@@ -17,7 +17,7 @@
 #include "internal/quic_error.h"
 #include "internal/time.h"
 
-static void aon_write_finish(QUIC_CONNECTION *qc);
+static void aon_write_finish(QUIC_XSO *xso);
 static int create_channel(QUIC_CONNECTION *qc);
 
 /*
@@ -140,13 +140,13 @@ static int expect_quic(const SSL *s, QCTX *ctx)
     case SSL_TYPE_QUIC_CONNECTION:
         qc              = (QUIC_CONNECTION *)s;
         ctx->qc         = qc;
-        ctx->xso        = NULL; /* TODO XXX (Filled by subsequent commit) */
+        ctx->xso        = qc->default_xso;
         ctx->is_stream  = 0;
         return 1;
 
     case SSL_TYPE_QUIC_XSO:
         xso             = (QUIC_XSO *)s;
-        ctx->qc         = NULL; /* TODO XXX (Filled by subsequent commit) */
+        ctx->qc         = xso->conn;
         ctx->xso        = xso;
         ctx->is_stream  = 1;
         return 1;
@@ -250,9 +250,9 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->as_server       = 0; /* TODO(QUIC): server support */
     qc->as_server_state = qc->as_server;
 
-    qc->ssl_mode   = qc->ssl.ctx->mode;
-    qc->last_error = SSL_ERROR_NONE;
-    qc->blocking   = 1;
+    qc->default_ssl_mode    = qc->ssl.ctx->mode;
+    qc->default_blocking    = 1;
+    qc->last_error          = SSL_ERROR_NONE;
 
     if (!create_channel(qc))
         goto err;
@@ -448,7 +448,8 @@ void ossl_quic_conn_set0_net_rbio(SSL *s, BIO *net_rbio)
 
         if (!BIO_get_rpoll_descriptor(net_rbio, &d)
             || d.type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD) {
-            ctx.qc->blocking = 0;
+            ctx.qc->blocking          = 0;
+            ctx.qc->default_blocking  = 0;
             ctx.qc->can_poll_net_rbio = 0;
         } else {
             ctx.qc->can_poll_net_rbio = 1;
@@ -477,7 +478,8 @@ void ossl_quic_conn_set0_net_wbio(SSL *s, BIO *net_wbio)
 
         if (!BIO_get_wpoll_descriptor(net_wbio, &d)
             || d.type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD) {
-            ctx.qc->blocking = 0;
+            ctx.qc->blocking          = 0;
+            ctx.qc->default_blocking  = 0;
             ctx.qc->can_poll_net_wbio = 0;
         } else {
             ctx.qc->can_poll_net_wbio = 1;
@@ -526,6 +528,9 @@ int ossl_quic_conn_get_blocking_mode(const SSL *s)
     if (!expect_quic(s, &ctx))
         return 0;
 
+    if (ctx.is_stream)
+        return ctx.xso->blocking;
+
     return ctx.qc->blocking;
 }
 
@@ -541,7 +546,22 @@ int ossl_quic_conn_set_blocking_mode(SSL *s, int blocking)
         (!ctx.qc->can_poll_net_rbio || !ctx.qc->can_poll_net_wbio))
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, ERR_R_UNSUPPORTED, NULL);
 
-    ctx.qc->blocking = (blocking != 0);
+    if (!ctx.is_stream) {
+        /*
+         * If called on a QCSO, update default and connection-level blocking
+         * modes.
+         */
+        ctx.qc->blocking         = (blocking != 0);
+        ctx.qc->default_blocking = ctx.qc->blocking;
+    }
+
+    if (ctx.xso != NULL)
+        /*
+         * If called on  a QSSO or QCSO with a default XSO, update blocking
+         * mode.
+         */
+        ctx.xso->blocking = (blocking != 0);
+
     return 1;
 }
 
@@ -577,9 +597,16 @@ int ossl_quic_conn_set_initial_peer_addr(SSL *s,
  */
 
 /* Returns 1 if the connection is being used in blocking mode. */
-static int blocking_mode(const QUIC_CONNECTION *qc)
+static int qc_blocking_mode(const QUIC_CONNECTION *qc)
 {
     return qc->blocking;
+}
+
+static int xso_blocking_mode(const QUIC_XSO *xso)
+{
+    return xso->blocking
+        && xso->conn->can_poll_net_rbio
+        && xso->conn->can_poll_net_wbio;
 }
 
 /* SSL_tick; ticks the reactor. */
@@ -722,6 +749,10 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
     if (!expect_quic(s, &ctx))
         return 0;
 
+    if (ctx.is_stream)
+        /* TODO(QUIC): Semantics currently undefined for QSSOs */
+        return -1;
+
     quic_lock(ctx.qc);
 
     ossl_quic_channel_local_close(ctx.qc->ch,
@@ -734,7 +765,7 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
         return 1;
     }
 
-    if (blocking_mode(ctx.qc) && (flags & SSL_SHUTDOWN_FLAG_RAPID) == 0)
+    if (qc_blocking_mode(ctx.qc) && (flags & SSL_SHUTDOWN_FLAG_RAPID) == 0)
         block_until_pred(ctx.qc, quic_shutdown_wait, ctx.qc, 0);
     else
         ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
@@ -754,15 +785,34 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     switch (cmd) {
     case SSL_CTRL_MODE:
-        /* Cannot enable EPW while AON write in progress. */
-        if (ctx.qc->aon_write_in_progress)
-            larg &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
+        /* If called on a QCSO, update the default mode. */
+        if (!ctx.is_stream)
+            ctx.qc->default_ssl_mode |= (uint32_t)larg;
 
-        ctx.qc->ssl_mode |= (uint32_t)larg;
-        return ctx.qc->ssl_mode;
+        /*
+         * If we were called on a QSSO or have a default stream, we also update
+         * that.
+         */
+        if (ctx.xso != NULL) {
+            /* Cannot enable EPW while AON write in progress. */
+            if (ctx.xso->aon_write_in_progress)
+                larg &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
+
+            ctx.xso->ssl_mode |= (uint32_t)larg;
+            return ctx.xso->ssl_mode;
+        }
+
+        return ctx.qc->default_ssl_mode;
     case SSL_CTRL_CLEAR_MODE:
-        ctx.qc->ssl_mode &= ~(uint32_t)larg;
-        return ctx.qc->ssl_mode;
+        if (!ctx.is_stream)
+            ctx.qc->default_ssl_mode &= ~(uint32_t)larg;
+
+        if (ctx.xso != NULL) {
+            ctx.xso->ssl_mode &= ~(uint32_t)larg;
+            return ctx.xso->ssl_mode;
+        }
+
+        return ctx.qc->default_ssl_mode;
     default:
         /* Probably a TLS related ctrl. Defer to our internal SSL object */
         return SSL_ctrl(ctx.qc->tls, cmd, larg, parg);
@@ -778,7 +828,7 @@ void ossl_quic_set_connect_state(SSL *s)
         return;
 
     /* Cannot be changed after handshake started */
-    if (ctx.qc->started)
+    if (ctx.qc->started || ctx.is_stream)
         return;
 
     ctx.qc->as_server_state = 0;
@@ -793,7 +843,7 @@ void ossl_quic_set_accept_state(SSL *s)
         return;
 
     /* Cannot be changed after handshake started */
-    if (ctx.qc->started)
+    if (ctx.qc->started || ctx.is_stream)
         return;
 
     ctx.qc->as_server_state = 1;
@@ -862,10 +912,6 @@ static int ensure_channel_started(QUIC_CONNECTION *qc)
             || !ossl_quic_channel_start(qc->ch))
             goto err;
 
-        qc->stream0 = ossl_quic_channel_get_stream_by_id(qc->ch, 0);
-        if (qc->stream0 == NULL)
-            goto err;
-
         if (qc->is_thread_assisted)
             if (!ossl_quic_thread_assist_init_start(&qc->thread_assist, qc->ch))
                 goto err;
@@ -923,7 +969,7 @@ static int quic_do_handshake(QUIC_CONNECTION *qc)
         /* The handshake is now done. */
         return 1;
 
-    if (blocking_mode(qc)) {
+    if (qc_blocking_mode(qc)) {
         /* In blocking mode, wait for the handshake to complete. */
         struct quic_handshake_wait_args args;
 
@@ -991,6 +1037,39 @@ int ossl_quic_accept(SSL *s)
 }
 
 /*
+ * QUIC Front-End I/O API: Stream Lifecycle Operations
+ * ===================================================
+ *
+ *         SSL_stream_new       => ossl_quic_conn_stream_new
+ *
+ */
+SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags)
+{
+    QCTX ctx;
+    QUIC_XSO *xso = NULL;
+
+    if (!expect_quic_conn_only(s, &ctx))
+        return NULL;
+
+    if ((xso = OPENSSL_zalloc(sizeof(*xso))) == NULL)
+        return NULL;
+
+    if (!ossl_ssl_init(&xso->ssl, s->ctx, s->method, SSL_TYPE_QUIC_XSO))
+        goto err;
+
+    xso->conn       = ctx.qc;
+    xso->blocking   = ctx.qc->default_blocking;
+    xso->ssl_mode   = ctx.qc->default_ssl_mode;
+
+    xso->stream     = NULL; /* TODO XXX ossl_quic_channel_new_stream */
+    return &xso->ssl;
+
+err:
+    OPENSSL_free(xso);
+    return NULL;
+}
+
+/*
  * QUIC Front-End I/O API: Steady-State Operations
  * ===============================================
  *
@@ -1035,15 +1114,15 @@ int ossl_quic_get_error(const SSL *s, int i)
  *
  */
 QUIC_NEEDS_LOCK
-static void quic_post_write(QUIC_CONNECTION *qc, int did_append, int do_tick)
+static void quic_post_write(QUIC_XSO *xso, int did_append, int do_tick)
 {
     /*
      * We have appended at least one byte to the stream.
      * Potentially mark stream as active, depending on FC.
      */
     if (did_append)
-        ossl_quic_stream_map_update_state(ossl_quic_channel_get_qsm(qc->ch),
-                                          qc->stream0);
+        ossl_quic_stream_map_update_state(ossl_quic_channel_get_qsm(xso->conn->ch),
+                                          xso->stream);
 
     /*
      * Try and send.
@@ -1052,11 +1131,11 @@ static void quic_post_write(QUIC_CONNECTION *qc, int did_append, int do_tick)
      * plus we should eventually consider Nagle's algorithm.
      */
     if (do_tick)
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(xso->conn->ch), 0);
 }
 
 struct quic_write_again_args {
-    QUIC_CONNECTION     *qc;
+    QUIC_XSO            *xso;
     const unsigned char *buf;
     size_t              len;
     size_t              total_written;
@@ -1068,15 +1147,15 @@ static int quic_write_again(void *arg)
     struct quic_write_again_args *args = arg;
     size_t actual_written = 0;
 
-    if (!ossl_quic_channel_is_active(args->qc->ch))
+    if (!ossl_quic_channel_is_active(args->xso->conn->ch))
         /* If connection is torn down due to an error while blocking, stop. */
         return -2;
 
-    if (!ossl_quic_sstream_append(args->qc->stream0->sstream,
+    if (!ossl_quic_sstream_append(args->xso->stream->sstream,
                                   args->buf, args->len, &actual_written))
         return -2;
 
-    quic_post_write(args->qc, actual_written > 0, 0);
+    quic_post_write(args->xso, actual_written > 0, 0);
 
     args->buf           += actual_written;
     args->len           -= actual_written;
@@ -1091,7 +1170,7 @@ static int quic_write_again(void *arg)
 }
 
 QUIC_NEEDS_LOCK
-static int quic_write_blocking(QUIC_CONNECTION *qc, const void *buf, size_t len,
+static int quic_write_blocking(QUIC_XSO *xso, const void *buf, size_t len,
                                size_t *written)
 {
     int res;
@@ -1099,14 +1178,14 @@ static int quic_write_blocking(QUIC_CONNECTION *qc, const void *buf, size_t len,
     size_t actual_written = 0;
 
     /* First make a best effort to append as much of the data as possible. */
-    if (!ossl_quic_sstream_append(qc->stream0->sstream, buf, len,
+    if (!ossl_quic_sstream_append(xso->stream->sstream, buf, len,
                                   &actual_written)) {
         /* Stream already finished or allocation error. */
         *written = 0;
-        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+        return QUIC_RAISE_NON_NORMAL_ERROR(xso->conn, ERR_R_INTERNAL_ERROR, NULL);
     }
 
-    quic_post_write(qc, actual_written > 0, 1);
+    quic_post_write(xso, actual_written > 0, 1);
 
     if (actual_written == len) {
         /* Managed to append everything on the first try. */
@@ -1119,17 +1198,17 @@ static int quic_write_blocking(QUIC_CONNECTION *qc, const void *buf, size_t len,
      * buffer has probably filled up. This means we need to block until some of
      * it is freed up.
      */
-    args.qc             = qc;
+    args.xso            = xso;
     args.buf            = (const unsigned char *)buf + actual_written;
     args.len            = len - actual_written;
     args.total_written  = 0;
 
-    res = block_until_pred(qc, quic_write_again, &args, 0);
+    res = block_until_pred(xso->conn, quic_write_again, &args, 0);
     if (res <= 0) {
-        if (!ossl_quic_channel_is_active(qc->ch))
-            return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+        if (!ossl_quic_channel_is_active(xso->conn->ch))
+            return QUIC_RAISE_NON_NORMAL_ERROR(xso->conn, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         else
-            return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+            return QUIC_RAISE_NON_NORMAL_ERROR(xso->conn, ERR_R_INTERNAL_ERROR, NULL);
     }
 
     *written = args.total_written;
@@ -1140,50 +1219,50 @@ static int quic_write_blocking(QUIC_CONNECTION *qc, const void *buf, size_t len,
  * Functions to manage All-or-Nothing (AON) (that is, non-ENABLE_PARTIAL_WRITE)
  * write semantics.
  */
-static void aon_write_begin(QUIC_CONNECTION *qc, const unsigned char *buf,
+static void aon_write_begin(QUIC_XSO *xso, const unsigned char *buf,
                             size_t buf_len, size_t already_sent)
 {
-    assert(!qc->aon_write_in_progress);
+    assert(!xso->aon_write_in_progress);
 
-    qc->aon_write_in_progress = 1;
-    qc->aon_buf_base          = buf;
-    qc->aon_buf_pos           = already_sent;
-    qc->aon_buf_len           = buf_len;
+    xso->aon_write_in_progress = 1;
+    xso->aon_buf_base          = buf;
+    xso->aon_buf_pos           = already_sent;
+    xso->aon_buf_len           = buf_len;
 }
 
-static void aon_write_finish(QUIC_CONNECTION *qc)
+static void aon_write_finish(QUIC_XSO *xso)
 {
-    qc->aon_write_in_progress   = 0;
-    qc->aon_buf_base            = NULL;
-    qc->aon_buf_pos             = 0;
-    qc->aon_buf_len             = 0;
+    xso->aon_write_in_progress   = 0;
+    xso->aon_buf_base            = NULL;
+    xso->aon_buf_pos             = 0;
+    xso->aon_buf_len             = 0;
 }
 
 QUIC_NEEDS_LOCK
-static int quic_write_nonblocking_aon(QUIC_CONNECTION *qc, const void *buf,
+static int quic_write_nonblocking_aon(QUIC_XSO *xso, const void *buf,
                                       size_t len, size_t *written)
 {
     const void *actual_buf;
     size_t actual_len, actual_written = 0;
     int accept_moving_buffer
-        = ((qc->ssl_mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER) != 0);
+        = ((xso->ssl_mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER) != 0);
 
-    if (qc->aon_write_in_progress) {
+    if (xso->aon_write_in_progress) {
         /*
          * We are in the middle of an AON write (i.e., a previous write did not
          * manage to append all data to the SSTREAM and we have Enable Partial
          * Write (EPW) mode disabled.)
          */
-        if ((!accept_moving_buffer && qc->aon_buf_base != buf)
-            || len != qc->aon_buf_len)
+        if ((!accept_moving_buffer && xso->aon_buf_base != buf)
+            || len != xso->aon_buf_len)
             /*
              * Pointer must not have changed if we are not in accept moving
              * buffer mode. Length must never change.
              */
-            return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_BAD_WRITE_RETRY, NULL);
+            return QUIC_RAISE_NON_NORMAL_ERROR(xso->conn, SSL_R_BAD_WRITE_RETRY, NULL);
 
-        actual_buf = (unsigned char *)buf + qc->aon_buf_pos;
-        actual_len = len - qc->aon_buf_pos;
+        actual_buf = (unsigned char *)buf + xso->aon_buf_pos;
+        actual_len = len - xso->aon_buf_pos;
         assert(actual_len > 0);
     } else {
         actual_buf = buf;
@@ -1191,26 +1270,26 @@ static int quic_write_nonblocking_aon(QUIC_CONNECTION *qc, const void *buf,
     }
 
     /* First make a best effort to append as much of the data as possible. */
-    if (!ossl_quic_sstream_append(qc->stream0->sstream, actual_buf, actual_len,
+    if (!ossl_quic_sstream_append(xso->stream->sstream, actual_buf, actual_len,
                                   &actual_written)) {
         /* Stream already finished or allocation error. */
         *written = 0;
-        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+        return QUIC_RAISE_NON_NORMAL_ERROR(xso->conn, ERR_R_INTERNAL_ERROR, NULL);
     }
 
-    quic_post_write(qc, actual_written > 0, 1);
+    quic_post_write(xso, actual_written > 0, 1);
 
     if (actual_written == actual_len) {
         /* We have sent everything. */
-        if (qc->aon_write_in_progress) {
+        if (xso->aon_write_in_progress) {
             /*
              * We have sent everything, and we were in the middle of an AON
              * write. The output write length is the total length of the AON
              * buffer, not however many bytes we managed to write to the stream
              * in this call.
              */
-            *written = qc->aon_buf_len;
-            aon_write_finish(qc);
+            *written = xso->aon_buf_len;
+            aon_write_finish(xso);
         } else {
             *written = actual_written;
         }
@@ -1218,16 +1297,16 @@ static int quic_write_nonblocking_aon(QUIC_CONNECTION *qc, const void *buf,
         return 1;
     }
 
-    if (qc->aon_write_in_progress) {
+    if (xso->aon_write_in_progress) {
         /*
          * AON write is in progress but we have not written everything yet. We
          * may have managed to send zero bytes, or some number of bytes less
          * than the total remaining which need to be appended during this
          * AON operation.
          */
-        qc->aon_buf_pos += actual_written;
-        assert(qc->aon_buf_pos < qc->aon_buf_len);
-        return QUIC_RAISE_NORMAL_ERROR(qc, SSL_ERROR_WANT_WRITE);
+        xso->aon_buf_pos += actual_written;
+        assert(xso->aon_buf_pos < xso->aon_buf_len);
+        return QUIC_RAISE_NORMAL_ERROR(xso->conn, SSL_ERROR_WANT_WRITE);
     }
 
     /*
@@ -1236,28 +1315,28 @@ static int quic_write_nonblocking_aon(QUIC_CONNECTION *qc, const void *buf,
      * actually append anything.
      */
     if (actual_written > 0)
-        aon_write_begin(qc, buf, len, actual_written);
+        aon_write_begin(xso, buf, len, actual_written);
 
     /*
      * AON - We do not publicly admit to having appended anything until AON
      * completes.
      */
     *written = 0;
-    return QUIC_RAISE_NORMAL_ERROR(qc, SSL_ERROR_WANT_WRITE);
+    return QUIC_RAISE_NORMAL_ERROR(xso->conn, SSL_ERROR_WANT_WRITE);
 }
 
 QUIC_NEEDS_LOCK
-static int quic_write_nonblocking_epw(QUIC_CONNECTION *qc, const void *buf, size_t len,
+static int quic_write_nonblocking_epw(QUIC_XSO *xso, const void *buf, size_t len,
                                       size_t *written)
 {
     /* Simple best effort operation. */
-    if (!ossl_quic_sstream_append(qc->stream0->sstream, buf, len, written)) {
+    if (!ossl_quic_sstream_append(xso->stream->sstream, buf, len, written)) {
         /* Stream already finished or allocation error. */
         *written = 0;
-        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+        return QUIC_RAISE_NON_NORMAL_ERROR(xso->conn, ERR_R_INTERNAL_ERROR, NULL);
     }
 
-    quic_post_write(qc, *written > 0, 1);
+    quic_post_write(xso, *written > 0, 1);
     return 1;
 }
 
@@ -1270,12 +1349,12 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
 
     *written = 0;
 
-    if (!expect_quic(s, &ctx))
+    if (!expect_quic_with_stream(s, &ctx))
         return 0;
 
     quic_lock(ctx.qc);
 
-    partial_write = ((ctx.qc->ssl_mode & SSL_MODE_ENABLE_PARTIAL_WRITE) != 0);
+    partial_write = ((ctx.xso->ssl_mode & SSL_MODE_ENABLE_PARTIAL_WRITE) != 0);
 
     if (ossl_quic_channel_is_term_any(ctx.qc->ch)) {
         ret = QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
@@ -1291,17 +1370,17 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
         goto out;
     }
 
-    if (ctx.qc->stream0 == NULL || ctx.qc->stream0->sstream == NULL) {
+    if (ctx.xso->stream == NULL || ctx.xso->stream->sstream == NULL) {
         ret = QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, ERR_R_INTERNAL_ERROR, NULL);
         goto out;
     }
 
-    if (blocking_mode(ctx.qc))
-        ret = quic_write_blocking(ctx.qc, buf, len, written);
+    if (xso_blocking_mode(ctx.xso))
+        ret = quic_write_blocking(ctx.xso, buf, len, written);
     else if (partial_write)
-        ret = quic_write_nonblocking_epw(ctx.qc, buf, len, written);
+        ret = quic_write_nonblocking_epw(ctx.xso, buf, len, written);
     else
-        ret = quic_write_nonblocking_aon(ctx.qc, buf, len, written);
+        ret = quic_write_nonblocking_aon(ctx.xso, buf, len, written);
 
 out:
     quic_unlock(ctx.qc);
@@ -1360,7 +1439,7 @@ static int quic_read_actual(QUIC_CONNECTION *qc,
 
             ossl_statm_get_rtt_info(ossl_quic_channel_get_statm(qc->ch), &rtt_info);
 
-            if (!ossl_quic_rxfc_on_retire(&qc->stream0->rxfc, *bytes_read,
+            if (!ossl_quic_rxfc_on_retire(&stream->rxfc, *bytes_read,
                                           rtt_info.smoothed_rtt))
                 return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
         }
@@ -1370,7 +1449,7 @@ static int quic_read_actual(QUIC_CONNECTION *qc,
 
         if (*bytes_read > 0)
             ossl_quic_stream_map_update_state(ossl_quic_channel_get_qsm(qc->ch),
-                                              qc->stream0);
+                                              stream);
     }
 
     return 1;
@@ -1408,7 +1487,7 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
 
     *bytes_read = 0;
 
-    if (!expect_quic(s, &ctx))
+    if (!expect_quic_with_stream(s, &ctx))
         return 0;
 
     quic_lock(ctx.qc);
@@ -1424,12 +1503,12 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
         goto out;
     }
 
-    if (ctx.qc->stream0 == NULL) {
+    if (ctx.xso->stream == NULL) {
         ret = QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, ERR_R_INTERNAL_ERROR, NULL);
         goto out;
     }
 
-    if (!quic_read_actual(ctx.qc, ctx.qc->stream0, buf, len, bytes_read, peek)) {
+    if (!quic_read_actual(ctx.qc, ctx.xso->stream, buf, len, bytes_read, peek)) {
         ret = 0; /* quic_read_actual raised error here */
         goto out;
     }
@@ -1441,14 +1520,14 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
          */
         ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
         ret = 1;
-    } else if (blocking_mode(ctx.qc)) {
+    } else if (xso_blocking_mode(ctx.xso)) {
         /*
          * We were not able to read anything immediately, so our stream
          * buffer is empty. This means we need to block until we get
          * at least one byte.
          */
         args.qc         = ctx.qc;
-        args.stream     = ctx.qc->stream0;
+        args.stream     = ctx.xso->stream;
         args.buf        = buf;
         args.len        = len;
         args.bytes_read = bytes_read;
@@ -1495,16 +1574,16 @@ static size_t ossl_quic_pending_int(const SSL *s)
     size_t avail = 0;
     int fin = 0;
 
-    if (!expect_quic(s, &ctx))
+    if (!expect_quic_with_stream(s, &ctx))
         return 0;
 
     quic_lock(ctx.qc);
 
-    if (ctx.qc->stream0 == NULL || ctx.qc->stream0->rstream == NULL)
+    if (ctx.xso->stream == NULL || ctx.xso->stream->rstream == NULL)
         /* Cannot raise errors here because we are const, just fail. */
         goto out;
 
-    if (!ossl_quic_rstream_available(ctx.qc->stream0->rstream, &avail, &fin))
+    if (!ossl_quic_rstream_available(ctx.xso->stream->rstream, &avail, &fin))
         avail = 0;
 
 out:
@@ -1532,12 +1611,12 @@ int ossl_quic_conn_stream_conclude(SSL *s)
     QCTX ctx;
     QUIC_STREAM *qs;
 
-    if (!expect_quic(s, &ctx))
+    if (!expect_quic_with_stream(s, &ctx))
         return 0;
 
     quic_lock(ctx.qc);
 
-    qs = ctx.qc->stream0;
+    qs = ctx.xso->stream;
 
     if (qs == NULL || qs->sstream == NULL) {
         quic_unlock(ctx.qc);
@@ -1551,7 +1630,7 @@ int ossl_quic_conn_stream_conclude(SSL *s)
     }
 
     ossl_quic_sstream_fin(qs->sstream);
-    quic_post_write(ctx.qc, 1, 1);
+    quic_post_write(ctx.xso, 1, 1);
     quic_unlock(ctx.qc);
     return 1;
 }

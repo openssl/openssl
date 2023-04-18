@@ -7299,6 +7299,18 @@ int SSL_stream_conclude(SSL *ssl, uint64_t flags)
 #endif
 }
 
+SSL *SSL_new_stream(SSL *s, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return NULL;
+
+    return ossl_quic_conn_stream_new(s, flags);
+#else
+    return NULL;
+#endif
+}
+
 int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk)
 {
     unsigned char *data = NULL;
