@@ -42,6 +42,8 @@ typedef struct ossl_quic_tx_packetiser_args_st {
     QUIC_STREAM_MAP *qsm;       /* QUIC Streams Map */
     QUIC_TXFC       *conn_txfc; /* QUIC Connection-Level TX Flow Controller */
     QUIC_RXFC       *conn_rxfc; /* QUIC Connection-Level RX Flow Controller */
+    QUIC_RXFC       *max_streams_bidi_rxfc; /* QUIC RXFC for MAX_STREAMS generation */
+    QUIC_RXFC       *max_streams_uni_rxfc;
     const OSSL_CC_METHOD *cc_method; /* QUIC Congestion Controller */
     OSSL_CC_DATA    *cc_data;   /* QUIC Congestion Controller Instance */
     OSSL_TIME       (*now)(void *arg);  /* Callback to get current time. */
