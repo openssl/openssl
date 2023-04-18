@@ -30,7 +30,7 @@
 
 /*
  * Interval before we force a PING to ensure NATs don't timeout. This is based
- * on the lowest commonly seen value of 30 seconds as cited in  RFC 9000 s.
+ * on the lowest commonly seen value of 30 seconds as cited in RFC 9000 s.
  * 10.1.2.
  */
 #define MAX_NAT_INTERVAL (ossl_ms2time(25000))
@@ -105,6 +105,12 @@ static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
  * QUIC Channel Initialization and Teardown
  * ========================================
  */
+#define DEFAULT_INIT_CONN_RXFC_WND      ( 2 * 1024 * 1024)
+#define DEFAULT_MAX_CONN_RXFC_WND       (10 * 1024 * 1024)
+
+#define DEFAULT_INIT_STREAM_RXFC_WND    ( 2 * 1024 * 1024)
+#define DEFAULT_MAX_STREAM_RXFC_WND     (10 * 1024 * 1024)
+
 static int ch_init(QUIC_CHANNEL *ch)
 {
     OSSL_QUIC_TX_PACKETISER_ARGS txp_args = {0};
@@ -139,9 +145,17 @@ static int ch_init(QUIC_CHANNEL *ch)
     if (!ossl_quic_txfc_init(&ch->conn_txfc, NULL))
         goto err;
 
+    /*
+     * Note: The TP we transmit governs what the peer can transmit and thus
+     * applies to the RXFC.
+     */
+    ch->tx_init_max_stream_data_bidi_local  = DEFAULT_INIT_STREAM_RXFC_WND;
+    ch->tx_init_max_stream_data_bidi_remote = DEFAULT_INIT_STREAM_RXFC_WND;
+    ch->tx_init_max_stream_data_uni         = DEFAULT_INIT_STREAM_RXFC_WND;
+
     if (!ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
-                             2  * 1024 * 1024,
-                             10 * 1024 * 1024,
+                             DEFAULT_INIT_CONN_RXFC_WND,
+                             DEFAULT_MAX_CONN_RXFC_WND,
                              get_time, ch))
         goto err;
 
@@ -1156,29 +1170,26 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
                                                    ossl_quic_rxfc_get_cwm(&ch->conn_rxfc)))
         goto err;
 
-    /*
-     * We actually want the default CWM for a new RXFC, but here we just use
-     * stream0 as a representative specimen. TODO(QUIC): revisit this when we
-     * support multiple streams.
-     */
+    /* Send the default CWM for a new RXFC. */
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_LOCAL,
-                                                   ossl_quic_rxfc_get_cwm(&ch->stream0->rxfc)))
+                                                   ch->tx_init_max_stream_data_bidi_local))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_REMOTE,
-                                                   ossl_quic_rxfc_get_cwm(&ch->stream0->rxfc)))
+                                                   ch->tx_init_max_stream_data_bidi_remote))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_UNI,
-                                                   ossl_quic_rxfc_get_cwm(&ch->stream0->rxfc)))
+                                                   ch->tx_init_max_stream_data_uni))
         goto err;
 
+    /* TODO(QUIC): MAX_STREAMS modelling */
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAMS_BIDI,
-                                                   ch->is_server ? 1 : 0))
+                                                   ch->is_server ? 100 : 100))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAMS_UNI,
-                                                   0))
+                                                   100))
         goto err;
 
     if (!WPACKET_get_total_written(&wpkt, &buf_len))
