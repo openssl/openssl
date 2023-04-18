@@ -13,6 +13,7 @@
 
 Title = TLS12 PRF tests (from NIST test vectors)
 
+FIPSversion = <=3.1.0
 KDF = TLS1-PRF
 Ctrl.digest = digest:SHA256
 Ctrl.Secret = hexsecret:f8938ecc9edebc5030c0c6a441e213cd24e6f770a50dda07876f8d55da062bcadb386b411fd4fe4313a604fce6c17fbc
@@ -21,6 +22,7 @@ Ctrl.client_random = hexseed:36c129d01a3200894b9179faac589d9835d58775f9b5ea3587c
 Ctrl.server_random = hexseed:f6c9575ed7ddd73e1f7d16eca115415812a43c2b747daaaae043abfb50053fce
 Output = 202c88c00f84a17a20027079604787461176455539e705be730890602c289a5001e34eeb3a043e5d52a65e66125188bf
 
+FIPSversion = <=3.1.0
 KDF = TLS1-PRF
 Ctrl.digest = digest:SHA256
 Ctrl.Secret = hexsecret:202c88c00f84a17a20027079604787461176455539e705be730890602c289a5001e34eeb3a043e5d52a65e66125188bf
@@ -30,6 +32,7 @@ Ctrl.client_random = hexseed:62e1fd91f23f558a605f28478c58cf72637b89784d959df7e94
 Output = d06139889fffac1e3a71865f504aa5d0d2a2e89506c6f2279b670c3e1b74f531016a2530c51a3a0f7e1d6590d0f0566b2f387f8d11fd4f731cdd572d2eae927f6f2f81410b25e6960be68985add6c38445ad9f8c64bf8068bf9a6679485d966f1ad6f68b43495b10a683755ea2b858d70ccac7ec8b053c6bd41ca299d4e51928
 
 # As above but use long name for KDF
+FIPSversion = <=3.1.0
 KDF = tls1-prf
 Ctrl.digest = digest:SHA256
 Ctrl.Secret = hexsecret:202c88c00f84a17a20027079604787461176455539e705be730890602c289a5001e34eeb3a043e5d52a65e66125188bf
