@@ -97,12 +97,6 @@ struct quic_channel_st {
     QUIC_SSTREAM                    *crypto_send[QUIC_PN_SPACE_NUM];
     QUIC_RSTREAM                    *crypto_recv[QUIC_PN_SPACE_NUM];
 
-    /*
-     * Our (currently only) application data stream. This is a bidirectional
-     * client-initiated stream and thus (in QUICv1) always has a stream ID of 0.
-     */
-    QUIC_STREAM                     *stream0;
-
     /* Internal state. */
     /*
      * Client: The DCID used in the first Initial packet we transmit as a client.
