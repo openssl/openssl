@@ -99,6 +99,7 @@ static int test_unknown_frame(void)
     unsigned char buf[80];
     size_t byteswritten;
     QTEST_FAULT *fault = NULL;
+    uint64_t sid = UINT64_MAX;
 
     if (!TEST_ptr(cctx))
         goto err;
@@ -119,7 +120,11 @@ static int test_unknown_frame(void)
                                                          NULL)))
         goto err;
 
-    if (!TEST_true(ossl_quic_tserver_write(qtserv, 0, (unsigned char *)msg, msglen,
+    if (!TEST_true(ossl_quic_tserver_stream_new(qtserv, /*is_uni=*/0, &sid))
+        || !TEST_uint64_t_eq(sid, 1))
+        goto err;
+
+    if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, (unsigned char *)msg, msglen,
                                            &byteswritten)))
         goto err;
 
@@ -263,6 +268,7 @@ static int test_corrupted_data(int idx)
     size_t msglen = strlen(msg);
     unsigned char buf[80];
     size_t bytesread, byteswritten;
+    uint64_t sid = UINT64_MAX;
 
     if (!TEST_ptr(cctx))
         goto err;
@@ -290,11 +296,15 @@ static int test_corrupted_data(int idx)
     /* Corrupt the next server packet*/
     docorrupt = 1;
 
+    if (!TEST_true(ossl_quic_tserver_stream_new(qtserv, /*is_uni=*/0, &sid))
+        || !TEST_uint64_t_eq(sid, 1))
+        goto err;
+
     /*
      * Send first 5 bytes of message. This will get corrupted and is treated as
      * "lost"
      */
-    if (!TEST_true(ossl_quic_tserver_write(qtserv, 0, (unsigned char *)msg, 5,
+    if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, (unsigned char *)msg, 5,
                                            &byteswritten)))
         goto err;
 
@@ -317,7 +327,7 @@ static int test_corrupted_data(int idx)
     OSSL_sleep(100);
 
     /* Send rest of message */
-    if (!TEST_true(ossl_quic_tserver_write(qtserv, 0, (unsigned char *)msg + 5,
+    if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, (unsigned char *)msg + 5,
                                            msglen - 5, &byteswritten)))
         goto err;
 
