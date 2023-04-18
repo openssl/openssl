@@ -1991,6 +1991,7 @@ int ossl_quic_get_stream_type(SSL *s)
  * SSL_get_stream_id
  * -----------------
  */
+QUIC_TAKES_LOCK
 uint64_t ossl_quic_get_stream_id(SSL *s)
 {
     QCTX ctx;
@@ -2009,6 +2010,7 @@ uint64_t ossl_quic_get_stream_id(SSL *s)
  * SSL_set_default_stream_mode
  * ---------------------------
  */
+QUIC_TAKES_LOCK
 int ossl_quic_set_default_stream_mode(SSL *s, uint32_t mode)
 {
     QCTX ctx;
@@ -2042,6 +2044,7 @@ int ossl_quic_set_default_stream_mode(SSL *s, uint32_t mode)
  * SSL_detach_stream
  * -----------------
  */
+QUIC_TAKES_LOCK
 SSL *ossl_quic_detach_stream(SSL *s)
 {
     QCTX ctx;
@@ -2067,6 +2070,7 @@ SSL *ossl_quic_detach_stream(SSL *s)
  * SSL_attach_stream
  * -----------------
  */
+QUIC_TAKES_LOCK
 int ossl_quic_attach_stream(SSL *conn, SSL *stream)
 {
     QCTX ctx;
@@ -2099,6 +2103,7 @@ int ossl_quic_attach_stream(SSL *conn, SSL *stream)
  * SSL_set_incoming_stream_reject_policy
  * -------------------------------------
  */
+QUIC_TAKES_LOCK
 int ossl_quic_set_incoming_stream_reject_policy(SSL *s, int policy,
                                                 uint64_t aec)
 {
@@ -2125,6 +2130,130 @@ int ossl_quic_set_incoming_stream_reject_policy(SSL *s, int policy,
 
     quic_unlock(ctx.qc);
     return ret;
+}
+
+/*
+ * SSL_accept_stream
+ * -----------------
+ */
+QUIC_NEEDS_LOCK
+static int qc_get_effective_incoming_stream_reject_policy(QUIC_CONNECTION *qc)
+{
+    switch (qc->incoming_stream_reject_policy) {
+        case SSL_INCOMING_STREAM_REJECT_POLICY_AUTO:
+            if ((qc->default_xso == NULL && qc->default_xso_created)
+                || qc->default_stream_mode == SSL_DEFAULT_STREAM_MODE_NONE)
+                return SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT;
+            else
+                return SSL_INCOMING_STREAM_REJECT_POLICY_REJECT;
+
+        default:
+            return qc->incoming_stream_reject_policy;
+    }
+}
+
+struct wait_for_incoming_stream_args {
+    QUIC_CONNECTION *qc;
+    QUIC_STREAM     *qs;
+};
+
+QUIC_NEEDS_LOCK
+static int wait_for_incoming_stream(void *arg)
+{
+    struct wait_for_incoming_stream_args *args = arg;
+    QUIC_STREAM_MAP *qsm = ossl_quic_channel_get_qsm(args->qc->ch);
+
+    if (!ossl_quic_channel_is_active(args->qc->ch)) {
+        /* If connection is torn down due to an error while blocking, stop. */
+        QUIC_RAISE_NON_NORMAL_ERROR(args->qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+        return -1;
+    }
+
+    args->qs = ossl_quic_stream_map_peek_accept_queue(qsm);
+    if (args->qs != NULL)
+        return 1; /* got a stream */
+
+    return 0; /* did not get a stream, keep trying */
+}
+
+QUIC_TAKES_LOCK
+SSL *ossl_quic_accept_stream(SSL *s, uint64_t flags)
+{
+    QCTX ctx;
+    int ret;
+    SSL *new_s = NULL;
+    QUIC_STREAM_MAP *qsm;
+    QUIC_STREAM *qs;
+    QUIC_XSO *xso;
+
+    if (!expect_quic_conn_only(s, &ctx))
+        return NULL;
+
+    quic_lock(ctx.qc);
+
+    if (qc_get_effective_incoming_stream_reject_policy(ctx.qc)
+        == SSL_INCOMING_STREAM_REJECT_POLICY_REJECT)
+        goto out;
+
+    qsm = ossl_quic_channel_get_qsm(ctx.qc->ch);
+
+    qs = ossl_quic_stream_map_peek_accept_queue(qsm);
+    if (qs == NULL) {
+        if (qc_blocking_mode(ctx.qc)
+            && (flags & SSL_ACCEPT_STREAM_NO_BLOCK) == 0) {
+            struct wait_for_incoming_stream_args args;
+
+            args.qc = ctx.qc;
+            args.qs = NULL;
+
+            ret = block_until_pred(ctx.qc, wait_for_incoming_stream, &args, 0);
+            if (ret == 0) {
+                QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, ERR_R_INTERNAL_ERROR, NULL);
+                goto out;
+            } else if (ret < 0 || args.qs == NULL) {
+                goto out;
+            }
+
+            qs = args.qs;
+        } else {
+            goto out;
+        }
+    }
+
+    xso = create_xso_from_stream(ctx.qc, qs);
+    if (xso == NULL)
+        goto out;
+
+    ossl_quic_stream_map_remove_from_accept_queue(qsm, qs);
+    new_s = &xso->ssl;
+
+    /* Calling this function inhibits default XSO autocreation. */
+    ctx.qc->default_xso_created = 1;
+
+out:
+    quic_unlock(ctx.qc);
+    return new_s;
+}
+
+/*
+ * SSL_get_accept_stream_queue_len
+ * -------------------------------
+ */
+QUIC_TAKES_LOCK
+size_t ossl_quic_get_accept_stream_queue_len(SSL *s)
+{
+    QCTX ctx;
+    size_t v;
+
+    if (!expect_quic_conn_only(s, &ctx))
+        return 0;
+
+    quic_lock(ctx.qc);
+
+    v = ossl_quic_stream_map_get_accept_queue_len(ossl_quic_channel_get_qsm(ctx.qc->ch));
+
+    quic_unlock(ctx.qc);
+    return v;
 }
 
 /*

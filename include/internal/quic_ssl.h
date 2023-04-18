@@ -74,6 +74,8 @@ __owur SSL *ossl_quic_detach_stream(SSL *s);
 __owur int ossl_quic_attach_stream(SSL *conn, SSL *stream);
 __owur int ossl_quic_set_incoming_stream_reject_policy(SSL *s, int policy,
                                                        uint64_t aec);
+__owur SSL *ossl_quic_accept_stream(SSL *s, uint64_t flags);
+__owur size_t ossl_quic_get_accept_stream_queue_len(SSL *s);
 
 /*
  * Used to override ossl_time_now() for debug purposes. Must be called before
