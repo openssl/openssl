@@ -568,3 +568,4 @@ SSL_get_stream_id                       ?	3_2_0	EXIST::FUNCTION:
 SSL_set_default_stream_mode             ?	3_2_0	EXIST::FUNCTION:
 SSL_detach_stream                       ?	3_2_0	EXIST::FUNCTION:
 SSL_attach_stream                       ?	3_2_0	EXIST::FUNCTION:
+SSL_set_incoming_stream_reject_policy   ?	3_2_0	EXIST::FUNCTION:
