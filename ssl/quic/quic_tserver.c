@@ -363,3 +363,37 @@ BIO *ossl_quic_tserver_get0_rbio(QUIC_TSERVER *srv)
 {
     return srv->args.net_rbio;
 }
+
+int ossl_quic_tserver_stream_has_peer_stop_sending(QUIC_TSERVER *srv,
+                                                   uint64_t stream_id,
+                                                   uint64_t *app_error_code)
+{
+    QUIC_STREAM *qs;
+
+    qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(srv->ch),
+                                        stream_id);
+    if (qs == NULL)
+        return 0;
+
+    if (qs->peer_stop_sending && app_error_code != NULL)
+        *app_error_code = qs->peer_stop_sending_aec;
+
+    return qs->peer_stop_sending;
+}
+
+int ossl_quic_tserver_stream_has_peer_reset_stream(QUIC_TSERVER *srv,
+                                                   uint64_t stream_id,
+                                                   uint64_t  *app_error_code)
+{
+    QUIC_STREAM *qs;
+
+    qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(srv->ch),
+                                        stream_id);
+    if (qs == NULL)
+        return 0;
+
+    if (qs->peer_reset_stream && app_error_code != NULL)
+        *app_error_code = qs->peer_reset_stream_aec;
+
+    return qs->peer_reset_stream;
+}
