@@ -1225,7 +1225,11 @@ static int quic_wait_for_stream(void *arg)
     }
 
     args->qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(args->qc->ch),
-                                              args->expect_id);
+                                              args->expect_id | QUIC_STREAM_DIR_BIDI);
+    if (args->qs == NULL)
+        args->qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(args->qc->ch),
+                                                  args->expect_id | QUIC_STREAM_DIR_UNI);
+
     if (args->qs != NULL)
         return 1; /* stream now exists */
 
@@ -1259,12 +1263,12 @@ static int qc_wait_for_default_xso_for_read(QUIC_CONNECTION *qc)
         ? QUIC_STREAM_INITIATOR_CLIENT
         : QUIC_STREAM_INITIATOR_SERVER;
 
-    expect_id |= (qc->default_stream_mode == SSL_DEFAULT_STREAM_MODE_AUTO_UNI)
-        ? QUIC_STREAM_DIR_UNI
-        : QUIC_STREAM_DIR_BIDI;
-
     qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(qc->ch),
-                                        expect_id);
+                                        expect_id | QUIC_STREAM_DIR_BIDI);
+    if (qs == NULL)
+        qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(qc->ch),
+                                            expect_id | QUIC_STREAM_DIR_UNI);
+
     if (qs == NULL) {
         ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
 
