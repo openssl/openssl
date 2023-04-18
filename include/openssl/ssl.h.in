@@ -2288,6 +2288,11 @@ __owur int SSL_attach_stream(SSL *conn, SSL *stream);
 #define SSL_STREAM_FLAG_UNI     (1U << 0)
 __owur SSL *SSL_new_stream(SSL *s, uint64_t flags);
 
+#define SSL_INCOMING_STREAM_REJECT_POLICY_AUTO      0
+#define SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT    1
+#define SSL_INCOMING_STREAM_REJECT_POLICY_REJECT    2
+__owur int SSL_set_incoming_stream_reject_policy(SSL *s, int policy, uint64_t aec);
+
 # ifndef OPENSSL_NO_QUIC
 __owur int SSL_inject_net_dgram(SSL *s, const unsigned char *buf,
                                 size_t buf_len,

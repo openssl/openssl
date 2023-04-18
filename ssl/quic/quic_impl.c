@@ -296,6 +296,8 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->default_stream_mode     = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
     qc->default_ssl_mode        = qc->ssl.ctx->mode;
     qc->default_blocking        = 1;
+    qc->incoming_stream_reject_policy
+        = SSL_INCOMING_STREAM_REJECT_POLICY_AUTO;
     qc->last_error              = SSL_ERROR_NONE;
 
     if (!create_channel(qc))
@@ -2091,6 +2093,38 @@ int ossl_quic_attach_stream(SSL *conn, SSL *stream)
 
     quic_unlock(ctx.qc);
     return 1;
+}
+
+/*
+ * SSL_set_incoming_stream_reject_policy
+ * -------------------------------------
+ */
+int ossl_quic_set_incoming_stream_reject_policy(SSL *s, int policy,
+                                                uint64_t aec)
+{
+    int ret = 1;
+    QCTX ctx;
+
+    if (!expect_quic_conn_only(s, &ctx))
+        return 0;
+
+    quic_lock(ctx.qc);
+
+    switch (policy) {
+    case SSL_INCOMING_STREAM_REJECT_POLICY_AUTO:
+    case SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT:
+    case SSL_INCOMING_STREAM_REJECT_POLICY_REJECT:
+        ctx.qc->incoming_stream_reject_policy = policy;
+        ctx.qc->incoming_stream_reject_aec    = aec;
+        break;
+
+    default:
+        ret = 0;
+        break;
+    }
+
+    quic_unlock(ctx.qc);
+    return ret;
 }
 
 /*

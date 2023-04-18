@@ -7388,6 +7388,18 @@ int SSL_attach_stream(SSL *conn, SSL *stream)
 #endif
 }
 
+int SSL_set_incoming_stream_reject_policy(SSL *s, int policy, uint64_t aec)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return 0;
+
+    return ossl_quic_set_incoming_stream_reject_policy(s, policy, aec);
+#else
+    return 0;
+#endif
+}
+
 int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk)
 {
     unsigned char *data = NULL;
