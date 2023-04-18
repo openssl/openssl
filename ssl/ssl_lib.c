@@ -7384,7 +7384,7 @@ int SSL_attach_stream(SSL *conn, SSL *stream)
 
     return ossl_quic_attach_stream(conn, stream);
 #else
-    return NULL;
+    return 0;
 #endif
 }
 

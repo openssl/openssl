@@ -299,7 +299,6 @@ static int helper_init(struct helper *h)
 
     s_args.net_rbio = h->s_net_bio;
     s_args.net_wbio = h->s_net_bio;
-    //s_args.now_cb = ...;
 
     if (!TEST_ptr(h->s = ossl_quic_tserver_new(&s_args, certfile, keyfile)))
         goto err;
@@ -849,7 +848,7 @@ static int run_script(const struct script_op *script)
 
         case OPK_C_WRITE_FAIL:
             {
-                uint64_t bytes_written = 0;
+                size_t bytes_written = 0;
 
                 if (!TEST_ptr(c_tgt))
                     goto out;
@@ -875,7 +874,7 @@ static int run_script(const struct script_op *script)
 
         case OPK_C_READ_FAIL:
             {
-                uint64_t bytes_read = 0;
+                size_t bytes_read = 0;
                 char buf[1];
 
                 if (!TEST_ptr(c_tgt))

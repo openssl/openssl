@@ -27,7 +27,7 @@
 # ifndef OPENSSL_NO_QUIC
 
 /*
- * QUIC stream SSL object (QCSO) type. This implements the API personality layer
+ * QUIC stream SSL object (QSSO) type. This implements the API personality layer
  * for QSSO objects, wrapping the QUIC-native QUIC_STREAM object and tracking
  * state required by the libssl API personality.
  */
