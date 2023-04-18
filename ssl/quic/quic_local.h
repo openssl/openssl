@@ -179,10 +179,15 @@ void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
       : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                 \
          ? (c SSL_CONNECTION *)((c QUIC_CONNECTION *)(ssl))->tls \
          : NULL))
+
+#  define IS_QUIC(ssl) ((ssl) != NULL                                   \
+                        && ((ssl)->type == SSL_TYPE_QUIC_CONNECTION     \
+                            || (ssl)->type == SSL_TYPE_QUIC_XSO))
 # else
 #  define QUIC_CONNECTION_FROM_SSL_int(ssl, c) NULL
 #  define QUIC_XSO_FROM_SSL_int(ssl, c) NULL
 #  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c) NULL
+#  define IS_QUIC(ssl) 0
 # endif
 
 # define QUIC_CONNECTION_FROM_SSL(ssl) \
