@@ -105,11 +105,11 @@ static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
  * QUIC Channel Initialization and Teardown
  * ========================================
  */
-#define DEFAULT_INIT_CONN_RXFC_WND      ( 2 * 1024 * 1024)
-#define DEFAULT_MAX_CONN_RXFC_WND       (10 * 1024 * 1024)
+#define DEFAULT_INIT_CONN_RXFC_WND      (2 * 1024 * 1024)
+#define DEFAULT_CONN_RXFC_MAX_WND_MUL   5
 
-#define DEFAULT_INIT_STREAM_RXFC_WND    ( 2 * 1024 * 1024)
-#define DEFAULT_MAX_STREAM_RXFC_WND     (10 * 1024 * 1024)
+#define DEFAULT_INIT_STREAM_RXFC_WND    (2 * 1024 * 1024)
+#define DEFAULT_STREAM_RXFC_MAX_WND_MUL 5
 
 static int ch_init(QUIC_CHANNEL *ch)
 {
@@ -155,7 +155,8 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     if (!ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
                              DEFAULT_INIT_CONN_RXFC_WND,
-                             DEFAULT_MAX_CONN_RXFC_WND,
+                             DEFAULT_CONN_RXFC_MAX_WND_MUL *
+                             DEFAULT_INIT_CONN_RXFC_WND,
                              get_time, ch))
         goto err;
 
@@ -923,7 +924,7 @@ static int ch_on_transport_params(const unsigned char *params,
                 goto malformed;
             }
 
-            ch->rx_init_max_stream_data_uni_remote = v;
+            ch->rx_init_max_stream_data_uni = v;
 
             /* Apply to all existing streams. */
             ossl_quic_stream_map_visit(&ch->qsm, txfc_bump_cwm_uni, &v);
@@ -2214,6 +2215,70 @@ SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch)
     return ch->tls;
 }
 
+static int ch_init_new_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs,
+                              int can_send, int can_recv)
+{
+    uint64_t rxfc_wnd;
+    int server_init = ossl_quic_stream_is_server_init(qs);
+    int local_init = (ch->is_server == server_init);
+    int is_uni = !ossl_quic_stream_is_bidi(qs);
+
+    if (can_send && (qs->sstream = ossl_quic_sstream_new(INIT_APP_BUF_LEN)) == NULL)
+        goto err;
+
+    if (can_recv && (qs->rstream = ossl_quic_rstream_new(NULL, NULL, 0)) == NULL)
+        goto err;
+
+    /* TXFC */
+    if (!ossl_quic_txfc_init(&qs->txfc, &ch->conn_txfc))
+        goto err;
+
+    if (ch->got_remote_transport_params) {
+        /*
+         * If we already got peer TPs we need to apply the initial CWM credit
+         * now. If we didn't already get peer TPs this will be done
+         * automatically for all extant streams when we do.
+         */
+        if (can_send) {
+            uint64_t cwm;
+
+            if (is_uni)
+                cwm = ch->rx_init_max_stream_data_uni;
+            else if (local_init)
+                cwm = ch->rx_init_max_stream_data_bidi_local;
+            else
+                cwm = ch->rx_init_max_stream_data_bidi_remote;
+
+            ossl_quic_txfc_bump_cwm(&qs->txfc, cwm);
+        }
+    }
+
+    /* RXFC */
+    if (!can_recv)
+        rxfc_wnd = 0;
+    else if (is_uni)
+        rxfc_wnd = ch->tx_init_max_stream_data_uni;
+    else if (local_init)
+        rxfc_wnd = ch->tx_init_max_stream_data_bidi_local;
+    else
+        rxfc_wnd = ch->tx_init_max_stream_data_bidi_remote;
+
+    if (!ossl_quic_rxfc_init(&qs->rxfc, &ch->conn_rxfc,
+                             rxfc_wnd,
+                             DEFAULT_STREAM_RXFC_MAX_WND_MUL * rxfc_wnd,
+                             get_time, ch))
+        goto err;
+
+    return 1;
+
+err:
+    ossl_quic_sstream_free(qs->sstream);
+    qs->sstream = NULL;
+    ossl_quic_rstream_free(qs->rstream);
+    qs->rstream = NULL;
+    return 0;
+}
+
 QUIC_STREAM *ossl_quic_channel_new_stream_local(QUIC_CHANNEL *ch, int is_uni)
 {
     QUIC_STREAM *qs;
@@ -2239,14 +2304,24 @@ QUIC_STREAM *ossl_quic_channel_new_stream_local(QUIC_CHANNEL *ch, int is_uni)
     if ((qs = ossl_quic_stream_map_alloc(&ch->qsm, stream_id, type)) == NULL)
         return NULL;
 
+    /* Locally-initiated stream, so we always want a send buffer. */
+    if (!ch_init_new_stream(ch, qs, /*can_send=*/1, /*can_recv=*/!is_uni))
+        goto err;
+
+
     ++*p_next_ordinal;
     return qs;
+
+err:
+    ossl_quic_stream_map_release(&ch->qsm, qs);
+    return NULL;
 }
 
 QUIC_STREAM *ossl_quic_channel_new_stream_remote(QUIC_CHANNEL *ch,
                                                  uint64_t stream_id)
 {
     uint64_t peer_role;
+    int is_uni;
     QUIC_STREAM *qs;
 
     peer_role = ch->is_server
@@ -2256,12 +2331,21 @@ QUIC_STREAM *ossl_quic_channel_new_stream_remote(QUIC_CHANNEL *ch,
     if ((stream_id & QUIC_STREAM_INITIATOR_MASK) != peer_role)
         return NULL;
 
+    is_uni = ((stream_id & QUIC_STREAM_DIR_MASK) == QUIC_STREAM_DIR_UNI);
+
     qs = ossl_quic_stream_map_alloc(&ch->qsm, stream_id,
                                     stream_id & (QUIC_STREAM_INITIATOR_MASK
                                                  | QUIC_STREAM_DIR_MASK));
     if (qs == NULL)
         return NULL;
 
+    if (!ch_init_new_stream(ch, qs, /*can_send=*/!is_uni, /*can_recv=*/1))
+        goto err;
+
     ossl_quic_stream_map_push_accept_queue(&ch->qsm, qs);
     return qs;
+
+err:
+    ossl_quic_stream_map_release(&ch->qsm, qs);
+    return NULL;
 }
