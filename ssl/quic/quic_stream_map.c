@@ -66,16 +66,25 @@ static void list_remove(QUIC_STREAM_LIST_NODE *l,
     n->next = n->prev = NULL;
 }
 
-static QUIC_STREAM *active_next(QUIC_STREAM_LIST_NODE *l, QUIC_STREAM *s)
+static QUIC_STREAM *list_next(QUIC_STREAM_LIST_NODE *l, QUIC_STREAM_LIST_NODE *n,
+                              size_t off)
 {
-    QUIC_STREAM_LIST_NODE *n = s->active_node.next;
+    n = n->next;
 
     if (n == l)
         n = n->next;
     if (n == l)
         return NULL;
-    return (QUIC_STREAM *)n;
+
+    return (QUIC_STREAM *)(((char *)n) - off);
 }
+
+#define active_next(l, s) list_next((l), &(s)->active_node, \
+                                    offsetof(QUIC_STREAM, active_node))
+#define accept_next(l, s) list_next((l), &(s)->accept_node, \
+                                    offsetof(QUIC_STREAM, accept_node))
+#define accept_head(l)    list_next((l), (l), \
+                                    offsetof(QUIC_STREAM, accept_node))
 
 static unsigned long hash_stream(const QUIC_STREAM *s)
 {
@@ -97,9 +106,11 @@ int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
 {
     qsm->map = lh_QUIC_STREAM_new(hash_stream, cmp_stream);
     qsm->active_list.prev = qsm->active_list.next = &qsm->active_list;
+    qsm->accept_list.prev = qsm->accept_list.next = &qsm->accept_list;
     qsm->rr_stepping = 1;
     qsm->rr_counter  = 0;
     qsm->rr_cur      = NULL;
+    qsm->num_accept  = 0;
 
     qsm->get_stream_limit_cb        = get_stream_limit_cb;
     qsm->get_stream_limit_cb_arg    = get_stream_limit_cb_arg;
@@ -269,6 +280,30 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
         stream_map_mark_active(qsm, s);
     else
         stream_map_mark_inactive(qsm, s);
+}
+
+QUIC_STREAM *ossl_quic_stream_map_peek_accept_queue(QUIC_STREAM_MAP *qsm)
+{
+    return accept_head(&qsm->accept_list);
+}
+
+void ossl_quic_stream_map_push_accept_queue(QUIC_STREAM_MAP *qsm,
+                                            QUIC_STREAM *s)
+{
+    list_insert_tail(&qsm->accept_list, &s->accept_node);
+    ++qsm->num_accept;
+}
+
+void ossl_quic_stream_map_remove_from_accept_queue(QUIC_STREAM_MAP *qsm,
+                                                   QUIC_STREAM *s)
+{
+    list_remove(&qsm->accept_list, &s->accept_node);
+    --qsm->num_accept;
+}
+
+size_t ossl_quic_stream_map_get_accept_queue_len(QUIC_STREAM_MAP *qsm)
+{
+    return qsm->num_accept;
 }
 
 /*

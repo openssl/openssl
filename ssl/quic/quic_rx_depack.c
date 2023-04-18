@@ -254,12 +254,80 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
 
     stream = ossl_quic_stream_map_get_by_id(&ch->qsm, frame_data.stream_id);
     if (stream == NULL) {
-        ossl_quic_channel_raise_protocol_error(ch,
-                                               QUIC_ERR_STREAM_STATE_ERROR,
-                                               frame_type,
-                                               "STREAM frame for nonexistent "
-                                               "stream");
-        return 0;
+        uint64_t peer_role, stream_ordinal, *p_next_ordinal;
+        int is_uni;
+
+        /*
+         * If we do not yet have a stream with the given ID, there are three
+         * possibilities:
+         *
+         *   (a) The stream ID is for a remotely-created stream and the peer
+         *       is creating a stream.
+         *
+         *   (b) The stream ID is for a locally-created stream which has
+         *       previously been deleted.
+         *
+         *   (c) The stream ID is for a locally-created stream which does
+         *       not exist yet. This is a protocol violation and we must
+         *       terminate the connection in this case.
+         *
+         * We distinguish between (b) and (c) using the stream ID allocator
+         * variable. Since stream ordinals are allocated monotonically, we
+         * simply determine if the stream ordinal is in the future.
+         */
+
+        peer_role = ch->is_server
+            ? QUIC_STREAM_INITIATOR_CLIENT
+            : QUIC_STREAM_INITIATOR_SERVER;
+
+        is_uni = ((frame_data.stream_id & QUIC_STREAM_DIR_MASK)
+                  == QUIC_STREAM_DIR_UNI);
+
+        stream_ordinal = frame_data.stream_id >> 2;
+
+        if ((frame_data.stream_id & QUIC_STREAM_INITIATOR_MASK) == peer_role) {
+            /* Peer-created stream which does not yet exist. Create it. */
+            stream = ossl_quic_channel_new_stream_remote(ch, frame_data.stream_id);
+            if (stream == NULL) {
+                ossl_quic_channel_raise_protocol_error(ch,
+                                                       QUIC_ERR_INTERNAL_ERROR,
+                                                       frame_type,
+                                                       "internal error (stream allocation)");
+                return 0;
+            }
+
+            /*
+             * Fallthrough to processing of stream data for newly created
+             * stream.
+             */
+        } else {
+            /* Locally-created stream which does not yet exist. */
+
+            p_next_ordinal = is_uni
+                ? &ch->next_local_stream_ordinal_uni
+                : &ch->next_local_stream_ordinal_bidi;
+
+            if (stream_ordinal >= *p_next_ordinal) {
+                /*
+                 * We never created this stream yet, this is a protocol
+                 * violation.
+                 */
+                ossl_quic_channel_raise_protocol_error(ch,
+                                                       QUIC_ERR_STREAM_STATE_ERROR,
+                                                       frame_type,
+                                                       "STREAM frame for nonexistent "
+                                                       "stream");
+                return 0;
+            }
+
+            /*
+             * Otherwise this is for an old locally-initiated stream which we
+             * have subsequently deleted. Ignore the data; it may simply be a
+             * retransmission. We already take care of notifying the peer of the
+             * termination of the stream during the stream deletion lifecycle.
+             */
+            return 1;
+        }
     }
 
     if (stream->rstream == NULL) {

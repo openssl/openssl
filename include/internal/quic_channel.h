@@ -273,9 +273,18 @@ CRYPTO_MUTEX *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch);
 /*
  * Creates a new locally-initiated stream in the stream mapper, choosing an
  * appropriate stream ID. If is_uni is 1, creates a unidirectional stream, else
- * creates a bidirectional stream.
+ * creates a bidirectional stream. Returns NULL on failure.
  */
-QUIC_STREAM *ossl_quic_channel_new_stream(QUIC_CHANNEL *ch, int is_uni);
+QUIC_STREAM *ossl_quic_channel_new_stream_local(QUIC_CHANNEL *ch, int is_uni);
+
+/*
+ * Creates a new remotely-initiated stream in the stream mapper. The stream ID
+ * is used to confirm the initiator and determine the stream type. The stream is
+ * automatically added to the QSM's accept queue. A pointer to the stream is
+ * also returned. Returns NULL on failure.
+ */
+QUIC_STREAM *ossl_quic_channel_new_stream_remote(QUIC_CHANNEL *ch,
+                                                 uint64_t stream_id);
 
 # endif
 
