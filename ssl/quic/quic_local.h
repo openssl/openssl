@@ -169,6 +169,9 @@ struct quic_conn_st {
     /* Do newly created streams start in blocking mode? Inherited by new XSOs. */
     unsigned int                    default_blocking        : 1;
 
+    /* Have we created a default XSO yet? */
+    unsigned int                    default_xso_created     : 1;
+
     /* SSL_set_mode. This is not used directly but inherited by new XSOs. */
     uint32_t                        default_ssl_mode;
 

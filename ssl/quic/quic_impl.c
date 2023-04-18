@@ -19,6 +19,8 @@
 
 static void aon_write_finish(QUIC_XSO *xso);
 static int create_channel(QUIC_CONNECTION *qc);
+static QUIC_XSO *create_xso_from_stream(QUIC_CONNECTION *qc, QUIC_STREAM *qs);
+static int qc_try_create_default_xso(QUIC_CONNECTION *qc, int remote_init);
 
 /*
  * QUIC Front-End I/O API: Common Utilities
@@ -160,11 +162,20 @@ static int expect_quic(const SSL *s, QCTX *ctx)
  * Like expect_quic(), but requires a QUIC_XSO be contextually available. In
  * other words, requires that the passed QSO be a QSSO or a QCSO with a default
  * stream.
+ *
+ * remote_init determines if we expect the default XSO to be remotely created or
+ * not. If it is -1, do not instantiate a default XSO if one does not yet exist.
  */
-static int ossl_unused expect_quic_with_stream(const SSL *s, QCTX *ctx)
+static int ossl_unused expect_quic_with_stream(const SSL *s, int remote_init,
+                                               QCTX *ctx)
 {
     if (!expect_quic(s, ctx))
         return 0;
+
+    if (ctx->xso == NULL && remote_init >= 0) {
+        qc_try_create_default_xso(ctx->qc, remote_init);
+        ctx->xso = ctx->qc->default_xso;
+    }
 
     if (ctx->xso == NULL)
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx->qc, ERR_R_INTERNAL_ERROR, NULL);
@@ -250,16 +261,23 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->as_server       = 0; /* TODO(QUIC): server support */
     qc->as_server_state = qc->as_server;
 
-    qc->default_ssl_mode    = qc->ssl.ctx->mode;
-    qc->default_blocking    = 1;
-    qc->last_error          = SSL_ERROR_NONE;
+    qc->default_ssl_mode        = qc->ssl.ctx->mode;
+    qc->default_blocking        = 1;
+    qc->last_error              = SSL_ERROR_NONE;
 
     if (!create_channel(qc))
         goto err;
 
-    if ((qc->default_xso = (QUIC_XSO *)ossl_quic_conn_stream_new(&qc->ssl, 0)) == NULL)
-        goto err;
-
+    /*
+     * We do not create the default XSO yet. The reason for this is that the
+     * stream ID of the default XSO will depend on whether the stream is client
+     * or server-initiated, which depends on who transmits first. Since we do
+     * not know whether the application will be using a client-transmits-first
+     * or server-transmits-first protocol, we defer default XSO creation until
+     * the client calls SSL_read() or SSL_write(). If it calls SSL_read() first,
+     * we take that as a cue that the client is expecting a server-initiated
+     * stream, and vice versa if SSL_write() is called first.
+     */
     return ssl_base;
 
 err:
@@ -317,8 +335,13 @@ void ossl_quic_free(SSL *s)
      * Free the default XSO, if any. The QUIC_STREAM is not deleted at this
      * stage, but is freed during the channel free when the whole QSM is freed.
      */
-    if (ctx.qc->default_xso != NULL)
-        SSL_free(&ctx.qc->default_xso->ssl);
+    if (ctx.qc->default_xso != NULL) {
+        QUIC_XSO *xso = ctx.qc->default_xso;
+
+        quic_unlock(ctx.qc);
+        SSL_free(&xso->ssl);
+        quic_lock(ctx.qc);
+    }
 
     /* Ensure we have no remaining XSOs. */
     assert(ctx.qc->num_xso == 0);
@@ -1089,10 +1112,92 @@ int ossl_quic_accept(SSL *s)
  *         SSL_stream_new       => ossl_quic_conn_stream_new
  *
  */
+
+/*
+ * Try to create the default XSO if it doesn't already exist. Returns 1 if the
+ * default XSO was created. Returns 0 if it was not (e.g. because it already
+ * exists). Note that this is NOT an error condition.
+ */
+QUIC_NEEDS_LOCK
+static int qc_try_create_default_xso(QUIC_CONNECTION *qc, int remote_init)
+{
+    QUIC_STREAM *qs;
+
+    if (qc->default_xso != NULL)
+        qc->default_xso_created = 1;
+
+    if (qc->default_xso_created)
+        /*
+         * We only do this once. If the user detaches a previously created
+         * default XSO we don't auto-create another one.
+         */
+        return 0;
+
+    if (!remote_init) {
+        /*
+         * We are writing to the stream first, so this is a locally-initiated
+         * stream.
+         */
+        qc->default_xso = (QUIC_XSO *)ossl_quic_conn_stream_new(&qc->ssl, 0);
+        if (qc->default_xso == NULL)
+            return 0;
+    } else {
+        /*
+         * Client is reading first. This means it is expecting to get data on a
+         * stream the peer writes to first, meaning this is a remotely-initiated
+         * stream. Ordinarily, we wait for the RXDP to handle a STREAM frame to
+         * create such a stream. But in this case, special case it and create
+         * the bookkeeping structures for the first peer-initiated bidirectional
+         * stream so the client can start to wait on it.
+         */
+       qs = ossl_quic_channel_new_stream_remote(qc->ch,
+                                                QUIC_STREAM_INITIATOR_SERVER
+                                                | QUIC_STREAM_DIR_BIDI);
+       if (qs == NULL)
+           return 0;
+
+        qc->default_xso = create_xso_from_stream(qc, qs);
+        if (qc->default_xso == NULL) {
+            ossl_quic_stream_map_release(ossl_quic_channel_get_qsm(qc->ch), qs);
+            return 0;
+        }
+    }
+
+    qc->default_xso_created = 1;
+    return 1;
+}
+
+QUIC_NEEDS_LOCK
+static QUIC_XSO *create_xso_from_stream(QUIC_CONNECTION *qc, QUIC_STREAM *qs)
+{
+    QUIC_XSO *xso = NULL;
+
+    if ((xso = OPENSSL_zalloc(sizeof(*xso))) == NULL)
+        goto err;
+
+    if (!ossl_ssl_init(&xso->ssl, qc->ssl.ctx, qc->ssl.method, SSL_TYPE_QUIC_XSO))
+        goto err;
+
+    xso->conn       = qc;
+    xso->blocking   = qc->default_blocking;
+    xso->ssl_mode   = qc->default_ssl_mode;
+
+    xso->stream     = qs;
+
+    ++qc->num_xso;
+    return xso;
+
+err:
+    OPENSSL_free(xso);
+    return NULL;
+}
+
+QUIC_TAKES_LOCK
 SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags)
 {
     QCTX ctx;
     QUIC_XSO *xso = NULL;
+    QUIC_STREAM *qs = NULL;
     int is_uni = ((flags & SSL_STREAM_FLAG_UNI) != 0);
 
     if (!expect_quic_conn_only(s, &ctx))
@@ -1105,27 +1210,20 @@ SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags)
         goto err;
     }
 
-    if ((xso = OPENSSL_zalloc(sizeof(*xso))) == NULL)
+    qs = ossl_quic_channel_new_stream_local(ctx.qc->ch, is_uni);
+    if (qs == NULL)
         goto err;
 
-    if (!ossl_ssl_init(&xso->ssl, s->ctx, s->method, SSL_TYPE_QUIC_XSO))
+    xso = create_xso_from_stream(ctx.qc, qs);
+    if (xso == NULL)
         goto err;
-
-    xso->conn       = ctx.qc;
-    xso->blocking   = ctx.qc->default_blocking;
-    xso->ssl_mode   = ctx.qc->default_ssl_mode;
-
-    xso->stream     = ossl_quic_channel_new_stream_local(ctx.qc->ch, is_uni);
-    if (xso->stream == NULL)
-        goto err;
-
-    ++ctx.qc->num_xso;
 
     quic_unlock(ctx.qc);
     return &xso->ssl;
 
 err:
     OPENSSL_free(xso);
+    ossl_quic_stream_map_release(ossl_quic_channel_get_qsm(ctx.qc->ch), qs);
     quic_unlock(ctx.qc);
     return NULL;
 }
@@ -1410,8 +1508,9 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
 
     *written = 0;
 
-    if (!expect_quic_with_stream(s, &ctx))
+    if (!expect_quic_with_stream(s, /*remote_init=*/0, &ctx)) {
         return 0;
+    }
 
     quic_lock(ctx.qc);
 
@@ -1548,7 +1647,7 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
 
     *bytes_read = 0;
 
-    if (!expect_quic_with_stream(s, &ctx))
+    if (!expect_quic_with_stream(s, /*remote_init=*/0, &ctx))
         return 0;
 
     quic_lock(ctx.qc);
@@ -1635,7 +1734,7 @@ static size_t ossl_quic_pending_int(const SSL *s)
     size_t avail = 0;
     int fin = 0;
 
-    if (!expect_quic_with_stream(s, &ctx))
+    if (!expect_quic_with_stream(s, /*remote_init=*/-1, &ctx))
         return 0;
 
     quic_lock(ctx.qc);
@@ -1672,7 +1771,7 @@ int ossl_quic_conn_stream_conclude(SSL *s)
     QCTX ctx;
     QUIC_STREAM *qs;
 
-    if (!expect_quic_with_stream(s, &ctx))
+    if (!expect_quic_with_stream(s, /*remote_init=*/0, &ctx))
         return 0;
 
     quic_lock(ctx.qc);
