@@ -252,11 +252,42 @@ int ossl_quic_tserver_read(QUIC_TSERVER *srv,
 int ossl_quic_tserver_has_read_ended(QUIC_TSERVER *srv, uint64_t stream_id)
 {
     QUIC_STREAM *qs;
+    unsigned char buf[1];
+    size_t bytes_read = 0;
+    int is_fin = 0;
 
     qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(srv->ch),
                                         stream_id);
 
-    return qs != NULL && qs->recv_fin_retired;
+    if (qs == NULL || qs->rstream == NULL)
+        return 0;
+
+    if (qs->recv_fin_retired)
+        return 1;
+
+    /*
+     * If we do not have recv_fin_retired, it is possible we should still return
+     * 1 if there is a lone FIN (but no more data) remaining to be retired from
+     * the RSTREAM, for example because ossl_quic_tserver_read() has not been
+     * called since the FIN was received.
+     */
+    if (!ossl_quic_rstream_peek(qs->rstream, buf, sizeof(buf),
+                                &bytes_read, &is_fin))
+        return 0;
+
+    if (is_fin && bytes_read == 0) {
+        /* If we have a FIN awaiting retirement and no data before it... */
+        /* Let RSTREAM know we've consumed this FIN. */
+        ossl_quic_rstream_read(qs->rstream, buf, sizeof(buf),
+                               &bytes_read, &is_fin); /* best effort */
+        assert(is_fin && bytes_read == 0);
+
+        qs->recv_fin_retired = 1;
+        ossl_quic_stream_map_update_state(ossl_quic_channel_get_qsm(srv->ch), qs);
+        return 1;
+    }
+
+    return 0;
 }
 
 int ossl_quic_tserver_write(QUIC_TSERVER *srv,

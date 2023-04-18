@@ -98,7 +98,7 @@ int ossl_quic_tserver_read(QUIC_TSERVER *srv,
 int ossl_quic_tserver_has_read_ended(QUIC_TSERVER *srv, uint64_t stream_id);
 
 /*
- * Attempts to write to stream 0. Writes the number of bytes consumed to
+ * Attempts to write to the given stream. Writes the number of bytes consumed to
  * *bytes_written and returns 1 on success. If there is no space currently
  * available to write any bytes, 0 is written to *consumed and 1 is returned
  * (this is considered a success case).
