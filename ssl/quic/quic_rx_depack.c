@@ -172,7 +172,14 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
     }
 
     stream->peer_stop_sending = 1;
-    ossl_quic_stream_map_update_state(&ch->qsm, stream);
+
+    /*
+     * RFC 9000 s. 3.5: Receiving a STOP_SENDING frame means we must respond in
+     * turn with a RESET_STREAM frame for the same part of the stream. The other
+     * part is unaffected.
+     */
+    ossl_quic_stream_map_reset_stream_send_part(&ch->qsm, stream,
+                                                frame_data.app_error_code);
     return 1;
 }
 

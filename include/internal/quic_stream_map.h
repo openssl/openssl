@@ -238,6 +238,13 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s);
 void ossl_quic_stream_map_set_rr_stepping(QUIC_STREAM_MAP *qsm, size_t stepping);
 
 /*
+ * Resets the sending part of a stream.
+ */
+void ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
+                                                 QUIC_STREAM *qs,
+                                                 uint64_t aec);
+
+/*
  * Adds a stream to the accept queue.
  */
 void ossl_quic_stream_map_push_accept_queue(QUIC_STREAM_MAP *qsm,
