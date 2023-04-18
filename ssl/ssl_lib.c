@@ -7328,6 +7328,18 @@ int SSL_is_connection(SSL *s)
     return SSL_get0_connection(s) == s;
 }
 
+int SSL_get_stream_type(SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return SSL_STREAM_TYPE_BIDI;
+
+    return ossl_quic_get_stream_type(s);
+#else
+    return SSL_STREAM_TYPE_BIDI;
+#endif
+}
+
 int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk)
 {
     unsigned char *data = NULL;

@@ -1836,6 +1836,38 @@ SSL *ossl_quic_get0_connection(SSL *s)
 }
 
 /*
+ * SSL_get_stream_type
+ * -------------------
+ */
+int ossl_quic_get_stream_type(SSL *s)
+{
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
+        return SSL_STREAM_TYPE_NONE;
+
+    if (ctx.xso == NULL) {
+        /*
+         * If we are deferring XSO creation, assume single stream mode and
+         * default to BIDI, as the deferred XSO which will be created will be
+         * bidirectional.
+         */
+        if (!ctx.qc->default_xso_created)
+            return SSL_STREAM_TYPE_BIDI;
+        else
+            return SSL_STREAM_TYPE_NONE;
+    }
+
+    if (ossl_quic_stream_is_bidi(ctx.xso->stream))
+        return SSL_STREAM_TYPE_BIDI;
+
+    if (ossl_quic_stream_is_server_init(ctx.xso->stream) != ctx.qc->as_server)
+        return SSL_STREAM_TYPE_READ;
+    else
+        return SSL_STREAM_TYPE_WRITE;
+}
+
+/*
  * QUIC Front-End I/O API: SSL_CTX Management
  * ==========================================
  */
