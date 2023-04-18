@@ -845,7 +845,7 @@ static int ch_on_transport_params(const unsigned char *params,
              * This is correct; the BIDI_LOCAL TP governs streams created by
              * the endpoint which sends the TP, i.e., our peer.
              */
-            ch->init_max_stream_data_bidi_remote = v;
+            ch->rx_init_max_stream_data_bidi_remote = v;
             got_initial_max_stream_data_bidi_local = 1;
             break;
 
@@ -865,7 +865,7 @@ static int ch_on_transport_params(const unsigned char *params,
              * This is correct; the BIDI_REMOTE TP governs streams created
              * by the endpoint which receives the TP, i.e., us.
              */
-            ch->init_max_stream_data_bidi_local = v;
+            ch->rx_init_max_stream_data_bidi_local = v;
 
             /* Apply to stream 0. */
             ossl_quic_txfc_bump_cwm(&ch->stream0->txfc, v);
@@ -884,7 +884,7 @@ static int ch_on_transport_params(const unsigned char *params,
                 goto malformed;
             }
 
-            ch->init_max_stream_data_uni_remote = v;
+            ch->rx_init_max_stream_data_uni_remote = v;
             got_initial_max_stream_data_uni = 1;
             break;
 
