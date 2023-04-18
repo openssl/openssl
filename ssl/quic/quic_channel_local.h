@@ -123,6 +123,11 @@ struct quic_channel_st {
     /* Server only: The DCID we currently expect the peer to use to talk to us. */
     QUIC_CONN_ID                    cur_local_dcid;
 
+    /* Transport parameter values we send to our peer. */
+    uint64_t                        tx_init_max_stream_data_bidi_local;
+    uint64_t                        tx_init_max_stream_data_bidi_remote;
+    uint64_t                        tx_init_max_stream_data_uni;
+
     /* Transport parameter values received from server. */
     uint64_t                        rx_init_max_stream_data_bidi_local;
     uint64_t                        rx_init_max_stream_data_bidi_remote;
