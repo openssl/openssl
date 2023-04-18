@@ -2293,6 +2293,10 @@ __owur SSL *SSL_new_stream(SSL *s, uint64_t flags);
 #define SSL_INCOMING_STREAM_REJECT_POLICY_REJECT    2
 __owur int SSL_set_incoming_stream_reject_policy(SSL *s, int policy, uint64_t aec);
 
+#define SSL_ACCEPT_STREAM_NO_BLOCK      (1U << 0)
+__owur SSL *SSL_accept_stream(SSL *s, uint64_t flags);
+__owur size_t SSL_get_accept_stream_queue_len(SSL *s);
+
 # ifndef OPENSSL_NO_QUIC
 __owur int SSL_inject_net_dgram(SSL *s, const unsigned char *buf,
                                 size_t buf_len,

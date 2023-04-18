@@ -7400,6 +7400,30 @@ int SSL_set_incoming_stream_reject_policy(SSL *s, int policy, uint64_t aec)
 #endif
 }
 
+SSL *SSL_accept_stream(SSL *s, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return NULL;
+
+    return ossl_quic_accept_stream(s, flags);
+#else
+    return NULL;
+#endif
+}
+
+size_t SSL_get_accept_stream_queue_len(SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return 0;
+
+    return ossl_quic_get_accept_stream_queue_len(s);
+#else
+    return 0;
+#endif
+}
+
 int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk)
 {
     unsigned char *data = NULL;
