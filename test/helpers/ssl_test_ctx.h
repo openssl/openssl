@@ -231,6 +231,9 @@ typedef struct {
     char *expected_session_ticket_app_data;
 
     OSSL_LIB_CTX *libctx;
+
+    /* FIPS version string to check for compatibility */
+    char *fips_version;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);

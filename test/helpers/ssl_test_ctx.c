@@ -652,6 +652,9 @@ IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CLIENT_CONF, client, enable_pha)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_SERVER_CONF, server, force_pha)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CLIENT_CONF, client, no_extms_on_reneg)
 
+/* FIPS provider version limiting */
+IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, fips_version)
+
 /* Known test options and their corresponding parse methods. */
 
 /* Top-level options. */
@@ -692,6 +695,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "EnableServerSCTPLabelBug", &parse_test_enable_server_sctp_label_bug },
     { "ExpectedCipher", &parse_test_expected_cipher },
     { "ExpectedSessionTicketAppData", &parse_test_expected_session_ticket_app_data },
+    { "FIPSversion", &parse_test_fips_version },
 };
 
 /* Nested client options. */
@@ -781,6 +785,7 @@ void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx)
     sk_X509_NAME_pop_free(ctx->expected_server_ca_names, X509_NAME_free);
     sk_X509_NAME_pop_free(ctx->expected_client_ca_names, X509_NAME_free);
     OPENSSL_free(ctx->expected_cipher);
+    OPENSSL_free(ctx->fips_version);
     OPENSSL_free(ctx);
 }
 

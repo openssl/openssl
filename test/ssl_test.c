@@ -409,6 +409,13 @@ static int test_handshake(int idx)
     if (!TEST_ptr(test_ctx))
         goto err;
 
+    /* Verify that the FIPS provider supports this test */
+    if (test_ctx->fips_version != NULL
+                && !fips_provider_version_match(libctx, test_ctx->fips_version)) {
+            ret = TEST_skip("FIPS provider unable to run this test");
+            goto err;
+    }
+
 #ifndef OPENSSL_NO_DTLS
     if (test_ctx->method == SSL_TEST_METHOD_DTLS) {
         server_ctx = SSL_CTX_new_ex(libctx, NULL, DTLS_server_method());
