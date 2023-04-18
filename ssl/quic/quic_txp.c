@@ -310,6 +310,7 @@ static QUIC_SSTREAM *get_sstream_by_id(uint64_t stream_id, uint32_t pn_space,
                                        void *arg);
 static void on_regen_notify(uint64_t frame_type, uint64_t stream_id,
                             QUIC_TXPIM_PKT *pkt, void *arg);
+static void on_sstream_updated(uint64_t stream_id, void *arg);
 static int sstream_is_pending(QUIC_SSTREAM *sstream);
 static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                           uint32_t archetype,
@@ -365,7 +366,8 @@ OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETIS
     if (!ossl_quic_fifd_init(&txp->fifd,
                              txp->args.cfq, txp->args.ackm, txp->args.txpim,
                              get_sstream_by_id, txp,
-                             on_regen_notify, txp)) {
+                             on_regen_notify, txp,
+                             on_sstream_updated, txp)) {
         OPENSSL_free(txp);
         return NULL;
     }
@@ -1118,6 +1120,18 @@ static void on_regen_notify(uint64_t frame_type, uint64_t stream_id,
             assert(0);
             break;
     }
+}
+
+static void on_sstream_updated(uint64_t stream_id, void *arg)
+{
+    OSSL_QUIC_TX_PACKETISER *txp = arg;
+    QUIC_STREAM *s;
+
+    s = ossl_quic_stream_map_get_by_id(txp->args.qsm, stream_id);
+    if (s == NULL)
+        return;
+
+    ossl_quic_stream_map_update_state(txp->args.qsm, s);
 }
 
 static int txp_generate_pre_token(OSSL_QUIC_TX_PACKETISER *txp,
