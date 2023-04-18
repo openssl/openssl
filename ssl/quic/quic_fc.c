@@ -146,6 +146,21 @@ int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
     rxfc->now               = now;
     rxfc->now_arg           = now_arg;
     rxfc->is_fin            = 0;
+    rxfc->stream_count_mode = 0;
+    return 1;
+}
+
+int ossl_quic_rxfc_init_for_stream_count(QUIC_RXFC *rxfc,
+                                         uint64_t initial_window_size,
+                                         OSSL_TIME (*now)(void *arg),
+                                         void *now_arg)
+{
+    if (!ossl_quic_rxfc_init(rxfc, NULL,
+                             initial_window_size, initial_window_size,
+                             now, now_arg))
+        return 0;
+
+    rxfc->stream_count_mode = 1;
     return 1;
 }
 
@@ -185,7 +200,7 @@ int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc, uint64_t end, int is_fin)
 {
     uint64_t delta;
 
-    if (rxfc->parent == NULL)
+    if (!rxfc->stream_count_mode && rxfc->parent == NULL)
         return 0;
 
     if (rxfc->is_fin && ((is_fin && rxfc->hwm != end) || end > rxfc->hwm)) {
@@ -201,8 +216,9 @@ int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc, uint64_t end, int is_fin)
         delta = end - rxfc->hwm;
         rxfc->hwm = end;
 
-        on_rx_controlled_bytes(rxfc, delta);           /* result ignored */
-        on_rx_controlled_bytes(rxfc->parent, delta);   /* result ignored */
+        on_rx_controlled_bytes(rxfc, delta);             /* result ignored */
+        if (rxfc->parent != NULL)
+            on_rx_controlled_bytes(rxfc->parent, delta); /* result ignored */
     } else if (end < rxfc->hwm && is_fin) {
         rxfc->error_code = QUIC_ERR_FINAL_SIZE_ERROR;
         return 1; /* not a caller error */
