@@ -2231,6 +2231,7 @@ SSL *ossl_quic_accept_stream(SSL *s, uint64_t flags)
     QUIC_STREAM_MAP *qsm;
     QUIC_STREAM *qs;
     QUIC_XSO *xso;
+    OSSL_RTT_INFO rtt_info;
 
     if (!expect_quic_conn_only(s, &ctx))
         return NULL;
@@ -2270,7 +2271,9 @@ SSL *ossl_quic_accept_stream(SSL *s, uint64_t flags)
     if (xso == NULL)
         goto out;
 
-    ossl_quic_stream_map_remove_from_accept_queue(qsm, qs);
+    ossl_statm_get_rtt_info(ossl_quic_channel_get_statm(ctx.qc->ch), &rtt_info);
+    ossl_quic_stream_map_remove_from_accept_queue(qsm, qs,
+                                                  rtt_info.smoothed_rtt);
     new_s = &xso->ssl;
 
     /* Calling this function inhibits default XSO autocreation. */

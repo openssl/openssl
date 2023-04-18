@@ -138,6 +138,8 @@ typedef struct quic_stream_map_st {
     QUIC_STREAM             *rr_cur;
     uint64_t                (*get_stream_limit_cb)(int uni, void *arg);
     void                    *get_stream_limit_cb_arg;
+    QUIC_RXFC               *max_streams_bidi_rxfc;
+    QUIC_RXFC               *max_streams_uni_rxfc;
 } QUIC_STREAM_MAP;
 
 /*
@@ -155,7 +157,9 @@ typedef struct quic_stream_map_st {
  */
 int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
                               uint64_t (*get_stream_limit_cb)(int uni, void *arg),
-                              void *get_stream_limit_cb_arg);
+                              void *get_stream_limit_cb_arg,
+                              QUIC_RXFC *max_streams_bidi_rxfc,
+                              QUIC_RXFC *max_streams_uni_rxfc);
 
 /*
  * Any streams still in the map will be released as though
@@ -246,12 +250,14 @@ void ossl_quic_stream_map_push_accept_queue(QUIC_STREAM_MAP *qsm,
 QUIC_STREAM *ossl_quic_stream_map_peek_accept_queue(QUIC_STREAM_MAP *qsm);
 
 /*
- * Removes a stream from the accept queue.
+ * Removes a stream from the accept queue. rtt is the estimated connection RTT.
+ * The stream is retired for the purposes of MAX_STREAMS RXFC.
  *
  * Precondition: s is in the accept queue.
  */
 void ossl_quic_stream_map_remove_from_accept_queue(QUIC_STREAM_MAP *qsm,
-                                                   QUIC_STREAM *s);
+                                                   QUIC_STREAM *s,
+                                                   OSSL_TIME rtt);
 
 /* Returns the length of the accept queue. */
 size_t ossl_quic_stream_map_get_accept_queue_len(QUIC_STREAM_MAP *qsm);
