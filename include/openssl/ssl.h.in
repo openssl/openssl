@@ -2318,6 +2318,38 @@ __owur int SSL_shutdown_ex(SSL *ssl, uint64_t flags,
 
 __owur int SSL_stream_conclude(SSL *ssl, uint64_t flags);
 
+typedef struct ssl_stream_reset_args_st {
+    uint64_t quic_error_code;
+} SSL_STREAM_RESET_ARGS;
+
+__owur int SSL_stream_reset(SSL *ssl,
+                            const SSL_STREAM_RESET_ARGS *args,
+                            size_t args_len);
+
+#define SSL_STREAM_STATE_NONE           0
+#define SSL_STREAM_STATE_OK             1
+#define SSL_STREAM_STATE_WRONG_DIR      2
+#define SSL_STREAM_STATE_FINISHED       3
+#define SSL_STREAM_STATE_RESET_LOCAL    4
+#define SSL_STREAM_STATE_RESET_REMOTE   5
+#define SSL_STREAM_STATE_CONN_CLOSED    6
+__owur int SSL_get_stream_read_state(SSL *ssl);
+__owur int SSL_get_stream_write_state(SSL *ssl);
+
+__owur int SSL_get_stream_read_error_code(SSL *ssl, uint64_t *app_error_code);
+__owur int SSL_get_stream_write_error_code(SSL *ssl, uint64_t *app_error_code);
+
+typedef struct ssl_conn_close_info_st {
+    uint64_t error_code;
+    char     *reason;
+    size_t    reason_len;
+    char      is_local, is_transport;
+} SSL_CONN_CLOSE_INFO;
+
+__owur int SSL_get_conn_close_info(SSL *ssl,
+                                   SSL_CONN_CLOSE_INFO *info,
+                                   size_t info_len);
+
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_cache_hit(s) SSL_session_reused(s)
 # endif

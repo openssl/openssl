@@ -7424,6 +7424,81 @@ size_t SSL_get_accept_stream_queue_len(SSL *s)
 #endif
 }
 
+int SSL_stream_reset(SSL *s,
+                     const SSL_STREAM_RESET_ARGS *args,
+                     size_t args_len)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return 0;
+
+    return ossl_quic_stream_reset(s, args, args_len);
+#else
+    return 0;
+#endif
+}
+
+int SSL_get_stream_read_state(SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return SSL_STREAM_STATE_NONE;
+
+    return ossl_quic_get_stream_read_state(s);
+#else
+    return SSL_STREAM_STATE_NONE;
+#endif
+}
+
+int SSL_get_stream_write_state(SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return SSL_STREAM_STATE_NONE;
+
+    return ossl_quic_get_stream_write_state(s);
+#else
+    return SSL_STREAM_STATE_NONE;
+#endif
+}
+
+int SSL_get_stream_read_error_code(SSL *s, uint64_t *app_error_code)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return -1;
+
+    return ossl_quic_get_stream_read_error_code(s, app_error_code);
+#else
+    return -1;
+#endif
+}
+
+int SSL_get_stream_write_error_code(SSL *s, uint64_t *app_error_code)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return -1;
+
+    return ossl_quic_get_stream_write_error_code(s, app_error_code);
+#else
+    return -1;
+#endif
+}
+
+int SSL_get_conn_close_info(SSL *s, SSL_CONN_CLOSE_INFO *info,
+                            size_t info_len)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return -1;
+
+    return ossl_quic_get_conn_close_info(s, info, info_len);
+#else
+    return -1;
+#endif
+}
+
 int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk)
 {
     unsigned char *data = NULL;
