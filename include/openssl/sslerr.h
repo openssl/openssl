@@ -202,6 +202,7 @@
 # define SSL_R_NO_SHARED_GROUPS                           410
 # define SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS             376
 # define SSL_R_NO_SRTP_PROFILES                           359
+# define SSL_R_NO_STREAM                                  355
 # define SSL_R_NO_SUITABLE_DIGEST_ALGORITHM               297
 # define SSL_R_NO_SUITABLE_GROUPS                         295
 # define SSL_R_NO_SUITABLE_KEY_SHARE                      101
@@ -353,5 +354,6 @@
 # define SSL_R_WRONG_VERSION_NUMBER                       267
 # define SSL_R_X509_LIB                                   268
 # define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS           269
+# define SSL_R_CONN_USE_ONLY                              411
 
 #endif

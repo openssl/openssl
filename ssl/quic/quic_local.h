@@ -172,6 +172,9 @@ struct quic_conn_st {
     /* Have we created a default XSO yet? */
     unsigned int                    default_xso_created     : 1;
 
+    /* Default stream type. Defaults to SSL_DEFAULT_STREAM_MODE_AUTO_BIDI. */
+    uint32_t                        default_stream_mode;
+
     /* SSL_set_mode. This is not used directly but inherited by new XSOs. */
     uint32_t                        default_ssl_mode;
 
