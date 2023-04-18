@@ -264,38 +264,33 @@ err:
 QUIC_TAKES_LOCK
 void ossl_quic_free(SSL *s)
 {
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+    QCTX ctx;
 
-    /* We should never be called on anything but a QUIC_CONNECTION. */
-    if (!expect_quic_conn(qc))
+    /* We should never be called on anything but a QSO. */
+    if (!expect_quic(s, &ctx))
         return;
 
-    quic_lock(qc);
+    quic_lock(ctx.qc);
 
-    if (qc->is_thread_assisted && qc->started) {
-        ossl_quic_thread_assist_wait_stopped(&qc->thread_assist);
-        ossl_quic_thread_assist_cleanup(&qc->thread_assist);
+    if (ctx.qc->is_thread_assisted && ctx.qc->started) {
+        ossl_quic_thread_assist_wait_stopped(&ctx.qc->thread_assist);
+        ossl_quic_thread_assist_cleanup(&ctx.qc->thread_assist);
     }
 
-    ossl_quic_channel_free(qc->ch);
+    ossl_quic_channel_free(ctx.qc->ch);
 
-    BIO_free(qc->net_rbio);
-    BIO_free(qc->net_wbio);
+    BIO_free(ctx.qc->net_rbio);
+    BIO_free(ctx.qc->net_wbio);
 
     /* Note: SSL_free calls OPENSSL_free(qc) for us */
 
-    SSL_free(qc->tls);
-    ossl_crypto_mutex_free(&qc->mutex); /* freed while still locked */
+    SSL_free(ctx.qc->tls);
+    ossl_crypto_mutex_free(&ctx.qc->mutex); /* freed while still locked */
 }
 
 /* SSL method init */
 int ossl_quic_init(SSL *s)
 {
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
-
-    if (!expect_quic_conn(qc))
-        return 0;
-
     /* Same op as SSL_clear, forward the call. */
     return ossl_quic_clear(s);
 }
@@ -309,9 +304,9 @@ void ossl_quic_deinit(SSL *s)
 /* SSL_reset */
 int ossl_quic_reset(SSL *s)
 {
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+    QCTX ctx;
 
-    if (!expect_quic_conn(qc))
+    if (!expect_quic(s, &ctx))
         return 0;
 
     /* TODO(QUIC); Currently a no-op. */
@@ -321,9 +316,9 @@ int ossl_quic_reset(SSL *s)
 /* SSL_clear */
 int ossl_quic_clear(SSL *s)
 {
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+    QCTX ctx;
 
-    if (!expect_quic_conn(qc))
+    if (!expect_quic(s, &ctx))
         return 0;
 
     /* TODO(QUIC): Currently a no-op. */
@@ -334,18 +329,24 @@ void ossl_quic_conn_set_override_now_cb(SSL *s,
                                         OSSL_TIME (*now_cb)(void *arg),
                                         void *now_cb_arg)
 {
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+    QCTX ctx;
 
-    qc->override_now_cb     = now_cb;
-    qc->override_now_cb_arg = now_cb_arg;
+    if (!expect_quic(s, &ctx))
+        return;
+
+    ctx.qc->override_now_cb     = now_cb;
+    ctx.qc->override_now_cb_arg = now_cb_arg;
 }
 
 void ossl_quic_conn_force_assist_thread_wake(SSL *s)
 {
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+    QCTX ctx;
 
-    if (qc->is_thread_assisted && qc->started)
-        ossl_quic_thread_assist_notify_deadline_changed(&qc->thread_assist);
+    if (!expect_quic(s, &ctx))
+        return;
+
+    if (ctx.qc->is_thread_assisted && ctx.qc->started)
+        ossl_quic_thread_assist_notify_deadline_changed(&ctx.qc->thread_assist);
 }
 
 /*
@@ -417,16 +418,22 @@ static int csm_analyse_init_peer_addr(BIO *net_wbio, BIO_ADDR *peer)
     return 1;
 }
 
-void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
+void ossl_quic_conn_set0_net_rbio(SSL *s, BIO *net_rbio)
 {
-    if (qc->net_rbio == net_rbio)
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
         return;
 
-    if (qc->ch != NULL && !ossl_quic_channel_set_net_rbio(qc->ch, net_rbio))
+    if (ctx.qc->net_rbio == net_rbio)
         return;
 
-    BIO_free(qc->net_rbio);
-    qc->net_rbio = net_rbio;
+    if (ctx.qc->ch != NULL
+        && !ossl_quic_channel_set_net_rbio(ctx.qc->ch, net_rbio))
+        return;
+
+    BIO_free(ctx.qc->net_rbio);
+    ctx.qc->net_rbio = net_rbio;
 
     /*
      * If what we have is not pollable (e.g. a BIO_dgram_pair) disable blocking
@@ -437,91 +444,123 @@ void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
 
         if (!BIO_get_rpoll_descriptor(net_rbio, &d)
             || d.type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD) {
-            qc->blocking = 0;
-            qc->can_poll_net_rbio = 0;
+            ctx.qc->blocking = 0;
+            ctx.qc->can_poll_net_rbio = 0;
         } else {
-            qc->can_poll_net_rbio = 1;
+            ctx.qc->can_poll_net_rbio = 1;
         }
     }
 }
 
-void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio)
+void ossl_quic_conn_set0_net_wbio(SSL *s, BIO *net_wbio)
 {
-    if (qc->net_wbio == net_wbio)
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
         return;
 
-    if (qc->ch != NULL && !ossl_quic_channel_set_net_wbio(qc->ch, net_wbio))
+    if (ctx.qc->net_wbio == net_wbio)
         return;
 
-    BIO_free(qc->net_wbio);
-    qc->net_wbio = net_wbio;
+    if (ctx.qc->ch != NULL
+        && !ossl_quic_channel_set_net_wbio(ctx.qc->ch, net_wbio))
+        return;
+
+    BIO_free(ctx.qc->net_wbio);
+    ctx.qc->net_wbio = net_wbio;
 
     if (net_wbio != NULL) {
         BIO_POLL_DESCRIPTOR d = {0};
 
         if (!BIO_get_wpoll_descriptor(net_wbio, &d)
             || d.type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD) {
-            qc->blocking = 0;
-            qc->can_poll_net_wbio = 0;
+            ctx.qc->blocking = 0;
+            ctx.qc->can_poll_net_wbio = 0;
         } else {
-            qc->can_poll_net_wbio = 1;
+            ctx.qc->can_poll_net_wbio = 1;
         }
 
         /*
          * If we do not have a peer address yet, and we have not started trying
          * to connect yet, try to autodetect one.
          */
-        if (BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC
-            && !qc->started) {
-            if (!csm_analyse_init_peer_addr(net_wbio, &qc->init_peer_addr))
+        if (BIO_ADDR_family(&ctx.qc->init_peer_addr) == AF_UNSPEC
+            && !ctx.qc->started) {
+            if (!csm_analyse_init_peer_addr(net_wbio, &ctx.qc->init_peer_addr))
                 /* best effort */
-                BIO_ADDR_clear(&qc->init_peer_addr);
+                BIO_ADDR_clear(&ctx.qc->init_peer_addr);
 
-            if (qc->ch != NULL)
-                ossl_quic_channel_set_peer_addr(qc->ch, &qc->init_peer_addr);
+            if (ctx.qc->ch != NULL)
+                ossl_quic_channel_set_peer_addr(ctx.qc->ch,
+                                                &ctx.qc->init_peer_addr);
         }
     }
 }
 
-BIO *ossl_quic_conn_get_net_rbio(const QUIC_CONNECTION *qc)
+BIO *ossl_quic_conn_get_net_rbio(const SSL *s)
 {
-    return qc->net_rbio;
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
+        return NULL;
+
+    return ctx.qc->net_rbio;
 }
 
-BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc)
+BIO *ossl_quic_conn_get_net_wbio(const SSL *s)
 {
-    return qc->net_wbio;
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
+        return NULL;
+
+    return ctx.qc->net_wbio;
 }
 
-int ossl_quic_conn_get_blocking_mode(const QUIC_CONNECTION *qc)
+int ossl_quic_conn_get_blocking_mode(const SSL *s)
 {
-    return qc->blocking;
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
+        return 0;
+
+    return ctx.qc->blocking;
 }
 
-int ossl_quic_conn_set_blocking_mode(QUIC_CONNECTION *qc, int blocking)
+int ossl_quic_conn_set_blocking_mode(SSL *s, int blocking)
 {
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
+        return 0;
+
     /* Cannot enable blocking mode if we do not have pollable FDs. */
     if (blocking != 0 &&
-        (!qc->can_poll_net_rbio || !qc->can_poll_net_wbio))
-        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_UNSUPPORTED, NULL);
+        (!ctx.qc->can_poll_net_rbio || !ctx.qc->can_poll_net_wbio))
+        return QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, ERR_R_UNSUPPORTED, NULL);
 
-    qc->blocking = (blocking != 0);
+    ctx.qc->blocking = (blocking != 0);
     return 1;
 }
 
-int ossl_quic_conn_set_initial_peer_addr(QUIC_CONNECTION *qc,
+int ossl_quic_conn_set_initial_peer_addr(SSL *s,
                                          const BIO_ADDR *peer_addr)
 {
-    if (qc->started)
-        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
+        return 0;
+
+    if (ctx.qc->started)
+        return QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
                                            NULL);
 
     if (peer_addr == NULL) {
-        BIO_ADDR_clear(&qc->init_peer_addr);
+        BIO_ADDR_clear(&ctx.qc->init_peer_addr);
         return 1;
     }
 
-    qc->init_peer_addr = *peer_addr;
+    ctx.qc->init_peer_addr = *peer_addr;
     return 1;
 }
 
@@ -543,17 +582,22 @@ static int blocking_mode(const QUIC_CONNECTION *qc)
 
 /* SSL_tick; ticks the reactor. */
 QUIC_TAKES_LOCK
-int ossl_quic_tick(QUIC_CONNECTION *qc)
+int ossl_quic_tick(SSL *s)
 {
-    quic_lock(qc);
+    QCTX ctx;
 
-    if (qc->ch == NULL) {
-        quic_unlock(qc);
+    if (!expect_quic(s, &ctx))
+        return 0;
+
+    quic_lock(ctx.qc);
+
+    if (ctx.qc->ch == NULL) {
+        quic_unlock(ctx.qc);
         return 1;
     }
 
-    ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
-    quic_unlock(qc);
+    ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+    quic_unlock(ctx.qc);
     return 1;
 }
 
@@ -564,79 +608,101 @@ int ossl_quic_tick(QUIC_CONNECTION *qc)
  * timeout is currently active.
  */
 QUIC_TAKES_LOCK
-int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc, struct timeval *tv)
+int ossl_quic_get_tick_timeout(SSL *s, struct timeval *tv)
 {
+    QCTX ctx;
     OSSL_TIME deadline = ossl_time_infinite();
 
-    quic_lock(qc);
+    if (!expect_quic(s, &ctx))
+        return 0;
 
-    if (qc->ch != NULL)
+    quic_lock(ctx.qc);
+
+    if (ctx.qc->ch != NULL)
         deadline
-            = ossl_quic_reactor_get_tick_deadline(ossl_quic_channel_get_reactor(qc->ch));
+            = ossl_quic_reactor_get_tick_deadline(ossl_quic_channel_get_reactor(ctx.qc->ch));
 
     if (ossl_time_is_infinite(deadline)) {
         tv->tv_sec  = -1;
         tv->tv_usec = 0;
-        quic_unlock(qc);
+        quic_unlock(ctx.qc);
         return 1;
     }
 
     *tv = ossl_time_to_timeval(ossl_time_subtract(deadline, ossl_time_now()));
-    quic_unlock(qc);
+    quic_unlock(ctx.qc);
     return 1;
 }
 
 /* SSL_get_rpoll_descriptor */
-int ossl_quic_get_rpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *desc)
+int ossl_quic_get_rpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
 {
-    if (desc == NULL || qc->net_rbio == NULL)
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
         return 0;
 
-    return BIO_get_rpoll_descriptor(qc->net_rbio, desc);
+    if (desc == NULL || ctx.qc->net_rbio == NULL)
+        return 0;
+
+    return BIO_get_rpoll_descriptor(ctx.qc->net_rbio, desc);
 }
 
 /* SSL_get_wpoll_descriptor */
-int ossl_quic_get_wpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *desc)
+int ossl_quic_get_wpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
 {
-    if (desc == NULL || qc->net_wbio == NULL)
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
         return 0;
 
-    return BIO_get_wpoll_descriptor(qc->net_wbio, desc);
+    if (desc == NULL || ctx.qc->net_wbio == NULL)
+        return 0;
+
+    return BIO_get_wpoll_descriptor(ctx.qc->net_wbio, desc);
 }
 
 /* SSL_net_read_desired */
 QUIC_TAKES_LOCK
-int ossl_quic_get_net_read_desired(QUIC_CONNECTION *qc)
+int ossl_quic_get_net_read_desired(SSL *s)
 {
+    QCTX ctx;
     int ret;
 
-    quic_lock(qc);
+    if (!expect_quic(s, &ctx))
+        return 0;
 
-    if (qc->ch == NULL) {
-        quic_unlock(qc);
+    quic_lock(ctx.qc);
+
+    if (ctx.qc->ch == NULL) {
+        quic_unlock(ctx.qc);
         return 0;
     }
 
-    ret = ossl_quic_reactor_net_read_desired(ossl_quic_channel_get_reactor(qc->ch));
-    quic_unlock(qc);
+    ret = ossl_quic_reactor_net_read_desired(ossl_quic_channel_get_reactor(ctx.qc->ch));
+    quic_unlock(ctx.qc);
     return ret;
 }
 
 /* SSL_net_write_desired */
 QUIC_TAKES_LOCK
-int ossl_quic_get_net_write_desired(QUIC_CONNECTION *qc)
+int ossl_quic_get_net_write_desired(SSL *s)
 {
     int ret;
+    QCTX ctx;
 
-    quic_lock(qc);
+    if (!expect_quic(s, &ctx))
+        return 0;
 
-    if (qc->ch == NULL) {
-        quic_unlock(qc);
+    quic_lock(ctx.qc);
+
+    if (ctx.qc->ch == NULL) {
+        quic_unlock(ctx.qc);
         return 0;
     }
 
-    ret = ossl_quic_reactor_net_write_desired(ossl_quic_channel_get_reactor(qc->ch));
-    quic_unlock(qc);
+    ret = ossl_quic_reactor_net_write_desired(ossl_quic_channel_get_reactor(ctx.qc->ch));
+    quic_unlock(ctx.qc);
     return ret;
 }
 
@@ -663,82 +729,96 @@ static int quic_shutdown_wait(void *arg)
 }
 
 QUIC_TAKES_LOCK
-int ossl_quic_conn_shutdown(QUIC_CONNECTION *qc, uint64_t flags,
+int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
                             const SSL_SHUTDOWN_EX_ARGS *args,
                             size_t args_len)
 {
     int ret;
+    QCTX ctx;
 
-    quic_lock(qc);
+    if (!expect_quic(s, &ctx))
+        return 0;
 
-    if (!ensure_channel(qc)) {
-        quic_unlock(qc);
+    quic_lock(ctx.qc);
+
+    if (!ensure_channel(ctx.qc)) {
+        quic_unlock(ctx.qc);
         return -1;
     }
 
-    ossl_quic_channel_local_close(qc->ch,
+    ossl_quic_channel_local_close(ctx.qc->ch,
                                   args != NULL ? args->quic_error_code : 0);
 
     /* TODO(QUIC): !SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH */
 
-    if (ossl_quic_channel_is_terminated(qc->ch)) {
-        quic_unlock(qc);
+    if (ossl_quic_channel_is_terminated(ctx.qc->ch)) {
+        quic_unlock(ctx.qc);
         return 1;
     }
 
-    if (blocking_mode(qc) && (flags & SSL_SHUTDOWN_FLAG_RAPID) == 0)
-        block_until_pred(qc, quic_shutdown_wait, qc, 0);
+    if (blocking_mode(ctx.qc) && (flags & SSL_SHUTDOWN_FLAG_RAPID) == 0)
+        block_until_pred(ctx.qc, quic_shutdown_wait, ctx.qc, 0);
     else
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
 
-    ret = ossl_quic_channel_is_terminated(qc->ch);
-    quic_unlock(qc);
+    ret = ossl_quic_channel_is_terminated(ctx.qc->ch);
+    quic_unlock(ctx.qc);
     return ret;
 }
 
 /* SSL_ctrl */
 long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+    QCTX ctx;
 
-    if (!expect_quic_conn(qc))
+    if (!expect_quic(s, &ctx))
         return 0;
 
     switch (cmd) {
     case SSL_CTRL_MODE:
         /* Cannot enable EPW while AON write in progress. */
-        if (qc->aon_write_in_progress)
+        if (ctx.qc->aon_write_in_progress)
             larg &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
 
-        qc->ssl_mode |= (uint32_t)larg;
-        return qc->ssl_mode;
+        ctx.qc->ssl_mode |= (uint32_t)larg;
+        return ctx.qc->ssl_mode;
     case SSL_CTRL_CLEAR_MODE:
-        qc->ssl_mode &= ~(uint32_t)larg;
-        return qc->ssl_mode;
+        ctx.qc->ssl_mode &= ~(uint32_t)larg;
+        return ctx.qc->ssl_mode;
     default:
         /* Probably a TLS related ctrl. Defer to our internal SSL object */
-        return SSL_ctrl(qc->tls, cmd, larg, parg);
+        return SSL_ctrl(ctx.qc->tls, cmd, larg, parg);
     }
 }
 
 /* SSL_set_connect_state */
-void ossl_quic_set_connect_state(QUIC_CONNECTION *qc)
+void ossl_quic_set_connect_state(SSL *s)
 {
-    /* Cannot be changed after handshake started */
-    if (qc->started)
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
         return;
 
-    qc->as_server = 0;
+    /* Cannot be changed after handshake started */
+    if (ctx.qc->started)
+        return;
+
+    ctx.qc->as_server = 0;
 }
 
 /* SSL_set_accept_state */
-void ossl_quic_set_accept_state(QUIC_CONNECTION *qc)
+void ossl_quic_set_accept_state(SSL *s)
 {
-    /* Cannot be changed after handshake started */
-    if (qc->started)
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
         return;
 
-    qc->as_server = 1;
+    /* Cannot be changed after handshake started */
+    if (ctx.qc->started)
+        return;
+
+    ctx.qc->as_server = 1;
 }
 
 /* SSL_do_handshake */
@@ -903,45 +983,39 @@ static int quic_do_handshake(QUIC_CONNECTION *qc)
 }
 
 QUIC_TAKES_LOCK
-int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
+int ossl_quic_do_handshake(SSL *s)
 {
     int ret;
+    QCTX ctx;
 
-    quic_lock(qc);
+    if (!expect_quic(s, &ctx))
+        return 0;
 
-    ret = quic_do_handshake(qc);
-    quic_unlock(qc);
+    quic_lock(ctx.qc);
+
+    ret = quic_do_handshake(ctx.qc);
+    quic_unlock(ctx.qc);
     return ret;
 }
 
 /* SSL_connect */
 int ossl_quic_connect(SSL *s)
 {
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
-
-    if (!expect_quic_conn(qc))
-        return 0;
-
     /* Ensure we are in connect state (no-op if non-idle). */
-    ossl_quic_set_connect_state(qc);
+    ossl_quic_set_connect_state(s);
 
     /* Begin or continue the handshake */
-    return ossl_quic_do_handshake(qc);
+    return ossl_quic_do_handshake(s);
 }
 
 /* SSL_accept */
 int ossl_quic_accept(SSL *s)
 {
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
-
-    if (!expect_quic_conn(qc))
-        return 0;
-
     /* Ensure we are in accept state (no-op if non-idle). */
-    ossl_quic_set_accept_state(qc);
+    ossl_quic_set_accept_state(s);
 
     /* Begin or continue the handshake */
-    return ossl_quic_do_handshake(qc);
+    return ossl_quic_do_handshake(s);
 }
 
 /*
@@ -963,9 +1037,14 @@ int ossl_quic_accept(SSL *s)
  */
 
 /* SSL_get_error */
-int ossl_quic_get_error(const QUIC_CONNECTION *qc, int i)
+int ossl_quic_get_error(const SSL *s, int i)
 {
-    return qc->last_error;
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
+        return 0;
+
+    return ctx.qc->last_error;
 }
 
 /*
@@ -1214,18 +1293,20 @@ QUIC_TAKES_LOCK
 int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
 {
     int ret;
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
-    int partial_write = ((qc->ssl_mode & SSL_MODE_ENABLE_PARTIAL_WRITE) != 0);
+    QCTX ctx;
+    int partial_write;
 
     *written = 0;
 
-    if (!expect_quic_conn(qc))
+    if (!expect_quic(s, &ctx))
         return 0;
 
-    quic_lock(qc);
+    quic_lock(ctx.qc);
 
-    if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch)) {
-        ret = QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+    partial_write = ((ctx.qc->ssl_mode & SSL_MODE_ENABLE_PARTIAL_WRITE) != 0);
+
+    if (ctx.qc->ch != NULL && ossl_quic_channel_is_term_any(ctx.qc->ch)) {
+        ret = QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         goto out;
     }
 
@@ -1233,25 +1314,25 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
      * If we haven't finished the handshake, try to advance it.
      * We don't accept writes until the handshake is completed.
      */
-    if (quic_do_handshake(qc) < 1) {
+    if (quic_do_handshake(ctx.qc) < 1) {
         ret = 0;
         goto out;
     }
 
-    if (qc->stream0 == NULL || qc->stream0->sstream == NULL) {
-        ret = QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+    if (ctx.qc->stream0 == NULL || ctx.qc->stream0->sstream == NULL) {
+        ret = QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, ERR_R_INTERNAL_ERROR, NULL);
         goto out;
     }
 
-    if (blocking_mode(qc))
-        ret = quic_write_blocking(qc, buf, len, written);
+    if (blocking_mode(ctx.qc))
+        ret = quic_write_blocking(ctx.qc, buf, len, written);
     else if (partial_write)
-        ret = quic_write_nonblocking_epw(qc, buf, len, written);
+        ret = quic_write_nonblocking_epw(ctx.qc, buf, len, written);
     else
-        ret = quic_write_nonblocking_aon(qc, buf, len, written);
+        ret = quic_write_nonblocking_aon(ctx.qc, buf, len, written);
 
 out:
-    quic_unlock(qc);
+    quic_unlock(ctx.qc);
     return ret;
 }
 
@@ -1350,33 +1431,33 @@ QUIC_TAKES_LOCK
 static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek)
 {
     int ret, res;
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+    QCTX ctx;
     struct quic_read_again_args args;
 
     *bytes_read = 0;
 
-    if (!expect_quic_conn(qc))
+    if (!expect_quic(s, &ctx))
         return 0;
 
-    quic_lock(qc);
+    quic_lock(ctx.qc);
 
-    if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch)) {
-        ret = QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+    if (ctx.qc->ch != NULL && ossl_quic_channel_is_term_any(ctx.qc->ch)) {
+        ret = QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         goto out;
     }
 
     /* If we haven't finished the handshake, try to advance it. */
-    if (quic_do_handshake(qc) < 1) {
+    if (quic_do_handshake(ctx.qc) < 1) {
         ret = 0; /* ossl_quic_do_handshake raised error here */
         goto out;
     }
 
-    if (qc->stream0 == NULL) {
-        ret = QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+    if (ctx.qc->stream0 == NULL) {
+        ret = QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, ERR_R_INTERNAL_ERROR, NULL);
         goto out;
     }
 
-    if (!quic_read_actual(qc, qc->stream0, buf, len, bytes_read, peek)) {
+    if (!quic_read_actual(ctx.qc, ctx.qc->stream0, buf, len, bytes_read, peek)) {
         ret = 0; /* quic_read_actual raised error here */
         goto out;
     }
@@ -1386,24 +1467,24 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
          * Even though we succeeded, tick the reactor here to ensure we are
          * handling other aspects of the QUIC connection.
          */
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
         ret = 1;
-    } else if (blocking_mode(qc)) {
+    } else if (blocking_mode(ctx.qc)) {
         /*
          * We were not able to read anything immediately, so our stream
          * buffer is empty. This means we need to block until we get
          * at least one byte.
          */
-        args.qc         = qc;
-        args.stream     = qc->stream0;
+        args.qc         = ctx.qc;
+        args.stream     = ctx.qc->stream0;
         args.buf        = buf;
         args.len        = len;
         args.bytes_read = bytes_read;
         args.peek       = peek;
 
-        res = block_until_pred(qc, quic_read_again, &args, 0);
+        res = block_until_pred(ctx.qc, quic_read_again, &args, 0);
         if (res == 0) {
-            ret = QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+            ret = QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, ERR_R_INTERNAL_ERROR, NULL);
             goto out;
         } else if (res < 0) {
             ret = 0; /* quic_read_again raised error here */
@@ -1413,11 +1494,11 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
         ret = 1;
     } else {
         /* We did not get any bytes and are not in blocking mode. */
-        ret = QUIC_RAISE_NORMAL_ERROR(qc, SSL_ERROR_WANT_READ);
+        ret = QUIC_RAISE_NORMAL_ERROR(ctx.qc, SSL_ERROR_WANT_READ);
     }
 
 out:
-    quic_unlock(qc);
+    quic_unlock(ctx.qc);
     return ret;
 }
 
@@ -1436,38 +1517,37 @@ int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *bytes_read)
  * -----------
  */
 QUIC_TAKES_LOCK
-static size_t ossl_quic_pending_int(const QUIC_CONNECTION *qc)
+static size_t ossl_quic_pending_int(const SSL *s)
 {
+    QCTX ctx;
     size_t avail = 0;
     int fin = 0;
 
-    if (!expect_quic_conn(qc))
+    if (!expect_quic(s, &ctx))
         return 0;
 
-    quic_lock((QUIC_CONNECTION *)qc);
+    quic_lock(ctx.qc);
 
-    if (qc->stream0 == NULL || qc->stream0->rstream == NULL)
+    if (ctx.qc->stream0 == NULL || ctx.qc->stream0->rstream == NULL)
         /* Cannot raise errors here because we are const, just fail. */
         goto out;
 
-    if (!ossl_quic_rstream_available(qc->stream0->rstream, &avail, &fin))
+    if (!ossl_quic_rstream_available(ctx.qc->stream0->rstream, &avail, &fin))
         avail = 0;
 
 out:
-    quic_unlock((QUIC_CONNECTION *)qc);
+    quic_unlock(ctx.qc);
     return avail;
 }
 
 size_t ossl_quic_pending(const SSL *s)
 {
-    const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
-
-    return ossl_quic_pending_int(qc);
+    return ossl_quic_pending_int(s);
 }
 
-int ossl_quic_has_pending(const QUIC_CONNECTION *qc)
+int ossl_quic_has_pending(const SSL *s)
 {
-    return ossl_quic_pending_int(qc) > 0;
+    return ossl_quic_pending_int(s) > 0;
 }
 
 /*
@@ -1475,26 +1555,32 @@ int ossl_quic_has_pending(const QUIC_CONNECTION *qc)
  * -------------------
  */
 QUIC_TAKES_LOCK
-int ossl_quic_conn_stream_conclude(QUIC_CONNECTION *qc)
+int ossl_quic_conn_stream_conclude(SSL *s)
 {
-    QUIC_STREAM *qs = qc->stream0;
+    QCTX ctx;
+    QUIC_STREAM *qs;
 
-    quic_lock(qc);
+    if (!expect_quic(s, &ctx))
+        return 0;
+
+    quic_lock(ctx.qc);
+
+    qs = ctx.qc->stream0;
 
     if (qs == NULL || qs->sstream == NULL) {
-        quic_unlock(qc);
+        quic_unlock(ctx.qc);
         return 0;
     }
 
-    if (!ossl_quic_channel_is_active(qc->ch)
+    if (!ossl_quic_channel_is_active(ctx.qc->ch)
         || ossl_quic_sstream_get_final_size(qs->sstream, NULL)) {
-        quic_unlock(qc);
+        quic_unlock(ctx.qc);
         return 1;
     }
 
     ossl_quic_sstream_fin(qs->sstream);
-    quic_post_write(qc, 1, 1);
-    quic_unlock(qc);
+    quic_post_write(ctx.qc, 1, 1);
+    quic_unlock(ctx.qc);
     return 1;
 }
 
@@ -1509,25 +1595,25 @@ int SSL_inject_net_dgram(SSL *s, const unsigned char *buf,
                          const BIO_ADDR *local)
 {
     int ret;
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+    QCTX ctx;
     QUIC_DEMUX *demux;
 
-    if (!expect_quic_conn(qc))
+    if (!expect_quic(s, &ctx))
         return 0;
 
-    quic_lock(qc);
+    quic_lock(ctx.qc);
 
-    if (qc->ch == NULL) {
-        ret = QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
+    if (ctx.qc->ch == NULL) {
+        ret = QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
                                           NULL);
         goto err;
     }
 
-    demux = ossl_quic_channel_get0_demux(qc->ch);
+    demux = ossl_quic_channel_get0_demux(ctx.qc->ch);
     ret = ossl_quic_demux_inject(demux, buf, buf_len, peer, local);
 
 err:
-    quic_unlock(qc);
+    quic_unlock(ctx.qc);
     return ret;
 }
 

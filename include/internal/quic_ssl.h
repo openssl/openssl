@@ -40,30 +40,30 @@ int ossl_quic_renegotiate_check(SSL *ssl, int initok);
 typedef struct quic_conn_st QUIC_CONNECTION;
 typedef struct quic_xso_st QUIC_XSO;
 
-int ossl_quic_do_handshake(QUIC_CONNECTION *qc);
-void ossl_quic_set_connect_state(QUIC_CONNECTION *qc);
-void ossl_quic_set_accept_state(QUIC_CONNECTION *qc);
+int ossl_quic_do_handshake(SSL *s);
+void ossl_quic_set_connect_state(SSL *s);
+void ossl_quic_set_accept_state(SSL *s);
 
-__owur int ossl_quic_has_pending(const QUIC_CONNECTION *qc);
-__owur int ossl_quic_tick(QUIC_CONNECTION *qc);
-__owur int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc, struct timeval *tv);
-OSSL_TIME ossl_quic_get_tick_deadline(QUIC_CONNECTION *qc);
-__owur int ossl_quic_get_rpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *d);
-__owur int ossl_quic_get_wpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *d);
-__owur int ossl_quic_get_net_read_desired(QUIC_CONNECTION *qc);
-__owur int ossl_quic_get_net_write_desired(QUIC_CONNECTION *qc);
-__owur int ossl_quic_get_error(const QUIC_CONNECTION *qc, int i);
-__owur int ossl_quic_conn_get_blocking_mode(const QUIC_CONNECTION *qc);
-__owur int ossl_quic_conn_set_blocking_mode(QUIC_CONNECTION *qc, int blocking);
-__owur int ossl_quic_conn_shutdown(QUIC_CONNECTION *qc, uint64_t flags,
+__owur int ossl_quic_has_pending(const SSL *s);
+__owur int ossl_quic_tick(SSL *s);
+__owur int ossl_quic_get_tick_timeout(SSL *s, struct timeval *tv);
+OSSL_TIME ossl_quic_get_tick_deadline(SSL *s);
+__owur int ossl_quic_get_rpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *d);
+__owur int ossl_quic_get_wpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *d);
+__owur int ossl_quic_get_net_read_desired(SSL *s);
+__owur int ossl_quic_get_net_write_desired(SSL *s);
+__owur int ossl_quic_get_error(const SSL *s, int i);
+__owur int ossl_quic_conn_get_blocking_mode(const SSL *s);
+__owur int ossl_quic_conn_set_blocking_mode(SSL *s, int blocking);
+__owur int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
                                    const SSL_SHUTDOWN_EX_ARGS *args,
                                    size_t args_len);
-__owur int ossl_quic_conn_stream_conclude(QUIC_CONNECTION *qc);
-void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_wbio);
-void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio);
-BIO *ossl_quic_conn_get_net_rbio(const QUIC_CONNECTION *qc);
-BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc);
-__owur int ossl_quic_conn_set_initial_peer_addr(QUIC_CONNECTION *qc,
+__owur int ossl_quic_conn_stream_conclude(SSL *s);
+void ossl_quic_conn_set0_net_rbio(SSL *s, BIO *net_wbio);
+void ossl_quic_conn_set0_net_wbio(SSL *s, BIO *net_wbio);
+BIO *ossl_quic_conn_get_net_rbio(const SSL *s);
+BIO *ossl_quic_conn_get_net_wbio(const SSL *s);
+__owur int ossl_quic_conn_set_initial_peer_addr(SSL *s,
                                                 const BIO_ADDR *peer_addr);
 
 /*
