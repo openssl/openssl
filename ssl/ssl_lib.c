@@ -7340,6 +7340,18 @@ int SSL_get_stream_type(SSL *s)
 #endif
 }
 
+uint64_t SSL_get_stream_id(SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return UINT64_MAX;
+
+    return ossl_quic_get_stream_id(s);
+#else
+    return UINT64_MAX;
+#endif
+}
+
 int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk)
 {
     unsigned char *data = NULL;

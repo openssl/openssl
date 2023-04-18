@@ -1868,6 +1868,20 @@ int ossl_quic_get_stream_type(SSL *s)
 }
 
 /*
+ * SSL_get_stream_id
+ * -----------------
+ */
+uint64_t ossl_quic_get_stream_id(SSL *s)
+{
+    QCTX ctx;
+
+    if (!expect_quic_with_stream(s, /*remote_init=*/-1, &ctx))
+        return UINT64_MAX;
+
+    return ctx.xso->stream->id;
+}
+
+/*
  * QUIC Front-End I/O API: SSL_CTX Management
  * ==========================================
  */

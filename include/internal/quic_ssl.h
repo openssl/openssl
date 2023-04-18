@@ -68,6 +68,7 @@ __owur int ossl_quic_conn_set_initial_peer_addr(SSL *s,
 __owur SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags);
 __owur SSL *ossl_quic_get0_connection(SSL *s);
 __owur int ossl_quic_get_stream_type(SSL *s);
+__owur uint64_t ossl_quic_get_stream_id(SSL *s);
 
 /*
  * Used to override ossl_time_now() for debug purposes. Must be called before
