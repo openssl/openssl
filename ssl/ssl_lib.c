@@ -7352,6 +7352,42 @@ uint64_t SSL_get_stream_id(SSL *s)
 #endif
 }
 
+int SSL_set_default_stream_mode(SSL *s, uint32_t mode)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return 0;
+
+    return ossl_quic_set_default_stream_mode(s, mode);
+#else
+    return 0;
+#endif
+}
+
+SSL *SSL_detach_stream(SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return NULL;
+
+    return ossl_quic_detach_stream(s);
+#else
+    return NULL;
+#endif
+}
+
+int SSL_attach_stream(SSL *conn, SSL *stream)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(conn))
+        return 0;
+
+    return ossl_quic_attach_stream(conn, stream);
+#else
+    return NULL;
+#endif
+}
+
 int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk)
 {
     unsigned char *data = NULL;

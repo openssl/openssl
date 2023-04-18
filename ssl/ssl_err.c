@@ -311,6 +311,7 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS),
     "no shared signature algorithms"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_SRTP_PROFILES), "no srtp profiles"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_STREAM), "no stream"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_SUITABLE_DIGEST_ALGORITHM),
     "no suitable digest algorithm"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_SUITABLE_GROUPS), "no suitable groups"},

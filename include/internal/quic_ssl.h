@@ -69,6 +69,9 @@ __owur SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags);
 __owur SSL *ossl_quic_get0_connection(SSL *s);
 __owur int ossl_quic_get_stream_type(SSL *s);
 __owur uint64_t ossl_quic_get_stream_id(SSL *s);
+__owur int ossl_quic_set_default_stream_mode(SSL *s, uint32_t mode);
+__owur SSL *ossl_quic_detach_stream(SSL *s);
+__owur int ossl_quic_attach_stream(SSL *conn, SSL *stream);
 
 /*
  * Used to override ossl_time_now() for debug purposes. Must be called before

@@ -84,6 +84,19 @@
  */
 #  define QUIC_TAKES_LOCK
 
+/*
+ * The function acquires the channel mutex and leaves it acquired
+ * when returning success.
+ *
+ * Any function tagged with this has the following precondition and
+ * postcondition:
+ *
+ *   Precondition: must not hold channel mutex (unchecked)
+ *   Postcondition: channel mutex is held by calling thread
+ *      or function returned failure
+ */
+#  define QUIC_ACQUIRES_LOCK
+
 #  define QUIC_TODO_LOCK
 
 #  define QUIC_CHANNEL_STATE_IDLE                        0

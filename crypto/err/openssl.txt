@@ -1463,6 +1463,7 @@ SSL_R_NO_SHARED_CIPHER:193:no shared cipher
 SSL_R_NO_SHARED_GROUPS:410:no shared groups
 SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS:376:no shared signature algorithms
 SSL_R_NO_SRTP_PROFILES:359:no srtp profiles
+SSL_R_NO_STREAM:355:no stream
 SSL_R_NO_SUITABLE_DIGEST_ALGORITHM:297:no suitable digest algorithm
 SSL_R_NO_SUITABLE_GROUPS:295:no suitable groups
 SSL_R_NO_SUITABLE_KEY_SHARE:101:no suitable key share
