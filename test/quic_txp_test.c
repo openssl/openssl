@@ -1470,7 +1470,8 @@ static int run_script(const struct script_op *script)
                                                                  op->arg0)))
                     goto err;
 
-                if (!TEST_true(ossl_quic_stream_stop_sending(s, op->arg1)))
+                if (!TEST_true(ossl_quic_stream_map_stop_sending_recv_part(h.args.qsm,
+                                                                           s, op->arg1)))
                     goto err;
 
                 ossl_quic_stream_map_update_state(h.args.qsm, s);
@@ -1487,7 +1488,8 @@ static int run_script(const struct script_op *script)
                                                                  op->arg0)))
                     goto err;
 
-                if (!TEST_true(ossl_quic_stream_reset(s, op->arg1)))
+                if (!TEST_true(ossl_quic_stream_map_reset_stream_send_part(h.args.qsm,
+                                                                           s, op->arg1)))
                     goto err;
 
                 ossl_quic_stream_map_update_state(h.args.qsm, s);

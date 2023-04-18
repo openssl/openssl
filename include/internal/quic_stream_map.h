@@ -107,18 +107,6 @@ struct quic_stream_st {
     unsigned int    deleted                 : 1;
 };
 
-/*
- * Marks a stream for STOP_SENDING. aec is the application error code (AEC).
- * This can only fail if it has already been called.
- */
-int ossl_quic_stream_stop_sending(QUIC_STREAM *s, uint64_t aec);
-
-/*
- * Marks a stream for reset. aec is the application error code (AEC).
- * This can only fail if it has already been called.
- */
-int ossl_quic_stream_reset(QUIC_STREAM *s, uint64_t aec);
-
 /* 
  * QUIC Stream Map
  * ===============
@@ -239,10 +227,24 @@ void ossl_quic_stream_map_set_rr_stepping(QUIC_STREAM_MAP *qsm, size_t stepping)
 
 /*
  * Resets the sending part of a stream.
+ *
+ * Returns 1 if the sending part of a stream was not already reset.
+ * Returns 0 otherwise, which need not be considered an error.
  */
-void ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
-                                                 QUIC_STREAM *qs,
-                                                 uint64_t aec);
+int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
+                                                QUIC_STREAM *qs,
+                                                uint64_t aec);
+
+/*
+ * Marks the receiving part of a stream for STOP_SENDING.
+ *
+ * Returns  1 if the receiving part of a stream was not already marked for
+ * STOP_SENDING.
+ * Returns 0 otherwise, which need not be considered an error.
+ */
+int ossl_quic_stream_map_stop_sending_recv_part(QUIC_STREAM_MAP *qsm,
+                                                QUIC_STREAM *qs,
+                                                uint64_t aec);
 
 /*
  * Adds a stream to the accept queue.

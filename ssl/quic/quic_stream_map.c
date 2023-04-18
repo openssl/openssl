@@ -10,32 +10,6 @@
 #include "internal/quic_stream_map.h"
 #include "internal/nelem.h"
 
-/* QUIC Stream
- * ===========
- */
-
-int ossl_quic_stream_stop_sending(QUIC_STREAM *s, uint64_t aec)
-{
-    if (s->stop_sending)
-        return 0;
-
-    s->stop_sending_aec     = aec;
-    s->stop_sending         = 1;
-    s->want_stop_sending    = 1;
-    return 1;
-}
-
-int ossl_quic_stream_reset(QUIC_STREAM *s, uint64_t aec)
-{
-    if (s->reset_stream)
-        return 0;
-
-    s->reset_stream_aec     = aec;
-    s->reset_stream         = 1;
-    s->want_reset_stream    = 1;
-    return 1;
-}
-
 /*
  * QUIC Stream Map
  * ===============
@@ -284,18 +258,34 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
         stream_map_mark_inactive(qsm, s);
 }
 
-void ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
-                                                 QUIC_STREAM *qs,
-                                                 uint64_t aec)
+int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
+                                                QUIC_STREAM *qs,
+                                                uint64_t aec)
 {
     if (qs->reset_stream)
-        return;
+        return 0;
 
     qs->reset_stream        = 1;
     qs->reset_stream_aec    = aec;
     qs->want_reset_stream   = 1;
 
     ossl_quic_stream_map_update_state(qsm, qs);
+    return 1;
+}
+
+int ossl_quic_stream_map_stop_sending_recv_part(QUIC_STREAM_MAP *qsm,
+                                                QUIC_STREAM *qs,
+                                                uint64_t aec)
+{
+    if (qs->stop_sending)
+        return 0;
+
+    qs->stop_sending        = 1;
+    qs->stop_sending_aec    = aec;
+    qs->want_stop_sending   = 1;
+
+    ossl_quic_stream_map_update_state(qsm, qs);
+    return 1;
 }
 
 QUIC_STREAM *ossl_quic_stream_map_peek_accept_queue(QUIC_STREAM_MAP *qsm)
