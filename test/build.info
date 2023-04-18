@@ -340,6 +340,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[quic_client_test]=../include ../apps/include
   DEPEND[quic_client_test]=../libcrypto.a ../libssl.a libtestutil.a
 
+  SOURCE[quic_multistream_test]=quic_multistream_test.c
+  INCLUDE[quic_multistream_test]=../include ../apps/include
+  DEPEND[quic_multistream_test]=../libcrypto.a ../libssl.a libtestutil.a
+
   SOURCE[asynctest]=asynctest.c
   INCLUDE[asynctest]=../include ../apps/include
   DEPEND[asynctest]=../libcrypto
@@ -1095,7 +1099,7 @@ ENDIF
     PROGRAMS{noinst}=quic_wire_test quic_ackm_test quic_record_test
     PROGRAMS{noinst}=quic_fc_test quic_stream_test quic_cfq_test quic_txpim_test
     PROGRAMS{noinst}=quic_fifd_test quic_txp_test quic_tserver_test
-    PROGRAMS{noinst}=quic_client_test quic_cc_test
+    PROGRAMS{noinst}=quic_client_test quic_cc_test quic_multistream_test
   ENDIF
 
   SOURCE[quic_ackm_test]=quic_ackm_test.c cc_dummy.c
