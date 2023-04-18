@@ -646,6 +646,25 @@ SSL_want_x509_lookup                    define
 SSLv23_client_method                    define
 SSLv23_method                           define
 SSLv23_server_method                    define
+SSL_STREAM_FLAG_UNI                     define
+SSL_STREAM_TYPE_NONE                    define
+SSL_STREAM_TYPE_READ                    define
+SSL_STREAM_TYPE_WRITE                   define
+SSL_STREAM_TYPE_BIDI                    define
+SSL_STREAM_STATE_NONE                   define
+SSL_STREAM_STATE_WRONG_DIR              define
+SSL_STREAM_STATE_OK                     define
+SSL_STREAM_STATE_FINISHED               define
+SSL_STREAM_STATE_RESET_LOCAL            define
+SSL_STREAM_STATE_RESET_REMOTE           define
+SSL_STREAM_STATE_CONN_CLOSED            define
+SSL_ACCEPT_STREAM_NO_BLOCK              define
+SSL_DEFAULT_STREAM_MODE_AUTO_BIDI       define
+SSL_DEFAULT_STREAM_MODE_AUTO_UNI        define
+SSL_DEFAULT_STREAM_MODE_NONE            define
+SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT define
+SSL_INCOMING_STREAM_REJECT_POLICY_AUTO  define
+SSL_INCOMING_STREAM_REJECT_POLICY_REJECT define
 TLS_DEFAULT_CIPHERSUITES                define deprecated 3.0.0
 X509_CRL_http_nbio                      define deprecated 3.0.0
 X509_http_nbio                          define deprecated 3.0.0
