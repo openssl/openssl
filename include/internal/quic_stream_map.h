@@ -37,6 +37,7 @@ struct quic_stream_list_node_st {
 struct quic_stream_st {
     QUIC_STREAM_LIST_NODE active_node; /* for use by QUIC_STREAM_MAP */
     QUIC_STREAM_LIST_NODE accept_node; /* accept queue of remotely-created streams */
+    QUIC_STREAM_LIST_NODE ready_for_gc_node; /* queue of streams now ready for GC */
 
     /* Temporary link used by TXP. */
     QUIC_STREAM    *txp_next;
@@ -119,8 +120,117 @@ struct quic_stream_st {
     /* A FIN has been retired from the rstream buffer. */
     unsigned int    recv_fin_retired        : 1;
 
-    /* The stream's XSO has been deleted. Pending GC. */
+    /*
+     * The stream's XSO has been deleted. Pending GC.
+     *
+     * Here is how stream deletion works:
+     *
+     *   - A QUIC_STREAM cannot be deleted until it is neither in the accept
+     *     queue nor has an associated XSO. This condition occurs when and only
+     *     when deleted is true.
+     *
+     *   - Once there is the case (i.e., no user-facing API object exposing the
+     *     stream), we can delete the stream once we determine that all of our
+     *     protocol obligations requiring us to keep the QUIC_STREAM around have
+     *     been met.
+     *
+     *     The following frames relate to the streams layer for a specific
+     *     stream:
+     *
+     *          STREAM
+     *
+     *              RX Obligations:
+     *                  Ignore for a deleted stream.
+     *
+     *                  (This is different from our obligation for a
+     *                  locally-initiated stream ID we have not created yet,
+     *                  which we must treat as a protocol error. This can be
+     *                  distinguished via a simple monotonic counter.)
+     *
+     *              TX Obligations:
+     *                  None, once we've decided to (someday) delete the stream.
+     *
+     *          STOP_SENDING
+     *
+     *              We cannot delete the stream until we have finished informing
+     *              the peer that we are not going to be listening to it
+     *              anymore.
+     *
+     *              RX Obligations:
+     *                  When we delete a stream we must have already had a FIN
+     *                  or RESET_STREAM we transmitted acknowledged by the peer.
+     *                  Thus we can ignore STOP_SENDING frames for deleted
+     *                  streams (if they occur, they are probably just
+     *                  retransmissions).
+     *
+     *              TX Obligations:
+     *                  _Acknowledged_ receipt of a STOP_SENDING frame by the
+     *                  peer (unless the peer's send part has already FIN'd).
+     *
+     *          RESET_STREAM
+     *
+     *              We cannot delete the stream until we have finished informing
+     *              the peer that we are not going to be transmitting on it
+     *              anymore.
+     *
+     *              RX Obligations:
+     *                  This indicates the peer is not going to send any more
+     *                  data on the stream. We don't need to care about this
+     *                  since once a stream is marked for deletion we don't care
+     *                  about any data it does send. We can ignore this for
+     *                  deleted streams. The important criterion is that the
+     *                  peer has been successfully delivered our STOP_SENDING
+     *                  frame.
+     *
+     *              TX Obligations:
+     *                  _Acknowledged_ receipt of a RESET_STREAM frame or FIN by
+     *                  the peer.
+     *
+     *          MAX_STREAM_DATA
+     *
+     *              RX Obligations:
+     *                 Ignore. Since we are not going to be sending any more
+     *                 data on a stream once it has been marked for deletion,
+     *                 we don't need to care about flow control information.
+     *
+     *              TX Obligations:
+     *                  None.
+     *
+     *     In other words, our protocol obligation is simply:
+     *
+     *       - either:
+     *         - the peer has acknowledged receipt of a STOP_SENDING frame sent
+     *            by us; -or-
+     *         - we have received a FIN and all preceding segments from the peer
+     *
+     *            [NOTE: The actual criterion required here is simply 'we have
+     *            received a FIN from the peer'. However, due to reordering and
+     *            retransmissions we might subsequently receive non-FIN segments
+     *            out of order. The FIN means we know the peer will stop
+     *            transmitting on the stream at *some* point, but by sending
+     *            STOP_SENDING we can avoid these needless retransmissions we
+     *            will just ignore anyway. In actuality we could just handle all
+     *            cases by sending a STOP_SENDING. The strategy we choose is to
+     *            only avoid sending a STOP_SENDING and rely on a received FIN
+     *            when we have received all preceding data, as this makes it
+     *            reasonably certain no benefit would be gained by sending
+     *            STOP_SENDING.]
+     *
+     *            TODO(QUIC): Implement the latter case (currently we just
+     *                        always do STOP_SENDING).
+     *
+     *         and;
+     *
+     *       - we have drained our send stream (for a finished send stream)
+     *         and got acknowledgement all parts of it including the FIN, or
+     *         sent a RESET_STREAM frame and got acknowledgement of that frame.
+     *
+     *      Once these conditions are met, we can GC the QUIC_STREAM.
+     *
+     */
     unsigned int    deleted                 : 1;
+    /* Set to 1 once the above conditions are actually met. */
+    unsigned int    ready_for_gc            : 1;
 };
 
 /* 
@@ -138,6 +248,7 @@ typedef struct quic_stream_map_st {
     LHASH_OF(QUIC_STREAM)   *map;
     QUIC_STREAM_LIST_NODE   active_list;
     QUIC_STREAM_LIST_NODE   accept_list;
+    QUIC_STREAM_LIST_NODE   ready_for_gc_list;
     size_t                  rr_stepping, rr_counter, num_accept;
     QUIC_STREAM             *rr_cur;
     uint64_t                (*get_stream_limit_cb)(int uni, void *arg);
@@ -286,6 +397,12 @@ void ossl_quic_stream_map_remove_from_accept_queue(QUIC_STREAM_MAP *qsm,
 
 /* Returns the length of the accept queue. */
 size_t ossl_quic_stream_map_get_accept_queue_len(QUIC_STREAM_MAP *qsm);
+
+/*
+ * Delete streams ready for GC. Pointers to those QUIC_STREAM objects become
+ * invalid.
+ */
+void ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm);
 
 /*
  * QUIC Stream Iterator

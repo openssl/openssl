@@ -1372,6 +1372,9 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
     /* Write any data to the network due to be sent. */
     ch_tx(ch);
 
+    /* Do stream GC. */
+    ossl_quic_stream_map_gc(&ch->qsm);
+
     /* Determine the time at which we should next be ticked. */
     res->tick_deadline = ch_determine_next_tick_deadline(ch);
 

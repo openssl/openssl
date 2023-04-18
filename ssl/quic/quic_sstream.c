@@ -372,6 +372,27 @@ size_t ossl_quic_sstream_get_buffer_avail(QUIC_SSTREAM *qss)
     return ring_buf_avail(&qss->ring_buf);
 }
 
+int ossl_quic_sstream_is_totally_acked(QUIC_SSTREAM *qss)
+{
+    UINT_RANGE r;
+    uint64_t cur_size;
+
+    if ((qss->have_final_size && !qss->acked_final_size)
+        || ossl_list_uint_set_num(&qss->acked_set) != 1)
+        return 0;
+
+    r = ossl_list_uint_set_head(&qss->acked_set)->range;
+    cur_size = qss->ring_buf.head_offset;
+
+    /*
+     * The invariants of UINT_SET guarantee a single list element if we have a
+     * single contiguous range, which is what we should have if everything has
+     * been acked.
+     */
+    assert(r.end + 1 <= cur_size);
+    return r.start == 0 && r.end + 1 == cur_size;
+}
+
 void ossl_quic_sstream_adjust_iov(size_t len,
                                   OSSL_QTX_IOVEC *iov,
                                   size_t num_iov)
