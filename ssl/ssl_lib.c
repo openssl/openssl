@@ -7323,6 +7323,11 @@ SSL *SSL_get0_connection(SSL *s)
 #endif
 }
 
+int SSL_is_connection(SSL *s)
+{
+    return SSL_get0_connection(s) == s;
+}
+
 int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk)
 {
     unsigned char *data = NULL;
