@@ -40,6 +40,10 @@ static void regen_frame(uint64_t frame_type, uint64_t stream_id,
     regen_frame_p(frame_type, stream_id, pkt, arg);
 }
 
+static void confirm_frame(uint64_t frame_type, uint64_t stream_id,
+                          QUIC_TXPIM_PKT *pkt, void *arg)
+{}
+
 static void sstream_updated(uint64_t stream_id, void *arg)
 {}
 
@@ -333,6 +337,7 @@ static int test_fifd(int idx)
                                           info.txpim,
                                           get_sstream_by_id, NULL,
                                           regen_frame, NULL,
+                                          confirm_frame, NULL,
                                           sstream_updated, NULL)))
         goto err;
 
