@@ -38,6 +38,7 @@ __owur const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u);
 int ossl_quic_renegotiate_check(SSL *ssl, int initok);
 
 typedef struct quic_conn_st QUIC_CONNECTION;
+typedef struct quic_xso_st QUIC_XSO;
 
 int ossl_quic_do_handshake(QUIC_CONNECTION *qc);
 void ossl_quic_set_connect_state(QUIC_CONNECTION *qc);

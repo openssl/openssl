@@ -167,11 +167,11 @@ void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
          ? (c QUIC_CONNECTION *)(ssl)            \
          : NULL))
 
-#  define QUIC_STREAM_FROM_SSL_int(ssl, c)       \
+#  define QUIC_XSO_FROM_SSL_int(ssl, c)          \
      ((ssl) == NULL ? NULL                       \
       : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION \
-          || (ssl)->type == SSL_TYPE_QUIC_STREAM \
-         ? (c QUIC_STREAM *)(ssl)                \
+          || (ssl)->type == SSL_TYPE_QUIC_XSO    \
+         ? (c QUIC_XSO *)(ssl)                   \
          : NULL))
 
 #  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c)               \
@@ -181,7 +181,7 @@ void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
          : NULL))
 # else
 #  define QUIC_CONNECTION_FROM_SSL_int(ssl, c) NULL
-#  define QUIC_STREAM_FROM_SSL_int(ssl, c) NULL
+#  define QUIC_XSO_FROM_SSL_int(ssl, c) NULL
 #  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c) NULL
 # endif
 
@@ -189,10 +189,10 @@ void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
     QUIC_CONNECTION_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
 # define QUIC_CONNECTION_FROM_CONST_SSL(ssl) \
     QUIC_CONNECTION_FROM_SSL_int(ssl, const)
-# define QUIC_STREAM_FROM_SSL(ssl) \
-    QUIC_STREAM_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
-# define QUIC_STREAM_FROM_CONST_SSL(ssl) \
-    QUIC_STREAM_FROM_SSL_int(ssl, const)
+# define QUIC_XSO_FROM_SSL(ssl) \
+    QUIC_XSO_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
+# define QUIC_XSO_FROM_CONST_SSL(ssl) \
+    QUIC_XSO_FROM_SSL_int(ssl, const)
 # define SSL_CONNECTION_FROM_QUIC_SSL(ssl) \
     SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
 # define SSL_CONNECTION_FROM_CONST_QUIC_SSL(ssl) \
