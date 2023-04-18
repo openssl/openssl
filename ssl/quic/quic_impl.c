@@ -247,6 +247,9 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->is_thread_assisted
         = (ssl_base->method == OSSL_QUIC_client_thread_method());
 
+    qc->as_server       = 0; /* TODO(QUIC): server support */
+    qc->as_server_state = qc->as_server;
+
     /* Channel is not created yet. */
     qc->ssl_mode   = qc->ssl.ctx->mode;
     qc->last_error = SSL_ERROR_NONE;
@@ -803,7 +806,7 @@ void ossl_quic_set_connect_state(SSL *s)
     if (ctx.qc->started)
         return;
 
-    ctx.qc->as_server = 0;
+    ctx.qc->as_server_state = 0;
 }
 
 /* SSL_set_accept_state */
@@ -818,7 +821,7 @@ void ossl_quic_set_accept_state(SSL *s)
     if (ctx.qc->started)
         return;
 
-    ctx.qc->as_server = 1;
+    ctx.qc->as_server_state = 1;
 }
 
 /* SSL_do_handshake */
@@ -926,7 +929,7 @@ static int quic_do_handshake(QUIC_CONNECTION *qc)
         return -1; /* Non-protocol error */
     }
 
-    if (qc->as_server) {
+    if (qc->as_server != qc->as_server_state) {
         /* TODO(QUIC): Server mode not currently supported */
         QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
         return -1; /* Non-protocol error */
