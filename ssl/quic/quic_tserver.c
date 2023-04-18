@@ -169,7 +169,8 @@ int ossl_quic_tserver_is_term_any(const QUIC_TSERVER *srv)
     return ossl_quic_channel_is_term_any(srv->ch);
 }
 
-QUIC_TERMINATE_CAUSE ossl_quic_tserver_get_terminate_cause(const QUIC_TSERVER *srv)
+const QUIC_TERMINATE_CAUSE *
+ossl_quic_tserver_get_terminate_cause(const QUIC_TSERVER *srv)
 {
     return ossl_quic_channel_get_terminate_cause(srv->ch);
 }

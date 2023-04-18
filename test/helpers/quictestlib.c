@@ -312,7 +312,7 @@ int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
 
 int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)
 {
-    QUIC_TERMINATE_CAUSE cause;
+    const QUIC_TERMINATE_CAUSE *cause;
 
     ossl_quic_tserver_tick(qtserv);
 
@@ -323,8 +323,9 @@ int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)
         return 0;
 
     cause = ossl_quic_tserver_get_terminate_cause(qtserv);
-    if  (!TEST_true(cause.remote)
-            || !TEST_uint64_t_eq(cause.error_code, code))
+    if  (!TEST_ptr(cause)
+            || !TEST_true(cause->remote)
+            || !TEST_uint64_t_eq(cause->error_code, code))
         return 0;
 
     return 1;

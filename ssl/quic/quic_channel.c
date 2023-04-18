@@ -445,9 +445,10 @@ int ossl_quic_channel_is_term_any(const QUIC_CHANNEL *ch)
         || ossl_quic_channel_is_terminated(ch);
 }
 
-QUIC_TERMINATE_CAUSE ossl_quic_channel_get_terminate_cause(const QUIC_CHANNEL *ch)
+const QUIC_TERMINATE_CAUSE *
+ossl_quic_channel_get_terminate_cause(const QUIC_CHANNEL *ch)
 {
-    return ch->terminate_cause;
+    return ossl_quic_channel_is_term_any(ch) ? &ch->terminate_cause : NULL;
 }
 
 int ossl_quic_channel_is_handshake_complete(const QUIC_CHANNEL *ch)

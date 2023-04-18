@@ -71,7 +71,8 @@ int ossl_quic_tserver_is_handshake_confirmed(const QUIC_TSERVER *srv);
 /* Returns 1 if the server is in any terminating or terminated state */
 int ossl_quic_tserver_is_term_any(const QUIC_TSERVER *srv);
 
-QUIC_TERMINATE_CAUSE ossl_quic_tserver_get_terminate_cause(const QUIC_TSERVER *srv);
+const QUIC_TERMINATE_CAUSE *
+ossl_quic_tserver_get_terminate_cause(const QUIC_TSERVER *srv);
 
 /* Returns 1 if the server is in a terminated state */
 int ossl_quic_tserver_is_terminated(const QUIC_TSERVER *srv);

@@ -257,7 +257,8 @@ QUIC_STREAM *ossl_quic_channel_get_stream_by_id(QUIC_CHANNEL *ch,
 
 /* Returns 1 if channel is terminating or terminated. */
 int ossl_quic_channel_is_term_any(const QUIC_CHANNEL *ch);
-QUIC_TERMINATE_CAUSE ossl_quic_channel_get_terminate_cause(const QUIC_CHANNEL *ch);
+const QUIC_TERMINATE_CAUSE *
+ossl_quic_channel_get_terminate_cause(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_terminating(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_terminated(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_active(const QUIC_CHANNEL *ch);
