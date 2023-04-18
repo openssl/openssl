@@ -59,6 +59,11 @@ static int quic_raise_normal_error(QUIC_CONNECTION *qc,
 /*
  * Raise a 'non-normal' error, meaning any error that is not reported via
  * SSL_get_error() and must be reported via ERR.
+ *
+ * qc should be provided if available. In exceptional circumstances when qc is
+ * not known NULL may be passed. This should generally only happen when an
+ * expect_...() function defined below fails, which generally indicates a
+ * dispatch error or caller error.
  */
 static int quic_raise_non_normal_error(QUIC_CONNECTION *qc,
                                        const char *file,
@@ -77,7 +82,9 @@ static int quic_raise_non_normal_error(QUIC_CONNECTION *qc,
     ERR_vset_error(ERR_LIB_SSL, reason, fmt, args);
     va_end(args);
 
-    qc->last_error = SSL_ERROR_SSL;
+    if (qc != NULL)
+        qc->last_error = SSL_ERROR_SSL;
+
     return 0;
 }
 
@@ -92,16 +99,92 @@ static int quic_raise_non_normal_error(QUIC_CONNECTION *qc,
                                 (msg))
 
 /*
- * Should be called at entry of every public function to confirm we have a valid
- * QUIC_CONNECTION.
+ * QCTX is a utility structure which provides information we commonly wish to
+ * unwrap upon an API call being dispatched to us, namely:
+ *
+ *   - a pointer to the QUIC_CONNECTION (regardless of whether a QCSO or QSSO
+ *     was passed);
+ *   - a pointer to any applicable QUIC_XSO (e.g. if a QSSO was passed, or if
+ *     a QCSO with a default stream was passed);
+ *   - whether a QSSO was passed (xso == NULL must not be used to determine this
+ *     because it may be non-NULL when a QCSO is passed if that QCSO has a
+ *     default stream).
  */
-static ossl_inline int expect_quic_conn(const QUIC_CONNECTION *qc)
+typedef struct qctx_st {
+    QUIC_CONNECTION *qc;
+    QUIC_XSO        *xso;
+    int             is_stream;
+} QCTX;
+
+/*
+ * Given a QCSO or QSSO, initialises a QCTX, determining the contextually
+ * applicable QUIC_CONNECTION pointer and, if applicable, QUIC_XSO pointer.
+ *
+ * After this returns 1, all fields of the passed QCTX are initialised.
+ * Returns 0 on failure. This function is intended to be used to provide API
+ * semantics and as such, it invokes QUIC_RAISE_NON_NORMAL_ERROR() on failure.
+ */
+static int expect_quic(const SSL *s, QCTX *ctx)
 {
-    if (!ossl_assert(qc != NULL))
+    QUIC_CONNECTION *qc;
+    QUIC_XSO *xso;
+
+    ctx->qc         = NULL;
+    ctx->xso        = NULL;
+    ctx->is_stream  = 0;
+
+    if (s == NULL)
         return QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
 
-    return 1;
+    switch (s->type) {
+    case SSL_TYPE_QUIC_CONNECTION:
+        qc              = (QUIC_CONNECTION *)s;
+        ctx->qc         = qc;
+        ctx->xso        = NULL; /* TODO XXX (Filled by subsequent commit) */
+        ctx->is_stream  = 0;
+        return 1;
 
+    case SSL_TYPE_QUIC_XSO:
+        xso             = (QUIC_XSO *)s;
+        ctx->qc         = NULL; /* TODO XXX (Filled by subsequent commit) */
+        ctx->xso        = xso;
+        ctx->is_stream  = 1;
+        return 1;
+
+    default:
+        return QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+    }
+}
+
+/*
+ * Like expect_quic(), but requires a QUIC_XSO be contextually available. In
+ * other words, requires that the passed QSO be a QSSO or a QCSO with a default
+ * stream.
+ */
+static int expect_quic_with_stream(const SSL *s, QCTX *ctx)
+{
+    if (!expect_quic(s, ctx))
+        return 0;
+
+    if (ctx->xso == NULL)
+        return QUIC_RAISE_NON_NORMAL_ERROR(ctx->qc, ERR_R_INTERNAL_ERROR, NULL);
+
+    return 1;
+}
+
+/*
+ * Like expect_quic(), but fails if called on a QUIC_XSO. ctx->xso may still
+ * be non-NULL if the QCSO has a default stream.
+ */
+static int expect_quic_conn_only(const SSL *s, QCTX *ctx)
+{
+    if (!expect_quic(s, ctx))
+        return 0;
+
+    if (ctx->is_stream)
+        return QUIC_RAISE_NON_NORMAL_ERROR(ctx->qc, ERR_R_INTERNAL_ERROR, NULL);
+
+    return 1;
 }
 
 /*
