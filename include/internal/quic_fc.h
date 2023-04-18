@@ -147,9 +147,6 @@ struct quic_rxfc_st {
  * and absolute maximum window sizes, respectively. Window size values are
  * expressed in bytes and determine how much credit the RXFC extends to the peer
  * to transmit more data at a time.
- *
- * If stream_count_mode is 1, this RXFC is for use tracking maximum stream count
- * enforcement. In this case conn_rxfc must be NULL.
  */
 int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
                         uint64_t initial_window_size,
