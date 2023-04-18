@@ -1822,6 +1822,20 @@ int SSL_inject_net_dgram(SSL *s, const unsigned char *buf,
 }
 
 /*
+ * SSL_get0_connection
+ * -------------------
+ */
+SSL *ossl_quic_get0_connection(SSL *s)
+{
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
+        return NULL;
+
+    return &ctx.qc->ssl;
+}
+
+/*
  * QUIC Front-End I/O API: SSL_CTX Management
  * ==========================================
  */
