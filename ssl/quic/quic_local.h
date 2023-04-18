@@ -86,10 +86,16 @@ struct quic_conn_st {
     unsigned int                    can_poll_net_wbio       : 1;
 
     /*
-     * Has the application called SSL_set_accept_state? We do not support this
-     * but track it here so we can reject a subsequent handshake call.
+     * This is 1 if we were instantiated using a QUIC server method
+     * (for future use).
      */
     unsigned int                    as_server               : 1;
+
+    /*
+     * Has the application called SSL_set_accept_state? We require this to be
+     * congruent with the value of as_server.
+     */
+    unsigned int                    as_server_state         : 1;
 
     /* Are we using thread assisted mode? Never changes after init. */
     unsigned int                    is_thread_assisted      : 1;
