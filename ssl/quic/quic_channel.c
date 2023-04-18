@@ -225,26 +225,6 @@ static int ch_init(QUIC_CHANNEL *ch)
             goto err;
     }
 
-    if ((ch->stream0 = ossl_quic_stream_map_alloc(&ch->qsm, 0,
-                                                  QUIC_STREAM_INITIATOR_CLIENT
-                                                  | QUIC_STREAM_DIR_BIDI)) == NULL)
-        goto err;
-
-    if ((ch->stream0->sstream = ossl_quic_sstream_new(INIT_APP_BUF_LEN)) == NULL)
-        goto err;
-
-    if ((ch->stream0->rstream = ossl_quic_rstream_new(NULL, NULL, 0)) == NULL)
-        goto err;
-
-    if (!ossl_quic_txfc_init(&ch->stream0->txfc, &ch->conn_txfc))
-        goto err;
-
-    if (!ossl_quic_rxfc_init(&ch->stream0->rxfc, &ch->conn_rxfc,
-                             1 * 1024 * 1024,
-                             5 * 1024 * 1024,
-                             get_time, ch))
-        goto err;
-
     /* Plug in the TLS handshake layer. */
     tls_args.s                          = ch->tls;
     tls_args.crypto_send_cb             = ch_on_crypto_send;
@@ -310,11 +290,6 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     if (ch->have_statm)
         ossl_statm_destroy(&ch->statm);
     ossl_ackm_free(ch->ackm);
-
-    if (ch->stream0 != NULL) {
-        assert(ch->have_qsm);
-        ossl_quic_stream_map_release(&ch->qsm, ch->stream0); /* frees sstream */
-    }
 
     if (ch->have_qsm)
         ossl_quic_stream_map_cleanup(&ch->qsm);
