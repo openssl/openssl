@@ -351,7 +351,9 @@ OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETIS
         || args->ackm == NULL
         || args->qsm == NULL
         || args->conn_txfc == NULL
-        || args->conn_rxfc == NULL) {
+        || args->conn_rxfc == NULL
+        || args->max_streams_bidi_rxfc == NULL
+        || args->max_streams_uni_rxfc == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
@@ -807,8 +809,13 @@ static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
         return 1;
 
     /* Do we want to produce a MAX_STREAMS frame? */
-    if (a.allow_conn_fc && (txp->want_max_streams_bidi
-                            || txp->want_max_streams_uni))
+    if (a.allow_conn_fc
+        && (txp->want_max_streams_bidi
+            || ossl_quic_rxfc_has_cwm_changed(txp->args.max_streams_bidi_rxfc,
+                                              0)
+            || txp->want_max_streams_uni
+            || ossl_quic_rxfc_has_cwm_changed(txp->args.max_streams_uni_rxfc,
+                                              0)))
         return 1;
 
     /* Do we want to produce a HANDSHAKE_DONE frame? */
@@ -1927,15 +1934,13 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
     }
 
     /* MAX_STREAMS_BIDI (Regenerate) */
-    /*
-     * TODO(STREAMS): Once we support multiple streams, add stream count FC
-     * and plug this in.
-     */
     if (a.allow_conn_fc
-        && txp->want_max_streams_bidi
+        && (txp->want_max_streams_bidi
+            || ossl_quic_rxfc_has_cwm_changed(txp->args.max_streams_bidi_rxfc, 0))
         && tx_helper_get_space_left(&h) >= MIN_FRAME_SIZE_MAX_STREAMS_BIDI) {
         WPACKET *wpkt = tx_helper_begin(&h);
-        uint64_t max_streams = 1; /* TODO */
+        uint64_t max_streams
+            = ossl_quic_rxfc_get_cwm(txp->args.max_streams_bidi_rxfc);
 
         if (wpkt == NULL)
             goto fatal_err;
@@ -1956,10 +1961,12 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
 
     /* MAX_STREAMS_UNI (Regenerate) */
     if (a.allow_conn_fc
-        && txp->want_max_streams_uni
+        && (txp->want_max_streams_uni
+            || ossl_quic_rxfc_has_cwm_changed(txp->args.max_streams_uni_rxfc, 0))
         && tx_helper_get_space_left(&h) >= MIN_FRAME_SIZE_MAX_STREAMS_UNI) {
         WPACKET *wpkt = tx_helper_begin(&h);
-        uint64_t max_streams = 0; /* TODO */
+        uint64_t max_streams
+            = ossl_quic_rxfc_get_cwm(txp->args.max_streams_uni_rxfc);
 
         if (wpkt == NULL)
             goto fatal_err;
@@ -2209,11 +2216,15 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
         ossl_quic_rxfc_has_cwm_changed(txp->args.conn_rxfc, 1);
     }
 
-    if (tpkt->had_max_streams_bidi_frame)
+    if (tpkt->had_max_streams_bidi_frame) {
         txp->want_max_streams_bidi = 0;
+        ossl_quic_rxfc_has_cwm_changed(txp->args.max_streams_bidi_rxfc, 1);
+    }
 
-    if (tpkt->had_max_streams_uni_frame)
+    if (tpkt->had_max_streams_uni_frame) {
         txp->want_max_streams_uni = 0;
+        ossl_quic_rxfc_has_cwm_changed(txp->args.max_streams_uni_rxfc, 1);
+    }
 
     if (tpkt->had_ack_frame)
         txp->want_ack &= ~(1UL << pn_space);

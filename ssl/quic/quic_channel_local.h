@@ -69,9 +69,13 @@ struct quic_channel_st {
     OSSL_QUIC_TX_PACKETISER         *txp;
     QUIC_TXPIM                      *txpim;
     QUIC_CFQ                        *cfq;
-    /* Connection level FC. */
+    /*
+     * Connection level FC. The stream_count RXFCs is used to manage
+     * MAX_STREAMS signalling.
+     */
     QUIC_TXFC                       conn_txfc;
     QUIC_RXFC                       conn_rxfc;
+    QUIC_RXFC                       max_streams_bidi_rxfc, max_streams_uni_rxfc;
     QUIC_STREAM_MAP                 qsm;
     OSSL_STATM                      statm;
     OSSL_CC_DATA                    *cc_data;

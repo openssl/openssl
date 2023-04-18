@@ -111,6 +111,8 @@ static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
 #define DEFAULT_INIT_STREAM_RXFC_WND    (2 * 1024 * 1024)
 #define DEFAULT_STREAM_RXFC_MAX_WND_MUL 5
 
+#define DEFAULT_INIT_CONN_MAX_STREAMS           100
+
 static int ch_init(QUIC_CHANNEL *ch)
 {
     OSSL_QUIC_TX_PACKETISER_ARGS txp_args = {0};
@@ -160,6 +162,16 @@ static int ch_init(QUIC_CHANNEL *ch)
                              get_time, ch))
         goto err;
 
+    if (!ossl_quic_rxfc_init_for_stream_count(&ch->max_streams_bidi_rxfc,
+                                              DEFAULT_INIT_CONN_MAX_STREAMS,
+                                              get_time, ch))
+        goto err;
+
+    if (!ossl_quic_rxfc_init_for_stream_count(&ch->max_streams_uni_rxfc,
+                                             DEFAULT_INIT_CONN_MAX_STREAMS,
+                                             get_time, ch))
+        goto err;
+
     if (!ossl_statm_init(&ch->statm))
         goto err;
 
@@ -172,25 +184,29 @@ static int ch_init(QUIC_CHANNEL *ch)
                                   ch->cc_method, ch->cc_data)) == NULL)
         goto err;
 
-    if (!ossl_quic_stream_map_init(&ch->qsm, get_stream_limit, ch))
+    if (!ossl_quic_stream_map_init(&ch->qsm, get_stream_limit, ch,
+                                   &ch->max_streams_bidi_rxfc,
+                                   &ch->max_streams_uni_rxfc))
         goto err;
 
     ch->have_qsm = 1;
 
     /* We use a zero-length SCID. */
-    txp_args.cur_dcid           = ch->init_dcid;
-    txp_args.ack_delay_exponent = 3;
-    txp_args.qtx                = ch->qtx;
-    txp_args.txpim              = ch->txpim;
-    txp_args.cfq                = ch->cfq;
-    txp_args.ackm               = ch->ackm;
-    txp_args.qsm                = &ch->qsm;
-    txp_args.conn_txfc          = &ch->conn_txfc;
-    txp_args.conn_rxfc          = &ch->conn_rxfc;
-    txp_args.cc_method          = ch->cc_method;
-    txp_args.cc_data            = ch->cc_data;
-    txp_args.now                = get_time;
-    txp_args.now_arg            = ch;
+    txp_args.cur_dcid               = ch->init_dcid;
+    txp_args.ack_delay_exponent     = 3;
+    txp_args.qtx                    = ch->qtx;
+    txp_args.txpim                  = ch->txpim;
+    txp_args.cfq                    = ch->cfq;
+    txp_args.ackm                   = ch->ackm;
+    txp_args.qsm                    = &ch->qsm;
+    txp_args.conn_txfc              = &ch->conn_txfc;
+    txp_args.conn_rxfc              = &ch->conn_rxfc;
+    txp_args.max_streams_bidi_rxfc  = &ch->max_streams_bidi_rxfc;
+    txp_args.max_streams_uni_rxfc   = &ch->max_streams_uni_rxfc;
+    txp_args.cc_method              = ch->cc_method;
+    txp_args.cc_data                = ch->cc_data;
+    txp_args.now                    = get_time;
+    txp_args.now_arg                = ch;
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
         ch->crypto_send[pn_space] = ossl_quic_sstream_new(INIT_CRYPTO_BUF_LEN);
         if (ch->crypto_send[pn_space] == NULL)
@@ -1215,13 +1231,12 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
                                                    ch->tx_init_max_stream_data_uni))
         goto err;
 
-    /* TODO(QUIC): MAX_STREAMS modelling */
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAMS_BIDI,
-                                                   ch->is_server ? 100 : 100))
+                                                   ossl_quic_rxfc_get_cwm(&ch->max_streams_bidi_rxfc)))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAMS_UNI,
-                                                   100))
+                                                   ossl_quic_rxfc_get_cwm(&ch->max_streams_uni_rxfc)))
         goto err;
 
     if (!WPACKET_get_total_written(&wpkt, &buf_len))
