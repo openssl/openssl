@@ -112,6 +112,10 @@ struct quic_stream_st {
     unsigned int    want_stop_sending       : 1; /* used for gen or regen */
     unsigned int    want_reset_stream       : 1; /* used for gen or regen */
 
+    /* Flags set when frames *we* sent were acknowledged. */
+    unsigned int    acked_stop_sending      : 1;
+    unsigned int    acked_reset_stream      : 1;
+
     /* A FIN has been retired from the rstream buffer. */
     unsigned int    recv_fin_retired        : 1;
 

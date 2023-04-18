@@ -27,6 +27,11 @@ int ossl_quic_fifd_init(QUIC_FIFD *fifd,
                                             QUIC_TXPIM_PKT *pkt,
                                             void *arg),
                         void *regen_frame_arg,
+                        void (*confirm_frame)(uint64_t frame_type,
+                                              uint64_t stream_id,
+                                              QUIC_TXPIM_PKT *pkt,
+                                              void *arg),
+                        void *confirm_frame_arg,
                         void (*sstream_updated)(uint64_t stream_id,
                                                 void *arg),
                         void *sstream_updated_arg)
@@ -42,6 +47,8 @@ int ossl_quic_fifd_init(QUIC_FIFD *fifd,
     fifd->get_sstream_by_id_arg = get_sstream_by_id_arg;
     fifd->regen_frame           = regen_frame;
     fifd->regen_frame_arg       = regen_frame_arg;
+    fifd->confirm_frame         = confirm_frame;
+    fifd->confirm_frame_arg     = confirm_frame_arg;
     fifd->sstream_updated       = sstream_updated;
     fifd->sstream_updated_arg   = sstream_updated_arg;
     return 1;
@@ -75,6 +82,16 @@ static void on_acked(void *arg)
 
         if (chunks[i].has_fin && chunks[i].stream_id != UINT64_MAX)
             ossl_quic_sstream_mark_acked_fin(sstream);
+
+        if (chunks[i].has_stop_sending && chunks[i].stream_id != UINT64_MAX)
+            fifd->confirm_frame(OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
+                                chunks[i].stream_id, pkt,
+                                fifd->confirm_frame_arg);
+
+        if (chunks[i].has_reset_stream && chunks[i].stream_id != UINT64_MAX)
+            fifd->confirm_frame(OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
+                                chunks[i].stream_id, pkt,
+                                fifd->confirm_frame_arg);
     }
 
     /* GCR */
