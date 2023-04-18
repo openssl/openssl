@@ -308,6 +308,33 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
     return 1;
 }
 
+static void update_streams(QUIC_STREAM *s, void *arg)
+{
+    QUIC_CHANNEL *ch = arg;
+
+    ossl_quic_stream_map_update_state(&ch->qsm, s);
+}
+
+static void update_streams_bidi(QUIC_STREAM *s, void *arg)
+{
+    QUIC_CHANNEL *ch = arg;
+
+    if (!ossl_quic_stream_is_bidi(s))
+        return;
+
+    ossl_quic_stream_map_update_state(&ch->qsm, s);
+}
+
+static void update_streams_uni(QUIC_STREAM *s, void *arg)
+{
+    QUIC_CHANNEL *ch = arg;
+
+    if (ossl_quic_stream_is_bidi(s))
+        return;
+
+    ossl_quic_stream_map_update_state(&ch->qsm, s);
+}
+
 static int depack_do_frame_max_data(PACKET *pkt, QUIC_CHANNEL *ch,
                                     OSSL_ACKM_RX_PKT *ackm_data)
 {
@@ -325,7 +352,7 @@ static int depack_do_frame_max_data(PACKET *pkt, QUIC_CHANNEL *ch,
     ackm_data->is_ack_eliciting = 1;
 
     ossl_quic_txfc_bump_cwm(&ch->conn_txfc, max_data);
-    ossl_quic_stream_map_update_state(&ch->qsm, ch->stream0);
+    ossl_quic_stream_map_visit(&ch->qsm, update_streams, ch);
     return 1;
 }
 
@@ -404,17 +431,15 @@ static int depack_do_frame_max_streams(PACKET *pkt,
         if (max_streams > ch->max_local_streams_bidi)
             ch->max_local_streams_bidi = max_streams;
 
-        /* Stream may now be able to send */
-        ossl_quic_stream_map_update_state(&ch->qsm,
-                                          ch->stream0);
+        /* Some streams may now be able to send. */
+        ossl_quic_stream_map_visit(&ch->qsm, update_streams_bidi, ch);
         break;
     case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI:
         if (max_streams > ch->max_local_streams_uni)
             ch->max_local_streams_uni = max_streams;
 
-        /* Stream may now be able to send */
-        ossl_quic_stream_map_update_state(&ch->qsm,
-                                          ch->stream0);
+        /* Some streams may now be able to send. */
+        ossl_quic_stream_map_visit(&ch->qsm, update_streams_uni, ch);
         break;
     default:
         ossl_quic_channel_raise_protocol_error(ch,

@@ -714,6 +714,31 @@ static int ch_on_handshake_alert(void *arg, unsigned char alert_code)
 #define TP_REASON_REQUIRED(x) \
     x " was not sent but is required"
 
+static void txfc_bump_cwm_bidi(QUIC_STREAM *s, void *arg)
+{
+    if (!ossl_quic_stream_is_bidi(s)
+        || ossl_quic_stream_is_server_init(s))
+        return;
+
+    ossl_quic_txfc_bump_cwm(&s->txfc, *(uint64_t *)arg);
+}
+
+static void txfc_bump_cwm_uni(QUIC_STREAM *s, void *arg)
+{
+    if (ossl_quic_stream_is_bidi(s)
+        || ossl_quic_stream_is_server_init(s))
+        return;
+
+    ossl_quic_txfc_bump_cwm(&s->txfc, *(uint64_t *)arg);
+}
+
+static void do_update(QUIC_STREAM *s, void *arg)
+{
+    QUIC_CHANNEL *ch = arg;
+
+    ossl_quic_stream_map_update_state(&ch->qsm, s);
+}
+
 static int ch_on_transport_params(const unsigned char *params,
                                   size_t params_len,
                                   void *arg)
@@ -881,8 +906,8 @@ static int ch_on_transport_params(const unsigned char *params,
              */
             ch->rx_init_max_stream_data_bidi_local = v;
 
-            /* Apply to stream 0. */
-            ossl_quic_txfc_bump_cwm(&ch->stream0->txfc, v);
+            /* Apply to all existing streams. */
+            ossl_quic_stream_map_visit(&ch->qsm, txfc_bump_cwm_bidi, &v);
             got_initial_max_stream_data_bidi_remote = 1;
             break;
 
@@ -899,6 +924,9 @@ static int ch_on_transport_params(const unsigned char *params,
             }
 
             ch->rx_init_max_stream_data_uni_remote = v;
+
+            /* Apply to all existing streams. */
+            ossl_quic_stream_map_visit(&ch->qsm, txfc_bump_cwm_uni, &v);
             got_initial_max_stream_data_uni = 1;
             break;
 
@@ -1093,8 +1121,11 @@ static int ch_on_transport_params(const unsigned char *params,
 
     if (got_initial_max_data || got_initial_max_stream_data_bidi_remote
         || got_initial_max_streams_bidi || got_initial_max_streams_uni)
-        /* If FC credit was bumped, we may now be able to send. */
-        ossl_quic_stream_map_update_state(&ch->qsm, ch->stream0);
+        /*
+         * If FC credit was bumped, we may now be able to send. Update all
+         * streams.
+         */
+        ossl_quic_stream_map_visit(&ch->qsm, do_update, ch);
 
     /* If we are a server, we now generate our own transport parameters. */
     if (ch->is_server && !ch_generate_transport_params(ch)) {
