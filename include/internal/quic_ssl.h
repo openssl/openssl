@@ -77,6 +77,20 @@ __owur int ossl_quic_set_incoming_stream_reject_policy(SSL *s, int policy,
 __owur SSL *ossl_quic_accept_stream(SSL *s, uint64_t flags);
 __owur size_t ossl_quic_get_accept_stream_queue_len(SSL *s);
 
+__owur int ossl_quic_stream_reset(SSL *ssl,
+                                  const SSL_STREAM_RESET_ARGS *args,
+                                  size_t args_len);
+
+__owur int ossl_quic_get_stream_read_state(SSL *ssl);
+__owur int ossl_quic_get_stream_write_state(SSL *ssl);
+__owur int ossl_quic_get_stream_read_error_code(SSL *ssl,
+                                                uint64_t *app_error_code);
+__owur int ossl_quic_get_stream_write_error_code(SSL *ssl,
+                                                 uint64_t *app_error_code);
+__owur int ossl_quic_get_conn_close_info(SSL *ssl,
+                                         SSL_CONN_CLOSE_INFO *info,
+                                         size_t info_len);
+
 /*
  * Used to override ossl_time_now() for debug purposes. Must be called before
  * connecting.
