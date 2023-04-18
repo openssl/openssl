@@ -2275,6 +2275,8 @@ __owur int SSL_is_connection(SSL *s);
 #define SSL_STREAM_TYPE_BIDI        (SSL_STREAM_TYPE_READ | SSL_STREAM_TYPE_WRITE)
 __owur int SSL_get_stream_type(SSL *s);
 
+__owur uint64_t SSL_get_stream_id(SSL *s);
+
 #define SSL_STREAM_FLAG_UNI     (1U << 0)
 __owur SSL *SSL_new_stream(SSL *s, uint64_t flags);
 
