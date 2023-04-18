@@ -2214,7 +2214,7 @@ SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch)
     return ch->tls;
 }
 
-QUIC_STREAM *ossl_quic_channel_new_stream(QUIC_CHANNEL *ch, int is_uni)
+QUIC_STREAM *ossl_quic_channel_new_stream_local(QUIC_CHANNEL *ch, int is_uni)
 {
     QUIC_STREAM *qs;
     int type = 0;
@@ -2240,5 +2240,28 @@ QUIC_STREAM *ossl_quic_channel_new_stream(QUIC_CHANNEL *ch, int is_uni)
         return NULL;
 
     ++*p_next_ordinal;
+    return qs;
+}
+
+QUIC_STREAM *ossl_quic_channel_new_stream_remote(QUIC_CHANNEL *ch,
+                                                 uint64_t stream_id)
+{
+    uint64_t peer_role;
+    QUIC_STREAM *qs;
+
+    peer_role = ch->is_server
+        ? QUIC_STREAM_INITIATOR_CLIENT
+        : QUIC_STREAM_INITIATOR_SERVER;
+
+    if ((stream_id & QUIC_STREAM_INITIATOR_MASK) != peer_role)
+        return NULL;
+
+    qs = ossl_quic_stream_map_alloc(&ch->qsm, stream_id,
+                                    stream_id & (QUIC_STREAM_INITIATOR_MASK
+                                                 | QUIC_STREAM_DIR_MASK));
+    if (qs == NULL)
+        return NULL;
+
+    ossl_quic_stream_map_push_accept_queue(&ch->qsm, qs);
     return qs;
 }

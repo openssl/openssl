@@ -36,6 +36,7 @@ struct quic_stream_list_node_st {
 
 struct quic_stream_st {
     QUIC_STREAM_LIST_NODE active_node; /* for use by QUIC_STREAM_MAP */
+    QUIC_STREAM_LIST_NODE accept_node; /* accept queue of remotely-created streams */
 
     /* Temporary link used by TXP. */
     QUIC_STREAM    *txp_next;
@@ -132,7 +133,8 @@ int ossl_quic_stream_reset(QUIC_STREAM *s, uint64_t aec);
 typedef struct quic_stream_map_st {
     LHASH_OF(QUIC_STREAM)   *map;
     QUIC_STREAM_LIST_NODE   active_list;
-    size_t                  rr_stepping, rr_counter;
+    QUIC_STREAM_LIST_NODE   accept_list;
+    size_t                  rr_stepping, rr_counter, num_accept;
     QUIC_STREAM             *rr_cur;
     uint64_t                (*get_stream_limit_cb)(int uni, void *arg);
     void                    *get_stream_limit_cb_arg;
@@ -230,6 +232,29 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s);
  * packets. The default value is 1.
  */
 void ossl_quic_stream_map_set_rr_stepping(QUIC_STREAM_MAP *qsm, size_t stepping);
+
+/*
+ * Adds a stream to the accept queue.
+ */
+void ossl_quic_stream_map_push_accept_queue(QUIC_STREAM_MAP *qsm,
+                                            QUIC_STREAM *s);
+
+/*
+ * Returns the next item to be popped from the accept queue, or NULL if it is
+ * empty.
+ */
+QUIC_STREAM *ossl_quic_stream_map_peek_accept_queue(QUIC_STREAM_MAP *qsm);
+
+/*
+ * Removes a stream from the accept queue.
+ *
+ * Precondition: s is in the accept queue.
+ */
+void ossl_quic_stream_map_remove_from_accept_queue(QUIC_STREAM_MAP *qsm,
+                                                   QUIC_STREAM *s);
+
+/* Returns the length of the accept queue. */
+size_t ossl_quic_stream_map_get_accept_queue_len(QUIC_STREAM_MAP *qsm);
 
 /*
  * QUIC Stream Iterator

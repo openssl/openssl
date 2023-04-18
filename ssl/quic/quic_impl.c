@@ -296,6 +296,15 @@ void ossl_quic_free(SSL *s)
 
         ctx.xso->stream->deleted = 1;
 
+        /* Auto-conclude stream. */
+        /* TODO(QUIC): Do RESET_STREAM here instead of auto-conclude */
+        if (ctx.xso->stream->sstream != NULL)
+            ossl_quic_sstream_fin(ctx.xso->stream->sstream);
+
+        /* Update stream state. */
+        ossl_quic_stream_map_update_state(ossl_quic_channel_get_qsm(ctx.xso->conn->ch),
+                                          ctx.xso->stream);
+
         quic_unlock(ctx.qc);
 
         /* Note: SSL_free calls OPENSSL_free(xso) for us */
@@ -1106,7 +1115,7 @@ SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags)
     xso->blocking   = ctx.qc->default_blocking;
     xso->ssl_mode   = ctx.qc->default_ssl_mode;
 
-    xso->stream     = ossl_quic_channel_new_stream(ctx.qc->ch, is_uni);
+    xso->stream     = ossl_quic_channel_new_stream_local(ctx.qc->ch, is_uni);
     if (xso->stream == NULL)
         goto err;
 
