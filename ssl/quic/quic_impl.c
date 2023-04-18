@@ -28,6 +28,8 @@ static int quic_do_handshake(QUIC_CONNECTION *qc);
 static void qc_update_reject_policy(QUIC_CONNECTION *qc);
 static void qc_touch_default_xso(QUIC_CONNECTION *qc);
 static void qc_set_default_xso(QUIC_CONNECTION *qc, QUIC_XSO *xso, int touch);
+static SSL *quic_conn_stream_new(QUIC_CONNECTION *qc, uint64_t flags,
+                                 int need_lock);
 
 /*
  * QUIC Front-End I/O API: Common Utilities
@@ -1190,7 +1192,8 @@ static int qc_try_create_default_xso_for_write(QUIC_CONNECTION *qc)
     if (qc->default_stream_mode == SSL_DEFAULT_STREAM_MODE_AUTO_UNI)
         flags |= SSL_STREAM_FLAG_UNI;
 
-    qc_set_default_xso(qc, (QUIC_XSO *)ossl_quic_conn_stream_new(&qc->ssl, flags),
+    qc_set_default_xso(qc, (QUIC_XSO *)quic_conn_stream_new(qc, flags,
+                                                            /*needs_lock=*/0),
                        /*touch=*/0);
     if (qc->default_xso == NULL)
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
@@ -1321,41 +1324,55 @@ err:
     return NULL;
 }
 
-QUIC_TAKES_LOCK
-SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags)
+/* locking depends on need_lock */
+static SSL *quic_conn_stream_new(QUIC_CONNECTION *qc, uint64_t flags,
+                                 int need_lock)
 {
-    QCTX ctx;
     QUIC_XSO *xso = NULL;
     QUIC_STREAM *qs = NULL;
     int is_uni = ((flags & SSL_STREAM_FLAG_UNI) != 0);
 
-    if (!expect_quic_conn_only(s, &ctx))
-        return NULL;
+    if (need_lock)
+        quic_lock(qc);
 
-    quic_lock(ctx.qc);
-
-    if (ossl_quic_channel_is_term_any(ctx.qc->ch)) {
-        QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+    if (ossl_quic_channel_is_term_any(qc->ch)) {
+        QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         goto err;
     }
 
-    qs = ossl_quic_channel_new_stream_local(ctx.qc->ch, is_uni);
+    qs = ossl_quic_channel_new_stream_local(qc->ch, is_uni);
     if (qs == NULL)
         goto err;
 
-    xso = create_xso_from_stream(ctx.qc, qs);
+    xso = create_xso_from_stream(qc, qs);
     if (xso == NULL)
         goto err;
 
-    qc_touch_default_xso(ctx.qc); /* inhibits default XSO */
-    quic_unlock(ctx.qc);
+    qc_touch_default_xso(qc); /* inhibits default XSO */
+    if (need_lock)
+        quic_unlock(qc);
+
     return &xso->ssl;
 
 err:
     OPENSSL_free(xso);
-    ossl_quic_stream_map_release(ossl_quic_channel_get_qsm(ctx.qc->ch), qs);
-    quic_unlock(ctx.qc);
+    ossl_quic_stream_map_release(ossl_quic_channel_get_qsm(qc->ch), qs);
+    if (need_lock)
+        quic_unlock(qc);
+
     return NULL;
+
+}
+
+QUIC_TAKES_LOCK
+SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags)
+{
+    QCTX ctx;
+
+    if (!expect_quic_conn_only(s, &ctx))
+        return NULL;
+
+    return quic_conn_stream_new(ctx.qc, flags, /*need_lock=*/1);
 }
 
 /*
