@@ -2380,9 +2380,11 @@ void ossl_quic_channel_set_incoming_stream_auto_reject(QUIC_CHANNEL *ch,
 
 void ossl_quic_channel_reject_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs)
 {
-    ossl_quic_stream_stop_sending(qs, ch->incoming_stream_auto_reject_aec);
-    ossl_quic_stream_reset(qs, ch->incoming_stream_auto_reject_aec);
+    ossl_quic_stream_map_stop_sending_recv_part(&ch->qsm, qs,
+                                                ch->incoming_stream_auto_reject_aec);
 
+    ossl_quic_stream_map_reset_stream_send_part(&ch->qsm, qs,
+                                                ch->incoming_stream_auto_reject_aec);
     qs->deleted = 1;
 
     ossl_quic_stream_map_update_state(&ch->qsm, qs);
