@@ -254,7 +254,8 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
 
     stream = ossl_quic_stream_map_get_by_id(&ch->qsm, frame_data.stream_id);
     if (stream == NULL) {
-        uint64_t peer_role, stream_ordinal, *p_next_ordinal;
+        uint64_t peer_role, stream_ordinal;
+        uint64_t *p_next_ordinal_local, *p_next_ordinal_remote;
         int is_uni;
 
         /*
@@ -286,14 +287,33 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
         stream_ordinal = frame_data.stream_id >> 2;
 
         if ((frame_data.stream_id & QUIC_STREAM_INITIATOR_MASK) == peer_role) {
-            /* Peer-created stream which does not yet exist. Create it. */
-            stream = ossl_quic_channel_new_stream_remote(ch, frame_data.stream_id);
-            if (stream == NULL) {
-                ossl_quic_channel_raise_protocol_error(ch,
-                                                       QUIC_ERR_INTERNAL_ERROR,
-                                                       frame_type,
-                                                       "internal error (stream allocation)");
-                return 0;
+            /*
+             * Peer-created stream which does not yet exist. Create it. QUIC
+             * stream ordinals within a given stream type MUST be used in
+             * sequence and receiving a STREAM frame for ordinal n must
+             * implicitly create streams with ordinals [0, n) within that stream
+             * type even if no explicit STREAM frames are received for those
+             * ordinals.
+             */
+            p_next_ordinal_remote = is_uni
+                ? &ch->next_remote_stream_ordinal_uni
+                : &ch->next_remote_stream_ordinal_bidi;
+
+            while (*p_next_ordinal_remote <= stream_ordinal) {
+                uint64_t stream_id = (*p_next_ordinal_remote << 2) |
+                    (frame_data.stream_id
+                     & (QUIC_STREAM_DIR_MASK | QUIC_STREAM_INITIATOR_MASK));
+
+                stream = ossl_quic_channel_new_stream_remote(ch, stream_id);
+                if (stream == NULL) {
+                    ossl_quic_channel_raise_protocol_error(ch,
+                                                           QUIC_ERR_INTERNAL_ERROR,
+                                                           frame_type,
+                                                           "internal error (stream allocation)");
+                    return 0;
+                }
+
+                ++*p_next_ordinal_remote;
             }
 
             /*
@@ -303,11 +323,11 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
         } else {
             /* Locally-created stream which does not yet exist. */
 
-            p_next_ordinal = is_uni
+            p_next_ordinal_local = is_uni
                 ? &ch->next_local_stream_ordinal_uni
                 : &ch->next_local_stream_ordinal_bidi;
 
-            if (stream_ordinal >= *p_next_ordinal) {
+            if (stream_ordinal >= *p_next_ordinal_local) {
                 /*
                  * We never created this stream yet, this is a protocol
                  * violation.

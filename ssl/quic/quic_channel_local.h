@@ -168,6 +168,15 @@ struct quic_channel_st {
     uint64_t                        next_local_stream_ordinal_uni;
 
     /*
+     * Used to track which stream ordinals within a given stream type have been
+     * used by the remote peer. This is an optimisation used to determine
+     * which streams should be implicitly created due to usage of a higher
+     * stream ordinal.
+     */
+    uint64_t                        next_remote_stream_ordinal_bidi;
+    uint64_t                        next_remote_stream_ordinal_uni;
+
+    /*
      * Application error code to be used for STOP_SENDING/RESET_STREAM frames
      * used to autoreject incoming streams.
      */
