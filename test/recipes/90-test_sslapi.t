@@ -19,7 +19,7 @@ use lib bldtop_dir('.');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $fipsmodcfg_filename = "fipsmodule.cnf";
-my $fipsmodcfg = bldtop_file("providers", $fipsmodcfg_filename);
+my $fipsmodcfg = bldtop_file("test", $fipsmodcfg_filename);
 
 my $provconf = srctop_file("test", "fips-and-base.cnf");
 
