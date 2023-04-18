@@ -271,19 +271,31 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
 
     should_be_active
         = allowed_by_stream_limit
-        && !s->peer_stop_sending
-        && !s->peer_reset_stream
-        && ((s->rstream != NULL
-            && (s->want_max_stream_data
-                || ossl_quic_rxfc_has_cwm_changed(&s->rxfc, 0)))
+        && ((!s->peer_reset_stream && s->rstream != NULL
+             && (s->want_max_stream_data
+                 || ossl_quic_rxfc_has_cwm_changed(&s->rxfc, 0)))
             || s->want_stop_sending
             || s->want_reset_stream
-            || stream_has_data_to_send(s));
+            || (!s->peer_stop_sending && stream_has_data_to_send(s)));
 
     if (should_be_active)
         stream_map_mark_active(qsm, s);
     else
         stream_map_mark_inactive(qsm, s);
+}
+
+void ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
+                                                 QUIC_STREAM *qs,
+                                                 uint64_t aec)
+{
+    if (qs->reset_stream)
+        return;
+
+    qs->reset_stream        = 1;
+    qs->reset_stream_aec    = aec;
+    qs->want_reset_stream   = 1;
+
+    ossl_quic_stream_map_update_state(qsm, qs);
 }
 
 QUIC_STREAM *ossl_quic_stream_map_peek_accept_queue(QUIC_STREAM_MAP *qsm)
