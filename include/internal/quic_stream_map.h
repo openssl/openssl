@@ -166,6 +166,16 @@ void ossl_quic_stream_map_cleanup(QUIC_STREAM_MAP *qsm);
 #define QUIC_STREAM_DIR_UNI                 2
 #define QUIC_STREAM_DIR_MASK                2
 
+static ossl_inline ossl_unused int ossl_quic_stream_is_server_init(QUIC_STREAM *s)
+{
+    return (s->type & QUIC_STREAM_INITIATOR_MASK) == QUIC_STREAM_INITIATOR_SERVER;
+}
+
+static ossl_inline ossl_unused int ossl_quic_stream_is_bidi(QUIC_STREAM *s)
+{
+    return (s->type & QUIC_STREAM_DIR_MASK) == QUIC_STREAM_DIR_BIDI;
+}
+
 /*
  * Allocate a new stream. type is a combination of one QUIC_STREAM_INITIATOR_*
  * value and one QUIC_STREAM_DIR_* value. Note that clients can e.g. allocate
