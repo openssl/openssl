@@ -230,7 +230,7 @@ const OSSL_DISPATCH ossl_kdf_krb5kdf_functions[] = {
       (void(*)(void))krb5kdf_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS,
       (void(*)(void))krb5kdf_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 #ifndef OPENSSL_NO_DES

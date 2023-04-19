@@ -323,5 +323,5 @@ const OSSL_DISPATCH ossl_winstore_store_functions[] = {
     { OSSL_FUNC_STORE_LOAD, (void (*)(void))winstore_load },
     { OSSL_FUNC_STORE_EOF, (void (*)(void))winstore_eof },
     { OSSL_FUNC_STORE_CLOSE, (void (*)(void))winstore_close },
-    { 0, NULL },
+    OSSL_DISPATCH_END,
 };

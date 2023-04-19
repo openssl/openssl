@@ -538,7 +538,7 @@ static const OSSL_DISPATCH xor_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_SET_PEER, (void (*)(void))xor_set_peer },
     { OSSL_FUNC_KEYEXCH_FREECTX, (void (*)(void))xor_freectx },
     { OSSL_FUNC_KEYEXCH_DUPCTX, (void (*)(void))xor_dupctx },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 static const OSSL_ALGORITHM tls_prov_keyexch[] = {
@@ -667,7 +667,7 @@ static const OSSL_DISPATCH xor_kem_functions[] = {
     { OSSL_FUNC_KEM_ENCAPSULATE, (void (*)(void))xor_encapsulate },
     { OSSL_FUNC_KEM_DECAPSULATE_INIT, (void (*)(void))xor_init },
     { OSSL_FUNC_KEM_DECAPSULATE, (void (*)(void))xor_decapsulate },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 static const OSSL_ALGORITHM tls_prov_kem[] = {
@@ -1110,7 +1110,7 @@ static const OSSL_DISPATCH xor_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))xor_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))xor_export_types },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES_EX, (void (*)(void))xor_export_types_ex },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 /* We're re-using most XOR keymgmt functions also for signature operations: */
@@ -1164,7 +1164,7 @@ static const OSSL_DISPATCH xor_xorhmacsig_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))xor_export_types },
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))xor_load },
     { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))xor_match },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 static const OSSL_DISPATCH xor_xorhmacsha2sig_keymgmt_functions[] = {
@@ -1188,7 +1188,7 @@ static const OSSL_DISPATCH xor_xorhmacsha2sig_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))xor_export_types },
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))xor_load },
     { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))xor_match },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 typedef enum {
@@ -2009,7 +2009,7 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
           (void (*)(void))impl##_to_##kind##_##output##_free_object },      \
         { OSSL_FUNC_ENCODER_ENCODE,                                         \
           (void (*)(void))impl##_to_##kind##_##output##_encode },           \
-        { 0, NULL }                                                         \
+        OSSL_DISPATCH_END                                                   \
     }
 
 /*
@@ -2544,7 +2544,7 @@ static void xorx_key_adjust(void *key, struct der2key_ctx_st *ctx)
           (void (*)(void))xor_der2key_decode },                         \
         { OSSL_FUNC_DECODER_EXPORT_OBJECT,                              \
           (void (*)(void))der2key_export_object },                      \
-        { 0, NULL }                                                     \
+        OSSL_DISPATCH_END                                               \
     }
 
 MAKE_DECODER(XORSIGALG_NAME, xorhmacsig, xor, PrivateKeyInfo);
@@ -3111,7 +3111,7 @@ static const OSSL_DISPATCH xor_signature_functions[] = {
       (void (*)(void))xor_sig_set_ctx_md_params },
     { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS,
       (void (*)(void))xor_sig_settable_ctx_md_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 static const OSSL_ALGORITHM tls_prov_signature[] = {
@@ -3169,7 +3169,7 @@ static const OSSL_DISPATCH tls_prov_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))tls_prov_teardown },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))tls_prov_query },
     { OSSL_FUNC_PROVIDER_GET_CAPABILITIES, (void (*)(void))tls_prov_get_capabilities },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 static

@@ -26,7 +26,7 @@
 #ifndef AES_CBC_HMAC_SHA_CAPABLE
 # define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)              \
 const OSSL_DISPATCH ossl_##nm##kbits##sub##_functions[] = {                    \
-    { 0, NULL }                                                                \
+    OSSL_DISPATCH_END                                                              \
 };
 #else
 
@@ -403,7 +403,7 @@ const OSSL_DISPATCH ossl_##nm##kbits##sub##_functions[] = {                    \
         (void (*)(void))nm##_set_ctx_params },                                 \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
         (void (*)(void))nm##_settable_ctx_params },                            \
-    { 0, NULL }                                                                \
+    OSSL_DISPATCH_END                                                          \
 };
 
 #endif /* AES_CBC_HMAC_SHA_CAPABLE */

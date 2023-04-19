@@ -1293,7 +1293,7 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
           (void (*)(void))impl##_to_##kind##_##output##_free_object },      \
         { OSSL_FUNC_ENCODER_ENCODE,                                         \
           (void (*)(void))impl##_to_##kind##_##output##_encode },           \
-        { 0, NULL }                                                         \
+        OSSL_DISPATCH_END                                                   \
     }
 
 /*

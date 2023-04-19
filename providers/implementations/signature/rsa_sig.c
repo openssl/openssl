@@ -1488,5 +1488,5 @@ const OSSL_DISPATCH ossl_rsa_signature_functions[] = {
       (void (*)(void))rsa_set_ctx_md_params },
     { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS,
       (void (*)(void))rsa_settable_ctx_md_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

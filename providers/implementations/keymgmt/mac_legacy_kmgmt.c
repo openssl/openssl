@@ -542,7 +542,7 @@ const OSSL_DISPATCH ossl_mac_legacy_keymgmt_functions[] = {
         (void (*)(void))mac_gen_settable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))mac_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))mac_gen_cleanup },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 const OSSL_DISPATCH ossl_cmac_legacy_keymgmt_functions[] = {
@@ -564,6 +564,6 @@ const OSSL_DISPATCH ossl_cmac_legacy_keymgmt_functions[] = {
         (void (*)(void))cmac_gen_settable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))mac_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))mac_gen_cleanup },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 

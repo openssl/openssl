@@ -293,7 +293,7 @@ static int aes_wrap_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             (void (*)(void))ossl_cipher_generic_gettable_ctx_params },         \
         { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                \
             (void (*)(void))ossl_cipher_generic_settable_ctx_params },         \
-        { 0, NULL }                                                            \
+        OSSL_DISPATCH_END                                                      \
     }
 
 IMPLEMENT_cipher(wrap, wrap, WRAP, WRAP_FLAGS, 256, 64, AES_WRAP_NOPAD_IVLEN * 8);

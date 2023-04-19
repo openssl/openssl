@@ -165,7 +165,7 @@ const OSSL_DISPATCH ossl_x25519_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_SET_PEER, (void (*)(void))ecx_set_peer },
     { OSSL_FUNC_KEYEXCH_FREECTX, (void (*)(void))ecx_freectx },
     { OSSL_FUNC_KEYEXCH_DUPCTX, (void (*)(void))ecx_dupctx },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 const OSSL_DISPATCH ossl_x448_keyexch_functions[] = {
@@ -175,5 +175,5 @@ const OSSL_DISPATCH ossl_x448_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_SET_PEER, (void (*)(void))ecx_set_peer },
     { OSSL_FUNC_KEYEXCH_FREECTX, (void (*)(void))ecx_freectx },
     { OSSL_FUNC_KEYEXCH_DUPCTX, (void (*)(void))ecx_dupctx },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

@@ -394,7 +394,7 @@ const OSSL_DISPATCH ossl_kdf_hkdf_functions[] = {
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
       (void(*)(void))kdf_hkdf_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_hkdf_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 /*
@@ -810,5 +810,5 @@ const OSSL_DISPATCH ossl_kdf_tls1_3_kdf_functions[] = {
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
       (void(*)(void))kdf_hkdf_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_hkdf_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

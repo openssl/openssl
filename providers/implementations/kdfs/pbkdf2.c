@@ -288,7 +288,7 @@ const OSSL_DISPATCH ossl_kdf_pbkdf2_functions[] = {
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
       (void(*)(void))kdf_pbkdf2_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_pbkdf2_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 /*

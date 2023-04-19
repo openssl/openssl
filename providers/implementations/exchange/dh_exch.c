@@ -507,5 +507,5 @@ const OSSL_DISPATCH ossl_dh_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS, (void (*)(void))dh_get_ctx_params },
     { OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS,
       (void (*)(void))dh_gettable_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

@@ -233,5 +233,5 @@ const OSSL_DISPATCH ossl_siphash_functions[] = {
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
       (void (*)(void))siphash_settable_ctx_params },
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))siphash_set_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

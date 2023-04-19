@@ -255,5 +255,5 @@ const OSSL_DISPATCH ossl_kdf_hmac_drbg_functions[] = {
       (void(*)(void))hmac_drbg_kdf_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS,
       (void(*)(void))hmac_drbg_kdf_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

@@ -545,14 +545,14 @@ static const OSSL_DISPATCH fips_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_GET_CAPABILITIES,
       (void (*)(void))ossl_prov_get_capabilities },
     { OSSL_FUNC_PROVIDER_SELF_TEST, (void (*)(void))fips_self_test },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 /* Functions we provide to ourself */
 static const OSSL_DISPATCH intern_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))fips_intern_teardown },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 /*

@@ -277,7 +277,7 @@ static const OSSL_DISPATCH fake_rsa_keymgmt_funcs[] = {
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))fake_rsa_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))fake_rsa_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))fake_rsa_gen_cleanup },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 static const OSSL_ALGORITHM fake_rsa_keymgmt_algs[] = {
@@ -510,7 +510,7 @@ static const OSSL_DISPATCH fake_rsa_sig_funcs[] = {
         (void (*)(void))fake_rsa_dgstvfy_final },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,
         (void (*)(void))fake_rsa_dgstvfy },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 static const OSSL_ALGORITHM fake_rsa_sig_algs[] = {
@@ -629,7 +629,7 @@ static const OSSL_DISPATCH fake_rsa_store_funcs[] = {
     { OSSL_FUNC_STORE_LOAD, (void (*)(void))fake_rsa_st_load },
     { OSSL_FUNC_STORE_EOF, (void (*)(void))fake_rsa_st_eof },
     { OSSL_FUNC_STORE_CLOSE, (void (*)(void))fake_rsa_st_close },
-    { 0, NULL },
+    OSSL_DISPATCH_END,
 };
 
 static const OSSL_ALGORITHM fake_rsa_store_algs[] = {
@@ -659,7 +659,7 @@ static const OSSL_ALGORITHM *fake_rsa_query(void *provctx,
 static const OSSL_DISPATCH fake_rsa_method[] = {
     { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OSSL_LIB_CTX_free },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fake_rsa_query },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 static int fake_rsa_provider_init(const OSSL_CORE_HANDLE *handle,

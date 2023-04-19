@@ -230,5 +230,5 @@ const OSSL_DISPATCH ossl_rc4_hmac_ossl_md5_functions[] = {
         (void (*)(void))rc4_hmac_md5_set_ctx_params },
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
         (void (*)(void))rc4_hmac_md5_settable_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

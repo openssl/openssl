@@ -549,7 +549,7 @@ const OSSL_DISPATCH ossl_##aes##kbits##mode##_functions[] = {                  \
         (void (*)(void))cipher_ocb_gettable_ctx_params },                      \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
         (void (*)(void))cipher_ocb_settable_ctx_params },                      \
-    { 0, NULL }                                                                \
+    OSSL_DISPATCH_END                                                          \
 }
 
 IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 256, 128, OCB_DEFAULT_IV_LEN * 8);

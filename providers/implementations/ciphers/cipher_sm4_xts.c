@@ -275,7 +275,7 @@ const OSSL_DISPATCH ossl_sm4##kbits##xts_functions[] = {                       \
       (void (*)(void))sm4_xts_set_ctx_params },                                \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))sm4_xts_settable_ctx_params },                            \
-    { 0, NULL }                                                                \
+    OSSL_DISPATCH_END                                                          \
 }
 /* ossl_sm4128xts_functions */
 IMPLEMENT_cipher(xts, XTS, 128, SM4_XTS_FLAGS);

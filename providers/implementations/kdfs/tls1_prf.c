@@ -311,7 +311,7 @@ const OSSL_DISPATCH ossl_kdf_tls1_prf_functions[] = {
       (void(*)(void))kdf_tls1_prf_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS,
       (void(*)(void))kdf_tls1_prf_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 /*

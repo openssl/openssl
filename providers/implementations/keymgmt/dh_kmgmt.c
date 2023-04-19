@@ -841,7 +841,7 @@ const OSSL_DISPATCH ossl_dh_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))dh_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))dh_export_types },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))dh_dup },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 /* For any DH key, we use the "DH" algorithms regardless of sub-type. */
@@ -875,5 +875,5 @@ const OSSL_DISPATCH ossl_dhx_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
       (void (*)(void))dhx_query_operation_name },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))dh_dup },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

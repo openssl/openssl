@@ -607,7 +607,7 @@ const OSSL_DISPATCH ossl_ed25519_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))eddsa_set_ctx_params },
     { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
       (void (*)(void))eddsa_settable_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 const OSSL_DISPATCH ossl_ed448_signature_functions[] = {
@@ -628,7 +628,7 @@ const OSSL_DISPATCH ossl_ed448_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))eddsa_set_ctx_params },
     { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
       (void (*)(void))eddsa_settable_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 #ifdef S390X_EC_ASM

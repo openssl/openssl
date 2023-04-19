@@ -134,7 +134,7 @@ static const OSSL_DISPATCH fake_rand_functions[] = {
     { OSSL_FUNC_RAND_GETTABLE_CTX_PARAMS,
       (void(*)(void))fake_rand_gettable_ctx_params },
     { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))fake_rand_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 static const OSSL_ALGORITHM fake_rand_rand[] = {
@@ -158,7 +158,7 @@ static const OSSL_ALGORITHM *fake_rand_query(void *provctx,
 static const OSSL_DISPATCH fake_rand_method[] = {
     { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OSSL_LIB_CTX_free },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fake_rand_query },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 static int fake_rand_provider_init(const OSSL_CORE_HANDLE *handle,

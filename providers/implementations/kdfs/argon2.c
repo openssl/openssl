@@ -1549,7 +1549,7 @@ const OSSL_DISPATCH ossl_kdf_argon2i_functions[] = {
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
       (void(*)(void))kdf_argon2_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_argon2_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 const OSSL_DISPATCH ossl_kdf_argon2d_functions[] = {
@@ -1563,7 +1563,7 @@ const OSSL_DISPATCH ossl_kdf_argon2d_functions[] = {
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
       (void(*)(void))kdf_argon2_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_argon2_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 const OSSL_DISPATCH ossl_kdf_argon2id_functions[] = {
@@ -1577,7 +1577,7 @@ const OSSL_DISPATCH ossl_kdf_argon2id_functions[] = {
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
       (void(*)(void))kdf_argon2_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_argon2_get_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 #endif

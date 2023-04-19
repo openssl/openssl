@@ -262,7 +262,7 @@ static void rsa_adjust(void *key, struct msblob2key_ctx_st *ctx)
           (void (*)(void))msblob2key_decode },                          \
         { OSSL_FUNC_DECODER_EXPORT_OBJECT,                              \
           (void (*)(void))msblob2key_export_object },                   \
-        { 0, NULL }                                                     \
+        OSSL_DISPATCH_END                                               \
     }
 
 #ifndef OPENSSL_NO_DSA

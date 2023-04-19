@@ -292,5 +292,5 @@ const OSSL_DISPATCH ossl_test_rng_functions[] = {
     { OSSL_FUNC_RAND_VERIFY_ZEROIZATION,
       (void(*)(void))test_rng_verify_zeroization },
     { OSSL_FUNC_RAND_GET_SEED, (void(*)(void))test_rng_get_seed },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

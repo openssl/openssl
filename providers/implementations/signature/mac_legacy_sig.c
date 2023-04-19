@@ -256,7 +256,7 @@ MAC_SETTABLE_CTX_PARAMS(cmac, "CMAC")
           (void (*)(void))mac_set_ctx_params }, \
         { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS, \
           (void (*)(void))mac_##funcname##_settable_ctx_params }, \
-        { 0, NULL } \
+        OSSL_DISPATCH_END \
     };
 
 MAC_SIGNATURE_FUNCTIONS(hmac)

@@ -749,7 +749,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
           (void (*)(void))der2key_decode },                             \
         { OSSL_FUNC_DECODER_EXPORT_OBJECT,                              \
           (void (*)(void))der2key_export_object },                      \
-        { 0, NULL }                                                     \
+        OSSL_DISPATCH_END                                               \
     }
 
 #ifndef OPENSSL_NO_DH

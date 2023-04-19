@@ -2160,6 +2160,6 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_OBJ_ADD_SIGID, (void (*)(void))core_obj_add_sigid },
     { OSSL_FUNC_CORE_OBJ_CREATE, (void (*)(void))core_obj_create },
 #endif
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 static const OSSL_DISPATCH *core_dispatch = core_dispatch_;

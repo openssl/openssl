@@ -120,5 +120,5 @@ const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_der_decoder_functions[] = {
     { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))spki2typespki_newctx },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))spki2typespki_freectx },
     { OSSL_FUNC_DECODER_DECODE, (void (*)(void))spki2typespki_decode },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

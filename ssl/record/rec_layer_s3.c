@@ -1103,7 +1103,7 @@ static const OSSL_DISPATCH rlayer_dispatch[] = {
     { OSSL_FUNC_RLAYER_MSG_CALLBACK, (void (*)(void))rlayer_msg_callback_wrapper },
     { OSSL_FUNC_RLAYER_SECURITY, (void (*)(void))rlayer_security_wrapper },
     { OSSL_FUNC_RLAYER_PADDING, (void (*)(void))rlayer_padding_wrapper },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 void ossl_ssl_set_custom_record_layer(SSL_CONNECTION *s,

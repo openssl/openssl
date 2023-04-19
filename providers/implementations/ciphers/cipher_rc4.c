@@ -110,7 +110,7 @@ const OSSL_DISPATCH ossl_##alg##kbits##_functions[] = {                        \
       (void (*)(void))ossl_cipher_generic_gettable_ctx_params },               \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))ossl_cipher_var_keylen_settable_ctx_params },             \
-    { 0, NULL }                                                                \
+    OSSL_DISPATCH_END                                                          \
 };
 
 /* ossl_rc440_functions */
