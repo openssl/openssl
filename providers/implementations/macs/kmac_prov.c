@@ -605,7 +605,7 @@ const OSSL_DISPATCH ossl_kmac128_functions[] = {
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
       (void (*)(void))kmac_settable_ctx_params },
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))kmac_set_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 const OSSL_DISPATCH ossl_kmac256_functions[] = {
@@ -621,5 +621,5 @@ const OSSL_DISPATCH ossl_kmac256_functions[] = {
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
       (void (*)(void))kmac_settable_ctx_params },
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))kmac_set_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

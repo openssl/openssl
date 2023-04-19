@@ -867,7 +867,7 @@ static int key2text_encode(void *vctx, const void *key, int selection,
           (void (*)(void))impl##2text_free_object },                    \
         { OSSL_FUNC_ENCODER_ENCODE,                                     \
           (void (*)(void))impl##2text_encode },                         \
-        { 0, NULL }                                                     \
+        OSSL_DISPATCH_END                                               \
     }
 
 #ifndef OPENSSL_NO_DH

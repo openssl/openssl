@@ -840,7 +840,7 @@ static int ed448_validate(const void *keydata, int selection, int checktype)
         { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ecx_gen_cleanup }, \
         { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))ecx_load }, \
         { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ecx_dup }, \
-        { 0, NULL } \
+        OSSL_DISPATCH_END \
     };
 
 MAKE_KEYMGMT_FUNCTIONS(x25519)

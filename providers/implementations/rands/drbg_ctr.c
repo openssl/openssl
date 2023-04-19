@@ -747,5 +747,5 @@ const OSSL_DISPATCH ossl_drbg_ctr_functions[] = {
       (void(*)(void))drbg_ctr_verify_zeroization },
     { OSSL_FUNC_RAND_GET_SEED, (void(*)(void))ossl_drbg_get_seed },
     { OSSL_FUNC_RAND_CLEAR_SEED, (void(*)(void))ossl_drbg_clear_seed },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

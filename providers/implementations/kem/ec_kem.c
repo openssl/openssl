@@ -810,5 +810,5 @@ const OSSL_DISPATCH ossl_ec_asym_kem_functions[] = {
       (void (*)(void))eckem_auth_encapsulate_init },
     { OSSL_FUNC_KEM_AUTH_DECAPSULATE_INIT,
       (void (*)(void))eckem_auth_decapsulate_init },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

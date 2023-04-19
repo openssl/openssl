@@ -216,5 +216,5 @@ const OSSL_DISPATCH ossl_pem_to_der_decoder_functions[] = {
     { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))pem2der_newctx },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))pem2der_freectx },
     { OSSL_FUNC_DECODER_DECODE, (void (*)(void))pem2der_decode },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

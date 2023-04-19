@@ -229,5 +229,5 @@ const OSSL_DISPATCH ossl_cmac_functions[] = {
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
       (void (*)(void))cmac_settable_ctx_params },
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))cmac_set_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

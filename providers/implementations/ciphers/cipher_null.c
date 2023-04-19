@@ -193,5 +193,5 @@ const OSSL_DISPATCH ossl_null_functions[] = {
     { OSSL_FUNC_CIPHER_SET_CTX_PARAMS, (void (*)(void))null_set_ctx_params },
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
       (void (*)(void))null_settable_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

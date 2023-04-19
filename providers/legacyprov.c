@@ -193,7 +193,7 @@ static const OSSL_DISPATCH legacy_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))legacy_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))legacy_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))legacy_query },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,

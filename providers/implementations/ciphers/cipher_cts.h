@@ -42,7 +42,7 @@ const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_cts_functions[] = {            \
       (void (*)(void)) alg##_cbc_cts_gettable_ctx_params },                    \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void)) alg##_cbc_cts_settable_ctx_params },                     \
-    { 0, NULL }                                                                \
+    OSSL_DISPATCH_END                                                          \
 };
 
 OSSL_FUNC_cipher_update_fn ossl_cipher_cbc_cts_block_update;

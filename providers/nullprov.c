@@ -64,7 +64,7 @@ static const OSSL_DISPATCH null_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))null_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))null_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))null_query },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 int ossl_null_provider_init(const OSSL_CORE_HANDLE *handle,

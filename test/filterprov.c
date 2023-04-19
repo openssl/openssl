@@ -128,7 +128,7 @@ static const OSSL_DISPATCH filter_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_UNQUERY_OPERATION, (void (*)(void))filter_unquery },
     { OSSL_FUNC_PROVIDER_GET_CAPABILITIES, (void (*)(void))filter_get_capabilities },
     { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))filter_teardown },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 int filter_provider_init(const OSSL_CORE_HANDLE *handle,

@@ -245,5 +245,5 @@ const OSSL_DISPATCH ossl_seed_src_functions[] = {
       (void(*)(void))seed_src_verify_zeroization },
     { OSSL_FUNC_RAND_GET_SEED, (void(*)(void))seed_get_seed },
     { OSSL_FUNC_RAND_CLEAR_SEED, (void(*)(void))seed_clear_seed },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

@@ -168,7 +168,7 @@ static int key2blob_encode(void *vctx, const void *key, int selection,
           (void (*)(void))impl##2blob_free_object },                    \
         { OSSL_FUNC_ENCODER_ENCODE,                                     \
           (void (*)(void))impl##2blob_encode },                         \
-        { 0, NULL }                                                     \
+        OSSL_DISPATCH_END                                               \
     }
 
 #ifndef OPENSSL_NO_EC

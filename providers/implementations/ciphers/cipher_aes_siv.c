@@ -293,7 +293,7 @@ const OSSL_DISPATCH ossl_##alg##kbits##lc##_functions[] = {                    \
       (void (*)(void)) alg##_##lc##_set_ctx_params },                          \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
       (void (*)(void)) alg##_##lc##_settable_ctx_params },                     \
-    { 0, NULL }                                                                \
+    OSSL_DISPATCH_END                                                          \
 };
 
 IMPLEMENT_cipher(aes, siv, SIV, SIV_FLAGS, 128, 8, 0)

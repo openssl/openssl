@@ -200,6 +200,6 @@ const OSSL_DISPATCH ossl_chacha20_functions[] = {
     { OSSL_FUNC_CIPHER_SET_CTX_PARAMS, (void (*)(void))chacha20_set_ctx_params },
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
         (void (*)(void))chacha20_settable_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 

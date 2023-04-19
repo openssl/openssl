@@ -229,5 +229,5 @@ const OSSL_DISPATCH ossl_sm2_asym_cipher_functions[] = {
       (void (*)(void))sm2_set_ctx_params },
     { OSSL_FUNC_ASYM_CIPHER_SETTABLE_CTX_PARAMS,
       (void (*)(void))sm2_settable_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

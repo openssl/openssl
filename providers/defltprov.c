@@ -557,7 +557,7 @@ static const OSSL_DISPATCH deflt_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))deflt_query },
     { OSSL_FUNC_PROVIDER_GET_CAPABILITIES,
       (void (*)(void))ossl_prov_get_capabilities },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 OSSL_provider_init_fn ossl_default_provider_init;

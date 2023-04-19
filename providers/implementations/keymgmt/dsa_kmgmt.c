@@ -672,5 +672,5 @@ const OSSL_DISPATCH ossl_dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))dsa_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))dsa_export_types },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))dsa_dup },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

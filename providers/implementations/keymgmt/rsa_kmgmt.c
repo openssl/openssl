@@ -715,7 +715,7 @@ const OSSL_DISPATCH ossl_rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))rsa_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))rsa_export_types },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))rsa_dup },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[] = {
@@ -740,5 +740,5 @@ const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
       (void (*)(void))rsa_query_operation_name },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))rsa_dup },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

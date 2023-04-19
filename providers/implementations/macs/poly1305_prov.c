@@ -183,5 +183,5 @@ const OSSL_DISPATCH ossl_poly1305_functions[] = {
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
       (void (*)(void))poly1305_settable_ctx_params },
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))poly1305_set_ctx_params },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

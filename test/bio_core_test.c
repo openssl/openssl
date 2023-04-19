@@ -61,7 +61,7 @@ static const OSSL_DISPATCH biocbs[] = {
     { OSSL_FUNC_BIO_CTRL, (void (*)(void))tst_bio_core_ctrl },
     { OSSL_FUNC_BIO_UP_REF, (void (*)(void))tst_bio_core_up_ref },
     { OSSL_FUNC_BIO_FREE, (void (*)(void))tst_bio_core_free },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
 
 static int test_bio_core(void)

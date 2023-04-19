@@ -203,7 +203,7 @@ const OSSL_DISPATCH ossl_tdes_wrap_cbc_functions[] =                           \
       (void (*)(void))ossl_cipher_generic_set_ctx_params },                    \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
       (void (*)(void))ossl_cipher_generic_settable_ctx_params },               \
-    { 0, NULL }                                                                \
+    OSSL_DISPATCH_END                                                          \
 }
 
 /* ossl_tdes_wrap_cbc_functions */

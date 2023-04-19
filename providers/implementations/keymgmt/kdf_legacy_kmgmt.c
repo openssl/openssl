@@ -100,5 +100,5 @@ const OSSL_DISPATCH ossl_kdf_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))kdf_newdata },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))kdf_freedata },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))kdf_has },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };

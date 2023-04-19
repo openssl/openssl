@@ -154,5 +154,5 @@ const OSSL_DISPATCH ossl_EncryptedPrivateKeyInfo_der_to_der_decoder_functions[] 
     { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))epki2pki_newctx },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))epki2pki_freectx },
     { OSSL_FUNC_DECODER_DECODE, (void (*)(void))epki2pki_decode },
-    { 0, NULL }
+    OSSL_DISPATCH_END
 };
