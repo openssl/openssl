@@ -751,7 +751,7 @@ operation C<BAR>.
 
  static const OSSL_ITEM reasons[] = {
      { E_MALLOC, "memory allocation failure" }.
-     { 0, NULL } /* Termination */
+     OSSL_DISPATCH_END
  };
 
  /*
@@ -831,7 +831,7 @@ operation C<BAR>.
      { OSSL_FUNC_BAR_INIT, (void (*)(void))foo_init },
      { OSSL_FUNC_BAR_UPDATE, (void (*)(void))foo_update },
      { OSSL_FUNC_BAR_FINAL, (void (*)(void))foo_final },
-     { 0, NULL }
+     OSSL_DISPATCH_END
  };
 
  static const OSSL_ALGORITHM bars[] = {
@@ -863,7 +863,7 @@ operation C<BAR>.
      { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))p_teardown },
      { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))p_query },
      { OSSL_FUNC_PROVIDER_GET_REASON_STRINGS, (void (*)(void))p_reasons },
-     { 0, NULL }
+     OSSL_DISPATCH_END
  };
 
  int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
