@@ -190,6 +190,7 @@ static void qrx_cleanup_urxl(OSSL_QRX *qrx, QUIC_URXE_LIST *l)
 
     for (e = ossl_list_urxe_head(l); e != NULL; e = enext) {
         enext = ossl_list_urxe_next(e);
+        ossl_list_urxe_remove(l, e);
         ossl_quic_demux_release_urxe(qrx->demux, e);
     }
 }
