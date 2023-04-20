@@ -1,7 +1,10 @@
 ---
 name: Error Injection Testrun for 1.1.1
 
-on: [push]
+on:
+  push:
+  schedule:
+    - cron: '0 5 * * *'
 
 permissions:
   contents: read
