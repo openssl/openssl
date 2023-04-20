@@ -237,11 +237,11 @@ void OPENSSL_cpuid_setup(void)
     }
 # endif
 
-    /* Things that getauxval didn't tell us */
-    if (sigsetjmp(ill_jmp, 1) == 0) {
-        _armv7_tick();
-        OPENSSL_armcap_P |= ARMV7_TICK;
-    }
+    /*
+     * Probing for ARMV7_TICK is known to produce unreliable results,
+     * so we will only use the feature when the user explicitly enables
+     * it with OPENSSL_armcap.
+     */
 
     sigaction(SIGILL, &ill_oact, NULL);
     sigprocmask(SIG_SETMASK, &oset, NULL);
