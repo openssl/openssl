@@ -406,18 +406,21 @@ static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
     int nid;
 
     nid = OBJ_obj2nid(key->algor->algorithm);
+    /* Try legacy ameth path unconditionally in UEFI system due to memory limit. */
+#ifndef OPENSSL_SYS_UEFI
     if (!key->flag_force_legacy) {
-#ifndef OPENSSL_NO_ENGINE
+# ifndef OPENSSL_NO_ENGINE
         ENGINE *e = NULL;
 
         e = ENGINE_get_pkey_meth_engine(nid);
         if (e == NULL)
             return 0;
         ENGINE_finish(e);
-#else
+# else
         return 0;
-#endif
+# endif
     }
+#endif
 
     pkey = EVP_PKEY_new();
     if (pkey == NULL) {
