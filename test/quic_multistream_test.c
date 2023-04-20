@@ -37,7 +37,7 @@ struct helper {
     LHASH_OF(STREAM_INFO)   *c_streams;
 
     OSSL_TIME       start_time;
-    int             init, blocking;
+    int             init, blocking, check_spin_again;
 };
 
 struct script_op {
@@ -167,9 +167,11 @@ static int check_rejected(struct helper *h, const struct script_op *op)
 {
     uint64_t stream_id = op->arg2;
 
-    if (!TEST_true(ossl_quic_tserver_stream_has_peer_stop_sending(h->s, stream_id, NULL))
-        || !TEST_true(ossl_quic_tserver_stream_has_peer_reset_stream(h->s, stream_id, NULL)))
+    if (!ossl_quic_tserver_stream_has_peer_stop_sending(h->s, stream_id, NULL)
+        || !ossl_quic_tserver_stream_has_peer_reset_stream(h->s, stream_id, NULL)) {
+        h->check_spin_again = 1;
         return 0;
+    }
 
     return 1;
 }
@@ -178,17 +180,24 @@ static int check_stream_reset(struct helper *h, const struct script_op *op)
 {
     uint64_t stream_id = op->arg2, aec = 0;
 
-    return TEST_true(ossl_quic_tserver_stream_has_peer_reset_stream(h->s, stream_id,
-                                                                    &aec))
-        && TEST_uint64_t_eq(aec, 42);
+    if (!ossl_quic_tserver_stream_has_peer_reset_stream(h->s, stream_id, &aec)) {
+        h->check_spin_again = 1;
+        return 0;
+    }
+
+    return TEST_uint64_t_eq(aec, 42);
 }
 
 static int check_stream_stopped(struct helper *h, const struct script_op *op)
 {
     uint64_t stream_id = op->arg2;
 
-    return TEST_true(ossl_quic_tserver_stream_has_peer_stop_sending(h->s, stream_id,
-                                                                    NULL));
+    if (!ossl_quic_tserver_stream_has_peer_stop_sending(h->s, stream_id, NULL)) {
+        h->check_spin_again = 1;
+        return 0;
+    }
+
+    return 1;
 }
 
 static unsigned long stream_info_hash(const STREAM_INFO *info)
@@ -442,20 +451,38 @@ static int run_script(const struct script_op *script)
 {
     size_t op_idx = 0;
     int testresult = 0;
-    int no_advance = 0;
+    int no_advance = 0, first = 1;
     const struct script_op *op = NULL;
     struct helper h;
     unsigned char *tmp_buf = NULL;
     int connect_started = 0;
+    OSSL_TIME op_start_time = ossl_time_zero(), op_deadline = ossl_time_zero();
+    size_t offset = 0;
 
     if (!TEST_true(helper_init(&h)))
         goto out;
 
-#define SPIN_AGAIN() do { no_advance = 1; continue; } while (0)
+#define SPIN_AGAIN() { no_advance = 1; continue; }
 
-    for (;; no_advance ? (void)(no_advance = 0) : (void)++op_idx) {
+    for (;;) {
         SSL *c_tgt              = h.c_conn;
         uint64_t s_stream_id    = UINT64_MAX;
+
+        if (no_advance) {
+            no_advance = 0;
+        } else {
+            if (!first)
+                ++op_idx;
+
+            first           = 0;
+            op_start_time   = ossl_time_now();
+            op_deadline     = ossl_time_add(op_start_time, ossl_ms2time(2000));
+        }
+
+        if (!TEST_int_le(ossl_time_compare(ossl_time_now(), op_deadline), 0)) {
+            TEST_error("op %zu timed out", op_idx + 1);
+            goto out;
+        }
 
         op = &script[op_idx];
 
@@ -474,9 +501,16 @@ static int run_script(const struct script_op *script)
             goto out;
 
         case OPK_CHECK:
-            if (!TEST_true(op->check_func(&h, op)))
-                goto out;
+            {
+                int ok = op->check_func(&h, op);
+                if (h.check_spin_again) {
+                    h.check_spin_again = 0;
+                    SPIN_AGAIN();
+                }
 
+                if (!TEST_true(ok))
+                    goto out;
+            }
             break;
 
         case OPK_C_SET_ALPN:
@@ -580,15 +614,21 @@ static int run_script(const struct script_op *script)
             {
                 size_t bytes_read = 0;
 
-                if (!TEST_ptr(tmp_buf = OPENSSL_malloc(op->arg1)))
+                if (op->arg1 > 0 && tmp_buf == NULL
+                    && !TEST_ptr(tmp_buf = OPENSSL_malloc(op->arg1)))
                     goto out;
 
-                if (!TEST_true(SSL_read_ex(c_tgt, tmp_buf, op->arg1,
-                                            &bytes_read))
-                    || !TEST_size_t_eq(bytes_read, op->arg1))
-                    goto out;
+                if (!SSL_read_ex(c_tgt, tmp_buf + offset, op->arg1 - offset,
+                                 &bytes_read))
+                    SPIN_AGAIN();
 
-                if (!TEST_mem_eq(tmp_buf, op->arg1, op->arg0, op->arg1))
+                if (bytes_read + offset != op->arg1) {
+                    offset += bytes_read;
+                    SPIN_AGAIN();
+                }
+
+                if (op->arg1 > 0
+                    && !TEST_mem_eq(tmp_buf, op->arg1, op->arg0, op->arg1))
                     goto out;
 
                 OPENSSL_free(tmp_buf);
@@ -603,15 +643,20 @@ static int run_script(const struct script_op *script)
                 if (!TEST_uint64_t_ne(s_stream_id, UINT64_MAX))
                     goto out;
 
-                if (op->arg1 > 0
+                if (op->arg1 > 0 && tmp_buf == NULL
                     && !TEST_ptr(tmp_buf = OPENSSL_malloc(op->arg1)))
                     goto out;
 
                 if (!TEST_true(ossl_quic_tserver_read(h.s, s_stream_id,
-                                                      tmp_buf, op->arg1,
-                                                      &bytes_read))
-                    || !TEST_size_t_eq(bytes_read, op->arg1))
+                                                      tmp_buf + offset,
+                                                      op->arg1 - offset,
+                                                      &bytes_read)))
                     goto out;
+
+                if (bytes_read + offset != op->arg1) {
+                    offset += bytes_read;
+                    SPIN_AGAIN();
+                }
 
                 if (op->arg1 > 0
                     && !TEST_mem_eq(tmp_buf, op->arg1, op->arg0, op->arg1))
@@ -629,19 +674,25 @@ static int run_script(const struct script_op *script)
 
                 if (!TEST_false(SSL_read_ex(c_tgt, buf, sizeof(buf),
                                             &bytes_read))
-                    || !TEST_size_t_eq(bytes_read, 0)
-                    || !TEST_int_eq(SSL_get_error(c_tgt, 0),
-                                    SSL_ERROR_ZERO_RETURN))
-                    goto  out;
+                    || !TEST_size_t_eq(bytes_read, 0))
+                    goto out;
+
+                if (is_want(c_tgt, 0))
+                    SPIN_AGAIN();
+
+                if (!TEST_int_eq(SSL_get_error(c_tgt, 0),
+                                 SSL_ERROR_ZERO_RETURN))
+                    goto out;
             }
             break;
 
         case OPK_S_EXPECT_FIN:
             {
-                if (!TEST_uint64_t_ne(s_stream_id, UINT64_MAX)
-                    || !TEST_true(ossl_quic_tserver_has_read_ended(h.s,
-                                                                   s_stream_id)))
+                if (!TEST_uint64_t_ne(s_stream_id, UINT64_MAX))
                     goto out;
+
+                if (!ossl_quic_tserver_has_read_ended(h.s, s_stream_id))
+                    SPIN_AGAIN();
             }
             break;
 
@@ -726,8 +777,8 @@ static int run_script(const struct script_op *script)
                 if (!TEST_ptr_null(c_tgt))
                     goto out; /* don't overwrite existing stream with same name */
 
-                if (!TEST_ptr(c_stream = SSL_accept_stream(h.c_conn, 0)))
-                    goto out;
+                if ((c_stream = SSL_accept_stream(h.c_conn, 0)) == NULL)
+                    SPIN_AGAIN();
 
                 if (!TEST_true(helper_set_c_stream(&h, op->stream_name,
                                                    c_stream)))
@@ -805,9 +856,8 @@ static int run_script(const struct script_op *script)
                 if (!TEST_ptr(c_tgt))
                     goto out;
 
-                if (!TEST_true(SSL_get_conn_close_info(c_tgt, &cc_info,
-                                                       sizeof(cc_info))))
-                    goto out;
+                if (!SSL_get_conn_close_info(c_tgt, &cc_info, sizeof(cc_info)))
+                    SPIN_AGAIN();
 
                 if (!TEST_int_eq(expect_app, !cc_info.is_transport)
                     || !TEST_int_eq(expect_remote, !cc_info.is_local)
@@ -823,8 +873,8 @@ static int run_script(const struct script_op *script)
                 int expect_remote = (op->arg1 & EXPECT_CONN_CLOSE_REMOTE) != 0;
                 uint64_t error_code = op->arg2;
 
-                if (!TEST_true(ossl_quic_tserver_is_term_any(h.s)))
-                    goto out;
+                if (!ossl_quic_tserver_is_term_any(h.s))
+                    SPIN_AGAIN();
 
                 if (!TEST_ptr(tc = ossl_quic_tserver_get_terminate_cause(h.s)))
                     goto out;
