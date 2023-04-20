@@ -1600,7 +1600,7 @@ int main(int argc, char *argv[])
             BIO_printf(bio_err, "setting PSK identity hint to s_ctx\n");
         if (!SSL_CTX_use_psk_identity_hint(s_ctx, "ctx server identity_hint") ||
             !SSL_CTX_use_psk_identity_hint(s_ctx2, "ctx server identity_hint")) {
-            BIO_printf(bio_err, "error setting PSK identity hint to s_ctx\n");
+            BIO_printf(bio_err, "error setting PSK identity hint to s_ctx or s_ctx2\n");
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -2967,7 +2967,8 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
     int ret;
     unsigned int psk_len = 0;
 
-    ret = BIO_snprintf(identity, max_identity_len, "Client_identity");
+    ret = BIO_snprintf(identity, max_identity_len, "%s", hint != NULL
+                       ? hint : "ctx server identity_hint");
     if (ret < 0)
         goto out_err;
     if (debug)
@@ -2987,7 +2988,7 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity,
 {
     unsigned int psk_len = 0;
 
-    if (strcmp(identity, "Client_identity") != 0) {
+    if (strcmp(identity, "ctx server identity_hint") != 0) {
         BIO_printf(bio_err, "server: PSK error: client identity not found\n");
         return 0;
     }

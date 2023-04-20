@@ -3275,10 +3275,9 @@ static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
 }
 
 #ifndef OPENSSL_NO_PSK
-static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *id,
-                                  unsigned int max_id_len,
-                                  unsigned char *psk,
-                                  unsigned int max_psk_len)
+static unsigned int psk_client_cb(ossl_unused SSL *ssl, ossl_unused const char *hint,
+                                  char *id, unsigned int max_id_len,
+                                  unsigned char *psk, unsigned int max_psk_len)
 {
     unsigned int psklen = 0;
 

@@ -142,6 +142,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
     int ret;
     long key_len;
     unsigned char *key;
+    char *used_hint = (char *)hint;
 
     if (c_debug)
         BIO_printf(bio_c_out, "psk_client_cb\n");
@@ -149,7 +150,8 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
         /* no ServerKeyExchange message */
         if (c_debug)
             BIO_printf(bio_c_out,
-                       "NULL received PSK identity hint, continuing anyway\n");
+                       "NULL received PSK identity hint, continuing with the default\n");
+        used_hint = psk_identity;
     } else if (c_debug) {
         BIO_printf(bio_c_out, "Received PSK identity hint '%s'\n", hint);
     }
@@ -157,7 +159,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
     /*
      * lookup PSK identity and PSK key based on the given identity hint here
      */
-    ret = BIO_snprintf(identity, max_identity_len, "%s", psk_identity);
+    ret = BIO_snprintf(identity, max_identity_len, "%s", used_hint);
     if (ret < 0 || (unsigned int)ret > max_identity_len)
         goto out_err;
     if (c_debug)
