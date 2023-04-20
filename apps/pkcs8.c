@@ -26,6 +26,7 @@ typedef enum OPTION_choice {
 #endif
     OPT_V2, OPT_V1, OPT_V2PRF, OPT_ITER, OPT_PASSIN, OPT_PASSOUT,
     OPT_TRADITIONAL,
+    OPT_SALTLEN,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -53,6 +54,7 @@ const OPTIONS pkcs8_options[] = {
     {"traditional", OPT_TRADITIONAL, '-', "use traditional format private key"},
     {"iter", OPT_ITER, 'p', "Specify the iteration count"},
     {"noiter", OPT_NOITER, '-', "Use 1 as iteration count"},
+    {"saltlen", OPT_SALTLEN, 'p', "Specify the salt length"},
 
 #ifndef OPENSSL_NO_SCRYPT
     OPT_SECTION("Scrypt"),
@@ -85,6 +87,7 @@ int pkcs8_main(int argc, char **argv)
     int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
     int private = 0, traditional = 0;
+    int saltlen = 0;
 #ifndef OPENSSL_NO_SCRYPT
     long scrypt_N = 0, scrypt_r = 0, scrypt_p = 0;
 #endif
@@ -188,6 +191,10 @@ int pkcs8_main(int argc, char **argv)
             if (!opt_long(opt_arg(), &scrypt_p) || scrypt_p <= 0)
                 goto opthelp;
             break;
+        case OPT_SALTLEN:
+            if (!opt_int(opt_arg(), &saltlen))
+                goto opthelp;
+            break;
 #endif
         }
     }
@@ -245,14 +252,14 @@ int pkcs8_main(int argc, char **argv)
             if (cipher) {
 #ifndef OPENSSL_NO_SCRYPT
                 if (scrypt_N && scrypt_r && scrypt_p)
-                    pbe = PKCS5_pbe2_set_scrypt(cipher, NULL, 0, NULL,
+                    pbe = PKCS5_pbe2_set_scrypt(cipher, NULL, saltlen, NULL,
                                                 scrypt_N, scrypt_r, scrypt_p);
                 else
 #endif
-                    pbe = PKCS5_pbe2_set_iv(cipher, iter, NULL, 0, NULL,
+                    pbe = PKCS5_pbe2_set_iv(cipher, iter, NULL, saltlen, NULL,
                                             pbe_nid);
             } else {
-                pbe = PKCS5_pbe_set(pbe_nid, iter, NULL, 0);
+                pbe = PKCS5_pbe_set(pbe_nid, iter, NULL, saltlen);
             }
             if (pbe == NULL) {
                 BIO_printf(bio_err, "Error setting PBE algorithm\n");
