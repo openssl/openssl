@@ -468,6 +468,7 @@ OSSL_PARAM_construct_TYPE               generic
 OSSL_PARAM_utf8_string                  define
 OSSL_PARAM_get_TYPE                     generic
 OSSL_PARAM_END                          define
+OSSL_DISPATCH_END                       define
 OSSL_PARAM_set_TYPE                     generic
 OSSL_ENCODER_PUBKEY_TO_DER_PQ           define
 OSSL_ENCODER_PrivateKey_TO_DER_PQ       define
