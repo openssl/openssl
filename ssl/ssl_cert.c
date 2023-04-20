@@ -29,11 +29,11 @@
 # ifdef _WIN32
 #  define stat _stat
 # endif
+# ifndef S_ISDIR
+#  define S_ISDIR(a) (((a) & S_IFMT) == S_IFDIR)
+# endif
 #endif
 
-#ifndef S_ISDIR
-# define S_ISDIR(a) (((a) & S_IFMT) == S_IFDIR)
-#endif
 
 static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
                                          int op, int bits, int nid, void *other,
@@ -761,8 +761,14 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     while ((filename = OPENSSL_DIR_read(&d, dir))) {
         char buf[1024];
         int r;
+#ifndef OPENSSL_NO_POSIX_IO
         struct stat st;
 
+#else
+        /* Cannot use stat so just skip current and parent directories */
+        if (strcmp(filename, ".") == 0 || strcmp(filename, "..") == 0)
+            continue;
+#endif
         if (strlen(dir) + strlen(filename) + 2 > sizeof(buf)) {
             ERR_raise(ERR_LIB_SSL, SSL_R_PATH_TOO_LONG);
             goto err;
@@ -772,9 +778,11 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 #else
         r = BIO_snprintf(buf, sizeof(buf), "%s/%s", dir, filename);
 #endif
+#ifndef OPENSSL_NO_POSIX_IO
         /* Skip subdirectories */
         if (!stat(buf, &st) && S_ISDIR(st.st_mode))
             continue;
+#endif
         if (r <= 0 || r >= (int)sizeof(buf))
             goto err;
         if (!SSL_add_file_cert_subjects_to_stack(stack, buf))
