@@ -416,24 +416,26 @@ This is a synonym for the "Groups" command.
 This sets the minimum supported SSL, TLS or DTLS version.
 
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
-B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
-The SSL and TLS bounds apply only to TLS-based contexts, while the DTLS bounds
-apply only to DTLS-based contexts.
-The command can be repeated with one instance setting a TLS bound, and the
-other setting a DTLS bound.
-The value B<None> applies to both types of contexts and disables the limits.
+B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1>, B<DTLSv1.2> and B<QUICv1>.
+The SSL and TLS bounds apply only to TLS-based contexts. The DTLS bounds
+apply only to DTLS-based contexts.The QUIC bounds apply only to QUIC-based
+contexts.
+The command can be repeated with one instance setting a TLS bound, another
+setting a DTLS bound and another setting a QUIC bound.
+The value B<None> applies to all types of contexts and disables the limits.
 
 =item B<MaxProtocol>
 
 This sets the maximum supported SSL, TLS or DTLS version.
 
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
-B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
-The SSL and TLS bounds apply only to TLS-based contexts, while the DTLS bounds
-apply only to DTLS-based contexts.
-The command can be repeated with one instance setting a TLS bound, and the
-other setting a DTLS bound.
-The value B<None> applies to both types of contexts and disables the limits.
+B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1>, B<DTLSv1.2> and B<QUICv1>.
+The SSL and TLS bounds apply only to TLS-based contexts. The DTLS bounds
+apply only to DTLS-based contexts.The QUIC bounds apply only to QUIC-based
+contexts.
+The command can be repeated with one instance setting a TLS bound, another
+setting a DTLS bound and another setting a QUIC bound.
+The value B<None> applies to all types of contexts and disables the limits.
 
 =item B<Protocol>
 
@@ -775,8 +777,8 @@ B<AllowNoDHEKEX> and B<PrioritizeChaCha> were added in OpenSSL 1.1.1.
 The B<UnsafeLegacyServerConnect> option is no longer set by default from
 OpenSSL 3.0.
 
-The B<TxCertificateCompression> and B<RxCertificateCompression> options were
-added in OpenSSL 3.2.
+The B<TxCertificateCompression> and B<RxCertificateCompression> options and QUIC
+support were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
