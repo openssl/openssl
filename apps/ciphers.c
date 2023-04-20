@@ -18,6 +18,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
+    OPT_ENGINE,
     OPT_STDNAME,
     OPT_CONVERT,
     OPT_SSL3,
@@ -36,6 +37,9 @@ const OPTIONS ciphers_options[] = {
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
 
     OPT_SECTION("Output"),
     {"v", OPT_V, '-', "Verbose listing of the SSL/TLS ciphers"},
@@ -122,6 +126,9 @@ int ciphers_main(int argc, char **argv)
             break;
         case OPT_UPPER_V:
             verbose = Verbose = 1;
+            break;
+        case OPT_ENGINE:
+            setup_engine(opt_arg(), 0);
             break;
         case OPT_S:
             use_supported = 1;
