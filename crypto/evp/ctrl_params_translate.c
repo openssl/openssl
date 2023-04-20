@@ -1134,6 +1134,7 @@ static int fix_ec_paramgen_curve_nid(enum state state,
                                      const struct translation_st *translation,
                                      struct translation_ctx_st *ctx)
 {
+    char *p2 = NULL;
     int ret;
 
     if ((ret = default_check(state, translation, ctx)) <= 0)
@@ -1146,13 +1147,25 @@ static int fix_ec_paramgen_curve_nid(enum state state,
     if (state == PRE_CTRL_TO_PARAMS) {
         ctx->p2 = (char *)OBJ_nid2sn(ctx->p1);
         ctx->p1 = 0;
+    } else if (state == PRE_PARAMS_TO_CTRL) {
+        /*
+         * We're translating from params to ctrl and setting the curve name.
+         * The ctrl function needs it to be a NID, but meanwhile, we need
+         * space to get the curve name from the param.  |ctx->name_buf| is
+         * sufficient for that.
+         * The double indirection is necessary for default_fixup_args()'s
+         * call of OSSL_PARAM_get_utf8_string() to be done correctly.
+         */
+        p2 = ctx->name_buf;
+        ctx->p2 = &p2;
+        ctx->sz = sizeof(ctx->name_buf);
     }
 
     if ((ret = default_fixup_args(state, translation, ctx)) <= 0)
         return ret;
 
     if (state == PRE_PARAMS_TO_CTRL) {
-        ctx->p1 = OBJ_sn2nid(ctx->p2);
+        ctx->p1 = OBJ_sn2nid(p2);
         ctx->p2 = NULL;
     }
 
