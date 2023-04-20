@@ -3827,7 +3827,7 @@ static int user_data_process(struct user_data_st *user_data, size_t *len,
         char *cmd_start = buf_start;
 
         cmd_start[outlen] = '\0';
-        do {
+        for (;;) {
             cmd_start = strstr(cmd_start, "{");
             if (cmd_start == buf_start && *(cmd_start + 1) == '{') {
                 /* The "{" is escaped, so skip it */
@@ -3838,7 +3838,8 @@ static int user_data_process(struct user_data_st *user_data, size_t *len,
                 outlen--;
                 continue;
             }
-        } while(0);
+            break;
+        }
 
         if (cmd_start == buf_start) {
             /* Command detected */
