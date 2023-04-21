@@ -4027,7 +4027,9 @@ int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
 {
     int i;
     size_t totlen = 0, len, maxlen, maxverok = 0;
-    int empty_reneg_info_scsv = !s->renegotiate;
+    int empty_reneg_info_scsv = !s->renegotiate
+                                && (SSL_CONNECTION_IS_DTLS(s)
+                                    || s->min_proto_version < TLS1_3_VERSION);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     /* Set disabled masks for this session */
