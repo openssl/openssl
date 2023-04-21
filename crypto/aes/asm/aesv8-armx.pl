@@ -2261,10 +2261,10 @@ $code.=<<___	if ($flavour =~ /64/);
 	b.ne	.Lxts_enc_big_size
 	// Encrypt the iv with key2, as the first XEX iv.
 	ldr	$rounds,[$key2,#240]
-	vld1.8	{$dat},[$key2],#16
+	vld1.32	{$dat},[$key2],#16
 	vld1.8	{$iv0},[$ivp]
 	sub	$rounds,$rounds,#2
-	vld1.8	{$dat1},[$key2],#16
+	vld1.32	{$dat1},[$key2],#16
 
 .Loop_enc_iv_enc:
 	aese	$iv0,$dat
@@ -2866,9 +2866,9 @@ $code.=<<___	if ($flavour =~ /64/);
 
 	// Encrypt the composite block to get the last second encrypted text block
 	ldr	$rounds,[$key1,#240]		// load key schedule...
-	vld1.8	{$dat},[$key1],#16
+	vld1.32	{$dat},[$key1],#16
 	sub	$rounds,$rounds,#2
-	vld1.8	{$dat1},[$key1],#16		// load key schedule...
+	vld1.32	{$dat1},[$key1],#16		// load key schedule...
 .Loop_final_enc:
 	aese	$tmpin,$dat0
 	aesmc	$tmpin,$tmpin
@@ -2937,10 +2937,10 @@ $code.=<<___	if ($flavour =~ /64/);
 	b.ne	.Lxts_dec_big_size
 	// Encrypt the iv with key2, as the first XEX iv.
 	ldr	$rounds,[$key2,#240]
-	vld1.8	{$dat},[$key2],#16
+	vld1.32	{$dat},[$key2],#16
 	vld1.8	{$iv0},[$ivp]
 	sub	$rounds,$rounds,#2
-	vld1.8	{$dat1},[$key2],#16
+	vld1.32	{$dat1},[$key2],#16
 
 .Loop_dec_small_iv_enc:
 	aese	$iv0,$dat
@@ -3020,10 +3020,10 @@ $code.=<<___	if ($flavour =~ /64/);
 
 	// Encrypt the iv with key2, as the first XEX iv
 	ldr	$rounds,[$key2,#240]
-	vld1.8	{$dat},[$key2],#16
+	vld1.32	{$dat},[$key2],#16
 	vld1.8	{$iv0},[$ivp]
 	sub	$rounds,$rounds,#2
-	vld1.8	{$dat1},[$key2],#16
+	vld1.32	{$dat1},[$key2],#16
 
 .Loop_dec_iv_enc:
 	aese	$iv0,$dat
@@ -3363,7 +3363,7 @@ $code.=<<___	if ($flavour =~ /64/);
 	vst1.8	{$tmp3-$tmp4},[$out],#32
 
 	b.eq	.Lxts_dec_abort
-	vld1.32	{$dat0},[$inp],#16
+	vld1.8	{$dat0},[$inp],#16
 	b	.Lxts_done
 .align	4
 .Lxts_outer_dec_tail:
@@ -3541,7 +3541,7 @@ $code.=<<___	if ($flavour =~ /64/);
 	// Processing the last two blocks with cipher stealing.
 	mov	x7,x3
 	cbnz	x2,.Lxts_dec_1st_done
-	vld1.32	{$dat0},[$inp],#16
+	vld1.8	{$dat0},[$inp],#16
 
 	// Decrypt the last secod block to get the last plain text block
 .Lxts_dec_1st_done:
@@ -3586,9 +3586,9 @@ $code.=<<___	if ($flavour =~ /64/);
 
 	// Decrypt the composite block to get the last second plain text block
 	ldr	$rounds,[$key_,#240]
-	vld1.8	{$dat},[$key_],#16
+	vld1.32	{$dat},[$key_],#16
 	sub	$rounds,$rounds,#2
-	vld1.8	{$dat1},[$key_],#16
+	vld1.32	{$dat1},[$key_],#16
 .Loop_final_dec:
 	aesd	$tmpin,$dat0
 	aesimc	$tmpin,$tmpin
