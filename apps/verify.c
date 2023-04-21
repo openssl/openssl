@@ -257,18 +257,6 @@ static int check(X509_STORE *ctx, const char *file,
     if (x == NULL)
         goto end;
 
-    if (opts != NULL) {
-        for (i = 0; i < sk_OPENSSL_STRING_num(opts); i++) {
-            char *opt = sk_OPENSSL_STRING_value(opts, i);
-            if (x509_ctrl_string(x, opt) <= 0) {
-                BIO_printf(bio_err, "parameter error \"%s\"\n", opt);
-                ERR_print_errors(bio_err);
-                X509_free(x);
-                return 0;
-            }
-        }
-    }
-
     csc = X509_STORE_CTX_new();
     if (csc == NULL) {
         BIO_printf(bio_err, "error %s: X.509 store context allocation failed\n",
@@ -284,6 +272,7 @@ static int check(X509_STORE *ctx, const char *file,
                    (file == NULL) ? "stdin" : file);
         goto end;
     }
+    X509_STORE_CTX_set0_vfyopts(csc, opts);
     if (tchain != NULL)
         X509_STORE_CTX_set0_trusted_stack(csc, tchain);
     if (crls != NULL)

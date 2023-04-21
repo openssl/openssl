@@ -5519,3 +5519,4 @@ X509_STORE_CTX_get0_rpk                 ?	3_2_0	EXIST::FUNCTION:
 X509_STORE_CTX_set0_rpk                 ?	3_2_0	EXIST::FUNCTION:
 X509_verify_ctx                         ?	3_2_0	EXIST::FUNCTION:
 X509_REQ_verify_ctx                     ?	3_2_0	EXIST::FUNCTION:
+X509_STORE_CTX_set0_vfyopts             ?	3_2_0	EXIST::FUNCTION:

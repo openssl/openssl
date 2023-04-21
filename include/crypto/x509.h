@@ -280,6 +280,8 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     int bare_ta_signed;
     /* Raw Public Key */
     EVP_PKEY *rpk;
+    /* verify options */
+    STACK_OF(OPENSSL_STRING) *vfyopts;
 
     OSSL_LIB_CTX *libctx;
     char *propq;
