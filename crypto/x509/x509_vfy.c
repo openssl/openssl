@@ -1806,6 +1806,27 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
     return 1;
 }
 
+static int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value)
+{
+    int rv = 0;
+    char *stmp, *vtmp = NULL;
+
+    stmp = OPENSSL_strdup(value);
+    if (stmp == NULL)
+        return -1;
+    vtmp = strchr(stmp, ':');
+    if (vtmp == NULL)
+        goto err;
+
+    *vtmp = 0;
+    vtmp++;
+    rv = EVP_PKEY_CTX_ctrl_str(ctx, stmp, vtmp);
+
+ err:
+    OPENSSL_free(stmp);
+    return rv;
+}
+
 /*
  * Verify the issuer signatures and cert times of ctx->chain.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
@@ -1900,7 +1921,41 @@ static int internal_verify(X509_STORE_CTX *ctx)
                 CB_FAIL_IF(1, ctx, xi, issuer_depth,
                            X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY);
             } else {
-                CB_FAIL_IF(X509_verify(xs, pkey) <= 0,
+                EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+                EVP_PKEY_CTX *pkctx = NULL;
+                const char *mdname = NULL;
+                int mdnid, pknid;
+                int i;
+
+                if (mctx == NULL)
+                    return 0;
+
+                if (OBJ_find_sigid_algs(X509_get_signature_nid(xs),
+                                        &mdnid, &pknid)
+                        && mdnid != NID_undef)
+                    mdname = OBJ_nid2sn(mdnid);
+
+                if (!EVP_DigestVerifyInit_ex(mctx, &pkctx, mdname, xs->libctx,
+                                             xs->propq, pkey, NULL)) {
+                    EVP_MD_CTX_free(mctx);
+                    return 0;
+                }
+
+                if (ctx->vfyopts) {
+                    for (i = 0; i < sk_OPENSSL_STRING_num(ctx->vfyopts); i++) {
+                        char *opt = sk_OPENSSL_STRING_value(ctx->vfyopts, i);
+
+                        if (pkey_ctrl_string(pkctx, opt) <= 0) {
+                            EVP_MD_CTX_free(mctx);
+                            return 0;
+                        }
+                    }
+                }
+
+                ret = X509_verify_ctx(xs, mctx);
+
+                EVP_MD_CTX_free(mctx);
+                CB_FAIL_IF(ret <= 0,
                            ctx, xs, n, X509_V_ERR_CERT_SIGNATURE_FAILURE);
             }
         }
@@ -2301,6 +2356,12 @@ void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk)
     ctx->crls = sk;
 }
 
+void X509_STORE_CTX_set0_vfyopts(X509_STORE_CTX *ctx,
+                                 STACK_OF(OPENSSL_STRING) *vfyopts)
+{
+    ctx->vfyopts = vfyopts;
+}
+
 int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose)
 {
     /*
@@ -2456,6 +2517,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     ctx->dane = NULL;
     ctx->bare_ta_signed = 0;
     ctx->rpk = NULL;
+    ctx->vfyopts = NULL;
     /* Zero ex_data to make sure we're cleanup-safe */
     memset(&ctx->ex_data, 0, sizeof(ctx->ex_data));
 

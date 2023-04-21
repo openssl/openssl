@@ -7,7 +7,7 @@ X509_STORE_CTX_free, X509_STORE_CTX_init,
 X509_STORE_CTX_init_rpk,
 X509_STORE_CTX_set0_trusted_stack,
 X509_STORE_CTX_set_cert, X509_STORE_CTX_set0_crls,
-X509_STORE_CTX_set0_rpk,
+X509_STORE_CTX_set0_rpk, X509_STORE_CTX_set0_vfyopts,
 X509_STORE_CTX_get0_param, X509_STORE_CTX_set0_param,
 X509_STORE_CTX_get0_untrusted, X509_STORE_CTX_set0_untrusted,
 X509_STORE_CTX_get_num_untrusted,
@@ -40,6 +40,8 @@ X509_STORE_CTX_purpose_inherit
  void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *target);
  void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk);
  void X509_STORE_CTX_set0_rpk(X509_STORE_CTX *ctx, EVP_PKEY *target);
+ void X509_STORE_CTX_set0_vfyopts(X509_STORE_CTX *ctx,
+                                  STACK_OF(OPENSSL_STRING) *vfyopts);
 
  X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(const X509_STORE_CTX *ctx);
  void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param);
@@ -142,6 +144,9 @@ verification to I<sk>. These CRLs will only be used if CRL verification is
 enabled in the associated B<X509_VERIFY_PARAM> structure. This might be
 used where additional "useful" CRLs are supplied as part of a protocol,
 for example in a PKCS#7 structure.
+
+X509_STORE_CTX_set0_vfyopts() sets the custom certificate verification
+parameters I<vfyopts>, which will eventually be set to EVP_PKEY_CTX.
 
 X509_STORE_CTX_get0_param() retrieves an internal pointer
 to the verification parameters associated with I<ctx>.
@@ -288,7 +293,8 @@ present, or NULL if absent.
 X509_STORE_CTX_cleanup(), X509_STORE_CTX_free(),
 X509_STORE_CTX_set0_trusted_stack(),
 X509_STORE_CTX_set_cert(),
-X509_STORE_CTX_set0_crls() and X509_STORE_CTX_set0_param() do not return
+X509_STORE_CTX_set0_crls(),
+X509_STORE_CTX_set0_vfyopts() and X509_STORE_CTX_set0_param() do not return
 values.
 
 X509_STORE_CTX_set_default() returns 1 for success or 0 if an error occurred.
@@ -306,8 +312,9 @@ L<X509_VERIFY_PARAM_set_flags(3)>
 The X509_STORE_CTX_set0_crls() function was added in OpenSSL 1.0.0.
 The X509_STORE_CTX_get_num_untrusted() function was added in OpenSSL 1.1.0.
 The X509_STORE_CTX_new_ex() function was added in OpenSSL 3.0.
-The X509_STORE_CTX_init_rpk(), X509_STORE_CTX_get0_rpk(), and
-X509_STORE_CTX_set0_rpk() functions were added in OpenSSL 3.2.
+The X509_STORE_CTX_init_rpk(), X509_STORE_CTX_get0_rpk(),
+X509_STORE_CTX_set0_rpk() and
+X509_STORE_CTX_set0_vfyopts() functions were added in OpenSSL 3.2.
 
 There is no need to call X509_STORE_CTX_cleanup() explicitly since OpenSSL 3.0.
 

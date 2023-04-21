@@ -672,6 +672,8 @@ void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *target);
 void X509_STORE_CTX_set0_rpk(X509_STORE_CTX *ctx, EVP_PKEY *target);
 void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *c, STACK_OF(X509) *sk);
 void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk);
+void X509_STORE_CTX_set0_vfyopts(X509_STORE_CTX *ctx,
+                                 STACK_OF(OPENSSL_STRING) *vfyopts);
 int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose);
 int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust);
 int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
