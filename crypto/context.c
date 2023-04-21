@@ -332,17 +332,32 @@ static OSSL_LIB_CTX default_context_int;
 
 static CRYPTO_ONCE default_context_init = CRYPTO_ONCE_STATIC_INIT;
 static CRYPTO_THREAD_LOCAL default_context_thread_local;
+static int default_context_inited = 0;
 
 DEFINE_RUN_ONCE_STATIC(default_context_do_init)
 {
-    return CRYPTO_THREAD_init_local(&default_context_thread_local, NULL)
-        && context_init(&default_context_int);
+    if (!CRYPTO_THREAD_init_local(&default_context_thread_local, NULL))
+        goto err;
+
+    if (!context_init(&default_context_int))
+        goto deinit_thread;
+
+    default_context_inited = 1;
+    return 1;
+
+deinit_thread:
+    CRYPTO_THREAD_cleanup_local(&default_context_thread_local);
+err:
+    return 0;
 }
 
 void ossl_lib_ctx_default_deinit(void)
 {
+    if (!default_context_inited)
+        return;
     context_deinit(&default_context_int);
     CRYPTO_THREAD_cleanup_local(&default_context_thread_local);
+    default_context_inited = 0;
 }
 
 static OSSL_LIB_CTX *get_thread_default_context(void)
