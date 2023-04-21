@@ -41,19 +41,19 @@ typedef struct ossl_cc_ecn_info_st {
 } OSSL_CC_ECN_INFO;
 
 /* Parameter (read-write): Maximum datagram payload length in bytes. */
-#define OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN        1
+#define OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN        "max_dgram_payload_len"
 
 /* Diagnostic (read-only): current congestion window size in bytes. */
-#define OSSL_CC_OPTION_CUR_CWND_SIZE                2
+#define OSSL_CC_OPTION_CUR_CWND_SIZE                "cur_cwnd_size"
 
 /* Diagnostic (read-only): minimum congestion window size in bytes. */
-#define OSSL_CC_OPTION_MIN_CWND_SIZE                3
+#define OSSL_CC_OPTION_MIN_CWND_SIZE                "min_cwnd_size"
 
 /* Diagnostic (read-only): current net bytes in flight. */
-#define OSSL_CC_OPTION_CUR_BYTES_IN_FLIGHT          4
+#define OSSL_CC_OPTION_CUR_BYTES_IN_FLIGHT          "bytes_in_flight"
 
 /* Diagnostic (read-only): method-specific state value. */
-#define OSSL_CC_OPTION_CUR_STATE                    5
+#define OSSL_CC_OPTION_CUR_STATE                    "cur_state"
 
 /*
  * Congestion control abstract interface.
@@ -77,7 +77,6 @@ typedef struct ossl_cc_ecn_info_st {
  *
  * All of these changes are intended to avoid having a congestion controller
  * have to access ACKM internal state.
- *
  */
 #define OSSL_CC_LOST_FLAG_PERSISTENT_CONGESTION     (1U << 0)
 
@@ -98,23 +97,41 @@ typedef struct ossl_cc_method_st {
     /*
      * Escape hatch for option configuration.
      *
-     * option_id: One of OSSL_CC_OPTION_*.
-     *
-     * value: The option value to set.
+     * params is an array of OSSL_PARAM structures.
      *
      * Returns 1 on success and 0 on failure.
      */
-    int (*set_option_uint)(OSSL_CC_DATA *ccdata,
-                           uint32_t option_id,
-                           uint64_t value);
+    int (*set_input_params)(OSSL_CC_DATA *ccdata,
+                            const OSSL_PARAM *params);
 
     /*
-     * On success, returns 1 and writes the current value of the given option to
-     * *value. Otherwise, returns 0.
+     * (Re)bind output (diagnostic) information.
+     *
+     * params is an array of OSSL_PARAM structures used to output values. The
+     * storage locations associated with each parameter are stored internally
+     * and updated whenever the state of the congestion controller is updated;
+     * thus, the storage locations associated with the OSSL_PARAMs passed in the
+     * call to this function must remain valid until the congestion controller
+     * is freed or those parameters are unbound. A given parameter name may be
+     * bound to only one location at a time. The params structures themselves
+     * do not need to remain allocated after this call returns.
+     *
+     * Returns 1 on success and 0 on failure.
      */
-    int (*get_option_uint)(OSSL_CC_DATA *ccdata,
-                           uint32_t option_id,
-                           uint64_t *value);
+    int (*bind_diagnostics)(OSSL_CC_DATA *ccdata,
+                            OSSL_PARAM *params);
+
+    /*
+     * Unbind diagnostic information. The parameters with the given names are
+     * unbound, cancelling the effects of a previous call to bind_diagnostic().
+     * params is an array of OSSL_PARAMs. The values of the parameters are
+     * ignored. If a parameter is already unbound, there is no effect for that
+     * parameter but other parameters are still unbound.
+     *
+     * Returns 1 on success or 0 on failure.
+     */
+    int (*unbind_diagnostics)(OSSL_CC_DATA *ccdata,
+                              OSSL_PARAM *params);
 
     /*
      * Returns the amount of additional data (above and beyond the data

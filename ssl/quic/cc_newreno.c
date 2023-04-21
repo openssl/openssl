@@ -25,6 +25,13 @@ typedef struct ossl_cc_newreno_st {
 
     /* Diagnostic state. */
     int         in_congestion_recovery;
+
+    /* Diagnostic output locations. */
+    size_t      *p_diag_max_dgram_payload_len;
+    uint64_t    *p_diag_cur_cwnd_size;
+    uint64_t    *p_diag_min_cwnd_size;
+    uint64_t    *p_diag_cur_bytes_in_flight;
+    uint32_t    *p_diag_cur_state;
 } OSSL_CC_NEWRENO;
 
 #define MIN_MAX_INIT_WND_SIZE    14720  /* RFC 9002 s. 7.2 */
@@ -33,6 +40,7 @@ typedef struct ossl_cc_newreno_st {
 
 static void newreno_set_max_dgram_size(OSSL_CC_NEWRENO *nr,
                                        size_t max_dgram_size);
+static void newreno_update_diag(OSSL_CC_NEWRENO *nr);
 
 static void newreno_reset(OSSL_CC_DATA *cc);
 
@@ -78,6 +86,8 @@ static void newreno_set_max_dgram_size(OSSL_CC_NEWRENO *nr,
 
     if (is_reduced)
         nr->cong_wnd = nr->k_init_wnd;
+
+    newreno_update_diag(nr);
 }
 
 static void newreno_reset(OSSL_CC_DATA *cc)
@@ -99,57 +109,130 @@ static void newreno_reset(OSSL_CC_DATA *cc)
     nr->in_congestion_recovery  = 0;
 }
 
-static int newreno_set_option_uint(OSSL_CC_DATA *cc, uint32_t option_id,
-                                   uint64_t value)
+static int newreno_set_input_params(OSSL_CC_DATA *cc, const OSSL_PARAM *params)
 {
     OSSL_CC_NEWRENO *nr = (OSSL_CC_NEWRENO *)cc;
+    const OSSL_PARAM *p;
+    size_t value;
 
-    switch (option_id) {
-    case OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN:
-        if (value > SIZE_MAX || value < QUIC_MIN_INITIAL_DGRAM_LEN)
+    p = OSSL_PARAM_locate_const(params, OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN);
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_size_t(p, &value))
+            return 0;
+        if (value < QUIC_MIN_INITIAL_DGRAM_LEN)
             return 0;
 
-        newreno_set_max_dgram_size(nr, (size_t)value);
-        return 1;
-
-    default:
-        return 0;
+        newreno_set_max_dgram_size(nr, value);
     }
+
+    return 1;
 }
 
-static int newreno_get_option_uint(OSSL_CC_DATA *cc, uint32_t option_id,
-                                   uint64_t *value)
+static int bind_diag(OSSL_PARAM *params, const char *param_name, size_t len,
+                     void **pp)
+{
+    const OSSL_PARAM *p = OSSL_PARAM_locate_const(params, param_name);
+
+    *pp = NULL;
+
+    if (p == NULL)
+        return 1;
+
+    if (p->data_type != OSSL_PARAM_UNSIGNED_INTEGER
+        || p->data_size != len)
+        return 0;
+
+    *pp = p->data;
+    return 1;
+}
+
+static int newreno_bind_diagnostic(OSSL_CC_DATA *cc, OSSL_PARAM *params)
+{
+    OSSL_CC_NEWRENO *nr = (OSSL_CC_NEWRENO *)cc;
+    size_t *new_p_max_dgram_payload_len;
+    uint64_t *new_p_cur_cwnd_size;
+    uint64_t *new_p_min_cwnd_size;
+    uint64_t *new_p_cur_bytes_in_flight;
+    uint32_t *new_p_cur_state;
+
+    if (!bind_diag(params, OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN,
+                   sizeof(size_t), (void **)&new_p_max_dgram_payload_len)
+        || !bind_diag(params, OSSL_CC_OPTION_CUR_CWND_SIZE,
+                      sizeof(uint64_t), (void **)&new_p_cur_cwnd_size)
+        || !bind_diag(params, OSSL_CC_OPTION_MIN_CWND_SIZE,
+                      sizeof(uint64_t), (void **)&new_p_min_cwnd_size)
+        || !bind_diag(params, OSSL_CC_OPTION_CUR_BYTES_IN_FLIGHT,
+                      sizeof(uint64_t), (void **)&new_p_cur_bytes_in_flight)
+        || !bind_diag(params, OSSL_CC_OPTION_CUR_STATE,
+                      sizeof(uint32_t), (void **)&new_p_cur_state))
+        return 0;
+
+    if (new_p_max_dgram_payload_len != NULL)
+        nr->p_diag_max_dgram_payload_len = new_p_max_dgram_payload_len;
+
+    if (new_p_cur_cwnd_size != NULL)
+        nr->p_diag_cur_cwnd_size = new_p_cur_cwnd_size;
+
+    if (new_p_min_cwnd_size != NULL)
+        nr->p_diag_min_cwnd_size = new_p_min_cwnd_size;
+
+    if (new_p_cur_bytes_in_flight != NULL)
+        nr->p_diag_cur_bytes_in_flight = new_p_cur_bytes_in_flight;
+
+    if (new_p_cur_state != NULL)
+        nr->p_diag_cur_state = new_p_cur_state;
+
+    newreno_update_diag(nr);
+    return 1;
+}
+
+static void unbind_diag(OSSL_PARAM *params, const char *param_name,
+                        void **pp)
+{
+    const OSSL_PARAM *p = OSSL_PARAM_locate_const(params, param_name);
+
+    if (p != NULL)
+        *pp = NULL;
+}
+
+static int newreno_unbind_diagnostic(OSSL_CC_DATA *cc, OSSL_PARAM *params)
 {
     OSSL_CC_NEWRENO *nr = (OSSL_CC_NEWRENO *)cc;
 
-    switch (option_id) {
-    case OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN:
-        *value = (uint64_t)nr->max_dgram_size;
-        return 1;
+    unbind_diag(params, OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN,
+                (void **)&nr->p_diag_max_dgram_payload_len);
+    unbind_diag(params, OSSL_CC_OPTION_CUR_CWND_SIZE,
+                (void **)&nr->p_diag_cur_cwnd_size);
+    unbind_diag(params, OSSL_CC_OPTION_MIN_CWND_SIZE,
+                (void **)&nr->p_diag_min_cwnd_size);
+    unbind_diag(params, OSSL_CC_OPTION_CUR_BYTES_IN_FLIGHT,
+                (void **)&nr->p_diag_cur_bytes_in_flight);
+    unbind_diag(params, OSSL_CC_OPTION_CUR_STATE,
+                (void **)&nr->p_diag_cur_state);
+    return 1;
+}
 
-    case OSSL_CC_OPTION_CUR_CWND_SIZE:
-        *value = nr->cong_wnd;
-        return 1;
+static void newreno_update_diag(OSSL_CC_NEWRENO *nr)
+{
+    if (nr->p_diag_max_dgram_payload_len != NULL)
+        *nr->p_diag_max_dgram_payload_len = nr->max_dgram_size;
 
-    case OSSL_CC_OPTION_MIN_CWND_SIZE:
-        *value = nr->k_min_wnd;
-        return 1;
+    if (nr->p_diag_cur_cwnd_size != NULL)
+        *nr->p_diag_cur_cwnd_size = nr->cong_wnd;
 
-    case OSSL_CC_OPTION_CUR_BYTES_IN_FLIGHT:
-        *value = nr->bytes_in_flight;
-        return 1;
+    if (nr->p_diag_min_cwnd_size != NULL)
+        *nr->p_diag_min_cwnd_size = nr->k_min_wnd;
 
-    case OSSL_CC_OPTION_CUR_STATE:
+    if (nr->p_diag_cur_bytes_in_flight != NULL)
+        *nr->p_diag_cur_bytes_in_flight = nr->bytes_in_flight;
+
+    if (nr->p_diag_cur_state != NULL) {
         if (nr->in_congestion_recovery)
-            *value = 'R';
+            *nr->p_diag_cur_state = 'R';
         else if (nr->cong_wnd < nr->slow_start_thresh)
-            *value = 'S';
+            *nr->p_diag_cur_state = 'S';
         else
-            *value = 'A';
-        return 1;
-
-    default:
-        return 0;
+            *nr->p_diag_cur_state = 'A';
     }
 }
 
@@ -198,6 +281,7 @@ static void newreno_flush(OSSL_CC_NEWRENO *nr, uint32_t flags)
     }
 
     nr->processing_loss = 0;
+    newreno_update_diag(nr);
 }
 
 static uint64_t newreno_get_tx_allowance(OSSL_CC_DATA *cc)
@@ -224,6 +308,7 @@ static int newreno_on_data_sent(OSSL_CC_DATA *cc, uint64_t num_bytes)
     OSSL_CC_NEWRENO *nr = (OSSL_CC_NEWRENO *)cc;
 
     nr->bytes_in_flight += num_bytes;
+    newreno_update_diag(nr);
     return 1;
 }
 
@@ -268,7 +353,7 @@ static int newreno_on_data_acked(OSSL_CC_DATA *cc,
      * congestion window.
      */
     if (!newreno_is_cong_limited(nr))
-        return 1;
+        goto out;
 
     /*
      * We can handle acknowledgement of a packet in one of three ways
@@ -286,12 +371,10 @@ static int newreno_on_data_acked(OSSL_CC_DATA *cc,
      */
     if (newreno_in_cong_recovery(nr, info->tx_time)) {
         /* Congestion recovery, do nothing. */
-        return 1;
     } else if (nr->cong_wnd < nr->slow_start_thresh) {
         /* When this condition is true we are in the Slow Start state. */
         nr->cong_wnd += info->tx_size;
         nr->in_congestion_recovery = 0;
-        return 1;
     } else {
         /* Otherwise, we are in the Congestion Avoidance state. */
         nr->bytes_acked += info->tx_size;
@@ -305,8 +388,11 @@ static int newreno_on_data_acked(OSSL_CC_DATA *cc,
         }
 
         nr->in_congestion_recovery = 0;
-        return 1;
     }
+
+out:
+    newreno_update_diag(nr);
+    return 1;
 }
 
 static int newreno_on_data_lost(OSSL_CC_DATA *cc,
@@ -328,7 +414,7 @@ static int newreno_on_data_lost(OSSL_CC_DATA *cc,
              * packet at a time s < t, as we've effectively already signalled
              * congestion on loss of that and subsequent packets.
              */
-            return 1;
+            goto out;
 
         nr->processing_loss = 1;
 
@@ -340,6 +426,9 @@ static int newreno_on_data_lost(OSSL_CC_DATA *cc,
 
     nr->tx_time_of_last_loss
         = ossl_time_max(nr->tx_time_of_last_loss, info->tx_time);
+
+out:
+    newreno_update_diag(nr);
     return 1;
 }
 
@@ -357,6 +446,7 @@ static int newreno_on_data_invalidated(OSSL_CC_DATA *cc,
     OSSL_CC_NEWRENO *nr = (OSSL_CC_NEWRENO *)cc;
 
     nr->bytes_in_flight -= num_bytes;
+    newreno_update_diag(nr);
     return 1;
 }
 
@@ -376,8 +466,9 @@ const OSSL_CC_METHOD ossl_cc_newreno_method = {
     newreno_new,
     newreno_free,
     newreno_reset,
-    newreno_set_option_uint,
-    newreno_get_option_uint,
+    newreno_set_input_params,
+    newreno_bind_diagnostic,
+    newreno_unbind_diagnostic,
     newreno_get_tx_allowance,
     newreno_get_wakeup_deadline,
     newreno_on_data_sent,

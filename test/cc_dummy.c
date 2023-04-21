@@ -12,7 +12,10 @@
 
 typedef struct ossl_cc_dummy_st {
     size_t max_dgram_len;
+    size_t *p_diag_max_dgram_len;
 } OSSL_CC_DUMMY;
+
+static void dummy_update_diag(OSSL_CC_DUMMY *d);
 
 static OSSL_CC_DATA *dummy_new(OSSL_TIME (*now_cb)(void *arg),
                                void *now_cb_arg)
@@ -36,39 +39,59 @@ static void dummy_reset(OSSL_CC_DATA *cc)
 
 }
 
-static int dummy_set_option_uint(OSSL_CC_DATA *cc,
-                                 uint32_t option_id,
-                                 uint64_t value)
+static int dummy_set_input_params(OSSL_CC_DATA *cc, const OSSL_PARAM *params)
 {
     OSSL_CC_DUMMY *d = (OSSL_CC_DUMMY *)cc;
+    const OSSL_PARAM *p;
+    size_t value;
 
-    switch (option_id) {
-    case OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN:
-        if (value > SIZE_MAX)
+    p = OSSL_PARAM_locate_const(params, OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN);
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_size_t(p, &value))
+            return 0;
+        if (value < QUIC_MIN_INITIAL_DGRAM_LEN)
             return 0;
 
-        d->max_dgram_len = (size_t)value;
-        return 1;
-
-    default:
-        return 0;
+        d->max_dgram_len = value;
+        dummy_update_diag(d);
     }
+
+    return 1;
 }
 
-static int dummy_get_option_uint(OSSL_CC_DATA *cc,
-                                 uint32_t option_id,
-                                 uint64_t *value)
+static int dummy_bind_diagnostic(OSSL_CC_DATA *cc, OSSL_PARAM *params)
+{
+    OSSL_CC_DUMMY *d = (OSSL_CC_DUMMY *)cc;
+    const OSSL_PARAM *p;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN);
+    if (p != NULL) {
+        if (p->data_type != OSSL_PARAM_UNSIGNED_INTEGER
+            || p->data_size != sizeof(size_t))
+            return 0;
+
+        d->p_diag_max_dgram_len = p->data;
+    }
+
+    dummy_update_diag(d);
+    return 1;
+}
+
+static int dummy_unbind_diagnostic(OSSL_CC_DATA *cc, OSSL_PARAM *params)
 {
     OSSL_CC_DUMMY *d = (OSSL_CC_DUMMY *)cc;
 
-    switch (option_id) {
-    case OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN:
-        *value = (uint64_t)d->max_dgram_len;
-        return 1;
+    if (OSSL_PARAM_locate_const(params, OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN)
+        != NULL)
+        d->p_diag_max_dgram_len = NULL;
 
-    default:
-        return 0;
-    }
+    return 1;
+}
+
+static void dummy_update_diag(OSSL_CC_DUMMY *d)
+{
+    if (d->p_diag_max_dgram_len != NULL)
+        *d->p_diag_max_dgram_len = d->max_dgram_len;
 }
 
 static uint64_t dummy_get_tx_allowance(OSSL_CC_DATA *cc)
@@ -115,8 +138,9 @@ const OSSL_CC_METHOD ossl_cc_dummy_method = {
     dummy_new,
     dummy_free,
     dummy_reset,
-    dummy_set_option_uint,
-    dummy_get_option_uint,
+    dummy_set_input_params,
+    dummy_bind_diagnostic,
+    dummy_unbind_diagnostic,
     dummy_get_tx_allowance,
     dummy_get_wakeup_deadline,
     dummy_on_data_sent,
