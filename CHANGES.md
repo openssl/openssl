@@ -31,9 +31,9 @@ breaking changes, and mappings for the large list of deprecated functions.
 ### Changes between 3.0.8 and 3.0.9 [xx XXX xxxx]
 
  * Fixed buffer overread in AES-XTS decryption on ARM 64 bit platforms which
-   happens if the buffer size is 4 mod 5. This can trigger a crash of an
-   application using AES-XTS decryption if the memory just after the buffer
-   being decrypted is not mapped.
+   happens if the buffer size is 4 mod 5 in 16 byte AES blocks. This can
+   trigger a crash of an application using AES-XTS decryption if the memory
+   just after the buffer being decrypted is not mapped.
    Thanks to Anton Romanov (Amazon) for discovering the issue.
    ([CVE-2023-1255])
 
