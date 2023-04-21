@@ -328,11 +328,14 @@ static int test_simulate(void)
     int have_sim = 0;
     const OSSL_CC_METHOD *ccm = &ossl_cc_newreno_method;
     OSSL_CC_DATA *cc = NULL;
-    uint64_t mdpl = 1472;
+    size_t mdpl = 1472;
     uint64_t total_sent = 0, total_to_send, allowance;
     uint64_t actual_capacity = 16000; /* B/s - 128kb/s */
     uint64_t cwnd_sample_sum = 0, cwnd_sample_count = 0;
+    uint64_t diag_cur_bytes_in_flight = UINT64_MAX;
+    uint64_t diag_cur_cwnd_size = UINT64_MAX;
     struct net_sim sim;
+    OSSL_PARAM params[3], *p = params;
 
     fake_time = TIME_BASE;
 
@@ -344,8 +347,21 @@ static int test_simulate(void)
 
     have_sim = 1;
 
-    if (!TEST_true(ccm->set_option_uint(cc, OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN,
-                                        mdpl)))
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN,
+                                       &mdpl);
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!TEST_true(ccm->set_input_params(cc, params)))
+        goto err;
+
+    p = params;
+    *p++ = OSSL_PARAM_construct_uint64(OSSL_CC_OPTION_CUR_BYTES_IN_FLIGHT,
+                                       &diag_cur_bytes_in_flight);
+    *p++ = OSSL_PARAM_construct_uint64(OSSL_CC_OPTION_CUR_CWND_SIZE,
+                                       &diag_cur_cwnd_size);
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!TEST_true(ccm->bind_diagnostics(cc, params)))
         goto err;
 
     ccm->reset(cc);
@@ -399,13 +415,7 @@ static int test_simulate(void)
          * have at least one MDPL's worth of allowance as nothing is in flight.
          */
         if (rc == 3) {
-            uint64_t v = 1;
-
-            if (!TEST_true(ccm->get_option_uint(cc, OSSL_CC_OPTION_CUR_BYTES_IN_FLIGHT,
-                                                &v)))
-                goto err;
-
-            if (!TEST_uint64_t_eq(v, 0))
+            if (!TEST_uint64_t_eq(diag_cur_bytes_in_flight, 0))
                 goto err;
 
             if (!TEST_uint64_t_ge(ccm->get_tx_allowance(cc), mdpl))
@@ -416,8 +426,8 @@ static int test_simulate(void)
         {
             uint64_t v = 1;
 
-            if (!TEST_true(ccm->get_option_uint(cc, OSSL_CC_OPTION_CUR_CWND_SIZE,
-                                                &v)))
+            if (!TEST_uint64_t_ne(diag_cur_bytes_in_flight, UINT64_MAX)
+                || !TEST_uint64_t_ne(diag_cur_cwnd_size, UINT64_MAX))
                 goto err;
 
             cwnd_sample_sum += v;
@@ -471,7 +481,10 @@ static int test_sanity(void)
     const OSSL_CC_METHOD *ccm = &ossl_cc_newreno_method;
     OSSL_CC_LOSS_INFO loss_info = {0};
     OSSL_CC_ACK_INFO ack_info = {0};
-    uint64_t allowance, allowance2, v = 1;
+    uint64_t allowance, allowance2;
+    OSSL_PARAM params[3], *p = params;
+    size_t mdpl = 1472, diag_mdpl = SIZE_MAX;
+    uint64_t diag_cur_bytes_in_flight = UINT64_MAX;
 
     fake_time = TIME_BASE;
 
@@ -479,15 +492,24 @@ static int test_sanity(void)
         goto err;
 
     /* Test configuration of options. */
-    if (!TEST_true(ccm->set_option_uint(cc, OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN,
-                                        1472)))
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN,
+                                       &mdpl);
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!TEST_true(ccm->set_input_params(cc, params)))
         goto err;
 
     ccm->reset(cc);
 
-    if (!TEST_true(ccm->get_option_uint(cc, OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN,
-                                        &v))
-        || !TEST_uint64_t_eq(v, 1472))
+    p = params;
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_CC_OPTION_MAX_DGRAM_PAYLOAD_LEN,
+                                       &diag_mdpl);
+    *p++ = OSSL_PARAM_construct_uint64(OSSL_CC_OPTION_CUR_BYTES_IN_FLIGHT,
+                                       &diag_cur_bytes_in_flight);
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!TEST_true(ccm->bind_diagnostics(cc, params))
+        || !TEST_size_t_eq(diag_mdpl, 1472))
         goto err;
 
     if (!TEST_uint64_t_ge(allowance = ccm->get_tx_allowance(cc), 1472))
@@ -501,9 +523,7 @@ static int test_sanity(void)
         goto err;
 
     /* No bytes should currently be in flight. */
-    if (!TEST_true(ccm->get_option_uint(cc, OSSL_CC_OPTION_CUR_BYTES_IN_FLIGHT,
-                                        &v))
-        || !TEST_uint64_t_eq(v, 0))
+    if (!TEST_uint64_t_eq(diag_cur_bytes_in_flight, 0))
         goto err;
 
     /* Tell the CC we have sent some data. */
