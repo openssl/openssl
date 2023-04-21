@@ -1147,7 +1147,7 @@ static int fix_ec_paramgen_curve_nid(enum state state,
     if (state == PRE_CTRL_TO_PARAMS) {
         ctx->p2 = (char *)OBJ_nid2sn(ctx->p1);
         ctx->p1 = 0;
-    } else if (state == POST_PARAMS_TO_CTRL) {
+    } else if (state == PRE_PARAMS_TO_CTRL) {
         /*
          * We're translating from params to ctrl and setting the curve name.
          * The ctrl function needs it to be a NID, but meanwhile, we need
@@ -1165,7 +1165,7 @@ static int fix_ec_paramgen_curve_nid(enum state state,
         return ret;
 
     if (state == PRE_PARAMS_TO_CTRL) {
-        ctx->p1 = OBJ_sn2nid(ctx->p2);
+        ctx->p1 = OBJ_sn2nid(p2);
         ctx->p2 = NULL;
     }
 
