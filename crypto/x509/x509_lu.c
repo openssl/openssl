@@ -326,6 +326,7 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx,
 
     if (!X509_STORE_lock(store))
         return 0;
+    sk_X509_OBJECT_sort(store->objs);
     tmp = X509_OBJECT_retrieve_by_subject(store->objs, type, name);
     X509_STORE_unlock(store);
 
@@ -574,6 +575,7 @@ STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store)
     if (!X509_STORE_lock(store))
         goto out_free;
 
+    sk_X509_OBJECT_sort(store->objs);
     objs = X509_STORE_get0_objects(store);
     for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
         X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(objs, i));
@@ -608,6 +610,7 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
     if (!X509_STORE_lock(store))
         return NULL;
 
+    sk_X509_OBJECT_sort(store->objs);
     idx = x509_object_idx_cnt(store->objs, X509_LU_X509, nm, &cnt);
     if (idx < 0) {
         /*
@@ -627,6 +630,7 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
         X509_OBJECT_free(xobj);
         if (!X509_STORE_lock(store))
             return NULL;
+        sk_X509_OBJECT_sort(store->objs);
         idx = x509_object_idx_cnt(store->objs, X509_LU_X509, nm, &cnt);
         if (idx < 0) {
             sk = sk_X509_new_null();
@@ -677,6 +681,7 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
         sk_X509_CRL_free(sk);
         return NULL;
     }
+    sk_X509_OBJECT_sort(store->objs);
     idx = x509_object_idx_cnt(store->objs, X509_LU_CRL, nm, &cnt);
     if (idx < 0) {
         X509_STORE_unlock(store);
@@ -781,6 +786,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     if (!X509_STORE_lock(store))
         return 0;
 
+    sk_X509_OBJECT_sort(store->objs);
     idx = x509_object_idx_cnt(store->objs, X509_LU_X509, xn, &nmatch);
     if (idx != -1) { /* should be true as we've had at least one match */
         /* Look through all matching certs for suitable issuer */
