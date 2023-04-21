@@ -150,7 +150,7 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     ch->have_statm = 1;
     ch->cc_method = &ossl_cc_newreno_method;
-    if ((ch->cc_data = ch->cc_method->new(get_time, NULL)) == NULL)
+    if ((ch->cc_data = ch->cc_method->new(get_time, ch)) == NULL)
         goto err;
 
     if ((ch->ackm = ossl_ackm_new(get_time, ch, &ch->statm,
