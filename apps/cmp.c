@@ -1643,7 +1643,7 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         if (opt_cmd == CMP_GENM) {
             CMP_warn("-csr option is ignored for command 'genm'");
         } else {
-            csr = load_csr_autofmt(opt_csr, FORMAT_UNDEF, "PKCS#10 CSR");
+            csr = load_csr_autofmt(opt_csr, FORMAT_UNDEF, NULL, "PKCS#10 CSR");
             if (csr == NULL)
                 return 0;
             if (!OSSL_CMP_CTX_set1_p10CSR(ctx, csr))

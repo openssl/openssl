@@ -738,7 +738,7 @@ int req_main(int argc, char **argv)
             BIO_printf(bio_err,
                        "Warning: Not placing -key in cert or request since request is used\n");
         req = load_csr_autofmt(infile /* if NULL, reads from stdin */,
-                               informat, "X509 request");
+                               informat, vfyopts, "X509 request");
         if (req == NULL)
             goto end;
     } else if (infile != NULL) {

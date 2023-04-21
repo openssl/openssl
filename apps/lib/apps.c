@@ -527,7 +527,8 @@ X509_REQ *load_csr(const char *file, int format, const char *desc)
 }
 
 /* Better extend OSSL_STORE to support CSRs, see FR #15725 */
-X509_REQ *load_csr_autofmt(const char *infile, int format, const char *desc)
+X509_REQ *load_csr_autofmt(const char *infile, int format,
+                           STACK_OF(OPENSSL_STRING) *vfyopts, const char *desc)
 {
     X509_REQ *csr;
 
@@ -550,12 +551,12 @@ X509_REQ *load_csr_autofmt(const char *infile, int format, const char *desc)
     }
     if (csr != NULL) {
         EVP_PKEY *pkey = X509_REQ_get0_pubkey(csr);
-        int ret = do_X509_REQ_verify(csr, pkey, NULL /* vfyopts */);
+        int ret = do_X509_REQ_verify(csr, pkey, vfyopts);
 
         if (pkey == NULL || ret < 0)
-            BIO_puts(bio_err, "Warning: error while verifying CSR self-signature");
+            BIO_puts(bio_err, "Warning: error while verifying CSR self-signature\n");
         else if (ret == 0)
-            BIO_puts(bio_err, "Warning: CSR self-signature does not match the contents");
+            BIO_puts(bio_err, "Warning: CSR self-signature does not match the contents\n");
         return csr;
     }
     return csr;
