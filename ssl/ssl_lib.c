@@ -747,8 +747,10 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
 
     s->options = ctx->options;
     s->dane.flags = ctx->dane.flags;
-    s->min_proto_version = ctx->min_proto_version;
-    s->max_proto_version = ctx->max_proto_version;
+    if (method->version == ctx->method->version) {
+        s->min_proto_version = ctx->min_proto_version;
+        s->max_proto_version = ctx->max_proto_version;
+    }
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
     s->max_early_data = ctx->max_early_data;
