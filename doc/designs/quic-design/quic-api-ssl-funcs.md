@@ -634,8 +634,10 @@ Notes:
 | `SSL_shutdown_ex` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_stream_conclude` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_stream_reset` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_get_stream_state` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_get_stream_error_code` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_get_stream_read_state` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_get_stream_write_state` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_get_stream_read_error_code` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_get_stream_write_error_code` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_get_conn_close_info` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | **⇒ New APIs for Multi-Stream** | |
 | `SSL_get0_connection` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
@@ -645,7 +647,8 @@ Notes:
 | `SSL_new_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_accept_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_get_accept_stream_queue_len` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_set_default_stream_type` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_set_default_stream_mode` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_set_incoming_stream_reject_policy` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_detach_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_attach_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | **⇒ Currently Not Supported** | |
