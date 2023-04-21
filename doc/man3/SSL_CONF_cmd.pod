@@ -418,7 +418,7 @@ This sets the minimum supported SSL, TLS or DTLS version.
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1>, B<DTLSv1.2> and B<QUICv1>.
 The SSL and TLS bounds apply only to TLS-based contexts. The DTLS bounds
-apply only to DTLS-based contexts.The QUIC bounds apply only to QUIC-based
+apply only to DTLS-based contexts. The QUIC bounds apply only to QUIC-based
 contexts.
 The command can be repeated with one instance setting a TLS bound, another
 setting a DTLS bound and another setting a QUIC bound.
@@ -431,7 +431,7 @@ This sets the maximum supported SSL, TLS or DTLS version.
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1>, B<DTLSv1.2> and B<QUICv1>.
 The SSL and TLS bounds apply only to TLS-based contexts. The DTLS bounds
-apply only to DTLS-based contexts.The QUIC bounds apply only to QUIC-based
+apply only to DTLS-based contexts. The QUIC bounds apply only to QUIC-based
 contexts.
 The command can be repeated with one instance setting a TLS bound, another
 setting a DTLS bound and another setting a QUIC bound.
