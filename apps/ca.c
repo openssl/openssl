@@ -1375,7 +1375,7 @@ static int certify(X509 **xret, const char *infile, int informat,
     EVP_PKEY *pktmp = NULL;
     int ok = -1, i;
 
-    req = load_csr_autofmt(infile, informat, "certificate request");
+    req = load_csr_autofmt(infile, informat, vfyopts, "certificate request");
     if (req == NULL)
         goto end;
     if ((pktmp = X509_REQ_get0_pubkey(req)) == NULL) {

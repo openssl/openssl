@@ -706,7 +706,8 @@ int x509_main(int argc, char **argv)
         if (infile == NULL)
             BIO_printf(bio_err,
                        "Warning: Reading cert request from stdin since no -in option is given\n");
-        req = load_csr_autofmt(infile, informat, "certificate request input");
+        req = load_csr_autofmt(infile, informat, vfyopts,
+                               "certificate request input");
         if (req == NULL)
             goto end;
 
