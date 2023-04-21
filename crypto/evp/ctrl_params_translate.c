@@ -2734,6 +2734,7 @@ static int evp_pkey_ctx_setget_params_to_ctrl(EVP_PKEY_CTX *pctx,
             if (translation->fixup_args != NULL)
                 fixup = translation->fixup_args;
             ctx.action_type = translation->action_type;
+            ctx.ctrl_cmd = translation->ctrl_num;
         }
         ctx.pctx = pctx;
         ctx.params = params;
