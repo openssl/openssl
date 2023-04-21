@@ -28,3 +28,6 @@
 [submodule "cloudflare-quiche"]
 	path = cloudflare-quiche
 	url = https://github.com/cloudflare/quiche
+[submodule "interop"]
+	path = interop
+	url = https://gitlab.com/redhat-crypto/tests/interop.git
