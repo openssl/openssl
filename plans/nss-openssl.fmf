@@ -1,0 +1,10 @@
+summary: Upstreamed interop-2way tests
+contact: Stanislav Zidek <szidek@redhat.com>
+discover:
+  # upstreamed tests (public)
+  - name: interop-nss-openssl
+    how: fmf
+    url: https://gitlab.com/redhat-crypto/tests/interop.git
+    filter: 'tag: interop-openssl & tag: interop-nss-slow & tag: -interop-2way'
+execute:
+    how: tmt

@@ -1,0 +1,10 @@
+summary: Upstreamed interop tests - short tests which do not need to run in parallel
+contact: Stanislav Zidek <szidek@redhat.com>
+discover:
+  # upstreamed tests (public)
+  - name: interop-other+basic
+    how: fmf
+    url: https://gitlab.com/redhat-crypto/tests/interop.git
+    filter: 'tag: interop-openssl & tag: -interop-2way & tag: -interop-3way & tag: -interop-nss-slow'
+execute:
+    how: tmt
