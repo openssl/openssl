@@ -154,7 +154,6 @@ OSSL_PARAM *OSSL_PARAM_dup(const OSSL_PARAM *p);
 OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2);
 void OSSL_PARAM_free(OSSL_PARAM *p);
 
-const OSSL_PARAM *OSSL_PARAM_locate_const(const OSSL_PARAM *p, const char *key);
 OSSL_PARAM *OSSL_PARAM_next(OSSL_PARAM *p);
 const OSSL_PARAM *OSSL_PARAM_next_const(const OSSL_PARAM *p);
 int OSSL_PARAM_equals(const OSSL_PARAM *p, const char *key);
