@@ -741,6 +741,7 @@ my @user_crossable = qw ( AR AS CC CXX CPP LD MT RANLIB RC );
 # input, as opposed to the VAR=string option that override the corresponding
 # config target attributes
 my %useradd = (
+    ASFLAGS     => [],
     CPPDEFINES  => [],
     CPPINCLUDES => [],
     CPPFLAGS    => [],
