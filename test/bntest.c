@@ -425,6 +425,63 @@ static int test_mod(void)
     return st;
 }
 
+static int nist_primes[] = {192, 224, 256, 384, 521};
+
+/*
+ * Test whether the BN_nist_mod_* functions return the same result as the
+ * slower BN_mod() function for positive inputs
+ * (for negative inputs, BN_nist_mod_* just calls BN_nnmod)
+ */
+static int test_nist_mod(int n)
+{
+    BIGNUM *input = NULL, *generic_res = NULL, *nist_res = NULL;
+    const BIGNUM *nist_prime;
+    int st = 0, i, bits = nist_primes[n];
+
+    switch (bits) {
+        case 192:
+            nist_prime = BN_get0_nist_prime_192();
+            break;
+        case 224:
+            nist_prime = BN_get0_nist_prime_224();
+            break;
+        case 256:
+            nist_prime = BN_get0_nist_prime_256();
+            break;
+        case 384:
+            nist_prime = BN_get0_nist_prime_384();
+            break;
+        case 521:
+            nist_prime = BN_get0_nist_prime_521();
+            break;
+        default:
+            goto err;
+    }
+
+    if (!TEST_ptr(input = BN_new())
+        || !TEST_ptr(generic_res = BN_new())
+        || !TEST_ptr(nist_res = BN_new())
+    )
+        goto err;
+
+    for (i = 0; i < NUM0; i++) {
+        if (!(TEST_true(BN_bntest_rand(input, bits + i * 10, 0, 0))))
+            goto err;
+
+        if (!(TEST_true(BN_mod(generic_res, input, nist_prime, ctx))
+                && TEST_true(BN_nist_mod_func(nist_prime) != NULL)
+                && TEST_true(BN_nist_mod_func(nist_prime)(nist_res, input, nist_prime, ctx))
+                && TEST_BN_eq(generic_res, nist_res)))
+            goto err;
+    }
+    st = 1;
+    err:
+        BN_free(input);
+        BN_free(generic_res);
+        BN_free(nist_res);
+        return st;
+}
+
 static const char *bn1strings[] = {
     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
@@ -3274,6 +3331,7 @@ int setup_tests(void)
         ADD_ALL_TESTS(test_signed_mod_replace_ab, OSSL_NELEM(signed_mod_tests));
         ADD_ALL_TESTS(test_signed_mod_replace_ba, OSSL_NELEM(signed_mod_tests));
         ADD_TEST(test_mod);
+        ADD_ALL_TESTS(test_nist_mod, OSSL_NELEM(nist_primes));
         ADD_TEST(test_modexp_mont5);
         ADD_TEST(test_kronecker);
         ADD_TEST(test_rand);
