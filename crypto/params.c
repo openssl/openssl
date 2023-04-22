@@ -1529,3 +1529,29 @@ int OSSL_PARAM_get_octet_string_ptr(const OSSL_PARAM *p, const void **val,
     return rv || get_string_ptr_internal(p, val, used_len,
                                          OSSL_PARAM_OCTET_STRING);
 }
+
+OSSL_PARAM *OSSL_PARAM_next(OSSL_PARAM *p)
+{
+    if (p != NULL && p->key != NULL)
+        return p + 1;
+    return NULL;
+}
+
+const OSSL_PARAM *OSSL_PARAM_next_const(const OSSL_PARAM *p)
+{
+    if (p != NULL && p->key != NULL)
+        return p + 1;
+    return NULL;
+}
+
+int OSSL_PARAM_equals(const OSSL_PARAM *p, const char *key)
+{
+    if (p != NULL && key != NULL && p->key != NULL)
+        return strcmp(key, p->key) == 0;
+    return 0;
+}
+
+int OSSL_PARAM_is_end(const OSSL_PARAM *p)
+{
+    return p == NULL || p->key == NULL;
+}
