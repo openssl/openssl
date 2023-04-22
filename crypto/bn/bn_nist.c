@@ -338,6 +338,13 @@ static void constant_time_cond_swap_bn(unsigned char mask, BN_ULONG *a,
         bn_cp_64(to, 2, from, (a1) - 3) \
         }
 
+/*
+ * `carry` is a signed integer that has the range of [-4, +6].
+ * In order to use carry with the `constant_time_*` functions, we need to
+ * offset `carry` so that it fits inside of an unsigned integer.
+ */
+#define CARRY_TO_UINT_OFFSET 16384 /* 2^14 */
+
 int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
                     BN_CTX *ctx)
 {
@@ -437,12 +444,20 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
             carry += (int)bn_add_words(r_d, r_d, t_d, BN_NIST_192_TOP);
     }
 #endif
-    if (carry > 0)
-        carry =
-            (int)bn_sub_words(r_d, r_d, _nist_p_192[carry - 1],
-                              BN_NIST_192_TOP);
-    else
-        carry = 1;
+    {
+        BN_ULONG table_row[BN_NIST_192_TOP];
+        int sub_carry;
+
+        constant_time_lookup(
+            table_row, _nist_p_192, BN_NIST_192_TOP * sizeof(BN_ULONG),
+            OSSL_NELEM(_nist_p_192), carry - 1
+        );
+        sub_carry = bn_sub_words(c_d, r_d, table_row, BN_NIST_192_TOP);
+        constant_time_cond_swap_bn(constant_time_ge_8(carry, 1),
+                                   c_d, r_d, BN_NIST_192_TOP);
+        carry = constant_time_select_int(constant_time_ge(carry, 1),
+                                         sub_carry, 1); /* if carry > 0 */
+    }
 
     /*
      * we need 'if (carry==0 || result>=modulus) result-=modulus;'
@@ -608,14 +623,33 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     }
 #endif
     adjust = ADJUST_WITH_SUB;
-    if (carry > 0) {
-        carry =
-            (int)bn_sub_words(r_d, r_d, _nist_p_224[carry - 1],
-                              BN_NIST_224_TOP);
+    {
+        unsigned int gt0_mask = constant_time_ge(carry + CARRY_TO_UINT_OFFSET,
+                                                 1 + CARRY_TO_UINT_OFFSET);
+        unsigned int lt0_mask = constant_time_lt(carry + CARRY_TO_UINT_OFFSET,
+                                                 CARRY_TO_UINT_OFFSET);
+        BN_ULONG table_row[BN_NIST_224_TOP];
+        int sub_carry, add_carry;
+
+        constant_time_lookup(
+            table_row, _nist_p_224, BN_NIST_224_TOP * sizeof(BN_ULONG),
+            OSSL_NELEM(_nist_p_224),
+            constant_time_select_int(
+                gt0_mask, carry - 1,
+                constant_time_select_int(lt0_mask, -carry - 1, /* unused */ 0)
+            )
+        );
+
+        /* if carry > 0 */
+        sub_carry = bn_sub_words(c_d, r_d, table_row, BN_NIST_224_TOP);
+        constant_time_cond_swap_bn(
+            constant_time_ge_8(carry + CARRY_TO_UINT_OFFSET,
+                               1 + CARRY_TO_UINT_OFFSET),
+            c_d, r_d, BN_NIST_224_TOP);
 #if BN_BITS2==64
-        carry = (int)(~(r_d[BN_NIST_224_TOP - 1] >> 32)) & 1;
+        sub_carry = (int)(~(r_d[BN_NIST_224_TOP - 1] >> 32)) & 1;
 #endif
-    } else if (carry < 0) {
+        /* else if (carry < 0) */
         /*
          * it's a bit more complicated logic in this case. if bn_add_words
          * yields no carry, then result has to be adjusted by unconditionally
@@ -623,16 +657,26 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
          * compared to the modulus and conditionally adjusted by
          * *subtracting* the latter.
          */
-        carry =
-            (int)bn_add_words(r_d, r_d, _nist_p_224[-carry - 1],
-                              BN_NIST_224_TOP);
+        add_carry = bn_add_words(c_d, r_d, table_row, BN_NIST_224_TOP);
+        constant_time_cond_swap_bn(
+            constant_time_lt_8(carry + CARRY_TO_UINT_OFFSET,
+                               CARRY_TO_UINT_OFFSET),
+                c_d, r_d, BN_NIST_224_TOP);
         adjust = constant_time_select_int(
-            constant_time_is_zero(carry),
-            ADJUST_WITH_ADD,
-            ADJUST_WITH_SUB
+            lt0_mask,
+            constant_time_select_int(
+                constant_time_is_zero(add_carry),
+                ADJUST_WITH_ADD,
+                ADJUST_WITH_SUB
+            ),
+            adjust
         );
-    } else
-        carry = 1;
+
+        carry = constant_time_select_int(gt0_mask, sub_carry,
+                                         constant_time_select_int(lt0_mask,
+                                                                  add_carry,
+                                                                  1));
+    }
 
     /*-
      * Constant-time equivalent to:
@@ -887,22 +931,51 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 #endif
     /* see BN_nist_mod_224 for explanation */
     adjust = ADJUST_WITH_SUB;
-    if (carry > 0)
-        carry =
-            (int)bn_sub_words(r_d, r_d, _nist_p_256[carry - 1],
-                              BN_NIST_256_TOP);
-    else if (carry < 0) {
-        carry =
-            (int)bn_add_words(r_d, r_d, _nist_p_256[-carry - 1],
-                              BN_NIST_256_TOP);
-        adjust = constant_time_select_int(
-            constant_time_is_zero(carry),
-            ADJUST_WITH_ADD,
-            ADJUST_WITH_SUB
-        );
-    } else
-        carry = 1;
+    {
+        unsigned int gt0_mask = constant_time_ge(carry + CARRY_TO_UINT_OFFSET,
+                                                 1 + CARRY_TO_UINT_OFFSET);
+        unsigned int lt0_mask = constant_time_lt(carry + CARRY_TO_UINT_OFFSET,
+                                                 CARRY_TO_UINT_OFFSET);
+        BN_ULONG table_row[BN_NIST_256_TOP];
+        int sub_carry, add_carry;
 
+        constant_time_lookup(
+            table_row, _nist_p_256, BN_NIST_256_TOP * sizeof(BN_ULONG),
+            OSSL_NELEM(_nist_p_256),
+            constant_time_select_int(
+                gt0_mask, carry - 1,
+                constant_time_select_int(lt0_mask, -carry - 1, /* unused */ 0)
+            )
+        );
+
+        /* if carry > 0 */
+        sub_carry = bn_sub_words(c_d, r_d, table_row, BN_NIST_256_TOP);
+        constant_time_cond_swap_bn(
+            constant_time_ge_8(carry + CARRY_TO_UINT_OFFSET,
+                               1 + CARRY_TO_UINT_OFFSET),
+            c_d, r_d, BN_NIST_256_TOP);
+
+        /* else if (carry < 0) */
+        add_carry = bn_add_words(c_d, r_d, table_row, BN_NIST_256_TOP);
+        constant_time_cond_swap_bn(
+            constant_time_lt_8(carry + CARRY_TO_UINT_OFFSET,
+                               CARRY_TO_UINT_OFFSET),
+                c_d, r_d, BN_NIST_256_TOP);
+        adjust = constant_time_select_int(
+            lt0_mask,
+            constant_time_select_int(
+                constant_time_is_zero(carry),
+                ADJUST_WITH_ADD,
+                ADJUST_WITH_SUB
+            ),
+            adjust
+        );
+
+        carry = constant_time_select_int(gt0_mask, sub_carry,
+                                         constant_time_select_int(lt0_mask,
+                                                                  add_carry,
+                                                                  1));
+    }
     {
         BN_ULONG add_res[BN_NIST_256_TOP];
         int add_carry, sub_carry, adjust_carry;
@@ -1186,21 +1259,51 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 #endif
     /* see BN_nist_mod_224 for explanation */
     adjust = ADJUST_WITH_SUB;
-    if (carry > 0)
-        carry =
-            (int)bn_sub_words(r_d, r_d, _nist_p_384[carry - 1],
-                              BN_NIST_384_TOP);
-    else if (carry < 0) {
-        carry =
-            (int)bn_add_words(r_d, r_d, _nist_p_384[-carry - 1],
-                              BN_NIST_384_TOP);
-        adjust = constant_time_select_int(
-            constant_time_is_zero(carry),
-            ADJUST_WITH_ADD,
-            ADJUST_WITH_SUB
+    {
+        unsigned int gt0_mask = constant_time_ge(carry + CARRY_TO_UINT_OFFSET,
+                                                 1 + CARRY_TO_UINT_OFFSET);
+        unsigned int lt0_mask = constant_time_lt(carry + CARRY_TO_UINT_OFFSET,
+                                                 CARRY_TO_UINT_OFFSET);
+        BN_ULONG table_row[BN_NIST_384_TOP];
+        int sub_carry, add_carry;
+
+        constant_time_lookup(
+            table_row, _nist_p_384, BN_NIST_384_TOP * sizeof(BN_ULONG),
+            OSSL_NELEM(_nist_p_384),
+            constant_time_select_int(
+                gt0_mask, carry - 1,
+                constant_time_select_int(lt0_mask, -carry - 1, /* unused */ 0)
+            )
         );
-    } else
-        carry = 1;
+
+        /* if carry > 0 */
+        sub_carry = bn_sub_words(c_d, r_d, table_row, BN_NIST_384_TOP);
+        constant_time_cond_swap_bn(
+            constant_time_ge_8(carry + CARRY_TO_UINT_OFFSET,
+                               1 + CARRY_TO_UINT_OFFSET),
+            c_d, r_d, BN_NIST_384_TOP);
+
+        /* else if (carry < 0) */
+        add_carry = bn_add_words(c_d, r_d, table_row, BN_NIST_384_TOP);
+        constant_time_cond_swap_bn(
+            constant_time_lt_8(carry + CARRY_TO_UINT_OFFSET,
+                               CARRY_TO_UINT_OFFSET),
+                c_d, r_d, BN_NIST_384_TOP);
+        adjust = constant_time_select_int(
+            lt0_mask,
+            constant_time_select_int(
+                constant_time_is_zero(carry),
+                ADJUST_WITH_ADD,
+                ADJUST_WITH_SUB
+            ),
+            adjust
+        );
+
+        carry = constant_time_select_int(gt0_mask, sub_carry,
+                                         constant_time_select_int(lt0_mask,
+                                                                  add_carry,
+                                                                  1));
+    }
 
     {
         BN_ULONG add_res[BN_NIST_384_TOP];
