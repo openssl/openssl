@@ -172,64 +172,65 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
             }
             break;
         case 'k':
-                if (OSSL_PARAM_equals(p, OSSL_CIPHER_PARAM_KEYLEN)) {
-                    if (!OSSL_PARAM_set_size_t(p, ctx->keylen)) {
-                        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-                        return 0;
-                    }
+            if (OSSL_PARAM_equals(p, OSSL_CIPHER_PARAM_KEYLEN)) {
+                if (!OSSL_PARAM_set_size_t(p, ctx->keylen)) {
+                    ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+                    return 0;
                 }
-                break;
+            }
+            break;
         case 't':
-                if (OSSL_PARAM_equals(p, OSSL_CIPHER_PARAM_AEAD_TAG)) {
-                    sz = p->data_size;
-                    if (sz == 0
-                        || sz > EVP_GCM_TLS_TAG_LEN
-                        || !ctx->enc
-                        || ctx->taglen == UNINITIALISED_SIZET) {
-                        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
-                        return 0;
-                    }
-                    if (!OSSL_PARAM_set_octet_string(p, ctx->buf, sz)) {
-                        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-                        return 0;
-                    }
+            if (OSSL_PARAM_equals(p, OSSL_CIPHER_PARAM_AEAD_TAG)) {
+                sz = p->data_size;
+                if (sz == 0
+                    || sz > EVP_GCM_TLS_TAG_LEN
+                    || !ctx->enc
+                    || ctx->taglen == UNINITIALISED_SIZET) {
+                    ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
+                    return 0;
                 }
-                else if (OSSL_PARAM_equals(p, OSSL_CIPHER_PARAM_AEAD_TAGLEN)) {
-                    size_t taglen = (ctx->taglen != UNINITIALISED_SIZET) ? ctx->taglen :
-                        GCM_TAG_MAX_SIZE;
+                if (!OSSL_PARAM_set_octet_string(p, ctx->buf, sz)) {
+                    ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+                    return 0;
+                }
+            }
+            else if (OSSL_PARAM_equals(p, OSSL_CIPHER_PARAM_AEAD_TAGLEN)) {
+                size_t taglen = (ctx->taglen != UNINITIALISED_SIZET) ? ctx->taglen :
+                    GCM_TAG_MAX_SIZE;
 
-                    if (!OSSL_PARAM_set_size_t(p, taglen)) {
-                        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-                        return 0;
-                    }
+                if (!OSSL_PARAM_set_size_t(p, taglen)) {
+                    ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+                    return 0;
                 }
-                else if (OSSL_PARAM_equals(p, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD)) {
-                    if (!OSSL_PARAM_set_size_t(p, ctx->tls_aad_pad_sz)) {
-                        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-                        return 0;
-                    }
+            }
+            else if (OSSL_PARAM_equals(p, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD)) {
+                if (!OSSL_PARAM_set_size_t(p, ctx->tls_aad_pad_sz)) {
+                    ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+                    return 0;
                 }
-                else if (OSSL_PARAM_equals(p, OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN)) {
-                    if (p->data == NULL
-                        || p->data_type != OSSL_PARAM_OCTET_STRING
-                        || !getivgen(ctx, p->data, p->data_size))
-                        return 0;
-                }
+            }
+            else if (OSSL_PARAM_equals(p, OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN)) {
+                if (p->data == NULL
+                    || p->data_type != OSSL_PARAM_OCTET_STRING
+                    || !getivgen(ctx, p->data, p->data_size))
+                    return 0;
+            }
+            break;
         case 'u':
-                if (OSSL_PARAM_equals(p, OSSL_CIPHER_PARAM_UPDATED_IV)) {
-                    if (ctx->iv_state == IV_STATE_UNINITIALISED)
-                        return 0;
-                    if (ctx->ivlen > p->data_size) {
-                        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
-                        return 0;
-                    }
-                    if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen)
-                        && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)) {
-                        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-                        return 0;
-                    }
+            if (OSSL_PARAM_equals(p, OSSL_CIPHER_PARAM_UPDATED_IV)) {
+                if (ctx->iv_state == IV_STATE_UNINITIALISED)
+                    return 0;
+                if (ctx->ivlen > p->data_size) {
+                    ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+                    return 0;
                 }
-                break;
+                if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen)
+                    && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)) {
+                    ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+                    return 0;
+                }
+            }
+            break;
         }
         p = OSSL_PARAM_next(p);
     }
