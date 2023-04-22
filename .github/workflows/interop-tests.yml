@@ -37,13 +37,10 @@ jobs:
           {
               echo 'FROM fedora:latest'
               echo '# set TZ to ensure the test using timestamp'
-              echo 'ENV TZ='Europe/London'
               echo 'RUN dnf -y update'
               echo 'RUN dnf -y install git tmt-all'
-              echo 'RUN dnf clean all'
-              echo 'RUN git clone --recurse-submodules https://github.com/not4pedro/openssl.git'
+              echo 'RUN git clone -b interop-tests --recurse-submodules https://github.com/not4pedro/openssl.git'
               echo 'WORKDIR /openssl'
               echo 'RUN tmt run -a plans -n short-interop-tests -n gnutls-2way -n nss-2way -n nss-openssl provision -h local execute -h tmt --interactive'
           } > podmanfile
           podman build --tag fedora38test -f ./podmanfile
-          
