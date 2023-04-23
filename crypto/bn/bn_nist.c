@@ -479,9 +479,6 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     return 1;
 }
 
-typedef BN_ULONG (*bn_addsub_f) (BN_ULONG *, const BN_ULONG *,
-                                 const BN_ULONG *, int);
-
 #define nist_set_224(to, from, a1, a2, a3, a4, a5, a6, a7) \
         { \
         bn_cp_32(to, 0, from, (a7) - 7) \
