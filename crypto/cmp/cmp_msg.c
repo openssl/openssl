@@ -293,7 +293,7 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
         rkey = ctx->pkey; /* default is independent of ctx->oldCert */
     if (rkey == NULL) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PUBLIC_KEY);
         return NULL;
 #endif
     }
@@ -417,8 +417,8 @@ OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int type,
          */
         if (privkey == NULL && OSSL_CMP_CTX_get0_newPkey(ctx, 0) == NULL)
             privkey = ctx->pkey; /* default is independent of ctx->oldCert */
-        if (ctx->popoMethod == OSSL_CRMF_POPO_SIGNATURE && privkey == NULL) {
-            ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PRIVATE_KEY);
+        if (ctx->popoMethod >= OSSL_CRMF_POPO_SIGNATURE && privkey == NULL) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PRIVATE_KEY_FOR_POPO);
             goto err;
         }
         if (crm == NULL) {

@@ -250,11 +250,15 @@ e.g., C<1.2.3.4:int:56789>.
 
 =item B<-newkey> I<filename>|I<uri>
 
-The source of the private or public key for the certificate requested
-in Initialization Request (IR), Certification Request(CR), or
-Key Update Request (KUR).
+The source of the private or public key for the certificate being requested.
 Defaults to the public key in the PKCS#10 CSR given with the B<-csr> option,
 the public key of the reference certificate, or the current client key.
+
+The public portion of the key is placed in the certification request.
+
+Unless B<-cmd> I<p10cr>, B<-popo> I<-1>, or B<-popo> I<0> is given, the
+private key will be needed as well to provide the proof of possession (POPO),
+where the B<-key> option may provide a fallback.
 
 =item B<-newkeypass> I<arg>
 
@@ -347,7 +351,7 @@ Flag the policies given with B<-policy_oids> as critical.
 
 =item B<-popo> I<number>
 
-Proof-of-Possession (POPO) method to use for IR/CR/KUR; values: C<-1>..<2> where
+Proof-of-possession (POPO) method to use for IR/CR/KUR; values: C<-1>..<2> where
 C<-1> = NONE, C<0> = RAVERIFIED, C<1> = SIGNATURE (default), C<2> = KEYENC.
 
 Note that a signature-based POPO can only be produced if a private key
@@ -357,10 +361,16 @@ is provided via the B<-newkey> or B<-key> options.
 
 PKCS#10 CSR in PEM or DER format containing a certificate request.
 With B<-cmd> I<p10cr> it is used directly in a legacy P10CR message.
+
 When used with B<-cmd> I<ir>, I<cr>, or I<kur>,
-it is transformed into the respective regular CMP request,
-while its public key is ignored if I<-newkey> is given.
-It may also be used with B<-cmd> I<rr> to specify the certificate to be revoked
+it is transformed into the respective regular CMP request.
+In this case, a private key must be provided (with B<-newkey> or B<-key>)
+for the proof of possession (unless B<-popo> I<-1> or B<-popo> I<0> is used)
+and the respective public key is placed in the certification request
+(rather than taking over the public key contained in the PKCS#10 CSR).
+
+PKCS#10 CSR input may also be used with B<-cmd> I<rr>
+to specify the certificate to be revoked
 via the included subject name and public key.
 Its subject is used as fallback sender in CMP message headers
 if B<-cert> and B<-oldcert> are not given.
@@ -414,6 +424,7 @@ For RR the certificate to be revoked can also be specified using B<-csr>.
 The reference certificate, if any, is also used for
 deriving default subject DN and Subject Alternative Names and the
 default issuer entry in the requested certificate template of an IR/CR/KUR.
+Its public key is used as a fallback in the template of certification requests.
 Its subject is used as sender of outgoing messages if B<-cert> is not given.
 Its issuer is used as default recipient in CMP message headers
 if neither B<-recipient>, B<-srvcert>, nor B<-issuer> is given.
@@ -673,17 +684,25 @@ L<openssl-passphrase-options(1)>.
 
 The client's current CMP signer certificate.
 Requires the corresponding key to be given with B<-key>.
+
+The subject and the public key contained in this certificate
+serve as fallback values in the certificate template of IR/CR/KUR messages.
+
 The subject of this certificate will be used as sender of outgoing CMP messages,
 while the subject of B<-oldcert> or B<-subjectName> may provide fallback values.
+
 The issuer of this certificate is used as one of the recipient fallback values
-and as fallback issuer entry in the certificate template of IR/CR/KUR.
+and as fallback issuer entry in the certificate template of IR/CR/KUR messages.
+
 When using signature-based message protection, this "protection certificate"
 will be included first in the extraCerts field of outgoing messages
 and the signature is done with the corresponding key.
 In Initialization Request (IR) messages this can be used for authenticating
 using an external entity certificate as defined in appendix E.7 of RFC 4210.
+
 For Key Update Request (KUR) messages this is also used as
 the certificate to be updated if the B<-oldcert> option is not given.
+
 If the file includes further certs, they are appended to the untrusted certs
 because they typically constitute the chain of the client certificate, which
 is included in the extraCerts field in signature-protected request messages.
@@ -709,6 +728,8 @@ the B<-cert> option.
 This will be used for signature-based message protection unless
 the B<-secret> option indicating PBM or B<-unprotected_requests> is given.
 
+It is also used as a fallback for the B<-newkey> option with IR/CR/KUR messages.
+
 =item B<-keypass> I<arg>
 
 Pass phrase source for the private key given with the B<-key> option.
@@ -723,7 +744,7 @@ L<openssl-passphrase-options(1)>.
 Specifies name of supported digest to use in RFC 4210's MSG_SIG_ALG
 and as the one-way function (OWF) in MSG_MAC_ALG.
 If applicable, this is used for message protection and
-Proof-of-Possession (POPO) signatures.
+proof-of-possession (POPO) signatures.
 To see the list of supported digests, use C<openssl list -digest-commands>.
 Defaults to C<sha256>.
 
@@ -1074,7 +1095,7 @@ So far this has no effect because the server does not accept any error messages.
 
 =item B<-accept_raverified>
 
-Accept RAVERIFED as proof-of-possession (POPO).
+Accept RAVERIFED as proof of possession (POPO).
 
 =back
 
