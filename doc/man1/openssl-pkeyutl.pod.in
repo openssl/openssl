@@ -345,8 +345,9 @@ must be known for this to work. If the size of the file cannot be determined
 =head1 SM2
 
 The SM2 algorithm supports sign, verify, encrypt and decrypt operations. For
-the sign and verify operations, SM2 requires an Distinguishing ID string to
-be passed in. The following B<-pkeyopt> value is supported:
+the sign and verify operations, if there is no option to explicitly not
+calculate Za, SM2 requires an Distinguishing ID string to be passed in. The
+following B<-pkeyopt> value is supported:
 
 =over 4
 
@@ -362,6 +363,16 @@ This sets the ID string used in SM2 sign or verify operations. While verifying
 an SM2 signature, the ID string must be the same one used when signing the data.
 Otherwise the verification will fail. The ID string provided with this option
 should be a valid hexadecimal value.
+
+=item B<sm2-za:>I<no>
+
+This option will change the default behavior in SM2 sign or verify, to not
+include Za when calculating the signed or verified hash. While verifying a
+SM2 signature, the sm2-za option must be same when signing the data. Otherwise
+the verification will fail. This option is similar to a boolean value, only
+supports "yes" or "no" string, the default value is "yes", specifying "yes"
+has the same effect as not having this option at all. If this option is
+specified as "no", it will override the value of Distinguishing ID.
 
 =back
 
