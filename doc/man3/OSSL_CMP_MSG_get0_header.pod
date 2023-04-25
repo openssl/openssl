@@ -72,7 +72,8 @@ The public key included is the first available value of these:
 
 =item the public key of any PKCS#10 CSR given in I<ctx>,
 
-=item the public key of any reference certificate given in I<ctx>,
+=item the public key of any reference certificate given in I<ctx>
+(see L<OSSL_CMP_CTX_set1_oldCert(3)>),
 
 =item the public key derived from any client's private key
 set via L<OSSL_CMP_CTX_set1_pkey(3)>.
