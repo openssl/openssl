@@ -1509,9 +1509,22 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         CMP_warn("no -subject given; no -csr or -oldcert or -cert available for fallback");
 
     if (opt_cmd == CMP_IR || opt_cmd == CMP_CR || opt_cmd == CMP_KUR) {
-        if (opt_newkey == NULL && opt_key == NULL && opt_csr == NULL) {
-            CMP_err("missing -newkey (or -key) to be certified and no -csr given");
+        if (opt_newkey == NULL
+            && opt_key == NULL && opt_csr == NULL && opt_oldcert == NULL) {
+            CMP_err("missing -newkey (or -key) to be certified and no -csr, -oldcert, or -cert given for fallback public key");
             return 0;
+        }
+        if (opt_newkey == NULL
+            && opt_popo != OSSL_CRMF_POPO_NONE
+            && opt_popo != OSSL_CRMF_POPO_RAVERIFIED) {
+            if (opt_csr != NULL) {
+                CMP_err("no -newkey option given with private key for POPO, and any fallback -key option hidden by -csr");
+                return 0;
+            }
+            if (opt_key == NULL) {
+                CMP_err("missing -newkey (or -key) option for POPO");
+                return 0;
+            }
         }
         if (opt_certout == NULL) {
             CMP_err("-certout not given, nowhere to save newly enrolled certificate");
