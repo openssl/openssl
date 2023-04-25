@@ -2049,8 +2049,10 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
 
     valid_tls = version >= SSL3_VERSION && version <= TLS_MAX_VERSION_INTERNAL;
     valid_dtls =
-        DTLS_VERSION_LE(version, DTLS_MAX_VERSION_INTERNAL) &&
-        DTLS_VERSION_GE(version, DTLS1_BAD_VER);
+        /* We support client side pre-standardisation version of DTLS */
+        (version == DTLS1_BAD_VER)
+        || (DTLS_VERSION_LE(version, DTLS_MAX_VERSION_INTERNAL)
+            && DTLS_VERSION_GE(version, DTLS1_VERSION));
 
     if (!valid_tls && !valid_dtls)
         return 0;
