@@ -42,10 +42,6 @@ The header of the record is being evaluated.
 
 The body of the record is being evaluated.
 
-=item "RD"/"read done"
-
-The record has been completely processed.
-
 =item "unknown"/"unknown"
 
 The read state is unknown. This should never happen.
