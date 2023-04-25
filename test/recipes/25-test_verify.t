@@ -29,7 +29,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 185;
+plan tests => 187;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -519,12 +519,16 @@ SKIP: {
 }
 
 SKIP: {
-    skip "SM2 is not supported by this OpenSSL build", 2 if disabled("sm2");
+    skip "SM2 is not supported by this OpenSSL build", 4 if disabled("sm2");
 
-   ok_nofips(verify("sm2", "", ["sm2-ca-cert"], [], "-vfyopt", "distid:1234567812345678"),
+    ok_nofips(verify("sm2-cert", "", ["sm2-root-cert"], [], "-vfyopt", "distid:1234567812345678"),
        "SM2 ID test");
-   ok_nofips(verify("sm2", "", ["sm2-ca-cert"], [], "-vfyopt", "hexdistid:31323334353637383132333435363738"),
+    ok_nofips(verify("sm2-cert", "", ["sm2-root-cert"], [], "-vfyopt", "hexdistid:31323334353637383132333435363738"),
        "SM2 hex ID test");
+    ok_nofips(!verify("sm2-cert", "", ["sm2-root-cert"], [], "-vfyopt", "sm2-za:no"),
+       "SM2 without Za test");
+    ok_nofips(verify("sm2-noza-cert", "", ["sm2-noza-root-cert"], [], "-vfyopt", "sm2-za:no"),
+       "SM2 without Za test");
 }
 
 # Mixed content tests

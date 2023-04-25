@@ -16,27 +16,40 @@ use OpenSSL::Test::Utils;
 
 setup("test_pkeyutl");
 
-plan tests => 12;
+plan tests => 14;
 
 # For the tests below we use the cert itself as the TBS file
 
 SKIP: {
-    skip "Skipping tests that require EC, SM2 or SM3", 2
+    skip "Skipping tests that require EC, SM2 or SM3", 4
         if disabled("ec") || disabled("sm2") || disabled("sm3");
 
     # SM2
     ok_nofips(run(app(([ 'openssl', 'pkeyutl', '-sign',
-                      '-in', srctop_file('test', 'certs', 'sm2.pem'),
+                      '-in', srctop_file('test', 'certs', 'sm2-cert.pem'),
                       '-inkey', srctop_file('test', 'certs', 'sm2.key'),
                       '-out', 'sm2.sig', '-rawin',
                       '-digest', 'sm3', '-pkeyopt', 'distid:someid']))),
                       "Sign a piece of data using SM2");
     ok_nofips(run(app(([ 'openssl', 'pkeyutl',
                       '-verify', '-certin',
-                      '-in', srctop_file('test', 'certs', 'sm2.pem'),
-                      '-inkey', srctop_file('test', 'certs', 'sm2.pem'),
+                      '-in', srctop_file('test', 'certs', 'sm2-cert.pem'),
+                      '-inkey', srctop_file('test', 'certs', 'sm2-cert.pem'),
                       '-sigfile', 'sm2.sig', '-rawin',
                       '-digest', 'sm3', '-pkeyopt', 'distid:someid']))),
+                      "Verify an SM2 signature against a piece of data");
+    ok_nofips(run(app(([ 'openssl', 'pkeyutl', '-sign',
+                      '-in', srctop_file('test', 'certs', 'sm2-noza-cert.pem'),
+                      '-inkey', srctop_file('test', 'certs', 'sm2.key'),
+                      '-out', 'sm2.sig', '-rawin',
+                      '-digest', 'sm3', '-pkeyopt', 'sm2-za:no']))),
+                      "Sign a piece of data using SM2 without Za");
+    ok_nofips(run(app(([ 'openssl', 'pkeyutl',
+                      '-verify', '-certin',
+                      '-in', srctop_file('test', 'certs', 'sm2-noza-cert.pem'),
+                      '-inkey', srctop_file('test', 'certs', 'sm2-noza-cert.pem'),
+                      '-sigfile', 'sm2.sig', '-rawin',
+                      '-digest', 'sm3', '-pkeyopt', 'sm2-za:no']))),
                       "Verify an SM2 signature against a piece of data");
 }
 
