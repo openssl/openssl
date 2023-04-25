@@ -411,12 +411,10 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
 {
     char buf[OSSL_CMP_PKISI_BUFLEN];
     X509 *crt = NULL;
-    EVP_PKEY *privkey;
 
     if (!ossl_assert(ctx != NULL && crep != NULL))
         return NULL;
 
-    privkey = OSSL_CMP_CTX_get0_newPkey(ctx, 1);
     switch (ossl_cmp_pkisi_get_status(crep->status)) {
     case OSSL_CMP_PKISTATUS_waiting:
         ossl_cmp_err(ctx,
@@ -454,7 +452,7 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
         ERR_raise(ERR_LIB_CMP, CMP_R_UNKNOWN_PKISTATUS);
         goto err;
     }
-    crt = ossl_cmp_certresponse_get1_cert(crep, ctx, privkey);
+    crt = ossl_cmp_certresponse_get1_cert(ctx, crep);
     if (crt == NULL) /* according to PKIStatus, we can expect a cert */
         ERR_raise(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_FOUND);
 
@@ -560,7 +558,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                          OSSL_CMP_MSG **resp, int *checkAfter,
                          int req_type, int expected_type)
 {
-    EVP_PKEY *rkey = OSSL_CMP_CTX_get0_newPkey(ctx /* may be NULL */, 0);
+    EVP_PKEY *rkey = ossl_cmp_ctx_get0_newPubkey(ctx);
     int fail_info = 0; /* no failure */
     const char *txt = NULL;
     OSSL_CMP_CERTREPMESSAGE *crepmsg;
