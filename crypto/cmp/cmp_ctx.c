@@ -755,6 +755,7 @@ int OSSL_CMP_CTX_set0_newPkey(OSSL_CMP_CTX *ctx, int priv, EVP_PKEY *pkey)
 }
 
 /* Get the private/public key to use for cert enrollment, or NULL on error */
+/* In case |priv| == 0, better use ossl_cmp_ctx_get0_newPubkey() below */
 EVP_PKEY *OSSL_CMP_CTX_get0_newPkey(const OSSL_CMP_CTX *ctx, int priv)
 {
     if (ctx == NULL) {
@@ -767,6 +768,21 @@ EVP_PKEY *OSSL_CMP_CTX_get0_newPkey(const OSSL_CMP_CTX *ctx, int priv)
     if (ctx->p10CSR != NULL)
         return priv ? NULL : X509_REQ_get0_pubkey(ctx->p10CSR);
     return ctx->pkey; /* may be NULL */
+}
+
+EVP_PKEY *ossl_cmp_ctx_get0_newPubkey(const OSSL_CMP_CTX *ctx)
+{
+    if (!ossl_assert(ctx != NULL))
+        return NULL;
+    if (ctx->newPkey != NULL)
+        return ctx->newPkey;
+    if (ctx->p10CSR != NULL)
+        return X509_REQ_get0_pubkey(ctx->p10CSR);
+    if (ctx->oldCert != NULL)
+        return X509_get0_pubkey(ctx->oldCert);
+    if (ctx->cert != NULL)
+        return X509_get0_pubkey(ctx->cert);
+    return ctx->pkey;
 }
 
 #define DEFINE_set1_ASN1_OCTET_STRING(PREFIX, FIELD) \

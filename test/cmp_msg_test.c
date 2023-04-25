@@ -382,7 +382,6 @@ static int execute_certrep_create(CMP_MSG_TEST_FIXTURE *fixture)
     OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
     OSSL_CMP_CERTREPMESSAGE *crepmsg = OSSL_CMP_CERTREPMESSAGE_new();
     OSSL_CMP_CERTRESPONSE *read_cresp, *cresp = OSSL_CMP_CERTRESPONSE_new();
-    EVP_PKEY *privkey;
     X509 *certfromresp = NULL;
     int res = 0;
 
@@ -404,8 +403,7 @@ static int execute_certrep_create(CMP_MSG_TEST_FIXTURE *fixture)
         goto err;
     if (!TEST_ptr_null(ossl_cmp_certrepmessage_get0_certresponse(crepmsg, 88)))
         goto err;
-    privkey = OSSL_CMP_CTX_get0_newPkey(ctx, 1); /* may be NULL */
-    certfromresp = ossl_cmp_certresponse_get1_cert(read_cresp, ctx, privkey);
+    certfromresp = ossl_cmp_certresponse_get1_cert(ctx, read_cresp);
     if (certfromresp == NULL || !TEST_int_eq(X509_cmp(cert, certfromresp), 0))
         goto err;
 
