@@ -323,11 +323,11 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
          * verify that the newly enrolled certificate (which assumed rid ==
          * OSSL_CMP_CERTREQID) can also be validated with the same trusted store
          */
-        EVP_PKEY *pkey = OSSL_CMP_CTX_get0_newPkey(ctx, 1);
         OSSL_CMP_CERTRESPONSE *crep =
             ossl_cmp_certrepmessage_get0_certresponse(msg->body->value.ip,
                                                       OSSL_CMP_CERTREQID);
-        X509 *newcrt = ossl_cmp_certresponse_get1_cert(crep, ctx, pkey);
+        X509 *newcrt = ossl_cmp_certresponse_get1_cert(ctx, crep);
+
         /*
          * maybe better use get_cert_status() from cmp_client.c, which catches
          * errors
