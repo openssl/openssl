@@ -621,6 +621,11 @@ Examine and verify an SM2 certificate request:
 
  openssl req -verify -in sm2.csr -sm3 -vfyopt "distid:1234567812345678"
 
+Generate a certificate request from private key and verify it without Za:
+
+ openssl req -new -key sm2.key -out sm2.csr -sm3 -sigopt "sm2-za:no"
+ openssl req -verify -in sm2.csr -sm3 -vfyopt "sm2-za:no"
+
 Example of a file pointed to by the B<oid_file> option:
 
  1.2.3.4        shortName       A longer Name

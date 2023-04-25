@@ -208,6 +208,9 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
     WPACKET pkt;
     int ret = 0;
 
+    /* This default value must be assigned before it may be overridden */
+    ctx->flag_compute_z_digest = 1;
+
     if (!sm2sig_signature_init(vpsm2ctx, ec, params)
         || !sm2sig_set_mdname(ctx, mdname))
         return ret;
@@ -238,8 +241,6 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
 
     if (!EVP_DigestInit_ex2(ctx->mdctx, ctx->md, params))
         goto error;
-
-    ctx->flag_compute_z_digest = 1;
 
     ret = 1;
 
@@ -426,6 +427,22 @@ static int sm2sig_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_SM2_ZA);
+    if (p != NULL) {
+        char *v = NULL;
+
+        if (!OSSL_PARAM_get_utf8_string(p, &v, 0))
+            return 0;
+
+        /*
+         * If 'sm2-za:no' is specified, omit computing the z digest
+         */
+        if (OPENSSL_strcasecmp(v, "no") == 0)
+            psm2ctx->flag_compute_z_digest = 0;
+
+        OPENSSL_free(v);
+    }
+
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DIST_ID);
     if (p != NULL) {
         void *tmp_id = NULL;
@@ -476,6 +493,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_DIST_ID, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_SM2_ZA, NULL, 0),
     OSSL_PARAM_END
 };
 

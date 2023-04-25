@@ -669,6 +669,12 @@ Sign an SM2 certificate request:
          -sigopt "distid:1234567812345678" \
          -vfyopt "distid:1234567812345678"
 
+Sign an SM2 certificate request without Za:
+
+ openssl ca -in sm2.csr -out sm2.crt -md sm3 \
+         -sigopt "sm2-za:no" \
+         -vfyopt "sm2-za:no"
+
 Sign a certificate request, using CA extensions:
 
  openssl ca -in req.pem -extensions v3_ca -out newcert.pem

@@ -44,6 +44,14 @@ and an B<SM2> ID must be set for it, like this:
 
  EVP_PKEY_CTX_set1_id(pctx, id, id_len);
 
+Or explicitly specify that the SM2 signature does not calculate Za. Note that
+completely disabling Za is different from setting a NULL SM2 dist ID, the
+latter still calculates Za with NULL as the SM2 ID, disabling Za will change
+the default behavior of the SM2 algorithm and override the value of B<SM2> ID,
+like this:
+
+ EVP_PKEY_CTX_ctrl_str(pctx, "sm2-za", "no");
+
 Before calling the EVP_DigestSignInit() or EVP_DigestVerifyInit() functions,
 that B<EVP_PKEY_CTX> should be assigned to the B<EVP_MD_CTX>, like this:
 

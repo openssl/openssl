@@ -355,6 +355,9 @@ extern "C" {
 #define OSSL_PKEY_PARAM_USE_COFACTOR_ECDH \
     OSSL_PKEY_PARAM_USE_COFACTOR_FLAG
 
+/* SM2 Specific Parameters */
+#define OSSL_PKEY_PARAM_SM2_ZA              "sm2-za"
+
 /* RSA Keys */
 /*
  * n, e, d are the usual public and private key components
