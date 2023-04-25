@@ -18,5 +18,5 @@ setup("test_ossl_store");
 plan tests => 1;
 
 ok(run(test(["ossl_store_test", "-dir", srctop_dir("test"),
-             "-in", "testrsa.pem", "-sm2", canonpath("certs/sm2-root.crt"),
+             "-in", "testrsa.pem", "-sm2", canonpath("certs/sm2-root-cert.pem"),
              "-data", data_dir()])));

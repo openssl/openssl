@@ -31,7 +31,7 @@ sub src_file {
 
 rmtree("demoCA", { safe => 0 });
 
-plan tests => 20;
+plan tests => 21;
 
 require_ok(srctop_file("test", "recipes", "tconversion.pl"));
 
@@ -67,7 +67,7 @@ require_ok(srctop_file("test", "recipes", "tconversion.pl"));
 }
 
 SKIP: {
-    skip "SM2 is not supported by this OpenSSL build", 1
+    skip "SM2 is not supported by this OpenSSL build", 2
         if disabled("sm2");
 
     is(yes(cmdstr(app(["openssl", "ca", "-config",
@@ -77,10 +77,22 @@ SKIP: {
                        "-sigopt", "distid:1234567812345678",
                        "-vfyopt", "distid:1234567812345678",
                        "-md", "sm3",
-                       "-cert", src_file("sm2-root.crt"),
+                       "-cert", src_file("sm2-root-cert.pem"),
                        "-keyfile", src_file("sm2-root.key")]))),
        0,
        "Signing SM2 certificate request");
+
+    is(yes(cmdstr(app(["openssl", "ca", "-config",
+                       $cnf,
+                       "-in", src_file("sm2-noza-csr.pem"),
+                       "-out", "sm2-noza-test.crt",
+                       "-sigopt", "sm2-za:no",
+                       "-vfyopt", "sm2-za:no",
+                       "-md", "sm3",
+                       "-cert", src_file("sm2-noza-root-cert.pem"),
+                       "-keyfile", src_file("sm2-root.key")]))),
+       0,
+       "Signing SM2 certificate request without Za");
 }
 
 my $v3_cert = "v3-test.crt";
