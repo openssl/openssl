@@ -10974,6 +10974,76 @@ end:
     return testresult;
 }
 
+/*
+ * Test that the SSL_rstate_string*() APIs return sane results
+ */
+static int test_rstate_string(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0, version;
+    const SSL_METHOD *servmeth = TLS_server_method();
+    const SSL_METHOD *clientmeth = TLS_client_method();
+    size_t written, readbytes;
+    unsigned char buf[2];
+    unsigned char dummyheader[SSL3_RT_HEADER_LENGTH] = {
+        SSL3_RT_APPLICATION_DATA,
+        TLS1_2_VERSION_MAJOR,
+        0, /* To be filled in later */
+        0,
+        1
+    };
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, servmeth, clientmeth, 0,
+                                       0, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_str_eq(SSL_rstate_string(serverssl), "RH")
+            || !TEST_str_eq(SSL_rstate_string_long(serverssl), "read header"))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_str_eq(SSL_rstate_string(serverssl), "RH")
+            || !TEST_str_eq(SSL_rstate_string_long(serverssl), "read header"))
+        goto end;
+
+    /* Fill in the correct version for the record header */
+    version = SSL_version(serverssl);
+    if (version == TLS1_3_VERSION)
+        version = TLS1_2_VERSION;
+    dummyheader[2] = version & 0xff;
+
+    /*
+     * Send a dummy header. If we continued to read the body as well this
+     * would fail with a bad record mac, but we're not going to go that far.
+     */
+    if (!TEST_true(BIO_write_ex(SSL_get_rbio(serverssl), dummyheader,
+                                sizeof(dummyheader), &written))
+            || !TEST_size_t_eq(written, SSL3_RT_HEADER_LENGTH))
+        goto end;
+
+    if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes)))
+        goto end;
+
+    if (!TEST_str_eq(SSL_rstate_string(serverssl), "RB")
+            || !TEST_str_eq(SSL_rstate_string_long(serverssl), "read body"))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -11278,6 +11348,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_pipelining, 6);
 #endif
     ADD_ALL_TESTS(test_version, 6);
+    ADD_TEST(test_rstate_string);
     return 1;
 
  err:
