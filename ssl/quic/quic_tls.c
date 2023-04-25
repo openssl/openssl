@@ -451,9 +451,9 @@ static void quic_get_state(OSSL_RECORD_LAYER *rl, const char **shortstr,
 {
     /*
      * According to the docs, valid read state strings are: "RH"/"read header",
-     * "RB"/"read body", "RD"/"read done" and "unknown"/"unknown". We don't
-     * read records in quite that way, so we report every "normal" state as
-     * "read done". In the event of error then we report "unknown".
+     * "RB"/"read body", and "unknown"/"unknown". We don't read records in quite
+     * that way, so we report every "normal" state as "read header". In the
+     * event of error then we report "unknown".
      */
 
     if (rl->qtls->inerror) {
@@ -463,9 +463,9 @@ static void quic_get_state(OSSL_RECORD_LAYER *rl, const char **shortstr,
             *longstr = "unknown";
     } else {
         if (shortstr != NULL)
-            *shortstr = "RD";
+            *shortstr = "RH";
         if (longstr != NULL)
-            *longstr = "read done";
+            *longstr = "read header";
     }
 }
 
