@@ -939,9 +939,13 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
         if (n > 0) {
             memcpy(dest + *dest_len, rr->data + rr->off, n);
             *dest_len += n;
-            if (!ssl_release_record(s, rr, n))
-                return -1;
         }
+        /*
+         * We release the number of bytes consumed, or the whole record if it
+         * is zero length
+         */
+        if ((n > 0 || rr->length == 0) && !ssl_release_record(s, rr, n))
+            return -1;
 
         if (*dest_len < dest_maxlen)
             goto start;     /* fragment was too small */
