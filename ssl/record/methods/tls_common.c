@@ -1296,6 +1296,7 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     rl->md = md;
 
     rl->alert = SSL_AD_NO_ALERT;
+    rl->rstate = SSL_ST_READ_HEADER;
 
     if (level == OSSL_RECORD_PROTECTION_LEVEL_NONE)
         rl->is_first_record = 1;
