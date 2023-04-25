@@ -78,6 +78,7 @@ static CMP_SES_TEST_FIXTURE *set_up(const char *const test_case_name)
             || !OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_UNPROTECTED_ERRORS, 1)
             || !OSSL_CMP_CTX_set1_oldCert(ctx, client_cert)
             || !OSSL_CMP_CTX_set1_pkey(ctx, client_key)
+            /* client_key is by default used also for newPkey */
             || !OSSL_CMP_CTX_set1_srvCert(ctx, server_cert)
             || !OSSL_CMP_CTX_set1_referenceValue(ctx, ref, sizeof(ref)))
         goto err;
@@ -253,26 +254,57 @@ static int test_exec_CR_ses_implicit_confirm(void)
         && test_exec_CR_ses(1, 1 /* granted */, 0);
 }
 
-static int test_exec_KUR_ses(int transfer_error)
+static int test_exec_KUR_ses(int transfer_error, int pubkey, int raverified)
 {
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
     fixture->req_type = OSSL_CMP_KUR;
+    /* ctx->oldCert has already been set */
+
     if (transfer_error)
         OSSL_CMP_CTX_set_transfer_cb_arg(fixture->cmp_ctx, NULL);
-    fixture->expected = transfer_error ? OSSL_CMP_PKISTATUS_trans
-        : OSSL_CMP_PKISTATUS_accepted;
+    if (pubkey) {
+        EVP_PKEY *key = raverified /* wrong key */ ? server_key : client_key;
+
+        EVP_PKEY_up_ref(key);
+        OSSL_CMP_CTX_set0_newPkey(fixture->cmp_ctx, 0 /* not priv */, key);
+        OSSL_CMP_SRV_CTX_set_accept_raverified(fixture->srv_ctx, 1);
+    }
+    if (pubkey || raverified)
+        OSSL_CMP_CTX_set_option(fixture->cmp_ctx, OSSL_CMP_OPT_POPO_METHOD,
+                                OSSL_CRMF_POPO_RAVERIFIED);
+    fixture->expected = transfer_error ? OSSL_CMP_PKISTATUS_trans :
+        raverified ? OSSL_CMP_PKISTATUS_rejection : OSSL_CMP_PKISTATUS_accepted;
     EXECUTE_TEST(execute_exec_certrequest_ses_test, tear_down);
     return result;
 }
 
 static int test_exec_KUR_ses_ok(void)
 {
-    return test_exec_KUR_ses(0);
+    return test_exec_KUR_ses(0, 0, 0);
 }
 
 static int test_exec_KUR_ses_transfer_error(void)
 {
-    return test_exec_KUR_ses(1);
+    return test_exec_KUR_ses(1, 0, 0);
+}
+
+static int test_exec_KUR_ses_wrong_popo(void)
+{
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION /* cf ossl_cmp_verify_popo() */
+    return test_exec_KUR_ses(0, 0, 1);
+#else
+    return 1;
+#endif
+}
+
+static int test_exec_KUR_ses_pub(void)
+{
+    return test_exec_KUR_ses(0, 1, 0);
+}
+
+static int test_exec_KUR_ses_wrong_pub(void)
+{
+    return test_exec_KUR_ses(0, 1, 1);
 }
 
 static int test_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
@@ -497,6 +529,9 @@ int setup_tests(void)
     ADD_TEST(test_exec_IR_ses_poll_total_timeout);
     ADD_TEST(test_exec_KUR_ses_ok);
     ADD_TEST(test_exec_KUR_ses_transfer_error);
+    ADD_TEST(test_exec_KUR_ses_wrong_popo);
+    ADD_TEST(test_exec_KUR_ses_pub);
+    ADD_TEST(test_exec_KUR_ses_wrong_pub);
     ADD_TEST(test_exec_P10CR_ses_ok);
     ADD_TEST(test_exec_P10CR_ses_reject);
     ADD_TEST(test_try_certreq_poll);
