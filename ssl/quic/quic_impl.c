@@ -2009,18 +2009,21 @@ int ossl_quic_get_stream_type(SSL *s)
     QCTX ctx;
 
     if (!expect_quic(s, &ctx))
-        return SSL_STREAM_TYPE_NONE;
+        return SSL_STREAM_TYPE_BIDI;
 
     if (ctx.xso == NULL) {
         /*
-         * If we are deferring XSO creation, assume single stream mode and
-         * default to BIDI, as the deferred XSO which will be created will be
-         * bidirectional.
+         * If deferred XSO creation has yet to occur, proceed according to the
+         * default stream mode. If AUTO_BIDI or AUTO_UNI is set, we cannot know
+         * what kind of stream will be created yet, so return BIDI on the basis
+         * that at this time, the client still has the option of calling
+         * SSL_read() or SSL_write() first.
          */
-        if (!ctx.qc->default_xso_created)
-            return SSL_STREAM_TYPE_BIDI;
-        else
+        if (ctx.qc->default_xso_created
+            || ctx.qc->default_stream_mode == SSL_DEFAULT_STREAM_MODE_NONE)
             return SSL_STREAM_TYPE_NONE;
+        else
+            return SSL_STREAM_TYPE_BIDI;
     }
 
     if (ossl_quic_stream_is_bidi(ctx.xso->stream))
