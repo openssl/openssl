@@ -30,11 +30,11 @@ designs and the relevant design decisions.
       - [`SSL_CTRL_MODE`, `SSL_CTRL_CLEAR_MODE`](#-ssl-ctrl-mode----ssl-ctrl-clear-mode-)
       - [SSL Modes](#ssl-modes)
     + [New APIs for Single-Stream Operation](#new-apis-for-single-stream-operation)
-      - [`SSL_tick`](#-ssl-tick-)
-      - [`SSL_get_tick_timeout`](#-ssl-get-tick-timeout-)
+      - [`SSL_handle_events`](#-ssl-handle-events-)
+      - [`SSL_get_event_timeout`](#-ssl-get-event-timeout-)
       - [`SSL_set_blocking_mode`, `SSL_get_blocking_mode`](#-ssl-set-blocking-mode----ssl-get-blocking-mode-)
       - [`SSL_get_rpoll_descriptor`, `SSL_get_wpoll_descriptor`](#-ssl-get-rpoll-descriptor----ssl-get-wpoll-descriptor-)
-      - [`SSL_want_net_read`, `SSL_want_net_write`](#-ssl-want-net-read----ssl-want-net-write-)
+      - [`SSL_net_read_desired`, `SSL_net_write_desired`](#-ssl-want-net-read----ssl-want-net-write-)
       - [`SSL_want`, `SSL_want_read`, `SSL_want_write`](#-ssl-want----ssl-want-read----ssl-want-write-)
       - [`SSL_set_initial_peer_addr`, `SSL_get_initial_peer_addr`](#-ssl-set-initial-peer-addr----ssl-get-initial-peer-addr-)
       - [`SSL_shutdown_ex`](#-ssl-shutdown-ex-)
@@ -54,10 +54,8 @@ designs and the relevant design decisions.
       - [`SSL_new_stream`](#-ssl-new-stream-)
       - [`SSL_accept_stream`](#-ssl-accept-stream-)
       - [`SSL_get_accept_stream_queue_len`](#-ssl-get-accept-stream-queue-len-)
-      - [`SSL_set_incoming_stream_reject_policy`](#-ssl-set-incoming-stream-reject-policy-)
+      - [`SSL_set_incoming_stream_policy`](#-ssl-set-incoming-stream-policy-)
       - [`SSL_set_default_stream_mode`](#-ssl-set-default-stream-mode-)
-      - [`SSL_detach_stream`](#-ssl-detach-stream-)
-      - [`SSL_attach_stream`](#-ssl-attach-stream-)
     + [Future APIs](#future-apis)
   * [BIO Objects](#bio-objects)
     + [Existing APIs](#existing-apis-1)
@@ -143,18 +141,16 @@ Each API listed below has an information table with the following fields:
     - **Error**: Non-`WANT_READ`/`WANT_WRITE` errors can be raised.
     - **Want**: `WANT_READ`/`WANT_WRITE` can be raised.
 
-- **Can Tick?**: Whether this function is allowed to tick the QUIC state
-  machine and potentially perform network I/O.
+- **Can Tick?**: Whether this function is allowed to perform event processing
+  for the QUIC state machine and potentially perform network I/O.
 
 - **CSHL:** Connection/Stream/Handshake Layer classification.
   This can be one of:
 
     - **HL:** This is a handshake layer related call. It should be supported
       on a QUIC connection SSL object, forwarding to the handshake layer
-      SSL object.
-
-      Whether we allow QUIC stream SSL objects to have these calls forwarded is
-      TBD.
+      SSL object. QUIC stream SSL objects do not allow these calls to be
+      forwarded.
 
     - **HL-Forbidden:** This is a handshake layer related call, but it is
       inapplicable to QUIC, so it is not supported.
@@ -430,9 +426,7 @@ Should not require any changes.
 
 ### New APIs for Single-Stream Operation
 
-TBD: Should any of these be implemented as ctrls rather than actual functions?
-
-#### `SSL_tick`
+#### `SSL_handle_events`
 
 | Semantics | `SSL_get_error` | Can Tick? | CSHL          |
 | --------- | ------------- | --------- | ------------- |
@@ -442,10 +436,7 @@ Advances the QUIC state machine to the extent feasible, potentially performing
 network I/O. Also compatible with DTLSv1 and supercedes `DTLSv1_handle_timeout`
 for all use cases.
 
-TBD: Deprecate `DTLSv1_get_timeout`?
-TBD: Deprecate `DTLSv1_handle_timeout`?
-
-#### `SSL_get_tick_timeout`
+#### `SSL_get_event_timeout`
 
 | Semantics | `SSL_get_error` | Can Tick? | CSHL          |
 | --------- | ------------- | --------- | ------------- |
@@ -460,13 +451,10 @@ protocol-agnostic API for this purpose, superceding `DTLSv1_get_timeout` for all
 use cases.
 
 The design is similar to that of `DTLSv1_get_timeout` and uses a `struct
-timeval`. However, this function represents an infinite timeout (i.e., no
-timeout) using `tv_sec == -1`, whereas `DTLSv1_get_timeout` represents an
+timeval`. However, this function can also output an infinite timeout using the
+`is_infinite` argument, whereas whereas `DTLSv1_get_timeout` represents an
 infinite timeout using a 0 return value, which does not allow a failure
 condition to be distinguished.
-
-TBD: Should we just map this to DTLS_CTRL_GET_TIMEOUT internally (and maybe
-alias the CTRL #define)?
 
 #### `SSL_set_blocking_mode`, `SSL_get_blocking_mode`
 
@@ -491,10 +479,10 @@ Not supported for non-QUIC SSL objects.
 | --------- | ------------- | --------- | ------------- |
 | New       | Never         | No        | CS            |
 
-These functions output poll descriptors which can be used to determine
-when the QUIC state machine should next be ticked. `SSL_get_rpoll_descriptor` is
-relevant if `SSL_want_net_read` returns 1, and `SSL_get_wpoll_descriptor` is
-relevant if `SSL_want_net_write` returns 1.
+These functions output poll descriptors which can be used to determine when the
+QUIC state machine next needs to have events handled. `SSL_get_rpoll_descriptor`
+is relevant if `SSL_net_read_desired` returns 1, and `SSL_get_wpoll_descriptor`
+is relevant if `SSL_net_write_desired` returns 1.
 
 The implementation of these functions is a simple forward to
 `BIO_get_rpoll_descriptor` and `BIO_get_wpoll_descriptor` on the underlying
@@ -502,7 +490,7 @@ network BIOs.
 
 TODO: Support these for non-QUIC SSL objects
 
-#### `SSL_want_net_read`, `SSL_want_net_write`
+#### `SSL_net_read_desired`, `SSL_net_write_desired`
 
 | Semantics | `SSL_get_error` | Can Tick? | CSHL          |
 | --------- | ------------- | --------- | ------------- |
@@ -511,11 +499,11 @@ TODO: Support these for non-QUIC SSL objects
 These calls return 1 if the QUIC state machine is interested in receiving
 further data from the network, or writing to the network, respectively. The
 return values of these calls should be used to determine which wakeup events
-should cause an application to call `SSL_tick`. These functions do not mutate
-any state, and their return values may change after a call to any SSL function
-other than `SSL_want_net_read`, `SSL_want_net_write`,
+should cause an application to call `SSL_handle_events`. These functions do not
+mutate any state, and their return values may change after a call to any SSL
+function other than `SSL_net_read_desired`, `SSL_net_write_desired`,
 `SSL_get_rpoll_descriptor`, `SSL_get_wpoll_descriptor` and
-`SSL_get_tick_timeout`.
+`SSL_get_event_timeout`.
 
 TODO: Support these for non-QUIC SSL objects, turning this into a unified
 replacement for `SSL_want`
@@ -528,8 +516,8 @@ non-blocking mode due to a desire to read from or write to the underlying
 network BIO. However, this API is unsuitable for use with QUIC because the
 return value of `SSL_want` can only express one I/O direction at a time (read or
 write), not both. This call will not be implemented for QUIC (e.g. always
-returns `SSL_NOTHING`) and `SSL_want_net_read` and `SSL_want_net_write` will be
-used instead.
+returns `SSL_NOTHING`) and `SSL_net_read_desired` and `SSL_net_write_desired`
+will be used instead.
 
 #### `SSL_set_initial_peer_addr`, `SSL_get_initial_peer_addr`
 
@@ -623,17 +611,17 @@ A QUIC connection can be shut down using this function in two different ways:
   an I/O would-block condition.
 
 It is permissible for an application to implement a hybrid approach, for example
-by initiating a rapid or non-blocking shutdown and continuing to call `SSL_tick`
-for a duration it chooses.
+by initiating a rapid or non-blocking shutdown and continuing to call
+`SSL_handle_events` for a duration it chooses.
 
 If `SSL_SHUTDOWN_FLAG_RAPID` is specified in `flags`, a rapid shutdown is
 performed, otherwise an RFC-compliant shutdown is performed. The principal
 effect of this flag is to partially disable blocking behaviour in blocking mode,
 and the QUIC implementation will still attempt to implement the Terminating
-state semantics if the application happens to tick it, until it reaches the
-Terminated state or is freed. An application can change its mind about
-performing a rapid shutdown by making a subsequent call to `SSL_shutdown_ex`
-without the flag set.
+state semantics if the application happens to call `SSL_handle_events`, until it
+reaches the Terminated state or is freed. An application can change its mind
+about performing a rapid shutdown by making a subsequent call to
+`SSL_shutdown_ex` without the flag set.
 
 Calling `SSL_shutdown_ex` on a QUIC stream SSL object is not valid; such a call
 will fail and has no effect. The rationale for this is that an application may
@@ -850,8 +838,8 @@ typedef struct ssl_conn_close_info_st {
     uint64_t error_code;
     char     *reason;
     size_t   reason_len;
-    char     is_local;
-    char     is_transport;
+    int      is_local;
+    int      is_transport;
 } SSL_CONN_CLOSE_INFO;
 
 int SSL_get_conn_close_info(SSL *ssl,
@@ -1080,7 +1068,7 @@ SSL *SSL_accept_stream(SSL *ssl, uint64_t flags);
 size_t SSL_get_accept_stream_queue_len(SSL *ssl);
 ```
 
-#### `SSL_set_incoming_stream_reject_policy`
+#### `SSL_set_incoming_stream_policy`
 
 | Semantics | `SSL_get_error` | Can Tick? | CSHL          |
 | --------- | ------------- | --------- | ------------- |
@@ -1090,9 +1078,7 @@ size_t SSL_get_accept_stream_queue_len(SSL *ssl);
 /*
  * Sets the policy for incoming streams. If `policy` is `AUTO` (the default):
  *
- *   - if `SSL_detach_stream` has been used, this is equivalent to `ACCEPT`;
- *
- *   - otherwise, if the default stream mode is
+ *   - if the default stream mode is
  *     `SSL_DEFAULT_STREAM_MODE_AUTO_BIDI` or
  *     `SSL_DEFAULT_STREAM_MODE_AUTO_UNI`, this is equivalent to `REJECT`;
  *
@@ -1107,11 +1093,11 @@ size_t SSL_get_accept_stream_queue_len(SSL *ssl);
  * used for the purposes of this termination. The default AEC value used if this
  * function is never called is 0.
  */
-#define SSL_INCOMING_STREAM_REJECT_POLICY_AUTO      0
-#define SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT    1
-#define SSL_INCOMING_STREAM_REJECT_POLICY_REJECT    2
+#define SSL_INCOMING_STREAM_POLICY_AUTO      0
+#define SSL_INCOMING_STREAM_POLICY_ACCEPT    1
+#define SSL_INCOMING_STREAM_POLICY_REJECT    2
 
-int SSL_set_incoming_stream_reject_policy(SSL *ssl, int policy, uint64_t aec);
+int SSL_set_incoming_stream_policy(SSL *ssl, int policy, uint64_t aec);
 ```
 
 #### `SSL_set_default_stream_mode`
@@ -1162,52 +1148,13 @@ int SSL_set_incoming_stream_reject_policy(SSL *ssl, int policy, uint64_t aec);
  *
  * This function must be called before a default stream object is created, for
  * example before initiating a connection. If the function is too late to have
- * an effect, this function fails and returns 0. To switch to multi-stream
- * operation after a default stream has been created, use `SSL_detach_stream`.
+ * an effect, this function fails and returns 0.
  */
 #define SSL_DEFAULT_STREAM_MODE_NONE                0
 #define SSL_DEFAULT_STREAM_MODE_AUTO_BIDI           1
 #define SSL_DEFAULT_STREAM_MODE_AUTO_UNI            2
 
 __owur int SSL_set_default_stream_mode(SSL *ssl, uint32_t mode);
-```
-
-#### `SSL_detach_stream`
-
-| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
-| --------- | ------------- | --------- | ------------- |
-| New       | Never         | No        | C             |
-
-```c
-/*
- * Detaches a default stream from a QUIC connection object. If the
- * QUIC connection object does not contain a default stream, returns NULL.
- * After calling this, calling SSL_get_stream_type on the connection object
- * returns SSL_STREAM_TYPE_NONE. Always returns NULL for non-QUIC connections.
- *
- * Calling this function automatically inhibits default stream creation;
- * though, after calling this function, a QUIC connection SSL object will no
- * longer have a stream attached to it, calling SSL_read or SSL_write on
- * that QUIC connection SSL object will not automatically create a new
- * default stream. Default stream creation only occurs at most a single time per
- * connection.
- */
-SSL *SSL_detach_stream(SSL *ssl);
-```
-
-#### `SSL_attach_stream`
-
-| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
-| --------- | ------------- | --------- | ------------- |
-| New       | Never         | No        | C             |
-
-```c
-/*
- * Attaches a default stream to a QUIC connection object. If the conn object is
- * not a QUIC connection object, or already has a default stream, this function
- * fails. The stream must belong to the same connection, or this function fails.
- */
-__owur int SSL_attach_stream(SSL *conn, SSL *stream);
 ```
 
 ### Future APIs
@@ -1576,7 +1523,8 @@ draining state is relevant. Since we conclude above that we do not need to
 implement the draining state on the client side, this means that connection
 closure can be completed immediately in the case of a remote closure.
 
-**Q. Should we just map `SSL_tick` to `DTLS_CTRL_HANDLE_TIMEOUT` internally?**
+**Q. Should we just map `SSL_handle_events` to `DTLS_CTRL_HANDLE_TIMEOUT`
+internally?**
 
 A. No, since the infinite time representation is different between the two
 calls.

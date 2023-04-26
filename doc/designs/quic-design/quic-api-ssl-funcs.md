@@ -133,7 +133,7 @@ Notes:
 | `DTLSv1_2_client_method` | Global | 🟩U | 🟦U | 🟩NC | 🟢Done |
 | `DTLSv1_2_server_method` | Global | 🟩U | 🟦U | 🟩NC | 🟢Done |
 | `OSSL_QUIC_client_method` | Global | 🟩U | 🟦U | 🟥QSA | 🟢Done |
-| `OSSL_QUIC_client_thread_method` | Global | 🟩U | 🟦U | 🟥QSA | 🟠Design TBD |
+| `OSSL_QUIC_client_thread_method` | Global | 🟩U | 🟦U | 🟥QSA | 🟢Done |
 | `OSSL_QUIC_server_method` | Global | 🟩U | 🟦U | 🟥QSA | 🟠Design TBD |
 | **⇒ Instantiation** | |
 | `BIO_f_ssl` | Object | 🟩U | 🟩A | 🟩NC | 🟢Done |
@@ -189,9 +189,9 @@ Notes:
 | `SSL_SESSION_set1_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
 | `SSL_SESSION_get0_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
 | `SSL_CTX_set_alpn_select_cb` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
-| `SSL_set_alpn_protos` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
-| `SSL_get0_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
-| `SSL_CTX_set_alpn_protos` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
+| `SSL_set_alpn_protos` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟢Done |
+| `SSL_get0_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟢Done |
+| `SSL_CTX_set_alpn_protos` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟢Done |
 | **⇒ NPN** | †3 |
 | `SSL_CTX_set_next_proto_select_cb` | HL | 🟩U | 🟥FC | 🟨C\* †3 | 🟢Done |
 | `SSL_CTX_set_next_protos_advertised_cb` | HL | 🟩U | 🟥FC | 🟨C\* †3 | 🟢Done |
@@ -648,9 +648,7 @@ Notes:
 | `SSL_accept_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_get_accept_stream_queue_len` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_set_default_stream_mode` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_set_incoming_stream_reject_policy` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_detach_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_attach_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_set_incoming_stream_policy` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | **⇒ Currently Not Supported** | |
 | `SSL_copy_session_id` | Special | 🟩U | 🟥FC | 🟨C* | 🟢Done |
 | `BIO_ssl_copy_session_id` | Special | 🟩U | 🟥FC | 🟨C* | 🟢Done |
@@ -842,23 +840,18 @@ encryption is mostly for protection against accidential modification and not
 active yet. An application using QUIC can always interpret NULL as meaning
 AES-128-GCM is being used if needed as this is implied by using QUIC.
 
+A. We return NULL here, because it allows applications to detect if a
+ciphersuite has been negotiated and NULL can be used to infer that Initial
+encryption is still being used. This also minimises the changes needed to the
+implementation.
+
 ### What should `SSL_CTX_set_cipher_list` do?
 
 Since this function configures the cipher list for TLSv1.2 and below only, there
 is no need to restrict it as TLSv1.3 is required for QUIC. For the sake of
 application compatibility, applications can still configure the TLSv1.2 cipher
-list; it will always be ignored.
-
-### What should `SSL_get_current_cipher` and similar do?
-
-QUIC always uses AES-128-GCM encryption initially, so we could either return
-AES-128-GCM where the handshake has not yet negotiated another algorithm or
-return NULL here.
-
-A. We return NULL here, because it allows applications to detect if a
-ciphersuite has been negotiated and NULL can be used to infer that Initial
-encryption is still being used. This also minimises the changes needed to the
-implementation.
+list; it will always be ignored. This function can still be used to set the
+SECLEVEL; no changes are needed to facilitate this.
 
 ### What SSL options should be supported?
 
@@ -870,10 +863,10 @@ Options we explicitly want to support:
 - `SSL_OP_NO_RX_CERTIFICATE_COMPRESSION`
 - `SSL_OP_PRIORITIZE_CHACHA`
 - `SSL_OP_NO_TICKET`
+- `SSL_OP_CLEANSE_PLAINTEXT`
 
 Options we do not yet support but could support in the future, currently no-ops:
 
-- `SSL_OP_CLEANSE_PLAINTEXT`
 - `SSL_OP_NO_QUERY_MTU`
 - `SSL_OP_NO_ANTI_REPLAY`
 
@@ -983,12 +976,11 @@ This is a deprecated function, so it needn't be supported for QUIC. Fail closed.
 
 ### What should `SSL_set_ssl_method` do?
 
-For now we can avoid supporting this for QUIC. Supporting this would be rather
-hairy.
+We do not currently support this for QUIC.
 
 ### What should `SSL_set_shutdown` do?
 
-TBD.
+This is not supported and is a no-op for QUIC.
 
 ### What should `SSL_dup` and `SSL_clear` do?
 
