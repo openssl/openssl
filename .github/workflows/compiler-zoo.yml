@@ -37,6 +37,10 @@ jobs:
             cc: gcc-12,
             distro: ubuntu-22.04
           }, {
+            cc: gcc-13,
+            distro: ubuntu-22.04,
+            gcc-ppa-name: ubuntu-toolchain-r/test
+          }, {
             cc: clang-6.0,
             distro: ubuntu-20.04
           }, {
@@ -80,11 +84,18 @@ jobs:
     steps:
     - name: install packages
       run: |
+        gcc_ppa_name="${{ matrix.zoo.gcc-ppa-name }}"
         llvm_ppa_name="${{ matrix.zoo.llvm-ppa-name }}"
 
-        # In the Matrix above, we set llvm-ppa-name if an LLVM version isn't
-        # part of the Ubuntu version we're using. See https://apt.llvm.org/.
-        if [[ -n ${llvm_ppa_name} ]] ; then
+        # In the Matrix above:
+        # - we set gcc-ppc-name if the GCC version isn't part of the Ubuntu version we're using (see https://launchpad.net/~ubuntu-toolchain-r/+archive/ubuntu/test).
+        # - we set llvm-ppa-name if an LLVM version isn't part of the Ubuntu version we're using (see https://apt.llvm.org/).
+        # This is especially needed because even new Ubuntu LTSes aren't available
+        # until a while after release on Github Actions.
+        if [[ -n ${gcc_ppa_name} ]] ; then
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+        elif [[ -n ${llvm_ppa_name} ]] ; then
             wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key |\
                 gpg --dearmor |\
                 sudo tee /usr/share/keyrings/llvm-snapshot.gpg.key > /dev/null
