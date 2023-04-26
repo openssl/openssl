@@ -36,22 +36,35 @@ blocking mode (see L<SSL_set_blocking_mode(3)>), but this may be bypassed by
 passing the flag B<SSL_ACCEPT_STREAM_NO_BLOCK> in B<flags>. If this flag is set,
 this function never blocks.
 
-SSL_accept_stream_queue_len() returns the number of incoming streams currently
-waiting in the accept queue. It is intended for informational use only, as this
-number may change between a call to it and a subsequent call to
-SSL_accept_stream(), due to SSL_accept_stream() calls by other threads.
+SSL_get_accept_stream_queue_len() returns the number of incoming streams
+currently waiting in the accept queue.
+
+=begin comment
+
+TODO(QUIC): Revise in MSMT PR to mention threading considerations.
+
+=end comment
 
 Depending on whether default stream functionality is being used, it may be
 necessary to explicitly configure the incoming stream rejection policy before
 streams can be accepted; see L<SSL_set_incoming_stream_reject_policy(3)>.
 
+=begin comment
+
+TODO(QUIC): Update the above to refer to default stream man(7) page once
+man(7) pages are merged
+
+=end comment
+
 =head1 RETURN VALUES
 
 SSL_accept_stream() returns a newly allocated QUIC stream SSL object, or NULL if
-no new incoming streams are available, or if the connection has been terminated.
+no new incoming streams are available, or if the connection has been terminated,
+or if called on a SSL object other than a QUIC connection SSL object.
 
 SSL_get_accept_stream_queue_len() returns the number of incoming streams
-currently waiting in the accept queue.
+currently waiting in the accept queue, or 0 if called on a SSL object other than
+a QUIC connection SSL object.
 
 =head1 SEE ALSO
 

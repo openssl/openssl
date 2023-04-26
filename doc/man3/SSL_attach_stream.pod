@@ -60,7 +60,8 @@ QUIC connection SSL object is freed.
 When a QUIC connection SSL object has no default stream currently associated
 with it, for example because the default stream was detached or because default
 stream functionality was disabled, calls to functions which require a stream on
-the QUIC connection SSL object will fail.
+the QUIC connection SSL object (for example, L<SSL_read(3)> and L<SSL_write(3)>)
+will fail.
 
 The act of detaching a stream from a QUIC connection SSL object can be reversed
 by calling SSL_attach_stream(). This can also be used to designate a stream
@@ -68,6 +69,13 @@ obtained via L<SSL_new_stream(3)> or L<SSL_accept_stream(3)> as the default
 stream. SSL_attach_stream() cannot be used if there is already a default stream
 associated with the QUIC connection SSL object; therefore, you may need to call
 SSL_detach_stream() first.
+
+If a stream is successfully attached to a QUIC connection SSL object using
+SSL_attach_stream(), the QUIC connection SSL object becomes responsible for
+managing its lifetime. Calling SSL_free() on the QUIC connection SSL object will
+free the stream automatically. Moreover, once the call to SSL_attach_stream()
+succeeds, the application must make no further use of the QUIC stream SSL object
+pointer that it passed to SSL_attach_stream().
 
 It is recommended that new applications and applications which rely on multiple
 streams forego use of the default stream functionality, which is intended for
@@ -89,9 +97,10 @@ the default stream. If L<SSL_read(3)> is called prior to any call to
 L<SSL_write(3)>, OpenSSL waits for an incoming stream from the peer (causing
 L<SSL_read(3)> to block if the connection is in blocking mode), and then binds
 that stream as the default stream. Note that this incoming stream may be either
-bidirectional or unidirectional; thus, this setting does not guarantee presence
-of a bidirectional stream when L<SSL_read(3)> is called first. To determine the
-type of a stream after a call to L<SSL_read(3)>, use L<SSL_get_stream_type(3)>.
+bidirectional or unidirectional; thus, this setting does not guarantee the
+presence of a bidirectional stream when L<SSL_read(3)> is called first. To
+determine the type of a stream after a call to L<SSL_read(3)>, use
+L<SSL_get_stream_type(3)>.
 
 =item SSL_DEFAULT_STREAM_MODE_AUTO_UNI
 
