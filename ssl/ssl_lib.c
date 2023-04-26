@@ -1874,13 +1874,11 @@ int SSL_has_pending(const SSL *s)
      * the records for some reason.
      */
     const SSL_CONNECTION *sc;
-#ifndef OPENSSL_NO_QUIC
-    const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
 
-    if (qc != NULL)
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(s))
         return ossl_quic_has_pending(s);
 #endif
-
 
     sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
@@ -2692,10 +2690,9 @@ int SSL_shutdown(SSL *s)
      * (see ssl3_shutdown).
      */
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-#ifndef OPENSSL_NO_QUIC
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (qc != NULL)
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(s))
         return ossl_quic_conn_shutdown(s, 0, NULL, 0);
 #endif
 

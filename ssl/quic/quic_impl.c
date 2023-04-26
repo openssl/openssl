@@ -341,6 +341,8 @@ void ossl_quic_free(SSL *s)
     if (!expect_quic(s, &ctx))
         return;
 
+    quic_lock(ctx.qc);
+
     if (ctx.is_stream) {
         /*
          * When a QSSO is freed, the XSO is freed immediately, because the XSO
@@ -348,8 +350,6 @@ void ossl_quic_free(SSL *s)
          * underlying QUIC_STREAM is not freed immediately but is instead marked
          * as deleted for later collection.
          */
-
-        quic_lock(ctx.qc);
 
         assert(ctx.qc->num_xso > 0);
         --ctx.qc->num_xso;
@@ -375,8 +375,6 @@ void ossl_quic_free(SSL *s)
         /* Note: SSL_free calls OPENSSL_free(xso) for us */
         return;
     }
-
-    quic_lock(ctx.qc);
 
     /*
      * Free the default XSO, if any. The QUIC_STREAM is not deleted at this
@@ -1902,7 +1900,7 @@ QUIC_TAKES_LOCK
 static size_t ossl_quic_pending_int(const SSL *s)
 {
     QCTX ctx;
-    size_t avail = 0;
+    size_t avail;
     int fin = 0;
 
     if (!expect_quic_with_stream_lock(s, /*remote_init=*/-1, &ctx))

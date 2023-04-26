@@ -2270,8 +2270,8 @@ __owur SSL *SSL_get0_connection(SSL *s);
 __owur int SSL_is_connection(SSL *s);
 
 #define SSL_STREAM_TYPE_NONE        0
-#define SSL_STREAM_TYPE_READ        1
-#define SSL_STREAM_TYPE_WRITE       2
+#define SSL_STREAM_TYPE_READ        (1U << 0)
+#define SSL_STREAM_TYPE_WRITE       (1U << 1)
 #define SSL_STREAM_TYPE_BIDI        (SSL_STREAM_TYPE_READ | SSL_STREAM_TYPE_WRITE)
 __owur int SSL_get_stream_type(SSL *s);
 
