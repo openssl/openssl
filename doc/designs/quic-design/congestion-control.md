@@ -20,11 +20,12 @@ faciliated via the `get_wakeup_deadline` method and the `now` argument to the
 controller makes use of this facility, it can be used by future congestion
 controllers to implement packet pacing.
 
-Congestion controllers may expose integer configuration options via the
-`set_option_uint` and `get_option_uint` methods. These options may be specific
-to the congestion controller method, although there are some well known ones
-intended to be common to all congestion controllers. The use of strings for
-option names is avoided for performance reasons.
+Congestion controllers may expose arbitrary configuration parameters via the
+`set_input_params` method. Equally, congestion controllers may expose diagnostic
+outputs via the `bind_diagnostics` and `unbind_diagnostics` methods. The
+configuration parameters and diagnostics supported may be specific to the
+congestion controller method, although there are some well known ones intended
+to be common to all congestion controllers.
 
 Currently, the only dependency injected to a congestion controller is access to
 a clock. In the future it is likely that access at least to the statistics
@@ -48,3 +49,6 @@ changed to avoid this. This involves some small amounts of functionality which
 RFC 9002 considers part of the congestion controller being part of the ACK
 manager in our implementation. See the comments in `include/internal/quic_cc.h`
 and `ssl/quic/quic_ackm.c` for more information.
+
+The congestion control API may be revised to allow pluggable congestion
+controllers via a provider-based interface in the future.
