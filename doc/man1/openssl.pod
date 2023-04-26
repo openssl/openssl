@@ -584,6 +584,8 @@ When a specific TLS version is required, only that version will be offered or
 accepted.
 Only one specific protocol can be given and it cannot be combined with any of
 the B<no_> options.
+The B<no_*> options do not work with B<s_time>, B<ciphers> commands but work with
+B<s_client> and B<s_server> commands.
 
 =item B<-dtls>, B<-dtls1>, B<-dtls1_2>
 
