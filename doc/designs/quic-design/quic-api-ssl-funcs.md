@@ -842,23 +842,18 @@ encryption is mostly for protection against accidential modification and not
 active yet. An application using QUIC can always interpret NULL as meaning
 AES-128-GCM is being used if needed as this is implied by using QUIC.
 
+A. We return NULL here, because it allows applications to detect if a
+ciphersuite has been negotiated and NULL can be used to infer that Initial
+encryption is still being used. This also minimises the changes needed to the
+implementation.
+
 ### What should `SSL_CTX_set_cipher_list` do?
 
 Since this function configures the cipher list for TLSv1.2 and below only, there
 is no need to restrict it as TLSv1.3 is required for QUIC. For the sake of
 application compatibility, applications can still configure the TLSv1.2 cipher
-list; it will always be ignored.
-
-### What should `SSL_get_current_cipher` and similar do?
-
-QUIC always uses AES-128-GCM encryption initially, so we could either return
-AES-128-GCM where the handshake has not yet negotiated another algorithm or
-return NULL here.
-
-A. We return NULL here, because it allows applications to detect if a
-ciphersuite has been negotiated and NULL can be used to infer that Initial
-encryption is still being used. This also minimises the changes needed to the
-implementation.
+list; it will always be ignored. This function can still be used to set the
+SECLEVEL; no changes are needed to facilitate this.
 
 ### What SSL options should be supported?
 
@@ -870,10 +865,10 @@ Options we explicitly want to support:
 - `SSL_OP_NO_RX_CERTIFICATE_COMPRESSION`
 - `SSL_OP_PRIORITIZE_CHACHA`
 - `SSL_OP_NO_TICKET`
+- `SSL_OP_CLEANSE_PLAINTEXT`
 
 Options we do not yet support but could support in the future, currently no-ops:
 
-- `SSL_OP_CLEANSE_PLAINTEXT`
 - `SSL_OP_NO_QUERY_MTU`
 - `SSL_OP_NO_ANTI_REPLAY`
 
