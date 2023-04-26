@@ -129,7 +129,7 @@ struct quic_stream_st {
      *     queue nor has an associated XSO. This condition occurs when and only
      *     when deleted is true.
      *
-     *   - Once there is the case (i.e., no user-facing API object exposing the
+     *   - Once this is the case (i.e., no user-facing API object exposing the
      *     stream), we can delete the stream once we determine that all of our
      *     protocol obligations requiring us to keep the QUIC_STREAM around have
      *     been met.

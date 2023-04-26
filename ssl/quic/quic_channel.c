@@ -2301,11 +2301,11 @@ err:
 QUIC_STREAM *ossl_quic_channel_new_stream_local(QUIC_CHANNEL *ch, int is_uni)
 {
     QUIC_STREAM *qs;
-    int type = 0;
+    int type;
     uint64_t stream_id, *p_next_ordinal;
 
-    type |= ch->is_server ? QUIC_STREAM_INITIATOR_SERVER
-                          : QUIC_STREAM_INITIATOR_CLIENT;
+    type = ch->is_server ? QUIC_STREAM_INITIATOR_SERVER
+                         : QUIC_STREAM_INITIATOR_CLIENT;
 
     if (is_uni) {
         p_next_ordinal = &ch->next_local_stream_ordinal_uni;
