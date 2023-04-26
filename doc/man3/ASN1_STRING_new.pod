@@ -27,7 +27,7 @@ If I<a> is NULL nothing is done.
 =head1 NOTES
 
 Other string types call the B<ASN1_STRING> functions. For example
-ASN1_OCTET_STRING_new() calls ASN1_STRING_type(V_ASN1_OCTET_STRING).
+ASN1_OCTET_STRING_new() calls ASN1_STRING_type_new(V_ASN1_OCTET_STRING).
 
 =head1 RETURN VALUES
 
