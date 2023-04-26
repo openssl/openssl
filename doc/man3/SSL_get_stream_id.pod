@@ -31,13 +31,14 @@ on the stream, and returns one of the following values:
 
 =item B<SSL_STREAM_TYPE_NONE>
 
-The SSL object is a non-QUIC SSL object, or is a QUIC connection SSL object
-without a default stream attached (see L<SSL_attach_stream(3)>).
+The SSL object is a QUIC connection SSL object without a default stream attached
+(see L<SSL_attach_stream(3)>).
 
 =item B<SSL_STREAM_TYPE_BIDI>
 
-The SSL object is a QUIC stream object (or QUIC connection SSL object with a
-default stream attached), and that stream is a bidirectional QUIC stream.
+The SSL object is a non-QUIC SSL object, or is a QUIC stream object (or QUIC
+connection SSL object with a default stream attached), and that stream is a
+bidirectional QUIC stream.
 
 =item B<SSL_STREAM_TYPE_READ>
 
