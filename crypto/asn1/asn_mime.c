@@ -679,7 +679,7 @@ static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
     char linebuf[MAX_SMLEN];
     MIME_HEADER *mhdr = NULL, *new_hdr = NULL;
     STACK_OF(MIME_HEADER) *headers;
-    int len, state, save_state = 0;
+    int i, len, state, save_state = 0;
 
     headers = sk_MIME_HEADER_new(mime_hdr_cmp);
     if (headers == NULL)
@@ -785,6 +785,12 @@ static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
             break;              /* Blank line means end of headers */
     }
 
+    /* Sort the headers and their params for faster searching */
+    sk_MIME_HEADER_sort(headers);
+    for (i = 0; i < sk_MIME_HEADER_num(headers); i++)
+        if ((mhdr = sk_MIME_HEADER_value(headers, i)) != NULL
+                && mhdr->params != NULL)
+            sk_MIME_PARAM_sort(mhdr->params);
     return headers;
 
  err:
