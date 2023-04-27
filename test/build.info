@@ -693,7 +693,7 @@ IF[{- !$disabled{tests} -}]
   SOURCE[ca_internals_test]=ca_internals_test.c ../apps/ca.c ../apps/lib/apps.c \
                             ../apps/lib/app_rand.c ../apps/lib/engine.c ../apps/lib/app_provider.c \
                             ../apps/lib/app_libctx.c ../apps/lib/fmt.c ../apps/lib/apps_ui.c \
-                            ../apps/lib/app_x509.c ../crypto/asn1/a_time.c ../crypto/ctype.c
+                            ../crypto/asn1/a_time.c ../crypto/ctype.c
   INCLUDE[ca_internals_test]=.. ../include ../apps/include
   DEPEND[ca_internals_test]=libtestutil.a ../libssl
 

@@ -2199,46 +2199,6 @@ static int do_pkey_ctx_init(EVP_PKEY_CTX *pkctx, STACK_OF(OPENSSL_STRING) *opts)
     return 1;
 }
 
-static int do_x509_init(X509 *x, STACK_OF(OPENSSL_STRING) *opts)
-{
-    int i;
-
-    if (opts == NULL)
-        return 1;
-
-    for (i = 0; i < sk_OPENSSL_STRING_num(opts); i++) {
-        char *opt = sk_OPENSSL_STRING_value(opts, i);
-
-        if (x509_ctrl_string(x, opt) <= 0) {
-            BIO_printf(bio_err, "parameter error \"%s\"\n", opt);
-            ERR_print_errors(bio_err);
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
-static int do_x509_req_init(X509_REQ *x, STACK_OF(OPENSSL_STRING) *opts)
-{
-    int i;
-
-    if (opts == NULL)
-        return 1;
-
-    for (i = 0; i < sk_OPENSSL_STRING_num(opts); i++) {
-        char *opt = sk_OPENSSL_STRING_value(opts, i);
-
-        if (x509_req_ctrl_string(x, opt) <= 0) {
-            BIO_printf(bio_err, "parameter error \"%s\"\n", opt);
-            ERR_print_errors(bio_err);
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
 static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
                         const char *md, STACK_OF(OPENSSL_STRING) *sigopts)
 {
@@ -2365,12 +2325,19 @@ int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const char *md,
  */
 int do_X509_verify(X509 *x, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *vfyopts)
 {
-    int rv = 0;
+    int rv = -1;
+    EVP_PKEY_CTX *pkctx = NULL;
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
-    if (do_x509_init(x, vfyopts) > 0)
-        rv = X509_verify(x, pkey);
-    else
-        rv = -1;
+    if (mctx == NULL)
+        return rv;
+
+    if (EVP_DigestVerifyInit_ex(mctx, &pkctx, NULL, app_get0_libctx(),
+                                app_get0_propq(), pkey, NULL)
+            && do_pkey_ctx_init(pkctx, vfyopts))
+        rv = X509_verify_ctx(x, mctx);
+
+    EVP_MD_CTX_free(mctx);
     return rv;
 }
 
@@ -2382,11 +2349,26 @@ int do_X509_REQ_verify(X509_REQ *x, EVP_PKEY *pkey,
                        STACK_OF(OPENSSL_STRING) *vfyopts)
 {
     int rv = 0;
+    EVP_PKEY_CTX *pkctx = NULL;
+    int nid, mdnid, pknid;
+    const char *mdname = NULL;
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
-    if (do_x509_req_init(x, vfyopts) > 0)
-        rv = X509_REQ_verify_ex(x, pkey, app_get0_libctx(), app_get0_propq());
-    else
-        rv = -1;
+    if (mctx == NULL)
+        return rv;
+
+    nid = X509_REQ_get_signature_nid(x);
+    if (nid != NID_undef
+            && OBJ_find_sigid_algs(nid, &mdnid, &pknid)
+            && mdnid != NID_undef)
+        mdname = OBJ_nid2sn(mdnid);
+
+    if (EVP_DigestVerifyInit_ex(mctx, &pkctx, mdname, app_get0_libctx(),
+                                app_get0_propq(), pkey, NULL)
+            && do_pkey_ctx_init(pkctx, vfyopts))
+        rv = X509_REQ_verify_ctx(x, mctx);
+
+    EVP_MD_CTX_free(mctx);
     return rv;
 }
 
