@@ -133,7 +133,9 @@ ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
 
     fnd.nid = nid;
-    if (stable) {
+    if (stable != NULL) {
+        /* Ideally, this would be done under lock */
+        sk_ASN1_STRING_TABLE_sort(stable);
         idx = sk_ASN1_STRING_TABLE_find(stable, &fnd);
         if (idx >= 0)
             return sk_ASN1_STRING_TABLE_value(stable, idx);
