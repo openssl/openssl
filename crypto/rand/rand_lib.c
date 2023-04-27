@@ -273,7 +273,13 @@ void RAND_add(const void *buf, int num, double randomness)
 # endif
     drbg = RAND_get0_primary(NULL);
     if (drbg != NULL && num > 0)
+# ifdef OPENSSL_RAND_SEED_NONE
+        /* Without an entropy source, we have to rely on the user */
+        EVP_RAND_reseed(drbg, 0, buf, num, NULL, 0);
+# else
+        /* With an entropy source, we downgrade this to additional input */
         EVP_RAND_reseed(drbg, 0, NULL, 0, buf, num);
+# endif
 }
 
 # if !defined(OPENSSL_NO_DEPRECATED_1_1_0)
