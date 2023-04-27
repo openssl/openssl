@@ -2285,7 +2285,9 @@ static int execute_test_session(int maxprot, int use_int_cache,
          */
         if (use_int_cache && maxprot != TLS1_3_VERSION) {
             if (!TEST_ptr(tmp = SSL_SESSION_dup(sess2))
-                    || !TEST_true(SSL_CTX_remove_session(sctx, sess2)))
+                || !TEST_true(sess2->owner != NULL)
+                || !TEST_true(tmp->owner == NULL)
+                || !TEST_true(SSL_CTX_remove_session(sctx, sess2)))
                 goto end;
             SSL_SESSION_free(sess2);
         }
