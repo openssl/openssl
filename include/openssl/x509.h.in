@@ -318,11 +318,13 @@ void *X509_CRL_get_meth_data(X509_CRL *crl);
 const char *X509_verify_cert_error_string(long n);
 
 int X509_verify(X509 *a, EVP_PKEY *r);
+int X509_verify_ctx(X509 *a, EVP_MD_CTX *ctx);
 int X509_self_signed(X509 *cert, int verify_signature);
 
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
                        const char *propq);
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
+int X509_REQ_verify_ctx(X509_REQ *a, EVP_MD_CTX *ctx);
 int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r);
 

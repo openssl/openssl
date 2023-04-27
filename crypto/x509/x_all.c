@@ -38,6 +38,15 @@ int X509_verify(X509 *a, EVP_PKEY *r)
                                a->distinguishing_id, r, a->libctx, a->propq);
 }
 
+int X509_verify_ctx(X509 *a, EVP_MD_CTX *ctx)
+{
+    if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature) != 0)
+        return 0;
+
+    return ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
+                                &a->signature, &a->cert_info, ctx);
+}
+
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
                        const char *propq)
 {
@@ -49,6 +58,12 @@ int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 {
     return X509_REQ_verify_ex(a, r, NULL, NULL);
+}
+
+int X509_REQ_verify_ctx(X509_REQ *a, EVP_MD_CTX *ctx)
+{
+    return ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_REQ_INFO), &a->sig_alg,
+                                a->signature, &a->req_info, ctx);
 }
 
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)

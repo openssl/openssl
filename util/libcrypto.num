@@ -5517,3 +5517,5 @@ EC_GROUP_to_params                      ?	3_2_0	EXIST::FUNCTION:EC
 X509_STORE_CTX_init_rpk                 ?	3_2_0	EXIST::FUNCTION:
 X509_STORE_CTX_get0_rpk                 ?	3_2_0	EXIST::FUNCTION:
 X509_STORE_CTX_set0_rpk                 ?	3_2_0	EXIST::FUNCTION:
+X509_verify_ctx                         ?	3_2_0	EXIST::FUNCTION:
+X509_REQ_verify_ctx                     ?	3_2_0	EXIST::FUNCTION:
