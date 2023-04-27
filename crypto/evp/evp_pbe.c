@@ -259,6 +259,8 @@ int EVP_PBE_find_ex(int type, int pbe_nid, int *pcnid, int *pmnid,
     pbelu.pbe_nid = pbe_nid;
 
     if (pbe_algs != NULL) {
+        /* Ideally, this would be done under lock */
+        sk_EVP_PBE_CTL_sort(pbe_algs);
         i = sk_EVP_PBE_CTL_find(pbe_algs, &pbelu);
         pbetmp = sk_EVP_PBE_CTL_value(pbe_algs, i);
     }
