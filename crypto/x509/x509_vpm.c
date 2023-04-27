@@ -635,6 +635,8 @@ const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name)
 
     pm.name = (char *)name;
     if (param_table != NULL) {
+        /* Ideally, this would be done under a lock */
+        sk_X509_VERIFY_PARAM_sort(param_table);
         idx = sk_X509_VERIFY_PARAM_find(param_table, &pm);
         if (idx >= 0)
             return sk_X509_VERIFY_PARAM_value(param_table, idx);
