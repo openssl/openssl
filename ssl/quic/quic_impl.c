@@ -1966,7 +1966,7 @@ QUIC_TAKES_LOCK
 static size_t ossl_quic_pending_int(const SSL *s)
 {
     QCTX ctx;
-    size_t avail;
+    size_t avail = 0;
     int fin = 0;
 
     if (!expect_quic_with_stream_lock(s, /*remote_init=*/-1, &ctx))
