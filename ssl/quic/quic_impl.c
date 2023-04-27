@@ -28,6 +28,8 @@ static int quic_do_handshake(QUIC_CONNECTION *qc);
 static void qc_update_reject_policy(QUIC_CONNECTION *qc);
 static void qc_touch_default_xso(QUIC_CONNECTION *qc);
 static void qc_set_default_xso(QUIC_CONNECTION *qc, QUIC_XSO *xso, int touch);
+static void qc_set_default_xso_keep_ref(QUIC_CONNECTION *qc, QUIC_XSO *xso,
+                                        int touch, QUIC_XSO **old_xso);
 static SSL *quic_conn_stream_new(QUIC_CONNECTION *qc, uint64_t flags,
                                  int need_lock);
 
@@ -336,6 +338,7 @@ QUIC_TAKES_LOCK
 void ossl_quic_free(SSL *s)
 {
     QCTX ctx;
+    int is_default;
 
     /* We should never be called on anything but a QSO. */
     if (!expect_quic(s, &ctx))
@@ -370,7 +373,18 @@ void ossl_quic_free(SSL *s)
         ossl_quic_stream_map_update_state(ossl_quic_channel_get_qsm(ctx.qc->ch),
                                           ctx.xso->stream);
 
+        is_default = (ctx.xso == ctx.qc->default_xso);
         quic_unlock(ctx.qc);
+
+        /*
+         * Unref the connection in most cases; the XSO has a ref to the QC and
+         * not vice versa. But for a default XSO, to avoid circular references,
+         * the QC refs the XSO but the XSO does not ref the QC. If we are the
+         * default XSO, we only get here when the QC is being torn down anyway,
+         * so don't call SSL_free(qc) as we are already in it.
+         */
+        if (!is_default)
+            SSL_free(&ctx.qc->ssl);
 
         /* Note: SSL_free calls OPENSSL_free(xso) for us */
         return;
@@ -386,6 +400,7 @@ void ossl_quic_free(SSL *s)
         quic_unlock(ctx.qc);
         SSL_free(&xso->ssl);
         quic_lock(ctx.qc);
+        ctx.qc->default_xso = NULL;
     }
 
     /* Ensure we have no remaining XSOs. */
@@ -475,12 +490,59 @@ static void qc_touch_default_xso(QUIC_CONNECTION *qc)
     qc_update_reject_policy(qc);
 }
 
+/*
+ * Changes default XSO. Allows caller to keep reference to the old default XSO
+ * (if any). Reference to new XSO is transferred from caller.
+ */
+QUIC_NEEDS_LOCK
+static void qc_set_default_xso_keep_ref(QUIC_CONNECTION *qc, QUIC_XSO *xso,
+                                        int touch,
+                                        QUIC_XSO **old_xso)
+{
+    int refs;
+
+    *old_xso = NULL;
+
+    if (qc->default_xso != xso) {
+        *old_xso = qc->default_xso; /* transfer old XSO ref to caller */
+
+        qc->default_xso = xso;
+
+        if (xso == NULL) {
+            /*
+             * Changing to not having a default XSO. XSO becomes standalone and
+             * now has a ref to the QC.
+             */
+            if (!ossl_assert(SSL_up_ref(&qc->ssl)))
+                return;
+        } else {
+            /*
+             * Changing from not having a default XSO to having one. The new XSO
+             * will have had a reference to the QC we need to drop to avoid a
+             * circular reference.
+             */
+            CRYPTO_DOWN_REF(&qc->ssl.references, &refs, &qc->ssl.lock);
+            assert(refs > 0);
+        }
+    }
+
+    if (touch)
+        qc_touch_default_xso(qc);
+}
+
+/*
+ * Changes default XSO, releasing the reference to any previous default XSO.
+ * Reference to new XSO is transferred from caller.
+ */
 QUIC_NEEDS_LOCK
 static void qc_set_default_xso(QUIC_CONNECTION *qc, QUIC_XSO *xso, int touch)
 {
-    qc->default_xso = xso;
-    if (touch)
-        qc_touch_default_xso(qc);
+    QUIC_XSO *old_xso = NULL;
+
+    qc_set_default_xso_keep_ref(qc, xso, touch, &old_xso);
+
+    if (old_xso != NULL)
+        SSL_free(&old_xso->ssl);
 }
 
 /*
@@ -1317,6 +1379,10 @@ static QUIC_XSO *create_xso_from_stream(QUIC_CONNECTION *qc, QUIC_STREAM *qs)
     if (!ossl_ssl_init(&xso->ssl, qc->ssl.ctx, qc->ssl.method, SSL_TYPE_QUIC_XSO))
         goto err;
 
+    /* XSO refs QC */
+    if (!SSL_up_ref(&qc->ssl))
+        goto err;
+
     xso->conn       = qc;
     xso->blocking   = qc->default_blocking;
     xso->ssl_mode   = qc->default_ssl_mode;
@@ -2096,7 +2162,7 @@ QUIC_TAKES_LOCK
 SSL *ossl_quic_detach_stream(SSL *s)
 {
     QCTX ctx;
-    QUIC_XSO *xso;
+    QUIC_XSO *xso = NULL;
 
     if (!expect_quic_conn_only(s, &ctx))
         return NULL;
@@ -2104,12 +2170,12 @@ SSL *ossl_quic_detach_stream(SSL *s)
     quic_lock(ctx.qc);
 
     /* Calling this function inhibits default XSO autocreation. */
-    xso = ctx.qc->default_xso;
-    qc_set_default_xso(ctx.qc, NULL, /*touch=*/1);
+    /* QC ref to any default XSO is transferred to us and to caller. */
+    qc_set_default_xso_keep_ref(ctx.qc, NULL, /*touch=*/1, &xso);
 
     quic_unlock(ctx.qc);
 
-    return &xso->ssl;
+    return xso != NULL ? &xso->ssl : NULL;
 }
 
 /*
@@ -2120,6 +2186,8 @@ QUIC_TAKES_LOCK
 int ossl_quic_attach_stream(SSL *conn, SSL *stream)
 {
     QCTX ctx;
+    QUIC_XSO *xso;
+    int nref;
 
     if (!expect_quic_conn_only(conn, &ctx))
         return 0;
@@ -2127,6 +2195,8 @@ int ossl_quic_attach_stream(SSL *conn, SSL *stream)
     if (stream == NULL || stream->type != SSL_TYPE_QUIC_XSO)
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, ERR_R_PASSED_NULL_PARAMETER,
                                            "stream to attach must be a valid QUIC stream");
+
+    xso = (QUIC_XSO *)stream;
 
     quic_lock(ctx.qc);
 
@@ -2136,8 +2206,26 @@ int ossl_quic_attach_stream(SSL *conn, SSL *stream)
                                            "connection already has a default stream");
     }
 
+    /*
+     * It is a caller error for the XSO being attached as a default XSO to have
+     * more than one ref.
+     */
+    if (!CRYPTO_GET_REF(&xso->ssl.references, &nref, &xso->ssl.lock)) {
+        quic_unlock(ctx.qc);
+        return QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, ERR_R_INTERNAL_ERROR,
+                                           "ref");
+    }
+
+    if (nref != 1) {
+        quic_unlock(ctx.qc);
+        return QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, ERR_R_PASSED_INVALID_ARGUMENT,
+                                           "stream being attached must have "
+                                           "only 1 reference");
+    }
+
+    /* Caller's reference to the XSO is transferred to us. */
     /* Calling this function inhibits default XSO autocreation. */
-    qc_set_default_xso(ctx.qc, (QUIC_XSO *)stream, /*touch=*/1);
+    qc_set_default_xso(ctx.qc, xso, /*touch=*/1);
 
     quic_unlock(ctx.qc);
     return 1;
