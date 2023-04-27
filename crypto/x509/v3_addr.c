@@ -1176,6 +1176,8 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
     if (b == NULL || X509v3_addr_inherits(a) || X509v3_addr_inherits(b))
         return 0;
     (void)sk_IPAddressFamily_set_cmp_func(b, IPAddressFamily_cmp);
+    sk_IPAddressFamily_sort(b);
+    /* Could sort a here too and get O(|a|) running time instead of O(|a| ln |b|) */
     for (i = 0; i < sk_IPAddressFamily_num(a); i++) {
         IPAddressFamily *fa = sk_IPAddressFamily_value(a, i);
         int j = sk_IPAddressFamily_find(b, fa);
@@ -1257,6 +1259,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
             ctx->error = X509_V_ERR_OUT_OF_MEM;
         goto done;
     }
+    sk_IPAddressFamily_sort(child);
 
     /*
      * Now walk up the chain.  No cert may list resources that its
@@ -1282,6 +1285,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
         }
         (void)sk_IPAddressFamily_set_cmp_func(x->rfc3779_addr,
                                               IPAddressFamily_cmp);
+        sk_IPAddressFamily_sort(x->rfc3779_addr);
         for (j = 0; j < sk_IPAddressFamily_num(child); j++) {
             IPAddressFamily *fc = sk_IPAddressFamily_value(child, j);
             int k = sk_IPAddressFamily_find(x->rfc3779_addr, fc);

@@ -63,6 +63,8 @@ static int policy_cache_create(X509 *x,
         }
         data = NULL;
     }
+    /* Sort so we can find more quickly */
+    sk_X509_POLICY_DATA_sort(cache->data);
     ret = 1;
 
  bad_policy:

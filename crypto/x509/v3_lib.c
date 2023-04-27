@@ -63,7 +63,10 @@ const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
         return *ret;
     if (!ext_list)
         return NULL;
+    /* Ideally, this would be done under a lock */
+    sk_X509V3_EXT_METHOD_sort(ext_list);
     idx = sk_X509V3_EXT_METHOD_find(ext_list, &tmp);
+    /* A failure to locate the item is handled by the value method */
     return sk_X509V3_EXT_METHOD_value(ext_list, idx);
 }
 

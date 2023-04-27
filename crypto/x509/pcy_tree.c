@@ -689,6 +689,7 @@ int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
 
     if ((calc_ret = tree_calculate_authority_set(tree, &auth_nodes)) == 0)
         goto error;
+    sk_X509_POLICY_NODE_sort(auth_nodes);
     ret = tree_calculate_user_set(tree, policy_oids, auth_nodes);
     if (calc_ret == TREE_CALC_OK_DOFREE)
         sk_X509_POLICY_NODE_free(auth_nodes);

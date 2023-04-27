@@ -105,6 +105,8 @@ int X509_TRUST_get_by_id(int id)
     if (trtable == NULL)
         return -1;
     tmp.trust = id;
+    /* Ideally, this would be done under lock */
+    sk_X509_TRUST_sort(trtable);
     idx = sk_X509_TRUST_find(trtable, &tmp);
     if (idx < 0)
         return -1;
