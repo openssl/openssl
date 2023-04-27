@@ -38,6 +38,7 @@ struct helper {
 
     OSSL_TIME       start_time;
     int             init, blocking, check_spin_again;
+    int             free_order;
 };
 
 struct script_op {
@@ -228,12 +229,21 @@ static void helper_cleanup_streams(LHASH_OF(STREAM_INFO) **lh)
 
 static void helper_cleanup(struct helper *h)
 {
+    if (h->free_order == 0) {
+        /* order 0: streams, then conn */
+        helper_cleanup_streams(&h->c_streams);
+
+        SSL_free(h->c_conn);
+        h->c_conn = NULL;
+    } else {
+        /* order 1: conn, then streams */
+        SSL_free(h->c_conn);
+        h->c_conn = NULL;
+
+        helper_cleanup_streams(&h->c_streams);
+    }
+
     helper_cleanup_streams(&h->s_streams);
-    helper_cleanup_streams(&h->c_streams);
-
-    SSL_free(h->c_conn);
-    h->c_conn = NULL;
-
     ossl_quic_tserver_free(h->s);
     h->s = NULL;
 
@@ -260,7 +270,7 @@ static void helper_cleanup(struct helper *h)
     h->c_ctx = NULL;
 }
 
-static int helper_init(struct helper *h)
+static int helper_init(struct helper *h, int free_order)
 {
     short port = 8186;
     struct in_addr ina = {0};
@@ -269,6 +279,7 @@ static int helper_init(struct helper *h)
     memset(h, 0, sizeof(*h));
     h->c_fd = -1;
     h->s_fd = -1;
+    h->free_order = free_order;
 
     if (!TEST_ptr(h->s_streams = lh_STREAM_INFO_new(stream_info_hash,
                                                     stream_info_cmp)))
@@ -447,7 +458,7 @@ static int is_want(SSL *s, int ret)
     return ec == SSL_ERROR_WANT_READ || ec == SSL_ERROR_WANT_WRITE;
 }
 
-static int run_script(const struct script_op *script)
+static int run_script(const struct script_op *script, int free_order)
 {
     size_t op_idx = 0;
     int testresult = 0;
@@ -459,7 +470,7 @@ static int run_script(const struct script_op *script)
     OSSL_TIME op_start_time = ossl_time_zero(), op_deadline = ossl_time_zero();
     size_t offset = 0;
 
-    if (!TEST_true(helper_init(&h)))
+    if (!TEST_true(helper_init(&h, free_order)))
         goto out;
 
 #define SPIN_AGAIN() { no_advance = 1; continue; }
@@ -1230,8 +1241,11 @@ static const struct script_op *const scripts[] = {
 
 static int test_script(int idx)
 {
-    TEST_info("Running script %d", idx + 1);
-    return run_script(scripts[idx]);
+    int script_idx = idx >> 1;
+    int free_order = idx & 1;
+
+    TEST_info("Running script %d (order=%d)", script_idx + 1, free_order);
+    return run_script(scripts[script_idx], free_order);
 }
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -1247,6 +1261,6 @@ int setup_tests(void)
         || !TEST_ptr(keyfile = test_get_argument(1)))
         return 0;
 
-    ADD_ALL_TESTS(test_script, OSSL_NELEM(scripts));
+    ADD_ALL_TESTS(test_script, OSSL_NELEM(scripts) * 2);
     return 1;
 }
