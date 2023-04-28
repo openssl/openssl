@@ -40,14 +40,22 @@ static const version_test version_testdata[] = {
     {PROTO_TLS,  TLS1_2_VERSION,         TLS1_1_VERSION,         1, 1, TLS1_2_VERSION,     TLS1_1_VERSION},
     {PROTO_TLS,  SSL3_VERSION - 1,       TLS1_3_VERSION,         0, 1, 0,                  TLS1_3_VERSION},
     {PROTO_TLS,  SSL3_VERSION,           TLS1_3_VERSION + 1,     1, 0, SSL3_VERSION,       0},
+#ifndef OPENSSL_NO_DTLS
     {PROTO_TLS,  DTLS1_VERSION,          DTLS1_2_VERSION,        1, 1, 0,                  0},
+#endif
     {PROTO_TLS,  OSSL_QUIC1_VERSION,     OSSL_QUIC1_VERSION,     0, 0, 0,                  0},
     {PROTO_TLS,  7,                      42,                     0, 0, 0,                  0},
     {PROTO_DTLS, 0,                      0,                      1, 1, 0,                  0},
     {PROTO_DTLS, DTLS1_VERSION,          DTLS1_2_VERSION,        1, 1, DTLS1_VERSION,      DTLS1_2_VERSION},
+#ifndef OPENSSL_NO_DTLS1_2
     {PROTO_DTLS, DTLS1_2_VERSION,        DTLS1_2_VERSION,        1, 1, DTLS1_2_VERSION,    DTLS1_2_VERSION},
+#endif
+#ifndef OPENSSL_NO_DTLS1
     {PROTO_DTLS, DTLS1_VERSION,          DTLS1_VERSION,          1, 1, DTLS1_VERSION,      DTLS1_VERSION},
+#endif
+#if !defined(OPENSSL_NO_DTLS1) && !defined(OPENSSL_NO_DTLS1_2)
     {PROTO_DTLS, DTLS1_2_VERSION,        DTLS1_VERSION,          1, 1, DTLS1_2_VERSION,    DTLS1_VERSION},
+#endif
     {PROTO_DTLS, DTLS1_VERSION + 1,      DTLS1_2_VERSION,        0, 1, 0,                  DTLS1_2_VERSION},
     {PROTO_DTLS, DTLS1_VERSION,          DTLS1_2_VERSION - 1,    1, 0, DTLS1_VERSION,      0},
     {PROTO_DTLS, TLS1_VERSION,           TLS1_3_VERSION,         1, 1, 0,                  0},
@@ -57,7 +65,9 @@ static const version_test version_testdata[] = {
     {PROTO_QUIC, OSSL_QUIC1_VERSION,     OSSL_QUIC1_VERSION,     0, 0, 0,                  0},
     {PROTO_QUIC, OSSL_QUIC1_VERSION,     OSSL_QUIC1_VERSION + 1, 0, 0, 0,                  0},
     {PROTO_QUIC, TLS1_VERSION,           TLS1_3_VERSION,         1, 1, 0,                  0},
+#ifndef OPENSSL_NO_DTLS
     {PROTO_QUIC, DTLS1_VERSION,          DTLS1_2_VERSION,        1, 1, 0,                  0},
+#endif
 };
 
 static int test_set_min_max_version(int idx_tst)
@@ -73,9 +83,11 @@ static int test_set_min_max_version(int idx_tst)
         meth = TLS_client_method();
         break;
 
+#ifndef OPENSSL_NO_DTLS
     case PROTO_DTLS:
         meth = DTLS_client_method();
         break;
+#endif
 
 #ifndef OPENSSL_NO_QUIC
     case PROTO_QUIC:
@@ -85,7 +97,7 @@ static int test_set_min_max_version(int idx_tst)
     }
 
     if (meth == NULL)
-        return TEST_skip("QUIC not supported");
+        return TEST_skip("Protocol not supported");
 
     ctx = SSL_CTX_new(meth);
     if (ctx == NULL)
