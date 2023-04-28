@@ -78,8 +78,8 @@ Typically I<crm> is NULL, then the template ingredients are taken from I<ctx>
 and need to be filled in using L<OSSL_CMP_CTX_set1_subjectName(3)>,
 L<OSSL_CMP_CTX_set0_newPkey(3)>, L<OSSL_CMP_CTX_set1_oldCert(3)>, etc.
 For P10CR, L<OSSL_CMP_CTX_set1_p10CSR(3)> needs to be used instead.
-The enrollment session may be blocked by sleeping until the addressed
-CA (or an intermediate PKI component) can fully process and answer the request.
+The enrollment session may be blocked (with polling and sleeping in between)
+until the server side can fully process and ultimately answer the request.
 
 OSSL_CMP_try_certreq() is an alternative to the above functions that is
 more flexible regarding what to do after receiving a checkAfter value.
@@ -118,11 +118,15 @@ We take "accepted" and "grantedWithMods" as clear success and handle
 typically return them as an indication that the certificate was already revoked.
 "rejection" is a clear error. The values "waiting" and "keyUpdateWarning"
 make no sense for revocation and thus are treated as an error as well.
+The revocation session may be blocked (with polling and sleeping in between)
+until the server can fully process and ultimately answer the request.
 
 OSSL_CMP_exec_GENM_ses() sends a genm general message containing the sequence of
 infoType and infoValue pairs (InfoTypeAndValue; short: B<ITAV>)
 optionally provided in the I<ctx> using L<OSSL_CMP_CTX_push0_genm_ITAV(3)>.
-On success it records in I<ctx> the status B<OSSL_CMP_PKISTATUS_accepted>
+The message exchange may be blocked (with polling and sleeping in between)
+until the server can fully process and ultimately answer the request.
+On success the function records in I<ctx> status B<OSSL_CMP_PKISTATUS_accepted>
 and returns the list of B<ITAV>s received in a genp response message.
 This can be used, for instance,
 with infoType C<signKeyPairTypes> to obtain the set of signature
@@ -215,6 +219,9 @@ The OpenSSL CMP support was added in OpenSSL 3.0.
 
 OSSL_CMP_get1_caCerts() and OSSL_CMP_get1_rootCaKeyUpdate()
 were added in OpenSSL 3.2.
+
+Support for delayed delivery of all types of response messages
+was added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 
