@@ -787,8 +787,8 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         return 0;
 
     /*
-     * enable clearing irrelevant errors in attempts to validate recipient nonce
-     * in case of delayed delivery.
+     * enable clearing irrelevant errors
+     * in attempts to validate recipient nonce in case of delayed delivery.
      */
     (void)ERR_set_mark();
     /* compare received nonce with the one we sent */
@@ -805,7 +805,6 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
             return 0;
         }
     }
-    /* discard any intermediate error while trying to check recipient nonce */
     (void)ERR_pop_to_mark();
 
     /* if not yet present, learn transactionID */
