@@ -990,11 +990,12 @@ static void ackm_on_pkts_acked(OSSL_ACKM *ackm, const OSSL_ACKM_TX_PKT *apkt)
                                               apkt->largest_acked + 1);
         }
 
+        ainfo.tx_time = apkt->time;
+        ainfo.tx_size = apkt->num_bytes;
+
         anext = apkt->anext;
         apkt->on_acked(apkt->cb_arg); /* may free apkt */
 
-        ainfo.tx_time = apkt->time;
-        ainfo.tx_size = apkt->num_bytes;
         ackm->cc_method->on_data_acked(ackm->cc_data, &ainfo);
     }
 }
