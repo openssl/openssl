@@ -29,6 +29,10 @@
  * pointer argument, the few that aren't ACK eliciting will not.  This makes
  * them a verifiable pattern against tables where this is specified.
  */
+static int depack_do_implicit_stream_create(QUIC_CHANNEL *ch,
+                                            uint64_t stream_id,
+                                            uint64_t frame_type,
+                                            QUIC_STREAM **result);
 
 static int depack_do_frame_padding(PACKET *pkt)
 {
@@ -110,15 +114,13 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    stream = ossl_quic_stream_map_get_by_id(&ch->qsm, frame_data.stream_id);
-    if (stream == NULL) {
-        ossl_quic_channel_raise_protocol_error(ch,
-                                               QUIC_ERR_STREAM_STATE_ERROR,
-                                               OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
-                                               "RESET_STREAM frame for "
-                                               "nonexistent stream");
-        return 0;
-    }
+    if (!depack_do_implicit_stream_create(ch, frame_data.stream_id,
+                                          OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
+                                          &stream))
+        return 0; /* error already raised for us */
+
+    if (stream == NULL)
+        return 1; /* old deleted stream, not a protocol violation, ignore */
 
     if (stream->rstream == NULL) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -154,15 +156,13 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    stream = ossl_quic_stream_map_get_by_id(&ch->qsm, frame_data.stream_id);
-    if (stream == NULL) {
-        ossl_quic_channel_raise_protocol_error(ch,
-                                               QUIC_ERR_STREAM_STATE_ERROR,
-                                               OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
-                                               "STOP_SENDING frame for "
-                                               "nonexistent stream");
-        return 0;
-    }
+    if (!depack_do_implicit_stream_create(ch, frame_data.stream_id,
+                                          OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
+                                          &stream))
+        return 0; /* error already raised for us */
+
+    if (stream == NULL)
+        return 1; /* old deleted stream, not a protocol violation, ignore */
 
     if (stream->sstream == NULL) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -242,6 +242,142 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CHANNEL *ch,
     return 1;
 }
 
+/*
+ * Returns 1 if no protocol violation has occurred. In this case *result will be
+ * non-NULL unless this is an old deleted stream and we should ignore the frame
+ * causing this function to be called. Returns 0 on protocol violation.
+ */
+static int depack_do_implicit_stream_create(QUIC_CHANNEL *ch,
+                                            uint64_t stream_id,
+                                            uint64_t frame_type,
+                                            QUIC_STREAM **result)
+{
+    QUIC_STREAM *stream;
+    uint64_t peer_role, stream_ordinal;
+    uint64_t *p_next_ordinal_local, *p_next_ordinal_remote;
+    QUIC_RXFC *max_streams_fc;
+    int is_uni, is_remote_init;
+
+    stream = ossl_quic_stream_map_get_by_id(&ch->qsm, stream_id);
+    if (stream != NULL) {
+        *result = stream;
+        return 1;
+    }
+
+    /*
+     * If we do not yet have a stream with the given ID, there are three
+     * possibilities:
+     *
+     *   (a) The stream ID is for a remotely-created stream and the peer
+     *       is creating a stream.
+     *
+     *   (b) The stream ID is for a locally-created stream which has
+     *       previously been deleted.
+     *
+     *   (c) The stream ID is for a locally-created stream which does
+     *       not exist yet. This is a protocol violation and we must
+     *       terminate the connection in this case.
+     *
+     * We distinguish between (b) and (c) using the stream ID allocator
+     * variable. Since stream ordinals are allocated monotonically, we
+     * simply determine if the stream ordinal is in the future.
+     */
+    peer_role = ch->is_server
+        ? QUIC_STREAM_INITIATOR_CLIENT
+        : QUIC_STREAM_INITIATOR_SERVER;
+
+    is_remote_init = ((stream_id & QUIC_STREAM_INITIATOR_MASK) == peer_role);
+    is_uni = ((stream_id & QUIC_STREAM_DIR_MASK) == QUIC_STREAM_DIR_UNI);
+
+    stream_ordinal = stream_id >> 2;
+
+    if (is_remote_init) {
+        /*
+         * Peer-created stream which does not yet exist. Create it. QUIC stream
+         * ordinals within a given stream type MUST be used in sequence and
+         * receiving a STREAM frame for ordinal n must implicitly create streams
+         * with ordinals [0, n) within that stream type even if no explicit
+         * STREAM frames are received for those ordinals.
+         */
+        p_next_ordinal_remote = is_uni
+            ? &ch->next_remote_stream_ordinal_uni
+            : &ch->next_remote_stream_ordinal_bidi;
+
+        /* Check this isn't violating stream count flow control. */
+        max_streams_fc = is_uni
+            ? &ch->max_streams_uni_rxfc
+            : &ch->max_streams_bidi_rxfc;
+
+        if (!ossl_quic_rxfc_on_rx_stream_frame(max_streams_fc,
+                                               stream_ordinal + 1,
+                                               /*is_fin=*/0)) {
+            ossl_quic_channel_raise_protocol_error(ch,
+                                                   QUIC_ERR_INTERNAL_ERROR,
+                                                   frame_type,
+                                                   "internal error (stream count RXFC)");
+            return 0;
+        }
+
+        if (ossl_quic_rxfc_get_error(max_streams_fc, 0) != QUIC_ERR_NO_ERROR) {
+            ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_STREAM_LIMIT_ERROR,
+                                                   frame_type,
+                                                   "exceeded maximum allowed streams");
+            return 0;
+        }
+
+        /*
+         * Create the named stream and any streams coming before it yet to be
+         * created.
+         */
+        while (*p_next_ordinal_remote <= stream_ordinal) {
+            uint64_t cur_stream_id = (*p_next_ordinal_remote << 2) |
+                (stream_id
+                 & (QUIC_STREAM_DIR_MASK | QUIC_STREAM_INITIATOR_MASK));
+
+            stream = ossl_quic_channel_new_stream_remote(ch, cur_stream_id);
+            if (stream == NULL) {
+                ossl_quic_channel_raise_protocol_error(ch,
+                                                       QUIC_ERR_INTERNAL_ERROR,
+                                                       frame_type,
+                                                       "internal error (stream allocation)");
+                return 0;
+            }
+
+            ++*p_next_ordinal_remote;
+        }
+
+        *result = stream;
+    } else {
+        /* Locally-created stream which does not yet exist. */
+        p_next_ordinal_local = is_uni
+            ? &ch->next_local_stream_ordinal_uni
+            : &ch->next_local_stream_ordinal_bidi;
+
+        if (stream_ordinal >= *p_next_ordinal_local) {
+            /*
+             * We never created this stream yet, this is a protocol
+             * violation.
+             */
+            ossl_quic_channel_raise_protocol_error(ch,
+                                                   QUIC_ERR_STREAM_STATE_ERROR,
+                                                   frame_type,
+                                                   "STREAM frame for nonexistent "
+                                                   "stream");
+            return 0;
+        }
+
+        /*
+         * Otherwise this is for an old locally-initiated stream which we
+         * have subsequently deleted. Ignore the data; it may simply be a
+         * retransmission. We already take care of notifying the peer of the
+         * termination of the stream during the stream deletion lifecycle.
+         */
+        *result = NULL;
+    }
+
+    return 1;
+}
+
 static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
                                   OSSL_QRX_PKT *parent_pkt,
                                   OSSL_ACKM_RX_PKT *ackm_data,
@@ -262,130 +398,16 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    stream = ossl_quic_stream_map_get_by_id(&ch->qsm, frame_data.stream_id);
-    if (stream == NULL) {
-        uint64_t peer_role, stream_ordinal;
-        uint64_t *p_next_ordinal_local, *p_next_ordinal_remote;
-        QUIC_RXFC *max_streams_fc;
-        int is_uni;
+    if (!depack_do_implicit_stream_create(ch, frame_data.stream_id,
+                                          frame_type, &stream))
+        return 0; /* protocol error raised by above call */
 
+    if (stream == NULL)
         /*
-         * If we do not yet have a stream with the given ID, there are three
-         * possibilities:
-         *
-         *   (a) The stream ID is for a remotely-created stream and the peer
-         *       is creating a stream.
-         *
-         *   (b) The stream ID is for a locally-created stream which has
-         *       previously been deleted.
-         *
-         *   (c) The stream ID is for a locally-created stream which does
-         *       not exist yet. This is a protocol violation and we must
-         *       terminate the connection in this case.
-         *
-         * We distinguish between (b) and (c) using the stream ID allocator
-         * variable. Since stream ordinals are allocated monotonically, we
-         * simply determine if the stream ordinal is in the future.
+         * Data for old stream which is not a protocol violation but should be
+         * ignored, so stop here.
          */
-
-        peer_role = ch->is_server
-            ? QUIC_STREAM_INITIATOR_CLIENT
-            : QUIC_STREAM_INITIATOR_SERVER;
-
-        is_uni = ((frame_data.stream_id & QUIC_STREAM_DIR_MASK)
-                  == QUIC_STREAM_DIR_UNI);
-
-        stream_ordinal = frame_data.stream_id >> 2;
-
-        if ((frame_data.stream_id & QUIC_STREAM_INITIATOR_MASK) == peer_role) {
-            /*
-             * Peer-created stream which does not yet exist. Create it. QUIC
-             * stream ordinals within a given stream type MUST be used in
-             * sequence and receiving a STREAM frame for ordinal n must
-             * implicitly create streams with ordinals [0, n) within that stream
-             * type even if no explicit STREAM frames are received for those
-             * ordinals.
-             */
-            p_next_ordinal_remote = is_uni
-                ? &ch->next_remote_stream_ordinal_uni
-                : &ch->next_remote_stream_ordinal_bidi;
-
-            /* Check this isn't violating stream count flow control. */
-            max_streams_fc = is_uni
-                ? &ch->max_streams_uni_rxfc
-                : &ch->max_streams_bidi_rxfc;
-
-            if (!ossl_quic_rxfc_on_rx_stream_frame(max_streams_fc,
-                                                   stream_ordinal + 1,
-                                                   /*is_fin=*/0)) {
-                ossl_quic_channel_raise_protocol_error(ch,
-                                                       QUIC_ERR_INTERNAL_ERROR,
-                                                       frame_type,
-                                                       "internal error (stream count RXFC)");
-                return 0;
-            }
-
-            if (ossl_quic_rxfc_get_error(max_streams_fc, 0) != QUIC_ERR_NO_ERROR) {
-                ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_STREAM_LIMIT_ERROR,
-                                                       frame_type,
-                                                       "exceeded maximum allowed streams");
-                return 0;
-            }
-
-            /*
-             * Create the named stream and any streams coming before it yet to
-             * be created.
-             */
-            while (*p_next_ordinal_remote <= stream_ordinal) {
-                uint64_t stream_id = (*p_next_ordinal_remote << 2) |
-                    (frame_data.stream_id
-                     & (QUIC_STREAM_DIR_MASK | QUIC_STREAM_INITIATOR_MASK));
-
-                stream = ossl_quic_channel_new_stream_remote(ch, stream_id);
-                if (stream == NULL) {
-                    ossl_quic_channel_raise_protocol_error(ch,
-                                                           QUIC_ERR_INTERNAL_ERROR,
-                                                           frame_type,
-                                                           "internal error (stream allocation)");
-                    return 0;
-                }
-
-                ++*p_next_ordinal_remote;
-            }
-
-            /*
-             * Fallthrough to processing of stream data for newly created
-             * stream.
-             */
-        } else {
-            /* Locally-created stream which does not yet exist. */
-
-            p_next_ordinal_local = is_uni
-                ? &ch->next_local_stream_ordinal_uni
-                : &ch->next_local_stream_ordinal_bidi;
-
-            if (stream_ordinal >= *p_next_ordinal_local) {
-                /*
-                 * We never created this stream yet, this is a protocol
-                 * violation.
-                 */
-                ossl_quic_channel_raise_protocol_error(ch,
-                                                       QUIC_ERR_STREAM_STATE_ERROR,
-                                                       frame_type,
-                                                       "STREAM frame for nonexistent "
-                                                       "stream");
-                return 0;
-            }
-
-            /*
-             * Otherwise this is for an old locally-initiated stream which we
-             * have subsequently deleted. Ignore the data; it may simply be a
-             * retransmission. We already take care of notifying the peer of the
-             * termination of the stream during the stream deletion lifecycle.
-             */
-            return 1;
-        }
-    }
+        return 1;
 
     if (stream->rstream == NULL) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -501,15 +523,13 @@ static int depack_do_frame_max_stream_data(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    stream = ossl_quic_stream_map_get_by_id(&ch->qsm, stream_id);
-    if (stream == NULL) {
-        ossl_quic_channel_raise_protocol_error(ch,
-                                               QUIC_ERR_STREAM_STATE_ERROR,
-                                               OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA,
-                                               "MAX_STREAM_DATA for nonexistent "
-                                               "stream");
-        return 0;
-    }
+    if (!depack_do_implicit_stream_create(ch, stream_id,
+                                          OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA,
+                                          &stream))
+        return 0; /* error already raised for us */
+
+    if (stream == NULL)
+        return 1; /* old deleted stream, not a protocol violation, ignore */
 
     if (stream->sstream == NULL) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -604,6 +624,7 @@ static int depack_do_frame_stream_data_blocked(PACKET *pkt,
 {
     uint64_t stream_id = 0;
     uint64_t max_data = 0;
+    QUIC_STREAM *stream;
 
     if (!ossl_quic_wire_decode_frame_stream_data_blocked(pkt, &stream_id,
                                                          &max_data)) {
@@ -616,6 +637,15 @@ static int depack_do_frame_stream_data_blocked(PACKET *pkt,
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
+
+    /*
+     * This is an informative/debugging frame, so we don't have to do anything,
+     * but it does trigger stream creation.
+     */
+    if (!depack_do_implicit_stream_create(ch, stream_id,
+                                          OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED,
+                                          &stream))
+        return 0; /* error already raised for us */
 
     /* No-op - informative/debugging frame. */
     return 1;
