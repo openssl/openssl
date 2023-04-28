@@ -186,7 +186,8 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     if (!ossl_quic_stream_map_init(&ch->qsm, get_stream_limit, ch,
                                    &ch->max_streams_bidi_rxfc,
-                                   &ch->max_streams_uni_rxfc))
+                                   &ch->max_streams_uni_rxfc,
+                                   ch->is_server))
         goto err;
 
     ch->have_qsm = 1;
@@ -2425,7 +2426,6 @@ QUIC_STREAM *ossl_quic_channel_new_stream_local(QUIC_CHANNEL *ch, int is_uni)
     /* Locally-initiated stream, so we always want a send buffer. */
     if (!ch_init_new_stream(ch, qs, /*can_send=*/1, /*can_recv=*/!is_uni))
         goto err;
-
 
     ++*p_next_ordinal;
     return qs;
