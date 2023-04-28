@@ -150,6 +150,13 @@ int ossl_quic_tserver_stream_has_peer_reset_stream(QUIC_TSERVER *srv,
  */
 int ossl_quic_tserver_set_new_local_cid(QUIC_TSERVER *srv,
                                         const QUIC_CONN_ID *conn_id);
+
+/*
+ * Returns the stream ID of the next incoming stream, or UINT64_MAX if there
+ * currently is none.
+ */
+uint64_t ossl_quic_tserver_pop_incoming_stream(QUIC_TSERVER *srv);
+
 # endif
 
 #endif

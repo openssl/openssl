@@ -404,3 +404,16 @@ int ossl_quic_tserver_set_new_local_cid(QUIC_TSERVER *srv,
     /* Replace existing local connection ID in the QUIC_CHANNEL */
     return ossl_quic_channel_replace_local_cid(srv->ch, conn_id);
 }
+
+uint64_t ossl_quic_tserver_pop_incoming_stream(QUIC_TSERVER *srv)
+{
+    QUIC_STREAM_MAP *qsm = ossl_quic_channel_get_qsm(srv->ch);
+    QUIC_STREAM *qs = ossl_quic_stream_map_peek_accept_queue(qsm);
+
+    if (qs == NULL)
+        return UINT64_MAX;
+
+    ossl_quic_stream_map_remove_from_accept_queue(qsm, qs, ossl_time_zero());
+
+    return qs->id;
+}
