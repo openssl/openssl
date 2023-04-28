@@ -5540,5 +5540,5 @@ OSSL_CMP_CTX_get0_geninfo_ITAVs         ?	3_3_0	EXIST::FUNCTION:CMP
 OSSL_CMP_HDR_get0_geninfo_ITAVs         ?	3_3_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_new0_certProfile          ?	3_3_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_get0_certProfile          ?	3_3_0	EXIST::FUNCTION:CMP
-OSSL_CMP_SRV_CTX_setup_polling          ?	3_3_0   EXIST::FUNCTION:CMP
+OSSL_CMP_SRV_CTX_init_trans             ?	3_3_0	EXIST::FUNCTION:CMP
 EVP_DigestSqueeze                       ?	3_3_0	EXIST::FUNCTION:
