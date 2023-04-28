@@ -3839,7 +3839,7 @@ static int user_data_execute(struct user_data_st *user_data, int cmd, char *arg)
         BIO_printf(bio_err, "  {help}: Get this help text\n");
         BIO_printf(bio_err, "  {quit}: Close the connection to the peer\n");
         BIO_printf(bio_err, "  {reconnect}: Reconnect to the peer\n");
-        if (isquic) {
+        if (SSL_is_quic(user_data->con)) {
             BIO_printf(bio_err, "  {fin}: Send FIN on the stream. No further writing is possible\n");
         } else if(SSL_version(user_data->con) == TLS1_3_VERSION) {
             BIO_printf(bio_err, "  {keyup:req|noreq}: Send a Key Update message\n");
@@ -3987,7 +3987,7 @@ static int user_data_process(struct user_data_st *user_data, size_t *len,
                 cmd = USER_COMMAND_QUIT;
             } else if (OPENSSL_strcasecmp(cmd_start, "reconnect") == 0) {
                 cmd = USER_COMMAND_RECONNECT;
-            } else if(isquic) {
+            } else if(SSL_is_quic(user_data->con)) {
                 if (OPENSSL_strcasecmp(cmd_start, "fin") == 0)
                     cmd = USER_COMMAND_FIN;
             } if (SSL_version(user_data->con) == TLS1_3_VERSION) {
