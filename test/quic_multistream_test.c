@@ -1679,6 +1679,91 @@ static const struct script_op script_14[] = {
     OP_END
 };
 
+/* 15. Client sending large number of streams, MAX_STREAMS test */
+static const struct script_op script_15[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    /*
+     * This will cause a protocol violation to be raised by the server if we are
+     * not handling the stream limit correctly on the TX side.
+     */
+    OP_BEGIN_REPEAT         (200)
+
+    OP_C_NEW_STREAM_BIDI    (a, ANY_ID)
+    OP_C_WRITE              (a, "foo", 3)
+    OP_C_CONCLUDE           (a)
+    OP_C_FREE_STREAM        (a)
+
+    OP_END_REPEAT           ()
+
+    /* Prove the connection is still good. */
+    OP_S_NEW_STREAM_BIDI    (a, S_BIDI_ID(0))
+    OP_S_WRITE              (a, "bar", 3)
+    OP_S_CONCLUDE           (a)
+
+    OP_C_ACCEPT_STREAM_WAIT (a)
+    OP_C_READ_EXPECT        (a, "bar", 3)
+    OP_C_EXPECT_FIN         (a)
+
+    /*
+     * Drain the queue of incoming streams. We should be able to get all 200
+     * even though only 100 can be initiated at a time.
+     */
+    OP_BEGIN_REPEAT         (200)
+
+    OP_S_ACCEPT_STREAM_WAIT (b)
+    OP_S_READ_EXPECT        (b, "foo", 3)
+    OP_S_EXPECT_FIN         (b)
+    OP_S_UNBIND_STREAM_ID   (b)
+
+    OP_END_REPEAT           ()
+
+    OP_END
+};
+
+/* 16. Server sending large number of streams, MAX_STREAMS test */
+static const struct script_op script_16[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    /*
+     * This will cause a protocol violation to be raised by the client if we are
+     * not handling the stream limit correctly on the TX side.
+     */
+    OP_BEGIN_REPEAT         (200)
+
+    OP_S_NEW_STREAM_BIDI    (a, ANY_ID)
+    OP_S_WRITE              (a, "foo", 3)
+    OP_S_CONCLUDE           (a)
+    OP_S_UNBIND_STREAM_ID   (a)
+
+    OP_END_REPEAT           ()
+
+    /* Prove that the connection is still good. */
+    OP_C_NEW_STREAM_BIDI    (a, ANY_ID)
+    OP_C_WRITE              (a, "bar", 3)
+    OP_C_CONCLUDE           (a)
+
+    OP_S_ACCEPT_STREAM_WAIT (b)
+    OP_S_READ_EXPECT        (b, "bar", 3)
+    OP_S_EXPECT_FIN         (b)
+
+    /* Drain the queue of incoming streams. */
+    OP_BEGIN_REPEAT         (200)
+
+    OP_C_ACCEPT_STREAM_WAIT (b)
+    OP_C_READ_EXPECT        (b, "foo", 3)
+    OP_C_EXPECT_FIN         (b)
+    OP_C_FREE_STREAM        (b)
+
+    OP_END_REPEAT           ()
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -1694,6 +1779,8 @@ static const struct script_op *const scripts[] = {
     script_12,
     script_13,
     script_14,
+    script_15,
+    script_16,
 };
 
 static int test_script(int idx)
