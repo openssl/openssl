@@ -448,7 +448,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                  * includes - with a large amount of time spent in
                  * OPENSSL_strlcat/OPENSSL_strcpy. This is not a security
                  * concern because config files should never come from untrusted
-                 * sources. We just set an aribtrary limit on the allowed
+                 * sources. We just set an arbitrary limit on the allowed
                  * number of includes when fuzzing to prevent this timeout.
                  */
                 if (numincludes++ > 10)
