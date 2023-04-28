@@ -364,7 +364,7 @@ With B<-cmd> I<p10cr> it is used directly in a legacy P10CR message.
 
 When used with B<-cmd> I<ir>, I<cr>, or I<kur>,
 it is transformed into the respective regular CMP request.
-In this case a private key must be provided (with B<-newkey> or B<-key>)
+In this case, a private key must be provided (with B<-newkey> or B<-key>)
 for the proof of possession (unless B<-popo> I<-1> or B<-popo> I<0> is used)
 and the respective public key is placed in the certification request
 (rather than taking over the public key contained in the PKCS#10 CSR).

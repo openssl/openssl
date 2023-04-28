@@ -1518,7 +1518,9 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             && opt_popo != OSSL_CRMF_POPO_NONE
             && opt_popo != OSSL_CRMF_POPO_RAVERIFIED) {
             if (opt_csr != NULL) {
-                CMP_err("no -newkey option given with private key for POPO, and any fallback -key option hidden by -csr");
+                CMP_err1("no -newkey option given with private key for POPO, -csr option only provides public key%s",
+                        opt_key == NULL ? "" :
+                        ", and -key option superseded by by -csr");
                 return 0;
             }
             if (opt_key == NULL) {
