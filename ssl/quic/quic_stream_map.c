@@ -280,8 +280,8 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
     int should_be_active, allowed_by_stream_limit = 1;
 
     if (qsm->get_stream_limit_cb != NULL
-        && (s->type & QUIC_STREAM_INITIATOR_CLIENT) != 0) {
-        int uni = ((s->type & QUIC_STREAM_DIR_UNI) != 0);
+        && ossl_quic_stream_is_server_init(s) == qsm->is_server) {
+        int uni = !ossl_quic_stream_is_bidi(s);
         uint64_t stream_limit, stream_ordinal = s->id >> 2;
 
         stream_limit
