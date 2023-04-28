@@ -255,6 +255,7 @@ typedef struct quic_stream_map_st {
     void                    *get_stream_limit_cb_arg;
     QUIC_RXFC               *max_streams_bidi_rxfc;
     QUIC_RXFC               *max_streams_uni_rxfc;
+    int                     is_server;
 } QUIC_STREAM_MAP;
 
 /*
@@ -274,7 +275,8 @@ int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
                               uint64_t (*get_stream_limit_cb)(int uni, void *arg),
                               void *get_stream_limit_cb_arg,
                               QUIC_RXFC *max_streams_bidi_rxfc,
-                              QUIC_RXFC *max_streams_uni_rxfc);
+                              QUIC_RXFC *max_streams_uni_rxfc,
+                              int is_server);
 
 /*
  * Any streams still in the map will be released as though
