@@ -110,6 +110,9 @@ struct script_op {
 #define OPK_C_STREAM_RESET                          29
 #define OPK_S_ACCEPT_STREAM_WAIT                    30
 #define OPK_NEW_THREAD                              31
+#define OPK_BEGIN_REPEAT                            32
+#define OPK_END_REPEAT                              33
+#define OPK_S_UNBIND_STREAM_ID                      34
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -198,7 +201,13 @@ struct script_op {
 #define OP_S_ACCEPT_STREAM_WAIT(stream_name)  \
     {OPK_S_ACCEPT_STREAM_WAIT, NULL, 0, NULL, #stream_name},
 #define OP_NEW_THREAD(num_threads, script) \
-    { OPK_NEW_THREAD, (script), (num_threads), NULL, NULL, 0 },
+    {OPK_NEW_THREAD, (script), (num_threads), NULL, NULL, 0 },
+#define OP_BEGIN_REPEAT(n)  \
+    {OPK_BEGIN_REPEAT, NULL, (n)},
+#define OP_END_REPEAT() \
+    {OPK_END_REPEAT},
+#define OP_S_UNBIND_STREAM_ID(stream_name) \
+    {OPK_S_UNBIND_STREAM_ID, NULL, 0, NULL, #stream_name},
 
 static int check_rejected(struct helper *h, const struct script_op *op)
 {
@@ -575,6 +584,10 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
     int no_advance = 0, first = 1, end_wait_warning = 0;
     OSSL_TIME op_start_time = ossl_time_zero(), op_deadline = ossl_time_zero();
     struct helper_local hl;
+#define REPEAT_SLOTS 8
+    size_t repeat_stack_idx[REPEAT_SLOTS], repeat_stack_done[REPEAT_SLOTS];
+    size_t repeat_stack_limit[REPEAT_SLOTS];
+    size_t repeat_stack_len = 0;
 
     if (!TEST_true(helper_local_init(&hl, h, thread_idx)))
         goto out;
@@ -629,6 +642,8 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 case OPK_C_WRITE:
                 case OPK_C_CONCLUDE:
                 case OPK_C_FREE_STREAM:
+                case OPK_BEGIN_REPEAT:
+                case OPK_END_REPEAT:
                     break;
 
                 default:
@@ -639,6 +654,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
 
         switch (op->op) {
         case OPK_END:
+            if (!TEST_size_t_eq(repeat_stack_len, 0))
+                goto out;
+
             if (thread_idx < 0) {
                 int done;
                 size_t i;
@@ -665,6 +683,34 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             TEST_info("script finished on thread %d", thread_idx);
             testresult = 1;
             goto out;
+
+        case OPK_BEGIN_REPEAT:
+            if (!TEST_size_t_lt(repeat_stack_len, OSSL_NELEM(repeat_stack_idx)))
+                goto out;
+
+            if (!TEST_size_t_gt(op->arg1, 0))
+                goto out;
+
+            repeat_stack_idx[repeat_stack_len] = op_idx + 1;
+            repeat_stack_done[repeat_stack_len] = 0;
+            repeat_stack_limit[repeat_stack_len] = op->arg1;
+            ++repeat_stack_len;
+            break;
+
+        case OPK_END_REPEAT:
+            if (!TEST_size_t_gt(repeat_stack_len, 0))
+                goto out;
+
+            if (++repeat_stack_done[repeat_stack_len - 1]
+                == repeat_stack_limit[repeat_stack_len - 1]) {
+                --repeat_stack_len;
+            } else {
+                op_idx = repeat_stack_idx[repeat_stack_len - 1];
+                no_advance = 1;
+                continue;
+            }
+
+            break;
 
         case OPK_CHECK:
             {
@@ -1078,6 +1124,16 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             }
             break;
 
+        case OPK_S_UNBIND_STREAM_ID:
+            {
+                if (!TEST_uint64_t_ne(s_stream_id, UINT64_MAX))
+                    goto out;
+
+                if (!TEST_true(helper_set_s_stream(h, op->stream_name, UINT64_MAX)))
+                    goto out;
+            }
+            break;
+
         case OPK_C_WRITE_FAIL:
             {
                 size_t bytes_written = 0;
@@ -1176,9 +1232,18 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
     }
 
 out:
-    if (!testresult)
+    if (!testresult) {
+        size_t i;
+
         TEST_error("failed at script op %zu, thread %d\n",
                    op_idx + 1, thread_idx);
+
+        for (i = 0; i < repeat_stack_len; ++i)
+            TEST_info("while repeating, iteration %zu of %zu, starting at script op %zu",
+                      repeat_stack_done[i],
+                      repeat_stack_limit[i],
+                      repeat_stack_idx[i]);
+    }
 
     OPENSSL_free(tmp_buf);
     helper_local_cleanup(&hl);
@@ -1473,7 +1538,7 @@ static const struct script_op script_10[] = {
     OP_END
 };
 
-/* 11. Many threads accepting on the same client connection */
+/* 11. Many threads accepted on the same client connection */
 static const struct script_op script_11_child[] = {
     OP_C_ACCEPT_STREAM_WAIT (a)
     OP_C_READ_EXPECT        (a, "foo", 3)
@@ -1487,32 +1552,32 @@ static const struct script_op script_11[] = {
     OP_C_CONNECT_WAIT       ()
     OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
 
-    OP_S_NEW_STREAM_BIDI    (a, S_BIDI_ID(0))
+    OP_NEW_THREAD           (5, script_11_child)
+
+    OP_S_NEW_STREAM_BIDI    (a, ANY_ID)
     OP_S_WRITE              (a, "foo", 3)
     OP_S_CONCLUDE           (a)
 
-    OP_S_NEW_STREAM_BIDI    (b, S_BIDI_ID(1))
+    OP_S_NEW_STREAM_BIDI    (b, ANY_ID)
     OP_S_WRITE              (b, "foo", 3)
     OP_S_CONCLUDE           (b)
 
-    OP_S_NEW_STREAM_BIDI    (c, S_BIDI_ID(2))
+    OP_S_NEW_STREAM_BIDI    (c, ANY_ID)
     OP_S_WRITE              (c, "foo", 3)
     OP_S_CONCLUDE           (c)
 
-    OP_S_NEW_STREAM_BIDI    (d, S_BIDI_ID(3))
+    OP_S_NEW_STREAM_BIDI    (d, ANY_ID)
     OP_S_WRITE              (d, "foo", 3)
     OP_S_CONCLUDE           (d)
 
-    OP_S_NEW_STREAM_BIDI    (e, S_BIDI_ID(4))
+    OP_S_NEW_STREAM_BIDI    (e, ANY_ID)
     OP_S_WRITE              (e, "foo", 3)
     OP_S_CONCLUDE           (e)
-
-    OP_NEW_THREAD           (5, script_11_child)
 
     OP_END
 };
 
-/* 12. Many threads initiating on the same client connection */
+/* 12. Many threads initiated on the same client connection */
 static const struct script_op script_12_child[] = {
     OP_C_NEW_STREAM_BIDI    (a, ANY_ID)
     OP_C_WRITE              (a, "foo", 3)
@@ -1548,6 +1613,72 @@ static const struct script_op script_12[] = {
     OP_END
 };
 
+/* 13. Many threads accepted on the same client connection (stress test) */
+static const struct script_op script_13_child[] = {
+    OP_BEGIN_REPEAT         (10)
+
+    OP_C_ACCEPT_STREAM_WAIT (a)
+    OP_C_READ_EXPECT        (a, "foo", 3)
+    OP_C_EXPECT_FIN         (a)
+    OP_C_FREE_STREAM        (a)
+
+    OP_END_REPEAT           ()
+
+    OP_END
+};
+
+static const struct script_op script_13[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_NEW_THREAD           (5, script_13_child)
+
+    OP_BEGIN_REPEAT         (50)
+
+    OP_S_NEW_STREAM_BIDI    (a, ANY_ID)
+    OP_S_WRITE              (a, "foo", 3)
+    OP_S_CONCLUDE           (a)
+    OP_S_UNBIND_STREAM_ID   (a)
+
+    OP_END_REPEAT           ()
+
+    OP_END
+};
+
+/* 14. Many threads initiating on the same client connection (stress test) */
+static const struct script_op script_14_child[] = {
+    OP_BEGIN_REPEAT         (10)
+
+    OP_C_NEW_STREAM_BIDI    (a, ANY_ID)
+    OP_C_WRITE              (a, "foo", 3)
+    OP_C_CONCLUDE           (a)
+    OP_C_FREE_STREAM        (a)
+
+    OP_END_REPEAT           ()
+
+    OP_END
+};
+
+static const struct script_op script_14[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_NEW_THREAD           (5, script_14_child)
+
+    OP_BEGIN_REPEAT         (50)
+
+    OP_S_ACCEPT_STREAM_WAIT (a)
+    OP_S_READ_EXPECT        (a, "foo", 3)
+    OP_S_EXPECT_FIN         (a)
+    OP_S_UNBIND_STREAM_ID   (a)
+
+    OP_END_REPEAT           ()
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -1561,6 +1692,8 @@ static const struct script_op *const scripts[] = {
     script_10,
     script_11,
     script_12,
+    script_13,
+    script_14,
 };
 
 static int test_script(int idx)
