@@ -43,6 +43,7 @@ OpenSSL 3.3
 
  * Added several new features of CMPv3 defined in RFC 9480 and RFC 9483:
    - `certProfile` request message header and respective `-profile` CLI option
+   - support for delayed delivery of all types of response messages
 
    *David von Oheimb*
 
