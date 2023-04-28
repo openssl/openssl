@@ -341,7 +341,7 @@ int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc,
                              uint64_t num_bytes,
                              OSSL_TIME rtt)
 {
-    if (rxfc->parent == NULL)
+    if (rxfc->parent == NULL && !rxfc->stream_count_mode)
         return 0;
 
     if (num_bytes == 0)
@@ -352,7 +352,10 @@ int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc,
         return 0;
 
     rxfc_on_retire(rxfc, num_bytes, 0, rtt);
-    rxfc_on_retire(rxfc->parent, num_bytes, rxfc->cur_window_size, rtt);
+
+    if (!rxfc->stream_count_mode)
+        rxfc_on_retire(rxfc->parent, num_bytes, rxfc->cur_window_size, rtt);
+
     return 1;
 }
 
