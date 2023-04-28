@@ -2864,11 +2864,7 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
     long l;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    /*
-     * TODO(QUIC): Special handling for some ctrls will be needed
-     * For example SSL_CTRL_SET/GET_MIN/MAX_PROTO_VERSION should
-     * be handled within the QUIC connection, not the inner TLS.
-     */
+    /* TODO(QUIC): Special handling for some ctrls will be needed */
     if (sc == NULL)
         return 0;
 
