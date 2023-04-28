@@ -107,12 +107,6 @@ static BIO *bio_c_out = NULL;
 static int c_quiet = 0;
 static char *sess_out = NULL;
 static SSL_SESSION *psksess = NULL;
-/*
- * TODO(QUIC): This needs to be global so we can query it easily. It would be
- *             better if there was an SSL_is_quic() function like there is
- *             an SSL_is_dtls()
- */
-static int isquic = 0;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
 #ifndef OPENSSL_NO_OCSP
@@ -949,7 +943,7 @@ int s_client_main(int argc, char **argv)
 #endif
     BIO *bio_c_msg = NULL;
     const char *keylog_file = NULL, *early_data_file = NULL;
-    int isdtls = 0;
+    int isdtls = 0, isquic = 0;
     char *psksessf = NULL;
     int enable_pha = 0;
     int enable_client_rpk = 0;
@@ -1375,9 +1369,8 @@ int s_client_main(int argc, char **argv)
         case OPT_QUIC:
 #ifndef OPENSSL_NO_QUIC
             meth = OSSL_QUIC_client_method();
-            /* TODO(QUIC): What should these values be for QUIC? */
-            min_version = TLS1_3_VERSION;
-            max_version = TLS1_3_VERSION;
+            min_version = 0;
+            max_version = 0;
             socket_type = SOCK_DGRAM;
 # ifndef OPENSSL_NO_DTLS
             isdtls = 0;
