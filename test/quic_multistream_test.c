@@ -1473,6 +1473,81 @@ static const struct script_op script_10[] = {
     OP_END
 };
 
+/* 11. Many threads accepting on the same client connection */
+static const struct script_op script_11_child[] = {
+    OP_C_ACCEPT_STREAM_WAIT (a)
+    OP_C_READ_EXPECT        (a, "foo", 3)
+    OP_C_EXPECT_FIN         (a)
+
+    OP_END
+};
+
+static const struct script_op script_11[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_S_NEW_STREAM_BIDI    (a, S_BIDI_ID(0))
+    OP_S_WRITE              (a, "foo", 3)
+    OP_S_CONCLUDE           (a)
+
+    OP_S_NEW_STREAM_BIDI    (b, S_BIDI_ID(1))
+    OP_S_WRITE              (b, "foo", 3)
+    OP_S_CONCLUDE           (b)
+
+    OP_S_NEW_STREAM_BIDI    (c, S_BIDI_ID(2))
+    OP_S_WRITE              (c, "foo", 3)
+    OP_S_CONCLUDE           (c)
+
+    OP_S_NEW_STREAM_BIDI    (d, S_BIDI_ID(3))
+    OP_S_WRITE              (d, "foo", 3)
+    OP_S_CONCLUDE           (d)
+
+    OP_S_NEW_STREAM_BIDI    (e, S_BIDI_ID(4))
+    OP_S_WRITE              (e, "foo", 3)
+    OP_S_CONCLUDE           (e)
+
+    OP_NEW_THREAD           (5, script_11_child)
+
+    OP_END
+};
+
+/* 12. Many threads initiating on the same client connection */
+static const struct script_op script_12_child[] = {
+    OP_C_NEW_STREAM_BIDI    (a, ANY_ID)
+    OP_C_WRITE              (a, "foo", 3)
+    OP_C_CONCLUDE           (a)
+    OP_C_FREE_STREAM        (a)
+
+    OP_END
+};
+
+static const struct script_op script_12[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_NEW_THREAD           (5, script_12_child)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "foo", 3)
+    OP_S_EXPECT_FIN         (a)
+    OP_S_BIND_STREAM_ID     (b, C_BIDI_ID(1))
+    OP_S_READ_EXPECT        (b, "foo", 3)
+    OP_S_EXPECT_FIN         (b)
+    OP_S_BIND_STREAM_ID     (c, C_BIDI_ID(2))
+    OP_S_READ_EXPECT        (c, "foo", 3)
+    OP_S_EXPECT_FIN         (c)
+    OP_S_BIND_STREAM_ID     (d, C_BIDI_ID(3))
+    OP_S_READ_EXPECT        (d, "foo", 3)
+    OP_S_EXPECT_FIN         (d)
+    OP_S_BIND_STREAM_ID     (e, C_BIDI_ID(4))
+    OP_S_READ_EXPECT        (e, "foo", 3)
+    OP_S_EXPECT_FIN         (e)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -1484,6 +1559,8 @@ static const struct script_op *const scripts[] = {
     script_8,
     script_9,
     script_10,
+    script_11,
+    script_12,
 };
 
 static int test_script(int idx)
