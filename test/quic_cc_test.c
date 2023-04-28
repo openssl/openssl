@@ -592,7 +592,7 @@ static int test_sanity(void)
     if (!TEST_uint64_t_ne(ccm->get_tx_allowance(cc), allowance2))
         goto err;
 
-    /* But it should not be as high as the origina value */
+    /* But it should not be as high as the original value */
     if (!TEST_uint64_t_lt(ccm->get_tx_allowance(cc), allowance))
         goto err;
 
