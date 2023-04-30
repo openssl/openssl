@@ -43,16 +43,38 @@ proceed to publishing ECH as an RFC. That will likely include a change
 of version code-points which have been tracking Internet-Draft version
 numbers during the course of spec development.
 
-The current version used is 0xfe0d where the 0d reflects draft-13 with
-the following symbol defined for this version:
+The current version used is 0xfe0d where the 0d reflects the current
+interop target (draft-13) with the following symbol defined for this
+version:
 
 ```c
 #  define OSSL_ECH_DRAFT_13_VERSION 0xfe0d /* version from draft-13 */
 ```
 
 It remains to be seen whether support for draft-13 will still be needed once
-the RFC is published. (Most implementaions have ECH turned off except if the
+the RFC is published. (Most implementations have ECH turned off except if the
 user has changed some flag or config option.)
+
+"GREASEing" is defined in
+[RFC8701](https://datatracker.ietf.org/doc/html/rfc8701) and is a mechanism
+intended to discourage protocol ossification that can be used for ECH.  GREASEd
+ECH may turn out to be important as an initial step towards widespread
+deployment of ECH.
+
+Minimal Sample Code
+-------------------
+
+OpenSSL includes code for an
+[``sslecho``](https://github.com/sftcd/openssl/tree/ECH-draft-13c/demos/sslecho)
+demo.  We've added a minimal
+[``echecho``](https://github.com/sftcd/openssl/blob/ECH-draft-13c/demos/sslecho/echecho.c)
+that shows that adding one new server call
+(``SSL_CTX_ech_enable_server_buffer()``) and one new client call
+(``SSL_CTX_ech_set1_echconfig()``) is all that's needed to ECH-enable this
+demo.
+
+Handling Custom Extensions
+--------------------------
 
 OpenSSL supports custom extensions (via ``SSL_CTX_add_custom_ext()``) so that
 extension values are supplied and parsed by client and server applications via
@@ -77,13 +99,14 @@ inner CH to another server that does the actual TLS handshake with the client.
 
 ### Key and ECHConfigList Generation
 
-This API is for use by command line or other key management tools, for example
-the ``openssl ech`` command documented
+``ossl_edch_make_echconfig()`` is for use by command line or other key
+management tools, for example the ``openssl ech`` command documented
 [here](https://github.com/sftcd/openssl/blob/ECH-draft-13c/doc/man1/openssl-ech.pod.in).
 
-The ECHConfigList structure contains the ECH public value (an ECC public key)
-and other ECH related information, mainly the ``public_name`` that will be used
-as the SNI value in outer CH messages.
+The ECHConfigList structure that will eventually be published in the DNS
+contains the ECH public value (an ECC public key) and other ECH related
+information, mainly the ``public_name`` that will be used as the SNI value in
+outer CH messages.
 
 ```c
 int ossl_ech_make_echconfig(unsigned char *echconfig, size_t *echconfiglen,
@@ -136,11 +159,12 @@ Cloudflare's test ECH service rotates published ECH public keys hourly
 so for some of our test services at defo.ie).
 
 ```c
-int SSL_CTX_ech_server_enable_file(SSL_CTX *ctx, const char *file);
+int SSL_CTX_ech_server_enable_file(SSL_CTX *ctx, const char *file,
+                                   int for_retry);
 int SSL_CTX_ech_server_enable_dir(SSL_CTX *ctx, int *loaded,
-                                  const char *echdir);
+                                  const char *echdir, int for_retry);
 int SSL_CTX_ech_server_enable_buffer(SSL_CTX *ctx, const unsigned char *buf,
-                                     const size_t blen);
+                                     const size_t blen, int for_retry);
 ```
 
 The three functions above support loading keys, the first attempts to load a
@@ -152,6 +176,11 @@ external key management process (likely managed via a cronjob).  The last
 allows the application to load keys from a buffer (that should contain the same
 content as a file) and was added for haproxy which prefers not to do disk reads
 after initial startup (for resilience reasons apparently).
+
+If the ``for_retry`` input has the value 1, then the corresponding ECHConfig
+values will be returned to clients that GREASE or use the wrong public value in
+the ``retry-config`` that may enable a client to use ECH in a subsequent
+connection.
 
 The content of files referred to above must also match the format defined in
 [draft-farrell-tls-pemesni](https://datatracker.ietf.org/doc/draft-farrell-tls-pemesni/).
@@ -171,37 +200,50 @@ then passes on the decrypted inner CH to a back-end TLS server that negotiates
 the actual TLS session with the client, based on the inner CH content. The
 function to support this simply takes the outer CH, indicates whether
 decryption has succeeded or not, and if it has, returns the inner CH and SNI
-values (allowing routing to the correct back-end).
+values (allowing routing to the correct back-end). Both the supplied (outer)
+CH and returned (inner) CH here include the record layer header.
 
 This has been tested in a PoC implementation with haproxy, which works for
-nomimal operation but that can't handle the combination of split-mode in the
-fact of HRR, as haproxy only supports examining the first (outer) CH seen,
-whereas ECH + split-mode + HRR requires processing both outer CHs. (In other
-words, the utility of this API ought be considered unproven.)
+nominal operation but that can't handle the combination of split-mode in the
+face of HRR, as haproxy only supports examining the first (outer) CH seen,
+whereas ECH + split-mode + HRR requires processing both outer CHs. ECH
+split-mode with HRR has so far only been tested as part of the ``make test``
+target. (In other words, the utility of this API ought be considered unproven.)
 
 ```c
 int SSL_CTX_ech_raw_decrypt(SSL_CTX *ctx,
                             int *decrypted_ok,
                             char **inner_sni, char **outer_sni,
                             unsigned char *outer_ch, size_t outer_len,
-                            unsigned char *inner_ch, size_t *inner_len);
+                            unsigned char *inner_ch, size_t *inner_len,
+                            unsigned char **hrrtok, size_t *toklen);
 ```
 
 The caller allocates the ``inner_ch`` buffer, on input ``inner_len`` should
-contain the size of the ``inner_ch`` buffer, on output the size of the actuall
+contain the size of the ``inner_ch`` buffer, on output the size of the actual
 inner CH. Note that, when ECH decryption succeeds, the inner CH will always be
 smaller than the outer CH.
 
 If there is no ECH present in the outer CH then this will return 1 (i.e., the
-call will succeed) but ``decrypted_ok`` will be zero. The same wll result if a
-GREASE'd ECH is present or decryption fails for some other (indistinguishable)
+call will succeed) but ``decrypted_ok`` will be zero. The same will result if a
+GREASEd ECH is present or decryption fails for some other (indistinguishable)
 reason.
 
-"GREASEing" is defined in
-[RFC8701](https://datatracker.ietf.org/doc/html/rfc8701) and is a mechanism
-intended to discourage protocol ossification that can be used for ECH.
-(GREASE'd ECH may turn out to be important as a step towards widespread
-deployment of ECH.)
+If the caller wishes to support HelloRetryRequest (HRR), then it must supply
+the same ``hrrtok`` and ``toklen`` pointers to both calls to
+``SSL_CTX_ech_raw_decrypt()`` (for the initial and second ClientHello
+messages). When done, the caller must free the ``hrrtok`` using
+``OPENSSL_free()``.  If the caller doesn't need to support HRR, then it can
+supply NULL values for these parameters. The value of the token is the client's
+ephemeral public value, which is not sensitive having being sent in clear in
+the first ClientHello.  This value is missing from the second ClientHello but
+is needed for ECH decryption.
+
+Note that ``SSL_CTX_ech_raw_decrypt()`` only takes a ClientHello as input. If
+the flight containing the ClientHello contains other messages (e.g. a
+ChangeCipherSuite or Early data), then the caller is responsible for
+disentangling those, and for assembling a new flight containing the inner
+ClientHello.
 
 Client-side APIs
 ----------------
@@ -246,7 +288,7 @@ int ossl_ech_find_echconfigs(int *num_echs,
 ``ossl_ech_find_echconfigs()`` returns the number of ECHConfig values from the
 input (``val``/``len``) successfully decoded  in the ``num_echs`` output.  If
 no ECHConfig values values are encountered (which can happen for good HTTPS RR
-values) then ``num_echs`` will be zero but the function return 1. If the
+values) then ``num_echs`` will be zero but the function returns 1. If the
 input contains more than one (syntactically correct) ECHConfig, then only
 those that contain locally supported options (e.g. AEAD ciphers) will be
 returned. If no ECHConfig found has supported options then none will be
@@ -272,7 +314,7 @@ int SSL_CTX_ech_set_outer_alpn_protos(SSL *s, const unsigned char *protos,
                                       unsigned int protos_len);
 ```
 
-If a client attempts ECH but that fails, or sends an ECH-GREASE'd CH, to
+If a client attempts ECH but that fails, or sends an ECH-GREASEd CH, to
 an ECH-supporting server, then that server may return an ECH "retry-config"
 value that the client could choose to use in a subsequent connection. The
 client can detect this situation via the ``SSL_ech_get_status()`` API and
@@ -349,8 +391,8 @@ int SSL_ech_get_status(SSL *s, char **inner_sni, char **outer_sni);
 #  define SSL_ECH_STATUS_FAILED_ECH -105 /* We tried, failed and got an ECH */
 ```
 
-The ``inner_sni`` and ``outer_sni`` values point at strings with the relevant
-values. (They aren't allocated or free'd by the caller.)
+The ``inner_sni`` and ``outer_sni`` values should be freed by callers
+via ``OPENSSL_free()``.
 
 The function returns one of the status values above.
 
