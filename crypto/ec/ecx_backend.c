@@ -28,6 +28,7 @@
 int ossl_ecx_public_from_private(ECX_KEY *key)
 {
     switch (key->type) {
+#ifndef FIPS_MODULE
     case ECX_KEY_TYPE_X25519:
         ossl_x25519_public_from_private(key->pubkey, key->privkey);
         break;
@@ -38,6 +39,7 @@ int ossl_ecx_public_from_private(ECX_KEY *key)
             return 0;
         }
         break;
+#endif
     case ECX_KEY_TYPE_X448:
         ossl_x448_public_from_private(key->pubkey, key->privkey);
         break;
