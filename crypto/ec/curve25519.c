@@ -5646,6 +5646,7 @@ err:
     return res;
 }
 
+#if !defined(FIPS_MODULE)
 int
 ossl_ed25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[32],
                                  const uint8_t private_key[32],
@@ -5676,6 +5677,7 @@ ossl_ed25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[32],
     OPENSSL_cleanse(az, sizeof(az));
     return 1;
 }
+#endif
 
 int
 ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
@@ -5687,6 +5689,7 @@ ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
     return CRYPTO_memcmp(kZeros, out_shared_key, 32) != 0;
 }
 
+#if !defined(FIPS_MODULE)
 void
 ossl_x25519_public_from_private(uint8_t out_public_value[32],
                                 const uint8_t private_key[32])
@@ -5715,3 +5718,4 @@ ossl_x25519_public_from_private(uint8_t out_public_value[32],
 
     OPENSSL_cleanse(e, sizeof(e));
 }
+#endif
