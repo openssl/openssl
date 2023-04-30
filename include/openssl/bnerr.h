@@ -72,7 +72,6 @@ int ERR_load_BN_strings(void);
 # define BN_F_BN_SET_WORDS                                144
 # define BN_F_BN_STACK_PUSH                               148
 # define BN_F_BN_USUB                                     115
-# define BN_F_OSSL_BN_RSA_DO_UNBLIND                      151
 
 /*
  * BN reason codes.
