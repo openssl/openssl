@@ -195,6 +195,11 @@ struct quic_conn_st {
      * and SSL_ERROR_WANT_WRITE.
      */
     int                             last_error;
+
+    /* Message callback related arguments */
+    ossl_msg_cb                     msg_callback;
+    void                            *msg_callback_arg;
+    SSL                             *msg_callback_s;
 };
 
 /* Internal calls to the QUIC CSM which come from various places. */

@@ -239,6 +239,10 @@ static int ch_init(QUIC_CHANNEL *ch)
     qrx_args.demux              = ch->demux;
     qrx_args.short_conn_id_len  = rx_short_cid_len;
     qrx_args.max_deferred       = 32;
+    /* Callback related arguments */
+    qrx_args.msg_callback       = ch->msg_callback;
+    qrx_args.msg_callback_arg   = ch->msg_callback_arg;
+    qrx_args.msg_callback_s     = ch->msg_callback_s;
 
     if ((ch->qrx = ossl_qrx_new(&qrx_args)) == NULL)
         goto err;
@@ -347,13 +351,16 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
     if ((ch = OPENSSL_zalloc(sizeof(*ch))) == NULL)
         return NULL;
 
-    ch->libctx      = args->libctx;
-    ch->propq       = args->propq;
-    ch->is_server   = args->is_server;
-    ch->tls         = args->tls;
-    ch->mutex       = args->mutex;
-    ch->now_cb      = args->now_cb;
-    ch->now_cb_arg  = args->now_cb_arg;
+    ch->libctx           = args->libctx;
+    ch->propq            = args->propq;
+    ch->is_server        = args->is_server;
+    ch->tls              = args->tls;
+    ch->mutex            = args->mutex;
+    ch->now_cb           = args->now_cb;
+    ch->now_cb_arg       = args->now_cb_arg;
+    ch->msg_callback     = args->msg_callback;
+    ch->msg_callback_arg = args->msg_callback_arg;
+    ch->msg_callback_s   = args->msg_callback_s;
 
     if (!ch_init(ch)) {
         OPENSSL_free(ch);

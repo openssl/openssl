@@ -93,6 +93,11 @@ struct quic_channel_st {
     OSSL_QTX                        *qtx;
     OSSL_QRX                        *qrx;
 
+    /* Message callback related arguments */
+    ossl_msg_cb                     msg_callback;
+    void                            *msg_callback_arg;
+    SSL                             *msg_callback_s;
+
     /*
      * Send and receive parts of the crypto streams.
      * crypto_send[QUIC_PN_SPACE_APP] is the 1-RTT crypto stream. There is no

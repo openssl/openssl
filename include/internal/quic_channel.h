@@ -130,6 +130,11 @@ typedef struct quic_channel_args_st {
      */
     OSSL_TIME       (*now_cb)(void *arg);
     void            *now_cb_arg;
+
+    /* Message callback related arguments */
+    ossl_msg_cb     msg_callback;
+    void            *msg_callback_arg;
+    SSL             *msg_callback_s;
 } QUIC_CHANNEL_ARGS;
 
 typedef struct quic_channel_st QUIC_CHANNEL;

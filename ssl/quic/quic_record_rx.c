@@ -145,6 +145,11 @@ struct ossl_qrx_st {
 
     /* Initial key phase. For debugging use only; always 0 in real use. */
     unsigned char                   init_key_phase_bit;
+
+    /* Message callback related arguments */
+    ossl_msg_cb msg_callback;
+    void *msg_callback_arg;
+    SSL *msg_callback_s;
 };
 
 static void qrx_on_rx(QUIC_URXE *urxe, void *arg);
@@ -170,6 +175,9 @@ OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
     qrx->short_conn_id_len      = args->short_conn_id_len;
     qrx->init_key_phase_bit     = args->init_key_phase_bit;
     qrx->max_deferred           = args->max_deferred;
+    qrx->msg_callback           = args->msg_callback;
+    qrx->msg_callback_arg       = args->msg_callback_arg;
+    qrx->msg_callback_s         = args->msg_callback_s;
     return qrx;
 }
 
@@ -979,6 +987,10 @@ static int qrx_process_datagram(OSSL_QRX *qrx, QUIC_URXE *e,
 
     if (!PACKET_buf_init(&pkt, data, data_len))
         return 0;
+
+    if (qrx->msg_callback != NULL)
+        qrx->msg_callback(0, OSSL_QUIC1_VERSION, SSL3_RT_QUIC_DATAGRAM, data,
+                          data_len, qrx->msg_callback_s, qrx->msg_callback_arg);
 
     for (; PACKET_remaining(&pkt) > 0; ++pkt_idx) {
         /*
