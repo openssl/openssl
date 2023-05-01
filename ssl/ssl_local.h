@@ -799,6 +799,9 @@ typedef struct {
 
 # define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE|TLS_GROUP_ONLY_FOR_TLS1_3)
 
+typedef void (*ossl_msg_cb)(int write_p, int version, int content_type,
+                            const void *buf, size_t len, SSL *ssl, void *arg);
+
 struct ssl_ctx_st {
     OSSL_LIB_CTX *libctx;
 
@@ -939,8 +942,7 @@ struct ssl_ctx_st {
     int read_ahead;
 
     /* callback that allows applications to peek at protocol messages */
-    void (*msg_callback) (int write_p, int version, int content_type,
-                          const void *buf, size_t len, SSL *ssl, void *arg);
+    ossl_msg_cb msg_callback;
     void *msg_callback_arg;
 
     uint32_t verify_mode;

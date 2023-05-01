@@ -3761,6 +3761,10 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             return (int)sc->ext.peer_supportedgroups_len;
         }
 
+    case SSL_CTRL_SET_MSG_CALLBACK_ARG:
+        sc->msg_callback_arg = parg;
+        return 1;
+
     default:
         break;
     }
@@ -3792,6 +3796,10 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
         sc->not_resumable_session_cb = (int (*)(SSL *, int))fp;
         ret = 1;
         break;
+
+    case SSL_CTRL_SET_MSG_CALLBACK:
+        sc->msg_callback = (ossl_msg_cb)fp;
+        return 1;
     default:
         break;
     }

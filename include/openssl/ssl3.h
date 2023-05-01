@@ -239,6 +239,9 @@ extern "C" {
 # define SSL3_RT_HEADER                  0x100
 # define SSL3_RT_INNER_CONTENT_TYPE      0x101
 
+/* Pseudo content types for QUIC */
+# define SSL3_RT_QUIC_DATAGRAM            0x200
+
 # define SSL3_AL_WARNING                 1
 # define SSL3_AL_FATAL                   2
 

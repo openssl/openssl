@@ -305,6 +305,9 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->default_blocking        = 1;
     qc->incoming_stream_policy  = SSL_INCOMING_STREAM_POLICY_AUTO;
     qc->last_error              = SSL_ERROR_NONE;
+    qc->msg_callback            = ctx->msg_callback;
+    qc->msg_callback_arg        = ctx->msg_callback_arg;
+    qc->msg_callback_s          = ssl_base;
 
     if (!create_channel(qc))
         goto err;
@@ -1009,6 +1012,12 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
         }
 
         return ctx.qc->default_ssl_mode;
+
+    case SSL_CTRL_SET_MSG_CALLBACK_ARG:
+        ctx.qc->msg_callback_arg = parg;
+        /* This ctrl also needs to be passed to the internal SSL object */
+        return SSL_ctrl(ctx.qc->tls, cmd, larg, parg);
+
     default:
         /* Probably a TLS related ctrl. Defer to our internal SSL object */
         return SSL_ctrl(ctx.qc->tls, cmd, larg, parg);
@@ -1080,13 +1089,16 @@ static int create_channel(QUIC_CONNECTION *qc)
 {
     QUIC_CHANNEL_ARGS args = {0};
 
-    args.libctx     = qc->ssl.ctx->libctx;
-    args.propq      = qc->ssl.ctx->propq;
-    args.is_server  = qc->as_server;
-    args.tls        = qc->tls;
-    args.mutex      = qc->mutex;
-    args.now_cb     = qc->override_now_cb;
-    args.now_cb_arg = qc->override_now_cb_arg;
+    args.libctx           = qc->ssl.ctx->libctx;
+    args.propq            = qc->ssl.ctx->propq;
+    args.is_server        = qc->as_server;
+    args.tls              = qc->tls;
+    args.mutex            = qc->mutex;
+    args.now_cb           = qc->override_now_cb;
+    args.now_cb_arg       = qc->override_now_cb_arg;
+    args.msg_callback     = qc->msg_callback;
+    args.msg_callback_arg = qc->msg_callback_arg;
+    args.msg_callback_s   = qc->msg_callback_s;
 
     qc->ch = ossl_quic_channel_new(&args);
     if (qc->ch == NULL)
@@ -2608,7 +2620,21 @@ long ossl_quic_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 long ossl_quic_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 {
-    return ssl3_callback_ctrl(s, cmd, fp);
+    QCTX ctx;
+
+    if (!expect_quic_conn_only(s, &ctx))
+        return 0;
+
+    switch (cmd) {
+    case SSL_CTRL_SET_MSG_CALLBACK:
+        ctx.qc->msg_callback = (ossl_msg_cb)fp;
+        /* This callback also needs to be set on the internal SSL object */
+        return ssl3_callback_ctrl(ctx.qc->tls, cmd, fp);;
+
+    default:
+        /* Probably a TLS related ctrl. Defer to our internal SSL object */
+        return ssl3_callback_ctrl(ctx.qc->tls, cmd, fp);
+    }
 }
 
 long ossl_quic_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))

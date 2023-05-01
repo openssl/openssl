@@ -2864,10 +2864,6 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         RECORD_LAYER_set_read_ahead(&sc->rlayer, larg);
         return l;
 
-    case SSL_CTRL_SET_MSG_CALLBACK_ARG:
-        sc->msg_callback_arg = parg;
-        return 1;
-
     case SSL_CTRL_MODE:
     {
         OSSL_PARAM options[2], *opts = options;
@@ -2962,22 +2958,7 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 long SSL_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-
-    if (sc == NULL)
-        return 0;
-
-    switch (cmd) {
-    case SSL_CTRL_SET_MSG_CALLBACK:
-        sc->msg_callback = (void (*)
-                            (int write_p, int version, int content_type,
-                             const void *buf, size_t len, SSL *ssl,
-                             void *arg))(fp);
-        return 1;
-
-    default:
-        return s->method->ssl_callback_ctrl(s, cmd, fp);
-    }
+    return s->method->ssl_callback_ctrl(s, cmd, fp);
 }
 
 LHASH_OF(SSL_SESSION) *SSL_CTX_sessions(SSL_CTX *ctx)
