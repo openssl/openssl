@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/ssl.h>
 #include "internal/quic_record_rx.h"
 #include "quic_record_shared.h"
 #include "internal/common.h"
@@ -233,6 +234,10 @@ void ossl_qrx_inject_urxe(OSSL_QRX *qrx, QUIC_URXE *urxe)
     urxe->hpr_removed   = 0;
     urxe->deferred      = 0;
     ossl_list_urxe_insert_tail(&qrx->urx_pending, urxe);
+
+    if (qrx->msg_callback != NULL)
+        qrx->msg_callback(0, OSSL_QUIC1_VERSION, SSL3_RT_QUIC_DATAGRAM, urxe + 1,
+                          urxe->data_len, qrx->msg_callback_s, qrx->msg_callback_arg);
 }
 
 static void qrx_on_rx(QUIC_URXE *urxe, void *arg)
@@ -987,10 +992,6 @@ static int qrx_process_datagram(OSSL_QRX *qrx, QUIC_URXE *e,
 
     if (!PACKET_buf_init(&pkt, data, data_len))
         return 0;
-
-    if (qrx->msg_callback != NULL)
-        qrx->msg_callback(0, OSSL_QUIC1_VERSION, SSL3_RT_QUIC_DATAGRAM, data,
-                          data_len, qrx->msg_callback_s, qrx->msg_callback_arg);
 
     for (; PACKET_remaining(&pkt) > 0; ++pkt_idx) {
         /*

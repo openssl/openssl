@@ -1702,6 +1702,19 @@ void SSL_trace(int write_p, int version, int content_type,
     const unsigned char *msg = buf;
     BIO *bio = arg;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+#ifndef OPENSSL_NO_QUIC
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(ssl);
+
+    if (qc != NULL) {
+        if (ossl_quic_trace(write_p, version, content_type, buf, msglen, ssl,
+                            arg))
+            return;
+        /*
+         * Otherwise ossl_quic_trace didn't handle this content_type so we
+         * fallback to standard TLS handling
+         */
+    }
+#endif
 
     if (sc == NULL)
         return;
@@ -1720,7 +1733,7 @@ void SSL_trace(int write_p, int version, int content_type,
             }
             hvers = msg[1] << 8 | msg[2];
             BIO_puts(bio, write_p ? "Sent" : "Received");
-            BIO_printf(bio, " Record\nHeader:\n  Version = %s (0x%x)\n",
+            BIO_printf(bio, " TLS Record\nHeader:\n  Version = %s (0x%x)\n",
                        ssl_trace_str(hvers, ssl_version_tbl), hvers);
             if (SSL_CONNECTION_IS_DTLS(sc)) {
                 BIO_printf(bio,

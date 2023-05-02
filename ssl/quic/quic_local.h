@@ -218,6 +218,9 @@ void ossl_quic_conn_raise_protocol_error(QUIC_CONNECTION *qc,
 void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
                                          OSSL_QUIC_FRAME_CONN_CLOSE *f);
 
+int ossl_quic_trace(int write_p, int version, int content_type,
+                    const void *buf, size_t msglen, SSL *ssl, void *arg);
+
 #  define OSSL_QUIC_ANY_VERSION 0xFFFFF
 
 #  define QUIC_CONNECTION_FROM_SSL_int(ssl, c)   \
