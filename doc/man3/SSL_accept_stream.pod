@@ -27,9 +27,7 @@ function may still return NULL in blocking mode, for example if the underlying
 connection is terminated.
 
 The caller is responsible for managing the lifetime of the returned QUIC stream
-SSL object. The lifespan of the parent QUIC connection SSL object must exceed
-that of the QUIC stream SSL object; that is, the stream object must be freed
-first, using L<SSL_free(3)>.
+SSL object; for more information, see L<SSL_free(3)>.
 
 This function will block if the QUIC connection SSL object is configured in
 blocking mode (see L<SSL_set_blocking_mode(3)>), but this may be bypassed by
