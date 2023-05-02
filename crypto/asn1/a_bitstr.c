@@ -142,11 +142,11 @@ ASN1_BIT_STRING *ossl_c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
  */
 int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 {
-    if (n < 0)
-        return 0;
-
     int w, v, iv;
     unsigned char *c;
+
+    if (n < 0)
+        return 0;
 
     w = n / 8;
     v = 1 << (7 - (n & 0x07));
@@ -178,10 +178,10 @@ int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 
 int ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n)
 {
+    int w, v;
+
     if (n < 0)
         return 0;
-
-    int w, v;
 
     w = n / 8;
     v = 1 << (7 - (n & 0x07));
