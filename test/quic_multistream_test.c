@@ -625,11 +625,11 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 s_stream_id = UINT64_MAX;
         }
 
-        if (thread_idx < 0) {
+        if (thread_idx < 0)
             ossl_quic_tserver_tick(h->s);
-            if (connect_started)
-                SSL_tick(h->c_conn);
-        }
+
+        if (thread_idx >= 0 || connect_started)
+            SSL_tick(h->c_conn);
 
         if (thread_idx >= 0) {
             /* Only allow certain opcodes on child threads. */
