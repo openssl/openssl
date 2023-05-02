@@ -52,10 +52,10 @@ SSL_detach_stream(), which detaches the default stream and returns it as an
 explicit QUIC stream SSL object.
 
 Once detached, the caller is responsible for managing the lifetime of the QUIC
-stream SSL object and must free it by calling L<SSL_free(3)>. The lifetime of a
-QUIC connection SSL object must exceed that of any subsidiary QUIC stream SSL
-objects; in other words, QUIC stream SSL objects must be freed before the parent
-QUIC connection SSL object is freed.
+stream SSL object and must free it by calling L<SSL_free(3)>. A QUIC stream SSL
+object maintains a reference to a QUIC connection SSL object, therefore a QUIC
+connection SSL object and its child stream objects may be freed in either order;
+for details, see L<SSL_free(3)>.
 
 When a QUIC connection SSL object has no default stream currently associated
 with it, for example because the default stream was detached or because default
@@ -75,7 +75,9 @@ SSL_attach_stream(), the QUIC connection SSL object becomes responsible for
 managing its lifetime. Calling SSL_free() on the QUIC connection SSL object will
 free the stream automatically. Moreover, once the call to SSL_attach_stream()
 succeeds, the application must make no further use of the QUIC stream SSL object
-pointer that it passed to SSL_attach_stream().
+pointer that it passed to SSL_attach_stream(). An application must not call
+SSL_attach_stream() with a QUIC stream SSL object that has more than one
+reference to it.
 
 It is recommended that new applications and applications which rely on multiple
 streams forego use of the default stream functionality, which is intended for
