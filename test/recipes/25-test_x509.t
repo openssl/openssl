@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 33;
+plan tests => 37;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -213,6 +213,19 @@ ok(get_issuer($b_cert) =~ /CN=ca.example.com/);
 has_version($b_cert, 3);
 has_SKID($b_cert, 1);
 has_AKID($b_cert, 1);
+
+# Tests for https://github.com/openssl/openssl/issues/10442 (fixed in 1.1.1a)
+# (incorrect default `-CAcreateserial` if `-CA` path has a dot in it)
+my $folder_with_dot = "test_x509.folder";
+ok(mkdir $folder_with_dot);
+my $ca_cert_dot_in_dir = File::Spec->catfile($folder_with_dot, "ca-cert.pem");
+ok(copy($ca_cert,$ca_cert_dot_in_dir));
+my $ca_serial_dot_in_dir = File::Spec->catfile($folder_with_dot, "ca-cert.srl");
+
+ok(run(app(["openssl", "x509", "-req", "-text", "-CAcreateserial",
+            "-CA", $ca_cert_dot_in_dir, "-CAkey", $ca_key,
+            "-in", $b_csr])));
+ok(-e $ca_serial_dot_in_dir);
 
 SKIP: {
     skip "EC is not supported by this OpenSSL build", 1
