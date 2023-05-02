@@ -495,7 +495,7 @@ in OpenSSL 3.0.
 
 OpenSSL 3.0 includes a FIPS 140-2 approved FIPS provider.
 
-OpenSSL 3.1 includes a FIPS 140-3 approved FIPS provider.
+OpenSSL 3.1 includes a FIPS 140-3 compliant FIPS provider.
 
 =head1 COPYRIGHT
 
