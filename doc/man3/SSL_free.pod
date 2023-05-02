@@ -62,6 +62,10 @@ stream in turn (which is its sending part).
 
 =back
 
+A QUIC stream SSL object maintains a reference to a QUIC connection SSL object
+internally, therefore a QUIC stream SSL object and its parent QUIC connection
+SSL object can be freed in either order.
+
 =head1 RETURN VALUES
 
 SSL_free() does not provide diagnostic information.
