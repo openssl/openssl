@@ -11,10 +11,11 @@ error return value. The `SSL_get_error()` call depends on the stack being
 clean before the API call to be properly able to determine if the API
 call caused a library or system (I/O) error.
 
-As the error stacks are thread-local calls from separate threads (even with
-the same SSL object) push errors to these separate error stacks. This is
-not a problem as applications are supposed to check for errors immediately
-after the API call on the same thread. There is no such thing as
+The error stacks are thread-local. Libssl API calls from separate threads
+push errors to these separate error stacks. It is unusual to invoke libssl
+APIs with the same SSL object from different threads, but even if it happens,
+it is not a problem as applications are supposed to check for errors
+immediately after the API call on the same thread. There is no such thing as
 Thread-assisted mode of operation.
 
 Constraints
@@ -22,7 +23,7 @@ Constraints
 
 We need to keep using the existing ERR API as doing otherwise would
 complicate the existing applications and break our API compatibility promise.
-Even the ERR_STATE structure is public, although deprecated, an thus its
+Even the ERR_STATE structure is public, although deprecated, and thus its
 structure and semantics cannot be changed.
 
 The error stack access is not under a lock (because it is thread-local).
@@ -45,7 +46,12 @@ library calls and in the subordinate libcrypto (and provider) calls. First
 type is an intermittent error that does not really affect the state of the
 QUIC connection - for example EAGAIN returned on a syscall, or unavailability
 of some algorithm where there are other algorithms to try. Second type
-is a permanent error that affect the error state of the QUIC connection.
+is a permanent error that affects the error state of the QUIC connection.
+Operations on QUIC streams (SSL_write(), SSL_read()) can also trigger errors,
+depending on their effect they are either permanent if they cause the
+QUIC connection to enter an error state, or if they just affect the stream
+they are left on the error stack of the thread that called SSL_write()
+or SSL_read() on the stream.
 
 Design
 ------
@@ -59,7 +65,7 @@ error stack before returning to the user.
 Permanent errors happenning within the assist thread need to be transferred
 to the regular user thread. To simplify the implementation they are required
 to appear on the error stack reachable by the application ERR_ calls only
-after the SSL_get_error() is called from the application.
+when the SSL_get_error() is called from the application.
 
 Implementation
 --------------
@@ -81,6 +87,13 @@ If a permanent error is detected during an SSL_tick() call, SSL_tick()
 should return an error to make an application be aware of the error
 condition. Otherwise an application keeping an idle connection with
 a server would not be able to detect a connection error.
+
+Multi-stream-single-thread mode
+-------------------------------
+
+SSL_tick() can be called on the QUIC_CONNECTION SSL object only. On the other
+hand SSL_get_error() can be also called on QUIC_STREAM type object to
+examine the current state of the QUIC_STREAM object.
 
 Multi-stream-multi-thread mode
 ------------------------------
