@@ -486,6 +486,7 @@ static int run_script(const struct script_op *script, int free_order)
                 ++op_idx;
 
             first           = 0;
+            offset          = 0;
             op_start_time   = ossl_time_now();
             op_deadline     = ossl_time_add(op_start_time, ossl_ms2time(2000));
         }
