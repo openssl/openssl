@@ -64,7 +64,6 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
     union BIO_sock_info_u s_info = {0};
     SSL_CTX *c_ctx = NULL;
     SSL *c_ssl = NULL;
-    short port = 8186;
     int c_connected = 0, c_write_done = 0, c_begin_read = 0, s_read_done = 0;
     int c_wait_eos = 0, c_done_eos = 0;
     int c_start_idle_test = 0, c_done_idle_test = 0;
@@ -89,8 +88,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
     if (!TEST_ptr(s_addr_ = BIO_ADDR_new()))
         goto err;
 
-    if (!TEST_true(BIO_ADDR_rawmake(s_addr_, AF_INET, &ina, sizeof(ina),
-                                    htons(port))))
+    if (!TEST_true(BIO_ADDR_rawmake(s_addr_, AF_INET, &ina, sizeof(ina), 0)))
         goto err;
 
     if (!TEST_true(BIO_bind(s_fd, s_addr_, 0)))
