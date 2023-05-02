@@ -315,7 +315,7 @@
 
 # ifndef OSSL_CRYPTO_ALLOC
 #  if defined(__GNUC__)
-#   define OSSL_CRYPTO_ALLOC __attribute__((malloc))
+#   define OSSL_CRYPTO_ALLOC __attribute__((__malloc__))
 #  elif defined(_MSC_VER)
 #   define OSSL_CRYPTO_ALLOC __declspec(restrict)
 #  else
