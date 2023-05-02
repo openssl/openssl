@@ -520,7 +520,13 @@ static void qc_set_default_xso_keep_ref(QUIC_CONNECTION *qc, QUIC_XSO *xso,
              * Changing from not having a default XSO to having one. The new XSO
              * will have had a reference to the QC we need to drop to avoid a
              * circular reference.
+             *
+             * Currently we never change directly from one default XSO to
+             * another, though this function would also still be correct if this
+             * weren't the case.
              */
+            assert(*old_xso == NULL);
+
             CRYPTO_DOWN_REF(&qc->ssl.references, &refs, &qc->ssl.lock);
             assert(refs > 0);
         }
