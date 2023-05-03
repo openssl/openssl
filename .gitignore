@@ -6,13 +6,18 @@
 /Makefile
 /MINFO
 /TABLE
-/*.pc
 /rehash.time
 /inc.*
 /makefile.*
 /out.*
 /tmp.*
 /configdata.pm
+/builddata.pm
+/installdata.pm
+
+# Exporters
+/*.pc
+/exporters/*.pc
 
 # Links under apps
 /apps/CA.pl
