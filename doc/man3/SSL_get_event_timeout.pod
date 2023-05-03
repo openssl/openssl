@@ -8,18 +8,38 @@ SSL_get_event_timeout - determine when an SSL object next needs to be ticked
 
  #include <openssl/ssl.h>
 
- int SSL_get_event_timeout(SSL *s, struct timeval *tv);
+ int SSL_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite);
 
 =head1 DESCRIPTION
 
 SSL_get_event_timeout() determines when the SSL object next needs to perform
 internal processing due to the passage of time.
 
-Calling SSL_get_event_timeout() results in I<*tv> being written with an amount of
-time left before the SSL object needs to be ticked. If the SSL object needs to
-be ticked immediately, it is set to zero; if the SSL object currently does not
-need to be ticked at any point in the future, I<tv->tv_sec> is set to -1,
-representing infinity.
+All arguments are required; I<tv> and I<is_infinite> must be non-NULL.
+
+Upon the successful return of SSL_get_event_timeout(), one of the following
+cases applies:
+
+=over 4
+
+=item
+
+The SSL object has events which need to be handled immediately; I<*tv> is set to
+zero and I<*is_infinite> is set to 0.
+
+=item
+
+The SSL object has events which need to be handled after some amount of time
+(relative to the time at which SSL_get_event_timeout() was called). I<*tv> is
+set to the amount of time after which L<SSL_handle_events(3)> should be called
+and I<*is_infinite> is set to 0.
+
+=item
+
+There are currently no timer events which require handling in the future. The
+value of I<*tv> is unspecified and I<*is_infinite> is set to 1.
+
+=back
 
 This function is currently applicable only to DTLS and QUIC connection SSL
 objects. If it is called on any other kind of SSL object, it always outputs
@@ -39,6 +59,9 @@ L<SSL_handle_events(3)>.
 
 Note that SSL_get_event_timeout() supersedes the older L<DTLSv1_get_timeout(3)>
 function for all use cases.
+
+If the call to SSL_get_event_timeout() fails, the values of I<*tv> and
+I<*is_infinite> may still be changed and their values become unspecified.
 
 =head1 RETURN VALUES
 
