@@ -1057,6 +1057,18 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
         /* This ctrl also needs to be passed to the internal SSL object */
         return SSL_ctrl(ctx.qc->tls, cmd, larg, parg);
 
+    case DTLS_CTRL_GET_TIMEOUT: /* DTLSv1_get_timeout */
+        {
+            int is_infinite;
+
+            if (!ossl_quic_get_event_timeout(s, parg, &is_infinite))
+                return 0;
+
+            return !is_infinite;
+        }
+    case DTLS_CTRL_HANDLE_TIMEOUT: /* DTLSv1_handle_timeout */
+        /* For legacy compatibility with DTLS calls. */
+        return ossl_quic_handle_events(s) == 1 ? 1 : -1;
     default:
         /* Probably a TLS related ctrl. Defer to our internal SSL object */
         return SSL_ctrl(ctx.qc->tls, cmd, larg, parg);
