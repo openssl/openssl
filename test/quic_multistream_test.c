@@ -632,7 +632,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             ossl_quic_tserver_tick(h->s);
 
         if (thread_idx >= 0 || connect_started)
-            SSL_tick(h->c_conn);
+            SSL_handle_events(h->c_conn);
 
         if (thread_idx >= 0) {
             /* Only allow certain opcodes on child threads. */

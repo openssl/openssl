@@ -91,7 +91,7 @@ static int test_quic_write_read(int idx)
                                                msglen, &numbytes)))
             goto end;
         ossl_quic_tserver_tick(qtserv);
-        SSL_tick(clientquic);
+        SSL_handle_events(clientquic);
         /*
          * In blocking mode the SSL_read_ex call will block until the socket is
          * readable and has our data. In non-blocking mode we're doing everything

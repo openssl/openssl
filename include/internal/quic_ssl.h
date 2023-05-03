@@ -45,9 +45,9 @@ void ossl_quic_set_connect_state(SSL *s);
 void ossl_quic_set_accept_state(SSL *s);
 
 __owur int ossl_quic_has_pending(const SSL *s);
-__owur int ossl_quic_tick(SSL *s);
-__owur int ossl_quic_get_tick_timeout(SSL *s, struct timeval *tv);
-OSSL_TIME ossl_quic_get_tick_deadline(SSL *s);
+__owur int ossl_quic_handle_events(SSL *s);
+__owur int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv);
+OSSL_TIME ossl_quic_get_event_deadline(SSL *s);
 __owur int ossl_quic_get_rpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *d);
 __owur int ossl_quic_get_wpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *d);
 __owur int ossl_quic_get_net_read_desired(SSL *s);

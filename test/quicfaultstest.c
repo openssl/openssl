@@ -132,7 +132,7 @@ static int test_unknown_frame(void)
         goto err;
 
     ossl_quic_tserver_tick(qtserv);
-    if (!TEST_true(SSL_tick(cssl)))
+    if (!TEST_true(SSL_handle_events(cssl)))
         goto err;
 
     if (!TEST_int_le(ret = SSL_read(cssl, buf, sizeof(buf)), 0))
@@ -145,10 +145,10 @@ static int test_unknown_frame(void)
     /*
      * TODO(QUIC): We should expect an error on the queue after this - but we
      * don't have it yet.
-     * Note, just raising the error in the obvious place causes SSL_tick() to
-     * succeed, but leave a suprious error on the stack. We need to either
-     * allow SSL_tick() to fail, or somehow delay the raising of the error
-     * until the SSL_read() call.
+     * Note, just raising the error in the obvious place causes
+     * SSL_handle_events() to succeed, but leave a suprious error on the stack.
+     * We need to either allow SSL_handle_events() to fail, or somehow delay the
+     * raising of the error until the SSL_read() call.
      */
     if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
                      SSL_R_UNKNOWN_FRAME_TYPE_RECEIVED))
@@ -339,7 +339,7 @@ static int test_corrupted_data(int idx)
      * "lost". We also process the second packet which should be decrypted
      * successfully. Therefore we ack the frames in it
      */
-    if (!TEST_true(SSL_tick(cssl)))
+    if (!TEST_true(SSL_handle_events(cssl)))
         goto err;
 
     /*
@@ -349,7 +349,7 @@ static int test_corrupted_data(int idx)
     ossl_quic_tserver_tick(qtserv);
 
     /* Receive and process the newly arrived message data resend */
-    if (!TEST_true(SSL_tick(cssl)))
+    if (!TEST_true(SSL_handle_events(cssl)))
         goto err;
 
     /* The whole message should now have arrived */

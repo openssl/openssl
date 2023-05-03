@@ -347,8 +347,9 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
              * the poll call. However this might be difficult because it
              * requires we do the call to poll(2) or equivalent syscall
              * ourselves, whereas in the general case the application does the
-             * polling and just calls SSL_tick(). Implementing this optimisation
-             * in the future will probably therefore require API changes.
+             * polling and just calls SSL_handle_events(). Implementing this
+             * optimisation in the future will probably therefore require API
+             * changes.
              */
             return 0;
     }

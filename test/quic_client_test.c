@@ -148,7 +148,7 @@ static int test_quic_client(void)
          * blocking but this is just a test.
          */
         OSSL_sleep(0);
-        SSL_tick(c_ssl);
+        SSL_handle_events(c_ssl);
     }
 
     testresult = 1;
