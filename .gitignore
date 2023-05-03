@@ -17,7 +17,9 @@
 
 # Exporters
 /*.pc
+/OpenSSLConfig*.cmake
 /exporters/*.pc
+/exporters/OpenSSLConfig*.cmake
 
 # Links under apps
 /apps/CA.pl

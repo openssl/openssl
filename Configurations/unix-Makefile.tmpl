@@ -205,6 +205,12 @@ INSTALL_EXPORTERS_PKGCONFIG={-
                         grep { $unified_info{attributes}->{generate}->{$_}->{exporter} eq 'pkg-config'}
                         sort keys %{$unified_info{generate}}))
 -}
+INSTALL_EXPORTERS_CMAKE={-
+        join(" \\\n" . ' ' x 24,
+             fill_lines(" ", $COLUMNS - 24,
+                        grep { $unified_info{attributes}->{generate}->{$_}->{exporter} eq 'cmake'}
+                        sort keys %{$unified_info{generate}}))
+-}
 BIN_SCRIPTS={-
         join(" \\\n" . ' ' x 12,
              fill_lines(" ", $COLUMNS - 12,
@@ -327,6 +333,7 @@ bindir={- file_name_is_absolute($bindir)
           ? $bindir : '$(INSTALLTOP)/$(BINDIR)' -}
 
 PKGCONFIGDIR=$(libdir)/pkgconfig
+CMAKECONFIGDIR=$(INSTALLTOP)/share/cmake/OpenSSL
 
 MANDIR=$(INSTALLTOP)/share/man
 DOCDIR=$(INSTALLTOP)/share/doc/$(BASENAME)
@@ -790,6 +797,13 @@ install_dev: install_runtime_libs
 		cp $$e "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
 		chmod 644 "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
 	done
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(CMAKECONFIGDIR)
+	@for e in $(INSTALL_EXPORTERS_CMAKE); do \
+		fn=`basename $$e`; \
+		$(ECHO) "install $$e -> $(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
+		cp $$e $(DESTDIR)$(CMAKECONFIGDIR)/$$fn; \
+		chmod 644 $(DESTDIR)$(CMAKECONFIGDIR)/$$fn; \
+	done
 
 uninstall_dev: uninstall_runtime_libs
 	@$(ECHO) "*** Uninstalling development files"
@@ -837,7 +851,12 @@ uninstall_dev: uninstall_runtime_libs
 		fn=`basename "$$e"`; \
 		$(RM) "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
 	done
+	@for e in $(INSTALL_EXPORTERS_CMAKE); do \
+		fn=`basename "$$e"`; \
+		$(RM) "$(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
+	done
 	-$(RMDIR) "$(DESTDIR)$(PKGCONFIGDIR)"
+	-$(RMDIR) "$(DESTDIR)$(CMAKECONFIGDIR)"
 	-$(RMDIR) "$(DESTDIR)$(libdir)"
 
 _install_modules_deps: install_runtime_libs build_modules
