@@ -820,8 +820,8 @@ int ossl_quic_conn_set_initial_peer_addr(SSL *s,
  * QUIC Front-End I/O API: Asynchronous I/O Management
  * ===================================================
  *
- *   (BIO/)SSL_tick                 => ossl_quic_tick
- *   (BIO/)SSL_get_tick_timeout     => ossl_quic_get_tick_timeout
+ *   (BIO/)SSL_handle_events        => ossl_quic_handle_events
+ *   (BIO/)SSL_get_event_timeout    => ossl_quic_get_event_timeout
  *   (BIO/)SSL_get_poll_fd          => ossl_quic_get_poll_fd
  *
  */
@@ -839,9 +839,9 @@ static int xso_blocking_mode(const QUIC_XSO *xso)
         && xso->conn->can_poll_net_wbio;
 }
 
-/* SSL_tick; ticks the reactor. */
+/* SSL_handle_events; handles events by ticking the reactor. */
 QUIC_TAKES_LOCK
-int ossl_quic_tick(SSL *s)
+int ossl_quic_handle_events(SSL *s)
 {
     QCTX ctx;
 
@@ -855,13 +855,13 @@ int ossl_quic_tick(SSL *s)
 }
 
 /*
- * SSL_get_tick_timeout. Get the time in milliseconds until the SSL object
- * should be ticked by the application by calling SSL_tick(). tv is set to 0 if
- * the object should be ticked immediately and tv->tv_sec is set to -1 if no
- * timeout is currently active.
+ * SSL_get_event_timeout. Get the time in milliseconds until the SSL object
+ * should be ticked by the application by calling SSL_handle_events(). tv is set
+ * to 0 if the object should be ticked immediately and tv->tv_sec is set to -1
+ * if no timeout is currently active.
  */
 QUIC_TAKES_LOCK
-int ossl_quic_get_tick_timeout(SSL *s, struct timeval *tv)
+int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv)
 {
     QCTX ctx;
     OSSL_TIME deadline = ossl_time_infinite();

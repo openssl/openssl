@@ -7124,13 +7124,13 @@ int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey)
 }
 
 /* QUIC-specific methods which are supported on QUIC connections only. */
-int SSL_tick(SSL *s)
+int SSL_handle_events(SSL *s)
 {
     SSL_CONNECTION *sc;
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
-        return ossl_quic_tick(s);
+        return ossl_quic_handle_events(s);
 #endif
 
     sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
@@ -7148,13 +7148,13 @@ int SSL_tick(SSL *s)
     return 1;
 }
 
-int SSL_get_tick_timeout(SSL *s, struct timeval *tv)
+int SSL_get_event_timeout(SSL *s, struct timeval *tv)
 {
     SSL_CONNECTION *sc;
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
-        return ossl_quic_get_tick_timeout(s, tv);
+        return ossl_quic_get_event_timeout(s, tv);
 #endif
 
     sc = SSL_CONNECTION_FROM_SSL_ONLY(s);

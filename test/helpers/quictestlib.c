@@ -268,7 +268,7 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
          * be done in a real application.
          */
         if (!clienterr && retc <= 0)
-            SSL_tick(clientssl);
+            SSL_handle_events(clientssl);
         if (!servererr && rets <= 0) {
             ossl_quic_tserver_tick(qtserv);
             servererr = ossl_quic_tserver_is_term_any(qtserv);
