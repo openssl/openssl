@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-DTLSv1_get_timeout - determine when a DTLS SSL object next needs a timeout
-event to be handled
+DTLSv1_get_timeout - determine when a DTLS or QUIC SSL object next needs a
+timeout event to be handled
 
 =head1 SYNOPSIS
 
@@ -13,8 +13,9 @@ event to be handled
 
 =head1 DESCRIPTION
 
-DTLSv1_get_timeout() can be used on a DTLS SSL object to determine when the
-SSL object next needs to perform internal processing due to the passage of time.
+DTLSv1_get_timeout() can be used on a DTLS or QUIC SSL object to determine when
+the SSL object next needs to perform internal processing due to the passage of
+time.
 
 Calling DTLSv1_get_timeout() results in I<*tv> being written with an amount of
 time left before the SSL object needs have DTLSv1_handle_timeout() called on it.
@@ -22,7 +23,7 @@ If the SSL object needs to be ticked immediately, I<*tv> is zeroed and the
 function succeeds, returning 1. If no timeout is currently active, this function
 returns 0.
 
-This function is only applicable to DTLS objects. It fails if called on
+This function is only applicable to DTLS and QUIC objects. It fails if called on
 any other kind of SSL object.
 
 Note that the value output by a call to DTLSv1_get_timeout() may change as a

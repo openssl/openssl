@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-DTLSv1_handle_timeout - handle a pending timeout event for a DTLS SSL object
+DTLSv1_handle_timeout - handle a pending timeout event for a DTLS or QUIC SSL
+object
 
 =head1 SYNOPSIS
 
@@ -13,13 +14,13 @@ DTLSv1_handle_timeout - handle a pending timeout event for a DTLS SSL object
 =head1 DESCRIPTION
 
 DTLSv1_handle_timeout() handles any timeout events which have become pending
-on a DTLS SSL object.
+on a DTLS or QUIC SSL object.
 
 Use L<DTLSv1_get_timeout(3)> or L<SSL_get_event_timeout(3)> to determine
 when to call DTLSv1_handle_timeout().
 
-This function is only applicable to DTLS objects. It returns 0 if called on
-any other kind of SSL object.
+This function is only applicable to DTLS or QUIC SSL objects. It returns 0 if
+called on any other kind of SSL object.
 
 L<SSL_handle_events(3)> supersedes all use cases for this this function and may
 be used instead of it.
@@ -29,7 +30,7 @@ be used instead of it.
 Returns 1 if there was a pending timeout event and it was handled successfully.
 
 Returns 0 if there was no pending timeout event, or if the SSL object is not a
-DTLS object.
+DTLS or QUIC object.
 
 Returns -1 if there was a pending timeout event but it could not be handled
 successfully.
