@@ -25,6 +25,7 @@ struct ossl_cmp_srv_ctx_st
     OSSL_CMP_CTX *ctx; /* CMP client context reused for transactionID etc. */
     void *custom_ctx;  /* application-specific server context */
     int certReqId;     /* of ir/cr/kur, OSSL_CMP_CERTREQID_NONE for p10cr */
+    int polling;       /* current tranaction is in polling mode */
 
     OSSL_CMP_SRV_cert_request_cb_t process_cert_request;
     OSSL_CMP_SRV_rr_cb_t process_rr;
@@ -61,6 +62,7 @@ OSSL_CMP_SRV_CTX *OSSL_CMP_SRV_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
     if ((ctx->ctx = OSSL_CMP_CTX_new(libctx, propq)) == NULL)
         goto err;
     ctx->certReqId = OSSL_CMP_CERTREQID_INVALID;
+    ctx->polling = 0;
 
     /* all other elements are initialized to 0 or NULL, respectively */
     return ctx;
@@ -169,6 +171,10 @@ static OSSL_CMP_MSG *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
                                       const OSSL_CMP_MSG *req)
 {
     int ret;
+    unsigned long err;
+    int status = OSSL_CMP_PKISTATUS_waiting,
+        fail_info = 0, errorCode = 0;
+    const char *txt = NULL, *details = NULL;
     OSSL_CMP_PKISI *si;
     OSSL_CMP_MSG *msg;
 
@@ -177,15 +183,25 @@ static OSSL_CMP_MSG *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
         return NULL;
 
     ret = srv_ctx->delayed_delivery(srv_ctx, req);
-    if (ret == 0 || !ossl_assert(ret != -1))
+    if (ret == 0)
         return NULL;
+    if (ret == 1) {
+        srv_ctx->polling = 1;
+    } else {
+        status = OSSL_CMP_PKISTATUS_rejection;
+        fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_systemFailure;
+        txt = "server application error";
+        err = ERR_peek_error();
+        errorCode = ERR_GET_REASON(err);
+        details = ERR_reason_error_string(err);
+    }
 
-    si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_waiting, 0, NULL);
+    si = OSSL_CMP_STATUSINFO_new(status, fail_info, txt);
     if (si == NULL)
         return NULL;
 
-    msg = ossl_cmp_error_new(srv_ctx->ctx, si, 0,
-                             NULL, srv_ctx->sendUnprotectedErrors);
+    msg = ossl_cmp_error_new(srv_ctx->ctx, si, errorCode, details,
+                             srv_ctx->sendUnprotectedErrors);
     OSSL_CMP_PKISI_free(si);
     return msg;
 }
@@ -262,6 +278,8 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                            &certOut, &chainOut, &caPubs);
         if (si == NULL)
             goto err;
+        if (ossl_cmp_pkisi_get_status(si) == OSSL_CMP_PKISTATUS_waiting)
+            srv_ctx->polling = 1;
         /* set OSSL_CMP_OPT_IMPLICIT_CONFIRM if and only if transaction ends */
         if (!OSSL_CMP_CTX_set_option(srv_ctx->ctx,
                                      OSSL_CMP_OPT_IMPLICIT_CONFIRM,
@@ -495,6 +513,11 @@ static OSSL_CMP_MSG *process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
     if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL))
         return NULL;
 
+    if (!srv_ctx->polling) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        return NULL;
+    }
+
     prc = req->body->value.pollReq;
     if (sk_OSSL_CMP_POLLREQ_num(prc) != 1) {
         ERR_raise(ERR_LIB_CMP, CMP_R_MULTIPLE_REQUESTS_NOT_SUPPORTED);
@@ -508,6 +531,7 @@ static OSSL_CMP_MSG *process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
         return NULL;
 
     if (orig_req != NULL) {
+        srv_ctx->polling = 0;
         msg = process_non_polling_request(srv_ctx, orig_req);
         OSSL_CMP_MSG_free(orig_req);
     } else {
@@ -578,6 +602,12 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     }
     if (!OSSL_CMP_CTX_set1_recipient(ctx, hdr->sender->d.directoryName))
         goto err;
+
+    if (srv_ctx->polling && req_type != OSSL_CMP_PKIBODY_POLLREQ
+            && req_type != OSSL_CMP_PKIBODY_ERROR) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_EXPECTED_POLLREQ);
+        goto err;
+    }
 
     switch (req_type) {
     case OSSL_CMP_PKIBODY_IR:
