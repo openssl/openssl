@@ -857,11 +857,11 @@ int ossl_quic_handle_events(SSL *s)
 /*
  * SSL_get_event_timeout. Get the time in milliseconds until the SSL object
  * should be ticked by the application by calling SSL_handle_events(). tv is set
- * to 0 if the object should be ticked immediately and tv->tv_sec is set to -1
- * if no timeout is currently active.
+ * to 0 if the object should be ticked immediately. If no timeout is currently
+ * active, *is_infinite is set to 1 and the value of *tv is undefined.
  */
 QUIC_TAKES_LOCK
-int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv)
+int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite)
 {
     QCTX ctx;
     OSSL_TIME deadline = ossl_time_infinite();
@@ -875,13 +875,21 @@ int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv)
         = ossl_quic_reactor_get_tick_deadline(ossl_quic_channel_get_reactor(ctx.qc->ch));
 
     if (ossl_time_is_infinite(deadline)) {
-        tv->tv_sec  = -1;
+        *is_infinite = 1;
+
+        /*
+         * Robustness against faulty applications that don't check *is_infinite;
+         * harmless long timeout.
+         */
+        tv->tv_sec  = 1000000;
         tv->tv_usec = 0;
+
         quic_unlock(ctx.qc);
         return 1;
     }
 
     *tv = ossl_time_to_timeval(ossl_time_subtract(deadline, ossl_time_now()));
+    *is_infinite = 0;
     quic_unlock(ctx.qc);
     return 1;
 }
