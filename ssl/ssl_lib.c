@@ -7148,22 +7148,25 @@ int SSL_handle_events(SSL *s)
     return 1;
 }
 
-int SSL_get_event_timeout(SSL *s, struct timeval *tv)
+int SSL_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite)
 {
     SSL_CONNECTION *sc;
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
-        return ossl_quic_get_event_timeout(s, tv);
+        return ossl_quic_get_event_timeout(s, tv, is_infinite);
 #endif
 
     sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
     if (sc != NULL && SSL_CONNECTION_IS_DTLS(sc)
-        && DTLSv1_get_timeout(s, tv))
+        && DTLSv1_get_timeout(s, tv)) {
+        *is_infinite = 0;
         return 1;
+    }
 
-    tv->tv_sec  = -1;
+    tv->tv_sec  = 1000000;
     tv->tv_usec = 0;
+    *is_infinite = 1;
     return 1;
 }
 
