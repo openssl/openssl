@@ -37,7 +37,7 @@ on a SSL object which is not a QUIC connection SSL object.
 
 =head1 SEE ALSO
 
-L<OSSL_QUIC_client_method(3)>, L<SSL_tick(3)>, L<SSL_set_blocking_mode(3)>
+L<OSSL_QUIC_client_method(3)>, L<SSL_handle_events(3)>, L<SSL_set_blocking_mode(3)>
 
 =head1 HISTORY
 

@@ -2,20 +2,20 @@
 
 =head1 NAME
 
-SSL_get_tick_timeout - determine when an SSL object next needs to be ticked
+SSL_get_event_timeout - determine when an SSL object next needs to be ticked
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
- int SSL_get_tick_timeout(SSL *s, struct timeval *tv);
+ int SSL_get_event_timeout(SSL *s, struct timeval *tv);
 
 =head1 DESCRIPTION
 
-SSL_get_tick_timeout() determines when the SSL object next needs to perform
+SSL_get_event_timeout() determines when the SSL object next needs to perform
 internal processing due to the passage of time.
 
-Calling SSL_get_tick_timeout() results in I<*tv> being written with an amount of
+Calling SSL_get_event_timeout() results in I<*tv> being written with an amount of
 time left before the SSL object needs to be ticked. If the SSL object needs to
 be ticked immediately, it is set to zero; if the SSL object currently does not
 need to be ticked at any point in the future, I<tv->tv_sec> is set to -1,
@@ -30,13 +30,14 @@ L<DTLSv1_get_timeout(3)> function. Note that this function differs from
 L<DTLSv1_get_timeout(3)> in that the case where no timeout is active is
 considered a success condition.
 
-Note that the value output by a call to SSL_get_tick_timeout() may change as a
+Note that the value output by a call to SSL_get_event_timeout() may change as a
 result of other calls to the SSL object.
 
-Once the timeout expires, SSL_tick() should be called to handle any internal
-processing which is due; for more information, see L<SSL_tick(3)>.
+Once the timeout expires, SSL_handle_events() should be called to handle any
+internal processing which is due; for more information, see
+L<SSL_handle_events(3)>.
 
-Note that SSL_get_tick_timeout() supersedes the older L<DTLSv1_get_timeout(3)>
+Note that SSL_get_event_timeout() supersedes the older L<DTLSv1_get_timeout(3)>
 function for all use cases.
 
 =head1 RETURN VALUES
@@ -45,11 +46,11 @@ Returns 1 on success and 0 on failure.
 
 =head1 SEE ALSO
 
-L<SSL_tick(3)>, L<DTLSv1_get_timeout(3)>, L<ssl(7)>
+L<SSL_handle_events(3)>, L<DTLSv1_get_timeout(3)>, L<ssl(7)>
 
 =head1 HISTORY
 
-The SSL_get_tick_timeout() function was added in OpenSSL 3.2.
+The SSL_get_event_timeout() function was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
