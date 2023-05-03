@@ -92,7 +92,7 @@ not pollable for readability or writeability respectively.
 
 =head1 SEE ALSO
 
-L<SSL_tick(3)>, L<SSL_get_tick_timeout(3)>, L<SSL_get_rpoll_descriptor(3)>,
+L<SSL_handle_events(3)>, L<SSL_get_event_timeout(3)>, L<SSL_get_rpoll_descriptor(3)>,
 L<SSL_get_wpoll_descriptor(3)>, L<bio(7)>
 
 =head1 HISTORY

@@ -37,7 +37,7 @@ provided to the SSL object are themselves configured in nonblocking mode.
 
 Where a QUIC connection SSL object is used in nonblocking mode, an application
 is responsible for ensuring that the SSL object is ticked regularly; see
-L<SSL_tick(3)>.
+L<SSL_handle_events(3)>.
 
 Blocking mode is disabled automatically if the application provides a QUIC
 connection SSL object with a network BIO which cannot support blocking mode. To
@@ -55,7 +55,7 @@ SSL_get_blocking_mode() returns 1 if blocking is currently enabled. It returns
 
 =head1 SEE ALSO
 
-L<SSL_tick(3)>, L<ssl(7)>
+L<SSL_handle_events(3)>, L<ssl(7)>
 
 =head1 HISTORY
 

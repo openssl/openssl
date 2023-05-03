@@ -20,7 +20,7 @@ network I/O can be performed
 The functions SSL_get_rpoll_descriptor() and SSL_get_wpoll_descriptor() can be
 used to determine when an SSL object which represents a QUIC connection can
 perform useful network I/O, so that an application using a QUIC connection SSL
-object in nonblocking mode can determine when it should call SSL_tick().
+object in nonblocking mode can determine when it should call SSL_handle_events().
 
 On success, these functions output poll descriptors. For more information on
 poll descriptors, see L<BIO_get_rpoll_descriptor(3)>.
@@ -34,9 +34,9 @@ not interested in writing data to the network at the current time,
 SSL_net_write_desired() will return 0.
 
 The intention is that an application using QUIC in nonblocking mode can use
-these calls, in conjunction with L<SSL_get_tick_timeout(3)> to wait for network
+these calls, in conjunction with L<SSL_get_event_timeout(3)> to wait for network
 I/O conditions which allow the SSL object to perform useful work. When such a
-condition arises, L<SSL_tick(3)> should be called.
+condition arises, L<SSL_handle_events(3)> should be called.
 
 In particular, the expected usage is as follows:
 
@@ -44,18 +44,18 @@ In particular, the expected usage is as follows:
 
 =item *
 
-SSL_tick() should be called whenever the timeout returned by
-SSL_get_tick_timeout(3) (if any) expires
+SSL_handle_events() should be called whenever the timeout returned by
+SSL_get_event_timeout(3) (if any) expires
 
 =item *
 
-If the last call to SSL_net_read_desired() returned 1, SSL_tick() should be called
+If the last call to SSL_net_read_desired() returned 1, SSL_handle_events() should be called
 whenever the poll descriptor output by SSL_get_rpoll_descriptor() becomes
 readable.
 
 =item *
 
-If the last call to SSL_net_write_desired() returned 1, SSL_tick() should be called
+If the last call to SSL_net_write_desired() returned 1, SSL_handle_events() should be called
 whenever the poll descriptor output by SSL_get_wpoll_descriptor() becomes
 writable.
 
@@ -64,7 +64,7 @@ writable.
 The return values of the SSL_net_read_desired() and SSL_net_write_desired() functions
 may change in response to any call to the SSL object other than
 SSL_net_read_desired(), SSL_net_write_desired(), SSL_get_rpoll_descriptor(),
-SSL_get_wpoll_descriptor() and SSL_get_tick_timeout().
+SSL_get_wpoll_descriptor() and SSL_get_event_timeout().
 
 These functions are not supported on non-QUIC SSL objects.
 
@@ -74,7 +74,7 @@ These functions return 1 on success and 0 on failure.
 
 =head1 SEE ALSO
 
-L<SSL_tick(3)>, L<SSL_get_tick_timeout(3)>, L<ssl(7)>
+L<SSL_handle_events(3)>, L<SSL_get_event_timeout(3)>, L<ssl(7)>
 
 =head1 HISTORY
 
