@@ -140,8 +140,9 @@ void engine_cleanup_add_first(ENGINE_CLEANUP_CB *cb)
     if (!int_cleanup_check(1))
         return;
     item = int_cleanup_item(cb);
-    if (item)
-        sk_ENGINE_CLEANUP_ITEM_insert(cleanup_stack, item, 0);
+    if (item != NULL)
+        if (sk_ENGINE_CLEANUP_ITEM_insert(cleanup_stack, item, 0) <= 0)
+            OPENSSL_free(item);
 }
 
 void engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb)
