@@ -188,10 +188,13 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
 
 static int depack_do_frame_crypto(PACKET *pkt, QUIC_CHANNEL *ch,
                                   OSSL_QRX_PKT *parent_pkt,
-                                  OSSL_ACKM_RX_PKT *ackm_data)
+                                  OSSL_ACKM_RX_PKT *ackm_data,
+                                  uint64_t *datalen)
 {
     OSSL_QUIC_FRAME_CRYPTO f;
     QUIC_RSTREAM *rstream;
+
+    *datalen = 0;
 
     if (!ossl_quic_wire_decode_frame_crypto(pkt, &f)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -216,6 +219,8 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CHANNEL *ch,
     if (!ossl_quic_rstream_queue_data(rstream, parent_pkt,
                                       f.offset, f.data, f.len, 0))
         return 0;
+
+    *datalen = f.len;
 
     return 1;
 }
@@ -245,11 +250,14 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CHANNEL *ch,
 static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
                                   OSSL_QRX_PKT *parent_pkt,
                                   OSSL_ACKM_RX_PKT *ackm_data,
-                                  uint64_t frame_type)
+                                  uint64_t frame_type,
+                                  uint64_t *datalen)
 {
     OSSL_QUIC_FRAME_STREAM frame_data;
     QUIC_STREAM *stream;
     uint64_t fce;
+
+    *datalen = 0;
 
     if (!ossl_quic_wire_decode_frame_stream(pkt, &frame_data)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -429,6 +437,8 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
                                       frame_data.len,
                                       frame_data.is_fin))
         return 0;
+
+    *datalen = frame_data.len;
 
     return 1;
 }
@@ -765,6 +775,11 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
 
     while (PACKET_remaining(pkt) > 0) {
         uint64_t frame_type;
+        const unsigned char *sof = NULL;
+        uint64_t datalen = 0;
+
+        if (ch->msg_callback != NULL)
+            sof = PACKET_data(pkt);
 
         if (!ossl_quic_wire_peek_frame_header(pkt, &frame_type))
             return 0;
@@ -833,7 +848,7 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
                                                        "CRYPTO frame not valid in 0-RTT");
                 return 0;
             }
-            if (!depack_do_frame_crypto(pkt, ch, parent_pkt, ackm_data))
+            if (!depack_do_frame_crypto(pkt, ch, parent_pkt, ackm_data, &datalen))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
@@ -867,7 +882,7 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
                 return 0;
             }
             if (!depack_do_frame_stream(pkt, ch, parent_pkt, ackm_data,
-                                        frame_type))
+                                        frame_type, &datalen))
                 return 0;
             break;
 
@@ -1046,6 +1061,23 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
                                                    frame_type,
                                                    "Unknown frame type received");
             return 0;
+        }
+
+        if (ch->msg_callback != NULL) {
+            int ctype = SSL3_RT_QUIC_FRAME_FULL;
+
+            size_t framelen = PACKET_data(pkt) - sof;
+
+            if (frame_type == OSSL_QUIC_FRAME_TYPE_PADDING) {
+                ctype = SSL3_RT_QUIC_FRAME_PADDING;
+            } else if (OSSL_QUIC_FRAME_TYPE_IS_STREAM(frame_type)
+                    || frame_type == OSSL_QUIC_FRAME_TYPE_CRYPTO) {
+                ctype = SSL3_RT_QUIC_FRAME_HEADER;
+                framelen -= datalen;
+            }
+
+            ch->msg_callback(0, OSSL_QUIC1_VERSION, ctype, sof, framelen,
+                             ch->msg_callback_s, ch->msg_callback_arg);
         }
     }
 
