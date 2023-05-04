@@ -840,6 +840,10 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
         if (ossl_quic_wire_decode_pkt_hdr(pkt, qrx->short_conn_id_len,
                                           0, &rxe->hdr, NULL) != 1)
             goto malformed;
+
+        if (qrx->msg_callback != NULL)
+            qrx->msg_callback(0, OSSL_QUIC1_VERSION, SSL3_RT_QUIC_PACKET, sop,
+                              eop - sop, qrx->msg_callback_s, qrx->msg_callback_arg);
     }
 
     /* Validate header and decode PN. */
@@ -995,7 +999,7 @@ static int qrx_process_datagram(OSSL_QRX *qrx, QUIC_URXE *e,
 
     for (; PACKET_remaining(&pkt) > 0; ++pkt_idx) {
         /*
-         * A packet smallest than the minimum possible QUIC packet size is not
+         * A packet smaller than the minimum possible QUIC packet size is not
          * considered valid. We also ignore more than a certain number of
          * packets within the same datagram.
          */
