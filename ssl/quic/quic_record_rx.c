@@ -1110,6 +1110,7 @@ int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT **ppkt)
         = BIO_ADDR_family(&rxe->local) != AF_UNSPEC ? &rxe->local : NULL;
     rxe->pkt.qrx            = qrx;
     *ppkt = &rxe->pkt;
+
     return 1;
 }
 
