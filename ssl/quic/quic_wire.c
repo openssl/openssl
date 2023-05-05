@@ -746,6 +746,7 @@ int ossl_quic_wire_decode_frame_new_conn_id(PACKET *pkt,
     if (!expect_frame_header(pkt, OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID)
             || !PACKET_get_quic_vlint(pkt, &f->seq_num)
             || !PACKET_get_quic_vlint(pkt, &f->retire_prior_to)
+            || f->seq_num < f->retire_prior_to
             || !PACKET_get_1(pkt, &len)
             || len > QUIC_MAX_CONN_ID_LEN)
         return 0;

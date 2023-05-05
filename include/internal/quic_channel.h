@@ -220,6 +220,8 @@ void ossl_quic_channel_raise_protocol_error(QUIC_CHANNEL *ch,
 /* For RXDP use. */
 void ossl_quic_channel_on_remote_conn_close(QUIC_CHANNEL *ch,
                                             OSSL_QUIC_FRAME_CONN_CLOSE *f);
+void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
+                                      OSSL_QUIC_FRAME_NEW_CONN_ID *f);
 
 /*
  * Queries and Accessors

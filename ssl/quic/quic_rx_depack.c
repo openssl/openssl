@@ -660,7 +660,7 @@ static int depack_do_frame_new_conn_id(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* TODO(QUIC): ADD CODE to send |frame_data.data| to the ch manager */
+    ossl_quic_channel_on_new_conn_id(ch, &frame_data);
 
     return 1;
 }
@@ -682,7 +682,7 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* TODO(QUIC): ADD CODE to send |seq_num| to the ch manager */
+    /* TODO(QUIC): Post MVP ADD CODE to send |seq_num| to the ch manager */
     return 1;
 }
 
