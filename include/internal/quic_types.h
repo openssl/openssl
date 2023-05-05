@@ -95,6 +95,9 @@ static ossl_unused ossl_inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
 
 #  define QUIC_STATELESS_RESET_TOKEN_LEN    16
 
+typedef void (*ossl_msg_cb)(int write_p, int version, int content_type,
+                            const void *buf, size_t len, SSL *ssl, void *arg);
+
 # endif
 
 #endif

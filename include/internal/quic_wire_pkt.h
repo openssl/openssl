@@ -425,6 +425,9 @@ struct quic_pkt_hdr_ptrs_st {
  * If partial is 0, the input is assumed to have already had header protection
  * removed, and all header fields are decoded.
  *
+ * If nodata is 1, the input assumed to have no payload data in it. Otherwise
+ * payload data must be present.
+ *
  * On success, the logical decode of the packet header is written to *hdr.
  * hdr->partial is set or cleared according to whether a partial decode was
  * performed. *ptrs is filled with pointers to various parts of the packet
@@ -441,6 +444,7 @@ struct quic_pkt_hdr_ptrs_st {
 int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
                                   size_t short_conn_id_len,
                                   int partial,
+                                  int nodata,
                                   QUIC_PKT_HDR *hdr,
                                   QUIC_PKT_HDR_PTRS *ptrs);
 

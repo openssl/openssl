@@ -162,6 +162,7 @@ int ossl_quic_hdr_protector_encrypt_fields(QUIC_HDR_PROTECTOR *hpr,
 int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
                                   size_t short_conn_id_len,
                                   int partial,
+                                  int nodata,
                                   QUIC_PKT_HDR *hdr,
                                   QUIC_PKT_HDR_PTRS *ptrs)
 {
@@ -369,8 +370,10 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
                 hdr->pn_len = partial ? 0 : (b0 & 3) + 1;
 
                 if (!PACKET_get_quic_vlint(pkt, &len)
-                    || len < sizeof(hdr->pn)
-                    || len > PACKET_remaining(pkt))
+                        || len < sizeof(hdr->pn))
+                    return 0;
+
+                if (!nodata && len > PACKET_remaining(pkt))
                     return 0;
 
                 /*
@@ -393,11 +396,15 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
                     hdr->len = (size_t)(len - hdr->pn_len);
                 }
 
-                hdr->data = PACKET_data(pkt);
+                if (nodata) {
+                    hdr->data = NULL;
+                } else {
+                    hdr->data = PACKET_data(pkt);
 
-                /* Skip over packet body. */
-                if (!PACKET_forward(pkt, hdr->len))
-                    return 0;
+                    /* Skip over packet body. */
+                    if (!PACKET_forward(pkt, hdr->len))
+                        return 0;
+                }
             }
         }
     }

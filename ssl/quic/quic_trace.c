@@ -495,7 +495,7 @@ int ossl_quic_trace(int write_p, int version, int content_type,
              * TODO(QUIC): We need to query the short connection id len here,
              *             e.g. via some API SSL_get_short_conn_id_len()
              */
-            if (ossl_quic_wire_decode_pkt_hdr(&pkt, 0, 0, &hdr, NULL) != 1)
+            if (ossl_quic_wire_decode_pkt_hdr(&pkt, 0, 0, 1, &hdr, NULL) != 1)
                 return 0;
 
             BIO_puts(bio, write_p ? "Sent" : "Received");

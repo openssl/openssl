@@ -18,9 +18,6 @@
 
 # ifndef OPENSSL_NO_QUIC
 
-typedef void (*ossl_msg_cb)(int write_p, int version, int content_type,
-                            const void *buf, size_t len, SSL *ssl, void *arg);
-
 /*
  * QUIC Record Layer - RX
  * ======================

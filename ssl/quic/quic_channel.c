@@ -130,6 +130,10 @@ static int ch_init(QUIC_CHANNEL *ch)
     /* We plug in a network write BIO to the QTX later when we get one. */
     qtx_args.libctx = ch->libctx;
     qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
+    /* Callback related arguments */
+    qtx_args.msg_callback       = ch->msg_callback;
+    qtx_args.msg_callback_arg   = ch->msg_callback_arg;
+    qtx_args.msg_callback_s     = ch->msg_callback_s;
     ch->rx_max_udp_payload_size = qtx_args.mdpl;
 
     ch->qtx = ossl_qtx_new(&qtx_args);
@@ -1601,7 +1605,7 @@ static void ch_default_packet_handler(QUIC_URXE *e, void *arg)
      * operation to fail if we get a 1-RTT packet. This is fine since we only
      * care about Initial packets.
      */
-    if (!ossl_quic_wire_decode_pkt_hdr(&pkt, SIZE_MAX, 1, &hdr, NULL))
+    if (!ossl_quic_wire_decode_pkt_hdr(&pkt, SIZE_MAX, 1, 0, &hdr, NULL))
         goto undesirable;
 
     switch (hdr.version) {
