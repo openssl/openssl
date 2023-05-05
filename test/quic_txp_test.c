@@ -394,8 +394,8 @@ static int schedule_cfq_new_conn_id(struct helper *h)
     size_t l = 0;
     OSSL_QUIC_FRAME_NEW_CONN_ID ncid = {0};
 
-    ncid.seq_num         = 1234;
-    ncid.retire_prior_to = 2345;
+    ncid.seq_num         = 2345;
+    ncid.retire_prior_to = 1234;
     ncid.conn_id         = cid_1;
     memcpy(ncid.stateless_reset_token, reset_token_1, sizeof(reset_token_1));
 
@@ -432,8 +432,8 @@ err:
 
 static int check_cfq_new_conn_id(struct helper *h)
 {
-    if (!TEST_uint64_t_eq(h->frame.new_conn_id.seq_num, 1234)
-        || !TEST_uint64_t_eq(h->frame.new_conn_id.retire_prior_to, 2345)
+    if (!TEST_uint64_t_eq(h->frame.new_conn_id.seq_num, 2345)
+        || !TEST_uint64_t_eq(h->frame.new_conn_id.retire_prior_to, 1234)
         || !TEST_mem_eq(&h->frame.new_conn_id.conn_id, sizeof(cid_1),
                         &cid_1, sizeof(cid_1))
         || !TEST_mem_eq(&h->frame.new_conn_id.stateless_reset_token,
