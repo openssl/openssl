@@ -900,6 +900,8 @@ static int test_EC_priv_pub(void)
     BIGNUM *priv = NULL;
     int ret = 0;
     unsigned char *encoded = NULL;
+    size_t len = 0;
+    unsigned char buffer[128];
 
     /*
      * Setup the parameters for our pkey object. For our purposes they don't
@@ -1018,6 +1020,26 @@ static int test_EC_priv_pub(void)
         encoded = NULL;
         goto err;
     }
+
+    /* Positive and negative testcase for EVP_PKEY_get_octet_string_param */
+    if (!TEST_int_eq(EVP_PKEY_get_octet_string_param(params_and_pub,
+                                                     OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                                     buffer, sizeof(buffer), &len), 1)
+        || !TEST_int_eq(len, 65))
+        goto err;
+
+    len = 0;
+    if (!TEST_int_eq(EVP_PKEY_get_octet_string_param(params_and_pub,
+                                                     OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                                     NULL, 0, &len), 1)
+        || !TEST_int_eq(len, 65))
+        goto err;
+
+    /* too-short buffer len*/
+    if (!TEST_int_eq(EVP_PKEY_get_octet_string_param(params_and_pub,
+                                                     OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                                     buffer, 10, &len), 0))
+        goto err;
 
     ret = 1;
  err:
