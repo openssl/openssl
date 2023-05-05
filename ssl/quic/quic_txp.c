@@ -301,6 +301,28 @@ static int tx_helper_commit(struct tx_helper *h)
         return 0;
     }
 
+    if (h->txp->args.msg_callback != NULL && l > 0) {
+        uint64_t ftype;
+        int ctype = SSL3_RT_QUIC_FRAME_FULL;
+        PACKET pkt;
+
+        if (!PACKET_buf_init(&pkt, h->txn.data, l)
+                || !ossl_quic_wire_peek_frame_header(&pkt, &ftype)) {
+            tx_helper_end(h, 0);
+            return 0;
+        }
+
+        if (ftype == OSSL_QUIC_FRAME_TYPE_PADDING)
+            ctype = SSL3_RT_QUIC_FRAME_PADDING;
+        else if (OSSL_QUIC_FRAME_TYPE_IS_STREAM(ftype)
+                || ftype == OSSL_QUIC_FRAME_TYPE_CRYPTO)
+            ctype = SSL3_RT_QUIC_FRAME_HEADER;
+
+        h->txp->args.msg_callback(1, OSSL_QUIC1_VERSION, ctype, h->txn.data, l,
+                                  h->txp->args.msg_callback_s,
+                                  h->txp->args.msg_callback_arg);
+    }
+
     h->scratch_bytes += l;
     tx_helper_end(h, 1);
     return 1;

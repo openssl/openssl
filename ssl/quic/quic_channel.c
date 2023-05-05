@@ -208,6 +208,11 @@ static int ch_init(QUIC_CHANNEL *ch)
     txp_args.cc_data                = ch->cc_data;
     txp_args.now                    = get_time;
     txp_args.now_arg                = ch;
+    /* Callback related arguments */
+    txp_args.msg_callback           = ch->msg_callback;
+    txp_args.msg_callback_arg       = ch->msg_callback_arg;
+    txp_args.msg_callback_s         = ch->msg_callback_s;
+
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
         ch->crypto_send[pn_space] = ossl_quic_sstream_new(INIT_CRYPTO_BUF_LEN);
         if (ch->crypto_send[pn_space] == NULL)

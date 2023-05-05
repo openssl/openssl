@@ -49,6 +49,11 @@ typedef struct ossl_quic_tx_packetiser_args_st {
     OSSL_TIME       (*now)(void *arg);  /* Callback to get current time. */
     void            *now_arg;
 
+    /* Message callback related arguments */
+    ossl_msg_cb msg_callback;
+    void *msg_callback_arg;
+    SSL *msg_callback_s;
+
     /*
      * Injected dependencies - crypto streams.
      *
