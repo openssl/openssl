@@ -55,12 +55,16 @@ int EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
     int ret = -1;
     char buff[BUFSIZ];
     UI *ui;
+    const UI_METHOD *ui_method = NULL;
 
     if ((prompt == NULL) && (prompt_string[0] != '\0'))
         prompt = prompt_string;
     ui = UI_new();
     if (ui == NULL)
         return ret;
+    ui_method = UI_get_method(ui);
+    if (ui_method == NULL || ui_method == UI_null())
+        goto end;
     if (UI_add_input_string(ui, prompt, 0, buf, min,
                             (len >= BUFSIZ) ? BUFSIZ - 1 : len) < 0
         || (verify

@@ -63,7 +63,7 @@ int PEM_def_callback(char *buf, int num, int rwflag, void *userdata)
         memset(buf, 0, (unsigned int)num);
         return -1;
     }
-    return strlen(buf);
+    return OPENSSL_strnlen(buf, (size_t)num);
 }
 
 void PEM_proc_type(char *buf, int type)

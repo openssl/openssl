@@ -107,7 +107,7 @@ static int ui_read(UI *ui, UI_STRING *uis)
     switch (UI_get_string_type(uis)) {
     case UIT_PROMPT:
         {
-            char result[PEM_BUFSIZE + 1];
+            char result[PEM_BUFSIZE + 1] = { 0, };
             const struct pem_password_cb_data *data =
                 UI_method_get_ex_data(UI_get_method(ui), ui_method_data_index);
             int maxsize = UI_get_result_maxsize(uis);
