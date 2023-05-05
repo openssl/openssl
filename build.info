@@ -22,6 +22,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/cmp.h \
          include/openssl/cms.h \
          include/openssl/conf.h \
+         include/openssl/core_names.h \
          include/openssl/crmf.h \
          include/openssl/crypto.h \
          include/openssl/ct.h \
@@ -40,7 +41,8 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/x509.h \
          include/openssl/x509v3.h \
          include/openssl/x509_vfy.h \
-         include/crypto/bn_conf.h include/crypto/dso_conf.h
+         include/crypto/bn_conf.h include/crypto/dso_conf.h \
+         include/internal/param_names.h  crypto/params_idx.c
 
 GENERATE[include/openssl/asn1.h]=include/openssl/asn1.h.in
 GENERATE[include/openssl/asn1t.h]=include/openssl/asn1t.h.in
@@ -72,6 +74,13 @@ GENERATE[include/openssl/x509v3.h]=include/openssl/x509v3.h.in
 GENERATE[include/openssl/x509_vfy.h]=include/openssl/x509_vfy.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
+
+DEPEND[crypto/params_idx.c \
+       include/internal/param_names.h \
+       include/openssl/core_names.h]=util/perl/OpenSSL/paramnames.pm
+GENERATE[crypto/params_idx.c]=crypto/params_idx.c.in
+GENERATE[include/internal/param_names.h]=include/internal/param_names.h.in
+GENERATE[include/openssl/core_names.h]=include/openssl/core_names.h.in
 
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld
