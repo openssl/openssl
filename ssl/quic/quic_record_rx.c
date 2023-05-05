@@ -726,7 +726,7 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     need_second_decode = !pkt_is_marked(&urxe->hpr_removed, pkt_idx);
     if (!ossl_quic_wire_decode_pkt_hdr(pkt,
                                        qrx->short_conn_id_len,
-                                       need_second_decode, &rxe->hdr, &ptrs))
+                                       need_second_decode, 0, &rxe->hdr, &ptrs))
         goto malformed;
 
     /*
@@ -838,17 +838,18 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
 
         /* Decode the now unprotected header. */
         if (ossl_quic_wire_decode_pkt_hdr(pkt, qrx->short_conn_id_len,
-                                          0, &rxe->hdr, NULL) != 1)
+                                          0, 0, &rxe->hdr, NULL) != 1)
             goto malformed;
-
-        if (qrx->msg_callback != NULL)
-            qrx->msg_callback(0, OSSL_QUIC1_VERSION, SSL3_RT_QUIC_PACKET, sop,
-                              eop - sop, qrx->msg_callback_s, qrx->msg_callback_arg);
     }
 
     /* Validate header and decode PN. */
     if (!qrx_validate_hdr(qrx, rxe))
         goto malformed;
+
+    if (qrx->msg_callback != NULL)
+        qrx->msg_callback(0, OSSL_QUIC1_VERSION, SSL3_RT_QUIC_PACKET, sop,
+                          eop - sop - rxe->hdr.len, qrx->msg_callback_s,
+                          qrx->msg_callback_arg);
 
     /*
      * The AAD data is the entire (unprotected) packet header including the PN.

@@ -46,6 +46,11 @@ typedef struct ossl_qtx_args_st {
 
     /* Maximum datagram payload length (MDPL) for TX purposes. */
     size_t          mdpl;
+
+    /* Message callback related arguments */
+    ossl_msg_cb msg_callback;
+    void *msg_callback_arg;
+    SSL *msg_callback_s;
 } OSSL_QTX_ARGS;
 
 /* Instantiates a new QTX. */

@@ -737,7 +737,7 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
             do {
                 if (!ossl_quic_wire_decode_pkt_hdr(&pkt,
                         0 /* TODO(QUIC): Not sure how this should be set*/, 1,
-                        &hdr, NULL))
+                        0, &hdr, NULL))
                     goto out;
 
                 /*
