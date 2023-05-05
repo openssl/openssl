@@ -122,8 +122,10 @@ struct quic_channel_st {
      */
     QUIC_CONN_ID                    retry_scid;
 
-    /* Server only: The DCID we currently use to talk to the peer. */
+    /* The DCID we currently use to talk to the peer and its sequence num. */
     QUIC_CONN_ID                    cur_remote_dcid;
+    uint64_t                        cur_remote_seq_num;
+    uint64_t                        cur_retire_prior_to;
     /* Server only: The DCID we currently expect the peer to use to talk to us. */
     QUIC_CONN_ID                    cur_local_dcid;
 

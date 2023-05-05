@@ -1212,7 +1212,7 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_ACTIVE_CONN_ID_LIMIT,
-                                                   4))
+                                                   2))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_DATA,
@@ -1240,16 +1240,17 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
                                                    ossl_quic_rxfc_get_cwm(&ch->max_streams_uni_rxfc)))
         goto err;
 
+    if (!WPACKET_finish(&wpkt))
+        goto err;
+
+    wpkt_valid = 0;
+
     if (!WPACKET_get_total_written(&wpkt, &buf_len))
         goto err;
 
     ch->local_transport_params = (unsigned char *)buf_mem->data;
     buf_mem->data = NULL;
 
-    if (!WPACKET_finish(&wpkt))
-        goto err;
-
-    wpkt_valid = 0;
 
     if (!ossl_quic_tls_set_transport_params(ch->qtls, ch->local_transport_params,
                                             buf_len))
@@ -1470,7 +1471,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
 
     if (ossl_quic_pkt_type_is_encrypted(ch->qrx_pkt->hdr->type)) {
         if (!ch->have_received_enc_pkt) {
-            ch->init_scid = ch->qrx_pkt->hdr->src_conn_id;
+            ch->cur_remote_dcid = ch->init_scid = ch->qrx_pkt->hdr->src_conn_id;
             ch->have_received_enc_pkt = 1;
 
             /*
@@ -2093,6 +2094,104 @@ void ossl_quic_channel_on_remote_conn_close(QUIC_CHANNEL *ch,
     tcause.frame_type = f->frame_type;
 
     ch_start_terminating(ch, &tcause, 0);
+}
+
+static void free_frame_data(unsigned char *buf, size_t buf_len, void *arg)
+{
+    OPENSSL_free(buf);
+}
+
+static int ch_enqueue_retire_conn_id(QUIC_CHANNEL *ch, uint64_t seq_num)
+{
+    BUF_MEM *buf_mem;
+    WPACKET wpkt;
+    size_t l;
+
+    if ((buf_mem = BUF_MEM_new()) == NULL)
+        return 0;
+
+    if (!WPACKET_init(&wpkt, buf_mem))
+        goto err;
+
+    if (!ossl_quic_wire_encode_frame_retire_conn_id(&wpkt, seq_num)) {
+        WPACKET_cleanup(&wpkt);
+        goto err;
+    }
+
+    WPACKET_finish(&wpkt);
+    if (!WPACKET_get_total_written(&wpkt, &l))
+        goto err;
+
+    if (ossl_quic_cfq_add_frame(ch->cfq, 1, QUIC_PN_SPACE_APP,
+                                OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID,
+                                (unsigned char *)buf_mem->data, l,
+                                free_frame_data, NULL) == NULL)
+        goto err;
+
+    buf_mem->data = NULL;
+    BUF_MEM_free(buf_mem);
+    return 1;
+
+err:
+    ossl_quic_channel_raise_protocol_error(ch,
+                                           QUIC_ERR_INTERNAL_ERROR,
+                                           OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
+                                           "internal error enqueueing retire conn id");
+    BUF_MEM_free(buf_mem);
+    return 0;
+}
+
+void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
+                                      OSSL_QUIC_FRAME_NEW_CONN_ID *f)
+{
+    uint64_t new_remote_seq_num = ch->cur_remote_seq_num;
+    uint64_t new_retire_prior_to = ch->cur_retire_prior_to;
+
+    if (!ossl_quic_channel_is_active(ch))
+        return;
+
+    /* We allow only two active connection ids; first check some constraints */
+
+    if (ch->cur_remote_dcid.id_len == 0) {
+        /* Changing from 0 length connection id is disallowed */
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_PROTOCOL_VIOLATION,
+                                               OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
+                                               "zero length connection id in use");
+
+        return;
+    }
+
+    if (f->seq_num > new_remote_seq_num)
+        new_remote_seq_num = f->seq_num;
+    if (f->retire_prior_to > new_retire_prior_to)
+        new_retire_prior_to = f->retire_prior_to;
+
+    if (new_remote_seq_num - new_retire_prior_to > 1
+        /*
+         * RFC allows connection termination if we see 2 times the limit
+         * of conn ids to retire. We are a little bit more liberal.
+         */
+        || new_retire_prior_to - ch->cur_retire_prior_to > 10) {
+        /* Violation of our active conn id limit */
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_CONNECTION_ID_LIMIT_ERROR,
+                                               OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
+                                               "active_connection_id limit violated");
+
+        return;
+    }
+
+    if (new_remote_seq_num > ch->cur_remote_seq_num) {
+        ch->cur_remote_seq_num = new_remote_seq_num;
+        ch->cur_remote_dcid = f->conn_id;
+        ossl_quic_tx_packetiser_set_cur_dcid(ch->txp, &ch->cur_remote_dcid);
+    }
+    while (new_retire_prior_to > ch->cur_retire_prior_to) {
+        if (!ch_enqueue_retire_conn_id(ch, ch->cur_retire_prior_to))
+            break;
+        ++ch->cur_retire_prior_to;
+    }
 }
 
 static void ch_raise_net_error(QUIC_CHANNEL *ch)
