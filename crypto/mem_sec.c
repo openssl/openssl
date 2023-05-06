@@ -66,6 +66,18 @@ VirtualLock(
 # include <sys/stat.h>
 # include <fcntl.h>
 #endif
+#ifndef HAVE_MADVISE
+# if defined(MADV_DONTDUMP)
+#  define HAVE_MADVISE 1
+# else
+#  define HAVE_MADVISE 0
+# endif
+#endif
+#if HAVE_MADVISE
+# undef NO_MADVISE
+#else
+# define NO_MADVISE
+#endif
 
 #define CLEAR(p, s) OPENSSL_cleanse(p, s)
 #ifndef PAGE_SIZE
@@ -567,7 +579,7 @@ static int sh_init(size_t size, size_t minsize)
     if (mlock(sh.arena, sh.arena_size) < 0)
         ret = 2;
 #endif
-#ifdef MADV_DONTDUMP
+#ifndef NO_MADVISE
     if (madvise(sh.arena, sh.arena_size, MADV_DONTDUMP) < 0)
         ret = 2;
 #endif
