@@ -92,7 +92,8 @@ my $guess_patterns = [
     [ 'IRIX64:.*',                  'mips4-sgi-irix64' ],
     [ 'Linux:[2-9]\..*',            '${MACHINE}-whatever-linux2' ],
     [ 'Linux:1\..*',                '${MACHINE}-whatever-linux1' ],
-    [ 'GNU.*',                      'hurd-x86' ],
+    [ 'GNU:.*86-AT386',             'hurd-x86' ],
+    [ 'GNU:.*86_64-AT386',          'hurd-x86_64' ],
     [ 'LynxOS:.*',                  '${MACHINE}-lynx-lynxos' ],
     # BSD/OS always says 386
     [ 'BSD\/OS:4\..*',              'i486-whatever-bsdi4' ],
