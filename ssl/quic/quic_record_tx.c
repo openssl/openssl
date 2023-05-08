@@ -910,8 +910,14 @@ int ossl_qtx_flush_net(OSSL_QTX *qtx)
         /*
          * Remove everything which was successfully sent from the pending queue.
          */
-        for (i = 0; i < wr; ++i)
+        for (i = 0; i < wr; ++i) {
+            if (qtx->msg_callback != NULL)
+                qtx->msg_callback(1, OSSL_QUIC1_VERSION, SSL3_RT_QUIC_DATAGRAM,
+                                msg[i].data, msg[i].data_len,
+                                qtx->msg_callback_s,
+                                qtx->msg_callback_arg);
             qtx_pending_to_free(qtx);
+        }
 
         total_written += wr;
     }
