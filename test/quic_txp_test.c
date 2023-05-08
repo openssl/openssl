@@ -1336,7 +1336,7 @@ static int run_script(const struct script_op *script)
                     goto err;
                 break;
             case OSSL_QUIC_FRAME_TYPE_CRYPTO:
-                if (!TEST_true(ossl_quic_wire_decode_frame_crypto(&h.pkt, &h.frame.crypto)))
+                if (!TEST_true(ossl_quic_wire_decode_frame_crypto(&h.pkt, 0, &h.frame.crypto)))
                     goto err;
                 break;
 
@@ -1348,7 +1348,7 @@ static int run_script(const struct script_op *script)
             case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_FIN:
             case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN:
             case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN_FIN:
-                if (!TEST_true(ossl_quic_wire_decode_frame_stream(&h.pkt, &h.frame.stream)))
+                if (!TEST_true(ossl_quic_wire_decode_frame_stream(&h.pkt, 0, &h.frame.stream)))
                     goto err;
                 break;
 

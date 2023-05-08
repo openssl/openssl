@@ -110,7 +110,7 @@ static int frame_crypto(BIO *bio, PACKET *pkt)
 {
     OSSL_QUIC_FRAME_CRYPTO frame_data;
 
-    if (!ossl_quic_wire_decode_frame_crypto(pkt, &frame_data))
+    if (!ossl_quic_wire_decode_frame_crypto(pkt, 1, &frame_data))
         return 0;
 
     BIO_printf(bio, "    Offset: %lu\n", frame_data.offset);
@@ -173,12 +173,19 @@ static int frame_stream(BIO *bio, PACKET *pkt, uint64_t frame_type)
         return 0;
     }
 
-    if (!ossl_quic_wire_decode_frame_stream(pkt, &frame_data))
+    if (!ossl_quic_wire_decode_frame_stream(pkt, 1, &frame_data))
         return 0;
 
     BIO_printf(bio, "    Stream id: %lu\n", frame_data.stream_id);
     BIO_printf(bio, "    Offset: %lu\n", frame_data.offset);
-    BIO_printf(bio, "    Len: %lu\n", frame_data.len);
+    /*
+     * It would be nice to find a way of passing the implicit length through
+     * to the msg_callback. But this is not currently possible.
+     */
+    if (frame_data.has_explicit_len)
+        BIO_printf(bio, "    Len: %lu\n", frame_data.len);
+    else
+        BIO_puts(bio, "    Len: <implicit length>\n");
 
     return 1;
 }
@@ -532,6 +539,7 @@ int ossl_quic_trace(int write_p, int version, int content_type,
 
     case SSL3_RT_QUIC_FRAME_PADDING:
     case SSL3_RT_QUIC_FRAME_FULL:
+    case SSL3_RT_QUIC_FRAME_HEADER:
         {
             BIO_puts(bio, write_p ? "Sent" : "Received");
             BIO_puts(bio, " Frame: ");
@@ -542,16 +550,6 @@ int ossl_quic_trace(int write_p, int version, int content_type,
                 BIO_puts(bio, "  <error processing frame data>\n");
                 return 0;
             }
-        }
-        break;
-
-    case SSL3_RT_QUIC_FRAME_HEADER:
-        {
-            BIO_puts(bio, write_p ? "Sent" : "Received");
-            BIO_puts(bio, " Frame Data\n");
-
-            /* TODO(QUIC): Implement me */
-            BIO_puts(bio, "  <content skipped>\n");
         }
         break;
 

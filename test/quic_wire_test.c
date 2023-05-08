@@ -261,7 +261,7 @@ static int encode_case_6_dec(PACKET *pkt, ossl_ssize_t fail)
 {
     OSSL_QUIC_FRAME_CRYPTO f = {0};
 
-    if (!TEST_int_eq(ossl_quic_wire_decode_frame_crypto(pkt, &f), fail < 0))
+    if (!TEST_int_eq(ossl_quic_wire_decode_frame_crypto(pkt, 0, &f), fail < 0))
         return 0;
 
     if (fail >= 0)
@@ -358,7 +358,7 @@ static int encode_case_8_dec(PACKET *pkt, ossl_ssize_t fail)
          */
         return 1;
 
-    if (!TEST_int_eq(ossl_quic_wire_decode_frame_stream(pkt, &f), fail < 0))
+    if (!TEST_int_eq(ossl_quic_wire_decode_frame_stream(pkt, 0, &f), fail < 0))
         return 0;
 
     if (fail >= 0)
@@ -413,7 +413,7 @@ static int encode_case_9_dec(PACKET *pkt, ossl_ssize_t fail)
 {
     OSSL_QUIC_FRAME_STREAM f = {0};
 
-    if (!TEST_int_eq(ossl_quic_wire_decode_frame_stream(pkt, &f), fail < 0))
+    if (!TEST_int_eq(ossl_quic_wire_decode_frame_stream(pkt, 0, &f), fail < 0))
         return 0;
 
     if (fail >= 0)
