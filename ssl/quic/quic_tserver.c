@@ -47,7 +47,7 @@ static int alpn_select_cb(SSL *ssl, const unsigned char **out,
                           unsigned char *outlen, const unsigned char *in,
                           unsigned int inlen, void *arg)
 {
-    unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
+    static const unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
 
     if (SSL_select_next_proto((unsigned char **)out, outlen, alpn, sizeof(alpn),
                               in, inlen) != OPENSSL_NPN_NEGOTIATED)
