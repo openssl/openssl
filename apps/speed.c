@@ -3550,11 +3550,12 @@ skip_hmac:
             unsigned char *out = NULL, *send_secret = NULL, *rcv_secret;
             size_t bits;
             char *name;
+            char sfx[100];
             OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
             int use_params = 0;
             enum kem_type_t { KEM_RSA = 1, KEM_EC, KEM_X25519, KEM_X448 } kem_type;
 
-            if (strncmp(kem_name, "rsa", 3) == 0)
+            if (sscanf(kem_name, "rsa%ld%s", &bits, sfx) == 1)
                 kem_type = KEM_RSA;
             else if (strncmp(kem_name, "EC", 2) == 0)
                 kem_type = KEM_EC;
@@ -3571,7 +3572,6 @@ skip_hmac:
             }
 
             if (kem_type == KEM_RSA) {
-                bits = atoi(kem_name + 3);
                 params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
                                                         &bits);
                 use_params = 1;
@@ -3734,6 +3734,7 @@ skip_hmac:
             EVP_PKEY_CTX *sig_verify_ctx = NULL;
             unsigned char md[SHA256_DIGEST_LENGTH];
             unsigned char *sig;
+            char sfx[100];
             size_t md_len = SHA256_DIGEST_LENGTH;
             size_t max_sig_len, sig_len;
             size_t bits;
@@ -3749,8 +3750,7 @@ skip_hmac:
                 ERR_print_errors(bio_err);
             }
 
-            if (strncmp(sig_name, "rsa", 3) == 0) {
-                bits = atoi(sig_name + 3);
+            if (sscanf(sig_name, "rsa%ld%s", &bits, sfx) == 1) {
                 params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
                                                         &bits);
                 use_params = 1;
@@ -3774,7 +3774,7 @@ skip_hmac:
 
             if (sig_gen_ctx == NULL)
                 sig_gen_ctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(),
-                                      (strncmp(sig_name, "rsa", 3) == 0) ? "RSA" : sig_name,
+                                      use_params == 1 ? "RSA" : sig_name,
                                       app_get0_propq());
 
             if (!sig_gen_ctx || EVP_PKEY_keygen_init(sig_gen_ctx) <= 0
@@ -3796,7 +3796,7 @@ skip_hmac:
                                                       app_get0_propq());
             if (sig_sign_ctx == NULL
                 || EVP_PKEY_sign_init(sig_sign_ctx) <= 0
-                || (strncmp(sig_name, "rsa", 3) == 0
+                || (use_params == 1
                     && (EVP_PKEY_CTX_set_rsa_padding(sig_sign_ctx,
                                                      RSA_PKCS1_PADDING) <= 0))
                 || EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len,
@@ -3822,7 +3822,7 @@ skip_hmac:
                                                         app_get0_propq());
             if (sig_verify_ctx == NULL
                 || EVP_PKEY_verify_init(sig_verify_ctx) <= 0
-                || (strncmp(sig_name, "rsa", 3) == 0
+                || (use_params == 1
                   && (EVP_PKEY_CTX_set_rsa_padding(sig_verify_ctx,
                                                    RSA_PKCS1_PADDING) <= 0))) {
                 BIO_printf(bio_err,
