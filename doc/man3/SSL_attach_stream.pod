@@ -87,7 +87,7 @@ SSL_set_default_stream_mode() can be used to configure or disable default stream
 handling. It can only be called on a QUIC connection SSL object prior to any
 default stream being created. If used, it is recommended to call it immediately
 after calling L<SSL_new(3)>, prior to initiating a connection. The argument
-B<mode> may be one of the following options:
+I<mode> may be one of the following options:
 
 =over 4
 

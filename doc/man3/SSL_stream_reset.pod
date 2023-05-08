@@ -22,10 +22,10 @@ The SSL_stream_reset() function resets the send part of a QUIC stream when
 called on a QUIC stream SSL object, or on a QUIC connection SSL object with  a
 default stream attached.
 
-If B<args> is non-NULL, B<args_len> must be set to B<sizeof(*args)>.
+If I<args> is non-NULL, I<args_len> must be set to C<sizeof(*args)>.
 
-B<quic_error_code> is an application-specified error code, which must be in the
-range [0, 2**62-1]. If B<args> is NULL, a value of 0 is used.
+I<quic_error_code> is an application-specified error code, which must be in the
+range [0, 2**62-1]. If I<args> is NULL, a value of 0 is used.
 
 Resetting a stream indicates to an application that the sending part of the
 stream is terminating abnormally. When a stream is reset, the implementation

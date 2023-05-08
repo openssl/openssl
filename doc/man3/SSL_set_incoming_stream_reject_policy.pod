@@ -28,11 +28,11 @@ operation with a default stream on a QUIC connection SSL object are not passed
 remotely-initiated streams by a peer which those applications are not prepared
 to handle.
 
-B<app_error_code> is an application error code which will be used in any QUIC
+I<app_error_code> is an application error code which will be used in any QUIC
 B<STOP_SENDING> or B<RESET_STREAM> frames generated to implement the rejection
 policy. The default application error code is 0.
 
-The valid values for B<policy> are:
+The valid values for I<policy> are:
 
 =over 4
 
