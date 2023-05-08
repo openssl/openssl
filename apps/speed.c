@@ -3548,14 +3548,14 @@ skip_hmac:
             size_t send_secret_len, out_len;
             size_t rcv_secret_len;
             unsigned char *out = NULL, *send_secret = NULL, *rcv_secret;
-            size_t bits;
+            unsigned int bits;
             char *name;
             char sfx[100];
             OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
             int use_params = 0;
             enum kem_type_t { KEM_RSA = 1, KEM_EC, KEM_X25519, KEM_X448 } kem_type;
 
-            if (sscanf(kem_name, "rsa%ld%s", &bits, sfx) == 1)
+            if (sscanf(kem_name, "rsa%u%s", &bits, sfx) == 1)
                 kem_type = KEM_RSA;
             else if (strncmp(kem_name, "EC", 2) == 0)
                 kem_type = KEM_EC;
@@ -3573,7 +3573,7 @@ skip_hmac:
 
             if (kem_type == KEM_RSA) {
                 params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
-                                                        &bits);
+                                                        (size_t *)&bits);
                 use_params = 1;
             } else if (kem_type == KEM_EC) {
                 name = (char *)(kem_name + 2);
@@ -3737,7 +3737,7 @@ skip_hmac:
             char sfx[100];
             size_t md_len = SHA256_DIGEST_LENGTH;
             size_t max_sig_len, sig_len;
-            size_t bits;
+            unsigned int bits;
             OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
             int use_params = 0;
 
@@ -3750,9 +3750,9 @@ skip_hmac:
                 ERR_print_errors(bio_err);
             }
 
-            if (sscanf(sig_name, "rsa%ld%s", &bits, sfx) == 1) {
+            if (sscanf(sig_name, "rsa%u%s", &bits, sfx) == 1) {
                 params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
-                                                        &bits);
+                                                        (size_t *)&bits);
                 use_params = 1;
             }
 
