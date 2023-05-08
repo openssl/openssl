@@ -31,6 +31,7 @@ static void cert_msg(const char *func, const char *file, int lineno,
     OPENSSL_free(subj);
 }
 
+/* use |type_CA| -1 (no CA type check) or 0 (must be EE) or 1 (must be CA) */
 static int ossl_X509_check(OSSL_CMP_CTX *ctx, const char *source, X509 *cert,
                            int type_CA, const X509_VERIFY_PARAM *vpm)
 {
@@ -47,7 +48,7 @@ static int ossl_X509_check(OSSL_CMP_CTX *ctx, const char *source, X509 *cert,
     if (type_CA >= 0 && (ex_flags & EXFLAG_V1) == 0) {
         int is_CA = (ex_flags & EXFLAG_CA) != 0;
 
-        if ((type_CA == 1) != is_CA) {
+        if ((type_CA != 0) != is_CA) {
             cert_msg(OPENSSL_FUNC, OPENSSL_FILE, OPENSSL_LINE, level, ctx,
                      source, cert,
                      is_CA ? "is not an EE cert" : "is not a CA cert");
@@ -82,10 +83,9 @@ static OSSL_CMP_ITAV *get_genm_itav(OSSL_CMP_CTX *ctx,
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         goto err;
     }
-    if (OSSL_CMP_CTX_get_status(ctx) != -1
-        /* TODO use OSSL_CMP_PKISTATUS_request when #19205 is merged */) {
+    if (OSSL_CMP_CTX_get_status(ctx) != OSSL_CMP_PKISTATUS_unspecified) {
         ERR_raise_data(ERR_LIB_CMP, CMP_R_UNCLEAN_CTX,
-                       "should call CMPclient_reinit() before");
+                       "client context in unsuitable state; should call CMPclient_reinit() before");
         goto err;
     }
 
@@ -94,11 +94,7 @@ static OSSL_CMP_ITAV *get_genm_itav(OSSL_CMP_CTX *ctx,
     req = NULL;
     itavs = OSSL_CMP_exec_GENM_ses(ctx);
     if (itavs == NULL) {
-        if (1 /*
-               * TODO when PR #19205 is merged: replace '1' by
-               * OSSL_CMP_CTX_get_status(ctx) != OSSL_CMP_PKISTATUS_request
-               */
-            )
+        if (OSSL_CMP_CTX_get_status(ctx) != OSSL_CMP_PKISTATUS_request)
             ERR_raise_data(ERR_LIB_CMP, CMP_R_GETTING_GENP,
                            "with infoType %s", desc);
         return NULL;
@@ -106,7 +102,7 @@ static OSSL_CMP_ITAV *get_genm_itav(OSSL_CMP_CTX *ctx,
 
     if ((n = sk_OSSL_CMP_ITAV_num(itavs)) <= 0) {
         ERR_raise_data(ERR_LIB_CMP, CMP_R_INVALID_GENP,
-                       "infoType %s requested, but no ITAV included", desc);
+                       "response on genm requesting infoType %s does not include suitable value", desc);
         sk_OSSL_CMP_ITAV_free(itavs);
         return NULL;
     }

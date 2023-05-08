@@ -2849,11 +2849,12 @@ static int do_genm(OSSL_CMP_CTX *ctx)
         if (!OSSL_CMP_get_caCerts(ctx, &cacerts))
             return 0;
 
-        /* TODO possibly check authorization of sender/origin */
+        /* could check authorization of sender/origin at this point */
         if (cacerts == NULL) {
-            CMP_warn("no CA certificate available");
+            CMP_warn("no CA certificates providedd by server");
         } else if (save_free_certs(cacerts, opt_cacertsout, "CA") < 0) {
-            CMP_err1("Failed to store caCerts from genp in %s", opt_cacertsout);
+            CMP_err1("Failed to store CA certficates from genp in %s",
+                     opt_cacertsout);
             return 0;
         }
         return 1;
@@ -2862,12 +2863,13 @@ static int do_genm(OSSL_CMP_CTX *ctx)
         STACK_OF(OSSL_CMP_ITAV) *itavs;
 
         if (opt_infotype != NID_undef) {
-            req = OSSL_CMP_ITAV_create(OBJ_nid2obj(opt_infotype), NULL);
-
-            CMP_warn1("No specific support for -infotype %s avaiable",
+            CMP_warn1("No specific support for -infotype %s available",
                       opt_infotype_s);
+
+            req = OSSL_CMP_ITAV_create(OBJ_nid2obj(opt_infotype), NULL);
             if (req == NULL || !OSSL_CMP_CTX_push0_genm_ITAV(ctx, req)) {
-                CMP_err("Failed to create ITAV for genm");
+                CMP_err1("Failed to create genm for -infotype %s",
+                         opt_infotype_s);
                 return 0;
             }
         }
@@ -2878,12 +2880,8 @@ static int do_genm(OSSL_CMP_CTX *ctx)
             sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
             return res;
         }
-        if (1 /*
-               * TOOD when PR #19205 is merged: replace '1' by
-               * OSSL_CMP_CTX_get_status(ctx) != OSSL_CMP_PKISTATUS_request
-               */
-            )
-            CMP_err("Could not obtain valid response message on genm");
+        if (OSSL_CMP_CTX_get_status(ctx) != OSSL_CMP_PKISTATUS_request)
+            CMP_err("Did not receive response on genm or genp is not valid");
         return 0;
     }
 }
