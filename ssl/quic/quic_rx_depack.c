@@ -196,7 +196,7 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CHANNEL *ch,
 
     *datalen = 0;
 
-    if (!ossl_quic_wire_decode_frame_crypto(pkt, &f)) {
+    if (!ossl_quic_wire_decode_frame_crypto(pkt, 0, &f)) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                QUIC_ERR_FRAME_ENCODING_ERROR,
                                                OSSL_QUIC_FRAME_TYPE_CRYPTO,
@@ -395,7 +395,7 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
 
     *datalen = 0;
 
-    if (!ossl_quic_wire_decode_frame_stream(pkt, &frame_data)) {
+    if (!ossl_quic_wire_decode_frame_stream(pkt, 0, &frame_data)) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                QUIC_ERR_FRAME_ENCODING_ERROR,
                                                frame_type,

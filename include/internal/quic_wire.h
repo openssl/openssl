@@ -557,9 +557,11 @@ int ossl_quic_wire_decode_frame_stop_sending(PACKET *pkt,
  * Decodes a QUIC CRYPTO frame.
  *
  * f->data is set to point inside the packet buffer inside the PACKET, therefore
- * it is safe to access for as long as the packet buffer exists.
+ * it is safe to access for as long as the packet buffer exists. If nodata is
+ * set to 1 then reading the PACKET stops after the frame header and f->data is
+ * set to NULL.
  */
-int ossl_quic_wire_decode_frame_crypto(PACKET *pkt,
+int ossl_quic_wire_decode_frame_crypto(PACKET *pkt, int nodata,
                                        OSSL_QUIC_FRAME_CRYPTO *f);
 
 /*
@@ -572,6 +574,10 @@ int ossl_quic_wire_decode_frame_new_token(PACKET               *pkt,
 
 /*
  * Decodes a QUIC STREAM frame.
+ *
+ * If nodata is set to 1 then reading the PACKET stops after the frame header
+ * and f->data is set to NULL. In this case f->len will also be 0 in the event
+ * that "has_explicit_len" is 0.
  *
  * If the frame did not contain an offset field, f->offset is set to 0, as the
  * absence of an offset field is equivalent to an offset of 0.
@@ -595,7 +601,7 @@ int ossl_quic_wire_decode_frame_new_token(PACKET               *pkt,
  * f->is_fin is set according to whether the frame was marked as ending the
  * stream.
  */
-int ossl_quic_wire_decode_frame_stream(PACKET *pkt,
+int ossl_quic_wire_decode_frame_stream(PACKET *pkt, int nodata,
                                        OSSL_QUIC_FRAME_STREAM *f);
 
 /*

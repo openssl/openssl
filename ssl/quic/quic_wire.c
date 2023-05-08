@@ -591,6 +591,7 @@ int ossl_quic_wire_decode_frame_stop_sending(PACKET *pkt,
 }
 
 int ossl_quic_wire_decode_frame_crypto(PACKET *pkt,
+                                       int nodata,
                                        OSSL_QUIC_FRAME_CRYPTO *f)
 {
     if (!expect_frame_header(pkt, OSSL_QUIC_FRAME_TYPE_CRYPTO)
@@ -599,13 +600,17 @@ int ossl_quic_wire_decode_frame_crypto(PACKET *pkt,
             || f->len > SIZE_MAX /* sizeof(uint64_t) > sizeof(size_t)? */)
         return 0;
 
-    if (PACKET_remaining(pkt) < f->len)
-        return 0;
+    if (nodata) {
+        f->data = NULL;
+    } else {
+        if (PACKET_remaining(pkt) < f->len)
+            return 0;
 
-    f->data = PACKET_data(pkt);
+        f->data = PACKET_data(pkt);
 
-    if (!PACKET_forward(pkt, (size_t)f->len))
-        return 0;
+        if (!PACKET_forward(pkt, (size_t)f->len))
+            return 0;
+    }
 
     return 1;
 }
@@ -633,6 +638,7 @@ int ossl_quic_wire_decode_frame_new_token(PACKET               *pkt,
 }
 
 int ossl_quic_wire_decode_frame_stream(PACKET *pkt,
+                                       int nodata,
                                        OSSL_QUIC_FRAME_STREAM *f)
 {
     uint64_t frame_type;
@@ -658,14 +664,21 @@ int ossl_quic_wire_decode_frame_stream(PACKET *pkt,
         if (!PACKET_get_quic_vlint(pkt, &f->len))
             return 0;
     } else {
-        f->len = PACKET_remaining(pkt);
+        if (nodata)
+            f->len = 0;
+        else
+            f->len = PACKET_remaining(pkt);
     }
 
-    f->data = PACKET_data(pkt);
+    if (nodata) {
+        f->data = NULL;
+    } else {
+        f->data = PACKET_data(pkt);
 
-    if (f->len > SIZE_MAX /* sizeof(uint64_t) > sizeof(size_t)? */
-        || !PACKET_forward(pkt, (size_t)f->len))
-        return 0;
+        if (f->len > SIZE_MAX /* sizeof(uint64_t) > sizeof(size_t)? */
+            || !PACKET_forward(pkt, (size_t)f->len))
+            return 0;
+    }
 
     return 1;
 }
