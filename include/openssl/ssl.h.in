@@ -2343,7 +2343,7 @@ typedef struct ssl_conn_close_info_st {
     uint64_t error_code;
     char     *reason;
     size_t    reason_len;
-    char      is_local, is_transport;
+    int       is_local, is_transport;
 } SSL_CONN_CLOSE_INFO;
 
 __owur int SSL_get_conn_close_info(SSL *ssl,
