@@ -197,6 +197,7 @@ typedef int CRYPTO_REF_COUNT;
 
 # define CRYPTO_UP_REF(val, ret, lock) CRYPTO_atomic_add(val, 1, ret, lock)
 # define CRYPTO_DOWN_REF(val, ret, lock) CRYPTO_atomic_add(val, -1, ret, lock)
+# define CRYPTO_GET_REF(val, ret, lock) CRYPTO_atomic_load(val, ret, lock)
 
 # endif
 
