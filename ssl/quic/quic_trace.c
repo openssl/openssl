@@ -37,26 +37,40 @@ static const char *packet_type(int type)
     }
 }
 
-static const char *conn_id(QUIC_CONN_ID *id, char *buf, size_t buflen)
+/* Print a non-NUL terminated string to BIO */
+static void put_str(BIO *bio, char *str, size_t slen)
 {
     size_t i;
-    char *obuf = buf;
 
-    if (id->id_len == 0)
-        return "<zero length id>";
+    for (i = 0; i < slen; i++)
+        BIO_printf(bio, "%c", str[i]);
+}
 
-    if ((((size_t)id->id_len * 2) + 2) > buflen - 1)
-        return "<id too long>"; /* Should never happen */
+static void put_data(BIO *bio, const uint8_t *data, size_t datalen)
+{
+    size_t i;
 
-    buf[0] = '0';
-    buf[1]= 'x';
-    buf += 2;
-    buflen -= 2;
+    for (i = 0; i < datalen; i++)
+        BIO_printf(bio, "%02x", data[i]);
+}
 
-    for (i = 0; i < id->id_len; i++, buflen -= 2, buf += 2)
-        BIO_snprintf(buf, buflen, "%02x", id->id[i]);
+static void put_conn_id(BIO *bio, QUIC_CONN_ID *id)
+{
+    if (id->id_len == 0) {
+        BIO_puts(bio, "<zero length id>");
+        return;
+    }
 
-    return obuf;
+    BIO_puts(bio, "0x");
+    put_data(bio, id->id, id->id_len);
+}
+
+static void put_token(BIO *bio, const uint8_t *token, size_t token_len)
+{
+    if (token_len == 0)
+        BIO_puts(bio, "<zerlo length token>");
+    else
+        put_data(bio, token, token_len);
 }
 
 static int frame_ack(BIO *bio, PACKET *pkt)
@@ -64,6 +78,7 @@ static int frame_ack(BIO *bio, PACKET *pkt)
     OSSL_QUIC_FRAME_ACK ack;
     OSSL_QUIC_ACK_RANGE *ack_ranges = NULL;
     uint64_t total_ranges = 0;
+    uint64_t i;
 
     if (!ossl_quic_wire_peek_frame_ack_num_ranges(pkt, &total_ranges)
         /* In case sizeof(uint64_t) > sizeof(size_t) */
@@ -75,10 +90,21 @@ static int frame_ack(BIO *bio, PACKET *pkt)
     ack.ack_ranges = ack_ranges;
     ack.num_ack_ranges = (size_t)total_ranges;
 
+    /* Ack delay exponent is 0, so we can get the raw delay time below */
     if (!ossl_quic_wire_decode_frame_ack(pkt, 0, &ack, NULL))
         return 0;
 
-    /* TODO(QUIC): Display the ack data here */
+    BIO_printf(bio, "    Largest acked: %lu\n", ack.ack_ranges[0].end);
+    BIO_printf(bio, "    Ack delay (raw) %lu\n", ossl_time2ticks(ack.delay_time));
+    BIO_printf(bio, "    Ack range count: %lu\n", total_ranges - 1);
+    BIO_printf(bio, "    First ack range: %lu\n",
+               ack.ack_ranges[0].end - ack.ack_ranges[0].start);
+    for (i = 1; i < total_ranges; i++) {
+        BIO_printf(bio, "    Gap: %lu\n",
+                   ack.ack_ranges[i - 1].start - ack.ack_ranges[i].end - 2);
+        BIO_printf(bio, "    Ack range len: %lu\n",
+                   ack.ack_ranges[i].end - ack.ack_ranges[i].start);
+    }
 
     OPENSSL_free(ack_ranges);
     return 1;
@@ -91,7 +117,9 @@ static int frame_reset_stream(BIO *bio, PACKET *pkt)
     if (!ossl_quic_wire_decode_frame_reset_stream(pkt, &frame_data))
         return 0;
 
-    /* TODO(QUIC): Display reset stream data here */
+    BIO_printf(bio, "    Stream id: %lu\n", frame_data.stream_id);
+    BIO_printf(bio, "    App Protocol Error Code: %lu\n", frame_data.app_error_code);
+    BIO_printf(bio, "    Final size: %lu\n", frame_data.final_size);
 
     return 1;
 }
@@ -102,6 +130,9 @@ static int frame_stop_sending(BIO *bio, PACKET *pkt)
 
     if (!ossl_quic_wire_decode_frame_stop_sending(pkt, &frame_data))
         return 0;
+
+    BIO_printf(bio, "    Stream id: %lu\n", frame_data.stream_id);
+    BIO_printf(bio, "    App Protocol Error Code: %lu\n", frame_data.app_error_code);
 
     return 1;
 }
@@ -126,6 +157,10 @@ static int frame_new_token(BIO *bio, PACKET *pkt)
 
     if (!ossl_quic_wire_decode_frame_new_token(pkt, &token, &token_len))
         return 0;
+
+    BIO_puts(bio, "    Token: ");
+    put_token(bio, token, token_len);
+    BIO_puts(bio, "\n");
 
     return 1;
 }
@@ -197,6 +232,8 @@ static int frame_max_data(BIO *bio, PACKET *pkt)
     if (!ossl_quic_wire_decode_frame_max_data(pkt, &max_data))
         return 0;
 
+    BIO_printf(bio, "    Max Data: %lu\n", max_data);
+
     return 1;
 }
 
@@ -209,6 +246,8 @@ static int frame_max_stream_data(BIO *bio, PACKET *pkt)
                                                      &max_stream_data))
         return 0;
 
+    BIO_printf(bio, "    Max Stream Data: %lu\n", max_stream_data);
+
     return 1;
 }
 
@@ -219,6 +258,8 @@ static int frame_max_streams(BIO *bio, PACKET *pkt)
     if (!ossl_quic_wire_decode_frame_max_streams(pkt, &max_streams))
         return 0;
 
+    BIO_printf(bio, "    Max Streams: %lu\n", max_streams);
+
     return 1;
 }
 
@@ -228,6 +269,8 @@ static int frame_data_blocked(BIO *bio, PACKET *pkt)
 
     if (!ossl_quic_wire_decode_frame_data_blocked(pkt, &max_data))
         return 0;
+
+    BIO_printf(bio, "    Max Data: %lu\n", max_data);
 
     return 1;
 }
@@ -241,6 +284,9 @@ static int frame_stream_data_blocked(BIO *bio, PACKET *pkt)
                                                          &max_data))
         return 0;
 
+    BIO_printf(bio, "    Stream id: %lu\n", stream_id);
+    BIO_printf(bio, "    Max Data: %lu\n", max_data);
+
     return 1;
 }
 
@@ -250,6 +296,8 @@ static int frame_streams_blocked(BIO *bio, PACKET *pkt)
 
     if (!ossl_quic_wire_decode_frame_streams_blocked(pkt, &max_data))
         return 0;
+
+    BIO_printf(bio, "    Max Data: %lu\n", max_data);
 
     return 1;
 }
@@ -261,6 +309,14 @@ static int frame_new_conn_id(BIO *bio, PACKET *pkt)
     if (!ossl_quic_wire_decode_frame_new_conn_id(pkt, &frame_data))
         return 0;
 
+    BIO_printf(bio, "    Sequence Number: %lu\n", frame_data.seq_num);
+    BIO_printf(bio, "    Retire prior to: %lu\n", frame_data.retire_prior_to);
+    BIO_puts(bio, "    Connection id: ");
+    put_conn_id(bio, &frame_data.conn_id);
+    BIO_puts(bio, "\n    Stateless Reset Token: ");
+    put_data(bio, frame_data.stateless_reset_token, 16);
+    BIO_puts(bio, "\n");
+
     return 1;
 }
 
@@ -271,25 +327,31 @@ static int frame_retire_conn_id(BIO *bio, PACKET *pkt)
     if (!ossl_quic_wire_decode_frame_retire_conn_id(pkt, &seq_num))
         return 0;
 
+    BIO_printf(bio, "    Sequence Number: %lu\n", seq_num);
+
     return 1;
 }
 
 static int frame_path_challenge(BIO *bio, PACKET *pkt)
 {
-    uint64_t frame_data = 0;
+    uint64_t data = 0;
 
-    if (!ossl_quic_wire_decode_frame_path_challenge(pkt, &frame_data))
+    if (!ossl_quic_wire_decode_frame_path_challenge(pkt, &data))
         return 0;
+
+    BIO_printf(bio, "    Data: %016lx\n", data);
 
     return 1;
 }
 
 static int frame_path_response(BIO *bio, PACKET *pkt)
 {
-    uint64_t frame_data = 0;
+    uint64_t data = 0;
 
-    if (!ossl_quic_wire_decode_frame_path_response(pkt, &frame_data))
+    if (!ossl_quic_wire_decode_frame_path_response(pkt, &data))
         return 0;
+
+    BIO_printf(bio, "    Data: %016lx\n", data);
 
     return 1;
 }
@@ -300,6 +362,11 @@ static int frame_conn_closed(BIO *bio, PACKET *pkt)
 
     if (!ossl_quic_wire_decode_frame_conn_close(pkt, &frame_data))
         return 0;
+
+    BIO_printf(bio, "    Error Code: %lu\n", frame_data.error_code);
+    BIO_puts(bio, "    Reason: ");
+    put_str(bio, frame_data.reason, frame_data.reason_len);
+    BIO_puts(bio, "\n");
 
     return 1;
 }
@@ -488,11 +555,6 @@ int ossl_quic_trace(int write_p, int version, int content_type,
     case SSL3_RT_QUIC_PACKET:
         {
             QUIC_PKT_HDR hdr;
-            /*
-             * Max Conn id is 20 bytes (40 hex digits) plus "0x" bytes plus NUL
-             * terminator
-             */
-            char tmpbuf[43];
             size_t i;
 
             if (!PACKET_buf_init(&pkt, buf, msglen))
@@ -510,20 +572,18 @@ int ossl_quic_trace(int write_p, int version, int content_type,
             BIO_printf(bio, "  Packet Type: %s\n", packet_type(hdr.type));
             if (hdr.type != QUIC_PKT_TYPE_1RTT)
                 BIO_printf(bio, "  Version: 0x%08x\n", hdr.version);
-            BIO_printf(bio, "  Destination Conn Id: %s\n",
-                       conn_id(&hdr.dst_conn_id, tmpbuf, sizeof(tmpbuf)));
-            if (hdr.type != QUIC_PKT_TYPE_1RTT)
-                BIO_printf(bio, "  Source Conn Id: %s\n",
-                           conn_id(&hdr.src_conn_id, tmpbuf, sizeof(tmpbuf)));
+            BIO_puts(bio, "  Destination Conn Id: ");
+            put_conn_id(bio, &hdr.dst_conn_id);
+            BIO_puts(bio, "\n");
+            if (hdr.type != QUIC_PKT_TYPE_1RTT) {
+                BIO_puts(bio, "  Source Conn Id: ");
+                put_conn_id(bio, &hdr.src_conn_id);
+                BIO_puts(bio, "\n");
+            }
             BIO_printf(bio, "  Payload length: %zu\n", hdr.len);
             if (hdr.type == QUIC_PKT_TYPE_INITIAL) {
                 BIO_puts(bio, "  Token: ");
-                if (hdr.token_len == 0) {
-                    BIO_puts(bio, "<zerlo length token>");
-                } else {
-                    for (i = 0; i < hdr.token_len; i++)
-                        BIO_printf(bio, "%02x", hdr.token[i]);
-                }
+                put_token(bio, hdr.token, hdr.token_len);
                 BIO_puts(bio, "\n");
             }
             if (hdr.type != QUIC_PKT_TYPE_VERSION_NEG
