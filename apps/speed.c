@@ -3555,6 +3555,7 @@ skip_hmac:
             int use_params = 0;
             enum kem_type_t { KEM_RSA = 1, KEM_EC, KEM_X25519, KEM_X448 } kem_type;
 
+            /* no string after rsa<bitcnt> permitted: */
             if (sscanf(kem_name, "rsa%u%s", &bits, sfx) == 1)
                 kem_type = KEM_RSA;
             else if (strncmp(kem_name, "EC", 2) == 0)
@@ -3750,6 +3751,7 @@ skip_hmac:
                 ERR_print_errors(bio_err);
             }
 
+            /* no string after rsa<bitcnt> permitted: */
             if (sscanf(sig_name, "rsa%u%s", &bits, sfx) == 1) {
                 params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
                                                         (size_t *)&bits);
