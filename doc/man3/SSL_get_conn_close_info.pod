@@ -24,41 +24,41 @@ SSL_get_conn_close_info - get information about why a QUIC connection was closed
 The SSL_get_conn_close_info() function provides information about why and how a
 QUIC connection was closed.
 
-Connection closure information is written to B<*info>, which must be non-NULL.
-B<info_len> must be set to B<sizeof(*info)>.
+Connection closure information is written to I<*info>, which must be non-NULL.
+I<info_len> must be set to C<sizeof(*info)>.
 
 The following fields are set:
 
 =over 4
 
-=item B<error_code>
+=item I<error_code>
 
 This is a 62-bit QUIC error code. It is either a 62-bit application error code
-(if B<is_transport> is 0) or a  62-bit standard QUIC transport error code (if
-B<is_transport> is 1).
+(if I<is_transport> is 0) or a  62-bit standard QUIC transport error code (if
+I<is_transport> is 1).
 
-=item B<reason>
+=item I<reason>
 
 If non-NULL, this is intended to be a UTF-8 textual string briefly describing
 the reason for connection closure. The length of the reason string in bytes is
-given in B<reason_len>. While, if non-NULL, OpenSSL guarantees that this string
+given in I<reason_len>. While, if non-NULL, OpenSSL guarantees that this string
 will be zero terminated, consider that this buffer may originate from the
 (untrusted) peer and thus may also contain zero bytes elsewhere. Therefore, use
-of B<reason_len> is recommended.
+of I<reason_len> is recommended.
 
 While it is intended as per the QUIC protocol that this be a UTF-8 string, there
 is no guarantee that this is the case for strings received from the peer.
 
-=item B<is_local>
+=item I<is_local>
 
 If 1, connection closure was locally triggered. This could be due to an
-application request (e.g. if B<is_transport> is 0), or (if B<is_transport> is 1)
+application request (e.g. if I<is_transport> is 0), or (if I<is_transport> is 1)
 due to logic internal to the QUIC implementation (for example, if the peer
 engages in a protocol violation, or an idle timeout occurs).
 
 If 0, connection closure was remotely triggered.
 
-=item B<is_transport>
+=item I<is_transport>
 
 If 1, connection closure was triggered for QUIC protocol reasons.
 

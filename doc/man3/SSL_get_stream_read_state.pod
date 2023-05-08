@@ -36,24 +36,24 @@ They both return one of the following values:
 
 =over 4
 
-=item SSL_STREAM_STATE_NONE
+=item B<SSL_STREAM_STATE_NONE>
 
 This value is returned if called on a non-QUIC SSL object, or on a QUIC
 connection SSL object without a default stream attached.
 
-=item SSL_STREAM_STATE_OK
+=item B<SSL_STREAM_STATE_OK>
 
 This value is returned on a stream which has not been concluded and remains
 healthy.
 
-=item SSL_STREAM_STATE_WRONG_DIR
+=item B<SSL_STREAM_STATE_WRONG_DIR>
 
 This value is returned if SSL_get_stream_read_state() is called on a
 locally-initiated (and thus send-only) unidirectional stream, or, conversely, if
 SSL_get_stream_write_state() is called on a remotely-initiated (and thus
 receive-only) unidirectional stream.
 
-=item SSL_STREAM_STATE_FINISHED
+=item B<SSL_STREAM_STATE_FINISHED>
 
 For SSL_get_stream_read_state(), this value is returned when the remote peer has
 signalled the end of the receiving part of the stream. Note that there may still
@@ -64,7 +64,7 @@ For SSL_get_stream_write_state(), this value is returned when the local
 application has concluded the stream using L<SSL_stream_conclude(3)>. Future
 L<SSL_write(3)> calls will not succeed.
 
-=item SSL_STREAM_STATE_RESET_LOCAL
+=item B<SSL_STREAM_STATE_RESET_LOCAL>
 
 This value is returned when the applicable stream part was reset by the local
 application.
@@ -83,7 +83,7 @@ When this value is returned, the application error code which was signalled can
 be obtained by calling SSL_get_stream_read_error_code() or
 SSL_get_stream_write_error_code() as appropriate.
 
-=item SSL_STREAM_STATE_RESET_REMOTE
+=item B<SSL_STREAM_STATE_RESET_REMOTE>
 
 This value is returned when the applicable stream part was reset by the remote
 peer.
@@ -101,7 +101,7 @@ When this value is returned, the application error code which was signalled can
 be obtained by calling SSL_get_stream_read_error_code() or
 SSL_get_stream_write_error_code() as appropriate.
 
-=item SSL_STREAM_STATE_CONN_CLOSED
+=item B<SSL_STREAM_STATE_CONN_CLOSED>
 
 The QUIC connection to which the stream belongs was closed. You can obtain
 information about the circumstances of this closure using
@@ -115,7 +115,7 @@ SSL_get_stream_write_state() will also return this state.
 SSL_get_stream_read_error_code() and SSL_get_stream_write_error_code() provide
 the application error code which was signalled during non-normal termination of
 the receiving or sending parts of a stream, respectively. On success, the
-application error code is written to B<*app_error_code>.
+application error code is written to I<*app_error_code>.
 
 =head1 NOTES
 

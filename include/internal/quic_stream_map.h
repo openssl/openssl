@@ -69,7 +69,7 @@ struct quic_stream_st {
 
     /*
      * Application Error Code (AEC) for incoming RESET_STREAM frame.
-     * This  is only valid if peer_reset_stream is 1.
+     * This is only valid if peer_reset_stream is 1.
      */
     uint64_t        peer_reset_stream_aec;
 
