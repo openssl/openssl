@@ -2,25 +2,25 @@
 
 =head1 NAME
 
-SSL_set_incoming_stream_reject_policy, SSL_INCOMING_STREAM_REJECT_POLICY_AUTO,
-SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT,
-SSL_INCOMING_STREAM_REJECT_POLICY_REJECT - manage the QUIC incoming stream
+SSL_set_incoming_stream_policy, SSL_INCOMING_STREAM_POLICY_AUTO,
+SSL_INCOMING_STREAM_POLICY_ACCEPT,
+SSL_INCOMING_STREAM_POLICY_REJECT - manage the QUIC incoming stream
 rejection policy
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
- #define SSL_INCOMING_STREAM_REJECT_POLICY_AUTO
- #define SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT
- #define SSL_INCOMING_STREAM_REJECT_POLICY_REJECT
+ #define SSL_INCOMING_STREAM_POLICY_AUTO
+ #define SSL_INCOMING_STREAM_POLICY_ACCEPT
+ #define SSL_INCOMING_STREAM_POLICY_REJECT
 
- int SSL_set_incoming_stream_reject_policy(SSL *conn, int policy,
+ int SSL_set_incoming_stream_policy(SSL *conn, int policy,
                                            uint64_t app_error_code);
 
 =head1 DESCRIPTION
 
-SSL_set_incoming_stream_reject_policy() policy changes the incoming stream
+SSL_set_incoming_stream_policy() policy changes the incoming stream
 rejection policy for a QUIC connection. Depending on the policy configured,
 OpenSSL QUIC may automatically reject incoming streams initiated by the peer.
 This is intended to ensure that legacy applications using single-stream
@@ -36,7 +36,7 @@ The valid values for I<policy> are:
 
 =over 4
 
-=item SSL_INCOMING_STREAM_REJECT_POLICY_AUTO
+=item SSL_INCOMING_STREAM_POLICY_AUTO
 
 This is the default setting. Incoming streams are accepted according to the
 following rules:
@@ -64,12 +64,12 @@ accepted.
 
 =back
 
-=item SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT
+=item SSL_INCOMING_STREAM_POLICY_ACCEPT
 
 Always accept incoming streams, allowing them to be dequeued using
 L<SSL_accept_stream(3)>.
 
-=item SSL_INCOMING_STREAM_REJECT_POLICY_REJECT
+=item SSL_INCOMING_STREAM_POLICY_REJECT
 
 Always reject incoming streams.
 
@@ -94,7 +94,7 @@ L<SSL_set_default_stream_mode(3)>, L<SSL_accept_stream(3)>
 
 =head1 HISTORY
 
-SSL_set_incoming_stream_reject_policy() was added in OpenSSL 3.2.
+SSL_set_incoming_stream_policy() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

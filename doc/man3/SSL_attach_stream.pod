@@ -129,8 +129,8 @@ object if the default stream mode is set to B<SSL_DEFAULT_STREAM_MODE_NONE>, or
 if the QUIC connection SSL object previously had a default stream which was
 detached using SSL_detach_stream().
 
-L<SSL_set_incoming_stream_reject_policy(3)> interacts significantly with the
-default stream functionality.
+L<SSL_set_incoming_stream_policy(3)> interacts significantly with the default
+stream functionality.
 
 =head1 RETURN VALUES
 
@@ -153,7 +153,7 @@ object.
 =head1 SEE ALSO
 
 L<SSL_new_stream(3)>, L<SSL_accept_stream(3)>, L<SSL_free(3)>,
-L<SSL_set_incoming_stream_reject_policy(3)>
+L<SSL_set_incoming_stream_policy(3)>
 
 =head1 HISTORY
 

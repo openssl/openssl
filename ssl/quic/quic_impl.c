@@ -303,8 +303,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->default_stream_mode     = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
     qc->default_ssl_mode        = qc->ssl.ctx->mode;
     qc->default_blocking        = 1;
-    qc->incoming_stream_reject_policy
-        = SSL_INCOMING_STREAM_REJECT_POLICY_AUTO;
+    qc->incoming_stream_policy  = SSL_INCOMING_STREAM_POLICY_AUTO;
     qc->last_error              = SSL_ERROR_NONE;
 
     if (!create_channel(qc))
@@ -2238,39 +2237,39 @@ int ossl_quic_attach_stream(SSL *conn, SSL *stream)
 }
 
 /*
- * SSL_set_incoming_stream_reject_policy
- * -------------------------------------
+ * SSL_set_incoming_stream_policy
+ * ------------------------------
  */
 QUIC_NEEDS_LOCK
-static int qc_get_effective_incoming_stream_reject_policy(QUIC_CONNECTION *qc)
+static int qc_get_effective_incoming_stream_policy(QUIC_CONNECTION *qc)
 {
-    switch (qc->incoming_stream_reject_policy) {
-        case SSL_INCOMING_STREAM_REJECT_POLICY_AUTO:
+    switch (qc->incoming_stream_policy) {
+        case SSL_INCOMING_STREAM_POLICY_AUTO:
             if ((qc->default_xso == NULL && !qc->default_xso_created)
                 || qc->default_stream_mode == SSL_DEFAULT_STREAM_MODE_NONE)
-                return SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT;
+                return SSL_INCOMING_STREAM_POLICY_ACCEPT;
             else
-                return SSL_INCOMING_STREAM_REJECT_POLICY_REJECT;
+                return SSL_INCOMING_STREAM_POLICY_REJECT;
 
         default:
-            return qc->incoming_stream_reject_policy;
+            return qc->incoming_stream_policy;
     }
 }
 
 QUIC_NEEDS_LOCK
 static void qc_update_reject_policy(QUIC_CONNECTION *qc)
 {
-    int policy = qc_get_effective_incoming_stream_reject_policy(qc);
-    int enable_reject = (policy == SSL_INCOMING_STREAM_REJECT_POLICY_REJECT);
+    int policy = qc_get_effective_incoming_stream_policy(qc);
+    int enable_reject = (policy == SSL_INCOMING_STREAM_POLICY_REJECT);
 
     ossl_quic_channel_set_incoming_stream_auto_reject(qc->ch,
                                                       enable_reject,
-                                                      qc->incoming_stream_reject_aec);
+                                                      qc->incoming_stream_aec);
 }
 
 QUIC_TAKES_LOCK
-int ossl_quic_set_incoming_stream_reject_policy(SSL *s, int policy,
-                                                uint64_t aec)
+int ossl_quic_set_incoming_stream_policy(SSL *s, int policy,
+                                         uint64_t aec)
 {
     int ret = 1;
     QCTX ctx;
@@ -2281,11 +2280,11 @@ int ossl_quic_set_incoming_stream_reject_policy(SSL *s, int policy,
     quic_lock(ctx.qc);
 
     switch (policy) {
-    case SSL_INCOMING_STREAM_REJECT_POLICY_AUTO:
-    case SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT:
-    case SSL_INCOMING_STREAM_REJECT_POLICY_REJECT:
-        ctx.qc->incoming_stream_reject_policy = policy;
-        ctx.qc->incoming_stream_reject_aec    = aec;
+    case SSL_INCOMING_STREAM_POLICY_AUTO:
+    case SSL_INCOMING_STREAM_POLICY_ACCEPT:
+    case SSL_INCOMING_STREAM_POLICY_REJECT:
+        ctx.qc->incoming_stream_policy = policy;
+        ctx.qc->incoming_stream_aec    = aec;
         break;
 
     default:
@@ -2342,8 +2341,8 @@ SSL *ossl_quic_accept_stream(SSL *s, uint64_t flags)
 
     quic_lock(ctx.qc);
 
-    if (qc_get_effective_incoming_stream_reject_policy(ctx.qc)
-        == SSL_INCOMING_STREAM_REJECT_POLICY_REJECT)
+    if (qc_get_effective_incoming_stream_policy(ctx.qc)
+        == SSL_INCOMING_STREAM_POLICY_REJECT)
         goto out;
 
     qsm = ossl_quic_channel_get_qsm(ctx.qc->ch);

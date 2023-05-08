@@ -662,9 +662,9 @@ SSL_ACCEPT_STREAM_NO_BLOCK              define
 SSL_DEFAULT_STREAM_MODE_AUTO_BIDI       define
 SSL_DEFAULT_STREAM_MODE_AUTO_UNI        define
 SSL_DEFAULT_STREAM_MODE_NONE            define
-SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT define
-SSL_INCOMING_STREAM_REJECT_POLICY_AUTO  define
-SSL_INCOMING_STREAM_REJECT_POLICY_REJECT define
+SSL_INCOMING_STREAM_POLICY_ACCEPT       define
+SSL_INCOMING_STREAM_POLICY_AUTO         define
+SSL_INCOMING_STREAM_POLICY_REJECT       define
 TLS_DEFAULT_CIPHERSUITES                define deprecated 3.0.0
 X509_CRL_http_nbio                      define deprecated 3.0.0
 X509_http_nbio                          define deprecated 3.0.0

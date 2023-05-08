@@ -2683,10 +2683,10 @@ DEPEND[html/man3/SSL_set_fd.html]=man3/SSL_set_fd.pod
 GENERATE[html/man3/SSL_set_fd.html]=man3/SSL_set_fd.pod
 DEPEND[man/man3/SSL_set_fd.3]=man3/SSL_set_fd.pod
 GENERATE[man/man3/SSL_set_fd.3]=man3/SSL_set_fd.pod
-DEPEND[html/man3/SSL_set_incoming_stream_reject_policy.html]=man3/SSL_set_incoming_stream_reject_policy.pod
-GENERATE[html/man3/SSL_set_incoming_stream_reject_policy.html]=man3/SSL_set_incoming_stream_reject_policy.pod
-DEPEND[man/man3/SSL_set_incoming_stream_reject_policy.3]=man3/SSL_set_incoming_stream_reject_policy.pod
-GENERATE[man/man3/SSL_set_incoming_stream_reject_policy.3]=man3/SSL_set_incoming_stream_reject_policy.pod
+DEPEND[html/man3/SSL_set_incoming_stream_policy.html]=man3/SSL_set_incoming_stream_policy.pod
+GENERATE[html/man3/SSL_set_incoming_stream_policy.html]=man3/SSL_set_incoming_stream_policy.pod
+DEPEND[man/man3/SSL_set_incoming_stream_policy.3]=man3/SSL_set_incoming_stream_policy.pod
+GENERATE[man/man3/SSL_set_incoming_stream_policy.3]=man3/SSL_set_incoming_stream_policy.pod
 DEPEND[html/man3/SSL_set_initial_peer_addr.html]=man3/SSL_set_initial_peer_addr.pod
 GENERATE[html/man3/SSL_set_initial_peer_addr.html]=man3/SSL_set_initial_peer_addr.pod
 DEPEND[man/man3/SSL_set_initial_peer_addr.3]=man3/SSL_set_initial_peer_addr.pod
@@ -3562,7 +3562,7 @@ html/man3/SSL_set_bio.html \
 html/man3/SSL_set_blocking_mode.html \
 html/man3/SSL_set_connect_state.html \
 html/man3/SSL_set_fd.html \
-html/man3/SSL_set_incoming_stream_reject_policy.html \
+html/man3/SSL_set_incoming_stream_policy.html \
 html/man3/SSL_set_initial_peer_addr.html \
 html/man3/SSL_set_retry_verify.html \
 html/man3/SSL_set_session.html \
@@ -4197,7 +4197,7 @@ man/man3/SSL_set_bio.3 \
 man/man3/SSL_set_blocking_mode.3 \
 man/man3/SSL_set_connect_state.3 \
 man/man3/SSL_set_fd.3 \
-man/man3/SSL_set_incoming_stream_reject_policy.3 \
+man/man3/SSL_set_incoming_stream_policy.3 \
 man/man3/SSL_set_initial_peer_addr.3 \
 man/man3/SSL_set_retry_verify.3 \
 man/man3/SSL_set_session.3 \

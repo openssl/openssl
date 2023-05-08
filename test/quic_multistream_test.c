@@ -70,7 +70,7 @@ struct script_op {
 #define OPK_C_ACCEPT_STREAM_NONE                    17
 #define OPK_C_FREE_STREAM                           18
 #define OPK_C_SET_DEFAULT_STREAM_MODE               19
-#define OPK_C_SET_INCOMING_STREAM_REJECT_POLICY     20
+#define OPK_C_SET_INCOMING_STREAM_POLICY            20
 #define OPK_C_SHUTDOWN                              21
 #define OPK_C_EXPECT_CONN_CLOSE_INFO                22
 #define OPK_S_EXPECT_CONN_CLOSE_INFO                23
@@ -137,8 +137,8 @@ struct script_op {
     {OPK_C_FREE_STREAM, NULL, 0, NULL, #stream_name},
 #define OP_C_SET_DEFAULT_STREAM_MODE(mode) \
     {OPK_C_SET_DEFAULT_STREAM_MODE, NULL, (mode), NULL, NULL},
-#define OP_C_SET_INCOMING_STREAM_REJECT_POLICY(policy) \
-    {OPK_C_SET_INCOMING_STREAM_REJECT_POLICY, NULL, (policy), NULL, NULL},
+#define OP_C_SET_INCOMING_STREAM_POLICY(policy) \
+    {OPK_C_SET_INCOMING_STREAM_POLICY, NULL, (policy), NULL, NULL},
 #define OP_C_SHUTDOWN() \
     {OPK_C_SHUTDOWN, NULL, 0, NULL, NULL},
 #define OP_C_EXPECT_CONN_CLOSE_INFO(ec, app, remote)                \
@@ -833,13 +833,13 @@ static int run_script(const struct script_op *script, int free_order)
             }
             break;
 
-        case OPK_C_SET_INCOMING_STREAM_REJECT_POLICY:
+        case OPK_C_SET_INCOMING_STREAM_POLICY:
             {
                 if (!TEST_ptr(c_tgt))
                     goto out;
 
-                if (!TEST_true(SSL_set_incoming_stream_reject_policy(c_tgt,
-                                                                     op->arg1, 0)))
+                if (!TEST_true(SSL_set_incoming_stream_policy(c_tgt,
+                                                              op->arg1, 0)))
                     goto out;
             }
             break;
@@ -996,7 +996,7 @@ static const struct script_op script_1[] = {
 static const struct script_op script_2[] = {
     OP_C_SET_ALPN           ("ossltest")
     OP_C_CONNECT_WAIT       ()
-    OP_C_SET_INCOMING_STREAM_REJECT_POLICY(SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT)
+    OP_C_SET_INCOMING_STREAM_POLICY(SSL_INCOMING_STREAM_POLICY_ACCEPT)
     OP_C_WRITE              (DEFAULT,  "apple", 5)
     OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
     OP_S_READ_EXPECT        (a, "apple", 5)
@@ -1055,14 +1055,14 @@ static const struct script_op script_2[] = {
     OP_C_EXPECT_FIN         (f)
     OP_C_WRITE_FAIL         (f)
 
-    OP_C_SET_INCOMING_STREAM_REJECT_POLICY(SSL_INCOMING_STREAM_REJECT_POLICY_REJECT)
+    OP_C_SET_INCOMING_STREAM_POLICY(SSL_INCOMING_STREAM_POLICY_REJECT)
     OP_S_NEW_STREAM_BIDI    (g, S_BIDI_ID(2))
     OP_S_WRITE              (g, "unseen", 6)
     OP_S_CONCLUDE           (g)
 
     OP_C_ACCEPT_STREAM_NONE ()
 
-    OP_C_SET_INCOMING_STREAM_REJECT_POLICY(SSL_INCOMING_STREAM_REJECT_POLICY_AUTO)
+    OP_C_SET_INCOMING_STREAM_POLICY(SSL_INCOMING_STREAM_POLICY_AUTO)
     OP_S_NEW_STREAM_BIDI    (h, S_BIDI_ID(3))
     OP_S_WRITE              (h, "UNSEEN", 6)
     OP_S_CONCLUDE           (h)

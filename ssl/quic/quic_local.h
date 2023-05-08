@@ -178,9 +178,9 @@ struct quic_conn_st {
     /* SSL_set_mode. This is not used directly but inherited by new XSOs. */
     uint32_t                        default_ssl_mode;
 
-    /* SSL_set_incoming_stream_reject_policy. */
-    int                             incoming_stream_reject_policy;
-    uint64_t                        incoming_stream_reject_aec;
+    /* SSL_set_incoming_stream_policy. */
+    int                             incoming_stream_policy;
+    uint64_t                        incoming_stream_aec;
 
     /*
      * Last 'normal' error during an app-level I/O operation, used by

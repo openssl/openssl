@@ -44,8 +44,8 @@ TODO(QUIC): Revise in MSMT PR to mention threading considerations.
 =end comment
 
 Depending on whether default stream functionality is being used, it may be
-necessary to explicitly configure the incoming stream rejection policy before
-streams can be accepted; see L<SSL_set_incoming_stream_reject_policy(3)>.
+necessary to explicitly configure the incoming stream policy before streams can
+be accepted; see L<SSL_set_incoming_stream_policy(3)>.
 
 =begin comment
 
