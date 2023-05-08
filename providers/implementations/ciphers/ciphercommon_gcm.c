@@ -15,6 +15,7 @@
 #include "prov/ciphercommon_gcm.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "internal/param_names.h"
 
 static int gcm_tls_init(PROV_GCM_CTX *dat, unsigned char *aad, size_t aad_len);
 static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
@@ -145,18 +146,21 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     OSSL_PARAM *p;
     size_t sz;
+    FAST_PARAM_declare;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    FAST_PARAM_initialise(params);
+
+    p = FAST_PARAM_locate(params, PIDX_CIPHER_PARAM_IVLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->ivlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
+    p = FAST_PARAM_locate(params, PIDX_CIPHER_PARAM_KEYLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->keylen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAGLEN);
+    p = FAST_PARAM_locate(params, PIDX_CIPHER_PARAM_AEAD_TAGLEN);
     if (p != NULL) {
         size_t taglen = (ctx->taglen != UNINITIALISED_SIZET) ? ctx->taglen :
                          GCM_TAG_MAX_SIZE;
@@ -167,7 +171,7 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
         }
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
+    p = FAST_PARAM_locate(params, PIDX_CIPHER_PARAM_IV);
     if (p != NULL) {
         if (ctx->iv_state == IV_STATE_UNINITIALISED)
             return 0;
@@ -182,7 +186,7 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
         }
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
+    p = FAST_PARAM_locate(params, PIDX_CIPHER_PARAM_UPDATED_IV);
     if (p != NULL) {
         if (ctx->iv_state == IV_STATE_UNINITIALISED)
             return 0;
@@ -197,12 +201,12 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
         }
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD);
+    p = FAST_PARAM_locate(params, PIDX_CIPHER_PARAM_AEAD_TLS1_AAD_PAD);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->tls_aad_pad_sz)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAG);
+    p = FAST_PARAM_locate(params, PIDX_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {
         sz = p->data_size;
         if (sz == 0
@@ -217,7 +221,7 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN);
+    p = FAST_PARAM_locate(params, PIDX_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN);
     if (p != NULL) {
         if (p->data == NULL
             || p->data_type != OSSL_PARAM_OCTET_STRING
@@ -233,11 +237,14 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     size_t sz;
     void *vp;
+    FAST_PARAM_declare;
 
     if (params == NULL)
         return 1;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TAG);
+    FAST_PARAM_initialise(params);
+
+    p = FAST_PARAM_locate_const(params, PIDX_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {
         vp = ctx->buf;
         if (!OSSL_PARAM_get_octet_string(p, &vp, EVP_GCM_TLS_TAG_LEN, &sz)) {
@@ -251,7 +258,7 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         ctx->taglen = sz;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_IVLEN);
+    p = FAST_PARAM_locate_const(params, PIDX_CIPHER_PARAM_AEAD_IVLEN);
     if (p != NULL) {
         if (!OSSL_PARAM_get_size_t(p, &sz)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -264,7 +271,7 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         ctx->ivlen = sz;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD);
+    p = FAST_PARAM_locate_const(params, PIDX_CIPHER_PARAM_AEAD_TLS1_AAD);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -278,7 +285,7 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         ctx->tls_aad_pad_sz = sz;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED);
+    p = FAST_PARAM_locate_const(params, PIDX_CIPHER_PARAM_AEAD_TLS1_IV_FIXED);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -289,7 +296,7 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         }
     }
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV);
+    p = FAST_PARAM_locate_const(params, PIDX_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV);
     if (p != NULL) {
         if (p->data == NULL
             || p->data_type != OSSL_PARAM_OCTET_STRING
