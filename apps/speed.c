@@ -22,6 +22,8 @@
 #define KEM_SECONDS     PKEY_SECONDS
 #define SIG_SECONDS     PKEY_SECONDS
 
+#define MAX_ALGNAME_SUFFIX 100
+
 /* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
@@ -3550,13 +3552,14 @@ skip_hmac:
             unsigned char *out = NULL, *send_secret = NULL, *rcv_secret;
             unsigned int bits;
             char *name;
-            char sfx[100];
+            char sfx[MAX_ALGNAME_SUFFIX];
             OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
             int use_params = 0;
             enum kem_type_t { KEM_RSA = 1, KEM_EC, KEM_X25519, KEM_X448 } kem_type;
 
             /* no string after rsa<bitcnt> permitted: */
-            if (sscanf(kem_name, "rsa%u%s", &bits, sfx) == 1)
+            if (strlen(kem_name) < MAX_ALGNAME_SUFFIX + 4 /* rsa+digit */
+                && sscanf(kem_name, "rsa%u%s", &bits, sfx) == 1)
                 kem_type = KEM_RSA;
             else if (strncmp(kem_name, "EC", 2) == 0)
                 kem_type = KEM_EC;
@@ -3735,7 +3738,7 @@ skip_hmac:
             EVP_PKEY_CTX *sig_verify_ctx = NULL;
             unsigned char md[SHA256_DIGEST_LENGTH];
             unsigned char *sig;
-            char sfx[100];
+            char sfx[MAX_ALGNAME_SUFFIX];
             size_t md_len = SHA256_DIGEST_LENGTH;
             size_t max_sig_len, sig_len;
             unsigned int bits;
@@ -3752,7 +3755,8 @@ skip_hmac:
             }
 
             /* no string after rsa<bitcnt> permitted: */
-            if (sscanf(sig_name, "rsa%u%s", &bits, sfx) == 1) {
+            if (strlen(sig_name) < MAX_ALGNAME_SUFFIX + 4 /* rsa+digit */
+                && sscanf(sig_name, "rsa%u%s", &bits, sfx) == 1) {
                 params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
                                                         (size_t *)&bits);
                 use_params = 1;
