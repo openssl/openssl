@@ -23,7 +23,8 @@ B<openssl> B<ciphers>
 [B<-stdname>]
 [B<-convert> I<name>]
 [B<-ciphersuites> I<val>]
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- output_off() if $disabled{"deprecated-3.0"}; ""
+-}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<cipherlist>]
 
 =head1 DESCRIPTION
@@ -40,6 +41,8 @@ determine the appropriate cipherlist.
 
 Print a usage message.
 
+{- $OpenSSL::safe::opt_engine_item -}
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 {- $OpenSSL::safe::opt_provider_item -}
 
 =item B<-s>
