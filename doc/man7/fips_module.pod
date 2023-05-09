@@ -14,6 +14,9 @@ This guide details different ways that OpenSSL can be used in conjunction
 with the FIPS module. Which is the correct approach to use will depend on your
 own specific circumstances and what you are attempting to achieve.
 
+For information related to installing the FIPS module see
+L<https://github.com/openssl/openssl/blob/master/README-FIPS.md>.
+
 Note that the old functions FIPS_mode() and FIPS_mode_set() are no longer
 present so you must remove them from your application if you use them.
 
