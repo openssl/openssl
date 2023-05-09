@@ -23,7 +23,7 @@
 # Presumably it has everything to do with AMD cache architecture and
 # RAW or whatever penalties. Once again! The module *requires* config
 # line *without* RC4_CHAR! As for coding "secret," I bet on partial
-# register arithmetics. For example instead of 'inc %r8; and $255,%r8'
+# register arithmetic. For example instead of 'inc %r8; and $255,%r8'
 # I simply 'inc %r8b'. Even though optimization manual discourages
 # to operate on partial registers, it turned out to be the best bet.
 # At least for AMD... How IA32E would perform remains to be seen...

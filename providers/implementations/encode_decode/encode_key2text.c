@@ -109,7 +109,7 @@ static int print_labeled_bignum(BIO *out, const char *label, const BIGNUM *bn)
         if ((bytes % 15) == 0 && bytes > 0) {
             if (BIO_printf(out, ":\n%s", spaces) <= 0)
                 goto err;
-            use_sep = 0; /* The first byte on the next line doesnt have a : */
+            use_sep = 0; /* The first byte on the next line doesn't have a : */
         }
         if (BIO_printf(out, "%s%c%c", use_sep ? ":" : "",
                        tolower(p[0]), tolower(p[1])) <= 0)

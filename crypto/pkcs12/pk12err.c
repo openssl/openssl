@@ -17,7 +17,7 @@
 static const ERR_STRING_DATA PKCS12_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PKCS12, 0, PKCS12_R_CALLBACK_FAILED), "callback failed"},
     {ERR_PACK(ERR_LIB_PKCS12, 0, PKCS12_R_CANT_PACK_STRUCTURE),
-    "cant pack structure"},
+    "can't pack structure"},
     {ERR_PACK(ERR_LIB_PKCS12, 0, PKCS12_R_CONTENT_TYPE_NOT_DATA),
     "content type not data"},
     {ERR_PACK(ERR_LIB_PKCS12, 0, PKCS12_R_DECODE_ERROR), "decode error"},

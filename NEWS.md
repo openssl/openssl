@@ -1450,7 +1450,7 @@ OpenSSL 0.9.x
   * Overhauled Win32 builds
   * Cleanups and fixes to the Big Number (BN) library
   * Support for ASN.1 GeneralizedTime
-  * Splitted ASN.1 SETs from SEQUENCEs
+  * Split ASN.1 SETs from SEQUENCEs
   * ASN1 and PEM support for Netscape Certificate Sequences
   * Overhauled Perl interface
   * Lots of source tree cleanups.

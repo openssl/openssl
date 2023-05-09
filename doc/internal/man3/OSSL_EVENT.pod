@@ -81,7 +81,7 @@ guaranteed to not trigger before their time.
 
 =item context
 
-A reference to user supplied contextual informaton.  The event queue passes
+A reference to user supplied contextual information.  The event queue passes
 this to callbacks and never dereferences the pointer.
 
 =item payload, payload_size

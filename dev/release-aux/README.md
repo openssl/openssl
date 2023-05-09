@@ -1,5 +1,5 @@
-Auxillary files for dev/release.sh
-===================================
+Auxiliary files for dev/release.sh
+==================================
 
 - release-state-fn.sh
 

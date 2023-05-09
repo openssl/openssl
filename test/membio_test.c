@@ -28,7 +28,7 @@ static int test_dgram(void)
     if (!TEST_ptr(rbio))
         goto err;
 
-    /* Seeting the EOF return value on a non datagram mem BIO should be fine */
+    /* Setting the EOF return value on a non datagram mem BIO should be fine */
     if (!TEST_int_gt(BIO_set_mem_eof_return(rbio, 0), 0))
         goto err;
 

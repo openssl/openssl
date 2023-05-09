@@ -60,7 +60,7 @@ typedef struct ossl_cc_ecn_info_st {
  *
  * This interface is broadly based on the design described in RFC 9002. However,
  * the demarcation between the ACKM and the congestion controller does not
- * exactly match that delineated in the RFC 9002 psuedocode. Where aspects of
+ * exactly match that delineated in the RFC 9002 pseudocode. Where aspects of
  * the demarcation involve the congestion controller accessing internal state of
  * the ACKM, the interface has been revised where possible to provide the
  * information needed by the congestion controller and avoid needing to give the

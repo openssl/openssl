@@ -255,7 +255,7 @@ struct ossl_record_layer_st
     /* each decoded record goes in here */
     TLS_RL_RECORD rrec[SSL_MAX_PIPELINES];
 
-    /* How many records have we got available in the rrec bufer */
+    /* How many records have we got available in the rrec buffer */
     size_t num_recs;
 
     /* The record number in the rrec buffer that can be read next */
@@ -313,7 +313,7 @@ struct ossl_record_layer_st
      */
     unsigned int max_frag_len;
 
-    /* The maxium amount of early data we can receive/send */
+    /* The maximum amount of early data we can receive/send */
     uint32_t max_early_data;
 
     /* The amount of early data that we have sent/received */
@@ -355,7 +355,7 @@ struct ossl_record_layer_st
     DTLS_BITMAP next_bitmap;
 
     /*
-     * Whether we are currently in a hanshake or not. Only maintained for DTLS
+     * Whether we are currently in a handshake or not. Only maintained for DTLS
      */
     int in_init;
 

@@ -146,7 +146,7 @@ static int test_unknown_frame(void)
      * TODO(QUIC): We should expect an error on the queue after this - but we
      * don't have it yet.
      * Note, just raising the error in the obvious place causes
-     * SSL_handle_events() to succeed, but leave a suprious error on the stack.
+     * SSL_handle_events() to succeed, but leave a spurious error on the stack.
      * We need to either allow SSL_handle_events() to fail, or somehow delay the
      * raising of the error until the SSL_read() call.
      */

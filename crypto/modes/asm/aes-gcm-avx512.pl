@@ -1234,7 +1234,7 @@ ___
 # ;; To compute GH = GH*HashKey mod poly, give HK = HashKey<<1 mod poly as input
 # ;; GH = GH * HK * x mod poly which is equivalent to GH*HashKey mod poly.
 # ;;
-# ;; Refer to [3] for more detals.
+# ;; Refer to [3] for more details.
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sub GHASH_MUL {
   my $GH = $_[0];    #; [in/out] xmm/ymm/zmm with multiply operand(s) (128-bits)

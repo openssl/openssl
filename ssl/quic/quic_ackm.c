@@ -317,7 +317,7 @@ tx_pkt_history_remove(struct tx_pkt_history_st *h, uint64_t pkt_num)
  * n) will no longer be processed. Although datagrams may be reordered in the
  * network, a PN we receive can only become provably ACKed after our own
  * subsequently generated ACK frame is sent in a future TX packet, and then we
- * receive another RX PN acknowleding that TX packet. This means that a given RX
+ * receive another RX PN acknowledging that TX packet. This means that a given RX
  * PN can only become provably ACKed at least 1 RTT after it is received; it is
  * unlikely that any reordered datagrams will still be "in the network" (and not
  * lost) by this time. If this does occur for whatever reason and a late PN is
@@ -334,7 +334,7 @@ tx_pkt_history_remove(struct tx_pkt_history_st *h, uint64_t pkt_num)
  * we use to keep track of which PNs we have received but which have not yet
  * been provably ACKed, and thus will later need to generate an ACK frame for.
  *
- * The correspondance with the logical states discussed above is as follows. A
+ * The correspondence with the logical states discussed above is as follows. A
  * PN is in state (C) if it is below the watermark; otherwise it is in state (B)
  * if it is in the logical set of PNs, and in state (A) otherwise.
  *
@@ -430,7 +430,7 @@ static void rx_pkt_history_trim_range_count(struct rx_pkt_history_st *h)
     }
 
     /*
-     * Bump watermark to cover all PNs we removed to avoid accidential
+     * Bump watermark to cover all PNs we removed to avoid accidental
      * reprocessing of packets.
      */
     if (highest != QUIC_PN_INVALID)

@@ -70,8 +70,8 @@ int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_
 
     /*
      * GetExitCodeThread call followed by this check is to make sure that
-     * the thread exitted properly. In particular, thread_retval may be
-     * non-zero when exitted via explicit ExitThread/TerminateThread or
+     * the thread exited properly. In particular, thread_retval may be
+     * non-zero when exited via explicit ExitThread/TerminateThread or
      * if the thread is still active (returns STILL_ACTIVE (259)).
      */
     if (thread_retval != 0)

@@ -120,7 +120,7 @@ Additional OTC analysis
 
 An OTC document provided the following analysis.
 
-There are differents types of application that we need to cater for:
+There are different types of application that we need to cater for:
 
 * Simple clients that just do basic SSL_read/SSL_write or BIO_read/BIO_write
   interactions. We want to be able to enable them to transfer to using single

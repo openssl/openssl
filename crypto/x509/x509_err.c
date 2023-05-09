@@ -20,7 +20,7 @@ static const ERR_STRING_DATA X509_str_reasons[] = {
     {ERR_PACK(ERR_LIB_X509, 0, X509_R_BAD_X509_FILETYPE), "bad x509 filetype"},
     {ERR_PACK(ERR_LIB_X509, 0, X509_R_BASE64_DECODE_ERROR),
     "base64 decode error"},
-    {ERR_PACK(ERR_LIB_X509, 0, X509_R_CANT_CHECK_DH_KEY), "cant check dh key"},
+    {ERR_PACK(ERR_LIB_X509, 0, X509_R_CANT_CHECK_DH_KEY), "can't check dh key"},
     {ERR_PACK(ERR_LIB_X509, 0, X509_R_CERTIFICATE_VERIFICATION_FAILED),
     "certificate verification failed"},
     {ERR_PACK(ERR_LIB_X509, 0, X509_R_CERT_ALREADY_IN_HASH_TABLE),

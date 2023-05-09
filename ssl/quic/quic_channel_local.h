@@ -12,7 +12,7 @@
  * QUIC channel internals. It is intended that only the QUIC_CHANNEL
  * implementation and the RX depacketiser be allowed to access this structure
  * directly. As the RX depacketiser has no state of its own and computes over a
- * QUIC_CHANNEL structure, it can be viewed as an extention of the QUIC_CHANNEL
+ * QUIC_CHANNEL structure, it can be viewed as an extension of the QUIC_CHANNEL
  * implementation. While the RX depacketiser could be provided with adequate
  * accessors to do what it needs, this would weaken the abstraction provided by
  * the QUIC_CHANNEL to other components; moreover the coupling of the RX

@@ -245,7 +245,7 @@ struct ec_group_st {
      * equation of the form y^2 + x*y = x^3 + a*x^2 + b.
      */
     BIGNUM *a, *b;
-    /* enable optimized point arithmetics for special case */
+    /* enable optimized point arithmetic for special case */
     int a_is_minus3;
     /* method-specific (e.g., Montgomery structure) */
     void *field_data1;
@@ -318,7 +318,7 @@ struct ec_point_st {
     BIGNUM *Y;
     BIGNUM *Z;                  /* Jacobian projective coordinates: * (X, Y,
                                  * Z) represents (X/Z^2, Y/Z^3) if Z != 0 */
-    int Z_is_one;               /* enable optimized point arithmetics for
+    int Z_is_one;               /* enable optimized point arithmetic for
                                  * special case */
 };
 

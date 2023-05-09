@@ -379,7 +379,7 @@ static int send_server_key_exchange(SSL_CONNECTION *s)
 }
 
 /*
- * Used to determine if we shoud send a CompressedCertificate message
+ * Used to determine if we should send a CompressedCertificate message
  *
  * Returns the algorithm to use, TLSEXT_comp_cert_none means no compression
  */

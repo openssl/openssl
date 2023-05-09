@@ -166,7 +166,7 @@ static int add_bytes(PROV_DRBG *drbg, unsigned char *dst,
         /* Add the carry to the top of the dst if inlen is not the same size */
         for (i = drbg->seedlen - inlen; i > 0; --i, d--) {
             *d += 1;     /* Carry can only be 1 */
-            if (*d != 0) /* exit if carry doesnt propagate to the next byte */
+            if (*d != 0) /* exit if carry doesn't propagate to the next byte */
                 break;
         }
     }

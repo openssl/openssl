@@ -251,7 +251,7 @@ const BIGNUM *BN_get0_nist_prime_521(void)
 
 /*
  * To avoid more recent compilers (specifically clang-14) from treating this
- * code as a violation of the strict aliasing conditions and omiting it, this
+ * code as a violation of the strict aliasing conditions and omitting it, this
  * cannot be declared as a function.  Moreover, the dst parameter cannot be
  * cached in a local since this no longer references the union and again falls
  * foul of the strict aliasing criteria.  Refer to #18225 for the initial

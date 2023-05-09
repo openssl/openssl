@@ -120,7 +120,7 @@ int qtest_fault_set_handshake_listener(QTEST_FAULT *fault,
 int qtest_fault_resize_handshake(QTEST_FAULT *fault, size_t newlen);
 
 /*
- * TODO(QUIC): Add listeners for specifc types of frame here. E.g. we might
+ * TODO(QUIC): Add listeners for specific types of frame here. E.g. we might
  * expect to see an "ACK" frame listener which will be passed pre-parsed ack
  * data that can be modified as required.
  */

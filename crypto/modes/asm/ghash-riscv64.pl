@@ -265,7 +265,7 @@ ___
 # input:  Xi: current hash value
 #         Htable: copy of H
 #         inp: pointer to input data
-#         len: length of input data in bytes (mutiple of block size)
+#         len: length of input data in bytes (multiple of block size)
 # output: Xi: Xi+1 (next hash value Xi)
 {
 my ($Xi,$Htable,$inp,$len,$x0,$x1,$y0,$y1) = ("a0","a1","a2","a3","a4","a5","a6","a7");
