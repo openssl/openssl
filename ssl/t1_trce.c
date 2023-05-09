@@ -1268,13 +1268,14 @@ static int ssl_print_server_keyex(BIO *bio, int indent, const SSL_CONNECTION *sc
     return !msglen;
 }
 
-static int ssl_print_certificate(BIO *bio, int indent,
+static int ssl_print_certificate(BIO *bio, const SSL_CONNECTION *sc, int indent,
                                  const unsigned char **pmsg, size_t *pmsglen)
 {
     size_t msglen = *pmsglen;
     size_t clen;
     X509 *x;
     const unsigned char *p = *pmsg, *q;
+    SSL_CTX *ctx = SSL_CONNECTION_GET_CTX(sc);
 
     if (msglen < 3)
         return 0;
@@ -1284,7 +1285,11 @@ static int ssl_print_certificate(BIO *bio, int indent,
     q = p + 3;
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "ASN.1Cert, length=%d", (int)clen);
-    x = d2i_X509(NULL, &q, clen);
+    x = X509_new_ex(ctx->libctx, ctx->propq);
+    if (x != NULL && d2i_X509(&x, &q, clen) == NULL) {
+        X509_free(x);
+        x = NULL;
+    }
     if (!x)
         BIO_puts(bio, "<UNPARSEABLE CERTIFICATE>\n");
     else {
@@ -1362,7 +1367,7 @@ static int ssl_print_certificates(BIO *bio, const SSL_CONNECTION *sc, int server
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "certificate_list, length=%d\n", (int)clen);
     while (clen > 0) {
-        if (!ssl_print_certificate(bio, indent + 2, &msg, &clen))
+        if (!ssl_print_certificate(bio, sc, indent + 2, &msg, &clen))
             return 0;
         if (SSL_CONNECTION_IS_TLS13(sc)
             && !ssl_print_extensions(bio, indent + 2, server,
