@@ -23,6 +23,7 @@ static OSSL_PROVIDER *defctxnull = NULL;
 static char *certsdir = NULL;
 static char *cert = NULL;
 static char *privkey = NULL;
+static char *datadir = NULL;
 
 static int is_fips = 0;
 
@@ -206,7 +207,100 @@ static int test_version(void)
     return testresult;
 }
 
-OPT_TEST_DECLARE_USAGE("provider config\n")
+#ifndef OPENSSL_NO_SSL_TRACE
+static int compare_with_file(BIO *membio)
+{
+    BIO *file = NULL;
+    char buf1[512], buf2[512];
+    char *reffile;
+    int ret = 0;
+    size_t i;
+
+    reffile = test_mk_file_path(datadir, "ssltraceref.txt");
+    if (!TEST_ptr(reffile))
+        goto err;
+
+    file = BIO_new_file(reffile, "rb");
+    if (!TEST_ptr(file))
+        goto err;
+
+    while (BIO_gets(file, buf1, sizeof(buf1)) > 0) {
+        if (BIO_gets(membio, buf2, sizeof(buf2)) <= 0) {
+            TEST_error("Failed reading mem data");
+            goto err;
+        }
+        if (strlen(buf1) != strlen(buf2)) {
+            TEST_error("Actual and ref line data length mismatch");
+            TEST_info("%s", buf1);
+            TEST_info("%s", buf2);
+           goto err;
+        }
+        for (i = 0; i < strlen(buf1); i++) {
+            /* '?' is a wild card character in the reference text */
+            if (buf1[i] == '?')
+                buf2[i] = '?';
+        }
+        if (!TEST_str_eq(buf1, buf2))
+            goto err;
+    }
+    if (!TEST_true(BIO_eof(file))
+            || !TEST_true(BIO_eof(membio)))
+        goto err;
+
+    ret = 1;
+ err:
+    OPENSSL_free(reffile);
+    BIO_free(file);
+    return ret;
+}
+
+/*
+ * Tests that the SSL_trace() msg_callback works as expected with a QUIC
+ * connection. This also provides testing of the msg_callback at the same time.
+ */
+static int test_ssl_trace(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+    BIO *bio = BIO_new(BIO_s_mem());
+
+    /*
+     * Ensure we only configure ciphersuites that are available with both the
+     * default and fips providers to get the same output in both cases
+     */
+    if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256")))
+        goto err;
+
+    if (!TEST_ptr(cctx)
+            || !TEST_ptr(bio)
+            || !TEST_true(qtest_create_quic_objects(libctx, cctx, cert, privkey,
+                                                    0, &qtserv, &clientquic,
+                                                    NULL)))
+        goto err;
+
+    SSL_set_msg_callback(clientquic, SSL_trace);
+    SSL_set_msg_callback_arg(clientquic, bio);
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+
+    if (!TEST_true(compare_with_file(bio)))
+        goto err;
+
+    testresult = 1;
+ err:
+    ossl_quic_tserver_free(qtserv);
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+    BIO_free(bio);
+
+    return testresult;
+}
+#endif
+
+OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
 int setup_tests(void)
 {
@@ -234,7 +328,8 @@ int setup_tests(void)
 
     if (!TEST_ptr(modulename = test_get_argument(0))
             || !TEST_ptr(configfile = test_get_argument(1))
-            || !TEST_ptr(certsdir = test_get_argument(2)))
+            || !TEST_ptr(certsdir = test_get_argument(2))
+            || !TEST_ptr(datadir = test_get_argument(3)))
         goto err;
 
     if (!TEST_true(OSSL_LIB_CTX_load_config(libctx, configfile)))
@@ -263,6 +358,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_quic_write_read, 2);
     ADD_TEST(test_ciphersuites);
     ADD_TEST(test_version);
+#ifndef OPENSSL_NO_SSL_TRACE
+    ADD_TEST(test_ssl_trace);
+#endif
 
     return 1;
  err:
