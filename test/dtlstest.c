@@ -620,7 +620,7 @@ static int test_listen(void)
 
     /*
      * The last parameter to create_bare_ssl_connection() requests that
-     * DLTSv1_listen() is used.
+     * DTLSv1_listen() is used.
      */
     if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
                                               SSL_ERROR_NONE, 1, 1)))
