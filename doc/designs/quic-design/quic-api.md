@@ -54,10 +54,8 @@ designs and the relevant design decisions.
       - [`SSL_new_stream`](#-ssl-new-stream-)
       - [`SSL_accept_stream`](#-ssl-accept-stream-)
       - [`SSL_get_accept_stream_queue_len`](#-ssl-get-accept-stream-queue-len-)
-      - [`SSL_set_incoming_stream_reject_policy`](#-ssl-set-incoming-stream-reject-policy-)
+      - [`SSL_set_incoming_stream_policy`](#-ssl-set-incoming-stream-policy-)
       - [`SSL_set_default_stream_mode`](#-ssl-set-default-stream-mode-)
-      - [`SSL_detach_stream`](#-ssl-detach-stream-)
-      - [`SSL_attach_stream`](#-ssl-attach-stream-)
     + [Future APIs](#future-apis)
   * [BIO Objects](#bio-objects)
     + [Existing APIs](#existing-apis-1)
@@ -850,8 +848,8 @@ typedef struct ssl_conn_close_info_st {
     uint64_t error_code;
     char     *reason;
     size_t   reason_len;
-    char     is_local;
-    char     is_transport;
+    int      is_local;
+    int      is_transport;
 } SSL_CONN_CLOSE_INFO;
 
 int SSL_get_conn_close_info(SSL *ssl,
@@ -1080,7 +1078,7 @@ SSL *SSL_accept_stream(SSL *ssl, uint64_t flags);
 size_t SSL_get_accept_stream_queue_len(SSL *ssl);
 ```
 
-#### `SSL_set_incoming_stream_reject_policy`
+#### `SSL_set_incoming_stream_policy`
 
 | Semantics | `SSL_get_error` | Can Tick? | CSHL          |
 | --------- | ------------- | --------- | ------------- |
@@ -1090,9 +1088,7 @@ size_t SSL_get_accept_stream_queue_len(SSL *ssl);
 /*
  * Sets the policy for incoming streams. If `policy` is `AUTO` (the default):
  *
- *   - if `SSL_detach_stream` has been used, this is equivalent to `ACCEPT`;
- *
- *   - otherwise, if the default stream mode is
+ *   - if the default stream mode is
  *     `SSL_DEFAULT_STREAM_MODE_AUTO_BIDI` or
  *     `SSL_DEFAULT_STREAM_MODE_AUTO_UNI`, this is equivalent to `REJECT`;
  *
@@ -1107,11 +1103,11 @@ size_t SSL_get_accept_stream_queue_len(SSL *ssl);
  * used for the purposes of this termination. The default AEC value used if this
  * function is never called is 0.
  */
-#define SSL_INCOMING_STREAM_REJECT_POLICY_AUTO      0
-#define SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT    1
-#define SSL_INCOMING_STREAM_REJECT_POLICY_REJECT    2
+#define SSL_INCOMING_STREAM_POLICY_AUTO      0
+#define SSL_INCOMING_STREAM_POLICY_ACCEPT    1
+#define SSL_INCOMING_STREAM_POLICY_REJECT    2
 
-int SSL_set_incoming_stream_reject_policy(SSL *ssl, int policy, uint64_t aec);
+int SSL_set_incoming_stream_policy(SSL *ssl, int policy, uint64_t aec);
 ```
 
 #### `SSL_set_default_stream_mode`
@@ -1162,52 +1158,13 @@ int SSL_set_incoming_stream_reject_policy(SSL *ssl, int policy, uint64_t aec);
  *
  * This function must be called before a default stream object is created, for
  * example before initiating a connection. If the function is too late to have
- * an effect, this function fails and returns 0. To switch to multi-stream
- * operation after a default stream has been created, use `SSL_detach_stream`.
+ * an effect, this function fails and returns 0.
  */
 #define SSL_DEFAULT_STREAM_MODE_NONE                0
 #define SSL_DEFAULT_STREAM_MODE_AUTO_BIDI           1
 #define SSL_DEFAULT_STREAM_MODE_AUTO_UNI            2
 
 __owur int SSL_set_default_stream_mode(SSL *ssl, uint32_t mode);
-```
-
-#### `SSL_detach_stream`
-
-| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
-| --------- | ------------- | --------- | ------------- |
-| New       | Never         | No        | C             |
-
-```c
-/*
- * Detaches a default stream from a QUIC connection object. If the
- * QUIC connection object does not contain a default stream, returns NULL.
- * After calling this, calling SSL_get_stream_type on the connection object
- * returns SSL_STREAM_TYPE_NONE. Always returns NULL for non-QUIC connections.
- *
- * Calling this function automatically inhibits default stream creation;
- * though, after calling this function, a QUIC connection SSL object will no
- * longer have a stream attached to it, calling SSL_read or SSL_write on
- * that QUIC connection SSL object will not automatically create a new
- * default stream. Default stream creation only occurs at most a single time per
- * connection.
- */
-SSL *SSL_detach_stream(SSL *ssl);
-```
-
-#### `SSL_attach_stream`
-
-| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
-| --------- | ------------- | --------- | ------------- |
-| New       | Never         | No        | C             |
-
-```c
-/*
- * Attaches a default stream to a QUIC connection object. If the conn object is
- * not a QUIC connection object, or already has a default stream, this function
- * fails. The stream must belong to the same connection, or this function fails.
- */
-__owur int SSL_attach_stream(SSL *conn, SSL *stream);
 ```
 
 ### Future APIs

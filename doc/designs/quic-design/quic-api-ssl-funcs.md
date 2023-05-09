@@ -648,9 +648,7 @@ Notes:
 | `SSL_accept_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_get_accept_stream_queue_len` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_set_default_stream_mode` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_set_incoming_stream_reject_policy` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_detach_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_attach_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_set_incoming_stream_policy` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | **⇒ Currently Not Supported** | |
 | `SSL_copy_session_id` | Special | 🟩U | 🟥FC | 🟨C* | 🟢Done |
 | `BIO_ssl_copy_session_id` | Special | 🟩U | 🟥FC | 🟨C* | 🟢Done |
