@@ -589,7 +589,7 @@ B<s_client> and B<s_server> commands.
 
 =item B<-dtls>, B<-dtls1>, B<-dtls1_2>
 
-These options specify to use DTLS instead of DLTS.
+These options specify to use DTLS instead of TLS.
 With B<-dtls>, clients will negotiate any supported DTLS protocol version.
 Use the B<-dtls1> or B<-dtls1_2> options to support only DTLS1.0 or DTLS1.2,
 respectively.
