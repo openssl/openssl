@@ -3576,8 +3576,8 @@ skip_hmac:
             }
 
             if (kem_type == KEM_RSA) {
-                params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
-                                                        (size_t *)&bits);
+                params[0] = OSSL_PARAM_construct_uint(OSSL_PKEY_PARAM_RSA_BITS,
+                                                      &bits);
                 use_params = 1;
             } else if (kem_type == KEM_EC) {
                 name = (char *)(kem_name + 2);
@@ -3757,8 +3757,8 @@ skip_hmac:
             /* no string after rsa<bitcnt> permitted: */
             if (strlen(sig_name) < MAX_ALGNAME_SUFFIX + 4 /* rsa+digit */
                 && sscanf(sig_name, "rsa%u%s", &bits, sfx) == 1) {
-                params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
-                                                        (size_t *)&bits);
+                params[0] = OSSL_PARAM_construct_uint(OSSL_PKEY_PARAM_RSA_BITS,
+                                                      &bits);
                 use_params = 1;
             }
 
