@@ -4,43 +4,40 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    # strategy:
-    #   fail-fast: false # Setting fail-fast to false prevents GitHub from cancelling all in-progress jobs if any matrix job fails.
-    #   matrix:
-    #     test-group:
-    #       [
-    #         gnutls-2way,
-    #         gnutls-3way,
-    #         gnutls-basic,
-    #         gnutls-other,
-    #         nss-other,
-    #         nss-2way
-    #       ]
+    strategy:
+      fail-fast: false # Setting fail-fast to false prevents GitHub from cancelling all in-progress jobs if any matrix job fails.
+      matrix:
+        COMPONENT: [openssl-upstream-gnutls, openssl-upstream-nss]
+    env:
+      COMPONENT: ${{ matrix.COMPONENT }}
     # Code below inspired by https://fedoramagazine.org/github-actions-use-podman-to-run-fedora-linux/
     steps:
       - name: Setup Podman
         run: |
-          sudo apt update
+          # sudo apt update
           sudo apt-get -y install podman
           podman pull registry.fedoraproject.org/fedora:latest
-      - name: Get source
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-        # not needed OR maybe change to our interop tests
-        # with:
-        #   path: 'red_amber'
-      - name: Create container and run tests
-        # TODO: we need to setup the environment for tests, or we could
-        # use the images from GitLab GnuTLS
+      # - name: Get source
+      #   uses: actions/checkout@v3
+      #   with:
+      #     submodules: true
+      - name: Create container
         run: |
           {
               echo 'FROM fedora:latest'
-              echo '# set TZ to ensure the test using timestamp'
               echo 'RUN dnf -y update'
+              echo 'RUN dnf -y install perl'
               echo 'RUN dnf -y install git tmt-all'
-              echo 'RUN git clone -b interop-tests --recurse-submodules https://github.com/not4pedro/openssl.git'
-              echo 'WORKDIR /openssl'
-              echo 'RUN tmt run -a plans -n short-interop-tests -n gnutls-2way -n nss-2way -n nss-openssl provision -h local execute -h tmt --interactive'
-          } > podmanfile
-          podman build --tag fedora38test -f ./podmanfile
+              echo 'RUN # dnf -y remove openssl'
+              echo 'RUN git clone -b interop-plans --recurse-submodules https://github.com/not4pedro/openssl.git'
+              echo 'WORKDIR /openssl/interop'
+              } > podmanfile
+              podman build --tag fedoralatest -f ./podmanfile
+      - name : Run tests
+        run: |
+          podman run -di --name fedoralatest fedoralatest:latest
+          echo "Tests to run:"
+          podman exec -i fedoralatest tmt run plans -n $COMPONENT  discover -v
+          echo "Run the tests:"
+          podman exec -i fedoralatest tmt run -a plans -n $COMPONENT provision -h local execute -h tmt --interactive
+          sleep 1

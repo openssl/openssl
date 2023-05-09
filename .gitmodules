@@ -30,4 +30,4 @@
 	url = https://github.com/cloudflare/quiche
 [submodule "interop"]
 	path = interop
-	url = https://gitlab.com/redhat-crypto/tests/interop.git
+	url = https://gitlab.com/not4pedro/interop
