@@ -426,11 +426,11 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
     return 1;
 }
 
-typedef enum {BIG, LITTLE} endianess_t;
+typedef enum {BIG, LITTLE} endianness_t;
 typedef enum {SIGNED, UNSIGNED} signedness_t;
 
 static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
-                      endianess_t endianess, signedness_t signedness)
+                      endianness_t endianness, signedness_t signedness)
 {
     int inc;
     const unsigned char *s2;
@@ -464,7 +464,7 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
      * significant BIGNUM chunk, so we adapt parameters to transfer
      * input bytes accordingly.
      */
-    if (endianess == LITTLE) {
+    if (endianness == LITTLE) {
         s2 = s + len - 1;
         inc2 = -1;
         inc = 1;
@@ -542,7 +542,7 @@ BIGNUM *BN_signed_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 }
 
 static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen,
-                     endianess_t endianess, signedness_t signedness)
+                     endianness_t endianness, signedness_t signedness)
 {
     int inc;
     int n, n8;
@@ -599,7 +599,7 @@ static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen,
      * to most significant BIGNUM limb, so we adapt parameters to
      * transfer output bytes accordingly.
      */
-    if (endianess == LITTLE) {
+    if (endianness == LITTLE) {
         inc = 1;
     } else {
         inc = -1;
