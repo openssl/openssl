@@ -45,15 +45,8 @@ following rules:
 
 =item *
 
-An incoming stream is accepted if L<SSL_detach_stream(3)> has ever been called
-on a QUIC connection SSL object, as the application is assumed to be
-stream-aware in this case.
-
-=item *
-
-Otherwise, if the default stream mode (configured using
-L<SSL_set_default_stream_mode(3)>) is set to
-B<SSL_DEFAULT_STREAM_MODE_AUTO_BIDI> (the default) or
+If the default stream mode (configured using L<SSL_set_default_stream_mode(3)>)
+is set to B<SSL_DEFAULT_STREAM_MODE_AUTO_BIDI> (the default) or
 B<SSL_DEFAULT_STREAM_MODE_AUTO_UNI>, the incoming stream is rejected.
 
 =item *
@@ -89,7 +82,6 @@ object.
 
 =head1 SEE ALSO
 
-L<SSL_attach_stream(3)>, L<SSL_detach_stream(3)>,
 L<SSL_set_default_stream_mode(3)>, L<SSL_accept_stream(3)>
 
 =head1 HISTORY

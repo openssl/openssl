@@ -2459,10 +2459,6 @@ DEPEND[html/man3/SSL_alloc_buffers.html]=man3/SSL_alloc_buffers.pod
 GENERATE[html/man3/SSL_alloc_buffers.html]=man3/SSL_alloc_buffers.pod
 DEPEND[man/man3/SSL_alloc_buffers.3]=man3/SSL_alloc_buffers.pod
 GENERATE[man/man3/SSL_alloc_buffers.3]=man3/SSL_alloc_buffers.pod
-DEPEND[html/man3/SSL_attach_stream.html]=man3/SSL_attach_stream.pod
-GENERATE[html/man3/SSL_attach_stream.html]=man3/SSL_attach_stream.pod
-DEPEND[man/man3/SSL_attach_stream.3]=man3/SSL_attach_stream.pod
-GENERATE[man/man3/SSL_attach_stream.3]=man3/SSL_attach_stream.pod
 DEPEND[html/man3/SSL_check_chain.html]=man3/SSL_check_chain.pod
 GENERATE[html/man3/SSL_check_chain.html]=man3/SSL_check_chain.pod
 DEPEND[man/man3/SSL_check_chain.3]=man3/SSL_check_chain.pod
@@ -2679,6 +2675,10 @@ DEPEND[html/man3/SSL_set_connect_state.html]=man3/SSL_set_connect_state.pod
 GENERATE[html/man3/SSL_set_connect_state.html]=man3/SSL_set_connect_state.pod
 DEPEND[man/man3/SSL_set_connect_state.3]=man3/SSL_set_connect_state.pod
 GENERATE[man/man3/SSL_set_connect_state.3]=man3/SSL_set_connect_state.pod
+DEPEND[html/man3/SSL_set_default_stream_mode.html]=man3/SSL_set_default_stream_mode.pod
+GENERATE[html/man3/SSL_set_default_stream_mode.html]=man3/SSL_set_default_stream_mode.pod
+DEPEND[man/man3/SSL_set_default_stream_mode.3]=man3/SSL_set_default_stream_mode.pod
+GENERATE[man/man3/SSL_set_default_stream_mode.3]=man3/SSL_set_default_stream_mode.pod
 DEPEND[html/man3/SSL_set_fd.html]=man3/SSL_set_fd.pod
 GENERATE[html/man3/SSL_set_fd.html]=man3/SSL_set_fd.pod
 DEPEND[man/man3/SSL_set_fd.3]=man3/SSL_set_fd.pod
@@ -3506,7 +3506,6 @@ html/man3/SSL_accept.html \
 html/man3/SSL_accept_stream.html \
 html/man3/SSL_alert_type_string.html \
 html/man3/SSL_alloc_buffers.html \
-html/man3/SSL_attach_stream.html \
 html/man3/SSL_check_chain.html \
 html/man3/SSL_clear.html \
 html/man3/SSL_connect.html \
@@ -3561,6 +3560,7 @@ html/man3/SSL_set_async_callback.html \
 html/man3/SSL_set_bio.html \
 html/man3/SSL_set_blocking_mode.html \
 html/man3/SSL_set_connect_state.html \
+html/man3/SSL_set_default_stream_mode.html \
 html/man3/SSL_set_fd.html \
 html/man3/SSL_set_incoming_stream_policy.html \
 html/man3/SSL_set_initial_peer_addr.html \
@@ -4141,7 +4141,6 @@ man/man3/SSL_accept.3 \
 man/man3/SSL_accept_stream.3 \
 man/man3/SSL_alert_type_string.3 \
 man/man3/SSL_alloc_buffers.3 \
-man/man3/SSL_attach_stream.3 \
 man/man3/SSL_check_chain.3 \
 man/man3/SSL_clear.3 \
 man/man3/SSL_connect.3 \
@@ -4196,6 +4195,7 @@ man/man3/SSL_set_async_callback.3 \
 man/man3/SSL_set_bio.3 \
 man/man3/SSL_set_blocking_mode.3 \
 man/man3/SSL_set_connect_state.3 \
+man/man3/SSL_set_default_stream_mode.3 \
 man/man3/SSL_set_fd.3 \
 man/man3/SSL_set_incoming_stream_policy.3 \
 man/man3/SSL_set_initial_peer_addr.3 \

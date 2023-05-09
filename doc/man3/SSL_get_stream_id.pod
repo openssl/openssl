@@ -31,8 +31,8 @@ on the stream, and returns one of the following values:
 
 =item B<SSL_STREAM_TYPE_NONE>
 
-The SSL object is a QUIC connection SSL object without a default stream attached
-(see L<SSL_attach_stream(3)>).
+The SSL object is a QUIC connection SSL object without a default stream
+attached.
 
 =item B<SSL_STREAM_TYPE_BIDI>
 
@@ -81,7 +81,7 @@ SSL_get_stream_type() returns one of the B<SSL_STREAM_TYPE> values.
 
 =head1 SEE ALSO
 
-L<SSL_attach_stream(3)>, L<SSL_new_stream(3)>, L<SSL_accept_stream(3)>
+L<SSL_new_stream(3)>, L<SSL_accept_stream(3)>
 
 =head1 HISTORY
 

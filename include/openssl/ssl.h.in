@@ -2282,9 +2282,6 @@ __owur uint64_t SSL_get_stream_id(SSL *s);
 #define SSL_DEFAULT_STREAM_MODE_AUTO_UNI    2
 __owur int SSL_set_default_stream_mode(SSL *s, uint32_t mode);
 
-__owur SSL *SSL_detach_stream(SSL *s);
-__owur int SSL_attach_stream(SSL *conn, SSL *stream);
-
 #define SSL_STREAM_FLAG_UNI     (1U << 0)
 __owur SSL *SSL_new_stream(SSL *s, uint64_t flags);
 

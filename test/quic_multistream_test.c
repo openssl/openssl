@@ -11,6 +11,7 @@
 #include <openssl/bio.h>
 #include <openssl/lhash.h>
 #include "internal/quic_tserver.h"
+#include "internal/quic_ssl.h"
 #include "testutil.h"
 
 static const char *certfile, *keyfile;
@@ -715,7 +716,7 @@ static int run_script(const struct script_op *script, int free_order)
                 if (!TEST_ptr_null(c_tgt))
                     goto out; /* don't overwrite existing stream with same name */
 
-                if (!TEST_ptr(c_stream = SSL_detach_stream(h.c_conn)))
+                if (!TEST_ptr(c_stream = ossl_quic_detach_stream(h.c_conn)))
                     goto out;
 
                 if (!TEST_true(helper_set_c_stream(&h, op->stream_name, c_stream)))
@@ -728,7 +729,7 @@ static int run_script(const struct script_op *script, int free_order)
                 if (!TEST_ptr(c_tgt))
                     goto out;
 
-                if (!TEST_true(SSL_attach_stream(h.c_conn, c_tgt)))
+                if (!TEST_true(ossl_quic_attach_stream(h.c_conn, c_tgt)))
                     goto out;
 
                 if (!TEST_true(helper_set_c_stream(&h, op->stream_name, NULL)))
