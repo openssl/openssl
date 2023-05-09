@@ -566,8 +566,6 @@ SSL_is_connection                       ?	3_2_0	EXIST::FUNCTION:
 SSL_get_stream_type                     ?	3_2_0	EXIST::FUNCTION:
 SSL_get_stream_id                       ?	3_2_0	EXIST::FUNCTION:
 SSL_set_default_stream_mode             ?	3_2_0	EXIST::FUNCTION:
-SSL_detach_stream                       ?	3_2_0	EXIST::FUNCTION:
-SSL_attach_stream                       ?	3_2_0	EXIST::FUNCTION:
 SSL_accept_stream                       ?	3_2_0	EXIST::FUNCTION:
 SSL_get_accept_stream_queue_len         ?	3_2_0	EXIST::FUNCTION:
 SSL_stream_reset                        ?	3_2_0	EXIST::FUNCTION:

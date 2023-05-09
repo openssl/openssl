@@ -7361,30 +7361,6 @@ int SSL_set_default_stream_mode(SSL *s, uint32_t mode)
 #endif
 }
 
-SSL *SSL_detach_stream(SSL *s)
-{
-#ifndef OPENSSL_NO_QUIC
-    if (!IS_QUIC(s))
-        return NULL;
-
-    return ossl_quic_detach_stream(s);
-#else
-    return NULL;
-#endif
-}
-
-int SSL_attach_stream(SSL *conn, SSL *stream)
-{
-#ifndef OPENSSL_NO_QUIC
-    if (!IS_QUIC(conn))
-        return 0;
-
-    return ossl_quic_attach_stream(conn, stream);
-#else
-    return 0;
-#endif
-}
-
 int SSL_set_incoming_stream_policy(SSL *s, int policy, uint64_t aec)
 {
 #ifndef OPENSSL_NO_QUIC
