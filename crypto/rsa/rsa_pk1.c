@@ -311,7 +311,7 @@ static int ossl_rsa_prf(OSSL_LIB_CTX *ctx,
      * different hash doesn't provide a Bleichenbacher oracle:
      * if the attacker can see that different versions return different
      * messages for the same ciphertext, they'll know that the message is
-     * syntethically generated, which means that the padding check failed
+     * synthetically generated, which means that the padding check failed
      */
     md = EVP_MD_fetch(ctx, "sha256", NULL);
     if (md == NULL) {
@@ -392,7 +392,7 @@ int ossl_rsa_padding_check_PKCS1_type_2(OSSL_LIB_CTX *ctx,
                                         int num, unsigned char *kdk)
 {
 /*
- * We need to generate a random length for the synthethic message, to avoid
+ * We need to generate a random length for the synthetic message, to avoid
  * bias towards zero and avoid non-constant timeness of DIV, we prepare
  * 128 values to check if they are not too large for the used key size,
  * and use 0 in case none of them are small enough, as 2^-128 is a good enough
@@ -400,7 +400,7 @@ int ossl_rsa_padding_check_PKCS1_type_2(OSSL_LIB_CTX *ctx,
  */
 #define MAX_LEN_GEN_TRIES 128
     unsigned char *synthetic = NULL;
-    int synthethic_length;
+    int synthetic_length;
     uint16_t len_candidate;
     unsigned char candidate_lengths[MAX_LEN_GEN_TRIES * sizeof(len_candidate)];
     uint16_t len_mask;
@@ -452,18 +452,18 @@ int ossl_rsa_padding_check_PKCS1_type_2(OSSL_LIB_CTX *ctx,
     len_mask |= len_mask >> 4;
     len_mask |= len_mask >> 8;
 
-    synthethic_length = 0;
+    synthetic_length = 0;
     for (i = 0; i < MAX_LEN_GEN_TRIES * (int)sizeof(len_candidate);
             i += sizeof(len_candidate)) {
         len_candidate = (candidate_lengths[i] << 8) | candidate_lengths[i + 1];
         len_candidate &= len_mask;
 
-        synthethic_length = constant_time_select_int(
+        synthetic_length = constant_time_select_int(
             constant_time_lt(len_candidate, max_sep_offset),
-            len_candidate, synthethic_length);
+            len_candidate, synthetic_length);
     }
 
-    synth_msg_index = flen - synthethic_length;
+    synth_msg_index = flen - synthetic_length;
 
     /* we have alternative message ready, check the real one */
     good = constant_time_is_zero(from[0]);
@@ -493,7 +493,7 @@ int ossl_rsa_padding_check_PKCS1_type_2(OSSL_LIB_CTX *ctx,
 
     /*
      * old code returned an error in case the decrypted message wouldn't fit
-     * into the |to|, since that would leak information, return the synthethic
+     * into the |to|, since that would leak information, return the synthetic
      * message instead
      */
     good &= constant_time_ge(tlen, num - msg_index);

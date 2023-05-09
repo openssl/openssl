@@ -100,7 +100,7 @@ void ossl_event_queue_free(OSSL_EVENT_QUEUE *queue);
  *
  * The event parameters are taken from the function arguments.
  *
- * The function reutrns NULL on failure and the added event on success.
+ * The function returns NULL on failure and the added event on success.
  */
 OSSL_EVENT *ossl_event_queue_add_new(OSSL_EVENT_QUEUE *queue, 
                                      uint32_t type, uint32_t priority,
@@ -113,7 +113,7 @@ OSSL_EVENT *ossl_event_queue_add_new(OSSL_EVENT_QUEUE *queue,
  *
  * The event parameters are taken from the function arguments.
  *
- * The function reutrns 0 on failure and 1 on success.
+ * The function returns 0 on failure and 1 on success.
  */
 int ossl_event_queue_add(OSSL_EVENT_QUEUE *queue, OSSL_EVENT *event,
                          uint32_t type, uint32_t priority,

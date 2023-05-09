@@ -112,7 +112,7 @@ static const OSSL_HPKE_KDF_INFO hpke_kdf_tab[] = {
  * others above.
  *
  * The function to use these is ossl_hpke_str2suite() further down
- * this file and shouln't need modification so long as the table
+ * this file and shouldn't need modification so long as the table
  * sizes (i.e. allow exactly 4 synonyms) don't change.
  */
 static const synonymttab_t kemstrtab[] = {

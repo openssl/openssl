@@ -1355,7 +1355,7 @@ unsigned long tls_output_rpk(SSL_CONNECTION *sc, WPACKET *pkt, CERT_PKEY *cpk)
 
     if (SSL_CONNECTION_IS_TLS13(sc)) {
         /*
-         * Only send extensions relevent to raw public keys. Until such
+         * Only send extensions relevant to raw public keys. Until such
          * extensions are defined, this will be an empty set of extensions.
          * |x509| may be NULL, which raw public-key extensions need to handle.
          */

@@ -161,7 +161,7 @@ The Fault Injector will utilise the callbacks described above in order to supply
 a more test friendly API to test authors.
 
 This API will primarily take the form of a set of event listener callbacks. A
-test will be able to "listen" for a specifc event occuring and be informed about
+test will be able to "listen" for a specific event occurring and be informed about
 it when it does. Examples of events might include:
 
 - An EncryptedExtensions handshake message being sent
@@ -295,7 +295,7 @@ int ossl_quic_fault_set_handshake_listener(OSSL_QUIC_FAULT *fault,
 int ossl_quic_fault_resize_handshake(OSSL_QUIC_FAULT *fault, size_t newlen);
 
 /*
- * TODO(QUIC): Add listeners for specifc types of frame here. E.g. we might
+ * TODO(QUIC): Add listeners for specific types of frame here. E.g. we might
  * expect to see an "ACK" frame listener which will be passed pre-parsed ack
  * data that can be modified as required.
  */
@@ -338,7 +338,7 @@ int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
                                      size_t *extlen);
 
 /*
- * TODO(QUIC): Add additional helper functions for quering extensions here (e.g.
+ * TODO(QUIC): Add additional helper functions for querying extensions here (e.g.
  * finding or adding them). We could also provide a "listener" API for listening
  * for specific extension types
  */
@@ -470,7 +470,7 @@ static int test_unknown_frame(void)
      * TODO(QUIC): We should expect an error on the queue after this - but we
      * don't have it yet.
      * Note, just raising the error in the obvious place causes SSL_tick() to
-     * succeed, but leave a suprious error on the stack. We need to either
+     * succeed, but leave a spurious error on the stack. We need to either
      * allow SSL_tick() to fail, or somehow delay the raising of the error
      * until the SSL_read() call.
      */

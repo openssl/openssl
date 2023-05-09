@@ -442,7 +442,7 @@ static int derive_kdk(int flen, const unsigned char *from, RSA *rsa,
      * different hash doesn't provide a Bleichenbacher oracle:
      * if the attacker can see that different versions return different
      * messages for the same ciphertext, they'll know that the message is
-     * syntethically generated, which means that the padding check failed
+     * synthetically generated, which means that the padding check failed
      */
     md = EVP_MD_fetch(rsa->libctx, "sha256", NULL);
     if (md == NULL) {

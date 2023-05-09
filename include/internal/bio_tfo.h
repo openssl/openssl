@@ -78,7 +78,7 @@
  *     Linux pre-4.14)
  *
  * OSSL_TFO_DO_NOT_CONNECT
- *     Defined to skip calling conect() when creating a
+ *     Defined to skip calling connect() when creating a
  *     client socket (macOS, FreeBSD, Linux pre-4.14)
  */
 

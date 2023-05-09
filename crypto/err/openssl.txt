@@ -927,7 +927,7 @@ PEM_R_UNSUPPORTED_ENCRYPTION:114:unsupported encryption
 PEM_R_UNSUPPORTED_KEY_COMPONENTS:126:unsupported key components
 PEM_R_UNSUPPORTED_PUBLIC_KEY_TYPE:110:unsupported public key type
 PKCS12_R_CALLBACK_FAILED:115:callback failed
-PKCS12_R_CANT_PACK_STRUCTURE:100:cant pack structure
+PKCS12_R_CANT_PACK_STRUCTURE:100:can't pack structure
 PKCS12_R_CONTENT_TYPE_NOT_DATA:121:content type not data
 PKCS12_R_DECODE_ERROR:101:decode error
 PKCS12_R_ENCODE_ERROR:102:encode error
@@ -1761,7 +1761,7 @@ X509_R_AKID_MISMATCH:110:akid mismatch
 X509_R_BAD_SELECTOR:133:bad selector
 X509_R_BAD_X509_FILETYPE:100:bad x509 filetype
 X509_R_BASE64_DECODE_ERROR:118:base64 decode error
-X509_R_CANT_CHECK_DH_KEY:114:cant check dh key
+X509_R_CANT_CHECK_DH_KEY:114:can't check dh key
 X509_R_CERTIFICATE_VERIFICATION_FAILED:139:certificate verification failed
 X509_R_CERT_ALREADY_IN_HASH_TABLE:101:cert already in hash table
 X509_R_CRL_ALREADY_DELTA:127:crl already delta

@@ -114,7 +114,7 @@ __owur int WPACKET_start_quic_sub_packet(WPACKET *pkt);
 /*
  * Starts a QUIC sub-packet headed by a QUIC variable-length integer. max_len
  * specifies the upper bound for the sub-packet size at the time the sub-packet
- * is closed, which determines the encoding size for tthe variable-length
+ * is closed, which determines the encoding size for the variable-length
  * integer header. max_len can be a precise figure or a worst-case bound
  * if a precise figure is not available.
  */

@@ -46,7 +46,7 @@ static int bits2int(BIGNUM *out, int qlen_bits,
  *     out The returned Octet String
  *     num The input Integer
  *     rlen The required size of the returned Octet String in bytes
- * Returns: 1 if successful, or  0 otherwis
+ * Returns: 1 if successful, or  0 otherwise.
  */
 static int int2octets(unsigned char *out, const BIGNUM *num, int rlen)
 {

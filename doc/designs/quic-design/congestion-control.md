@@ -15,7 +15,7 @@ Congestion controllers are not thread safe; the caller is responsible for
 synchronisation.
 
 Congestion controllers may vary their state with respect to time. This is
-faciliated via the `get_wakeup_deadline` method and the `now` argument to the
+facilitated via the `get_wakeup_deadline` method and the `now` argument to the
 `new` method, which provides access to a clock. While no current congestion
 controller makes use of this facility, it can be used by future congestion
 controllers to implement packet pacing.
@@ -40,10 +40,10 @@ only a single path per connection, so there is one congestion control instance
 per connection. This may change in future.
 
 While the congestion control API is roughly based around the arrangement of
-functions as described by the congestion control psuedocode in RFC 9002, there
+functions as described by the congestion control pseudocode in RFC 9002, there
 are some deliberate changes in order to obtain cleaner separation between the
 loss detection and congestion control functions. Where a literal option of RFC
-9002 psuedocode would require a congestion controller to access the ACK
+9002 pseudocode would require a congestion controller to access the ACK
 manager's internal state directly, the interface between the two has been
 changed to avoid this. This involves some small amounts of functionality which
 RFC 9002 considers part of the congestion controller being part of the ACK

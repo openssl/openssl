@@ -24,7 +24,7 @@
  */
 
 /*
- * An OSSL_RECORD_METHOD is a protcol specific method which provides the
+ * An OSSL_RECORD_METHOD is a protocol specific method which provides the
  * functions for reading and writing records for that protocol. Which
  * OSSL_RECORD_METHOD to use for a given protocol is defined by the SSL_METHOD.
  */
@@ -161,7 +161,7 @@ struct ossl_record_method_st {
     int (*processed_read_pending)(OSSL_RECORD_LAYER *rl);
 
     /*
-     * The amount of processed app data that is internally bufferred and
+     * The amount of processed app data that is internally buffered and
      * available to read
      */
     size_t (*app_data_pending)(OSSL_RECORD_LAYER *rl);

@@ -816,7 +816,7 @@ static int test_no_ems(void)
     status = create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE);
     if (fips_ems_check) {
         if (status == 1) {
-            printf("When FIPS uses the EMS check a connection that doesnt use EMS should fail\n");
+            printf("When FIPS uses the EMS check a connection that doesn't use EMS should fail\n");
             goto end;
         }
     } else {

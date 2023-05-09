@@ -32,7 +32,7 @@ For this reason it's actually common for asynchronous I/O libraries to basically
 contain two separate implementations of their APIs internally, or at least a
 substantial chunk of their code (e.g. libuv, nanomsg). It turns out to be easier
 just to write a poll-based implementation of an I/O reactor and an IOCP-based
-implementation than try to overcome the impedence discontinuities.
+implementation than try to overcome the impedance discontinuities.
 
 The difference between polling and IOCPs is that polling reports *readiness*
 whereas IOCPs report *completion of an operation*. For example, in the IOCP

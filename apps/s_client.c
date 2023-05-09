@@ -2269,7 +2269,7 @@ int s_client_main(int argc, char **argv)
     if (isquic) {
         sbio = BIO_new_dgram(sock, BIO_NOCLOSE);
         if (!SSL_set_initial_peer_addr(con, peer_addr)) {
-            BIO_printf(bio_err, "Failed to set the inital peer address\n");
+            BIO_printf(bio_err, "Failed to set the initial peer address\n");
             goto shut;
         }
     } else
@@ -4019,7 +4019,7 @@ static int user_data_process(struct user_data_st *user_data, size_t *len,
                     && user_data->buf[user_data->bufoff] == '\n') {
                 /*
                  * This command was the only thing on the whole line. We
-                 * supress the final `\n`
+                 * suppress the final `\n`
                  */
                 user_data->bufoff = 0;
                 user_data->buflen = 0;

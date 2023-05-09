@@ -2068,7 +2068,7 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
     case QUIC_CHANNEL_STATE_TERMINATING_DRAINING:
         /*
          * Other than in the force-immediate case, we remain here until the
-         * timout expires.
+         * timeout expires.
          */
         if (force_immediate)
             ch_on_terminating_timeout(ch);

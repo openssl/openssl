@@ -438,7 +438,7 @@ static size_t hpke_seqnonce2buf(OSSL_HPKE_CTX *ctx,
  * @brief call the underlying KEM to encap
  * @param ctx is the OSSL_HPKE_CTX
  * @param enc is a buffer for the sender's ephemeral public value
- * @param enclen is the size of enc on input, number of octets used on ouptut
+ * @param enclen is the size of enc on input, number of octets used on output
  * @param pub is the recipient's public value
  * @param publen is the length of pub
  * @return 1 for success, 0 for error

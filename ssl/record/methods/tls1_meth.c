@@ -121,7 +121,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             && !ossl_set_tls_provider_parameters(rl, ciph_ctx, ciph, md))
         return OSSL_RECORD_RETURN_FATAL;
 
-    /* Calculate the explict IV length */
+    /* Calculate the explicit IV length */
     if (RLAYER_USE_EXPLICIT_IV(rl)) {
         int mode = EVP_CIPHER_CTX_get_mode(ciph_ctx);
         int eivlen = 0;

@@ -1477,7 +1477,7 @@ $code.=<<___;
 	cmp $remain,0
 	b.eq .return${std}
 
-// This brance calculates the last two tweaks, 
+// This branch calculates the last two tweaks, 
 // while the encryption/decryption length is larger than 32
 .last_2blks_tweak${std}:
 	ld1	{@tweak[0].4s},[$ivp]
@@ -1489,7 +1489,7 @@ $code.=<<___;
 	b .check_dec${std}
 
 
-// This brance calculates the last two tweaks, 
+// This branch calculates the last two tweaks, 
 // while the encryption/decryption length is equal to 32, who only need two tweaks
 .only_2blks_tweak${std}:
 	mov @tweak[1].16b,@tweak[0].16b

@@ -49,7 +49,7 @@ typedef size_t size_t_aX;
 
 /*-
  *
- * NOTE: TABLE_BITS and all non-4bit implmentations have been removed in 3.1.
+ * NOTE: TABLE_BITS and all non-4bit implementations have been removed in 3.1.
  *
  * Even though permitted values for TABLE_BITS are 8, 4 and 1, it should
  * never be set to 8. 8 is effectively reserved for testing purposes.
