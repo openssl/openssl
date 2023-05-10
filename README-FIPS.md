@@ -2,7 +2,7 @@ OpenSSL FIPS support
 ====================
 
 This release of OpenSSL includes a cryptographic module that can be
-FIPS 140-2 validated. The module is implemented as an OpenSSL provider.
+FIPS validated. The module is implemented as an OpenSSL provider.
 A provider is essentially a dynamically loadable module which implements
 cryptographic algorithms, see the [README-PROVIDERS](README-PROVIDERS.md) file
 for further details.
@@ -31,9 +31,9 @@ the `enable-fips` option.
 Installing the FIPS provider
 ============================
 
-You can build the OpenSSL source code and the FIPS provider by doing the following
-if you only use the FIPS validated source code. If you want to use a validated FIPS
-module with the latest release see the next section.
+You can build the OpenSSL source code with a validated FIPS provider by doing the
+following if you only use the FIPS validated source code. If you want to use a
+validated FIPS provider with the latest release see the next section.
 
 The following is only a guide.
 Please read the Security Policy for up to date installation instructions.
@@ -86,13 +86,11 @@ Installing the FIPS provider and using it with the latest release
 
 This normally requires you to download 2 copies of the OpenSSL source code.
 
-Download and build the (OpenSSL 3.0) FIPS provider
+Download and build a validated FIPS provider
 --------------------------------------------------
 
-OpenSSL 3.0 is the only source that is currently FIPS validated.
-If you use any other source currently it is NOT FIPS valid.
-Please refer to the security guide for guidance related to
-the OpenSSL 3.0  FIPS provider.
+Refer to <https://www.openssl.org/source/> for information related to
+which versions are FIPS validated. For this example we use OpenSSL 3.0.0.
 
     $ wget https://www.openssl.org/source/openssl-3.0.0.tar.gz
     $ tar -xf openssl-3.0.0.tar.gz
@@ -104,40 +102,40 @@ the OpenSSL 3.0  FIPS provider.
 Download and build the latest release of OpenSSL
 ------------------------------------------------
 
-We use OpenSSL 3.1 here, (but you could also use the latest 3.0.X)
+We use OpenSSL 3.1.0 here, (but you could also use the latest 3.0.X)
 
     $ wget https://www.openssl.org/source/openssl-3.1.0.tar.gz
     $ tar -xf openssl-3.1.0.tar.gz
     $ cd openssl-3.1.0
     $ ./Configure enable-fips
-    $ make -j 4
+    $ make
 
-Use the OpenSSL 3.0 FIPS provider for testing
+Use the OpenSSL FIPS provider for testing
 ---------------------------------------------
 
-We do this by replacing the artifact for the OpenSSL 3.1 FIPS provider.
-Note that the OpenSSL 3.1 FIPS provider has not been validated
+We do this by replacing the artifact for the OpenSSL 3.1.0 FIPS provider.
+Note that the OpenSSL 3.1.0 FIPS provider has not been validated
 so it must not be used for FIPS purposes.
 
     $ cp ../openssl-3.0.0/providers/fips.so providers/.
     $ cp ../openssl-3.0.0/providers/fipsmodule.cnf providers/.
 
     // Validate the output of the following to make sure we are using the
-    // OpenSSL 3.0 FIPS provider
+    // OpenSSL 3.0.0 FIPS provider
     $ ./util/wrap.pl -fips apps/openssl list -provider-path providers \
     -provider fips -providers
 
     // Now run the current tests using the OpenSSL 3.0 FIPS provider.
     $ make tests
 
-Copy the FIPS provider artifacts (fips.so & fipsmodule.cnf) to known locations
-------------------------------------------------------------------------------
+Copy the FIPS provider artifacts (`fips.so` & `fipsmodule.cnf`) to known locations
+-------------------------------------------------------------------------------------
 
     $ cd ../openssl-3.0.0
     $ sudo make install_fips
 
-Check that the FIPS provider is being used
-------------------------------------------
+Check that the correct FIPS provider is being used
+--------------------------------------------------
 
     $./util/wrap.pl -fips apps/openssl list -provider-path providers \
     -provider fips -providers
