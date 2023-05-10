@@ -13,6 +13,8 @@ I<command>
 
 B<openssl> B<no->I<XXX> [ I<options> ]
 
+B<openssl> B<-help> | B<-version>
+
 =head1 DESCRIPTION
 
 OpenSSL is a cryptography toolkit implementing the Secure Sockets Layer (SSL)
@@ -499,13 +501,33 @@ SM4 Cipher
 Details of which options are available depend on the specific command.
 This section describes some common options with common behavior.
 
-=head2 Common Options
+=head2 Program Options
+
+These options can be specified without a command specified to get help
+or version information.
 
 =over 4
 
 =item B<-help>
 
 Provides a terse summary of all options.
+For more detailed information, each command supports a B<-help> option.
+Accepts B<--help> as well.
+
+=item B<-version>
+
+Provides a terse summary of the B<openssl> program version.
+For more detailed information see L<openssl-version(1)>.
+Accepts B<--version> as well.
+
+=back
+
+=head2 Common Options
+
+=over 4
+
+=item B<-help>
+
 If an option takes an argument, the "type" of argument is also given.
 
 =item B<-->

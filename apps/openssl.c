@@ -232,6 +232,7 @@ static void setup_trace(const char *str)
 #endif /* OPENSSL_NO_TRACE */
 
 static char *help_argv[] = { "help", NULL };
+static char *version_argv[] = { "version", NULL };
 
 int main(int argc, char *argv[])
 {
@@ -241,6 +242,7 @@ int main(int argc, char *argv[])
     const char *fname;
     ARGS arg;
     int global_help = 0;
+    int global_version = 0;
     int ret = 0;
 
     arg.argv = NULL;
@@ -285,17 +287,26 @@ int main(int argc, char *argv[])
         global_help = argc > 1
             && (strcmp(argv[1], "-help") == 0 || strcmp(argv[1], "--help") == 0
                 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--h") == 0);
+        global_version = argc > 1
+            && (strcmp(argv[1], "-version") == 0 || strcmp(argv[1], "--version") == 0
+                || strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--v") == 0);
+
         argc--;
         argv++;
-        opt_appname(argc == 1 || global_help ? "help" : argv[0]);
+        opt_appname(argc == 1 || global_help ? "help" : global_version ? "version" : argv[0]);
     } else {
         argv[0] = pname;
     }
 
-    /* If there's a command, run with that, otherwise "help". */
-    ret = argc == 0 || global_help
-        ? do_cmd(prog, 1, help_argv)
-        : do_cmd(prog, argc, argv);
+    /*
+     * If there's no command, assume "help". If there's an override for help
+     * or version run those, otherwise run the command given.
+     */
+    ret =  (argc == 0) || global_help
+            ? do_cmd(prog, 1, help_argv)
+            : global_version
+                ? do_cmd(prog, 1, version_argv)
+                : do_cmd(prog, argc, argv);
 
  end:
     OPENSSL_free(default_config_file);
@@ -325,7 +336,6 @@ const OPTIONS help_options[] = {
     {"command", 0, 0, "Name of command to display help (optional)"},
     {NULL}
 };
-
 
 int help_main(int argc, char **argv)
 {
