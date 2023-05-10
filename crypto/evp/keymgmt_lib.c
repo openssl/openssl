@@ -194,7 +194,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
      * operation cache.  In that case, we know that |i| is zero.
      */
     if (pk->dirty_cnt != pk->dirty_cnt_copy)
-        evp_keymgmt_util_clear_operation_cache(pk, 0);
+        evp_keymgmt_util_clear_operation_cache(pk);
 
     /* Add the new export to the operation cache */
     if (!evp_keymgmt_util_cache_keydata(pk, keymgmt, import_data.keydata,
@@ -219,15 +219,11 @@ static void op_cache_free(OP_CACHE_ELEM *e)
     OPENSSL_free(e);
 }
 
-int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk, int locking)
+int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk)
 {
     if (pk != NULL) {
-        if (locking && pk->lock != NULL && !CRYPTO_THREAD_write_lock(pk->lock))
-            return 0;
         sk_OP_CACHE_ELEM_pop_free(pk->operation_cache, op_cache_free);
         pk->operation_cache = NULL;
-        if (locking && pk->lock != NULL)
-            CRYPTO_THREAD_unlock(pk->lock);
     }
 
     return 1;

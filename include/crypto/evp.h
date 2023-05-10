@@ -785,7 +785,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
 OP_CACHE_ELEM *evp_keymgmt_util_find_operation_cache(EVP_PKEY *pk,
                                                      EVP_KEYMGMT *keymgmt,
                                                      int selection);
-int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk, int locking);
+int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk);
 int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
                                    void *keydata, int selection);
 void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk);
