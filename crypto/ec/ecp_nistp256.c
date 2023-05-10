@@ -97,7 +97,7 @@ static const felem_bytearray nistp256_curve_params[5] = {
  * values, or four 64-bit values. The field element represented is:
  *   v[0]*2^0 + v[1]*2^64 + v[2]*2^128 + v[3]*2^192  (mod p)
  * or:
- *   v[0]*2^0 + v[1]*2^64 + v[2]*2^128 + ... + v[8]*2^512  (mod p)
+ *   v[0]*2^0 + v[1]*2^64 + v[2]*2^128 + ... + v[7]*2^448  (mod p)
  *
  * 128-bit values are called 'limbs'. Since the limbs are spaced only 64 bits
  * apart, but are 128-bits wide, the most significant bits of each limb overlap
