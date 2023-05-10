@@ -368,7 +368,7 @@ This example is for setting parameters on some object:
 =head2 Example 2
 
 This example is for requesting parameters on some object, and also
-demonstrates that the requestor isn't obligated to request all
+demonstrates that the requester isn't obligated to request all
 available parameters:
 
     const char *foo = NULL;
