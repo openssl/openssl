@@ -118,7 +118,7 @@ static const felem_bytearray nistp521_curve_params[5] = {
  *
  * We represent field elements with nine values. These values are either 64 or
  * 128 bits and the field element represented is:
- *   v[0]*2^0 + v[1]*2^58 + v[2]*2^116 + ... + v[7]*2^464  (mod p)
+ *   v[0]*2^0 + v[1]*2^58 + v[2]*2^116 + ... + v[8]*2^464  (mod p)
  * Each of the nine values is called a 'limb'. Since the limbs are spaced only
  * 58 bits apart, but are greater than 58 bits in length, the most significant
  * bits of each limb overlap with the least significant bits of the next.
