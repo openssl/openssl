@@ -32,7 +32,7 @@ Once the timeout expires, DTLSv1_handle_timeout() should be called to handle any
 internal processing which is due; for more information, see
 L<DTLSv1_handle_timeout(3)>.
 
-L<SSL_get_tick_timeout(3)> supercedes all use cases for this this function and
+L<SSL_get_tick_timeout(3)> supersedes all use cases for this this function and
 may be used instead of it.
 
 =head1 RETURN VALUES
