@@ -1598,7 +1598,7 @@ BIO *SSL_get_wbio(const SSL *s)
     const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
 
     if (qc != NULL)
-        return ossl_quic_conn_get_net_rbio(qc);
+        return ossl_quic_conn_get_net_wbio(qc);
 #endif
 
     if (sc == NULL)
