@@ -68,7 +68,7 @@ may be NULL to select the defaults.
 In case the method is OSSL_CRMF_POPO_SIGNATURE the POPO is calculated
 using the private key I<pkey> and the digest method I<digest>,
 where the I<digest> argument is ignored if I<pkey> is of a type (such as
-Ed25519 and Ed448) that is implicitly associated with a digest alorithm.
+Ed25519 and Ed448) that is implicitly associated with a digest algorithm.
 
 I<meth> can be one of the following:
 

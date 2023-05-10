@@ -211,7 +211,7 @@ description of the replay protection feature. Anti-replay measures are required
 to comply with the TLSv1.3 specification. Some applications may be able to
 mitigate the replay risks in other ways and in such cases the built in OpenSSL
 functionality is not required. Those applications can turn this feature off by
-setting this option. This is a server-side opton only. It is ignored by
+setting this option. This is a server-side option only. It is ignored by
 clients.
 
 =item SSL_OP_NO_COMPRESSION
