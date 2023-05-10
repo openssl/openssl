@@ -189,6 +189,13 @@ const RAND_METHOD *RAND_get_rand_method(void)
     if (!RUN_ONCE(&rand_init, do_rand_init))
         return NULL;
 
+    if (!CRYPTO_THREAD_read_lock(rand_meth_lock))
+        return NULL;
+    tmp_meth = default_RAND_meth;
+    CRYPTO_THREAD_unlock(rand_meth_lock);
+    if (tmp_meth != NULL)
+        return tmp_meth;
+
     if (!CRYPTO_THREAD_write_lock(rand_meth_lock))
         return NULL;
     if (default_RAND_meth == NULL) {
