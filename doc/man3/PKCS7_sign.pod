@@ -96,7 +96,7 @@ not be NULL.
 
 PKCS7_sign() is like PKCS7_sign_ex() except that it uses default values of
 NULL for the library context I<libctx> and the property query I<propq>.
-This is retained for API backward compatibiliy.
+This is retained for API backward compatibility.
 
 =head1 BUGS
 

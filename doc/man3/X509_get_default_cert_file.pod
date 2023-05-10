@@ -53,7 +53,7 @@ value returned by the corresponding function above should be used.
 
 X509_get_default_cert_path_env() returns the environment variable name which is
 recommended to specify a nondefault value to be used instead of the value
-returned by X509_get_default_cert_dir(). This environment variable supercedes
+returned by X509_get_default_cert_dir(). This environment variable supersedes
 the deprecated environment variable whose name is returned by
 X509_get_default_cert_dir_env(). This environment variable was deprecated as its
 contents can be interpreted ambiguously; see NOTES.

@@ -40,11 +40,11 @@ suitable form for the internal structure of the object.
 
 =item * Request parameters of some object
 
-The caller (the I<requestor>) sets up the B<OSSL_PARAM> array and
+The caller (the I<requester>) sets up the B<OSSL_PARAM> array and
 calls some function (the I<responder>) that has intimate knowledge
 about the object, which can take the internal data of the object and
 copy (possibly convert) that to the memory prepared by the
-I<requestor> and pointed at with the B<OSSL_PARAM> I<data>.
+I<requester> and pointed at with the B<OSSL_PARAM> I<data>.
 
 =item * Request parameter descriptors
 
@@ -111,7 +111,7 @@ size should be set to the size of the buffer to be populated, which
 should accommodate enough space for a terminating NUL byte.
 
 When I<requesting parameters>, it's acceptable for I<data> to be NULL.
-This can be used by the I<requestor> to figure out dynamically exactly
+This can be used by the I<requester> to figure out dynamically exactly
 how much buffer space is needed to store the parameter data.
 In this case, I<data_size> is ignored.
 

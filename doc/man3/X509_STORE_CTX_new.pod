@@ -106,7 +106,7 @@ this can be also set indirectly using X509_STORE_CTX_set0_untrusted().
 X509_STORE_CTX_init_rpk() sets up I<ctx> for a subsequent verification
 operation for the I<target> raw public key.
 It behaves similarly to X509_STORE_CTX_init().
-The I<target> raw public key can aslo be supplied separately, via
+The I<target> raw public key can also be supplied separately, via
 X509_STORE_CTX_set0_rpk().
 The I<target> public key is not copied (its reference count is not updated),
 and the caller must not free it before verification is complete.
