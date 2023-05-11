@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[8364] = {
+static const unsigned char so[8717] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1153,9 +1153,89 @@ static const unsigned char so[8364] = {
     0x60,0x86,0x48,0x01,0x86,0xF9,0x66,0xAD,0xCA,0x7B,0x01,0x01,  /* [ 8332] OBJ_oracle_jdk_trustedkeyusage */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x32,  /* [ 8344] OBJ_id_ct_signedTAL */
     0x2A,0x81,0x1C,0xCF,0x55,0x01,0x68,0x0A,       /* [ 8355] OBJ_sm4_xts */
+    0x55,0x1D,0x26,                                /* [ 8363] OBJ_authority_attribute_identifier */
+    0x55,0x1D,0x27,                                /* [ 8366] OBJ_role_spec_cert_identifier */
+    0x55,0x1D,0x29,                                /* [ 8369] OBJ_basic_att_constraints */
+    0x55,0x1D,0x2A,                                /* [ 8372] OBJ_delegated_name_constraints */
+    0x55,0x1D,0x2B,                                /* [ 8375] OBJ_time_specification */
+    0x55,0x1D,0x30,                                /* [ 8378] OBJ_attribute_descriptor */
+    0x55,0x1D,0x31,                                /* [ 8381] OBJ_user_notice */
+    0x55,0x1D,0x32,                                /* [ 8384] OBJ_soa_identifier */
+    0x55,0x1D,0x34,                                /* [ 8387] OBJ_acceptable_cert_policies */
+    0x55,0x1D,0x39,                                /* [ 8390] OBJ_acceptable_privilege_policies */
+    0x55,0x1D,0x3D,                                /* [ 8393] OBJ_indirect_issuer */
+    0x55,0x1D,0x3E,                                /* [ 8396] OBJ_no_assertion */
+    0x55,0x1D,0x3F,                                /* [ 8399] OBJ_id_aa_issuing_distribution_point */
+    0x55,0x1D,0x40,                                /* [ 8402] OBJ_issued_on_behalf_of */
+    0x55,0x1D,0x41,                                /* [ 8405] OBJ_single_use */
+    0x55,0x1D,0x42,                                /* [ 8408] OBJ_group_ac */
+    0x55,0x1D,0x43,                                /* [ 8411] OBJ_allowed_attribute_assignments */
+    0x55,0x1D,0x44,                                /* [ 8414] OBJ_attribute_mappings */
+    0x55,0x1D,0x45,                                /* [ 8417] OBJ_holder_name_constraints */
+    0x55,0x1D,0x46,                                /* [ 8420] OBJ_authorization_validation */
+    0x55,0x1D,0x47,                                /* [ 8423] OBJ_prot_restrict */
+    0x55,0x1D,0x48,                                /* [ 8426] OBJ_subject_alt_public_key_info */
+    0x55,0x1D,0x49,                                /* [ 8429] OBJ_alt_signature_algorithm */
+    0x55,0x1D,0x4A,                                /* [ 8432] OBJ_alt_signature_value */
+    0x55,0x1D,0x4B,                                /* [ 8435] OBJ_associated_information */
+    0x67,0x81,0x05,                                /* [ 8438] OBJ_tcg */
+    0x67,0x81,0x05,0x01,                           /* [ 8441] OBJ_tcg_tcpaSpecVersion */
+    0x67,0x81,0x05,0x02,                           /* [ 8445] OBJ_tcg_attribute */
+    0x67,0x81,0x05,0x03,                           /* [ 8449] OBJ_tcg_protocol */
+    0x67,0x81,0x05,0x04,                           /* [ 8453] OBJ_tcg_algorithm */
+    0x67,0x81,0x05,0x05,                           /* [ 8457] OBJ_tcg_platformClass */
+    0x67,0x81,0x05,0x06,                           /* [ 8461] OBJ_tcg_ce */
+    0x67,0x81,0x05,0x08,                           /* [ 8465] OBJ_tcg_kp */
+    0x67,0x81,0x05,0x11,                           /* [ 8469] OBJ_tcg_address */
+    0x67,0x81,0x05,0x12,                           /* [ 8473] OBJ_tcg_registry */
+    0x67,0x81,0x05,0x05,0x01,                      /* [ 8477] OBJ_tcg_common */
+    0x67,0x81,0x05,0x05,0x01,0x01,                 /* [ 8482] OBJ_tcg_at_platformManufacturerStr */
+    0x67,0x81,0x05,0x05,0x01,0x02,                 /* [ 8488] OBJ_tcg_at_platformManufacturerId */
+    0x67,0x81,0x05,0x05,0x01,0x03,                 /* [ 8494] OBJ_tcg_at_platformConfigUri */
+    0x67,0x81,0x05,0x05,0x01,0x04,                 /* [ 8500] OBJ_tcg_at_platformModel */
+    0x67,0x81,0x05,0x05,0x01,0x05,                 /* [ 8506] OBJ_tcg_at_platformVersion */
+    0x67,0x81,0x05,0x05,0x01,0x06,                 /* [ 8512] OBJ_tcg_at_platformSerial */
+    0x67,0x81,0x05,0x05,0x01,0x07,                 /* [ 8518] OBJ_tcg_at_platformConfiguration */
+    0x67,0x81,0x05,0x02,0x01,                      /* [ 8524] OBJ_tcg_at_tpmManufacturer */
+    0x67,0x81,0x05,0x02,0x02,                      /* [ 8529] OBJ_tcg_at_tpmModel */
+    0x67,0x81,0x05,0x02,0x03,                      /* [ 8534] OBJ_tcg_at_tpmVersion */
+    0x67,0x81,0x05,0x02,0x0A,                      /* [ 8539] OBJ_tcg_at_securityQualities */
+    0x67,0x81,0x05,0x02,0x0B,                      /* [ 8544] OBJ_tcg_at_tpmProtectionProfile */
+    0x67,0x81,0x05,0x02,0x0C,                      /* [ 8549] OBJ_tcg_at_tpmSecurityTarget */
+    0x67,0x81,0x05,0x02,0x0D,                      /* [ 8554] OBJ_tcg_at_tbbProtectionProfile */
+    0x67,0x81,0x05,0x02,0x0E,                      /* [ 8559] OBJ_tcg_at_tbbSecurityTarget */
+    0x67,0x81,0x05,0x02,0x0F,                      /* [ 8564] OBJ_tcg_at_tpmIdLabel */
+    0x67,0x81,0x05,0x02,0x10,                      /* [ 8569] OBJ_tcg_at_tpmSpecification */
+    0x67,0x81,0x05,0x02,0x11,                      /* [ 8574] OBJ_tcg_at_tcgPlatformSpecification */
+    0x67,0x81,0x05,0x02,0x12,                      /* [ 8579] OBJ_tcg_at_tpmSecurityAssertions */
+    0x67,0x81,0x05,0x02,0x13,                      /* [ 8584] OBJ_tcg_at_tbbSecurityAssertions */
+    0x67,0x81,0x05,0x02,0x17,                      /* [ 8589] OBJ_tcg_at_tcgCredentialSpecification */
+    0x67,0x81,0x05,0x02,0x19,                      /* [ 8594] OBJ_tcg_at_tcgCredentialType */
+    0x67,0x81,0x05,0x05,0x01,0x07,0x01,            /* [ 8599] OBJ_tcg_at_platformConfiguration_v1 */
+    0x67,0x81,0x05,0x05,0x01,0x07,0x02,            /* [ 8606] OBJ_tcg_at_platformConfiguration_v2 */
+    0x67,0x81,0x05,0x04,0x01,                      /* [ 8613] OBJ_tcg_algorithm_null */
+    0x67,0x81,0x05,0x08,0x01,                      /* [ 8618] OBJ_tcg_kp_EKCertificate */
+    0x67,0x81,0x05,0x08,0x02,                      /* [ 8623] OBJ_tcg_kp_PlatformAttributeCertificate */
+    0x67,0x81,0x05,0x08,0x03,                      /* [ 8628] OBJ_tcg_kp_AIKCertificate */
+    0x67,0x81,0x05,0x08,0x04,                      /* [ 8633] OBJ_tcg_kp_PlatformKeyCertificate */
+    0x67,0x81,0x05,0x08,0x05,                      /* [ 8638] OBJ_tcg_kp_DeltaPlatformAttributeCertificate */
+    0x67,0x81,0x05,0x06,0x02,                      /* [ 8643] OBJ_tcg_ce_relevantCredentials */
+    0x67,0x81,0x05,0x06,0x03,                      /* [ 8648] OBJ_tcg_ce_relevantManifests */
+    0x67,0x81,0x05,0x06,0x04,                      /* [ 8653] OBJ_tcg_ce_virtualPlatformAttestationService */
+    0x67,0x81,0x05,0x06,0x05,                      /* [ 8658] OBJ_tcg_ce_migrationControllerAttestationService */
+    0x67,0x81,0x05,0x06,0x06,                      /* [ 8663] OBJ_tcg_ce_migrationControllerRegistrationService */
+    0x67,0x81,0x05,0x06,0x07,                      /* [ 8668] OBJ_tcg_ce_virtualPlatformBackupService */
+    0x67,0x81,0x05,0x03,0x01,                      /* [ 8673] OBJ_tcg_prt_tpmIdProtocol */
+    0x67,0x81,0x05,0x11,0x01,                      /* [ 8678] OBJ_tcg_address_ethernetmac */
+    0x67,0x81,0x05,0x11,0x02,                      /* [ 8683] OBJ_tcg_address_wlanmac */
+    0x67,0x81,0x05,0x11,0x03,                      /* [ 8688] OBJ_tcg_address_bluetoothmac */
+    0x67,0x81,0x05,0x12,0x03,                      /* [ 8693] OBJ_tcg_registry_componentClass */
+    0x67,0x81,0x05,0x12,0x03,0x01,                 /* [ 8698] OBJ_tcg_registry_componentClass_tcg */
+    0x67,0x81,0x05,0x12,0x03,0x02,                 /* [ 8704] OBJ_tcg_registry_componentClass_ietf */
+    0x67,0x81,0x05,0x12,0x03,0x03,                 /* [ 8710] OBJ_tcg_registry_componentClass_dmtf */
 };
 
-#define NUM_NID 1291
+#define NUM_NID 1371
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -1444,7 +1524,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-mod-cmp2000", "id-mod-cmp2000", NID_id_mod_cmp2000, 8, &so[2075]},
     {"biometricInfo", "Biometric Info", NID_biometricInfo, 8, &so[2083]},
     {"qcStatements", "qcStatements", NID_qcStatements, 8, &so[2091]},
-    {"ac-auditEntity", "ac-auditEntity", NID_ac_auditEntity, 8, &so[2099]},
+    {"ac-auditEntity", "Audit Identity", NID_ac_auditEntity, 8, &so[2099]},
     {"ac-targeting", "ac-targeting", NID_ac_targeting, 8, &so[2107]},
     {"aaControls", "aaControls", NID_aaControls, 8, &so[2115]},
     {"sbgp-ipAddrBlock", "sbgp-ipAddrBlock", NID_sbgp_ipAddrBlock, 8, &so[2123]},
@@ -2448,9 +2528,89 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"brotli", "Brotli compression", NID_brotli},
     {"zstd", "Zstandard compression", NID_zstd},
     {"SM4-XTS", "sm4-xts", NID_sm4_xts, 8, &so[8355]},
+    {"authorityAttributeIdentifier", "X509v3 Authority Attribute Identifier", NID_authority_attribute_identifier, 3, &so[8363]},
+    {"roleSpecCertIdentifier", "X509v3 Role Specification Certificate Identifier", NID_role_spec_cert_identifier, 3, &so[8366]},
+    {"basicAttConstraints", "X509v3 Basic Attribute Certificate Constraints", NID_basic_att_constraints, 3, &so[8369]},
+    {"delegatedNameConstraints", "X509v3 Delegated Name Constraints", NID_delegated_name_constraints, 3, &so[8372]},
+    {"timeSpecification", "X509v3 Time Specification", NID_time_specification, 3, &so[8375]},
+    {"attributeDescriptor", "X509v3 Attribute Descriptor", NID_attribute_descriptor, 3, &so[8378]},
+    {"userNotice", "X509v3 User Notice", NID_user_notice, 3, &so[8381]},
+    {"sOAIdentifier", "X509v3 Source of Authority Identifier", NID_soa_identifier, 3, &so[8384]},
+    {"acceptableCertPolicies", "X509v3 Acceptable Certification Policies", NID_acceptable_cert_policies, 3, &so[8387]},
+    {"acceptablePrivPolicies", "X509v3 Acceptable Privilege Policies", NID_acceptable_privilege_policies, 3, &so[8390]},
+    {"indirectIssuer", "X509v3 Indirect Issuer", NID_indirect_issuer, 3, &so[8393]},
+    {"noAssertion", "X509v3 No Assertion", NID_no_assertion, 3, &so[8396]},
+    {"aAissuingDistributionPoint", "X509v3 Attribute Authority Issuing Distribution Point", NID_id_aa_issuing_distribution_point, 3, &so[8399]},
+    {"issuedOnBehalfOf", "X509v3 Issued On Behalf Of", NID_issued_on_behalf_of, 3, &so[8402]},
+    {"singleUse", "X509v3 Single Use", NID_single_use, 3, &so[8405]},
+    {"groupAC", "X509v3 Group Attribute Certificate", NID_group_ac, 3, &so[8408]},
+    {"allowedAttributeAssignments", "X509v3 Allowed Attribute Assignments", NID_allowed_attribute_assignments, 3, &so[8411]},
+    {"attributeMappings", "X509v3 Attribute Mappings", NID_attribute_mappings, 3, &so[8414]},
+    {"holderNameConstraints", "X509v3 Holder Name Constraints", NID_holder_name_constraints, 3, &so[8417]},
+    {"authorizationValidation", "X509v3 Authorization Validation", NID_authorization_validation, 3, &so[8420]},
+    {"protRestrict", "X509v3 Protocol Restriction", NID_prot_restrict, 3, &so[8423]},
+    {"subjectAltPublicKeyInfo", "X509v3 Subject Alternative Public Key Info", NID_subject_alt_public_key_info, 3, &so[8426]},
+    {"altSignatureAlgorithm", "X509v3 Alternative Signature Algorithm", NID_alt_signature_algorithm, 3, &so[8429]},
+    {"altSignatureValue", "X509v3 Alternative Signature Value", NID_alt_signature_value, 3, &so[8432]},
+    {"associatedInformation", "X509v3 Associated Information", NID_associated_information, 3, &so[8435]},
+    {"tcg", "Trusted Computing Group", NID_tcg, 3, &so[8438]},
+    {"tcg-tcpaSpecVersion", "tcg-tcpaSpecVersion", NID_tcg_tcpaSpecVersion, 4, &so[8441]},
+    {"tcg-attribute", "Trusted Computing Group Attributes", NID_tcg_attribute, 4, &so[8445]},
+    {"tcg-protocol", "Trusted Computing Group Protocols", NID_tcg_protocol, 4, &so[8449]},
+    {"tcg-algorithm", "Trusted Computing Group Algorithms", NID_tcg_algorithm, 4, &so[8453]},
+    {"tcg-platformClass", "Trusted Computing Group Platform Classes", NID_tcg_platformClass, 4, &so[8457]},
+    {"tcg-ce", "Trusted Computing Group Certificate Extensions", NID_tcg_ce, 4, &so[8461]},
+    {"tcg-kp", "Trusted Computing Group Key Purposes", NID_tcg_kp, 4, &so[8465]},
+    {"tcg-address", "Trusted Computing Group Address Formats", NID_tcg_address, 4, &so[8469]},
+    {"tcg-registry", "Trusted Computing Group Registry", NID_tcg_registry, 4, &so[8473]},
+    {"tcg-common", "TCG Common", NID_tcg_common, 5, &so[8477]},
+    {"tcg-at-platformManufacturerStr", "TCG Platform Manufacturer String", NID_tcg_at_platformManufacturerStr, 6, &so[8482]},
+    {"tcg-at-platformManufacturerId", "TCG Platform Manufacturer ID", NID_tcg_at_platformManufacturerId, 6, &so[8488]},
+    {"tcg-at-platformConfigUri", "TCG Platform Configuration URI", NID_tcg_at_platformConfigUri, 6, &so[8494]},
+    {"tcg-at-platformModel", "TCG Platform Model", NID_tcg_at_platformModel, 6, &so[8500]},
+    {"tcg-at-platformVersion", "TCG Platform Version", NID_tcg_at_platformVersion, 6, &so[8506]},
+    {"tcg-at-platformSerial", "TCG Platform Serial Number", NID_tcg_at_platformSerial, 6, &so[8512]},
+    {"tcg-at-platformConfiguration", "TCG Platform Configuration", NID_tcg_at_platformConfiguration, 6, &so[8518]},
+    {"tcg-at-tpmManufacturer", "TPM Manufacturer", NID_tcg_at_tpmManufacturer, 5, &so[8524]},
+    {"tcg-at-tpmModel", "TPM Model", NID_tcg_at_tpmModel, 5, &so[8529]},
+    {"tcg-at-tpmVersion", "TPM Version", NID_tcg_at_tpmVersion, 5, &so[8534]},
+    {"tcg-at-securityQualities", "Security Qualities", NID_tcg_at_securityQualities, 5, &so[8539]},
+    {"tcg-at-tpmProtectionProfile", "TPM Protection Profile", NID_tcg_at_tpmProtectionProfile, 5, &so[8544]},
+    {"tcg-at-tpmSecurityTarget", "TPM Security Target", NID_tcg_at_tpmSecurityTarget, 5, &so[8549]},
+    {"tcg-at-tbbProtectionProfile", "TBB Protection Profile", NID_tcg_at_tbbProtectionProfile, 5, &so[8554]},
+    {"tcg-at-tbbSecurityTarget", "TBB Security Target", NID_tcg_at_tbbSecurityTarget, 5, &so[8559]},
+    {"tcg-at-tpmIdLabel", "TPM ID Label", NID_tcg_at_tpmIdLabel, 5, &so[8564]},
+    {"tcg-at-tpmSpecification", "TPM Specification", NID_tcg_at_tpmSpecification, 5, &so[8569]},
+    {"tcg-at-tcgPlatformSpecification", "TPM Platform Specification", NID_tcg_at_tcgPlatformSpecification, 5, &so[8574]},
+    {"tcg-at-tpmSecurityAssertions", "TPM Security Assertions", NID_tcg_at_tpmSecurityAssertions, 5, &so[8579]},
+    {"tcg-at-tbbSecurityAssertions", "TBB Security Assertions", NID_tcg_at_tbbSecurityAssertions, 5, &so[8584]},
+    {"tcg-at-tcgCredentialSpecification", "TCG Credential Specification", NID_tcg_at_tcgCredentialSpecification, 5, &so[8589]},
+    {"tcg-at-tcgCredentialType", "TCG Credential Type", NID_tcg_at_tcgCredentialType, 5, &so[8594]},
+    {"tcg-at-platformConfiguration-v1", "Platform Configuration Version 1", NID_tcg_at_platformConfiguration_v1, 7, &so[8599]},
+    {"tcg-at-platformConfiguration-v2", "Platform Configuration Version 2", NID_tcg_at_platformConfiguration_v2, 7, &so[8606]},
+    {"tcg-algorithm-null", "TCG NULL Algorithm", NID_tcg_algorithm_null, 5, &so[8613]},
+    {"tcg-kp-EKCertificate", "Endorsement Key Certificate", NID_tcg_kp_EKCertificate, 5, &so[8618]},
+    {"tcg-kp-PlatformAttributeCertificate", "Platform Attribute Certificate", NID_tcg_kp_PlatformAttributeCertificate, 5, &so[8623]},
+    {"tcg-kp-AIKCertificate", "Attestation Identity Key Certificate", NID_tcg_kp_AIKCertificate, 5, &so[8628]},
+    {"tcg-kp-PlatformKeyCertificate", "Platform Key Certificate", NID_tcg_kp_PlatformKeyCertificate, 5, &so[8633]},
+    {"tcg-kp-DeltaPlatformAttributeCertificate", "Delta Platform Attribute Certificate", NID_tcg_kp_DeltaPlatformAttributeCertificate, 5, &so[8638]},
+    {"tcg-ce-relevantCredentials", "Relevant Credentials", NID_tcg_ce_relevantCredentials, 5, &so[8643]},
+    {"tcg-ce-relevantManifests", "Relevant Manifests", NID_tcg_ce_relevantManifests, 5, &so[8648]},
+    {"tcg-ce-virtualPlatformAttestationService", "Virtual Platform Attestation Service", NID_tcg_ce_virtualPlatformAttestationService, 5, &so[8653]},
+    {"tcg-ce-migrationControllerAttestationService", "Migration Controller Attestation Service", NID_tcg_ce_migrationControllerAttestationService, 5, &so[8658]},
+    {"tcg-ce-migrationControllerRegistrationService", "Migration Controller Registration Service", NID_tcg_ce_migrationControllerRegistrationService, 5, &so[8663]},
+    {"tcg-ce-virtualPlatformBackupService", "Virtual Platform Backup Service", NID_tcg_ce_virtualPlatformBackupService, 5, &so[8668]},
+    {"tcg-prt-tpmIdProtocol", "TCG TPM Protocol", NID_tcg_prt_tpmIdProtocol, 5, &so[8673]},
+    {"tcg-address-ethernetmac", "Ethernet MAC Address", NID_tcg_address_ethernetmac, 5, &so[8678]},
+    {"tcg-address-wlanmac", "WLAN MAC Address", NID_tcg_address_wlanmac, 5, &so[8683]},
+    {"tcg-address-bluetoothmac", "Bluetooth MAC Address", NID_tcg_address_bluetoothmac, 5, &so[8688]},
+    {"tcg-registry-componentClass", "TCG Component Class", NID_tcg_registry_componentClass, 5, &so[8693]},
+    {"tcg-registry-componentClass-tcg", "Trusted Computed Group Registry", NID_tcg_registry_componentClass_tcg, 6, &so[8698]},
+    {"tcg-registry-componentClass-ietf", "Internet Engineering Task Force Registry", NID_tcg_registry_componentClass_ietf, 6, &so[8704]},
+    {"tcg-registry-componentClass-dmtf", "Distributed Management Task Force Registry", NID_tcg_registry_componentClass_dmtf, 6, &so[8710]},
 };
 
-#define NUM_SN 1282
+#define NUM_SN 1362
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2760,25 +2920,37 @@ static const unsigned int sn_objs[NUM_SN] = {
     1206,    /* "X963KDF" */
      185,    /* "X9cm" */
      125,    /* "ZLIB" */
+    1303,    /* "aAissuingDistributionPoint" */
      478,    /* "aRecord" */
      289,    /* "aaControls" */
      287,    /* "ac-auditEntity" */
      397,    /* "ac-proxying" */
      288,    /* "ac-targeting" */
+    1299,    /* "acceptableCertPolicies" */
+    1300,    /* "acceptablePrivPolicies" */
      368,    /* "acceptableResponses" */
      446,    /* "account" */
      363,    /* "ad_timestamping" */
      376,    /* "algorithm" */
+    1307,    /* "allowedAttributeAssignments" */
+    1313,    /* "altSignatureAlgorithm" */
+    1314,    /* "altSignatureValue" */
      405,    /* "ansi-X9-62" */
      910,    /* "anyExtendedKeyUsage" */
      746,    /* "anyPolicy" */
      370,    /* "archiveCutoff" */
      484,    /* "associatedDomain" */
+    1315,    /* "associatedInformation" */
      485,    /* "associatedName" */
+    1296,    /* "attributeDescriptor" */
+    1308,    /* "attributeMappings" */
      501,    /* "audio" */
+    1291,    /* "authorityAttributeIdentifier" */
      177,    /* "authorityInfoAccess" */
       90,    /* "authorityKeyIdentifier" */
      882,    /* "authorityRevocationList" */
+    1310,    /* "authorizationValidation" */
+    1293,    /* "basicAttConstraints" */
       87,    /* "basicConstraints" */
      365,    /* "basicOCSPResponse" */
      285,    /* "biometricInfo" */
@@ -2870,6 +3042,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      495,    /* "dSAQuality" */
      434,    /* "data" */
      390,    /* "dcobject" */
+    1294,    /* "delegatedNameConstraints" */
      140,    /* "deltaCRL" */
      891,    /* "deltaRevocationList" */
      107,    /* "description" */
@@ -2957,6 +3130,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1010,    /* "gost89-ecb" */
      812,    /* "gost94" */
      850,    /* "gost94cc" */
+    1306,    /* "groupAC" */
     1156,    /* "hmacWithDstu34311" */
      797,    /* "hmacWithMD5" */
      163,    /* "hmacWithSHA1" */
@@ -2971,6 +3145,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      430,    /* "holdInstructionCode" */
      431,    /* "holdInstructionNone" */
      433,    /* "holdInstructionReject" */
+    1309,    /* "holderNameConstraints" */
      486,    /* "homePostalAddress" */
      473,    /* "homeTelephoneNumber" */
      466,    /* "host" */
@@ -3315,6 +3490,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      676,    /* "identified-organization" */
     1170,    /* "ieee" */
     1171,    /* "ieee-siswg" */
+    1301,    /* "indirectIssuer" */
      461,    /* "info" */
      748,    /* "inhibitAnyPolicy" */
      101,    /* "initials" */
@@ -3327,6 +3503,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1022,    /* "ipsecIKE" */
      295,    /* "ipsecTunnel" */
      296,    /* "ipsecUser" */
+    1304,    /* "issuedOnBehalfOf" */
       86,    /* "issuerAltName" */
     1008,    /* "issuerSignTool" */
      770,    /* "issuingDistributionPoint" */
@@ -3391,6 +3568,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      481,    /* "nSRecord" */
      173,    /* "name" */
      666,    /* "nameConstraints" */
+    1302,    /* "noAssertion" */
      369,    /* "noCheck" */
      403,    /* "noRevAvail" */
       72,    /* "nsBaseUrl" */
@@ -3464,6 +3642,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      415,    /* "prime256v1" */
      385,    /* "private" */
       84,    /* "privateKeyUsagePeriod" */
+    1311,    /* "protRestrict" */
      886,    /* "protocolInformation" */
      663,    /* "proxyCertInfo" */
      510,    /* "pseudonym" */
@@ -3474,6 +3653,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      870,    /* "registeredAddress" */
      400,    /* "role" */
      877,    /* "roleOccupant" */
+    1292,    /* "roleSpecCertIdentifier" */
      448,    /* "room" */
      463,    /* "roomNumber" */
     1243,    /* "rpkiManifest" */
@@ -3482,6 +3662,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      644,    /* "rsaOAEPEncryptionSET" */
      377,    /* "rsaSignature" */
        1,    /* "rsadsi" */
+    1298,    /* "sOAIdentifier" */
      482,    /* "sOARecord" */
      155,    /* "safeContentsBag" */
      291,    /* "sbgp-autonomousSysNum" */
@@ -3671,10 +3852,12 @@ static const unsigned int sn_objs[NUM_SN] = {
       52,    /* "signingTime" */
      454,    /* "simpleSecurityObject" */
      496,    /* "singleLevelQuality" */
+    1305,    /* "singleUse" */
     1142,    /* "sm-scheme" */
      387,    /* "snmpv2" */
      660,    /* "street" */
       85,    /* "subjectAltName" */
+    1312,    /* "subjectAltPublicKeyInfo" */
      769,    /* "subjectDirectoryAttributes" */
      398,    /* "subjectInfoAccess" */
       82,    /* "subjectKeyIdentifier" */
@@ -3684,11 +3867,67 @@ static const unsigned int sn_objs[NUM_SN] = {
      890,    /* "supportedAlgorithms" */
      874,    /* "supportedApplicationContext" */
      402,    /* "targetInformation" */
+    1316,    /* "tcg" */
+    1324,    /* "tcg-address" */
+    1366,    /* "tcg-address-bluetoothmac" */
+    1364,    /* "tcg-address-ethernetmac" */
+    1365,    /* "tcg-address-wlanmac" */
+    1320,    /* "tcg-algorithm" */
+    1351,    /* "tcg-algorithm-null" */
+    1329,    /* "tcg-at-platformConfigUri" */
+    1333,    /* "tcg-at-platformConfiguration" */
+    1349,    /* "tcg-at-platformConfiguration-v1" */
+    1350,    /* "tcg-at-platformConfiguration-v2" */
+    1328,    /* "tcg-at-platformManufacturerId" */
+    1327,    /* "tcg-at-platformManufacturerStr" */
+    1330,    /* "tcg-at-platformModel" */
+    1332,    /* "tcg-at-platformSerial" */
+    1331,    /* "tcg-at-platformVersion" */
+    1337,    /* "tcg-at-securityQualities" */
+    1340,    /* "tcg-at-tbbProtectionProfile" */
+    1346,    /* "tcg-at-tbbSecurityAssertions" */
+    1341,    /* "tcg-at-tbbSecurityTarget" */
+    1347,    /* "tcg-at-tcgCredentialSpecification" */
+    1348,    /* "tcg-at-tcgCredentialType" */
+    1344,    /* "tcg-at-tcgPlatformSpecification" */
+    1342,    /* "tcg-at-tpmIdLabel" */
+    1334,    /* "tcg-at-tpmManufacturer" */
+    1335,    /* "tcg-at-tpmModel" */
+    1338,    /* "tcg-at-tpmProtectionProfile" */
+    1345,    /* "tcg-at-tpmSecurityAssertions" */
+    1339,    /* "tcg-at-tpmSecurityTarget" */
+    1343,    /* "tcg-at-tpmSpecification" */
+    1336,    /* "tcg-at-tpmVersion" */
+    1318,    /* "tcg-attribute" */
+    1322,    /* "tcg-ce" */
+    1360,    /* "tcg-ce-migrationControllerAttestationService" */
+    1361,    /* "tcg-ce-migrationControllerRegistrationService" */
+    1357,    /* "tcg-ce-relevantCredentials" */
+    1358,    /* "tcg-ce-relevantManifests" */
+    1359,    /* "tcg-ce-virtualPlatformAttestationService" */
+    1362,    /* "tcg-ce-virtualPlatformBackupService" */
+    1326,    /* "tcg-common" */
+    1323,    /* "tcg-kp" */
+    1354,    /* "tcg-kp-AIKCertificate" */
+    1356,    /* "tcg-kp-DeltaPlatformAttributeCertificate" */
+    1352,    /* "tcg-kp-EKCertificate" */
+    1353,    /* "tcg-kp-PlatformAttributeCertificate" */
+    1355,    /* "tcg-kp-PlatformKeyCertificate" */
+    1321,    /* "tcg-platformClass" */
+    1319,    /* "tcg-protocol" */
+    1363,    /* "tcg-prt-tpmIdProtocol" */
+    1325,    /* "tcg-registry" */
+    1367,    /* "tcg-registry-componentClass" */
+    1370,    /* "tcg-registry-componentClass-dmtf" */
+    1369,    /* "tcg-registry-componentClass-ietf" */
+    1368,    /* "tcg-registry-componentClass-tcg" */
+    1317,    /* "tcg-tcpaSpecVersion" */
      864,    /* "telephoneNumber" */
      866,    /* "teletexTerminalIdentifier" */
      865,    /* "telexNumber" */
      459,    /* "textEncodedORAddress" */
      293,    /* "textNotice" */
+    1295,    /* "timeSpecification" */
      133,    /* "timeStamping" */
      106,    /* "title" */
     1020,    /* "tlsfeature" */
@@ -3712,6 +3951,7 @@ static const unsigned int sn_objs[NUM_SN] = {
       49,    /* "unstructuredName" */
      880,    /* "userCertificate" */
      465,    /* "userClass" */
+    1297,    /* "userNotice" */
      879,    /* "userPassword" */
      373,    /* "valid" */
      678,    /* "wap" */
@@ -3736,17 +3976,20 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1282
+#define NUM_LN 1362
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
      368,    /* "Acceptable OCSP Responses" */
      910,    /* "Any Extended Key Usage" */
      664,    /* "Any language" */
+    1354,    /* "Attestation Identity Key Certificate" */
+     287,    /* "Audit Identity" */
      177,    /* "Authority Information Access" */
     1220,    /* "BGPsec Router" */
      365,    /* "Basic OCSP Response" */
      285,    /* "Biometric Info" */
+    1366,    /* "Bluetooth MAC Address" */
     1221,    /* "Brand Indicator for Message Identification" */
     1288,    /* "Brotli compression" */
      179,    /* "CA Issuers" */
@@ -3786,13 +4029,17 @@ static const unsigned int ln_objs[NUM_LN] = {
     1167,    /* "DSTU curve 7" */
     1168,    /* "DSTU curve 8" */
     1169,    /* "DSTU curve 9" */
+    1356,    /* "Delta Platform Attribute Certificate" */
      783,    /* "Diffie-Hellman based MAC" */
      382,    /* "Directory" */
+    1370,    /* "Distributed Management Task Force Registry" */
      392,    /* "Domain" */
      132,    /* "E-mail Protection" */
     1087,    /* "ED25519" */
     1088,    /* "ED448" */
+    1352,    /* "Endorsement Key Certificate" */
      389,    /* "Enterprises" */
+    1364,    /* "Ethernet MAC Address" */
      384,    /* "Experimental" */
      372,    /* "Extended OCSP Status" */
      172,    /* "Extension Request" */
@@ -3848,6 +4095,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      667,    /* "Independent" */
      665,    /* "Inherit all" */
      647,    /* "International Organizations" */
+    1369,    /* "Internet Engineering Task Force Registry" */
      142,    /* "Invalidity Date" */
      504,    /* "MIME MHS" */
      388,    /* "Mail" */
@@ -3862,6 +4110,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      648,    /* "Microsoft Smartcard Login" */
      136,    /* "Microsoft Trust List Signing" */
      649,    /* "Microsoft User Principal Name" */
+    1360,    /* "Migration Controller Attestation Service" */
+    1361,    /* "Migration Controller Registration Service" */
     1211,    /* "NAIRealm" */
      393,    /* "NULL" */
      404,    /* "NULL" */
@@ -3894,6 +4144,10 @@ static const unsigned int ln_objs[NUM_LN] = {
     1032,    /* "PKINIT Client Auth" */
      127,    /* "PKIX" */
      858,    /* "Permanent Identifier" */
+    1353,    /* "Platform Attribute Certificate" */
+    1349,    /* "Platform Configuration Version 1" */
+    1350,    /* "Platform Configuration Version 2" */
+    1355,    /* "Platform Key Certificate" */
      164,    /* "Policy Qualifier CPS" */
      165,    /* "Policy Qualifier User Notice" */
      385,    /* "Private" */
@@ -3907,6 +4161,8 @@ static const unsigned int ln_objs[NUM_LN] = {
     1117,    /* "RSA-SHA3-256" */
     1118,    /* "RSA-SHA3-384" */
     1119,    /* "RSA-SHA3-512" */
+    1357,    /* "Relevant Credentials" */
+    1358,    /* "Relevant Manifests" */
      188,    /* "S/MIME" */
      167,    /* "S/MIME Capabilities" */
     1204,    /* "SM2-with-SM3" */
@@ -3917,6 +4173,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1026,    /* "SSH Server" */
      512,    /* "Secure Electronic Transactions" */
      386,    /* "Security" */
+    1337,    /* "Security Qualities" */
      394,    /* "Selected Attribute Types" */
     1029,    /* "Send Owner" */
     1030,    /* "Send Proxied Owner" */
@@ -3929,39 +4186,102 @@ static const unsigned int ln_objs[NUM_LN] = {
     1208,    /* "Smtp UTF8 Mailbox" */
      143,    /* "Strong Extranet ID" */
      398,    /* "Subject Information Access" */
+    1340,    /* "TBB Protection Profile" */
+    1346,    /* "TBB Security Assertions" */
+    1341,    /* "TBB Security Target" */
+    1326,    /* "TCG Common" */
+    1367,    /* "TCG Component Class" */
+    1347,    /* "TCG Credential Specification" */
+    1348,    /* "TCG Credential Type" */
+    1351,    /* "TCG NULL Algorithm" */
+    1333,    /* "TCG Platform Configuration" */
+    1329,    /* "TCG Platform Configuration URI" */
+    1328,    /* "TCG Platform Manufacturer ID" */
+    1327,    /* "TCG Platform Manufacturer String" */
+    1330,    /* "TCG Platform Model" */
+    1332,    /* "TCG Platform Serial Number" */
+    1331,    /* "TCG Platform Version" */
+    1363,    /* "TCG TPM Protocol" */
     1020,    /* "TLS Feature" */
      130,    /* "TLS Web Client Authentication" */
      129,    /* "TLS Web Server Authentication" */
+    1342,    /* "TPM ID Label" */
+    1334,    /* "TPM Manufacturer" */
+    1335,    /* "TPM Model" */
+    1344,    /* "TPM Platform Specification" */
+    1338,    /* "TPM Protection Profile" */
+    1345,    /* "TPM Security Assertions" */
+    1339,    /* "TPM Security Target" */
+    1343,    /* "TPM Specification" */
+    1336,    /* "TPM Version" */
      133,    /* "Time Stamping" */
      375,    /* "Trust Root" */
+    1368,    /* "Trusted Computed Group Registry" */
+    1316,    /* "Trusted Computing Group" */
+    1324,    /* "Trusted Computing Group Address Formats" */
+    1320,    /* "Trusted Computing Group Algorithms" */
+    1318,    /* "Trusted Computing Group Attributes" */
+    1322,    /* "Trusted Computing Group Certificate Extensions" */
+    1323,    /* "Trusted Computing Group Key Purposes" */
+    1321,    /* "Trusted Computing Group Platform Classes" */
+    1319,    /* "Trusted Computing Group Protocols" */
+    1325,    /* "Trusted Computing Group Registry" */
     1283,    /* "Trusted key usage (Oracle)" */
+    1359,    /* "Virtual Platform Attestation Service" */
+    1362,    /* "Virtual Platform Backup Service" */
+    1365,    /* "WLAN MAC Address" */
     1034,    /* "X25519" */
     1035,    /* "X448" */
       12,    /* "X509" */
      402,    /* "X509v3 AC Targeting" */
+    1299,    /* "X509v3 Acceptable Certification Policies" */
+    1300,    /* "X509v3 Acceptable Privilege Policies" */
+    1307,    /* "X509v3 Allowed Attribute Assignments" */
+    1313,    /* "X509v3 Alternative Signature Algorithm" */
+    1314,    /* "X509v3 Alternative Signature Value" */
      746,    /* "X509v3 Any Policy" */
+    1315,    /* "X509v3 Associated Information" */
+    1303,    /* "X509v3 Attribute Authority Issuing Distribution Point" */
+    1296,    /* "X509v3 Attribute Descriptor" */
+    1308,    /* "X509v3 Attribute Mappings" */
+    1291,    /* "X509v3 Authority Attribute Identifier" */
       90,    /* "X509v3 Authority Key Identifier" */
+    1310,    /* "X509v3 Authorization Validation" */
+    1293,    /* "X509v3 Basic Attribute Certificate Constraints" */
       87,    /* "X509v3 Basic Constraints" */
      103,    /* "X509v3 CRL Distribution Points" */
       88,    /* "X509v3 CRL Number" */
      141,    /* "X509v3 CRL Reason Code" */
      771,    /* "X509v3 Certificate Issuer" */
       89,    /* "X509v3 Certificate Policies" */
+    1294,    /* "X509v3 Delegated Name Constraints" */
      140,    /* "X509v3 Delta CRL Indicator" */
      126,    /* "X509v3 Extended Key Usage" */
      857,    /* "X509v3 Freshest CRL" */
+    1306,    /* "X509v3 Group Attribute Certificate" */
+    1309,    /* "X509v3 Holder Name Constraints" */
+    1301,    /* "X509v3 Indirect Issuer" */
      748,    /* "X509v3 Inhibit Any Policy" */
+    1304,    /* "X509v3 Issued On Behalf Of" */
       86,    /* "X509v3 Issuer Alternative Name" */
      770,    /* "X509v3 Issuing Distribution Point" */
       83,    /* "X509v3 Key Usage" */
      666,    /* "X509v3 Name Constraints" */
+    1302,    /* "X509v3 No Assertion" */
      403,    /* "X509v3 No Revocation Available" */
      401,    /* "X509v3 Policy Constraints" */
      747,    /* "X509v3 Policy Mappings" */
       84,    /* "X509v3 Private Key Usage Period" */
+    1311,    /* "X509v3 Protocol Restriction" */
+    1292,    /* "X509v3 Role Specification Certificate Identifier" */
+    1305,    /* "X509v3 Single Use" */
+    1298,    /* "X509v3 Source of Authority Identifier" */
       85,    /* "X509v3 Subject Alternative Name" */
+    1312,    /* "X509v3 Subject Alternative Public Key Info" */
      769,    /* "X509v3 Subject Directory Attributes" */
       82,    /* "X509v3 Subject Key Identifier" */
+    1295,    /* "X509v3 Time Specification" */
+    1297,    /* "X509v3 User Notice" */
      920,    /* "X9.42 DH" */
      184,    /* "X9.57" */
      185,    /* "X9.57 CM ?" */
@@ -3969,7 +4289,6 @@ static const unsigned int ln_objs[NUM_LN] = {
     1289,    /* "Zstandard compression" */
      478,    /* "aRecord" */
      289,    /* "aaControls" */
-     287,    /* "ac-auditEntity" */
      397,    /* "ac-proxying" */
      288,    /* "ac-targeting" */
      446,    /* "account" */
@@ -4979,6 +5298,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      890,    /* "supportedAlgorithms" */
      874,    /* "supportedApplicationContext" */
      100,    /* "surname" */
+    1317,    /* "tcg-tcpaSpecVersion" */
      864,    /* "telephoneNumber" */
      866,    /* "teletexTerminalIdentifier" */
      865,    /* "telexNumber" */
@@ -5022,7 +5342,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1148
+#define NUM_OBJ 1228
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5135,10 +5455,35 @@ static const unsigned int obj_objs[NUM_OBJ] = {
       90,    /* OBJ_authority_key_identifier     2 5 29 35 */
      401,    /* OBJ_policy_constraints           2 5 29 36 */
      126,    /* OBJ_ext_key_usage                2 5 29 37 */
+    1291,    /* OBJ_authority_attribute_identifier 2 5 29 38 */
+    1292,    /* OBJ_role_spec_cert_identifier    2 5 29 39 */
+    1293,    /* OBJ_basic_att_constraints        2 5 29 41 */
+    1294,    /* OBJ_delegated_name_constraints   2 5 29 42 */
+    1295,    /* OBJ_time_specification           2 5 29 43 */
      857,    /* OBJ_freshest_crl                 2 5 29 46 */
+    1296,    /* OBJ_attribute_descriptor         2 5 29 48 */
+    1297,    /* OBJ_user_notice                  2 5 29 49 */
+    1298,    /* OBJ_soa_identifier               2 5 29 50 */
+    1299,    /* OBJ_acceptable_cert_policies     2 5 29 52 */
      748,    /* OBJ_inhibit_any_policy           2 5 29 54 */
      402,    /* OBJ_target_information           2 5 29 55 */
      403,    /* OBJ_no_rev_avail                 2 5 29 56 */
+    1300,    /* OBJ_acceptable_privilege_policies 2 5 29 57 */
+    1301,    /* OBJ_indirect_issuer              2 5 29 61 */
+    1302,    /* OBJ_no_assertion                 2 5 29 62 */
+    1303,    /* OBJ_id_aa_issuing_distribution_point 2 5 29 63 */
+    1304,    /* OBJ_issued_on_behalf_of          2 5 29 64 */
+    1305,    /* OBJ_single_use                   2 5 29 65 */
+    1306,    /* OBJ_group_ac                     2 5 29 66 */
+    1307,    /* OBJ_allowed_attribute_assignments 2 5 29 67 */
+    1308,    /* OBJ_attribute_mappings           2 5 29 68 */
+    1309,    /* OBJ_holder_name_constraints      2 5 29 69 */
+    1310,    /* OBJ_authorization_validation     2 5 29 70 */
+    1311,    /* OBJ_prot_restrict                2 5 29 71 */
+    1312,    /* OBJ_subject_alt_public_key_info  2 5 29 72 */
+    1313,    /* OBJ_alt_signature_algorithm      2 5 29 73 */
+    1314,    /* OBJ_alt_signature_value          2 5 29 74 */
+    1315,    /* OBJ_associated_information       2 5 29 75 */
      513,    /* OBJ_set_ctype                    2 23 42 0 */
      514,    /* OBJ_set_msgExt                   2 23 42 1 */
      515,    /* OBJ_set_attr                     2 23 42 3 */
@@ -5146,6 +5491,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      517,    /* OBJ_set_certExt                  2 23 42 7 */
      518,    /* OBJ_set_brand                    2 23 42 8 */
      679,    /* OBJ_wap_wsg                      2 23 43 1 */
+    1316,    /* OBJ_tcg                          2 23 133 */
     1266,    /* OBJ_electronic_signature_standard 0 4 0 1733 */
      382,    /* OBJ_Directory                    1 3 6 1 1 */
      383,    /* OBJ_Management                   1 3 6 1 2 */
@@ -5272,6 +5618,15 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      637,    /* OBJ_set_brand_Diners             2 23 42 8 30 */
      638,    /* OBJ_set_brand_AmericanExpress    2 23 42 8 34 */
      639,    /* OBJ_set_brand_JCB                2 23 42 8 35 */
+    1317,    /* OBJ_tcg_tcpaSpecVersion          2 23 133 1 */
+    1318,    /* OBJ_tcg_attribute                2 23 133 2 */
+    1319,    /* OBJ_tcg_protocol                 2 23 133 3 */
+    1320,    /* OBJ_tcg_algorithm                2 23 133 4 */
+    1321,    /* OBJ_tcg_platformClass            2 23 133 5 */
+    1322,    /* OBJ_tcg_ce                       2 23 133 6 */
+    1323,    /* OBJ_tcg_kp                       2 23 133 8 */
+    1324,    /* OBJ_tcg_address                  2 23 133 17 */
+    1325,    /* OBJ_tcg_registry                 2 23 133 18 */
     1273,    /* OBJ_cades                        0 4 0 19122 */
     1267,    /* OBJ_ess_attributes               0 4 0 1733 2 */
     1195,    /* OBJ_gmac                         1 0 9797 3 4 */
@@ -5357,6 +5712,39 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      743,    /* OBJ_wap_wsg_idm_ecid_wtls10      2 23 43 1 4 10 */
      744,    /* OBJ_wap_wsg_idm_ecid_wtls11      2 23 43 1 4 11 */
      745,    /* OBJ_wap_wsg_idm_ecid_wtls12      2 23 43 1 4 12 */
+    1334,    /* OBJ_tcg_at_tpmManufacturer       2 23 133 2 1 */
+    1335,    /* OBJ_tcg_at_tpmModel              2 23 133 2 2 */
+    1336,    /* OBJ_tcg_at_tpmVersion            2 23 133 2 3 */
+    1337,    /* OBJ_tcg_at_securityQualities     2 23 133 2 10 */
+    1338,    /* OBJ_tcg_at_tpmProtectionProfile  2 23 133 2 11 */
+    1339,    /* OBJ_tcg_at_tpmSecurityTarget     2 23 133 2 12 */
+    1340,    /* OBJ_tcg_at_tbbProtectionProfile  2 23 133 2 13 */
+    1341,    /* OBJ_tcg_at_tbbSecurityTarget     2 23 133 2 14 */
+    1342,    /* OBJ_tcg_at_tpmIdLabel            2 23 133 2 15 */
+    1343,    /* OBJ_tcg_at_tpmSpecification      2 23 133 2 16 */
+    1344,    /* OBJ_tcg_at_tcgPlatformSpecification 2 23 133 2 17 */
+    1345,    /* OBJ_tcg_at_tpmSecurityAssertions 2 23 133 2 18 */
+    1346,    /* OBJ_tcg_at_tbbSecurityAssertions 2 23 133 2 19 */
+    1347,    /* OBJ_tcg_at_tcgCredentialSpecification 2 23 133 2 23 */
+    1348,    /* OBJ_tcg_at_tcgCredentialType     2 23 133 2 25 */
+    1363,    /* OBJ_tcg_prt_tpmIdProtocol        2 23 133 3 1 */
+    1351,    /* OBJ_tcg_algorithm_null           2 23 133 4 1 */
+    1326,    /* OBJ_tcg_common                   2 23 133 5 1 */
+    1357,    /* OBJ_tcg_ce_relevantCredentials   2 23 133 6 2 */
+    1358,    /* OBJ_tcg_ce_relevantManifests     2 23 133 6 3 */
+    1359,    /* OBJ_tcg_ce_virtualPlatformAttestationService 2 23 133 6 4 */
+    1360,    /* OBJ_tcg_ce_migrationControllerAttestationService 2 23 133 6 5 */
+    1361,    /* OBJ_tcg_ce_migrationControllerRegistrationService 2 23 133 6 6 */
+    1362,    /* OBJ_tcg_ce_virtualPlatformBackupService 2 23 133 6 7 */
+    1352,    /* OBJ_tcg_kp_EKCertificate         2 23 133 8 1 */
+    1353,    /* OBJ_tcg_kp_PlatformAttributeCertificate 2 23 133 8 2 */
+    1354,    /* OBJ_tcg_kp_AIKCertificate        2 23 133 8 3 */
+    1355,    /* OBJ_tcg_kp_PlatformKeyCertificate 2 23 133 8 4 */
+    1356,    /* OBJ_tcg_kp_DeltaPlatformAttributeCertificate 2 23 133 8 5 */
+    1364,    /* OBJ_tcg_address_ethernetmac      2 23 133 17 1 */
+    1365,    /* OBJ_tcg_address_wlanmac          2 23 133 17 2 */
+    1366,    /* OBJ_tcg_address_bluetoothmac     2 23 133 17 3 */
+    1367,    /* OBJ_tcg_registry_componentClass  2 23 133 18 3 */
     1274,    /* OBJ_cades_attributes             0 4 0 19122 1 */
     1268,    /* OBJ_id_aa_ets_mimeType           0 4 0 1733 2 1 */
     1269,    /* OBJ_id_aa_ets_longTermValidation 0 4 0 1733 2 2 */
@@ -5405,6 +5793,16 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      633,    /* OBJ_setAttr_T2cleartxt           2 23 42 3 3 4 2 */
      634,    /* OBJ_setAttr_TokICCsig            2 23 42 3 3 5 1 */
      635,    /* OBJ_setAttr_SecDevSig            2 23 42 3 3 5 2 */
+    1327,    /* OBJ_tcg_at_platformManufacturerStr 2 23 133 5 1 1 */
+    1328,    /* OBJ_tcg_at_platformManufacturerId 2 23 133 5 1 2 */
+    1329,    /* OBJ_tcg_at_platformConfigUri     2 23 133 5 1 3 */
+    1330,    /* OBJ_tcg_at_platformModel         2 23 133 5 1 4 */
+    1331,    /* OBJ_tcg_at_platformVersion       2 23 133 5 1 5 */
+    1332,    /* OBJ_tcg_at_platformSerial        2 23 133 5 1 6 */
+    1333,    /* OBJ_tcg_at_platformConfiguration 2 23 133 5 1 7 */
+    1368,    /* OBJ_tcg_registry_componentClass_tcg 2 23 133 18 3 1 */
+    1369,    /* OBJ_tcg_registry_componentClass_ietf 2 23 133 18 3 2 */
+    1370,    /* OBJ_tcg_registry_componentClass_dmtf 2 23 133 18 3 3 */
     1275,    /* OBJ_id_aa_ets_signerAttrV2       0 4 0 19122 1 1 */
     1276,    /* OBJ_id_aa_ets_sigPolicyStore     0 4 0 19122 1 3 */
     1277,    /* OBJ_id_aa_ATSHashIndex_v2        0 4 0 19122 1 4 */
@@ -5487,6 +5885,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      508,    /* OBJ_id_hex_multipart_message     1 3 6 1 7 1 1 2 */
       57,    /* OBJ_netscape                     2 16 840 1 113730 */
     1282,    /* OBJ_oracle                       2 16 840 1 113894 */
+    1349,    /* OBJ_tcg_at_platformConfiguration_v1 2 23 133 5 1 7 1 */
+    1350,    /* OBJ_tcg_at_platformConfiguration_v2 2 23 133 5 1 7 2 */
      754,    /* OBJ_camellia_128_ecb             0 3 4401 5 3 1 9 1 */
      766,    /* OBJ_camellia_128_ofb128          0 3 4401 5 3 1 9 3 */
      757,    /* OBJ_camellia_128_cfb128          0 3 4401 5 3 1 9 4 */

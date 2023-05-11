@@ -804,3 +804,16 @@ int OBJ_obj2nid(const ASN1_OBJECT *a)
 {
     return ossl_obj_obj2nid(a, 1);
 }
+
+int print_oid (BIO *out, ASN1_OBJECT *oid) {
+    const char *ln;
+    char objbuf[80];
+
+    if (OBJ_obj2txt(objbuf, sizeof(objbuf), oid, 1) <= 0) {
+        return 0;
+    }
+    ln = OBJ_nid2ln(OBJ_obj2nid(oid));
+    return (ln != NULL)
+        ? BIO_printf(out, "%s (%s)", objbuf, ln)
+        : BIO_printf(out, "%s", objbuf);
+}

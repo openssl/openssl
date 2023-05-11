@@ -126,6 +126,11 @@ typedef struct BASIC_CONSTRAINTS_st {
     ASN1_INTEGER *pathlen;
 } BASIC_CONSTRAINTS;
 
+typedef struct BASIC_ATTR_CONSTRAINTS_st {
+    int authority;
+    ASN1_INTEGER *pathlen;
+} BASIC_ATTR_CONSTRAINTS;
+
 typedef struct PKEY_USAGE_PERIOD_st {
     ASN1_GENERALIZEDTIME *notBefore;
     ASN1_GENERALIZEDTIME *notAfter;
@@ -268,6 +273,13 @@ typedef struct USERNOTICE_st {
     NOTICEREF *noticeref;
     ASN1_STRING *exptext;
 } USERNOTICE;
+
+typedef STACK_OF(USERNOTICE) USER_NOTICE_SYNTAX;
+DECLARE_ASN1_FUNCTIONS(USER_NOTICE_SYNTAX)
+
+{-
+    generate_stack_macros("USERNOTICE");
+-}
 
 typedef struct POLICYQUALINFO_st {
     ASN1_OBJECT *pqualid;
@@ -507,6 +519,7 @@ typedef struct x509_purpose_st {
 # define X509V3_ADD_SILENT               0x10
 
 DECLARE_ASN1_FUNCTIONS(BASIC_CONSTRAINTS)
+DECLARE_ASN1_FUNCTIONS(BASIC_ATTR_CONSTRAINTS)
 
 DECLARE_ASN1_FUNCTIONS(SXNET)
 DECLARE_ASN1_FUNCTIONS(SXNETID)
@@ -783,6 +796,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS(const char *ipasc);
 ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc);
 int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
                              unsigned long chtype);
+int ossl_print_gens(BIO *out, GENERAL_NAMES *gens, int indent);
 
 void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent);
 {-
@@ -1014,6 +1028,527 @@ const ASN1_PRINTABLESTRING *PROFESSION_INFO_get0_registrationNumber(
     const PROFESSION_INFO *pi);
 void PROFESSION_INFO_set0_registrationNumber(
     PROFESSION_INFO *pi, ASN1_PRINTABLESTRING *rn);
+
+typedef struct ISSUER_SERIAL_st {
+    GENERAL_NAMES *issuer;
+    ASN1_INTEGER *serial;
+    ASN1_BIT_STRING *issuerUID;
+} ISSUER_SERIAL;
+
+typedef STACK_OF(ISSUER_SERIAL) AUTHORITY_ATTRIBUTE_ID_SYNTAX;
+DECLARE_ASN1_FUNCTIONS(AUTHORITY_ATTRIBUTE_ID_SYNTAX)
+
+{-
+    generate_stack_macros("ISSUER_SERIAL");
+-}
+
+#define ODI_TYPE_PUBLIC_KEY      0
+#define ODI_TYPE_PUBLIC_KEY_CERT 1
+#define ODI_TYPE_OTHER           2
+
+typedef struct OBJECT_DIGEST_INFO_st {
+    ASN1_ENUMERATED *digestedObjectType;
+    ASN1_OBJECT *otherObjectTypeID;
+    X509_ALGOR *digestAlgorithm;
+    ASN1_BIT_STRING *objectDigest;
+} OBJECT_DIGEST_INFO;
+
+typedef struct TARGET_CERT_st {
+    ISSUER_SERIAL *targetCertificate;
+    GENERAL_NAME *targetName;
+    OBJECT_DIGEST_INFO *certDigestInfo;
+} TARGET_CERT;
+
+# define TGT_TARGET_NAME  0
+# define TGT_TARGET_GROUP 1
+# define TGT_TARGET_CERT  2
+
+typedef struct TARGET_st {
+    int type;
+    union {
+        GENERAL_NAME *targetName;
+        GENERAL_NAME *targetGroup;
+        TARGET_CERT *targetCert;
+    } choice;
+} TARGET;
+
+typedef STACK_OF(TARGET) TARGETS;
+typedef STACK_OF(TARGETS) TARGETING_INFORMATION;
+
+{-
+    generate_stack_macros("TARGET");
+-}
+
+{-
+    generate_stack_macros("TARGETS");
+-}
+
+DECLARE_ASN1_FUNCTIONS(ISSUER_SERIAL)
+DECLARE_ASN1_FUNCTIONS(OBJECT_DIGEST_INFO)
+DECLARE_ASN1_FUNCTIONS(TARGET_CERT)
+DECLARE_ASN1_FUNCTIONS(TARGET)
+DECLARE_ASN1_FUNCTIONS(TARGETS)
+DECLARE_ASN1_FUNCTIONS(TARGETING_INFORMATION)
+
+typedef STACK_OF(X509_ATTRIBUTE) ATTRIBUTES_SYNTAX;
+DECLARE_ASN1_FUNCTIONS(ATTRIBUTES_SYNTAX)
+
+# define AAA_ATTRIBUTE_TYPE     0
+# define AAA_ATTRIBUTE_VALUES   1
+
+typedef struct ALLOWED_ATTRIBUTES_CHOICE_st {
+    int type;
+    union {
+        ASN1_OBJECT *attributeType;
+        X509_ATTRIBUTE *attributeTypeandValues;
+    } choice;
+} ALLOWED_ATTRIBUTES_CHOICE;
+
+typedef struct ALLOWED_ATTRIBUTES_ITEM_st {
+    STACK_OF(ALLOWED_ATTRIBUTES_CHOICE) *attributes;
+    GENERAL_NAME *holderDomain;
+} ALLOWED_ATTRIBUTES_ITEM;
+
+typedef STACK_OF(ALLOWED_ATTRIBUTES_ITEM) ALLOWED_ATTRIBUTES_SYNTAX;
+DECLARE_ASN1_FUNCTIONS(ALLOWED_ATTRIBUTES_SYNTAX)
+
+{-
+    generate_stack_macros("ALLOWED_ATTRIBUTES_CHOICE");
+-}
+{-
+    generate_stack_macros("ALLOWED_ATTRIBUTES_ITEM");
+-}
+
+typedef struct atav_st {
+    ASN1_OBJECT *type;
+    ASN1_TYPE *value;
+} ATAV;
+
+typedef struct ATTRIBUTE_TYPE_MAPPING_st {
+    ASN1_OBJECT *local;
+    ASN1_OBJECT *remote;
+} ATTRIBUTE_TYPE_MAPPING;
+
+typedef struct ATTRIBUTE_VALUE_MAPPING_st {
+    ATAV *local;
+    ATAV *remote;
+} ATTRIBUTE_VALUE_MAPPING;
+
+#define ATTR_MAP_TYPE   0
+#define ATTR_MAP_VALUE  1
+
+typedef struct ATTRIBUTE_MAPPING_st {
+    int type;
+    union {
+        ATTRIBUTE_TYPE_MAPPING *typeMappings;
+        ATTRIBUTE_VALUE_MAPPING *typeValueMappings;
+    } choice;
+} ATTRIBUTE_MAPPING;
+
+typedef STACK_OF(ATTRIBUTE_MAPPING) ATTRIBUTE_MAPPINGS;
+DECLARE_ASN1_FUNCTIONS(ATTRIBUTE_MAPPINGS)
+
+{-
+    generate_stack_macros("ATTRIBUTE_MAPPING");
+-}
+
+typedef struct HASH_st {
+    X509_ALGOR *algorithmIdentifier;
+    ASN1_BIT_STRING *hashValue;
+} HASH;
+
+typedef struct INFO_SYNTAX_POINTER_st {
+    GENERAL_NAMES *name;
+    HASH *hash;
+} INFO_SYNTAX_POINTER;
+
+#define INFO_SYNTAX_TYPE_CONTENT 0
+#define INFO_SYNTAX_TYPE_POINTER 1
+
+typedef struct INFO_SYNTAX_st {
+    int type;
+    union {
+        ASN1_STRING *content;
+        INFO_SYNTAX_POINTER *pointer;
+    } choice;
+} INFO_SYNTAX;
+
+typedef struct PRIVILEGE_POLICY_ID_st {
+    ASN1_OBJECT *privilegePolicy;
+    INFO_SYNTAX *privPolSyntax;
+} PRIVILEGE_POLICY_ID;
+
+typedef struct ATTRIBUTE_DESCRIPTOR_st {
+    ASN1_OBJECT *identifier;
+    ASN1_STRING *attributeSyntax;
+    ASN1_UTF8STRING *name;
+    ASN1_UTF8STRING *description;
+    PRIVILEGE_POLICY_ID *dominationRule;
+} ATTRIBUTE_DESCRIPTOR;
+
+DECLARE_ASN1_FUNCTIONS(ATTRIBUTE_DESCRIPTOR)
+
+typedef struct AA_DIST_POINT_st {
+    DIST_POINT_NAME *distpoint;
+    ASN1_BIT_STRING *reasons;
+    int dp_reasons;
+    ASN1_BOOLEAN indirectCRL;
+    ASN1_BOOLEAN containsUserAttributeCerts;
+    ASN1_BOOLEAN containsAACerts;
+    ASN1_BOOLEAN containsSOAPublicKeyCerts;
+} AA_DIST_POINT;
+
+typedef struct ROLE_SPEC_CERT_ID_st {
+    GENERAL_NAME *roleName;
+    GENERAL_NAME *roleCertIssuer;
+    ASN1_INTEGER *roleCertSerialNumber;
+    GENERAL_NAMES *roleCertLocator;
+} ROLE_SPEC_CERT_ID;
+
+DECLARE_ASN1_FUNCTIONS(ROLE_SPEC_CERT_ID)
+{-
+    generate_stack_macros("ROLE_SPEC_CERT_ID");
+-}
+
+typedef STACK_OF(ROLE_SPEC_CERT_ID) ROLE_SPEC_CERT_ID_SYNTAX;
+
+DECLARE_ASN1_FUNCTIONS(ROLE_SPEC_CERT_ID_SYNTAX)
+
+typedef struct TIME_SPEC_ABSOLUTE_st {
+    ASN1_GENERALIZEDTIME *startTime;
+    ASN1_GENERALIZEDTIME *endTime;
+} TIME_SPEC_ABSOLUTE;
+
+typedef struct DAY_TIME_st {
+    ASN1_INTEGER *hour;
+    ASN1_INTEGER *minute;
+    ASN1_INTEGER *second;
+} DAY_TIME;
+
+typedef struct DAY_TIME_BAND_st {
+    DAY_TIME *startDayTime;
+    DAY_TIME *endDayTime;
+} DAY_TIME_BAND;
+
+#define NAMED_DAY_TYPE_INT 0
+#define NAMED_DAY_TYPE_BIT 1
+#define NAMED_DAY_INT_SUN 1
+#define NAMED_DAY_INT_MON 2
+#define NAMED_DAY_INT_TUE 3
+#define NAMED_DAY_INT_WED 4
+#define NAMED_DAY_INT_THU 5
+#define NAMED_DAY_INT_FRI 6
+#define NAMED_DAY_INT_SAT 7
+#define NAMED_DAY_BIT_SUN 0
+#define NAMED_DAY_BIT_MON 1
+#define NAMED_DAY_BIT_TUE 2
+#define NAMED_DAY_BIT_WED 3
+#define NAMED_DAY_BIT_THU 4
+#define NAMED_DAY_BIT_FRI 5
+#define NAMED_DAY_BIT_SAT 6
+
+typedef struct NAMED_DAY_st {
+    int type;
+    union {
+        ASN1_INTEGER *intNamedDays;
+        ASN1_BIT_STRING *bitNamedDays;
+    } choice;
+} NAMED_DAY;
+
+#define TIME_SPEC_X_DAY_OF_FIRST 0
+#define TIME_SPEC_X_DAY_OF_SECOND 1
+#define TIME_SPEC_X_DAY_OF_THIRD 2
+#define TIME_SPEC_X_DAY_OF_FOURTH 3
+#define TIME_SPEC_X_DAY_OF_FIFTH 4
+
+typedef struct TIME_SPEC_X_DAY_OF_st {
+    int type;
+    union {
+        NAMED_DAY *first;
+        NAMED_DAY *second;
+        NAMED_DAY *third;
+        NAMED_DAY *fourth;
+        NAMED_DAY *fifth;
+    } choice;
+} TIME_SPEC_X_DAY_OF;
+
+#define TIME_SPEC_DAY_TYPE_INT 0
+#define TIME_SPEC_DAY_TYPE_BIT 1
+#define TIME_SPEC_DAY_TYPE_DAY_OF 2
+#define TIME_SPEC_DAY_BIT_SUN 0
+#define TIME_SPEC_DAY_BIT_MON 1
+#define TIME_SPEC_DAY_BIT_TUE 2
+#define TIME_SPEC_DAY_BIT_WED 3
+#define TIME_SPEC_DAY_BIT_THU 4
+#define TIME_SPEC_DAY_BIT_FRI 5
+#define TIME_SPEC_DAY_BIT_SAT 6
+#define TIME_SPEC_DAY_INT_SUN 1
+#define TIME_SPEC_DAY_INT_MON 2
+#define TIME_SPEC_DAY_INT_TUE 3
+#define TIME_SPEC_DAY_INT_WED 4
+#define TIME_SPEC_DAY_INT_THU 5
+#define TIME_SPEC_DAY_INT_FRI 6
+#define TIME_SPEC_DAY_INT_SAT 7
+
+typedef struct TIME_SPEC_DAY_st {
+    int type;
+    union {
+        STACK_OF(ASN1_INTEGER) *intDay;
+        ASN1_BIT_STRING *bitDay;
+        TIME_SPEC_X_DAY_OF *dayOf;
+    } choice;
+} TIME_SPEC_DAY;
+
+#define TIME_SPEC_WEEKS_TYPE_ALL 0
+#define TIME_SPEC_WEEKS_TYPE_INT 1
+#define TIME_SPEC_WEEKS_TYPE_BIT 2
+#define TIME_SPEC_BIT_WEEKS_1 0
+#define TIME_SPEC_BIT_WEEKS_2 1
+#define TIME_SPEC_BIT_WEEKS_3 2
+#define TIME_SPEC_BIT_WEEKS_4 3
+#define TIME_SPEC_BIT_WEEKS_5 4
+
+typedef struct TIME_SPEC_WEEKS_st {
+    int type;
+    union {
+        ASN1_NULL *allWeeks;
+        STACK_OF(ASN1_INTEGER) *intWeek;
+        ASN1_BIT_STRING *bitWeek;
+    } choice;
+} TIME_SPEC_WEEKS;
+
+#define TIME_SPEC_MONTH_TYPE_ALL 0
+#define TIME_SPEC_MONTH_TYPE_INT 1
+#define TIME_SPEC_MONTH_TYPE_BIT 2
+#define TIME_SPEC_INT_MONTH_JAN 1
+#define TIME_SPEC_INT_MONTH_FEB 2
+#define TIME_SPEC_INT_MONTH_MAR 3
+#define TIME_SPEC_INT_MONTH_APR 4
+#define TIME_SPEC_INT_MONTH_MAY 5
+#define TIME_SPEC_INT_MONTH_JUN 6
+#define TIME_SPEC_INT_MONTH_JUL 7
+#define TIME_SPEC_INT_MONTH_AUG 8
+#define TIME_SPEC_INT_MONTH_SEP 9
+#define TIME_SPEC_INT_MONTH_OCT 10
+#define TIME_SPEC_INT_MONTH_NOV 11
+#define TIME_SPEC_INT_MONTH_DEC 12
+#define TIME_SPEC_BIT_MONTH_JAN 0
+#define TIME_SPEC_BIT_MONTH_FEB 1
+#define TIME_SPEC_BIT_MONTH_MAR 2
+#define TIME_SPEC_BIT_MONTH_APR 3
+#define TIME_SPEC_BIT_MONTH_MAY 4
+#define TIME_SPEC_BIT_MONTH_JUN 5
+#define TIME_SPEC_BIT_MONTH_JUL 6
+#define TIME_SPEC_BIT_MONTH_AUG 7
+#define TIME_SPEC_BIT_MONTH_SEP 8
+#define TIME_SPEC_BIT_MONTH_OCT 9
+#define TIME_SPEC_BIT_MONTH_NOV 10
+#define TIME_SPEC_BIT_MONTH_DEC 11
+
+typedef struct TIME_SPEC_MONTH_st {
+    int type;
+    union {
+        ASN1_NULL *allMonths;
+        STACK_OF(ASN1_INTEGER) *intMonth;
+        ASN1_BIT_STRING *bitMonth;
+    } choice;
+} TIME_SPEC_MONTH;
+
+typedef struct TIME_PERIOD_st {
+    STACK_OF(DAY_TIME_BAND) *timesOfDay;
+    TIME_SPEC_DAY *days;
+    TIME_SPEC_WEEKS *weeks;
+    TIME_SPEC_MONTH *months;
+    STACK_OF(ASN1_INTEGER) *years;
+} TIME_PERIOD;
+
+#define TIME_SPEC_TIME_TYPE_ABSOLUTE 0
+#define TIME_SPEC_TIME_TYPE_PERIODIC 1
+
+typedef struct TIME_SPEC_TIME_st {
+    int type;
+    union {
+        TIME_SPEC_ABSOLUTE *absolute;
+        STACK_OF(TIME_PERIOD) *periodic;
+    } choice;
+} TIME_SPEC_TIME;
+
+typedef struct TIME_SPEC_st {
+    TIME_SPEC_TIME *time;
+    ASN1_BOOLEAN notThisTime;
+    ASN1_INTEGER *timeZone;
+} TIME_SPEC;
+
+DECLARE_ASN1_FUNCTIONS(TIME_SPEC_ABSOLUTE)
+DECLARE_ASN1_FUNCTIONS(TIME_SPEC_TIME)
+DECLARE_ASN1_FUNCTIONS(TIME_SPEC)
+{-
+    generate_stack_macros("TIME_PERIOD");
+-}
+
+{-
+    generate_stack_macros("DAY_TIME_BAND");
+-}
+
+typedef struct URI_REFERENCE_st {
+    ASN1_IA5STRING *uniformResourceIdentifier;
+    X509_ALGOR *hashAlgorithm;
+    ASN1_BIT_STRING *hashValue;
+} URI_REFERENCE;
+
+typedef struct COMMON_CRITERIA_MEASURES_st {
+    ASN1_IA5STRING *version;
+    ASN1_ENUMERATED *assurancelevel;
+    ASN1_ENUMERATED *evaluationStatus;
+    ASN1_BOOLEAN plus;
+    ASN1_ENUMERATED *strengthOfFunction;
+    ASN1_OBJECT *profileOid;
+    URI_REFERENCE *profileUri;
+    ASN1_OBJECT *targetOid;
+    URI_REFERENCE *targetUri;
+} COMMON_CRITERIA_MEASURES; 
+DECLARE_ASN1_FUNCTIONS(COMMON_CRITERIA_MEASURES)
+
+typedef struct FIPS_LEVEL_st {
+    ASN1_IA5STRING *version;
+    ASN1_ENUMERATED *level;
+    ASN1_BOOLEAN plus;
+} FIPS_LEVEL;
+DECLARE_ASN1_FUNCTIONS(FIPS_LEVEL)
+
+typedef struct TBB_SECURITY_ASSERTIONS_st {
+    ASN1_INTEGER *version;
+    COMMON_CRITERIA_MEASURES *ccInfo;
+    FIPS_LEVEL *fipsLevel;
+    ASN1_ENUMERATED *rtmType;
+    ASN1_BOOLEAN iso9000Certified;
+    ASN1_IA5STRING *iso9000Uri;
+} TBB_SECURITY_ASSERTIONS;
+DECLARE_ASN1_FUNCTIONS(TBB_SECURITY_ASSERTIONS)
+
+typedef struct MANUFACTURER_ID_st {
+    ASN1_OBJECT *manufacturerIdentifier;
+} MANUFACTURER_ID;
+
+DECLARE_ASN1_FUNCTIONS(MANUFACTURER_ID)
+
+typedef struct TCG_SPEC_VERSION_st {
+    ASN1_INTEGER *majorVersion;
+    ASN1_INTEGER *minorVersion;
+    ASN1_INTEGER *revision;
+} TCG_SPEC_VERSION;
+
+DECLARE_ASN1_ALLOC_FUNCTIONS(TCG_SPEC_VERSION)
+
+typedef struct TCG_PLATFORM_SPEC_st {
+    TCG_SPEC_VERSION *version;
+    ASN1_OCTET_STRING *platformClass;
+} TCG_PLATFORM_SPEC;
+
+DECLARE_ASN1_FUNCTIONS(TCG_PLATFORM_SPEC)
+
+typedef struct TCG_CRED_TYPE_st {
+    ASN1_OBJECT *certificateType;
+} TCG_CRED_TYPE;
+
+DECLARE_ASN1_FUNCTIONS(TCG_CRED_TYPE)
+
+typedef struct COMPONENT_CLASS_st {
+    ASN1_OBJECT *componentClassRegistry;
+    ASN1_OCTET_STRING *componentClassValue;
+} COMPONENT_CLASS;
+
+DECLARE_ASN1_ALLOC_FUNCTIONS(COMPONENT_CLASS)
+
+typedef struct COMPONENT_ADDRESS_st {
+    ASN1_OBJECT *addressType;
+    ASN1_UTF8STRING *addressValue;
+} COMPONENT_ADDRESS;
+
+typedef struct PLATFORM_PROPERTY_st {
+    ASN1_UTF8STRING *propertyName;
+    ASN1_UTF8STRING *propertyValue;
+    ASN1_ENUMERATED *status;
+} PLATFORM_PROPERTY;
+
+typedef struct ATTRIBUTE_CERTIFICATE_IDENTIFIER_st {
+    X509_ALGOR *hashAlgorithm;
+    ASN1_OCTET_STRING *hashOverSignatureValue;
+} ATTRIBUTE_CERTIFICATE_IDENTIFIER;
+
+typedef struct CERTIFICATE_IDENTIFIER_st {
+    ATTRIBUTE_CERTIFICATE_IDENTIFIER *attributeCertIdentifier;
+    ISSUER_SERIAL *genericCertIdentifier;
+} CERTIFICATE_IDENTIFIER;
+
+typedef struct COMPONENT_IDENTIFIER_st {
+    COMPONENT_CLASS *componentClass;
+    ASN1_UTF8STRING *componentManufacturer;
+    ASN1_UTF8STRING *componentModel;
+    ASN1_UTF8STRING *componentSerial;
+    ASN1_UTF8STRING *componentRevision;
+    ASN1_OBJECT *componentManufacturerId;
+    ASN1_BOOLEAN fieldReplaceable;
+    STACK_OF(COMPONENT_ADDRESS) *componentAddresses;
+    CERTIFICATE_IDENTIFIER *componentPlatformCert;
+    URI_REFERENCE *componentPlatformCertUri;
+    ASN1_ENUMERATED *status;
+} COMPONENT_IDENTIFIER;
+
+typedef struct PLATFORM_CONFIG_st {
+    STACK_OF(COMPONENT_IDENTIFIER) *componentIdentifiers;
+    URI_REFERENCE *componentIdentifiersUri;
+    STACK_OF(PLATFORM_PROPERTY) *platformProperties;
+    URI_REFERENCE *platformPropertiesUri;
+} PLATFORM_CONFIG;
+DECLARE_ASN1_FUNCTIONS(PLATFORM_CONFIG)
+
+#define MEASUREMENT_ROOT_TYPE_STATIC        0
+#define MEASUREMENT_ROOT_TYPE_DYNAMIC       1
+#define MEASUREMENT_ROOT_TYPE_NONHOST       2
+#define MEASUREMENT_ROOT_TYPE_HYBRID        3
+#define MEASUREMENT_ROOT_TYPE_PHYSICAL      4
+#define MEASUREMENT_ROOT_TYPE_VIRTUAL       5
+#define EVALUATION_ASSURANCE_LEVEL_1        1
+#define EVALUATION_ASSURANCE_LEVEL_2        2
+#define EVALUATION_ASSURANCE_LEVEL_3        3
+#define EVALUATION_ASSURANCE_LEVEL_4        4
+#define EVALUATION_ASSURANCE_LEVEL_5        5
+#define EVALUATION_ASSURANCE_LEVEL_6        6
+#define EVALUATION_ASSURANCE_LEVEL_7        7
+#define EVALUATION_STATUS_DESIGNED_TO_MEET  0
+#define EVALUATION_STATUS_EVAL_IN_PROGRESS  1
+#define EVALUATION_STATUS_EVAL_COMPLETED    2
+#define STRENGTH_OF_FUNCTION_BASIC          0
+#define STRENGTH_OF_FUNCTION_MEDIUM         1
+#define STRENGTH_OF_FUNCTION_HIGH           2
+#define SECURITY_LEVEL_1                    1
+#define SECURITY_LEVEL_2                    2
+#define SECURITY_LEVEL_3                    3
+#define SECURITY_LEVEL_4                    4
+#define ATTRIBUTE_STATUS_ADDED              0
+#define ATTRIBUTE_STATUS_MODIFIED           1
+#define ATTRIBUTE_STATUS_REMOVED            2
+
+DECLARE_ASN1_FUNCTIONS(URI_REFERENCE)
+{-
+    generate_stack_macros("URI_REFERENCE");
+-}
+
+DECLARE_ASN1_FUNCTIONS(COMPONENT_ADDRESS)
+{-
+    generate_stack_macros("COMPONENT_ADDRESS");
+-}
+
+DECLARE_ASN1_FUNCTIONS(PLATFORM_PROPERTY)
+{-
+    generate_stack_macros("PLATFORM_PROPERTY");
+-}
+
+DECLARE_ASN1_FUNCTIONS(COMPONENT_IDENTIFIER)
+{-
+    generate_stack_macros("COMPONENT_IDENTIFIER");
+-}
 
 # ifdef  __cplusplus
 }

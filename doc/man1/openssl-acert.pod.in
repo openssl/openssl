@@ -1,0 +1,317 @@
+=pod
+{- OpenSSL::safe::output_do_not_edit_headers(); -}
+
+=head1 NAME
+
+openssl-acert - RFC 5755 attribute certificate generate and display command
+
+=head1 SYNOPSIS
+
+B<openssl> B<acert>
+[B<-help>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>]
+[B<-in> I<filename>]
+[B<-passin> I<arg>]
+[B<-out> I<filename>]
+[B<-text>]
+[B<-noout>]
+[B<-verify>]
+[B<-new>]
+[B<-I<digest>>]
+[B<-config> I<filename>]
+[B<-section> I<name>]
+[B<-new>]
+[B<-holder> I<filename>]
+[B<-use-holder-basecertid>]
+[B<-use-holder-name>]
+[B<-AA> I<filename>|I<uri>]
+[B<-AAkey> I<filename>|I<uri>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-days> I<n>]
+[B<-set_serial> I<n>]
+[B<-startdate> I<date>]
+[B<-enddate> I<date>]
+[B<-addext> I<ext>]
+[B<-acertexts> I<section>]
+[B<-utf8>]
+[B<-certopt>]
+[B<-sigopt> I<nm>:I<v>]
+[B<-verbose>]
+{- $OpenSSL::safe::opt_name_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
+
+=head1 DESCRIPTION
+
+This command primarily creates and parses attributes certificates as defined
+by RFC5755.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-help>
+
+Print out a usage message.
+
+=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+
+The input and output formats; unspecified by default.
+See L<openssl-format-options(1)> for details.
+
+The data is a attribute certificate.
+
+=item B<-in> I<filename>
+
+This specifies the input filename to read an attribute certificate from
+or standard input if this option is not specified. An attribute certificate
+is only read if B<-new> is not specified.
+
+=item B<-sigopt> I<nm>:I<v>
+
+Pass options to the signature algorithm during sign operations.
+Names and values of these options are algorithm-specific.
+
+=item B<-passin> I<arg>
+
+The password source for the attribute authority certificate.
+For more information about the format of B<arg>
+see L<openssl-passphrase-options(1)>.
+
+=item B<-out> I<filename>
+
+This specifies the output filename to write to or standard output by default.
+
+=item B<-text>
+
+Prints out the attribute certificate in text form.
+
+=item B<-noout>
+
+This option prevents output of the encoded version of the attribute certificate.
+
+=item B<-verify>
+
+Verifies the attribute certificate signature and whether it corresponds to the
+supplied B<-holder> and B<-AA> certificates.
+
+=item B<-new>
+
+This option generates a new attribute certificate. The attributes
+must be specified in a configuration file.
+
+A holder certificate must be specified with the B<-holder> option.
+An attribute authority certificate and signing key must be specified
+with the B<-AA> and, if necessary, the B<-AAkey> options.
+
+=item B<-holder> I<filename>
+
+Specifies the holder certificate to issue the attribute certificate for when
+the B<-new> option is given.  Used to verify an attribute certificate when
+the B<-verify> option is given.
+
+=item B<-use-holder-basecertid> 
+
+Use the holder certificate's serial number and issuer name to identify the
+holder in the new attribute certificate.
+
+=item B<-use-holder-name> 
+
+Use the holder certificate's subject name to identify the holder
+in the new attribute certificate.
+
+=item B<-AA> I<filename>|I<uri>
+
+Specifies the Attribute Authority certificate to be used for signing with the
+B<-new> option. The AA certificate is also used to verify an attribute
+certificate when the B<-verify> option is given.
+
+=item B<-AAkey> I<filename>|I<uri>
+
+This specifies the attribute authority's private key to use for signing
+signing attribute certificates produced using the B<-new> option.
+
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+
+The format of the private key; unspecified by default.
+See L<openssl-format-options(1)> for details.
+
+=item B<-I<digest>>
+
+This specifies the message digest to sign the attribute certificate.
+Any digest supported by the OpenSSL B<dgst> command can be used.
+This overrides the digest algorithm specified in
+the configuration file.
+
+Some public key algorithms may override this choice. For instance, DSA
+signatures always use SHA1, GOST R 34.10 signatures always use
+GOST R 34.11-94 (B<-md_gost94>), Ed25519 and Ed448 never use any digest.
+
+=item B<-config> I<filename>
+
+This allows an alternative configuration file to be specified.
+Optional; for a description of the default value,
+see L<openssl(1)/COMMAND SUMMARY>.
+
+=item B<-section> I<name>
+
+Specifies the name of the section to use; the default is B<acert>.
+
+=item B<-startdate> I<date>
+
+This option sets the validity start date of the attribute certificate
+generated with the B<-new> option.  The date format is YYYYMMDDHHMMSSZ
+(The same format as an ASN1 GeneralizedTime structure).  The current
+date will be used when this option is not specified.
+
+=item B<-enddate> I<date>
+
+This option sets the validity end date of the attribute certificate
+generated with the B<-new> option.  The date format is YYYYMMDDHHMMSSZ
+(The same format as an ASN1 GeneralizedTime structure).
+
+=item B<-days> I<n>
+
+When the B<-new> option is being used this specifies the number of
+days to certify the certificate for, otherwise it is ignored. I<n> should
+be a positive integer. The default is 1 day.
+
+=item B<-set_serial> I<n>
+
+Serial number to use when outputting a self-signed certificate.
+This may be specified as a decimal value or a hex value if preceded by C<0x>.
+If not given, a large random number will be used.
+
+=item B<-addext> I<ext>
+
+Add a specific extension to the attribute certificate if the B<-new> option is
+present.  The argument must have the form of
+a key=value pair as it would appear in a config file.
+
+This option can be given multiple times.
+
+=item B<-acertexts> I<section>
+
+These options specify alternative sections to include certificate
+extensions (if the B<-new> option is present).
+This allows several different sections to
+be used in the same configuration file to specify attribute certificates
+for a variety of purposes.
+
+=item B<-utf8>
+
+This option causes field values to be interpreted as UTF8 strings, by
+default they are interpreted as ASCII. This means that the field
+values, whether prompted from a terminal or obtained from a
+configuration file, must be valid UTF8 strings.
+
+=item B<-certopt> I<option>
+
+Customize the printing format used with B<-text>. The I<option> argument can be
+a single option or multiple options separated by commas.
+
+See discussion of the  B<-certopt> parameter in the L<openssl-x509(1)>
+command.
+
+=item B<-verbose>
+
+Print extra details about the operations being performed.
+
+{- $OpenSSL::safe::opt_name_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
+
+=back
+
+=head1 CONFIGURATION FILE FORMAT
+
+The configuration options are specified in the B<acert> section of
+the configuration file. An alternate name be specified by using the
+B<-section> option.
+As with all configuration files, if no
+value is specified in the specific section then
+the initial unnamed or B<default> section is searched too.
+
+The options available are described in detail below.
+
+=over 4
+
+=item B<acert_extensions>
+
+This specifies the configuration file section containing a list of
+extensions to add to the attribute certificate. It can be overridden
+by the B<-acertexts> command line switch. See the
+L<x509v3_config(5)> manual page for details of the
+extension section format.
+
+=item B<utf8>
+
+If set to the value B<yes> then field values to be interpreted as UTF8
+strings, by default they are interpreted as ASCII. This means that
+the field values, whether prompted from a terminal or obtained from a
+configuration file, must be valid UTF8 strings.
+
+=item B<attributes>
+
+This specifies the section containing the attributes to add to newly
+created certificates.  See the next section for format details.
+
+=back
+
+=head1 ATTRIBUTE SECTION FORMAT
+
+Attribute value can be specified as a simple,
+I<key>=I<value> format.  For example,
+
+ attributeName=attributeValue
+
+Alternatively ASN1 sequences can be explicitly
+specified. For example, 
+
+ id-aca-group = ASN1:SEQUENCE:ietfattr
+
+ [ietfattr]
+ values = SEQUENCE:groups
+
+ [groups]
+ 1.string = UTF8:groupA
+ 2.string = UTF8:groupB
+ 3.string = UTF8:groupF
+
+See L<ASN1_generate_nconf(3)> for more examples and detailed explanation of the
+ASN1 format specifiers.
+
+=head1 EXAMPLES
+
+Examine an attribute certificate:
+
+ openssl acert -in acert.pem -text -noout
+
+Generate a new attribute certificate for a holder and sign it:
+
+ openssl acert -new -holder holder.pem -AA aa.pem -AAkey aakey.pem -out acert.pem
+
+Verify that an attribute certificate corresponds to an AA and holder
+
+ openssl acert -holder holder.pem -AA aa.pem -in acert.pem -verify
+
+=head1 SEE ALSO
+
+L<openssl(1)>,
+L<openssl-x509(1)>,
+L<config(5)>,
+L<ASN1_generate_nconf(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

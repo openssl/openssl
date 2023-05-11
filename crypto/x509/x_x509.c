@@ -14,6 +14,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
+#include <openssl/x509_acert.h>
 
 ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
         ASN1_EXP_OPT(X509_CINF, version, ASN1_INTEGER, 0),
@@ -313,4 +314,26 @@ void X509_set0_distinguishing_id(X509 *x, ASN1_OCTET_STRING *d_id)
 ASN1_OCTET_STRING *X509_get0_distinguishing_id(X509 *x)
 {
     return x->distinguishing_id;
+}
+
+OSSL_ISSUER_SERIAL *X509_get_issuer_serial (X509 *x)
+{
+    STACK_OF(GENERAL_NAME) *issuer = sk_GENERAL_NAME_new(NULL);
+    ASN1_INTEGER serial;
+    ASN1_BIT_STRING *issuerUID;
+
+    GENERAL_NAME *gn = GENERAL_NAME_new();
+    gn->type = GEN_DIRNAME;
+    gn->d.dirn = x->cert_info.issuer;
+    if (sk_GENERAL_NAME_push(issuer, gn) <= 0)
+        return NULL;
+
+    serial = x->cert_info.serialNumber;
+    issuerUID = x->cert_info.issuerUID;
+
+    OSSL_ISSUER_SERIAL *iss_ser = OSSL_ISSUER_SERIAL_new();
+    iss_ser->issuer = issuer;
+    iss_ser->serial = serial;
+    iss_ser->issuerUID = issuerUID;
+    return iss_ser;
 }
