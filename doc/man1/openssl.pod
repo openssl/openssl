@@ -13,6 +13,8 @@ I<command>
 
 B<openssl> B<no->I<XXX> [ I<options> ]
 
+B<openssl> B<-help> | B<--help> | B<-version> | B<--version>
+
 =head1 DESCRIPTION
 
 OpenSSL is a cryptography toolkit implementing the Secure Sockets Layer (SSL)
@@ -31,6 +33,20 @@ It can be used for
  o  SSL/TLS Client and Server Tests
  o  Handling of S/MIME signed or encrypted mail
  o  Timestamp requests, generation and verification
+
+=head2 Program Options
+
+=over 4
+
+=item B<-help> | B<--help>
+
+Provides a terse summary of all B<openssl> program options. For more detailed information, each command supports a B<-help> option.
+
+=item B<-version> | B<--version>
+
+Provides a terse summary of the B<openssl> program version. For more detailed information see L<openssl-version(1)>.
+
+=back
 
 =head1 COMMAND SUMMARY
 
