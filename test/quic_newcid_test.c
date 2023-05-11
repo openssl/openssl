@@ -67,7 +67,7 @@ static int test_ncid_frame(int fail)
     if (!TEST_ptr(cctx))
         goto err;
 
-    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, cert, privkey, 1,
+    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, cert, privkey, 0,
                                              &qtserv, &cssl, &fault)))
         goto err;
 
@@ -78,7 +78,8 @@ static int test_ncid_frame(int fail)
         goto err;
 
     ossl_quic_tserver_tick(qtserv);
-    if (!TEST_true(ossl_quic_tserver_read(qtserv, buf, sizeof(buf), &bytesread)))
+    if (!TEST_true(ossl_quic_tserver_read(qtserv, 0, buf, sizeof(buf),
+                                          &bytesread)))
         goto err;
 
     /*
@@ -99,7 +100,8 @@ static int test_ncid_frame(int fail)
         goto err;
     if (!fail && !TEST_true(ossl_quic_tserver_set_new_local_cid(qtserv, &conn_id)))
         goto err;
-    if (!TEST_true(ossl_quic_tserver_write(qtserv, (unsigned char *)msg, msglen,
+    if (!TEST_true(ossl_quic_tserver_write(qtserv, 0,
+                                           (unsigned char *)msg, msglen,
                                            &byteswritten)))
         goto err;
 
@@ -123,7 +125,8 @@ static int test_ncid_frame(int fail)
         goto err;
 
     ossl_quic_tserver_tick(qtserv);
-    if (!TEST_true(ossl_quic_tserver_read(qtserv, buf, sizeof(buf), &bytesread)))
+    if (!TEST_true(ossl_quic_tserver_read(qtserv, 0, buf, sizeof(buf),
+                                          &bytesread)))
         goto err;
 
     if (fail) {
