@@ -37,7 +37,13 @@ ENGINE *ENGINE_new(void)
         return NULL;
     ret->struct_ref = 1;
     ENGINE_REF_PRINT(ret, 0, 1);
+    ret->refcnt_lock = CRYPTO_THREAD_lock_new();
+    if (ret->refcnt_lock == NULL) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data)) {
+        CRYPTO_THREAD_lock_free(ret->refcnt_lock);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -76,10 +82,7 @@ int engine_free_util(ENGINE *e, int not_locked)
 
     if (e == NULL)
         return 1;
-    if (not_locked)
-        CRYPTO_DOWN_REF(&e->struct_ref, &i, global_engine_lock);
-    else
-        i = --e->struct_ref;
+    CRYPTO_DOWN_REF(&e->struct_ref, &i, e->refcnt_lock);
     ENGINE_REF_PRINT(e, 0, -1);
     if (i > 0)
         return 1;
@@ -95,6 +98,7 @@ int engine_free_util(ENGINE *e, int not_locked)
         e->destroy(e);
     engine_remove_dynamic_id(e, not_locked);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ENGINE, e, &e->ex_data);
+    CRYPTO_THREAD_lock_free(e->refcnt_lock);
     OPENSSL_free(e);
     return 1;
 }

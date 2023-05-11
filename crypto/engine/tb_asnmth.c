@@ -205,8 +205,14 @@ const EVP_PKEY_ASN1_METHOD *ENGINE_pkey_asn1_find_str(ENGINE **pe,
         return NULL;
     engine_table_doall(pkey_asn1_meth_table, look_str_cb, &fstr);
     /* If found obtain a structural reference to engine */
-    if (fstr.e) {
-        fstr.e->struct_ref++;
+    if (fstr.e != NULL) {
+        int ref;
+
+        if (!CRYPTO_UP_REF(&fstr.e->struct_ref, &ref, fstr.e->refcnt_lock)) {
+            CRYPTO_THREAD_unlock(global_engine_lock);
+            ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
+            return NULL;
+        }
         ENGINE_REF_PRINT(fstr.e, 0, 1);
     }
     *pe = fstr.e;
