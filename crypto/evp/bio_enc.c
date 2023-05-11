@@ -360,6 +360,7 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
 
         /* Finally flush the underlying BIO */
         ret = BIO_ctrl(next, cmd, num, ptr);
+        BIO_copy_next_retry(b);
         break;
     case BIO_C_GET_CIPHER_STATUS:
         ret = (long)ctx->ok;

@@ -360,6 +360,7 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             return 0;
         if (ctx->obuf_len <= 0) {
             ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+            BIO_copy_next_retry(b);
             break;
         }
 
@@ -380,6 +381,7 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             }
         }
         ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        BIO_copy_next_retry(b);
         break;
     case BIO_CTRL_DUP:
         dbio = (BIO *)ptr;
