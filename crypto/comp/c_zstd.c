@@ -762,8 +762,10 @@ static long bio_zstd_ctrl(BIO *b, int cmd, long num, void *ptr)
 
     case BIO_CTRL_FLUSH:
         ret = bio_zstd_flush(b);
-        if (ret > 0)
+        if (ret > 0) {
             ret = BIO_flush(next);
+            BIO_copy_next_retry(b);
+        }
         break;
 
     case BIO_C_SET_BUFF_SIZE:
