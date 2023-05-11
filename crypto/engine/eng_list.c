@@ -58,6 +58,7 @@ static int engine_list_add(ENGINE *e)
 {
     int conflict = 0;
     ENGINE *iterator = NULL;
+    int ref;
 
     if (e == NULL) {
         ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
@@ -72,9 +73,19 @@ static int engine_list_add(ENGINE *e)
         ERR_raise(ERR_LIB_ENGINE, ENGINE_R_CONFLICTING_ENGINE_ID);
         return 0;
     }
+
+    /*
+     * Having the engine in the list assumes a structural reference.
+     */
+    if (!CRYPTO_UP_REF(&e->struct_ref, &ref, e->refcnt_lock)) {
+            ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INTERNAL_LIST_ERROR);
+            return 0;
+    }
+    ENGINE_REF_PRINT(e, 0, 1);
     if (engine_list_head == NULL) {
         /* We are adding to an empty list. */
-        if (engine_list_tail) {
+        if (engine_list_tail != NULL) {
+            CRYPTO_DOWN_REF(&e->struct_ref, &ref, e->refcnt_lock);
             ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INTERNAL_LIST_ERROR);
             return 0;
         }
@@ -87,17 +98,14 @@ static int engine_list_add(ENGINE *e)
     } else {
         /* We are adding to the tail of an existing list. */
         if ((engine_list_tail == NULL) || (engine_list_tail->next != NULL)) {
+            CRYPTO_DOWN_REF(&e->struct_ref, &ref, e->refcnt_lock);
             ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INTERNAL_LIST_ERROR);
             return 0;
         }
         engine_list_tail->next = e;
         e->prev = engine_list_tail;
     }
-    /*
-     * Having the engine in the list assumes a structural reference.
-     */
-    e->struct_ref++;
-    ENGINE_REF_PRINT(e, 0, 1);
+
     /* However it came to be, e is the last item in the list. */
     engine_list_tail = e;
     e->next = NULL;
@@ -228,7 +236,12 @@ ENGINE *ENGINE_get_first(void)
         return NULL;
     ret = engine_list_head;
     if (ret) {
-        ret->struct_ref++;
+        int ref;
+
+        if (!CRYPTO_UP_REF(&ret->struct_ref, &ref, ret->refcnt_lock)) {
+            ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
+            return NULL;
+        }
         ENGINE_REF_PRINT(ret, 0, 1);
     }
     CRYPTO_THREAD_unlock(global_engine_lock);
@@ -249,7 +262,12 @@ ENGINE *ENGINE_get_last(void)
         return NULL;
     ret = engine_list_tail;
     if (ret) {
-        ret->struct_ref++;
+        int ref;
+
+        if (!CRYPTO_UP_REF(&ret->struct_ref, &ref, ret->refcnt_lock)) {
+            ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
+            return NULL;
+        }
         ENGINE_REF_PRINT(ret, 0, 1);
     }
     CRYPTO_THREAD_unlock(global_engine_lock);
@@ -268,8 +286,13 @@ ENGINE *ENGINE_get_next(ENGINE *e)
         return NULL;
     ret = e->next;
     if (ret) {
+        int ref;
+
         /* Return a valid structural reference to the next ENGINE */
-        ret->struct_ref++;
+        if (!CRYPTO_UP_REF(&ret->struct_ref, &ref, ret->refcnt_lock)) {
+            ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
+            return NULL;
+        }
         ENGINE_REF_PRINT(ret, 0, 1);
     }
     CRYPTO_THREAD_unlock(global_engine_lock);
@@ -289,8 +312,13 @@ ENGINE *ENGINE_get_prev(ENGINE *e)
         return NULL;
     ret = e->prev;
     if (ret) {
+        int ref;
+
         /* Return a valid structural reference to the next ENGINE */
-        ret->struct_ref++;
+        if (!CRYPTO_UP_REF(&ret->struct_ref, &ref, ret->refcnt_lock)) {
+            ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
+            return NULL;
+        }
         ENGINE_REF_PRINT(ret, 0, 1);
     }
     CRYPTO_THREAD_unlock(global_engine_lock);
@@ -405,7 +433,14 @@ ENGINE *ENGINE_by_id(const char *id)
                 iterator = cp;
             }
         } else {
-            iterator->struct_ref++;
+            int ref;
+
+            if (!CRYPTO_UP_REF(&iterator->struct_ref, &ref,
+                               iterator->refcnt_lock)) {
+                CRYPTO_THREAD_unlock(global_engine_lock);
+                ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
+                return NULL;
+            }
             ENGINE_REF_PRINT(iterator, 0, 1);
         }
     }

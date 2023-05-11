@@ -23,7 +23,8 @@ extern CRYPTO_RWLOCK *global_engine_lock;
  * This prints the engine's pointer address, "struct" or "funct" to
  * indicate the reference type, the before and after reference count, and
  * the file:line-number pair. The "ENGINE_REF_PRINT" statements must come
- * *after* the change.
+ * *after* the change. Since this is for tracing only we do not concern
+ * ourselves with using atomic primitives for reading the struct_ref
  */
 # define ENGINE_REF_PRINT(e, isfunct, diff)                             \
     OSSL_TRACE6(ENGINE_REF_COUNT,                                       \
@@ -135,6 +136,7 @@ struct engine_st {
     int flags;
     /* reference count on the structure itself */
     CRYPTO_REF_COUNT struct_ref;
+    CRYPTO_RWLOCK *refcnt_lock;
     /*
      * reference count on usability of the engine type. NB: This controls the
      * loading and initialisation of any functionality required by this
