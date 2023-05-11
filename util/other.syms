@@ -53,6 +53,7 @@ EVP_RAND                                datatype
 EVP_RAND_CTX                            datatype
 EVP_SIGNATURE                           datatype
 GEN_SESSION_CB                          datatype
+OSSL_IETF_ATTR_SYNTAX                   datatype
 NAMING_AUTHORITY                        datatype
 OPENSSL_Applink                         external
 OSSL_ALGORITHM                          datatype

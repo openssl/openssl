@@ -3424,3 +3424,16 @@ int opt_legacy_okay(void)
         return 0;
     return 1;
 }
+
+/* Sign the attribute certificate info */
+int do_X509_ACERT_sign(X509_ACERT *x, EVP_PKEY *pkey, const char *md,
+                     STACK_OF(OPENSSL_STRING) *sigopts)
+{
+    int rv = 0;
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+
+    if (do_sign_init(mctx, pkey, md, sigopts) > 0)
+        rv = (X509_ACERT_sign_ctx(x, mctx) > 0);
+    EVP_MD_CTX_free(mctx);
+    return rv;
+}

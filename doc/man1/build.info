@@ -2,6 +2,7 @@
 # turned into appropriate DEPEND and GENERATE lines.  All we need here are
 # the additional dependencies on ../perlvars.pm.
 
+DEPEND[openssl-acert.pod]=../perlvars.pm
 DEPEND[openssl-asn1parse.pod]=../perlvars.pm
 DEPEND[openssl-ca.pod]=../perlvars.pm
 DEPEND[openssl-ciphers.pod]=../perlvars.pm

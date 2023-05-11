@@ -27,6 +27,8 @@
 #include "crypto/pkcs7.h"
 #include "crypto/x509.h"
 #include "crypto/rsa.h"
+#include "crypto/x509_acert.h"
+#include "openssl/x509_acert.h"
 
 int X509_verify(X509 *a, EVP_PKEY *r)
 {
@@ -167,6 +169,36 @@ X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 {
     return (X509_CRL *)simple_get_asn1(url, bio, rbio, timeout,
                                        ASN1_ITEM_rptr(X509_CRL));
+}
+
+int X509_ACERT_sign(X509_ACERT *x, EVP_PKEY *pkey, const EVP_MD *md)
+{
+    x->acinfo->enc.modified = 1;
+    return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_ACERT_INFO), &x->acinfo->signature,
+                            &x->sig_alg,
+                             &x->signature, x->acinfo, NULL,
+                             pkey, md, NULL, NULL);
+}
+
+int X509_ACERT_sign_ctx(X509_ACERT *x, EVP_MD_CTX *ctx)
+{
+    x->acinfo->enc.modified = 1;
+    return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_ACERT_INFO), &x->acinfo->signature,
+                              &x->sig_alg, &x->signature,
+                              x->acinfo, ctx);
+}
+
+int X509_ACERT_verify_ex(X509_ACERT *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
+                       const char *propq)
+{
+    return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_ACERT_INFO), &a->sig_alg,
+                               &a->signature, a->acinfo, NULL,
+                               r, libctx, propq);
+}
+
+int X509_ACERT_verify(X509_ACERT *a, EVP_PKEY *r)
+{
+    return X509_ACERT_verify_ex(a, r, NULL, NULL);
 }
 
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)
@@ -819,4 +851,26 @@ EVP_PKEY *d2i_PUBKEY_ex_bio(BIO *bp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
 EVP_PKEY *d2i_PUBKEY_bio(BIO *bp, EVP_PKEY **a)
 {
     return ASN1_d2i_bio_of(EVP_PKEY, EVP_PKEY_new, d2i_PUBKEY, bp, a);
+}
+
+#ifndef OPENSSL_NO_STDIO
+X509_ACERT *d2i_X509_ACERT_fp(FILE *fp, X509_ACERT **acert)
+{
+    return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509_ACERT), fp, acert);
+}
+
+int i2d_X509_ACERT_fp(FILE *fp, const X509_ACERT *acert)
+{
+    return ASN1_item_i2d_fp(ASN1_ITEM_rptr(X509_ACERT), fp, acert);
+}
+#endif
+
+X509_ACERT *d2i_X509_ACERT_bio(BIO *bp, X509_ACERT **acert)
+{
+    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_ACERT), bp, acert);
+}
+
+int i2d_X509_ACERT_bio(BIO *bp, const X509_ACERT *acert)
+{
+    return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509_ACERT), bp, acert);
 }

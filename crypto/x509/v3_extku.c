@@ -44,6 +44,30 @@ const X509V3_EXT_METHOD ossl_v3_ocsp_accresp = {
     NULL
 };
 
+/* Acceptable Certificate Policies also is a SEQUENCE OF OBJECT */
+const X509V3_EXT_METHOD ossl_v3_acc_cert_policies = {
+    NID_acceptable_cert_policies, 0,
+    ASN1_ITEM_ref(EXTENDED_KEY_USAGE),
+    0, 0, 0, 0,
+    0, 0,
+    i2v_EXTENDED_KEY_USAGE,
+    v2i_EXTENDED_KEY_USAGE,
+    0, 0,
+    NULL
+};
+
+/* Acceptable Privilege Policies also is a SEQUENCE OF OBJECT */
+const X509V3_EXT_METHOD ossl_v3_acc_priv_policies = {
+    NID_acceptable_privilege_policies, 0,
+    ASN1_ITEM_ref(EXTENDED_KEY_USAGE),
+    0, 0, 0, 0,
+    0, 0,
+    i2v_EXTENDED_KEY_USAGE,
+    v2i_EXTENDED_KEY_USAGE,
+    0, 0,
+    NULL
+};
+
 ASN1_ITEM_TEMPLATE(EXTENDED_KEY_USAGE) =
         ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, EXTENDED_KEY_USAGE, ASN1_OBJECT)
 ASN1_ITEM_TEMPLATE_END(EXTENDED_KEY_USAGE)
