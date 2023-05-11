@@ -19,10 +19,10 @@ static char *privkey = NULL;
 /*
  * Inject NEW_CONNECTION_ID frame
  */
+static size_t ncid_injected;
 static int add_ncid_frame_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
                              unsigned char *buf, size_t len, void *cbarg)
 {
-    static size_t done = 0;
     /*
      * We inject NEW_CONNECTION_ID frame to trigger change of the DCID.
      * The connection id length must be 8, otherwise the tserver won't be
@@ -39,14 +39,14 @@ static int add_ncid_frame_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
     };
 
     /* We only ever add the unknown frame to one packet */
-    if (done++)
+    if (ncid_injected++)
         return 1;
 
     return qtest_fault_prepend_frame(fault, new_conn_id_frame,
                                      sizeof(new_conn_id_frame));
 }
 
-static int test_ncid_frame(void)
+static int test_ncid_frame(int fail)
 {
     int testresult = 0;
     SSL_CTX *cctx = SSL_CTX_new(OSSL_QUIC_client_method());
@@ -63,10 +63,11 @@ static int test_ncid_frame(void)
         {0x33, 0x44, 0x55, 0x66, 0xde, 0xad, 0xbe, 0xef}
     };
 
+    ncid_injected = 0;
     if (!TEST_ptr(cctx))
         goto err;
 
-    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, cert, privkey, 1,
+    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, cert, privkey, 0,
                                              &qtserv, &cssl, &fault)))
         goto err;
 
@@ -77,7 +78,8 @@ static int test_ncid_frame(void)
         goto err;
 
     ossl_quic_tserver_tick(qtserv);
-    if (!TEST_true(ossl_quic_tserver_read(qtserv, buf, sizeof(buf), &bytesread)))
+    if (!TEST_true(ossl_quic_tserver_read(qtserv, 0, buf, sizeof(buf),
+                                          &bytesread)))
         goto err;
 
     /*
@@ -96,10 +98,14 @@ static int test_ncid_frame(void)
                                                          add_ncid_frame_cb,
                                                          NULL)))
         goto err;
-    if (!TEST_true(ossl_quic_tserver_set_new_local_cid(qtserv, &conn_id)))
+    if (!fail && !TEST_true(ossl_quic_tserver_set_new_local_cid(qtserv, &conn_id)))
         goto err;
-    if (!TEST_true(ossl_quic_tserver_write(qtserv, (unsigned char *)msg, msglen,
+    if (!TEST_true(ossl_quic_tserver_write(qtserv, 0,
+                                           (unsigned char *)msg, msglen,
                                            &byteswritten)))
+        goto err;
+
+    if (!TEST_true(ncid_injected))
         goto err;
 
     if (!TEST_size_t_eq(msglen, byteswritten))
@@ -119,11 +125,17 @@ static int test_ncid_frame(void)
         goto err;
 
     ossl_quic_tserver_tick(qtserv);
-    if (!TEST_true(ossl_quic_tserver_read(qtserv, buf, sizeof(buf), &bytesread)))
+    if (!TEST_true(ossl_quic_tserver_read(qtserv, 0, buf, sizeof(buf),
+                                          &bytesread)))
         goto err;
 
-    if (!TEST_mem_eq(msg, msglen, buf, bytesread))
-        goto err;
+    if (fail) {
+        if (!TEST_size_t_eq(bytesread, 0))
+            goto err;
+    } else {
+        if (!TEST_mem_eq(msg, msglen, buf, bytesread))
+            goto err;
+    }
 
     testresult = 1;
  err:
@@ -156,7 +168,7 @@ int setup_tests(void)
     if (privkey == NULL)
         goto err;
 
-    ADD_TEST(test_ncid_frame);
+    ADD_ALL_TESTS(test_ncid_frame, 2);
 
     return 1;
 
