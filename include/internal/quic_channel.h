@@ -319,6 +319,10 @@ void ossl_quic_channel_set_incoming_stream_auto_reject(QUIC_CHANNEL *ch,
  */
 void ossl_quic_channel_reject_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs);
 
+/* Replace local connection ID in TXP and DEMUX for testing purposes. */
+int ossl_quic_channel_replace_local_cid(QUIC_CHANNEL *ch,
+                                        const QUIC_CONN_ID *conn_id);
+
 # endif
 
 #endif
