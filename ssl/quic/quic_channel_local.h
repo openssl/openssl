@@ -127,7 +127,7 @@ struct quic_channel_st {
     uint64_t                        cur_remote_seq_num;
     uint64_t                        cur_retire_prior_to;
     /* Server only: The DCID we currently expect the peer to use to talk to us. */
-    QUIC_CONN_ID                    cur_local_dcid;
+    QUIC_CONN_ID                    cur_local_cid;
 
     /* Transport parameter values we send to our peer. */
     uint64_t                        tx_init_max_stream_data_bidi_local;

@@ -145,6 +145,11 @@ int ossl_quic_tserver_stream_has_peer_reset_stream(QUIC_TSERVER *srv,
                                                    uint64_t stream_id,
                                                    uint64_t *app_error_code);
 
+/*
+ * Replaces existing local connection ID in the underlying QUIC_CHANNEL.
+ */
+int ossl_quic_tserver_set_new_local_cid(QUIC_TSERVER *srv,
+                                        const QUIC_CONN_ID *conn_id);
 # endif
 
 #endif
