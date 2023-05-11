@@ -20,7 +20,10 @@ use lib bldtop_dir('.');
 plan skip_all => "QUIC protocol is not supported by this OpenSSL build"
     if disabled('quic');
 
-plan tests => 1;
+plan tests => 2;
 
 ok(run(test(["quicfaultstest", srctop_dir("test", "certs")])),
    "running quicfaultstest");
+
+ok(run(test(["quic_newcid_test", srctop_dir("test", "certs")])),
+   "running quic_newcid_test");

@@ -397,3 +397,10 @@ int ossl_quic_tserver_stream_has_peer_reset_stream(QUIC_TSERVER *srv,
 
     return qs->peer_reset_stream;
 }
+
+int ossl_quic_tserver_set_new_local_cid(QUIC_TSERVER *srv,
+                                        const QUIC_CONN_ID *conn_id)
+{
+    /* Replace existing local connection ID in the QUIC_CHANNEL */
+    return ossl_quic_channel_replace_local_cid(srv->ch, conn_id);
+}
