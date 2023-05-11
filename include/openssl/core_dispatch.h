@@ -453,6 +453,7 @@ OSSL_CORE_MAKE_FUNC(int, kdf_set_ctx_params,
 # define OSSL_FUNC_RAND_VERIFY_ZEROIZATION           17
 # define OSSL_FUNC_RAND_GET_SEED                     18
 # define OSSL_FUNC_RAND_CLEAR_SEED                   19
+# define OSSL_FUNC_RAND_LOCK_EX                      20
 
 OSSL_CORE_MAKE_FUNC(void *,rand_newctx,
                     (void *provctx, void *parent,
@@ -477,6 +478,7 @@ OSSL_CORE_MAKE_FUNC(size_t,rand_nonce,
                      size_t min_noncelen, size_t max_noncelen))
 OSSL_CORE_MAKE_FUNC(int,rand_enable_locking, (void *vctx))
 OSSL_CORE_MAKE_FUNC(int,rand_lock, (void *vctx))
+OSSL_CORE_MAKE_FUNC(int,rand_lock_ex, (void *vctx, int read))
 OSSL_CORE_MAKE_FUNC(void,rand_unlock, (void *vctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,rand_gettable_params, (void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,rand_gettable_ctx_params,

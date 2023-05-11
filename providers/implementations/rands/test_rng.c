@@ -33,7 +33,7 @@ static OSSL_FUNC_rand_gettable_ctx_params_fn test_rng_gettable_ctx_params;
 static OSSL_FUNC_rand_get_ctx_params_fn test_rng_get_ctx_params;
 static OSSL_FUNC_rand_verify_zeroization_fn test_rng_verify_zeroization;
 static OSSL_FUNC_rand_enable_locking_fn test_rng_enable_locking;
-static OSSL_FUNC_rand_lock_fn test_rng_lock;
+static OSSL_FUNC_rand_lock_ex_fn test_rng_lock_ex;
 static OSSL_FUNC_rand_unlock_fn test_rng_unlock;
 static OSSL_FUNC_rand_get_seed_fn test_rng_get_seed;
 
@@ -253,12 +253,16 @@ static int test_rng_enable_locking(void *vtest)
     return 1;
 }
 
-static int test_rng_lock(void *vtest)
+static int test_rng_lock_ex(void *vtest, int read)
 {
     PROV_TEST_RNG *t = (PROV_TEST_RNG *)vtest;
 
     if (t == NULL || t->lock == NULL)
         return 1;
+
+    if (read)
+        return CRYPTO_THREAD_read_lock(t->lock);
+
     return CRYPTO_THREAD_write_lock(t->lock);
 }
 
@@ -281,7 +285,7 @@ const OSSL_DISPATCH ossl_test_rng_functions[] = {
     { OSSL_FUNC_RAND_RESEED, (void(*)(void))test_rng_reseed },
     { OSSL_FUNC_RAND_NONCE, (void(*)(void))test_rng_nonce },
     { OSSL_FUNC_RAND_ENABLE_LOCKING, (void(*)(void))test_rng_enable_locking },
-    { OSSL_FUNC_RAND_LOCK, (void(*)(void))test_rng_lock },
+    { OSSL_FUNC_RAND_LOCK_EX, (void(*)(void))test_rng_lock_ex },
     { OSSL_FUNC_RAND_UNLOCK, (void(*)(void))test_rng_unlock },
     { OSSL_FUNC_RAND_SETTABLE_CTX_PARAMS,
       (void(*)(void))test_rng_settable_ctx_params },

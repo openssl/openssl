@@ -146,7 +146,7 @@ static int dummy_rand_enable_locking(void *vtest)
     return 1;
 }
 
-static int dummy_rand_lock(void *vtest)
+static int dummy_rand_lock_ex(void *vtest, int read)
 {
     return 1;
 }
@@ -165,7 +165,7 @@ static const OSSL_DISPATCH dummy_rand_functions[] = {
       (void(*)(void))dummy_rand_gettable_ctx_params },
     { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))dummy_rand_get_ctx_params },
     { OSSL_FUNC_RAND_ENABLE_LOCKING, (void(*)(void))dummy_rand_enable_locking },
-    { OSSL_FUNC_RAND_LOCK, (void(*)(void))dummy_rand_lock },
+    { OSSL_FUNC_RAND_LOCK_EX, (void(*)(void))dummy_rand_lock_ex },
     { OSSL_FUNC_RAND_UNLOCK, (void(*)(void))dummy_rand_unlock },
     OSSL_DISPATCH_END
 };

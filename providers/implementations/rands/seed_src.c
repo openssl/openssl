@@ -32,7 +32,7 @@ static OSSL_FUNC_rand_gettable_ctx_params_fn seed_src_gettable_ctx_params;
 static OSSL_FUNC_rand_get_ctx_params_fn seed_src_get_ctx_params;
 static OSSL_FUNC_rand_verify_zeroization_fn seed_src_verify_zeroization;
 static OSSL_FUNC_rand_enable_locking_fn seed_src_enable_locking;
-static OSSL_FUNC_rand_lock_fn seed_src_lock;
+static OSSL_FUNC_rand_lock_ex_fn seed_src_lock_ex;
 static OSSL_FUNC_rand_unlock_fn seed_src_unlock;
 static OSSL_FUNC_rand_get_seed_fn seed_get_seed;
 static OSSL_FUNC_rand_clear_seed_fn seed_clear_seed;
@@ -217,7 +217,7 @@ static int seed_src_enable_locking(ossl_unused void *vseed)
     return 1;
 }
 
-int seed_src_lock(ossl_unused void *vctx)
+int seed_src_lock_ex(ossl_unused void *vctx, int read)
 {
     return 1;
 }
@@ -236,7 +236,7 @@ const OSSL_DISPATCH ossl_seed_src_functions[] = {
     { OSSL_FUNC_RAND_GENERATE, (void(*)(void))seed_src_generate },
     { OSSL_FUNC_RAND_RESEED, (void(*)(void))seed_src_reseed },
     { OSSL_FUNC_RAND_ENABLE_LOCKING, (void(*)(void))seed_src_enable_locking },
-    { OSSL_FUNC_RAND_LOCK, (void(*)(void))seed_src_lock },
+    { OSSL_FUNC_RAND_LOCK, (void(*)(void))seed_src_lock_ex },
     { OSSL_FUNC_RAND_UNLOCK, (void(*)(void))seed_src_unlock },
     { OSSL_FUNC_RAND_GETTABLE_CTX_PARAMS,
       (void(*)(void))seed_src_gettable_ctx_params },

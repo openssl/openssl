@@ -45,12 +45,16 @@ static const OSSL_DISPATCH *find_call(const OSSL_DISPATCH *dispatch,
 
 static int rand_drbg_restart(PROV_DRBG *drbg);
 
-int ossl_drbg_lock(void *vctx)
+int ossl_drbg_lock_ex(void *vctx, int read)
 {
     PROV_DRBG *drbg = vctx;
 
     if (drbg == NULL || drbg->lock == NULL)
         return 1;
+
+    if (read)
+        return CRYPTO_THREAD_read_lock(drbg->lock);
+
     return CRYPTO_THREAD_write_lock(drbg->lock);
 }
 
@@ -62,12 +66,18 @@ void ossl_drbg_unlock(void *vctx)
         CRYPTO_THREAD_unlock(drbg->lock);
 }
 
-static int ossl_drbg_lock_parent(PROV_DRBG *drbg)
+static int ossl_drbg_lock_parent(PROV_DRBG *drbg, int read)
 {
     void *parent = drbg->parent;
 
-    if (parent != NULL
-            && drbg->parent_lock != NULL
+    if (parent == NULL)
+        return 1;
+    if (drbg->parent_lock_ex != NULL
+            && !drbg->parent_lock_ex(parent, read)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_PARENT_LOCKING_NOT_ENABLED);
+        return 0;
+    }
+    if (drbg->parent_lock != NULL
             && !drbg->parent_lock(parent)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_PARENT_LOCKING_NOT_ENABLED);
         return 0;
@@ -95,7 +105,7 @@ static int get_parent_strength(PROV_DRBG *drbg, unsigned int *str)
     }
 
     *params = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, str);
-    if (!ossl_drbg_lock_parent(drbg)) {
+    if (!ossl_drbg_lock_parent(drbg, 1)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOCK_PARENT);
         return 0;
     }
@@ -115,7 +125,7 @@ static unsigned int get_parent_reseed_count(PROV_DRBG *drbg)
     unsigned int r = 0;
 
     *params = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_COUNTER, &r);
-    if (!ossl_drbg_lock_parent(drbg)) {
+    if (!ossl_drbg_lock_parent(drbg, 1)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOCK_PARENT);
         goto err;
     }
@@ -227,7 +237,7 @@ static size_t get_entropy(PROV_DRBG *drbg, unsigned char **pout, int entropy,
      * generating bits from it.  Note: taking the lock will be a no-op
      * if locking is not required (while drbg->parent->lock == NULL).
      */
-    if (!ossl_drbg_lock_parent(drbg))
+    if (!ossl_drbg_lock_parent(drbg, 0))
         return 0;
     /*
      * Get random data from parent.  Include our DRBG address as
@@ -254,7 +264,7 @@ static void cleanup_entropy(PROV_DRBG *drbg, unsigned char *out, size_t outlen)
         ossl_prov_cleanup_entropy(drbg->provctx, out, outlen);
 #endif
     } else if (drbg->parent_clear_seed != NULL) {
-        if (!ossl_drbg_lock_parent(drbg))
+        if (!ossl_drbg_lock_parent(drbg, 0))
             return;
         drbg->parent_clear_seed(drbg->parent, out, outlen);
         ossl_drbg_unlock_parent(drbg);
@@ -792,6 +802,8 @@ PROV_DRBG *ossl_rand_drbg_new
         drbg->parent_enable_locking = OSSL_FUNC_rand_enable_locking(pfunc);
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_LOCK)) != NULL)
         drbg->parent_lock = OSSL_FUNC_rand_lock(pfunc);
+    if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_LOCK_EX)) != NULL)
+        drbg->parent_lock_ex = OSSL_FUNC_rand_lock_ex(pfunc);
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_UNLOCK)) != NULL)
         drbg->parent_unlock = OSSL_FUNC_rand_unlock(pfunc);
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_GET_CTX_PARAMS)) != NULL)

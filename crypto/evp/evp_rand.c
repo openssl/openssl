@@ -39,6 +39,7 @@ struct evp_rand_st {
     OSSL_FUNC_rand_nonce_fn *nonce;
     OSSL_FUNC_rand_enable_locking_fn *enable_locking;
     OSSL_FUNC_rand_lock_fn *lock;
+    OSSL_FUNC_rand_lock_ex_fn *lock_ex;
     OSSL_FUNC_rand_unlock_fn *unlock;
     OSSL_FUNC_rand_gettable_params_fn *gettable_params;
     OSSL_FUNC_rand_gettable_ctx_params_fn *gettable_ctx_params;
@@ -97,9 +98,13 @@ int EVP_RAND_enable_locking(EVP_RAND_CTX *rand)
     return 0;
 }
 
-/* Lock the underlying DRBG/RAND if available */
-static int evp_rand_lock(EVP_RAND_CTX *rand)
+/* Lock the underlying DRBG/RAND if available. If read is 1 then a read lock
+ * is obtained. Otherwise a write lock.
+ */
+static int evp_rand_lock(EVP_RAND_CTX *rand, int read)
 {
+    if (rand->meth->lock_ex != NULL)
+        return rand->meth->lock_ex(rand->algctx, read);
     if (rand->meth->lock != NULL)
         return rand->meth->lock(rand->algctx);
     return 1;
@@ -188,6 +193,12 @@ static void *evp_rand_from_algorithm(int name_id,
             rand->lock = OSSL_FUNC_rand_lock(fns);
             fnlockcnt++;
             break;
+        case OSSL_FUNC_RAND_LOCK_EX:
+            if (rand->lock_ex != NULL)
+                break;
+            rand->lock_ex = OSSL_FUNC_rand_lock_ex(fns);
+            fnlockcnt++;
+            break;
         case OSSL_FUNC_RAND_UNLOCK:
             if (rand->unlock != NULL)
                 break;
@@ -250,7 +261,8 @@ static void *evp_rand_from_algorithm(int name_id,
     if (fnrandcnt != 3
             || fnctxcnt != 3
             || (fnenablelockcnt != 0 && fnenablelockcnt != 1)
-            || (fnlockcnt != 0 && fnlockcnt != 2)
+            || (fnlockcnt != 0 && fnlockcnt != 2 && fnlockcnt != 3)
+            || (fnlockcnt != 0 && rand->unlock == NULL)
 #ifdef FIPS_MODULE
             || fnzeroizecnt != 1
 #endif
@@ -407,7 +419,7 @@ int EVP_RAND_CTX_get_params(EVP_RAND_CTX *ctx, OSSL_PARAM params[])
 {
     int res;
 
-    if (!evp_rand_lock(ctx))
+    if (!evp_rand_lock(ctx, 1))
         return 0;
     res = evp_rand_get_ctx_params_locked(ctx, params);
     evp_rand_unlock(ctx);
@@ -426,7 +438,7 @@ int EVP_RAND_CTX_set_params(EVP_RAND_CTX *ctx, const OSSL_PARAM params[])
 {
     int res;
 
-    if (!evp_rand_lock(ctx))
+    if (!evp_rand_lock(ctx, 0))
         return 0;
     res = evp_rand_set_ctx_params_locked(ctx, params);
     evp_rand_unlock(ctx);
@@ -515,7 +527,7 @@ int EVP_RAND_instantiate(EVP_RAND_CTX *ctx, unsigned int strength,
 {
     int res;
 
-    if (!evp_rand_lock(ctx))
+    if (!evp_rand_lock(ctx, 0))
         return 0;
     res = evp_rand_instantiate_locked(ctx, strength, prediction_resistance,
                                       pstr, pstr_len, params);
@@ -532,7 +544,7 @@ int EVP_RAND_uninstantiate(EVP_RAND_CTX *ctx)
 {
     int res;
 
-    if (!evp_rand_lock(ctx))
+    if (!evp_rand_lock(ctx, 0))
         return 0;
     res = evp_rand_uninstantiate_locked(ctx);
     evp_rand_unlock(ctx);
@@ -577,7 +589,7 @@ int EVP_RAND_generate(EVP_RAND_CTX *ctx, unsigned char *out, size_t outlen,
 {
     int res;
 
-    if (!evp_rand_lock(ctx))
+    if (!evp_rand_lock(ctx, 0))
         return 0;
     res = evp_rand_generate_locked(ctx, out, outlen, strength,
                                    prediction_resistance, addin, addin_len);
@@ -601,7 +613,7 @@ int EVP_RAND_reseed(EVP_RAND_CTX *ctx, int prediction_resistance,
 {
     int res;
 
-    if (!evp_rand_lock(ctx))
+    if (!evp_rand_lock(ctx, 0))
         return 0;
     res = evp_rand_reseed_locked(ctx, prediction_resistance,
                                  ent, ent_len, addin, addin_len);
@@ -624,7 +636,7 @@ unsigned int EVP_RAND_get_strength(EVP_RAND_CTX *ctx)
 {
     unsigned int res;
 
-    if (!evp_rand_lock(ctx))
+    if (!evp_rand_lock(ctx, 1))
         return 0;
     res = evp_rand_strength_locked(ctx);
     evp_rand_unlock(ctx);
@@ -647,7 +659,7 @@ int EVP_RAND_nonce(EVP_RAND_CTX *ctx, unsigned char *out, size_t outlen)
 {
     int res;
 
-    if (!evp_rand_lock(ctx))
+    if (!evp_rand_lock(ctx, 0))
         return 0;
     res = evp_rand_nonce_locked(ctx, out, outlen);
     evp_rand_unlock(ctx);
@@ -676,7 +688,7 @@ int EVP_RAND_verify_zeroization(EVP_RAND_CTX *ctx)
 {
     int res;
 
-    if (!evp_rand_lock(ctx))
+    if (!evp_rand_lock(ctx, 1))
         return 0;
     res = evp_rand_verify_zeroization_locked(ctx);
     evp_rand_unlock(ctx);

@@ -50,6 +50,7 @@ functions
  /* Context Locking */
  int OSSL_FUNC_rand_enable_locking(void *ctx);
  int OSSL_FUNC_rand_lock(void *ctx);
+ int OSSL_FUNC_rand_lock_ex(void *ctx, int read);
  void OSSL_FUNC_rand_unlock(void *ctx);
 
  /* RAND parameter descriptors */
@@ -144,8 +145,13 @@ OSSL_FUNC_rand_enable_locking() allows locking to be turned on for a DRBG and al
 its parent DRBGs.  From this call onwards, the DRBG can be used in a thread
 safe manner.
 
-OSSL_FUNC_rand_lock() is used to lock a DRBG.  Once locked, exclusive access
-is guaranteed.
+OSSL_FUNC_rand_lock() and OSSL_FUNC_rand_lock_ex() are used to lock a DRBG.
+Where possible it is preferred that a DRBG implement OSSL_FUNC_rand_lock_ex()
+in preference to OSSL_FUNC_rand_lock(). Once locked, exclusive access
+is guaranteed. OSSL_FUNC_rand_lock_ex() takes an additional "read" parameter
+which indicates whether a lock should be a read lock or a write lock. A "read"
+lock is assumed to be sufficient for OSSL_FUNC_rand_get_ctx_params() and
+OSSL_FUNC_rand_verify_zeroization() calls.
 
 OSSL_FUNC_rand_unlock() is used to unlock a DRBG.
 
