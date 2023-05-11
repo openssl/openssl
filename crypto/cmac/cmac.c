@@ -20,6 +20,7 @@
 #include <openssl/cmac.h>
 #include <openssl/err.h>
 
+#define LOCAL_BUF_SIZE 2048
 struct CMAC_CTX_st {
     /* Cipher context to use */
     EVP_CIPHER_CTX *cctx;
@@ -162,6 +163,8 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
 {
     const unsigned char *data = in;
     int bl;
+    size_t max_burst_blocks, cipher_blocks;
+    unsigned char buf[LOCAL_BUF_SIZE];
 
     if (ctx->nlast_block == -1)
         return 0;
@@ -188,11 +191,35 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
             return 0;
     }
     /* Encrypt all but one of the complete blocks left */
-    while (dlen > (size_t)bl) {
-        if (EVP_Cipher(ctx->cctx, ctx->tbl, data, bl) <= 0)
-            return 0;
-        dlen -= bl;
-        data += bl;
+
+    max_burst_blocks = LOCAL_BUF_SIZE / bl;
+    cipher_blocks = (dlen - 1) / bl;
+    if (max_burst_blocks == 0) {
+        /*
+         * In case block length is greater than local buffer size,
+         * use ctx->tbl as cipher output.
+         */
+        while (dlen > (size_t)bl) {
+            if (EVP_Cipher(ctx->cctx, ctx->tbl, data, bl) <= 0)
+                return 0;
+            dlen -= bl;
+            data += bl;
+        }
+    } else {
+        while (cipher_blocks > max_burst_blocks) {
+            if (EVP_Cipher(ctx->cctx, buf, data, max_burst_blocks * bl) <= 0)
+                return 0;
+            dlen -= max_burst_blocks * bl;
+            data += max_burst_blocks * bl;
+            cipher_blocks -= max_burst_blocks;
+        }
+        if (cipher_blocks > 0) {
+            if (EVP_Cipher(ctx->cctx, buf, data, cipher_blocks * bl) <= 0)
+                return 0;
+            dlen -= cipher_blocks * bl;
+            data += cipher_blocks * bl;
+            memcpy(ctx->tbl, &buf[(cipher_blocks - 1) * bl], bl);
+        }
     }
     /* Copy any data left to last block buffer */
     memcpy(ctx->last_block, data, dlen);
