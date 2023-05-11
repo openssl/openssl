@@ -1450,7 +1450,10 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
     for (curr++; curr < max; curr++) {
         OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(provs, curr);
 
-        CRYPTO_DOWN_REF(&prov->activatecnt, &ref, prov->refcnt_lock);
+        if (!CRYPTO_DOWN_REF(&prov->activatecnt, &ref, prov->refcnt_lock)) {
+            ret = 0;
+            continue;
+        }
         if (ref < 1) {
             /*
              * Looks like we need to deactivate properly. We could just have
@@ -1465,7 +1468,10 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
          * to avoid making upcalls. There should always be at least one ref
          * to the provider in the store, so this should never drop to 0.
          */
-        CRYPTO_DOWN_REF(&prov->refcnt, &ref, prov->refcnt_lock);
+        if (!CRYPTO_DOWN_REF(&prov->refcnt, &ref, prov->refcnt_lock)) {
+            ret = 0;
+            continue;
+        }
         /*
          * Not much we can do if this assert ever fails. So we don't use
          * ossl_assert here.
