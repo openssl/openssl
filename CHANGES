@@ -9,6 +9,32 @@
 
  Changes between 1.1.1t and 1.1.1u [xx XXX xxxx]
 
+  *) Mitigate for the time it takes for `OBJ_obj2txt` to translate gigantic
+     OBJECT IDENTIFIER sub-identifiers to canonical numeric text form.
+
+     OBJ_obj2txt() would translate any size OBJECT IDENTIFIER to canonical
+     numeric text form.  For gigantic sub-identifiers, this would take a very
+     long time, the time complexity being O(n^2) where n is the size of that
+     sub-identifier.  (CVE-2023-2650)
+
+     To mitigitate this, `OBJ_obj2txt()` will only translate an OBJECT
+     IDENTIFIER to canonical numeric text form if the size of that OBJECT
+     IDENTIFIER is 586 bytes or less, and fail otherwise.
+
+     The basis for this restriction is RFC 2578 (STD 58), section 3.5. OBJECT
+     IDENTIFIER values, which stipulates that OBJECT IDENTIFIERS may have at
+     most 128 sub-identifiers, and that the maximum value that each sub-
+     identifier may have is 2^32-1 (4294967295 decimal).
+
+     For each byte of every sub-identifier, only the 7 lower bits are part of
+     the value, so the maximum amount of bytes that an OBJECT IDENTIFIER with
+     these restrictions may occupy is 32 * 128 / 7, which is approximately 586
+     bytes.
+
+     Ref: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
+
+     [Richard Levitte]
+
   *) Reworked the Fix for the Timing Oracle in RSA Decryption (CVE-2022-4304).
      The previous fix for this timing side channel turned out to cause
      a severe 2-3x performance regression in the typical use case
