@@ -45,6 +45,16 @@ static const OSSL_DISPATCH *find_call(const OSSL_DISPATCH *dispatch,
 
 static int rand_drbg_restart(PROV_DRBG *drbg);
 
+int ossl_drbg_lock(void *vctx)
+{
+    PROV_DRBG *drbg = vctx;
+
+    if (drbg == NULL || drbg->lock == NULL)
+        return 1;
+
+    return CRYPTO_THREAD_write_lock(drbg->lock);
+}
+
 int ossl_drbg_lock_ex(void *vctx, int read)
 {
     PROV_DRBG *drbg = vctx;
@@ -72,10 +82,12 @@ static int ossl_drbg_lock_parent(PROV_DRBG *drbg, int read)
 
     if (parent == NULL)
         return 1;
-    if (drbg->parent_lock_ex != NULL
-            && !drbg->parent_lock_ex(parent, read)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_PARENT_LOCKING_NOT_ENABLED);
-        return 0;
+    if (drbg->parent_lock_ex != NULL) {
+        if (!drbg->parent_lock_ex(parent, read)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_PARENT_LOCKING_NOT_ENABLED);
+            return 0;
+        }
+        return 1;
     }
     if (drbg->parent_lock != NULL
             && !drbg->parent_lock(parent)) {

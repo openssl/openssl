@@ -218,6 +218,7 @@ OSSL_FUNC_rand_clear_seed_fn ossl_drbg_clear_seed;
 
 /* locking api */
 OSSL_FUNC_rand_enable_locking_fn ossl_drbg_enable_locking;
+OSSL_FUNC_rand_lock_fn ossl_drbg_lock;
 OSSL_FUNC_rand_lock_ex_fn ossl_drbg_lock_ex;
 OSSL_FUNC_rand_unlock_fn ossl_drbg_unlock;
 

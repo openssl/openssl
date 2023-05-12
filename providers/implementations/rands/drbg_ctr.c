@@ -735,6 +735,7 @@ const OSSL_DISPATCH ossl_drbg_ctr_functions[] = {
     { OSSL_FUNC_RAND_GENERATE, (void(*)(void))drbg_ctr_generate_wrapper },
     { OSSL_FUNC_RAND_RESEED, (void(*)(void))drbg_ctr_reseed_wrapper },
     { OSSL_FUNC_RAND_ENABLE_LOCKING, (void(*)(void))ossl_drbg_enable_locking },
+    { OSSL_FUNC_RAND_LOCK, (void(*)(void))ossl_drbg_lock },
     { OSSL_FUNC_RAND_LOCK_EX, (void(*)(void))ossl_drbg_lock_ex },
     { OSSL_FUNC_RAND_UNLOCK, (void(*)(void))ossl_drbg_unlock },
     { OSSL_FUNC_RAND_SETTABLE_CTX_PARAMS,
