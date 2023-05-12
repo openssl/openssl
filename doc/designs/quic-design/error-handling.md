@@ -30,13 +30,14 @@ The error stack access is not under a lock (because it is thread-local).
 This complicates _moving errors between threads_.
 
 Error stack entries contain allocated data, copying entries between threads
-would mean duplicating it or losing it.
+implies duplicating it or losing it.
 
 Assumptions
 -----------
 
-This document assumes the error state of the QUIC connection (or stream for
-stream level errors) is handled separately.
+This document assumes the actual error state of the QUIC connection (or stream
+for stream level errors) is handled separately from the auxiliary error reason
+entries on the error stack.
 
 We can assume the internal assistance thread is well-behaving in regards
 to the error stack.
@@ -62,40 +63,39 @@ depend on the error stack contents.
 Intermittent errors are handled within the library and cleared from the
 error stack before returning to the user.
 
-Permanent errors happenning within the assist thread need to be transferred
-to the regular user thread. To simplify the implementation they are required
-to appear on the error stack reachable by the application ERR_ calls only
-when the SSL_get_error() is called from the application.
+Permanent errors happenning within the assist thread, within SSL_tick()
+processing, or when calling SSL_read()/SSL_write() on a stream need to be
+replicated for SSL_read()/SSL_write() calls on other streams.
 
 Implementation
 --------------
 
 There is an error stack in QUIC_CHANNEL which serves as temporary storage
 for errors happening in the internal assistance thread. When a permanent error
-is detected in the assistance thread the error stack entries are copied
-to this error stack in QUIC_CHANNEL.
+is detected the error stack entries are moved to this error stack in
+QUIC_CHANNEL.
 
-When SSL_get_error() is called and there is a permanent error condition
-detected the errors from the QUIC_CHANNEL error stack are moved to the
-error stack of the thread that is calling SSL_get_error() on the SSL
-object representing the QUIC_CONNECTION.
+When returning to an application from a SSL_read()/SSL_write() call with
+a permanent connection error, entries from the QUIC_CHANNEL error stack
+are copied to the thread local error stack. They are always kept on
+the QUIC_CHANNEL error stack as well for possible further calls from
+an application. An additional error reason
+SSL_R_QUIC_CONNECTION_TERMINATED is added to the stack.
 
 SSL_tick() return value
 -----------------------
 
-If a permanent error is detected during an SSL_tick() call, SSL_tick()
-should return an error to make an application be aware of the error
-condition. Otherwise an application keeping an idle connection with
-a server would not be able to detect a connection error.
-
-Multi-stream-single-thread mode
--------------------------------
-
-SSL_tick() can be called on the QUIC_CONNECTION SSL object only. On the other
-hand SSL_get_error() can be also called on QUIC_STREAM type object to
-examine the current state of the QUIC_STREAM object.
+The return value of SSL_tick() does not depend on whether there is
+a permanent error on the connection. The only case when SSL_tick() may
+return an error is when there was some fatal error processing it
+such as a memory allocation error where no further SSL_tick() calls
+make any sense.
 
 Multi-stream-multi-thread mode
 ------------------------------
 
-TBD
+There is nothing particular that needs to be handled specially for
+multi-stream-multi-thread mode as the error stack entries are always
+copied from the QUIC_CHANNEL after the failure. So if multiple threads
+are calling SSL_read()/SSL_write() simultaneously they all get
+the same error stack entries to report to the user.
