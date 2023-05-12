@@ -186,11 +186,21 @@ static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
 {
     BN_BLINDING *ret;
 
-    if (!CRYPTO_THREAD_write_lock(rsa->lock))
+    if (!CRYPTO_THREAD_read_lock(rsa->lock))
         return NULL;
 
     if (rsa->blinding == NULL) {
-        rsa->blinding = RSA_setup_blinding(rsa, ctx);
+        /*
+         * This dance with upgrading the lock from read to write will be
+         * slower in cases of a single use RSA object, but should be
+         * significantly better in multi-thread cases (e.g. servers). It's
+         * probably worth it.
+         */
+        CRYPTO_THREAD_unlock(rsa->lock);
+        if (!CRYPTO_THREAD_write_lock(rsa->lock))
+            return NULL;
+        if (rsa->blinding == NULL)
+            rsa->blinding = RSA_setup_blinding(rsa, ctx);
     }
 
     ret = rsa->blinding;
@@ -212,7 +222,11 @@ static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
         *local = 0;
 
         if (rsa->mt_blinding == NULL) {
-            rsa->mt_blinding = RSA_setup_blinding(rsa, ctx);
+            CRYPTO_THREAD_unlock(rsa->lock);
+            if (!CRYPTO_THREAD_write_lock(rsa->lock))
+                return NULL;
+            if (rsa->mt_blinding == NULL)
+                rsa->mt_blinding = RSA_setup_blinding(rsa, ctx);
         }
         ret = rsa->mt_blinding;
     }
