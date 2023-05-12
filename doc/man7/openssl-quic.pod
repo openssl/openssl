@@ -7,9 +7,8 @@ openssl-quic - OpenSSL QUIC
 =head1 DESCRIPTION
 
 OpenSSL 3.2 and later features support for the QUIC transport protocol.
-Currently, only client connectivity and a single stream is supported.
-This man page describes the usage of QUIC client functionality for both existing
-and new applications.
+Currently, only client connectivity is supported. This man page describes the
+usage of QUIC client functionality for both existing and new applications.
 
 QUIC functionality uses the standard SSL API. A QUIC connection is represented
 by an SSL object in the same way that a TLS connection is. Only minimal changes
@@ -18,13 +17,27 @@ QUIC client functionality. To make use of QUIC, use the SSL method
 L<OSSL_QUIC_client_method(3)> or L<OSSL_QUIC_client_thread_method(3)> with
 L<SSL_CTX_new(3)>.
 
-When a QUIC connection is created, it has a single bidirectional stream
-associated with it. Calls to L<SSL_read(3)> and L<SSL_write(3)> on the QUIC
-connection SSL object read and write from that stream.
+When a QUIC connection is created, by default, it operates in default stream
+mode, which is intended to provide compatibility with existing non-QUIC
+application usage patterns. In this mode, the connection has a single
+stream associated with it. Calls to L<SSL_read(3)> and
+L<SSL_write(3)> on the QUIC connection SSL object read and write from that
+stream. Whether the stream is client-initiated or server-initiated from a QUIC
+perspective depends on whether L<SSL_read(3)> or L<SSL_write(3)> is called
+first. See the MODES OF OPERATION section for more information.
+
+The default stream mode is intended for compatibility with existing
+applications. New applications using QUIC are recommended to disable default
+stream mode and use the multi-stream API; see the MODES OF OPERATION section and
+the RECOMMENDATIONS FOR NEW APPLICATIONS section for more information.
 
 The remainder of this man page discusses, in order:
 
 =over 4
+
+=item
+
+Default stream mode versus multi-stream mode;
 
 =item
 
@@ -45,6 +58,63 @@ Recommended usage approaches for new applications.
 New, QUIC-specific APIs.
 
 =back
+
+=head1 MODES OF OPERATION
+
+=head2 Default Stream Mode
+
+A QUIC client connection can be used in either default stream mode or
+multi-stream mode. By default, a newly created QUIC connection SSL object uses
+default stream mode.
+
+In default stream mode, a stream is implicitly created and bound to the QUIC
+connection SSL object; L<SSL_read(3)> and L<SSL_write(3)> calls to the QUIC
+connection SSL object work by default and are mapped to that stream.
+
+When default stream mode is used, any API function which can be called on a QUIC
+stream SSL object can also be called on a QUIC connection SSL object, in which
+case it affects the default stream bound to the connection.
+
+The identity of a QUIC stream, including its stream ID, varies depending on
+whether a stream is client-initiated or server-initiated. In default stream
+mode, if a client application calls L<SSL_read(3)> first before any call to
+L<SSL_write(3)> on the connection, it is assumed that the application protocol
+is using a server-initiated stream, and the L<SSL_read(3)> call will not
+complete (either blocking, or failing appropriately if nonblocking mode is
+configured) until the server initiates a stream. Conversely, if the client
+application calls L<SSL_write(3)> before any call to L<SSL_read(3)> on the
+connection, it is assumed that a client-initiated stream is to be used
+and such a stream is created automatically.
+
+Default stream mode is intended to aid compatibility with legacy applications.
+New applications adopting QUIC should use multi-stream mode, described below,
+and avoid use of the default stream functionality.
+
+It is possible to use additional streams in default stream mode using
+L<SSL_new_stream(3)> and L<SSL_accept_stream(3)>; note that the default incoming
+stream policy will need to be changed using L<SSL_set_incoming_stream_policy(3)>
+in order to use L<SSL_accept_stream(3)> in this case. However, applications
+using additional streams are strongly recommended to use multi-stream mode
+instead.
+
+=head2 Multi-Stream Mode
+
+The recommended usage mode for new applications adopting QUIC is multi-stream
+mode, in which no default stream is attached to the QUIC connection SSL object
+and attempts to call L<SSL_read(3)> and L<SSL_write(3)> on the QUIC connection
+SSL object fail. Instead, an application calls L<SSL_new_stream(3)> or
+L<SSL_accept_stream(3)> to create individual stream SSL objects for sending and
+receiving application data using L<SSL_read(3)> and L<SSL_write(3)>.
+
+To use multi-stream mode, call L<SSL_set_default_stream_mode(3)> with an
+argument of B<SSL_DEFAULT_STREAM_MODE_NONE>; this function must be called prior
+to initiating the connection. The default stream mode cannot be changed after
+initiating a connection.
+
+When multi-stream mode is used, meaning that no default stream is associated
+with the connection, calls to API functions which are defined as operating on a
+QUIC stream fail if called on the QUIC connection SSL object. For example, calls
+such as L<SSL_write(3)> or L<SSL_get_stream_id(3)> will fail.
 
 =head1 CHANGES TO EXISTING APIS
 
@@ -90,6 +160,24 @@ L<BIO_s_datagram(3)> and using L<SSL_set0_rbio(3)> and L<SSL_set0_wbio(3)>.
 
 =item
 
+Traditionally, whether the application-level I/O APIs (such as L<SSL_read(3)>
+and L<SSL_write(3)> operated in a blocking fashion was directly correlated with
+whether the underlying network socket was configured in a blocking fashion. This
+is no longer the case; applications must explicitly configure the desired
+application-level blocking mode using L<SSL_set_blocking_mode(3)>. See
+L<SSL_set_blocking_mode(3)> for details.
+
+=item
+
+Network-level I/O must always be performed in a nonblocking manner. The
+application can still enjoy blocking semantics for calls to application-level
+I/O functions such as L<SSL_read(3)> and L<SSL_write(3)>, but the underlying
+network BIO provided to QUIC (such as a L<BIO_s_datagram(3)>) must be configured
+in nonblocking mode. For application-level blocking functionality, see
+L<SSL_set_blocking_mode(3)>.
+
+=item
+
 L<BIO_new_ssl_connect(3)> has been changed to automatically use a
 L<BIO_s_datagram(3)> when used with QUIC, therefore applications which use this
 do not need to change the BIO they use.
@@ -130,8 +218,24 @@ further discussion.
 
 =item
 
-The use of ALPN is mandatory when using QUIC. For information on how to
-configure ALPN, see L<SSL_set_alpn_protos(3)>.
+The use of ALPN is mandatory when using QUIC. Attempts to connect without
+configuring ALPN will fail. For information on how to configure ALPN, see
+L<SSL_set_alpn_protos(3)>.
+
+=item
+
+Whether QUIC operates in a client or server mode is determined by the
+B<SSL_METHOD> used, rather than by calls to L<SSL_set_connect_state(3)> or
+L<SSL_set_accept_state(3)>. It is not necessary to call either of
+L<SSL_set_connect_state(3)> or L<SSL_set_accept_state(3)> before connecting, but
+if either of these are called, the function called must be congruent with the
+B<SSL_METHOD> being used. Currently, only client mode is supported.
+
+=item
+
+The L<SSL_set_min_proto_version(3)> and L<SSL_set_max_proto_version(3)> APIs are
+not used and the values passed to them are ignored, as OpenSSL QUIC currently
+always uses TLS 1.3.
 
 =item
 
@@ -228,8 +332,9 @@ Your application uses L<BIO_s_socket(3)> to construct a BIO which is passed to
 the SSL object to provide it with network access.
 
 Changes needed: Change your application to use L<BIO_s_datagram(3)> instead when
-using QUIC. You may or may not need to use L<SSL_set_initial_peer_addr(3)> to
-set the initial peer address; see the B<QUIC-SPECIFIC APIS> section for details.
+using QUIC. The socket must be configured in nonblocking mode. You may or may
+not need to use L<SSL_set_initial_peer_addr(3)> to set the initial peer address;
+see the B<QUIC-SPECIFIC APIS> section for details.
 
 =item
 
@@ -370,6 +475,11 @@ QUIC-specific functionality. For example, L<SSL_stream_conclude(3)> can be used
 to indicate the end of the sending part of a stream, and L<SSL_shutdown_ex(3)>
 can be used to provide a QUIC application error code when closing a connection.
 
+Regardless of the design decisions chosen above, it is recommended that new
+applications avoid use of the default stream mode and use the multi-stream API
+by calling L<SSL_set_default_stream_mode(3)>; see the MODES OF OPERATION section
+for details.
+
 =head1 QUIC-SPECIFIC APIS
 
 This section details new APIs which are directly or indirectly related to QUIC.
@@ -458,19 +568,65 @@ This allows an application to indicate the non-normal termination of a stream,
 including both its sending and receiving parts. This corresponds to the
 RESET_STREAM frame in the QUIC RFC.
 
-=item L<SSL_get_stream_state(3)>
+=item L<SSL_get_stream_write_state(3)> and L<SSL_get_stream_read_state(3)>
 
-This allows an application to determine the current stream state.
+This allows an application to determine the current stream states for the
+sending and receiving parts of a stream respectively.
 
-=item L<SSL_get_stream_error_code(3)>
+=item L<SSL_get_stream_write_error_code(3)> and L<SSL_get_stream_read_error_code(3)>
 
 This allows an application to determine the application error code which was
-signalled by a peer which has performed a non-normal stream termination, if any.
+signalled by a peer which has performed a non-normal stream termination of the
+respective sending or receiving part of a stream, if any.
 
 =item L<SSL_get_conn_close_info(3)>
 
 This allows an application to determine the error code which was signalled when
 the local or remote endpoint terminated the QUIC connection.
+
+=item L<SSL_get0_connection(3)>
+
+Gets the QUIC connection SSL object from a QUIC stream SSL object.
+
+=item L<SSL_is_connection(3)>
+
+Returns 1 if a SSL object is not a QUIC stream SSL object.
+
+=item L<SSL_get_stream_type(3)>
+
+Provides information on the kind of QUIC stream which is attached
+to the SSL object.
+
+=item L<SSL_get_stream_id(3)>
+
+Returns the QUIC stream ID which the QUIC protocol has associated with a QUIC
+stream.
+
+=item L<SSL_new_stream(3)>
+
+Creates a new QUIC stream SSL object representing a new, locally-initiated QUIC
+stream.
+
+=item L<SSL_accept_stream(3)>
+
+Potentially yields a new QUIC stream SSL object representing a new
+remotely-initiated QUIC stream, blocking until one is available if the
+connection is configured to do so.
+
+=item L<SSL_get_accept_stream_queue_len(3)>
+
+Provides information on the number of pending remotely-initiated streams.
+
+=item L<SSL_set_incoming_stream_policy(3)>
+
+Configures how incoming, remotely-initiated streams are handled. The incoming
+stream policy can be used to automatically reject streams created by the peer,
+or allow them to be handled using L<SSL_accept_stream(3)>.
+
+=item L<SSL_set_default_stream_mode(3)>
+
+Used to configure or disable default stream mode; see the MODES OF OPERATION
+section for details.
 
 =back
 
@@ -651,9 +807,9 @@ If the network read and write BIOs provided were not pollable (for example, in
 the case of L<BIO_s_dgram_pair(3)>), the application is responsible for managing
 and synchronising network I/O. It should call L<SSL_tick(3)> after it writes
 data to a L<BIO_s_dgram_pair(3)> or otherwise takes action so that the QUIC
-implementation can read new datagrams via a call to L<BIO_read(3)> on the
+implementation can read new datagrams via a call to L<BIO_recvmmsg(3)> on the
 underlying network BIO. The QUIC implementation may output datagrams via a call
-to L<BIO_write(3)> and the application is responsible for ensuring these are
+to L<BIO_sendmmsg(3)> and the application is responsible for ensuring these are
 transmitted.
 
 The application must call L<SSL_get_tick_timeout(3)> after every call to
@@ -667,7 +823,13 @@ call to L<SSL_tick(3)> is performed after the specified timeout (if any).
 L<SSL_tick(3)>, L<SSL_get_tick_timeout(3)>, L<SSL_net_read_desired(3)>,
 L<SSL_net_write_desired(3)>, L<SSL_get_rpoll_descriptor(3)>,
 L<SSL_get_wpoll_descriptor(3)>, L<SSL_set_blocking_mode(3)>,
-L<SSL_shutdown_ex(3)>, L<SSL_set_initial_peer_addr(3)>
+L<SSL_shutdown_ex(3)>, L<SSL_set_initial_peer_addr(3)>,
+L<SSL_stream_conclude(3)>, L<SSL_stream_reset(3)>,
+L<SSL_get_stream_read_state(3)>, L<SSL_get_stream_read_error_code(3)>,
+L<SSL_get_conn_close_info(3)>, L<SSL_get0_connection(3)>,
+L<SSL_get_stream_type(3)>, L<SSL_get_stream_id(3)>, L<SSL_new_stream(3)>,
+L<SSL_accept_stream(3)>, L<SSL_set_incoming_stream_policy(3)>,
+L<SSL_set_default_stream_mode(3)>
 
 =head1 COPYRIGHT
 
