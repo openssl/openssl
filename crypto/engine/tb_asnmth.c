@@ -201,7 +201,7 @@ const EVP_PKEY_ASN1_METHOD *ENGINE_pkey_asn1_find_str(ENGINE **pe,
         return NULL;
     }
 
-    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+    if (!CRYPTO_THREAD_read_lock(global_engine_lock))
         return NULL;
     engine_table_doall(pkey_asn1_meth_table, look_str_cb, &fstr);
     /* If found obtain a structural reference to engine */
