@@ -348,11 +348,15 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         /*
          * we have added it to the cache so now pull it out again
          */
-        X509_STORE_lock(xl->store_ctx);
-        j = sk_X509_OBJECT_find(xl->store_ctx->objs, &stmp);
-        tmp = sk_X509_OBJECT_value(xl->store_ctx->objs, j);
-        X509_STORE_unlock(xl->store_ctx);
-
+        if (k > 0) {
+            X509_STORE_lock(xl->store_ctx);
+            j = sk_X509_OBJECT_find(xl->store_ctx->objs, &stmp);
+            tmp = sk_X509_OBJECT_value(xl->store_ctx->objs, j);
+            X509_STORE_unlock(xl->store_ctx);
+        } else {
+            j = -1;
+            tmp = NULL;
+        }
         /*
          * If a CRL, update the last file suffix added for this.
          * We don't need to add an entry if k is 0 as this is the initial value.
