@@ -20,6 +20,8 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 3.0.8 and OpenSSL 3.0.9 [under development]
 
+  * Mitigate for very slow `OBJ_obj2txt()` performance with gigantic OBJECT
+    IDENTIFIER sub-identities.  ([CVE-2023-2650])
   * Fixed buffer overread in AES-XTS decryption on ARM 64 bit platforms
     ([CVE-2023-1255])
   * Fixed documentation of X509_VERIFY_PARAM_add0_policy() ([CVE-2023-0466])
@@ -1439,6 +1441,8 @@ OpenSSL 0.9.x
   * Support for various new platforms
 
 <!-- Links -->
+
+[CVE-2023-2650]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2650
 [CVE-2023-1255]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-1255
 [CVE-2023-0466]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0466
 [CVE-2023-0465]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0465
