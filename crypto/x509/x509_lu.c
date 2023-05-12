@@ -44,6 +44,13 @@ int X509_STORE_lock(X509_STORE *xs)
     return CRYPTO_THREAD_write_lock(xs->lock);
 }
 
+static int x509_store_lock_ex(X509_STORE *xs, int read)
+{
+    if (read)
+        return CRYPTO_THREAD_read_lock(xs->lock);
+    return CRYPTO_THREAD_write_lock(xs->lock);
+}
+
 int X509_STORE_unlock(X509_STORE *xs)
 {
     return CRYPTO_THREAD_unlock(xs->lock);
@@ -324,9 +331,15 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx,
     stmp.type = X509_LU_NONE;
     stmp.data.ptr = NULL;
 
-    if (!X509_STORE_lock(store))
+    if (!x509_store_lock_ex(store, 1))
         return 0;
-    sk_X509_OBJECT_sort(store->objs);
+    /* Should already be sorted...but just in case */
+    if (!sk_X509_OBJECT_is_sorted(store->objs)) {
+        X509_STORE_unlock(store);
+        /* Take a write lock instead of a read lock */
+        X509_STORE_lock(store);
+        sk_X509_OBJECT_sort(store->objs);
+    }
     tmp = X509_OBJECT_retrieve_by_subject(store->objs, type, name);
     X509_STORE_unlock(store);
 
@@ -535,15 +548,18 @@ static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
         return -1;
     }
 
+    /* Assumes h is locked for read if applicable */
     return sk_X509_OBJECT_find_all(h, &stmp, pnmatch);
 }
 
+/* Assumes h is locked for read if applicable */
 int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
                                const X509_NAME *name)
 {
     return x509_object_idx_cnt(h, type, name, NULL);
 }
 
+/* Assumes h is locked for read if applicable */
 X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h,
                                              X509_LOOKUP_TYPE type,
                                              const X509_NAME *name)
