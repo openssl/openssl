@@ -34,20 +34,6 @@ It can be used for
  o  Handling of S/MIME signed or encrypted mail
  o  Timestamp requests, generation and verification
 
-=head2 Program Options
-
-=over 4
-
-=item B<-help> | B<--help>
-
-Provides a terse summary of all B<openssl> program options. For more detailed information, each command supports a B<-help> option.
-
-=item B<-version> | B<--version>
-
-Provides a terse summary of the B<openssl> program version. For more detailed information see L<openssl-version(1)>.
-
-=back
-
 =head1 COMMAND SUMMARY
 
 The B<openssl> program provides a rich variety of commands (I<command> in
@@ -519,10 +505,16 @@ This section describes some common options with common behavior.
 
 =over 4
 
-=item B<-help>
+=item B<-help> | B<--help>
 
 Provides a terse summary of all options.
 If an option takes an argument, the "type" of argument is also given.
+For more detailed information, each command supports a B<-help> option.
+
+=item B<-version> | B<--version>
+
+Provides a terse summary of the B<openssl> program version.
+For more detailed information see L<openssl-version(1)>.
 
 =item B<-->
 
