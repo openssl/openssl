@@ -23,6 +23,7 @@
 #include <openssl/rsa.h>
 #include <openssl/dh.h>
 #include <openssl/core_names.h>
+#include <openssl/ui.h>
 
 #include "testutil.h"
 #include "internal/nelem.h"
@@ -669,6 +670,52 @@ static int test_PEM_read_bio_negative(int testid)
     return ok;
 }
 
+static int test_PEM_read_bio_negative_wrong_password(int testid)
+{
+    int ok = 0;
+    OSSL_PROVIDER *provider = OSSL_PROVIDER_load(NULL, "default");
+    EVP_PKEY *read_pkey = NULL;
+    EVP_PKEY *write_pkey = EVP_RSA_gen(1024);
+    BIO *key_bio = BIO_new(BIO_s_mem());
+    const UI_METHOD *undo_ui_method = NULL;
+    const UI_METHOD *ui_method = NULL;
+    if (testid > 0)
+        ui_method = UI_null();
+
+    if (!TEST_ptr(provider))
+        goto err;
+    if (!TEST_ptr(key_bio))
+        goto err;
+    if (!TEST_ptr(write_pkey))
+        goto err;
+    undo_ui_method = UI_get_default_method();
+    UI_set_default_method(ui_method);
+
+    if (/* Output Encrypted private key in PEM form */
+        !TEST_true(PEM_write_bio_PrivateKey(key_bio, write_pkey, EVP_aes_256_cbc(),
+                                           NULL, 0, NULL, "pass")))
+        goto err;
+
+    ERR_clear_error();
+    read_pkey = PEM_read_bio_PrivateKey(key_bio, NULL, NULL, NULL);
+    if (!TEST_ptr_null(read_pkey))
+        goto err;
+
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_get_error()), PEM_R_PROBLEMS_GETTING_PASSWORD))
+        goto err;
+    ok = 1;
+
+ err:
+    test_openssl_errors();
+    EVP_PKEY_free(read_pkey);
+    EVP_PKEY_free(write_pkey);
+    BIO_free(key_bio);
+    OSSL_PROVIDER_unload(provider);
+    UI_set_default_method(undo_ui_method);
+
+    return ok;
+}
+
 static int do_fromdata_key_is_equal(const OSSL_PARAM params[],
                                     const EVP_PKEY *expected, const char *type)
 {
@@ -1212,6 +1259,7 @@ int setup_tests(void)
     ADD_TEST(test_pkcs8key_nid_bio);
 #endif
     ADD_ALL_TESTS(test_PEM_read_bio_negative, OSSL_NELEM(keydata));
+    ADD_ALL_TESTS(test_PEM_read_bio_negative_wrong_password, 2);
     ADD_TEST(test_rsa_pss_sign);
     ADD_TEST(test_evp_md_ctx_copy);
     ADD_ALL_TESTS(test_provider_unload_effective, 2);
