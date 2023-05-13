@@ -508,6 +508,10 @@ int UI_process(UI *ui)
                 ok = 0;
                 break;
             }
+        } else {
+            ui->flags &= ~UI_FLAG_REDOABLE;
+            ok = -2;
+            goto err;
         }
     }
 
