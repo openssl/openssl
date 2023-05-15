@@ -658,7 +658,13 @@ static int drbg_ctr_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
     PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)drbg->data;
     OSSL_PARAM *p;
-    int ret = 0;
+    int ret = 0, complete = 0;
+
+    if (!ossl_drbg_get_ctx_params_no_lock(drbg, params, &complete))
+        return 0;
+
+    if (complete)
+        return 1;
 
     if (drbg->lock != NULL && !CRYPTO_THREAD_read_lock(drbg->lock))
         return 0;

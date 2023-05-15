@@ -356,7 +356,13 @@ static int drbg_hmac_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
     const char *name;
     const EVP_MD *md;
     OSSL_PARAM *p;
-    int ret = 0;
+    int ret = 0, complete = 0;
+
+    if (!ossl_drbg_get_ctx_params_no_lock(drbg, params, &complete))
+        return 0;
+
+    if (complete)
+        return 1;
 
     if (drbg->lock != NULL && !CRYPTO_THREAD_read_lock(drbg->lock))
         return 0;

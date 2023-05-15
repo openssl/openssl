@@ -893,10 +893,6 @@ int ossl_drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[])
     if (p != NULL && !OSSL_PARAM_set_int(p, drbg->strength))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_MAX_REQUEST);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, drbg->max_request))
-        return 0;
-
     p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_MIN_ENTROPYLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, drbg->min_entropylen))
         return 0;
@@ -933,10 +929,43 @@ int ossl_drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[])
     if (p != NULL && !OSSL_PARAM_set_time_t(p, drbg->reseed_time_interval))
         return 0;
 
+    return 1;
+}
+
+/*
+ * Helper function to get certain params that require no lock to obtain. Sets
+ * *complete to 1 if all the params were processed, or 0 otherwise
+ */
+int ossl_drbg_get_ctx_params_no_lock(PROV_DRBG *drbg, OSSL_PARAM params[],
+                                     int *complete)
+{
+    size_t cnt = 0;
+    OSSL_PARAM *p;
+
+    /* This value never changes once set */
+    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_MAX_REQUEST);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_size_t(p, drbg->max_request))
+            return 0;
+        cnt++;
+    }
+
+    /*
+     * Can be changed by multiple threads, but we tolerate inaccuracies in this
+     * value.
+     */
     p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_RESEED_COUNTER);
-    if (p != NULL
-            && !OSSL_PARAM_set_uint(p, tsan_load(&drbg->reseed_counter)))
-        return 0;
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_uint(p, tsan_load(&drbg->reseed_counter)))
+            return 0;
+        cnt++;
+    }
+
+    if (params[cnt].key == NULL)
+        *complete = 1;
+    else
+        *complete = 0;
+
     return 1;
 }
 

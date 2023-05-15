@@ -463,7 +463,13 @@ static int drbg_hash_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
     PROV_DRBG_HASH *hash = (PROV_DRBG_HASH *)drbg->data;
     const EVP_MD *md;
     OSSL_PARAM *p;
-    int ret = 0;
+    int ret = 0, complete = 0;
+
+    if (!ossl_drbg_get_ctx_params_no_lock(drbg, params, &complete))
+        return 0;
+
+    if (complete)
+        return 1;
 
     if (drbg->lock != NULL && !CRYPTO_THREAD_read_lock(drbg->lock))
         return 0;
