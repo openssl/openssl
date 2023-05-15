@@ -197,6 +197,7 @@ foreach (@ARGV, split(/ /, $config{options}))
 	}
 $libname = $unified_info{sharednames}->{libcrypto} if $do_crypto;
 $libname = $unified_info{sharednames}->{libssl} if $do_ssl;
+$libname .= $target{shlib_variant} || "";
 
 if (!$libname) {
 	if ($do_ssl) {
