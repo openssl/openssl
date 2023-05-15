@@ -25,10 +25,10 @@ jobs:
   check_update:
     runs-on: ubuntu-latest
     steps:
-    - name: install unifdef
+    - name: install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install unifdef
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install unifdef gperf
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
