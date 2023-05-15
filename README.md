@@ -39,7 +39,7 @@ Note that, referencing the terminology defined by [ETSI](https://www.etsi.org/te
 
 ## Status
 
-This fork is currently in sync with the [OpenSSL\_1\_1\_1s tag](https://github.com/openssl/openssl/tree/OpenSSL_1_1_1s), and adds the following:
+This fork is currently in sync with the [OpenSSL\_1\_1\_1t tag](https://github.com/openssl/openssl/tree/OpenSSL_1_1_1t), and adds the following:
 
 - quantum-safe key exchange in TLS 1.3
 - hybrid (quantum-safe + elliptic curve) key exchange in TLS 1.3
@@ -147,6 +147,8 @@ The following instructions will download and build liboqs, then install it into 
 	ninja install
 
 Building liboqs requires your system to have (a standard) OpenSSL already installed. `configure` will detect it if it is located in a standard location, such as `/usr` or `/usr/local/opt/openssl` (for brew on macOS).  Otherwise, you may need to specify it with `-DOPENSSL_ROOT_DIR=<path-to-system-openssl-dir>` added to the `cmake` command.
+
+*Note*: This will only work correctly, if the OpenSSL version used to build `liboqs` is a version below 3.0.0. If the standard OpenSSL on the build system or the version pointed to by the above `-DOPENSSL_ROOT_DIR=...` command is a version >= 3.0.0, then you _must_ add the option `-DOQS_USE_OPENSSL=OFF` to the above `cmake` build command to successfully complete the subsequent build steps for this package.
 
 #### Step 2: Build the fork
 
