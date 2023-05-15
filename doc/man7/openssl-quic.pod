@@ -545,7 +545,7 @@ respective poll descriptor is currently relevant for the purposes of polling.
 
 =item L<SSL_set_initial_peer_addr(3)>
 
-This functions can be used to set the initial peer address for an outgoing QUIC
+This function can be used to set the initial peer address for an outgoing QUIC
 connection. This function must be used in the general case when creating an
 outgoing QUIC connection; however, the correct initial peer address can be
 autodetected in some cases. See L<SSL_set_initial_peer_addr(3)> for details.
@@ -564,9 +564,8 @@ part of a stream remains usable.
 
 =item L<SSL_stream_reset(3)>
 
-This allows an application to indicate the non-normal termination of a stream,
-including both its sending and receiving parts. This corresponds to the
-RESET_STREAM frame in the QUIC RFC.
+This allows an application to indicate the non-normal termination of the sending
+part of a stream. This corresponds to the RESET_STREAM frame in the QUIC RFC.
 
 =item L<SSL_get_stream_write_state(3)> and L<SSL_get_stream_read_state(3)>
 
@@ -704,12 +703,6 @@ does provide the simplest mode of usage for an application.
 
 The implementation may or may not use a common thread or thread pool to service
 multiple SSL objects in the same B<SSL_CTX>.
-
-=begin comment
-
-TODO(QUIC): Amend this man page once thread assisted mode is supported.
-
-=end comment
 
 =head1 APPLICATION-DRIVEN EVENT LOOPS
 
