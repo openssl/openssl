@@ -338,7 +338,8 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx,
         X509_STORE_unlock(store);
         /* Take a write lock instead of a read lock */
         X509_STORE_lock(store);
-        sk_X509_OBJECT_sort(store->objs);
+        if (!sk_X509_OBJECT_is_sorted(store->objs))
+            sk_X509_OBJECT_sort(store->objs);
     }
     tmp = X509_OBJECT_retrieve_by_subject(store->objs, type, name);
     X509_STORE_unlock(store);
