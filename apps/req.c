@@ -635,8 +635,10 @@ int req_main(int argc, char **argv)
     if (newreq && pkey == NULL) {
         app_RAND_load_conf(req_conf, section);
 
-        if (!NCONF_get_number(req_conf, section, BITS, &newkey_len))
+        if (!NCONF_get_number(req_conf, section, BITS, &newkey_len)) {
+            ERR_clear_error();
             newkey_len = DEFAULT_KEY_LENGTH;
+        }
 
         genctx = set_keygen_ctx(keyalg, &keyalgstr, &newkey_len, gen_eng);
         if (genctx == NULL)
