@@ -1130,7 +1130,8 @@ update: generate errors ordinals generate_buildinfo ## Update errors, ordinals a
 .PHONY: generate generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
 generate: generate_apps generate_crypto_bn generate_crypto_objects \
-          generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
+          generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids \
+          generate_hash
 
 .PHONY: generate_buildinfo generate_doc_buildinfo
 generate_buildinfo: generate_doc_buildinfo
@@ -1169,6 +1170,9 @@ generate_apps:
 
 generate_crypto_bn:
 	( cd $(SRCDIR); $(PERL) crypto/bn/bn_prime.pl > crypto/bn/bn_prime.h )
+
+generate_hash: crypto/params_table.gperf
+	gperf -m 20 crypto/params_table.gperf >$(SRCDIR)/crypto/params_table.inc
 
 generate_crypto_objects:
 	( cd $(SRCDIR); $(PERL) crypto/objects/objects.pl -n \

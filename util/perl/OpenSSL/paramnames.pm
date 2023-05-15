@@ -665,3 +665,23 @@ sub produce_decoder {
     generate_code_from_trie(0, \%t);
     return $s;
 }
+
+sub generate_gperf {
+    my @entries = ();
+    my %reverse;
+
+    # Filter and unique the names
+    foreach my $name (sort keys %params) {
+        my $key = $params{$name};
+
+        if (substr($key, 0, 1) ne '*' and not defined $reverse{$key}) {
+            $reverse{$key} = 'PIDX_' . $name;
+        }
+    }
+
+    foreach my $key (sort keys %reverse) {
+        push(@entries, $key . ', ' . $reverse{$key});
+    }
+
+    return join("\n", sort @entries);
+}
