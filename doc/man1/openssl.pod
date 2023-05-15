@@ -13,7 +13,7 @@ I<command>
 
 B<openssl> B<no->I<XXX> [ I<options> ]
 
-B<openssl> B<-help> | B<--help> | B<-version> | B<--version>
+B<openssl> B<-help> | B<-version>
 
 =head1 DESCRIPTION
 
@@ -505,16 +505,18 @@ This section describes some common options with common behavior.
 
 =over 4
 
-=item B<-help> | B<--help>
+=item B<-help>
 
 Provides a terse summary of all options.
 If an option takes an argument, the "type" of argument is also given.
 For more detailed information, each command supports a B<-help> option.
+Accepts B<--help> as well.
 
-=item B<-version> | B<--version>
+=item B<-version>
 
 Provides a terse summary of the B<openssl> program version.
 For more detailed information see L<openssl-version(1)>.
+Accepts B<--version> as well.
 
 =item B<-->
 
