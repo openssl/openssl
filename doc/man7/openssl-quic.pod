@@ -128,7 +128,7 @@ changes to the semantics of existing APIs are as follows:
 
 Since QUIC uses UDP, L<SSL_set_bio(3)>, L<SSL_set0_rbio(3)> and
 L<SSL_set0_wbio(3)> function as before, but must now receive a BIO with datagram
-semantics. There are broadly three options for applications to use as a network
+semantics. There are broadly four options for applications to use as a network
 BIO:
 
 =over 4
@@ -140,9 +140,14 @@ L<BIO_s_socket(3)> and provides a UDP socket.
 
 =item
 
-L<BIO_s_dgram_pair(3)> provides BIO pair-like function but with datagram
+L<BIO_s_dgram_pair(3)> provides BIO pair-like functionality but with datagram
 semantics, and is recommended for existing applications which use a BIO pair or
 memory BIO to manage libssl's communication with the network.
+
+=item
+
+L<BIO_s_dgram_mem(3)> provides a simple memory BIO-like interface but with
+datagram semantics. Unlike L<BIO_s_dgram_pair(3)>, it is unidirectional.
 
 =item
 
