@@ -1671,7 +1671,10 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
         char *p = NCONF_get_string(dbattr_conf, NULL, "unique_subject");
         if (p) {
             retdb->attributes.unique_subject = parse_yesno(p, 1);
+        } else {
+            ERR_clear_error();
         }
+
     }
 
     retdb->dbfname = OPENSSL_strdup(dbfile);
