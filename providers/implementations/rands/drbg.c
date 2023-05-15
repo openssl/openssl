@@ -45,21 +45,20 @@ static const OSSL_DISPATCH *find_call(const OSSL_DISPATCH *dispatch,
 
 static int rand_drbg_restart(PROV_DRBG *drbg);
 
+/*
+ * We interpret a call to this function as a hint only and ignore it. This
+ * occurs when the EVP layer thinks we should do some locking. In practice
+ * however we manage for ourselves when we take a lock or not on the basis
+ * of whether drbg->lock is present or not.
+ */
 int ossl_drbg_lock(void *vctx)
 {
-    PROV_DRBG *drbg = vctx;
-
-    if (drbg == NULL || drbg->lock == NULL)
-        return 1;
-    return CRYPTO_THREAD_write_lock(drbg->lock);
+    return 1;
 }
 
+/* Interpreted as a hint only and ignored as for ossl_drbg_lock() */
 void ossl_drbg_unlock(void *vctx)
 {
-    PROV_DRBG *drbg = vctx;
-
-    if (drbg != NULL && drbg->lock != NULL)
-        CRYPTO_THREAD_unlock(drbg->lock);
 }
 
 static int ossl_drbg_lock_parent(PROV_DRBG *drbg)
@@ -487,13 +486,16 @@ int ossl_prov_drbg_uninstantiate(PROV_DRBG *drbg)
 /*
  * Reseed |drbg|, mixing in the specified data
  *
- * Requires that drbg->lock is already locked for write, if non-null.
+ * Acquires the drbg->lock for writing, if non-null.
  *
  * Returns 1 on success, 0 on failure.
  */
-int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
-                          const unsigned char *ent, size_t ent_len,
-                          const unsigned char *adin, size_t adinlen)
+static int ossl_prov_drbg_reseed_unlocked(PROV_DRBG *drbg,
+                                          int prediction_resistance,
+                                          const unsigned char *ent,
+                                          size_t ent_len,
+                                          const unsigned char *adin,
+                                          size_t adinlen)
 {
     unsigned char *entropy = NULL;
     size_t entropylen = 0;
@@ -595,12 +597,30 @@ int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
     return 0;
 }
 
+int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
+                          const unsigned char *ent, size_t ent_len,
+                          const unsigned char *adin, size_t adinlen)
+{
+    int ret;
+
+    if (drbg->lock != NULL && !CRYPTO_THREAD_write_lock(drbg->lock))
+        return 0;
+
+    ret = ossl_prov_drbg_reseed_unlocked(drbg, prediction_resistance, ent,
+                                         ent_len, adin, adinlen);
+
+    if (drbg->lock != NULL)
+        CRYPTO_THREAD_unlock(drbg->lock);
+
+    return ret;
+}
+
 /*
  * Generate |outlen| bytes into the buffer at |out|.  Reseed if we need
  * to or if |prediction_resistance| is set.  Additional input can be
  * sent in |adin| and |adinlen|.
  *
- * Requires that drbg->lock is already locked for write, if non-null.
+ * Acquires the drbg->lock for writing if available
  *
  * Returns 1 on success, 0 on failure.
  *
@@ -611,8 +631,12 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
 {
     int fork_id;
     int reseed_required = 0;
+    int ret = 0;
 
     if (!ossl_prov_is_running())
+        return 0;
+
+    if (drbg->lock != NULL && !CRYPTO_THREAD_write_lock(drbg->lock))
         return 0;
 
     if (drbg->state != EVP_RAND_STATE_READY) {
@@ -621,25 +645,25 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
 
         if (drbg->state == EVP_RAND_STATE_ERROR) {
             ERR_raise(ERR_LIB_PROV, PROV_R_IN_ERROR_STATE);
-            return 0;
+            goto err;
         }
         if (drbg->state == EVP_RAND_STATE_UNINITIALISED) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_INSTANTIATED);
-            return 0;
+            goto err;
         }
     }
     if (strength > drbg->strength) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INSUFFICIENT_DRBG_STRENGTH);
-        return 0;
+        goto err;
     }
 
     if (outlen > drbg->max_request) {
         ERR_raise(ERR_LIB_PROV, PROV_R_REQUEST_TOO_LARGE_FOR_DRBG);
-        return 0;
+        goto err;
     }
     if (adinlen > drbg->max_adinlen) {
         ERR_raise(ERR_LIB_PROV, PROV_R_ADDITIONAL_INPUT_TOO_LONG);
-        return 0;
+        goto err;
     }
 
     fork_id = openssl_get_fork_id();
@@ -664,10 +688,10 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
         reseed_required = 1;
 
     if (reseed_required || prediction_resistance) {
-        if (!ossl_prov_drbg_reseed(drbg, prediction_resistance, NULL, 0,
-                                   adin, adinlen)) {
+        if (!ossl_prov_drbg_reseed_unlocked(drbg, prediction_resistance, NULL,
+                                            0, adin, adinlen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_RESEED_ERROR);
-            return 0;
+            goto err;
         }
         adin = NULL;
         adinlen = 0;
@@ -676,12 +700,17 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
     if (!drbg->generate(drbg, out, outlen, adin, adinlen)) {
         drbg->state = EVP_RAND_STATE_ERROR;
         ERR_raise(ERR_LIB_PROV, PROV_R_GENERATE_ERROR);
-        return 0;
+        goto err;
     }
 
     drbg->generate_counter++;
 
-    return 1;
+    ret = 1;
+ err:
+    if (drbg->lock != NULL)
+        CRYPTO_THREAD_unlock(drbg->lock);
+
+    return ret;
 }
 
 /*
@@ -848,6 +877,10 @@ void ossl_rand_drbg_free(PROV_DRBG *drbg)
     OPENSSL_free(drbg);
 }
 
+/*
+ * Helper function called by internal DRBG implementations. Assumes that at
+ * least a read lock has been taken on drbg->lock
+ */
 int ossl_drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;

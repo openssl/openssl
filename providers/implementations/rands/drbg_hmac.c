@@ -32,6 +32,8 @@ static OSSL_FUNC_rand_gettable_ctx_params_fn drbg_hmac_gettable_ctx_params;
 static OSSL_FUNC_rand_get_ctx_params_fn drbg_hmac_get_ctx_params;
 static OSSL_FUNC_rand_verify_zeroization_fn drbg_hmac_verify_zeroization;
 
+static int drbg_hmac_set_ctx_params_locked(void *vctx, const OSSL_PARAM params[]);
+
 /*
  * Called twice by SP800-90Ar1 10.1.2.2 HMAC_DRBG_Update_Process.
  *
@@ -143,12 +145,22 @@ static int drbg_hmac_instantiate_wrapper(void *vdrbg, unsigned int strength,
                                          const OSSL_PARAM params[])
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+    int ret = 0;
 
-    if (!ossl_prov_is_running() || !drbg_hmac_set_ctx_params(drbg, params))
+    if (drbg->lock != NULL && !CRYPTO_THREAD_write_lock(drbg->lock))
         return 0;
-    return ossl_prov_drbg_instantiate(drbg, strength, prediction_resistance,
-                                      pstr, pstr_len);
+
+    if (!ossl_prov_is_running()
+            || !drbg_hmac_set_ctx_params_locked(drbg, params))
+        goto err;
+    ret = ossl_prov_drbg_instantiate(drbg, strength, prediction_resistance,
+                                     pstr, pstr_len);
+ err:
+    if (drbg->lock != NULL)
+        CRYPTO_THREAD_unlock(drbg->lock);
+    return ret;
 }
+
 
 /*
  * SP800-90Ar1 10.1.2.4 HMAC_DRBG_Reseed_Process:
@@ -263,17 +275,37 @@ static int drbg_hmac_uninstantiate(PROV_DRBG *drbg)
 
 static int drbg_hmac_uninstantiate_wrapper(void *vdrbg)
 {
-    return drbg_hmac_uninstantiate((PROV_DRBG *)vdrbg);
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+    int ret;
+
+    if (drbg->lock != NULL && !CRYPTO_THREAD_write_lock(drbg->lock))
+        return 0;
+
+    ret = drbg_hmac_uninstantiate(drbg);
+
+    if (drbg->lock != NULL)
+        CRYPTO_THREAD_unlock(drbg->lock);
+
+    return ret;
 }
 
 static int drbg_hmac_verify_zeroization(void *vdrbg)
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
     PROV_DRBG_HMAC *hmac = (PROV_DRBG_HMAC *)drbg->data;
+    int ret = 0;
+
+    if (drbg->lock != NULL && !CRYPTO_THREAD_read_lock(drbg->lock))
+        return 0;
 
     PROV_DRBG_VERYIFY_ZEROIZATION(hmac->K);
     PROV_DRBG_VERYIFY_ZEROIZATION(hmac->V);
-    return 1;
+
+    ret = 1;
+ err:
+    if (drbg->lock != NULL)
+        CRYPTO_THREAD_unlock(drbg->lock);
+    return ret;
 }
 
 static int drbg_hmac_new(PROV_DRBG *drbg)
@@ -324,24 +356,33 @@ static int drbg_hmac_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
     const char *name;
     const EVP_MD *md;
     OSSL_PARAM *p;
+    int ret = 0;
+
+    if (drbg->lock != NULL && !CRYPTO_THREAD_read_lock(drbg->lock))
+        return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_MAC);
     if (p != NULL) {
         if (hmac->ctx == NULL)
-            return 0;
+            goto err;
         name = EVP_MAC_get0_name(EVP_MAC_CTX_get0_mac(hmac->ctx));
         if (!OSSL_PARAM_set_utf8_string(p, name))
-            return 0;
+            goto err;
     }
 
     p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_DIGEST);
     if (p != NULL) {
         md = ossl_prov_digest_md(&hmac->digest);
         if (md == NULL || !OSSL_PARAM_set_utf8_string(p, EVP_MD_get0_name(md)))
-            return 0;
+            goto err;
     }
 
-    return ossl_drbg_get_ctx_params(drbg, params);
+    ret = ossl_drbg_get_ctx_params(drbg, params);
+ err:
+    if (drbg->lock != NULL)
+        CRYPTO_THREAD_unlock(drbg->lock);
+
+    return ret;
 }
 
 static const OSSL_PARAM *drbg_hmac_gettable_ctx_params(ossl_unused void *vctx,
@@ -356,7 +397,7 @@ static const OSSL_PARAM *drbg_hmac_gettable_ctx_params(ossl_unused void *vctx,
     return known_gettable_ctx_params;
 }
 
-static int drbg_hmac_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int drbg_hmac_set_ctx_params_locked(void *vctx, const OSSL_PARAM params[])
 {
     PROV_DRBG *ctx = (PROV_DRBG *)vctx;
     PROV_DRBG_HMAC *hmac = (PROV_DRBG_HMAC *)ctx->data;
@@ -387,6 +428,22 @@ static int drbg_hmac_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
 
     return ossl_drbg_set_ctx_params(ctx, params);
+}
+
+static int drbg_hmac_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    PROV_DRBG *drbg = (PROV_DRBG *)vctx;
+    int ret;
+
+    if (drbg->lock != NULL && !CRYPTO_THREAD_write_lock(drbg->lock))
+        return 0;
+
+    ret = drbg_hmac_set_ctx_params_locked(vctx, params);
+
+    if (drbg->lock != NULL)
+        CRYPTO_THREAD_unlock(drbg->lock);
+
+    return ret;
 }
 
 static const OSSL_PARAM *drbg_hmac_settable_ctx_params(ossl_unused void *vctx,

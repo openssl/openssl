@@ -212,7 +212,7 @@ OSSL_FUNC_rand_clear_seed_fn ossl_drbg_clear_seed;
                                             \
         for (i = 0; i < OSSL_NELEM(v); i++) \
             if ((v)[i] != 0)                \
-                return 0;                   \
+                goto err;                   \
     }
 
 /* locking api */
