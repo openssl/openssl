@@ -109,7 +109,6 @@ ___
 
 $code=<<___;
 #include "arm_arch.h"
-.arch	armv8.2-a
 .text
 ___
 

@@ -174,7 +174,7 @@ $code=<<___;
 
 #if __ARM_MAX_ARCH__>=8
 ___
-$code.=".arch   armv8.2-a+crypto\n.text\n";
+$code.=".arch   armv8-a+crypto\n.text\n";
 
 $input_ptr="x0";  #argument block
 $bit_length="x1";
