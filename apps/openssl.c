@@ -298,8 +298,10 @@ int main(int argc, char *argv[])
         argv[0] = pname;
     }
 
-    /* If there's no command, assume "help". If there's an override for help
-    or version run those, otherwise run the command given. */
+    /*
+     * If there's no command, assume "help". If there's an override for help
+     * or version run those, otherwise run the command given.
+     */
     ret =  (argc == 0) || global_help 
             ? do_cmd(prog, 1, help_argv)
             : global_version 
