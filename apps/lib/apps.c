@@ -349,6 +349,19 @@ char *app_conf_try_string(const CONF *conf, const char *group, const char *name)
     return res;
 }
 
+int app_conf_try_number(const CONF *conf, const char *group, const char *name,
+                        long *result)
+{
+    int ok;
+
+    ERR_set_mark();
+    ok = NCONF_get_number(conf, group, name, result);
+    if (!ok)
+        ERR_pop_to_mark();
+    else
+        ERR_clear_last_mark();
+    return ok;
+}
 
 CONF *app_load_config_bio(BIO *in, const char *filename)
 {

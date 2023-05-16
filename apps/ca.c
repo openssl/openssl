@@ -886,10 +886,8 @@ end_of_options:
         }
 
         if (days == 0) {
-            if (!NCONF_get_number(conf, section, ENV_DEFAULT_DAYS, &days)) {
-                ERR_clear_error();
+            if (!app_conf_try_number(conf, section, ENV_DEFAULT_DAYS, &days))
                 days = 0;
-            }
         }
         if (enddate == NULL && days == 0) {
             BIO_printf(bio_err, "cannot lookup how many days to certify for\n");
@@ -1149,16 +1147,12 @@ end_of_options:
         }
 
         if (!crldays && !crlhours && !crlsec) {
-            if (!NCONF_get_number(conf, section,
-                                  ENV_DEFAULT_CRL_DAYS, &crldays)) {
-                ERR_clear_error();
+            if (!app_conf_try_number(conf, section,
+                                  ENV_DEFAULT_CRL_DAYS, &crldays))
                 crldays = 0;
-            }
-            if (!NCONF_get_number(conf, section,
-                                  ENV_DEFAULT_CRL_HOURS, &crlhours)) {
-                ERR_clear_error();
+            if (!app_conf_try_number(conf, section,
+                                  ENV_DEFAULT_CRL_HOURS, &crlhours))
                 crlhours = 0;
-            }
         }
         if ((crl_nextupdate == NULL) &&
                 (crldays == 0) && (crlhours == 0) && (crlsec == 0)) {

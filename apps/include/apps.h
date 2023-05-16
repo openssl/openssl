@@ -66,6 +66,8 @@ BIO *bio_open_owner(const char *filename, int format, int private);
 BIO *bio_open_default(const char *filename, char mode, int format);
 BIO *bio_open_default_quiet(const char *filename, char mode, int format);
 char *app_conf_try_string(const CONF *cnf, const char *group, const char *name);
+int app_conf_try_number(const CONF *conf, const char *group, const char *name,
+                        long *result);
 CONF *app_load_config_bio(BIO *in, const char *filename);
 # define app_load_config(filename) app_load_config_internal(filename, 0)
 # define app_load_config_quiet(filename) app_load_config_internal(filename, 1)

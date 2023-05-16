@@ -608,7 +608,7 @@ int req_main(int argc, char **argv)
     if (newreq && pkey == NULL) {
         app_RAND_load_conf(req_conf, section);
 
-        if (!NCONF_get_number(req_conf, section, BITS, &newkey_len))
+        if (!app_conf_try_number(req_conf, section, BITS, &newkey_len))
             newkey_len = DEFAULT_KEY_LENGTH;
 
         genctx = set_keygen_ctx(keyalg, &keyalgstr, &newkey_len, gen_eng);
@@ -1167,17 +1167,13 @@ static int prompt_info(X509_REQ *req,
 
             if (!join(buf, sizeof(buf), v->name, "_min", "Name"))
                 return 0;
-            if (!NCONF_get_number(req_conf, dn_sect, buf, &n_min)) {
-                ERR_clear_error();
+            if (!app_conf_try_number(req_conf, dn_sect, buf, &n_min))
                 n_min = -1;
-            }
 
             if (!join(buf, sizeof(buf), v->name, "_max", "Name"))
                 return 0;
-            if (!NCONF_get_number(req_conf, dn_sect, buf, &n_max)) {
-                ERR_clear_error();
+            if (!app_conf_try_number(req_conf, dn_sect, buf, &n_max))
                 n_max = -1;
-            }
 
             if (!add_DN_object(subj, v->value, def, value, nid,
                                n_min, n_max, chtype, mval))
@@ -1221,17 +1217,13 @@ static int prompt_info(X509_REQ *req,
 
                 if (!join(buf, sizeof(buf), type, "_min", "Name"))
                     return 0;
-                if (!NCONF_get_number(req_conf, attr_sect, buf, &n_min)) {
-                    ERR_clear_error();
+                if (!app_conf_try_number(req_conf, attr_sect, buf, &n_min))
                     n_min = -1;
-                }
 
                 if (!join(buf, sizeof(buf), type, "_max", "Name"))
                     return 0;
-                if (!NCONF_get_number(req_conf, attr_sect, buf, &n_max)) {
-                    ERR_clear_error();
+                if (!app_conf_try_number(req_conf, attr_sect, buf, &n_max))
                     n_max = -1;
-                }
 
                 if (!add_attribute_object(req,
                                           v->value, def, value, nid, n_min,
