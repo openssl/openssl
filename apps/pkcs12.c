@@ -152,7 +152,7 @@ const OPTIONS pkcs12_options[] = {
     {"noiter", OPT_NOITER, '-', "Don't use encryption iteration"},
     {"nomaciter", OPT_NOMACITER, '-', "Don't use MAC iteration)"},
     {"maciter", OPT_MACITER, '-', "Unused, kept for backwards compatibility"},
-    {"macsaltlen", OPT_MACSALTLEN, '-', "Specify the salt len for MAC"},
+    {"macsaltlen", OPT_MACSALTLEN, 'p', "Specify the salt len for MAC"},
     {"nomac", OPT_NOMAC, '-', "Don't generate MAC"},
     {NULL}
 };
