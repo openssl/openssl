@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 37;
+plan tests => 119;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -109,6 +109,288 @@ subtest 'x509 -- pathlen' => sub {
 cert_contains(srctop_file(@certs, "fake-gp.pem"),
               "2.16.528.1.1003.1.3.5.5.2-1-0000006666-Z-12345678-01.015-12345678",
               1, 'x500 -- subjectAltName');
+
+cert_contains(srctop_file(@certs, "ext-noAssertion.pem"),
+              "No Assertion",
+              1, 'X.509 Not Assertion Extension');
+
+cert_contains(srctop_file(@certs, "ext-groupAC.pem"),
+              "Group Attribute Certificate",
+              1, 'X.509 Group Attribute Certificate Extension');
+
+cert_contains(srctop_file(@certs, "ext-sOAIdentifier.pem"),
+              "Source of Authority",
+              1, 'X.509 Source of Authority Extension');
+
+cert_contains(srctop_file(@certs, "ext-noRevAvail.pem"),
+              "No Revocation Available",
+              1, 'X.509 Source of Authority Extension');
+cert_contains(srctop_file(@certs, "ext-singleUse.pem"),
+              "Single Use",
+              1, 'X.509 Single Use Certification Extension');
+cert_contains(srctop_file(@certs, "ext-auditIdentity.pem"),
+              "Audit Identity",
+              1, 'X.509 Audit Identity Extension');
+
+my $tgt_info_cert = srctop_file(@certs, "ext-targetingInformation.pem");
+cert_contains($tgt_info_cert,
+              "AC Targeting",
+              1, 'X.509 Targeting Information Extension');
+cert_contains($tgt_info_cert,
+              "Targets:",
+              1, 'X.509 Targeting Information Targets');
+cert_contains($tgt_info_cert,
+              "Target:",
+              1, 'X.509 Targeting Information Target');
+cert_contains($tgt_info_cert,
+              "Target Name: DirName:CN = W",
+              1, 'X.509 Targeting Information Target Name');
+cert_contains($tgt_info_cert,
+              "Target Group: DNS:wildboarsoftware.com",
+              1, 'X.509 Targeting Information Target Name');
+cert_contains($tgt_info_cert,
+              "Issuer Names:",
+              1, 'X.509 Targeting Information Issuer Names');
+cert_contains($tgt_info_cert,
+              "Issuer Serial: 01020304",
+              1, 'X.509 Targeting Information Issuer Serial');
+cert_contains($tgt_info_cert,
+              "Issuer UID: B0",
+              1, 'X.509 Targeting Information Issuer UID');
+cert_contains($tgt_info_cert,
+              "Digest Type: Public Key",
+              1, 'X.509 Targeting Information Object Digest Type');
+
+my $bacons_cert = srctop_file(@certs, "ext-basicAttConstraints.pem");
+cert_contains($bacons_cert,
+              "authority:TRUE",
+              1, 'X.509 Basic Attribute Constraints Authority');
+cert_contains($bacons_cert,
+              "pathlen:3",
+              1, 'X.509 Basic Attribute Constraints Path Length');
+
+my $dncons_cert = srctop_file(@certs, "ext-delegatedNameConstraints.pem");
+cert_contains($dncons_cert,
+              "DirName:CN = Wil",
+              1, 'X.509 Delegated Name Constraints');
+cert_contains($dncons_cert,
+              "Permitted:",
+              1, 'X.509 Delegated Name Constraints');
+cert_contains($dncons_cert,
+              "Excluded:",
+              1, 'X.509 Delegated Name Constraints');
+
+my $sda_cert = srctop_file(@certs, "ext-subjectDirectoryAttributes.pem");
+cert_contains($sda_cert,
+              "Steve Brule",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "CN=Hi mom",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "<No Values>",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "Funkytown",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "commonName",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "owner",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "givenName",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "localityName",
+              1, 'X.509 Subject Directory Attributes');
+
+my $ass_info_cert = srctop_file(@certs, "ext-associatedInformation.pem");
+cert_contains($ass_info_cert,
+              "Steve Brule",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "CN=Hi mom",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "<No Values>",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "Funkytown",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "commonName",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "owner",
+              1, 'X509v3 Associated Information');
+cert_contains($sda_cert,
+              "givenName",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "localityName",
+              1, 'X509v3 Associated Information');
+
+my $user_notice_cert = srctop_file(@certs, "ext-userNotice.pem");
+cert_contains($user_notice_cert,
+              "Organization: Wildboar Software",
+              1, 'X509v3 User Notice');
+cert_contains($user_notice_cert,
+              "Numbers: 123, 456",
+              1, 'X509v3 User Notice');
+cert_contains($user_notice_cert,
+              "Explicit Text: Hey there big boi",
+              1, 'X509v3 User Notice');
+cert_contains($user_notice_cert,
+              "Number: 50505",
+              1, 'X509v3 User Notice');
+cert_contains($user_notice_cert,
+              "Explicit Text: Ice ice baby",
+              1, 'X509v3 User Notice');
+
+my $auth_attr_id_cert = srctop_file(@certs, "ext-authorityAttributeIdentifier.pem");
+cert_contains($auth_attr_id_cert,
+              "DirName:CN = Wildboar",
+              1, 'X509v3 Authority Attribute Identifier');
+cert_contains($auth_attr_id_cert,
+              "Issuer Serial: 01030507",
+              1, 'X509v3 Authority Attribute Identifier');
+cert_contains($auth_attr_id_cert,
+              "Issuer UID: B2",
+              1, 'X509v3 Authority Attribute Identifier');
+
+my $iobo_cert = srctop_file(@certs, "ext-issuedOnBehalfOf.pem");
+cert_contains($iobo_cert,
+              "DirName:CN = Wildboar",
+              1, 'X509v3 Issued On Behalf Of');
+
+my $aaa_cert = srctop_file(@certs, "ext-allowedAttributeAssignments.pem");
+cert_contains($aaa_cert,
+              "Attribute Type: commonName",
+              1, 'X509v3 Allowed Attribute Assignments');
+cert_contains($aaa_cert,
+              "Holder Domain: email:jonathan",
+              1, 'X509v3 Allowed Attribute Assignments');
+
+my $attr_map_cert = srctop_file(@certs, "ext-attributeMappings.pem");
+cert_contains($attr_map_cert,
+              "commonName == localityName",
+              1, 'X509v3 Attribute Mappings');
+cert_contains($attr_map_cert,
+              "commonName:asdf == localityName:830",
+              1, 'X509v3 Attribute Mappings');
+
+my $indirect_issuer_cert = srctop_file(@certs, "ext-indirectIssuer.pem");
+cert_contains($indirect_issuer_cert,
+              "NULL",
+              1, 'X509v3 Indirect Issuer');
+
+my $attr_desc_cert = srctop_file(@certs, "ext-attributeDescriptor.pem");
+cert_contains($attr_desc_cert,
+              "Identifier: 2.5.4.3",
+              1, 'X509v3 Attribute Descriptor');
+cert_contains($attr_desc_cert,
+              "Syntax: UnboundedDirectoryString",
+              1, 'X509v3 Attribute Descriptor');
+cert_contains($attr_desc_cert,
+              "Name: commonName",
+              1, 'X509v3 Attribute Descriptor');
+cert_contains($attr_desc_cert,
+              "Description: A general-purpose name",
+              1, 'X509v3 Attribute Descriptor');
+cert_contains($attr_desc_cert,
+              "Identifier: 2.5.4.10",
+              1, 'X509v3 Attribute Descriptor');
+cert_contains($attr_desc_cert,
+              "DirName:CN = Wild",
+              1, 'X509v3 Attribute Descriptor');
+cert_contains($attr_desc_cert,
+              "Algorithm: sha256",
+              1, 'X509v3 Attribute Descriptor');
+cert_contains($attr_desc_cert,
+              "Hash Value:",
+              1, 'X509v3 Attribute Descriptor');
+
+my $aa_idp_cert = srctop_file(@certs, "ext-aAissuingDistributionPoint.pem");
+cert_contains($aa_idp_cert,
+              "DirName:CN = Wild",
+              1, 'X509v3 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              "CA Compromise",
+              1, 'X509v3 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              "Indirect CRL: TRUE",
+              1, 'X509v3 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              "Contains User Attribute Certificates: TRUE",
+              1, 'X509v3 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              'Contains Attribute Authority \(AA\) Certificates: TRUE',
+              1, 'X509v3 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              'Contains Source Of Authority \(SOA\) Public Key Certificates: TRUE',
+              1, 'X509v3 Attribute Authority Issuing Distribution Point');
+
+my $role_spec_cert = srctop_file(@certs, "ext-roleSpecCertIdentifier.pem");
+cert_contains($role_spec_cert,
+              "Role Specification Certificate Identifier #1",
+              1, 'X509v3 Role Specification Certificate Identifier');
+cert_contains($role_spec_cert,
+              "Role Name: DirName:CN = Wild",
+              1, 'X509v3 Role Specification Certificate Identifier');
+cert_contains($role_spec_cert,
+              "Role Certificate Issuer: DirName:CN = Wild",
+              1, 'X509v3 Role Specification Certificate Identifier');
+cert_contains($role_spec_cert,
+              "Role Certificate Serial Number: 0x02040608",
+              1, 'X509v3 Role Specification Certificate Identifier');
+cert_contains($role_spec_cert,
+              "DNS:wildboar",
+              1, 'X509v3 Role Specification Certificate Identifier');
+cert_contains($role_spec_cert,
+              "Registered ID:description",
+              1, 'X509v3 Role Specification Certificate Identifier');
+
+my $time_spec_abs_cert = srctop_file(@certs, "ext-timeSpecification-absolute.pem");
+cert_contains($time_spec_abs_cert,
+              "Timezone: UTC-05:00",
+              1, 'X509v3 Time Specification');
+cert_contains($time_spec_abs_cert,
+              "Absolute: Any time between Dec 20 13:07:21 2022 GMT and Dec 20 13:07:21 2022 GMT",
+              1, 'X509v3 Time Specification');
+
+my $time_spec_per_cert = srctop_file(@certs, "ext-timeSpecification-periodic.pem");
+cert_contains($time_spec_per_cert,
+              "Timezone: UTC-05:00",
+              1, 'X509v3 Time Specification');
+cert_contains($time_spec_per_cert,
+              "NOT this time:",
+              1, 'X509v3 Time Specification');
+cert_contains($time_spec_per_cert,
+              "05:43:21 - 12:34:56",
+              1, 'X509v3 Time Specification');
+cert_contains($time_spec_per_cert,
+              "Days of the week: SUN, MON",
+              1, 'X509v3 Time Specification');
+cert_contains($time_spec_per_cert,
+              "Weeks of the month: 3, 4",
+              1, 'X509v3 Time Specification');
+cert_contains($time_spec_per_cert,
+              "Months: MAY, JUN",
+              1, 'X509v3 Time Specification');
+cert_contains($time_spec_per_cert,
+              "Years: 2022, 2023",
+              1, 'X509v3 Time Specification');
+cert_contains($time_spec_per_cert,
+              "Days of the month: 3, 4",
+              1, 'X509v3 Time Specification');
+cert_contains($time_spec_per_cert,
+              "Months: JUL, AUG",
+              1, 'X509v3 Time Specification');
+cert_contains($time_spec_per_cert,
+              "Years: 2023, 2024",
+              1, 'X509v3 Time Specification');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
