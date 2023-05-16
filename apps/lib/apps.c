@@ -336,6 +336,20 @@ static char *app_get_pass(const char *arg, int keepbio)
     return OPENSSL_strdup(tpass);
 }
 
+char *app_conf_try_string(const CONF *conf, const char *group, const char *name)
+{
+    char *res;
+
+    ERR_set_mark();
+    res = NCONF_get_string(conf, group, name);
+    if (res == NULL)
+        ERR_pop_to_mark();
+    else
+        ERR_clear_last_mark();
+    return res;
+}
+
+
 CONF *app_load_config_bio(BIO *in, const char *filename)
 {
     long errorline = -1;
@@ -416,10 +430,8 @@ int add_oid_section(CONF *conf)
     CONF_VALUE *cnf;
     int i;
 
-    if ((p = NCONF_get_string(conf, NULL, "oid_section")) == NULL) {
-        ERR_clear_error();
+    if ((p = app_conf_try_string(conf, NULL, "oid_section")) == NULL)
         return 1;
-    }
     if ((sktmp = NCONF_get_section(conf, p)) == NULL) {
         BIO_printf(bio_err, "problem loading oid section %s\n", p);
         return 0;
@@ -1679,12 +1691,11 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
     else
         retdb->attributes.unique_subject = 1;
 
-    if (dbattr_conf) {
-        char *p = NCONF_get_string(dbattr_conf, NULL, "unique_subject");
+    if (dbattr_conf != NULL) {
+        char *p = app_conf_try_string(dbattr_conf, NULL, "unique_subject");
 
-        if (p) {
+        if (p != NULL)
             retdb->attributes.unique_subject = parse_yesno(p, 1);
-        }
     }
 
     retdb->dbfname = OPENSSL_strdup(dbfile);
