@@ -687,11 +687,9 @@ int x509_main(int argc, char **argv)
         if ((extconf = app_load_config(extfile)) == NULL)
             goto end;
         if (extsect == NULL) {
-            extsect = NCONF_get_string(extconf, "default", "extensions");
-            if (extsect == NULL) {
-                ERR_clear_error();
+            extsect = app_conf_try_string(extconf, "default", "extensions");
+            if (extsect == NULL)
                 extsect = "default";
-            }
         }
         X509V3_set_ctx_test(&ctx2);
         X509V3_set_nconf(&ctx2, extconf);

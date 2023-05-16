@@ -518,9 +518,7 @@ int req_main(int argc, char **argv)
         goto end;
 
     if (req_conf != NULL) {
-        p = NCONF_get_string(req_conf, NULL, "oid_file");
-        if (p == NULL)
-            ERR_clear_error();
+        p = app_conf_try_string(req_conf, NULL, "oid_file");
         if (p != NULL) {
             BIO *oid_bio = BIO_new_file(p, "r");
 
@@ -543,19 +541,14 @@ int req_main(int argc, char **argv)
             goto opthelp;
     } else {
         /* No digest specified, default to configuration */
-        p = NCONF_get_string(req_conf, section, "default_md");
-        if (p == NULL)
-            ERR_clear_error();
-        else
+        p = app_conf_try_string(req_conf, section, "default_md");
+        if (p != NULL)
             digest = p;
     }
 
-    if (extsect == NULL) {
-        extsect = NCONF_get_string(req_conf, section,
+    if (extsect == NULL)
+        extsect = app_conf_try_string(req_conf, section,
                                    gen_x509 ? V3_EXTENSIONS : REQ_EXTENSIONS);
-        if (extsect == NULL)
-            ERR_clear_error();
-    }
     if (extsect != NULL) {
         /* Check syntax of extension section in config file */
         X509V3_CTX ctx;
@@ -581,34 +574,23 @@ int req_main(int argc, char **argv)
         }
     }
 
-    if (passin == NULL) {
+    if (passin == NULL)
         passin = nofree_passin =
-            NCONF_get_string(req_conf, section, "input_password");
-        if (passin == NULL)
-            ERR_clear_error();
-    }
+            app_conf_try_string(req_conf, section, "input_password");
 
-    if (passout == NULL) {
+    if (passout == NULL)
         passout = nofree_passout =
-            NCONF_get_string(req_conf, section, "output_password");
-        if (passout == NULL)
-            ERR_clear_error();
-    }
+            app_conf_try_string(req_conf, section, "output_password");
 
-    p = NCONF_get_string(req_conf, section, STRING_MASK);
-    if (p == NULL)
-        ERR_clear_error();
-
+    p = app_conf_try_string(req_conf, section, STRING_MASK);
     if (p != NULL && !ASN1_STRING_set_default_mask_asc(p)) {
         BIO_printf(bio_err, "Invalid global string mask setting %s\n", p);
         goto end;
     }
 
     if (chtype != MBSTRING_UTF8) {
-        p = NCONF_get_string(req_conf, section, UTF8_IN);
-        if (p == NULL)
-            ERR_clear_error();
-        else if (strcmp(p, "yes") == 0)
+        p = app_conf_try_string(req_conf, section, UTF8_IN);
+        if (p != NULL && strcmp(p, "yes") == 0)
             chtype = MBSTRING_UTF8;
     }
 
@@ -678,11 +660,8 @@ int req_main(int argc, char **argv)
         EVP_PKEY_CTX_free(genctx);
         genctx = NULL;
     }
-    if (keyout == NULL && keyfile == NULL) {
-        keyout = NCONF_get_string(req_conf, section, KEYFILE);
-        if (keyout == NULL)
-            ERR_clear_error();
-    }
+    if (keyout == NULL && keyfile == NULL)
+        keyout = app_conf_try_string(req_conf, section, KEYFILE);
 
     if (pkey != NULL && (keyfile == NULL || keyout != NULL)) {
         if (verbose) {
@@ -696,14 +675,10 @@ int req_main(int argc, char **argv)
         if (out == NULL)
             goto end;
 
-        p = NCONF_get_string(req_conf, section, "encrypt_rsa_key");
-        if (p == NULL) {
-            ERR_clear_error();
-            p = NCONF_get_string(req_conf, section, "encrypt_key");
-            if (p == NULL)
-                ERR_clear_error();
-        }
-        if ((p != NULL) && (strcmp(p, "no") == 0))
+        p = app_conf_try_string(req_conf, section, "encrypt_rsa_key");
+        if (p == NULL)
+            p = app_conf_try_string(req_conf, section, "encrypt_key");
+        if (p != NULL && strcmp(p, "no") == 0)
             cipher = NULL;
         if (noenc)
             cipher = NULL;
@@ -1072,16 +1047,12 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
     STACK_OF(CONF_VALUE) *dn_sk = NULL, *attr_sk = NULL;
     char *tmp, *dn_sect, *attr_sect;
 
-    tmp = NCONF_get_string(req_conf, section, PROMPT);
-    if (tmp == NULL)
-        ERR_clear_error();
-    if ((tmp != NULL) && strcmp(tmp, "no") == 0)
+    tmp = app_conf_try_string(req_conf, section, PROMPT);
+    if (tmp != NULL && strcmp(tmp, "no") == 0)
         no_prompt = 1;
 
-    dn_sect = NCONF_get_string(req_conf, section, DISTINGUISHED_NAME);
-    if (dn_sect == NULL) {
-        ERR_clear_error();
-    } else {
+    dn_sect = app_conf_try_string(req_conf, section, DISTINGUISHED_NAME);
+    if (dn_sect != NULL) {
         dn_sk = NCONF_get_section(req_conf, dn_sect);
         if (dn_sk == NULL) {
             BIO_printf(bio_err, "Unable to get '%s' section\n", dn_sect);
@@ -1089,10 +1060,8 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
         }
     }
 
-    attr_sect = NCONF_get_string(req_conf, section, ATTRIBUTES);
-    if (attr_sect == NULL) {
-        ERR_clear_error();
-    } else {
+    attr_sect = app_conf_try_string(req_conf, section, ATTRIBUTES);
+    if (attr_sect != NULL) {
         attr_sk = NCONF_get_section(req_conf, attr_sect);
         if (attr_sk == NULL) {
             BIO_printf(bio_err, "Unable to get '%s' section\n", attr_sect);
@@ -1188,17 +1157,13 @@ static int prompt_info(X509_REQ *req,
                 goto start;
             if (!join(buf, sizeof(buf), v->name, "_default", "Name"))
                 return 0;
-            if ((def = NCONF_get_string(req_conf, dn_sect, buf)) == NULL) {
-                ERR_clear_error();
+            if ((def = app_conf_try_string(req_conf, dn_sect, buf)) == NULL)
                 def = "";
-            }
 
             if (!join(buf, sizeof(buf), v->name, "_value", "Name"))
                 return 0;
-            if ((value = NCONF_get_string(req_conf, dn_sect, buf)) == NULL) {
-                ERR_clear_error();
+            if ((value = app_conf_try_string(req_conf, dn_sect, buf)) == NULL)
                 value = NULL;
-            }
 
             if (!join(buf, sizeof(buf), v->name, "_min", "Name"))
                 return 0;
@@ -1246,19 +1211,13 @@ static int prompt_info(X509_REQ *req,
 
                 if (!join(buf, sizeof(buf), type, "_default", "Name"))
                     return 0;
-                if ((def = NCONF_get_string(req_conf, attr_sect, buf))
-                    == NULL) {
-                    ERR_clear_error();
+                def = app_conf_try_string(req_conf, attr_sect, buf);
+                if (def == NULL)
                     def = "";
-                }
 
                 if (!join(buf, sizeof(buf), type, "_value", "Name"))
                     return 0;
-                if ((value = NCONF_get_string(req_conf, attr_sect, buf))
-                    == NULL) {
-                    ERR_clear_error();
-                    value = NULL;
-                }
+                value = app_conf_try_string(req_conf, attr_sect, buf);
 
                 if (!join(buf, sizeof(buf), type, "_min", "Name"))
                     return 0;

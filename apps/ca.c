@@ -514,9 +514,7 @@ end_of_options:
         && (section = lookup_conf(conf, BASE_SECTION, ENV_DEFAULT_CA)) == NULL)
         goto end;
 
-    p = NCONF_get_string(conf, NULL, "oid_file");
-    if (p == NULL)
-        ERR_clear_error();
+    p = app_conf_try_string(conf, NULL, "oid_file");
     if (p != NULL) {
         BIO *oid_bio = BIO_new_file(p, "r");
 
@@ -534,28 +532,22 @@ end_of_options:
     if (!app_RAND_load())
         goto end;
 
-    f = NCONF_get_string(conf, section, STRING_MASK);
-    if (f == NULL)
-        ERR_clear_error();
+    f = app_conf_try_string(conf, section, STRING_MASK);
     if (f != NULL && !ASN1_STRING_set_default_mask_asc(f)) {
         BIO_printf(bio_err, "Invalid global string mask setting %s\n", f);
         goto end;
     }
 
     if (chtype != MBSTRING_UTF8) {
-        f = NCONF_get_string(conf, section, UTF8_IN);
-        if (f == NULL)
-            ERR_clear_error();
-        else if (strcmp(f, "yes") == 0)
+        f = app_conf_try_string(conf, section, UTF8_IN);
+        if (f != NULL && strcmp(f, "yes") == 0)
             chtype = MBSTRING_UTF8;
     }
 
     db_attr.unique_subject = 1;
-    p = NCONF_get_string(conf, section, ENV_UNIQUE_SUBJECT);
+    p = app_conf_try_string(conf, section, ENV_UNIQUE_SUBJECT);
     if (p != NULL)
         db_attr.unique_subject = parse_yesno(p, 1);
-    else
-        ERR_clear_error();
 
     /*****************************************************************/
     /* report status of cert with serial number given on command line */
@@ -618,20 +610,14 @@ end_of_options:
     if (!selfsign)
         x509p = x509;
 
-    f = NCONF_get_string(conf, BASE_SECTION, ENV_PRESERVE);
-    if (f == NULL)
-        ERR_clear_error();
-    if ((f != NULL) && ((*f == 'y') || (*f == 'Y')))
+    f = app_conf_try_string(conf, BASE_SECTION, ENV_PRESERVE);
+    if (f != NULL && (*f == 'y' || *f == 'Y'))
         preserve = 1;
-    f = NCONF_get_string(conf, BASE_SECTION, ENV_MSIE_HACK);
-    if (f == NULL)
-        ERR_clear_error();
-    if ((f != NULL) && ((*f == 'y') || (*f == 'Y')))
+    f = app_conf_try_string(conf, BASE_SECTION, ENV_MSIE_HACK);
+    if (f != NULL && (*f == 'y' || *f == 'Y'))
         msie_hack = 1;
 
-    f = NCONF_get_string(conf, section, ENV_NAMEOPT);
-    if (f == NULL)
-        ERR_clear_error();
+    f = app_conf_try_string(conf, section, ENV_NAMEOPT);
     if (f != NULL) {
         if (!set_nameopt(f)) {
             BIO_printf(bio_err, "Invalid name options: \"%s\"\n", f);
@@ -640,25 +626,21 @@ end_of_options:
         default_op = 0;
     }
 
-    f = NCONF_get_string(conf, section, ENV_CERTOPT);
+    f = app_conf_try_string(conf, section, ENV_CERTOPT);
     if (f != NULL) {
         if (!set_cert_ex(&certopt, f)) {
             BIO_printf(bio_err, "Invalid certificate options: \"%s\"\n", f);
             goto end;
         }
         default_op = 0;
-    } else {
-        ERR_clear_error();
     }
 
-    f = NCONF_get_string(conf, section, ENV_EXTCOPY);
+    f = app_conf_try_string(conf, section, ENV_EXTCOPY);
     if (f != NULL) {
         if (!set_ext_copy(&ext_copy, f)) {
             BIO_printf(bio_err, "Invalid extension copy option: \"%s\"\n", f);
             goto end;
         }
-    } else {
-        ERR_clear_error();
     }
 
     /*****************************************************************/
@@ -786,11 +768,10 @@ end_of_options:
 
         /* We can have sections in the ext file */
         if (extensions == NULL) {
-            extensions = NCONF_get_string(extfile_conf, "default", "extensions");
-            if (extensions == NULL) {
-                ERR_clear_error();
+            extensions =
+                app_conf_try_string(extfile_conf, "default", "extensions");
+            if (extensions == NULL)
                 extensions = "default";
-            }
         }
     }
 
@@ -827,9 +808,8 @@ end_of_options:
         if (email_dn == 1) {
             char *tmp_email_dn = NULL;
 
-            tmp_email_dn = NCONF_get_string(conf, section, ENV_DEFAULT_EMAIL_DN);
-            if (tmp_email_dn == NULL)
-                ERR_clear_error();
+            tmp_email_dn =
+                app_conf_try_string(conf, section, ENV_DEFAULT_EMAIL_DN);
             if (tmp_email_dn != NULL && strcmp(tmp_email_dn, "no") == 0)
                 email_dn = 0;
         }
@@ -842,10 +822,9 @@ end_of_options:
         if (verbose)
             BIO_printf(bio_err, "policy is %s\n", policy);
 
-        if (NCONF_get_string(conf, section, ENV_RAND_SERIAL) != NULL) {
+        if (app_conf_try_string(conf, section, ENV_RAND_SERIAL) != NULL) {
             rand_ser = 1;
         } else {
-            ERR_clear_error();
             serialfile = lookup_conf(conf, section, ENV_SERIAL);
             if (serialfile == NULL)
                 goto end;
@@ -869,11 +848,8 @@ end_of_options:
              * no '-extfile' option, so we look for extensions in the main
              * configuration file
              */
-            if (extensions == NULL) {
-                extensions = NCONF_get_string(conf, section, ENV_EXTENSIONS);
-                if (extensions == NULL)
-                    ERR_clear_error();
-            }
+            if (extensions == NULL)
+                extensions = app_conf_try_string(conf, section, ENV_EXTENSIONS);
             if (extensions != NULL) {
                 /* Check syntax of config file section */
                 X509V3_CTX ctx;
@@ -890,11 +866,9 @@ end_of_options:
             }
         }
 
-        if (startdate == NULL) {
-            startdate = NCONF_get_string(conf, section, ENV_DEFAULT_STARTDATE);
-            if (startdate == NULL)
-                ERR_clear_error();
-        }
+        if (startdate == NULL)
+            startdate =
+                app_conf_try_string(conf, section, ENV_DEFAULT_STARTDATE);
         if (startdate != NULL && !ASN1_TIME_set_string_X509(NULL, startdate)) {
             BIO_printf(bio_err,
                        "start date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ\n");
@@ -903,11 +877,8 @@ end_of_options:
         if (startdate == NULL)
             startdate = "today";
 
-        if (enddate == NULL) {
-            enddate = NCONF_get_string(conf, section, ENV_DEFAULT_ENDDATE);
-            if (enddate == NULL)
-                ERR_clear_error();
-        }
+        if (enddate == NULL)
+            enddate = app_conf_try_string(conf, section, ENV_DEFAULT_ENDDATE);
         if (enddate != NULL && !ASN1_TIME_set_string_X509(NULL, enddate)) {
             BIO_printf(bio_err,
                        "end date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ\n");
@@ -1151,11 +1122,9 @@ end_of_options:
     /*****************************************************************/
     if (gencrl) {
         int crl_v2 = 0;
-        if (crl_ext == NULL) {
-            crl_ext = NCONF_get_string(conf, section, ENV_CRLEXT);
-            if (crl_ext == NULL)
-                ERR_clear_error();
-        }
+
+        if (crl_ext == NULL)
+            crl_ext = app_conf_try_string(conf, section, ENV_CRLEXT);
         if (crl_ext != NULL) {
             /* Check syntax of file */
             X509V3_CTX ctx;
@@ -1170,15 +1139,13 @@ end_of_options:
             }
         }
 
-        crlnumberfile = NCONF_get_string(conf, section, ENV_CRLNUMBER);
+        crlnumberfile = app_conf_try_string(conf, section, ENV_CRLNUMBER);
         if (crlnumberfile != NULL) {
             if ((crlnumber = load_serial(crlnumberfile, NULL, 0, NULL))
                 == NULL) {
                 BIO_printf(bio_err, "error while loading CRL number\n");
                 goto end;
             }
-        } else {
-            ERR_clear_error();
         }
 
         if (!crldays && !crlhours && !crlsec) {

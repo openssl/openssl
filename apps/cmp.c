@@ -2187,7 +2187,7 @@ static char *conf_get_string(const CONF *src_conf, const char *groups,
     const char *end = groups + strlen(groups);
 
     while ((end = prev_item(groups, end)) != NULL) {
-        if ((res = NCONF_get_string(src_conf, opt_item, name)) != NULL)
+        if ((res = app_conf_try_string(src_conf, opt_item, name)) != NULL)
             return res;
     }
     return res;

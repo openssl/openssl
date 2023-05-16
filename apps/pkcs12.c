@@ -683,7 +683,8 @@ int pkcs12_main(int argc, char **argv)
         if (!app_load_modules(conf))
             goto export_end;
         /* Find the cert bag section */
-        if ((cb_attr = NCONF_get_string(conf, "pkcs12", "certBagAttr")) != NULL) {
+        cb_attr = app_conf_try_string(conf, "pkcs12", "certBagAttr");
+        if (cb_attr != NULL) {
             if ((cb_sk = NCONF_get_section(conf, cb_attr)) != NULL) {
                 for (i = 0; i < sk_CONF_VALUE_num(cb_sk); i++) {
                     val = sk_CONF_VALUE_value(cb_sk, i);
@@ -695,8 +696,6 @@ int pkcs12_main(int argc, char **argv)
             } else {
                 ERR_clear_error();
             }
-        } else {
-            ERR_clear_error();
         }
 
         p12 = PKCS12_create_ex2(cpass, name, key, ee_cert, certs,
