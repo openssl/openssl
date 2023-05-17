@@ -1288,3 +1288,7 @@ brainpoolP512r1tls13		1287
 brotli		1288
 zstd		1289
 sm4_xts		1290
+ms_ntds_obj_sid		1291
+ms_ntds_sec_ext		1292
+ms_cert_templ		1293
+ms_app_policies		1294

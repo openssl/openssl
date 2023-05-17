@@ -353,9 +353,10 @@ id-smime-cti 6		: id-smime-cti-ets-proofOfCreation
 
 pkcs9 20		:			: friendlyName
 pkcs9 21		:			: localKeyID
+!Alias ms-corp 1 3 6 1 4 1 311
 !Cname ms-csp-name
-1 3 6 1 4 1 311 17 1	: CSPName		: Microsoft CSP Name
-1 3 6 1 4 1 311 17 2	: LocalKeySet		: Microsoft Local Key set
+ms-corp 17 1	: CSPName		: Microsoft CSP Name
+ms-corp 17 2	: LocalKeySet		: Microsoft Local Key set
 !Alias certTypes pkcs9 22
 certTypes 1		:			: x509Certificate
 certTypes 2		:			: sdsiCertificate
@@ -435,21 +436,26 @@ rsadsi 3 8		: RC5-CBC		: rc5-cbc
 			: RC5-OFB		: rc5-ofb
 
 !Cname ms-ext-req
-1 3 6 1 4 1 311 2 1 14	: msExtReq		: Microsoft Extension Request
+ms-corp 2 1 14	: msExtReq		: Microsoft Extension Request
 !Cname ms-code-ind
-1 3 6 1 4 1 311 2 1 21	: msCodeInd		: Microsoft Individual Code Signing
+ms-corp 2 1 21	: msCodeInd		: Microsoft Individual Code Signing
 !Cname ms-code-com
-1 3 6 1 4 1 311 2 1 22	: msCodeCom		: Microsoft Commercial Code Signing
+ms-corp 2 1 22	: msCodeCom		: Microsoft Commercial Code Signing
 !Cname ms-ctl-sign
-1 3 6 1 4 1 311 10 3 1	: msCTLSign		: Microsoft Trust List Signing
+ms-corp 10 3 1	: msCTLSign		: Microsoft Trust List Signing
 !Cname ms-sgc
-1 3 6 1 4 1 311 10 3 3	: msSGC			: Microsoft Server Gated Crypto
+ms-corp 10 3 3	: msSGC			: Microsoft Server Gated Crypto
 !Cname ms-efs
-1 3 6 1 4 1 311 10 3 4	: msEFS			: Microsoft Encrypted File System
+ms-corp 10 3 4	: msEFS			: Microsoft Encrypted File System
 !Cname ms-smartcard-login
-1 3 6 1 4 1 311 20 2 2	: msSmartcardLogin	: Microsoft Smartcard Login
+ms-corp 20 2 2	: msSmartcardLogin	: Microsoft Smartcard Login
 !Cname ms-upn
-1 3 6 1 4 1 311 20 2 3	: msUPN			: Microsoft User Principal Name
+ms-corp 20 2 3	: msUPN			: Microsoft User Principal Name
+
+ms-corp 25 2	: ms-ntds-sec-ext	: Microsoft NTDS CA Extension
+ms-corp 25 2 1	: ms-ntds-obj-sid	: Microsoft NTDS AD objectSid
+ms-corp 21 7	: ms-cert-templ		: Microsoft certificate template
+ms-corp 21 10	: ms-app-policies	: Microsoft Application Policies Extension
 
 1 3 6 1 4 1 188 7 1 1 2	: IDEA-CBC		: idea-cbc
 			: IDEA-ECB		: idea-ecb
@@ -1686,9 +1692,9 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 # CABForum EV SSL Certificate Guidelines
 # (see https://cabforum.org/extended-validation/)
 # OIDs for Subject Jurisdiction of Incorporation or Registration
-1 3 6 1 4 1 311 60 2 1 1	: jurisdictionL		: jurisdictionLocalityName
-1 3 6 1 4 1 311 60 2 1 2	: jurisdictionST	: jurisdictionStateOrProvinceName
-1 3 6 1 4 1 311 60 2 1 3	: jurisdictionC		: jurisdictionCountryName
+ms-corp 60 2 1 1	: jurisdictionL		: jurisdictionLocalityName
+ms-corp 60 2 1 2	: jurisdictionST	: jurisdictionStateOrProvinceName
+ms-corp 60 2 1 3	: jurisdictionC		: jurisdictionCountryName
 
 # SCRYPT algorithm
 !Cname id-scrypt
