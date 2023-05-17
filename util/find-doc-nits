@@ -1083,7 +1083,7 @@ sub checkflags {
                 err("$cmd does not implement help for -$expect_helpstr") unless m/^\s*"/;
                 $expect_helpstr = "";
             }
-            if (m/\{\s*"([^"]+)"\s*,\s*OPT_[A-Z0-9_]+\s*,\s*('[-\/:<>cEfFlMnNpsuU]'|0)(.*)$/
+            if (m/\{\s*"([^"]+)"\s*,\s*OPT_[A-Z0-9_]+\s*,\s*('[-\/:<>cAEfFlMnNpsuU]'|0)(.*)$/
                     && !($cmd eq "s_client" && $1 eq "wdebug")) {
                 push @cmdopts, $1;
                 $expect_helpstr = $1;
@@ -1122,7 +1122,7 @@ sub checkflags {
         err("$doc: undocumented $cmd option -$_");
     }
 
-    # See what's in the command not the manpage.
+    # See what's in the manpage not the command.
     my @unimpl = sort grep { my $e = $_; !(grep /^\Q$e\E$/, @cmdopts) } keys %docopts;
     foreach ( @unimpl ) {
         next if $_ eq "-"; # Skip the -- end-of-flags marker
