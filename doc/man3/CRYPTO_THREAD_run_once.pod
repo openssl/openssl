@@ -6,6 +6,7 @@ CRYPTO_THREAD_run_once,
 CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock,
 CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free,
 CRYPTO_atomic_add, CRYPTO_atomic_or, CRYPTO_atomic_load,
+CRYPTO_atomic_load_int,
 OSSL_set_max_threads, OSSL_get_max_threads,
 OSSL_get_thread_support_flags - OpenSSL thread support
 
@@ -26,6 +27,7 @@ OSSL_get_thread_support_flags - OpenSSL thread support
  int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
                       CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock);
+ int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock);
 
  int OSSL_set_max_threads(OSSL_LIB_CTX *ctx, uint64_t max_threads);
  uint64_t OSSL_get_max_threads(OSSL_LIB_CTX *ctx);
@@ -103,6 +105,11 @@ platform. Because of this, if a variable is modified by CRYPTO_atomic_or() or
 read by CRYPTO_atomic_load() then CRYPTO_atomic_load() must be the only way that
 the variable is read. If atomic operations are not supported and I<lock> is
 NULL, then the function will fail.
+
+=item *
+
+CRYPTO_atomic_load_int() works identically to CRYPTO_atomic_load() but operates
+on an I<int> value instead of a I<uint64_t> value.
 
 =item *
 

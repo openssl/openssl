@@ -258,14 +258,18 @@ static int ossl_unused expect_quic_conn_only(const SSL *s, QCTX *ctx)
  */
 static void quic_lock(QUIC_CONNECTION *qc)
 {
+#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_lock(qc->mutex);
+#endif
 }
 
 /* Precondition: Channel mutex is held (unchecked) */
 QUIC_NEEDS_LOCK
 static void quic_unlock(QUIC_CONNECTION *qc)
 {
+#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_unlock(qc->mutex);
+#endif
 }
 
 
@@ -304,11 +308,15 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     if (qc->tls == NULL || (sc = SSL_CONNECTION_FROM_SSL(qc->tls)) == NULL)
          goto err;
 
+#if defined(OPENSSL_THREADS)
     if ((qc->mutex = ossl_crypto_mutex_new()) == NULL)
         goto err;
+#endif
 
+#if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
     qc->is_thread_assisted
         = (ssl_base->method == OSSL_QUIC_client_thread_method());
+#endif
 
     qc->as_server       = 0; /* TODO(QUIC): server support */
     qc->as_server_state = qc->as_server;
@@ -338,6 +346,9 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
 
 err:
     if (qc != NULL) {
+#if defined(OPENSSL_THREADS)
+        ossl_crypto_mutex_free(qc->mutex);
+#endif
         ossl_quic_channel_free(qc->ch);
         SSL_free(qc->tls);
     }
@@ -418,10 +429,12 @@ void ossl_quic_free(SSL *s)
     /* Ensure we have no remaining XSOs. */
     assert(ctx.qc->num_xso == 0);
 
+#if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
     if (ctx.qc->is_thread_assisted && ctx.qc->started) {
         ossl_quic_thread_assist_wait_stopped(&ctx.qc->thread_assist);
         ossl_quic_thread_assist_cleanup(&ctx.qc->thread_assist);
     }
+#endif
 
     ossl_quic_channel_free(ctx.qc->ch);
 
@@ -431,7 +444,9 @@ void ossl_quic_free(SSL *s)
     /* Note: SSL_free calls OPENSSL_free(qc) for us */
 
     SSL_free(ctx.qc->tls);
+#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_free(&ctx.qc->mutex); /* freed while still locked */
+#endif
 }
 
 /* SSL method init */
@@ -491,8 +506,10 @@ void ossl_quic_conn_force_assist_thread_wake(SSL *s)
     if (!expect_quic(s, &ctx))
         return;
 
+#if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
     if (ctx.qc->is_thread_assisted && ctx.qc->started)
         ossl_quic_thread_assist_notify_deadline_changed(&ctx.qc->thread_assist);
+#endif
 }
 
 QUIC_NEEDS_LOCK
@@ -1121,9 +1138,11 @@ static int ensure_channel_started(QUIC_CONNECTION *qc)
             || !ossl_quic_channel_start(qc->ch))
             goto err;
 
+#if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
         if (qc->is_thread_assisted)
             if (!ossl_quic_thread_assist_init_start(&qc->thread_assist, qc->ch))
                 goto err;
+#endif
     }
 
     qc->started = 1;

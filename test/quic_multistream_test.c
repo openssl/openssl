@@ -581,7 +581,10 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
     size_t offset = 0;
     size_t op_idx = 0;
     const struct script_op *op = NULL;
-    int no_advance = 0, first = 1, end_wait_warning = 0;
+    int no_advance = 0, first = 1;
+#if defined(OPENSSL_THREADS)
+    int end_wait_warning = 0;
+#endif
     OSSL_TIME op_start_time = ossl_time_zero(), op_deadline = ossl_time_zero();
     struct helper_local hl;
 #define REPEAT_SLOTS 8
@@ -657,6 +660,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             if (!TEST_size_t_eq(repeat_stack_len, 0))
                 goto out;
 
+#if defined(OPENSSL_THREADS)
             if (thread_idx < 0) {
                 int done;
                 size_t i;
@@ -679,6 +683,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     }
                 }
             }
+#endif
 
             TEST_info("script finished on thread %d", thread_idx);
             testresult = 1;
@@ -1190,7 +1195,12 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
         case OPK_NEW_THREAD:
             {
 #if !defined(OPENSSL_THREADS)
-                TEST_error("threading not supported");
+                /*
+                 * If this test script requires threading and we do not have
+                 * support for it, skip the rest of it.
+                 */
+                TEST_skip("threading not supported, skipping");
+                testresult = 1;
                 goto out;
 #else
                 size_t i;
@@ -1261,8 +1271,10 @@ static int run_script(const struct script_op *script, int free_order)
     if (!TEST_true(run_script_worker(&h, script, -1)))
         goto out;
 
+#if defined(OPENSSL_THREADS)
     if (!TEST_true(join_threads(h.threads, h.num_threads)))
         goto out;
+#endif
 
     testresult = 1;
 out:

@@ -175,8 +175,10 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         /* Do not block forever; should not happen. */
         return 0;
 
+# if defined(OPENSSL_THREADS)
     if (mutex != NULL)
         ossl_crypto_mutex_unlock(mutex);
+# endif
 
     do {
         /*
@@ -200,8 +202,10 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         pres = select(maxfd + 1, &rfd_set, &wfd_set, &efd_set, ptv);
     } while (pres == -1 && get_last_socket_error_is_eintr());
 
+# if defined(OPENSSL_THREADS)
     if (mutex != NULL)
         ossl_crypto_mutex_lock(mutex);
+# endif
 
     return pres < 0 ? 0 : 1;
 #else
@@ -232,8 +236,10 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         /* Do not block forever; should not happen. */
         return 0;
 
+# if defined(OPENSSL_THREADS)
     if (mutex != NULL)
         ossl_crypto_mutex_unlock(mutex);
+# endif
 
     do {
         if (ossl_time_is_infinite(deadline)) {
@@ -247,8 +253,10 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         pres = poll(pfds, npfd, timeout_ms);
     } while (pres == -1 && get_last_socket_error_is_eintr());
 
+# if defined(OPENSSL_THREADS)
     if (mutex != NULL)
         ossl_crypto_mutex_lock(mutex);
+# endif
 
     return pres < 0 ? 0 : 1;
 #endif

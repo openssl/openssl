@@ -12,6 +12,7 @@
 #include "internal/common.h"
 #include "internal/sockets.h"
 #include "internal/quic_tserver.h"
+#include "internal/quic_thread_assist.h"
 #include "internal/quic_ssl.h"
 #include "internal/time.h"
 #include "testutil.h"
@@ -74,6 +75,13 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
     unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
     OSSL_TIME (*now_cb)(void *arg) = use_fake_time ? fake_now : real_now;
     size_t limit_ms = 1000;
+
+#if defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
+    if (use_thread_assist) {
+        TEST_skip("thread assisted mode not enabled");
+        return 1;
+    }
+#endif
 
     ina.s_addr = htonl(0x7f000001UL);
 
