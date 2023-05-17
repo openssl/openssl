@@ -175,7 +175,7 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         /* Do not block forever; should not happen. */
         return 0;
 
-# if !defined(OPENSSL_THREADS)
+# if defined(OPENSSL_THREADS)
     if (mutex != NULL)
         ossl_crypto_mutex_unlock(mutex);
 # endif
