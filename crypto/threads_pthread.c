@@ -270,6 +270,30 @@ int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 
     return 1;
 }
+
+int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
+{
+# if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS)
+    if (__atomic_is_lock_free(sizeof(*val), val)) {
+        __atomic_load(val, ret, __ATOMIC_ACQUIRE);
+        return 1;
+    }
+# elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
+    /* This will work for all future Solaris versions. */
+    if (ret != NULL) {
+        *ret = (int *)atomic_or_uint_nv((unsigned int *)val, 0);
+        return 1;
+    }
+# endif
+    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
+        return 0;
+    *ret  = *val;
+    if (!CRYPTO_THREAD_unlock(lock))
+        return 0;
+
+    return 1;
+}
+
 # ifndef FIPS_MODULE
 int openssl_init_fork_handlers(void)
 {

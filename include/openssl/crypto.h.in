@@ -89,6 +89,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
 int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
                      CRYPTO_RWLOCK *lock);
 int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock);
+int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock);
 
 /* No longer needed, so this is a no-op */
 #define OPENSSL_malloc_init() while(0) continue

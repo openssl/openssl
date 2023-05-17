@@ -251,6 +251,22 @@ int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 #endif
 }
 
+int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
+{
+#if (defined(NO_INTERLOCKEDOR64))
+    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
+        return 0;
+    *ret = *val;
+    if (!CRYPTO_THREAD_unlock(lock))
+        return 0;
+
+    return 1;
+#else
+    *ret = (int)InterlockedOr((LONG volatile *)val, 0);
+    return 1;
+#endif
+}
+
 int openssl_init_fork_handlers(void)
 {
     return 0;
