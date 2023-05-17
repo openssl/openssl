@@ -586,7 +586,7 @@ static int HKDF_Expand(const EVP_MD *evp_md,
         if (!HMAC_Final(hmac, prev, NULL))
             goto err;
 
-        copy_len = (done_len + dig_len > okm_len) ?
+        copy_len = (dig_len > okm_len - done_len) ?
                        okm_len - done_len :
                        dig_len;
 
