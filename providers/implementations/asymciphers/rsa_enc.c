@@ -161,10 +161,12 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
             return 0;
         }
         if (prsactx->oaep_md == NULL) {
-            OPENSSL_free(tbuf);
             prsactx->oaep_md = EVP_MD_fetch(prsactx->libctx, "SHA-1", NULL);
-            ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
-            return 0;
+            if (prsactx->oaep_md == NULL) {
+                OPENSSL_free(tbuf);
+                ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
         }
         ret =
             ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(prsactx->libctx, tbuf,
