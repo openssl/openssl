@@ -955,6 +955,7 @@ int s_client_main(int argc, char **argv)
     int enable_ktls = 0;
 #endif
     int tfo = 0;
+    int is_infinite;
     BIO_ADDR *peer_addr = NULL;
     struct user_data_st user_data;
 
@@ -2909,23 +2910,12 @@ int s_client_main(int argc, char **argv)
         FD_ZERO(&readfds);
         FD_ZERO(&writefds);
 
-        if ((isdtls || isquic) && SSL_get_tick_timeout(con, &timeout)) {
-            /*
-             * TODO(QUIC): The need to do this seems like an unintended
-             * consequence of the SSL_get_tick_timeout() design. You cannot
-             * call select with the returned timeout if tv_sec < 0 because it
-             * errors out. Possibly SSL_get_tick_timeout() should return 0 if
-             * tv_sec < 0 to make it easier to detect this? Or alternatively
-             * make it work the same way that DTLSv1_get_timeout() did which
-             * would make SSL_get_tick_timeout() a drop in replacement
-             */
-            if (timeout.tv_sec < 0)
-                timeoutp = NULL;
-            else
-                timeoutp = &timeout;
-        } else {
+        if ((isdtls || isquic)
+            && SSL_get_event_timeout(con, &timeout, &is_infinite)
+            && !is_infinite)
+            timeoutp = &timeout;
+        else
             timeoutp = NULL;
-        }
 
         if (!SSL_is_init_finished(con) && SSL_total_renegotiations(con) == 0
                 && SSL_get_key_update_type(con) == SSL_KEY_UPDATE_NONE) {
@@ -3013,8 +3003,8 @@ int s_client_main(int argc, char **argv)
             /*
              * Note that for QUIC we never actually check FD_ISSET() for the
              * underlying network fds. We just rely on select waking up when
-             * they become readable/writeable and then SSL_tick() doing the
-             * right thing.
+             * they become readable/writeable and then SSL_handle_events() doing
+             * the right thing.
              */
             if ((!isquic && read_ssl)
                     || (isquic && SSL_net_read_desired(con)))
@@ -3073,7 +3063,7 @@ int s_client_main(int argc, char **argv)
         }
 
         if (timeoutp != NULL) {
-            SSL_tick(con);
+            SSL_handle_events(con);
             if (isdtls
                     && !FD_ISSET(SSL_get_fd(con), &readfds)
                     && !FD_ISSET(SSL_get_fd(con), &writefds))
