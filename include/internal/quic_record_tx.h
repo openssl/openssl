@@ -46,11 +46,6 @@ typedef struct ossl_qtx_args_st {
 
     /* Maximum datagram payload length (MDPL) for TX purposes. */
     size_t          mdpl;
-
-    /* Message callback related arguments */
-    ossl_msg_cb msg_callback;
-    void *msg_callback_arg;
-    SSL *msg_callback_s;
 } OSSL_QTX_ARGS;
 
 /* Instantiates a new QTX. */
@@ -62,6 +57,11 @@ void ossl_qtx_free(OSSL_QTX *qtx);
 /* Set mutator callbacks for test framework support */
 void ossl_qtx_set_mutator(OSSL_QTX *qtx, ossl_mutate_packet_cb mutatecb,
                           ossl_finish_mutate_cb finishmutatecb, void *mutatearg);
+
+/* Setters for the msg_callback and the msg_callback_arg */
+void ossl_qtx_set_msg_callback(OSSL_QTX *qtx, ossl_msg_cb msg_callback,
+                               SSL *msg_callback_s);
+void ossl_qtx_set_msg_callback_arg(OSSL_QTX *qtx, void *msg_callback_arg);
 
 /*
  * Secret Management

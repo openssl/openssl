@@ -176,9 +176,6 @@ OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
     qrx->short_conn_id_len      = args->short_conn_id_len;
     qrx->init_key_phase_bit     = args->init_key_phase_bit;
     qrx->max_deferred           = args->max_deferred;
-    qrx->msg_callback           = args->msg_callback;
-    qrx->msg_callback_arg       = args->msg_callback_arg;
-    qrx->msg_callback_s         = args->msg_callback_s;
     return qrx;
 }
 
@@ -1206,4 +1203,16 @@ uint64_t ossl_qrx_get_max_forged_pkt_count(OSSL_QRX *qrx,
 
     return el == NULL ? UINT64_MAX
         : ossl_qrl_get_suite_max_forged_pkt(el->suite_id);
+}
+
+void ossl_qrx_set_msg_callback(OSSL_QRX *qrx, ossl_msg_cb msg_callback,
+                               SSL *msg_callback_s)
+{
+    qrx->msg_callback = msg_callback;
+    qrx->msg_callback_s = msg_callback_s;
+}
+
+void ossl_qrx_set_msg_callback_arg(OSSL_QRX *qrx, void *msg_callback_arg)
+{
+    qrx->msg_callback_arg = msg_callback_arg;
 }

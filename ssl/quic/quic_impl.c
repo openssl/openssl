@@ -305,12 +305,12 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->default_blocking        = 1;
     qc->incoming_stream_policy  = SSL_INCOMING_STREAM_POLICY_AUTO;
     qc->last_error              = SSL_ERROR_NONE;
-    qc->msg_callback            = ctx->msg_callback;
-    qc->msg_callback_arg        = ctx->msg_callback_arg;
-    qc->msg_callback_s          = ssl_base;
 
     if (!create_channel(qc))
         goto err;
+
+    ossl_quic_channel_set_msg_callback(qc->ch, ctx->msg_callback, ssl_base);
+    ossl_quic_channel_set_msg_callback_arg(qc->ch, ctx->msg_callback_arg);
 
     qc_update_reject_policy(qc);
 
@@ -1014,7 +1014,7 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
         return ctx.qc->default_ssl_mode;
 
     case SSL_CTRL_SET_MSG_CALLBACK_ARG:
-        ctx.qc->msg_callback_arg = parg;
+        ossl_quic_channel_set_msg_callback_arg(ctx.qc->ch, parg);
         /* This ctrl also needs to be passed to the internal SSL object */
         return SSL_ctrl(ctx.qc->tls, cmd, larg, parg);
 
@@ -1096,9 +1096,6 @@ static int create_channel(QUIC_CONNECTION *qc)
     args.mutex            = qc->mutex;
     args.now_cb           = qc->override_now_cb;
     args.now_cb_arg       = qc->override_now_cb_arg;
-    args.msg_callback     = qc->msg_callback;
-    args.msg_callback_arg = qc->msg_callback_arg;
-    args.msg_callback_s   = qc->msg_callback_s;
 
     qc->ch = ossl_quic_channel_new(&args);
     if (qc->ch == NULL)
@@ -2627,7 +2624,8 @@ long ossl_quic_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 
     switch (cmd) {
     case SSL_CTRL_SET_MSG_CALLBACK:
-        ctx.qc->msg_callback = (ossl_msg_cb)fp;
+        ossl_quic_channel_set_msg_callback(ctx.qc->ch, (ossl_msg_cb)fp,
+                                           &ctx.qc->ssl);
         /* This callback also needs to be set on the internal SSL object */
         return ssl3_callback_ctrl(ctx.qc->tls, cmd, fp);;
 
