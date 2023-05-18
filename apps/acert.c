@@ -73,7 +73,7 @@ const OPTIONS acert_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
-    {"in", OPT_IN, '<', "X.509 request input file"},
+    {"in", OPT_IN, '<', "attribute certificate input file"},
     {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
     {"verify", OPT_VERIFY, '-', "Verify signature on the attribue certificate"},
 
@@ -683,11 +683,20 @@ int acert_main(int argc, char **argv)
     }
 
     if (verify) {
+        if (holderfile == NULL) {
+            BIO_printf(bio_err, "'-holder' option required to verify.\n");
+            goto end;
+        }
+        if (holder == NULL) {
+            BIO_printf(bio_err, "Holder certificate could not be loaded.\n");
+            goto end;
+        }
         if (X509_ACERT_verify_cert(acert, holder, AAcert) <= 0) {
             ERR_print_errors(bio_err);
             BIO_printf(bio_err, "Attribute certificate verification failed.\n");
             goto end;
         }
+        BIO_printf(bio_err, "Attribute certificate is valid.\n");
     }
 
     if (noout && !text) {
