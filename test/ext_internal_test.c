@@ -14,7 +14,7 @@
 
 #define EXT_ENTRY(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_##name, #name }
 #define EXT_EXCEPTION(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_invalid, #name }
-#define EXT_END(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_out_of_range, #name }
+#define EXT_LAST(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_out_of_range, #name }
 
 typedef struct {
     size_t idx;
@@ -74,7 +74,7 @@ static EXT_LIST ext_list[] = {
     EXT_ENTRY(certificate_authorities),
     EXT_ENTRY(padding),
     EXT_ENTRY(psk),
-    EXT_END(num_builtins)
+    EXT_LAST(num_builtins)
 };
 
 static int test_extension_list(void)

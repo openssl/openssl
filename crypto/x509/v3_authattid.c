@@ -10,21 +10,17 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
-int i2r_ISSUER_SERIAL(X509V3_EXT_METHOD *method,
-                      ISSUER_SERIAL *iss,
-                      BIO *out, int indent);
-
 static int i2r_AUTHORITY_ATTRIBUTE_ID_SYNTAX(X509V3_EXT_METHOD *method,
                                              AUTHORITY_ATTRIBUTE_ID_SYNTAX *aids,
                                              BIO *out, int indent)
 {
     int i;
-    ISSUER_SERIAL *aid;
-    for (i = 0; i < sk_ISSUER_SERIAL_num(aids); i++) {
+    OSSL_ISSUER_SERIAL *aid;
+    for (i = 0; i < sk_OSSL_ISSUER_SERIAL_num(aids); i++) {
         if (BIO_printf(out, "%*sIssuer-Serials:\n", indent, "") <= 0) {
             return 0;
         }
-        aid = sk_ISSUER_SERIAL_value(aids, i);
+        aid = sk_OSSL_ISSUER_SERIAL_value(aids, i);
         if (i2r_ISSUER_SERIAL(method, aid, out, indent + 4) <= 0) {
             return 0;
         }
@@ -36,7 +32,7 @@ static int i2r_AUTHORITY_ATTRIBUTE_ID_SYNTAX(X509V3_EXT_METHOD *method,
 }
 
 ASN1_ITEM_TEMPLATE(AUTHORITY_ATTRIBUTE_ID_SYNTAX) =
-        ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, AUTHORITY_ATTRIBUTE_ID_SYNTAX, ISSUER_SERIAL)
+        ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, AUTHORITY_ATTRIBUTE_ID_SYNTAX, OSSL_ISSUER_SERIAL)
 ASN1_ITEM_TEMPLATE_END(AUTHORITY_ATTRIBUTE_ID_SYNTAX)
 
 IMPLEMENT_ASN1_FUNCTIONS(AUTHORITY_ATTRIBUTE_ID_SYNTAX)

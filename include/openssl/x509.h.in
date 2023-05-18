@@ -548,6 +548,8 @@ X509_REQ *X509_REQ_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
 
 DECLARE_ASN1_FUNCTIONS(X509_ATTRIBUTE)
 X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, void *value);
+int print_hex(BIO *out, unsigned char *buf, int len);
+int print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int indent);
 
 DECLARE_ASN1_FUNCTIONS(X509_EXTENSION)
 DECLARE_ASN1_ENCODE_FUNCTIONS(X509_EXTENSIONS, X509_EXTENSIONS, X509_EXTENSIONS)

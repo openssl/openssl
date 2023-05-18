@@ -14,6 +14,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "x509_local.h"
+#include <openssl/pkcs12.h>
 
 /*-
  * X509_ATTRIBUTE: this has the following form:
@@ -90,9 +91,6 @@ int print_hex(BIO *out, unsigned char *buf, int len)
 
 int print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int indent)
 {
-    const char *ln;
-    char objbuf[80];
-    ASN1_STRING *str;
     unsigned char *value;
     X509_NAME *xn = NULL;
     int64_t int_val;
@@ -242,7 +240,7 @@ int print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int indent
         if (ASN1_INTEGER_get_int64(&int_val, av->value.integer) > 0) {
             return BIO_printf(out, "%ld", int_val);
         } else {
-            return ASN1_INTEGER_print_bio(out, str);
+            return ASN1_INTEGER_print_bio(out, av->value.integer);
         }
 
     case V_ASN1_ENUMERATED:
@@ -252,7 +250,7 @@ int print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int indent
         if (ASN1_ENUMERATED_get_int64(&int_val, av->value.enumerated) > 0) {
             return BIO_printf(out, "%ld", int_val);
         } else {
-            return ASN1_INTEGER_print_bio(out, str);
+            return ASN1_INTEGER_print_bio(out, av->value.enumerated);
         }
 
     case V_ASN1_BIT_STRING:
@@ -343,7 +341,7 @@ int print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int indent
     /* CHARACTER STRING */
 
     case V_ASN1_BMPSTRING:
-        value = OPENSSL_uni2asc(av->value.bmpstring->data,
+        value = (unsigned char *)OPENSSL_uni2asc(av->value.bmpstring->data,
                                 av->value.bmpstring->length);
         int ret = BIO_printf(out, "%*s%s", indent, "", value);
         OPENSSL_free(value);

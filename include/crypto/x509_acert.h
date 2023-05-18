@@ -70,3 +70,14 @@ int X509_attr_cert_verify(X509_STORE_CTX *ctx, X509_ACERT *acert);
 int acert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509_ACERT *x);
 
 #endif
+
+int X509_acert_get_ext_count(const X509_ACERT *x);
+int X509_acert_get_ext_by_NID(const X509_ACERT *x, int nid, int lastpos);
+int X509_acert_get_ext_by_OBJ(const X509_ACERT *x, const ASN1_OBJECT *obj, int lastpos);
+int X509_acert_get_ext_by_critical(const X509_ACERT *x, int crit, int lastpos);
+X509_EXTENSION *X509_acert_get_ext(const X509_ACERT *x, int loc);
+X509_EXTENSION *X509_acert_delete_ext(X509_ACERT *x, int loc);
+int X509_acert_add_ext(X509_ACERT *x, X509_EXTENSION *ex, int loc);
+void *X509_acert_get_ext_d2i(const X509_ACERT *x, int nid, int *crit, int *idx);
+int X509_acert_add1_ext_i2d(X509_ACERT *x, int nid, void *value, int crit,
+                            unsigned long flags);

@@ -182,7 +182,7 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
 
 static int X509_ACERT_verify_cert (X509_ACERT *acert, X509 *holder, X509 *issuer) {
     int ret = 0;
-    ISSUER_SERIAL *basecertid;
+    OSSL_ISSUER_SERIAL *basecertid;
     const GENERAL_NAMES *holder_ent;
     const X509_NAME *entity;
     AUTHORITY_KEYID *akid;
@@ -702,7 +702,7 @@ int acert_main(int argc, char **argv)
     if (text) {
         ret = X509_ACERT_print_ex(out, acert, get_nameopt(), certflag);
         if (ret == 0) {
-            BIO_printf(bio_err, "Error printing certificate request\n");
+            BIO_printf(bio_err, "Error printing attribute certificate\n");
         }
     }
 
@@ -712,7 +712,7 @@ int acert_main(int argc, char **argv)
         else
             i = PEM_write_bio_X509_ACERT(out, acert);
         if (!i) {
-            BIO_printf(bio_err, "Unable to write certificate request\n");
+            BIO_printf(bio_err, "Unable to write attribute certificate\n");
             goto end;
         }
     }
@@ -763,7 +763,7 @@ static int make_ACERT(X509_ACERT *acert, X509 *holder,
                       X509 *issuer, int holder_name, int holder_basecertid)
 {
     int ret = 0;
-    ISSUER_SERIAL *isss = NULL;
+    OSSL_ISSUER_SERIAL *isss = NULL;
     GENERAL_NAMES *names = NULL;
     GENERAL_NAME *name = NULL;
     X509_NAME *holder_subj = NULL;
@@ -772,7 +772,7 @@ static int make_ACERT(X509_ACERT *acert, X509 *holder,
         goto err;
 
     if (holder_basecertid == 1) {
-        isss = ISSUER_SERIAL_new();
+        isss = OSSL_ISSUER_SERIAL_new();
         if (OSSL_ISSUER_SERIAL_set1_issuer(isss, X509_get_issuer_name(holder)) == 0)
             goto err;
 
@@ -807,7 +807,7 @@ static int make_ACERT(X509_ACERT *acert, X509 *holder,
 
     return 1;
  err:
-    ISSUER_SERIAL_free(isss);
+    OSSL_ISSUER_SERIAL_free(isss);
     GENERAL_NAME_free(name);
     GENERAL_NAMES_free(names);
     X509_NAME_free(holder_subj);

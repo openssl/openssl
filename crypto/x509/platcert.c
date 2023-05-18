@@ -67,7 +67,7 @@ ASN1_SEQUENCE(TCG_SPEC_VERSION) = {
     ASN1_SIMPLE(TCG_SPEC_VERSION, revision, ASN1_INTEGER)
 } ASN1_SEQUENCE_END(TCG_SPEC_VERSION)
 
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS(TCG_SPEC_VERSION)
+IMPLEMENT_ASN1_FUNCTIONS(TCG_SPEC_VERSION)
 
 ASN1_SEQUENCE(TCG_PLATFORM_SPEC) = {
     ASN1_SIMPLE(TCG_PLATFORM_SPEC, version, TCG_SPEC_VERSION),
@@ -104,7 +104,7 @@ ASN1_SEQUENCE(ATTRIBUTE_CERTIFICATE_IDENTIFIER) = {
 
 ASN1_SEQUENCE(CERTIFICATE_IDENTIFIER) = {
     ASN1_IMP_OPT(CERTIFICATE_IDENTIFIER, attributeCertIdentifier, ATTRIBUTE_CERTIFICATE_IDENTIFIER, 0),
-    ASN1_IMP_OPT(CERTIFICATE_IDENTIFIER, genericCertIdentifier, ISSUER_SERIAL, 1)
+    ASN1_IMP_OPT(CERTIFICATE_IDENTIFIER, genericCertIdentifier, OSSL_ISSUER_SERIAL, 1)
 } ASN1_SEQUENCE_END(CERTIFICATE_IDENTIFIER)
 
 ASN1_SEQUENCE(COMPONENT_CLASS) = {
@@ -112,7 +112,7 @@ ASN1_SEQUENCE(COMPONENT_CLASS) = {
     ASN1_SIMPLE(COMPONENT_CLASS, componentClassValue, ASN1_OCTET_STRING)
 } ASN1_SEQUENCE_END(COMPONENT_CLASS)
 
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS(COMPONENT_CLASS)
+IMPLEMENT_ASN1_FUNCTIONS(COMPONENT_CLASS)
 
 ASN1_SEQUENCE(COMPONENT_IDENTIFIER) = {
     ASN1_SIMPLE(COMPONENT_IDENTIFIER, componentClass, COMPONENT_CLASS),
@@ -138,17 +138,6 @@ ASN1_SEQUENCE(PLATFORM_CONFIG) = {
 } ASN1_SEQUENCE_END(PLATFORM_CONFIG)
 
 IMPLEMENT_ASN1_FUNCTIONS(PLATFORM_CONFIG)
-
-static int print_hex(BIO *out, unsigned char *buf, int len)
-{
-    int i;
-    for (i = 0; i < len; i++) {
-        if (BIO_printf(out, "%02X ", buf[i]) <= 0) {
-            return 0;
-        }
-    }
-    return 1;
-}
 
 int URI_REFERENCE_print (BIO *out, URI_REFERENCE *value, int indent) {
     int rc;
@@ -509,7 +498,7 @@ int ATTRIBUTE_CERTIFICATE_IDENTIFIER_print (BIO *out, ATTRIBUTE_CERTIFICATE_IDEN
 
 int CERTIFICATE_IDENTIFIER_print (BIO *out, CERTIFICATE_IDENTIFIER *value, int indent) {
     int rc;
-    ISSUER_SERIAL *iss;
+    OSSL_ISSUER_SERIAL *iss;
 
     if (value->attributeCertIdentifier != NULL) {
         rc = BIO_printf(out, "%*sAttribute Certificate Identifier:\n", indent, "");
@@ -531,14 +520,12 @@ int CERTIFICATE_IDENTIFIER_print (BIO *out, CERTIFICATE_IDENTIFIER *value, int i
             rc = BIO_puts(out, "\n");
             if (rc <= 0) return rc;
         }
-        if (iss->serial != NULL) {
-            rc = BIO_printf(out, "%*sIssuer Serial: 0x", indent + 4, "");
-            if (rc <= 0) return rc;
-            if (i2a_ASN1_INTEGER(out, iss->serial) <= 0)
-                return 0;
-            rc = BIO_puts(out, "\n");
-            if (rc <= 0) return rc;
-        }
+        rc = BIO_printf(out, "%*sIssuer Serial: 0x", indent + 4, "");
+        if (rc <= 0) return rc;
+        if (i2a_ASN1_INTEGER(out, &iss->serial) <= 0)
+            return 0;
+        rc = BIO_puts(out, "\n");
+        if (rc <= 0) return rc;
         if (iss->issuerUID != NULL) {
             BIO_printf(out, "%*sIssuer UID: ", indent + 4, "");
             if (i2a_ASN1_STRING(out, iss->issuerUID, V_ASN1_BIT_STRING) <= 0)

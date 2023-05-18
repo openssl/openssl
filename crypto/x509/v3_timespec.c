@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
+#include <crypto/asn1.h>
 
 ASN1_SEQUENCE(TIME_SPEC_ABSOLUTE) = {
     ASN1_EXP_OPT(TIME_SPEC_ABSOLUTE, startTime, ASN1_GENERALIZEDTIME, 0),
@@ -187,7 +188,7 @@ static int print_int_month (BIO *out, int64_t month) {
 }
 
 static int print_bit_month (BIO *out, ASN1_BIT_STRING *bs) {
-    int i;
+    int i = 0;
     if (ASN1_BIT_STRING_get_bit(bs, TIME_SPEC_BIT_MONTH_JAN)) {
         if (i > 0 && !BIO_puts(out, ", ")) {
             return 0;
@@ -303,7 +304,7 @@ static int print_bit_month (BIO *out, ASN1_BIT_STRING *bs) {
 string numerically, but the fifth bit has the special meaning
 of "the final week" imputed to it by the text of ITU Rec. X.520. */
 static int print_bit_week (BIO *out, ASN1_BIT_STRING *bs) {
-    int i;
+    int i = 0;
     if (ASN1_BIT_STRING_get_bit(bs, TIME_SPEC_BIT_WEEKS_1)) {
         if (i > 0 && !BIO_puts(out, ", ")) {
             return 0;
@@ -353,7 +354,7 @@ static int print_bit_week (BIO *out, ASN1_BIT_STRING *bs) {
 }
 
 static int print_day_of_week (BIO *out, ASN1_BIT_STRING *bs) {
-    int i;
+    int i = 0;
     if (ASN1_BIT_STRING_get_bit(bs, TIME_SPEC_DAY_BIT_SUN)) {
         if (i > 0 && !BIO_puts(out, ", ")) {
             return 0;

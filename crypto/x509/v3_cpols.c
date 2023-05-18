@@ -26,7 +26,6 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
                                          X509V3_CTX *ctx, const char *value);
 static void print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals,
                              int indent);
-static void print_notice(BIO *out, USERNOTICE *notice, int indent);
 static POLICYINFO *policy_section(X509V3_CTX *ctx,
                                   STACK_OF(CONF_VALUE) *polstrs, int ia5org);
 static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,

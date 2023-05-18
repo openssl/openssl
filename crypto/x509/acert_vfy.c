@@ -25,6 +25,7 @@
 #include "crypto/x509.h"
 #include "x509_local.h"
 #include "crypto/x509_acert.h"
+#include "openssl/x509_acert.h"
 
 /*-
  * Check attribute certificate validity times.
@@ -77,16 +78,14 @@ int ossl_x509_check_acert_exts(X509_ACERT *acert)
 int X509_attr_cert_verify(X509_STORE_CTX *ctx, X509_ACERT *acert)
 {
     int rc;
-    int pki_depth;
     EVP_PKEY *pkey;
     X509 *subj_pkc;
 
-    if (X509_ALGOR_cmp(&acert->sig_alg, &acert->signature) != 0)
+    if (X509_ALGOR_cmp(&acert->sig_alg, &acert->acinfo->signature) != 0)
         return 0;
     rc = X509_STORE_CTX_verify(ctx);
     if (rc != X509_V_OK)
         return rc;
-    pki_depth = sk_X509_num(ctx->chain);
     if (sk_X509_num(ctx->chain) <= 0)
         return 0;
     subj_pkc = sk_X509_value(ctx->chain, 0);

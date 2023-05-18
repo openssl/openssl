@@ -569,9 +569,8 @@ static void *v2i_aaidp(const X509V3_EXT_METHOD *method,
     GENERAL_NAMES *gens = NULL;
     GENERAL_NAME *gen = NULL;
     CONF_VALUE *cnf;
-    const int num = sk_CONF_VALUE_num(nval);
-    int i;
-    AA_DIST_POINT *point;
+    int i = 0;
+    AA_DIST_POINT *point = NULL;
 
     cnf = sk_CONF_VALUE_value(nval, i);
     if (cnf->value == NULL) {
@@ -581,8 +580,9 @@ static void *v2i_aaidp(const X509V3_EXT_METHOD *method,
             goto err;
         point = aaidp_from_section(ctx, dpsect);
         X509V3_section_free(ctx, dpsect);
-        if (point == NULL)
-            goto err;
+        if (point == NULL) {
+            goto err;            
+        }
     } else {
         if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
             goto err;
@@ -595,7 +595,7 @@ static void *v2i_aaidp(const X509V3_EXT_METHOD *method,
             goto err;
         }
         gen = NULL;
-        if ((point = DIST_POINT_new()) == NULL) {
+        if ((point = AA_DIST_POINT_new()) == NULL) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
             goto err;
         }
@@ -610,16 +610,19 @@ static void *v2i_aaidp(const X509V3_EXT_METHOD *method,
     return point;
 
  err:
+    if (point != NULL) {
+        AA_DIST_POINT_free(point);
+    }
     GENERAL_NAME_free(gen);
     GENERAL_NAMES_free(gens);
-    AA_DIST_POINT_free(point);
     return NULL;
 }
 
 
-static int i2r_aaidp(const X509V3_EXT_METHOD *method, AA_DIST_POINT *dp, BIO *out,
+static int i2r_aaidp(const X509V3_EXT_METHOD *method, void *pdp, BIO *out,
                      int indent)
 {
+    AA_DIST_POINT *dp = pdp;
     if (dp->distpoint)
         if (print_distpoint(out, dp->distpoint, indent) <= 0) {
             return 0;

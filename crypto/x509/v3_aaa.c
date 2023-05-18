@@ -9,6 +9,7 @@
 
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
+#include <openssl/x509.h>
 
 IMPLEMENT_ASN1_FUNCTIONS(ALLOWED_ATTRIBUTES_SYNTAX)
 

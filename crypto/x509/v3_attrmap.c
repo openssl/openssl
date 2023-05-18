@@ -43,7 +43,6 @@ static int i2r_ATTRIBUTE_MAPPING(X509V3_EXT_METHOD *method,
     ASN1_OBJECT *local_type, *remote_type;
     int local_attr_nid, remote_attr_nid;
     ASN1_TYPE *local_val, *remote_val;
-    ASN1_STRING *local_str, *remote_str;
 
     switch (am->type) {
     case (ATTR_MAP_TYPE): {

@@ -175,7 +175,7 @@ int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid);
 int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid);
 int OBJ_add_sigid(int signid, int dig_id, int pkey_id);
 void OBJ_sigid_free(void);
-
+int print_oid (BIO *out, ASN1_OBJECT *oid);
 
 # ifdef  __cplusplus
 }
