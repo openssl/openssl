@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "*.in": "c",
+        "x509_acert.h": "c",
+        "*.inc": "c",
+        "typeinfo": "c",
+        "x509v3.h": "c",
+        "x509_local.h": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c",
+        "pkcs12.h": "c",
+        "nelem.h": "c",
+        "ssl_local.h": "c"
+    }
+}
