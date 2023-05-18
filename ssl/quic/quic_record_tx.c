@@ -117,9 +117,6 @@ OSSL_QTX *ossl_qtx_new(const OSSL_QTX_ARGS *args)
     qtx->propq              = args->propq;
     qtx->bio                = args->bio;
     qtx->mdpl               = args->mdpl;
-    qtx->msg_callback       = args->msg_callback;
-    qtx->msg_callback_arg   = args->msg_callback_arg;
-    qtx->msg_callback_s     = args->msg_callback_s;
     return qtx;
 }
 
@@ -1004,4 +1001,16 @@ uint64_t ossl_qtx_get_max_epoch_pkt_count(OSSL_QTX *qtx, uint32_t enc_level)
         return UINT64_MAX;
 
     return ossl_qrl_get_suite_max_pkt(el->suite_id);
+}
+
+void ossl_qtx_set_msg_callback(OSSL_QTX *qtx, ossl_msg_cb msg_callback,
+                               SSL *msg_callback_s)
+{
+    qtx->msg_callback = msg_callback;
+    qtx->msg_callback_s = msg_callback_s;
+}
+
+void ossl_qtx_set_msg_callback_arg(OSSL_QTX *qtx, void *msg_callback_arg)
+{
+    qtx->msg_callback_arg = msg_callback_arg;
 }

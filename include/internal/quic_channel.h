@@ -130,11 +130,6 @@ typedef struct quic_channel_args_st {
      */
     OSSL_TIME       (*now_cb)(void *arg);
     void            *now_cb_arg;
-
-    /* Message callback related arguments */
-    ossl_msg_cb     msg_callback;
-    void            *msg_callback_arg;
-    SSL             *msg_callback_s;
 } QUIC_CHANNEL_ARGS;
 
 typedef struct quic_channel_st QUIC_CHANNEL;
@@ -327,6 +322,13 @@ void ossl_quic_channel_reject_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs);
 /* Replace local connection ID in TXP and DEMUX for testing purposes. */
 int ossl_quic_channel_replace_local_cid(QUIC_CHANNEL *ch,
                                         const QUIC_CONN_ID *conn_id);
+
+/* Setters for the msg_callback and msg_callback_arg */
+void ossl_quic_channel_set_msg_callback(QUIC_CHANNEL *ch,
+                                        ossl_msg_cb msg_callback,
+                                        SSL *msg_callback_s);
+void ossl_quic_channel_set_msg_callback_arg(QUIC_CHANNEL *ch,
+                                            void *msg_callback_arg);
 
 # endif
 

@@ -45,11 +45,6 @@ typedef struct ossl_qrx_args_st {
 
     /* Initial key phase. For debugging use only; always 0 in real use. */
     unsigned char   init_key_phase_bit;
-
-    /* Message callback related arguments */
-    ossl_msg_cb msg_callback;
-    void *msg_callback_arg;
-    SSL *msg_callback_s;
 } OSSL_QRX_ARGS;
 
 /* Instantiates a new QRX. */
@@ -64,6 +59,12 @@ OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args);
  * IDs (DCIDs) automatically.
  */
 void ossl_qrx_free(OSSL_QRX *qrx);
+
+/* Setters for the msg_callback and msg_callback_arg */
+void ossl_qrx_set_msg_callback(OSSL_QRX *qrx, ossl_msg_cb msg_callback,
+                               SSL *msg_callback_s);
+void ossl_qrx_set_msg_callback_arg(OSSL_QRX *qrx,
+                                   void *msg_callback_arg);
 
 /*
  * DCID Management

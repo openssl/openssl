@@ -69,6 +69,12 @@ struct ossl_quic_tx_packetiser_st {
     size_t          scratch_len;    /* number of bytes allocated for scratch */
     OSSL_QTX_IOVEC  *iovec;         /* scratch iovec array for use with QTX */
     size_t          alloc_iovec;    /* size of iovec array */
+
+    /* Message callback related arguments */
+    ossl_msg_cb msg_callback;
+    void *msg_callback_arg;
+    SSL *msg_callback_s;
+
 };
 
 /*
@@ -301,7 +307,7 @@ static int tx_helper_commit(struct tx_helper *h)
         return 0;
     }
 
-    if (h->txp->args.msg_callback != NULL && l > 0) {
+    if (h->txp->msg_callback != NULL && l > 0) {
         uint64_t ftype;
         int ctype = SSL3_RT_QUIC_FRAME_FULL;
         PACKET pkt;
@@ -318,9 +324,9 @@ static int tx_helper_commit(struct tx_helper *h)
                 || ftype == OSSL_QUIC_FRAME_TYPE_CRYPTO)
             ctype = SSL3_RT_QUIC_FRAME_HEADER;
 
-        h->txp->args.msg_callback(1, OSSL_QUIC1_VERSION, ctype, h->txn.data, l,
-                                  h->txp->args.msg_callback_s,
-                                  h->txp->args.msg_callback_arg);
+        h->txp->msg_callback(1, OSSL_QUIC1_VERSION, ctype, h->txn.data, l,
+                             h->txp->msg_callback_s,
+                             h->txp->msg_callback_arg);
     }
 
     h->scratch_bytes += l;
@@ -2375,4 +2381,18 @@ int ossl_quic_tx_packetiser_schedule_conn_close(OSSL_QUIC_TX_PACKETISER *txp,
     txp->conn_close_frame.reason_len    = reason_len;
     txp->want_conn_close                = 1;
     return 1;
+}
+
+void ossl_quic_tx_packetiser_set_msg_callback(OSSL_QUIC_TX_PACKETISER *txp,
+                                              ossl_msg_cb msg_callback,
+                                              SSL *msg_callback_s)
+{
+    txp->msg_callback = msg_callback;
+    txp->msg_callback_s = msg_callback_s;
+}
+
+void ossl_quic_tx_packetiser_set_msg_callback_arg(OSSL_QUIC_TX_PACKETISER *txp,
+                                                  void *msg_callback_arg)
+{
+    txp->msg_callback_arg = msg_callback_arg;
 }

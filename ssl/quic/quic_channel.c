@@ -130,10 +130,6 @@ static int ch_init(QUIC_CHANNEL *ch)
     /* We plug in a network write BIO to the QTX later when we get one. */
     qtx_args.libctx = ch->libctx;
     qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
-    /* Callback related arguments */
-    qtx_args.msg_callback       = ch->msg_callback;
-    qtx_args.msg_callback_arg   = ch->msg_callback_arg;
-    qtx_args.msg_callback_s     = ch->msg_callback_s;
     ch->rx_max_udp_payload_size = qtx_args.mdpl;
 
     ch->qtx = ossl_qtx_new(&qtx_args);
@@ -212,10 +208,6 @@ static int ch_init(QUIC_CHANNEL *ch)
     txp_args.cc_data                = ch->cc_data;
     txp_args.now                    = get_time;
     txp_args.now_arg                = ch;
-    /* Callback related arguments */
-    txp_args.msg_callback           = ch->msg_callback;
-    txp_args.msg_callback_arg       = ch->msg_callback_arg;
-    txp_args.msg_callback_s         = ch->msg_callback_s;
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
         ch->crypto_send[pn_space] = ossl_quic_sstream_new(INIT_CRYPTO_BUF_LEN);
@@ -248,10 +240,6 @@ static int ch_init(QUIC_CHANNEL *ch)
     qrx_args.demux              = ch->demux;
     qrx_args.short_conn_id_len  = rx_short_cid_len;
     qrx_args.max_deferred       = 32;
-    /* Callback related arguments */
-    qrx_args.msg_callback       = ch->msg_callback;
-    qrx_args.msg_callback_arg   = ch->msg_callback_arg;
-    qrx_args.msg_callback_s     = ch->msg_callback_s;
 
     if ((ch->qrx = ossl_qrx_new(&qrx_args)) == NULL)
         goto err;
@@ -360,16 +348,13 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
     if ((ch = OPENSSL_zalloc(sizeof(*ch))) == NULL)
         return NULL;
 
-    ch->libctx           = args->libctx;
-    ch->propq            = args->propq;
-    ch->is_server        = args->is_server;
-    ch->tls              = args->tls;
-    ch->mutex            = args->mutex;
-    ch->now_cb           = args->now_cb;
-    ch->now_cb_arg       = args->now_cb_arg;
-    ch->msg_callback     = args->msg_callback;
-    ch->msg_callback_arg = args->msg_callback_arg;
-    ch->msg_callback_s   = args->msg_callback_s;
+    ch->libctx      = args->libctx;
+    ch->propq       = args->propq;
+    ch->is_server   = args->is_server;
+    ch->tls         = args->tls;
+    ch->mutex       = args->mutex;
+    ch->now_cb      = args->now_cb;
+    ch->now_cb_arg  = args->now_cb_arg;
 
     if (!ch_init(ch)) {
         OPENSSL_free(ch);
@@ -2523,4 +2508,25 @@ int ossl_quic_channel_replace_local_cid(QUIC_CHANNEL *ch,
     if (!ossl_qrx_add_dst_conn_id(ch->qrx, &ch->cur_local_cid))
         return 0;
     return 1;
+}
+
+void ossl_quic_channel_set_msg_callback(QUIC_CHANNEL *ch,
+                                        ossl_msg_cb msg_callback,
+                                        SSL *msg_callback_s)
+{
+    ch->msg_callback = msg_callback;
+    ch->msg_callback_s = msg_callback_s;
+    ossl_qtx_set_msg_callback(ch->qtx, msg_callback, msg_callback_s);
+    ossl_quic_tx_packetiser_set_msg_callback(ch->txp, msg_callback,
+                                             msg_callback_s);
+    ossl_qrx_set_msg_callback(ch->qrx, msg_callback, msg_callback_s);
+}
+
+void ossl_quic_channel_set_msg_callback_arg(QUIC_CHANNEL *ch,
+                                            void *msg_callback_arg)
+{
+    ch->msg_callback_arg = msg_callback_arg;
+    ossl_qtx_set_msg_callback_arg(ch->qtx, msg_callback_arg);
+    ossl_quic_tx_packetiser_set_msg_callback_arg(ch->txp, msg_callback_arg);
+    ossl_qrx_set_msg_callback_arg(ch->qrx, msg_callback_arg);
 }
