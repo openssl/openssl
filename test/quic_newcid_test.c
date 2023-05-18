@@ -112,7 +112,7 @@ static int test_ncid_frame(int fail)
         goto err;
 
     ossl_quic_tserver_tick(qtserv);
-    if (!TEST_true(SSL_tick(cssl)))
+    if (!TEST_true(SSL_handle_events(cssl)))
         goto err;
 
     if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), msglen))
