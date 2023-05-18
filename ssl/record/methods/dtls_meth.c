@@ -777,6 +777,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_app_data_pending,
     tls_get_max_records,
     tls_write_records,
+    tls_writev_records,
     tls_retry_write_records,
     tls_read_record,
     tls_release_record,

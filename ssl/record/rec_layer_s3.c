@@ -437,6 +437,228 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
     }
 }
 
+int ssl3_writev_bytes(SSL *ssl, int type, const OSSL_IOVEC *iov, size_t iovcnt,
+                      size_t *written)
+{
+    size_t len = 0;
+    size_t tot;
+    size_t n, max_send_fragment, split_send_fragment, maxpipes;
+    int i;
+    SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    OSSL_RECORD_TEMPLATE tmpls[SSL_MAX_PIPELINES];
+    unsigned int recversion;
+
+    if (s == NULL)
+        return -1;
+
+    s->rwstate = SSL_NOTHING;
+    tot = s->rlayer.wnum;
+    /*
+     * ensure that if we end up with a smaller value of data to write out
+     * than the original len from a write which didn't complete for
+     * non-blocking I/O and also somehow ended up avoiding the check for
+     * this in tls_write_check_pending/SSL_R_BAD_WRITE_RETRY as it must never be
+     * possible to end up with (len-tot) as a large number that will then
+     * promptly send beyond the end of the users buffer ... so we trap and
+     * report the error in a way the user will notice
+     */
+    for (i = 0; i < iovcnt; i++)
+        len += iov[i].iov_len;
+    if ((len < s->rlayer.wnum)
+        || ((s->rlayer.wpend_tot != 0)
+            && (len < (s->rlayer.wnum + s->rlayer.wpend_tot)))) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_LENGTH);
+        return -1;
+    }
+
+    if (s->early_data_state == SSL_EARLY_DATA_WRITING
+            && !ossl_early_data_count_ok(s, len, 0, 1)) {
+        /* SSLfatal() already called */
+        return -1;
+    }
+
+    s->rlayer.wnum = 0;
+
+    /*
+     * If we are supposed to be sending a KeyUpdate or NewSessionTicket then go
+     * into init unless we have writes pending - in which case we should finish
+     * doing that first.
+     */
+    if (s->rlayer.wpend_tot == 0 && (s->key_update != SSL_KEY_UPDATE_NONE
+                                     || s->ext.extra_tickets_expected > 0))
+        ossl_statem_set_in_init(s, 1);
+
+    /*
+     * When writing early data on the server side we could be "in_init" in
+     * between receiving the EoED and the CF - but we don't want to handle those
+     * messages yet.
+     */
+    if (SSL_in_init(ssl) && !ossl_statem_get_in_handshake(s)
+            && s->early_data_state != SSL_EARLY_DATA_UNAUTH_WRITING) {
+        i = s->handshake_func(ssl);
+        /* SSLfatal() already called */
+        if (i < 0)
+            return i;
+        if (i == 0) {
+            return -1;
+        }
+    }
+
+    i = tls_write_check_pending(s, type, (const unsigned char *)iov, len);
+    if (i < 0) {
+        /* SSLfatal() already called */
+        return i;
+    } else if (i > 0) {
+        /* Retry needed */
+        i = HANDLE_RLAYER_WRITE_RETURN(s,
+                s->rlayer.wrlmethod->retry_write_records(s->rlayer.wrl));
+        if (i <= 0)
+            return i;
+        tot += s->rlayer.wpend_tot;
+        s->rlayer.wpend_tot = 0;
+    } /* else no retry required */
+
+    if (tot == 0) {
+        /*
+         * We've not previously sent any data for this write so memorize
+         * arguments so that we can detect bad write retries later
+         */
+        s->rlayer.wpend_tot = 0;
+        s->rlayer.wpend_type = type;
+        s->rlayer.wpend_buf = (const unsigned char *)iov;
+        s->rlayer.wpend_ret = len;
+    }
+
+    if (tot == len) {           /* done? */
+        *written = tot;
+        return 1;
+    }
+
+    /* If we have an alert to send, lets send it */
+    if (s->s3.alert_dispatch > 0) {
+        i = ssl->method->ssl_dispatch_alert(ssl);
+        if (i <= 0) {
+            /* SSLfatal() already called if appropriate */
+            return i;
+        }
+        /* if it went, fall through and send more stuff */
+    }
+
+    n = (len - tot);
+
+    max_send_fragment = ssl_get_max_send_fragment(s);
+    split_send_fragment = ssl_get_split_send_fragment(s);
+
+    if (max_send_fragment == 0
+            || split_send_fragment == 0
+            || split_send_fragment > max_send_fragment) {
+        /*
+         * We should have prevented this when we set/get the split and max send
+         * fragments so we shouldn't get here
+         */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
+    /*
+     * Some servers hang if initial client hello is larger than 256 bytes
+     * and record version number > TLS 1.0
+     */
+    recversion = (s->version == TLS1_3_VERSION) ? TLS1_2_VERSION : s->version;
+    if (SSL_get_state(ssl) == TLS_ST_CW_CLNT_HELLO
+            && !s->renegotiate
+            && TLS1_get_version(ssl) > TLS1_VERSION
+            && s->hello_retry_request == SSL_HRR_NONE)
+        recversion = TLS1_VERSION;
+
+    for (;;) {
+        size_t tmppipelen, remain;
+        size_t j, lensofar = tot;
+
+        /*
+        * Ask the record layer how it would like to split the amount of data
+        * that we have, and how many of those records it would like in one go.
+        */
+        maxpipes = s->rlayer.wrlmethod->get_max_records(s->rlayer.wrl, type, n,
+                                                        max_send_fragment,
+                                                        &split_send_fragment);
+        /*
+        * If max_pipelines is 0 then this means "undefined" and we default to
+        * whatever the record layer wants to do. Otherwise we use the smallest
+        * value from the number requested by the record layer, and max number
+        * configured by the user.
+        */
+        if (s->max_pipelines > 0 && maxpipes > s->max_pipelines)
+            maxpipes = s->max_pipelines;
+
+        if (maxpipes > SSL_MAX_PIPELINES)
+            maxpipes = SSL_MAX_PIPELINES;
+
+        if (split_send_fragment > max_send_fragment) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
+
+        if (n / maxpipes >= split_send_fragment) {
+            /*
+             * We have enough data to completely fill all available
+             * pipelines
+             */
+            for (j = 0; j < maxpipes; j++) {
+                tmpls[j].type = type;
+                tmpls[j].version = recversion;
+                tmpls[j].buf = (const unsigned char *)iov;
+                tmpls[j].buflen = split_send_fragment;
+                tmpls[j].offset = lensofar;
+                lensofar += split_send_fragment;
+            }
+            /* Remember how much data we are going to be sending */
+            s->rlayer.wpend_tot = maxpipes * split_send_fragment;
+        } else {
+            /* We can partially fill all available pipelines */
+            tmppipelen = n / maxpipes;
+            remain = n % maxpipes;
+            /*
+             * If there is a remainder we add an extra byte to the first few
+             * pipelines
+             */
+            if (remain > 0)
+                tmppipelen++;
+            for (j = 0; j < maxpipes; j++) {
+                tmpls[j].type = type;
+                tmpls[j].version = recversion;
+                tmpls[j].buf = (const unsigned char *)iov;
+                tmpls[j].buflen = tmppipelen;
+                tmpls[j].offset = lensofar;
+                lensofar += tmppipelen;
+                if (j + 1 == remain)
+                    tmppipelen--;
+            }
+            /* Remember how much data we are going to be sending */
+            s->rlayer.wpend_tot = n;
+        }
+
+        i = HANDLE_RLAYER_WRITE_RETURN(s,
+            s->rlayer.wrlmethod->writev_records(s->rlayer.wrl, tmpls, maxpipes));
+        if (i <= 0) {
+            /* SSLfatal() already called if appropriate */
+            s->rlayer.wnum = tot;
+            return i;
+        }
+
+        if (s->rlayer.wpend_tot == n
+                || (type == SSL3_RT_APPLICATION_DATA
+                    && (s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE) != 0)) {
+            *written = tot + s->rlayer.wpend_tot;
+            s->rlayer.wpend_tot = 0;
+            return 1;
+        }
+
+        n -= s->rlayer.wpend_tot;
+        tot += s->rlayer.wpend_tot;
+    }
+}
+
 int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
                                   char *file, int line)
 {

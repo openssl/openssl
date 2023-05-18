@@ -472,6 +472,23 @@ int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len)
     return 1;
 }
 
+int WPACKET_memcpy_iovec(WPACKET *pkt, const OSSL_IOVEC *iov, size_t len,
+                         size_t offset)
+{
+    unsigned char *dest;
+
+    if (len == 0)
+        return 1;
+
+    if (!WPACKET_allocate_bytes(pkt, len, &dest))
+        return 0;
+
+    if (dest != NULL)
+        ossl_iovec_memcpy(dest, iov, len, offset);
+
+    return 1;
+}
+
 int WPACKET_sub_memcpy__(WPACKET *pkt, const void *src, size_t len,
                          size_t lenbytes)
 {

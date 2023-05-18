@@ -67,6 +67,7 @@ struct ossl_record_template_st {
     unsigned int version;
     const unsigned char *buf;
     size_t buflen;
+    size_t offset; /* Offset for OSSL_IOVEC */
 };
 
 typedef struct ossl_record_template_st OSSL_RECORD_TEMPLATE;
@@ -204,6 +205,8 @@ struct ossl_record_method_st {
      */
     int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                          size_t numtempl);
+    int (*writev_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
+                          size_t numtempl);
 
     /*
      * Retry a previous call to write_records. The caller should continue to

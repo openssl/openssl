@@ -18,6 +18,7 @@
 # include <openssl/e_os2.h>
 
 # include "internal/numbers.h"
+# include "internal/iovec.h"
 
 typedef struct {
     /* Pointer to where we are currently reading from */
@@ -890,6 +891,8 @@ int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize);
 
 /* Copy |len| bytes of data from |*src| into the WPACKET. */
 int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len);
+int WPACKET_memcpy_iovec(WPACKET *pkt, const OSSL_IOVEC *iov, size_t len,
+                         size_t offset);
 
 /* Set |len| bytes of data to |ch| into the WPACKET. */
 int WPACKET_memset(WPACKET *pkt, int ch, size_t len);

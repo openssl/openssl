@@ -314,6 +314,7 @@ struct record_functions_st tls_1_3_funcs = {
     tls13_post_process_record,
     tls_get_max_records_default,
     tls_write_records_default,
+    tls_writev_records_default,
     tls_allocate_write_buffers_default,
     tls_initialise_write_packets_default,
     tls13_get_record_type,

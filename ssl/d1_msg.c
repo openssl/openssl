@@ -36,6 +36,37 @@ int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
     return dtls1_write_bytes(sc, type, buf_, len, written);
 }
 
+int dtls1_writev_app_data_bytes(SSL *s, int type, const OSSL_IOVEC *iov,
+                                size_t iovcnt, size_t *written)
+{
+    size_t len = 0;
+    int i;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+
+    if (sc == NULL)
+        return -1;
+
+    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(sc)) {
+        i = sc->handshake_func(s);
+        if (i < 0)
+            return i;
+        if (i == 0) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_SSL_HANDSHAKE_FAILURE);
+            return -1;
+        }
+    }
+
+    for (i = 0; i < iovcnt; i++)
+        len += iov[i].iov_len;
+    if (len > SSL3_RT_MAX_PLAIN_LENGTH) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_DTLS_MESSAGE_TOO_BIG);
+        return -1;
+    }
+
+    return dtls1_writev_bytes(sc, type, iov, len, written);
+}
+
+
 int dtls1_dispatch_alert(SSL *ssl)
 {
     int i, j;

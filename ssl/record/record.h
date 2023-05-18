@@ -150,6 +150,8 @@ int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl);
 __owur size_t ssl3_pending(const SSL *s);
 __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, size_t len,
                             size_t *written);
+__owur int ssl3_writev_bytes(SSL *s, int type, const OSSL_IOVEC *iov,
+                             size_t iovcnt, size_t *written);
 __owur int ssl3_read_bytes(SSL *s, int type, int *recvd_type,
                            unsigned char *buf, size_t len, int peek,
                            size_t *readbytes);
@@ -162,8 +164,12 @@ __owur int dtls1_read_bytes(SSL *s, int type, int *recvd_type,
                             size_t *readbytes);
 __owur int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
                              size_t len, size_t *written);
+__owur int dtls1_writev_bytes(SSL_CONNECTION *s, int type, const OSSL_IOVEC *iov,
+                              size_t len, size_t *written);
 int do_dtls1_write(SSL_CONNECTION *s, int type, const unsigned char *buf,
                    size_t len, size_t *written);
+int do_dtls1_writev(SSL_CONNECTION *s, int type, const OSSL_IOVEC *iov,
+                    size_t len, size_t *written);
 void dtls1_increment_epoch(SSL_CONNECTION *s, int rw);
 int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length);
 

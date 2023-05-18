@@ -79,10 +79,11 @@ struct ssl_async_args {
     SSL *s;
     void *buf;
     size_t num;
-    enum { READFUNC, WRITEFUNC, OTHERFUNC } type;
+    enum { READFUNC, WRITEFUNC, WRITEVFUNC, OTHERFUNC } type;
     union {
         int (*func_read) (SSL *, void *, size_t, size_t *);
         int (*func_write) (SSL *, const void *, size_t, size_t *);
+        int (*func_writev) (SSL *, const OSSL_IOVEC *, size_t, size_t *);
         int (*func_other) (SSL *);
     } f;
 };
@@ -2228,6 +2229,9 @@ static int ssl_io_intern(void *vargs)
         return args->f.func_read(s, buf, num, &sc->asyncrw);
     case WRITEFUNC:
         return args->f.func_write(s, buf, num, &sc->asyncrw);
+    case WRITEVFUNC:
+        return args->f.func_writev(s, (const OSSL_IOVEC *)buf, num,
+                                   &sc->asyncrw);
     case OTHERFUNC:
         return args->f.func_other(s);
     }
@@ -2506,6 +2510,57 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
     }
 }
 
+int ssl_writev_internal(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
+                        size_t *written)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(s))
+        return s->method->ssl_write(s, buf, num, written);
+#endif
+
+    if (sc == NULL)
+        return 0;
+
+    if (sc->handshake_func == NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNINITIALIZED);
+        return -1;
+    }
+
+    if (sc->shutdown & SSL_SENT_SHUTDOWN) {
+        sc->rwstate = SSL_NOTHING;
+        ERR_raise(ERR_LIB_SSL, SSL_R_PROTOCOL_IS_SHUTDOWN);
+        return -1;
+    }
+
+    if (sc->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY
+                || sc->early_data_state == SSL_EARLY_DATA_ACCEPT_RETRY
+                || sc->early_data_state == SSL_EARLY_DATA_READ_RETRY) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+    /* If we are a client and haven't sent the Finished we better do that */
+    ossl_statem_check_finish_init(sc, 1);
+
+    if ((sc->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
+        int ret;
+        struct ssl_async_args args;
+
+        args.s = s;
+        args.buf = (void *)iov;
+        args.num = iovcnt;
+        args.type = WRITEVFUNC;
+        args.f.func_writev = s->method->ssl_writev;
+
+        ret = ssl_start_async_job(s, &args, ssl_io_intern);
+        *written = sc->asyncrw;
+        return ret;
+    } else {
+        return s->method->ssl_writev(s, iov, iovcnt, written);
+    }
+}
+
 ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
 {
     ossl_ssize_t ret;
@@ -2599,6 +2654,37 @@ int SSL_write(SSL *s, const void *buf, int num)
 int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
 {
     int ret = ssl_write_internal(s, buf, num, written);
+
+    if (ret < 0)
+        ret = 0;
+    return ret;
+}
+
+int SSL_writev(SSL *s, const OSSL_IOVEC *iov, int iovcnt)
+{
+    int ret;
+    size_t written;
+
+    if (iovcnt < 0) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_LENGTH);
+        return -1;
+    }
+
+    ret = ssl_writev_internal(s, iov, (size_t)iovcnt, &written);
+
+    /*
+     * The cast is safe here because ret should be <= INT_MAX because num is
+     * <= INT_MAX
+     */
+    if (ret > 0)
+        ret = (int)written;
+
+    return ret;
+}
+
+int SSL_writev_ex(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written)
+{
+    int ret = ssl_writev_internal(s, iov, iovcnt, written);
 
     if (ret < 0)
         ret = 0;

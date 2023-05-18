@@ -4501,6 +4501,21 @@ int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written)
                                       written);
 }
 
+int ssl3_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+
+    if (sc == NULL)
+        return 0;
+
+    clear_sys_error();
+    if (sc->s3.renegotiate)
+        ssl3_renegotiate_check(s, 0);
+
+    return s->method->ssl_writev_bytes(s, SSL3_RT_APPLICATION_DATA, iov,
+                                       iovcnt, written);
+}
+
 static int ssl3_read_internal(SSL *s, void *buf, size_t len, int peek,
                               size_t *readbytes)
 {
