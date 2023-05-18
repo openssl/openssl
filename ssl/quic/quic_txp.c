@@ -302,8 +302,15 @@ static int tx_helper_commit(struct tx_helper *h)
     }
 
     if (h->txp->args.msg_callback != NULL && l > 0) {
-        unsigned char ftype = *h->txn.data;
+        uint64_t ftype;
         int ctype = SSL3_RT_QUIC_FRAME_FULL;
+        PACKET pkt;
+
+        if (!PACKET_buf_init(&pkt, h->txn.data, l)
+                || !ossl_quic_wire_peek_frame_header(&pkt, &ftype)) {
+            tx_helper_end(h, 0);
+            return 0;
+        }
 
         if (ftype == OSSL_QUIC_FRAME_TYPE_PADDING)
             ctype = SSL3_RT_QUIC_FRAME_PADDING;
