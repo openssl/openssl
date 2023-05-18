@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include <openssl/crypto.h>
+#include <openssl/core_names.h>
 #include <openssl/rsa.h>
 #include <openssl/aes.h>
 #include <openssl/err.h>
@@ -447,6 +448,8 @@ static void thread_shared_evp_pkey(void)
     EVP_PKEY_CTX *ctx = NULL;
     int success = 0;
     int i;
+    int padding = RSA_PKCS1_OAEP_PADDING;
+    OSSL_PARAM params[4];
 
     for (i = 0; i < 1 + do_fips; i++) {
         if (i > 0)
@@ -454,10 +457,18 @@ static void thread_shared_evp_pkey(void)
         ctx = EVP_PKEY_CTX_new_from_pkey(multi_libctx, shared_evp_pkey,
                                          i == 0 ? "provider=default"
                                                 : "provider=fips");
+
+        params[0] = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PAD_MODE, &padding);
+        params[1] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST,
+                                                     OSSL_DIGEST_NAME_SHA2_256, 0);
+        params[2] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST,
+                                                     OSSL_DIGEST_NAME_SHA1, 0);
+        params[3] = OSSL_PARAM_construct_end();
+
         if (!TEST_ptr(ctx))
             goto err;
 
-        if (!TEST_int_ge(EVP_PKEY_encrypt_init(ctx), 0)
+        if (!TEST_int_ge(EVP_PKEY_encrypt_init_ex(ctx, params), 0)
                 || !TEST_int_ge(EVP_PKEY_encrypt(ctx, ctbuf, &ctlen,
                                                 (unsigned char *)msg, strlen(msg)),
                                                 0))
