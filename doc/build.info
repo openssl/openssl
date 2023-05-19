@@ -2527,6 +2527,10 @@ DEPEND[html/man3/SSL_get_current_cipher.html]=man3/SSL_get_current_cipher.pod
 GENERATE[html/man3/SSL_get_current_cipher.html]=man3/SSL_get_current_cipher.pod
 DEPEND[man/man3/SSL_get_current_cipher.3]=man3/SSL_get_current_cipher.pod
 GENERATE[man/man3/SSL_get_current_cipher.3]=man3/SSL_get_current_cipher.pod
+DEPEND[html/man3/SSL_get_curve_name.html]=man3/SSL_get_curve_name.pod
+GENERATE[html/man3/SSL_get_curve_name.html]=man3/SSL_get_curve_name.pod
+DEPEND[man/man3/SSL_get_curve_name.3]=man3/SSL_get_curve_name.pod
+GENERATE[man/man3/SSL_get_curve_name.3]=man3/SSL_get_curve_name.pod
 DEPEND[html/man3/SSL_get_default_timeout.html]=man3/SSL_get_default_timeout.pod
 GENERATE[html/man3/SSL_get_default_timeout.html]=man3/SSL_get_default_timeout.pod
 DEPEND[man/man3/SSL_get_default_timeout.3]=man3/SSL_get_default_timeout.pod
@@ -3523,6 +3527,7 @@ html/man3/SSL_get_ciphers.html \
 html/man3/SSL_get_client_random.html \
 html/man3/SSL_get_conn_close_info.html \
 html/man3/SSL_get_current_cipher.html \
+html/man3/SSL_get_curve_name.html \
 html/man3/SSL_get_default_timeout.html \
 html/man3/SSL_get_error.html \
 html/man3/SSL_get_event_timeout.html \
@@ -4158,6 +4163,7 @@ man/man3/SSL_get_ciphers.3 \
 man/man3/SSL_get_client_random.3 \
 man/man3/SSL_get_conn_close_info.3 \
 man/man3/SSL_get_current_cipher.3 \
+man/man3/SSL_get_curve_name.3 \
 man/man3/SSL_get_default_timeout.3 \
 man/man3/SSL_get_error.3 \
 man/man3/SSL_get_event_timeout.3 \

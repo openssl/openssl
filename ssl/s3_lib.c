@@ -5022,6 +5022,22 @@ int ssl_encapsulate(SSL_CONNECTION *s, EVP_PKEY *pubkey,
     return rv;
 }
 
+const char *SSL_get_curve_name(SSL *s)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    unsigned int id;
+
+    if (sc == NULL)
+        return NULL;
+
+    if (SSL_CONNECTION_IS_TLS13(sc) && sc->s3.did_kex)
+        id = sc->s3.group_id;
+    else
+        id = sc->session->kex_group;
+
+    return tls1_group_id2name(s->ctx, id);
+}
+
 const char *SSL_group_to_name(SSL *s, int nid) {
     int group_id = 0;
     const TLS_GROUP_INFO *cinf = NULL;
