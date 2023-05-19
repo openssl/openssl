@@ -267,6 +267,14 @@ B<OSSL_PARAM_OCTET_STRING>), but this is in no way mandatory.
 
 =item *
 
+If I<data> for a B<OSSL_PARAM_OCTET_STRING> or a
+B<OSSL_PARAM_UTF8_STRING> is NULL, the I<responder> should
+set I<return_size> to the size of the item to be returned
+and return success. Later the responder will be called again
+with I<data> pointing at the place for the value to be put.
+
+=item *
+
 If a I<responder> finds that some data sizes are too small for the
 requested data, it must set I<return_size> for each such
 B<OSSL_PARAM> item to the minimum required size, and eventually return
