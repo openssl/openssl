@@ -755,6 +755,16 @@ const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t group_id)
     return NULL;
 }
 
+const char *tls1_group_id2name(SSL_CTX *ctx, uint16_t group_id)
+{
+    const TLS_GROUP_INFO *tls_group_info = tls1_group_id_lookup(ctx, group_id);
+
+    if (tls_group_info == NULL)
+        return NULL;
+
+    return tls_group_info->tlsname;
+}
+
 int tls1_group_id2nid(uint16_t group_id, int include_unknown)
 {
     size_t i;

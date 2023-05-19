@@ -2767,6 +2767,7 @@ __owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CONNECTION *s);
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
 __owur const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t curve_id);
+__owur const char *tls1_group_id2name(SSL_CTX *ctx, uint16_t group_id);
 __owur int tls1_group_id2nid(uint16_t group_id, int include_unknown);
 __owur uint16_t tls1_nid2group_id(int nid);
 __owur int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
