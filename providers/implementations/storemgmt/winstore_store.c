@@ -23,7 +23,9 @@
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "file_store_local.h"
-
+#ifdef __CYGWIN__
+#include <Windows.h>
+#endif
 #include <wincrypt.h>
 
 enum {
