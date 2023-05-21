@@ -48,6 +48,11 @@
 /include/openssl/x509.h
 /include/openssl/x509v3.h
 /include/openssl/x509_vfy.h
+/include/openssl/core_names.h
+/include/internal/param_names.h
+
+# Auto generated parameter name files
+/crypto/params_idx.c
 
 # Auto generated doc files
 doc/man1/openssl-*.pod
