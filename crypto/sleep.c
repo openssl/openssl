@@ -12,6 +12,7 @@
 
 /* system-specific variants defining OSSL_sleep() */
 #if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
+#include <unistd.h>
 
 void OSSL_sleep(uint64_t millis)
 {
@@ -36,7 +37,11 @@ void OSSL_sleep(uint64_t millis)
     usleep(millis * 1000);
 #  endif
 # else
-    usleep(millis * 1000);
+    unsigned int s = (unsigned int)(millis / 1000);
+    unsigned int us = (unsigned int)((millis % 1000) * 1000);
+
+    sleep(s);
+    usleep(us);
 # endif
 }
 #elif defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
