@@ -76,14 +76,14 @@ void test_close_streams(void)
 #endif
 }
 
-static ossl_inline void lock(void)
+static ossl_inline void test_io_lock(void)
 {
 #if defined(OPENSSL_THREADS)
     OPENSSL_assert(CRYPTO_THREAD_write_lock(io_lock) > 0);
 #endif
 }
 
-static ossl_inline void unlock(void)
+static ossl_inline void test_io_unlock(void)
 {
 #if defined(OPENSSL_THREADS)
     CRYPTO_THREAD_unlock(io_lock);
@@ -94,9 +94,9 @@ int test_vprintf_stdout(const char *fmt, va_list ap)
 {
     int r;
 
-    lock();
+    test_io_lock();
     r = BIO_vprintf(bio_out, fmt, ap);
-    unlock();
+    test_io_unlock();
 
     return r;
 }
@@ -105,9 +105,9 @@ int test_vprintf_stderr(const char *fmt, va_list ap)
 {
     int r;
 
-    lock();
+    test_io_lock();
     r = BIO_vprintf(bio_err, fmt, ap);
-    unlock();
+    test_io_unlock();
 
     return r;
 }
@@ -116,9 +116,9 @@ int test_flush_stdout(void)
 {
     int r;
 
-    lock();
+    test_io_lock();
     r = BIO_flush(bio_out);
-    unlock();
+    test_io_unlock();
 
     return r;
 }
@@ -127,9 +127,9 @@ int test_flush_stderr(void)
 {
     int r;
 
-    lock();
+    test_io_lock();
     r = BIO_flush(bio_err);
-    unlock();
+    test_io_unlock();
 
     return r;
 }
@@ -138,9 +138,9 @@ int test_vprintf_tapout(const char *fmt, va_list ap)
 {
     int r;
 
-    lock();
+    test_io_lock();
     r = BIO_vprintf(tap_out, fmt, ap);
-    unlock();
+    test_io_unlock();
 
     return r;
 }
@@ -149,9 +149,9 @@ int test_vprintf_taperr(const char *fmt, va_list ap)
 {
     int r;
 
-    lock();
+    test_io_lock();
     r = BIO_vprintf(tap_err, fmt, ap);
-    unlock();
+    test_io_unlock();
 
     return r;
 }
@@ -160,9 +160,9 @@ int test_flush_tapout(void)
 {
     int r;
 
-    lock();
+    test_io_lock();
     r = BIO_flush(tap_out);
-    unlock();
+    test_io_unlock();
 
     return r;
 }
@@ -171,9 +171,9 @@ int test_flush_taperr(void)
 {
     int r;
 
-    lock();
+    test_io_lock();
     r = BIO_flush(tap_err);
-    unlock();
+    test_io_unlock();
 
     return r;
 }
