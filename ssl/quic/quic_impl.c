@@ -1089,13 +1089,13 @@ static int create_channel(QUIC_CONNECTION *qc)
 {
     QUIC_CHANNEL_ARGS args = {0};
 
-    args.libctx           = qc->ssl.ctx->libctx;
-    args.propq            = qc->ssl.ctx->propq;
-    args.is_server        = qc->as_server;
-    args.tls              = qc->tls;
-    args.mutex            = qc->mutex;
-    args.now_cb           = qc->override_now_cb;
-    args.now_cb_arg       = qc->override_now_cb_arg;
+    args.libctx     = qc->ssl.ctx->libctx;
+    args.propq      = qc->ssl.ctx->propq;
+    args.is_server  = qc->as_server;
+    args.tls        = qc->tls;
+    args.mutex      = qc->mutex;
+    args.now_cb     = qc->override_now_cb;
+    args.now_cb_arg = qc->override_now_cb_arg;
 
     qc->ch = ossl_quic_channel_new(&args);
     if (qc->ch == NULL)

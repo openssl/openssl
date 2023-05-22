@@ -347,13 +347,13 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
     if ((ch = OPENSSL_zalloc(sizeof(*ch))) == NULL)
         return NULL;
 
-    ch->libctx           = args->libctx;
-    ch->propq            = args->propq;
-    ch->is_server        = args->is_server;
-    ch->tls              = args->tls;
-    ch->mutex            = args->mutex;
-    ch->now_cb           = args->now_cb;
-    ch->now_cb_arg       = args->now_cb_arg;
+    ch->libctx      = args->libctx;
+    ch->propq       = args->propq;
+    ch->is_server   = args->is_server;
+    ch->tls         = args->tls;
+    ch->mutex       = args->mutex;
+    ch->now_cb      = args->now_cb;
+    ch->now_cb_arg  = args->now_cb_arg;
 
     if (!ch_init(ch)) {
         OPENSSL_free(ch);
