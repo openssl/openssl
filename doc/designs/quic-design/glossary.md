@@ -129,6 +129,10 @@ usage in which API calls must not be made concurrently.
 **QCSO:** QUIC Connection SSL Object. This is an SSL object created using
 `SSL_new` using a QUIC method.
 
+**QCTX**: QUIC Context. This is a utility object defined within the QUIC APL
+which helps to unwrap a SSL object pointer (a QCSO or QSSO) into the relevant
+structure pointers such as `QUIC_CONNECTION` or `QUIC_XSO`.
+
 **QRL:** QUIC record layer. Refers collectively to the QRX and QTX.
 
 **QRX:** QUIC Record Layer RX. Receives incoming datagrams and decrypts the
