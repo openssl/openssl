@@ -1290,7 +1290,7 @@ static int ssl_print_certificate(BIO *bio, const SSL_CONNECTION *sc, int indent,
         X509_free(x);
         x = NULL;
     }
-    if (!x)
+    if (x ==  NULL)
         BIO_puts(bio, "<UNPARSEABLE CERTIFICATE>\n");
     else {
         BIO_puts(bio, "\n------details-----\n");
