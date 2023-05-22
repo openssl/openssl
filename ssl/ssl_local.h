@@ -36,6 +36,7 @@
 # include "internal/bio.h"
 # include "internal/ktls.h"
 # include "internal/time.h"
+# include "internal/ssl.h"
 # include "record/record.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
@@ -798,9 +799,6 @@ typedef struct {
 # define TLS_GROUP_ONLY_FOR_TLS1_3  0x00000010U
 
 # define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE|TLS_GROUP_ONLY_FOR_TLS1_3)
-
-typedef void (*ossl_msg_cb)(int write_p, int version, int content_type,
-                            const void *buf, size_t len, SSL *ssl, void *arg);
 
 struct ssl_ctx_st {
     OSSL_LIB_CTX *libctx;
