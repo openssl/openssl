@@ -340,6 +340,11 @@ static int ends_with_dirsep(const char *path)
     return *path == '/';
 }
 
+static int sk_strcmp(const char * const *a, const char * const *b)
+{
+    return strcmp(*a, *b);
+}
+
 /*
  * Process a directory; return number of errors found.
  */
@@ -369,7 +374,7 @@ static int do_dir(const char *dirname, enum Hash h)
     if (verbose)
         BIO_printf(bio_out, "Doing %s\n", dirname);
 
-    if ((files = sk_OPENSSL_STRING_new_null()) == NULL) {
+    if ((files = sk_OPENSSL_STRING_new(sk_strcmp)) == NULL) {
         BIO_printf(bio_err, "Skipping %s, out of memory\n", dirname);
         errs = 1;
         goto err;
