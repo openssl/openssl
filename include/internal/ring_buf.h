@@ -102,18 +102,16 @@ static ossl_inline size_t ring_buf_push(struct ring_buf *r,
                                         const unsigned char *buf,
                                         size_t buf_len)
 {
-    size_t pushed = 0, avail, idx, l, i;
+    size_t pushed = 0, avail, idx, l;
     unsigned char *start = r->start;
 
-    for (i = 0;; ++i) {
+    for (;;) {
         avail = ring_buf_avail(r);
         if (buf_len > avail)
             buf_len = avail;
 
         if (buf_len == 0)
             break;
-
-        assert(i < 2);
 
         idx = r->head_offset % r->alloc;
         l = r->alloc - idx;
