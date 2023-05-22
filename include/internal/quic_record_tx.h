@@ -60,7 +60,7 @@ void ossl_qtx_set_mutator(OSSL_QTX *qtx, ossl_mutate_packet_cb mutatecb,
 
 /* Setters for the msg_callback and the msg_callback_arg */
 void ossl_qtx_set_msg_callback(OSSL_QTX *qtx, ossl_msg_cb msg_callback,
-                               SSL *msg_callback_s);
+                               SSL *msg_callback_ssl);
 void ossl_qtx_set_msg_callback_arg(OSSL_QTX *qtx, void *msg_callback_arg);
 
 /*

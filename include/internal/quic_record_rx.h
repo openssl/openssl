@@ -62,7 +62,7 @@ void ossl_qrx_free(OSSL_QRX *qrx);
 
 /* Setters for the msg_callback and msg_callback_arg */
 void ossl_qrx_set_msg_callback(OSSL_QRX *qrx, ossl_msg_cb msg_callback,
-                               SSL *msg_callback_s);
+                               SSL *msg_callback_ssl);
 void ossl_qrx_set_msg_callback_arg(OSSL_QRX *qrx,
                                    void *msg_callback_arg);
 

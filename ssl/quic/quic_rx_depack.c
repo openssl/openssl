@@ -1107,7 +1107,7 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
             }
 
             ch->msg_callback(0, OSSL_QUIC1_VERSION, ctype, sof, framelen,
-                             ch->msg_callback_s, ch->msg_callback_arg);
+                             ch->msg_callback_ssl, ch->msg_callback_arg);
         }
     }
 
