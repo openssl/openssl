@@ -150,7 +150,7 @@ struct ossl_qrx_st {
     /* Message callback related arguments */
     ossl_msg_cb msg_callback;
     void *msg_callback_arg;
-    SSL *msg_callback_s;
+    SSL *msg_callback_ssl;
 };
 
 static void qrx_on_rx(QUIC_URXE *urxe, void *arg);
@@ -234,7 +234,8 @@ void ossl_qrx_inject_urxe(OSSL_QRX *qrx, QUIC_URXE *urxe)
 
     if (qrx->msg_callback != NULL)
         qrx->msg_callback(0, OSSL_QUIC1_VERSION, SSL3_RT_QUIC_DATAGRAM, urxe + 1,
-                          urxe->data_len, qrx->msg_callback_s, qrx->msg_callback_arg);
+                          urxe->data_len, qrx->msg_callback_ssl,
+                          qrx->msg_callback_arg);
 }
 
 static void qrx_on_rx(QUIC_URXE *urxe, void *arg)
@@ -845,7 +846,7 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
 
     if (qrx->msg_callback != NULL)
         qrx->msg_callback(0, OSSL_QUIC1_VERSION, SSL3_RT_QUIC_PACKET, sop,
-                          eop - sop - rxe->hdr.len, qrx->msg_callback_s,
+                          eop - sop - rxe->hdr.len, qrx->msg_callback_ssl,
                           qrx->msg_callback_arg);
 
     /*
@@ -1206,10 +1207,10 @@ uint64_t ossl_qrx_get_max_forged_pkt_count(OSSL_QRX *qrx,
 }
 
 void ossl_qrx_set_msg_callback(OSSL_QRX *qrx, ossl_msg_cb msg_callback,
-                               SSL *msg_callback_s)
+                               SSL *msg_callback_ssl)
 {
     qrx->msg_callback = msg_callback;
-    qrx->msg_callback_s = msg_callback_s;
+    qrx->msg_callback_ssl = msg_callback_ssl;
 }
 
 void ossl_qrx_set_msg_callback_arg(OSSL_QRX *qrx, void *msg_callback_arg)

@@ -2512,14 +2512,14 @@ int ossl_quic_channel_replace_local_cid(QUIC_CHANNEL *ch,
 
 void ossl_quic_channel_set_msg_callback(QUIC_CHANNEL *ch,
                                         ossl_msg_cb msg_callback,
-                                        SSL *msg_callback_s)
+                                        SSL *msg_callback_ssl)
 {
     ch->msg_callback = msg_callback;
-    ch->msg_callback_s = msg_callback_s;
-    ossl_qtx_set_msg_callback(ch->qtx, msg_callback, msg_callback_s);
+    ch->msg_callback_ssl = msg_callback_ssl;
+    ossl_qtx_set_msg_callback(ch->qtx, msg_callback, msg_callback_ssl);
     ossl_quic_tx_packetiser_set_msg_callback(ch->txp, msg_callback,
-                                             msg_callback_s);
-    ossl_qrx_set_msg_callback(ch->qrx, msg_callback, msg_callback_s);
+                                             msg_callback_ssl);
+    ossl_qrx_set_msg_callback(ch->qrx, msg_callback, msg_callback_ssl);
 }
 
 void ossl_quic_channel_set_msg_callback_arg(QUIC_CHANNEL *ch,

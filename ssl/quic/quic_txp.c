@@ -73,7 +73,7 @@ struct ossl_quic_tx_packetiser_st {
     /* Message callback related arguments */
     ossl_msg_cb msg_callback;
     void *msg_callback_arg;
-    SSL *msg_callback_s;
+    SSL *msg_callback_ssl;
 
 };
 
@@ -325,7 +325,7 @@ static int tx_helper_commit(struct tx_helper *h)
             ctype = SSL3_RT_QUIC_FRAME_HEADER;
 
         h->txp->msg_callback(1, OSSL_QUIC1_VERSION, ctype, h->txn.data, l,
-                             h->txp->msg_callback_s,
+                             h->txp->msg_callback_ssl,
                              h->txp->msg_callback_arg);
     }
 
@@ -2385,10 +2385,10 @@ int ossl_quic_tx_packetiser_schedule_conn_close(OSSL_QUIC_TX_PACKETISER *txp,
 
 void ossl_quic_tx_packetiser_set_msg_callback(OSSL_QUIC_TX_PACKETISER *txp,
                                               ossl_msg_cb msg_callback,
-                                              SSL *msg_callback_s)
+                                              SSL *msg_callback_ssl)
 {
     txp->msg_callback = msg_callback;
-    txp->msg_callback_s = msg_callback_s;
+    txp->msg_callback_ssl = msg_callback_ssl;
 }
 
 void ossl_quic_tx_packetiser_set_msg_callback_arg(OSSL_QUIC_TX_PACKETISER *txp,

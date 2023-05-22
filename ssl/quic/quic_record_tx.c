@@ -98,7 +98,7 @@ struct ossl_qtx_st {
     /* Message callback related arguments */
     ossl_msg_cb msg_callback;
     void *msg_callback_arg;
-    SSL *msg_callback_s;
+    SSL *msg_callback_ssl;
 };
 
 /* Instantiates a new QTX. */
@@ -452,7 +452,7 @@ static int qtx_write_hdr(OSSL_QTX *qtx, const QUIC_PKT_HDR *hdr, TXE *txe,
 
     if (qtx->msg_callback != NULL)
         qtx->msg_callback(1, OSSL_QUIC1_VERSION, SSL3_RT_QUIC_PACKET, data, l,
-                          qtx->msg_callback_s, qtx->msg_callback_arg);
+                          qtx->msg_callback_ssl, qtx->msg_callback_arg);
 
     txe->data_len += l;
 
@@ -911,7 +911,7 @@ int ossl_qtx_flush_net(OSSL_QTX *qtx)
             if (qtx->msg_callback != NULL)
                 qtx->msg_callback(1, OSSL_QUIC1_VERSION, SSL3_RT_QUIC_DATAGRAM,
                                 msg[i].data, msg[i].data_len,
-                                qtx->msg_callback_s,
+                                qtx->msg_callback_ssl,
                                 qtx->msg_callback_arg);
             qtx_pending_to_free(qtx);
         }
@@ -1004,10 +1004,10 @@ uint64_t ossl_qtx_get_max_epoch_pkt_count(OSSL_QTX *qtx, uint32_t enc_level)
 }
 
 void ossl_qtx_set_msg_callback(OSSL_QTX *qtx, ossl_msg_cb msg_callback,
-                               SSL *msg_callback_s)
+                               SSL *msg_callback_ssl)
 {
     qtx->msg_callback = msg_callback;
-    qtx->msg_callback_s = msg_callback_s;
+    qtx->msg_callback_ssl = msg_callback_ssl;
 }
 
 void ossl_qtx_set_msg_callback_arg(OSSL_QTX *qtx, void *msg_callback_arg)

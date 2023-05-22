@@ -96,7 +96,7 @@ struct quic_channel_st {
     /* Message callback related arguments */
     ossl_msg_cb                     msg_callback;
     void                            *msg_callback_arg;
-    SSL                             *msg_callback_s;
+    SSL                             *msg_callback_ssl;
 
     /*
      * Send and receive parts of the crypto streams.
