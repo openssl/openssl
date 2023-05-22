@@ -425,7 +425,7 @@ struct quic_pkt_hdr_ptrs_st {
  * If partial is 0, the input is assumed to have already had header protection
  * removed, and all header fields are decoded.
  *
- * If nodata is 1, the input assumed to have no payload data in it. Otherwise
+ * If nodata is 1, the input is assumed to have no payload data in it. Otherwise
  * payload data must be present.
  *
  * On success, the logical decode of the packet header is written to *hdr.
