@@ -207,7 +207,7 @@ static int test_version(void)
     return testresult;
 }
 
-#ifndef OPENSSL_NO_SSL_TRACE
+#if !defined(OPENSSL_NO_SSL_TRACE) && !defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_ZLIB)
 static int compare_with_file(BIO *membio)
 {
     BIO *file = NULL;
@@ -358,7 +358,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_quic_write_read, 2);
     ADD_TEST(test_ciphersuites);
     ADD_TEST(test_version);
-#ifndef OPENSSL_NO_SSL_TRACE
+#if !defined(OPENSSL_NO_SSL_TRACE) && !defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_ZLIB)
     ADD_TEST(test_ssl_trace);
 #endif
 
