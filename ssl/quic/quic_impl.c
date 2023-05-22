@@ -444,8 +444,9 @@ void ossl_quic_free(SSL *s)
     /* Note: SSL_free calls OPENSSL_free(qc) for us */
 
     SSL_free(ctx.qc->tls);
+    quic_unlock(ctx.qc); /* tsan doesn't like freeing locked mutexes */
 #if defined(OPENSSL_THREADS)
-    ossl_crypto_mutex_free(&ctx.qc->mutex); /* freed while still locked */
+    ossl_crypto_mutex_free(&ctx.qc->mutex);
 #endif
 }
 
