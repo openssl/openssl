@@ -170,7 +170,7 @@ The pseudo content type B<SSL3_RT_INNER_CONTENT_TYPE> was added in OpenSSL 1.1.1
 
 The pseudo content types B<SSL3_RT_QUIC_DATAGRAM>, B<SSL3_RT_QUIC_PACKET>,
 B<SSL3_RT_QUIC_FRAME_FULL>, B<SSL3_RT_QUIC_FRAME_HEADER> and
-B<SSL3_RT_QUIC_FRAME_PADDING> where added in OpenSSL 3.2.
+B<SSL3_RT_QUIC_FRAME_PADDING> were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
