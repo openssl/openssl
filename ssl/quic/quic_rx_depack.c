@@ -1073,7 +1073,7 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
             } else if (OSSL_QUIC_FRAME_TYPE_IS_STREAM(frame_type)
                     || frame_type == OSSL_QUIC_FRAME_TYPE_CRYPTO) {
                 ctype = SSL3_RT_QUIC_FRAME_HEADER;
-                framelen -= datalen;
+                framelen -= (size_t)datalen;
             }
 
             ch->msg_callback(0, OSSL_QUIC1_VERSION, ctype, sof, framelen,
