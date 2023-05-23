@@ -66,6 +66,7 @@ static int ch_on_crypto_send(const unsigned char *buf, size_t buf_len,
 static OSSL_TIME get_time(void *arg);
 static uint64_t get_stream_limit(int uni, void *arg);
 static int rx_early_validate(QUIC_PN pn, int pn_space, void *arg);
+static void rxku_detected(QUIC_PN pn, void *arg);
 static int ch_retry(QUIC_CHANNEL *ch,
                     const unsigned char *retry_token,
                     size_t retry_token_len,
@@ -85,6 +86,8 @@ static void ch_default_packet_handler(QUIC_URXE *e, void *arg);
 static int ch_server_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
                                  const QUIC_CONN_ID *peer_scid,
                                  const QUIC_CONN_ID *peer_dcid);
+static void ch_on_txp_ack_tx(const OSSL_QUIC_FRAME_ACK *ack, uint32_t pn_space,
+                             void *arg);
 
 static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
 {
@@ -184,6 +187,7 @@ static int ch_init(QUIC_CHANNEL *ch)
                                   ch->cc_method, ch->cc_data)) == NULL)
         goto err;
 
+
     if (!ossl_quic_stream_map_init(&ch->qsm, get_stream_limit, ch,
                                    &ch->max_streams_bidi_rxfc,
                                    &ch->max_streams_uni_rxfc,
@@ -221,6 +225,8 @@ static int ch_init(QUIC_CHANNEL *ch)
     if (ch->txp == NULL)
         goto err;
 
+    ossl_quic_tx_packetiser_set_ack_tx_cb(ch->txp, ch_on_txp_ack_tx, ch);
+
     if ((ch->demux = ossl_quic_demux_new(/*BIO=*/NULL,
                                          /*Short CID Len=*/rx_short_cid_len,
                                          get_time, ch)) == NULL)
@@ -247,6 +253,11 @@ static int ch_init(QUIC_CHANNEL *ch)
     if (!ossl_qrx_set_early_validation_cb(ch->qrx,
                                           rx_early_validate,
                                           ch))
+        goto err;
+
+    if (!ossl_qrx_set_key_update_cb(ch->qrx,
+                                    rxku_detected,
+                                    ch))
         goto err;
 
     if (!ch->is_server && !ossl_qrx_add_dst_conn_id(ch->qrx, &txp_args.cur_scid))
@@ -510,6 +521,213 @@ static int rx_early_validate(QUIC_PN pn, int pn_space, void *arg)
         return 0;
 
     return 1;
+}
+
+/*
+ * Triggers a TXKU (whether spontaneous or solicited). Does not check whether
+ * spontaneous TXKU is currently allowed.
+ */
+QUIC_NEEDS_LOCK
+static void ch_trigger_txku(QUIC_CHANNEL *ch)
+{
+    uint64_t next_pn
+        = ossl_quic_tx_packetiser_get_next_pn(ch->txp, QUIC_PN_SPACE_APP);
+
+    if (!ossl_quic_pn_valid(next_pn)
+        || !ossl_qtx_trigger_key_update(ch->qtx)) {
+        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
+                                               "key update");
+        return;
+    }
+
+    ch->txku_in_progress    = 1;
+    ch->txku_pn             = next_pn;
+    ch->rxku_expected       = ch->ku_locally_initiated;
+}
+
+QUIC_NEEDS_LOCK
+static int txku_in_progress(QUIC_CHANNEL *ch)
+{
+    if (ch->txku_in_progress
+        && ossl_ackm_get_largest_acked(ch->ackm, QUIC_PN_SPACE_APP) >= ch->txku_pn) {
+        OSSL_TIME pto = ossl_ackm_get_pto_duration(ch->ackm);
+
+        /*
+         * RFC 9001 s. 6.5: Endpoints SHOULD wait three times the PTO before
+         * initiating a key update after receiving an acknowledgment that
+         * confirms that the previous key update was received.
+         *
+         * Note that by the above wording, this period starts from when we get
+         * the ack for a TXKU-triggering packet, not when the TXKU is initiated.
+         * So we defer TXKU cooldown deadline calculation to this point.
+         */
+        ch->txku_in_progress        = 0;
+        ch->txku_cooldown_deadline  = ossl_time_add(get_time(ch),
+                                                    ossl_time_multiply(pto, 3));
+    }
+
+    return ch->txku_in_progress;
+}
+
+QUIC_NEEDS_LOCK
+static int txku_allowed(QUIC_CHANNEL *ch)
+{
+    return ch->tx_enc_level == QUIC_ENC_LEVEL_1RTT /* Sanity check. */
+        /* Strict RFC 9001 criterion for TXKU. */
+        && ch->handshake_confirmed
+        && !txku_in_progress(ch);
+}
+
+QUIC_NEEDS_LOCK
+static int txku_recommendable(QUIC_CHANNEL *ch)
+{
+    if (!txku_allowed(ch))
+        return 0;
+
+    return
+        /* Recommended RFC 9001 criterion for TXKU. */
+        ossl_time_compare(get_time(ch), ch->txku_cooldown_deadline) >= 0
+        /* Some additional sensible criteria. */
+        && !ch->rxku_in_progress
+        && !ch->rxku_pending_confirm;
+}
+
+QUIC_NEEDS_LOCK
+static int txku_desirable(QUIC_CHANNEL *ch)
+{
+    uint64_t cur_pkt_count, max_pkt_count;
+    const uint32_t enc_level = QUIC_ENC_LEVEL_1RTT;
+
+    /* Check AEAD limit to determine if we should perform a spontaneous TXKU. */
+    cur_pkt_count = ossl_qtx_get_cur_epoch_pkt_count(ch->qtx, enc_level);
+    max_pkt_count = ossl_qtx_get_max_epoch_pkt_count(ch->qtx, enc_level);
+
+    return cur_pkt_count >= max_pkt_count / 2;
+}
+
+QUIC_NEEDS_LOCK
+static void ch_maybe_trigger_spontaneous_txku(QUIC_CHANNEL *ch)
+{
+    if (!txku_recommendable(ch) || !txku_desirable(ch))
+        return;
+
+    ch->ku_locally_initiated = 1;
+    ch_trigger_txku(ch);
+}
+
+QUIC_NEEDS_LOCK
+static int rxku_allowed(QUIC_CHANNEL *ch)
+{
+    /*
+     * RFC 9001 s. 6.1: An endpoint MUST NOT initiate a key update prior to
+     * having confirmed the handshake (Section 4.1.2).
+     *
+     * RFC 9001 s. 6.1: An endpoint MUST NOT initiate a subsequent key update
+     * unless it has received an acknowledgment for a packet that was sent
+     * protected with keys from the current key phase.
+     *
+     * RFC 9001 s. 6.2: If an endpoint detects a second update before it has
+     * sent any packets with updated keys containing an acknowledgment for the
+     * packet that initiated the key update, it indicates that its peer has
+     * updated keys twice without awaiting confirmation. An endpoint MAY treat
+     * such consecutive key updates as a connection error of type
+     * KEY_UPDATE_ERROR.
+     */
+    return ch->handshake_confirmed && !ch->rxku_pending_confirm;
+}
+
+/*
+ * Called when the QRX detects a new RX key update event.
+ */
+enum rxku_decision {
+    DECISION_RXKU_ONLY,
+    DECISION_PROTOCOL_VIOLATION,
+    DECISION_SOLICITED_TXKU
+};
+
+/* Called when the QRX detects a key update has occurred. */
+QUIC_NEEDS_LOCK
+static void rxku_detected(QUIC_PN pn, void *arg)
+{
+    QUIC_CHANNEL *ch = arg;
+    enum rxku_decision decision;
+    OSSL_TIME pto;
+
+    /*
+     * Note: rxku_in_progress is always 0 here as an RXKU cannot be detected
+     * when we are still in UPDATING or COOLDOWN (see quic_record_rx.h).
+     */
+    assert(!ch->rxku_in_progress);
+
+    if (!rxku_allowed(ch))
+        /* Is RXKU even allowed at this time? */
+        decision = DECISION_PROTOCOL_VIOLATION;
+
+    else if (ch->ku_locally_initiated)
+        /*
+         * If this key update was locally initiated (meaning that this detected
+         * RXKU event is a result of our own spontaneous TXKU), we do not
+         * trigger another TXKU; after all, to do so would result in an infinite
+         * ping-pong of key updates. We still process it as an RXKU.
+         */
+        decision = DECISION_RXKU_ONLY;
+
+    else
+        /*
+         * Otherwise, a peer triggering a KU means we have to trigger a KU also.
+         */
+        decision = DECISION_SOLICITED_TXKU;
+
+    if (decision == DECISION_PROTOCOL_VIOLATION) {
+        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_KEY_UPDATE_ERROR,
+                                               0, "RX key update again too soon");
+        return;
+    }
+
+    pto = ossl_ackm_get_pto_duration(ch->ackm);
+
+    ch->ku_locally_initiated        = 0;
+    ch->rxku_in_progress            = 1;
+    ch->rxku_pending_confirm        = 1;
+    ch->rxku_trigger_pn             = pn;
+    ch->rxku_update_end_deadline    = ossl_time_add(get_time(ch), pto);
+
+    if (decision == DECISION_SOLICITED_TXKU)
+        /* NOT gated by usual txku_allowed() */
+        ch_trigger_txku(ch);
+}
+
+/* Called per tick to handle RXKU timer events. */
+QUIC_NEEDS_LOCK
+static void ch_rxku_tick(QUIC_CHANNEL *ch)
+{
+    if (!ch->rxku_in_progress
+        || ossl_time_compare(get_time(ch), ch->rxku_update_end_deadline) < 0)
+        return;
+
+    ch->rxku_update_end_deadline    = ossl_time_infinite();
+    ch->rxku_in_progress            = 0;
+
+    if (!ossl_qrx_key_update_timeout(ch->qrx, /*normal=*/1))
+        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
+                                               "RXKU cooldown internal error");
+}
+
+QUIC_NEEDS_LOCK
+static void ch_on_txp_ack_tx(const OSSL_QUIC_FRAME_ACK *ack, uint32_t pn_space,
+                             void *arg)
+{
+    QUIC_CHANNEL *ch = arg;
+
+    if (pn_space != QUIC_PN_SPACE_APP || !ch->rxku_pending_confirm
+        || !ossl_quic_frame_ack_contains_pn(ack, ch->rxku_trigger_pn))
+        return;
+
+    /*
+     * Defer clearing rxku_pending_confirm until TXP generate call returns
+     * successfully.
+     */
+    ch->rxku_pending_confirm_done = 1;
 }
 
 /*
@@ -1317,6 +1535,9 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
         }
     }
 
+    /* Handle RXKU timeouts. */
+    ch_rxku_tick(ch);
+
     /* Handle any incoming data from network. */
     ch_rx_pre(ch);
 
@@ -1655,6 +1876,11 @@ static int ch_tx(QUIC_CHANNEL *ch)
         ch->conn_close_queued = 0;
     }
 
+    /* Do TXKU if we need to. */
+    ch_maybe_trigger_spontaneous_txku(ch);
+
+    ch->rxku_pending_confirm_done = 0;
+
     /*
      * Send a packet, if we need to. Best effort. The TXP consults the CC and
      * applies any limitations imposed by it, so we don't need to do it here.
@@ -1677,6 +1903,9 @@ static int ch_tx(QUIC_CHANNEL *ch)
             ch_update_idle(ch);
             ch->have_sent_ack_eliciting_since_rx = 1;
         }
+
+        if (ch->rxku_pending_confirm_done)
+            ch->rxku_pending_confirm = 0;
 
         ch_update_ping_deadline(ch);
         break;
@@ -1754,6 +1983,10 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
     if (!ossl_time_is_infinite(ch->ping_deadline))
         deadline = ossl_time_min(deadline,
                                  ch->ping_deadline);
+
+    /* When does the RXKU process complete? */
+    if (ch->rxku_in_progress)
+        deadline = ossl_time_min(deadline, ch->rxku_update_end_deadline);
 
     return deadline;
 }
