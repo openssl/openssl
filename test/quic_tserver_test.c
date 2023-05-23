@@ -165,7 +165,8 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
         goto err;
 
     if (use_fake_time)
-        ossl_quic_conn_set_override_now_cb(c_ssl, fake_now, NULL);
+        if (!TEST_true(ossl_quic_conn_set_override_now_cb(c_ssl, fake_now, NULL)))
+            goto err;
 
     /* 0 is a success for SSL_set_alpn_protos() */
     if (!TEST_false(SSL_set_alpn_protos(c_ssl, alpn, sizeof(alpn))))
