@@ -15,6 +15,18 @@
 
 OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
 
+int ossl_quic_frame_ack_contains_pn(const OSSL_QUIC_FRAME_ACK *ack, QUIC_PN pn)
+{
+    size_t i;
+
+    for (i = 0; i < ack->num_ack_ranges; ++i)
+        if (pn >= ack->ack_ranges[i].start
+            && pn <= ack->ack_ranges[i].end)
+            return 1;
+
+    return 0;
+}
+
 /*
  * QUIC Wire Format Encoding
  * =========================
