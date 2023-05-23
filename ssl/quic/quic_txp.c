@@ -2197,7 +2197,7 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
     tpkt->ackm_pkt.is_ack_eliciting = have_ack_eliciting;
     tpkt->ackm_pkt.is_pto_probe     = 0;
     tpkt->ackm_pkt.is_mtu_probe     = 0;
-    tpkt->ackm_pkt.time             = ossl_time_now();
+    tpkt->ackm_pkt.time             = txp->args.now(txp->args.now_arg);
 
     /* Packet Information for QTX */
     pkt.hdr         = phdr;
