@@ -208,6 +208,17 @@ static int test_version(void)
 }
 
 #if !defined(OPENSSL_NO_SSL_TRACE) && !defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_ZLIB)
+static void strip_line_ends(char *str)
+{
+    size_t i;
+
+    for (i = strlen(str);
+         i > 0 && (str[i - 1] == '\n' || str[i - 1] == '\r');
+         i--);
+
+    str[i] = '\0';
+}
+
 static int compare_with_file(BIO *membio)
 {
     BIO *file = NULL;
@@ -229,6 +240,8 @@ static int compare_with_file(BIO *membio)
             TEST_error("Failed reading mem data");
             goto err;
         }
+        strip_line_ends(buf1);
+        strip_line_ends(buf2);
         if (strlen(buf1) != strlen(buf2)) {
             TEST_error("Actual and ref line data length mismatch");
             TEST_info("%s", buf1);
