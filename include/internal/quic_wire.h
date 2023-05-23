@@ -159,6 +159,9 @@ typedef struct ossl_quic_frame_ack_st {
     unsigned int                ecn_present : 1;
 } OSSL_QUIC_FRAME_ACK;
 
+/* Returns 1 if the given frame contains the given PN. */
+int ossl_quic_frame_ack_contains_pn(const OSSL_QUIC_FRAME_ACK *ack, QUIC_PN pn);
+
 /* QUIC Frame: STREAM */
 typedef struct ossl_quic_frame_stream_st {
     uint64_t                stream_id;  /* Stream ID */
