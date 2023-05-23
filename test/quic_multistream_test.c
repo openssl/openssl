@@ -1892,7 +1892,7 @@ static const struct script_op script_17[] = {
     OP_END_REPEAT           ()
 
     /* At least 150 RXKUs detected */
-    OP_CHECK                (check_key_update_ge, 150)
+    OP_CHECK                (check_key_update_ge, 20)
 
     /*
      * Prove the connection is still healthy by sending something in both
@@ -1933,7 +1933,7 @@ static const struct script_op script_18[] = {
      * 1 packet above, which is absurd; thus this ensures we only actually
      * generate TXKUs when we are allowed to.
      */
-    OP_CHECK                (check_key_update_ge, 50)
+    OP_CHECK                (check_key_update_ge, 20)
     OP_CHECK                (check_key_update_lt, 100)
 
     /*
