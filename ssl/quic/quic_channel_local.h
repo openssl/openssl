@@ -228,11 +228,11 @@ struct quic_channel_st {
     OSSL_TIME                       rxku_update_end_deadline;
 
     /*
-     * The first (application space) PN sent with a new key phase. Valid if
-     * txku_in_progress. Once a packet we sent with a PN p (p >= txku_pn) is
-     * ACKed, the TXKU is considered completed and txku_in_progress becomes 0.
-     * For sanity's sake, such a PN p should also be <= the highest PN we have
-     * ever sent, of course.
+     * The first (application space) PN sent with a new key phase. Valid if the
+     * QTX key epoch is greater than 0. Once a packet we sent with a PN p (p >=
+     * txku_pn) is ACKed, the TXKU is considered completed and txku_in_progress
+     * becomes 0. For sanity's sake, such a PN p should also be <= the highest
+     * PN we have ever sent, of course.
      */
     QUIC_PN                         txku_pn;
 
@@ -386,6 +386,11 @@ struct quic_channel_st {
 
     /* Temporary variable indicating rxku_pending_confirm is to become 0. */
     unsigned int                    rxku_pending_confirm_done           : 1;
+
+    /*
+     * If set, RXKU is expected (because we initiated a spontaneous TXKU).
+     */
+    unsigned int                    rxku_expected                       : 1;
 };
 
 # endif
