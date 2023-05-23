@@ -1767,6 +1767,23 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
              */
             ch_discard_el(ch, QUIC_ENC_LEVEL_INITIAL);
 
+        if (ch->rxku_in_progress
+            && ch->qrx_pkt->hdr->type == QUIC_PKT_TYPE_1RTT
+            && ch->qrx_pkt->pn >= ch->rxku_trigger_pn
+            && ch->qrx_pkt->key_epoch < ossl_qrx_get_key_epoch(ch->qrx)) {
+            /*
+             * RFC 9001 s. 6.4: Packets with higher packet numbers MUST be
+             * protected with either the same or newer packet protection keys
+             * than packets with lower packet numbers. An endpoint that
+             * successfully removes protection with old keys when newer keys
+             * were used for packets with lower packet numbers MUST treat this
+             * as a connection error of type KEY_UPDATE_ERROR.
+             */
+            ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_KEY_UPDATE_ERROR,
+                                                   0, "new packet with old keys");
+            break;
+        }
+
         /* This packet contains frames, pass to the RXDP. */
         ossl_quic_handle_frames(ch, ch->qrx_pkt); /* best effort */
         break;
