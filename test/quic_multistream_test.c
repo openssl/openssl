@@ -59,6 +59,15 @@ struct helper {
 #endif
 
     OSSL_TIME       start_time;
+
+    /*
+     * This is a duration recording the amount of time we have skipped forwards
+     * for testing purposes relative to the real ossl_time_now() clock. We add
+     * a quantity of time to this every time we skip some time.
+     */
+    CRYPTO_RWLOCK   *time_lock;
+    OSSL_TIME       time_slip; /* protected by time_lock */
+
     int             init, blocking, check_spin_again;
     int             free_order;
 };
@@ -209,6 +218,31 @@ struct script_op {
 #define OP_S_UNBIND_STREAM_ID(stream_name) \
     {OPK_S_UNBIND_STREAM_ID, NULL, 0, NULL, #stream_name},
 
+static OSSL_TIME get_time(void *arg)
+{
+    struct helper *h = arg;
+    OSSL_TIME t;
+
+    if (!TEST_true(CRYPTO_THREAD_read_lock(h->time_lock)))
+        return ossl_time_zero();
+
+    t = ossl_time_add(ossl_time_now(), h->time_slip);
+
+    CRYPTO_THREAD_unlock(h->time_lock);
+    return t;
+}
+
+static int skip_time_ms(struct helper *h, const struct script_op *op)
+{
+    if (!TEST_true(CRYPTO_THREAD_write_lock(h->time_lock)))
+        return 0;
+
+    h->time_slip = ossl_time_add(h->time_slip, ossl_ms2time(op->arg2));
+
+    CRYPTO_THREAD_unlock(h->time_lock);
+    return 1;
+}
+
 static int check_rejected(struct helper *h, const struct script_op *op)
 {
     uint64_t stream_id = op->arg2;
@@ -242,6 +276,47 @@ static int check_stream_stopped(struct helper *h, const struct script_op *op)
         h->check_spin_again = 1;
         return 0;
     }
+
+    return 1;
+}
+
+static int override_key_update(struct helper *h, const struct script_op *op)
+{
+    QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
+
+    ossl_quic_channel_set_txku_threshold_override(ch, op->arg2);
+    return 1;
+}
+
+static int check_key_update_ge(struct helper *h, const struct script_op *op)
+{
+    QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
+    int64_t txke = (int64_t)ossl_quic_channel_get_tx_key_epoch(ch);
+    int64_t rxke = (int64_t)ossl_quic_channel_get_rx_key_epoch(ch);
+    int64_t diff = txke - rxke;
+
+    /*
+     * TXKE must always be equal to or ahead of RXKE.
+     * It can be ahead of RXKE by at most 1.
+     */
+    if (!TEST_int64_t_ge(diff, 0) || !TEST_int64_t_le(diff, 1))
+        return 0;
+
+    /* Caller specifies a minimum number of RXKEs which must have happened. */
+    if (!TEST_uint64_t_ge((uint64_t)rxke, op->arg2))
+        return 0;
+
+    return 1;
+}
+
+static int check_key_update_lt(struct helper *h, const struct script_op *op)
+{
+    QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
+    uint64_t txke = ossl_quic_channel_get_tx_key_epoch(ch);
+
+    /* Caller specifies a maximum number of TXKEs which must have happened. */
+    if (!TEST_uint64_t_lt(txke, op->arg2))
+        return 0;
 
     return 1;
 }
@@ -348,6 +423,9 @@ static void helper_cleanup(struct helper *h)
 
     SSL_CTX_free(h->c_ctx);
     h->c_ctx = NULL;
+
+    CRYPTO_THREAD_lock_free(h->time_lock);
+    h->time_lock = NULL;
 }
 
 static int helper_init(struct helper *h, int free_order)
@@ -360,6 +438,10 @@ static int helper_init(struct helper *h, int free_order)
     h->c_fd = -1;
     h->s_fd = -1;
     h->free_order = free_order;
+    h->time_slip = ossl_time_zero();
+
+    if (!TEST_ptr(h->time_lock = CRYPTO_THREAD_lock_new()))
+        goto err;
 
     if (!TEST_ptr(h->s_streams = lh_STREAM_INFO_new(stream_info_hash,
                                                     stream_info_cmp)))
@@ -397,8 +479,10 @@ static int helper_init(struct helper *h, int free_order)
     if (!BIO_up_ref(h->s_net_bio))
         goto err;
 
-    s_args.net_rbio = h->s_net_bio;
-    s_args.net_wbio = h->s_net_bio;
+    s_args.net_rbio     = h->s_net_bio;
+    s_args.net_wbio     = h->s_net_bio;
+    s_args.now_cb       = get_time;
+    s_args.now_cb_arg   = h;
 
     if (!TEST_ptr(h->s = ossl_quic_tserver_new(&s_args, certfile, keyfile)))
         goto err;
@@ -423,6 +507,10 @@ static int helper_init(struct helper *h, int free_order)
         goto err;
 
     if (!TEST_ptr(h->c_conn = SSL_new(h->c_ctx)))
+        goto err;
+
+    /* Use custom time function for virtual time skip. */
+    if (!TEST_true(ossl_quic_conn_set_override_now_cb(h->c_conn, get_time, h)))
         goto err;
 
     /* Takes ownership of our reference to the BIO. */
@@ -1776,6 +1864,91 @@ static const struct script_op script_16[] = {
     OP_END
 };
 
+/* 17. Key update test - unlimited */
+static const struct script_op script_17[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_CHECK                (override_key_update, 1)
+
+    OP_BEGIN_REPEAT         (200)
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    /*
+     * TXKU frequency is bounded by RTT because a previous TXKU needs to be
+     * acknowledged by the peer first before another one can be begin. By
+     * waiting this long, we eliminate any such concern and ensure as many key
+     * updates as possible can occur for the purposes of this test.
+     */
+    OP_CHECK                (skip_time_ms,    100)
+
+    OP_END_REPEAT           ()
+
+    /* At least 150 RXKUs detected */
+    OP_CHECK                (check_key_update_ge, 150)
+
+    /*
+     * Prove the connection is still healthy by sending something in both
+     * directions.
+     */
+    OP_C_WRITE              (DEFAULT, "xyzzy", 5)
+    OP_S_READ_EXPECT        (a, "xyzzy", 5)
+
+    OP_S_WRITE              (a, "plugh", 5)
+    OP_C_READ_EXPECT        (DEFAULT, "plugh", 5)
+
+    OP_END
+};
+
+/* 18. Key update test - RTT-bounded */
+static const struct script_op script_18[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_CHECK                (override_key_update, 1)
+
+    OP_BEGIN_REPEAT         (200)
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_READ_EXPECT        (a, "apple", 5)
+    OP_CHECK                (skip_time_ms,    2)
+
+    OP_END_REPEAT           ()
+
+    /*
+     * This time we simulate far less time passing between writes, so there are
+     * fewer opportunities to initiate TXKUs. Note that we ask for a TXKU every
+     * 1 packet above, which is absurd; thus this ensures we only actually
+     * generate TXKUs when we are allowed to.
+     */
+    OP_CHECK                (check_key_update_ge, 50)
+    OP_CHECK                (check_key_update_lt, 100)
+
+    /*
+     * Prove the connection is still healthy by sending something in both
+     * directions.
+     */
+    OP_C_WRITE              (DEFAULT, "xyzzy", 5)
+    OP_S_READ_EXPECT        (a, "xyzzy", 5)
+
+    OP_S_WRITE              (a, "plugh", 5)
+    OP_C_READ_EXPECT        (DEFAULT, "plugh", 5)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -1793,6 +1966,8 @@ static const struct script_op *const scripts[] = {
     script_14,
     script_15,
     script_16,
+    script_17,
+    script_18,
 };
 
 static int test_script(int idx)
