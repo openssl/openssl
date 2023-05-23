@@ -1641,6 +1641,38 @@ static void ch_rx_pre(QUIC_CHANNEL *ch)
         ch_raise_net_error(ch);
 }
 
+/* Check incoming forged packet limit and terminate connection if needed. */
+static void ch_rx_check_forged_pkt_limit(QUIC_CHANNEL *ch)
+{
+    uint32_t enc_level;
+    uint64_t limit = UINT64_MAX, l;
+
+    for (enc_level = QUIC_ENC_LEVEL_INITIAL;
+         enc_level < QUIC_ENC_LEVEL_NUM;
+         ++enc_level)
+    {
+        /*
+         * Different ELs can have different AEADs which can in turn impose
+         * different limits, so use the lowest value of any currently valid EL.
+         */
+        if ((ch->el_discarded & (1U << enc_level)) != 0)
+            continue;
+
+        if (enc_level > ch->rx_enc_level)
+            break;
+
+        l = ossl_qrx_get_max_forged_pkt_count(ch->qrx, enc_level);
+        if (l < limit)
+            limit = l;
+    }
+
+    if (ossl_qrx_get_cur_forged_pkt_count(ch->qrx) < limit)
+        return;
+
+    ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_AEAD_LIMIT_REACHED, 0,
+                                           "forgery limit");
+}
+
 /* Process queued incoming packets and handle frames, if any. */
 static int ch_rx(QUIC_CHANNEL *ch)
 {
@@ -1675,6 +1707,8 @@ static int ch_rx(QUIC_CHANNEL *ch)
         ch->have_sent_ack_eliciting_since_rx = 0;
         handled_any = 1;
     }
+
+    ch_rx_check_forged_pkt_limit(ch);
 
     /*
      * When in TERMINATING - CLOSING, generate a CONN_CLOSE frame whenever we
