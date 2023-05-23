@@ -1935,7 +1935,7 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
         goto fatal_err;
 
     /* Maximum PN reached? */
-    if (txp->next_pn[pn_space] >= (((QUIC_PN)1) << 62))
+    if (!ossl_quic_pn_valid(txp->next_pn[pn_space]))
         goto fatal_err;
 
     if ((tpkt = ossl_quic_txpim_pkt_alloc(txp->args.txpim)) == NULL)
@@ -2190,18 +2190,6 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
         ? NULL : &txp->args.peer;
     pkt.pn          = txp->next_pn[pn_space];
     pkt.flags       = OSSL_QTX_PKT_FLAG_COALESCE; /* always try to coalesce */
-
-    /* Do TX key update if needed. */
-    if (enc_level == QUIC_ENC_LEVEL_1RTT) {
-        uint64_t cur_pkt_count, max_pkt_count;
-
-        cur_pkt_count = ossl_qtx_get_cur_epoch_pkt_count(txp->args.qtx, enc_level);
-        max_pkt_count = ossl_qtx_get_max_epoch_pkt_count(txp->args.qtx, enc_level);
-
-        if (cur_pkt_count >= max_pkt_count / 2)
-            if (!ossl_qtx_trigger_key_update(txp->args.qtx))
-                goto fatal_err;
-    }
 
     if (!ossl_assert(h.bytes_appended > 0))
         goto fatal_err;

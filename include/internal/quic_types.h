@@ -67,6 +67,11 @@ static ossl_unused ossl_inline QUIC_PN ossl_quic_pn_min(QUIC_PN a, QUIC_PN b)
     return a < b ? a : b;
 }
 
+static ossl_unused ossl_inline int ossl_quic_pn_valid(QUIC_PN pn)
+{
+    return pn < (((QUIC_PN)1) << 62);
+}
+
 /* QUIC connection ID representation. */
 #  define QUIC_MAX_CONN_ID_LEN   20
 
