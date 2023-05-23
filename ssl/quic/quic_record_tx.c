@@ -1014,3 +1014,14 @@ void ossl_qtx_set_msg_callback_arg(OSSL_QTX *qtx, void *msg_callback_arg)
 {
     qtx->msg_callback_arg = msg_callback_arg;
 }
+
+uint64_t ossl_qtx_get_key_epoch(OSSL_QTX *qtx)
+{
+    OSSL_QRL_ENC_LEVEL *el;
+
+    el = ossl_qrl_enc_level_set_get(&qtx->el_set, QUIC_ENC_LEVEL_1RTT, 1);
+    if (el == NULL)
+        return 0;
+
+    return el->key_epoch;
+}

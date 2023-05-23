@@ -14,6 +14,7 @@
 # include <openssl/bio.h>
 # include "internal/quic_record_rx.h" /* OSSL_QRX */
 # include "internal/quic_ackm.h"      /* OSSL_ACKM */
+# include "internal/quic_channel.h"   /* QUIC_CHANNEL */
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -107,6 +108,9 @@ int ossl_quic_conn_set_override_now_cb(SSL *s,
  * spurious wakeup instead.
  */
 void ossl_quic_conn_force_assist_thread_wake(SSL *s);
+
+/* For use by tests only. */
+QUIC_CHANNEL *ossl_quic_conn_get_channel(SSL *s);
 
 # endif
 

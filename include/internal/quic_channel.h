@@ -330,6 +330,14 @@ void ossl_quic_channel_set_msg_callback(QUIC_CHANNEL *ch,
 void ossl_quic_channel_set_msg_callback_arg(QUIC_CHANNEL *ch,
                                             void *msg_callback_arg);
 
+/* Testing use only - sets a TXKU threshold packet count override value. */
+void ossl_quic_channel_set_txku_threshold_override(QUIC_CHANNEL *ch,
+                                                   uint64_t tx_pkt_threshold);
+
+/* Testing use only - gets current 1-RTT key epochs for QTX and QRX. */
+uint64_t ossl_quic_channel_get_tx_key_epoch(QUIC_CHANNEL *ch);
+uint64_t ossl_quic_channel_get_rx_key_epoch(QUIC_CHANNEL *ch);
+
 # endif
 
 #endif

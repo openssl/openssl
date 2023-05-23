@@ -193,6 +193,14 @@ struct quic_channel_st {
      */
     uint64_t                        incoming_stream_auto_reject_aec;
 
+    /*
+     * Override packet count threshold at which we do a spontaneous TXKU.
+     * Usually UINT64_MAX in which case a suitable value is chosen based on AEAD
+     * limit advice from the QRL utility functions. This is intended for testing
+     * use only. Usually set to UINT64_MAX.
+     */
+    uint64_t                        txku_threshold_override;
+
     /* Valid if we are in the TERMINATING or TERMINATED states. */
     QUIC_TERMINATE_CAUSE            terminate_cause;
 
