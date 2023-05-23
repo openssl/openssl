@@ -93,12 +93,13 @@ __owur int ossl_quic_get_conn_close_info(SSL *ssl,
                                          size_t info_len);
 
 /*
- * Used to override ossl_time_now() for debug purposes. Must be called before
+ * Used to override ossl_time_now() for debug purposes. While this may be
+ * overridden at any time, expect strange results if you change it after
  * connecting.
  */
-void ossl_quic_conn_set_override_now_cb(SSL *s,
-                                        OSSL_TIME (*now_cb)(void *arg),
-                                        void *now_cb_arg);
+int ossl_quic_conn_set_override_now_cb(SSL *s,
+                                       OSSL_TIME (*now_cb)(void *arg),
+                                       void *now_cb_arg);
 
 /*
  * Condvar waiting in the assist thread doesn't support time faking as it relies

@@ -59,6 +59,21 @@ static int block_until_pred(QUIC_CONNECTION *qc,
                                               qc->mutex);
 }
 
+static OSSL_TIME get_time(QUIC_CONNECTION *qc)
+{
+    if (qc->override_now_cb != NULL)
+        return qc->override_now_cb(qc->override_now_cb_arg);
+    else
+        return ossl_time_now();
+}
+
+static OSSL_TIME get_time_cb(void *arg)
+{
+    QUIC_CONNECTION *qc = arg;
+
+    return get_time(qc);
+}
+
 /*
  * QCTX is a utility structure which provides information we commonly wish to
  * unwrap upon an API call being dispatched to us, namely:
@@ -490,17 +505,22 @@ int ossl_quic_clear(SSL *s)
     return 1;
 }
 
-void ossl_quic_conn_set_override_now_cb(SSL *s,
-                                        OSSL_TIME (*now_cb)(void *arg),
-                                        void *now_cb_arg)
+int ossl_quic_conn_set_override_now_cb(SSL *s,
+                                       OSSL_TIME (*now_cb)(void *arg),
+                                       void *now_cb_arg)
 {
     QCTX ctx;
 
     if (!expect_quic(s, &ctx))
-        return;
+        return 0;
+
+    quic_lock(ctx.qc);
 
     ctx.qc->override_now_cb     = now_cb;
     ctx.qc->override_now_cb_arg = now_cb_arg;
+
+    quic_unlock(ctx.qc);
+    return 1;
 }
 
 void ossl_quic_conn_force_assist_thread_wake(SSL *s)
@@ -889,7 +909,7 @@ int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite)
         return 1;
     }
 
-    *tv = ossl_time_to_timeval(ossl_time_subtract(deadline, ossl_time_now()));
+    *tv = ossl_time_to_timeval(ossl_time_subtract(deadline, get_time(ctx.qc)));
     *is_infinite = 0;
     quic_unlock(ctx.qc);
     return 1;
@@ -1146,8 +1166,8 @@ static int create_channel(QUIC_CONNECTION *qc)
     args.is_server  = qc->as_server;
     args.tls        = qc->tls;
     args.mutex      = qc->mutex;
-    args.now_cb     = qc->override_now_cb;
-    args.now_cb_arg = qc->override_now_cb_arg;
+    args.now_cb     = get_time_cb;
+    args.now_cb_arg = qc;
 
     qc->ch = ossl_quic_channel_new(&args);
     if (qc->ch == NULL)
