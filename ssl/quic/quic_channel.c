@@ -691,6 +691,7 @@ static void rxku_detected(QUIC_PN pn, void *arg)
     ch->rxku_pending_confirm        = 1;
     ch->rxku_trigger_pn             = pn;
     ch->rxku_update_end_deadline    = ossl_time_add(get_time(ch), pto);
+    ch->rxku_expected               = 0;
 
     if (decision == DECISION_SOLICITED_TXKU)
         /* NOT gated by usual txku_allowed() */

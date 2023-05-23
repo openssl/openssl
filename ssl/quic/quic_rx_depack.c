@@ -60,7 +60,8 @@ static int depack_do_frame_ping(PACKET *pkt, QUIC_CHANNEL *ch,
 
 static int depack_do_frame_ack(PACKET *pkt, QUIC_CHANNEL *ch,
                                int packet_space, OSSL_TIME received,
-                               uint64_t frame_type)
+                               uint64_t frame_type,
+                               OSSL_QRX_PKT *qpacket)
 {
     OSSL_QUIC_FRAME_ACK ack;
     OSSL_QUIC_ACK_RANGE *ack_ranges = NULL;
@@ -79,6 +80,40 @@ static int depack_do_frame_ack(PACKET *pkt, QUIC_CHANNEL *ch,
 
     if (!ossl_quic_wire_decode_frame_ack(pkt, ack_delay_exp, &ack, NULL))
         goto malformed;
+
+    if (qpacket->hdr->type == QUIC_PKT_TYPE_1RTT
+        && (qpacket->key_epoch < ossl_qrx_get_key_epoch(ch->qrx)
+            || ch->rxku_expected)
+        && ack.ack_ranges[0].end >= ch->txku_pn) {
+        /*
+         * RFC 9001 s. 6.2: An endpoint that receives an acknowledgment that is
+         * carried in a packet protected with old keys where any acknowledged
+         * packet was protected with newer keys MAY treat that as a connection
+         * error of type KEY_UPDATE_ERROR.
+         *
+         * Two cases to handle here:
+         *
+         *   - We did spontaneous TXKU, the peer has responded in kind and we
+         *     have detected RXKU; !ch->rxku_expected, but then it sent a packet
+         *     with old keys acknowledging a packet in the new key epoch.
+         *
+         *     This also covers the case where we got RXKU and triggered
+         *     solicited TXKU, and then for some reason the peer sent an ACK of
+         *     a PN in our new TX key epoch with old keys.
+         *
+         *   - We did spontaneous TXKU; ch->txku_pn is the starting PN of our
+         *     new TX key epoch; the peer has not initiated a solicited TXKU in
+         *     response (so we have not detected RXKU); in this case the RX key
+         *     epoch has not incremented and ch->rxku_expected is still 1.
+         */
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_KEY_UPDATE_ERROR,
+                                               frame_type,
+                                               "acked packet which initiated a "
+                                               "key update without a "
+                                               "corresponding key update");
+        return 0;
+    }
 
     if (!ossl_ackm_on_rx_ack_frame(ch->ackm, &ack,
                                    packet_space, received))
@@ -837,7 +872,7 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
                 return 0;
             }
             if (!depack_do_frame_ack(pkt, ch, packet_space, received,
-                                     frame_type))
+                                     frame_type, parent_pkt))
                 return 0;
             break;
 
