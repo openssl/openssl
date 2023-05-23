@@ -296,6 +296,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     ch->max_idle_timeout        = QUIC_DEFAULT_IDLE_TIMEOUT;
     ch->tx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
     ch->rx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
+    ch->txku_threshold_override = UINT64_MAX;
 
     /*
      * Determine the QUIC Transport Parameters and serialize the transport
@@ -595,14 +596,18 @@ static int txku_recommendable(QUIC_CHANNEL *ch)
 QUIC_NEEDS_LOCK
 static int txku_desirable(QUIC_CHANNEL *ch)
 {
-    uint64_t cur_pkt_count, max_pkt_count;
+    uint64_t cur_pkt_count, max_pkt_count, thresh_pkt_count;
     const uint32_t enc_level = QUIC_ENC_LEVEL_1RTT;
 
     /* Check AEAD limit to determine if we should perform a spontaneous TXKU. */
     cur_pkt_count = ossl_qtx_get_cur_epoch_pkt_count(ch->qtx, enc_level);
     max_pkt_count = ossl_qtx_get_max_epoch_pkt_count(ch->qtx, enc_level);
 
-    return cur_pkt_count >= max_pkt_count / 2;
+    thresh_pkt_count = max_pkt_count / 2;
+    if (ch->txku_threshold_override != UINT64_MAX)
+        thresh_pkt_count = ch->txku_threshold_override;
+
+    return cur_pkt_count >= thresh_pkt_count;
 }
 
 QUIC_NEEDS_LOCK
@@ -2847,4 +2852,20 @@ void ossl_quic_channel_set_msg_callback_arg(QUIC_CHANNEL *ch,
     ossl_qtx_set_msg_callback_arg(ch->qtx, msg_callback_arg);
     ossl_quic_tx_packetiser_set_msg_callback_arg(ch->txp, msg_callback_arg);
     ossl_qrx_set_msg_callback_arg(ch->qrx, msg_callback_arg);
+}
+
+void ossl_quic_channel_set_txku_threshold_override(QUIC_CHANNEL *ch,
+                                                   uint64_t tx_pkt_threshold)
+{
+    ch->txku_threshold_override = tx_pkt_threshold;
+}
+
+uint64_t ossl_quic_channel_get_tx_key_epoch(QUIC_CHANNEL *ch)
+{
+    return ossl_qtx_get_key_epoch(ch->qtx);
+}
+
+uint64_t ossl_quic_channel_get_rx_key_epoch(QUIC_CHANNEL *ch)
+{
+    return ossl_qrx_get_key_epoch(ch->qrx);
 }

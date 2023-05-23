@@ -2746,3 +2746,18 @@ const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u)
 {
     return NULL;
 }
+
+/*
+ * Internal Testing APIs
+ * =====================
+ */
+
+QUIC_CHANNEL *ossl_quic_conn_get_channel(SSL *s)
+{
+    QCTX ctx;
+
+    if (!expect_quic_conn_only(s, &ctx))
+        return NULL;
+
+    return ctx.qc->ch;
+}

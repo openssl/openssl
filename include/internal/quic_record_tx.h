@@ -362,6 +362,12 @@ uint64_t ossl_qtx_get_cur_epoch_pkt_count(OSSL_QTX *qtx, uint32_t enc_level);
  */
 uint64_t ossl_qtx_get_max_epoch_pkt_count(OSSL_QTX *qtx, uint32_t enc_level);
 
+/*
+ * Get the 1-RTT EL key epoch number for the QTX. This is intended for
+ * diagnostic purposes. Returns 0 if 1-RTT EL is not provisioned yet.
+ */
+uint64_t ossl_qtx_get_key_epoch(OSSL_QTX *qtx);
+
 # endif
 
 #endif
