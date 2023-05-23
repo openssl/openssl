@@ -263,6 +263,9 @@ int ossl_ackm_mark_packet_pseudo_lost(OSSL_ACKM *ackm,
  */
 OSSL_TIME ossl_ackm_get_pto_duration(OSSL_ACKM *ackm);
 
+/* Returns the largest acked PN in the given PN space. */
+QUIC_PN ossl_ackm_get_largest_acked(OSSL_ACKM *ackm, int pkt_space);
+
 # endif
 
 #endif
