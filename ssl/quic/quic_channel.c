@@ -1640,7 +1640,7 @@ undesirable:
 /* Try to generate packets and if possible, flush them to the network. */
 static int ch_tx(QUIC_CHANNEL *ch)
 {
-    int sent_ack_eliciting = 0;
+    QUIC_TXP_STATUS status;
 
     if (ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING) {
         /*
@@ -1664,7 +1664,7 @@ static int ch_tx(QUIC_CHANNEL *ch)
      */
     switch (ossl_quic_tx_packetiser_generate(ch->txp,
                                              TX_PACKETISER_ARCHETYPE_NORMAL,
-                                             &sent_ack_eliciting)) {
+                                             &status)) {
     case TX_PACKETISER_RES_SENT_PKT:
         ch->have_sent_any_pkt = 1; /* Packet was sent */
 
@@ -1673,7 +1673,7 @@ static int ch_tx(QUIC_CHANNEL *ch)
          * sending an ack-eliciting packet if no other ack-eliciting packets
          * have been sent since last receiving and processing a packet.'
          */
-        if (sent_ack_eliciting && !ch->have_sent_ack_eliciting_since_rx) {
+        if (status.sent_ack_eliciting && !ch->have_sent_ack_eliciting_since_rx) {
             ch_update_idle(ch);
             ch->have_sent_ack_eliciting_since_rx = 1;
         }
