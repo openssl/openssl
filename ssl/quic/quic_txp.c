@@ -519,6 +519,12 @@ void ossl_quic_tx_packetiser_schedule_ack_eliciting(OSSL_QUIC_TX_PACKETISER *txp
     txp->force_ack_eliciting |= (1UL << pn_space);
 }
 
+void ossl_quic_tx_packetiser_schedule_ack(OSSL_QUIC_TX_PACKETISER *txp,
+                                          uint32_t pn_space)
+{
+    txp->want_ack |= (1UL << pn_space);
+}
+
 #define TXP_ERR_INTERNAL     0  /* Internal (e.g. alloc) error */
 #define TXP_ERR_SUCCESS      1  /* Success */
 #define TXP_ERR_SPACE        2  /* Not enough room for another packet */
