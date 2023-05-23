@@ -31,6 +31,7 @@ static const QUIC_CONN_ID empty_conn_id = {0, {0}};
 #define RX_TEST_OP_CHECK_KEY_EPOCH        10 /* check key epoch value matches */
 #define RX_TEST_OP_KEY_UPDATE_TIMEOUT     11 /* complete key update process */
 #define RX_TEST_OP_SET_INIT_KEY_PHASE     12 /* initial Key Phase bit value */
+#define RX_TEST_OP_CHECK_PKT_EPOCH        13 /* check read key epoch matches */
 
 struct rx_test_op {
     unsigned char op;
@@ -78,6 +79,8 @@ struct rx_test_op {
     { RX_TEST_OP_KEY_UPDATE_TIMEOUT, 0, NULL, 0, NULL, (normal), 0, 0, NULL },
 #define RX_OP_SET_INIT_KEY_PHASE(kp_bit) \
     { RX_TEST_OP_SET_INIT_KEY_PHASE, 0, NULL, 0, NULL, (kp_bit), 0, 0, NULL },
+#define RX_OP_CHECK_PKT_EPOCH(expected) \
+    { RX_TEST_OP_CHECK_PKT_EPOCH, 0, NULL, 0, NULL, 0, 0, (expected), NULL },
 
 #define RX_OP_INJECT_N(n)                                          \
     RX_OP_INJECT(rx_script_##n##_in)
@@ -1567,6 +1570,7 @@ static const struct rx_test_op rx_script_8[] = {
     RX_OP_CHECK_PKT_N(8a)
     RX_OP_CHECK_NO_PKT()
     RX_OP_CHECK_KEY_EPOCH(0)
+    RX_OP_CHECK_PKT_EPOCH(0)
 
     /* Packet with new key phase */
     RX_OP_INJECT_N(8b)
@@ -1575,6 +1579,7 @@ static const struct rx_test_op rx_script_8[] = {
     RX_OP_CHECK_NO_PKT()
     /* Key epoch has increased */
     RX_OP_CHECK_KEY_EPOCH(1)
+    RX_OP_CHECK_PKT_EPOCH(1)
 
     /*
      * Now inject an old packet with the old keys (perhaps reordered in
@@ -1586,18 +1591,21 @@ static const struct rx_test_op rx_script_8[] = {
     RX_OP_CHECK_NO_PKT()
     /* Epoch has not changed */
     RX_OP_CHECK_KEY_EPOCH(1)
+    RX_OP_CHECK_PKT_EPOCH(0)
 
     /* Another packet with the new keys. */
     RX_OP_INJECT_N(8d)
     RX_OP_CHECK_PKT_N(8d)
     RX_OP_CHECK_NO_PKT()
     RX_OP_CHECK_KEY_EPOCH(1)
+    RX_OP_CHECK_PKT_EPOCH(1)
 
     /* We can inject the old packet multiple times and it still works */
     RX_OP_INJECT_N(8c)
     RX_OP_CHECK_PKT_N(8c)
     RX_OP_CHECK_NO_PKT()
     RX_OP_CHECK_KEY_EPOCH(1)
+    RX_OP_CHECK_PKT_EPOCH(0)
 
     /* Until we move from UPDATING to COOLDOWN */
     RX_OP_KEY_UPDATE_TIMEOUT(0)
@@ -1619,12 +1627,14 @@ static const struct rx_test_op rx_script_8[] = {
     RX_OP_CHECK_PKT_N(8e)
     RX_OP_CHECK_NO_PKT()
     RX_OP_CHECK_KEY_EPOCH(2)
+    RX_OP_CHECK_PKT_EPOCH(2)
 
     /* Can still receive old packet */
     RX_OP_INJECT_N(8d)
     RX_OP_CHECK_PKT_N(8d)
     RX_OP_CHECK_NO_PKT()
     RX_OP_CHECK_KEY_EPOCH(2)
+    RX_OP_CHECK_PKT_EPOCH(1)
 
     /* Move straight from UPDATING to NORMAL */
     RX_OP_KEY_UPDATE_TIMEOUT(1)
@@ -1634,6 +1644,7 @@ static const struct rx_test_op rx_script_8[] = {
     RX_OP_CHECK_PKT_N(8f)
     RX_OP_CHECK_NO_PKT()
     RX_OP_CHECK_KEY_EPOCH(3)
+    RX_OP_CHECK_PKT_EPOCH(3)
 
     RX_OP_END
 };
@@ -1726,6 +1737,7 @@ static int rx_run_script(const struct rx_test_op *script)
     size_t i;
     OSSL_QRX_PKT *pkt = NULL;
     const struct rx_test_op *op = script;
+    uint64_t last_key_epoch = UINT64_MAX;
 
     for (; op->op != RX_TEST_OP_END; ++op)
         switch (op->op) {
@@ -1793,6 +1805,8 @@ static int rx_run_script(const struct rx_test_op *script)
                                            op->buf, op->buf_len, 1)))
                     goto err;
 
+                last_key_epoch = pkt->key_epoch;
+
                 ossl_qrx_pkt_release(pkt);
                 pkt = NULL;
                 break;
@@ -1810,6 +1824,14 @@ static int rx_run_script(const struct rx_test_op *script)
 
                 if (!TEST_uint64_t_eq(ossl_qrx_get_key_epoch(s.qrx),
                                       op->largest_pn))
+                    goto err;
+
+                break;
+            case RX_TEST_OP_CHECK_PKT_EPOCH:
+                if (!TEST_true(rx_state_ensure(&s)))
+                    goto err;
+
+                if (!TEST_uint64_t_eq(last_key_epoch, op->largest_pn))
                     goto err;
 
                 break;

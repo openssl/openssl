@@ -246,6 +246,12 @@ typedef struct ossl_qrx_pkt_st {
 
     /* The QRX which was used to receive the packet. */
     OSSL_QRX            *qrx;
+
+    /*
+     * The key epoch the packet was received with. Always 0 for non-1-RTT
+     * packets.
+     */
+    uint64_t            key_epoch;
 } OSSL_QRX_PKT;
 
 /*

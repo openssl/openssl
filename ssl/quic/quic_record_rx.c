@@ -62,6 +62,12 @@ struct rxe_st {
     size_t              datagram_len;
 
     /*
+     * The key epoch the packet was received with. Always 0 for non-1-RTT
+     * packets.
+     */
+    uint64_t            key_epoch;
+
+    /*
      * alloc_len allocated bytes (of which data_len bytes are valid) follow this
      * structure.
      */
@@ -550,13 +556,21 @@ static int qrx_validate_hdr(OSSL_QRX *qrx, RXE *rxe)
     return 1;
 }
 
-/* Retrieves the correct cipher context for an EL and key phase. */
+/*
+ * Retrieves the correct cipher context for an EL and key phase. Writes the key
+ * epoch number actually used for packet decryption to *rx_key_epoch.
+ */
 static size_t qrx_get_cipher_ctx_idx(OSSL_QRX *qrx, OSSL_QRL_ENC_LEVEL *el,
                                      uint32_t enc_level,
-                                     unsigned char key_phase_bit)
+                                     unsigned char key_phase_bit,
+                                     uint64_t *rx_key_epoch)
 {
-    if (enc_level != QUIC_ENC_LEVEL_1RTT)
+    size_t idx;
+
+    if (enc_level != QUIC_ENC_LEVEL_1RTT) {
+        *rx_key_epoch = 0;
         return 0;
+    }
 
     if (!ossl_assert(key_phase_bit <= 1))
         return SIZE_MAX;
@@ -584,8 +598,54 @@ static size_t qrx_get_cipher_ctx_idx(OSSL_QRX *qrx, OSSL_QRL_ENC_LEVEL *el,
      * the best we can reasonably do and appears to be directly suggested by the
      * RFC.
      */
-    return el->state == QRL_EL_STATE_PROV_COOLDOWN ? el->key_epoch & 1
-                                                   : key_phase_bit;
+    idx = (el->state == QRL_EL_STATE_PROV_COOLDOWN ? el->key_epoch & 1
+                                                   : key_phase_bit);
+
+    /*
+     * We also need to determine the key epoch number which this index
+     * corresponds to. This is so we can report the key epoch number in the
+     * OSSL_QRX_PKT structure, which callers need to validate whether it was OK
+     * for a packet to be sent using a given key epoch's keys.
+     */
+    switch (el->state) {
+    case QRL_EL_STATE_PROV_NORMAL:
+        /*
+         * If we are in the NORMAL state, usually the KP bit will match the LSB
+         * of our key epoch, meaning no new key update is being signalled. If it
+         * does not match, this means the packet (purports to) belong to
+         * the next key epoch.
+         *
+         * IMPORTANT: The AEAD tag has not been verified yet when this function
+         * is called, so this code must be timing-channel safe, hence use of
+         * XOR. Moreover, the value output below is not yet authenticated.
+         */
+        *rx_key_epoch
+            = el->key_epoch + ((el->key_epoch & 1) ^ (uint64_t)key_phase_bit);
+        break;
+
+    case QRL_EL_STATE_PROV_UPDATING:
+        /*
+         * If we are in the UPDATING state, usually the KP bit will match the
+         * LSB of our key epoch. If it does not match, this means that the
+         * packet (purports to) belong to the previous key epoch.
+         *
+         * As above, must be timing-channel safe.
+         */
+        *rx_key_epoch
+            = el->key_epoch - ((el->key_epoch & 1) ^ (uint64_t)key_phase_bit);
+        break;
+
+    case QRL_EL_STATE_PROV_COOLDOWN:
+        /*
+         * If we are in COOLDOWN, there is only one key epoch we can possibly
+         * decrypt with, so just try that. If AEAD decryption fails, the
+         * value we output here isn't used anyway.
+         */
+        *rx_key_epoch = el->key_epoch;
+        break;
+    }
+
+    return idx;
 }
 
 /*
@@ -602,7 +662,8 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
                                 size_t src_len, size_t *dec_len,
                                 const unsigned char *aad, size_t aad_len,
                                 QUIC_PN pn, uint32_t enc_level,
-                                unsigned char key_phase_bit)
+                                unsigned char key_phase_bit,
+                                uint64_t *rx_key_epoch)
 {
     int l = 0, l2 = 0;
     unsigned char nonce[EVP_MAX_IV_LENGTH];
@@ -628,7 +689,8 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
     if (qrx->forged_pkt_count >= ossl_qrl_get_suite_max_forged_pkt(el->suite_id))
         return 0;
 
-    cctx_idx = qrx_get_cipher_ctx_idx(qrx, el, enc_level, key_phase_bit);
+    cctx_idx = qrx_get_cipher_ctx_idx(qrx, el, enc_level, key_phase_bit,
+                                      rx_key_epoch);
     if (!ossl_assert(cctx_idx < OSSL_NELEM(el->cctx)))
         return 0;
 
@@ -704,6 +766,7 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     QUIC_PKT_HDR_PTRS ptrs;
     uint32_t pn_space, enc_level;
     OSSL_QRL_ENC_LEVEL *el = NULL;
+    uint64_t rx_key_epoch = UINT64_MAX;
 
     /*
      * Get a free RXE. If we need to allocate a new one, use the packet length
@@ -884,10 +947,15 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     dst = (unsigned char *)rxe_data(rxe) + i;
     if (!qrx_decrypt_pkt_body(qrx, dst, rxe->hdr.data, rxe->hdr.len,
                               &dec_len, sop, aad_len, rxe->pn, enc_level,
-                              rxe->hdr.key_phase))
+                              rxe->hdr.key_phase, &rx_key_epoch))
         goto malformed;
 
     /*
+     * -----------------------------------------------------
+     *   IMPORTANT: ANYTHING ABOVE THIS LINE IS UNVERIFIED
+     *              AND MUST BE TIMING-CHANNEL SAFE.
+     * -----------------------------------------------------
+     *
      * At this point, we have successfully authenticated the AEAD tag and no
      * longer need to worry about exposing the Key Phase bit in timing channels.
      * Check for a Key Phase bit differing from our expectation.
@@ -921,6 +989,7 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     rxe->hdr.len        = dec_len;
     rxe->data_len       = dec_len;
     rxe->datagram_len   = datagram_len;
+    rxe->key_epoch      = rx_key_epoch;
 
     /* We processed the PN successfully, so update largest processed PN. */
     pn_space = rxe_determine_pn_space(rxe);
@@ -1108,6 +1177,7 @@ int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT **ppkt)
         = BIO_ADDR_family(&rxe->peer) != AF_UNSPEC ? &rxe->peer : NULL;
     rxe->pkt.local
         = BIO_ADDR_family(&rxe->local) != AF_UNSPEC ? &rxe->local : NULL;
+    rxe->pkt.key_epoch      = rxe->key_epoch;
     rxe->pkt.qrx            = qrx;
     *ppkt = &rxe->pkt;
 
