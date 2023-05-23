@@ -82,6 +82,8 @@ may be maintained at a given time. See `quic_record_rx.h` for details.
 
 **KS:** See Keyslot.
 
+**KU:** Key update. See also TXKU, RXKU.
+
 **Locally-initiated:** Refers to a QUIC stream which was initiated by the local
 application rather than the remote peer.
 
@@ -188,6 +190,10 @@ provides indication of when flow control frames increasing a peer's flow control
 budget should be generated. Exists in both connection-level and stream-level
 instances.
 
+**RXKU:** RX key update. The detected condition whereby a received packet
+has a flipped Key Phase bit, meaning the peer has initiated a key update.
+Causes a solicited TXKU. See also TXKU.
+
 **RXL:** RXE list. See RXE.
 
 **RCMPPL:** The number of bytes left in a packet whose payload we are currently
@@ -212,6 +218,11 @@ Owned by the QTX.
 
 **TXFC:** TX flow control. This determines how much can be transmitted to the
 peer. Exists in both connection-level and stream-level instances.
+
+**TXKU:** TX key update. This refers to when a QTX signals a key update for the
+TX direction by flipping the Key Phase bit in an outgoing packet. A TXKU can be
+either spontaneous (locally initiated) or in solicited (in response to receiving
+an RXKU). See also RXKU.
 
 **TXL:** TXE list. See TXE.
 
