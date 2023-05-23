@@ -266,20 +266,6 @@ static const char *get_sigtype(int nid)
         return "Dilithium5";
     case NID_p521_dilithium5:
         return "ECDSA p521 - Dilithium5";
-    case NID_dilithium2_aes:
-        return "Dilithium2_AES";
-    case NID_p256_dilithium2_aes:
-        return "ECDSA p256 - Dilithium2_AES";
-    case NID_rsa3072_dilithium2_aes:
-        return "RSA3072 - Dilithium2_AES";
-    case NID_dilithium3_aes:
-        return "Dilithium3_AES";
-    case NID_p384_dilithium3_aes:
-        return "ECDSA p384 - Dilithium3_AES";
-    case NID_dilithium5_aes:
-        return "Dilithium5_AES";
-    case NID_p521_dilithium5_aes:
-        return "ECDSA p521 - Dilithium5_AES";
     case NID_falcon512:
         return "Falcon-512";
     case NID_p256_falcon512:
@@ -290,36 +276,28 @@ static const char *get_sigtype(int nid)
         return "Falcon-1024";
     case NID_p521_falcon1024:
         return "ECDSA p521 - Falcon-1024";
-    case NID_sphincsharaka128frobust:
-        return "SPHINCS+-Haraka-128f-robust";
-    case NID_p256_sphincsharaka128frobust:
-        return "ECDSA p256 - SPHINCS+-Haraka-128f-robust";
-    case NID_rsa3072_sphincsharaka128frobust:
-        return "RSA3072 - SPHINCS+-Haraka-128f-robust";
-    case NID_sphincsharaka128fsimple:
-        return "SPHINCS+-Haraka-128f-simple";
-    case NID_p256_sphincsharaka128fsimple:
-        return "ECDSA p256 - SPHINCS+-Haraka-128f-simple";
-    case NID_rsa3072_sphincsharaka128fsimple:
-        return "RSA3072 - SPHINCS+-Haraka-128f-simple";
-    case NID_sphincssha256128frobust:
-        return "SPHINCS+-SHA256-128f-robust";
-    case NID_p256_sphincssha256128frobust:
-        return "ECDSA p256 - SPHINCS+-SHA256-128f-robust";
-    case NID_rsa3072_sphincssha256128frobust:
-        return "RSA3072 - SPHINCS+-SHA256-128f-robust";
-    case NID_sphincssha256128ssimple:
-        return "SPHINCS+-SHA256-128s-simple";
-    case NID_p256_sphincssha256128ssimple:
-        return "ECDSA p256 - SPHINCS+-SHA256-128s-simple";
-    case NID_rsa3072_sphincssha256128ssimple:
-        return "RSA3072 - SPHINCS+-SHA256-128s-simple";
-    case NID_sphincsshake256128fsimple:
-        return "SPHINCS+-SHAKE256-128f-simple";
-    case NID_p256_sphincsshake256128fsimple:
-        return "ECDSA p256 - SPHINCS+-SHAKE256-128f-simple";
-    case NID_rsa3072_sphincsshake256128fsimple:
-        return "RSA3072 - SPHINCS+-SHAKE256-128f-simple";
+    case NID_sphincssha2128fsimple:
+        return "SPHINCS+-SHA2-128f-simple";
+    case NID_p256_sphincssha2128fsimple:
+        return "ECDSA p256 - SPHINCS+-SHA2-128f-simple";
+    case NID_rsa3072_sphincssha2128fsimple:
+        return "RSA3072 - SPHINCS+-SHA2-128f-simple";
+    case NID_sphincssha2128ssimple:
+        return "SPHINCS+-SHA2-128s-simple";
+    case NID_p256_sphincssha2128ssimple:
+        return "ECDSA p256 - SPHINCS+-SHA2-128s-simple";
+    case NID_rsa3072_sphincssha2128ssimple:
+        return "RSA3072 - SPHINCS+-SHA2-128s-simple";
+    case NID_sphincssha2192fsimple:
+        return "SPHINCS+-SHA2-192f-simple";
+    case NID_p384_sphincssha2192fsimple:
+        return "ECDSA p384 - SPHINCS+-SHA2-192f-simple";
+    case NID_sphincsshake128fsimple:
+        return "SPHINCS+-SHAKE-128f-simple";
+    case NID_p256_sphincsshake128fsimple:
+        return "ECDSA p256 - SPHINCS+-SHAKE-128f-simple";
+    case NID_rsa3072_sphincsshake128fsimple:
+        return "RSA3072 - SPHINCS+-SHAKE-128f-simple";
 ///// OQS_TEMPLATE_FRAGMENT_SIG_NAME_STR_END
     default:
         return NULL;
@@ -485,9 +463,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0241: return "bikel1";
   case 0x0242: return "bikel3";
   case 0x0243: return "bikel5";
-  case 0x023E: return "kyber90s512";
-  case 0x023F: return "kyber90s768";
-  case 0x0240: return "kyber90s1024";
   case 0x022C: return "hqc128";
   case 0x022D: return "hqc192";
   case 0x022E: return "hqc256";
@@ -505,9 +480,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
    case 0x2F41: return "p256_bikel1 hybrid";
    case 0x2F42: return "p384_bikel3 hybrid";
    case 0x2F43: return "p521_bikel5 hybrid";
-   case 0x2F3E: return "p256_kyber90s512 hybrid";
-   case 0x2F3F: return "p384_kyber90s768 hybrid";
-   case 0x2F40: return "p521_kyber90s1024 hybrid";
    case 0x2F2C: return "p256_hqc128 hybrid";
    case 0x2F2D: return "p384_hqc192 hybrid";
    case 0x2F2E: return "p521_hqc256 hybrid";

@@ -52,8 +52,8 @@ def get_sig_nistlevel(family, alg, docsdir):
     # translate family names in generate.yml to directory names for liboqs algorithm datasheets
     if family['family'] == 'CRYSTALS-Dilithium': datasheetname = 'dilithium'
     elif family['family'] == 'SPHINCS-Haraka': datasheetname = 'sphincs'
-    elif family['family'] == 'SPHINCS-SHA256': datasheetname = 'sphincs'
-    elif family['family'] == 'SPHINCS-SHAKE256': datasheetname = 'sphincs'
+    elif family['family'] == 'SPHINCS-SHA2': datasheetname = 'sphincs'
+    elif family['family'] == 'SPHINCS-SHAKE': datasheetname = 'sphincs'
     else: datasheetname = family['family'].lower()
     # load datasheet
     algymlfilename = os.path.join(docsdir, 'algorithms', 'sig', '{:s}.yml'.format(datasheetname))
@@ -86,14 +86,18 @@ def complete_config(config, oqsdocsdir = None):
         print("Must include LIBOQS_DOCS_DIR in environment")
         exit(1)
       oqsdocsdir = os.environ["LIBOQS_DOCS_DIR"]
+   nkc = []
    for kem in config['kems']:
       if not "bit_security" in kem.keys():
          bits_level = nist_to_bits(get_kem_nistlevel(kem, oqsdocsdir))
          if bits_level == None: 
              print("Cannot find security level for {:s} {:s}".format(kem['family'], kem['name_group']))
-             exit(1)
-         kem['bit_security'] = bits_level
+         else:
+             kem['bit_security'] = bits_level
+             nkc.append(kem)
+   config['kems']=nkc
    for famsig in config['sigs']:
+      nsv = []
       for sig in famsig['variants']:
          if not "security" in sig.keys():
             bits_level = nist_to_bits(get_sig_nistlevel(famsig, sig, oqsdocsdir))
@@ -102,7 +106,10 @@ def complete_config(config, oqsdocsdir = None):
                     bits_level=128
                 else:
                     print("Cannot find security level for {:s} {:s}".format(famsig['family'], sig['name']))
-                    exit(1)
-            sig['security'] = bits_level
+                    bits_level = -1
+            else:
+                sig['security'] = bits_level
+                nsv.append(sig)
+      famsig['variants']=nsv
    return config
 
