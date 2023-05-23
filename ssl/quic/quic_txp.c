@@ -2385,3 +2385,12 @@ void ossl_quic_tx_packetiser_set_msg_callback_arg(OSSL_QUIC_TX_PACKETISER *txp,
 {
     txp->msg_callback_arg = msg_callback_arg;
 }
+
+QUIC_PN ossl_quic_tx_packetiser_get_next_pn(OSSL_QUIC_TX_PACKETISER *txp,
+                                            uint32_t pn_space)
+{
+    if (pn_space >= QUIC_PN_SPACE_NUM)
+        return UINT64_MAX;
+
+    return txp->next_pn[pn_space];
+}

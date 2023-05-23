@@ -179,6 +179,11 @@ void ossl_quic_tx_packetiser_set_msg_callback(OSSL_QUIC_TX_PACKETISER *txp,
 void ossl_quic_tx_packetiser_set_msg_callback_arg(OSSL_QUIC_TX_PACKETISER *txp,
                                                   void *msg_callback_arg);
 
+/*
+ * Determines the next PN which will be used for a given PN space.
+ */
+QUIC_PN ossl_quic_tx_packetiser_get_next_pn(OSSL_QUIC_TX_PACKETISER *txp,
+                                            uint32_t pn_space);
 # endif
 
 #endif
