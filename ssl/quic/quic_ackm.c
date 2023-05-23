@@ -1677,3 +1677,8 @@ OSSL_TIME ossl_ackm_get_pto_duration(OSSL_ACKM *ackm)
 
     return duration;
 }
+
+QUIC_PN ossl_ackm_get_largest_acked(OSSL_ACKM *ackm, int pkt_space)
+{
+    return ackm->largest_acked_pkt[pkt_space];
+}
