@@ -352,7 +352,7 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                                int is_last_in_dgram,
                                int dgram_contains_initial,
                                int chosen_for_conn_close,
-                               int *sent_ack_eliciting);
+                               QUIC_TXP_STATUS *status);
 static size_t txp_determine_pn_len(OSSL_QUIC_TX_PACKETISER *txp);
 static int txp_determine_ppl_from_pl(OSSL_QUIC_TX_PACKETISER *txp,
                                      size_t pl,
@@ -368,7 +368,7 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
                                       size_t pkt_overhead,
                                       QUIC_PKT_HDR *phdr,
                                       int chosen_for_conn_close,
-                                      int *sent_ack_eliciting);
+                                      QUIC_TXP_STATUS *status);
 
 OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETISER_ARGS *args)
 {
@@ -538,12 +538,14 @@ int ossl_quic_tx_packetiser_has_pending(OSSL_QUIC_TX_PACKETISER *txp,
  */
 int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
                                      uint32_t archetype,
-                                     int *sent_ack_eliciting)
+                                     QUIC_TXP_STATUS *status)
 {
     uint32_t enc_level, conn_close_enc_level = QUIC_ENC_LEVEL_NUM;
     int have_pkt_for_el[QUIC_ENC_LEVEL_NUM], is_last_in_dgram, cc_can_send;
     size_t num_el_in_dgram = 0, pkts_done = 0;
     int rc;
+
+    status->sent_ack_eliciting = 0;
 
     /*
      * If CC says we cannot send we still may be able to send any queued probes.
@@ -580,7 +582,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
                                  is_last_in_dgram,
                                  have_pkt_for_el[QUIC_ENC_LEVEL_INITIAL],
                                  enc_level == conn_close_enc_level,
-                                 sent_ack_eliciting);
+                                 status);
 
         if (rc != TXP_ERR_SUCCESS) {
             /*
@@ -934,7 +936,7 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                                int is_last_in_dgram,
                                int dgram_contains_initial,
                                int chosen_for_conn_close,
-                               int *sent_ack_eliciting)
+                               QUIC_TXP_STATUS *status)
 {
     int must_pad = dgram_contains_initial && is_last_in_dgram;
     size_t min_dpl, min_pl, min_ppl, cmpl, cmppl, running_total;
@@ -1047,7 +1049,7 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
     return txp_generate_for_el_actual(txp, enc_level, archetype, min_ppl, cmppl,
                                       pkt_overhead, &phdr,
                                       chosen_for_conn_close,
-                                      sent_ack_eliciting);
+                                      status);
 }
 
 /* Determine how many bytes we should use for the encoded PN. */
@@ -1896,7 +1898,7 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
                                       size_t pkt_overhead,
                                       QUIC_PKT_HDR *phdr,
                                       int chosen_for_conn_close,
-                                      int *sent_ack_eliciting)
+                                      QUIC_TXP_STATUS *status)
 {
     int rc = TXP_ERR_SUCCESS;
     struct archetype_data a;
@@ -2314,8 +2316,7 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
             --probe_info->pto[pn_space];
     }
 
-    if (have_ack_eliciting)
-        *sent_ack_eliciting = 1;
+    status->sent_ack_eliciting = 1;
 
     /* Done. */
     tx_helper_cleanup(&h);
