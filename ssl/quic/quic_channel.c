@@ -701,6 +701,23 @@ static void rxku_detected(QUIC_PN pn, void *arg)
     if (decision == DECISION_SOLICITED_TXKU)
         /* NOT gated by usual txku_allowed() */
         ch_trigger_txku(ch);
+
+    /*
+     * Ordinarily, we only generate ACK when some ACK-eliciting frame has been
+     * received. In some cases, this may not occur for a long time, for example
+     * if transmission of application data is going in only one direction and
+     * nothing else is happening with the connection. However, since the peer
+     * cannot initiate a subsequent (spontaneous) TXKU until its prior
+     * (spontaneous or solicited) TXKU has completed - meaning that that prior
+     * TXKU's trigger packet (or subsequent packet) has been acknowledged, this
+     * can lead to very long times before a TXKU is considered 'completed'.
+     * Optimise this by forcing ACK generation after triggering TXKU.
+     * (Basically, we consider a RXKU event something that is 'ACK-eliciting',
+     * which it more or less should be; it is necessarily separate from ordinary
+     * processing of ACK-eliciting frames as key update is not indicated via a
+     * frame.)
+     */
+    ossl_quic_tx_packetiser_schedule_ack(ch->txp, QUIC_PN_SPACE_APP);
 }
 
 /* Called per tick to handle RXKU timer events. */
