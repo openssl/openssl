@@ -678,13 +678,14 @@ static ossl_inline void ignore_res(int x)
     /* No-op. */
 }
 
-static void qrx_key_update_initiated(OSSL_QRX *qrx)
+static void qrx_key_update_initiated(OSSL_QRX *qrx, QUIC_PN pn)
 {
     if (!ossl_qrl_enc_level_set_key_update(&qrx->el_set, QUIC_ENC_LEVEL_1RTT))
+        /* Returns 0 if already in RXKU, so we don't call callback again. */
         return;
 
     if (qrx->key_update_cb != NULL)
-        qrx->key_update_cb(qrx->key_update_cb_arg);
+        qrx->key_update_cb(pn, qrx->key_update_cb_arg);
 }
 
 /* Process a single packet in a datagram. */
@@ -893,7 +894,7 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
      */
     if (rxe->hdr.type == QUIC_PKT_TYPE_1RTT
         && rxe->hdr.key_phase != (el->key_epoch & 1))
-        qrx_key_update_initiated(qrx);
+        qrx_key_update_initiated(qrx, rxe->pn);
 
     /*
      * We have now successfully decrypted the packet payload. If there are

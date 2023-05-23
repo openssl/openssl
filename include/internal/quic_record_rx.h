@@ -495,9 +495,11 @@ uint64_t ossl_qrx_get_key_epoch(OSSL_QRX *qrx);
  * Sets an optional callback which will be called when the key epoch changes.
  *
  * The callback is optional and can be unset by passing NULL for cb.
- * cb_arg is an opaque value passed to cb.
+ * cb_arg is an opaque value passed to cb. pn is the PN of the packet.
+ * Since key update is only supported for 1-RTT packets, the PN is always
+ * in the Application Data PN space.
 */
-typedef void (ossl_qrx_key_update_cb)(void *arg);
+typedef void (ossl_qrx_key_update_cb)(QUIC_PN pn, void *arg);
 
 int ossl_qrx_set_key_update_cb(OSSL_QRX *qrx,
                                ossl_qrx_key_update_cb *cb, void *cb_arg);
