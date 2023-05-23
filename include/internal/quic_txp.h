@@ -184,6 +184,17 @@ void ossl_quic_tx_packetiser_set_msg_callback_arg(OSSL_QUIC_TX_PACKETISER *txp,
  */
 QUIC_PN ossl_quic_tx_packetiser_get_next_pn(OSSL_QUIC_TX_PACKETISER *txp,
                                             uint32_t pn_space);
+
+/*
+ * Sets a callback which is called whenever TXP sends an ACK frame. The callee
+ * must not modify the ACK frame data. Can be used to snoop on PNs being ACKed.
+ */
+void ossl_quic_tx_packetiser_set_ack_tx_cb(OSSL_QUIC_TX_PACKETISER *txp,
+                                           void (*cb)(const OSSL_QUIC_FRAME_ACK *ack,
+                                                      uint32_t pn_space,
+                                                      void *arg),
+                                           void *cb_arg);
+
 # endif
 
 #endif

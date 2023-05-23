@@ -75,6 +75,11 @@ struct ossl_quic_tx_packetiser_st {
     void *msg_callback_arg;
     SSL *msg_callback_ssl;
 
+    /* Callbacks. */
+    void            (*ack_tx_cb)(const OSSL_QUIC_FRAME_ACK *ack,
+                                 uint32_t pn_space,
+                                 void *arg);
+    void            *ack_tx_cb_arg;
 };
 
 /*
@@ -472,6 +477,16 @@ int ossl_quic_tx_packetiser_set_peer(OSSL_QUIC_TX_PACKETISER *txp,
 
     txp->args.peer = *peer;
     return 1;
+}
+
+void ossl_quic_tx_packetiser_set_ack_tx_cb(OSSL_QUIC_TX_PACKETISER *txp,
+                                           void (*cb)(const OSSL_QUIC_FRAME_ACK *ack,
+                                                      uint32_t pn_space,
+                                                      void *arg),
+                                           void *cb_arg)
+{
+    txp->ack_tx_cb      = cb;
+    txp->ack_tx_cb_arg  = cb_arg;
 }
 
 int ossl_quic_tx_packetiser_discard_enc_level(OSSL_QUIC_TX_PACKETISER *txp,
@@ -1247,6 +1262,9 @@ static int txp_generate_pre_token(OSSL_QUIC_TX_PACKETISER *txp,
 
             if (ack->num_ack_ranges > 0)
                 tpkt->ackm_pkt.largest_acked = ack->ack_ranges[0].end;
+
+            if (txp->ack_tx_cb != NULL)
+                txp->ack_tx_cb(&ack2, pn_space, txp->ack_tx_cb_arg);
         } else {
             tx_helper_rollback(h);
         }
