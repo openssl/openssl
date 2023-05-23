@@ -2299,6 +2299,7 @@ int ossl_quic_channel_on_handshake_confirmed(QUIC_CHANNEL *ch)
 
     ch_discard_el(ch, QUIC_ENC_LEVEL_HANDSHAKE);
     ch->handshake_confirmed = 1;
+    ossl_ackm_on_handshake_confirmed(ch->ackm);
     return 1;
 }
 
