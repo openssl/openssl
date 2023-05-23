@@ -198,7 +198,9 @@ BIO *http_server_init(const char *prog, const char *port, int verb)
     BIO *acbio = NULL, *bufbio;
     int asock;
     int port_num;
+    char name[40];
 
+    snprintf(name, sizeof(name), "[::]:%s", port); /* port may be "0" */
     if (verb >= 0 && !log_set_verbosity(prog, verb))
         return NULL;
     bufbio = BIO_new(BIO_f_buffer());
@@ -207,7 +209,7 @@ BIO *http_server_init(const char *prog, const char *port, int verb)
     acbio = BIO_new(BIO_s_accept());
     if (acbio == NULL
         || BIO_set_bind_mode(acbio, BIO_BIND_REUSEADDR) < 0
-        || BIO_set_accept_port(acbio, port /* may be "0" */) < 0) {
+        || BIO_set_accept_name(acbio, name) < 0) {
         log_HTTP(prog, LOG_ERR, "error setting up accept BIO");
         goto err;
     }
