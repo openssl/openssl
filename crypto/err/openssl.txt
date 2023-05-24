@@ -231,9 +231,9 @@ CMP_R_FAILED_BUILDING_OWN_CHAIN:164:failed building own chain
 CMP_R_FAILED_EXTRACTING_PUBKEY:141:failed extracting pubkey
 CMP_R_FAILURE_OBTAINING_RANDOM:110:failure obtaining random
 CMP_R_FAIL_INFO_OUT_OF_RANGE:129:fail info out of range
-CMP_R_GETTING_GENP:190:getting genp
+CMP_R_GETTING_GENP:192:getting genp
 CMP_R_INVALID_ARGS:100:invalid args
-CMP_R_INVALID_GENP:191:invalid genp
+CMP_R_INVALID_GENP:193:invalid genp
 CMP_R_INVALID_OPTION:174:invalid option
 CMP_R_MISSING_CERTID:165:missing certid
 CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION:130:\
@@ -270,7 +270,7 @@ CMP_R_SRVCERT_DOES_NOT_VALIDATE_MSG:151:srvcert does not validate msg
 CMP_R_TOTAL_TIMEOUT:184:total timeout
 CMP_R_TRANSACTIONID_UNMATCHED:152:transactionid unmatched
 CMP_R_TRANSFER_ERROR:159:transfer error
-CMP_R_UNCLEAN_CTX:183:unclean ctx
+CMP_R_UNCLEAN_CTX:191:unclean ctx
 CMP_R_UNEXPECTED_PKIBODY:133:unexpected pkibody
 CMP_R_UNEXPECTED_PKISTATUS:185:unexpected pkistatus
 CMP_R_UNEXPECTED_PVNO:153:unexpected pvno
