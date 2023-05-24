@@ -100,11 +100,11 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
             tree->extra_data = sk_X509_POLICY_DATA_new_null();
         if (tree->extra_data == NULL){
             X509V3err(X509V3_F_LEVEL_ADD_NODE, ERR_R_MALLOC_FAILURE);
-            goto node_error;
+            goto extra_data_error;
         }
         if (!sk_X509_POLICY_DATA_push(tree->extra_data, data)) {
             X509V3err(X509V3_F_LEVEL_ADD_NODE, ERR_R_MALLOC_FAILURE);
-            goto node_error;
+            goto extra_data_error;
         }
     }
 
@@ -113,6 +113,14 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
         parent->nchild++;
 
     return node;
+
+ extra_data_error:
+    if (level != NULL) {
+        if (level->anyPolicy == node)
+            level->anyPolicy = NULL;
+        else
+            (void) sk_X509_POLICY_NODE_pop(level->nodes);
+    }
 
  node_error:
     policy_node_free(node);
