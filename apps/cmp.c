@@ -2851,7 +2851,7 @@ static int do_genm(OSSL_CMP_CTX *ctx)
 
         /* could check authorization of sender/origin at this point */
         if (cacerts == NULL) {
-            CMP_warn("no CA certificates providedd by server");
+            CMP_warn("no CA certificates provided by server");
         } else if (save_free_certs(cacerts, opt_cacertsout, "CA") < 0) {
             CMP_err1("Failed to store CA certficates from genp in %s",
                      opt_cacertsout);
