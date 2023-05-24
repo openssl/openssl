@@ -25,6 +25,8 @@
 # define OPENSSL_POLICY_TREE_NODES_MAX 1000
 #endif
 
+static void exnode_free(X509_POLICY_NODE *node);
+
 static void expected_print(BIO *channel,
                            X509_POLICY_LEVEL *lev, X509_POLICY_NODE *node,
                            int indent)
@@ -567,14 +569,22 @@ static int tree_calculate_user_set(X509_POLICY_TREE *tree,
                 | POLICY_DATA_FLAG_EXTRA_NODE;
             node = ossl_policy_level_add_node(NULL, extra, anyPolicy->parent,
                                               tree, 1);
+            if (node == NULL) {
+                ossl_policy_data_free(extra);
+                return 0;
+            }
         }
         if (!tree->user_policies) {
             tree->user_policies = sk_X509_POLICY_NODE_new_null();
-            if (!tree->user_policies)
-                return 1;
+            if (!tree->user_policies) {
+                exnode_free(node);
+                return 0;
+            }
         }
-        if (!sk_X509_POLICY_NODE_push(tree->user_policies, node))
+        if (!sk_X509_POLICY_NODE_push(tree->user_policies, node)) {
+            exnode_free(node);
             return 0;
+        }
     }
     return 1;
 }
