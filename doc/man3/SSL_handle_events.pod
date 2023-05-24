@@ -38,10 +38,10 @@ cases of L<DTLSv1_handle_timeout(3)>, it should be preferred for new
 applications which do not require support for OpenSSL 3.1 or older.
 
 When using DTLS, an application must call SSL_handle_events() as indicated by
-calls to L<SSL_get_event_timeout(3)>; ticking is not performed automatically by
-calls to other SSL functions such as L<SSL_read(3)> or L<SSL_write(3)>. Note
-that this is different to QUIC which also performs ticking implicitly; see
-below.
+calls to L<SSL_get_event_timeout(3)>; event handling is not performed
+automatically by calls to other SSL functions such as L<SSL_read(3)> or
+L<SSL_write(3)>. Note that this is different to QUIC which also performs event
+handling implicitly; see below.
 
 =item QUIC connection SSL objects
 
