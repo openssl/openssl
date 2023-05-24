@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_get_event_timeout - determine when an SSL object next needs to be ticked
+SSL_get_event_timeout - determine when an SSL object next needs to have events
+handled
 
 =head1 SYNOPSIS
 
@@ -24,8 +25,8 @@ cases applies:
 
 =item
 
-The SSL object has events which need to be handled immediately; I<*tv> is set to
-zero and I<*is_infinite> is set to 0.
+The SSL object has events which need to be handled immediately; The fields of
+I<*tv> are set to 0 and I<*is_infinite> is set to 0.
 
 =item
 
@@ -53,7 +54,7 @@ considered a success condition.
 Note that the value output by a call to SSL_get_event_timeout() may change as a
 result of other calls to the SSL object.
 
-Once the timeout expires, SSL_handle_events() should be called to handle any
+Once the timeout expires, L<SSL_handle_events(3)> should be called to handle any
 internal processing which is due; for more information, see
 L<SSL_handle_events(3)>.
 
