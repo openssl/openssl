@@ -5022,7 +5022,7 @@ int ssl_encapsulate(SSL_CONNECTION *s, EVP_PKEY *pubkey,
     return rv;
 }
 
-const char *SSL_get_curve_name(SSL *s)
+const char *SSL_get0_group_name(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
     unsigned int id;

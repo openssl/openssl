@@ -2,26 +2,26 @@
 
 =head1 NAME
 
-SSL_get_curve_name - get name of the curve that was used for the key
+SSL_get0_group_name - get name of the group that was used for the key
 agreement of the current TLS session establishment
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
- const char *SSL_get_curve_name(SSL *s);
+ const char *SSL_get0_group_name(SSL *s);
 
 =head1 DESCRIPTION
 
-SSL_get_curve_name() returns the name of the curve that was used for
+SSL_get0_group_name() returns the name of the group that was used for
 the key agreement of the current TLS session establishment.
 
 
 =head1 RETURN VALUES
 
-If non-NULL, SSL_get_curve_name() returns the name of the curve that was used for
+If non-NULL, SSL_get0_group_name() returns the name of the group that was used for
 the key agreement of the current TLS session establishment.
-If SSL_get_curve_name() returns NULL, an error occurred; possibly no TLS session
+If SSL_get0_group_name() returns NULL, an error occurred; possibly no TLS session
 has been established.
 
 Note that the return value is valid only during the lifetime of the

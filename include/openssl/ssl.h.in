@@ -1504,7 +1504,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_get_max_proto_version(s) \
         SSL_ctrl(s, SSL_CTRL_GET_MAX_PROTO_VERSION, 0, NULL)
 
-const char *SSL_get_curve_name(SSL *s);
+const char *SSL_get0_group_name(SSL *s);
 const char *SSL_group_to_name(SSL *s, int id);
 
 /* Backwards compatibility, original 1.1.0 names */

@@ -5037,8 +5037,8 @@ static int test_key_exchange(int idx)
 
     /* We don't implement RFC 7919 named groups for TLS 1.2. */
     if (idx != 13) {
-        if (!TEST_str_eq(SSL_get_curve_name(serverssl), kexch_name0)
-            || !TEST_str_eq(SSL_get_curve_name(clientssl), kexch_name0))
+        if (!TEST_str_eq(SSL_get0_group_name(serverssl), kexch_name0)
+            || !TEST_str_eq(SSL_get0_group_name(clientssl), kexch_name0))
             goto end;
         if (!TEST_int_eq(SSL_get_negotiated_group(serverssl), kexch_groups[0]))
             goto end;
@@ -9498,8 +9498,8 @@ static int test_pluggable_group(int idx)
                      SSL_group_to_name(serverssl, SSL_get_shared_group(serverssl, 0))))
         goto end;
 
-    if (!TEST_str_eq(group_name, SSL_get_curve_name(serverssl))
-        || !TEST_str_eq(group_name, SSL_get_curve_name(clientssl)))
+    if (!TEST_str_eq(group_name, SSL_get0_group_name(serverssl))
+        || !TEST_str_eq(group_name, SSL_get0_group_name(clientssl)))
         goto end;
 
     testresult = 1;

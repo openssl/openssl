@@ -2491,6 +2491,10 @@ DEPEND[html/man3/SSL_get0_connection.html]=man3/SSL_get0_connection.pod
 GENERATE[html/man3/SSL_get0_connection.html]=man3/SSL_get0_connection.pod
 DEPEND[man/man3/SSL_get0_connection.3]=man3/SSL_get0_connection.pod
 GENERATE[man/man3/SSL_get0_connection.3]=man3/SSL_get0_connection.pod
+DEPEND[html/man3/SSL_get0_group_name.html]=man3/SSL_get0_group_name.pod
+GENERATE[html/man3/SSL_get0_group_name.html]=man3/SSL_get0_group_name.pod
+DEPEND[man/man3/SSL_get0_group_name.3]=man3/SSL_get0_group_name.pod
+GENERATE[man/man3/SSL_get0_group_name.3]=man3/SSL_get0_group_name.pod
 DEPEND[html/man3/SSL_get0_peer_rpk.html]=man3/SSL_get0_peer_rpk.pod
 GENERATE[html/man3/SSL_get0_peer_rpk.html]=man3/SSL_get0_peer_rpk.pod
 DEPEND[man/man3/SSL_get0_peer_rpk.3]=man3/SSL_get0_peer_rpk.pod
@@ -2527,10 +2531,6 @@ DEPEND[html/man3/SSL_get_current_cipher.html]=man3/SSL_get_current_cipher.pod
 GENERATE[html/man3/SSL_get_current_cipher.html]=man3/SSL_get_current_cipher.pod
 DEPEND[man/man3/SSL_get_current_cipher.3]=man3/SSL_get_current_cipher.pod
 GENERATE[man/man3/SSL_get_current_cipher.3]=man3/SSL_get_current_cipher.pod
-DEPEND[html/man3/SSL_get_curve_name.html]=man3/SSL_get_curve_name.pod
-GENERATE[html/man3/SSL_get_curve_name.html]=man3/SSL_get_curve_name.pod
-DEPEND[man/man3/SSL_get_curve_name.3]=man3/SSL_get_curve_name.pod
-GENERATE[man/man3/SSL_get_curve_name.3]=man3/SSL_get_curve_name.pod
 DEPEND[html/man3/SSL_get_default_timeout.html]=man3/SSL_get_default_timeout.pod
 GENERATE[html/man3/SSL_get_default_timeout.html]=man3/SSL_get_default_timeout.pod
 DEPEND[man/man3/SSL_get_default_timeout.3]=man3/SSL_get_default_timeout.pod
@@ -3518,6 +3518,7 @@ html/man3/SSL_export_keying_material.html \
 html/man3/SSL_extension_supported.html \
 html/man3/SSL_free.html \
 html/man3/SSL_get0_connection.html \
+html/man3/SSL_get0_group_name.html \
 html/man3/SSL_get0_peer_rpk.html \
 html/man3/SSL_get0_peer_scts.html \
 html/man3/SSL_get_SSL_CTX.html \
@@ -3527,7 +3528,6 @@ html/man3/SSL_get_ciphers.html \
 html/man3/SSL_get_client_random.html \
 html/man3/SSL_get_conn_close_info.html \
 html/man3/SSL_get_current_cipher.html \
-html/man3/SSL_get_curve_name.html \
 html/man3/SSL_get_default_timeout.html \
 html/man3/SSL_get_error.html \
 html/man3/SSL_get_event_timeout.html \
@@ -4154,6 +4154,7 @@ man/man3/SSL_export_keying_material.3 \
 man/man3/SSL_extension_supported.3 \
 man/man3/SSL_free.3 \
 man/man3/SSL_get0_connection.3 \
+man/man3/SSL_get0_group_name.3 \
 man/man3/SSL_get0_peer_rpk.3 \
 man/man3/SSL_get0_peer_scts.3 \
 man/man3/SSL_get_SSL_CTX.3 \
@@ -4163,7 +4164,6 @@ man/man3/SSL_get_ciphers.3 \
 man/man3/SSL_get_client_random.3 \
 man/man3/SSL_get_conn_close_info.3 \
 man/man3/SSL_get_current_cipher.3 \
-man/man3/SSL_get_curve_name.3 \
 man/man3/SSL_get_default_timeout.3 \
 man/man3/SSL_get_error.3 \
 man/man3/SSL_get_event_timeout.3 \
