@@ -24,6 +24,16 @@ OpenSSL 3.1
 
 ### Changes between 3.1.0 and 3.1.1 [xx XXX xxxx]
 
+ * Multiple algorithm implementation fixes for ARM BE platforms.
+
+   *Liu-ErMeng*
+
+ * Added a -pedantic option to fipsinstall that adjusts the various
+   settings to ensure strict FIPS compliance rather than backwards
+   compatibility.
+
+   *Paul Dale*
+
  * Fixed buffer overread in AES-XTS decryption on ARM 64 bit platforms which
    happens if the buffer size is 4 mod 5 in 16 byte AES blocks. This can
    trigger a crash of an application using AES-XTS decryption if the memory
