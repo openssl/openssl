@@ -36,9 +36,6 @@ B<openssl> B<genrsa>
 
 =head1 DESCRIPTION
 
-This command has been deprecated.
-The L<openssl-genpkey(1)> command should be used instead.
-
 This command generates an RSA private key.
 
 =head1 OPTIONS
@@ -123,10 +120,6 @@ of a key.
 L<openssl(1)>,
 L<openssl-genpkey(1)>,
 L<openssl-gendsa(1)>
-
-=head1 HISTORY
-
-This command was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
