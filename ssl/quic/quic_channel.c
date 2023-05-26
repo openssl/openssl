@@ -2169,17 +2169,44 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
     if (f->retire_prior_to > new_retire_prior_to)
         new_retire_prior_to = f->retire_prior_to;
 
-    if (new_remote_seq_num - new_retire_prior_to > 1
-        /*
-         * RFC allows connection termination if we see 2 times the limit
-         * of conn ids to retire. We are a little bit more liberal.
-         */
-        || new_retire_prior_to - ch->cur_retire_prior_to > 10) {
-        /* Violation of our active conn id limit */
+    /*
+     * RFC 9000-5.1.1: An endpoint MUST NOT provide more connection IDs
+     * than the peer's limit.
+     *
+     * After processing a NEW_CONNECTION_ID frame and adding and retiring
+     * active connection IDs, if the number of active connection IDs exceeds
+     * the value advertised in its active_connection_id_limit transport
+     * parameter, an endpoint MUST close the connection with an error of
+     * type CONNECTION_ID_LIMIT_ERROR.
+     */
+    if (new_remote_seq_num - new_retire_prior_to > 1) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                QUIC_ERR_CONNECTION_ID_LIMIT_ERROR,
                                                OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
                                                "active_connection_id limit violated");
+        return;
+    }
+
+    /*
+     * RFC 9000-5.1.1: An endpoint MAY send connection IDs that temporarily
+     * exceed a peer's limit if the NEW_CONNECTION_ID frame also requires
+     * the retirement of any excess, by including a sufficiently large
+     * value in the Retire Prior To field.
+     *
+     * RFC 9000-5.1.2: An endpoint SHOULD allow for sending and tracking
+     * a number of RETIRE_CONNECTION_ID frames of at least twice the value
+     * of the active_connection_id_limit transport parameter.  An endpoint
+     * MUST NOT forget a connection ID without retiring it, though it MAY
+     * choose to treat having connection IDs in need of retirement that
+     * exceed this limit as a connection error of type CONNECTION_ID_LIMIT_ERROR.
+     *
+     * We are a little bit more liberal than the minimum mandated.
+     */
+    if (new_retire_prior_to - ch->cur_retire_prior_to > 10) {
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_CONNECTION_ID_LIMIT_ERROR,
+                                               OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
+                                               "retiring connection id limit violated");
 
         return;
     }
@@ -2189,6 +2216,12 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
         ch->cur_remote_dcid = f->conn_id;
         ossl_quic_tx_packetiser_set_cur_dcid(ch->txp, &ch->cur_remote_dcid);
     }
+    /*
+     * RFC 9000-5.1.2: Upon receipt of an increased Retire Prior To
+     * field, the peer MUST stop using the corresponding connection IDs
+     * and retire them with RETIRE_CONNECTION_ID frames before adding the
+     * newly provided connection ID to the set of active connection IDs.
+     */
     while (new_retire_prior_to > ch->cur_retire_prior_to) {
         if (!ch_enqueue_retire_conn_id(ch, ch->cur_retire_prior_to))
             break;
