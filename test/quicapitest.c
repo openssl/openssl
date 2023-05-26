@@ -40,6 +40,7 @@ static int is_fips = 0;
  * Test that we read what we've written.
  * Test 0: Non-blocking
  * Test 1: Blocking
+ * Test 2: Blocking, introduce socket error, test error handling.
  */
 static int test_quic_write_read(int idx)
 {
@@ -54,7 +55,7 @@ static int test_quic_write_read(int idx)
     int ssock = 0, csock = 0;
     uint64_t sid = UINT64_MAX;
 
-    if (idx == 1 && !qtest_supports_blocking())
+    if (idx >= 1 && !qtest_supports_blocking())
         return TEST_skip("Blocking tests not supported in this build");
 
     if (!TEST_ptr(cctx)
@@ -65,7 +66,7 @@ static int test_quic_write_read(int idx)
             || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto end;
 
-    if (idx == 1) {
+    if (idx >= 1) {
         if (!TEST_true(BIO_get_fd(ossl_quic_tserver_get0_rbio(qtserv), &ssock)))
             goto end;
         if (!TEST_int_gt(csock = SSL_get_rfd(clientquic), 0))
@@ -79,7 +80,7 @@ static int test_quic_write_read(int idx)
         if (!TEST_true(SSL_write_ex(clientquic, msg, msglen, &numbytes))
             || !TEST_size_t_eq(numbytes, msglen))
             goto end;
-        if (idx == 1) {
+        if (idx >= 1) {
             do {
                 if (!TEST_true(wait_until_sock_readable(ssock)))
                     goto end;
@@ -95,12 +96,29 @@ static int test_quic_write_read(int idx)
                 goto end;
         }
 
+        if (idx >= 2 && j > 0)
+            /* Introduce permanent socket error */
+            BIO_closesocket(csock);
+
         ossl_quic_tserver_tick(qtserv);
         if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, (unsigned char *)msg,
                                                msglen, &numbytes)))
             goto end;
         ossl_quic_tserver_tick(qtserv);
         SSL_handle_events(clientquic);
+
+        if (idx >= 2 && j > 0) {
+            if (!TEST_false(SSL_read_ex(clientquic, buf, 1, &numbytes))
+                    || !TEST_int_eq(SSL_get_error(clientquic, 0),
+                                    SSL_ERROR_SYSCALL)
+                    || !TEST_false(SSL_write_ex(clientquic, msg, msglen,
+                                                &numbytes))
+                    || !TEST_int_eq(SSL_get_error(clientquic, 0),
+                                    SSL_ERROR_SYSCALL))
+                goto end;
+            break;
+        }
+
         /*
          * In blocking mode the SSL_read_ex call will block until the socket is
          * readable and has our data. In non-blocking mode we're doing everything
@@ -641,7 +659,7 @@ int setup_tests(void)
     if (privkey == NULL)
         goto err;
 
-    ADD_ALL_TESTS(test_quic_write_read, 2);
+    ADD_ALL_TESTS(test_quic_write_read, 3);
     ADD_TEST(test_ciphersuites);
     ADD_TEST(test_version);
 #if defined(DO_SSL_TRACE_TEST)

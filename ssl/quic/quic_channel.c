@@ -2558,6 +2558,8 @@ static void ch_raise_net_error(QUIC_CHANNEL *ch)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
 
+    ch->net_error = 1;
+
     tcause.error_code = QUIC_ERR_INTERNAL_ERROR;
 
     /*
@@ -2565,6 +2567,11 @@ static void ch_raise_net_error(QUIC_CHANNEL *ch)
      * send CONNECTION_CLOSE if we cannot communicate.
      */
     ch_start_terminating(ch, &tcause, 1);
+}
+
+int ossl_quic_channel_net_error(QUIC_CHANNEL *ch)
+{
+    return ch->net_error;
 }
 
 void ossl_quic_channel_raise_protocol_error(QUIC_CHANNEL *ch,
