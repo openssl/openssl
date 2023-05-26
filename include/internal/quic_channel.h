@@ -216,6 +216,11 @@ void ossl_quic_channel_raise_protocol_error(QUIC_CHANNEL *ch,
                                             uint64_t error_code,
                                             uint64_t frame_type,
                                             const char *reason);
+/*
+ * Returns 1 if permanent net error was detected on the QUIC_CHANNEL,
+ * 0 otherwise.
+ */
+int ossl_quic_channel_net_error(QUIC_CHANNEL *ch);
 
 /* For RXDP use. */
 void ossl_quic_channel_on_remote_conn_close(QUIC_CHANNEL *ch,
