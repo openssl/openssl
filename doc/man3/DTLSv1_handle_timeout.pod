@@ -22,7 +22,7 @@ when to call DTLSv1_handle_timeout().
 This function is only applicable to DTLS or QUIC SSL objects. It returns 0 if
 called on any other kind of SSL object.
 
-L<SSL_handle_events(3)> supersedes all use cases for this this function and may
+L<SSL_handle_events(3)> supersedes all use cases for this function and may
 be used instead of it.
 
 =head1 RETURN VALUES
