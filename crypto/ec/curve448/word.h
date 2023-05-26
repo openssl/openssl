@@ -17,8 +17,12 @@
 # include <assert.h>
 # include <stdlib.h>
 # include <openssl/e_os2.h>
-# include "arch_intrinsics.h"
 # include "curve448utils.h"
+# if C448_WORD_BITS == 64
+#  include "arch_64/arch_intrinsics.h"
+# else
+#  include "arch_32/arch_intrinsics.h"
+# endif
 
 # if (ARCH_WORD_BITS == 64)
 typedef uint64_t word_t, mask_t;

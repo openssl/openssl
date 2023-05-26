@@ -10,7 +10,12 @@
  * Originally written by Mike Hamburg
  */
 
-#include "field.h"
+#include "../field.h"
+
+#if ARCH_WORD_BITS != 32
+/* We have support for 128 bit ints, so do nothing here */
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 void gf_mul(gf_s * RESTRICT cs, const gf as, const gf bs)
 {
@@ -93,3 +98,4 @@ void gf_sqr(gf_s * RESTRICT cs, const gf as)
 {
     gf_mul(cs, as, as);         /* Performs better with a dedicated square */
 }
+#endif
