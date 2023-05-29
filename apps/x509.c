@@ -1149,16 +1149,7 @@ static int callb(int ok, X509_STORE_CTX *ctx)
     if (err == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)
         return 1;
 
-    /*
-     * BAD we should have gotten an error.  Normally if everything worked
-     * X509_STORE_CTX_get_error(ctx) will still be set to
-     * DEPTH_ZERO_SELF_....
-     */
-    if (ok) {
-        BIO_printf(bio_err,
-                   "Error with certificate to be certified - should be self-signed\n");
-        return 0;
-    } else {
+    if (!ok) {
         err_cert = X509_STORE_CTX_get_current_cert(ctx);
         print_name(bio_err, "subject=", X509_get_subject_name(err_cert));
         BIO_printf(bio_err,
@@ -1167,6 +1158,8 @@ static int callb(int ok, X509_STORE_CTX *ctx)
                    X509_verify_cert_error_string(err));
         return 1;
     }
+  
+    return 1;
 }
 
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt)
