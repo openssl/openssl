@@ -148,7 +148,7 @@ struct ossl_provider_st {
 
     /* OpenSSL library side data */
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *refcnt_lock;  /* For the ref and activatecnt counters */
+    CRYPTO_RWLOCK *refcnt_lock;  /* For the refcnt and activatecnt counters */
     CRYPTO_REF_COUNT activatecnt;
     char *name;
     char *path;
