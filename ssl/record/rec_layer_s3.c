@@ -544,7 +544,7 @@ int ssl3_writev_bytes(SSL *ssl, int type, const OSSL_IOVEC *iov, size_t iovcnt,
         /* if it went, fall through and send more stuff */
     }
 
-    n = (len - tot);
+    n = len - tot;
 
     max_send_fragment = ssl_get_max_send_fragment(s);
     split_send_fragment = ssl_get_split_send_fragment(s);

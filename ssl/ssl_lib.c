@@ -2556,9 +2556,9 @@ int ssl_writev_internal(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
         ret = ssl_start_async_job(s, &args, ssl_io_intern);
         *written = sc->asyncrw;
         return ret;
-    } else {
-        return s->method->ssl_writev(s, iov, iovcnt, written);
     }
+
+    return s->method->ssl_writev(s, iov, iovcnt, written);
 }
 
 ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
