@@ -66,8 +66,9 @@ static ossl_inline void err_set_debug(ERR_STATE *es, size_t i,
     OPENSSL_free(es->err_func[i]);
     if (fn == NULL || fn[0] == '\0')
         es->err_func[i] = NULL;
-    else
-        es->err_func[i] = OPENSSL_strdup(fn);
+    else if ((es->err_func[i] = CRYPTO_malloc(strlen(fn) + 1,
+                                              NULL, 0)) != NULL)
+        strcpy(es->err_func[i], fn);
 }
 
 static ossl_inline void err_set_data(ERR_STATE *es, size_t i,

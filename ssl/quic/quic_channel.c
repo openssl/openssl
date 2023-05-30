@@ -7,12 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/rand.h>
+#include <openssl/err.h>
 #include "internal/quic_channel.h"
 #include "internal/quic_error.h"
 #include "internal/quic_rx_depack.h"
 #include "../ssl_local.h"
 #include "quic_channel_local.h"
-#include <openssl/rand.h>
 
 /*
  * NOTE: While this channel implementation currently has basic server support,
@@ -352,6 +353,7 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     ossl_qrx_free(ch->qrx);
     ossl_quic_demux_free(ch->demux);
     OPENSSL_free(ch->local_transport_params);
+    OSSL_ERR_STATE_free(ch->err_state);
 }
 
 QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
@@ -2554,11 +2556,23 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
     }
 }
 
+static void ch_save_err_state(QUIC_CHANNEL *ch)
+{
+    if (ch->err_state == NULL)
+        ch->err_state = OSSL_ERR_STATE_new();
+
+    if (ch->err_state == NULL)
+        return;
+
+    OSSL_ERR_STATE_save(ch->err_state);
+}
+
 static void ch_raise_net_error(QUIC_CHANNEL *ch)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
 
     ch->net_error = 1;
+    ch_save_err_state(ch);
 
     tcause.error_code = QUIC_ERR_INTERNAL_ERROR;
 
@@ -2574,12 +2588,24 @@ int ossl_quic_channel_net_error(QUIC_CHANNEL *ch)
     return ch->net_error;
 }
 
+void ossl_quic_channel_restore_err_state(QUIC_CHANNEL *ch)
+{
+    if (ch == NULL)
+        return;
+
+    OSSL_ERR_STATE_restore(ch->err_state);
+}
+
 void ossl_quic_channel_raise_protocol_error(QUIC_CHANNEL *ch,
                                             uint64_t error_code,
                                             uint64_t frame_type,
                                             const char *reason)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
+
+    if (error_code == QUIC_ERR_INTERNAL_ERROR)
+        /* Internal errors might leave some errors on the stack. */
+        ch_save_err_state(ch);
 
     tcause.error_code = error_code;
     tcause.frame_type = frame_type;

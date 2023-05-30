@@ -1,0 +1,69 @@
+=pod
+
+=head1 NAME
+
+OSSL_ERR_STATE_new, OSSL_ERR_STATE_save, OSSL_ERR_STATE_restore,
+OSSL_ERR_STATE_free - saving and restoring error state
+
+=head1 SYNOPSIS
+
+ #include <openssl/err.h>
+
+ ERR_STATE *OSSL_ERR_STATE_new(void);
+ void OSSL_ERR_STATE_save(ERR_STATE *es);
+ void OSSL_ERR_STATE_restore(const ERR_STATE *es);
+ void OSSL_ERR_STATE_free(ERR_STATE *es);
+
+=head1 DESCRIPTION
+
+These functions save and restore the error state from the thread
+local error state to a preallocated error state structure.
+
+OSSL_ERR_STATE_new() allocates an empty error state structure to
+be used when saving and restoring thread error state.
+
+OSSL_ERR_STATE_save() saves the thread error state to I<es>. It
+subsequently clears the thread error state. Any previously saved
+state in I<es> is cleared prior to saving the new state.
+
+OSSL_ERR_STATE_restore() adds all the error entries from the
+saved state I<es> to the thread error state. Existing entries in
+the thread error state are not affected if there is enough space
+for all the added entries. Any allocated data in the saved error
+entries is duplicated on adding to the thread state.
+
+OSSL_ERR_STATE_free() frees the saved error state I<es>.
+
+=head1 RETURN VALUES
+
+OSSL_ERR_STATE_new() returns a pointer to the allocated ERR_STATE
+structure or NULL on error.
+
+OSSL_ERR_STATE_save(), OSSL_ERR_STATE_restore(), OSSL_ERR_STATE_free()
+do not return any values.
+
+=head1 NOTES
+
+OSSL_ERR_STATE_save() cannot fail as it takes over any allocated
+data from the thread error state.
+
+OSSL_ERR_STATE_restore() is a best effort function. The only failure
+that can happen during its operation is when memory allocation fails.
+Because it manipulates the thread error state it avoids raising memory
+errors on such failure. At worst the restored error entries will be
+missing the auxiliary error data.
+
+=head1 SEE ALSO
+
+L<ERR_raise(3)>, L<ERR_get_error(3)>, L<ERR_clear_error(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

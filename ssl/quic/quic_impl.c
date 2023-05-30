@@ -130,19 +130,22 @@ static int quic_raise_non_normal_error(QCTX *ctx,
 {
     va_list args;
 
+    if (ctx != NULL) {
+        if (ctx->is_stream && ctx->xso != NULL)
+            ctx->xso->last_error = SSL_ERROR_SSL;
+        else if (!ctx->is_stream && ctx->qc != NULL)
+            ctx->qc->last_error = SSL_ERROR_SSL;
+
+        if (reason == SSL_R_PROTOCOL_IS_SHUTDOWN && ctx->qc != NULL)
+            ossl_quic_channel_restore_err_state(ctx->qc->ch);
+    }
+
     ERR_new();
     ERR_set_debug(file, line, func);
 
     va_start(args, fmt);
     ERR_vset_error(ERR_LIB_SSL, reason, fmt, args);
     va_end(args);
-
-    if (ctx != NULL) {
-        if (ctx->is_stream && ctx->xso != NULL)
-            ctx->xso->last_error = SSL_ERROR_SSL;
-        else if (!ctx->is_stream && ctx->qc != NULL)
-            ctx->qc->last_error = SSL_ERROR_SSL;
-    }
 
     return 0;
 }
