@@ -270,8 +270,8 @@ L<openssl-passphrase-options(1)>.
 
 =item B<-subject> I<name>
 
-X509 Distinguished Name (DN) of subject to use in the requested certificate
-template.
+X.509 Distinguished Name (DN) to use as subject field
+in the requested certificate template in IR/CR/KUR messages.
 If the NULL-DN (C</>) is given then no subject is placed in the template.
 Default is the subject DN of any PKCS#10 CSR given with the B<-csr> option.
 For KUR, a further fallback is the subject DN
@@ -293,8 +293,8 @@ C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 =item B<-issuer> I<name>
 
-X509 issuer Distinguished Name (DN) of the CA server
-to place in the requested certificate template in IR/CR/KUR.
+X.509 Distinguished Name (DN) use as issuer field
+in the requested certificate template in IR/CR/KUR messages.
 If the NULL-DN (C</>) is given then no issuer is placed in the template.
 
 If provided and neither B<-recipient> nor B<-srvcert> is given,
@@ -512,11 +512,13 @@ Defaults to any path given with B<-server>, else C<"/">.
 
 =item B<-keep_alive> I<value>
 
-If the given value is 0 then HTTP connections are not kept open
-after receiving a response, which is the default behavior for HTTP 1.0.
-If the value is 1 or 2 then persistent connections are requested.
-If the value is 2 then persistent connections are required,
-i.e., in case the server does not grant them an error occurs.
+If the given value is 0 then HTTP connections are closed after each response
+(which would be the default behavior of HTTP 1.0)
+even if a CMP transaction needs more than one round trip.
+If the value is 1 or 2
+then for each transaction a persistent connection is requested.
+If the value is 2 then a persistent connection is required,
+i.e., an error occurs if the server does not grant it.
 The default value is 1, which means preferring to keep the connection open.
 
 =item B<-msg_timeout> I<seconds>
@@ -570,7 +572,8 @@ as well as for chain building
 when validating server certificates (checking signature-based
 CMP message protection) and when validating newly enrolled certificates.
 
-Multiple filenames or URLs may be given, separated by commas and/or whitespace.
+Multiple sources may be given, separated by commas and/or whitespace
+(where in the latter case the whole argument must be enclosed in "...").
 Each source may contain multiple certificates.
 
 =item B<-srvcert> I<filename>|I<uri>
