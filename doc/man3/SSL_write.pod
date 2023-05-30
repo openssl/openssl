@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_write_ex, SSL_write, SSL_writev_ex, SSL_writev, SSL_sendfile - write bytes to a TLS/SSL connection
+SSL_write_ex, SSL_write, SSL_writev_ex, SSL_writev,
+SSL_sendfile, OSSL_IOVEC - write bytes to a TLS/SSL connection
 
 =head1 SYNOPSIS
 

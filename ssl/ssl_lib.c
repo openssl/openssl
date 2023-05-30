@@ -2517,7 +2517,7 @@ int ssl_writev_internal(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
-        return s->method->ssl_write(s, buf, num, written);
+        return s->method->ssl_writev(s, iov, iovcnt, written);
 #endif
 
     if (sc == NULL)
