@@ -1984,6 +1984,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 
         if ((info = OPENSSL_zalloc(sizeof(*info))) == NULL)
             goto err;
+        APP_HTTP_TLS_INFO_free(OSSL_CMP_CTX_get_http_cb_arg(ctx));
         (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, info);
         info->ssl_ctx = setup_ssl_ctx(ctx, host, engine);
         info->server = host;
@@ -3158,6 +3159,7 @@ int cmp_main(int argc, char **argv)
 #ifndef OPENSSL_NO_SOCK
         APP_HTTP_TLS_INFO *info = OSSL_CMP_CTX_get_http_cb_arg(cmp_ctx);
 
+        (void)OSSL_CMP_CTX_set_http_cb_arg(cmp_ctx, NULL);
 #endif
         ossl_cmp_mock_srv_free(OSSL_CMP_CTX_get_transfer_cb_arg(cmp_ctx));
         X509_STORE_free(OSSL_CMP_CTX_get_certConf_cb_arg(cmp_ctx));
