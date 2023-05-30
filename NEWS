@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.1.1u and OpenSSL 1.1.1v [under development]
+
+      o
+
   Major changes between OpenSSL 1.1.1t and OpenSSL 1.1.1u [30 May 2023]
 
       o Mitigate for very slow `OBJ_obj2txt()` performance with gigantic
