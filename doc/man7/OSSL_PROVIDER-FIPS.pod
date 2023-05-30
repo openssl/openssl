@@ -430,13 +430,12 @@ L<OSSL_SELF_TEST_new(3)>,
 L<OSSL_PARAM(3)>,
 L<openssl-core.h(7)>,
 L<openssl-core_dispatch.h(7)>,
-L<provider(7)>
+L<provider(7)>,
+L<https://www.openssl.org/source/>
 
 =head1 HISTORY
 
 This functionality was added in OpenSSL 3.0.
-
-OpenSSL 3.0.0 and OpenSSL 3.0.8 include a FIPS 140-2 approved FIPS provider.
 
 =head1 COPYRIGHT
 

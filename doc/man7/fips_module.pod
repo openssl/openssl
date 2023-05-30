@@ -471,14 +471,13 @@ you to address bug fixes and CVEs that fall outside the FIPS boundary.
 
 =head1 SEE ALSO
 
-L<migration_guide(7)>, L<crypto(7)>, L<fips_config(5)>
+L<migration_guide(7)>, L<crypto(7)>, L<fips_config(5)>,
+L<https://www.openssl.org/source/>
 
 =head1 HISTORY
 
 The FIPS module guide was created for use with the new FIPS provider
 in OpenSSL 3.0.
-
-OpenSSL 3.0.0 and OpenSSL 3.0.8 include a FIPS 140-2 approved FIPS provider.
 
 =head1 COPYRIGHT
 
