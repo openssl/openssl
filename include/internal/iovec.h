@@ -14,7 +14,7 @@
 # include <string.h>
 # include <openssl/e_os2.h>
 
-# ifndef OPENSSL_NO_POSIX_IO
+# ifdef OPENSSL_SYS_UNIX
 #  include <sys/uio.h>
 # else
 struct iovec {
