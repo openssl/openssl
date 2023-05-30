@@ -7,7 +7,7 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.1t and 1.1.1u [xx XXX xxxx]
+ Changes between 1.1.1t and 1.1.1u [30 May 2023]
 
   *) Mitigate for the time it takes for `OBJ_obj2txt` to translate gigantic
      OBJECT IDENTIFIER sub-identifiers to canonical numeric text form.
