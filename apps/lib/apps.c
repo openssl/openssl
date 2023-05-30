@@ -2349,6 +2349,7 @@ int do_X509_sign(X509 *cert, int force_v1, EVP_PKEY *pkey, const char *md,
                              "keyid, issuer", !self_sign))
             goto end;
     }
+    /* May add further measures for ensuring RFC 5280 compliance, see #19805 */
 
     if (mctx != NULL && do_sign_init(mctx, pkey, md, sigopts) > 0)
         rv = (X509_sign_ctx(cert, mctx) > 0);
