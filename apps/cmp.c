@@ -1560,7 +1560,7 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
                 if (!set_name(opt_subject, OSSL_CMP_CTX_set1_subjectName, ctx, "subject"))
                     return 0;
             } else {
-                CMP_warn1("-subject %s since -ref or -cert is given", msg);
+                CMP_warn1("-subject %s since sender is taken from -ref or -cert", msg);
             }
         }
         if (opt_issuer != NULL)
@@ -1575,6 +1575,16 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             CMP_warn1("-policies %s", msg);
         if (opt_policy_oids != NULL)
             CMP_warn1("-policy_oids %s", msg);
+        if (opt_cmd != CMP_P10CR) {
+            if (opt_implicit_confirm)
+                CMP_warn1("-implicit_confirm %s, and 'p10cr'", msg);
+            if (opt_disable_confirm)
+                CMP_warn1("-disable_confirm %s, and 'p10cr'", msg);
+            if (opt_certout != NULL)
+                CMP_warn1("-certout %s, and 'p10cr'", msg);
+            if (opt_chainout != NULL)
+                CMP_warn1("-chainout %s, and 'p10cr'", msg);
+        }
     }
     if (opt_cmd == CMP_KUR) {
         char *ref_cert = opt_oldcert != NULL ? opt_oldcert : opt_cert;
@@ -1658,7 +1668,7 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 
     if (opt_csr != NULL) {
         if (opt_cmd == CMP_GENM) {
-            CMP_warn("-csr option is ignored for command 'genm'");
+            CMP_warn("-csr option is ignored for 'genm' command");
         } else {
             csr = load_csr_autofmt(opt_csr, FORMAT_UNDEF, NULL, "PKCS#10 CSR");
             if (csr == NULL)
@@ -1738,7 +1748,7 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 
     if (opt_oldcert != NULL) {
         if (opt_cmd == CMP_GENM) {
-            CMP_warn("-oldcert option is ignored for command 'genm'");
+            CMP_warn("-oldcert option is ignored for 'genm' command");
         } else {
             X509 *oldcert = load_cert_pwd(opt_oldcert, opt_keypass,
                                           opt_cmd == CMP_KUR ?
