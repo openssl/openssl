@@ -28,6 +28,10 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
+### Changes between 3.0.9 and 3.0.10 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.0.8 and 3.0.9 [30 May 2023]
 
  * Mitigate for the time it takes for `OBJ_obj2txt` to translate gigantic
