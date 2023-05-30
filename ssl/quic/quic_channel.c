@@ -2164,20 +2164,8 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
         return;
     }
 
-    if (f->seq_num > new_remote_seq_num) {
-        if (f->seq_num != new_remote_seq_num + 1) {
-            /*
-             * RFC 9000-5.1.1: The sequence number on each newly issued
-             * connection ID MUST increase by 1
-             */
-            ossl_quic_channel_raise_protocol_error(ch,
-                                                   QUIC_ERR_PROTOCOL_VIOLATION,
-                                                   OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
-                                                   "sequence number increased by > 1");
-            return;
-        }
+    if (f->seq_num > new_remote_seq_num)
         new_remote_seq_num = f->seq_num;
-    }
     if (f->retire_prior_to > new_retire_prior_to)
         new_retire_prior_to = f->retire_prior_to;
 
