@@ -1381,7 +1381,7 @@ test_ordinals:
 
 tags TAGS: FORCE
 	rm -f TAGS tags
-	-util/ctags.sh
+	-( cd $(SRCDIR); util/ctags.sh )
 	-etags `find . -name '*.[ch]' -o -name '*.pm'`
 
 providers/fips.checksum.new: providers/fips.module.sources.new
