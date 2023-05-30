@@ -222,6 +222,9 @@ void ossl_quic_channel_raise_protocol_error(QUIC_CHANNEL *ch,
  */
 int ossl_quic_channel_net_error(QUIC_CHANNEL *ch);
 
+/* Restore saved error state (best effort) */
+void ossl_quic_channel_restore_err_state(QUIC_CHANNEL *ch);
+
 /* For RXDP use. */
 void ossl_quic_channel_on_remote_conn_close(QUIC_CHANNEL *ch,
                                             OSSL_QUIC_FRAME_CONN_CLOSE *f);

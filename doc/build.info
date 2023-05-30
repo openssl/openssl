@@ -1687,6 +1687,10 @@ DEPEND[html/man3/OSSL_ENCODER_to_bio.html]=man3/OSSL_ENCODER_to_bio.pod
 GENERATE[html/man3/OSSL_ENCODER_to_bio.html]=man3/OSSL_ENCODER_to_bio.pod
 DEPEND[man/man3/OSSL_ENCODER_to_bio.3]=man3/OSSL_ENCODER_to_bio.pod
 GENERATE[man/man3/OSSL_ENCODER_to_bio.3]=man3/OSSL_ENCODER_to_bio.pod
+DEPEND[html/man3/OSSL_ERR_STATE_save.html]=man3/OSSL_ERR_STATE_save.pod
+GENERATE[html/man3/OSSL_ERR_STATE_save.html]=man3/OSSL_ERR_STATE_save.pod
+DEPEND[man/man3/OSSL_ERR_STATE_save.3]=man3/OSSL_ERR_STATE_save.pod
+GENERATE[man/man3/OSSL_ERR_STATE_save.3]=man3/OSSL_ERR_STATE_save.pod
 DEPEND[html/man3/OSSL_ESS_check_signing_certs.html]=man3/OSSL_ESS_check_signing_certs.pod
 GENERATE[html/man3/OSSL_ESS_check_signing_certs.html]=man3/OSSL_ESS_check_signing_certs.pod
 DEPEND[man/man3/OSSL_ESS_check_signing_certs.3]=man3/OSSL_ESS_check_signing_certs.pod
@@ -3325,6 +3329,7 @@ html/man3/OSSL_ENCODER.html \
 html/man3/OSSL_ENCODER_CTX.html \
 html/man3/OSSL_ENCODER_CTX_new_for_pkey.html \
 html/man3/OSSL_ENCODER_to_bio.html \
+html/man3/OSSL_ERR_STATE_save.html \
 html/man3/OSSL_ESS_check_signing_certs.html \
 html/man3/OSSL_HPKE_CTX_new.html \
 html/man3/OSSL_HTTP_REQ_CTX.html \
@@ -3963,6 +3968,7 @@ man/man3/OSSL_ENCODER.3 \
 man/man3/OSSL_ENCODER_CTX.3 \
 man/man3/OSSL_ENCODER_CTX_new_for_pkey.3 \
 man/man3/OSSL_ENCODER_to_bio.3 \
+man/man3/OSSL_ERR_STATE_save.3 \
 man/man3/OSSL_ESS_check_signing_certs.3 \
 man/man3/OSSL_HPKE_CTX_new.3 \
 man/man3/OSSL_HTTP_REQ_CTX.3 \
