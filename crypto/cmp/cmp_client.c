@@ -31,7 +31,7 @@
 static int unprotected_exception(const OSSL_CMP_CTX *ctx,
                                  const OSSL_CMP_MSG *rep,
                                  int invalid_protection,
-                                 int expected_type /* ignored here */)
+                                 ossl_unused int expected_type)
 {
     int rcvd_type = OSSL_CMP_MSG_get_bodytype(rep /* may be NULL */);
     const char *msg_type = NULL;
@@ -556,7 +556,8 @@ int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
  */
 static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                          OSSL_CMP_MSG **resp, int *checkAfter,
-                         int req_type, int expected_type)
+                         ossl_unused int req_type,
+                         ossl_unused int expected_type)
 {
     EVP_PKEY *rkey = ossl_cmp_ctx_get0_newPubkey(ctx);
     int fail_info = 0; /* no failure */
@@ -646,6 +647,10 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     if (fail_info != 0) /* immediately log error before any certConf exchange */
         ossl_cmp_log1(ERROR, ctx,
                       "rejecting newly enrolled cert with subject: %s", subj);
+    /*
+     * certConf exchange should better be moved to do_certreq_seq() such that
+     * also more low-level errors with CertReqMessages get reported to server
+     */
     if (!ctx->disableConfirm
             && !ossl_cmp_hdr_has_implicitConfirm((*resp)->header)) {
         if (!ossl_cmp_exchange_certConf(ctx, rid, fail_info, txt))
