@@ -24,9 +24,10 @@ OpenSSL 3.2
 -----------
 
 ### Changes between 3.1 and 3.2 [xx XXX xxxx]
- * TLS round-trip time calculation was added by a Brigham Young University 
-   Capstone team partnering with Sandia National Laboratories. A new function 
-   in ssl_lib titled SSL_get_handshake_rtt will calculate and retrieve this 
+
+ * TLS round-trip time calculation was added by a Brigham Young University
+   Capstone team partnering with Sandia National Laboratories. A new function
+   in ssl_lib titled SSL_get_handshake_rtt will calculate and retrieve this
    value.
 
    *Jairus Christensen*

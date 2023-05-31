@@ -19,28 +19,30 @@ This metric is represented in microseconds (us) as a uint64_t data type.
 
 =head1 NOTES
 
-This metric is created by taking two timestamps during the handshake and providing the
-difference between these two times.
+This metric is created by taking two timestamps during the handshake and
+providing the difference between these two times.
 
 When acting as the server, one timestamp is taken when the server is finished
-writing to the client. This is during the ServerFinished in TLS 1.3 and 
-ServerHelloDone in TLS 1.2. The other timestamp is taken when the server is done reading 
-the client's response. This is after the client has responded with ClientFinished.
+writing to the client. This is during the ServerFinished in TLS 1.3 and
+ServerHelloDone in TLS 1.2. The other timestamp is taken when the server is
+done reading the client's response. This is after the client has responded
+with ClientFinished.
 
-When acting as the client, one timestamp is taken when the client is finished writing 
-the ClientHello and early data (if any). The other is taken when client is done reading the server's response.
-This is after ServerFinished in TLS 1.3 and after ServerHelloDone in TLS 1.2.
+When acting as the client, one timestamp is taken when the client is finished
+writing the ClientHello and early data (if any). The other is taken when
+client is done reading the server's response. This is after ServerFinished in
+TLS 1.3 and after ServerHelloDone in TLS 1.2.
 
-In addition to network propagation delay and network stack overhead, this metric 
-includes processing time on both endpoints, as this is based on TLS protocol-level 
-messages and the TLS protocol is not designed to measure network timings. In some cases the 
-processing time can be significant, especially when the processing includes asymmetric cryptographic 
-operations.
+In addition to network propagation delay and network stack overhead, this
+metric includes processing time on both endpoints, as this is based on TLS
+protocol-level messages and the TLS protocol is not designed to measure
+network timings. In some cases the processing time can be significant,
+especially when the processing includes asymmetric cryptographic operations.
 
 =head1 RETURN VALUES
 
 Returns 1 if the TLS handshake RTT is successfully retrieved.
-Returns 0 if the TLS handshake RTT cannot yet determined.
+Returns 0 if the TLS handshake RTT cannot be determined yet.
 Returns -1 if, while retrieving the TLS handshake RTT, an error occurs.
 
 =head1 COPYRIGHT
