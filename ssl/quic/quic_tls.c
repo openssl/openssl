@@ -551,6 +551,7 @@ static const OSSL_RECORD_METHOD quic_tls_record_method = {
     quic_app_data_pending, /* Never called */
     quic_get_max_records,
     quic_write_records,
+    NULL, /* Never called */
     quic_retry_write_records,
     quic_read_record,
     quic_release_record,

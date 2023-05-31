@@ -281,11 +281,13 @@ const SSL_METHOD *func_name(void)  \
                 ossl_quic_read, \
                 ossl_quic_peek, \
                 ossl_quic_write, \
+                NULL /* writev */, \
                 NULL /* shutdown */, \
                 NULL /* renegotiate */, \
                 ossl_quic_renegotiate_check, \
                 NULL /* read_bytes */, \
                 NULL /* write_bytes */, \
+                NULL /* writev_bytes */, \
                 NULL /* dispatch_alert */, \
                 ossl_quic_ctrl, \
                 ossl_quic_ctx_ctrl, \
