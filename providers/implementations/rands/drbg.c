@@ -483,13 +483,6 @@ int ossl_prov_drbg_uninstantiate(PROV_DRBG *drbg)
     return 1;
 }
 
-/*
- * Reseed |drbg|, mixing in the specified data
- *
- * Acquires the drbg->lock for writing, if non-null.
- *
- * Returns 1 on success, 0 on failure.
- */
 static int ossl_prov_drbg_reseed_unlocked(PROV_DRBG *drbg,
                                           int prediction_resistance,
                                           const unsigned char *ent,
@@ -597,6 +590,13 @@ static int ossl_prov_drbg_reseed_unlocked(PROV_DRBG *drbg,
     return 0;
 }
 
+/*
+ * Reseed |drbg|, mixing in the specified data
+ *
+ * Acquires the drbg->lock for writing, if non-null.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
 int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
                           const unsigned char *ent, size_t ent_len,
                           const unsigned char *adin, size_t adinlen)
