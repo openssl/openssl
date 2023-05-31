@@ -572,6 +572,7 @@ static struct record_functions_st ossl_ktls_funcs = {
     ktls_post_process_record,
     tls_get_max_records_default,
     tls_write_records_default,
+    tls_writev_records_default,
     ktls_allocate_write_buffers,
     ktls_initialise_write_packets,
     NULL,
