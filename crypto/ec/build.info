@@ -39,8 +39,9 @@ IF[{- !$disabled{asm} -}]
   $ECASM_ppc64=ecp_nistz256.c ecp_ppc.c ecp_nistz256-ppc64.s
   $ECDEF_ppc64=ECP_NISTZ256_ASM
   IF[{- !$disabled{'ec_nistp_64_gcc_128'} -}]
-    $ECASM_ppc64=$ECASM_ppc64 ecp_nistp521-ppc64.s
-    $ECDEF_ppc64=$ECDEF_ppc64 ECP_NISTP521_ASM
+    $ECASM_ppc64=$ECASM_ppc64 ecp_nistp384-ppc64.s ecp_nistp521-ppc64.s
+    $ECDEF_ppc64=$ECDEF_ppc64 ECP_NISTP384_ASM ECP_NISTP521_ASM
+    INCLUDE[ecp_nistp384.o]=..
     INCLUDE[ecp_nistp521.o]=..
   ENDIF
   IF[{- !$disabled{'ecx'} -}]
@@ -119,6 +120,7 @@ GENERATE[ecp_nistz256-armv8.S]=asm/ecp_nistz256-armv8.pl
 INCLUDE[ecp_nistz256-armv8.o]=..
 GENERATE[ecp_nistz256-ppc64.s]=asm/ecp_nistz256-ppc64.pl
 
+GENERATE[ecp_nistp384-ppc64.s]=asm/ecp_nistp384-ppc64.pl
 GENERATE[ecp_nistp521-ppc64.s]=asm/ecp_nistp521-ppc64.pl
 
 IF[{- !$disabled{'ecx'} -}]

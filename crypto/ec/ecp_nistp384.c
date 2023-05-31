@@ -691,6 +691,15 @@ void p384_felem_mul(widefelem out, const felem in1, const felem in2);
 
 static void felem_select(void)
 {
+# if defined(_ARCH_PPC64)
+    if ((OPENSSL_ppccap_P & PPC_MADD300) && (OPENSSL_ppccap_P & PPC_ALTIVEC)) {
+        felem_square_p = p384_felem_square;
+        felem_mul_p = p384_felem_mul;
+
+        return;
+    }
+# endif
+
     /* Default */
     felem_square_p = felem_square_ref;
     felem_mul_p = felem_mul_ref;
