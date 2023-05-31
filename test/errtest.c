@@ -334,6 +334,78 @@ static int test_clear_error(void)
     return res;
 }
 
+static int test_save_restore(void)
+{
+    ERR_STATE *es;
+    int res = 0, i, flags = -1;
+    unsigned long mallocfail, interr;
+    static const char testdata[] = "test data";
+    const char *data = NULL;
+
+    if (!TEST_ptr(es = OSSL_ERR_STATE_new()))
+        goto err;
+
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+    mallocfail = ERR_peek_last_error();
+    if (!TEST_ulong_gt(mallocfail, 0))
+        goto err;
+
+    ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR, testdata);
+    interr = ERR_peek_last_error();
+    if (!TEST_ulong_ne(mallocfail, ERR_peek_last_error()))
+        goto err;
+
+    OSSL_ERR_STATE_save(es);
+
+    if (!TEST_ulong_eq(ERR_peek_last_error(), 0))
+        goto err;
+
+    for (i = 0; i < 2; i++) {
+        OSSL_ERR_STATE_restore(es);
+
+        if (!TEST_ulong_eq(ERR_peek_last_error(), interr))
+            goto err;
+        ERR_peek_last_error_data(&data, &flags);
+        if (!TEST_str_eq(data, testdata)
+                || !TEST_int_eq(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
+            goto err;
+
+        /* restore again to duplicate the entries */
+        OSSL_ERR_STATE_restore(es);
+
+        /* verify them all */
+        if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
+                                             &data, &flags), mallocfail)
+            || !TEST_int_ne(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
+            goto err;
+
+        if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
+                                             &data, &flags), interr)
+            || !TEST_str_eq(data, testdata)
+            || !TEST_int_eq(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
+            goto err;
+
+        if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
+                                             &data, &flags), mallocfail)
+            || !TEST_int_ne(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
+            goto err;
+
+        if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
+                                             &data, &flags), interr)
+            || !TEST_str_eq(data, testdata)
+            || !TEST_int_eq(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
+            goto err;
+
+        if (!TEST_ulong_eq(ERR_get_error(), 0))
+            goto err;
+    }
+
+    res = 1;
+ err:
+    OSSL_ERR_STATE_free(es);
+    return res;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(preserves_system_error);
@@ -343,6 +415,7 @@ int setup_tests(void)
     ADD_TEST(test_print_error_format);
 #endif
     ADD_TEST(test_marks);
+    ADD_TEST(test_save_restore);
     ADD_TEST(test_clear_error);
     return 1;
 }
