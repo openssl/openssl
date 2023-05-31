@@ -2,14 +2,11 @@
 
 =head1 NAME
 
-SSL_write_ex, SSL_write, SSL_writev_ex, SSL_writev,
-SSL_sendfile, OSSL_IOVEC - write bytes to a TLS/SSL connection
+SSL_write_ex, SSL_write, SSL_writev_ex, SSL_writev, SSL_sendfile - write bytes to a TLS/SSL connection
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
-
- typedef struct iovec OSSL_IOVEC;
 
  ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags);
  int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written);
