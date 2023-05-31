@@ -2518,11 +2518,12 @@ int ssl_writev_internal(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s)) {
         size_t i, len = 0;
+        unsigned char *buf = NULL;
 
         for (i = 0; i < iovcnt; i++)
             len += iov[i].iov_len;
 
-        unsigned char *buf = OPENSSL_malloc(len);
+        buf = OPENSSL_malloc(len);
         ossl_iovec_memcpy(buf, iov, len, 0);
 
         return s->method->ssl_write(s, buf, len, written);
