@@ -777,11 +777,9 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
 
 int rand_pool_add_additional_data(RAND_POOL *pool)
 {
-    struct {
-        int fork_id;
-        CRYPTO_THREAD_ID tid;
-        uint64_t time;
-    } data = { 0 };
+    int fork_id;
+    CRYPTO_THREAD_ID tid;
+    uint64_t time;
 
     /*
      * Add some noise from the thread id and a high resolution timer.
@@ -789,11 +787,13 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
      * The thread id adds a little randomness if the drbg is accessed
      * concurrently (which is the case for the <master> drbg).
      */
-    data.fork_id = openssl_get_fork_id();
-    data.tid = CRYPTO_THREAD_get_current_id();
-    data.time = get_timer_bits();
+    fork_id = openssl_get_fork_id();
+    tid = CRYPTO_THREAD_get_current_id();
+    time = get_timer_bits();
 
-    return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
+    return rand_pool_add(pool, (unsigned char *)&fork_id, sizeof(fork_id), 0)
+           && rand_pool_add(pool, (unsigned char *)&tid, sizeof(tid), 0)
+           && rand_pool_add(pool, (unsigned char *)&time, sizeof(time), 0);
 }
 
 
