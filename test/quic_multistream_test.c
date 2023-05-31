@@ -122,6 +122,12 @@ struct script_op {
 #define OPK_BEGIN_REPEAT                            32
 #define OPK_END_REPEAT                              33
 #define OPK_S_UNBIND_STREAM_ID                      34
+#define OPK_C_READ_FAIL_WAIT                        35
+#define OPK_C_CLOSE_SOCKET                          36
+#define OPK_C_EXPECT_SSL_ERR                        37
+#define OPK_EXPECT_ERR_REASON                       38
+#define OPK_EXPECT_ERR_LIB                          39
+#define OPK_SLEEP                                   40
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -217,6 +223,18 @@ struct script_op {
     {OPK_END_REPEAT},
 #define OP_S_UNBIND_STREAM_ID(stream_name) \
     {OPK_S_UNBIND_STREAM_ID, NULL, 0, NULL, #stream_name},
+#define OP_C_READ_FAIL_WAIT(stream_name) \
+    {OPK_C_READ_FAIL_WAIT, NULL, 0, NULL, #stream_name},
+#define OP_C_CLOSE_SOCKET() \
+    {OPK_C_CLOSE_SOCKET},
+#define OP_C_EXPECT_SSL_ERR(stream_name, err) \
+    {OPK_C_EXPECT_SSL_ERR, NULL, (err), NULL, #stream_name},
+#define OP_EXPECT_ERR_REASON(err) \
+    {OPK_EXPECT_ERR_REASON, NULL, (err)},
+#define OP_EXPECT_ERR_LIB(lib) \
+    {OPK_EXPECT_ERR_LIB, NULL, (lib)},
+#define OP_SLEEP(ms) \
+    {OPK_SLEEP, NULL, 0, NULL, NULL, (ms)},
 
 static OSSL_TIME get_time(void *arg)
 {
@@ -743,6 +761,11 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 case OPK_C_FREE_STREAM:
                 case OPK_BEGIN_REPEAT:
                 case OPK_END_REPEAT:
+                case OPK_C_READ_FAIL_WAIT:
+                case OPK_C_EXPECT_SSL_ERR:
+                case OPK_EXPECT_ERR_REASON:
+                case OPK_EXPECT_ERR_LIB:
+                case OPK_SLEEP:
                     break;
 
                 default:
@@ -1274,6 +1297,22 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             }
             break;
 
+        case OPK_C_READ_FAIL_WAIT:
+            {
+                size_t bytes_read = 0;
+                char buf[1];
+
+                if (!TEST_ptr(c_tgt))
+                    goto out;
+
+                if (!TEST_false(SSL_read_ex(c_tgt, buf, sizeof(buf), &bytes_read)))
+                    goto out;
+
+                if (is_want(c_tgt, 0))
+                    SPIN_AGAIN();
+            }
+            break;
+
         case OPK_C_STREAM_RESET:
             {
                 SSL_STREAM_RESET_ARGS args = {0};
@@ -1328,6 +1367,39 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                         goto out;
                 }
 #endif
+            }
+            break;
+
+        case OPK_C_CLOSE_SOCKET:
+            {
+                BIO_closesocket(h->c_fd);
+            }
+            break;
+
+        case OPK_C_EXPECT_SSL_ERR:
+            {
+                if (!TEST_size_t_eq((size_t)SSL_get_error(c_tgt, 0), op->arg1))
+                    goto out;
+            }
+            break;
+
+        case OPK_EXPECT_ERR_REASON:
+            {
+                if (!TEST_size_t_eq((size_t)ERR_GET_REASON(ERR_get_error()), op->arg1))
+                    goto out;
+            }
+            break;
+
+        case OPK_EXPECT_ERR_LIB:
+            {
+                if (!TEST_size_t_eq((size_t)ERR_GET_LIB(ERR_get_error()), op->arg1))
+                    goto out;
+            }
+            break;
+
+        case OPK_SLEEP:
+            {
+                OSSL_sleep(op->arg2);
             }
             break;
 
@@ -1978,6 +2050,44 @@ static const struct script_op script_19[] = {
     OP_END
 };
 
+/* 20. Multiple threads accept stream with socket forcibly closed (error test) */
+static const struct script_op script_20_child[] = {
+    OP_C_ACCEPT_STREAM_WAIT (a)
+    OP_C_READ_EXPECT        (a, "foo", 3)
+
+    OP_SLEEP                (500)
+
+    OP_C_READ_FAIL_WAIT     (a)
+    OP_C_EXPECT_SSL_ERR     (a, SSL_ERROR_SYSCALL)
+    OP_EXPECT_ERR_LIB       (ERR_LIB_SYS)
+    OP_EXPECT_ERR_REASON    (SSL_R_PROTOCOL_IS_SHUTDOWN)
+    OP_C_FREE_STREAM        (a)
+
+    OP_END
+};
+
+static const struct script_op script_20[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_NEW_THREAD           (5, script_20_child)
+
+    OP_BEGIN_REPEAT         (5)
+
+    OP_S_NEW_STREAM_BIDI    (a, ANY_ID)
+    OP_S_WRITE              (a, "foo", 3)
+    OP_S_UNBIND_STREAM_ID   (a)
+
+    OP_END_REPEAT           ()
+
+    OP_SLEEP                (100)
+
+    OP_C_CLOSE_SOCKET       ()
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -1998,6 +2108,7 @@ static const struct script_op *const scripts[] = {
     script_17,
     script_18,
     script_19,
+    script_20,
 };
 
 static int test_script(int idx)
