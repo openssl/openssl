@@ -14,7 +14,7 @@
 # include <string.h>
 # include <openssl/e_os2.h>
 
-# if __has_include(<sys/uio.h>)
+# if __has_include(<sys/uio.h>) && !defined(__DJGPP__)
 #  include <sys/uio.h>
 # else
 struct iovec {
