@@ -338,7 +338,14 @@ __owur static int drbg_ctr_generate(RAND_DRBG *drbg,
 
     inc_128(ctr);
 
-    if (outlen == 0) {
+    if (outlen == 0 || outlen == AES_BLOCK_SIZE) {
+        if (outlen == AES_BLOCK_SIZE) {
+            if (!EVP_CipherUpdate(ctr->ctx_ecb, out, &outl, ctr->V,
+                                  AES_BLOCK_SIZE)
+                || outl != AES_BLOCK_SIZE)
+                return 0;
+        }
+
         inc_128(ctr);
 
         if (!ctr_update(drbg, adin, adinlen, NULL, 0, NULL, 0))
