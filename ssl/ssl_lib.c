@@ -2670,28 +2670,6 @@ int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
     return ret;
 }
 
-int SSL_writev(SSL *s, const OSSL_IOVEC *iov, int iovcnt)
-{
-    int ret;
-    size_t written;
-
-    if (iovcnt < 0) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_LENGTH);
-        return -1;
-    }
-
-    ret = ssl_writev_internal(s, iov, (size_t)iovcnt, &written);
-
-    /*
-     * The cast is safe here because ret should be <= INT_MAX because num is
-     * <= INT_MAX
-     */
-    if (ret > 0)
-        ret = (int)written;
-
-    return ret;
-}
-
 int SSL_writev_ex(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written)
 {
     int ret = ssl_writev_internal(s, iov, iovcnt, written);
