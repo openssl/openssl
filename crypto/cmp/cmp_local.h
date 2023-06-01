@@ -51,8 +51,10 @@ struct ossl_cmp_ctx_st {
     int total_timeout; /* max number of seconds an enrollment may take, incl. */
     /* attempts polling for a response if a 'waiting' PKIStatus is received */
     time_t end_time; /* session start time + totaltimeout */
+# ifndef OPENSSL_NO_HTTP
     OSSL_HTTP_bio_cb_t http_cb;
     void *http_cb_arg; /* allows to store optional argument to cb */
+# endif
 
     /* server authentication */
     /*

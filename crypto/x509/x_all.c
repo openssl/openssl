@@ -98,6 +98,7 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
 static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,
                                    int timeout, const ASN1_ITEM *it)
 {
+#ifndef OPENSSL_NO_HTTP
     BIO *mem = OSSL_HTTP_get(url, NULL /* proxy */, NULL /* no_proxy */,
                              bio, rbio, NULL /* cb */, NULL /* arg */,
                              1024 /* buf_size */, NULL /* headers */,
@@ -107,6 +108,9 @@ static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,
 
     BIO_free(mem);
     return res;
+#else
+    return 0;
+#endif
 }
 
 X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)

@@ -23,6 +23,7 @@ jobs:
           no-dtls,
           no-ec,
           no-ec2m,
+          no-http,
           no-siv,
           no-legacy,
           no-rfc3779,

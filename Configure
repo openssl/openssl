@@ -459,6 +459,7 @@ my @disablables = (
     "fuzz-afl",
     "fuzz-libfuzzer",
     "gost",
+    "http",
     "idea",
     "ktls",
     "legacy",
@@ -1778,6 +1779,8 @@ unless ($disabled{winstore}) {
         disable('not-windows', 'winstore');
     }
 }
+
+disable('no-http-api', 'ocsp') if ($disabled{http});
 
 push @{$config{openssl_other_defines}}, "OPENSSL_NO_KTLS" if ($disabled{ktls});
 

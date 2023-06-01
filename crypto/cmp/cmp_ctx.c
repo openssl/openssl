@@ -163,11 +163,13 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
         return 0;
     }
 
+#ifndef OPENSSL_NO_HTTP
     if (ctx->http_ctx != NULL) {
         (void)OSSL_HTTP_close(ctx->http_ctx, 1);
         ossl_cmp_debug(ctx, "disconnected from CMP server");
         ctx->http_ctx = NULL;
     }
+#endif
     ctx->status = OSSL_CMP_PKISTATUS_unspecified;
     ctx->failInfoCode = -1;
 
@@ -191,10 +193,12 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     if (ctx == NULL)
         return;
 
+#ifndef OPENSSL_NO_HTTP
     if (ctx->http_ctx != NULL) {
         (void)OSSL_HTTP_close(ctx->http_ctx, 1);
         ossl_cmp_debug(ctx, "disconnected from CMP server");
     }
+#endif
     OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx->serverPath);
     OPENSSL_free(ctx->server);
@@ -813,6 +817,7 @@ DEFINE_OSSL_CMP_CTX_set1(server, char)
 /* Set the server exclusion list of the HTTP proxy server */
 DEFINE_OSSL_CMP_CTX_set1(no_proxy, char)
 
+#ifndef OPENSSL_NO_HTTP
 /* Set the http connect/disconnect callback function to be used for HTTP(S) */
 DEFINE_OSSL_set(OSSL_CMP_CTX, http_cb, OSSL_HTTP_bio_cb_t)
 
@@ -824,6 +829,7 @@ DEFINE_OSSL_set(OSSL_CMP_CTX, http_cb_arg, void *)
  * Returns callback argument set previously (NULL if not set or on error)
  */
 DEFINE_OSSL_get(OSSL_CMP_CTX, http_cb_arg, void *, NULL)
+#endif
 
 /* Set callback function for sending CMP request and receiving response */
 DEFINE_OSSL_set(OSSL_CMP_CTX, transfer_cb, OSSL_CMP_transfer_cb_t)
