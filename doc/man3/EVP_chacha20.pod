@@ -25,7 +25,7 @@ The ChaCha20 stream cipher. The key length is 256 bits, the IV is 128 bits long.
 The first 64 bits consists of a counter in little-endian order followed by a 64
 bit nonce. For example a nonce of:
 
-000000000000000000000002
+0000000000000002
 
 With an initial counter of 42 (2a in hex) would be expressed as:
 
