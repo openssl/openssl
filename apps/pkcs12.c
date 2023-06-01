@@ -432,7 +432,7 @@ int pkcs12_main(int argc, char **argv)
             WARN_NO_EXPORT("nomaciter");
         if (cert_pbe == -1 && maciter == -1)
             WARN_NO_EXPORT("nomac");
-        if (macsaltlen != 0)
+        if (macsaltlen != PKCS12_SALT_LEN)
             WARN_NO_EXPORT("macsaltlen");
     }
 #ifndef OPENSSL_NO_DES
