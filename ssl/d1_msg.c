@@ -36,7 +36,7 @@ int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
     return dtls1_write_bytes(sc, type, buf_, len, written);
 }
 
-int dtls1_writev_app_data_bytes(SSL *s, int type, const OSSL_IOVEC *iov,
+int dtls1_writev_app_data_bytes(SSL *s, int type, const struct iovec *iov,
                                 size_t iovcnt, size_t *written)
 {
     size_t i, len = 0;

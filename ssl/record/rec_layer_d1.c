@@ -617,7 +617,7 @@ int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
     return i;
 }
 
-int dtls1_writev_bytes(SSL_CONNECTION *s, int type, const OSSL_IOVEC *iov,
+int dtls1_writev_bytes(SSL_CONNECTION *s, int type, const struct iovec *iov,
                        size_t len, size_t *written)
 {
     int i;
@@ -678,7 +678,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
     return ret;
 }
 
-int do_dtls1_writev(SSL_CONNECTION *sc, int type, const OSSL_IOVEC *iov,
+int do_dtls1_writev(SSL_CONNECTION *sc, int type, const struct iovec *iov,
                     size_t len, size_t *written)
 {
     int i;

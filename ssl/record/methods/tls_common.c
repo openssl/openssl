@@ -1931,7 +1931,7 @@ int tls_writev_records_default(OSSL_RECORD_LAYER *rl,
         if (rl->compctx != NULL) {
             /* need copying to support oneshot compression */
             TLS_RL_RECORD_set_input(thiswr, OPENSSL_malloc(thiswr->length));
-            ossl_iovec_memcpy(thiswr->input, (const OSSL_IOVEC *)thistempl->buf,
+            ossl_iovec_memcpy(thiswr->input, (const struct iovec *)thistempl->buf,
                               thiswr->length, thistempl->offset);
 
             if (!tls_do_compress(rl, thiswr)
@@ -1941,7 +1941,7 @@ int tls_writev_records_default(OSSL_RECORD_LAYER *rl,
             }
         } else if (compressdata != NULL) {
             TLS_RL_RECORD_set_input(thiswr, (unsigned char *)thistempl->buf);
-            if (!WPACKET_memcpy_iovec(thispkt, (const OSSL_IOVEC *)thiswr->input,
+            if (!WPACKET_memcpy_iovec(thispkt, (const struct iovec *)thiswr->input,
                                       thiswr->length, thistempl->offset)) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;

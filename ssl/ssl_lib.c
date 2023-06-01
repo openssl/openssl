@@ -83,7 +83,7 @@ struct ssl_async_args {
     union {
         int (*func_read) (SSL *, void *, size_t, size_t *);
         int (*func_write) (SSL *, const void *, size_t, size_t *);
-        int (*func_writev) (SSL *, const OSSL_IOVEC *, size_t, size_t *);
+        int (*func_writev) (SSL *, const struct iovec *, size_t, size_t *);
         int (*func_other) (SSL *);
     } f;
 };
@@ -2230,7 +2230,7 @@ static int ssl_io_intern(void *vargs)
     case WRITEFUNC:
         return args->f.func_write(s, buf, num, &sc->asyncrw);
     case WRITEVFUNC:
-        return args->f.func_writev(s, (const OSSL_IOVEC *)buf, num,
+        return args->f.func_writev(s, (const struct iovec *)buf, num,
                                    &sc->asyncrw);
     case OTHERFUNC:
         return args->f.func_other(s);
@@ -2510,7 +2510,7 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
     }
 }
 
-int ssl_writev_internal(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
+int ssl_writev_internal(SSL *s, const struct iovec *iov, size_t iovcnt,
                         size_t *written)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
@@ -2670,7 +2670,7 @@ int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
     return ret;
 }
 
-int SSL_writev_ex(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written)
+int SSL_writev_ex(SSL *s, const struct iovec *iov, size_t iovcnt, size_t *written)
 {
     int ret = ssl_writev_internal(s, iov, iovcnt, written);
 

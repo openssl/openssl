@@ -472,7 +472,7 @@ int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len)
     return 1;
 }
 
-int WPACKET_memcpy_iovec(WPACKET *pkt, const OSSL_IOVEC *iov, size_t len,
+int WPACKET_memcpy_iovec(WPACKET *pkt, const struct iovec *iov, size_t len,
                          size_t offset)
 {
     unsigned char *dest;

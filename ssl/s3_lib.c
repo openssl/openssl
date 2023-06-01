@@ -4501,7 +4501,7 @@ int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written)
                                       written);
 }
 
-int ssl3_writev(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written)
+int ssl3_writev(SSL *s, const struct iovec *iov, size_t iovcnt, size_t *written)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 

@@ -891,7 +891,7 @@ int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize);
 
 /* Copy |len| bytes of data from |*src| into the WPACKET. */
 int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len);
-int WPACKET_memcpy_iovec(WPACKET *pkt, const OSSL_IOVEC *iov, size_t len,
+int WPACKET_memcpy_iovec(WPACKET *pkt, const struct iovec *iov, size_t len,
                          size_t offset);
 
 /* Set |len| bytes of data to |ch| into the WPACKET. */

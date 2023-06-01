@@ -1933,7 +1933,7 @@ __owur ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size,
                                  int flags);
 __owur int SSL_write(SSL *ssl, const void *buf, int num);
 __owur int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written);
-__owur int SSL_writev_ex(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt,
+__owur int SSL_writev_ex(SSL *s, const struct iovec *iov, size_t iovcnt,
                          size_t *written);
 __owur int SSL_write_early_data(SSL *s, const void *buf, size_t num,
                                 size_t *written);

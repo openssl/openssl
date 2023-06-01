@@ -11,7 +11,7 @@ SSL_write_ex, SSL_write, SSL_writev_ex, SSL_sendfile - write bytes to a TLS/SSL 
  ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags);
  int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written);
  int SSL_write(SSL *ssl, const void *buf, int num);
- int SSL_writev_ex(SSL *s, const OSSL_IOVEC *iov, size_t iovcnt, size_t *written);
+ int SSL_writev_ex(SSL *s, const struct iovec *iov, size_t iovcnt, size_t *written);
 
 =head1 DESCRIPTION
 

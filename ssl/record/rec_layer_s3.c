@@ -437,7 +437,7 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
     }
 }
 
-int ssl3_writev_bytes(SSL *ssl, int type, const OSSL_IOVEC *iov, size_t iovcnt,
+int ssl3_writev_bytes(SSL *ssl, int type, const struct iovec *iov, size_t iovcnt,
                       size_t *written)
 {
     size_t j, len = 0;

@@ -302,6 +302,18 @@ typedef uint64_t ossl_uintmax_t;
 #  define ossl_unused
 # endif
 
+/* struct iovec */
+# if defined(OPENSSL_SYS_UNIX)
+#  include <sys/uio.h>
+# elif defined(__DJGPP__)
+#  include <sys/socket.h>
+# else
+struct iovec {
+    void   *iov_base;
+    size_t  iov_len;
+};
+# endif
+
 #ifdef  __cplusplus
 }
 #endif
