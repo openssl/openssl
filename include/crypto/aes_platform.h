@@ -454,6 +454,13 @@ void rv64i_zvkned_encrypt(const unsigned char *in, unsigned char *out,
 void rv64i_zvkned_decrypt(const unsigned char *in, unsigned char *out,
                           const AES_KEY *key);
 
+void rv64i_zvkned_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                              size_t length, const AES_KEY *key,
+                              unsigned char *ivec, const int enc);
+
+void rv64i_zvkned_cbc_decrypt(const unsigned char *in, unsigned char *out,
+                              size_t length, const AES_KEY *key,
+                              unsigned char *ivec, const int enc);
 # elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
 /* RISC-V 32 support */
 #  include "riscv_arch.h"
