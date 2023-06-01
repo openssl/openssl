@@ -121,10 +121,6 @@ L<openssl(1)>,
 L<openssl-genpkey(1)>,
 L<openssl-gendsa(1)>
 
-=head1 HISTORY
-
-This command was erroneously marked as deprecated in OpenSSL 3.0. It is not deprecated.
-
 =head1 COPYRIGHT
 
 Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
