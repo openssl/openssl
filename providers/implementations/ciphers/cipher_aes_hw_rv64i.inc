@@ -71,29 +71,32 @@ static int cipher_hw_rv64i_zvkned_initkey(PROV_CIPHER_CTX *dat,
 
     dat->ks = ks;
 
-    /* Zvkned only supports 128 and 256 bit keys for key schedule generation. */
+    /*
+     * Zvkned only supports 128 and 256 bit keys for key schedule generation.
+     * For AES-192 case, we could fallback to `AES_set_encrypt_key`.
+     * All Zvkned-based implementations use the same `encrypt-key` scheduling
+     * for both encryption and decryption.
+     */
     if (keylen * 8 == 128 || keylen * 8 == 256) {
-        if ((dat->mode == EVP_CIPH_ECB_MODE || dat->mode == EVP_CIPH_CBC_MODE)
-            && !dat->enc) {
-            ret = rv64i_zvkned_set_decrypt_key(key, keylen * 8, ks);
-            dat->block = (block128_f) rv64i_zvkned_decrypt;
-            dat->stream.cbc = NULL;
-        } else {
-            ret = rv64i_zvkned_set_encrypt_key(key, keylen * 8, ks);
-            dat->block = (block128_f) rv64i_zvkned_encrypt;
-            dat->stream.cbc = NULL;
-        }
+        ret = rv64i_zvkned_set_encrypt_key(key, keylen * 8, ks);
     } else {
-        if ((dat->mode == EVP_CIPH_ECB_MODE || dat->mode == EVP_CIPH_CBC_MODE)
-            && !dat->enc) {
-            ret = AES_set_encrypt_key(key, keylen * 8, ks);
-            dat->block = (block128_f) rv64i_zvkned_decrypt;
-            dat->stream.cbc = NULL;
+        ret = AES_set_encrypt_key(key, keylen * 8, ks);
+    }
+
+    if (dat->mode == EVP_CIPH_CBC_MODE) {
+        if (dat->enc) {
+            dat->stream.cbc = (cbc128_f) rv64i_zvkned_cbc_encrypt;
         } else {
-            ret = AES_set_encrypt_key(key, keylen * 8, ks);
-            dat->block = (block128_f) rv64i_zvkned_encrypt;
-            dat->stream.cbc = NULL;
+            dat->stream.cbc = (cbc128_f) rv64i_zvkned_cbc_decrypt;
         }
+    }
+
+    /* Zvkned supports aes-128/192/256 encryption and decryption. */
+    if ((dat->mode == EVP_CIPH_ECB_MODE || dat->mode == EVP_CIPH_CBC_MODE) &&
+        !dat->enc) {
+        dat->block = (block128_f) rv64i_zvkned_decrypt;
+    } else {
+        dat->block = (block128_f) rv64i_zvkned_encrypt;
     }
 
     if (ret < 0) {
