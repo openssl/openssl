@@ -33,7 +33,7 @@ static ossl_inline void ossl_iovec_memcpy(unsigned char *dst,
 {
     size_t ptr = 0;
     
-    while (offset >= src[ptr].iov_len) {
+    while (offset >= (size_t)src[ptr].iov_len) {
         offset -= src[ptr].iov_len;
         ptr++;
     }
