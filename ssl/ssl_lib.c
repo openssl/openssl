@@ -2670,7 +2670,7 @@ int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
     return ret;
 }
 
-int SSL_writev_ex(SSL *s, const struct iovec *iov, size_t iovcnt, size_t *written)
+int SSL_writev(SSL *s, const struct iovec *iov, size_t iovcnt, size_t *written)
 {
     int ret = ssl_writev_internal(s, iov, iovcnt, written);
 

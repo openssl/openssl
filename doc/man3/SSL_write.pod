@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_write_ex, SSL_write, SSL_writev_ex, SSL_sendfile - write bytes to a TLS/SSL connection
+SSL_write_ex, SSL_write, SSL_writev, SSL_sendfile - write bytes to a TLS/SSL connection
 
 =head1 SYNOPSIS
 
@@ -11,7 +11,7 @@ SSL_write_ex, SSL_write, SSL_writev_ex, SSL_sendfile - write bytes to a TLS/SSL 
  ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags);
  int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written);
  int SSL_write(SSL *ssl, const void *buf, int num);
- int SSL_writev_ex(SSL *s, const struct iovec *iov, size_t iovcnt, size_t *written);
+ int SSL_writev(SSL *s, const struct iovec *iov, size_t iovcnt, size_t *written);
 
 =head1 DESCRIPTION
 
@@ -19,8 +19,8 @@ SSL_write_ex() and SSL_write() write B<num> bytes from the buffer B<buf> into
 the specified B<ssl> connection. On success SSL_write_ex() will store the number
 of bytes written in B<*written>.
 
-SSL_writev_ex() write B<iovcnt> buffers from the array B<iov> into the specified
-B<ssl> connection. On success SSL_writev_ex() will store the number of bytes
+SSL_writev() write B<iovcnt> buffers from the array B<iov> into the specified
+B<ssl> connection. On success SSL_writev() will store the number of bytes
 written in B<*written>.
 
 SSL_sendfile() writes B<size> bytes from offset B<offset> in the file
@@ -34,7 +34,7 @@ Currently, under Linux it is ignored.
 =head1 NOTES
 
 In the paragraphs below a "write function" is defined as one of either
-SSL_write_ex(), SSL_write(), or SSL_writev_ex().
+SSL_write_ex(), SSL_write(), or SSL_writev().
 
 If necessary, a write function will negotiate a TLS/SSL session, if not already
 explicitly performed by L<SSL_connect(3)> or L<SSL_accept(3)>. If the peer
@@ -81,12 +81,12 @@ When B<SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER> was set using L<SSL_CTX_set_mode(3)>
 the pointer can be different, but the data and length should still be the same.
 
 You should not call SSL_write() with num=0, it will return an error.
-SSL_write_ex() and SSL_writev_ex() can be called with num=0, but will not send application data to
+SSL_write_ex() and SSL_writev() can be called with num=0, but will not send application data to
 the peer.
 
 =head1 RETURN VALUES
 
-SSL_write_ex() and SSL_writev_ex() will return 1 for success or 0 for failure. Success means that
+SSL_write_ex() and SSL_writev() will return 1 for success or 0 for failure. Success means that
 all requested application data bytes have been written to the SSL connection or,
 if SSL_MODE_ENABLE_PARTIAL_WRITE is in use, at least 1 application data byte has
 been written to the SSL connection. Failure means that not all the requested
