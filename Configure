@@ -459,6 +459,7 @@ my @disablables = (
     "fuzz-afl",
     "fuzz-libfuzzer",
     "gost",
+    "http",
     "idea",
     "ktls",
     "legacy",
@@ -672,7 +673,9 @@ my @disable_cascades = (
 
     "blake2"            => [ "argon2" ],
 
-    "deprecated-3.0"    => [ "engine", "srp" ]
+    "deprecated-3.0"    => [ "engine", "srp" ],
+
+    "http"              => [ "ocsp" ]
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version

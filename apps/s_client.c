@@ -1654,6 +1654,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (proxystr != NULL) {
+#ifndef OPENSSL_NO_HTTP
         int res;
         char *tmp_host = host, *tmp_port = port;
 
@@ -1688,7 +1689,13 @@ int s_client_main(int argc, char **argv)
                        "%s: -proxy argument malformed or ambiguous\n", prog);
             goto end;
         }
+#else
+        BIO_printf(bio_err,
+                   "%s: -proxy not supported in no-http build\n", prog);
+	goto end;
+#endif
     }
+
 
     if (bindstr != NULL) {
         int res;
@@ -2341,12 +2348,14 @@ int s_client_main(int argc, char **argv)
     sbuf_len = 0;
     sbuf_off = 0;
 
+#ifndef OPENSSL_NO_HTTP
     if (proxystr != NULL) {
         /* Here we must use the connect string target host & port */
         if (!OSSL_HTTP_proxy_connect(sbio, thost, tport, proxyuser, proxypass,
                                      0 /* no timeout */, bio_err, prog))
             goto shut;
     }
+#endif
 
     switch ((PROTOCOL_CHOICE) starttls_proto) {
     case PROTO_OFF:

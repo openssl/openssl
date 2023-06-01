@@ -57,7 +57,7 @@ IF[{- !$disabled{tests} -}]
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest rand_status_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
-          http_test servername_test ocspapitest fatalerrtest tls13ccstest \
+          servername_test ocspapitest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test build_wincrypt_test \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
@@ -515,12 +515,14 @@ IF[{- !$disabled{tests} -}]
   DEPEND[ocspapitest]=../libcrypto libtestutil.a
 
   IF[{- !$disabled{sock} -}]
-    PROGRAMS{noinst}=http_test
-  ENDIF
+    IF[{- !$disabled{http} -}]
+      PROGRAMS{noinst}=http_test
 
-  SOURCE[http_test]=http_test.c
-  INCLUDE[http_test]=../include ../apps/include
-  DEPEND[http_test]=../libcrypto libtestutil.a
+      SOURCE[http_test]=http_test.c
+      INCLUDE[http_test]=../include ../apps/include
+      DEPEND[http_test]=../libcrypto libtestutil.a
+    ENDIF
+  ENDIF
 
   SOURCE[dtlstest]=dtlstest.c helpers/ssltestlib.c
   INCLUDE[dtlstest]=../include ../apps/include
@@ -589,10 +591,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[ciphername_test]=ciphername_test.c
   INCLUDE[ciphername_test]=../include ../apps/include
   DEPEND[ciphername_test]=../libcrypto ../libssl libtestutil.a
-
-  SOURCE[http_test]=http_test.c
-  INCLUDE[http_test]=../include ../apps/include
-  DEPEND[http_test]=../libcrypto libtestutil.a
 
   SOURCE[servername_test]=servername_test.c helpers/ssltestlib.c
   INCLUDE[servername_test]=../include ../apps/include

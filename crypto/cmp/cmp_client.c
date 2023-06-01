@@ -134,8 +134,10 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     int time_left;
     OSSL_CMP_transfer_cb_t transfer_cb = ctx->transfer_cb;
 
+#ifndef OPENSSL_NO_HTTP
     if (transfer_cb == NULL)
         transfer_cb = OSSL_CMP_MSG_http_perform;
+#endif
     *rep = NULL;
 
     if (ctx->total_timeout != 0 /* not waiting indefinitely */) {

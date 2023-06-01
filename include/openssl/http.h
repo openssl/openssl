@@ -33,6 +33,8 @@ extern "C" {
 # define OPENSSL_HTTP_PROXY "HTTP_PROXY"
 # define OPENSSL_HTTPS_PROXY "HTTPS_PROXY"
 
+# ifndef OPENSSL_NO_HTTP
+
 #define OSSL_HTTP_DEFAULT_MAX_LINE_LEN (4 * 1024)
 #define OSSL_HTTP_DEFAULT_MAX_RESP_LEN (100 * 1024)
 
@@ -103,6 +105,8 @@ int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
 const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
                                   const char *server, int use_ssl);
 
+
+# endif /* !defined(OPENSSL_NO_HTTP) */
 # ifdef  __cplusplus
 }
 # endif
