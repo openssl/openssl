@@ -4683,6 +4683,10 @@ DEPEND[html/man7/fips_module.html]=man7/fips_module.pod
 GENERATE[html/man7/fips_module.html]=man7/fips_module.pod
 DEPEND[man/man7/fips_module.7]=man7/fips_module.pod
 GENERATE[man/man7/fips_module.7]=man7/fips_module.pod
+DEPEND[html/man7/guide-tls-client-block.html]=man7/guide-tls-client-block.pod
+GENERATE[html/man7/guide-tls-client-block.html]=man7/guide-tls-client-block.pod
+DEPEND[man/man7/guide-tls-client-block.7]=man7/guide-tls-client-block.pod
+GENERATE[man/man7/guide-tls-client-block.7]=man7/guide-tls-client-block.pod
 DEPEND[html/man7/life_cycle-cipher.html]=man7/life_cycle-cipher.pod
 GENERATE[html/man7/life_cycle-cipher.html]=man7/life_cycle-cipher.pod
 DEPEND[man/man7/life_cycle-cipher.7]=man7/life_cycle-cipher.pod
@@ -4938,6 +4942,7 @@ html/man7/ct.html \
 html/man7/des_modes.html \
 html/man7/evp.html \
 html/man7/fips_module.html \
+html/man7/guide-tls-client-block.html \
 html/man7/life_cycle-cipher.html \
 html/man7/life_cycle-digest.html \
 html/man7/life_cycle-kdf.html \
@@ -5071,6 +5076,7 @@ man/man7/ct.7 \
 man/man7/des_modes.7 \
 man/man7/evp.7 \
 man/man7/fips_module.7 \
+man/man7/guide-tls-client-block.7 \
 man/man7/life_cycle-cipher.7 \
 man/man7/life_cycle-digest.7 \
 man/man7/life_cycle-kdf.7 \
