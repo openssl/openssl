@@ -75,6 +75,9 @@ GENERATE[include/openssl/x509_vfy.h]=include/openssl/x509_vfy.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
+DEPEND[crypto/params_idx.c \
+       include/internal/param_names.h \
+       include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
 GENERATE[crypto/params_idx.c]=crypto/params_idx.c.in
 GENERATE[include/internal/param_names.h]=include/internal/param_names.h.in
 GENERATE[include/openssl/core_names.h]=include/openssl/core_names.h.in
