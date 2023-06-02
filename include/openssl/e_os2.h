@@ -306,6 +306,8 @@ typedef uint64_t ossl_uintmax_t;
 # if defined(OPENSSL_SYS_UNIX)
 #  include <sys/uio.h>
 # elif defined(__DJGPP__)
+#  define WATT32
+#  define WATT32_NO_OLDIES
 #  include <sys/socket.h>
 # else
 struct iovec {

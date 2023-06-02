@@ -202,6 +202,54 @@ static int test_sstream_simple(void)
     return testresult;
 }
 
+static int test_sstream_iov(void)
+{
+    int testresult = 0;
+    QUIC_SSTREAM *sstream = NULL;
+    OSSL_QUIC_FRAME_STREAM hdr;
+    OSSL_QTX_IOVEC iov[2];
+    size_t num_iov = 0, wr = 0, init_size = 8192, offset = 2;
+
+    if (!TEST_ptr(sstream = ossl_quic_sstream_new(init_size)))
+        goto err;
+
+    /* Should not have any data yet */
+    num_iov = OSSL_NELEM(iov);
+    if (!TEST_false(ossl_quic_sstream_get_stream_frame(sstream, 0, &hdr, iov,
+                                                       &num_iov)))
+        goto err;
+
+    /* Append data */
+    const struct iovec data_1_iov[] = {
+        { (void *)data_1, 8 },
+        { (void *)(data_1 + 8), sizeof(data_1) - 8 }
+    };
+    if (!TEST_true(ossl_quic_sstream_appendv(sstream, data_1_iov,
+                                             sizeof(data_1) - offset,
+                                             offset, &wr))
+        || !TEST_size_t_eq(wr, sizeof(data_1) - offset))
+        goto err;
+
+    /* Read data */
+    num_iov = OSSL_NELEM(iov);
+    if (!TEST_true(ossl_quic_sstream_get_stream_frame(sstream, 0, &hdr, iov,
+                                                      &num_iov))
+        || !TEST_size_t_gt(num_iov, 0)
+        || !TEST_uint64_t_eq(hdr.offset, 0)
+        || !TEST_uint64_t_eq(hdr.len, sizeof(data_1) - offset)
+        || !TEST_false(hdr.is_fin))
+        goto err;
+
+    if (!TEST_true(compare_iov(data_1 + offset, sizeof(data_1) - offset,
+                               iov, num_iov)))
+        goto err;
+
+    testresult = 1;
+ err:
+    ossl_quic_sstream_free(sstream);
+    return testresult;
+}
+
 static int test_sstream_bulk(int idx)
 {
     int testresult = 0;
@@ -570,6 +618,7 @@ static int test_rstream_random(int idx)
 int setup_tests(void)
 {
     ADD_TEST(test_sstream_simple);
+    ADD_TEST(test_sstream_iov);
     ADD_ALL_TESTS(test_sstream_bulk, 100);
     ADD_ALL_TESTS(test_rstream_simple, 4);
     ADD_ALL_TESTS(test_rstream_random, 100);

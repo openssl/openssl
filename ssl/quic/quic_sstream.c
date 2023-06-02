@@ -328,6 +328,74 @@ int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
     return 1;
 }
 
+int ossl_quic_sstream_appendv(QUIC_SSTREAM *qss,
+                              const struct iovec *iov,
+                              size_t buf_len,
+                              size_t offset,
+                              size_t *consumed)
+{
+    size_t ptr = 0, l, consumed_ = 0;
+    UINT_RANGE r;
+    struct ring_buf old_ring_buf = qss->ring_buf;
+
+    if (qss->have_final_size) {
+        *consumed = 0;
+        return 0;
+    }
+
+    /*
+     * Note: It is assumed that ossl_quic_sstream_append will be called during a
+     * call to e.g. SSL_write and this function is therefore designed to support
+     * such semantics. In particular, the buffer pointed to by buf is only
+     * assumed to be valid for the duration of this call, therefore we must copy
+     * the data here. We will later copy-and-encrypt the data during packet
+     * encryption, so this is a two-copy design. Supporting a one-copy design in
+     * the future will require applications to use a different kind of API.
+     * Supporting such changes in future will require corresponding enhancements
+     * to this code.
+     */
+    while (offset >= iov[ptr].iov_len) {
+        offset -= iov[ptr].iov_len;
+        ptr++;
+    }
+
+    while (buf_len > 0) {
+        size_t to_copy = iov[ptr].iov_len - offset;
+
+        if (to_copy > buf_len)
+            to_copy = buf_len;
+
+        l = ring_buf_push(&qss->ring_buf,
+                          (unsigned char *)(iov[ptr].iov_base) + offset,
+                          to_copy);
+        if (l == 0)
+            break;
+
+        offset      += l;
+        buf_len     -= l;
+        consumed_   += l;
+
+        if (offset == iov[ptr].iov_len) {
+            offset = 0;
+            ptr++;
+        }
+    }
+
+    if (consumed_ > 0) {
+        r.start = old_ring_buf.head_offset;
+        r.end   = r.start + consumed_ - 1;
+        assert(r.end + 1 == qss->ring_buf.head_offset);
+        if (!ossl_uint_set_insert(&qss->new_set, &r)) {
+            qss->ring_buf = old_ring_buf;
+            *consumed = 0;
+            return 0;
+        }
+    }
+
+    *consumed = consumed_;
+    return 1;
+}
+
 static void qss_cull(QUIC_SSTREAM *qss)
 {
     UINT_SET_ITEM *h = ossl_list_uint_set_head(&qss->acked_set);

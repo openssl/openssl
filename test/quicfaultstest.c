@@ -65,6 +65,64 @@ static int test_basic(void)
 }
 
 /*
+ * Test that sends data using iovec and checks that the data is received
+ */
+static int test_iov(void)
+{
+    int testresult = 0;
+    size_t i;
+    SSL_CTX *cctx = SSL_CTX_new(OSSL_QUIC_client_method());
+    QUIC_TSERVER *qtserv = NULL;
+    SSL *cssl = NULL;
+    char *msg = "Hello World!";
+    size_t msglen = strlen(msg);
+    unsigned char buf[80];
+    size_t num_iov, written, bytesread;
+    const struct iovec iov[4] = {
+        { (void *)msg, msglen }, { (void *)msg, msglen },
+        { (void *)msg, msglen }, { (void *)msg, msglen }
+    };
+
+    if (!TEST_ptr(cctx))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, cert, privkey, 0,
+                                             &qtserv, &cssl, NULL)))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
+        goto err;
+
+    num_iov = OSSL_NELEM(iov);
+    if (!TEST_true(SSL_writev(cssl, iov, num_iov, &written)))
+        goto err;
+
+    if (!TEST_size_t_eq(written, msglen * num_iov))
+        goto err;
+
+    ossl_quic_tserver_tick(qtserv);
+    if (!TEST_true(ossl_quic_tserver_read(qtserv, 0, buf, sizeof(buf), &bytesread)))
+        goto err;
+
+    /*
+     * We assume the entire message is read from the server in one go. In
+     * theory this could get fragmented but its a small message so we assume
+     * not.
+     */
+    for (i = 0; i < num_iov; i++) {
+        if (!TEST_mem_eq(msg, msglen, buf + (i * msglen), bytesread / num_iov))
+            goto err;
+    }
+
+    testresult = 1;
+ err:
+    SSL_free(cssl);
+    ossl_quic_tserver_free(qtserv);
+    SSL_CTX_free(cctx);
+    return testresult; 
+}
+
+/*
  * Test that adding an unknown frame type is handled correctly
  */
 static int add_unknown_frame_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
@@ -398,6 +456,7 @@ int setup_tests(void)
         goto err;
 
     ADD_TEST(test_basic);
+    ADD_TEST(test_iov);
     ADD_TEST(test_unknown_frame);
     ADD_TEST(test_no_transport_params);
     ADD_ALL_TESTS(test_corrupted_data, 2);
