@@ -492,9 +492,9 @@ extra file or module to load, where this is applicable.
 Depending on what generator is used, a B<DEPEND> statement also acts
 as an B<INCLUDE> statement for the directory where the I<file> is
 located.  In some cases, that's not quite feasible, because a module
-isn't meant to be loaded by file name only and may require a
-non-default separation between the implied inclusion directory and the
-intended module name.
+isn't meant to be loaded by filename only and may require a nondefault
+separation between the implied inclusion directory and the intended module
+name.
 
 =item ... but there is a solution:
 
