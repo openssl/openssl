@@ -5622,9 +5622,6 @@ OSSL_IETF_ATTR_SYNTAX_add1_value        ?	3_2_0	EXIST::FUNCTION:
 OSSL_IETF_ATTR_SYNTAX_print             ?	3_2_0	EXIST::FUNCTION:
 X509V3_EXT_ACERT_add_nconf              ?	3_2_0	EXIST::FUNCTION:
 X509V3_EXT_ACERT_add_conf               ?	3_2_0	EXIST::FUNCTION:
-ossl_x509_check_acert_time              ?	3_2_0	EXIST::FUNCTION:
-ossl_x509_check_acert_exts              ?	3_2_0	EXIST::FUNCTION:
-X509_attr_cert_verify                   ?	3_2_0	EXIST::FUNCTION:
 X509_ACERT_verify_ex                    ?	3_2_0	EXIST::FUNCTION:
 X509_ACERT_verify                       ?	3_2_0	EXIST::FUNCTION:
 d2i_USER_NOTICE_SYNTAX                  ?	3_2_0	EXIST::FUNCTION:
@@ -5824,3 +5821,8 @@ CERTIFICATE_IDENTIFIER_print            ?	3_2_0	EXIST::FUNCTION:
 COMPONENT_IDENTIFIER_print              ?	3_2_0	EXIST::FUNCTION:
 PLATFORM_CONFIG_print                   ?	3_2_0	EXIST::FUNCTION:
 i2r_ISSUER_SERIAL                       ?	3_2_0	EXIST::FUNCTION:
+ossl_x509_check_acert_time              ?	3_2_0	EXIST::FUNCTION:
+ossl_x509_check_acert_exts              ?	3_2_0	EXIST::FUNCTION:
+X509_attr_cert_verify                   ?	3_2_0	EXIST::FUNCTION:
+X509_attr_cert_verify_ex                ?	3_2_0	EXIST::FUNCTION:
+acert_crl                               ?	3_2_0	EXIST::FUNCTION:

@@ -164,10 +164,14 @@ int X509V3_EXT_ACERT_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
 int X509V3_EXT_ACERT_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
                               const char *section, X509_ACERT *acert);
 
-int ossl_x509_check_acert_time(X509_STORE_CTX *ctx, X509_ACERT *acert);
-int ossl_x509_check_acert_exts(X509_ACERT *acert);
-int X509_attr_cert_verify(X509_STORE_CTX *ctx, X509_ACERT *acert);
 int X509_ACERT_verify_ex(X509_ACERT *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx, const char *propq);
 int X509_ACERT_verify(X509_ACERT *a, EVP_PKEY *r);
+
+int ossl_x509_check_acert_time(X509_ACERT *acert, time_t* as_of);
+int ossl_x509_check_acert_exts(X509_ACERT *acert, TARGET *tgt, int asserted_before);
+int X509_attr_cert_verify(X509_ACERT *acert, X509 *issuer);
+int X509_attr_cert_verify_ex(X509_ACERT *acert, X509 *issuer, X509 *holder,
+                             TARGET *tgt, int asserted_before);
+int acert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509_ACERT *x);
 
 #endif

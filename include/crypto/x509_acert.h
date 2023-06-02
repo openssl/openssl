@@ -64,9 +64,11 @@ typedef struct X509_acert_st {
     CRYPTO_RWLOCK *lock;
 } X509_ACERT;
 
-int ossl_x509_check_acert_time(X509_STORE_CTX *ctx, X509_ACERT *acert);
-int ossl_x509_check_acert_exts(X509_ACERT *acert);
-int X509_attr_cert_verify(X509_STORE_CTX *ctx, X509_ACERT *acert);
+int ossl_x509_check_acert_time(X509_ACERT *acert, time_t* as_of);
+int ossl_x509_check_acert_exts(X509_ACERT *acert, TARGET *tgt, int asserted_before);
+int X509_attr_cert_verify(X509_ACERT *acert, X509 *issuer);
+int X509_attr_cert_verify_ex(X509_ACERT *acert, X509 *issuer, X509 *holder,
+                             TARGET *tgt, int asserted_before);
 int acert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509_ACERT *x);
 
 #endif

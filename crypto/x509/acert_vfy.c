@@ -27,28 +27,24 @@
 #include "crypto/x509_acert.h"
 #include "openssl/x509_acert.h"
 
+int TARGET_CERT_cmp (TARGET_CERT* a, TARGET_CERT* b);
+int ossl_x509_check_targeting (TARGET *asserted, TARGETING_INFORMATION *tinfo);
+
 /*-
  * Check attribute certificate validity times.
+ * Make second argument NULL to evaluate against the current time.
  */
-int ossl_x509_check_acert_time(X509_STORE_CTX *ctx, X509_ACERT *acert)
+int ossl_x509_check_acert_time(X509_ACERT *acert, time_t* as_of)
 {
-    time_t *ptime;
     int i;
 
-    if ((ctx->param->flags & X509_V_FLAG_USE_CHECK_TIME) != 0)
-        ptime = &ctx->param->check_time;
-    else if ((ctx->param->flags & X509_V_FLAG_NO_CHECK_TIME) != 0)
-        return X509_V_OK;
-    else
-        ptime = NULL;
-
-    i = X509_cmp_time(X509_ACERT_get0_notBefore(acert), ptime);
+    i = X509_cmp_time(X509_ACERT_get0_notBefore(acert), as_of);
     if (i == 0)
         return X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
     if (i > 0)
         return X509_V_ERR_CERT_NOT_YET_VALID;
 
-    i = X509_cmp_time(X509_ACERT_get0_notAfter(acert), ptime);
+    i = X509_cmp_time(X509_ACERT_get0_notAfter(acert), as_of);
     if (i == 0)
         return X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
     if (i < 0)
@@ -57,54 +53,230 @@ int ossl_x509_check_acert_time(X509_STORE_CTX *ctx, X509_ACERT *acert)
     return X509_V_OK;
 }
 
-int ossl_x509_check_acert_exts(X509_ACERT *acert)
+/* Returns 0 if they are equal, != 0 otherwise. certDigestInfo is not checked. */
+int TARGET_CERT_cmp (TARGET_CERT* a, TARGET_CERT* b) {
+    int a_name_num, b_name_num, i, j;
+    GENERAL_NAMES *a_names, *b_names;
+    GENERAL_NAME *a_name, *b_name;
+    if (!ASN1_INTEGER_cmp(&a->targetCertificate->serial,
+        &b->targetCertificate->serial)) {
+        return 1;
+    }
+    a_names = a->targetCertificate->issuer;
+    b_names = b->targetCertificate->issuer;
+    a_name_num = sk_GENERAL_NAME_num(a_names);
+    b_name_num = sk_GENERAL_NAME_num(b_names);
+    for (i = 0; i < a_name_num; i++) {
+        for (j = 0; j < b_name_num; j++) {
+            a_name = sk_GENERAL_NAME_value(a_names, i);
+            b_name = sk_GENERAL_NAME_value(b_names, j);
+            if (!GENERAL_NAME_cmp(a_name, b_name)) {
+                return 0;
+            }
+        }
+    }
+    return 2;
+}
+
+int ossl_x509_check_targeting (TARGET *asserted, TARGETING_INFORMATION *tinfo) {
+    int i, j, targets_num, target_num;
+    TARGETS* tgts;
+    TARGET* tgt;
+    GENERAL_NAME *gn, *asserted_gn;
+    TARGET_CERT *tc, *asserted_tc;
+    targets_num = sk_TARGETS_num(tinfo);
+    for (i = 0; i < targets_num; i++) {
+        tgts = sk_TARGETS_value(tinfo, i);
+        target_num = sk_TARGET_num(tgts);
+        for (j = 0; j < target_num; j++) {
+            tgt = sk_TARGET_value(tgts, j);
+            if (tgt->type != asserted->type) {
+                continue;
+            }
+            switch (tgt->type) {
+                case (TGT_TARGET_NAME): {
+                    gn = tgt->choice.targetName;
+                    asserted_gn = asserted->choice.targetName;
+                    if (!GENERAL_NAME_cmp(gn, asserted_gn)) {
+                        return 1;
+                    }
+                    break;
+                }
+                case (TGT_TARGET_GROUP): {
+                    // TODO: Define a group lookup callback?
+                    // gn = tgt->choice.targetGroup;
+                    /* Currently unrecognized. */
+                    break;
+                }
+                case (TGT_TARGET_CERT): {
+                    tc = tgt->choice.targetCert;
+                    asserted_tc = asserted->choice.targetCert;
+                    if (TARGET_CERT_cmp(asserted_tc, tc)) {
+                        continue;
+                    }
+                    /* The targetName field of TargetCert is not explained. My
+                    assumption is that, if it is present in the certificate, it
+                    further constrains the asserted targetName to an exact
+                    match, and without it, any targetName is acceptable as long
+                    as the target's IssuerSerial matches. */
+                    if (tc->targetName != NULL) {
+                        if (asserted_tc->targetName != NULL) {
+                            continue;
+                        }
+                        if (!GENERAL_NAME_cmp(tc->targetName,
+                                              asserted_tc->targetName)) {
+                            return 1;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+int ossl_x509_check_acert_exts(X509_ACERT *acert, TARGET *tgt,
+                               int asserted_before)
 {
-    int i;
+    int i, critical, nid;
     X509_EXTENSION *current_ext;
+    ASN1_OBJECT *oid;
+    TARGETING_INFORMATION *tinfo;
     int n = X509_acert_get_ext_count(acert);
 
     for (i = 0; i < n; i++) {
         current_ext = X509_acert_get_ext(acert, i);
         if (current_ext == NULL)
             break;
-        if (current_ext->critical)
-            /* All extensions for attribute certificates not validated. Those
-            for public-key certs are not applicable. */
-            return X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION;
+        oid = X509_EXTENSION_get_object(current_ext);
+        nid = OBJ_obj2nid(oid);
+        switch (nid) {
+            case NID_no_assertion:
+                return X509_V_ERR_NO_ASSERTION;
+            case NID_single_use: {
+                if (asserted_before)
+                    return X509_V_ERR_SINGLE_USE;
+                break;
+            }
+            case NID_target_information: {
+                if (tgt != NULL) {
+                    tinfo = X509V3_EXT_d2i(current_ext);
+                    if (!ossl_x509_check_targeting(tgt, tinfo))
+                        return X509_V_ERR_INVALID_TARGET;
+                }
+                break;
+            }
+            default: {
+                /* You have to use this function, because X509_EXTENSION defaults the
+                critical field to -1 which evaluates truthy! */
+                critical = X509_EXTENSION_get_critical(current_ext);
+                if (critical) {
+                    return X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION;
+                }
+            }
+        }
     }
     return X509_V_OK;
 }
 
-int X509_attr_cert_verify(X509_STORE_CTX *ctx, X509_ACERT *acert)
-{
-    int rc;
+/* This DOES NOT verify the issuer or holder certificates. Those must be
+verified separately. */
+int X509_attr_cert_verify_ex(X509_ACERT *acert, X509 *issuer, X509 *holder,
+                             TARGET *tgt, int asserted_before) {
+    int rc, holder_verified;
     EVP_PKEY *pkey;
-    X509 *subj_pkc;
+    AUTHORITY_KEYID *akid;
+    OSSL_ISSUER_SERIAL *basecertid;
+    GENERAL_NAMES *holder_ent;
 
     if (X509_ALGOR_cmp(&acert->sig_alg, &acert->acinfo->signature) != 0)
-        return 0;
-    rc = X509_STORE_CTX_verify(ctx);
-    if (rc != X509_V_OK)
-        return rc;
-    if (sk_X509_num(ctx->chain) <= 0)
-        return 0;
-    subj_pkc = sk_X509_value(ctx->chain, 0);
-    if ((pkey = X509_get0_pubkey(subj_pkc)) == NULL)
+        return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
+
+    if (holder != NULL) {
+        /*
+        * Check that holder cert matches attribute cert holder field.
+        * This can be done withi *either* the baseCertificateId or the
+        * entityName.  RFC 5755 recommends that only one option is used
+        * for a given AC, but in case both are present, baseCertificateId
+        * takes precedence.
+        */
+        if ((basecertid = X509_ACERT_get0_holder_baseCertId(acert)) != NULL) {
+            if (X509_NAME_cmp(OSSL_ISSUER_SERIAL_get0_issuer(basecertid),
+                            X509_get_issuer_name(holder)) != 0
+                || ASN1_STRING_cmp(OSSL_ISSUER_SERIAL_get0_serial(basecertid),
+                                X509_get0_serialNumber(holder)) != 0) {
+                return X509_V_ERR_ISSUER_HOLDER_MISMATCH;
+            }
+            holder_verified = 1;
+        }
+
+        if (holder_verified == 0
+            && (holder_ent = X509_ACERT_get0_holder_entityName(acert)) != NULL
+            && sk_GENERAL_NAME_num(holder_ent) >= 1) {
+            GENERAL_NAMES *holderAltNames;
+            GENERAL_NAME *entName = sk_GENERAL_NAME_value(holder_ent, 0);
+            int i;
+
+            if (entName->type == GEN_DIRNAME
+                && X509_NAME_cmp(entName->d.directoryName, X509_get_subject_name(holder)) == 0)
+                holder_verified = 1;
+
+            if (holder_verified == 0
+                && (holderAltNames = X509_get_ext_d2i(holder, NID_subject_alt_name,
+                                                    NULL, NULL)) != NULL) {
+                for (i = 0; i < sk_GENERAL_NAME_num(holderAltNames); i++) {
+                    GENERAL_NAME *name = sk_GENERAL_NAME_value(holderAltNames, i);
+
+                    if (GENERAL_NAME_cmp(name, entName) == 0) {
+                        holder_verified = 1;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (holder_verified == 0) {
+            return X509_V_ERR_ISSUER_HOLDER_MISMATCH;
+        }
+    }
+
+    akid = X509V3_get_d2i(acert->acinfo->extensions, NID_authority_key_identifier, NULL, NULL);
+    if (akid != NULL) {
+        rc = X509_check_akid(issuer, akid);
+        if (rc != X509_V_OK)
+            return rc;
+    }
+    if ((pkey = X509_get0_pubkey(issuer)) == NULL)
         return X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
-    rc = ASN1_item_verify(ASN1_ITEM_rptr(X509_ACERT), &acert->sig_alg,
-                           &acert->signature, &acert->acinfo, pkey);
+    rc = X509_ACERT_verify(acert, pkey);
     if (rc != 1)
         return X509_V_ERR_CERT_SIGNATURE_FAILURE;
 
-    rc = ossl_x509_check_acert_time(ctx, acert);
+    rc = ossl_x509_check_acert_time(acert, NULL);
     if (rc != X509_V_OK)
         return rc;
 
-    rc = ossl_x509_check_acert_exts(acert);
+    /*
+     * Check that the issuer satisfies the AC issuer profile in
+     * RFC 5755 Section 4.5.  This will also cache the attached
+     * X509v3 extensions, which must be done before calling
+     * X509_check_akid() and X509_check_ca() to get valid results.
+     */
+    if ((X509_get_key_usage(issuer) & X509v3_KU_DIGITAL_SIGNATURE) == 0) {
+        return X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE;
+    }
+
+    rc = ossl_x509_check_acert_exts(acert, tgt, asserted_before);
     if (rc != X509_V_OK)
         return rc;
 
     return X509_V_OK;
+}
+
+int X509_attr_cert_verify(X509_ACERT *acert, X509 *issuer)
+{
+    return X509_attr_cert_verify_ex(acert, issuer, NULL, NULL, 0);
 }
 
 /*-
