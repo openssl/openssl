@@ -2450,7 +2450,7 @@ EOF
                     $ddest = cleanfile($buildd, $dest, $blddir);
                 }
             }
-            foreach (@{$depends{$dest}}) {
+            foreach my $f (@{$depends{$dest}}) {
                 # If the dependency destination is generated, dependencies
                 # may have an extra syntax to separate the intended inclusion
                 # directory from the module to be loaded: a | instead of a
@@ -2463,15 +2463,17 @@ EOF
                 # $i = full module path in source directory
                 # $i2 = full module path in build directory
                 my $i; my $i2; my $m; my $d; my $d2;
-                if ($unified_info{generate}->{$ddest}) {
-                    ($i, $m) = m/^(.*?)\|(.*)$/;
+                if ($unified_info{generate}->{$ddest}
+                    && $f =~ m/^(.*?)\|(.*)$/) {
+                    $i = $1;
+                    $m = $2;
                     $i = cleanfile($sourced, $i, $blddir);
                     $i2 = cleanfile($buildd, $i, $blddir);
                     $d = cleanfile($sourced, "$i/$m", $blddir);
                     $d2 = cleanfile($buildd, "$i/$m", $blddir);
                 } else {
-                    $d = cleanfile($sourced, $_, $blddir);
-                    $d2 = cleanfile($buildd, $_, $blddir);
+                    $d = cleanfile($sourced, $f, $blddir);
+                    $d2 = cleanfile($buildd, $f, $blddir);
                 }
 
                 # If we know it's generated, or assume it is because we can't
@@ -2494,8 +2496,8 @@ EOF
 
                 # Fix up associated attributes
                 $unified_info{attributes}->{depends}->{$ddest}->{$d} =
-                    $attributes{depends}->{$dest}->{$_}
-                    if defined $attributes{depends}->{$dest}->{$_};
+                    $attributes{depends}->{$dest}->{$f}
+                    if defined $attributes{depends}->{$dest}->{$f};
             }
         }
 
@@ -2665,7 +2667,9 @@ EOF
         next if $dest eq "";
         foreach my $d (keys %{$unified_info{depends}->{$dest}}) {
             next unless $d =~ /\.(h|pm)$/;
-            my $i = dirname($d);
+            # Take into account when a dependency uses the inclusion|module
+            # syntax
+            my $i = $d =~ m/\|/ ? $` : dirname($d);
             my $spot =
                 $d eq "configdata.pm" || defined($unified_info{generate}->{$d})
                 ? 'build' : 'source';

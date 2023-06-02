@@ -1080,7 +1080,7 @@ EOF
                   $d = $x;
               } else {
                   # All other dependencies are simply collected
-                  $d = $;
+                  $d = $x;
               }
               push @perlmodules, '"-M'.$m.'"' if $m;
               $perlmoduledeps{$d} = 1;
