@@ -26,7 +26,6 @@ jobs:
           no-http,
           no-siv,
           no-legacy,
-          no-rfc3779,
           no-sock,
           no-srp,
           no-srtp,
