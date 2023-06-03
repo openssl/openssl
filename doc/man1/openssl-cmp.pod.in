@@ -1127,6 +1127,17 @@ only affect the certificate verification enabled via the B<-out_trusted> option.
 
 =head1 NOTES
 
+When a client obtains from a CMP server CA certificates that it is going to
+trust, for instance via the C<caPubs> field of a certificate response
+or using general messages with infoType C<caCerts>,
+authentication of the CMP server is particularly critical.
+So special care must be taken setting up server authentication
+using B<-trusted> and related options for certificate-based authentication
+or B<-secret> for MAC-based protection.
+If authentication is certificate-based, the B<-srvcertout> option
+should be used to obtain the validated server certificate
+and perform an authorization check based on it.
+
 When setting up CMP configurations and experimenting with enrollment options
 typically various errors occur until the configuration is correct and complete.
 When the CMP server reports an error the client will by default
