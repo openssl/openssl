@@ -2893,7 +2893,7 @@ static int do_genm(OSSL_CMP_CTX *ctx)
             return 0;
         }
 
-        if (!OSSL_CMP_get_caCerts(ctx, &cacerts))
+        if (!OSSL_CMP_get1_caCerts(ctx, &cacerts))
             return 0;
 
         /* could check authorization of sender/origin at this point */

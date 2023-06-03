@@ -14,7 +14,7 @@ OSSL_CMP_KUR,
 OSSL_CMP_try_certreq,
 OSSL_CMP_exec_RR_ses,
 OSSL_CMP_exec_GENM_ses,
-OSSL_CMP_get_caCerts
+OSSL_CMP_get1_caCerts
 - functions implementing CMP client transactions
 
 =head1 SYNOPSIS
@@ -34,8 +34,9 @@ OSSL_CMP_get_caCerts
  int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
                           const OSSL_CRMF_MSG *crm, int *checkAfter);
  int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);
+
  STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx);
- int OSSL_CMP_get_caCerts(OSSL_CMP_CTX *ctx, STACK_OF(X509) **out);
+ int OSSL_CMP_get1_caCerts(OSSL_CMP_CTX *ctx, STACK_OF(X509) **out);
 
 =head1 DESCRIPTION
 
@@ -114,19 +115,22 @@ typically return them as an indication that the certificate was already revoked.
 "rejection" is a clear error. The values "waiting" and "keyUpdateWarning"
 make no sense for revocation and thus are treated as an error as well.
 
-OSSL_CMP_exec_GENM_ses() sends a general message containing the sequence of
+OSSL_CMP_exec_GENM_ses() sends a genm general message containing the sequence of
 infoType and infoValue pairs (InfoTypeAndValue; short: B<ITAV>)
 optionally provided in the I<ctx> using L<OSSL_CMP_CTX_push0_genm_ITAV(3)>.
 On success it records in I<ctx> the status B<OSSL_CMP_PKISTATUS_accepted>
-and returns the list of B<ITAV>s received in the GENP message.
-This can be used, for instance, to poll for CRLs or CA Key Updates.
+and returns the list of B<ITAV>s received in a genp response message.
+This can be used, for instance,
+with infoType C<signKeyPairTypes> to obtain the set of signature
+algorithm identifiers that the CA will certify for subject public keys.
 See RFC 4210 section 5.3.19 and appendix E.5 for details.
+Functions implementing more specific genm/genp exchanges are described next.
 
-OSSL_CMP_get_caCerts() uses a genm/gemp message exchange with infoType caCerts
+OSSL_CMP_get1_caCerts() uses a genm/genp message exchange with infoType caCerts
 to obtain a list of CA certificates from the CMP server referenced by I<ctx>.
 On success it assigns to I<*out> the list of certificates received,
 which must be freed by the caller.
-NULL means that no CA certificate is available at the server.
+NULL output means that no CA certificates were provided by the server.
 
 =head1 NOTES
 
@@ -151,7 +155,7 @@ In the latter case L<OSSL_CMP_CTX_get0_newCert(3)> yields NULL
 and the output parameter I<checkAfter> has been used to
 assign the received value unless I<checkAfter> is NULL.
 
-OSSL_CMP_exec_RR_ses() and OSSL_CMP_get_caCerts()
+OSSL_CMP_exec_RR_ses() and OSSL_CMP_get1_caCerts()
 return 1 on success, 0 on error.
 
 OSSL_CMP_exec_GENM_ses() returns NULL on error,
@@ -175,7 +179,7 @@ L<OSSL_CMP_MSG_http_perform(3)>
 
 The OpenSSL CMP support was added in OpenSSL 3.0.
 
-OSSL_CMP_get_caCerts() was added in OpenSSL 3.2.
+OSSL_CMP_get1_caCerts() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

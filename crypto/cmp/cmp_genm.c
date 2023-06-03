@@ -138,7 +138,7 @@ static OSSL_CMP_ITAV *get_genm_itav(OSSL_CMP_CTX *ctx,
     return NULL;
 }
 
-int OSSL_CMP_get_caCerts(OSSL_CMP_CTX *ctx, STACK_OF(X509) **out)
+int OSSL_CMP_get1_caCerts(OSSL_CMP_CTX *ctx, STACK_OF(X509) **out)
 {
     OSSL_CMP_ITAV *req, *itav;
     STACK_OF(X509) *certs = NULL;
