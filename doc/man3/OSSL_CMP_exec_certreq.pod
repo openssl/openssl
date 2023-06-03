@@ -122,6 +122,14 @@ CMP is defined in RFC 4210 (and CRMF in RFC 4211).
 The CMP client implementation is limited to one request per CMP message
 (and consequently to at most one response component per CMP message).
 
+When a client obtains from a CMP server CA certificates that it is going to
+trust, for instance via the caPubs field of a certificate response,
+authentication of the CMP server is particularly critical.
+So special care must be taken setting up server authentication in I<ctx>
+using functions such as
+L<OSSL_CMP_CTX_set0_trustedStore(3)> (for certificate-based authentication) or
+L<OSSL_CMP_CTX_set1_secretValue(3)> (for MAC-based protection).
+
 =head1 RETURN VALUES
 
 OSSL_CMP_exec_certreq(), OSSL_CMP_exec_IR_ses(), OSSL_CMP_exec_CR_ses(),
