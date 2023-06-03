@@ -673,7 +673,9 @@ my @disable_cascades = (
 
     "blake2"            => [ "argon2" ],
 
-    "deprecated-3.0"    => [ "engine", "srp" ]
+    "deprecated-3.0"    => [ "engine", "srp" ],
+
+    "http"              => [ "ocsp" ]
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -1779,8 +1781,6 @@ unless ($disabled{winstore}) {
         disable('not-windows', 'winstore');
     }
 }
-
-disable('no-http-api', 'ocsp') if ($disabled{http});
 
 push @{$config{openssl_other_defines}}, "OPENSSL_NO_KTLS" if ($disabled{ktls});
 
