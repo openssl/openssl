@@ -41,13 +41,14 @@ jobs:
       with:
          packages: perl git make gcc-core
 # Disabled as cygwin seems to cause PATH problems with this default action
-#    - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
     - name: Check repo
       run: cygcheck -V
     - name: Full cygcheck status
       run: cygcheck -s -v -r -h 
-    - name: Clone repo 
-      run: bash -c "pwd && git clone --branch ${{ github.ref_name }} --depth 1 https://github.com/${{ github.repository }}.git"
+# Activate this if checkout action fails:
+#    - name: Clone repo 
+#      run: bash -c "pwd && git clone --branch ${{ github.ref_name }} --depth 1 https://github.com/${{ github.repository }}.git"
     - name: Full build
       run: bash -c "cd openssl && ./config ${{ matrix.platform.config }} && make $MAKE_PARAMS"
 # Disable testing for now. TBD: Need local cygwin installation to debug .
