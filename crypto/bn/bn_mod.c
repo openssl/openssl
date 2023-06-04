@@ -12,6 +12,17 @@
 
 int BN_nnmod(BIGNUM *r, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
 {
+    if (r == d) {
+        BIGNUM *d_dup = BN_dup(d);
+        int ret;
+
+        if (d_dup == NULL)
+            return 0;
+        ret = BN_nnmod(r, m, d_dup, ctx);
+        BN_free(d_dup);
+        return ret;
+    }
+
     /*
      * like BN_mod, but returns non-negative remainder (i.e., 0 <= r < |d|
      * always holds)
