@@ -1,0 +1,56 @@
+# Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Cygwin tests
+
+on: [pull_request, push]
+
+permissions:
+  contents: read
+
+jobs:
+  cygwin:
+    # Run a job for each of the specified target architectures:
+    strategy:
+      matrix:
+        os:
+          - windows-2019
+# really worth while running, too? cygwin should mask this
+#          - windows-2022
+        platform:
+          - arch: win64
+            config: -DCMAKE_C_COMPILER=gcc
+# are we really learning sth new from win32?
+          - arch: win32
+            config: -DCMAKE_C_COMPILER=gcc
+# if we activate this, more code changes are required:
+# see https://github.com/openssl/openssl/issues/21123
+#            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips enable-quic
+    runs-on: ${{matrix.os}}
+    env:
+      CYGWIN_NOWINPATH: 1
+      SHELLOPTS: igncr
+# Don't overwhelm github CI VMs:
+      MAKE_PARAMS: -j 4
+    steps:
+    - uses: cygwin/cygwin-install-action@master
+      with:
+         packages: perl git make gcc-core
+# Disabled as cygwin seems to cause PATH problems with this default action
+#    - uses: actions/checkout@v3
+    - name: Check repo
+      run: cygcheck -V
+    - name: Full cygcheck status
+      run: cygcheck -s -v -r -h 
+    - name: Clone repo 
+      run: bash -c "pwd && git clone --branch ${{ github.ref_name }} --depth 1 https://github.com/${{ github.repository }}.git"
+    - name: Full build
+      run: bash -c "cd openssl && ./config ${{ matrix.platform.config }} && make $MAKE_PARAMS"
+# Disable testing for now. TBD: Need local cygwin installation to debug .
+#    - name: Run openssl tests
+#      run: bash -c "cd openssl && make V=1 test"
+
