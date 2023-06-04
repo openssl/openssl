@@ -37,11 +37,11 @@ jobs:
 # Don't overwhelm github CI VMs:
       MAKE_PARAMS: -j 4
     steps:
+# Checkout before cygwin can mess with PATH...
+    - uses: actions/checkout@v3
     - uses: cygwin/cygwin-install-action@master
       with:
          packages: perl git make gcc-core
-# Disabled as cygwin seems to cause PATH problems with this default action
-    - uses: actions/checkout@v3
     - name: Check repo
       run: cygcheck -V
     - name: Full cygcheck status
