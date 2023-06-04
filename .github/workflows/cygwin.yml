@@ -50,7 +50,7 @@ jobs:
 #    - name: Clone repo 
 #      run: bash -c "pwd && git clone --branch ${{ github.ref_name }} --depth 1 https://github.com/${{ github.repository }}.git"
     - name: Full build
-      run: bash -c "cd openssl && ./config ${{ matrix.platform.config }} && make $MAKE_PARAMS"
+      run: bash -c "pwd && ls && ./config ${{ matrix.platform.config }} && make $MAKE_PARAMS"
 # Disable testing for now. TBD: Need local cygwin installation to debug .
 #    - name: Run openssl tests
 #      run: bash -c "cd openssl && make V=1 test"
