@@ -201,7 +201,7 @@ int fips_provider_version_match(OSSL_LIB_CTX *libctx, const char *versions)
         } else if (*p == '>') {
             mode = MODE_GT;
             p++;
-        } else if (isdigit(*p)) {
+        } else if (isdigit((unsigned char)*p)) {
             mode = MODE_EQ;
         } else {
             TEST_info("Error matching FIPS version: mode %s\n", p);
