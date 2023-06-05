@@ -195,6 +195,17 @@ int bn_mod_sub_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 int BN_mod_sub_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
                      const BIGNUM *m)
 {
+    if (r == m) {
+        BIGNUM *m_dup = BN_dup(m);
+        int ret;
+
+        if (m_dup == NULL)
+            return 0;
+        ret = BN_mod_sub_quick(r, a, b, m_dup);
+        BN_free(m_dup);
+        return ret;
+    }
+
     if (!BN_sub(r, a, b))
         return 0;
     if (r->neg)
