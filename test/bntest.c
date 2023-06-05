@@ -3176,6 +3176,7 @@ static int test_mod_inverse(void)
         goto err;
     if (!TEST_true(BN_dec2bn(&b, "3259122431")))
         goto err;
+    /* Note that this aliases the result with the modulus. */
     if (!TEST_ptr_eq(BN_mod_inverse(b, a, b, ctx), b))
         goto err;
     if (!TEST_ptr_ne(str = BN_bn2dec(b), NULL))
