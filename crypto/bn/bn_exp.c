@@ -1362,6 +1362,22 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     wstart = bits - 1;          /* The top bit of the window */
     wend = 0;                   /* The bottom bit of the window */
 
+    if (r == m) {
+        BIGNUM *m_dup = BN_CTX_get(ctx);
+
+        if (m_dup == NULL || BN_copy(m_dup, r) == NULL)
+            goto err;
+        m = m_dup;
+    }
+
+    if (r == p) {
+        BIGNUM *p_dup = BN_CTX_get(ctx);
+
+        if (p_dup == NULL || BN_copy(p_dup, p) == NULL)
+            goto err;
+        p = p_dup;
+    }
+
     if (!BN_one(r))
         goto err;
 

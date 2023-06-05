@@ -3193,6 +3193,38 @@ err:
     return res;
 }
 
+static int test_mod_exp_simple(void)
+{
+    int res = 0;
+    char *str = NULL;
+    BIGNUM* a = NULL;
+    BIGNUM* b = NULL;
+    BIGNUM* c = NULL;
+
+    if (!TEST_true(BN_dec2bn(&a, "3")))
+        goto err;
+    if (!TEST_true(BN_dec2bn(&b, "1")))
+        goto err;
+    if (!TEST_true(BN_dec2bn(&c, "11")))
+        goto err;
+    /* Note that this aliases the result with the modulus. */
+    if (!TEST_int_eq(BN_mod_exp_simple(c, a, b, c, ctx), 1))
+        goto err;
+    if (!TEST_ptr_ne(str = BN_bn2dec(c), NULL))
+        goto err;
+    if (!TEST_int_eq(strcmp(str, "3"), 0))
+        goto err;
+
+    res = 1;
+
+err:
+    BN_free(a);
+    BN_free(b);
+    BN_free(c);
+    OPENSSL_free(str);
+    return res;
+}
+
 static int file_test_run(STANZA *s)
 {
     static const FILETEST filetests[] = {
@@ -3340,6 +3372,7 @@ int setup_tests(void)
         ADD_ALL_TESTS(test_mod_exp_consttime, (int)OSSL_NELEM(ModExpTests));
         ADD_TEST(test_mod_exp2_mont);
         ADD_TEST(test_mod_inverse);
+        ADD_TEST(test_mod_exp_simple);
         if (stochastic)
             ADD_TEST(test_rand_range);
     } else {
