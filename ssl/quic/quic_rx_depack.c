@@ -53,8 +53,6 @@ static int depack_do_frame_ping(PACKET *pkt, QUIC_CHANNEL *ch,
         return 0;
     }
 
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
     return 1;
 }
 
@@ -147,9 +145,6 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
         return 0;
     }
 
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
-
     if (!depack_do_implicit_stream_create(ch, frame_data.stream_id,
                                           OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
                                           &stream))
@@ -225,9 +220,6 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
         return 0;
     }
 
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
-
     if (!depack_do_implicit_stream_create(ch, frame_data.stream_id,
                                           OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
                                           &stream))
@@ -276,9 +268,6 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CHANNEL *ch,
         return 0;
     }
 
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
-
     rstream = ch->crypto_recv[ackm_data->pkt_space];
     if (!ossl_assert(rstream != NULL))
         /*
@@ -310,9 +299,6 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CHANNEL *ch,
                                                "decode error");
         return 0;
     }
-
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
 
     if (token_len == 0) {
         /*
@@ -488,9 +474,6 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
         return 0;
     }
 
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
-
     if (!depack_do_implicit_stream_create(ch, frame_data.stream_id,
                                           frame_type, &stream))
         return 0; /* protocol error raised by above call */
@@ -644,9 +627,6 @@ static int depack_do_frame_max_data(PACKET *pkt, QUIC_CHANNEL *ch,
         return 0;
     }
 
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
-
     ossl_quic_txfc_bump_cwm(&ch->conn_txfc, max_data);
     ossl_quic_stream_map_visit(&ch->qsm, update_streams, ch);
     return 1;
@@ -668,9 +648,6 @@ static int depack_do_frame_max_stream_data(PACKET *pkt,
                                                "decode error");
         return 0;
     }
-
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
 
     if (!depack_do_implicit_stream_create(ch, stream_id,
                                           OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA,
@@ -708,9 +685,6 @@ static int depack_do_frame_max_streams(PACKET *pkt,
                                                "decode error");
         return 0;
     }
-
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
 
     if (max_streams > (((uint64_t)1) << 60)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -760,9 +734,6 @@ static int depack_do_frame_data_blocked(PACKET *pkt,
         return 0;
     }
 
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
-
     /* No-op - informative/debugging frame. */
     return 1;
 }
@@ -783,9 +754,6 @@ static int depack_do_frame_stream_data_blocked(PACKET *pkt,
                                                "decode error");
         return 0;
     }
-
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
 
     /*
      * This is an informative/debugging frame, so we don't have to do anything,
@@ -832,9 +800,6 @@ static int depack_do_frame_streams_blocked(PACKET *pkt,
         return 0;
     }
 
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
-
     if (max_data > (((uint64_t)1) << 60)) {
         /*
          * RFC 9000 s. 19.14: "This value cannot exceed 2**60, as it is not
@@ -867,9 +832,6 @@ static int depack_do_frame_new_conn_id(PACKET *pkt,
         return 0;
     }
 
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
-
     ossl_quic_channel_on_new_conn_id(ch, &frame_data);
 
     return 1;
@@ -889,9 +851,6 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
         return 0;
     }
 
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
-
     /* TODO(QUIC): Post MVP ADD CODE to send |seq_num| to the ch manager */
     return 1;
 }
@@ -909,9 +868,6 @@ static int depack_do_frame_path_challenge(PACKET *pkt,
                                                "decode error");
         return 0;
     }
-
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
 
     /* TODO(QUIC): ADD CODE to send |frame_data| to the ch manager */
 
@@ -931,9 +887,6 @@ static int depack_do_frame_path_response(PACKET *pkt,
                                                "decode error");
         return 0;
     }
-
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
 
     /* TODO(QUIC): ADD CODE to send |frame_data| to the ch manager */
 
@@ -957,9 +910,6 @@ static int depack_do_frame_handshake_done(PACKET *pkt,
 {
     if (!ossl_quic_wire_decode_frame_handshake_done(pkt))
         return 0;
-
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
 
     ossl_quic_channel_on_handshake_confirmed(ch);
     return 1;
@@ -1009,6 +959,24 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
                                                    frame_type,
                                                    "non-minimal frame type encoding");
             return 0;
+        }
+
+        /*
+         * There are only a few frame types which are not ACK-eliciting. Handle
+         * these centrally to make error handling cases more resilient, as we
+         * should tell the ACKM about an ACK-eliciting frame even if it was not
+         * successfully handled.
+         */
+        switch (frame_type) {
+        case OSSL_QUIC_FRAME_TYPE_PADDING:
+        case OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN:
+        case OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN:
+        case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT:
+        case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP:
+            break;
+        default:
+            ackm_data->is_ack_eliciting = 1;
+            break;
         }
 
         switch (frame_type) {
@@ -1282,7 +1250,6 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
 
         default:
             /* Unknown frame type */
-            ackm_data->is_ack_eliciting = 1;
             ossl_quic_channel_raise_protocol_error(ch,
                                                    QUIC_ERR_FRAME_ENCODING_ERROR,
                                                    frame_type,
