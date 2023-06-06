@@ -335,8 +335,9 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
         && !s->ready_for_gc
         && ((ossl_quic_stream_has_recv(s)
              && !ossl_quic_stream_recv_is_reset(s)
-             && (s->want_max_stream_data
-                 || ossl_quic_rxfc_has_cwm_changed(&s->rxfc, 0)))
+             && (s->recv_state == QUIC_RSTREAM_STATE_RECV
+                 && (s->want_max_stream_data
+                     || ossl_quic_rxfc_has_cwm_changed(&s->rxfc, 0))))
             || s->want_stop_sending
             || s->want_reset_stream
             || (!s->peer_stop_sending && stream_has_data_to_send(s)));

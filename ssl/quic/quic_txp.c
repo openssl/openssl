@@ -1923,8 +1923,15 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
                 = f.final_size - ossl_quic_txfc_get_swm(&stream->txfc);
         }
 
-        /* Stream Flow Control Frames (MAX_STREAM_DATA) */
-        if (ossl_quic_stream_has_recv_buffer(stream)
+        /*
+         * Stream Flow Control Frames (MAX_STREAM_DATA)
+         *
+         * RFC 9000 s. 13.3: "An endpoint SHOULD stop sending MAX_STREAM_DATA
+         * frames when the receiving part of the stream enters a "Size Known" or
+         * "Reset Recvd" state." -- In practice, RECV is the only state
+         * in which it makes sense to generate more MAX_STREAM_DATA frames.
+         */
+        if (stream->recv_state == QUIC_RSTREAM_STATE_RECV
             && (stream->want_max_stream_data
                 || ossl_quic_rxfc_has_cwm_changed(&stream->rxfc, 0))) {
 
