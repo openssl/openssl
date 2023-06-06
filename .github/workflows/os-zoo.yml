@@ -7,9 +7,9 @@
 
 name: OS Zoo CI
 
-on:
-  schedule:
-    - cron: '0 5 * * *'
+on: [pull_request]
+#  schedule:
+#    - cron: '0 5 * * *'
 
 permissions:
   contents: read
@@ -29,11 +29,11 @@ jobs:
     steps:
     - name: install packages
       run: |
-        apk --no-cache add build-base perl linux-headers ${{ matrix.cc }}
+        apk --no-cache add build-base perl linux-headers git ${{ matrix.cc }}
 
     - uses: actions/checkout@v3
-    - name: checkout fuzz/corpora submodule
-      run: git submodule update --init --depth 1 fuzz/corpora
+      with:
+        submodules: true
 
     - name: config
       run: |
@@ -46,7 +46,7 @@ jobs:
         fi
 
         CC=${{ matrix.cc }} ./config --banner=Configured no-shared \
-            -Wall -Werror enable-fips --strict-warnings -DOPENSSL_USE_IPV6=0 ${extra_cflags}
+            -Wall -Werror enable-fips enable-quic --strict-warnings -DOPENSSL_USE_IPV6=0 ${extra_cflags}
 
     - name: config dump
       run: ./configdata.pm --dump
@@ -59,10 +59,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [
-          macos-10.15,
           macos-11,
-          ubuntu-18.04,
+          macos-12,
+          macos-13,
           ubuntu-20.04,
+          ubuntu-22.04,
         ]
     runs-on: ${{ matrix.os }}
     steps:
@@ -72,7 +73,7 @@ jobs:
     - name: config
       run: |
         CC=${{ matrix.zoo.cc }} ./config --banner=Configured \
-            -Wall -Werror --strict-warnings enable-fips
+            -Wall -Werror --strict-warnings enable-fips enable-quic
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -100,7 +101,7 @@ jobs:
     - name: config
       working-directory: _build
       run: |
-        perl ..\Configure --banner=Configured no-makedepend enable-fips
+        perl ..\Configure --banner=Configured no-makedepend enable-fips enable-quic
     - name: config dump
       working-directory: _build
       run: ./configdata.pm --dump
