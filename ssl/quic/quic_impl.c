@@ -2049,8 +2049,9 @@ struct quic_read_again_args {
 QUIC_NEEDS_LOCK
 static int quic_validate_for_read(QUIC_XSO *xso, int *err, int *eos)
 {
-    *eos = 0;
     QUIC_STREAM_MAP *qsm;
+
+    *eos = 0;
 
     if (xso == NULL || xso->stream == NULL) {
         *err = ERR_R_INTERNAL_ERROR;
