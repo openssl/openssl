@@ -237,7 +237,8 @@ int ossl_quic_tserver_read(QUIC_TSERVER *srv,
         return 1;
     }
 
-    if (qs->recv_fin_retired || !ossl_quic_stream_has_recv_buffer(qs))
+    if (qs->recv_state == QUIC_RSTREAM_STATE_DATA_READ
+        || !ossl_quic_stream_has_recv_buffer(qs))
         return 0;
 
     if (!ossl_quic_rstream_read(qs->rstream, buf, buf_len,
@@ -261,7 +262,8 @@ int ossl_quic_tserver_read(QUIC_TSERVER *srv,
     }
 
     if (is_fin)
-        qs->recv_fin_retired = 1;
+        ossl_quic_stream_map_notify_totally_read(ossl_quic_channel_get_qsm(srv->ch),
+                                                 qs);
 
     if (*bytes_read > 0)
         ossl_quic_stream_map_update_state(ossl_quic_channel_get_qsm(srv->ch), qs);
@@ -279,15 +281,18 @@ int ossl_quic_tserver_has_read_ended(QUIC_TSERVER *srv, uint64_t stream_id)
     qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(srv->ch),
                                         stream_id);
 
-    if (qs == NULL || !ossl_quic_stream_has_recv_buffer(qs))
+    if (qs == NULL)
         return 0;
 
-    if (qs->recv_fin_retired)
+    if (qs->recv_state == QUIC_RSTREAM_STATE_DATA_READ)
         return 1;
 
+    if (!ossl_quic_stream_has_recv_buffer(qs))
+        return 0;
+
     /*
-     * If we do not have recv_fin_retired, it is possible we should still return
-     * 1 if there is a lone FIN (but no more data) remaining to be retired from
+     * If we do not have the DATA_READ, it is possible we should still return 1
+     * if there is a lone FIN (but no more data) remaining to be retired from
      * the RSTREAM, for example because ossl_quic_tserver_read() has not been
      * called since the FIN was received.
      */
@@ -301,8 +306,10 @@ int ossl_quic_tserver_has_read_ended(QUIC_TSERVER *srv, uint64_t stream_id)
         ossl_quic_rstream_read(qs->rstream, buf, sizeof(buf),
                                &bytes_read, &is_fin); /* best effort */
         assert(is_fin && bytes_read == 0);
+        assert(qs->recv_state == QUIC_RSTREAM_STATE_DATA_RECVD);
 
-        qs->recv_fin_retired = 1;
+        ossl_quic_stream_map_notify_totally_read(ossl_quic_channel_get_qsm(srv->ch),
+                                                 qs);
         ossl_quic_stream_map_update_state(ossl_quic_channel_get_qsm(srv->ch), qs);
         return 1;
     }

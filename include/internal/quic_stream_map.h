@@ -201,9 +201,6 @@ struct quic_stream_st {
     /* Flags set when frames *we* sent were acknowledged. */
     unsigned int    acked_stop_sending      : 1;
 
-    /* A FIN has been retired from the rstream buffer. */
-    unsigned int    recv_fin_retired        : 1;
-
     /*
      * The stream's XSO has been deleted. Pending GC.
      *

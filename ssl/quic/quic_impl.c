@@ -2049,8 +2049,9 @@ struct quic_read_again_args {
 QUIC_NEEDS_LOCK
 static int quic_validate_for_read(QUIC_XSO *xso, int *err, int *eos)
 {
-    *eos = 0;
     QUIC_STREAM_MAP *qsm;
+
+    *eos = 0;
 
     if (xso == NULL || xso->stream == NULL) {
         *err = ERR_R_INTERNAL_ERROR;
@@ -2790,7 +2791,7 @@ static void quic_classify_stream(QUIC_CONNECTION *qc,
     } else if (ossl_quic_channel_is_term_any(qc->ch)) {
         /* Connection already closed. */
         *state = SSL_STREAM_STATE_CONN_CLOSED;
-    } else if (!is_write && qs->recv_fin_retired) {
+    } else if (!is_write && qs->recv_state == QUIC_RSTREAM_STATE_DATA_READ) {
         /* Application has read a FIN. */
         *state = SSL_STREAM_STATE_FINISHED;
     } else if ((!is_write && qs->stop_sending)
