@@ -1854,6 +1854,17 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
             *have_ack_eliciting = 1;
             tx_helper_unrestrict(h); /* no longer need PING */
             stream->txp_sent_reset_stream = 1;
+
+            /*
+             * The final size of the stream as indicated by RESET_STREAM is used
+             * to ensure a consistent view of flow control state by both
+             * parties; if we happen to send a RESET_STREAM that consumes more
+             * flow control credit, make sure we account for that.
+             */
+            assert(f.final_size <= ossl_quic_txfc_get_swm(&stream->txfc));
+
+            stream->txp_txfc_new_credit_consumed
+                = f.final_size - ossl_quic_txfc_get_swm(&stream->txfc);
         }
 
         /* Stream Flow Control Frames (MAX_STREAM_DATA) */
@@ -1895,6 +1906,8 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
         if (ossl_quic_stream_has_send_buffer(stream)
             && !ossl_quic_stream_send_is_reset(stream)) {
             int packet_full = 0, stream_drained = 0;
+
+            assert(!stream->want_reset_stream);
 
             if (!txp_generate_stream_frames(txp, h, pn_space, tpkt,
                                             stream->id, stream->sstream,

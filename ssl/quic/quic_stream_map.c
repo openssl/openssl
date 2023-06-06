@@ -416,8 +416,6 @@ int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
                                                 QUIC_STREAM *qs,
                                                 uint64_t aec)
 {
-    uint64_t final_size;
-
     switch (qs->send_state) {
     default:
     case QUIC_SSTREAM_STATE_NONE:
@@ -435,7 +433,6 @@ int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
 
     case QUIC_SSTREAM_STATE_READY:
     case QUIC_SSTREAM_STATE_SEND:
-    case QUIC_SSTREAM_STATE_DATA_SENT:
         /*
          * If we already have a final size (e.g. because we are coming from
          * DATA_SENT), we have to be consistent with that, so don't change it.
@@ -447,9 +444,10 @@ int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
          * transmitted yet, to avoid unnecessarily consuming flow control
          * credit. We can get this from the TXFC.
          */
-        if (!ossl_quic_stream_send_get_final_size(qs, &final_size))
-            qs->send_final_size = ossl_quic_txfc_get_swm(&qs->txfc);
+        qs->send_final_size = ossl_quic_txfc_get_swm(&qs->txfc);
 
+        /* FALLTHROUGH */
+    case QUIC_SSTREAM_STATE_DATA_SENT:
         qs->reset_stream_aec    = aec;
         qs->want_reset_stream   = 1;
         qs->send_state          = QUIC_SSTREAM_STATE_RESET_SENT;
@@ -640,15 +638,24 @@ int ossl_quic_stream_map_stop_sending_recv_part(QUIC_STREAM_MAP *qsm,
          */
     case QUIC_RSTREAM_STATE_RESET_RECVD:
     case QUIC_RSTREAM_STATE_RESET_READ:
-        /* No point in STOP_SENDING if the peer already reset their send part. */
+        /*
+         * RFC 9000 s. 3.5: "STOP_SENDING SHOULD only be sent for a stream that
+         * has not been reset by the peer."
+         *
+         * No point in STOP_SENDING if the peer already reset their send part.
+         */
         return 0;
 
     case QUIC_RSTREAM_STATE_RECV:
     case QUIC_RSTREAM_STATE_SIZE_KNOWN:
         /*
-         * It does make sense to send STOP_SENDING for a receive part of a
-         * stream which has a known size (because we have received a FIN) but
-         * which still has other (previous) stream data yet to be received.
+         * RFC 9000 s. 3.5: "If the stream is in the Recv or Size Known state,
+         * the transport SHOULD signal this by sending a STOP_SENDING frame to
+         * prompt closure of the stream in the opposite direction."
+         *
+         * Note that it does make sense to send STOP_SENDING for a receive part
+         * of a stream which has a known size (because we have received a FIN)
+         * but which still has other (previous) stream data yet to be received.
          */
         break;
     }
@@ -658,6 +665,7 @@ int ossl_quic_stream_map_stop_sending_recv_part(QUIC_STREAM_MAP *qsm,
     return ossl_quic_stream_map_schedule_stop_sending(qsm, qs);
 }
 
+/* Called to mark STOP_SENDING for generation, or regeneration after loss. */
 int ossl_quic_stream_map_schedule_stop_sending(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
 {
     if (!qs->stop_sending)
@@ -675,6 +683,14 @@ int ossl_quic_stream_map_schedule_stop_sending(QUIC_STREAM_MAP *qsm, QUIC_STREAM
         return 1; /* ignore */
     case QUIC_RSTREAM_STATE_RECV:
     case QUIC_RSTREAM_STATE_SIZE_KNOWN:
+        /*
+         * RFC 9000 s. 3.5: "An endpoint is expected to send another
+         * STOP_SENDING frame if a packet containing a previous STOP_SENDING is
+         * lost. However, once either all stream data or a RESET_STREAM frame
+         * has been received for the stream -- that is, the stream is in any
+         * state other than "Recv" or "Size Known" -- sending a STOP_SENDING
+         * frame is unnecessary."
+         */
         break;
     }
 
