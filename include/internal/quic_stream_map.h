@@ -720,7 +720,8 @@ int ossl_quic_stream_map_notify_totally_read(QUIC_STREAM_MAP *qsm,
 /* RECV/SIZE_KNOWN/DATA_RECVD -> RESET_RECVD */
 int ossl_quic_stream_map_notify_reset_recv_part(QUIC_STREAM_MAP *qsm,
                                                 QUIC_STREAM *qs,
-                                                uint64_t app_error_code);
+                                                uint64_t app_error_code,
+                                                uint64_t final_size);
 
 /* RESET_RECVD -> RESET_READ */
 int ossl_quic_stream_map_notify_app_read_reset_recv_part(QUIC_STREAM_MAP *qsm,

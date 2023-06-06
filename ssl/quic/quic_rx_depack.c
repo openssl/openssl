@@ -137,6 +137,7 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
 {
     OSSL_QUIC_FRAME_RESET_STREAM frame_data;
     QUIC_STREAM *stream = NULL;
+    uint64_t fce;
 
     if (!ossl_quic_wire_decode_frame_reset_stream(pkt, &frame_data)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -167,13 +168,43 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
     }
 
     /*
+     * The final size field of the RESET_STREAM frame must be used to determine
+     * how much flow control credit the aborted stream was considered to have
+     * consumed.
+     *
+     * We also need to ensure that if we already have a final size for the
+     * stream, the RESET_STREAM frame's Final Size field matches this; we SHOULD
+     * terminate the connection otherwise (RFC 9000 s. 4.5). The RXFC takes care
+     * of this for us.
+     */
+    if (!ossl_quic_rxfc_on_rx_stream_frame(&stream->rxfc,
+                                           frame_data.final_size, /*is_fin=*/1)) {
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_INTERNAL_ERROR,
+                                               OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
+                                               "internal error (flow control)");
+        return 0;
+    }
+
+    /* Has a flow control error occurred? */
+    fce = ossl_quic_rxfc_get_error(&stream->rxfc, 0);
+    if (fce != QUIC_ERR_NO_ERROR) {
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               fce,
+                                               OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
+                                               "flow control violation");
+        return 0;
+    }
+
+    /*
      * Depending on the receive part state this is handled either as a reset
      * transition or a no-op (e.g. if a reset has already been received before,
      * or the application already retired a FIN). Best effort - there are no
      * protoocol error conditions we need to check for here.
      */
     ossl_quic_stream_map_notify_reset_recv_part(&ch->qsm, stream,
-                                                frame_data.app_error_code);
+                                                frame_data.app_error_code,
+                                                frame_data.final_size);
 
     ossl_quic_stream_map_update_state(&ch->qsm, stream);
     return 1;
