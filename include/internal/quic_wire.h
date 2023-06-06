@@ -764,6 +764,19 @@ int ossl_quic_wire_decode_transport_param_cid(PACKET *pkt,
                                               uint64_t *id,
                                               QUIC_CONN_ID *cid);
 
+/*
+ * Decodes a QUIC transport parameter TLV containing a preferred_address.
+ */
+typedef struct quic_preferred_addr_st {
+    uint16_t      ipv4_port, ipv6_port;
+    unsigned char ipv4[4], ipv6[16];
+    unsigned char stateless_reset_token[QUIC_STATELESS_RESET_TOKEN_LEN];
+    QUIC_CONN_ID  cid;
+} QUIC_PREFERRED_ADDR;
+
+int ossl_quic_wire_decode_transport_param_preferred_addr(PACKET *pkt,
+                                                         QUIC_PREFERRED_ADDR *p);
+
 # endif
 
 #endif

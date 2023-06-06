@@ -1344,18 +1344,38 @@ static int ch_on_transport_params(const unsigned char *params,
             break;
 
         case QUIC_TPARAM_PREFERRED_ADDR:
-            /* TODO(QUIC): Handle preferred address. */
-            if (ch->is_server) {
-                reason = TP_REASON_SERVER_ONLY("PREFERRED_ADDR");
-                goto malformed;
-            }
+            {
+                /* TODO(QUIC): Handle preferred address. */
+                QUIC_PREFERRED_ADDR pfa;
 
-            body = ossl_quic_wire_decode_transport_param_bytes(&pkt, &id, &len);
-            if (body == NULL) {
-                reason = TP_REASON_MALFORMED("PREFERRED_ADDR");
-                goto malformed;
-            }
+                /*
+                 * RFC 9000 s. 18.2: "A server that chooses a zero-length
+                 * connection ID MUST NOT provide a preferred address.
+                 * Similarly, a server MUST NOT include a zero-length connection
+                 * ID in this transport parameter. A client MUST treat a
+                 * violation of these requirements as a connection error of type
+                 * TRANSPORT_PARAMETER_ERROR."
+                 */
+                if (ch->is_server) {
+                    reason = TP_REASON_SERVER_ONLY("PREFERRED_ADDR");
+                    goto malformed;
+                }
 
+                if (ch->cur_remote_dcid.id_len == 0) {
+                    reason = "PREFERRED_ADDR provided for zero-length CID";
+                    goto malformed;
+                }
+
+                if (!ossl_quic_wire_decode_transport_param_preferred_addr(&pkt, &pfa)) {
+                    reason = TP_REASON_MALFORMED("PREFERRED_ADDR");
+                    goto malformed;
+                }
+
+                if (pfa.cid.id_len == 0) {
+                    reason = "zero-length CID in PREFERRED_ADDR";
+                    goto malformed;
+                }
+            }
             break;
 
         case QUIC_TPARAM_DISABLE_ACTIVE_MIGRATION:
@@ -1488,7 +1508,7 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_ACTIVE_CONN_ID_LIMIT,
-                                                   2))
+                                                   QUIC_MIN_ACTIVE_CONN_ID_LIMIT))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_DATA,
