@@ -125,7 +125,7 @@ static const QUIC_CONN_ID rx_script_1_dcid = {
 
 static const QUIC_PKT_HDR rx_script_1_expect_hdr = {
     QUIC_PKT_TYPE_INITIAL,
-    0, 0, 2, 0, 1, 0, 1, { 0, {0} },
+    0, 0, 2, 0, 1, 0, 0, 1, { 0, {0} },
     { 8, {0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5 } },
     { 0, 1, 0, 0 },
     NULL, 0,
@@ -161,7 +161,7 @@ static const unsigned char rx_script_2_body[] = {
 
 static const QUIC_PKT_HDR rx_script_2_expect_hdr = {
     QUIC_PKT_TYPE_1RTT,
-    0, 0, 3, 0, 1, 0, 0, {0, {0}}, {0, {0}},
+    0, 0, 3, 0, 1, 0, 0, 0, {0, {0}}, {0, {0}},
     {0x00, 0xbf, 0xf4, 0x00},
     NULL, 0,
     1, NULL
@@ -198,6 +198,7 @@ static const QUIC_PKT_HDR rx_script_3_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     0,          /* Version */
     {0, {0}},                                   /* DCID */
     {12, {0x35, 0x3c, 0x1b, 0x97, 0xca, 0xf8,   /* SCID */
@@ -251,6 +252,7 @@ static const QUIC_PKT_HDR rx_script_4_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     1,          /* Version */
     {0, {0}},                           /* DCID */
     {4, {0xad, 0x15, 0x3f, 0xae}},      /* SCID */
@@ -433,6 +435,7 @@ static const QUIC_PKT_HDR rx_script_5a_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     1,          /* Version */
     {0, {0}},                           /* DCID */
     {4, {0x83, 0xd0, 0x0a, 0x27}},      /* SCID */
@@ -490,6 +493,7 @@ static const QUIC_PKT_HDR rx_script_5b_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     1,          /* Version */
     {0, {0}},                           /* DCID */
     {4, {0x83, 0xd0, 0x0a, 0x27}},      /* SCID */
@@ -564,6 +568,7 @@ static const QUIC_PKT_HDR rx_script_5c_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     0,          /* Version */
     {0, {0}},                           /* DCID */
     {0, {0}},                           /* SCID */
@@ -799,6 +804,7 @@ static const QUIC_PKT_HDR rx_script_6a_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     1,          /* Version */
     {0, {0}},                           /* DCID */
     {4, {0x36, 0xf4, 0x75, 0x2d}},      /* SCID */
@@ -854,6 +860,7 @@ static const QUIC_PKT_HDR rx_script_6b_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     1,          /* Version */
     {0, {0}},                           /* DCID */
     {4, {0x36, 0xf4, 0x75, 0x2d}},      /* SCID */
@@ -929,6 +936,7 @@ static const QUIC_PKT_HDR rx_script_6c_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     0,          /* Version */
     {0, {0}},                           /* DCID */
     {0, {0}},                           /* SCID */
@@ -1158,6 +1166,7 @@ static const QUIC_PKT_HDR rx_script_7a_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     1,          /* Version */
     {0, {0}},                           /* DCID */
     {4, {0x03, 0x45, 0x0c, 0x7a}},      /* SCID */
@@ -1214,6 +1223,7 @@ static const QUIC_PKT_HDR rx_script_7b_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     1,          /* Version */
     {0, {0}},                           /* DCID */
     {4, {0x03, 0x45, 0x0c, 0x7a}},      /* SCID */
@@ -1288,6 +1298,7 @@ static const QUIC_PKT_HDR rx_script_7c_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     0,          /* Version */
     {0, {0}},                           /* DCID */
     {0, {0}},                           /* SCID */
@@ -1389,6 +1400,7 @@ static const QUIC_PKT_HDR rx_script_8a_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     0,          /* Version */
     {0, {0}},   /* DCID */
     {0, {0}},   /* SCID */
@@ -1421,6 +1433,7 @@ static const QUIC_PKT_HDR rx_script_8b_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     0,          /* Version */
     {0, {0}},   /* DCID */
     {0, {0}},   /* SCID */
@@ -1452,6 +1465,7 @@ static const QUIC_PKT_HDR rx_script_8c_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     0,          /* Version */
     {0, {0}},   /* DCID */
     {0, {0}},   /* SCID */
@@ -1484,6 +1498,7 @@ static const QUIC_PKT_HDR rx_script_8d_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     0,          /* Version */
     {0, {0}},   /* DCID */
     {0, {0}},   /* SCID */
@@ -1516,6 +1531,7 @@ static const QUIC_PKT_HDR rx_script_8e_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     0,          /* Version */
     {0, {0}},   /* DCID */
     {0, {0}},   /* SCID */
@@ -1545,6 +1561,7 @@ static const QUIC_PKT_HDR rx_script_8f_expect_hdr = {
     0,          /* Partial */
     1,          /* Fixed */
     0,          /* Unused */
+    0,          /* Reserved */
     0,          /* Version */
     {0, {0}},   /* DCID */
     {0, {0}},   /* SCID */
@@ -1910,6 +1927,7 @@ static const struct pkt_hdr_test pkt_hdr_test_1 = {
         0,                      /* partial */
         1,                      /* fixed */
         0,                      /* unused */
+        0,                      /* reserved */
         1,                      /* version */
         { 0, {0} },             /* DCID */
         { 8, {0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5 } }, /* SCID */
@@ -1957,6 +1975,7 @@ static const struct pkt_hdr_test pkt_hdr_test_2 = {
         0,                      /* partial */
         1,                      /* fixed */
         0,                      /* unused */
+        0,                      /* reserved */
         1,                      /* version */
         { 0, {0} },             /* DCID */
         { 8, {0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5 } }, /* SCID */
@@ -2005,6 +2024,7 @@ static const struct pkt_hdr_test pkt_hdr_test_3 = {
         0,                      /* partial */
         1,                      /* fixed */
         0,                      /* unused */
+        0,                      /* reserved */
         1,                      /* version */
         { 3, {0x70, 0x71, 0x72} },                                /* DCID */
         { 8, {0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5 } }, /* SCID */
@@ -2047,6 +2067,7 @@ static const struct pkt_hdr_test pkt_hdr_test_4 = {
         0,                      /* partial */
         1,                      /* fixed */
         0,                      /* unused */
+        0,                      /* reserved */
         1,                      /* version */
         { 3, {0x70, 0x71, 0x72} },                                /* DCID */
         { 8, {0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5 } }, /* SCID */
@@ -2089,6 +2110,7 @@ static const struct pkt_hdr_test pkt_hdr_test_5 = {
         0,                          /* partial */
         1,                          /* fixed */
         0,                          /* unused */
+        0,                          /* reserved */
         1,                          /* version */
         { 3, {0x70, 0x71, 0x72} },                                /* DCID */
         { 8, {0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5 } }, /* SCID */
@@ -2129,6 +2151,7 @@ static const struct pkt_hdr_test pkt_hdr_test_6 = {
         0,                          /* partial */
         1,                          /* fixed */
         0,                          /* unused */
+        0,                          /* reserved */
         1,                          /* version */
         { 3, {0x70, 0x71, 0x72} },                                /* DCID */
         { 8, {0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5 } }, /* SCID */
@@ -2165,6 +2188,7 @@ static const struct pkt_hdr_test pkt_hdr_test_7 = {
         0,                          /* partial */
         1,                          /* fixed */
         0,                          /* unused */
+        0,                          /* reserved */
         0,                          /* version */
         { 3, {0x70, 0x71, 0x72} },  /* DCID */
         { 0, {0} },                 /* SCID */
@@ -2201,6 +2225,7 @@ static const struct pkt_hdr_test pkt_hdr_test_8 = {
         0,                          /* partial */
         1,                          /* fixed */
         0,                          /* unused */
+        0,                          /* reserved */
         0,                          /* version */
         { 3, {0x70, 0x71, 0x72} },  /* DCID */
         { 0, {0} },                 /* SCID */
@@ -2237,6 +2262,7 @@ static const struct pkt_hdr_test pkt_hdr_test_9 = {
         0,                          /* partial */
         1,                          /* fixed */
         0,                          /* unused */
+        0,                          /* reserved */
         0,                          /* version */
         { 3, {0x70, 0x71, 0x72} },  /* DCID */
         { 0, {0} },                 /* SCID */
@@ -2279,6 +2305,7 @@ static const struct pkt_hdr_test pkt_hdr_test_10 = {
         0,                          /* partial */
         1,                          /* fixed */
         0,                          /* unused */
+        0,                          /* reserved */
         1,                          /* version */
         { 3, {0x70, 0x71, 0x72} },                                /* DCID */
         { 8, {0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5 } }, /* SCID */
@@ -2315,6 +2342,7 @@ static const struct pkt_hdr_test pkt_hdr_test_11 = {
         0,                          /* partial */
         1,                          /* fixed */
         0,                          /* unused */
+        0,                          /* reserved */
         0,                          /* version */
         { 3, {0x70, 0x71, 0x72} },  /* DCID */
         { 0, {0} },                 /* SCID */
@@ -2350,6 +2378,7 @@ static const struct pkt_hdr_test pkt_hdr_test_12 = {
         0,                          /* partial */
         1,                          /* fixed */
         0,                          /* unused */
+        0,                          /* reserved */
         0,                          /* version */
         { 3, {0x70, 0x71, 0x72} },  /* DCID */
         { 2, {0x81, 0x82} },        /* SCID */
@@ -2385,6 +2414,7 @@ static const struct pkt_hdr_test pkt_hdr_test_13 = {
         0,                          /* partial */
         0,                          /* fixed */
         0,                          /* unused */
+        0,                          /* reserved */
         0,                          /* version */
         { 3, {0x70, 0x71, 0x72} },  /* DCID */
         { 2, {0x81, 0x82} },        /* SCID */
@@ -2459,6 +2489,172 @@ static const struct pkt_hdr_test pkt_hdr_test_16 = {
     19, 23
 };
 
+/* Packet Header Test 17: Initial - Non-Zero Reserved Bits */
+static const unsigned char pkt_hdr_test_17_expected[] = {
+    0xcd,                     /* Long|Fixed, Type=Initial, PN Len=2 */
+    0x00, 0x00, 0x00, 0x01,   /* Version */
+    0x00,                     /* DCID Length */
+    0x08, 0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5, /* SCID Length, SCID */
+    0x00,                     /* Token Length */
+    0x15,                     /* Length=21 */
+    0x33, 0x44,               /* Encoded PN */
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, /* Payload */
+    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+    0x20, 0x21, 0x22
+};
+
+static const unsigned char pkt_hdr_test_17_payload[] = {
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+    0x20, 0x21, 0x22
+};
+
+static const struct pkt_hdr_test pkt_hdr_test_17 = {
+    {
+        QUIC_PKT_TYPE_INITIAL,  /* type */
+        0,                      /* spin bit */
+        0,                      /* key phase */
+        2,                      /* PN length */
+        0,                      /* partial */
+        1,                      /* fixed */
+        0,                      /* unused */
+        3,                      /* reserved */
+        1,                      /* version */
+        { 0, {0} },             /* DCID */
+        { 8, {0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5 } }, /* SCID */
+        { 0x33, 0x44 },         /* PN */
+        NULL, 0,                /* Token/Token Len */
+        19, NULL                /* Len/Data */
+    },
+    pkt_hdr_test_17_expected, OSSL_NELEM(pkt_hdr_test_17_expected),
+    pkt_hdr_test_17_payload,  OSSL_NELEM(pkt_hdr_test_17_payload),
+    0, sizeof(pkt_hdr_test_17_expected),
+    17, 21
+};
+
+/* Packet Header Test 18: 0-RTT - Non-Zero Reserved Bits */
+static const unsigned char pkt_hdr_test_18_expected[] = {
+    0xd8,                     /* Long|Fixed, Type=0-RTT, PN Len=1 */
+    0x00, 0x00, 0x00, 0x01,   /* Version */
+    0x03,                     /* DCID Length */
+    0x70, 0x71, 0x72,         /* DCID */
+    0x08, 0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5, /* SCID Length, SCID */
+    0x14,                     /* Length=20 */
+    0x33,                     /* Encoded PN */
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, /* Payload */
+    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+    0x20, 0x21, 0x22
+};
+
+static const unsigned char pkt_hdr_test_18_payload[] = {
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+    0x20, 0x21, 0x22
+};
+
+static const struct pkt_hdr_test pkt_hdr_test_18 = {
+    {
+        QUIC_PKT_TYPE_0RTT,     /* type */
+        0,                      /* spin bit */
+        0,                      /* key phase */
+        1,                      /* PN length */
+        0,                      /* partial */
+        1,                      /* fixed */
+        0,                      /* unused */
+        2,                      /* reserved */
+        1,                      /* version */
+        { 3, {0x70, 0x71, 0x72} },                                /* DCID */
+        { 8, {0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5 } }, /* SCID */
+        { 0x33 },               /* PN */
+        NULL, 0,                /* Token */
+        19, NULL                /* Len/Data */
+    },
+    pkt_hdr_test_18_expected, OSSL_NELEM(pkt_hdr_test_18_expected),
+    pkt_hdr_test_18_payload,  OSSL_NELEM(pkt_hdr_test_18_payload),
+    0, sizeof(pkt_hdr_test_18_expected),
+    19, 23
+};
+
+/* Packet Header Test 19: Handshake - Non-Zero Reserved Bits */
+static const unsigned char pkt_hdr_test_19_expected[] = {
+    0xe4,                     /* Long|Fixed, Type=Handshake, PN Len=1 */
+    0x00, 0x00, 0x00, 0x01,   /* Version */
+    0x03,                     /* DCID Length */
+    0x70, 0x71, 0x72,         /* DCID */
+    0x08, 0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5, /* SCID Length, SCID */
+    0x14,                     /* Length=20 */
+    0x33,                     /* Encoded PN */
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, /* Payload */
+    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+    0x20, 0x21, 0x22
+};
+
+static const unsigned char pkt_hdr_test_19_payload[] = {
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+    0x20, 0x21, 0x22
+};
+
+static const struct pkt_hdr_test pkt_hdr_test_19 = {
+    {
+        QUIC_PKT_TYPE_HANDSHAKE,    /* type */
+        0,                          /* spin bit */
+        0,                          /* key phase */
+        1,                          /* PN length */
+        0,                          /* partial */
+        1,                          /* fixed */
+        0,                          /* unused */
+        1,                          /* reserved */
+        1,                          /* version */
+        { 3, {0x70, 0x71, 0x72} },                                /* DCID */
+        { 8, {0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5 } }, /* SCID */
+        { 0x33 },                   /* PN */
+        NULL, 0,                    /* Token */
+        19, NULL                    /* Len/Data */
+    },
+    pkt_hdr_test_19_expected, OSSL_NELEM(pkt_hdr_test_19_expected),
+    pkt_hdr_test_19_payload,  OSSL_NELEM(pkt_hdr_test_19_payload),
+    0, sizeof(pkt_hdr_test_19_expected),
+    19, 23
+};
+
+/* Packet Header Test 20: 1-RTT with Non-Zero Reserved Bits */
+static const unsigned char pkt_hdr_test_20_expected[] = {
+    0x5a,                     /* Short|Fixed, Type=1-RTT, PN Len=3 */
+    0x70, 0x71, 0x72,         /* DCID */
+    0x50, 0x51, 0x52,         /* PN */
+    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99,
+    0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f, 0xa0, 0xa1
+};
+
+static const unsigned char pkt_hdr_test_20_payload[] = {
+    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99,
+    0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f, 0xa0, 0xa1
+};
+
+static const struct pkt_hdr_test pkt_hdr_test_20 = {
+    {
+        QUIC_PKT_TYPE_1RTT,         /* type */
+        0,                          /* spin bit */
+        0,                          /* key phase */
+        3,                          /* PN length */
+        0,                          /* partial */
+        1,                          /* fixed */
+        0,                          /* unused */
+        3,                          /* reserved */
+        0,                          /* version */
+        { 3, {0x70, 0x71, 0x72} },  /* DCID */
+        { 0, {0} },                 /* SCID */
+        { 0x50, 0x51, 0x52 },       /* PN */
+        NULL, 0,                    /* Token */
+        18, NULL                    /* Len/Data */
+    },
+    pkt_hdr_test_20_expected, OSSL_NELEM(pkt_hdr_test_20_expected),
+    pkt_hdr_test_20_payload,  OSSL_NELEM(pkt_hdr_test_20_payload),
+    3, 21,
+    4, 8
+};
+
 static const struct pkt_hdr_test *const pkt_hdr_tests[] = {
     &pkt_hdr_test_1,
     &pkt_hdr_test_2,
@@ -2475,7 +2671,11 @@ static const struct pkt_hdr_test *const pkt_hdr_tests[] = {
     &pkt_hdr_test_13,
     &pkt_hdr_test_14,
     &pkt_hdr_test_15,
-    &pkt_hdr_test_16
+    &pkt_hdr_test_16,
+    &pkt_hdr_test_17,
+    &pkt_hdr_test_18,
+    &pkt_hdr_test_19,
+    &pkt_hdr_test_20
 };
 
 #define HPR_REPEAT_COUNT 4
@@ -2920,6 +3120,7 @@ static QUIC_PKT_HDR tx_script_1_hdr = {
     0,                          /* partial */
     0,                          /* fixed */
     0,                          /* unused */
+    0,                          /* reserved */
     1,                          /* version */
     {8, {0x83, 0x94, 0xc8, 0xf0, 0x3e, 0x51, 0x57, 0x08}}, /* DCID */
     { 0, {0} },                 /* SCID */
@@ -2984,6 +3185,7 @@ static QUIC_PKT_HDR tx_script_2_hdr = {
     0,                          /* partial */
     0,                          /* fixed */
     0,                          /* unused */
+    0,                          /* reserved */
     1,                          /* version */
     { 0, {0} },                 /* DCID */
     {8, {0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5}}, /* SCID */
@@ -3035,6 +3237,7 @@ static QUIC_PKT_HDR tx_script_3_hdr = {
     0,                          /* partial */
     0,                          /* fixed */
     0,                          /* unused */
+    0,                          /* reserved */
     0,                          /* version */
     { 0, {0} },                 /* DCID */
     { 0, {0} },                 /* SCID */
@@ -3092,6 +3295,7 @@ static QUIC_PKT_HDR tx_script_4a_hdr = {
     0,                          /* partial */
     0,                          /* fixed */
     0,                          /* unused */
+    0,                          /* reserved */
     0,                          /* version */
     { 4, {0x6e, 0x4e, 0xbd, 0x49} }, /* DCID */
     { 0, {0} },                 /* SCID */
@@ -3135,6 +3339,7 @@ static QUIC_PKT_HDR tx_script_4b_hdr = {
     0,                          /* partial */
     0,                          /* fixed */
     0,                          /* unused */
+    0,                          /* reserved */
     0,                          /* version */
     { 4, {0x6e, 0x4e, 0xbd, 0x49} }, /* DCID */
     { 0, {0} },                 /* SCID */
@@ -3178,6 +3383,7 @@ static QUIC_PKT_HDR tx_script_4c_hdr = {
     0,                          /* partial */
     0,                          /* fixed */
     0,                          /* unused */
+    0,                          /* reserved */
     0,                          /* version */
     { 4, {0x6e, 0x4e, 0xbd, 0x49} }, /* DCID */
     { 0, {0} },                 /* SCID */
@@ -3248,6 +3454,7 @@ static QUIC_PKT_HDR tx_script_5_hdr = {
     0,                          /* partial */
     0,                          /* fixed */
     0,                          /* unused */
+    0,                          /* reserved */
     1,                          /* version */
     { 0, {0} },                 /* DCID */
     { 4, {0xa9, 0x20, 0xcc, 0xc2} },   /* SCID */
@@ -3299,6 +3506,7 @@ static QUIC_PKT_HDR tx_script_6_hdr = {
     0,                          /* partial */
     0,                          /* fixed */
     0,                          /* unused */
+    0,                          /* reserved */
     0,                          /* version */
     { 0, {0} },                 /* DCID */
     { 12, {0x35, 0x3c, 0x1b, 0x97, 0xca, 0xf8, 0x99,
