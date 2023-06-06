@@ -314,6 +314,19 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CHANNEL *ch,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
+    if (token_len == 0) {
+        /*
+         * RFC 9000 s. 19.7: "A client MUST treat receipt of a NEW_TOKEN frame
+         * with an empty Token field as a connection error of type
+         * FRAME_ENCODING_ERROR."
+         */
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_FRAME_ENCODING_ERROR,
+                                               OSSL_QUIC_FRAME_TYPE_NEW_TOKEN,
+                                               "zero-length NEW_TOKEN");
+        return 0;
+    }
+
     /* TODO(QUIC): ADD CODE to send |token| to the session manager */
 
     return 1;
