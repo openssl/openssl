@@ -143,7 +143,7 @@ struct ossl_qrx_st {
     uint64_t                    forged_pkt_count;
 
     /* Validation callback. */
-    ossl_qrx_early_validation_cb   *validation_cb;
+    ossl_qrx_late_validation_cb    *validation_cb;
     void                           *validation_cb_arg;
 
     /* Key update callback. */
@@ -544,6 +544,14 @@ static int qrx_validate_hdr(OSSL_QRX *qrx, RXE *rxe)
                                           qrx->largest_pn[pn_space],
                                           &rxe->pn))
         return 0;
+
+    return 1;
+}
+
+/* Late packet header validation. */
+static int qrx_validate_hdr_late(OSSL_QRX *qrx, RXE *rxe)
+{
+    int pn_space = rxe_determine_pn_space(rxe);
 
     /*
      * Allow our user to decide whether to discard the packet before we try and
@@ -957,9 +965,14 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
      * -----------------------------------------------------
      *
      * At this point, we have successfully authenticated the AEAD tag and no
-     * longer need to worry about exposing the Key Phase bit in timing channels.
-     * Check for a Key Phase bit differing from our expectation.
+     * longer need to worry about exposing the PN, PN length or Key Phase bit in
+     * timing channels. Invoke any configured validation callback to allow for
+     * rejection of duplicate PNs.
      */
+    if (!qrx_validate_hdr_late(qrx, rxe))
+        goto malformed;
+
+    /* Check for a Key Phase bit differing from our expectation. */
     if (rxe->hdr.type == QUIC_PKT_TYPE_1RTT
         && rxe->hdr.key_phase != (el->key_epoch & 1))
         qrx_key_update_initiated(qrx, rxe->pn);
@@ -1215,9 +1228,9 @@ uint64_t ossl_qrx_get_bytes_received(OSSL_QRX *qrx, int clear)
     return v;
 }
 
-int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
-                                     ossl_qrx_early_validation_cb *cb,
-                                     void *cb_arg)
+int ossl_qrx_set_late_validation_cb(OSSL_QRX *qrx,
+                                    ossl_qrx_late_validation_cb *cb,
+                                    void *cb_arg)
 {
     qrx->validation_cb       = cb;
     qrx->validation_cb_arg   = cb_arg;
