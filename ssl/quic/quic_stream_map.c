@@ -406,8 +406,8 @@ int ossl_quic_stream_map_notify_totally_acked(QUIC_STREAM_MAP *qsm,
     case QUIC_SSTREAM_STATE_DATA_SENT:
         qs->send_state = QUIC_SSTREAM_STATE_DATA_RECVD;
         /* We no longer need a QUIC_SSTREAM in this state. */
-        //ossl_quic_sstream_free(qs->sstream);
-        //qs->sstream = NULL;
+        ossl_quic_sstream_free(qs->sstream);
+        qs->sstream = NULL;
         return 1;
     }
 }
@@ -416,6 +416,8 @@ int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
                                                 QUIC_STREAM *qs,
                                                 uint64_t aec)
 {
+    uint64_t final_size;
+
     switch (qs->send_state) {
     default:
     case QUIC_SSTREAM_STATE_NONE:
@@ -434,11 +436,27 @@ int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
     case QUIC_SSTREAM_STATE_READY:
     case QUIC_SSTREAM_STATE_SEND:
     case QUIC_SSTREAM_STATE_DATA_SENT:
-        qs->reset_stream_aec    = aec;
-        qs->send_state          = QUIC_SSTREAM_STATE_RESET_SENT;
-        qs->want_reset_stream   = 1;
+        /*
+         * If we already have a final size (e.g. because we are coming from
+         * DATA_SENT), we have to be consistent with that, so don't change it.
+         * If we don't already have a final size, determine a final size value.
+         * This is the value which we will end up using for a RESET_STREAM frame
+         * for flow control purposes. We could send the stream size (total
+         * number of bytes appended to QUIC_SSTREAM by the application), but it
+         * is in our interest to exclude any bytes we have not actually
+         * transmitted yet, to avoid unnecessarily consuming flow control
+         * credit. We can get this from the TXFC.
+         */
+        if (!ossl_quic_stream_send_get_final_size(qs, &final_size))
+            qs->send_final_size = ossl_quic_txfc_get_swm(&qs->txfc);
 
-        /* TODO free */
+        qs->reset_stream_aec    = aec;
+        qs->want_reset_stream   = 1;
+        qs->send_state          = QUIC_SSTREAM_STATE_RESET_SENT;
+
+        ossl_quic_sstream_free(qs->sstream);
+        qs->sstream = NULL;
+
         ossl_quic_stream_map_update_state(qsm, qs);
         return 1;
 
@@ -536,8 +554,8 @@ int ossl_quic_stream_map_notify_totally_read(QUIC_STREAM_MAP *qsm,
         qs->recv_state = QUIC_RSTREAM_STATE_DATA_READ;
 
         /* QUIC_RSTREAM is no longer needed */
-        //ossl_quic_rstream_free(qs->rstream);
-        //qs->rstream = NULL;
+        ossl_quic_rstream_free(qs->rstream);
+        qs->rstream = NULL;
         return 1;
     }
 }
@@ -562,8 +580,8 @@ int ossl_quic_stream_map_notify_reset_recv_part(QUIC_STREAM_MAP *qsm,
         qs->want_stop_sending       = 0;
 
         /* QUIC_RSTREAM is no longer needed */
-        //ossl_quic_rstream_free(qs->rstream);
-        //qs->rstream = NULL;
+        ossl_quic_rstream_free(qs->rstream);
+        qs->rstream = NULL;
 
         ossl_quic_stream_map_update_state(qsm, qs);
         return 1;

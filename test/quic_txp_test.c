@@ -1033,7 +1033,7 @@ static ossl_unused int check_stream_13(struct helper *h)
 {
     if (!TEST_uint64_t_eq(h->frame.reset_stream.stream_id, 42)
         || !TEST_uint64_t_eq(h->frame.reset_stream.app_error_code, 4568)
-        || !TEST_uint64_t_eq(h->frame.reset_stream.final_size, 8))
+        || !TEST_uint64_t_eq(h->frame.reset_stream.final_size, 0))
         return 0;
 
     return 1;
