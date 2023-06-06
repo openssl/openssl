@@ -1822,6 +1822,18 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
          */
         return;
 
+    /*
+     * RFC 9000 s. 17.2: "An endpoint MUST treat receipt of a packet that has a
+     * non-zero value for [the reserved bits] after removing both packet and
+     * header protection as a connection error of type PROTOCOL_VIOLATION."
+     */
+    if (ossl_quic_pkt_type_is_encrypted(ch->qrx_pkt->hdr->type)
+        && ch->qrx_pkt->hdr->reserved != 0) {
+        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
+                                               0, "packet header reserved bits");
+        return;
+    }
+
     /* Handle incoming packet. */
     switch (ch->qrx_pkt->hdr->type) {
     case QUIC_PKT_TYPE_RETRY:
