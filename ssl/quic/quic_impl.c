@@ -2050,6 +2050,7 @@ QUIC_NEEDS_LOCK
 static int quic_validate_for_read(QUIC_XSO *xso, int *err, int *eos)
 {
     *eos = 0;
+    QUIC_STREAM_MAP *qsm;
 
     if (xso == NULL || xso->stream == NULL) {
         *err = ERR_R_INTERNAL_ERROR;
@@ -2072,6 +2073,10 @@ static int quic_validate_for_read(QUIC_XSO *xso, int *err, int *eos)
         return 0;
 
     case QUIC_RSTREAM_STATE_RESET_RECVD:
+        qsm = ossl_quic_channel_get_qsm(xso->conn->ch);
+        ossl_quic_stream_map_notify_app_read_reset_recv_part(qsm, xso->stream);
+
+        /* FALLTHROUGH */
     case QUIC_RSTREAM_STATE_RESET_READ:
         *err = SSL_R_STREAM_RESET;
         return 0;
@@ -2094,11 +2099,6 @@ static int quic_read_actual(QCTX *ctx,
         else
             return QUIC_RAISE_NON_NORMAL_ERROR(ctx, err, NULL);
     }
-
-    /* If the receive part of the stream is over, issue EOF. */
-    if (stream->recv_fin_retired)
-        /* XXX TODO REMOVE */
-        return QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_ZERO_RETURN);
 
     if (peek) {
         if (!ossl_quic_rstream_peek(stream->rstream, buf, buf_len,
@@ -2128,8 +2128,11 @@ static int quic_read_actual(QCTX *ctx,
                 return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
         }
 
-        if (is_fin)
-            stream->recv_fin_retired = 1;
+        if (is_fin && !peek) {
+            QUIC_STREAM_MAP *qsm = ossl_quic_channel_get_qsm(ctx->qc->ch);
+
+            ossl_quic_stream_map_notify_totally_read(qsm, ctx->xso->stream);
+        }
 
         if (*bytes_read > 0)
             ossl_quic_stream_map_update_state(ossl_quic_channel_get_qsm(qc->ch),

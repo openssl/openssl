@@ -463,6 +463,8 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
     OSSL_QUIC_FRAME_STREAM frame_data;
     QUIC_STREAM *stream;
     uint64_t fce;
+    size_t rs_avail;
+    int rs_fin = 0;
 
     *datalen = 0;
 
@@ -566,6 +568,16 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
                                       frame_data.len,
                                       frame_data.is_fin))
         return 0;
+
+    /*
+     * rs_fin will be 1 only if we can read all data up to and including the FIN
+     * without any gaps before it; this implies we have received all data.
+     */
+    if (!ossl_quic_rstream_available(stream->rstream, &rs_avail, &rs_fin))
+        return 0;
+
+    if (rs_fin)
+        ossl_quic_stream_map_notify_totally_received(&ch->qsm, stream);
 
     *datalen = frame_data.len;
 
