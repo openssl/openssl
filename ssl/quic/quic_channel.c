@@ -1795,6 +1795,29 @@ static int ch_rx(QUIC_CHANNEL *ch)
     return 1;
 }
 
+static int bio_addr_eq(const BIO_ADDR *a, const BIO_ADDR *b)
+{
+    if (BIO_ADDR_family(a) != BIO_ADDR_family(b))
+        return 0;
+
+    switch (BIO_ADDR_family(a)) {
+        case AF_INET:
+            return !memcmp(&a->s_in.sin_addr,
+                           &b->s_in.sin_addr,
+                           sizeof(a->s_in.sin_addr))
+                && a->s_in.sin_port == b->s_in.sin_port;
+        case AF_INET6:
+            return !memcmp(&a->s_in6.sin6_addr,
+                           &b->s_in6.sin6_addr,
+                           sizeof(a->s_in6.sin6_addr))
+                && a->s_in6.sin6_port == b->s_in6.sin6_port;
+        default:
+            return 0; /* not supported */
+    }
+
+    return 1;
+}
+
 /* Handles the packet currently in ch->qrx_pkt->hdr. */
 static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
 {
@@ -1820,11 +1843,27 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
             return;
     }
 
+    /*
+     * RFC 9000 s. 9.6: "If a client receives packets from a new server address
+     * when the client has not initiated a migration to that address, the client
+     * SHOULD discard these packets."
+     *
+     * We need to be a bit careful here as due to the BIO abstraction layer an
+     * application is liable to be weird and lie to us about peer addresses.
+     * Only apply this check if we actually are using a real address and haven't
+     * been given AF_UNSPEC by the application.
+     */
+    if (!ch->is_server
+        && ch->qrx_pkt->peer != NULL
+        && BIO_ADDR_family(&ch->cur_peer_addr) != AF_UNSPEC
+        && !bio_addr_eq(ch->qrx_pkt->peer, &ch->cur_peer_addr))
+        return;
+
     if (!ch->is_server
         && ch->have_received_enc_pkt
         && ossl_quic_pkt_type_has_scid(ch->qrx_pkt->hdr->type)) {
         /*
-         * RFC 9000 s. 7.2. "Once a client has received a valid Initial packet
+         * RFC 9000 s. 7.2: "Once a client has received a valid Initial packet
          * from the server, it MUST discard any subsequent packet it receives on
          * that connection with a different SCID."
          */
