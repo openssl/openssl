@@ -2790,7 +2790,7 @@ static void quic_classify_stream(QUIC_CONNECTION *qc,
     } else if (ossl_quic_channel_is_term_any(qc->ch)) {
         /* Connection already closed. */
         *state = SSL_STREAM_STATE_CONN_CLOSED;
-    } else if (!is_write && qs->recv_fin_retired) {
+    } else if (!is_write && qs->recv_state == QUIC_RSTREAM_STATE_DATA_READ) {
         /* Application has read a FIN. */
         *state = SSL_STREAM_STATE_FINISHED;
     } else if ((!is_write && qs->stop_sending)
