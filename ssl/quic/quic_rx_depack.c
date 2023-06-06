@@ -851,7 +851,27 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
         return 0;
     }
 
-    /* TODO(QUIC): Post MVP ADD CODE to send |seq_num| to the ch manager */
+    /*
+     * RFC 9000 s. 19.16: "An endpoint cannot send this frame if it was provided
+     * with a zero-length connection ID by its peer. An endpoint that provides a
+     * zero-length connection ID MUST treat receipt of a RETIRE_CONNECTION_ID
+     * frame as a connection error of type PROTOCOL_VIOLATION."
+     *
+     * Since we always use a zero-length SCID as a client, there is no case
+     * where it is valid for a server to send this. Our server support is
+     * currently non-conformant and for internal testing use; simply handle it
+     * as a no-op in this case.
+     *
+     * TODO(QUIC): Revise and implement correctly for server support.
+     */
+    if (!ch->is_server) {
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_PROTOCOL_VIOLATION,
+                                               OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID,
+                                               "conn has zero-length CID");
+        return 0;
+    }
+
     return 1;
 }
 
