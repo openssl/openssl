@@ -2047,21 +2047,58 @@ struct quic_read_again_args {
 };
 
 QUIC_NEEDS_LOCK
+static int quic_validate_for_read(QUIC_XSO *xso, int *err, int *eos)
+{
+    *eos = 0;
+
+    if (xso == NULL || xso->stream == NULL) {
+        *err = ERR_R_INTERNAL_ERROR;
+        return 0;
+    }
+
+    switch (xso->stream->recv_state) {
+    default:
+    case QUIC_RSTREAM_STATE_NONE:
+        *err = SSL_R_STREAM_SEND_ONLY;
+        return 0;
+
+    case QUIC_RSTREAM_STATE_RECV:
+    case QUIC_RSTREAM_STATE_SIZE_KNOWN:
+    case QUIC_RSTREAM_STATE_DATA_RECVD:
+        return 1;
+
+    case QUIC_RSTREAM_STATE_DATA_READ:
+        *eos = 1;
+        return 0;
+
+    case QUIC_RSTREAM_STATE_RESET_RECVD:
+    case QUIC_RSTREAM_STATE_RESET_READ:
+        *err = SSL_R_STREAM_RESET;
+        return 0;
+    }
+}
+
+QUIC_NEEDS_LOCK
 static int quic_read_actual(QCTX *ctx,
                             QUIC_STREAM *stream,
                             void *buf, size_t buf_len,
                             size_t *bytes_read,
                             int peek)
 {
-    int is_fin = 0;
+    int is_fin = 0, err, eos;
     QUIC_CONNECTION *qc = ctx->qc;
+
+    if (!quic_validate_for_read(ctx->xso, &err, &eos)) {
+        if (eos)
+            return QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_ZERO_RETURN);
+        else
+            return QUIC_RAISE_NON_NORMAL_ERROR(ctx, err, NULL);
+    }
 
     /* If the receive part of the stream is over, issue EOF. */
     if (stream->recv_fin_retired)
+        /* XXX TODO REMOVE */
         return QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_ZERO_RETURN);
-
-    if (!ossl_quic_stream_has_recv_buffer(stream))
-        return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
 
     if (peek) {
         if (!ossl_quic_rstream_peek(stream->rstream, buf, buf_len,
@@ -2163,11 +2200,6 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
         }
 
         ctx.xso = ctx.qc->default_xso;
-    }
-
-    if (ctx.xso->stream == NULL) {
-        ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_INTERNAL_ERROR, NULL);
-        goto out;
     }
 
     if (!quic_read_actual(&ctx, ctx.xso->stream, buf, len, bytes_read, peek)) {
@@ -2708,7 +2740,7 @@ int ossl_quic_stream_reset(SSL *ssl,
     QUIC_STREAM_MAP *qsm;
     QUIC_STREAM *qs;
     uint64_t error_code;
-    int ok;
+    int ok, err;
 
     if (!expect_quic_with_stream_lock(ssl, /*remote_init=*/0, &ctx))
         return 0;
@@ -2716,6 +2748,9 @@ int ossl_quic_stream_reset(SSL *ssl,
     qsm         = ossl_quic_channel_get_qsm(ctx.qc->ch);
     qs          = ctx.xso->stream;
     error_code  = (args != NULL ? args->quic_error_code : 0);
+
+    if (!quic_validate_for_write(ctx.xso, &err))
+        return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, err, NULL);
 
     ok = ossl_quic_stream_map_reset_stream_send_part(qsm, qs, error_code);
 
