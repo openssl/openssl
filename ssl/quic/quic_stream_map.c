@@ -433,6 +433,10 @@ int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
         return 0;
 
     case QUIC_SSTREAM_STATE_READY:
+        if (!ossl_quic_stream_map_ensure_send_part_id(qsm, qs))
+            return 0;
+
+        /* FALLTHROUGH */
     case QUIC_SSTREAM_STATE_SEND:
         /*
          * If we already have a final size (e.g. because we are coming from
