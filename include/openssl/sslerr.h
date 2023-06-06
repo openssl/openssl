@@ -286,6 +286,10 @@
 # define SSL_R_SSL_SESSION_ID_TOO_LONG                    408
 # define SSL_R_SSL_SESSION_VERSION_MISMATCH               210
 # define SSL_R_STILL_IN_INIT                              121
+# define SSL_R_STREAM_FINISHED                            365
+# define SSL_R_STREAM_RECV_ONLY                           366
+# define SSL_R_STREAM_RESET                               375
+# define SSL_R_STREAM_SEND_ONLY                           379
 # define SSL_R_TLSV13_ALERT_CERTIFICATE_REQUIRED          1116
 # define SSL_R_TLSV13_ALERT_MISSING_EXTENSION             1109
 # define SSL_R_TLSV1_ALERT_ACCESS_DENIED                  1049
@@ -355,9 +359,5 @@
 # define SSL_R_WRONG_VERSION_NUMBER                       267
 # define SSL_R_X509_LIB                                   268
 # define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS           269
-# define SSL_R_STREAM_RECV_ONLY                           382
-# define SSL_R_STREAM_SEND_ONLY                           387
-# define SSL_R_STREAM_RESET                               393
-# define SSL_R_STREAM_FINISHED                            395
 
 #endif

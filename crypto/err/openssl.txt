@@ -1558,6 +1558,10 @@ SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH:303:ssl session id has bad length
 SSL_R_SSL_SESSION_ID_TOO_LONG:408:ssl session id too long
 SSL_R_SSL_SESSION_VERSION_MISMATCH:210:ssl session version mismatch
 SSL_R_STILL_IN_INIT:121:still in init
+SSL_R_STREAM_FINISHED:365:stream finished
+SSL_R_STREAM_RECV_ONLY:366:stream recv only
+SSL_R_STREAM_RESET:375:stream reset
+SSL_R_STREAM_SEND_ONLY:379:stream send only
 SSL_R_TLSV13_ALERT_CERTIFICATE_REQUIRED:1116:tlsv13 alert certificate required
 SSL_R_TLSV13_ALERT_MISSING_EXTENSION:1109:tlsv13 alert missing extension
 SSL_R_TLSV1_ALERT_ACCESS_DENIED:1049:tlsv1 alert access denied
