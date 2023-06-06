@@ -2298,6 +2298,13 @@ static int ch_retry(QUIC_CHANNEL *ch,
 {
     void *buf;
 
+    /*
+     * RFC 9000 s. 17.2.5.1: "A client MUST discard a Retry packet that contains
+     * a SCID field that is identical to the DCID field of its initial packet."
+     */
+    if (ossl_quic_conn_id_eq(&ch->init_dcid, retry_scid))
+        return 0;
+
     /* We change to using the SCID in the Retry packet as the DCID. */
     if (!ossl_quic_tx_packetiser_set_cur_dcid(ch->txp, retry_scid))
         return 0;
