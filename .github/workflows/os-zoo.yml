@@ -7,9 +7,9 @@
 
 name: OS Zoo CI
 
-on: [pull_request]
-#  schedule:
-#    - cron: '0 5 * * *'
+on:
+  schedule:
+    - cron: '0 5 * * *'
 
 permissions:
   contents: read
