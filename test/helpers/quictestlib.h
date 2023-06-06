@@ -75,6 +75,12 @@ int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code);
 int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv);
 
 /*
+ * Confirm the server has received a frame encoding error. Equivalent to calling
+ * qtest_check_server_transport_err with a code of QUIC_ERR_FRAME_ENCODING_ERROR
+ */
+int qtest_check_server_frame_encoding_err(QUIC_TSERVER *qtserv);
+
+/*
  * Enable tests to listen for pre-encryption QUIC packets being sent
  */
 typedef int (*qtest_fault_on_packet_plain_cb)(QTEST_FAULT *fault,

@@ -493,7 +493,8 @@ int ossl_quic_wire_encode_transport_param_cid(WPACKET *wpkt,
  * position). This can be used to determine the frame type and determine which
  * frame decoding function to call.
  */
-int ossl_quic_wire_peek_frame_header(PACKET *pkt, uint64_t *type);
+int ossl_quic_wire_peek_frame_header(PACKET *pkt, uint64_t *type,
+                                     int *was_minimal);
 
 /*
  * Like ossl_quic_wire_peek_frame_header, but advances the current position

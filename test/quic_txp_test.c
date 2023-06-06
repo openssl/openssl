@@ -1217,7 +1217,7 @@ static void skip_padding(struct helper *h)
 {
     uint64_t frame_type;
 
-    if (!ossl_quic_wire_peek_frame_header(&h->pkt, &frame_type))
+    if (!ossl_quic_wire_peek_frame_header(&h->pkt, &frame_type, NULL))
         return; /* EOF */
 
     if (frame_type == OSSL_QUIC_FRAME_TYPE_PADDING)
@@ -1296,7 +1296,7 @@ static int run_script(const struct script_op *script)
             break;
         case OPK_NEXT_FRAME:
             skip_padding(&h);
-            if (!ossl_quic_wire_peek_frame_header(&h.pkt, &h.frame_type)) {
+            if (!ossl_quic_wire_peek_frame_header(&h.pkt, &h.frame_type, NULL)) {
                 h.frame_type = UINT64_MAX;
                 break;
             }

@@ -392,7 +392,7 @@ static int trace_frame_data(BIO *bio, PACKET *pkt)
 {
     uint64_t frame_type;
 
-    if (!ossl_quic_wire_peek_frame_header(pkt, &frame_type))
+    if (!ossl_quic_wire_peek_frame_header(pkt, &frame_type, NULL))
         return 0;
 
     switch (frame_type) {
