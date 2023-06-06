@@ -1832,12 +1832,15 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
         if (stream->want_reset_stream) {
             OSSL_QUIC_FRAME_RESET_STREAM f;
 
+            assert(stream->send_state == QUIC_SSTREAM_STATE_RESET_SENT);
+
             wpkt = tx_helper_begin(h);
             if (wpkt == NULL)
                 return 0; /* alloc error */
 
             f.stream_id         = stream->id;
             f.app_error_code    = stream->reset_stream_aec;
+            /* XXX fix this - use how much we've actually sent */
             f.final_size        = ossl_quic_sstream_get_cur_size(stream->sstream);
             if (!ossl_quic_wire_encode_frame_reset_stream(wpkt, &f)) {
                 tx_helper_rollback(h); /* can't fit */
@@ -1879,8 +1882,18 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
             stream->txp_sent_fc = 1;
         }
 
-        /* Stream Data Frames (STREAM) */
-        if (ossl_quic_stream_has_send_buffer(stream)) {
+        /*
+         * Stream Data Frames (STREAM)
+         *
+         * RFC 9000 s. 3.3: A sender MUST NOT send a STREAM [...] frame for a
+         * stream in the "Reset Sent" state [or any terminal state]. We don't
+         * send any moore STREAM frames if we are sending, have sent, or are
+         * planning to send, RESET_STREAM. The other terminal state is Data
+         * Recvd, but txp_generate_stream_frames() is guaranteed to generate
+         * nothing in this case.
+         */
+        if (ossl_quic_stream_has_send_buffer(stream)
+            && !ossl_quic_stream_send_is_reset(stream)) {
             int packet_full = 0, stream_drained = 0;
 
             if (!txp_generate_stream_frames(txp, h, pn_space, tpkt,
