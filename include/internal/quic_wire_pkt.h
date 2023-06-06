@@ -119,6 +119,24 @@ ossl_quic_pkt_type_must_be_last(uint32_t pkt_type)
 }
 
 /*
+ * Determine if the packet type has a version field.
+ */
+static ossl_inline ossl_unused int
+ossl_quic_pkt_type_has_version(uint32_t pkt_type)
+{
+    return pkt_type != QUIC_PKT_TYPE_1RTT && pkt_type != QUIC_PKT_TYPE_VERSION_NEG;
+}
+
+/*
+ * Determine if the packet type has a SCID field.
+ */
+static ossl_inline ossl_unused int
+ossl_quic_pkt_type_has_scid(uint32_t pkt_type)
+{
+    return pkt_type != QUIC_PKT_TYPE_1RTT;
+}
+
+/*
  * Smallest possible QUIC packet size as per RFC (aside from version negotiation
  * packets).
  */

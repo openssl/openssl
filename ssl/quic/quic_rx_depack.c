@@ -914,6 +914,19 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
 {
     uint32_t pkt_type = parent_pkt->hdr->type;
 
+    if (PACKET_remaining(pkt) == 0) {
+        /*
+         * RFC 9000 s. 12.4: An endpoint MUST treat receipt of a packet
+         * containing no frames as a connection error of type
+         * PROTOCOL_VIOLATION.
+         */
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_PROTOCOL_VIOLATION,
+                                               0,
+                                               "empty packet payload");
+        return 0;
+    }
+
     while (PACKET_remaining(pkt) > 0) {
         uint64_t frame_type;
         const unsigned char *sof = NULL;

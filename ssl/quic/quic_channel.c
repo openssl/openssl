@@ -1032,6 +1032,7 @@ static int ch_on_transport_params(const unsigned char *params,
     int got_max_udp_payload_size = 0;
     int got_max_idle_timeout = 0;
     int got_active_conn_id_limit = 0;
+    int got_disable_active_migration = 0;
     QUIC_CONN_ID cid;
     const char *reason = "bad transport parameter";
 
@@ -1359,8 +1360,31 @@ static int ch_on_transport_params(const unsigned char *params,
 
         case QUIC_TPARAM_DISABLE_ACTIVE_MIGRATION:
             /* We do not currently handle migration, so nothing to do. */
+            if (got_disable_active_migration) {
+                /* must not appear more than once */
+                reason = TP_REASON_DUP("DISABLE_ACTIVE_MIGRATION");
+                goto malformed;
+            }
+
+            body = ossl_quic_wire_decode_transport_param_bytes(&pkt, &id, &len);
+            if (body == NULL || len > 0) {
+                reason = TP_REASON_MALFORMED("DISABLE_ACTIVE_MIGRATION");
+                goto malformed;
+            }
+
+            got_disable_active_migration = 1;
+            break;
+
         default:
-            /* Skip over and ignore. */
+            /*
+             * Skip over and ignore.
+             *
+             * RFC 9000 s. 7.4: We SHOULD treat duplicated transport parameters
+             * as a connection error, but we are not required to. Currently,
+             * handle this programmatically by checking for duplicates in the
+             * parameters that we recognise, as above, but don't bother
+             * maintaining a list of duplicates for anything we don't recognise.
+             */
             body = ossl_quic_wire_decode_transport_param_bytes(&pkt, &id,
                                                                &len);
             if (body == NULL)
@@ -1775,6 +1799,28 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
             /* Do not process packets from ELs we have already discarded. */
             return;
     }
+
+    if (!ch->is_server
+        && ch->have_received_enc_pkt
+        && ossl_quic_pkt_type_has_scid(ch->qrx_pkt->hdr->type)) {
+        /*
+         * RFC 9000 s. 7.2. "Once a client has received a valid Initial packet
+         * from the server, it MUST discard any subsequent packet it receives on
+         * that connection with a different SCID."
+         */
+        if (!ossl_quic_conn_id_eq(&ch->qrx_pkt->hdr->src_conn_id,
+                                  &ch->init_scid))
+            return;
+    }
+
+    if (ossl_quic_pkt_type_has_version(ch->qrx_pkt->hdr->type)
+        && ch->qrx_pkt->hdr->version != QUIC_VERSION_1)
+        /*
+         * RFC 9000 s. 5.2.1: If a client receives a packet that uses a
+         * different version than it initially selected, it MUST discard the
+         * packet. We only ever use v1, so require it.
+         */
+        return;
 
     /* Handle incoming packet. */
     switch (ch->qrx_pkt->hdr->type) {
