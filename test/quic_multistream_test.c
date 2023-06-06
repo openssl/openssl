@@ -12,7 +12,9 @@
 #include <openssl/lhash.h>
 #include "internal/quic_tserver.h"
 #include "internal/quic_ssl.h"
+#include "internal/quic_error.h"
 #include "testutil.h"
+#include "helpers/quictestlib.h"
 #if defined(OPENSSL_THREADS)
 # include "internal/thread_arch.h"
 #endif
@@ -42,7 +44,7 @@ DEFINE_LHASH_OF_EX(STREAM_INFO);
 
 struct helper {
     int                     s_fd;
-    BIO                     *s_net_bio, *s_net_bio_own;
+    BIO                     *s_net_bio, *s_net_bio_own, *s_qtf_wbio, *s_qtf_wbio_own;
     BIO_ADDR                *s_net_bio_addr;
     QUIC_TSERVER            *s;
     LHASH_OF(STREAM_INFO)   *s_streams;
@@ -68,8 +70,14 @@ struct helper {
     CRYPTO_RWLOCK   *time_lock;
     OSSL_TIME       time_slip; /* protected by time_lock */
 
+    QTEST_FAULT     *qtf;
+
     int             init, blocking, check_spin_again;
-    int             free_order;
+    int             free_order, need_injector;
+
+    int (*qtf_packet_plain_cb)(struct helper *h, QUIC_PKT_HDR *hdr,
+                               unsigned char *buf, size_t buf_len);
+    uint64_t inject_word0, inject_word1;
 };
 
 struct helper_local {
@@ -85,6 +93,8 @@ struct script_op {
     int             (*check_func)(struct helper *h, const struct script_op *op);
     const char      *stream_name;
     uint64_t        arg2;
+    int             (*qtf_packet_plain_cb)(struct helper *h, QUIC_PKT_HDR *hdr,
+                                           unsigned char *buf, size_t buf_len);
 };
 
 #define OPK_END                                     0
@@ -129,6 +139,8 @@ struct script_op {
 #define OPK_EXPECT_ERR_LIB                          39
 #define OPK_SLEEP                                   40
 #define OPK_S_READ_FAIL                             41
+#define OPK_S_SET_INJECT_PLAIN                      42
+#define OPK_SET_INJECT_WORD                         43
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -152,6 +164,8 @@ struct script_op {
     {OPK_C_SET_ALPN, (alpn), 0, NULL, NULL},
 #define OP_C_CONNECT_WAIT() \
     {OPK_C_CONNECT_WAIT, NULL, 0, NULL, NULL},
+#define OP_C_CONNECT_WAIT_OR_FAIL() \
+    {OPK_C_CONNECT_WAIT, NULL, 1, NULL, NULL},
 #define OP_C_WRITE(stream_name, buf, buf_len)   \
     {OPK_C_WRITE, (buf), (buf_len), NULL, #stream_name},
 #define OP_S_WRITE(stream_name, buf, buf_len)   \
@@ -238,6 +252,10 @@ struct script_op {
     {OPK_EXPECT_ERR_LIB, NULL, (lib)},
 #define OP_SLEEP(ms) \
     {OPK_SLEEP, NULL, 0, NULL, NULL, (ms)},
+#define OP_S_SET_INJECT_PLAIN(f) \
+    {OPK_S_SET_INJECT_PLAIN, NULL, 0, NULL, NULL, 0, (f)},
+#define OP_SET_INJECT_WORD(w0, w1) \
+    {OPK_SET_INJECT_WORD, NULL, (w0), NULL, NULL, (w1), NULL},
 
 static OSSL_TIME get_time(void *arg)
 {
@@ -437,6 +455,9 @@ static void helper_cleanup(struct helper *h)
     BIO_free(h->c_net_bio_own);
     h->c_net_bio_own = NULL;
 
+    BIO_free(h->s_qtf_wbio_own);
+    h->s_qtf_wbio_own = NULL;
+
     if (h->s_fd >= 0) {
         BIO_closesocket(h->s_fd);
         h->s_fd = -1;
@@ -457,7 +478,7 @@ static void helper_cleanup(struct helper *h)
     h->time_lock = NULL;
 }
 
-static int helper_init(struct helper *h, int free_order)
+static int helper_init(struct helper *h, int free_order, int need_injector)
 {
     short port = 8186;
     struct in_addr ina = {0};
@@ -467,6 +488,7 @@ static int helper_init(struct helper *h, int free_order)
     h->c_fd = -1;
     h->s_fd = -1;
     h->free_order = free_order;
+    h->need_injector = need_injector;
     h->time_slip = ossl_time_zero();
 
     if (!TEST_ptr(h->time_lock = CRYPTO_THREAD_lock_new()))
@@ -508,8 +530,20 @@ static int helper_init(struct helper *h, int free_order)
     if (!BIO_up_ref(h->s_net_bio))
         goto err;
 
+    if (need_injector) {
+        h->s_qtf_wbio = h->s_qtf_wbio_own = BIO_new(qtest_get_bio_method());
+        if (!TEST_ptr(h->s_qtf_wbio))
+            goto err;
+
+        if (!TEST_ptr(BIO_push(h->s_qtf_wbio, h->s_net_bio)))
+            goto err;
+
+        s_args.net_wbio = h->s_qtf_wbio;
+    } else {
+        s_args.net_wbio = h->s_net_bio;
+    }
+
     s_args.net_rbio     = h->s_net_bio;
-    s_args.net_wbio     = h->s_net_bio;
     s_args.alpn         = NULL;
     s_args.now_cb       = get_time;
     s_args.now_cb_arg   = h;
@@ -517,7 +551,16 @@ static int helper_init(struct helper *h, int free_order)
     if (!TEST_ptr(h->s = ossl_quic_tserver_new(&s_args, certfile, keyfile)))
         goto err;
 
-    h->s_net_bio_own = NULL;
+    if (need_injector) {
+        h->qtf = qtest_create_injector(h->s);
+        if (!TEST_ptr(h->qtf))
+            goto err;
+
+        BIO_set_data(h->s_qtf_wbio, h->qtf);
+    }
+
+    h->s_net_bio_own    = NULL;
+    h->s_qtf_wbio_own   = NULL;
 
     h->c_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
     if (!TEST_int_ge(h->c_fd, 0))
@@ -531,7 +574,6 @@ static int helper_init(struct helper *h, int free_order)
 
     if (!TEST_true(BIO_dgram_set_peer(h->c_net_bio, h->s_net_bio_addr)))
         goto err;
-
 
     if (!TEST_ptr(h->c_ctx = SSL_CTX_new(OSSL_QUIC_client_method())))
         goto err;
@@ -681,6 +723,15 @@ static uint64_t helper_get_s_stream(struct helper *h, const char *stream_name)
         return UINT64_MAX;
 
     return info->s_stream_id;
+}
+
+static int helper_packet_plain_listener(QTEST_FAULT *qtf, QUIC_PKT_HDR *hdr,
+                                        unsigned char *buf, size_t buf_len,
+                                        void *arg)
+{
+    struct helper *h = arg;
+
+    return h->qtf_packet_plain_cb(h, hdr, buf, buf_len);
 }
 
 static int is_want(SSL *s, int ret)
@@ -883,11 +934,11 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 connect_started = 1;
 
                 ret = SSL_connect(h->c_conn);
-                if (!TEST_true(ret == 1
+                if (!TEST_true((ret == 1 || op->arg1 > 0)
                                || (!h->blocking && is_want(h->c_conn, ret))))
                     goto out;
 
-                if (!h->blocking && ret != 1)
+                if (!h->blocking && ret < 0)
                     SPIN_AGAIN();
             }
             break;
@@ -1423,6 +1474,22 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             }
             break;
 
+        case OPK_S_SET_INJECT_PLAIN:
+            h->qtf_packet_plain_cb = op->qtf_packet_plain_cb;
+
+            if (!TEST_true(qtest_fault_set_packet_plain_listener(h->qtf,
+                                                                 h->qtf_packet_plain_cb != NULL ?
+                                                                 helper_packet_plain_listener : NULL,
+                                                                 h)))
+                goto out;
+
+            break;
+
+        case OPK_SET_INJECT_WORD:
+            h->inject_word0 = op->arg1;
+            h->inject_word1 = op->arg2;
+            break;
+
         default:
             TEST_error("unknown op");
             goto out;
@@ -1453,7 +1520,7 @@ static int run_script(const struct script_op *script, int free_order)
     int testresult = 0;
     struct helper h;
 
-    if (!TEST_true(helper_init(&h, free_order)))
+    if (!TEST_true(helper_init(&h, free_order, 1)))
         goto out;
 
     if (!TEST_true(run_script_worker(&h, script, -1)))
@@ -2116,6 +2183,589 @@ static const struct script_op script_20[] = {
     OP_END
 };
 
+/* 21. Fault injection - unknown frame in 1-RTT packet */
+static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    WPACKET wpkt;
+    unsigned char frame_buf[8];
+    size_t written;
+
+    if (h->inject_word0 == 0 || hdr->type != h->inject_word0)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1)))
+        return 0;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        return 0;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_21[] = {
+    OP_S_SET_INJECT_PLAIN   (script_21_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (QUIC_PKT_TYPE_1RTT, OSSL_QUIC_VLINT_MAX)
+
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_FRAME_ENCODING_ERROR,0,0)
+
+    OP_END
+};
+
+/* 22. Fault injection - non-zero packet header reserved bits */
+static int script_22_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    if (h->inject_word0 == 0)
+        return 1;
+
+    hdr->reserved = 1;
+    return 1;
+}
+
+static const struct script_op script_22[] = {
+    OP_S_SET_INJECT_PLAIN   (script_22_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, 0)
+
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_PROTOCOL_VIOLATION,0,0)
+
+    OP_END
+};
+
+/* 23. Fault injection - empty NEW_TOKEN */
+static int script_23_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    WPACKET wpkt;
+    unsigned char frame_buf[16];
+    size_t written;
+
+    if (h->inject_word0 == 0)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_NEW_TOKEN))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        return 0;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_23[] = {
+    OP_S_SET_INJECT_PLAIN   (script_23_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, 0)
+
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_FRAME_ENCODING_ERROR,0,0)
+
+    OP_END
+};
+
+/* 24. Fault injection - excess value of MAX_STREAMS_BIDI */
+static int script_24_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    WPACKET wpkt;
+    unsigned char frame_buf[16];
+    size_t written;
+
+    if (h->inject_word0 == 0)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, (((uint64_t)1) << 60) + 1)))
+        return 0;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        return 0;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_24[] = {
+    OP_S_SET_INJECT_PLAIN   (script_24_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI)
+
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_FRAME_ENCODING_ERROR,0,0)
+
+    OP_END
+};
+
+/* 25. Fault injection - excess value of MAX_STREAMS_UNI */
+static const struct script_op script_25[] = {
+    OP_S_SET_INJECT_PLAIN   (script_24_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI)
+
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_FRAME_ENCODING_ERROR,0,0)
+
+    OP_END
+};
+
+/* 26. Fault injection - excess value of STREAMS_BLOCKED_BIDI */
+static const struct script_op script_26[] = {
+    OP_S_SET_INJECT_PLAIN   (script_24_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI)
+
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_LIMIT_ERROR,0,0)
+
+    OP_END
+};
+
+/* 27. Fault injection - excess value of STREAMS_BLOCKED_UNI */
+static const struct script_op script_27[] = {
+    OP_S_SET_INJECT_PLAIN   (script_24_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI)
+
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_LIMIT_ERROR,0,0)
+
+    OP_END
+};
+
+/* 28. Fault injection - received RESET_STREAM for send-only stream */
+static int script_28_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    WPACKET wpkt;
+    unsigned char frame_buf[32];
+    size_t written;
+
+    if (h->inject_word0 == 0)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /* stream ID */
+                                               h->inject_word0 - 1))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 123))
+        || (h->inject_word1 == OSSL_QUIC_FRAME_TYPE_RESET_STREAM
+           && !TEST_true(WPACKET_quic_write_vlint(&wpkt, 5)))) /* final size */
+        return 0;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        return 0;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_28[] = {
+    OP_S_SET_INJECT_PLAIN   (script_28_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_UNI     (a, C_UNI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+
+    OP_S_BIND_STREAM_ID     (a, C_UNI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (C_UNI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_RESET_STREAM)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_STATE_ERROR,0,0)
+
+    OP_END
+};
+
+/* 29. Fault injection - received RESET_STREAM for nonexistent send-only stream */
+static const struct script_op script_29[] = {
+    OP_S_SET_INJECT_PLAIN   (script_28_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_UNI     (a, C_UNI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+
+    OP_S_BIND_STREAM_ID     (a, C_UNI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (C_UNI_ID(1) + 1, OSSL_QUIC_FRAME_TYPE_RESET_STREAM)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_STATE_ERROR,0,0)
+
+    OP_END
+};
+
+/* 30. Fault injection - received STOP_SENDING for receive-only stream */
+static const struct script_op script_30[] = {
+    OP_S_SET_INJECT_PLAIN   (script_28_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_S_NEW_STREAM_UNI     (a, S_UNI_ID(0))
+    OP_S_WRITE              (a, "apple", 5)
+
+    OP_C_ACCEPT_STREAM_WAIT (a)
+    OP_C_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (S_UNI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_STOP_SENDING)
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_STATE_ERROR,0,0)
+
+    OP_END
+};
+
+/* 31. Fault injection - received STOP_SENDING for nonexistent receive-only stream */
+static const struct script_op script_31[] = {
+    OP_S_SET_INJECT_PLAIN   (script_28_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_S_NEW_STREAM_UNI     (a, S_UNI_ID(0))
+    OP_S_WRITE              (a, "apple", 5)
+
+    OP_C_ACCEPT_STREAM_WAIT (a)
+    OP_C_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (C_UNI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_STOP_SENDING)
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_STATE_ERROR,0,0)
+
+    OP_END
+};
+
+/* 32. Fault injection - STREAM frame for nonexistent stream */
+static int script_32_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    WPACKET wpkt;
+    unsigned char frame_buf[64];
+    size_t written;
+    uint64_t type = OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN, offset, flen, i;
+
+    switch (h->inject_word1) {
+    default:
+        return 0;
+    case 0:
+        return 1;
+    case 1:
+        offset  = 0;
+        flen     = 0;
+        break;
+    case 2:
+        offset  = (((uint64_t)1)<<62) - 1;
+        flen     = 5;
+        break;
+    case 3:
+        offset  = 1 * 1024 * 1024 * 1024; /* 1G */
+        flen     = 5;
+        break;
+    }
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, type))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /* stream ID */
+                                               h->inject_word0 - 1))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, offset))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, flen)))
+        return 0;
+
+    for (i = 0; i < flen; ++i)
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
+            return 0;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        return 0;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_32[] = {
+    OP_S_SET_INJECT_PLAIN   (script_32_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_S_NEW_STREAM_UNI     (a, S_UNI_ID(0))
+    OP_S_WRITE              (a, "apple", 5)
+
+    OP_C_ACCEPT_STREAM_WAIT (a)
+    OP_C_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (C_UNI_ID(0) + 1, 1)
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_STATE_ERROR,0,0)
+
+    OP_END
+};
+
+/* 33. Fault injection - STREAM frame with illegal offset */
+static const struct script_op script_33[] = {
+    OP_S_SET_INJECT_PLAIN   (script_32_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (C_BIDI_ID(0) + 1, 2)
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_FRAME_ENCODING_ERROR,0,0)
+
+    OP_END
+};
+
+/* 34. Fault injection - STREAM frame which exceeds FC */
+static const struct script_op script_34[] = {
+    OP_S_SET_INJECT_PLAIN   (script_32_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (C_BIDI_ID(0) + 1, 3)
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_FLOW_CONTROL_ERROR,0,0)
+
+    OP_END
+};
+
+/* 35. Fault injection - MAX_STREAM_DATA for receive-only stream */
+static const struct script_op script_35[] = {
+    OP_S_SET_INJECT_PLAIN   (script_28_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_S_NEW_STREAM_UNI     (a, S_UNI_ID(0))
+    OP_S_WRITE              (a, "apple", 5)
+
+    OP_C_ACCEPT_STREAM_WAIT (a)
+    OP_C_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (S_UNI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA)
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_STATE_ERROR,0,0)
+
+    OP_END
+};
+
+/* 36. Fault injection - MAX_STREAM_DATA for nonexistent stream */
+static const struct script_op script_36[] = {
+    OP_S_SET_INJECT_PLAIN   (script_28_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_S_NEW_STREAM_UNI     (a, S_UNI_ID(0))
+    OP_S_WRITE              (a, "apple", 5)
+
+    OP_C_ACCEPT_STREAM_WAIT (a)
+    OP_C_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (C_BIDI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA)
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_STATE_ERROR,0,0)
+
+    OP_END
+};
+
+/* 37. Fault injection - STREAM_DATA_BLOCKED for send-only stream */
+static const struct script_op script_37[] = {
+    OP_S_SET_INJECT_PLAIN   (script_28_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_UNI     (a, C_UNI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+
+    OP_S_BIND_STREAM_ID     (a, C_UNI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_S_NEW_STREAM_UNI     (b, S_UNI_ID(0))
+    OP_SET_INJECT_WORD      (C_UNI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED)
+    OP_S_WRITE              (b, "orange", 5)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_STATE_ERROR,0,0)
+
+    OP_END
+};
+
+/* 38. Fault injection - STREAM_DATA_BLOCKED for non-existent stream */
+static const struct script_op script_38[] = {
+    OP_S_SET_INJECT_PLAIN   (script_28_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_S_NEW_STREAM_UNI     (b, S_UNI_ID(0))
+    OP_SET_INJECT_WORD      (C_BIDI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED)
+    OP_S_WRITE              (b, "orange", 5)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_STATE_ERROR,0,0)
+
+    OP_END
+};
+
+/* 39. Fault injection - NEW_CONN_ID with zero-len CID */
+static int script_39_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    WPACKET wpkt;
+    unsigned char frame_buf[64];
+    size_t i, written;
+
+    if (h->inject_word1 == 0)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)) /* seq no */
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)) /* retire prior to */
+        || !TEST_true(WPACKET_put_bytes_u8(&wpkt, 0))) /* len */
+        return 0;
+
+    for (i = 0; i < QUIC_STATELESS_RESET_TOKEN_LEN; ++i)
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
+            return 0;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        return 0;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_39[] = {
+    OP_S_SET_INJECT_PLAIN   (script_39_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (0, 1)
+    OP_S_WRITE              (a, "orange", 5)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_FRAME_ENCODING_ERROR,0,0)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -2137,6 +2787,24 @@ static const struct script_op *const scripts[] = {
     script_18,
     script_19,
     script_20,
+    script_21,
+    script_22,
+    script_23,
+    script_24,
+    script_25,
+    script_26,
+    script_27,
+    script_28,
+    script_29,
+    script_30,
+    script_31,
+    script_32,
+    script_33,
+    script_34,
+    script_35,
+    script_36,
+    script_37,
+    script_38,
 };
 
 static int test_script(int idx)
@@ -2146,6 +2814,86 @@ static int test_script(int idx)
 
     TEST_info("Running script %d (order=%d)", script_idx + 1, free_order);
     return run_script(scripts[script_idx], free_order);
+}
+
+/* Dynamically generated tests. */
+static struct script_op dyn_frame_types_script[] = {
+    OP_S_SET_INJECT_PLAIN   (script_19_inject_plain)
+    OP_SET_INJECT_WORD      (0, 0) /* dynamic */
+
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT_OR_FAIL()
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_FRAME_ENCODING_ERROR,0,0)
+
+    OP_END
+};
+
+struct forbidden_frame_type {
+    uint64_t pkt_type, frame_type, expected_err;
+};
+
+static const struct forbidden_frame_type forbidden_frame_types[] = {
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_VLINT_MAX, QUIC_ERR_FRAME_ENCODING_ERROR },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_VLINT_MAX, QUIC_ERR_FRAME_ENCODING_ERROR },
+    { QUIC_PKT_TYPE_1RTT, OSSL_QUIC_VLINT_MAX, QUIC_ERR_FRAME_ENCODING_ERROR },
+
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_STREAM, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_RESET_STREAM, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_STOP_SENDING, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_NEW_TOKEN, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_MAX_DATA, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE, QUIC_ERR_PROTOCOL_VIOLATION },
+
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_STREAM, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_RESET_STREAM, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_STOP_SENDING, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_NEW_TOKEN, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_MAX_DATA, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP, QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE, QUIC_ERR_PROTOCOL_VIOLATION },
+
+    /* Client uses a zero-length CID so this is not allowed. */
+    { QUIC_PKT_TYPE_1RTT, OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID, QUIC_ERR_PROTOCOL_VIOLATION },
+};
+
+static ossl_unused int test_dyn_frame_types(int idx)
+{
+    size_t i;
+    struct script_op *s = dyn_frame_types_script;
+
+    for (i = 0; i < OSSL_NELEM(dyn_frame_types_script); ++i)
+        if (s[i].op == OPK_SET_INJECT_WORD) {
+            s[i].arg1 = forbidden_frame_types[idx].pkt_type;
+            s[i].arg2 = forbidden_frame_types[idx].frame_type;
+        } else if (s[i].op == OPK_C_EXPECT_CONN_CLOSE_INFO) {
+            s[i].arg2 = forbidden_frame_types[idx].expected_err;
+        }
+
+    return run_script(dyn_frame_types_script, 0);
 }
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -2161,6 +2909,7 @@ int setup_tests(void)
         || !TEST_ptr(keyfile = test_get_argument(1)))
         return 0;
 
+    ADD_ALL_TESTS(test_dyn_frame_types, OSSL_NELEM(forbidden_frame_types));
     ADD_ALL_TESTS(test_script, OSSL_NELEM(scripts) * 2);
     return 1;
 }

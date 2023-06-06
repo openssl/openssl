@@ -318,7 +318,8 @@ int ossl_quic_wire_encode_frame_streams_blocked(WPACKET *pkt,
 int ossl_quic_wire_encode_frame_new_conn_id(WPACKET *pkt,
                                             const OSSL_QUIC_FRAME_NEW_CONN_ID *f)
 {
-    if (f->conn_id.id_len > QUIC_MAX_CONN_ID_LEN)
+    if (f->conn_id.id_len < 1
+        || f->conn_id.id_len > QUIC_MAX_CONN_ID_LEN)
         return 0;
 
     if (!encode_frame_hdr(pkt, OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID)
@@ -683,6 +684,14 @@ int ossl_quic_wire_decode_frame_stream(PACKET *pkt,
             f->len = PACKET_remaining(pkt);
     }
 
+    /*
+     * RFC 9000 s. 19.8: "The largest offset delivered on a stream -- the sum of
+     * the offset and data length -- cannot exceed 2**62 - 1, as it is not
+     * possible to provide flow control credit for that data."
+     */
+    if (f->offset + f->len > (((uint64_t)1) << 62) - 1)
+        return 0;
+
     if (nodata) {
         f->data = NULL;
     } else {
@@ -774,6 +783,7 @@ int ossl_quic_wire_decode_frame_new_conn_id(PACKET *pkt,
             || !PACKET_get_quic_vlint(pkt, &f->retire_prior_to)
             || f->seq_num < f->retire_prior_to
             || !PACKET_get_1(pkt, &len)
+            || len < 1
             || len > QUIC_MAX_CONN_ID_LEN)
         return 0;
 

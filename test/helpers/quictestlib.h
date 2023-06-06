@@ -44,6 +44,10 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
 /* Where QTEST_FLAG_FAKE_TIME is used, add millis to the current time */
 void qtest_add_time(uint64_t millis);
 
+QTEST_FAULT *qtest_create_injector(QUIC_TSERVER *ts);
+
+BIO_METHOD *qtest_get_bio_method(void);
+
 /*
  * Free up a Fault Injector instance
  */
@@ -108,7 +112,7 @@ int qtest_fault_resize_plain_packet(QTEST_FAULT *fault, size_t newlen);
  * Prepend frame data into a packet. To be called from a packet_plain_listener
  * callback
  */
-int qtest_fault_prepend_frame(QTEST_FAULT *fault, unsigned char *frame,
+int qtest_fault_prepend_frame(QTEST_FAULT *fault, const unsigned char *frame,
                               size_t frame_len);
 
 /*

@@ -339,7 +339,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[quic_client_test]=../include ../apps/include
   DEPEND[quic_client_test]=../libcrypto.a ../libssl.a libtestutil.a
 
-  SOURCE[quic_multistream_test]=quic_multistream_test.c
+  SOURCE[quic_multistream_test]=quic_multistream_test.c helpers/ssltestlib.c helpers/quictestlib.c
   INCLUDE[quic_multistream_test]=../include ../apps/include
   DEPEND[quic_multistream_test]=../libcrypto.a ../libssl.a libtestutil.a
 
