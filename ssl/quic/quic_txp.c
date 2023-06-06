@@ -1161,8 +1161,7 @@ static void on_regen_notify(uint64_t frame_type, uint64_t stream_id,
                 if (s == NULL)
                     return;
 
-                s->want_stop_sending = 1;
-                ossl_quic_stream_map_update_state(txp->args.qsm, s);
+                ossl_quic_stream_map_schedule_stop_sending(txp->args.qsm, s);
             }
             break;
         case OSSL_QUIC_FRAME_TYPE_RESET_STREAM:

@@ -13,6 +13,7 @@
 
 # include "internal/e_os.h"
 # include "internal/time.h"
+# include "internal/common.h"
 # include "internal/quic_types.h"
 # include "internal/quic_stream.h"
 # include "internal/quic_fc.h"
@@ -117,6 +118,19 @@ struct quic_stream_st {
 
     /* Temporary value used by TXP. */
     uint64_t        txp_txfc_new_credit_consumed;
+
+    /*
+     * The final size of the send stream. Although this information can be
+     * discerned from a QUIC_SSTREAM, it is stored separately as we need to keep
+     * track of this even if we have thrown away the QUIC_SSTREAM. Use
+     * ossl_quic_stream_send_get_final_size to determine if this contain a
+     * valid value or if there is no final size yet for a sending part.
+     *
+     * For the receive part, the final size is tracked by the stream-level RXFC;
+     * use ossl_quic_stream_recv_get_final_size or
+     * ossl_quic_rxfc_get_final_size.
+     */
+    uint64_t        send_final_size;
 
     /*
      * Send stream part and receive stream part buffer management objects.
@@ -434,6 +448,63 @@ static ossl_inline ossl_unused int ossl_quic_stream_recv_is_reset(const QUIC_STR
 }
 
 /*
+ * Returns 1 if the stream has a send part and that part has a final size.
+ *
+ * If final_size is non-NULL, *final_size is the final size (on success) or an
+ * undefined value otherwise.
+ */
+static ossl_inline ossl_unused int ossl_quic_stream_send_get_final_size(const QUIC_STREAM *s,
+                                                                        uint64_t *final_size)
+{
+    switch (s->send_state) {
+    default:
+    case QUIC_SSTREAM_STATE_NONE:
+        return 0;
+    case QUIC_SSTREAM_STATE_SEND:
+        /*
+         * SEND may or may not have had a FIN - even if we have a FIN we do not
+         * move to DATA_SENT until we have actually sent all the data. So
+         * ask the QUIC_SSTREAM.
+         */
+        return ossl_quic_sstream_get_final_size(s->sstream, final_size);
+    case QUIC_SSTREAM_STATE_DATA_SENT:
+    case QUIC_SSTREAM_STATE_DATA_RECVD:
+    case QUIC_SSTREAM_STATE_RESET_SENT:
+    case QUIC_SSTREAM_STATE_RESET_RECVD:
+        if (final_size != NULL)
+            *final_size = s->send_final_size;
+        return 1;
+    }
+}
+
+/*
+ * Returns 1 if the stream has a receive part and that part has a final size.
+ *
+ * If final_size is non-NULL, *final_size is the final size (on success) or an
+ * undefined value otherwise.
+ */
+static ossl_inline ossl_unused int ossl_quic_stream_recv_get_final_size(const QUIC_STREAM *s,
+                                                                        uint64_t *final_size)
+{
+    switch (s->recv_state) {
+    default:
+    case QUIC_RSTREAM_STATE_NONE:
+    case QUIC_RSTREAM_STATE_RECV:
+        return 0;
+
+    case QUIC_RSTREAM_STATE_SIZE_KNOWN:
+    case QUIC_RSTREAM_STATE_DATA_RECVD:
+    case QUIC_RSTREAM_STATE_DATA_READ:
+    case QUIC_RSTREAM_STATE_RESET_RECVD:
+    case QUIC_RSTREAM_STATE_RESET_READ:
+        if (!ossl_assert(ossl_quic_rxfc_get_final_size(&s->rxfc, final_size)))
+            return 0;
+
+        return 1;
+    }
+}
+
+/*
  * QUIC Stream Map
  * ===============
  *
@@ -630,11 +701,13 @@ int ossl_quic_stream_map_notify_reset_stream_acked(QUIC_STREAM_MAP *qsm,
 /*
  * Transitions from the RECV to SIZE_KNOWN receive stream states. This should be
  * called once a STREAM frame is received for the stream with the FIN bit set.
+ * final_size should be the final size of the stream in bytes.
  *
  * Returns 1 if the transition was taken.
  */
 int ossl_quic_stream_map_notify_size_known_recv_part(QUIC_STREAM_MAP *qsm,
-                                                     QUIC_STREAM *qs);
+                                                     QUIC_STREAM *qs,
+                                                     uint64_t final_size);
 
 /* SIZE_KNOWN -> DATA_RECVD */
 int ossl_quic_stream_map_notify_totally_received(QUIC_STREAM_MAP *qsm,
@@ -664,6 +737,15 @@ int ossl_quic_stream_map_notify_app_read_reset_recv_part(QUIC_STREAM_MAP *qsm,
 int ossl_quic_stream_map_stop_sending_recv_part(QUIC_STREAM_MAP *qsm,
                                                 QUIC_STREAM *qs,
                                                 uint64_t aec);
+
+/*
+ * Marks the stream as wanting a STOP_SENDING frame transmitted. It is not valid
+ * to vall this if ossl_quic_stream_map_stop_sending_recv_part() has not been
+ * called. For TXP use.
+ */
+int ossl_quic_stream_map_schedule_stop_sending(QUIC_STREAM_MAP *qsm,
+                                               QUIC_STREAM *qs);
+
 
 /*
  * Accept Queue Management

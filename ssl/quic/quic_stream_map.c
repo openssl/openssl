@@ -161,6 +161,8 @@ QUIC_STREAM *ossl_quic_stream_map_alloc(QUIC_STREAM_MAP *qsm,
         ? QUIC_RSTREAM_STATE_RECV
         : QUIC_RSTREAM_STATE_NONE;
 
+    s->send_final_size  = UINT64_MAX;
+
     lh_QUIC_STREAM_insert(qsm->map, s);
     return s;
 }
@@ -487,7 +489,8 @@ int ossl_quic_stream_map_notify_reset_stream_acked(QUIC_STREAM_MAP *qsm,
  */
 
 int ossl_quic_stream_map_notify_size_known_recv_part(QUIC_STREAM_MAP *qsm,
-                                                     QUIC_STREAM *qs)
+                                                     QUIC_STREAM *qs,
+                                                     uint64_t final_size)
 {
     switch (qs->recv_state) {
     default:
@@ -497,7 +500,7 @@ int ossl_quic_stream_map_notify_size_known_recv_part(QUIC_STREAM_MAP *qsm,
         return 0;
 
     case QUIC_RSTREAM_STATE_RECV:
-        qs->recv_state = QUIC_RSTREAM_STATE_SIZE_KNOWN;
+        qs->recv_state      = QUIC_RSTREAM_STATE_SIZE_KNOWN;
         return 1;
     }
 }
@@ -513,7 +516,8 @@ int ossl_quic_stream_map_notify_totally_received(QUIC_STREAM_MAP *qsm,
         return 0;
 
     case QUIC_RSTREAM_STATE_SIZE_KNOWN:
-        qs->recv_state = QUIC_RSTREAM_STATE_DATA_RECVD;
+        qs->recv_state          = QUIC_RSTREAM_STATE_DATA_RECVD;
+        qs->want_stop_sending   = 0;
         return 1;
     }
 }
@@ -599,10 +603,56 @@ int ossl_quic_stream_map_stop_sending_recv_part(QUIC_STREAM_MAP *qsm,
     if (qs->stop_sending)
         return 0;
 
+    switch (qs->recv_state) {
+    default:
+    case QUIC_RSTREAM_STATE_NONE:
+        /* Send-only stream, so this makes no sense. */
+    case QUIC_RSTREAM_STATE_DATA_RECVD:
+    case QUIC_RSTREAM_STATE_DATA_READ:
+        /*
+         * Not really any point in STOP_SENDING if we already received all data.
+         */
+    case QUIC_RSTREAM_STATE_RESET_RECVD:
+    case QUIC_RSTREAM_STATE_RESET_READ:
+        /* No point in STOP_SENDING if the peer already reset their send part. */
+        return 0;
+
+    case QUIC_RSTREAM_STATE_RECV:
+    case QUIC_RSTREAM_STATE_SIZE_KNOWN:
+        /*
+         * It does make sense to send STOP_SENDING for a receive part of a
+         * stream which has a known size (because we have received a FIN) but
+         * which still has other (previous) stream data yet to be received.
+         */
+        break;
+    }
+
     qs->stop_sending        = 1;
     qs->stop_sending_aec    = aec;
-    qs->want_stop_sending   = 1;
+    return ossl_quic_stream_map_schedule_stop_sending(qsm, qs);
+}
 
+int ossl_quic_stream_map_schedule_stop_sending(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
+{
+    if (!qs->stop_sending)
+        return 0;
+
+    /*
+     * Ignore the call as a no-op if already scheduled, or in a state
+     * where it makes no sense to send STOP_SENDING.
+     */
+    if (qs->want_stop_sending)
+        return 1;
+
+    switch (qs->recv_state) {
+    default:
+        return 1; /* ignore */
+    case QUIC_RSTREAM_STATE_RECV:
+    case QUIC_RSTREAM_STATE_SIZE_KNOWN:
+        break;
+    }
+
+    qs->want_stop_sending = 1;
     ossl_quic_stream_map_update_state(qsm, qs);
     return 1;
 }
