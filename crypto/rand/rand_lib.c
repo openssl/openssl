@@ -363,6 +363,16 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
                   unsigned int strength)
 {
     EVP_RAND_CTX *rand;
+
+#if defined(__has_feature) && __has_feature(memory_sanitizer)
+    /*
+     * MemorySanitizer fails to understand some of the methods
+     * and produces false positive use-of-uninitialized-value
+     * warnings without memset.
+     */
+    memset(buf, 0, num);
+#endif
+
 #if !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(FIPS_MODULE)
     const RAND_METHOD *meth = RAND_get_rand_method();
 
