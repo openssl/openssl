@@ -1825,6 +1825,10 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
 
     assert(ch->qrx_pkt != NULL);
 
+    if (!ossl_quic_channel_is_active(ch))
+        /* Do not process packets once we are terminating. */
+        return;
+
     if (ossl_quic_pkt_type_is_encrypted(ch->qrx_pkt->hdr->type)) {
         if (!ch->have_received_enc_pkt) {
             ch->cur_remote_dcid = ch->init_scid = ch->qrx_pkt->hdr->src_conn_id;
