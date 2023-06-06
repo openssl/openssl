@@ -2041,7 +2041,19 @@ static int ch_tx(QUIC_CHANNEL *ch)
 
     case TX_PACKETISER_RES_NO_PKT:
         break; /* No packet was sent */
+
     default:
+        /*
+         * One case where TXP can fail is if we reach a TX PN of 2**62 - 1. As
+         * per RFC 9000 s. 12.3, if this happens we MUST close the connection
+         * without sending a CONNECTION_CLOSE frame. This is actually handled as
+         * an emergent consequence of our design, as the TX packetiser will
+         * never transmit another packet when the TX PN reaches the limit.
+         *
+         * Calling the below function terminates the connection; its attempt to
+         * schedule a CONNECTION_CLOSE frame will not actually cause a packet to
+         * be transmitted for this reason.
+         */
         ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
                                                "internal error");
         break; /* Internal failure (e.g.  allocation, assertion) */
