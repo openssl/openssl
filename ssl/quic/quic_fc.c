@@ -393,3 +393,14 @@ int ossl_quic_rxfc_get_error(QUIC_RXFC *rxfc, int clear)
 
     return r;
 }
+
+int ossl_quic_rxfc_get_final_size(const QUIC_RXFC *rxfc, uint64_t *final_size)
+{
+    if (!rxfc->is_fin)
+        return 0;
+
+    if (final_size != NULL)
+        *final_size = rxfc->hwm;
+
+    return 1;
+}

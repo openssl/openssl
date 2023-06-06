@@ -488,6 +488,45 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
         return 0;
     }
 
+    switch (stream->recv_state) {
+    case QUIC_RSTREAM_STATE_RECV:
+    case QUIC_RSTREAM_STATE_SIZE_KNOWN:
+        /*
+         * It only makes sense to process incoming STREAM frames in these
+         * states.
+         */
+        break;
+
+    case QUIC_RSTREAM_STATE_DATA_RECVD:
+    case QUIC_RSTREAM_STATE_DATA_READ:
+    case QUIC_RSTREAM_STATE_RESET_RECVD:
+    case QUIC_RSTREAM_STATE_RESET_READ:
+    default:
+        /*
+         * We have no use for STREAM frames once the receive part reaches any of
+         * these states, so just ignore.
+         */
+        return 1;
+    }
+
+    /* If we are in RECV, auto-transition to SIZE_KNOWN on FIN. */
+    if (frame_data.is_fin
+        && !ossl_quic_stream_recv_get_final_size(stream, NULL)) {
+
+        /* State was already checked above, so can't fail. */
+        ossl_quic_stream_map_notify_size_known_recv_part(&ch->qsm, stream,
+                                                         frame_data.offset
+                                                         + frame_data.len);
+    }
+
+    /*
+     * If we requested STOP_SENDING do not bother buffering the data. Note that
+     * this must happen after RXFC checks above as even if we sent STOP_SENDING
+     * we must still enforce correct flow control (RFC 9000 s. 3.5).
+     */
+    if (stream->stop_sending)
+        return 1; /* not an error - packet reordering, etc. */
+
     /*
      * The receive stream buffer may or may not choose to consume the data
      * without copying by reffing the OSSL_QRX_PKT. In this case

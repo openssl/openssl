@@ -261,6 +261,13 @@ int ossl_quic_rxfc_has_cwm_changed(QUIC_RXFC *rxfc, int clear);
  */
 int ossl_quic_rxfc_get_error(QUIC_RXFC *rxfc, int clear);
 
+/*
+ * Returns 1 if the RXFC is a stream-level RXFC and the RXFC knows the final
+ * size for the stream in bytes. If this is the case and final_size is non-NULL,
+ * writes the final size to *final_size. Otherwise, returns 0.
+ */
+int ossl_quic_rxfc_get_final_size(const QUIC_RXFC *rxfc, uint64_t *final_size);
+
 # endif
 
 #endif
