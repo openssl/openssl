@@ -2633,11 +2633,26 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
         ch->cur_remote_dcid = f->conn_id;
         ossl_quic_tx_packetiser_set_cur_dcid(ch->txp, &ch->cur_remote_dcid);
     }
+
     /*
      * RFC 9000-5.1.2: Upon receipt of an increased Retire Prior To
      * field, the peer MUST stop using the corresponding connection IDs
      * and retire them with RETIRE_CONNECTION_ID frames before adding the
      * newly provided connection ID to the set of active connection IDs.
+     */
+
+    /*
+     * Note: RFC 9000 s. 19.15 says:
+     *   "An endpoint that receives a NEW_CONNECTION_ID frame with a sequence
+     *    number smaller than the Retire Prior To field of a previously received
+     *    NEW_CONNECTION_ID frame MUST send a correspoonding
+     *    RETIRE_CONNECTION_ID frame that retires the newly received connection
+     *    ID, unless it has already done so for that sequence number."
+     *
+     * Since we currently always queue RETIRE_CONN_ID frames based on the Retire
+     * Prior To field of a NEW_CONNECTION_ID frame immediately upon receiving
+     * that NEW_CONNECTION_ID frame, by definition this will always be met.
+     * This may change in future when we change our CID handling.
      */
     while (new_retire_prior_to > ch->cur_retire_prior_to) {
         if (!ch_enqueue_retire_conn_id(ch, ch->cur_retire_prior_to))
