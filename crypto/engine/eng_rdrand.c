@@ -32,6 +32,16 @@ static int get_random_bytes(unsigned char *buf, int num)
         return 0;
     }
 
+#if defined(__has_feature)
+#if __has_feature(memory_sanitizer)
+    /*
+     * MemorySanitizer fails to understand asm and produces false positive 
+     * use-of-uninitialized-value warnings without memset.
+     */
+    memset(buf, 0, num);
+#endif
+#endif
+
     return (size_t)num == OPENSSL_ia32_rdrand_bytes(buf, (size_t)num);
 }
 
