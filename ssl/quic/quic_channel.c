@@ -1908,6 +1908,19 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
             break;
         }
 
+        if (!ch->is_server
+            && ch->qrx_pkt->hdr->type == QUIC_PKT_TYPE_INITIAL
+            && ch->qrx_pkt->hdr->token_len > 0) {
+            /*
+             * RFC 9000 s. 17.2.2: Clients that receive an Initial packet with a
+             * non-zero Token Length field MUST either discard the packet or
+             * generate a connection error of type PROTOCOL_VIOLATION.
+             */
+            ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
+                                                   0, "client received initial token");
+            break;
+        }
+
         /* This packet contains frames, pass to the RXDP. */
         ossl_quic_handle_frames(ch, ch->qrx_pkt); /* best effort */
         break;
