@@ -634,11 +634,12 @@ int ossl_quic_stream_map_ensure_send_part_id(QUIC_STREAM_MAP *qsm,
                                              QUIC_STREAM *qs);
 
 /*
- * Transitions from READY or SEND to the DATA_SENT state. Note that this is NOT
- * the same as the point in time at which the final size of the stream becomes
- * known (i.e., the time at which ossl_quic_sstream_fin()) is called as it
- * occurs when we have SENT all data on a given stream send part, not merely
- * buffered it.
+ * Transitions from SEND to the DATA_SENT state. Note that this is NOT the same
+ * as the point in time at which the final size of the stream becomes known
+ * (i.e., the time at which ossl_quic_sstream_fin()) is called as it occurs when
+ * we have SENT all data on a given stream send part, not merely buffered it.
+ * Note that this transition is NOT reversed in the event of some of that data
+ * being lost.
  *
  * Returns 1 if the state transition was successfully taken. Returns 0 if there
  * is no send part (caller error) or if the state transition cannot be taken
@@ -651,12 +652,11 @@ int ossl_quic_stream_map_notify_all_data_sent(QUIC_STREAM_MAP *qsm,
  * Transitions from the DATA_SENT to DATA_RECVD state; should be called
  * when all transmitted stream data is ACKed by the peer.
  *
- * Returns 1 if the state transition was successfully taken, or if the send part
- * was already in the DATA_RECVD state. Returns 0 if there is no send part
- * (caller error) or the state transition cannot be taken because the send part
- * is not in the DATA_SENT or DATA_RECVD states. Because
- * ossl_quic_stream_map_fin_send_part() should always be called prior to this
- * function, the send state must already be in DATA_SENT in order for this
+ * Returns 1 if the state transition was successfully taken. Returns 0 if there
+ * is no send part (caller error) or the state transition cannot be taken
+ * because the send part is not in the DATA_SENT state. Because
+ * ossl_quic_stream_map_notify_all_data_sent() should always be called prior to
+ * this function, the send state must already be in DATA_SENT in order for this
  * function to succeed.
  */
 int ossl_quic_stream_map_notify_totally_acked(QUIC_STREAM_MAP *qsm,
@@ -685,9 +685,10 @@ int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
  * part was in one of the states above) or if it is already in the RESET_RECVD
  * state (idempotent operation).
  *
- * It returns 0 if not in the RESET_SENT state, as this function should only be
- * called after we have already sent a RESET_STREAM frame and entered the
- * RESET_SENT state. It also returns 0 if there is no send part (caller error).
+ * It returns 0 if not in the RESET_SENT or RESET_RECVD states, as this function
+ * should only be called after we have already sent a RESET_STREAM frame and
+ * entered the RESET_SENT state. It also returns 0 if there is no send part
+ * (caller error).
  */
 int ossl_quic_stream_map_notify_reset_stream_acked(QUIC_STREAM_MAP *qsm,
                                                    QUIC_STREAM *qs);
@@ -699,9 +700,9 @@ int ossl_quic_stream_map_notify_reset_stream_acked(QUIC_STREAM_MAP *qsm,
  */
 
 /*
- * Transitions from the RECV to SIZE_KNOWN receive stream states. This should be
- * called once a STREAM frame is received for the stream with the FIN bit set.
- * final_size should be the final size of the stream in bytes.
+ * Transitions from the RECV receive stream state to the SIZE_KNOWN state. This
+ * should be called once a STREAM frame is received for the stream with the FIN
+ * bit set. final_size should be the final size of the stream in bytes.
  *
  * Returns 1 if the transition was taken.
  */
@@ -709,21 +710,41 @@ int ossl_quic_stream_map_notify_size_known_recv_part(QUIC_STREAM_MAP *qsm,
                                                      QUIC_STREAM *qs,
                                                      uint64_t final_size);
 
-/* SIZE_KNOWN -> DATA_RECVD */
+/*
+ * Transitions from the SIZE_KNOWN receive stream state to the DATA_RECVD state.
+ * This should be called once all data for a receive stream is received.
+ *
+ * Returns 1 if the transition was taken.
+ */
 int ossl_quic_stream_map_notify_totally_received(QUIC_STREAM_MAP *qsm,
                                                  QUIC_STREAM *qs);
 
-/* DATA_RECVD -> DATA_READ */
+/*
+ * Transitions from the DATA_RECVD receive stream state to the DATA_READ state.
+ * This shuld be called once all data for a receive stream is read by the
+ * application.
+ *
+ * Returns 1 if the transition was taken.
+ */
 int ossl_quic_stream_map_notify_totally_read(QUIC_STREAM_MAP *qsm,
                                              QUIC_STREAM *qs);
 
-/* RECV/SIZE_KNOWN/DATA_RECVD -> RESET_RECVD */
+/*
+ * Transitions from the RECV, SIZE_KNOWN or DATA_RECVD receive stream state to
+ * the RESET_RECVD state. This should be called on RESET_STREAM.
+ *
+ * Returns 1 if the transition was taken.
+ */
 int ossl_quic_stream_map_notify_reset_recv_part(QUIC_STREAM_MAP *qsm,
                                                 QUIC_STREAM *qs,
                                                 uint64_t app_error_code,
                                                 uint64_t final_size);
 
-/* RESET_RECVD -> RESET_READ */
+/*
+ * Transitions from the RESET_RECVD receive stream state to the RESET_READ
+ * receive stream state. This should be called when the application is notified
+ * of a stream reset.
+ */
 int ossl_quic_stream_map_notify_app_read_reset_recv_part(QUIC_STREAM_MAP *qsm,
                                                          QUIC_STREAM *qs);
 

@@ -475,18 +475,6 @@ int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
     }
 }
 
-/*
- * Transitions from the RESET_SENT to the RESET_RECVD state. This should be
- * called when a sent RESET_STREAM frame has been acknowledged by the peer.
- *
- * This function returns 1 if the transition is taken (i.e., if the send stream
- * part was in one of the states above) or if it is already in the RESET_RECVD
- * state (idempotent operation).
- *
- * It returns 0 if not in the RESET_SENT state, as this function should only be
- * called after we have already sent a RESET_STREAM frame and entered the
- * RESET_SENT state. It also returns 0 if there is no send part (caller error).
- */
 int ossl_quic_stream_map_notify_reset_stream_acked(QUIC_STREAM_MAP *qsm,
                                                    QUIC_STREAM *qs)
 {
