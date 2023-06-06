@@ -2372,8 +2372,16 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
          */
         ossl_quic_stream_map_update_state(txp->args.qsm, stream);
 
-        if (stream->txp_drained)
+        if (stream->txp_drained) {
             assert(!ossl_quic_sstream_has_pending(stream->sstream));
+
+            /*
+             * Transition to DATA_SENT if stream has a final size and we have
+             * sent all data.
+             */
+            if (ossl_quic_sstream_get_final_size(stream->sstream, NULL))
+                ossl_quic_stream_map_notify_all_data_sent(txp->args.qsm, stream);
+        }
     }
 
     /* We have now sent the packet, so update state accordingly. */
