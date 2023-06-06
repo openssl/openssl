@@ -114,7 +114,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  endif
 
 #  ifdef OPENSSL_SYS_UNIX
-#    include <sys/poll.h>
+#    include <poll.h>
 #    include <errno.h>
 #  endif
 
