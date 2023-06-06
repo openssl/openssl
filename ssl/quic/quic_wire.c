@@ -937,3 +937,39 @@ int ossl_quic_wire_decode_transport_param_cid(PACKET *pkt,
     memcpy(cid->id, body, cid->id_len);
     return 1;
 }
+
+int ossl_quic_wire_decode_transport_param_preferred_addr(PACKET *pkt,
+                                                         QUIC_PREFERRED_ADDR *p)
+{
+    const unsigned char *body;
+    uint64_t id;
+    size_t len = 0;
+    PACKET pkt2;
+    unsigned int ipv4_port, ipv6_port, cidl;
+
+    body = ossl_quic_wire_decode_transport_param_bytes(pkt, &id, &len);
+    if (body == NULL
+        || len < QUIC_MIN_ENCODED_PREFERRED_ADDR_LEN
+        || len > QUIC_MAX_ENCODED_PREFERRED_ADDR_LEN
+        || id != QUIC_TPARAM_PREFERRED_ADDR)
+        return 0;
+
+    if (!PACKET_buf_init(&pkt2, body, len))
+        return 0;
+
+    if (!PACKET_copy_bytes(&pkt2, p->ipv4, sizeof(p->ipv4))
+        || !PACKET_get_net_2(&pkt2, &ipv4_port)
+        || !PACKET_copy_bytes(&pkt2, p->ipv6, sizeof(p->ipv6))
+        || !PACKET_get_net_2(&pkt2, &ipv6_port)
+        || !PACKET_get_1(&pkt2, &cidl)
+        || cidl > QUIC_MAX_CONN_ID_LEN
+        || !PACKET_copy_bytes(&pkt2, p->cid.id, cidl)
+        || !PACKET_copy_bytes(&pkt2, p->stateless_reset_token,
+                              sizeof(p->stateless_reset_token)))
+        return 0;
+
+    p->ipv4_port    = (uint16_t)ipv4_port;
+    p->ipv6_port    = (uint16_t)ipv6_port;
+    p->cid.id_len   = (unsigned char)cidl;
+    return 1;
+}
