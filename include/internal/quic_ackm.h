@@ -67,10 +67,19 @@ struct ossl_ackm_tx_pkt_st {
      */
     unsigned int pkt_space :2;
 
-    /* 1 if the packet is in flight. */
+    /*
+     * 1 if the packet is in flight. A packet is considered 'in flight' if it is
+     * counted for purposes of congestion control and 'bytes in flight' counts.
+     * Most packets are considered in flight. The only circumstance where a
+     * numbered packet is not considered in flight is if it contains only ACK
+     * frames (not even PADDING frames), as these frames can bypass CC.
+     */
     unsigned int is_inflight :1;
 
-    /* 1 if the packet has one or more ACK-eliciting frames. */
+    /*
+     * 1 if the packet has one or more ACK-eliciting frames.
+     * Note that if this is set, is_inflight must be set.
+     */
     unsigned int is_ack_eliciting :1;
 
     /* 1 if the packet is a PTO probe. */
