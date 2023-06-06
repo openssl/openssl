@@ -149,8 +149,18 @@ QUIC_STREAM *ossl_quic_stream_map_alloc(QUIC_STREAM_MAP *qsm,
     if (s == NULL)
         return NULL;
 
-    s->id   = stream_id;
-    s->type = type;
+    s->id           = stream_id;
+    s->type         = type;
+    s->as_server    = qsm->is_server;
+    s->send_state   = (ossl_quic_stream_is_local_init(s)
+                       || ossl_quic_stream_is_bidi(s))
+        ? QUIC_SSTREAM_STATE_READY
+        : QUIC_SSTREAM_STATE_NONE;
+    s->recv_state   = (!ossl_quic_stream_is_local_init(s)
+                       || ossl_quic_stream_is_bidi(s))
+        ? QUIC_RSTREAM_STATE_RECV
+        : QUIC_RSTREAM_STATE_NONE;
+
     lh_QUIC_STREAM_insert(qsm->map, s);
     return s;
 }
@@ -228,8 +238,18 @@ static int stream_has_data_to_send(QUIC_STREAM *s)
     size_t num_iov;
     uint64_t fc_credit, fc_swm, fc_limit;
 
-    if (s->sstream == NULL)
-        return 0;
+    switch (s->send_state) {
+    case QUIC_SSTREAM_STATE_READY:
+    case QUIC_SSTREAM_STATE_SEND:
+    case QUIC_SSTREAM_STATE_DATA_SENT:
+        /*
+         * We can still have data to send in DATA_SENT due to retransmissions,
+         * etc.
+         */
+        break;
+    default:
+        return 0; /* Nothing to send. */
+    }
 
     /*
      * We cannot determine if we have data to send simply by checking if
@@ -250,6 +270,18 @@ static int stream_has_data_to_send(QUIC_STREAM *s)
     return (shdr.is_fin && shdr.len == 0) || shdr.offset < fc_limit;
 }
 
+static ossl_unused int qsm_send_part_permits_gc(const QUIC_STREAM *qs)
+{
+    switch (qs->send_state) {
+    case QUIC_SSTREAM_STATE_NONE:
+    case QUIC_SSTREAM_STATE_DATA_RECVD:
+    case QUIC_SSTREAM_STATE_RESET_RECVD:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 static int qsm_ready_for_gc(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
 {
     int recv_stream_fully_drained = 0; /* TODO(QUIC): Optimisation */
@@ -259,20 +291,20 @@ static int qsm_ready_for_gc(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
      * we don't need to worry about that here.
      */
     assert(!qs->deleted
-           || qs->sstream == NULL
-           || qs->reset_stream
+           || !ossl_quic_stream_has_send(qs)
+           || ossl_quic_stream_send_is_reset(qs)
            || ossl_quic_sstream_get_final_size(qs->sstream, NULL));
 
     return
         qs->deleted
-        && (qs->rstream == NULL
+        && (!ossl_quic_stream_has_recv(qs)
             || recv_stream_fully_drained
             || qs->acked_stop_sending)
-        && (qs->sstream == NULL
-            || (!qs->reset_stream
+        && (!ossl_quic_stream_has_send(qs)
+            || (!ossl_quic_stream_send_is_reset(qs)
                 && ossl_quic_sstream_is_totally_acked(qs->sstream))
-            || (qs->reset_stream
-                && qs->acked_reset_stream));
+            || (ossl_quic_stream_send_is_reset(qs)
+                && qs->send_state == QUIC_SSTREAM_STATE_RESET_RECVD));
 }
 
 void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
@@ -299,7 +331,8 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
     should_be_active
         = allowed_by_stream_limit
         && !s->ready_for_gc
-        && ((!s->peer_reset_stream && s->rstream != NULL
+        && ((ossl_quic_stream_has_recv(s)
+             && !ossl_quic_stream_recv_is_reset(s)
              && (s->want_max_stream_data
                  || ossl_quic_rxfc_has_cwm_changed(&s->rxfc, 0)))
             || s->want_stop_sending
@@ -312,19 +345,251 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
         stream_map_mark_inactive(qsm, s);
 }
 
+/*
+ * Stream Send Part State Management
+ * =================================
+ */
+
+int ossl_quic_stream_map_ensure_send_part_id(QUIC_STREAM_MAP *qsm,
+                                             QUIC_STREAM *qs)
+{
+    switch (qs->send_state) {
+    case QUIC_SSTREAM_STATE_NONE:
+        /* Stream without send part - caller error. */
+        return 0;
+
+    case QUIC_SSTREAM_STATE_READY:
+        /*
+         * We always allocate a stream ID upfront, so we don't need to do it
+         * here.
+         */
+        qs->send_state = QUIC_SSTREAM_STATE_SEND;
+        return 1;
+
+    default:
+        /* Nothing to do. */
+        return 1;
+    }
+}
+
+int ossl_quic_stream_map_notify_all_data_sent(QUIC_STREAM_MAP *qsm,
+                                              QUIC_STREAM *qs)
+{
+    switch (qs->send_state) {
+    default:
+        /* Wrong state - caller error. */
+    case QUIC_SSTREAM_STATE_NONE:
+        /* Stream without send part - caller error. */
+        return 0;
+
+    case QUIC_SSTREAM_STATE_SEND:
+        if (!ossl_quic_sstream_get_final_size(qs->sstream, &qs->send_final_size))
+            return 0;
+
+        qs->send_state = QUIC_SSTREAM_STATE_DATA_SENT;
+        return 1;
+    }
+}
+
+int ossl_quic_stream_map_notify_totally_acked(QUIC_STREAM_MAP *qsm,
+                                              QUIC_STREAM *qs)
+{
+    switch (qs->send_state) {
+    default:
+        /* Wrong state - caller error. */
+    case QUIC_SSTREAM_STATE_NONE:
+        /* Stream without send part - caller error. */
+        return 0;
+
+    case QUIC_SSTREAM_STATE_DATA_SENT:
+        qs->send_state = QUIC_SSTREAM_STATE_DATA_RECVD;
+        /* We no longer need a QUIC_SSTREAM in this state. */
+        //ossl_quic_sstream_free(qs->sstream);
+        //qs->sstream = NULL;
+        return 1;
+    }
+}
+
 int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
                                                 QUIC_STREAM *qs,
                                                 uint64_t aec)
 {
-    if (qs->reset_stream)
+    switch (qs->send_state) {
+    default:
+    case QUIC_SSTREAM_STATE_NONE:
+        /*
+         * RESET_STREAM pertains to sending part only, so we cannot reset a
+         * receive-only stream.
+         */
+    case QUIC_SSTREAM_STATE_DATA_RECVD:
+        /*
+         * RFC 9000 s. 3.3: A sender MUST NOT [...] send RESET_STREAM from a
+         * terminal state. If the stream has already finished normally and the
+         * peer has acknowledged this, we cannot reset it.
+         */
         return 0;
 
-    qs->reset_stream        = 1;
-    qs->reset_stream_aec    = aec;
-    qs->want_reset_stream   = 1;
+    case QUIC_SSTREAM_STATE_READY:
+    case QUIC_SSTREAM_STATE_SEND:
+    case QUIC_SSTREAM_STATE_DATA_SENT:
+        qs->reset_stream_aec    = aec;
+        qs->send_state          = QUIC_SSTREAM_STATE_RESET_SENT;
+        qs->want_reset_stream   = 1;
 
-    ossl_quic_stream_map_update_state(qsm, qs);
-    return 1;
+        /* TODO free */
+        ossl_quic_stream_map_update_state(qsm, qs);
+        return 1;
+
+    case QUIC_SSTREAM_STATE_RESET_SENT:
+    case QUIC_SSTREAM_STATE_RESET_RECVD:
+        /*
+         * Idempotent - no-op. In any case, do not send RESET_STREAM again - as
+         * mentioned, we must not send it from a terminal state.
+         */
+        return 1;
+    }
+}
+
+/*
+ * Transitions from the RESET_SENT to the RESET_RECVD state. This should be
+ * called when a sent RESET_STREAM frame has been acknowledged by the peer.
+ *
+ * This function returns 1 if the transition is taken (i.e., if the send stream
+ * part was in one of the states above) or if it is already in the RESET_RECVD
+ * state (idempotent operation).
+ *
+ * It returns 0 if not in the RESET_SENT state, as this function should only be
+ * called after we have already sent a RESET_STREAM frame and entered the
+ * RESET_SENT state. It also returns 0 if there is no send part (caller error).
+ */
+int ossl_quic_stream_map_notify_reset_stream_acked(QUIC_STREAM_MAP *qsm,
+                                                   QUIC_STREAM *qs)
+{
+    switch (qs->send_state) {
+    default:
+        /* Wrong state - caller error. */
+    case QUIC_SSTREAM_STATE_NONE:
+        /* Stream without send part - caller error. */
+         return 0;
+
+    case QUIC_SSTREAM_STATE_RESET_SENT:
+        qs->send_state = QUIC_SSTREAM_STATE_RESET_RECVD;
+        return 1;
+
+    case QUIC_SSTREAM_STATE_RESET_RECVD:
+        /* Already in the correct state. */
+        return 1;
+    }
+}
+
+/* Stream Receive Part State Management
+ * ====================================
+ */
+
+int ossl_quic_stream_map_notify_size_known_recv_part(QUIC_STREAM_MAP *qsm,
+                                                     QUIC_STREAM *qs)
+{
+    switch (qs->recv_state) {
+    default:
+        /* Wrong state - caller error. */
+    case QUIC_RSTREAM_STATE_NONE:
+        /* Stream without receive part - caller error. */
+        return 0;
+
+    case QUIC_RSTREAM_STATE_RECV:
+        qs->recv_state = QUIC_RSTREAM_STATE_SIZE_KNOWN;
+        return 1;
+    }
+}
+
+int ossl_quic_stream_map_notify_totally_received(QUIC_STREAM_MAP *qsm,
+                                                 QUIC_STREAM *qs)
+{
+    switch (qs->recv_state) {
+    default:
+        /* Wrong state - caller error. */
+    case QUIC_RSTREAM_STATE_NONE:
+        /* Stream without receive part - caller error. */
+        return 0;
+
+    case QUIC_RSTREAM_STATE_SIZE_KNOWN:
+        qs->recv_state = QUIC_RSTREAM_STATE_DATA_RECVD;
+        return 1;
+    }
+}
+
+int ossl_quic_stream_map_notify_totally_read(QUIC_STREAM_MAP *qsm,
+                                             QUIC_STREAM *qs)
+{
+    switch (qs->recv_state) {
+    default:
+        /* Wrong state - caller error. */
+    case QUIC_RSTREAM_STATE_NONE:
+        /* Stream without receive part - caller error. */
+        return 0;
+
+    case QUIC_RSTREAM_STATE_DATA_RECVD:
+        qs->recv_state = QUIC_RSTREAM_STATE_DATA_READ;
+
+        /* QUIC_RSTREAM is no longer needed */
+        //ossl_quic_rstream_free(qs->rstream);
+        //qs->rstream = NULL;
+        return 1;
+    }
+}
+
+int ossl_quic_stream_map_notify_reset_recv_part(QUIC_STREAM_MAP *qsm,
+                                                QUIC_STREAM *qs,
+                                                uint64_t app_error_code)
+{
+    switch (qs->recv_state) {
+    default:
+    case QUIC_RSTREAM_STATE_NONE:
+        /* Stream without receive part - caller error. */
+        return 0;
+
+    case QUIC_RSTREAM_STATE_RECV:
+    case QUIC_RSTREAM_STATE_SIZE_KNOWN:
+    case QUIC_RSTREAM_STATE_DATA_RECVD:
+        qs->recv_state              = QUIC_RSTREAM_STATE_RESET_RECVD;
+        qs->peer_reset_stream_aec   = app_error_code;
+
+        /* RFC 9000 s. 3.3: No point sending STOP_SENDING if already reset. */
+        qs->want_stop_sending       = 0;
+
+        /* QUIC_RSTREAM is no longer needed */
+        //ossl_quic_rstream_free(qs->rstream);
+        //qs->rstream = NULL;
+
+        ossl_quic_stream_map_update_state(qsm, qs);
+        return 1;
+
+    case QUIC_RSTREAM_STATE_DATA_READ:
+        /*
+         * If we already retired the FIN to the application this is moot
+         * - just ignore.
+         */
+    case QUIC_RSTREAM_STATE_RESET_RECVD:
+    case QUIC_RSTREAM_STATE_RESET_READ:
+        /* Could be a reordered/retransmitted frame - just ignore. */
+        return 1;
+    }
+}
+
+int ossl_quic_stream_map_notify_app_read_reset_recv_part(QUIC_STREAM_MAP *qsm,
+                                                         QUIC_STREAM *qs)
+{
+    switch (qs->recv_state) {
+    default:
+        /* Wrong state - caller error. */
+    case QUIC_RSTREAM_STATE_NONE:
+        /* Stream without receive part - caller error. */
+        return 0;
+
+    case QUIC_RSTREAM_STATE_RESET_RECVD:
+        qs->recv_state = QUIC_RSTREAM_STATE_RESET_READ;
+        return 1;
+    }
 }
 
 int ossl_quic_stream_map_stop_sending_recv_part(QUIC_STREAM_MAP *qsm,

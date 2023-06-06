@@ -128,6 +128,7 @@ struct script_op {
 #define OPK_EXPECT_ERR_REASON                       38
 #define OPK_EXPECT_ERR_LIB                          39
 #define OPK_SLEEP                                   40
+#define OPK_S_READ_FAIL                             41
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -211,6 +212,8 @@ struct script_op {
     {OPK_S_WRITE_FAIL, NULL, 0, NULL, #stream_name},
 #define OP_C_READ_FAIL(stream_name)  \
     {OPK_C_READ_FAIL, NULL, 0, NULL, #stream_name},
+#define OP_S_READ_FAIL(stream_name)  \
+    {OPK_S_READ_FAIL, NULL, 0, NULL, #stream_name},
 #define OP_C_STREAM_RESET(stream_name, aec)  \
     {OPK_C_STREAM_RESET, NULL, 0, NULL, #stream_name, (aec)},
 #define OP_S_ACCEPT_STREAM_WAIT(stream_name)  \
@@ -1315,6 +1318,21 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             }
             break;
 
+        case OPK_S_READ_FAIL:
+            {
+                size_t bytes_read = 0;
+                unsigned char buf[1];
+
+                if (!TEST_uint64_t_ne(s_stream_id, UINT64_MAX))
+                    goto out;
+
+                if (!TEST_false(ossl_quic_tserver_read(h->s, s_stream_id,
+                                                      buf, sizeof(buf),
+                                                      &bytes_read)))
+                    goto out;
+            }
+            break;
+
         case OPK_C_STREAM_RESET:
             {
                 SSL_STREAM_RESET_ARGS args = {0};
@@ -1636,7 +1654,8 @@ static const struct script_op script_5[] = {
     OP_C_STREAM_RESET       (a, 42)
 
     OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
-    OP_S_READ_EXPECT        (a, "apple", 5)
+    /* Reset disrupts read of already sent data */
+    OP_S_READ_FAIL          (a)
     OP_CHECK                (check_stream_reset, C_BIDI_ID(0))
 
     OP_END

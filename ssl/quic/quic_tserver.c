@@ -237,7 +237,7 @@ int ossl_quic_tserver_read(QUIC_TSERVER *srv,
         return 1;
     }
 
-    if (qs->recv_fin_retired || qs->rstream == NULL)
+    if (qs->recv_fin_retired || !ossl_quic_stream_has_recv_buffer(qs))
         return 0;
 
     if (!ossl_quic_rstream_read(qs->rstream, buf, buf_len,
@@ -279,7 +279,7 @@ int ossl_quic_tserver_has_read_ended(QUIC_TSERVER *srv, uint64_t stream_id)
     qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(srv->ch),
                                         stream_id);
 
-    if (qs == NULL || qs->rstream == NULL)
+    if (qs == NULL || !ossl_quic_stream_has_recv_buffer(qs))
         return 0;
 
     if (qs->recv_fin_retired)
@@ -323,7 +323,7 @@ int ossl_quic_tserver_write(QUIC_TSERVER *srv,
 
     qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(srv->ch),
                                         stream_id);
-    if (qs == NULL || qs->sstream == NULL)
+    if (qs == NULL || !ossl_quic_stream_has_send_buffer(qs))
         return 0;
 
     if (!ossl_quic_sstream_append(qs->sstream,
@@ -351,7 +351,7 @@ int ossl_quic_tserver_conclude(QUIC_TSERVER *srv, uint64_t stream_id)
 
     qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(srv->ch),
                                         stream_id);
-    if  (qs == NULL || qs->sstream == NULL)
+    if (qs == NULL || !ossl_quic_stream_has_send_buffer(qs))
         return 0;
 
     if (!ossl_quic_sstream_get_final_size(qs->sstream, NULL)) {
@@ -412,10 +412,10 @@ int ossl_quic_tserver_stream_has_peer_reset_stream(QUIC_TSERVER *srv,
     if (qs == NULL)
         return 0;
 
-    if (qs->peer_reset_stream && app_error_code != NULL)
+    if (ossl_quic_stream_recv_is_reset(qs) && app_error_code != NULL)
         *app_error_code = qs->peer_reset_stream_aec;
 
-    return qs->peer_reset_stream;
+    return ossl_quic_stream_recv_is_reset(qs);
 }
 
 int ossl_quic_tserver_set_new_local_cid(QUIC_TSERVER *srv,

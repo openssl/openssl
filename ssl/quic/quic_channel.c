@@ -2817,6 +2817,7 @@ QUIC_STREAM *ossl_quic_channel_new_stream_local(QUIC_CHANNEL *ch, int is_uni)
     if ((qs = ossl_quic_stream_map_alloc(&ch->qsm, stream_id, type)) == NULL)
         return NULL;
 
+
     /* Locally-initiated stream, so we always want a send buffer. */
     if (!ch_init_new_stream(ch, qs, /*can_send=*/1, /*can_recv=*/!is_uni))
         goto err;
