@@ -355,5 +355,9 @@
 # define SSL_R_WRONG_VERSION_NUMBER                       267
 # define SSL_R_X509_LIB                                   268
 # define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS           269
+# define SSL_R_STREAM_RECV_ONLY                           382
+# define SSL_R_STREAM_SEND_ONLY                           387
+# define SSL_R_STREAM_RESET                               393
+# define SSL_R_STREAM_FINISHED                            395
 
 #endif
