@@ -796,6 +796,23 @@ static int depack_do_frame_stream_data_blocked(PACKET *pkt,
                                           &stream))
         return 0; /* error already raised for us */
 
+    if (stream == NULL)
+        return 1; /* old deleted stream, not a protocol violation, ignore */
+
+    if (!ossl_quic_stream_has_recv(stream)) {
+        /*
+         * RFC 9000 s. 19.14: "An endpoint that receives a STREAM_DATA_BLOCKED
+         * frame for a send-only stream MUST terminate the connection with error
+         * STREAM_STATE_ERROR."
+         */
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_STREAM_STATE_ERROR,
+                                               OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED,
+                                               "STREAM_DATA_BLOCKED frame for "
+                                               "TX only stream");
+        return 0;
+    }
+
     /* No-op - informative/debugging frame. */
     return 1;
 }
