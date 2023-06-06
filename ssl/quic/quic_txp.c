@@ -10,6 +10,7 @@
 #include "internal/quic_txp.h"
 #include "internal/quic_fifd.h"
 #include "internal/quic_stream_map.h"
+#include "internal/quic_error.h"
 #include "internal/common.h"
 #include <openssl/err.h>
 
@@ -820,7 +821,37 @@ static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
     if (!ossl_qtx_is_enc_level_provisioned(txp->args.qtx, enc_level))
         return 0;
 
-    if (*conn_close_enc_level > enc_level)
+    /*
+     * We can produce CONNECTION_CLOSE frames on any EL in principle, which
+     * means we need to choose which EL we would prefer to use. After a
+     * connection is fully established we have only one provisioned EL and this
+     * is a non-issue. Where multiple ELs are provisioned, it is possible the
+     * peer does not have the keys for the EL yet, which suggests in general it
+     * is preferable to use the lowest EL which is still provisioned.
+     *
+     * However (RFC 9000 s. 12.5) we are also required to not send application
+     * CONNECTION_CLOSE frames in non-1-RTT ELs, so as to not potentially leak
+     * application data on a connection which has yet to be authenticated. Thus
+     * when we have an application CONNECTION_CLOSE frame queued and need to
+     * send it on a non-1-RTT EL, we have to convert it into a transport
+     * CONNECTION_CLOSE frame which contains no application data. Since this
+     * loses information, it suggests we should use the 1-RTT EL to avoid this
+     * if possible, even if a lower EL is also available.
+     *
+     * At the same time, just because we have the 1-RTT EL provisioned locally
+     * does not necessarily mean the peer does, for example if a handshake
+     * CRYPTO frame has been lost. It is fairly important that CONNECTION_CLOSE
+     * is signalled in a way we know our peer can decrypt, as we stop processing
+     * connection retransmission logic for real after connection close and
+     * simply 'blindly' retransmit the same CONNECTION_CLOSE frame.
+     *
+     * This is not a major concern for clients, since if a client has a 1-RTT EL
+     * provisioned the server is guaranteed to also have a 1-RTT EL provisioned.
+     *
+     * TODO(QUIC): Revisit this when server support is added.
+     */
+    if (*conn_close_enc_level > enc_level
+        && *conn_close_enc_level != QUIC_ENC_LEVEL_1RTT)
         *conn_close_enc_level = enc_level;
 
     if (!txp_get_archetype_data(enc_level, archetype, &a))
@@ -1282,12 +1313,37 @@ static int txp_generate_pre_token(OSSL_QUIC_TX_PACKETISER *txp,
     /* CONNECTION_CLOSE Frames (Regenerate) */
     if (a->allow_conn_close && txp->want_conn_close && chosen_for_conn_close) {
         WPACKET *wpkt = tx_helper_begin(h);
+        OSSL_QUIC_FRAME_CONN_CLOSE f, *pf = &txp->conn_close_frame;
 
         if (wpkt == NULL)
             return 0;
 
-        if (ossl_quic_wire_encode_frame_conn_close(wpkt,
-                                                   &txp->conn_close_frame)) {
+        /*
+         * Application CONNECTION_CLOSE frames may only be sent in the
+         * Application PN space, as otherwise they may be sent before a
+         * connection is authenticated and leak application data. Therefore, if
+         * we need to send a CONNECTION_CLOSE frame in another PN space and were
+         * given an application CONNECTION_CLOSE frame, convert it into a
+         * transport CONNECTION_CLOSE frame, removing any sensitive application
+         * data.
+         *
+         * RFC 9000 s. 10.2.3: "A CONNECTION_CLOSE of type 0x1d MUST be replaced
+         * by a CONNECTION_CLOSE of type 0x1c when sending the frame in Initial
+         * or Handshake packets. Otherwise, information about the application
+         * state might be revealed. Endpoints MUST clear the value of the Reason
+         * Phrase field and SHOULD use the APPLICATION_ERROR code when
+         * converting to a CONNECTION_CLOSE of type 0x1c."
+         */
+        if (pn_space != QUIC_PN_SPACE_APP && pf->is_app) {
+            pf = &f;
+            pf->is_app      = 0;
+            pf->frame_type  = 0;
+            pf->error_code  = QUIC_ERR_APPLICATION_ERROR;
+            pf->reason      = NULL;
+            pf->reason_len  = 0;
+        }
+
+        if (ossl_quic_wire_encode_frame_conn_close(wpkt, pf)) {
             if (!tx_helper_commit(h))
                 return 0;
         } else {
