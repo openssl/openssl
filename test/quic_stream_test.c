@@ -208,7 +208,8 @@ static int test_sstream_iov(void)
     QUIC_SSTREAM *sstream = NULL;
     OSSL_QUIC_FRAME_STREAM hdr;
     OSSL_QTX_IOVEC iov[2];
-    size_t num_iov = 0, wr = 0, init_size = 8192, offset = 2;
+    size_t i, num_iov = 0, wr = 0, init_size = 8192, offset = 2, buffer_len = 4;
+    struct iovec data_1_iov[4];
 
     if (!TEST_ptr(sstream = ossl_quic_sstream_new(init_size)))
         goto err;
@@ -220,10 +221,12 @@ static int test_sstream_iov(void)
         goto err;
 
     /* Append data */
-    const struct iovec data_1_iov[] = {
-        { (void *)data_1, 8 },
-        { (void *)(data_1 + 8), sizeof(data_1) - 8 }
-    };
+    num_iov = OSSL_NELEM(data_1_iov);
+    for (i = 0; i < num_iov; ++i) {
+        data_1_iov[i].iov_base = (void *)(data_1 + i * buffer_len);
+        data_1_iov[i].iov_len = buffer_len;
+    }
+
     if (!TEST_true(ossl_quic_sstream_appendv(sstream, data_1_iov,
                                              sizeof(data_1) - offset,
                                              offset, &wr))

@@ -78,10 +78,7 @@ static int test_iov(void)
     size_t msglen = strlen(msg);
     unsigned char buf[80];
     size_t num_iov, written, bytesread;
-    const struct iovec iov[4] = {
-        { (void *)msg, msglen }, { (void *)msg, msglen },
-        { (void *)msg, msglen }, { (void *)msg, msglen }
-    };
+    struct iovec iov[4];
 
     if (!TEST_ptr(cctx))
         goto err;
@@ -94,6 +91,11 @@ static int test_iov(void)
         goto err;
 
     num_iov = OSSL_NELEM(iov);
+    for (i = 0; i < num_iov; i++) {
+        iov[i].iov_base = (void *)msg;
+        iov[i].iov_len = msglen;
+    }
+
     if (!TEST_true(SSL_writev(cssl, iov, num_iov, &written)))
         goto err;
 
