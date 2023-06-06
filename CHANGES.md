@@ -296,7 +296,7 @@ OpenSSL 3.1
    IDENTIFIER to canonical numeric text form if the size of that OBJECT
    IDENTIFIER is 586 bytes or less, and fail otherwise.
 
-   The basis for this restriction is RFC 2578 (STD 58), section 3.5. OBJECT
+   The basis for this restriction is [RFC 2578 (STD 58), section 3.5]. OBJECT
    IDENTIFIER values, which stipulates that OBJECT IDENTIFIERS may have at
    most 128 sub-identifiers, and that the maximum value that each sub-
    identifier may have is 2^32-1 (4294967295 decimal).
@@ -305,8 +305,6 @@ OpenSSL 3.1
    the value, so the maximum amount of bytes that an OBJECT IDENTIFIER with
    these restrictions may occupy is 32 * 128 / 7, which is approximately 586
    bytes.
-
-   Ref: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
 
    *Richard Levitte*
 
@@ -20002,6 +20000,7 @@ ndif
 
 <!-- Links -->
 
+[RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
 [CVE-2023-2650]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2650
 [CVE-2023-1255]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-1255
 [CVE-2023-0466]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0466
