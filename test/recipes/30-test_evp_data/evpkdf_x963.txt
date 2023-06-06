@@ -112,6 +112,7 @@ Ctrl.hexinfo = hexinfo:eb17da8851c41c7ac6710b1c49f324f8
 Output = 829a28b81f9e95b5f306604067499c07d5944ca034ed130d513951f7143e4e162bad8adb2833e53b8235c293cd2a809659ac7f7e392cba6a543660e5d95070c0c9e6a9cdc38123e22da61bb4cbb6ad6d1a58a069e934fc231bd9fe39a24afcbf322ccea385f0418f3b01c1edd6e7124593a1cefe3e48fcd95daaf72cfd973c59
 
 # Test concat of multiple info (Uses existing test data, and just splits the info into separate fields)
+FIPSversion = >=3.2.0
 KDF = X963KDF
 Ctrl.digest = digest:SHA512
 Ctrl.hexsecret = hexsecret:0096172bf47d06d544ae98471490cf9e52ee59ea7a2208b33b26c52d4952bb8f41b2211d3f9ff32e77ca8cc906ba8d246ff266ddf1df8f53824ccb15b8fb39724703
