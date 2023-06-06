@@ -562,8 +562,11 @@ int ossl_quic_stream_map_notify_totally_read(QUIC_STREAM_MAP *qsm,
 
 int ossl_quic_stream_map_notify_reset_recv_part(QUIC_STREAM_MAP *qsm,
                                                 QUIC_STREAM *qs,
-                                                uint64_t app_error_code)
+                                                uint64_t app_error_code,
+                                                uint64_t final_size)
 {
+    uint64_t prev_final_size;
+
     switch (qs->recv_state) {
     default:
     case QUIC_RSTREAM_STATE_NONE:
@@ -573,6 +576,11 @@ int ossl_quic_stream_map_notify_reset_recv_part(QUIC_STREAM_MAP *qsm,
     case QUIC_RSTREAM_STATE_RECV:
     case QUIC_RSTREAM_STATE_SIZE_KNOWN:
     case QUIC_RSTREAM_STATE_DATA_RECVD:
+        if (ossl_quic_stream_recv_get_final_size(qs, &prev_final_size)
+            && prev_final_size != final_size)
+            /* Cannot change previous final size. */
+            return 0;
+
         qs->recv_state              = QUIC_RSTREAM_STATE_RESET_RECVD;
         qs->peer_reset_stream_aec   = app_error_code;
 
