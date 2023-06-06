@@ -1839,8 +1839,9 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
 
             f.stream_id         = stream->id;
             f.app_error_code    = stream->reset_stream_aec;
-            /* XXX fix this - use how much we've actually sent */
-            f.final_size        = ossl_quic_sstream_get_cur_size(stream->sstream);
+            if (!ossl_quic_stream_send_get_final_size(stream, &f.final_size))
+                return 0; /* should not be possible */
+
             if (!ossl_quic_wire_encode_frame_reset_stream(wpkt, &f)) {
                 tx_helper_rollback(h); /* can't fit */
                 txp_enlink_tmp(tmp_head, stream);
