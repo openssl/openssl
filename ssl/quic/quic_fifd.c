@@ -92,6 +92,9 @@ static void on_acked(void *arg)
             fifd->confirm_frame(OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
                                 chunks[i].stream_id, pkt,
                                 fifd->confirm_frame_arg);
+
+        if (ossl_quic_sstream_is_totally_acked(sstream))
+            fifd->sstream_updated(chunks[i].stream_id, fifd->sstream_updated_arg);
     }
 
     /* GCR */

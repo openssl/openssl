@@ -295,7 +295,7 @@ static int qsm_ready_for_gc(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
     assert(!qs->deleted
            || !ossl_quic_stream_has_send(qs)
            || ossl_quic_stream_send_is_reset(qs)
-           || ossl_quic_sstream_get_final_size(qs->sstream, NULL));
+           || ossl_quic_stream_send_get_final_size(qs, NULL));
 
     return
         qs->deleted
@@ -303,10 +303,8 @@ static int qsm_ready_for_gc(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
             || recv_stream_fully_drained
             || qs->acked_stop_sending)
         && (!ossl_quic_stream_has_send(qs)
-            || (!ossl_quic_stream_send_is_reset(qs)
-                && ossl_quic_sstream_is_totally_acked(qs->sstream))
-            || (ossl_quic_stream_send_is_reset(qs)
-                && qs->send_state == QUIC_SSTREAM_STATE_RESET_RECVD));
+            || qs->send_state == QUIC_SSTREAM_STATE_DATA_RECVD
+            || qs->send_state == QUIC_SSTREAM_STATE_RESET_RECVD);
 }
 
 void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
@@ -323,6 +321,10 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
 
         allowed_by_stream_limit = (stream_ordinal < stream_limit);
     }
+
+    if (s->send_state == QUIC_SSTREAM_STATE_DATA_SENT
+        && ossl_quic_sstream_is_totally_acked(s->sstream))
+        ossl_quic_stream_map_notify_totally_acked(qsm, s);
 
     if (!s->ready_for_gc) {
         s->ready_for_gc = qsm_ready_for_gc(qsm, s);
