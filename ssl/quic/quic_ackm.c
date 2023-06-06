@@ -1068,6 +1068,10 @@ int ossl_ackm_on_tx_packet(OSSL_ACKM *ackm, OSSL_ACKM_TX_PKT *pkt)
     if (pkt->num_bytes == 0)
         return 0;
 
+    /* Does not make any sense for a non-in-flight packet to be ACK-eliciting. */
+    if (!pkt->is_inflight && pkt->is_ack_eliciting)
+        return 0;
+
     if (tx_pkt_history_add(h, pkt) == 0)
         return 0;
 
