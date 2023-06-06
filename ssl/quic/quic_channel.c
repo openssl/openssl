@@ -2629,7 +2629,6 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
         return;
 
     /* We allow only two active connection ids; first check some constraints */
-
     if (ch->cur_remote_dcid.id_len == 0) {
         /* Changing from 0 length connection id is disallowed */
         ossl_quic_channel_raise_protocol_error(ch,

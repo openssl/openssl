@@ -64,8 +64,6 @@ struct qtest_fault {
 static void packet_plain_finish(void *arg);
 static void handshake_finish(void *arg);
 
-static BIO_METHOD *get_bio_method(void);
-
 static OSSL_TIME fake_now;
 
 static OSSL_TIME fake_now_cb(void *arg)
@@ -155,7 +153,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
             goto err;
     }
 
-    fisbio = BIO_new(get_bio_method());
+    fisbio = BIO_new(qtest_get_bio_method());
     if (!TEST_ptr(fisbio))
         goto err;
 
@@ -204,6 +202,19 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
 void qtest_add_time(uint64_t millis)
 {
     fake_now = ossl_time_add(fake_now, ossl_ms2time(millis));
+}
+
+QTEST_FAULT *qtest_create_injector(QUIC_TSERVER *ts)
+{
+    QTEST_FAULT *f;
+
+    f = OPENSSL_zalloc(sizeof(*f));
+    if (f == NULL)
+        return NULL;
+
+    f->qtserv = ts;
+    return f;
+
 }
 
 int qtest_supports_blocking(void)
@@ -487,7 +498,7 @@ int qtest_fault_resize_plain_packet(QTEST_FAULT *fault, size_t newlen)
  * Prepend frame data into a packet. To be called from a packet_plain_listener
  * callback
  */
-int qtest_fault_prepend_frame(QTEST_FAULT *fault, unsigned char *frame,
+int qtest_fault_prepend_frame(QTEST_FAULT *fault, const unsigned char *frame,
                               size_t frame_len)
 {
     unsigned char *buf;
@@ -819,7 +830,7 @@ static long pcipher_ctrl(BIO *b, int cmd, long larg, void *parg)
     return BIO_ctrl(next, cmd, larg, parg);
 }
 
-static BIO_METHOD *get_bio_method(void)
+BIO_METHOD *qtest_get_bio_method(void)
 {
     BIO_METHOD *tmp;
 

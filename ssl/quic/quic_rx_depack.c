@@ -515,21 +515,6 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
         return 0;
     }
 
-    /*
-     * RFC 9000 s. 19.8: "The largest offset delivered on a stream -- the sum of
-     * the offset and data length -- cannot exceed 2**62 - 1, as it is not
-     * possible to provide flow control credit for that data. Receipt of a frame
-     * that exceeds this limit MUST be treated as a connection error of type
-     * FRAME_ENCODING_ERROR or FLOW_CONTROL_ERROR."
-     */
-    if (frame_data.offset + frame_data.len > (((uint64_t)1) << 62) - 1) {
-        ossl_quic_channel_raise_protocol_error(ch,
-                                               QUIC_ERR_FRAME_ENCODING_ERROR,
-                                               frame_type,
-                                               "oversize stream");
-        return 0;
-    }
-
     switch (stream->recv_state) {
     case QUIC_RSTREAM_STATE_RECV:
     case QUIC_RSTREAM_STATE_SIZE_KNOWN:
