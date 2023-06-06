@@ -347,6 +347,7 @@ int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)
     cause = ossl_quic_tserver_get_terminate_cause(qtserv);
     if  (!TEST_ptr(cause)
             || !TEST_true(cause->remote)
+            || !TEST_false(cause->app)
             || !TEST_uint64_t_eq(cause->error_code, code))
         return 0;
 
@@ -356,6 +357,11 @@ int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)
 int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv)
 {
     return qtest_check_server_transport_err(qtserv, QUIC_ERR_PROTOCOL_VIOLATION);
+}
+
+int qtest_check_server_frame_encoding_err(QUIC_TSERVER *qtserv)
+{
+    return qtest_check_server_transport_err(qtserv, QUIC_ERR_FRAME_ENCODING_ERROR);
 }
 
 void qtest_fault_free(QTEST_FAULT *fault)

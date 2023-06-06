@@ -318,7 +318,7 @@ static int tx_helper_commit(struct tx_helper *h)
         PACKET pkt;
 
         if (!PACKET_buf_init(&pkt, h->txn.data, l)
-                || !ossl_quic_wire_peek_frame_header(&pkt, &ftype)) {
+                || !ossl_quic_wire_peek_frame_header(&pkt, &ftype, NULL)) {
             tx_helper_end(h, 0);
             return 0;
         }

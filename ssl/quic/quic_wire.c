@@ -439,9 +439,10 @@ int ossl_quic_wire_encode_transport_param_cid(WPACKET *wpkt,
  * QUIC Wire Format Decoding
  * =========================
  */
-int ossl_quic_wire_peek_frame_header(PACKET *pkt, uint64_t *type)
+int ossl_quic_wire_peek_frame_header(PACKET *pkt, uint64_t *type,
+                                     int *was_minimal)
 {
-    return PACKET_peek_quic_vlint(pkt, type);
+    return PACKET_peek_quic_vlint_ex(pkt, type, was_minimal);
 }
 
 int ossl_quic_wire_skip_frame_header(PACKET *pkt, uint64_t *type)

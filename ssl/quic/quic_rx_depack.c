@@ -928,6 +928,7 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
     }
 
     while (PACKET_remaining(pkt) > 0) {
+        int was_minimal;
         uint64_t frame_type;
         const unsigned char *sof = NULL;
         uint64_t datalen = 0;
@@ -935,8 +936,21 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
         if (ch->msg_callback != NULL)
             sof = PACKET_data(pkt);
 
-        if (!ossl_quic_wire_peek_frame_header(pkt, &frame_type))
+        if (!ossl_quic_wire_peek_frame_header(pkt, &frame_type, &was_minimal)) {
+            ossl_quic_channel_raise_protocol_error(ch,
+                                                   QUIC_ERR_PROTOCOL_VIOLATION,
+                                                   0,
+                                                   "malformed frame header");
             return 0;
+        }
+
+        if (!was_minimal) {
+            ossl_quic_channel_raise_protocol_error(ch,
+                                                   QUIC_ERR_PROTOCOL_VIOLATION,
+                                                   frame_type,
+                                                   "non-minimal frame type encoding");
+            return 0;
+        }
 
         switch (frame_type) {
         case OSSL_QUIC_FRAME_TYPE_PING:
@@ -1211,7 +1225,7 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
             /* Unknown frame type */
             ackm_data->is_ack_eliciting = 1;
             ossl_quic_channel_raise_protocol_error(ch,
-                                                   QUIC_ERR_PROTOCOL_VIOLATION,
+                                                   QUIC_ERR_FRAME_ENCODING_ERROR,
                                                    frame_type,
                                                    "Unknown frame type received");
             return 0;

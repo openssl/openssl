@@ -155,7 +155,7 @@ static int test_unknown_frame(void)
         goto err;
 #endif
 
-    if (!TEST_true(qtest_check_server_protocol_err(qtserv)))
+    if (!TEST_true(qtest_check_server_frame_encoding_err(qtserv)))
         goto err;
 
     testresult = 1;
