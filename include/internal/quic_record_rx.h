@@ -309,29 +309,28 @@ int ossl_qrx_unprocessed_read_pending(OSSL_QRX *qrx);
 uint64_t ossl_qrx_get_bytes_received(OSSL_QRX *qrx, int clear);
 
 /*
- * Sets a callback which is called when a packet is received and being
- * validated before being queued in the read queue. This is called before packet
- * body decryption. pn_space is a QUIC_PN_SPACE_* value denoting which PN space
- * the PN belongs to.
+ * Sets a callback which is called when a packet is received and being validated
+ * before being queued in the read queue. This is called after packet body
+ * decryption and authentication to prevent exposing side channels. pn_space is
+ * a QUIC_PN_SPACE_* value denoting which PN space the PN belongs to.
  *
  * If this callback returns 1, processing continues normally.
  * If this callback returns 0, the packet is discarded.
  *
  * Other packets in the same datagram will still be processed where possible.
  *
- * The intended use for this function is to allow early validation of whether
- * a PN is a potential duplicate before spending CPU time decrypting the
- * packet payload.
+ * The intended use for this function is to allow validation of whether a PN is
+ * a potential duplicate before spending CPU time decrypting the packet payload.
  *
  * The callback is optional and can be unset by passing NULL for cb.
  * cb_arg is an opaque value passed to cb.
  */
-typedef int (ossl_qrx_early_validation_cb)(QUIC_PN pn, int pn_space,
-                                           void *arg);
+typedef int (ossl_qrx_late_validation_cb)(QUIC_PN pn, int pn_space,
+                                          void *arg);
 
-int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
-                                     ossl_qrx_early_validation_cb *cb,
-                                     void *cb_arg);
+int ossl_qrx_set_late_validation_cb(OSSL_QRX *qrx,
+                                    ossl_qrx_late_validation_cb *cb,
+                                    void *cb_arg);
 
 /*
  * Forcibly injects a URXE which has been issued by the DEMUX into the QRX for

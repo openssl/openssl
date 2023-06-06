@@ -66,7 +66,7 @@ static int ch_on_crypto_send(const unsigned char *buf, size_t buf_len,
                              size_t *consumed, void *arg);
 static OSSL_TIME get_time(void *arg);
 static uint64_t get_stream_limit(int uni, void *arg);
-static int rx_early_validate(QUIC_PN pn, int pn_space, void *arg);
+static int rx_late_validate(QUIC_PN pn, int pn_space, void *arg);
 static void rxku_detected(QUIC_PN pn, void *arg);
 static int ch_retry(QUIC_CHANNEL *ch,
                     const unsigned char *retry_token,
@@ -252,9 +252,9 @@ static int ch_init(QUIC_CHANNEL *ch)
     if ((ch->qrx = ossl_qrx_new(&qrx_args)) == NULL)
         goto err;
 
-    if (!ossl_qrx_set_early_validation_cb(ch->qrx,
-                                          rx_early_validate,
-                                          ch))
+    if (!ossl_qrx_set_late_validation_cb(ch->qrx,
+                                         rx_late_validate,
+                                         ch))
         goto err;
 
     if (!ossl_qrx_set_key_update_cb(ch->qrx,
@@ -522,7 +522,7 @@ static uint64_t get_stream_limit(int uni, void *arg)
  * Called by QRX to determine if a packet is potentially invalid before trying
  * to decrypt it.
  */
-static int rx_early_validate(QUIC_PN pn, int pn_space, void *arg)
+static int rx_late_validate(QUIC_PN pn, int pn_space, void *arg)
 {
     QUIC_CHANNEL *ch = arg;
 
