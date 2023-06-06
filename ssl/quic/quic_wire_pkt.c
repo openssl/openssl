@@ -181,8 +181,9 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
         || !PACKET_get_1(pkt, &b0))
         return 0;
 
-    hdr->partial = partial;
-    hdr->unused  = 0;
+    hdr->partial    = partial;
+    hdr->unused     = 0;
+    hdr->reserved   = 0;
 
     if ((b0 & 0x80) == 0) {
         /* Short header. */
@@ -199,9 +200,11 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
         if (partial) {
             hdr->key_phase  = 0; /* protected, zero for now */
             hdr->pn_len     = 0; /* protected, zero for now */
+            hdr->reserved   = 0; /* protected, zero for now */
         } else {
-            hdr->key_phase  = (b0 & 0x4) != 0;
-            hdr->pn_len     = (b0 & 0x3) + 1;
+            hdr->key_phase  = (b0 & 0x04) != 0;
+            hdr->pn_len     = (b0 & 0x03) + 1;
+            hdr->reserved   = (b0 & 0x18) >> 3;
         }
 
         /* Copy destination connection ID field to header structure. */
@@ -367,7 +370,8 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
                 /* Initial, 0-RTT or Handshake packet. */
                 uint64_t len;
 
-                hdr->pn_len = partial ? 0 : (b0 & 3) + 1;
+                hdr->pn_len     = partial ? 0 : ((b0 & 0x03) + 1);
+                hdr->reserved   = partial ? 0 : ((b0 & 0x0C) >> 2);
 
                 if (!PACKET_get_quic_vlint(pkt, &len)
                         || len < sizeof(hdr->pn))
@@ -460,6 +464,7 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
         b0 = (hdr->spin_bit << 5)
              | (hdr->key_phase << 2)
              | (hdr->pn_len - 1)
+             | (hdr->reserved << 3)
              | 0x40; /* fixed bit */
 
         if (!WPACKET_put_bytes_u8(pkt, b0)
@@ -499,8 +504,10 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
         b0 = (raw_type << 4) | 0x80; /* long */
         if (hdr->type != QUIC_PKT_TYPE_VERSION_NEG || hdr->fixed)
             b0 |= 0x40; /* fixed */
-        if (ossl_quic_pkt_type_has_pn(hdr->type))
+        if (ossl_quic_pkt_type_has_pn(hdr->type)) {
             b0 |= hdr->pn_len - 1;
+            b0 |= (hdr->reserved << 2);
+        }
         if (hdr->type == QUIC_PKT_TYPE_RETRY)
             b0 |= hdr->unused;
 

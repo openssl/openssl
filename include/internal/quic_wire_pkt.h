@@ -350,6 +350,14 @@ typedef struct quic_pkt_hdr_st {
      */
     unsigned int    unused      :4;
 
+    /*
+     * The 'Reserved' bits in an Initial, Handshake, 0-RTT or 1-RTT packet
+     * header's first byte. These are provided so that the caller can validate
+     * that they are zero, as this must be done after packet protection is
+     * successfully removed to avoid creating a timing channel.
+     */
+    unsigned int    reserved    :2;
+
     /* [L] Version field. Valid if (type != 1RTT). */
     uint32_t        version;
 

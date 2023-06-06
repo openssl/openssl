@@ -1015,6 +1015,7 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
     phdr.pn_len         = txp_determine_pn_len(txp);
     phdr.partial        = 0;
     phdr.fixed          = 1;
+    phdr.reserved       = 0;
     phdr.version        = QUIC_VERSION_1;
     phdr.dst_conn_id    = txp->args.cur_dcid;
     phdr.src_conn_id    = txp->args.cur_scid;
