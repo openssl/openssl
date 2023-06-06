@@ -835,6 +835,20 @@ static int depack_do_frame_streams_blocked(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
+    if (max_data > (((uint64_t)1) << 60)) {
+        /*
+         * RFC 9000 s. 19.14: "This value cannot exceed 2**60, as it is not
+         * possible to encode stream IDs larger than 2**62 - 1. Receipt of a
+         * frame that encodes a larger stream ID MUST be treated as a connection
+         * error of type STREAM_LIMIT_ERROR or FRAME_ENCODING_ERROR."
+         */
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_STREAM_LIMIT_ERROR,
+                                               frame_type,
+                                               "invalid stream count limit");
+        return 0;
+    }
+
     /* No-op - informative/debugging frame. */
     return 1;
 }
