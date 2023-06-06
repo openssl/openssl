@@ -157,7 +157,7 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
     if (stream == NULL)
         return 1; /* old deleted stream, not a protocol violation, ignore */
 
-    if (stream->rstream == NULL) {
+    if (!ossl_quic_stream_has_recv(stream)) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                QUIC_ERR_STREAM_STATE_ERROR,
                                                OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
@@ -166,8 +166,14 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
         return 0;
     }
 
-    stream->peer_reset_stream       = 1;
-    stream->peer_reset_stream_aec   = frame_data.app_error_code;
+    /*
+     * Depending on the receive part state this is handled either as a reset
+     * transition or a no-op (e.g. if a reset has already been received before,
+     * or the application already retired a FIN). Best effort - there are no
+     * protoocol error conditions we need to check for here.
+     */
+    ossl_quic_stream_map_notify_reset_recv_part(&ch->qsm, stream,
+                                                frame_data.app_error_code);
 
     ossl_quic_stream_map_update_state(&ch->qsm, stream);
     return 1;
@@ -199,7 +205,7 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
     if (stream == NULL)
         return 1; /* old deleted stream, not a protocol violation, ignore */
 
-    if (stream->sstream == NULL) {
+    if (!ossl_quic_stream_has_send(stream)) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                QUIC_ERR_STREAM_STATE_ERROR,
                                                OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
@@ -452,7 +458,7 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
          */
         return 1;
 
-    if (stream->rstream == NULL) {
+    if (!ossl_quic_stream_has_recv(stream)) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                QUIC_ERR_STREAM_STATE_ERROR,
                                                frame_type,
@@ -576,7 +582,7 @@ static int depack_do_frame_max_stream_data(PACKET *pkt,
     if (stream == NULL)
         return 1; /* old deleted stream, not a protocol violation, ignore */
 
-    if (stream->sstream == NULL) {
+    if (!ossl_quic_stream_has_send(stream)) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                QUIC_ERR_STREAM_STATE_ERROR,
                                                OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA,

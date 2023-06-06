@@ -1055,7 +1055,6 @@ static const struct script_op script_13[] = {
     OP_EXPECT_FRAME(OSSL_QUIC_FRAME_TYPE_RESET_STREAM)
     OP_CHECK(check_stream_13)
     OP_NEXT_FRAME()
-    OP_EXPECT_FRAME(OSSL_QUIC_FRAME_TYPE_STREAM)
     OP_EXPECT_NO_FRAME()
     OP_RX_PKT_NONE()
     OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
@@ -1431,7 +1430,9 @@ static int run_script(const struct script_op *script)
                     || !TEST_true(ossl_quic_rxfc_init(&s->rxfc, &h.conn_rxfc,
                                                       1 * 1024 * 1024,
                                                       16 * 1024 * 1024,
-                                                      fake_now, NULL))) {
+                                                      fake_now, NULL))
+                    || !TEST_ptr(s->rstream = ossl_quic_rstream_new(&s->rxfc,
+                                                                    NULL, 1024))) {
                     ossl_quic_sstream_free(s->sstream);
                     ossl_quic_stream_map_release(h.args.qsm, s);
                     goto err;

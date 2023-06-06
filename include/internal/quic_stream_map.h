@@ -34,6 +34,48 @@ struct quic_stream_list_node_st {
     QUIC_STREAM_LIST_NODE *prev, *next;
 };
 
+/*
+ * QUIC Send Stream States
+ * -----------------------
+ *
+ * These correspond to the states defined in RFC 9000 s. 3.1, with the
+ * exception of the NONE state which represents the absence of a send stream
+ * part.
+ *
+ * Invariants in each state are noted in comments below. In particular, once all
+ * data has been acknowledged received, or we have reset the stream, we don't
+ * need to keep the QUIC_SSTREAM and data buffers around. Of course, we also
+ * don't have a QUIC_SSTREAM on a receive-only stream.
+ */
+#define QUIC_SSTREAM_STATE_NONE         0   /* --- sstream == NULL  */
+#define QUIC_SSTREAM_STATE_READY        1   /* \                    */
+#define QUIC_SSTREAM_STATE_SEND         2   /* |-- sstream != NULL  */
+#define QUIC_SSTREAM_STATE_DATA_SENT    3   /* /                    */
+#define QUIC_SSTREAM_STATE_DATA_RECVD   4   /* \                    */
+#define QUIC_SSTREAM_STATE_RESET_SENT   5   /* |-- sstream == NULL  */
+#define QUIC_SSTREAM_STATE_RESET_RECVD  6   /* /                    */
+
+/*
+ * QUIC Receive Stream States
+ * --------------------------
+ *
+ * These correspond to the states defined in RFC 9000 s. 3.2, with the exception
+ * of the NONE state which represents the absence of a receive stream part.
+ *
+ * Invariants in each state are noted in comments below. In particular, once all
+ * data has been read by the application, we don't need to keep the QUIC_RSTREAM
+ * and data buffers around. If the receive part is instead reset before it is
+ * finished, we also don't need to keep the QUIC_RSTREAM around. Finally, we
+ * don't need a QUIC_RSTREAM on a send-only stream.
+ */
+#define QUIC_RSTREAM_STATE_NONE         0   /* --- rstream == NULL  */
+#define QUIC_RSTREAM_STATE_RECV         1   /* \                    */
+#define QUIC_RSTREAM_STATE_SIZE_KNOWN   2   /* |-- rstream != NULL  */
+#define QUIC_RSTREAM_STATE_DATA_RECVD   3   /* /                    */
+#define QUIC_RSTREAM_STATE_DATA_READ    4   /* \                    */
+#define QUIC_RSTREAM_STATE_RESET_RECVD  5   /* |-- rstream == NULL  */
+#define QUIC_RSTREAM_STATE_RESET_READ   6   /* /                    */
+
 struct quic_stream_st {
     QUIC_STREAM_LIST_NODE active_node; /* for use by QUIC_STREAM_MAP */
     QUIC_STREAM_LIST_NODE accept_node; /* accept queue of remotely-created streams */
@@ -76,12 +118,45 @@ struct quic_stream_st {
     /* Temporary value used by TXP. */
     uint64_t        txp_txfc_new_credit_consumed;
 
+    /*
+     * Send stream part and receive stream part buffer management objects.
+     *
+     * DO NOT test these pointers (sstream, rstream) for NULL. Determine the
+     * state of the send or receive stream part first using the appropriate
+     * function; then the invariant of that state guarantees that sstream or
+     * rstream either is or is not NULL respectively, therefore there is no
+     * valid use case for testing these pointers for NULL. In particular, a
+     * stream with a send part can still have sstream as NULL, and a stream with
+     * a receive part can still have rstream as NULL. QUIC_SSTREAM and
+     * QUIC_RSTREAM are stream buffer resource management objects which exist
+     * only when they need to for buffer management purposes. The existence or
+     * non-existence of a QUIC_SSTREAM or QUIC_RSTREAM object does not
+     * correspond with whether a stream's respective send or receive part
+     * logically exists or not.
+     */
     QUIC_SSTREAM    *sstream;   /* NULL if RX-only */
     QUIC_RSTREAM    *rstream;   /* NULL if TX only */
+
+    /* Stream-level flow control managers. */
     QUIC_TXFC       txfc;       /* NULL if RX-only */
     QUIC_RXFC       rxfc;       /* NULL if TX-only */
-    unsigned int    type   : 8; /* QUIC_STREAM_INITIATOR_*, QUIC_STREAM_DIR_* */
+
+    unsigned int    type : 8; /* QUIC_STREAM_INITIATOR_*, QUIC_STREAM_DIR_* */
+
+    unsigned int    send_state : 8; /* QUIC_SSTREAM_STATE_* */
+    unsigned int    recv_state : 8; /* QUIC_RSTREAM_STATE_* */
+
+    /* 1 iff this QUIC_STREAM is on the active queue (invariant). */
     unsigned int    active : 1;
+
+    /*
+     * This is a cpoy of the QUIC connection as_server  value, indicating
+     * whether we are locally operating as a server or not. Having this
+     * significantly simplifies stream type determination relative to our
+     * perspective. It never changes after a QUIC_STREAM is created and is the
+     * same for all QUIC_STREAMS under a QUIC_STREAM_MAP.
+     */
+    unsigned int    as_server : 1;
 
     /*
      * Has STOP_SENDING been requested (by us)? Note that this is not the same
@@ -94,12 +169,8 @@ struct quic_stream_st {
      * Has RESET_STREAM been requested (by us)? Works identically to
      * STOP_SENDING for transmission purposes.
      */
-    unsigned int    reset_stream            : 1;
-
     /* Has our peer sent a STOP_SENDING frame? */
     unsigned int    peer_stop_sending       : 1;
-    /* Has our peer sent a RESET_STREAM frame? */
-    unsigned int    peer_reset_stream       : 1;
 
     /* Temporary flags used by TXP. */
     unsigned int    txp_sent_fc             : 1;
@@ -115,7 +186,6 @@ struct quic_stream_st {
 
     /* Flags set when frames *we* sent were acknowledged. */
     unsigned int    acked_stop_sending      : 1;
-    unsigned int    acked_reset_stream      : 1;
 
     /* A FIN has been retired from the rstream buffer. */
     unsigned int    recv_fin_retired        : 1;
@@ -233,7 +303,137 @@ struct quic_stream_st {
     unsigned int    ready_for_gc            : 1;
 };
 
-/* 
+#define QUIC_STREAM_INITIATOR_CLIENT        0
+#define QUIC_STREAM_INITIATOR_SERVER        1
+#define QUIC_STREAM_INITIATOR_MASK          1
+
+#define QUIC_STREAM_DIR_BIDI                0
+#define QUIC_STREAM_DIR_UNI                 2
+#define QUIC_STREAM_DIR_MASK                2
+
+void ossl_quic_stream_check(const QUIC_STREAM *s);
+
+/*
+ * Returns 1 if the QUIC_STREAM was initiated by the endpoint with the server
+ * role.
+ */
+static ossl_inline ossl_unused int ossl_quic_stream_is_server_init(const QUIC_STREAM *s)
+{
+    return (s->type & QUIC_STREAM_INITIATOR_MASK) == QUIC_STREAM_INITIATOR_SERVER;
+}
+
+/*
+ * Returns 1 if the QUIC_STREAM is bidirectional and 0 if it is unidirectional.
+ */
+static ossl_inline ossl_unused int ossl_quic_stream_is_bidi(const QUIC_STREAM *s)
+{
+    return (s->type & QUIC_STREAM_DIR_MASK) == QUIC_STREAM_DIR_BIDI;
+}
+
+/* Returns 1 if the QUIC_STREAM was locally initiated. */
+static ossl_inline ossl_unused int ossl_quic_stream_is_local_init(const QUIC_STREAM *s)
+{
+    return ossl_quic_stream_is_server_init(s) == s->as_server;
+}
+
+/*
+ * Returns 1 if the QUIC_STREAM has a sending part, based on its stream type.
+ *
+ * Do NOT use (s->sstream != NULL) to test this; use this function. Note that
+ * even if this function returns 1, s->sstream might be NULL if the QUIC_SSTREAM
+ * has been deemed no longer needed, for example due to a RESET_STREAM.
+ */
+static ossl_inline ossl_unused int ossl_quic_stream_has_send(const QUIC_STREAM *s)
+{
+    return s->send_state != QUIC_SSTREAM_STATE_NONE;
+}
+
+/*
+ * Returns 1 if the QUIC_STREAM has a receiving part, based on its stream type.
+ *
+ * Do NOT use (s->rstream != NULL) to test this; use this function. Note that
+ * even if this function returns 1, s->rstream might be NULL if the QUIC_RSTREAM
+ * has been deemed no longer needed, for example if the receive stream is
+ * completely finished with.
+ */
+static ossl_inline ossl_unused int ossl_quic_stream_has_recv(const QUIC_STREAM *s)
+{
+    return s->recv_state != QUIC_RSTREAM_STATE_NONE;
+}
+
+/*
+ * Returns 1 if the QUIC_STREAM has a QUIC_SSTREAM send buffer associated with
+ * it. If this returns 1, s->sstream is guaranteed to be non-NULL. The converse
+ * is not necessarily true; erasure of a send stream buffer which is no longer
+ * required is an optimisation which the QSM may, but is not obliged, to
+ * perform.
+ *
+ * This call should be used where it is desired to do something with the send
+ * stream buffer but there is no more specific send state restriction which is
+ * applicable.
+ *
+ * Note: This does NOT indicate whether it is suitable to allow an application
+ * to append to the buffer. DATA_SENT indicates all data (including FIN) has
+ * been *sent*; the absence of DATA_SENT does not mean a FIN has not been queued
+ * (meaning no more application data can be appended). This is enforced by
+ * QUIC_SSTREAM.
+ */
+static ossl_inline ossl_unused int ossl_quic_stream_has_send_buffer(const QUIC_STREAM *s)
+{
+    switch (s->send_state) {
+    case QUIC_SSTREAM_STATE_READY:
+    case QUIC_SSTREAM_STATE_SEND:
+    case QUIC_SSTREAM_STATE_DATA_SENT:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/*
+ * Returns 1 if the QUIC_STREAM has a sending part which is in one of the reset
+ * states.
+ */
+static ossl_inline ossl_unused int ossl_quic_stream_send_is_reset(const QUIC_STREAM *s)
+{
+    return s->send_state == QUIC_SSTREAM_STATE_RESET_SENT
+        || s->send_state == QUIC_SSTREAM_STATE_RESET_RECVD;
+}
+
+/*
+ * Returns 1 if the QUIC_STREAM has a QUIC_RSTREAM receive buffer associated
+ * with it. If this returns 1, s->rstream is guaranteed to be non-NULL. The
+ * converse is not necessarily true; erasure of a receive stream buffer which is
+ * no longer required is an optimisation which the QSM may, but is not obliged,
+ * to perform.
+ *
+ * This call should be used where it is desired to do something with the receive
+ * stream buffer but there is no more specific receive state restriction which is
+ * applicable.
+ */
+static ossl_inline ossl_unused int ossl_quic_stream_has_recv_buffer(const QUIC_STREAM *s)
+{
+    switch (s->recv_state) {
+    case QUIC_RSTREAM_STATE_RECV:
+    case QUIC_RSTREAM_STATE_SIZE_KNOWN:
+    case QUIC_RSTREAM_STATE_DATA_RECVD:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/*
+ * Returns 1 if the QUIC_STREAM has a receiving part which is in one of the
+ * reset states.
+ */
+static ossl_inline ossl_unused int ossl_quic_stream_recv_is_reset(const QUIC_STREAM *s)
+{
+    return s->recv_state == QUIC_RSTREAM_STATE_RESET_RECVD
+        || s->recv_state == QUIC_RSTREAM_STATE_RESET_READ;
+}
+
+/*
  * QUIC Stream Map
  * ===============
  *
@@ -283,24 +483,6 @@ int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
  * ossl_quic_stream_map_release was called on them.
  */
 void ossl_quic_stream_map_cleanup(QUIC_STREAM_MAP *qsm);
-
-#define QUIC_STREAM_INITIATOR_CLIENT        0
-#define QUIC_STREAM_INITIATOR_SERVER        1
-#define QUIC_STREAM_INITIATOR_MASK          1
-
-#define QUIC_STREAM_DIR_BIDI                0
-#define QUIC_STREAM_DIR_UNI                 2
-#define QUIC_STREAM_DIR_MASK                2
-
-static ossl_inline ossl_unused int ossl_quic_stream_is_server_init(QUIC_STREAM *s)
-{
-    return (s->type & QUIC_STREAM_INITIATOR_MASK) == QUIC_STREAM_INITIATOR_SERVER;
-}
-
-static ossl_inline ossl_unused int ossl_quic_stream_is_bidi(QUIC_STREAM *s)
-{
-    return (s->type & QUIC_STREAM_DIR_MASK) == QUIC_STREAM_DIR_BIDI;
-}
 
 /*
  * Allocate a new stream. type is a combination of one QUIC_STREAM_INITIATOR_*
@@ -354,26 +536,139 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s);
  */
 void ossl_quic_stream_map_set_rr_stepping(QUIC_STREAM_MAP *qsm, size_t stepping);
 
+
 /*
- * Resets the sending part of a stream.
+ * Stream Send Part
+ * ================
+ */
+
+/*
+ * Ensures that the sending part has transitioned out of the READY state (i.e.,
+ * to SEND, or a subsequent state). This function is named as it is because,
+ * while on paper the distinction between READY and SEND is whether we have
+ * started transmitting application data, in practice the meaningful distinction
+ * between the two states is whether we have allocated a stream ID to the stream
+ * or not. QUIC permits us to defer stream ID allocation until first STREAM (or
+ * STREAM_DATA_BLOCKED) frame transmission for locally-initiated streams.
  *
- * Returns 1 if the sending part of a stream was not already reset.
- * Returns 0 otherwise, which need not be considered an error.
+ * Our implementation does not currently do this and we allocate stream IDs up
+ * front, however we may revisit this in the future. Calling this ensures
+ * represents a demand for a stream ID by the caller and ensures one has been
+ * allocated to the stream, and causes us to transition to SEND if we are still
+ * in the READY state.
+ *
+ * Returns 0 if there is no send part (caller error) and 1 otherwise.
+ */
+int ossl_quic_stream_map_ensure_send_part_id(QUIC_STREAM_MAP *qsm,
+                                             QUIC_STREAM *qs);
+
+/*
+ * Transitions from READY or SEND to the DATA_SENT state. Note that this is NOT
+ * the same as the point in time at which the final size of the stream becomes
+ * known (i.e., the time at which ossl_quic_sstream_fin()) is called as it
+ * occurs when we have SENT all data on a given stream send part, not merely
+ * buffered it.
+ *
+ * Returns 1 if the state transition was successfully taken. Returns 0 if there
+ * is no send part (caller error) or if the state transition cannot be taken
+ * because the send part is not in the SEND state.
+ */
+int ossl_quic_stream_map_notify_all_data_sent(QUIC_STREAM_MAP *qsm,
+                                              QUIC_STREAM *qs);
+
+/*
+ * Transitions from the DATA_SENT to DATA_RECVD state; should be called
+ * when all transmitted stream data is ACKed by the peer.
+ *
+ * Returns 1 if the state transition was successfully taken, or if the send part
+ * was already in the DATA_RECVD state. Returns 0 if there is no send part
+ * (caller error) or the state transition cannot be taken because the send part
+ * is not in the DATA_SENT or DATA_RECVD states. Because
+ * ossl_quic_stream_map_fin_send_part() should always be called prior to this
+ * function, the send state must already be in DATA_SENT in order for this
+ * function to succeed.
+ */
+int ossl_quic_stream_map_notify_totally_acked(QUIC_STREAM_MAP *qsm,
+                                              QUIC_STREAM *qs);
+
+/*
+ * Resets the sending part of a stream. This is a transition from the READY,
+ * SEND or DATA_SENT send stream states to the RESET_SENT state.
+ *
+ * This function returns 1 if the transition is taken (i.e., if the send stream
+ * part was in one of the states above), or if it is already in the RESET_SENT
+ * state (idempotent operation), or if it has reached the RESET_RECVD state.
+ *
+ * It returns 0 if in the DATA_RECVD state, as a send stream cannot be reset
+ * in this state. It also returns 0 if there is no send part (caller error).
  */
 int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
                                                 QUIC_STREAM *qs,
                                                 uint64_t aec);
 
 /*
- * Marks the receiving part of a stream for STOP_SENDING.
+ * Transitions from the RESET_SENT to the RESET_RECVD state. This should be
+ * called when a sent RESET_STREAM frame has been acknowledged by the peer.
  *
- * Returns  1 if the receiving part of a stream was not already marked for
+ * This function returns 1 if the transition is taken (i.e., if the send stream
+ * part was in one of the states above) or if it is already in the RESET_RECVD
+ * state (idempotent operation).
+ *
+ * It returns 0 if not in the RESET_SENT state, as this function should only be
+ * called after we have already sent a RESET_STREAM frame and entered the
+ * RESET_SENT state. It also returns 0 if there is no send part (caller error).
+ */
+int ossl_quic_stream_map_notify_reset_stream_acked(QUIC_STREAM_MAP *qsm,
+                                                   QUIC_STREAM *qs);
+
+
+/*
+ * Stream Receive Part
+ * ===================
+ */
+
+/*
+ * Transitions from the RECV to SIZE_KNOWN receive stream states. This should be
+ * called once a STREAM frame is received for the stream with the FIN bit set.
+ *
+ * Returns 1 if the transition was taken.
+ */
+int ossl_quic_stream_map_notify_size_known_recv_part(QUIC_STREAM_MAP *qsm,
+                                                     QUIC_STREAM *qs);
+
+/* SIZE_KNOWN -> DATA_RECVD */
+int ossl_quic_stream_map_notify_totally_received(QUIC_STREAM_MAP *qsm,
+                                                 QUIC_STREAM *qs);
+
+/* DATA_RECVD -> DATA_READ */
+int ossl_quic_stream_map_notify_totally_read(QUIC_STREAM_MAP *qsm,
+                                             QUIC_STREAM *qs);
+
+/* RECV/SIZE_KNOWN/DATA_RECVD -> RESET_RECVD */
+int ossl_quic_stream_map_notify_reset_recv_part(QUIC_STREAM_MAP *qsm,
+                                                QUIC_STREAM *qs,
+                                                uint64_t app_error_code);
+
+/* RESET_RECVD -> RESET_READ */
+int ossl_quic_stream_map_notify_app_read_reset_recv_part(QUIC_STREAM_MAP *qsm,
+                                                         QUIC_STREAM *qs);
+
+/*
+ * Marks the receiving part of a stream for STOP_SENDING. This is orthogonal to
+ * receive stream state as it does not affect it directly.
+ *
+ * Returns 1 if the receiving part of a stream was not already marked for
  * STOP_SENDING.
  * Returns 0 otherwise, which need not be considered an error.
  */
 int ossl_quic_stream_map_stop_sending_recv_part(QUIC_STREAM_MAP *qsm,
                                                 QUIC_STREAM *qs,
                                                 uint64_t aec);
+
+/*
+ * Accept Queue Management
+ * =======================
+ */
 
 /*
  * Adds a stream to the accept queue.

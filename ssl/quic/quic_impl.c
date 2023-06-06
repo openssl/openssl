@@ -415,13 +415,15 @@ void ossl_quic_free(SSL *s)
         --ctx.qc->num_xso;
 
         /* If a stream's send part has not been finished, auto-reset it. */
-        if (ctx.xso->stream->sstream != NULL
+        if ((   ctx.xso->stream->send_state == QUIC_SSTREAM_STATE_READY
+             || ctx.xso->stream->send_state == QUIC_SSTREAM_STATE_SEND)
             && !ossl_quic_sstream_get_final_size(ctx.xso->stream->sstream, NULL))
             ossl_quic_stream_map_reset_stream_send_part(ossl_quic_channel_get_qsm(ctx.qc->ch),
                                                         ctx.xso->stream, 0);
 
         /* Do STOP_SENDING for the receive part, if applicable. */
-        if (ctx.xso->stream->rstream != NULL)
+        if (   ctx.xso->stream->recv_state == QUIC_RSTREAM_STATE_RECV
+            || ctx.xso->stream->recv_state == QUIC_RSTREAM_STATE_SIZE_KNOWN)
             ossl_quic_stream_map_stop_sending_recv_part(ossl_quic_channel_get_qsm(ctx.qc->ch),
                                                         ctx.xso->stream, 0);
 
@@ -1960,7 +1962,8 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
         goto out;
     }
 
-    if (ctx.xso->stream == NULL || ctx.xso->stream->sstream == NULL) {
+    if (ctx.xso->stream == NULL
+        || !ossl_quic_stream_has_send_buffer(ctx.xso->stream)) {
         ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_INTERNAL_ERROR, NULL);
         goto out;
     }
@@ -2004,7 +2007,7 @@ static int quic_read_actual(QCTX *ctx,
     if (stream->recv_fin_retired)
         return QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_ZERO_RETURN);
 
-    if (stream->rstream == NULL)
+    if (!ossl_quic_stream_has_recv_buffer(stream))
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
 
     if (peek) {
@@ -2198,7 +2201,8 @@ static size_t ossl_quic_pending_int(const SSL *s, int check_channel)
     if (!expect_quic_with_stream_lock(s, /*remote_init=*/-1, &ctx))
         return 0;
 
-    if (ctx.xso->stream == NULL || ctx.xso->stream->rstream == NULL)
+    if (ctx.xso->stream == NULL
+        || !ossl_quic_stream_has_recv_buffer(ctx.xso->stream))
         /* Cannot raise errors here because we are const, just fail. */
         goto out;
 
@@ -2239,13 +2243,15 @@ int ossl_quic_conn_stream_conclude(SSL *s)
 
     qs = ctx.xso->stream;
 
-    if (qs == NULL || qs->sstream == NULL) {
+    if (qs == NULL
+        || !ossl_quic_channel_is_active(ctx.qc->ch)
+        || !ossl_quic_stream_has_send(qs)
+        || ossl_quic_stream_send_is_reset(qs)) {
         quic_unlock(ctx.qc);
         return 0;
     }
 
-    if (!ossl_quic_channel_is_active(ctx.qc->ch)
-        || ossl_quic_sstream_get_final_size(qs->sstream, NULL)) {
+    if (ossl_quic_sstream_get_final_size(qs->sstream, NULL)) {
         quic_unlock(ctx.qc);
         return 1;
     }
@@ -2646,6 +2652,7 @@ int ossl_quic_stream_reset(SSL *ssl,
     QUIC_STREAM_MAP *qsm;
     QUIC_STREAM *qs;
     uint64_t error_code;
+    int ok;
 
     if (!expect_quic_with_stream_lock(ssl, /*remote_init=*/0, &ctx))
         return 0;
@@ -2654,10 +2661,10 @@ int ossl_quic_stream_reset(SSL *ssl,
     qs          = ctx.xso->stream;
     error_code  = (args != NULL ? args->quic_error_code : 0);
 
-    ossl_quic_stream_map_reset_stream_send_part(qsm, qs, error_code);
+    ok = ossl_quic_stream_map_reset_stream_send_part(qsm, qs, error_code);
 
     quic_unlock(ctx.qc);
-    return 1;
+    return ok;
 }
 
 /*
@@ -2693,7 +2700,7 @@ static void quic_classify_stream(QUIC_CONNECTION *qc,
         /* Application has read a FIN. */
         *state = SSL_STREAM_STATE_FINISHED;
     } else if ((!is_write && qs->stop_sending)
-               || (is_write && qs->reset_stream)) {
+               || (is_write && ossl_quic_stream_send_is_reset(qs))) {
         /*
          * Stream has been reset locally. FIN takes precedence over this for the
          * read case as the application need not care if the stream is reset
@@ -2703,7 +2710,7 @@ static void quic_classify_stream(QUIC_CONNECTION *qc,
         *app_error_code = !is_write
             ? qs->stop_sending_aec
             : qs->reset_stream_aec;
-    } else if ((!is_write && qs->peer_reset_stream)
+    } else if ((!is_write && ossl_quic_stream_recv_is_reset(qs))
                || (is_write && qs->peer_stop_sending)) {
         /*
          * Stream has been reset remotely. */

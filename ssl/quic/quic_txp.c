@@ -1209,7 +1209,11 @@ static void on_confirm_notify(uint64_t frame_type, uint64_t stream_id,
                 if (s == NULL)
                     return;
 
-                s->acked_reset_stream = 1;
+                /*
+                 * We must already be in RESET_SENT or RESET_RECVD if we are
+                 * here, so we don't need to check state here.
+                 */
+                ossl_quic_stream_map_notify_reset_stream_acked(txp->args.qsm, s);
                 ossl_quic_stream_map_update_state(txp->args.qsm, s);
             }
             break;
@@ -1783,7 +1787,6 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
                                        QUIC_STREAM **tmp_head)
 {
     QUIC_STREAM_ITER it;
-    void *rstream;
     WPACKET *wpkt;
     uint64_t cwm;
     QUIC_STREAM *stream, *snext;
@@ -1801,8 +1804,6 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
         stream->txp_drained                  = 0;
         stream->txp_blocked                  = 0;
         stream->txp_txfc_new_credit_consumed = 0;
-
-        rstream = stream->rstream;
 
         /* Stream Abort Frames (STOP_SENDING, RESET_STREAM) */
         if (stream->want_stop_sending) {
@@ -1853,7 +1854,7 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
         }
 
         /* Stream Flow Control Frames (MAX_STREAM_DATA) */
-        if (rstream != NULL
+        if (ossl_quic_stream_has_recv_buffer(stream)
             && (stream->want_max_stream_data
                 || ossl_quic_rxfc_has_cwm_changed(&stream->rxfc, 0))) {
 
@@ -1879,7 +1880,7 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
         }
 
         /* Stream Data Frames (STREAM) */
-        if (stream->sstream != NULL) {
+        if (ossl_quic_stream_has_send_buffer(stream)) {
             int packet_full = 0, stream_drained = 0;
 
             if (!txp_generate_stream_frames(txp, h, pn_space, tpkt,
