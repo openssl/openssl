@@ -569,7 +569,7 @@ int ASN1_TIME_normalize(ASN1_TIME *t)
 {
     struct tm tm;
 
-    if (!ASN1_TIME_to_tm(t, &tm))
+    if (t == NULL || !ASN1_TIME_to_tm(t, &tm))
         return 0;
 
     return ossl_asn1_time_from_tm(t, &tm, V_ASN1_UNDEF) != NULL;
