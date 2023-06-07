@@ -2413,7 +2413,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
     char *buf = NULL;
     fd_set readfds;
     int ret = 1, width;
-    int k, i;
+    int k;
     unsigned long l;
     SSL *con = NULL;
     BIO *sbio;
@@ -2600,6 +2600,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
     else
         width = s + 1;
     for (;;) {
+        int i;
         int read_from_terminal;
         int read_from_sslcon;
 
@@ -2699,7 +2700,6 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     SSL_renegotiate(con);
                     i = SSL_do_handshake(con);
                     printf("SSL_do_handshake -> %d\n", i);
-                    i = 0;      /* 13; */
                     continue;
                 }
                 if ((buf[0] == 'R') && ((buf[1] == '\n') || (buf[1] == '\r'))) {
@@ -2709,7 +2709,6 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     SSL_renegotiate(con);
                     i = SSL_do_handshake(con);
                     printf("SSL_do_handshake -> %d\n", i);
-                    i = 0;      /* 13; */
                     continue;
                 }
                 if ((buf[0] == 'K' || buf[0] == 'k')
@@ -2719,7 +2718,6 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                                         : SSL_KEY_UPDATE_NOT_REQUESTED);
                     i = SSL_do_handshake(con);
                     printf("SSL_do_handshake -> %d\n", i);
-                    i = 0;
                     continue;
                 }
                 if (buf[0] == 'c' && ((buf[1] == '\n') || (buf[1] == '\r'))) {
@@ -2731,7 +2729,6 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     } else {
                         i = SSL_do_handshake(con);
                         printf("SSL_do_handshake -> %d\n", i);
-                        i = 0;
                     }
                     continue;
                 }
