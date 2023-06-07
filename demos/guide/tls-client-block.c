@@ -37,10 +37,8 @@ static BIO *create_socket_bio(const char *hostname, const char *port)
      * Lookup IP address info for the server.
      */
     if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, 0, SOCK_STREAM, 0,
-                       &res)) {
-        BIO_closesocket(sock);
+                       &res))
         return NULL;
-    }
 
     /*
      * Loop through all the possible addresses for the server and find one
