@@ -2918,7 +2918,7 @@ static ossl_unused int test_dyn_frame_types(int idx)
 
     for (i = 0; i < OSSL_NELEM(dyn_frame_types_script); ++i)
         if (s[i].op == OPK_SET_INJECT_WORD) {
-            s[i].arg1 = forbidden_frame_types[idx].pkt_type;
+            s[i].arg1 = (size_t)forbidden_frame_types[idx].pkt_type;
             s[i].arg2 = forbidden_frame_types[idx].frame_type;
         } else if (s[i].op == OPK_C_EXPECT_CONN_CLOSE_INFO) {
             s[i].arg2 = forbidden_frame_types[idx].expected_err;
