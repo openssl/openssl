@@ -358,7 +358,6 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
             tmp = sk_X509_OBJECT_value(xl->store_ctx->objs, j);
             X509_STORE_unlock(xl->store_ctx);
         } else {
-            j = -1;
             tmp = NULL;
         }
         /*
