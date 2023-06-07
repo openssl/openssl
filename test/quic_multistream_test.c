@@ -458,6 +458,11 @@ static void helper_cleanup(struct helper *h)
     BIO_free(h->s_qtf_wbio_own);
     h->s_qtf_wbio_own = NULL;
 
+    if (h->qtf != NULL) {
+        qtest_fault_free(h->qtf);
+        h->qtf = NULL;
+    }
+
     if (h->s_fd >= 0) {
         BIO_closesocket(h->s_fd);
         h->s_fd = -1;
@@ -559,7 +564,9 @@ static int helper_init(struct helper *h, int free_order, int need_injector)
         BIO_set_data(h->s_qtf_wbio, h->qtf);
     }
 
-    h->s_net_bio_own    = NULL;
+    if (!need_injector)
+        h->s_net_bio_own = NULL;
+
     h->s_qtf_wbio_own   = NULL;
 
     h->c_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
@@ -2187,6 +2194,7 @@ static const struct script_op script_20[] = {
 static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
                                   unsigned char *buf, size_t len)
 {
+    int ok = 0;
     WPACKET wpkt;
     unsigned char frame_buf[8];
     size_t written;
@@ -2199,15 +2207,18 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
         return 0;
 
     if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1)))
-        return 0;
+        goto err;
 
     if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        return 0;
+        goto err;
 
     if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
-        return 0;
+        goto err;
 
-    return 1;
+    ok = 1;
+err:
+    WPACKET_finish(&wpkt);
+    return ok;
 }
 
 static const struct script_op script_21[] = {
@@ -2261,6 +2272,7 @@ static const struct script_op script_22[] = {
 static int script_23_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
                                   unsigned char *buf, size_t len)
 {
+    int ok = 0;
     WPACKET wpkt;
     unsigned char frame_buf[16];
     size_t written;
@@ -2274,15 +2286,18 @@ static int script_23_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 
     if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_NEW_TOKEN))
         || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)))
-        return 0;
+        goto err;
 
     if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        return 0;
+        goto err;
 
     if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
-        return 0;
+        goto err;
 
-    return 1;
+    ok = 1;
+err:
+    WPACKET_finish(&wpkt);
+    return ok;
 }
 
 static const struct script_op script_23[] = {
@@ -2307,6 +2322,7 @@ static const struct script_op script_23[] = {
 static int script_24_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
                                   unsigned char *buf, size_t len)
 {
+    int ok = 0;
     WPACKET wpkt;
     unsigned char frame_buf[16];
     size_t written;
@@ -2320,15 +2336,18 @@ static int script_24_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 
     if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1))
         || !TEST_true(WPACKET_quic_write_vlint(&wpkt, (((uint64_t)1) << 60) + 1)))
-        return 0;
+        goto err;
 
     if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        return 0;
+        goto err;
 
     if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
-        return 0;
+        goto err;
 
-    return 1;
+    ok = 1;
+err:
+    WPACKET_finish(&wpkt);
+    return ok;
 }
 
 static const struct script_op script_24[] = {
@@ -2410,6 +2429,7 @@ static const struct script_op script_27[] = {
 static int script_28_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
                                   unsigned char *buf, size_t len)
 {
+    int ok = 0;
     WPACKET wpkt;
     unsigned char frame_buf[32];
     size_t written;
@@ -2427,15 +2447,18 @@ static int script_28_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
         || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 123))
         || (h->inject_word1 == OSSL_QUIC_FRAME_TYPE_RESET_STREAM
            && !TEST_true(WPACKET_quic_write_vlint(&wpkt, 5)))) /* final size */
-        return 0;
+        goto err;
 
     if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        return 0;
+        goto err;
 
     if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
-        return 0;
+        goto err;
 
-    return 1;
+    ok = 1;
+err:
+    WPACKET_finish(&wpkt);
+    return ok;
 }
 
 static const struct script_op script_28[] = {
@@ -2523,6 +2546,7 @@ static const struct script_op script_31[] = {
 static int script_32_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
                                   unsigned char *buf, size_t len)
 {
+    int ok = 0;
     WPACKET wpkt;
     unsigned char frame_buf[64];
     size_t written;
@@ -2556,19 +2580,22 @@ static int script_32_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
                                                h->inject_word0 - 1))
         || !TEST_true(WPACKET_quic_write_vlint(&wpkt, offset))
         || !TEST_true(WPACKET_quic_write_vlint(&wpkt, flen)))
-        return 0;
+        goto err;
 
     for (i = 0; i < flen; ++i)
         if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
-            return 0;
+            goto err;
 
     if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        return 0;
+        goto err;
 
     if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
-        return 0;
+        goto err;
 
-    return 1;
+    ok = 1;
+err:
+    WPACKET_finish(&wpkt);
+    return ok;
 }
 
 static const struct script_op script_32[] = {
@@ -2717,6 +2744,7 @@ static const struct script_op script_38[] = {
 static int script_39_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
                                   unsigned char *buf, size_t len)
 {
+    int ok = 0;
     WPACKET wpkt;
     unsigned char frame_buf[64];
     size_t i, written;
@@ -2732,19 +2760,22 @@ static int script_39_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
         || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)) /* seq no */
         || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)) /* retire prior to */
         || !TEST_true(WPACKET_put_bytes_u8(&wpkt, 0))) /* len */
-        return 0;
+        goto err;
 
     for (i = 0; i < QUIC_STATELESS_RESET_TOKEN_LEN; ++i)
         if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
-            return 0;
+            goto err;
 
     if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        return 0;
+        goto err;
 
     if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
-        return 0;
+        goto err;
 
-    return 1;
+    ok = 1;
+err:
+    WPACKET_finish(&wpkt);
+    return ok;
 }
 
 static const struct script_op script_39[] = {
