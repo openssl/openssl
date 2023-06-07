@@ -9,12 +9,12 @@
 
 /*
  * NB: Changes to this file should also be reflected in
- * doc/man7/guide-tls-client-block.pod
+ * doc/man7/ossl-guide-tls-client-block.pod
  */
 
 #include <string.h>
 
-/* Include the appropriate header file for AF_INET and SOCK_STREAM */
+/* Include the appropriate header file for SOCK_STREAM */
 #ifdef _WIN32 /* Windows */
 # include <winsock2.h>
 #else /* Linux/Unix */
@@ -28,40 +28,50 @@
 /* Helper function to create a BIO connected to the server */
 static BIO *create_socket_bio(const char *hostname, const char *port)
 {
-    int sock;
-    BIO_ADDRINFO *ai = NULL;
+    int sock = -1;
+    BIO_ADDRINFO *res;
+    const BIO_ADDRINFO *ai = NULL;
     BIO *bio;
 
     /*
-     * Create a TCP socket. We could equally use non-OpenSSL calls such as
-     * "socket" here for this and the subsequent lookup, connect and close
-     * functions. But for portability reasons and also so that we get errors
-     * on the OpenSSL stack in the event of a failure we use OpenSSL's
-     * versions of these functions.
+     * Lookup IP address info for the server.
      */
-    sock = BIO_socket(AF_INET, SOCK_STREAM, 0, 0);
-    if (sock == -1)
-        return NULL;
-
-    /*
-     * Lookup IP address info for the server. For simplicity we only look at
-     * the first address returned.
-     */
-    if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, AF_INET,
-                       SOCK_STREAM, 0, &ai)) {
+    if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, 0, SOCK_STREAM, 0,
+                       &res)) {
         BIO_closesocket(sock);
         return NULL;
     }
 
-    /* Connect the socket to the server's address */
-    if (!BIO_connect(sock, BIO_ADDRINFO_address(ai), BIO_SOCK_NODELAY)) {
-        BIO_closesocket(sock);
-        BIO_ADDRINFO_free(ai);
-        return NULL;
+    /*
+     * Loop through all the possible addresses for the server and find one
+     * we can connect to.
+     */
+    for (ai = res; ai != NULL; ai = BIO_ADDRINFO_next(ai)) {
+        /*
+         * Create a TCP socket. We could equally use non-OpenSSL calls such
+         * as "socket" here for this and the subsequent connect and close
+         * functions. But for portability reasons and also so that we get
+         * errors on the OpenSSL stack in the event of a failure we use
+         * OpenSSL's versions of these functions.
+         */
+        sock = BIO_socket(BIO_ADDRINFO_family(ai), SOCK_STREAM, 0, 0);
+        if (sock == -1)
+            continue;
+
+        /* Connect the socket to the server's address */
+        if (!BIO_connect(sock, BIO_ADDRINFO_address(ai), BIO_SOCK_NODELAY)) {
+            BIO_closesocket(sock);
+            sock = -1;
+            continue;
+        }
     }
 
     /* Free the address information resources we allocated earlier */
-    BIO_ADDRINFO_free(ai);
+    BIO_ADDRINFO_free(res);
+
+    /* If sock is -1 then we've been unable to connect to the server */
+    if (sock == -1)
+        return NULL;
 
     /* Create a BIO to wrap the socket*/
     bio = BIO_new(BIO_s_socket());
@@ -123,6 +133,15 @@ int main(void)
         goto end;
     }
 
+    /*
+     * TLSv1.1 or earlier are deprecated by IETF and are generally to be
+     * avoided if possible. We require a mimimum TLS version of TLSv1.2.
+     */
+    if (!SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION)) {
+        printf("Failed to set the minimum TLS protocol version\n");
+        goto end;
+    }
+
     /* Create an SSL object to represent the TLS connection */
     ssl = SSL_new(ctx);
     if (ssl == NULL) {
@@ -181,20 +200,18 @@ int main(void)
     }
 
     /*
-     * Get up to sizeof(buf) -1  bytes of the response. OpenSSL does not
-     * guarantee that the data is a string or is NUL terminated. We reserve
-     * the last byte in the buffer for a trailing NUL which we add
-     * afterwards. We keep reading until the server closes the connection.
+     * Get up to sizeof(buf) bytes of the response. We keep reading until the
+     * server closes the connection.
      */
-    while (SSL_read_ex(ssl, buf, sizeof(buf) - 1, &readbytes)) {
+    while (SSL_read_ex(ssl, buf, sizeof(buf), &readbytes)) {
         /*
-        * We add a trailing NUL terminator and treat the response as a
-        * string for the purposes of this simple example. In fact OpenSSL
-        * does not guarantee this and in reality the response might be
-        * non-printable or have NUL characters in the middle of it.
+        * OpenSSL does not guarantee that the returned data is a string or
+        * that it is NUL terminated so we use fwrite() to write the exact
+        * number of bytes that we read. The data could be non-printable or
+        * have NUL characters in the middle of it. For this simple example
+        * we're going to print it to stdout anyway.
         */
-        buf[readbytes] = '\0';
-        printf("%s", buf);
+        fwrite(buf, 1, readbytes, stdout);
     }
     /* In case the response didn't finish with a newline we add one now */
     printf("\n");

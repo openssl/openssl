@@ -1,7 +1,7 @@
 #
 # To run the demos when linked with a shared library (default):
 #
-#    LD_LIBRARY_PATH=../.. ./hkdf
+#    LD_LIBRARY_PATH=../.. ./tls-client-block
 
 CFLAGS = -I../../include -g
 LDFLAGS = -L../..
