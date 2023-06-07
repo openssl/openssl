@@ -533,32 +533,36 @@ static int encode_case_12_dec(PACKET *pkt, ossl_ssize_t fail)
 {
     uint64_t max_streams_1 = 0, max_streams_2 = 0,
             frame_type_1 = 0, frame_type_2 = 0;
-    int is_minimal;
+    int is_minimal = 1, success_if;
 
+    success_if = (fail < 0 || fail >= 1);
     if (!TEST_int_eq(ossl_quic_wire_peek_frame_header(pkt, &frame_type_1,
                                                       &is_minimal),
-                     fail < 0 || fail >= 1))
+                     success_if))
         return 0;
 
-    if (!TEST_true(is_minimal))
+    if (!TEST_true(!success_if || is_minimal))
         return 0;
 
+    success_if = (fail < 0 || fail >= 3);
     if (!TEST_int_eq(ossl_quic_wire_decode_frame_max_streams(pkt,
                                                              &max_streams_1),
-                     fail < 0 || fail >= 3))
+                     success_if))
         return 0;
 
+    success_if = (fail < 0 || fail >= 4);
     if (!TEST_int_eq(ossl_quic_wire_peek_frame_header(pkt, &frame_type_2,
                                                       &is_minimal),
-                     fail < 0 || fail >= 4))
+                     success_if))
         return 0;
 
-    if (!TEST_true(is_minimal))
+    if (!TEST_true(!success_if || is_minimal))
         return 0;
 
+    success_if = (fail < 0);
     if (!TEST_int_eq(ossl_quic_wire_decode_frame_max_streams(pkt,
                                                              &max_streams_2),
-                     fail < 0))
+                     success_if))
         return 0;
 
     if ((fail < 0 || fail >= 3)
@@ -672,27 +676,30 @@ static int encode_case_15_dec(PACKET *pkt, ossl_ssize_t fail)
 {
     uint64_t max_streams_1 = 0, max_streams_2 = 0,
             frame_type_1 = 0, frame_type_2 = 0;
-    int is_minimal;
+    int is_minimal = 1, success_if;
 
+    success_if = (fail < 0 || fail >= 1);
     if (!TEST_int_eq(ossl_quic_wire_peek_frame_header(pkt, &frame_type_1,
                                                       &is_minimal),
-                     fail < 0 || fail >= 1))
+                     success_if))
         return 0;
 
-    if (!TEST_true(is_minimal))
+    if (!TEST_true(!success_if || is_minimal))
         return 0;
 
+    success_if = (fail < 0 || fail >= 3);
     if (!TEST_int_eq(ossl_quic_wire_decode_frame_streams_blocked(pkt,
                                                                  &max_streams_1),
-                     fail < 0 || fail >= 3))
+                     success_if))
         return 0;
 
+    success_if = (fail < 0 || fail >= 4);
     if (!TEST_int_eq(ossl_quic_wire_peek_frame_header(pkt, &frame_type_2,
                                                       &is_minimal),
-                     fail < 0 || fail >= 4))
+                     success_if))
         return 0;
 
-    if (!TEST_true(is_minimal))
+    if (!TEST_true(!success_if || is_minimal))
         return 0;
 
     if (!TEST_int_eq(ossl_quic_wire_decode_frame_streams_blocked(pkt,
