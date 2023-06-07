@@ -20,16 +20,13 @@ jobs:
         os:
           - windows-2019
 # really worth while running, too? cygwin should mask this
-#          - windows-2022
+          - windows-2022
         platform:
           - arch: win64
-            config: -DCMAKE_C_COMPILER=gcc
+            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips enable-quic
 # are we really learning sth new from win32?
           - arch: win32
-            config: -DCMAKE_C_COMPILER=gcc
-# if we activate this, more code changes are required:
-# see https://github.com/openssl/openssl/issues/21123
-#            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips enable-quic
+            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips enable-quic
     runs-on: ${{matrix.os}}
     env:
       CYGWIN_NOWINPATH: 1
