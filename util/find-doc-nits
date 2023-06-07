@@ -86,10 +86,10 @@ die "Argument of -m option may contain only man1, man3, man5, and/or man7"
 my @sections = ( split /[, ]/, $opt_m );
 
 my %mandatory_sections = (
-    '*' => [ 'NAME', 'DESCRIPTION', 'COPYRIGHT' ],
-    1   => [ 'SYNOPSIS', 'OPTIONS' ],
-    3   => [ 'SYNOPSIS', 'RETURN VALUES' ],
-    5   => [ ],
+    '*' => [ 'NAME', 'COPYRIGHT' ],
+    1   => [ 'DESCRIPTION', 'SYNOPSIS', 'OPTIONS' ],
+    3   => [ 'DESCRIPTION', 'SYNOPSIS', 'RETURN VALUES' ],
+    5   => [ 'DESCRIPTION' ],
     7   => [ ]
                          );
 
