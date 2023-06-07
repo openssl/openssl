@@ -32,8 +32,6 @@ jobs:
         apk --no-cache add build-base perl linux-headers git ${{ matrix.cc }}
 
     - uses: actions/checkout@v3
-      with:
-        submodules: true
 
     - name: config
       run: |
