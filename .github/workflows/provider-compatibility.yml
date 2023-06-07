@@ -40,9 +40,9 @@ jobs:
             url: "https://www.openssl.org/source/openssl-3.0.8.tar.gz",
           },
           {
-            dir: openssl-3.1.0,
-            tgz: openssl-3.1.0.tar.gz,
-            url: "https://www.openssl.org/source/openssl-3.1.0.tar.gz",
+            dir: openssl-3.1.1,
+            tgz: openssl-3.1.1.tar.gz,
+            url: "https://www.openssl.org/source/openssl-3.1.1.tar.gz",
           },
         ]
 
@@ -174,7 +174,7 @@ jobs:
         # later providers.  Problems in these situations ought to be
         # caught by cross branch testing before the release.
         tree_a: [ branch-master, branch-3.1, branch-3.0,
-                  openssl-3.0.0, openssl-3.0.8, openssl-3.1.0 ]
+                  openssl-3.0.0, openssl-3.0.8, openssl-3.1.1 ]
         tree_b: [ branch-master, branch-3.1, branch-3.0  ]
     steps:
       - name: early exit checks
