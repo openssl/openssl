@@ -12,281 +12,9 @@ demos/guide/tls-client-block.c
 ossl-guide-tls-client-block
 - OpenSSL Guide: Writing a simple blocking TLS client
 
-=head1 INTRODUCTION
-
-This page will walk you through the process of writing a simple blocking TLS
-client using OpenSSL.
-
-It assumes that you already have OpenSSL installed on your system; that you
-understand fundamental OpenSSL concepts (see L<crypto(7)>); and that you
-know how to write and build C code and link it against the libcrypto and libssl
-libraries that are provided by OpenSSL. It also assumes that you have a basic
-understanding of TCP/IP and sockets.
-
-=head1 WHAT IS TLS?
-
-TLS stands for Transport Layer Security. TLS allows applications to securely
-communicate with each other across a network such that the confidentiality of
-the information exchanged is protected (i.e. it prevents eavesdroppers from
-listening in to the communication). Additionally it protects the integrity of
-the information exchanged to prevent an attacker from changing it. Finally it
-provides authentication so that one or both parties can be sure that they are
-talking to who they think they are talking to and not some imposter.
-
-Sometimes TLS is referred to by its predecessor's name SSL (Secure Sockets
-Layer). OpenSSL dates from a time when the SSL name was still in common use and
-hence many of the functions and names used by OpenSSL contain the "SSL"
-abbreviation. Nonetheless OpenSSL contains a fully fledged TLS implementation.
-
-TLS is based on a client/server model. The application that initiates a
-communication is known as the client. The application that responds to a
-remotely initiated communication is the server.
-
-TLS is a standardised protocol and there are numerous different implementations
-of it. Due to the standards an OpenSSL client or server is able to communicate
-seamlessly with an application using some different implementation of TLS. TLS
-(and its predecessor SSL) have been around for a significant period of time and
-the protocol has undergone various changes over the years. Consequently there
-are different versions of the protocol available. TLS includes the ability to
-perform version negotiation so that the highest protocol version that the client
-and server share in common is used.
-
-=head1 SSL AND TLS VERSIONS
-
-SSL was initially developed by Netscape Communications and its first publicly
-released version was SSLv2 in 1995. Note that SSLv1 was never publicly released.
-SSLv3 came along quickly afterwards in 1996. Subsequently development of the
-protocol moved to the IETF which released the first version of TLS (TLSv1.0) in
-1999 as RFC2246. TLSv1.1 was released in 2006 as RFC4346 and TLSv1.2 came along
-in 2008 as RFC5246. The most recent version of the standard is TLSv1.3 which
-was released in 2018 as RFC8446.
-
-Today TLSv1.3 and TLSv1.2 are the most commonly deployed versions of the
-protocol. The IETF have formally deprecated TLSv1.1 and TLSv1.0, so anything
-below TLSv1.2 should be avoided since the older protocol versions are
-susceptible to security problems.
-
-OpenSSL does not support SSLv2 (it was removed in OpenSSL 1.1.0). Support for
-SSLv3 is available as a compile time option - but it is not built by default.
-Support for TLSv1.0, TLSv1.1, TLSv1.2 and TLSv1.3 are all available by default
-in a standard build of OpenSSL. However special run-time configuration is
-required in order to make TLSv1.0 and TLSv1.1 work successfully.
-
-OpenSSL will always try to negotiate the highest protocol version that it has
-been configured to support. In most cases this will mean either TLSv1.3 or
-TLSv1.2 is chosen.
-
-=head1 CERTIFICATES
-
-In order for a client to establish a connection to a server it must authenticate
-the identify of that server, i.e. it needs to confirm that the server is really
-the server that it claims to be and not some imposter. In order to do this the
-server will send to the client a digital certificate (also commonly referred to
-as an X.509 certificate). The certificate contains various information about the
-server including its full DNS hostname. Also within the certificate is the
-server's public key. The server operator will have a private key which is
-linked to the public key and must not be published.
-
-Along with the certificate the server will also send to the client proof that it
-knows the private key associated with the public key in the certificate. It does
-this by digitally signing a message to the client using that private key. The
-client can verify the signature using the public key from the certificate. If
-the signature verifies successfully then the client knows that the server is in
-possession of the correct private key.
-
-The certificate that the server sends will also be signed by a Certificate
-Authority. The Certificate Authority (commonly known as a CA) is a third party
-organisation that is responsible for verifying the information in the server's
-certificate (including its DNS hostname). The CA should only sign the
-certificate if it has been able to confirm that the server operator does indeed
-have control of the server associated with its DNS hostname and that the server
-operator has control of the private key.
-
-In this way, if the client trusts the CA that has signed the server's
-certificate and it can verify that the server has the right private key then it
-can trust that the server truly does represent the DNS hostname given in the
-certificate. The client must also verify that the hostname given in the
-certificate matches the hostname that it originally sent the request to.
-
-Once all of these checks have been done the client has successfully verified the
-identify of the server. OpenSSL can perform all of these checks automatically
-but it must be provided with certain information in order to do so, i.e. the set
-of CAs that the client trusts as well as the DNS hostname for the server that
-this client is trying to connect to.
-
-Note that it is common for certificates to be built up into a chain. For example
-a server's certificate may be signed by a key owned by a an intermediate CA.
-That intermediate CA also has a certificate containing its public key which is
-in turn signed by a key owned by a root CA. The client may only trust the root
-CA, but if the server sends both its own certificate and the certificate for the
-intermediate CA then the client can still successfully verify the identity of
-the server. There is a chain of trust between the root CA and the server.
-
-=head1 TRUSTED CERTIFICATE STORE
-
-The system described above only works if a chain of trust can be built between
-the set of CAs that the client trusts and the certificate that the server is
-using. The client must therefore have a set of certificates for CAs that it
-trusts before any communication can take place. OpenSSL itself does not provide
-such a set of certificates. Therefore you will need to make sure you have them
-before you start.
-
-Fortunately other organisations do maintain such a set of certificates. If you
-have obtained your copy of OpenSSL from an Operating System (OS) vendor (e.g. a
-Linux distribution) then normally the set of CA certificates will also be
-distributed with that copy.
-
-You can check this by running the OpenSSL command line application like this:
-
- openssl version -d
-
-This will display a value for B<OPENSSLDIR>. Look in the B<certs> sub directory
-of B<OPENSSLDIR> and check its contents. For example if B<OPENSSLDIR> is
-"/usr/local/ssl", then check the contents of the "/usr/local/ssl/certs"
-directory.
-
-You are expecting to see a list of files, typically with the suffix ".pem" or
-".0". If they exist then you already have a suitable trusted certificate store.
-
-If you are running your version of OpenSSL on Windows then OpenSSL (from version
-3.2 onwards) will use the default Windows set of trusted CAs.
-
-If you have built your version of OpenSSL from source, or obtained it from some
-other location and it does not have a set of trusted CA certificates then you
-will have to obtain them yourself. One such source is the Curl project. See the
-page L<https://curl.se/docs/caextract.html> where you can download trusted
-certificates in a single file. Rename the file to "cert.pem" and store it
-directly in B<OPENSSLDIR>. For example if B<OPENSSLDIR> is "/usr/local/ssl",
-then save it as "/usr/local/ssl/cert.pem".
-
-You can also use environment variables to override the default location that
-OpenSSL will look for its trusted certificate store. Set the B<SSL_CERT_PATH>
-environment variable to give the directory where OpenSSL should looks for its
-certificates or the B<SSL_CERT_FILE> environment variable to give the name of
-a single file containing all of the certifictes. See L<openssl-env(7)> for
-further details about OpenSSL environment variables. For example you could use
-this capability to have multiple versions of OpenSSL all installed on the same
-system using different values for B<OPENSSLDIR> but all using the same
-trusted certificate store.
-
-You can test that your trusted certificate store is setup correctly by using it
-via the OpenSSL command line. Use the following command to connect to a TLS
-server:
-
- openssl s_client www.openssl.org:443
-
-Once the command has connected type the letter "Q" followed by "<enter>" to exit
-the session. This will print a lot of information on the screen about the
-connection. Look for a block of text like this:
-
- SSL handshake has read 4584 bytes and written 403 bytes
- Verification: OK
-
-Hopefully if everything has worked then the "Verification" line will say "OK".
-If its not working as expected then you might see output like this instead:
-
- SSL handshake has read 4584 bytes and written 403 bytes
- Verification error: unable to get local issuer certificate
-
-The "unable to get local issuer certificate" error means that OpenSSL has been
-unable to find a trusted CA for the chain of certifictes provided by the server
-in its trusted certificate store. Check your trusted certificate store
-configuration again.
-
-Note that s_client is a testing tool and will still allow you to connect to the
-TLS server regardless of the verification error. Most applications should not do
-this and should abort the connection in the event of a verification error.
-
-=head1 IMPORTANT OBJECTS FOR TLS CLIENT APPLICATION
-
-A TLS connection is represented by the B<SSL> object in an OpenSSL based
-application. Once a connection with a server has been established a client can
-"write" data to the B<SSL> object to send data to the server, or "read" data
-from it to receive data from the server.
-
-A new B<SSL> object is created from an B<SSL_CTX> object. Think of an B<SSL_CTX>
-as a "factory" for creating B<SSL> objects. You can create a single B<SSL_CTX>
-object and then create multiple connections (i.e. B<SSL> objects) from it.
-Typically you can set up common configuration options on the B<SSL_CTX> so that
-all the B<SSL> object created from it inherit the same configuration options.
-
-Note that internaly to OpenSSL various items that are shared between multiple
-B<SSL> objects are cached in the B<SSL_CTX> for performance reasons. Therefore
-it is considered best practice to create one B<SSL_CTX> for use by multiple
-B<SSL> objects instead of having one B<SSL_CTX> for each B<SSL> object that you
-create.
-
-Each B<SSL> object is also associated with two B<BIO> objects. A B<BIO> object
-is used for sending or receiving data from the underlying transport layer. For
-example you might create a B<BIO> to represent a TCP socket. The B<SSL> object
-uses one B<BIO> for reading data and one B<BIO> for writing data. In most cases
-you would use the same B<BIO> for each direction but there could be some
-circumstances where you want them to be different.
-
-It is up to the application programmer to create the B<BIO> objects that are
-needed and supply them to the B<SSL> object. See L</Creating the socket and BIO>
-below for further information.
-
-Finally, a client can establish a "session" with a server. The session holds
-various TLS parameters about the connection between the client and the server.
-The session details can then be reused in a subsequent connection attempt to
-speed up the process of connecting. This is known as "resumption". Sessions are
-represented in OpenSSL by the B<SSL_SESSION> object. In TLSv1.2 there is always
-exactly one session per connection. In TLSv1.3 there can be any number per
-connection including none. The example presented on this page does not use the
-resumption capability and so we will not use the B<SSL_SESSION> object at this
-time.
-
-=head1 PHASES OF A TLS CONNECTION
-
-A client side TLS connection starts with an initial "set up" phase. The client
-creates the B<SSL_CTX> (if one has not already been created) and then creates an
-B<SSL> object to represent the TLS connection. Any connection specific
-configuration parameters are then applied and the underlying socket is created
-and associated with the B<SSL> via B<BIO> objects.
-
-After set up is complete the TLS "handshake" phase begins. A TLS handshake
-consists of the client and server exchanging a series of TLS handshake messages
-to establish the connection. The client starts by sending a "ClientHello"
-handshake message and the server responds with a "ServerHello". The handshake is
-complete once an endpoint has sent its last message (known as the "Finished"
-message) and received a Finished message from its peer. Note that this might
-occur at slightly different times for each peer. For example in TLSv1.3 the
-server always sends its Finished message before the client. The client later
-responds with its Finished message. At this point the client has completed the
-handshake because it has both sent and received a Finished message. The server
-has sent its Finished message but the Finished message from the client may still
-be in-flight, so the server is still in the handshake phase. It is even possible
-that the server will fail to complete the handshake (if it considers there is
-some problem with the messages sent from the client), even though the client may
-have already progressed to sending application data. In TLSv1.2 this can happen
-the other way around, i.e. the server finishes first and the client finishes
-second.
-
-Once the handshake is complete the application data transfer phase begins.
-Strictly speaking there are some situations where the client can start sending
-application data even earlier (using the TLSv1.3 "early data" capability) - but
-we're going to skip over that for this basic introduction.
-
-During application data transfer the client and server can read and write data
-to the connection freely. The details of this are typically left to some higher
-level application protocol (for example HTTP). Not all information exchanged
-during this phase is application data. Some protocol level messages may still
-be exchanged - so it is not necessarily the case that, just because the
-underlying socket is "readable", that application data will be available to read.
-
-When the connection is no longer required then it should be shutdown. A shutdown
-may be initiated by either the client or the server via a message known as a
-"close_notify" alert. The client or server that receives a close_notify may
-respond with one and then the connection is fully closed and application data
-can no longer be sent or received.
-
-Once shutdown is complete a TLS application must clean up by freeing the SSL
-object.
-
 =head1 SIMPLE BLOCKING TLS CLIENT EXAMPLE
 
-This section will present various source code samples demonstrating how to write
+This page will present various source code samples demonstrating how to write
 a simple TLS client application which connects to a server, sends an HTTP/1.0
 request to it, and reads back the response.
 
@@ -306,14 +34,23 @@ the B<demos/guide> directory of the OpenSSL source distribution in the file
 B<tls-client-block.c>. It is also available online at
 L<https://github.com/openssl/openssl/blob/master/demos/guide/tls-client-block.c>.
 
+We assume that you already have OpenSSL installed on your system; that you
+already have some fundamental understanding of OpenSSL concepts and TLS (see
+L<crypto(7)> and L<ossl-guide-tls-introduction(7)>); and that you know how to
+write and build C code and link it against the libcrypto and libssl libraries
+that are provided by OpenSSL. It also assumes that you have a basic
+understanding of TCP/IP and sockets.
+
 =head2 Creating the SSL_CTX and SSL objects
 
 The first step is to create an B<SSL_CTX> object for our client. We use the
-L<SSL_CTX_new(3)> function for this purpose. We pass as an argument the return
-value of the function L<TLS_client_method(3)>. You should use this method
-whenever you are writing a TLS client. This method will automatically use TLS
-version negotiation to select the highest version of the protocol that is
-mutually supported by both the client and the server.
+L<SSL_CTX_new(3)> function for this purpose. We could alternatively use
+L<SSL_CTX_new_ex(3)> if we want to associate the B<SSL_CTX> with a particular
+B<OSSL_LIB_CTX> (see L<crypto(7)> to learn about B<OSSL_LIB_CTX>). We pass as an
+argument the return value of the function L<TLS_client_method(3)>. You should
+use this method whenever you are writing a TLS client. This method will
+automatically use TLS version negotiation to select the highest version of the
+protocol that is mutually supported by both the client and the server.
 
     /*
      * Create an SSL_CTX which we can use to create SSL objects from. We
@@ -341,8 +78,9 @@ can safely be set to NULL to get the default handling.
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
 In order for certificate verification to be successful you must have configured
-where the trusted certifcate store to be used is located. In most cases you just
-want to use the default store so we call L<SSL_CTX_set_default_verify_paths(3)>.
+where the trusted certifcate store to be used is located (see
+L<ossl-guide-tls-introduction(7)>). In most cases you just want to use the
+default store so we call L<SSL_CTX_set_default_verify_paths(3)>.
 
     /* Use the default trusted certificate store */
     if (!SSL_CTX_set_default_verify_paths(ctx)) {
@@ -766,7 +504,7 @@ reasons. For example
 
 =item Failure to correctly setup the trusted certificate store
 
-See the section L</TRUSTED CERTIFICATE STORE> and check that your trusted
+See the page L<ossl-guide-tls-introduction(7)> and check that your trusted
 certificate store is correctly configured
 
 =item Unrecognised CA
@@ -803,7 +541,7 @@ intermediate CAs, or the issuer is simply unrecognised).
 
 =head1 SEE ALSO
 
-L<crypto(7)>
+L<crypto(7)>, L<ossl-guide-tls-introduction(7)>
 
 =head1 COPYRIGHT
 
