@@ -78,7 +78,6 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
         p += add;
         n = 0;
         pp[n++] = p;
-        i = 0;
         f = buf->data;
 
         esc = 0;
