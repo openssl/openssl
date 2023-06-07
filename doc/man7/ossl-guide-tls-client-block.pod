@@ -12,7 +12,7 @@ demos/guide/tls-client-block.c
 ossl-guide-tls-client-block
 - OpenSSL Guide: Writing a simple blocking TLS client
 
-=head1 Introduction
+=head1 INTRODUCTION
 
 This page will walk you through the process of writing a simple blocking TLS
 client using OpenSSL.
@@ -23,7 +23,7 @@ know how to write and build C code and link it against the libcrypto and libssl
 libraries that are provided by OpenSSL. It also assumes that you have a basic
 understanding of TCP/IP and sockets.
 
-=head1 What is TLS?
+=head1 WHAT IS TLS?
 
 TLS stands for Transport Layer Security. TLS allows applications to securely
 communicate with each other across a network such that the confidentiality of
@@ -51,7 +51,7 @@ are different versions of the protocol available. TLS includes the ability to
 perform version negotiation so that the highest protocol version that the client
 and server share in common is used.
 
-=head1 SSL and TLS versions
+=head1 SSL AND TLS VERSIONS
 
 SSL was initially developed by Netscape Communications and its first publicly
 released version was SSLv2 in 1995. Note that SSLv1 was never publicly released.
@@ -76,13 +76,13 @@ OpenSSL will always try to negotiate the highest protocol version that it has
 been configured to support. In most cases this will mean either TLSv1.3 or
 TLSv1.2 is chosen.
 
-=head1 Certificates
+=head1 CERTIFICATES
 
 In order for a client to establish a connection to a server it must authenticate
 the identify of that server, i.e. it needs to confirm that the server is really
 the server that it claims to be and not some imposter. In order to do this the
 server will send to the client a digital certificate (also commonly referred to
-as an X509 certificate). The certificate contains various information about the
+as an X.509 certificate). The certificate contains various information about the
 server including its full DNS hostname. Also within the certificate is the
 server's public key. The server operator will have a private key which is
 linked to the public key and must not be published.
@@ -122,7 +122,7 @@ CA, but if the server sends both its own certificate and the certificate for the
 intermediate CA then the client can still successfully verify the identity of
 the server. There is a chain of trust between the root CA and the server.
 
-=head1 Trusted Certificate Store
+=head1 TRUSTED CERTIFICATE STORE
 
 The system described above only works if a chain of trust can be built between
 the set of CAs that the client trusts and the certificate that the server is
@@ -197,7 +197,7 @@ Note that s_client is a testing tool and will still allow you to connect to the
 TLS server regardless of the verification error. Most applications should not do
 this and should abort the connection in the event of a verification error.
 
-=head1 Important objects for a TLS client application
+=head1 IMPORTANT OBJECTS FOR TLS CLIENT APPLICATION
 
 A TLS connection is represented by the B<SSL> object in an OpenSSL based
 application. Once a connection with a server has been established a client can
@@ -237,7 +237,7 @@ connection including none. The example presented on this page does not use the
 resumption capability and so we will not use the B<SSL_SESSION> object at this
 time.
 
-=head1 Phases of a TLS connection
+=head1 PHASES OF A TLS CONNECTION
 
 A client side TLS connection starts with an initial "set up" phase. The client
 creates the B<SSL_CTX> (if one has not already been created) and then creates an
@@ -284,7 +284,7 @@ can no longer be sent or received.
 Once shutdown is complete a TLS application must clean up by freeing the SSL
 object.
 
-=head1 Simple blocking TLS client example
+=head1 SIMPLE BLOCKING TLS CLIENT EXAMPLE
 
 This section will present various source code samples demonstrating how to write
 a simple TLS client application which connects to a server, sends an HTTP/1.0
@@ -350,6 +350,20 @@ want to use the default store so we call L<SSL_CTX_set_default_verify_paths(3)>.
         goto end;
     }
 
+We would also like to restrict the TLS versions that we are willing to accept to
+TLSv1.2 or above. TLS protocol versions earlier than that are generally to be
+avoided where possible. We can do that using
+L<SSL_CTX_set_min_proto_version(3)>:
+
+    /*
+     * TLSv1.1 or earlier are deprecated by IETF and are generally to be
+     * avoided if possible. We require a mimimum TLS version of TLSv1.2.
+     */
+    if (!SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION)) {
+        printf("Failed to set the minimum TLS protocol version\n");
+        goto end;
+    }
+
 That is all the setup that we need to do for the B<SSL_CTX>, so next we need to
 create an B<SSL> object to represent the TLS connection. In a real application
 we might expect to be creating more than one TLS connection over time. In that
@@ -387,27 +401,6 @@ to create an IPv4 TCP socket:
     if (sock == -1)
         return NULL;
 
-OpenSSL provides a helper wrapper function to do this which also integrates into
-the OpenSSL error system to log error data, e.g.
-
-    int sock;
-
-    /*
-     * Create a TCP socket. We could equally use non-OpenSSL calls such as
-     * "socket" here for this and the subsequent lookup, connect and close
-     * functions. But for portability reasons and also so that we get errors
-     * on the OpenSSL stack in the event of a failure we use OpenSSL's
-     * versions of these functions.
-     */
-    sock = BIO_socket(AF_INET, SOCK_STREAM, 0, 0);
-    if (sock == -1)
-        return NULL;
-
-See L<BIO_socket(3)> for further information on this function.
-
-Sockets created using the methods described above will automatically be blocking
-sockets - which is exactly what we want for this example.
-
 Once the socket is constructed it must be connected to the remote server. Again
 the details are platform specific but most platforms (including Windows)
 provide the POSIX compatible I<connect> function. For example:
@@ -432,36 +425,55 @@ provide the POSIX compatible I<connect> function. For example:
         return NULL;
     }
 
-OpenSSL also provides wrapper functions that can be used to assist with this
-too:
+OpenSSL provides portable helper functions to do these tasks which also
+integrate into the OpenSSL error system to log error data, e.g.
 
-    BIO_ADDRINFO *ai = NULL;
+   BIO_ADDRINFO *ai = NULL;
 
     /*
-     * Lookup IP address info for the server. For simplicity we only look at
-     * the first address returned.
+     * Lookup IP address info for the server.
      */
-    if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, AF_INET,
-                       SOCK_STREAM, 0, &ai)) {
+    if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, 0, SOCK_STREAM, 0,
+                       &res)) {
         BIO_closesocket(sock);
         return NULL;
     }
 
-    /* Connect the socket to the server's address */
-    if (!BIO_connect(sock, BIO_ADDRINFO_address(ai), BIO_SOCK_NODELAY)) {
-        BIO_closesocket(sock);
-        BIO_ADDRINFO_free(ai);
-        return NULL;
+    /*
+     * Loop through all the possible addresses for the server and find one
+     * we can connect to.
+     */
+    for (ai = res; ai != NULL; ai = BIO_ADDRINFO_next(ai)) {
+        /*
+         * Create a TCP socket. We could equally use non-OpenSSL calls such
+         * as "socket" here for this and the subsequent connect and close
+         * functions. But for portability reasons and also so that we get
+         * errors on the OpenSSL stack in the event of a failure we use
+         * OpenSSL's versions of these functions.
+         */
+        sock = BIO_socket(BIO_ADDRINFO_family(ai), SOCK_STREAM, 0, 0);
+        if (sock == -1)
+            continue;
+
+        /* Connect the socket to the server's address */
+        if (!BIO_connect(sock, BIO_ADDRINFO_address(ai), BIO_SOCK_NODELAY)) {
+            BIO_closesocket(sock);
+            sock = -1;
+            continue;
+        }
     }
 
     /* Free the address information resources we allocated earlier */
-    BIO_ADDRINFO_free(ai);
+    BIO_ADDRINFO_free(res);
 
+See L<BIO_lookup_ex(3)>, L<BIO_socket(3)>, L<BIO_connect(3)>,
+L<BIO_closesocket(3)>, L<BIO_ADDRINFO_next(3)>, L<BIO_ADDRINFO_address(3)> and
+L<BIO_ADDRINFO_free(3)> for further information on the functions used here. In
+the above example code the B<hostname> and B<port> variables are strings, e.g.
+"www.example.com" and "443".
 
-See L<BIO_lookup_ex(3)>, L<BIO_connect(3)>, L<BIO_closesocket(3)>,
-L<BIO_ADDRINFO_address(3)> and L<BIO_ADDRINFO_free(3)> for further information
-on the functions used here. In the above example code the B<hostname> and
-B<port> variables are strings, e.g. "www.example.com" and "443".
+Sockets created using the methods described above will automatically be blocking
+sockets - which is exactly what we want for this example.
 
 Once the socket has been created and connected we need to associate it with a
 BIO object:
@@ -492,7 +504,7 @@ responsible for its management and will free it automatically when the B<SSL> is
 freed. So, once L<SSL_set_bio(3)> has been been called, you should not call
 L<BIO_free(3)> on the B<BIO>.
 
- SSL_set_bio(ssl, bio, bio);
+    SSL_set_bio(ssl, bio, bio);
 
 =head2 Setting the server's hostname
 
@@ -524,12 +536,12 @@ like this:
 Here the HOSTNAME argument is a string representing the hostname of the server,
 e.g. "www.example.com".
 
-We also need to tell OpenSSL what hostname we expect to see in the certificate
-coming back from the server. This is almost always the same one that we asked
-for in the original request. This is important because, without this, we do not
-verify that the hostname in the certificate is what we expect it to be and any
-certificate is acceptable unless your application explicitly checks this itself.
-We do this via the L<SSL_set1_host(3)> function:
+Secondly, we need to tell OpenSSL what hostname we expect to see in the
+certificate coming back from the server. This is almost always the same one that
+we asked for in the original request. This is important because, without this,
+we do not verify that the hostname in the certificate is what we expect it to be
+and any certificate is acceptable unless your application explicitly checks this
+itself. We do this via the L<SSL_set1_host(3)> function:
 
     /*
      * Ensure we check during certificate verification that the server has
@@ -578,7 +590,7 @@ verification was successful (so the connection error must be due to some other
 cause). Otherwise we use the L<X509_verify_cert_error_string(3)> function to get
 a human readable error message.
 
-=head1 Sending and receiving data
+=head2 Sending and receiving data
 
 Once the handshake is complete we are able to send and receive application data.
 Exactly what data is sent and in what order is usually controlled by some
@@ -608,23 +620,22 @@ server.
     char buf[160];
 
     /*
-     * Get up to sizeof(buf) -1  bytes of the response. OpenSSL does not
-     * guarantee that the data is a string or is NUL terminated. We reserve
-     * the last byte in the buffer for a trailing NUL which we add
-     * afterwards. We keep reading until the server closes the connection.
+     * Get up to sizeof(buf) bytes of the response. We keep reading until the
+     * server closes the connection.
      */
-    while (SSL_read_ex(ssl, buf, sizeof(buf) - 1, &readbytes)) {
+    while (SSL_read_ex(ssl, buf, sizeof(buf), &readbytes)) {
         /*
-        * We add a trailing NUL terminator and treat the response as a
-        * string for the purposes of this simple example. In fact OpenSSL
-        * does not guarantee this and in reality the response might be
-        * non-printable or have NUL characters in the middle of it.
+        * OpenSSL does not guarantee that the returned data is a string or
+        * that it is NUL terminated so we use fwrite() to write the exact
+        * number of bytes that we read. The data could be non-printable or
+        * have NUL characters in the middle of it. For this simple example
+        * we're going to print it to stdout anyway.
         */
-        buf[readbytes] = '\0';
-        printf("%s", buf);
+        fwrite(buf, 1, readbytes, stdout);
     }
     /* In case the response didn't finish with a newline we add one now */
     printf("\n");
+
 
 We use the L<SSL_read_ex(3)> function to read the response. We don't know
 exactly how much data we are going to receive back so we enter a loop reading
@@ -658,7 +669,7 @@ L<SSL_get_error(3)> to determine the cause of the 0 return value.
 If L<SSL_get_error(3)> returns B<SSL_ERROR_ZERO_RETURN> then we know that the
 server has finished sending its data. Otherwise an error has occurred.
 
-=head1 Shuting down the connection
+=head2 Shuting down the connection
 
 Once we have finished reading data from the server then we are ready to close
 the connection down. We do this via the L<SSL_shutdown(3)> function which has
@@ -693,7 +704,7 @@ received. However in this case we already know that the server has sent us a
 call to L<SSL_read_ex(3)>. So this scenario should never happen in practice. We
 just treat it as an error in this example.
 
-=head1 Final clean up
+=head2 Final clean up
 
 Before the application exits we have to clean up some memory that we allocated.
 If we are exiting due to an error we might also want to display further
@@ -728,7 +739,7 @@ L<SSL_free(3)> function. Also, since we are not going to be creating any more
 TLS connections we must also free up the B<SSL_CTX> via a call to
 L<SSL_CTX_free(3)>.
 
-=head1 Troubleshooting
+=head1 TROUBLESHOOTING
 
 There are a number of things that might go wrong when running the demo
 application. This section desribes some common things you might encounter.
@@ -755,7 +766,7 @@ reasons. For example
 
 =item Failure to correctly setup the trusted certificate store
 
-See the section L</Trusted Certificate Store> and check that your trusted
+See the section L</TRUSTED CERTIFICATE STORE> and check that your trusted
 certificate store is correctly configured
 
 =item Unrecognised CA

@@ -4683,10 +4683,6 @@ DEPEND[html/man7/fips_module.html]=man7/fips_module.pod
 GENERATE[html/man7/fips_module.html]=man7/fips_module.pod
 DEPEND[man/man7/fips_module.7]=man7/fips_module.pod
 GENERATE[man/man7/fips_module.7]=man7/fips_module.pod
-DEPEND[html/man7/guide-tls-client-block.html]=man7/guide-tls-client-block.pod
-GENERATE[html/man7/guide-tls-client-block.html]=man7/guide-tls-client-block.pod
-DEPEND[man/man7/guide-tls-client-block.7]=man7/guide-tls-client-block.pod
-GENERATE[man/man7/guide-tls-client-block.7]=man7/guide-tls-client-block.pod
 DEPEND[html/man7/life_cycle-cipher.html]=man7/life_cycle-cipher.pod
 GENERATE[html/man7/life_cycle-cipher.html]=man7/life_cycle-cipher.pod
 DEPEND[man/man7/life_cycle-cipher.7]=man7/life_cycle-cipher.pod
@@ -4749,6 +4745,10 @@ DEPEND[man/man7/openssl_user_macros.7]=man7/openssl_user_macros.pod
 GENERATE[man/man7/openssl_user_macros.7]=man7/openssl_user_macros.pod
 DEPEND[man7/openssl_user_macros.pod]{pod}=man7/openssl_user_macros.pod.in
 GENERATE[man7/openssl_user_macros.pod]=man7/openssl_user_macros.pod.in
+DEPEND[html/man7/ossl-guide-tls-client-block.html]=man7/ossl-guide-tls-client-block.pod
+GENERATE[html/man7/ossl-guide-tls-client-block.html]=man7/ossl-guide-tls-client-block.pod
+DEPEND[man/man7/ossl-guide-tls-client-block.7]=man7/ossl-guide-tls-client-block.pod
+GENERATE[man/man7/ossl-guide-tls-client-block.7]=man7/ossl-guide-tls-client-block.pod
 DEPEND[html/man7/ossl_store-file.html]=man7/ossl_store-file.pod
 GENERATE[html/man7/ossl_store-file.html]=man7/ossl_store-file.pod
 DEPEND[man/man7/ossl_store-file.7]=man7/ossl_store-file.pod
@@ -4942,7 +4942,6 @@ html/man7/ct.html \
 html/man7/des_modes.html \
 html/man7/evp.html \
 html/man7/fips_module.html \
-html/man7/guide-tls-client-block.html \
 html/man7/life_cycle-cipher.html \
 html/man7/life_cycle-digest.html \
 html/man7/life_cycle-kdf.html \
@@ -4958,6 +4957,7 @@ html/man7/openssl-glossary.html \
 html/man7/openssl-quic.html \
 html/man7/openssl-threads.html \
 html/man7/openssl_user_macros.html \
+html/man7/ossl-guide-tls-client-block.html \
 html/man7/ossl_store-file.html \
 html/man7/ossl_store.html \
 html/man7/passphrase-encoding.html \
@@ -5076,7 +5076,6 @@ man/man7/ct.7 \
 man/man7/des_modes.7 \
 man/man7/evp.7 \
 man/man7/fips_module.7 \
-man/man7/guide-tls-client-block.7 \
 man/man7/life_cycle-cipher.7 \
 man/man7/life_cycle-digest.7 \
 man/man7/life_cycle-kdf.7 \
@@ -5092,6 +5091,7 @@ man/man7/openssl-glossary.7 \
 man/man7/openssl-quic.7 \
 man/man7/openssl-threads.7 \
 man/man7/openssl_user_macros.7 \
+man/man7/ossl-guide-tls-client-block.7 \
 man/man7/ossl_store-file.7 \
 man/man7/ossl_store.7 \
 man/man7/passphrase-encoding.7 \
