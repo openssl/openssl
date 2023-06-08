@@ -9,12 +9,12 @@
 
 /*
  * NB: Changes to this file should also be reflected in
- * doc/man7/ossl-guide-tls-client-block.pod
+ * doc/man7/ossl-guide-quic-client-block.pod
  */
 
 #include <string.h>
 
-/* Include the appropriate header file for SOCK_STREAM */
+/* Include the appropriate header file for SOCK_DGRAM */
 #ifdef _WIN32 /* Windows */
 # include <winsock2.h>
 #else /* Linux/Unix */
@@ -26,7 +26,8 @@
 #include <openssl/err.h>
 
 /* Helper function to create a BIO connected to the server */
-static BIO *create_socket_bio(const char *hostname, const char *port)
+static BIO *create_socket_bio(const char *hostname, const char *port,
+                              BIO_ADDR **peer_addr)
 {
     int sock = -1;
     BIO_ADDRINFO *res;
@@ -36,7 +37,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port)
     /*
      * Lookup IP address info for the server.
      */
-    if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, 0, SOCK_STREAM, 0,
+    if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, 0, SOCK_DGRAM, 0,
                        &res))
         return NULL;
 
@@ -52,20 +53,34 @@ static BIO *create_socket_bio(const char *hostname, const char *port)
          * errors on the OpenSSL stack in the event of a failure we use
          * OpenSSL's versions of these functions.
          */
-        sock = BIO_socket(BIO_ADDRINFO_family(ai), SOCK_STREAM, 0, 0);
+        sock = BIO_socket(BIO_ADDRINFO_family(ai), SOCK_DGRAM, 0, 0);
         if (sock == -1)
             continue;
 
         /* Connect the socket to the server's address */
-        if (!BIO_connect(sock, BIO_ADDRINFO_address(ai), BIO_SOCK_NODELAY)) {
+        if (!BIO_connect(sock, BIO_ADDRINFO_address(ai), 0)) {
             BIO_closesocket(sock);
             sock = -1;
             continue;
         }
 
-        /* We have a connected socket so break out of the loop */
+        /* Set to nonblocking mode */
+        if (!BIO_socket_nbio(sock, 1)) {
+            sock = -1;
+            continue;
+        }
+
         break;
     }
+
+    if (sock != -1) {
+        *peer_addr = BIO_ADDR_dup(BIO_ADDRINFO_address(ai));
+        if (*peer_addr == NULL) {
+            BIO_closesocket(sock);
+            return NULL;
+        }
+    }
+
 
     /* Free the address information resources we allocated earlier */
     BIO_ADDRINFO_free(res);
@@ -75,7 +90,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port)
         return NULL;
 
     /* Create a BIO to wrap the socket*/
-    bio = BIO_new(BIO_s_socket());
+    bio = BIO_new(BIO_s_datagram());
     if (bio == NULL)
         BIO_closesocket(sock);
 
@@ -101,7 +116,9 @@ static BIO *create_socket_bio(const char *hostname, const char *port)
 
 /*
  * Simple application to send a basic HTTP/1.0 request to a server and
- * print the response on the screen.
+ * print the response on the screen. Note that HTTP/1.0 over QUIC is
+ * non-standard and will not typically be supported by real world servers. This
+ * is for demonstration purposes only.
  */
 int main(void)
 {
@@ -110,17 +127,19 @@ int main(void)
     BIO *bio = NULL;
     int res = EXIT_FAILURE;
     int ret;
+    unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '1', '.', '0' };
     const char *request =
         "GET / HTTP/1.0\r\nConnection: close\r\nHost: "HOSTNAME"\r\n\r\n";
     size_t written, readbytes;
     char buf[160];
+    BIO_ADDR *peer_addr = NULL;
 
     /*
      * Create an SSL_CTX which we can use to create SSL objects from. We
-     * want an SSL_CTX for creating clients so we use TLS_client_method()
-     * here.
+     * want an SSL_CTX for creating clients so we use
+     * OSSL_QUIC_client_method() here.
      */
-    ctx = SSL_CTX_new(TLS_client_method());
+    ctx = SSL_CTX_new(OSSL_QUIC_client_method());
     if (ctx == NULL) {
         printf("Failed to create the SSL_CTX\n");
         goto end;
@@ -139,15 +158,6 @@ int main(void)
         goto end;
     }
 
-    /*
-     * TLSv1.1 or earlier are deprecated by IETF and are generally to be
-     * avoided if possible. We require a minimum TLS version of TLSv1.2.
-     */
-    if (!SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION)) {
-        printf("Failed to set the minimum TLS protocol version\n");
-        goto end;
-    }
-
     /* Create an SSL object to represent the TLS connection */
     ssl = SSL_new(ctx);
     if (ssl == NULL) {
@@ -159,7 +169,7 @@ int main(void)
      * Create the underlying transport socket/BIO and associate it with the
      * connection.
      */
-    bio = create_socket_bio(HOSTNAME, PORT);
+    bio = create_socket_bio(HOSTNAME, PORT, &peer_addr);
     if (bio == NULL) {
         printf("Failed to crete the BIO\n");
         goto end;
@@ -186,9 +196,18 @@ int main(void)
         goto end;
     }
 
-    /* Do the handshake with the server */
-    if (SSL_connect(ssl) < 1) {
-        printf("Failed to connect to the server\n");
+    /* SSL_set_alpn_protos returns 0 for success! */
+    if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn)) != 0) {
+        printf("Failed to set the ALPN for the connection\n");
+        goto end;
+    }
+
+    if (!SSL_set_initial_peer_addr(ssl, peer_addr)) {
+        printf("Failed to set the inital peer address\n");
+        goto end;
+    }
+
+    if ((ret = SSL_connect(ssl)) < 1) {
         /*
          * If the failure is due to a verification error we can get more
          * information about it from SSL_get_verify_result().
@@ -238,20 +257,16 @@ int main(void)
     }
 
     /*
-     * The peer already shutdown gracefully (we know this because of the
-     * SSL_ERROR_ZERO_RETURN above). We should do the same back.
+     * Repeatedly call SSL_shutdown() until the connection is fully
+     * closed.
      */
-    ret = SSL_shutdown(ssl);
-    if (ret < 1) {
-        /*
-         * ret < 0 indicates an error. ret == 0 would be unexpected here
-         * because that means "we've sent a close_notify and we're waiting
-         * for one back". But we already know we got one from the peer
-         * because of the SSL_ERROR_ZERO_RETURN above.
-         */
-        printf("Error shutting down\n");
-        goto end;
-    }
+    do {
+        ret = SSL_shutdown(ssl);
+        if (ret < 0) {
+            printf("Error shuting down: %d\n", ret);
+            goto end;
+        }
+    } while (ret != 1);
 
     /* Success! */
     res = EXIT_SUCCESS;
@@ -271,5 +286,6 @@ int main(void)
      */
     SSL_free(ssl);
     SSL_CTX_free(ctx);
+    BIO_ADDR_free(peer_addr);
     return res;
 }
