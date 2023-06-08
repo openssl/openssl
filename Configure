@@ -2442,17 +2442,39 @@ EOF
             } elsif ($dest eq '') {
                 $ddest = '';
             } else {
-                $ddest = cleanfile($sourced, $_, $blddir);
+                $ddest = cleanfile($sourced, $dest, $blddir);
 
                 # If the destination doesn't exist in source, it can only be
                 # a generated file in the build tree.
                 if ($ddest eq $src_configdata || ! -f $ddest) {
-                    $ddest = cleanfile($buildd, $_, $blddir);
+                    $ddest = cleanfile($buildd, $dest, $blddir);
                 }
             }
-            foreach (@{$depends{$dest}}) {
-                my $d = cleanfile($sourced, $_, $blddir);
-                my $d2 = cleanfile($buildd, $_, $blddir);
+            foreach my $f (@{$depends{$dest}}) {
+                # If the dependency destination is generated, dependencies
+                # may have an extra syntax to separate the intended inclusion
+                # directory from the module to be loaded: a | instead of a
+                # / as directory separator.
+                # Do note that this has to be handled in the build file
+                # template as well.
+                # $i = inclusion path in source directory
+                # $i2 = inclusion path in build directory
+                # $m = module path (within the inclusion path)
+                # $i = full module path in source directory
+                # $i2 = full module path in build directory
+                my $i; my $i2; my $m; my $d; my $d2;
+                if ($unified_info{generate}->{$ddest}
+                    && $f =~ m/^(.*?)\|(.*)$/) {
+                    $i = $1;
+                    $m = $2;
+                    $i = cleanfile($sourced, $i, $blddir);
+                    $i2 = cleanfile($buildd, $i, $blddir);
+                    $d = cleanfile($sourced, "$i/$m", $blddir);
+                    $d2 = cleanfile($buildd, "$i/$m", $blddir);
+                } else {
+                    $d = cleanfile($sourced, $f, $blddir);
+                    $d2 = cleanfile($buildd, $f, $blddir);
+                }
 
                 # If we know it's generated, or assume it is because we can't
                 # find it in the source tree, we set file we depend on to be
@@ -2462,13 +2484,20 @@ EOF
                         keys %{$unified_info{generate}})
                     || ! -f $d) {
                     $d = $d2;
+                    $i = $i2;
+                }
+                if ($i) {
+                    # Put together the computed inclusion dir with the
+                    # original module name.  Do note that we conserve the
+                    # Unixly path syntax for the module path.
+                    $d = "$i|$m";
                 }
                 $unified_info{depends}->{$ddest}->{$d} = 1;
 
                 # Fix up associated attributes
                 $unified_info{attributes}->{depends}->{$ddest}->{$d} =
-                    $attributes{depends}->{$dest}->{$_}
-                    if defined $attributes{depends}->{$dest}->{$_};
+                    $attributes{depends}->{$dest}->{$f}
+                    if defined $attributes{depends}->{$dest}->{$f};
             }
         }
 
@@ -2638,7 +2667,9 @@ EOF
         next if $dest eq "";
         foreach my $d (keys %{$unified_info{depends}->{$dest}}) {
             next unless $d =~ /\.(h|pm)$/;
-            my $i = dirname($d);
+            # Take into account when a dependency uses the inclusion|module
+            # syntax
+            my $i = $d =~ m/\|/ ? $` : dirname($d);
             my $spot =
                 $d eq "configdata.pm" || defined($unified_info{generate}->{$d})
                 ? 'build' : 'source';
