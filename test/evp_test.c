@@ -3683,11 +3683,11 @@ static int prov_available(char *providers)
     int more = 1;
 
     while (more) {
-        for (; isspace(*providers); providers++)
+        for (; isspace((unsigned char)(*providers)); providers++)
             continue;
         if (*providers == '\0')
             break;               /* End of the road */
-        for (p = providers; *p != '\0' && !isspace(*p); p++)
+        for (p = providers; *p != '\0' && !isspace((unsigned char)(*p)); p++)
             continue;
         if (*p == '\0')
             more = 0;
