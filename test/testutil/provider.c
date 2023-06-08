@@ -177,11 +177,11 @@ int fips_provider_version_match(OSSL_LIB_CTX *libctx, const char *versions)
     } mode;
 
     while (*versions != '\0') {
-        for (; isspace(*versions); versions++)
+        for (; isspace((unsigned char)(*versions)); versions++)
             continue;
         if (*versions == '\0')
             break;
-        for (p = versions; *versions != '\0' && !isspace(*versions); versions++)
+        for (p = versions; *versions != '\0' && !isspace((unsigned char)(*versions)); versions++)
             continue;
         if (*p == '!') {
             mode = MODE_NE;

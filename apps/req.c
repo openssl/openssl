@@ -198,7 +198,7 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
 
     /* Check syntax. */
     /* Skip leading whitespace, make a copy. */
-    while (isspace(*kv))
+    while (isspace(_UC(*kv)))
         kv++;
     if ((p = strchr(kv, '=')) == NULL) {
         BIO_printf(bio_err, "Parse error on -addext: missing '='\n");
@@ -210,7 +210,7 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
 
     /* Skip trailing space before the equal sign. */
     for (p = kv + off; p > kv; --p)
-        if (!isspace(p[-1]))
+        if (!isspace(_UC(p[-1])))
             break;
     if (p == kv) {
         BIO_printf(bio_err, "Parse error on -addext: missing key\n");
