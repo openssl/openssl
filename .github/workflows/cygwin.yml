@@ -20,13 +20,15 @@ jobs:
         os:
           - windows-2019
 # really worth while running, too? cygwin should mask this
-          - windows-2022
+#          - windows-2022
         platform:
           - arch: win64
-            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips enable-quic
-# are we really learning sth new from win32?
-          - arch: win32
-            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips enable-quic
+            config: -DCMAKE_C_COMPILER=gcc
+# Is anyone interested in strict checking on cygwin?
+#            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips enable-quic
+# are we really learning sth new from win32? So let's save some CO2 for now disabling this
+#          - arch: win32
+#            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips enable-quic
     runs-on: ${{matrix.os}}
     env:
       CYGWIN_NOWINPATH: 1
@@ -47,7 +49,7 @@ jobs:
 #    - name: Clone repo 
 #      run: bash -c "pwd && git clone --branch ${{ github.ref_name }} --depth 1 https://github.com/${{ github.repository }}.git"
     - name: Full build
-      run: bash -c "pwd && ls && ./config ${{ matrix.platform.config }} && make $MAKE_PARAMS"
+      run: bash -c "gcc --version && ./config ${{ matrix.platform.config }} && make $MAKE_PARAMS"
 # Disable testing for now. TBD: Need local cygwin installation to debug .
 #    - name: Run openssl tests
 #      run: bash -c "cd openssl && make V=1 test"
