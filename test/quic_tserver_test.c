@@ -119,6 +119,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 
     tserver_args.net_rbio = s_net_bio;
     tserver_args.net_wbio = s_net_bio;
+    tserver_args.alpn = NULL;
     if (use_fake_time)
         tserver_args.now_cb = fake_now;
 

@@ -156,6 +156,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     tserver_args.libctx = libctx;
     tserver_args.net_rbio = sbio;
     tserver_args.net_wbio = fisbio;
+    tserver_args.alpn = NULL;
 
     if (!TEST_ptr(*qtserv = ossl_quic_tserver_new(&tserver_args, certfile,
                                                   keyfile)))

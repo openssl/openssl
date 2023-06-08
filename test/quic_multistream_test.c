@@ -489,6 +489,7 @@ static int helper_init(struct helper *h, int free_order)
 
     s_args.net_rbio     = h->s_net_bio;
     s_args.net_wbio     = h->s_net_bio;
+    s_args.alpn         = NULL;
     s_args.now_cb       = get_time;
     s_args.now_cb_arg   = h;
 
