@@ -11,6 +11,7 @@
 #include "internal/quic_channel.h"
 #include "internal/quic_statm.h"
 #include "internal/common.h"
+#include "internal/time.h"
 
 /*
  * QUIC Test Server Module
@@ -44,9 +45,22 @@ static int alpn_select_cb(SSL *ssl, const unsigned char **out,
                           unsigned char *outlen, const unsigned char *in,
                           unsigned int inlen, void *arg)
 {
-    static const unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
+    QUIC_TSERVER *srv = arg;
+    static const unsigned char alpndeflt[] = {
+        8, 'o', 's', 's', 'l', 't', 'e', 's', 't'
+    };
+    static const unsigned char *alpn;
+    size_t alpnlen;
 
-    if (SSL_select_next_proto((unsigned char **)out, outlen, alpn, sizeof(alpn),
+    if (srv->args.alpn == NULL) {
+        alpn = alpndeflt;
+        alpnlen = sizeof(alpn);
+    } else {
+        alpn = srv->args.alpn;
+        alpnlen = srv->args.alpnlen;
+    }
+
+    if (SSL_select_next_proto((unsigned char **)out, outlen, alpn, alpnlen,
                               in, inlen) != OPENSSL_NPN_NEGOTIATED)
         return SSL_TLSEXT_ERR_ALERT_FATAL;
 
@@ -422,4 +436,49 @@ uint64_t ossl_quic_tserver_pop_incoming_stream(QUIC_TSERVER *srv)
     ossl_quic_stream_map_remove_from_accept_queue(qsm, qs, ossl_time_zero());
 
     return qs->id;
+}
+
+int ossl_quic_tserver_is_stream_totally_acked(QUIC_TSERVER *srv,
+                                              uint64_t stream_id)
+{
+    QUIC_STREAM *qs;
+
+    qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(srv->ch),
+                                        stream_id);
+    if (qs == NULL)
+        return 1;
+
+    return ossl_quic_sstream_is_totally_acked(qs->sstream);
+}
+
+int ossl_quic_tserver_get_net_read_desired(QUIC_TSERVER *srv)
+{
+    return ossl_quic_reactor_net_read_desired(
+                ossl_quic_channel_get_reactor(srv->ch));
+}
+
+int ossl_quic_tserver_get_net_write_desired(QUIC_TSERVER *srv)
+{
+    return ossl_quic_reactor_net_write_desired(
+                ossl_quic_channel_get_reactor(srv->ch));
+}
+
+OSSL_TIME ossl_quic_tserver_get_deadline(QUIC_TSERVER *srv)
+{
+    return ossl_quic_reactor_get_tick_deadline(
+                ossl_quic_channel_get_reactor(srv->ch));
+}
+
+int ossl_quic_tserver_shutdown(QUIC_TSERVER *srv)
+{
+    ossl_quic_channel_local_close(srv->ch, 0);
+
+    /* TODO(QUIC): !SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH */
+
+    if (ossl_quic_channel_is_terminated(srv->ch))
+        return 1;
+
+    ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(srv->ch), 0);
+
+    return ossl_quic_channel_is_terminated(srv->ch);
 }
