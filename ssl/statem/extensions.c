@@ -1449,7 +1449,11 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
                     group_id = pgroups[i];
 
                     if (check_in_list(s, group_id, clntgroups, clnt_num_groups,
-                                      1))
+                                      1)
+                            && tls_group_allowed(s, group_id,
+                                                 SSL_SECOP_CURVE_SUPPORTED)
+                            && tls_valid_group(s, group_id, TLS1_3_VERSION,
+                                               TLS1_3_VERSION, 0, NULL))
                         break;
                 }
 
