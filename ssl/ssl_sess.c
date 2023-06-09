@@ -919,14 +919,19 @@ long SSL_SESSION_get_timeout(const SSL_SESSION *s)
 
 long SSL_SESSION_get_time(const SSL_SESSION *s)
 {
-    if (s == NULL)
-        return 0;
-    return (long)ossl_time_to_time_t(s->time);
+    return (long) SSL_SESSION_get_time_ex(s);
 }
 
-long SSL_SESSION_set_time(SSL_SESSION *s, long t)
+time_t SSL_SESSION_get_time_ex(const SSL_SESSION *s)
 {
-    OSSL_TIME new_time = ossl_time_from_time_t((time_t)t);
+    if (s == NULL)
+        return 0;
+    return ossl_time_to_time_t(s->time);
+}
+
+time_t SSL_SESSION_set_time_ex(SSL_SESSION *s, time_t t)
+{
+    OSSL_TIME new_time = ossl_time_from_time_t(t);
 
     if (s == NULL)
         return 0;
@@ -942,6 +947,11 @@ long SSL_SESSION_set_time(SSL_SESSION *s, long t)
         ssl_session_calculate_timeout(s);
     }
     return t;
+}
+
+long SSL_SESSION_set_time(SSL_SESSION *s, long t)
+{
+    return (long) SSL_SESSION_set_time_ex(s, (time_t) t);
 }
 
 int SSL_SESSION_get_protocol_version(const SSL_SESSION *s)

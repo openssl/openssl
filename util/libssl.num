@@ -581,3 +581,5 @@ SSL_write_ex2                           ?	3_3_0	EXIST::FUNCTION:
 SSL_get_value_uint                      ?	3_3_0	EXIST::FUNCTION:
 SSL_set_value_uint                      ?	3_3_0	EXIST::FUNCTION:
 SSL_poll                                ?	3_3_0	EXIST::FUNCTION:
+SSL_SESSION_get_time_ex                 ?	3_3_0	EXIST::FUNCTION:
+SSL_SESSION_set_time_ex                 ?	3_3_0	EXIST::FUNCTION:
