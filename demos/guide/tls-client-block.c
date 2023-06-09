@@ -62,6 +62,9 @@ static BIO *create_socket_bio(const char *hostname, const char *port)
             sock = -1;
             continue;
         }
+
+        /* We have a connected socket so break out of the loop */
+        break;
     }
 
     /* Free the address information resources we allocated earlier */
@@ -103,7 +106,8 @@ int main(void)
     BIO *bio = NULL;
     int res = EXIT_FAILURE;
     int ret;
-    const char *request = "GET / HTTP/1.0\r\nHost: "HOSTNAME"\r\n\r\n";
+    const char *request =
+        "GET / HTTP/1.0\r\nConnection: close\r\nHost: "HOSTNAME"\r\n\r\n";
     size_t written, readbytes;
     char buf[160];
 
