@@ -86,7 +86,8 @@ ok($fatal_alert, "Server duplicated HRR");
 #        TLSv1.3. We expect the server to select X25519 in the HRR and the
 #        handshake to complete successfully
 SKIP: {
-    skip "EC is disabled in this build", 1 if disabled("ec");
+    skip "EC/TLSv1.2 is disabled in this build", 1
+        if disabled("ec") || disabled("tls1_2");
 
     $proxy->clear();
     $proxy->clientflags("-groups P-256:brainpoolP512r1:X25519");
