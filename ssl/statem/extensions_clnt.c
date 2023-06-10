@@ -1986,6 +1986,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         goto oqs_cleanup;
       }
       if (!EVP_PKEY_set1_tls_encodedpoint(skey, classical_encoded_pt, classical_encodedlen)) {
+
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
                  SSL_R_BAD_ECPOINT);
         EVP_PKEY_free(skey);

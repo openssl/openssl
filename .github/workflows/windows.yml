@@ -57,11 +57,7 @@ jobs:
         - windows-2022
     runs-on: ${{matrix.os}}
     steps:
-<<<<<<< HEAD
-    - uses: actions/checkout@v2
-=======
     - uses: actions/checkout@v3
->>>>>>> OpenSSL_1_1_1t
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: shogo82148/actions-setup-perl@v1
     - name: prepare the build directory
@@ -85,11 +81,7 @@ jobs:
         - windows-2022
     runs-on: ${{matrix.os}}
     steps:
-<<<<<<< HEAD
-    - uses: actions/checkout@v2
-=======
     - uses: actions/checkout@v3
->>>>>>> OpenSSL_1_1_1t
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: shogo82148/actions-setup-perl@v1
     - name: prepare the build directory
