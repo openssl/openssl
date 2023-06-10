@@ -424,14 +424,14 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 {
     int ret = 0;
 
-    if (mode_3gpp
-            && ((!ctx->permitTAInExtraCertsForIR
-                     || OSSL_CMP_MSG_get_bodytype(msg) != OSSL_CMP_PKIBODY_IP)))
+    if (ctx->permitTAInExtraCertsForIR
+            && OSSL_CMP_MSG_get_bodytype(msg) == OSSL_CMP_PKIBODY_IP)
+        ossl_cmp_info(ctx, mode_3gpp ?
+                      "normal mode failed; trying now 3GPP mode trusting extraCerts"
+                      : "trying first normal mode using trust store");
+    else if (mode_3gpp)
         return 0;
 
-    ossl_cmp_info(ctx,
-                  mode_3gpp ? "normal mode failed; trying now 3GPP mode trusting extraCerts"
-                            : "trying first normal mode using trust store");
     if (check_msg_with_certs(ctx, msg->extraCerts, "extraCerts",
                              NULL, NULL, msg, mode_3gpp))
         return 1;
