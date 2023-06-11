@@ -375,22 +375,16 @@ Defaults to the environment variable C<no_proxy> if set, else C<NO_PROXY>.
 OSSL_CMP_CTX_set_http_cb() sets the optional BIO connect/disconnect callback
 function, which has the prototype
 
- typedef BIO *(*HTTP_bio_cb_t) (BIO *bio, void *ctx, int connect, int detail);
+ typedef BIO *(*HTTP_bio_cb_t) (BIO *bio, void *arg, int connect, int detail);
 
-The callback may modify the I<bio> provided by L<OSSL_CMP_MSG_http_perform(3)>,
-whereby it may make use of a custom defined argument I<ctx>
-stored in the OSSL_CMP_CTX by means of OSSL_CMP_CTX_set_http_cb_arg().
-During connection establishment, just after calling BIO_do_connect_retry(),
-the function is invoked with the I<connect> argument being 1 and the I<detail>
-argument being 1 if HTTPS is requested, i.e., SSL/TLS should be enabled. On
-disconnect I<connect> is 0 and I<detail> is 1 in case no error occurred, else 0.
-For instance, on connect the function may prepend a TLS BIO to implement HTTPS;
-after disconnect it may do some diagnostic output and/or specific cleanup.
-The function should return NULL to indicate failure.
-After disconnect the modified BIO will be deallocated using BIO_free_all().
+The callback may modify the I<bio> provided by L<OSSL_CMP_MSG_http_perform(3)>
+as described for the I<bio_update_fn> parameter of L<OSSL_HTTP_open(3)>.
+The callback may make use of a custom defined argument I<arg>,
+as described for the I<arg> parameter of L<OSSL_HTTP_open(3)>.
+The argument is stored in the OSSL_CMP_CTX using OSSL_CMP_CTX_set_http_cb_arg().
 
-OSSL_CMP_CTX_set_http_cb_arg() sets an argument, respectively a pointer to
-a structure containing arguments,
+OSSL_CMP_CTX_set_http_cb_arg() sets the argument, respectively a pointer to
+a structure containing arguments such as an B<SSL_CTX> structure,
 optionally to be used by the http connect/disconnect callback function.
 I<arg> is not consumed, and it must therefore explicitly be freed when not
 needed any more. I<arg> may be NULL to clear the entry.
@@ -404,8 +398,6 @@ which has the type
 
  typedef OSSL_CMP_MSG *(*OSSL_CMP_transfer_cb_t) (OSSL_CMP_CTX *ctx,
                                                   const OSSL_CMP_MSG *req);
-
-Returns 1 on success, 0 on error.
 
 Default is NULL, which implies the use of L<OSSL_CMP_MSG_http_perform(3)>.
 The callback should send the CMP request message it obtains via the I<req>
@@ -813,7 +805,7 @@ the id-it-signKeyPairTypes OID and prints info on the General Response contents:
 L<OSSL_CMP_exec_IR_ses(3)>, L<OSSL_CMP_exec_CR_ses(3)>,
 L<OSSL_CMP_exec_KUR_ses(3)>, L<OSSL_CMP_exec_GENM_ses(3)>,
 L<OSSL_CMP_exec_certreq(3)>, L<OSSL_CMP_MSG_http_perform(3)>,
-L<ERR_print_errors_cb(3)>
+L<ERR_print_errors_cb(3)>, L<OSSL_HTTP_open(3)>
 
 =head1 HISTORY
 

@@ -99,8 +99,8 @@ I<bio_update_fn> is a BIO connect/disconnect callback function with prototype
  BIO *(*OSSL_HTTP_bio_cb_t)(BIO *bio, void *arg, int connect, int detail)
 
 The callback function may modify the BIO provided in the I<bio> argument,
-whereby it may make use of a custom defined argument I<arg>,
-which may for instance point to an B<SSL_CTX> structure.
+whereby it may use an optional custom defined argument I<arg>,
+which can for instance point to an B<SSL_CTX> structure.
 During connection establishment, just after calling BIO_do_connect_retry(), the
 callback function is invoked with the I<connect> argument being 1 and
 I<detail> being 1 if I<use_ssl> is nonzero (i.e., HTTPS is requested), else 0.
@@ -108,7 +108,7 @@ On disconnect I<connect> is 0 and I<detail> is 1 if no error occurred, else 0.
 For instance, on connect the callback may push an SSL BIO to implement HTTPS;
 after disconnect it may do some diagnostic output and pop and free the SSL BIO.
 
-The callback function must return either the potentially modified BIO I<bio>.
+The callback function must return either the potentially modified BIO I<bio>
 or NULL to indicate failure, in which case it should not modify the BIO.
 
 Here is a simple example that supports TLS connections (but not via a proxy):
@@ -135,6 +135,8 @@ Here is a simple example that supports TLS connections (but not via a proxy):
  }
 
 After disconnect the modified BIO will be deallocated using BIO_free_all().
+The optional callback function argument I<arg> is not consumed,
+so must be freed by the caller when not needed any more.
 
 The I<buf_size> parameter specifies the response header maximum line length.
 A value <= 0 means that the B<OSSL_HTTP_DEFAULT_MAX_LINE_LEN> (4KiB) is used.
