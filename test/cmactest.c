@@ -31,6 +31,13 @@ static const char xtskey[32] = {
     0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
 };
 
+#ifdef __GNUC__
+# pragma GCC diagnostic ignored "-Woverlength-strings"
+#endif
+#ifdef __clang__
+# pragma clang diagnostic ignored "-Woverlength-strings"
+#endif
+
 static struct test_st {
     const char key[32];
     int key_len;
