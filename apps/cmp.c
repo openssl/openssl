@@ -1879,10 +1879,6 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             CMP_warn("ignoring -proxy option since -server is not given");
         if (opt_no_proxy != NULL)
             CMP_warn("ignoring -no_proxy option since -server is not given");
-        if (opt_tls_used) {
-            CMP_warn("ignoring -tls_used option since -server is not given");
-            opt_tls_used = 0;
-        }
         goto set_path;
     }
     if (!OSSL_HTTP_parse_url(opt_server, &use_ssl, NULL /* user */,
@@ -1892,8 +1888,8 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         goto err;
     }
     if (use_ssl && !opt_tls_used) {
-        CMP_err("missing -tls_used option since -server URL indicates HTTPS");
-        goto err;
+        CMP_warn("assuming -tls_used since -server URL indicates HTTPS");
+        opt_tls_used = 1;
     }
 
     BIO_snprintf(server_port, sizeof(server_port), "%s", port);

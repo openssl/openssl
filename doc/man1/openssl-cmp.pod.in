@@ -464,8 +464,8 @@ of the CMP server to connect to using HTTP(S).
 This option excludes I<-port> and I<-use_mock_srv>.
 It is ignored if I<-rspin> is given with enough filename arguments.
 
-The scheme C<https> may be given only if the B<-tls_used> option is provided.
-In this case the default port is 443, else 80.
+If the scheme C<https> is given, the B<-tls_used> option is implied.
+When TLS is used, the default port is 443, otherwise 80.
 The optional userinfo and fragment components are ignored.
 Any given query component is handled as part of the path component.
 If a path is included it provides the default value for the B<-path> option.
@@ -475,9 +475,9 @@ If a path is included it provides the default value for the B<-path> option.
 The HTTP(S) proxy server to use for reaching the CMP server unless B<-no_proxy>
 applies, see below.
 The proxy port defaults to 80 or 443 if the scheme is C<https>; apart from that
-the optional C<http://> or C<https://> prefix is ignored (note that TLS may be
-enabled by B<-tls_used>), as well as any path, userinfo, and query, and fragment
-components.
+the optional C<http://> or C<https://> prefix is ignored (note that using TLS
+may be required by B<-tls_used> or B<-server> with the prefix C<https>),
+as well as any path, userinfo, and query, and fragment components.
 Defaults to the environment variable C<http_proxy> if set, else C<HTTP_PROXY>
 in case no TLS is used, otherwise C<https_proxy> if set, else C<HTTPS_PROXY>.
 This option is ignored if I<-server> is not given.
@@ -568,7 +568,7 @@ Non-trusted intermediate CA certificate(s).
 Any extra certificates given with the B<-cert> option are appended to it.
 All these certificates may be useful for cert path construction
 for the own CMP signer certificate (to include in the extraCerts field of
-request messages) and for the TLS client certificate (if TLS is enabled)
+request messages) and for the TLS client certificate (if TLS is used)
 as well as for chain building
 when validating server certificates (checking signature-based
 CMP message protection) and when validating newly enrolled certificates.
@@ -841,14 +841,14 @@ B<-tls_key>.
 
 =item B<-tls_used>
 
-Enable using TLS (even when other TLS-related options are not set)
-for message exchange with CMP server via HTTP.
+Make the CMP client use TLS (regardless if other TLS-related options are set)
+for message exchange with the server via HTTP.
 This option is not supported with the I<-port> option.
-It is ignored if the I<-server> option is not given or I<-use_mock_srv> is given
-or I<-rspin> is given with enough filename arguments.
+It is implied of the B<-server> option is given with the scheme C<https>.
+It is ignored if the B<-server> option is not given or B<-use_mock_srv> is given
+or B<-rspin> is given with enough filename arguments.
 
-The following TLS-related options are ignored
-if B<-tls_used> is not given or does not take effect.
+The following TLS-related options are ignored if TLS is not used.
 
 =item B<-tls_cert> I<filename>|I<uri>
 
