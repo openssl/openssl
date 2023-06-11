@@ -275,9 +275,10 @@ const char *OSSL_CMP_CTX_get0_propq(const OSSL_CMP_CTX *ctx);
 /* CMP general options: */
 #  define OSSL_CMP_OPT_LOG_VERBOSITY 0
 /* CMP transfer options: */
-#  define OSSL_CMP_OPT_KEEP_ALIVE 10
-#  define OSSL_CMP_OPT_MSG_TIMEOUT 11
+#  define OSSL_CMP_OPT_KEEP_ALIVE    10
+#  define OSSL_CMP_OPT_MSG_TIMEOUT   11
 #  define OSSL_CMP_OPT_TOTAL_TIMEOUT 12
+#  define OSSL_CMP_OPT_USE_TLS       13
 /* CMP request options: */
 #  define OSSL_CMP_OPT_VALIDITY_DAYS 20
 #  define OSSL_CMP_OPT_SUBJECTALTNAME_NODEFAULT 21

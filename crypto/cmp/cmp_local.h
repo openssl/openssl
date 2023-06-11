@@ -49,6 +49,7 @@ struct ossl_cmp_ctx_st {
     int keep_alive; /* persistent connection: 0=no, 1=prefer, 2=require */
     int msg_timeout; /* max seconds to wait for each CMP message round trip */
     int total_timeout; /* max number of seconds an enrollment may take, incl. */
+    int tls_used; /* whether to use TLS for client-side HTTP connections */
     /* attempts polling for a response if a 'waiting' PKIStatus is received */
     time_t end_time; /* session start time + totaltimeout */
 # ifndef OPENSSL_NO_HTTP

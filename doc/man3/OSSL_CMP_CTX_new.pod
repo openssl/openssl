@@ -235,6 +235,11 @@ The following options can be set:
         A value <= 0 means no limitation (waiting indefinitely).
         Default is 0.
 
+=item B<OSSL_CMP_OPT_USE_TLS>
+
+        Use TLS for client-side HTTP connections if the given value is nonzero.
+        Default is 0 (false).
+
 =item B<OSSL_CMP_OPT_VALIDITY_DAYS>
 
         Number of days new certificates are asked to be valid for.

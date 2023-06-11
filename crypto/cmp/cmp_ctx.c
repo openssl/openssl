@@ -946,6 +946,9 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
     case OSSL_CMP_OPT_TOTAL_TIMEOUT:
         ctx->total_timeout = val;
         break;
+    case OSSL_CMP_OPT_USE_TLS:
+        ctx->tls_used = val != 0;
+        break;
     case OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR:
         ctx->permitTAInExtraCertsForIR = val;
         break;
@@ -1010,6 +1013,8 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
         return ctx->msg_timeout;
     case OSSL_CMP_OPT_TOTAL_TIMEOUT:
         return ctx->total_timeout;
+    case OSSL_CMP_OPT_USE_TLS:
+        return ctx->tls_used;
     case OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR:
         return ctx->permitTAInExtraCertsForIR;
     case OSSL_CMP_OPT_REVOCATION_REASON:

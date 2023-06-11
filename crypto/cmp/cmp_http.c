@@ -68,7 +68,7 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
 
     if (ctx->serverPort != 0)
         BIO_snprintf(server_port, sizeof(server_port), "%d", ctx->serverPort);
-    tls_used = OSSL_CMP_CTX_get_http_cb_arg(ctx) != NULL;
+    tls_used = OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_USE_TLS);
     if (ctx->http_ctx == NULL)
         ossl_cmp_log3(DEBUG, ctx, "connecting to CMP server %s:%s%s",
                       ctx->server, server_port, tls_used ? " using TLS" : "");
