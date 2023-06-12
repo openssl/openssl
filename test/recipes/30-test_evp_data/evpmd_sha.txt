@@ -58,6 +58,25 @@ Input = "a"
 Ncopy = 64
 Output = cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0
 
+Availablein = default
+Digest = SHA256-192
+Input = "abc"
+Output = ba7816bf8f01cfea414140de5dae2223b00361a396177a9c
+
+Availablein = default
+Digest = SHA256-192
+Input = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+Output = 248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167
+
+Availablein = default
+Digest = SHA256-192
+Input = "a"
+Ncopy = 288
+Count = 3472
+Input = "a"
+Ncopy = 64
+Output = cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e
+
 Digest = SHA384
 Input = "abc"
 Output = cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7

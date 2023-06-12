@@ -44,6 +44,10 @@ Available with the default provider:
 
 =over 4
 
+=item SHA2-256/192
+
+Known names are "SHA2-256/192", "SHA-256/192" and "SHA256-192".
+
 =item SHA2-512/224
 
 Known names are "SHA2-512/224", "SHA-512/224" and "SHA512-224".
