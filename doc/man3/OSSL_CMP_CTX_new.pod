@@ -237,8 +237,14 @@ The following options can be set:
 
 =item B<OSSL_CMP_OPT_USE_TLS>
 
-        Use TLS for client-side HTTP connections if the given value is nonzero.
-        Default is 0 (false).
+        Use this option to indicate to the HTTP implementation
+        whether TLS is going to be used for the connection (resulting in HTTPS).
+        The value 1 indicates that TLS is used for client-side HTTP connections,
+        which needs to be implemented via a callback function set by
+        OSSL_CMP_CTX_set_http_cb().
+        The value 0 indicates that TLS is not used.
+        Default is -1 for backward compatibility: TLS is used by the client side
+        if and only if OSSL_CMP_CTX_set_http_cb_arg() sets a non-NULL I<arg>.
 
 =item B<OSSL_CMP_OPT_VALIDITY_DAYS>
 
@@ -387,6 +393,7 @@ as described for the I<bio_update_fn> parameter of L<OSSL_HTTP_open(3)>.
 The callback may make use of a custom defined argument I<arg>,
 as described for the I<arg> parameter of L<OSSL_HTTP_open(3)>.
 The argument is stored in the OSSL_CMP_CTX using OSSL_CMP_CTX_set_http_cb_arg().
+See also the B<OSSL_CMP_OPT_USE_TLS> option described above.
 
 OSSL_CMP_CTX_set_http_cb_arg() sets the argument, respectively a pointer to
 a structure containing arguments such as an B<SSL_CTX> structure,

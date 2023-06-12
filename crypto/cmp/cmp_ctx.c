@@ -123,6 +123,7 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
 
     ctx->keep_alive = 1;
     ctx->msg_timeout = -1;
+    ctx->tls_used = -1; /* default for backward compatibility */
 
     if ((ctx->untrusted = sk_X509_new_null()) == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
@@ -947,7 +948,7 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
         ctx->total_timeout = val;
         break;
     case OSSL_CMP_OPT_USE_TLS:
-        ctx->tls_used = val != 0;
+        ctx->tls_used = val;
         break;
     case OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR:
         ctx->permitTAInExtraCertsForIR = val;

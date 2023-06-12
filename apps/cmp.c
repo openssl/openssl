@@ -1891,8 +1891,8 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         CMP_warn("assuming -tls_used since -server URL indicates HTTPS");
         opt_tls_used = 1;
     }
-    if (opt_tls_used)
-        (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_USE_TLS, 1);
+    if (!OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_USE_TLS, opt_tls_used))
+        goto err;
 
     BIO_snprintf(server_port, sizeof(server_port), "%s", port);
     if (opt_path == NULL)
