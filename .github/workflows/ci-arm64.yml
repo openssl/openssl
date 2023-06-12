@@ -1,0 +1,36 @@
+name: Build OpenSSL Arm64
+
+on:
+  workflow_dispatch:
+    inputs:
+      openssl_build:
+        description: 'OpenSSL Arm64'
+        required: false
+        default: true
+        type: boolean
+      openssl_clang_build:
+        description: 'OpenSSL with clang-cl Arm64'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  build-openssl-clang-arm64:
+    if: ${{ inputs.openssl_clang_build }}
+
+    runs-on: [self-hosted, Windows, ARM64, GCC]
+    timeout-minutes: 600
+
+    steps:
+    
+    - name: Build OpenSSL with clang-cl Arm64
+      shell: cmd
+      run: |
+        git clone https://github.com/openssl/openssl.git --single-branch --depth 1
+        cd openssl
+        call "%VCINSTALLDIR%\Auxiliary\Build\vcvarsall.bat" arm64
+        set VSCMD_DEBUG=3
+        set PATH=%PATH%;%VCINSTALLDIR%\Tools\Llvm\ARM64\bin
+        perl Configure VC-WIN64-CLANGASM-ARM
+        nmake
+
