@@ -844,7 +844,7 @@ B<-tls_key>.
 Make the CMP client use TLS (regardless if other TLS-related options are set)
 for message exchange with the server via HTTP.
 This option is not supported with the I<-port> option.
-It is implied of the B<-server> option is given with the scheme C<https>.
+It is implied if the B<-server> option is given with the scheme C<https>.
 It is ignored if the B<-server> option is not given or B<-use_mock_srv> is given
 or B<-rspin> is given with enough filename arguments.
 
