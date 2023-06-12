@@ -187,7 +187,6 @@ static int ch_init(QUIC_CHANNEL *ch)
                                   ch->cc_method, ch->cc_data)) == NULL)
         goto err;
 
-
     if (!ossl_quic_stream_map_init(&ch->qsm, get_stream_limit, ch,
                                    &ch->max_streams_bidi_rxfc,
                                    &ch->max_streams_uni_rxfc,
@@ -708,7 +707,7 @@ static void rxku_detected(QUIC_PN pn, void *arg)
      * if transmission of application data is going in only one direction and
      * nothing else is happening with the connection. However, since the peer
      * cannot initiate a subsequent (spontaneous) TXKU until its prior
-     * (spontaneous or solicited) TXKU has completed - meaning that that prior
+     * (spontaneous or solicited) TXKU has completed - meaning that prior
      * TXKU's trigger packet (or subsequent packet) has been acknowledged, this
      * can lead to very long times before a TXKU is considered 'completed'.
      * Optimise this by forcing ACK generation after triggering TXKU.
@@ -2896,4 +2895,14 @@ uint64_t ossl_quic_channel_get_tx_key_epoch(QUIC_CHANNEL *ch)
 uint64_t ossl_quic_channel_get_rx_key_epoch(QUIC_CHANNEL *ch)
 {
     return ossl_qrx_get_key_epoch(ch->qrx);
+}
+
+int ossl_quic_channel_trigger_txku(QUIC_CHANNEL *ch)
+{
+    if (!txku_allowed(ch))
+        return 0;
+
+    ch->ku_locally_initiated = 1;
+    ch_trigger_txku(ch);
+    return 1;
 }
