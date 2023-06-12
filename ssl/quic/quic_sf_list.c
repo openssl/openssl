@@ -20,6 +20,9 @@ struct stream_frame_st {
 
 static void stream_frame_free(SFRAME_LIST *fl, STREAM_FRAME *sf)
 {
+    if (fl->cleanse && sf->data != NULL)
+        OPENSSL_cleanse((unsigned char *)sf->data,
+                        sf->range.end - sf->range.start);
     ossl_qrx_pkt_release(sf->pkt);
     OPENSSL_free(sf);
 }
@@ -294,6 +297,10 @@ int ossl_sframe_list_move_data(SFRAME_LIST *fl,
             if (!write_at_cb(limit, data, len, cb_arg))
                 /* data did not fit */
                 return 0;
+
+            if (fl->cleanse)
+                OPENSSL_cleanse((unsigned char *)data,
+                                sf->range.end - sf->range.start);
 
             /* release the packet */
             sf->data = NULL;

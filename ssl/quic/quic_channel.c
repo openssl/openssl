@@ -2379,8 +2379,13 @@ static int ch_init_new_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs,
     if (can_send && (qs->sstream = ossl_quic_sstream_new(INIT_APP_BUF_LEN)) == NULL)
         goto err;
 
-    if (can_recv && (qs->rstream = ossl_quic_rstream_new(NULL, NULL, 0)) == NULL)
-        goto err;
+    if (can_recv) {
+        if ((qs->rstream = ossl_quic_rstream_new(NULL, NULL, 0)) == NULL)
+            goto err;
+        ossl_quic_rstream_set_cleanse(qs->rstream,
+                                      (ch->tls->ctx->options
+                                          & SSL_OP_CLEANSE_PLAINTEXT) != 0);
+    }
 
     /* TXFC */
     if (!ossl_quic_txfc_init(&qs->txfc, &ch->conn_txfc))

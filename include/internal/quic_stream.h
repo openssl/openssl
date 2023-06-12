@@ -414,6 +414,11 @@ int ossl_quic_rstream_move_to_rbuf(QUIC_RSTREAM *qrs);
  * than currently occupied.
  */
 int ossl_quic_rstream_resize_rbuf(QUIC_RSTREAM *qrs, size_t rbuf_size);
+
+/*
+ * Sets flag to cleanse the buffered data when user reads it.
+ */
+void ossl_quic_rstream_set_cleanse(QUIC_RSTREAM *qrs, int cleanse);
 # endif
 
 #endif

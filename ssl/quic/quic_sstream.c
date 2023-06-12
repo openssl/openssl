@@ -349,7 +349,7 @@ static void qss_cull(QUIC_SSTREAM *qss)
      * can only cull contiguous areas at the start of the ring buffer anyway.
      */
     if (h != NULL)
-        ring_buf_cpop_range(&qss->ring_buf, h->range.start, h->range.end);
+        ring_buf_cpop_range(&qss->ring_buf, h->range.start, h->range.end, 0);
 }
 
 int ossl_quic_sstream_set_buffer_size(QUIC_SSTREAM *qss, size_t num_bytes)

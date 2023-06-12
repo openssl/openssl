@@ -443,6 +443,43 @@ renegotiation between OpenSSL clients and unpatched servers B<only>, while
 B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> allows initial connections
 and renegotiation between OpenSSL and unpatched clients or servers.
 
+=head2 Applicability of options to QUIC connections and streams
+
+These options apply to SSL objects referencing a QUIC connection:
+
+=over 4
+
+=item SSL_OP_ALLOW_NO_DHE_KEX
+
+=item SSL_OP_NO_TX_CERTIFICATE_COMPRESSION
+
+=item SSL_OP_NO_RX_CERTIFICATE_COMPRESSION
+
+=item SSL_OP_NO_TICKET
+
+=item SSL_OP_PRIORITIZE_CHACHA
+
+=back
+
+Other options do not have an effect and will be ignored.
+
+These options apply to SSL objects referencing a QUIC stream:
+
+=over 4
+
+=item SSL_OP_CLEANSE_PLAINTEXT
+
+=back
+
+Other options do not have an effect and will be ignored.
+
+If an SSL object is a QUIC connection object with a default stream attached,
+only the stream-relevant options are applied. If it is a QUIC connection
+without a default stream, the stream-relevant options are ignored.
+
+Connection and stream relevant options are initialized from the options
+set on SSL_CTX before the connection or stream objects are created.
+
 =head1 RETURN VALUES
 
 SSL_CTX_set_options() and SSL_set_options() return the new options bit-mask

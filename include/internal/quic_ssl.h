@@ -35,6 +35,7 @@ __owur long ossl_quic_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void)
 __owur size_t ossl_quic_pending(const SSL *s);
 __owur int ossl_quic_num_ciphers(void);
 __owur const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u);
+__owur int ossl_quic_set_ssl_op(SSL *ssl, uint64_t op);
 int ossl_quic_renegotiate_check(SSL *ssl, int initok);
 
 typedef struct quic_conn_st QUIC_CONNECTION;
