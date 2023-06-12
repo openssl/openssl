@@ -743,7 +743,7 @@ static ossl_inline void ignore_res(int x)
 static void qrx_key_update_initiated(OSSL_QRX *qrx, QUIC_PN pn)
 {
     if (!ossl_qrl_enc_level_set_key_update(&qrx->el_set, QUIC_ENC_LEVEL_1RTT))
-        /* Returns 0 if already in RXKU, so we don't call callback again. */
+        /* We are already in RXKU, so we don't call the callback again. */
         return;
 
     if (qrx->key_update_cb != NULL)
