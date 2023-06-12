@@ -2727,6 +2727,11 @@ int SSL_key_update(SSL *s, int updatetype)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(s))
+        return ossl_quic_key_update(s, updatetype);
+#endif
+
     if (sc == NULL)
         return 0;
 
@@ -2759,6 +2764,11 @@ int SSL_key_update(SSL *s, int updatetype)
 int SSL_get_key_update_type(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(s))
+        return ossl_quic_get_key_update_type(s);
+#endif
 
     if (sc == NULL)
         return 0;

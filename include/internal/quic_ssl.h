@@ -34,6 +34,8 @@ __owur long ossl_quic_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg);
 __owur long ossl_quic_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
 __owur long ossl_quic_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void));
 __owur size_t ossl_quic_pending(const SSL *s);
+__owur int ossl_quic_key_update(SSL *s, int update_type);
+__owur int ossl_quic_get_key_update_type(const SSL *s);
 __owur int ossl_quic_num_ciphers(void);
 __owur const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u);
 int ossl_quic_renegotiate_check(SSL *ssl, int initok);

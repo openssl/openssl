@@ -1558,6 +1558,7 @@ SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags)
  *   (BIO/)SSL_write            => ossl_quic_write
  *         SSL_pending          => ossl_quic_pending
  *         SSL_stream_conclude  => ossl_quic_conn_stream_conclude
+ *         SSL_key_update       => ossl_quic_key_update
  */
 
 /* SSL_get_error */
@@ -2686,6 +2687,56 @@ int ossl_quic_get_conn_close_info(SSL *ssl,
     info->is_local      = !tc->remote;
     info->is_transport  = !tc->app;
     return 1;
+}
+
+/*
+ * SSL_key_update
+ * --------------
+ */
+int ossl_quic_key_update(SSL *ssl, int update_type)
+{
+    QCTX ctx;
+
+    if (!expect_quic_conn_only(ssl, &ctx))
+        return 0;
+
+    switch (update_type) {
+    case SSL_KEY_UPDATE_NOT_REQUESTED:
+        /*
+         * QUIC signals peer key update implicily by triggering a local
+         * spontaneous TXKU. Silently upgrade this to SSL_KEY_UPDATE_REQUESTED.
+         */
+    case SSL_KEY_UPDATE_REQUESTED:
+        break;
+
+    default:
+        /* Unknown type - error. */
+        return 0;
+    }
+
+    quic_lock(ctx.qc);
+
+    /* Attempt to perform a TXKU. */
+    if (!ossl_quic_channel_trigger_txku(ctx.qc->ch)) {
+        quic_unlock(ctx.qc);
+        return 0;
+    }
+
+    quic_unlock(ctx.qc);
+    return 1;
+}
+
+/*
+ * SSL_get_key_update_type
+ * -----------------------
+ */
+int ossl_quic_get_key_update_type(const SSL *s)
+{
+    /*
+     * We always handle key updates immediately so a key update is never
+     * pending.
+     */
+    return SSL_KEY_UPDATE_NONE;
 }
 
 /*
