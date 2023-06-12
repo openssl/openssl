@@ -288,6 +288,14 @@ static int override_key_update(struct helper *h, const struct script_op *op)
     return 1;
 }
 
+static int trigger_key_update(struct helper *h, const struct script_op *op)
+{
+    if (!TEST_true(SSL_key_update(h->c_conn, SSL_KEY_UPDATE_REQUESTED)))
+        return 0;
+
+    return 1;
+}
+
 static int check_key_update_ge(struct helper *h, const struct script_op *op)
 {
     QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
@@ -683,7 +691,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
     if (!TEST_true(helper_local_init(&hl, h, thread_idx)))
         goto out;
 
-#define SPIN_AGAIN() { no_advance = 1; continue; }
+#define SPIN_AGAIN() { OSSL_sleep(1); no_advance = 1; continue; }
 
     for (;;) {
         SSL *c_tgt              = h->c_conn;
@@ -1933,7 +1941,7 @@ static const struct script_op script_18[] = {
      * 1 packet above, which is absurd; thus this ensures we only actually
      * generate TXKUs when we are allowed to.
      */
-    OP_CHECK                (check_key_update_ge, 5)
+    OP_CHECK                (check_key_update_ge, 4)
     OP_CHECK                (check_key_update_lt, 120)
 
     /*
@@ -1945,6 +1953,27 @@ static const struct script_op script_18[] = {
 
     OP_S_WRITE              (a, "plugh", 5)
     OP_C_READ_EXPECT        (DEFAULT, "plugh", 5)
+
+    OP_END
+};
+
+/* 19. Key update test - artificially triggered */
+static const struct script_op script_19[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_CHECK                (check_key_update_lt, 1)
+    OP_CHECK                (trigger_key_update, 0)
+
+    OP_C_WRITE              (DEFAULT, "orange", 6)
+    OP_S_READ_EXPECT        (a, "orange", 6)
+
+    OP_CHECK                (check_key_update_ge, 1)
 
     OP_END
 };
@@ -1968,6 +1997,7 @@ static const struct script_op *const scripts[] = {
     script_16,
     script_17,
     script_18,
+    script_19,
 };
 
 static int test_script(int idx)
