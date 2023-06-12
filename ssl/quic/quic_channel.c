@@ -1710,7 +1710,7 @@ static int ch_tx(QUIC_CHANNEL *ch)
 static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
 {
     OSSL_TIME deadline;
-    uint32_t pn_space;
+    int i;
 
     if (ossl_quic_channel_is_terminated(ch))
         return ossl_time_infinite();
@@ -1719,9 +1719,19 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
     if (ossl_time_is_zero(deadline))
         deadline = ossl_time_infinite();
 
-    for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space)
-        deadline = ossl_time_min(deadline,
-                                 ossl_ackm_get_ack_deadline(ch->ackm, pn_space));
+    /*
+     * If the CC will let us send acks, check the ack deadline for all
+     * enc_levels that are actually provisioned
+     */
+    if (ch->cc_method->get_tx_allowance(ch->cc_data) > 0) {
+        for (i = 0; i < QUIC_ENC_LEVEL_NUM; i++) {
+            if (ossl_qtx_is_enc_level_provisioned(ch->qtx, i)) {
+                deadline = ossl_time_min(deadline,
+                                         ossl_ackm_get_ack_deadline(ch->ackm,
+                                                                    ossl_quic_enc_level_to_pn_space(i)));
+            }
+        }
+    }
 
     /* When will CC let us send more? */
     if (ossl_quic_tx_packetiser_has_pending(ch->txp, TX_PACKETISER_ARCHETYPE_NORMAL,
