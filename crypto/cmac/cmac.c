@@ -196,7 +196,7 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
     cipher_blocks = (dlen - 1) / bl;
     if (max_burst_blocks == 0) {
         /*
-         * In case block length is greater than local buffer size,
+         * When block length is greater than local buffer size,
          * use ctx->tbl as cipher output.
          */
         while (dlen > (size_t)bl) {
