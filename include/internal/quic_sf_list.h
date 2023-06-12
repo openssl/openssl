@@ -49,6 +49,8 @@ typedef struct sframe_list_st {
     uint64_t offset;
     /* Is head locked ? */
     int head_locked;
+    /* Cleanse data on release? */
+    int cleanse;
 } SFRAME_LIST;
 
 /*

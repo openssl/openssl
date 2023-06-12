@@ -469,6 +469,9 @@ static int test_rstream_random(int idx)
         || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
         goto err;
 
+    if (idx % 3 == 0)
+        ossl_quic_rstream_set_cleanse(rstream, 1);
+
     for (i = 0; i < data_size; ++i)
         bulk_data[i] = (unsigned char)(test_random() & 0xFF);
 
@@ -522,8 +525,9 @@ static int test_rstream_random(int idx)
         }
         if (!TEST_size_t_ge(readbytes, queued_min - read_off)
             || !TEST_size_t_le(readbytes + read_off, data_size)
-            || !TEST_mem_eq(read_buf, readbytes, bulk_data + read_off,
-                            readbytes))
+            || (idx % 3 != 0
+                && !TEST_mem_eq(read_buf, readbytes, bulk_data + read_off,
+                                readbytes)))
             goto err;
         read_off += readbytes;
         queued_min = read_off;
@@ -543,6 +547,11 @@ static int test_rstream_random(int idx)
 
     TEST_info("Total read bytes: %zu Fin rcvd: %d", read_off, fin);
 
+    if (idx % 3 == 0)
+        for (i = 0; i < read_off; i++)
+            if (!TEST_uchar_eq(bulk_data[i], 0))
+                goto err;
+
     if (read_off == data_size && fin_set && !fin) {
         /* We might still receive the final empty frame */
         if (idx % 2 == 0) {
@@ -561,9 +570,9 @@ static int test_rstream_random(int idx)
     ret = 1;
 
  err:
+    ossl_quic_rstream_free(rstream);
     OPENSSL_free(bulk_data);
     OPENSSL_free(read_buf);
-    ossl_quic_rstream_free(rstream);
     return ret;
 }
 

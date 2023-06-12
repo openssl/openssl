@@ -120,7 +120,7 @@ static int read_internal(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,
 
     if (drop && offset != 0) {
         ret = ossl_sframe_list_drop_frames(&qrs->fl, offset);
-        ring_buf_cpop_range(&qrs->rbuf, 0, offset - 1);
+        ring_buf_cpop_range(&qrs->rbuf, 0, offset - 1, qrs->fl.cleanse);
     }
 
     if (ret) {
@@ -245,7 +245,7 @@ int ossl_quic_rstream_release_record(QUIC_RSTREAM *qrs, size_t read_len)
         return 0;
 
     if (offset > 0)
-        ring_buf_cpop_range(&qrs->rbuf, 0, offset - 1);
+        ring_buf_cpop_range(&qrs->rbuf, 0, offset - 1, qrs->fl.cleanse);
 
     if (qrs->rxfc != NULL) {
         OSSL_TIME rtt = get_rtt(qrs);
@@ -285,4 +285,9 @@ int ossl_quic_rstream_resize_rbuf(QUIC_RSTREAM *qrs, size_t rbuf_size)
         return 0;
 
     return 1;
+}
+
+void ossl_quic_rstream_set_cleanse(QUIC_RSTREAM *qrs, int cleanse)
+{
+    qrs->fl.cleanse = cleanse;
 }

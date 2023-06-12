@@ -5880,10 +5880,17 @@ uint64_t SSL_CTX_set_options(SSL_CTX *ctx, uint64_t op)
 
 uint64_t SSL_set_options(SSL *s, uint64_t op)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    SSL_CONNECTION *sc;
     OSSL_PARAM options[2], *opts = options;
 
-    if (sc == NULL)
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(s) && ossl_quic_set_ssl_op(s, op))
+        /* Handled by QUIC, return as set */
+        return op;
+#endif
+
+   sc = SSL_CONNECTION_FROM_SSL(s);
+   if (sc == NULL)
         return 0;
 
     sc->options |= op;

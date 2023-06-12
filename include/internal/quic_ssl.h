@@ -38,6 +38,7 @@ __owur int ossl_quic_key_update(SSL *s, int update_type);
 __owur int ossl_quic_get_key_update_type(const SSL *s);
 __owur int ossl_quic_num_ciphers(void);
 __owur const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u);
+__owur int ossl_quic_set_ssl_op(SSL *ssl, uint64_t op);
 int ossl_quic_renegotiate_check(SSL *ssl, int initok);
 
 typedef struct quic_conn_st QUIC_CONNECTION;

@@ -2798,6 +2798,24 @@ const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u)
     return NULL;
 }
 
+int ossl_quic_set_ssl_op(SSL *ssl, uint64_t op)
+{
+    QCTX ctx;
+
+    if (!expect_quic_with_stream_lock(ssl, /*remote_init=*/-1, &ctx))
+        return 0;
+
+    if (ctx.xso->stream == NULL || ctx.xso->stream->rstream == NULL)
+        goto out;
+
+    ossl_quic_rstream_set_cleanse(ctx.xso->stream->rstream,
+                                  (op & SSL_OP_CLEANSE_PLAINTEXT) != 0);
+
+ out:
+    quic_unlock(ctx.qc);
+    return 1;
+}
+
 /*
  * Internal Testing APIs
  * =====================
