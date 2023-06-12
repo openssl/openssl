@@ -576,12 +576,12 @@ sub generate_trie {
                 }
 
                 if (not defined $$cursor{$c}) {
-                    $$cursor{$c} = {};
+                    $cursor->{$c} = {};
                     $nodes++;
                 }
-                $cursor = %$cursor{$c};
+                $cursor = $cursor->{$c};
             }
-            $$cursor{'val'} = $name;
+            $cursor->{'val'} = $name;
         }
     }
     #print "\n\n/* $nodes nodes for $chars letters*/\n\n";
