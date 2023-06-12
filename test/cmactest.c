@@ -25,8 +25,6 @@
 
 #include "testutil.h"
 
-#define TEST_CMAC_CASES 8
-
 static const char xtskey[32] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
     0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -39,7 +37,7 @@ static struct test_st {
     unsigned char data[4096];
     int data_len;
     const char *mac;
-} test[8] = {
+} test[] = {
     {
         {
             0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
@@ -175,12 +173,12 @@ static int test_cmac_run(void)
     unsigned char buf[AES_BLOCK_SIZE];
     size_t len;
     int ret = 0;
-    int case_idx = 0;
+    size_t case_idx = 0;
 
     ctx = CMAC_CTX_new();
 
     /* Construct input data, fullfill data to match data length */
-    for (case_idx = 0; case_idx < TEST_CMAC_CASES; case_idx++) {
+    for (case_idx = 0; case_idx < OSSL_NELEM(test); case_idx++) {
         size_t str_len = strlen((char *)test[case_idx].data);
         size_t fullfill_len = test[case_idx].data_len - str_len;
         size_t fullfill_idx = str_len;
@@ -270,6 +268,7 @@ static int test_cmac_run(void)
     if (!TEST_str_eq(p, test[5].mac))
         goto err;
 
+#ifndef OPENSSL_NO_DES
     if (!TEST_true(CMAC_Init(ctx, test[6].key, test[6].key_len,
                              EVP_des_ede3_cbc(), NULL))
         || !TEST_true(CMAC_Update(ctx, test[6].data, test[6].data_len))
@@ -278,7 +277,9 @@ static int test_cmac_run(void)
     p = pt(buf, len);
     if (!TEST_str_eq(p, test[6].mac))
         goto err;
+#endif
 
+#ifndef OPENSSL_NO_SM4
     if (!TEST_true(CMAC_Init(ctx, test[7].key, test[7].key_len,
                              EVP_sm4_cbc(), NULL))
         || !TEST_true(CMAC_Update(ctx, test[7].data, test[7].data_len))
@@ -287,6 +288,7 @@ static int test_cmac_run(void)
     p = pt(buf, len);
     if (!TEST_str_eq(p, test[7].mac))
         goto err;
+#endif
 
     ret = 1;
 err:
