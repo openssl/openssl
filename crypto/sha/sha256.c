@@ -22,6 +22,7 @@
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
 #include "internal/endian.h"
+#include "crypto/sha.h"
 
 int SHA224_Init(SHA256_CTX *c)
 {
@@ -53,6 +54,13 @@ int SHA256_Init(SHA256_CTX *c)
     return 1;
 }
 
+int ossl_sha256_192_init(SHA256_CTX *c)
+{
+    SHA256_Init(c);
+    c->md_len = SHA256_192_DIGEST_LENGTH;
+    return 1;
+}
+
 int SHA224_Update(SHA256_CTX *c, const void *data, size_t len)
 {
     return SHA256_Update(c, data, len);
@@ -81,7 +89,11 @@ int SHA224_Final(unsigned char *md, SHA256_CTX *c)
         unsigned long ll;               \
         unsigned int  nn;               \
         switch ((c)->md_len)            \
-        {   case SHA224_DIGEST_LENGTH:  \
+        {   case SHA256_192_DIGEST_LENGTH: \
+                for (nn=0;nn<SHA256_192_DIGEST_LENGTH/4;nn++)   \
+                {   ll=(c)->h[nn]; (void)HOST_l2c(ll,(s));   }  \
+                break;                  \
+            case SHA224_DIGEST_LENGTH:  \
                 for (nn=0;nn<SHA224_DIGEST_LENGTH/4;nn++)       \
                 {   ll=(c)->h[nn]; (void)HOST_l2c(ll,(s));   }  \
                 break;                  \

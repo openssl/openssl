@@ -81,6 +81,7 @@ OSSL_DEPRECATEDIN_3_0 void SHA256_Transform(SHA256_CTX *c,
 unsigned char *SHA224(const unsigned char *d, size_t n, unsigned char *md);
 unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md);
 
+# define SHA256_192_DIGEST_LENGTH 24
 # define SHA224_DIGEST_LENGTH    28
 # define SHA256_DIGEST_LENGTH    32
 # define SHA384_DIGEST_LENGTH    48

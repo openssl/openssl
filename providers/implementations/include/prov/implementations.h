@@ -14,6 +14,7 @@
 extern const OSSL_DISPATCH ossl_sha1_functions[];
 extern const OSSL_DISPATCH ossl_sha224_functions[];
 extern const OSSL_DISPATCH ossl_sha256_functions[];
+extern const OSSL_DISPATCH ossl_sha256_192_functions[];
 extern const OSSL_DISPATCH ossl_sha384_functions[];
 extern const OSSL_DISPATCH ossl_sha512_functions[];
 extern const OSSL_DISPATCH ossl_sha512_224_functions[];

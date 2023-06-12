@@ -103,6 +103,7 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { PROV_NAMES_SHA1, "provider=default", ossl_sha1_functions },
     { PROV_NAMES_SHA2_224, "provider=default", ossl_sha224_functions },
     { PROV_NAMES_SHA2_256, "provider=default", ossl_sha256_functions },
+    { PROV_NAMES_SHA2_256_192, "provider=default", ossl_sha256_192_functions },
     { PROV_NAMES_SHA2_384, "provider=default", ossl_sha384_functions },
     { PROV_NAMES_SHA2_512, "provider=default", ossl_sha512_functions },
     { PROV_NAMES_SHA2_512_224, "provider=default", ossl_sha512_224_functions },

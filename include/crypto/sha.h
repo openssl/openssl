@@ -14,6 +14,7 @@
 
 # include <openssl/sha.h>
 
+int ossl_sha256_192_init(SHA256_CTX *c);
 int sha512_224_init(SHA512_CTX *);
 int sha512_256_init(SHA512_CTX *);
 int ossl_sha1_ctrl(SHA_CTX *ctx, int cmd, int mslen, void *ms);

@@ -71,7 +71,12 @@ IMPLEMENT_digest_functions(sha224, SHA256_CTX,
 IMPLEMENT_digest_functions(sha256, SHA256_CTX,
                            SHA256_CBLOCK, SHA256_DIGEST_LENGTH, SHA2_FLAGS,
                            SHA256_Init, SHA256_Update, SHA256_Final)
-
+#ifndef FIPS_MODULE
+/* ossl_sha256_192_functions */
+IMPLEMENT_digest_functions(sha256_192, SHA256_CTX,
+                           SHA256_CBLOCK, SHA256_192_DIGEST_LENGTH, SHA2_FLAGS,
+                           ossl_sha256_192_init, SHA256_Update, SHA256_Final)
+#endif
 /* ossl_sha384_functions */
 IMPLEMENT_digest_functions(sha384, SHA512_CTX,
                            SHA512_CBLOCK, SHA384_DIGEST_LENGTH, SHA2_FLAGS,
