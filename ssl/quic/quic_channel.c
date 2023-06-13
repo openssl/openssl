@@ -135,6 +135,8 @@ static int ch_init(QUIC_CHANNEL *ch)
     qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
     ch->rx_max_udp_payload_size = qtx_args.mdpl;
 
+    ch->ping_deadline = ossl_time_infinite();
+
     ch->qtx = ossl_qtx_new(&qtx_args);
     if (ch->qtx == NULL)
         goto err;
