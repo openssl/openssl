@@ -534,6 +534,8 @@ int OSSL_CMP_CTX_reset_geninfo_ITAVs(OSSL_CMP_CTX *ctx)
     return 1;
 }
 
+DEFINE_OSSL_CMP_CTX_get0(geninfo_ITAVs, STACK_OF(OSSL_CMP_ITAV))
+
 /* Add an itav for the body of outgoing general messages */
 int OSSL_CMP_CTX_push0_genm_ITAV(OSSL_CMP_CTX *ctx, OSSL_CMP_ITAV *itav)
 {

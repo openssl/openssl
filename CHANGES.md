@@ -33,6 +33,11 @@ OpenSSL 3.3
 
    *James Muir*
 
+ * Added several new features of CMPv3 defined in RFC 9480 and RFC 9483:
+   - `certProfile` request message header and respective `-profile` CLI option
+
+   *David von Oheimb*
+
  * The build of exporters (such as `.pc` files for pkg-config) cleaned up to
    be less hard coded in the build file templates, and to allow easier
    addition of more exporters.  With that, an exporter for CMake is also

@@ -254,6 +254,8 @@ struct ossl_cmp_itav_st {
         OSSL_CMP_MSGS *origPKIMessage;
         /* NID_id_it_suppLangTags - Supported Language Tags */
         STACK_OF(ASN1_UTF8STRING) *suppLangTagsValue;
+        /* NID_id_it_certProfile - Certificate Profile */
+        STACK_OF(ASN1_UTF8STRING) *certProfile;
         /* NID_id_it_caCerts - CA Certificates */
         STACK_OF(X509) *caCerts;
         /* NID_id_it_rootCaCert - Root CA Certificate */
