@@ -111,14 +111,12 @@ explicitly run (with more debugging):
     $ make test VERBOSE=1 TESTS=test_external_oqsprovider
 
 The environment variable `OQS_SKIP_TESTS` can be set to select tests and
-algorithms to be skipped. If not set, the "rainbow" algorithm set as well as
-the (OQS-)OpenSSL1.1.1 compatibility tests will not be executed. So, for
-example to exclude the "mceliece" and "kyber" algorithms execute
+algorithms to be skipped, e.g. as follows:
 
-    OQS_SKIP_TESTS=mceliece,kyber make test TESTS=test_external_oqsprovider
+    OQS_SKIP_TESTS=kyber make test TESTS=test_external_oqsprovider
 
 The names of all supported quantum-safe algorithms are available at
-<https://github.com/open-quantum-safe/openssl#supported-algorithms>
+<https://github.com/open-quantum-safe/oqs-provider#algorithms>
 
 Updating test suites
 ====================
