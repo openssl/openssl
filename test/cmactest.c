@@ -279,6 +279,7 @@ static int test_cmac_run(void)
     if (!TEST_str_eq(p, test[6].mac))
         goto err;
 
+#ifndef OPENSSL_NO_SM4
     if (!TEST_true(CMAC_Init(ctx, test[7].key, test[7].key_len,
                              EVP_sm4_cbc(), NULL))
         || !TEST_true(CMAC_Update(ctx, test[7].data, test[7].data_len))
@@ -287,6 +288,7 @@ static int test_cmac_run(void)
     p = pt(buf, len);
     if (!TEST_str_eq(p, test[7].mac))
         goto err;
+#endif
 
     ret = 1;
 err:
