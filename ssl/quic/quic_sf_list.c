@@ -299,7 +299,7 @@ int ossl_sframe_list_move_data(SFRAME_LIST *fl,
                 return 0;
 
             if (fl->cleanse)
-                OPENSSL_cleanse((unsigned char *)data,
+                OPENSSL_cleanse((unsigned char *)sf->data,
                                 (size_t)(sf->range.end - sf->range.start));
 
             /* release the packet */
