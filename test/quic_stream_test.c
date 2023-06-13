@@ -570,9 +570,9 @@ static int test_rstream_random(int idx)
     ret = 1;
 
  err:
+    ossl_quic_rstream_free(rstream);
     OPENSSL_free(bulk_data);
     OPENSSL_free(read_buf);
-    ossl_quic_rstream_free(rstream);
     return ret;
 }
 
