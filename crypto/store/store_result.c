@@ -553,8 +553,10 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 
             ok = 0;              /* Assume decryption or parse error */
 
-            if (PKCS12_verify_mac(p12, "", 0)
+            if (!PKCS12_mac_present(p12)
                 || PKCS12_verify_mac(p12, NULL, 0)) {
+                pass = NULL;
+            } else if (PKCS12_verify_mac(p12, "", 0)) {
                 pass = "";
             } else {
                 static char prompt_info[] = "PKCS12 import pass phrase";
