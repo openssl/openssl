@@ -241,6 +241,42 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
         /* give final response after polling */
         ctx->curr_pollCount = 0;
 
+    /* accept cert profile for cr messages only with the configured name */
+    if (OSSL_CMP_MSG_get_bodytype(cert_req) == OSSL_CMP_CR) {
+        STACK_OF(OSSL_CMP_ITAV) *itavs =
+            OSSL_CMP_HDR_get0_geninfo_ITAVs(OSSL_CMP_MSG_get0_header(cert_req));
+        int i;
+
+        for (i = 0; i < sk_OSSL_CMP_ITAV_num(itavs); i++) {
+            OSSL_CMP_ITAV *itav = sk_OSSL_CMP_ITAV_value(itavs, i);
+            ASN1_OBJECT *obj = OSSL_CMP_ITAV_get0_type(itav);
+            STACK_OF(ASN1_UTF8STRING) *strs;
+            ASN1_UTF8STRING *str;
+            const char *data;
+
+            if (OBJ_obj2nid(obj) == NID_id_it_certProfile) {
+                if (!OSSL_CMP_ITAV_get0_certProfile(itav, &strs))
+                    return NULL;
+                if (sk_ASN1_UTF8STRING_num(strs) < 1) {
+                    ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_CERTPROFILE);
+                    return NULL;
+                }
+                str = sk_ASN1_UTF8STRING_value(strs, 0);
+                if (str == NULL
+                    || (data =
+                        (const char *)ASN1_STRING_get0_data(str)) == NULL) {
+                    ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_INVALID_ARGUMENT);
+                    return NULL;
+                }
+                if (strcmp(data, "profile1") != 0) {
+                    ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_CERTPROFILE);
+                    return NULL;
+                }
+                break;
+            }
+        }
+    }
+
     /* accept cert update request only for the reference cert, if given */
     if (bodytype == OSSL_CMP_KUR
             && crm != NULL /* thus not p10cr */ && ctx->refCert != NULL) {

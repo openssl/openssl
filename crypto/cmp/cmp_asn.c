@@ -58,11 +58,7 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_CAKEYUPDANNCONTENT)
 ASN1_SEQUENCE(OSSL_CMP_ERRORMSGCONTENT) = {
     ASN1_SIMPLE(OSSL_CMP_ERRORMSGCONTENT, pKIStatusInfo, OSSL_CMP_PKISI),
     ASN1_OPT(OSSL_CMP_ERRORMSGCONTENT, errorCode, ASN1_INTEGER),
-    /*
-     * OSSL_CMP_PKIFREETEXT is effectively a sequence of ASN1_UTF8STRING
-     * so it is used directly
-     *
-     */
+    /* OSSL_CMP_PKIFREETEXT is a ASN1_UTF8STRING sequence, so used directly */
     ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ERRORMSGCONTENT, errorDetails,
                          ASN1_UTF8STRING)
 } ASN1_SEQUENCE_END(OSSL_CMP_ERRORMSGCONTENT)
@@ -121,6 +117,9 @@ ASN1_ADB(OSSL_CMP_ITAV) = {
     ADB_ENTRY(NID_id_it_rootCaKeyUpdate,
               ASN1_OPT(OSSL_CMP_ITAV, infoValue.rootCaKeyUpdate,
                        OSSL_CMP_ROOTCAKEYUPDATE)),
+    ADB_ENTRY(NID_id_it_certProfile,
+              ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.certProfile,
+                                   ASN1_UTF8STRING)),
 } ASN1_ADB_END(OSSL_CMP_ITAV, 0, infoType, 0,
                &infotypeandvalue_default_tt, NULL);
 
@@ -190,11 +189,38 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
     return 1;
 
  err:
-    if (created != 0) {
+    if (created) {
         sk_OSSL_CMP_ITAV_free(*itav_sk_p);
         *itav_sk_p = NULL;
     }
     return 0;
+}
+
+OSSL_CMP_ITAV
+*OSSL_CMP_ITAV_new0_certProfile(STACK_OF(ASN1_UTF8STRING) *certProfile)
+{
+    OSSL_CMP_ITAV *itav;
+
+    if ((itav = OSSL_CMP_ITAV_new()) == NULL)
+        return NULL;
+    itav->infoType = OBJ_nid2obj(NID_id_it_certProfile);
+    itav->infoValue.certProfile = certProfile;
+    return itav;
+}
+
+int OSSL_CMP_ITAV_get0_certProfile(const OSSL_CMP_ITAV *itav,
+                                   STACK_OF(ASN1_UTF8STRING) **out)
+{
+    if (itav == NULL || out == NULL) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (OBJ_obj2nid(itav->infoType) != NID_id_it_certProfile) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    *out = itav->infoValue.certProfile;
+    return 1;
 }
 
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_caCerts(const STACK_OF(X509) *caCerts)
@@ -327,7 +353,7 @@ int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a)
 }
 
 static int ossl_cmp_msg_cb(int operation, ASN1_VALUE **pval,
-                           const ASN1_ITEM *it, void *exarg)
+                           ossl_unused const ASN1_ITEM *it, void *exarg)
 {
     OSSL_CMP_MSG *msg = (OSSL_CMP_MSG *)*pval;
 
@@ -417,14 +443,9 @@ ASN1_ITEM_TEMPLATE_END(OSSL_CMP_PKISTATUS)
 
 ASN1_SEQUENCE(OSSL_CMP_PKISI) = {
     ASN1_SIMPLE(OSSL_CMP_PKISI, status, OSSL_CMP_PKISTATUS),
-    /*
-     * CMP_PKIFREETEXT is effectively a sequence of ASN1_UTF8STRING
-     * so it is used directly
-     */
+    /* OSSL_CMP_PKIFREETEXT is a ASN1_UTF8STRING sequence, so used directly */
     ASN1_SEQUENCE_OF_OPT(OSSL_CMP_PKISI, statusString, ASN1_UTF8STRING),
-    /*
-     * OSSL_CMP_PKIFAILUREINFO is effectively ASN1_BIT_STRING so used directly
-     */
+    /* OSSL_CMP_PKIFAILUREINFO is effectively ASN1_BIT_STRING, used directly */
     ASN1_OPT(OSSL_CMP_PKISI, failInfo, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END(OSSL_CMP_PKISI)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_PKISI)
@@ -541,10 +562,7 @@ ASN1_SEQUENCE(OSSL_CMP_PKIHEADER) = {
     ASN1_EXP_OPT(OSSL_CMP_PKIHEADER, transactionID, ASN1_OCTET_STRING, 4),
     ASN1_EXP_OPT(OSSL_CMP_PKIHEADER, senderNonce, ASN1_OCTET_STRING, 5),
     ASN1_EXP_OPT(OSSL_CMP_PKIHEADER, recipNonce, ASN1_OCTET_STRING, 6),
-    /*
-     * OSSL_CMP_PKIFREETEXT is effectively a sequence of ASN1_UTF8STRING
-     * so it is used directly
-     */
+    /* OSSL_CMP_PKIFREETEXT is a ASN1_UTF8STRING sequence, so used directly */
     ASN1_EXP_SEQUENCE_OF_OPT(OSSL_CMP_PKIHEADER, freeText, ASN1_UTF8STRING, 7),
     ASN1_EXP_SEQUENCE_OF_OPT(OSSL_CMP_PKIHEADER, generalInfo,
                              OSSL_CMP_ITAV, 8)
