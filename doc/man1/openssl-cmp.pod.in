@@ -17,6 +17,7 @@ Generic message options:
 
 [B<-cmd> I<ir|cr|kur|p10cr|rr|genm>]
 [B<-infotype> I<name>]
+[B<-profile> I<name>]
 [B<-geninfo> I<OID:int:N>]
 
 Certificate enrollment options:
@@ -245,6 +246,11 @@ ITAV B<infoType>s is printed to stdout.
 Set InfoType name to use for requesting specific info in B<genm>,
 e.g., C<signKeyPairTypes>.
 So far, there is specific support for C<caCerts> and C<rootCaCert>.
+
+=item B<-profile> I<name>
+
+Name of a certificate profile to place in
+the PKIHeader generalInfo field of request messages.
 
 =item B<-geninfo> I<OID:int:N>
 
@@ -1390,7 +1396,9 @@ L<openssl-req(1)>, L<openssl-x509(1)>, L<x509v3_config(5)>
 
 The B<cmp> application was added in OpenSSL 3.0.
 
-The B<-engine option> was deprecated in OpenSSL 3.0.
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
+The B<-profile> option was added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 

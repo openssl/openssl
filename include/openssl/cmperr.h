@@ -98,6 +98,7 @@
 #  define CMP_R_TRANSACTIONID_UNMATCHED                    152
 #  define CMP_R_TRANSFER_ERROR                             159
 #  define CMP_R_UNCLEAN_CTX                                191
+#  define CMP_R_UNEXPECTED_CERTPROFILE                     196
 #  define CMP_R_UNEXPECTED_PKIBODY                         133
 #  define CMP_R_UNEXPECTED_PKISTATUS                       185
 #  define CMP_R_UNEXPECTED_PVNO                            153

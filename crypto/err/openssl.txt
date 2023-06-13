@@ -272,6 +272,7 @@ CMP_R_TOTAL_TIMEOUT:184:total timeout
 CMP_R_TRANSACTIONID_UNMATCHED:152:transactionid unmatched
 CMP_R_TRANSFER_ERROR:159:transfer error
 CMP_R_UNCLEAN_CTX:191:unclean ctx
+CMP_R_UNEXPECTED_CERTPROFILE:196:unexpected certprofile
 CMP_R_UNEXPECTED_PKIBODY:133:unexpected pkibody
 CMP_R_UNEXPECTED_PKISTATUS:185:unexpected pkistatus
 CMP_R_UNEXPECTED_PVNO:153:unexpected pvno
