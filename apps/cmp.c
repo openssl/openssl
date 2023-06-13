@@ -112,6 +112,7 @@ static int opt_cmd = -1;
 static char *opt_geninfo = NULL;
 static char *opt_infotype_s = NULL;
 static int opt_infotype = NID_undef;
+static char *opt_profile = NULL;
 
 /* certificate enrollment */
 static char *opt_newkey = NULL;
@@ -210,7 +211,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_CONFIG, OPT_SECTION, OPT_VERBOSITY,
 
-    OPT_CMD, OPT_INFOTYPE, OPT_GENINFO,
+    OPT_CMD, OPT_INFOTYPE, OPT_PROFILE, OPT_GENINFO,
 
     OPT_NEWKEY, OPT_NEWKEYPASS, OPT_SUBJECT,
     OPT_DAYS, OPT_REQEXTS,
@@ -291,6 +292,8 @@ const OPTIONS cmp_options[] = {
      "InfoType name for requesting specific info in genm, with specific support"},
     {OPT_MORE_STR, 0, 0,
      "for 'caCerts' and 'rootCaCert'"},
+    {"profile", OPT_PROFILE, 's',
+     "Certificate profile name to place in generalInfo field of request PKIHeader"},
     {"geninfo", OPT_GENINFO, 's',
      "generalInfo integer values to place in request PKIHeader with given OID"},
     {OPT_MORE_STR, 0, 0,
@@ -587,7 +590,7 @@ typedef union {
 static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {&opt_config}, {&opt_section}, {(char **)&opt_verbosity},
 
-    {&opt_cmd_s}, {&opt_infotype_s}, {&opt_geninfo},
+    {&opt_cmd_s}, {&opt_infotype_s}, {&opt_profile}, {&opt_geninfo},
 
     {&opt_newkey}, {&opt_newkeypass}, {&opt_subject},
     {(char **)&opt_days}, {&opt_reqexts},
@@ -1837,6 +1840,36 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     return 0;
 }
 
+static int add_certProfile(OSSL_CMP_CTX *ctx, const char *name)
+{
+    OSSL_CMP_ITAV *itav = NULL;
+    STACK_OF(ASN1_UTF8STRING) *sk;
+    ASN1_UTF8STRING *utf8string;
+
+    if (ctx == NULL || name == NULL)
+        return 0;
+
+    if ((sk = sk_ASN1_UTF8STRING_new_reserve(NULL, 1)) == NULL)
+        return 0;
+   if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
+       goto err;
+   if (!ASN1_STRING_set(utf8string, name, (int)strlen(name))) {
+       ASN1_STRING_free(utf8string);
+       goto err;
+   }
+   (void)sk_ASN1_UTF8STRING_push(sk, utf8string); /* must succeed */
+   if ((itav = OSSL_CMP_ITAV_new0_certProfile(sk)) == NULL)
+       goto err;
+   if (OSSL_CMP_CTX_push0_geninfo_ITAV(ctx, itav))
+       return 1;
+   OSSL_CMP_ITAV_free(itav);
+   return 0;
+
+ err:
+    sk_ASN1_UTF8STRING_pop_free(sk, ASN1_UTF8STRING_free);
+    return 0;
+}
+
 static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
 {
     long value;
@@ -2077,6 +2110,8 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         goto err;
 
     if (opt_geninfo != NULL && !handle_opt_geninfo(ctx))
+        goto err;
+    if (opt_profile != NULL && !add_certProfile(ctx, opt_profile))
         goto err;
 
     /* not printing earlier, to minimize confusion in case setup fails before */
@@ -2602,6 +2637,9 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_INFOTYPE:
             opt_infotype_s = opt_str();
+            break;
+        case OPT_PROFILE:
+            opt_profile = opt_str();
             break;
         case OPT_GENINFO:
             opt_geninfo = opt_str();
@@ -3131,6 +3169,7 @@ int cmp_main(int argc, char **argv)
     cmp_ctx = OSSL_CMP_CTX_new(app_get0_libctx(), app_get0_propq());
     if (cmp_ctx == NULL)
         goto err;
+
     OSSL_CMP_CTX_set_log_verbosity(cmp_ctx, opt_verbosity);
     if (!OSSL_CMP_CTX_set_log_cb(cmp_ctx, print_to_bio_out)) {
         CMP_err1("cannot set up error reporting and logging for %s", prog);

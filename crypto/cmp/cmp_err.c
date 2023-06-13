@@ -144,6 +144,8 @@ static const ERR_STRING_DATA CMP_str_reasons[] = {
     "transactionid unmatched"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_TRANSFER_ERROR), "transfer error"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_UNCLEAN_CTX), "unclean ctx"},
+    {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_UNEXPECTED_CERTPROFILE),
+     "unexpected certprofile"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_UNEXPECTED_PKIBODY), "unexpected pkibody"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_UNEXPECTED_PKISTATUS),
     "unexpected pkistatus"},

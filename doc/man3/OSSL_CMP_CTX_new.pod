@@ -39,6 +39,7 @@ OSSL_CMP_CTX_set1_secretValue,
 OSSL_CMP_CTX_set1_recipient,
 OSSL_CMP_CTX_push0_geninfo_ITAV,
 OSSL_CMP_CTX_reset_geninfo_ITAVs,
+OSSL_CMP_CTX_get0_geninfo_ITAVs,
 OSSL_CMP_CTX_set1_extraCertsOut,
 OSSL_CMP_CTX_set0_newPkey,
 OSSL_CMP_CTX_get0_newPkey,
@@ -127,6 +128,8 @@ OSSL_CMP_CTX_set1_senderNonce
  int OSSL_CMP_CTX_set1_recipient(OSSL_CMP_CTX *ctx, const X509_NAME *name);
  int OSSL_CMP_CTX_push0_geninfo_ITAV(OSSL_CMP_CTX *ctx, OSSL_CMP_ITAV *itav);
  int OSSL_CMP_CTX_reset_geninfo_ITAVs(OSSL_CMP_CTX *ctx);
+ STACK_OF(OSSL_CMP_ITAV)
+     *OSSL_CMP_CTX_get0_geninfo_ITAVs(const OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_set1_extraCertsOut(OSSL_CMP_CTX *ctx,
                                      STACK_OF(X509) *extraCertsOut);
 
@@ -540,11 +543,15 @@ the issuer of the CMP signer certificate,
 as far as any of those is present, else the NULL-DN as last resort.
 
 OSSL_CMP_CTX_push0_geninfo_ITAV() adds I<itav> to the stack in the I<ctx> to be
-added to the GeneralInfo field of the CMP PKIMessage header of a request
+added to the generalInfo field of the CMP PKIMessage header of a request
 message sent with this context.
 
 OSSL_CMP_CTX_reset_geninfo_ITAVs()
 clears any ITAVs that were added by OSSL_CMP_CTX_push0_geninfo_ITAV().
+
+OSSL_CMP_CTX_get0_geninfo_ITAVs() returns the list of ITAVs set in I<ctx>
+for inclusion in the generalInfo field of the CMP PKIMessage header of requests
+or NULL if not set.
 
 OSSL_CMP_CTX_set1_extraCertsOut() sets the stack of extraCerts that will be
 sent to remote.
@@ -737,6 +744,7 @@ OSSL_CMP_CTX_get_http_cb_arg(),
 OSSL_CMP_CTX_get_transfer_cb_arg(),
 OSSL_CMP_CTX_get0_trusted(),
 OSSL_CMP_CTX_get0_untrusted(),
+OSSL_CMP_CTX_get0_geninfo_ITAVs(),
 OSSL_CMP_CTX_get0_newPkey(),
 OSSL_CMP_CTX_get_certConf_cb_arg(),
 OSSL_CMP_CTX_get0_statusString(),
@@ -841,7 +849,8 @@ in OpenSSL 3.2.
 
 OSSL_CMP_CTX_reset_geninfo_ITAVs() was added in OpenSSL 3.0.8.
 
-OSSL_CMP_CTX_get0_libctx(), OSSL_CMP_CTX_get0_propq(), and
+OSSL_CMP_CTX_get0_libctx(), OSSL_CMP_CTX_get0_propq(),
+OSSL_CMP_CTX_get0_geninfo_ITAVs(), and
 OSSL_CMP_CTX_get0_validatedSrvCert() were added in OpenSSL 3.2.
 
 OSSL_CMP_CTX_set1_serialNumber() was added in OpenSSL 3.2.
