@@ -495,11 +495,8 @@ ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
 ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj);
 
 const char *X509_get_default_cert_area(void);
-const char *X509_get_default_cert_uri(void);
 const char *X509_get_default_cert_dir(void);
 const char *X509_get_default_cert_file(void);
-const char *X509_get_default_cert_uri_env(void);
-const char *X509_get_default_cert_path_env(void);
 const char *X509_get_default_cert_dir_env(void);
 const char *X509_get_default_cert_file_env(void);
 const char *X509_get_default_private_dir(void);

@@ -5468,9 +5468,6 @@ BIO_meth_get_sendmmsg                   ?	3_2_0	EXIST::FUNCTION:
 BIO_meth_set_recvmmsg                   ?	3_2_0	EXIST::FUNCTION:
 BIO_meth_get_recvmmsg                   ?	3_2_0	EXIST::FUNCTION:
 BIO_err_is_non_fatal                    ?	3_2_0	EXIST::FUNCTION:SOCK
-X509_get_default_cert_uri               ?	3_2_0	EXIST::FUNCTION:
-X509_get_default_cert_uri_env           ?	3_2_0	EXIST::FUNCTION:
-X509_get_default_cert_path_env          ?	3_2_0	EXIST::FUNCTION:
 BIO_s_dgram_pair                        ?	3_2_0	EXIST::FUNCTION:DGRAM
 BIO_new_bio_dgram_pair                  ?	3_2_0	EXIST::FUNCTION:DGRAM
 EVP_PKEY_auth_encapsulate_init          ?	3_2_0	EXIST::FUNCTION:

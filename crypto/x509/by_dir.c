@@ -88,18 +88,13 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
     switch (cmd) {
     case X509_L_ADD_DIR:
         if (argl == X509_FILETYPE_DEFAULT) {
-            /* If SSL_CERT_PATH is provided and non-empty, use that. */
-            const char *dir = ossl_safe_getenv(X509_get_default_cert_path_env());
+            const char *dir = ossl_safe_getenv(X509_get_default_cert_dir_env());
 
-            /* Fallback to SSL_CERT_DIR. */
-            if (dir == NULL)
-                dir = ossl_safe_getenv(X509_get_default_cert_dir_env());
-
-            /* Fallback to built-in default. */
-            if (dir == NULL)
-                dir = X509_get_default_cert_dir();
-
-            ret = add_cert_dir(ld, dir, X509_FILETYPE_PEM);
+            if (dir)
+                ret = add_cert_dir(ld, dir, X509_FILETYPE_PEM);
+            else
+                ret = add_cert_dir(ld, X509_get_default_cert_dir(),
+                                   X509_FILETYPE_PEM);
             if (!ret) {
                 ERR_raise(ERR_LIB_X509, X509_R_LOADING_CERT_DIR);
             }
