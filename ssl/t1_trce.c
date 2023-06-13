@@ -1521,7 +1521,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL_CONNECTION *sc
         p = msg;
         nm = d2i_X509_NAME(NULL, &p, dlen);
         if (!nm) {
-            BIO_puts(bio, "<UNPARSABLE DN>\n");
+            BIO_puts(bio, "<UNPARSEABLE DN>\n");
         } else {
             X509_NAME_print_ex(bio, nm, 0, XN_FLAG_ONELINE);
             BIO_puts(bio, "\n");
