@@ -111,21 +111,12 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
 {
     switch (cmd) {
     case X509_L_ADD_STORE:
-        /* First try the newer default cert URI envvar. */
-        if (argp == NULL)
-            argp = ossl_safe_getenv(X509_get_default_cert_uri_env());
-
-        /* If not set, see if we have a URI in the older cert dir envvar. */
+        /* If no URI is given, use the default cert dir as default URI */
         if (argp == NULL)
             argp = ossl_safe_getenv(X509_get_default_cert_dir_env());
 
-        /* Fallback to default store URI. */
         if (argp == NULL)
-            argp = X509_get_default_cert_uri();
-
-        /* No point adding an empty URI. */
-        if (!*argp)
-            return 1;
+            argp = X509_get_default_cert_dir();
 
         {
             STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
