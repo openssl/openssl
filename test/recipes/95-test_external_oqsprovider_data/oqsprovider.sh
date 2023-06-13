@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -45,29 +45,30 @@ echo "   OPENSSL_ROOT_DIR:   $OPENSSL_ROOT_DIR"
 echo "   OpenSSL version:    $OPENSSL_VERSION"
 echo "------------------------------------------------------------------"
 
-if [ ! -d $SRCTOP/oqs-provider/oqs ]; then
-# disable rainbow family by default; all further config options listed at
+if [ ! -d $SRCTOP/oqs-provider/.local ]; then
+# this version of oqsprovider dependent on v0.8.0 of liboqs, so set this;
+# also be sure to use this openssl for liboqs-internal OpenSSL use;
+# see all libops config options listed at
 # https://github.com/open-quantum-safe/liboqs/wiki/Customizing-liboqs
 (
        cd $SRCTOP/oqs-provider \
-           && git clone --depth 1 --branch 0.7.2 https://github.com/open-quantum-safe/liboqs.git \
+           && git clone --depth 1 --branch 0.8.0 https://github.com/open-quantum-safe/liboqs.git \
            && cd liboqs \
            && mkdir build \
            && cd build \
-           && cmake -DOQS_ENABLE_SIG_RAINBOW=OFF -DCMAKE_INSTALL_PREFIX=$SRCTOP/oqs-provider/oqs .. \
+           && cmake -DOPENSSL_ROOT_DIR=$OPENSSL_ROOT_DIR -DCMAKE_INSTALL_PREFIX=$SRCTOP/oqs-provider/.local .. \
            && make \
            && make install
    )
 fi
 
 echo "   CWD:                $PWD"
-cmake $SRCTOP/oqs-provider -DCMAKE_INCLUDE_PATH=$SRCTOP/oqs-provider/oqs -DCMAKE_PREFIX_PATH=$SRCTOP/oqs-provider/oqs -DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR" -DOPENSSL_BLDTOP=$BLDTOP -B _build && cmake --build _build
+liboqs_DIR=$SRCTOP/oqs-provider/.local cmake $SRCTOP/oqs-provider -DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR" -B _build && cmake --build _build
 export CTEST_OUTPUT_ON_FAILURE=1
 export HARNESS_OSSL_PREFIX=''
 export OPENSSL_APP="$O_EXE/openssl"
-if [ -z "$OQS_SKIP_TESTS" ]; then
-    export OQS_SKIP_TESTS="rainbow,111"
-fi
-export OPENSSL_MODULES=$PWD/_build/oqsprov
-export OQS_PROVIDER_TESTSCRIPTS=$SRCTOP/oqs-provider
-$SRCTOP/oqs-provider/scripts/runtests.sh
+export OPENSSL_MODULES=$PWD/_build/lib
+export OQS_PROVIDER_TESTSCRIPTS=$SRCTOP/oqs-provider/scripts
+export OPENSSL_CONF=$OQS_PROVIDER_TESTSCRIPTS/openssl-ca.cnf
+# Be verbose if harness is verbose:
+$SRCTOP/oqs-provider/scripts/runtests.sh -V
