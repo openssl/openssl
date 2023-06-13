@@ -162,8 +162,8 @@ static int kdf_scrypt_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
-    for (p = params; p->key != NULL; p++)
-        switch (kdf_scrypt_ctx_lookup(p))
+    for (p = params; p->key != NULL; p++) {
+        switch (kdf_scrypt_ctx_lookup(p)) {
         default:
             break;
 
@@ -228,6 +228,7 @@ static int kdf_scrypt_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                         return 0;
                     }
             }
+        }
     }
 
     return 1;
@@ -257,8 +258,8 @@ static int kdf_scrypt_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
-    for (p = params; p->key != NULL; p++)
-        switch (kdf_scrypt_ctx_lookup(p))
+    for (p = params; p->key != NULL; p++) {
+        switch (kdf_scrypt_ctx_lookup(p)) {
         default:
             break;
 
@@ -308,6 +309,7 @@ static int kdf_scrypt_get_ctx_params(void *vctx, OSSL_PARAM params[])
             if (!OSSL_PARAM_set_size_t(p, SIZE_MAX))
                 return 0;
             break;
+        }
     }
     return 1;
 }
