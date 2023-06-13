@@ -339,6 +339,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->default_stream_mode     = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
     qc->default_ssl_mode        = qc->ssl.ctx->mode;
     qc->default_blocking        = 1;
+    qc->blocking                = 1;
     qc->incoming_stream_policy  = SSL_INCOMING_STREAM_POLICY_AUTO;
     qc->last_error              = SSL_ERROR_NONE;
 
