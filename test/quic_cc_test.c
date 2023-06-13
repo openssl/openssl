@@ -515,11 +515,8 @@ static int test_sanity(void)
     if (!TEST_uint64_t_ge(allowance = ccm->get_tx_allowance(cc), 1472))
         goto err;
 
-    /*
-     * No wakeups should be scheduled currently as we don't currently implement
-     * pacing.
-     */
-    if (!TEST_true(ossl_time_is_infinite(ccm->get_wakeup_deadline(cc))))
+    /* There is TX allowance so wakeup should be immediate */
+    if (!TEST_true(ossl_time_is_zero(ccm->get_wakeup_deadline(cc))))
         goto err;
 
     /* No bytes should currently be in flight. */

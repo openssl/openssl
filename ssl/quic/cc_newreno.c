@@ -296,11 +296,16 @@ static uint64_t newreno_get_tx_allowance(OSSL_CC_DATA *cc)
 
 static OSSL_TIME newreno_get_wakeup_deadline(OSSL_CC_DATA *cc)
 {
-    /*
-     * The NewReno congestion controller does not vary its state in time, only
-     * in response to stimulus.
-     */
-    return ossl_time_infinite();
+    if (newreno_get_tx_allowance(cc) > 0) {
+        /* We have TX allowance now so wakeup immediately */
+        return ossl_time_zero();
+    } else {
+        /*
+         * The NewReno congestion controller does not vary its state in time,
+         * only in response to stimulus.
+         */
+        return ossl_time_infinite();
+    }
 }
 
 static int newreno_on_data_sent(OSSL_CC_DATA *cc, uint64_t num_bytes)
