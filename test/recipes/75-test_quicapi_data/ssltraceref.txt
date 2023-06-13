@@ -234,7 +234,7 @@ YeeuLO02zToHhnQ6KbPXOrQAqcL1kngO4g+j/ru+4AZThFkdkGnltvk=
         No extensions
 
 Received Datagram
-  Length: 256
+  Length: 234
 Received Packet
   Packet Type: Handshake
   Version: 0x00000001
@@ -267,8 +267,6 @@ Header:
     Finished, Length=32
       verify_data (len=32): ????????????????????????????????????????????????????????????????
 
-
-Received Frame: Ping
 Sent Frame: Ack  (without ECN)
     Largest acked: 1
     Ack delay (raw) 0
@@ -284,11 +282,5 @@ Sent Packet
   Source Conn Id: <zero length id>
   Payload length: 60
   Packet Number: 0x00000000
-Sent Frame: Ack  (without ECN)
-    Largest acked: 0
-    Ack delay (raw) 0
-    Ack range count: 0
-    First ack range: 0
-
 Sent Datagram
-  Length: 115
+  Length: 81
