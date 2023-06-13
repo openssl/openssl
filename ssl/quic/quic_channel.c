@@ -2384,7 +2384,7 @@ static int ch_init_new_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs,
             goto err;
         ossl_quic_rstream_set_cleanse(qs->rstream,
                                       (ch->tls->ctx->options
-                                          & SSL_OP_CLEANSE_PLAINTEXT) != 0);
+                                       & SSL_OP_CLEANSE_PLAINTEXT) != 0);
     }
 
     /* TXFC */
