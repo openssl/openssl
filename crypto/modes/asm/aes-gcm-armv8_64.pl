@@ -245,12 +245,12 @@ $code.=<<___                    if ($flavour !~ /64/);
 ___
 
 #########################################################################################
-# size_t aes_gcm_enc_128_kernel(const unsigned char *in,
-#                               size_t len,
-#                               unsigned char *out,
-#                               const void *key,
+# size_t aes_gcm_enc_128_kernel(const uint8_t * plaintext,
+#                               uint64_t plaintext_length,
+#                               uint8_t * ciphertext,
+#                               uint64_t *Xi,
 #                               unsigned char ivec[16],
-#                               u64 *Xi);
+#                               const void *key);
 #
 $code.=<<___;
 .global aes_gcm_enc_128_kernel
@@ -1131,12 +1131,12 @@ aes_gcm_enc_128_kernel:
 ___
 
 #########################################################################################
-# size_t aes_gcm_dec_128_kernel(const unsigned char *in,
-#                               size_t len,
-#                               unsigned char *out,
-#                               const void *key,
+# size_t aes_gcm_dec_128_kernel(const uint8_t * ciphertext,
+#                               uint64_t plaintext_length,
+#                               uint8_t * plaintext,
+#                               uint64_t *Xi,
 #                               unsigned char ivec[16],
-#                               u64 *Xi);
+#                               const void *key);
 #
 $code.=<<___;
 .global aes_gcm_dec_128_kernel
@@ -2089,12 +2089,12 @@ my $rk4v="v22";
 my $rk4d="d22";
 
 #########################################################################################
-# size_t aes_gcm_enc_192_kernel(const unsigned char *in,
-#                               size_t len,
-#                               unsigned char *out,
-#                               const void *key,
+# size_t aes_gcm_enc_192_kernel(const uint8_t * plaintext,
+#                               uint64_t plaintext_length,
+#                               uint8_t * ciphertext,
+#                               uint64_t *Xi,
 #                               unsigned char ivec[16],
-#                               u64 *Xi);
+#                               const void *key);
 #
 $code.=<<___;
 .global aes_gcm_enc_192_kernel
@@ -3026,12 +3026,12 @@ aes_gcm_enc_192_kernel:
 ___
 
 #########################################################################################
-# size_t aes_gcm_dec_192_kernel(const unsigned char *in,
-#                               size_t len,
-#                               unsigned char *out,
-#                               const void *key,
+# size_t aes_gcm_dec_192_kernel(const uint8_t * ciphertext,
+#                               uint64_t plaintext_length,
+#                               uint8_t * plaintext,
+#                               uint64_t *Xi,
 #                               unsigned char ivec[16],
-#                               u64 *Xi);
+#                               const void *key);
 #
 $code.=<<___;
 .global aes_gcm_dec_192_kernel
@@ -4034,12 +4034,12 @@ my $rk4v="v22";
 my $rk4d="d22";
 
 #########################################################################################
-# size_t aes_gcm_enc_256_kernel(const unsigned char *in,
-#                               size_t len,
-#                               unsigned char *out,
-#                               const void *key,
+# size_t aes_gcm_enc_256_kernel(const uint8_t * plaintext,
+#                               uint64_t plaintext_length,
+#                               uint8_t * ciphertext,
+#                               uint64_t *Xi,
 #                               unsigned char ivec[16],
-#                               u64 *Xi);
+#                               const void *key);
 #
 $code.=<<___;
 .global aes_gcm_enc_256_kernel
@@ -5019,12 +5019,12 @@ my $t8d="d4";
 my $t9="v6";
 my $t9d="d6";
 #########################################################################################
-# size_t aes_gcm_dec_256_kernel(const unsigned char *in,
-#                               size_t len,
-#                               unsigned char *out,
-#                               const void *key,
+# size_t aes_gcm_dec_256_kernel(const uint8_t * ciphertext,
+#                               uint64_t plaintext_length,
+#                               uint8_t * plaintext,
+#                               uint64_t *Xi,
 #                               unsigned char ivec[16],
-#                               u64 *Xi);
+#                               const void *key);
 #
 $code.=<<___;
 .global aes_gcm_dec_256_kernel

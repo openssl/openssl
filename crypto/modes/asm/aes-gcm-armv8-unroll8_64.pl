@@ -249,12 +249,12 @@ my $rk4v="v27";
 
 
 #########################################################################################
-# size_t unroll8_eor3_aes_gcm_enc_128_kernel(const unsigned char *in,
-#                               size_t len,
-#                               unsigned char *out,
-#                               const void *key,
-#                               unsigned char ivec[16],
-#                               u64 *Xi);
+# size_t unroll8_eor3_aes_gcm_enc_128_kernel(const uint8_t * plaintext,
+#                                            uint64_t plaintext_length,
+#                                            uint8_t * ciphertext,
+#                                            uint64_t *Xi,
+#                                            unsigned char ivec[16],
+#                                            const void *key);
 #
 $code.=<<___;
 .global unroll8_eor3_aes_gcm_enc_128_kernel
@@ -1348,12 +1348,12 @@ unroll8_eor3_aes_gcm_enc_128_kernel:
 ___
 
 #########################################################################################
-# size_t unroll8_eor3_aes_gcm_dec_128_kernel(const unsigned char *in,
-#                               size_t len,
-#                               unsigned char *out,
-#                               u64 *Xi,
-#                               unsigned char ivec[16],
-#                               const void *key);
+# size_t unroll8_eor3_aes_gcm_dec_128_kernel(const uint8_t * ciphertext,
+#                                            uint64_t plaintext_length,
+#                                            uint8_t * plaintext,
+#                                            uint64_t *Xi,
+#                                            unsigned char ivec[16],
+#                                            const void *key);
 #
 $code.=<<___;
 .global unroll8_eor3_aes_gcm_dec_128_kernel
@@ -2502,12 +2502,12 @@ my $rk3q1="v26.1q";
 my $rk4v="v27";
 
 #########################################################################################
-# size_t unroll8_eor3_aes_gcm_enc_192_kernel(const unsigned char *in,
-#                               size_t len,
-#                               unsigned char *out,
-#                               const void *key,
-#                               unsigned char ivec[16],
-#                               u64 *Xi);
+# size_t unroll8_eor3_aes_gcm_enc_192_kernel(const uint8_t * plaintext,
+#                                            uint64_t plaintext_length,
+#                                            uint8_t * ciphertext,
+#                                            uint64_t *Xi,
+#                                            unsigned char ivec[16],
+#                                            const void *key);
 #
 $code.=<<___;
 .global unroll8_eor3_aes_gcm_enc_192_kernel
@@ -3664,12 +3664,12 @@ unroll8_eor3_aes_gcm_enc_192_kernel:
 ___
 
 #########################################################################################
-# size_t unroll8_eor3_aes_gcm_dec_192_kernel(const unsigned char *in,
-#                               size_t len,
-#                               unsigned char *out,
-#                               const void *key,
-#                               unsigned char ivec[16],
-#                               u64 *Xi);
+# size_t unroll8_eor3_aes_gcm_dec_192_kernel(const uint8_t * ciphertext,
+#                                            uint64_t plaintext_length,
+#                                            uint8_t * plaintext,
+#                                            uint64_t *Xi,
+#                                            unsigned char ivec[16],
+#                                            const void *key);
 #
 $code.=<<___;
 .global unroll8_eor3_aes_gcm_dec_192_kernel
@@ -4879,12 +4879,12 @@ my $rk2q1="v28.1q";
 my $rk3q1="v26.1q";
 my $rk4v="v27";
 #########################################################################################
-# size_t unroll8_eor3_aes_gcm_enc_256_kernel(const unsigned char *in,
-#                               size_t len,
-#                               unsigned char *out,
-#                               const void *key,
-#                               unsigned char ivec[16],
-#                               u64 *Xi);
+# size_t unroll8_eor3_aes_gcm_enc_256_kernel(const uint8_t * plaintext,
+#                                            uint64_t plaintext_length,
+#                                            uint8_t * ciphertext,
+#                                            uint64_t *Xi,
+#                                            unsigned char ivec[16],
+#                                            const void *key);
 #
 $code.=<<___;
 .global unroll8_eor3_aes_gcm_enc_256_kernel
@@ -6110,12 +6110,12 @@ ___
 
 {
 #########################################################################################
-# size_t unroll8_eor3_aes_gcm_dec_256_kernel(const unsigned char *in,
-#                               size_t len,
-#                               unsigned char *out,
-#                               const void *key,
-#                               unsigned char ivec[16],
-#                               u64 *Xi);
+# size_t unroll8_eor3_aes_gcm_dec_256_kernel(const uint8_t * ciphertext,
+#                                            uint64_t plaintext_length,
+#                                            uint8_t * plaintext,
+#                                            uint64_t *Xi,
+#                                            unsigned char ivec[16],
+#                                            const void *key);
 #
 $code.=<<___;
 .global unroll8_eor3_aes_gcm_dec_256_kernel
