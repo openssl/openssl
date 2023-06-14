@@ -49,14 +49,14 @@ variable can also be a store URI (but see BUGS below).
 
 By default (for example, when L<X509_STORE_set_default_paths(3)> is used), the
 environment variable name returned by X509_get_default_cert_dir_env() is
-interpreted both as a delimiter-separated list of paths, and as a store URI by
-default. This is ambiguous. For example, specifying a value of
-B<"file:///etc/certs"> would cause instantiation of the "file" store provided as
-part of the default provider, but would also cause an L<X509_LOOKUP_hash_dir(3)>
-instance to look for certificates in the directory B<"file"> (relative to the
-current working directory) and the directory B<"///etc/certs">. This can be
-avoided by avoiding use of the environment variable mechanism and using other
-methods to construct X509_LOOKUP instances.
+interpreted both as a delimiter-separated list of paths, and as a store URI.
+This is ambiguous. For example, specifying a value of B<"file:///etc/certs">
+would cause instantiation of the "file" store provided as part of the default
+provider, but would also cause an L<X509_LOOKUP_hash_dir(3)> instance to look
+for certificates in the directory B<"file"> (relative to the current working
+directory) and the directory B<"///etc/certs">. This can be avoided by avoiding
+use of the environment variable mechanism and using other methods to construct
+X509_LOOKUP instances.
 
 =head1 RETURN VALUES
 
@@ -76,7 +76,7 @@ L<SSL_CTX_load_verify_locations(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

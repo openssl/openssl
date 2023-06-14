@@ -235,7 +235,7 @@ OpenSSL 3.2
    arguments. This store is built by default and can be disabled using the new
    compile-time option `no-winstore`. This store is not currently used by
    default and must be loaded explicitly using the above store URI. It is
-   expected to be loaded by default in the next minor release of OpenSSL.
+   expected to be loaded by default in the future.
 
    *Hugo Landau*
 
