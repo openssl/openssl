@@ -460,7 +460,7 @@ int ossl_prov_is_running(void)
     loclstate = tsan_load(&FIPS_state);
     res = loclstate == FIPS_STATE_RUNNING || loclstate == FIPS_STATE_SELFTEST;
     if (loclstate == FIPS_STATE_ERROR)
-        if (tsan_add(&rate_limit, 1) < FIPS_ERROR_REPORTING_RATE_LIMIT)
+        if (tsan_counter(&rate_limit) < FIPS_ERROR_REPORTING_RATE_LIMIT)
             ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_IN_ERROR_STATE);
     return res;
 }
