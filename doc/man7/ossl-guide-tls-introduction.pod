@@ -297,10 +297,12 @@ object.
 
 See L<ossl-guide-tls-client-block(7)> to see an example of applying these
 concepts in order to write a simple TLS client based on a blocking socket.
+See L<ossl-guide-quic-introduction(7)> for an introduction to QUIC in OpenSSL.
 
 =head1 SEE ALSO
 
-L<crypto(7)>, L<ossl-guide-tls-client-block(7)>
+L<crypto(7)>, L<ossl-guide-tls-client-block(7)>,
+L<ossl-guide-quic-introduction(7)>
 
 =head1 COPYRIGHT
 

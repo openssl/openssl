@@ -135,7 +135,7 @@ to create an IPv4 TCP socket:
 
     int sock;
 
-    sock = socket(AF_INET, SOCK_STEAM, 0);
+    sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1)
         return NULL;
 
@@ -542,6 +542,11 @@ that we have been unable to find the issuer of the server's certificate (or one
 of its intermediate CA certificates) in our trusted certificate store (e.g.
 because the trusted certificate store is misconfigured, or there are missing
 intermediate CAs, or the issuer is simply unrecognised).
+
+=head1 FURTHER READING
+
+See L<ossl-guide-quic-client-block(7)> to read a tutorial on how to modify the
+client developed on this page to support QUIC instead of TLS.
 
 =head1 SEE ALSO
 
