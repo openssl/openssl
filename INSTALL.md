@@ -586,6 +586,7 @@ Additional information related to ACVP can be found at
 ### no-apps
 
 Do not build apps, e.g. the openssl program. This is handy for minimization.
+This option also disables tests.
 
 ### no-asm
 
