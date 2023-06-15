@@ -562,7 +562,7 @@ int ossl_quic_trace(int write_p, int version, int content_type,
     case SSL3_RT_QUIC_DATAGRAM:
         BIO_puts(bio, write_p ? "Sent" : "Received");
         /*
-         * Unfortunately there is no way of receiving auxilliary information
+         * Unfortunately there is no way of receiving auxiliary information
          * about the datagram through the msg_callback API such as the peer
          * address
          */

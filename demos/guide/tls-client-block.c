@@ -137,7 +137,7 @@ int main(void)
 
     /*
      * TLSv1.1 or earlier are deprecated by IETF and are generally to be
-     * avoided if possible. We require a mimimum TLS version of TLSv1.2.
+     * avoided if possible. We require a minimum TLS version of TLSv1.2.
      */
     if (!SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION)) {
         printf("Failed to set the minimum TLS protocol version\n");
@@ -245,7 +245,7 @@ int main(void)
          * for one back". But we already know we got one from the peer
          * because of the SSL_ERROR_ZERO_RETURN above.
          */
-        printf("Error shuting down\n");
+        printf("Error shutting down\n");
         goto end;
     }
 
