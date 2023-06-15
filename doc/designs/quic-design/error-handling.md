@@ -63,7 +63,7 @@ depend on the error stack contents.
 Intermittent errors are handled within the library and cleared from the
 error stack before returning to the user.
 
-Permanent errors happenning within the assist thread, within SSL_tick()
+Permanent errors happening within the assist thread, within SSL_tick()
 processing, or when calling SSL_read()/SSL_write() on a stream need to be
 replicated for SSL_read()/SSL_write() calls on other streams.
 

@@ -53,14 +53,14 @@ fi
 
 {
     # At the first pass, ctags should not be affected by personal
-    # configration files. So --options=NONE is passed.
+    # configuration files. So --options=NONE is passed.
     #
     # However, if the option is passed, ctags doesn't load the project
-    # default configration files under $project/.ctags.d. So we load
-    # the project default configration files, add-dir.ctags and
+    # default configuration files under $project/.ctags.d. So we load
+    # the project default configuration files, add-dir.ctags and
     # exclude.ctags, explicitly.
     #
-    # openssl-stage1 contains a configration file specialized to
+    # openssl-stage1 contains a configuration file specialized to
     # extract macro definitions. It should not be used in normal ctags
     # usage.
     $CTAGS --quiet --options=NONE \
