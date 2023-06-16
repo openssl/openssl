@@ -18,7 +18,7 @@ L<ossl-guide-tls-introduction(7)>).
 QUIC is a general purpose protocol for enabling applications to securely
 communicate over a network. It is defined in RFC9000 (see
 L<https://datatracker.ietf.org/doc/rfc9000/>). QUIC integrates parts of the
-TLS protocol for connection establishment but independetenly protects packets.
+TLS protocol for connection establishment but independently protects packets.
 It provides similar security guarantees to TLS such as confidentiality,
 integrity and authentication (see L<ossl-guide-tls-introduction(7)>). It
 additionally provides multiplexing capabilities through the use of "streams"
@@ -102,7 +102,7 @@ See L<bio(7)> for an introduction to OpenSSL's B<BIO> concept.
 A significant difference between OpenSSL TLS applications and OpenSSL QUIC
 applications is the way that blocking is implemented. In TLS if your application
 expects blocking behaviour then you configure the underlying socket for
-blocking. Conversely if your application want nonblocking behaviour then the
+blocking. Conversely if your application wants nonblocking behaviour then the
 underlying socket is configured to be nonblocking.
 
 With an OpenSSL QUIC application the underlying socket must always be configured

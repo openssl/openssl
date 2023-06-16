@@ -34,8 +34,8 @@ For this tutorial our client will be using a single QUIC stream. A subsequent
 tutorial will discuss how to write a multi-stream client.
 
 The complete source code for this example blocking QUIC client is available in
-the B<demos/guide> directory of the OpenSSL source distribution in the file
-B<quic-client-block.c>. It is also available online at
+the C<demos/guide> directory of the OpenSSL source distribution in the file
+C<quic-client-block.c>. It is also available online at
 L<https://github.com/openssl/openssl/blob/master/demos/guide/quic-client-block.c>.
 
 =head2 Creating the SSL_CTX and SSL objects
@@ -81,8 +81,8 @@ same way as for the TLS application.
 
 =head2 Creating the socket and BIO
 
-A major different between TLS and QUIC is the underlying transport protocol. TLS
-uses TCP while QUIC uses UDP. The way that the QUIC socket is created in our
+A major difference between TLS and QUIC is the underlying transport protocol.
+TLS uses TCP while QUIC uses UDP. The way that the QUIC socket is created in our
 example code is much the same as for TLS. We use the L<BIO_lookup_ex(3)> and
 L<BIO_socket(3)> helper functions as we did in the previous tutorial except that
 we pass B<SOCK_DGRAM> as an argument to indicate UDP (instead of B<SOCK_STREAM>
