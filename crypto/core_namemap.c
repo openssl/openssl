@@ -142,6 +142,9 @@ int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
     cbdata.number = number;
     cbdata.found = 0;
 
+    if (namemap == NULL)
+        return 0;
+
     /*
      * We collect all the names first under a read lock. Subsequently we call
      * the user function, so that we're not holding the read lock when in user
