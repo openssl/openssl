@@ -322,10 +322,16 @@ int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
     prov = OSSL_DECODER_get0_provider(decoder);
     provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
-    if ((decoderctx = decoder->newctx(provctx)) == NULL
+    if (decoder->newctx_ex != NULL)
+        decoderctx = decoder->newctx_ex(provctx, NULL);
+    else
+        decoderctx = decoder->newctx(provctx);
+
+    if (decoderctx == NULL
         || (decoder_inst =
             ossl_decoder_instance_new(decoder, decoderctx)) == NULL)
         goto err;
+
     /* Avoid double free of decoderctx on further errors */
     decoderctx = NULL;
 
@@ -365,7 +371,7 @@ static void collect_all_decoders(OSSL_DECODER *decoder, void *arg)
         OSSL_DECODER_free(decoder);
 }
 
-static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
+static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg, const char *propq)
 {
     struct collect_extra_decoder_data_st *data = arg;
     size_t j;
@@ -404,7 +410,11 @@ static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
             }
         }
 
-        if ((decoderctx = decoder->newctx(provctx)) == NULL)
+        if (decoder->newctx_ex != NULL)
+            decoderctx = decoder->newctx_ex(provctx, propq);
+        else
+            decoderctx = decoder->newctx(provctx);
+        if (decoderctx == NULL)
             return;
 
         if ((di = ossl_decoder_instance_new(decoder, decoderctx)) == NULL) {
@@ -542,7 +552,7 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
 
                 for (j = 0; j < numdecoders; j++)
                     collect_extra_decoder(sk_OSSL_DECODER_value(skdecoders, j),
-                                          &data);
+                                          &data, propq);
             }
         }
         /* How many were added in this iteration */

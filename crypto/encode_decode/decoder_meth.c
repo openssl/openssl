@@ -199,8 +199,8 @@ static int put_decoder_in_store(void *store, void *method,
 }
 
 /* Create and populate a decoder method */
-void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
-                                  OSSL_PROVIDER *prov)
+static void *ossl_decoder_from_algorithm_ex(int id, const OSSL_ALGORITHM *algodef,
+                                            OSSL_PROVIDER *prov, const char *propq)
 {
     OSSL_DECODER *decoder = NULL;
     const OSSL_DISPATCH *fns = algodef->implementation;
@@ -225,6 +225,10 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
         case OSSL_FUNC_DECODER_NEWCTX:
             if (decoder->newctx == NULL)
                 decoder->newctx = OSSL_FUNC_decoder_newctx(fns);
+            break;
+        case OSSL_FUNC_DECODER_NEWCTX_EX:
+            if (decoder->newctx_ex == NULL)
+                decoder->newctx_ex = OSSL_FUNC_decoder_newctx_ex(fns);
             break;
         case OSSL_FUNC_DECODER_FREECTX:
             if (decoder->freectx == NULL)
@@ -270,8 +274,8 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
      * If you have a constructor, you must have a destructor and vice versa.
      * You must have at least one of the encoding driver functions.
      */
-    if (!((decoder->newctx == NULL && decoder->freectx == NULL)
-          || (decoder->newctx != NULL && decoder->freectx != NULL))
+    if (!((decoder->newctx == NULL && decoder->newctx_ex == NULL && decoder->freectx == NULL)
+          || ((decoder->newctx != NULL || decoder->newctx_ex != NULL) && decoder->freectx != NULL))
         || decoder->decode == NULL) {
         OSSL_DECODER_free(decoder);
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_INVALID_PROVIDER_FUNCTIONS);
@@ -287,6 +291,11 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
     return decoder;
 }
 
+void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
+                                  OSSL_PROVIDER *prov)
+{
+    return ossl_decoder_from_algorithm_ex(id, algodef, prov, NULL);
+}
 
 /*
  * The core fetching functionality passes the names of the implementation.
@@ -310,7 +319,7 @@ static void *construct_decoder(const OSSL_ALGORITHM *algodef,
     void *method = NULL;
 
     if (id != 0)
-        method = ossl_decoder_from_algorithm(id, algodef, prov);
+        method = ossl_decoder_from_algorithm_ex(id, algodef, prov, methdata->propquery);
 
     /*
      * Flag to indicate that there was actual construction errors.  This

@@ -89,6 +89,7 @@ struct keytype_desc_st {
  */
 struct der2key_ctx_st {
     PROV_CTX *provctx;
+    char *propq;
     const struct keytype_desc_st *desc;
     /* The selection that is passed to der2key_decode() */
     int selection;
@@ -109,7 +110,7 @@ static void *der2key_decode_p8(const unsigned char **input_der,
     if ((p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, input_der, input_der_len)) != NULL
         && PKCS8_pkey_get0(NULL, NULL, NULL, &alg, p8inf)
         && OBJ_obj2nid(alg->algorithm) == ctx->desc->evp_type)
-        key = key_from_pkcs8(p8inf, PROV_LIBCTX_OF(ctx->provctx), NULL);
+        key = key_from_pkcs8(p8inf, PROV_LIBCTX_OF(ctx->provctx), ctx->propq);
     PKCS8_PRIV_KEY_INFO_free(p8inf);
 
     return key;
@@ -122,13 +123,16 @@ static OSSL_FUNC_decoder_decode_fn der2key_decode;
 static OSSL_FUNC_decoder_export_object_fn der2key_export_object;
 
 static struct der2key_ctx_st *
-der2key_newctx(void *provctx, const struct keytype_desc_st *desc)
+der2key_newctx_ex(void *provctx, const struct keytype_desc_st *desc,
+                  const char *propq)
 {
     struct der2key_ctx_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx != NULL) {
         ctx->provctx = provctx;
         ctx->desc = desc;
+        if (propq != NULL)
+            ctx->propq = OPENSSL_strdup(propq);
     }
     return ctx;
 }
@@ -137,6 +141,8 @@ static void der2key_freectx(void *vctx)
 {
     struct der2key_ctx_st *ctx = vctx;
 
+    if (ctx != NULL)
+        OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx);
 }
 
@@ -725,11 +731,13 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         { keytype_name, ossl_##keytype##_keymgmt_functions,             \
           DO_##kind(keytype) };                                         \
                                                                         \
-    static OSSL_FUNC_decoder_newctx_fn kind##_der2##keytype##_newctx;   \
+    static OSSL_FUNC_decoder_newctx_ex_fn kind##_der2##keytype##_newctx_ex;\
                                                                         \
-    static void *kind##_der2##keytype##_newctx(void *provctx)           \
+    static void *kind##_der2##keytype##_newctx_ex(void *provctx,        \
+                                                  const char *propq)    \
     {                                                                   \
-        return der2key_newctx(provctx, &kind##_##keytype##_desc);       \
+        return der2key_newctx_ex(provctx, &kind##_##keytype##_desc,     \
+                                 propq);                                \
     }                                                                   \
     static int kind##_der2##keytype##_does_selection(void *provctx,     \
                                                      int selection)     \
@@ -739,8 +747,8 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
     }                                                                   \
     const OSSL_DISPATCH                                                 \
     ossl_##kind##_der_to_##keytype##_decoder_functions[] = {            \
-        { OSSL_FUNC_DECODER_NEWCTX,                                     \
-          (void (*)(void))kind##_der2##keytype##_newctx },              \
+        { OSSL_FUNC_DECODER_NEWCTX_EX,                                  \
+          (void (*)(void))kind##_der2##keytype##_newctx_ex },           \
         { OSSL_FUNC_DECODER_FREECTX,                                    \
           (void (*)(void))der2key_freectx },                            \
         { OSSL_FUNC_DECODER_DOES_SELECTION,                             \

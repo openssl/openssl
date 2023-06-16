@@ -53,6 +53,7 @@ struct ossl_decoder_st {
     OSSL_FUNC_decoder_does_selection_fn *does_selection;
     OSSL_FUNC_decoder_decode_fn *decode;
     OSSL_FUNC_decoder_export_object_fn *export_object;
+    OSSL_FUNC_decoder_newctx_ex_fn *newctx_ex;
 };
 
 struct ossl_encoder_instance_st {

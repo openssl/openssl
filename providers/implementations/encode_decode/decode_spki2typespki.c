@@ -20,7 +20,7 @@
 #include "prov/implementations.h"
 #include "endecoder_local.h"
 
-static OSSL_FUNC_decoder_newctx_fn spki2typespki_newctx;
+static OSSL_FUNC_decoder_newctx_ex_fn spki2typespki_newctx_ex;
 static OSSL_FUNC_decoder_freectx_fn spki2typespki_freectx;
 static OSSL_FUNC_decoder_decode_fn spki2typespki_decode;
 
@@ -30,14 +30,18 @@ static OSSL_FUNC_decoder_decode_fn spki2typespki_decode;
  */
 struct spki2typespki_ctx_st {
     PROV_CTX *provctx;
+    char *propq;
 };
 
-static void *spki2typespki_newctx(void *provctx)
+static void *spki2typespki_newctx_ex(void *provctx, const char *propq)
 {
     struct spki2typespki_ctx_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (ctx != NULL)
+    if (ctx != NULL) {
         ctx->provctx = provctx;
+        if (propq != NULL)
+            ctx->propq = OPENSSL_strdup(propq);
+    }
     return ctx;
 }
 
@@ -45,6 +49,8 @@ static void spki2typespki_freectx(void *vctx)
 {
     struct spki2typespki_ctx_st *ctx = vctx;
 
+    if (ctx != NULL)
+        OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx);
 }
 
@@ -67,7 +73,7 @@ static int spki2typespki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         return 1;
     derp = der;
     xpub = ossl_d2i_X509_PUBKEY_INTERNAL((const unsigned char **)&derp, len,
-                                         PROV_LIBCTX_OF(ctx->provctx));
+                                         PROV_LIBCTX_OF(ctx->provctx), ctx->propq);
 
 
     if (xpub == NULL) {
@@ -117,7 +123,7 @@ static int spki2typespki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 }
 
 const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_der_decoder_functions[] = {
-    { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))spki2typespki_newctx },
+    { OSSL_FUNC_DECODER_NEWCTX_EX, (void (*)(void))spki2typespki_newctx_ex },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))spki2typespki_freectx },
     { OSSL_FUNC_DECODER_DECODE, (void (*)(void))spki2typespki_decode },
     OSSL_DISPATCH_END

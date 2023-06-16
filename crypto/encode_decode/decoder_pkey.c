@@ -199,6 +199,7 @@ static void decoder_clean_pkey_construct_arg(void *construct_data)
 
 struct collect_data_st {
     OSSL_LIB_CTX *libctx;
+    const char *propq;
     OSSL_DECODER_CTX *ctx;
 
     const char *keytype; /* the keytype requested, if any */
@@ -226,7 +227,11 @@ static void collect_decoder_keymgmt(EVP_KEYMGMT *keymgmt, OSSL_DECODER *decoder,
         /* Mismatch is not an error, continue. */
         return;
 
-    if ((decoderctx = decoder->newctx(provctx)) == NULL) {
+    if (decoder->newctx_ex != NULL)
+        decoderctx = decoder->newctx_ex(provctx, data->propq);
+    else
+        decoderctx = decoder->newctx(provctx);
+    if (decoderctx == NULL) {
         data->error_occurred = 1;
         return;
     }
@@ -430,6 +435,7 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
      */
     collect_data.ctx        = ctx;
     collect_data.libctx     = libctx;
+    collect_data.propq      = propquery;
     collect_data.keymgmts   = keymgmts;
     collect_data.keytype    = keytype;
     EVP_KEYMGMT_do_all_provided(libctx, collect_keymgmt, &collect_data);

@@ -893,9 +893,12 @@ OSSL_CORE_MAKE_FUNC(void, encoder_free_object, (void *obj))
 # define OSSL_FUNC_DECODER_GETTABLE_PARAMS             4
 # define OSSL_FUNC_DECODER_SET_CTX_PARAMS              5
 # define OSSL_FUNC_DECODER_SETTABLE_CTX_PARAMS         6
+# define OSSL_FUNC_DECODER_NEWCTX_EX                   7
 # define OSSL_FUNC_DECODER_DOES_SELECTION             10
 # define OSSL_FUNC_DECODER_DECODE                     11
 # define OSSL_FUNC_DECODER_EXPORT_OBJECT              20
+
+OSSL_CORE_MAKE_FUNC(void *, decoder_newctx_ex, (void *provctx, const char *propq))
 OSSL_CORE_MAKE_FUNC(void *, decoder_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void, decoder_freectx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(int, decoder_get_params, (OSSL_PARAM params[]))

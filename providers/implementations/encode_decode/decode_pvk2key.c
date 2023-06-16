@@ -55,19 +55,23 @@ static OSSL_FUNC_decoder_export_object_fn pvk2key_export_object;
  */
 struct pvk2key_ctx_st {
     PROV_CTX *provctx;
+    char *propq;
     const struct keytype_desc_st *desc;
     /* The selection that is passed to der2key_decode() */
     int selection;
 };
 
 static struct pvk2key_ctx_st *
-pvk2key_newctx(void *provctx, const struct keytype_desc_st *desc)
+pvk2key_newctx_ex(void *provctx, const struct keytype_desc_st *desc,
+                  const char *propq)
 {
     struct pvk2key_ctx_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx != NULL) {
         ctx->provctx = provctx;
         ctx->desc = desc;
+        if (propq != NULL)
+            ctx->propq = OPENSSL_strdup(propq);
     }
     return ctx;
 }
@@ -76,6 +80,8 @@ static void pvk2key_freectx(void *vctx)
 {
     struct pvk2key_ctx_st *ctx = vctx;
 
+    if (ctx != NULL)
+        OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx);
 }
 
@@ -104,7 +110,8 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             goto end;
 
         key = ctx->desc->read_private_key(in, ossl_pw_pvk_password, &pwdata,
-                                          PROV_LIBCTX_OF(ctx->provctx), NULL);
+                                          PROV_LIBCTX_OF(ctx->provctx),
+                                          ctx->propq);
 
         /*
          * Because the PVK API doesn't have a separate decrypt call, we need
@@ -215,15 +222,16 @@ static void rsa_adjust(void *key, struct pvk2key_ctx_st *ctx)
         keytype##_adjust,                                               \
         keytype##_free                                                  \
     };                                                                  \
-    static OSSL_FUNC_decoder_newctx_fn pvk2##keytype##_newctx;          \
-    static void *pvk2##keytype##_newctx(void *provctx)                  \
+    static OSSL_FUNC_decoder_newctx_ex_fn pvk2##keytype##_newctx_ex;    \
+    static void *pvk2##keytype##_newctx_ex(void *provctx,               \
+                                           const char *propq)           \
     {                                                                   \
-        return pvk2key_newctx(provctx, &pvk2##keytype##_desc);          \
+        return pvk2key_newctx_ex(provctx, &pvk2##keytype##_desc, propq);\
     }                                                                   \
     const OSSL_DISPATCH                                                 \
     ossl_##pvk_to_##keytype##_decoder_functions[] = {                   \
-        { OSSL_FUNC_DECODER_NEWCTX,                                     \
-          (void (*)(void))pvk2##keytype##_newctx },                     \
+        { OSSL_FUNC_DECODER_NEWCTX_EX,                                  \
+          (void (*)(void))pvk2##keytype##_newctx_ex },                  \
         { OSSL_FUNC_DECODER_FREECTX,                                    \
           (void (*)(void))pvk2key_freectx },                            \
         { OSSL_FUNC_DECODER_DECODE,                                     \

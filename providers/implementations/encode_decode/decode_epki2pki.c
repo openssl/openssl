@@ -23,7 +23,7 @@
 #include "prov/implementations.h"
 #include "endecoder_local.h"
 
-static OSSL_FUNC_decoder_newctx_fn epki2pki_newctx;
+static OSSL_FUNC_decoder_newctx_ex_fn epki2pki_newctx_ex;
 static OSSL_FUNC_decoder_freectx_fn epki2pki_freectx;
 static OSSL_FUNC_decoder_decode_fn epki2pki_decode;
 
@@ -32,14 +32,18 @@ static OSSL_FUNC_decoder_decode_fn epki2pki_decode;
  */
 struct epki2pki_ctx_st {
     PROV_CTX *provctx;
+    char *propq;
 };
 
-static void *epki2pki_newctx(void *provctx)
+static void *epki2pki_newctx_ex(void *provctx, const char *propq)
 {
     struct epki2pki_ctx_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (ctx != NULL)
+    if (ctx != NULL) {
         ctx->provctx = provctx;
+        if (propq != NULL)
+            ctx->propq = OPENSSL_strdup(propq);
+    }
     return ctx;
 }
 
@@ -47,6 +51,8 @@ static void epki2pki_freectx(void *vctx)
 {
     struct epki2pki_ctx_st *ctx = vctx;
 
+    if (ctx != NULL)
+        OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx);
 }
 
@@ -104,7 +110,7 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             if (!PKCS12_pbe_crypt_ex(alg, pbuf, plen,
                                      oct->data, oct->length,
                                      &new_der, &new_der_len, 0,
-                                     PROV_LIBCTX_OF(ctx->provctx), NULL)) {
+                                     PROV_LIBCTX_OF(ctx->provctx), ctx->propq)) {
                 ok = 0;
             } else {
                 OPENSSL_free(der);
@@ -151,7 +157,7 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 }
 
 const OSSL_DISPATCH ossl_EncryptedPrivateKeyInfo_der_to_der_decoder_functions[] = {
-    { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))epki2pki_newctx },
+    { OSSL_FUNC_DECODER_NEWCTX_EX, (void (*)(void))epki2pki_newctx_ex },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))epki2pki_freectx },
     { OSSL_FUNC_DECODER_DECODE, (void (*)(void))epki2pki_decode },
     OSSL_DISPATCH_END
