@@ -23,6 +23,8 @@
 static OSSL_FUNC_decoder_newctx_fn spki2typespki_newctx;
 static OSSL_FUNC_decoder_freectx_fn spki2typespki_freectx;
 static OSSL_FUNC_decoder_decode_fn spki2typespki_decode;
+static OSSL_FUNC_decoder_settable_ctx_params_fn spki2typespki_settable_ctx_params;
+static OSSL_FUNC_decoder_set_ctx_params_fn spki2typespki_set_ctx_params;
 
 /*
  * Context used for SubjectPublicKeyInfo to Type specific SubjectPublicKeyInfo
@@ -30,6 +32,7 @@ static OSSL_FUNC_decoder_decode_fn spki2typespki_decode;
  */
 struct spki2typespki_ctx_st {
     PROV_CTX *provctx;
+    char *propq;
 };
 
 static void *spki2typespki_newctx(void *provctx)
@@ -45,7 +48,31 @@ static void spki2typespki_freectx(void *vctx)
 {
     struct spki2typespki_ctx_st *ctx = vctx;
 
+    if (ctx != NULL)
+        OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx);
+}
+
+static const OSSL_PARAM *spki2typespki_settable_ctx_params(ossl_unused void *provctx)
+{
+    static const OSSL_PARAM settables[] = {
+        OSSL_PARAM_utf8_string(OSSL_DECODER_PARAM_PROPERTIES, NULL, 0),
+        OSSL_PARAM_END,
+    };
+    return settables;
+}
+
+static int spki2typespki_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    struct spki2typespki_ctx_st *ctx = vctx;
+    const OSSL_PARAM *p;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_DECODER_PARAM_PROPERTIES);
+    if (p != NULL && !OSSL_PARAM_get_utf8_string(p, &ctx->propq,
+                                                 OSSL_MAX_PROPQUERY_SIZE))
+        return 0;
+
+    return 1;
 }
 
 static int spki2typespki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
@@ -67,7 +94,8 @@ static int spki2typespki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         return 1;
     derp = der;
     xpub = ossl_d2i_X509_PUBKEY_INTERNAL((const unsigned char **)&derp, len,
-                                         PROV_LIBCTX_OF(ctx->provctx));
+                                         PROV_LIBCTX_OF(ctx->provctx),
+                                         ctx->propq);
 
 
     if (xpub == NULL) {
@@ -120,5 +148,9 @@ const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_der_decoder_functions[] = {
     { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))spki2typespki_newctx },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))spki2typespki_freectx },
     { OSSL_FUNC_DECODER_DECODE, (void (*)(void))spki2typespki_decode },
+    { OSSL_FUNC_DECODER_SETTABLE_CTX_PARAMS,
+      (void (*)(void))spki2typespki_settable_ctx_params },
+    { OSSL_FUNC_DECODER_SET_CTX_PARAMS,
+      (void (*)(void))spki2typespki_set_ctx_params },
     OSSL_DISPATCH_END
 };
