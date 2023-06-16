@@ -25,7 +25,7 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $rsa_key = srctop_file("test", "certs", "ee-key.pem");
 my $pss_key = srctop_file("test", "certs", "ca-pss-key.pem");
 
-plan tests => ($no_fips ? 0 : 1) + 2;     # FIPS install test + test
+plan tests => ($no_fips ? 0 : 3) + 2;     # FIPS install test + test
 
 my $conf = srctop_file("test", "default.cnf");
 ok(run(test(["endecode_test", "-rsa", $rsa_key,
@@ -47,5 +47,16 @@ unless ($no_fips) {
                                   "-pss", $pss_key,
                                   "-config", $conf,
                                   "-provider", "fips"])));
-}
 
+    my $no_des = disabled("des");
+SKIP: {
+    skip "DES disabled", 2 if disabled("des");
+    ok(run(app([ 'openssl', 'genrsa', '-des3', '-out', 'epki.pem',
+                 '-passout', 'pass:pass' ])),
+       "rsa encrypt using a non fips algorithm");
+
+    my $conf2 = srctop_file("test", "default-and-fips.cnf");
+    ok(run(test(['decoder_propq_test', '-config', $conf2,
+                 '-provider', 'fips', 'epki.pem'])));
+}
+}

@@ -26,12 +26,15 @@
 static OSSL_FUNC_decoder_newctx_fn epki2pki_newctx;
 static OSSL_FUNC_decoder_freectx_fn epki2pki_freectx;
 static OSSL_FUNC_decoder_decode_fn epki2pki_decode;
+static OSSL_FUNC_decoder_settable_ctx_params_fn epki2pki_settable_ctx_params;
+static OSSL_FUNC_decoder_set_ctx_params_fn epki2pki_set_ctx_params;
 
 /*
  * Context used for EncryptedPrivateKeyInfo to PrivateKeyInfo decoding.
  */
 struct epki2pki_ctx_st {
     PROV_CTX *provctx;
+    char propq[OSSL_MAX_PROPQUERY_SIZE];
 };
 
 static void *epki2pki_newctx(void *provctx)
@@ -48,6 +51,28 @@ static void epki2pki_freectx(void *vctx)
     struct epki2pki_ctx_st *ctx = vctx;
 
     OPENSSL_free(ctx);
+}
+
+static const OSSL_PARAM *epki2pki_settable_ctx_params(ossl_unused void *provctx)
+{
+    static const OSSL_PARAM settables[] = {
+        OSSL_PARAM_utf8_string(OSSL_DECODER_PARAM_PROPERTIES, NULL, 0),
+        OSSL_PARAM_END
+    };
+    return settables;
+}
+
+static int epki2pki_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    struct epki2pki_ctx_st *ctx = vctx;
+    const OSSL_PARAM *p;
+    char *str = ctx->propq;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_DECODER_PARAM_PROPERTIES);
+    if (p != NULL && !OSSL_PARAM_get_utf8_string(p, &str, sizeof(ctx->propq)))
+        return 0;
+
+    return 1;
 }
 
 /*
@@ -104,7 +129,8 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             if (!PKCS12_pbe_crypt_ex(alg, pbuf, plen,
                                      oct->data, oct->length,
                                      &new_der, &new_der_len, 0,
-                                     PROV_LIBCTX_OF(ctx->provctx), NULL)) {
+                                     PROV_LIBCTX_OF(ctx->provctx),
+                                     ctx->propq)) {
                 ok = 0;
             } else {
                 OPENSSL_free(der);
@@ -154,5 +180,9 @@ const OSSL_DISPATCH ossl_EncryptedPrivateKeyInfo_der_to_der_decoder_functions[] 
     { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))epki2pki_newctx },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))epki2pki_freectx },
     { OSSL_FUNC_DECODER_DECODE, (void (*)(void))epki2pki_decode },
+    { OSSL_FUNC_DECODER_SETTABLE_CTX_PARAMS,
+      (void (*)(void))epki2pki_settable_ctx_params },
+    { OSSL_FUNC_DECODER_SET_CTX_PARAMS,
+      (void (*)(void))epki2pki_set_ctx_params },
     OSSL_DISPATCH_END
 };

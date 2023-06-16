@@ -1071,6 +1071,11 @@ IF[{- !$disabled{tests} -}]
     DEPEND[endecoder_legacy_test]=../libcrypto.a libtestutil.a
   ENDIF
 
+  PROGRAMS{noinst}=decoder_propq_test
+  SOURCE[decoder_propq_test]=decoder_propq_test.c
+  INCLUDE[decoder_propq_test]=.. ../include ../apps/include
+  DEPEND[decoder_propq_test]=../libcrypto.a libtestutil.a
+
   PROGRAMS{noinst}=namemap_internal_test
   SOURCE[namemap_internal_test]=namemap_internal_test.c
   INCLUDE[namemap_internal_test]=.. ../include ../apps/include
