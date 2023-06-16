@@ -301,9 +301,9 @@ static OSSL_TIME newreno_get_wakeup_deadline(OSSL_CC_DATA *cc)
         return ossl_time_zero();
     } else {
         /*
-        * The NewReno congestion controller does not vary its state in time,
-        * only in response to stimulus.
-        */
+         * The NewReno congestion controller does not vary its state in time,
+         * only in response to stimulus.
+         */
         return ossl_time_infinite();
     }
 }
