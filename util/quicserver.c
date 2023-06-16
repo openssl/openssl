@@ -15,6 +15,7 @@
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include "internal/e_os.h"
 #include "internal/sockets.h"
 #include "internal/quic_tserver.h"
 #include "internal/time.h"
