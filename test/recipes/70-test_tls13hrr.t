@@ -161,7 +161,7 @@ sub hrr_filter
         my @ciphersuites = (TLSProxy::Message::CIPHER_TLS13_AES_128_GCM_SHA256);
         $ch1->ciphersuite_len(2 * scalar @ciphersuites);
         $ch1->ciphersuites(\@ciphersuites);
-    } else {
+    } elsif ($testtype == INVALID_GROUP) {
         # INVALID_GROUP
         my $ext = pack "C7",
             0x00, 0x05, #List Length
