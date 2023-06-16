@@ -25,7 +25,8 @@ OpenSSL 3.2
 
 ### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
- * Allow to disable HTTP support via the `no-http` configure option.
+ * Provide a new configure option `no-http` that can be used to disable HTTP
+   support.
 
    *Vladimír Kotal*
 
