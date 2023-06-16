@@ -77,7 +77,7 @@ static struct test_st {
             0x0b, 0x0c, 0x0d, 0x0e, 0x0f
         },
         16,
-        /* fulfill data to 3072 bytes with below string */
+        /* repeat the string below until filling 3072 bytes */
         "#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#",
         3072,
         "35da8a02a7afce90e5b711308cee2dee"
@@ -90,7 +90,7 @@ static struct test_st {
             0x16, 0x17
         },
         24,
-        /* fulfill data to 4095 bytes with below string */
+        /* repeat the string below until filling 4095 bytes */
         "#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#",
         4095,
         "59053f4e81f3593610f987adb547c5b2"
@@ -103,7 +103,7 @@ static struct test_st {
             0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
         },
         32,
-        /* fulfill data to 2560 bytes with below string */
+        /* repeat the string below until filling 2560 bytes */
         "#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#",
         2560,
         "9c6cf85f7f4baca99725764a0df973a9"
@@ -116,7 +116,7 @@ static struct test_st {
             0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
         },
         24,
-        /* fulfill data to 2048 bytes with below string */
+        /* repeat the string below until filling 2048 bytes */
         "#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#",
         2048,
         "2c2fccc7fcc5d98a"
@@ -128,7 +128,7 @@ static struct test_st {
             0x0b, 0x0c, 0x0d, 0x0e, 0x0f
         },
         16,
-        /* fulfill data to 2049 bytes with below string */
+        /* repeat the string below until filling 2049 bytes */
         "#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#",
         2049,
         "c9a9cbc82a3b2d96074e386fce1216f2"
@@ -177,19 +177,19 @@ static int test_cmac_run(void)
 
     ctx = CMAC_CTX_new();
 
-    /* Construct input data, fulfill data to match data length */
+    /* Construct input data, fill repeatedly until reaching data length */
     for (case_idx = 0; case_idx < OSSL_NELEM(test); case_idx++) {
         size_t str_len = strlen((char *)test[case_idx].data);
-        size_t fulfill_len = test[case_idx].data_len - str_len;
-        size_t fulfill_idx = str_len;
-        while (fulfill_len > 0) {
-            if (fulfill_len > str_len) {
-                memcpy(&test[case_idx].data[fulfill_idx], test[case_idx].data, str_len);
-                fulfill_len -= str_len;
-                fulfill_idx += str_len;
+        size_t fill_len = test[case_idx].data_len - str_len;
+        size_t fill_idx = str_len;
+        while (fill_len > 0) {
+            if (fill_len > str_len) {
+                memcpy(&test[case_idx].data[fill_idx], test[case_idx].data, str_len);
+                fill_len -= str_len;
+                fill_idx += str_len;
             } else {
-                memcpy(&test[case_idx].data[fulfill_idx], test[case_idx].data, fulfill_len);
-                fulfill_len = 0;
+                memcpy(&test[case_idx].data[fill_idx], test[case_idx].data, fill_len);
+                fill_len = 0;
             }
         }
     }
