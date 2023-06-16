@@ -106,9 +106,13 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
     return bio;
 }
 
-/* Server hostname and port details */
-#define HOSTNAME "www.example.com"
-#define PORT     "443"
+/* Server hostname and port details. Must be in quotes */
+#ifndef HOSTNAME
+# define HOSTNAME "www.example.com"
+#endif
+#ifndef PORT
+# define PORT     "443"
+#endif
 
 /*
  * Simple application to send a basic HTTP/1.0 request to a server and
