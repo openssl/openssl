@@ -19,6 +19,7 @@ provider-decoder - The OSSL_DECODER library E<lt>-E<gt> provider functions
  int OSSL_FUNC_decoder_get_params(OSSL_PARAM params[]);
 
  /* Functions to construct / destruct / manipulate the decoder context */
+ void *OSSL_FUNC_decoder_newctx_ex(void *provctx, const char *propq);
  void *OSSL_FUNC_decoder_newctx(void *provctx);
  void OSSL_FUNC_decoder_freectx(void *ctx);
  const OSSL_PARAM *OSSL_FUNC_decoder_settable_ctx_params(void *provctx);
@@ -92,6 +93,7 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_decoder_get_params          OSSL_FUNC_DECODER_GET_PARAMS
  OSSL_FUNC_decoder_gettable_params     OSSL_FUNC_DECODER_GETTABLE_PARAMS
 
+ OSSL_FUNC_decoder_newctx_ex           OSSL_FUNC_DECODER_NEWCTX_EX
  OSSL_FUNC_decoder_newctx              OSSL_FUNC_DECODER_NEWCTX
  OSSL_FUNC_decoder_freectx             OSSL_FUNC_DECODER_FREECTX
  OSSL_FUNC_decoder_set_ctx_params      OSSL_FUNC_DECODER_SET_CTX_PARAMS
@@ -191,11 +193,17 @@ supports any of the combinations given by I<selection>.
 
 =head2 Context functions
 
-OSSL_FUNC_decoder_newctx() returns a context to be used with the rest of
-the functions.
+OSSL_FUNC_decoder_newctx_ex() return a context to be used with the rest of the
+functions.
+OSSL_FUNC_decoder_newctx_ex() passes the optional property query parameter
+I<propq> which may be used by fetches inside OSSL_FUNC_decoder_decode().
+
+OSSL_FUNC_decoder_newctx() is similiar to OSSL_FUNC_decoder_newctx_ex() but
+uses NULL as the property query internally. This function will only be used
+when OSSL_FUNC_decoder_newctx_ex() is not implemented.
 
 OSSL_FUNC_decoder_freectx() frees the given I<ctx> as created by
-OSSL_FUNC_decoder_newctx().
+OSSL_FUNC_decoder_newctx_ex().
 
 OSSL_FUNC_decoder_set_ctx_params() sets context data according to parameters
 from I<params> that it recognises.  Unrecognised parameters should be
@@ -277,8 +285,8 @@ of object it's being prompted for.
 
 =head1 RETURN VALUES
 
-OSSL_FUNC_decoder_newctx() returns a pointer to a context, or NULL on
-failure.
+OSSL_FUNC_decoder_newctx_ex() and OSSL_FUNC_decoder_newctx()
+return a pointer to a context, or NULL on failure.
 
 OSSL_FUNC_decoder_set_ctx_params() returns 1, unless a recognised
 parameter was invalid or caused an error, for which 0 is returned.
@@ -299,6 +307,7 @@ L<provider(7)>
 =head1 HISTORY
 
 The DECODER interface was introduced in OpenSSL 3.0.
+The function OSSL_FUNC_decoder_newctx_ex() was added in OpenSSL 3.0.10
 
 =head1 COPYRIGHT
 
