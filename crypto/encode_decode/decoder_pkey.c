@@ -455,6 +455,7 @@ static int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
                    "(ctx %p) Got %d decoders producing keys\n",
                    (void *)ctx, collect_data.total);
     } OSSL_TRACE_END(DECODER);
+
     /*
      * Finish initializing the decoder context. If one or more decoders matched
      * above then the number of decoders attached to the OSSL_DECODER_CTX will
