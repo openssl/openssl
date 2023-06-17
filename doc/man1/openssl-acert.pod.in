@@ -25,6 +25,8 @@ B<openssl> B<acert>
 [B<-holder> I<filename>]
 [B<-use-holder-basecertid>]
 [B<-use-holder-name>]
+[B<-target-cert>]
+[B<-asserted-before>]
 [B<-AA> I<filename>|I<uri>]
 [B<-AAkey> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
@@ -120,6 +122,24 @@ holder in the new attribute certificate.
 
 Use the holder certificate's subject name to identify the holder
 in the new attribute certificate.
+
+=item B<-target-cert> I<filename>
+
+The target certificate file, from which a TARGET (using the targetCert
+alternative) is constructed and compared against the targets listed in the
+targetingInformation X.509v3 extension, if it is present. This argument takes
+effect if the B<acert> command is used with the B<-verify> option.
+
+Verification will not fail if the targetingInformation extension does not
+exist in the verified attribute certificate, but it will fail if the extension
+is present and the target does not appear in the list of targets.
+
+=item B<-asserted-before>
+
+Specifies whether the verified attribute certificate has been asserted once
+before. If provided, this causes verification of an attribute certificate to
+fail if the singleUse X.509v3 extension is present. This argument only takes
+effect if the B<acert> command is used with the B<-verify> option.
 
 =item B<-AA> I<filename>|I<uri>
 
