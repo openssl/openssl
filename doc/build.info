@@ -2879,6 +2879,10 @@ DEPEND[html/man3/X509_add_cert.html]=man3/X509_add_cert.pod
 GENERATE[html/man3/X509_add_cert.html]=man3/X509_add_cert.pod
 DEPEND[man/man3/X509_add_cert.3]=man3/X509_add_cert.pod
 GENERATE[man/man3/X509_add_cert.3]=man3/X509_add_cert.pod
+DEPEND[html/man3/X509_attr_cert_verify.html]=man3/X509_attr_cert_verify.pod
+GENERATE[html/man3/X509_attr_cert_verify.html]=man3/X509_attr_cert_verify.pod
+DEPEND[man/man3/X509_attr_cert_verify.3]=man3/X509_attr_cert_verify.pod
+GENERATE[man/man3/X509_attr_cert_verify.3]=man3/X509_attr_cert_verify.pod
 DEPEND[html/man3/X509_check_ca.html]=man3/X509_check_ca.pod
 GENERATE[html/man3/X509_check_ca.html]=man3/X509_check_ca.pod
 DEPEND[man/man3/X509_check_ca.3]=man3/X509_check_ca.pod
@@ -3625,6 +3629,7 @@ html/man3/X509_STORE_new.html \
 html/man3/X509_STORE_set_verify_cb_func.html \
 html/man3/X509_VERIFY_PARAM_set_flags.html \
 html/man3/X509_add_cert.html \
+html/man3/X509_attr_cert_verify.html \
 html/man3/X509_check_ca.html \
 html/man3/X509_check_host.html \
 html/man3/X509_check_issued.html \
@@ -4262,6 +4267,7 @@ man/man3/X509_STORE_new.3 \
 man/man3/X509_STORE_set_verify_cb_func.3 \
 man/man3/X509_VERIFY_PARAM_set_flags.3 \
 man/man3/X509_add_cert.3 \
+man/man3/X509_attr_cert_verify.3 \
 man/man3/X509_check_ca.3 \
 man/man3/X509_check_host.3 \
 man/man3/X509_check_issued.3 \
