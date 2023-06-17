@@ -64,7 +64,8 @@ typedef enum OPTION_choice {
     OPT_DAYS, OPT_SET_SERIAL, OPT_STARTDATE, OPT_ENDDATE,
     OPT_ADDEXT, OPT_ACERTEXTS,
     OPT_SECTION,
-    OPT_PROV_ENUM, OPT_MD
+    OPT_PROV_ENUM, OPT_MD,
+    OPT_ASSERTED_BEFORE, OPT_TARGET_CERT
 } OPTION_CHOICE;
 
 const OPTIONS acert_options[] = {
@@ -104,6 +105,10 @@ const OPTIONS acert_options[] = {
      "Additional cert extension key=value pair (may be given more than once)"},
     {"acertexts", OPT_ACERTEXTS, 's',
      "Attribute certificate extension section (override value in config file)"},
+    {"asserted-before", OPT_ASSERTED_BEFORE, '-',
+     "Fail verification if the attribute certificate contains the singleUse extension."},
+    {"target-cert", OPT_TARGET_CERT, '<',
+     "The target certificate path to check against the targetingInformation extension"},
 
     OPT_SECTION("Signing"),
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
@@ -189,21 +194,25 @@ int acert_main(int argc, char **argv)
     EVP_PKEY_CTX *genctx = NULL;
     STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL;
     LHASH_OF(OPENSSL_STRING) *addexts = NULL;
-    X509 *AAcert = NULL, *holder = NULL;
+    X509 *AAcert = NULL, *holder = NULL, *target_x509 = NULL;
+    TARGET_CERT *target_cert = NULL;
+    OSSL_ISSUER_SERIAL *target_iss_ser = NULL;
+    GENERAL_NAME *target_cert_name = NULL;
+    TARGET *target = NULL;
     X509_ACERT *acert = NULL;
     BIO *addext_bio = NULL;
     const char *infile = NULL, *AAfile = NULL, *AAkeyfile = NULL;
-    const char *holderfile = NULL;
+    const char *holderfile = NULL, *targetfile = NULL;
     int hldr_basecertid = 0, hldr_entity = 0;
     char *outfile = NULL, *digest = NULL;
     char *keyalgstr = NULL, *p, *prog;
     char *passin = NULL, *passinarg = NULL;
     char *acert_exts = NULL;
-    X509_NAME *fsubj = NULL;
+    X509_NAME *fsubj = NULL, *target_subj = NULL;
     char *template = default_config_file;
     OPTION_CHOICE o;
     int days = DEFAULT_DAYS;
-    int ret = 1, i = 0, newacert = 0, verbose = 0;
+    int ret = 1, i = 0, newacert = 0, verbose = 0, asserted_before = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyform = FORMAT_UNDEF;
     int verify = 0, noout = 0, text = 0;
     unsigned long chtype = MBSTRING_ASC, certflag = 0;
@@ -309,6 +318,12 @@ int acert_main(int argc, char **argv)
             break;
         case OPT_ENDDATE:
             enddate = opt_arg();
+            break;
+        case OPT_ASSERTED_BEFORE:
+            asserted_before = 1;
+            break;
+        case OPT_TARGET_CERT:
+            targetfile = opt_arg();
             break;
         case OPT_DAYS:
             days = atoi(opt_arg());
@@ -559,15 +574,29 @@ int acert_main(int argc, char **argv)
     }
 
     if (verify) {
-        if (holderfile == NULL) {
-            BIO_printf(bio_err, "'-holder' option required to verify.\n");
-            goto end;
+        if (targetfile) {
+            if ((target_x509 = load_cert_pass(targetfile, FORMAT_UNDEF, 1, passin,
+                                        "target certificate")) == NULL)
+                goto end;
+            target_iss_ser = OSSL_ISSUER_SERIAL_new();
+            if (OSSL_ISSUER_SERIAL_set1_issuer(target_iss_ser, X509_get_issuer_name(target_x509)) == 0)
+                goto end;
+            if (OSSL_ISSUER_SERIAL_set1_serial(target_iss_ser, X509_get_serialNumber(target_x509)) == 0)
+                goto end;
+
+            target_cert_name = GENERAL_NAME_new();
+            target_subj = X509_NAME_dup(X509_get_subject_name(target_x509));
+            if (target_subj == NULL)
+                goto end;
+            GENERAL_NAME_set0_value(target_cert_name, GEN_DIRNAME, target_subj);
+            target_cert = TARGET_CERT_new();
+            target_cert->targetCertificate = target_iss_ser;
+            target_cert->targetName = target_cert_name;
+            target = TARGET_new();
+            target->type = TGT_TARGET_CERT;
+            target->choice.targetCert = target_cert;
         }
-        if (holder == NULL) {
-            BIO_printf(bio_err, "Holder certificate could not be loaded.\n");
-            goto end;
-        }
-        ret = X509_attr_cert_verify_ex(acert, AAcert, holder, NULL, 0);
+        ret = X509_attr_cert_verify_ex(acert, AAcert, holder, target, asserted_before);
         if (ret != X509_V_OK) {
             BIO_printf(bio_err, "Attribute certificate is invalid.\n");
             goto end;
