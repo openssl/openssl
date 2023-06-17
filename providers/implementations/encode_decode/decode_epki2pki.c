@@ -34,7 +34,7 @@ static OSSL_FUNC_decoder_set_ctx_params_fn epki2pki_set_ctx_params;
  */
 struct epki2pki_ctx_st {
     PROV_CTX *provctx;
-    char *propq;
+    char propq[OSSL_MAX_PROPQUERY_SIZE];
 };
 
 static void *epki2pki_newctx(void *provctx)
@@ -50,8 +50,6 @@ static void epki2pki_freectx(void *vctx)
 {
     struct epki2pki_ctx_st *ctx = vctx;
 
-    if (ctx != NULL)
-        OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx);
 }
 
@@ -59,7 +57,7 @@ static const OSSL_PARAM *epki2pki_settable_ctx_params(ossl_unused void *provctx)
 {
     static const OSSL_PARAM settables[] = {
         OSSL_PARAM_utf8_string(OSSL_DECODER_PARAM_PROPERTIES, NULL, 0),
-        OSSL_PARAM_END,
+        OSSL_PARAM_END
     };
     return settables;
 }
@@ -68,10 +66,10 @@ static int epki2pki_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct epki2pki_ctx_st *ctx = vctx;
     const OSSL_PARAM *p;
+    char *str = ctx->propq;
 
     p = OSSL_PARAM_locate_const(params, OSSL_DECODER_PARAM_PROPERTIES);
-    if (p != NULL && !OSSL_PARAM_get_utf8_string(p, &ctx->propq,
-                                                 OSSL_MAX_PROPQUERY_SIZE))
+    if (p != NULL && !OSSL_PARAM_get_utf8_string(p, &str, sizeof(ctx->propq)))
         return 0;
 
     return 1;
