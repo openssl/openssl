@@ -27,7 +27,7 @@ failure as reported by SSL_get_verify_result().
 To get the errors, it is necessary to setup a verify callback via
 L<SSL_CTX_set_verify(3)> or L<SSL_set_verify(3)> and retrieve the errors
 from the error stack there, because once L<SSL_connect(3)> returns,
-these errors mey no longer be available.
+these errors may no longer be available.
 
 The verification result is part of the established session and is restored
 when a session is reused.
