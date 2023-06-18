@@ -1,3 +1,5 @@
+## Note: As oqs-openssl111 is phased out, please rely on the new iteration of this information at https://github.com/open-quantum-safe/oqs-provider/blob/main/oqs-template/oqs-kem-info.md
+
 | Family         | Implementation Version   | Variant        |   NIST round |   Claimed NIST Level | Code Point   | Hybrid Elliptic Curve (if any)   |
 |:---------------|:-------------------------|:---------------|-------------:|---------------------:|:-------------|:---------------------------------|
 | BIKE           | 5.1                      | bikel1         |            4 |                    1 | 0x0241       |                                  |

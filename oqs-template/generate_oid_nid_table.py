@@ -68,6 +68,7 @@ def gen_sig_table(oqslibdocdir):
                               hybrid['oid']])
 
   with open(os.path.join('oqs-template', 'oqs-sig-info.md'), mode='w', encoding='utf-8') as f:
+    f.write("## Note: As oqs-openssl111 is phased out, please rely on the new iteration of this information at https://github.com/open-quantum-safe/oqs-provider/blob/main/oqs-template/oqs-sig-info.md\n\n")
     f.write(tabulate(table, tablefmt="pipe", headers="firstrow"))
   print("Written oqs-sig-info.md")
 
@@ -142,6 +143,7 @@ def gen_kem_table(oqslibdocdir):
   table = [table_header] + table
 
   with open(os.path.join('oqs-template', 'oqs-kem-info.md'), mode='w', encoding='utf-8') as f:
+    f.write("## Note: As oqs-openssl111 is phased out, please rely on the new iteration of this information at https://github.com/open-quantum-safe/oqs-provider/blob/main/oqs-template/oqs-kem-info.md\n\n")
     f.write(tabulate(table, tablefmt="pipe", headers="firstrow"))
     f.write("\n")
   print("Written oqs-kem-info.md")

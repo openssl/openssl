@@ -1,3 +1,5 @@
+## Note: As oqs-openssl111 is phased out, please rely on the new iteration of this information at https://github.com/open-quantum-safe/oqs-provider/blob/main/oqs-template/oqs-sig-info.md
+
 | Algorithm                                      | Implementation Version                        |   NIST round |   Claimed NIST Level | Code Point   | OID                     |
 |:-----------------------------------------------|:----------------------------------------------|-------------:|---------------------:|:-------------|:------------------------|
 | dilithium2                                     | 3.1                                           |            3 |                    2 | 0xfea0       | 1.3.6.1.4.1.2.267.7.4.4 |
