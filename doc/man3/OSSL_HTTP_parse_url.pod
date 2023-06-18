@@ -57,7 +57,7 @@ The path component is also optional and defaults to C</>.
 Each non-NULL result pointer argument I<pscheme>, I<puser>, I<phost>, I<pport>,
 I<ppath>, I<pquery>, and I<pfrag>, is assigned the respective url component.
 On success, they are guaranteed to contain non-NULL string pointers, else NULL.
-It is the reponsibility of the caller to free them using L<OPENSSL_free(3)>.
+It is the responsibility of the caller to free them using L<OPENSSL_free(3)>.
 If I<pquery> is NULL, any given query component is handled as part of the path.
 A string returned via I<*ppath> is guaranteed to begin with a C</> character.
 For absent scheme, userinfo, port, query, and fragment components

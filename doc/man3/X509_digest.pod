@@ -44,9 +44,9 @@ X509_digest_sig() calculates a digest of the given certificate I<cert>
 using the same hash algorithm as in its signature, if the digest
 is an integral part of the certificate signature algorithm identifier.
 Otherwise, a fallback hash algorithm is determined as follows:
-SHA512 if the signature alorithm is ED25519,
+SHA512 if the signature algorithm is ED25519,
 SHAKE256 if it is ED448, otherwise SHA256.
-The output parmeters are assigned as follows.
+The output parameters are assigned as follows.
 Unless I<md_used> is NULL, the hash algorithm used is provided
 in I<*md_used> and must be freed by the caller (if it is not NULL).
 Unless I<md_is_fallback> is NULL,

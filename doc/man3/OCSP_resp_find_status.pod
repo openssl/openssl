@@ -131,7 +131,7 @@ in L<X509_VERIFY_PARAM_set_flags(3)/VERIFICATION FLAGS>.
 If I<flags> contains B<OCSP_NOCHAIN> it ignores all certificates in I<certs>
 and in I<bs>, else it takes them as untrusted intermediate CA certificates
 and uses them for constructing the validation path for the signer certificate.
-Certicate revocation status checks using CRLs is disabled during path validation
+Certificate revocation status checks using CRLs is disabled during path validation
 if the signer certificate contains the B<id-pkix-ocsp-no-check> extension.
 After successful path
 validation the function returns success if the B<OCSP_NOCHECKS> flag is set.

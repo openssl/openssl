@@ -34,7 +34,7 @@ as determined by calling CONF_get1_default_config_file().
 If B<appname> is NULL the standard OpenSSL application name B<openssl_conf> is
 used.
 The behaviour can be customized using B<flags>. Note that, the error suppressing
-can be overriden by B<config_diagnostics> as described in L<config(5)>.
+can be overridden by B<config_diagnostics> as described in L<config(5)>.
 
 CONF_modules_load_file() is the same as CONF_modules_load_file_ex() but
 has a NULL library context.

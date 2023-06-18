@@ -278,7 +278,7 @@ RFC5114 names "dh_1024_160", "dh_2048_224", "dh_2048_256".
 
 If this option is set, then the appropriate RFC5114 parameters are used
 instead of generating new parameters. The value I<num> can be one of
-1, 2 or 3 that are equivalant to using the option B<group> with one of
+1, 2 or 3 that are equivalent to using the option B<group> with one of
 "dh_1024_160", "dh_2048_224" or "dh_2048_256".
 All other options will be ignored if this value is set.
 
