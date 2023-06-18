@@ -879,14 +879,64 @@ id-ce 35		: authorityKeyIdentifier : X509v3 Authority Key Identifier
 id-ce 36		: policyConstraints	: X509v3 Policy Constraints
 !Cname ext-key-usage
 id-ce 37		: extendedKeyUsage	: X509v3 Extended Key Usage
+!Cname authority-attribute-identifier
+id-ce 38		: authorityAttributeIdentifier : X509v3 Authority Attribute Identifier
+!Cname role-spec-cert-identifier
+id-ce 39		: roleSpecCertIdentifier	: X509v3 Role Specification Certificate Identifier
+!Cname basic-att-constraints
+id-ce 41		: basicAttConstraints		: X509v3 Basic Attribute Certificate Constraints
+!Cname delegated-name-constraints
+id-ce 42 		: delegatedNameConstraints	: X509v3 Delegated Name Constraints
+!Cname time-specification
+id-ce 43		: timeSpecification			: X509v3 Time Specification
 !Cname freshest-crl
 id-ce 46		: freshestCRL		: X509v3 Freshest CRL
+!Cname attribute-descriptor
+id-ce 48		: attributeDescriptor		: X509v3 Attribute Descriptor
+!Cname user-notice
+id-ce 49		: userNotice				: X509v3 User Notice
+!Cname soa-identifier
+id-ce 50        : sOAIdentifier     : X509v3 Source of Authority Identifier
+!Cname acceptable-cert-policies
+id-ce 52		: acceptableCertPolicies	: X509v3 Acceptable Certification Policies
 !Cname inhibit-any-policy
 id-ce 54		: inhibitAnyPolicy	: X509v3 Inhibit Any Policy
 !Cname target-information
 id-ce 55		: targetInformation	: X509v3 AC Targeting
 !Cname no-rev-avail
 id-ce 56		: noRevAvail		: X509v3 No Revocation Available
+!Cname acceptable-privilege-policies
+id-ce 57		: acceptablePrivPolicies	: X509v3 Acceptable Privilege Policies
+!Cname indirect-issuer
+id-ce 61		: indirectIssuer			: X509v3 Indirect Issuer
+!Cname no-assertion
+id-ce 62        : noAssertion       : X509v3 No Assertion
+!Cname id-aa-issuing-distribution-point
+id-ce 63		: aAissuingDistributionPoint : X509v3 Attribute Authority Issuing Distribution Point
+!Cname issued-on-behalf-of
+id-ce 64		: issuedOnBehalfOf	: X509v3 Issued On Behalf Of
+!Cname single-use
+id-ce 65		: singleUse			: X509v3 Single Use
+!Cname group-ac
+id-ce 66		: groupAC			: X509v3 Group Attribute Certificate
+!Cname allowed-attribute-assignments
+id-ce 67		: allowedAttributeAssignments		: X509v3 Allowed Attribute Assignments
+!Cname attribute-mappings
+id-ce 68		: attributeMappings		: X509v3 Attribute Mappings
+!Cname holder-name-constraints
+id-ce 69		: holderNameConstraints	: X509v3 Holder Name Constraints
+!Cname authorization-validation
+id-ce 70		: authorizationValidation : X509v3 Authorization Validation
+!Cname prot-restrict
+id-ce 71		: protRestrict : X509v3 Protocol Restriction
+!Cname subject-alt-public-key-info
+id-ce 72		: subjectAltPublicKeyInfo : X509v3 Subject Alternative Public Key Info
+!Cname alt-signature-algorithm
+id-ce 73		: altSignatureAlgorithm : X509v3 Alternative Signature Algorithm
+!Cname alt-signature-value
+id-ce 74		: altSignatureValue : X509v3 Alternative Signature Value
+!Cname associated-information
+id-ce 75		: associatedInformation : X509v3 Associated Information
 
 # From RFC5280
 ext-key-usage 0		: anyExtendedKeyUsage	: Any Extended Key Usage
