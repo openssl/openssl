@@ -123,7 +123,7 @@ otherwise 0.
 
 EVP_KEYMGMT_get0_name() returns the algorithm name, or NULL on error.
 
-EVP_KEYMGMT_get0_description() returns a pointer to a decription, or NULL if
+EVP_KEYMGMT_get0_description() returns a pointer to a description, or NULL if
 there isn't one.
 
 EVP_KEYMGMT_gettable_params(), EVP_KEYMGMT_settable_params() and

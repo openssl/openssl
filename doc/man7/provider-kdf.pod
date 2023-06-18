@@ -198,7 +198,7 @@ Sets the mode in the associated KDF ctx.
 
 =item "pkcs5" (B<OSSL_KDF_PARAM_PKCS5>) <integer>
 
-Enables or diables the SP800-132 compliance checks.
+Enables or disables the SP800-132 compliance checks.
 A mode of 0 enables the compliance checks.
 
 The checks performed are:

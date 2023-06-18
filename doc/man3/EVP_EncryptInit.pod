@@ -665,7 +665,7 @@ Note that the block size for a cipher may be different to the block size for
 the underlying encryption/decryption primitive.
 For example AES in CTR mode has a block size of 1 (because it operates like a
 stream cipher), even though AES has a block size of 16.
-Use EVP_CIPHER_get_block_size() to retreive the cached value.
+Use EVP_CIPHER_get_block_size() to retrieve the cached value.
 
 =item "aead" (B<OSSL_CIPHER_PARAM_AEAD>) <integer>
 
