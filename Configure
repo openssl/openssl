@@ -440,6 +440,7 @@ my @disablables = (
     "devcryptoeng",
     "dgram",
     "dh",
+    "docs",
     "dsa",
     "dso",
     "dtls",

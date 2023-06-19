@@ -512,7 +512,7 @@ LANG=C
 {- dependmagic('build_modules', 'Build the modules (i.e. providers and engines)'); -}: build_modules_nodep
 {- dependmagic('build_programs', 'Build the openssl executables and scripts'); -}: build_programs_nodep
 
-all: build_sw build_docs ## Build software and documentation
+all: build_sw {- "build_docs" if !$disabled{docs}; -} ## Build software and documentation
 
 ##@ Documentation
 build_generated_pods: $(GENERATED_PODS)
@@ -624,9 +624,9 @@ depend: Makefile
 # Install helper targets #############################################
 ##@ Installation
 
-install: install_sw install_ssldirs install_docs {- $disabled{fips} ? "" : "install_fips" -} ## Install software and documentation, create OpenSSL directories
+install: install_sw install_ssldirs {- "install_docs" if !$disabled{docs}; -} {- $disabled{fips} ? "" : "install_fips" -} ## Install software and documentation, create OpenSSL directories
 
-uninstall: uninstall_docs uninstall_sw {- $disabled{fips} ? "" : "uninstall_fips" -} ## Uninstall software and documentation
+uninstall: {- "uninstall_docs" if !$disabled{docs}; -} uninstall_sw {- $disabled{fips} ? "" : "uninstall_fips" -} ## Uninstall software and documentation
 
 install_sw: install_dev install_engines install_modules install_runtime ## Install just the software and libraries
 
