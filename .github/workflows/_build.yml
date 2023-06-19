@@ -13,11 +13,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - uses: awalsh128/cache-apt-pkgs-action@latest
-      with:
-        packages: mingw-w64 mingw-w64-tools ccache
-        version: 1.0
-        execute_install_scripts: true
+    # - uses: awalsh128/cache-apt-pkgs-action@latest
+    #  with:
+   #     packages: ccache
+  #      version: 1.0
+ #       execute_install_scripts: true
+    - name: install dependencies
+      run: apt install mingw-w64 mingw-w64-tools
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2
     - name: make build32 directory
