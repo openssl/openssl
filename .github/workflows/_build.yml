@@ -1,0 +1,45 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: mingw-w64
+        version: 1.0
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+    - name: make build directory
+      run: mkdir build
+    - name: Configure
+      run: ./Configure --cross-compile-prefix=x86_64-w64-mingw32- mingw64
+    - name: make
+      run: make
+    - name: make install
+      run: make install
+    - name: Bump version and push tag
+      id: tag_version
+      uses: mathieudutour/github-tag-action@v6.1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create a GitHub release
+      uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ steps.tag_version.outputs.new_tag }}
+        name: Release ${{ steps.tag_version.outputs.new_tag }}
+        body: ${{ steps.tag_version.outputs.changelog }}
+    - name: upload build
+      uses: actions/upload-artifact@v3
+      with:
+        name: output
+        path: build
