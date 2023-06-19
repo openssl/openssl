@@ -20,17 +20,17 @@ jobs:
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2
     - name: make build32 directory
-      run: mkdir build32
+      run: mkdir ~/build32
     - name: Configure
-      run: ./Configure --cross-compile-prefix=i686-w64-mingw32- mingw64 --prefix=build32 --openssldir=build32
+      run: ./Configure --cross-compile-prefix=i686-w64-mingw32- mingw64 --prefix=~/build32 --openssldir=~/build32
     - name: make 32
       run: make
     - name: make install 32
       run: make install
     - name: make build64 directory
-      run: mkdir build64
+      run: mkdir ~/build64
     - name: Configure
-      run: ./Configure --cross-compile-prefix=x86_64-w64-mingw32- mingw64 --prefix=build64 --openssldir=build64
+      run: ./Configure --cross-compile-prefix=x86_64-w64-mingw32- mingw64 --prefix=~/build64 --openssldir=~/build64
     - name: make 64
       run: make
     - name: make install 64
@@ -50,10 +50,10 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: build32
-        path: build32
+        path: ~/build32
     - name: upload build64
       uses: actions/upload-artifact@v3
       with:
         name: build64
-        path: build64
+        path: ~/build64
 
