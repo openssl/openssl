@@ -47,12 +47,31 @@ int main(int argc, char **argv)
         /* Otherwise application specific argument processing */
         if (strcmp(*args, "-connect") == 0) {
             connect_str = args[1];
-            if (connect_str == NULL) {
-                fprintf(stderr, "Missing -connect argument\n");
+            int colon_pos = strcspn(connect_str, ":");
+            char *host = strndup(connect_str, colon_pos);
+            char *port_str = connect_str + colon_pos + 1;
+            char *endptr;
+            long port = strtol(port_str, &endptr, 10);
+            if (nargs < 2) {
+                fprintf(stderr, "Missing argument after -connect\n");
+                goto end;
+            }
+            if (colon_pos == strlen(connect_str)) {
+                fprintf(stderr, "Invalid -connect argument: must be in the format 'host:port'\n");
+                goto end;
+            }
+            if (*endptr != '\0' || port <= 0 || port > 65535) {
+                fprintf(stderr, "Invalid -connect argument: invalid port number '%s'\n", port_str);
+                free(host);
                 goto end;
             }
             args += 2;
             nargs -= 2;
+            /* Use host and port here */
+            BIO_set_conn_hostname(sbio, host);
+            BIO_set_conn_port(sbio, port_str);
+
+            free(host);
             continue;
         } else {
             fprintf(stderr, "Unknown argument %s\n", *args);
