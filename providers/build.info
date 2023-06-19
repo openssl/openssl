@@ -40,7 +40,11 @@ $LIBCOMMON=libcommon.a
 $LIBFIPS=libfips.a
 $LIBLEGACY=liblegacy.a
 $LIBDEFAULT=libdefault.a
-LIBS{noinst}=$LIBDEFAULT $LIBCOMMON
+IF[{- $disabled{shared} -}]
+    LIBS=$LIBDEFAULT $LIBCOMMON
+ELSE
+    LIBS{noinst}=$LIBDEFAULT $LIBCOMMON
+ENDIF
 
 # Enough of our implementations include prov/ciphercommon.h (present in
 # providers/implementations/include), which includes crypto/*_platform.h
