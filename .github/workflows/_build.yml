@@ -17,6 +17,7 @@ jobs:
       with:
         packages: mingw-w64 mingw-w64-tools ccache
         version: 1.0
+        execute_install_scripts: true
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2
     - name: make build32 directory
