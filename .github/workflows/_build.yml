@@ -19,13 +19,21 @@ jobs:
         version: 1.0
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2
-    - name: make build directory
-      run: mkdir build
+    - name: make build32 directory
+      run: mkdir build32
     - name: Configure
-      run: ./Configure --cross-compile-prefix=x86_64-w64-mingw32- mingw64
-    - name: make
+      run: ./Configure --cross-compile-prefix=i686-w64-mingw32- mingw64 --prefix=build32 --openssldir=build32
+    - name: make 32
       run: make
-    - name: make install
+    - name: make install 32
+      run: make install
+    - name: make build64 directory
+      run: mkdir build64
+    - name: Configure
+      run: ./Configure --cross-compile-prefix=x86_64-w64-mingw32- mingw64 --prefix=build64 --openssldir=build64
+    - name: make 64
+      run: make
+    - name: make install 64
       run: make install
     - name: Bump version and push tag
       id: tag_version
@@ -38,8 +46,14 @@ jobs:
         tag: ${{ steps.tag_version.outputs.new_tag }}
         name: Release ${{ steps.tag_version.outputs.new_tag }}
         body: ${{ steps.tag_version.outputs.changelog }}
-    - name: upload build
+    - name: upload build32
       uses: actions/upload-artifact@v3
       with:
-        name: output
-        path: build
+        name: build32
+        path: build32
+    - name: upload build64
+      uses: actions/upload-artifact@v3
+      with:
+        name: build64
+        path: build64
+
