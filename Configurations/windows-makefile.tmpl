@@ -436,7 +436,7 @@ build_all_generated: $(GENERATED_MANDATORY) $(GENERATED) build_docs
 	@$(ECHO) "         then make will fail..."
 	@{- output_on() if $disabled{makedepend}; "\@rem" -}
 
-all: build_sw build_docs
+all: build_sw {- "build_docs" if !$disabled{docs}; -}
 
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep copy-utils
@@ -453,9 +453,9 @@ list-tests:
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
 	@{- output_on() if !$disabled{tests}; "\@rem" -}
 
-install: install_sw install_ssldirs install_docs {- $disabled{fips} ? "" : "install_fips" -}
+install: install_sw install_ssldirs {- "install_docs" if !$disabled{docs}; -} {- $disabled{fips} ? "" : "install_fips" -}
 
-uninstall: uninstall_docs uninstall_sw {- $disabled{fips} ? "" : "uninstall_fips" -}
+uninstall: {- "uninstall_docs" if !$disabled{docs}; -} uninstall_sw {- $disabled{fips} ? "" : "uninstall_fips" -}
 
 libclean:
 	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """{.,apps,test,fuzz}/$$1.*"""; } @ARGV" $(SHLIBS)

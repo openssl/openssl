@@ -716,6 +716,10 @@ Don't build support for datagram based BIOs.
 
 Selecting this option will also force the disabling of DTLS.
 
+### no-docs
+
+Don't build and install documentation, i.e. manual pages in various forms.
+
 ### no-dso
 
 Don't build support for loading Dynamic Shared Objects (DSO)

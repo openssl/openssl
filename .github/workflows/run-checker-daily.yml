@@ -49,6 +49,7 @@ jobs:
           no-des,
           no-devcryptoeng,
           no-dh,
+          no-docs,
           no-dsa,
           no-dtls1,
           no-dtls1_2,
