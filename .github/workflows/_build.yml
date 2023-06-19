@@ -22,7 +22,7 @@ jobs:
     - name: make build32 directory
       run: mkdir build32
     - name: Configure
-      run: ./Configure --cross-compile-prefix=i686-w64-mingw32- mingw32 --prefix=$(pwd)/build32 --openssldir=$(pwd)/build32
+      run: ./Configure --cross-compile-prefix=i686-w64-mingw32- mingw --prefix=$(pwd)/build32 --openssldir=$(pwd)/build32
     - name: make 32
       run: make
     - name: make install 32
