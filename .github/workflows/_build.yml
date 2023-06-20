@@ -69,7 +69,7 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
-        tag: ${{ steps.tag_version.outputs.new_tag }}
+        tag_name: ${{ steps.tag_version.outputs.new_tag }}
         files: |
           openssl-win32.zip
           openssl-win64.zip
