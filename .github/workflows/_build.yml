@@ -1,4 +1,4 @@
-name: Build FFMPEG
+name: Build OpenSSL
 
 on:
   push:
@@ -22,7 +22,7 @@ jobs:
     - name: make
       run: make
     - name: make install
-      run: make install
+      run: make install_sw
     - name: upload build
       uses: actions/upload-artifact@v3
       with:
