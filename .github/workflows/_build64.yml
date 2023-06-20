@@ -1,0 +1,32 @@
+name: Build 64 bit
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: install dependencies
+      run: |
+        sudo apt update
+        sudo apt install mingw-w64 mingw-w64-tools
+    - name: make build directory
+      run: mkdir build
+    - name: Configure
+      run: ./Configure --cross-compile-prefix=/usr/bin/x86_64-w64-mingw32- mingw64 --prefix=$(pwd)/build --openssldir=$(pwd)/build
+    - name: make
+      run: make
+    - name: make install
+      run: make install
+    - name: upload build
+      uses: actions/upload-artifact@v3
+      with:
+        name: build
+        path: build
