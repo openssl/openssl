@@ -66,8 +66,8 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
       with:
+        tag: ${{ steps.tag_version.outputs.new_tag }}
         files: |
           openssl-win32.zip
           openssl-win64.zip
