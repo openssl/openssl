@@ -50,6 +50,8 @@ jobs:
         name: build64
         path: build/bin
   release:
+    permissions:
+      contents: write
     needs: [build32, build64]
     runs-on: ubuntu-latest
     steps:
