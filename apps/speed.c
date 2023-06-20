@@ -382,7 +382,7 @@ static const OPT_PAIR rsa_choices[RSA_NUM] = {
     {"rsa15360", R_RSA_15360}
 };
 
-static double rsa_results[RSA_NUM][2];  /* 2 ops: sign then verify */
+static double rsa_results[RSA_NUM][4];  /* 4 ops: sign, verify, encrypt, decrypt */
 
 #ifndef OPENSSL_NO_DH
 enum ff_params_t {
@@ -521,8 +521,11 @@ typedef struct loopargs_st {
     unsigned char *key;
     size_t buflen;
     size_t sigsize;
+    size_t encsize;
     EVP_PKEY_CTX *rsa_sign_ctx[RSA_NUM];
     EVP_PKEY_CTX *rsa_verify_ctx[RSA_NUM];
+    EVP_PKEY_CTX *rsa_encrypt_ctx[RSA_NUM];
+    EVP_PKEY_CTX *rsa_decrypt_ctx[RSA_NUM];
     EVP_PKEY_CTX *dsa_sign_ctx[DSA_NUM];
     EVP_PKEY_CTX *dsa_verify_ctx[DSA_NUM];
     EVP_PKEY_CTX *ecdsa_sign_ctx[ECDSA_NUM];
@@ -936,6 +939,50 @@ static int RSA_verify_loop(void *args)
         ret = EVP_PKEY_verify(rsa_verify_ctx[testnum], buf2, rsa_num, buf, 36);
         if (ret <= 0) {
             BIO_printf(bio_err, "RSA verify failure\n");
+            ERR_print_errors(bio_err);
+            count = -1;
+            break;
+        }
+    }
+    return count;
+}
+
+static int RSA_encrypt_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    unsigned char *buf2 = tempargs->buf2;
+    size_t *rsa_num = &tempargs->encsize;
+    EVP_PKEY_CTX **rsa_encrypt_ctx = tempargs->rsa_encrypt_ctx;
+    int ret, count;
+
+    for (count = 0; COND(rsa_c[testnum][2]); count++) {
+        *rsa_num = tempargs->buflen;
+        ret = EVP_PKEY_encrypt(rsa_encrypt_ctx[testnum], buf2, rsa_num, buf, 36);
+        if (ret <= 0) {
+            BIO_printf(bio_err, "RSA encrypt failure\n");
+            ERR_print_errors(bio_err);
+            count = -1;
+            break;
+        }
+    }
+    return count;
+}
+
+static int RSA_decrypt_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    unsigned char *buf2 = tempargs->buf2;
+    size_t rsa_num;
+    EVP_PKEY_CTX **rsa_decrypt_ctx = tempargs->rsa_decrypt_ctx;
+    int ret, count;
+
+    for (count = 0; COND(rsa_c[testnum][3]); count++) {
+        rsa_num = tempargs->buflen;
+        ret = EVP_PKEY_decrypt(rsa_decrypt_ctx[testnum], buf, &rsa_num, buf2, tempargs->encsize);
+        if (ret <= 0) {
+            BIO_printf(bio_err, "RSA decrypt failure\n");
             ERR_print_errors(bio_err);
             count = -1;
             break;
@@ -1650,6 +1697,7 @@ int speed_main(int argc, char **argv)
     unsigned int idx;
     int keylen;
     int buflen;
+    size_t declen;
     BIGNUM *bn = NULL;
     EVP_PKEY_CTX *genctx = NULL;
 #ifndef NO_FORK
@@ -2841,7 +2889,7 @@ skip_hmac:
             ERR_print_errors(bio_err);
             op_count = 1;
         } else {
-            pkey_print_message("private", "rsa",
+            pkey_print_message("private", "rsa sign",
                                rsa_keys[testnum].bits, seconds.rsa);
             /* RSA_blinding_on(rsa_key[testnum],NULL); */
             Time_F(START);
@@ -2849,7 +2897,7 @@ skip_hmac:
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R1:%ld:%d:%.2f\n"
-                       : "%ld %u bits private RSA's in %.2fs\n",
+                       : "%ld %u bits private RSA sign ops in %.2fs\n",
                        count, rsa_keys[testnum].bits, d);
             rsa_results[testnum][0] = (double)count / d;
             op_count = count;
@@ -2872,16 +2920,79 @@ skip_hmac:
             ERR_print_errors(bio_err);
             rsa_doit[testnum] = 0;
         } else {
-            pkey_print_message("public", "rsa",
+            pkey_print_message("public", "rsa verify",
                                rsa_keys[testnum].bits, seconds.rsa);
             Time_F(START);
             count = run_benchmark(async_jobs, RSA_verify_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R2:%ld:%d:%.2f\n"
-                       : "%ld %u bits public RSA's in %.2fs\n",
+                       : "%ld %u bits public RSA verify ops in %.2fs\n",
                        count, rsa_keys[testnum].bits, d);
             rsa_results[testnum][1] = (double)count / d;
+        }
+
+        for (i = 0; st && i < loopargs_len; i++) {
+            loopargs[i].rsa_encrypt_ctx[testnum] = EVP_PKEY_CTX_new(rsa_key, NULL);
+            loopargs[i].encsize = loopargs[i].buflen;
+            if (loopargs[i].rsa_encrypt_ctx[testnum] == NULL
+                || EVP_PKEY_encrypt_init(loopargs[i].rsa_encrypt_ctx[testnum]) <= 0
+                || EVP_PKEY_encrypt(loopargs[i].rsa_encrypt_ctx[testnum],
+                                    loopargs[i].buf2,
+                                    &loopargs[i].encsize,
+                                    loopargs[i].buf, 36) <= 0)
+                st = 0;
+        }
+        if (!st) {
+            BIO_printf(bio_err,
+                       "RSA encrypt setup failure.  No RSA encrypt will be done.\n");
+            ERR_print_errors(bio_err);
+            op_count = 1;
+        } else {
+            pkey_print_message("private", "rsa encrypt",
+                               rsa_keys[testnum].bits, seconds.rsa);
+            /* RSA_blinding_on(rsa_key[testnum],NULL); */
+            Time_F(START);
+            count = run_benchmark(async_jobs, RSA_encrypt_loop, loopargs);
+            d = Time_F(STOP);
+            BIO_printf(bio_err,
+                       mr ? "+R3:%ld:%d:%.2f\n"
+                       : "%ld %u bits public RSA encrypt ops in %.2fs\n",
+                       count, rsa_keys[testnum].bits, d);
+            rsa_results[testnum][2] = (double)count / d;
+            op_count = count;
+        }
+
+        for (i = 0; st && i < loopargs_len; i++) {
+            loopargs[i].rsa_decrypt_ctx[testnum] = EVP_PKEY_CTX_new(rsa_key, NULL);
+            declen = loopargs[i].buflen;
+            if (loopargs[i].rsa_decrypt_ctx[testnum] == NULL
+                || EVP_PKEY_decrypt_init(loopargs[i].rsa_decrypt_ctx[testnum]) <= 0
+                || EVP_PKEY_decrypt(loopargs[i].rsa_decrypt_ctx[testnum],
+                                    loopargs[i].buf,
+                                    &declen,
+                                    loopargs[i].buf2,
+                                    loopargs[i].encsize) <= 0)
+                st = 0;
+        }
+        if (!st) {
+            BIO_printf(bio_err,
+                       "RSA decrypt setup failure.  No RSA decrypt will be done.\n");
+            ERR_print_errors(bio_err);
+            op_count = 1;
+        } else {
+            pkey_print_message("private", "rsa decrypt",
+                               rsa_keys[testnum].bits, seconds.rsa);
+            /* RSA_blinding_on(rsa_key[testnum],NULL); */
+            Time_F(START);
+            count = run_benchmark(async_jobs, RSA_decrypt_loop, loopargs);
+            d = Time_F(STOP);
+            BIO_printf(bio_err,
+                       mr ? "+R4:%ld:%d:%.2f\n"
+                       : "%ld %u bits private RSA decrypt ops in %.2fs\n",
+                       count, rsa_keys[testnum].bits, d);
+            rsa_results[testnum][3] = (double)count / d;
+            op_count = count;
         }
 
         if (op_count <= 1) {
@@ -2925,7 +3036,7 @@ skip_hmac:
             count = run_benchmark(async_jobs, DSA_sign_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R3:%ld:%u:%.2f\n"
+                       mr ? "+R5:%ld:%u:%.2f\n"
                        : "%ld %u bits DSA signs in %.2fs\n",
                        count, dsa_bits[testnum], d);
             dsa_results[testnum][0] = (double)count / d;
@@ -2955,7 +3066,7 @@ skip_hmac:
             count = run_benchmark(async_jobs, DSA_verify_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R4:%ld:%u:%.2f\n"
+                       mr ? "+R6:%ld:%u:%.2f\n"
                        : "%ld %u bits DSA verify in %.2fs\n",
                        count, dsa_bits[testnum], d);
             dsa_results[testnum][1] = (double)count / d;
@@ -3002,7 +3113,7 @@ skip_hmac:
             count = run_benchmark(async_jobs, ECDSA_sign_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R5:%ld:%u:%.2f\n"
+                       mr ? "+R7:%ld:%u:%.2f\n"
                        : "%ld %u bits ECDSA signs in %.2fs\n",
                        count, ec_curves[testnum].bits, d);
             ecdsa_results[testnum][0] = (double)count / d;
@@ -3032,7 +3143,7 @@ skip_hmac:
             count = run_benchmark(async_jobs, ECDSA_verify_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R6:%ld:%u:%.2f\n"
+                       mr ? "+R8:%ld:%u:%.2f\n"
                        : "%ld %u bits ECDSA verify in %.2fs\n",
                        count, ec_curves[testnum].bits, d);
             ecdsa_results[testnum][1] = (double)count / d;
@@ -3119,7 +3230,7 @@ skip_hmac:
                 run_benchmark(async_jobs, ECDH_EVP_derive_key_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R7:%ld:%d:%.2f\n" :
+                       mr ? "+R9:%ld:%d:%.2f\n" :
                        "%ld %u-bits ECDH ops in %.2fs\n", count,
                        ec_curves[testnum].bits, d);
             ecdh_results[testnum][0] = (double)count / d;
@@ -3205,7 +3316,7 @@ skip_hmac:
                 d = Time_F(STOP);
 
                 BIO_printf(bio_err,
-                           mr ? "+R8:%ld:%u:%s:%.2f\n" :
+                           mr ? "+R10:%ld:%u:%s:%.2f\n" :
                            "%ld %u bits %s signs in %.2fs \n",
                            count, ed_curves[testnum].bits,
                            ed_curves[testnum].name, d);
@@ -3232,7 +3343,7 @@ skip_hmac:
                 count = run_benchmark(async_jobs, EdDSA_verify_loop, loopargs);
                 d = Time_F(STOP);
                 BIO_printf(bio_err,
-                           mr ? "+R9:%ld:%u:%s:%.2f\n"
+                           mr ? "+R11:%ld:%u:%s:%.2f\n"
                            : "%ld %u bits %s verify in %.2fs\n",
                            count, ed_curves[testnum].bits,
                            ed_curves[testnum].name, d);
@@ -3336,7 +3447,7 @@ skip_hmac:
                 d = Time_F(STOP);
 
                 BIO_printf(bio_err,
-                           mr ? "+R10:%ld:%u:%s:%.2f\n" :
+                           mr ? "+R12:%ld:%u:%s:%.2f\n" :
                            "%ld %u bits %s signs in %.2fs \n",
                            count, sm2_curves[testnum].bits,
                            sm2_curves[testnum].name, d);
@@ -3364,7 +3475,7 @@ skip_hmac:
                 count = run_benchmark(async_jobs, SM2_verify_loop, loopargs);
                 d = Time_F(STOP);
                 BIO_printf(bio_err,
-                           mr ? "+R11:%ld:%u:%s:%.2f\n"
+                           mr ? "+R13:%ld:%u:%s:%.2f\n"
                            : "%ld %u bits %s verify in %.2fs\n",
                            count, sm2_curves[testnum].bits,
                            sm2_curves[testnum].name, d);
@@ -3550,7 +3661,7 @@ skip_hmac:
                 run_benchmark(async_jobs, FFDH_derive_key_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R12:%ld:%d:%.2f\n" :
+                       mr ? "+R14:%ld:%d:%.2f\n" :
                        "%ld %u-bits FFDH ops in %.2fs\n", count,
                        ffdh_params[testnum].bits, d);
             ffdh_results[testnum][0] = (double)count / d;
@@ -3716,7 +3827,7 @@ skip_hmac:
                 run_benchmark(async_jobs, KEM_keygen_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R13:%ld:%s:%.2f\n" :
+                       mr ? "+R15:%ld:%s:%.2f\n" :
                        "%ld %s KEM keygens in %.2fs\n", count,
                        kem_name, d);
             kems_results[testnum][0] = (double)count / d;
@@ -3727,7 +3838,7 @@ skip_hmac:
                 run_benchmark(async_jobs, KEM_encaps_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R14:%ld:%s:%.2f\n" :
+                       mr ? "+R16:%ld:%s:%.2f\n" :
                        "%ld %s KEM encaps in %.2fs\n", count,
                        kem_name, d);
             kems_results[testnum][1] = (double)count / d;
@@ -3738,7 +3849,7 @@ skip_hmac:
                 run_benchmark(async_jobs, KEM_decaps_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R15:%ld:%s:%.2f\n" :
+                       mr ? "+R17:%ld:%s:%.2f\n" :
                        "%ld %s KEM decaps in %.2fs\n", count,
                        kem_name, d);
             kems_results[testnum][2] = (double)count / d;
@@ -3893,7 +4004,7 @@ skip_hmac:
             count = run_benchmark(async_jobs, SIG_keygen_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R16:%ld:%s:%.2f\n" :
+                       mr ? "+R18:%ld:%s:%.2f\n" :
                        "%ld %s signature keygens in %.2fs\n", count,
                        sig_name, d);
             sigs_results[testnum][0] = (double)count / d;
@@ -3904,7 +4015,7 @@ skip_hmac:
                 run_benchmark(async_jobs, SIG_sign_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R17:%ld:%s:%.2f\n" :
+                       mr ? "+R19:%ld:%s:%.2f\n" :
                        "%ld %s signature signs in %.2fs\n", count,
                        sig_name, d);
             sigs_results[testnum][1] = (double)count / d;
@@ -3916,7 +4027,7 @@ skip_hmac:
                 run_benchmark(async_jobs, SIG_verify_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R18:%ld:%s:%.2f\n" :
+                       mr ? "+R20:%ld:%s:%.2f\n" :
                        "%ld %s signature verifys in %.2fs\n", count,
                        sig_name, d);
             sigs_results[testnum][2] = (double)count / d;
@@ -3979,17 +4090,20 @@ skip_hmac:
         if (!rsa_doit[k])
             continue;
         if (testnum && !mr) {
-            printf("%18ssign    verify    sign/s verify/s\n", " ");
+            printf("%19ssign    verify    encrypt   decrypt   sign/s verify/s  encr./s  decr./s\n", " ");
             testnum = 0;
         }
         if (mr)
-            printf("+F2:%u:%u:%f:%f\n",
-                   k, rsa_keys[k].bits, rsa_results[k][0], rsa_results[k][1]);
+            printf("+F2:%u:%u:%f:%f:%f:%f\n",
+                   k, rsa_keys[k].bits, rsa_results[k][0], rsa_results[k][1],
+                   rsa_results[k][2], rsa_results[k][3]);
         else
-            printf("rsa %4u bits %8.6fs %8.6fs %8.1f %8.1f\n",
+            printf("rsa %5u bits %8.6fs %8.6fs %8.6fs %8.6fs %8.1f %8.1f %8.1f %8.1f\n",
                    rsa_keys[k].bits, 1.0 / rsa_results[k][0],
-                   1.0 / rsa_results[k][1],
-                   rsa_results[k][0], rsa_results[k][1]);
+                   1.0 / rsa_results[k][1], 1.0 / rsa_results[k][2],
+                   1.0 / rsa_results[k][3],
+                   rsa_results[k][0], rsa_results[k][1],
+                   rsa_results[k][2], rsa_results[k][3]);
     }
     testnum = 1;
     for (k = 0; k < DSA_NUM; k++) {
@@ -4413,6 +4527,12 @@ static int do_multi(int multi, int size_num)
 
                     d = atof(sstrsep(&p, sep));
                     rsa_results[k][1] += d;
+
+                    d = atof(sstrsep(&p, sep));
+                    rsa_results[k][2] += d;
+
+                    d = atof(sstrsep(&p, sep));
+                    rsa_results[k][3] += d;
                 }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F3:")) {
                 tk = sstrsep(&p, sep);
