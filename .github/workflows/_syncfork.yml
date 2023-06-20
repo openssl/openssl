@@ -12,6 +12,7 @@ jobs:
 
     steps:
       - uses: tgymnich/fork-sync@v1.8
+        continue-on-error: true
         with:
           owner: FFmpeg
           base: master
