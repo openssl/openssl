@@ -46,12 +46,27 @@ int main(int argc, char **argv)
             continue;
         /* Otherwise application specific argument processing */
         if (strcmp(*args, "-connect") == 0) {
-            connect_str = args[1];
-            int colon_pos = strcspn(connect_str, ":");
-            char *host = strndup(connect_str, colon_pos);
-            char *port_str = connect_str + colon_pos + 1;
+            int colon_pos;
+            char *connect_str = args[1];
+            char *port_str = connect_str;
             char *endptr;
-            long port = strtol(port_str, &endptr, 10);
+            long port;
+            char *host;
+            int i;
+            
+            colon_pos = strcspn(connect_str, ":");
+            host = (char *)malloc(colon_pos + 1);
+            if (!host) {
+                fprintf(stderr, "Error: could not allocate memory\n");
+                goto end;
+            }
+            for (i = 0; i < colon_pos; i++) {
+                host[i] = connect_str[i];
+            }
+            host[colon_pos] = '\0';
+            port_str += colon_pos + 1;
+            port = strtol(port_str, &endptr, 10);
+
             if (nargs < 2) {
                 fprintf(stderr, "Missing argument after -connect\n");
                 goto end;
