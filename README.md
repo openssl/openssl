@@ -1,6 +1,15 @@
-Welcome to the OpenSSL Project
-==============================
+Unofficial OpenSSL Windows Binaries
+=============
 
+OpenSSL Windows binaries automatically updated by Github Actions. (This repo will not be maintained but is meant to be used as a reference.)
+
+## Files
+- .github/workflows/build.yml - When the master branch changes, compiles FFMPEG for win32 and win64, then creates a new release on GitHub
+- .github/workflows/syncfork.yml - Occasionally checks for upstream changes and updates this repo
+
+
+Upstream OpenSSL Readme
+==============================
 [![openssl logo]][www.openssl.org]
 
 [![github actions ci badge]][github actions ci]
