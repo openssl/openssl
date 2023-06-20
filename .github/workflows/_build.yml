@@ -27,7 +27,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: build32
-        path: build
+        path: build/bin
   build64:
     runs-on: ubuntu-latest
     steps:
@@ -48,4 +48,26 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: build64
-        path: build
+        path: build/bin
+  release:
+    needs: [build32, build64]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download all workflow run artifacts
+      uses: actions/download-artifact@v3
+    - name: zip artifacts
+      run: |
+        zip -r -j openssl-win32.zip build32
+        zip -r -j openssl-win64.zip build64
+    - name: Bump version and push tag
+      id: tag_version
+      uses: mathieudutour/github-tag-action@v6.1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          openssl-win32.zip
+          openssl-win64.zip
