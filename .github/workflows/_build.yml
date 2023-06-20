@@ -28,7 +28,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: build32
-        path: build/bin
+        path: build
   build64:
     runs-on: ubuntu-latest
     steps:
@@ -49,7 +49,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: build64
-        path: build/bin
+        path: build
   release:
     permissions:
       contents: write
@@ -60,8 +60,10 @@ jobs:
       uses: actions/download-artifact@v3
     - name: zip artifacts
       run: |
-        zip -r -j openssl-win32.zip build32
-        zip -r -j openssl-win64.zip build64
+        zip -r -j openssl-win32-dev.zip build32
+        zip -r -j openssl-win64-dev.zip build64
+        zip -r -j openssl-win32.zip build32/bin
+        zip -r -j openssl-win64.zip build64/bin
     - name: Bump version and push tag
       id: tag_version
       uses: mathieudutour/github-tag-action@v6.1
@@ -72,5 +74,7 @@ jobs:
       with:
         tag_name: ${{ steps.tag_version.outputs.new_tag }}
         files: |
+          openssl-win32-dev.zip
+          openssl-win64-dev.zip
           openssl-win32.zip
           openssl-win64.zip
