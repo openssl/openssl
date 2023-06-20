@@ -57,13 +57,12 @@ int main(int argc, char **argv)
             colon_pos = strcspn(connect_str, ":");
             host = (char *)malloc(colon_pos + 1);
 
-            if (!host) {
+            if (host == NULL) {
                 fprintf(stderr, "Error: could not allocate memory\n");
                 goto end;
             }
-            for (i = 0; i < colon_pos; i++) {
+            for (i = 0; i < colon_pos; i++) 
                 host[i] = connect_str[i];
-            }
             
             host[colon_pos] = '\0';
             port_str += colon_pos + 1;
