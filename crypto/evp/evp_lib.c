@@ -852,10 +852,10 @@ EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
         return NULL;
 
     if ((to = EVP_MD_meth_new(md->type, md->pkey_type)) != NULL) {
-        CRYPTO_RWLOCK *lock = to->lock;
+        CRYPTO_REF_COUNT refcnt = to->refcnt;
 
         memcpy(to, md, sizeof(*to));
-        to->lock = lock;
+        to->refcnt = refcnt;
         to->origin = EVP_ORIG_METH;
     }
     return to;
@@ -865,7 +865,7 @@ void evp_md_free_int(EVP_MD *md)
 {
     OPENSSL_free(md->type_name);
     ossl_provider_free(md->prov);
-    CRYPTO_THREAD_lock_free(md->lock);
+    CRYPTO_FREE_REF(&md->refcnt);
     OPENSSL_free(md);
 }
 

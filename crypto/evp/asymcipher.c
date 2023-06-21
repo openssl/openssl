@@ -324,15 +324,12 @@ static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
     if (cipher == NULL)
         return NULL;
 
-    cipher->lock = CRYPTO_THREAD_lock_new();
-    if (cipher->lock == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
+    if (!CRYPTO_NEW_REF(&cipher->refcnt, 1)) {
         OPENSSL_free(cipher);
         return NULL;
     }
     cipher->prov = prov;
     ossl_provider_up_ref(prov);
-    cipher->refcnt = 1;
 
     return cipher;
 }
@@ -460,12 +457,12 @@ void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher)
 
     if (cipher == NULL)
         return;
-    CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock);
+    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
     if (i > 0)
         return;
     OPENSSL_free(cipher->type_name);
     ossl_provider_free(cipher->prov);
-    CRYPTO_THREAD_lock_free(cipher->lock);
+    CRYPTO_FREE_REF(&cipher->refcnt);
     OPENSSL_free(cipher);
 }
 
@@ -473,7 +470,7 @@ int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&cipher->refcnt, &ref, cipher->lock);
+    CRYPTO_UP_REF(&cipher->refcnt, &ref);
     return 1;
 }
 

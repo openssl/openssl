@@ -204,7 +204,6 @@ struct evp_mac_st {
     const char *description;
 
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
 
     OSSL_FUNC_mac_newctx_fn *newctx;
     OSSL_FUNC_mac_dupctx_fn *dupctx;
@@ -226,7 +225,6 @@ struct evp_kdf_st {
     char *type_name;
     const char *description;
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
 
     OSSL_FUNC_kdf_newctx_fn *newctx;
     OSSL_FUNC_kdf_dupctx_fn *dupctx;
@@ -271,7 +269,6 @@ struct evp_md_st {
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
     OSSL_FUNC_digest_newctx_fn *newctx;
     OSSL_FUNC_digest_init_fn *dinit;
     OSSL_FUNC_digest_update_fn *dupdate;
@@ -327,7 +324,6 @@ struct evp_cipher_st {
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
     OSSL_FUNC_cipher_newctx_fn *newctx;
     OSSL_FUNC_cipher_encrypt_init_fn *einit;
     OSSL_FUNC_cipher_decrypt_init_fn *dinit;

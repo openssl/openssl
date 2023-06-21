@@ -99,7 +99,6 @@ struct evp_keymgmt_st {
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
 
     /* Constructor(s), destructor, information */
     OSSL_FUNC_keymgmt_new_fn *new;
@@ -141,7 +140,6 @@ struct evp_keyexch_st {
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
 
     OSSL_FUNC_keyexch_newctx_fn *newctx;
     OSSL_FUNC_keyexch_init_fn *init;
@@ -161,7 +159,6 @@ struct evp_signature_st {
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
 
     OSSL_FUNC_signature_newctx_fn *newctx;
     OSSL_FUNC_signature_sign_init_fn *sign_init;
@@ -196,7 +193,6 @@ struct evp_asym_cipher_st {
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
 
     OSSL_FUNC_asym_cipher_newctx_fn *newctx;
     OSSL_FUNC_asym_cipher_encrypt_init_fn *encrypt_init;
@@ -217,7 +213,6 @@ struct evp_kem_st {
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
 
     OSSL_FUNC_kem_newctx_fn *newctx;
     OSSL_FUNC_kem_encapsulate_init_fn *encapsulate_init;

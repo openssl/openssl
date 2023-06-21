@@ -23,14 +23,10 @@ static void *keymgmt_new(void)
 
     if ((keymgmt = OPENSSL_zalloc(sizeof(*keymgmt))) == NULL)
         return NULL;
-    if ((keymgmt->lock = CRYPTO_THREAD_lock_new()) == NULL) {
+    if (!CRYPTO_NEW_REF(&keymgmt->refcnt, 1)) {
         EVP_KEYMGMT_free(keymgmt);
-        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         return NULL;
     }
-
-    keymgmt->refcnt = 1;
-
     return keymgmt;
 }
 
@@ -249,7 +245,7 @@ int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&keymgmt->refcnt, &ref, keymgmt->lock);
+    CRYPTO_UP_REF(&keymgmt->refcnt, &ref);
     return 1;
 }
 
@@ -260,12 +256,12 @@ void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
     if (keymgmt == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref, keymgmt->lock);
+    CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref);
     if (ref > 0)
         return;
     OPENSSL_free(keymgmt->type_name);
     ossl_provider_free(keymgmt->prov);
-    CRYPTO_THREAD_lock_free(keymgmt->lock);
+    CRYPTO_FREE_REF(&keymgmt->refcnt);
     OPENSSL_free(keymgmt);
 }
 

@@ -22,7 +22,7 @@ static int evp_kdf_up_ref(void *vkdf)
     EVP_KDF *kdf = (EVP_KDF *)vkdf;
     int ref = 0;
 
-    CRYPTO_UP_REF(&kdf->refcnt, &ref, kdf->lock);
+    CRYPTO_UP_REF(&kdf->refcnt, &ref);
     return 1;
 }
 
@@ -34,12 +34,12 @@ static void evp_kdf_free(void *vkdf)
     if (kdf == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&kdf->refcnt, &ref, kdf->lock);
+    CRYPTO_DOWN_REF(&kdf->refcnt, &ref);
     if (ref > 0)
         return;
     OPENSSL_free(kdf->type_name);
     ossl_provider_free(kdf->prov);
-    CRYPTO_THREAD_lock_free(kdf->lock);
+    CRYPTO_FREE_REF(&kdf->refcnt);
     OPENSSL_free(kdf);
 }
 
@@ -48,11 +48,10 @@ static void *evp_kdf_new(void)
     EVP_KDF *kdf = NULL;
 
     if ((kdf = OPENSSL_zalloc(sizeof(*kdf))) == NULL
-        || (kdf->lock = CRYPTO_THREAD_lock_new()) == NULL) {
+        || !CRYPTO_NEW_REF(&kdf->refcnt, 1)) {
         OPENSSL_free(kdf);
         return NULL;
     }
-    kdf->refcnt = 1;
     return kdf;
 }
 
