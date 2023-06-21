@@ -82,12 +82,20 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 0,profile missing argument, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -profile,,,,,
 0,profile extra argument, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -profile,profile1,profile2,,,
 ,,,,,,,,,,,,,,,,,,,
-1,geninfo, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,1.2.3:int:987,BLANK,,BLANK,
-0,geninfo missing argument, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,,,,,
-0,geninfo bad syntax: leading '.', -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,.1.2.3:int:987,BLANK,,BLANK,
-0,geninfo bad syntax: missing ':', -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,1.2.3:int987,,,,
-0,geninfo bad syntax: double ':', -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,1.2.3:int::987,,,,
+1,geninfo int,                        -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,1.3:int:987
+1,geninfo str,                        -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,id-kp:str:name
+1,geninfo empty str,                  -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,id-kp:str:
+1,geninfo str and int,                -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo, 'id-kp:str:name, 1.3:int:987'
+0,geninfo missing argument,           -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,,,,,
+0,geninfo bad OID num syntax,         -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,.1.2.3:int:987
+0,geninfo invalid OID number string,  -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,1.333:int:987
+1,geninfo unknown OID number string,  -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,1.33:int:987
+0,geninfo bad OID name: trailing '_', -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,id-kp_:int:987
 0,geninfo bad syntax: missing ':int', -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,1.2.3,,,,
+0,geninfo bad type tag,               -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,1.2.3:xyz:987,,,,
+0,geninfo bad syntax: missing ':',    -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,1.2.3:int987,,,,
+0,geninfo bad int syntax: double ':', -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,1.2.3:int::987,,,,
+0,geninfo bad int syntax: extra char, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,1.2.3:int:987@,,,,
 ,,,,,,,,,,,,,,,,,,,
 1,reqout ir+certConf rspout ip+pkiConf, -section,, -cmd,ir,,-reqout,_RESULT_DIR/ir.der _RESULT_DIR/certConf.der,,-rspout,_RESULT_DIR/ip.der _RESULT_DIR/pkiConf.der,,BLANK,,BLANK,
 1,reqout cr rspout cp, -section,, -cmd,cr,,-reqout,_RESULT_DIR/cr.der,,-rspout,_RESULT_DIR/cp.der,,BLANK,,BLANK,

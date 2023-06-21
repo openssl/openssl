@@ -18,7 +18,7 @@ Generic message options:
 [B<-cmd> I<ir|cr|kur|p10cr|rr|genm>]
 [B<-infotype> I<name>]
 [B<-profile> I<name>]
-[B<-geninfo> I<OID:int:N>]
+[B<-geninfo> I<values>]
 
 Certificate enrollment options:
 
@@ -252,10 +252,13 @@ So far, there is specific support for C<caCerts> and C<rootCaCert>.
 Name of a certificate profile to place in
 the PKIHeader generalInfo field of request messages.
 
-=item B<-geninfo> I<OID:int:N>
+=item B<-geninfo> I<values>
 
-generalInfo integer values to place in request PKIHeader with given OID,
-e.g., C<1.2.3.4:int:56789>.
+A comma-separated list of InfoTypeAndValue to place in
+the generalInfo field of the PKIHeader of requests messages.
+Each InfoTypeAndValue gives an OID and an integer or string value
+of the form I<OID>:int:I<number> or I<OID>:str:I<text>,
+e.g., C<'1.2.3.4:int:56789, id-kp:str:name'>.
 
 =back
 
