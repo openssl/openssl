@@ -23,8 +23,7 @@ extern CRYPTO_RWLOCK *global_engine_lock;
  * This prints the engine's pointer address, "struct" or "funct" to
  * indicate the reference type, the before and after reference count, and
  * the file:line-number pair. The "ENGINE_REF_PRINT" statements must come
- * *after* the change. Since this is for tracing only we do not concern
- * ourselves with using atomic primitives for reading the struct_ref
+ * *after* the change.
  */
 # define ENGINE_REF_PRINT(e, isfunct, diff)                             \
     OSSL_TRACE6(ENGINE_REF_COUNT,                                       \
@@ -32,8 +31,8 @@ extern CRYPTO_RWLOCK *global_engine_lock;
                (void *)(e), (isfunct ? "funct" : "struct"),             \
                ((isfunct)                                               \
                 ? ((e)->funct_ref - (diff))                             \
-                : ((e)->struct_ref - (diff))),                          \
-               ((isfunct) ? (e)->funct_ref : (e)->struct_ref),          \
+                : (eng_struct_ref(e) - (diff))),                        \
+               ((isfunct) ? (e)->funct_ref : eng_struct_ref(e)),        \
                (OPENSSL_FILE), (OPENSSL_LINE))
 
 /*
@@ -136,7 +135,6 @@ struct engine_st {
     int flags;
     /* reference count on the structure itself */
     CRYPTO_REF_COUNT struct_ref;
-    CRYPTO_RWLOCK *refcnt_lock;
     /*
      * reference count on usability of the engine type. NB: This controls the
      * loading and initialisation of any functionality required by this
@@ -159,5 +157,13 @@ struct engine_st {
 typedef struct st_engine_pile ENGINE_PILE;
 
 DEFINE_LHASH_OF_EX(ENGINE_PILE);
+
+static ossl_unused ossl_inline int eng_struct_ref(ENGINE *e)
+{
+    int res;
+
+    CRYPTO_GET_REF(&e->struct_ref, &res);
+    return res;
+}
 
 #endif                          /* OSSL_CRYPTO_ENGINE_ENG_LOCAL_H */
