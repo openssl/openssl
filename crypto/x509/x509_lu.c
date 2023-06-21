@@ -209,13 +209,16 @@ X509_STORE *X509_STORE_new(void)
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
-    ret->references = 1;
+
+    if (!CRYPTO_NEW_REF(&ret->references, 1))
+        goto err;
     return ret;
 
 err:
     X509_VERIFY_PARAM_free(ret->param);
     sk_X509_OBJECT_free(ret->objs);
     sk_X509_LOOKUP_free(ret->get_cert_methods);
+    CRYPTO_THREAD_lock_free(ret->lock);
     OPENSSL_free(ret);
     return NULL;
 }
@@ -228,7 +231,7 @@ void X509_STORE_free(X509_STORE *xs)
 
     if (xs == NULL)
         return;
-    CRYPTO_DOWN_REF(&xs->references, &i, xs->lock);
+    CRYPTO_DOWN_REF(&xs->references, &i);
     REF_PRINT_COUNT("X509_STORE", xs);
     if (i > 0)
         return;
@@ -246,6 +249,7 @@ void X509_STORE_free(X509_STORE *xs)
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, xs, &xs->ex_data);
     X509_VERIFY_PARAM_free(xs->param);
     CRYPTO_THREAD_lock_free(xs->lock);
+    CRYPTO_FREE_REF(&xs->references);
     OPENSSL_free(xs);
 }
 
@@ -253,7 +257,7 @@ int X509_STORE_up_ref(X509_STORE *xs)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&xs->references, &i, xs->lock) <= 0)
+    if (CRYPTO_UP_REF(&xs->references, &i) <= 0)
         return 0;
 
     REF_PRINT_COUNT("X509_STORE", xs);
