@@ -113,17 +113,13 @@ ECX_KEY *ossl_ecx_key_dup(const ECX_KEY *key, int selection)
     if (ret == NULL)
         return NULL;
 
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        OPENSSL_free(ret);
-        return NULL;
-    }
-
     ret->libctx = key->libctx;
     ret->haspubkey = key->haspubkey;
     ret->keylen = key->keylen;
     ret->type = key->type;
-    ret->references = 1;
+
+    if (!CRYPTO_NEW_REF(&ret->references, 1))
+        goto err;
 
     if (key->propq != NULL) {
         ret->propq = OPENSSL_strdup(key->propq);
@@ -146,6 +142,7 @@ ECX_KEY *ossl_ecx_key_dup(const ECX_KEY *key, int selection)
     return ret;
 
 err:
+    CRYPTO_FREE_REF(&ret->references);
     ossl_ecx_key_free(ret);
     return NULL;
 }

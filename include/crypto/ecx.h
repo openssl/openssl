@@ -72,7 +72,6 @@ struct ecx_key_st {
     size_t keylen;
     ECX_KEY_TYPE type;
     CRYPTO_REF_COUNT references;
-    CRYPTO_RWLOCK *lock;
 };
 
 size_t ossl_ecx_key_length(ECX_KEY_TYPE type);
