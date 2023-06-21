@@ -34,7 +34,7 @@ int engine_unlocked_init(ENGINE *e)
          * OK, we return a functional reference which is also a structural
          * reference.
          */
-        if (!CRYPTO_UP_REF(&e->struct_ref, &ref, e->refcnt_lock)) {
+        if (!CRYPTO_UP_REF(&e->struct_ref, &ref)) {
             e->finish(e);
             return 0;
         }
