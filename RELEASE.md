@@ -1,5 +1,5 @@
-OQS-OpenSSL_1\_1\_1-stable snapshot 2022-08
-===========================================
+OQS-OpenSSL_1\_1\_1-stable snapshot 2023-06-rc1
+===============================================
 
 About
 -----
@@ -13,47 +13,52 @@ The **Open Quantum Safe (OQS) project** has the goal of developing and prototypi
 Release notes
 =============
 
-This is the 2022-08 snapshot release of OQS-OpenSSL, which was released on August 23, 2022.  This release is intended to be used with liboqs version 0.7.2.
+This is release candidate 1 of the 2023-06 snapshot release of OQS-OpenSSL, which was released on June 20, 2023.  This release is intended to be used with liboqs version 0.8.0.
+
+END OF LIFE NOTICE
+------------------
+
+As the OpenSSL team has announced that OpenSSL 1.1.1 will reach [end of life in September 2023](https://www.openssl.org/blog/blog/2023/03/28/1.1.1-EOL/), this release is intended to be the final release of OQS-OpenSSL_1\_1\_1-stable.  Users are recommended to migrate to OpenSSL 3 and make use of the [OQS Provider](https://github.com/open-quantum-safe/oqs-provider/) which provides full post-quantum support in OpenSSL 3.
 
 What's New
 ----------
 
-This is the ninth snapshot release of OQS-OpenSSL_1\_1\_1-stable.  It is based on OpenSSL 1.1.1q.
+This is the tenth snapshot release of OQS-OpenSSL_1\_1\_1-stable.  It is based on OpenSSL 1.1.1u.
 
-- Update OpenSSL to version 1.1.1q.
-- Remove support for Rainbow level 1 and SIKE/SIDH.
-- Adding support for setting default client KEM algorithms via TLS_DEFAULT_GROUPS environment variable.
-
-Previous release notes
-----------------------
-
-- [OQS-OpenSSL 1.1.1 snapshot 2022-01](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2022-01), based on OpenSSL 1.1.1m, aligned with liboqs 0.7.1 (January 6, 2022)
-- [OQS-OpenSSL 1.1.1 snapshot 2021-08](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2021-08), based on OpenSSL 1.1.1k, aligned with liboqs 0.7.0 (August 11, 2021)
-- [OQS-OpenSSL 1.1.1 snapshot 2021-03](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2021-03), based on OpenSSL 1.1.1k, aligned with liboqs 0.5.0 (March 26, 2021)
-- [OQS-OpenSSL 1.1.1 snapshot 2020-08](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2020-08), based on OpenSSL 1.1.1g, aligned with liboqs 0.4.0 (August 11, 2020)
-- [OQS-OpenSSL 1.1.1 snapshot 2020-07](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2020-07), based on OpenSSL 1.1.1g, aligned with liboqs 0.3.0 (July 10, 2020)
-- [OQS-OpenSSL 1.1.1 snapshot 2019-10](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2019-10), based on OpenSSL 1.1.1d, aligned with liboqs 0.2.0 (October 8, 2019)
-- [OQS-OpenSSL 1.1.1 snapshot 2018-11](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2018-11), based on OpenSSL 1.1.1, aligned with liboqs 0.1.0 (November 13, 2018)
-
----
+- Update OpenSSL to version 1.1.1u.
+- Key encapsulation mechanism algorithm changes:
+  - BIKE: updated to Round 4 version.
+  - Kyber: 90s variants were removed.
+  - NTRU Prime: All variants were removed.
+  - Saber: removed.
+- Digital signature scheme algorithm changes:
+  - Dilithium; AES variants were removed.
+  - Falcon: updated to the 2023-02-07 version.
+  - Picnic: removed.
+  - Rainbow: removed.
+  - SPHINCS+: updated to version 3.1; SPHINCS+-Haraka variants were removed; SPHINCS+-SHA256 and SPHINCS+-SHAKE variants were renamed
+- Update OIDs and TLS key exchange code points
 
 Detailed changelog
 ------------------
 
-* more explanation pointers for NIST levels [skip ci] by @baentsch in https://github.com/open-quantum-safe/openssl/pull/350
-* adding TLS_DEFAULT_GROUPS env var by @baentsch in https://github.com/open-quantum-safe/openssl/pull/354
-* Updating interop test suite for BoringSSL update. by @xvzcf in https://github.com/open-quantum-safe/openssl/pull/355
-* generalize openssl install regarding liboqs lib location by @baentsch in https://github.com/open-quantum-safe/openssl/pull/358
-* fix out of source build by @baentsch in https://github.com/open-quantum-safe/openssl/pull/359
-* 1.1.1n merge by @baentsch in https://github.com/open-quantum-safe/openssl/pull/361
-* merge with upstream 1.1.1o by @baentsch in https://github.com/open-quantum-safe/openssl/pull/370
-* openssl test cert update by @baentsch in https://github.com/open-quantum-safe/openssl/pull/373
-* Upstream 111p merge by @baentsch in https://github.com/open-quantum-safe/openssl/pull/375
-* upstream 111q merge by @baentsch in https://github.com/open-quantum-safe/openssl/pull/377
-* re-run generator for corrected dilithium2 level by @baentsch in https://github.com/open-quantum-safe/openssl/pull/381
-* remove RainbowI by @baentsch in https://github.com/open-quantum-safe/openssl/pull/382
-* remove SIDH/SIKE by @baentsch in https://github.com/open-quantum-safe/openssl/pull/383
-* trigger CI also on main branch by @baentsch in https://github.com/open-quantum-safe/openssl/pull/386
-* fix liboqs.so.version install by @baentsch in https://github.com/open-quantum-safe/openssl/pull/387
+* documentation generator fix by @baentsch in https://github.com/open-quantum-safe/openssl/pull/394
+* Upstream 1.1.1s by @baentsch in https://github.com/open-quantum-safe/openssl/pull/407
+* removing Picnic,NTRUprime,Rainbow,Saber by @baentsch in https://github.com/open-quantum-safe/openssl/pull/411
+* adds IDs for proper wireshark sigalg dissection by @baentsch in https://github.com/open-quantum-safe/openssl/pull/412
+* Updated upstream tag reference to 1.1.1s. by @christianpaquin in https://github.com/open-quantum-safe/openssl/pull/414
+* Removed NTRU. by @xvzcf in https://github.com/open-quantum-safe/openssl/pull/415
+* remove boringssl interop by @baentsch in https://github.com/open-quantum-safe/openssl/pull/417
+* change sphincs variant enablement by @baentsch in https://github.com/open-quantum-safe/openssl/pull/425
+* Upgrade to upstream 1.1.1t by @baentsch in https://github.com/open-quantum-safe/openssl/pull/430
+* (O)ID update for BIKE and Falcon using oqs-provider template by @baentsch in https://github.com/open-quantum-safe/openssl/pull/438
+* version and build instruction update by @baentsch in https://github.com/open-quantum-safe/openssl/pull/443
+* Algorithm & ID updates by @baentsch in https://github.com/open-quantum-safe/openssl/pull/447
+* Merged 1.1.1u by @christianpaquin in https://github.com/open-quantum-safe/openssl/pull/453
+* Code point documentation update by @baentsch in https://github.com/open-quantum-safe/openssl/pull/458
+* Updated generate.yml to support liboqs 0.8.0 algorithm changes by @crt26 in https://github.com/open-quantum-safe/openssl/pull/456
 
-**Full Changelog**: https://github.com/open-quantum-safe/openssl/compare/OQS-OpenSSL_1_1_1-stable-snapshot-2022-01...OQS-OpenSSL-1_1_1-stable-snapshot-2022-08
+## New Contributors
+* @crt26 made their first contribution in https://github.com/open-quantum-safe/openssl/pull/456
+
+**Full Changelog**: https://github.com/open-quantum-safe/openssl/compare/OQS-OpenSSL-1_1_1-stable-snapshot-2022-08...OQS-OpenSSL-1_1_1-stable-snapshot-2023-06-rc-1
