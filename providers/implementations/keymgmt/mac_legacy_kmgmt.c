@@ -72,13 +72,11 @@ MAC_KEY *ossl_mac_key_new(OSSL_LIB_CTX *libctx, int cmac)
     if (mackey == NULL)
         return NULL;
 
-    mackey->lock = CRYPTO_THREAD_lock_new();
-    if (mackey->lock == NULL) {
+    if (!CRYPTO_NEW_REF(&mackey->refcnt, 1)) {
         OPENSSL_free(mackey);
         return NULL;
     }
     mackey->libctx = libctx;
-    mackey->refcnt = 1;
     mackey->cmac = cmac;
 
     return mackey;
@@ -91,14 +89,14 @@ void ossl_mac_key_free(MAC_KEY *mackey)
     if (mackey == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&mackey->refcnt, &ref, mackey->lock);
+    CRYPTO_DOWN_REF(&mackey->refcnt, &ref);
     if (ref > 0)
         return;
 
     OPENSSL_secure_clear_free(mackey->priv_key, mackey->priv_key_len);
     OPENSSL_free(mackey->properties);
     ossl_prov_cipher_reset(&mackey->cipher);
-    CRYPTO_THREAD_lock_free(mackey->lock);
+    CRYPTO_FREE_REF(&mackey->refcnt);
     OPENSSL_free(mackey);
 }
 
@@ -116,7 +114,7 @@ int ossl_mac_key_up_ref(MAC_KEY *mackey)
     if (!ossl_prov_is_running())
         return 0;
 
-    CRYPTO_UP_REF(&mackey->refcnt, &ref, mackey->lock);
+    CRYPTO_UP_REF(&mackey->refcnt, &ref);
     return 1;
 }
 

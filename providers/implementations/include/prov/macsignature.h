@@ -13,7 +13,6 @@
 #include "prov/provider_util.h"
 
 struct mac_key_st {
-    CRYPTO_RWLOCK *lock;
     OSSL_LIB_CTX *libctx;
     CRYPTO_REF_COUNT refcnt;
     unsigned char *priv_key;

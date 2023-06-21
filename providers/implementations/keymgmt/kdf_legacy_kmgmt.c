@@ -37,13 +37,11 @@ KDF_DATA *ossl_kdf_data_new(void *provctx)
     if (kdfdata == NULL)
         return NULL;
 
-    kdfdata->lock = CRYPTO_THREAD_lock_new();
-    if (kdfdata->lock == NULL) {
+    if (!CRYPTO_NEW_REF(&kdfdata->refcnt, 1)) {
         OPENSSL_free(kdfdata);
         return NULL;
     }
     kdfdata->libctx = PROV_LIBCTX_OF(provctx);
-    kdfdata->refcnt = 1;
 
     return kdfdata;
 }
@@ -55,11 +53,11 @@ void ossl_kdf_data_free(KDF_DATA *kdfdata)
     if (kdfdata == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&kdfdata->refcnt, &ref, kdfdata->lock);
+    CRYPTO_DOWN_REF(&kdfdata->refcnt, &ref);
     if (ref > 0)
         return;
 
-    CRYPTO_THREAD_lock_free(kdfdata->lock);
+    CRYPTO_FREE_REF(&kdfdata->refcnt);
     OPENSSL_free(kdfdata);
 }
 
@@ -77,7 +75,7 @@ int ossl_kdf_data_up_ref(KDF_DATA *kdfdata)
     if (!ossl_prov_is_running())
         return 0;
 
-    CRYPTO_UP_REF(&kdfdata->refcnt, &ref, kdfdata->lock);
+    CRYPTO_UP_REF(&kdfdata->refcnt, &ref);
     return 1;
 }
 
