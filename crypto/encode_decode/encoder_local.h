@@ -25,7 +25,6 @@ struct ossl_endecode_base_st {
     OSSL_PROPERTY_LIST *parsed_propdef;
 
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
 };
 
 struct ossl_encoder_st {
