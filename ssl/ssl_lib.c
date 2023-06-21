@@ -707,13 +707,18 @@ int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, const SSL_METHOD *method, int type)
 {
     ssl->type = type;
 
-    ssl->references = 1;
     ssl->lock = CRYPTO_THREAD_lock_new();
     if (ssl->lock == NULL)
         return 0;
 
+    if (!CRYPTO_NEW_REF(&ssl->references, 1)) {
+        CRYPTO_THREAD_lock_free(ssl->lock);
+        return 0;
+    }
+
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, ssl, &ssl->ex_data)) {
         CRYPTO_THREAD_lock_free(ssl->lock);
+        CRYPTO_FREE_REF(&ssl->references);
         ssl->lock = NULL;
         return 0;
     }
@@ -969,7 +974,7 @@ int SSL_up_ref(SSL *s)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&s->references, &i, s->lock) <= 0)
+    if (CRYPTO_UP_REF(&s->references, &i) <= 0)
         return 0;
 
     REF_PRINT_COUNT("SSL", s);
@@ -1374,7 +1379,7 @@ void SSL_free(SSL *s)
 
     if (s == NULL)
         return;
-    CRYPTO_DOWN_REF(&s->references, &i, s->lock);
+    CRYPTO_DOWN_REF(&s->references, &i);
     REF_PRINT_COUNT("SSL", s);
     if (i > 0)
         return;
@@ -1387,6 +1392,7 @@ void SSL_free(SSL *s)
 
     SSL_CTX_free(s->ctx);
     CRYPTO_THREAD_lock_free(s->lock);
+    CRYPTO_FREE_REF(&s->references);
 
     OPENSSL_free(s);
 }
@@ -1974,7 +1980,7 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
             return 0;
     }
 
-    CRYPTO_UP_REF(&fsc->cert->references, &i, fsc->cert->lock);
+    CRYPTO_UP_REF(&fsc->cert->references, &i);
     ssl_cert_free(tsc->cert);
     tsc->cert = fsc->cert;
     if (!SSL_set_session_id_context(t, fsc->sid_ctx, (int)fsc->sid_ctx_length)) {
@@ -3779,12 +3785,15 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         ERR_raise(ERR_LIB_SSL, SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
         goto err;
     }
+
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL)
         goto err;
 
     /* Init the reference counting before any call to SSL_CTX_free */
-    ret->references = 1;
+    if (!CRYPTO_NEW_REF(&ret->references, 1))
+        goto err;
+
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
@@ -4029,7 +4038,7 @@ int SSL_CTX_up_ref(SSL_CTX *ctx)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&ctx->references, &i, ctx->lock) <= 0)
+    if (CRYPTO_UP_REF(&ctx->references, &i) <= 0)
         return 0;
 
     REF_PRINT_COUNT("SSL_CTX", ctx);
@@ -4045,7 +4054,7 @@ void SSL_CTX_free(SSL_CTX *a)
     if (a == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&a->references, &i, a->lock);
+    CRYPTO_DOWN_REF(&a->references, &i);
     REF_PRINT_COUNT("SSL_CTX", a);
     if (i > 0)
         return;
@@ -4130,6 +4139,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->server_cert_type);
 
     CRYPTO_THREAD_lock_free(a->lock);
+    CRYPTO_FREE_REF(&a->references);
 #ifdef TSAN_REQUIRES_LOCKING
     CRYPTO_THREAD_lock_free(a->tsan_lock);
 #endif
@@ -4815,7 +4825,7 @@ SSL *SSL_dup(SSL *s)
 
     /* If we're not quiescent, just up_ref! */
     if (!SSL_in_init(s) || !SSL_in_before(s)) {
-        CRYPTO_UP_REF(&s->references, &i, s->lock);
+        CRYPTO_UP_REF(&s->references, &i);
         return s;
     }
 

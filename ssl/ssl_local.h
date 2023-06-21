@@ -571,7 +571,6 @@ struct ssl_session_st {
     size_t ticket_appdata_len;
     uint32_t flags;
     SSL_CTX *owner;
-    CRYPTO_RWLOCK *lock;
 };
 
 /* Extended master secret support */
@@ -1965,7 +1964,6 @@ struct ossl_comp_cert_st {
     size_t len;
     size_t orig_len;
     CRYPTO_REF_COUNT references;
-    CRYPTO_RWLOCK *lock;
     int alg;
 };
 typedef struct ossl_comp_cert_st OSSL_COMP_CERT;
@@ -2107,7 +2105,6 @@ typedef struct cert_st {
     char *psk_identity_hint;
 # endif
     CRYPTO_REF_COUNT references;             /* >1 only if SSL_copy_session_id is used */
-    CRYPTO_RWLOCK *lock;
 } CERT;
 
 # define FP_ICC  (int (*)(const void *,const void *))
