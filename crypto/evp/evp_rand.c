@@ -27,7 +27,6 @@ struct evp_rand_st {
     char *type_name;
     const char *description;
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *refcnt_lock;
 
     const OSSL_DISPATCH *dispatch;
     OSSL_FUNC_rand_newctx_fn *newctx;
@@ -55,7 +54,7 @@ static int evp_rand_up_ref(void *vrand)
     int ref = 0;
 
     if (rand != NULL)
-        return CRYPTO_UP_REF(&rand->refcnt, &ref, rand->refcnt_lock);
+        return CRYPTO_UP_REF(&rand->refcnt, &ref);
     return 1;
 }
 
@@ -66,12 +65,12 @@ static void evp_rand_free(void *vrand)
 
     if (rand == NULL)
         return;
-    CRYPTO_DOWN_REF(&rand->refcnt, &ref, rand->refcnt_lock);
+    CRYPTO_DOWN_REF(&rand->refcnt, &ref);
     if (ref > 0)
         return;
     OPENSSL_free(rand->type_name);
     ossl_provider_free(rand->prov);
-    CRYPTO_THREAD_lock_free(rand->refcnt_lock);
+    CRYPTO_FREE_REF(&rand->refcnt);
     OPENSSL_free(rand);
 }
 
@@ -79,12 +78,10 @@ static void *evp_rand_new(void)
 {
     EVP_RAND *rand = OPENSSL_zalloc(sizeof(*rand));
 
-    if (rand == NULL
-            || (rand->refcnt_lock = CRYPTO_THREAD_lock_new()) == NULL) {
+    if (rand == NULL || !CRYPTO_NEW_REF(&rand->refcnt, 1)) {
         OPENSSL_free(rand);
         return NULL;
     }
-    rand->refcnt = 1;
     return rand;
 }
 
@@ -324,7 +321,7 @@ int EVP_RAND_CTX_up_ref(EVP_RAND_CTX *ctx)
 {
     int ref = 0;
 
-    return CRYPTO_UP_REF(&ctx->refcnt, &ref, ctx->refcnt_lock);
+    return CRYPTO_UP_REF(&ctx->refcnt, &ref);
 }
 
 EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, EVP_RAND_CTX *parent)
@@ -341,15 +338,14 @@ EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, EVP_RAND_CTX *parent)
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
         return NULL;
-    if ((ctx->refcnt_lock = CRYPTO_THREAD_lock_new()) == NULL) {
+    if (!CRYPTO_NEW_REF(&ctx->refcnt, 1)) {
         OPENSSL_free(ctx);
-        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     if (parent != NULL) {
         if (!EVP_RAND_CTX_up_ref(parent)) {
             ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
-            CRYPTO_THREAD_lock_free(ctx->refcnt_lock);
+            CRYPTO_FREE_REF(&ctx->refcnt);
             OPENSSL_free(ctx);
             return NULL;
         }
@@ -361,14 +357,13 @@ EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, EVP_RAND_CTX *parent)
             || !EVP_RAND_up_ref(rand)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         rand->freectx(ctx->algctx);
-        CRYPTO_THREAD_lock_free(ctx->refcnt_lock);
+        CRYPTO_FREE_REF(&ctx->refcnt);
         OPENSSL_free(ctx);
         EVP_RAND_CTX_free(parent);
         return NULL;
     }
     ctx->meth = rand;
     ctx->parent = parent;
-    ctx->refcnt = 1;
     return ctx;
 }
 
@@ -380,14 +375,14 @@ void EVP_RAND_CTX_free(EVP_RAND_CTX *ctx)
     if (ctx == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&ctx->refcnt, &ref, ctx->refcnt_lock);
+    CRYPTO_DOWN_REF(&ctx->refcnt, &ref);
     if (ref > 0)
         return;
     parent = ctx->parent;
     ctx->meth->freectx(ctx->algctx);
     ctx->algctx = NULL;
     EVP_RAND_free(ctx->meth);
-    CRYPTO_THREAD_lock_free(ctx->refcnt_lock);
+    CRYPTO_FREE_REF(&ctx->refcnt);
     OPENSSL_free(ctx);
     EVP_RAND_CTX_free(parent);
 }

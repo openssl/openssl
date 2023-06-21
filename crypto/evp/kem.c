@@ -278,15 +278,12 @@ static EVP_KEM *evp_kem_new(OSSL_PROVIDER *prov)
     if (kem == NULL)
         return NULL;
 
-    kem->lock = CRYPTO_THREAD_lock_new();
-    if (kem->lock == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
+    if (!CRYPTO_NEW_REF(&kem->refcnt, 1)) {
         OPENSSL_free(kem);
         return NULL;
     }
     kem->prov = prov;
     ossl_provider_up_ref(prov);
-    kem->refcnt = 1;
 
     return kem;
 }
@@ -428,12 +425,12 @@ void EVP_KEM_free(EVP_KEM *kem)
     if (kem == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&kem->refcnt, &i, kem->lock);
+    CRYPTO_DOWN_REF(&kem->refcnt, &i);
     if (i > 0)
         return;
     OPENSSL_free(kem->type_name);
     ossl_provider_free(kem->prov);
-    CRYPTO_THREAD_lock_free(kem->lock);
+    CRYPTO_FREE_REF(&kem->refcnt);
     OPENSSL_free(kem);
 }
 
@@ -441,7 +438,7 @@ int EVP_KEM_up_ref(EVP_KEM *kem)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&kem->refcnt, &ref, kem->lock);
+    CRYPTO_UP_REF(&kem->refcnt, &ref);
     return 1;
 }
 

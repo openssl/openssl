@@ -46,10 +46,10 @@ EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher)
 
     if ((to = EVP_CIPHER_meth_new(cipher->nid, cipher->block_size,
                                   cipher->key_len)) != NULL) {
-        CRYPTO_RWLOCK *lock = to->lock;
+        CRYPTO_REF_COUNT refcnt = to->refcnt;
 
         memcpy(to, cipher, sizeof(*to));
-        to->lock = lock;
+        to->refcnt = refcnt;
         to->origin = EVP_ORIG_METH;
     }
     return to;

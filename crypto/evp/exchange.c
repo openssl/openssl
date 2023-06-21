@@ -25,15 +25,12 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
     if (exchange == NULL)
         return NULL;
 
-    exchange->lock = CRYPTO_THREAD_lock_new();
-    if (exchange->lock == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
+    if (!CRYPTO_NEW_REF(&exchange->refcnt, 1)) {
         OPENSSL_free(exchange);
         return NULL;
     }
     exchange->prov = prov;
     ossl_provider_up_ref(prov);
-    exchange->refcnt = 1;
 
     return exchange;
 }
@@ -148,12 +145,12 @@ void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
 
     if (exchange == NULL)
         return;
-    CRYPTO_DOWN_REF(&exchange->refcnt, &i, exchange->lock);
+    CRYPTO_DOWN_REF(&exchange->refcnt, &i);
     if (i > 0)
         return;
     OPENSSL_free(exchange->type_name);
     ossl_provider_free(exchange->prov);
-    CRYPTO_THREAD_lock_free(exchange->lock);
+    CRYPTO_FREE_REF(&exchange->refcnt);
     OPENSSL_free(exchange);
 }
 
@@ -161,7 +158,7 @@ int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&exchange->refcnt, &ref, exchange->lock);
+    CRYPTO_UP_REF(&exchange->refcnt, &ref);
     return 1;
 }
 

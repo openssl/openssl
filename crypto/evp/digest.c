@@ -901,13 +901,9 @@ EVP_MD *evp_md_new(void)
 {
     EVP_MD *md = OPENSSL_zalloc(sizeof(*md));
 
-    if (md != NULL) {
-        md->lock = CRYPTO_THREAD_lock_new();
-        if (md->lock == NULL) {
-            OPENSSL_free(md);
-            return NULL;
-        }
-        md->refcnt = 1;
+    if (md != NULL && !CRYPTO_NEW_REF(&md->refcnt, 1)) {
+        OPENSSL_free(md);
+        return NULL;
     }
     return md;
 }
@@ -1120,7 +1116,7 @@ int EVP_MD_up_ref(EVP_MD *md)
     int ref = 0;
 
     if (md->origin == EVP_ORIG_DYNAMIC)
-        CRYPTO_UP_REF(&md->refcnt, &ref, md->lock);
+        CRYPTO_UP_REF(&md->refcnt, &ref);
     return 1;
 }
 
@@ -1131,7 +1127,7 @@ void EVP_MD_free(EVP_MD *md)
     if (md == NULL || md->origin != EVP_ORIG_DYNAMIC)
         return;
 
-    CRYPTO_DOWN_REF(&md->refcnt, &i, md->lock);
+    CRYPTO_DOWN_REF(&md->refcnt, &i);
     if (i > 0)
         return;
     evp_md_free_int(md);
