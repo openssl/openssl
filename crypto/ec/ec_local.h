@@ -298,7 +298,6 @@ struct ec_key_st {
 #ifndef FIPS_MODULE
     CRYPTO_EX_DATA ex_data;
 #endif
-    CRYPTO_RWLOCK *lock;
     OSSL_LIB_CTX *libctx;
     char *propq;
 
