@@ -295,9 +295,9 @@ const OPTIONS cmp_options[] = {
     {"profile", OPT_PROFILE, 's',
      "Certificate profile name to place in generalInfo field of request PKIHeader"},
     {"geninfo", OPT_GENINFO, 's',
-     "generalInfo integer values to place in request PKIHeader with given OID"},
+     "Comma-separated list of OID and value to place in generalInfo PKIHeader"},
     {OPT_MORE_STR, 0, 0,
-     "specified in the form <OID>:int:<n>, e.g. \"1.2.3.4:int:56789\""},
+     "of form <OID>:int:<n> or <OID>:str:<s>, e.g. \'1.2.3.4:int:56789, id-kp:str:name'"},
 
     OPT_SECTION("Certificate enrollment"),
     {"newkey", OPT_NEWKEY, 's',
@@ -1794,9 +1794,11 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         char *next = next_item(opt_policy_oids);
 
         if ((policy = OBJ_txt2obj(opt_policy_oids, 1)) == 0) {
-            CMP_err1("unknown policy OID '%s'", opt_policy_oids);
+            CMP_err1("Invalid -policy_oids arg '%s'", opt_policy_oids);
             return 0;
         }
+        if (OBJ_obj2nid(policy) == NID_undef)
+            CMP_warn1("Unknown -policy_oids arg: %.40s", opt_policy_oids);
 
         if ((pinfo = POLICYINFO_new()) == NULL) {
             ASN1_OBJECT_free(policy);
@@ -1872,62 +1874,94 @@ static int add_certProfile(OSSL_CMP_CTX *ctx, const char *name)
 
 static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
 {
+    ASN1_OBJECT *obj = NULL;
+    ASN1_TYPE *type = NULL;
     long value;
-    ASN1_OBJECT *type;
-    ASN1_INTEGER *aint;
-    ASN1_TYPE *val;
+    ASN1_INTEGER *aint = NULL;
+    ASN1_UTF8STRING *text = NULL;
     OSSL_CMP_ITAV *itav;
-    char *endstr;
-    char *valptr = strchr(opt_geninfo, ':');
+    char *ptr = opt_geninfo, *oid, *end;
 
-    if (valptr == NULL) {
-        CMP_err("missing ':' in -geninfo option");
-        return 0;
-    }
-    valptr[0] = '\0';
-    valptr++;
+    do {
+        while (isspace(_UC(*ptr)))
+            ptr++;
+        oid = ptr;
+        if ((ptr = strchr(oid, ':')) == NULL) {
+            CMP_err1("Missing ':' in -geninfo arg %.40s", oid);
+            return 0;
+        }
+        *ptr++ = '\0';
+        if ((obj = OBJ_txt2obj(oid, 0)) == NULL) {
+            CMP_err1("Invalid OID in -geninfo arg %.40s", oid);
+            return 0;
+        }
+        if (OBJ_obj2nid(obj) == NID_undef)
+            CMP_warn1("Unknown OID in -geninfo arg: %.40s", oid);
+        if ((type = ASN1_TYPE_new()) == NULL)
+            goto oom;
 
-    if (!CHECK_AND_SKIP_CASE_PREFIX(valptr, "int:")) {
-        CMP_err("missing 'int:' in -geninfo option");
-        return 0;
-    }
+        if (CHECK_AND_SKIP_CASE_PREFIX(ptr, "int:")) {
+            value = strtol(ptr, &end, 10);
+            if (end == ptr) {
+                CMP_err1("Cannot parse int in -geninfo arg %.40s", ptr);
+                goto err;
+            }
+            ptr = end;
+            if (*ptr != '\0') {
+                if (*ptr != ',') {
+                    CMP_err1("Missing ',' or end of -geninfo arg after int at %.40s",
+                        ptr);
+                    goto err;
+                }
+                ptr++;
+            }
 
-    value = strtol(valptr, &endstr, 10);
-    if (endstr == valptr || *endstr != '\0') {
-        CMP_err("cannot parse int in -geninfo option");
-        return 0;
-    }
+            if ((aint = ASN1_INTEGER_new()) == NULL
+                    || !ASN1_INTEGER_set(aint, value))
+                goto oom;
+            ASN1_TYPE_set(type, V_ASN1_INTEGER, aint);
+            aint = NULL;
 
-    type = OBJ_txt2obj(opt_geninfo, 1);
-    if (type == NULL) {
-        CMP_err("cannot parse OID in -geninfo option");
-        return 0;
-    }
+        } else if (CHECK_AND_SKIP_CASE_PREFIX(ptr, "str:")) {
+            end = strchr(ptr, ',');
+            if (end == NULL)
+                end = ptr + strlen(ptr);
+            else
+                *end++ = '\0';
+            if ((text = ASN1_UTF8STRING_new()) == NULL
+                    || !ASN1_STRING_set(text, ptr, -1))
+                goto oom;
+            ptr = end;
+            ASN1_TYPE_set(type, V_ASN1_UTF8STRING, text);
+            text = NULL;
 
-    if ((aint = ASN1_INTEGER_new()) == NULL)
-        goto oom;
+        } else {
+            CMP_err1("Missing 'int:' or 'str:' in -geninfo arg %.40s", ptr);
+            goto err;
+        }
 
-    val = ASN1_TYPE_new();
-    if (!ASN1_INTEGER_set(aint, value) || val == NULL) {
-        ASN1_INTEGER_free(aint);
-        goto oom;
-    }
-    ASN1_TYPE_set(val, V_ASN1_INTEGER, aint);
-    itav = OSSL_CMP_ITAV_create(type, val);
-    if (itav == NULL) {
-        ASN1_TYPE_free(val);
-        goto oom;
-    }
+        if ((itav = OSSL_CMP_ITAV_create(obj, type)) == NULL) {
+            CMP_err("Unable to create 'OSSL_CMP_ITAV' structure");
+            goto err;
+        }
+        obj = NULL;
+        type = NULL;
 
-    if (!OSSL_CMP_CTX_push0_geninfo_ITAV(ctx, itav)) {
-        OSSL_CMP_ITAV_free(itav);
-        return 0;
-    }
+        if (!OSSL_CMP_CTX_push0_geninfo_ITAV(ctx, itav)) {
+            CMP_err("Failed to add ITAV for geninfo of the PKI message header");
+            OSSL_CMP_ITAV_free(itav);
+            return 0;
+        }
+    } while (*ptr != '\0');
     return 1;
 
  oom:
-    ASN1_OBJECT_free(type);
     CMP_err("out of memory");
+ err:
+    ASN1_OBJECT_free(obj);
+    ASN1_TYPE_free(type);
+    ASN1_INTEGER_free(aint);
+    ASN1_UTF8STRING_free(text);
     return 0;
 }
 
@@ -3146,6 +3180,10 @@ int cmp_main(int argc, char **argv)
     }
     (void)BIO_flush(bio_err); /* prevent interference with opt_help() */
 
+    cmp_ctx = OSSL_CMP_CTX_new(app_get0_libctx(), app_get0_propq());
+    if (cmp_ctx == NULL)
+        goto err;
+
     ret = get_opts(argc, argv);
     if (ret <= 0)
         goto err;
@@ -3165,10 +3203,6 @@ int cmp_main(int argc, char **argv)
             goto err;
         }
     }
-
-    cmp_ctx = OSSL_CMP_CTX_new(app_get0_libctx(), app_get0_propq());
-    if (cmp_ctx == NULL)
-        goto err;
 
     OSSL_CMP_CTX_set_log_verbosity(cmp_ctx, opt_verbosity);
     if (!OSSL_CMP_CTX_set_log_cb(cmp_ctx, print_to_bio_out)) {
