@@ -31,13 +31,10 @@ static OSSL_ENCODER *ossl_encoder_new(void)
 
     if ((encoder = OPENSSL_zalloc(sizeof(*encoder))) == NULL)
         return NULL;
-    if ((encoder->base.lock = CRYPTO_THREAD_lock_new()) == NULL) {
+    if (!CRYPTO_NEW_REF(&encoder->base.refcnt, 1)) {
         OSSL_ENCODER_free(encoder);
-        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_CRYPTO_LIB);
         return NULL;
     }
-
-    encoder->base.refcnt = 1;
 
     return encoder;
 }
@@ -46,7 +43,7 @@ int OSSL_ENCODER_up_ref(OSSL_ENCODER *encoder)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&encoder->base.refcnt, &ref, encoder->base.lock);
+    CRYPTO_UP_REF(&encoder->base.refcnt, &ref);
     return 1;
 }
 
@@ -57,13 +54,13 @@ void OSSL_ENCODER_free(OSSL_ENCODER *encoder)
     if (encoder == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&encoder->base.refcnt, &ref, encoder->base.lock);
+    CRYPTO_DOWN_REF(&encoder->base.refcnt, &ref);
     if (ref > 0)
         return;
     OPENSSL_free(encoder->base.name);
     ossl_property_free(encoder->base.parsed_propdef);
     ossl_provider_free(encoder->base.prov);
-    CRYPTO_THREAD_lock_free(encoder->base.lock);
+    CRYPTO_FREE_REF(&encoder->base.refcnt);
     OPENSSL_free(encoder);
 }
 
