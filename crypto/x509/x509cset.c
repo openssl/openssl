@@ -75,7 +75,7 @@ int X509_CRL_up_ref(X509_CRL *crl)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&crl->references, &i, crl->lock) <= 0)
+    if (CRYPTO_UP_REF(&crl->references, &i) <= 0)
         return 0;
 
     REF_PRINT_COUNT("X509_CRL", crl);
