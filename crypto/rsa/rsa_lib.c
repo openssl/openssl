@@ -79,13 +79,15 @@ static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     if (ret == NULL)
         return NULL;
 
-    ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
         OPENSSL_free(ret);
         return NULL;
     }
+
+    if (!CRYPTO_NEW_REF(&ret->references, 1))
+        goto err;
 
     ret->libctx = libctx;
     ret->meth = RSA_get_default_method();
@@ -135,7 +137,7 @@ void RSA_free(RSA *r)
     if (r == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&r->references, &i, r->lock);
+    CRYPTO_DOWN_REF(&r->references, &i);
     REF_PRINT_COUNT("RSA", r);
     if (i > 0)
         return;
@@ -152,6 +154,7 @@ void RSA_free(RSA *r)
 #endif
 
     CRYPTO_THREAD_lock_free(r->lock);
+    CRYPTO_FREE_REF(&r->references);
 
     BN_free(r->n);
     BN_free(r->e);
@@ -179,7 +182,7 @@ int RSA_up_ref(RSA *r)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&r->references, &i, r->lock) <= 0)
+    if (CRYPTO_UP_REF(&r->references, &i) <= 0)
         return 0;
 
     REF_PRINT_COUNT("RSA", r);
