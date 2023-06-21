@@ -116,7 +116,6 @@ struct bio_st {
     uint64_t num_read;
     uint64_t num_write;
     CRYPTO_EX_DATA ex_data;
-    CRYPTO_RWLOCK *lock;
 };
 
 #ifndef OPENSSL_NO_SOCK
@@ -140,7 +139,7 @@ extern LPFN_WSASENDMSG bio_WSASendMsg;
 # endif
 #endif
 
-extern CRYPTO_RWLOCK *bio_type_lock;
+extern CRYPTO_REF_COUNT bio_type_count;
 
 void bio_sock_cleanup_int(void);
 
