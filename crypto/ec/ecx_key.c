@@ -42,24 +42,20 @@ ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey
         break;
     }
     ret->type = type;
-    ret->references = 1;
+
+    if (!CRYPTO_NEW_REF(&ret->references, 1))
+        goto err;
 
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
         if (ret->propq == NULL)
             goto err;
     }
-
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
-        goto err;
-    }
     return ret;
 err:
     if (ret != NULL) {
         OPENSSL_free(ret->propq);
-        CRYPTO_THREAD_lock_free(ret->lock);
+        CRYPTO_FREE_REF(&ret->references);
     }
     OPENSSL_free(ret);
     return NULL;
@@ -72,7 +68,7 @@ void ossl_ecx_key_free(ECX_KEY *key)
     if (key == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&key->references, &i, key->lock);
+    CRYPTO_DOWN_REF(&key->references, &i);
     REF_PRINT_COUNT("ECX_KEY", key);
     if (i > 0)
         return;
@@ -80,7 +76,7 @@ void ossl_ecx_key_free(ECX_KEY *key)
 
     OPENSSL_free(key->propq);
     OPENSSL_secure_clear_free(key->privkey, key->keylen);
-    CRYPTO_THREAD_lock_free(key->lock);
+    CRYPTO_FREE_REF(&key->references);
     OPENSSL_free(key);
 }
 
@@ -93,7 +89,7 @@ int ossl_ecx_key_up_ref(ECX_KEY *key)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&key->references, &i, key->lock) <= 0)
+    if (CRYPTO_UP_REF(&key->references, &i) <= 0)
         return 0;
 
     REF_PRINT_COUNT("ECX_KEY", key);
