@@ -14,7 +14,6 @@
 struct kdf_data_st {
     OSSL_LIB_CTX *libctx;
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
 };
 
 typedef struct kdf_data_st KDF_DATA;
