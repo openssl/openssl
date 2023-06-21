@@ -78,13 +78,10 @@ CERT *ssl_cert_new(size_t ssl_pkey_num)
     }
 
     ret->key = &(ret->pkeys[SSL_PKEY_RSA]);
-    ret->references = 1;
     ret->sec_cb = ssl_security_default_callback;
     ret->sec_level = OPENSSL_TLS_SECURITY_LEVEL;
     ret->sec_ex = NULL;
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+    if (!CRYPTO_NEW_REF(&ret->references, 1)) {
         OPENSSL_free(ret->pkeys);
         OPENSSL_free(ret);
         return NULL;
@@ -111,11 +108,8 @@ CERT *ssl_cert_dup(CERT *cert)
         return NULL;
     }
 
-    ret->references = 1;
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+    if (!CRYPTO_NEW_REF(&ret->references, 1)) {
         OPENSSL_free(ret->pkeys);
         OPENSSL_free(ret);
         return NULL;
@@ -272,7 +266,7 @@ void ssl_cert_free(CERT *c)
 
     if (c == NULL)
         return;
-    CRYPTO_DOWN_REF(&c->references, &i, c->lock);
+    CRYPTO_DOWN_REF(&c->references, &i);
     REF_PRINT_COUNT("CERT", c);
     if (i > 0)
         return;
@@ -291,7 +285,7 @@ void ssl_cert_free(CERT *c)
     OPENSSL_free(c->psk_identity_hint);
 #endif
     OPENSSL_free(c->pkeys);
-    CRYPTO_THREAD_lock_free(c->lock);
+    CRYPTO_FREE_REF(&c->references);
     OPENSSL_free(c);
 }
 

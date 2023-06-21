@@ -64,10 +64,9 @@ static OSSL_COMP_CERT *OSSL_COMP_CERT_new(unsigned char *data, size_t len, size_
     if (!ossl_comp_has_alg(alg)
             || data == NULL
             || (ret = OPENSSL_zalloc(sizeof(*ret))) == NULL
-            || (ret->lock = CRYPTO_THREAD_lock_new()) == NULL)
+            || !CRYPTO_NEW_REF(&ret->references, 1))
         goto err;
 
-    ret->references = 1;
     ret->data = data;
     ret->len = len;
     ret->orig_len = orig_len;
@@ -136,21 +135,21 @@ void OSSL_COMP_CERT_free(OSSL_COMP_CERT *cc)
     if (cc == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&cc->references, &i, cc->lock);
+    CRYPTO_DOWN_REF(&cc->references, &i);
     REF_PRINT_COUNT("OSSL_COMP_CERT", cc);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
 
     OPENSSL_free(cc->data);
-    CRYPTO_THREAD_lock_free(cc->lock);
+    CRYPTO_FREE_REF(&cc->references);
     OPENSSL_free(cc);
 }
 int OSSL_COMP_CERT_up_ref(OSSL_COMP_CERT *cc)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&cc->references, &i, cc->lock) <= 0)
+    if (CRYPTO_UP_REF(&cc->references, &i) <= 0)
         return 0;
 
     REF_PRINT_COUNT("OSSL_COMP_CERT", cc);
