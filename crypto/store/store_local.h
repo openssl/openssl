@@ -103,7 +103,6 @@ struct ossl_store_loader_st {
     const char *description;
 
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
 
     OSSL_FUNC_store_open_fn *p_open;
     OSSL_FUNC_store_attach_fn *p_attach;

@@ -21,7 +21,7 @@ int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader)
     int ref = 0;
 
     if (loader->prov != NULL)
-        CRYPTO_UP_REF(&loader->refcnt, &ref, loader->lock);
+        CRYPTO_UP_REF(&loader->refcnt, &ref);
     return 1;
 }
 
@@ -30,11 +30,11 @@ void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader)
     if (loader != NULL && loader->prov != NULL) {
         int i;
 
-        CRYPTO_DOWN_REF(&loader->refcnt, &i, loader->lock);
+        CRYPTO_DOWN_REF(&loader->refcnt, &i);
         if (i > 0)
             return;
         ossl_provider_free(loader->prov);
-        CRYPTO_THREAD_lock_free(loader->lock);
+        CRYPTO_FREE_REF(&loader->refcnt);
     }
     OPENSSL_free(loader);
 }
@@ -48,13 +48,12 @@ static OSSL_STORE_LOADER *new_loader(OSSL_PROVIDER *prov)
     OSSL_STORE_LOADER *loader;
 
     if ((loader = OPENSSL_zalloc(sizeof(*loader))) == NULL
-        || (loader->lock = CRYPTO_THREAD_lock_new()) == NULL) {
+        || !CRYPTO_NEW_REF(&loader->refcnt, 1)) {
         OPENSSL_free(loader);
         return NULL;
     }
     loader->prov = prov;
     ossl_provider_up_ref(prov);
-    loader->refcnt = 1;
 
     return loader;
 }
