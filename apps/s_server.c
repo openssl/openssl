@@ -533,7 +533,6 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
         goto err;
     if (!OCSP_request_add0_id(req, id))
         goto err;
-    id = NULL;
     /* Add any extensions to the request */
     SSL_get_tlsext_status_exts(s, &exts);
     for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
