@@ -676,8 +676,8 @@ static void felem_reduce(felem out, const largefelem in)
 }
 
 #if defined(ECP_NISTP521_ASM)
-void felem_square_wrapper(largefelem out, const felem in);
-void felem_mul_wrapper(largefelem out, const felem in1, const felem in2);
+static void felem_square_wrapper(largefelem out, const felem in);
+static void felem_mul_wrapper(largefelem out, const felem in1, const felem in2);
 
 static void (*felem_square_p)(largefelem out, const felem in) =
     felem_square_wrapper;
@@ -691,7 +691,7 @@ void p521_felem_mul(largefelem out, const felem in1, const felem in2);
 #  include "crypto/ppc_arch.h"
 # endif
 
-void felem_select(void)
+static void felem_select(void)
 {
 # if defined(_ARCH_PPC64)
     if ((OPENSSL_ppccap_P & PPC_MADD300) && (OPENSSL_ppccap_P & PPC_ALTIVEC)) {
@@ -707,13 +707,13 @@ void felem_select(void)
     felem_mul_p = felem_mul_ref;
 }
 
-void felem_square_wrapper(largefelem out, const felem in)
+static void felem_square_wrapper(largefelem out, const felem in)
 {
     felem_select();
     felem_square_p(out, in);
 }
 
-void felem_mul_wrapper(largefelem out, const felem in1, const felem in2)
+static void felem_mul_wrapper(largefelem out, const felem in1, const felem in2)
 {
     felem_select();
     felem_mul_p(out, in1, in2);
