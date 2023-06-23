@@ -923,6 +923,7 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
     const uint16_t *pref, *supp;
     size_t num_pref, num_supp, i;
     int k;
+    SSL_CTX *ctx = SSL_CONNECTION_GET_CTX(s);
 
     /* Can't do anything on client side */
     if (s->server == 0)
@@ -959,10 +960,29 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
 
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
+        const TLS_GROUP_INFO *inf;
 
         if (!tls1_in_list(id, supp, num_supp)
                 || !tls_group_allowed(s, id, SSL_SECOP_CURVE_SHARED))
             continue;
+        inf = tls1_group_id_lookup(ctx, id);
+        if (!ossl_assert(inf != NULL))
+            return 0;
+        if (SSL_CONNECTION_IS_DTLS(s)) {
+            if (inf->maxdtls == -1)
+                continue;
+            if ((inf->mindtls != 0 && DTLS_VERSION_LT(s->version, inf->mindtls))
+                    || (inf->maxdtls != 0
+                        && DTLS_VERSION_GT(s->version, inf->maxdtls)))
+                continue;
+        } else {
+            if (inf->maxtls == -1)
+                continue;
+            if ((inf->mintls != 0 && s->version < inf->mintls)
+                    || (inf->maxtls != 0 && s->version > inf->maxtls))
+                continue;
+        }
+
         if (nmatch == k)
             return id;
          k++;
