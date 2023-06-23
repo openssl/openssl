@@ -72,7 +72,7 @@ to both TLS and QUIC.
 QUIC introduces the concept of "streams". A stream provides a reliable
 mechanism for sending and receiving application data between the endpoints. The
 bytes transmitted are guaranteed to be received in the same order they were sent
-in without any loss of data or reordering of the bytes. A TLS application
+without any loss of data or reordering of the bytes. A TLS application
 effectively has one bi-directional stream available to it per TLS connection. A
 QUIC application can have multiple uni-directional or bi-directional streams
 available to it for each connection.
