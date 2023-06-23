@@ -15,11 +15,13 @@ our $fips_mode;
 my @curves = ("prime256v1", "secp384r1", "secp521r1", "X25519",
               "X448");
 #Curves *only* suitable for use in TLSv1.3
-my @curves_tls_1_3 = ("brainpoolP256r1tls13", "brainpoolP384r1tls13",
-                      "brainpoolP512r1tls13");
+my @curves_tls_1_3 = ("ffdhe2048", "ffdhe3072", "ffdhe4096", "ffdhe6144",
+                      "ffdhe8192");
+my @curves_tls_1_3_no_fips = ("brainpoolP256r1tls13", "brainpoolP384r1tls13",
+                              "brainpoolP512r1tls13");
 
-#It so happens that all the curves in @curves_tls_1_3 are non-fips curves
-push @curves, @curves_tls_1_3 if !$fips_mode;
+push @curves_tls_1_3, @curves_tls_1_3_no_fips if !$fips_mode;
+push @curves, @curves_tls_1_3;
 
 my @curves_tls_1_2 = ("sect233k1", "sect233r1",
               "sect283k1", "sect283r1", "sect409k1", "sect409r1",
@@ -34,6 +36,19 @@ my @curves_non_fips = ("sect163k1", "sect163r2", "prime192v1",
 push @curves_tls_1_2, @curves_non_fips if !$fips_mode;
 
 our @tests = ();
+
+sub get_key_type {
+    my $group = shift;
+    my $keyType;
+
+    if ($group =~ /ffdhe/) {
+        $keyType = "dhKeyAgreement";
+    } else {
+        $keyType = $group;
+    }
+
+    return $keyType;
+}
 
 sub generate_tests() {
     foreach (0..$#curves) {
@@ -51,7 +66,7 @@ sub generate_tests() {
                 "Curves" => $curve
             },
             test   => {
-                "ExpectedTmpKeyType" => $curve,
+                "ExpectedTmpKeyType" => get_key_type($curve),
                 "ExpectedProtocol" => "TLSv1.3",
                 "ExpectedResult" => "Success"
             },
@@ -72,7 +87,7 @@ sub generate_tests() {
                 "Curves" => $curve
             },
             test   => {
-                "ExpectedTmpKeyType" => $curve,
+                "ExpectedTmpKeyType" => get_key_type($curve),
                 "ExpectedProtocol" => "TLSv1.2",
                 "ExpectedResult" => "Success"
             },
@@ -121,29 +136,46 @@ sub generate_tests() {
             },
         };
     }
-    if (!$fips_mode) {
-        foreach (0..$#curves_tls_1_3) {
-            my $curve = $curves_tls_1_3[$_];
-            push @tests, {
-                name => "curve-${curve}-tls13-in-tls12",
-                server => {
-                    "Curves" => $curve,
-                    "CipherString" => 'DEFAULT@SECLEVEL=1',
-                    "MaxProtocol" => "TLSv1.3"
-                },
-                client => {
-                    "CipherString" => 'ECDHE@SECLEVEL=1',
-                    "MaxProtocol" => "TLSv1.2",
-                    "Curves" => $curve
-                },
-                test   => {
-                    #These curves are only suitable for TLSv1.3 so we expect the
-                    #server to fail because it has no shared groups for TLSv1.2
-                    #ECDHE key exchange
-                    "ExpectedResult" => "ServerFail"
-                },
-            };
-        }
+    foreach (0..$#curves_tls_1_3) {
+        my $curve = $curves_tls_1_3[$_];
+        push @tests, {
+            name => "curve-${curve}-tls13-in-tls12",
+            server => {
+                "Curves" => $curve,
+                "CipherString" => 'DEFAULT@SECLEVEL=1',
+                "MaxProtocol" => "TLSv1.3"
+            },
+            client => {
+                "CipherString" => 'ECDHE@SECLEVEL=1',
+                "MaxProtocol" => "TLSv1.2",
+                "Curves" => $curve
+            },
+            test   => {
+                #These curves are only suitable for TLSv1.3 so we expect the
+                #server to fail because it has no shared groups for TLSv1.2
+                #ECDHE key exchange
+                "ExpectedResult" => "ServerFail"
+            },
+        };
+        push @tests, {
+            name => "curve-${curve}-tls13-in-tls12-2",
+            server => {
+                "Curves" => $curve,
+                "CipherString" => 'DEFAULT@SECLEVEL=1',
+                "MaxProtocol" => "TLSv1.2"
+            },
+            client => {
+                "CipherString" => 'DEFAULT@SECLEVEL=1',
+                "MaxProtocol" => "TLSv1.3",
+                "Curves" => $curve
+            },
+            test   => {
+                #These curves are only suitable for TLSv1.3. We expect TLSv1.2
+                #negotiation to succeed because we fall back to some other
+                #ciphersuite
+                "ExpectedResult" => "Success"
+            },
+        };
     }
 }
 
