@@ -84,7 +84,7 @@ int ossl_asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
     switch (op) {
     case 0:
         if (!CRYPTO_NEW_REF(refcnt, 1))
-            return 0;
+            return -1;
         *lock = CRYPTO_THREAD_lock_new();
         if (*lock == NULL) {
             CRYPTO_FREE_REF(refcnt);
