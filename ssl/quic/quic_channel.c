@@ -2831,9 +2831,20 @@ static void ch_update_idle(QUIC_CHANNEL *ch)
 {
     if (ch->max_idle_timeout == 0)
         ch->idle_deadline = ossl_time_infinite();
-    else
-        ch->idle_deadline = ossl_time_add(get_time(ch),
-            ossl_ms2time(ch->max_idle_timeout));
+    else {
+        /* RFC 9000 s. 10.1: Idle Timeout
+         *  To avoid excessively small idle timeout periods, endpoints
+         *  MUST increase the idle timeout period to be at least three
+         *  times the current Probe Timeout (PTO). This allows for
+         *  multiple PTOs to expire, and therefore multiple probes to
+         *  be sent and lost, prior to idle timeout.
+         */
+        OSSL_TIME pto = ossl_ackm_get_pto_duration(ch->ackm);
+        OSSL_TIME timeout = ossl_time_max(ossl_ms2time(ch->max_idle_timeout),
+                                          ossl_time_multiply(pto, 3));
+
+        ch->idle_deadline = ossl_time_add(get_time(ch), timeout);
+    }
 }
 
 /*
