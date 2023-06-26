@@ -116,7 +116,9 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
 
 /*
  * Simple application to send a basic HTTP/1.0 request to a server and
- * print the response on the screen.
+ * print the response on the screen. Note that HTTP/1.0 over QUIC is
+ * non-standard and will not typically be supported by real world servers. This
+ * is for demonstration purposes only.
  */
 int main(void)
 {
@@ -165,7 +167,7 @@ int main(void)
 
     /*
      * Create the underlying transport socket/BIO and associate it with the
-     * connection
+     * connection.
      */
     bio = create_socket_bio(HOSTNAME, PORT, &peer_addr);
     if (bio == NULL) {
@@ -248,7 +250,7 @@ int main(void)
     if (SSL_get_error(ssl, 0) != SSL_ERROR_ZERO_RETURN) {
         /*
          * Some error occurred other than a graceful close down by the
-         * peer
+         * peer.
          */
         printf ("Failed reading remaining data\n");
         goto end;

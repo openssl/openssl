@@ -157,7 +157,7 @@ int main(void)
 
     /*
      * Create the underlying transport socket/BIO and associate it with the
-     * connection
+     * connection.
      */
     bio = create_socket_bio(HOSTNAME, PORT);
     if (bio == NULL) {
@@ -231,7 +231,7 @@ int main(void)
     if (SSL_get_error(ssl, 0) != SSL_ERROR_ZERO_RETURN) {
         /*
          * Some error occurred other than a graceful close down by the
-         * peer
+         * peer.
          */
         printf ("Failed reading remaining data\n");
         goto end;
