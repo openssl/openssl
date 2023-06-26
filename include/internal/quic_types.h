@@ -18,17 +18,22 @@
 # ifndef OPENSSL_NO_QUIC
 
 /* QUIC encryption levels. */
-#  define QUIC_ENC_LEVEL_INITIAL          0
-#  define QUIC_ENC_LEVEL_HANDSHAKE        1
-#  define QUIC_ENC_LEVEL_0RTT             2
-#  define QUIC_ENC_LEVEL_1RTT             3
-#  define QUIC_ENC_LEVEL_NUM              4
+enum {
+    QUIC_ENC_LEVEL_INITIAL = 0,
+    QUIC_ENC_LEVEL_HANDSHAKE,
+    QUIC_ENC_LEVEL_0RTT,
+    QUIC_ENC_LEVEL_1RTT,
+    QUIC_ENC_LEVEL_NUM       /* Must be the ultimate entry */
+};
 
 /* QUIC packet number spaces. */
-#  define QUIC_PN_SPACE_INITIAL           0
-#  define QUIC_PN_SPACE_HANDSHAKE         1
-#  define QUIC_PN_SPACE_APP               2
-#  define QUIC_PN_SPACE_NUM               3
+enum {
+    QUIC_PN_SPACE_INITIAL = 0,
+    QUIC_PN_SPACE_HANDSHAKE,
+    /* New entries must go here, so that QUIC_PN_SPACE_APP is the penultimate */
+    QUIC_PN_SPACE_APP,
+    QUIC_PN_SPACE_NUM       /* Must be the ultimate entry */
+};
 
 static ossl_unused ossl_inline uint32_t
 ossl_quic_enc_level_to_pn_space(uint32_t enc_level)
@@ -46,12 +51,6 @@ ossl_quic_enc_level_to_pn_space(uint32_t enc_level)
         return QUIC_PN_SPACE_APP;
     }
 }
-
-/* QUIC packet number spaces. */
-#  define QUIC_PN_SPACE_INITIAL       0
-#  define QUIC_PN_SPACE_HANDSHAKE     1
-#  define QUIC_PN_SPACE_APP           2
-#  define QUIC_PN_SPACE_NUM           3
 
 /* QUIC packet number representation. */
 typedef uint64_t QUIC_PN;
