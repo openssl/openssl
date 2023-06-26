@@ -460,7 +460,7 @@ static int ssl_check_allowed_versions(int min_version, int max_version,
             min_version = DTLS1_2_VERSION;
 #endif
         /* Done massaging versions; do the check. */
-        if (0
+        if (is_quic
 #ifdef OPENSSL_NO_DTLS1
             || (DTLS_VERSION_GE(min_version, DTLS1_VERSION)
                 && DTLS_VERSION_GE(DTLS1_VERSION, max_version))
@@ -2996,20 +2996,26 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         else
             return 0;
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
+        if (IS_QUIC(s))
+            return 0;
         return ssl_check_allowed_versions(larg, sc->max_proto_version,
                                           IS_QUIC(s))
                && ssl_set_version_bound(s->defltmeth->version, (int)larg,
                                         &sc->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
+        if (IS_QUIC(s))
+            return 0;
         return sc->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
-        if (IS_QUIC(s) && larg < TLS1_3_VERSION)
+        if (IS_QUIC(s))
             return 0;
         return ssl_check_allowed_versions(sc->min_proto_version, larg,
                                           IS_QUIC(s))
                && ssl_set_version_bound(s->defltmeth->version, (int)larg,
                                         &sc->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:
+        if (IS_QUIC(s))
+            return 0;
         return sc->max_proto_version;
     default:
         return s->method->ssl_ctrl(s, cmd, larg, parg);
@@ -3139,12 +3145,16 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_CLEAR_CERT_FLAGS:
         return (ctx->cert->cert_flags &= ~larg);
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
+        if (IS_QUIC_CTX(ctx))
+            return 0;
         return ssl_check_allowed_versions(larg, ctx->max_proto_version, 0)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
         return ctx->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
+        if (IS_QUIC_CTX(ctx))
+            return 0;
         return ssl_check_allowed_versions(ctx->min_proto_version, larg, 0)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->max_proto_version);

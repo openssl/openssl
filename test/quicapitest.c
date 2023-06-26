@@ -501,11 +501,6 @@ static int test_quic_forbidden_options(void)
         || !TEST_false(SSL_set_max_pipelines(ssl, 2)))
         goto err;
 
-    /* Protocol Version */
-    if (!TEST_false(SSL_set_max_proto_version(ssl, TLS1_2_VERSION))
-        || !TEST_true(SSL_set_max_proto_version(ssl, TLS1_3_VERSION)))
-        goto err;
-
     /* HRR */
     if  (!TEST_false(SSL_stateless(ssl)))
         goto err;
