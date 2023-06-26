@@ -63,7 +63,7 @@ This relationship between QUIC and TLS means that many of the API functions in
 OpenSSL that apply to TLS connections also apply to QUIC connections and
 applications can use them in exactly the same way. Some functions do not apply
 to QUIC at all, and others have altered semantics. You should refer to the
-documenation pages for each function for information on how it applies to QUIC.
+documentation pages for each function for information on how it applies to QUIC.
 Typically if QUIC is not mentioned in the manual pages then the functions apply
 to both TLS and QUIC.
 

@@ -16,7 +16,9 @@ ossl-guide-quic-client-block
 
 This page will present various source code samples demonstrating how to write
 a simple blocking QUIC client application which connects to a server, sends an
-HTTP/1.0 request to it, and reads back the response.
+HTTP/1.0 request to it, and reads back the response. Note that HTTP/1.0 over
+QUIC is non-standard and will not typically be supported by real world servers.
+This is for demonstration purposes only.
 
 We assume that you already have OpenSSL installed on your system; that you
 already have some fundamental understanding of OpenSSL concepts, TLS and QUIC
