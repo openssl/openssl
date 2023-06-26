@@ -66,7 +66,7 @@ void OSSL_ERR_STATE_restore(const ERR_STATE *es)
         top = thread_es->top;
         err_clear(thread_es, top, 0);
 
-        thread_es->err_flags[top] = es->err_flags[i] & ~ERR_FLAG_MARK;
+        thread_es->err_flags[top] = es->err_flags[i];
         thread_es->err_buffer[top] = es->err_buffer[i];
 
         err_set_debug(thread_es, top, es->err_file[i], es->err_line[i],
