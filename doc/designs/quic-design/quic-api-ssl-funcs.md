@@ -133,7 +133,7 @@ Notes:
 | `DTLSv1_2_client_method` | Global | 🟩U | 🟦U | 🟩NC | 🟢Done |
 | `DTLSv1_2_server_method` | Global | 🟩U | 🟦U | 🟩NC | 🟢Done |
 | `OSSL_QUIC_client_method` | Global | 🟩U | 🟦U | 🟥QSA | 🟢Done |
-| `OSSL_QUIC_client_thread_method` | Global | 🟩U | 🟦U | 🟥QSA | 🟠Design TBD |
+| `OSSL_QUIC_client_thread_method` | Global | 🟩U | 🟦U | 🟥QSA | 🟢Done |
 | `OSSL_QUIC_server_method` | Global | 🟩U | 🟦U | 🟥QSA | 🟠Design TBD |
 | **⇒ Instantiation** | |
 | `BIO_f_ssl` | Object | 🟩U | 🟩A | 🟩NC | 🟢Done |
@@ -189,9 +189,9 @@ Notes:
 | `SSL_SESSION_set1_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
 | `SSL_SESSION_get0_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
 | `SSL_CTX_set_alpn_select_cb` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
-| `SSL_set_alpn_protos` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
-| `SSL_get0_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
-| `SSL_CTX_set_alpn_protos` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
+| `SSL_set_alpn_protos` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟢Done |
+| `SSL_get0_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟢Done |
+| `SSL_CTX_set_alpn_protos` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟢Done |
 | **⇒ NPN** | †3 |
 | `SSL_CTX_set_next_proto_select_cb` | HL | 🟩U | 🟥FC | 🟨C\* †3 | 🟢Done |
 | `SSL_CTX_set_next_protos_advertised_cb` | HL | 🟩U | 🟥FC | 🟨C\* †3 | 🟢Done |
@@ -976,12 +976,11 @@ This is a deprecated function, so it needn't be supported for QUIC. Fail closed.
 
 ### What should `SSL_set_ssl_method` do?
 
-For now we can avoid supporting this for QUIC. Supporting this would be rather
-hairy.
+We do not currently support this for QUIC.
 
 ### What should `SSL_set_shutdown` do?
 
-TBD.
+This is not supported and is a no-op for QUIC.
 
 ### What should `SSL_dup` and `SSL_clear` do?
 
