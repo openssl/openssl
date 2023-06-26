@@ -617,33 +617,39 @@ static void qc_set_default_xso(QUIC_CONNECTION *qc, QUIC_XSO *xso, int touch)
 }
 
 /* SSL_set_options */
+QUIC_TAKES_LOCK
 static uint64_t quic_mask_or_options(SSL *ssl, uint64_t mask_value, uint64_t or_value)
 {
     QCTX ctx;
-    uint64_t r, options;
+    uint64_t options;
 
-    if (!expect_quic_with_stream_lock(ssl, /*remote_init=*/-1, &ctx))
+    if (!expect_quic(ssl, &ctx))
         return 0;
+
+    quic_lock(ctx.qc);
 
     /*
      * Currently most options that we permit are handled in the handshake
      * layer.
      */
-    options = (SSL_get_options(ctx.qc->tls) & ~mask_value) | or_value;
-    options &= OSSL_QUIC_PERMITTED_OPTIONS;
-    r = SSL_set_options(ctx.qc->tls, options);
+    or_value &= OSSL_QUIC_PERMITTED_OPTIONS;
 
-    if (ctx.xso->stream != NULL && ctx.xso->stream->rstream != NULL)
+    SSL_clear_options(ctx.qc->tls, mask_value);
+    options = SSL_set_options(ctx.qc->tls, or_value);
+
+    if (ctx.xso != NULL
+        && ctx.xso->stream != NULL
+        && ctx.xso->stream->rstream != NULL)
         ossl_quic_rstream_set_cleanse(ctx.xso->stream->rstream,
                                       (options & SSL_OP_CLEANSE_PLAINTEXT) != 0);
 
     quic_unlock(ctx.qc);
-    return r;
+    return options;
 }
 
 uint64_t ossl_quic_set_options(SSL *ssl, uint64_t options)
 {
-    return quic_mask_or_options(ssl, UINT64_MAX, options);
+    return quic_mask_or_options(ssl, 0, options);
 }
 
 /* SSL_clear_options */
@@ -2118,7 +2124,7 @@ int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *bytes_read)
  */
 
 QUIC_TAKES_LOCK
-static size_t ossl_quic_pending_int(const SSL *s)
+static size_t ossl_quic_pending_int(const SSL *s, int check_channel)
 {
     QCTX ctx;
     size_t avail = 0;
@@ -2134,6 +2140,9 @@ static size_t ossl_quic_pending_int(const SSL *s)
     if (!ossl_quic_rstream_available(ctx.xso->stream->rstream, &avail, &fin))
         avail = 0;
 
+    if (avail == 0 && check_channel && ossl_quic_channel_has_pending(ctx.qc->ch))
+        avail = 1;
+
 out:
     quic_unlock(ctx.qc);
     return avail;
@@ -2141,13 +2150,13 @@ out:
 
 size_t ossl_quic_pending(const SSL *s)
 {
-    return ossl_quic_pending_int(s);
+    return ossl_quic_pending_int(s, /*check_channel=*/0);
 }
 
 int ossl_quic_has_pending(const SSL *s)
 {
     /* Do we have app-side pending data or pending URXEs or RXEs? */
-    return ossl_quic_pending_int(s) > 0 || ossl_quic_channel_has_pending(qc->ch);
+    return ossl_quic_pending_int(s, /*check_channel=*/1) > 0;
 }
 
 /*

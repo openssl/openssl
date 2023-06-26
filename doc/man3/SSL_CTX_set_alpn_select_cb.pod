@@ -25,6 +25,8 @@ SSL_select_next_proto, SSL_get0_alpn_selected, SSL_get0_next_proto_negotiated
  void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
                              unsigned int *len);
 
+
+
  void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *ctx,
                                             int (*cb)(SSL *ssl,
                                                       const unsigned char **out,
@@ -112,7 +114,9 @@ this function need not be a member of the list of supported protocols
 provided by the callback.
 
 NPN functionality cannot be used with QUIC SSL objects. Use of ALPN is mandatory
-when using QUIC SSL objects.
+when using QUIC SSL objects. SSL_CTX_set_next_protos_advertised_cb() and
+SSL_CTX_set_next_proto_select_cb() have no effect if called on a QUIC SSL
+context.
 
 =head1 NOTES
 

@@ -425,8 +425,7 @@ static int dane_tlsa_add(SSL_DANE *dane,
  * Return 0 if there is only one version configured and it was disabled
  * at configure time.  Return 1 otherwise.
  */
-static int ssl_check_allowed_versions(int min_version, int max_version,
-                                      int is_quic)
+static int ssl_check_allowed_versions(int min_version, int max_version)
 {
     int minisdtls = 0, maxisdtls = 0;
 
@@ -474,7 +473,7 @@ static int ssl_check_allowed_versions(int min_version, int max_version,
     } else {
         /* Regular TLS version checks. */
         if (min_version == 0)
-            min_version = is_quic ? TLS1_3_VERSION : SSL3_VERSION;
+            min_version = SSL3_VERSION;
         if (max_version == 0)
             max_version = TLS1_3_VERSION;
 #ifdef OPENSSL_NO_TLS1_3
@@ -764,17 +763,8 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
         s->max_proto_version = ctx->max_proto_version;
     }
 
-    s->min_proto_version = ctx->min_proto_version;
-    if (IS_QUIC_CTX(ctx) && s->min_proto_version < TLS1_3_VERSION)
-        s->min_proto_version = TLS1_3_VERSION;
-
-    s->max_proto_version = ctx->max_proto_version;
-    if (IS_QUIC_CTX(ctx) && s->max_proto_version < TLS1_3_VERSION)
-        s->max_proto_version = 0;
-
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
-
     if (!IS_QUIC_CTX(ctx)) {
         s->max_early_data = ctx->max_early_data;
         s->recv_max_early_data = ctx->recv_max_early_data;
@@ -806,11 +796,9 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     s->msg_callback_arg = ctx->msg_callback_arg;
     s->verify_mode = ctx->verify_mode;
     s->not_resumable_session_cb = ctx->not_resumable_session_cb;
-    if (!IS_QUIC_CTX(ctx)) {
-        s->rlayer.record_padding_cb = ctx->record_padding_cb;
-        s->rlayer.record_padding_arg = ctx->record_padding_arg;
-        s->rlayer.block_padding = ctx->block_padding;
-    }
+    s->rlayer.record_padding_cb = ctx->record_padding_cb;
+    s->rlayer.record_padding_arg = ctx->record_padding_arg;
+    s->rlayer.block_padding = ctx->block_padding;
     s->sid_ctx_length = ctx->sid_ctx_length;
     if (!ossl_assert(s->sid_ctx_length <= sizeof(s->sid_ctx)))
         goto err;
@@ -1672,12 +1660,27 @@ int SSL_get_wfd(const SSL *s)
 }
 
 #ifndef OPENSSL_NO_SOCK
+static const BIO_METHOD *fd_method(SSL *s)
+{
+#ifndef OPENSSL_NO_DGRAM
+    if (IS_QUIC(s))
+        return BIO_s_datagram();
+#endif
+
+    return BIO_s_socket();
+}
+
 int SSL_set_fd(SSL *s, int fd)
 {
     int ret = 0;
     BIO *bio = NULL;
 
-    bio = BIO_new(IS_QUIC_SSL(s) ? BIO_s_datagram() : BIO_s_socket());
+    if (s->type == SSL_TYPE_QUIC_XSO) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_CONN_USE_ONLY);
+        goto err;
+    }
+
+    bio = BIO_new(fd_method(s));
 
     if (bio == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
@@ -1702,11 +1705,16 @@ int SSL_set_fd(SSL *s, int fd)
 int SSL_set_wfd(SSL *s, int fd)
 {
     BIO *rbio = SSL_get_rbio(s);
-    int desired_type = IS_QUIC_SSL(s) ? BIO_TYPE_DGRAM : BIO_TYPE_SOCKET;
+    int desired_type = IS_QUIC(s) ? BIO_TYPE_DGRAM : BIO_TYPE_SOCKET;
+
+    if (s->type == SSL_TYPE_QUIC_XSO) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_CONN_USE_ONLY);
+        return 0;
+    }
 
     if (rbio == NULL || BIO_method_type(rbio) != desired_type
         || (int)BIO_get_fd(rbio, NULL) != fd) {
-        BIO *bio = BIO_new(IS_QUIC_SSL(s) ? BIO_s_datagram() : BIO_s_socket());
+        BIO *bio = BIO_new(fd_method(s));
 
         if (bio == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
@@ -1733,11 +1741,16 @@ int SSL_set_wfd(SSL *s, int fd)
 int SSL_set_rfd(SSL *s, int fd)
 {
     BIO *wbio = SSL_get_wbio(s);
-    int desired_type = IS_QUIC_SSL(s) ? BIO_TYPE_DGRAM : BIO_TYPE_SOCKET;
+    int desired_type = IS_QUIC(s) ? BIO_TYPE_DGRAM : BIO_TYPE_SOCKET;
+
+    if (s->type == SSL_TYPE_QUIC_XSO) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_CONN_USE_ONLY);
+        return 0;
+    }
 
     if (wbio == NULL || BIO_method_type(wbio) != desired_type
         || ((int)BIO_get_fd(wbio, NULL) != fd)) {
-        BIO *bio = BIO_new(IS_QUIC_SSL(s) ? BIO_s_datagram() : BIO_s_socket());
+        BIO *bio = BIO_new(fd_method(s));
 
         if (bio == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
@@ -1857,7 +1870,7 @@ void SSL_set_read_ahead(SSL *s, int yes)
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
     OSSL_PARAM options[2], *opts = options;
 
-    if (sc == NULL || IS_QUIC_SSL(s))
+    if (sc == NULL || IS_QUIC(s))
         return;
 
     RECORD_LAYER_set_read_ahead(&sc->rlayer, yes);
@@ -1874,7 +1887,7 @@ int SSL_get_read_ahead(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
-    if (sc == NULL || IS_QUIC_SSL(s))
+    if (sc == NULL || IS_QUIC(s))
         return 0;
 
     return RECORD_LAYER_get_read_ahead(&sc->rlayer);
@@ -1899,10 +1912,6 @@ int SSL_pending(const SSL *s)
 
 int SSL_has_pending(const SSL *s)
 {
-#ifndef OPENSSL_NO_QUIC
-    const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
-#endif
-
     /*
      * Similar to SSL_pending() but returns a 1 to indicate that we have
      * processed or unprocessed data available or 0 otherwise (as opposed to the
@@ -1919,11 +1928,6 @@ int SSL_has_pending(const SSL *s)
 #endif
 
     sc = SSL_CONNECTION_FROM_CONST_SSL(s);
-
-#ifndef OPENSSL_NO_QUIC
-    if (qc != NULL)
-        return ossl_quic_has_pending(qc);
-#endif
 
     /* Check buffered app data if any first */
     if (SSL_CONNECTION_IS_DTLS(sc)) {
@@ -2364,10 +2368,8 @@ int SSL_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes)
     int ret;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
-    if (sc == NULL)
-        return 0;
-
-    if (!sc->server) {
+    /* TODO(QUIC 0RTT): 0-RTT support */
+    if (sc == NULL || !sc->server) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return SSL_READ_EARLY_DATA_ERROR;
     }
@@ -2421,6 +2423,7 @@ int SSL_get_early_data_status(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL_ONLY(s);
 
+    /* TODO(QUIC 0RTT): 0-RTT support */
     if (sc == NULL)
         return 0;
 
@@ -2909,11 +2912,11 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     switch (cmd) {
     case SSL_CTRL_GET_READ_AHEAD:
-        if (IS_QUIC_SSL(s))
+        if (IS_QUIC(s))
             return 0;
         return RECORD_LAYER_get_read_ahead(&sc->rlayer);
     case SSL_CTRL_SET_READ_AHEAD:
-        if (IS_QUIC_SSL(s))
+        if (IS_QUIC(s))
             return 0;
         l = RECORD_LAYER_get_read_ahead(&sc->rlayer);
         RECORD_LAYER_set_read_ahead(&sc->rlayer, larg);
@@ -2945,7 +2948,7 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         sc->max_cert_list = (size_t)larg;
         return l;
     case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
-        if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH || IS_QUIC_SSL(s))
+        if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH || IS_QUIC(s))
             return 0;
 #ifndef OPENSSL_NO_KTLS
         if (sc->wbio != NULL && BIO_get_ktls_send(sc->wbio))
@@ -2957,12 +2960,12 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         sc->rlayer.wrlmethod->set_max_frag_len(sc->rlayer.wrl, larg);
         return 1;
     case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT:
-        if ((size_t)larg > sc->max_send_fragment || larg == 0 || IS_QUIC_SSL(s))
+        if ((size_t)larg > sc->max_send_fragment || larg == 0 || IS_QUIC(s))
             return 0;
         sc->split_send_fragment = larg;
         return 1;
     case SSL_CTRL_SET_MAX_PIPELINES:
-        if (larg < 1 || larg > SSL_MAX_PIPELINES || IS_QUIC_SSL(s))
+        if (larg < 1 || larg > SSL_MAX_PIPELINES || IS_QUIC(s))
             return 0;
         sc->max_pipelines = larg;
         if (sc->rlayer.rrlmethod->set_max_pipelines != NULL)
@@ -2995,17 +2998,13 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         else
             return 0;
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
-        return ssl_check_allowed_versions(larg, sc->max_proto_version,
-                                          IS_QUIC_SSL(s))
+        return ssl_check_allowed_versions(larg, sc->max_proto_version)
                && ssl_set_version_bound(s->defltmeth->version, (int)larg,
                                         &sc->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
         return sc->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
-        if (IS_QUIC_SSL(s) && larg < TLS1_3_VERSION)
-            return 0;
-        return ssl_check_allowed_versions(sc->min_proto_version, larg,
-                                          IS_QUIC_SSL(s))
+        return ssl_check_allowed_versions(sc->min_proto_version, larg)
                && ssl_set_version_bound(s->defltmeth->version, (int)larg,
                                         &sc->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:
@@ -3138,13 +3137,13 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_CLEAR_CERT_FLAGS:
         return (ctx->cert->cert_flags &= ~larg);
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
-        return ssl_check_allowed_versions(larg, ctx->max_proto_version, 0)
+        return ssl_check_allowed_versions(larg, ctx->max_proto_version)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
         return ctx->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
-        return ssl_check_allowed_versions(ctx->min_proto_version, larg, 0)
+        return ssl_check_allowed_versions(ctx->min_proto_version, larg)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:
@@ -5675,7 +5674,7 @@ int SSL_set_record_padding_callback(SSL *ssl,
     BIO *b;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
-    if (sc == NULL || IS_QUIC_SSL(ssl))
+    if (sc == NULL || IS_QUIC(ssl))
         return 0;
 
     b = SSL_get_wbio(ssl);
@@ -5710,7 +5709,7 @@ int SSL_set_block_padding(SSL *ssl, size_t block_size)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
-    if (sc == NULL || (IS_QUIC_SSL(ssl) && block_size > 1))
+    if (sc == NULL || (IS_QUIC(ssl) && block_size > 1))
         return 0;
 
     /* block size of 0 or 1 is basically no padding */
@@ -6606,7 +6605,7 @@ int SSL_free_buffers(SSL *ssl)
         return 0;
 
     /* QUIC buffers are always 'in use'. */
-    if (IS_QUIC_SSL(ssl))
+    if (IS_QUIC(ssl))
         return 0;
 
     rl = &sc->rlayer;
@@ -6624,7 +6623,7 @@ int SSL_alloc_buffers(SSL *ssl)
         return 0;
 
     /* QUIC always has buffers allocated. */
-    if (IS_QUIC_SSL(ssl))
+    if (IS_QUIC(ssl))
         return 1;
 
     rl = &sc->rlayer;
@@ -6912,7 +6911,7 @@ int SSL_set_max_early_data(SSL *s, uint32_t max_early_data)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL || IS_QUIC_SSL(s))
+    if (sc == NULL || IS_QUIC(s))
         return 0;
 
     sc->max_early_data = max_early_data;
@@ -6946,7 +6945,7 @@ int SSL_set_recv_max_early_data(SSL *s, uint32_t recv_max_early_data)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL || IS_QUIC_SSL(s))
+    if (sc == NULL || IS_QUIC(s))
         return 0;
 
     sc->recv_max_early_data = recv_max_early_data;
@@ -6994,7 +6993,7 @@ int SSL_stateless(SSL *s)
     int ret;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL || IS_QUIC_SSL(s))
+    if (sc == NULL || IS_QUIC(s))
         return 0;
 
     /* Ensure there is no state left over from a previous invocation */
@@ -7024,10 +7023,9 @@ void SSL_CTX_set_post_handshake_auth(SSL_CTX *ctx, int val)
 void SSL_set_post_handshake_auth(SSL *ssl, int val)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
-#ifndef OPENSSL_NO_QUIC
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(ssl);
 
-    if (qc != NULL)
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(ssl))
         return;
 #endif
 
@@ -7040,10 +7038,9 @@ void SSL_set_post_handshake_auth(SSL *ssl, int val)
 int SSL_verify_client_post_handshake(SSL *ssl)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
-#ifndef OPENSSL_NO_QUIC
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(ssl);
 
-    if (qc != NULL) {
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(ssl)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_WRONG_SSL_VERSION);
         return 0;
     }
@@ -7122,7 +7119,7 @@ void SSL_set_allow_early_data_cb(SSL *s,
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL || IS_QUIC_SSL(s))
+    if (sc == NULL || IS_QUIC(s))
         return;
 
     sc->allow_early_data_cb = cb;

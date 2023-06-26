@@ -216,16 +216,10 @@ void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
 int ossl_quic_trace(int write_p, int version, int content_type,
                     const void *buf, size_t msglen, SSL *ssl, void *arg);
 
-#  define OSSL_QUIC_ANY_VERSION     0x5155
-#  ifndef OPENSSL_NO_QUIC
-#   define IS_QUIC_METHOD(m)        ((m)->version == OSSL_QUIC_ANY_VERSION)
-#   define IS_QUIC_SSL(s)           ((s) != NULL && \
-                                     ((s)->type == SSL_TYPE_QUIC_CONNECTION || \
-                                      (s)->type == SSL_TYPE_QUIC_STREAM))
-#  else
-#   define IS_QUIC_METHOD(m)        0
-#   define IS_QUIC_SSL(s)           0
-#  endif
+#  define OSSL_QUIC_ANY_VERSION 0xFFFFF
+#  define IS_QUIC_METHOD(m) \
+    ((m) == OSSL_QUIC_client_method() || \
+     (m) == OSSL_QUIC_client_thread_method())
 #  define IS_QUIC_CTX(ctx)          IS_QUIC_METHOD((ctx)->method)
 
 #  define QUIC_CONNECTION_FROM_SSL_int(ssl, c)   \
@@ -257,6 +251,8 @@ int ossl_quic_trace(int write_p, int version, int content_type,
 #  define QUIC_XSO_FROM_SSL_int(ssl, c) NULL
 #  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c) NULL
 #  define IS_QUIC(ssl) 0
+#  define IS_QUIC_CTX(ctx) 0
+#  define IS_QUIC_METHOD(m) 0
 # endif
 
 # define QUIC_CONNECTION_FROM_SSL(ssl) \

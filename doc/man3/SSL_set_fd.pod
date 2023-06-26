@@ -23,8 +23,9 @@ interface between the B<ssl> and B<fd>. The BIO and hence the SSL engine
 inherit the behaviour of B<fd>. If B<fd> is nonblocking, the B<ssl> will
 also have nonblocking behaviour.
 
-When used on a QUIC SSL object, a B<datagram BIO> is automatically created
-instead of a B<socket BIO>.
+When used on a QUIC connection SSL object, a B<datagram BIO> is automatically
+created instead of a B<socket BIO>. These functions fail if called
+on a QUIC stream SSL object.
 
 If there was already a BIO connected to B<ssl>, BIO_free() will be called
 (for both the reading and writing side, if different).
