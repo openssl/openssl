@@ -6,6 +6,8 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#ifndef STATEM_H
+# define STATEM_H
 
 /*****************************************************************************
  *                                                                           *
@@ -165,3 +167,5 @@ int ossl_statem_set_mutator(SSL *s,
                             ossl_statem_mutate_handshake_cb mutate_handshake_cb,
                             ossl_statem_finish_mutate_handshake_cb finish_mutate_handshake_cb,
                             void *mutatearg);
+
+#endif

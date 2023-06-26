@@ -24,6 +24,7 @@
 #include "internal/sizes.h"
 #include "internal/tlsgroups.h"
 #include "ssl_local.h"
+#include "quic/quic_local.h"
 #include <openssl/ct.h>
 
 static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pkey);
@@ -3866,7 +3867,7 @@ int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode)
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
     if (sc == NULL
-        || (IS_QUIC_SSL(ssl) && mode != TLSEXT_max_fragment_length_DISABLED))
+        || (IS_QUIC(ssl) && mode != TLSEXT_max_fragment_length_DISABLED))
         return 0;
 
     if (mode != TLSEXT_max_fragment_length_DISABLED

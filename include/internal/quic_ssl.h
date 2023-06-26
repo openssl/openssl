@@ -117,9 +117,7 @@ void ossl_quic_conn_force_assist_thread_wake(SSL *s);
 
 /* For use by tests only. */
 QUIC_CHANNEL *ossl_quic_conn_get_channel(SSL *s);
-uint64_t ossl_quic_set_options(SSL *s, uint64_t opts);
-uint64_t ossl_quic_clear_options(SSL *s, uint64_t opts);
-uint64_t ossl_quic_get_options(SSL *s);
+
 int ossl_quic_has_pending(const SSL *s);
 
 # endif
