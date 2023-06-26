@@ -1568,19 +1568,20 @@ SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags)
 int ossl_quic_get_error(const SSL *s, int i)
 {
     QCTX ctx;
-    int net_error;
+    int net_error, qc_last_error;
 
     if (!expect_quic(s, &ctx))
         return 0;
 
     quic_lock(ctx.qc);
     net_error = ossl_quic_channel_net_error(ctx.qc->ch);
+    qc_last_error = ctx.qc->last_error;
     quic_unlock(ctx.qc);
 
     if (net_error)
         return SSL_ERROR_SYSCALL;
 
-    return ctx.is_stream ? ctx.xso->last_error : ctx.qc->last_error;
+    return ctx.is_stream ? ctx.xso->last_error : qc_last_error;
 }
 
 /*
