@@ -10,7 +10,7 @@
 #include "bio_local.h"
 #include "internal/thread_once.h"
 
-static CRYPTO_REF_COUNT bio_type_count;
+CRYPTO_REF_COUNT bio_type_count;
 static CRYPTO_ONCE bio_type_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(do_bio_type_init)

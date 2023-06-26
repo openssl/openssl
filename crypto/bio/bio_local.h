@@ -139,6 +139,8 @@ extern LPFN_WSASENDMSG bio_WSASendMsg;
 # endif
 #endif
 
+extern CRYPTO_REF_COUNT bio_type_count;
+
 void bio_sock_cleanup_int(void);
 
 #if BIO_FLAGS_UPLINK_INTERNAL==0

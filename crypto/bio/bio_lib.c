@@ -951,6 +951,7 @@ void bio_cleanup(void)
     CRYPTO_THREAD_lock_free(bio_lookup_lock);
     bio_lookup_lock = NULL;
 #endif
+    CRYPTO_FREE_REF(&bio_type_count);
 }
 
 /* Internal variant of the below BIO_wait() not calling ERR_raise(...) */
