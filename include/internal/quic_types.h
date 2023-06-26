@@ -27,7 +27,7 @@
 /* QUIC packet number spaces. */
 #  define QUIC_PN_SPACE_INITIAL           0
 #  define QUIC_PN_SPACE_HANDSHAKE         1
-#  define QUIC_PN_SPACE_APP               2
+#  define QUIC_PN_SPACE_APP               2     /* Must be last */
 #  define QUIC_PN_SPACE_NUM               3
 
 static ossl_unused ossl_inline uint32_t
@@ -46,12 +46,6 @@ ossl_quic_enc_level_to_pn_space(uint32_t enc_level)
         return QUIC_PN_SPACE_APP;
     }
 }
-
-/* QUIC packet number spaces. */
-#  define QUIC_PN_SPACE_INITIAL       0
-#  define QUIC_PN_SPACE_HANDSHAKE     1
-#  define QUIC_PN_SPACE_APP           2
-#  define QUIC_PN_SPACE_NUM           3
 
 /* QUIC packet number representation. */
 typedef uint64_t QUIC_PN;
