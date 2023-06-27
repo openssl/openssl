@@ -66,6 +66,8 @@ int ossl_config_int(const OPENSSL_INIT_SETTINGS *settings)
 
 #ifndef OPENSSL_SYS_UEFI
     ret = CONF_modules_load_file(filename, appname, flags);
+#else
+    ret = 1;
 #endif
     openssl_configured = 1;
     return ret;
