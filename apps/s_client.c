@@ -1285,7 +1285,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DTLS
             isdtls = 0;
 #endif
-#ifndef OPENSS_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
             isquic = 0;
 #endif
             break;
@@ -1296,7 +1296,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DTLS
             isdtls = 0;
 #endif
-#ifndef OPENSS_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
             isquic = 0;
 #endif
             break;
@@ -1307,7 +1307,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DTLS
             isdtls = 0;
 #endif
-#ifndef OPENSS_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
             isquic = 0;
 #endif
             break;
@@ -1318,7 +1318,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DTLS
             isdtls = 0;
 #endif
-#ifndef OPENSS_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
             isquic = 0;
 #endif
             break;
@@ -1329,7 +1329,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DTLS
             isdtls = 0;
 #endif
-#ifndef OPENSS_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
             isquic = 0;
 #endif
             break;
@@ -1338,7 +1338,7 @@ int s_client_main(int argc, char **argv)
             meth = DTLS_client_method();
             socket_type = SOCK_DGRAM;
             isdtls = 1;
-# ifndef OPENSS_NO_QUIC
+# ifndef OPENSSL_NO_QUIC
             isquic = 0;
 # endif
 #endif
@@ -1350,7 +1350,7 @@ int s_client_main(int argc, char **argv)
             max_version = DTLS1_VERSION;
             socket_type = SOCK_DGRAM;
             isdtls = 1;
-# ifndef OPENSS_NO_QUIC
+# ifndef OPENSSL_NO_QUIC
             isquic = 0;
 # endif
 #endif
@@ -1362,7 +1362,7 @@ int s_client_main(int argc, char **argv)
             max_version = DTLS1_2_VERSION;
             socket_type = SOCK_DGRAM;
             isdtls = 1;
-# ifndef OPENSS_NO_QUIC
+# ifndef OPENSSL_NO_QUIC
             isquic = 0;
 # endif
 #endif
