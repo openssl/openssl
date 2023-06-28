@@ -523,7 +523,6 @@ SSL_group_to_name                       523	3_0_0	EXIST::FUNCTION:
 SSL_client_hello_get_extension_order    ?	3_2_0	EXIST::FUNCTION:
 OSSL_QUIC_client_method                 ?	3_2_0	EXIST::FUNCTION:QUIC
 OSSL_QUIC_client_thread_method          ?	3_2_0	EXIST::FUNCTION:QUIC
-OSSL_QUIC_server_method                 ?	3_2_0	EXIST::FUNCTION:QUIC
 SSL_CTX_set1_cert_comp_preference       ?	3_2_0	EXIST::FUNCTION:
 SSL_set1_cert_comp_preference           ?	3_2_0	EXIST::FUNCTION:
 SSL_CTX_compress_certs                  ?	3_2_0	EXIST::FUNCTION:
