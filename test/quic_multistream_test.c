@@ -1973,7 +1973,9 @@ static const struct script_op script_19[] = {
 
     OP_C_WRITE              (DEFAULT, "orange", 6)
     OP_S_READ_EXPECT        (a, "orange", 6)
+    OP_S_WRITE              (a, "ok", 2)
 
+    OP_C_READ_EXPECT        (DEFAULT, "ok", 2)
     OP_CHECK                (check_key_update_ge, 1)
 
     OP_END
