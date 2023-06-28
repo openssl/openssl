@@ -141,6 +141,11 @@ responsible for cleansing all other buffers. Most notably, this
 applies to buffers passed to functions like L<SSL_read(3)>,
 L<SSL_peek(3)> but also like L<SSL_write(3)>.
 
+This option can be set differently on individual QUIC stream objects.
+Because the data to send is buffered by OpenSSL until it is acknowledged
+by the peer this option when set will cause also cleansing the buffered
+sent data once it is acknowledged by the peer.
+
 =item SSL_OP_COOKIE_EXCHANGE
 
 Turn on Cookie Exchange as described in RFC4347 Section 4.2.1. Only affects
