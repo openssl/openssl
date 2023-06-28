@@ -30,7 +30,7 @@ QUIC_RSTREAM *ossl_quic_rstream_new(QUIC_RXFC *rxfc,
         return NULL;
 
     ring_buf_init(&ret->rbuf);
-    if (!ring_buf_resize(&ret->rbuf, rbuf_size)) {
+    if (!ring_buf_resize(&ret->rbuf, rbuf_size, 0)) {
         OPENSSL_free(ret);
         return NULL;
     }
@@ -43,11 +43,14 @@ QUIC_RSTREAM *ossl_quic_rstream_new(QUIC_RXFC *rxfc,
 
 void ossl_quic_rstream_free(QUIC_RSTREAM *qrs)
 {
+    int cleanse;
+
     if (qrs == NULL)
         return;
 
+    cleanse = qrs->fl.cleanse;
     ossl_sframe_list_destroy(&qrs->fl);
-    ring_buf_destroy(&qrs->rbuf);
+    ring_buf_destroy(&qrs->rbuf, cleanse);
     OPENSSL_free(qrs);
 }
 
@@ -281,7 +284,7 @@ int ossl_quic_rstream_resize_rbuf(QUIC_RSTREAM *qrs, size_t rbuf_size)
     if (ossl_sframe_list_is_head_locked(&qrs->fl))
         return 0;
 
-    if (!ring_buf_resize(&qrs->rbuf, rbuf_size))
+    if (!ring_buf_resize(&qrs->rbuf, rbuf_size, qrs->fl.cleanse))
         return 0;
 
     return 1;
