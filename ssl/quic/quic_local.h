@@ -250,7 +250,7 @@ int ossl_quic_trace(int write_p, int version, int content_type,
 #  define QUIC_XSO_FROM_SSL_int(ssl, c) NULL
 #  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c) NULL
 #  define IS_QUIC(ssl) 0
-#  define IS_QUIC_CTX(ssl) 0
+#  define IS_QUIC_CTX(ctx) 0
 #  define IS_QUIC_METHOD(m) 0
 # endif
 

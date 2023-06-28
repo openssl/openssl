@@ -34,7 +34,8 @@ server method, even if TLS_*_methods were chosen on startup. This
 will might lead to connection failures (see L<SSL_new(3)>)
 for a description of the method's properties.
 
-This function is not supported on QUIC SSL objects.
+This function is not supported on QUIC SSL objects and returns failure if called
+on such an object.
 
 =head1 WARNINGS
 

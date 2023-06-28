@@ -54,6 +54,8 @@ The B<arg> parameter is the value set via SSL_CTX_set_record_padding_callback_ar
 or SSL_set_record_padding_callback_arg().
 
 These functions cannot be used with QUIC SSL objects.
+SSL_set_record_padding_callback() and SSL_set_block_padding() fail if called on
+a QUIC SSL object.
 
 =head1 RETURN VALUES
 

@@ -216,6 +216,7 @@ When post-handshake authentication occurs, a refreshed NewSessionTicket
 message is sent to the client.
 
 Post-handshake authentication cannot be used with QUIC.
+SSL_set_post_handshake_auth() has no effect if called on a QUIC SSL object.
 
 =head1 BUGS
 

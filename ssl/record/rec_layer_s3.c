@@ -171,15 +171,7 @@ void SSL_set_default_read_buffer_len(SSL *s, size_t len)
 const char *SSL_rstate_string_long(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
-#ifndef OPENSSL_NO_QUIC
-    const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
-#endif
     const char *lng;
-
-#ifndef OPENSSL_NO_QUIC
-    if (qc != NULL)
-        return "unknown";
-#endif
 
     if (sc == NULL)
         return NULL;
@@ -195,15 +187,7 @@ const char *SSL_rstate_string_long(const SSL *s)
 const char *SSL_rstate_string(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
-#ifndef OPENSSL_NO_QUIC
-    const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
-#endif
     const char *shrt;
-
-#ifndef OPENSSL_NO_QUIC
-    if (qc != NULL)
-        return "unknown";
-#endif
 
     if (sc == NULL)
         return NULL;

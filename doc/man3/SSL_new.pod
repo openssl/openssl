@@ -96,7 +96,8 @@ SSL_set0_client_CA_list() or similar functions
 
 =back
 
-SSL_dup() is not supported on QUIC SSL objects.
+SSL_dup() is not supported on QUIC SSL objects and returns NULL if called on
+such an object.
 
 =head1 RETURN VALUES
 

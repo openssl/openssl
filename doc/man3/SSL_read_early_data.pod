@@ -242,6 +242,9 @@ has been explicitly disabled using the SSL_OP_NO_ANTI_REPLAY option. See
 L</REPLAY PROTECTION> below.
 
 These functions cannot currently be used with QUIC SSL objects.
+SSL_set_max_early_data(), SSL_set_recv_max_early_data(), SSL_write_early_data(),
+SSL_read_early_data(), SSL_get_early_data_status() and
+SSL_set_allow_early_data_cb() fail if called on a QUIC SSL object.
 
 =head1 NOTES
 

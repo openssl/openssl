@@ -425,8 +425,7 @@ static int dane_tlsa_add(SSL_DANE *dane,
  * Return 0 if there is only one version configured and it was disabled
  * at configure time.  Return 1 otherwise.
  */
-static int ssl_check_allowed_versions(int min_version, int max_version,
-                                      int is_quic)
+static int ssl_check_allowed_versions(int min_version, int max_version)
 {
     int minisdtls = 0, maxisdtls = 0;
 
@@ -460,7 +459,7 @@ static int ssl_check_allowed_versions(int min_version, int max_version,
             min_version = DTLS1_2_VERSION;
 #endif
         /* Done massaging versions; do the check. */
-        if (is_quic
+        if (0
 #ifdef OPENSSL_NO_DTLS1
             || (DTLS_VERSION_GE(min_version, DTLS1_VERSION)
                 && DTLS_VERSION_GE(DTLS1_VERSION, max_version))
@@ -474,7 +473,7 @@ static int ssl_check_allowed_versions(int min_version, int max_version,
     } else {
         /* Regular TLS version checks. */
         if (min_version == 0)
-            min_version = is_quic ? TLS1_3_VERSION : SSL3_VERSION;
+            min_version = SSL3_VERSION;
         if (max_version == 0)
             max_version = TLS1_3_VERSION;
 #ifdef OPENSSL_NO_TLS1_3
@@ -764,17 +763,8 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
         s->max_proto_version = ctx->max_proto_version;
     }
 
-    s->min_proto_version = ctx->min_proto_version;
-    if (IS_QUIC_CTX(ctx) && s->min_proto_version < TLS1_3_VERSION)
-        s->min_proto_version = TLS1_3_VERSION;
-
-    s->max_proto_version = ctx->max_proto_version;
-    if (IS_QUIC_CTX(ctx) && s->max_proto_version < TLS1_3_VERSION)
-        s->max_proto_version = 0;
-
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
-
     if (!IS_QUIC_CTX(ctx)) {
         s->max_early_data = ctx->max_early_data;
         s->recv_max_early_data = ctx->recv_max_early_data;
@@ -806,11 +796,9 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     s->msg_callback_arg = ctx->msg_callback_arg;
     s->verify_mode = ctx->verify_mode;
     s->not_resumable_session_cb = ctx->not_resumable_session_cb;
-    if (!IS_QUIC_CTX(ctx)) {
-        s->rlayer.record_padding_cb = ctx->record_padding_cb;
-        s->rlayer.record_padding_arg = ctx->record_padding_arg;
-        s->rlayer.block_padding = ctx->block_padding;
-    }
+    s->rlayer.record_padding_cb = ctx->record_padding_cb;
+    s->rlayer.record_padding_arg = ctx->record_padding_arg;
+    s->rlayer.block_padding = ctx->block_padding;
     s->sid_ctx_length = ctx->sid_ctx_length;
     if (!ossl_assert(s->sid_ctx_length <= sizeof(s->sid_ctx)))
         goto err;
@@ -1687,6 +1675,11 @@ int SSL_set_fd(SSL *s, int fd)
     int ret = 0;
     BIO *bio = NULL;
 
+    if (s->type == SSL_TYPE_QUIC_XSO) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_CONN_USE_ONLY);
+        goto err;
+    }
+
     bio = BIO_new(fd_method(s));
 
     if (bio == NULL) {
@@ -1713,6 +1706,11 @@ int SSL_set_wfd(SSL *s, int fd)
 {
     BIO *rbio = SSL_get_rbio(s);
     int desired_type = IS_QUIC(s) ? BIO_TYPE_DGRAM : BIO_TYPE_SOCKET;
+
+    if (s->type == SSL_TYPE_QUIC_XSO) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_CONN_USE_ONLY);
+        return 0;
+    }
 
     if (rbio == NULL || BIO_method_type(rbio) != desired_type
         || (int)BIO_get_fd(rbio, NULL) != fd) {
@@ -1744,6 +1742,11 @@ int SSL_set_rfd(SSL *s, int fd)
 {
     BIO *wbio = SSL_get_wbio(s);
     int desired_type = IS_QUIC(s) ? BIO_TYPE_DGRAM : BIO_TYPE_SOCKET;
+
+    if (s->type == SSL_TYPE_QUIC_XSO) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_CONN_USE_ONLY);
+        return 0;
+    }
 
     if (wbio == NULL || BIO_method_type(wbio) != desired_type
         || ((int)BIO_get_fd(wbio, NULL) != fd)) {
@@ -2365,10 +2368,8 @@ int SSL_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes)
     int ret;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
-    if (sc == NULL)
-        return 0;
-
-    if (!sc->server) {
+    /* TODO(QUIC 0RTT): 0-RTT support */
+    if (sc == NULL || !sc->server) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return SSL_READ_EARLY_DATA_ERROR;
     }
@@ -2422,6 +2423,7 @@ int SSL_get_early_data_status(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL_ONLY(s);
 
+    /* TODO(QUIC 0RTT): 0-RTT support */
     if (sc == NULL)
         return 0;
 
@@ -2996,26 +2998,16 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         else
             return 0;
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
-        if (IS_QUIC(s))
-            return 0;
-        return ssl_check_allowed_versions(larg, sc->max_proto_version,
-                                          IS_QUIC(s))
+        return ssl_check_allowed_versions(larg, sc->max_proto_version)
                && ssl_set_version_bound(s->defltmeth->version, (int)larg,
                                         &sc->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
-        if (IS_QUIC(s))
-            return 0;
         return sc->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
-        if (IS_QUIC(s))
-            return 0;
-        return ssl_check_allowed_versions(sc->min_proto_version, larg,
-                                          IS_QUIC(s))
+        return ssl_check_allowed_versions(sc->min_proto_version, larg)
                && ssl_set_version_bound(s->defltmeth->version, (int)larg,
                                         &sc->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:
-        if (IS_QUIC(s))
-            return 0;
         return sc->max_proto_version;
     default:
         return s->method->ssl_ctrl(s, cmd, larg, parg);
@@ -3145,17 +3137,13 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_CLEAR_CERT_FLAGS:
         return (ctx->cert->cert_flags &= ~larg);
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
-        if (IS_QUIC_CTX(ctx))
-            return 0;
-        return ssl_check_allowed_versions(larg, ctx->max_proto_version, 0)
+        return ssl_check_allowed_versions(larg, ctx->max_proto_version)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
         return ctx->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
-        if (IS_QUIC_CTX(ctx))
-            return 0;
-        return ssl_check_allowed_versions(ctx->min_proto_version, larg, 0)
+        return ssl_check_allowed_versions(ctx->min_proto_version, larg)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:

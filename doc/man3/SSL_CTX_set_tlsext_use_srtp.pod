@@ -117,6 +117,8 @@ use. This provides the client write master key, the server write master key, the
 client write master salt and the server write master salt in that order.
 
 These functions cannot be used with QUIC SSL objects.
+SSL_CTX_set_tlsext_use_srtp() fails if called on a QUIC SSL context.
+SSL_set_tlsext_use_srtp() fails if called on a QUIC SSL object.
 
 =head1 RETURN VALUES
 

@@ -48,7 +48,8 @@ try to reuse an existing one in this fashion.  Its usage is considered
 deprecated.
 
 SSL_set_ssl_method() cannot be used to change a non-QUIC SSL object to a QUIC
-SSL object or vice versa.
+SSL object or vice versa, or change a QUIC SSL object from one QUIC method to
+another.
 
 =head1 RETURN VALUES
 
