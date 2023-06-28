@@ -47,9 +47,12 @@ static ossl_inline int ring_buf_init(struct ring_buf *r)
     return 1;
 }
 
-static ossl_inline void ring_buf_destroy(struct ring_buf *r)
+static ossl_inline void ring_buf_destroy(struct ring_buf *r, int cleanse)
 {
-    OPENSSL_free(r->start);
+    if (cleanse)
+        OPENSSL_clear_free(r->start, r->alloc);
+    else
+        OPENSSL_free(r->start);
     r->start = NULL;
     r->alloc = 0;
 }
@@ -213,7 +216,8 @@ static ossl_inline void ring_buf_cpop_range(struct ring_buf *r,
         r->head_offset = r->ctail_offset;
 }
 
-static ossl_inline int ring_buf_resize(struct ring_buf *r, size_t num_bytes)
+static ossl_inline int ring_buf_resize(struct ring_buf *r, size_t num_bytes,
+                                       int cleanse)
 {
     struct ring_buf rnew = {0};
     const unsigned char *src = NULL;
@@ -251,9 +255,9 @@ static ossl_inline int ring_buf_resize(struct ring_buf *r, size_t num_bytes)
     }
 
     assert(rnew.head_offset == r->head_offset);
-    rnew.ctail_offset   = r->ctail_offset;
+    rnew.ctail_offset = r->ctail_offset;
 
-    OPENSSL_free(r->start);
+    ring_buf_destroy(r, cleanse);
     memcpy(r, &rnew, sizeof(*r));
     return 1;
 }

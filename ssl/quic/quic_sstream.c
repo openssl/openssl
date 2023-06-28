@@ -66,8 +66,8 @@ QUIC_SSTREAM *ossl_quic_sstream_new(size_t init_buf_size)
         return NULL;
 
     ring_buf_init(&qss->ring_buf);
-    if (!ring_buf_resize(&qss->ring_buf, init_buf_size)) {
-        ring_buf_destroy(&qss->ring_buf);
+    if (!ring_buf_resize(&qss->ring_buf, init_buf_size, 0)) {
+        ring_buf_destroy(&qss->ring_buf, 0);
         OPENSSL_free(qss);
         return NULL;
     }
@@ -84,7 +84,7 @@ void ossl_quic_sstream_free(QUIC_SSTREAM *qss)
 
     ossl_uint_set_destroy(&qss->new_set);
     ossl_uint_set_destroy(&qss->acked_set);
-    ring_buf_destroy(&qss->ring_buf);
+    ring_buf_destroy(&qss->ring_buf, qss->cleanse);
     OPENSSL_free(qss);
 }
 
@@ -356,7 +356,7 @@ static void qss_cull(QUIC_SSTREAM *qss)
 
 int ossl_quic_sstream_set_buffer_size(QUIC_SSTREAM *qss, size_t num_bytes)
 {
-    return ring_buf_resize(&qss->ring_buf, num_bytes);
+    return ring_buf_resize(&qss->ring_buf, num_bytes, qss->cleanse);
 }
 
 size_t ossl_quic_sstream_get_buffer_size(QUIC_SSTREAM *qss)
