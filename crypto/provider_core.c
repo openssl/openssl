@@ -75,6 +75,9 @@
  * The provider flag_lock: Used to control updates to the various provider
  * "flags" (flag_initialized and flag_activated).
  *
+ * The provider activatecnt_lock: Used to control updates to the provider
+ * activatecnt value.
+ *
  * The provider optbits_lock: Used to control access to the provider's
  * operation_bits and operation_bits_sz fields.
  *
@@ -96,11 +99,12 @@
  * introducing the possibility of deadlock. The following rules MUST be adhered
  * to in order to avoid that:
  *  - Holding multiple locks at the same time is only allowed for the
- *    provider store lock and the provider flag_lock.
+ *    provider store lock, the provider activatecnt_lock and the provider flag_lock.
  *  - When holding multiple locks they must be acquired in the following order of
  *    precedence:
  *        1) provider store lock
  *        2) provider flag_lock
+ *        3) provider activatecnt_lock
  *  - When releasing locks they must be released in the reverse order to which
  *    they were acquired
  *  - No locks may be held when making an upcall. NOTE: Some common functions
@@ -144,7 +148,8 @@ struct ossl_provider_st {
 
     /* OpenSSL library side data */
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_REF_COUNT activatecnt;
+    CRYPTO_RWLOCK *activatecnt_lock; /* For the activatecnt counter */
+    int activatecnt;
     char *name;
     char *path;
     DSO *module;
@@ -442,6 +447,13 @@ static OSSL_PROVIDER *provider_new(const char *name,
         ossl_provider_free(prov);
         return NULL;
     }
+#ifndef HAVE_ATOMICS
+    if ((prov->activatecnt_lock = CRYPTO_THREAD_lock_new()) == NULL) {
+        OPENSSL_free(prov);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
+        return NULL;
+    }
+#endif
 
     if ((prov->opbits_lock = CRYPTO_THREAD_lock_new()) == NULL
         || (prov->flag_lock = CRYPTO_THREAD_lock_new()) == NULL
@@ -701,8 +713,10 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
             sk_INFOPAIR_pop_free(prov->parameters, infopair_free);
             CRYPTO_THREAD_lock_free(prov->opbits_lock);
             CRYPTO_THREAD_lock_free(prov->flag_lock);
+#ifndef HAVE_ATOMICS
+            CRYPTO_THREAD_lock_free(prov->activatecnt_lock);
+#endif
             CRYPTO_FREE_REF(&prov->refcnt);
-            CRYPTO_FREE_REF(&prov->activatecnt);
             OPENSSL_free(prov);
         }
 #ifndef FIPS_MODULE
@@ -1056,7 +1070,7 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
         return -1;
     }
 
-    CRYPTO_DOWN_REF(&prov->activatecnt, &count);
+    CRYPTO_atomic_add(&prov->activatecnt, -1, &count, prov->activatecnt_lock);
 #ifndef FIPS_MODULE
     if (count >= 1 && prov->ischild && upcalls) {
         /*
@@ -1142,7 +1156,7 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
 #endif
         return -1;
     }
-    if (CRYPTO_UP_REF(&prov->activatecnt, &count)) {
+    if (CRYPTO_atomic_add(&prov->activatecnt, 1, &count, prov->activatecnt_lock)) {
         prov->flag_activated = 1;
 
         if (count == 1 && store != NULL) {
@@ -1399,7 +1413,8 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
              * In theory this could mean the parent provider goes inactive,
              * whilst still activated in the child for a short period. That's ok.
              */
-            if (CRYPTO_UP_REF(&prov->activatecnt, &ref) <= 0) {
+            if (!CRYPTO_atomic_add(&prov->activatecnt, 1, &ref,
+                                   prov->activatecnt_lock)) {
                 CRYPTO_DOWN_REF(&prov->refcnt, &ref);
                 CRYPTO_THREAD_unlock(prov->flag_lock);
                 goto err_unlock;
@@ -1439,7 +1454,8 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
     for (curr++; curr < max; curr++) {
         OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(provs, curr);
 
-        if (!CRYPTO_DOWN_REF(&prov->activatecnt, &ref)) {
+        if (!CRYPTO_atomic_add(&prov->activatecnt, -1, &ref,
+                               prov->activatecnt_lock)) {
             ret = 0;
             continue;
         }
@@ -1449,7 +1465,8 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
              * done this originally, but it involves taking a write lock so
              * we avoid it. We up the count again and do a full deactivation
              */
-            if (CRYPTO_UP_REF(&prov->activatecnt, &ref))
+            if (CRYPTO_atomic_add(&prov->activatecnt, 1, &ref,
+                                  prov->activatecnt_lock))
                 provider_deactivate(prov, 0, 1);
             else
                 ret = 0;
