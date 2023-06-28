@@ -30,14 +30,6 @@ static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
         return NULL;
     }
 
-    signature->lock = CRYPTO_THREAD_lock_new();
-    if (signature->lock == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
-        CRYPTO_FREE_REF(&signature->refcnt);
-        OPENSSL_free(signature);
-        return NULL;
-    }
-
     signature->prov = prov;
     ossl_provider_up_ref(prov);
 
@@ -292,7 +284,6 @@ void EVP_SIGNATURE_free(EVP_SIGNATURE *signature)
         return;
     OPENSSL_free(signature->type_name);
     ossl_provider_free(signature->prov);
-    CRYPTO_THREAD_lock_free(signature->lock);
     CRYPTO_FREE_REF(&signature->refcnt);
     OPENSSL_free(signature);
 }
