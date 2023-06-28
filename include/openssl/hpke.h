@@ -72,6 +72,10 @@
 # define OSSL_HPKE_ROLE_SENDER 0
 # define OSSL_HPKE_ROLE_RECEIVER 1
 
+# ifdef  __cplusplus
+extern "C" {
+# endif
+
 typedef struct {
     uint16_t    kem_id; /* Key Encapsulation Method id */
     uint16_t    kdf_id; /* Key Derivation Function id */
@@ -156,5 +160,9 @@ int OSSL_HPKE_str2suite(const char *str, OSSL_HPKE_SUITE *suite);
 size_t OSSL_HPKE_get_ciphertext_size(OSSL_HPKE_SUITE suite, size_t clearlen);
 size_t OSSL_HPKE_get_public_encap_size(OSSL_HPKE_SUITE suite);
 size_t OSSL_HPKE_get_recommended_ikmelen(OSSL_HPKE_SUITE suite);
+
+# ifdef  __cplusplus
+}
+# endif
 
 #endif
