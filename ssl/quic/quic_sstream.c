@@ -52,6 +52,7 @@ struct quic_sstream_st {
     unsigned int    have_final_size     : 1;
     unsigned int    sent_final_size     : 1;
     unsigned int    acked_final_size    : 1;
+    unsigned int    cleanse             : 1;
 };
 
 static void qss_cull(QUIC_SSTREAM *qss);
@@ -349,7 +350,8 @@ static void qss_cull(QUIC_SSTREAM *qss)
      * can only cull contiguous areas at the start of the ring buffer anyway.
      */
     if (h != NULL)
-        ring_buf_cpop_range(&qss->ring_buf, h->range.start, h->range.end, 0);
+        ring_buf_cpop_range(&qss->ring_buf, h->range.start, h->range.end,
+                            qss->cleanse);
 }
 
 int ossl_quic_sstream_set_buffer_size(QUIC_SSTREAM *qss, size_t num_bytes)
@@ -409,4 +411,9 @@ void ossl_quic_sstream_adjust_iov(size_t len,
 
         running += iovlen;
     }
+}
+
+void ossl_quic_sstream_set_cleanse(QUIC_SSTREAM *qss, int cleanse)
+{
+    qss->cleanse = cleanse;
 }

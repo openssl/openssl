@@ -296,6 +296,11 @@ void ossl_quic_sstream_adjust_iov(size_t len,
                                   size_t num_iov);
 
 /*
+ * Sets flag to cleanse the buffered data when it is acked.
+ */
+void ossl_quic_sstream_set_cleanse(QUIC_SSTREAM *qss, int cleanse);
+
+/*
  * QUIC Receive Stream Manager
  * ===========================
  *

@@ -2802,15 +2802,19 @@ const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u)
 int ossl_quic_set_ssl_op(SSL *ssl, uint64_t op)
 {
     QCTX ctx;
+    int cleanse;
 
     if (!expect_quic_with_stream_lock(ssl, /*remote_init=*/-1, &ctx))
         return 0;
 
-    if (ctx.xso->stream == NULL || ctx.xso->stream->rstream == NULL)
+    if (ctx.xso->stream == NULL)
         goto out;
 
-    ossl_quic_rstream_set_cleanse(ctx.xso->stream->rstream,
-                                  (op & SSL_OP_CLEANSE_PLAINTEXT) != 0);
+    cleanse = (op & SSL_OP_CLEANSE_PLAINTEXT) != 0;
+    if (ctx.xso->stream->rstream != NULL)
+        ossl_quic_rstream_set_cleanse(ctx.xso->stream->rstream, cleanse);
+    if (ctx.xso->stream->sstream != NULL)
+        ossl_quic_sstream_set_cleanse(ctx.xso->stream->sstream, cleanse);
 
  out:
     quic_unlock(ctx.qc);
