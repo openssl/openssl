@@ -2694,16 +2694,18 @@ static int ch_init_new_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs,
     int server_init = ossl_quic_stream_is_server_init(qs);
     int local_init = (ch->is_server == server_init);
     int is_uni = !ossl_quic_stream_is_bidi(qs);
+    int cleanse = (ch->tls->ctx->options & SSL_OP_CLEANSE_PLAINTEXT) != 0;
 
-    if (can_send && (qs->sstream = ossl_quic_sstream_new(INIT_APP_BUF_LEN)) == NULL)
-        goto err;
+    if (can_send) {
+        if ((qs->sstream = ossl_quic_sstream_new(INIT_APP_BUF_LEN)) == NULL)
+            goto err;
+        ossl_quic_sstream_set_cleanse(qs->sstream, cleanse);
+    }
 
     if (can_recv) {
         if ((qs->rstream = ossl_quic_rstream_new(NULL, NULL, 0)) == NULL)
             goto err;
-        ossl_quic_rstream_set_cleanse(qs->rstream,
-                                      (ch->tls->ctx->options
-                                       & SSL_OP_CLEANSE_PLAINTEXT) != 0);
+        ossl_quic_rstream_set_cleanse(qs->rstream, cleanse);
     }
 
     /* TXFC */
