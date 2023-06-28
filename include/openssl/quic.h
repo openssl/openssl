@@ -28,12 +28,6 @@ __owur const SSL_METHOD *OSSL_QUIC_client_method(void);
  * Method used for thread-assisted QUIC client operation.
  */
 __owur const SSL_METHOD *OSSL_QUIC_client_thread_method(void);
-/*
- * This method does not implement full server operation,
- * is used for testing, and is subject to change in later
- * releases.
- */
-__owur const SSL_METHOD *OSSL_QUIC_server_method(void);
 
 #  ifdef __cplusplus
 }
