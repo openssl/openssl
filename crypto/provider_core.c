@@ -442,14 +442,13 @@ static OSSL_PROVIDER *provider_new(const char *name,
 
     if ((prov = OPENSSL_zalloc(sizeof(*prov))) == NULL)
         return NULL;
-    if (!CRYPTO_NEW_REF(&prov->refcnt, 1)
-            || !CRYPTO_NEW_REF(&prov->activatecnt, 0)) {
+    if (!CRYPTO_NEW_REF(&prov->refcnt, 1)) {
         ossl_provider_free(prov);
         return NULL;
     }
 #ifndef HAVE_ATOMICS
     if ((prov->activatecnt_lock = CRYPTO_THREAD_lock_new()) == NULL) {
-        OPENSSL_free(prov);
+        ossl_provider_free(prov);
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
