@@ -216,6 +216,7 @@ void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
 int ossl_quic_trace(int write_p, int version, int content_type,
                     const void *buf, size_t msglen, SSL *ssl, void *arg);
 
+#  define OSSL_QUIC_ANY_VERSION 0xFFFFF
 #  define IS_QUIC_METHOD(m) \
     ((m) == OSSL_QUIC_client_method() || \
      (m) == OSSL_QUIC_client_thread_method())
