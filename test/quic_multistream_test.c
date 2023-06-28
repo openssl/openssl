@@ -1932,7 +1932,7 @@ static const struct script_op script_18[] = {
 
     OP_C_WRITE              (DEFAULT, "apple", 5)
     OP_S_READ_EXPECT        (a, "apple", 5)
-    OP_CHECK                (skip_time_ms,    2)
+    OP_CHECK                (skip_time_ms,    4)
 
     OP_END_REPEAT           ()
 
@@ -1943,7 +1943,7 @@ static const struct script_op script_18[] = {
      * generate TXKUs when we are allowed to.
      */
     OP_CHECK                (check_key_update_ge, 4)
-    OP_CHECK                (check_key_update_lt, 120)
+    OP_CHECK                (check_key_update_lt, 240)
 
     /*
      * Prove the connection is still healthy by sending something in both
