@@ -433,7 +433,7 @@ Should not require any changes.
 | New       | Never         | Yes       | CS            |
 
 Advances the QUIC state machine to the extent feasible, potentially performing
-network I/O. Also compatible with DTLSv1 and supercedes `DTLSv1_handle_timeout`
+network I/O. Also compatible with DTLSv1 and supersedes `DTLSv1_handle_timeout`
 for all use cases.
 
 #### `SSL_get_event_timeout`
@@ -447,7 +447,7 @@ event, if any.
 
 This is similar to the existing `DTLSv1_get_timeout` function, but it is not
 specific to DTLSv1. It is also usable for DTLSv1 and can become a
-protocol-agnostic API for this purpose, superceding `DTLSv1_get_timeout` for all
+protocol-agnostic API for this purpose, superseding `DTLSv1_get_timeout` for all
 use cases.
 
 The design is similar to that of `DTLSv1_get_timeout` and uses a `struct
@@ -1617,7 +1617,7 @@ initial call to `SSL_read` implying use of a remotely-initiated stream. However,
 this would mean we are creating state tracking a remotely-initiated stream
 before the peer has signalled it. This would work in the happy case where the
 client is connected to a compatible server but may result in strange
-inconsistencies of QUIC internal state if a client is accidentially connected to
+inconsistencies of QUIC internal state if a client is accidentally connected to
 an incompatible peer. Since the peer ought to be the authority on the streams it
 creates, this seems like an undesirable approach.
 
