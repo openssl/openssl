@@ -765,10 +765,8 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
 
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
-    if (!IS_QUIC_CTX(ctx)) {
-        s->max_early_data = ctx->max_early_data;
-        s->recv_max_early_data = ctx->recv_max_early_data;
-    }
+    s->max_early_data = ctx->max_early_data;
+    s->recv_max_early_data = ctx->recv_max_early_data;
 
     s->num_tickets = ctx->num_tickets;
     s->pha_enabled = ctx->pha_enabled;
@@ -5654,6 +5652,9 @@ void *SSL_CTX_get_record_padding_callback_arg(const SSL_CTX *ctx)
 
 int SSL_CTX_set_block_padding(SSL_CTX *ctx, size_t block_size)
 {
+    if (IS_QUIC_CTX(ctx) && block_size > 1)
+        return 0;
+
     /* block size of 0 or 1 is basically no padding */
     if (block_size == 1)
         ctx->block_padding = 0;

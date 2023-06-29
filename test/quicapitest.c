@@ -479,9 +479,7 @@ static int test_quic_forbidden_options(void)
         goto err;
 
     /* Max early data */
-    if (!TEST_false(SSL_get_recv_max_early_data(ssl))
-        || !TEST_false(SSL_get_max_early_data(ssl))
-        || !TEST_false(SSL_set_recv_max_early_data(ssl, 1))
+    if (!TEST_false(SSL_set_recv_max_early_data(ssl, 1))
         || !TEST_false(SSL_set_max_early_data(ssl, 1)))
         goto err;
 
