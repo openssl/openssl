@@ -6,8 +6,8 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#ifndef STATEM_H
-# define STATEM_H
+#ifndef OSSL_INTERNAL_STATEM_H
+# define OSSL_INTERNAL_STATEM_H
 
 /*****************************************************************************
  *                                                                           *
