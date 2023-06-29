@@ -333,7 +333,7 @@ The B<algorithm> option must be B<"DH">.
 =item "default"
 
 Selects a default type based on the B<algorithm>. This is used by the
-OpenSSL default provider to set the type for backwards compatability.
+OpenSSL default provider to set the type for backwards compatibility.
 If B<algorithm> is B<"DH"> then B<"generator"> is used.
 If B<algorithm> is B<"DHX"> then B<"fips186_2"> is used.
 
