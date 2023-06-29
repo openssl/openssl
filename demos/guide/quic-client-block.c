@@ -203,7 +203,7 @@ int main(void)
     }
 
     if (!SSL_set_initial_peer_addr(ssl, peer_addr)) {
-        printf("Failed to set the inital peer address\n");
+        printf("Failed to set the initial peer address\n");
         goto end;
     }
 
@@ -263,7 +263,7 @@ int main(void)
     do {
         ret = SSL_shutdown(ssl);
         if (ret < 0) {
-            printf("Error shuting down: %d\n", ret);
+            printf("Error shutting down: %d\n", ret);
             goto end;
         }
     } while (ret != 1);
