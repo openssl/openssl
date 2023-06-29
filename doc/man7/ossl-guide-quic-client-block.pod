@@ -222,7 +222,7 @@ address away for future use. Now we need to use it via the
 L<SSL_set_initial_peer_addr(3)> function.
 
     if (!SSL_set_initial_peer_addr(ssl, peer_addr)) {
-        printf("Failed to set the inital peer address\n");
+        printf("Failed to set the initial peer address\n");
         goto end;
     }
 
@@ -257,7 +257,7 @@ once:
     do {
         ret = SSL_shutdown(ssl);
         if (ret < 0) {
-            printf("Error shuting down: %d\n", ret);
+            printf("Error shutting down: %d\n", ret);
             goto end;
         }
     } while (ret != 1);
