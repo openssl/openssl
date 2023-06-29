@@ -78,7 +78,7 @@ can safely be set to NULL to get the default handling.
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
 In order for certificate verification to be successful you must have configured
-where the trusted certifcate store to be used is located (see
+where the trusted certificate store to be used is located (see
 L<ossl-guide-tls-introduction(7)>). In most cases you just want to use the
 default store so we call L<SSL_CTX_set_default_verify_paths(3)>.
 
@@ -95,7 +95,7 @@ L<SSL_CTX_set_min_proto_version(3)>:
 
     /*
      * TLSv1.1 or earlier are deprecated by IETF and are generally to be
-     * avoided if possible. We require a mimimum TLS version of TLSv1.2.
+     * avoided if possible. We require a minimum TLS version of TLSv1.2.
      */
     if (!SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION)) {
         printf("Failed to set the minimum TLS protocol version\n");
@@ -411,7 +411,7 @@ L<SSL_get_error(3)> to determine the cause of the 0 return value.
 If L<SSL_get_error(3)> returns B<SSL_ERROR_ZERO_RETURN> then we know that the
 server has finished sending its data. Otherwise an error has occurred.
 
-=head2 Shuting down the connection
+=head2 Shutting down the connection
 
 Once we have finished reading data from the server then we are ready to close
 the connection down. We do this via the L<SSL_shutdown(3)> function which has
@@ -430,7 +430,7 @@ the server saying that we have finished writing data:
          * for one back". But we already know we got one from the peer
          * because of the SSL_ERROR_ZERO_RETURN above.
          */
-        printf("Error shuting down\n");
+        printf("Error shutting down\n");
         goto end;
     }
 
@@ -484,7 +484,7 @@ L<SSL_CTX_free(3)>.
 =head1 TROUBLESHOOTING
 
 There are a number of things that might go wrong when running the demo
-application. This section desribes some common things you might encounter.
+application. This section describes some common things you might encounter.
 
 =head2 Failure to connect the underlying socket
 
@@ -514,7 +514,7 @@ certificate store is correctly configured
 =item Unrecognised CA
 
 If the CA used by the server's certificate is not in the trusted certificate
-store for the client then this will cause a verfication failure during
+store for the client then this will cause a verification failure during
 connection. Often this can occur if the server is using a self-signed
 certificate (i.e. a test certificate that has not been signed by a CA at all).
 

@@ -119,7 +119,7 @@ the server. There is a chain of trust between the root CA and the server.
 
 By default it is only the client that authenticates the server using this
 method. However it is also possible to set things up such that the server
-additionally autenticates the client. This is known as "client authentication".
+additionally authenticates the client. This is known as "client authentication".
 In this approach the client will still authenticate the server in the same way,
 but the server will request a certificate from the client. The client sends the
 server its certificate and the server authenticates it in the same way that the
@@ -215,7 +215,7 @@ object and then create multiple connections (i.e. B<SSL> objects) from it.
 Typically you can set up common configuration options on the B<SSL_CTX> so that
 all the B<SSL> object created from it inherit the same configuration options.
 
-Note that internaly to OpenSSL various items that are shared between multiple
+Note that internally to OpenSSL various items that are shared between multiple
 B<SSL> objects are cached in the B<SSL_CTX> for performance reasons. Therefore
 it is considered best practice to create one B<SSL_CTX> for use by multiple
 B<SSL> objects instead of having one B<SSL_CTX> for each B<SSL> object that you
