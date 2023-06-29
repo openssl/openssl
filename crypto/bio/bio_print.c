@@ -707,8 +707,6 @@ fmtfp(char **sbuffer,
         fracpart = (fracpart / 10);
     }
 
-    if (fplace == sizeof(fconvert))
-        fplace--;
     fconvert[fplace] = 0;
 
     /* convert exponent part */
