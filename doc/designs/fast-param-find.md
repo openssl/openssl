@@ -102,10 +102,10 @@ THe top level attributes are:
   will be appended _[gs]et[_ctx]_params
 - "functions" is the functions to generate.  By default both setters and
   getters but either can be omitted.
-- "prologue" defines some introductory code emited in the generated functions.
+- "prologue" defines some introductory code emitted in the generated functions.
   Function arguments are: `void *vctx, OSSL_PARAM params[]` and this
   can be used to specialise the void pointer or declare locals.
-- "epilogue" defines some post decode code emited in the generated function
+- "epilogue" defines some post decode code emitted in the generated function
 - "params" defines the parameters both gettable and settable
 
 Within the "params" the fields specify each parameter by label.

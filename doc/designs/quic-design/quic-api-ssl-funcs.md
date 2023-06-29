@@ -835,7 +835,7 @@ Q&A For TLS-Related Calls
 QUIC always uses AES-128-GCM for Initial packets. At this time the handshake
 layer has not negotiated a ciphersuite so it has no “current” cipher. We could
 return AES-128-GCM here, but it seems reasonable to just return NULL as the
-encryption is mostly for protection against accidential modification and not
+encryption is mostly for protection against accidental modification and not
 “real” encryption. From the perspective of the Handshake layer encryption is not
 active yet. An application using QUIC can always interpret NULL as meaning
 AES-128-GCM is being used if needed as this is implied by using QUIC.
