@@ -245,3 +245,7 @@ MAKE0[0-9][0-9][0-9].@@@
 # Windows manifest files
 *.manifest
 doc-nits
+
+# LSP (Language Server Protocol) support
+.cache/
+compile_commands.json
