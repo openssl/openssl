@@ -4,6 +4,7 @@
 
 X509_sign, X509_sign_ctx,
 X509_REQ_sign, X509_REQ_sign_ctx,
+X509_ACERT_sign, X509_ACERT_sign_ctx,
 X509_CRL_sign, X509_CRL_sign_ctx -
 sign certificate, certificate request, or CRL signature
 
@@ -20,6 +21,11 @@ sign certificate, certificate request, or CRL signature
  int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
  int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx);
 
+ #include <openssl/x509_acert.h>
+
+ int X509_ACERT_sign(X509_ACERT *x, EVP_PKEY *pkey, const EVP_MD *md);
+ int X509_ACERT_sign_ctx(X509_ACERT *x, EVP_MD_CTX *ctx);
+
 =head1 DESCRIPTION
 
 X509_sign() signs certificate I<x> using private key I<pkey> and message
@@ -29,6 +35,7 @@ If the certificate information includes X.509 extensions,
 these two functions make sure that the certificate bears X.509 version 3.
 
 X509_REQ_sign(), X509_REQ_sign_ctx(),
+X509_ACERT_sign(), X509_ACERT_sign_ctx(),
 X509_CRL_sign(), and X509_CRL_sign_ctx()
 sign certificate requests and CRLs, respectively.
 
@@ -67,6 +74,9 @@ available in all versions of OpenSSL.
 
 The X509_sign_ctx(), X509_REQ_sign_ctx()
 and X509_CRL_sign_ctx() functions were added in OpenSSL 1.0.1.
+
+The X509_ACERT_sign() and X509_ACERT_sign_ctx() functions were added
+in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
