@@ -2799,10 +2799,18 @@ DEPEND[html/man3/X509V3_set_ctx.html]=man3/X509V3_set_ctx.pod
 GENERATE[html/man3/X509V3_set_ctx.html]=man3/X509V3_set_ctx.pod
 DEPEND[man/man3/X509V3_set_ctx.3]=man3/X509V3_set_ctx.pod
 GENERATE[man/man3/X509V3_set_ctx.3]=man3/X509V3_set_ctx.pod
+DEPEND[html/man3/X509_ACERT_add1_attr.html]=man3/X509_ACERT_add1_attr.pod
+GENERATE[html/man3/X509_ACERT_add1_attr.html]=man3/X509_ACERT_add1_attr.pod
+DEPEND[man/man3/X509_ACERT_add1_attr.3]=man3/X509_ACERT_add1_attr.pod
+GENERATE[man/man3/X509_ACERT_add1_attr.3]=man3/X509_ACERT_add1_attr.pod
 DEPEND[html/man3/X509_ACERT_get0_holder_baseCertId.html]=man3/X509_ACERT_get0_holder_baseCertId.pod
 GENERATE[html/man3/X509_ACERT_get0_holder_baseCertId.html]=man3/X509_ACERT_get0_holder_baseCertId.pod
 DEPEND[man/man3/X509_ACERT_get0_holder_baseCertId.3]=man3/X509_ACERT_get0_holder_baseCertId.pod
 GENERATE[man/man3/X509_ACERT_get0_holder_baseCertId.3]=man3/X509_ACERT_get0_holder_baseCertId.pod
+DEPEND[html/man3/X509_ACERT_get_attr.html]=man3/X509_ACERT_get_attr.pod
+GENERATE[html/man3/X509_ACERT_get_attr.html]=man3/X509_ACERT_get_attr.pod
+DEPEND[man/man3/X509_ACERT_get_attr.3]=man3/X509_ACERT_get_attr.pod
+GENERATE[man/man3/X509_ACERT_get_attr.3]=man3/X509_ACERT_get_attr.pod
 DEPEND[html/man3/X509_ACERT_print_ex.html]=man3/X509_ACERT_print_ex.pod
 GENERATE[html/man3/X509_ACERT_print_ex.html]=man3/X509_ACERT_print_ex.pod
 DEPEND[man/man3/X509_ACERT_print_ex.3]=man3/X509_ACERT_print_ex.pod
@@ -3639,7 +3647,9 @@ html/man3/UI_create_method.html \
 html/man3/UI_new.html \
 html/man3/X509V3_get_d2i.html \
 html/man3/X509V3_set_ctx.html \
+html/man3/X509_ACERT_add1_attr.html \
 html/man3/X509_ACERT_get0_holder_baseCertId.html \
+html/man3/X509_ACERT_get_attr.html \
 html/man3/X509_ACERT_print_ex.html \
 html/man3/X509_ALGOR_dup.html \
 html/man3/X509_ATTRIBUTE.html \
@@ -4286,7 +4296,9 @@ man/man3/UI_create_method.3 \
 man/man3/UI_new.3 \
 man/man3/X509V3_get_d2i.3 \
 man/man3/X509V3_set_ctx.3 \
+man/man3/X509_ACERT_add1_attr.3 \
 man/man3/X509_ACERT_get0_holder_baseCertId.3 \
+man/man3/X509_ACERT_get_attr.3 \
 man/man3/X509_ACERT_print_ex.3 \
 man/man3/X509_ALGOR_dup.3 \
 man/man3/X509_ATTRIBUTE.3 \

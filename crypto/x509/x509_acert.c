@@ -183,3 +183,62 @@ const ASN1_GENERALIZEDTIME *X509_ACERT_get0_notAfter(const X509_ACERT *x)
 {
     return x->acinfo->validityPeriod.notAfter;
 }
+
+/* Attribute management functions */
+
+int X509_ACERT_get_attr_count(const X509_ACERT *x)
+{
+    return X509at_get_attr_count(x->acinfo->attributes);
+}
+
+int X509_ACERT_get_attr_by_NID(const X509_ACERT *x, int nid, int lastpos)
+{
+    return X509at_get_attr_by_NID(x->acinfo->attributes, nid, lastpos);
+}
+
+int X509_ACERT_get_attr_by_OBJ(const X509_ACERT *x, const ASN1_OBJECT *obj,
+                               int lastpos)
+{
+    return X509at_get_attr_by_OBJ(x->acinfo->attributes, obj, lastpos);
+}
+
+X509_ATTRIBUTE *X509_ACERT_get_attr(const X509_ACERT *x, int loc)
+{
+    return X509at_get_attr(x->acinfo->attributes, loc);
+}
+
+X509_ATTRIBUTE *X509_ACERT_delete_attr(X509_ACERT *x, int loc)
+{
+    return X509at_delete_attr(x->acinfo->attributes, loc);
+}
+
+int X509_ACERT_add1_attr(X509_ACERT *x, X509_ATTRIBUTE *attr)
+{
+    STACK_OF(X509_ATTRIBUTE) **attrs = &x->acinfo->attributes;
+
+    return X509at_add1_attr(attrs, attr) != NULL;
+}
+
+int X509_ACERT_add1_attr_by_OBJ(X509_ACERT *x, const ASN1_OBJECT *obj,
+                                int type, const void *bytes, int len)
+{
+    STACK_OF(X509_ATTRIBUTE) **attrs = &x->acinfo->attributes;
+
+    return X509at_add1_attr_by_OBJ(attrs, obj, type, bytes, len) != NULL;
+}
+
+int X509_ACERT_add1_attr_by_NID(X509_ACERT *x, int nid, int type,
+                                const void *bytes, int len)
+{
+    STACK_OF(X509_ATTRIBUTE) **attrs = &x->acinfo->attributes;
+
+    return X509at_add1_attr_by_NID(attrs, nid, type, bytes, len) != NULL;
+}
+
+int X509_ACERT_add1_attr_by_txt(X509_ACERT *x, const char *attrname, int type,
+                                const unsigned char *bytes, int len)
+{
+    STACK_OF(X509_ATTRIBUTE) **attrs = &x->acinfo->attributes;
+
+    return X509at_add1_attr_by_txt(attrs, attrname, type, bytes, len) != NULL;
+}
