@@ -622,6 +622,7 @@ my @disable_cascades = (
     "tls"               => [ @tls ],
     sub { 0 == scalar grep { !$disabled{$_} } @tls }
                         => [ "tls" ],
+    "tls1_3"            => [ "quic" ],
 
     "crypto-mdebug"     => [ "crypto-mdebug-backtrace" ],
 
