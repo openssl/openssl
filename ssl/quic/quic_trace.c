@@ -355,7 +355,7 @@ static int frame_path_challenge(BIO *bio, PACKET *pkt)
     if (!ossl_quic_wire_decode_frame_path_challenge(pkt, &data))
         return 0;
 
-    BIO_printf(bio, "    Data: %016lx\n", data);
+    BIO_printf(bio, "    Data: %016llx\n", (unsigned long long)data);
 
     return 1;
 }
@@ -367,7 +367,7 @@ static int frame_path_response(BIO *bio, PACKET *pkt)
     if (!ossl_quic_wire_decode_frame_path_response(pkt, &data))
         return 0;
 
-    BIO_printf(bio, "    Data: %016lx\n", data);
+    BIO_printf(bio, "    Data: %016llx\n", (unsigned long long)data);
 
     return 1;
 }
