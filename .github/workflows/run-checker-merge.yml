@@ -19,17 +19,21 @@ jobs:
       matrix:
         opt: [
           enable-asan enable-ubsan no-shared no-asm -DOPENSSL_SMALL_FOOTPRINT,
-          no-dgram,
+          no-ct,
           no-dso,
           no-dynamic-engine,
           no-engine no-shared,
           no-err,
           no-filenames,
           enable-ubsan no-asm -DOPENSSL_SMALL_FOOTPRINT -fno-sanitize=alignment,
-          no-unit-test,
+          no-module,
+          no-ocsp,
+          no-pinshared,
+          no-srp,
+          no-srtp,
+          no-ts,
           enable-weak-ssl-ciphers,
           enable-zlib,
-          no-ecx,
         ]
     runs-on: ubuntu-latest
     steps:
