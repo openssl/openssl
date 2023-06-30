@@ -5613,3 +5613,6 @@ X509_ACERT_add1_attr_by_txt             ?	3_4_0	EXIST::FUNCTION:
 X509_ACERT_sign                         ?	3_4_0	EXIST::FUNCTION:
 X509_ACERT_sign_ctx                     ?	3_4_0	EXIST::FUNCTION:
 X509_ACERT_verify                       ?	3_4_0	EXIST::FUNCTION:
+X509_ACERT_get_ext_d2i                  ?	3_4_0	EXIST::FUNCTION:
+X509_ACERT_add1_ext_i2d                 ?	3_4_0	EXIST::FUNCTION:
+X509_ACERT_get0_extensions              ?	3_4_0	EXIST::FUNCTION:
