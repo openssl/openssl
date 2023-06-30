@@ -62,6 +62,10 @@ const ASN1_TIME *X509_ACERT_get0_notBefore(const X509_ACERT *x);
 const ASN1_TIME *X509_ACERT_get0_notAfter(const X509_ACERT *x);
 const ASN1_BIT_STRING *X509_ACERT_get0_issuerUID(const X509_ACERT *x);
 
+int X509_ACERT_print(BIO *bp, X509_ACERT *x);
+int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
+                        unsigned long cflag);
+
 # define OSSL_OBJECT_DIGEST_INFO_PUBLIC_KEY        0
 # define OSSL_OBJECT_DIGEST_INFO_PUBLIC_KEY_CERT   1
 # define OSSL_OBJECT_DIGEST_INFO_OTHER             2  /* must not be used in RFC 5755 profile */
