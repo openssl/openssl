@@ -129,7 +129,7 @@ connection. Only available when using the deprecated DTLSv1_client_method() API.
 
 =item SSL_OP_CLEANSE_PLAINTEXT
 
-By default TLS connections keep a copy of received plaintext
+By default TLS and QUIC SSL objects keep a copy of received plaintext
 application data in a static buffer until it is overwritten by the
 next portion of data. When enabling SSL_OP_CLEANSE_PLAINTEXT
 deciphered application data is cleansed by calling OPENSSL_cleanse(3)
@@ -141,10 +141,13 @@ responsible for cleansing all other buffers. Most notably, this
 applies to buffers passed to functions like L<SSL_read(3)>,
 L<SSL_peek(3)> but also like L<SSL_write(3)>.
 
-This option can be set differently on individual QUIC stream objects.
-Because the data to send is buffered by OpenSSL until it is acknowledged
-by the peer this option when set will cause also cleansing the buffered
-sent data once it is acknowledged by the peer.
+TLS connections do not buffer data to be sent in plaintext. QUIC stream
+objects do buffer plaintext data to be sent and this option will also cause
+that data to be cleansed when it is discarded.
+
+This option can be set differently on individual QUIC stream objects and
+has no effect on QUIC connection objects (except where a default stream is
+being used).
 
 =item SSL_OP_COOKIE_EXCHANGE
 
