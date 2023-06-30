@@ -891,10 +891,6 @@ EVP_MD_CTX *evp_md_ctx_new_ex(EVP_PKEY *pkey, const ASN1_OCTET_STRING *id,
 int evp_pkey_name2type(const char *name);
 const char *evp_pkey_type2name(int type);
 
-int evp_pkey_ctx_set1_id_prov(EVP_PKEY_CTX *ctx, const void *id, int len);
-int evp_pkey_ctx_get1_id_prov(EVP_PKEY_CTX *ctx, void *id);
-int evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len);
-
 int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
 # endif /* !defined(FIPS_MODULE) */
 
