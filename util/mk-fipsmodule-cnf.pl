@@ -45,7 +45,7 @@ print <<_____;
 activate = $activate
 conditional-errors = $conditional_errors
 security-checks = $security_checks
-ems_check = $ems_check
-drgb_no_trunc_dgst = $drgb_no_trunc_dgst
+tls1-prf-ems-check = $ems_check
+drbg-no-trunc-md = $drgb_no_trunc_dgst
 module-mac = $module_mac
 _____
