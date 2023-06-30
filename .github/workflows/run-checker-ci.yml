@@ -37,6 +37,7 @@ jobs:
           no-tls1_3,
           enable-trace enable-fips,
           no-ui,
+          no-quic
         ]
     runs-on: ubuntu-latest
     steps:
