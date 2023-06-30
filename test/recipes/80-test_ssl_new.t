@@ -114,7 +114,7 @@ my %skip = (
   # TODO(TLS 1.3): We should review this once we have TLS 1.3.
   "13-fragmentation.cnf" => disabled("tls1_2"),
   "14-curves.cnf" => disabled("tls1_2") || disabled("tls1_3")
-                     || $no_ec2m || $no_ecx,
+                     || $no_ec2m || $no_ecx || $no_dh,
   "15-certstatus.cnf" => $no_tls || $no_ocsp,
   "16-dtls-certstatus.cnf" => $no_dtls || $no_ocsp,
   "17-renegotiate.cnf" => $no_tls_below1_3,
