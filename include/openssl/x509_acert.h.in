@@ -77,6 +77,11 @@ int X509_ACERT_get_attr_by_OBJ(const X509_ACERT *x, const ASN1_OBJECT *obj,
 X509_ATTRIBUTE *X509_ACERT_get_attr(const X509_ACERT *x, int loc);
 X509_ATTRIBUTE *X509_ACERT_delete_attr(X509_ACERT *x, int loc);
 
+void *X509_ACERT_get_ext_d2i(const X509_ACERT *x, int nid, int *crit, int *idx);
+int X509_ACERT_add1_ext_i2d(X509_ACERT *x, int nid, void *value, int crit,
+                            unsigned long flags);
+const STACK_OF(X509_EXTENSION) *X509_ACERT_get0_extensions(const X509_ACERT *x);
+
 # define OSSL_OBJECT_DIGEST_INFO_PUBLIC_KEY        0
 # define OSSL_OBJECT_DIGEST_INFO_PUBLIC_KEY_CERT   1
 # define OSSL_OBJECT_DIGEST_INFO_OTHER             2  /* must not be used in RFC 5755 profile */

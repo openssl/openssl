@@ -242,3 +242,19 @@ int X509_ACERT_add1_attr_by_txt(X509_ACERT *x, const char *attrname, int type,
 
     return X509at_add1_attr_by_txt(attrs, attrname, type, bytes, len) != NULL;
 }
+
+void *X509_ACERT_get_ext_d2i(const X509_ACERT *x, int nid, int *crit, int *idx)
+{
+    return X509V3_get_d2i(x->acinfo->extensions, nid, crit, idx);
+}
+
+int X509_ACERT_add1_ext_i2d(X509_ACERT *x, int nid, void *value, int crit,
+                            unsigned long flags)
+{
+    return X509V3_add1_i2d(&x->acinfo->extensions, nid, value, crit, flags);
+}
+
+const STACK_OF(X509_EXTENSION) *X509_ACERT_get0_extensions(const X509_ACERT *x)
+{
+    return x->acinfo->extensions;
+}
