@@ -27,6 +27,13 @@ static char *datadir = NULL;
 
 static int is_fips = 0;
 
+/* The ssltrace test assumes some options are switched on/off */
+#if !defined(OPENSSL_NO_SSL_TRACE) && !defined(OPENSSL_NO_EC) \
+    && defined(OPENSSL_NO_ZLIB) && defined(OPENSSL_NO_BROTLI) \
+    && defined(OPENSSL_NO_ZSTD)
+# define DO_SSL_TRACE_TEST
+#endif
+
 /*
  * Test that we read what we've written.
  * Test 0: Non-blocking
@@ -207,7 +214,7 @@ static int test_version(void)
     return testresult;
 }
 
-#if !defined(OPENSSL_NO_SSL_TRACE) && !defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_ZLIB)
+#if defined(DO_SSL_TRACE_TEST)
 static void strip_line_ends(char *str)
 {
     size_t i;
@@ -371,7 +378,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_quic_write_read, 2);
     ADD_TEST(test_ciphersuites);
     ADD_TEST(test_version);
-#if !defined(OPENSSL_NO_SSL_TRACE) && !defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_ZLIB)
+#if defined(DO_SSL_TRACE_TEST)
     ADD_TEST(test_ssl_trace);
 #endif
 
