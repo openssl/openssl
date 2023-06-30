@@ -5599,3 +5599,12 @@ OSSL_ISSUER_SERIAL_set1_issuerUID       ?	3_3_0	EXIST::FUNCTION:
 X509_ACERT_get_signature_nid            ?	3_3_0	EXIST::FUNCTION:
 X509_ACERT_print                        ?	3_3_0	EXIST::FUNCTION:
 X509_ACERT_print_ex                     ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_get_attr_count               ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_get_attr_by_NID              ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_get_attr_by_OBJ              ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_get_attr                     ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_delete_attr                  ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_add1_attr                    ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_add1_attr_by_OBJ             ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_add1_attr_by_NID             ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_add1_attr_by_txt             ?	3_3_0	EXIST::FUNCTION:
