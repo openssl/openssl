@@ -83,15 +83,15 @@ ok($fatal_alert, "Server duplicated HRR");
 #        otherwise not valid (e.g. not suitable for TLSv1.3) we should reject it
 #        and not consider it when sending the HRR. We send brainpoolP512r1 in
 #        the ClientHello, which is acceptable to the server but is not valid in
-#        TLSv1.3. We expect the server to select X25519 in the HRR and the
+#        TLSv1.3. We expect the server to select P-521 in the HRR and the
 #        handshake to complete successfully
 SKIP: {
     skip "EC/TLSv1.2 is disabled in this build", 1
         if disabled("ec") || disabled("tls1_2");
 
     $proxy->clear();
-    $proxy->clientflags("-groups P-256:brainpoolP512r1:X25519");
-    $proxy->serverflags("-groups brainpoolP512r1:X25519");
+    $proxy->clientflags("-groups P-256:brainpoolP512r1:P-521");
+    $proxy->serverflags("-groups brainpoolP512r1:P-521");
     $testtype = INVALID_GROUP;
     $proxy->start();
     ok(TLSProxy::Message->success(), "Invalid group with HRR");
