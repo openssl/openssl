@@ -5597,3 +5597,5 @@ OSSL_ISSUER_SERIAL_set1_issuer          ?	3_3_0	EXIST::FUNCTION:
 OSSL_ISSUER_SERIAL_set1_serial          ?	3_3_0	EXIST::FUNCTION:
 OSSL_ISSUER_SERIAL_set1_issuerUID       ?	3_3_0	EXIST::FUNCTION:
 X509_ACERT_get_signature_nid            ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_print                        ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_print_ex                     ?	3_3_0	EXIST::FUNCTION:
