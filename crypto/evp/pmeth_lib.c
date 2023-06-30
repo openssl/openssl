@@ -1264,16 +1264,6 @@ static int get1_id_data(EVP_PKEY_CTX *ctx, void *id, size_t *id_len)
     return ret;
 }
 
-int evp_pkey_ctx_get1_id_prov(EVP_PKEY_CTX *ctx, void *id)
-{
-    return get1_id_data(ctx, id, NULL);
-}
-
-int evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len)
-{
-    return get1_id_data(ctx, NULL, id_len);
-}
-
 int EVP_PKEY_CTX_get1_id(EVP_PKEY_CTX *ctx, void *id)
 {
     return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_GET1_ID, 0, (void*)id);
