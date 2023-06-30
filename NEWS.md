@@ -22,6 +22,7 @@ OpenSSL 3.2
 
 ### Major changes between OpenSSL 3.1 and OpenSSL 3.2 [under development]
 
+  * Added client side support for QUIC.
   * Add Raw Public Key (RFC7250) support.
   * Added support for certificate compression (RFC8879), including
     library support for Brotli and Zstandard compression.

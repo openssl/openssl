@@ -22,9 +22,9 @@ jobs:
           - windows-2022
         platform:
           - arch: win64
-            config: enable-fips enable-quic
+            config: enable-fips
           - arch: win32
-            config: --strict-warnings no-fips enable-quic
+            config: --strict-warnings no-fips
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v3
@@ -101,7 +101,7 @@ jobs:
     - name: config
       working-directory: _build
       run: |
-        perl ..\Configure --banner=Configured no-makedepend no-bulk no-deprecated no-fips no-asm no-threads enable-quic -DOPENSSL_SMALL_FOOTPRINT
+        perl ..\Configure --banner=Configured no-makedepend no-bulk no-deprecated no-fips no-asm no-threads -DOPENSSL_SMALL_FOOTPRINT
         perl configdata.pm --dump
     - name: build
       working-directory: _build
@@ -119,10 +119,10 @@ jobs:
 #          - windows-2022
         platform:
           - arch: win64
-            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips enable-quic
+            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips
 # are we really learning sth new from win32? So let's save some CO2 for now disabling this
 #          - arch: win32
-#            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips enable-quic
+#            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips
     runs-on: ${{matrix.os}}
     env:
       CYGWIN_NOWINPATH: 1

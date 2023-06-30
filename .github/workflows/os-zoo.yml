@@ -44,7 +44,7 @@ jobs:
         fi
 
         CC=${{ matrix.cc }} ./config --banner=Configured no-shared \
-            -Wall -Werror enable-fips enable-quic --strict-warnings -DOPENSSL_USE_IPV6=0 ${extra_cflags}
+            -Wall -Werror enable-fips --strict-warnings -DOPENSSL_USE_IPV6=0 ${extra_cflags}
 
     - name: config dump
       run: ./configdata.pm --dump
@@ -71,7 +71,7 @@ jobs:
     - name: config
       run: |
         CC=${{ matrix.zoo.cc }} ./config --banner=Configured \
-            -Wall -Werror --strict-warnings enable-fips enable-quic
+            -Wall -Werror --strict-warnings enable-fips
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -99,7 +99,7 @@ jobs:
     - name: config
       working-directory: _build
       run: |
-        perl ..\Configure --banner=Configured no-makedepend enable-fips enable-quic
+        perl ..\Configure --banner=Configured no-makedepend enable-fips
     - name: config dump
       working-directory: _build
       run: ./configdata.pm --dump

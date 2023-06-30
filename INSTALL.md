@@ -971,10 +971,9 @@ Don't build test programs or run any tests.
 
 Build with support for TCP Fast Open (RFC7413). Supported on Linux, macOS and FreeBSD.
 
-### enable-quic
+### no-quic
 
-Build with QUIC support. This is currently just for developers as the
-implementation is by no means complete and usable.
+Don't build with QUIC support.
 
 ### no-threads
 
