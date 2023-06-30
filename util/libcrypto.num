@@ -5608,3 +5608,6 @@ X509_ACERT_add1_attr                    ?	3_3_0	EXIST::FUNCTION:
 X509_ACERT_add1_attr_by_OBJ             ?	3_3_0	EXIST::FUNCTION:
 X509_ACERT_add1_attr_by_NID             ?	3_3_0	EXIST::FUNCTION:
 X509_ACERT_add1_attr_by_txt             ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_sign                         ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_sign_ctx                     ?	3_3_0	EXIST::FUNCTION:
+X509_ACERT_verify                       ?	3_3_0	EXIST::FUNCTION:
