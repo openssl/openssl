@@ -3608,7 +3608,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 static int ocsp_resp_cb(SSL *s, void *arg)
 {
     const unsigned char *p;
-    int len;
+    int len, ret;
     OCSP_RESPONSE *rsp;
     len = SSL_get_tlsext_status_ocsp_resp(s, &p);
     BIO_puts(arg, "OCSP response: ");
@@ -3625,8 +3625,14 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     BIO_puts(arg, "\n======================================\n");
     OCSP_RESPONSE_print(arg, rsp, 0);
     BIO_puts(arg, "======================================\n");
+    ret = OCSP_RESPONSE_check_status(rsp);
     OCSP_RESPONSE_free(rsp);
-    return 1;
+    if (ret <= -1) {
+        BIO_puts(arg, "unable to verify OCSP response\n");
+    } else if (ret == 0) {
+        BIO_puts(arg, "revoked certificate found in OCSP response\n");
+    }
+    return ret;
 }
 # endif
 

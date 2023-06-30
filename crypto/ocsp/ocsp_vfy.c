@@ -438,3 +438,34 @@ static int ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req,
     }
     return 0;
 }
+
+/*
+ * Check an OCSP response for revoked certificate. Return a negative value on
+ * error; 0 if the response is not acceptable (in which case the handshake
+ * will fail) or a positive value if it is acceptable (no revoked certificate
+ * is found).
+ */
+
+int OCSP_RESPONSE_check_status(OCSP_RESPONSE *o)
+{
+    int i;
+    OCSP_BASICRESP *br = NULL;
+    OCSP_RESPDATA *rd = NULL;
+    OCSP_SINGLERESP *single = NULL;
+    OCSP_RESPBYTES *rb = o->responseBytes;
+    if (rb == NULL)
+        return -1;
+    if (OBJ_obj2nid(rb->responseType) != NID_id_pkix_OCSP_basic)
+        return -1;
+    if ((br = OCSP_response_get1_basic(o)) == NULL)
+        return -1;
+    rd = &br->tbsResponseData;
+    for (i = 0; i < sk_OCSP_SINGLERESP_num(rd->responses); i++) {
+        if (!sk_OCSP_SINGLERESP_value(rd->responses, i))
+            continue;
+        single = sk_OCSP_SINGLERESP_value(rd->responses, i);
+        if (single->certStatus->type == V_OCSP_CERTSTATUS_REVOKED)
+            return 0;
+    }
+    return 1;
+}
