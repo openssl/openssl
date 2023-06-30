@@ -355,7 +355,7 @@ static int frame_path_challenge(BIO *bio, PACKET *pkt)
     if (!ossl_quic_wire_decode_frame_path_challenge(pkt, &data))
         return 0;
 
-    BIO_printf(bio, "    Data: %016lx\n", data);
+    BIO_printf(bio, "    Data: %016llx\n", (unsigned long long)data);
 
     return 1;
 }
@@ -367,7 +367,7 @@ static int frame_path_response(BIO *bio, PACKET *pkt)
     if (!ossl_quic_wire_decode_frame_path_response(pkt, &data))
         return 0;
 
-    BIO_printf(bio, "    Data: %016lx\n", data);
+    BIO_printf(bio, "    Data: %016llx\n", (unsigned long long)data);
 
     return 1;
 }
@@ -588,7 +588,8 @@ int ossl_quic_trace(int write_p, int version, int content_type,
             BIO_puts(bio, " Packet\n");
             BIO_printf(bio, "  Packet Type: %s\n", packet_type(hdr.type));
             if (hdr.type != QUIC_PKT_TYPE_1RTT)
-                BIO_printf(bio, "  Version: 0x%08x\n", hdr.version);
+                BIO_printf(bio, "  Version: 0x%08lx\n",
+                           (unsigned long)hdr.version);
             BIO_puts(bio, "  Destination Conn Id: ");
             put_conn_id(bio, &hdr.dst_conn_id);
             BIO_puts(bio, "\n");
