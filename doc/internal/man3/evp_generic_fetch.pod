@@ -121,6 +121,11 @@ And here's the implementation of the FOO method fetcher:
         if ((foo = OPENSSL_zalloc(sizeof(*foo))) == NULL)
             return NULL;
 
+        if (!CRYPTO_NEW_REF(&foo->refcnt, 1)) {
+            OPENSSL_free(foo);
+            return NULL;
+        }
+
         foo->name_id = name_id;
 
         for (; fns->function_id != 0; fns++) {
@@ -151,9 +156,16 @@ And here's the implementation of the FOO method fetcher:
 
     EVP_FOO_meth_free(EVP_FOO *foo)
     {
+        int i;
+
         if (foo != NULL) {
             OSSL_PROVIDER *prov = foo->prov;
 
+            CRYPTO_DOWN_REF(&foo->refcnt, &i);
+            if (i > 0)
+                return;
+
+            CRYPTO_FREE_REF(&foo->refcnt);
             OPENSSL_free(foo);
             ossl_provider_free(prov);
         }
@@ -170,7 +182,7 @@ And here's the implementation of the FOO method fetcher:
         EVP_FOO *foo = vfoo;
         int ref = 0;
 
-        CRYPTO_UP_REF(&foo->refcnt, &ref, foo_lock);
+        CRYPTO_UP_REF(&foo->refcnt, &ref);
         return 1;
     }
 
