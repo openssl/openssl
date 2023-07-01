@@ -4,6 +4,10 @@ DEPEND[html/man1/CA.pl.html]=man1/CA.pl.pod
 GENERATE[html/man1/CA.pl.html]=man1/CA.pl.pod
 DEPEND[man/man1/CA.pl.1]=man1/CA.pl.pod
 GENERATE[man/man1/CA.pl.1]=man1/CA.pl.pod
+DEPEND[html/man1/openssl-acert.html]=man1/openssl-acert.pod
+GENERATE[html/man1/openssl-acert.html]=man1/openssl-acert.pod
+DEPEND[man/man1/openssl-acert.1]=man1/openssl-acert.pod
+GENERATE[man/man1/openssl-acert.1]=man1/openssl-acert.pod
 DEPEND[html/man1/openssl-asn1parse.html]=man1/openssl-asn1parse.pod
 GENERATE[html/man1/openssl-asn1parse.html]=man1/openssl-asn1parse.pod
 DEPEND[man/man1/openssl-asn1parse.1]=man1/openssl-asn1parse.pod
@@ -348,6 +352,7 @@ DEPEND[man/man1/tsget.1]=man1/tsget.pod
 GENERATE[man/man1/tsget.1]=man1/tsget.pod
 IMAGEDOCS[man1]=
 HTMLDOCS[man1]=html/man1/CA.pl.html \
+html/man1/openssl-acert.html \
 html/man1/openssl-asn1parse.html \
 html/man1/openssl-ca.html \
 html/man1/openssl-ciphers.html \
@@ -408,6 +413,7 @@ html/man1/openssl-x509.html \
 html/man1/openssl.html \
 html/man1/tsget.html
 MANDOCS[man1]=man/man1/CA.pl.1 \
+man/man1/openssl-acert.1 \
 man/man1/openssl-asn1parse.1 \
 man/man1/openssl-ca.1 \
 man/man1/openssl-ciphers.1 \
