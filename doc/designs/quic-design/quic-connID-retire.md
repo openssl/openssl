@@ -1,7 +1,7 @@
 QUIC Route Requirements
 =======================
 
-* Two connection ID -- one local, one remote
+* Two connection IDs -- one local, one remote
 
 MVP
 ---
@@ -26,11 +26,12 @@ To achieve this, more work is required:
 * retirement of CIDs that are no longer being used
 * ensuring only one retire connection ID frame is in flight
 
-Migration
----------
+Connection Migration
+--------------------
 
-* Goes well beyond CID management which should be sufficient to support it
-  with the above done
+* Supporting migration goes well beyond CID management.  The additions required
+  to the CID code should be undertaken when/if connection migration is
+  supported.  I.e. do this later in a just in time manner.
 
 Retiring Connection ID
 ----------------------
@@ -40,7 +41,7 @@ When a remote asks to retire a connection ID (RETIRE_CONNECTION_ID) we have to:
 * Send retirement acks for all retired CIDs
 * Immediately delete all CIDs and routes associated with these CIDs
   * Retransmits use different route, so they are good.
-  * Out of order delivery will initiate retransmites
+  * Out of order delivery will initiate retransmits
 * Should respond with a NEW_CONNECTION_ID frame if we are low on CIDs
   * Not sure if it is mandatory to send a retirement.
 
@@ -50,7 +51,7 @@ When a remote creates a new connection ID:
 * It reads like the NEW_CONNECTION_ID frame can't be used to retire routes.
   However, see above.  Suggest we accept either.
 
-When we want to retire one (or more) connection ID we have to:
+When we want to retire one (or more) connection IDs we have to:
 
 * Flag the route(s) as retired
 * Send a retirement frame (RETIRE_CONNECTION_ID)
@@ -62,5 +63,8 @@ State
 
 * routes we've retired until they are acked as being retired (uint64_t max CID)
 * routes our peer has retired don't need tracking, we can remove immediately
-* retired routes where we've outstanding data to send will be before the
-  retirement acks in the send queue and retransmits will use different routes.
+* retired routes where we've outstanding data to send will have that data
+  sent before the retirement acks are send.  If these fragments need to
+  be retransmitted, they'll be done so using a new CID on a new route.
+  This means, there is no requirement to wait for data to be flushed
+  before sending the retirement ack.
