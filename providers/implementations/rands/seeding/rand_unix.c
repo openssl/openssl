@@ -395,6 +395,10 @@ static ssize_t syscall_random(void *buf, size_t buflen)
 #  elif (defined(__DragonFly__)  && __DragonFly_version >= 500700) \
      || (defined(__NetBSD__) && __NetBSD_Version >= 1000000000)
     return getrandom(buf, buflen, 0);
+#  elif defined(__wasi__)
+    if (getentropy(buf, buflen) == 0)
+      return (ssize_t)buflen;
+    return -1;
 #  else
     errno = ENOSYS;
     return -1;

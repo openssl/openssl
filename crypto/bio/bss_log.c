@@ -24,6 +24,8 @@
 
 #if defined(OPENSSL_SYS_WINCE)
 #elif defined(OPENSSL_SYS_WIN32)
+#elif defined(__wasi__)
+# define NO_SYSLOG
 #elif defined(OPENSSL_SYS_VMS)
 # include <opcdef.h>
 # include <descrip.h>
