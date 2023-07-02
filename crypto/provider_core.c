@@ -443,7 +443,7 @@ static OSSL_PROVIDER *provider_new(const char *name,
     if ((prov = OPENSSL_zalloc(sizeof(*prov))) == NULL)
         return NULL;
     if (!CRYPTO_NEW_REF(&prov->refcnt, 1)) {
-        ossl_provider_free(prov);
+        OPENSSL_free(prov);
         return NULL;
     }
 #ifndef HAVE_ATOMICS

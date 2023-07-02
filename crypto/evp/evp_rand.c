@@ -78,7 +78,10 @@ static void *evp_rand_new(void)
 {
     EVP_RAND *rand = OPENSSL_zalloc(sizeof(*rand));
 
-    if (rand == NULL || !CRYPTO_NEW_REF(&rand->refcnt, 1)) {
+    if (rand == NULL)
+        return NULL;
+
+    if (!CRYPTO_NEW_REF(&rand->refcnt, 1)) {
         OPENSSL_free(rand);
         return NULL;
     }

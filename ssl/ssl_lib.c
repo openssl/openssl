@@ -3781,6 +3781,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     if (!OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL))
         return NULL;
 
+    /* Doing this for the run once effect */
     if (SSL_get_ex_data_X509_STORE_CTX_idx() < 0) {
         ERR_raise(ERR_LIB_SSL, SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
         goto err;
@@ -3788,11 +3789,13 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL)
-        goto err;
+        return NULL;
 
     /* Init the reference counting before any call to SSL_CTX_free */
-    if (!CRYPTO_NEW_REF(&ret->references, 1))
-        goto err;
+    if (!CRYPTO_NEW_REF(&ret->references, 1)) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {

@@ -141,9 +141,8 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
     SSL_SESSION *dest;
 
     dest = OPENSSL_malloc(sizeof(*dest));
-    if (dest == NULL) {
-        goto err;
-    }
+    if (dest == NULL)
+        return NULL;
     memcpy(dest, src, sizeof(*dest));
 
     /*
@@ -171,8 +170,10 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
     dest->next = NULL;
     dest->owner = NULL;
 
-    if (!CRYPTO_NEW_REF(&dest->references, 1))
-        goto err;
+    if (!CRYPTO_NEW_REF(&dest->references, 1)) {
+        OPENSSL_free(dest);
+        return NULL;
+    }
 
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, dest, &dest->ex_data)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);

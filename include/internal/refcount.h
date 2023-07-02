@@ -230,7 +230,8 @@ static ossl_unused ossl_inline int CRYPTO_NEW_REF(CRYPTO_REF_COUNT *refcnt, int 
 
 static ossl_unused ossl_inline void CRYPTO_FREE_REF(CRYPTO_REF_COUNT *refcnt)                                  \
 {
-    CRYPTO_THREAD_lock_free(refcnt->lock);
+    if (refcnt != NULL)
+        CRYPTO_THREAD_lock_free(refcnt->lock);
 }
 
 #  else     /* OPENSSL_THREADS */

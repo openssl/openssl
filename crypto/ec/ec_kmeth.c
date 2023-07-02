@@ -86,15 +86,17 @@ EC_KEY *ossl_ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
     if (ret == NULL)
         return NULL;
 
+    if (!CRYPTO_NEW_REF(&ret->references, 1)) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
     ret->libctx = libctx;
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
         if (ret->propq == NULL)
             goto err;
     }
-
-    if (!CRYPTO_NEW_REF(&ret->references, 1))
-        goto err;
 
     ret->meth = EC_KEY_get_default_method();
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
@@ -133,7 +135,6 @@ EC_KEY *ossl_ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
     return ret;
 
  err:
-    CRYPTO_FREE_REF(&ret->references);
     EC_KEY_free(ret);
     return NULL;
 }
