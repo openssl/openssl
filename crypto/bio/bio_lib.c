@@ -98,7 +98,6 @@ BIO *BIO_new_ex(OSSL_LIB_CTX *libctx, const BIO_METHOD *method)
     if (method->create != NULL && !method->create(bio)) {
         ERR_raise(ERR_LIB_BIO, ERR_R_INIT_FAIL);
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
-        CRYPTO_FREE_REF(&bio->references);
         goto err;
     }
     if (method->create == NULL)

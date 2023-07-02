@@ -86,8 +86,11 @@ static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
         return NULL;
     }
 
-    if (!CRYPTO_NEW_REF(&ret->references, 1))
-        goto err;
+    if (!CRYPTO_NEW_REF(&ret->references, 1)) {
+        CRYPTO_THREAD_lock_free(ret->lock);
+        OPENSSL_free(ret);
+        return NULL;
+    }
 
     ret->libctx = libctx;
     ret->meth = RSA_get_default_method();
