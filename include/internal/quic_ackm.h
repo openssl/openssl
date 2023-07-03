@@ -38,6 +38,23 @@ void ossl_ackm_set_ack_deadline_callback(OSSL_ACKM *ackm,
                                                     void *arg),
                                          void *arg);
 
+/*
+ * Configures the RX-side maximum ACK delay. This is the maximum amount of time
+ * the peer is allowed to delay sending an ACK frame after receiving an
+ * ACK-eliciting packet. The peer communicates this value via a transport
+ * parameter and it must be provided to the ACKM.
+ */
+void ossl_ackm_set_rx_max_ack_delay(OSSL_ACKM *ackm, OSSL_TIME rx_max_ack_delay);
+
+/*
+ * Configures the TX-side maximum ACK delay. This is the maximum amount of time
+ * we are allowed to delay sending an ACK frame after receiving an ACK-eliciting
+ * packet. Note that this cannot be changed after a connection is established as
+ * it must be accurately reported in the transport parameters we send to our
+ * peer.
+ */
+void ossl_ackm_set_tx_max_ack_delay(OSSL_ACKM *ackm, OSSL_TIME tx_max_ack_delay);
+
 typedef struct ossl_ackm_tx_pkt_st OSSL_ACKM_TX_PKT;
 struct ossl_ackm_tx_pkt_st {
     /* The packet number of the transmitted packet. */
