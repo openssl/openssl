@@ -57,8 +57,8 @@ static int test_quic_write_read(int idx)
 
     if (!TEST_ptr(cctx)
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, cert, privkey,
-                                                    idx, &qtserv, &clientquic,
-                                                    NULL))
+                                                    idx == 1 ? QTEST_FLAG_BLOCK : 0,
+                                                    &qtserv, &clientquic, NULL))
             || !TEST_true(SSL_set_tlsext_host_name(clientquic, "localhost"))
             || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto end;
