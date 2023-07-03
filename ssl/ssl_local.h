@@ -3044,8 +3044,8 @@ void ossl_ssl_set_custom_record_layer(SSL_CONNECTION *s,
      SSL_OP_LEGACY_SERVER_CONNECT             | \
      SSL_OP_IGNORE_UNEXPECTED_EOF             )
 
-/* Total mask of options permitted or ignored under QUIC. */
-#define OSSL_QUIC_PERMITTED_OPTIONS             \
+/* Total mask of connection-level options permitted or ignored under QUIC. */
+#define OSSL_QUIC_PERMITTED_OPTIONS_CONN        \
     (OSSL_LEGACY_SSL_OPTIONS                  | \
      OSSL_TLS1_2_OPTIONS                      | \
      SSL_OP_CIPHER_SERVER_PREFERENCE          | \
@@ -3053,9 +3053,19 @@ void ossl_ssl_set_custom_record_layer(SSL_CONNECTION *s,
      SSL_OP_NO_TX_CERTIFICATE_COMPRESSION     | \
      SSL_OP_NO_RX_CERTIFICATE_COMPRESSION     | \
      SSL_OP_PRIORITIZE_CHACHA                 | \
-     SSL_OP_CLEANSE_PLAINTEXT                 | \
      SSL_OP_NO_QUERY_MTU                      | \
      SSL_OP_NO_TICKET                         | \
      SSL_OP_NO_ANTI_REPLAY                    )
+
+/* Total mask of stream-level options permitted or ignored under QUIC. */
+#define OSSL_QUIC_PERMITTED_OPTIONS_STREAM      \
+    (OSSL_LEGACY_SSL_OPTIONS                  | \
+     OSSL_TLS1_2_OPTIONS                      | \
+     SSL_OP_CLEANSE_PLAINTEXT                 )
+
+/* Total mask of options permitted on either connections or streams. */
+#define OSSL_QUIC_PERMITTED_OPTIONS             \
+    (OSSL_QUIC_PERMITTED_OPTIONS_CONN |         \
+     OSSL_QUIC_PERMITTED_OPTIONS_STREAM)
 
 #endif

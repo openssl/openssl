@@ -85,6 +85,9 @@ struct quic_xso_st {
     /* SSL_set_mode */
     uint32_t                        ssl_mode;
 
+    /* SSL_set_options */
+    uint64_t                        ssl_options;
+
     /*
      * Last 'normal' error during an app-level I/O operation, used by
      * SSL_get_error(); used to track data-path errors like SSL_ERROR_WANT_READ
@@ -184,6 +187,9 @@ struct quic_conn_st {
 
     /* SSL_set_mode. This is not used directly but inherited by new XSOs. */
     uint32_t                        default_ssl_mode;
+
+    /* SSL_set_options. This is not used directly but inherited by new XSOs. */
+    uint64_t                        default_ssl_options;
 
     /* SSL_set_incoming_stream_policy. */
     int                             incoming_stream_policy;

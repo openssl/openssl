@@ -469,8 +469,6 @@ These options apply to SSL objects referencing a QUIC connection:
 
 =back
 
-Other options do not have an effect and will be ignored.
-
 These options apply to SSL objects referencing a QUIC stream:
 
 =over 4
@@ -479,14 +477,20 @@ These options apply to SSL objects referencing a QUIC stream:
 
 =back
 
-Other options do not have an effect and will be ignored.
+Options on QUIC connections are initialized from the options set on SSL_CTX
+before a QUIC connection SSL object is created. Options on QUIC streams are
+initialised from the options configured on the QUIC connection SSL object
+they are created from.
 
-If an SSL object is a QUIC connection object with a default stream attached,
-only the stream-relevant options are applied. If it is a QUIC connection
-without a default stream, the stream-relevant options are ignored.
+Setting options which relate to QUIC streams on a QUIC connection SSL object has
+no direct effect on the QUIC connection SSL object itself, but will change the
+options set on the default stream (if there is one) and will also determine the
+default options set on any future streams which are created.
 
-Connection and stream relevant options are initialized from the options
-set on SSL_CTX before the connection or stream objects are created.
+Other options not mentioned above do not have an effect and will be ignored.
+
+Options which relate to QUIC streams may also be set directly on QUIC stream SSL
+objects. Setting connection-related options on such an object has no effect.
 
 =head1 RETURN VALUES
 

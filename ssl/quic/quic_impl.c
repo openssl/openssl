@@ -331,7 +331,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     sc->s3.flags |= TLS1_FLAGS_QUIC;
 
     /* Restrict options derived from the SSL_CTX. */
-    sc->options &= OSSL_QUIC_PERMITTED_OPTIONS;
+    sc->options &= OSSL_QUIC_PERMITTED_OPTIONS_CONN;
     sc->pha_enabled = 0;
 
 #if defined(OPENSSL_THREADS)
@@ -349,6 +349,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
 
     qc->default_stream_mode     = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
     qc->default_ssl_mode        = qc->ssl.ctx->mode;
+    qc->default_ssl_options     = qc->ssl.ctx->options & OSSL_QUIC_PERMITTED_OPTIONS;
     qc->default_blocking        = 1;
     qc->blocking                = 1;
     qc->incoming_stream_policy  = SSL_INCOMING_STREAM_POLICY_AUTO;
@@ -616,38 +617,70 @@ static void qc_set_default_xso(QUIC_CONNECTION *qc, QUIC_XSO *xso, int touch)
         SSL_free(&old_xso->ssl);
 }
 
-/* SSL_set_options */
+QUIC_NEEDS_LOCK
+static void xso_update_options(QUIC_XSO *xso)
+{
+    int cleanse = ((xso->ssl_options & SSL_OP_CLEANSE_PLAINTEXT) != 0);
+
+    if (xso->stream->rstream != NULL)
+        ossl_quic_rstream_set_cleanse(xso->stream->rstream, cleanse);
+
+    if (xso->stream->sstream != NULL)
+        ossl_quic_sstream_set_cleanse(xso->stream->sstream, cleanse);
+}
+
+/*
+ * SSL_set_options
+ * ---------------
+ *
+ * Setting options on a QCSO
+ *   - configures the handshake-layer options;
+ *   - configures the default data-plane options for new streams;
+ *   - configures the data-plane options on the default XSO, if there is one.
+ *
+ * Setting options on a QSSO
+ *   - configures data-plane options for that stream only.
+ */
 QUIC_TAKES_LOCK
 static uint64_t quic_mask_or_options(SSL *ssl, uint64_t mask_value, uint64_t or_value)
 {
     QCTX ctx;
-    uint64_t options;
+    uint64_t hs_mask_value, hs_or_value, ret;
 
     if (!expect_quic(ssl, &ctx))
         return 0;
 
     quic_lock(ctx.qc);
 
-    /*
-     * Currently most options that we permit are handled in the handshake
-     * layer.
-     */
-    or_value &= OSSL_QUIC_PERMITTED_OPTIONS;
+    if (!ctx.is_stream) {
+        /*
+         * If we were called on the connection, we apply any handshake option
+         * changes.
+         */
+        hs_mask_value = (mask_value & OSSL_QUIC_PERMITTED_OPTIONS_CONN);
+        hs_or_value   = (or_value   & OSSL_QUIC_PERMITTED_OPTIONS_CONN);
 
-    SSL_clear_options(ctx.qc->tls, mask_value);
-    options = SSL_set_options(ctx.qc->tls, or_value);
+        SSL_clear_options(ctx.qc->tls, hs_mask_value);
+        SSL_set_options(ctx.qc->tls, hs_or_value);
 
-    if (ctx.xso != NULL && ctx.xso->stream != NULL) {
-        int cleanse = ((options & SSL_OP_CLEANSE_PLAINTEXT) != 0);
-
-        if (ctx.xso->stream->rstream != NULL)
-            ossl_quic_rstream_set_cleanse(ctx.xso->stream->rstream, cleanse);
-        if (ctx.xso->stream->sstream != NULL)
-            ossl_quic_sstream_set_cleanse(ctx.xso->stream->sstream, cleanse);
+        /* Update defaults for new streams. */
+        ctx.qc->default_ssl_options
+            = ((ctx.qc->default_ssl_options & ~mask_value) | or_value)
+              & OSSL_QUIC_PERMITTED_OPTIONS;
     }
 
+    if (ctx.xso != NULL) {
+        ctx.xso->ssl_options
+            = ((ctx.xso->ssl_options & ~mask_value) | or_value)
+            & OSSL_QUIC_PERMITTED_OPTIONS_STREAM;
+
+        xso_update_options(ctx.xso);
+    }
+
+    ret = ctx.is_stream ? ctx.xso->ssl_options : ctx.qc->default_ssl_options;
+
     quic_unlock(ctx.qc);
-    return options;
+    return ret;
 }
 
 uint64_t ossl_quic_set_options(SSL *ssl, uint64_t options)
@@ -1542,11 +1575,14 @@ static QUIC_XSO *create_xso_from_stream(QUIC_CONNECTION *qc, QUIC_STREAM *qs)
     xso->conn       = qc;
     xso->blocking   = qc->default_blocking;
     xso->ssl_mode   = qc->default_ssl_mode;
+    xso->ssl_options
+        = qc->default_ssl_options & OSSL_QUIC_PERMITTED_OPTIONS_STREAM;
     xso->last_error = SSL_ERROR_NONE;
 
     xso->stream     = qs;
 
     ++qc->num_xso;
+    xso_update_options(xso);
     return xso;
 
 err:
