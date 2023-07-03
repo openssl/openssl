@@ -40,7 +40,7 @@ extern "C" {
  *  major minor fix final patch/beta)
  */
 # define OPENSSL_VERSION_NUMBER  0x1010115fL
-# define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1u  30 May 2023, Open Quantum Safe 2023-06-rc1"
+# define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1u  30 May 2023, Open Quantum Safe 2023-07"
 
 /*-
  * The macros below are to be used for shared library (.so, .dll, ...)

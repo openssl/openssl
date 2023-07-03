@@ -1,4 +1,4 @@
-OQS-OpenSSL_1\_1\_1-stable snapshot 2023-06-rc1
+OQS-OpenSSL_1\_1\_1-stable snapshot 2023-07
 ===============================================
 
 About
@@ -13,7 +13,7 @@ The **Open Quantum Safe (OQS) project** has the goal of developing and prototypi
 Release notes
 =============
 
-This is release candidate 1 of the 2023-06 snapshot release of OQS-OpenSSL, which was released on June 20, 2023.  This release is intended to be used with liboqs version 0.8.0.
+This is the 2023-07 snapshot release of OQS-OpenSSL, which was released on July 3, 2023.  This release is intended to be used with liboqs version 0.8.0.
 
 END OF LIFE NOTICE
 ------------------
@@ -61,4 +61,4 @@ Detailed changelog
 ## New Contributors
 * @crt26 made their first contribution in https://github.com/open-quantum-safe/openssl/pull/456
 
-**Full Changelog**: https://github.com/open-quantum-safe/openssl/compare/OQS-OpenSSL-1_1_1-stable-snapshot-2022-08...OQS-OpenSSL-1_1_1-stable-snapshot-2023-06-rc-1
+**Full Changelog**: https://github.com/open-quantum-safe/openssl/compare/OQS-OpenSSL-1_1_1-stable-snapshot-2022-08...OQS-OpenSSL-1_1_1-stable-snapshot-2023-07
