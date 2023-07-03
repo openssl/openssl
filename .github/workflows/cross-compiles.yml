@@ -126,7 +126,7 @@ jobs:
           }, {
             arch: m68k-linux-gnu,
             libs: libc6-dev-m68k-cross,
-            target: -mcfv4e linux-latomic -Wno-stringop-overflow,
+            target: -mcfv4e linux-latomic -Wno-stringop-overflow no-quic,
             tests: none
           }, {
             arch: mips-linux-gnu,
