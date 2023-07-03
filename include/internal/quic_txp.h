@@ -68,10 +68,10 @@ typedef void (ossl_quic_initial_token_free_fn)(const unsigned char *buf,
 void ossl_quic_tx_packetiser_free(OSSL_QUIC_TX_PACKETISER *txp);
 
 /* Generate normal packets containing most frame types. */
-#define TX_PACKETISER_ARCHETYPE_NORMAL      0
-/* Generate ACKs only. */
-#define TX_PACKETISER_ARCHETYPE_ACK_ONLY    1
-#define TX_PACKETISER_ARCHETYPE_NUM         2
+#define TX_PACKETISER_ARCHETYPE_NORMAL              0
+/* Generate ACKs and PINGs only. */
+#define TX_PACKETISER_ARCHETYPE_ACK_AND_PING_ONLY   1
+#define TX_PACKETISER_ARCHETYPE_NUM                 2
 
 /*
  * Generates a datagram by polling the various ELs to determine if they want to

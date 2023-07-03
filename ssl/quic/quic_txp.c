@@ -661,10 +661,10 @@ static const struct archetype_data archetypes[QUIC_ENC_LEVEL_NUM][TX_PACKETISER_
             /*allow_new_token                 =*/ 0,
             /*allow_force_ack_eliciting       =*/ 1,
         },
-        /* EL 0(INITIAL) - Archetype 1(ACK_ONLY) */
+        /* EL 0(INITIAL) - Archetype 1(ACK_AND_PING_ONLY) */
         {
             /*allow_ack                       =*/ 1,
-            /*allow_ping                      =*/ 0,
+            /*allow_ping                      =*/ 1,
             /*allow_crypto                    =*/ 0,
             /*allow_handshake_done            =*/ 0,
             /*allow_path_challenge            =*/ 0,
@@ -698,10 +698,10 @@ static const struct archetype_data archetypes[QUIC_ENC_LEVEL_NUM][TX_PACKETISER_
             /*allow_new_token                 =*/ 0,
             /*allow_force_ack_eliciting       =*/ 1,
         },
-        /* EL 1(HANDSHAKE) - Archetype 1(ACK_ONLY) */
+        /* EL 1(HANDSHAKE) - Archetype 1(ACK_AND_PING_ONLY) */
         {
             /*allow_ack                       =*/ 1,
-            /*allow_ping                      =*/ 0,
+            /*allow_ping                      =*/ 1,
             /*allow_crypto                    =*/ 0,
             /*allow_handshake_done            =*/ 0,
             /*allow_path_challenge            =*/ 0,
@@ -735,10 +735,10 @@ static const struct archetype_data archetypes[QUIC_ENC_LEVEL_NUM][TX_PACKETISER_
             /*allow_new_token                 =*/ 0,
             /*allow_force_ack_eliciting       =*/ 0,
         },
-        /* EL 2(0RTT) - Archetype 1(ACK_ONLY) */
+        /* EL 2(0RTT) - Archetype 1(ACK_AND_PING_ONLY) */
         {
             /*allow_ack                       =*/ 0,
-            /*allow_ping                      =*/ 0,
+            /*allow_ping                      =*/ 1,
             /*allow_crypto                    =*/ 0,
             /*allow_handshake_done            =*/ 0,
             /*allow_path_challenge            =*/ 0,
@@ -772,10 +772,10 @@ static const struct archetype_data archetypes[QUIC_ENC_LEVEL_NUM][TX_PACKETISER_
             /*allow_new_token                 =*/ 1,
             /*allow_force_ack_eliciting       =*/ 1,
         },
-        /* EL 3(1RTT) - Archetype 1(ACK_ONLY) */
+        /* EL 3(1RTT) - Archetype 1(ACK_AND_PING_ONLY) */
         {
             /*allow_ack                       =*/ 1,
-            /*allow_ping                      =*/ 0,
+            /*allow_ping                      =*/ 1,
             /*allow_crypto                    =*/ 0,
             /*allow_handshake_done            =*/ 0,
             /*allow_path_challenge            =*/ 0,
@@ -999,10 +999,13 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
     /* Determine the limit CC imposes on what we can send. */
     if (!cc_can_send) {
         /*
-         * If we are called when we cannot send, this must be because we want
-         * to generate a probe. In this circumstance, don't clamp based on CC.
+         * If we are called when we cannot send, this must be because we want to
+         * generate a probe. In this circumstance, don't clamp based on CC, but
+         * don't add application data and limit ourselves to generating a small
+         * packet containing only PING and ACK frames.
          */
-        cc_limit = SIZE_MAX;
+        cc_limit  = SIZE_MAX;
+        archetype = TX_PACKETISER_ARCHETYPE_ACK_AND_PING_ONLY;
     } else {
         /* Allow CC to clamp how much we can send. */
         cc_limit_ = txp->args.cc_method->get_tx_allowance(txp->args.cc_data);
