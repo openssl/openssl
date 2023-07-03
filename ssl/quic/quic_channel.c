@@ -36,6 +36,14 @@
  */
 #define MAX_NAT_INTERVAL (ossl_ms2time(25000))
 
+/*
+ * Our maximum ACK delay on the TX side. This is up to us to choose. Note that
+ * this could differ from QUIC_DEFAULT_MAX_DELAY in future as that is a protocol
+ * value which determines the value of the maximum ACK delay if the
+ * max_ack_delay transport parameter is not set.
+ */
+#define DEFAULT_MAX_ACK_DELAY   QUIC_DEFAULT_MAX_ACK_DELAY
+
 static void ch_rx_pre(QUIC_CHANNEL *ch);
 static int ch_rx(QUIC_CHANNEL *ch);
 static int ch_tx(QUIC_CHANNEL *ch);
@@ -292,6 +300,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     if ((ch->qtls = ossl_quic_tls_new(&tls_args)) == NULL)
         goto err;
 
+    ch->tx_max_ack_delay        = DEFAULT_MAX_ACK_DELAY;
     ch->rx_max_ack_delay        = QUIC_DEFAULT_MAX_ACK_DELAY;
     ch->rx_ack_delay_exp        = QUIC_DEFAULT_ACK_DELAY_EXP;
     ch->rx_active_conn_id_limit = QUIC_MIN_ACTIVE_CONN_ID_LIMIT;
@@ -299,6 +308,9 @@ static int ch_init(QUIC_CHANNEL *ch)
     ch->tx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
     ch->rx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
     ch->txku_threshold_override = UINT64_MAX;
+
+    ossl_ackm_set_tx_max_ack_delay(ch->ackm, ossl_ms2time(ch->tx_max_ack_delay));
+    ossl_ackm_set_rx_max_ack_delay(ch->ackm, ossl_ms2time(ch->rx_max_ack_delay));
 
     /*
      * Determine the QUIC Transport Parameters and serialize the transport
@@ -1232,6 +1244,9 @@ static int ch_on_transport_params(const unsigned char *params,
             }
 
             ch->rx_max_ack_delay = v;
+            ossl_ackm_set_rx_max_ack_delay(ch->ackm,
+                                           ossl_ms2time(ch->rx_max_ack_delay));
+
             got_max_ack_delay = 1;
             break;
 
@@ -1509,6 +1524,11 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_ACTIVE_CONN_ID_LIMIT,
                                                    QUIC_MIN_ACTIVE_CONN_ID_LIMIT))
+        goto err;
+
+    if (ch->tx_max_ack_delay != QUIC_DEFAULT_MAX_ACK_DELAY
+        && !ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_MAX_ACK_DELAY,
+                                                      ch->tx_max_ack_delay))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_DATA,

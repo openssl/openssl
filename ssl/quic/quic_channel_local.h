@@ -138,6 +138,7 @@ struct quic_channel_st {
     uint64_t                        tx_init_max_stream_data_bidi_local;
     uint64_t                        tx_init_max_stream_data_bidi_remote;
     uint64_t                        tx_init_max_stream_data_uni;
+    uint64_t                        tx_max_ack_delay; /* ms */
 
     /* Transport parameter values received from server. */
     uint64_t                        rx_init_max_stream_data_bidi_local;
