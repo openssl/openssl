@@ -1466,6 +1466,8 @@ static void ackm_on_rx_ack_eliciting(OSSL_ACKM *ackm,
                                      OSSL_TIME rx_time, int pkt_space,
                                      int was_missing)
 {
+    OSSL_TIME tx_max_ack_delay;
+
     if (ackm->rx_ack_desired[pkt_space])
         /* ACK generation already requested so nothing to do. */
         return;
@@ -1507,15 +1509,24 @@ static void ackm_on_rx_ack_eliciting(OSSL_ACKM *ackm,
      * Not emitting an ACK yet.
      *
      * Update the ACK flush deadline.
+     *
+     * RFC 9000 s. 13.2.1: "An endpoint MUST acknowledge all ack-eliciting
+     * Initial and Handshake packets immediately"; don't delay ACK generation if
+     * we are using the Initial or Handshake PN spaces.
      */
+    tx_max_ack_delay = ackm->tx_max_ack_delay;
+    if (pkt_space == QUIC_PN_SPACE_INITIAL
+        || pkt_space == QUIC_PN_SPACE_HANDSHAKE)
+        tx_max_ack_delay = ossl_time_zero();
+
     if (ossl_time_is_infinite(ackm->rx_ack_flush_deadline[pkt_space]))
         ackm_set_flush_deadline(ackm, pkt_space,
-                                ossl_time_add(rx_time, ackm->tx_max_ack_delay));
+                                ossl_time_add(rx_time, tx_max_ack_delay));
     else
         ackm_set_flush_deadline(ackm, pkt_space,
                                 ossl_time_min(ackm->rx_ack_flush_deadline[pkt_space],
                                               ossl_time_add(rx_time,
-                                                            ackm->tx_max_ack_delay)));
+                                                            tx_max_ack_delay)));
 }
 
 int ossl_ackm_on_rx_packet(OSSL_ACKM *ackm, const OSSL_ACKM_RX_PKT *pkt)
