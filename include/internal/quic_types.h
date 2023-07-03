@@ -102,8 +102,8 @@ static ossl_unused ossl_inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
 #  define QUIC_STATELESS_RESET_TOKEN_LEN    16
 
 /*
- * An encoded preferred_addr transport parameter cannot be longer than this
- * number of bytes.
+ * An encoded preferred_addr transport parameter cannot be shorter or longer
+ * than these lengths in bytes.
  */
 #  define QUIC_MIN_ENCODED_PREFERRED_ADDR_LEN   41
 #  define QUIC_MAX_ENCODED_PREFERRED_ADDR_LEN   61

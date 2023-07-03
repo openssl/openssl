@@ -1888,7 +1888,8 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
         if (stream->want_reset_stream) {
             OSSL_QUIC_FRAME_RESET_STREAM f;
 
-            assert(stream->send_state == QUIC_SSTREAM_STATE_RESET_SENT);
+            if (!ossl_assert(stream->send_state == QUIC_SSTREAM_STATE_RESET_SENT))
+                return 0;
 
             wpkt = tx_helper_begin(h);
             if (wpkt == NULL)
@@ -1918,7 +1919,8 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
              * parties; if we happen to send a RESET_STREAM that consumes more
              * flow control credit, make sure we account for that.
              */
-            assert(f.final_size <= ossl_quic_txfc_get_swm(&stream->txfc));
+            if (!ossl_assert(f.final_size <= ossl_quic_txfc_get_swm(&stream->txfc)))
+                return 0;
 
             stream->txp_txfc_new_credit_consumed
                 = f.final_size - ossl_quic_txfc_get_swm(&stream->txfc);
@@ -1971,7 +1973,8 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
             && !ossl_quic_stream_send_is_reset(stream)) {
             int packet_full = 0, stream_drained = 0;
 
-            assert(!stream->want_reset_stream);
+            if (!ossl_assert(!stream->want_reset_stream))
+                return 0;
 
             if (!txp_generate_stream_frames(txp, h, pn_space, tpkt,
                                             stream->id, stream->sstream,

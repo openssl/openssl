@@ -495,7 +495,8 @@ int ossl_quic_stream_map_notify_reset_stream_acked(QUIC_STREAM_MAP *qsm,
     }
 }
 
-/* Stream Receive Part State Management
+/*
+ * Stream Receive Part State Management
  * ====================================
  */
 
@@ -511,7 +512,7 @@ int ossl_quic_stream_map_notify_size_known_recv_part(QUIC_STREAM_MAP *qsm,
         return 0;
 
     case QUIC_RSTREAM_STATE_RECV:
-        qs->recv_state      = QUIC_RSTREAM_STATE_SIZE_KNOWN;
+        qs->recv_state = QUIC_RSTREAM_STATE_SIZE_KNOWN;
         return 1;
     }
 }
