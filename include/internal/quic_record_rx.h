@@ -319,9 +319,6 @@ uint64_t ossl_qrx_get_bytes_received(OSSL_QRX *qrx, int clear);
  *
  * Other packets in the same datagram will still be processed where possible.
  *
- * The intended use for this function is to allow validation of whether a PN is
- * a potential duplicate before spending CPU time decrypting the packet payload.
- *
  * The callback is optional and can be unset by passing NULL for cb.
  * cb_arg is an opaque value passed to cb.
  */

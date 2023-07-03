@@ -1854,12 +1854,13 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
      *
      * We need to be a bit careful here as due to the BIO abstraction layer an
      * application is liable to be weird and lie to us about peer addresses.
-     * Only apply this check if we actually are using a real address and haven't
-     * been given AF_UNSPEC by the application.
+     * Only apply this check if we actually are using a real AF_INET or AF_INET6
+     * address.
      */
     if (!ch->is_server
         && ch->qrx_pkt->peer != NULL
-        && BIO_ADDR_family(&ch->cur_peer_addr) != AF_UNSPEC
+        && (BIO_ADDR_family(&ch->cur_peer_addr) == AF_INET
+            || BIO_ADDR_family(&ch->cur_peer_addr) == AF_INET6)
         && !bio_addr_eq(ch->qrx_pkt->peer, &ch->cur_peer_addr))
         return;
 
@@ -2983,7 +2984,6 @@ QUIC_STREAM *ossl_quic_channel_new_stream_local(QUIC_CHANNEL *ch, int is_uni)
 
     if ((qs = ossl_quic_stream_map_alloc(&ch->qsm, stream_id, type)) == NULL)
         return NULL;
-
 
     /* Locally-initiated stream, so we always want a send buffer. */
     if (!ch_init_new_stream(ch, qs, /*can_send=*/1, /*can_recv=*/!is_uni))

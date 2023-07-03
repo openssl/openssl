@@ -2217,7 +2217,10 @@ static int script_21_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 
     ok = 1;
 err:
-    WPACKET_finish(&wpkt);
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
     return ok;
 }
 
@@ -2296,7 +2299,10 @@ static int script_23_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 
     ok = 1;
 err:
-    WPACKET_finish(&wpkt);
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
     return ok;
 }
 
@@ -2346,7 +2352,10 @@ static int script_24_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 
     ok = 1;
 err:
-    WPACKET_finish(&wpkt);
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
     return ok;
 }
 
@@ -2457,7 +2466,10 @@ static int script_28_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 
     ok = 1;
 err:
-    WPACKET_finish(&wpkt);
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
     return ok;
 }
 
@@ -2608,7 +2620,10 @@ static int script_32_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 
     ok = 1;
 err:
-    WPACKET_finish(&wpkt);
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
     return ok;
 }
 
@@ -2788,7 +2803,10 @@ static int script_39_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
 
     ok = 1;
 err:
-    WPACKET_finish(&wpkt);
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
     return ok;
 }
 

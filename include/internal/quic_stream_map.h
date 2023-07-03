@@ -604,7 +604,6 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s);
  */
 void ossl_quic_stream_map_set_rr_stepping(QUIC_STREAM_MAP *qsm, size_t stepping);
 
-
 /*
  * Stream Send Part
  * ================
@@ -620,10 +619,10 @@ void ossl_quic_stream_map_set_rr_stepping(QUIC_STREAM_MAP *qsm, size_t stepping)
  * STREAM_DATA_BLOCKED) frame transmission for locally-initiated streams.
  *
  * Our implementation does not currently do this and we allocate stream IDs up
- * front, however we may revisit this in the future. Calling this ensures
- * represents a demand for a stream ID by the caller and ensures one has been
- * allocated to the stream, and causes us to transition to SEND if we are still
- * in the READY state.
+ * front, however we may revisit this in the future. Calling this represents a
+ * demand for a stream ID by the caller and ensures one has been allocated to
+ * the stream, and causes us to transition to SEND if we are still in the READY
+ * state.
  *
  * Returns 0 if there is no send part (caller error) and 1 otherwise.
  */
@@ -759,7 +758,7 @@ int ossl_quic_stream_map_stop_sending_recv_part(QUIC_STREAM_MAP *qsm,
 
 /*
  * Marks the stream as wanting a STOP_SENDING frame transmitted. It is not valid
- * to vall this if ossl_quic_stream_map_stop_sending_recv_part() has not been
+ * to call this if ossl_quic_stream_map_stop_sending_recv_part() has not been
  * called. For TXP use.
  */
 int ossl_quic_stream_map_schedule_stop_sending(QUIC_STREAM_MAP *qsm,
