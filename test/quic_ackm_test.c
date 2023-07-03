@@ -1056,7 +1056,7 @@ static int test_rx_ack_actual(int tidx, int space)
             break;
 
         case RX_OPK_SKIP_IF_PN_SPACE:
-            if (space == s->pn) {
+            if (space == (int)s->pn) {
                 testresult = 1;
                 goto err;
             }
