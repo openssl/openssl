@@ -25,8 +25,6 @@ SSL_select_next_proto, SSL_get0_alpn_selected, SSL_get0_next_proto_negotiated
  void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
                              unsigned int *len);
 
-
-
  void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *ctx,
                                             int (*cb)(SSL *ssl,
                                                       const unsigned char **out,

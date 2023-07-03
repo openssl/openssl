@@ -331,8 +331,8 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     sc->s3.flags |= TLS1_FLAGS_QUIC;
 
     /* Restrict options derived from the SSL_CTX. */
-    sc->options     &= OSSL_QUIC_PERMITTED_OPTIONS;
-    sc->pha_enabled  = 0;
+    sc->options &= OSSL_QUIC_PERMITTED_OPTIONS;
+    sc->pha_enabled = 0;
 
 #if defined(OPENSSL_THREADS)
     if ((qc->mutex = ossl_crypto_mutex_new()) == NULL)
