@@ -951,18 +951,18 @@ static void ackm_on_pkts_lost(OSSL_ACKM *ackm, int pkt_space,
 
             if (p->pkt_num > largest_pn_lost)
                 largest_pn_lost = p->pkt_num;
-        }
 
-        if (!pseudo) {
-            /*
-             * If this is pseudo-loss (e.g. during connection retry) we do not
-             * inform the CC as it is not a real loss and not reflective of
-             * network conditions.
-             */
-            loss_info.tx_time = p->time;
-            loss_info.tx_size = p->num_bytes;
+            if (!pseudo) {
+                /*
+                 * If this is pseudo-loss (e.g. during connection retry) we do not
+                 * inform the CC as it is not a real loss and not reflective of
+                 * network conditions.
+                 */
+                loss_info.tx_time = p->time;
+                loss_info.tx_size = p->num_bytes;
 
-            ackm->cc_method->on_data_lost(ackm->cc_data, &loss_info);
+                ackm->cc_method->on_data_lost(ackm->cc_data, &loss_info);
+            }
         }
 
         p->on_lost(p->cb_arg);
@@ -1012,7 +1012,8 @@ static void ackm_on_pkts_acked(OSSL_ACKM *ackm, const OSSL_ACKM_TX_PKT *apkt)
         anext = apkt->anext;
         apkt->on_acked(apkt->cb_arg); /* may free apkt */
 
-        ackm->cc_method->on_data_acked(ackm->cc_data, &ainfo);
+        if (apkt->is_inflight)
+            ackm->cc_method->on_data_acked(ackm->cc_data, &ainfo);
     }
 }
 
