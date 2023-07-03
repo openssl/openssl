@@ -1865,10 +1865,10 @@ void SSL_set_verify_depth(SSL *s, int depth)
 
 void SSL_set_read_ahead(SSL *s, int yes)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
     OSSL_PARAM options[2], *opts = options;
 
-    if (sc == NULL || IS_QUIC(s))
+    if (sc == NULL)
         return;
 
     RECORD_LAYER_set_read_ahead(&sc->rlayer, yes);
@@ -1883,9 +1883,9 @@ void SSL_set_read_ahead(SSL *s, int yes)
 
 int SSL_get_read_ahead(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL_ONLY(s);
 
-    if (sc == NULL || IS_QUIC(s))
+    if (sc == NULL)
         return 0;
 
     return RECORD_LAYER_get_read_ahead(&sc->rlayer);
@@ -5673,9 +5673,9 @@ int SSL_set_record_padding_callback(SSL *ssl,
                                                    size_t len, void *arg))
 {
     BIO *b;
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
-    if (sc == NULL || IS_QUIC(ssl))
+    if (sc == NULL)
         return 0;
 
     b = SSL_get_wbio(ssl);
@@ -6600,13 +6600,9 @@ int SSL_client_hello_get0_ext(SSL *s, unsigned int type, const unsigned char **o
 int SSL_free_buffers(SSL *ssl)
 {
     RECORD_LAYER *rl;
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
     if (sc == NULL)
-        return 0;
-
-    /* QUIC buffers are always 'in use'. */
-    if (IS_QUIC(ssl))
         return 0;
 
     rl = &sc->rlayer;
@@ -6910,9 +6906,9 @@ uint32_t SSL_CTX_get_max_early_data(const SSL_CTX *ctx)
 
 int SSL_set_max_early_data(SSL *s, uint32_t max_early_data)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
-    if (sc == NULL || IS_QUIC(s))
+    if (sc == NULL)
         return 0;
 
     sc->max_early_data = max_early_data;
@@ -6944,9 +6940,9 @@ uint32_t SSL_CTX_get_recv_max_early_data(const SSL_CTX *ctx)
 
 int SSL_set_recv_max_early_data(SSL *s, uint32_t recv_max_early_data)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
-    if (sc == NULL || IS_QUIC(s))
+    if (sc == NULL)
         return 0;
 
     sc->recv_max_early_data = recv_max_early_data;
@@ -6992,9 +6988,9 @@ __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc)
 int SSL_stateless(SSL *s)
 {
     int ret;
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
-    if (sc == NULL || IS_QUIC(s))
+    if (sc == NULL)
         return 0;
 
     /* Ensure there is no state left over from a previous invocation */
@@ -7023,12 +7019,7 @@ void SSL_CTX_set_post_handshake_auth(SSL_CTX *ctx, int val)
 
 void SSL_set_post_handshake_auth(SSL *ssl, int val)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
-
-#ifndef OPENSSL_NO_QUIC
-    if (IS_QUIC(ssl))
-        return;
-#endif
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
     if (sc == NULL)
         return;
@@ -7118,9 +7109,9 @@ void SSL_set_allow_early_data_cb(SSL *s,
                                  SSL_allow_early_data_cb_fn cb,
                                  void *arg)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
-    if (sc == NULL || IS_QUIC(s))
+    if (sc == NULL)
         return;
 
     sc->allow_early_data_cb = cb;
