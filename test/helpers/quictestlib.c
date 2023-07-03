@@ -66,9 +66,16 @@ static void handshake_finish(void *arg);
 
 static BIO_METHOD *get_bio_method(void);
 
+static OSSL_TIME fake_now;
+
+static OSSL_TIME fake_now_cb(void *arg)
+{
+    return fake_now;
+}
+
 int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
                               char *certfile, char *keyfile,
-                              int block, QUIC_TSERVER **qtserv, SSL **cssl,
+                              int flags, QUIC_TSERVER **qtserv, SSL **cssl,
                               QTEST_FAULT **fault)
 {
     /* ALPN value as recognised by QUIC_TSERVER */
@@ -92,7 +99,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     if (!TEST_ptr(peeraddr = BIO_ADDR_new()))
         goto err;
 
-    if (block) {
+    if ((flags & QTEST_FLAG_BLOCK) != 0) {
 #if !defined(OPENSSL_NO_POSIX_IO)
         int cfd, sfd;
 
@@ -132,7 +139,8 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
 
     SSL_set_bio(*cssl, cbio, cbio);
 
-    if (!TEST_true(SSL_set_blocking_mode(*cssl, block)))
+    if (!TEST_true(SSL_set_blocking_mode(*cssl,
+                                         (flags & QTEST_FLAG_BLOCK) != 0 ? 1 : 0)))
         goto err;
 
     if (!TEST_true(SSL_set_initial_peer_addr(*cssl, peeraddr)))
@@ -157,6 +165,10 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     tserver_args.net_rbio = sbio;
     tserver_args.net_wbio = fisbio;
     tserver_args.alpn = NULL;
+    if ((flags & QTEST_FLAG_FAKE_TIME) != 0) {
+        fake_now = ossl_time_zero();
+        tserver_args.now_cb = fake_now_cb;
+    }
 
     if (!TEST_ptr(*qtserv = ossl_quic_tserver_new(&tserver_args, certfile,
                                                   keyfile)))
@@ -184,6 +196,11 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         OPENSSL_free(*fault);
 
     return 0;
+}
+
+void qtest_add_time(uint64_t millis)
+{
+    fake_now = ossl_time_add(fake_now, ossl_ms2time(millis));
 }
 
 int qtest_supports_blocking(void)
@@ -271,6 +288,7 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
         if (!clienterr && retc <= 0)
             SSL_handle_events(clientssl);
         if (!servererr && rets <= 0) {
+            qtest_add_time(1);
             ossl_quic_tserver_tick(qtserv);
             servererr = ossl_quic_tserver_is_term_any(qtserv);
             if (!servererr)

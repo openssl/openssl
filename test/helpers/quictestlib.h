@@ -24,15 +24,25 @@ typedef struct qtest_fault_encrypted_extensions {
     size_t extensionslen;
 } QTEST_ENCRYPTED_EXTENSIONS;
 
+/* Flags for use with qtest_create_quic_objects() */
+
+/* Indicates whether we are using blocking mode or not */
+#define QTEST_FLAG_BLOCK        1
+/* Use fake time rather than real time */
+#define QTEST_FLAG_FAKE_TIME    2
+
 /*
  * Given an SSL_CTX for the client and filenames for the server certificate and
  * keyfile, create a server and client instances as well as a fault injector
- * instance. |block| indicates whether we are using blocking mode or not.
+ * instance. |flags| is the logical or of flags defined above, or 0 if none.
  */
 int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
-                              char *certfile, char *keyfile, int block,
+                              char *certfile, char *keyfile, int flags,
                               QUIC_TSERVER **qtserv, SSL **cssl,
                               QTEST_FAULT **fault);
+
+/* Where QTEST_FLAG_FAKE_TIME is used, add millis to the current time */
+void qtest_add_time(uint64_t millis);
 
 /*
  * Free up a Fault Injector instance
