@@ -1234,36 +1234,6 @@ int EVP_PKEY_CTX_set1_id(EVP_PKEY_CTX *ctx, const void *id, int len)
                              EVP_PKEY_CTRL_SET1_ID, (int)len, (void*)(id));
 }
 
-static int get1_id_data(EVP_PKEY_CTX *ctx, void *id, size_t *id_len)
-{
-    int ret;
-    void *tmp_id = NULL;
-    OSSL_PARAM params[2], *p = params;
-
-    if (!EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    }
-
-    *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_PKEY_PARAM_DIST_ID,
-                                          &tmp_id, 0);
-    *p++ = OSSL_PARAM_construct_end();
-
-    ret = evp_pkey_ctx_get_params_strict(ctx, params);
-    if (ret == -2) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-    } else if (ret > 0) {
-        size_t tmp_id_len = params[0].return_size;
-
-        if (id != NULL)
-            memcpy(id, tmp_id, tmp_id_len);
-        if (id_len != NULL)
-            *id_len = tmp_id_len;
-    }
-    return ret;
-}
-
 int EVP_PKEY_CTX_get1_id(EVP_PKEY_CTX *ctx, void *id)
 {
     return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_GET1_ID, 0, (void*)id);
