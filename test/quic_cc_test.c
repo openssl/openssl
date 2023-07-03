@@ -444,8 +444,10 @@ static int test_simulate(void)
 
         double error = ((double)estimated_capacity / (double)actual_capacity) - 1.0;
 
-        TEST_info("est = %6lu kB/s, act=%6lu kB/s (error=%.02f%%)\n",
-                  estimated_capacity, actual_capacity, error * 100.0);
+        TEST_info("est = %6llu kB/s, act=%6llu kB/s (error=%.02f%%)\n",
+                  (unsigned long long)estimated_capacity,
+                  (unsigned long long)actual_capacity,
+                  error * 100.0);
 
         /* Max 5% error */
         if (!TEST_double_le(error, 0.05))

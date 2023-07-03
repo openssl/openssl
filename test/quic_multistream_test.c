@@ -747,7 +747,8 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     break;
 
                 default:
-                    TEST_error("opcode %d not allowed on child thread", op->op);
+                    TEST_error("opcode %lu not allowed on child thread",
+                               (unsigned long)op->op);
                     goto out;
             }
         }
