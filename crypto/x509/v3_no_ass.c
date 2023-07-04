@@ -37,6 +37,8 @@ static void *s2i_NO_ASSERTION(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx, 
     return ASN1_NULL_new();
 }
 
+/* The noAssertion X.509v3 extension is defined in ITU Recommendation X.509
+(2019), Section 17.5.2.7. See: https://www.itu.int/rec/T-REC-X.509-201910-I/en. */
 const X509V3_EXT_METHOD ossl_v3_no_assertion = {
     NID_no_assertion, 0, ASN1_ITEM_ref(ASN1_NULL),
     0, 0, 0, 0,

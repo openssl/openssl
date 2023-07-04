@@ -37,6 +37,8 @@ static void *s2i_SOA_IDENTIFIER(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx
     return ASN1_NULL_new();
 }
 
+/* The sOAIdentifier X.509v3 extension is defined in ITU Recommendation X.509
+(2019), Section 17.3.2.1.1. See: https://www.itu.int/rec/T-REC-X.509-201910-I/en. */
 const X509V3_EXT_METHOD ossl_v3_soa_identifier = {
     NID_soa_identifier, 0, ASN1_ITEM_ref(ASN1_NULL),
     0, 0, 0, 0,
