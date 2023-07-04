@@ -118,14 +118,18 @@ static int siv_cipher(void *vctx, unsigned char *out, size_t *outl,
     if (!ossl_prov_is_running())
         return 0;
 
-    if (inl == 0) {
-        *outl = 0;
-        return 1;
-    }
+    /* Ignore just empty encryption/decryption call and not AAD. */
+    if (out != NULL) {
+        if (inl == 0) {
+            if (outl != NULL)
+                *outl = 0;
+            return 1;
+        }
 
-    if (outsize < inl) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
-        return 0;
+        if (outsize < inl) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+            return 0;
+        }
     }
 
     if (ctx->hw->cipher(ctx, out, in, inl) <= 0)
