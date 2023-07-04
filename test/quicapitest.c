@@ -604,6 +604,138 @@ err:
     return testresult;
 }
 
+#define MAXLOOPS    1000
+
+static int test_bio_ssl(void)
+{
+    /*
+     * We just use OSSL_QUIC_client_method() rather than
+     * OSSL_QUIC_client_thread_method(). We will never leave the connection idle
+     * so we will always be implicitly handling time events anyway via other
+     * IO calls.
+     */
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL, *stream = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+    BIO *cbio = NULL, *strbio = NULL, *thisbio;
+    const char *msg = "Hello world";
+    int abortctr = 0, err, clienterr = 0, servererr = 0, retc = 0, rets = 0;
+    size_t written, readbytes, msglen;
+    int sid = 0, i;
+    unsigned char buf[80];
+
+    if (!TEST_ptr(cctx))
+        goto err;
+
+    cbio = BIO_new_ssl(cctx, 1);
+    if (!TEST_ptr(cbio))
+        goto err;
+
+    /*
+     * We must configure the ALPN/peer address etc so we get the SSL object in
+     * order to pass it to qtest_create_quic_objects for configuration.
+     */
+    if (!TEST_int_eq(BIO_get_ssl(cbio, &clientquic), 1))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_objects(libctx, NULL, cert, privkey,
+                                             0, &qtserv, &clientquic, NULL)))
+        goto err;
+
+    msglen = strlen(msg);
+
+    do {
+        err = BIO_FLAGS_WRITE;
+        while (!clienterr && !retc && err == BIO_FLAGS_WRITE) {
+            retc = BIO_write_ex(cbio, msg, msglen, &written);
+            if (!retc) {
+                if (BIO_should_retry(cbio))
+                    err = BIO_retry_type(cbio);
+                else
+                    err = 0;
+            }
+        }
+
+        if (!clienterr && retc <= 0 && err != BIO_FLAGS_READ) {
+            TEST_info("BIO_write_ex() failed %d, %d", retc, err);
+            TEST_openssl_errors();
+            clienterr = 1;
+        }
+
+        if (!servererr && rets <= 0) {
+            ossl_quic_tserver_tick(qtserv);
+            servererr = ossl_quic_tserver_is_term_any(qtserv);
+            if (!servererr)
+                rets = ossl_quic_tserver_is_handshake_confirmed(qtserv);
+        }
+
+        if (clienterr && servererr)
+            goto err;
+
+        if (++abortctr == MAXLOOPS) {
+            TEST_info("No progress made");
+            goto err;
+        }
+    } while ((!retc && !clienterr) || (rets <= 0 && !servererr));
+
+    /*
+     * 2 loops: The first using the default stream, and the second using a new
+     * client initiated bidi stream.
+     */
+    for (i = 0, thisbio = cbio; i < 2; i++) {
+        if (!TEST_true(ossl_quic_tserver_read(qtserv, sid, buf, sizeof(buf),
+                                              &readbytes))
+                || !TEST_mem_eq(msg, msglen, buf, readbytes))
+            goto err;
+
+        if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, (unsigned char *)msg,
+                                               msglen, &written)))
+            goto err;
+        ossl_quic_tserver_tick(qtserv);
+        /*
+        * TODO(QUIC): BIO_read_ex() doesn't seem to automatically tick???
+        * See issue #21365
+        */
+        SSL_handle_events(clientquic);
+        if (!TEST_true(BIO_read_ex(thisbio, buf, sizeof(buf), &readbytes))
+                || !TEST_mem_eq(msg, msglen, buf, readbytes))
+            goto err;
+
+        if (i == 1)
+            break;
+
+        /* Now create a new stream and repeat */
+        sid = 4;
+        stream = SSL_new_stream(clientquic, 0);
+        if (!TEST_ptr(stream))
+            goto err;
+
+        thisbio = strbio = BIO_new(BIO_f_ssl());
+        if (!TEST_ptr(strbio))
+            goto err;
+
+        if (!TEST_int_eq(BIO_set_ssl(thisbio, stream, BIO_CLOSE), 1))
+            goto err;
+        stream = NULL;
+
+        if (!TEST_true(BIO_write_ex(thisbio, msg, msglen, &written)))
+            goto err;
+
+        ossl_quic_tserver_tick(qtserv);
+    }
+
+    testresult = 1;
+ err:
+    BIO_free(cbio);
+    BIO_free(strbio);
+    SSL_free(stream);
+    ossl_quic_tserver_free(qtserv);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
 int setup_tests(void)
@@ -669,6 +801,7 @@ int setup_tests(void)
     ADD_TEST(test_quic_forbidden_apis);
     ADD_TEST(test_quic_forbidden_options);
     ADD_ALL_TESTS(test_quic_set_fd, 3);
+    ADD_TEST(test_bio_ssl);
     return 1;
  err:
     cleanup_tests();
