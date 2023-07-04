@@ -88,9 +88,12 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     *qtserv = NULL;
     if (fault != NULL)
         *fault = NULL;
-    *cssl = SSL_new(clientctx);
-    if (!TEST_ptr(*cssl))
-        return 0;
+
+    if (*cssl == NULL) {
+        *cssl = SSL_new(clientctx);
+        if (!TEST_ptr(*cssl))
+            return 0;
+    }
 
     /* SSL_set_alpn_protos returns 0 for success! */
     if (!TEST_false(SSL_set_alpn_protos(*cssl, alpn, sizeof(alpn))))
