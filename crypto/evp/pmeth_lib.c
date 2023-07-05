@@ -1203,31 +1203,6 @@ int EVP_PKEY_CTX_set_kem_op(EVP_PKEY_CTX *ctx, const char *op)
     return EVP_PKEY_CTX_set_params(ctx, params);
 }
 
-int evp_pkey_ctx_set1_id_prov(EVP_PKEY_CTX *ctx, const void *id, int len)
-{
-    OSSL_PARAM params[2], *p = params;
-    int ret;
-
-    if (!EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    }
-
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DIST_ID,
-                                             /*
-                                              * Cast away the const. This is
-                                              * read only so should be safe
-                                              */
-                                             (void *)id, (size_t)len);
-    *p++ = OSSL_PARAM_construct_end();
-
-    ret = evp_pkey_ctx_set_params_strict(ctx, params);
-    if (ret == -2)
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-    return ret;
-}
-
 int EVP_PKEY_CTX_set1_id(EVP_PKEY_CTX *ctx, const void *id, int len)
 {
     return EVP_PKEY_CTX_ctrl(ctx, -1, -1,
