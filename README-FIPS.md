@@ -31,9 +31,13 @@ the `enable-fips` option.
 Installing the FIPS provider
 ============================
 
-You can build the OpenSSL source code with a validated FIPS provider by doing the
-following if you only use the FIPS validated source code. If you want to use a
-validated FIPS provider with the latest release see the next section.
+In order to be FIPS compliant you must only use FIPS validated source code.
+Refer to <https://www.openssl.org/source/> for information related to
+which versions are FIPS validated. The instructions given below build OpenSSL
+just using the FIPS validated source code.
+
+If you want to use a validated FIPS provider, but also want to use the latest
+OpenSSL release to build everything else, then refer to the next section.
 
 The following is only a guide.
 Please read the Security Policy for up to date installation instructions.
@@ -67,11 +71,11 @@ the installation by doing the following two things:
 
 - Runs the FIPS module self tests
 - Generates the so-called FIPS module configuration file containing information
-  about the module such as the self test status, and the module checksum.
+  about the module such as the module checksum (and for OpenSSL 3.0 the self test status).
 
 The FIPS module must have the self tests run, and the FIPS module config file
-output generated on every machine that it is to be used on. You must not copy
-the FIPS module config file output data from one machine to another.
+output generated on every machine that it is to be used on. For OpenSSL 3.0,
+you must not copy the FIPS module config file output data from one machine to another.
 
 On Unix, the `openssl fipsinstall` command will be invoked as follows by default:
 
@@ -79,7 +83,7 @@ On Unix, the `openssl fipsinstall` command will be invoked as follows by default
 
 If you configured OpenSSL to be installed to a different location, the paths will
 vary accordingly. In the rare case that you need to install the fipsmodule.cnf
-to non-standard location, you can execute the `openssl fipsinstall` command manually.
+to a non-standard location, you can execute the `openssl fipsinstall` command manually.
 
 Installing the FIPS provider and using it with the latest release
 =================================================================
@@ -87,7 +91,7 @@ Installing the FIPS provider and using it with the latest release
 This normally requires you to download 2 copies of the OpenSSL source code.
 
 Download and build a validated FIPS provider
---------------------------------------------------
+--------------------------------------------
 
 Refer to <https://www.openssl.org/source/> for information related to
 which versions are FIPS validated. For this example we use OpenSSL 3.0.0.
@@ -111,7 +115,7 @@ We use OpenSSL 3.1.0 here, (but you could also use the latest 3.0.X)
     $ make
 
 Use the OpenSSL FIPS provider for testing
----------------------------------------------
+-----------------------------------------
 
 We do this by replacing the artifact for the OpenSSL 3.1.0 FIPS provider.
 Note that the OpenSSL 3.1.0 FIPS provider has not been validated
@@ -119,6 +123,9 @@ so it must not be used for FIPS purposes.
 
     $ cp ../openssl-3.0.0/providers/fips.so providers/.
     $ cp ../openssl-3.0.0/providers/fipsmodule.cnf providers/.
+    // Note that for OpenSSL 3.0 that the `fipsmodule.cnf` file should not
+    // be copied across multiple machines if it contains an entry for
+    // `install-status`. (Otherwise the self tests would be skipped).
 
     // Validate the output of the following to make sure we are using the
     // OpenSSL 3.0.0 FIPS provider
