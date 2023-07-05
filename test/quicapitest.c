@@ -12,6 +12,7 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/quic.h>
+#include <openssl/rand.h>
 
 #include "helpers/ssltestlib.h"
 #include "helpers/quictestlib.h"
@@ -746,6 +747,72 @@ static int test_bio_ssl(void)
     return testresult;
 }
 
+#define BACK_PRESSURE_NUM_LOOPS 10000
+/*
+ * Test that sending data from the client to the server faster than the server
+ * can process it eventually results in back pressure on the client.
+ */
+static int test_back_pressure(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+    unsigned char *msg = NULL;
+    const size_t msglen = 1024;
+    unsigned char buf[64];
+    size_t readbytes, written;
+    int i;
+
+    if (!TEST_ptr(cctx)
+            || !TEST_true(qtest_create_quic_objects(libctx, cctx, cert, privkey,
+                                                    0, &qtserv, &clientquic,
+                                                    NULL))
+            || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+
+    msg = OPENSSL_malloc(msglen);
+    if (!TEST_ptr(msg))
+        goto err;
+    if (!TEST_int_eq(RAND_bytes_ex(libctx, msg, msglen, 0), 1))
+        goto err;
+
+    /*
+     * Limit to 10000 loops. If we've not seen any back pressure after that
+     * we're going to run out of memory, so abort.
+     */
+    for (i = 0; i < BACK_PRESSURE_NUM_LOOPS; i++) {
+        /* Send data from the client */
+        if (!SSL_write_ex(clientquic, msg, msglen, &written)) {
+            /* Check if we are seeing back pressure */
+            if (SSL_get_error(clientquic, 0) == SSL_ERROR_WANT_WRITE)
+                break;
+            TEST_error("Unexpected client failure");
+            goto err;
+        }
+
+        /* Receive data at the server */
+        ossl_quic_tserver_tick(qtserv);
+        if (!TEST_true(ossl_quic_tserver_read(qtserv, 0, buf, sizeof(buf),
+                                              &readbytes)))
+            goto err;
+    }
+
+    if (i == BACK_PRESSURE_NUM_LOOPS) {
+        TEST_error("No back pressure seen");
+        goto err;
+    }
+
+    testresult = 1;
+ err:
+    SSL_free(clientquic);
+    ossl_quic_tserver_free(qtserv);
+    SSL_CTX_free(cctx);
+    OPENSSL_free(msg);
+
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
 int setup_tests(void)
@@ -812,6 +879,7 @@ int setup_tests(void)
     ADD_TEST(test_quic_forbidden_options);
     ADD_ALL_TESTS(test_quic_set_fd, 3);
     ADD_TEST(test_bio_ssl);
+    ADD_TEST(test_back_pressure);
     return 1;
  err:
     cleanup_tests();
