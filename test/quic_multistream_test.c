@@ -1968,11 +1968,20 @@ static const struct script_op script_19[] = {
     OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
     OP_S_READ_EXPECT        (a, "apple", 5)
 
+    OP_C_WRITE              (DEFAULT, "orange", 6)
+    OP_S_READ_EXPECT        (a, "orange", 6)
+
+    OP_S_WRITE              (a, "strawberry", 10)
+    OP_C_READ_EXPECT        (DEFAULT, "strawberry", 10)
+
     OP_CHECK                (check_key_update_lt, 1)
     OP_CHECK                (trigger_key_update, 0)
 
     OP_C_WRITE              (DEFAULT, "orange", 6)
     OP_S_READ_EXPECT        (a, "orange", 6)
+
+    OP_S_WRITE              (a, "strawberry", 10)
+    OP_C_READ_EXPECT        (DEFAULT, "strawberry", 10)
 
     OP_CHECK                (check_key_update_ge, 1)
 
