@@ -2138,8 +2138,22 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
 
         ret = 1;
     } else {
-        /* We did not get any bytes and are not in blocking mode. */
-        ret = QUIC_RAISE_NORMAL_ERROR(&ctx, SSL_ERROR_WANT_READ);
+        /*
+         * We did not get any bytes and are not in blocking mode.
+         * Tick to see if this delivers any more.
+         */
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+
+        /* Try the read again. */
+        if (!quic_read_actual(&ctx, ctx.xso->stream, buf, len, bytes_read, peek)) {
+            ret = 0; /* quic_read_actual raised error here */
+            goto out;
+        }
+
+        if (*bytes_read > 0)
+            ret = 1; /* Succeeded this time. */
+        else
+            ret = QUIC_RAISE_NORMAL_ERROR(&ctx, SSL_ERROR_WANT_READ);
     }
 
 out:
