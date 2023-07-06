@@ -458,10 +458,8 @@ static void helper_cleanup(struct helper *h)
     BIO_free(h->s_qtf_wbio_own);
     h->s_qtf_wbio_own = NULL;
 
-    if (h->qtf != NULL) {
-        qtest_fault_free(h->qtf);
-        h->qtf = NULL;
-    }
+    qtest_fault_free(h->qtf);
+    h->qtf = NULL;
 
     if (h->s_fd >= 0) {
         BIO_closesocket(h->s_fd);
