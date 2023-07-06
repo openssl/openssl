@@ -705,7 +705,12 @@ static int test_bio_ssl(void)
         if (i == 1)
             break;
 
-        /* Now create a new stream and repeat */
+        /*
+         * Now create a new stream and repeat. The bottom two bits of the stream
+         * id represents whether the stream is bidi and whether it is client
+         * initiated or not. For client initiated bidi they are both 0. So the
+         * first client initiated bidi stream is 0 and the next one is 4.
+         */
         sid = 4;
         stream = SSL_new_stream(clientquic, 0);
         if (!TEST_ptr(stream))
@@ -727,8 +732,8 @@ static int test_bio_ssl(void)
 
     testresult = 1;
  err:
-    BIO_free(cbio);
-    BIO_free(strbio);
+    BIO_free_all(cbio);
+    BIO_free_all(strbio);
     SSL_free(stream);
     ossl_quic_tserver_free(qtserv);
     SSL_CTX_free(cctx);
