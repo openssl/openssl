@@ -2096,7 +2096,7 @@ static const struct script_op script_18[] = {
 
     OP_C_WRITE              (DEFAULT, "apple", 5)
     OP_S_READ_EXPECT        (a, "apple", 5)
-    OP_CHECK                (skip_time_ms,    4)
+    OP_CHECK                (skip_time_ms,    8)
 
     OP_END_REPEAT           ()
 
