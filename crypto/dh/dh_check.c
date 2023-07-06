@@ -101,6 +101,10 @@ int DH_check(const DH *dh, int *ret)
     BN_CTX *ctx = NULL;
     BIGNUM *t1 = NULL, *t2 = NULL;
 
+    /* Don't do any checks at all with an excessively large modulus */
+    if (BN_num_bits(dh->p) > OPENSSL_DH_CHECK_MAX_MODULUS_BITS)
+        return 0;
+
     if (!DH_check_params(dh, ret))
         return 0;
 
