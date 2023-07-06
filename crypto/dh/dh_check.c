@@ -152,6 +152,12 @@ int DH_check(const DH *dh, int *ret)
     if (nid != NID_undef)
         return 1;
 
+    /* Don't do any checks at all with an excessively large modulus */
+    if (BN_num_bits(dh->params.p) > OPENSSL_DH_CHECK_MAX_MODULUS_BITS) {
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
+        return 0;
+    }
+
     if (!DH_check_params(dh, ret))
         return 0;
 
