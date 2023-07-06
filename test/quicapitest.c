@@ -31,7 +31,7 @@ static int is_fips = 0;
 /* The ssltrace test assumes some options are switched on/off */
 #if !defined(OPENSSL_NO_SSL_TRACE) && !defined(OPENSSL_NO_EC) \
     && defined(OPENSSL_NO_ZLIB) && defined(OPENSSL_NO_BROTLI) \
-    && defined(OPENSSL_NO_ZSTD)
+    && defined(OPENSSL_NO_ZSTD) && !defined(OPENSSL_NO_ECX)
 # define DO_SSL_TRACE_TEST
 #endif
 
