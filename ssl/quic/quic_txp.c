@@ -1964,7 +1964,7 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
          *
          * RFC 9000 s. 3.3: A sender MUST NOT send a STREAM [...] frame for a
          * stream in the "Reset Sent" state [or any terminal state]. We don't
-         * send any moore STREAM frames if we are sending, have sent, or are
+         * send any more STREAM frames if we are sending, have sent, or are
          * planning to send, RESET_STREAM. The other terminal state is Data
          * Recvd, but txp_generate_stream_frames() is guaranteed to generate
          * nothing in this case.

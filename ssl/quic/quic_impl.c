@@ -2753,11 +2753,14 @@ int ossl_quic_stream_reset(SSL *ssl,
     qs          = ctx.xso->stream;
     error_code  = (args != NULL ? args->quic_error_code : 0);
 
-    if (!quic_validate_for_write(ctx.xso, &err))
-        return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, err, NULL);
+    if (!quic_validate_for_write(ctx.xso, &err)) {
+        ok = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, err, NULL);
+        goto err;
+    }
 
     ok = ossl_quic_stream_map_reset_stream_send_part(qsm, qs, error_code);
 
+err:
     quic_unlock(ctx.qc);
     return ok;
 }

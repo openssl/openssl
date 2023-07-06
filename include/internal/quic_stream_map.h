@@ -164,7 +164,7 @@ struct quic_stream_st {
     unsigned int    active : 1;
 
     /*
-     * This is a cpoy of the QUIC connection as_server  value, indicating
+     * This is a copy of the QUIC connection as_server value, indicating
      * whether we are locally operating as a server or not. Having this
      * significantly simplifies stream type determination relative to our
      * perspective. It never changes after a QUIC_STREAM is created and is the
@@ -717,7 +717,7 @@ int ossl_quic_stream_map_notify_totally_received(QUIC_STREAM_MAP *qsm,
 
 /*
  * Transitions from the DATA_RECVD receive stream state to the DATA_READ state.
- * This shuld be called once all data for a receive stream is read by the
+ * This should be called once all data for a receive stream is read by the
  * application.
  *
  * Returns 1 if the transition was taken.

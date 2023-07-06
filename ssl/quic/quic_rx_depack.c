@@ -195,7 +195,7 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
      * Depending on the receive part state this is handled either as a reset
      * transition or a no-op (e.g. if a reset has already been received before,
      * or the application already retired a FIN). Best effort - there are no
-     * protoocol error conditions we need to check for here.
+     * protocol error conditions we need to check for here.
      */
     ossl_quic_stream_map_notify_reset_recv_part(&ch->qsm, stream,
                                                 frame_data.app_error_code,
@@ -571,9 +571,12 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
 
     /*
      * rs_fin will be 1 only if we can read all data up to and including the FIN
-     * without any gaps before it; this implies we have received all data.
+     * without any gaps before it; this implies we have received all data. Avoid
+     * calling ossl_quic_rstream_available() where it is not necessary as it is
+     * more expensive.
      */
-    if (!ossl_quic_rstream_available(stream->rstream, &rs_avail, &rs_fin))
+    if (stream->recv_state != QUIC_RSTREAM_STATE_SIZE_KNOWN
+        || !ossl_quic_rstream_available(stream->rstream, &rs_avail, &rs_fin))
         return 0;
 
     if (rs_fin)
