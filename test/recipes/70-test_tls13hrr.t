@@ -73,7 +73,7 @@ $proxy->clear();
 if (disabled("ec")) {
     $proxy->serverflags("-curves ffdhe3072");
 } else {
-    $proxy->serverflags("-curves P-256");
+    $proxy->serverflags("-curves P-384");
 }
 $testtype = DUPLICATE_HRR;
 $proxy->start();
