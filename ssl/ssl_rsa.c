@@ -89,11 +89,7 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
         j = ERR_R_PEM_LIB;
         cert = PEM_read_bio_X509(in, &x, sc->default_passwd_callback,
                                  sc->default_passwd_callback_userdata);
-    } else {
-        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
-        goto end;
     }
-
     if (cert == NULL) {
         ERR_raise(ERR_LIB_SSL, j);
         goto end;
