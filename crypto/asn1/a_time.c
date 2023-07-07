@@ -595,7 +595,7 @@ int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b)
 # define timezone _timezone
 #endif
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__wasi__)
 # define USE_TIMEGM
 #endif
 
