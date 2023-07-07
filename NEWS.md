@@ -37,7 +37,14 @@ OpenSSL 3.2
 OpenSSL 3.1
 -----------
 
-### Major changes between OpenSSL 3.1.0 and OpenSSL 3.1.1 [under development]
+### Major changes between OpenSSL 3.1.1 and OpenSSL 3.1.2 [under development]
+
+ * When building with the `enable-fips` option and using the resulting
+   FIPS provider, TLS 1.2 will, by default, mandate the use of an
+   extended master secret and the Hash and HMAC DRBGs will not operate
+   with truncated digests.
+
+### Major changes between OpenSSL 3.1.0 and OpenSSL 3.1.1 [30 May 2023]
 
   * Mitigate for very slow `OBJ_obj2txt()` performance with gigantic OBJECT
     IDENTIFIER sub-identities.  ([CVE-2023-2650])
