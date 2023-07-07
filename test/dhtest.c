@@ -63,7 +63,7 @@ static int dh_test(void)
         || !TEST_true(DH_set0_pqg(dh, p, q, g)))
         goto err1;
 
-    if (!DH_check(dh, &i))
+    if (!TEST_true(DH_check(dh, &i)))
         goto err2;
     if (!TEST_false(i & DH_CHECK_P_NOT_PRIME)
             || !TEST_false(i & DH_CHECK_P_NOT_SAFE_PRIME)
@@ -123,6 +123,17 @@ static int dh_test(void)
     /* check whether the public key was calculated correctly */
     TEST_uint_eq(BN_get_word(pub_key2), 3331L);
 
+    /* Modulus of size: dh check max modulus bits + 1 */
+    if (!TEST_true(BN_set_word(p, 1))
+            || !TEST_true(BN_lshift(p, p, OPENSSL_DH_CHECK_MAX_MODULUS_BITS)))
+        goto err3;
+
+    /*
+     * We expect no checks at all for an excessively large modulus
+     */
+    if (!TEST_false(DH_check(dh, &i)))
+        goto err3;
+
     /*
      * II) key generation
      */
@@ -137,7 +148,7 @@ static int dh_test(void)
         goto err3;
 
     /* ... and check whether it is valid */
-    if (!DH_check(a, &i))
+    if (!TEST_true(DH_check(a, &i)))
         goto err3;
     if (!TEST_false(i & DH_CHECK_P_NOT_PRIME)
             || !TEST_false(i & DH_CHECK_P_NOT_SAFE_PRIME)
