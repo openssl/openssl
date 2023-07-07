@@ -21,7 +21,12 @@ OpenSSL 3.1
 
 ### Major changes between OpenSSL 3.1.1 and OpenSSL 3.1.2 [under development]
 
-  * none
+  * By default, the FIPS provider is installed to ensure compliance in
+    its operation.  This installation has two notable side effects:
+
+    1. TLS 1.2 necessitates an extended master secret.  This could lead to
+       interoperability issues with older devices.
+    2. Truncated digests cannot be utilized with the Hash and HMAC DRBGs.
 
 ### Major changes between OpenSSL 3.1.0 and OpenSSL 3.1.1 [30 May 2023]
 
