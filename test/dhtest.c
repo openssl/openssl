@@ -73,7 +73,7 @@ static int dh_test(void)
         goto err1;
 
     /* check fails, because p is way too small */
-    if (!DH_check(dh, &i))
+    if (!TEST_true(DH_check(dh, &i)))
         goto err2;
     i ^= DH_MODULUS_TOO_SMALL;
     if (!TEST_false(i & DH_CHECK_P_NOT_PRIME)
@@ -124,6 +124,17 @@ static int dh_test(void)
     /* We'll have a stale error on the queue from the above test so clear it */
     ERR_clear_error();
 
+    /* Modulus of size: dh check max modulus bits + 1 */
+    if (!TEST_true(BN_set_word(p, 1))
+            || !TEST_true(BN_lshift(p, p, OPENSSL_DH_CHECK_MAX_MODULUS_BITS)))
+        goto err3;
+
+    /*
+     * We expect no checks at all for an excessively large modulus
+     */
+    if (!TEST_false(DH_check(dh, &i)))
+        goto err3;
+
     /*
      * II) key generation
      */
@@ -138,7 +149,7 @@ static int dh_test(void)
         goto err3;
 
     /* ... and check whether it is valid */
-    if (!DH_check(a, &i))
+    if (!TEST_true(DH_check(a, &i)))
         goto err3;
     if (!TEST_false(i & DH_CHECK_P_NOT_PRIME)
             || !TEST_false(i & DH_CHECK_P_NOT_SAFE_PRIME)
