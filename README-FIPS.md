@@ -71,7 +71,8 @@ the installation by doing the following two things:
 
 - Runs the FIPS module self tests
 - Generates the so-called FIPS module configuration file containing information
-  about the module such as the module checksum (and for OpenSSL 3.0 the self test status).
+  about the module such as the module checksum (and for OpenSSL 3.0 the
+  self test status).
 
 The FIPS module must have the self tests run, and the FIPS module config file
 output generated on every machine that it is to be used on. For OpenSSL 3.0,
