@@ -975,7 +975,7 @@ int req_main(int argc, char **argv)
 
             if (!EVP_PKEY_get_bn_param(tpubkey, "n", &n))
                 goto end;
-            BN_print(out, n);
+            BN_print_fp(stdout, n);
             BN_free(n);
         } else {
             fprintf(stdout, "Wrong Algorithm type");
