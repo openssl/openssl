@@ -17,6 +17,7 @@
 #include "internal/core.h"
 #include "internal/provider.h"
 #include "internal/namemap.h"
+#include "internal/decoder.h"
 #include "crypto/evp.h"    /* evp_local.h needs it */
 #include "evp_local.h"
 
@@ -422,6 +423,7 @@ static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
     OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx, loadconfig);
 
     if (plp != NULL && store != NULL) {
+        int ret;
 #ifndef FIPS_MODULE
         char *propstr = NULL;
         size_t strsz;
@@ -455,8 +457,12 @@ static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
 #endif
         ossl_property_free(*plp);
         *plp = def_prop;
-        if (store != NULL)
-            return ossl_method_store_cache_flush_all(store);
+
+        ret = ossl_method_store_cache_flush_all(store);
+#ifndef FIPS_MODULE
+        ossl_decoder_cache_flush(libctx);
+#endif
+        return ret;
     }
     ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
     return 0;
