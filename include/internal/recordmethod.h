@@ -63,7 +63,7 @@ typedef struct ossl_record_layer_st OSSL_RECORD_LAYER;
  * buffer of payload data in |buf| of length |buflen|.
  */
 struct ossl_record_template_st {
-    int type;
+    unsigned char type;
     unsigned int version;
     const unsigned char *buf;
     size_t buflen;
