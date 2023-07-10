@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/common.h"
 #include "internal/quic_wire_pkt.h"
 
 int ossl_quic_hdr_protector_init(QUIC_HDR_PROTECTOR *hpr,
@@ -433,6 +434,9 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
         return 0;
 
     if (ptrs != NULL) {
+        /* ptrs would not be stable on non-static WPACKET */
+        if (!ossl_assert(pkt->staticbuf != NULL))
+            return 0;
         ptrs->raw_start         = NULL;
         ptrs->raw_sample        = NULL;
         ptrs->raw_sample_len    = 0;
