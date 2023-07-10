@@ -5528,3 +5528,6 @@ OSSL_ERR_STATE_new                      ?	3_2_0	EXIST::FUNCTION:
 OSSL_ERR_STATE_save                     ?	3_2_0	EXIST::FUNCTION:
 OSSL_ERR_STATE_restore                  ?	3_2_0	EXIST::FUNCTION:
 OSSL_ERR_STATE_free                     ?	3_2_0	EXIST::FUNCTION:
+X509_STORE_CTX_purpose_inherit_ex       ?	3_2_0	EXIST::FUNCTION:
+X509_STORE_CTX_set_purpose_ex           ?	3_2_0	EXIST::FUNCTION:
+X509_STORE_CTX_set_trust_ex             ?	3_2_0	EXIST::FUNCTION:

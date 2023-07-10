@@ -2303,21 +2303,31 @@ void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk)
 
 int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose)
 {
+    return X509_STORE_CTX_set_purpose_ex(ctx, purpose, 0);
+}
+
+int X509_STORE_CTX_set_purpose_ex(X509_STORE_CTX *ctx, int purpose, int override)
+{
     /*
      * XXX: Why isn't this function always used to set the associated trust?
      * Should there even be a VPM->trust field at all?  Or should the trust
      * always be inferred from the purpose by X509_STORE_CTX_init().
      */
-    return X509_STORE_CTX_purpose_inherit(ctx, 0, purpose, 0);
+    return X509_STORE_CTX_purpose_inherit_ex(ctx, 0, purpose, 0, override);
 }
 
 int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
+{
+    return X509_STORE_CTX_set_trust_ex(ctx, trust, 0);
+}
+
+int X509_STORE_CTX_set_trust_ex(X509_STORE_CTX *ctx, int trust, int override)
 {
     /*
      * XXX: See above, this function would only be needed when the default
      * trust for the purpose needs an override in a corner case.
      */
-    return X509_STORE_CTX_purpose_inherit(ctx, 0, 0, trust);
+    return X509_STORE_CTX_purpose_inherit_ex(ctx, 0, 0, trust, override);
 }
 
 /*
@@ -2332,6 +2342,15 @@ int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
  */
 int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
                                    int purpose, int trust)
+{
+    return X509_STORE_CTX_purpose_inherit_ex(ctx, def_purpose, purpose, trust, 0);
+}
+
+/*
+ * This "_ex" function allows to override existing values 
+ */
+int X509_STORE_CTX_purpose_inherit_ex(X509_STORE_CTX *ctx, int def_purpose,
+                                   int purpose, int trust, int override)
 {
     int idx;
 
@@ -2374,9 +2393,9 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
         }
     }
 
-    if (ctx->param->purpose == 0 && purpose != 0)
+    if ((ctx->param->purpose == 0 && purpose != 0) || override != 0)
         ctx->param->purpose = purpose;
-    if (ctx->param->trust == 0 && trust != 0)
+    if ((ctx->param->trust == 0 && trust != 0) || override != 0)
         ctx->param->trust = trust;
     return 1;
 }
