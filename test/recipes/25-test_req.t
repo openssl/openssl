@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 102;
+plan tests => 103;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -590,3 +590,30 @@ $cert = "self-signed_CA_with_keyUsages.pem";
 generate_cert($cert, "-in", srctop_file(@certs, "ext-check.csr"),
     "-copy_extensions", "copy");
 has_keyUsage($cert, 1);
+
+subtest "Issue 21403 - '-modulus' interaction with 'req'" => sub {
+    plan tests => 2;
+
+    SKIP {
+        skip "RSA is not supported by this OpenSSL build", 2
+            if disabled("rsa");
+
+        # Tests for issue #21403 - within isolated variable scope
+        my $i21403_cnf = srctop_file('test', 'test.cnf');
+        my $i21403_key = srctop_file('test-runs', 'key-21403.pem');
+        my $i21403_cert = srctop_file('test-runs', 'cert-21403.pem');
+
+        # Create cert
+        ok(run(app(["openssl", "req", "-x509", "-new", "-newkey", "rsa:4096",
+                    "-days", "365", "-nodes",
+                    "-config", $i21403_cnf,
+                    "-keyout", $i21403_key,
+                    "-out", $i21403_cert,
+                    "-modulus"])), "cert creation - issue 21403");
+
+        # Verify cert
+        ok(run(app(["openssl", "x509", "-in", $i21403_cert,
+                    "-noout", "-text"])), "cert verification - issue 21403");
+    }
+};
+

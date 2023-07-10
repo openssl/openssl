@@ -232,21 +232,3 @@ SKIP: {
         if disabled("ec");
     ok(run(test(["x509_test"])), "running x509_test");
 }
-
-{
-    # Tests for issue #21403 - within isolated variable scope
-    my $i21403_cnf = srctop_file('test', 'test.cnf');
-    my $i21403_key = srctop_file('test', 'key-21403.pem');
-    my $i21403_cert = srctop_file('test', 'cert-21403.pem');
-
-    # Create cert
-    ok(run(app(["openssl", "req", "-x509", "-new", "-newkey", "rsa:4096",
-                "-days", "365", "-nodes",
-                "-config", $i21403_cnf,
-                "-keyout", $i21403_key,
-                "-out", $i21403_cert,
-                "-modulus"])), "cert creation - issue 21403");
-    # Verify cert
-    ok(run(app(["openssl", "x509", "-in", $i21403_cert,
-                "-noout", "-text"])), "cert verification - issue 21403");
-}
