@@ -372,9 +372,11 @@ static int test_quic_forbidden_apis_ctx(void)
     if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method())))
         goto err;
 
+#ifndef OPENSSL_NO_SRTP
     /* This function returns 0 on success and 1 on error, and should fail. */
     if (!TEST_true(SSL_CTX_set_tlsext_use_srtp(ctx, "SRTP_AEAD_AES_128_GCM")))
         goto err;
+#endif
 
     /*
      * List of ciphersuites we do and don't allow in QUIC.
@@ -420,9 +422,11 @@ static int test_quic_forbidden_apis(void)
     if (!TEST_ptr(ssl = SSL_new(ctx)))
         goto err;
 
+#ifndef OPENSSL_NO_SRTP
     /* This function returns 0 on success and 1 on error, and should fail. */
     if (!TEST_true(SSL_set_tlsext_use_srtp(ssl, "SRTP_AEAD_AES_128_GCM")))
         goto err;
+#endif
 
     /* Set TLSv1.3 ciphersuite list for the SSL_CTX. */
     if (!TEST_true(SSL_set_ciphersuites(ssl,
