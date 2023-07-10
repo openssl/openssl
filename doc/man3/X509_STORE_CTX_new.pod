@@ -17,8 +17,11 @@ X509_STORE_CTX_set_default,
 X509_STORE_CTX_set_verify,
 X509_STORE_CTX_verify_fn,
 X509_STORE_CTX_set_purpose,
+X509_STORE_CTX_set_purpose_ex,
 X509_STORE_CTX_set_trust,
-X509_STORE_CTX_purpose_inherit
+X509_STORE_CTX_set_trust_ex,
+X509_STORE_CTX_purpose_inherit,
+X509_STORE_CTX_purpose_inherit_ex
 - X509_STORE_CTX initialisation
 
 =head1 SYNOPSIS
@@ -57,9 +60,14 @@ X509_STORE_CTX_purpose_inherit
  void X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx, X509_STORE_CTX_verify_fn verify);
 
  int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose);
+ int X509_STORE_CTX_set_purpose_ex(X509_STORE_CTX *ctx, int purpose,
+                                   int override);
  int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust);
+ int X509_STORE_CTX_set_trust_ex(X509_STORE_CTX *ctx, int trust, int override);
  int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
                                     int purpose, int trust);
+ int X509_STORE_CTX_purpose_inherit_ex(X509_STORE_CTX *ctx, int def_purpose,
+                                       int purpose, int trust, int override);
 
 =head1 DESCRIPTION
 
@@ -233,6 +241,10 @@ The purpose however is only set by X509_STORE_CTX_set_purpose(), if no purpose
 was set previously. I another purpose was already set, the new purpose is
 not set but silently ignored.
 
+X509_STORE_CTX_set_purpose_ex() extends X509_STORE_CTX_set_purpose() by
+allowing to explicitly override already existing settings for the purpose
+(and any trust implied by the purpose).
+
 X509_STORE_CTX_set_trust() sets the trust value for the target certificate
 being verified in the I<ctx>. Built-in available values for the I<trust>
 argument are B<X509_TRUST_COMPAT>, B<X509_TRUST_SSL_CLIENT>,
@@ -247,6 +259,9 @@ used.
 The trust however is only set by X509_STORE_CTX_set_trust(), if no trust
 was set previously. I another trust was already set, either explicitly or
 implicitly by setting a purpose, the new trust is not set but silently ignored.
+
+X509_STORE_CTX_set_trust_ex() extends X509_STORE_CTX_set_trust() by
+allowing to explicitly override already existing settings for the trust.
 
 It should not normally be necessary for end user applications to call
 X509_STORE_CTX_purpose_inherit() directly. Typically applications should call
@@ -267,6 +282,9 @@ If I<trust> is 0 then the trust value will be set from
 the default trust value for I<purpose>. If the default trust value for the
 purpose is I<X509_TRUST_DEFAULT> and I<trust> is 0 then the default trust value
 associated with the I<def_purpose> value is used for the trust setting instead.
+
+X509_STORE_CTX_purpose_inherit_ex() adds an additional "override" parameter
+that enforces the setting, even if the purpose was set in the I<ctx> before.
 
 =head1 NOTES
 
