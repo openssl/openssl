@@ -693,11 +693,7 @@ static int test_bio_ssl(void)
                                                msglen, &written)))
             goto err;
         ossl_quic_tserver_tick(qtserv);
-        /*
-        * TODO(QUIC): BIO_read_ex() doesn't seem to automatically tick???
-        * See issue #21365
-        */
-        SSL_handle_events(clientquic);
+
         if (!TEST_true(BIO_read_ex(thisbio, buf, sizeof(buf), &readbytes))
                 || !TEST_mem_eq(msg, msglen, buf, readbytes))
             goto err;
