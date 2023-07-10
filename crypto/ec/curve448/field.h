@@ -54,8 +54,8 @@ static INLINE_UNUSED void gf_weak_reduce(gf inout);
 void gf_strong_reduce(gf inout);
 void gf_add(gf out, const gf a, const gf b);
 void gf_sub(gf out, const gf a, const gf b);
-void gf_mul(gf_s * RESTRICT out, const gf a, const gf b);
-void gf_mulw_unsigned(gf_s * RESTRICT out, const gf a, uint32_t b);
+void ossl_gf_mul(gf_s * RESTRICT out, const gf a, const gf b);
+void ossl_gf_mulw_unsigned(gf_s * RESTRICT out, const gf a, uint32_t b);
 void gf_sqr(gf_s * RESTRICT out, const gf a);
 mask_t gf_isr(gf a, const gf x); /** a^2 x = 1, QNR, or 0 if x=0.  Return true if successful */
 mask_t gf_eq(const gf x, const gf y);
@@ -117,9 +117,9 @@ static ossl_inline void gf_subx_nr(gf c, const gf a, const gf b, int amt)
 static ossl_inline void gf_mulw(gf c, const gf a, int32_t w)
 {
     if (w > 0) {
-        gf_mulw_unsigned(c, a, w);
+        ossl_gf_mulw_unsigned(c, a, w);
     } else {
-        gf_mulw_unsigned(c, a, -w);
+        ossl_gf_mulw_unsigned(c, a, -w);
         gf_sub(c, ZERO, c);
     }
 }
