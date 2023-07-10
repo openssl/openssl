@@ -736,7 +736,7 @@ static int test_store_ctx(void)
     return test_self_signed(bad_f, 0, 0);
 }
 
-static int do_test_purpose(int purpose, int expected)
+static int do_test_purpose(int purpose, int purpose2, int expected)
 {
     X509 *eecert = load_cert_from_file(ee_cert); /* may result in NULL */
     X509 *untrcert = load_cert_from_file(ca_cert);
@@ -766,6 +766,11 @@ static int do_test_purpose(int purpose, int expected)
 
     if (!TEST_true(X509_STORE_CTX_set_purpose(ctx, purpose)))
         goto err;
+
+    if (purpose2 != 0) {
+        if (!TEST_true(X509_STORE_CTX_set_purpose(ctx, purpose2)))
+            goto err;
+    }
 
     /*
      * X509_STORE_CTX_set0_trusted_stack() is bady named. Despite the set0 name
@@ -863,17 +868,22 @@ static int test_store_ctx_empty_libctx(void)
 
 static int test_purpose_ssl_client(void)
 {
-    return do_test_purpose(X509_PURPOSE_SSL_CLIENT, 0);
+    return do_test_purpose(X509_PURPOSE_SSL_CLIENT, 0, 0);
 }
 
 static int test_purpose_ssl_server(void)
 {
-    return do_test_purpose(X509_PURPOSE_SSL_SERVER, 1);
+    return do_test_purpose(X509_PURPOSE_SSL_SERVER, 0, 1);
+}
+
+static int test_purpose_ssl_client_override_fail(void)
+{
+    return do_test_purpose(X509_PURPOSE_SSL_SERVER, X509_PURPOSE_SSL_CLIENT, 1);
 }
 
 static int test_purpose_any(void)
 {
-    return do_test_purpose(X509_PURPOSE_ANY, 1);
+    return do_test_purpose(X509_PURPOSE_ANY, 0, 1);
 }
 
 static const char *ca_cert_pathlen_254[] = {
@@ -1110,6 +1120,7 @@ int setup_tests(void)
     ADD_TEST(test_store_ctx_empty_libctx);
     ADD_TEST(test_purpose_ssl_client);
     ADD_TEST(test_purpose_ssl_server);
+    ADD_TEST(test_purpose_ssl_client_override_fail);
     ADD_TEST(test_purpose_any);
     ADD_TEST(test_multiname_selfsigned);
     ADD_TEST(test_vpm_input_validation);
