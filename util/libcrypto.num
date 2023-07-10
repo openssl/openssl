@@ -5747,3 +5747,6 @@ PKCS12_PARSE_CTX_set_cert               ?	4_2_0	EXIST::FUNCTION:
 PKCS12_PARSE_CTX_set_ca                 ?	4_2_0	EXIST::FUNCTION:
 PKCS12_PARSE_CTX_set_skeys              ?	4_2_0	EXIST::FUNCTION:
 PKCS12_parse_ex                         ?	4_2_0	EXIST::FUNCTION:
+X509_STORE_CTX_purpose_inherit_ex       ?	4_2_0	EXIST::FUNCTION:
+X509_STORE_CTX_set_purpose_ex           ?	4_2_0	EXIST::FUNCTION:
+X509_STORE_CTX_set_trust_ex             ?	4_2_0	EXIST::FUNCTION:
