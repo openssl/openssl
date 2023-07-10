@@ -229,6 +229,10 @@ at the same time. During verification, this trust setting will be verified
 to check whether it is consistent with the trust set by the system administrator
 for certificates in the chain.
 
+The purpose however is only set by X509_STORE_CTX_set_purpose(), if no purpose
+was set previously. I another purpose was already set, the new purpose is
+not set but silently ignored.
+
 X509_STORE_CTX_set_trust() sets the trust value for the target certificate
 being verified in the I<ctx>. Built-in available values for the I<trust>
 argument are B<X509_TRUST_COMPAT>, B<X509_TRUST_SSL_CLIENT>,
@@ -239,6 +243,10 @@ also sets the trust value it is normally sufficient to only call that function.
 If both are called then X509_STORE_CTX_set_trust() should be called after
 X509_STORE_CTX_set_purpose() since the trust setting of the last call will be
 used.
+
+The trust however is only set by X509_STORE_CTX_set_trust(), if no trust
+was set previously. I another trust was already set, either explicitly or
+implicitly by setting a purpose, the new trust is not set but silently ignored.
 
 It should not normally be necessary for end user applications to call
 X509_STORE_CTX_purpose_inherit() directly. Typically applications should call
