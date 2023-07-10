@@ -2488,6 +2488,8 @@ static const struct pkt_hdr_test *const pkt_hdr_tests[] = {
 static unsigned int counts_u[HPR_CIPHER_COUNT][37] = {0};
 static unsigned int counts_c[HPR_CIPHER_COUNT][37] = {0};
 
+#define TEST_PKT_BUF_LEN 20000
+
 static int test_wire_pkt_hdr_actual(int tidx, int repeat, int cipher,
                                     size_t trunc_len)
 {
@@ -2497,7 +2499,7 @@ static int test_wire_pkt_hdr_actual(int tidx, int repeat, int cipher,
     QUIC_PKT_HDR_PTRS ptrs = {0}, wptrs = {0};
     PACKET pkt = {0};
     WPACKET wpkt = {0};
-    BUF_MEM *buf = NULL;
+    unsigned char *buf = NULL;
     size_t l = 0, i, j;
     QUIC_HDR_PROTECTOR hpr = {0};
     unsigned char hpr_key[32] = {0,1,2,3,4,5,6,7};
@@ -2534,10 +2536,10 @@ static int test_wire_pkt_hdr_actual(int tidx, int repeat, int cipher,
             goto err;
     }
 
-    if (!TEST_ptr(buf = BUF_MEM_new()))
+    if (!TEST_ptr(buf = OPENSSL_malloc(TEST_PKT_BUF_LEN)))
         goto err;
 
-    if (!TEST_true(WPACKET_init(&wpkt, buf)))
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, buf, TEST_PKT_BUF_LEN, 0)))
         goto err;
 
     if (!TEST_true(PACKET_buf_init(&pkt, t->expected, trunc_len)))
@@ -2580,7 +2582,7 @@ static int test_wire_pkt_hdr_actual(int tidx, int repeat, int cipher,
         if (!TEST_true(WPACKET_get_total_written(&wpkt, &l)))
             goto err;
 
-        if (!TEST_mem_eq(buf->data, l, t->expected, t->expected_len))
+        if (!TEST_mem_eq(buf, l, t->expected, t->expected_len))
             goto err;
 
         /* Test header protection. */
@@ -2658,7 +2660,7 @@ err:
     if (have_hpr)
         ossl_quic_hdr_protector_cleanup(&hpr);
     WPACKET_finish(&wpkt);
-    BUF_MEM_free(buf);
+    OPENSSL_free(buf);
     OPENSSL_free(hbuf);
     return testresult;
 }
