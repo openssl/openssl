@@ -28,6 +28,7 @@
 #include "internal/refcount.h"
 #include "internal/bio.h"
 #include "internal/core.h"
+#include "internal/decoder.h"
 #include "provider_local.h"
 #include "crypto/context.h"
 #ifndef FIPS_MODULE
@@ -657,6 +658,15 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
         ossl_provider_deactivate(prov, 0);
         ossl_provider_free(prov);
     }
+#ifndef FIPS_MODULE
+    else {
+        /*
+         * This can be done outside the lock. We tolerate other threads getting
+         * the wrong result briefly when creating OSSL_DECODER_CTXs.
+         */
+        ossl_decoder_cache_flush(prov->libctx);
+    }
+#endif
 
     return 1;
 
@@ -1103,6 +1113,14 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
     if (lock) {
         CRYPTO_THREAD_unlock(prov->flag_lock);
         CRYPTO_THREAD_unlock(store->lock);
+        /*
+         * This can be done outside the lock. We tolerate other threads getting
+         * the wrong result briefly when creating OSSL_DECODER_CTXs.
+         */
+#ifndef FIPS_MODULE
+        if (count < 1)
+            ossl_decoder_cache_flush(prov->libctx);
+#endif
     }
 #ifndef FIPS_MODULE
     if (freeparent)
@@ -1165,6 +1183,14 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
     if (lock) {
         CRYPTO_THREAD_unlock(prov->flag_lock);
         CRYPTO_THREAD_unlock(store->lock);
+        /*
+         * This can be done outside the lock. We tolerate other threads getting
+         * the wrong result briefly when creating OSSL_DECODER_CTXs.
+         */
+#ifndef FIPS_MODULE
+        if (count == 1)
+            ossl_decoder_cache_flush(prov->libctx);
+#endif
     }
 
     if (!ret)

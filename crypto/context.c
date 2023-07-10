@@ -14,6 +14,7 @@
 #include "internal/core.h"
 #include "internal/bio.h"
 #include "internal/provider.h"
+#include "internal/decoder.h"
 #include "crypto/context.h"
 
 struct ossl_lib_ctx_st {
@@ -33,6 +34,7 @@ struct ossl_lib_ctx_st {
     void *bio_core;
     void *child_provider;
     OSSL_METHOD_STORE *decoder_store;
+    void *decoder_cache;
     OSSL_METHOD_STORE *encoder_store;
     OSSL_METHOD_STORE *store_loader_store;
     void *self_test_cb;
@@ -110,9 +112,15 @@ static int context_init(OSSL_LIB_CTX *ctx)
         goto err;
 
 #ifndef FIPS_MODULE
-    /* P2. We want decoder_store to be cleaned up before the provider store */
+    /*
+     * P2. We want decoder_store/decoder_cache to be cleaned up before the
+     * provider store
+     */
     ctx->decoder_store = ossl_method_store_new(ctx);
     if (ctx->decoder_store == NULL)
+        goto err;
+    ctx->decoder_cache = ossl_decoder_cache_new(ctx);
+    if (ctx->decoder_cache == NULL)
         goto err;
 
     /* P2. We want encoder_store to be cleaned up before the provider store */
@@ -226,11 +234,19 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
         ctx->provider_conf = NULL;
     }
 
-    /* P2. We want decoder_store to be cleaned up before the provider store */
+    /*
+     * P2. We want decoder_store/decoder_cache to be cleaned up before the
+     * provider store
+     */
     if (ctx->decoder_store != NULL) {
         ossl_method_store_free(ctx->decoder_store);
         ctx->decoder_store = NULL;
     }
+    if (ctx->decoder_cache != NULL) {
+        ossl_decoder_cache_free(ctx->decoder_cache);
+        ctx->decoder_cache = NULL;
+    }
+
 
     /* P2. We want encoder_store to be cleaned up before the provider store */
     if (ctx->encoder_store != NULL) {
@@ -559,6 +575,8 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
         return ctx->child_provider;
     case OSSL_LIB_CTX_DECODER_STORE_INDEX:
         return ctx->decoder_store;
+    case OSSL_LIB_CTX_DECODER_CACHE_INDEX:
+        return ctx->decoder_cache;
     case OSSL_LIB_CTX_ENCODER_STORE_INDEX:
         return ctx->encoder_store;
     case OSSL_LIB_CTX_STORE_LOADER_STORE_INDEX:
