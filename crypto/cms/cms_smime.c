@@ -262,7 +262,8 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
                                       STACK_OF(X509) *untrusted,
                                       STACK_OF(X509_CRL) *crls,
                                       STACK_OF(X509) **chain,
-                                      const CMS_CTX *cms_ctx)
+                                      const CMS_CTX *cms_ctx,
+                                      time_t *verification_time)
 {
     X509_STORE_CTX *ctx;
     X509 *signer;
@@ -283,6 +284,8 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
     if (crls != NULL)
         X509_STORE_CTX_set0_crls(ctx, crls);
 
+    if (verification_time)
+        X509_STORE_CTX_set_time(ctx, 0, *verification_time);
     i = X509_verify_cert(ctx);
     if (i <= 0) {
         j = X509_STORE_CTX_get_error(ctx);
@@ -313,6 +316,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     X509 *signer;
     int i, scount = 0, ret = 0;
     BIO *cmsbio = NULL, *tmpin = NULL, *tmpout = NULL;
+    time_t verification_time, *vt = NULL;
     int cadesVerify = (flags & CMS_CADES) != 0;
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms);
 
@@ -424,9 +428,10 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
         for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
 
+            /* vt is NULL unless a valid timestamp was found */
             if (!cms_signerinfo_verify_cert(si, store, cms_certs, crls,
                                             si_chains ? &si_chains[i] : NULL,
-                                            ctx))
+                                            ctx, vt))
                 goto err;
         }
     }
