@@ -238,7 +238,7 @@ to check whether it is consistent with the trust set by the system administrator
 for certificates in the chain.
 
 The purpose however is only set by X509_STORE_CTX_set_purpose(), if no purpose
-was set previously. I another purpose was already set, the new purpose is
+was set previously. If another purpose was already set, the new purpose is
 not set but silently ignored.
 
 X509_STORE_CTX_set_purpose_ex() extends X509_STORE_CTX_set_purpose() by
@@ -257,7 +257,7 @@ X509_STORE_CTX_set_purpose() since the trust setting of the last call will be
 used.
 
 The trust however is only set by X509_STORE_CTX_set_trust(), if no trust
-was set previously. I another trust was already set, either explicitly or
+was set previously. If another trust was already set, either explicitly or
 implicitly by setting a purpose, the new trust is not set but silently ignored.
 
 X509_STORE_CTX_set_trust_ex() extends X509_STORE_CTX_set_trust() by
