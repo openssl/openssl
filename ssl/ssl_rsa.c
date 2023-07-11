@@ -68,10 +68,7 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
         goto end;
     }
 
-    if (type != SSL_FILETYPE_ASN1 && type != SSL_FILETYPE_PEM) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
-        goto end;
-    }
+
     x = X509_new_ex(ssl->ctx->libctx, ssl->ctx->propq);
     if (x == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
@@ -89,6 +86,9 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
         j = ERR_R_PEM_LIB;
         cert = PEM_read_bio_X509(in, &x, sc->default_passwd_callback,
                                  sc->default_passwd_callback_userdata);
+    } else {
+        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
+        goto end;
     }
     if (cert == NULL) {
         ERR_raise(ERR_LIB_SSL, j);
@@ -310,10 +310,7 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
         ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }
-    if (type != SSL_FILETYPE_ASN1 && type != SSL_FILETYPE_PEM) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
-        goto end;
-    }
+
     x = X509_new_ex(ctx->libctx, ctx->propq);
     if (x == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
@@ -326,7 +323,10 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
         j = ERR_R_PEM_LIB;
         cert = PEM_read_bio_X509(in, &x, ctx->default_passwd_callback,
                                  ctx->default_passwd_callback_userdata);
-    }
+    }else {
+		ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
+		goto end;
+	}
     if (cert == NULL) {
         ERR_raise(ERR_LIB_SSL, j);
         goto end;
