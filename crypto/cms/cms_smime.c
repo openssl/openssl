@@ -349,47 +349,6 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
         goto err;
     }
 
-    /* Attempt to verify all signers certs */
-    /* at this point scount == sk_CMS_SignerInfo_num(sinfos) */
-
-    if ((flags & CMS_NO_SIGNER_CERT_VERIFY) == 0 || cadesVerify) {
-        if (cadesVerify) {
-            /* Certificate trust chain is required to check CAdES signature */
-            si_chains = OPENSSL_zalloc(scount * sizeof(si_chains[0]));
-            if (si_chains == NULL)
-                goto err;
-        }
-        cms_certs = CMS_get1_certs(cms);
-        if (!(flags & CMS_NOCRL))
-            crls = CMS_get1_crls(cms);
-        for (i = 0; i < scount; i++) {
-            si = sk_CMS_SignerInfo_value(sinfos, i);
-
-            if (!cms_signerinfo_verify_cert(si, store, cms_certs, crls,
-                                            si_chains ? &si_chains[i] : NULL,
-                                            ctx))
-                goto err;
-        }
-    }
-
-    /* Attempt to verify all SignerInfo signed attribute signatures */
-
-    if ((flags & CMS_NO_ATTR_VERIFY) == 0 || cadesVerify) {
-        for (i = 0; i < scount; i++) {
-            si = sk_CMS_SignerInfo_value(sinfos, i);
-            if (CMS_signed_get_attr_count(si) < 0)
-                continue;
-            if (CMS_SignerInfo_verify(si) <= 0)
-                goto err;
-            if (cadesVerify) {
-                STACK_OF(X509) *si_chain = si_chains ? si_chains[i] : NULL;
-
-                if (ossl_cms_check_signing_certs(si, si_chain) <= 0)
-                    goto err;
-            }
-        }
-    }
-
     /*
      * Performance optimization: if the content is a memory BIO then store
      * its contents in a temporary read only memory BIO. This avoids
@@ -449,6 +408,47 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             goto err;
 
     }
+    /* Attempt to verify all signers certs */
+    /* at this point scount == sk_CMS_SignerInfo_num(sinfos) */
+
+    if ((flags & CMS_NO_SIGNER_CERT_VERIFY) == 0 || cadesVerify) {
+        if (cadesVerify) {
+            /* Certificate trust chain is required to check CAdES signature */
+            si_chains = OPENSSL_zalloc(scount * sizeof(si_chains[0]));
+            if (si_chains == NULL)
+                goto err;
+        }
+        cms_certs = CMS_get1_certs(cms);
+        if (!(flags & CMS_NOCRL))
+            crls = CMS_get1_crls(cms);
+        for (i = 0; i < scount; i++) {
+            si = sk_CMS_SignerInfo_value(sinfos, i);
+
+            if (!cms_signerinfo_verify_cert(si, store, cms_certs, crls,
+                                            si_chains ? &si_chains[i] : NULL,
+                                            ctx))
+                goto err;
+        }
+    }
+
+    /* Attempt to verify all SignerInfo signed attribute signatures */
+
+    if ((flags & CMS_NO_ATTR_VERIFY) == 0 || cadesVerify) {
+        for (i = 0; i < scount; i++) {
+            si = sk_CMS_SignerInfo_value(sinfos, i);
+            if (CMS_signed_get_attr_count(si) < 0)
+                continue;
+            if (CMS_SignerInfo_verify(si) <= 0)
+                goto err;
+            if (cadesVerify) {
+                STACK_OF(X509) *si_chain = si_chains ? si_chains[i] : NULL;
+
+                if (ossl_cms_check_signing_certs(si, si_chain) <= 0)
+                    goto err;
+            }
+        }
+    }
+
     if (!(flags & CMS_NO_CONTENT_VERIFY)) {
         for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
