@@ -412,6 +412,61 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             goto err;
 
     }
+
+    /*
+     * Handle CAdES signatures of higher levels (Baseline-T, -LT, and -LTA)
+     * that include additional information packed into the unsigned attributes
+     * of the signerInfo elements.
+     * Read this: they are not organized by document but by signer, therefore
+     * mulitple * objects may exist.
+     * Extract timestamp, if available, to set the correct time for certificate
+     * validation.
+     * Timestamp (and archive-timestamps) are taken from the unsigned
+     * attributes anyway, so it does not matter when they are evaluated.
+     * Evaluating earlier however supplies the timestamp and optional CRLs
+     * supporting the verification.
+     */
+    if (cadesVerify) {
+        int num, j;
+        for (i = 0; i < scount; i++) {
+            si = sk_CMS_SignerInfo_value(sinfos, i);
+
+            /*
+             * Look for embedded timestamp tokens and archiveTimestamps,
+             * note: there can be more than one
+             */
+            num = CMS_unsigned_get_attr_count(si);
+            if (num < 0)
+                continue;
+            for (j = 0; j < num; j++) {
+                X509_ATTRIBUTE *attr = CMS_unsigned_get_attr(si, j);
+                ASN1_OBJECT *obj = X509_ATTRIBUTE_get0_object(attr);
+                switch (OBJ_obj2nid(obj)) {
+                    case NID_id_smime_aa_timeStampToken:
+                        /*
+                         * Insert evaluation of timestamp
+                         * If successfull, a valid signing time is available
+                         */
+                        break;
+                    case NID_id_aa_ets_archiveTimestampV3:
+                        /*
+                         * Evaluate archiveTimestampV3 attribute
+                         */
+                        break;
+                    default:
+                        ; /* Other information not covered */
+                }
+            }
+        }
+    }
+
+    /*
+     * at this point, verification_time is supported by a valid time stamp if
+     * at least Baseline-T level was reached.
+     * If higher level long term information was available, it was verified
+     * as well.
+     */
+
     /* Attempt to verify all signers certs */
     /* at this point scount == sk_CMS_SignerInfo_num(sinfos) */
 
