@@ -18,6 +18,14 @@
 # include "internal/e_os.h" /* ossl_inline in many files */
 # include "internal/nelem.h"
 
+#if defined(__GNUC__) || defined(__clang__)
+    #define likely(x) __builtin_expect(!!(x), 1)
+    #define unlikely(x) __builtin_expect(!!(x), 0)
+#else
+    #define likely(x) x
+    #define unlikely(x) x
+#endif
+
 #ifdef NDEBUG
 # define ossl_assert(x) ((x) != 0)
 #else
