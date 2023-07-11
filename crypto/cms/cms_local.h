@@ -43,6 +43,7 @@ typedef struct CMS_PasswordRecipientInfo_st CMS_PasswordRecipientInfo;
 typedef struct CMS_OtherRecipientInfo_st CMS_OtherRecipientInfo;
 typedef struct CMS_KEMRecipientInfo_st CMS_KEMRecipientInfo;
 typedef struct CMS_ReceiptsFrom_st CMS_ReceiptsFrom;
+typedef struct CMS_ATSHashIndexV3_st CMS_ATSHashIndexV3;
 typedef struct CMS_CTX_st CMS_CTX;
 
 struct CMS_CTX_st {
@@ -413,6 +414,13 @@ struct CMS_Receipt_st {
     ASN1_OCTET_STRING *originatorSignatureValue;
 };
 
+struct CMS_ATSHashIndexV3_st {
+    X509_ALGOR hashIndAlgorithm;
+    STACK_OF(ASN1_OCTET_STRING) *certificatesHashIndex;
+    STACK_OF(ASN1_OCTET_STRING) *crlsHashIndex;
+    STACK_OF(ASN1_OCTET_STRING) *unsignedAttrValuesHashIndex;
+};
+
 DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
 DECLARE_ASN1_ITEM(CMS_SignerInfo)
 DECLARE_ASN1_ITEM(CMS_EncryptedContentInfo)
@@ -422,6 +430,7 @@ DECLARE_ASN1_ITEM(CMS_Attributes_Verify)
 /* The authAttrs AAD encoding matches the signed-attributes one */
 #define CMS_Attributes_AadEncrypt_it CMS_Attributes_Sign_it
 #define CMS_Attributes_AadDecrypt_it CMS_Attributes_Verify_it
+DECLARE_ASN1_ITEM(CMS_Attributes_CadesLTA)
 DECLARE_ASN1_ITEM(CMS_RecipientInfo)
 DECLARE_ASN1_ITEM(CMS_PasswordRecipientInfo)
 DECLARE_ASN1_ALLOC_FUNCTIONS(CMS_IssuerAndSerialNumber)
@@ -582,5 +591,7 @@ DECLARE_ASN1_ITEM(CMS_RecipientKeyIdentifier)
 DECLARE_ASN1_ITEM(CMS_RevocationInfoChoice)
 DECLARE_ASN1_ITEM(CMS_SignedData)
 DECLARE_ASN1_ITEM(CMS_CompressedData)
+DECLARE_ASN1_ITEM(CMS_ATSHashIndexV3)
+DECLARE_ASN1_ITEM(CMS_SignerIdentifier)
 
 #endif

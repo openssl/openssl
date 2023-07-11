@@ -411,6 +411,15 @@ ASN1_ITEM_TEMPLATE(CMS_Attributes_Verify) = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQU
     V_ASN1_SET, CMS_ATTRIBUTES, X509_ATTRIBUTE)
 ASN1_ITEM_TEMPLATE_END(CMS_Attributes_Verify)
 
+/*
+ * In the context of the CAdES-Baseline-LTA verification the IMP_SET_ is
+ * translated into cont[0].
+ * I do think the correct handling is different but this setup works for now.
+ */
+ASN1_ITEM_TEMPLATE(CMS_Attributes_CadesLTA) = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_IMPTAG | ASN1_TFLG_CONTEXT,
+    0, CMS_ATTRIBUTES, X509_ATTRIBUTE)
+ASN1_ITEM_TEMPLATE_END(CMS_Attributes_CadesLTA)
+
 ASN1_CHOICE(CMS_ReceiptsFrom) = {
     ASN1_IMP_EMBED(CMS_ReceiptsFrom, d.allOrFirstTier, INT32, 0),
     ASN1_IMP_SEQUENCE_OF(CMS_ReceiptsFrom, d.receiptList, GENERAL_NAMES, 1)
@@ -500,3 +509,10 @@ int CMS_CMSORIforKEMOtherInfo_encode(unsigned char **pder, X509_ALGOR *wrap, ASN
     return ASN1_item_i2d((ASN1_VALUE *)&kem_otherinfo, pder,
         ASN1_ITEM_rptr(CMS_CMSORIforKEMOtherInfo));
 }
+
+ASN1_SEQUENCE(CMS_ATSHashIndexV3) = {
+    ASN1_SIMPLE(CMS_ATSHashIndexV3, hashIndAlgorithm, X509_ALGOR),
+    ASN1_SEQUENCE_OF(CMS_ATSHashIndexV3, certificatesHashIndex, ASN1_OCTET_STRING),
+    ASN1_SEQUENCE_OF(CMS_ATSHashIndexV3, crlsHashIndex, ASN1_OCTET_STRING),
+    ASN1_SEQUENCE_OF(CMS_ATSHashIndexV3, unsignedAttrValuesHashIndex, ASN1_OCTET_STRING),
+} ASN1_SEQUENCE_END(CMS_ATSHashIndexV3)
