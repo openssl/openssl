@@ -259,7 +259,7 @@ static int do_test_purpose(int purpose, int purpose2, int override,
         if (!TEST_true(X509_STORE_CTX_set_purpose_ex(ctx, purpose2, override)))
             goto err;
     }
-        
+
     /*
      * X509_STORE_CTX_set0_trusted_stack() is bady named. Despite the set0 name
      * we are still responsible for freeing trusted after we have finished with
