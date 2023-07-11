@@ -25,6 +25,8 @@
 #include <openssl/aes.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/pem.h>
+#include <openssl/evp.h>
 #include "internal/tsan_assist.h"
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -741,6 +743,55 @@ err:
 }
 #endif
 
+const char *pemdataraw[] = {
+    "-----BEGIN RSA PRIVATE KEY-----\n",
+    "MIIBOgIBAAJBAMFcGsaxxdgiuuGmCkVImy4h99CqT7jwY3pexPGcnUFtR2Fh36Bp\n",
+    "oncwtkZ4cAgtvd4Qs8PkxUdp6p/DlUmObdkCAwEAAQJAUR44xX6zB3eaeyvTRzms\n",
+    "kHADrPCmPWnr8dxsNwiDGHzrMKLN+i/HAam+97HxIKVWNDH2ba9Mf1SA8xu9dcHZ\n",
+    "AQIhAOHPCLxbtQFVxlnhSyxYeb7O323c3QulPNn3bhOipElpAiEA2zZpBE8ZXVnL\n",
+    "74QjG4zINlDfH+EOEtjJJ3RtaYDugvECIBtsQDxXytChsRgDQ1TcXdStXPcDppie\n",
+    "dZhm8yhRTTBZAiAZjE/U9rsIDC0ebxIAZfn3iplWh84yGB3pgUI3J5WkoQIhAInE\n",
+    "HTUY5WRj5riZtkyGnbm3DvF+1eMtO2lYV+OuLcfE\n",
+    "-----END RSA PRIVATE KEY-----\n",
+    NULL
+};
+
+static void test_pem_read_one(void)
+{
+    EVP_PKEY *key = NULL;
+    BIO *pem = NULL;
+    char *pemdata;
+    size_t len;
+
+    pemdata = glue_strings(pemdataraw, &len);
+    if (pemdata == NULL) {
+        multi_set_success(0);
+        goto err;
+    }
+
+    pem = BIO_new_mem_buf(pemdata, len);
+    if (pem == NULL) {
+        multi_set_success(0);
+        goto err;
+    }
+
+    key = PEM_read_bio_PrivateKey(pem, NULL, NULL, NULL);
+    if (key == NULL)
+        multi_set_success(0);
+
+ err:
+    EVP_PKEY_free(key);
+    BIO_free(pem);
+    OPENSSL_free(pemdata);
+}
+
+/* Test reading PEM files in multiple threads */
+static int test_pem_read(void)
+{
+    return thread_run_test(&test_pem_read_one, MAXIMUM_THREADS,
+                           &test_pem_read_one, 1, default_provider);
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -816,6 +867,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
     ADD_TEST(test_bio_dgram_pair);
 #endif
+    ADD_TEST(test_pem_read);
     return 1;
 }
 
