@@ -594,7 +594,7 @@ has_keyUsage($cert, 1);
 subtest "Issue 21403 - '-modulus' interaction with 'req'" => sub {
     plan tests => 2;
 
-    SKIP {
+    SKIP: {
         skip "RSA is not supported by this OpenSSL build", 2
             if disabled("rsa");
 
