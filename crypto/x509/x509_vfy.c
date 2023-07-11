@@ -2347,7 +2347,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 }
 
 /*
- * This "_ex" function allows to override existing values 
+ * This "_ex" function allows to override existing values
  */
 int X509_STORE_CTX_purpose_inherit_ex(X509_STORE_CTX *ctx, int def_purpose,
                                    int purpose, int trust, int override)
