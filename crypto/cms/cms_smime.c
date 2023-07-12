@@ -444,9 +444,14 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
                 switch (OBJ_obj2nid(obj)) {
                     case NID_id_smime_aa_timeStampToken:
                         /*
-                         * Insert evaluation of timestamp
+                         * Perform evaluation of timestamp. The value
+                         * timestamped is the original signature
                          * If successfull, a valid signing time is available
                          */
+                        if (!ossl_cms_handle_CAdES_SignatureTimestampToken(attr,
+                                 store, si->signature, &verification_time))
+                            goto err;
+                        vt = &verification_time;
                         break;
                     case NID_id_aa_ets_archiveTimestampV3:
                         /*
