@@ -92,7 +92,7 @@ int ssl3_do_write(SSL_CONNECTION *s, int type)
 
     ret = ssl3_write_bytes(ssl, type, &s->init_buf->data[s->init_off],
                            s->init_num, &written);
-    if (ret < 0)
+    if (ret <= 0)
         return -1;
     if (type == SSL3_RT_HANDSHAKE)
         /*
