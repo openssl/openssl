@@ -486,6 +486,7 @@ SHA3_squeeze:
 	ret
 .size	SHA3_squeeze,.-SHA3_squeeze
 
+.section .rodata
 .align	64
 theta_perm:
 	.quad	0, 1, 2, 3, 4, 5, 6, 7		# [not used]
