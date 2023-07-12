@@ -21,17 +21,10 @@ OpenSSL 3.1
 
 ### Major changes between OpenSSL 3.1.1 and OpenSSL 3.1.2 [under development]
 
-  * When building with the `enable-fips` option, the FIPS provider is
-    installed to ensure FIPS 140-3 compliance by default.  This
-    installation has two notable side effects:
-
-    1. TLS 1.2 necessitates use of an extended master secret (EMS).
-       This could lead to interoperability issues with older devices
-       not supporting TLS 1.3 or EMS in TLS 1.2.  This is as per the
-       FIPS 140-3 IG G.Q transition.
-
-    2. Truncated digests cannot be utilised with the Hash and HMAC DRBGs.
-       This is as per the FIPS 140-3 IG G.Q transition.
+ * When building with the `enable-fips` option and using the resulting
+   FIPS provider, TLS 1.2 will mandate the use of an extended master
+   secret and the Hash and HMAC DRBGs will not operate with truncated
+   digests.
 
 ### Major changes between OpenSSL 3.1.0 and OpenSSL 3.1.1 [30 May 2023]
 
