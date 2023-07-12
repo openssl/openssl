@@ -25,9 +25,9 @@ OpenSSL 3.1
 ### Changes between 3.1.1 and 3.1.2 [xx XXX xxxx]
 
  * When building with the `enable-fips` option and using the resulting
-   FIPS provider, TLS 1.2 will mandate the use of an extended master
-   secret (FIPS 140-3 IG G.Q) and the Hash and HMAC DRBGs will not
-   operate with truncated digests (FIPS 140-3 IG G.R).
+   FIPS provider, TLS 1.2 will, by default, mandate the use of an extended
+   master secret (FIPS 140-3 IG G.Q) and the Hash and HMAC DRBGs will
+   not operate with truncated digests (FIPS 140-3 IG G.R).
 
    *Paul Dale*
 
