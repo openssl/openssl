@@ -484,7 +484,7 @@ static EVP_KEYMGMT *keymgmt_dup(const EVP_KEYMGMT *keymgmt)
 
 /*
  * Duplicates a template OSSL_DECODER_CTX that has been setup for an EVP_PKEY
- * operation and sets up the duplicte for a new operation.
+ * operation and sets up the duplicate for a new operation.
  * It does not duplicate the pwdata on the assumption that this does not form
  * part of the template. That is set up later.
  */
