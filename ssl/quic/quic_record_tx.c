@@ -383,19 +383,27 @@ static size_t iovec_cur_get_buffer(struct iovec_cur *cur,
 }
 
 /* Determines the size of the AEAD output given the input size. */
-static size_t qtx_inflate_payload_len(OSSL_QTX *qtx, uint32_t enc_level,
-                                      size_t plaintext_len)
+int ossl_qtx_calculate_ciphertext_payload_len(OSSL_QTX *qtx, uint32_t enc_level,
+                                              size_t plaintext_len,
+                                              size_t *ciphertext_len)
 {
     OSSL_QRL_ENC_LEVEL *el
         = ossl_qrl_enc_level_set_get(&qtx->el_set, enc_level, 1);
+    size_t tag_len;
 
-    assert(el != NULL); /* Already checked by caller. */
+    if (el == NULL) {
+        *ciphertext_len = 0;
+        return 0;
+    }
 
     /*
      * We currently only support ciphers with a 1:1 mapping between plaintext
      * and ciphertext size, save for authentication tag.
      */
-    return plaintext_len + ossl_qrl_get_suite_cipher_tag_len(el->suite_id);
+    tag_len = ossl_qrl_get_suite_cipher_tag_len(el->suite_id);
+
+    *ciphertext_len = plaintext_len + tag_len;
+    return 1;
 }
 
 /* Determines the size of the AEAD input given the output size. */
@@ -611,9 +619,12 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
     }
 
     /* Determine encrypted payload length. */
-    payload_len = needs_encrypt ? qtx_inflate_payload_len(qtx, enc_level,
-                                                          cur.bytes_remaining)
-                                : cur.bytes_remaining;
+    if (needs_encrypt)
+        ossl_qtx_calculate_ciphertext_payload_len(qtx, enc_level,
+                                                  cur.bytes_remaining,
+                                                  &payload_len);
+    else
+        payload_len = cur.bytes_remaining;
 
     /* Determine header length. */
     hdr->data  = NULL;
