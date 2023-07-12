@@ -99,12 +99,16 @@ void EC_pre_comp_free(EC_GROUP *group)
     case PCT_nistp256:
         EC_nistp256_pre_comp_free(group->pre_comp.nistp256);
         break;
+    case PCT_nistp384:
+        ossl_ec_nistp384_pre_comp_free(group->pre_comp.nistp384);
+        break;
     case PCT_nistp521:
         EC_nistp521_pre_comp_free(group->pre_comp.nistp521);
         break;
 #else
     case PCT_nistp224:
     case PCT_nistp256:
+    case PCT_nistp384:
     case PCT_nistp521:
         break;
 #endif
@@ -188,12 +192,16 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
     case PCT_nistp256:
         dest->pre_comp.nistp256 = EC_nistp256_pre_comp_dup(src->pre_comp.nistp256);
         break;
+    case PCT_nistp384:
+        dest->pre_comp.nistp384 = ossl_ec_nistp384_pre_comp_dup(src->pre_comp.nistp384);
+        break;
     case PCT_nistp521:
         dest->pre_comp.nistp521 = EC_nistp521_pre_comp_dup(src->pre_comp.nistp521);
         break;
 #else
     case PCT_nistp224:
     case PCT_nistp256:
+    case PCT_nistp384:
     case PCT_nistp521:
         break;
 #endif

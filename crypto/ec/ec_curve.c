@@ -2838,6 +2838,8 @@ static const ec_list_element curve_list[] = {
     {NID_secp384r1, &_EC_NIST_PRIME_384.h,
 # if defined(S390X_EC_ASM)
      EC_GFp_s390x_nistp384_method,
+# elif !defined(OPENSSL_NO_EC_NISTP_64_GCC_128)
+     ossl_ec_GFp_nistp384_method,
 # else
      0,
 # endif
@@ -2931,6 +2933,8 @@ static const ec_list_element curve_list[] = {
     {NID_secp384r1, &_EC_NIST_PRIME_384.h,
 # if defined(S390X_EC_ASM)
      EC_GFp_s390x_nistp384_method,
+# elif !defined(OPENSSL_NO_EC_NISTP_64_GCC_128)
+     ossl_ec_GFp_nistp384_method,
 # else
      0,
 # endif
