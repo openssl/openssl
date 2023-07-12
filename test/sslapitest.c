@@ -956,18 +956,13 @@ end:
 }
 #endif
 
-static int execute_test_large_message(const SSL_METHOD *smeth,
-                                      const SSL_METHOD *cmeth,
-                                      int min_version, int max_version,
-                                      int read_ahead)
+static int add_large_cert_chain(SSL_CTX *sctx)
 {
-    SSL_CTX *cctx = NULL, *sctx = NULL;
-    SSL *clientssl = NULL, *serverssl = NULL;
-    int testresult = 0;
-    int i;
     BIO *certbio = NULL;
     X509 *chaincert = NULL;
     int certlen;
+    int ret = 0;
+    int i;
 
     if (!TEST_ptr(certbio = BIO_new_file(cert, "r")))
         goto end;
@@ -979,6 +974,41 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
         goto end;
     BIO_free(certbio);
     certbio = NULL;
+
+    /*
+     * We assume the supplied certificate is big enough so that if we add
+     * NUM_EXTRA_CERTS it will make the overall message large enough. The
+     * default buffer size is requested to be 16k, but due to the way BUF_MEM
+     * works, it ends up allocating a little over 21k (16 * 4/3). So, in this
+     * test we need to have a message larger than that.
+     */
+    certlen = i2d_X509(chaincert, NULL);
+    OPENSSL_assert(certlen * NUM_EXTRA_CERTS >
+                   (SSL3_RT_MAX_PLAIN_LENGTH * 4) / 3);
+    for (i = 0; i < NUM_EXTRA_CERTS; i++) {
+        if (!X509_up_ref(chaincert))
+            goto end;
+        if (!SSL_CTX_add_extra_chain_cert(sctx, chaincert)) {
+            X509_free(chaincert);
+            goto end;
+        }
+    }
+
+    ret = 1;
+ end:
+    BIO_free(certbio);
+    X509_free(chaincert);
+    return ret;
+}
+
+static int execute_test_large_message(const SSL_METHOD *smeth,
+                                      const SSL_METHOD *cmeth,
+                                      int min_version, int max_version,
+                                      int read_ahead)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, min_version,
                                        max_version, &sctx, &cctx, cert,
@@ -1006,24 +1036,8 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
         SSL_CTX_set_read_ahead(cctx, 1);
     }
 
-    /*
-     * We assume the supplied certificate is big enough so that if we add
-     * NUM_EXTRA_CERTS it will make the overall message large enough. The
-     * default buffer size is requested to be 16k, but due to the way BUF_MEM
-     * works, it ends up allocating a little over 21k (16 * 4/3). So, in this
-     * test we need to have a message larger than that.
-     */
-    certlen = i2d_X509(chaincert, NULL);
-    OPENSSL_assert(certlen * NUM_EXTRA_CERTS >
-                   (SSL3_RT_MAX_PLAIN_LENGTH * 4) / 3);
-    for (i = 0; i < NUM_EXTRA_CERTS; i++) {
-        if (!X509_up_ref(chaincert))
-            goto end;
-        if (!SSL_CTX_add_extra_chain_cert(sctx, chaincert)) {
-            X509_free(chaincert);
-            goto end;
-        }
-    }
+    if (!add_large_cert_chain(sctx))
+        goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                       NULL, NULL))
@@ -1040,8 +1054,6 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
 
     testresult = 1;
  end:
-    BIO_free(certbio);
-    X509_free(chaincert);
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -11064,6 +11076,102 @@ end:
     return testresult;
 }
 
+/*
+ * Force a write retry during handshaking. We test various combinations of
+ * scenarios. We test a large certificate message which will fill the buffering
+ * BIO used in the handshake. We try with client auth on and off. Finally we
+ * also try a BIO that indicates retry via a 0 return. BIO_write() is documented
+ * to indicate retry via -1 - but sometimes BIOs don't do that.
+ *
+ * Test 0: Standard certificate message
+ * Test 1: Large certificate message
+ * Test 2: Standard cert, verify peer
+ * Test 3: Large cert, verify peer
+ * Test 4: Standard cert, BIO returns 0 on retry
+ * Test 5: Large cert, BIO returns 0 on retry
+ * Test 6: Standard cert, verify peer, BIO returns 0 on retry
+ * Test 7: Large cert, verify peer, BIO returns 0 on retry
+ * Test 8-15: Repeat of above with TLSv1.2
+ */
+static int test_handshake_retry(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    BIO *tmp = NULL, *bretry = BIO_new(bio_s_always_retry());
+    int maxversion = 0;
+
+    if (!TEST_ptr(bretry))
+        goto end;
+
+#ifndef OPENSSL_NO_TLS1_2
+    if ((idx & 8) == 8)
+        maxversion = TLS1_2_VERSION;
+#else
+    if ((idx & 8) == 8)
+        return TEST_skip("No TLSv1.2");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), 0, maxversion,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    /*
+     * Add a large amount of data to fill the buffering BIO used by the SSL
+     * object
+     */
+    if ((idx & 1) == 1 && !add_large_cert_chain(sctx))
+        goto end;
+
+    /*
+     * We don't actually configure a client cert, but neither do we fail if one
+     * isn't present.
+     */
+    if ((idx & 2) == 2)
+        SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER, NULL);
+
+    if ((idx & 4) == 4)
+        set_always_retry_err_val(0);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL)))
+        goto end;
+
+    tmp = SSL_get_wbio(serverssl);
+    if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    SSL_set0_wbio(serverssl, bretry);
+    bretry = NULL;
+
+    if (!TEST_int_eq(SSL_connect(clientssl), -1))
+        goto end;
+
+    if (!TEST_int_eq(SSL_accept(serverssl), -1)
+            || !TEST_int_eq(SSL_get_error(serverssl, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* Restore a BIO that will let the write succeed */
+    SSL_set0_wbio(serverssl, tmp);
+    tmp = NULL;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free(bretry);
+    BIO_free(tmp);
+    set_always_retry_err_val(-1);
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -11369,6 +11477,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_version, 6);
     ADD_TEST(test_rstate_string);
+    ADD_ALL_TESTS(test_handshake_retry, 16);
     return 1;
 
  err:
