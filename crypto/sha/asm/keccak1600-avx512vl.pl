@@ -349,6 +349,7 @@ $code.=<<___;
 	ret
 .size	SHA3_squeeze,.-SHA3_squeeze
 
+.section .rodata
 .align	64
 rhotates_left:
 	.quad	3,	18,	36,	41	# [2][0] [4][0] [1][0] [3][0]
