@@ -474,7 +474,8 @@ static void alg_do_each(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
     for (i = 0; i < end; i++) {
         IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
 
-        alg_do_one(alg, impl, data->fn, data->fnarg);
+        if (impl != NULL)
+            alg_do_one(alg, impl, data->fn, data->fnarg);
     }
 }
 
