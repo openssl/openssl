@@ -743,7 +743,7 @@ err:
 }
 #endif
 
-const char *pemdataraw[] = {
+static const char *pemdataraw[] = {
     "-----BEGIN RSA PRIVATE KEY-----\n",
     "MIIBOgIBAAJBAMFcGsaxxdgiuuGmCkVImy4h99CqT7jwY3pexPGcnUFtR2Fh36Bp\n",
     "oncwtkZ4cAgtvd4Qs8PkxUdp6p/DlUmObdkCAwEAAQJAUR44xX6zB3eaeyvTRzms\n",
