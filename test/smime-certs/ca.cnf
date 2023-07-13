@@ -67,6 +67,15 @@ basicConstraints = CA:FALSE
 keyUsage = critical, digitalSignature
 extendedKeyUsage = codeSigning
 
+[ timestamp_cert ]
+
+# These extensions are added when 'ca' signs a request for a time-stamping
+# end-entity certificate compatible with RSA and ECC keys
+
+basicConstraints = CA:FALSE
+keyUsage = critical, digitalSignature
+extendedKeyUsage = critical,timeStamping
+
 [ v3_ca ]
 
 # Extensions for a typical CA as required by RFC 5280 etc.
