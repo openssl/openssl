@@ -19,7 +19,7 @@
 
 /* QUIC encryption levels. */
 enum {
-    QUIC_ENC_LEVEL_INITIAL,
+    QUIC_ENC_LEVEL_INITIAL = 0,
     QUIC_ENC_LEVEL_HANDSHAKE,
     QUIC_ENC_LEVEL_0RTT,
     QUIC_ENC_LEVEL_1RTT,
@@ -28,7 +28,7 @@ enum {
 
 /* QUIC packet number spaces. */
 enum {
-    QUIC_PN_SPACE_INITIAL,
+    QUIC_PN_SPACE_INITIAL = 0,
     QUIC_PN_SPACE_HANDSHAKE,
     /* New entries must go here, so that QUIC_PN_SPACE_APP is the penultimate */
     QUIC_PN_SPACE_APP,
