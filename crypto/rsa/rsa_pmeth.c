@@ -584,6 +584,10 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING_MODE);
             return -2;
         }
+        if (p2 == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+            return 0;
+        }
         *(unsigned char **)p2 = rctx->oaep_label;
         return rctx->oaep_labellen;
 
