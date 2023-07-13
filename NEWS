@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.1.1u and OpenSSL 1.1.1v [under development]
 
-      o
+      o Fix DH_check() excessive time with over sized modulus (CVE-2023-3446)
 
   Major changes between OpenSSL 1.1.1t and OpenSSL 1.1.1u [30 May 2023]
 
