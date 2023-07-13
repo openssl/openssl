@@ -2126,9 +2126,7 @@ static int ch_tx(QUIC_CHANNEL *ch)
      * Best effort. In particular if TXP fails for some reason we should still
      * flush any queued packets which we already generated.
      */
-    switch (ossl_quic_tx_packetiser_generate(ch->txp,
-                                             TX_PACKETISER_ARCHETYPE_NORMAL,
-                                             &status)) {
+    switch (ossl_quic_tx_packetiser_generate(ch->txp, &status)) {
     case TX_PACKETISER_RES_SENT_PKT:
         ch->have_sent_any_pkt = 1; /* Packet was sent */
 
@@ -2212,11 +2210,9 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
         }
     }
 
-    /* When will CC let us send more? */
-    if (ossl_quic_tx_packetiser_has_pending(ch->txp, TX_PACKETISER_ARCHETYPE_NORMAL,
-                                            TX_PACKETISER_BYPASS_CC))
-        deadline = ossl_time_min(deadline,
-                                 ch->cc_method->get_wakeup_deadline(ch->cc_data));
+    /* Apply TXP wakeup deadline. */
+    deadline = ossl_time_min(deadline,
+                             ossl_quic_tx_packetiser_get_deadline(ch->txp));
 
     /* Is the terminating timer armed? */
     if (ossl_quic_channel_is_terminating(ch))
