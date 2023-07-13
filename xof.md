@@ -38,6 +38,8 @@ A decision has to be made as to whether a new API is required, as well as consid
 how the change may affect existing applications.
 The changes introduced should have a minimal affect on other related functions that
 share the same code (e.g SHAKE and SHA3 share functionality).
+Older providers that have not been updated to support this change should produce an
+error if a newer core is used that supports multiple squeeze operations.
 
 API Discussion of Squeeze
 -------------------------
@@ -47,6 +49,11 @@ API Discussion of Squeeze
 Currently EVP_DigestFinalXOF() uses a flag to check that it is only invoked once.
 It returns an error if called more than once. When initially written it also did a 
 reset, but that code was removed as it was deemed to be incorrect.
+
+If we remove the flag check, then the core code will potentially call low level squeeze code
+in a older provider that does not handle returning correct data for multiple calls.
+To counter this the provider needs a mechanism to indicate that multiple calls are allowed.
+This could just be a new gettable flag (having a separate provider function should not be necessary).
 
 #### Proposal 1
 
