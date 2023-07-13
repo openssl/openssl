@@ -372,6 +372,10 @@ int ossl_quic_wire_encode_frame_conn_close(WPACKET *pkt,
             || !WPACKET_quic_write_vlint(pkt, f->error_code))
         return 0;
 
+    /*
+     * RFC 9000 s. 19.19: The application-specific variant of CONNECTION_CLOSE
+     * (type 0x1d) does not include this field.
+     */
     if (!f->is_app && !WPACKET_quic_write_vlint(pkt, f->frame_type))
         return 0;
 
