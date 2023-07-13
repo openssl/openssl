@@ -2547,6 +2547,11 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
         if (!force_immediate) {
             ch->state = tcause->remote ? QUIC_CHANNEL_STATE_TERMINATING_DRAINING
                                        : QUIC_CHANNEL_STATE_TERMINATING_CLOSING;
+            /*
+             * RFC 9000 s. 10.2 Immediate Close
+             *  These states SHOULD persist for at least three times
+             *  the current PTO interval as defined in [QUIC-RECOVERY].
+             */
             ch->terminate_deadline
                 = ossl_time_add(get_time(ch),
                                 ossl_time_multiply(ossl_ackm_get_pto_duration(ch->ackm),
