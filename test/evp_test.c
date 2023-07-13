@@ -72,6 +72,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
     OPT_CONFIG_FILE,
+    OPT_INPLACE,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -109,6 +110,18 @@ static int memory_err_compare(EVP_TEST *t, const char *err,
     if (!r)
         t->err = err;
     return r;
+}
+
+/* Option specific for evp test */
+static int process_mode_in_place;
+
+static int evp_test_process_mode(char *mode)
+{
+    if (strcmp(mode, "inplace") == 0)
+        return 1;
+    else if (strcmp(mode, "both") == 0)
+        return 0;
+    return -1;
 }
 
 /*
@@ -713,8 +726,8 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
     return 0;
 }
 
-static int cipher_test_enc(EVP_TEST *t, int enc,
-                           size_t out_misalign, size_t inp_misalign, int frag)
+static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
+                           size_t inp_misalign, int frag, int in_place)
 {
     CIPHER_DATA *expected = t->data;
     unsigned char *in, *expected_out, *tmp = NULL;
@@ -740,7 +753,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         expected_out = expected->plaintext;
         out_len = expected->plaintext_len;
     }
-    if (inp_misalign == (size_t)-1) {
+    if (in_place == 1) {
         /* Exercise in-place encryption */
         tmp = OPENSSL_malloc(out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH);
         if (!tmp)
@@ -1053,10 +1066,27 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     return ok;
 }
 
+/*
+ * XTS, SIV, CCM, stitched ciphers and Wrap modes have special
+ * requirements about input lengths so we don't fragment for those
+ */
+static int cipher_test_valid_fragmentation(CIPHER_DATA *cdat)
+{
+    return (cdat->aead == EVP_CIPH_CCM_MODE
+            || cdat->aead == EVP_CIPH_CBC_MODE
+            || (cdat->aead == -1
+                && EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_STREAM_CIPHER)
+            || ((EVP_CIPHER_get_flags(cdat->cipher) & EVP_CIPH_FLAG_CTS) != 0)
+            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
+            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_GCM_SIV_MODE
+            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
+            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE) ? 0 : 1;
+}
+
 static int cipher_test_run(EVP_TEST *t)
 {
     CIPHER_DATA *cdat = t->data;
-    int rv, frag = 0;
+    int rv, frag, fragmax, in_place;
     size_t out_misalign, inp_misalign;
 
     if (!cdat->key) {
@@ -1074,62 +1104,56 @@ static int cipher_test_run(EVP_TEST *t)
         t->err = "NO_TAG";
         return 0;
     }
-    for (out_misalign = 0; out_misalign <= 1;) {
-        static char aux_err[64];
-        t->aux_err = aux_err;
-        for (inp_misalign = (size_t)-1; inp_misalign != 2; inp_misalign++) {
-            if (inp_misalign == (size_t)-1) {
-                /* kludge: inp_misalign == -1 means "exercise in-place" */
-                BIO_snprintf(aux_err, sizeof(aux_err),
-                             "%s in-place, %sfragmented",
-                             out_misalign ? "misaligned" : "aligned",
-                             frag ? "" : "not ");
-            } else {
-                BIO_snprintf(aux_err, sizeof(aux_err),
-                             "%s output and %s input, %sfragmented",
-                             out_misalign ? "misaligned" : "aligned",
-                             inp_misalign ? "misaligned" : "aligned",
-                             frag ? "" : "not ");
-            }
-            if (cdat->enc) {
-                rv = cipher_test_enc(t, 1, out_misalign, inp_misalign, frag);
-                /* Not fatal errors: return */
-                if (rv != 1) {
-                    if (rv < 0)
-                        return 0;
-                    return 1;
-                }
-            }
-            if (cdat->enc != 1) {
-                rv = cipher_test_enc(t, 0, out_misalign, inp_misalign, frag);
-                /* Not fatal errors: return */
-                if (rv != 1) {
-                    if (rv < 0)
-                        return 0;
-                    return 1;
-                }
-            }
-        }
 
-        if (out_misalign == 1 && frag == 0) {
-            /*
-             * XTS, SIV, CCM, stitched ciphers and Wrap modes have special
-             * requirements about input lengths so we don't fragment for those
-             */
-            if (cdat->aead == EVP_CIPH_CCM_MODE
-                || cdat->aead == EVP_CIPH_CBC_MODE
-                || (cdat->aead == -1
-                    && EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_STREAM_CIPHER)
-                || ((EVP_CIPHER_get_flags(cdat->cipher) & EVP_CIPH_FLAG_CTS) != 0)
-                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
-                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_GCM_SIV_MODE
-                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
-                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE)
-                break;
-            out_misalign = 0;
-            frag++;
-        } else {
-            out_misalign++;
+    fragmax = (cipher_test_valid_fragmentation(cdat) == 0) ? 0 : 1;
+    for (in_place = 1; in_place >= 0; in_place--) {
+        static char aux_err[64];
+
+        t->aux_err = aux_err;
+        /* Test only in-place data processing */
+        if (process_mode_in_place == 1 && in_place == 0)
+            break;
+
+        for (frag = 0; frag <= fragmax; frag++) {
+            for (out_misalign = 0; out_misalign <= 1; out_misalign++) {
+                for (inp_misalign = 0; inp_misalign <= 1; inp_misalign++) {
+                    /* Skip input misalign tests for in-place processing */
+                    if (inp_misalign == 1 && in_place == 1)
+                        break;
+                    if (in_place == 1) {
+                        BIO_snprintf(aux_err, sizeof(aux_err),
+                                        "%s in-place, %sfragmented",
+                                        out_misalign ? "misaligned" : "aligned",
+                                        frag ? "" : "not ");
+                    } else {
+                        BIO_snprintf(aux_err, sizeof(aux_err),
+                                        "%s output and %s input, %sfragmented",
+                                        out_misalign ? "misaligned" : "aligned",
+                                        inp_misalign ? "misaligned" : "aligned",
+                                        frag ? "" : "not ");
+                    }
+                    if (cdat->enc) {
+                        rv = cipher_test_enc(t, 1, out_misalign, inp_misalign,
+                                             frag, in_place);
+                        /* Not fatal errors: return */
+                        if (rv != 1) {
+                            if (rv < 0)
+                                return 0;
+                            return 1;
+                        }
+                    }
+                    if (cdat->enc != 1) {
+                        rv = cipher_test_enc(t, 0, out_misalign, inp_misalign,
+                                             frag, in_place);
+                        /* Not fatal errors: return */
+                        if (rv != 1) {
+                            if (rv < 0)
+                                return 0;
+                            return 1;
+                        }
+                    }
+                }
+            }
         }
     }
     t->aux_err = NULL;
@@ -4070,6 +4094,8 @@ const OPTIONS *test_get_options(void)
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("[file...]\n"),
         { "config", OPT_CONFIG_FILE, '<',
           "The configuration file to use for the libctx" },
+        { "process", OPT_INPLACE, 's',
+          "Mode for data processing by cipher tests [inplace/both],both by default"},
         { OPT_HELP_STR, 1, '-', "file\tFile to run tests on.\n" },
         { NULL }
     };
@@ -4088,8 +4114,12 @@ int setup_tests(void)
         case OPT_CONFIG_FILE:
             config_file = opt_arg();
             break;
+        case OPT_INPLACE:
+            if ((process_mode_in_place = evp_test_process_mode(opt_arg())) == -1)
+                return 0;
+            break;
         case OPT_TEST_CASES:
-           break;
+            break;
         default:
         case OPT_ERR:
             return 0;
