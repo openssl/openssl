@@ -91,6 +91,18 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
                                      QUIC_TXP_STATUS *status);
 
 /*
+ * Returns a deadline after which a call to ossl_quic_tx_packetiser_generate()
+ * might succeed even if it did not previously. This may return
+ * ossl_time_infinite() if there is no such deadline currently applicable. It
+ * returns ossl_time_zero() if there is (potentially) more data to be generated
+ * immediately. The value returned is liable to change after any call to
+ * ossl_quic_tx_packetiser_generate() (or after ACKM or CC state changes). Note
+ * that ossl_quic_tx_packetiser_generate() can also start to succeed for other
+ * non-chronological reasons, such as changes to send stream buffers, etc.
+ */
+OSSL_TIME ossl_quic_tx_packetiser_get_deadline(OSSL_QUIC_TX_PACKETISER *txp);
+
+/*
  * Set the token used in Initial packets. The callback is called when the buffer
  * is no longer needed; for example, when the TXP is freed or when this function
  * is called again with a new buffer.

@@ -440,7 +440,8 @@ static int txp_pkt_append_padding(struct txp_pkt *pkt,
                                   OSSL_QUIC_TX_PACKETISER *txp, size_t num_bytes);
 static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp, struct txp_pkt *pkt,
                           uint32_t archetype);
-static uint32_t txp_determine_archetype(OSSL_QUIC_TX_PACKETISER *txp);
+static uint32_t txp_determine_archetype(OSSL_QUIC_TX_PACKETISER *txp,
+                                        uint64_t cc_limit);
 
 OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETISER_ARGS *args)
 {
@@ -712,7 +713,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
     ossl_qtx_finish_dgram(txp->args.qtx);
 
     /* 1. Archetype Selection */
-    archetype = txp_determine_archetype(txp);
+    archetype = txp_determine_archetype(txp, cc_limit);
 
     /* 2. Packet Staging */
     for (enc_level = QUIC_ENC_LEVEL_INITIAL;
@@ -1166,12 +1167,11 @@ static int txp_determine_geometry(OSSL_QUIC_TX_PACKETISER *txp,
     return 1;
 }
 
-static uint32_t txp_determine_archetype(OSSL_QUIC_TX_PACKETISER *txp)
+static uint32_t txp_determine_archetype(OSSL_QUIC_TX_PACKETISER *txp,
+                                        uint64_t cc_limit)
 {
     OSSL_ACKM_PROBE_INFO *probe_info
         = ossl_ackm_get0_probe_request(txp->args.ackm);
-    uint64_t cc_limit
-        = txp->args.cc_method->get_tx_allowance(txp->args.cc_data);
     uint32_t pn_space;
 
     /*
@@ -2932,4 +2932,36 @@ QUIC_PN ossl_quic_tx_packetiser_get_next_pn(OSSL_QUIC_TX_PACKETISER *txp,
         return UINT64_MAX;
 
     return txp->next_pn[pn_space];
+}
+
+OSSL_TIME ossl_quic_tx_packetiser_get_deadline(OSSL_QUIC_TX_PACKETISER *txp)
+{
+    /*
+     * TXP-specific deadline computations which rely on TXP innards. This is in
+     * turn relied on by the QUIC_CHANNEL code to determine the channel event
+     * handling deadline.
+     */
+    OSSL_TIME deadline = ossl_time_infinite();
+    uint32_t enc_level, pn_space;
+
+    /*
+     * ACK generation is not CC-gated - packets containing only ACKs are allowed
+     * to bypass CC. We want to generate ACK frames even if we are currently
+     * restricted by CC so the peer knows we have received data. The generate
+     * call will take care of selecting the correct packet archetype.
+     */
+    for (enc_level = QUIC_ENC_LEVEL_INITIAL;
+         enc_level < QUIC_ENC_LEVEL_NUM;
+         ++enc_level)
+        if (ossl_qtx_is_enc_level_provisioned(txp->args.qtx, enc_level)) {
+            pn_space = ossl_quic_enc_level_to_pn_space(enc_level);
+            deadline = ossl_time_min(deadline,
+                                     ossl_ackm_get_ack_deadline(txp->args.ackm, pn_space));
+        }
+
+    /* When will CC let us send more? */
+    deadline = ossl_time_min(deadline,
+                             txp->args.cc_method->get_wakeup_deadline(txp->args.cc_data));
+
+    return deadline;
 }
