@@ -1286,8 +1286,10 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 int expect_remote = (op->arg1 & EXPECT_CONN_CLOSE_REMOTE) != 0;
                 uint64_t error_code = op->arg2;
 
-                if (!ossl_quic_tserver_is_term_any(h->s))
+                if (!ossl_quic_tserver_is_term_any(h->s)) {
+                    ossl_quic_tserver_ping(h->s);
                     SPIN_AGAIN();
+                }
 
                 if (!TEST_ptr(tc = ossl_quic_tserver_get_terminate_cause(h->s)))
                     goto out;
@@ -1721,11 +1723,16 @@ static const struct script_op script_5[] = {
 
     OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
     OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_NEW_STREAM_BIDI    (b, C_BIDI_ID(1))
 
     OP_C_WRITE              (a, "apple", 5)
     OP_C_STREAM_RESET       (a, 42)
 
+    OP_C_WRITE              (b, "strawberry", 10)
+
     OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_BIND_STREAM_ID     (b, C_BIDI_ID(1))
+    OP_S_READ_EXPECT        (b, "strawberry", 10)
     /* Reset disrupts read of already sent data */
     OP_S_READ_FAIL          (a)
     OP_CHECK                (check_stream_reset, C_BIDI_ID(0))

@@ -3117,3 +3117,12 @@ int ossl_quic_channel_trigger_txku(QUIC_CHANNEL *ch)
     ch_trigger_txku(ch);
     return 1;
 }
+
+int ossl_quic_channel_ping(QUIC_CHANNEL *ch)
+{
+    int pn_space = ossl_quic_enc_level_to_pn_space(ch->tx_enc_level);
+
+    ossl_quic_tx_packetiser_schedule_ack_eliciting(ch->txp, pn_space);
+
+    return 1;
+}
