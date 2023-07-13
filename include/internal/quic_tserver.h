@@ -181,6 +181,9 @@ OSSL_TIME ossl_quic_tserver_get_deadline(QUIC_TSERVER *srv);
  */
 int ossl_quic_tserver_shutdown(QUIC_TSERVER *srv);
 
+/* Force generation of an ACK-eliciting packet. */
+int ossl_quic_tserver_ping(QUIC_TSERVER *srv);
+
 # endif
 
 #endif
