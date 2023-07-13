@@ -492,11 +492,11 @@ int ossl_quic_tserver_shutdown(QUIC_TSERVER *srv)
 
 int ossl_quic_tserver_ping(QUIC_TSERVER *srv)
 {
-   if (ossl_quic_channel_is_terminated(srv->ch))
-     return 0;
+    if (ossl_quic_channel_is_terminated(srv->ch))
+        return 0;
 
     if (!ossl_quic_channel_ping(srv->ch))
-      return 0;
+        return 0;
 
     ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(srv->ch), 0);
     return 1;
