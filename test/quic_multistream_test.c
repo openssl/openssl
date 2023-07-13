@@ -2866,6 +2866,7 @@ static const struct script_op *const scripts[] = {
     script_36,
     script_37,
     script_38,
+    script_39,
 };
 
 static int test_script(int idx)
@@ -2879,7 +2880,7 @@ static int test_script(int idx)
 
 /* Dynamically generated tests. */
 static struct script_op dyn_frame_types_script[] = {
-    OP_S_SET_INJECT_PLAIN   (script_20_inject_plain)
+    OP_S_SET_INJECT_PLAIN   (script_21_inject_plain)
     OP_SET_INJECT_WORD      (0, 0) /* dynamic */
 
     OP_C_SET_ALPN           ("ossltest")
