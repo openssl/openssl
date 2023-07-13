@@ -2605,7 +2605,9 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp,
     /* PING */
     tx_helper_unrestrict(h);
 
-    if (a.require_ack_eliciting && !have_ack_eliciting && a.allow_ping) {
+    if ((a.require_ack_eliciting
+         || (txp->force_ack_eliciting & (1UL << pn_space)) != 0)
+        && !have_ack_eliciting && a.allow_ping) {
         WPACKET *wpkt;
 
         wpkt = tx_helper_begin(h);
