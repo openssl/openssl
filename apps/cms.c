@@ -77,6 +77,7 @@ typedef enum OPTION_choice {
     OPT_CONTENT, OPT_PRINT, OPT_NAMEOPT,
     OPT_SECRETKEY, OPT_SECRETKEYID, OPT_PWRI_PASSWORD, OPT_ECONTENT_TYPE,
     OPT_PASSIN, OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP,
+    OPT_SIGNATUREOUT,
     OPT_CERTSOUT, OPT_MD, OPT_INKEY, OPT_KEYFORM, OPT_KEYOPT, OPT_RR_FROM,
     OPT_RR_TO, OPT_AES128_WRAP, OPT_AES192_WRAP, OPT_AES256_WRAP,
     OPT_3DES_WRAP, OPT_WRAP, OPT_ENGINE,
@@ -225,6 +226,7 @@ const OPTIONS cms_options[] = {
     {"to", OPT_TO, 's', "To address"},
     {"from", OPT_FROM, 's', "From address"},
     {"subject", OPT_SUBJECT, 's', "Subject"},
+    {"signature", OPT_SIGNATUREOUT, '>', "Signature for CAdES extension with timestamp"},
 
     OPT_SECTION("Printing"),
     {"noout", OPT_NOOUT, '-',
@@ -293,6 +295,7 @@ int cms_main(int argc, char **argv)
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL;
     char *certsoutfile = NULL, *digestname = NULL, *wrapname = NULL;
+    char *sigoutfile = NULL;
     int noCAfile = 0, noCApath = 0, noCAstore = 0;
     char *digesthex = NULL;
     unsigned char *digestbin = NULL;
@@ -575,6 +578,9 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_CERTSOUT:
             certsoutfile = opt_arg();
+            break;
+        case OPT_SIGNATUREOUT:
+            sigoutfile = opt_arg();
             break;
         case OPT_MD:
             digestname = opt_arg();
@@ -1265,6 +1271,31 @@ int cms_main(int argc, char **argv)
         }
         if (ret <= 0) {
             ret = 6;
+            goto end;
+        }
+    }
+    if (sigoutfile != NULL) {
+        if ((flags & CMS_CADES) == 0) {
+            BIO_printf(bio_err, "Signature export only supported in CAdES mode");
+            ret = 5;
+            goto end;
+        }
+        BIO *tmp;
+        /* We assume to have only one signature */
+        CMS_SignerInfo *si;
+        STACK_OF(CMS_SignerInfo) *sinfos;
+        sinfos = CMS_get0_SignerInfos(cms);
+        si = sk_CMS_SignerInfo_value(sinfos, 0);
+        ASN1_OCTET_STRING *os = CMS_SignerInfo_get0_signature(si);
+        tmp = BIO_new_file(sigoutfile, "w");
+        if (tmp == NULL) {
+            ret=7;
+            goto end;
+        }
+        ret = BIO_write(tmp, os->data, os->length);
+        BIO_free(tmp);
+        if (ret <=0) {
+            ret = 7;
             goto end;
         }
     }
