@@ -495,7 +495,7 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
                               const char *input_structure)
 {
     OSSL_DECODER_CTX *dest;
-    struct decoder_pkey_data_st *process_data_src, *process_data_dest = NULL;;
+    struct decoder_pkey_data_st *process_data_src, *process_data_dest = NULL;
 
     if (src == NULL)
         return NULL;
@@ -533,13 +533,13 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
     if (process_data_src != NULL) {
         process_data_dest = OPENSSL_zalloc(sizeof(*process_data_dest));
         if (process_data_dest == NULL) {
-            ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
+            ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
             goto err;
         }
         if (process_data_src->propq != NULL) {
             process_data_dest->propq = OPENSSL_strdup(process_data_src->propq);
             if (process_data_dest->propq == NULL) {
-                ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
+                ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
                 goto err;
             }
         }
@@ -550,7 +550,7 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
                                            keymgmt_dup,
                                            EVP_KEYMGMT_free);
             if (process_data_dest->keymgmts == NULL) {
-                ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
+                ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_EVP_LIB);
                 goto err;
             }
         }
@@ -759,7 +759,7 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
     cacheent.propquery = (char *)propquery;
 
     if (!CRYPTO_THREAD_read_lock(cache->lock)) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -832,7 +832,7 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
         newcache->template = ctx;
 
         if (!CRYPTO_THREAD_write_lock(cache->lock)) {
-            ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
+            ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
             return NULL;
         }
         res = lh_DECODER_CACHE_ENTRY_retrieve(cache->hashtable, &cacheent);
