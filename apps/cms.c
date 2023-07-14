@@ -20,6 +20,7 @@
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
 #include <openssl/cms.h>
+#include <openssl/ts.h>
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);
@@ -48,6 +49,7 @@ static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
 #define SMIME_DATA_CREATE (14 | SMIME_OP)
 #define SMIME_DATA_OUT (15 | SMIME_IP)
 #define SMIME_CMSOUT (16 | SMIME_IP | SMIME_OP)
+#define SMIME_EXTEND_SIG_TST (17 | SMIME_IP | SMIME_OP)
 
 static int verify_err = 0;
 
@@ -149,6 +151,8 @@ typedef enum OPTION_choice {
     OPT_AES256_WRAP,
     OPT_3DES_WRAP,
     OPT_WRAP,
+    OPT_EXTEND_SIG_TST,
+    OPT_TOKEN_IN,
     OPT_SIGNATUREOUT,
     OPT_R_ENUM,
     OPT_PROV_ENUM,
@@ -195,6 +199,8 @@ const OPTIONS cms_options[] = {
     { "data_create", OPT_DATA_CREATE, '-', "Create a CMS \"Data\" object" },
     { "data_out", OPT_DATA_OUT, '-', "Copy CMS \"Data\" object to output" },
     { "cmsout", OPT_CMSOUT, '-', "Output CMS structure" },
+    { "extend_signature_tst", OPT_EXTEND_SIG_TST, '<',
+        "Extend CMS signature with timestamp to CAdES Baseline-T format" },
 
     OPT_SECTION("File format"),
     { "inform", OPT_INFORM, 'c', "Input format SMIME (default), PEM or DER" },
@@ -210,6 +216,8 @@ const OPTIONS cms_options[] = {
         "Use CRLF as EOL termination instead of LF only" },
     { "asciicrlf", OPT_ASCIICRLF, '-',
         "Perform CRLF canonicalisation when signing" },
+    { "token_in", OPT_TOKEN_IN, '-',
+        "Signature extension input is in Timestamp Token format instead of timestamp reply" },
 
     OPT_SECTION("Keys and passwords"),
     { "pwri_password", OPT_PWRI_PASSWORD, 's',
@@ -397,8 +405,9 @@ int cms_main(int argc, char **argv)
     char *originatorfile = NULL, *recipfile = NULL;
     char *ciphername = NULL, *kekciphername = NULL;
     char *to = NULL, *from = NULL, *subject = NULL, *prog;
+    char *tsfile = NULL;
     cms_key_param *key_first = NULL, *key_param = NULL;
-    int flags = CMS_DETACHED, binary_files = 0;
+    int flags = CMS_DETACHED, binary_files = 0, token_in = 0;
     int noout = 0, print = 0, keyidx = -1, vpmtouched = 0;
     int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
     int operation = 0, ret = 1, rr_print = 0, rr_allorfirst = -1;
@@ -498,6 +507,13 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_CMSOUT:
             operation = SMIME_CMSOUT;
+            break;
+        case OPT_EXTEND_SIG_TST:
+            operation = SMIME_EXTEND_SIG_TST;
+            tsfile = opt_arg();
+            break;
+        case OPT_TOKEN_IN:
+            token_in = 1;
             break;
 
         case OPT_DEBUG_DECRYPT:
@@ -1339,6 +1355,55 @@ int cms_main(int argc, char **argv)
                 BIO_puts(bio_err, "Error finalizing CMS structure\n");
                 goto end;
             }
+        }
+    } else if (operation == SMIME_EXTEND_SIG_TST) {
+        if ((flags & CMS_CADES) == 0) {
+            BIO_printf(bio_err, "Signature extension only supported in CAdES mode");
+            ret = 6;
+            goto end;
+        }
+        BIO *tmp;
+        /* We assume to have only one signature */
+        CMS_SignerInfo *si;
+        STACK_OF(CMS_SignerInfo) *sinfos;
+        ASN1_OCTET_STRING *str = NULL;
+        PKCS7 *token = NULL;
+        TS_RESP *response = NULL;
+        sinfos = CMS_get0_SignerInfos(cms);
+        si = sk_CMS_SignerInfo_value(sinfos, 0);
+        tmp = BIO_new_file(tsfile, "rb");
+        if (tmp == NULL) {
+            BIO_printf(bio_err, "Failed open the timestamp file\n");
+            ret = 6;
+            goto end;
+        }
+        if (token_in) {
+            token = d2i_PKCS7_bio(tmp, NULL);
+            if (token == NULL) {
+                BIO_printf(bio_err, "Failed to read timestamp token\n");
+                ret = 6;
+                goto end;
+            }
+        } else {
+            response = d2i_TS_RESP_bio(tmp, NULL);
+            if (response == NULL) {
+                BIO_printf(bio_err, "Failed to read timestamp response\n");
+                ret = 6;
+                goto end;
+            }
+            token = TS_RESP_get_token(response);
+        }
+        str = ASN1_item_pack(token, ASN1_ITEM_rptr(PKCS7), &str);
+        if (str == NULL) {
+            BIO_printf(bio_err, "Failed to create object for embedding\n");
+            ret = 6;
+            goto end;
+        }
+        if (!CMS_unsigned_add1_attr_by_NID(si, NID_id_smime_aa_timeStampToken,
+                                          V_ASN1_SEQUENCE, str, -1)) {
+            BIO_printf(bio_err, "Failed to extend signature\n");
+            ret = 6;
+            goto end;
         }
     }
 
