@@ -271,43 +271,22 @@ static PROV_SHA3_METHOD sha3_ARMSHA3_md =
     armsha3_sha3_absorb,
     generic_sha3_final
 };
-/* Detection on Apple operating systems */
-# if defined(__APPLE__)
-#  define ARM_SHA3_CAPABLE (OPENSSL_armcap_P & ARMV8_SHA3)
-#  define SHA3_SET_MD(uname, typ)                                              \
+/* Users can switch back to the generic code by clearing either of the bits */
+# define ARM_SHA3_CAPABLE                                                      \
+    ((OPENSSL_armcap_P & ARMV8_SHA3) &&                                        \
+     (OPENSSL_armcap_P & ARMV8_WORTH_USING_SHA3))
+# define SHA3_SET_MD(uname, typ)                                               \
     if (ARM_SHA3_CAPABLE) {                                                    \
         ctx->meth = sha3_ARMSHA3_md;                                           \
     } else {                                                                   \
         ctx->meth = sha3_generic_md;                                           \
     }
-#  define KMAC_SET_MD(bitlen)                                                  \
+# define KMAC_SET_MD(bitlen)                                                   \
     if (ARM_SHA3_CAPABLE) {                                                    \
         ctx->meth = sha3_ARMSHA3_md;                                           \
     } else {                                                                   \
         ctx->meth = sha3_generic_md;                                           \
     }
-/* Detection on other operating systems */
-# else
-#  define ARM_HAS_FASTER_SHA3                                                                  \
-    (MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_APPLE, APPLE_CPU_PART_M1_FIRESTORM)     ||\
-     MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_APPLE, APPLE_CPU_PART_M1_FIRESTORM_PRO) ||\
-     MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_APPLE, APPLE_CPU_PART_M1_FIRESTORM_MAX) ||\
-     MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_APPLE, APPLE_CPU_PART_M2_AVALANCHE)     ||\
-     MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_APPLE, APPLE_CPU_PART_M2_AVALANCHE_PRO) ||\
-     MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_APPLE, APPLE_CPU_PART_M2_AVALANCHE_MAX))
-#  define SHA3_SET_MD(uname, typ)                                              \
-    if (ARM_HAS_FASTER_SHA3) {                                                 \
-        ctx->meth = sha3_ARMSHA3_md;                                           \
-    } else {                                                                   \
-        ctx->meth = sha3_generic_md;                                           \
-    }
-#  define KMAC_SET_MD(bitlen)                                                  \
-    if (ARM_HAS_FASTER_SHA3) {                                                 \
-        ctx->meth = sha3_ARMSHA3_md;                                           \
-    } else {                                                                   \
-        ctx->meth = sha3_generic_md;                                           \
-    }
-# endif /* APPLE */
 #else
 # define SHA3_SET_MD(uname, typ) ctx->meth = sha3_generic_md;
 # define KMAC_SET_MD(bitlen) ctx->meth = sha3_generic_md;
