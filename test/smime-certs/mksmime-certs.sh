@@ -64,3 +64,8 @@ gen smdh.pem "/CN=Test SMIME EE DH" dh_cert >>smdh.pem
 # EE RSA code signing end entity certificate with respective extensions
 cp ../certs/ee-key.pem csrsa1.pem
 gen csrsa1.pem "/CN=Test CodeSign EE RSA" codesign_cert >>csrsa1.pem
+
+# EE RSA timestamp signing end entity certificate with respetive extensions
+# this is needed to test CAdES Baseline-T (and higher) functionality
+cp ../certs/ee-key.pem tsrsa1.pem
+gen tsrsa1.pem "/CN=Test Timestamping EE RSA" timestamp_cert >> tsrsa1.pem
