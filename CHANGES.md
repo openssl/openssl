@@ -288,17 +288,18 @@ OpenSSL 3.1
 
  * Fix DH_check() excessive time with over sized modulus
 
-   The function DH_check() performs various checks on DH parameters. One of those
-   checks confirms that the modulus ("p" parameter) is not too large. Trying to use
-   a very large modulus is slow and OpenSSL will not normally use a modulus which
-   is over 10,000 bits in length.
+   The function DH_check() performs various checks on DH parameters. One of
+   those checks confirms that the modulus ("p" parameter) is not too large.
+   Trying to use a very large modulus is slow and OpenSSL will not normally use
+   a modulus which is over 10,000 bits in length.
 
-   However the DH_check() function checks numerous aspects of the key or parameters
-   that have been supplied. Some of those checks use the supplied modulus value
-   even if it has already been found to be too large.
+   However the DH_check() function checks numerous aspects of the key or
+   parameters that have been supplied. Some of those checks use the supplied
+   modulus value even if it has already been found to be too large.
 
-   A new limit has been added to DH_check of 32,768 bits. Supply a key/parameters
-   with a modulus over this size will simply cause DH_check() to fail.
+   A new limit has been added to DH_check of 32,768 bits. Supplying a
+   key/parameters with a modulus over this size will simply cause DH_check() to
+   fail.
 
    ([CVE-2023-3446])
 
