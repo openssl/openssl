@@ -44,13 +44,14 @@ my $provname = 'default';
 my $datadir = srctop_dir("test", "recipes", "80-test_cms_data");
 my $smdir    = srctop_dir("test", "smime-certs");
 my $smcont   = srctop_file("test", "smcont.txt");
+my $catsacnf = srctop_file("test", "catsa.cnf");
 my $smcont_zero = srctop_file("test", "smcont_zero.txt");
 my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
     = disabled qw/des dh dsa ec ec2m rc2 zlib/;
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 20;
+plan tests => 21;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -1077,6 +1078,93 @@ subtest "CMS code signing test" => sub {
                     "-CAfile", catfile($smdir, "smroot.pem"),
                     "-content", $smcont])),
        "fail verify CMS signature with code signing certificate for purpose smime_sign");
+};
+
+subtest "CMS code signing with CAdES Baseline-T test" => sub {
+    plan tests => 10;
+    my $tmp_sig_file = "tmp_signature.p7s";
+    my $dgst_sig_file = "signature.bin";
+    my $sig_file = "signature.p7s";
+    my $req_file = "request.tsq";
+    my $resp_file = "response.tsr";
+
+    # ts fails with test libctx set
+    $ENV{OPENSSL_TEST_LIBCTX} = "0";
+
+    ok(run(app(["openssl", "cms", @prov, "-sign", "-cades", "-in", $smcont,
+                   "-certfile", catfile($smdir, "smroot.pem"),
+                   "-signer", catfile($smdir, "csrsa1.pem"),
+                   "-out", $tmp_sig_file,
+                   "-outform", "DER",
+                   "-signature", $dgst_sig_file])),
+        "accept perform CMS signature with code signing certificate and export internal signature digest");
+
+    ok(run(app(["openssl", "ts", "-query", "-config", $catsacnf, @prov,
+                   "-data", $dgst_sig_file,
+                   "-cert", "-sha256", "-no_nonce",
+                   "-out", $req_file])),
+        "accept create timestamp request for signature digest");
+
+    ok(run(app(["openssl", "ts", "-reply", "-config", $catsacnf, @prov,
+                   "-queryfile", $req_file,
+                   "-chain", catfile($smdir, "smroot.pem"), # overrides "cert" in config file
+                   "-signer", catfile($smdir, "tsrsa1.pem"),
+                   "-inkey", catfile($smdir, "tsrsa1.pem"),
+                   "-out", $resp_file])),
+        "accept create timestamp response for signature digest");
+
+    # ts -reply does not fail hard but encodes error messages into the
+    # response. Therefore the reply has to be tested explicitly.
+    ok(run(app(["openssl", "ts", "-verify", "-config", $catsacnf, @prov,
+                   "-data", $dgst_sig_file,
+                   "-CAfile", catfile($smdir, "smroot.pem"),
+                   "-in", $resp_file])),
+        "accept verify timestamp response for signature digest");
+
+    ok(run(app(["openssl", "cms", @prov, "-cades",
+                   "-extend_signature_tst", $resp_file,
+                   "-in", $tmp_sig_file, "-inform", "DER",
+                   "-out", $sig_file, "-outform", "DER"])),
+        "accept extend CMS signature with timestamp to reach CAdES Baseline-T");
+
+    ok(run(app(["openssl", "cms", @prov, "-verify", "-cades", "-binary",
+                    "-in", $sig_file, "-inform", "DER",
+                    "-CAfile", catfile($smdir, "smroot.pem"),
+                    "-purpose", "codesign",
+                    "-content", $smcont])),
+       "accept verify CMS signature with code signing certificate for purpose code signing in CAdES Baseline-T");
+
+    # now repeat the same operation(s) but with openssl ts -reply providing
+    # a timestamp token instead of a timestamp response
+
+    ok(run(app(["openssl", "ts", "-reply", "-config", $catsacnf, @prov,
+                   "-queryfile", $req_file,
+                   "-chain", catfile($smdir, "smroot.pem"), # overrides "cert" in config file
+                   "-signer", catfile($smdir, "tsrsa1.pem"),
+                   "-inkey", catfile($smdir, "tsrsa1.pem"),
+                   "-out", $resp_file, "-token_out"])),
+        "accept create timestamp response for signature digest");
+
+    # ts -reply does not fail hard but encodes error messages into the
+    # response. Therefore the reply has to be tested explicitly.
+    ok(run(app(["openssl", "ts", "-verify", "-config", $catsacnf, @prov,
+                   "-data", $dgst_sig_file,
+                   "-CAfile", catfile($smdir, "smroot.pem"),
+                   "-in", $resp_file, "-token_in"])),
+        "accept verify timestamp response for signature digest");
+
+    ok(run(app(["openssl", "cms", @prov, "-cades",
+                   "-extend_signature_tst", $resp_file, "-token_in",
+                   "-in", $tmp_sig_file, "-inform", "DER",
+                   "-out", $sig_file, "-outform", "DER"])),
+        "accept extend CMS signature with timestamp to reach CAdES Baseline-T");
+
+    ok(run(app(["openssl", "cms", @prov, "-verify", "-cades", "-binary",
+                    "-in", $sig_file, "-inform", "DER",
+                    "-CAfile", catfile($smdir, "smroot.pem"),
+                    "-purpose", "codesign",
+                    "-content", $smcont])),
+       "accept verify CMS signature with code signing certificate for purpose code signing in CAdES Baseline-T");
 };
 
 # Test case for missing MD algorithm (must not segfault)
