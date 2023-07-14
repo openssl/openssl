@@ -696,7 +696,7 @@ and the certificate provided with B<-oldwithold> as the (only) trust anchor,
 or if not provided, using the certificates given with the B<-trusted> option.
 
 B<WARNING:>
-The newWithNew certificate is meant to be certificate that will be trusted.
+The newWithNew certificate is meant to be a certificate that will be trusted.
 The trust placed in it cannot be stronger than the trust placed in
 the B<-oldwithold> certificate if present, otherwise it cannot be stronger than
 the weakest trust placed in any of the B<-trusted> certificates.
@@ -1185,7 +1185,7 @@ only affect the certificate verification enabled via the B<-out_trusted> option.
 
 =head1 NOTES
 
-When a client obtains from a CMP server CA certificates that it is going to
+When a client obtains, from a CMP server, CA certificates that it is going to
 trust, for instance via the C<caPubs> field of a certificate response
 or using general messages with infoType C<caCerts> or C<rootCaCert>,
 authentication of the CMP server is particularly critical.
