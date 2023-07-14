@@ -1230,7 +1230,7 @@ static int run_script(int script_idx, const struct script_op *script)
     QUIC_TXP_STATUS status;
     struct helper h;
     const struct script_op *op;
-    size_t opn;
+    size_t opn = 0;
 
     if (!helper_init(&h))
         goto err;
