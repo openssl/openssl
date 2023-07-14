@@ -95,7 +95,7 @@ int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 #   define OPENSSL_DH_MAX_MODULUS_BITS        10000
 #  endif
 
-#  ifndef OPENSSL_DH_MAX_CHECK_MODULUS_BITS
+#  ifndef OPENSSL_DH_CHECK_MAX_MODULUS_BITS
 #   define OPENSSL_DH_CHECK_MAX_MODULUS_BITS  32768
 #  endif
 
