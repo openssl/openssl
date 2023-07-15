@@ -271,18 +271,14 @@ static PROV_SHA3_METHOD sha3_ARMSHA3_md =
     armsha3_sha3_absorb,
     generic_sha3_final
 };
-/* Users can switch back to the generic code by clearing either of the bits */
-# define ARM_SHA3_CAPABLE                                                      \
-    ((OPENSSL_armcap_P & ARMV8_SHA3) &&                                        \
-     (OPENSSL_armcap_P & ARMV8_WORTH_USING_SHA3))
 # define SHA3_SET_MD(uname, typ)                                               \
-    if (ARM_SHA3_CAPABLE) {                                                    \
+    if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING) {                  \
         ctx->meth = sha3_ARMSHA3_md;                                           \
     } else {                                                                   \
         ctx->meth = sha3_generic_md;                                           \
     }
 # define KMAC_SET_MD(bitlen)                                                   \
-    if (ARM_SHA3_CAPABLE) {                                                    \
+    if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING) {                  \
         ctx->meth = sha3_ARMSHA3_md;                                           \
     } else {                                                                   \
         ctx->meth = sha3_generic_md;                                           \

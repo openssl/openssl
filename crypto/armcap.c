@@ -300,7 +300,7 @@ void OPENSSL_cpuid_setup(void)
                ((strncmp(uarch, "Apple M1", 8) == 0) ||
                 (strncmp(uarch, "Apple M2", 8) == 0))) {
                 OPENSSL_armcap_P |= ARMV8_UNROLL8_EOR3;
-                OPENSSL_armcap_P |= ARMV8_WORTH_USING_SHA3;
+                OPENSSL_armcap_P |= ARMV8_HAVE_SHA3_AND_WORTH_USING;
             }
         }
     }
@@ -433,7 +433,7 @@ void OPENSSL_cpuid_setup(void)
          MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_APPLE, APPLE_CPU_PART_M2_AVALANCHE_MAX) ||
          MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_APPLE, APPLE_CPU_PART_M2_BLIZZARD_MAX)) &&
         (OPENSSL_armcap_P & ARMV8_SHA3))
-        OPENSSL_armcap_P |= ARMV8_WORTH_USING_SHA3;
+        OPENSSL_armcap_P |= ARMV8_HAVE_SHA3_AND_WORTH_USING;
 # endif
 }
 #endif /* _WIN32, __ARM_MAX_ARCH__ >= 7 */
