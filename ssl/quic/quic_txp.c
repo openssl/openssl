@@ -1984,7 +1984,7 @@ static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
 
         /*
          * Ensure we have enough iovecs allocated (1 for the header, up to 2 for
-         * the the stream data.)
+         * the stream data.)
          */
         if (!txp_el_ensure_iovec(&txp->el[enc_level], h->num_iovec + 3))
             return 0; /* alloc error */
@@ -2234,7 +2234,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
 
         /*
          * Ensure we have enough iovecs allocated (1 for the header, up to 2 for
-         * the the stream data.)
+         * the stream data.)
          */
         if (!txp_el_ensure_iovec(&txp->el[enc_level], h->num_iovec + 3))
             goto err; /* alloc error */

@@ -2152,7 +2152,7 @@ struct keytype_desc_st {
 /*
  * Start blatant code steal. Alternative: Open up d2i_X509_PUBKEY_INTERNAL
  * as per https://github.com/openssl/openssl/issues/16697 (TBD)
- * Code from from openssl/crypto/x509/x_pubkey.c as
+ * Code from openssl/crypto/x509/x_pubkey.c as
  * ossl_d2i_X509_PUBKEY_INTERNAL is presently not public
  */
 struct X509_pubkey_st {

@@ -423,7 +423,7 @@ err:
  * See SP800-56Br1 6.3.1.3 (Step 6) Perform a pair-wise consistency test by
  * verifying that: k = (k^e)^d mod n for some integer k where 1 < k < n-1.
  *
- * Returns 1 if the RSA key passes the pairwise test or 0 it it fails.
+ * Returns 1 if the RSA key passes the pairwise test or 0 if it fails.
  */
 int ossl_rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx)
 {

@@ -699,7 +699,7 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return NULL;
 
     /*
-     * If a group name is selected then the type is group regardless of what the
+     * If a group name is selected then the type is group regardless of what
      * the user selected. This overrides rather than errors for backwards
      * compatibility.
      */
