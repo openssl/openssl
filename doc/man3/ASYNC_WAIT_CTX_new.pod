@@ -83,7 +83,7 @@ will be populated with the list of added and deleted fds respectively. Similarly
 to ASYNC_WAIT_CTX_get_all_fds() either of these can be NULL, but if they are not
 NULL then the caller is responsible for ensuring sufficient memory is allocated.
 
-Implementors of async aware code (e.g. engines) are encouraged to return a
+Implementers of async aware code (e.g. engines) are encouraged to return a
 stable fd for the lifetime of the B<ASYNC_WAIT_CTX> in order to reduce the
 "churn" of regularly changing fds - although no guarantees of this are provided
 to applications.
