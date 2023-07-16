@@ -271,7 +271,7 @@ ossl_x448_derive_public_key(uint8_t out[X448_PUBLIC_BYTES],
  */
 void
 ossl_curve448_precomputed_scalarmul(curve448_point_t scaled,
-                                    const curve448_precomputed_s * base,
+                                    const curve448_precomputed_s *base,
                                     const curve448_scalar_t scalar);
 
 /*

@@ -221,7 +221,7 @@ ossl_curve448_point_valid(const curve448_point_t p)
 }
 
 static ossl_inline void constant_time_lookup_niels(niels_s * RESTRICT ni,
-                                                   const niels_t * table,
+                                                   const niels_t *table,
                                                    int nelts, int idx)
 {
     constant_time_lookup(ni, table, sizeof(niels_s), nelts, idx);
@@ -229,7 +229,7 @@ static ossl_inline void constant_time_lookup_niels(niels_s * RESTRICT ni,
 
 void
 ossl_curve448_precomputed_scalarmul(curve448_point_t out,
-                                    const curve448_precomputed_s * table,
+                                    const curve448_precomputed_s *table,
                                     const curve448_scalar_t scalar)
 {
     unsigned int i, j, k;
@@ -612,7 +612,7 @@ static int recode_wnaf(struct smvt_control *control,
     return n - 1;
 }
 
-static void prepare_wnaf_table(pniels_t * output,
+static void prepare_wnaf_table(pniels_t *output,
                                const curve448_point_t working,
                                unsigned int tbits)
 {

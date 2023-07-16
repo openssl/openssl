@@ -892,7 +892,7 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
 
 static int is_keytype(const CONF *conf, char c, unsigned short type)
 {
-    const unsigned short * keytypes = (const unsigned short *) conf->meth_data;
+    const unsigned short *keytypes = (const unsigned short *) conf->meth_data;
     unsigned char key = (unsigned char)c;
 
 #ifdef CHARSET_EBCDIC

@@ -271,7 +271,7 @@ static int alg##_##kbits##_##lc##_get_params(OSSL_PARAM params[])              \
     return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,    \
                                           flags, 2*kbits, blkbits, ivbits);    \
 }                                                                              \
-static void * alg##kbits##lc##_newctx(void *provctx)                           \
+static void *alg##kbits##lc##_newctx(void *provctx)                            \
 {                                                                              \
     return alg##_##lc##_newctx(provctx, 2*kbits, EVP_CIPH_##UCMODE##_MODE,     \
                                flags);                                         \

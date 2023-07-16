@@ -193,7 +193,7 @@ static int test_ocsp_url_svcloc_new(void)
     };
 
     X509 *issuer = NULL;
-    X509_EXTENSION * ext = NULL;
+    X509_EXTENSION *ext = NULL;
     int ret = 0;
 
     if (!TEST_true(get_cert(&issuer)))

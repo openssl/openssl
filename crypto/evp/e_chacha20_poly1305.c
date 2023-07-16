@@ -55,7 +55,7 @@ static int chacha_init_key(EVP_CIPHER_CTX *ctx,
     return 1;
 }
 
-static int chacha_cipher(EVP_CIPHER_CTX * ctx, unsigned char *out,
+static int chacha_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                          const unsigned char *inp, size_t len)
 {
     EVP_CHACHA_KEY *key = data(ctx);

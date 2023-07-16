@@ -9549,7 +9549,7 @@ static int test_pluggable_group(int idx)
  */
 static int create_cert_key(int idx, char *certfilename, char *privkeyfilename)
 {
-    EVP_PKEY_CTX * evpctx = EVP_PKEY_CTX_new_from_name(libctx,
+    EVP_PKEY_CTX *evpctx = EVP_PKEY_CTX_new_from_name(libctx,
                              (idx == 0) ? "xorhmacsig" : "xorhmacsha2sig", NULL);
     EVP_PKEY *pkey = NULL;
     X509 *x509 = X509_new();

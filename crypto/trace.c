@@ -502,7 +502,7 @@ BIO *OSSL_trace_begin(int category)
     return channel;
 }
 
-void OSSL_trace_end(int category, BIO * channel)
+void OSSL_trace_end(int category, BIO *channel)
 {
 #ifndef OPENSSL_NO_TRACE
     char *suffix = NULL;

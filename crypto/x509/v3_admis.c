@@ -71,7 +71,7 @@ const X509V3_EXT_METHOD ossl_v3_ext_admission = {
 static int i2r_NAMING_AUTHORITY(const struct v3_ext_method *method, void *in,
                                 BIO *bp, int ind)
 {
-    NAMING_AUTHORITY * namingAuthority = (NAMING_AUTHORITY*) in;
+    NAMING_AUTHORITY *namingAuthority = (NAMING_AUTHORITY*) in;
 
     if (namingAuthority == NULL)
         return 0;
@@ -118,7 +118,7 @@ err:
 static int i2r_ADMISSION_SYNTAX(const struct v3_ext_method *method, void *in,
                                 BIO *bp, int ind)
 {
-    ADMISSION_SYNTAX * admission = (ADMISSION_SYNTAX *)in;
+    ADMISSION_SYNTAX *admission = (ADMISSION_SYNTAX *)in;
     int i, j, k;
 
     if (admission->admissionAuthority != NULL) {

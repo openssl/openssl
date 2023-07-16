@@ -510,7 +510,7 @@ static int wait_random_seeded(void)
  * So the handle might have been closed or even reused for opening
  * another file.
  */
-static int check_random_device(struct random_device * rd)
+static int check_random_device(struct random_device *rd)
 {
     struct stat st;
 
@@ -528,7 +528,7 @@ static int check_random_device(struct random_device * rd)
 static int get_random_device(size_t n)
 {
     struct stat st;
-    struct random_device * rd = &random_devices[n];
+    struct random_device *rd = &random_devices[n];
 
     /* reuse existing file descriptor if it is (still) valid */
     if (check_random_device(rd))
@@ -557,7 +557,7 @@ static int get_random_device(size_t n)
  */
 static void close_random_device(size_t n)
 {
-    struct random_device * rd = &random_devices[n];
+    struct random_device *rd = &random_devices[n];
 
     if (check_random_device(rd))
         close(rd->fd);

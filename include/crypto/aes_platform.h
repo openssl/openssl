@@ -121,29 +121,29 @@ void gcm_ghash_p8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
                                 (gctx)->gcm.funcs.ghash==gcm_ghash_v8)
 /* The [unroll8_eor3_]aes_gcm_(enc|dec)_(128|192|256)_kernel() functions
  * take input length in BITS and return number of BYTES processed */
-size_t aes_gcm_enc_128_kernel(const uint8_t * plaintext, uint64_t plaintext_length, uint8_t * ciphertext,
+size_t aes_gcm_enc_128_kernel(const uint8_t *plaintext, uint64_t plaintext_length, uint8_t *ciphertext,
                               uint64_t *Xi, unsigned char ivec[16], const void *key);
-size_t aes_gcm_enc_192_kernel(const uint8_t * plaintext, uint64_t plaintext_length, uint8_t * ciphertext,
+size_t aes_gcm_enc_192_kernel(const uint8_t *plaintext, uint64_t plaintext_length, uint8_t *ciphertext,
                               uint64_t *Xi, unsigned char ivec[16], const void *key);
-size_t aes_gcm_enc_256_kernel(const uint8_t * plaintext, uint64_t plaintext_length, uint8_t * ciphertext,
+size_t aes_gcm_enc_256_kernel(const uint8_t *plaintext, uint64_t plaintext_length, uint8_t *ciphertext,
                               uint64_t *Xi, unsigned char ivec[16], const void *key);
-size_t aes_gcm_dec_128_kernel(const uint8_t * ciphertext, uint64_t plaintext_length, uint8_t * plaintext,
+size_t aes_gcm_dec_128_kernel(const uint8_t *ciphertext, uint64_t plaintext_length, uint8_t *plaintext,
                               uint64_t *Xi, unsigned char ivec[16], const void *key);
-size_t aes_gcm_dec_192_kernel(const uint8_t * ciphertext, uint64_t plaintext_length, uint8_t * plaintext,
+size_t aes_gcm_dec_192_kernel(const uint8_t *ciphertext, uint64_t plaintext_length, uint8_t *plaintext,
                               uint64_t *Xi, unsigned char ivec[16], const void *key);
-size_t aes_gcm_dec_256_kernel(const uint8_t * ciphertext, uint64_t plaintext_length, uint8_t * plaintext,
+size_t aes_gcm_dec_256_kernel(const uint8_t *ciphertext, uint64_t plaintext_length, uint8_t *plaintext,
                               uint64_t *Xi, unsigned char ivec[16], const void *key);
-size_t unroll8_eor3_aes_gcm_enc_128_kernel(const uint8_t * plaintext, uint64_t plaintext_length, uint8_t * ciphertext,
+size_t unroll8_eor3_aes_gcm_enc_128_kernel(const uint8_t *plaintext, uint64_t plaintext_length, uint8_t *ciphertext,
                               uint64_t *Xi, unsigned char ivec[16], const void *key);
-size_t unroll8_eor3_aes_gcm_enc_192_kernel(const uint8_t * plaintext, uint64_t plaintext_length, uint8_t * ciphertext,
+size_t unroll8_eor3_aes_gcm_enc_192_kernel(const uint8_t *plaintext, uint64_t plaintext_length, uint8_t *ciphertext,
                               uint64_t *Xi, unsigned char ivec[16], const void *key);
-size_t unroll8_eor3_aes_gcm_enc_256_kernel(const uint8_t * plaintext, uint64_t plaintext_length, uint8_t * ciphertext,
+size_t unroll8_eor3_aes_gcm_enc_256_kernel(const uint8_t *plaintext, uint64_t plaintext_length, uint8_t *ciphertext,
                               uint64_t *Xi, unsigned char ivec[16], const void *key);
-size_t unroll8_eor3_aes_gcm_dec_128_kernel(const uint8_t * ciphertext, uint64_t plaintext_length, uint8_t * plaintext,
+size_t unroll8_eor3_aes_gcm_dec_128_kernel(const uint8_t *ciphertext, uint64_t plaintext_length, uint8_t *plaintext,
                               uint64_t *Xi, unsigned char ivec[16], const void *key);
-size_t unroll8_eor3_aes_gcm_dec_192_kernel(const uint8_t * ciphertext, uint64_t plaintext_length, uint8_t * plaintext,
+size_t unroll8_eor3_aes_gcm_dec_192_kernel(const uint8_t *ciphertext, uint64_t plaintext_length, uint8_t *plaintext,
                               uint64_t *Xi, unsigned char ivec[16], const void *key);
-size_t unroll8_eor3_aes_gcm_dec_256_kernel(const uint8_t * ciphertext, uint64_t plaintext_length, uint8_t * plaintext,
+size_t unroll8_eor3_aes_gcm_dec_256_kernel(const uint8_t *ciphertext, uint64_t plaintext_length, uint8_t *plaintext,
                               uint64_t *Xi, unsigned char ivec[16], const void *key);
 size_t armv8_aes_gcm_encrypt(const unsigned char *in, unsigned char *out, size_t len, const void *key,
                              unsigned char ivec[16], u64 *Xi);

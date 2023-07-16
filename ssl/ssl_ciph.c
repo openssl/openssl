@@ -114,7 +114,7 @@ static const ssl_cipher_table ssl_cipher_table_auth[] = {
 /* *INDENT-ON* */
 
 /* Utility function for table lookup */
-static int ssl_cipher_info_find(const ssl_cipher_table * table,
+static int ssl_cipher_info_find(const ssl_cipher_table *table,
                                 size_t table_cnt, uint32_t mask)
 {
     size_t i;
