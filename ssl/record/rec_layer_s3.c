@@ -94,8 +94,14 @@ int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl)
 
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl)
 {
-    return (rl->numwpipes > 0)
-        && SSL3_BUFFER_get_left(&rl->wbuf[rl->numwpipes - 1]) != 0;
+    const SSL3_BUFFER *wb = rl->wbuf;
+    size_t currbuf = rl->numwpipes;
+
+    while (currbuf > 0) {
+        if (SSL3_BUFFER_get_left(&wb[--currbuf]) != 0)
+            return 1;
+    }
+    return 0;
 }
 
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl)
@@ -1129,7 +1135,8 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
     if ((s->rlayer.wpend_tot > len)
         || (!(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)
             && (s->rlayer.wpend_buf != buf))
-        || (s->rlayer.wpend_type != type)) {
+        || (s->rlayer.wpend_type != type)
+        || !RECORD_LAYER_write_pending(&s->rlayer)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_WRITE_PENDING,
                  SSL_R_BAD_WRITE_RETRY);
         return -1;
