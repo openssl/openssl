@@ -89,7 +89,7 @@ extern "C" {
 
 /*
  * DLL settings.  This part is a bit tough, because it's up to the
- * application implementor how he or she will link the application, so it
+ * application implementer how he or she will link the application, so it
  * requires some macro to be used.
  */
 # ifdef OPENSSL_SYS_WINDOWS

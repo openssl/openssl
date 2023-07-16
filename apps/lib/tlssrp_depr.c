@@ -87,7 +87,7 @@ static int ssl_srp_verify_param_cb(SSL *s, void *arg)
                        "SRP param N and g are not known params, going to check deeper.\n");
 
         /*
-         * The srp_moregroups is a real debugging feature. Implementors
+         * The srp_moregroups is a real debugging feature. Implementers
          * should rather add the value to the known ones. The minimal size
          * has already been tested.
          */

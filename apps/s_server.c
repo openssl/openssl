@@ -3564,7 +3564,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
             break;
     }
  end:
-    /* make sure we re-use sessions */
+    /* make sure we reuse sessions */
     do_ssl_shutdown(con);
 
  err:
@@ -3721,7 +3721,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
         }
     }
  end:
-    /* make sure we re-use sessions */
+    /* make sure we reuse sessions */
     do_ssl_shutdown(con);
 
  err:

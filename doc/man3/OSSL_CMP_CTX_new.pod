@@ -193,7 +193,7 @@ clearing the internal CMP transaction (aka session) status, PKIStatusInfo,
 and any previous results (newCert, newChain, caPubs, and extraCertsIn)
 from the last executed transaction.
 It also clears any ITAVs that were added by OSSL_CMP_CTX_push0_genm_ITAV().
-All other field values (i.e., CMP options) are retained for potential re-use.
+All other field values (i.e., CMP options) are retained for potential reuse.
 
 OSSL_CMP_CTX_get0_libctx() returns the I<libctx> argument that was used
 when constructing I<ctx> with OSSL_CMP_CTX_new(), which may be NULL.

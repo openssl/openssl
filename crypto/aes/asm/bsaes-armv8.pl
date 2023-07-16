@@ -1852,7 +1852,7 @@ ossl_bsaes_xts_encrypt:
         sub     x6, x21, #0x10
         // Penultimate plaintext block produces final ciphertext part-block
         // plus remaining part of final plaintext block. Move ciphertext part
-        // to final position and re-use penultimate ciphertext block buffer to
+        // to final position and reuse penultimate ciphertext block buffer to
         // construct final plaintext block
 .Lxts_enc_steal:
         ldrb    w0, [x20], #1
@@ -2329,7 +2329,7 @@ ossl_bsaes_xts_decrypt:
         mov     x6, x21
         // Penultimate ciphertext block produces final plaintext part-block
         // plus remaining part of final ciphertext block. Move plaintext part
-        // to final position and re-use penultimate plaintext block buffer to
+        // to final position and reuse penultimate plaintext block buffer to
         // construct final ciphertext block
 .Lxts_dec_steal:
         ldrb    w1, [x21]
