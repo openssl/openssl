@@ -66,7 +66,7 @@ cases.
 =item B<-kdfopt> I<nm>:I<v>
 
 Passes options to the KDF algorithm.
-A comprehensive list of parameters can be found in the EVP_KDF_CTX
+A comprehensive list of parameters can be found in the L<EVP_KDF(3)>
 implementation documentation.
 Common parameter names used by EVP_KDF_CTX_set_params() are:
 
@@ -81,9 +81,8 @@ A key must be specified for most KDF algorithms.
 
 =item B<hexkey:>I<string>
 
-Specifies the secret key in hexadecimal form (two hex digits per byte).
-The key length must conform to any restrictions of the KDF algorithm.
-A key must be specified for most KDF algorithms.
+As before, but
+specifies the secret key in hexadecimal form (two hex digits per byte).
 
 =item B<pass:>I<string>
 
@@ -93,8 +92,32 @@ The password must be specified for PBKDF2 and scrypt.
 
 =item B<hexpass:>I<string>
 
-Specifies the password in hexadecimal form (two hex digits per byte).
-The password must be specified for PBKDF2 and scrypt.
+As before, but
+specifies the password in hexadecimal form (two hex digits per byte).
+
+=item B<salt:>I<string>
+
+Specifies a non-secret random cryptographic salt as an alphanumeric string
+(use if it contains printable characters only).
+The length must conform to any restrictions of the KDF algorithm.
+A salt parameter is required for several KDF algorithms, such as PBKDF2.
+
+=item B<hexsalt:>I<string>
+
+As before, but
+specifies the cryptographic salt in hexadecimal form (two hex digits per byte).
+
+=item B<info:>I<string>
+
+Some KDF implementations such as HKDF take an 'info' parameter for binding
+the derived key material to application- and context-specific information.
+Specifies the info, fixed info, other info or shared info argument
+as an alphanumeric string (use if it contains printable characters only).
+The length must conform to any restrictions of the KDF algorithm.
+
+=item B<hexinfo:>I<string>
+
+As before, but specifies the info in hexadecimal form (two hex digits per byte).
 
 =item B<digest:>I<string>
 
