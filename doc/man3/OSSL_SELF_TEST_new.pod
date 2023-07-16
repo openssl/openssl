@@ -22,7 +22,7 @@ OSSL_SELF_TEST_onend - functionality to trigger a callback during a self test
 
 =head1 DESCRIPTION
 
-These methods are intended for use by provider implementors, to display
+These methods are intended for use by provider implementers, to display
 diagnostic information during self testing.
 
 OSSL_SELF_TEST_new() allocates an opaque B<OSSL_SELF_TEST> object that has a
