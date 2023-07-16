@@ -191,7 +191,7 @@ For those KDF implementations that support it, this parameter sets the password.
 
 =item "salt" (B<OSSL_KDF_PARAM_SALT>) <octet string>
 
-Some KDF implementations can take a salt.
+Some KDF implementations can take a non-secret random cryptographic salt.
 For those KDF implementations that support it, this parameter sets the salt.
 
 The default value, if any, is implementation dependent.
@@ -229,7 +229,9 @@ sets the key.
 
 =item "info" (B<OSSL_KDF_PARAM_INFO>) <octet string>
 
-This parameter sets the info, fixed info, other info or shared info value.
+Some KDF implementations such as HKDF take an 'info' parameter for binding
+the derived key material to application- and context-specific information.
+This parameter sets the info, fixed info, other info or shared info argument.
 You can specify this parameter multiple times, and each instance will
 be concatenated to form the final value.
 
