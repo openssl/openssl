@@ -2457,7 +2457,7 @@ static int ec_point_hex2point_test(int id)
     EC_GROUP *group = NULL;
     const EC_POINT *G = NULL;
     EC_POINT *P = NULL;
-    BN_CTX * bnctx = NULL;
+    BN_CTX *bnctx = NULL;
 
     /* Do some setup */
     nid = curves[id].nid;

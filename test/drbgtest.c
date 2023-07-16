@@ -299,7 +299,7 @@ typedef struct drbg_fork_result_st {
  * This simplifies finding duplicate random output and makes
  * the printout in case of an error more readable.
  */
-static int compare_drbg_fork_result(const void * left, const void * right)
+static int compare_drbg_fork_result(const void *left, const void *right)
 {
     int result;
     const drbg_fork_result *l = left;
@@ -322,7 +322,7 @@ static int compare_drbg_fork_result(const void * left, const void * right)
  *
  * Used for finding collisions in two-byte chunks
  */
-static int compare_rand_chunk(const void * left, const void * right)
+static int compare_rand_chunk(const void *left, const void *right)
 {
     return memcmp(left, right, 2);
 }

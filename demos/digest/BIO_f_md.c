@@ -34,7 +34,7 @@
  * The default digest is SHA3-512
  */
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
     int ret = EXIT_FAILURE;
     OSSL_LIB_CTX *library_context = NULL;

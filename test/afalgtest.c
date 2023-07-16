@@ -112,7 +112,7 @@ static int test_afalg_aes_cbc(int keysize_idx)
 static int test_pr16743(void)
 {
     int ret = 0;
-    const EVP_CIPHER * cipher;
+    const EVP_CIPHER *cipher;
     EVP_CIPHER_CTX *ctx;
 
     if (!TEST_true(ENGINE_init(e)))

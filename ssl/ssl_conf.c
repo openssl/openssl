@@ -855,7 +855,7 @@ static int ssl_conf_cmd_skip_prefix(SSL_CONF_CTX *cctx, const char **pcmd)
 }
 
 /* Determine if a command is allowed according to cctx flags */
-static int ssl_conf_cmd_allowed(SSL_CONF_CTX *cctx, const ssl_conf_cmd_tbl * t)
+static int ssl_conf_cmd_allowed(SSL_CONF_CTX *cctx, const ssl_conf_cmd_tbl *t)
 {
     unsigned int tfl = t->flags;
     unsigned int cfl = cctx->flags;
@@ -893,7 +893,7 @@ static const ssl_conf_cmd_tbl *ssl_conf_cmd_lookup(SSL_CONF_CTX *cctx,
     return NULL;
 }
 
-static int ctrl_switch_option(SSL_CONF_CTX *cctx, const ssl_conf_cmd_tbl * cmd)
+static int ctrl_switch_option(SSL_CONF_CTX *cctx, const ssl_conf_cmd_tbl *cmd)
 {
     /* Find index of command in table */
     size_t idx = cmd - ssl_conf_cmds;

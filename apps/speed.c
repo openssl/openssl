@@ -566,7 +566,7 @@ typedef struct loopargs_st {
     unsigned char *sig_sig[MAX_KEM_NUM];
 } loopargs_t;
 static int run_benchmark(int async_jobs, int (*loop_function) (void *),
-                         loopargs_t * loopargs);
+                         loopargs_t *loopargs);
 
 static unsigned int testnum;
 
@@ -1363,7 +1363,7 @@ static int SIG_verify_loop(void *args)
 }
 
 static int run_benchmark(int async_jobs,
-                         int (*loop_function) (void *), loopargs_t * loopargs)
+                         int (*loop_function) (void *), loopargs_t *loopargs)
 {
     int job_op_count = 0;
     int total_op_count = 0;

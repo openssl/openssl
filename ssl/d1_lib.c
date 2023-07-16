@@ -256,7 +256,7 @@ long dtls1_ctrl(SSL *ssl, int cmd, long larg, void *parg)
     return ret;
 }
 
-static void dtls1_bio_set_next_timeout(BIO * bio, const DTLS1_STATE *d1)
+static void dtls1_bio_set_next_timeout(BIO *bio, const DTLS1_STATE *d1)
 {
     struct timeval tv = ossl_time_to_timeval(d1->next_timeout);
 

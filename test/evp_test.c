@@ -52,13 +52,13 @@ struct evp_test_method_st {
     /* Name of test as it appears in file */
     const char *name;
     /* Initialise test for "alg" */
-    int (*init) (EVP_TEST * t, const char *alg);
+    int (*init) (EVP_TEST *t, const char *alg);
     /* Clean up method */
-    void (*cleanup) (EVP_TEST * t);
+    void (*cleanup) (EVP_TEST *t);
     /* Test specific name value pair processing */
-    int (*parse) (EVP_TEST * t, const char *name, const char *value);
+    int (*parse) (EVP_TEST *t, const char *name, const char *value);
     /* Run the test itself */
-    int (*run_test) (EVP_TEST * t);
+    int (*run_test) (EVP_TEST *t);
 };
 
 /* Linked list of named keys. */
