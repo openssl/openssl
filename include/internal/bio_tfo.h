@@ -54,7 +54,7 @@
  * Some options are purposely NOT defined per-platform
  *
  * OSSL_TFO_SYSCTL
- *     Defined as a sysctlbyname() option to to determine if
+ *     Defined as a sysctlbyname() option to determine if
  *     TFO is enabled in the kernel (macOS, FreeBSD)
  *
  * OSSL_TFO_SERVER_SOCKOPT
@@ -86,7 +86,7 @@
 /*
  * NO WINDOWS SUPPORT
  *
- * But this is is what would be used on the server:
+ * But this is what would be used on the server:
  *
  * define OSSL_TFO_SERVER_SOCKOPT       TCP_FASTOPEN
  * define OSSL_TFO_SERVER_SOCKOPT_VALUE 1

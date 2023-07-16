@@ -228,7 +228,7 @@ struct ossl_record_method_st {
      * remain available until all the bytes from record are released via one or
      * more release_record calls.
      *
-     * Internally the the OSSL_RECORD_METHOD the implementation may read/process
+     * Internally the OSSL_RECORD_METHOD implementation may read/process
      * multiple records in one go and buffer them.
      */
     int (*read_record)(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,

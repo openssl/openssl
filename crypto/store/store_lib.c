@@ -1013,7 +1013,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
     ctx->post_process_data = post_process_data;
 
     /*
-     * ossl_store_get0_loader_int will raise an error if the loader for the
+     * ossl_store_get0_loader_int will raise an error if the loader for
      * the scheme cannot be retrieved. But if a loader was successfully
      * fetched then we remove this error from the error stack.
      */

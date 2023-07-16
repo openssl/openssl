@@ -1127,7 +1127,7 @@ OSSL_DEPRECATEDIN_3_0 int EC_KEY_check_key(const EC_KEY *key);
 
 /** Indicates if an EC_KEY can be used for signing.
  *  \param  eckey  the EC_KEY object
- *  \return 1 if can can sign and 0 otherwise.
+ *  \return 1 if can sign and 0 otherwise.
  */
 OSSL_DEPRECATEDIN_3_0 int EC_KEY_can_sign(const EC_KEY *eckey);
 

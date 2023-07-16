@@ -93,7 +93,7 @@ static int test_pkey_sig(void)
         /*
          * If this picks the wrong signature without realizing it
          * we can get a segfault or some internal error. At least watch
-         * whether fake-rsa sign_init is is exercised by calling sign.
+         * whether fake-rsa sign_init is exercised by calling sign.
          */
         if (!TEST_int_eq(EVP_PKEY_sign_init(ctx), 1))
             goto end;

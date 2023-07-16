@@ -1571,7 +1571,7 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             if (opt_csr != NULL) {
                 CMP_err1("no -newkey option given with private key for POPO, -csr option only provides public key%s",
                         opt_key == NULL ? "" :
-                        ", and -key option superseded by by -csr");
+                        ", and -key option superseded by -csr");
                 return 0;
             }
             if (opt_key == NULL) {
