@@ -38,7 +38,7 @@ I<flags> is an optional set of flags, which can be used to modify the operation.
 CMS_SignedData_verify() is like CMS_verify() except that
 it operates on B<CMS SignedData> input in the I<sd> argument,
 it has some additional parameters described next,
-and on success it returns the verfied content as a memory BIO.
+and on success it returns the verified content as a memory BIO.
 The optional I<extra> parameter may be used to provide untrusted CA
 certificates that may be helpful for chain building in certificate validation.
 This list of certificates must not contain duplicates.
@@ -132,7 +132,7 @@ timestamp).
 
 CMS_verify() returns 1 for a successful verification and 0 if an error occurred.
 
-CMS_SignedData_verify() returns a memory BIO containing the verfied content,
+CMS_SignedData_verify() returns a memory BIO containing the verified content,
 or NULL on error.
 
 CMS_get0_signers() returns all signers or NULL if an error occurred.

@@ -72,7 +72,7 @@ Evaluation of the existing demos and their applicability to Windows IOCP:
 
 Further, a cursory examination of code on GitHub seems to suggest that when
 people do use IOCP with libssl, they do it using memory BIOs passed to libssl.
-So ddd-05 and ddd-06 essentially demonstate this use case, especially ddd-06 as
+So ddd-05 and ddd-06 essentially demonstrate this use case, especially ddd-06 as
 it uses IOCP internally on Windows.
 
 My conclusion here is that since libssl does not support IOCP in the first

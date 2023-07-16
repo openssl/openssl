@@ -487,7 +487,7 @@ unless the B<-new> option is given, which generates a certificate from scratch.
 
 =item B<-CAform> B<DER>|B<PEM>|B<P12>,
 
-The format for the CA certificate; unspecifed by default.
+The format for the CA certificate; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
 =item B<-CAkey> I<filename>|I<uri>

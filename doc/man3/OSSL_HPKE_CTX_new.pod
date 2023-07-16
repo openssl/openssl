@@ -189,7 +189,7 @@ modes> and L</Sender-authenticated HPKE Modes>.
 
 HPKE contexts have a role - either sender or receiver. This is used 
 to control which functions can be called and so that senders do not
-re-use a key and nonce with different plaintexts.
+reuse a key and nonce with different plaintexts.
 
 OSSL_HPKE_CTX_free(), OSSL_HPKE_export(), OSSL_HPKE_CTX_set1_psk(), 
 and OSSL_HPKE_CTX_get_seq() can be called regardless of role.
@@ -406,7 +406,7 @@ I<seq> output) that will be used in the next call to seal or open. That would
 return 0 before the first call a sender made to OSSL_HPKE_seal() and 1 after
 that first call.
 
-Note that re-use of the same nonce and key with different plaintexts would
+Note that reuse of the same nonce and key with different plaintexts would
 be very dangerous and could lead to loss of confidentiality and integrity.
 We therefore only support application control over I<seq> for decryption
 (i.e. OSSL_HPKE_open()) operations.

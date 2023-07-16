@@ -782,7 +782,7 @@ static int fix_cipher_md(enum state state,
 
     if (state == POST_CTRL_TO_PARAMS && ctx->action_type == GET) {
         /*
-         * Here's how we re-use |ctx->orig_p2| that was set in the
+         * Here's how we reuse |ctx->orig_p2| that was set in the
          * PRE_CTRL_TO_PARAMS state above.
          */
         *(void **)ctx->orig_p2 =
