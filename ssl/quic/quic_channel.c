@@ -2120,6 +2120,10 @@ static int ch_tx(QUIC_CHANNEL *ch)
          * from the peer. Once we tell the TXP to generate CONN_CLOSE, all
          * future calls to it generate CONN_CLOSE frames, so otherwise we would
          * just constantly generate CONN_CLOSE frames.
+         *
+         * Conforming to RFC 9000 s. 10.2.1 Closing Connection State:
+         *      An endpoint SHOULD limit the rate at which it generates
+         *      packets in the closing state. TODO(QUIC)
          */
         if (!ch->conn_close_queued)
             return 0;
@@ -2529,6 +2533,26 @@ int ossl_quic_channel_on_handshake_confirmed(QUIC_CHANNEL *ch)
  * Any successive calls have their termination cause data discarded;
  * once we start sending a CONNECTION_CLOSE frame, we don't change the details
  * in it.
+ *
+ * This conforms to RFC 9000 s. 10.2.1: Closing Connection State:
+ *      To minimize the state that an endpoint maintains for a closing
+ *      connection, endpoints MAY send the exact same packet in response
+ *      to any received packet.
+ *
+ * We don't drop any connection state (specifically packet protection keys)
+ * even though we are permitted to.  This conforms to RFC 9000 s. 10.2.1:
+ * Closing Connection State:
+ *       An endpoint MAY retain packet protection keys for incoming
+ *       packets to allow it to read and process a CONNECTION_CLOSE frame.
+ *
+ * Note that we do not conform to these two from the same section:
+ *      An endpoint's selected connection ID and the QUIC version
+ *      are sufficient information to identify packets for a closing
+ *      connection; the endpoint MAY discard all other connection state.
+ * and:
+ *      An endpoint MAY drop packet protection keys when entering the
+ *      closing state and send a packet containing a CONNECTION_CLOSE
+ *      frame in response to any UDP datagram that is received.
  */
 static void ch_start_terminating(QUIC_CHANNEL *ch,
                                  const QUIC_TERMINATE_CAUSE *tcause,
