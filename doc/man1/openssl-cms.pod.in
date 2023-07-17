@@ -35,6 +35,7 @@ Operation options:
 [B<-data_create>]
 [B<-data_out>]
 [B<-cmsout>]
+[B<-extend_signature_tst> I<ts response file>]
 
 File format options:
 
@@ -47,6 +48,7 @@ File format options:
 [B<-binary>]
 [B<-crlfeol>]
 [B<-asciicrlf>]
+[B<-token_in>]
 
 Keys and password options:
 
@@ -110,6 +112,7 @@ Output options:
 [B<-to> I<addr>]
 [B<-from> I<addr>]
 [B<-subject> I<subj>]
+[B<-signature> I<file>]
 
 Printing options:
 
@@ -259,6 +262,15 @@ B<Data> type and output the content.
 
 Takes an input message and writes out a PEM encoded CMS structure.
 
+item B<-extend_signature_tst>
+
+Extend an existing CMS signatgure by adding a timestamp token to create
+a CAdES Baseline-T signature. This function only supports exactly one
+signature. The input file is a timestamp response file including the
+timestamp token, unless the B<-token_in> option is additionally set.
+
+This option is only available in CAdES mode.
+
 =back
 
 =head2 File format options
@@ -318,6 +330,11 @@ the encapsulated content type. This option is normally used with detached
 content and an output signature format of DER. This option is not normally
 needed when verifying as it is enabled automatically if the encapsulated
 content format is detected.
+
+=item B<-token_in>
+
+If a timestamp is used to extend a signature to CAdES Baseline-T, treat
+the input file as a Timestamp Token (PKCS7) instead of a timestamp reply.
 
 =back
 
