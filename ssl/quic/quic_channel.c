@@ -2770,10 +2770,14 @@ void ossl_quic_channel_raise_protocol_error(QUIC_CHANNEL *ch,
                                             const char *reason)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
+    int err_reason = error_code == QUIC_ERR_INTERNAL_ERROR
+                     ? ERR_R_INTERNAL_ERROR : SSL_R_QUIC_PROTOCOL_ERROR;
 
-    if (error_code == QUIC_ERR_INTERNAL_ERROR)
-        /* Internal errors might leave some errors on the stack. */
-        ch_save_err_state(ch);
+    ERR_raise_data(ERR_LIB_SSL, err_reason,
+                   "Error code: %llu Frame type: %llu Reason: %s",
+                   (unsigned long long) error_code,
+                   (unsigned long long) frame_type, reason);
+    ch_save_err_state(ch);
 
     tcause.error_code = error_code;
     tcause.frame_type = frame_type;

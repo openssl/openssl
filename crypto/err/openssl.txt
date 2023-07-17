@@ -1498,6 +1498,7 @@ SSL_R_PROTOCOL_IS_SHUTDOWN:207:protocol is shutdown
 SSL_R_PSK_IDENTITY_NOT_FOUND:223:psk identity not found
 SSL_R_PSK_NO_CLIENT_CB:224:psk no client cb
 SSL_R_PSK_NO_SERVER_CB:225:psk no server cb
+SSL_R_QUIC_PROTOCOL_ERROR:382:quic protocol error
 SSL_R_READ_BIO_NOT_SET:211:read bio not set
 SSL_R_READ_TIMEOUT_EXPIRED:312:read timeout expired
 SSL_R_RECORDS_NOT_RELEASED:321:records not released
