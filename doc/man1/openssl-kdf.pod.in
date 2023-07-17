@@ -80,8 +80,8 @@ A key must be specified for most KDF algorithms.
 
 =item B<hexkey:>I<string>
 
-Similar to the B<key:> option, but
-specifies the secret key in hexadecimal form (two hex digits per byte).
+Alternative to the B<key:> option where
+the secret key is specified in hexadecimal form (two hex digits per byte).
 
 =item B<pass:>I<string>
 
@@ -91,8 +91,8 @@ The password must be specified for PBKDF2 and scrypt.
 
 =item B<hexpass:>I<string>
 
-Similar to the B<pass:> option, but
-specifies the password in hexadecimal form (two hex digits per byte).
+Alternative to the B<pass:> option where
+the password is specified in hexadecimal form (two hex digits per byte).
 
 =item B<salt:>I<string>
 
@@ -104,12 +104,12 @@ such as L<EVP_KDF-PBKDF2(7)>.
 
 =item B<hexsalt:>I<string>
 
-Similar to the B<salt:> option, but
-specifies the cryptographic salt in hexadecimal form (two hex digits per byte).
+Alternative to the B<salt:> option where
+the salt is specified in hexadecimal form (two hex digits per byte).
 
 =item B<info:>I<string>
 
-Some KDF implementations such as L<EVP_KDF-HKDF(7)> take an 'info' parameter
+Some KDF implementations, such as L<EVP_KDF-HKDF(7)>, take an 'info' parameter
 for binding the derived key material
 to application- and context-specific information.
 Specifies the info, fixed info, other info or shared info argument
@@ -118,8 +118,8 @@ The length must conform to any restrictions of the KDF algorithm.
 
 =item B<hexinfo:>I<string>
 
-Similar to the B<info:> option,
-but specifies the info in hexadecimal form (two hex digits per byte).
+Alternative to the B<info:> option where
+the info is specified in hexadecimal form (two hex digits per byte).
 
 =item B<digest:>I<string>
 
