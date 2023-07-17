@@ -236,8 +236,8 @@ static int rxfc_cwm_bump_desired(QUIC_RXFC *rxfc)
     int err = 0;
     uint64_t window_rem = rxfc->cwm - rxfc->rwm;
     uint64_t threshold
-        = safe_mul_uint64_t(rxfc->cur_window_size,
-                            WINDOW_THRESHOLD_NUM, &err) / WINDOW_THRESHOLD_DEN;
+        = safe_muldiv_uint64_t(rxfc->cur_window_size,
+                               WINDOW_THRESHOLD_NUM, WINDOW_THRESHOLD_DEN, &err);
 
     if (err)
         /*
