@@ -802,6 +802,9 @@ int cms_main(int argc, char **argv)
     if ((operation & SMIME_IP) == 0 && contfile != NULL)
         BIO_printf(bio_err,
                    "Warning: -contfile option is ignored for the given operation\n");
+    if (operation != SMIME_ENCRYPT && *argv != NULL)
+        BIO_printf(bio_err,
+                   "Warning: recipient certificate file parameters ignored for operation other than -encrypt\n");
 
     if ((flags & CMS_BINARY) != 0) {
         if (!(operation & SMIME_OP))
@@ -839,9 +842,6 @@ int cms_main(int argc, char **argv)
                 cert = NULL;
             }
         }
-    } else {
-        if (*argv != NULL)
-            BIO_printf(bio_err, "Warning: recipient certificate file parameters ignored for operation other than -encrypt\n");
     }
 
     if (certfile != NULL) {
