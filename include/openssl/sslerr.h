@@ -230,6 +230,7 @@
 # define SSL_R_PSK_IDENTITY_NOT_FOUND                     223
 # define SSL_R_PSK_NO_CLIENT_CB                           224
 # define SSL_R_PSK_NO_SERVER_CB                           225
+# define SSL_R_QUIC_PROTOCOL_ERROR                        382
 # define SSL_R_READ_BIO_NOT_SET                           211
 # define SSL_R_READ_TIMEOUT_EXPIRED                       312
 # define SSL_R_RECORDS_NOT_RELEASED                       321

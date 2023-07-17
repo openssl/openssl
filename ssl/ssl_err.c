@@ -355,6 +355,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "psk identity not found"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_PSK_NO_CLIENT_CB), "psk no client cb"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_PSK_NO_SERVER_CB), "psk no server cb"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_QUIC_PROTOCOL_ERROR),
+    "quic protocol error"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_READ_BIO_NOT_SET), "read bio not set"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_READ_TIMEOUT_EXPIRED),
     "read timeout expired"},
