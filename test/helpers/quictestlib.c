@@ -784,7 +784,13 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
 
             do {
                 if (!ossl_quic_wire_decode_pkt_hdr(&pkt,
-                        0 /* TODO(QUIC): Not sure how this should be set*/, 1,
+                        /*
+                         * TODO(QUIC SERVER):
+                         * Needs to be set to the actual short header CID length
+                         * when testing the server implementation.
+                         */
+                        0,
+                        1,
                         0, &hdr, NULL))
                     goto out;
 
@@ -797,7 +803,7 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                     goto out;
 
                 /*
-                 * TODO(QUIC): At the moment modifications to hdr by the callback
+                 * At the moment modifications to hdr by the callback
                  * are ignored. We might need to rewrite the QUIC header to
                  * enable tests to change this. We also don't yet have a
                  * mechanism for the callback to change the encrypted data
