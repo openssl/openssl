@@ -451,21 +451,25 @@ int ossl_quic_channel_is_active(const QUIC_CHANNEL *ch)
     return ch != NULL && ch->state == QUIC_CHANNEL_STATE_ACTIVE;
 }
 
-int ossl_quic_channel_is_terminating(const QUIC_CHANNEL *ch)
+static int ossl_quic_channel_is_closing(const QUIC_CHANNEL *ch)
 {
-    if (ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING
-            || ch->state == QUIC_CHANNEL_STATE_TERMINATING_DRAINING)
-        return 1;
+    return ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING;
+}
 
-    return 0;
+static int ossl_quic_channel_is_draining(const QUIC_CHANNEL *ch)
+{
+    return ch->state == QUIC_CHANNEL_STATE_TERMINATING_DRAINING;
+}
+
+static int ossl_quic_channel_is_terminating(const QUIC_CHANNEL *ch)
+{
+    return ossl_quic_channel_is_closing(ch)
+        || ossl_quic_channel_is_draining(ch);
 }
 
 int ossl_quic_channel_is_terminated(const QUIC_CHANNEL *ch)
 {
-    if (ch->state == QUIC_CHANNEL_STATE_TERMINATED)
-        return 1;
-
-    return 0;
+    return ch->state == QUIC_CHANNEL_STATE_TERMINATED;
 }
 
 int ossl_quic_channel_is_term_any(const QUIC_CHANNEL *ch)
@@ -1816,7 +1820,7 @@ static int ch_rx(QUIC_CHANNEL *ch)
      * When in TERMINATING - CLOSING, generate a CONN_CLOSE frame whenever we
      * process one or more incoming packets.
      */
-    if (handled_any && ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING)
+    if (handled_any && ossl_quic_channel_is_closing(ch))
         ch->conn_close_queued = 1;
 
     return 1;
@@ -2114,16 +2118,26 @@ static int ch_tx(QUIC_CHANNEL *ch)
 {
     QUIC_TXP_STATUS status;
 
-    if (ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING) {
+    /*
+     * RFC 9000 s. 10.2.2: Draining Connection State:
+     *      While otherwise identical to the closing state, an endpoint
+     *      in the draining state MUST NOT send any packets.
+     * and:
+     *      An endpoint MUST NOT send further packets.
+     */
+    if (ossl_quic_channel_is_draining(ch))
+        return 0;
+
+    if (ossl_quic_channel_is_closing(ch)) {
         /*
          * While closing, only send CONN_CLOSE if we've received more traffic
          * from the peer. Once we tell the TXP to generate CONN_CLOSE, all
          * future calls to it generate CONN_CLOSE frames, so otherwise we would
          * just constantly generate CONN_CLOSE frames.
          *
-         * Conforming to RFC 9000 s. 10.2.1 Closing Connection State:
+         * Confirming to RFC 9000 s. 10.2.1 Closing Connection State:
          *      An endpoint SHOULD limit the rate at which it generates
-         *      packets in the closing state. TODO(QUIC)
+         *      packets in the closing state.
          */
         if (!ch->conn_close_queued)
             return 0;
@@ -2589,6 +2603,13 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
                 f.frame_type = ch->terminate_cause.frame_type;
                 f.is_app     = ch->terminate_cause.app;
                 ossl_quic_tx_packetiser_schedule_conn_close(ch->txp, &f);
+                /*
+                 * RFC 9000 s. 10.2.2 Draining Connection State:
+                 *  An endpoint that receives a CONNECTION_CLOSE frame MAY
+                 *  send a single packet containing a CONNECTION_CLOSE
+                 *  frame before entering the draining state, using a
+                 *  NO_ERROR code if appropriate
+                 */
                 ch->conn_close_queued = 1;
             }
         } else {
@@ -2600,6 +2621,12 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
         if (force_immediate)
             ch_on_terminating_timeout(ch);
         else if (tcause->remote)
+            /*
+             * RFC 9000 s. 10.2.2 Draining Connection State:
+             *  An endpoint MAY enter the draining state from the
+             *  closing state if it receives a CONNECTION_CLOSE frame,
+             *  which indicates that the peer is also closing or draining.
+             */
             ch->state = QUIC_CHANNEL_STATE_TERMINATING_DRAINING;
 
         break;
