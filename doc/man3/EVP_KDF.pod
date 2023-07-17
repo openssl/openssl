@@ -229,7 +229,7 @@ sets the key.
 
 =item "info" (B<OSSL_KDF_PARAM_INFO>) <octet string>
 
-Some KDF implementations such as L<EVP_KDF-HKDF(7)> take an 'info' parameter
+Some KDF implementations, such as L<EVP_KDF-HKDF(7)>, take an 'info' parameter
 for binding the derived key material
 to application- and context-specific information.
 This parameter sets the info, fixed info, other info or shared info argument.
