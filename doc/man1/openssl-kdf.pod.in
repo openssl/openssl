@@ -96,7 +96,7 @@ the password is specified in hexadecimal form (two hex digits per byte).
 
 =item B<salt:>I<string>
 
-Specifies a non-secret random cryptographic salt as an alphanumeric string
+Specifies a non-secret unique cryptographic salt as an alphanumeric string
 (use if it contains printable characters only).
 The length must conform to any restrictions of the KDF algorithm.
 A salt parameter is required for several KDF algorithms,
