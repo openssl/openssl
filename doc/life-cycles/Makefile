@@ -1,4 +1,4 @@
-GRAPHS=cipher.dot digest.dot kdf.dot mac.dot pkey.dot rand.dot
+GRAPHS=cipher.dot digest.dot kdf.dot mac.dot pkey.dot rand.dot digestxof.dot
 IMAGES=
 
 all: png txt

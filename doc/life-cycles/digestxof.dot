@@ -1,0 +1,39 @@
+digraph digestxof {
+    bgcolor="transparent";
+
+    begin [label=start, color="#deeaee", style="filled"];
+    newed [label=newed, fontcolor="#c94c4c", style="solid"];
+    initialised [label=initialised, fontcolor="#c94c4c"];
+    absorbed [label="absorbed", fontcolor="#c94c4c"];
+    finaled [label="finaled", fontcolor="#c94c4c"];
+    squeezed [label="squeezed", fontcolor="#c94c4c"];
+    end [label="freed", color="#deeaee", style="filled"];
+
+    begin -> newed [label="EVP_MD_CTX_new"];
+    newed -> initialised [label="EVP_DigestInit"];
+    initialised -> absorbed [label="EVP_DigestAbsorb", weight=3];
+    absorbed -> absorbed [label="EVP_DigestAborb"];
+    absorbed -> finaled [label="EVP_DigestFinalXOF"];
+    absorbed -> squeezed [label="EVP_DigestSqueeze",
+                        fontcolor="#808080", color="#808080"];
+    squeezed -> squeezed [taillabel="EVP_DigestSqueeze",
+                        labeldistance=9, labelangle=345,
+                        labelfontcolor="#808080", color="#808080"];
+    finaled -> end [label="EVP_MD_CTX_free"];
+    squeezed -> end [label="EVP_MD_CTX_free"];
+
+    finaled -> newed [label="EVP_MD_CTX_reset", style=dashed, weight=2,
+                      color="#034f84", fontcolor="#034f84"];
+    absorbed -> newed [label="EVP_MD_CTX_reset", style=dashed,
+                      color="#034f84", fontcolor="#034f84"];
+    absorbed -> initialised [label="EVP_DigestInit", weight=0, style=dashed,
+                            color="#034f84", fontcolor="#034f84"];
+    finaled -> initialised [label="EVP_DigestInit", style=dashed,
+                            color="#034f84", fontcolor="#034f84"];
+    squeezed -> newed [label="EVP_MD_CTX_reset", style=dashed,
+                      color="#034f84", fontcolor="#034f84"];
+    squeezed -> initialised [label="EVP_DigestInit", weight=0, style=dashed,
+                            color="#034f84", fontcolor="#034f84"];
+
+}
+
