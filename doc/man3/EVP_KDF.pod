@@ -191,7 +191,7 @@ For those KDF implementations that support it, this parameter sets the password.
 
 =item "salt" (B<OSSL_KDF_PARAM_SALT>) <octet string>
 
-Some KDF implementations can take a non-secret random cryptographic salt.
+Some KDF implementations can take a non-secret unique cryptographic salt.
 For those KDF implementations that support it, this parameter sets the salt.
 
 The default value, if any, is implementation dependent.
