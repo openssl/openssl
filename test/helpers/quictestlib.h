@@ -140,7 +140,7 @@ int qtest_fault_set_handshake_listener(QTEST_FAULT *fault,
 int qtest_fault_resize_handshake(QTEST_FAULT *fault, size_t newlen);
 
 /*
- * TODO(QUIC): Add listeners for specific types of frame here. E.g. we might
+ * Add listeners for specific types of frame here. E.g. we might
  * expect to see an "ACK" frame listener which will be passed pre-parsed ack
  * data that can be modified as required.
  */
@@ -159,7 +159,7 @@ int qtest_fault_set_hand_enc_ext_listener(QTEST_FAULT *fault,
                                           qtest_fault_on_enc_ext_cb encextcb,
                                           void *encextcbarg);
 
-/* TODO(QUIC): Add listeners for other types of handshake message here */
+/* Add listeners for other types of handshake message here */
 
 
 /*
@@ -183,7 +183,7 @@ int qtest_fault_delete_extension(QTEST_FAULT *fault,
                                  size_t *extlen);
 
 /*
- * TODO(QUIC): Add additional helper functions for querying extensions here (e.g.
+ * Add additional helper functions for querying extensions here (e.g.
  * finding or adding them). We could also provide a "listener" API for listening
  * for specific extension types
  */
