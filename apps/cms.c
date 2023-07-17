@@ -830,19 +830,18 @@ int cms_main(int argc, char **argv)
         }
 
         if (*argv != NULL) {
-            if (operation == SMIME_ENCRYPT) {
-                for (; *argv != NULL; argv++) {
-                    cert = load_cert(*argv, FORMAT_UNDEF,
-                                     "recipient certificate file");
-                    if (cert == NULL)
-                        goto end;
-                    sk_X509_push(encerts, cert);
-                    cert = NULL;
-                }
-            } else {
-                BIO_printf(bio_err, "Warning: recipient certificate file parameters ignored for operation other than -encrypt\n");
+            for (; *argv != NULL; argv++) {
+                cert = load_cert(*argv, FORMAT_UNDEF,
+                                 "recipient certificate file");
+                if (cert == NULL)
+                    goto end;
+                sk_X509_push(encerts, cert);
+                cert = NULL;
             }
         }
+    } else {
+        if (*argv != NULL)
+            BIO_printf(bio_err, "Warning: recipient certificate file parameters ignored for operation other than -encrypt\n");
     }
 
     if (certfile != NULL) {
