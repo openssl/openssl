@@ -66,8 +66,7 @@ cases.
 =item B<-kdfopt> I<nm>:I<v>
 
 Passes options to the KDF algorithm.
-A comprehensive list of parameters can be found in the L<EVP_KDF(3)/PARAMETERS>
-implementation documentation.
+A comprehensive list of parameters can be found in L<EVP_KDF(3)/PARAMETERS>.
 Common parameter names used by EVP_KDF_CTX_set_params() are:
 
 =over 4
@@ -110,8 +109,9 @@ specifies the cryptographic salt in hexadecimal form (two hex digits per byte).
 
 =item B<info:>I<string>
 
-Some KDF implementations such as HKDF take an 'info' parameter for binding
-the derived key material to application- and context-specific information.
+Some KDF implementations such as L<EVP_KDF-HKDF(7)> take an 'info' parameter
+for binding the derived key material
+to application- and context-specific information.
 Specifies the info, fixed info, other info or shared info argument
 as an alphanumeric string (use if it contains printable characters only).
 The length must conform to any restrictions of the KDF algorithm.
