@@ -202,7 +202,7 @@ struct quic_channel_st {
      */
     uint64_t                        txku_threshold_override;
 
-    /* Valid if we are in the TERMINATING or TERMINATED states. */
+   /* Valid if we are in the TERMINATING or TERMINATED states. */
     QUIC_TERMINATE_CAUSE            terminate_cause;
 
     /*

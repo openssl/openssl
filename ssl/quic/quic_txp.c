@@ -89,6 +89,13 @@ struct ossl_quic_tx_packetiser_st {
 
     OSSL_QUIC_FRAME_CONN_CLOSE  conn_close_frame;
 
+    /*
+     * Counts of the number of bytes received and sent while in the closing
+     * state.
+     */
+    uint64_t                        closing_bytes_recv;
+    uint64_t                        closing_bytes_xmit;
+
     /* Internal state - packet assembly. */
     struct txp_el {
         unsigned char   *scratch;       /* scratch buffer for packet assembly */
@@ -1640,6 +1647,47 @@ static void on_sstream_updated(uint64_t stream_id, void *arg)
     ossl_quic_stream_map_update_state(txp->args.qsm, s);
 }
 
+/*
+ * Returns 1 if we can send that many bytes in closing state, 0 otherwise.
+ * Also maintains the bytes sent state if it returns a success.
+ */
+static int try_commit_conn_close(OSSL_QUIC_TX_PACKETISER *txp, size_t n)
+{
+    int res;
+
+    /* We can always send the first connection close frame */
+    if (txp->closing_bytes_recv == 0)
+        return 1;
+
+    /*
+     * RFC 9000 s. 10.2.1 Closing Connection State:
+     *      To avoid being used for an amplification attack, such
+     *      endpoints MUST limit the cumulative size of packets it sends
+     *      to three times the cumulative size of the packets that are
+     *      received and attributed to the connection.
+     * and:
+     *      An endpoint in the closing state MUST either discard packets
+     *      received from an unvalidated address or limit the cumulative
+     *      size of packets it sends to an unvalidated address to three
+     *      times the size of packets it receives from that address.
+     */
+    res = txp->closing_bytes_xmit + n <= txp->closing_bytes_recv * 3;
+
+    /*
+     * Attribute the bytes to the connection, if we are allowed to send them
+     * and this isn't the first closing frame.
+     */
+    if (res && txp->closing_bytes_recv != 0)
+        txp->closing_bytes_xmit += n;
+    return res;
+}
+
+void ossl_quic_tx_packetiser_record_received_closing_bytes(
+        OSSL_QUIC_TX_PACKETISER *txp, size_t n)
+{
+    txp->closing_bytes_recv += n;
+}
+
 static int txp_generate_pre_token(OSSL_QUIC_TX_PACKETISER *txp,
                                   struct txp_pkt *pkt,
                                   int chosen_for_conn_close,
@@ -1692,6 +1740,7 @@ static int txp_generate_pre_token(OSSL_QUIC_TX_PACKETISER *txp,
     if (a->allow_conn_close && txp->want_conn_close && chosen_for_conn_close) {
         WPACKET *wpkt = tx_helper_begin(h);
         OSSL_QUIC_FRAME_CONN_CLOSE f, *pf = &txp->conn_close_frame;
+        size_t l;
 
         if (wpkt == NULL)
             return 0;
@@ -1721,7 +1770,9 @@ static int txp_generate_pre_token(OSSL_QUIC_TX_PACKETISER *txp,
             pf->reason_len  = 0;
         }
 
-        if (ossl_quic_wire_encode_frame_conn_close(wpkt, pf)) {
+        if (ossl_quic_wire_encode_frame_conn_close(wpkt, pf)
+                && WPACKET_get_total_written(wpkt, &l)
+                && try_commit_conn_close(txp, l)) {
             if (!tx_helper_commit(h))
                 return 0;
 

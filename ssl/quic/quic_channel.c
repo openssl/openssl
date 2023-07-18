@@ -1783,6 +1783,7 @@ static void ch_rx_check_forged_pkt_limit(QUIC_CHANNEL *ch)
 static int ch_rx(QUIC_CHANNEL *ch)
 {
     int handled_any = 0;
+    const int closing = ossl_quic_channel_is_closing(ch);
 
     if (!ch->is_server && !ch->have_sent_any_pkt)
         /*
@@ -1796,6 +1797,11 @@ static int ch_rx(QUIC_CHANNEL *ch)
 
         if (!ossl_qrx_read_pkt(ch->qrx, &ch->qrx_pkt))
             break;
+
+        /* Track the amount of data received while in the closing state */
+        if (closing)
+            ossl_quic_tx_packetiser_record_received_closing_bytes(
+                    ch->txp, ch->qrx_pkt->hdr->len);
 
         if (!handled_any)
             ch_update_idle(ch);
@@ -1820,7 +1826,7 @@ static int ch_rx(QUIC_CHANNEL *ch)
      * When in TERMINATING - CLOSING, generate a CONN_CLOSE frame whenever we
      * process one or more incoming packets.
      */
-    if (handled_any && ossl_quic_channel_is_closing(ch))
+    if (handled_any && closing)
         ch->conn_close_queued = 1;
 
     return 1;
@@ -1858,8 +1864,12 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
 
     assert(ch->qrx_pkt != NULL);
 
+    /*
+     * RFC 9000 s. 10.2.1 Closing Connection State:
+     *      An endpoint that is closing is not required to process any
+     *      received frame.
+     */
     if (!ossl_quic_channel_is_active(ch))
-        /* Do not process packets once we are terminating. */
         return;
 
     if (ossl_quic_pkt_type_is_encrypted(ch->qrx_pkt->hdr->type)) {

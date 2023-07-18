@@ -56,7 +56,15 @@ typedef struct ossl_quic_tx_packetiser_args_st {
      *       crypto[QUIC_PN_SPACE_APP] is the 1-RTT crypto stream.
      */
     QUIC_SSTREAM    *crypto[QUIC_PN_SPACE_NUM];
-} OSSL_QUIC_TX_PACKETISER_ARGS;
+
+    /*
+     * Counts of the number of bytes received and sent while in the closing
+     * state.
+     */
+    uint64_t                        closing_bytes_recv;
+    uint64_t                        closing_bytes_xmit;
+
+ } OSSL_QUIC_TX_PACKETISER_ARGS;
 
 typedef struct ossl_quic_tx_packetiser_st OSSL_QUIC_TX_PACKETISER;
 
@@ -66,6 +74,14 @@ typedef void (ossl_quic_initial_token_free_fn)(const unsigned char *buf,
                                                size_t buf_len, void *arg);
 
 void ossl_quic_tx_packetiser_free(OSSL_QUIC_TX_PACKETISER *txp);
+
+/*
+ * When in the closing state we need to maintain a count of received bytes
+ * so that we can limit the number of close connection frames we send.
+ * Refer RFC 9000 s. 10.2.1 Closing Connection State.
+ */
+void ossl_quic_tx_packetiser_record_received_closing_bytes(
+        OSSL_QUIC_TX_PACKETISER *txp, size_t n);
 
 /*
  * Generates a datagram by polling the various ELs to determine if they want to
