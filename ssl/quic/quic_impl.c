@@ -2899,6 +2899,41 @@ int ossl_quic_get_stream_write_error_code(SSL *ssl, uint64_t *app_error_code)
 }
 
 /*
+ * Write buffer size mutation
+ * --------------------------
+ */
+int ossl_quic_set_write_buffer_size(SSL *ssl, size_t size)
+{
+    int ret = 0;
+    QCTX ctx;
+
+    if (!expect_quic_with_stream_lock(ssl, /*remote_init=*/-1, &ctx))
+        return 0;
+
+    if (!ossl_quic_stream_has_send(ctx.xso->stream))
+        /* Called on a unidirectional receive-only stream - error. */
+        goto out;
+
+    if (!ossl_quic_stream_has_send_buffer(ctx.xso->stream)) {
+        /*
+         * If the stream has a send part but we have disposed of it because we
+         * no longer need it, this is a no-op.
+         */
+        ret = 1;
+        goto out;
+    }
+
+    if (!ossl_quic_sstream_set_buffer_size(ctx.xso->stream->sstream, size))
+        goto out;
+
+    ret = 1;
+
+out:
+    quic_unlock(ctx.qc);
+    return ret;
+}
+
+/*
  * SSL_get_conn_close_info
  * -----------------------
  */

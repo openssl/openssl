@@ -99,6 +99,9 @@ uint64_t ossl_quic_set_options(SSL *s, uint64_t opts);
 uint64_t ossl_quic_clear_options(SSL *s, uint64_t opts);
 uint64_t ossl_quic_get_options(const SSL *s);
 
+/* Modifies write buffer size for a stream. */
+__owur int ossl_quic_set_write_buffer_size(SSL *s, size_t size);
+
 /*
  * Used to override ossl_time_now() for debug purposes. While this may be
  * overridden at any time, expect strange results if you change it after
