@@ -55,6 +55,12 @@ static int block_until_pred(QUIC_CONNECTION *qc,
 
     assert(qc->ch != NULL);
 
+    /*
+     * Any attempt to block auto-disables tick inhibition as otherwise we will
+     * hang around forever.
+     */
+    ossl_quic_channel_set_inhibit_tick(qc->ch, 0);
+
     rtor = ossl_quic_channel_get_reactor(qc->ch);
     return ossl_quic_reactor_block_until_pred(rtor, pred, pred_arg, flags,
                                               qc->mutex);
