@@ -2303,31 +2303,21 @@ void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk)
 
 int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose)
 {
-    return X509_STORE_CTX_set_purpose_ex(ctx, purpose, 0);
-}
-
-int X509_STORE_CTX_set_purpose_ex(X509_STORE_CTX *ctx, int purpose, int override)
-{
     /*
      * XXX: Why isn't this function always used to set the associated trust?
      * Should there even be a VPM->trust field at all?  Or should the trust
      * always be inferred from the purpose by X509_STORE_CTX_init().
      */
-    return X509_STORE_CTX_purpose_inherit_ex(ctx, 0, purpose, 0, override);
+    return X509_STORE_CTX_purpose_inherit(ctx, 0, purpose, 0);
 }
 
 int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
-{
-    return X509_STORE_CTX_set_trust_ex(ctx, trust, 0);
-}
-
-int X509_STORE_CTX_set_trust_ex(X509_STORE_CTX *ctx, int trust, int override)
 {
     /*
      * XXX: See above, this function would only be needed when the default
      * trust for the purpose needs an override in a corner case.
      */
-    return X509_STORE_CTX_purpose_inherit_ex(ctx, 0, 0, trust, override);
+    return X509_STORE_CTX_purpose_inherit(ctx, 0, 0, trust);
 }
 
 /*

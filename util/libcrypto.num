@@ -5535,5 +5535,3 @@ OSSL_ERR_STATE_save_to_mark             ?	3_2_0	EXIST::FUNCTION:
 X509_STORE_CTX_set_get_crl              ?	3_2_0	EXIST::FUNCTION:
 X509_STORE_CTX_set_current_reasons      ?	3_2_0	EXIST::FUNCTION:
 X509_STORE_CTX_purpose_inherit_ex       ?	3_2_0	EXIST::FUNCTION:
-X509_STORE_CTX_set_purpose_ex           ?	3_2_0	EXIST::FUNCTION:
-X509_STORE_CTX_set_trust_ex             ?	3_2_0	EXIST::FUNCTION:
