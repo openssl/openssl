@@ -1097,12 +1097,45 @@ int ossl_quic_get_net_write_desired(SSL *s)
  *
  */
 
+QUIC_NEEDS_LOCK
+static void qc_shutdown_flush_init(QUIC_CONNECTION *qc)
+{
+    QUIC_STREAM_MAP *qsm;
+
+    if (qc->shutting_down)
+        return;
+
+    qsm = ossl_quic_channel_get_qsm(qc->ch);
+
+    ossl_quic_stream_map_begin_shutdown_flush(qsm);
+    qc->shutting_down = 1;
+}
+
+/* Returns 1 if all shutdown-flush streams have been done with. */
+QUIC_NEEDS_LOCK
+static int qc_shutdown_flush_finished(QUIC_CONNECTION *qc)
+{
+    QUIC_STREAM_MAP *qsm = ossl_quic_channel_get_qsm(qc->ch);
+
+    return qc->shutting_down
+        && ossl_quic_stream_map_is_shutdown_flush_finished(qsm);
+}
+
 /* SSL_shutdown */
 static int quic_shutdown_wait(void *arg)
 {
     QUIC_CONNECTION *qc = arg;
 
     return ossl_quic_channel_is_terminated(qc->ch);
+}
+
+/* Returns 1 if shutdown flush process has finished or is inapplicable. */
+static int quic_shutdown_flush_wait(void *arg)
+{
+    QUIC_CONNECTION *qc = arg;
+
+    return ossl_quic_channel_is_term_any(qc->ch)
+        || qc_shutdown_flush_finished(qc);
 }
 
 QUIC_TAKES_LOCK
@@ -1112,6 +1145,7 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
 {
     int ret;
     QCTX ctx;
+    int stream_flush = ((flags & SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH) == 0);
 
     if (!expect_quic(s, &ctx))
         return 0;
@@ -1122,16 +1156,33 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
 
     quic_lock(ctx.qc);
 
+    /* Phase 1: Stream Flushing */
+    if (stream_flush) {
+        qc_shutdown_flush_init(ctx.qc);
+
+        if (!qc_shutdown_flush_finished(ctx.qc)) {
+            if (qc_blocking_mode(ctx.qc))
+                block_until_pred(ctx.qc, quic_shutdown_flush_wait, ctx.qc, 0);
+            else
+                ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+        }
+
+        if (!qc_shutdown_flush_finished(ctx.qc)) {
+            quic_unlock(ctx.qc);
+            return 0; /* ongoing */
+        }
+    }
+
+    /* Phase 2: Connection Closure */
     ossl_quic_channel_local_close(ctx.qc->ch,
                                   args != NULL ? args->quic_error_code : 0);
-
-    /* TODO(QUIC): !SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH */
 
     if (ossl_quic_channel_is_terminated(ctx.qc->ch)) {
         quic_unlock(ctx.qc);
         return 1;
     }
 
+    /* Phase 3: Terminating Wait Time */
     if (qc_blocking_mode(ctx.qc) && (flags & SSL_SHUTDOWN_FLAG_RAPID) == 0)
         block_until_pred(ctx.qc, quic_shutdown_wait, ctx.qc, 0);
     else
