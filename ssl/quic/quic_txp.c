@@ -2141,6 +2141,13 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
         if (shdr->is_fin)
             chunks[(i + 1) % 2].valid = 0;
 
+        /*
+         * We are now committed to our length (shdr->len can't change).
+         * If we truncated the chunk, clear the FIN bit.
+         */
+        if (shdr->len < orig_len)
+            shdr->is_fin = 0;
+
         /* Truncate IOVs to match our chosen length. */
         ossl_quic_sstream_adjust_iov((size_t)shdr->len, chunks[i % 2].iov,
                                      chunks[i % 2].num_stream_iovec);
