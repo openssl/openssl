@@ -247,6 +247,7 @@ void ossl_qrx_inject_urxe(OSSL_QRX *qrx, QUIC_URXE *urxe)
 static void qrx_on_rx(QUIC_URXE *urxe, void *arg)
 {
     OSSL_QRX *qrx = arg;
+
     ossl_qrx_inject_urxe(qrx, urxe);
 }
 
