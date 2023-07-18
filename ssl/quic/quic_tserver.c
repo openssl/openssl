@@ -215,9 +215,6 @@ int ossl_quic_tserver_read(QUIC_TSERVER *srv,
     int is_fin = 0;
     QUIC_STREAM *qs;
 
-    if (!ossl_quic_channel_is_active(srv->ch))
-        return 0;
-
     qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(srv->ch),
                                         stream_id);
     if (qs == NULL) {
@@ -227,10 +224,11 @@ int ossl_quic_tserver_read(QUIC_TSERVER *srv,
 
         /*
          * A client-initiated stream might spontaneously come into existence, so
-         * allow trying to read on a client-initiated stream before it exists.
+         * allow trying to read on a client-initiated stream before it exists,
+         * assuming the connection is still active.
          * Otherwise, fail.
          */
-        if (!is_client_init)
+        if (!is_client_init || !ossl_quic_channel_is_active(srv->ch))
             return 0;
 
         *bytes_read = 0;
