@@ -25,6 +25,7 @@ static const char *certfile, *keyfile;
 struct child_thread_args {
     struct helper *h;
     const struct script_op *script;
+    const char *script_name;
     int thread_idx;
 
     CRYPTO_THREAD *t;
@@ -747,6 +748,7 @@ static int is_want(SSL *s, int ret)
 }
 
 static int run_script_worker(struct helper *h, const struct script_op *script,
+                             const char *script_name,
                              int thread_idx)
 {
     int testresult = 0;
@@ -865,7 +867,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             }
 #endif
 
-            TEST_info("script finished on thread %d", thread_idx);
+            TEST_info("script \"%s\" finished on thread %d", script_name, thread_idx);
             testresult = 1;
             goto out;
 
@@ -1432,6 +1434,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 for (i = 0; i < op->arg1; ++i) {
                     h->threads[i].h            = h;
                     h->threads[i].script       = op->arg0;
+                    h->threads[i].script_name  = script_name;
                     h->threads[i].thread_idx   = i;
 
                     h->threads[i].m = ossl_crypto_mutex_new();
@@ -1507,8 +1510,8 @@ out:
     if (!testresult) {
         size_t i;
 
-        TEST_error("failed at script op %zu, thread %d\n",
-                   op_idx + 1, thread_idx);
+        TEST_error("failed in script \"%s\" at op %zu, thread %d\n",
+                   script_name, op_idx + 1, thread_idx);
 
         for (i = 0; i < repeat_stack_len; ++i)
             TEST_info("while repeating, iteration %zu of %zu, starting at script op %zu",
@@ -1522,7 +1525,9 @@ out:
     return testresult;
 }
 
-static int run_script(const struct script_op *script, int free_order)
+static int run_script(const struct script_op *script,
+                      const char *script_name,
+                      int free_order)
 {
     int testresult = 0;
     struct helper h;
@@ -1530,7 +1535,7 @@ static int run_script(const struct script_op *script, int free_order)
     if (!TEST_true(helper_init(&h, free_order, 1)))
         goto out;
 
-    if (!TEST_true(run_script_worker(&h, script, -1)))
+    if (!TEST_true(run_script_worker(&h, script, script_name, -1)))
         goto out;
 
 #if defined(OPENSSL_THREADS)
@@ -1551,6 +1556,7 @@ static CRYPTO_THREAD_RETVAL run_script_child_thread(void *arg)
     struct child_thread_args *args = arg;
 
     testresult = run_script_worker(args->h, args->script,
+                                   args->script_name,
                                    args->thread_idx);
 
     ossl_crypto_mutex_lock(args->m);
@@ -2874,15 +2880,19 @@ static const struct script_op *const scripts[] = {
     script_37,
     script_38,
     script_39,
+    script_40,
 };
 
 static int test_script(int idx)
 {
     int script_idx = idx >> 1;
     int free_order = idx & 1;
+    char script_name[64];
+
+    snprintf(script_name, sizeof(script_name), "script %d", idx);
 
     TEST_info("Running script %d (order=%d)", script_idx + 1, free_order);
-    return run_script(scripts[script_idx], free_order);
+    return run_script(scripts[script_idx], script_name, free_order);
 }
 
 /* Dynamically generated tests. */
@@ -2952,6 +2962,7 @@ static const struct forbidden_frame_type forbidden_frame_types[] = {
 static ossl_unused int test_dyn_frame_types(int idx)
 {
     size_t i;
+    char script_name[64];
     struct script_op *s = dyn_frame_types_script;
 
     for (i = 0; i < OSSL_NELEM(dyn_frame_types_script); ++i)
@@ -2962,7 +2973,10 @@ static ossl_unused int test_dyn_frame_types(int idx)
             s[i].arg2 = forbidden_frame_types[idx].expected_err;
         }
 
-    return run_script(dyn_frame_types_script, 0);
+    snprintf(script_name, sizeof(script_name),
+             "dyn script %d", idx);
+
+    return run_script(dyn_frame_types_script, script_name, 0);
 }
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
