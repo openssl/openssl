@@ -1631,69 +1631,76 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
         }
     }
 
-    /* Handle RXKU timeouts. */
-    ch_rxku_tick(ch);
+    if (!ch->inhibit_tick) {
+        /* Handle RXKU timeouts. */
+        ch_rxku_tick(ch);
 
-    /* Handle any incoming data from network. */
-    ch_rx_pre(ch);
+        /* Handle any incoming data from network. */
+        ch_rx_pre(ch);
 
-    do {
-        /* Process queued incoming packets. */
-        ch_rx(ch);
+        do {
+            /* Process queued incoming packets. */
+            ch_rx(ch);
 
-        /*
-         * Allow the handshake layer to check for any new incoming data and generate
-         * new outgoing data.
-         */
-        ch->have_new_rx_secret = 0;
-        if (!channel_only)
-            ossl_quic_tls_tick(ch->qtls);
+            /*
+             * Allow the handshake layer to check for any new incoming data and
+             * generate new outgoing data.
+             */
+            ch->have_new_rx_secret = 0;
+            if (!channel_only)
+                ossl_quic_tls_tick(ch->qtls);
 
-        /*
-         * If the handshake layer gave us a new secret, we need to do RX again
-         * because packets that were not previously processable and were
-         * deferred might now be processable.
-         *
-         * TODO(QUIC): Consider handling this in the yield_secret callback.
-         */
-    } while (ch->have_new_rx_secret);
+            /*
+             * If the handshake layer gave us a new secret, we need to do RX
+             * again because packets that were not previously processable and
+             * were deferred might now be processable.
+             *
+             * TODO(QUIC): Consider handling this in the yield_secret callback.
+             */
+        } while (ch->have_new_rx_secret);
+    }
 
     /*
-     * Handle any timer events which are due to fire; namely, the loss detection
-     * deadline and the idle timeout.
+     * Handle any timer events which are due to fire; namely, the loss
+     * detection deadline and the idle timeout.
      *
-     * ACKM ACK generation deadline is polled by TXP, so we don't need to handle
-     * it here.
+     * ACKM ACK generation deadline is polled by TXP, so we don't need to
+     * handle it here.
      */
     now = get_time(ch);
     if (ossl_time_compare(now, ch->idle_deadline) >= 0) {
         /*
-         * Idle timeout differs from normal protocol violation because we do not
-         * send a CONN_CLOSE frame; go straight to TERMINATED.
+         * Idle timeout differs from normal protocol violation because we do
+         * not send a CONN_CLOSE frame; go straight to TERMINATED.
          */
-        ch_on_idle_timeout(ch);
+        if (!ch->inhibit_tick)
+            ch_on_idle_timeout(ch);
+
         res->net_read_desired   = 0;
         res->net_write_desired  = 0;
         res->tick_deadline      = ossl_time_infinite();
         return;
     }
 
-    deadline = ossl_ackm_get_loss_detection_deadline(ch->ackm);
-    if (!ossl_time_is_zero(deadline) && ossl_time_compare(now, deadline) >= 0)
-        ossl_ackm_on_timeout(ch->ackm);
+    if (!ch->inhibit_tick) {
+        deadline = ossl_ackm_get_loss_detection_deadline(ch->ackm);
+        if (!ossl_time_is_zero(deadline)
+            && ossl_time_compare(now, deadline) >= 0)
+            ossl_ackm_on_timeout(ch->ackm);
 
-    /* If a ping is due, inform TXP. */
-    if (ossl_time_compare(now, ch->ping_deadline) >= 0) {
-        int pn_space = ossl_quic_enc_level_to_pn_space(ch->tx_enc_level);
+        /* If a ping is due, inform TXP. */
+        if (ossl_time_compare(now, ch->ping_deadline) >= 0) {
+            int pn_space = ossl_quic_enc_level_to_pn_space(ch->tx_enc_level);
 
-        ossl_quic_tx_packetiser_schedule_ack_eliciting(ch->txp, pn_space);
+            ossl_quic_tx_packetiser_schedule_ack_eliciting(ch->txp, pn_space);
+        }
+
+        /* Write any data to the network due to be sent. */
+        ch_tx(ch);
+
+        /* Do stream GC. */
+        ossl_quic_stream_map_gc(&ch->qsm);
     }
-
-    /* Write any data to the network due to be sent. */
-    ch_tx(ch);
-
-    /* Do stream GC. */
-    ossl_quic_stream_map_gc(&ch->qsm);
 
     /* Determine the time at which we should next be ticked. */
     res->tick_deadline = ch_determine_next_tick_deadline(ch);
@@ -3151,4 +3158,9 @@ int ossl_quic_channel_ping(QUIC_CHANNEL *ch)
     ossl_quic_tx_packetiser_schedule_ack_eliciting(ch->txp, pn_space);
 
     return 1;
+}
+
+void ossl_quic_channel_set_inhibit_tick(QUIC_CHANNEL *ch, int inhibit)
+{
+    ch->inhibit_tick = (inhibit != 0);
 }
