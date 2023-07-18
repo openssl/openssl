@@ -832,15 +832,13 @@ int cms_main(int argc, char **argv)
             goto end;
         }
 
-        if (*argv != NULL) {
-            for (; *argv != NULL; argv++) {
-                cert = load_cert(*argv, FORMAT_UNDEF,
-                                 "recipient certificate file");
-                if (cert == NULL)
-                    goto end;
-                sk_X509_push(encerts, cert);
-                cert = NULL;
-            }
+        for (; *argv != NULL; argv++) {
+            cert = load_cert(*argv, FORMAT_UNDEF,
+                             "recipient certificate file");
+            if (cert == NULL)
+                goto end;
+            sk_X509_push(encerts, cert);
+            cert = NULL;
         }
     }
 
