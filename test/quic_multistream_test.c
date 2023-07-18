@@ -119,7 +119,7 @@ struct script_op {
 #define OPK_C_FREE_STREAM                           18
 #define OPK_C_SET_DEFAULT_STREAM_MODE               19
 #define OPK_C_SET_INCOMING_STREAM_POLICY            20
-#define OPK_C_SHUTDOWN                              21
+#define OPK_C_SHUTDOWN_WAIT                         21
 #define OPK_C_EXPECT_CONN_CLOSE_INFO                22
 #define OPK_S_EXPECT_CONN_CLOSE_INFO                23
 #define OPK_S_BIND_STREAM_ID                        24
@@ -142,6 +142,8 @@ struct script_op {
 #define OPK_S_READ_FAIL                             41
 #define OPK_S_SET_INJECT_PLAIN                      42
 #define OPK_SET_INJECT_WORD                         43
+#define OPK_C_INHIBIT_TICK                          44
+#define OPK_C_SET_WRITE_BUF_SIZE                    45
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -205,8 +207,8 @@ struct script_op {
     {OPK_C_SET_DEFAULT_STREAM_MODE, NULL, (mode), NULL, NULL},
 #define OP_C_SET_INCOMING_STREAM_POLICY(policy) \
     {OPK_C_SET_INCOMING_STREAM_POLICY, NULL, (policy), NULL, NULL},
-#define OP_C_SHUTDOWN() \
-    {OPK_C_SHUTDOWN, NULL, 0, NULL, NULL},
+#define OP_C_SHUTDOWN_WAIT() \
+    {OPK_C_SHUTDOWN_WAIT, NULL, 0, NULL, NULL},
 #define OP_C_EXPECT_CONN_CLOSE_INFO(ec, app, remote)                \
     {OPK_C_EXPECT_CONN_CLOSE_INFO, NULL,                            \
         ((app) ? EXPECT_CONN_CLOSE_APP : 0) |                       \
@@ -257,6 +259,10 @@ struct script_op {
     {OPK_S_SET_INJECT_PLAIN, NULL, 0, NULL, NULL, 0, (f)},
 #define OP_SET_INJECT_WORD(w0, w1) \
     {OPK_SET_INJECT_WORD, NULL, (w0), NULL, NULL, (w1), NULL},
+#define OP_C_INHIBIT_TICK(inhibit) \
+    {OPK_C_INHIBIT_TICK, NULL, (inhibit), NULL, NULL, 0, NULL},
+#define OP_C_SET_WRITE_BUF_SIZE(stream_name, size) \
+    {OPK_C_SET_WRITE_BUF_SIZE, NULL, (size), NULL, #stream_name},
 
 static OSSL_TIME get_time(void *arg)
 {
@@ -786,7 +792,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             first           = 0;
             offset          = 0;
             op_start_time   = ossl_time_now();
-            op_deadline     = ossl_time_add(op_start_time, ossl_ms2time(2000));
+            op_deadline     = ossl_time_add(op_start_time, ossl_ms2time(8000));
         }
 
         if (!TEST_int_le(ossl_time_compare(ossl_time_now(), op_deadline), 0)) {
@@ -1247,9 +1253,12 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             }
             break;
 
-        case OPK_C_SHUTDOWN:
+        case OPK_C_SHUTDOWN_WAIT:
             {
                 int ret;
+                QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
+
+                ossl_quic_channel_set_inhibit_tick(ch, 0);
 
                 if (!TEST_ptr(c_tgt))
                     goto out;
@@ -1258,6 +1267,8 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_int_ge(ret, 0))
                     goto out;
 
+                if (ret == 0)
+                    SPIN_AGAIN();
             }
             break;
 
@@ -1498,6 +1509,23 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
         case OPK_SET_INJECT_WORD:
             h->inject_word0 = op->arg1;
             h->inject_word1 = op->arg2;
+            break;
+
+        case OPK_C_INHIBIT_TICK:
+            {
+                QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
+
+                ossl_quic_channel_set_inhibit_tick(ch, op->arg1);
+            }
+            break;
+
+        case OPK_C_SET_WRITE_BUF_SIZE:
+            if (!TEST_ptr(c_tgt))
+                goto out;
+
+            if (!TEST_true(ossl_quic_set_write_buffer_size(c_tgt, op->arg1)))
+                goto out;
+
             break;
 
         default:
@@ -1817,7 +1845,7 @@ static const struct script_op script_10[] = {
     OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
     OP_S_READ_EXPECT        (a, "apple", 5)
 
-    OP_C_SHUTDOWN           ()
+    OP_C_SHUTDOWN_WAIT      ()
     OP_C_EXPECT_CONN_CLOSE_INFO(0, 1, 0)
     OP_S_EXPECT_CONN_CLOSE_INFO(0, 1, 1)
 
@@ -2840,6 +2868,46 @@ static const struct script_op script_39[] = {
     OP_END
 };
 
+/* 40. Shutdown flush test */
+static const unsigned char script_40_data[1024] = "strawberry";
+
+static const struct script_op script_40[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+
+    OP_C_INHIBIT_TICK       (1)
+    OP_C_SET_WRITE_BUF_SIZE (a, 1024 * 100 * 3)
+
+    OP_BEGIN_REPEAT         (100)
+
+    OP_C_WRITE              (a, script_40_data, sizeof(script_40_data))
+
+    OP_END_REPEAT           ()
+
+    OP_C_CONCLUDE           (a)
+    OP_C_SHUTDOWN_WAIT      ()  /* disengages tick inhibition */
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_BEGIN_REPEAT         (100)
+
+    OP_S_READ_EXPECT        (a, script_40_data, sizeof(script_40_data))
+
+    OP_END_REPEAT           ()
+
+    OP_S_EXPECT_FIN         (a)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(0, 1, 0)
+    OP_S_EXPECT_CONN_CLOSE_INFO(0, 1, 1)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -2889,7 +2957,7 @@ static int test_script(int idx)
     int free_order = idx & 1;
     char script_name[64];
 
-    snprintf(script_name, sizeof(script_name), "script %d", idx);
+    snprintf(script_name, sizeof(script_name), "script %d", script_idx + 1);
 
     TEST_info("Running script %d (order=%d)", script_idx + 1, free_order);
     return run_script(scripts[script_idx], script_name, free_order);
