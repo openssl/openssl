@@ -34,6 +34,7 @@ static void qc_set_default_xso_keep_ref(QUIC_CONNECTION *qc, QUIC_XSO *xso,
                                         int touch, QUIC_XSO **old_xso);
 static SSL *quic_conn_stream_new(QCTX *ctx, uint64_t flags, int need_lock);
 static int quic_validate_for_write(QUIC_XSO *xso, int *err);
+static int quic_mutation_allowed(QUIC_CONNECTION *qc, int req_active);
 
 /*
  * QUIC Front-End I/O API: Common Utilities
@@ -227,7 +228,7 @@ static int ossl_unused expect_quic_with_stream_lock(const SSL *s, int remote_ini
     quic_lock(ctx->qc);
 
     if (ctx->xso == NULL && remote_init >= 0) {
-        if (ossl_quic_channel_is_term_any(ctx->qc->ch)) {
+        if (!quic_mutation_allowed(ctx->qc, /*req_active=*/0)) {
             QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
             goto err;
         }
@@ -297,6 +298,26 @@ static void quic_unlock(QUIC_CONNECTION *qc)
 #endif
 }
 
+/*
+ * This predicate is the criterion which should determine API call rejection for
+ * *most* mutating API calls, particularly stream-related operations for send
+ * parts.
+ *
+ * A call is rejected (this function returns 0) if shutdown is in progress
+ * (stream flushing), or we are in a TERMINATING or TERMINATED state. If
+ * req_active=1, the connection must be active (i.e., the IDLE state is also
+ * rejected).
+ */
+static int quic_mutation_allowed(QUIC_CONNECTION *qc, int req_active)
+{
+    if (qc->shutting_down || ossl_quic_channel_is_term_any(qc->ch))
+        return 0;
+
+    if (req_active && !ossl_quic_channel_is_active(qc->ch))
+        return 0;
+
+    return 1;
+}
 
 /*
  * QUIC Front-End I/O API: Initialization
@@ -1294,7 +1315,7 @@ static int quic_handshake_wait(void *arg)
 {
     struct quic_handshake_wait_args *args = arg;
 
-    if (!ossl_quic_channel_is_active(args->qc->ch))
+    if (!quic_mutation_allowed(args->qc, /*req_active=*/1))
         return -1;
 
     if (ossl_quic_channel_is_handshake_complete(args->qc->ch))
@@ -1374,7 +1395,7 @@ static int quic_do_handshake(QCTX *ctx)
         /* Handshake already completed. */
         return 1;
 
-    if (ossl_quic_channel_is_term_any(qc->ch))
+    if (!quic_mutation_allowed(qc, /*req_active=*/0))
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
 
     if (BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC) {
@@ -1415,7 +1436,7 @@ static int quic_do_handshake(QCTX *ctx)
         args.qc     = qc;
 
         ret = block_until_pred(qc, quic_handshake_wait, &args, 0);
-        if (!ossl_quic_channel_is_active(qc->ch)) {
+        if (!quic_mutation_allowed(qc, /*req_active=*/1)) {
             QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
             return 0; /* Shutdown before completion */
         } else if (ret <= 0) {
@@ -1528,7 +1549,7 @@ static int quic_wait_for_stream(void *arg)
 {
     struct quic_wait_for_stream_args *args = arg;
 
-    if (!ossl_quic_channel_is_active(args->qc->ch)) {
+    if (!quic_mutation_allowed(args->qc, /*req_active=*/1)) {
         /* If connection is torn down due to an error while blocking, stop. */
         QUIC_RAISE_NON_NORMAL_ERROR(args->ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         return -1;
@@ -1664,7 +1685,7 @@ static SSL *quic_conn_stream_new(QCTX *ctx, uint64_t flags, int need_lock)
     if (need_lock)
         quic_lock(qc);
 
-    if (ossl_quic_channel_is_term_any(qc->ch)) {
+    if (!quic_mutation_allowed(qc, /*req_active=*/0)) {
         QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         goto err;
     }
@@ -1793,7 +1814,7 @@ static int quic_write_again(void *arg)
     struct quic_write_again_args *args = arg;
     size_t actual_written = 0;
 
-    if (!ossl_quic_channel_is_active(args->xso->conn->ch))
+    if (!quic_mutation_allowed(args->xso->conn, /*req_active=*/1))
         /* If connection is torn down due to an error while blocking, stop. */
         return -2;
 
@@ -1861,7 +1882,7 @@ static int quic_write_blocking(QCTX *ctx, const void *buf, size_t len,
 
     res = block_until_pred(xso->conn, quic_write_again, &args, 0);
     if (res <= 0) {
-        if (!ossl_quic_channel_is_active(xso->conn->ch))
+        if (!quic_mutation_allowed(xso->conn, /*req_active=*/1))
             return QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         else
             return QUIC_RAISE_NON_NORMAL_ERROR(ctx, args.err, NULL);
@@ -2058,7 +2079,7 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
 
     partial_write = ((ctx.xso->ssl_mode & SSL_MODE_ENABLE_PARTIAL_WRITE) != 0);
 
-    if (ossl_quic_channel_is_term_any(ctx.qc->ch)) {
+    if (!quic_mutation_allowed(ctx.qc, /*req_active=*/0)) {
         ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         goto out;
     }
@@ -2205,7 +2226,7 @@ static int quic_read_again(void *arg)
 {
     struct quic_read_again_args *args = arg;
 
-    if (!ossl_quic_channel_is_active(args->ctx->qc->ch)) {
+    if (!quic_mutation_allowed(args->ctx->qc, /*req_active=*/1)) {
         /* If connection is torn down due to an error while blocking, stop. */
         QUIC_RAISE_NON_NORMAL_ERROR(args->ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         return -1;
@@ -2237,7 +2258,7 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
 
     quic_lock(ctx.qc);
 
-    if (ossl_quic_channel_is_term_any(ctx.qc->ch)) {
+    if (!quic_mutation_allowed(ctx.qc, /*req_active=*/0)) {
         ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         goto out;
     }
@@ -2390,7 +2411,7 @@ int ossl_quic_conn_stream_conclude(SSL *s)
 
     qs = ctx.xso->stream;
 
-    if (!ossl_quic_channel_is_active(ctx.qc->ch)) {
+    if (!quic_mutation_allowed(ctx.qc, /*req_active=*/1)) {
         quic_unlock(ctx.qc);
         return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
     }
@@ -2693,7 +2714,7 @@ static int wait_for_incoming_stream(void *arg)
     QUIC_CONNECTION *qc = args->ctx->qc;
     QUIC_STREAM_MAP *qsm = ossl_quic_channel_get_qsm(qc->ch);
 
-    if (!ossl_quic_channel_is_active(qc->ch)) {
+    if (!quic_mutation_allowed(qc, /*req_active=*/1)) {
         /* If connection is torn down due to an error while blocking, stop. */
         QUIC_RAISE_NON_NORMAL_ERROR(args->ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         return -1;
