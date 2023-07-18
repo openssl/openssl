@@ -312,6 +312,8 @@ struct quic_stream_st {
     unsigned int    deleted                 : 1;
     /* Set to 1 once the above conditions are actually met. */
     unsigned int    ready_for_gc            : 1;
+    /* Set to 1 if this is currently counted in the shutdown flush stream count. */
+    unsigned int    shutdown_flush          : 1;
 };
 
 #define QUIC_STREAM_INITIATOR_CLIENT        0
@@ -517,7 +519,8 @@ typedef struct quic_stream_map_st {
     QUIC_STREAM_LIST_NODE   active_list;
     QUIC_STREAM_LIST_NODE   accept_list;
     QUIC_STREAM_LIST_NODE   ready_for_gc_list;
-    size_t                  rr_stepping, rr_counter, num_accept;
+    size_t                  rr_stepping, rr_counter;
+    size_t                  num_accept, num_shutdown_flush;
     QUIC_STREAM             *rr_cur;
     uint64_t                (*get_stream_limit_cb)(int uni, void *arg);
     void                    *get_stream_limit_cb_arg;
@@ -796,10 +799,30 @@ void ossl_quic_stream_map_remove_from_accept_queue(QUIC_STREAM_MAP *qsm,
 size_t ossl_quic_stream_map_get_accept_queue_len(QUIC_STREAM_MAP *qsm);
 
 /*
+ * Shutdown Flush and GC
+ * =====================
+ */
+
+/*
  * Delete streams ready for GC. Pointers to those QUIC_STREAM objects become
  * invalid.
  */
 void ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm);
+
+/*
+ * Begins shutdown stream flush triage. Analyses all streams, including deleted
+ * but not yet GC'd streams, to determine if we should wait for that stream to
+ * be fully flushed before shutdown. After calling this, call
+ * ossl_quic_stream_map_is_shutdown_flush_finished() to determine if all
+ * shutdown flush eligible streams have been flushed.
+ */
+void ossl_quic_stream_map_begin_shutdown_flush(QUIC_STREAM_MAP *qsm);
+
+/*
+ * Returns 1 if all shutdown flush eligible streams have finished flushing,
+ * or if ossl_quic_stream_map_begin_shutdown_flush() has not been called.
+ */
+int ossl_quic_stream_map_is_shutdown_flush_finished(QUIC_STREAM_MAP *qsm);
 
 /*
  * QUIC Stream Iterator

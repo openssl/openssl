@@ -100,7 +100,9 @@ int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
     qsm->rr_stepping = 1;
     qsm->rr_counter  = 0;
     qsm->rr_cur      = NULL;
-    qsm->num_accept  = 0;
+
+    qsm->num_accept         = 0;
+    qsm->num_shutdown_flush = 0;
 
     qsm->get_stream_limit_cb        = get_stream_limit_cb;
     qsm->get_stream_limit_cb_arg    = get_stream_limit_cb_arg;
@@ -396,6 +398,16 @@ int ossl_quic_stream_map_notify_all_data_sent(QUIC_STREAM_MAP *qsm,
     }
 }
 
+static void shutdown_flush_done(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
+{
+    if (!qs->shutdown_flush)
+        return;
+
+    assert(qsm->num_shutdown_flush > 0);
+    qs->shutdown_flush = 0;
+    --qsm->num_shutdown_flush;
+}
+
 int ossl_quic_stream_map_notify_totally_acked(QUIC_STREAM_MAP *qsm,
                                               QUIC_STREAM *qs)
 {
@@ -411,6 +423,8 @@ int ossl_quic_stream_map_notify_totally_acked(QUIC_STREAM_MAP *qsm,
         /* We no longer need a QUIC_SSTREAM in this state. */
         ossl_quic_sstream_free(qs->sstream);
         qs->sstream = NULL;
+
+        shutdown_flush_done(qsm, qs);
         return 1;
     }
 }
@@ -462,6 +476,7 @@ int ossl_quic_stream_map_reset_stream_send_part(QUIC_STREAM_MAP *qsm,
         ossl_quic_sstream_free(qs->sstream);
         qs->sstream = NULL;
 
+        shutdown_flush_done(qsm, qs);
         ossl_quic_stream_map_update_state(qsm, qs);
         return 1;
 
@@ -744,6 +759,43 @@ void ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm)
 
          ossl_quic_stream_map_release(qsm, qs);
     }
+}
+
+static int eligible_for_shutdown_flush(QUIC_STREAM *qs)
+{
+    /*
+     * We only care about servicing the send part of a stream (if any) during
+     * shutdown flush. A stream needs to have a final size and that final size
+     * needs to be a result of normal conclusion of a stream via
+     * SSL_stream_conclude (as opposed to due to reset). If the application did
+     * not conclude a stream before deleting it we assume it does not care about
+     * data being flushed during connection termination.
+     */
+    return ossl_quic_stream_has_send_buffer(qs)
+        && ossl_quic_stream_send_get_final_size(qs, NULL);
+}
+
+static void begin_shutdown_flush_each(QUIC_STREAM *qs, void *arg)
+{
+    QUIC_STREAM_MAP *qsm = arg;
+
+    if (!eligible_for_shutdown_flush(qs) || qs->shutdown_flush)
+        return;
+
+    qs->shutdown_flush = 1;
+    ++qsm->num_shutdown_flush;
+}
+
+void ossl_quic_stream_map_begin_shutdown_flush(QUIC_STREAM_MAP *qsm)
+{
+    qsm->num_shutdown_flush = 0;
+
+    ossl_quic_stream_map_visit(qsm, begin_shutdown_flush_each, qsm);
+}
+
+int ossl_quic_stream_map_is_shutdown_flush_finished(QUIC_STREAM_MAP *qsm)
+{
+    return qsm->num_shutdown_flush == 0;
 }
 
 /*
