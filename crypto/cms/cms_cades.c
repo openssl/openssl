@@ -27,6 +27,7 @@
 /* extract the time of stamping from the timestamp token */
 static int ossl_cms_cades_extract_timestamp(PKCS7 *token, time_t *stamp_time) {
     int ret = 0;
+
     TS_TST_INFO *tst_info = PKCS7_to_TS_TST_INFO(token);
     const ASN1_GENERALIZEDTIME *atime = TS_TST_INFO_get_time(tst_info);
     struct tm tm;
@@ -77,7 +78,8 @@ err:
  * it can be proven that the signing took place at or before the time
  * of the timestamp. The signature is provided as "os".
  */
-int ossl_cms_handle_CAdES_SignatureTimestampToken(X509_ATTRIBUTE *tsattr, X509_STORE *store, ASN1_OCTET_STRING *os, time_t *stamp_time) {
+int ossl_cms_handle_CAdES_SignatureTimestampToken(X509_ATTRIBUTE *tsattr,
+               X509_STORE *store, ASN1_OCTET_STRING *os, time_t *stamp_time) {
     int ret = 0, f = 0;
     TS_VERIFY_CTX *verify_ctx = NULL;
     ASN1_TYPE *type = X509_ATTRIBUTE_get0_type(tsattr, 0);
@@ -90,7 +92,7 @@ int ossl_cms_handle_CAdES_SignatureTimestampToken(X509_ATTRIBUTE *tsattr, X509_S
     unsigned char *imprint = NULL;
     unsigned int imprint_len;
 
-    if (!token) {
+    if (token == NULL) {
 	goto err;
     }
 
@@ -113,7 +115,6 @@ int ossl_cms_handle_CAdES_SignatureTimestampToken(X509_ATTRIBUTE *tsattr, X509_S
 
     md_ctx = EVP_MD_CTX_new();
     if (md_ctx == NULL) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     if (!EVP_DigestInit(md_ctx, md))
