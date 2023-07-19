@@ -428,6 +428,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
      */
     if (cadesVerify) {
         int num, j;
+
         for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
 
@@ -446,7 +447,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
                         /*
                          * Perform evaluation of timestamp. The value
                          * timestamped is the original signature
-                         * If successfull, a valid signing time is available
+                         * If successful, a valid signing time is available
                          */
                         if (!ossl_cms_handle_CAdES_SignatureTimestampToken(attr,
                                  store, si->signature, &verification_time))
