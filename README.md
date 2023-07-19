@@ -3,6 +3,12 @@
 OQS-OpenSSL\_1\_1\_1
 ==================================
 
+## <span style="color: red;">Warning</span>
+
+<b><span style="color: red;">The OpenSSL project has announced that its support for OpenSSL 1.1.1 will stop in September, 2023, and that all users should switch to OpenSSL 3.  Consequently, the Open Quantum Safe project is discontinuing development of our OQS-OpenSSL 1.1.1 fork.  No more releases are planned for OQS-OpenSSL 1.1.1.  The [OQS Provider for OpenSSL 3](https://github.com/open-quantum-safe/oqs-provider/) provides full support for post-quantum key exchange and authentication in TLS 1.3, X.509, and S/MIME.</span></b>
+
+---
+
 [OpenSSL](https://openssl.org/) is an open-source implementation of the TLS protocol and various cryptographic algorithms ([View the original README](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/README).)
 
 OQS-OpenSSL\_1\_1\_1 is a fork of OpenSSL 1.1.1 that adds quantum-safe key exchange and authentication algorithms using [liboqs](https://github.com/open-quantum-safe/liboqs) for prototyping and evaluation purposes. This fork is not endorsed by the OpenSSL project.
