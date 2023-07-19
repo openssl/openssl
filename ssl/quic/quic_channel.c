@@ -1826,11 +1826,13 @@ static int bio_addr_eq(const BIO_ADDR *a, const BIO_ADDR *b)
                            &b->s_in.sin_addr,
                            sizeof(a->s_in.sin_addr))
                 && a->s_in.sin_port == b->s_in.sin_port;
+#if OPENSSL_USE_IPV6
         case AF_INET6:
             return !memcmp(&a->s_in6.sin6_addr,
                            &b->s_in6.sin6_addr,
                            sizeof(a->s_in6.sin6_addr))
                 && a->s_in6.sin6_port == b->s_in6.sin6_port;
+#endif
         default:
             return 0; /* not supported */
     }
@@ -1879,8 +1881,12 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
      */
     if (!ch->is_server
         && ch->qrx_pkt->peer != NULL
-        && (BIO_ADDR_family(&ch->cur_peer_addr) == AF_INET
-            || BIO_ADDR_family(&ch->cur_peer_addr) == AF_INET6)
+        && (
+               BIO_ADDR_family(&ch->cur_peer_addr) == AF_INET
+#if OPENSSL_USE_IPV6
+            || BIO_ADDR_family(&ch->cur_peer_addr) == AF_INET6
+#endif
+        )
         && !bio_addr_eq(ch->qrx_pkt->peer, &ch->cur_peer_addr))
         return;
 
