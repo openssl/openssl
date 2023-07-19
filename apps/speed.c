@@ -2040,6 +2040,8 @@ int speed_main(int argc, char **argv)
             sigs_algname[sigs_algs_len++] = OPENSSL_strdup(sig_name);
         }
     }
+    sk_EVP_SIGNATURE_pop_free(sig_stack, EVP_SIGNATURE_free);
+    sig_stack = NULL;
 
     /* Remaining arguments are algorithms. */
     argc = opt_num_rest();
@@ -4227,8 +4229,12 @@ skip_hmac:
     OPENSSL_free(evp_cmac_name);
     for (k = 0; k < kems_algs_len; k++)
         OPENSSL_free(kems_algname[k]);
+    if (kem_stack != NULL)
+        sk_EVP_KEM_pop_free(kem_stack, EVP_KEM_free);
     for (k = 0; k < sigs_algs_len; k++)
         OPENSSL_free(sigs_algname[k]);
+    if (sig_stack != NULL)
+        sk_EVP_SIGNATURE_pop_free(sig_stack, EVP_SIGNATURE_free);
 
     if (async_jobs > 0) {
         for (i = 0; i < loopargs_len; i++)
