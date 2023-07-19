@@ -282,7 +282,7 @@ static int server_ocsp_cb(SSL *s, void *arg)
     if (!SSL_set_tlsext_status_ocsp_resp(s, sk_resp, 0)) {
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
-#endif    
+#endif
 
     return SSL_TLSEXT_ERR_OK;
 }
@@ -294,9 +294,7 @@ static int client_ocsp_cb(SSL *s, void *arg)
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     OCSP_RESPONSE *rsp;
 
-
     SSL_get_tlsext_status_ocsp_resp(s, &sk_resp);
-
 
     if (sk_resp == NULL) {
         BIO_puts(arg, "no response sent\n");
@@ -313,7 +311,6 @@ static int client_ocsp_cb(SSL *s, void *arg)
 
     i = OCSP_response_status(rsp);
 
-
     if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
         return 0;
 #endif
@@ -321,7 +318,8 @@ static int client_ocsp_cb(SSL *s, void *arg)
 }
 
 
-static int verify_reject_cb(X509_STORE_CTX *ctx, void *arg) {
+static int verify_reject_cb(X509_STORE_CTX *ctx, void *arg) 
+{
     X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
     return 0;
 }
@@ -604,7 +602,7 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         } else {
             dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, NULL);
         }
-        sk_OCSP_RESPONSE_insert(sk_resp, dummy_ocsp_resp, -1);
+        sk_OCSP_RESPONSE_push(sk_resp, dummy_ocsp_resp);
         SSL_CTX_set_tlsext_status_arg(server_ctx, sk_resp);
 #endif        
     }
