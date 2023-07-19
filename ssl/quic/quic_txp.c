@@ -1237,14 +1237,14 @@ static int txp_should_try_staging(OSSL_QUIC_TX_PACKETISER *txp,
      * peer does not have the keys for the EL yet, which suggests in general it
      * is preferable to use the lowest EL which is still provisioned.
      *
-     * However (RFC 9000 s. 12.5) we are also required to not send application
-     * CONNECTION_CLOSE frames in non-1-RTT ELs, so as to not potentially leak
-     * application data on a connection which has yet to be authenticated. Thus
-     * when we have an application CONNECTION_CLOSE frame queued and need to
-     * send it on a non-1-RTT EL, we have to convert it into a transport
-     * CONNECTION_CLOSE frame which contains no application data. Since this
-     * loses information, it suggests we should use the 1-RTT EL to avoid this
-     * if possible, even if a lower EL is also available.
+     * However (RFC 9000 s. 10.2.3 & 12.5) we are also required to not send
+     * application CONNECTION_CLOSE frames in non-1-RTT ELs, so as to not
+     * potentially leak application data on a connection which has yet to be
+     * authenticated. Thus when we have an application CONNECTION_CLOSE frame
+     * queued and need to send it on a non-1-RTT EL, we have to convert it
+     * into a transport CONNECTION_CLOSE frame which contains no application
+     * data. Since this loses information, it suggests we should use the 1-RTT
+     * EL to avoid this if possible, even if a lower EL is also available.
      *
      * At the same time, just because we have the 1-RTT EL provisioned locally
      * does not necessarily mean the peer does, for example if a handshake
