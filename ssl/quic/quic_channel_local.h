@@ -258,7 +258,7 @@ struct quic_channel_st {
      * state of the connection's lifecycle, but more fine-grained conditions of
      * the Active state are tracked via flags below. For more details, see
      * doc/designs/quic-design/connection-state-machine.md. We are in the Open
-     * state if the state is QUIC_CSM_STATE_ACTIVE and handshake_confirmed is
+     * state if the state is QUIC_CHANNEL_STATE_ACTIVE and handshake_confirmed is
      * set.
      */
     unsigned int                    state                   : 3;
