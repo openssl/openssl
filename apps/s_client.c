@@ -660,9 +660,9 @@ const OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_OCSP
     {"status", OPT_STATUS, '-', "Request certificate status from server"},
     {"ocsp_check", OPT_STATUS_OCSP_CHECK, '-',
-     "check leaf certificate revocation with OCSP response"},
+     "require leaf certificate status checking, trying OCSP stapling"},
     {"ocsp_check_all", OPT_STATUS_OCSP_CHECK_ALL, '-',
-     "check full chain revocation with OCSP response"},
+     "require certificate status checking on each cert in chain, trying OCSP stapling"},
 #endif
     {"serverinfo", OPT_SERVERINFO, 's',
      "types  Send empty ClientHello extensions (comma-separated numbers)"},
@@ -3630,18 +3630,23 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 # ifndef OPENSSL_NO_OCSP
 static int ocsp_resp_cb(SSL *s, void *arg)
 {
-    int len, i;
+    int num, i;
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     OCSP_RESPONSE *rsp;
+
     SSL_get_tlsext_status_ocsp_resp(s, &sk_resp);
+
     BIO_puts(arg, "OCSP response: ");
+
     if (sk_resp == NULL) {
         BIO_puts(arg, "no response sent\n");
         return 1;
     }
-    len = sk_OCSP_RESPONSE_num(sk_resp);
-    BIO_printf(arg, "number of responses: %d", len);
-    for (i=0; i<len; i++) {
+
+    num = sk_OCSP_RESPONSE_num(sk_resp);
+
+    BIO_printf(arg, "number of responses: %d", num);
+    for (i = 0; i < num; i++) {
         rsp = sk_OCSP_RESPONSE_value(sk_resp, i);
         if (rsp == NULL) {
             BIO_puts(arg, "response parse error\n");

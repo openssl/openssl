@@ -1865,8 +1865,12 @@ static int ocsp_server_cb(SSL *s, void *arg)
 
     dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, NULL);
 
+    if (!TEST_ptr(dummy_ocsp_resp)) {
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+
     sk_resp = sk_OCSP_RESPONSE_new_null();
-    sk_OCSP_RESPONSE_insert(sk_resp, dummy_ocsp_resp, -1);
+    sk_OCSP_RESPONSE_push(sk_resp, dummy_ocsp_resp);
 
     if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, sk_resp, 0))) {
         return SSL_TLSEXT_ERR_ALERT_FATAL;
@@ -1879,7 +1883,7 @@ static int ocsp_server_cb(SSL *s, void *arg)
 static int ocsp_client_cb(SSL *s, void *arg)
 {
     int *argi = (int *)arg;
-    int len, i;
+    int num, i;
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     OCSP_RESPONSE *rsp;
 
@@ -1888,12 +1892,9 @@ static int ocsp_client_cb(SSL *s, void *arg)
 
     SSL_get_tlsext_status_ocsp_resp(s, &sk_resp);
 
-    if (sk_resp == NULL)
-        return 0;
+    num = sk_OCSP_RESPONSE_num(sk_resp);
 
-    len = sk_OCSP_RESPONSE_num(sk_resp);
-
-    if (len != 1) {
+    if (num != 1) {
         return 0;
     }
 

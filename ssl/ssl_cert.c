@@ -467,7 +467,7 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     /* Set suite B flags if needed */
     X509_STORE_CTX_set_flags(ctx, tls1_suiteb(s));
     if (!X509_STORE_CTX_set_ex_data(ctx,
-            SSL_get_ex_data_X509_STORE_CTX_idx(), s)) {
+                                    SSL_get_ex_data_X509_STORE_CTX_idx(), s)) {
         goto end;
     }
 
@@ -486,12 +486,12 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
         /* ignore status_request_v2 if TLS 1.3 */
         SSL *ssl = SSL_CONNECTION_GET_SSL(s);
         int status = SSL_get_tlsext_status_type(ssl);
-        
+
         if (status == TLSEXT_STATUSTYPE_ocsp) {
             X509_STORE_CTX_set_ocsp_resp(ctx, s->ext.ocsp.resp);
         }
     }
-#endif        
+#endif
 
     /*
      * We need to inherit the verify parameters. These can be determined by
@@ -562,7 +562,7 @@ int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk)
 }
 
 static void set0_CA_list(STACK_OF(X509_NAME) **ca_list,
-                        STACK_OF(X509_NAME) *name_list)
+                         STACK_OF(X509_NAME) *name_list)
 {
     sk_X509_NAME_pop_free(*ca_list, X509_NAME_free);
     *ca_list = name_list;

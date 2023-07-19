@@ -4322,7 +4322,8 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
     }
 
 #ifndef OPENSSL_NO_OCSP
-    /* In TLSv1.3 the caller gives the index of the certificate for which the
+    /*
+     * In TLSv1.3 the caller gives the index of the certificate for which the
      * status message should be created.
      * Prior to TLSv1.3 the chain index is 0 and the body should only the status
      * of the server certificate itself.
@@ -4335,13 +4336,14 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
     if (server_certs != NULL) {
         /*
          * if the certificate chain was built, get the status message for the
-         * requested certificate specified by chainidx
-         * SSL_get0_chain_certs contains certificate chain except the server cert
+         * requested certificate specified by chainidx  SSL_get0_chain_certs
+         * contains certificate chain except the server cert
+         *
          * if chainidx = 0 the server certificate is request
          * if chainidx > 0 an intermediate certificate is request
          */
-        if((int)chainidx < sk_X509_num(server_certs)+1 && chainidx > 0) {
-            x = sk_X509_value(server_certs, chainidx-1);
+        if ((int)chainidx < sk_X509_num(server_certs)+1 && chainidx > 0) {
+            x = sk_X509_value(server_certs, chainidx - 1);
             issuer = X509_find_by_subject(server_certs, X509_get_issuer_name(x));
         }
 
@@ -4350,7 +4352,7 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
 
         /* find the correct OCSP response for the requested certificate */
         found = -1;
-        for (i=0; i<sk_OCSP_RESPONSE_num(s->ext.ocsp.resp); i++) {
+        for (i = 0; i < sk_OCSP_RESPONSE_num(s->ext.ocsp.resp); i++) {
             if ((resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp, i)) == NULL)
                 continue;
 
@@ -4359,12 +4361,14 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
 
             found = OCSP_resp_find(bs, cert_id, -1);
 
-            if (bs != NULL) OCSP_BASICRESP_free(bs);
+            if (bs != NULL)
+                OCSP_BASICRESP_free(bs);
 
             if (found > -1)
                 break;
         }
-        if(found < 0) resp = NULL;
+        if (found < 0)
+            resp = NULL;
 
     } else if (chainidx == 0) {
         /*
