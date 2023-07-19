@@ -6307,7 +6307,7 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
     if (s->ext.ocsp.resp == NULL)
         goto err;
 
-    for (j=0; j<sk_OCSP_RESPONSE_num(s->ext.ocsp.resp); j++) {
+    for (j = 0; j < sk_OCSP_RESPONSE_num(s->ext.ocsp.resp); j++) {
         rsp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp, j);
         if (rsp == NULL)
             goto err;
@@ -6322,10 +6322,10 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
             if (single == NULL)
                 continue;
 
-            scts =
-                OCSP_SINGLERESP_get1_ext_d2i(single, NID_ct_cert_scts, NULL, NULL);
-            scts_extracted =
-                ct_move_scts(&s->scts, scts, SCT_SOURCE_OCSP_STAPLED_RESPONSE);
+            scts = OCSP_SINGLERESP_get1_ext_d2i(single,
+                                                NID_ct_cert_scts, NULL, NULL);
+            scts_extracted = ct_move_scts(&s->scts, scts,
+                                          SCT_SOURCE_OCSP_STAPLED_RESPONSE);
             if (scts_extracted < 0)
                 goto err;
         }
