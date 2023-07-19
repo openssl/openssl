@@ -264,7 +264,7 @@ Takes an input message and writes out a PEM encoded CMS structure.
 
 item B<-extend_signature_tst>
 
-Extend an existing CMS signatgure by adding a timestamp token to create
+Extend an existing CMS signature by adding a timestamp token to create
 a CAdES Baseline-T signature. This function only supports exactly one
 signature. The input file is a timestamp response file including the
 timestamp token, unless the B<-token_in> option is additionally set.
