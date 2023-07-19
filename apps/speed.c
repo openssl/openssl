@@ -1024,6 +1024,13 @@ static int EdDSA_sign_loop(void *args)
     int ret, count;
 
     for (count = 0; COND(eddsa_c[testnum][0]); count++) {
+        ret = EVP_DigestSignInit(edctx[testnum], NULL, NULL, NULL, NULL);
+        if (ret == 0) {
+            BIO_printf(bio_err, "EdDSA sign init failure\n");
+            ERR_print_errors(bio_err);
+            count = -1;
+            break;
+        }
         ret = EVP_DigestSign(edctx[testnum], eddsasig, eddsasigsize, buf, 20);
         if (ret == 0) {
             BIO_printf(bio_err, "EdDSA sign failure\n");
@@ -1045,6 +1052,13 @@ static int EdDSA_verify_loop(void *args)
     int ret, count;
 
     for (count = 0; COND(eddsa_c[testnum][1]); count++) {
+        ret = EVP_DigestVerifyInit(edctx[testnum], NULL, NULL, NULL, NULL);
+        if (ret == 0) {
+            BIO_printf(bio_err, "EdDSA verify init failure\n");
+            ERR_print_errors(bio_err);
+            count = -1;
+            break;
+        }
         ret = EVP_DigestVerify(edctx[testnum], eddsasig, eddsasigsize, buf, 20);
         if (ret != 1) {
             BIO_printf(bio_err, "EdDSA verify failure\n");
