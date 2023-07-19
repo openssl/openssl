@@ -85,7 +85,7 @@ gen sm_mlkem512.pem "/CN=Test SMIME EE ML-KEM-512" kem_cert >>sm_mlkem512.pem
 $OPENSSL genpkey -algorithm ML-KEM-768 -out sm_mlkem768.pem
 gen sm_mlkem768.pem "/CN=Test SMIME EE ML-KEM-768" kem_cert >>sm_mlkem768.pem
 
-# EE RSA timestamp signing end entity certificate with respetive extensions
+# EE RSA timestamp signing end entity certificate with respective extensions
 # this is needed to test CAdES Baseline-T (and higher) functionality
 cp ../certs/ee-key.pem tsrsa1.pem
 gen tsrsa1.pem "/CN=Test Timestamping EE RSA" timestamp_cert >> tsrsa1.pem
