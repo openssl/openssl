@@ -3037,7 +3037,7 @@ skip_hmac:
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R5:%ld:%u:%.2f\n"
-                       : "%ld %u bits DSA signs in %.2fs\n",
+                       : "%ld %u bits DSA sign ops in %.2fs\n",
                        count, dsa_bits[testnum], d);
             dsa_results[testnum][0] = (double)count / d;
             op_count = count;
@@ -3067,7 +3067,7 @@ skip_hmac:
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R6:%ld:%u:%.2f\n"
-                       : "%ld %u bits DSA verify in %.2fs\n",
+                       : "%ld %u bits DSA verify ops in %.2fs\n",
                        count, dsa_bits[testnum], d);
             dsa_results[testnum][1] = (double)count / d;
         }
@@ -3114,7 +3114,7 @@ skip_hmac:
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R7:%ld:%u:%.2f\n"
-                       : "%ld %u bits ECDSA signs in %.2fs\n",
+                       : "%ld %u bits ECDSA sign ops in %.2fs\n",
                        count, ec_curves[testnum].bits, d);
             ecdsa_results[testnum][0] = (double)count / d;
             op_count = count;
@@ -3144,7 +3144,7 @@ skip_hmac:
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R8:%ld:%u:%.2f\n"
-                       : "%ld %u bits ECDSA verify in %.2fs\n",
+                       : "%ld %u bits ECDSA verify ops in %.2fs\n",
                        count, ec_curves[testnum].bits, d);
             ecdsa_results[testnum][1] = (double)count / d;
         }
@@ -3317,7 +3317,7 @@ skip_hmac:
 
                 BIO_printf(bio_err,
                            mr ? "+R10:%ld:%u:%s:%.2f\n" :
-                           "%ld %u bits %s signs in %.2fs \n",
+                           "%ld %u bits %s sign ops in %.2fs \n",
                            count, ed_curves[testnum].bits,
                            ed_curves[testnum].name, d);
                 eddsa_results[testnum][0] = (double)count / d;
@@ -3344,7 +3344,7 @@ skip_hmac:
                 d = Time_F(STOP);
                 BIO_printf(bio_err,
                            mr ? "+R11:%ld:%u:%s:%.2f\n"
-                           : "%ld %u bits %s verify in %.2fs\n",
+                           : "%ld %u bits %s verify ops in %.2fs\n",
                            count, ed_curves[testnum].bits,
                            ed_curves[testnum].name, d);
                 eddsa_results[testnum][1] = (double)count / d;
@@ -3448,7 +3448,7 @@ skip_hmac:
 
                 BIO_printf(bio_err,
                            mr ? "+R12:%ld:%u:%s:%.2f\n" :
-                           "%ld %u bits %s signs in %.2fs \n",
+                           "%ld %u bits %s sign ops in %.2fs \n",
                            count, sm2_curves[testnum].bits,
                            sm2_curves[testnum].name, d);
                 sm2_results[testnum][0] = (double)count / d;
@@ -3476,7 +3476,7 @@ skip_hmac:
                 d = Time_F(STOP);
                 BIO_printf(bio_err,
                            mr ? "+R13:%ld:%u:%s:%.2f\n"
-                           : "%ld %u bits %s verify in %.2fs\n",
+                           : "%ld %u bits %s verify ops in %.2fs\n",
                            count, sm2_curves[testnum].bits,
                            sm2_curves[testnum].name, d);
                 sm2_results[testnum][1] = (double)count / d;
@@ -3828,7 +3828,7 @@ skip_hmac:
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R15:%ld:%s:%.2f\n" :
-                       "%ld %s KEM keygens in %.2fs\n", count,
+                       "%ld %s KEM keygen ops in %.2fs\n", count,
                        kem_name, d);
             kems_results[testnum][0] = (double)count / d;
             op_count = count;
@@ -3839,7 +3839,7 @@ skip_hmac:
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R16:%ld:%s:%.2f\n" :
-                       "%ld %s KEM encaps in %.2fs\n", count,
+                       "%ld %s KEM encaps ops in %.2fs\n", count,
                        kem_name, d);
             kems_results[testnum][1] = (double)count / d;
             op_count = count;
@@ -3850,7 +3850,7 @@ skip_hmac:
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R17:%ld:%s:%.2f\n" :
-                       "%ld %s KEM decaps in %.2fs\n", count,
+                       "%ld %s KEM decaps ops in %.2fs\n", count,
                        kem_name, d);
             kems_results[testnum][2] = (double)count / d;
             op_count = count;
@@ -4005,7 +4005,7 @@ skip_hmac:
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R18:%ld:%s:%.2f\n" :
-                       "%ld %s signature keygens in %.2fs\n", count,
+                       "%ld %s signature keygen ops in %.2fs\n", count,
                        sig_name, d);
             sigs_results[testnum][0] = (double)count / d;
             op_count = count;
@@ -4016,7 +4016,7 @@ skip_hmac:
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R19:%ld:%s:%.2f\n" :
-                       "%ld %s signature signs in %.2fs\n", count,
+                       "%ld %s signature sign ops in %.2fs\n", count,
                        sig_name, d);
             sigs_results[testnum][1] = (double)count / d;
             op_count = count;
@@ -4028,7 +4028,7 @@ skip_hmac:
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R20:%ld:%s:%.2f\n" :
-                       "%ld %s signature verifys in %.2fs\n", count,
+                       "%ld %s signature verify ops in %.2fs\n", count,
                        sig_name, d);
             sigs_results[testnum][2] = (double)count / d;
             op_count = count;
@@ -4364,7 +4364,7 @@ static void print_message(const char *s, int length, int tm)
 {
     BIO_printf(bio_err,
                mr ? "+DT:%s:%d:%d\n"
-               : "Doing %s for %ds on %d size blocks: ", s, tm, length);
+               : "Doing %s ops for %ds on %d size blocks: ", s, tm, length);
     (void)BIO_flush(bio_err);
     run = 1;
     alarm(tm);
@@ -4375,7 +4375,7 @@ static void pkey_print_message(const char *str, const char *str2, unsigned int b
 {
     BIO_printf(bio_err,
                mr ? "+DTP:%d:%s:%s:%d\n"
-               : "Doing %u bits %s %s's for %ds: ", bits, str, str2, tm);
+               : "Doing %u bits %s %s ops for %ds: ", bits, str, str2, tm);
     (void)BIO_flush(bio_err);
     run = 1;
     alarm(tm);
@@ -4385,7 +4385,7 @@ static void kskey_print_message(const char *str, const char *str2, int tm)
 {
     BIO_printf(bio_err,
                mr ? "+DTP:%s:%s:%d\n"
-               : "Doing %s %s's for %ds: ", str, str2, tm);
+               : "Doing %s %s ops for %ds: ", str, str2, tm);
     (void)BIO_flush(bio_err);
     run = 1;
     alarm(tm);
@@ -4400,7 +4400,7 @@ static void print_result(int alg, int run_no, int count, double time_used)
     }
     BIO_printf(bio_err,
                mr ? "+R:%d:%s:%f\n"
-               : "%d %s's in %.2fs\n", count, names[alg], time_used);
+               : "%d %s ops in %.2fs\n", count, names[alg], time_used);
     results[alg][run_no] = ((double)count) / time_used * lengths[run_no];
 }
 
@@ -4738,7 +4738,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
         }
         d = Time_F(STOP);
         BIO_printf(bio_err, mr ? "+R:%d:%s:%f\n"
-                   : "%d %s's in %.2fs\n", count, "evp", d);
+                   : "%d %s ops in %.2fs\n", count, "evp", d);
         if ((ciph_success <= 0) && (mr == 0))
             BIO_printf(bio_err, "Error performing cipher op\n");
         results[D_EVP][j] = ((double)count) / d * mblengths[j];
