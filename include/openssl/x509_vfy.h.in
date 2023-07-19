@@ -324,13 +324,6 @@ X509_LOOKUP_ctrl_ex((x), X509_L_ADD_STORE, (name), 0, NULL,           \
 # define X509_V_ERR_OCSP_HAS_EXPIRED                     99
 # define X509_V_ERR_OCSP_NO_RESPONSE                    100
 
-/* additional OCSP status errors */
-# define X509_V_ERR_OCSP_INVALID                         95
-# define X509_V_ERR_OCSP_SIGNATURE_FAILURE               96
-# define X509_V_ERR_OCSP_NOT_YET_VALID                   97
-# define X509_V_ERR_OCSP_HAS_EXPIRED                     98
-# define X509_V_ERR_OCSP_NO_RESPONSE                     99
-
 /* Certificate verify flags */
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define X509_V_FLAG_CB_ISSUER_CHECK             0x0   /* Deprecated */
