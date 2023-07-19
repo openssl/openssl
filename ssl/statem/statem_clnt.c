@@ -2699,7 +2699,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
             && (!PACKET_get_net_4(pkt, &age_add)
                 || !PACKET_get_length_prefixed_1(pkt, &nonce)))
         || !PACKET_get_net_2(pkt, &ticklen)
-        || (SSL_CONNECTION_IS_TLS13(s) ? (ticklen == 0 
+        || (SSL_CONNECTION_IS_TLS13(s) ? (ticklen == 0
                                           || PACKET_remaining(pkt) < ticklen)
                                        : PACKET_remaining(pkt) != ticklen)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
@@ -2868,7 +2868,7 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt
     unsigned int type;
 #ifndef OPENSSL_NO_OCSP
     size_t resplen;
-    unsigned char* respder;
+    unsigned char *respder;
     OCSP_RESPONSE *resp = NULL;
     const unsigned char *p;
 #endif
@@ -2878,9 +2878,9 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_UNSUPPORTED_STATUS_TYPE);
         return 0;
     }
-    
+
 #ifndef OPENSSL_NO_OCSP
-    if(s->ext.ocsp.resp == NULL) {
+    if (s->ext.ocsp.resp == NULL) {
         s->ext.ocsp.resp = sk_OCSP_RESPONSE_new_null();
     }
     if (!SSL_CONNECTION_IS_TLS13(s) && type == TLSEXT_STATUSTYPE_ocsp) {
@@ -2888,7 +2888,7 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt
         s->ext.ocsp.resp = sk_OCSP_RESPONSE_new_null();
     }
     if (SSL_CONNECTION_IS_TLS13(s) || type == TLSEXT_STATUSTYPE_ocsp) {
-        if(PACKET_remaining(pkt) > 0) {
+        if (PACKET_remaining(pkt) > 0) {
             if (!PACKET_get_net_3_len(pkt, &resplen)
                 || PACKET_remaining(pkt) != resplen) {
                 SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
@@ -2903,9 +2903,9 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt
                 }
                 p = respder;
                 resp = d2i_OCSP_RESPONSE(NULL, &p, resplen);
-                if (resp == NULL) {            
-                    SSLfatal(s, TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE, 
-                    SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE);
+                if (resp == NULL) {
+                    SSLfatal(s, TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE,
+                             SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE);
                     return 0;
                 }
                 sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp, resp, chainidx);
@@ -2916,7 +2916,6 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt
 #endif
     return 1;
 }
-
 
 MSG_PROCESS_RETURN tls_process_cert_status(SSL_CONNECTION *s, PACKET *pkt)
 {

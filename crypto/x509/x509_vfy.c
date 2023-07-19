@@ -192,13 +192,13 @@ static int verify_cb_crl(X509_STORE_CTX *ctx, int err)
 }
 
 #ifndef OPENSSL_NO_OCSP
-/*-
-  * Inform the verify callback of an error, OCSP-specific variant.  Here, the
-  * error depth and certificate are already set, we just specify the error
-  * number.
-  *
-  * Returns 0 to abort verification with an error, non-zero to continue.
-  */
+/*
+ * Inform the verify callback of an error, OCSP-specific variant.  Here, the
+ * error depth and certificate are already set, we just specify the error
+ * number.
+ *
+ * Returns 0 to abort verification with an error, non-zero to continue.
+ */
 static int verify_cb_ocsp(X509_STORE_CTX *ctx, int err)
 {
     ctx->error = err;
@@ -246,7 +246,6 @@ static int verify_rpk(X509_STORE_CTX *ctx)
 
     return !!ctx->verify_cb(ctx->error == X509_V_OK, ctx);
 }
-
 
 /*-
  * Returns -1 on internal error.
@@ -993,12 +992,16 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
 static int check_revocation(X509_STORE_CTX *ctx)
 {
     int i = 0, last = 0, ok = 0;
+    int crl_ocsp_check =
+        ctx->param->flags & (X509_V_FLAG_CRL_CHECK | X509_V_FLAG_OCSP_CHECK);
+    int crl_ocsp_check_all =
+        ctx->param->flags
+        & (X509_V_FLAG_CRL_CHECK_ALL | X509_V_FLAG_OCSP_CHECK_ALL);
 
-    if ((ctx->param->flags & X509_V_FLAG_CRL_CHECK) == 0
-            && (ctx->param->flags & X509_V_FLAG_OCSP_CHECK) == 0)
+    if (crl_ocsp_check == 0)
         return 1;
-    if ((ctx->param->flags & X509_V_FLAG_CRL_CHECK_ALL) == 0
-            || (ctx->param->flags & X509_V_FLAG_OCSP_CHECK_ALL) == 0) {
+
+    if (crl_ocsp_check_all != 0) {
         last = sk_X509_num(ctx->chain) - 1;
     } else {
         /* If checking CRL paths this isn't the EE certificate */
@@ -1013,28 +1016,26 @@ static int check_revocation(X509_STORE_CTX *ctx)
             ok = check_cert_ocsp(ctx);
 
             /*
-             * If the client receives a "ocsp_response_list" that does not contain
-             * a response for one or more of the certificates in the completed
-             * certificate chain, the client SHOULD attempt to validate the
-             * certificate using an alternative retrieval method, such as
-             * downloading the relevant CRL;
-             * If the OCSP response received from the server does not result in a
-             * definite "good" or "revoked" status, it is inconclusive.  A TLS
-             * client in such a case MAY check the validity of the server
+             * If the client receives a "ocsp_response_list" that does not
+             * contain a response for one or more of the certificates in the
+             * completed certificate chain, the client SHOULD attempt to
+             * validate the certificate using an alternative retrieval method,
+             * such as downloading the relevant CRL;
+             * If the OCSP response received from the server does not result
+             * in a definite "good" or "revoked" status, it is inconclusive.
+             * A TLS client in such a case MAY check the validity of the server
              * certificate through other means, e.g., by directly querying the
              * certificate issuer.
              */
             if (ok == V_OCSP_CERTSTATUS_REVOKED) {
-                verify_cb_ocsp(ctx, X509_V_ERR_CERT_REVOKED);
-                return 0; /* X509_V_ERR_CERT_REVOKED */
+                return verify_cb_ocsp(ctx, X509_V_ERR_CERT_REVOKED);
             }
 
             if (ok == V_OCSP_CERTSTATUS_GOOD)
                 continue;
 
             if (!(ctx->param->flags & X509_V_FLAG_CRL_CHECK)) {
-                verify_cb_ocsp(ctx, ok);
-                return ok;
+                return verify_cb_ocsp(ctx, 0);
             }
         }
 #endif
@@ -1063,16 +1064,15 @@ static int check_cert_ocsp(X509_STORE_CTX *ctx)
     ret = V_OCSP_CERTSTATUS_UNKNOWN;
     ctx->current_cert = x;
     ctx->current_issuer = X509_find_by_subject(ctx->chain,
-                                                X509_get_issuer_name(x));
+                                               X509_get_issuer_name(x));
 
-
-    if (ctx->ocsp_resp == NULL || sk_OCSP_RESPONSE_num(ctx->ocsp_resp) == 0) {
+    if (sk_OCSP_RESPONSE_num(ctx->ocsp_resp) <= 0) {
         return X509_V_ERR_OCSP_NO_RESPONSE;
     }
 
     cert_id = OCSP_cert_to_id(NULL, ctx->current_cert, ctx->current_issuer);
 
-    for (i=0; i<sk_OCSP_RESPONSE_num(ctx->ocsp_resp); i++) {
+    for (i = 0; i < sk_OCSP_RESPONSE_num(ctx->ocsp_resp); i++) {
         if ((resp = sk_OCSP_RESPONSE_value(ctx->ocsp_resp, i)) == NULL)
             continue;
 
@@ -1080,23 +1080,23 @@ static int check_cert_ocsp(X509_STORE_CTX *ctx)
             continue;
 
         found = OCSP_resp_find(bs, cert_id, -1);
-
         if (found >= 0)
             break;
     }
-    if(found < 0) resp = NULL;
+    if (found < 0)
+        resp = NULL;
 
     if (resp == NULL) {
         ret = X509_V_ERR_OCSP_NO_RESPONSE;
         goto end;
     }
 
-    if(OCSP_response_status(resp) != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
+    if (OCSP_response_status(resp) != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
         ret = X509_V_ERR_OCSP_INVALID;
         goto end;
     }
 
-    if((bs = OCSP_response_get1_basic(resp)) == NULL) {
+    if ((bs = OCSP_response_get1_basic(resp)) == NULL) {
         ret = X509_V_ERR_OCSP_NO_RESPONSE;
         goto end;
     }
@@ -1106,16 +1106,20 @@ static int check_cert_ocsp(X509_STORE_CTX *ctx)
         goto end;
     }
 
-    if(OCSP_resp_find_status(bs, cert_id, &cert_status, &crl_reason, &rev,
-                                &thisupd, &nextupd) <=0 ) {
+    if (OCSP_resp_find_status(bs, cert_id, &cert_status, &crl_reason, &rev,
+                              &thisupd, &nextupd) <= 0) {
         ret = X509_V_ERR_OCSP_INVALID;
         goto end;
     }
 
-    switch(cert_status) {
+    switch (cert_status) {
     case V_OCSP_CERTSTATUS_GOOD:
-        /* Note: A OCSP stapling result will be accepted up to 5 minutes after it expired! */
-        if(!OCSP_check_validity(thisupd, nextupd, 300L, -1L)) {
+        /*
+         * Note:
+         * A OCSP stapling result will be accepted up to 5 minutes
+         * after it expired!
+         */
+        if (!OCSP_check_validity(thisupd, nextupd, 300L, -1L)) {
             ret = X509_V_ERR_OCSP_HAS_EXPIRED;
         } else {
             ret = V_OCSP_CERTSTATUS_GOOD;
@@ -1137,8 +1141,11 @@ static int check_cert_ocsp(X509_STORE_CTX *ctx)
 
 end:
 
-    if (cert_id != NULL) OCSP_CERTID_free(cert_id);
-    if (bs != NULL) OCSP_BASICRESP_free(bs);
+    if (cert_id != NULL)
+        OCSP_CERTID_free(cert_id);
+
+    if (bs != NULL)
+        OCSP_BASICRESP_free(bs);
 
     return ret;
 }
@@ -2455,7 +2462,7 @@ void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk)
 #ifndef OPENSSL_NO_OCSP
 void X509_STORE_CTX_set_ocsp_resp(X509_STORE_CTX *ctx, STACK_OF(OCSP_RESPONSE) *sk)
 {
-    ctx->ocsp_resp = (STACK_OF(OCSP_RESPONSE) *)sk;
+    ctx->ocsp_resp = sk;
 }
 #endif
 
@@ -2574,7 +2581,6 @@ void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
     OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx);
 }
-
 
 int X509_STORE_CTX_init_rpk(X509_STORE_CTX *ctx, X509_STORE *store, EVP_PKEY *rpk)
 {

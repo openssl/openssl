@@ -175,7 +175,7 @@ const char *X509_verify_cert_error_string(long n)
     case X509_V_ERR_OCSP_CERT_UNKNOWN:
         return "OCSP unknown cert";
     case X509_V_ERR_OCSP_INVALID:
-        return "OCSP response invalid";
+        return "OCSP response(s) invalid";
     case X509_V_ERR_OCSP_SIGNATURE_FAILURE:
         return "OCSP signature failure";
     case X509_V_ERR_OCSP_NOT_YET_VALID:
@@ -183,7 +183,7 @@ const char *X509_verify_cert_error_string(long n)
     case X509_V_ERR_OCSP_HAS_EXPIRED:
         return "OCSP response has expired";
     case X509_V_ERR_OCSP_NO_RESPONSE:
-        return "no OCSP response found";
+        return "no OCSP response available for certificate";
     case X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM:
         return "Cannot find certificate signature algorithm";
     case X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH:
