@@ -520,6 +520,7 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
                         /*
                          * Evaluate archiveTimestampV3 attribute
                          */
+                        /* prepared for future use with Baseline-LT(A) */
                         break;
                     default:
                         ; /* Other information not covered */
