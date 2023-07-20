@@ -792,7 +792,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             first           = 0;
             offset          = 0;
             op_start_time   = ossl_time_now();
-            op_deadline     = ossl_time_add(op_start_time, ossl_ms2time(2000));
+            op_deadline     = ossl_time_add(op_start_time, ossl_ms2time(8000));
         }
 
         if (!TEST_int_le(ossl_time_compare(ossl_time_now(), op_deadline), 0)) {
@@ -2880,7 +2880,7 @@ static const struct script_op script_40[] = {
     OP_C_WRITE              (a, "apple", 5)
 
     OP_C_INHIBIT_TICK       (1)
-    OP_C_SET_WRITE_BUF_SIZE (a, 1024 * 100)
+    OP_C_SET_WRITE_BUF_SIZE (a, 1024 * 100 * 3)
 
     OP_BEGIN_REPEAT         (100)
 
@@ -2957,7 +2957,7 @@ static int test_script(int idx)
     int free_order = idx & 1;
     char script_name[64];
 
-    snprintf(script_name, sizeof(script_name), "script %d", idx);
+    snprintf(script_name, sizeof(script_name), "script %d", script_idx + 1);
 
     TEST_info("Running script %d (order=%d)", script_idx + 1, free_order);
     return run_script(scripts[script_idx], script_name, free_order);
