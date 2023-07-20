@@ -675,6 +675,18 @@ EOF
                                     defines => [ 'B_ENDIAN' ] } ],
       [ 'sh.*-.*-linux2',         { target => "linux-generic32",
                                     defines => [ 'L_ENDIAN' ] } ],
+      [ 'loongarch64-.*-linux2',
+        sub {
+            my $disable = [ 'asm' ];
+            if ( okrun('echo xvadd.w \$xr0,\$xr0,\$xr0',
+                       "$CC -c -x assembler - -o /dev/null 2>/dev/null") ) {
+                $disable = [];
+            }
+            return { target => "linux64-loongarch64",
+                     defines => [ 'L_ENDIAN' ],
+                     disable => $disable, };
+        }
+      ],
       [ 'm68k.*-.*-linux2',       { target => "linux-generic32",
                                     defines => [ 'B_ENDIAN' ] } ],
       [ 's390-.*-linux2',         { target => "linux-generic32",
