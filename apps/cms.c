@@ -1161,18 +1161,19 @@ int cms_main(int argc, char **argv)
                 goto end;
         }
     } else if (operation == SMIME_EXTEND_SIG_TST) {
+        /* We assume to have only one signature */
+        CMS_SignerInfo *si;
+        STACK_OF(CMS_SignerInfo) *sinfos;
+        BIO *tmp = NULL;
+        ASN1_OCTET_STRING *str = NULL;
+        PKCS7 *token = NULL;
+        TS_RESP *response = NULL;
+
         if ((flags & CMS_CADES) == 0) {
             BIO_printf(bio_err, "Signature extension only supported in CAdES mode");
             ret = 6;
             goto end;
         }
-        BIO *tmp;
-        /* We assume to have only one signature */
-        CMS_SignerInfo *si;
-        STACK_OF(CMS_SignerInfo) *sinfos;
-        ASN1_OCTET_STRING *str = NULL;
-        PKCS7 *token = NULL;
-        TS_RESP *response = NULL;
         sinfos = CMS_get0_SignerInfos(cms);
         si = sk_CMS_SignerInfo_value(sinfos, 0);
         tmp = BIO_new_file(tsfile, "rb");
@@ -1183,32 +1184,36 @@ int cms_main(int argc, char **argv)
         }
         if (token_in) {
             token = d2i_PKCS7_bio(tmp, NULL);
-            if (token == NULL) {
-                BIO_printf(bio_err, "Failed to read timestamp token\n");
-                ret = 6;
-                goto end;
-            }
         } else {
             response = d2i_TS_RESP_bio(tmp, NULL);
-            if (response == NULL) {
-                BIO_printf(bio_err, "Failed to read timestamp response\n");
+            if (response != NULL)
+                token = TS_RESP_get_token(response);
+        }
+        BIO_free(tmp);
+        if (token != NULL) {
+            str = ASN1_item_pack(token, ASN1_ITEM_rptr(PKCS7), &str);
+            if (str != NULL) {
+                if (!CMS_unsigned_add1_attr_by_NID(si,
+                    NID_id_smime_aa_timeStampToken, V_ASN1_SEQUENCE, str, -1)) {
+                    BIO_printf(bio_err, "Failed to extend signature\n");
+                    ret = 6;
+                }
+                ASN1_OCTET_STRING_free(str);
+            } else {
+                BIO_printf(bio_err, "Failed to create object for embedding\n");
                 ret = 6;
-                goto end;
             }
-            token = TS_RESP_get_token(response);
-        }
-        str = ASN1_item_pack(token, ASN1_ITEM_rptr(PKCS7), &str);
-        if (str == NULL) {
-            BIO_printf(bio_err, "Failed to create object for embedding\n");
+        } else {
+            BIO_printf(bio_err, "Failed to read timestamp token\n");
             ret = 6;
-            goto end;
         }
-        if (!CMS_unsigned_add1_attr_by_NID(si, NID_id_smime_aa_timeStampToken,
-                                          V_ASN1_SEQUENCE, str, -1)) {
-            BIO_printf(bio_err, "Failed to extend signature\n");
-            ret = 6;
+        /* token is a subset of response, prevent invalid free */
+        if (token_in)
+            PKCS7_free(token);
+        else
+            TS_RESP_free(response);
+        if (ret == 6)
             goto end;
-        }
     }
 
     if (cms == NULL) {
