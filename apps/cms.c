@@ -1351,6 +1351,7 @@ int cms_main(int argc, char **argv)
         BIO *tmp;
         CMS_SignerInfo *si;
         STACK_OF(CMS_SignerInfo) *sinfos;
+        ASN1_OCTET_STRING *os;
 
         if ((flags & CMS_CADES) == 0) {
             BIO_printf(bio_err,
@@ -1367,7 +1368,7 @@ int cms_main(int argc, char **argv)
             goto end;
         }
         si = sk_CMS_SignerInfo_value(sinfos, 0);
-        ASN1_OCTET_STRING *os = CMS_SignerInfo_get0_signature(si);
+        os = CMS_SignerInfo_get0_signature(si);
         tmp = BIO_new_file(sigoutfile, "w");
         if (tmp == NULL) {
             ret = 7;
