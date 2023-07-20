@@ -1161,7 +1161,6 @@ int cms_main(int argc, char **argv)
                 goto end;
         }
     } else if (operation == SMIME_EXTEND_SIG_TST) {
-        /* We assume to have only one signature */
         CMS_SignerInfo *si;
         STACK_OF(CMS_SignerInfo) *sinfos;
         BIO *tmp = NULL;
@@ -1175,6 +1174,13 @@ int cms_main(int argc, char **argv)
             goto end;
         }
         sinfos = CMS_get0_SignerInfos(cms);
+        /* Supporting multiple signatures would be very complex */
+        if (sk_CMS_SignerInfo_num(sinfos) != 1) {
+            BIO_printf(bio_err,
+                      "Only one signature in CMS supported in export");
+            ret = 6;
+            goto end;
+        }
         si = sk_CMS_SignerInfo_value(sinfos, 0);
         tmp = BIO_new_file(tsfile, "rb");
         if (tmp == NULL) {
