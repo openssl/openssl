@@ -2026,6 +2026,18 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
              * RFC 9000 s. 17.2.2: Clients that receive an Initial packet with a
              * non-zero Token Length field MUST either discard the packet or
              * generate a connection error of type PROTOCOL_VIOLATION.
+             *
+             * TODO(QUIC): consider the implications of RFC 9000 s. 10.2.3
+             * Immediate Close during the Handshake:
+             *      However, at the cost of reducing feedback about
+             *      errors for legitimate peers, some forms of denial of
+             *      service can be made more difficult for an attacker
+             *      if endpoints discard illegal packets rather than
+             *      terminating a connection with CONNECTION_CLOSE. For
+             *      this reason, endpoints MAY discard packets rather
+             *      than immediately close if errors are detected in
+             *      packets that lack authentication.
+             * I.e. should we drop this packet instead of closing the connection?
              */
             ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
                                                    0, "client received initial token");
