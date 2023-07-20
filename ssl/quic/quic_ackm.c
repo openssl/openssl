@@ -937,7 +937,7 @@ static void ackm_on_pkts_lost(OSSL_ACKM *ackm, int pkt_space,
     const OSSL_ACKM_TX_PKT *p, *pnext;
     OSSL_RTT_INFO rtt;
     QUIC_PN largest_pn_lost = 0;
-    OSSL_CC_LOSS_INFO loss_info = {0};
+    OSSL_CC_LOSS_INFO loss_info = {{0}};
     uint32_t flags = 0;
 
     for (p = lpkt; p != NULL; p = pnext) {
@@ -984,7 +984,7 @@ static void ackm_on_pkts_acked(OSSL_ACKM *ackm, const OSSL_ACKM_TX_PKT *apkt)
 {
     const OSSL_ACKM_TX_PKT *anext;
     QUIC_PN last_pn_acked = 0;
-    OSSL_CC_ACK_INFO ainfo = {0};
+    OSSL_CC_ACK_INFO ainfo = {{0}};
 
     for (; apkt != NULL; apkt = anext) {
         if (apkt->is_inflight) {
