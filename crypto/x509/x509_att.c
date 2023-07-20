@@ -89,7 +89,7 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    if (X509at_get_attr_by_OBJ(sk, attr->object, -1) != -1) {
+    if (*x != NULL && X509at_get_attr_by_OBJ(*x, attr->object, -1) != -1) {
         ERR_raise(ERR_LIB_X509, X509_R_DUPLICATE_ATTRIBUTE);
         return NULL;
     }
