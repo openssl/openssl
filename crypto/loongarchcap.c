@@ -7,16 +7,28 @@
  * https://www.openssl.org/source/license.html
  */
 #include "loongarch_arch.h"
+#include <sys/auxv.h>
+
+#define CPUCFG_LSX_BIT 6
+#define CPUCFG_LASX_BIT 7
+
+#define AT_HWCAP_LSX_BIT 4
+#define AT_HWCAP_LASX_BIT 5
 
 unsigned int OPENSSL_loongarchcap_P = 0;
 
 void OPENSSL_cpuid_setup(void)
 {
-	unsigned int reg;
-	__asm__ volatile(
-	    "cpucfg %0, %1 \n\t"
-	    : "+&r"(reg)
-	    : "r"(LOONGARCH_CFG2)
-	);
+	unsigned long hwcap;
+	unsigned int reg = 0;
+	hwcap = getauxval(AT_HWCAP);
+	if(hwcap & (1<<AT_HWCAP_LSX_BIT))
+	{
+		reg |= (1<<CPUCFG_LSX_BIT);
+	}
+	if(hwcap & (1<<AT_HWCAP_LASX_BIT))
+	{
+		reg |= (1<<CPUCFG_LASX_BIT);
+	}
 	OPENSSL_loongarchcap_P = reg;
 }
