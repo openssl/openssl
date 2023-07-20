@@ -1342,26 +1342,34 @@ int cms_main(int argc, char **argv)
         }
     }
     if (sigoutfile != NULL) {
-        if ((flags & CMS_CADES) == 0) {
-            BIO_printf(bio_err, "Signature export only supported in CAdES mode");
-            ret = 5;
-            goto end;
-        }
         BIO *tmp;
-        /* We assume to have only one signature */
         CMS_SignerInfo *si;
         STACK_OF(CMS_SignerInfo) *sinfos;
+
+        if ((flags & CMS_CADES) == 0) {
+            BIO_printf(bio_err,
+                       "Signature export only supported in CAdES mode");
+            ret = 7;
+            goto end;
+        }
         sinfos = CMS_get0_SignerInfos(cms);
+        /* Supporting multiple signatures would be very complex */
+        if (sk_CMS_SignerInfo_num(sinfos) != 1) {
+            BIO_printf(bio_err,
+                      "Only one signature in CMS supported in export");
+            ret = 7;
+            goto end;
+        }
         si = sk_CMS_SignerInfo_value(sinfos, 0);
         ASN1_OCTET_STRING *os = CMS_SignerInfo_get0_signature(si);
         tmp = BIO_new_file(sigoutfile, "w");
         if (tmp == NULL) {
-            ret=7;
+            ret = 7;
             goto end;
         }
         ret = BIO_write(tmp, os->data, os->length);
         BIO_free(tmp);
-        if (ret <=0) {
+        if (ret <= 0) {
             ret = 7;
             goto end;
         }
