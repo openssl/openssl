@@ -82,6 +82,11 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
         return NULL;
     }
 
+    if (*x != NULL && X509at_get_attr_by_OBJ(*x, attr->object, -1) != -1) {
+        ERR_raise(ERR_LIB_X509, X509_R_DUPLICATE_ATTRIBUTE);
+        return NULL;
+    }
+
     if (*x == NULL) {
         if ((sk = sk_X509_ATTRIBUTE_new_null()) == NULL)
             goto err;
