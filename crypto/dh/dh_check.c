@@ -97,7 +97,7 @@ int DH_check_ex(const DH *dh)
 
 int DH_check(const DH *dh, int *ret)
 {
-    int ok = 0, r;
+    int ok = 0, r, q_good = 0;
     BN_CTX *ctx = NULL;
     BIGNUM *t1 = NULL, *t2 = NULL;
 
@@ -119,7 +119,14 @@ int DH_check(const DH *dh, int *ret)
     if (t2 == NULL)
         goto err;
 
-    if (dh->q) {
+    if (dh->q != NULL) {
+        if (BN_ucmp(dh->p, dh->q) > 0)
+            q_good = 1;
+        else
+            *ret |= DH_CHECK_INVALID_Q_VALUE;
+    }
+
+    if (q_good) {
         if (BN_cmp(dh->g, BN_value_one()) <= 0)
             *ret |= DH_NOT_SUITABLE_GENERATOR;
         else if (BN_cmp(dh->g, dh->p) >= 0)
