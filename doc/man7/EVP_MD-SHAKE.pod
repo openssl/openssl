@@ -54,18 +54,17 @@ settable for an B<EVP_MD_CTX> with L<EVP_MD_CTX_set_params(3)>:
 
 =item "xoflen" (B<OSSL_DIGEST_PARAM_XOFLEN>) <unsigned integer>
 
-Sets the digest length for extendable output functions.
-The length of the "xoflen" parameter should not exceed that of a B<size_t>.
-
-For backwards compatibility reasons the default xoflen length for SHAKE-128 is
-16 (bytes) which results in a security strength of only 64 bits. To ensure the
-maximum security strength of 128 bits, the xoflen should be set to at least 32.
-
-For backwards compatibility reasons the default xoflen length for SHAKE-256 is
-32 (bytes) which results in a security strength of only 128 bits. To ensure the
-maximum security strength of 256 bits, the xoflen should be set to at least 64.
+This parameter is no longer used.
 
 =back
+
+=head1 NOTES
+
+For SHAKE-128, to ensure the maximum security strength of 128 bits, the output
+length passed to EVP_DigestFinalXOF() should be at least 32.
+
+For SHAKE-256, to ensure the maximum security strength of 256 bits, the output
+length passed to EVP_DigestFinalXOF() should be at least 64.
 
 =head1 SEE ALSO
 

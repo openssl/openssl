@@ -282,6 +282,7 @@ struct evp_md_st {
     OSSL_FUNC_digest_init_fn *dinit;
     OSSL_FUNC_digest_update_fn *dupdate;
     OSSL_FUNC_digest_final_fn *dfinal;
+    OSSL_FUNC_digest_squeeze_fn *dsqueeze;
     OSSL_FUNC_digest_digest_fn *digest;
     OSSL_FUNC_digest_freectx_fn *freectx;
     OSSL_FUNC_digest_dupctx_fn *dupctx;
