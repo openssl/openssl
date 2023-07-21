@@ -10309,7 +10309,7 @@ end:
     ENGINE_finish(e);
     ENGINE_free(e);
     OPENSSL_free(buf);
-    if (idx == 5)
+    if (fragsize == SSL3_RT_MAX_PLAIN_LENGTH)
         OPENSSL_free(msg);
     return testresult;
 }
