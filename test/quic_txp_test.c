@@ -245,6 +245,7 @@ err:
 #define OPK_CONN_TXFC_BUMP          20  /* Bump connection TXFC CWM */
 #define OPK_STREAM_TXFC_BUMP        21  /* Bump stream TXFC CWM */
 #define OPK_HANDSHAKE_COMPLETE      22  /* Mark handshake as complete */
+#define OPK_NOP                     23  /* No-op */
 
 struct script_op {
     uint32_t opcode;
@@ -300,6 +301,8 @@ struct script_op {
     { OPK_STREAM_TXFC_BUMP, (cwm), (id) },
 #define OP_HANDSHAKE_COMPLETE() \
     { OPK_HANDSHAKE_COMPLETE },
+#define OP_NOP() \
+    { OPK_NOP },
 
 static int schedule_handshake_done(struct helper *h)
 {
@@ -1526,6 +1529,8 @@ static int run_script(int script_idx, const struct script_op *script)
         case OPK_HANDSHAKE_COMPLETE:
             ossl_quic_tx_packetiser_notify_handshake_complete(h.txp);
             break;
+        case OPK_NOP:
+            break;
         default:
             TEST_error("bad opcode");
             goto err;
@@ -1574,6 +1579,16 @@ static int test_script(int idx)
 static const unsigned char dyn_script_1_crypto_1a[1200];
 static const unsigned char dyn_script_1_crypto_1b[1];
 
+static int check_is_initial(struct helper *h)
+{
+    return h->qrx_pkt->hdr->type == QUIC_PKT_TYPE_INITIAL;
+}
+
+static int check_is_handshake(struct helper *h)
+{
+    return h->qrx_pkt->hdr->type == QUIC_PKT_TYPE_HANDSHAKE;
+}
+
 static struct script_op dyn_script_1[] = {
     OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM, secret_1)
     OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM, secret_1)
@@ -1583,17 +1598,32 @@ static struct script_op dyn_script_1[] = {
     OP_TXP_GENERATE()
     OP_RX_PKT()
     OP_EXPECT_DGRAM_LEN(1200, 1200)
+    OP_CHECK(check_is_initial)
+    OP_NOP() /* [pkt_idx] */
+    OP_NOP() /* [check_idx] */
     OP_END
 };
 
-static const size_t dyn_script_1_crypto_idx = 3;
-static const size_t dyn_script_1_start_from = 1000;
+static const size_t dyn_script_1_crypto_idx     = 3;
+static const size_t dyn_script_1_pkt_idx        = 9;
+static const size_t dyn_script_1_check_idx      = 10;
+static const size_t dyn_script_1_start_from     = 1000;
 
 static int test_dyn_script_1(int idx)
 {
     size_t target_size = dyn_script_1_start_from + (size_t)idx;
+    int expect_handshake_pkt_in_same_dgram = (target_size <= 1115);
 
     dyn_script_1[dyn_script_1_crypto_idx].buf_len = target_size;
+
+    if (expect_handshake_pkt_in_same_dgram) {
+        dyn_script_1[dyn_script_1_pkt_idx].opcode       = OPK_RX_PKT;
+        dyn_script_1[dyn_script_1_check_idx].opcode     = OPK_CHECK;
+        dyn_script_1[dyn_script_1_check_idx].check_func = check_is_handshake;
+    } else {
+        dyn_script_1[dyn_script_1_pkt_idx].opcode       = OPK_RX_PKT_NONE;
+        dyn_script_1[dyn_script_1_check_idx].opcode     = OPK_NOP;
+    }
 
     if (!run_script(idx, dyn_script_1)) {
         TEST_error("failed dyn script 1 with target size %zu", target_size);
