@@ -275,6 +275,9 @@ static int mac_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
 
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) == 0)
+        return 0;
+
     tmpl = OSSL_PARAM_BLD_new();
     if (tmpl == NULL)
         return 0;

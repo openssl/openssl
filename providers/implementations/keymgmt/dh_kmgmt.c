@@ -222,6 +222,9 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     if (!ossl_prov_is_running() || dh == NULL)
         return 0;
 
+    if ((selection & DH_POSSIBLE_SELECTIONS) == 0)
+        return 0;
+
     tmpl = OSSL_PARAM_BLD_new();
     if (tmpl == NULL)
         return 0;
