@@ -391,6 +391,8 @@ CNF_CXXFLAGS={- join(' ', $target{cxxflags} || (),
                           @{$config{cxxflags}}) -}
 CNF_LDFLAGS={- join(' ', $target{lflags} || (),
                          @{$config{lflags}}) -}
+CNF_ATOMIC_LIBS={- join(' ', $target{atomic_libs} || (),
+                         @{$config{atomic_libs}}) -}
 CNF_EX_LIBS={- join(' ', $target{ex_libs} || (),
                          @{$config{ex_libs}}) -}
 
@@ -434,6 +436,7 @@ LIB_CXXFLAGS={- join(' ', $target{lib_cxxflags} || (),
 LIB_LDFLAGS={- join(' ', $target{shared_ldflag} || (),
                          $config{shared_ldflag} || (),
                          '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
+LIB_ATOMIC_LIBS=$(CNF_ATOMIC_LIBS) $(ATOMIC_LIBS)
 LIB_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
 DSO_CPPFLAGS={- join(' ', $target{dso_cppflags} || (),
                           $target{module_cppflags} || (),
@@ -1452,7 +1455,7 @@ libcrypto.pc:
 	    echo 'Name: OpenSSL-libcrypto'; \
 	    echo 'Description: OpenSSL cryptography library'; \
 	    echo 'Version: '$(VERSION); \
-	    echo 'Libs: -L$${libdir} -lcrypto'; \
+	    echo 'Libs: -L$${libdir} -lcrypto $(LIB_ATOMIC_LIBS)'; \
 	    echo 'Libs.private: $(LIB_EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir}' ) > libcrypto.pc
 

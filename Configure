@@ -3392,6 +3392,7 @@ sub print_table_entry
         "ld",
         "lflags",
         "loutflag",
+        "atomic_libs",
         "ex_libs",
         "bn_ops",
         "enable",
