@@ -1391,12 +1391,13 @@ with({ exit_checker => sub { return shift == 4; } },
     });
 
 subtest "CMS code signing with CAdES Baseline-T test" => sub {
-    plan tests => 10;
+    plan tests => 12;
     my $tmp_sig_file = "tmp_signature.p7s";
     my $dgst_sig_file = "signature.bin";
     my $sig_file = "signature.p7s";
     my $req_file = "request.tsq";
     my $resp_file = "response.tsr";
+    my $expired_sig_file = catfile($datadir, "expired_signature_cades_t.cms");
 
     # ts fails with test libctx set
     $ENV{OPENSSL_TEST_LIBCTX} = "0";
@@ -1475,6 +1476,22 @@ subtest "CMS code signing with CAdES Baseline-T test" => sub {
                     "-purpose", "codesign",
                     "-content", $smcont])),
        "accept verify CMS signature with code signing certificate for purpose code signing in CAdES Baseline-T");
+
+    # test signature with an already expired certificate but with CAdES B-T
+    # Shall fail without -cades but succeed with -cades
+    ok(!run(app(["openssl", "cms", @prov, "-verify", "-binary",
+                    "-in", $expired_sig_file, "-inform", "DER",
+                    "-CAfile", catfile($smdir, "smroot.pem"),
+                    "-purpose", "codesign",
+                    "-content", $smcont])),
+       "fail verify CMS signature with expired code signing certificate");
+
+    ok(run(app(["openssl", "cms", @prov, "-verify", "-cades", "-binary",
+                    "-in", $expired_sig_file, "-inform", "DER",
+                    "-CAfile", catfile($smdir, "smroot.pem"),
+                    "-purpose", "codesign",
+                    "-content", $smcont])),
+       "accept verify CMS signature with expired code signing certificate for purpose code signing in CAdES Baseline-T");
 };
 
 # Test case for missing MD algorithm (must not segfault)
