@@ -165,7 +165,7 @@ void gcm_ghash_v8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
 # if defined(__loongarch__) || defined(__loongarch64)
 #  include "loongarch_arch.h"
 #  if defined(VPAES_ASM)
-#   define VPAES_CAPABLE  (OPENSSL_loongarchcap_P & LOONGARCH_CFG2_LSX)
+#   define VPAES_CAPABLE  (OPENSSL_loongarch_hwcap_P & LOONGARCH_HWCAP_LSX)
 #  endif
 # endif
 
