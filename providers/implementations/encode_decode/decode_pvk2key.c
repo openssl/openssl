@@ -91,11 +91,7 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     if (in == NULL)
         return 0;
 
-    if (selection == 0)
-        /* import/export functions do not tolerate 0 selection */
-        ctx->selection = OSSL_KEYMGMT_SELECT_ALL;
-    else
-        ctx->selection = selection;
+    ctx->selection = selection;
 
     if ((selection == 0
          || (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
@@ -183,10 +179,14 @@ static int pvk2key_export_object(void *vctx,
     void *keydata;
 
     if (reference_sz == sizeof(keydata) && export != NULL) {
+        int selection = ctx->selection;
+
+        if (selection == 0)
+            selection = OSSL_KEYMGMT_SELECT_ALL;
         /* The contents of the reference is the address to our object */
         keydata = *(void **)reference;
 
-        return export(keydata, ctx->selection, export_cb, export_cbarg);
+        return export(keydata, selection, export_cb, export_cbarg);
     }
     return 0;
 }

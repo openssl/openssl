@@ -185,12 +185,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     void *key = NULL;
     int ok = 0;
 
-    if (selection == 0)
-        /* import/export functions do not tolerate 0 selection */
-        ctx->selection = OSSL_KEYMGMT_SELECT_ALL;
-    else
-        ctx->selection = selection;
-
+    ctx->selection = selection;
     /*
      * The caller is allowed to specify 0 as a selection mark, to have the
      * structure and key type guessed.  For type-specific structures, this
@@ -322,10 +317,14 @@ static int der2key_export_object(void *vctx,
     void *keydata;
 
     if (reference_sz == sizeof(keydata) && export != NULL) {
+        int selection = ctx->selection;
+
+        if (selection == 0)
+            selection = OSSL_KEYMGMT_SELECT_ALL;
         /* The contents of the reference is the address to our object */
         keydata = *(void **)reference;
 
-        return export(keydata, ctx->selection, export_cb, export_cbarg);
+        return export(keydata, selection, export_cb, export_cbarg);
     }
     return 0;
 }
