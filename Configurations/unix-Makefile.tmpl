@@ -11,8 +11,13 @@
      sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw)/ }
 
      # Shared AIX support is special. We put libcrypto[64].so.ver into
-     # libcrypto.a and use libcrypto_a.a as static one.
-     sub sharedaix  { !$disabled{shared} && $config{target} =~ /^aix/ }
+     # libcrypto.a and use libcrypto_a.a as static one, unless using
+     # shared_target style aix-solib.  In that mode, create
+     # libcrypto.so as a link-import library that inserts runtime
+     # dependencies on libcrypto.so.ver, and the static library is
+     # named libcrypto.a.
+     sub sharedaix  { !$disabled{shared} && $target{shared_target} =~ /^aix(?!-solib$)/ }
+     sub sharedaix_solib  { !$disabled{shared} && $target{shared_target} =~ /^aix-solib$/ }
 
      our $sover_dirname = platform->shlib_version_as_filename();
 
@@ -759,12 +764,12 @@ install_dev: install_runtime_libs
 		fn1=`basename "$$s1"`; \
 		fn2=`basename "$$s2"`; \
 		fn3=`basename "$$s3"`; \
-		: {- output_off(); output_on() unless windowsdll() or sharedaix(); "" -}; \
+		: {- output_off(); output_on() unless windowsdll() or sharedaix() or sharedaix_solib(); "" -}; \
 		if [ "$$fn2" != "" ]; then \
 			$(ECHO) "link $(DESTDIR)$(libdir)/$$fn2 -> $(DESTDIR)$(libdir)/$$fn1"; \
 			ln -sf $$fn1 "$(DESTDIR)$(libdir)/$$fn2"; \
 		fi; \
-		: {- output_off() unless windowsdll() or sharedaix(); output_on() if windowsdll(); "" -}; \
+		: {- output_off() unless windowsdll() or sharedaix() or sharedaix_solib(); output_on() if windowsdll() or sharedaix_solib(); "" -}; \
 		if [ "$$fn3" != "" ]; then \
 			$(ECHO) "install $$s3 -> $(DESTDIR)$(libdir)/$$fn3"; \
 			cp $$s3 "$(DESTDIR)$(libdir)/$$fn3.new"; \
@@ -772,7 +777,7 @@ install_dev: install_runtime_libs
 			mv -f "$(DESTDIR)$(libdir)/$$fn3.new" \
 			      "$(DESTDIR)$(libdir)/$$fn3"; \
 		fi; \
-		: {- output_off() if windowsdll(); output_on() if sharedaix(); "" -}; \
+		: {- output_off() if windowsdll() or sharedaix_solib(); output_on() if sharedaix(); "" -}; \
 		a="$(DESTDIR)$(libdir)/$$fn2"; \
 		$(ECHO) "install $$s1 -> $$a"; \
 		if [ -f $$a ]; then ( trap "rm -rf /tmp/ar.$$$$" INT 0; \
@@ -1789,6 +1794,8 @@ EOF
       # libraries for DLLs are a thing.  On platforms that have this mechanism,
       # $import has the name of this import library.  On platforms that don't
       # have this mechanism, $import will be |undef|.
+      # It's also used on AIX in solib mode, which creates import libraries
+      # for the shared libraries.
       my $import = platform->sharedlib_import($args{lib});
       # $simple is for platforms where full shared library names include the
       # shared library version, and there's a simpler name that doesn't include
@@ -1849,9 +1856,18 @@ EOF
           }
       }
       if (defined $import) {
+          if (sharedaix_solib()) {
+              $recipe .= <<"EOF";
+$import: $full $defs[0]
+	rm -f $import && \\
+	echo \\#!$full > $import && \\
+        cat $defs[0] >>$import
+EOF
+          } else {
       $recipe .= <<"EOF";
 $import: $full
 EOF
+          }
       }
       $recipe .= <<"EOF";
 $full: $fulldeps
