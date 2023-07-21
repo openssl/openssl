@@ -9,9 +9,8 @@
 #ifndef OSSL_CRYPTO_LOONGARCH_ARCH_H
 # define OSSL_CRYPTO_LOONGARCH_ARCH_H
 
-extern unsigned int OPENSSL_loongarchcap_P;
-# define LOONGARCH_CFG2      0x02
-# define LOONGARCH_CFG2_LSX  (1<<6)
-# define LOONGARCH_CFG2_LASX (1<<7)
+extern unsigned int OPENSSL_loongarch_hwcap_P;
+# define LOONGARCH_HWCAP_LSX  (1 << 4)
+# define LOONGARCH_HWCAP_LASX (1 << 5)
 
 #endif
