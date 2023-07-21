@@ -91,7 +91,11 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     if (in == NULL)
         return 0;
 
-    ctx->selection = selection;
+    if (selection == 0)
+        /* import/export functions do not tolerate 0 selection */
+        ctx->selection = OSSL_KEYMGMT_SELECT_ALL;
+    else
+        ctx->selection = selection;
 
     if ((selection == 0
          || (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)

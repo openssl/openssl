@@ -185,7 +185,12 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     void *key = NULL;
     int ok = 0;
 
-    ctx->selection = selection;
+    if (selection == 0)
+        /* import/export functions do not tolerate 0 selection */
+        ctx->selection = OSSL_KEYMGMT_SELECT_ALL;
+    else
+        ctx->selection = selection;
+
     /*
      * The caller is allowed to specify 0 as a selection mark, to have the
      * structure and key type guessed.  For type-specific structures, this

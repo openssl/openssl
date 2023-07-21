@@ -107,7 +107,12 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     if (!ok)
         goto next;
 
-    ctx->selection = selection;
+    if (selection == 0)
+        /* import/export functions do not tolerate 0 selection */
+        ctx->selection = OSSL_KEYMGMT_SELECT_ALL;
+    else
+        ctx->selection = selection;
+
     ok = 0;                      /* Assume that we fail */
 
     if ((isdss && ctx->desc->type != EVP_PKEY_DSA)
