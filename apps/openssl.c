@@ -80,8 +80,8 @@ static int apps_startup(void)
         if (strcmp(use_libctx, "1") == 0) {
             if (app_create_libctx() == NULL)
                 return 0;
+            OSSL_LIB_CTX_set0_default(app_get0_libctx());
         }
-        OSSL_LIB_CTX_set0_default(app_get0_libctx());
     }
 
     return 1;
