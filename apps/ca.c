@@ -1048,7 +1048,7 @@ end_of_options:
             }
         }
         /*
-         * we have a stack of newly certified certificates and a data base
+         * we have a stack of newly certified certificates and a database
          * and serial number that need updating
          */
 
@@ -1149,7 +1149,7 @@ end_of_options:
             if (!rotate_index(dbfile, "new", "old"))
                 goto end;
 
-            BIO_printf(bio_err, "Data Base Updated\n");
+            BIO_printf(bio_err, "Database updated\n");
         }
     }
 
@@ -1336,7 +1336,7 @@ end_of_options:
             if (!rotate_index(dbfile, "new", "old"))
                 goto end;
 
-            BIO_printf(bio_err, "Data Base Updated\n");
+            BIO_printf(bio_err, "Database updated\n");
         }
     }
     ret = 0;
@@ -1778,7 +1778,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     if (verbose)
         BIO_printf(bio_err,
-                   "The subject name appears to be ok, checking data base for clashes\n");
+                   "The subject name appears to be ok, checking database for clashes\n");
 
     /* Build the correct Subject if no e-mail is wanted in the subject. */
     if (!email_dn) {
@@ -1867,7 +1867,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         else if (rrow[DB_type][0] == DB_TYPE_VAL)
             p = "Valid";
         else
-            p = "\ninvalid type, Data base error\n";
+            p = "\ninvalid type, Database error\n";
         BIO_printf(bio_err, "Type          :%s\n", p);;
         if (rrow[DB_type][0] == DB_TYPE_REV) {
             p = rrow[DB_exp_date];
