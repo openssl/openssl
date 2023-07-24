@@ -64,11 +64,9 @@ will be made to the object for a substantial period of time. So long as at least
 one call to the SSL object is blocking, no such call is needed. However,
 SSL_handle_events() may optionally be used on a QUIC connection object if desired.
 
-=begin comment
-
-TODO(QUIC): Update the above paragraph once we support thread assisted mode.
-
-=end comment
+With the thread-assisted mode of operation L<OSSL_QUIC_client_thread_method(3)>
+it is unnecessary to call SSL_handle_events() as the assist thread handles the QUIC
+connection events.
 
 =back
 

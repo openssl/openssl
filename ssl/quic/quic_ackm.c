@@ -927,7 +927,7 @@ static int ackm_set_loss_detection_timer(OSSL_ACKM *ackm)
 static int ackm_in_persistent_congestion(OSSL_ACKM *ackm,
                                          const OSSL_ACKM_TX_PKT *lpkt)
 {
-    /* TODO(QUIC): Persistent congestion not currently implemented. */
+    /* TODO(QUIC FUTURE): Persistent congestion not currently implemented. */
     return 0;
 }
 
@@ -1284,7 +1284,8 @@ static void ackm_queue_probe_anti_deadlock_initial(OSSL_ACKM *ackm)
 static void ackm_queue_probe(OSSL_ACKM *ackm, int pkt_space)
 {
     /*
-     * TODO(QUIC): We are allowed to send either one or two probe packets here.
+     * TODO(QUIC FUTURE): We are allowed to send either one or two probe
+     * packets here.
      * Determine a strategy for when we should send two probe packets.
      */
     ++ackm->pending_probe.pto[pkt_space];

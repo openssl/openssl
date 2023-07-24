@@ -290,7 +290,7 @@ static ossl_unused int qsm_send_part_permits_gc(const QUIC_STREAM *qs)
 
 static int qsm_ready_for_gc(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
 {
-    int recv_stream_fully_drained = 0; /* TODO(QUIC): Optimisation */
+    int recv_stream_fully_drained = 0; /* TODO(QUIC FUTURE): Optimisation */
 
     /*
      * If sstream has no FIN, we auto-reset it at marked-for-deletion time, so

@@ -36,7 +36,7 @@ typedef struct ossl_cc_newreno_st {
 
 #define MIN_MAX_INIT_WND_SIZE    14720  /* RFC 9002 s. 7.2 */
 
-/* TODO(QUIC): Pacing support. */
+/* TODO(QUIC FUTURE): Pacing support. */
 
 static void newreno_set_max_dgram_size(OSSL_CC_NEWRENO *nr,
                                        size_t max_dgram_size);

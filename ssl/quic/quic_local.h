@@ -293,7 +293,7 @@ const SSL_METHOD *func_name(void)  \
                 ossl_quic_free, \
                 ossl_quic_reset, \
                 ossl_quic_init, \
-                ossl_quic_clear, \
+                NULL /* clear */, \
                 ossl_quic_deinit, \
                 q_accept, \
                 q_connect, \

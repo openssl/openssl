@@ -21,8 +21,8 @@
  * not suitable for network use. In particular, it does not implement address
  * validation, anti-amplification or retry logic.
  *
- * TODO(QUIC): Implement address validation and anti-amplification
- * TODO(QUIC): Implement retry logic
+ * TODO(QUIC SERVER): Implement address validation and anti-amplification
+ * TODO(QUIC SERVER): Implement retry logic
  */
 
 #define INIT_DCID_LEN           8
@@ -1360,7 +1360,7 @@ static int ch_on_transport_params(const unsigned char *params,
 
         case QUIC_TPARAM_PREFERRED_ADDR:
             {
-                /* TODO(QUIC): Handle preferred address. */
+                /* TODO(QUIC FUTURE): Handle preferred address. */
                 QUIC_PREFERRED_ADDR pfa;
 
                 /*
@@ -1655,7 +1655,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
              * again because packets that were not previously processable and
              * were deferred might now be processable.
              *
-             * TODO(QUIC): Consider handling this in the yield_secret callback.
+             * TODO(QUIC FUTURE): Consider handling this in the yield_secret callback.
              */
         } while (ch->have_new_rx_secret);
     }
@@ -1946,7 +1946,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
             return;
 
         /*
-         * TODO(QUIC): Theoretically this should probably be in the QRX.
+         * TODO(QUIC FUTURE): Theoretically this should probably be in the QRX.
          * However because validation is dependent on context (namely the
          * client's initial DCID) we can't do this cleanly. In the future we
          * should probably add a callback to the QRX to let it call us (via
@@ -1972,8 +1972,8 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
             return;
 
         /*
-         * TODO(QUIC): Implement 0-RTT on the server side. We currently do
-         * not need to implement this as a client can only do 0-RTT if we
+         * TODO(QUIC 0RTT): Implement 0-RTT on the server side. We currently
+         * do not need to implement this as a client can only do 0-RTT if we
          * have given it permission to in a previous session.
          */
         break;
@@ -2073,7 +2073,7 @@ static void ch_default_packet_handler(QUIC_URXE *e, void *arg)
         case QUIC_VERSION_NONE:
         default:
             /* Unknown version or proactive version negotiation request, bail. */
-            /* TODO(QUIC): Handle version negotiation on server side */
+            /* TODO(QUIC SERVER): Handle version negotiation on server side */
             goto undesirable;
     }
 

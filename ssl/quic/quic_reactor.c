@@ -342,14 +342,14 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
              * things again. If poll_two_fds returns 0, this is some other
              * non-timeout failure and we should stop here.
              *
-             * TODO(QUIC): In the future we could avoid unnecessary syscalls by
-             * not retrying network I/O that isn't ready based on the result of
-             * the poll call. However this might be difficult because it
-             * requires we do the call to poll(2) or equivalent syscall
-             * ourselves, whereas in the general case the application does the
-             * polling and just calls SSL_handle_events(). Implementing this
-             * optimisation in the future will probably therefore require API
-             * changes.
+             * TODO(QUIC FUTURE): In the future we could avoid unnecessary
+             * syscalls by not retrying network I/O that isn't ready based
+             * on the result of the poll call. However this might be difficult
+             * because it requires we do the call to poll(2) or equivalent
+             * syscall ourselves, whereas in the general case the application
+             * does the polling and just calls SSL_handle_events().
+             * Implementing this optimisation in the future will probably
+             * therefore require API changes.
              */
             return 0;
     }

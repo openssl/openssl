@@ -189,8 +189,8 @@ initial API will provide a basic set of listeners and helper functions in order
 to provide the basis for future work.
 
 The following outlines an illustrative set of functions that will initially be
-provided. A number of `TODO(QUIC)` comments are inserted to explain how we
-might expand the API over time:
+provided. A number of `TODO(QUIC TESTING)` comments are inserted to explain how
+we might expand the API over time:
 
 ```` C
 /* Type to represent the Fault Injector */
@@ -295,15 +295,15 @@ int ossl_quic_fault_set_handshake_listener(OSSL_QUIC_FAULT *fault,
 int ossl_quic_fault_resize_handshake(OSSL_QUIC_FAULT *fault, size_t newlen);
 
 /*
- * TODO(QUIC): Add listeners for specific types of frame here. E.g. we might
- * expect to see an "ACK" frame listener which will be passed pre-parsed ack
- * data that can be modified as required.
+ * TODO(QUIC TESTING): Add listeners for specific types of frame here. E.g.
+ * we might expect to see an "ACK" frame listener which will be passed
+ * pre-parsed ack data that can be modified as required.
  */
 
 /*
  * Handshake message specific listeners. Unlike the general handshake message
  * listener these messages are pre-parsed and supplied with message specific
- * data and exclude the handshake header
+ * data and exclude the handshake header.
  */
 typedef int (*ossl_quic_fault_on_enc_ext_cb)(OSSL_QUIC_FAULT *fault,
                                              OSSL_QF_ENCRYPTED_EXTENSIONS *ee,
@@ -314,7 +314,7 @@ int ossl_quic_fault_set_hand_enc_ext_listener(OSSL_QUIC_FAULT *fault,
                                               ossl_quic_fault_on_enc_ext_cb encextcb,
                                               void *encextcbarg);
 
-/* TODO(QUIC): Add listeners for other types of handshake message here */
+/* TODO(QUIC TESTING): Add listeners for other types of handshake message here */
 
 
 /*
@@ -338,9 +338,9 @@ int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
                                      size_t *extlen);
 
 /*
- * TODO(QUIC): Add additional helper functions for querying extensions here (e.g.
- * finding or adding them). We could also provide a "listener" API for listening
- * for specific extension types
+ * TODO(QUIC TESTING): Add additional helper functions for querying extensions
+ * here (e.g. finding or adding them). We could also provide a "listener" API
+ * for listening for specific extension types.
  */
 
 /*
@@ -465,19 +465,9 @@ static int test_unknown_frame(void)
     if (!TEST_int_eq(SSL_get_error(cssl, ret), SSL_ERROR_SSL))
         goto err;
 
-#if 0
-    /*
-     * TODO(QUIC): We should expect an error on the queue after this - but we
-     * don't have it yet.
-     * Note, just raising the error in the obvious place causes SSL_tick() to
-     * succeed, but leave a spurious error on the stack. We need to either
-     * allow SSL_tick() to fail, or somehow delay the raising of the error
-     * until the SSL_read() call.
-     */
     if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
                      SSL_R_UNKNOWN_FRAME_TYPE_RECEIVED))
         goto err;
-#endif
 
     if (!TEST_true(qtest_check_server_protocol_err(qtserv)))
         goto err;

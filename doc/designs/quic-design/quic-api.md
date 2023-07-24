@@ -631,10 +631,6 @@ object (i.e., a single bytestream); those components may well already call
 `SSL_shutdown` and it is not desired for such calls to affect the whole
 connection.
 
-**TBD:** Should we allow `SSL_shutdown_ex` on a QUIC stream SSL object to act as
-`SSL_stream_conclude`? Should we require this behaviour to be explicitly
-enabled?
-
 The `args->quic_error_code` and `args->reason` fields allow the application
 error code and reason string for the closure of a QUIC connection to be
 specified. If `args` or `args->reason` is `NULL`, a zero-length string is used
