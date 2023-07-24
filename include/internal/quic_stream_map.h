@@ -297,8 +297,8 @@ struct quic_stream_st {
      *            reasonably certain no benefit would be gained by sending
      *            STOP_SENDING.]
      *
-     *            TODO(QUIC): Implement the latter case (currently we just
-     *                        always do STOP_SENDING).
+     *            TODO(QUIC FUTURE): Implement the latter case (currently we
+                                     just always do STOP_SENDING).
      *
      *         and;
      *

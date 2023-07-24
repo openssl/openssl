@@ -105,12 +105,6 @@ zero-initialised B<SSL_SHUTDOWN_EX_ARGS> structure. When used with a non-QUIC
 SSL object, the arguments are ignored and the call functions identically to
 SSL_shutdown().
 
-=begin comment
-
-TODO(QUIC): Once streams are implemented, revise this text
-
-=end comment
-
 When used with a QUIC connection SSL object, SSL_shutdown_ex() initiates a QUIC
 immediate close. The I<quic_error_code> field can be used to specify a 62-bit
 application error code to be signalled via QUIC. The value specified must be in
@@ -262,6 +256,8 @@ It can occur if an action is needed to continue the operation for nonblocking
 BIOs.
 
 It can also occur when not all data was read using SSL_read().
+
+This value is also returned when called on QUIC stream SSL objects.
 
 =back
 

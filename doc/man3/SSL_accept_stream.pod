@@ -45,7 +45,8 @@ TODO(QUIC): Revise in MSMT PR to mention threading considerations.
 
 Depending on whether default stream functionality is being used, it may be
 necessary to explicitly configure the incoming stream policy before streams can
-be accepted; see L<SSL_set_incoming_stream_policy(3)>.
+be accepted; see L<SSL_set_incoming_stream_policy(3)>. See also
+L<openssl-quic(7)/MODES OF OPERATION>.
 
 =begin comment
 
@@ -67,7 +68,8 @@ a QUIC connection SSL object.
 
 =head1 SEE ALSO
 
-L<SSL_new_stream(3)>, L<SSL_set_blocking_mode(3)>, L<SSL_free(3)>
+L<openssl-quic(7)/MODES OF OPERATION>, L<SSL_new_stream(3)>,
+L<SSL_set_blocking_mode(3)>, L<SSL_free(3)>
 
 =head1 HISTORY
 

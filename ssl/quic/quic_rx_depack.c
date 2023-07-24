@@ -332,7 +332,7 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CHANNEL *ch,
         return 0;
     }
 
-    /* TODO(QUIC): ADD CODE to send |token| to the session manager */
+    /* TODO(QUIC FUTURE): ADD CODE to send |token| to the session manager */
 
     return 1;
 }
@@ -881,7 +881,7 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
      * currently non-conformant and for internal testing use; simply handle it
      * as a no-op in this case.
      *
-     * TODO(QUIC): Revise and implement correctly for server support.
+     * TODO(QUIC SERVER): Revise and implement correctly for server support.
      */
     if (!ch->is_server) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -968,7 +968,7 @@ static int depack_do_frame_path_response(PACKET *pkt,
         return 0;
     }
 
-    /* TODO(QUIC): ADD CODE to send |frame_data| to the ch manager */
+    /* TODO(QUIC MULTIPATH): ADD CODE to send |frame_data| to the ch manager */
 
     return 1;
 }
@@ -1378,8 +1378,8 @@ int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
     /* Initialize |ackm_data| (and reinitialize |ok|)*/
     memset(&ackm_data, 0, sizeof(ackm_data));
     /*
-     * TODO(QUIC): ASSUMPTION: All packets that aren't special case have a
-     * packet number
+     * ASSUMPTION: All packets that aren't special case have a
+     * packet number.
      */
     ackm_data.pkt_num = qpacket->pn;
     ackm_data.time = qpacket->time;
@@ -1413,7 +1413,7 @@ int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
     ok = 1;
  end:
     /*
-     * TODO(QUIC): ASSUMPTION: If this function is called at all, |qpacket| is
+     * ASSUMPTION: If this function is called at all, |qpacket| is
      * a legitimate packet, even if its contents aren't.
      * Therefore, we call ossl_ackm_on_rx_packet() unconditionally, as long as
      * |ackm_data| has at least been initialized.

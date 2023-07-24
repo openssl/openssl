@@ -375,7 +375,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
         = (ssl_base->method == OSSL_QUIC_client_thread_method());
 #endif
 
-    qc->as_server       = 0; /* TODO(QUIC): server support */
+    qc->as_server       = 0; /* TODO(QUIC SERVER): add server support */
     qc->as_server_state = qc->as_server;
 
     qc->default_stream_mode     = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
@@ -547,7 +547,7 @@ int ossl_quic_clear(SSL *s)
     if (!expect_quic(s, &ctx))
         return 0;
 
-    /* TODO(QUIC): Currently a no-op. */
+    /* TODO(QUIC FUTURE): Currently a no-op. */
     return 1;
 }
 
@@ -1172,7 +1172,6 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
         return -1;
 
     if (ctx.is_stream)
-        /* TODO(QUIC): Semantics currently undefined for QSSOs */
         return -1;
 
     quic_lock(ctx.qc);
@@ -1412,7 +1411,6 @@ static int quic_do_handshake(QCTX *ctx)
     }
 
     if (qc->as_server != qc->as_server_state) {
-        /* TODO(QUIC): Must match the method used to create the QCSO */
         QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
         return -1; /* Non-protocol error */
     }
@@ -1800,8 +1798,8 @@ static void quic_post_write(QUIC_XSO *xso, int did_append, int do_tick)
     /*
      * Try and send.
      *
-     * TODO(QUIC): It is probably inefficient to try and do this immediately,
-     * plus we should eventually consider Nagle's algorithm.
+     * TODO(QUIC FUTURE): It is probably inefficient to try and do this
+     * immediately, plus we should eventually consider Nagle's algorithm.
      */
     if (do_tick)
         ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(xso->conn->ch), 0);

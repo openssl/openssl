@@ -1276,7 +1276,7 @@ static int txp_should_try_staging(OSSL_QUIC_TX_PACKETISER *txp,
      * This is not a major concern for clients, since if a client has a 1-RTT EL
      * provisioned the server is guaranteed to also have a 1-RTT EL provisioned.
      *
-     * TODO(QUIC): Revisit this when server support is added.
+     * TODO(QUIC SERVER): Revisit this when server support is added.
      */
     if (*conn_close_enc_level > enc_level
         && *conn_close_enc_level != QUIC_ENC_LEVEL_1RTT)
@@ -1402,7 +1402,7 @@ static int sstream_is_pending(QUIC_SSTREAM *sstream)
 /* Determine how many bytes we should use for the encoded PN. */
 static size_t txp_determine_pn_len(OSSL_QUIC_TX_PACKETISER *txp)
 {
-    return 4; /* TODO(QUIC) */
+    return 4; /* TODO(QUIC FUTURE) */
 }
 
 /* Determine plaintext packet payload length from payload length. */
