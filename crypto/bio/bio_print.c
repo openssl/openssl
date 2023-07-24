@@ -706,7 +706,7 @@ fmtfp(char **sbuffer,
         fconvert[fplace++] = "0123456789"[fracpart % 10];
         fracpart = (fracpart / 10);
     }
-  
+
     fconvert[fplace] = 0;
 
     /* convert exponent part */
