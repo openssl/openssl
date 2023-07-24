@@ -62,14 +62,14 @@ _vpaes_encrypt_core:
     ld.w      $t5,$a2,240
     vori.b    $vr1,$vr9,0
     la.local  $t0,Lk_ipt
-    vld	      $vr2,$t0,0    # iptlo
+    vld       $vr2,$t0,0    # iptlo
     vandn.v   $vr1,$vr1,$vr0
     vld	      $vr5,$a5,0    # round0 key
     vsrli.w   $vr1,$vr1,4
     vand.v    $vr0,$vr0,$vr9
-    vshuf.b   $vr2,$vr0,$vr2,$vr0
+    vshuf.b   $vr2,$vr18,$vr2,$vr0
     vld       $vr0,$t0,16   # ipthi
-    vshuf.b   $vr0,$vr1,$vr0,$vr1
+    vshuf.b   $vr0,$vr18,$vr0,$vr1
     vxor.v    $vr2,$vr2,$vr5
     addi.d    $a5,$a5,16
     vxor.v    $vr0,$vr0,$vr2
@@ -81,26 +81,26 @@ _vpaes_encrypt_core:
     # middle of middle round
     vori.b    $vr4,$vr13,0           # 4 : sb1u
     vori.b    $vr0,$vr12,0           # 0 : sb1t
-    vshuf.b   $vr4,$vr2,$vr4,$vr2    # 4 = sb1u
-    vshuf.b   $vr0,$vr3,$vr0,$vr3    # 0 = sb1t
+    vshuf.b   $vr4,$vr18,$vr4,$vr2    # 4 = sb1u
+    vshuf.b   $vr0,$vr18,$vr0,$vr3    # 0 = sb1t
     vxor.v    $vr4,$vr4,$vr5         # 4 = sb1u + k
     vori.b    $vr5,$vr15,0           # 4 : sb2u
     vxor.v    $vr0,$vr0,$vr4         # 0 = A
     add.d     $t0,$a7,$a6            # Lk_mc_forward[]
     vld       $vr1,$t0,-0x40
-    vshuf.b   $vr5,$vr2,$vr5,$vr2    # 4 = sb2u
+    vshuf.b   $vr5,$vr18,$vr5,$vr2    # 4 = sb2u
     vld       $vr4,$t0,0             # Lk_mc_backward[]
     vori.b    $vr2,$vr14,0           # 2 : sb2t
-    vshuf.b   $vr2,$vr3,$vr2,$vr3    # 2 = sb2t
+    vshuf.b   $vr2,$vr18,$vr2,$vr3    # 2 = sb2t
     vori.b    $vr3,$vr0,0            # 3 = A
     vxor.v    $vr2,$vr5,$vr2         # 2 = 2A
-    vshuf.b   $vr0,$vr1,$vr0,$vr1    # 0 = B
+    vshuf.b   $vr0,$vr18,$vr0,$vr1    # 0 = B
     addi.d    $a5,$a5,16             # next key
     vxor.v    $vr0,$vr0,$vr2         # 0 = 2A+B
-    vshuf.b   $vr3,$vr4,$vr3,$vr4    # 3 = D
+    vshuf.b   $vr3,$vr18,$vr3,$vr4    # 3 = D
     addi.d    $a7,$a7,16             # next mc
     vxor.v    $vr3,$vr3,$vr0         # 3 = 2A+B+D
-    vshuf.b   $vr0,$vr1,$vr0,$vr1    # 0 = 2B+C
+    vshuf.b   $vr0,$vr18,$vr0,$vr1    # 0 = 2B+C
     andi      $a7,$a7,0x30           # ... mod 4
     addi.d    $t5,$t5,-1             # nr--
     vxor.v    $vr0,$vr0,$vr3         # 0 = 2A+3B+C+D
@@ -112,33 +112,33 @@ _vpaes_encrypt_core:
     vandn.v   $vr1,$vr1,$vr0        # 1 = i<<4
     vsrli.w   $vr1,$vr1,4           # 1 = i
     vand.v    $vr0,$vr0,$vr9        # 0 = k
-    vshuf.b   $vr5,$vr0,$vr5,$vr0   # 2 = a/k
+    vshuf.b   $vr5,$vr18,$vr5,$vr0   # 2 = a/k
     vori.b    $vr3,$vr10,0          # 3 : 1/i
     vxor.v    $vr0,$vr0,$vr1        # 0 = j
-    vshuf.b   $vr3,$vr1,$vr3,$vr1   # 3 = 1/i
+    vshuf.b   $vr3,$vr18,$vr3,$vr1   # 3 = 1/i
     vori.b    $vr4,$vr10,0          # 4 : 1/j
     vxor.v    $vr3,$vr3,$vr5        # 3 = iak = 1/i + a/k
-    vshuf.b   $vr4,$vr0,$vr4,$vr0   # 4 = 1/j
+    vshuf.b   $vr4,$vr18,$vr4,$vr0   # 4 = 1/j
     vori.b    $vr2,$vr10,0          # 2 : 1/iak
     vxor.v    $vr4,$vr4,$vr5        # 4 = jak = 1/j + a/k
-    vshuf.b   $vr2,$vr3,$vr2,$vr3   # 2 = 1/iak
+    vshuf.b   $vr2,$vr18,$vr2,$vr3   # 2 = 1/iak
     vori.b    $vr3,$vr10,0          # 3 : 1/jak
     vxor.v    $vr2,$vr2,$vr0        # 2 = io
-    vshuf.b   $vr3,$vr4,$vr3,$vr4   # 3 = 1/jak
-    vld       $vr5,$a5,	0
+    vshuf.b   $vr3,$vr18,$vr3,$vr4   # 3 = 1/jak
+    vld       $vr5,$a5,0
     vxor.v    $vr3,$vr3,$vr1        # 3 = jo
     bnez      $t5,.Lenc_loop
 
     # middle of last round
     vld       $vr4,$a6,	-0x60		# 3 : sbou	Lk_sbo
     vld       $vr0,$a6,	-0x50		# 0 : sbot	Lk_sbo+16
-    vshuf.b   $vr4,$vr2,$vr4,$vr2	# 4 = sbou
+    vshuf.b   $vr4,$vr18,$vr4,$vr2	# 4 = sbou
     vxor.v    $vr4,$vr4,$vr5		# 4 = sb1u + k
-    vshuf.b   $vr0,$vr3,$vr0,$vr3	# 0 = sb1t
+    vshuf.b   $vr0,$vr18,$vr0,$vr3	# 0 = sb1t
     add.d     $t0,$a7,$a6		# Lk_sr[]
-    vld       $vr1,$t0,	0x40
+    vld       $vr1,$t0,0x40
     vxor.v    $vr0,$vr0,$vr4		# 0 = A
-    vshuf.b   $vr0,$vr1,$vr0,$vr1
+    vshuf.b   $vr0,$vr18,$vr0,$vr1
     jr        $ra
 .cfi_endproc
 .size	_vpaes_encrypt_core,.-_vpaes_encrypt_core
@@ -163,11 +163,11 @@ _vpaes_decrypt_core:
     vld       $vr5,$a5,0               # round0 key
     slli.d    $a7,$a7,4
     vand.v    $vr0,$vr9,$vr0
-    vshuf.b   $vr2,$vr0,$vr2,$vr0
+    vshuf.b   $vr2,$vr18,$vr2,$vr0
     vld       $vr0,$t0,16              # ipthi
     xori      $a7,$a7,0x30
     la.local  $a6,Lk_dsbd
-    vshuf.b   $vr0,$vr1,$vr0,$vr1
+    vshuf.b   $vr0,$vr18,$vr0,$vr1
     andi      $a7,$a7,0x30
     vxor.v    $vr2,$vr2,$vr5
     la.local  $t0,Lk_mc_forward
@@ -184,29 +184,29 @@ _vpaes_decrypt_core:
 ##
     vld        $vr4,$a6,-0x20		# 4 : sb9u
     vld        $vr1,$a6,-0x10		# 0 : sb9t
-    vshuf.b    $vr4,$vr2,$vr4,$vr2	# 4 = sb9u
-    vshuf.b    $vr1,$vr3,$vr1,$vr3	# 0 = sb9t
+    vshuf.b    $vr4,$vr18,$vr4,$vr2	# 4 = sb9u
+    vshuf.b    $vr1,$vr18,$vr1,$vr3	# 0 = sb9t
     vxor.v     $vr0,$vr0,$vr4
     vld        $vr4,$a6,0x0		# 4 : sbdu
     vxor.v     $vr0,$vr0,$vr1		# 0 = ch
     vld        $vr1,$a6,0x10		# 0 : sbdt
-    vshuf.b    $vr4,$vr2,$vr4,$vr2	# 4 = sbdu
-    vshuf.b    $vr0,$vr5,$vr0,$vr5	# MC ch
-    vshuf.b    $vr1,$vr3,$vr1,$vr3	# 0 = sbdt
+    vshuf.b    $vr4,$vr18,$vr4,$vr2	# 4 = sbdu
+    vshuf.b    $vr0,$vr18,$vr0,$vr5	# MC ch
+    vshuf.b    $vr1,$vr18,$vr1,$vr3	# 0 = sbdt
     vxor.v     $vr0,$vr0,$vr4		# 4 = ch
     vld        $vr4,$a6,0x20		# 4 : sbbu
     vxor.v     $vr0,$vr0,$vr1		# 0 = ch
     vld        $vr1,$a6,0x30		# 0 : sbbt
-    vshuf.b    $vr4,$vr2,$vr4,$vr2	# 4 = sbbu
-    vshuf.b    $vr0,$vr5,$vr0,$vr5	# MC ch
-    vshuf.b    $vr1,$vr3,$vr1,$vr3	# 0 = sbbt
+    vshuf.b    $vr4,$vr18,$vr4,$vr2	# 4 = sbbu
+    vshuf.b    $vr0,$vr18,$vr0,$vr5	# MC ch
+    vshuf.b    $vr1,$vr18,$vr1,$vr3	# 0 = sbbt
     vxor.v     $vr0,$vr0,$vr4		# 4 = ch
     vld        $vr4,$a6,0x40		# 4 : sbeu
     vxor.v     $vr0,$vr0,$vr1		# 0 = ch
     vld        $vr1,$a6,0x50		# 0 : sbet
-    vshuf.b    $vr4,$vr2,$vr4,$vr2	# 4 = sbeu
-    vshuf.b    $vr0,$vr5,$vr0,$vr5	# MC ch
-    vshuf.b    $vr1,$vr3,$vr1,$vr3	# 0 = sbet
+    vshuf.b    $vr4,$vr18,$vr4,$vr2	# 4 = sbeu
+    vshuf.b    $vr0,$vr18,$vr0,$vr5	# MC ch
+    vshuf.b    $vr1,$vr18,$vr1,$vr3	# 0 = sbet
     vxor.v     $vr0,$vr0,$vr4		# 4 = ch
     addi.d     $a5,$a5,	16		# next round key
     vbsrl.v    $vr16,$vr5,0xc
@@ -222,32 +222,32 @@ _vpaes_decrypt_core:
     vori.b     $vr2,$vr11,0		# 2 : a/k
     vsrli.w    $vr1,$vr1,4		# 1 = i
     vand.v     $vr0,$vr0,$vr9		# 0 = k
-    vshuf.b    $vr2,$vr0,$vr2,$vr0	# 2 = a/k
+    vshuf.b    $vr2,$vr18,$vr2,$vr0	# 2 = a/k
     vori.b     $vr3,$vr10,0		# 3 : 1/i
     vxor.v     $vr0,$vr0,$vr1		# 0 = j
-    vshuf.b    $vr3,$vr1,$vr3,$vr1	# 3 = 1/i
+    vshuf.b    $vr3,$vr18,$vr3,$vr1	# 3 = 1/i
     vori.b     $vr4,$vr10,0		# 4 : 1/j
     vxor.v     $vr3,$vr3,$vr2		# 3 = iak = 1/i + a/k
-    vshuf.b    $vr4,$vr0,$vr4,$vr0	# 4 = 1/j
+    vshuf.b    $vr4,$vr18,$vr4,$vr0	# 4 = 1/j
     vxor.v     $vr4,$vr4,$vr2		# 4 = jak = 1/j + a/k
     vori.b     $vr2,$vr10,0		# 2 : 1/iak
-    vshuf.b    $vr2,$vr3,$vr2,$vr3	# 2 = 1/iak
+    vshuf.b    $vr2,$vr18,$vr2,$vr3	# 2 = 1/iak
     vori.b     $vr3,$vr10,0		# 3 : 1/jak
     vxor.v     $vr2,$vr2,$vr0		# 2 = io
-    vshuf.b    $vr3,$vr4,$vr3,$vr4	# 3 = 1/jak
+    vshuf.b    $vr3,$vr18,$vr3,$vr4	# 3 = 1/jak
     vld        $vr0,$a5,0
     vxor.v     $vr3,$vr3,$vr1		# 3 = jo
     bnez       $t5,.Ldec_loop
 
     # middle of last round
     vld        $vr4,$a6,0x60		# 3 : sbou
-    vshuf.b    $vr4,$vr2,$vr4,$vr2	# 4 = sbou
+    vshuf.b    $vr4,$vr18,$vr4,$vr2	# 4 = sbou
     vxor.v     $vr4,$vr4,$vr0		# 4 = sb1u + k
     vld        $vr0,$a6,0x70		# 0 : sbot
     vld        $vr2,$a7,-0x160		# Lk_sr-.Lk_dsbd=-0x160
-    vshuf.b    $vr0,$vr3,$vr0,$vr3	# 0 = sb1t
+    vshuf.b    $vr0,$vr18,$vr0,$vr3	# 0 = sb1t
     vxor.v     $vr0,$vr0,$vr4		# 0 = A
-    vshuf.b    $vr0,$vr2,$vr0,$vr2
+    vshuf.b    $vr0,$vr18,$vr0,$vr2
     jr         $ra
 .cfi_endproc
 .size	_vpaes_decrypt_core,.-_vpaes_decrypt_core
@@ -292,7 +292,7 @@ _vpaes_schedule_core:
     # decrypting, output zeroth round key after shiftrows
     add.d     $t2,$a4,$a6
     vld       $vr1,$t2,0
-    vshuf.b   $vr3,$vr1,$vr3,$vr1
+    vshuf.b   $vr3,$vr18,$vr3,$vr1
     vst       $vr3,$a2,0
     xori      $a4,$a4,0x30
 
@@ -415,7 +415,7 @@ _vpaes_schedule_core:
      # encrypting
      add.d      $t0,$a4,$a6
      vld        $vr1,$t0,0
-     vshuf.b    $vr0,$vr1,$vr0,$vr1             # output permute
+     vshuf.b    $vr0,$vr18,$vr0,$vr1             # output permute
      la.local   $a7,Lk_opt                      # prepare to output transform
      addi.d     $a2,$a2,32
 
@@ -530,24 +530,24 @@ _vpaes_schedule_low_round:
     vsrli.w     $vr1,$vr1,0x4			# 1 = i
     vand.v      $vr0,$vr0,$vr9			# 0 = k
     vaddi.du    $vr2,$vr11,0x0			# 2 : a/k
-    vshuf.b     $vr2,$vr0,$vr2,$vr0		# 2 = a/k
+    vshuf.b     $vr2,$vr18,$vr2,$vr0		# 2 = a/k
     vxor.v      $vr0,$vr0,$vr1			# 0 = j
     vaddi.du    $vr3,$vr10,0x0			# 3 : 1/i
-    vshuf.b     $vr3,$vr1,$vr3,$vr1		# 3 = 1/i
+    vshuf.b     $vr3,$vr18,$vr3,$vr1		# 3 = 1/i
     vxor.v      $vr3,$vr3,$vr2			# 3 = iak = 1/i + a/k
     vaddi.du    $vr4,$vr10,0x0			# 4 : 1/j
-    vshuf.b     $vr4,$vr0,$vr4,$vr0		# 4 = 1/j
+    vshuf.b     $vr4,$vr18,$vr4,$vr0		# 4 = 1/j
     vxor.v      $vr4,$vr4,$vr2			# 4 = jak = 1/j + a/k
     vaddi.du    $vr2,$vr10,0x0			# 2 : 1/iak
-    vshuf.b     $vr2,$vr3,$vr2,$vr3		# 2 = 1/iak
+    vshuf.b     $vr2,$vr18,$vr2,$vr3		# 2 = 1/iak
     vxor.v      $vr2,$vr2,$vr0			# 2 = io
     vaddi.du    $vr3,$vr10,0x0			# 3 : 1/jak
-    vshuf.b     $vr3,$vr4,$vr3,$vr4		# 3 = 1/jak
+    vshuf.b     $vr3,$vr18,$vr3,$vr4		# 3 = 1/jak
     vxor.v      $vr3,$vr3,$vr1			# 3 = jo
     vaddi.du    $vr4,$vr13,0x0			# 4 : sbou
-    vshuf.b     $vr4,$vr2,$vr4,$vr2		# 4 = sbou
+    vshuf.b     $vr4,$vr18,$vr4,$vr2		# 4 = sbou
     vaddi.du    $vr0,$vr12,0x0			# 0 : sbot
-    vshuf.b     $vr0,$vr3,$vr0,$vr3		# 0 = sb1t
+    vshuf.b     $vr0,$vr18,$vr0,$vr3		# 0 = sb1t
     vxor.v      $vr0,$vr0,$vr4			# 0 = sbox output
 
     # add in smeared stuff
@@ -575,9 +575,9 @@ _vpaes_schedule_transform:
     vsrli.w    $vr1,$vr1,4
     vand.v     $vr0,$vr0,$vr9
     vld        $vr2,$a7,0		# lo
-    vshuf.b    $vr2,$vr0,$vr2,$vr0
+    vshuf.b    $vr2,$vr18,$vr2,$vr0
     vld        $vr0,$a7,16		# hi
-    vshuf.b    $vr0,$vr1,$vr0,$vr1
+    vshuf.b    $vr0,$vr18,$vr0,$vr1
     vxor.v     $vr0,$vr0,$vr2
     jr         $ra
 .cfi_endproc
@@ -620,11 +620,11 @@ _vpaes_schedule_mangle:
     la.local   $t0,Lk_s63
     vld        $vr16,$t0,0
     vxor.v     $vr4,$vr4,$vr16
-    vshuf.b    $vr4,$vr5,$vr4,$vr5
+    vshuf.b    $vr4,$vr18,$vr4,$vr5
     vori.b     $vr3,$vr4,0
-    vshuf.b    $vr4,$vr5,$vr4,$vr5
+    vshuf.b    $vr4,$vr18,$vr4,$vr5
     vxor.v     $vr3,$vr3,$vr4
-    vshuf.b    $vr4,$vr5,$vr4,$vr5
+    vshuf.b    $vr4,$vr18,$vr4,$vr5
     vxor.v     $vr3,$vr3,$vr4
 
     b          .Lschedule_mangle_both
@@ -638,33 +638,33 @@ _vpaes_schedule_mangle:
     vand.v     $vr4,$vr4,$vr9		# 4 = lo
 
     vld        $vr2,$a7,0
-    vshuf.b    $vr2,$vr4,$vr2,$vr4
+    vshuf.b    $vr2,$vr18,$vr2,$vr4
     vld        $vr3,$a7,0x10
-    vshuf.b    $vr3,$vr1,$vr3,$vr1
+    vshuf.b    $vr3,$vr18,$vr3,$vr1
     vxor.v     $vr3,$vr3,$vr2
-    vshuf.b    $vr3,$vr5,$vr3,$vr5
+    vshuf.b    $vr3,$vr18,$vr3,$vr5
 
     vld        $vr2,$a7,0x20
-    vshuf.b    $vr2,$vr4,$vr2,$vr4
+    vshuf.b    $vr2,$vr18,$vr2,$vr4
     vxor.v     $vr2,$vr2,$vr3
     vld        $vr3,$a7,0x30
-    vshuf.b    $vr3,$vr1,$vr3,$vr1
+    vshuf.b    $vr3,$vr18,$vr3,$vr1
     vxor.v     $vr3,$vr3,$vr2
-    vshuf.b    $vr3,$vr5,$vr3,$vr5
+    vshuf.b    $vr3,$vr18,$vr3,$vr5
 
     vld        $vr2,$a7,0x40
-    vshuf.b    $vr2,$vr4,$vr2,$vr4
+    vshuf.b    $vr2,$vr18,$vr2,$vr4
     vxor.v     $vr2,$vr2,$vr3
     vld        $vr3,$a7,0x50
-    vshuf.b    $vr3,$vr1,$vr3,$vr1
+    vshuf.b    $vr3,$vr18,$vr3,$vr1
     vxor.v     $vr3,$vr3,$vr2
-    vshuf.b    $vr3,$vr5,$vr3,$vr5
+    vshuf.b    $vr3,$vr18,$vr3,$vr5
 
     vld        $vr2,$a7,0x60
-    vshuf.b    $vr2,$vr4,$vr2,$vr4
+    vshuf.b    $vr2,$vr18,$vr2,$vr4
     vxor.v     $vr2,$vr2,$vr3
     vld        $vr3,$a7,0x70
-    vshuf.b    $vr3,$vr1,$vr3,$vr1
+    vshuf.b    $vr3,$vr18,$vr3,$vr1
     vxor.v     $vr3,$vr3,$vr2
 
     addi.d     $a2,$a2,-16
@@ -672,7 +672,7 @@ _vpaes_schedule_mangle:
 .Lschedule_mangle_both:
     add.d      $t2,$a4,$a6
     vld        $vr1,$t2,0
-    vshuf.b    $vr3,$vr1,$vr3,$vr1
+    vshuf.b    $vr3,$vr18,$vr3,$vr1
     addi.d     $a4,$a4,-16
     andi       $a4,$a4,0x30
     vst        $vr3,$a2,0
@@ -885,6 +885,7 @@ _vpaes_preheat:
     vld       $vr12,$a6,0x40		# Lk_sb1+16
     vld       $vr15,$a6,0x50		# Lk_sb2
     vld       $vr14,$a6,0x60		# Lk_sb2+16
+    vldi      $vr18,0                   # $vr18 in this program is equal to 0
     jirl      $zero,$ra,0
 .cfi_endproc
 .size	_vpaes_preheat,.-_vpaes_preheat
@@ -899,8 +900,8 @@ $code.=<<___;
 .section .rodata
 .align	6
 Lk_inv:	# inv, inva
-    .quad	0x0E05060F0D080180, 0x040703090A0B0C02
-    .quad	0x01040A060F0B0780, 0x030D0E0C02050809
+    .quad	0x0E05060F0D080110, 0x040703090A0B0C02
+    .quad	0x01040A060F0B0710, 0x030D0E0C02050809
 
 Lk_s0F:	# s0F
     .quad	0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F
