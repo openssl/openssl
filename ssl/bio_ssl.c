@@ -25,7 +25,11 @@ static int ssl_free(BIO *data);
 static long ssl_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 typedef struct bio_ssl_st {
     SSL *ssl;                   /* The ssl handle :-) */
-    /* re-negotiate every time the total number of bytes is this size */
+    /*
+     * Re-negotiate every time the total number of bytes is this size
+     * or when timeout expires.
+     * There is no proper support for TLS-1.3 or QUIC yet.
+     */
     int num_renegotiates;
     unsigned long renegotiate_count;
     size_t byte_count;
@@ -230,13 +234,14 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
     bs = BIO_get_data(b);
     next = BIO_next(b);
     ssl = bs->ssl;
-    if ((ssl == NULL
-         || (sc = SSL_CONNECTION_FROM_SSL(ssl)) == NULL)
-        && cmd != BIO_C_SET_SSL)
+    if (ssl == NULL && cmd != BIO_C_SET_SSL)
         return 0;
-    /* TODO(QUIC): The rbio/wbio might be from QUIC_CONNECTION instead */
     switch (cmd) {
     case BIO_CTRL_RESET:
+        /* TODO(QUIC FUTURE): Add support when SSL_clear() is supported */
+        if ((sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl)) == NULL)
+            return 0;
+
         SSL_shutdown(ssl);
 
         if (sc->handshake_func == ssl->method->ssl_connect)
@@ -313,20 +318,20 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         BIO_set_shutdown(b, (int)num);
         break;
     case BIO_CTRL_WPENDING:
-        ret = BIO_ctrl(sc->wbio, cmd, num, ptr);
+        ret = BIO_ctrl(SSL_get_wbio(ssl), cmd, num, ptr);
         break;
     case BIO_CTRL_PENDING:
         ret = SSL_pending(ssl);
         if (ret == 0)
-            ret = BIO_pending(sc->rbio);
+            ret = BIO_pending(SSL_get_rbio(ssl));
         break;
     case BIO_CTRL_FLUSH:
         BIO_clear_retry_flags(b);
-        ret = BIO_ctrl(sc->wbio, cmd, num, ptr);
+        ret = BIO_ctrl(SSL_get_wbio(ssl), cmd, num, ptr);
         BIO_copy_next_retry(b);
         break;
     case BIO_CTRL_PUSH:
-        if ((next != NULL) && (next != sc->rbio)) {
+        if ((next != NULL) && (next != SSL_get_rbio(ssl))) {
             /*
              * We are going to pass ownership of next to the SSL object...but
              * we don't own a reference to pass yet - so up ref
@@ -380,7 +385,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = (dbs->ssl != NULL);
         break;
     case BIO_C_GET_FD:
-        ret = BIO_ctrl(sc->rbio, cmd, num, ptr);
+        ret = BIO_ctrl(SSL_get_rbio(ssl), cmd, num, ptr);
         break;
     case BIO_CTRL_SET_CALLBACK:
         ret = 0; /* use callback ctrl */
@@ -394,7 +399,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = 0;
         break;
     default:
-        ret = BIO_ctrl(sc->rbio, cmd, num, ptr);
+        ret = BIO_ctrl(SSL_get_rbio(ssl), cmd, num, ptr);
         break;
     }
     return ret;
