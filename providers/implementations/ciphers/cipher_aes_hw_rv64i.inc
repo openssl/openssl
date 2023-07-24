@@ -71,7 +71,7 @@ static int cipher_hw_rv64i_zvkned_initkey(PROV_CIPHER_CTX *dat,
 
     dat->ks = ks;
 
-    /* Zvkned only supports 128 and 256 bit keys. */
+    /* Zvkned only supports 128 and 256 bit keys for key schedule generation. */
     if (keylen * 8 == 128 || keylen * 8 == 256) {
         if ((dat->mode == EVP_CIPH_ECB_MODE || dat->mode == EVP_CIPH_CBC_MODE)
             && !dat->enc) {
@@ -86,15 +86,13 @@ static int cipher_hw_rv64i_zvkned_initkey(PROV_CIPHER_CTX *dat,
     } else {
         if ((dat->mode == EVP_CIPH_ECB_MODE || dat->mode == EVP_CIPH_CBC_MODE)
             && !dat->enc) {
-            ret = AES_set_decrypt_key(key, keylen * 8, ks);
-            dat->block = (block128_f)AES_decrypt;
-            dat->stream.cbc = (dat->mode == EVP_CIPH_CBC_MODE)
-                              ? (cbc128_f)AES_cbc_encrypt : NULL;
+            ret = AES_set_encrypt_key(key, keylen * 8, ks);
+            dat->block = (block128_f) rv64i_zvkned_decrypt;
+            dat->stream.cbc = NULL;
         } else {
             ret = AES_set_encrypt_key(key, keylen * 8, ks);
-            dat->block = (block128_f)AES_encrypt;
-            dat->stream.cbc = (dat->mode == EVP_CIPH_CBC_MODE)
-                              ? (cbc128_f)AES_cbc_encrypt : NULL;
+            dat->block = (block128_f) rv64i_zvkned_encrypt;
+            dat->stream.cbc = NULL;
         }
     }
 

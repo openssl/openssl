@@ -41,12 +41,12 @@ static int rv64i_zvkned_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     AES_KEY *ks = &actx->ks.ks;
-    /* Zvkned only supports 128 and 256 bit keys. */
+    /* Zvkned only supports 128 and 256 bit keys for key schedule generation. */
     if (keylen * 8 == 128 || keylen * 8 == 256) {
         GCM_HW_SET_KEY_CTR_FN(ks, rv64i_zvkned_set_encrypt_key,
                               rv64i_zvkned_encrypt, NULL);
     } else {
-        GCM_HW_SET_KEY_CTR_FN(ks, AES_set_encrypt_key, AES_encrypt, NULL);
+        GCM_HW_SET_KEY_CTR_FN(ks, AES_set_encrypt_key, rv64i_zvkned_encrypt, NULL);
     }
     return 1;
 }

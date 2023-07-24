@@ -41,12 +41,12 @@ static int ccm_rv64i_zvkned_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
 {
     PROV_AES_CCM_CTX *actx = (PROV_AES_CCM_CTX *)ctx;
 
-    /* Zvkned only supports 128 and 256 bit keys. */
+    /* Zvkned only supports 128 and 256 bit keys for key schedule generation. */
     if (keylen * 8 == 128 || keylen * 8 == 256) {
         AES_HW_CCM_SET_KEY_FN(rv64i_zvkned_set_encrypt_key, rv64i_zvkned_encrypt,
                               NULL, NULL);
     } else {
-        AES_HW_CCM_SET_KEY_FN(AES_set_encrypt_key, AES_encrypt, NULL, NULL)
+        AES_HW_CCM_SET_KEY_FN(AES_set_encrypt_key, rv64i_zvkned_encrypt, NULL, NULL)
     }
     return 1;
 }

@@ -263,6 +263,8 @@ rv64i_zvkned_encrypt:
     beq $rounds, $T6, L_enc_256
     li $T6, 10
     beq $rounds, $T6, L_enc_128
+    li $T6, 12
+    beq $rounds, $T6, L_enc_192
 
     j L_fail_m2
 .size rv64i_zvkned_encrypt,.-rv64i_zvkned_encrypt
@@ -313,6 +315,58 @@ L_enc_128:
 
     ret
 .size L_enc_128,.-L_enc_128
+___
+
+$code .= <<___;
+.p2align 3
+L_enc_192:
+    @{[vsetivli__x0_4_e32_m1_tu_mu]}
+
+    @{[vle32_v $v10, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v11, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v12, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v13, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v14, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v15, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v16, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v17, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v18, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v19, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v20, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v21, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v22, ($KEYP)]}
+
+    @{[vle32_v $v1, ($INP)]}
+
+    @{[vaesz_vs $v1, $v10]}     # with round key w[ 0, 3]
+    @{[vaesem_vs $v1, $v11]}
+    @{[vaesem_vs $v1, $v12]}
+    @{[vaesem_vs $v1, $v13]}
+    @{[vaesem_vs $v1, $v14]}
+    @{[vaesem_vs $v1, $v15]}
+    @{[vaesem_vs $v1, $v16]}
+    @{[vaesem_vs $v1, $v17]}
+    @{[vaesem_vs $v1, $v18]}
+    @{[vaesem_vs $v1, $v19]}
+    @{[vaesem_vs $v1, $v20]}
+    @{[vaesem_vs $v1, $v21]}
+    @{[vaesef_vs $v1, $v22]}
+
+    @{[vse32_v $v1, ($OUTP)]}
+    ret
+.size L_enc_192,.-L_enc_192
 ___
 
 $code .= <<___;
@@ -399,6 +453,8 @@ rv64i_zvkned_decrypt:
     beq $rounds, $T6, L_dec_256
     li $T6, 10
     beq $rounds, $T6, L_dec_128
+    li $T6, 12
+    beq $rounds, $T6, L_dec_192
 
     j L_fail_m2
 .size rv64i_zvkned_decrypt,.-rv64i_zvkned_decrypt
@@ -449,6 +505,59 @@ L_dec_128:
 
     ret
 .size L_dec_128,.-L_dec_128
+___
+
+$code .= <<___;
+.p2align 3
+L_dec_192:
+    @{[vsetivli__x0_4_e32_m1_tu_mu]}
+
+    @{[vle32_v $v10, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v11, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v12, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v13, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v14, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v15, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v16, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v17, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v18, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v19, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v20, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v21, ($KEYP)]}
+    addi $KEYP, $KEYP, 16
+    @{[vle32_v $v22, ($KEYP)]}
+
+    @{[vle32_v $v1, ($INP)]}
+
+    @{[vaesz_vs $v1, $v22]}    # with round key w[48,51]
+    @{[vaesdm_vs $v1, $v21]}   # with round key w[44,47]
+    @{[vaesdm_vs $v1, $v20]}   # with round key w[40,43]
+    @{[vaesdm_vs $v1, $v19]}   # with round key w[36,39]
+    @{[vaesdm_vs $v1, $v18]}   # with round key w[32,35]
+    @{[vaesdm_vs $v1, $v17]}   # with round key w[28,31]
+    @{[vaesdm_vs $v1, $v16]}   # with round key w[24,27]
+    @{[vaesdm_vs $v1, $v15]}   # with round key w[20,23]
+    @{[vaesdm_vs $v1, $v14]}   # with round key w[16,19]
+    @{[vaesdm_vs $v1, $v13]}   # with round key w[12,15]
+    @{[vaesdm_vs $v1, $v12]}   # with round key w[ 8,11]
+    @{[vaesdm_vs $v1, $v11]}   # with round key w[ 4, 7]
+    @{[vaesdf_vs $v1, $v10]}   # with round key w[ 0, 3]
+
+    @{[vse32_v $v1, ($OUTP)]}
+
+    ret
+.size L_dec_192,.-L_dec_192
 ___
 
 $code .= <<___;
