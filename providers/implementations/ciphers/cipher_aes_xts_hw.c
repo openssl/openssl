@@ -190,8 +190,8 @@ static int cipher_hw_aes_xts_rv64i_zvkned_initkey(PROV_CIPHER_CTX *ctx,
                        rv64i_zvkned_encrypt, rv64i_zvkned_decrypt,
                        stream_enc, stream_dec);
     } else {
-        XTS_SET_KEY_FN(AES_set_encrypt_key, AES_set_decrypt_key,
-                       AES_encrypt, AES_decrypt,
+        XTS_SET_KEY_FN(AES_set_encrypt_key, AES_set_encrypt_key,
+                       rv64i_zvkned_encrypt, rv64i_zvkned_decrypt,
                        stream_enc, stream_dec);
     }
     return 1;
