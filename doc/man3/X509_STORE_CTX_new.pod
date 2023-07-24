@@ -242,7 +242,7 @@ was set previously. If another purpose was already set, the new purpose is
 not set but silently ignored.
 
 X509_STORE_CTX_set_purpose_ex() extends X509_STORE_CTX_set_purpose() by
-allowing to explicitly override already existing settings for the purpose
+explicitly overriding any existing purpose setting
 (and any trust implied by the purpose).
 
 X509_STORE_CTX_set_trust() sets the trust value for the target certificate
@@ -261,7 +261,7 @@ was set previously. If another trust was already set, either explicitly or
 implicitly by setting a purpose, the new trust is not set but silently ignored.
 
 X509_STORE_CTX_set_trust_ex() extends X509_STORE_CTX_set_trust() by
-allowing to explicitly override already existing settings for the trust.
+explicitly overriding any existing trust setting.
 
 It should not normally be necessary for end user applications to call
 X509_STORE_CTX_purpose_inherit() directly. Typically applications should call
