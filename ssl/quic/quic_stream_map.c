@@ -16,6 +16,8 @@
  */
 DEFINE_LHASH_OF_EX(QUIC_STREAM);
 
+static void shutdown_flush_done(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs);
+
 /* Circular list management. */
 static void list_insert_tail(QUIC_STREAM_LIST_NODE *l,
                              QUIC_STREAM_LIST_NODE *n)
@@ -327,6 +329,10 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
     if (s->send_state == QUIC_SSTREAM_STATE_DATA_SENT
         && ossl_quic_sstream_is_totally_acked(s->sstream))
         ossl_quic_stream_map_notify_totally_acked(qsm, s);
+    else if (s->shutdown_flush
+             && s->send_state == QUIC_SSTREAM_STATE_SEND
+             && ossl_quic_sstream_is_totally_acked(s->sstream))
+        shutdown_flush_done(qsm, s);
 
     if (!s->ready_for_gc) {
         s->ready_for_gc = qsm_ready_for_gc(qsm, s);
@@ -765,14 +771,19 @@ static int eligible_for_shutdown_flush(QUIC_STREAM *qs)
 {
     /*
      * We only care about servicing the send part of a stream (if any) during
-     * shutdown flush. A stream needs to have a final size and that final size
-     * needs to be a result of normal conclusion of a stream via
-     * SSL_stream_conclude (as opposed to due to reset). If the application did
-     * not conclude a stream before deleting it we assume it does not care about
-     * data being flushed during connection termination.
+     * shutdown flush. We make sure we flush a stream if it is either
+     * non-terminated or was terminated normally such as via
+     * SSL_stream_conclude. A stream which was terminated via a reset is not
+     * flushed, and we will have thrown away the send buffer in that case
+     * anyway.
      */
-    return ossl_quic_stream_has_send_buffer(qs)
-        && ossl_quic_stream_send_get_final_size(qs, NULL);
+    switch (qs->send_state) {
+    case QUIC_SSTREAM_STATE_SEND:
+    case QUIC_SSTREAM_STATE_DATA_SENT:
+        return !ossl_quic_sstream_is_totally_acked(qs->sstream);
+    default:
+        return 0;
+    }
 }
 
 static void begin_shutdown_flush_each(QUIC_STREAM *qs, void *arg)

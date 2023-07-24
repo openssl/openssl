@@ -1169,13 +1169,18 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
     int stream_flush = ((flags & SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH) == 0);
 
     if (!expect_quic(s, &ctx))
-        return 0;
+        return -1;
 
     if (ctx.is_stream)
         /* TODO(QUIC): Semantics currently undefined for QSSOs */
         return -1;
 
     quic_lock(ctx.qc);
+
+    if (ossl_quic_channel_is_terminated(ctx.qc->ch)) {
+        quic_unlock(ctx.qc);
+        return 1;
+    }
 
     /* Phase 1: Stream Flushing */
     if (stream_flush) {
