@@ -133,8 +133,13 @@ static int test_quic_write_read(int idx)
             goto end;
     }
 
-    if (!TEST_true(qtest_shutdown(qtserv, clientquic)))
-        goto end;
+    if (idx < 1)
+        /*
+         * Blocking SSL_shutdown cannot be tested here due to requirement to
+         * tick TSERVER during drainage.
+         */
+        if (!TEST_true(qtest_shutdown(qtserv, clientquic)))
+            goto end;
 
     ret = 1;
 

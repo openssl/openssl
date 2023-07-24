@@ -2969,8 +2969,9 @@ OSSL_TIME ossl_quic_tx_packetiser_get_deadline(OSSL_QUIC_TX_PACKETISER *txp)
         }
 
     /* When will CC let us send more? */
-    deadline = ossl_time_min(deadline,
-                             txp->args.cc_method->get_wakeup_deadline(txp->args.cc_data));
+    if (txp->args.cc_method->get_tx_allowance(txp->args.cc_data) == 0)
+        deadline = ossl_time_min(deadline,
+                                 txp->args.cc_method->get_wakeup_deadline(txp->args.cc_data));
 
     return deadline;
 }

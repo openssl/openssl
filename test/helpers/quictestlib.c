@@ -337,8 +337,17 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
 int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
 {
     /* Busy loop in non-blocking mode. It should be quick because its local */
-    while (SSL_shutdown(clientssl) != 1)
+    for (;;) {
+        int rc = SSL_shutdown(clientssl);
+
+        if (rc == 1)
+            break;
+
+        if (rc < 0)
+            return 0;
+
         ossl_quic_tserver_tick(qtserv);
+    }
 
     return 1;
 }
