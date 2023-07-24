@@ -1118,7 +1118,7 @@ end_of_options:
             if (!rotate_index(dbfile, "new", "old"))
                 goto end;
 
-            BIO_printf(bio_err, "Database Updated\n");
+            BIO_printf(bio_err, "Database updated\n");
         }
     }
 
@@ -1297,7 +1297,7 @@ end_of_options:
             if (!rotate_index(dbfile, "new", "old"))
                 goto end;
 
-            BIO_printf(bio_err, "Database Updated\n");
+            BIO_printf(bio_err, "Database updated\n");
         }
     }
     ret = 0;
