@@ -35,7 +35,13 @@
 
 /* Inclusive range for handshake-specific errors. */
 #  define QUIC_ERR_CRYPTO_ERR_BEGIN          0x0100
-#  define QUUC_ERR_CRYPTO_ERR_END            0x01FF
+#  define QUIC_ERR_CRYPTO_ERR_END            0x01FF
+
+#  define QUIC_ERR_CRYPTO_ERR(X) \
+    (QUIC_ERR_CRYPTO_ERR_BEGIN + (X))
+
+#  define QUIC_ERR_CRYPTO_MISSING_EXT \
+    QUIC_ERR_CRYPTO_ERR(TLS13_AD_MISSING_EXTENSION)
 
 # endif
 
