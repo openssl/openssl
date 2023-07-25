@@ -176,6 +176,12 @@ static int ch_init(QUIC_CHANNEL *ch)
                              get_time, ch))
         goto err;
 
+    for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space)
+        if (!ossl_quic_rxfc_init_standalone(&ch->crypto_rxfc[pn_space],
+                                            INIT_CRYPTO_BUF_LEN,
+                                            get_time, ch))
+            goto err;
+
     if (!ossl_quic_rxfc_init_standalone(&ch->max_streams_bidi_rxfc,
                                         DEFAULT_INIT_CONN_MAX_STREAMS,
                                         get_time, ch))
@@ -855,9 +861,16 @@ static int ch_on_crypto_release_record(size_t bytes_read, void *arg)
 {
     QUIC_CHANNEL *ch = arg;
     QUIC_RSTREAM *rstream;
+    OSSL_RTT_INFO rtt_info;
+    uint32_t rx_pn_space = ossl_quic_enc_level_to_pn_space(ch->rx_enc_level);
 
-    rstream = ch->crypto_recv[ossl_quic_enc_level_to_pn_space(ch->rx_enc_level)];
+    rstream = ch->crypto_recv[rx_pn_space];
     if (rstream == NULL)
+        return 0;
+
+    ossl_statm_get_rtt_info(ossl_quic_channel_get_statm(ch), &rtt_info);
+    if (!ossl_quic_rxfc_on_retire(&ch->crypto_rxfc[rx_pn_space], bytes_read,
+                                  rtt_info.smoothed_rtt))
         return 0;
 
     return ossl_quic_rstream_release_record(rstream, bytes_read);

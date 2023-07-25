@@ -257,6 +257,7 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CHANNEL *ch,
 {
     OSSL_QUIC_FRAME_CRYPTO f;
     QUIC_RSTREAM *rstream;
+    QUIC_RXFC *rxfc;
 
     *datalen = 0;
 
@@ -276,6 +277,24 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CHANNEL *ch,
          * shouldn't be here.
          */
         return 0;
+
+    rxfc = &ch->crypto_rxfc[ackm_data->pkt_space];
+
+    if (!ossl_quic_rxfc_on_rx_stream_frame(rxfc, f.offset + f.len,
+                                           /*is_fin=*/0)) {
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_INTERNAL_ERROR,
+                                               OSSL_QUIC_FRAME_TYPE_CRYPTO,
+                                               "internal error (crypto RXFC)");
+        return 0;
+    }
+
+    if (ossl_quic_rxfc_get_error(rxfc, 0) != QUIC_ERR_NO_ERROR) {
+        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_CRYPTO_BUFFER_EXCEEDED,
+                                               OSSL_QUIC_FRAME_TYPE_CRYPTO,
+                                               "exceeded maximum crypto buffer");
+        return 0;
+    }
 
     if (!ossl_quic_rstream_queue_data(rstream, parent_pkt,
                                       f.offset, f.data, f.len, 0))
