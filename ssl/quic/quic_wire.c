@@ -618,6 +618,10 @@ int ossl_quic_wire_decode_frame_crypto(PACKET *pkt,
             || f->len > SIZE_MAX /* sizeof(uint64_t) > sizeof(size_t)? */)
         return 0;
 
+    if (f->offset + f->len > (((uint64_t)1) << 62) - 1)
+        /* RFC 9000 s. 19.6 */
+        return 0;
+
     if (nodata) {
         f->data = NULL;
     } else {
