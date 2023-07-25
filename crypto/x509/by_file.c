@@ -115,9 +115,9 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
                     break;
                 } else {
                     ERR_clear_last_mark();
-                    if (count == 0)
+                    if (count == 0) {
                         ERR_raise(ERR_LIB_X509, X509_R_NO_CERTIFICATE_FOUND);
-                    else {
+                    } else {
                         ERR_raise(ERR_LIB_X509, ERR_R_PEM_LIB);
                         count = 0;
                     }
@@ -175,9 +175,9 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
                     ERR_clear_error();
                     break;
                 } else {
-                    if (count == 0)
+                    if (count == 0) {
                         ERR_raise(ERR_LIB_X509, X509_R_NO_CRL_FOUND);
-                    else {
+                    } else {
                         ERR_raise(ERR_LIB_X509, ERR_R_PEM_LIB);
                         count = 0;
                     }
