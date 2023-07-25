@@ -74,7 +74,7 @@ struct quic_channel_st {
      * MAX_STREAMS signalling.
      */
     QUIC_TXFC                       conn_txfc;
-    QUIC_RXFC                       conn_rxfc;
+    QUIC_RXFC                       conn_rxfc, crypto_rxfc[QUIC_PN_SPACE_NUM];
     QUIC_RXFC                       max_streams_bidi_rxfc, max_streams_uni_rxfc;
     QUIC_STREAM_MAP                 qsm;
     OSSL_STATM                      statm;
