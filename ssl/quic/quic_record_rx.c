@@ -158,6 +158,9 @@ struct ossl_qrx_st {
     /* Initial key phase. For debugging use only; always 0 in real use. */
     unsigned char                   init_key_phase_bit;
 
+    /* Are we allowed to process 1-RTT packets yet? */
+    unsigned char                   allow_1rtt;
+
     /* Message callback related arguments */
     ossl_msg_cb msg_callback;
     void *msg_callback_arg;
@@ -883,6 +886,13 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     switch (ossl_qrl_enc_level_set_have_el(&qrx->el_set, enc_level)) {
         case 1:
             /* We have keys. */
+            if (enc_level == QUIC_ENC_LEVEL_1RTT && !qrx->allow_1rtt)
+                /*
+                 * But we cannot process 1-RTT packets until the handshake is
+                 * completed (RFC 9000 s. 5.7).
+                 */
+                goto cannot_decrypt;
+
             break;
         case 0:
             /* No keys yet. */
@@ -1312,6 +1322,15 @@ uint64_t ossl_qrx_get_max_forged_pkt_count(OSSL_QRX *qrx,
 
     return el == NULL ? UINT64_MAX
         : ossl_qrl_get_suite_max_forged_pkt(el->suite_id);
+}
+
+void ossl_qrx_allow_1rtt_processing(OSSL_QRX *qrx)
+{
+    if (qrx->allow_1rtt)
+        return;
+
+    qrx->allow_1rtt = 1;
+    qrx_requeue_deferred(qrx);
 }
 
 void ossl_qrx_set_msg_callback(OSSL_QRX *qrx, ossl_msg_cb msg_callback,
