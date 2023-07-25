@@ -951,6 +951,9 @@ static int ch_on_handshake_complete(void *arg)
     OPENSSL_free(ch->local_transport_params);
     ch->local_transport_params = NULL;
 
+    /* Tell the QRX it can now process 1-RTT packets. */
+    ossl_qrx_allow_1rtt_processing(ch->qrx);
+
     /* Tell TXP the handshake is complete. */
     ossl_quic_tx_packetiser_notify_handshake_complete(ch->txp);
 

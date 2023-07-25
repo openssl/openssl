@@ -1744,6 +1744,7 @@ static int rx_state_ensure(struct rx_state *s)
         && !TEST_ptr(s->qrx = ossl_qrx_new(&s->args)))
         return 0;
 
+    ossl_qrx_allow_1rtt_processing(s->qrx);
     return 1;
 }
 
