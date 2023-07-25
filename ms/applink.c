@@ -34,9 +34,12 @@
 #define APPLINK_MAX     22      /* always same as last macro */
 
 #ifndef APPMACROS_ONLY
+
+#ifndef APPLINK_NOiNCLUDES
 # include <stdio.h>
 # include <io.h>
 # include <fcntl.h>
+#endif
 
 # ifdef __BORLANDC__
    /* _lseek in <io.h> is a function-like macro so we can't take its address */
