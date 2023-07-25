@@ -114,7 +114,7 @@ static int test_cfq(void)
     for (i = 0; i < OSSL_NELEM(ref_buf); ++i) {
         if (!TEST_ptr(item = ossl_quic_cfq_add_frame(cfq, ref_priority[i],
                                                      ref_pn_space[i],
-                                                     ref_frame_type[i],
+                                                     ref_frame_type[i], 0,
                                                      ref_buf + i,
                                                      1,
                                                      free_cb,
