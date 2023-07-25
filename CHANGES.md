@@ -24,7 +24,24 @@ OpenSSL 3.1
 
 ### Changes between 3.1.1 and 3.1.2 [xx XXX xxxx]
 
- * Fix DH_check() excessive time with over sized modulus
+ * Fix excessive time spent checking DH q parameter value.
+
+   The function DH_check() performs various checks on DH parameters. After
+   fixing CVE-2023-3446 it was discovered that a large q parameter value can
+   also trigger an overly long computation during some of these checks.
+   A correct q value, if present, cannot be larger than the modulus p
+   parameter, thus it is unnecessary to perform these checks if q is larger
+   than p.
+
+   If DH_check() is called with such q parameter value,
+   DH_CHECK_INVALID_Q_VALUE return flag is set and the computationally
+   intensive checks are skipped.
+
+   ([CVE-2023-3817])
+
+   *Tomáš Mráz*
+
+ * Fix DH_check() excessive time with over sized modulus.
 
    The function DH_check() performs various checks on DH parameters. One of
    those checks confirms that the modulus ("p" parameter) is not too large.
@@ -61,7 +78,7 @@ OpenSSL 3.1
    has to skip calls to `EVP_DecryptUpdate()` for empty associated data
    entries.
 
-   *Tomas Mraz*
+   *Tomáš Mráz*
 
  * When building with the `enable-fips` option and using the resulting
    FIPS provider, TLS 1.2 will, by default, mandate the use of an extended
@@ -19815,6 +19832,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2023-3817]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-3817
 [CVE-2023-3446]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-3446
 [CVE-2023-2975]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2975
 [RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
