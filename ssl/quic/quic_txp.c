@@ -824,6 +824,7 @@ out:
     return pkts_done > 0 ? TX_PACKETISER_RES_SENT_PKT : res;
 }
 
+
 static const struct archetype_data archetypes[QUIC_ENC_LEVEL_NUM][TX_PACKETISER_ARCHETYPE_NUM] = {
     /* EL 0(INITIAL) */
     {
@@ -1023,7 +1024,7 @@ static const struct archetype_data archetypes[QUIC_ENC_LEVEL_NUM][TX_PACKETISER_
             /*allow_crypto                    =*/ 1,
             /*allow_handshake_done            =*/ 1,
             /*allow_path_challenge            =*/ 0,
-            /*allow_path_response             =*/ 0,
+            /*allow_path_response             =*/ 1,
             /*allow_new_conn_id               =*/ 1,
             /*allow_retire_conn_id            =*/ 1,
             /*allow_stream_rel                =*/ 1,
@@ -1043,7 +1044,7 @@ static const struct archetype_data archetypes[QUIC_ENC_LEVEL_NUM][TX_PACKETISER_
             /*allow_crypto                    =*/ 1,
             /*allow_handshake_done            =*/ 1,
             /*allow_path_challenge            =*/ 0,
-            /*allow_path_response             =*/ 0,
+            /*allow_path_response             =*/ 1,
             /*allow_new_conn_id               =*/ 1,
             /*allow_retire_conn_id            =*/ 1,
             /*allow_stream_rel                =*/ 1,
@@ -1337,6 +1338,10 @@ static int txp_should_try_staging(OSSL_QUIC_TX_PACKETISER *txp,
                 break;
             case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
                 if (a.allow_new_token)
+                    return 1;
+                break;
+            case OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE:
+                if (a.allow_path_response)
                     return 1;
                 break;
             default:
