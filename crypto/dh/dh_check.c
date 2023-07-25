@@ -143,7 +143,7 @@ int DH_check(const DH *dh, int *ret)
 #ifdef FIPS_MODULE
     return DH_check_params(dh, ret);
 #else
-    int ok = 0, r;
+    int ok = 0, r, q_good = 0;
     BN_CTX *ctx = NULL;
     BIGNUM *t1 = NULL, *t2 = NULL;
     int nid = DH_get_nid((DH *)dh);
@@ -171,6 +171,13 @@ int DH_check(const DH *dh, int *ret)
         goto err;
 
     if (dh->params.q != NULL) {
+        if (BN_ucmp(dh->params.p, dh->params.q) > 0)
+            q_good = 1;
+        else
+            *ret |= DH_CHECK_INVALID_Q_VALUE;
+    }
+
+    if (q_good) {
         if (BN_cmp(dh->params.g, BN_value_one()) <= 0)
             *ret |= DH_NOT_SUITABLE_GENERATOR;
         else if (BN_cmp(dh->params.g, dh->params.p) >= 0)
