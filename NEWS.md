@@ -39,6 +39,7 @@ OpenSSL 3.1
 
 ### Major changes between OpenSSL 3.1.1 and OpenSSL 3.1.2 [under development]
 
+  * Fix excessive time spent checking DH q parameter value ([CVE-2023-3817])
   * Fix DH_check() excessive time with over sized modulus ([CVE-2023-3446])
   * Do not ignore empty associated data entries with AES-SIV ([CVE-2023-2975])
   * When building with the `enable-fips` option and using the resulting
@@ -1481,6 +1482,7 @@ OpenSSL 0.9.x
 
 <!-- Links -->
 
+[CVE-2023-3817]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-3817
 [CVE-2023-3446]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-3446
 [CVE-2023-2975]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2975
 [CVE-2023-2650]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2650
