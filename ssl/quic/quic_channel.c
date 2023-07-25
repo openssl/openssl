@@ -941,7 +941,7 @@ static int ch_on_handshake_complete(void *arg)
          * Was not a valid QUIC handshake if we did not get valid transport
          * params.
          */
-        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
+        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_CRYPTO_MISSING_EXT,
                                                OSSL_QUIC_FRAME_TYPE_CRYPTO,
                                                "no transport parameters received");
         return 0;
