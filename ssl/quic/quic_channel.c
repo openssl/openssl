@@ -2832,7 +2832,7 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
      * Note: RFC 9000 s. 19.15 says:
      *   "An endpoint that receives a NEW_CONNECTION_ID frame with a sequence
      *    number smaller than the Retire Prior To field of a previously received
-     *    NEW_CONNECTION_ID frame MUST send a correspoonding
+     *    NEW_CONNECTION_ID frame MUST send a corresponding
      *    RETIRE_CONNECTION_ID frame that retires the newly received connection
      *    ID, unless it has already done so for that sequence number."
      *
