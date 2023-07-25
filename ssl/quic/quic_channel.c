@@ -176,14 +176,14 @@ static int ch_init(QUIC_CHANNEL *ch)
                              get_time, ch))
         goto err;
 
-    if (!ossl_quic_rxfc_init_for_stream_count(&ch->max_streams_bidi_rxfc,
-                                              DEFAULT_INIT_CONN_MAX_STREAMS,
-                                              get_time, ch))
+    if (!ossl_quic_rxfc_init_standalone(&ch->max_streams_bidi_rxfc,
+                                        DEFAULT_INIT_CONN_MAX_STREAMS,
+                                        get_time, ch))
         goto err;
 
-    if (!ossl_quic_rxfc_init_for_stream_count(&ch->max_streams_uni_rxfc,
-                                             DEFAULT_INIT_CONN_MAX_STREAMS,
-                                             get_time, ch))
+    if (!ossl_quic_rxfc_init_standalone(&ch->max_streams_uni_rxfc,
+                                        DEFAULT_INIT_CONN_MAX_STREAMS,
+                                        get_time, ch))
         goto err;
 
     if (!ossl_statm_init(&ch->statm))

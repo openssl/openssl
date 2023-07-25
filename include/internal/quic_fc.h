@@ -137,7 +137,7 @@ struct quic_rxfc_st {
     OSSL_TIME       (*now)(void *arg);
     void            *now_arg;
     QUIC_RXFC       *parent;
-    unsigned char   error_code, has_cwm_changed, is_fin, stream_count_mode;
+    unsigned char   error_code, has_cwm_changed, is_fin, standalone;
 };
 
 /*
@@ -155,12 +155,14 @@ int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
                         void *now_arg);
 
 /*
- * Initialises an RX flow controller for stream count enforcement.
+ * Initialises an RX flow controller which is used by itself and not under a
+ * connection-level RX flow controller. This can be used for stream count
+ * enforcement as well as CRYPTO buffer enforcement.
  */
-int ossl_quic_rxfc_init_for_stream_count(QUIC_RXFC *rxfc,
-                                         uint64_t initial_window_size,
-                                         OSSL_TIME (*now)(void *arg),
-                                         void *now_arg);
+int ossl_quic_rxfc_init_standalone(QUIC_RXFC *rxfc,
+                                   uint64_t initial_window_size,
+                                   OSSL_TIME (*now)(void *arg),
+                                   void *now_arg);
 
 /*
  * Gets the parent (i.e., connection-level) RXFC. Returns NULL if called on a
