@@ -412,6 +412,7 @@ struct txp_pkt {
     QUIC_STREAM         *stream_head;
     QUIC_PKT_HDR        phdr;
     struct txp_pkt_geom geom;
+    int                 force_pad;
 };
 
 static QUIC_SSTREAM *get_sstream_by_id(uint64_t stream_id, uint32_t pn_space,
@@ -707,6 +708,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
     struct txp_pkt pkt[QUIC_ENC_LEVEL_NUM];
     size_t pkts_done = 0;
     uint64_t cc_limit = txp->args.cc_method->get_tx_allowance(txp->args.cc_data);
+    int need_padding = 0;
 
     for (enc_level = QUIC_ENC_LEVEL_INITIAL;
          enc_level < QUIC_ENC_LEVEL_NUM;
@@ -749,6 +751,12 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
         if (rc != TXP_ERR_SUCCESS)
             goto out;
 
+        if (pkt[enc_level].force_pad)
+            /*
+             * txp_generate_for_el emitted a frame which forces packet padding.
+             */
+            need_padding = 1;
+
         pkt[enc_level].geom.hwm = running_total
             + pkt[enc_level].h.bytes_appended
             + pkt[enc_level].geom.pkt_overhead;
@@ -756,27 +764,35 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
 
     /* 3. Packet Adjustment */
     if (pkt[QUIC_ENC_LEVEL_INITIAL].h_valid
-        && pkt[QUIC_ENC_LEVEL_INITIAL].h.bytes_appended > 0) {
+        && pkt[QUIC_ENC_LEVEL_INITIAL].h.bytes_appended > 0)
         /*
          * We have an Initial packet in this datagram, so we need to make sure
          * the total size of the datagram is adequate.
          */
+        need_padding = 1;
+
+    if (need_padding) {
         size_t total_dgram_size = 0;
         const size_t min_dpl = QUIC_MIN_INITIAL_DGRAM_LEN;
+        uint32_t first_el = QUIC_ENC_LEVEL_NUM;
 
         for (enc_level = QUIC_ENC_LEVEL_INITIAL;
              enc_level < QUIC_ENC_LEVEL_NUM;
              ++enc_level)
             if (pkt[enc_level].h_valid && pkt[enc_level].h.bytes_appended > 0) {
+                if (first_el == QUIC_ENC_LEVEL_NUM)
+                    first_el = enc_level;
+
                 txp_pkt_postgen_update_pkt_overhead(&pkt[enc_level], txp);
                 total_dgram_size += pkt[enc_level].geom.pkt_overhead
                     + pkt[enc_level].h.bytes_appended;
             }
 
-        if (total_dgram_size < min_dpl) {
+        if (first_el != QUIC_ENC_LEVEL_NUM
+            && total_dgram_size < min_dpl) {
             size_t deficit = min_dpl - total_dgram_size;
 
-            if (!txp_pkt_append_padding(&pkt[QUIC_ENC_LEVEL_INITIAL], txp, deficit))
+            if (!txp_pkt_append_padding(&pkt[first_el], txp, deficit))
                 goto out;
         }
     }
@@ -1509,6 +1525,7 @@ static int txp_pkt_init(struct txp_pkt *pkt, OSSL_QUIC_TX_PACKETISER *txp,
     pkt->h_valid            = 1;
     pkt->tpkt               = NULL;
     pkt->stream_head        = NULL;
+    pkt->force_pad          = 0;
     return 1;
 }
 
@@ -2618,6 +2635,17 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp,
                                                &can_be_non_inflight))
                         done_pre_token = 1;
 
+                break;
+            case OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE:
+                if (!a.allow_path_response)
+                    continue;
+
+                /*
+                 * RFC 9000 s. 8.2.2: An endpoint MUST expand datagrams that
+                 * contain a PATH_RESPONSE frame to at least the smallest
+                 * allowed maximum datagram size of 1200 bytes.
+                 */
+                pkt->force_pad = 1;
                 break;
             default:
                 if (!a.allow_cfq_other)
