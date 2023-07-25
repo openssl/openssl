@@ -6,6 +6,8 @@ IF[{- !$disabled{asm} -}]
   $CHACHAASM_x86_64=chacha-x86_64.s
 
   $CHACHAASM_ia64=chacha-ia64.s
+  # HPUX 32-bit chacha20 assembly core dumps
+  # $CHACHAASM_ia64_32=chacha-ia64.s
 
   $CHACHAASM_s390x=chacha-s390x.S
 

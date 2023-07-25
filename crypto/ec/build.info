@@ -10,6 +10,7 @@ IF[{- !$disabled{asm} -}]
     $ECDEF_x86_64=$ECDEF_x86_64 X25519_ASM
   ENDIF
   $ECASM_ia64=
+  $ECASM_ia64_32=
 
   $ECASM_sparcv9=ecp_nistz256.c ecp_nistz256-sparcv9.S
   $ECDEF_sparcv9=ECP_NISTZ256_ASM

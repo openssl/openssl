@@ -10,7 +10,9 @@ IF[{- !$disabled{asm} -}]
   $SHA1DEF_x86_64=SHA1_ASM SHA256_ASM SHA512_ASM
 
   $SHA1ASM_ia64=sha1-ia64.s sha256-ia64.s sha512-ia64.s
+  $SHA1ASM_ia64_32=sha1-ia64.s sha256-ia64.s sha512-ia64.s
   $SHA1DEF_ia64=SHA1_ASM SHA256_ASM SHA512_ASM
+  $SHA1DEF_ia64_32=SHA1_ASM SHA256_ASM SHA512_ASM
 
   $SHA1ASM_sparcv9=sha1-sparcv9.S sha256-sparcv9.S sha512-sparcv9.S
   $SHA1DEF_sparcv9=SHA1_ASM SHA256_ASM SHA512_ASM

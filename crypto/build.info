@@ -17,6 +17,7 @@ IF[{- !$disabled{uplink} -}]
   $UPLINKSRC_x86=$UPLINKSRC_common uplink-x86.S
   $UPLINKSRC_x86_64=$UPLINKSRC_common uplink-x86_64.s
   $UPLINKSRC_ia64=$UPLINKSRC_common uplink-ia64.s
+  $UPLINKSRC_ia64_32=$UPLINKSRC_common uplink-ia64.s
 
   IF[$UPLINKSRC_{- $target{uplink_arch} -}]
     $UPLINKSRC=$UPLINKSRC_{- $target{uplink_arch} -}
@@ -32,6 +33,7 @@ IF[{- !$disabled{asm} && $config{processor} ne '386' -}]
   $CPUIDASM_x86_64=x86_64cpuid.s
 
   $CPUIDASM_ia64=ia64cpuid.s
+  $CPUIDASM_ia64_32=ia64cpuid.s
 
   $CPUIDASM_sparcv9=sparcv9cap.c sparccpuid.S
 

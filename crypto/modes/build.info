@@ -10,7 +10,9 @@ IF[{- !$disabled{asm} -}]
   # ghash-ia64.s doesn't work on VMS
   IF[{- $config{target} !~ /^vms-/ -}]
     $MODESASM_ia64=ghash-ia64.s
+    $MODESASM_ia64_32=ghash-ia64.s
     $MODESDEF_ia64=GHASH_ASM
+    $MODESDEF_ia64_32=GHASH_ASM
   ENDIF
 
   $MODESASM_sparcv9=ghash-sparcv9.S

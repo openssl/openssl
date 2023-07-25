@@ -13,7 +13,9 @@ IF[{- !$disabled{asm} -}]
   $AESDEF_x86_64=AES_ASM VPAES_ASM BSAES_ASM
 
   $AESASM_ia64=aes_core.c aes_cbc.c aes-ia64.s
+  $AESASM_ia64_32=aes_core.c aes_cbc.c aes-ia64.s
   $AESDEF_ia64=AES_ASM
+  $AESDEF_ia64_32=AES_ASM
 
   $AESASM_sparcv9=\
         aes_core.c aes_cbc.c aes-sparcv9.S aest4-sparcv9.S aesfx-sparcv9.S

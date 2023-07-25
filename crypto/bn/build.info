@@ -35,6 +35,7 @@ IF[{- !$disabled{asm} -}]
 
   IF[{- $config{target} !~ /^VC/ -}]
     $BNASM_ia64=bn-ia64.s ia64-mont.s
+    $BNASM_ia64_32=bn-ia64.s ia64-mont.s
   ELSE
     $BNASM_ia64=bn_asm.c ia64-mont.s
   ENDIF
