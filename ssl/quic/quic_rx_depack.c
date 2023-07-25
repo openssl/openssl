@@ -875,11 +875,19 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
     return 1;
 }
 
+static void free_path_response(unsigned char *buf, size_t buf_len, void *arg)
+{
+    OPENSSL_free(buf);
+}
+
 static int depack_do_frame_path_challenge(PACKET *pkt,
                                           QUIC_CHANNEL *ch,
                                           OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t frame_data = 0;
+    unsigned char *encoded = NULL;
+    size_t encoded_len;
+    WPACKET wpkt;
 
     if (!ossl_quic_wire_decode_frame_path_challenge(pkt, &frame_data)) {
         ossl_quic_channel_raise_protocol_error(ch,
@@ -889,9 +897,41 @@ static int depack_do_frame_path_challenge(PACKET *pkt,
         return 0;
     }
 
-    /* TODO(QUIC): ADD CODE to send |frame_data| to the ch manager */
+    /*
+     * RFC 9000 s. 8.2.2: On receiving a PATH_CHALLENGE frame, an endpoint MUST
+     * respond by echoing the data contained in the PATH_CHALLENGE frame in a
+     * PATH_RESPONSE frame.
+     *
+     * TODO(QUIC): We should try to avoid allocation here in the future.
+     */
+    encoded_len = sizeof(uint64_t) + 1;
+    if ((encoded = OPENSSL_malloc(encoded_len)) == NULL)
+        goto err;
+
+    if (!WPACKET_init_static_len(&wpkt, encoded, encoded_len, 0))
+        goto err;
+
+    if (!ossl_quic_wire_encode_frame_path_response(&wpkt, frame_data)) {
+        WPACKET_cleanup(&wpkt);
+        goto err;
+    }
+
+    WPACKET_finish(&wpkt);
+
+    if (!ossl_quic_cfq_add_frame(ch->cfq, 0, QUIC_PN_SPACE_APP,
+                                 OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE,
+                                 encoded, encoded_len,
+                                 free_path_response, NULL))
+        goto err;
 
     return 1;
+
+err:
+    OPENSSL_free(encoded);
+    ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR,
+                                           OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE,
+                                           "internal error");
+    return 0;
 }
 
 static int depack_do_frame_path_response(PACKET *pkt,
@@ -1224,6 +1264,7 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
             }
             if (!depack_do_frame_path_challenge(pkt, ch, ackm_data))
                 return 0;
+
             break;
         case OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE:
             /* PATH_RESPONSE frames are valid in 1RTT packets */

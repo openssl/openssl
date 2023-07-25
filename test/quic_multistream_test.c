@@ -79,6 +79,7 @@ struct helper {
     int (*qtf_packet_plain_cb)(struct helper *h, QUIC_PKT_HDR *hdr,
                                unsigned char *buf, size_t buf_len);
     uint64_t inject_word0, inject_word1;
+    uint64_t scratch0, scratch1;
 };
 
 struct helper_local {
@@ -2909,6 +2910,122 @@ static const struct script_op script_40[] = {
     OP_END
 };
 
+/* 41. Fault injection - PATH_CHALLENGE yields PATH_RESPONSE */
+static const uint64_t path_challenge = UINT64_C(0xbdeb9451169c83aa);
+
+static int script_41_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[16];
+    size_t written;
+
+    if (h->inject_word0 == 0)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE))
+        || !TEST_true(WPACKET_put_bytes_u64(&wpkt, path_challenge)))
+        goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !TEST_size_t_eq(written, 9))
+        goto err;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        goto err;
+
+    --h->inject_word0;
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+static void script_41_trace(int write_p, int version, int content_type,
+                            const void *buf, size_t len, SSL *ssl, void *arg)
+{
+    uint64_t frame_type, frame_data;
+    int was_minimal;
+    struct helper *h = arg;
+    PACKET pkt;
+
+    if (version != OSSL_QUIC1_VERSION
+        || content_type != SSL3_RT_QUIC_FRAME_FULL
+        || len < 1)
+        return;
+
+    if (!TEST_true(PACKET_buf_init(&pkt, buf, len))) {
+        ++h->scratch1;
+        return;
+    }
+
+    if (!TEST_true(ossl_quic_wire_peek_frame_header(&pkt, &frame_type,
+                                                    &was_minimal))) {
+        ++h->scratch1;
+        return;
+    }
+
+    if (frame_type != OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE)
+        return;
+
+   if (!TEST_true(ossl_quic_wire_decode_frame_path_response(&pkt, &frame_data))
+       || !TEST_uint64_t_eq(frame_data, path_challenge)) {
+       ++h->scratch1;
+        return;
+   }
+
+   ++h->scratch0;
+}
+
+static int script_41_setup(struct helper *h, const struct script_op *op)
+{
+    ossl_quic_tserver_set_msg_callback(h->s, script_41_trace, h);
+    return 1;
+}
+
+static int script_41_check(struct helper *h, const struct script_op *op)
+{
+    /* At least one valid challenge/response echo? */
+    if (!TEST_uint64_t_gt(h->scratch0, 0))
+        return 0;
+
+    /* No failed tests? */
+    if (!TEST_uint64_t_eq(h->scratch1, 0))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_41[] = {
+    OP_S_SET_INJECT_PLAIN   (script_41_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_CHECK                (script_41_setup, 0)
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, 0)
+
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (DEFAULT, "orange", 6)
+
+    OP_C_WRITE              (DEFAULT, "strawberry", 10)
+    OP_S_READ_EXPECT        (a, "strawberry", 10)
+
+    OP_CHECK                (script_41_check, 0)
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -2950,6 +3067,7 @@ static const struct script_op *const scripts[] = {
     script_38,
     script_39,
     script_40,
+    script_41,
 };
 
 static int test_script(int idx)

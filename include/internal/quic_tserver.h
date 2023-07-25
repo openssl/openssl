@@ -187,6 +187,14 @@ int ossl_quic_tserver_shutdown(QUIC_TSERVER *srv);
 /* Force generation of an ACK-eliciting packet. */
 int ossl_quic_tserver_ping(QUIC_TSERVER *srv);
 
+/* Set tracing callback on channel. */
+void ossl_quic_tserver_set_msg_callback(QUIC_TSERVER *srv,
+                                        void (*f)(int write_p, int version,
+                                                  int content_type,
+                                                  const void *buf, size_t len,
+                                                  SSL *ssl, void *arg),
+                                        void *arg);
+
 # endif
 
 #endif

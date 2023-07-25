@@ -511,3 +511,14 @@ int ossl_quic_tserver_ping(QUIC_TSERVER *srv)
     ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(srv->ch), 0);
     return 1;
 }
+
+void ossl_quic_tserver_set_msg_callback(QUIC_TSERVER *srv,
+                                        void (*f)(int write_p, int version,
+                                                  int content_type,
+                                                  const void *buf, size_t len,
+                                                  SSL *ssl, void *arg),
+                                        void *arg)
+{
+    ossl_quic_channel_set_msg_callback(srv->ch, f, NULL);
+    ossl_quic_channel_set_msg_callback_arg(srv->ch, arg);
+}
