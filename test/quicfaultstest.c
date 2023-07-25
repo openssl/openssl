@@ -200,7 +200,8 @@ static int test_no_transport_params(void)
     if (!TEST_false(qtest_create_quic_connection(qtserv, cssl)))
         goto err;
 
-    if (!TEST_true(qtest_check_server_protocol_err(qtserv)))
+    if (!TEST_true(qtest_check_server_transport_err(qtserv,
+                                                    QUIC_ERR_CRYPTO_MISSING_EXT)))
         goto err;
 
     testresult = 1;
