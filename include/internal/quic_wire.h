@@ -209,7 +209,7 @@ typedef struct ossl_quic_frame_new_conn_id_st {
     uint64_t              seq_num;
     uint64_t              retire_prior_to;
     QUIC_CONN_ID          conn_id;
-    unsigned char         stateless_reset_token[16];
+    unsigned char         stateless_reset_token[QUIC_STATELESS_RESET_TOKEN_LEN];
 } OSSL_QUIC_FRAME_NEW_CONN_ID;
 
 /* QUIC Frame: CONNECTION_CLOSE */
