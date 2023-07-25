@@ -92,14 +92,11 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
     X509 *x = NULL;
 
     in = BIO_new(BIO_s_file());
-    if (in == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
-        return 0;
-    }
 
-    if (BIO_read_filename(in, file) <= 0) {
-        ERR_raise(ERR_LIB_X509, ERR_R_SYS_LIB);
-        goto err;
+    if ((in == NULL) || (BIO_read_filename(in, file) <= 0)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_BIO_LIB);
+        BIO_free(in);
+        return 0;
     }
 
     x = X509_new_ex(libctx, propq);
@@ -120,32 +117,31 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
                     ERR_clear_last_mark();
                     if (count == 0)
                         ERR_raise(ERR_LIB_X509, X509_R_NO_CERTIFICATE_FOUND);
+                    else {
+                        ERR_raise(ERR_LIB_X509, ERR_R_PEM_LIB);
+                        count = 0;
+                    }
                     goto err;
                 }
             }
             ERR_clear_last_mark();
             if (!X509_STORE_add_cert(ctx->store_ctx, x)) {
-                if (count == 0)
-                    ERR_raise(ERR_LIB_X509, X509_R_NO_CERTIFICATE_FOUND);
+                count = 0;
                 goto err;
             }
             count++;
         }
     } else if (type == X509_FILETYPE_ASN1) {
         if (d2i_X509_bio(in, &x) == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
-            goto err;
-        }
-        count = X509_STORE_add_cert(ctx->store_ctx, x);
-        if (count == 0) {
             ERR_raise(ERR_LIB_X509, X509_R_NO_CERTIFICATE_FOUND);
             goto err;
         }
+        count = X509_STORE_add_cert(ctx->store_ctx, x);
     } else {
         ERR_raise(ERR_LIB_X509, X509_R_BAD_X509_FILETYPE);
         goto err;
     }
-err:
+ err:
     X509_free(x);
     BIO_free(in);
     return count;
@@ -165,8 +161,9 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
     in = BIO_new(BIO_s_file());
 
     if ((in == NULL) || (BIO_read_filename(in, file) <= 0)) {
-        ERR_raise(ERR_LIB_X509, ERR_R_SYS_LIB);
-        goto err;
+        ERR_raise(ERR_LIB_X509, ERR_R_BIO_LIB);
+        BIO_free(in);
+        return 0;
     }
 
     if (type == X509_FILETYPE_PEM) {
@@ -178,13 +175,17 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
                     ERR_clear_error();
                     break;
                 } else {
-                    ERR_raise(ERR_LIB_X509, ERR_R_PEM_LIB);
+                    if (count == 0)
+                        ERR_raise(ERR_LIB_X509, X509_R_NO_CRL_FOUND);
+                    else {
+                        ERR_raise(ERR_LIB_X509, ERR_R_PEM_LIB);
+                        count = 0;
+                    }
                     goto err;
                 }
             }
             if (!X509_STORE_add_crl(ctx->store_ctx, x)) {
-				if (count == 0)
-					ERR_raise(ERR_LIB_X509, X509_R_NO_CRL_FOUND);
+                count = 0;
                 goto err;
             }
             count++;
@@ -192,14 +193,10 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
     } else if (type == X509_FILETYPE_ASN1) {
         x = d2i_X509_CRL_bio(in, NULL);
         if (x == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
-            goto err;
-        }
-        count = X509_STORE_add_crl(ctx->store_ctx, x);
-        if (count == 0) {
             ERR_raise(ERR_LIB_X509, X509_R_NO_CRL_FOUND);
             goto err;
         }
+        count = X509_STORE_add_crl(ctx->store_ctx, x);
     } else {
         ERR_raise(ERR_LIB_X509, X509_R_BAD_X509_FILETYPE);
         goto err;
@@ -222,7 +219,7 @@ int X509_load_cert_crl_file_ex(X509_LOOKUP *ctx, const char *file, int type,
         return X509_load_cert_file_ex(ctx, file, type, libctx, propq);
     in = BIO_new_file(file, "r");
     if (in == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_X509, ERR_R_BIO_LIB);
         return 0;
     }
     inf = PEM_X509_INFO_read_bio_ex(in, NULL, NULL, "", libctx, propq);
@@ -234,13 +231,17 @@ int X509_load_cert_crl_file_ex(X509_LOOKUP *ctx, const char *file, int type,
     for (i = 0; i < sk_X509_INFO_num(inf); i++) {
         itmp = sk_X509_INFO_value(inf, i);
         if (itmp->x509) {
-            if (!X509_STORE_add_cert(ctx->store_ctx, itmp->x509))
+            if (!X509_STORE_add_cert(ctx->store_ctx, itmp->x509)) {
+                count = 0;
                 goto err;
+            }
             count++;
         }
         if (itmp->crl) {
-            if (!X509_STORE_add_crl(ctx->store_ctx, itmp->crl))
+            if (!X509_STORE_add_crl(ctx->store_ctx, itmp->crl)) {
+                count = 0;
                 goto err;
+            }
             count++;
         }
     }
