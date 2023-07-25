@@ -2713,7 +2713,7 @@ static int ch_enqueue_retire_conn_id(QUIC_CHANNEL *ch, uint64_t seq_num)
         goto err;
 
     if (ossl_quic_cfq_add_frame(ch->cfq, 1, QUIC_PN_SPACE_APP,
-                                OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID,
+                                OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID, 0,
                                 (unsigned char *)buf_mem->data, l,
                                 free_frame_data, NULL) == NULL)
         goto err;

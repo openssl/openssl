@@ -920,6 +920,7 @@ static int depack_do_frame_path_challenge(PACKET *pkt,
 
     if (!ossl_quic_cfq_add_frame(ch->cfq, 0, QUIC_PN_SPACE_APP,
                                  OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE,
+                                 QUIC_CFQ_ITEM_FLAG_UNRELIABLE,
                                  encoded, encoded_len,
                                  free_path_response, NULL))
         goto err;

@@ -162,7 +162,7 @@ static int test_generic(INFO *info, int kind)
     cfq_freed = 0;
     if (!TEST_ptr(cfq_item = ossl_quic_cfq_add_frame(info->cfq, 10,
                                                      pn_space,
-                                                     OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
+                                                     OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID, 0,
                                                      placeholder_data,
                                                      sizeof(placeholder_data),
                                                      cfq_free_cb_, NULL))
