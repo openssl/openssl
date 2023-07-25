@@ -35,6 +35,12 @@
 
 #ifndef APPMACROS_ONLY
 
+/*
+ * Normally, do not define APPLINK_NOiNCLUDES.  Define it if you are using
+ * symbol preprocessing and do not want the preprocessing to affect the
+ * following included header files.  You will need to put these
+ * include lines somewhere in your file that is including applink.c.
+ */
 #ifndef APPLINK_NOiNCLUDES
 # include <stdio.h>
 # include <io.h>
