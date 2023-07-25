@@ -1599,6 +1599,8 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
     OSSL_TIME now, deadline;
     QUIC_CHANNEL *ch = arg;
     int channel_only = (flags & QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY) != 0;
+    uint64_t error_code;
+    const char *error_msg;
 
     /*
      * When we tick the QUIC connection, we do everything we need to do
@@ -1651,8 +1653,13 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
              * generate new outgoing data.
              */
             ch->have_new_rx_secret = 0;
-            if (!channel_only)
+            if (!channel_only) {
                 ossl_quic_tls_tick(ch->qtls);
+
+                if (ossl_quic_tls_get_error(ch->qtls, &error_code, &error_msg))
+                    ossl_quic_channel_raise_protocol_error(ch, error_code, 0,
+                                                           error_msg);
+            }
 
             /*
              * If the handshake layer gave us a new secret, we need to do RX

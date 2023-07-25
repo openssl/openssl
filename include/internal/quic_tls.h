@@ -94,4 +94,9 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls);
 int ossl_quic_tls_set_transport_params(QUIC_TLS *qtls,
                                        const unsigned char *transport_params,
                                        size_t transport_params_len);
+
+int ossl_quic_tls_get_error(QUIC_TLS *qtls,
+                            uint64_t *error_code,
+                            const char **error_msg);
+
 #endif

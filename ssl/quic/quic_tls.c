@@ -10,6 +10,7 @@
 #include "internal/recordmethod.h"
 #include "internal/quic_tls.h"
 #include "../ssl_local.h"
+#include "internal/quic_error.h"
 
 #define QUIC_TLS_FATAL(rl, ad, err) \
     do { \
@@ -27,6 +28,18 @@ struct quic_tls_st {
      */
     const unsigned char *local_transport_params;
     size_t local_transport_params_len;
+
+    /*
+     * QUIC error code (usually in the TLS Alert-mapped CRYPTO_ERR range). Valid
+     * only if inerror is 1.
+     */
+    uint64_t error_code;
+
+    /*
+     * Error message with static storage duration. Valid only if inerr is 1.
+     * Should be suitable for encapsulation in a CONNECTION_CLOSE frame.
+     */
+    const char *error_msg;
 
     /* Whether our SSL object for TLS has been configured for use in QUIC */
     unsigned int configured : 1;
@@ -628,6 +641,20 @@ void ossl_quic_tls_free(QUIC_TLS *qtls)
     OPENSSL_free(qtls);
 }
 
+static int raise_error(QUIC_TLS *qtls, uint64_t error_code,
+                       const char *error_msg)
+{
+    qtls->error_code = error_code;
+    qtls->error_msg  = error_msg;
+    qtls->inerror    = 1;
+    return 0;
+}
+
+static int raise_internal_error(QUIC_TLS *qtls)
+{
+    return raise_error(qtls, QUIC_ERR_INTERNAL_ERROR, "internal error");
+}
+
 int ossl_quic_tls_tick(QUIC_TLS *qtls)
 {
     int ret;
@@ -656,20 +683,15 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
 
         /* ALPN is a requirement for QUIC and must be set */
         if (qtls->args.is_server) {
-            if (sctx->ext.alpn_select_cb == NULL) {
-                qtls->inerror = 1;
-                return 0;
-            }
+            if (sctx->ext.alpn_select_cb == NULL)
+                return raise_internal_error(qtls);
         } else {
-            if (sc->ext.alpn == NULL || sc->ext.alpn_len == 0) {
-                qtls->inerror = 1;
-                return 0;
-            }
+            if (sc->ext.alpn == NULL || sc->ext.alpn_len == 0)
+                return raise_internal_error(qtls);
         }
-        if (!SSL_set_min_proto_version(qtls->args.s, TLS1_3_VERSION)) {
-            qtls->inerror = 1;
-            return 0;
-        }
+        if (!SSL_set_min_proto_version(qtls->args.s, TLS1_3_VERSION))
+            return raise_internal_error(qtls);
+
         SSL_clear_options(qtls->args.s, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
         ossl_ssl_set_custom_record_layer(sc, &quic_tls_record_method, qtls);
 
@@ -682,16 +704,12 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
                                             | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
                                             add_transport_params_cb,
                                             free_transport_params_cb, qtls,
-                                            parse_transport_params_cb, qtls)) {
-            qtls->inerror = 1;
-            return 0;
-        }
+                                            parse_transport_params_cb, qtls))
+            return raise_internal_error(qtls);
 
         nullbio = BIO_new(BIO_s_null());
-        if (nullbio == NULL) {
-            qtls->inerror = 1;
-            return 0;
-        }
+        if (nullbio == NULL)
+            return raise_internal_error(qtls);
 
         /*
          * Our custom record layer doesn't use the BIO - but libssl generally
@@ -721,18 +739,17 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
         case SSL_ERROR_WANT_WRITE:
             return 1;
         default:
-            qtls->inerror = 1;
-            return 0;
+            return raise_internal_error(qtls);
         }
     }
 
     if (!qtls->complete) {
         /* Validate that we have ALPN */
         SSL_get0_alpn_selected(qtls->args.s, &alpn, &alpnlen);
-        if (alpn == NULL || alpnlen == 0) {
-            qtls->inerror = 1;
-            return 0;
-        }
+        if (alpn == NULL || alpnlen == 0)
+            return raise_error(qtls, QUIC_ERR_CRYPTO_NO_APP_PROTO,
+                               "no application protocol negotiated");
+
         qtls->complete = 1;
         return qtls->args.handshake_complete_cb(qtls->args.handshake_complete_cb_arg);
     }
@@ -747,4 +764,16 @@ int ossl_quic_tls_set_transport_params(QUIC_TLS *qtls,
     qtls->local_transport_params       = transport_params;
     qtls->local_transport_params_len   = transport_params_len;
     return 1;
+}
+
+int ossl_quic_tls_get_error(QUIC_TLS *qtls,
+                            uint64_t *error_code,
+                            const char **error_msg)
+{
+    if (qtls->inerror) {
+        *error_code = qtls->error_code;
+        *error_msg = qtls->error_msg;
+    }
+
+    return qtls->inerror;
 }
