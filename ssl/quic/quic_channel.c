@@ -2200,6 +2200,13 @@ static int ch_tx(QUIC_CHANNEL *ch)
             ch->have_sent_ack_eliciting_since_rx = 1;
         }
 
+        if (!ch->is_server && status.sent_handshake)
+            /*
+             * RFC 9001 s. 4.9.1: A client MUST discard Initial keys when it
+             * first sends a Handshake packet.
+             */
+            ch_discard_el(ch, QUIC_ENC_LEVEL_INITIAL);
+
         if (ch->rxku_pending_confirm_done)
             ch->rxku_pending_confirm = 0;
 

@@ -94,6 +94,7 @@ void ossl_quic_tx_packetiser_record_received_closing_bytes(
 
 typedef struct quic_txp_status_st {
     int sent_ack_eliciting; /* Was an ACK-eliciting packet sent? */
+    int sent_handshake; /* Was a Handshake packet sent? */
 } QUIC_TXP_STATUS;
 
 int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,

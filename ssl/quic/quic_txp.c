@@ -823,6 +823,10 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
         ++pkts_done;
     }
 
+    status->sent_handshake
+        = (pkt[QUIC_ENC_LEVEL_HANDSHAKE].h_valid
+           && pkt[QUIC_ENC_LEVEL_HANDSHAKE].h.bytes_appended > 0);
+
     /* Flush & Cleanup */
     res = TX_PACKETISER_RES_NO_PKT;
 out:
