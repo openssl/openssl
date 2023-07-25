@@ -142,6 +142,11 @@ struct ossl_qrx_st {
      */
     uint64_t                    forged_pkt_count;
 
+    /*
+     * The PN the current key epoch started at, inclusive.
+     */
+    uint64_t                    cur_epoch_start_pn;
+
     /* Validation callback. */
     ossl_qrx_late_validation_cb    *validation_cb;
     void                           *validation_cb_arg;
@@ -572,9 +577,12 @@ static int qrx_validate_hdr_late(OSSL_QRX *qrx, RXE *rxe)
 static size_t qrx_get_cipher_ctx_idx(OSSL_QRX *qrx, OSSL_QRL_ENC_LEVEL *el,
                                      uint32_t enc_level,
                                      unsigned char key_phase_bit,
-                                     uint64_t *rx_key_epoch)
+                                     uint64_t *rx_key_epoch,
+                                     int *is_old_key)
 {
     size_t idx;
+
+    *is_old_key = 0;
 
     if (enc_level != QUIC_ENC_LEVEL_1RTT) {
         *rx_key_epoch = 0;
@@ -640,8 +648,8 @@ static size_t qrx_get_cipher_ctx_idx(OSSL_QRX *qrx, OSSL_QRL_ENC_LEVEL *el,
          *
          * As above, must be timing-channel safe.
          */
-        *rx_key_epoch
-            = el->key_epoch - ((el->key_epoch & 1) ^ (uint64_t)key_phase_bit);
+        *is_old_key = (el->key_epoch & 1) ^ (uint64_t)key_phase_bit;
+        *rx_key_epoch = el->key_epoch - (uint64_t)*is_old_key;
         break;
 
     case QRL_EL_STATE_PROV_COOLDOWN:
@@ -674,7 +682,7 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
                                 unsigned char key_phase_bit,
                                 uint64_t *rx_key_epoch)
 {
-    int l = 0, l2 = 0;
+    int l = 0, l2 = 0, is_old_key;
     unsigned char nonce[EVP_MAX_IV_LENGTH];
     size_t nonce_len, i, cctx_idx;
     OSSL_QRL_ENC_LEVEL *el = ossl_qrl_enc_level_set_get(&qrx->el_set,
@@ -699,8 +707,21 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
         return 0;
 
     cctx_idx = qrx_get_cipher_ctx_idx(qrx, el, enc_level, key_phase_bit,
-                                      rx_key_epoch);
+                                      rx_key_epoch, &is_old_key);
     if (!ossl_assert(cctx_idx < OSSL_NELEM(el->cctx)))
+        return 0;
+
+    if (is_old_key && pn >= qrx->cur_epoch_start_pn)
+        /*
+         * RFC 9001 s. 5.5: Once an endpoint successfully receives a packet with
+         * a given PN, it MUST discard all packets in the same PN space with
+         * higher PNs if they cannot be successfully unprotected with the same
+         * key, or -- if there is a key update -- a subsequent packet protection
+         * key.
+         *
+         * In other words, once a PN x triggers a KU, it is invalid for us to
+         * receive a packet with a newer PN y (y > x) using the old keys.
+         */
         return 0;
 
     cctx = el->cctx[cctx_idx];
@@ -754,6 +775,8 @@ static void qrx_key_update_initiated(OSSL_QRX *qrx, QUIC_PN pn)
     if (!ossl_qrl_enc_level_set_key_update(&qrx->el_set, QUIC_ENC_LEVEL_1RTT))
         /* We are already in RXKU, so we don't call the callback again. */
         return;
+
+    qrx->cur_epoch_start_pn = pn;
 
     if (qrx->key_update_cb != NULL)
         qrx->key_update_cb(pn, qrx->key_update_cb_arg);
