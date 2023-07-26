@@ -3,12 +3,12 @@
 =head1 NAME
 
 ossl-guide-tls-introduction
-- OpenSSL Guide: An introduction to TLS in OpenSSL
+- OpenSSL Guide: An introduction to SSL/TLS in OpenSSL
 
 =head1 INTRODUCTION
 
-This page will provide an introduction to some basic TLS concepts and background
-and how it is used within OpenSSL. It assumes that you have a basic
+This page will provide an introduction to some basic SSL/TLS concepts and
+background and how it is used within OpenSSL. It assumes that you have a basic
 understanding of TCP/IP and sockets.
 
 =head1 WHAT IS TLS?
