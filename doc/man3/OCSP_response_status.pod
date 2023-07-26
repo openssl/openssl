@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-OCSP_response_status, OCSP_response_get1_basic, OCSP_response_create,
-OCSP_RESPONSE_free, OCSP_RESPID_set_by_name,
+OCSP_response_status, OCSP_RESPONSE_check_status, OCSP_response_get1_basic,
+OCSP_response_create, OCSP_RESPONSE_free, OCSP_RESPID_set_by_name,
 OCSP_RESPID_set_by_key_ex, OCSP_RESPID_set_by_key, OCSP_RESPID_match_ex,
 OCSP_RESPID_match, OCSP_basic_sign, OCSP_basic_sign_ctx
 - OCSP response functions
@@ -13,6 +13,7 @@ OCSP_RESPID_match, OCSP_basic_sign, OCSP_basic_sign_ctx
  #include <openssl/ocsp.h>
 
  int OCSP_response_status(OCSP_RESPONSE *resp);
+ int OCSP_RESPONSE_check_status(OCSP_RESPONSE *resp);
  OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp);
  OCSP_RESPONSE *OCSP_response_create(int status, OCSP_BASICRESP *bs);
  void OCSP_RESPONSE_free(OCSP_RESPONSE *resp);
@@ -38,6 +39,10 @@ one of the values: I<OCSP_RESPONSE_STATUS_SUCCESSFUL>,
 I<OCSP_RESPONSE_STATUS_MALFORMEDREQUEST>,
 I<OCSP_RESPONSE_STATUS_INTERNALERROR>, I<OCSP_RESPONSE_STATUS_TRYLATER>
 I<OCSP_RESPONSE_STATUS_SIGREQUIRED>, or I<OCSP_RESPONSE_STATUS_UNAUTHORIZED>.
+
+OCSP_RESPONSE_check_status() check status of the OCSP response I<resp>. It
+returns a negative value on error; 0 if the response is not acceptable
+(e.g. contains revoked certificate) or a positive value if it is acceptable.
 
 OCSP_response_get1_basic() decodes and returns the I<OCSP_BASICRESP> structure
 contained in I<resp>.
@@ -81,7 +86,11 @@ uses the parameters contained in digest context I<ctx>.
 
 =head1 RETURN VALUES
 
-OCSP_RESPONSE_status() returns a status value.
+OCSP_response_status() returns a status value.
+
+OCSP_RESPONSE_check_status() returns a result of check - negative value on
+error; 0 if the response is not acceptable; positive value if response is
+acceptable.
 
 OCSP_response_get1_basic() returns an I<OCSP_BASICRESP> structure pointer or
 I<NULL> if an error occurred.
