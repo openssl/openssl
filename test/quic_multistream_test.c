@@ -3106,6 +3106,57 @@ static const struct script_op script_43[] = {
     OP_END
 };
 
+/* 44. Fault injection - PADDING */
+static int script_44_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[16];
+    size_t written;
+
+    if (h->inject_word0 == 0)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(ossl_quic_wire_encode_padding(&wpkt, 1)))
+        goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        goto err;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+static const struct script_op script_44[] = {
+    OP_S_SET_INJECT_PLAIN   (script_44_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, 0)
+
+    OP_S_WRITE              (a, "Strawberry", 10)
+    OP_C_READ_EXPECT        (DEFAULT, "Strawberry", 10)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -3150,6 +3201,7 @@ static const struct script_op *const scripts[] = {
     script_41,
     script_42,
     script_43,
+    script_44,
 };
 
 static int test_script(int idx)
