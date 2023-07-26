@@ -149,6 +149,21 @@ typedef struct quic_terminate_cause_st {
      */
     uint64_t                        frame_type;
 
+    /*
+     * Optional reason string. When calling ossl_quic_channel_local_close, if a
+     * reason string pointer is passed, it is copied and stored inside
+     * QUIC_CHANNEL for the remainder of the lifetime of the channel object.
+     * Thus the string pointed to by this value, if non-NULL, is valid for the
+     * lifetime of the QUIC_CHANNEL object.
+     */
+    const char                      *reason;
+
+    /*
+     * Length of reason in bytes. The reason is supposed to contain a UTF-8
+     * string but may be arbitrary data if the reason came from the network.
+     */
+    size_t                          reason_len;
+
     /* Is this error code in the transport (0) or application (1) space? */
     unsigned int                    app : 1;
 
@@ -196,7 +211,8 @@ int ossl_quic_channel_set_mutator(QUIC_CHANNEL *ch,
 int ossl_quic_channel_start(QUIC_CHANNEL *ch);
 
 /* Start a locally initiated connection shutdown. */
-void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code);
+void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code,
+                                   const char *app_reason);
 
 /*
  * Called when the handshake is confirmed.

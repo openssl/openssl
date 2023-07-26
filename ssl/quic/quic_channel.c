@@ -371,6 +371,7 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     ossl_qrx_free(ch->qrx);
     ossl_quic_demux_free(ch->demux);
     OPENSSL_free(ch->local_transport_params);
+    OPENSSL_free((char *)ch->terminate_cause.reason);
     OSSL_ERR_STATE_free(ch->err_state);
 }
 
@@ -2438,7 +2439,8 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 }
 
 /* Start a locally initiated connection shutdown. */
-void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code)
+void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code,
+                                   const char *app_reason)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
 
@@ -2447,6 +2449,8 @@ void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code)
 
     tcause.app          = 1;
     tcause.error_code   = app_error_code;
+    tcause.reason       = app_reason;
+    tcause.reason_len   = app_reason != NULL ? strlen(app_reason) : 0;
     ch_start_terminating(ch, &tcause, 0);
 }
 
@@ -2622,6 +2626,37 @@ int ossl_quic_channel_on_handshake_confirmed(QUIC_CHANNEL *ch)
  *      closing state and send a packet containing a CONNECTION_CLOSE
  *      frame in response to any UDP datagram that is received.
  */
+static void copy_tcause(QUIC_TERMINATE_CAUSE *dst,
+                        const QUIC_TERMINATE_CAUSE *src)
+{
+    dst->error_code = src->error_code;
+    dst->frame_type = src->frame_type;
+    dst->app        = src->app;
+    dst->remote     = src->remote;
+
+    dst->reason     = NULL;
+    dst->reason_len = 0;
+
+    if (src->reason != NULL && src->reason_len > 0) {
+        size_t l = src->reason_len;
+        char *r;
+
+        if (l >= SIZE_MAX)
+            --l;
+
+        /*
+         * If this fails, dst->reason becomes NULL and we simply do not use a
+         * reason. This ensures termination is infallible.
+         */
+        dst->reason = r = OPENSSL_memdup(src->reason, l + 1);
+        if (r == NULL)
+            return;
+
+        r[l]  = '\0';
+        dst->reason_len = l;
+    }
+}
+
 static void ch_start_terminating(QUIC_CHANNEL *ch,
                                  const QUIC_TERMINATE_CAUSE *tcause,
                                  int force_immediate)
@@ -2629,12 +2664,12 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
     switch (ch->state) {
     default:
     case QUIC_CHANNEL_STATE_IDLE:
-        ch->terminate_cause = *tcause;
+        copy_tcause(&ch->terminate_cause, tcause);
         ch_on_terminating_timeout(ch);
         break;
 
     case QUIC_CHANNEL_STATE_ACTIVE:
-        ch->terminate_cause = *tcause;
+        copy_tcause(&ch->terminate_cause, tcause);
 
         if (!force_immediate) {
             ch->state = tcause->remote ? QUIC_CHANNEL_STATE_TERMINATING_DRAINING
@@ -2656,6 +2691,8 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
                 f.error_code = ch->terminate_cause.error_code;
                 f.frame_type = ch->terminate_cause.frame_type;
                 f.is_app     = ch->terminate_cause.app;
+                f.reason     = (char *)ch->terminate_cause.reason;
+                f.reason_len = ch->terminate_cause.reason_len;
                 ossl_quic_tx_packetiser_schedule_conn_close(ch->txp, &f);
                 /*
                  * RFC 9000 s. 10.2.2 Draining Connection State:
@@ -2714,7 +2751,8 @@ void ossl_quic_channel_on_remote_conn_close(QUIC_CHANNEL *ch,
     tcause.app        = f->is_app;
     tcause.error_code = f->error_code;
     tcause.frame_type = f->frame_type;
-
+    tcause.reason     = f->reason;
+    tcause.reason_len = f->reason_len;
     ch_start_terminating(ch, &tcause, 0);
 }
 
@@ -2967,6 +3005,7 @@ void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
 
     tcause.error_code = error_code;
     tcause.frame_type = frame_type;
+    tcause.reason     = reason;
 
     ch_start_terminating(ch, &tcause, 0);
 }

@@ -2339,10 +2339,10 @@ __owur int SSL_get_stream_read_error_code(SSL *ssl, uint64_t *app_error_code);
 __owur int SSL_get_stream_write_error_code(SSL *ssl, uint64_t *app_error_code);
 
 typedef struct ssl_conn_close_info_st {
-    uint64_t error_code;
-    char     *reason;
-    size_t    reason_len;
-    int       is_local, is_transport;
+    uint64_t    error_code;
+    const char  *reason;
+    size_t      reason_len;
+    int         is_local, is_transport;
 } SSL_CONN_CLOSE_INFO;
 
 __owur int SSL_get_conn_close_info(SSL *ssl,
