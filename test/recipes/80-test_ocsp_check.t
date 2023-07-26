@@ -15,6 +15,9 @@ use OpenSSL::Test::Utils;
 
 setup("test_ocsp_check");
 
+plan skip_all => "OCSP is not supported by this OpenSSL build"
+    if disabled("ocsp");
+
 plan tests => 2;
 
 my $shlib_wrap = bldtop_file("util", "shlib_wrap.sh");
