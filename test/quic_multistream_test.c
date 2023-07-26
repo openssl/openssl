@@ -3416,6 +3416,93 @@ static const struct script_op script_51[] = {
     OP_END
 };
 
+/* 52. Fault injection - ignore BLOCKED frames with bogus values */
+static int script_52_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    int ok = 0;
+    unsigned char frame_buf[64];
+    size_t written;
+    WPACKET wpkt;
+    uint64_t type = h->inject_word1;
+
+    if (h->inject_word0 == 0)
+        return 1;
+
+    --h->inject_word0;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, type)))
+        goto err;
+
+    if (type == OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED)
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, C_BIDI_ID(0))))
+            goto err;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, 0xFFFFFF)))
+        goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        goto err;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+static const struct script_op script_52[] = {
+    OP_S_SET_INJECT_PLAIN   (script_52_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED)
+
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (DEFAULT, "orange", 6)
+
+    OP_C_WRITE              (DEFAULT, "Strawberry", 10)
+    OP_S_READ_EXPECT        (a, "Strawberry", 10)
+
+    OP_SET_INJECT_WORD      (1, OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED)
+
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (DEFAULT, "orange", 6)
+
+    OP_C_WRITE              (DEFAULT, "Strawberry", 10)
+    OP_S_READ_EXPECT        (a, "Strawberry", 10)
+
+    OP_SET_INJECT_WORD      (1, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI)
+
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (DEFAULT, "orange", 6)
+
+    OP_C_WRITE              (DEFAULT, "Strawberry", 10)
+    OP_S_READ_EXPECT        (a, "Strawberry", 10)
+
+    OP_SET_INJECT_WORD      (1, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI)
+
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (DEFAULT, "orange", 6)
+
+    OP_C_WRITE              (DEFAULT, "Strawberry", 10)
+    OP_S_READ_EXPECT        (a, "Strawberry", 10)
+
+    OP_END
+};
 
 static const struct script_op *const scripts[] = {
     script_1,
@@ -3469,6 +3556,7 @@ static const struct script_op *const scripts[] = {
     script_49,
     script_50,
     script_51,
+    script_52,
 };
 
 static int test_script(int idx)
