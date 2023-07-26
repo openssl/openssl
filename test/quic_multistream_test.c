@@ -2845,19 +2845,59 @@ static int script_39_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     WPACKET wpkt;
     unsigned char frame_buf[64];
     size_t i, written;
+    uint64_t seq_no = 0, retire_prior_to = 0;
+    QUIC_CONN_ID new_cid = {0};
+    QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(h->s);
 
-    if (h->inject_word1 == 0)
+    switch (h->inject_word1) {
+    case 0:
         return 1;
+    case 1:
+        new_cid.id_len  = 0;
+        break;
+    case 2:
+        new_cid.id_len  = 21;
+        break;
+    case 3:
+        new_cid.id_len  = 1;
+        new_cid.id[0]   = 0x55;
+
+        seq_no          = 0;
+        retire_prior_to = 1;
+        break;
+    case 4:
+        /* Cheese it by using our actual CID so we don't break connectivity. */
+        ossl_quic_channel_get_diag_local_cid(ch, &new_cid);
+
+        seq_no          = 2;
+        retire_prior_to = 2;
+        break;
+    case 5:
+        /*
+         * Use a bogus CID which will need to be ignored if connectivity is to
+         * be continued.
+         */
+        new_cid.id_len  = 8;
+        new_cid.id[0]   = 0x55;
+
+        seq_no          = 1;
+        retire_prior_to = 1;
+        break;
+    }
 
     if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
                                            sizeof(frame_buf), 0)))
         return 0;
 
     if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)) /* seq no */
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)) /* retire prior to */
-        || !TEST_true(WPACKET_put_bytes_u8(&wpkt, 0))) /* len */
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, seq_no)) /* seq no */
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, retire_prior_to)) /* retire prior to */
+        || !TEST_true(WPACKET_put_bytes_u8(&wpkt, new_cid.id_len))) /* len */
         goto err;
+
+    for (i = 0; i < new_cid.id_len; ++i)
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, new_cid.id[i])))
+            goto err;
 
     for (i = 0; i < QUIC_STATELESS_RESET_TOKEN_LEN; ++i)
         if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
@@ -3631,6 +3671,80 @@ static const struct script_op script_54[] = {
     OP_END
 };
 
+/* 55. Fault injection - NEW_CONN_ID with >20 byte CID */
+static const struct script_op script_55[] = {
+    OP_S_SET_INJECT_PLAIN   (script_39_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (0, 2)
+    OP_S_WRITE              (a, "orange", 5)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_FRAME_ENCODING_ERROR,0,0)
+
+    OP_END
+};
+
+/* 56. Fault injection - NEW_CONN_ID with seq no < retire prior to */
+static const struct script_op script_56[] = {
+    OP_S_SET_INJECT_PLAIN   (script_39_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (0, 3)
+    OP_S_WRITE              (a, "orange", 5)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_FRAME_ENCODING_ERROR,0,0)
+
+    OP_END
+};
+
+/* 57. Fault injection - NEW_CONN_ID with lower seq no ignored */
+static const struct script_op script_57[] = {
+    OP_S_SET_INJECT_PLAIN   (script_39_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (0, 4)
+    OP_S_WRITE              (a, "orange", 5)
+    OP_C_READ_EXPECT        (a, "orange", 5)
+
+    OP_C_WRITE              (a, "Strawberry", 10)
+    OP_S_READ_EXPECT        (a, "Strawberry", 10)
+
+    /*
+     * Now we send a NEW_CONN_ID with a bogus CID. However the sequence number
+     * is old so it should be ignored and we should still be able to
+     * communicate.
+     */
+    OP_SET_INJECT_WORD      (0, 5)
+    OP_S_WRITE              (a, "raspberry", 9)
+    OP_C_READ_EXPECT        (a, "raspberry", 9)
+
+    OP_C_WRITE              (a, "peach", 5)
+    OP_S_READ_EXPECT        (a, "peach", 5)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -3686,6 +3800,9 @@ static const struct script_op *const scripts[] = {
     script_52,
     script_53,
     script_54,
+    script_55,
+    script_56,
+    script_57,
 };
 
 static int test_script(int idx)
