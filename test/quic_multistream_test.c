@@ -3206,6 +3206,195 @@ static const struct script_op script_45[] = {
     OP_END
 };
 
+/* 46. Fault injection - ACK - malformed initial range */
+static int script_46_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[16];
+    size_t written;
+    uint64_t type, largest_acked, first_range, range_count, agap, alen;
+    uint64_t ect0 = 0, ect1 = 0, ecnce = 0;
+
+    if (h->inject_word0 == 0)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    type = OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN;
+
+    switch (h->inject_word0) {
+    case 1:
+        largest_acked   = 100;
+        first_range     = 101;
+        range_count     = 0;
+        break;
+    case 2:
+        largest_acked   = 100;
+        first_range     = 80;
+        /* [20..100]; [0..18]  */
+        range_count     = 1;
+        agap            = 0;
+        alen            = 19;
+        break;
+    case 3:
+        largest_acked   = 100;
+        first_range     = 80;
+        range_count     = 1;
+        agap            = 18;
+        alen            = 1;
+        break;
+    case 4:
+        type            = OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN;
+        largest_acked   = 100;
+        first_range     = 1;
+        range_count     = 0;
+        break;
+    case 5:
+        type            = OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN;
+        largest_acked   = 0;
+        first_range     = 0;
+        range_count     = 0;
+        ect0            = 0;
+        ect1            = 50;
+        ecnce           = 200;
+        break;
+    }
+
+    h->inject_word0 = 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, type))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, largest_acked))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /*ack_delay=*/0))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /*ack_range_count=*/range_count))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /*first_ack_range=*/first_range)))
+        goto err;
+
+    if (range_count > 0)
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, /*range[0].gap=*/agap))
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /*range[0].len=*/alen)))
+            goto err;
+
+    if (type == OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN)
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, ect0))
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, ect1))
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, ecnce)))
+            goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        goto err;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+static const struct script_op script_46[] = {
+    OP_S_SET_INJECT_PLAIN   (script_46_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, 0)
+
+    OP_S_WRITE              (a, "Strawberry", 10)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_FRAME_ENCODING_ERROR,0,0)
+
+    OP_END
+};
+
+/* 47. Fault injection - ACK - malformed subsequent range */
+static const struct script_op script_47[] = {
+    OP_S_SET_INJECT_PLAIN   (script_46_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (2, 0)
+
+    OP_S_WRITE              (a, "Strawberry", 10)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_FRAME_ENCODING_ERROR,0,0)
+
+    OP_END
+};
+
+/* 48. Fault injection - ACK - malformed subsequent range */
+static const struct script_op script_48[] = {
+    OP_S_SET_INJECT_PLAIN   (script_46_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (3, 0)
+
+    OP_S_WRITE              (a, "Strawberry", 10)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_FRAME_ENCODING_ERROR,0,0)
+
+    OP_END
+};
+
+/* 49. Fault injection - ACK - fictional PN */
+static const struct script_op script_49[] = {
+    OP_S_SET_INJECT_PLAIN   (script_46_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (4, 0)
+
+    OP_S_WRITE              (a, "Strawberry", 10)
+    OP_C_READ_EXPECT        (DEFAULT, "Strawberry", 10)
+
+    OP_END
+};
+
+/* 50. Fault injection - ACK - duplicate PN */
+static const struct script_op script_50[] = {
+    OP_S_SET_INJECT_PLAIN   (script_46_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_BEGIN_REPEAT         (2)
+
+    OP_SET_INJECT_WORD      (5, 0)
+
+    OP_S_WRITE              (a, "Strawberry", 10)
+    OP_C_READ_EXPECT        (DEFAULT, "Strawberry", 10)
+
+    OP_END_REPEAT           ()
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -3252,6 +3441,11 @@ static const struct script_op *const scripts[] = {
     script_43,
     script_44,
     script_45,
+    script_46,
+    script_47,
+    script_48,
+    script_49,
+    script_50,
 };
 
 static int test_script(int idx)
