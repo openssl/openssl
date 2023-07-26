@@ -390,6 +390,11 @@ void ossl_quic_channel_set_inhibit_tick(QUIC_CHANNEL *ch, int inhibit);
  */
 uint16_t ossl_quic_channel_get_diag_num_rx_ack(QUIC_CHANNEL *ch);
 
+/*
+ * Diagnostic use only. Gets the current local CID.
+ */
+void ossl_quic_channel_get_diag_local_cid(QUIC_CHANNEL *ch, QUIC_CONN_ID *cid);
+
 # endif
 
 #endif

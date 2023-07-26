@@ -2846,19 +2846,22 @@ static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp,
     if (!ossl_quic_fifd_pkt_commit(&txp->fifd, tpkt))
         return 0;
 
+    /*
+     * Transmission and Post-Packet Generation Bookkeeping
+     * ===================================================
+     *
+     * No backing out anymore - at this point the ACKM has recorded the packet
+     * as having been sent, so we need to increment our next PN counter, or
+     * the ACKM will complain when we try to record a duplicate packet with
+     * the same PN later. At this point actually sending the packet may still
+     * fail. In this unlikely event it will simply be handled as though it
+     * were a lost packet.
+     */
+    ++txp->next_pn[pn_space];
+
     /* Send the packet. */
     if (!ossl_qtx_write_pkt(txp->args.qtx, &txpkt))
         return 0;
-
-    /*
-     * Post-Packet Generation Bookkeeping
-     * ==================================
-     *
-     * No backing out anymore - we have sent the packet and need to record this
-     * fact.
-     */
-
-    ++txp->next_pn[pn_space];
 
     /*
      * Record FC and stream abort frames as sent; deactivate streams which no

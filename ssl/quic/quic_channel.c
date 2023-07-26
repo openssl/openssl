@@ -3337,3 +3337,8 @@ uint16_t ossl_quic_channel_get_diag_num_rx_ack(QUIC_CHANNEL *ch)
 {
     return ch->diag_num_rx_ack;
 }
+
+void ossl_quic_channel_get_diag_local_cid(QUIC_CHANNEL *ch, QUIC_CONN_ID *cid)
+{
+    *cid = ch->cur_local_cid;
+}
