@@ -202,7 +202,10 @@ struct quic_channel_st {
      */
     uint64_t                        txku_threshold_override;
 
-   /* Valid if we are in the TERMINATING or TERMINATED states. */
+    /* Diagnostic counters for testing purposes only. May roll over. */
+    uint16_t                        diag_num_rx_ack; /* Number of ACK frames received */
+
+    /* Valid if we are in the TERMINATING or TERMINATED states. */
     QUIC_TERMINATE_CAUSE            terminate_cause;
 
     /*

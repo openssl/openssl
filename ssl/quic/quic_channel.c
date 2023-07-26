@@ -3332,3 +3332,8 @@ void ossl_quic_channel_set_inhibit_tick(QUIC_CHANNEL *ch, int inhibit)
 {
     ch->inhibit_tick = (inhibit != 0);
 }
+
+uint16_t ossl_quic_channel_get_diag_num_rx_ack(QUIC_CHANNEL *ch)
+{
+    return ch->diag_num_rx_ack;
+}
