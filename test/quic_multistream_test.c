@@ -213,8 +213,8 @@ struct script_op {
     {OPK_C_SET_DEFAULT_STREAM_MODE, NULL, (mode), NULL, NULL},
 #define OP_C_SET_INCOMING_STREAM_POLICY(policy) \
     {OPK_C_SET_INCOMING_STREAM_POLICY, NULL, (policy), NULL, NULL},
-#define OP_C_SHUTDOWN_WAIT() \
-    {OPK_C_SHUTDOWN_WAIT, NULL, 0, NULL, NULL},
+#define OP_C_SHUTDOWN_WAIT(reason) \
+    {OPK_C_SHUTDOWN_WAIT, (reason), 0, NULL, NULL},
 #define OP_C_EXPECT_CONN_CLOSE_INFO(ec, app, remote)                \
     {OPK_C_EXPECT_CONN_CLOSE_INFO, NULL,                            \
         ((app) ? EXPECT_CONN_CLOSE_APP : 0) |                       \
@@ -1275,13 +1275,16 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             {
                 int ret;
                 QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
+                SSL_SHUTDOWN_EX_ARGS args = {0};
 
                 ossl_quic_channel_set_inhibit_tick(ch, 0);
 
                 if (!TEST_ptr(c_tgt))
                     goto out;
 
-                ret = SSL_shutdown_ex(c_tgt, 0, NULL, 0);
+                args.quic_reason = (const char *)op->arg0;
+
+                ret = SSL_shutdown_ex(c_tgt, 0, &args, sizeof(args));
                 if (!TEST_int_ge(ret, 0))
                     goto out;
 
@@ -1874,7 +1877,7 @@ static const struct script_op script_10[] = {
     OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
     OP_S_READ_EXPECT        (a, "apple", 5)
 
-    OP_C_SHUTDOWN_WAIT      ()
+    OP_C_SHUTDOWN_WAIT      (NULL)
     OP_C_EXPECT_CONN_CLOSE_INFO(0, 1, 0)
     OP_S_EXPECT_CONN_CLOSE_INFO(0, 1, 1)
 
@@ -2958,7 +2961,7 @@ static const struct script_op script_40[] = {
     OP_END_REPEAT           ()
 
     OP_C_CONCLUDE           (a)
-    OP_C_SHUTDOWN_WAIT      ()  /* disengages tick inhibition */
+    OP_C_SHUTDOWN_WAIT      (NULL) /* disengages tick inhibition */
 
     OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
     OP_S_READ_EXPECT        (a, "apple", 5)
@@ -3281,7 +3284,8 @@ static int script_46_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     WPACKET wpkt;
     unsigned char frame_buf[16];
     size_t written;
-    uint64_t type, largest_acked, first_range, range_count, agap, alen;
+    uint64_t type = 0, largest_acked = 0, first_range = 0, range_count = 0;
+    uint64_t agap = 0, alen = 0;
     uint64_t ect0 = 0, ect1 = 0, ecnce = 0;
 
     if (h->inject_word0 == 0)
@@ -3600,7 +3604,7 @@ static int script_53_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
         break;
     }
 
-    frame_len = 1 + 8 + 8 + data_len;
+    frame_len = 1 + 8 + 8 + (size_t)data_len;
     if (!TEST_ptr(frame_buf = OPENSSL_malloc(frame_len)))
         return 0;
 
@@ -3825,6 +3829,49 @@ static const struct script_op script_59[] = {
     OP_END
 };
 
+/* 60. Connection close reason truncation */
+static char long_reason[2048];
+
+static int init_reason(struct helper *h, const struct script_op *op)
+{
+    memset(long_reason, '~', sizeof(long_reason));
+    memcpy(long_reason, "This is a long reason string.", 29);
+    return 1;
+}
+
+static int check_shutdown_reason(struct helper *h, const struct script_op *op)
+{
+    const QUIC_TERMINATE_CAUSE *tc = ossl_quic_tserver_get_terminate_cause(h->s);
+
+    if (tc == NULL) {
+        h->check_spin_again = 1;
+        return 0;
+    }
+
+    if (!TEST_size_t_ge(tc->reason_len, 50)
+        || !TEST_mem_eq(long_reason, tc->reason_len,
+                        tc->reason, tc->reason_len))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_60[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_CHECK                (init_reason, 0)
+    OP_C_SHUTDOWN_WAIT      (long_reason)
+    OP_CHECK                (check_shutdown_reason, 0)
+
+    OP_END
+};
+
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -3885,6 +3932,7 @@ static const struct script_op *const scripts[] = {
     script_57,
     script_58,
     script_59,
+    script_60,
 };
 
 static int test_script(int idx)
