@@ -2928,7 +2928,7 @@ static int script_41_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
                                            sizeof(frame_buf), 0)))
         return 0;
 
-    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE))
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1))
         || !TEST_true(WPACKET_put_bytes_u64(&wpkt, path_challenge)))
         goto err;
 
@@ -3014,7 +3014,7 @@ static const struct script_op script_41[] = {
     OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
     OP_S_READ_EXPECT        (a, "apple", 5)
 
-    OP_SET_INJECT_WORD      (1, 0)
+    OP_SET_INJECT_WORD      (1, OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE)
 
     OP_S_WRITE              (a, "orange", 6)
     OP_C_READ_EXPECT        (DEFAULT, "orange", 6)
@@ -3395,6 +3395,28 @@ static const struct script_op script_50[] = {
     OP_END
 };
 
+/* 51. Fault injection - PATH_CHALLENGE is ignored */
+static const struct script_op script_51[] = {
+    OP_S_SET_INJECT_PLAIN   (script_41_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE)
+
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (DEFAULT, "orange", 6)
+
+    OP_C_WRITE              (DEFAULT, "Strawberry", 10)
+    OP_S_READ_EXPECT        (a, "Strawberry", 10)
+
+    OP_END
+};
+
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -3446,6 +3468,7 @@ static const struct script_op *const scripts[] = {
     script_48,
     script_49,
     script_50,
+    script_51,
 };
 
 static int test_script(int idx)
