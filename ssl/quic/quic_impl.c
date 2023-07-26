@@ -1200,7 +1200,8 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
 
     /* Phase 2: Connection Closure */
     ossl_quic_channel_local_close(ctx.qc->ch,
-                                  args != NULL ? args->quic_error_code : 0);
+                                  args != NULL ? args->quic_error_code : 0,
+                                  args != NULL ? args->quic_reason : NULL);
 
     SSL_set_shutdown(ctx.qc->tls, SSL_SENT_SHUTDOWN);
 
@@ -3043,8 +3044,8 @@ int ossl_quic_get_conn_close_info(SSL *ssl,
         return 0;
 
     info->error_code    = tc->error_code;
-    info->reason        = NULL; /* TODO(QUIC): Wire reason */
-    info->reason_len    = 0;
+    info->reason        = tc->reason;
+    info->reason_len    = tc->reason_len;
     info->is_local      = !tc->remote;
     info->is_transport  = !tc->app;
     return 1;
