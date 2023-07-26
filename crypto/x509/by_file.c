@@ -95,8 +95,7 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
 
     if ((in == NULL) || (BIO_read_filename(in, file) <= 0)) {
         ERR_raise(ERR_LIB_X509, ERR_R_BIO_LIB);
-        BIO_free(in);
-        return 0;
+        goto err;
     }
 
     x = X509_new_ex(libctx, propq);
@@ -162,8 +161,7 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 
     if ((in == NULL) || (BIO_read_filename(in, file) <= 0)) {
         ERR_raise(ERR_LIB_X509, ERR_R_BIO_LIB);
-        BIO_free(in);
-        return 0;
+        goto err;
     }
 
     if (type == X509_FILETYPE_PEM) {
