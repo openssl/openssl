@@ -3745,6 +3745,86 @@ static const struct script_op script_57[] = {
     OP_END
 };
 
+/* 58. Fault injection - repeated HANDSHAKE_DONE */
+static int script_58_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    int ok = 0;
+    unsigned char frame_buf[64];
+    size_t written;
+    WPACKET wpkt;
+
+    if (h->inject_word0 == 0)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    if (h->inject_word0 == 1) {
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE)))
+            goto err;
+    } else {
+        /* Needless multi-byte encoding */
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x40))
+            || !TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x1E)))
+            goto err;
+    }
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        goto err;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+static const struct script_op script_58[] = {
+    OP_S_SET_INJECT_PLAIN   (script_58_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, 0)
+
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (DEFAULT, "orange", 6)
+
+    OP_C_WRITE              (DEFAULT, "Strawberry", 10)
+    OP_S_READ_EXPECT        (a, "Strawberry", 10)
+
+    OP_END
+};
+
+/* 59. Fault injection - multi-byte frame encoding */
+static const struct script_op script_59[] = {
+    OP_S_SET_INJECT_PLAIN   (script_58_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (2, 0)
+
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_PROTOCOL_VIOLATION,0,0)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -3803,6 +3883,8 @@ static const struct script_op *const scripts[] = {
     script_55,
     script_56,
     script_57,
+    script_58,
+    script_59,
 };
 
 static int test_script(int idx)
