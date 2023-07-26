@@ -384,6 +384,12 @@ int ossl_quic_channel_ping(QUIC_CHANNEL *ch);
 /* For testing use. While enabled, ticking is not performed. */
 void ossl_quic_channel_set_inhibit_tick(QUIC_CHANNEL *ch, int inhibit);
 
+/*
+ * These queries exist for diagnostic purposes only. They may roll over.
+ * Do not rely on them for non-testing purposes.
+ */
+uint16_t ossl_quic_channel_get_diag_num_rx_ack(QUIC_CHANNEL *ch);
+
 # endif
 
 #endif

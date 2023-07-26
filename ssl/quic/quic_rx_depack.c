@@ -117,6 +117,7 @@ static int depack_do_frame_ack(PACKET *pkt, QUIC_CHANNEL *ch,
                                    packet_space, received))
         goto malformed;
 
+    ++ch->diag_num_rx_ack;
     OPENSSL_free(ack_ranges);
     return 1;
 

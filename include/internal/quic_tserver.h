@@ -195,6 +195,12 @@ void ossl_quic_tserver_set_msg_callback(QUIC_TSERVER *srv,
                                                   SSL *ssl, void *arg),
                                         void *arg);
 
+/*
+ * This is similar to ossl_quic_conn_get_channel; it should be used for test
+ * instrumentation only and not to bypass QUIC_TSERVER for 'normal' operations.
+ */
+QUIC_CHANNEL *ossl_quic_tserver_get_channel(QUIC_TSERVER *srv);
+
 # endif
 
 #endif

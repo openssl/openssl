@@ -512,6 +512,11 @@ int ossl_quic_tserver_ping(QUIC_TSERVER *srv)
     return 1;
 }
 
+QUIC_CHANNEL *ossl_quic_tserver_get_channel(QUIC_TSERVER *srv)
+{
+    return srv->ch;
+}
+
 void ossl_quic_tserver_set_msg_callback(QUIC_TSERVER *srv,
                                         void (*f)(int write_p, int version,
                                                   int content_type,
