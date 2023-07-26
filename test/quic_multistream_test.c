@@ -78,6 +78,8 @@ struct helper {
 
     int (*qtf_packet_plain_cb)(struct helper *h, QUIC_PKT_HDR *hdr,
                                unsigned char *buf, size_t buf_len);
+    int (*qtf_handshake_cb)(struct helper *h,
+                            unsigned char *buf, size_t buf_len);
     uint64_t inject_word0, inject_word1;
     uint64_t scratch0, scratch1;
 };
@@ -97,6 +99,8 @@ struct script_op {
     uint64_t        arg2;
     int             (*qtf_packet_plain_cb)(struct helper *h, QUIC_PKT_HDR *hdr,
                                            unsigned char *buf, size_t buf_len);
+    int             (*qtf_handshake_cb)(struct helper *h,
+                                        unsigned char *buf, size_t buf_len);
 };
 
 #define OPK_END                                     0
@@ -145,6 +149,7 @@ struct script_op {
 #define OPK_SET_INJECT_WORD                         43
 #define OPK_C_INHIBIT_TICK                          44
 #define OPK_C_SET_WRITE_BUF_SIZE                    45
+#define OPK_S_SET_INJECT_HANDSHAKE                  46
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -264,6 +269,8 @@ struct script_op {
     {OPK_C_INHIBIT_TICK, NULL, (inhibit), NULL, NULL, 0, NULL},
 #define OP_C_SET_WRITE_BUF_SIZE(stream_name, size) \
     {OPK_C_SET_WRITE_BUF_SIZE, NULL, (size), NULL, #stream_name},
+#define OP_S_SET_INJECT_HANDSHAKE(f) \
+    {OPK_S_SET_INJECT_HANDSHAKE, NULL, 0, NULL, NULL, 0, NULL, (f)},
 
 static OSSL_TIME get_time(void *arg)
 {
@@ -746,6 +753,15 @@ static int helper_packet_plain_listener(QTEST_FAULT *qtf, QUIC_PKT_HDR *hdr,
     struct helper *h = arg;
 
     return h->qtf_packet_plain_cb(h, hdr, buf, buf_len);
+}
+
+static int helper_handshake_listener(QTEST_FAULT *fault,
+                                     unsigned char *buf, size_t buf_len,
+                                     void *arg)
+{
+    struct helper *h = arg;
+
+    return h->qtf_handshake_cb(h, buf, buf_len);
 }
 
 static int is_want(SSL *s, int ret)
@@ -1504,6 +1520,17 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                                                                  h->qtf_packet_plain_cb != NULL ?
                                                                  helper_packet_plain_listener : NULL,
                                                                  h)))
+                goto out;
+
+            break;
+
+        case OPK_S_SET_INJECT_HANDSHAKE:
+            h->qtf_handshake_cb = op->qtf_handshake_cb;
+
+            if (!TEST_true(qtest_fault_set_handshake_listener(h->qtf,
+                                                              h->qtf_handshake_cb != NULL ?
+                                                              helper_handshake_listener : NULL,
+                                                              h)))
                 goto out;
 
             break;
@@ -3504,6 +3531,106 @@ static const struct script_op script_52[] = {
     OP_END
 };
 
+/* 53. Fault injection - excess CRYPTO buffer size */
+static int script_53_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    int ok = 0;
+    size_t written;
+    WPACKET wpkt;
+    uint64_t offset = 0, data_len = 100;
+    unsigned char *frame_buf = NULL;
+    size_t frame_len, i;
+
+    if (h->inject_word0 == 0)
+        return 1;
+
+    h->inject_word0 = 0;
+
+    switch (h->inject_word1) {
+    case 0:
+        /*
+         * Far out offset which will not have been reached during handshake.
+         * This will not be delivered to the QUIC_TLS instance since it will be
+         * waiting for in-order delivery of previous bytes. This tests our flow
+         * control on CRYPTO stream buffering.
+         */
+        offset      = 100000;
+        data_len    = 1;
+        break;
+    }
+
+    frame_len = 1 + 8 + 8 + data_len;
+    if (!TEST_ptr(frame_buf = OPENSSL_malloc(frame_len)))
+        return 0;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf, frame_len, 0)))
+        goto err;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_CRYPTO))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, offset))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, data_len)))
+        goto err;
+
+    for (i = 0; i < data_len; ++i)
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
+            goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        goto err;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    OPENSSL_free(frame_buf);
+    return ok;
+}
+
+static const struct script_op script_53[] = {
+    OP_S_SET_INJECT_PLAIN   (script_53_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_WRITE              (DEFAULT, "apple", 5)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, 0)
+    OP_S_WRITE              (a, "Strawberry", 10)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_CRYPTO_BUFFER_EXCEEDED,0,0)
+
+    OP_END
+};
+
+/* 54. Fault injection - corrupted crypto stream data */
+static int script_54_inject_handshake(struct helper *h,
+                                      unsigned char *buf, size_t buf_len)
+{
+    size_t i;
+
+    for (i = 0; i < buf_len; ++i)
+        buf[i] ^= 0xff;
+
+    return 1;
+}
+
+static const struct script_op script_54[] = {
+    OP_S_SET_INJECT_HANDSHAKE(script_54_inject_handshake)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT_OR_FAIL()
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_CRYPTO_UNEXPECTED_MESSAGE,0,0)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -3557,6 +3684,8 @@ static const struct script_op *const scripts[] = {
     script_50,
     script_51,
     script_52,
+    script_53,
+    script_54,
 };
 
 static int test_script(int idx)
