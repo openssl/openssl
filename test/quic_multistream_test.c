@@ -1513,6 +1513,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
         case OPK_C_CLOSE_SOCKET:
             {
                 BIO_closesocket(h->c_fd);
+                h->c_fd = -1;
             }
             break;
 
