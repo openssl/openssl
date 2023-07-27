@@ -3284,7 +3284,8 @@ static int script_46_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     WPACKET wpkt;
     unsigned char frame_buf[16];
     size_t written;
-    uint64_t type, largest_acked, first_range, range_count, agap, alen;
+    uint64_t type = 0, largest_acked = 0, first_range = 0, range_count = 0;
+    uint64_t agap = 0, alen = 0;
     uint64_t ect0 = 0, ect1 = 0, ecnce = 0;
 
     if (h->inject_word0 == 0)
@@ -3603,7 +3604,7 @@ static int script_53_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
         break;
     }
 
-    frame_len = 1 + 8 + 8 + data_len;
+    frame_len = 1 + 8 + 8 + (size_t)data_len;
     if (!TEST_ptr(frame_buf = OPENSSL_malloc(frame_len)))
         return 0;
 
