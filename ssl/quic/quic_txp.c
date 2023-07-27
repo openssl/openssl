@@ -447,7 +447,7 @@ static int txp_pkt_postgen_update_pkt_overhead(struct txp_pkt *pkt,
 static int txp_pkt_append_padding(struct txp_pkt *pkt,
                                   OSSL_QUIC_TX_PACKETISER *txp, size_t num_bytes);
 static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp, struct txp_pkt *pkt,
-                          uint32_t archetype);
+                          uint32_t archetype, int *txpim_pkt_reffed);
 static uint32_t txp_determine_archetype(OSSL_QUIC_TX_PACKETISER *txp,
                                         uint64_t cc_limit);
 
@@ -708,7 +708,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
     struct txp_pkt pkt[QUIC_ENC_LEVEL_NUM];
     size_t pkts_done = 0;
     uint64_t cc_limit = txp->args.cc_method->get_tx_allowance(txp->args.cc_data);
-    int need_padding = 0;
+    int need_padding = 0, txpim_pkt_reffed;
 
     for (enc_level = QUIC_ENC_LEVEL_INITIAL;
          enc_level < QUIC_ENC_LEVEL_NUM;
@@ -812,14 +812,19 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
             /* Nothing was generated for this EL, so skip. */
             continue;
 
-        if (!txp_pkt_commit(txp, &pkt[enc_level], archetype))
+        rc = txp_pkt_commit(txp, &pkt[enc_level], archetype,
+                            &txpim_pkt_reffed);
+        if (rc)
+            status->sent_ack_eliciting
+                = status->sent_ack_eliciting
+                || pkt[enc_level].tpkt->ackm_pkt.is_ack_eliciting;
+
+        if (txpim_pkt_reffed)
+            pkt[enc_level].tpkt = NULL; /* don't free */
+
+        if (!rc)
             goto out;
 
-        status->sent_ack_eliciting
-            = status->sent_ack_eliciting
-            || pkt[enc_level].tpkt->ackm_pkt.is_ack_eliciting;
-
-        pkt[enc_level].tpkt = NULL; /* don't free */
         ++pkts_done;
     }
 
@@ -2799,7 +2804,8 @@ fatal_err:
  */
 static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp,
                           struct txp_pkt *pkt,
-                          uint32_t archetype)
+                          uint32_t archetype,
+                          int *txpim_pkt_reffed)
 {
     int rc = 1;
     uint32_t enc_level = pkt->h.enc_level;
@@ -2808,6 +2814,8 @@ static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp,
     QUIC_STREAM *stream;
     OSSL_QTX_PKT txpkt;
     struct archetype_data a;
+
+    *txpim_pkt_reffed = 0;
 
     /* Cannot send a packet with an empty payload. */
     if (pkt->h.bytes_appended == 0)
@@ -2858,6 +2866,7 @@ static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp,
      * were a lost packet.
      */
     ++txp->next_pn[pn_space];
+    *txpim_pkt_reffed = 1;
 
     /* Send the packet. */
     if (!ossl_qtx_write_pkt(txp->args.qtx, &txpkt))
