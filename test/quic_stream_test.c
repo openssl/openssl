@@ -208,8 +208,8 @@ static int test_sstream_bulk(int idx)
     QUIC_SSTREAM *sstream = NULL;
     OSSL_QUIC_FRAME_STREAM hdr;
     OSSL_QTX_IOVEC iov[2];
-    size_t i, num_iov = 0, init_size = 8192, l;
-    size_t consumed = 0, rd, expected = 0;
+    size_t i, j, num_iov = 0, init_size = 8192, l;
+    size_t consumed = 0, total_written = 0, rd, cur_rd, expected = 0, start_at;
     unsigned char *src_buf = NULL, *dst_buf = NULL;
     unsigned char *ref_src_buf = NULL, *ref_dst_buf = NULL;
     unsigned char *ref_dst_cur, *ref_src_cur, *dst_cur;
@@ -244,6 +244,8 @@ static int test_sstream_bulk(int idx)
                                                    init_size / 2 - 1)))
         goto err;
 
+    start_at = init_size / 2;
+
     /* Generate a random buffer. */
     for (i = 0; i < init_size; ++i)
         src_buf[i] = (unsigned char)(test_random() & 0xFF);
@@ -257,6 +259,7 @@ static int test_sstream_bulk(int idx)
 
         memcpy(ref_src_cur, src_buf, consumed);
         ref_src_cur     += consumed;
+        total_written   += consumed;
     } while (consumed > 0);
 
     if (!TEST_size_t_eq(ossl_quic_sstream_get_buffer_used(sstream), init_size)
@@ -270,11 +273,13 @@ static int test_sstream_bulk(int idx)
      */
     ref_src_cur = ref_src_buf;
     ref_dst_cur = ref_dst_buf;
-    for (i = 0; i < consumed; ++i) {
+    for (i = 0; i < total_written; ++i) {
         if ((test_random() & 1) != 0) {
             *ref_dst_cur++ = *ref_src_cur;
             ++expected;
-        } else if (!TEST_true(ossl_quic_sstream_mark_transmitted(sstream, i, i)))
+        } else if (!TEST_true(ossl_quic_sstream_mark_transmitted(sstream,
+                                                                 start_at + i,
+                                                                 start_at + i)))
             goto err;
 
         ++ref_src_cur;
@@ -293,17 +298,20 @@ static int test_sstream_bulk(int idx)
                                                           &num_iov)))
             goto err;
 
-        for (i = 0; i < num_iov; ++i) {
-            if (!TEST_size_t_le(iov[i].buf_len + rd, expected))
+        cur_rd = 0;
+        for (j = 0; j < num_iov; ++j) {
+            if (!TEST_size_t_le(iov[j].buf_len + rd, expected))
                 goto err;
 
-            memcpy(dst_cur, iov[i].buf, iov[i].buf_len);
-            dst_cur += iov[i].buf_len;
-            rd      += iov[i].buf_len;
+            memcpy(dst_cur, iov[j].buf, iov[j].buf_len);
+            dst_cur += iov[j].buf_len;
+            cur_rd  += iov[j].buf_len;
         }
 
-        if (!TEST_uint64_t_eq(rd, hdr.len))
+        if (!TEST_uint64_t_eq(cur_rd, hdr.len))
             goto err;
+
+        rd += cur_rd;
     }
 
     if (!TEST_mem_eq(dst_buf, rd, ref_dst_buf, expected))
