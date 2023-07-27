@@ -14,9 +14,9 @@
 
 #define QUIC_TLS_FATAL(rl, ad, err) \
     do { \
-        (rl)->alert = (ad); \
+        if ((rl) != NULL) (rl)->alert = (ad); \
         ERR_raise(ERR_LIB_SSL, (err)); \
-        (rl)->qtls->inerror = 1; \
+        if ((rl) != NULL) (rl)->qtls->inerror = 1; \
     } while(0)
 
 struct quic_tls_st {
