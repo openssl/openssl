@@ -308,8 +308,12 @@ int ossl_quic_tserver_has_read_ended(QUIC_TSERVER *srv, uint64_t stream_id)
     if (is_fin && bytes_read == 0) {
         /* If we have a FIN awaiting retirement and no data before it... */
         /* Let RSTREAM know we've consumed this FIN. */
-        ossl_quic_rstream_read(qs->rstream, buf, sizeof(buf),
-                               &bytes_read, &is_fin); /* best effort */
+        if (!ossl_quic_rstream_read(qs->rstream, buf, sizeof(buf),
+                                    &bytes_read, &is_fin)) {
+            bytes_read  = 0;
+            is_fin      = 0;
+        }
+
         assert(is_fin && bytes_read == 0);
         assert(qs->recv_state == QUIC_RSTREAM_STATE_DATA_RECVD);
 
