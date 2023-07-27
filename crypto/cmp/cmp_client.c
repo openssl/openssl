@@ -683,7 +683,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         if (rid == OSSL_CMP_CERTREQID_NONE) {
             /* for OSSL_CMP_PKIBODY_P10CR learn CertReqId from response */
             rid = ossl_cmp_asn1_get_int(crep->certReqId);
-            if (rid != OSSL_CMP_CERTREQID_NONE) {
+            if (rid < OSSL_CMP_CERTREQID_NONE) {
                 ERR_raise(ERR_LIB_CMP, CMP_R_BAD_REQUEST_ID);
                 return 0;
             }
