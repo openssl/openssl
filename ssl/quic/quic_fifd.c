@@ -77,6 +77,7 @@ static void on_acked(void *arg)
             continue;
 
         if (chunks[i].end >= chunks[i].start)
+            /* coverity[check_return]: Best effort - we cannot fail here. */
             ossl_quic_sstream_mark_acked(sstream,
                                          chunks[i].start, chunks[i].end);
 
