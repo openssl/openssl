@@ -214,6 +214,8 @@ static int helper_init(struct helper *h)
     if (!TEST_true(ossl_qrx_add_dst_conn_id(h->qrx, &dcid_1)))
         goto err;
 
+    ossl_qrx_allow_1rtt_processing(h->qrx);
+
     rc = 1;
 err:
     if (!rc)
@@ -1548,7 +1550,6 @@ err:
 
 static int test_script(int idx)
 {
-    if (idx + 1 != 18) return 1;
     return run_script(idx, scripts[idx]);
 }
 
