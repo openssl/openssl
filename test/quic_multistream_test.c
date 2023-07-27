@@ -2898,8 +2898,12 @@ static int script_39_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
         || !TEST_true(WPACKET_put_bytes_u8(&wpkt, new_cid.id_len))) /* len */
         goto err;
 
-    for (i = 0; i < new_cid.id_len; ++i)
+    for (i = 0; i < new_cid.id_len && i < OSSL_NELEM(new_cid.id); ++i)
         if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, new_cid.id[i])))
+            goto err;
+
+    for (; i < new_cid.id_len; ++i)
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x55)))
             goto err;
 
     for (i = 0; i < QUIC_STATELESS_RESET_TOKEN_LEN; ++i)
@@ -3836,6 +3840,7 @@ static int init_reason(struct helper *h, const struct script_op *op)
 {
     memset(long_reason, '~', sizeof(long_reason));
     memcpy(long_reason, "This is a long reason string.", 29);
+    long_reason[OSSL_NELEM(long_reason) - 1] = '\0';
     return 1;
 }
 
@@ -3887,9 +3892,9 @@ static int script_61_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
                                            sizeof(frame_buf), 0)))
         return 0;
 
-    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1))
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word0))
         || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /* stream ID */
-                                               h->inject_word0))
+                                               h->inject_word1))
         || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 123))
         || (h->inject_word1 == OSSL_QUIC_FRAME_TYPE_RESET_STREAM
            && !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)))) /* final size */
@@ -3922,8 +3927,8 @@ static const struct script_op script_61[] = {
     OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
     OP_S_READ_EXPECT        (a, "orange", 6)
 
-    OP_SET_INJECT_WORD      (S_BIDI_ID(OSSL_QUIC_VLINT_MAX / 4),
-                             OSSL_QUIC_FRAME_TYPE_RESET_STREAM)
+    OP_SET_INJECT_WORD      (OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
+                             S_BIDI_ID(OSSL_QUIC_VLINT_MAX / 4))
     OP_S_WRITE              (a, "fruit", 5)
 
     OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_LIMIT_ERROR,0,0)
@@ -3944,15 +3949,14 @@ static const struct script_op script_62[] = {
     OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
     OP_S_READ_EXPECT        (a, "orange", 6)
 
-    OP_SET_INJECT_WORD      (C_BIDI_ID(OSSL_QUIC_VLINT_MAX / 4),
-                             OSSL_QUIC_FRAME_TYPE_STOP_SENDING)
+    OP_SET_INJECT_WORD      (OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
+                             C_BIDI_ID(OSSL_QUIC_VLINT_MAX / 4))
     OP_S_WRITE              (a, "fruit", 5)
 
     OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_STATE_ERROR,0,0)
 
     OP_END
 };
-
 
 static const struct script_op *const scripts[] = {
     script_1,
