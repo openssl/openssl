@@ -334,8 +334,7 @@ int tls13_setup_key_block(SSL_CONNECTION *s)
     return 1;
 }
 
-static int derive_secret_key_and_iv(SSL_CONNECTION *s, int sending,
-                                    const EVP_MD *md,
+static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
                                     const EVP_CIPHER *ciph,
                                     const unsigned char *insecret,
                                     const unsigned char *hash,
@@ -624,7 +623,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     if (!ossl_assert(cipher != NULL))
         goto err;
 
-    if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, md, cipher,
+    if (!derive_secret_key_and_iv(s, md, cipher,
                                   insecret, hash, label, labellen, secret, key,
                                   &keylen, iv, &ivlen, &taglen)) {
         /* SSLfatal() already called */
@@ -723,7 +722,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     else
         insecret = s->client_app_traffic_secret;
 
-    if (!derive_secret_key_and_iv(s, sending, md,
+    if (!derive_secret_key_and_iv(s, md,
                                   s->s3.tmp.new_sym_enc, insecret, NULL,
                                   application_traffic,
                                   sizeof(application_traffic) - 1, secret, key,
