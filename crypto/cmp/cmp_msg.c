@@ -984,7 +984,7 @@ static int suitable_rid(const ASN1_INTEGER *certReqId, int rid)
         return 1;
 
     trid = ossl_cmp_asn1_get_int(certReqId);
-    if (trid < OSSL_CMP_CERTREQID_NONE) {
+    if (trid <= OSSL_CMP_CERTREQID_INVALID) {
         ERR_raise(ERR_LIB_CMP, CMP_R_BAD_REQUEST_ID);
         return 0;
     }
