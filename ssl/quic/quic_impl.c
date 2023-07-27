@@ -2565,9 +2565,11 @@ int ossl_quic_set_default_stream_mode(SSL *s, uint32_t mode)
 
     quic_lock(ctx.qc);
 
-    if (ctx.qc->default_xso_created)
+    if (ctx.qc->default_xso_created) {
+        quic_unlock(ctx.qc);
         return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
                                            "too late to change default stream mode");
+    }
 
     switch (mode) {
     case SSL_DEFAULT_STREAM_MODE_NONE:
