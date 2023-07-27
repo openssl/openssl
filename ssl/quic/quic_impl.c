@@ -254,7 +254,7 @@ static int ossl_unused expect_quic_with_stream_lock(const SSL *s, int remote_ini
         goto err;
     }
 
-    return 1; /* lock held */
+    return 1; /* coverity[missing_unlock]: lock held */
 
 err:
     quic_unlock(ctx->qc);
@@ -1186,10 +1186,15 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
         qc_shutdown_flush_init(ctx.qc);
 
         if (!qc_shutdown_flush_finished(ctx.qc)) {
-            if (qc_blocking_mode(ctx.qc))
-                block_until_pred(ctx.qc, quic_shutdown_flush_wait, ctx.qc, 0);
-            else
+            if (qc_blocking_mode(ctx.qc)) {
+                ret = block_until_pred(ctx.qc, quic_shutdown_flush_wait, ctx.qc, 0);
+                if (ret < 1) {
+                    ret = 0;
+                    goto err;
+                }
+            } else {
                 ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+            }
         }
 
         if (!qc_shutdown_flush_finished(ctx.qc)) {
@@ -1211,12 +1216,18 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
     }
 
     /* Phase 3: Terminating Wait Time */
-    if (qc_blocking_mode(ctx.qc) && (flags & SSL_SHUTDOWN_FLAG_RAPID) == 0)
-        block_until_pred(ctx.qc, quic_shutdown_wait, ctx.qc, 0);
-    else
+    if (qc_blocking_mode(ctx.qc) && (flags & SSL_SHUTDOWN_FLAG_RAPID) == 0) {
+        ret = block_until_pred(ctx.qc, quic_shutdown_wait, ctx.qc, 0);
+        if (ret < 1) {
+            ret = 0;
+            goto err;
+        }
+    } else {
         ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+    }
 
     ret = ossl_quic_channel_is_terminated(ctx.qc->ch);
+err:
     quic_unlock(ctx.qc);
     return ret;
 }
