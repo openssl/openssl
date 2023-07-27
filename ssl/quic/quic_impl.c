@@ -1993,9 +1993,6 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
 
     *written = 0;
 
-    if (len == 0)
-        return 1;
-
     if (!expect_quic_with_stream_lock(s, /*remote_init=*/0, &ctx))
         return 0;
 
@@ -2018,6 +2015,11 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
     /* Ensure correct stream state, stream send part not concluded, etc. */
     if (!quic_validate_for_write(ctx.xso, &err)) {
         ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, err, NULL);
+        goto out;
+    }
+
+    if (len == 0) {
+        ret = 1;
         goto out;
     }
 
