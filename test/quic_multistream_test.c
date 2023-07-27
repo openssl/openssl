@@ -1126,6 +1126,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_ptr_null(c_tgt))
                     goto out; /* don't overwrite existing stream with same name */
 
+                if (!TEST_ptr(op->stream_name))
+                    goto out;
+
                 if (!TEST_ptr(c_stream = ossl_quic_detach_stream(h->c_conn)))
                     goto out;
 
@@ -1137,6 +1140,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
         case OPK_C_ATTACH:
             {
                 if (!TEST_ptr(c_tgt))
+                    goto out;
+
+                if (!TEST_ptr(op->stream_name))
                     goto out;
 
                 if (!TEST_true(ossl_quic_attach_stream(h->c_conn, c_tgt)))
@@ -1154,6 +1160,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
 
                 if (!TEST_ptr_null(c_tgt))
                     goto out; /* don't overwrite existing stream with same name */
+
+                if (!TEST_ptr(op->stream_name))
+                    goto out;
 
                 if (op->arg1 != 0)
                     flags |= SSL_STREAM_FLAG_UNI;
@@ -1178,6 +1187,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_uint64_t_eq(s_stream_id, UINT64_MAX))
                     goto out; /* don't overwrite existing stream with same name */
 
+                if (!TEST_ptr(op->stream_name))
+                    goto out;
+
                 if (!TEST_true(ossl_quic_tserver_stream_new(h->s,
                                                             op->arg1 > 0,
                                                             &stream_id)))
@@ -1200,6 +1212,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_ptr_null(c_tgt))
                     goto out; /* don't overwrite existing stream with same name */
 
+                if (!TEST_ptr(op->stream_name))
+                    goto out;
+
                 if ((c_stream = SSL_accept_stream(h->c_conn, 0)) == NULL)
                     SPIN_AGAIN();
 
@@ -1214,6 +1229,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 uint64_t new_stream_id;
 
                 if (!TEST_uint64_t_eq(s_stream_id, UINT64_MAX))
+                    goto out;
+
+                if (!TEST_ptr(op->stream_name))
                     goto out;
 
                 new_stream_id = ossl_quic_tserver_pop_incoming_stream(h->s);
@@ -1240,6 +1258,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             {
                 if (!TEST_ptr(c_tgt)
                     || !TEST_true(!SSL_is_connection(c_tgt)))
+                    goto out;
+
+                if (!TEST_ptr(op->stream_name))
                     goto out;
 
                 if (!TEST_true(helper_local_set_c_stream(&hl, op->stream_name, NULL)))
@@ -1340,6 +1361,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_uint64_t_eq(s_stream_id, UINT64_MAX))
                     goto out;
 
+                if (!TEST_ptr(op->stream_name))
+                    goto out;
+
                 if (!TEST_true(helper_set_s_stream(h, op->stream_name, op->arg2)))
                     goto out;
             }
@@ -1348,6 +1372,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
         case OPK_S_UNBIND_STREAM_ID:
             {
                 if (!TEST_uint64_t_ne(s_stream_id, UINT64_MAX))
+                    goto out;
+
+                if (!TEST_ptr(op->stream_name))
                     goto out;
 
                 if (!TEST_true(helper_set_s_stream(h, op->stream_name, UINT64_MAX)))
