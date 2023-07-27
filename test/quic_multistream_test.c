@@ -3871,6 +3871,88 @@ static const struct script_op script_60[] = {
     OP_END
 };
 
+/* 61. Fault injection - RESET_STREAM exceeding stream count FC */
+static int script_61_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[32];
+    size_t written;
+
+    if (h->inject_word0 == 0)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /* stream ID */
+                                               h->inject_word0))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 123))
+        || (h->inject_word1 == OSSL_QUIC_FRAME_TYPE_RESET_STREAM
+           && !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)))) /* final size */
+        goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        goto err;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+static const struct script_op script_61[] = {
+    OP_S_SET_INJECT_PLAIN   (script_61_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "orange", 6)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "orange", 6)
+
+    OP_SET_INJECT_WORD      (S_BIDI_ID(OSSL_QUIC_VLINT_MAX / 4),
+                             OSSL_QUIC_FRAME_TYPE_RESET_STREAM)
+    OP_S_WRITE              (a, "fruit", 5)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_LIMIT_ERROR,0,0)
+
+    OP_END
+};
+
+/* 62. Fault injection - STOP_SENDING with high ID */
+static const struct script_op script_62[] = {
+    OP_S_SET_INJECT_PLAIN   (script_61_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "orange", 6)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "orange", 6)
+
+    OP_SET_INJECT_WORD      (C_BIDI_ID(OSSL_QUIC_VLINT_MAX / 4),
+                             OSSL_QUIC_FRAME_TYPE_STOP_SENDING)
+    OP_S_WRITE              (a, "fruit", 5)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_STATE_ERROR,0,0)
+
+    OP_END
+};
+
 
 static const struct script_op *const scripts[] = {
     script_1,
@@ -3933,6 +4015,8 @@ static const struct script_op *const scripts[] = {
     script_58,
     script_59,
     script_60,
+    script_61,
+    script_62,
 };
 
 static int test_script(int idx)
