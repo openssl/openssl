@@ -644,9 +644,6 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
     if (qtls->inerror)
         return 0;
 
-    if (qtls->complete)
-        return 1;
-
     if (!qtls->configured) {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(qtls->args.s);
         SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(sc);
@@ -702,19 +699,22 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
          */
         SSL_set_bio(qtls->args.s, nullbio, nullbio);
 
-        if (qtls->args.is_server) {
+        if (qtls->args.is_server)
             SSL_set_accept_state(qtls->args.s);
-            if (!SSL_set_num_tickets(qtls->args.s, 0)) {
-                qtls->inerror = 1;
-                return 0;
-            }
-        } else {
+        else
             SSL_set_connect_state(qtls->args.s);
-        }
 
         qtls->configured = 1;
     }
-    ret = SSL_do_handshake(qtls->args.s);
+
+    if (qtls->complete)
+        /*
+         * There should never be app data to read, but calling SSL_read() will
+         * ensure any post-handshake messages are processed.
+         */
+        ret = SSL_read(qtls->args.s, NULL, 0);
+    else
+        ret = SSL_do_handshake(qtls->args.s);
     if (ret <= 0) {
         switch (SSL_get_error(qtls->args.s, ret)) {
         case SSL_ERROR_WANT_READ:
@@ -726,14 +726,18 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
         }
     }
 
-    /* Validate that we have ALPN */
-    SSL_get0_alpn_selected(qtls->args.s, &alpn, &alpnlen);
-    if (alpn == NULL || alpnlen == 0) {
-        qtls->inerror = 1;
-        return 0;
+    if (!qtls->complete) {
+        /* Validate that we have ALPN */
+        SSL_get0_alpn_selected(qtls->args.s, &alpn, &alpnlen);
+        if (alpn == NULL || alpnlen == 0) {
+            qtls->inerror = 1;
+            return 0;
+        }
+        qtls->complete = 1;
+        return qtls->args.handshake_complete_cb(qtls->args.handshake_complete_cb_arg);
     }
-    qtls->complete = 1;
-    return qtls->args.handshake_complete_cb(qtls->args.handshake_complete_cb_arg);
+
+    return 1;
 }
 
 int ossl_quic_tls_set_transport_params(QUIC_TLS *qtls,
