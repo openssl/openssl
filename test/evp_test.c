@@ -75,6 +75,7 @@ typedef enum OPTION_choice {
     OPT_IN_PLACE,
     OPT_PROVIDER_NAME,
     OPT_PROV_PROPQUERY,
+    OPT_DATA_CHUNK,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -118,6 +119,7 @@ static int memory_err_compare(EVP_TEST *t, const char *err,
 /* Option specific for evp test */
 static int process_mode_in_place;
 static const char *propquery = NULL;
+static int data_chunk_size;
 
 static int evp_test_process_mode(char *mode)
 {
@@ -4161,6 +4163,7 @@ const OPTIONS *test_get_options(void)
           "The provider to load (when no configuration file, the default value is 'default')" },
         { "propquery", OPT_PROV_PROPQUERY, 's',
           "Property query used when fetching algorithms" },
+        { "chunk", OPT_DATA_CHUNK, 'N', "Size of data chunks to be processed, 0 for default size"},
         { OPT_HELP_STR, 1, '-', "file\tFile to run tests on.\n" },
         { NULL }
     };
@@ -4182,6 +4185,8 @@ int setup_tests(void)
             break;
         case OPT_IN_PLACE:
             if ((process_mode_in_place = evp_test_process_mode(opt_arg())) == -1)
+        case OPT_DATA_CHUNK:
+            if (!opt_int(opt_arg(), &data_chunk_size))
                 return 0;
             break;
         case OPT_PROVIDER_NAME:
