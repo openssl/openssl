@@ -685,9 +685,9 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
                                 unsigned char key_phase_bit,
                                 uint64_t *rx_key_epoch)
 {
-    int l = 0, l2 = 0, is_old_key;
+    int l = 0, l2 = 0, is_old_key, nonce_len;
     unsigned char nonce[EVP_MAX_IV_LENGTH];
-    size_t nonce_len, i, cctx_idx;
+    size_t i, cctx_idx;
     OSSL_QRL_ENC_LEVEL *el = ossl_qrl_enc_level_set_get(&qrx->el_set,
                                                         enc_level, 1);
     EVP_CIPHER_CTX *cctx;
@@ -731,7 +731,7 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
 
     /* Construct nonce (nonce=IV ^ PN). */
     nonce_len = EVP_CIPHER_CTX_get_iv_length(cctx);
-    if (!ossl_assert(nonce_len >= sizeof(QUIC_PN)))
+    if (!ossl_assert(nonce_len >= (int)sizeof(QUIC_PN)))
         return 0;
 
     memcpy(nonce, el->iv[cctx_idx], nonce_len);
