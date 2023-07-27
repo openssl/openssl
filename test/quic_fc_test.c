@@ -470,7 +470,7 @@ static int run_rxfc_script(const struct rx_test_op *script)
 #define MAX_STREAMS     3
     int testresult = 0;
     const struct rx_test_op *op = script;
-    QUIC_RXFC conn_rxfc, stream_rxfc[MAX_STREAMS];
+    QUIC_RXFC conn_rxfc = {0}, stream_rxfc[MAX_STREAMS] = {0}; /* coverity */
     char stream_init_done[MAX_STREAMS] = {0};
     int conn_init_done = 0;
 
@@ -488,7 +488,8 @@ static int run_rxfc_script(const struct rx_test_op *script)
                 break;
 
             case RX_OPC_INIT_STREAM:
-                if (!TEST_size_t_lt(op->stream_idx, OSSL_NELEM(stream_rxfc)))
+                if (!TEST_size_t_lt(op->stream_idx, OSSL_NELEM(stream_rxfc))
+                    || !TEST_true(conn_init_done))
                     goto err;
 
                 if (!TEST_true(ossl_quic_rxfc_init(&stream_rxfc[op->stream_idx],
