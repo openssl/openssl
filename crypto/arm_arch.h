@@ -102,6 +102,7 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 # define ARM_CPU_PART_N1           0xD0C
 # define ARM_CPU_PART_V1           0xD40
 # define ARM_CPU_PART_N2           0xD49
+# define ARM_CPU_PART_V2           0xD4F
 
 # define MIDR_PARTNUM_SHIFT       4
 # define MIDR_PARTNUM_MASK        (0xfffU << MIDR_PARTNUM_SHIFT)
