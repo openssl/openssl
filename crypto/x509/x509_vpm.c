@@ -335,7 +335,10 @@ int X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param,
         if (param->policies == NULL)
             return 0;
     }
-    return sk_ASN1_OBJECT_push(param->policies, policy);
+
+    if (sk_ASN1_OBJECT_push(param->policies, policy) <= 0)
+        return 0;
+    return 1;
 }
 
 int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param,
@@ -607,7 +610,10 @@ int X509_VERIFY_PARAM_add0_table(X509_VERIFY_PARAM *param)
             X509_VERIFY_PARAM_free(ptmp);
         }
     }
-    return sk_X509_VERIFY_PARAM_push(param_table, param);
+
+    if (sk_X509_VERIFY_PARAM_push(param_table, param) <= 0)
+        return 0;
+    return 1;
 }
 
 int X509_VERIFY_PARAM_get_count(void)
