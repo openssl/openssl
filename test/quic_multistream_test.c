@@ -2656,15 +2656,19 @@ static int script_32_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
         return 1;
     case 1:
         offset  = 0;
-        flen     = 0;
+        flen    = 0;
         break;
     case 2:
         offset  = (((uint64_t)1)<<62) - 1;
-        flen     = 5;
+        flen    = 5;
         break;
     case 3:
         offset  = 1 * 1024 * 1024 * 1024; /* 1G */
-        flen     = 5;
+        flen    = 5;
+        break;
+    case 4:
+        offset  = 0;
+        flen    = 1;
         break;
     }
 
@@ -3958,6 +3962,189 @@ static const struct script_op script_62[] = {
     OP_END
 };
 
+/* 63. Fault injection - STREAM frame exceeding stream limit */
+static const struct script_op script_63[] = {
+    OP_S_SET_INJECT_PLAIN   (script_32_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (S_BIDI_ID(5000) + 1, 4)
+    OP_S_WRITE              (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_LIMIT_ERROR,0,0)
+
+    OP_END
+};
+
+/* 64. Fault injection - STREAM - zero-length no-FIN is accepted */
+static const struct script_op script_64[] = {
+    OP_S_SET_INJECT_PLAIN   (script_32_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_S_NEW_STREAM_UNI     (a, S_UNI_ID(0))
+    OP_S_WRITE              (a, "apple", 5)
+
+    OP_C_ACCEPT_STREAM_WAIT (a)
+    OP_C_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (S_BIDI_ID(20) + 1, 1)
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (a, "orange", 6)
+
+    OP_END
+};
+
+/* 65. Fault injection - CRYPTO - zero-length is accepted */
+static int script_65_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    int ok = 0;
+    unsigned char frame_buf[64];
+    size_t written;
+    WPACKET wpkt;
+
+    if (h->inject_word0 == 0)
+        return 1;
+
+    --h->inject_word0;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_CRYPTO))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)))
+        goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        goto err;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+static const struct script_op script_65[] = {
+    OP_S_SET_INJECT_PLAIN   (script_65_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, 0)
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (a, "orange", 6)
+
+    OP_END
+};
+
+/* 66. Fault injection - large MAX_STREAM_DATA */
+static int script_66_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+                                  unsigned char *buf, size_t len)
+{
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[64];
+    size_t written;
+
+    if (h->inject_word0 == 0)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1)))
+        goto err;
+
+    if (h->inject_word1 == OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA)
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, /* stream ID */
+                                                h->inject_word0 - 1)))
+            goto err;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_VLINT_MAX)))
+        goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        goto err;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+static const struct script_op script_66[] = {
+    OP_S_SET_INJECT_PLAIN   (script_66_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_S_NEW_STREAM_BIDI    (a, S_BIDI_ID(0))
+    OP_S_WRITE              (a, "apple", 5)
+
+    OP_C_ACCEPT_STREAM_WAIT (a)
+    OP_C_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (S_BIDI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA)
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (a, "orange", 6)
+    OP_C_WRITE              (a, "Strawberry", 10)
+    OP_S_READ_EXPECT        (a, "Strawberry", 10)
+
+    OP_END
+};
+
+/* 67. Fault injection - large MAX_DATA */
+static const struct script_op script_67[] = {
+    OP_S_SET_INJECT_PLAIN   (script_66_inject_plain)
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_S_NEW_STREAM_BIDI    (a, S_BIDI_ID(0))
+    OP_S_WRITE              (a, "apple", 5)
+
+    OP_C_ACCEPT_STREAM_WAIT (a)
+    OP_C_READ_EXPECT        (a, "apple", 5)
+
+    OP_SET_INJECT_WORD      (1, OSSL_QUIC_FRAME_TYPE_MAX_DATA)
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (a, "orange", 6)
+    OP_C_WRITE              (a, "Strawberry", 10)
+    OP_S_READ_EXPECT        (a, "Strawberry", 10)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -4021,6 +4208,11 @@ static const struct script_op *const scripts[] = {
     script_60,
     script_61,
     script_62,
+    script_63,
+    script_64,
+    script_65,
+    script_66,
+    script_67,
 };
 
 static int test_script(int idx)
