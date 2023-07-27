@@ -270,6 +270,9 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CHANNEL *ch,
         return 0;
     }
 
+    if (f.len == 0)
+        return 1; /* nothing to do */
+
     rstream = ch->crypto_recv[ackm_data->pkt_space];
     if (!ossl_assert(rstream != NULL))
         /*
@@ -581,8 +584,13 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
      * without copying by reffing the OSSL_QRX_PKT. In this case
      * ossl_qrx_pkt_release() will be eventually called when the data is no
      * longer needed.
+     *
+     * It is OK for the peer to send us a zero-length non-FIN STREAM frame,
+     * which is a no-op, aside from the fact that it ensures the stream exists.
+     * In this case we have nothing to report to the receive buffer.
      */
-    if (!ossl_quic_rstream_queue_data(stream->rstream, parent_pkt,
+    if ((frame_data.len > 0 || frame_data.is_fin)
+        && !ossl_quic_rstream_queue_data(stream->rstream, parent_pkt,
                                       frame_data.offset,
                                       frame_data.data,
                                       frame_data.len,
@@ -595,9 +603,9 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
      * calling ossl_quic_rstream_available() where it is not necessary as it is
      * more expensive.
      */
-    if (stream->recv_state != QUIC_RSTREAM_STATE_SIZE_KNOWN
-        || !ossl_quic_rstream_available(stream->rstream, &rs_avail, &rs_fin))
-        return 0;
+    if (stream->recv_state == QUIC_RSTREAM_STATE_SIZE_KNOWN)
+        if (!ossl_quic_rstream_available(stream->rstream, &rs_avail, &rs_fin))
+            return 0;
 
     if (rs_fin)
         ossl_quic_stream_map_notify_totally_received(&ch->qsm, stream);
