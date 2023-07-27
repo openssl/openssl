@@ -601,6 +601,24 @@ typedef struct cipher_data_st {
     const char *xts_standard;
 } CIPHER_DATA;
 
+
+/*
+ * XTS, SIV, CCM, stitched ciphers and Wrap modes have special
+ * requirements about input lengths so we don't fragment for those
+ */
+static int cipher_test_valid_fragmentation(CIPHER_DATA *cdat)
+{
+    return (cdat->aead == EVP_CIPH_CCM_MODE
+            || cdat->aead == EVP_CIPH_CBC_MODE
+            || (cdat->aead == -1
+                && EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_STREAM_CIPHER)
+            || ((EVP_CIPHER_get_flags(cdat->cipher) & EVP_CIPH_FLAG_CTS) != 0)
+            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
+            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_GCM_SIV_MODE
+            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
+            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE) ? 0 : 1;
+}
+
 static int cipher_test_init(EVP_TEST *t, const char *alg)
 {
     const EVP_CIPHER *cipher;
@@ -640,6 +658,13 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
         cdat->aead = m != 0 ? m : -1;
     else
         cdat->aead = 0;
+
+    if (data_chunk_size != 0 && !cipher_test_valid_fragmentation(cdat)) {
+        ERR_pop_to_mark();
+        t->skip = 1;
+        TEST_info("skipping, '%s' does not support fragmentation", alg);
+        return 1;
+    }
 
     t->data = cdat;
     if (fetched_cipher != NULL)
@@ -948,15 +973,26 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     if (expected->aad[0] != NULL && !expected->tls_aad) {
         t->err = "AAD_SET_ERROR";
         if (!frag) {
+            /* Supply the data all in one go or according to data_chunk_size */
             for (i = 0; expected->aad[i] != NULL; i++) {
-                if (!EVP_CipherUpdate(ctx, NULL, &chunklen, expected->aad[i],
-                                      expected->aad_len[i]))
-                    goto err;
+                size_t aad_len = expected->aad_len[i];
+                donelen = 0;
+
+                do {
+                    size_t current_aad_len = (size_t) data_chunk_size;
+
+                    if (data_chunk_size == 0 || (size_t) data_chunk_size > aad_len)
+                        current_aad_len = aad_len;
+                    if (!EVP_CipherUpdate(ctx, NULL, &chunklen,
+                                          expected->aad[i] + donelen,
+                                          current_aad_len))
+                        goto err;
+                    donelen += current_aad_len;
+                    aad_len -= current_aad_len;
+                } while (aad_len > 0);
             }
         } else {
-            /*
-             * Supply the AAD in chunks less than the block size where possible
-             */
+            /* Supply the AAD in chunks less than the block size where possible */
             for (i = 0; expected->aad[i] != NULL; i++) {
                 if (expected->aad_len[i] > 0) {
                     if (!EVP_CipherUpdate(ctx, NULL, &chunklen, expected->aad[i], 1))
@@ -1020,9 +1056,19 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     t->err = "CIPHERUPDATE_ERROR";
     tmplen = 0;
     if (!frag) {
-        /* We supply the data all in one go */
-        if (!EVP_CipherUpdate(ctx, tmp + out_misalign, &tmplen, in, in_len))
-            goto err;
+        do {
+            /* Supply the data all in one go or according to data_chunk_size */
+            size_t current_in_len = (size_t) data_chunk_size;
+
+            if (data_chunk_size == 0 || (size_t) data_chunk_size > in_len)
+                current_in_len = in_len;
+            if (!EVP_CipherUpdate(ctx, tmp + out_misalign + tmplen, &chunklen,
+                                  in, current_in_len))
+                goto err;
+            tmplen += chunklen;
+            in += current_in_len;
+            in_len -= current_in_len;
+        } while (in_len > 0);
     } else {
         /* Supply the data in chunks less than the block size where possible */
         if (in_len > 0) {
@@ -1105,23 +1151,6 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     return ok;
 }
 
-/*
- * XTS, SIV, CCM, stitched ciphers and Wrap modes have special
- * requirements about input lengths so we don't fragment for those
- */
-static int cipher_test_valid_fragmentation(CIPHER_DATA *cdat)
-{
-    return (cdat->aead == EVP_CIPH_CCM_MODE
-            || cdat->aead == EVP_CIPH_CBC_MODE
-            || (cdat->aead == -1
-                && EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_STREAM_CIPHER)
-            || ((EVP_CIPHER_get_flags(cdat->cipher) & EVP_CIPH_FLAG_CTS) != 0)
-            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
-            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_GCM_SIV_MODE
-            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
-            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE) ? 0 : 1;
-}
-
 static int cipher_test_run(EVP_TEST *t)
 {
     CIPHER_DATA *cdat = t->data;
@@ -1155,6 +1184,8 @@ static int cipher_test_run(EVP_TEST *t)
             break;
 
         for (frag = 0; frag <= fragmax; frag++) {
+            if (frag == 1 && data_chunk_size != 0)
+                break;
             for (out_misalign = 0; out_misalign <= 1; out_misalign++) {
                 for (inp_misalign = 0; inp_misalign <= 1; inp_misalign++) {
                     /* Skip input misalign tests for in-place processing */
