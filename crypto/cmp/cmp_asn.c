@@ -306,22 +306,22 @@ int OSSL_CMP_ITAV_get0_rootCaKeyUpdate(const OSSL_CMP_ITAV *itav,
     return 1;
 }
 
-/* get ASN.1 encoded integer, return -1 on error */
+/* get ASN.1 encoded integer, return -2 on error; -1 is valid for certReqId */
 int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a)
 {
     int64_t res;
 
     if (!ASN1_INTEGER_get_int64(&res, a)) {
         ERR_raise(ERR_LIB_CMP, ASN1_R_INVALID_NUMBER);
-        return -1;
+        return -2;
     }
     if (res < INT_MIN) {
         ERR_raise(ERR_LIB_CMP, ASN1_R_TOO_SMALL);
-        return -1;
+        return -2;
     }
     if (res > INT_MAX) {
         ERR_raise(ERR_LIB_CMP, ASN1_R_TOO_LARGE);
-        return -1;
+        return -2;
     }
     return (int)res;
 }
