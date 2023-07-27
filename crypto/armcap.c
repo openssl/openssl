@@ -10,17 +10,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <setjmp.h>
-#include <signal.h>
 #include <openssl/crypto.h>
 #ifdef __APPLE__
 #include <sys/sysctl.h>
+#else
+#include <setjmp.h>
+#include <signal.h>
 #endif
 #include "internal/cryptlib.h"
-#ifndef _WIN32
-#include <unistd.h>
-#else
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include <unistd.h>
 #endif
 #include "arm_arch.h"
 
@@ -46,7 +47,7 @@ uint32_t OPENSSL_rdtsc(void)
 {
     return 0;
 }
-#elif __ARM_MAX_ARCH__<7
+#elif __ARM_MAX_ARCH__ < 7
 void OPENSSL_cpuid_setup(void)
 {
 }
@@ -55,73 +56,11 @@ uint32_t OPENSSL_rdtsc(void)
 {
     return 0;
 }
-#else
-static sigset_t all_masked;
+#else /* !_WIN32 && __ARM_MAX_ARCH__ >= 7 */
 
-static sigjmp_buf ill_jmp;
-static void ill_handler(int sig)
-{
-    siglongjmp(ill_jmp, sig);
-}
+ /* 3 ways of handling things here: __APPLE__,  getauxval() or SIGILL detect */
 
-/*
- * Following subroutines could have been inlined, but it's not all
- * ARM compilers support inline assembler...
- */
-void _armv7_neon_probe(void);
-void _armv8_aes_probe(void);
-void _armv8_sha1_probe(void);
-void _armv8_sha256_probe(void);
-void _armv8_pmull_probe(void);
-# ifdef __aarch64__
-void _armv8_sm3_probe(void);
-void _armv8_sm4_probe(void);
-void _armv8_eor3_probe(void);
-void _armv8_sha512_probe(void);
-unsigned int _armv8_cpuid_probe(void);
-void _armv8_sve_probe(void);
-void _armv8_sve2_probe(void);
-void _armv8_rng_probe(void);
-
-size_t OPENSSL_rndr_asm(unsigned char *buf, size_t len);
-size_t OPENSSL_rndrrs_asm(unsigned char *buf, size_t len);
-
-size_t OPENSSL_rndr_bytes(unsigned char *buf, size_t len);
-size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len);
-
-static size_t OPENSSL_rndr_wrapper(size_t (*func)(unsigned char *, size_t), unsigned char *buf, size_t len)
-{
-    size_t buffer_size = 0;
-    int i;
-
-    for (i = 0; i < 8; i++) {
-        buffer_size = func(buf, len);
-        if (buffer_size == len)
-            break;
-        usleep(5000);  /* 5000 microseconds (5 milliseconds) */
-    }
-    return buffer_size;
-}
-
-size_t OPENSSL_rndr_bytes(unsigned char *buf, size_t len)
-{
-    return OPENSSL_rndr_wrapper(OPENSSL_rndr_asm, buf, len);
-}
-
-size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len)
-{
-    return OPENSSL_rndr_wrapper(OPENSSL_rndrrs_asm, buf, len);
-}
-# endif
-uint32_t _armv7_tick(void);
-
-uint32_t OPENSSL_rdtsc(void)
-{
-    if (OPENSSL_armcap_P & ARMV7_TICK)
-        return _armv7_tick();
-    else
-        return 0;
-}
+ /* First determine if getauxval() is available (OSSL_IMPLEMENT_GETAUXVAL) */
 
 # if defined(__GNUC__) && __GNUC__>=2
 void OPENSSL_cpuid_setup(void) __attribute__ ((constructor));
@@ -161,10 +100,10 @@ static unsigned long getauxval(unsigned long key)
  * Android: according to https://developer.android.com/ndk/guides/cpu-features,
  * getauxval is supported starting with API level 18
  */
-#  if defined(__ANDROID__) && defined(__ANDROID_API__) && __ANDROID_API__ >= 18
-#   include <sys/auxv.h>
-#   define OSSL_IMPLEMENT_GETAUXVAL
-#  endif
+# if defined(__ANDROID__) && defined(__ANDROID_API__) && __ANDROID_API__ >= 18
+#  include <sys/auxv.h>
+#  define OSSL_IMPLEMENT_GETAUXVAL
+# endif
 
 /*
  * ARM puts the feature bits for Crypto Extensions in AT_HWCAP2, whereas
@@ -177,40 +116,144 @@ static unsigned long getauxval(unsigned long key)
 #  define AT_HWCAP2              26
 # endif
 # if defined(__arm__) || defined (__arm)
-#  define HWCAP                  AT_HWCAP
-#  define HWCAP_NEON             (1 << 12)
+#  define OSSL_HWCAP                  AT_HWCAP
+#  define OSSL_HWCAP_NEON             (1 << 12)
 
-#  define HWCAP_CE               AT_HWCAP2
-#  define HWCAP_CE_AES           (1 << 0)
-#  define HWCAP_CE_PMULL         (1 << 1)
-#  define HWCAP_CE_SHA1          (1 << 2)
-#  define HWCAP_CE_SHA256        (1 << 3)
+#  define OSSL_HWCAP_CE               AT_HWCAP2
+#  define OSSL_HWCAP_CE_AES           (1 << 0)
+#  define OSSL_HWCAP_CE_PMULL         (1 << 1)
+#  define OSSL_HWCAP_CE_SHA1          (1 << 2)
+#  define OSSL_HWCAP_CE_SHA256        (1 << 3)
 # elif defined(__aarch64__)
-#  define HWCAP                  AT_HWCAP
-#  define HWCAP_NEON             (1 << 1)
+#  define OSSL_HWCAP                  AT_HWCAP
+#  define OSSL_HWCAP_NEON             (1 << 1)
 
-#  define HWCAP_CE               HWCAP
-#  define HWCAP_CE_AES           (1 << 3)
-#  define HWCAP_CE_PMULL         (1 << 4)
-#  define HWCAP_CE_SHA1          (1 << 5)
-#  define HWCAP_CE_SHA256        (1 << 6)
-#  define HWCAP_CPUID            (1 << 11)
-#  define HWCAP_SHA3             (1 << 17)
-#  define HWCAP_CE_SM3           (1 << 18)
-#  define HWCAP_CE_SM4           (1 << 19)
-#  define HWCAP_CE_SHA512        (1 << 21)
-#  define HWCAP_SVE              (1 << 22)
-                                  /* AT_HWCAP2 */
-#  define HWCAP2                 26
-#  define HWCAP2_SVE2            (1 << 1)
-#  define HWCAP2_RNG             (1 << 16)
+#  define OSSL_HWCAP_CE               AT_HWCAP
+#  define OSSL_HWCAP_CE_AES           (1 << 3)
+#  define OSSL_HWCAP_CE_PMULL         (1 << 4)
+#  define OSSL_HWCAP_CE_SHA1          (1 << 5)
+#  define OSSL_HWCAP_CE_SHA256        (1 << 6)
+#  define OSSL_HWCAP_CPUID            (1 << 11)
+#  define OSSL_HWCAP_SHA3             (1 << 17)
+#  define OSSL_HWCAP_CE_SM3           (1 << 18)
+#  define OSSL_HWCAP_CE_SM4           (1 << 19)
+#  define OSSL_HWCAP_CE_SHA512        (1 << 21)
+#  define OSSL_HWCAP_SVE              (1 << 22)
+                                      /* AT_HWCAP2 */
+#  define OSSL_HWCAP2                 26
+#  define OSSL_HWCAP2_SVE2            (1 << 1)
+#  define OSSL_HWCAP2_RNG             (1 << 16)
+# endif
+
+uint32_t _armv7_tick(void);
+
+uint32_t OPENSSL_rdtsc(void)
+{
+    if (OPENSSL_armcap_P & ARMV7_TICK)
+        return _armv7_tick();
+    else
+        return 0;
+}
+
+# ifdef __aarch64__
+size_t OPENSSL_rndr_asm(unsigned char *buf, size_t len);
+size_t OPENSSL_rndrrs_asm(unsigned char *buf, size_t len);
+
+size_t OPENSSL_rndr_bytes(unsigned char *buf, size_t len);
+size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len);
+
+static size_t OPENSSL_rndr_wrapper(size_t (*func)(unsigned char *, size_t), unsigned char *buf, size_t len)
+{
+    size_t buffer_size = 0;
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        buffer_size = func(buf, len);
+        if (buffer_size == len)
+            break;
+        usleep(5000);  /* 5000 microseconds (5 milliseconds) */
+    }
+    return buffer_size;
+}
+
+size_t OPENSSL_rndr_bytes(unsigned char *buf, size_t len)
+{
+    return OPENSSL_rndr_wrapper(OPENSSL_rndr_asm, buf, len);
+}
+
+size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len)
+{
+    return OPENSSL_rndr_wrapper(OPENSSL_rndrrs_asm, buf, len);
+}
+# endif
+
+# if !defined(__APPLE__) && !defined(OSSL_IMPLEMENT_GETAUXVAL)
+static sigset_t all_masked;
+
+static sigjmp_buf ill_jmp;
+static void ill_handler(int sig)
+{
+    siglongjmp(ill_jmp, sig);
+}
+
+/*
+ * Following subroutines could have been inlined, but not all
+ * ARM compilers support inline assembler, and we'd then have to
+ * worry about the compiler optimising out the detection code...
+ */
+void _armv7_neon_probe(void);
+void _armv8_aes_probe(void);
+void _armv8_sha1_probe(void);
+void _armv8_sha256_probe(void);
+void _armv8_pmull_probe(void);
+#  ifdef __aarch64__
+void _armv8_sm3_probe(void);
+void _armv8_sm4_probe(void);
+void _armv8_sha512_probe(void);
+void _armv8_eor3_probe(void);
+void _armv8_sve_probe(void);
+void _armv8_sve2_probe(void);
+void _armv8_rng_probe(void);
+#  endif
+# endif /* !__APPLE__ && !OSSL_IMPLEMENT_GETAUXVAL */
+
+/* We only call _armv8_cpuid_probe() if (OPENSSL_armcap_P & ARMV8_CPUID) != 0 */
+unsigned int _armv8_cpuid_probe(void);
+
+# if defined(__APPLE__)
+/*
+ * Checks the specified integer sysctl, returning `value` if it's 1, otherwise returning 0.
+ */
+static unsigned int sysctl_query(const char *name, unsigned int value)
+{
+    unsigned int sys_value = 0;
+    size_t len = sizeof(sys_value);
+
+    return (sysctlbyname(name, &sys_value, &len, NULL, 0) == 0 && sys_value == 1) ? value : 0;
+}
+# elif !defined(OSSL_IMPLEMENT_GETAUXVAL)
+/*
+ * Calls a provided probe function, which may SIGILL. If it doesn't, return `value`, otherwise return 0.
+ */
+static unsigned int arm_probe_for(void (*probe)(void), volatile unsigned int value)
+{
+    if (sigsetjmp(ill_jmp, 1) == 0) {
+        probe();
+        return value;
+    } else {
+        /* The probe function gave us SIGILL */
+        return 0;
+    }
+}
 # endif
 
 void OPENSSL_cpuid_setup(void)
 {
     const char *e;
+# if !defined(__APPLE__) && !defined(OSSL_IMPLEMENT_GETAUXVAL)
     struct sigaction ill_oact, ill_act;
     sigset_t oset;
+# endif
     static int trigger = 0;
 
     if (trigger)
@@ -225,7 +268,7 @@ void OPENSSL_cpuid_setup(void)
     }
 
 # if defined(__APPLE__)
-#   if !defined(__aarch64__)
+#  if !defined(__aarch64__)
     /*
      * Capability probing by catching SIGILL appears to be problematic
      * on iOS. But since Apple universe is "monocultural", it's actually
@@ -235,77 +278,82 @@ void OPENSSL_cpuid_setup(void)
         OPENSSL_armcap_P = ARMV7_NEON;
         return;
     }
-    /*
-     * One could do same even for __aarch64__ iOS builds. It's not done
-     * exclusively for reasons of keeping code unified across platforms.
-     * Unified code works because it never triggers SIGILL on Apple
-     * devices...
-     */
-#   else
+#  else
     {
-        unsigned int feature;
-        size_t len = sizeof(feature);
-        char uarch[64];
+        /*
+         * From
+         * https://github.com/llvm/llvm-project/blob/412237dcd07e5a2afbb1767858262a5f037149a3/llvm/lib/Target/AArch64/AArch64.td#L719
+         * all of these have been available on 64-bit Apple Silicon from the
+         * beginning (the A7).
+         */
+        OPENSSL_armcap_P |= ARMV7_NEON | ARMV8_PMULL | ARMV8_AES | ARMV8_SHA1 | ARMV8_SHA256;
 
-        if (sysctlbyname("hw.optional.armv8_2_sha512", &feature, &len, NULL, 0) == 0 && feature == 1)
-            OPENSSL_armcap_P |= ARMV8_SHA512;
-        feature = 0;
-        if (sysctlbyname("hw.optional.armv8_2_sha3", &feature, &len, NULL, 0) == 0 && feature == 1) {
-            OPENSSL_armcap_P |= ARMV8_SHA3;
-            len = sizeof(uarch);
+        /* More recent extensions are indicated by sysctls */
+        OPENSSL_armcap_P |= sysctl_query("hw.optional.armv8_2_sha512", ARMV8_SHA512);
+        OPENSSL_armcap_P |= sysctl_query("hw.optional.armv8_2_sha3", ARMV8_SHA3);
+
+        if (OPENSSL_armcap_P & ARMV8_SHA3) {
+            char uarch[64];
+
+            size_t len = sizeof(uarch);
             if ((sysctlbyname("machdep.cpu.brand_string", uarch, &len, NULL, 0) == 0) &&
-                (strncmp(uarch, "Apple M1", 8) == 0))
+               ((strncmp(uarch, "Apple M1", 8) == 0) ||
+                (strncmp(uarch, "Apple M2", 8) == 0))) {
                 OPENSSL_armcap_P |= ARMV8_UNROLL8_EOR3;
+            }
         }
     }
-#   endif
-# endif
+#  endif       /* __aarch64__ */
 
-# ifdef OSSL_IMPLEMENT_GETAUXVAL
-    if (getauxval(HWCAP) & HWCAP_NEON) {
-        unsigned long hwcap = getauxval(HWCAP_CE);
+# elif defined(OSSL_IMPLEMENT_GETAUXVAL)
+
+    if (getauxval(OSSL_HWCAP) & OSSL_HWCAP_NEON) {
+        unsigned long hwcap = getauxval(OSSL_HWCAP_CE);
 
         OPENSSL_armcap_P |= ARMV7_NEON;
 
-        if (hwcap & HWCAP_CE_AES)
+        if (hwcap & OSSL_HWCAP_CE_AES)
             OPENSSL_armcap_P |= ARMV8_AES;
 
-        if (hwcap & HWCAP_CE_PMULL)
+        if (hwcap & OSSL_HWCAP_CE_PMULL)
             OPENSSL_armcap_P |= ARMV8_PMULL;
 
-        if (hwcap & HWCAP_CE_SHA1)
+        if (hwcap & OSSL_HWCAP_CE_SHA1)
             OPENSSL_armcap_P |= ARMV8_SHA1;
 
-        if (hwcap & HWCAP_CE_SHA256)
+        if (hwcap & OSSL_HWCAP_CE_SHA256)
             OPENSSL_armcap_P |= ARMV8_SHA256;
 
 #  ifdef __aarch64__
-        if (hwcap & HWCAP_CE_SM4)
+        if (hwcap & OSSL_HWCAP_CE_SM4)
             OPENSSL_armcap_P |= ARMV8_SM4;
 
-        if (hwcap & HWCAP_CE_SHA512)
+        if (hwcap & OSSL_HWCAP_CE_SHA512)
             OPENSSL_armcap_P |= ARMV8_SHA512;
 
-        if (hwcap & HWCAP_CPUID)
+        if (hwcap & OSSL_HWCAP_CPUID)
             OPENSSL_armcap_P |= ARMV8_CPUID;
 
-        if (hwcap & HWCAP_CE_SM3)
+        if (hwcap & OSSL_HWCAP_CE_SM3)
             OPENSSL_armcap_P |= ARMV8_SM3;
-        if (hwcap & HWCAP_SHA3)
+        if (hwcap & OSSL_HWCAP_SHA3)
             OPENSSL_armcap_P |= ARMV8_SHA3;
 #  endif
     }
 #  ifdef __aarch64__
-        if (getauxval(HWCAP) & HWCAP_SVE)
+        if (getauxval(OSSL_HWCAP) & OSSL_HWCAP_SVE)
             OPENSSL_armcap_P |= ARMV8_SVE;
 
-        if (getauxval(HWCAP2) & HWCAP2_SVE2)
+        if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_SVE2)
             OPENSSL_armcap_P |= ARMV8_SVE2;
 
-        if (getauxval(HWCAP2) & HWCAP2_RNG)
+        if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_RNG)
             OPENSSL_armcap_P |= ARMV8_RNG;
 #  endif
-# endif
+
+# else /* !__APPLE__ && !OSSL_IMPLEMENT_GETAUXVAL */
+
+    /* If all else fails, do brute force SIGILL-based feature detection */
 
     sigfillset(&all_masked);
     sigdelset(&all_masked, SIGILL);
@@ -321,73 +369,41 @@ void OPENSSL_cpuid_setup(void)
     sigprocmask(SIG_SETMASK, &ill_act.sa_mask, &oset);
     sigaction(SIGILL, &ill_act, &ill_oact);
 
-    /* If we used getauxval, we already have all the values */
-# ifndef OSSL_IMPLEMENT_GETAUXVAL
-    if (sigsetjmp(ill_jmp, 1) == 0) {
-        _armv7_neon_probe();
-        OPENSSL_armcap_P |= ARMV7_NEON;
-        if (sigsetjmp(ill_jmp, 1) == 0) {
-            _armv8_pmull_probe();
-            OPENSSL_armcap_P |= ARMV8_PMULL | ARMV8_AES;
-        } else if (sigsetjmp(ill_jmp, 1) == 0) {
-            _armv8_aes_probe();
-            OPENSSL_armcap_P |= ARMV8_AES;
-        }
-        if (sigsetjmp(ill_jmp, 1) == 0) {
-            _armv8_sha1_probe();
-            OPENSSL_armcap_P |= ARMV8_SHA1;
-        }
-        if (sigsetjmp(ill_jmp, 1) == 0) {
-            _armv8_sha256_probe();
-            OPENSSL_armcap_P |= ARMV8_SHA256;
-        }
-#  if defined(__aarch64__) && !defined(__APPLE__)
-        if (sigsetjmp(ill_jmp, 1) == 0) {
-            _armv8_sm4_probe();
-            OPENSSL_armcap_P |= ARMV8_SM4;
+    OPENSSL_armcap_P |= arm_probe_for(_armv7_neon_probe, ARMV7_NEON);
+
+    if (OPENSSL_armcap_P & ARMV7_NEON) {
+
+        OPENSSL_armcap_P |= arm_probe_for(_armv8_pmull_probe, ARMV8_PMULL | ARMV8_AES);
+        if (!(OPENSSL_armcap_P & ARMV8_AES)) {
+            OPENSSL_armcap_P |= arm_probe_for(_armv8_aes_probe, ARMV8_AES);
         }
 
-        if (sigsetjmp(ill_jmp, 1) == 0) {
-            _armv8_sha512_probe();
-            OPENSSL_armcap_P |= ARMV8_SHA512;
-        }
+        OPENSSL_armcap_P |= arm_probe_for(_armv8_sha1_probe, ARMV8_SHA1);
+        OPENSSL_armcap_P |= arm_probe_for(_armv8_sha256_probe, ARMV8_SHA256);
 
-        if (sigsetjmp(ill_jmp, 1) == 0) {
-            _armv8_sm3_probe();
-            OPENSSL_armcap_P |= ARMV8_SM3;
-        }
-        if (sigsetjmp(ill_jmp, 1) == 0) {
-            _armv8_eor3_probe();
-            OPENSSL_armcap_P |= ARMV8_SHA3;
-        }
+#  if defined(__aarch64__)
+        OPENSSL_armcap_P |= arm_probe_for(_armv8_sm3_probe, ARMV8_SM3);
+        OPENSSL_armcap_P |= arm_probe_for(_armv8_sm4_probe, ARMV8_SM4);
+        OPENSSL_armcap_P |= arm_probe_for(_armv8_sha512_probe, ARMV8_SHA512);
+        OPENSSL_armcap_P |= arm_probe_for(_armv8_eor3_probe, ARMV8_SHA3);
 #  endif
     }
-#  if defined(__aarch64__) && !defined(__APPLE__)
-    if (sigsetjmp(ill_jmp, 1) == 0) {
-        _armv8_sve_probe();
-        OPENSSL_armcap_P |= ARMV8_SVE;
-    }
-
-    if (sigsetjmp(ill_jmp, 1) == 0) {
-        _armv8_sve2_probe();
-        OPENSSL_armcap_P |= ARMV8_SVE2;
-    }
-
-    if (sigsetjmp(ill_jmp, 1) == 0) {
-        _armv8_rng_probe();
-        OPENSSL_armcap_P |= ARMV8_RNG;
-    }
+#  ifdef __aarch64__
+    OPENSSL_armcap_P |= arm_probe_for(_armv8_sve_probe, ARMV8_SVE);
+    OPENSSL_armcap_P |= arm_probe_for(_armv8_sve2_probe, ARMV8_SVE2);
+    OPENSSL_armcap_P |= arm_probe_for(_armv8_rng_probe, ARMV8_RNG);
 #  endif
-# endif
 
     /*
      * Probing for ARMV7_TICK is known to produce unreliable results,
-     * so we will only use the feature when the user explicitly enables
-     * it with OPENSSL_armcap.
+     * so we only use the feature when the user explicitly enables it
+     * with OPENSSL_armcap.
      */
 
     sigaction(SIGILL, &ill_oact, NULL);
     sigprocmask(SIG_SETMASK, &oset, NULL);
+
+# endif /* __APPLE__, OSSL_IMPLEMENT_GETAUXVAL */
 
 # ifdef __aarch64__
     if (OPENSSL_armcap_P & ARMV8_CPUID)
@@ -399,9 +415,10 @@ void OPENSSL_cpuid_setup(void)
             OPENSSL_armv8_rsa_neonized = 1;
     }
     if ((MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V1) ||
-         MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N2)) &&
+         MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N2) ||
+         MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V2)) &&
         (OPENSSL_armcap_P & ARMV8_SHA3))
         OPENSSL_armcap_P |= ARMV8_UNROLL8_EOR3;
 # endif
 }
-#endif
+#endif /* _WIN32, __ARM_MAX_ARCH__ >= 7 */
