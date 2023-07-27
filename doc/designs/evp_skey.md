@@ -144,5 +144,19 @@ similar to `EVP_MAC_init`
 API to derive an EVP_SKEY object
 --------------------------------
 
-This part is delayed for a while because the proposed API doesn't fit well with
-TLS KDFs deriving multiple keys simultaneously.
+The derived key can be algorithm-specific or algorithm-agnostic. To specify the
+algorithm binding, the params argument can be used.
+
+```C
+EVP_SKEY *EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, EVP_SKEYMGMT *mgmt,
+                               const char *key_type, const char *propquery,
+                               size_t keylen, const OSSL_PARAM params[]);
+EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
+                              const char *key_type, const char *propquery,
+                              size_t keylen, const OSSL_PARAM params[]);
+```
+
+similar to `EVP_PKEY_derive/EVP_KDF_derive`
+
+For some KDFs (e.g. TLS KDF, HKDF) we can derive several keys simultaneously.
+It requires a special API.
