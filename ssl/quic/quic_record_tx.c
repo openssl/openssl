@@ -472,11 +472,11 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
                                 const unsigned char *hdr, size_t hdr_len,
                                 QUIC_PKT_HDR_PTRS *ptrs)
 {
-    int l = 0, l2 = 0;
+    int l = 0, l2 = 0, nonce_len;
     OSSL_QRL_ENC_LEVEL *el
         = ossl_qrl_enc_level_set_get(&qtx->el_set, enc_level, 1);
     unsigned char nonce[EVP_MAX_IV_LENGTH];
-    size_t nonce_len, i;
+    size_t i;
     EVP_CIPHER_CTX *cctx = NULL;
 
     /* We should not have been called if we do not have key material. */
@@ -501,10 +501,10 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
 
     /* Construct nonce (nonce=IV ^ PN). */
     nonce_len = EVP_CIPHER_CTX_get_iv_length(cctx);
-    if (!ossl_assert(nonce_len >= sizeof(QUIC_PN)))
+    if (!ossl_assert(nonce_len >= (int)sizeof(QUIC_PN)))
         return 0;
 
-    memcpy(nonce, el->iv[0], nonce_len);
+    memcpy(nonce, el->iv[0], (size_t)nonce_len);
     for (i = 0; i < sizeof(QUIC_PN); ++i)
         nonce[nonce_len - i - 1] ^= (unsigned char)(pn >> (i * 8));
 
