@@ -277,7 +277,7 @@ int ossl_uint_set_remove(UINT_SET *s, const UINT_RANGE *range)
              */
             ossl_list_uint_set_remove(s, z);
             OPENSSL_free(z);
-        } else if (start <= z->range.start) {
+        } else if (start <= z->range.start && end >= z->range.start) {
             /*
              * The range being removed includes start of this range, but does
              * not cover the entire range (as this would be caught by the case
@@ -303,6 +303,7 @@ int ossl_uint_set_remove(UINT_SET *s, const UINT_RANGE *range)
              */
             y = create_set_item(end + 1, z->range.end);
             ossl_list_uint_set_insert_after(s, z, y);
+            z->range.end = start - 1;
             break;
         } else {
             /* Assert no partial overlap; all cases should be covered above. */
@@ -310,7 +311,7 @@ int ossl_uint_set_remove(UINT_SET *s, const UINT_RANGE *range)
         }
     }
 
-     return 1;
+    return 1;
 }
 
 int ossl_uint_set_query(const UINT_SET *s, uint64_t v)
