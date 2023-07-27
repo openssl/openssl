@@ -111,14 +111,15 @@ static int uint_range_overlaps(const UINT_RANGE *a,
 
 static UINT_SET_ITEM *create_set_item(uint64_t start, uint64_t end)
 {
-        UINT_SET_ITEM *x = OPENSSL_malloc(sizeof(UINT_SET_ITEM));
+    UINT_SET_ITEM *x = OPENSSL_malloc(sizeof(UINT_SET_ITEM));
 
-        ossl_list_uint_set_init_elem(x);
-        if (x != NULL) {
-            x->range.start = start;
-            x->range.end   = end;
-        }
-        return x;
+    if (x == NULL)
+        return NULL;
+
+    ossl_list_uint_set_init_elem(x);
+    x->range.start = start;
+    x->range.end   = end;
+    return x;
 }
 
 int ossl_uint_set_insert(UINT_SET *s, const UINT_RANGE *range)
