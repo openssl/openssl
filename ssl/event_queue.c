@@ -111,8 +111,11 @@ OSSL_EVENT *ossl_event_queue_add_new(OSSL_EVENT_QUEUE *queue,
 {
     OSSL_EVENT *e = OPENSSL_malloc(sizeof(*e));
 
-    if (e == NULL || queue == NULL)
+    if (e == NULL || queue == NULL) {
+        OPENSSL_free(e);
         return NULL;
+    }
+
     ossl_event_set(e, type, priority, when, ctx, payload, payload_size);
     e->flag_dynamic = 1;
     if (event_queue_add(queue, e))
