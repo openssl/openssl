@@ -13,11 +13,11 @@ C<libcrypto> and C<libssl>.
 The C<libcrypto> library provides APIs for general purpose cryptography such as
 encryption, digital signatures, hash functions, etc. It additionally supplies
 supporting APIs for cryptography related standards, e.g. for reading and writing
-digital certificates (also known as X.509 certifictes). Finally it also supplies
-various additional supporting APIs that are not directly cryptography related
-but are nonetheless useful and dependended upon by other APIs. For example the
-"BIO" functions provide capabilities for abstracting I/O, e.g. via a file or
-over a network.
+digital certificates (also known as X.509 certificates). Finally it also
+supplies various additional supporting APIs that are not directly cryptography
+related but are nonetheless useful and dependended upon by other APIs. For
+example the "BIO" functions provide capabilities for abstracting I/O, e.g. via a
+file or over a network.
 
 The C<libssl> library provides functions to perform secure communication between
 two peers across a network. Most signficiantly it implements support for the
@@ -78,7 +78,7 @@ needed. This will automatically load any available configuration file and will
 initialise OpenSSL for use. Unlike in earlier versions of OpenSSL (prior to
 1.1.0) no explicit initialisation steps need to be taken.
 
-Similarly when the application exits the default library context is
+Similarly when the application exits, the default library context is
 automatically destroyed. No explicit de-initialisation steps need to be taken.
 
 See L<OSSL_LIB_CTX(3)> for more information about library contexts.
@@ -87,7 +87,7 @@ See also L<ossl-guide-libcrypto-introduction(7)/ALGORITHM FETCHING>.
 =head1 PROPERTY QUERY STRINGS
 
 In some cases the available providers may mean that more than one implementation
-of any given algorithm might be available. For example the OpenSSL fips provider
+of any given algorithm might be available. For example the OpenSSL FIPS provider
 supplies alternative implementations of many of the same algorithms that are
 available in the OpenSSL default provider.
 
@@ -197,7 +197,7 @@ See L<OSSL_PROVIDER-default(7)>.
 =head2 Base provider
 
 The base provider is built in as part of the F<libcrypto> library and contains
-algorithm implementations for encoding and decoding for OpenSSL keys.
+algorithm implementations for encoding and decoding of OpenSSL keys.
 Should it be needed (if other providers are loaded and offer
 implementations of the same algorithms), the property query string
 "provider=base" can be used as a search criterion for these implementations.
@@ -213,13 +213,16 @@ See L<OSSL_PROVIDER-base(7)>.
 The FIPS provider is a dynamically loadable module, and must therefore
 be loaded explicitly, either in code or through OpenSSL configuration
 (see L<config(5)>). It contains algorithm implementations that have been
-validated according to the FIPS 140-2 standard. Should it be needed (if other
+validated according to FIPS standards. Should it be needed (if other
 providers are loaded and offer implementations of the same algorithms), the
 property query string "provider=fips" can be used as a search criterion for
 these implementations. All approved algorithm implementations in the FIPS
 provider can also be selected with the property "fips=yes". The FIPS provider
 may also contain non-approved algorithm implementations and these can be
 selected with the property "fips=no".
+
+Typically the L</Base provider> will also need to be loaded because the FIPS
+provider does not support the encoding or decoding of keys.
 
 See L<OSSL_PROVIDER-FIPS(7)> and L<fips_module(7)>.
 
@@ -241,6 +244,12 @@ The null provider is built in as part of the F<libcrypto> library. It contains
 no algorithms in it at all. When fetching algorithms the default provider will
 be automatically loaded if no other provider has been explicitly loaded. To
 prevent that from happening you can explicitly load the null provider.
+
+You can use this if you create your own library context and want to ensure that
+all API calls have correctly passed the created library context and are not
+accidentally using the default library context. Load the null provider into the
+default library context so that the default library context has no algorithm
+implementations available.
 
 See L<OSSL_PROVIDER-null(7)>.
 
@@ -288,11 +297,14 @@ lowercase letters and indicates the purpose of the function.
 =head1 DEMO APPLICATIONS
 
 OpenSSL is distributed with a set of demo applications which provide some
-examples of how use the various API functions. To look at them download the
+examples of how to use the various API functions. To look at them download the
 OpenSSL source code from the OpenSSL website
 (L<https://www.openssl.org/source/>). Extract the downloaded B<.tar.gz> file for
 the version of OpenSSL that you are using and look at the various files in the
 B<demos> sub-directory.
+
+The Makefiles in the subdirectories give instructions on how to build and run
+the demo applications.
 
 =head1 FURTHER READING
 
