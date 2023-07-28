@@ -213,8 +213,8 @@ typedef struct ossl_qf_encrypted_extensions {
  * instance. |block| indicates whether we are using blocking mode or not.
  */
 int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
-                              char *certfile, char *keyfile, int block,
-                              QUIC_TSERVER **qtserv, SSL **cssl,
+                              SSL_CTX *serverctx, char *certfile, char *keyfile,
+                              int block, QUIC_TSERVER **qtserv, SSL **cssl,
                               OSSL_QUIC_FAULT **fault);
 
 /*
@@ -432,7 +432,7 @@ static int test_unknown_frame(void)
     if (!TEST_ptr(cctx))
         goto err;
 
-    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, cert, privkey, 0,
+    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, NULL, cert, privkey, 0,
                                              &qtserv, &cssl, &fault)))
         goto err;
 
@@ -525,7 +525,7 @@ static int test_no_transport_params(void)
     if (!TEST_ptr(cctx))
         goto err;
 
-    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, cert, privkey, 0,
+    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, NULL, cert, privkey, 0,
                                              &qtserv, &cssl, &fault)))
         goto err;
 

@@ -72,7 +72,7 @@ static OSSL_TIME fake_now_cb(void *arg)
 }
 
 int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
-                              char *certfile, char *keyfile,
+                              SSL_CTX *serverctx, char *certfile, char *keyfile,
                               int flags, QUIC_TSERVER **qtserv, SSL **cssl,
                               QTEST_FAULT **fault)
 {
@@ -166,7 +166,9 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     tserver_args.net_rbio = sbio;
     tserver_args.net_wbio = fisbio;
     tserver_args.alpn = NULL;
-    tserver_args.ctx = NULL;
+    if (serverctx != NULL && !TEST_true(SSL_CTX_up_ref(serverctx)))
+        goto err;
+    tserver_args.ctx = serverctx;
     if ((flags & QTEST_FLAG_FAKE_TIME) != 0) {
         fake_now = ossl_time_zero();
         tserver_args.now_cb = fake_now_cb;
@@ -187,6 +189,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
 
     return 1;
  err:
+    SSL_CTX_free(tserver_args.ctx);
     BIO_ADDR_free(peeraddr);
     BIO_free(cbio);
     BIO_free(fisbio);
