@@ -844,7 +844,6 @@ out:
     return pkts_done > 0 ? TX_PACKETISER_RES_SENT_PKT : res;
 }
 
-
 static const struct archetype_data archetypes[QUIC_ENC_LEVEL_NUM][TX_PACKETISER_ARCHETYPE_NUM] = {
     /* EL 0(INITIAL) */
     {

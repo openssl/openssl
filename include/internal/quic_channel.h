@@ -211,11 +211,28 @@ int ossl_quic_channel_on_handshake_confirmed(QUIC_CHANNEL *ch);
  * reason string is not currently handled, but should be a string of static
  * storage duration. If the connection has already terminated due to a previous
  * protocol error, this is a no-op; first error wins.
+ *
+ * Usually the ossl_quic_channel_raise_protocol_error() function should be used.
+ * The ossl_quic_channel_raise_protocol_error_loc() function can be used
+ * directly for passing through existing call site information from an existing
+ * error.
  */
-void ossl_quic_channel_raise_protocol_error(QUIC_CHANNEL *ch,
-                                            uint64_t error_code,
-                                            uint64_t frame_type,
-                                            const char *reason);
+void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
+                                                uint64_t error_code,
+                                                uint64_t frame_type,
+                                                const char *reason,
+                                                const char *src_file,
+                                                int src_line,
+                                                const char *src_func);
+
+#define ossl_quic_channel_raise_protocol_error(ch, error_code, frame_type, reason) \
+    ossl_quic_channel_raise_protocol_error_loc((ch), (error_code),  \
+                                               (frame_type),        \
+                                               (reason),            \
+                                               OPENSSL_FILE,        \
+                                               OPENSSL_LINE,        \
+                                               OPENSSL_FUNC)
+
 /*
  * Returns 1 if permanent net error was detected on the QUIC_CHANNEL,
  * 0 otherwise.
