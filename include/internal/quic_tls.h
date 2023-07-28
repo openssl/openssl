@@ -97,6 +97,9 @@ int ossl_quic_tls_set_transport_params(QUIC_TLS *qtls,
 
 int ossl_quic_tls_get_error(QUIC_TLS *qtls,
                             uint64_t *error_code,
-                            const char **error_msg);
+                            const char **error_msg,
+                            const char **error_src_file,
+                            int *error_src_line,
+                            const char **error_src_func);
 
 #endif

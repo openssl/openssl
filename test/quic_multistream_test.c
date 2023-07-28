@@ -2203,7 +2203,7 @@ static const struct script_op script_20_child[] = {
     OP_C_READ_FAIL_WAIT     (a)
     OP_C_EXPECT_SSL_ERR     (a, SSL_ERROR_SYSCALL)
     OP_EXPECT_ERR_LIB       (ERR_LIB_SYS)
-    OP_EXPECT_ERR_REASON    (SSL_R_PROTOCOL_IS_SHUTDOWN)
+    OP_EXPECT_ERR_REASON    (SSL_R_QUIC_NETWORK_ERROR)
     OP_C_FREE_STREAM        (a)
 
     OP_END

@@ -36,10 +36,14 @@ struct quic_tls_st {
     uint64_t error_code;
 
     /*
-     * Error message with static storage duration. Valid only if inerr is 1.
+     * Error message with static storage duration. Valid only if inerror is 1.
      * Should be suitable for encapsulation in a CONNECTION_CLOSE frame.
      */
     const char *error_msg;
+
+    const char *error_src_file;
+    const char *error_src_func;
+    int error_src_line;
 
     /* Whether our SSL object for TLS has been configured for use in QUIC */
     unsigned int configured : 1;
@@ -642,18 +646,26 @@ void ossl_quic_tls_free(QUIC_TLS *qtls)
 }
 
 static int raise_error(QUIC_TLS *qtls, uint64_t error_code,
-                       const char *error_msg)
+                       const char *error_msg,
+                       const char *src_file,
+                       int src_line,
+                       const char *src_func)
 {
-    qtls->error_code = error_code;
-    qtls->error_msg  = error_msg;
-    qtls->inerror    = 1;
+    qtls->error_code        = error_code;
+    qtls->error_msg         = error_msg;
+    qtls->error_src_file    = src_file;
+    qtls->error_src_line    = src_line;
+    qtls->error_src_func    = src_func;
+    qtls->inerror           = 1;
     return 0;
 }
 
-static int raise_internal_error(QUIC_TLS *qtls)
-{
-    return raise_error(qtls, QUIC_ERR_INTERNAL_ERROR, "internal error");
-}
+#define RAISE_ERROR(qtls, error_code, error_msg) \
+    raise_error((qtls), (error_code), (error_msg), \
+                OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC)
+
+#define RAISE_INTERNAL_ERROR(qtls) \
+    RAISE_ERROR((qtls), QUIC_ERR_INTERNAL_ERROR, "internal error")
 
 int ossl_quic_tls_tick(QUIC_TLS *qtls)
 {
@@ -684,13 +696,13 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
         /* ALPN is a requirement for QUIC and must be set */
         if (qtls->args.is_server) {
             if (sctx->ext.alpn_select_cb == NULL)
-                return raise_internal_error(qtls);
+                return RAISE_INTERNAL_ERROR(qtls);
         } else {
             if (sc->ext.alpn == NULL || sc->ext.alpn_len == 0)
-                return raise_internal_error(qtls);
+                return RAISE_INTERNAL_ERROR(qtls);
         }
         if (!SSL_set_min_proto_version(qtls->args.s, TLS1_3_VERSION))
-            return raise_internal_error(qtls);
+            return RAISE_INTERNAL_ERROR(qtls);
 
         SSL_clear_options(qtls->args.s, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
         ossl_ssl_set_custom_record_layer(sc, &quic_tls_record_method, qtls);
@@ -705,11 +717,11 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
                                             add_transport_params_cb,
                                             free_transport_params_cb, qtls,
                                             parse_transport_params_cb, qtls))
-            return raise_internal_error(qtls);
+            return RAISE_INTERNAL_ERROR(qtls);
 
         nullbio = BIO_new(BIO_s_null());
         if (nullbio == NULL)
-            return raise_internal_error(qtls);
+            return RAISE_INTERNAL_ERROR(qtls);
 
         /*
          * Our custom record layer doesn't use the BIO - but libssl generally
@@ -739,7 +751,7 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
         case SSL_ERROR_WANT_WRITE:
             return 1;
         default:
-            return raise_internal_error(qtls);
+            return RAISE_INTERNAL_ERROR(qtls);
         }
     }
 
@@ -747,7 +759,7 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
         /* Validate that we have ALPN */
         SSL_get0_alpn_selected(qtls->args.s, &alpn, &alpnlen);
         if (alpn == NULL || alpnlen == 0)
-            return raise_error(qtls, QUIC_ERR_CRYPTO_NO_APP_PROTO,
+            return RAISE_ERROR(qtls, QUIC_ERR_CRYPTO_NO_APP_PROTO,
                                "no application protocol negotiated");
 
         qtls->complete = 1;
@@ -768,11 +780,17 @@ int ossl_quic_tls_set_transport_params(QUIC_TLS *qtls,
 
 int ossl_quic_tls_get_error(QUIC_TLS *qtls,
                             uint64_t *error_code,
-                            const char **error_msg)
+                            const char **error_msg,
+                            const char **error_src_file,
+                            int *error_src_line,
+                            const char **error_src_func)
 {
     if (qtls->inerror) {
-        *error_code = qtls->error_code;
-        *error_msg = qtls->error_msg;
+        *error_code     = qtls->error_code;
+        *error_msg      = qtls->error_msg;
+        *error_src_file = qtls->error_src_file;
+        *error_src_line = qtls->error_src_line;
+        *error_src_func = qtls->error_src_func;
     }
 
     return qtls->inerror;

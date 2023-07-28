@@ -1616,7 +1616,8 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
     QUIC_CHANNEL *ch = arg;
     int channel_only = (flags & QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY) != 0;
     uint64_t error_code;
-    const char *error_msg;
+    const char *error_msg, *error_src_file, *error_src_func;
+    int error_src_line;
 
     /*
      * When we tick the QUIC connection, we do everything we need to do
@@ -1672,9 +1673,16 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
             if (!channel_only) {
                 ossl_quic_tls_tick(ch->qtls);
 
-                if (ossl_quic_tls_get_error(ch->qtls, &error_code, &error_msg))
-                    ossl_quic_channel_raise_protocol_error(ch, error_code, 0,
-                                                           error_msg);
+                if (ossl_quic_tls_get_error(ch->qtls, &error_code, &error_msg,
+                                            &error_src_file,
+                                            &error_src_line,
+                                            &error_src_func)) {
+                    ossl_quic_channel_raise_protocol_error_loc(ch, error_code, 0,
+                                                               error_msg,
+                                                               error_src_file,
+                                                               error_src_line,
+                                                               error_src_func);
+                }
             }
 
             /*
@@ -2877,6 +2885,9 @@ static void ch_raise_net_error(QUIC_CHANNEL *ch)
     QUIC_TERMINATE_CAUSE tcause = {0};
 
     ch->net_error = 1;
+
+    ERR_raise_data(ERR_LIB_SSL, SSL_R_QUIC_NETWORK_ERROR,
+                   "connection terminated due to network error");
     ch_save_err_state(ch);
 
     tcause.error_code = QUIC_ERR_INTERNAL_ERROR;
@@ -2901,19 +2912,55 @@ void ossl_quic_channel_restore_err_state(QUIC_CHANNEL *ch)
     OSSL_ERR_STATE_restore(ch->err_state);
 }
 
-void ossl_quic_channel_raise_protocol_error(QUIC_CHANNEL *ch,
-                                            uint64_t error_code,
-                                            uint64_t frame_type,
-                                            const char *reason)
+void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
+                                                uint64_t error_code,
+                                                uint64_t frame_type,
+                                                const char *reason,
+                                                const char *src_file,
+                                                int src_line,
+                                                const char *src_func)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
     int err_reason = error_code == QUIC_ERR_INTERNAL_ERROR
                      ? ERR_R_INTERNAL_ERROR : SSL_R_QUIC_PROTOCOL_ERROR;
+    const char *err_str = ossl_quic_err_to_string(error_code);
+    const char *err_str_pfx = " (", *err_str_sfx = ")";
+    const char *ft_str = NULL;
+    const char *ft_str_pfx = " (", *ft_str_sfx = ")";
 
-    ERR_raise_data(ERR_LIB_SSL, err_reason,
-                   "Error code: %llu Frame type: %llu Reason: %s",
-                   (unsigned long long) error_code,
-                   (unsigned long long) frame_type, reason);
+    if (err_str == NULL) {
+        err_str     = "";
+        err_str_pfx = "";
+        err_str_sfx = "";
+    }
+
+    if (frame_type != 0) {
+        ft_str = ossl_quic_frame_type_to_string(frame_type);
+        if (ft_str == NULL) {
+            ft_str      = "";
+            ft_str_pfx  = "";
+            ft_str_sfx  = "";
+        }
+
+        ERR_raise_data(ERR_LIB_SSL, err_reason,
+                       "QUIC error code: 0x%llx%s%s%s "
+                       "(triggered by frame type: 0x%llx%s%s%s), reason: \"%s\"",
+                       (unsigned long long) error_code,
+                       err_str_pfx, err_str, err_str_sfx,
+                       (unsigned long long) frame_type,
+                       ft_str_pfx, ft_str, ft_str_sfx,
+                       reason);
+    } else {
+        ERR_raise_data(ERR_LIB_SSL, err_reason,
+                       "QUIC error code: 0x%llx%s%s%s, reason: \"%s\"",
+                       (unsigned long long) error_code,
+                       err_str_pfx, err_str, err_str_sfx,
+                       reason);
+    }
+
+    if (src_file != NULL)
+        ERR_set_debug(src_file, src_line, src_func);
+
     ch_save_err_state(ch);
 
     tcause.error_code = error_code;
