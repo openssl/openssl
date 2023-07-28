@@ -37,8 +37,8 @@ typedef struct qtest_fault_encrypted_extensions {
  * instance. |flags| is the logical or of flags defined above, or 0 if none.
  */
 int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
-                              char *certfile, char *keyfile, int flags,
-                              QUIC_TSERVER **qtserv, SSL **cssl,
+                              SSL_CTX *serverctx, char *certfile, char *keyfile,
+                              int flags, QUIC_TSERVER **qtserv, SSL **cssl,
                               QTEST_FAULT **fault);
 
 /* Where QTEST_FLAG_FAKE_TIME is used, add millis to the current time */

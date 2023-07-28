@@ -46,108 +46,164 @@ static int is_fips = 0;
 static int test_quic_write_read(int idx)
 {
     SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL_CTX *sctx = NULL;
     SSL *clientquic = NULL;
     QUIC_TSERVER *qtserv = NULL;
-    int j, ret = 0;
+    int j, k, ret = 0;
     unsigned char buf[20];
     static char *msg = "A test message";
     size_t msglen = strlen(msg);
     size_t numbytes = 0;
     int ssock = 0, csock = 0;
     uint64_t sid = UINT64_MAX;
+    SSL_SESSION *sess = NULL;
 
     if (idx >= 1 && !qtest_supports_blocking())
         return TEST_skip("Blocking tests not supported in this build");
 
-    if (!TEST_ptr(cctx)
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, cert, privkey,
-                                                    idx >= 1 ? QTEST_FLAG_BLOCK : 0,
-                                                    &qtserv, &clientquic, NULL))
-            || !TEST_true(SSL_set_tlsext_host_name(clientquic, "localhost"))
-            || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
-        goto end;
-
-    if (idx >= 1) {
-        if (!TEST_true(BIO_get_fd(ossl_quic_tserver_get0_rbio(qtserv), &ssock)))
+    for (k = 0; k < 2; k++) {
+        if (!TEST_ptr(cctx)
+                || !TEST_true(qtest_create_quic_objects(libctx, cctx, sctx,
+                                                        cert, privkey,
+                                                        idx >= 1
+                                                            ? QTEST_FLAG_BLOCK
+                                                            : 0,
+                                                        &qtserv, &clientquic,
+                                                        NULL))
+                || !TEST_true(SSL_set_tlsext_host_name(clientquic, "localhost")))
             goto end;
-        if (!TEST_int_gt(csock = SSL_get_rfd(clientquic), 0))
-            goto end;
-    }
 
-    sid = 0; /* client-initiated bidirectional stream */
-
-    for (j = 0; j < 2; j++) {
-        /* Check that sending and receiving app data is ok */
-        if (!TEST_true(SSL_write_ex(clientquic, msg, msglen, &numbytes))
-            || !TEST_size_t_eq(numbytes, msglen))
+        if (sess != NULL && !TEST_true(SSL_set_session(clientquic, sess)))
             goto end;
+
+        if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+            goto end;
+
         if (idx >= 1) {
-            do {
-                if (!TEST_true(wait_until_sock_readable(ssock)))
-                    goto end;
-
-                ossl_quic_tserver_tick(qtserv);
-
-                if (!TEST_true(ossl_quic_tserver_read(qtserv, sid, buf, sizeof(buf),
-                                                      &numbytes)))
-                    goto end;
-            } while (numbytes == 0);
-
-            if (!TEST_mem_eq(buf, numbytes, msg, msglen))
+            if (!TEST_true(BIO_get_fd(ossl_quic_tserver_get0_rbio(qtserv),
+                                      &ssock)))
+                goto end;
+            if (!TEST_int_gt(csock = SSL_get_rfd(clientquic), 0))
                 goto end;
         }
 
-        if (idx >= 2 && j > 0)
-            /* Introduce permanent socket error */
-            BIO_closesocket(csock);
+        sid = 0; /* client-initiated bidirectional stream */
 
-        ossl_quic_tserver_tick(qtserv);
-        if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, (unsigned char *)msg,
-                                               msglen, &numbytes)))
-            goto end;
-        ossl_quic_tserver_tick(qtserv);
-        SSL_handle_events(clientquic);
-
-        if (idx >= 2 && j > 0) {
-            if (!TEST_false(SSL_read_ex(clientquic, buf, 1, &numbytes))
-                    || !TEST_int_eq(SSL_get_error(clientquic, 0),
-                                    SSL_ERROR_SYSCALL)
-                    || !TEST_false(SSL_write_ex(clientquic, msg, msglen,
-                                                &numbytes))
-                    || !TEST_int_eq(SSL_get_error(clientquic, 0),
-                                    SSL_ERROR_SYSCALL))
+        for (j = 0; j < 2; j++) {
+            /* Check that sending and receiving app data is ok */
+            if (!TEST_true(SSL_write_ex(clientquic, msg, msglen, &numbytes))
+                || !TEST_size_t_eq(numbytes, msglen))
                 goto end;
+            if (idx >= 1) {
+                do {
+                    if (!TEST_true(wait_until_sock_readable(ssock)))
+                        goto end;
+
+                    ossl_quic_tserver_tick(qtserv);
+
+                    if (!TEST_true(ossl_quic_tserver_read(qtserv, sid, buf,
+                                                          sizeof(buf),
+                                                          &numbytes)))
+                        goto end;
+                } while (numbytes == 0);
+
+                if (!TEST_mem_eq(buf, numbytes, msg, msglen))
+                    goto end;
+            }
+
+            if (idx >= 2 && j > 0)
+                /* Introduce permanent socket error */
+                BIO_closesocket(csock);
+
+            ossl_quic_tserver_tick(qtserv);
+            if (!TEST_true(ossl_quic_tserver_write(qtserv, sid,
+                                                   (unsigned char *)msg,
+                                                   msglen, &numbytes)))
+                goto end;
+            ossl_quic_tserver_tick(qtserv);
+            SSL_handle_events(clientquic);
+
+            if (idx >= 2 && j > 0) {
+                if (!TEST_false(SSL_read_ex(clientquic, buf, 1, &numbytes))
+                        || !TEST_int_eq(SSL_get_error(clientquic, 0),
+                                        SSL_ERROR_SYSCALL)
+                        || !TEST_false(SSL_write_ex(clientquic, msg, msglen,
+                                                    &numbytes))
+                        || !TEST_int_eq(SSL_get_error(clientquic, 0),
+                                        SSL_ERROR_SYSCALL))
+                    goto end;
+                break;
+            }
+
+            /*
+            * In blocking mode the SSL_read_ex call will block until the socket
+            * is readable and has our data. In non-blocking mode we're doing
+            * everything in memory, so it should be immediately available
+            */
+            if (!TEST_true(SSL_read_ex(clientquic, buf, 1, &numbytes))
+                    || !TEST_size_t_eq(numbytes, 1)
+                    || !TEST_true(SSL_has_pending(clientquic))
+                    || !TEST_int_eq(SSL_pending(clientquic), msglen - 1)
+                    || !TEST_true(SSL_read_ex(clientquic, buf + 1,
+                                              sizeof(buf) - 1, &numbytes))
+                    || !TEST_mem_eq(buf, numbytes + 1, msg, msglen))
+                goto end;
+        }
+
+        if (sess == NULL) {
+            /* We didn't supply a session so we're not expecting resumption */
+            if (!TEST_false(SSL_session_reused(clientquic)))
+                goto end;
+            /* We should have a session ticket by now */
+            sess = SSL_get1_session(clientquic);
+            if (!TEST_ptr(sess))
+                goto end;
+        } else {
+            /* We supplied a session so we should have resumed */
+            if (!TEST_true(SSL_session_reused(clientquic)))
+                goto end;
+        }
+
+        if (idx < 1) {
+            /*
+            * Blocking SSL_shutdown cannot be tested here due to requirement to
+            * tick TSERVER during drainage.
+            */
+            if (!TEST_true(qtest_shutdown(qtserv, clientquic)))
+                goto end;
+        } else {
+            /*
+             * We cheat here because we have not shutdown correctly. We make the
+             * client think it has been shutdown normally so the session is
+             * eligible for reuse.
+             */
+            SSL_CONNECTION_FROM_SSL(clientquic)->shutdown = SSL_SENT_SHUTDOWN;
+        }
+
+        if (sctx == NULL) {
+            sctx = ossl_quic_tserver_get0_ssl_ctx(qtserv);
+            if (!TEST_true(SSL_CTX_up_ref(sctx))) {
+                sctx = NULL;
+                goto end;
+            }
+        }
+        ossl_quic_tserver_free(qtserv);
+        qtserv = NULL;
+        SSL_free(clientquic);
+        clientquic = NULL;
+
+        if (idx >= 2)
             break;
-        }
-
-        /*
-         * In blocking mode the SSL_read_ex call will block until the socket is
-         * readable and has our data. In non-blocking mode we're doing everything
-         * in memory, so it should be immediately available
-         */
-        if (!TEST_true(SSL_read_ex(clientquic, buf, 1, &numbytes))
-                || !TEST_size_t_eq(numbytes, 1)
-                || !TEST_true(SSL_has_pending(clientquic))
-                || !TEST_int_eq(SSL_pending(clientquic), msglen - 1)
-                || !TEST_true(SSL_read_ex(clientquic, buf + 1, sizeof(buf) - 1, &numbytes))
-                || !TEST_mem_eq(buf, numbytes + 1, msg, msglen))
-            goto end;
     }
-
-    if (idx < 1)
-        /*
-         * Blocking SSL_shutdown cannot be tested here due to requirement to
-         * tick TSERVER during drainage.
-         */
-        if (!TEST_true(qtest_shutdown(qtserv, clientquic)))
-            goto end;
 
     ret = 1;
 
  end:
+    SSL_SESSION_free(sess);
     ossl_quic_tserver_free(qtserv);
     SSL_free(clientquic);
     SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
 
     return ret;
 }
@@ -215,9 +271,9 @@ static int test_version(void)
     int testresult = 0;
 
     if (!TEST_ptr(cctx)
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, cert, privkey,
-                                                    0, &qtserv, &clientquic,
-                                                    NULL))
+            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                                    privkey, 0, &qtserv,
+                                                    &clientquic, NULL))
             || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto err;
 
@@ -321,9 +377,9 @@ static int test_ssl_trace(void)
 
     if (!TEST_ptr(cctx)
             || !TEST_ptr(bio)
-            || !TEST_true(qtest_create_quic_objects(libctx, cctx, cert, privkey,
-                                                    0, &qtserv, &clientquic,
-                                                    NULL)))
+            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                                    privkey, 0, &qtserv,
+                                                    &clientquic, NULL)))
         goto err;
 
     SSL_set_msg_callback(clientquic, SSL_trace);
@@ -649,7 +705,7 @@ static int test_bio_ssl(void)
     if (!TEST_int_eq(BIO_get_ssl(cbio, &clientquic), 1))
         goto err;
 
-    if (!TEST_true(qtest_create_quic_objects(libctx, NULL, cert, privkey,
+    if (!TEST_true(qtest_create_quic_objects(libctx, NULL, NULL, cert, privkey,
                                              0, &qtserv, &clientquic, NULL)))
         goto err;
 
