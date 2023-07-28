@@ -8,8 +8,8 @@ ossl-guide-libcrypto-introduction, crypto
 
 =head1 INTRODUCTION
 
-The OpenSSL cryptogrpahy library (C<libcrypto>) implements a wide range of
-cryptographic algorithms used in various Internet standards. The services
+The OpenSSL cryptography library (C<libcrypto>) enables access to a wide range
+of cryptographic algorithms used in various Internet standards. The services
 provided by this library are used by the OpenSSL implementations of TLS and
 CMS, and they have also been used to implement many other third party products
 and protocols.
@@ -29,6 +29,9 @@ which has been validated to FIPS standards for situations where that is
 important. It is also possible that a third party could add additional
 implementations such as in a hardware security module (HSM).
 
+Algorithms are implemented in providers. See
+L<ossl-guide-libraries-introduction(7)> for information about providers.
+
 =head2 Operations
 
 Different algorithms can be grouped together by their purpose. For example there
@@ -47,17 +50,16 @@ Fetching is the process of looking through the available implementations,
 applying selection criteria (via a property query string), and finally choosing
 the implementation that will be used.
 
-Two types of fetching are supported by OpenSSL - explicit fetching and implicit
-fetching.
+Two types of fetching are supported by OpenSSL - L</Explicit fetching> and
+L</Implicit fetching>.
 
 =head2 Explicit fetching
 
-Users of the OpenSSL libraries never query a provider directly for an algorithm
-implementation. Instead, the diverse OpenSSL APIs often have explicit fetching
-functions that do the work, and they return an appropriate algorithm object back
-to the user. These functions usually have the name C<APINAME_fetch>, where
-C<APINAME> is the name of the operation. For example L<EVP_MD_fetch(3)> can
-be used to explicitly fetch a digest algorithm implementation. The user is
+Explicit fetching involves directly calling a specific API to fetch an algorithm
+implementation from a provider. This fetched object can then be passed to other
+APIs. These explicit fetching functions usually have the name C<APINAME_fetch>,
+where C<APINAME> is the name of the operation. For example L<EVP_MD_fetch(3)>
+can be used to explicitly fetch a digest algorithm implementation. The user is
 responsible for freeing the object returned from the C<APINAME_fetch> function
 using C<APINAME_free> when it is no longer needed.
 
@@ -78,6 +80,13 @@ will be loaded as a fallback (see L<OSSL_PROVIDER-default(7)>).
 =item An identifier
 
 For all currently implemented fetching functions this is the algorithm name.
+Each provider supports a list of algorithm implementations. See the provider
+specific documentation for information on the algorithm implementations
+available in each provider:
+L<OSSL_PROVIDER-default(7)/OPERATIONS AND ALGORITHMS>,
+L<OSSL_PROVIDER-FIPS(7)/OPERATIONS AND ALGORITHMS>,
+L<OSSL_PROVIDER-legacy(7)/OPERATIONS AND ALGORITHMS> and
+L<OSSL_PROVIDER-base(7)/OPERATIONS AND ALGORITHMS>.
 
 =item A property query string
 
@@ -102,7 +111,8 @@ available.
 
 When they are used with functions like L<EVP_DigestInit_ex(3)> or
 L<EVP_CipherInit_ex(3)>, the actual implementation to be used is
-fetched implicitly using default search criteria.
+fetched implicitly using default search criteria (which uses NULL for the
+library context and property query string).
 
 In some cases implicit fetching can also occur when a NULL algorithm parameter
 is supplied. In this case an algorithm implementation is implicitly fetched
@@ -118,7 +128,7 @@ the function that has been called.
 
 If you perform the same operation many times with the same algorithm then it is
 recommended to use a single explicit fetch of the algorithm and then reuse the
-explicitly fetched algorithm each susbsequent time. This will typically be
+explicitly fetched algorithm each subsequent time. This will typically be
 faster than implicitly fetching the algorithm every time you use it. See an
 example of Explicit fetching in L</USING ALGORITHMS IN APPLICATIONS>.
 
@@ -139,25 +149,45 @@ The following functions can be used for explicit fetching:
 
 =item L<EVP_MD_fetch(3)>
 
+Fetch a message digest/hashing algorithm implementation.
+
 =item L<EVP_CIPHER_fetch(3)>
+
+Fetch a symmetric cipher algorithm implementation.
 
 =item L<EVP_KDF_fetch(3)>
 
+Fetch a Key Derivation Function (KDF) algorithm implementation.
+
 =item L<EVP_MAC_fetch(3)>
+
+Fetch a Message Authentication Code (MAC) algorithm implementation.
 
 =item L<EVP_KEM_fetch(3)>
 
+Fetch a Key Encapsulation Mechanism (KEM) algorithm implementation
+
 =item L<OSSL_ENCODER_fetch(3)>
+
+Fetch an encoder algorithm implementation (e.g. to encode keys to a specified
+format).
 
 =item L<OSSL_DECODER_fetch(3)>
 
+Fetch a decoder algorithm implementation (e.g. to decode keys from a specified
+format).
+
 =item L<EVP_RAND_fetch(3)>
+
+Fetch a Pseudo Random Number Generator (PRNG) algorithm implementation.
 
 =back
 
-See L<OSSL_PROVIDER-default(7)>, L<OSSL_PROVIDER-FIPS(7)> and
-L<OSSL_PROVIDER-legacy(7)> for a list of algorithm names that
-can be fetched.
+See L<OSSL_PROVIDER-default(7)/OPERATIONS AND ALGORITHMS>,
+L<OSSL_PROVIDER-FIPS(7)/OPERATIONS AND ALGORITHMS>, 
+L<OSSL_PROVIDER-legacy(7)/OPERATIONS AND ALGORITHMS> and
+L<OSSL_PROVIDER-base(7)/OPERATIONS AND ALGORITHMS> for a list of algorithm names
+that can be fetched.
 
 =head1 FETCHING EXAMPLES
 
@@ -191,10 +221,17 @@ default context:
  ...
  EVP_MD_free(md);
 
-Fetch an implementation of SHA2-256 from the default provider in the specified
-context:
+Fetch an implementation of SHA2-256 that is preferably from the FIPS provider in
+the default context:
 
- EVP_MD *md = EVP_MD_fetch(ctx, "SHA2-256", "provider=default");
+ EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", "provider=?fips");
+ ...
+ EVP_MD_free(md);
+
+Fetch an implementation of SHA2-256 from the default provider in the specified
+library context:
+
+ EVP_MD *md = EVP_MD_fetch(libctx, "SHA2-256", "provider=default");
  ...
  EVP_MD_free(md);
 
@@ -244,7 +281,9 @@ freed.
 
 The following shows a complete example for doing this process for digesting
 data using SHA256. The process is similar for other operations such as
-encryption/decryption, signatures, message authentication codes, etc.
+encryption/decryption, signatures, message authentication codes, etc. Additional
+examples can be found in the OpenSSL demos (see
+L<ossl-guide-libraries-introduction(7)/DEMO APPLICATIONS>).
 
  #include <stdio.h>
  #include <openssl/evp.h>
@@ -349,7 +388,7 @@ L<openssl-glossary(7)>, L<provider(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
