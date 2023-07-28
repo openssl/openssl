@@ -12,6 +12,7 @@
 #include <assert.h>
 #include "internal/priority_queue.h"
 #include "internal/safe_math.h"
+#include "internal/numbers.h"
 
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 
