@@ -698,9 +698,12 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
             atmp->value.asn1_string->data = rdata;
             atmp->value.asn1_string->length = rdlen;
             atmp->value.asn1_string->type = utype;
-        } else if (format == ASN1_GEN_FORMAT_ASCII)
-            ASN1_STRING_set(atmp->value.asn1_string, str, -1);
-        else if ((format == ASN1_GEN_FORMAT_BITLIST)
+        } else if (format == ASN1_GEN_FORMAT_ASCII) {
+            if (!ASN1_STRING_set(atmp->value.asn1_string, str, -1)) {
+                ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+                goto bad_str;
+            }
+        } else if ((format == ASN1_GEN_FORMAT_BITLIST)
                  && (utype == V_ASN1_BIT_STRING)) {
             if (!CONF_parse_list
                 (str, ',', 1, bitstr_cb, atmp->value.bit_string)) {
