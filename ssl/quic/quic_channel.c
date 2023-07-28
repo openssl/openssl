@@ -117,11 +117,11 @@ static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
  * QUIC Channel Initialization and Teardown
  * ========================================
  */
-#define DEFAULT_INIT_CONN_RXFC_WND      (2 * 1024 * 1024)
-#define DEFAULT_CONN_RXFC_MAX_WND_MUL   5
+#define DEFAULT_INIT_CONN_RXFC_WND      (768 * 1024)
+#define DEFAULT_CONN_RXFC_MAX_WND_MUL   20
 
-#define DEFAULT_INIT_STREAM_RXFC_WND    (2 * 1024 * 1024)
-#define DEFAULT_STREAM_RXFC_MAX_WND_MUL 5
+#define DEFAULT_INIT_STREAM_RXFC_WND    (512 * 1024)
+#define DEFAULT_STREAM_RXFC_MAX_WND_MUL 12
 
 #define DEFAULT_INIT_CONN_MAX_STREAMS           100
 
