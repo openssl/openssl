@@ -557,6 +557,7 @@ static int helper_init(struct helper *h, int free_order, int need_injector)
     s_args.alpn         = NULL;
     s_args.now_cb       = get_time;
     s_args.now_cb_arg   = h;
+    s_args.ctx          = NULL;
 
     if (!TEST_ptr(h->s = ossl_quic_tserver_new(&s_args, certfile, keyfile)))
         goto err;
