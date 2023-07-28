@@ -37,6 +37,7 @@ typedef struct quic_tserver_st QUIC_TSERVER;
 typedef struct quic_tserver_args_st {
     OSSL_LIB_CTX *libctx;
     const char *propq;
+    SSL_CTX *ctx;
     BIO *net_rbio, *net_wbio;
     OSSL_TIME (*now_cb)(void *arg);
     void *now_cb_arg;
@@ -131,6 +132,8 @@ int ossl_quic_tserver_stream_new(QUIC_TSERVER *srv,
                                  uint64_t *stream_id);
 
 BIO *ossl_quic_tserver_get0_rbio(QUIC_TSERVER *srv);
+
+SSL_CTX *ossl_quic_tserver_get0_ssl_ctx(QUIC_TSERVER *srv);
 
 /*
  * Returns 1 if the peer has sent a STOP_SENDING frame for a stream.

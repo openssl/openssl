@@ -86,7 +86,11 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
         goto err;
 #endif
 
-    srv->ctx = SSL_CTX_new_ex(srv->args.libctx, srv->args.propq, TLS_method());
+    if (args->ctx != NULL)
+        srv->ctx = args->ctx;
+    else
+        srv->ctx = SSL_CTX_new_ex(srv->args.libctx, srv->args.propq,
+                                  TLS_method());
     if (srv->ctx == NULL)
         goto err;
 
@@ -121,6 +125,9 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
 
 err:
     if (srv != NULL) {
+        if (args->ctx == NULL)
+            SSL_CTX_free(srv->ctx);
+        SSL_free(srv->tls);
         ossl_quic_channel_free(srv->ch);
 #if defined(OPENSSL_THREADS)
         ossl_crypto_mutex_free(&srv->mutex);
@@ -387,6 +394,11 @@ int ossl_quic_tserver_stream_new(QUIC_TSERVER *srv,
 BIO *ossl_quic_tserver_get0_rbio(QUIC_TSERVER *srv)
 {
     return srv->args.net_rbio;
+}
+
+SSL_CTX *ossl_quic_tserver_get0_ssl_ctx(QUIC_TSERVER *srv)
+{
+    return srv->ctx;
 }
 
 int ossl_quic_tserver_stream_has_peer_stop_sending(QUIC_TSERVER *srv,

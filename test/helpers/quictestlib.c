@@ -166,6 +166,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     tserver_args.net_rbio = sbio;
     tserver_args.net_wbio = fisbio;
     tserver_args.alpn = NULL;
+    tserver_args.ctx = NULL;
     if ((flags & QTEST_FLAG_FAKE_TIME) != 0) {
         fake_now = ossl_time_zero();
         tserver_args.now_cb = fake_now_cb;

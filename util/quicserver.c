@@ -187,6 +187,7 @@ int main(int argc, char *argv[])
     tserver_args.net_wbio = bio;
     tserver_args.alpn = alpn;
     tserver_args.alpnlen = sizeof(alpn);
+    tserver_args.ctx = NULL;
 
     qtserv = ossl_quic_tserver_new(&tserver_args, certfile, keyfile);
     if (qtserv == NULL) {
