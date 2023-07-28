@@ -1089,7 +1089,7 @@ malformed:
          * discerned.
          *
          * Advance over the entire remainder of the datagram, and mark it as
-         * processed gap as an optimization.
+         * processed as an optimization.
          */
         pkt_mark(&urxe->processed, pkt_idx);
         /* We don't care if this fails (see above) */
