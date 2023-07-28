@@ -89,6 +89,8 @@ static KEY_LIST *public_keys;
 
 static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst);
 static int parse_bin(const char *value, unsigned char **buf, size_t *buflen);
+static int parse_bin_chunk(const char *value, size_t offset, size_t max,
+                           unsigned char **buf, size_t *buflen, size_t *out_offset);
 static int is_digest_disabled(const char *name);
 static int is_pkey_disabled(const char *name);
 static int is_mac_disabled(const char *name);
@@ -150,23 +152,42 @@ static void evp_test_buffer_free(EVP_TEST_BUFFER *db)
 }
 
 /* append buffer to a list */
-static int evp_test_buffer_append(const char *value,
+static int evp_test_buffer_append(const char *value, size_t max_len,
                                   STACK_OF(EVP_TEST_BUFFER) **sk)
 {
     EVP_TEST_BUFFER *db = NULL;
-
-    if (!TEST_ptr(db = OPENSSL_malloc(sizeof(*db))))
-        goto err;
-
-    if (!parse_bin(value, &db->buf, &db->buflen))
-        goto err;
-    db->count = 1;
-    db->count_set = 0;
+    int rv = 0;
+    size_t offset = 0;
 
     if (*sk == NULL && !TEST_ptr(*sk = sk_EVP_TEST_BUFFER_new_null()))
         goto err;
-    if (!sk_EVP_TEST_BUFFER_push(*sk, db))
-        goto err;
+
+    do {
+        if (!TEST_ptr(db = OPENSSL_zalloc(sizeof(*db))))
+            goto err;
+        if (max_len == 0) {
+            /* parse all in one shot */
+            if ((rv = parse_bin(value, &db->buf, &db->buflen)) != 1)
+                goto err;
+        } else {
+            /* parse in chunks */
+            size_t new_offset = 0;
+
+            if ((rv = parse_bin_chunk(value, offset, max_len, &db->buf,
+                                      &db->buflen, &new_offset)) == -1)
+                goto err;
+            offset = new_offset;
+        }
+
+        db->count = 1;
+        db->count_set = 0;
+
+        if (db->buf == NULL)
+            evp_test_buffer_free(db);
+        else if (db->buf != NULL && !sk_EVP_TEST_BUFFER_push(*sk, db))
+            goto err;
+        /* if processing by chunks, continue until the whole value is parsed */
+    } while (rv == 1 && max_len != 0);
 
     return 1;
 
@@ -340,6 +361,66 @@ static int parse_bin(const char *value, unsigned char **buf, size_t *buflen)
     return 1;
 }
 
+/*
+ * Convert at maximum "max" bytes to a binary allocated buffer.
+ * Return 1 on success, -1 on failure or 0 for end of value string.
+ */
+static int parse_bin_chunk(const char *value, size_t offset, size_t max,
+                           unsigned char **buf, size_t *buflen, size_t *out_offset)
+{
+    size_t vlen;
+    size_t chunk_len;
+    const char *value_str = value[0] == '"' ? value + offset + 1 : value + offset;
+
+    if (max < 1)
+        return -1;
+
+    if (*value == '\0' || strcmp(value, "\"\"") == 0) {
+        *buf = OPENSSL_malloc(1);
+        if (*buf == NULL)
+            return 0;
+        **buf = 0;
+        *buflen = 0;
+        return 0;
+    }
+
+    if (*value_str == '\0')
+        return 0;
+
+    vlen = strlen(value_str);
+    if (value[0] == '"') {
+        /* Parse string literal */
+        if (vlen == 1 && value_str[0] != '"')
+            /* Missing ending quotation mark */
+            return -1;
+        if (vlen == 1 && value_str[0] == '"')
+            /* End of value */
+            return 0;
+        vlen--;
+        chunk_len = max > vlen ? vlen : max;
+        if ((*buf = unescape(value_str, chunk_len, buflen)) == NULL)
+            return -1;
+    } else {
+        /* Parse hex string chunk */
+        long len;
+        char *chunk = NULL;
+
+        chunk_len = 2 * max > vlen ? vlen : 2 * max;
+        chunk = OPENSSL_strndup(value_str, chunk_len);
+        if (chunk == NULL)
+            return -1;
+        if (!TEST_ptr(*buf = OPENSSL_hexstr2buf(chunk, &len))) {
+            OPENSSL_free(chunk);
+            TEST_info("Can't convert chunk %s", chunk);
+            TEST_openssl_errors();
+            return -1;
+        }
+        *buflen = len;
+    }
+    *out_offset = value[0] == '"' ? offset + (*buflen) : offset + 2 * (*buflen);
+    return 1;
+}
+
 /**
  **  MESSAGE DIGEST TESTS
  **/
@@ -403,7 +484,7 @@ static int digest_test_parse(EVP_TEST *t,
     DIGEST_DATA *mdata = t->data;
 
     if (strcmp(keyword, "Input") == 0)
-        return evp_test_buffer_append(value, &mdata->input);
+        return evp_test_buffer_append(value, data_chunk_size, &mdata->input);
     if (strcmp(keyword, "Output") == 0)
         return parse_bin(value, &mdata->output, &mdata->output_len);
     if (strcmp(keyword, "Count") == 0)
@@ -3482,12 +3563,12 @@ static int digestsigver_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "Input") == 0) {
         if (mdata->is_oneshot)
             return parse_bin(value, &mdata->osin, &mdata->osin_len);
-        return evp_test_buffer_append(value, &mdata->input);
+        return evp_test_buffer_append(value, data_chunk_size, &mdata->input);
     }
     if (strcmp(keyword, "Output") == 0)
         return parse_bin(value, &mdata->output, &mdata->output_len);
 
-    if (!mdata->is_oneshot) {
+    if (!mdata->is_oneshot && data_chunk_size == 0) {
         if (strcmp(keyword, "Count") == 0)
             return evp_test_buffer_set_count(value, mdata->input);
         if (strcmp(keyword, "Ncopy") == 0)
