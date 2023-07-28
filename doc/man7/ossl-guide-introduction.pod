@@ -13,6 +13,8 @@ command line application that enables users to perform various cryptography
 related functions such as generating keys and certificates. Additionally it
 supplies two libraries that application developers can use to implement
 cryptography based capabilities and to securely communicate across a network.
+Finally, it also has a set of providers that supply implementations of a broad
+set of cryptographic algorithms.
 
 OpenSSL is fully open source. Version 3.0 and above are distributed under the
 Apache v2 license.
