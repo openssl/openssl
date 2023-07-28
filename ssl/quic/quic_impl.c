@@ -1203,6 +1203,8 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
     ossl_quic_channel_local_close(ctx.qc->ch,
                                   args != NULL ? args->quic_error_code : 0);
 
+    SSL_set_shutdown(ctx.qc->tls, SSL_SENT_SHUTDOWN);
+
     if (ossl_quic_channel_is_terminated(ctx.qc->ch)) {
         quic_unlock(ctx.qc);
         return 1;
