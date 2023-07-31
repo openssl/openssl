@@ -27,7 +27,6 @@ Importing and exporting parameters
 
 ```C
 int EVP_SKEY_fromdata(EVP_CIPHER_CTX *ctx, EVP_SKEY **pskey, OSSL_PARAM params[]);
-int EVP_SKEY_assign(EVP_CIPHER_CTX *ctx, EVP_SKEY *pskey, OSSL_PARAM params[]);
 int EVP_SKEY_todata(const EVP_SKEY *key, OSSL_PARAM **params);
 int EVP_SKEY_export(const EVP_SKEY *key, OSSL_PARAM **params,
                     OSSL_CALLBACK *export_cb, void *export_cbarg);
@@ -61,22 +60,14 @@ EVP_CipherInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                    int enc, const OSSL_PARAM params[]);
 ```
 
-and can introduce
-
-```C
-EVP_CipherInit_ex3(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
-                   const EVP_SKEY *skey, const unsigned char *iv,
-                   int enc, const OSSL_PARAM params[]);
-```
-
-(we definitely need a better name for it) with corresponding
-`EVP_EncryptInit_ex3/EVP_DecryptInit_ex3`
+To set the skey object to the context, we invoke `EVP_CipherInit_ex2` with NULL
+key ptr and invoke `EVP_CIPHER_CTX_set1_EVP_SKEY` (see below)
 
 To find out the parameters supported by a particular EVP_CIPHER object,
 we need a function
 
 ```C
-const OSSL_PARAM *EVP_CIPHER_settable(EVP_CIPHER *cipher);
+const OSSL_PARAM *EVP_SKEY_fromdata_settable(EVP_CIPHER *cipher);
 ```
 
 similar to `EVP_PKEY_fromdata_settable`
@@ -89,6 +80,8 @@ To get/set the currently set key as a EVP_SKEY object, we introduce the API
 ```C
 EVP_SKEY * EVP_CIPHER_CTX_get1_EVP_SKEY(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_set1_EVP_SKEY(const EVP_CIPHER_CTX *ctx, EVP_SKEY *skey);
+int EVP_MAC_CTX_set1_EVP_SKEY(const EVP_MAC_CTX *ctx, EVP_SKEY *skey);
+int EVP_KDF_CTX_set1_EVP_SKEY(const EVP_KDF_CTX *ctx, EVP_SKEY *skey);
 ```
 
 The object returned by getter should be freed by `EVP_SKEY_free` function.
