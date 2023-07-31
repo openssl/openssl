@@ -743,10 +743,11 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
                            (void *)new_data.ctx, LEVEL, rv);
             } OSSL_TRACE_END(DECODER);
 
-            data->flag_construct_called = 1;
             ok = (rv > 0);
-            if (ok)
+            if (ok) {
+                data->flag_construct_called = 1;
                 goto end;
+            }
         }
 
         /* The constructor didn't return success */
