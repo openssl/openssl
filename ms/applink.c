@@ -41,11 +41,11 @@
  * following included header files.  You will need to put these
  * include lines somewhere in the file that is including applink.c.
  */
-#ifndef APPLINK_NO_INCLUDES
-# include <stdio.h>
-# include <io.h>
-# include <fcntl.h>
-#endif
+# ifndef APPLINK_NO_INCLUDES
+#  include <stdio.h>
+#  include <io.h>
+#  include <fcntl.h>
+# endif
 
 # ifdef __BORLANDC__
    /* _lseek in <io.h> is a function-like macro so we can't take its address */
