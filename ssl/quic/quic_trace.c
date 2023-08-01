@@ -330,7 +330,8 @@ static int frame_new_conn_id(BIO *bio, PACKET *pkt)
     BIO_puts(bio, "    Connection id: ");
     put_conn_id(bio, &frame_data.conn_id);
     BIO_puts(bio, "\n    Stateless Reset Token: ");
-    put_data(bio, frame_data.stateless_reset_token, 16);
+    put_data(bio, frame_data.stateless_reset.token,
+             sizeof(frame_data.stateless_reset.token));
     BIO_puts(bio, "\n");
 
     return 1;

@@ -403,7 +403,7 @@ static int schedule_cfq_new_conn_id(struct helper *h)
     ncid.seq_num         = 2345;
     ncid.retire_prior_to = 1234;
     ncid.conn_id         = cid_1;
-    memcpy(ncid.stateless_reset_token, reset_token_1, sizeof(reset_token_1));
+    memcpy(ncid.stateless_reset.token, reset_token_1, sizeof(reset_token_1));
 
     if (!TEST_ptr(buf_mem = BUF_MEM_new()))
         goto err;
@@ -442,7 +442,7 @@ static int check_cfq_new_conn_id(struct helper *h)
         || !TEST_uint64_t_eq(h->frame.new_conn_id.retire_prior_to, 1234)
         || !TEST_mem_eq(&h->frame.new_conn_id.conn_id, sizeof(cid_1),
                         &cid_1, sizeof(cid_1))
-        || !TEST_mem_eq(&h->frame.new_conn_id.stateless_reset_token,
+        || !TEST_mem_eq(&h->frame.new_conn_id.stateless_reset.token,
                         sizeof(reset_token_1),
                         reset_token_1,
                         sizeof(reset_token_1)))
