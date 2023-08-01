@@ -125,7 +125,7 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
 
 err:
     if (srv != NULL) {
-        if (args->ctx != NULL)
+        if (args->ctx == NULL)
             SSL_CTX_free(srv->ctx);
         SSL_free(srv->tls);
         ossl_quic_channel_free(srv->ch);
