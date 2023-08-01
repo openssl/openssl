@@ -7,7 +7,7 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.1u and 1.1.1v [xx XXX xxxx]
+ Changes between 1.1.1u and 1.1.1v [1 Aug 2023]
 
  *) Fix excessive time spent checking DH q parameter value.
 
