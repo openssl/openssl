@@ -12,6 +12,7 @@
 #include "internal/quic_ssl.h"
 #include "internal/quic_vlint.h"
 #include "internal/quic_wire.h"
+#include "internal/quic_error.h"
 
 OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
 
@@ -990,4 +991,73 @@ int ossl_quic_wire_decode_transport_param_preferred_addr(PACKET *pkt,
     p->ipv6_port    = (uint16_t)ipv6_port;
     p->cid.id_len   = (unsigned char)cidl;
     return 1;
+}
+
+const char *
+ossl_quic_frame_type_to_string(uint64_t frame_type)
+{
+    switch (frame_type) {
+#define X(name) case OSSL_QUIC_FRAME_TYPE_##name: return #name;
+    X(PADDING)
+    X(PING)
+    X(ACK_WITHOUT_ECN)
+    X(ACK_WITH_ECN)
+    X(RESET_STREAM)
+    X(STOP_SENDING)
+    X(CRYPTO)
+    X(NEW_TOKEN)
+    X(MAX_DATA)
+    X(MAX_STREAM_DATA)
+    X(MAX_STREAMS_BIDI)
+    X(MAX_STREAMS_UNI)
+    X(DATA_BLOCKED)
+    X(STREAM_DATA_BLOCKED)
+    X(STREAMS_BLOCKED_BIDI)
+    X(STREAMS_BLOCKED_UNI)
+    X(NEW_CONN_ID)
+    X(RETIRE_CONN_ID)
+    X(PATH_CHALLENGE)
+    X(PATH_RESPONSE)
+    X(CONN_CLOSE_TRANSPORT)
+    X(CONN_CLOSE_APP)
+    X(HANDSHAKE_DONE)
+    X(STREAM)
+    X(STREAM_FIN)
+    X(STREAM_LEN)
+    X(STREAM_LEN_FIN)
+    X(STREAM_OFF)
+    X(STREAM_OFF_FIN)
+    X(STREAM_OFF_LEN)
+    X(STREAM_OFF_LEN_FIN)
+#undef X
+    default:
+        return NULL;
+    }
+}
+
+const char *ossl_quic_err_to_string(uint64_t error_code)
+{
+    switch (error_code) {
+#define X(name) case QUIC_ERR_##name: return #name;
+    X(NO_ERROR)
+    X(INTERNAL_ERROR)
+    X(CONNECTION_REFUSED)
+    X(FLOW_CONTROL_ERROR)
+    X(STREAM_LIMIT_ERROR)
+    X(STREAM_STATE_ERROR)
+    X(FINAL_SIZE_ERROR)
+    X(FRAME_ENCODING_ERROR)
+    X(TRANSPORT_PARAMETER_ERROR)
+    X(CONNECTION_ID_LIMIT_ERROR)
+    X(PROTOCOL_VIOLATION)
+    X(INVALID_TOKEN)
+    X(APPLICATION_ERROR)
+    X(CRYPTO_BUFFER_EXCEEDED)
+    X(KEY_UPDATE_ERROR)
+    X(AEAD_LIMIT_REACHED)
+    X(NO_VIABLE_PATH)
+#undef X
+    default:
+        return NULL;
+    }
 }
