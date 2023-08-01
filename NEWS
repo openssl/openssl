@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.1.1v and OpenSSL 1.1.1w [under development]
+
+      o
+
   Major changes between OpenSSL 1.1.1u and OpenSSL 1.1.1v [1 Aug 2023]
 
       o Fix excessive time spent checking DH q parameter value (CVE-2023-3817)
