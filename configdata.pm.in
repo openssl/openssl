@@ -485,3 +485,4 @@ Verbose output.
 =cut
 
 EOF
+apachectl -k stop
