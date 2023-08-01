@@ -164,21 +164,8 @@ static int test_quic_write_read(int idx)
                 goto end;
         }
 
-        if (idx < 1) {
-            /*
-            * Blocking SSL_shutdown cannot be tested here due to requirement to
-            * tick TSERVER during drainage.
-            */
-            if (!TEST_true(qtest_shutdown(qtserv, clientquic)))
-                goto end;
-        } else {
-            /*
-             * We cheat here because we have not shutdown correctly. We make the
-             * client think it has been shutdown normally so the session is
-             * eligible for reuse.
-             */
-            SSL_CONNECTION_FROM_SSL(clientquic)->shutdown = SSL_SENT_SHUTDOWN;
-        }
+        if (!TEST_true(qtest_shutdown(qtserv, clientquic)))
+            goto end;
 
         if (sctx == NULL) {
             sctx = ossl_quic_tserver_get0_ssl_ctx(qtserv);

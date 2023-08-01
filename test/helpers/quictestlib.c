@@ -20,6 +20,7 @@
 #include "internal/quic_record_tx.h"
 #include "internal/quic_error.h"
 #include "internal/packet.h"
+#include "internal/tsan_assist.h"
 
 #define GROWTH_ALLOWANCE 1024
 
@@ -338,22 +339,77 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
     return ret;
 }
 
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+static TSAN_QUALIFIER int shutdowndone;
+
+static void run_server_shutdown_thread(void)
+{
+    /*
+     * This will operate in a busy loop because the server does not block,
+     * but should be acceptable because it is local and we expect this to be
+     * fast
+     */
+    do {
+        ossl_quic_tserver_tick(globtserv);
+    } while(!tsan_load(&shutdowndone));
+}
+#endif
+
 int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
 {
+    int tickserver = 1;
+    int ret = 0;
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+    /*
+     * Pointless initialisation to avoid bogus compiler warnings about using
+     * t uninitialised
+     */
+    thread_t t = thread_zero;
+#endif
+
+    if (SSL_get_blocking_mode(clientssl) > 0) {
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+        /*
+         * clientssl is blocking. We will need a thread to complete the
+         * connection
+         */
+        globtserv = qtserv;
+        shutdowndone = 0;
+        if (!TEST_true(run_thread(&t, run_server_shutdown_thread)))
+            return 0;
+
+        tickserver = 0;
+#else
+        TEST_error("No thread support in this build");
+        return 0;
+#endif
+    }
+
     /* Busy loop in non-blocking mode. It should be quick because its local */
     for (;;) {
         int rc = SSL_shutdown(clientssl);
 
-        if (rc == 1)
+        if (rc == 1) {
+            ret = 1;
             break;
+        }
 
         if (rc < 0)
-            return 0;
+            break;
 
-        ossl_quic_tserver_tick(qtserv);
+        if (tickserver)
+            ossl_quic_tserver_tick(qtserv);
     }
 
-    return 1;
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+    tsan_store(&shutdowndone, 1);
+    if (!tickserver) {
+        if (!TEST_true(wait_for_thread(t)))
+            ret = 0;
+    }
+#endif
+
+    return ret;
 }
 
 int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)
