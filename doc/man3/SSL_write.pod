@@ -66,6 +66,14 @@ operation is considered completed. The bytes are sent and a new write call with
 a new buffer (with the already sent bytes removed) must be started. A partial
 write is performed with the size of a message block, which is 16kB.
 
+When used with a QUIC SSL object, calling an I/O function such as SSL_write()
+allows internal network event processing to be performed. It is important that
+this processing is performed regularly. If an application is not using thread
+assisted mode, an application should ensure that an I/O function such as
+SSL_write() is called regularly, or alternatively ensure that SSL_handle_events()
+is called regularly. See L<openssl-quic(7)> and L<SSL_handle_events(3)> for more
+information.
+
 =head1 WARNINGS
 
 When a write function call has to be repeated because L<SSL_get_error(3)>
