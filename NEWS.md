@@ -19,7 +19,7 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
-### Major changes between OpenSSL 3.1.1 and OpenSSL 3.1.2 [under development]
+### Major changes between OpenSSL 3.1.1 and OpenSSL 3.1.2 [1 Aug 2023]
 
   * Fix excessive time spent checking DH q parameter value ([CVE-2023-3817])
   * Fix DH_check() excessive time with over sized modulus ([CVE-2023-3446])
