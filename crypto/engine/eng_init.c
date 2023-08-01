@@ -17,6 +17,7 @@
 int engine_unlocked_init(ENGINE *e)
 {
     int to_return = 1;
+    int i = 0;
 
     if ((e->funct_ref == 0) && e->init)
         /*
@@ -29,8 +30,9 @@ int engine_unlocked_init(ENGINE *e)
          * OK, we return a functional reference which is also a structural
          * reference.
          */
-        e->struct_ref++;
-        e->funct_ref++;
+
+        CRYPTO_UP_REF(&e->struct_ref, &i, global_engine_lock);
+        CRYPTO_UP_REF(&e->funct_ref, &i, global_engine_lock);
         engine_ref_debug(e, 0, 1);
         engine_ref_debug(e, 1, 1);
     }
@@ -44,6 +46,7 @@ int engine_unlocked_init(ENGINE *e)
 int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers)
 {
     int to_return = 1;
+    int i = 0;
 
     /*
      * Reduce the functional reference count here so if it's the terminating
@@ -53,7 +56,7 @@ int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers)
      * there's a chance that both threads will together take the count from 2
      * to 0 without either calling finish().
      */
-    e->funct_ref--;
+    CRYPTO_DOWN_REF(&e->funct_ref, &i, global_engine_lock);
     engine_ref_debug(e, 1, -1);
     if ((e->funct_ref == 0) && e->finish) {
         if (unlock_for_handlers)

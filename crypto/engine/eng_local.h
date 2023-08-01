@@ -161,7 +161,7 @@ struct engine_st {
      * (de)allocation of this structure. Hence, running_ref <= struct_ref at
      * all times.
      */
-    int funct_ref;
+    CRYPTO_REF_COUNT funct_ref;
     /* A place to store per-ENGINE data */
     CRYPTO_EX_DATA ex_data;
     /* Used to maintain the linked-list of engines. */

@@ -208,7 +208,6 @@ ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f,
         return NULL;
     }
     ERR_set_mark();
-    CRYPTO_THREAD_write_lock(global_engine_lock);
     /*
      * Check again inside the lock otherwise we could race against cleanup
      * operations. But don't worry about a fprintf(stderr).
@@ -279,7 +278,6 @@ ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f,
         fprintf(stderr, "engine_table_dbg: %s:%d, nid=%d, caching "
                 "'no matching ENGINE'\n", f, l, nid);
 #endif
-    CRYPTO_THREAD_unlock(global_engine_lock);
     /*
      * Whatever happened, any failed init()s are not failures in this
      * context, so clear our error state.
