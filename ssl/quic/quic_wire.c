@@ -328,8 +328,8 @@ int ossl_quic_wire_encode_frame_new_conn_id(WPACKET *pkt,
             || !WPACKET_quic_write_vlint(pkt, f->retire_prior_to)
             || !WPACKET_put_bytes_u8(pkt, f->conn_id.id_len)
             || !WPACKET_memcpy(pkt, f->conn_id.id, f->conn_id.id_len)
-            || !WPACKET_memcpy(pkt, f->stateless_reset_token,
-                               sizeof(f->stateless_reset_token)))
+            || !WPACKET_memcpy(pkt, f->stateless_reset.token,
+                               sizeof(f->stateless_reset.token)))
         return 0;
 
     return 1;
@@ -804,8 +804,8 @@ int ossl_quic_wire_decode_frame_new_conn_id(PACKET *pkt,
     if (len < QUIC_MAX_CONN_ID_LEN)
         memset(f->conn_id.id + len, 0, QUIC_MAX_CONN_ID_LEN - len);
 
-    if (!PACKET_copy_bytes(pkt, f->stateless_reset_token,
-                           sizeof(f->stateless_reset_token)))
+    if (!PACKET_copy_bytes(pkt, f->stateless_reset.token,
+                           sizeof(f->stateless_reset.token)))
         return 0;
 
     return 1;
@@ -983,8 +983,8 @@ int ossl_quic_wire_decode_transport_param_preferred_addr(PACKET *pkt,
         || !PACKET_get_1(&pkt2, &cidl)
         || cidl > QUIC_MAX_CONN_ID_LEN
         || !PACKET_copy_bytes(&pkt2, p->cid.id, cidl)
-        || !PACKET_copy_bytes(&pkt2, p->stateless_reset_token,
-                              sizeof(p->stateless_reset_token)))
+        || !PACKET_copy_bytes(&pkt2, p->stateless_reset.token,
+                              sizeof(p->stateless_reset.token)))
         return 0;
 
     p->ipv4_port    = (uint16_t)ipv4_port;

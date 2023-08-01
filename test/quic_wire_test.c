@@ -746,8 +746,10 @@ static const OSSL_QUIC_FRAME_NEW_CONN_ID encode_case_16_f = {
         {0x33, 0x44, 0x55, 0x66}
     },
     {
-        0xde, 0x06, 0xcb, 0x76, 0x5d, 0xb1, 0xa7, 0x71,
-        0x78, 0x09, 0xbb, 0xe8, 0x50, 0x19, 0x12, 0x9a
+        {
+            0xde, 0x06, 0xcb, 0x76, 0x5d, 0xb1, 0xa7, 0x71,
+            0x78, 0x09, 0xbb, 0xe8, 0x50, 0x19, 0x12, 0x9a
+        }
     }
 };
 
@@ -783,10 +785,10 @@ static int encode_case_16_dec(PACKET *pkt, ossl_ssize_t fail)
                      encode_case_16_conn_id, sizeof(encode_case_16_conn_id)))
         return 0;
 
-    if (!TEST_mem_eq(f.stateless_reset_token,
-                     sizeof(f.stateless_reset_token),
-                     encode_case_16_f.stateless_reset_token,
-                     sizeof(encode_case_16_f.stateless_reset_token)))
+    if (!TEST_mem_eq(f.stateless_reset.token,
+                     sizeof(f.stateless_reset.token),
+                     encode_case_16_f.stateless_reset.token,
+                     sizeof(encode_case_16_f.stateless_reset.token)))
         return 0;
 
     return 1;
@@ -811,8 +813,10 @@ static const OSSL_QUIC_FRAME_NEW_CONN_ID encode_case_16b_f = {
         {0x33, 0x44, 0x55, 0x66}
     },
     {
-        0xde, 0x06, 0xcb, 0x76, 0x5d, 0xb1, 0xa7, 0x71,
-        0x78, 0x09, 0xbb, 0xe8, 0x50, 0x19, 0x12, 0x9a
+        {
+            0xde, 0x06, 0xcb, 0x76, 0x5d, 0xb1, 0xa7, 0x71,
+            0x78, 0x09, 0xbb, 0xe8, 0x50, 0x19, 0x12, 0x9a
+        }
     }
 };
 

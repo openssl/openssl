@@ -86,17 +86,21 @@ static int ch_discard_el(QUIC_CHANNEL *ch,
 static void ch_on_idle_timeout(QUIC_CHANNEL *ch);
 static void ch_update_idle(QUIC_CHANNEL *ch);
 static void ch_update_ping_deadline(QUIC_CHANNEL *ch);
+static void ch_stateless_reset(QUIC_CHANNEL *ch);
 static void ch_raise_net_error(QUIC_CHANNEL *ch);
 static void ch_on_terminating_timeout(QUIC_CHANNEL *ch);
 static void ch_start_terminating(QUIC_CHANNEL *ch,
                                  const QUIC_TERMINATE_CAUSE *tcause,
                                  int force_immediate);
+static int ch_stateless_reset_token_handler(const unsigned char *data, size_t datalen, void *arg);
 static void ch_default_packet_handler(QUIC_URXE *e, void *arg);
 static int ch_server_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
                                  const QUIC_CONN_ID *peer_scid,
                                  const QUIC_CONN_ID *peer_dcid);
 static void ch_on_txp_ack_tx(const OSSL_QUIC_FRAME_ACK *ack, uint32_t pn_space,
                              void *arg);
+
+DEFINE_LHASH_OF_EX(QUIC_SRT_ELEM);
 
 static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
 {
@@ -111,6 +115,136 @@ static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
     }
 
     return 1;
+}
+
+static unsigned long chan_reset_token_hash(const QUIC_SRT_ELEM *a)
+{
+    unsigned long h;
+
+    assert(sizeof(h) <= sizeof(a->token));
+    memcpy(&h, &a->token, sizeof(h));
+    return h;
+}
+
+static int chan_reset_token_cmp(const QUIC_SRT_ELEM *a, const QUIC_SRT_ELEM *b)
+{
+    /* RFC 9000 s. 10.3.1:
+     *      When comparing a datagram to stateless reset token values,
+     *      endpoints MUST perform the comparison without leaking
+     *      information about the value of the token. For example,
+     *      performing this comparison in constant time protects the
+     *      value of individual stateless reset tokens from information
+     *      leakage through timing side channels.
+     *
+     * TODO(QUIC FUTURE): make this a memcmp when obfuscation is done and update
+     *                    comment above.
+     */
+    return CRYPTO_memcmp(&a->token, &b->token, sizeof(a->token));
+}
+
+static int reset_token_obfuscate(QUIC_SRT_ELEM *out, const unsigned char *in)
+{
+    /*
+     * TODO(QUIC FUTURE): update this to AES encrypt the token in ECB mode with a
+     * random (per channel) key.
+     */
+    memcpy(&out->token, in, sizeof(out->token));
+    return 1;
+}
+
+/*
+ * Add a stateless reset token to the channel
+ */
+static int chan_add_reset_token(QUIC_CHANNEL *ch, const unsigned char *new,
+                                uint64_t seq_num)
+{
+    QUIC_SRT_ELEM *srte;
+    int err;
+
+    /* Add to list by sequence number (always the tail) */
+    if ((srte = OPENSSL_malloc(sizeof(*srte))) == NULL)
+        return 0;
+
+    ossl_list_stateless_reset_tokens_init_elem(srte);
+    ossl_list_stateless_reset_tokens_insert_tail(&ch->srt_list_seq, srte);
+    reset_token_obfuscate(srte, new);
+    srte->seq_num = seq_num;
+
+    lh_QUIC_SRT_ELEM_insert(ch->srt_hash_tok, srte);
+    err = lh_QUIC_SRT_ELEM_error(ch->srt_hash_tok);
+    if (err > 0) {
+        ossl_list_stateless_reset_tokens_remove(&ch->srt_list_seq, srte);
+        OPENSSL_free(srte);
+        return 0;
+    }
+    return 1;
+}
+
+/*
+ * Remove a stateless reset token from the channel
+ * If the token isn't know, we just ignore the remove request which is safe.
+ */
+static void chan_remove_reset_token(QUIC_CHANNEL *ch, uint64_t seq_num)
+{
+    QUIC_SRT_ELEM *srte;
+
+    /*
+     * Because the list is ordered and we only ever remove CIDs in order,
+     * this loop should never iterate, but safer to provide the option.
+     */
+    for (   srte = ossl_list_stateless_reset_tokens_head(&ch->srt_list_seq);
+            srte != NULL;
+            srte = ossl_list_stateless_reset_tokens_next(srte)) {
+        if (srte->seq_num > seq_num)
+            return;
+        if (srte->seq_num == seq_num) {
+            ossl_list_stateless_reset_tokens_remove(&ch->srt_list_seq, srte);
+            (void)lh_QUIC_SRT_ELEM_delete(ch->srt_hash_tok, srte);
+            OPENSSL_free(srte);
+            return;
+        }
+    }
+}
+
+/*
+ * This is called by the demux whenever a new datagram arrives
+ *
+ * TODO(QUIC FUTURE): optimise this to only be called for unparsable packets
+ */
+static int ch_stateless_reset_token_handler(const unsigned char *data,
+                                            size_t datalen, void *arg)
+{
+    QUIC_SRT_ELEM srte;
+    QUIC_CHANNEL *ch = (QUIC_CHANNEL *)arg;
+
+    /*
+     * Perform some fast and cheap checks for a packet not being a stateless
+     * reset token.  RFC 9000 s. 10.3 specifies this layout for stateless
+     * reset packets:
+     *
+     *  Stateless Reset {
+     *      Fixed Bits (2) = 1,
+     *      Unpredictable Bits (38..),
+     *      Stateless Reset Token (128),
+     *  }
+     *
+     * It also specifies:
+     *      However, endpoints MUST treat any packet ending in a valid
+     *      stateless reset token as a Stateless Reset, as other QUIC
+     *      versions might allow the use of a long header.
+     *
+     * We can rapidly check for the minimum length and that the first pair
+     * of bits in the first byte are 01 or 11.
+     *
+     * The function returns 1 if it is a stateless reset packet, 0 if it isn't
+     * and -1 if an error was encountered.
+     */
+    if (datalen < QUIC_STATELESS_RESET_TOKEN_LEN + 5 || (0100 & *data) != 0100)
+        return 0;
+    memset(&srte, 0, sizeof(srte));
+    if (!reset_token_obfuscate(&srte, data - sizeof(srte.token)))
+        return -1;
+    return lh_QUIC_SRT_ELEM_retrieve(ch->srt_hash_tok, &srte) != NULL;
 }
 
 /*
@@ -133,6 +267,12 @@ static int ch_init(QUIC_CHANNEL *ch)
     QUIC_TLS_ARGS tls_args = {0};
     uint32_t pn_space;
     size_t rx_short_cid_len = ch->is_server ? INIT_DCID_LEN : 0;
+
+    ossl_list_stateless_reset_tokens_init(&ch->srt_list_seq);
+    ch->srt_hash_tok = lh_QUIC_SRT_ELEM_new(&chan_reset_token_hash,
+                                            &chan_reset_token_cmp);
+    if (ch->srt_hash_tok == NULL)
+        goto err;
 
     /* For clients, generate our initial DCID. */
     if (!ch->is_server
@@ -249,6 +389,13 @@ static int ch_init(QUIC_CHANNEL *ch)
         goto err;
 
     /*
+     * Setup a handler to detect stateless reset tokens.
+     */
+    ossl_quic_demux_set_stateless_reset_handler(ch->demux,
+                                                &ch_stateless_reset_token_handler,
+                                                ch);
+
+    /*
      * If we are a server, setup our handler for packets not corresponding to
      * any known DCID on our end. This is for handling clients establishing new
      * connections.
@@ -338,6 +485,7 @@ err:
 
 static void ch_cleanup(QUIC_CHANNEL *ch)
 {
+    QUIC_SRT_ELEM *srte, *srte_next;
     uint32_t pn_space;
 
     if (ch->ackm != NULL)
@@ -373,6 +521,17 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     OPENSSL_free(ch->local_transport_params);
     OPENSSL_free((char *)ch->terminate_cause.reason);
     OSSL_ERR_STATE_free(ch->err_state);
+
+    /* Free the stateless reset tokens */
+    for (   srte = ossl_list_stateless_reset_tokens_head(&ch->srt_list_seq);
+            srte != NULL;
+            srte = srte_next) {
+        srte_next = ossl_list_stateless_reset_tokens_next(srte);
+        ossl_list_stateless_reset_tokens_remove(&ch->srt_list_seq, srte);
+        (void)lh_QUIC_SRT_ELEM_delete(ch->srt_hash_tok, srte);
+        OPENSSL_free(srte);
+    }
+    lh_QUIC_SRT_ELEM_free(ch->srt_hash_tok);
 }
 
 QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
@@ -1016,6 +1175,8 @@ static int ch_on_handshake_alert(void *arg, unsigned char alert_code)
     x " sent when not performing a retry"
 #define TP_REASON_REQUIRED(x) \
     x " was not sent but is required"
+#define TP_REASON_INTERNAL_ERROR(x) \
+    x " encountered internal error"
 
 static void txfc_bump_cwm_bidi(QUIC_STREAM *s, void *arg)
 {
@@ -1361,10 +1522,11 @@ static int ch_on_transport_params(const unsigned char *params,
             break;
 
         case QUIC_TPARAM_STATELESS_RESET_TOKEN:
-            /* TODO(QUIC): Handle stateless reset tokens. */
             /*
-             * We ignore these for now, but we must ensure a client doesn't
-             * send them.
+             * We must ensure a client doesn't send them because we don't have
+             * processing for them.
+             *
+             * TODO(QUIC SERVER): remove this restriction
              */
             if (ch->is_server) {
                 reason = TP_REASON_SERVER_ONLY("STATELESS_RESET_TOKEN");
@@ -1374,6 +1536,10 @@ static int ch_on_transport_params(const unsigned char *params,
             body = ossl_quic_wire_decode_transport_param_bytes(&pkt, &id, &len);
             if (body == NULL || len != QUIC_STATELESS_RESET_TOKEN_LEN) {
                 reason = TP_REASON_MALFORMED("STATELESS_RESET_TOKEN");
+                goto malformed;
+            }
+            if (!chan_add_reset_token(ch, body, ch->cur_remote_seq_num)) {
+                reason = TP_REASON_INTERNAL_ERROR("STATELESS_RESET_TOKEN");
                 goto malformed;
             }
 
@@ -1762,7 +1928,9 @@ static void ch_rx_pre(QUIC_CHANNEL *ch)
      * to the appropriate QRX instance.
      */
     ret = ossl_quic_demux_pump(ch->demux);
-    if (ret == QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL)
+    if (ret == QUIC_DEMUX_PUMP_RES_STATELESS_RESET)
+        ch_stateless_reset(ch);
+    else if (ret == QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL)
         /*
          * We don't care about transient failure, but permanent failure means we
          * should tear down the connection as though a protocol violation
@@ -2767,6 +2935,8 @@ static int ch_enqueue_retire_conn_id(QUIC_CHANNEL *ch, uint64_t seq_num)
     WPACKET wpkt;
     size_t l;
 
+    chan_remove_reset_token(ch, seq_num);
+
     if ((buf_mem = BUF_MEM_new()) == NULL)
         return 0;
 
@@ -2869,6 +3039,16 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
     }
 
     if (new_remote_seq_num > ch->cur_remote_seq_num) {
+        /* Add new stateless reset token */
+        if (!chan_add_reset_token(ch, f->stateless_reset.token,
+                                  new_remote_seq_num)) {
+            ossl_quic_channel_raise_protocol_error(
+                    ch, QUIC_ERR_CONNECTION_ID_LIMIT_ERROR,
+                    OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
+                    "unable to store stateless reset token");
+
+            return;
+        }
         ch->cur_remote_seq_num = new_remote_seq_num;
         ch->cur_remote_dcid = f->conn_id;
         ossl_quic_tx_packetiser_set_cur_dcid(ch->txp, &ch->cur_remote_dcid);
@@ -2910,6 +3090,14 @@ static void ch_save_err_state(QUIC_CHANNEL *ch)
         return;
 
     OSSL_ERR_STATE_save(ch->err_state);
+}
+
+static void ch_stateless_reset(QUIC_CHANNEL *ch)
+{
+    QUIC_TERMINATE_CAUSE tcause = {0};
+
+    tcause.error_code = QUIC_ERR_NO_ERROR;
+    ch_start_terminating(ch, &tcause, 1);
 }
 
 static void ch_raise_net_error(QUIC_CHANNEL *ch)
