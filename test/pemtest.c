@@ -127,7 +127,7 @@ static int test_empty_payload(void)
 
 static int test_protected_params(void)
 {
-     BIO *b;
+    BIO *b;
     static char *protectedpay =
         "-----BEGIN RSA PRIVATE KEY-----\n"
         "Proc-Type: 4,ENCRYPTED\n"
