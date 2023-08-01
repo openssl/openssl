@@ -87,47 +87,7 @@
 #  define OSSL_QUIC_FRAME_TYPE_IS_CONN_CLOSE(x) \
     (((x) & ~(uint64_t)1) == OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT)
 
-static ossl_unused ossl_inline const char *
-ossl_quic_frame_type_to_string(uint64_t frame_type)
-{
-    switch (frame_type) {
-#define X(name) case OSSL_QUIC_FRAME_TYPE_##name: return #name;
-    X(PADDING)
-    X(PING)
-    X(ACK_WITHOUT_ECN)
-    X(ACK_WITH_ECN)
-    X(RESET_STREAM)
-    X(STOP_SENDING)
-    X(CRYPTO)
-    X(NEW_TOKEN)
-    X(MAX_DATA)
-    X(MAX_STREAM_DATA)
-    X(MAX_STREAMS_BIDI)
-    X(MAX_STREAMS_UNI)
-    X(DATA_BLOCKED)
-    X(STREAM_DATA_BLOCKED)
-    X(STREAMS_BLOCKED_BIDI)
-    X(STREAMS_BLOCKED_UNI)
-    X(NEW_CONN_ID)
-    X(RETIRE_CONN_ID)
-    X(PATH_CHALLENGE)
-    X(PATH_RESPONSE)
-    X(CONN_CLOSE_TRANSPORT)
-    X(CONN_CLOSE_APP)
-    X(HANDSHAKE_DONE)
-    X(STREAM)
-    X(STREAM_FIN)
-    X(STREAM_LEN)
-    X(STREAM_LEN_FIN)
-    X(STREAM_OFF)
-    X(STREAM_OFF_FIN)
-    X(STREAM_OFF_LEN)
-    X(STREAM_OFF_LEN_FIN)
-#undef X
-    default:
-        return NULL;
-    }
-}
+const char *ossl_quic_frame_type_to_string(uint64_t frame_type);
 
 static ossl_unused ossl_inline int
 ossl_quic_frame_type_is_ack_eliciting(uint64_t frame_type)

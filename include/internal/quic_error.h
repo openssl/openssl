@@ -46,33 +46,7 @@
 #  define QUIC_ERR_CRYPTO_NO_APP_PROTO \
     QUIC_ERR_CRYPTO_ERR(TLS1_AD_NO_APPLICATION_PROTOCOL)
 
-static ossl_inline ossl_unused const char *
-ossl_quic_err_to_string(uint64_t error_code)
-{
-    switch (error_code) {
-#define X(name) case QUIC_ERR_##name: return #name;
-    X(NO_ERROR)
-    X(INTERNAL_ERROR)
-    X(CONNECTION_REFUSED)
-    X(FLOW_CONTROL_ERROR)
-    X(STREAM_LIMIT_ERROR)
-    X(STREAM_STATE_ERROR)
-    X(FINAL_SIZE_ERROR)
-    X(FRAME_ENCODING_ERROR)
-    X(TRANSPORT_PARAMETER_ERROR)
-    X(CONNECTION_ID_LIMIT_ERROR)
-    X(PROTOCOL_VIOLATION)
-    X(INVALID_TOKEN)
-    X(APPLICATION_ERROR)
-    X(CRYPTO_BUFFER_EXCEEDED)
-    X(KEY_UPDATE_ERROR)
-    X(AEAD_LIMIT_REACHED)
-    X(NO_VIABLE_PATH)
-#undef X
-    default:
-        return NULL;
-    }
-}
+const char *ossl_quic_err_to_string(uint64_t error_code);
 
 # endif
 
