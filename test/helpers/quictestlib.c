@@ -401,16 +401,13 @@ int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
             ossl_quic_tserver_tick(qtserv);
     }
 
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
     tsan_store(&shutdowndone, 1);
     if (!tickserver) {
-#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
         if (!TEST_true(wait_for_thread(t)))
             ret = 0;
-#else
-        TEST_error("Should not happen");
-        ret = 0;
-#endif
     }
+#endif
 
     return ret;
 }
