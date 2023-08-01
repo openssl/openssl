@@ -28,6 +28,10 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
+### Changes between 3.0.10 and 3.0.11 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.0.9 and 3.0.10 [1 Aug 2023]
 
  * Fix excessive time spent checking DH q parameter value.
