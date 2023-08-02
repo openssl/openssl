@@ -57,13 +57,6 @@ typedef struct ossl_quic_tx_packetiser_args_st {
      */
     QUIC_SSTREAM    *crypto[QUIC_PN_SPACE_NUM];
 
-    /*
-     * Counts of the number of bytes received and sent while in the closing
-     * state.
-     */
-    uint64_t                        closing_bytes_recv;
-    uint64_t                        closing_bytes_xmit;
-
  } OSSL_QUIC_TX_PACKETISER_ARGS;
 
 typedef struct ossl_quic_tx_packetiser_st OSSL_QUIC_TX_PACKETISER;
