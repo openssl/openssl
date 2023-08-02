@@ -81,7 +81,7 @@ connection attempts.
 
 =item B<SSL_CIPHER> (SSL Cipher)
 
-During connection establishment the client and server agree which cryptographic
+During connection establishment the client and server agree upon cryptographic
 algorithms they are going to use for encryption and other uses. A single set
 of cryptographic algorithms that are to be used together is known as a
 ciphersuite. Such a set is represented by an B<SSL_CIPHER> object.
