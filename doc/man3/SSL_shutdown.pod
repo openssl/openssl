@@ -74,8 +74,11 @@ Calling SSL_shutdown() only closes the write direction of the connection; the
 read direction is closed by the peer. Once SSL_shutdown() is called,
 L<SSL_write(3)> can no longer be used, but L<SSL_read(3)> may still be used
 until the peer decides to close the connection in turn. The peer might
-continuing sending data for some period of time before honouring the local
-application's shutdown request.
+continue sending data for some period of time before handling the local
+application's shutdown indication.
+
+SSL_shutdown() does not affect an underlying network connection such as a TCP
+connection, which remains open.
 
 =head2 Remotely-Initiated Shutdown
 
@@ -83,7 +86,7 @@ If the peer was the first to initiate the shutdown process by sending a
 close_notify alert message, an application will be notified of this as an EOF
 condition when calling
 L<SSL_read(3)> (i.e., L<SSL_read(3)> will fail and L<SSL_get_error(3)> will
-return B<SSL_ERROR_ZERO_RETURN>), after any application data sent by the peer
+return B<SSL_ERROR_ZERO_RETURN>), after all application data sent by the peer
 prior to initiating the shutdown has been read. An application should handle
 this condition by calling SSL_shutdown() to respond with a close_notify alert in
 turn, completing the shutdown process, though it may choose to write additional
@@ -94,10 +97,11 @@ the behaviour will not be fully standards compliant.
 =head2 Shutdown Lifecycle
 
 Regardless of whether a shutdown was initiated locally or by the peer, if the
-underlying BIO is blocking, a call to SSL_shutdown() will return either once
-close_notify alert messages have both been sent to and received from the peer,
-and the shutdown process is thereby completed (returning 1), or if an error
-occurs.
+underlying BIO is blocking, a call to SSL_shutdown() will return firstly once a
+close_notify alert message is written to the peer (returning 0), and upon a
+second and subsequent call, once a corresponding message is received from the
+peer (returning 1 and completing the shutdown process). Calls to SSL_shutdown()
+with a blocking underlying BIO will also return if an error occurs.
 
 If the underlying BIO is nonblocking and the shutdown process is not yet
 complete (for example, because a close_notify alert message has not yet been
@@ -112,10 +116,12 @@ process is complete (with a close_notify alert having both been sent and
 received). However, the preferred method of waiting for the shutdown to complete
 is to use L<SSL_read(3)> until L<SSL_get_error(3)> indicates EOF by returning
 B<SSL_ERROR_ZERO_RETURN>. This ensures any data received immediately before the
-peer's close_notify alert is still provided to the application.
+peer's close_notify alert is still provided to the application. It also ensures
+any final handshake-layer messages received are processed (for example, messages
+issuing new session tickets).
 
-SSL_shutdown() must not be called if a previous fatal error has occurred on a
-connection; i.e., if L<SSL_get_error(3)> has returned B<SSL_ERROR_SYCALL> or
+SSL_shutdown() should not be called if a previous fatal error has occurred on a
+connection; i.e., if L<SSL_get_error(3)> has returned B<SSL_ERROR_SYSCALL> or
 B<SSL_ERROR_SSL>.
 
 When calling SSL_shutdown(), the B<SSL_SENT_SHUTDOWN> flag is set once an
@@ -185,6 +191,10 @@ potentially vulnerable to truncation attacks. Thus, this option must only be
 used in conjunction with an application protocol which indicates unambiguously
 when all data has been received.
 
+An alternative approach is to simply avoid calling L<SSL_read(3)> if it is known
+that no more data is going to be sent. This requires an application protocol
+which indicates unambiguously when all data has been sent.
+
 =head2 Session Ticket Handling
 
 If a client application only writes to a SSL/TLS or DTLS connection and never
@@ -203,9 +213,13 @@ received and processed by OpenSSL.
 When used with a QUIC connection SSL object, SSL_shutdown() initiates a QUIC
 immediate close using QUIC B<CONNECTION_CLOSE> frames.
 
-SSL_shutdown_ex() may be used by an application to provide additional
-information to the peer on the reason why a connection is being shut down. The
-information which can be provided is as follows:
+SSL_shutdown() cannot be used on QUIC stream SSL objects. To conclude a stream
+normally, see L<SSL_stream_conclude(3)>; to perform a non-normal stream
+termination, see L<SSL_stream_reset(3)>.
+
+SSL_shutdown_ex() may be used instead of SSL_shutdown() by an application to
+provide additional information to the peer on the reason why a connection is
+being shut down. The information which can be provided is as follows:
 
 =over 4
 
@@ -235,13 +249,17 @@ The arguments to SSL_shutdown_ex() are used only on the first call to
 SSL_shutdown_ex() (or SSL_shutdown()) for a given QUIC connection SSL object.
 These arguments are ignored on subsequent calls.
 
+These functions do not affect an underlying network BIO or the resource it
+represents; for example, a UDP datagram provided to a QUIC connection as the
+network BIO will remain open.
+
 =head2 Application Data Drainage Behaviour
 
 When using QUIC, SSL_shutdown() or SSL_shutdown_ex() ordinarily waits until all
 data written to a stream by an application has been acknowledged by the peer. In
 other words, the shutdown process waits until all data written by the
 application has been sent to the peer, and until the receipt of all such data is
-acknowledged by the peer. Only once this process is completed is thue shutdown
+acknowledged by the peer. Only once this process is completed is the shutdown
 considered complete.
 
 An exception to this is streams which terminated in a non-normal fashion, for
@@ -342,7 +360,8 @@ Call L<SSL_get_error(3)> with the return value B<ret> to find out the reason.
 It can occur if an action is needed to continue the operation for nonblocking
 BIOs.
 
-It can also occur when not all data was read using SSL_read().
+It can also occur when not all data was read using SSL_read(), or if called
+on a QUIC stream SSL object.
 
 This value is also returned when called on QUIC stream SSL objects.
 
