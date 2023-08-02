@@ -842,3 +842,14 @@ int ossl_quic_tls_get_error(QUIC_TLS *qtls,
 
     return qtls->inerror;
 }
+
+/*
+ * Returns true if the last handshake record message we processed was a
+ * CertificateRequest
+ */
+int ossl_quic_tls_is_cert_request(QUIC_TLS *qtls)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(qtls->args.s);
+
+    return sc->s3.tmp.message_type == SSL3_MT_CERTIFICATE_REQUEST;
+}

@@ -989,8 +989,25 @@ static int ch_on_handshake_alert(void *arg, unsigned char alert_code)
 {
     QUIC_CHANNEL *ch = arg;
 
-    ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_CRYPTO_ERR_BEGIN + alert_code,
-                                           0, "handshake alert");
+    /*
+     * RFC 9001 s. 4.4: More specifically, servers MUST NOT send post-handshake
+     * TLS CertificateRequest messages, and clients MUST treat receipt of such
+     * messages as a connection error of type PROTOCOL_VIOLATION.
+     */
+    if (alert_code == SSL3_AD_UNEXPECTED_MESSAGE
+            && ch->handshake_complete
+            && ossl_quic_tls_is_cert_request(ch->qtls))
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_PROTOCOL_VIOLATION,
+                                               0,
+                                               "Post-handshake TLS "
+                                               "CertificateRequest received");
+    else
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_CRYPTO_ERR_BEGIN
+                                               + alert_code,
+                                               0, "handshake alert");
+
     return 1;
 }
 
