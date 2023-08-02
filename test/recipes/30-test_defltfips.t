@@ -21,6 +21,9 @@ BEGIN {
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
+plan skip_all => "Configuration loading is turned off"
+    if disabled("autoload-config");
+
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
