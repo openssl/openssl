@@ -595,7 +595,7 @@ int ossl_ssl_connection_reset(SSL *s)
     OPENSSL_free(sc->psksession_id);
     sc->psksession_id = NULL;
     sc->psksession_id_len = 0;
-    sc->hello_retry_request = 0;
+    sc->hello_retry_request = SSL_HRR_NONE;
     sc->sent_tickets = 0;
 
     sc->error = 0;

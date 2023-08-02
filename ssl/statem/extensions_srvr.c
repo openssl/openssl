@@ -902,7 +902,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     /* Act as if this ClientHello came after a HelloRetryRequest */
-    s->hello_retry_request = 1;
+    s->hello_retry_request = SSL_HRR_PENDING;
 
     s->ext.cookieok = 1;
 #endif
