@@ -81,8 +81,10 @@ DEFINE_RUN_ONCE_STATIC(obj_lock_initialise)
 
 static ossl_inline int ossl_init_added_lock(void)
 {
+#ifndef OPENSSL_NO_AUTOLOAD_CONFIG
     /* Make sure we've loaded config before checking for any "added" objects */
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
     return RUN_ONCE(&ossl_obj_lock_init, obj_lock_initialise);
 }
 
