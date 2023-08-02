@@ -201,8 +201,10 @@ ENGINE *ossl_engine_table_select(ENGINE_TABLE **table, int nid,
     ENGINE_PILE tmplate, *fnd = NULL;
     int initres, loop = 0;
 
+#ifndef OPENSSL_NO_AUTOLOAD_CONFIG
     /* Load the config before trying to check if engines are available */
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
 
     if (!(*table)) {
         OSSL_TRACE3(ENGINE_TABLE,
