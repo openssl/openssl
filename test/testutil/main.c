@@ -15,6 +15,7 @@
 int main(int argc, char *argv[])
 {
     int ret = EXIT_FAILURE;
+    int setup_res;
 
     test_open_streams();
 
@@ -26,11 +27,11 @@ int main(int argc, char *argv[])
     if (!setup_test_framework(argc, argv))
         goto end;
 
-    if (setup_tests()) {
+    if ((setup_res = setup_tests()) > 0) {
         ret = run_tests(argv[0]);
         cleanup_tests();
         opt_check_usage();
-    } else {
+    } else if (setup_res == 0) {
         opt_help(test_get_options());
     }
 end:
