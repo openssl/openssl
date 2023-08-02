@@ -44,7 +44,7 @@ carefully in order to achieve a successful build. In the directory you will also
 find a set of B<NOTES> files that provide further platform specific information.
 Make sure you carefully read the file appropriate to your platform. As well as
 the platform specific B<NOTES> files there is also a B<NOTES-PERL.md> file that
-provides information about setting up perl for use by the OpenSSL build system
+provides information about setting up Perl for use by the OpenSSL build system
 across multiple platforms.
 
 Sometimes you may want to build and install OpenSSL from source on a system
@@ -52,8 +52,8 @@ which already has a pre-built version of OpenSSL installed on it via the
 Operating System package management system (for example if you want to use a
 newer version of OpenSSL than the one supplied by your Operating System). In
 this case it is recommended to install OpenSSL to a different location than
-where the pre-built version is installed. You should not typically replace the
-pre-built version with a different version as this may break your system.
+where the pre-built version is installed. You should never replace the pre-built
+version with a different version as this may break your system.
 
 =head1 CONTENTS OF THE OPENSSL GUIDE
 
