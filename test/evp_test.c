@@ -2552,6 +2552,7 @@ static int encode_test_run(EVP_TEST *t)
     unsigned char *encode_out = NULL, *decode_out = NULL;
     int output_len, chunk_len;
     EVP_ENCODE_CTX *decode_ctx = NULL, *encode_ctx = NULL;
+    size_t input_len, donelen;
 
     if (!TEST_ptr(decode_ctx = EVP_ENCODE_CTX_new())) {
         t->err = "INTERNAL_ERROR";
@@ -2566,13 +2567,25 @@ static int encode_test_run(EVP_TEST *t)
             goto err;
 
         EVP_EncodeInit(encode_ctx);
-        if (!TEST_true(EVP_EncodeUpdate(encode_ctx, encode_out, &chunk_len,
-                                        expected->input, expected->input_len)))
-            goto err;
 
-        output_len = chunk_len;
+        input_len = expected->input_len;
+        donelen = 0;
+        output_len = 0;
+        do {
+            size_t current_len = (size_t) data_chunk_size;
 
-        EVP_EncodeFinal(encode_ctx, encode_out + chunk_len, &chunk_len);
+            if (data_chunk_size == 0 || (size_t) data_chunk_size > input_len)
+                current_len = input_len;
+            if (!TEST_true(EVP_EncodeUpdate(encode_ctx, encode_out, &chunk_len,
+                                            expected->input + donelen,
+                                            current_len)))
+                goto err;
+            donelen += current_len;
+            input_len -= current_len;
+            output_len += chunk_len;
+        } while (input_len > 0);
+
+        EVP_EncodeFinal(encode_ctx, encode_out + output_len, &chunk_len);
         output_len += chunk_len;
 
         if (!memory_err_compare(t, "BAD_ENCODING",
@@ -2585,15 +2598,27 @@ static int encode_test_run(EVP_TEST *t)
                 OPENSSL_malloc(EVP_DECODE_LENGTH(expected->output_len))))
         goto err;
 
+    output_len = 0;
     EVP_DecodeInit(decode_ctx);
-    if (EVP_DecodeUpdate(decode_ctx, decode_out, &chunk_len, expected->output,
-                         expected->output_len) < 0) {
-        t->err = "DECODE_ERROR";
-        goto err;
-    }
-    output_len = chunk_len;
 
-    if (EVP_DecodeFinal(decode_ctx, decode_out + chunk_len, &chunk_len) != 1) {
+    input_len = expected->output_len;
+    donelen = 0;
+    do {
+        size_t current_len = (size_t) data_chunk_size;
+
+        if (data_chunk_size == 0 || (size_t) data_chunk_size > input_len)
+            current_len = input_len;
+        if (EVP_DecodeUpdate(decode_ctx, decode_out + output_len, &chunk_len,
+                                expected->output + donelen, current_len) < 0) {
+            t->err = "DECODE_ERROR";
+            goto err;
+        }
+        donelen += current_len;
+        input_len -= current_len;
+        output_len += chunk_len;
+    } while (input_len > 0);
+
+    if (EVP_DecodeFinal(decode_ctx, decode_out + output_len, &chunk_len) != 1) {
         t->err = "DECODE_ERROR";
         goto err;
     }
