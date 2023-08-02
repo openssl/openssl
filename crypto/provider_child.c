@@ -132,7 +132,7 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
          * init children
          */
         if ((cprov = ossl_provider_new(ctx, provname, ossl_child_provider_init,
-                                       1)) == NULL)
+                                       NULL, 1)) == NULL)
             goto err;
 
         if (!ossl_provider_activate(cprov, 0, 0)) {

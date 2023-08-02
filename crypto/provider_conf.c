@@ -158,7 +158,7 @@ static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
         }
         prov = ossl_provider_find(libctx, name, 1);
         if (prov == NULL)
-            prov = ossl_provider_new(libctx, name, NULL, 1);
+            prov = ossl_provider_new(libctx, name, NULL, NULL, 1);
         if (prov == NULL) {
             CRYPTO_THREAD_unlock(pcgbl->lock);
             if (soft)
