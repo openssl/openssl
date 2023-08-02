@@ -129,8 +129,10 @@ ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
     int idx;
     ASN1_STRING_TABLE fnd;
 
+#ifndef OPENSSL_NO_AUTOLOAD_CONFIG
     /* "stable" can be impacted by config, so load the config file first */
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
 
     fnd.nid = nid;
     if (stable != NULL) {

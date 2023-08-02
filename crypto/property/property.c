@@ -124,11 +124,11 @@ void *ossl_ctx_global_properties_new(OSSL_LIB_CTX *ctx)
 }
 
 OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *libctx,
-                                                int loadconfig)
+                                                ossl_unused int loadconfig)
 {
     OSSL_GLOBAL_PROPERTIES *globp;
 
-#ifndef FIPS_MODULE
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_AUTOLOAD_CONFIG)
     if (loadconfig && !OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL))
         return NULL;
 #endif
@@ -505,7 +505,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     if (nid <= 0 || method == NULL || store == NULL)
         return 0;
 
-#ifndef FIPS_MODULE
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_AUTOLOAD_CONFIG)
     if (ossl_lib_ctx_is_default(store->ctx)
             && !OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
