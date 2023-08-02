@@ -2018,7 +2018,6 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
         break;
 
     case QUIC_PKT_TYPE_INITIAL:
-        ch->el_discarded |= (1U << QUIC_ENC_LEVEL_INITIAL);
     case QUIC_PKT_TYPE_HANDSHAKE:
     case QUIC_PKT_TYPE_1RTT:
         if (ch->qrx_pkt->hdr->type == QUIC_PKT_TYPE_HANDSHAKE)
@@ -2071,7 +2070,10 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
         }
 
         /* This packet contains frames, pass to the RXDP. */
-        ossl_quic_handle_frames(ch, ch->qrx_pkt); /* best effort */
+        /* best effort */
+        if (ossl_quic_handle_frames(ch, ch->qrx_pkt))
+            if (ch->qrx_pkt->hdr->type == QUIC_PKT_TYPE_INITIAL)
+                ch->el_discarded |= (1U << QUIC_ENC_LEVEL_INITIAL);
         break;
 
     default:
