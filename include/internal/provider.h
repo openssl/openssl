@@ -32,7 +32,7 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
                                   int noconfig);
 OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
                                  OSSL_provider_init_fn *init_function,
-                                 int noconfig);
+                                 OSSL_PARAM *params, int noconfig);
 int ossl_provider_up_ref(OSSL_PROVIDER *prov);
 void ossl_provider_free(OSSL_PROVIDER *prov);
 

@@ -5,6 +5,7 @@
 OSSL_PROVIDER_set_default_search_path,
 OSSL_PROVIDER_get0_default_search_path,
 OSSL_PROVIDER, OSSL_PROVIDER_load, OSSL_PROVIDER_try_load, OSSL_PROVIDER_unload,
+OSSL_PROVIDER_load_ex, OSSL_PROVIDER_try_load_ex,
 OSSL_PROVIDER_available, OSSL_PROVIDER_do_all,
 OSSL_PROVIDER_gettable_params, OSSL_PROVIDER_get_params,
 OSSL_PROVIDER_query_operation, OSSL_PROVIDER_unquery_operation,
@@ -24,8 +25,13 @@ OSSL_PROVIDER_self_test
  const char *OSSL_PROVIDER_get0_default_search_path(OSSL_LIB_CTX *libctx);
 
  OSSL_PROVIDER *OSSL_PROVIDER_load(OSSL_LIB_CTX *libctx, const char *name);
+ OSSL_PROVIDER *OSSL_PROVIDER_load_ex(OSSL_LIB_CTX *, const char *name,
+                                      OSSL_PARAM *params);
  OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
                                        int retain_fallbacks);
+ OSSL_PROVIDER *OSSL_PROVIDER_try_load_ex(OSSL_LIB_CTX *, const char *name,
+                                          OSSL_PARAM *params,
+                                          int retain_fallbacks);
  int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
  int OSSL_PROVIDER_available(OSSL_LIB_CTX *libctx, const char *name);
  int OSSL_PROVIDER_do_all(OSSL_LIB_CTX *ctx,
@@ -100,6 +106,13 @@ it does not disable the fallback providers if the provider cannot be
 loaded and initialized or if I<retain_fallbacks> is nonzero.
 If the provider loads successfully and I<retain_fallbacks> is zero, the
 fallback providers are disabled.
+
+OSSL_PROVIDER_load_ex() and OSSL_PROVIDER_try_load_ex() are the variants
+of the previous functions accepting an C<OSSL_PARAM> array of the parameters
+that are passed as the configuration of the loaded provider. The parameters
+of any type but C<OSSL_PARAM_UTF8_STRING> are silently ignored. If the
+parameters are provided, they replace B<all> the ones specified in the
+configuration file.
 
 OSSL_PROVIDER_unload() unloads the given provider.
 For a provider added with OSSL_PROVIDER_add_builtin(), this simply
@@ -220,6 +233,9 @@ L<openssl-core.h(7)>, L<OSSL_LIB_CTX(3)>, L<provider(7)>
 =head1 HISTORY
 
 The type and functions described here were added in OpenSSL 3.0.
+
+The I<OSSL_PROVIDER_load_ex> and I<OSSL_PROVIDER_try_load_ex> functions were
+added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

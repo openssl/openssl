@@ -518,7 +518,7 @@ static int provider_free_intern(OSSL_PROVIDER *prov, int deactivate)
  */
 OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
                                  OSSL_provider_init_fn *init_function,
-                                 int noconfig)
+                                 OSSL_PARAM *params, int noconfig)
 {
     struct provider_store_st *store = NULL;
     OSSL_PROVIDER_INFO template;
@@ -540,7 +540,7 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
             }
         }
         if (p->name == NULL) {
-            /* Check if this is a user added builtin provider */
+            /* Check if this is a user added provider */
             if (!CRYPTO_THREAD_read_lock(store->lock))
                 return NULL;
             for (i = 0, p = store->provinfo; i < store->numprovinfo; p++, i++) {
@@ -555,8 +555,29 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
         template.init = init_function;
     }
 
+    if (params != NULL) {
+        int i;
+
+        template.parameters = sk_INFOPAIR_new_null();
+        if (template.parameters == NULL)
+            return NULL;
+
+        for (i = 0; params[i].key != NULL; i++) {
+            if (params[i].data_type != OSSL_PARAM_UTF8_STRING)
+                continue;
+            if (ossl_provider_info_add_parameter(&template, params[i].key,
+                                                 (char *)params[i].data) <= 0)
+                return NULL;
+        }
+    }
+
     /* provider_new() generates an error, so no need here */
-    if ((prov = provider_new(name, template.init, template.parameters)) == NULL)
+    prov = provider_new(name, template.init, template.parameters);
+
+    if (params != NULL) /* We copied the parameters, let's free them */
+        sk_INFOPAIR_pop_free(template.parameters, infopair_free);
+
+    if (prov == NULL)
         return NULL;
 
     prov->libctx = libctx;
