@@ -921,7 +921,7 @@ static int depack_do_frame_path_challenge(PACKET *pkt,
      * respond by echoing the data contained in the PATH_CHALLENGE frame in a
      * PATH_RESPONSE frame.
      *
-     * TODO(QUIC): We should try to avoid allocation here in the future.
+     * TODO(QUIC FUTURE): We should try to avoid allocation here in the future.
      */
     encoded_len = sizeof(uint64_t) + 1;
     if ((encoded = OPENSSL_malloc(encoded_len)) == NULL)
