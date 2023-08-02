@@ -583,7 +583,7 @@ int SSL_clear(SSL *s)
     OPENSSL_free(s->psksession_id);
     s->psksession_id = NULL;
     s->psksession_id_len = 0;
-    s->hello_retry_request = 0;
+    s->hello_retry_request = SSL_HRR_NONE;
     s->sent_tickets = 0;
 
     s->error = 0;
