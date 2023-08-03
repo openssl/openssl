@@ -940,7 +940,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
         BIO *bio;
 
         if (!maybe_stdin) {
-            BIO_printf(bio_err, "No filename or uri specified for loading");
+            BIO_printf(bio_err, "No filename or uri specified for loading\n");
             goto end;
         }
         uri = "<stdin>";
@@ -956,10 +956,8 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
         ctx = OSSL_STORE_open_ex(uri, libctx, propq, get_ui_method(), &uidata,
                                  params, NULL, NULL);
     }
-    if (ctx == NULL) {
-        BIO_printf(bio_err, "Could not open file or uri for loading");
+    if (ctx == NULL)
         goto end;
-    }
     if (expect > 0 && !OSSL_STORE_expect(ctx, expect))
         goto end;
 
