@@ -116,6 +116,7 @@ Client-side debugging options:
 [B<-reqin> I<filenames>]
 [B<-reqin_new_tid>]
 [B<-reqout> I<filenames>]
+[B<-reqout_only> I<filename>]
 [B<-rspin> I<filenames>]
 [B<-rspout> I<filenames>]
 [B<-use_mock_srv>]
@@ -968,7 +969,7 @@ If not given it defaults to the B<-server> address.
 
 =back
 
-=head2 Client-side debugging options
+=head2 Client-side options for debugging and offline scenarios
 
 =over 4
 
@@ -1019,6 +1020,14 @@ Multiple filenames may be given, separated by commas and/or whitespace.
 Files are written as far as needed to save the transaction
 and filenames have been provided.
 If the transaction contains more requests, the remaining ones are not saved.
+
+=item B<-reqout_only> I<filename>
+
+Save the first CMP requests created by the client to the given file and exit.
+Any options related to CMP servers and their reponses are ignored.
+
+This option is useful for supporting offline scenarios where the certificate
+request (or any other CMP request) is produced beforehand and sent out later.
 
 =item B<-rspin> I<filenames>
 
