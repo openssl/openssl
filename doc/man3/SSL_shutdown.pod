@@ -113,12 +113,19 @@ will yield B<SSL_ERROR_WANT_READ> or B<SSL_ERROR_WANT_WRITE>.
 An application can then detect completion of the shutdown process by calling
 SSL_shutdown() again repeatedly until it returns 1, indicating that the shutdown
 process is complete (with a close_notify alert having both been sent and
-received). However, the preferred method of waiting for the shutdown to complete
-is to use L<SSL_read(3)> until L<SSL_get_error(3)> indicates EOF by returning
+received).
+
+However, the preferred method of waiting for the shutdown to complete is to use
+L<SSL_read(3)> until L<SSL_get_error(3)> indicates EOF by returning
 B<SSL_ERROR_ZERO_RETURN>. This ensures any data received immediately before the
 peer's close_notify alert is still provided to the application. It also ensures
 any final handshake-layer messages received are processed (for example, messages
 issuing new session tickets).
+
+If this approach is not used, the second call to SSL_shutdown() (to complete the
+shutdown by confirming receipt of the peer's close_notify message) will fail if
+it is called when the application has not read all pending application data
+sent by the peer using L<SSL_read(3)>.
 
 SSL_shutdown() should not be called if a previous fatal error has occurred on a
 connection; i.e., if L<SSL_get_error(3)> has returned B<SSL_ERROR_SYSCALL> or
