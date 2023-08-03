@@ -230,6 +230,7 @@
 # define SSL_R_PSK_IDENTITY_NOT_FOUND                     223
 # define SSL_R_PSK_NO_CLIENT_CB                           224
 # define SSL_R_PSK_NO_SERVER_CB                           225
+# define SSL_R_QUIC_HANDSHAKE_LAYER_ERROR                 393
 # define SSL_R_QUIC_NETWORK_ERROR                         387
 # define SSL_R_QUIC_PROTOCOL_ERROR                        382
 # define SSL_R_READ_BIO_NOT_SET                           211

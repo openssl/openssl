@@ -221,6 +221,7 @@ void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
                                                 uint64_t error_code,
                                                 uint64_t frame_type,
                                                 const char *reason,
+                                                ERR_STATE *err_state,
                                                 const char *src_file,
                                                 int src_line,
                                                 const char *src_func);
@@ -229,9 +230,20 @@ void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
     ossl_quic_channel_raise_protocol_error_loc((ch), (error_code),  \
                                                (frame_type),        \
                                                (reason),            \
+                                               NULL,                \
                                                OPENSSL_FILE,        \
                                                OPENSSL_LINE,        \
                                                OPENSSL_FUNC)
+
+#define ossl_quic_channel_raise_protocol_error_state(ch, error_code, frame_type, reason, state) \
+    ossl_quic_channel_raise_protocol_error_loc((ch), (error_code),  \
+                                               (frame_type),        \
+                                               (reason),            \
+                                               (state),             \
+                                               OPENSSL_FILE,        \
+                                               OPENSSL_LINE,        \
+                                               OPENSSL_FUNC)
+
 
 /*
  * Returns 1 if permanent net error was detected on the QUIC_CHANNEL,

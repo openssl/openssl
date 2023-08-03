@@ -1616,8 +1616,8 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
     QUIC_CHANNEL *ch = arg;
     int channel_only = (flags & QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY) != 0;
     uint64_t error_code;
-    const char *error_msg, *error_src_file, *error_src_func;
-    int error_src_line;
+    const char *error_msg;
+    ERR_STATE *error_state = NULL;
 
     /*
      * When we tick the QUIC connection, we do everything we need to do
@@ -1674,15 +1674,9 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
                 ossl_quic_tls_tick(ch->qtls);
 
                 if (ossl_quic_tls_get_error(ch->qtls, &error_code, &error_msg,
-                                            &error_src_file,
-                                            &error_src_line,
-                                            &error_src_func)) {
-                    ossl_quic_channel_raise_protocol_error_loc(ch, error_code, 0,
-                                                               error_msg,
-                                                               error_src_file,
-                                                               error_src_line,
-                                                               error_src_func);
-                }
+                                            &error_state))
+                    ossl_quic_channel_raise_protocol_error_state(ch, error_code, 0,
+                                                                 error_msg, error_state);
             }
 
             /*
@@ -2916,6 +2910,7 @@ void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
                                                 uint64_t error_code,
                                                 uint64_t frame_type,
                                                 const char *reason,
+                                                ERR_STATE *err_state,
                                                 const char *src_file,
                                                 int src_line,
                                                 const char *src_func)
@@ -2933,6 +2928,13 @@ void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
         err_str_pfx = "";
         err_str_sfx = "";
     }
+
+    /*
+     * If we were provided an underlying error state, restore it and then append
+     * our ERR on top as a "cover letter" error.
+     */
+    if (err_state != NULL)
+        OSSL_ERR_STATE_restore(err_state);
 
     if (frame_type != 0) {
         ft_str = ossl_quic_frame_type_to_string(frame_type);
