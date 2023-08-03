@@ -264,6 +264,7 @@ void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst,
 
     dst->pkey_size = src->pkey_size;
     dst->pkey_bits = src->pkey_bits;
+    dst->pkey_security_bits = src->pkey_security_bits;
 
     dst->param_decode = src->param_decode;
     dst->param_encode = src->param_encode;
@@ -271,6 +272,7 @@ void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst,
     dst->param_copy = src->param_copy;
     dst->param_cmp = src->param_cmp;
     dst->param_print = src->param_print;
+    dst->sig_print = src->sig_print;
 
     dst->pkey_free = src->pkey_free;
     dst->pkey_ctrl = src->pkey_ctrl;
@@ -281,6 +283,13 @@ void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst,
     dst->siginf_set = src->siginf_set;
 
     dst->pkey_check = src->pkey_check;
+    dst->pkey_public_check = src->pkey_public_check;
+    dst->pkey_param_check = src->pkey_param_check;
+
+    dst->set_priv_key = src->set_priv_key;
+    dst->set_pub_key = src->set_pub_key;
+    dst->get_priv_key = src->get_priv_key;
+    dst->get_pub_key = src->get_pub_key;
 
 }
 
