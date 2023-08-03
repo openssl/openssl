@@ -4560,6 +4560,11 @@ int SSL_set_ssl_method(SSL *s, const SSL_METHOD *meth)
 
 int SSL_get_error(const SSL *s, int i)
 {
+    return ossl_ssl_get_error(s, i, /*check_err=*/1);
+}
+
+int ossl_ssl_get_error(const SSL *s, int i, int check_err)
+{
     int reason;
     unsigned long l;
     BIO *bio;
@@ -4583,7 +4588,7 @@ int SSL_get_error(const SSL *s, int i)
      * Make things return SSL_ERROR_SYSCALL when doing SSL_do_handshake etc,
      * where we do encode the error
      */
-    if ((l = ERR_peek_error()) != 0) {
+    if (check_err && (l = ERR_peek_error()) != 0) {
         if (ERR_GET_LIB(l) == ERR_LIB_SYS)
             return SSL_ERROR_SYSCALL;
         else

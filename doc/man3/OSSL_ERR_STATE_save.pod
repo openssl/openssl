@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-OSSL_ERR_STATE_new, OSSL_ERR_STATE_save, OSSL_ERR_STATE_restore,
-OSSL_ERR_STATE_free - saving and restoring error state
+OSSL_ERR_STATE_new, OSSL_ERR_STATE_save, OSSL_ERR_STATE_save_to_mark,
+OSSL_ERR_STATE_restore, OSSL_ERR_STATE_free - saving and restoring error state
 
 =head1 SYNOPSIS
 
@@ -11,6 +11,7 @@ OSSL_ERR_STATE_free - saving and restoring error state
 
  ERR_STATE *OSSL_ERR_STATE_new(void);
  void OSSL_ERR_STATE_save(ERR_STATE *es);
+ void OSSL_ERR_STATE_save_to_mark(ERR_STATE *es);
  void OSSL_ERR_STATE_restore(const ERR_STATE *es);
  void OSSL_ERR_STATE_free(ERR_STATE *es);
 
@@ -26,6 +27,18 @@ OSSL_ERR_STATE_save() saves the thread error state to I<es>. It
 subsequently clears the thread error state. Any previously saved
 state in I<es> is cleared prior to saving the new state.
 
+OSSL_ERR_STATE_save_to_mark() is similar to OSSL_ERR_STATE_save() but only saves
+ERR entries up to the most recent mark on the ERR stack. These entries are moved
+to I<es> and removed from the thread error state. However, the most recent
+marked ERR and any ERR state before it remains part of the thread error state
+and is not moved to the ERR_STATE. The mark is not cleared and must be cleared
+explicitly after a call to this function using L<ERR_pop_to_mark(3)> or
+L<ERR_clear_last_mark(3)>. (Since a call to OSSL_ERR_STATE_save_to_mark() leaves
+the marked ERR as the top error, either of these functions will have the same
+effect.) If there is no marked ERR in the thread local error state, all ERR
+entries are copied and the effect is the same as for a call to
+OSSL_ERR_STATE_save().
+
 OSSL_ERR_STATE_restore() adds all the error entries from the
 saved state I<es> to the thread error state. Existing entries in
 the thread error state are not affected if there is enough space
@@ -39,13 +52,13 @@ OSSL_ERR_STATE_free() frees the saved error state I<es>.
 OSSL_ERR_STATE_new() returns a pointer to the allocated ERR_STATE
 structure or NULL on error.
 
-OSSL_ERR_STATE_save(), OSSL_ERR_STATE_restore(), OSSL_ERR_STATE_free()
-do not return any values.
+OSSL_ERR_STATE_save(), OSSL_ERR_STATE_save_to_mark(), OSSL_ERR_STATE_restore(),
+OSSL_ERR_STATE_free() do not return any values.
 
 =head1 NOTES
 
-OSSL_ERR_STATE_save() cannot fail as it takes over any allocated
-data from the thread error state.
+OSSL_ERR_STATE_save() and OSSL_ERR_STATE_save_to_mark() cannot fail as it takes
+over any allocated data from the thread error state.
 
 OSSL_ERR_STATE_restore() is a best effort function. The only failure
 that can happen during its operation is when memory allocation fails.
