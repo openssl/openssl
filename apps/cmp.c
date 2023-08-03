@@ -165,6 +165,8 @@ static int opt_repeat = 1;
 static char *opt_reqin = NULL;
 static int opt_reqin_new_tid = 0;
 static char *opt_reqout = NULL;
+static char *opt_reqout_only = NULL;
+static int reqout_only_done = 0;
 static char *opt_rspin = NULL;
 static int rspin_in_use = 0;
 static char *opt_rspout = NULL;
@@ -255,7 +257,8 @@ typedef enum OPTION_choice {
 #endif
 
     OPT_BATCH, OPT_REPEAT,
-    OPT_REQIN, OPT_REQIN_NEW_TID, OPT_REQOUT, OPT_RSPIN, OPT_RSPOUT,
+    OPT_REQIN, OPT_REQIN_NEW_TID, OPT_REQOUT, OPT_REQOUT_ONLY,
+    OPT_RSPIN, OPT_RSPOUT,
     OPT_USE_MOCK_SRV,
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
@@ -502,6 +505,8 @@ const OPTIONS cmp_options[] = {
      "Use fresh transactionID for CMP requests read from -reqin"},
     {"reqout", OPT_REQOUT, 's',
      "Save sequence of CMP requests created by the client to file(s)"},
+    {"reqout_only", OPT_REQOUT_ONLY, 's',
+     "Save first CMP request created by the client to file and exit"},
     {"rspin", OPT_RSPIN, 's',
      "Process sequence of CMP responses provided in file(s), skipping server"},
     {"rspout", OPT_RSPOUT, 's',
@@ -638,7 +643,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
 
     {(char **)&opt_batch}, {(char **)&opt_repeat},
     {&opt_reqin}, {(char **)&opt_reqin_new_tid},
-    {&opt_reqout}, {&opt_rspin}, {&opt_rspout},
+    {&opt_reqout}, {&opt_reqout_only}, {&opt_rspin}, {&opt_rspout},
 
     {(char **)&opt_use_mock_srv},
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
@@ -814,6 +819,14 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
     OSSL_CMP_PKIHEADER *hdr;
     const char *prev_opt_rspin = opt_rspin;
 
+    if (opt_reqout_only != NULL) {
+        if (OSSL_CMP_MSG_write(opt_reqout_only, req) < 0)
+            CMP_err1("cannot write request PKIMessage to file '%s'",
+                     opt_reqout_only);
+        else
+            reqout_only_done = 1;
+        return 0; /* in any case, stop at this point, not contacting server */
+    }
     if (opt_reqout != NULL && !write_PKIMESSAGE(req, &opt_reqout))
         goto err;
     if (opt_reqin != NULL && opt_rspin == NULL) {
@@ -1583,7 +1596,7 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
                 return 0;
             }
         }
-        if (opt_certout == NULL) {
+        if (opt_certout == NULL && opt_reqout_only == NULL) {
             CMP_err("-certout not given, nowhere to save newly enrolled certificate");
             return 0;
         }
@@ -1815,7 +1828,6 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         }
         opt_policy_oids = next;
     }
-
     if (opt_popo >= OSSL_CRMF_POPO_NONE)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_POPO_METHOD, opt_popo);
 
@@ -1986,9 +1998,11 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     char server_buf[200] = "mock server";
     char proxy_buf[200] = "";
 
+    if (!opt_use_mock_srv)
+        strcpy(server_buf, "no server");
     if (!opt_use_mock_srv && opt_rspin == NULL) { /* note: -port is not given */
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
-        if (opt_server == NULL) {
+        if (opt_server == NULL && opt_reqout_only == NULL) {
             CMP_err("missing -server or -use_mock_srv or -rspin option");
             goto err;
         }
@@ -2152,12 +2166,10 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         goto err;
 
     /* not printing earlier, to minimize confusion in case setup fails before */
-    if (opt_rspin != NULL)
-        CMP_info2("will contact %s%s "
-                  "only if -rspin argument gives too few filenames",
-                  server_buf, proxy_buf);
-    else
-        CMP_info2("will contact %s%s", server_buf, proxy_buf);
+    if (opt_reqout_only == NULL)
+        CMP_info3("will contact %s%s%s ", server_buf, proxy_buf,
+                  opt_rspin == NULL ? "" :
+                  " only if -rspin argument gives too few filenames");
 
     ret = 1;
 
@@ -2797,6 +2809,9 @@ static int get_opts(int argc, char **argv)
         case OPT_REQOUT:
             opt_reqout = opt_str();
             break;
+        case OPT_REQOUT_ONLY:
+            opt_reqout_only = opt_str();
+            break;
         case OPT_RSPIN:
             opt_rspin = opt_str();
             break;
@@ -3261,11 +3276,11 @@ int cmp_main(int argc, char **argv)
         (void)OSSL_CMP_CTX_set_option(cmp_ctx, OSSL_CMP_OPT_NO_CACHE_EXTRACERTS,
                                       1);
 
-    if (opt_use_mock_srv
+    if (opt_reqout_only == NULL && (opt_use_mock_srv
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
-        || opt_port != NULL
+                                    || opt_port != NULL
 #endif
-        ) {
+                                    )) {
         OSSL_CMP_SRV_CTX *srv_ctx;
 
         if ((srv_ctx = setup_srv_ctx(engine)) == NULL)
@@ -3292,6 +3307,23 @@ int cmp_main(int argc, char **argv)
 
     /* act as CMP client, possibly using internal mock server */
 
+    if (opt_reqout_only != NULL) {
+        const char *msg = "option is ignored since -reqout_only option is given";
+
+#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
+        if (opt_server != NULL)
+            CMP_warn1("-server %s", msg);
+#endif
+        if (opt_use_mock_srv)
+            CMP_warn1("-use_mock_srv %s", msg);
+        if (opt_reqout != NULL)
+            CMP_warn1("-reqout %s", msg);
+        if (opt_rspin != NULL)
+            CMP_warn1("-rspin %s", msg);
+        if (opt_rspout != NULL)
+            CMP_warn1("-rspout %s", msg);
+        opt_reqout = opt_reqout_only;
+    }
     if (opt_rspin != NULL) {
         if (opt_server != NULL)
             CMP_warn("-server option is not used if enough filenames given for -rspin");
@@ -3336,8 +3368,13 @@ int cmp_main(int argc, char **argv)
             break;
         }
         if (OSSL_CMP_CTX_get_status(cmp_ctx) < OSSL_CMP_PKISTATUS_accepted) {
+            /* we got no response, maybe even did not send request */
             ret = 0;
-            goto err; /* we got no response, maybe even did not send request */
+            if (reqout_only_done) {
+                ERR_clear_error();
+                ret = 1;
+            }
+            goto err;
         }
         print_status();
         if (!save_cert_or_delete(OSSL_CMP_CTX_get0_validatedSrvCert(cmp_ctx),
