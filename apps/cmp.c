@@ -1130,7 +1130,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
     if (!setup_cert(srv_ctx, opt_ref_cert, opt_otherpass,
                     "reference cert to be expected by the mock server",
                     (add_X509_fn_t)ossl_cmp_mock_srv_set1_refCert))
-            goto err;
+        goto err;
     if (opt_rsp_cert == NULL) {
         CMP_warn("no -rsp_cert given for mock server");
     } else {
@@ -1598,7 +1598,8 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
                 if (!set_name(opt_subject, OSSL_CMP_CTX_set1_subjectName, ctx, "subject"))
                     return 0;
             } else {
-                CMP_warn1("-subject %s since sender is taken from -ref or -cert", msg);
+                CMP_warn1("-subject %s since sender is taken from -ref or -cert",
+                          msg);
             }
         }
         if (opt_issuer != NULL && opt_cmd != CMP_RR)
@@ -3105,25 +3106,17 @@ static int do_genm(OSSL_CMP_CTX *ctx)
     }
 }
 
-int cmp_main(int argc, char **argv)
+static int handle_opts_upfront(int argc, char **argv)
 {
-    char *configfile = NULL;
     int i;
-    X509 *newcert = NULL;
-    ENGINE *engine = NULL;
-    OSSL_CMP_CTX *srv_cmp_ctx = NULL;
-    int ret = 0; /* default: failure */
 
     prog = opt_appname(argv[0]);
     if (argc <= 1) {
         opt_help(cmp_options);
-        goto err;
+        return 0;
     }
 
-    /*
-     * handle options -config, -section, and -verbosity upfront
-     * to take effect for other options
-     */
+    /* handle -config, -section, and -verbosity to take effect for other opts */
     for (i = 1; i < argc - 1; i++) {
         if (*argv[i] == '-') {
             if (!strcmp(argv[i] + 1, cmp_options[OPT_CONFIG - OPT_HELP].name))
@@ -3134,11 +3127,25 @@ int cmp_main(int argc, char **argv)
             else if (strcmp(argv[i] + 1,
                             cmp_options[OPT_VERBOSITY - OPT_HELP].name) == 0
                      && !set_verbosity(atoi(argv[++i])))
-                goto err;
+                return 0;
         }
     }
     if (opt_section[0] == '\0') /* empty string */
         opt_section = DEFAULT_SECTION;
+    return 1;
+}
+
+int cmp_main(int argc, char **argv)
+{
+    char *configfile = NULL;
+    int i;
+    X509 *newcert = NULL;
+    ENGINE *engine = NULL;
+    OSSL_CMP_CTX *srv_cmp_ctx = NULL;
+    int ret = 0; /* default: failure */
+
+    if (!handle_opts_upfront(argc, argv))
+        goto err;
 
     vpm = X509_VERIFY_PARAM_new();
     if (vpm == NULL) {
