@@ -988,8 +988,24 @@ Default is one invocation.
 Take the sequence of CMP requests to send to the server from the given file(s)
 rather than from the sequence of requests produced internally.
 
+This option is useful for supporting offline scenarios where the certificate
+request (or any other CMP request) is produced beforehand and sent out later.
+
 This option is ignored if the B<-rspin> option is given
 because in the latter case no requests are actually sent.
+
+Note that in any case the client produces internally its sequence
+of CMP request messages. Thus, all options required for doing this
+(such as B<-cmd> and all options providing the required parameters)
+need to be given also when the B<-reqin> option is present.
+
+Hint: In case the B<-reqin> option is given for a certificate request,
+there are situations where the client has access to
+the public key to be certified (e.g., via the B<-newkey> or B<-csr> options) but
+not to the private key that by default will be needed for proof of possession.
+In this case the POPO is not actually needed (because the internally produced
+certificate request message will not be sent), and its generation
+can be disabled using the options B<-popo> I<-1> or B<-popo> I<0>.
 
 Multiple filenames may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").

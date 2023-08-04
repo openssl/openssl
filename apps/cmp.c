@@ -1586,13 +1586,15 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             && opt_popo != OSSL_CRMF_POPO_NONE
             && opt_popo != OSSL_CRMF_POPO_RAVERIFIED) {
             if (opt_csr != NULL) {
-                CMP_err1("no -newkey option given with private key for POPO, -csr option only provides public key%s",
-                        opt_key == NULL ? "" :
-                        ", and -key option superseded by -csr");
+                CMP_err1("no -newkey option given with private key for POPO, -csr option provides just public key%s",
+                         opt_key == NULL ? "" :
+                         ", and -key option superseded by -csr");
+                if (opt_reqin != NULL)
+                    CMP_info("since -reqin is used, may use -popo -1 or -popo 0 to disable the needless generation of a POPO");
                 return 0;
             }
             if (opt_key == NULL) {
-                CMP_err("missing -newkey (or -key) option for POPO");
+                CMP_err("missing -newkey (or -key) option for key to be certified and for POPO");
                 return 0;
             }
         }
@@ -1696,7 +1698,7 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 
     if (opt_recipient == NULL && opt_srvcert == NULL && opt_issuer == NULL
             && opt_oldcert == NULL && opt_cert == NULL)
-        CMP_warn("missing -recipient, -srvcert, -issuer, -oldcert or -cert; recipient will be set to \"NULL-DN\"");
+        CMP_warn("missing -recipient, -srvcert, -issuer, -oldcert or -cert; recipient for any requests not covered by -reqin will be set to \"NULL-DN\"");
 
     if (opt_cmd == CMP_P10CR || opt_cmd == CMP_RR || opt_cmd == CMP_GENM) {
         const char *msg = "option is ignored for 'p10cr', 'rr', and 'genm' commands";
