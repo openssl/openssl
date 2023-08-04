@@ -1558,6 +1558,48 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     return 1;
 }
 
+static int set_fallback_pubkey(OSSL_CMP_CTX *ctx)
+{
+    char *file = opt_reqin, *end = file, bak;
+    OSSL_CMP_MSG *req;
+    const X509_PUBKEY *pubkey;
+    EVP_PKEY *pkey;
+    EVP_PKEY *pkey1;
+    int res = 0;
+
+    /* temporarily separate first file name in opt_reqin */
+    while (*end != ',' && !isspace(_UC(*end)) && *end != '\0')
+        end++;
+    bak = *end;
+    *end = '\0';
+    req = OSSL_CMP_MSG_read(file, app_get0_libctx(), app_get0_propq());
+    *end = bak;
+
+    if (req == NULL) {
+        CMP_err1("failed to load ir/cr/kur file '%s' attempting to get fallback public key",
+                 file);
+        return 0;
+    }
+    if ((pubkey = OSSL_CMP_MSG_get0_certreq_publickey(req)) == NULL
+        || (pkey = X509_PUBKEY_get0(pubkey)) == NULL) {
+        CMP_err1("failed to get fallback public key from ir/cr/kur file '%s'",
+                 file);
+        goto err;
+    }
+    pkey1 = EVP_PKEY_dup(pkey);
+    if (pkey == NULL || !OSSL_CMP_CTX_set0_newPkey(ctx, 0 /* priv */, pkey1)) {
+        EVP_PKEY_free(pkey1);
+        CMP_err1("failed to get fallback public key obtained from ir/cr/kur file '%s'",
+                 file);
+        goto err;
+    }
+    res = 1;
+
+ err:
+    OSSL_CMP_MSG_free(req);
+    return res;
+}
+
 /*
  * Set up IR/CR/P10CR/KUR/CertConf/RR/GENM specific parts of the OSSL_CMP_CTX
  * based on options from CLI and/or config file.
@@ -1577,9 +1619,9 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (!set_name(opt_issuer, OSSL_CMP_CTX_set1_issuer, ctx, "issuer"))
         return 0;
     if (opt_cmd == CMP_IR || opt_cmd == CMP_CR || opt_cmd == CMP_KUR) {
-        if (opt_newkey == NULL
+        if (opt_reqin == NULL && opt_newkey == NULL
             && opt_key == NULL && opt_csr == NULL && opt_oldcert == NULL) {
-            CMP_err("missing -newkey (or -key) to be certified and no -csr, -oldcert, or -cert given for fallback public key");
+            CMP_err("missing -newkey (or -key) to be certified and no -csr, -oldcert, -cert, or -reqin option given, which could provide fallback public key");
             return 0;
         }
         if (opt_newkey == NULL
@@ -1738,6 +1780,10 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             EVP_PKEY_free(pkey);
             return 0;
         }
+    } else if (opt_reqin != NULL
+               && opt_key == NULL && opt_csr == NULL && opt_oldcert == NULL) {
+        if (!set_fallback_pubkey(ctx))
+            return 0;
     }
 
     if (opt_days > 0
