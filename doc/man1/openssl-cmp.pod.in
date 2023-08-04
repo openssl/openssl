@@ -999,9 +999,13 @@ of CMP request messages. Thus, all options required for doing this
 (such as B<-cmd> and all options providing the required parameters)
 need to be given also when the B<-reqin> option is present.
 
-Hint: In case the B<-reqin> option is given for a certificate request,
-there are situations where the client has access to
-the public key to be certified (e.g., via the B<-newkey> or B<-csr> options) but
+If the B<-reqin> option is given for a certificate request
+and no B<-newkey>, B<-key>, B<-oldcert>, or B<-csr> option is given,
+a fallback public key is taken from the request message file
+(if it is included in the certificate template).
+
+Hint: In case the B<-reqin> option is given for a certificate request, there are
+situations where the client has access to the public key to be certified but
 not to the private key that by default will be needed for proof of possession.
 In this case the POPO is not actually needed (because the internally produced
 certificate request message will not be sent), and its generation
