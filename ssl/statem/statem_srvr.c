@@ -1979,6 +1979,10 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         }
     }
 
+     for (int i = 0; i < 32; i++) {
+         pos[i] = (unsigned char)i;
+     }
+
     if (!s->hit
             && s->version >= TLS1_VERSION
             && !SSL_CONNECTION_IS_TLS13(s)
