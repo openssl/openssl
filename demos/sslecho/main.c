@@ -118,7 +118,7 @@ void configure_client_context(SSL_CTX *ctx)
     }
 }
 
-void usage()
+void usage(void)
 {
     printf("Usage: sslecho s\n");
     printf("       --or--\n");

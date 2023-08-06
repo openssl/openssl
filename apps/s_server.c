@@ -266,7 +266,7 @@ typedef struct {
     char buff[1];
 } EBCDIC_OUTBUFF;
 
-static const BIO_METHOD *BIO_f_ebcdic_filter()
+static const BIO_METHOD *BIO_f_ebcdic_filter(void)
 {
     if (methods_ebcdic == NULL) {
         methods_ebcdic = BIO_meth_new(BIO_TYPE_EBCDIC_FILTER,
