@@ -152,7 +152,7 @@ static __inline unsigned int _strlen31(const char *str)
 #     undef stdin
 #     undef stdout
 #     undef stderr
-FILE *__iob_func();
+FILE *__iob_func(void);
 #     define stdin  (&__iob_func()[0])
 #     define stdout (&__iob_func()[1])
 #     define stderr (&__iob_func()[2])
@@ -304,12 +304,12 @@ struct servent *getservbyname(const char *name, const char *proto);
 #  define gethostbyname(name)                gethostbyname((char*)name)
 #  define ioctlsocket(a,b,c)	ioctl(a,b,c)
 #  ifdef NO_GETPID
-inline int nssgetpid();
+inline int nssgetpid(void);
 #   ifndef NSSGETPID_MACRO
 #    define NSSGETPID_MACRO
 #    include <cextdecs.h(PROCESSHANDLE_GETMINE_)>
 #    include <cextdecs.h(PROCESSHANDLE_DECOMPOSE_)>
-       inline int nssgetpid()
+       inline int nssgetpid(void)
        {
          short phandle[10]={0};
          union pseudo_pid {
