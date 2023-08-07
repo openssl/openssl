@@ -156,7 +156,7 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
 #endif
         }
 
-        if (mt == SSL3_MT_KEY_UPDATE) {
+        if (mt == SSL3_MT_KEY_UPDATE && !SSL_IS_QUIC_HANDSHAKE(s)) {
             st->hand_state = TLS_ST_SR_KEY_UPDATE;
             return 1;
         }
