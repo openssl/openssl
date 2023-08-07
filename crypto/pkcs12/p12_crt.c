@@ -16,6 +16,12 @@ static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
                           PKCS12_SAFEBAG *bag);
 static int pkcs12_remove_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
                              PKCS12_SAFEBAG *bag);
+static PKCS12_SAFEBAG *pkcs12_add_cert_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
+                                           X509 *cert,
+                                           const char *name,
+                                           int namelen,
+                                           unsigned char *keyid,
+                                           int keyidlen);
 
 static int copy_bag_attr(PKCS12_SAFEBAG *bag, EVP_PKEY *pkey, int nid)
 {
@@ -39,6 +45,9 @@ PKCS12 *PKCS12_create_ex2(const char *pass, const char *name, EVP_PKEY *pkey,
     int i, cbret;
     unsigned char keyid[EVP_MAX_MD_SIZE];
     unsigned int keyidlen = 0;
+    int namelen = -1;
+    unsigned char *pkeyid = NULL;
+    int pkeyidlen = -1;
 
     /* Set defaults */
     if (nid_cert == NID_undef)
@@ -63,11 +72,16 @@ PKCS12 *PKCS12_create_ex2(const char *pass, const char *name, EVP_PKEY *pkey,
     }
 
     if (cert) {
-        bag = PKCS12_add_cert(&bags, cert);
-        if (name && !PKCS12_add_friendlyname(bag, name, -1))
-            goto err;
-        if (keyidlen && !PKCS12_add_localkeyid(bag, keyid, keyidlen))
-            goto err;
+        if (name == NULL)
+            name = (char *)X509_alias_get0(cert, &namelen);
+        if (keyidlen > 0) {
+            pkeyid = keyid;
+            pkeyidlen = keyidlen;
+        } else {
+            pkeyid = X509_keyid_get0(cert, &pkeyidlen);
+        }
+
+        bag = pkcs12_add_cert_bag(&bags, cert, name, namelen, pkeyid, pkeyidlen);
         if (cb != NULL) {
             cbret = cb(bag, cbarg);
             if (cbret  == -1) {
@@ -175,30 +189,23 @@ PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *
                             iter, mac_iter, keytype, NULL, NULL);
 }
 
-PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert)
+static PKCS12_SAFEBAG *pkcs12_add_cert_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
+                                           X509 *cert,
+                                           const char *name,
+                                           int namelen,
+                                           unsigned char *keyid,
+                                           int keyidlen)
 {
     PKCS12_SAFEBAG *bag = NULL;
-    char *name;
-    int namelen = -1;
-    unsigned char *keyid;
-    int keyidlen = -1;
 
     /* Add user certificate */
     if ((bag = PKCS12_SAFEBAG_create_cert(cert)) == NULL)
         goto err;
 
-    /*
-     * Use friendlyName and localKeyID in certificate. (if present)
-     */
-
-    name = (char *)X509_alias_get0(cert, &namelen);
-
-    if (name && !PKCS12_add_friendlyname(bag, name, namelen))
+    if (name != NULL && !PKCS12_add_friendlyname(bag, name, namelen))
         goto err;
 
-    keyid = X509_keyid_get0(cert, &keyidlen);
-
-    if (keyid && !PKCS12_add_localkeyid(bag, keyid, keyidlen))
+    if (keyid != NULL && !PKCS12_add_localkeyid(bag, keyid, keyidlen))
         goto err;
 
     if (!pkcs12_add_bag(pbags, bag))
@@ -209,7 +216,22 @@ PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert)
  err:
     PKCS12_SAFEBAG_free(bag);
     return NULL;
+}
 
+PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert)
+{
+    char *name = NULL;
+    int namelen = -1;
+    unsigned char *keyid = NULL;
+    int keyidlen = -1;
+
+    /*
+     * Use friendlyName and localKeyID in certificate. (if present)
+     */
+    name = (char *)X509_alias_get0(cert, &namelen);
+    keyid = X509_keyid_get0(cert, &keyidlen);
+
+    return pkcs12_add_cert_bag(pbags, cert, name, namelen, keyid, keyidlen);
 }
 
 PKCS12_SAFEBAG *PKCS12_add_key_ex(STACK_OF(PKCS12_SAFEBAG) **pbags,
