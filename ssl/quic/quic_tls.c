@@ -853,3 +853,19 @@ int ossl_quic_tls_is_cert_request(QUIC_TLS *qtls)
 
     return sc->s3.tmp.message_type == SSL3_MT_CERTIFICATE_REQUEST;
 }
+
+/*
+ * Returns true if the last session associated with the connection has an
+ * invalid max_early_data value for QUIC.
+ */
+int ossl_quic_tls_has_bad_max_early_data(QUIC_TLS *qtls)
+{
+    uint32_t max_early_data = SSL_get0_session(qtls->args.s)->ext.max_early_data;
+
+    /*
+     * If max_early_data was present we always ensure a non-zero value is
+     * stored in the session for QUIC. Therefore if max_early_data == 0 here
+     * we can be confident that it was not present in the NewSessionTicket
+     */
+    return max_early_data != 0xffffffff && max_early_data != 0;
+}

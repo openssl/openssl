@@ -1934,6 +1934,22 @@ int tls_parse_stoc_early_data(SSL_CONNECTION *s, PACKET *pkt,
 
         s->session->ext.max_early_data = max_early_data;
 
+        if (SSL_IS_QUIC_HANDSHAKE(s) && max_early_data != 0xffffffff) {
+            /*
+             * QUIC allows missing max_early_data, or a max_early_data value
+             * of 0xffffffff. Missing max_early_data is stored in the session
+             * as 0. This is indistinguishable in OpenSSL from a present
+             * max_early_data value that was 0. In order that later checks for
+             * invalid max_early_data correctly treat as an error the case where
+             * max_early_data is present and it is 0, we store any invalid
+             * value in the same (non-zero) way. Otherwise we would have to
+             * introduce a new flag just for this.
+             */
+            s->session->ext.max_early_data = 1;
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_INVALID_MAX_EARLY_DATA);
+            return 0;
+        }
+
         return 1;
     }
 
