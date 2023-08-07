@@ -3019,6 +3019,10 @@ void ossl_ssl_set_custom_record_layer(SSL_CONNECTION *s,
      SSL_OP_SINGLE_ECDH_USE                   | \
      SSL_OP_EPHEMERAL_RSA                     )
 
+/* This option is undefined in public headers with no-dtls1-method. */
+#ifndef SSL_OP_CISCO_ANYCONNECT
+# define SSL_OP_CISCO_ANYCONNECT 0
+#endif
 /*
  * Options which are no-ops under QUIC or TLSv1.3 and which are therefore
  * allowed but ignored under QUIC.
