@@ -12,7 +12,7 @@
 # pragma once
 
 # if defined(OPENSSL_CPUID_OBJ)
-#  if defined(__aarch64__)
+#  if defined(__aarch64__) ||  defined (_M_ARM64)
 #   include "arm_arch.h"
 extern unsigned int OPENSSL_arm_midr;
 static inline int vpsm4_capable(void)

@@ -34,7 +34,7 @@
       } while (0)
 
 #if defined(OPENSSL_SM3_ASM)
-# if defined(__aarch64__)
+# if defined(__aarch64__) || defined(_M_ARM64)
 #  include "crypto/arm_arch.h"
 #  define HWSM3_CAPABLE (OPENSSL_armcap_P & ARMV8_SM3)
 void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
