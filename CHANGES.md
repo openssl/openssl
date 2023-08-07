@@ -25,6 +25,10 @@ OpenSSL 3.2
 
 ### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
+ * Enable extra Arm64 optimization on Windows for GHASH, RAND and AES.
+
+   *Evgeny Karpov*
+
  * Added a function to delete objects from store by URI - OSSL_STORE_delete()
    and the corresponding provider-storemgmt API function
    OSSL_FUNC_store_delete().
