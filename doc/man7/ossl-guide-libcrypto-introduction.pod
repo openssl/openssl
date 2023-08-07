@@ -25,7 +25,7 @@ Cryptographic primitives such as the SHA256 digest, or AES encryption are
 referred to in OpenSSL as "algorithms". Each algorithm may have multiple
 implementations available for use. For example the RSA algorithm is available as
 a "default" implementation suitable for general use, and a "fips" implementation
-which has been validated to FIPS standards for situations where that is
+which has been validated to FIPS 140 standards for situations where that is
 important. It is also possible that a third party could add additional
 implementations such as in a hardware security module (HSM).
 
