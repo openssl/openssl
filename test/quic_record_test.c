@@ -146,7 +146,7 @@ static const struct rx_test_op rx_script_1[] = {
 };
 
 /* 2. RFC 9001 - A.5 ChaCha20-Poly1305 Short Header Packet */
-#ifndef OPENSSL_NO_CHACHA
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 static const unsigned char rx_script_2_in[] = {
     0x4c, 0xfe, 0x41, 0x89, 0x65, 0x5e, 0x5c, 0xd5, 0x5c, 0x41, 0xf6, 0x90,
     0x80, 0x57, 0x5d, 0x79, 0x99, 0xc2, 0x5a, 0x5b, 0xfb
@@ -180,7 +180,7 @@ static const struct rx_test_op rx_script_2[] = {
     RX_OP_CHECK_NO_PKT()
     RX_OP_END
 };
-#endif /* !defined(OPENSSL_NO_CHACHA) */
+#endif /* !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) */
 
 /* 3. Real World - Version Negotiation Response */
 static const unsigned char rx_script_3_in[] = {
@@ -1020,7 +1020,7 @@ static const struct rx_test_op rx_script_6[] = {
  * 7. Real World - S2C Multiple Packets
  *      - Initial, Handshake, 1-RTT (ChaCha20-Poly1305)
  */
-#ifndef OPENSSL_NO_CHACHA
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 static const QUIC_CONN_ID rx_script_7_c2s_init_dcid = {
     4, {0xfa, 0x5d, 0xd6, 0x80}
 };
@@ -1378,7 +1378,7 @@ static const struct rx_test_op rx_script_7[] = {
 
     RX_OP_END
 };
-#endif /* !defined(OPENSSL_NO_CHACHA) */
+#endif /* !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) */
 
 /*
  * 8. Real World - S2C Multiple Packets with Peer Initiated Key Phase Update
@@ -1698,14 +1698,14 @@ static const struct rx_test_op rx_script_9[] = {
 
 static const struct rx_test_op *rx_scripts[] = {
     rx_script_1,
-#ifndef OPENSSL_NO_CHACHA
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     rx_script_2,
 #endif
     rx_script_3,
     rx_script_4,
     rx_script_5,
     rx_script_6,
-#ifndef OPENSSL_NO_CHACHA
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     rx_script_7,
 #endif
     rx_script_8,
@@ -2768,7 +2768,7 @@ static int test_wire_pkt_hdr_actual(int tidx, int repeat, int cipher,
              * Removing all dependence on CHACHA is more difficult and these
              * tests are fast enough.
              */
-#ifndef OPENSSL_NO_CHACHA
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
             hpr_cipher_id = QUIC_HDR_PROT_CIPHER_CHACHA;
 #else
             hpr_cipher_id = QUIC_HDR_PROT_CIPHER_AES_256;
@@ -3256,7 +3256,7 @@ static const struct tx_test_op tx_script_2[] = {
     TX_OP_END
 };
 
-#ifndef OPENSSL_NO_CHACHA
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 /* 3. RFC 9001 - A.5 ChaCha20-Poly1305 Short Header Packet */
 static const unsigned char tx_script_3_body[] = {
     0x01
@@ -3307,7 +3307,7 @@ static const struct tx_test_op tx_script_3[] = {
     TX_OP_WRITE_CHECK(3)
     TX_OP_END
 };
-#endif /* !defined(OPENSSL_NO_CHACHA) */
+#endif /* !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) */
 
 /* 4. Real World - AES-128-GCM Key Update */
 static const unsigned char tx_script_4_secret[] = {
@@ -3580,7 +3580,7 @@ static const struct tx_test_op tx_script_6[] = {
 static const struct tx_test_op *const tx_scripts[] = {
     tx_script_1,
     tx_script_2,
-#ifndef OPENSSL_NO_CHACHA
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     tx_script_3,
 #endif
     tx_script_4,
