@@ -59,6 +59,7 @@ static void my_init(void)
     if (!init) {
         uint32_t seed;
         char *env = getenv("ERROR_INJECT");
+
         if (env && *env) {
             seed = atoi(env);
         } else {
@@ -75,6 +76,7 @@ static void my_init(void)
         if (env && !*env) {
 # ifdef __SANITIZE_ADDRESS__
             char msg[40];
+
             sprintf(msg, "ERROR_INJECT=%u", seed);
             __sanitizer_report_error_summary(msg);
 # else
