@@ -6,7 +6,7 @@ SCRIPTS{noinst}=wrap.pl
 SOURCE[wrap.pl]=wrap.pl.in
 DEPEND[wrap.pl]=../configdata.pm
 
-IF[{- !$disabled{quic} -}]
+IF[{- !$disabled{quic} && !$disabled{stdio} -}]
   PROGRAMS{noinst}=quicserver
   SOURCE[quicserver]=quicserver.c
 INCLUDE[quicserver]=../include ../apps/include
