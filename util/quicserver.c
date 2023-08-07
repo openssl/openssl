@@ -12,6 +12,7 @@
  * by s_server and removed once we have full QUIC server support.
  */
 
+#include <stdio.h>
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -19,6 +20,8 @@
 #include "internal/sockets.h"
 #include "internal/quic_tserver.h"
 #include "internal/time.h"
+
+static BIO *bio_err = NULL;
 
 static void wait_for_activity(QUIC_TSERVER *qtserv)
 {
@@ -129,7 +132,7 @@ static BIO *create_dgram_bio(int family, const char *hostname, const char *port)
 
 static void usage(void)
 {
-    printf("quicserver [-6] hostname port certfile keyfile\n");
+    BIO_printf(bio_err, "quicserver [-6] hostname port certfile keyfile\n");
 }
 
 int main(int argc, char *argv[])
@@ -150,8 +153,9 @@ int main(int argc, char *argv[])
     unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '1', '.', '0' };
     int first = 1;
 
-    if (argc == 0)
-        return EXIT_FAILURE;
+    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
+    if (argc == 0 || bio_err == NULL)
+        goto end2;
 
     while (argnext < argc) {
         if (argv[argnext][0] != '-')
@@ -159,16 +163,16 @@ int main(int argc, char *argv[])
         if (strcmp(argv[argnext], "-6") == 0) {
             ipv6 = 1;
         } else {
-            printf("Unrecognised argument %s\n", argv[argnext]);
+            BIO_printf(bio_err, "Unrecognised argument %s\n", argv[argnext]);
             usage();
-            return EXIT_FAILURE;
+            goto end2;
         }
         argnext++;
     }
 
     if (argc - argnext != 4) {
         usage();
-        return EXIT_FAILURE;
+        goto end2;
     }
     hostname = argv[argnext++];
     port = argv[argnext++];
@@ -177,9 +181,8 @@ int main(int argc, char *argv[])
 
     bio = create_dgram_bio(ipv6 ? AF_INET6 : AF_INET, hostname, port);
     if (bio == NULL || !BIO_up_ref(bio)) {
-        BIO_free(bio);
-        printf("Unable to create server socket\n");
-        return EXIT_FAILURE;
+        BIO_printf(bio_err, "Unable to create server socket\n");
+        goto end2;
     }
 
     tserver_args.libctx = NULL;
@@ -191,13 +194,15 @@ int main(int argc, char *argv[])
 
     qtserv = ossl_quic_tserver_new(&tserver_args, certfile, keyfile);
     if (qtserv == NULL) {
-        printf("Failed to create the QUIC_TSERVER\n");
+        BIO_printf(bio_err, "Failed to create the QUIC_TSERVER\n");
         goto end;
     }
 
-    printf("Starting quicserver\n");
-    printf("Note that this utility will be removed in a future OpenSSL version\n");
-    printf("For test purposes only. Not for use in a production environment\n");
+    BIO_printf(bio_err, "Starting quicserver\n");
+    BIO_printf(bio_err,
+               "Note that this utility will be removed in a future OpenSSL version.\n");
+    BIO_printf(bio_err,
+               "For test purposes only. Not for use in a production environment.\n");
 
     /* Ownership of the BIO is passed to qtserv */
     bio = NULL;
@@ -248,7 +253,9 @@ int main(int argc, char *argv[])
  end:
     /* Free twice because we did an up-ref */
     BIO_free(bio);
+ end2:
     BIO_free(bio);
     ossl_quic_tserver_free(qtserv);
+    BIO_free(bio_err);
     return ret;
 }
