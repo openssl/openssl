@@ -307,6 +307,7 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
 
 err:
     el->suite_id = 0;
+    el->md = NULL;
     OPENSSL_cleanse(hpr_key, sizeof(hpr_key));
     OPENSSL_cleanse(ku_key, sizeof(ku_key));
     OPENSSL_cleanse(el->ku, sizeof(el->ku));
