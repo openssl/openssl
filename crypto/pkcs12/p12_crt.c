@@ -64,9 +64,10 @@ PKCS12 *PKCS12_create_ex2(const char *pass, const char *name, EVP_PKEY *pkey,
 
     if (cert) {
         bag = PKCS12_add_cert(&bags, cert);
-        if (name && !PKCS12_add_friendlyname(bag, name, -1))
+        /* PKCS12_add_cert may add friendlyName and localKeyID attributes if present in the certificate, so check before adding them again */
+        if (PKCS12_SAFEBAG_get0_attr(bag, NID_friendlyName) == NULL && name && !PKCS12_add_friendlyname(bag, name, -1))
             goto err;
-        if (keyidlen && !PKCS12_add_localkeyid(bag, keyid, keyidlen))
+        if (PKCS12_SAFEBAG_get0_attr(bag, NID_localKeyID) == NULL && keyidlen && !PKCS12_add_localkeyid(bag, keyid, keyidlen))
             goto err;
         if (cb != NULL) {
             cbret = cb(bag, cbarg);
