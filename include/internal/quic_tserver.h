@@ -204,6 +204,13 @@ QUIC_CHANNEL *ossl_quic_tserver_get_channel(QUIC_TSERVER *srv);
 /* Send a TLS new session ticket */
 int ossl_quic_tserver_new_ticket(QUIC_TSERVER *srv);
 
+/*
+ * Set the max_early_data value to be sent in NewSessionTickets. Only the
+ * values 0 and 0xffffffff are valid for use in QUIC.
+ */
+int ossl_quic_tserver_set_max_early_data(QUIC_TSERVER *srv,
+                                         uint32_t max_early_data);
+
 # endif
 
 #endif

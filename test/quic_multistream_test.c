@@ -4181,6 +4181,150 @@ static const struct script_op script_67[] = {
     OP_END
 };
 
+/* 68. Fault injection - Unexpected TLS messages */
+static int script_68_inject_handshake(struct helper *h, unsigned char *msg,
+                                      size_t msglen)
+{
+    const unsigned char *data;
+    size_t datalen;
+    const unsigned char certreq[] = {
+        SSL3_MT_CERTIFICATE_REQUEST,         /* CertificateRequest message */
+        0, 0, 12,                            /* Length of message */
+        1, 1,                                /* certificate_request_context */
+        0, 8,                                /* Extensions block length */
+        0, TLSEXT_TYPE_signature_algorithms, /* sig_algs extension*/
+        0, 4,                                /* 4 bytes of sig algs extension*/
+        0, 2,                                /* sigalgs list is 2 bytes long */
+        8, 4                                 /* rsa_pss_rsae_sha256 */
+    };
+    const unsigned char keyupdate[] = {
+        SSL3_MT_KEY_UPDATE,                  /* KeyUpdate message */
+        0, 0, 1,                             /* Length of message */
+        SSL_KEY_UPDATE_NOT_REQUESTED         /* update_not_requested */
+    };
+
+    /* We transform the NewSessionTicket message into something else */
+    switch(h->inject_word0) {
+    case 0:
+        return 1;
+
+    case 1:
+        /* CertificateRequest message */
+        data = certreq;
+        datalen = sizeof(certreq);
+        break;
+
+    case 2:
+        /* KeyUpdate message */
+        data = keyupdate;
+        datalen = sizeof(keyupdate);
+        break;
+
+    default:
+        return 0;
+    }
+
+    if (!TEST_true(qtest_fault_resize_message(h->qtf,
+                                              datalen - SSL3_HM_HEADER_LENGTH)))
+        return 0;
+
+    memcpy(msg, data, datalen);
+
+    return 1;
+}
+
+/* Send a CerticateRequest message post-handshake */
+static const struct script_op script_68[] = {
+    OP_S_SET_INJECT_HANDSHAKE(script_68_inject_handshake)
+    OP_C_SET_ALPN            ("ossltest")
+    OP_C_CONNECT_WAIT        ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI     (a, C_BIDI_ID(0))
+    OP_C_WRITE               (a, "apple", 5)
+    OP_S_BIND_STREAM_ID      (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT         (a, "apple", 5)
+
+    OP_SET_INJECT_WORD       (1, 0)
+    OP_S_NEW_TICKET          ()
+    OP_S_WRITE               (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_PROTOCOL_VIOLATION, 0, 0)
+
+    OP_END
+};
+
+/* 69. Send a TLS KeyUpdate message post-handshake */
+static const struct script_op script_69[] = {
+    OP_S_SET_INJECT_HANDSHAKE(script_68_inject_handshake)
+    OP_C_SET_ALPN            ("ossltest")
+    OP_C_CONNECT_WAIT        ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI     (a, C_BIDI_ID(0))
+    OP_C_WRITE               (a, "apple", 5)
+    OP_S_BIND_STREAM_ID      (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT         (a, "apple", 5)
+
+    OP_SET_INJECT_WORD       (2, 0)
+    OP_S_NEW_TICKET          ()
+    OP_S_WRITE               (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_CRYPTO_ERR_BEGIN
+                                + SSL_AD_UNEXPECTED_MESSAGE, 0, 0)
+
+    OP_END
+};
+
+static int set_max_early_data(struct helper *h, const struct script_op *op)
+{
+
+    if (!TEST_true(ossl_quic_tserver_set_max_early_data(h->s,
+                                                        (uint32_t)op->arg2)))
+        return 0;
+
+    return 1;
+}
+
+/* 70. Send a TLS NewSessionTicket message with invalid max_early_data */
+static const struct script_op script_70[] = {
+    OP_C_SET_ALPN            ("ossltest")
+    OP_C_CONNECT_WAIT        ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI     (a, C_BIDI_ID(0))
+    OP_C_WRITE               (a, "apple", 5)
+    OP_S_BIND_STREAM_ID      (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT         (a, "apple", 5)
+
+    OP_CHECK                 (set_max_early_data, 0xfffffffe)
+    OP_S_NEW_TICKET          ()
+    OP_S_WRITE               (a, "orange", 6)
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_PROTOCOL_VIOLATION, 0, 0)
+
+    OP_END
+};
+
+/* 71. Send a TLS NewSessionTicket message with valid max_early_data */
+static const struct script_op script_71[] = {
+    OP_C_SET_ALPN            ("ossltest")
+    OP_C_CONNECT_WAIT        ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI     (a, C_BIDI_ID(0))
+    OP_C_WRITE               (a, "apple", 5)
+    OP_S_BIND_STREAM_ID      (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT         (a, "apple", 5)
+
+    OP_CHECK                 (set_max_early_data, 0xffffffff)
+    OP_S_NEW_TICKET          ()
+    OP_S_WRITE               (a, "orange", 6)
+    OP_C_READ_EXPECT         (a, "orange", 6)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -4249,6 +4393,10 @@ static const struct script_op *const scripts[] = {
     script_65,
     script_66,
     script_67,
+    script_68,
+    script_69,
+    script_70,
+    script_71
 };
 
 static int test_script(int idx)
