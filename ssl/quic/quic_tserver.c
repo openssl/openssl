@@ -529,3 +529,8 @@ void ossl_quic_tserver_set_msg_callback(QUIC_TSERVER *srv,
     ossl_quic_channel_set_msg_callback(srv->ch, f, NULL);
     ossl_quic_channel_set_msg_callback_arg(srv->ch, arg);
 }
+
+int ossl_quic_tserver_new_ticket(QUIC_TSERVER *srv)
+{
+    return SSL_new_session_ticket(srv->tls);
+}

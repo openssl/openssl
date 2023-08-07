@@ -201,6 +201,9 @@ void ossl_quic_tserver_set_msg_callback(QUIC_TSERVER *srv,
  */
 QUIC_CHANNEL *ossl_quic_tserver_get_channel(QUIC_TSERVER *srv);
 
+/* Send a TLS new session ticket */
+int ossl_quic_tserver_new_ticket(QUIC_TSERVER *srv);
+
 # endif
 
 #endif

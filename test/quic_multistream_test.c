@@ -150,6 +150,7 @@ struct script_op {
 #define OPK_C_INHIBIT_TICK                          44
 #define OPK_C_SET_WRITE_BUF_SIZE                    45
 #define OPK_S_SET_INJECT_HANDSHAKE                  46
+#define OPK_S_NEW_TICKET                            47
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -271,6 +272,8 @@ struct script_op {
     {OPK_C_SET_WRITE_BUF_SIZE, NULL, (size), NULL, #stream_name},
 #define OP_S_SET_INJECT_HANDSHAKE(f) \
     {OPK_S_SET_INJECT_HANDSHAKE, NULL, 0, NULL, NULL, 0, NULL, (f)},
+#define OP_S_NEW_TICKET() \
+    {OPK_S_NEW_TICKET},
 
 static OSSL_TIME get_time(void *arg)
 {
@@ -1586,6 +1589,11 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             if (!TEST_true(ossl_quic_set_write_buffer_size(c_tgt, op->arg1)))
                 goto out;
 
+            break;
+
+        case OPK_S_NEW_TICKET:
+            if (!TEST_true(ossl_quic_tserver_new_ticket(h->s)))
+                goto out;
             break;
 
         default:
