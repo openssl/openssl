@@ -673,9 +673,14 @@ void X509_STORE_CTX_set0_rpk(X509_STORE_CTX *ctx, EVP_PKEY *target);
 void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *c, STACK_OF(X509) *sk);
 void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk);
 int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose);
+int X509_STORE_CTX_set_purpose_ex(X509_STORE_CTX *ctx, int purpose,
+                                  int override);
 int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust);
+int X509_STORE_CTX_set_trust_ex(X509_STORE_CTX *ctx, int trust, int override);
 int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
                                    int purpose, int trust);
+int X509_STORE_CTX_purpose_inherit_ex(X509_STORE_CTX *ctx, int def_purpose,
+                                      int purpose, int trust, int override);
 void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, unsigned long flags);
 void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags,
                              time_t t);

@@ -61,7 +61,8 @@ static const struct {
                                             | CMS_ATTR_F_ONE_ATTR_VALUE },
     { NID_id_smime_aa_receiptRequest, CMS_ATTR_F_SIGNED
                                       | CMS_ATTR_F_ONLY_ONE
-                                      | CMS_ATTR_F_ONE_ATTR_VALUE }
+                                      | CMS_ATTR_F_ONE_ATTR_VALUE },
+    { NID_id_smime_aa_timeStampToken, CMS_ATTR_F_UNSIGNED }
 };
 
 /* CMS SignedData Attribute utilities */

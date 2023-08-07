@@ -18,6 +18,11 @@ gen() {
              -extfile $CONF -extensions $3
 }
 
+gen_short() {
+    $OPENSSL x509 -CA smroot.pem -new -days 1 -force_pubkey $1 -subj "$2" \
+             -extfile $CONF -extensions $3
+}
+
 # Root CA: create certificate directly
 CN="Test S/MIME RSA Root" $OPENSSL req -config ca.cnf -x509 -noenc \
 	-keyout smroot.pem -out smroot.pem -key ../certs/ca-key.pem -days 36524
@@ -64,3 +69,14 @@ gen smdh.pem "/CN=Test SMIME EE DH" dh_cert >>smdh.pem
 # EE RSA code signing end entity certificate with respective extensions
 cp ../certs/ee-key.pem csrsa1.pem
 gen csrsa1.pem "/CN=Test CodeSign EE RSA" codesign_cert >>csrsa1.pem
+
+# Short lived EE RSA code signing end entity certificate with respective
+# extensions
+cp ../certs/ee-key.pem csrsa2.pem
+gen_short csrsa2.pem "/CN=Test CodeSign EE RSA shortlived" codesign_cert \
+        >>csrsa2.pem
+
+# EE RSA timestamp signing end entity certificate with respective extensions
+# this is needed to test CAdES Baseline-T (and higher) functionality
+cp ../certs/ee-key.pem tsrsa1.pem
+gen tsrsa1.pem "/CN=Test Timestamping EE RSA" timestamp_cert >> tsrsa1.pem

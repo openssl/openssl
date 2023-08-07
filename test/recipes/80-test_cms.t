@@ -44,6 +44,7 @@ my $provname = 'default';
 my $datadir = srctop_dir("test", "recipes", "80-test_cms_data");
 my $smdir    = srctop_dir("test", "smime-certs");
 my $smcont   = srctop_file("test", "smcont.txt");
+my $catsacnf = srctop_file("test", "catsa.cnf");
 my $smcont_zero = srctop_file("test", "smcont_zero.txt");
 my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
     = disabled qw/des dh dsa ec ec2m rc2 zlib/;
