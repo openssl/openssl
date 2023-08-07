@@ -994,7 +994,7 @@ static int ch_on_handshake_alert(void *arg, unsigned char alert_code)
      * TLS CertificateRequest messages, and clients MUST treat receipt of such
      * messages as a connection error of type PROTOCOL_VIOLATION.
      */
-    if (alert_code == SSL3_AD_UNEXPECTED_MESSAGE
+    if (alert_code == SSL_AD_UNEXPECTED_MESSAGE
             && ch->handshake_complete
             && ossl_quic_tls_is_cert_request(ch->qtls))
         ossl_quic_channel_raise_protocol_error(ch,
@@ -1002,6 +1002,20 @@ static int ch_on_handshake_alert(void *arg, unsigned char alert_code)
                                                0,
                                                "Post-handshake TLS "
                                                "CertificateRequest received");
+    /*
+     * RFC 9001 s. 4.6.1: Servers MUST NOT send the early_data extension with a
+     * max_early_data_size field set to any value other than 0xffffffff. A
+     * client MUST treat receipt of a NewSessionTicket that contains an
+     * early_data extension with any other value as a connection error of type
+     * PROTOCOL_VIOLATION.
+     */
+    else if (alert_code == SSL_AD_ILLEGAL_PARAMETER
+             && ch->handshake_complete
+             && ossl_quic_tls_has_bad_max_early_data(ch->qtls))
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_PROTOCOL_VIOLATION,
+                                               0,
+                                               "Bad max_early_data received");
     else
         ossl_quic_channel_raise_protocol_error(ch,
                                                QUIC_ERR_CRYPTO_ERR_BEGIN
