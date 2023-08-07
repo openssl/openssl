@@ -36,8 +36,8 @@ L<https://wiki.openssl.org/index.php/Binaries>.
 
 If you build and install OpenSSL from the source code then you should download
 the appropriate files for the version that you want to use from the link given
-above. Extract the contents of B<tar.gz> archive file that you downloaded into
-an appropriate directory. Inside that archive you will find a file named
+above. Extract the contents of the B<tar.gz> archive file that you downloaded
+into an appropriate directory. Inside that archive you will find a file named
 B<INSTALL.md> which will supply detailed instructions on how to build and
 install OpenSSL from source. Make sure you read the contents of that file
 carefully in order to achieve a successful build. In the directory you will also
@@ -51,9 +51,9 @@ Sometimes you may want to build and install OpenSSL from source on a system
 which already has a pre-built version of OpenSSL installed on it via the
 Operating System package management system (for example if you want to use a
 newer version of OpenSSL than the one supplied by your Operating System). In
-this case it is recommended to install OpenSSL to a different location than
-where the pre-built version is installed. You should never replace the pre-built
-version with a different version as this may break your system.
+this case it is strongly recommended to install OpenSSL to a different location
+than where the pre-built version is installed. You should B<never> replace the
+pre-built version with a different version as this may break your system.
 
 =head1 CONTENTS OF THE OPENSSL GUIDE
 
@@ -65,20 +65,23 @@ assume knowledge from earlier pages.
 
 The pages in the guide are as follows:
 
-L<ossl-guide-libraries-introduction(7)>: An introduction to the OpenSSL libraries
+=over 4
 
-L<ossl-guide-libcrypto-introduction(7)>: An introduction to libcrypto
+=item L<ossl-guide-libraries-introduction(7)>: An introduction to the OpenSSL libraries
 
-L<ossl-guide-libssl-introduction(7)>: An introduction to libssl
+=item L<ossl-guide-libcrypto-introduction(7)>: An introduction to libcrypto
 
-L<ossl-guide-tls-introduction(7)>: An introduction to SSL/TLS in OpenSSL
+=item L<ossl-guide-libssl-introduction(7)>: An introduction to libssl
 
-L<ossl-guide-tls-client-block(7)>: Writing a simple blocking TLS client
+=item L<ossl-guide-tls-introduction(7)>: An introduction to SSL/TLS in OpenSSL
 
-L<ossl-guide-quic-introduction(7)>: An introduction to QUIC in OpenSSL
+=item L<ossl-guide-tls-client-block(7)>: Writing a simple blocking TLS client
 
-L<ossl-guide-quic-client-block(7)>: Writing a simple blocking QUIC client
+=item L<ossl-guide-quic-introduction(7)>: An introduction to QUIC in OpenSSL
 
+=item L<ossl-guide-quic-client-block(7)>: Writing a simple blocking QUIC client
+
+=back
 
 =head1 COPYRIGHT
 
