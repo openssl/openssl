@@ -53,12 +53,10 @@ static int cms_get_enveloped_type(const CMS_ContentInfo *cms)
 
 void ossl_cms_env_enc_content_free(const CMS_ContentInfo *cinf)
 {
-    if (cms_get_enveloped_type_simple(cinf) != 0)
-    {
-            CMS_EncryptedContentInfo *ec = ossl_cms_get0_env_enc_content(cinf);
-
-            if (ec != NULL)
-                OPENSSL_clear_free(ec->key, ec->keylen);
+    if (cms_get_enveloped_type_simple(cinf) != 0) {
+        CMS_EncryptedContentInfo *ec = ossl_cms_get0_env_enc_content(cinf);
+        if (ec != NULL)
+            OPENSSL_clear_free(ec->key, ec->keylen);
     }
 }
 
