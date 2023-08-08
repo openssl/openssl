@@ -159,11 +159,11 @@ static int mem_buf_free(BIO *a)
     if (a == NULL)
         return 0;
 
-    if (a->shutdown && a->init && a->ptr != NULL) {
+    if (a->init && a->ptr != NULL) {
         BIO_BUF_MEM *bb = (BIO_BUF_MEM *)a->ptr;
         BUF_MEM *b = bb->buf;
 
-        if (a->flags & BIO_FLAGS_MEM_RDONLY)
+        if (!a->shutdown || a->flags & BIO_FLAGS_MEM_RDONLY)
             b->data = NULL;
         BUF_MEM_free(b);
     }
