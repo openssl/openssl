@@ -84,6 +84,8 @@ struct ossl_record_layer_st {
     void *cbarg;
 };
 
+static int quic_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio);
+
 static int
 quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       int role, int direction, int level, uint16_t epoch,
@@ -111,7 +113,10 @@ quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     rl->qtls = (QUIC_TLS *)rlarg;
     rl->level = level;
-    rl->dummybio = transport;
+    if (!quic_set1_bio(rl, transport)) {
+        QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     rl->cbarg = cbarg;
     *retrl = rl;
 
@@ -193,6 +198,7 @@ static int quic_free(OSSL_RECORD_LAYER *rl)
     if (rl == NULL)
         return 1;
 
+    BIO_free(rl->dummybio);
     OPENSSL_free(rl);
     return 1;
 }
@@ -524,10 +530,11 @@ static int quic_free_buffers(OSSL_RECORD_LAYER *rl)
 
 static int quic_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio)
 {
-    /*
-     * Can be called to set the buffering BIO - which is then never used by us.
-     * We ignore it
-     */
+    if (bio != NULL && !BIO_up_ref(bio))
+        return 0;
+    BIO_free(rl->dummybio);
+    rl->dummybio = bio;
+
     return 1;
 }
 
