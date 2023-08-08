@@ -60,11 +60,12 @@ static void my_init(void)
         uint32_t seed;
         char *env = getenv("ERROR_INJECT");
 
-        if (env && *env) {
+        if (env != NULL && *env) {
             seed = atoi(env);
         } else {
 # ifdef __linux__
             struct timeval tv;
+
             gettimeofday(&tv, NULL);
             seed = (uint32_t)(tv.tv_sec ^ tv.tv_usec);
 # else
