@@ -447,6 +447,7 @@ BIO *ossl_cms_EnvelopedData_init_bio(CMS_ContentInfo *cms);
 int ossl_cms_EnvelopedData_final(CMS_ContentInfo *cms, BIO *chain);
 BIO *ossl_cms_AuthEnvelopedData_init_bio(CMS_ContentInfo *cms);
 int ossl_cms_AuthEnvelopedData_final(CMS_ContentInfo *cms, BIO *cmsbio);
+void ossl_cms_env_enc_content_free(const CMS_ContentInfo *cinf);
 CMS_EnvelopedData *ossl_cms_get0_enveloped(CMS_ContentInfo *cms);
 CMS_AuthEnvelopedData *ossl_cms_get0_auth_enveloped(CMS_ContentInfo *cms);
 CMS_EncryptedContentInfo *ossl_cms_get0_env_enc_content(const CMS_ContentInfo *cms);

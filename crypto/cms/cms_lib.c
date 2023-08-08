@@ -74,13 +74,7 @@ CMS_ContentInfo *CMS_ContentInfo_new(void)
 void CMS_ContentInfo_free(CMS_ContentInfo *cms)
 {
     if (cms != NULL) {
-        /* Check content type is enveloped data to avoid CMS_R_CONTENT_TYPE_NOT_ENVELOPED_DATA error */
-        int nid = OBJ_obj2nid(cms->contentType);
-        if (nid == NID_pkcs7_enveloped || nid == NID_id_smime_ct_authEnvelopedData) {
-            CMS_EncryptedContentInfo *ec = ossl_cms_get0_env_enc_content(cms);
-            if (ec != NULL)
-                OPENSSL_clear_free(ec->key, ec->keylen);
-        }
+        ossl_cms_env_enc_content_free(cms);
         OPENSSL_free(cms->ctx.propq);
         ASN1_item_free((ASN1_VALUE *)cms, ASN1_ITEM_rptr(CMS_ContentInfo));
     }
