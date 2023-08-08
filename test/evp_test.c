@@ -1524,6 +1524,7 @@ static int mac_test_run_pkey(EVP_TEST *t)
     unsigned char *got = NULL;
     size_t got_len;
     int i;
+    size_t input_len, donelen;
 
     /* We don't do XOF mode via PKEY */
     if (expected->xof)
@@ -1593,10 +1594,21 @@ static int mac_test_run_pkey(EVP_TEST *t)
             t->err = "EVPPKEYCTXCTRL_ERROR";
             goto err;
         }
-    if (!EVP_DigestSignUpdate(mctx, expected->input, expected->input_len)) {
-        t->err = "DIGESTSIGNUPDATE_ERROR";
-        goto err;
-    }
+    input_len = expected->input_len;
+    donelen = 0;
+    do {
+        size_t current_len = (size_t) data_chunk_size;
+
+        if (data_chunk_size == 0 || (size_t) data_chunk_size > input_len)
+            current_len = input_len;
+        if (!EVP_DigestSignUpdate(mctx, expected->input + donelen, current_len)) {
+            t->err = "DIGESTSIGNUPDATE_ERROR";
+            goto err;
+        }
+        donelen += current_len;
+        input_len -= current_len;
+    } while (input_len > 0);
+
     if (!EVP_DigestSignFinal(mctx, NULL, &got_len)) {
         t->err = "DIGESTSIGNFINAL_LENGTH_ERROR";
         goto err;
@@ -1637,6 +1649,7 @@ static int mac_test_run_mac(EVP_TEST *t)
         EVP_MAC_settable_ctx_params(expected->mac);
     int xof;
     int reinit = 1;
+    size_t input_len, donelen ;
 
     if (expected->alg == NULL)
         TEST_info("Trying the EVP_MAC %s test", expected->mac_name);
@@ -1783,10 +1796,21 @@ static int mac_test_run_mac(EVP_TEST *t)
         }
     }
  retry:
-    if (!EVP_MAC_update(ctx, expected->input, expected->input_len)) {
-        t->err = "MAC_UPDATE_ERROR";
-        goto err;
-    }
+    input_len = expected->input_len;
+    donelen = 0;
+    do {
+        size_t current_len = (size_t) data_chunk_size;
+
+        if (data_chunk_size == 0 || (size_t) data_chunk_size > input_len)
+            current_len = input_len;
+        if (!EVP_MAC_update(ctx, expected->input + donelen, current_len)) {
+            t->err = "MAC_UPDATE_ERROR";
+            goto err;
+        }
+        donelen += current_len;
+        input_len -= current_len;
+    } while (input_len > 0);
+
     xof = expected->xof;
     if (xof) {
         if (!TEST_ptr(got = OPENSSL_malloc(expected->output_len))) {
