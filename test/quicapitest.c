@@ -96,10 +96,9 @@ static int test_quic_write_read(int idx)
                 goto end;
             if (idx >= 1) {
                 do {
-#if !defined(OPENSSL_NO_POSIX_IO) && !defined(OPENSSL_NO_SOCK)
                     if (!TEST_true(wait_until_sock_readable(ssock)))
                         goto end;
-#endif
+
                     ossl_quic_tserver_tick(qtserv);
 
                     if (!TEST_true(ossl_quic_tserver_read(qtserv, sid, buf,
