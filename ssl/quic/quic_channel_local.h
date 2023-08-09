@@ -456,6 +456,9 @@ struct quic_channel_st {
     /* Inhibit tick for testing purposes? */
     unsigned int                    inhibit_tick                        : 1;
 
+    /* Are we using addressed mode? */
+    unsigned int                    addressed_mode                      : 1;
+
     /* Saved error stack in case permanent error was encountered */
     ERR_STATE                       *err_state;
 };

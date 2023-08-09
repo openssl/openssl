@@ -128,7 +128,10 @@ int ossl_quic_tx_packetiser_set_cur_dcid(OSSL_QUIC_TX_PACKETISER *txp,
 int ossl_quic_tx_packetiser_set_cur_scid(OSSL_QUIC_TX_PACKETISER *txp,
                                          const QUIC_CONN_ID *scid);
 
-/* Change the destination L4 address the TXP uses to send datagrams. */
+/*
+ * Change the destination L4 address the TXP uses to send datagrams. Specify
+ * NULL (or AF_UNSPEC) to disable use of addressed mode.
+ */
 int ossl_quic_tx_packetiser_set_peer(OSSL_QUIC_TX_PACKETISER *txp,
                                      const BIO_ADDR *peer);
 
