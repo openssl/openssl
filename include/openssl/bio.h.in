@@ -461,6 +461,10 @@ typedef struct bio_poll_descriptor_st {
 
 # define BIO_C_SET_TFO                           156 /* like BIO_C_SET_NBIO */
 
+# define BIO_C_SET_SOCK_TYPE                     157
+# define BIO_C_GET_SOCK_TYPE                     158
+# define BIO_C_GET_DGRAM_BIO                     159
+
 # define BIO_set_app_data(s,arg)         BIO_set_ex_data(s,0,arg)
 # define BIO_get_app_data(s)             BIO_get_ex_data(s,0)
 
@@ -488,6 +492,9 @@ typedef struct bio_poll_descriptor_st {
 #  define BIO_get_conn_ip_family(b)     BIO_ctrl(b,BIO_C_GET_CONNECT,3,NULL)
 #  define BIO_get_conn_mode(b)          BIO_ctrl(b,BIO_C_GET_CONNECT,4,NULL)
 #  define BIO_set_conn_mode(b,n)        BIO_ctrl(b,BIO_C_SET_CONNECT_MODE,(n),NULL)
+#  define BIO_set_sock_type(b,t)        BIO_ctrl(b,BIO_C_SET_SOCK_TYPE,(t),NULL)
+#  define BIO_get_sock_type(b)          BIO_ctrl(b,BIO_C_GET_SOCK_TYPE,0,NULL)
+#  define BIO_get_dgram_bio(b, p)       BIO_ctrl(b,BIO_C_GET_DGRAM_BIO,0,(void *)(BIO **)(p))
 
 /* BIO_s_accept() */
 #  define BIO_set_accept_name(b,name)   BIO_ctrl(b,BIO_C_SET_ACCEPT,0, \
