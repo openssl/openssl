@@ -11,7 +11,11 @@ typedef void (app_connect_cb)(APP_CONN *conn, int status, void *arg);
 typedef void (app_write_cb)(APP_CONN *conn, int status, void *arg);
 typedef void (app_read_cb)(APP_CONN *conn, void *buf, size_t buf_len, void *arg);
 
+#ifdef USE_QUIC
+static void set_timer(APP_CONN *conn);
+#else
 static void tcp_connect_done(uv_connect_t *tcp_connect, int status);
+#endif
 static void net_connect_fail_close_done(uv_handle_t *handle);
 static int handshake_ssl(APP_CONN *conn);
 static void flush_write_buf(APP_CONN *conn);
@@ -54,8 +58,13 @@ struct app_conn_st {
     SSL            *ssl;
     BIO            *net_bio;
     uv_stream_t    *stream;
+#ifdef USE_QUIC
+    uv_udp_t        udp;
+    uv_timer_t      timer;
+#else
     uv_tcp_t        tcp;
     uv_connect_t    tcp_connect;
+#endif
     app_connect_cb *app_connect_cb;   /* called once handshake is done */
     void           *app_connect_arg;
     app_read_cb    *app_read_cb;      /* application's on-RX callback */
@@ -77,7 +86,11 @@ SSL_CTX *create_ssl_ctx(void)
 {
     SSL_CTX *ctx;
 
+#ifdef USE_QUIC
+    ctx = SSL_CTX_new(QUIC_client_method());
+#else
     ctx = SSL_CTX_new(TLS_client_method());
+#endif
     if (ctx == NULL)
         return NULL;
 
@@ -112,21 +125,47 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname,
     if (!conn)
         return NULL;
 
+#ifdef USE_QUIC
+    uv_udp_init(uv_default_loop(), &conn->udp);
+    conn->udp.data = conn;
+
+    uv_timer_init(uv_default_loop(), &conn->timer);
+    conn->timer.data = conn;
+#else
     uv_tcp_init(uv_default_loop(), &conn->tcp);
     conn->tcp.data = conn;
 
     conn->stream            = (uv_stream_t *)&conn->tcp;
+#endif
+
     conn->app_connect_cb    = cb;
     conn->app_connect_arg   = arg;
+#ifdef USE_QUIC
+    rc = uv_udp_connect(&conn->udp, sa);
+#else
     conn->tcp_connect.data  = conn;
     rc = uv_tcp_connect(&conn->tcp_connect, &conn->tcp, sa, tcp_connect_done);
+#endif
     if (rc < 0) {
+#ifdef USE_QUIC
+        uv_close((uv_handle_t *)&conn->udp, net_connect_fail_close_done);
+#else
         uv_close((uv_handle_t *)&conn->tcp, net_connect_fail_close_done);
+#endif
         return NULL;
     }
 
     conn->ctx       = ctx;
     conn->hostname  = hostname;
+
+#ifdef USE_QUIC
+    rc = setup_ssl(conn, hostname);
+    if (rc < 0) {
+        uv_close((uv_handle_t *)&conn->udp, net_connect_fail_close_done);
+        return NULL;
+    }
+#endif
+
     return conn;
 }
 
@@ -167,13 +206,22 @@ void teardown(APP_CONN *conn)
     BIO_free_all(conn->net_bio);
     SSL_free(conn->ssl);
 
+#ifndef USE_QUIC
     uv_cancel((uv_req_t *)&conn->tcp_connect);
+#endif
 
     conn->teardown_done = &teardown_done;
     uv_close((uv_handle_t *)conn->stream, teardown_continued);
+#ifdef USE_QUIC
+    uv_close((uv_handle_t *)&conn->timer, teardown_continued);
+#endif
 
     /* Just wait synchronously until teardown completes. */
+#ifdef USE_QUIC
+    while (teardown_done < 2)
+#else
     while (!teardown_done)
+#endif
         uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 }
 
@@ -218,6 +266,11 @@ static void dequeue_upper_write_op(APP_CONN *conn)
 static void net_read_alloc(uv_handle_t *handle,
                            size_t suggested_size, uv_buf_t *buf)
 {
+#ifdef USE_QUIC
+    if (suggested_size < 1472)
+        suggested_size = 1472;
+#endif
+
     buf->base = malloc(suggested_size);
     buf->len  = suggested_size;
 }
@@ -313,7 +366,11 @@ static void net_read_done(uv_stream_t *stream, ssize_t nr, const uv_buf_t *buf)
 
 static void set_rx(APP_CONN *conn)
 {
+#ifdef USE_QUIC
+    if (!conn->closed)
+#else
     if (!conn->closed && (conn->app_read_cb || (!conn->done_handshake && conn->init_handshake) || conn->pending_upper_write_head != NULL))
+#endif
         uv_read_start(conn->stream, net_read_alloc, net_read_done);
     else
         uv_read_stop(conn->stream);
@@ -372,6 +429,9 @@ static void flush_write_buf(APP_CONN *conn)
 
 static void handshake_done_ssl(APP_CONN *conn)
 {
+#ifdef USE_QUIC
+    set_timer(conn);
+#endif
     conn->app_connect_cb(conn, 0, conn->app_connect_arg);
 }
 
@@ -411,10 +471,17 @@ static int setup_ssl(APP_CONN *conn, const char *hostname)
 
     SSL_set_connect_state(ssl);
 
+#ifdef USE_QUIC
+    if (BIO_new_dgram_pair(&internal_bio, 0, &net_bio, 0) <= 0) {
+        SSL_free(ssl);
+        return -1;
+    }
+#else
     if (BIO_new_bio_pair(&internal_bio, 0, &net_bio, 0) <= 0) {
         SSL_free(ssl);
         return -1;
     }
+#endif
 
     SSL_set_bio(ssl, internal_bio, internal_bio);
 
@@ -433,6 +500,7 @@ static int setup_ssl(APP_CONN *conn, const char *hostname)
     return handshake_ssl(conn);
 }
 
+#ifndef USE_QUIC
 static void tcp_connect_done(uv_connect_t *tcp_connect, int status)
 {
     int rc;
@@ -450,6 +518,7 @@ static void tcp_connect_done(uv_connect_t *tcp_connect, int status)
         return;
     }
 }
+#endif
 
 static void net_connect_fail_close_done(uv_handle_t *handle)
 {
@@ -457,6 +526,28 @@ static void net_connect_fail_close_done(uv_handle_t *handle)
 
     free(conn);
 }
+
+#ifdef USE_QUIC
+
+static void timer_done(uv_timer_t *timer)
+{
+    APP_CONN *conn = (APP_CONN *)timer->data;
+
+    SSL_pump(conn->ssl);
+    handle_pending_writes(conn);
+    flush_write_buf(conn);
+    set_rx(conn);
+    set_timer(conn); /* repeat timer */
+}
+
+static void set_timer(APP_CONN *conn)
+{
+    int ms = SSL_get_timeout(conn->ssl);
+    if (ms > 0)
+        uv_timer_start(&conn->timer, timer_done, ms, 0);
+}
+
+#endif
 
 static int try_write(APP_CONN *conn, UPPER_WRITE_OP *op)
 {
@@ -511,13 +602,20 @@ static void teardown_continued(uv_handle_t *handle)
     UPPER_WRITE_OP *op, *next_op;
     char *teardown_done = conn->teardown_done;
 
+#ifdef USE_QUIC
+    if (++*teardown_done < 2)
+        return;
+#endif
+
     for (op=conn->pending_upper_write_head; op; op=next_op) {
         next_op = op->next;
         free(op);
     }
 
     free(conn);
+#ifndef USE_QUIC
     *teardown_done = 1;
+#endif
 }
 
 /*
