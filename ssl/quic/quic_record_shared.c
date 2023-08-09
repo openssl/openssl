@@ -150,8 +150,10 @@ static int el_setup_keyslot(OSSL_QRL_ENC_LEVEL_SET *els,
         goto err;
 
     /* Create and initialise cipher context. */
-    if ((cipher = EVP_CIPHER_fetch(el->libctx, cipher_name, el->propq)) == NULL)
+    if ((cipher = EVP_CIPHER_fetch(el->libctx, cipher_name, el->propq)) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
     if ((cctx = EVP_CIPHER_CTX_new()) == NULL)
         goto err;
@@ -161,8 +163,10 @@ static int el_setup_keyslot(OSSL_QRL_ENC_LEVEL_SET *els,
         goto err;
 
     /* IV will be changed on RX/TX so we don't need to use a real value here. */
-    if (!EVP_CipherInit_ex(cctx, cipher, NULL, key, el->iv[keyslot], 0))
+    if (!EVP_CipherInit_ex(cctx, cipher, NULL, key, el->iv[keyslot], 0)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
     el->cctx[keyslot] = cctx;
 

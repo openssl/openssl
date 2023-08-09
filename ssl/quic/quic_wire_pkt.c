@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/err.h>
 #include "internal/common.h"
 #include "internal/quic_wire_pkt.h"
 
@@ -39,12 +40,16 @@ int ossl_quic_hdr_protector_init(QUIC_HDR_PROTECTOR *hpr,
 
     hpr->cipher = EVP_CIPHER_fetch(libctx, cipher_name, propq);
     if (hpr->cipher == NULL
-        || quic_hp_key_len != (size_t)EVP_CIPHER_get_key_length(hpr->cipher))
+        || quic_hp_key_len != (size_t)EVP_CIPHER_get_key_length(hpr->cipher)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
     if (!EVP_CipherInit_ex(hpr->cipher_ctx, hpr->cipher, NULL,
-                           quic_hp_key, NULL, 1))
+                           quic_hp_key, NULL, 1)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
     hpr->libctx     = libctx;
     hpr->propq      = propq;
@@ -80,8 +85,10 @@ static int hdr_generate_mask(QUIC_HDR_PROTECTOR *hpr,
             return 0;
 
         if (!EVP_CipherInit_ex(hpr->cipher_ctx, NULL, NULL, NULL, NULL, 1)
-            || !EVP_CipherUpdate(hpr->cipher_ctx, dst, &l, sample, 16))
+            || !EVP_CipherUpdate(hpr->cipher_ctx, dst, &l, sample, 16)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
             return 0;
+        }
 
         for (i = 0; i < 5; ++i)
             mask[i] = dst[i];
@@ -91,8 +98,10 @@ static int hdr_generate_mask(QUIC_HDR_PROTECTOR *hpr,
 
         if (!EVP_CipherInit_ex(hpr->cipher_ctx, NULL, NULL, NULL, sample, 1)
             || !EVP_CipherUpdate(hpr->cipher_ctx, mask, &l,
-                                 zeroes, sizeof(zeroes)))
+                                 zeroes, sizeof(zeroes))) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
             return 0;
+        }
     } else {
         assert(0);
         return 0;
@@ -855,33 +864,45 @@ int ossl_quic_calculate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
 
     /* Create and initialise cipher context. */
     /* TODO(QUIC FUTURE): Cipher fetch caching. */
-    if ((cipher = EVP_CIPHER_fetch(libctx, "AES-128-GCM", propq)) == NULL)
+    if ((cipher = EVP_CIPHER_fetch(libctx, "AES-128-GCM", propq)) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
     if ((cctx = EVP_CIPHER_CTX_new()) == NULL)
         goto err;
 
     if (!EVP_CipherInit_ex(cctx, cipher, NULL,
-                           retry_integrity_key, retry_integrity_nonce, /*enc=*/1))
+                           retry_integrity_key, retry_integrity_nonce, /*enc=*/1)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         goto err;
+    }
 
     /* Feed packet header as AAD data. */
-    if (EVP_CipherUpdate(cctx, NULL, &l, buf, hdr_enc_len) != 1)
+    if (EVP_CipherUpdate(cctx, NULL, &l, buf, hdr_enc_len) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         return 0;
+    }
 
     /* Feed packet body as AAD data. */
     if (EVP_CipherUpdate(cctx, NULL, &l, hdr->data,
-                         hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN) != 1)
+                         hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         return 0;
+    }
 
     /* Finalise and get tag. */
-    if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1)
+    if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         return 0;
+    }
 
     if (EVP_CIPHER_CTX_ctrl(cctx, EVP_CTRL_AEAD_GET_TAG,
                             QUIC_RETRY_INTEGRITY_TAG_LEN,
-                            tag) != 1)
+                            tag) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         return 0;
+    }
 
     ok = 1;
 err:

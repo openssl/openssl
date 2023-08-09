@@ -509,12 +509,16 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
         nonce[nonce_len - i - 1] ^= (unsigned char)(pn >> (i * 8));
 
     /* type and key will already have been setup; feed the IV. */
-    if (EVP_CipherInit_ex(cctx, NULL, NULL, NULL, nonce, /*enc=*/1) != 1)
+    if (EVP_CipherInit_ex(cctx, NULL, NULL, NULL, nonce, /*enc=*/1) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         return 0;
+    }
 
     /* Feed AAD data. */
-    if (EVP_CipherUpdate(cctx, NULL, &l, hdr, hdr_len) != 1)
+    if (EVP_CipherUpdate(cctx, NULL, &l, hdr, hdr_len) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         return 0;
+    }
 
     /* Encrypt plaintext directly into TXE. */
     for (;;) {
@@ -526,20 +530,26 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
             break;
 
         if (EVP_CipherUpdate(cctx, txe_data(txe) + txe->data_len,
-                             &l, src, src_len) != 1)
+                             &l, src, src_len) != 1) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
             return 0;
+        }
 
         assert(l > 0 && src_len == (size_t)l);
         txe->data_len += src_len;
     }
 
     /* Finalise and get tag. */
-    if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1)
+    if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         return 0;
+    }
 
     if (EVP_CIPHER_CTX_ctrl(cctx, EVP_CTRL_AEAD_GET_TAG,
-                            el->tag_len, txe_data(txe) + txe->data_len) != 1)
+                            el->tag_len, txe_data(txe) + txe->data_len) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
         return 0;
+    }
 
     txe->data_len += el->tag_len;
 
