@@ -32,7 +32,11 @@ SSL_CTX *create_ssl_ctx(void)
 {
     SSL_CTX *ctx;
 
+#ifdef USE_QUIC
+    ctx = SSL_CTX_new(QUIC_client_method());
+#else
     ctx = SSL_CTX_new(TLS_client_method());
+#endif
     if (ctx == NULL)
         return NULL;
 
@@ -77,7 +81,11 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
         return NULL;
     }
 
+#ifdef USE_QUIC
+    buf = BIO_new(BIO_f_dgram_buffer());
+#else
     buf = BIO_new(BIO_f_buffer());
+#endif
     if (buf == NULL) {
         BIO_free_all(out);
         free(conn);
@@ -170,7 +178,11 @@ int rx(APP_CONN *conn, void *buf, int buf_len)
  */
 int get_conn_fd(APP_CONN *conn)
 {
+#ifdef USE_QUIC
+    return BIO_get_poll_fd(conn->ssl_bio, NULL);
+#else
     return BIO_get_fd(conn->ssl_bio, NULL);
+#endif
 }
 
 /*
@@ -188,13 +200,39 @@ int get_conn_fd(APP_CONN *conn)
  */
 int get_conn_pending_tx(APP_CONN *conn)
 {
+#ifdef USE_QUIC
+    return POLLIN | POLLOUT | POLLERR;
+#else
     return (conn->tx_need_rx ? POLLIN : 0) | POLLOUT | POLLERR;
+#endif
 }
 
 int get_conn_pending_rx(APP_CONN *conn)
 {
     return (conn->rx_need_tx ? POLLOUT : 0) | POLLIN | POLLERR;
 }
+
+#ifdef USE_QUIC
+/*
+ * Returns the number of milliseconds after which some call to libssl must be
+ * made. Any call (BIO_read/BIO_write/BIO_pump) will do. Returns -1 if
+ * there is no need for such a call. This may change after the next call
+ * to libssl.
+ */
+int get_conn_pump_timeout(APP_CONN *conn)
+{
+    return BIO_get_timeout(conn->ssl_bio);
+}
+
+/*
+ * Called to advance internals of libssl state machines without having to
+ * perform an application-level read/write.
+ */
+void pump(APP_CONN *conn)
+{
+    BIO_pump(conn->ssl_bio);
+}
+#endif
 
 /*
  * The application wants to close the connection and free bookkeeping
@@ -220,15 +258,36 @@ void teardown_ctx(SSL_CTX *ctx)
  * Example driver for the above code. This is just to demonstrate that the code
  * works and is not intended to be representative of a real application.
  */
+#include <sys/time.h>
+
+static inline void ms_to_timeval(struct timeval *t, int ms)
+{
+    t->tv_sec   = ms < 0 ? -1 : ms/1000;
+    t->tv_usec  = ms < 0 ? 0 : (ms%1000)*1000;
+}
+
+static inline int timeval_to_ms(const struct timeval *t)
+{
+    return t->tv_sec*1000 + t->tv_usec/1000;
+}
+
 int main(int argc, char **argv)
 {
     static char tx_msg[384], host_port[300];
     const char *tx_p = tx_msg;
     char rx_buf[2048];
     int res = 1, l, tx_len = sizeof(tx_msg)-1;
+#ifdef USE_QUIC
+    struct timeval timeout;
+#else
     int timeout = 2000 /* ms */;
+#endif
     APP_CONN *conn = NULL;
     SSL_CTX *ctx = NULL;
+
+#ifdef USE_QUIC
+    ms_to_timeval(&timeout, 2000);
+#endif
 
     if (argc < 3) {
         fprintf(stderr, "usage: %s host port\n", argv[0]);
@@ -260,12 +319,38 @@ int main(int argc, char **argv)
         } else if (l == -1) {
             fprintf(stderr, "tx error\n");
         } else if (l == -2) {
+#ifdef USE_QUIC
+            struct timeval start, now, deadline, t;
+#endif
             struct pollfd pfd = {0};
+
+#ifdef USE_QUIC
+            ms_to_timeval(&t, get_conn_pump_timeout(conn));
+            if (t.tv_sec < 0 || timercmp(&t, &timeout, >))
+                t = timeout;
+
+            gettimeofday(&start, NULL);
+            timeradd(&start, &timeout, &deadline);
+#endif
+
             pfd.fd = get_conn_fd(conn);
             pfd.events = get_conn_pending_tx(conn);
-            if (poll(&pfd, 1, timeout) == 0) {
-                fprintf(stderr, "tx timeout\n");
-                goto fail;
+#ifdef USE_QUIC
+            if (poll(&pfd, 1, timeval_to_ms(&t)) == 0)
+#else
+            if (poll(&pfd, 1, timeout) == 0)
+#endif
+            {
+#ifdef USE_QUIC
+                pump(conn);
+
+                gettimeofday(&now, NULL);
+                if (timercmp(&now, &deadline, >=))
+#endif
+                {
+                    fprintf(stderr, "tx timeout\n");
+                    goto fail;
+                }
             }
         }
     }
@@ -278,12 +363,38 @@ int main(int argc, char **argv)
         } else if (l == -1) {
             break;
         } else if (l == -2) {
+#ifdef USE_QUIC
+            struct timeval start, now, deadline, t;
+#endif
             struct pollfd pfd = {0};
+
+#ifdef USE_QUIC
+            ms_to_timeval(&t, get_conn_pump_timeout(conn));
+            if (t.tv_sec < 0 || timercmp(&t, &timeout, >))
+                t = timeout;
+
+            gettimeofday(&start, NULL);
+            timeradd(&start, &timeout, &deadline);
+#endif
+
             pfd.fd = get_conn_fd(conn);
             pfd.events = get_conn_pending_rx(conn);
-            if (poll(&pfd, 1, timeout) == 0) {
-                fprintf(stderr, "rx timeout\n");
-                goto fail;
+#ifdef USE_QUIC
+            if (poll(&pfd, 1, timeval_to_ms(&t)) == 0)
+#else
+            if (poll(&pfd, 1, timeout) == 0)
+#endif
+            {
+#ifdef USE_QUIC
+                pump(conn);
+
+                gettimeofday(&now, NULL);
+                if (timercmp(&now, &deadline, >=))
+#endif
+                {
+                    fprintf(stderr, "rx timeout\n");
+                    goto fail;
+                }
             }
         }
     }
