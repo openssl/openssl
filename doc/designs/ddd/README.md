@@ -50,6 +50,9 @@ certificates or other TLS functionality, the use of QUIC is unlikely to have
 implications for these APIs and demos demonstrating such functionality are
 therefore out of scope.
 
+[A report is available](REPORT.md) on the results of the DDD process following
+the completion of the development of the QUIC MVP.
+
 Background
 ----------
 
