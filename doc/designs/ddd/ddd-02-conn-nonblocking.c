@@ -33,7 +33,7 @@ SSL_CTX *create_ssl_ctx(void)
     SSL_CTX *ctx;
 
 #ifdef USE_QUIC
-    ctx = SSL_CTX_new(QUIC_client_method());
+    ctx = SSL_CTX_new(OSSL_QUIC_client_method());
 #else
     ctx = SSL_CTX_new(TLS_client_method());
 #endif
@@ -64,6 +64,9 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
     BIO *out, *buf;
     SSL *ssl = NULL;
     const char *bare_hostname;
+#ifdef USE_QUIC
+    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+#endif
 
     conn = calloc(1, sizeof(APP_CONN));
     if (conn == NULL)
@@ -81,11 +84,20 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
         return NULL;
     }
 
-#ifdef USE_QUIC
-    buf = BIO_new(BIO_f_dgram_buffer());
-#else
+    /*
+     * NOTE: QUIC cannot operate with a buffering BIO between the QUIC SSL
+     * object in the network. In this case, the call to BIO_push() is not
+     * supported by the QUIC SSL object and will be ignored, thus this code
+     * works without removing this line. However, the buffering BIO is not
+     * actually used as a result and should be removed when adapting code to use
+     * QUIC.
+     *
+     * Setting a buffer as the underlying BIO on the QUIC SSL object using
+     * SSL_set_bio() will not work, though BIO_s_dgram_pair is available for
+     * buffering the input and output to the QUIC SSL object on the network side
+     * if desired.
+     */
     buf = BIO_new(BIO_f_buffer());
-#endif
     if (buf == NULL) {
         BIO_free_all(out);
         free(conn);
@@ -114,6 +126,15 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
         free(conn);
         return NULL;
     }
+
+#ifdef USE_QUIC
+    /* Configure ALPN, which is required for QUIC. */
+    if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn))) {
+        /* Note: SSL_set_alpn_protos returns 1 for failure. */
+        BIO_free_all(out);
+        return NULL;
+    }
+#endif
 
     /* Make the BIO nonblocking. */
     BIO_set_nbio(out, 1);
@@ -179,7 +200,12 @@ int rx(APP_CONN *conn, void *buf, int buf_len)
 int get_conn_fd(APP_CONN *conn)
 {
 #ifdef USE_QUIC
-    return BIO_get_poll_fd(conn->ssl_bio, NULL);
+    BIO_POLL_DESCRIPTOR d;
+
+    if (!BIO_get_rpoll_descriptor(conn->ssl_bio, &d))
+        return -1;
+
+    return d.value.fd;
 #else
     return BIO_get_fd(conn->ssl_bio, NULL);
 #endif
@@ -201,7 +227,9 @@ int get_conn_fd(APP_CONN *conn)
 int get_conn_pending_tx(APP_CONN *conn)
 {
 #ifdef USE_QUIC
-    return POLLIN | POLLOUT | POLLERR;
+    return (SSL_net_read_desired(conn->ssl) ? POLLIN : 0)
+           | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
+           | POLLERR;
 #else
     return (conn->tx_need_rx ? POLLIN : 0) | POLLOUT | POLLERR;
 #endif
@@ -209,7 +237,11 @@ int get_conn_pending_tx(APP_CONN *conn)
 
 int get_conn_pending_rx(APP_CONN *conn)
 {
+#ifdef USE_QUIC
+    return get_conn_pending_tx(conn);
+#else
     return (conn->rx_need_tx ? POLLOUT : 0) | POLLIN | POLLERR;
+#endif
 }
 
 #ifdef USE_QUIC
@@ -219,9 +251,17 @@ int get_conn_pending_rx(APP_CONN *conn)
  * there is no need for such a call. This may change after the next call
  * to libssl.
  */
+static inline int timeval_to_ms(const struct timeval *t);
+
 int get_conn_pump_timeout(APP_CONN *conn)
 {
-    return BIO_get_timeout(conn->ssl_bio);
+    struct timeval tv;
+    int is_infinite;
+
+    if (!SSL_get_event_timeout(conn->ssl, &tv, &is_infinite))
+        return -1;
+
+    return is_infinite ? -1 : timeval_to_ms(&tv);
 }
 
 /*
@@ -230,7 +270,7 @@ int get_conn_pump_timeout(APP_CONN *conn)
  */
 void pump(APP_CONN *conn)
 {
-    BIO_pump(conn->ssl_bio);
+    SSL_handle_events(conn->ssl);
 }
 #endif
 
