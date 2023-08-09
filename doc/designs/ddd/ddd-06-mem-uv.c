@@ -237,11 +237,12 @@ static void on_rx_push(APP_CONN *conn)
 
         srd = SSL_read(conn->ssl, buf, buf_len);
         flush_write_buf(conn);
-        if (srd < 0) {
-            free(buf);
+        if (srd <= 0) {
             rc = SSL_get_error(conn->ssl, srd);
-            if (rc == SSL_ERROR_WANT_READ)
+            if (rc == SSL_ERROR_WANT_READ) {
+                free(buf);
                 return;
+            }
         }
 
         conn->app_read_cb(conn, buf, srd, conn->app_read_arg);
