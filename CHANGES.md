@@ -163,6 +163,13 @@ OpenSSL 3.3
 
    *Alexandr Nedvedicky*
 
+ * Added options `-not_before` and `-not_after` for explicit setting
+   start and end dates of certificates created with the `req` and `x509`
+   apps. Added the same options also to `ca` app as alias for
+   `-startdate` and `-enddate` options.
+
+   *Stephan Wurm*
+
 OpenSSL 3.2
 -----------
 

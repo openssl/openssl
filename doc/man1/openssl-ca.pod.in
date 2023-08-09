@@ -30,7 +30,9 @@ B<openssl> B<ca>
 [B<-crlsec> I<seconds>]
 [B<-crlexts> I<section>]
 [B<-startdate> I<date>]
+[B<-not_before> I<date>]
 [B<-enddate> I<date>]
+[B<-not_after> I<date>]
 [B<-days> I<arg>]
 [B<-md> I<arg>]
 [B<-policy> I<arg>]
@@ -226,23 +228,32 @@ Don't output the text form of a certificate to the output file.
 Specify the date output format. Values are: rfc_822 and iso_8601.
 Defaults to rfc_822.
 
-=item B<-startdate> I<date>
+=item B<-startdate> I<date>, B<-not_before> I<date>
 
 This allows the start date to be explicitly set. The format of the
 date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure), or
 YYYYMMDDHHMMSSZ (the same as an ASN1 GeneralizedTime structure). In
 both formats, seconds SS and timezone Z must be present.
+Alternatively, you can also use "today".
 
-=item B<-enddate> I<date>
+=item B<-enddate> I<date>, B<-not_after> I<date>
 
 This allows the expiry date to be explicitly set. The format of the
 date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure), or
 YYYYMMDDHHMMSSZ (the same as an ASN1 GeneralizedTime structure). In
 both formats, seconds SS and timezone Z must be present.
+Alternatively, you can also use "today".
+
+This overrides the B<-days> option.
 
 =item B<-days> I<arg>
 
-The number of days to certify the certificate for.
+The number of days from today to certify the certificate for.
+
+Regardless of the option B<-not_before>, the days are always counted from
+today.
+When used together with the option B<-not_after>/B<-startdate>, the explicit
+expiry date takes precedence.
 
 =item B<-md> I<alg>
 
@@ -502,7 +513,7 @@ not necessary anymore, see the L</HISTORY> section.
 
 =item B<default_days>
 
-The same as the B<-days> option. The number of days to certify
+The same as the B<-days> option. The number of days from today to certify
 a certificate for.
 
 =item B<default_startdate>

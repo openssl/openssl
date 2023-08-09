@@ -54,6 +54,8 @@ B<openssl> B<x509>
 [B<-checkip> I<ipaddr>]
 [B<-set_serial> I<n>]
 [B<-next_serial>]
+[B<-not_before> I<date>]
+[B<-not_after> I<date>]
 [B<-days> I<arg>]
 [B<-preserve_dates>]
 [B<-set_issuer> I<arg>]
@@ -183,6 +185,8 @@ It sets the issuer name to the subject name (i.e., makes it self-issued).
 Unless the B<-preserve_dates> option is supplied,
 it sets the validity start date to the current time
 and the end date to a value determined by the B<-days> option.
+Start date and end date can also be explicitly supplied with options
+B<-not_before> and B<-not_after>.
 
 =item B<-signkey> I<filename>|I<uri>
 
@@ -376,17 +380,40 @@ The serial number can be decimal or hex (if preceded by C<0x>).
 
 Set the serial to be one more than the number in the certificate.
 
+=item B<-not_before> I<date>
+
+This allows the start date to be explicitly set. The format of the
+date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure), or
+YYYYMMDDHHMMSSZ (the same as an ASN1 GeneralizedTime structure). In
+both formats, seconds SS and timezone Z must be present.
+Alternatively, you can also use "today".
+
+Cannot be used together with the B<-preserve_dates> option.
+
+=item B<-not_after> I<date>
+
+This allows the expiry date to be explicitly set. The format of the
+date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure), or
+YYYYMMDDHHMMSSZ (the same as an ASN1 GeneralizedTime structure). In
+both formats, seconds SS and timezone Z must be present.
+Alternatively, you can also use "today".
+
+Cannot be used together with the B<-preserve_dates> option.
+This overrides the option B<-days>.
+
 =item B<-days> I<arg>
 
-Specifies the number of days until a newly generated certificate expires.
+Specifies the number of days from today until a newly generated certificate expires.
 The default is 30.
-Cannot be used together with the B<-preserve_dates> option.
+
+Cannot be used together with the option B<-preserve_dates>.
+If option B<-not_after> is set, the explicit expiry date takes precedence.
 
 =item B<-preserve_dates>
 
 When signing a certificate, preserve "notBefore" and "notAfter" dates of any
 input certificate instead of adjusting them to current time and duration.
-Cannot be used together with the B<-days> option.
+Cannot be used together with the options B<-days>, B<-not_before> and B<-not_after>.
 
 =item B<-set_issuer> I<arg>
 

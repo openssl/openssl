@@ -10,12 +10,14 @@
 use strict;
 use warnings;
 
+use POSIX;
 use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use Time::Piece;
 
 setup("test_req");
 
-plan tests => 107;
+plan tests => 108;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -606,3 +608,51 @@ ok(run(app(["openssl", "req", "-x509", "-new", "-days", "365",
 # Verify cert
 ok(run(app(["openssl", "x509", "-in", "testreq-cert.pem",
             "-noout", "-text"])), "cert verification");
+
+# extracts string value of certificate field from a -text formatted-output
+sub get_field {
+    my ($f, $field) = @_;
+    my $string = "";
+    open my $fh, $f or die;
+    while (my $line = <$fh>) {
+        if ($line =~ /$field:\s+(.*)/) {
+            $string = $1;
+        }
+    }
+    close $fh;
+    return $string;
+}
+
+sub get_not_before {
+    return get_field(@_, "Not Before");
+}
+
+# Date as yyyy-mm-dd
+sub get_not_before_date {
+    return Time::Piece->strptime(
+        get_not_before(@_),
+        "%b %d %T %Y %Z")->date;
+}
+
+sub get_not_after {
+    return get_field(@_, "Not After ");
+}
+
+# Date as yyyy-mm-dd
+sub get_not_after_date {
+    return Time::Piece->strptime(
+        get_not_after(@_),
+        "%b %d %T %Y %Z")->date;
+}
+
+# Generate cert with explicit start and end dates
+my $today = strftime("%Y-%m-%d", localtime);
+my $cert = "self-signed_explicit_date.pem";
+ok(run(app(["openssl", "req", "-x509", "-new", "-text",
+            "-config", srctop_file('test', 'test.cnf'),
+            "-key", srctop_file("test", "testrsa.pem"),
+            "-not_before", "today",
+            "-not_after", "today",
+            "-out", $cert]))
+&& get_not_before_date($cert) eq $today
+&& get_not_after_date($cert) eq $today, "explicit start and end dates");
