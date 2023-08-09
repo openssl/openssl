@@ -445,6 +445,14 @@ struct quic_channel_st {
     /* Permanent net error encountered */
     unsigned int                    net_error                           : 1;
 
+    /*
+     * Protocol error encountered. Note that you should refer to the state field
+     * rather than this. This is only used so we can ignore protocol errors
+     * after the first protocol error, but still record the first protocol error
+     * if it happens during the TERMINATING state.
+     */
+    unsigned int                    protocol_error                      : 1;
+
     /* Inhibit tick for testing purposes? */
     unsigned int                    inhibit_tick                        : 1;
 
