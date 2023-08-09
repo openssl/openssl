@@ -245,7 +245,9 @@ int main(void)
      * Check whether we finished the while loop above normally or as the
      * result of an error. The 0 argument to SSL_get_error() is the return
      * code we received from the SSL_read_ex() call. It must be 0 in order
-     * to get here. Normal completion is indicated by SSL_ERROR_ZERO_RETURN.
+     * to get here. Normal completion is indicated by SSL_ERROR_ZERO_RETURN. In
+     * QUIC terms this means that the peer has sent FIN on the stream to
+     * indicate that no further data will be sent.
      */
     if (SSL_get_error(ssl, 0) != SSL_ERROR_ZERO_RETURN) {
         /*

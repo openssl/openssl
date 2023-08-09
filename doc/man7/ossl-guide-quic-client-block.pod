@@ -244,11 +244,24 @@ the same way as for TLS. Again, we won't repeat it here.
 
 =head2 Shutting down the connection
 
-As in the TLS tutorial, once we have finished reading data from the server then
-we are ready to close the connection down. As before we do this via the
-L<SSL_shutdown(3)> function. This example for QUIC is very similar to the TLS
-version. However the L<SSL_shutdown(3)> function may need to be called more than
-once:
+In the TLS tutorial we knew that the server had finished sending data because
+L<SSL_read_ex(3)> returned 0, and L<SSL_get_error(3)> returned
+B<SSL_ERROR_ZERO_RETURN>. The same is true with QUIC except that
+B<SSL_ERROR_ZERO_RETURN> should be interpreted slightly differently. With TLS
+we knew that this meant that the server had sent a "close_notify" alert. No
+more data will be sent from the server on that connection.
+
+With QUIC it means that the server has indicated "FIN" on the stream, meaning
+that it will no longer send any more data on that stream. However this only
+gives us information about the stream itself and does not tell us anything about
+the underlying connection. More data could still be sent from the server on some
+other stream.
+
+In this tutorial, once we have finished reading data from the server on the one
+stream that we are using, we will close the connection down. As before we do
+this via the L<SSL_shutdown(3)> function. This example for QUIC is very similar
+to the TLS version. However the L<SSL_shutdown(3)> function will need to be
+called more than once:
 
     /*
      * Repeatedly call SSL_shutdown() until the connection is fully
@@ -262,20 +275,17 @@ once:
         }
     } while (ret != 1);
 
-The shutdown process is in two stages. First we gracefully shutdown the
-connection for sending and secondly we shutdown the connection for receiving.
-L<SSL_shutdown(3)> returns 0 once the first stage has been completed, and 1 once
-the second stage is finished. This two stage process applies to TLS as well.
-However in our blocking TLS client example code we knew that the peer had
-already partially closed down due to the B<SSL_ERROR_ZERO_RETURN> that we had
-obtained via L<SSL_get_error(3)> after the final L<SSL_read_ex(3)> call. Due to
-that return value we knew that the connection was already closed down for
-receiving data and hence L<SSL_shutdown(3)> should only need to be called once.
+The shutdown process is in two stages. In the first stage we wait until all the
+data we have buffered for sending on any stream has been successfully sent and
+acknowledged by the peer, and then we send a CONNECTION_CLOSE to the peer to
+indicate that the connection is no longer usable. This immediately closes the
+connection and no more data can be sent or received. L<SSL_shutdown(3)> returns
+0 once the first stage has been completed.
 
-However, with QUIC, the B<SSL_ERROR_ZERO_RETURN> value only tells us that the
-stream (not the connection) is partially closed down. Therefore we need to call
-L<SSL_shutdown(3)> more than once to ensure that we progress through both stages
-of the shutdown process.
+In the second stage the connection enters a "closing" state. Application data
+cannot be sent or recieved in this state, but late arriving packets coming from
+the peer will be handled appropriately. Once this stage has completed
+successfully L<SSL_shutdown(3)> will return 1 to indicate success.
 
 =head1 SEE ALSO
 
