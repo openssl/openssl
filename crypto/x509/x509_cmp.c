@@ -325,7 +325,9 @@ unsigned long X509_NAME_hash_old(const X509_NAME *x)
         goto end;
 
     /* Make sure X509_NAME structure contains valid cached encoding */
-    i2d_X509_NAME(x, NULL);
+    if (i2d_X509_NAME(x, NULL) < 0)
+        goto end;
+
     if (EVP_DigestInit_ex(md_ctx, md5, NULL)
         && EVP_DigestUpdate(md_ctx, x->bytes->data, x->bytes->length)
         && EVP_DigestFinal_ex(md_ctx, md, NULL))
