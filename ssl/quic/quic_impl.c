@@ -816,7 +816,7 @@ uint64_t ossl_quic_get_options(const SSL *ssl)
  */
 static int csm_analyse_init_peer_addr(BIO *net_wbio, BIO_ADDR *peer)
 {
-    if (BIO_dgram_get_peer(net_wbio, peer) <= 0)
+    if (BIO_dgram_detect_peer_addr(net_wbio, peer) <= 0)
         return 0;
 
     return 1;
@@ -1518,12 +1518,6 @@ static int quic_do_handshake(QCTX *ctx)
     if (!quic_mutation_allowed(qc, /*req_active=*/0))
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
 
-    if (BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC) {
-        /* Peer address must have been set. */
-        QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_REMOTE_PEER_ADDRESS_NOT_SET, NULL);
-        return -1; /* Non-protocol error */
-    }
-
     if (qc->as_server != qc->as_server_state) {
         QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
         return -1; /* Non-protocol error */
@@ -1532,6 +1526,82 @@ static int quic_do_handshake(QCTX *ctx)
     if (qc->net_rbio == NULL || qc->net_wbio == NULL) {
         /* Need read and write BIOs. */
         QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_BIO_NOT_SET, NULL);
+        return -1; /* Non-protocol error */
+    }
+
+    /*
+     * We need to determine our addressing mode. There are basically two
+     * ways we can use L4 addresses:
+     *
+     *   - Addressed mode, in which our BIO_sendmmsg calls have destination
+     *     addresses attached to them which we expect the underlying network BIO
+     *     to handle;
+     *
+     *   - Unaddressed mode, in which the BIO provided to us on the
+     *     network side neither provides us with L4 addresses nor is capable of
+     *     honouring ones we provide. We don't know where the QUIC traffic we
+     *     send ends up exactly and trust the application to know what it is
+     *     doing.
+     *
+     * Addressed mode is preferred because it enables support for connection
+     * migration, multipath, etc. in the future. Addressed mode is automatically
+     * enabled if we are using e.g. BIO_s_datagram, with or without
+     * BIO_s_connect.
+     *
+     * If we are passed a BIO_s_dgram_pair (or some custom BIO) we may have to
+     * use unaddressed mode unless that BIO supports capability flags indicating
+     * it can provide and honour L4 addresses.
+     *
+     * Our strategy for determining address mode is simple: we probe the
+     * underlying network BIOs for their capabilities. If the network BIOs
+     * support what we need, we use addressed mode. Otherwise, we use
+     * unaddressed mode.
+     *
+     * If addressed mode is chosen, we require an initial peer address to be
+     * set. If this is not set, we fail. If unaddressed mode is used, we do not
+     * require this, as such an address is superfluous, though it can be set if
+     * desired.
+     */
+    if (!qc->started && !qc->addressing_probe_done) {
+        long rcaps = BIO_dgram_get_effective_caps(qc->net_rbio);
+        long wcaps = BIO_dgram_get_effective_caps(qc->net_wbio);
+        int can_use_addressed =
+            (wcaps & BIO_DGRAM_CAP_HANDLES_DST_ADDR) != 0
+            && (rcaps & BIO_DGRAM_CAP_PROVIDES_SRC_ADDR) != 0;
+
+        qc->addressed_mode          = can_use_addressed;
+        qc->addressing_probe_done   = 1;
+    }
+
+    if (!qc->started && qc->addressed_mode
+        && BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC) {
+        /*
+         * We are trying to connect and are using addressed mode, which means we
+         * need an initial peer address; if we do not have a peer address yet,
+         * we should try to autodetect one.
+         *
+         * We do this as late as possible because some BIOs (e.g. BIO_s_connect)
+         * may not be able to provide us with a peer address until they have
+         * finished their own processing. They may not be able to perform this
+         * processing until an application has figured configuring that BIO
+         * (e.g. with setter calls), which might happen after SSL_set_bio is
+         * called.
+         */
+        if (!csm_analyse_init_peer_addr(qc->net_wbio, &qc->init_peer_addr))
+            /* best effort */
+            BIO_ADDR_clear(&qc->init_peer_addr);
+        else
+            ossl_quic_channel_set_peer_addr(qc->ch, &qc->init_peer_addr);
+    }
+
+    if (!qc->started
+        && qc->addressed_mode
+        && BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC) {
+        /*
+         * If we still don't have a peer address in addressed mode, we can't do
+         * anything.
+         */
+        QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_REMOTE_PEER_ADDRESS_NOT_SET, NULL);
         return -1; /* Non-protocol error */
     }
 
