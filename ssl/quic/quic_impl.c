@@ -35,6 +35,8 @@ static void qc_set_default_xso_keep_ref(QUIC_CONNECTION *qc, QUIC_XSO *xso,
 static SSL *quic_conn_stream_new(QCTX *ctx, uint64_t flags, int need_lock);
 static int quic_validate_for_write(QUIC_XSO *xso, int *err);
 static int quic_mutation_allowed(QUIC_CONNECTION *qc, int req_active);
+static int qc_blocking_mode(const QUIC_CONNECTION *qc);
+static int xso_blocking_mode(const QUIC_XSO *xso);
 
 /*
  * QUIC Front-End I/O API: Common Utilities
@@ -399,8 +401,8 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->default_stream_mode     = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
     qc->default_ssl_mode        = qc->ssl.ctx->mode;
     qc->default_ssl_options     = qc->ssl.ctx->options & OSSL_QUIC_PERMITTED_OPTIONS;
-    qc->default_blocking        = 1;
-    qc->blocking                = 1;
+    qc->desires_blocking        = 1;
+    qc->blocking                = 0;
     qc->incoming_stream_policy  = SSL_INCOMING_STREAM_POLICY_AUTO;
     qc->last_error              = SSL_ERROR_NONE;
 
@@ -820,6 +822,24 @@ static int csm_analyse_init_peer_addr(BIO *net_wbio, BIO_ADDR *peer)
     return 1;
 }
 
+static int qc_can_support_blocking_cached(QUIC_CONNECTION *qc)
+{
+    QUIC_REACTOR *rtor = ossl_quic_channel_get_reactor(qc->ch);
+
+    return ossl_quic_reactor_can_poll_r(rtor)
+        && ossl_quic_reactor_can_poll_w(rtor);
+}
+
+static void qc_update_can_support_blocking(QUIC_CONNECTION *qc)
+{
+    ossl_quic_channel_update_poll_descriptors(qc->ch); /* best effort */
+}
+
+static void qc_update_blocking_mode(QUIC_CONNECTION *qc)
+{
+    qc->blocking = qc->desires_blocking && qc_can_support_blocking_cached(qc);
+}
+
 void ossl_quic_conn_set0_net_rbio(SSL *s, BIO *net_rbio)
 {
     QCTX ctx;
@@ -836,24 +856,15 @@ void ossl_quic_conn_set0_net_rbio(SSL *s, BIO *net_rbio)
     BIO_free(ctx.qc->net_rbio);
     ctx.qc->net_rbio = net_rbio;
 
-    /*
-     * If what we have is not pollable (e.g. a BIO_dgram_pair) disable blocking
-     * mode as we do not support it for non-pollable BIOs.
-     */
-    if (net_rbio != NULL) {
-        BIO_POLL_DESCRIPTOR d = {0};
-
-        if (!BIO_get_rpoll_descriptor(net_rbio, &d)
-            || d.type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD) {
-            ctx.qc->blocking          = 0;
-            ctx.qc->default_blocking  = 0;
-            ctx.qc->can_poll_net_rbio = 0;
-        } else {
-            ctx.qc->can_poll_net_rbio = 1;
-        }
-
+    if (net_rbio != NULL)
         BIO_set_nbio(net_rbio, 1); /* best effort autoconfig */
-    }
+
+    /*
+     * Determine if the current pair of read/write BIOs now set allows blocking
+     * mode to be supported.
+     */
+    qc_update_can_support_blocking(ctx.qc);
+    qc_update_blocking_mode(ctx.qc);
 }
 
 void ossl_quic_conn_set0_net_wbio(SSL *s, BIO *net_wbio)
@@ -872,34 +883,15 @@ void ossl_quic_conn_set0_net_wbio(SSL *s, BIO *net_wbio)
     BIO_free(ctx.qc->net_wbio);
     ctx.qc->net_wbio = net_wbio;
 
-    if (net_wbio != NULL) {
-        BIO_POLL_DESCRIPTOR d = {0};
-
-        if (!BIO_get_wpoll_descriptor(net_wbio, &d)
-            || d.type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD) {
-            ctx.qc->blocking          = 0;
-            ctx.qc->default_blocking  = 0;
-            ctx.qc->can_poll_net_wbio = 0;
-        } else {
-            ctx.qc->can_poll_net_wbio = 1;
-        }
-
-        /*
-         * If we do not have a peer address yet, and we have not started trying
-         * to connect yet, try to autodetect one.
-         */
-        if (BIO_ADDR_family(&ctx.qc->init_peer_addr) == AF_UNSPEC
-            && !ctx.qc->started) {
-            if (!csm_analyse_init_peer_addr(net_wbio, &ctx.qc->init_peer_addr))
-                /* best effort */
-                BIO_ADDR_clear(&ctx.qc->init_peer_addr);
-
-            ossl_quic_channel_set_peer_addr(ctx.qc->ch,
-                                            &ctx.qc->init_peer_addr);
-        }
-
+    if (net_wbio != NULL)
         BIO_set_nbio(net_wbio, 1); /* best effort autoconfig */
-    }
+
+    /*
+     * Determine if the current pair of read/write BIOs now set allows blocking
+     * mode to be supported.
+     */
+    qc_update_can_support_blocking(ctx.qc);
+    qc_update_blocking_mode(ctx.qc);
 }
 
 BIO *ossl_quic_conn_get_net_rbio(const SSL *s)
@@ -930,40 +922,59 @@ int ossl_quic_conn_get_blocking_mode(const SSL *s)
         return 0;
 
     if (ctx.is_stream)
-        return ctx.xso->blocking;
+        return xso_blocking_mode(ctx.xso);
 
-    return ctx.qc->blocking;
+    return qc_blocking_mode(ctx.qc);
 }
 
+QUIC_TAKES_LOCK
 int ossl_quic_conn_set_blocking_mode(SSL *s, int blocking)
 {
+    int ret = 0;
     QCTX ctx;
 
     if (!expect_quic(s, &ctx))
         return 0;
 
-    /* Cannot enable blocking mode if we do not have pollable FDs. */
-    if (blocking != 0 &&
-        (!ctx.qc->can_poll_net_rbio || !ctx.qc->can_poll_net_wbio))
-        return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_UNSUPPORTED, NULL);
+    quic_lock(ctx.qc);
 
-    if (!ctx.is_stream) {
+    /* Sanity check - can we support the request given the current network BIO? */
+    if (blocking) {
         /*
-         * If called on a QCSO, update default and connection-level blocking
-         * modes.
+         * If called directly on a QCSO, update our information on network BIO
+         * capabilities.
          */
-        ctx.qc->blocking         = (blocking != 0);
-        ctx.qc->default_blocking = ctx.qc->blocking;
+        if (!ctx.is_stream)
+            qc_update_can_support_blocking(ctx.qc);
+
+        /* Cannot enable blocking mode if we do not have pollable FDs. */
+        if (!qc_can_support_blocking_cached(ctx.qc)) {
+            ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_UNSUPPORTED, NULL);
+            goto out;
+        }
     }
 
-    if (ctx.xso != NULL)
+    if (!ctx.is_stream)
         /*
-         * If called on  a QSSO or QCSO with a default XSO, update blocking
+         * If called directly on a QCSO, update default and connection-level
+         * blocking modes.
+         */
+        ctx.qc->desires_blocking = (blocking != 0);
+
+    if (ctx.xso != NULL) {
+        /*
+         * If called on a QSSO or a QCSO with a default XSO, update the blocking
          * mode.
          */
-        ctx.xso->blocking = (blocking != 0);
+        ctx.xso->desires_blocking       = (blocking != 0);
+        ctx.xso->desires_blocking_set   = 1;
+    }
 
-    return 1;
+    ret = 1;
+out:
+    qc_update_blocking_mode(ctx.qc);
+    quic_unlock(ctx.qc);
+    return ret;
 }
 
 int ossl_quic_conn_set_initial_peer_addr(SSL *s,
@@ -1005,9 +1016,11 @@ static int qc_blocking_mode(const QUIC_CONNECTION *qc)
 
 static int xso_blocking_mode(const QUIC_XSO *xso)
 {
-    return xso->blocking
-        && xso->conn->can_poll_net_rbio
-        && xso->conn->can_poll_net_wbio;
+    if (xso->desires_blocking_set)
+        return xso->desires_blocking && qc_can_support_blocking_cached(xso->conn);
+    else
+        /* Only ever set if we can support blocking. */
+        return xso->conn->blocking;
 }
 
 /* SSL_handle_events; performs QUIC I/O and timeout processing. */
@@ -1533,6 +1546,34 @@ static int quic_do_handshake(QCTX *ctx)
         /* The handshake is now done. */
         return 1;
 
+    if (!qc_blocking_mode(qc)) {
+        /* Try to advance the reactor. */
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
+
+        if (ossl_quic_channel_is_handshake_complete(qc->ch))
+            /* The handshake is now done. */
+            return 1;
+
+        if (ossl_quic_channel_is_term_any(qc->ch)) {
+            QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+            return 0;
+        } else if (qc->desires_blocking) {
+            /*
+             * As a special case when doing a handshake when blocking mode is
+             * desired yet not available, see if the network BIOs have become
+             * poll descriptor-enabled. This supports BIOs such as BIO_s_connect
+             * which do late creation of socket FDs and therefore cannot expose
+             * a poll descriptor until after a network BIO is set on the QCSO.
+             */
+            assert(!qc->blocking);
+            qc_update_can_support_blocking(qc);
+            qc_update_blocking_mode(qc);
+        }
+    }
+
+    /*
+     * We are either in blocking mode or just entered it due to the code above.
+     */
     if (qc_blocking_mode(qc)) {
         /* In blocking mode, wait for the handshake to complete. */
         struct quic_handshake_wait_args args;
@@ -1550,18 +1591,14 @@ static int quic_do_handshake(QCTX *ctx)
 
         assert(ossl_quic_channel_is_handshake_complete(qc->ch));
         return 1;
-    } else {
-        /* Try to advance the reactor. */
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
-
-        if (ossl_quic_channel_is_handshake_complete(qc->ch))
-            /* The handshake is now done. */
-            return 1;
-
-        /* Otherwise, indicate that the handshake isn't done yet. */
-        QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_WANT_READ);
-        return -1; /* Non-protocol error */
     }
+
+    /*
+     * Otherwise, indicate that the handshake isn't done yet.
+     * We can only get here in non-blocking mode.
+     */
+    QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_WANT_READ);
+    return -1; /* Non-protocol error */
 }
 
 QUIC_TAKES_LOCK
@@ -1768,7 +1805,6 @@ static QUIC_XSO *create_xso_from_stream(QUIC_CONNECTION *qc, QUIC_STREAM *qs)
     }
 
     xso->conn       = qc;
-    xso->blocking   = qc->default_blocking;
     xso->ssl_mode   = qc->default_ssl_mode;
     xso->ssl_options
         = qc->default_ssl_options & OSSL_QUIC_PERMITTED_OPTIONS_STREAM;
