@@ -94,6 +94,13 @@ typedef struct quic_reactor_st {
      */
     unsigned int net_read_desired   : 1;
     unsigned int net_write_desired  : 1;
+
+    /*
+     * Are the read and write poll descriptors we are currently configured with
+     * things we can actually poll?
+     */
+    unsigned int can_poll_r : 1;
+    unsigned int can_poll_w : 1;
 } QUIC_REACTOR;
 
 void ossl_quic_reactor_init(QUIC_REACTOR *rtor,
@@ -108,12 +115,16 @@ void ossl_quic_reactor_set_poll_r(QUIC_REACTOR *rtor,
 void ossl_quic_reactor_set_poll_w(QUIC_REACTOR *rtor,
                                   const BIO_POLL_DESCRIPTOR *w);
 
-const BIO_POLL_DESCRIPTOR *ossl_quic_reactor_get_poll_r(QUIC_REACTOR *rtor);
+const BIO_POLL_DESCRIPTOR *ossl_quic_reactor_get_poll_r(const QUIC_REACTOR *rtor);
+const BIO_POLL_DESCRIPTOR *ossl_quic_reactor_get_poll_w(const QUIC_REACTOR *rtor);
 
-const BIO_POLL_DESCRIPTOR *ossl_quic_reactor_get_poll_w(QUIC_REACTOR *rtor);
+int ossl_quic_reactor_can_poll_r(const QUIC_REACTOR *rtor);
+int ossl_quic_reactor_can_poll_w(const QUIC_REACTOR *rtor);
+
+int ossl_quic_reactor_can_support_poll_descriptor(const QUIC_REACTOR *rtor,
+                                                  const BIO_POLL_DESCRIPTOR *d);
 
 int ossl_quic_reactor_net_read_desired(QUIC_REACTOR *rtor);
-
 int ossl_quic_reactor_net_write_desired(QUIC_REACTOR *rtor);
 
 OSSL_TIME ossl_quic_reactor_get_tick_deadline(QUIC_REACTOR *rtor);
