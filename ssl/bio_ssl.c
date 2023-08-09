@@ -438,6 +438,12 @@ BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
 #ifndef OPENSSL_NO_SOCK
     BIO *ret = NULL, *buf = NULL, *ssl = NULL;
 
+# ifndef OPENSSL_NO_QUIC
+    if (ctx != NULL && IS_QUIC_CTX(ctx))
+        /* Never use buffering for QUIC. */
+        return BIO_new_ssl_connect(ctx);
+# endif
+
     if ((buf = BIO_new(BIO_f_buffer())) == NULL)
         return NULL;
     if ((ssl = BIO_new_ssl_connect(ctx)) == NULL)
@@ -459,6 +465,13 @@ BIO *BIO_new_ssl_connect(SSL_CTX *ctx)
 
     if ((con = BIO_new(BIO_s_connect())) == NULL)
         return NULL;
+
+# ifndef OPENSSL_NO_QUIC
+    if (ctx != NULL && IS_QUIC_CTX(ctx))
+        if (!BIO_set_sock_type(con, SOCK_DGRAM))
+            goto err;
+#endif
+
     if ((ssl = BIO_new_ssl(ctx, 1)) == NULL)
         goto err;
     if ((ret = BIO_push(ssl, con)) == NULL)
