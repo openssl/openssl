@@ -260,6 +260,15 @@ These functions do not affect an underlying network BIO or the resource it
 represents; for example, a UDP datagram provided to a QUIC connection as the
 network BIO will remain open.
 
+Note that when using QUIC, an application must call SSL_shutdown() if it wants
+to ensure that all transmitted data was received by the peer. This is unlike a
+TLS/TCP connection, where reliable transmission of buffered data is the
+responsibility of the operating system. If an application calls SSL_free() on a
+QUIC connection SSL object or exits before completing the shutdown process using
+SSL_shutdown(), data which was written by the application using SSL_write(), but
+could not yet be transmitted, or which was sent but lost in the network, may not
+be received by the peer.
+
 =head2 Application Data Drainage Behaviour
 
 When using QUIC, SSL_shutdown() or SSL_shutdown_ex() ordinarily waits until all
