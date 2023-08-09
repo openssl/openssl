@@ -28,7 +28,7 @@ SSL_CTX *create_ssl_ctx(void)
     SSL_CTX *ctx;
 
 #ifdef USE_QUIC
-    ctx = SSL_CTX_new(QUIC_client_method());
+    ctx = SSL_CTX_new(OSSL_QUIC_client_method());
 #else
     ctx = SSL_CTX_new(TLS_client_method());
 #endif
@@ -57,6 +57,9 @@ APP_CONN *new_conn(SSL_CTX *ctx, int fd, const char *bare_hostname)
 {
     APP_CONN *conn;
     SSL *ssl;
+#ifdef USE_QUIC
+    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+#endif
 
     conn = calloc(1, sizeof(APP_CONN));
     if (conn == NULL)
@@ -87,6 +90,16 @@ APP_CONN *new_conn(SSL_CTX *ctx, int fd, const char *bare_hostname)
         free(conn);
         return NULL;
     }
+
+#ifdef USE_QUIC
+    /* Configure ALPN, which is required for QUIC. */
+    if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn))) {
+        /* Note: SSL_set_alpn_protos returns 1 for failure. */
+        SSL_free(ssl);
+        free(conn);
+        return NULL;
+    }
+#endif
 
     conn->fd = fd;
     return conn;
@@ -185,7 +198,9 @@ int get_conn_fd(APP_CONN *conn)
 int get_conn_pending_tx(APP_CONN *conn)
 {
 #ifdef USE_QUIC
-    return POLLIN | POLLOUT | POLLERR;
+    return (SSL_net_read_desired(conn->ssl) ? POLLIN : 0)
+           | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
+           | POLLERR;
 #else
     return (conn->tx_need_rx ? POLLIN : 0) | POLLOUT | POLLERR;
 #endif
@@ -193,7 +208,7 @@ int get_conn_pending_tx(APP_CONN *conn)
 
 int get_conn_pending_rx(APP_CONN *conn)
 {
-    return (conn->rx_need_tx ? POLLOUT : 0) | POLLIN | POLLERR;
+    return get_conn_pending_tx(conn);
 }
 
 #ifdef USE_QUIC
@@ -203,9 +218,17 @@ int get_conn_pending_rx(APP_CONN *conn)
  * no need for such a call. This may change after the next call
  * to libssl.
  */
+static inline int timeval_to_ms(const struct timeval *t);
+
 int get_conn_pump_timeout(APP_CONN *conn)
 {
-    return SSL_get_timeout(conn->ssl);
+    struct timeval tv;
+    int is_infinite;
+
+    if (!SSL_get_event_timeout(conn->ssl, &tv, &is_infinite))
+        return -1;
+
+    return is_infinite ? -1 : timeval_to_ms(&tv);
 }
 
 /*
@@ -214,7 +237,7 @@ int get_conn_pump_timeout(APP_CONN *conn)
  */
 void pump(APP_CONN *conn)
 {
-    SSL_pump(conn->ssl);
+    SSL_handle_events(conn->ssl);
 }
 #endif
 
