@@ -902,7 +902,8 @@ static int pkcs12_recreate_test(void)
     pkey = d2i_AutoPrivateKey(NULL, &key_bytes, sizeof(KEY1));
     if (!TEST_ptr(pkey))
         goto err;
-    p12 = PKCS12_create("pass", NULL, pkey, cert, NULL, NID_aes_256_cbc, NID_aes_256_cbc, 2, 1, 0);
+    p12 = PKCS12_create("pass", NULL, pkey, cert, NULL, NID_aes_256_cbc,
+                        NID_aes_256_cbc, 2, 1, 0);
     if (!TEST_ptr(p12))
         goto err;
     if (!TEST_int_eq(ERR_peek_error(), 0))
@@ -919,11 +920,14 @@ static int pkcs12_recreate_test(void)
     p12_parsed = d2i_PKCS12_bio(bio, &p12_parsed);
     if (!TEST_ptr(p12_parsed))
         goto err;
-    if (!TEST_int_eq(PKCS12_parse(p12_parsed, "pass", &pkey_parsed, &cert_parsed, NULL), 1))
+    if (!TEST_int_eq(PKCS12_parse(p12_parsed, "pass", &pkey_parsed,
+                                  &cert_parsed, NULL), 1))
         goto err;
 
     /* cert_parsed also contains auxiliary data */
-    p12_recreated = PKCS12_create("new_pass", NULL, pkey_parsed, cert_parsed, NULL, NID_aes_256_cbc, NID_aes_256_cbc, 2, 1, 0);
+    p12_recreated = PKCS12_create("new_pass", NULL, pkey_parsed, cert_parsed,
+                                  NULL, NID_aes_256_cbc, NID_aes_256_cbc,
+                                  2, 1, 0);
     if (!TEST_ptr(p12_recreated))
         goto err;
     if (!TEST_int_eq(ERR_peek_error(), 0))
