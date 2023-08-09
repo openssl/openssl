@@ -82,8 +82,12 @@ int has_stdin_waiting(void);
 # endif
 
 void corrupt_signature(const ASN1_STRING *signature);
+
+/* Helpers for setting X509v3 certificate fields notBefore and notAfter */
+int check_cert_time_string(const char *time, const char *desc);
 int set_cert_times(X509 *x, const char *startdate, const char *enddate,
-                   int days);
+                   int days, int strict_compare_times);
+
 int set_crl_lastupdate(X509_CRL *crl, const char *lastupdate);
 int set_crl_nextupdate(X509_CRL *crl, const char *nextupdate,
                        long days, long hours, long secs);

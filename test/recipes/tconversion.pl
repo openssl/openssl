@@ -13,6 +13,8 @@ use warnings;
 use File::Compare qw/compare_text/;
 use File::Copy;
 use OpenSSL::Test qw/:DEFAULT/;
+use Time::Piece;
+use POSIX qw(strftime);
 
 my %conversionforms = (
     # Default conversion forms.  Other series may be added with
@@ -174,6 +176,46 @@ sub cert_ext_has_n_different_lines {
     is(file_n_different_lines($out), $expected, ($name ? "$name: " : "").
        "$cert '$exts' output should contain $expected different lines");
     # not unlinking $out
+}
+
+# extracts string value of certificate field from a -text formatted-output
+sub get_field {
+    my ($f, $field) = @_;
+    my $string = "";
+    open my $fh, $f or die;
+    while (my $line = <$fh>) {
+        if ($line =~ /$field:\s+(.*)/) {
+            $string = $1;
+        }
+    }
+    close $fh;
+    return $string;
+}
+
+sub get_issuer {
+    return get_field(@_, "Issuer");
+}
+
+sub get_not_before {
+    return get_field(@_, "Not Before");
+}
+
+# Date as yyyy-mm-dd
+sub get_not_before_date {
+    return Time::Piece->strptime(
+        get_not_before(@_),
+        "%b %d %T %Y %Z")->date;
+}
+
+sub get_not_after {
+    return get_field(@_, "Not After ");
+}
+
+# Date as yyyy-mm-dd
+sub get_not_after_date {
+    return Time::Piece->strptime(
+        get_not_after(@_),
+        "%b %d %T %Y %Z")->date;
 }
 
 1;
