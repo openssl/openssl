@@ -32,7 +32,7 @@ SSL_CTX *create_ssl_ctx(void)
     SSL_CTX *ctx;
 
 #ifdef USE_QUIC
-    ctx = SSL_CTX_new(QUIC_client_method());
+    ctx = SSL_CTX_new(OSSL_QUIC_client_method());
 #else
     ctx = SSL_CTX_new(TLS_client_method());
 #endif
@@ -62,6 +62,9 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *bare_hostname)
     BIO *ssl_bio, *internal_bio, *net_bio;
     APP_CONN *conn;
     SSL *ssl;
+#ifdef USE_QUIC
+    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+#endif
 
     conn = calloc(1, sizeof(APP_CONN));
     if (conn == NULL)
@@ -76,7 +79,7 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *bare_hostname)
     SSL_set_connect_state(ssl); /* cannot fail */
 
 #ifdef USE_QUIC
-    if (BIO_new_dgram_pair(&internal_bio, 0, &net_bio, 0) <= 0) {
+    if (BIO_new_bio_dgram_pair(&internal_bio, 0, &net_bio, 0) <= 0) {
 #else
     if (BIO_new_bio_pair(&internal_bio, 0, &net_bio, 0) <= 0) {
 #endif
@@ -111,6 +114,16 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *bare_hostname)
         BIO_free(ssl_bio);
         return NULL;
     }
+
+#ifdef USE_QUIC
+    /* Configure ALPN, which is required for QUIC. */
+    if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn))) {
+        /* Note: SSL_set_alpn_protos returns 1 for failure. */
+        SSL_free(ssl);
+        BIO_free(ssl_bio);
+        return NULL;
+    }
+#endif
 
     conn->ssl_bio   = ssl_bio;
     conn->net_bio   = net_bio;
@@ -231,7 +244,9 @@ size_t net_tx_avail(APP_CONN *conn)
 int get_conn_pending_tx(APP_CONN *conn)
 {
 #ifdef USE_QUIC
-    return POLLIN | POLLOUT | POLLERR;
+    return (SSL_net_read_desired(conn->ssl) ? POLLIN : 0)
+           | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
+           | POLLERR;
 #else
     return (conn->tx_need_rx ? POLLIN : 0) | POLLOUT | POLLERR;
 #endif
@@ -239,7 +254,11 @@ int get_conn_pending_tx(APP_CONN *conn)
 
 int get_conn_pending_rx(APP_CONN *conn)
 {
+#ifdef USE_QUIC
+    return get_conn_pending_tx(conn);
+#else
     return (conn->rx_need_tx ? POLLOUT : 0) | POLLIN | POLLERR;
+#endif
 }
 
 /*
