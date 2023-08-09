@@ -33,7 +33,7 @@ SSL_CTX *create_ssl_ctx(void)
     SSL_CTX *ctx;
 
 #ifdef USE_QUIC
-    ctx = SSL_CTX_new(QUIC_client_thread_method());
+    ctx = SSL_CTX_new(OSSL_QUIC_client_thread_method());
 #else
     ctx = SSL_CTX_new(TLS_client_method());
 #endif
@@ -64,6 +64,9 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
     BIO *out, *buf;
     SSL *ssl = NULL;
     const char *bare_hostname;
+#ifdef USE_QUIC
+    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+#endif
 
     conn = calloc(1, sizeof(APP_CONN));
     if (conn == NULL)
@@ -110,6 +113,15 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
         free(conn);
         return NULL;
     }
+
+#ifdef USE_QUIC
+    /* Configure ALPN, which is required for QUIC. */
+    if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn))) {
+        /* Note: SSL_set_alpn_protos returns 1 for failure. */
+        BIO_free_all(out);
+        return NULL;
+    }
+#endif
 
     /* Make the BIO nonblocking. */
     BIO_set_nbio(out, 1);
@@ -175,7 +187,12 @@ int rx(APP_CONN *conn, void *buf, int buf_len)
 int get_conn_fd(APP_CONN *conn)
 {
 #ifdef USE_QUIC
-    return BIO_get_poll_fd(conn->ssl_bio, NULL);
+    BIO_POLL_DESCRIPTOR d;
+
+    if (!BIO_get_rpoll_descriptor(conn->ssl_bio, &d))
+        return -1;
+
+    return d.value.fd;
 #else
     return BIO_get_fd(conn->ssl_bio, NULL);
 #endif
@@ -197,7 +214,9 @@ int get_conn_fd(APP_CONN *conn)
 int get_conn_pending_tx(APP_CONN *conn)
 {
 #ifdef USE_QUIC
-    return POLLIN | POLLOUT | POLLERR;
+    return (SSL_net_read_desired(conn->ssl) ? POLLIN : 0)
+           | (SSL_net_write_desired(conn->ssl) ? POLLOUT : 0)
+           | POLLERR;
 #else
     return (conn->tx_need_rx ? POLLIN : 0) | POLLOUT | POLLERR;
 #endif
@@ -205,7 +224,11 @@ int get_conn_pending_tx(APP_CONN *conn)
 
 int get_conn_pending_rx(APP_CONN *conn)
 {
+#ifdef USE_QUIC
+    return get_conn_pending_tx(conn);
+#else
     return (conn->rx_need_tx ? POLLOUT : 0) | POLLIN | POLLERR;
+#endif
 }
 
 /*
