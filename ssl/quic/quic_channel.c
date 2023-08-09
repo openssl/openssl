@@ -2616,6 +2616,40 @@ BIO *ossl_quic_channel_get_net_wbio(QUIC_CHANNEL *ch)
     return ch->net_wbio;
 }
 
+static int ch_update_poll_desc(QUIC_CHANNEL *ch, BIO *net_bio, int for_write)
+{
+    BIO_POLL_DESCRIPTOR d = {0};
+
+    if (net_bio == NULL
+        || (!for_write && !BIO_get_rpoll_descriptor(net_bio, &d))
+        || (for_write && !BIO_get_wpoll_descriptor(net_bio, &d)))
+        /* Non-pollable BIO */
+        d.type = BIO_POLL_DESCRIPTOR_TYPE_NONE;
+
+    if (!validate_poll_descriptor(&d))
+        return 0;
+
+    if (for_write)
+        ossl_quic_reactor_set_poll_w(&ch->rtor, &d);
+    else
+        ossl_quic_reactor_set_poll_r(&ch->rtor, &d);
+
+    return 1;
+}
+
+int ossl_quic_channel_update_poll_descriptors(QUIC_CHANNEL *ch)
+{
+    int ok = 1;
+
+    if (!ch_update_poll_desc(ch, ch->net_rbio, /*for_write=*/0))
+        ok = 0;
+
+    if (!ch_update_poll_desc(ch, ch->net_wbio, /*for_write=*/1))
+        ok = 0;
+
+    return ok;
+}
+
 /*
  * QUIC_CHANNEL does not ref any BIO it is provided with, nor is any ref
  * transferred to it. The caller (i.e., QUIC_CONNECTION) is responsible for
@@ -2624,21 +2658,12 @@ BIO *ossl_quic_channel_get_net_wbio(QUIC_CHANNEL *ch)
  */
 int ossl_quic_channel_set_net_rbio(QUIC_CHANNEL *ch, BIO *net_rbio)
 {
-    BIO_POLL_DESCRIPTOR d = {0};
-
     if (ch->net_rbio == net_rbio)
         return 1;
 
-    if (net_rbio != NULL) {
-        if (!BIO_get_rpoll_descriptor(net_rbio, &d))
-            /* Non-pollable BIO */
-            d.type = BIO_POLL_DESCRIPTOR_TYPE_NONE;
+    if (!ch_update_poll_desc(ch, net_rbio, /*for_write=*/0))
+        return 0;
 
-        if (!validate_poll_descriptor(&d))
-            return 0;
-    }
-
-    ossl_quic_reactor_set_poll_r(&ch->rtor, &d);
     ossl_quic_demux_set_bio(ch->demux, net_rbio);
     ch->net_rbio = net_rbio;
     return 1;
@@ -2646,21 +2671,12 @@ int ossl_quic_channel_set_net_rbio(QUIC_CHANNEL *ch, BIO *net_rbio)
 
 int ossl_quic_channel_set_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio)
 {
-    BIO_POLL_DESCRIPTOR d = {0};
-
     if (ch->net_wbio == net_wbio)
         return 1;
 
-    if (net_wbio != NULL) {
-        if (!BIO_get_wpoll_descriptor(net_wbio, &d))
-            /* Non-pollable BIO */
-            d.type = BIO_POLL_DESCRIPTOR_TYPE_NONE;
+    if (!ch_update_poll_desc(ch, net_wbio, /*for_write=*/1))
+        return 0;
 
-        if (!validate_poll_descriptor(&d))
-            return 0;
-    }
-
-    ossl_quic_reactor_set_poll_w(&ch->rtor, &d);
     ossl_qtx_set_bio(ch->qtx, net_wbio);
     ch->net_wbio = net_wbio;
     return 1;
