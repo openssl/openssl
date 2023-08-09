@@ -2930,6 +2930,10 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
                                  const QUIC_TERMINATE_CAUSE *tcause,
                                  int force_immediate)
 {
+    /* No point sending anything if we haven't sent anything yet. */
+    if (!ch->have_sent_any_pkt)
+        force_immediate = 1;
+
     switch (ch->state) {
     default:
     case QUIC_CHANNEL_STATE_IDLE:
@@ -3250,6 +3254,10 @@ void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
     const char *ft_str = NULL;
     const char *ft_str_pfx = " (", *ft_str_sfx = ")";
 
+    if (ch->protocol_error)
+        /* Only the first call to this function matters. */
+        return;
+
     if (err_str == NULL) {
         err_str     = "";
         err_str_pfx = "";
@@ -3297,6 +3305,7 @@ void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
     tcause.reason     = reason;
     tcause.reason_len = strlen(reason);
 
+    ch->protocol_error = 1;
     ch_start_terminating(ch, &tcause, 0);
 }
 
