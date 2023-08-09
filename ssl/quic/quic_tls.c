@@ -672,8 +672,8 @@ static int raise_error(QUIC_TLS *qtls, uint64_t error_code,
     ERR_new();
     ERR_set_debug(src_file, src_line, src_func);
     ERR_set_error(ERR_LIB_SSL, SSL_R_QUIC_HANDSHAKE_LAYER_ERROR,
-                  "handshake layer error, error code %llu (\"%s\")",
-                  (unsigned long long)error_code, error_msg);
+                  "handshake layer error, error code %llu (0x%llx) (\"%s\")",
+                  error_code, error_code, error_msg);
     OSSL_ERR_STATE_save_to_mark(qtls->error_state);
 
     /*
@@ -743,7 +743,8 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
                 return RAISE_INTERNAL_ERROR(qtls);
         } else {
             if (sc->ext.alpn == NULL || sc->ext.alpn_len == 0)
-                return RAISE_INTERNAL_ERROR(qtls);
+                return RAISE_ERROR(qtls, QUIC_ERR_CRYPTO_NO_APP_PROTO,
+                                   "ALPN must be configured when using QUIC");
         }
         if (!SSL_set_min_proto_version(qtls->args.s, TLS1_3_VERSION))
             return RAISE_INTERNAL_ERROR(qtls);
