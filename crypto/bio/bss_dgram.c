@@ -722,6 +722,28 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_SET_PEER:
         BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         break;
+    case BIO_CTRL_DGRAM_DETECT_PEER_ADDR:
+        {
+            BIO_ADDR xaddr, *p = &data->peer;
+            socklen_t xaddr_len = sizeof(xaddr.sa);
+
+            if (BIO_ADDR_family(p) == AF_UNSPEC) {
+                if (getpeername(b->num, (void *)&xaddr.sa, &xaddr_len) == 0
+                    && BIO_ADDR_family(&xaddr) != AF_UNSPEC) {
+                    p = &xaddr;
+                } else {
+                    ret = 0;
+                    break;
+                }
+            }
+
+            ret = BIO_ADDR_sockaddr_size(p);
+            if (num == 0 || num > ret)
+                num = ret;
+
+            memcpy(ptr, p, (ret = num));
+        }
+        break;
     case BIO_C_SET_NBIO:
         if (!BIO_socket_nbio(b->num, num != 0))
             ret = 0;
