@@ -2614,6 +2614,12 @@ void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags,
     X509_VERIFY_PARAM_set_time(ctx->param, t);
 }
 
+void X509_STORE_CTX_set_current_reasons(X509_STORE_CTX *ctx,
+                                        unsigned int current_reasons)
+{
+   ctx->current_reasons = current_reasons;
+}
+
 X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx)
 {
     return ctx->cert;
@@ -2683,6 +2689,12 @@ X509_STORE_CTX_get_check_revocation(const X509_STORE_CTX *ctx)
 X509_STORE_CTX_get_crl_fn X509_STORE_CTX_get_get_crl(const X509_STORE_CTX *ctx)
 {
     return ctx->get_crl;
+}
+
+void X509_STORE_CTX_set_get_crl(X509_STORE_CTX *ctx,
+                                X509_STORE_CTX_get_crl_fn get_crl)
+{
+   ctx->get_crl = get_crl;
 }
 
 X509_STORE_CTX_check_crl_fn
