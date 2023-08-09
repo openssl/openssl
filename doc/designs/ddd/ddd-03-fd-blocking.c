@@ -22,7 +22,7 @@ SSL_CTX *create_ssl_ctx(void)
     SSL_CTX *ctx;
 
 #ifdef USE_QUIC
-    ctx = SSL_CTX_new(QUIC_client_method());
+    ctx = SSL_CTX_new(OSSL_QUIC_client_method());
 #else
     ctx = SSL_CTX_new(TLS_client_method());
 #endif
@@ -50,6 +50,9 @@ SSL_CTX *create_ssl_ctx(void)
 SSL *new_conn(SSL_CTX *ctx, int fd, const char *bare_hostname)
 {
     SSL *ssl;
+#ifdef USE_QUIC
+    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+#endif
 
     ssl = SSL_new(ctx);
     if (ssl == NULL)
@@ -71,6 +74,15 @@ SSL *new_conn(SSL_CTX *ctx, int fd, const char *bare_hostname)
         SSL_free(ssl);
         return NULL;
     }
+
+#ifdef USE_QUIC
+    /* Configure ALPN, which is required for QUIC. */
+    if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn))) {
+        /* Note: SSL_set_alpn_protos returns 1 for failure. */
+        SSL_free(ssl);
+        return NULL;
+    }
+#endif
 
     return ssl;
 }
