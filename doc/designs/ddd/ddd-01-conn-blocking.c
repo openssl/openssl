@@ -21,7 +21,7 @@ SSL_CTX *create_ssl_ctx(void)
     SSL_CTX *ctx;
 
 #ifdef USE_QUIC
-    ctx = SSL_CTX_new(QUIC_client_method());
+    ctx = SSL_CTX_new(OSSL_QUIC_client_method());
 #else
     ctx = SSL_CTX_new(TLS_client_method());
 #endif
@@ -51,6 +51,9 @@ BIO *new_conn(SSL_CTX *ctx, const char *hostname)
     BIO *out;
     SSL *ssl = NULL;
     const char *bare_hostname;
+#ifdef USE_QUIC
+    static const unsigned char alpn[] = {5, 'd', 'u', 'm', 'm', 'y'};
+#endif
 
     out = BIO_new_ssl_connect(ctx);
     if (out == NULL)
@@ -78,6 +81,15 @@ BIO *new_conn(SSL_CTX *ctx, const char *hostname)
         BIO_free_all(out);
         return NULL;
     }
+
+#ifdef USE_QUIC
+    /* Configure ALPN, which is required for QUIC. */
+    if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn))) {
+        /* Note: SSL_set_alpn_protos returns 1 for failure. */
+        BIO_free_all(out);
+        return NULL;
+    }
+#endif
 
     return out;
 }
