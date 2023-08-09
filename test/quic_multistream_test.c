@@ -2901,7 +2901,7 @@ static int script_39_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
         retire_prior_to = 1;
         break;
     case 4:
-        /* Cheese it by using our actual CID so we don't break connectivity. */
+        /* Use our actual CID so we don't break connectivity. */
         ossl_quic_channel_get_diag_local_cid(ch, &new_cid);
 
         seq_no          = 2;
@@ -3502,7 +3502,7 @@ static const struct script_op script_50[] = {
     OP_END
 };
 
-/* 51. Fault injection - PATH_CHALLENGE is ignored */
+/* 51. Fault injection - PATH_RESPONSE is ignored */
 static const struct script_op script_51[] = {
     OP_S_SET_INJECT_PLAIN   (script_41_inject_plain)
     OP_C_SET_ALPN           ("ossltest")
@@ -3751,7 +3751,7 @@ static const struct script_op script_56[] = {
     OP_END
 };
 
-/* 57. Fault injection - NEW_CONN_ID with lower seq no ignored */
+/* 57. Fault injection - NEW_CONN_ID with lower seq so ignored */
 static const struct script_op script_57[] = {
     OP_S_SET_INJECT_PLAIN   (script_39_inject_plain)
     OP_C_SET_ALPN           ("ossltest")
