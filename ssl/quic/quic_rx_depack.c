@@ -301,8 +301,13 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CHANNEL *ch,
     }
 
     if (!ossl_quic_rstream_queue_data(rstream, parent_pkt,
-                                      f.offset, f.data, f.len, 0))
+                                      f.offset, f.data, f.len, 0)) {
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_INTERNAL_ERROR,
+                                               OSSL_QUIC_FRAME_TYPE_CRYPTO,
+                                               "internal error (rstream queue)");
         return 0;
+    }
 
     *datalen = f.len;
 
@@ -594,8 +599,13 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
                                       frame_data.offset,
                                       frame_data.data,
                                       frame_data.len,
-                                      frame_data.is_fin))
+                                      frame_data.is_fin)) {
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_INTERNAL_ERROR,
+                                               frame_type,
+                                               "internal error (rstream queue)");
         return 0;
+    }
 
     /*
      * rs_fin will be 1 only if we can read all data up to and including the FIN
@@ -603,9 +613,14 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
      * calling ossl_quic_rstream_available() where it is not necessary as it is
      * more expensive.
      */
-    if (stream->recv_state == QUIC_RSTREAM_STATE_SIZE_KNOWN)
-        if (!ossl_quic_rstream_available(stream->rstream, &rs_avail, &rs_fin))
-            return 0;
+    if (stream->recv_state == QUIC_RSTREAM_STATE_SIZE_KNOWN
+        && !ossl_quic_rstream_available(stream->rstream, &rs_avail, &rs_fin)) {
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_INTERNAL_ERROR,
+                                               frame_type,
+                                               "internal error (rstream available)");
+        return 0;
+    }
 
     if (rs_fin)
         ossl_quic_stream_map_notify_totally_received(&ch->qsm, stream);
@@ -982,12 +997,18 @@ static int depack_do_frame_path_response(PACKET *pkt,
     return 1;
 }
 
-static int depack_do_frame_conn_close(PACKET *pkt, QUIC_CHANNEL *ch)
+static int depack_do_frame_conn_close(PACKET *pkt, QUIC_CHANNEL *ch,
+                                      uint64_t frame_type)
 {
     OSSL_QUIC_FRAME_CONN_CLOSE frame_data;
 
-    if (!ossl_quic_wire_decode_frame_conn_close(pkt, &frame_data))
+    if (!ossl_quic_wire_decode_frame_conn_close(pkt, &frame_data)) {
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_FRAME_ENCODING_ERROR,
+                                               frame_type,
+                                               "decode error");
         return 0;
+    }
 
     ossl_quic_channel_on_remote_conn_close(ch, &frame_data);
     return 1;
@@ -997,8 +1018,14 @@ static int depack_do_frame_handshake_done(PACKET *pkt,
                                           QUIC_CHANNEL *ch,
                                           OSSL_ACKM_RX_PKT *ackm_data)
 {
-    if (!ossl_quic_wire_decode_frame_handshake_done(pkt))
+    if (!ossl_quic_wire_decode_frame_handshake_done(pkt)) {
+        /* This can fail only with an internal error. */
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_INTERNAL_ERROR,
+                                               OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE,
+                                               "internal error (decode frame handshake done)");
         return 0;
+    }
 
     ossl_quic_channel_on_handshake_confirmed(ch);
     return 1;
@@ -1321,7 +1348,7 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
             /* FALLTHRU */
         case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT:
             /* CONN_CLOSE_TRANSPORT frames are valid in all packets */
-            if (!depack_do_frame_conn_close(pkt, ch))
+            if (!depack_do_frame_conn_close(pkt, ch, frame_type))
                 return 0;
             break;
 

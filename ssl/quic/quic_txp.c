@@ -833,7 +833,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
            && pkt[QUIC_ENC_LEVEL_HANDSHAKE].h.bytes_appended > 0);
 
     /* Flush & Cleanup */
-    res = TX_PACKETISER_RES_NO_PKT;
+    res = pkts_done > 0 ? TX_PACKETISER_RES_SENT_PKT : TX_PACKETISER_RES_NO_PKT;
 out:
     ossl_qtx_finish_dgram(txp->args.qtx);
 
@@ -842,11 +842,7 @@ out:
          ++enc_level)
         txp_pkt_cleanup(&pkt[enc_level], txp);
 
-    /*
-     * If we already successfully did at least one, make sure we report this via
-     * the return code.
-     */
-    return pkts_done > 0 ? TX_PACKETISER_RES_SENT_PKT : res;
+    return res;
 }
 
 static const struct archetype_data archetypes[QUIC_ENC_LEVEL_NUM][TX_PACKETISER_ARCHETYPE_NUM] = {
