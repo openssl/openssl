@@ -851,6 +851,8 @@ void ossl_quic_conn_set0_net_rbio(SSL *s, BIO *net_rbio)
         } else {
             ctx.qc->can_poll_net_rbio = 1;
         }
+
+        BIO_set_nbio(net_rbio, 1); /* best effort autoconfig */
     }
 }
 
@@ -895,6 +897,8 @@ void ossl_quic_conn_set0_net_wbio(SSL *s, BIO *net_wbio)
             ossl_quic_channel_set_peer_addr(ctx.qc->ch,
                                             &ctx.qc->init_peer_addr);
         }
+
+        BIO_set_nbio(net_wbio, 1); /* best effort autoconfig */
     }
 }
 
