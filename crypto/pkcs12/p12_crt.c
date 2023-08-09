@@ -81,7 +81,7 @@ PKCS12 *PKCS12_create_ex2(const char *pass, const char *name, EVP_PKEY *pkey,
             pkeyid = X509_keyid_get0(cert, &pkeyidlen);
         }
 
-        bag = pkcs12_add_cert_bag(&bags, cert, name, namelen, pkeyid, keyidlen);
+        bag = pkcs12_add_cert_bag(&bags, cert, name, namelen, pkeyid, pkeyidlen);
         if (cb != NULL) {
             cbret = cb(bag, cbarg);
             if (cbret  == -1) {
