@@ -117,7 +117,7 @@ int ossl_quic_provide_initial_secret(OSSL_LIB_CTX *libctx,
                                  sizeof(quic_client_in_label),
                                  NULL, 0,
                                  client_initial_secret,
-                                 sizeof(client_initial_secret), 0))
+                                 sizeof(client_initial_secret), 1))
         goto err;
 
     /* Derive "server in" secret. */
@@ -130,7 +130,7 @@ int ossl_quic_provide_initial_secret(OSSL_LIB_CTX *libctx,
                                  sizeof(quic_server_in_label),
                                  NULL, 0,
                                  server_initial_secret,
-                                 sizeof(server_initial_secret), 0))
+                                 sizeof(server_initial_secret), 1))
         goto err;
 
     /* Setup RX EL. Initial encryption always uses AES-128-GCM. */
