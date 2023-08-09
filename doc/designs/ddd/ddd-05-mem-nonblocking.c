@@ -31,7 +31,11 @@ SSL_CTX *create_ssl_ctx(void)
 {
     SSL_CTX *ctx;
 
+#ifdef USE_QUIC
+    ctx = SSL_CTX_new(QUIC_client_method());
+#else
     ctx = SSL_CTX_new(TLS_client_method());
+#endif
     if (ctx == NULL)
         return NULL;
 
@@ -71,7 +75,11 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *bare_hostname)
 
     SSL_set_connect_state(ssl); /* cannot fail */
 
+#ifdef USE_QUIC
+    if (BIO_new_dgram_pair(&internal_bio, 0, &net_bio, 0) <= 0) {
+#else
     if (BIO_new_bio_pair(&internal_bio, 0, &net_bio, 0) <= 0) {
+#endif
         SSL_free(ssl);
         free(conn);
         return NULL;
@@ -168,7 +176,11 @@ int rx(APP_CONN *conn, void *buf, int buf_len)
 
 /*
  * Called to get data which has been enqueued for transmission to the network
- * by OpenSSL.
+ * by OpenSSL. For QUIC, this always outputs a single frame.
+ *
+ * IMPORTANT (QUIC): If buf_len is inadequate to hold the frame, it is truncated
+ * (similar to read(2)). A buffer size of at least 1472 must be used by default
+ * to guarantee this does not occur.
  */
 int read_net_tx(APP_CONN *conn, void *buf, int buf_len)
 {
@@ -177,6 +189,9 @@ int read_net_tx(APP_CONN *conn, void *buf, int buf_len)
 
 /*
  * Called to feed data which has been received from the network to OpenSSL.
+ *
+ * QUIC: buf must contain the entirety of a single frame. It will be consumed
+ * entirely (return value == buf_len) or not at all.
  */
 int write_net_rx(APP_CONN *conn, const void *buf, int buf_len)
 {
@@ -215,7 +230,11 @@ size_t net_tx_avail(APP_CONN *conn)
  */
 int get_conn_pending_tx(APP_CONN *conn)
 {
+#ifdef USE_QUIC
+    return POLLIN | POLLOUT | POLLERR;
+#else
     return (conn->tx_need_rx ? POLLIN : 0) | POLLOUT | POLLERR;
+#endif
 }
 
 int get_conn_pending_rx(APP_CONN *conn)
@@ -259,7 +278,7 @@ void teardown_ctx(SSL_CTX *ctx)
 static int pump(APP_CONN *conn, int fd, int events, int timeout)
 {
     int l, l2;
-    char buf[2048];
+    char buf[2048]; /* QUIC: would need to be changed if < 1472 */
     size_t wspace;
     struct pollfd pfd = {0};
 
@@ -350,7 +369,11 @@ int main(int argc, char **argv)
 
     signal(SIGPIPE, SIG_IGN);
 
+#ifdef USE_QUIC
+    fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+#else
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+#endif
     if (fd < 0) {
         fprintf(stderr, "cannot create socket\n");
         goto fail;
