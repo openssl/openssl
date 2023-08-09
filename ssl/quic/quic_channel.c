@@ -584,13 +584,26 @@ int ossl_quic_channel_set_mutator(QUIC_CHANNEL *ch,
 
 int ossl_quic_channel_get_peer_addr(QUIC_CHANNEL *ch, BIO_ADDR *peer_addr)
 {
+    if (!ch->addressed_mode)
+        return 0;
+
     *peer_addr = ch->cur_peer_addr;
     return 1;
 }
 
 int ossl_quic_channel_set_peer_addr(QUIC_CHANNEL *ch, const BIO_ADDR *peer_addr)
 {
-    ch->cur_peer_addr = *peer_addr;
+    if (ch->state != QUIC_CHANNEL_STATE_IDLE)
+        return 0;
+
+    if (peer_addr == NULL || BIO_ADDR_family(peer_addr) == AF_UNSPEC) {
+        BIO_ADDR_clear(&ch->cur_peer_addr);
+        ch->addressed_mode = 0;
+        return 1;
+    }
+
+    ch->cur_peer_addr   = *peer_addr;
+    ch->addressed_mode  = 1;
     return 1;
 }
 

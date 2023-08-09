@@ -555,8 +555,8 @@ int ossl_quic_tx_packetiser_set_peer(OSSL_QUIC_TX_PACKETISER *txp,
                                      const BIO_ADDR *peer)
 {
     if (peer == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
+        BIO_ADDR_clear(&txp->args.peer);
+        return 1;
     }
 
     txp->args.peer = *peer;
