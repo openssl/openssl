@@ -3006,6 +3006,7 @@ void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
     tcause.error_code = error_code;
     tcause.frame_type = frame_type;
     tcause.reason     = reason;
+    tcause.reason_len = strlen(reason);
 
     ch_start_terminating(ch, &tcause, 0);
 }
