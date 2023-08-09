@@ -700,13 +700,6 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
     const unsigned char *alpn;
     unsigned int alpnlen;
 
-    /*
-     * TODO(QUIC): There are various calls here that could fail and ordinarily
-     * would result in an ERR_raise call - but "tick" calls aren't supposed to
-     * fail "loudly" - so its unclear how we will report these errors. The
-     * ERR_raise calls are omitted from this function for now.
-     */
-
     if (qtls->inerror)
         return 0;
 
