@@ -190,6 +190,7 @@ extern "C" {
 
 # define BIO_CTRL_GET_RPOLL_DESCRIPTOR          90
 # define BIO_CTRL_GET_WPOLL_DESCRIPTOR          91
+# define BIO_CTRL_DGRAM_DETECT_PEER_ADDR        92
 
 # define BIO_DGRAM_CAP_NONE                 0U
 # define BIO_DGRAM_CAP_HANDLES_SRC_ADDR     (1U << 0)
@@ -639,6 +640,8 @@ int BIO_ctrl_reset_read_request(BIO *b);
          (int)BIO_ctrl(b, BIO_CTRL_DGRAM_GET_PEER, 0, (char *)(peer))
 # define BIO_dgram_set_peer(b,peer) \
          (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, (char *)(peer))
+# define BIO_dgram_detect_peer_addr(b,peer) \
+         (int)BIO_ctrl(b, BIO_CTRL_DGRAM_DETECT_PEER_ADDR, 0, (char *)(peer))
 # define BIO_dgram_get_mtu_overhead(b) \
          (unsigned int)BIO_ctrl((b), BIO_CTRL_DGRAM_GET_MTU_OVERHEAD, 0, NULL)
 # define BIO_dgram_get_local_addr_cap(b) \

@@ -571,6 +571,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         break;
     case BIO_CTRL_DGRAM_GET_PEER:
+    case BIO_CTRL_DGRAM_DETECT_PEER_ADDR:
         if (data->state != BIO_CONN_S_OK)
             conn_state(b, data); /* best effort */
 
