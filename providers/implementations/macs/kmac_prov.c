@@ -535,6 +535,9 @@ static int bytepad(unsigned char *out, size_t *out_len,
                    const unsigned char *in1, size_t in1_len,
                    const unsigned char *in2, size_t in2_len, size_t w)
 {
+    if (w == 0)
+        return 0;
+
     int len;
     unsigned char *p = out;
     int sz = w;
