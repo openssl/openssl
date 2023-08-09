@@ -20,7 +20,11 @@ SSL_CTX *create_ssl_ctx(void)
 {
     SSL_CTX *ctx;
 
+#ifdef USE_QUIC
+    ctx = SSL_CTX_new(QUIC_client_method());
+#else
     ctx = SSL_CTX_new(TLS_client_method());
+#endif
     if (ctx == NULL)
         return NULL;
 
