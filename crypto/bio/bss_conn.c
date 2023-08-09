@@ -610,6 +610,10 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
             data->connect_mode |= BIO_SOCK_NONBLOCK;
         else
             data->connect_mode &= ~BIO_SOCK_NONBLOCK;
+
+        if (data->dgram_bio != NULL)
+            ret = BIO_set_nbio(data->dgram_bio, num);
+
         break;
 #if defined(TCP_FASTOPEN) && !defined(OPENSSL_NO_TFO)
     case BIO_C_SET_TFO:
