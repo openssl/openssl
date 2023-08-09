@@ -722,6 +722,10 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_SET_PEER:
         BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         break;
+    case BIO_C_SET_NBIO:
+        if (!BIO_socket_nbio(b->num, num != 0))
+            ret = 0;
+        break;
     case BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT:
         data->next_timeout = ossl_time_from_timeval(*(struct timeval *)ptr);
         break;
