@@ -121,11 +121,20 @@ void teardown_ctx(SSL_CTX *ctx)
  */
 int main(int argc, char **argv)
 {
-    const char msg[] = "GET / HTTP/1.0\r\nHost: www.openssl.org\r\n\r\n";
+    static char msg[384], host_port[300];
     SSL_CTX *ctx = NULL;
     BIO *b = NULL;
     char buf[2048];
     int l, res = 1;
+
+    if (argc < 3) {
+        fprintf(stderr, "usage: %s host port\n", argv[0]);
+        goto fail;
+    }
+
+    snprintf(host_port, sizeof(host_port), "%s:%s\n", argv[1], argv[2]);
+    snprintf(msg, sizeof(msg),
+             "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {
@@ -133,7 +142,7 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    b = new_conn(ctx, "www.openssl.org:443");
+    b = new_conn(ctx, host_port);
     if (b == NULL) {
         fprintf(stderr, "could not create conn\n");
         goto fail;

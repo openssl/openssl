@@ -223,14 +223,22 @@ void teardown_ctx(SSL_CTX *ctx)
 int main(int argc, char **argv)
 {
     int rc, fd = -1, res = 1;
-    const char tx_msg[] = "GET / HTTP/1.0\r\nHost: www.openssl.org\r\n\r\n";
+    static char tx_msg[300];
     const char *tx_p = tx_msg;
     char rx_buf[2048];
     int l, tx_len = sizeof(tx_msg)-1;
     int timeout = 2000 /* ms */;
     APP_CONN *conn = NULL;
     struct addrinfo hints = {0}, *result = NULL;
-    SSL_CTX *ctx;
+    SSL_CTX *ctx = NULL;
+
+    if (argc < 3) {
+        fprintf(stderr, "usage: %s host port\n", argv[0]);
+        goto fail;
+    }
+
+    snprintf(tx_msg, sizeof(tx_msg),
+             "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {
@@ -241,7 +249,7 @@ int main(int argc, char **argv)
     hints.ai_family     = AF_INET;
     hints.ai_socktype   = SOCK_STREAM;
     hints.ai_flags      = AI_PASSIVE;
-    rc = getaddrinfo("www.openssl.org", "443", &hints, &result);
+    rc = getaddrinfo(argv[1], argv[2], &hints, &result);
     if (rc < 0) {
         fprintf(stderr, "cannot resolve\n");
         goto fail;
@@ -267,7 +275,7 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    conn = new_conn(ctx, fd, "www.openssl.org");
+    conn = new_conn(ctx, fd, argv[1]);
     if (conn == NULL) {
         fprintf(stderr, "cannot establish connection\n");
         goto fail;

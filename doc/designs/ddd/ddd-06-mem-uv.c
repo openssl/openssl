@@ -547,10 +547,11 @@ static void post_write_get(APP_CONN *conn, int status, void *arg)
     app_read_start(conn, post_read, NULL);
 }
 
+char tx_msg[300];
+
 static void post_connect(APP_CONN *conn, int status, void *arg)
 {
     int wr;
-    const char tx_msg[] = "GET / HTTP/1.0\r\nHost: www.openssl.org\r\n\r\n";
 
     if (status < 0) {
         fprintf(stderr, "failed to connect: %d\n", status);
@@ -568,9 +569,17 @@ static void post_connect(APP_CONN *conn, int status, void *arg)
 int main(int argc, char **argv)
 {
     int rc = 1;
-    SSL_CTX *ctx;
+    SSL_CTX *ctx = NULL;
     APP_CONN *conn = NULL;
     struct addrinfo hints = {0}, *result = NULL;
+
+    if (argc < 3) {
+        fprintf(stderr, "usage: %s host port\n", argv[0]);
+        goto fail;
+    }
+
+    snprintf(tx_msg, sizeof(tx_msg),
+             "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (!ctx)
@@ -579,13 +588,13 @@ int main(int argc, char **argv)
     hints.ai_family     = AF_INET;
     hints.ai_socktype   = SOCK_STREAM;
     hints.ai_flags      = AI_PASSIVE;
-    rc = getaddrinfo("www.openssl.org", "443", &hints, &result);
+    rc = getaddrinfo(argv[1], argv[2], &hints, &result);
     if (rc < 0) {
         fprintf(stderr, "cannot resolve\n");
         goto fail;
     }
 
-    conn = new_conn(ctx, "www.openssl.org", result->ai_addr, result->ai_addrlen, post_connect, NULL);
+    conn = new_conn(ctx, argv[1], result->ai_addr, result->ai_addrlen, post_connect, NULL);
     if (!conn)
         goto fail;
 
