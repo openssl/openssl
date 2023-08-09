@@ -43,7 +43,7 @@
 
 #define DEFAULT_KEY_LENGTH 2048
 #define MIN_KEY_LENGTH     512
-#define DEFAULT_DAYS       30 /* default cert validity period in days */
+#define DEFAULT_DAYS       30 /* default certificate validity period in days */
 #define UNSET_DAYS         -2 /* -1 may be used for testing expiration checks */
 #define EXT_COPY_UNSET     -1
 
@@ -87,7 +87,7 @@ typedef enum OPTION_choice {
     OPT_VERIFY, OPT_NOENC, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
     OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT,
     OPT_X509, OPT_X509V1, OPT_CA, OPT_CAKEY,
-    OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL,
+    OPT_MULTIVALUE_RDN, OPT_NOT_BEFORE, OPT_NOT_AFTER, OPT_DAYS, OPT_SET_SERIAL,
     OPT_COPY_EXTENSIONS, OPT_EXTENSIONS, OPT_REQEXTS, OPT_ADDEXT,
     OPT_PRECERT, OPT_MD,
     OPT_SECTION, OPT_QUIET,
@@ -127,7 +127,11 @@ const OPTIONS req_options[] = {
      "Print the subject of the output request or cert"},
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
      "Deprecated; multi-valued RDNs support is always on."},
-    {"days", OPT_DAYS, 'p', "Number of days cert is valid for"},
+    {"not_before", OPT_NOT_BEFORE, 's',
+     "[CC]YYMMDDHHMMSSZ value for notBefore certificate field"},
+    {"not_after", OPT_NOT_AFTER, 's',
+     "[CC]YYMMDDHHMMSSZ value for notAfter certificate field, overrides -days"},
+    {"days", OPT_DAYS, 'p', "Number of days certificate is valid for"},
     {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
     {"copy_extensions", OPT_COPY_EXTENSIONS, 's',
      "copy extensions from request when using -x509"},
@@ -259,6 +263,7 @@ int req_main(int argc, char **argv)
     char *template = default_config_file, *keyout = NULL;
     const char *keyalg = NULL;
     OPTION_CHOICE o;
+    char *not_before = NULL, *not_after = NULL;
     int days = UNSET_DAYS;
     int ret = 1, gen_x509 = 0, i = 0, newreq = 0, verbose = 0, progress = 1;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyform = FORMAT_UNDEF;
@@ -423,9 +428,15 @@ int req_main(int argc, char **argv)
         case OPT_CAKEY:
             CAkeyfile = opt_arg();
             break;
+        case OPT_NOT_BEFORE:
+            not_before = opt_arg();
+            break;
+        case OPT_NOT_AFTER:
+            not_after = opt_arg();
+            break;
         case OPT_DAYS:
             days = atoi(opt_arg());
-            if (days < -1) {
+            if (days <= UNSET_DAYS) {
                 BIO_printf(bio_err, "%s: -days parameter arg must be >= -1\n",
                            prog);
                 goto end;
@@ -494,9 +505,13 @@ int req_main(int argc, char **argv)
 
     if (!gen_x509) {
         if (days != UNSET_DAYS)
-            BIO_printf(bio_err, "Ignoring -days without -x509; not generating a certificate\n");
+            BIO_printf(bio_err, "Warning: Ignoring -days without -x509; not generating a certificate\n");
+        if (not_before != NULL)
+            BIO_printf(bio_err, "Warning: Ignoring -not_before without -x509; not generating a certificate\n");
+        if (not_after != NULL)
+            BIO_printf(bio_err, "Warning: Ignoring -not_after without -x509; not generating a certificate\n");
         if (ext_copy == EXT_COPY_NONE)
-            BIO_printf(bio_err, "Ignoring -copy_extensions 'none' when -x509 is not given\n");
+            BIO_printf(bio_err, "Warning: Ignoring -copy_extensions 'none' when -x509 is not given\n");
     }
     if (infile == NULL) {
         if (gen_x509)
@@ -802,10 +817,11 @@ int req_main(int argc, char **argv)
 
             if (!X509_set_issuer_name(new_x509, issuer))
                 goto end;
-            if (days == UNSET_DAYS) {
+            if (days == UNSET_DAYS)
                 days = DEFAULT_DAYS;
-            }
-            if (!set_cert_times(new_x509, NULL, NULL, days))
+            else if (not_after != NULL)
+                BIO_printf(bio_err,"Warning: -not_after option overriding -days option\n");
+            if (!set_cert_times(new_x509, not_before, not_after, days, 1))
                 goto end;
             if (!X509_set_subject_name(new_x509, n_subj))
                 goto end;

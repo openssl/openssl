@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 108;
+plan tests => 109;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -607,3 +607,15 @@ ok(run(app(["openssl", "req", "-x509", "-new", "-days", "365",
 # Verify cert
 ok(run(app(["openssl", "x509", "-in", "testreq-cert.pem",
             "-noout", "-text"])), "cert verification");
+
+# Generate cert with explicit start and end dates
+my $today = strftime("%Y-%m-%d", localtime);
+my $cert = "self-signed_explicit_date.pem";
+ok(run(app(["openssl", "req", "-x509", "-new", "-text",
+            "-config", srctop_file('test', 'test.cnf'),
+            "-key", srctop_file("test", "testrsa.pem"),
+            "-not_before", "today",
+            "-not_after", "today",
+            "-out", $cert]))
+&& get_not_before_date($cert) eq $today
+&& get_not_after_date($cert) eq $today, "explicit start and end dates");

@@ -29,8 +29,8 @@
 
 #undef POSTFIX
 #define POSTFIX ".srl"
-#define DEFAULT_DAYS    30 /* default cert validity period in days */
-#define UNSET_DAYS      -2 /* -1 is used for testing expiration checks */
+#define DEFAULT_DAYS       30 /* default certificate validity period in days */
+#define UNSET_DAYS         -2 /* -1 may be used for testing expiration checks */
 #define EXT_COPY_UNSET     -1
 
 static int callb(int ok, X509_STORE_CTX *ctx);
@@ -54,6 +54,7 @@ typedef enum OPTION_choice {
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
     OPT_SUBJECT_HASH_OLD, OPT_ISSUER_HASH_OLD, OPT_COPY_EXTENSIONS,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
+    OPT_NOT_BEFORE, OPT_NOT_AFTER,
     OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT
 } OPTION_CHOICE;
 
@@ -135,6 +136,10 @@ const OPTIONS x509_options[] = {
      "Serial number to use, overrides -CAserial"},
     {"next_serial", OPT_NEXT_SERIAL, '-',
      "Increment current certificate serial number"},
+    {"not_before", OPT_NOT_BEFORE, 's',
+     "[CC]YYMMDDHHMMSSZ value for notBefore certificate field"},
+    {"not_after", OPT_NOT_AFTER, 's',
+     "[CC]YYMMDDHHMMSSZ value for notAfter certificate field, overrides -days"},
     {"days", OPT_DAYS, 'n',
      "Number of days until newly generated certificate expires - default 30"},
     {"preserve_dates", OPT_PRESERVE_DATES, '-',
@@ -279,7 +284,7 @@ int x509_main(int argc, char **argv)
     char *ext_names = NULL;
     char *extsect = NULL, *extfile = NULL, *passin = NULL, *passinarg = NULL;
     char *infile = NULL, *outfile = NULL, *privkeyfile = NULL, *CAfile = NULL;
-    char *prog;
+    char *prog, *not_before = NULL, *not_after = NULL;
     int days = UNSET_DAYS; /* not explicitly set */
     int x509toreq = 0, modulus = 0, print_pubkey = 0, pprint = 0;
     int CAformat = FORMAT_UNDEF, CAkeyformat = FORMAT_UNDEF;
@@ -376,9 +381,15 @@ int x509_main(int argc, char **argv)
             if (!vfyopts || !sk_OPENSSL_STRING_push(vfyopts, opt_arg()))
                 goto opthelp;
             break;
+        case OPT_NOT_BEFORE:
+            not_before = opt_arg();
+            break;
+        case OPT_NOT_AFTER:
+            not_after = opt_arg();
+            break;
         case OPT_DAYS:
             days = atoi(opt_arg());
-            if (days < -1) {
+            if (days <= UNSET_DAYS) {
                 BIO_printf(bio_err, "%s: -days parameter arg must be >= -1\n",
                            prog);
                 goto err;
@@ -610,12 +621,22 @@ int x509_main(int argc, char **argv)
     if (!opt_check_md(digest))
         goto opthelp;
 
+    if (preserve_dates && not_before != NULL) {
+        BIO_printf(bio_err, "Cannot use -preserve_dates with -not_before option\n");
+        goto err;
+    }
+    if (preserve_dates && not_after != NULL) {
+        BIO_printf(bio_err, "Cannot use -preserve_dates with -not_after option\n");
+        goto err;
+    }
     if (preserve_dates && days != UNSET_DAYS) {
         BIO_printf(bio_err, "Cannot use -preserve_dates with -days option\n");
         goto err;
     }
     if (days == UNSET_DAYS)
         days = DEFAULT_DAYS;
+    else if (not_after != NULL)
+        BIO_printf(bio_err, "Warning: -not_after option overriding -days option\n");
 
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
@@ -837,7 +858,7 @@ int x509_main(int argc, char **argv)
         goto end;
 
     if (reqfile || newcert || privkey != NULL || CAfile != NULL) {
-        if (!preserve_dates && !set_cert_times(x, NULL, NULL, days))
+        if (!preserve_dates && !set_cert_times(x, not_before, not_after, days, 1))
             goto end;
         if (fissu != NULL) {
             if (!X509_set_issuer_name(x, fissu))
