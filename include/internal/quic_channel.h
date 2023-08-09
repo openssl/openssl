@@ -304,6 +304,12 @@ int ossl_quic_channel_set_net_rbio(QUIC_CHANNEL *ch, BIO *net_rbio);
 int ossl_quic_channel_set_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio);
 
 /*
+ * Re-poll the network BIOs already set to determine if their support
+ * for polling has changed.
+ */
+int ossl_quic_channel_update_poll_descriptors(QUIC_CHANNEL *ch);
+
+/*
  * Returns an existing stream by stream ID. Returns NULL if the stream does not
  * exist.
  */
