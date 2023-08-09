@@ -21,7 +21,11 @@ SSL_CTX *create_ssl_ctx(void)
 {
     SSL_CTX *ctx;
 
+#ifdef USE_QUIC
+    ctx = SSL_CTX_new(QUIC_client_method());
+#else
     ctx = SSL_CTX_new(TLS_client_method());
+#endif
     if (ctx == NULL)
         return NULL;
 
@@ -152,7 +156,11 @@ int main(int argc, char **argv)
 
     signal(SIGPIPE, SIG_IGN);
 
+#ifdef USE_QUIC
+    fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+#else
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+#endif
     if (fd < 0) {
         fprintf(stderr, "cannot create socket\n");
         goto fail;
