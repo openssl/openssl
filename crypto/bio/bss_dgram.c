@@ -971,6 +971,13 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         *(int *)ptr = data->local_addr_enabled;
         break;
 
+    case BIO_CTRL_DGRAM_GET_EFFECTIVE_CAPS:
+        ret = (long)(BIO_DGRAM_CAP_HANDLES_DST_ADDR
+                     | BIO_DGRAM_CAP_HANDLES_SRC_ADDR
+                     | BIO_DGRAM_CAP_PROVIDES_DST_ADDR
+                     | BIO_DGRAM_CAP_PROVIDES_SRC_ADDR);
+        break;
+
     case BIO_CTRL_GET_RPOLL_DESCRIPTOR:
     case BIO_CTRL_GET_WPOLL_DESCRIPTOR:
         {
