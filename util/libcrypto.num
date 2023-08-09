@@ -5530,3 +5530,5 @@ OSSL_ERR_STATE_restore                  ?	3_2_0	EXIST::FUNCTION:
 OSSL_ERR_STATE_free                     ?	3_2_0	EXIST::FUNCTION:
 ERR_count_to_mark                       ?	3_2_0	EXIST::FUNCTION:
 OSSL_ERR_STATE_save_to_mark             ?	3_2_0	EXIST::FUNCTION:
+X509_STORE_CTX_set_get_crl              ?	3_2_0	EXIST::FUNCTION:
+X509_STORE_CTX_set_current_reasons      ?	3_2_0	EXIST::FUNCTION:
