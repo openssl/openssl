@@ -535,7 +535,7 @@ int ossl_quic_reset(SSL *s)
     if (!expect_quic(s, &ctx))
         return 0;
 
-    /* Not supported. */
+    ERR_raise(ERR_LIB_SSL, ERR_R_UNSUPPORTED);
     return 0;
 }
 
@@ -1052,8 +1052,10 @@ int ossl_quic_get_rpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
     if (!expect_quic(s, &ctx))
         return 0;
 
-    if (desc == NULL || ctx.qc->net_rbio == NULL)
+    if (desc == NULL || ctx.qc->net_rbio == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
+    }
 
     return BIO_get_rpoll_descriptor(ctx.qc->net_rbio, desc);
 }
@@ -1066,8 +1068,10 @@ int ossl_quic_get_wpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
     if (!expect_quic(s, &ctx))
         return 0;
 
-    if (desc == NULL || ctx.qc->net_wbio == NULL)
+    if (desc == NULL || ctx.qc->net_wbio == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
+    }
 
     return BIO_get_wpoll_descriptor(ctx.qc->net_wbio, desc);
 }
@@ -1708,12 +1712,16 @@ static SSL *quic_conn_stream_new(QCTX *ctx, uint64_t flags, int need_lock)
     }
 
     qs = ossl_quic_channel_new_stream_local(qc->ch, is_uni);
-    if (qs == NULL)
+    if (qs == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
 
     xso = create_xso_from_stream(qc, qs);
-    if (xso == NULL)
+    if (xso == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
 
     qc_touch_default_xso(qc); /* inhibits default XSO */
     if (need_lock)
@@ -2719,6 +2727,7 @@ int ossl_quic_set_incoming_stream_policy(SSL *s, int policy,
         break;
 
     default:
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         ret = 0;
         break;
     }
@@ -3018,9 +3027,11 @@ int ossl_quic_set_write_buffer_size(SSL *ssl, size_t size)
     if (!expect_quic_with_stream_lock(ssl, /*remote_init=*/-1, &ctx))
         return 0;
 
-    if (!ossl_quic_stream_has_send(ctx.xso->stream))
+    if (!ossl_quic_stream_has_send(ctx.xso->stream)) {
         /* Called on a unidirectional receive-only stream - error. */
+        ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         goto out;
+    }
 
     if (!ossl_quic_stream_has_send_buffer(ctx.xso->stream)) {
         /*
@@ -3031,8 +3042,10 @@ int ossl_quic_set_write_buffer_size(SSL *ssl, size_t size)
         goto out;
     }
 
-    if (!ossl_quic_sstream_set_buffer_size(ctx.xso->stream->sstream, size))
+    if (!ossl_quic_sstream_set_buffer_size(ctx.xso->stream->sstream, size)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto out;
+    }
 
     ret = 1;
 
@@ -3088,7 +3101,7 @@ int ossl_quic_key_update(SSL *ssl, int update_type)
         break;
 
     default:
-        /* Unknown type - error. */
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
 

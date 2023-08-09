@@ -110,6 +110,7 @@ static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
     cid->id_len = (unsigned char)len;
 
     if (RAND_bytes_ex(libctx, cid->id, len, len * 8) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_RAND_LIB);
         cid->id_len = 0;
         return 0;
     }
@@ -1264,8 +1265,11 @@ static int ch_on_transport_params(const unsigned char *params,
     if (ch->got_remote_transport_params)
         goto malformed;
 
-    if (!PACKET_buf_init(&pkt, params, params_len))
+    if (!PACKET_buf_init(&pkt, params, params_len)) {
+        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
+                                               "internal error (packet buf init)");
         return 0;
+    }
 
     while (PACKET_remaining(&pkt) > 0) {
         if (!ossl_quic_wire_peek_transport_param(&pkt, &id))
@@ -1447,7 +1451,7 @@ static int ch_on_transport_params(const unsigned char *params,
             if (got_max_ack_delay) {
                 /* must not appear more than once */
                 reason = TP_REASON_DUP("MAX_ACK_DELAY");
-                return 0;
+                goto malformed;
             }
 
             if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
@@ -1467,7 +1471,7 @@ static int ch_on_transport_params(const unsigned char *params,
             if (got_initial_max_streams_bidi) {
                 /* must not appear more than once */
                 reason = TP_REASON_DUP("INITIAL_MAX_STREAMS_BIDI");
-                return 0;
+                goto malformed;
             }
 
             if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
@@ -2202,9 +2206,11 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
             /* Malformed retry packet, ignore. */
             return;
 
-        ch_retry(ch, ch->qrx_pkt->hdr->data,
-                 ch->qrx_pkt->hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN,
-                 &ch->qrx_pkt->hdr->src_conn_id);
+        if (!ch_retry(ch, ch->qrx_pkt->hdr->data,
+                      ch->qrx_pkt->hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN,
+                      &ch->qrx_pkt->hdr->src_conn_id))
+            ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR,
+                                                   0, "handling retry packet");
         break;
 
     case QUIC_PKT_TYPE_0RTT:
@@ -2449,7 +2455,7 @@ static int ch_tx(QUIC_CHANNEL *ch)
          * be transmitted for this reason.
          */
         ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
-                                               "internal error");
+                                               "internal error (txp generate)");
         break; /* Internal failure (e.g.  allocation, assertion) */
     }
 
@@ -2532,8 +2538,10 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
 /* Determines whether we can support a given poll descriptor. */
 static int validate_poll_descriptor(const BIO_POLL_DESCRIPTOR *d)
 {
-    if (d->type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD && d->value.fd < 0)
+    if (d->type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD && d->value.fd < 0) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
+    }
 
     return 1;
 }
@@ -2673,7 +2681,7 @@ static int ch_retry(QUIC_CHANNEL *ch,
      * a SCID field that is identical to the DCID field of its initial packet."
      */
     if (ossl_quic_conn_id_eq(&ch->init_dcid, retry_scid))
-        return 0;
+        return 1;
 
     /* We change to using the SCID in the Retry packet as the DCID. */
     if (!ossl_quic_tx_packetiser_set_cur_dcid(ch->txp, retry_scid))
@@ -2964,14 +2972,14 @@ static void free_frame_data(unsigned char *buf, size_t buf_len, void *arg)
 
 static int ch_enqueue_retire_conn_id(QUIC_CHANNEL *ch, uint64_t seq_num)
 {
-    BUF_MEM *buf_mem;
+    BUF_MEM *buf_mem = NULL;
     WPACKET wpkt;
     size_t l;
 
     chan_remove_reset_token(ch, seq_num);
 
     if ((buf_mem = BUF_MEM_new()) == NULL)
-        return 0;
+        goto err;
 
     if (!WPACKET_init(&wpkt, buf_mem))
         goto err;
