@@ -1453,32 +1453,39 @@ static int create_channel(QUIC_CONNECTION *qc)
 }
 
 /*
- * Creates a channel and configures it with the information we have accumulated
- * via calls made to us from the application prior to starting a handshake
- * attempt.
+ * Configures a channel with the information we have accumulated via calls made
+ * to us from the application prior to starting a handshake attempt.
  */
 QUIC_NEEDS_LOCK
-static int ensure_channel_started(QUIC_CONNECTION *qc)
+static int ensure_channel_started(QCTX *ctx)
 {
+    QUIC_CONNECTION *qc = ctx->qc;
+
     if (!qc->started) {
-        if (!configure_channel(qc)
-            || !ossl_quic_channel_start(qc->ch))
-            goto err;
+        if (!configure_channel(qc)) {
+            QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR,
+                                        "failed to configure channel");
+            return 0;
+        }
+
+        if (!ossl_quic_channel_start(qc->ch)) {
+            QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR,
+                                        "failed to start channel");
+            return 0;
+        }
 
 #if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
         if (qc->is_thread_assisted)
-            if (!ossl_quic_thread_assist_init_start(&qc->thread_assist, qc->ch))
-                goto err;
+            if (!ossl_quic_thread_assist_init_start(&qc->thread_assist, qc->ch)) {
+                QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR,
+                                            "failed to start assist thread");
+                return 0;
+            }
 #endif
     }
 
     qc->started = 1;
     return 1;
-
-err:
-    ossl_quic_channel_free(qc->ch);
-    qc->ch = NULL;
-    return 0;
 }
 
 QUIC_NEEDS_LOCK
@@ -1515,10 +1522,8 @@ static int quic_do_handshake(QCTX *ctx)
      * Start connection process. Note we may come here multiple times in
      * non-blocking mode, which is fine.
      */
-    if (!ensure_channel_started(qc)) {
-        QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
+    if (!ensure_channel_started(qc)) /* raises on failure */
         return -1; /* Non-protocol error */
-    }
 
     if (ossl_quic_channel_is_handshake_complete(qc->ch))
         /* The handshake is now done. */
