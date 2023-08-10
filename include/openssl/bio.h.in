@@ -188,9 +188,9 @@ extern "C" {
  * # define BIO_CTRL_SET_KTLS_TX_ZEROCOPY_SENDFILE 90
  */
 
-# define BIO_CTRL_GET_RPOLL_DESCRIPTOR          90
-# define BIO_CTRL_GET_WPOLL_DESCRIPTOR          91
-# define BIO_CTRL_DGRAM_DETECT_PEER_ADDR        92
+# define BIO_CTRL_GET_RPOLL_DESCRIPTOR          91
+# define BIO_CTRL_GET_WPOLL_DESCRIPTOR          92
+# define BIO_CTRL_DGRAM_DETECT_PEER_ADDR        93
 
 # define BIO_DGRAM_CAP_NONE                 0U
 # define BIO_DGRAM_CAP_HANDLES_SRC_ADDR     (1U << 0)

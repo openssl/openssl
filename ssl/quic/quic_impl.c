@@ -1565,15 +1565,13 @@ static int quic_do_handshake(QCTX *ctx)
     if (!qc->started && !qc->addressing_probe_done) {
         long rcaps = BIO_dgram_get_effective_caps(qc->net_rbio);
         long wcaps = BIO_dgram_get_effective_caps(qc->net_wbio);
-        int can_use_addressed =
-            (wcaps & BIO_DGRAM_CAP_HANDLES_DST_ADDR) != 0
-            && (rcaps & BIO_DGRAM_CAP_PROVIDES_SRC_ADDR) != 0;
 
-        qc->addressed_mode          = can_use_addressed;
-        qc->addressing_probe_done   = 1;
+        qc->addressed_mode_r = ((rcaps & BIO_DGRAM_CAP_PROVIDES_SRC_ADDR) != 0);
+        qc->addressed_mode_w = ((wcaps & BIO_DGRAM_CAP_HANDLES_DST_ADDR) != 0);
+        qc->addressing_probe_done = 1;
     }
 
-    if (!qc->started && qc->addressed_mode
+    if (!qc->started && qc->addressed_mode_w
         && BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC) {
         /*
          * We are trying to connect and are using addressed mode, which means we
@@ -1595,7 +1593,7 @@ static int quic_do_handshake(QCTX *ctx)
     }
 
     if (!qc->started
-        && qc->addressed_mode
+        && qc->addressed_mode_w
         && BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC) {
         /*
          * If we still don't have a peer address in addressed mode, we can't do
