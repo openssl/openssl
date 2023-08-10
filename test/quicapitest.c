@@ -297,7 +297,7 @@ static void strip_line_ends(char *str)
 
 static int compare_with_file(BIO *membio)
 {
-    BIO *file = NULL;
+    BIO *file = NULL, *newfile = NULL;
     char buf1[512], buf2[512];
     char *reffile;
     int ret = 0;
@@ -309,6 +309,19 @@ static int compare_with_file(BIO *membio)
 
     file = BIO_new_file(reffile, "rb");
     if (!TEST_ptr(file))
+        goto err;
+
+    newfile = BIO_new_file("ssltraceref-new.txt", "wb");
+    if (!TEST_ptr(newfile))
+        goto err;
+
+    while (BIO_gets(membio, buf2, sizeof(buf2)) > 0)
+        if (BIO_puts(newfile, buf2) <= 0) {
+            TEST_error("Failed writing new file data");
+            goto err;
+        }
+
+    if (!TEST_int_ge(BIO_seek(membio, 0), 0))
         goto err;
 
     while (BIO_gets(file, buf1, sizeof(buf1)) > 0) {
@@ -340,6 +353,7 @@ static int compare_with_file(BIO *membio)
  err:
     OPENSSL_free(reffile);
     BIO_free(file);
+    BIO_free(newfile);
     return ret;
 }
 
