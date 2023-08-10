@@ -182,7 +182,7 @@ static int chan_add_reset_token(QUIC_CHANNEL *ch, const unsigned char *new,
 
 /*
  * Remove a stateless reset token from the channel
- * If the token isn't know, we just ignore the remove request which is safe.
+ * If the token isn't known, we just ignore the remove request which is safe.
  */
 static void chan_remove_reset_token(QUIC_CHANNEL *ch, uint64_t seq_num)
 {
@@ -192,9 +192,9 @@ static void chan_remove_reset_token(QUIC_CHANNEL *ch, uint64_t seq_num)
      * Because the list is ordered and we only ever remove CIDs in order,
      * this loop should never iterate, but safer to provide the option.
      */
-    for (   srte = ossl_list_stateless_reset_tokens_head(&ch->srt_list_seq);
-            srte != NULL;
-            srte = ossl_list_stateless_reset_tokens_next(srte)) {
+    for (srte = ossl_list_stateless_reset_tokens_head(&ch->srt_list_seq);
+         srte != NULL;
+         srte = ossl_list_stateless_reset_tokens_next(srte)) {
         if (srte->seq_num > seq_num)
             return;
         if (srte->seq_num == seq_num) {
@@ -242,7 +242,7 @@ static int ch_stateless_reset_token_handler(const unsigned char *data,
     if (datalen < QUIC_STATELESS_RESET_TOKEN_LEN + 5 || (0100 & *data) != 0100)
         return 0;
     memset(&srte, 0, sizeof(srte));
-    if (!reset_token_obfuscate(&srte, data - sizeof(srte.token)))
+    if (!reset_token_obfuscate(&srte, data + datalen - sizeof(srte.token)))
         return -1;
     return lh_QUIC_SRT_ELEM_retrieve(ch->srt_hash_tok, &srte) != NULL;
 }
@@ -523,9 +523,9 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     OSSL_ERR_STATE_free(ch->err_state);
 
     /* Free the stateless reset tokens */
-    for (   srte = ossl_list_stateless_reset_tokens_head(&ch->srt_list_seq);
-            srte != NULL;
-            srte = srte_next) {
+    for (srte = ossl_list_stateless_reset_tokens_head(&ch->srt_list_seq);
+         srte != NULL;
+         srte = srte_next) {
         srte_next = ossl_list_stateless_reset_tokens_next(srte);
         ossl_list_stateless_reset_tokens_remove(&ch->srt_list_seq, srte);
         (void)lh_QUIC_SRT_ELEM_delete(ch->srt_hash_tok, srte);

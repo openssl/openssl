@@ -144,7 +144,7 @@ struct quic_channel_st {
     /*
      * The DCID we currently use to talk to the peer and its sequence num.
      *
-     * TODO(QUIC FUTURE) remove the second two, both are contained in
+     * TODO(QUIC FUTURE) consider removing the second two, both are contained in
      * srt_list_seq (defined below).
      *
      * cur_remote_seq_num is same as the sequence number in the last element.
