@@ -114,6 +114,19 @@ preceding that write operation cannot be undone.
 Calling BIO_get_mem_ptr() prior to a BIO_reset() call with
 BIO_FLAGS_NONCLEAR_RST set has the same effect as a write operation.
 
+Calling this function implies claiming ownership of the data pointer in
+the BIO.  Regardless of the state of BIO_set_close(), it is the responsibility of
+the caller to free the returned pointer to prevent leaks
+
+Calling BIO_free on a BIO for which BIO_set_close() with BIO_NOCLOSE has been
+called without first calling BIO_get_mem_ptr(), or
+BIO_set_mem_ptr()  will result in an erro being returned from
+BIO_free, as the underlying BUF_MEM structure would have leaked.
+If you plan to orphan the BUF_MEM structure using BIO_set_close(bio,
+BIO_NOCLOSE), first retrieve the pointer to the BUF_MEM.  The error details are
+raised and available via the ERR api, and it is safe to access the BIO after
+this failure.
+
 =head1 BUGS
 
 There should be an option to set the maximum size of a memory BIO.
