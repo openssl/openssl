@@ -68,6 +68,84 @@ static int test_bio_get_mem(void)
     return ok;
 }
 
+static int test_bio_get_mem_data(void)
+{
+    int ok = 0;
+    BIO *bio = NULL;
+    BUF_MEM *bufmem = NULL;
+    char *buf = NULL;
+    int len = 0;
+
+    bio = BIO_new(BIO_s_mem());
+    if (!TEST_ptr(bio))
+        goto finish;
+    if (!TEST_int_eq(BIO_puts(bio, "Hello World\n"), 12))
+        goto finish;
+    len = BIO_get_mem_data(bio, &buf);
+    if (!TEST_ptr(buf))
+        goto finish;
+    BIO_get_mem_ptr(bio, &bufmem);
+    if (!TEST_ptr(bufmem))
+        goto finish;
+    if (!TEST_int_gt(BIO_set_close(bio, BIO_NOCLOSE), 0))
+        goto finish;
+    BIO_free(bio);
+    bio = NULL;
+    /* bufmem->data should be NULL here from orphaning */
+    if (!TEST_ptr_null(bufmem->data))
+        goto finish;
+    if (!TEST_mem_eq(buf, len, "Hello World\n", 12))
+        goto finish;
+    ok = 1;
+
+ finish:
+    BIO_free(bio);
+    BUF_MEM_free(bufmem);
+    free(buf);
+    return ok;
+}
+
+static int test_bio_get_mem_data_leak_err(void)
+{
+    int ok = 0;
+    BIO *bio = NULL;
+    char *buf = NULL;
+    int len = 0;
+    BUF_MEM *bufmem = NULL;
+
+    bio = BIO_new(BIO_s_mem());
+    if (!TEST_ptr(bio))
+        goto finish;
+    if (!TEST_int_eq(BIO_puts(bio, "Hello World\n"), 12))
+        goto finish;
+    len = BIO_get_mem_data(bio, &buf);
+    if (!TEST_ptr(buf))
+        goto finish;
+    if (!TEST_int_gt(BIO_set_close(bio, BIO_NOCLOSE), 0))
+        goto finish;
+    /* BIO_free should raise an error here, returning 1 for failure */
+    if (!TEST_int_eq(BIO_free(bio), 0))
+        goto finish;
+    /* Now get the buf pointer and make sure we can free it*/
+    BIO_get_mem_ptr(bio, &bufmem);
+    if (!TEST_ptr(bufmem->data))
+        goto finish;
+    if (!TEST_int_eq(BIO_free(bio), 1))
+        goto finish;
+    if (!TEST_ptr_null(bufmem->data))
+        goto finish;
+    bio = NULL;
+    if (!TEST_mem_eq(buf, len, "Hello World\n", 12))
+        goto finish;
+    ok = 1;
+
+ finish:
+    BIO_free(bio);
+    BUF_MEM_free(bufmem);
+    free(buf);
+    return ok;
+}
+
 static int test_bio_new_mem_buf(void)
 {
     int ok = 0;
@@ -282,6 +360,8 @@ int setup_tests(void)
 {
     ADD_TEST(test_bio_memleak);
     ADD_TEST(test_bio_get_mem);
+    ADD_TEST(test_bio_get_mem_data);
+    ADD_TEST(test_bio_get_mem_data_leak_err);
     ADD_TEST(test_bio_new_mem_buf);
     ADD_TEST(test_bio_rdonly_mem_buf);
     ADD_TEST(test_bio_rdwr_rdonly);
