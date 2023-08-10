@@ -2220,7 +2220,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
     case QUIC_PKT_TYPE_INITIAL:
     case QUIC_PKT_TYPE_HANDSHAKE:
     case QUIC_PKT_TYPE_1RTT:
-        if (ch->qrx_pkt->hdr->type == QUIC_PKT_TYPE_HANDSHAKE)
+        if (ch->is_server && ch->qrx_pkt->hdr->type == QUIC_PKT_TYPE_HANDSHAKE)
             /*
              * We automatically drop INITIAL EL keys when first successfully
              * decrypting a HANDSHAKE packet, as per the RFC.
