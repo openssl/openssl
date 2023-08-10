@@ -75,7 +75,7 @@ Sent Packet
   Destination Conn Id: 0x????????????????
   Source Conn Id: <zero length id>
   Payload length: 1178
-  Token: <zerlo length token>
+  Token: <zero length token>
   Packet Number: 0x00000000
 Sent Datagram
   Length: 1200
@@ -87,7 +87,7 @@ Received Packet
   Destination Conn Id: <zero length id>
   Source Conn Id: 0x????????????????
   Payload length: 115
-  Token: <zerlo length token>
+  Token: <zero length token>
   Packet Number: 0x00000000
 Received Frame: Ack  (without ECN)
     Largest acked: 0
@@ -245,7 +245,7 @@ Sent Packet
   Destination Conn Id: 0x????????????????
   Source Conn Id: <zero length id>
   Payload length: 1178
-  Token: <zerlo length token>
+  Token: <zero length token>
   Packet Number: 0x00000001
 Sent Datagram
   Length: 1200
