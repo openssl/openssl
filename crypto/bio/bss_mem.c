@@ -147,8 +147,9 @@ static int mem_free(BIO *a)
         return 0;
 
     bb = (BIO_BUF_MEM *)a->ptr;
-    if (!mem_buf_free(a))
+    if (!mem_buf_free(a)) {
         return 0;
+    }
     OPENSSL_free(bb->readp);
     OPENSSL_free(bb);
     return 1;
@@ -159,13 +160,30 @@ static int mem_buf_free(BIO *a)
     if (a == NULL)
         return 0;
 
-    if (a->shutdown && a->init && a->ptr != NULL) {
+    if (a->init && a->ptr != NULL) {
         BIO_BUF_MEM *bb = (BIO_BUF_MEM *)a->ptr;
         BUF_MEM *b = bb->buf;
 
-        if (a->flags & BIO_FLAGS_MEM_RDONLY)
+        if (!a->shutdown) {
+            /* BIO_NOCLOSE was set, so we should orpan the BUF_MEM */
+            if (!(a->flags & BIO_FLAGS_MEMBUF_FETCH)) {
+                /* If the caller didn't ever fetch or set the bufmem ptr
+                 * it will leak, raise that as an error to the caler
+                 */
+                ERR_raise(ERR_LIB_BIO, ERR_R_FETCH_FAILED);
+                return 0;
+            }
+        }
+
+        if (a->flags & BIO_FLAGS_DATA_FETCH) {
+            /* if someone grabbed the data ptr, we always orphan it */
             b->data = NULL;
-        BUF_MEM_free(b);
+        }
+        if (a->shutdown) {
+            if (a->flags & BIO_FLAGS_MEM_RDONLY)
+                b->data = NULL;
+            BUF_MEM_free(b);
+        }
     }
     return 1;
 }
@@ -296,6 +314,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
         if (ptr != NULL) {
             pptr = (char **)ptr;
             *pptr = (char *)(bm->data);
+            b->flags |= BIO_FLAGS_DATA_FETCH;
         }
         break;
     case BIO_C_SET_BUF_MEM:
@@ -303,6 +322,10 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->shutdown = (int)num;
         bbm->buf = ptr;
         *bbm->readp = *bbm->buf;
+        if (!b->shutdown)
+            b->flags |= BIO_FLAGS_MEMBUF_FETCH;
+        else
+            b->flags &= ~BIO_FLAGS_MEMBUF_FETCH;
         break;
     case BIO_C_GET_BUF_MEM_PTR:
         if (ptr != NULL) {
@@ -311,6 +334,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
             bm = bbm->buf;
             pptr = (char **)ptr;
             *pptr = (char *)bm;
+            b->flags |= BIO_FLAGS_MEMBUF_FETCH;
         }
         break;
     case BIO_CTRL_GET_CLOSE:

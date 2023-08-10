@@ -208,6 +208,8 @@ extern "C" {
 # define BIO_FLAGS_MEM_RDONLY    0x200
 # define BIO_FLAGS_NONCLEAR_RST  0x400
 # define BIO_FLAGS_IN_EOF        0x800
+# define BIO_FLAGS_MEMBUF_FETCH  0x8000
+# define BIO_FLAGS_DATA_FETCH    0x10000
 
 /* the BIO FLAGS values 0x1000 to 0x4000 are reserved for internal KTLS flags */
 
