@@ -140,15 +140,22 @@ int BIO_free(BIO *a)
 
     if (HAS_CALLBACK(a)) {
         ret = (int)bio_call_callback(a, BIO_CB_FREE, NULL, 0, 0, 0L, 1L, NULL);
-        if (ret <= 0)
+        if (ret <= 0) {
+            CRYPTO_UP_REF(&a->references, &ret, a->lock);
             return 0;
+        }
     }
 
-    if ((a->method != NULL) && (a->method->destroy != NULL))
-        a->method->destroy(a);
-
+    if ((a->method != NULL) && (a->method->destroy != NULL)) {
+        ret = a->method->destroy(a);
+        if (!ret) {
+		/* restore ref count */
+                CRYPTO_UP_REF(&a->references, &ret, a->lock);
+                return 0;
+	    }
+    }
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, a, &a->ex_data);
-
+ 
     CRYPTO_THREAD_lock_free(a->lock);
 
     OPENSSL_free(a);
