@@ -199,7 +199,8 @@ struct quic_conn_st {
     unsigned int                    addressing_probe_done   : 1;
 
     /* Are we using addressed mode (BIO_sendmmsg with non-NULL peer)? */
-    unsigned int                    addressed_mode          : 1;
+    unsigned int                    addressed_mode_w        : 1;
+    unsigned int                    addressed_mode_r        : 1;
 
     /* Default stream type. Defaults to SSL_DEFAULT_STREAM_MODE_AUTO_BIDI. */
     uint32_t                        default_stream_mode;
