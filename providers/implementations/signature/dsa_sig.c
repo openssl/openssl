@@ -172,8 +172,8 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
             && ossl_DER_w_algorithmIdentifier_DSA_with_MD(&pkt, -1, ctx->dsa,
                                                           md_nid)
             && WPACKET_finish(&pkt)) {
-            WPACKET_get_total_written(&pkt, &ctx->aid_len);
-            ctx->aid = WPACKET_get_curr(&pkt);
+            if(WPACKET_get_total_written(&pkt, &ctx->aid_len))
+                ctx->aid = WPACKET_get_curr(&pkt);
         }
         WPACKET_cleanup(&pkt);
 
