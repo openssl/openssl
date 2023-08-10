@@ -68,7 +68,7 @@ static void put_conn_id(BIO *bio, QUIC_CONN_ID *id)
 static void put_token(BIO *bio, const uint8_t *token, size_t token_len)
 {
     if (token_len == 0)
-        BIO_puts(bio, "<zerlo length token>");
+        BIO_puts(bio, "<zero length token>");
     else
         put_data(bio, token, token_len);
 }
