@@ -4747,8 +4747,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
             } else {
                 int pad;
 
-                if (RAND_bytes(out, 16) > 0)
-                {
+                if (RAND_bytes(out, 16) > 0) {
                     len += 16;
                     aad[11] = (unsigned char)(len >> 8);
                     aad[12] = (unsigned char)(len);
