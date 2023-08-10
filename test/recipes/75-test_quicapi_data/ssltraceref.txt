@@ -233,6 +233,22 @@ YeeuLO02zToHhnQ6KbPXOrQAqcL1kngO4g+j/ru+4AZThFkdkGnltvk=
 ------------------
         No extensions
 
+Sent Frame: Ack  (without ECN)
+    Largest acked: 0
+    Ack delay (raw) 0
+    Ack range count: 0
+    First ack range: 0
+Sent Frame: Padding
+Sent Packet
+  Packet Type: Initial
+  Version: 0x00000001
+  Destination Conn Id: 0x????????????????
+  Source Conn Id: <zero length id>
+  Payload length: 1178
+  Token: <zerlo length token>
+  Packet Number: 0x00000001
+Sent Datagram
+  Length: 1200
 Received Datagram
   Length: 234
 Received Packet
