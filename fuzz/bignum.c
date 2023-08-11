@@ -66,12 +66,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         ++buf;
     }
     if (BN_bin2bn(buf, l1, b1) != b1)
-        goto err;
+        goto done;
     BN_set_negative(b1, s1);
     if (BN_bin2bn(buf + l1, l2, b2) != b2)
-        goto err;
+        goto done;
     if (BN_bin2bn(buf + l1 + l2, l3, b3) != b3)
-        goto err;
+        goto done;
     BN_set_negative(b3, s3);
 
     /* mod 0 is undefined */
@@ -81,9 +81,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     }
 
     if (!BN_mod_exp(b4, b1, b2, b3, ctx))
-        goto err;
+        goto done;
     if (!BN_mod_exp_simple(b5, b1, b2, b3, ctx))
-        goto err;
+        goto done;
 
     success = BN_cmp(b4, b5) == 0;
     if (!success) {
@@ -100,7 +100,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     }
 
  done:
+#ifndef ERROR_INJECT
     OPENSSL_assert(success);
+#endif
  err:
     BN_free(b1);
     BN_free(b2);
