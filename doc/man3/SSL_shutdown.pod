@@ -269,6 +269,14 @@ SSL_shutdown(), data which was written by the application using SSL_write(), but
 could not yet be transmitted, or which was sent but lost in the network, may not
 be received by the peer.
 
+When using QUIC, calling SSL_shutdown() allows internal network event processing
+to be performed. It is important that this processing is performed regularly,
+whether during connection usage or during shutdown. If an application is not
+using thread assisted mode, an application conducting shutdown should either
+ensure that SSL_shutdown() is called regularly, or alternatively ensure that
+SSL_handle_events() is called regularly. See L<openssl-quic(7)> and
+L<SSL_handle_events(3)> for more information.
+
 =head2 Application Data Drainage Behaviour
 
 When using QUIC, SSL_shutdown() or SSL_shutdown_ex() ordinarily waits until all
