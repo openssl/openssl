@@ -1,0 +1,36 @@
+=pod
+
+=begin comment
+
+NB: Changes to the source code samples in this file should also be reflected in
+demos/guide/quic-multi-stream.c
+
+=end comment
+
+=head1 NAME
+
+ossl-guide-quic-multi-stream
+- OpenSSL Guide: Writing a simple multi-stream QUIC client
+
+=head1 SIMPLE MULTI-STREAM QUIC CLIENT EXAMPLE
+
+CONTENT HERE
+
+
+
+=head1 SEE ALSO
+
+L<ossl-guide-introduction(7)>, L<ossl-guide-libraries-introduction(7)>,
+L<ossl-guide-libssl-introduction(7)> L<ossl-guide-quic-introduction(7)>,
+L<ossl-guide-quic-client-block(7)>
+
+=head1 COPYRIGHT
+
+Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
