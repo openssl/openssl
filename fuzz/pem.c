@@ -31,7 +31,11 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         return 0;
 
     in = BIO_new(BIO_s_mem());
-    OPENSSL_assert((size_t)BIO_write(in, buf + 1, len - 1) == len - 1);
+    if ((size_t)BIO_write(in, buf + 1, len - 1) != len - 1) {
+#ifndef ERROR_INJECT
+        OPENSSL_assert(0);
+#endif
+    }
     if (PEM_read_bio_ex(in, &name, &header, &data, &outlen, buf[0]) == 1) {
 	/* Try to read all the data we get to see if allocated properly. */
         BIO_write(in, name, strlen(name));
