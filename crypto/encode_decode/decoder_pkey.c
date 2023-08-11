@@ -837,11 +837,15 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
 
         if (!CRYPTO_THREAD_write_lock(cache->lock)) {
             ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
-            return NULL;
+            goto err;
         }
         res = lh_DECODER_CACHE_ENTRY_retrieve(cache->hashtable, &cacheent);
         if (res == NULL) {
-            lh_DECODER_CACHE_ENTRY_insert(cache->hashtable, newcache);
+            (void)lh_DECODER_CACHE_ENTRY_insert(cache->hashtable, newcache);
+            if (lh_DECODER_CACHE_ENTRY_error(cache->hashtable)) {
+                ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
+                goto err;
+            }
         } else {
             /*
              * We raced with another thread to construct this and lost. Free
