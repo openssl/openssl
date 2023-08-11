@@ -10,8 +10,8 @@ ossl-guide-quic-introduction
 This page will provide an introduction to some basic QUIC concepts and
 background and how it is used within OpenSSL. It assumes that you have a basic
 understanding of UDP/IP and sockets. It also assumes that you are familiar with
-some OpenSSL and TLS fundamentals (see L<crypto(7)> and
-L<ossl-guide-tls-introduction(7)>).
+some OpenSSL and TLS fundamentals (see L<ossl-guide-libraries-introduction(7)>
+and L<ossl-guide-tls-introduction(7)>).
 
 =head1 WHAT IS QUIC?
 
@@ -120,8 +120,9 @@ concepts in order to write a simple blocking QUIC client.
 
 =head1 SEE ALSO
 
-L<crypto(7)>, L<bio(7)>, L<ossl-guide-tls-introduction(7)>,
-L<ossl-guide-tls-client-block(7)>, L<ossl-guide-quic-client-block(7)>
+L<ossl-guide-introduction(7)>, L<ossl-guide-libraries-introduction(7)>,
+L<ossl-guide-libssl-introduction(7)>, L<ossl-guide-tls-introduction(7)>,
+L<ossl-guide-tls-client-block(7)>, L<ossl-guide-quic-client-block(7)>, L<bio(7)>
 
 =head1 COPYRIGHT
 

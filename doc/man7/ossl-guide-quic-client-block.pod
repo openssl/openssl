@@ -22,8 +22,8 @@ This is for demonstration purposes only.
 
 We assume that you already have OpenSSL installed on your system; that you
 already have some fundamental understanding of OpenSSL concepts, TLS and QUIC
-(see L<crypto(7)>, L<ossl-guide-tls-introduction(7)> and
-L<ossl-guide-quic-introduction(7)>); and that you know how to
+(see L<ossl-guide-libraries-introduction(7)>, L<ossl-guide-tls-introduction(7)>
+and L<ossl-guide-quic-introduction(7)>); and that you know how to
 write and build C code and link it against the libcrypto and libssl libraries
 that are provided by OpenSSL. It also assumes that you have a basic
 understanding of UDP/IP and sockets. The example code that we build in this
@@ -289,7 +289,8 @@ successfully L<SSL_shutdown(3)> will return 1 to indicate success.
 
 =head1 SEE ALSO
 
-L<crypto(7)>, L<ossl-guide-tls-introduction(7)>,
+L<ossl-guide-introduction(7)>, L<ossl-guide-libraries-introduction(7)>,
+L<ossl-guide-libssl-introduction(7)>, L<ossl-guide-tls-introduction(7)>,
 L<ossl-guide-tls-client-block(7)>, L<ossl-guide-quic-introduction(7)>
 
 =head1 COPYRIGHT

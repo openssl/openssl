@@ -36,21 +36,22 @@ L<https://github.com/openssl/openssl/blob/master/demos/guide/tls-client-block.c>
 
 We assume that you already have OpenSSL installed on your system; that you
 already have some fundamental understanding of OpenSSL concepts and TLS (see
-L<crypto(7)> and L<ossl-guide-tls-introduction(7)>); and that you know how to
-write and build C code and link it against the libcrypto and libssl libraries
-that are provided by OpenSSL. It also assumes that you have a basic
-understanding of TCP/IP and sockets.
+L<ossl-guide-libraries-introduction(7)> and L<ossl-guide-tls-introduction(7)>);
+and that you know how to write and build C code and link it against the
+libcrypto and libssl libraries that are provided by OpenSSL. It also assumes
+that you have a basic understanding of TCP/IP and sockets.
 
 =head2 Creating the SSL_CTX and SSL objects
 
 The first step is to create an B<SSL_CTX> object for our client. We use the
 L<SSL_CTX_new(3)> function for this purpose. We could alternatively use
 L<SSL_CTX_new_ex(3)> if we want to associate the B<SSL_CTX> with a particular
-B<OSSL_LIB_CTX> (see L<crypto(7)> to learn about B<OSSL_LIB_CTX>). We pass as an
-argument the return value of the function L<TLS_client_method(3)>. You should
-use this method whenever you are writing a TLS client. This method will
-automatically use TLS version negotiation to select the highest version of the
-protocol that is mutually supported by both the client and the server.
+B<OSSL_LIB_CTX> (see L<ossl-guide-libraries-introduction(7)> to learn about
+B<OSSL_LIB_CTX>). We pass as an argument the return value of the function
+L<TLS_client_method(3)>. You should use this method whenever you are writing a
+TLS client. This method will automatically use TLS version negotiation to select
+the highest version of the protocol that is mutually supported by both the
+client and the server.
 
     /*
      * Create an SSL_CTX which we can use to create SSL objects from. We
@@ -550,7 +551,8 @@ client developed on this page to support QUIC instead of TLS.
 
 =head1 SEE ALSO
 
-L<crypto(7)>, L<ossl-guide-tls-introduction(7)>
+L<ossl-guide-introduction(7)>, L<ossl-guide-libraries-introduction(7)>,
+L<ossl-guide-libssl-introduction(7)>, L<ossl-guide-tls-introduction(7)>
 
 =head1 COPYRIGHT
 
