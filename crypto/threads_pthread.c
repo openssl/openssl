@@ -70,8 +70,6 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 #  if !defined (__TANDEM) && !defined (_SPT_MODEL_)
 #   if !defined(NDEBUG) && !defined(OPENSSL_NO_MUTEX_ERRORCHECK)
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
-#   else
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_NORMAL);
 #   endif
 #  else
     /* The SPT Thread Library does not define MUTEX attributes. */
