@@ -72,10 +72,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         l2 = len - l1;
     }
     if (BN_bin2bn(buf, l1, b1) != b1)
-        goto err;
+        goto done;
     BN_set_negative(b1, s1);
     if (BN_bin2bn(buf + l1, l2, b2) != b2)
-        goto err;
+        goto done;
     BN_set_negative(b2, s2);
 
     /* divide by 0 is an error */
@@ -85,11 +85,11 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     }
 
     if (!BN_div(b3, b4, b1, b2, ctx))
-        goto err;
+        goto done;
     if (!BN_mul(b5, b3, b2, ctx))
-        goto err;
+        goto done;
     if (!BN_add(b5, b5, b4))
-        goto err;
+        goto done;
     if (BN_is_zero(b1))
         success = BN_is_zero(b3) && BN_is_zero(b4);
     else if (BN_is_negative(b1))
@@ -121,7 +121,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     }
 
  done:
+#ifndef ERROR_INJECT
     OPENSSL_assert(success);
+#endif
  err:
     BN_free(b1);
     BN_free(b2);
