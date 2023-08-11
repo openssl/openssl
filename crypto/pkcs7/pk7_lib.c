@@ -367,7 +367,9 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
                          V_ASN1_NULL, NULL))
         return 0;
 
-    if (EVP_PKEY_is_a(pkey, "EC") || EVP_PKEY_is_a(pkey, "DSA"))
+    if (EVP_PKEY_is_a(pkey, "EC")
+            || EVP_PKEY_is_a(pkey, "DSA")
+            || EVP_PKEY_is_a(pkey, "SM2"))
         return pkcs7_ecdsa_or_dsa_sign_verify_setup(p7i, 0);
     if (EVP_PKEY_is_a(pkey, "RSA"))
         return pkcs7_rsa_sign_verify_setup(p7i, 0);
