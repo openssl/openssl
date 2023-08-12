@@ -59,7 +59,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         EVP_PKEY_print_params(bio, pkey, 1, pctx);
 
         pkey2 = EVP_PKEY_dup(pkey);
+#ifndef ERROR_INJECT
         OPENSSL_assert(pkey2 != NULL);
+#endif
         EVP_PKEY_eq(pkey, pkey2);
         EVP_PKEY_free(pkey2);
 
@@ -68,7 +70,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         EVP_PKEY_public_check(ctx);
         EVP_PKEY_private_check(ctx);
         EVP_PKEY_pairwise_check(ctx);
+#ifndef ERROR_INJECT
         OPENSSL_assert(ctx != NULL);
+#endif
         EVP_PKEY_CTX_free(ctx);
         EVP_PKEY_free(pkey);
     }
