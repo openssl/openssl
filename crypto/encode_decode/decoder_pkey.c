@@ -836,6 +836,7 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
         newcache->template = ctx;
 
         if (!CRYPTO_THREAD_write_lock(cache->lock)) {
+            ctx = NULL;
             ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
             goto err;
         }
