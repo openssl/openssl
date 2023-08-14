@@ -9,12 +9,12 @@
 
 /*
  * NB: Changes to this file should also be reflected in
- * doc/man7/ossl-guide-tls-client-block.pod
+ * doc/man7/ossl-guide-quic-multi-stream.pod
  */
 
 #include <string.h>
 
-/* Include the appropriate header file for SOCK_STREAM */
+/* Include the appropriate header file for SOCK_DGRAM */
 #ifdef _WIN32 /* Windows */
 # include <winsock2.h>
 #else /* Linux/Unix */
@@ -26,7 +26,8 @@
 #include <openssl/err.h>
 
 /* Helper function to create a BIO connected to the server */
-static BIO *create_socket_bio(const char *hostname, const char *port)
+static BIO *create_socket_bio(const char *hostname, const char *port,
+                              BIO_ADDR **peer_addr)
 {
     int sock = -1;
     BIO_ADDRINFO *res;
@@ -36,7 +37,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port)
     /*
      * Lookup IP address info for the server.
      */
-    if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, 0, SOCK_STREAM, 0,
+    if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, 0, SOCK_DGRAM, 0,
                        &res))
         return NULL;
 
@@ -52,20 +53,34 @@ static BIO *create_socket_bio(const char *hostname, const char *port)
          * errors on the OpenSSL stack in the event of a failure we use
          * OpenSSL's versions of these functions.
          */
-        sock = BIO_socket(BIO_ADDRINFO_family(ai), SOCK_STREAM, 0, 0);
+        sock = BIO_socket(BIO_ADDRINFO_family(ai), SOCK_DGRAM, 0, 0);
         if (sock == -1)
             continue;
 
         /* Connect the socket to the server's address */
-        if (!BIO_connect(sock, BIO_ADDRINFO_address(ai), BIO_SOCK_NODELAY)) {
+        if (!BIO_connect(sock, BIO_ADDRINFO_address(ai), 0)) {
             BIO_closesocket(sock);
             sock = -1;
             continue;
         }
 
-        /* We have a connected socket so break out of the loop */
+        /* Set to nonblocking mode */
+        if (!BIO_socket_nbio(sock, 1)) {
+            sock = -1;
+            continue;
+        }
+
         break;
     }
+
+    if (sock != -1) {
+        *peer_addr = BIO_ADDR_dup(BIO_ADDRINFO_address(ai));
+        if (*peer_addr == NULL) {
+            BIO_closesocket(sock);
+            return NULL;
+        }
+    }
+
 
     /* Free the address information resources we allocated earlier */
     BIO_ADDRINFO_free(res);
@@ -75,7 +90,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port)
         return NULL;
 
     /* Create a BIO to wrap the socket*/
-    bio = BIO_new(BIO_s_socket());
+    bio = BIO_new(BIO_s_datagram());
     if (bio == NULL)
         BIO_closesocket(sock);
 
@@ -100,27 +115,34 @@ static BIO *create_socket_bio(const char *hostname, const char *port)
 #endif
 
 /*
- * Simple application to send a basic HTTP/1.0 request to a server and
- * print the response on the screen.
+ * Simple application to send basic HTTP/1.0 requests to a server and print the
+ * response on the screen. Note that HTTP/1.0 over QUIC is not a real protocol
+ * and will not be supported by real world servers. This is for demonstration
+ * purposes only.
  */
 int main(void)
 {
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
+    SSL *stream1 = NULL, *stream2 = NULL, *stream3 = NULL;
     BIO *bio = NULL;
     int res = EXIT_FAILURE;
     int ret;
-    const char *request =
-        "GET / HTTP/1.0\r\nConnection: close\r\nHost: "HOSTNAME"\r\n\r\n";
+    unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '1', '.', '0' };
+    const char *request1 =
+        "GET /request1.html HTTP/1.0\r\nConnection: close\r\nHost: "HOSTNAME"\r\n\r\n";
+    const char *request2 =
+        "GET /request2.html HTTP/1.0\r\nConnection: close\r\nHost: "HOSTNAME"\r\n\r\n";
     size_t written, readbytes;
     char buf[160];
+    BIO_ADDR *peer_addr = NULL;
 
     /*
      * Create an SSL_CTX which we can use to create SSL objects from. We
-     * want an SSL_CTX for creating clients so we use TLS_client_method()
-     * here.
+     * want an SSL_CTX for creating clients so we use
+     * OSSL_QUIC_client_method() here.
      */
-    ctx = SSL_CTX_new(TLS_client_method());
+    ctx = SSL_CTX_new(OSSL_QUIC_client_method());
     if (ctx == NULL) {
         printf("Failed to create the SSL_CTX\n");
         goto end;
@@ -139,15 +161,6 @@ int main(void)
         goto end;
     }
 
-    /*
-     * TLSv1.1 or earlier are deprecated by IETF and are generally to be
-     * avoided if possible. We require a minimum TLS version of TLSv1.2.
-     */
-    if (!SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION)) {
-        printf("Failed to set the minimum TLS protocol version\n");
-        goto end;
-    }
-
     /* Create an SSL object to represent the TLS connection */
     ssl = SSL_new(ctx);
     if (ssl == NULL) {
@@ -156,10 +169,19 @@ int main(void)
     }
 
     /*
+     * We will use multiple streams so we will disable the default stream mode.
+     * This is not a requirement for using multiple streams but is recommended.
+     */
+    if (!SSL_set_default_stream_mode(ssl, SSL_DEFAULT_STREAM_MODE_NONE)) {
+        printf("Failed to disable the default stream mode\n");
+        goto end;
+    }
+
+    /*
      * Create the underlying transport socket/BIO and associate it with the
      * connection.
      */
-    bio = create_socket_bio(HOSTNAME, PORT);
+    bio = create_socket_bio(HOSTNAME, PORT, &peer_addr);
     if (bio == NULL) {
         printf("Failed to crete the BIO\n");
         goto end;
@@ -186,9 +208,18 @@ int main(void)
         goto end;
     }
 
-    /* Do the handshake with the server */
-    if (SSL_connect(ssl) < 1) {
-        printf("Failed to connect to the server\n");
+    /* SSL_set_alpn_protos returns 0 for success! */
+    if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn)) != 0) {
+        printf("Failed to set the ALPN for the connection\n");
+        goto end;
+    }
+
+    if (!SSL_set_initial_peer_addr(ssl, peer_addr)) {
+        printf("Failed to set the initial peer address\n");
+        goto end;
+    }
+
+    if ((ret = SSL_connect(ssl)) < 1) {
         /*
          * If the failure is due to a verification error we can get more
          * information about it from SSL_get_verify_result().
@@ -199,17 +230,42 @@ int main(void)
         goto end;
     }
 
-    /* Write an HTTP GET request to the peer */
-    if (!SSL_write_ex(ssl, request, strlen(request), &written)) {
-        printf("Failed to write HTTP request\n");
+    /*
+     * We create two new client initiated streams. The first will be
+     * bi-directional, and the second will be uni-directional.
+     */
+    stream1 = SSL_new_stream(ssl, 0);
+    stream2 = SSL_new_stream(ssl, SSL_STREAM_FLAG_UNI);
+    if (stream1 == NULL || stream2 == NULL) {
+        printf("Failed to create streams\n");
+        goto end;
+    }
+
+    /* Write an HTTP GET request on each of our streams to the peer */
+    if (!SSL_write_ex(stream1, request1, strlen(request1), &written)) {
+        printf("Failed to write HTTP request on stream 1\n");
+        goto end;
+    }
+
+    if (!SSL_write_ex(stream2, request2, strlen(request2), &written)) {
+        printf("Failed to write HTTP request on stream 2\n");
         goto end;
     }
 
     /*
-     * Get up to sizeof(buf) bytes of the response. We keep reading until the
-     * server closes the connection.
+     * In this demo we read all the data from one stream before reading all the
+     * data from the next stream for simplicity. In practice there is no need to
+     * do this. We can interleave IO on the different streams if we wish, or
+     * manage the streams entirely separately on different threads.
      */
-    while (SSL_read_ex(ssl, buf, sizeof(buf), &readbytes)) {
+
+    printf("Stream 1 data:\n");
+    /*
+     * Get up to sizeof(buf) bytes of the response from stream 1 (which is a
+     * bidirectional stream). We keep reading until the server closes the
+     * connection.
+     */
+    while (SSL_read_ex(stream1, buf, sizeof(buf), &readbytes)) {
         /*
         * OpenSSL does not guarantee that the returned data is a string or
         * that it is NUL terminated so we use fwrite() to write the exact
@@ -226,32 +282,63 @@ int main(void)
      * Check whether we finished the while loop above normally or as the
      * result of an error. The 0 argument to SSL_get_error() is the return
      * code we received from the SSL_read_ex() call. It must be 0 in order
-     * to get here. Normal completion is indicated by SSL_ERROR_ZERO_RETURN.
+     * to get here. Normal completion is indicated by SSL_ERROR_ZERO_RETURN. In
+     * QUIC terms this means that the peer has sent FIN on the stream to
+     * indicate that no further data will be sent.
      */
-    if (SSL_get_error(ssl, 0) != SSL_ERROR_ZERO_RETURN) {
+    if (SSL_get_error(stream1, 0) != SSL_ERROR_ZERO_RETURN) {
         /*
          * Some error occurred other than a graceful close down by the
          * peer.
          */
-        printf ("Failed reading remaining data\n");
+        printf ("Failed reading remaining data from stream 1\n");
         goto end;
     }
 
     /*
-     * The peer already shutdown gracefully (we know this because of the
-     * SSL_ERROR_ZERO_RETURN above). We should do the same back.
+     * In our hypothetical HTTP/1.0 over QUIC protocol that we are using we
+     * assume that the server will respond with a server initiated stream
+     * containing the data requested in our uni-directional stream. This doesn't
+     * really make sense to do in a real protocol, but its just for
+     * demonstration purposes.
+     *
+     * We're using blocking mode so this will block until a stream becomes
+     * available. We could override this behaviour if we wanted to by setting
+     * the SSL_ACCEPT_STREAM_NO_BLOCK flag in the second argument below.
      */
-    ret = SSL_shutdown(ssl);
-    if (ret < 1) {
-        /*
-         * ret < 0 indicates an error. ret == 0 would be unexpected here
-         * because that means "we've sent a close_notify and we're waiting
-         * for one back". But we already know we got one from the peer
-         * because of the SSL_ERROR_ZERO_RETURN above.
-         */
-        printf("Error shutting down\n");
+    stream3 = SSL_accept_stream(ssl, 0);
+    if (stream3 == NULL) {
+        printf("Failed to accept a new stream\n");
         goto end;
     }
+
+    printf("Stream 3 data:\n");
+    /*
+     * Read the data from stream 3 like we did for stream 1 above. Note that
+     * stream 2 was uni-directional so there is no data to be read from that
+     * one.
+     */
+    while (SSL_read_ex(stream3, buf, sizeof(buf), &readbytes))
+        fwrite(buf, 1, readbytes, stdout);
+    printf("\n");
+
+    /* Check for errors on the stream */
+    if (SSL_get_error(stream3, 0) != SSL_ERROR_ZERO_RETURN) {
+        printf ("Failed reading remaining data from stream 3\n");
+        goto end;
+    }
+
+    /*
+     * Repeatedly call SSL_shutdown() until the connection is fully
+     * closed.
+     */
+    do {
+        ret = SSL_shutdown(ssl);
+        if (ret < 0) {
+            printf("Error shutting down: %d\n", ret);
+            goto end;
+        }
+    } while (ret != 1);
 
     /* Success! */
     res = EXIT_SUCCESS;
@@ -270,6 +357,10 @@ int main(void)
      * via SSL_set_bio(). The BIO will be freed when we free the SSL object.
      */
     SSL_free(ssl);
+    SSL_free(stream1);
+    SSL_free(stream2);
+    SSL_free(stream3);
     SSL_CTX_free(ctx);
+    BIO_ADDR_free(peer_addr);
     return res;
 }
