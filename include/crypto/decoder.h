@@ -33,4 +33,8 @@ int ossl_decoder_get_number(const OSSL_DECODER *encoder);
 int ossl_decoder_store_cache_flush(OSSL_LIB_CTX *libctx);
 int ossl_decoder_store_remove_all_provided(const OSSL_PROVIDER *prov);
 
+void *ossl_decoder_cache_new(OSSL_LIB_CTX *ctx);
+void ossl_decoder_cache_free(void *vcache);
+int ossl_decoder_cache_flush(OSSL_LIB_CTX *libctx);
+
 #endif

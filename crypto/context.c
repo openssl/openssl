@@ -14,7 +14,7 @@
 #include "internal/core.h"
 #include "internal/bio.h"
 #include "internal/provider.h"
-#include "internal/decoder.h"
+#include "crypto/decoder.h"
 #include "crypto/context.h"
 
 struct ossl_lib_ctx_st {
