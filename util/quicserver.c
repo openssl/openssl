@@ -149,9 +149,16 @@ int main(int argc, char *argv[])
     const char reqterm[] = {
         '\r', '\n', '\r', '\n'
     };
-    const char *msg = "Hello world\n";
+    const char *response[] = {
+        "HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n<!DOCTYPE html>\n<html>\n<body>Hello world</body>\n</html>\n",
+        "HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n<!DOCTYPE html>\n<html>\n<body>Hello again</body>\n</html>\n",
+        "HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n<!DOCTYPE html>\n<html>\n<body>Another response</body>\n</html>\n",
+        "HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n<!DOCTYPE html>\n<html>\n<body>A message</body>\n</html>\n",
+    };
     unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '1', '.', '0' };
     int first = 1;
+    uint64_t streamid;
+    size_t respnum = 0;
 
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
     if (argc == 0 || bio_err == NULL)
@@ -212,49 +219,72 @@ int main(int argc, char *argv[])
     if (trace)
         ossl_quic_tserver_set_msg_callback(qtserv, SSL_trace, bio_err);
 
-    /* Read the request */
-    do {
-        if (first)
-            first = 0;
-        else
-            wait_for_activity(qtserv);
-
-        ossl_quic_tserver_tick(qtserv);
-
-        if (ossl_quic_tserver_read(qtserv, 0, reqbuf + reqbytes,
-                                   sizeof(reqbuf) - reqbytes,
-                                   &numbytes)) {
-            if (numbytes > 0)
-                fwrite(reqbuf + reqbytes, 1, numbytes, stdout);
-            reqbytes += numbytes;
-        }
-    } while (reqbytes < sizeof(reqterm)
-             || memcmp(reqbuf + reqbytes - sizeof(reqterm), reqterm,
-                       sizeof(reqterm)) != 0);
-
-    /* Send the response */
-
+    /* Wait for handshake to complete */
     ossl_quic_tserver_tick(qtserv);
-    if (!ossl_quic_tserver_write(qtserv, 0, (unsigned char *)msg, strlen(msg),
-                                 &numbytes))
-        goto end;
-
-    if (!ossl_quic_tserver_conclude(qtserv, 0))
-        goto end;
-
-    /* Wait until all data we have sent has been acked */
-    while (!ossl_quic_tserver_is_terminated(qtserv)
-           && !ossl_quic_tserver_is_stream_totally_acked(qtserv, 0)) {
-        ossl_quic_tserver_tick(qtserv);
+    while(!ossl_quic_tserver_is_handshake_confirmed(qtserv)) {
         wait_for_activity(qtserv);
+        ossl_quic_tserver_tick(qtserv);
     }
 
-    while (!ossl_quic_tserver_shutdown(qtserv))
-        wait_for_activity(qtserv);
+    for (;; respnum++) {
+        if (respnum >= OSSL_NELEM(response))
+            goto end;
+        /* Wait for an incoming stream */
+        do {
+            streamid = ossl_quic_tserver_pop_incoming_stream(qtserv);
+            if (streamid == UINT64_MAX)
+                wait_for_activity(qtserv);
+            ossl_quic_tserver_tick(qtserv);
+            if (ossl_quic_tserver_is_terminated(qtserv)) {
+                /* Assume we finished everything the clients wants from us */
+                ret = EXIT_SUCCESS;
+                goto end;
+            }
+        } while(streamid == UINT64_MAX);
 
-    /* Close down here */
+        /* Read the request */
+        do {
+            if (first)
+                first = 0;
+            else
+                wait_for_activity(qtserv);
 
-    ret = EXIT_SUCCESS;
+            ossl_quic_tserver_tick(qtserv);
+
+            if (ossl_quic_tserver_read(qtserv, streamid, reqbuf + reqbytes,
+                                    sizeof(reqbuf) - reqbytes,
+                                    &numbytes)) {
+                if (numbytes > 0)
+                    fwrite(reqbuf + reqbytes, 1, numbytes, stdout);
+                reqbytes += numbytes;
+            }
+        } while (reqbytes < sizeof(reqterm)
+                || memcmp(reqbuf + reqbytes - sizeof(reqterm), reqterm,
+                        sizeof(reqterm)) != 0);
+
+        if ((streamid & QUIC_STREAM_DIR_UNI) != 0) {
+            /*
+            * Incoming stream was uni-directional. Create a server initiated
+            * uni-directional stream for the response.
+            */
+            if (!ossl_quic_tserver_stream_new(qtserv, 1, &streamid)) {
+                BIO_printf(bio_err, "Failed creating response stream\n");
+                goto end;
+            }
+        }
+
+        /* Send the response */
+
+        ossl_quic_tserver_tick(qtserv);
+        if (!ossl_quic_tserver_write(qtserv, streamid,
+                                    (unsigned char *)response[respnum],
+                                    strlen(response[respnum]), &numbytes))
+            goto end;
+
+        if (!ossl_quic_tserver_conclude(qtserv, streamid))
+            goto end;
+    }
+
  end:
     /* Free twice because we did an up-ref */
     BIO_free(bio);
