@@ -1819,7 +1819,8 @@ static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
 
     return testresult;
 }
-#endif /* !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3) \
+#endif /*
+        * !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
         * || !defined(OPENSSL_NO_DTLS)
         */
 
