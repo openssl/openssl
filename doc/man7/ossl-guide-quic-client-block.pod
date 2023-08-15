@@ -17,8 +17,8 @@ ossl-guide-quic-client-block
 This page will present various source code samples demonstrating how to write
 a simple blocking QUIC client application which connects to a server, sends an
 HTTP/1.0 request to it, and reads back the response. Note that HTTP/1.0 over
-QUIC is non-standard and will not typically be supported by real world servers.
-This is for demonstration purposes only.
+QUIC is non-standard and will not be supported by real world servers. This is
+for demonstration purposes only.
 
 We assume that you already have OpenSSL installed on your system; that you
 already have some fundamental understanding of OpenSSL concepts, TLS and QUIC
@@ -33,7 +33,8 @@ this one will be discussed so we also assume that you have run through and
 understand that tutorial.
 
 For this tutorial our client will be using a single QUIC stream. A subsequent
-tutorial will discuss how to write a multi-stream client.
+tutorial will discuss how to write a multi-stream client (see
+L<ossl-guide-quic-multi-stream(7)>).
 
 The complete source code for this example blocking QUIC client is available in
 the C<demos/guide> directory of the OpenSSL source distribution in the file
@@ -287,6 +288,11 @@ In the second stage the connection enters a "closing" state. Application data
 cannot be sent or received in this state, but late arriving packets coming from
 the peer will be handled appropriately. Once this stage has completed
 successfully L<SSL_shutdown(3)> will return 1 to indicate success.
+
+=head1 FURTHER READING
+
+See L<ossl-guide-quic-multi-stream(7)> to read a tutorial on how to modify the
+client developed on this page to support multiple streams.
 
 =head1 SEE ALSO
 
