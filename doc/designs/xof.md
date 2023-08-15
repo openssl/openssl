@@ -15,8 +15,6 @@ xof.absorb(bytes2);
 xof.finalize();
 out1 = xof.squeeze(10);
 out2 = xof.squeeze(1000);
-xof.reset();
-xof.assorb(bytes);
 ```
 ### Rules
 
@@ -69,7 +67,7 @@ Changing the code at this level should be a simple matter of removing the flag c
 
   - Final seems like a strange name to call multiple times.
 
-#### Proposal 2
+#### Proposal 2 (Proposed Solution)
 
 Keep EVP_DigestFinalXOF() as a one shot function and create a new API to handle the
 multi squeeze case e.g.
@@ -87,6 +85,20 @@ EVP_DigestSqueeze(ctx, out, outlen).
   - The interaction between the 2 API's needs to be clearly documented.
      - A call to EVP_DigestSqueeze() after EVP_DigestFinalXOF() would fail.
      - A call to EVP_DigestFinalXOF() after the EVP_DigestSqueeze() would fail? Is this confusing.
+
+#### Proposal 3
+
+Create a completely new type e.g. EVP_XOF_MD to implement XOF digests
+
+##### Pros
+
+  - This would separate the XOF operations so that the interface consisted mainly of Init, Absorb and Squeeze API's
+  - DigestXOF could then be deprecated.
+
+##### Cons
+
+  - XOF operations are required for Post Quantum signatures which currently use an EVP_MD object. This would then complicate the Signature API also.
+  - Duplication of the EVP_MD code (although all legacy/engine code would be removed).
 
 API Discussion of other XOF API'S
 ---------------------------------
@@ -113,6 +125,7 @@ Do we want to have an Alias function?
 ```
 EVP_DigestAbsorb(ctx, in, inlen);
 ```
+(The consensus was that this is not required).
 
 ### Finalize
 
@@ -134,10 +147,10 @@ The existing one shot squeeze method is:
 ```
 SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t outlen, size_t r)
 ```
-It contains an opaque object for storing the state B<A>,
-which can be used B<r> times to output squeezed values to B<out>,
-before it needs to update the state B<A> by internally calling KeccakF1600().
-Unless you are using a multiple of B<r> as the B<outlen>, the function no way
+It contains an opaque object for storing the state B<A>, that can be used to output to B<out>.
+After every B<r> bits, the state B<A> is updated internally by calling KeccakF1600().
+
+Unless you are using a multiple of B<r> as the B<outlen>, the function has no way
 of knowing where to start from if another call to SHA_squeeze() was attempted.
 The method also avoids doing a final call to KeccakF1600() currently since it was
 assumed that it was not required for a one shot operation.
@@ -156,7 +169,7 @@ See https://github.com/openssl/openssl/pull/13470.
 #### Cons
 
   - The logic in the c reference has many if clauses.
-  - It needs to be written in assembler, the logic would also be different in different assembler routines
+  - This C code also needs to be written in assembler, the logic would also be different in different assembler routines
     due to the internal format of the state A being different.
   - The general SHA3 case would be slower unless code was duplicated?
 
@@ -189,7 +202,7 @@ Perform a one-shot squeeze on the original absorbed data and throw away the firs
   - Incredibly slow.
   - More of a hack than a real solution.
 
-### Proposed Solution
+### Solution 4 (Proposed Solution)
 
 An alternative approach to solution 2 is to modify the SHA3_squeeze() slightly so that it can pass in a boolean that handles
 the call to KeccakF1600() correctly for multiple calls.
