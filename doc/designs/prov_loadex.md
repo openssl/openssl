@@ -35,7 +35,7 @@ Real-world cases
 ----------------
 
 Many applications use PKCS#11 API with a specific drivers. OpenSSL PKCS#11
-provider (https://github.com/latchset/pkcs11-provider) also provides a set of
+provider <https://github.com/latchset/pkcs11-provider> also provides a set of
 tweaks usable in particular situations. So there are at least several scenarios
 I have in mind:
 
