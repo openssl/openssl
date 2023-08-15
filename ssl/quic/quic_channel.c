@@ -2028,8 +2028,10 @@ static int ch_rx(QUIC_CHANNEL *ch)
             ossl_quic_tx_packetiser_record_received_closing_bytes(
                     ch->txp, ch->qrx_pkt->hdr->len);
 
-        if (!handled_any)
+        if (!handled_any) {
             ch_update_idle(ch);
+            ch_update_ping_deadline(ch);
+        }
 
         ch_rx_handle_packet(ch); /* best effort */
 
