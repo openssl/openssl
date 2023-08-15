@@ -579,6 +579,7 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
     if (process_data_dest != NULL) {
         OPENSSL_free(process_data_dest->propq);
         sk_EVP_KEYMGMT_pop_free(process_data_dest->keymgmts, EVP_KEYMGMT_free);
+        OPENSSL_free(process_data_dest);
     }
     OSSL_DECODER_CTX_free(dest);
     return NULL;
