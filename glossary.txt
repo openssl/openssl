@@ -1,0 +1,73 @@
+========
+Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+
+    Licensed under the Apache License 2.0 (the "License").  You may not use
+    this file except in compliance with the License.  You can obtain a copy
+    in the file LICENSE in the source distribution or at
+    https://www.openssl.org/source/license.html
+========
+========
+Glossary
+========
+
+.. glossary::
+
+    AES (Advanced Encryption Standard)
+        A specification for the encryption of electronic data established by National Institute of Standards
+        and Technology. A variant of the Rijndael block cipher.
+
+    CRL (Certificate Revocation List)
+        A method of preventing the validation of unwanted certificates by containing the identities of certificates
+        that are deeemed unworthy.
+
+    CSR (Certificate Signing Request)
+        A message sent from an applicant to a certificate authority of the public key infrastructure in order to
+        apply for a digital identity certificate.
+
+    DES (Data Encryption Standard)
+        A symmetric-key algorithm for the encryption of digital data.
+
+    DSA certificate
+        An SSL certificate that uses the DSA(Digital Signature Algorithm) algorithm for digital signatures
+        and/or data encryption.
+
+    ECC (Elliptic Curve Cryptography)
+        Promises stronger security and increased performance in shorter key lengths.
+
+    ECDSA
+        An SSL certificate that uses the ECDSA (Ellptical Curve Digital Signature Algorithm) algorithm
+        for digital signatures and/or data encryption.
+
+    EdDSA
+        An SSL certificate that uses the ECDSA (Edwards-Curve Digital Signature Algorithm) algorithm
+        for digital signatures and/or data encryption.
+
+    OCSP (Online Certificate Status Protocol)
+        An Internet Protocol that certificate authorities use to determine the status of secure sockets layer/trasport
+        layer security certificates.
+
+    OpenSSL
+        A cryptographic toolkit that consists of many different utilities.
+
+    PKCS (Public Key Cryptography Standards)
+        A group of public key cryptography standards devised and published by RSA Security LLC.
+
+    PKI (Public Key Infrastructure)
+       A set of roles, policies, hardware, software and procdures needed to create, use, manage, distribute,
+       and store digital certificates.
+
+    Root Certificate
+        A public key cerificate that identifies a root certificate authority.
+
+    RSA certificate
+        An SSL certificate that uses the RSA(Rivest–Shamir–Adleman) algorithm for digital signatures
+        and/or data encryption.
+
+    SSL (Secure Sockets Layer)
+        A security protocol that creates an encrypted link between a web server and a web browser.
+
+    SAN (Subject Alternative Name)
+        A structured way to indicate all the domain names and IP addresses that are secured by the certificate.
+
+    TLS (Transport Layer Security)
+        A protocol or communication rule that allows computer systems to talk to each other on the internet safely.
