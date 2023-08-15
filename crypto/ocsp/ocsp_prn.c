@@ -79,7 +79,9 @@ const char *OCSP_crl_reason_str(long s)
         {OCSP_REVOKED_STATUS_SUPERSEDED, "superseded"},
         {OCSP_REVOKED_STATUS_CESSATIONOFOPERATION, "cessationOfOperation"},
         {OCSP_REVOKED_STATUS_CERTIFICATEHOLD, "certificateHold"},
-        {OCSP_REVOKED_STATUS_REMOVEFROMCRL, "removeFromCRL"}
+        {OCSP_REVOKED_STATUS_REMOVEFROMCRL, "removeFromCRL"},
+        {OCSP_REVOKED_STATUS_PRIVILEGEWITHDRAWN, "privilegeWithdrawn"},
+        {OCSP_REVOKED_STATUS_AACOMPROMISE, "aACompromise"}
     };
     return table2string(s, reason_tbl);
 }
