@@ -540,7 +540,7 @@ static void felem_reduce(felem out, const widefelem in)
     acc[7] += in[12] >> 8;
     acc[6] += (in[12] & 0xff) << 48;
     acc[6] -= in[12] >> 16;
-    acc[5] -= ((in[12] & 0xffff) << 40);
+    acc[5] -= (in[12] & 0xffff) << 40;
     acc[6] += in[12] >> 48;
     acc[5] += (in[12] & 0xffffffffffff) << 8;
 
@@ -549,7 +549,7 @@ static void felem_reduce(felem out, const widefelem in)
     acc[6] += in[11] >> 8;
     acc[5] += (in[11] & 0xff) << 48;
     acc[5] -= in[11] >> 16;
-    acc[4] -= ((in[11] & 0xffff) << 40);
+    acc[4] -= (in[11] & 0xffff) << 40;
     acc[5] += in[11] >> 48;
     acc[4] += (in[11] & 0xffffffffffff) << 8;
 
@@ -558,7 +558,7 @@ static void felem_reduce(felem out, const widefelem in)
     acc[5] += in[10] >> 8;
     acc[4] += (in[10] & 0xff) << 48;
     acc[4] -= in[10] >> 16;
-    acc[3] -= ((in[10] & 0xffff) << 40);
+    acc[3] -= (in[10] & 0xffff) << 40;
     acc[4] += in[10] >> 48;
     acc[3] += (in[10] & 0xffffffffffff) << 8;
 
@@ -567,7 +567,7 @@ static void felem_reduce(felem out, const widefelem in)
     acc[4] += in[9] >> 8;
     acc[3] += (in[9] & 0xff) << 48;
     acc[3] -= in[9] >> 16;
-    acc[2] -= ((in[9] & 0xffff) << 40);
+    acc[2] -= (in[9] & 0xffff) << 40;
     acc[3] += in[9] >> 48;
     acc[2] += (in[9] & 0xffffffffffff) << 8;
 
@@ -582,7 +582,7 @@ static void felem_reduce(felem out, const widefelem in)
     acc[3] += acc[8] >> 8;
     acc[2] += (acc[8] & 0xff) << 48;
     acc[2] -= acc[8] >> 16;
-    acc[1] -= ((acc[8] & 0xffff) << 40);
+    acc[1] -= (acc[8] & 0xffff) << 40;
     acc[2] += acc[8] >> 48;
     acc[1] += (acc[8] & 0xffffffffffff) << 8;
 
@@ -591,7 +591,7 @@ static void felem_reduce(felem out, const widefelem in)
     acc[2] += acc[7] >> 8;
     acc[1] += (acc[7] & 0xff) << 48;
     acc[1] -= acc[7] >> 16;
-    acc[0] -= ((acc[7] & 0xffff) << 40);
+    acc[0] -= (acc[7] & 0xffff) << 40;
     acc[1] += acc[7] >> 48;
     acc[0] += (acc[7] & 0xffffffffffff) << 8;
 
