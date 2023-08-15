@@ -1325,7 +1325,6 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                 next = BIO_new(BIO_s_mem());
 
             if (next == NULL) {
-                BIO_free(prev);
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
