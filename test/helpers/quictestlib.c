@@ -251,7 +251,7 @@ static void run_server_thread(void)
 
 int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
 {
-    int retc = -1, rets = 0, err, abortctr = 0, ret = 0;
+    int retc = -1, rets = 0, abortctr = 0, ret = 0;
     int clienterr = 0, servererr = 0;
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
     /*
@@ -284,17 +284,19 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
     }
 
     do {
-        err = SSL_ERROR_WANT_WRITE;
-        while (!clienterr && retc <= 0 && err == SSL_ERROR_WANT_WRITE) {
-            retc = SSL_connect(clientssl);
-            if (retc <= 0)
-                err = SSL_get_error(clientssl, retc);
-        }
+        if (!clienterr && retc <= 0) {
+            int err;
 
-        if (!clienterr && retc <= 0 && err != SSL_ERROR_WANT_READ) {
-            TEST_info("SSL_connect() failed %d, %d", retc, err);
-            TEST_openssl_errors();
-            clienterr = 1;
+            retc = SSL_connect(clientssl);
+            if (retc <= 0) {
+                err = SSL_get_error(clientssl, retc);
+
+                if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
+                    TEST_info("SSL_connect() failed %d, %d", retc, err);
+                    TEST_openssl_errors();
+                    clienterr = 1;
+                }
+            }
         }
 
         /*
