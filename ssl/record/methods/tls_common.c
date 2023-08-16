@@ -1411,7 +1411,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
  err:
     if (ret != OSSL_RECORD_RETURN_SUCCESS) {
-        OPENSSL_free(*retrl);
+        tls_int_free(*retrl);
         *retrl = NULL;
     }
     return ret;
