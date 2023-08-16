@@ -339,7 +339,8 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx,
     if (!sk_X509_OBJECT_is_sorted(store->objs)) {
         X509_STORE_unlock(store);
         /* Take a write lock instead of a read lock */
-        X509_STORE_lock(store);
+        if (!X509_STORE_lock(store))
+            return 0;
         /*
          * Another thread might have sorted it in the meantime. But if so,
          * sk_X509_OBJECT_sort() exits early.
