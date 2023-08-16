@@ -910,7 +910,7 @@ static int pkcs12_recreate_test(void)
         goto err;
 
     bio = BIO_new(BIO_s_mem());
-    if (TEST_ptr(bio))
+    if (!TEST_ptr(bio))
         goto err;
     if (!TEST_int_eq(i2d_PKCS12_bio(bio, p12), 1))
         goto err;
