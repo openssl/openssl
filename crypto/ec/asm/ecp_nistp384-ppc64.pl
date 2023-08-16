@@ -62,51 +62,6 @@ sub endproc($)
 ___
 }
 
-
-sub push_vrs($$)
-{
-    my ($min, $max) = @_;
-
-    my $count = $max - $min + 1;
-
-    $code.=<<___;
-    mr      $savesp,$sp
-    stdu        $sp,-16*`$count+1`($sp)
-
-___
-        for (my $i = $min; $i <= $max; $i++) {
-            my $mult = $max - $i + 1;
-            $code.=<<___;
-    stxv        $i,-16*$mult($savesp)
-___
-
-    }
-
-    $code.=<<___;
-
-___
-}
-
-sub pop_vrs($$)
-{
-    my ($min, $max) = @_;
-
-    $code.=<<___;
-    ld      $savesp,0($sp)
-___
-    for (my $i = $min; $i <= $max; $i++) {
-        my $mult = $max - $i + 1;
-        $code.=<<___;
-    lxv     $i,-16*$mult($savesp)
-___
-    }
-
-    $code.=<<___;
-    mr      $sp,$savesp
-
-___
-}
-
 sub load_vrs($$)
 {
     my ($pointer, $reg_list) = @_;
@@ -161,8 +116,6 @@ ___
         my @in2 = map("v$_",(35..41));
 
         startproc("p384_felem_mul");
-
-        push_vrs(52, 63);
 
         $code.=<<___;
     vspltisw    $vzero,0
@@ -267,8 +220,6 @@ ___
         my @inx2 = map("v$_",(35..41));
 
         startproc("p384_felem_square");
-
-        push_vrs(52, 63);
 
         $code.=<<___;
     vspltisw    $vzero,0
