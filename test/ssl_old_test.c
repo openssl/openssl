@@ -332,6 +332,18 @@ static int verify_alpn(SSL *client, SSL *server)
     OPENSSL_free(alpn_selected);
     alpn_selected = NULL;
 
+    if (client_proto == NULL && client_proto_len != 0) {
+        BIO_printf(bio_stdout,
+                   "Inconsistent SSL_get0_alpn_selected() for client!\n");
+        goto err;
+    }
+
+    if (server_proto == NULL && server_proto_len != 0) {
+        BIO_printf(bio_stdout,
+                   "Inconsistent SSL_get0_alpn_selected() for server!\n");
+        goto err;
+    }
+
     if (client_proto_len != server_proto_len) {
         BIO_printf(bio_stdout, "ALPN selected protocols differ!\n");
         goto err;
