@@ -261,8 +261,8 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
                                    OSSL_CMP_ITAV *itav);
 void OSSL_CMP_ITAV_free(OSSL_CMP_ITAV *itav);
 
-OSSL_CMP_ITAV
-*OSSL_CMP_ITAV_new0_certProfile(STACK_OF(ASN1_UTF8STRING) *certProfile);
+OSSL_CMP_ITAV *OSSL_CMP_ITAV_new0_certProfile(STACK_OF(ASN1_UTF8STRING)
+                                              *certProfile);
 int OSSL_CMP_ITAV_get0_certProfile(const OSSL_CMP_ITAV *itav,
                                    STACK_OF(ASN1_UTF8STRING) **out);
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_caCerts(const STACK_OF(X509) *caCerts);

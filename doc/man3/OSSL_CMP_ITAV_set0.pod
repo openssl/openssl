@@ -51,7 +51,7 @@ by I<*itav_sk_p>. It creates a new stack if I<*itav_sk_p> points to NULL.
 
 OSSL_CMP_ITAV_new0_certProfile() creates a new B<OSSL_CMP_ITAV> structure
 of type B<certProfile> that includes the optionally given list of profile names.
-On success, ownership of list is with the new B<OSSL_CMP_ITAV> structure.
+On success, ownership of the list is with the new B<OSSL_CMP_ITAV> structure.
 
 OSSL_CMP_ITAV_get0_certProfile() on success assigns to I<*out>
 an internal pointer to the
