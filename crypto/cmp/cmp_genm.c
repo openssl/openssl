@@ -180,7 +180,7 @@ int OSSL_CMP_get1_caCerts(OSSL_CMP_CTX *ctx, STACK_OF(X509) **out)
 
 static int selfsigned_verify_cb(int ok, X509_STORE_CTX *store_ctx)
 {
-    if (ok == 0 && store_ctx != NULL
+    if (ok == 0
             && X509_STORE_CTX_get_error_depth(store_ctx) == 0
             && X509_STORE_CTX_get_error(store_ctx)
             == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) {
