@@ -172,7 +172,7 @@ quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     }
 
     /* We pass a ref to the md in a successful yield_secret_cb call */
-    /* TODO(QUIC): This cast is horrible. We should try and remove it */
+    /* TODO(QUIC FUTURE): This cast is horrible. We should try and remove it */
     if (!EVP_MD_up_ref((EVP_MD *)kdfdigest)) {
         QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
