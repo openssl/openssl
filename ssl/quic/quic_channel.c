@@ -99,6 +99,8 @@ static int ch_server_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
                                  const QUIC_CONN_ID *peer_dcid);
 static void ch_on_txp_ack_tx(const OSSL_QUIC_FRAME_ACK *ack, uint32_t pn_space,
                              void *arg);
+static void ch_rx_handle_version_neg(QUIC_CHANNEL *ch, OSSL_QRX_PKT *pkt);
+static void ch_raise_version_neg_failure(QUIC_CHANNEL *ch);
 
 DEFINE_LHASH_OF_EX(QUIC_SRT_ELEM);
 
@@ -2092,6 +2094,7 @@ static int bio_addr_eq(const BIO_ADDR *a, const BIO_ADDR *b)
 static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
 {
     uint32_t enc_level;
+    int old_have_processed_any_pkt = ch->have_processed_any_pkt;
 
     assert(ch->qrx_pkt != NULL);
 
@@ -2163,6 +2166,8 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
          * packet. We only ever use v1, so require it.
          */
         return;
+
+    ch->have_processed_any_pkt = 1;
 
     /*
      * RFC 9000 s. 17.2: "An endpoint MUST treat receipt of a packet that has a
@@ -2281,10 +2286,61 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
         ossl_quic_handle_frames(ch, ch->qrx_pkt); /* best effort */
         break;
 
+    case QUIC_PKT_TYPE_VERSION_NEG:
+        /*
+         * "A client MUST discard any Version Negotiation packet if it has
+         * received and successfully processed any other packet."
+         */
+        if (!old_have_processed_any_pkt)
+            ch_rx_handle_version_neg(ch, ch->qrx_pkt);
+
+        break;
+
     default:
         assert(0);
         break;
     }
+}
+
+static void ch_rx_handle_version_neg(QUIC_CHANNEL *ch, OSSL_QRX_PKT *pkt)
+{
+    /*
+     * We do not support version negotiation at this time. As per RFC 9000 s.
+     * 6.2., we MUST abandon the connection attempt if we receive a Version
+     * Negotiation packet, unless we have already successfully processed another
+     * incoming packet, or the packet lists the QUIC version we want to use.
+     */
+    PACKET vpkt;
+    unsigned long v;
+
+    if (!PACKET_buf_init(&vpkt, pkt->hdr->data, pkt->hdr->len))
+        return;
+
+    while (PACKET_remaining(&vpkt) > 0) {
+        if (!PACKET_get_net_4(&vpkt, &v))
+            break;
+
+        if ((uint32_t)v == QUIC_VERSION_1)
+            return;
+    }
+
+    /* No match, this is a failure case. */
+    ch_raise_version_neg_failure(ch);
+}
+
+static void ch_raise_version_neg_failure(QUIC_CHANNEL *ch)
+{
+    QUIC_TERMINATE_CAUSE tcause = {0};
+
+    tcause.error_code = QUIC_ERR_CONNECTION_REFUSED;
+    tcause.reason     = "version negotiation failure";
+    tcause.reason_len = strlen(tcause.reason);
+
+    /*
+     * Skip TERMINATING state; this is not considered a protocol error and we do
+     * not send CONNECTION_CLOSE.
+     */
+    ch_start_terminating(ch, &tcause, 1);
 }
 
 /*

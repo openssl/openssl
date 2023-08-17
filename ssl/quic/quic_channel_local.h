@@ -305,6 +305,13 @@ struct quic_channel_st {
     unsigned int                    have_received_enc_pkt   : 1;
 
     /*
+     * Have we successfully processed any packet, including a Version
+     * Negotiation packet? If so, further Version Negotiation packets should be
+     * ignored.
+     */
+    unsigned int                    have_processed_any_pkt  : 1;
+
+    /*
      * Have we sent literally any packet yet? If not, there is no point polling
      * RX.
      */
