@@ -12,6 +12,7 @@
 #include "internal/quic_statm.h"
 #include "internal/common.h"
 #include "internal/time.h"
+#include "quic_local.h"
 
 /*
  * QUIC Test Server Module
@@ -19,6 +20,9 @@
  */
 struct quic_tserver_st {
     QUIC_TSERVER_ARGS   args;
+
+    /* Dummy SSL object for this QUIC connection for use by msg_callback */
+    SSL *ssl;
 
     /*
      * The QUIC channel providing the core QUIC connection implementation.
@@ -72,6 +76,7 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
 {
     QUIC_TSERVER *srv = NULL;
     QUIC_CHANNEL_ARGS ch_args = {0};
+    QUIC_CONNECTION *qc = NULL;
 
     if (args->net_rbio == NULL || args->net_wbio == NULL)
         goto err;
@@ -121,6 +126,13 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
         || !ossl_quic_channel_set_net_wbio(srv->ch, srv->args.net_wbio))
         goto err;
 
+    qc = OPENSSL_zalloc(sizeof(*qc));
+    if (qc == NULL)
+        goto err;
+    srv->ssl = (SSL *)qc;
+    qc->ch = srv->ch;
+    srv->ssl->type = SSL_TYPE_QUIC_CONNECTION;
+
     return srv;
 
 err:
@@ -132,6 +144,7 @@ err:
 #if defined(OPENSSL_THREADS)
         ossl_crypto_mutex_free(&srv->mutex);
 #endif
+        OPENSSL_free(qc);
     }
 
     OPENSSL_free(srv);
@@ -146,6 +159,7 @@ void ossl_quic_tserver_free(QUIC_TSERVER *srv)
     ossl_quic_channel_free(srv->ch);
     BIO_free(srv->args.net_rbio);
     BIO_free(srv->args.net_wbio);
+    OPENSSL_free(srv->ssl);
     SSL_free(srv->tls);
     SSL_CTX_free(srv->ctx);
 #if defined(OPENSSL_THREADS)
@@ -526,8 +540,10 @@ void ossl_quic_tserver_set_msg_callback(QUIC_TSERVER *srv,
                                                   SSL *ssl, void *arg),
                                         void *arg)
 {
-    ossl_quic_channel_set_msg_callback(srv->ch, f, NULL);
+    ossl_quic_channel_set_msg_callback(srv->ch, f, srv->ssl);
     ossl_quic_channel_set_msg_callback_arg(srv->ch, arg);
+    SSL_set_msg_callback(srv->tls, f);
+    SSL_set_msg_callback_arg(srv->tls, arg);
 }
 
 int ossl_quic_tserver_new_ticket(QUIC_TSERVER *srv)
