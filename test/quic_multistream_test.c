@@ -80,6 +80,8 @@ struct helper {
                                unsigned char *buf, size_t buf_len);
     int (*qtf_handshake_cb)(struct helper *h,
                             unsigned char *buf, size_t buf_len);
+    int (*qtf_datagram_cb)(struct helper *h,
+                           BIO_MSG *m, size_t stride);
     uint64_t inject_word0, inject_word1;
     uint64_t scratch0, scratch1, fail_count;
 };
@@ -101,6 +103,8 @@ struct script_op {
                                            unsigned char *buf, size_t buf_len);
     int             (*qtf_handshake_cb)(struct helper *h,
                                         unsigned char *buf, size_t buf_len);
+    int             (*qtf_datagram_cb)(struct helper *h,
+                                       BIO_MSG *m, size_t stride);
 };
 
 #define OPK_END                                     0
@@ -152,6 +156,7 @@ struct script_op {
 #define OPK_S_SET_INJECT_HANDSHAKE                  46
 #define OPK_S_NEW_TICKET                            47
 #define OPK_C_SKIP_IF_UNBOUND                       48
+#define OPK_S_SET_INJECT_DATAGRAM                   49
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -286,6 +291,8 @@ struct script_op {
     {OPK_S_NEW_TICKET},
 #define OP_C_SKIP_IF_UNBOUND(stream_name, n) \
     {OPK_C_SKIP_IF_UNBOUND, NULL, (n), NULL, #stream_name},
+#define OP_S_SET_INJECT_DATAGRAM(f) \
+    {OPK_S_SET_INJECT_DATAGRAM, NULL, 0, NULL, NULL, 0, NULL, NULL, (f)},
 
 static OSSL_TIME get_time(void *arg)
 {
@@ -777,6 +784,15 @@ static int helper_handshake_listener(QTEST_FAULT *fault,
     struct helper *h = arg;
 
     return h->qtf_handshake_cb(h, buf, buf_len);
+}
+
+static int helper_datagram_listener(QTEST_FAULT *fault,
+                                    BIO_MSG *msg, size_t stride,
+                                    void *arg)
+{
+    struct helper *h = arg;
+
+    return h->qtf_datagram_cb(h, msg, stride);
 }
 
 static int is_want(SSL *s, int ret)
@@ -1595,6 +1611,17 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                                                               h->qtf_handshake_cb != NULL ?
                                                               helper_handshake_listener : NULL,
                                                               h)))
+                goto out;
+
+            break;
+
+        case OPK_S_SET_INJECT_DATAGRAM:
+            h->qtf_datagram_cb = op->qtf_datagram_cb;
+
+            if (!TEST_true(qtest_fault_set_datagram_listener(h->qtf,
+                                                             h->qtf_datagram_cb != NULL ?
+                                                             helper_datagram_listener : NULL,
+                                                             h)))
                 goto out;
 
             break;
@@ -4411,6 +4438,103 @@ static const struct script_op script_73[] = {
     OP_END
 };
 
+/* 74. Version negotiation: QUIC_VERSION_1 ignored */
+static int generate_version_neg(WPACKET *wpkt, uint32_t version)
+{
+    QUIC_PKT_HDR hdr = {0};
+
+    hdr.type                = QUIC_PKT_TYPE_VERSION_NEG;
+    hdr.fixed               = 1;
+    hdr.dst_conn_id.id_len  = 0;
+    hdr.src_conn_id.id_len  = 8;
+    memset(hdr.src_conn_id.id, 0x55, 8);
+
+    if (!TEST_true(ossl_quic_wire_encode_pkt_hdr(wpkt, 0, &hdr, NULL)))
+        return 0;
+
+    if (!TEST_true(WPACKET_put_bytes_u32(wpkt, version)))
+        return 0;
+
+    return 1;
+}
+
+static int server_gen_version_neg(struct helper *h, BIO_MSG *msg, size_t stride)
+{
+    int rc = 0, have_wpkt = 0;
+    size_t l;
+    WPACKET wpkt;
+    BUF_MEM *buf = NULL;
+    uint32_t version;
+
+    switch (h->inject_word0) {
+    case 0:
+        return 1;
+    case 1:
+        version = QUIC_VERSION_1;
+        break;
+    default:
+        version = 0x5432abcd;
+        break;
+    }
+
+    if (!TEST_ptr(buf = BUF_MEM_new()))
+        goto err;
+
+    if (!TEST_true(WPACKET_init(&wpkt, buf)))
+        goto err;
+
+    have_wpkt = 1;
+
+    generate_version_neg(&wpkt, version);
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &l)))
+        goto err;
+
+    if (!TEST_true(qtest_fault_resize_datagram(h->qtf, l)))
+        return 0;
+
+    memcpy(msg->data, buf->data, l);
+    h->inject_word0 = 0;
+
+    rc = 1;
+err:
+    if (have_wpkt)
+        WPACKET_finish(&wpkt);
+
+    BUF_MEM_free(buf);
+    return rc;
+}
+
+static const struct script_op script_74[] = {
+    OP_S_SET_INJECT_DATAGRAM (server_gen_version_neg)
+    OP_SET_INJECT_WORD       (1, 0)
+
+    OP_C_SET_ALPN            ("ossltest")
+    OP_C_CONNECT_WAIT        ()
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI     (a, C_BIDI_ID(0))
+    OP_C_WRITE               (a, "apple", 5)
+    OP_S_BIND_STREAM_ID      (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT         (a, "apple", 5)
+
+    OP_END
+};
+
+/* 75. Version negotiation: Unknown version causes connection abort */
+static const struct script_op script_75[] = {
+    OP_S_SET_INJECT_DATAGRAM (server_gen_version_neg)
+    OP_SET_INJECT_WORD       (2, 0)
+
+    OP_C_SET_ALPN            ("ossltest")
+    OP_C_CONNECT_WAIT_OR_FAIL()
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_CONNECTION_REFUSED,0,0)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -4484,7 +4608,9 @@ static const struct script_op *const scripts[] = {
     script_70,
     script_71,
     script_72,
-    script_73
+    script_73,
+    script_74,
+    script_75
 };
 
 static int test_script(int idx)

@@ -2753,6 +2753,11 @@ static int test_wire_pkt_hdr_actual(int tidx, int repeat, int cipher,
     hpr_key[8] = (unsigned char)tidx;
     hpr_key[9] = (unsigned char)repeat;
 
+    if (is_trunc && trunc_len > t->min_success_len
+        && t->hdr.type == QUIC_PKT_TYPE_VERSION_NEG
+        && ((trunc_len - t->min_success_len) % 4) != 0)
+        expect_fail = 1;
+
     switch (cipher) {
         case 0:
             hpr_cipher_id = QUIC_HDR_PROT_CIPHER_AES_128;
