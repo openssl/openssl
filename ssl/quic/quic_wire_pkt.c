@@ -306,6 +306,13 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
             hdr->data       = PACKET_data(pkt);
             hdr->len        = PACKET_remaining(pkt);
 
+            /*
+             * Version negotiation packets must contain an array of u32s, so it
+             * is invalid for their payload length to not be divisible by 4.
+             */
+            if ((hdr->len % 4) != 0)
+                return 0;
+
             /* Version negotiation packets are always fully decoded. */
             hdr->partial    = 0;
 
