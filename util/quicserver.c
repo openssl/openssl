@@ -132,14 +132,14 @@ static BIO *create_dgram_bio(int family, const char *hostname, const char *port)
 
 static void usage(void)
 {
-    BIO_printf(bio_err, "quicserver [-6] hostname port certfile keyfile\n");
+    BIO_printf(bio_err, "quicserver [-6][-trace] hostname port certfile keyfile\n");
 }
 
 int main(int argc, char *argv[])
 {
     QUIC_TSERVER_ARGS tserver_args = {0};
     QUIC_TSERVER *qtserv = NULL;
-    int ipv6 = 0;
+    int ipv6 = 0, trace = 0;
     int argnext = 1;
     BIO *bio = NULL;
     char *hostname, *port, *certfile, *keyfile;
@@ -162,6 +162,8 @@ int main(int argc, char *argv[])
             break;
         if (strcmp(argv[argnext], "-6") == 0) {
             ipv6 = 1;
+        } else if(strcmp(argv[argnext], "-trace") == 0) {
+            trace = 1;
         } else {
             BIO_printf(bio_err, "Unrecognised argument %s\n", argv[argnext]);
             usage();
@@ -206,6 +208,9 @@ int main(int argc, char *argv[])
 
     /* Ownership of the BIO is passed to qtserv */
     bio = NULL;
+
+    if (trace)
+        ossl_quic_tserver_set_msg_callback(qtserv, SSL_trace, bio_err);
 
     /* Read the request */
     do {
