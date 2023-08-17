@@ -873,6 +873,13 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
         rxe->hdr.data   = rxe_data(rxe);
         rxe->pn         = QUIC_PN_INVALID;
 
+        rxe->data_len       = rxe->hdr.len;
+        rxe->datagram_len   = datagram_len;
+        rxe->key_epoch      = 0;
+        rxe->peer           = urxe->peer;
+        rxe->local          = urxe->local;
+        rxe->time           = urxe->time;
+
         /* Move RXE to pending. */
         ossl_list_rxe_remove(&qrx->rx_free, rxe);
         ossl_list_rxe_insert_tail(&qrx->rx_pending, rxe);
