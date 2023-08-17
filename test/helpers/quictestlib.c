@@ -16,6 +16,7 @@
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
 # include "../threadstest.h"
 #endif
+#include "internal/quic_ssl.h"
 #include "internal/quic_wire_pkt.h"
 #include "internal/quic_record_tx.h"
 #include "internal/quic_error.h"
@@ -172,7 +173,10 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     tserver_args.ctx = serverctx;
     if ((flags & QTEST_FLAG_FAKE_TIME) != 0) {
         fake_now = ossl_time_zero();
+        /* zero time can have a special meaning, bump it */
+        qtest_add_time(1);
         tserver_args.now_cb = fake_now_cb;
+        (void)ossl_quic_conn_set_override_now_cb(*cssl, fake_now_cb, NULL);
     }
 
     if (!TEST_ptr(*qtserv = ossl_quic_tserver_new(&tserver_args, certfile,

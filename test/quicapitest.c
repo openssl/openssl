@@ -379,7 +379,9 @@ static int test_ssl_trace(void)
     if (!TEST_ptr(cctx)
             || !TEST_ptr(bio)
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                                    privkey, 0, &qtserv,
+                                                    privkey,
+                                                    QTEST_FLAG_FAKE_TIME,
+                                                    &qtserv,
                                                     &clientquic, NULL)))
         goto err;
 
