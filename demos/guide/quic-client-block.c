@@ -202,11 +202,13 @@ int main(void)
         goto end;
     }
 
+    /* Set the IP address of the remote peer */
     if (!SSL_set1_initial_peer_addr(ssl, peer_addr)) {
         printf("Failed to set the initial peer address\n");
         goto end;
     }
 
+    /* Connect to the server and perform the TLS handshake */
     if ((ret = SSL_connect(ssl)) < 1) {
         /*
          * If the failure is due to a verification error we can get more

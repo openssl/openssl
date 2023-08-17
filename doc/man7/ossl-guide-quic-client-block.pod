@@ -222,6 +222,7 @@ is being connected to. In L</Creating the socket and BIO> above we saved that
 address away for future use. Now we need to use it via the
 L<SSL_set1_initial_peer_addr(3)> function.
 
+    /* Set the IP address of the remote peer */
     if (!SSL_set1_initial_peer_addr(ssl, peer_addr)) {
         printf("Failed to set the initial peer address\n");
         goto end;
