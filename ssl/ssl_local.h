@@ -2999,6 +2999,8 @@ void ossl_ssl_set_custom_record_layer(SSL_CONNECTION *s,
                                       const OSSL_RECORD_METHOD *meth,
                                       void *rlarg);
 
+long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
+
 /*
  * Options which no longer have any effect, but which can be implemented
  * as no-ops for QUIC.

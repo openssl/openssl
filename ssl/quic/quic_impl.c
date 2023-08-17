@@ -1306,9 +1306,25 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
     case DTLS_CTRL_HANDLE_TIMEOUT: /* DTLSv1_handle_timeout */
         /* For legacy compatibility with DTLS calls. */
         return ossl_quic_handle_events(s) == 1 ? 1 : -1;
+
+        /* Mask ctrls we shouldn't support for QUIC. */
+    case SSL_CTRL_GET_READ_AHEAD:
+    case SSL_CTRL_SET_READ_AHEAD:
+    case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
+    case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT:
+    case SSL_CTRL_SET_MAX_PIPELINES:
+        return 0;
+
     default:
-        /* Probably a TLS related ctrl. Defer to our internal SSL object */
-        return SSL_ctrl(ctx.qc->tls, cmd, larg, parg);
+        /*
+         * Probably a TLS related ctrl. Send back to the frontend SSL_ctrl
+         * implementation. Either SSL_ctrl will handle it itself by direct
+         * access into handshake layer state, or failing that, it will be passed
+         * to the handshake layer via the SSL_METHOD vtable. If the ctrl is not
+         * supported by anything, the handshake layer's ctrl method will finally
+         * return 0.
+         */
+        return ossl_ctrl_internal(&ctx.qc->ssl, cmd, larg, parg, /*no_quic=*/1);
     }
 }
 
