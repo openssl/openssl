@@ -2406,57 +2406,62 @@ static int ch_tx(QUIC_CHANNEL *ch)
 
     ch->rxku_pending_confirm_done = 0;
 
-    /*
-     * Send a packet, if we need to. Best effort. The TXP consults the CC and
-     * applies any limitations imposed by it, so we don't need to do it here.
-     *
-     * Best effort. In particular if TXP fails for some reason we should still
-     * flush any queued packets which we already generated.
-     */
-    res = ossl_quic_tx_packetiser_generate(ch->txp, &status);
-    if (status.sent_pkt > 0) {
-        ch->have_sent_any_pkt = 1; /* Packet was sent */
-
+    /* Loop until we stop generating packets to send */
+    do {
         /*
-         * RFC 9000 s. 10.1. 'An endpoint also restarts its idle timer when
-         * sending an ack-eliciting packet if no other ack-eliciting packets
-         * have been sent since last receiving and processing a packet.'
-         */
-        if (status.sent_ack_eliciting && !ch->have_sent_ack_eliciting_since_rx) {
-            ch_update_idle(ch);
-            ch->have_sent_ack_eliciting_since_rx = 1;
+        * Send packet, if we need to. Best effort. The TXP consults the CC and
+        * applies any limitations imposed by it, so we don't need to do it here.
+        *
+        * Best effort. In particular if TXP fails for some reason we should
+        * still flush any queued packets which we already generated.
+        */
+        res = ossl_quic_tx_packetiser_generate(ch->txp, &status);
+        if (status.sent_pkt > 0) {
+            ch->have_sent_any_pkt = 1; /* Packet(s) were sent */
+
+            /*
+            * RFC 9000 s. 10.1. 'An endpoint also restarts its idle timer when
+            * sending an ack-eliciting packet if no other ack-eliciting packets
+            * have been sent since last receiving and processing a packet.'
+            */
+            if (status.sent_ack_eliciting
+                    && !ch->have_sent_ack_eliciting_since_rx) {
+                ch_update_idle(ch);
+                ch->have_sent_ack_eliciting_since_rx = 1;
+            }
+
+            if (!ch->is_server && status.sent_handshake)
+                /*
+                * RFC 9001 s. 4.9.1: A client MUST discard Initial keys when it
+                * first sends a Handshake packet.
+                */
+                ch_discard_el(ch, QUIC_ENC_LEVEL_INITIAL);
+
+            if (ch->rxku_pending_confirm_done)
+                ch->rxku_pending_confirm = 0;
+
+            ch_update_ping_deadline(ch);
         }
 
-        if (!ch->is_server && status.sent_handshake)
+        if (!res) {
             /*
-             * RFC 9001 s. 4.9.1: A client MUST discard Initial keys when it
-             * first sends a Handshake packet.
-             */
-            ch_discard_el(ch, QUIC_ENC_LEVEL_INITIAL);
-
-        if (ch->rxku_pending_confirm_done)
-            ch->rxku_pending_confirm = 0;
-
-        ch_update_ping_deadline(ch);
-    }
-
-    if (!res) {
-        /*
-         * Internal failure (e.g.  allocation, assertion).
-         *
-         * One case where TXP can fail is if we reach a TX PN of 2**62 - 1. As
-         * per RFC 9000 s. 12.3, if this happens we MUST close the connection
-         * without sending a CONNECTION_CLOSE frame. This is actually handled as
-         * an emergent consequence of our design, as the TX packetiser will
-         * never transmit another packet when the TX PN reaches the limit.
-         *
-         * Calling the below function terminates the connection; its attempt to
-         * schedule a CONNECTION_CLOSE frame will not actually cause a packet to
-         * be transmitted for this reason.
-         */
-        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
-                                               "internal error (txp generate)");
-    }
+            * One case where TXP can fail is if we reach a TX PN of 2**62 - 1.
+            * As per RFC 9000 s. 12.3, if this happens we MUST close the
+            * connection without sending a CONNECTION_CLOSE frame. This is
+            * actually handled as an emergent consequence of our design, as the
+            * TX packetiser will never transmit another packet when the TX PN
+            * reaches the limit.
+            *
+            * Calling the below function terminates the connection; its attempt
+            * to schedule a CONNECTION_CLOSE frame will not actually cause a
+            * packet to be transmitted for this reason.
+            */
+            ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR,
+                                                   0,
+                                                   "internal error (txp generate)");
+            break;
+        }
+    } while (status.sent_pkt > 0);
 
     /* Flush packets to network. */
     switch (ossl_qtx_flush_net(ch->qtx)) {
