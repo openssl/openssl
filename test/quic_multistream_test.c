@@ -987,12 +987,13 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 connect_started = 1;
 
                 ret = SSL_connect(h->c_conn);
-                if (!TEST_true((ret == 1 || op->arg1 > 0)
-                               || (!h->blocking && is_want(h->c_conn, ret))))
-                    goto out;
+                if (ret != 1) {
+                    if (!h->blocking && is_want(h->c_conn, ret))
+                        SPIN_AGAIN();
 
-                if (!h->blocking && ret < 0)
-                    SPIN_AGAIN();
+                    if (op->arg1 == 0 && !TEST_int_eq(ret, 1))
+                        goto out;
+                }
             }
             break;
 
