@@ -2418,7 +2418,6 @@ int ssl_get_min_max_version(const SSL_CONNECTION *s, int *min_version,
 {
     int version, tmp_real_max;
     int hole;
-    const SSL_METHOD *single = NULL;
     const SSL_METHOD *method;
     const version_info *table;
     const version_info *vent;
@@ -2460,13 +2459,12 @@ int ssl_get_min_max_version(const SSL_CONNECTION *s, int *min_version,
      * the valid protocol entries) and we don't have a selected version yet.
      *
      * Whenever "hole == 1", and we hit an enabled method, its version becomes
-     * the selected version, and the method becomes a candidate "single"
-     * method.  We're no longer in a hole, so "hole" becomes 0.
+     * the selected version.  We're no longer in a hole, so "hole" becomes 0.
      *
-     * If "hole == 0" and we hit an enabled method, then "single" is cleared,
-     * as we support a contiguous range of at least two methods.  If we hit
-     * a disabled method, then hole becomes true again, but nothing else
-     * changes yet, because all the remaining methods may be disabled too.
+     * If "hole == 0" and we hit an enabled method, we support a contiguous
+     * range of at least two methods.  If we hit a disabled method,
+     * then hole becomes true again, but nothing else changes yet,
+     * because all the remaining methods may be disabled too.
      * If we again hit an enabled method after the new hole, it becomes
      * selected, as we start from scratch.
      */
@@ -2493,12 +2491,11 @@ int ssl_get_min_max_version(const SSL_CONNECTION *s, int *min_version,
         if (ssl_method_error(s, method) != 0) {
             hole = 1;
         } else if (!hole) {
-            single = NULL;
             *min_version = method->version;
         } else {
             if (real_max != NULL && tmp_real_max != 0)
                 *real_max = tmp_real_max;
-            version = (single = method)->version;
+            version = method->version;
             *min_version = version;
             hole = 0;
         }
