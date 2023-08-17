@@ -2418,7 +2418,6 @@ int ssl_get_min_max_version(const SSL_CONNECTION *s, int *min_version,
 {
     int version, tmp_real_max;
     int hole;
-    const SSL_METHOD *single = NULL;
     const SSL_METHOD *method;
     const version_info *table;
     const version_info *vent;
@@ -2493,12 +2492,11 @@ int ssl_get_min_max_version(const SSL_CONNECTION *s, int *min_version,
         if (ssl_method_error(s, method) != 0) {
             hole = 1;
         } else if (!hole) {
-            single = NULL;
             *min_version = method->version;
         } else {
             if (real_max != NULL && tmp_real_max != 0)
                 *real_max = tmp_real_max;
-            version = (single = method)->version;
+            version = method->version;
             *min_version = version;
             hole = 0;
         }
