@@ -1244,16 +1244,16 @@ static int run_script(int script_idx, const struct script_op *script)
     for (op = script, opn = 0; op->opcode != OPK_END; ++op, ++opn) {
         switch (op->opcode) {
         case OPK_TXP_GENERATE:
-            if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, &status),
-                             TX_PACKETISER_RES_SENT_PKT))
+            if (!TEST_true(ossl_quic_tx_packetiser_generate(h.txp, &status))
+                && !TEST_size_t_gt(status.sent_pkt, 0))
                 goto err;
 
             ossl_qtx_finish_dgram(h.args.qtx);
             ossl_qtx_flush_net(h.args.qtx);
             break;
         case OPK_TXP_GENERATE_NONE:
-            if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, &status),
-                             TX_PACKETISER_RES_NO_PKT))
+            if (!TEST_true(ossl_quic_tx_packetiser_generate(h.txp, &status))
+                && !TEST_size_t_eq(status.sent_pkt, 0))
                 goto err;
 
             break;

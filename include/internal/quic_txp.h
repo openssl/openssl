@@ -81,20 +81,17 @@ void ossl_quic_tx_packetiser_record_received_closing_bytes(
  * generate any frames, and generating a datagram which coalesces packets for
  * any ELs which do.
  *
- * Returns TX_PACKETISER_RES_FAILURE on failure (e.g. allocation error),
- * TX_PACKETISER_RES_NO_PKT if no packets were sent (e.g. because nothing wants
- * to send anything), and TX_PACKETISER_RES_SENT_PKT if packets were sent.
+ * Returns 0 on failure (e.g. allocation error or other errors), 1 otherwise.
  *
- * *status is filled with status information about the generated packet, if any.
+ * *status is filled with status information about the generated packet.
+ * It is always filled even in case of failure. In particular, packets can be
+ * sent even if failure is later returned.
  * See QUIC_TXP_STATUS for details.
  */
-#define TX_PACKETISER_RES_FAILURE   0
-#define TX_PACKETISER_RES_NO_PKT    1
-#define TX_PACKETISER_RES_SENT_PKT  2
-
 typedef struct quic_txp_status_st {
     int sent_ack_eliciting; /* Was an ACK-eliciting packet sent? */
     int sent_handshake; /* Was a Handshake packet sent? */
+    size_t sent_pkt; /* Number of packets sent (0 if nothing was sent) */
 } QUIC_TXP_STATUS;
 
 int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,

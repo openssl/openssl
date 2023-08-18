@@ -2372,6 +2372,7 @@ undesirable:
 static int ch_tx(QUIC_CHANNEL *ch)
 {
     QUIC_TXP_STATUS status;
+    int res;
 
     /*
      * RFC 9000 s. 10.2.2: Draining Connection State:
@@ -2412,8 +2413,8 @@ static int ch_tx(QUIC_CHANNEL *ch)
      * Best effort. In particular if TXP fails for some reason we should still
      * flush any queued packets which we already generated.
      */
-    switch (ossl_quic_tx_packetiser_generate(ch->txp, &status)) {
-    case TX_PACKETISER_RES_SENT_PKT:
+    res = ossl_quic_tx_packetiser_generate(ch->txp, &status);
+    if (status.sent_pkt > 0) {
         ch->have_sent_any_pkt = 1; /* Packet was sent */
 
         /*
@@ -2437,13 +2438,12 @@ static int ch_tx(QUIC_CHANNEL *ch)
             ch->rxku_pending_confirm = 0;
 
         ch_update_ping_deadline(ch);
-        break;
+    }
 
-    case TX_PACKETISER_RES_NO_PKT:
-        break; /* No packet was sent */
-
-    default:
+    if (!res) {
         /*
+         * Internal failure (e.g.  allocation, assertion).
+         *
          * One case where TXP can fail is if we reach a TX PN of 2**62 - 1. As
          * per RFC 9000 s. 12.3, if this happens we MUST close the connection
          * without sending a CONNECTION_CLOSE frame. This is actually handled as
@@ -2456,7 +2456,6 @@ static int ch_tx(QUIC_CHANNEL *ch)
          */
         ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
                                                "internal error (txp generate)");
-        break; /* Internal failure (e.g.  allocation, assertion) */
     }
 
     /* Flush packets to network. */
