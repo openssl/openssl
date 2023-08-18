@@ -1,5 +1,5 @@
 ---
-name: Error Injection Testrun
+name: Error Injection Testrun for 3.0
 
 on:
   pull_request:
