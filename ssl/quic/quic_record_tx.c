@@ -480,15 +480,19 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
     EVP_CIPHER_CTX *cctx = NULL;
 
     /* We should not have been called if we do not have key material. */
-    if (!ossl_assert(el != NULL))
+    if (!ossl_assert(el != NULL)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     /*
      * Have we already encrypted the maximum number of packets using the current
      * key?
      */
-    if (el->op_count >= ossl_qrl_get_suite_max_pkt(el->suite_id))
+    if (el->op_count >= ossl_qrl_get_suite_max_pkt(el->suite_id)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_MAXIMUM_ENCRYPTED_PKTS_REACHED);
         return 0;
+    }
 
     /*
      * TX key update is simpler than for RX; once we initiate a key update, we
@@ -496,13 +500,17 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
      * keys. Thus the EL always uses keyslot 0 for the TX side.
      */
     cctx = el->cctx[0];
-    if (!ossl_assert(cctx != NULL))
+    if (!ossl_assert(cctx != NULL)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     /* Construct nonce (nonce=IV ^ PN). */
     nonce_len = EVP_CIPHER_CTX_get_iv_length(cctx);
-    if (!ossl_assert(nonce_len >= (int)sizeof(QUIC_PN)))
+    if (!ossl_assert(nonce_len >= (int)sizeof(QUIC_PN))) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     memcpy(nonce, el->iv[0], (size_t)nonce_len);
     for (i = 0; i < sizeof(QUIC_PN); ++i)
