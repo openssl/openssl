@@ -1581,7 +1581,7 @@ static int quic_do_handshake(QCTX *ctx)
          * We do this as late as possible because some BIOs (e.g. BIO_s_connect)
          * may not be able to provide us with a peer address until they have
          * finished their own processing. They may not be able to perform this
-         * processing until an application has figured configuring that BIO
+         * processing until an application has finished configuring that BIO
          * (e.g. with setter calls), which might happen after SSL_set_bio is
          * called.
          */

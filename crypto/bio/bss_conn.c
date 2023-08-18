@@ -347,8 +347,7 @@ static int conn_free(BIO *a)
         return 0;
     data = (BIO_CONNECT *)a->ptr;
 
-    if (data->dgram_bio != NULL)
-        BIO_free(data->dgram_bio);
+    BIO_free(data->dgram_bio);
 
     if (a->shutdown) {
         conn_close_socket(a);
@@ -372,8 +371,12 @@ static int conn_read(BIO *b, char *out, int outl)
             return ret;
     }
 
-    if (data->dgram_bio != NULL)
-        return BIO_read(data->dgram_bio, out, outl);
+    if (data->dgram_bio != NULL) {
+        BIO_clear_retry_flags(b);
+        ret = BIO_read(data->dgram_bio, out, outl);
+        BIO_set_flags(b, BIO_get_retry_flags(data->dgram_bio));
+        return ret;
+    }
 
     if (out != NULL) {
         clear_socket_error();
@@ -406,8 +409,12 @@ static int conn_write(BIO *b, const char *in, int inl)
             return ret;
     }
 
-    if (data->dgram_bio != NULL)
-        return BIO_write(data->dgram_bio, in, inl);
+    if (data->dgram_bio != NULL) {
+        BIO_clear_retry_flags(b);
+        ret = BIO_write(data->dgram_bio, in, inl);
+        BIO_set_flags(b, BIO_get_retry_flags(data->dgram_bio));
+        return ret;
+    }
 
     clear_socket_error();
 # ifndef OPENSSL_NO_KTLS

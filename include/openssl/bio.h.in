@@ -495,7 +495,7 @@ typedef struct bio_poll_descriptor_st {
 #  define BIO_set_conn_mode(b,n)        BIO_ctrl(b,BIO_C_SET_CONNECT_MODE,(n),NULL)
 #  define BIO_set_sock_type(b,t)        BIO_ctrl(b,BIO_C_SET_SOCK_TYPE,(t),NULL)
 #  define BIO_get_sock_type(b)          BIO_ctrl(b,BIO_C_GET_SOCK_TYPE,0,NULL)
-#  define BIO_get_dgram_bio(b, p)       BIO_ctrl(b,BIO_C_GET_DGRAM_BIO,0,(void *)(BIO **)(p))
+#  define BIO_get0_dgram_bio(b, p)      BIO_ctrl(b,BIO_C_GET_DGRAM_BIO,0,(void *)(BIO **)(p))
 
 /* BIO_s_accept() */
 #  define BIO_set_accept_name(b,name)   BIO_ctrl(b,BIO_C_SET_ACCEPT,0, \
