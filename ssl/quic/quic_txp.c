@@ -1804,6 +1804,7 @@ static int txp_generate_pre_token(OSSL_QUIC_TX_PACKETISER *txp,
             if (!tx_helper_commit(h))
                 return 0;
 
+            tpkt->had_conn_close = 1;
             *can_be_non_inflight = 0;
         } else {
             tx_helper_rollback(h);
@@ -2943,6 +2944,9 @@ static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp,
 
     if (tpkt->had_ack_frame)
         txp->want_ack &= ~(1UL << pn_space);
+
+    if (tpkt->had_conn_close)
+        txp->want_conn_close = 0;
 
     /*
      * Decrement probe request counts if we have sent a packet that meets
