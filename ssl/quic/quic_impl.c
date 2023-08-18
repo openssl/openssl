@@ -2237,6 +2237,9 @@ static int quic_read_actual(QCTX *ctx,
                                               stream);
     }
 
+    if (*bytes_read == 0 && is_fin)
+        return QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_ZERO_RETURN);
+
     return 1;
 }
 
