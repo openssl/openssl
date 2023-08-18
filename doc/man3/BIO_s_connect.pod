@@ -7,7 +7,7 @@ BIO_set_conn_hostname, BIO_set_conn_port,
 BIO_set_conn_address, BIO_set_conn_ip_family,
 BIO_get_conn_hostname, BIO_get_conn_port,
 BIO_get_conn_address, BIO_get_conn_ip_family,
-BIO_set_nbio, BIO_set_sock_type, BIO_get_sock_type, BIO_get_dgram_bio,
+BIO_set_nbio, BIO_set_sock_type, BIO_get_sock_type, BIO_get0_dgram_bio,
 BIO_do_connect - connect BIO
 
 =head1 SYNOPSIS
@@ -31,7 +31,7 @@ BIO_do_connect - connect BIO
 
  int BIO_set_sock_type(BIO *b, int sock_type);
  int BIO_get_sock_type(BIO *b);
- int BIO_get_dgram_bio(BIO *B, BIO **dgram_bio);
+ int BIO_get0_dgram_bio(BIO *B, BIO **dgram_bio);
 
  long BIO_do_connect(BIO *b);
 
@@ -112,8 +112,10 @@ default) and B<SOCK_DGRAM>. If B<SOCK_DGRAM> is configured, the connection
 created is a UDP datagram socket handled via L<BIO_s_datagram(3)>.
 I/O calls such as L<BIO_read(3)> and L<BIO_write(3)> are forwarded transparently
 to an internal L<BIO_s_datagram(3)> instance. The created L<BIO_s_datagram(3)>
-instance can be retrieved using BIO_get_dgram_bio() if desired, which writes
-a pointer to the L<BIO_s_datagram(3)> instance to I<*dgram_bio>.
+instance can be retrieved using BIO_get0_dgram_bio() if desired, which writes
+a pointer to the L<BIO_s_datagram(3)> instance to I<*dgram_bio>. The lifetime
+of the internal L<BIO_s_datagram(3)> is managed by BIO_s_connect() and does not
+need to be freed by the caller.
 
 BIO_get_sock_type() retrieves the value set using BIO_set_sock_type().
 
@@ -181,7 +183,7 @@ BIO_set_sock_type() returns 1 on success or 0 on failure.
 
 BIO_get_sock_type() returns a socket type or 0 if the call is not supported.
 
-BIO_get_dgram_bio() returns 1 on success or 0 on failure.
+BIO_get0_dgram_bio() returns 1 on success or 0 on failure.
 
 =head1 EXAMPLES
 
