@@ -702,7 +702,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
      *      sent to the FIFM.
      *
      */
-    int res = TX_PACKETISER_RES_FAILURE, rc;
+    int res = 0, rc;
     uint32_t archetype, enc_level;
     uint32_t conn_close_enc_level = QUIC_ENC_LEVEL_NUM;
     struct txp_pkt pkt[QUIC_ENC_LEVEL_NUM];
@@ -714,6 +714,8 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
          enc_level < QUIC_ENC_LEVEL_NUM;
          ++enc_level)
         pkt[enc_level].h_valid = 0;
+
+    memset(status, 0, sizeof(*status));
 
     /*
      * Should not be needed, but a sanity check in case anyone else has been
@@ -798,8 +800,6 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
     }
 
     /* 4. Commit */
-    memset(status, 0, sizeof(*status));
-
     for (enc_level = QUIC_ENC_LEVEL_INITIAL;
          enc_level < QUIC_ENC_LEVEL_NUM;
          ++enc_level) {
@@ -833,7 +833,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
            && pkt[QUIC_ENC_LEVEL_HANDSHAKE].h.bytes_appended > 0);
 
     /* Flush & Cleanup */
-    res = pkts_done > 0 ? TX_PACKETISER_RES_SENT_PKT : TX_PACKETISER_RES_NO_PKT;
+    res = 1;
 out:
     ossl_qtx_finish_dgram(txp->args.qtx);
 
@@ -841,6 +841,8 @@ out:
          enc_level < QUIC_ENC_LEVEL_NUM;
          ++enc_level)
         txp_pkt_cleanup(&pkt[enc_level], txp);
+
+    status->sent_pkt = pkts_done;
 
     return res;
 }
