@@ -115,6 +115,7 @@ static void txpim_clear(QUIC_TXPIM_PKT_EX *ex)
     ex->public.had_max_streams_bidi_frame  = 0;
     ex->public.had_max_streams_uni_frame   = 0;
     ex->public.had_ack_frame               = 0;
+    ex->public.had_conn_close              = 0;
 }
 
 QUIC_TXPIM_PKT *ossl_quic_txpim_pkt_alloc(QUIC_TXPIM *txpim)
