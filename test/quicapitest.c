@@ -195,6 +195,83 @@ static int test_quic_write_read(int idx)
     return ret;
 }
 
+/*
+ * Test that sending FIN with no data to a client blocking in SSL_read_ex() will
+ * wake up the client.
+ */
+static int test_fin_only_blocking(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL_CTX *sctx = NULL;
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    const char *msg = "Hello World";
+    uint64_t sid;
+    size_t numbytes;
+    unsigned char buf[32];
+    int ret = 0;
+    OSSL_TIME timer, timediff;
+
+    if (!qtest_supports_blocking())
+        return TEST_skip("Blocking tests not supported in this build");
+
+    if (!TEST_ptr(cctx)
+            || !TEST_true(qtest_create_quic_objects(libctx, cctx, sctx,
+                                                    cert, privkey,
+                                                    QTEST_FLAG_BLOCK,
+                                                    &qtserv, &clientquic,
+                                                    NULL))
+            || !TEST_true(SSL_set_tlsext_host_name(clientquic, "localhost")))
+        goto end;
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto end;
+
+    if (!TEST_true(ossl_quic_tserver_stream_new(qtserv, 0, &sid))
+            || !TEST_true(ossl_quic_tserver_write(qtserv, sid,
+                                                  (unsigned char *)msg,
+                                                  strlen(msg), &numbytes))
+            || !TEST_size_t_eq(strlen(msg), numbytes))
+        goto end;
+
+    ossl_quic_tserver_tick(qtserv);
+
+    if (!TEST_true(SSL_read_ex(clientquic, buf, sizeof(buf), &numbytes))
+            || !TEST_mem_eq(msg, strlen(msg), buf, numbytes))
+
+
+        goto end;
+
+    if (!TEST_true(ossl_quic_tserver_conclude(qtserv, sid)))
+        goto end;
+
+    timer = ossl_time_now();
+    if (!TEST_false(SSL_read_ex(clientquic, buf, sizeof(buf), &numbytes)))
+        goto end;
+    timediff = ossl_time_subtract(ossl_time_now(), timer);
+
+    if (!TEST_int_eq(SSL_get_error(clientquic, 0), SSL_ERROR_ZERO_RETURN)
+               /*
+                * We expect the SSL_read_ex to not have blocked so this should
+                * be very fast. 20ms should be plenty.
+                */
+            || !TEST_uint64_t_le(ossl_time2ms(timediff), 20))
+        goto end;
+
+    if (!TEST_true(qtest_shutdown(qtserv, clientquic)))
+        goto end;
+
+    ret = 1;
+
+ end:
+    ossl_quic_tserver_free(qtserv);
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+
+    return ret;
+}
+
 /* Test that a vanilla QUIC SSL object has the expected ciphersuites available */
 static int test_ciphersuites(void)
 {
@@ -912,6 +989,7 @@ int setup_tests(void)
         goto err;
 
     ADD_ALL_TESTS(test_quic_write_read, 3);
+    ADD_TEST(test_fin_only_blocking);
     ADD_TEST(test_ciphersuites);
     ADD_TEST(test_version);
 #if defined(DO_SSL_TRACE_TEST)
