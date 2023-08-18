@@ -119,11 +119,13 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                BN_cmp(b5, b1));
         puts("----\n");
     }
+    OPENSSL_assert(success);
 
  done:
 #ifndef ERROR_INJECT
     OPENSSL_assert(success);
 #endif
+
  err:
     BN_free(b1);
     BN_free(b2);
