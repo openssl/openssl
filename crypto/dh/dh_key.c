@@ -310,30 +310,52 @@ static int generate_key(DH *dh)
             if (!ossl_ffc_generate_private_key(ctx, &dh->params, dh->length,
                                                max_strength, priv_key))
                 goto err;
+            if (!ossl_dh_generate_public_key(ctx, dh, priv_key, pub_key))
+                goto err;
         } else {
 #ifdef FIPS_MODULE
             if (dh->params.q == NULL)
                 goto err;
 #else
             if (dh->params.q == NULL) {
-                /* secret exponent length, must satisfy 2^(l-1) <= p */
-                if (dh->length != 0
-                    && dh->length >= BN_num_bits(dh->params.p))
-                    goto err;
-                l = dh->length ? dh->length : BN_num_bits(dh->params.p) - 1;
-                if (!BN_priv_rand_ex(priv_key, l, BN_RAND_TOP_ONE,
-                                     BN_RAND_BOTTOM_ANY, 0, ctx))
-                    goto err;
-                /*
-                 * We handle just one known case where g is a quadratic non-residue:
-                 * for g = 2: p % 8 == 3
-                 */
-                if (BN_is_word(dh->params.g, DH_GENERATOR_2)
-                    && !BN_is_bit_set(dh->params.p, 2)) {
-                    /* clear bit 0, since it won't be a secret anyway */
-                    if (!BN_clear_bit(priv_key, 0))
+                int errflags = 0;
+                do {
+                    /* secret exponent length, must satisfy 2^(l-1) <= p */
+                    if (dh->length != 0
+                        && dh->length >= BN_num_bits(dh->params.p))
                         goto err;
-                }
+                    l = dh->length ? dh->length : BN_num_bits(dh->params.p) - 1;
+                    if (!BN_priv_rand_ex(priv_key, l, BN_RAND_TOP_ONE,
+                                        BN_RAND_BOTTOM_ANY, 0, ctx))
+                        goto err;
+                    /*
+                    * We handle just one known case where g is a quadratic non-residue:
+                    * for g = 2: p % 8 == 3
+                    */
+                    if (BN_is_word(dh->params.g, DH_GENERATOR_2)
+                        && !BN_is_bit_set(dh->params.p, 2)) {
+                        /* clear bit 0, since it won't be a secret anyway */
+                        if (!BN_clear_bit(priv_key, 0))
+                            goto err;
+                    }
+                    if (!ossl_dh_generate_public_key(ctx, dh, priv_key, pub_key))
+                        goto err;
+                    /* 
+                    * The private key could not be valided with q,
+                    * so regenerate the private key in case of weak public key 
+                    */
+                    if (DH_check_pub_key(dh, pub_key, &errflags))
+                        break;
+                    if ((errflags & DH_CHECK_PUBKEY_TOO_SMALL) != 0){
+                        ERR_raise(ERR_LIB_DH, DH_R_CHECK_PUBKEY_TOO_SMALL);
+                        continue;
+                    }
+                    if ((errflags & DH_CHECK_PUBKEY_TOO_LARGE) != 0){
+                        ERR_raise(ERR_LIB_DH, DH_R_CHECK_PUBKEY_TOO_LARGE);
+                        continue;
+                    }
+                    goto err;
+                } while (1);
             } else
 #endif
             {
@@ -342,21 +364,20 @@ static int generate_key(DH *dh)
                                                      FFC_PARAM_TYPE_DH, NULL))
                     goto err;
                 /*
-                 * For FFC FIPS 186-4 keygen
-                 * security strength s = 112,
-                 * Max Private key size N = len(q)
-                 */
+                * For FFC FIPS 186-4 keygen
+                * security strength s = 112,
+                * Max Private key size N = len(q)
+                */
                 if (!ossl_ffc_generate_private_key(ctx, &dh->params,
-                                                   BN_num_bits(dh->params.q),
-                                                   MIN_STRENGTH,
-                                                   priv_key))
+                                                    BN_num_bits(dh->params.q),
+                                                    MIN_STRENGTH,
+                                                    priv_key))
+                    goto err;
+                if (!ossl_dh_generate_public_key(ctx, dh, priv_key, pub_key))
                     goto err;
             }
         }
     }
-
-    if (!ossl_dh_generate_public_key(ctx, dh, priv_key, pub_key))
-        goto err;
 
     dh->pub_key = pub_key;
     dh->priv_key = priv_key;
