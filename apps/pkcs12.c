@@ -878,6 +878,15 @@ static int jdk_trust(PKCS12_SAFEBAG *bag, void *cbarg)
     if (cbarg == NULL)
         return 1;
 
+    /* only add to X509 certBag without localKeyID (no associated key)
+     * and no existing trustedkeyusage
+     */
+    if(PKCS12_SAFEBAG_get_nid(bag)!=NID_certBag
+            || PKCS12_SAFEBAG_get_bag_nid(bag)!=NID_x509Certificate
+            || !!PKCS12_SAFEBAG_get0_attr(bag, NID_localKeyID)
+            || !!PKCS12_SAFEBAG_get0_attr(bag, NID_oracle_jdk_trustedkeyusage))
+        return 1;
+
     /* Get the current attrs */
     attrs = (STACK_OF(X509_ATTRIBUTE)*)PKCS12_SAFEBAG_get0_attrs(bag);
 
