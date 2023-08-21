@@ -10,6 +10,7 @@ use strict;
 use warnings;
 
 use IPC::Open2;
+use IPC::Open3;
 use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_file/;
 use OpenSSL::Test::Utils;
 
@@ -18,6 +19,7 @@ setup("test_ocsp_check");
 plan skip_all => "OCSP is not supported by this OpenSSL build"
     if disabled("ocsp");
 plan skip_all => "test_ocsp_check needs sock enabled" if disabled("sock");
+plan skip_all => "test_ocsp_check needs TLS enabled" if disabled("no_tls");
 plan skip_all => "test_ocsp_check does not run on Windows"
     if $^O =~ /^(MSWin32|msys)$/;
 
@@ -61,7 +63,14 @@ sub run_test {
                  "-status", "-verify_return_error", "-strict", @check_time);
 
     # Run the OCSP responder
-    my $o_pid = open2(my $o_out, my $o_in, $shlib_wrap, $apps_openssl, @o_cmd);
+    my $o_pid = open3(my $o_in, my $o_out, my $o_err, $shlib_wrap, $apps_openssl, @o_cmd);
+    while (<$o_err>) {
+        chomp;
+        if (/^ocsp: waiting for OCSP client connections...$/) {
+            print "OCSP responder ready\n";
+            last;
+        }
+    }
 
     # Start up the server
     my $s_pid = open2(my $s_out, my $s_in, $shlib_wrap, $apps_openssl, @s_cmd);
