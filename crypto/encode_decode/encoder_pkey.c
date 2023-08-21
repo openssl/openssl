@@ -284,8 +284,10 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
         end = sk_OPENSSL_CSTRING_num(encoder_data.names);
         if (end > 0) {
             encoder_data.id_names = OPENSSL_malloc(end * sizeof(int));
-            if (encoder_data.id_names == NULL)
+            if (encoder_data.id_names == NULL) {
+                sk_OPENSSL_CSTRING_free(keymgmt_data.names);
                 goto err;
+            }
             for (i = 0; i < end; ++i) {
                 const char *name = sk_OPENSSL_CSTRING_value(keymgmt_data.names, i);
 
