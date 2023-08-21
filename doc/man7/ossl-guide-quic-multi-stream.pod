@@ -131,14 +131,6 @@ send more data on a stream after L<SSL_stream_conclude(3)> has been called.
 It is also possible to abandon a stream abnormally by calling
 L<SSL_stream_reset(3)>.
 
-=begin comment
-
-TODO(QUIC): What does SSL_get_error() return in the event that the
-peer has reset a stream? If SSL_ERROR_SSL how does an application distinguish
-between a stream reset and a connection level fatal error?
-
-=end comment
-
 Once a stream object is no longer needed it should be freed via a call to
 L<SSL_free(3)>. An application should not call L<SSL_shutdown(3)> on it since
 this is only meaningful for connection level B<SSL> objects. Freeing the stream
@@ -277,7 +269,10 @@ function to find out more details. Since this is a blocking application this
 will either return B<SSL_ERROR_SYSCALL> or B<SSL_ERROR_SSL> indicating a
 fundamental problem, or it will return B<SSL_ERROR_ZERO_RETURN> indicating that
 the stream is concluded and there will be no more data available to read from
-it.
+it. Care must be taken to distinguish between an error at the stream level (i.e.
+a stream reset) and an error at the connection level (i.e. a connection closed).
+The L<SSL_get_stream_read_state(3)> function can be used to distinguish between
+these different cases.
 
     /*
      * Check whether we finished the while loop above normally or as the
@@ -287,13 +282,37 @@ it.
      * QUIC terms this means that the peer has sent FIN on the stream to
      * indicate that no further data will be sent.
      */
-    if (SSL_get_error(stream1, 0) != SSL_ERROR_ZERO_RETURN) {
+    switch (SSL_get_error(ssl, 0)) {
+    case SSL_ERROR_ZERO_RETURN:
+        /* Normal completion of the stream */
+        break;
+
+    case SSL_ERROR_SSL:
         /*
-         * Some error occurred other than a graceful close down by the
-         * peer.
+         * Some stream fatal error occurred. This could be because of a stream
+         * reset - or some failure occurred on the underlying connection.
          */
-        printf ("Failed reading remaining data from stream 1\n");
-        goto end;
+        switch (SSL_get_stream_read_state(ssl)) {
+        case SSL_STREAM_STATE_RESET_REMOTE:
+            printf("Stream reset occurred\n");
+            /* The stream has been reset but the connection is still healthy. */
+            break;
+
+        case SSL_STREAM_STATE_CONN_CLOSED:
+            printf("Connection closed\n");
+            /* Connection is already closed. Skip SSL_shutdown() */
+            goto end;
+
+        default:
+            printf("Unknown stream failure\n");
+            break;
+        }
+        break;
+
+    default:
+        /* Some other unexpected error occurred */
+        printf ("Failed reading remaining data\n");
+        break;
     }
 
 =head2 Accepting an incoming stream
