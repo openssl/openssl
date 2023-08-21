@@ -137,6 +137,10 @@ struct bio_st {
 # ifdef OPENSSL_SYS_VMS
 typedef unsigned int socklen_t;
 # endif
+# if defined(_HPUX_SOURCE) && defined(_PA_RISC1_1)
+#  undef socklen_t
+#  define socklen_t int
+# endif
 
 extern CRYPTO_RWLOCK *bio_lookup_lock;
 
