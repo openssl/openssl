@@ -23,16 +23,31 @@ OpenSSL 3.2
 ### Major changes between OpenSSL 3.1 and OpenSSL 3.2 [under development]
 
   * Added client side support for QUIC.
-  * Add Raw Public Key (RFC7250) support.
+  * Added multiple tutorials on the OpenSSL library and in particular
+    on writing various clients (using TLS and QUIC protocols) with libssl.
+  * Added support for Brainpool curves in TLS-1.3.
+  * Added Raw Public Key (RFC7250) support.
   * Added support for certificate compression (RFC8879), including
     library support for Brotli and Zstandard compression.
+  * Implemented support for all five instances of EdDSA from RFC8032.
+  * Implemented SM4-XTS support.
+  * Implemented deterministic ECDSA signatures (RFC6979) support.
+  * Implemented AES-GCM-SIV (RFC8452) support.
+  * Implemented Hybrid Public Key Encryption (HPKE) as defined in RFC9180.
+  * Multiple new features and improvements of the CMP protocol support.
   * Subject or issuer names in X.509 objects are now displayed as UTF-8 strings
     by default.
   * TCP Fast Open (RFC7413) support is available on Linux, macOS, and FreeBSD
     where enabled and supported.
+  * The default SSL/TLS security level has been changed from 1 to 2.
   * Full support for provider-based/pluggable signature algorithms in TLS 1.3
-    operations as well as X.509 data structure support. With a suitable provider
-    this fully enables use of post-quantum/quantum-safe cryptography.
+    operations as well as CMS and X.509 data structure support. With a suitable
+    provider this fully enables use of post-quantum/quantum-safe cryptography.
+  * It is now possible to use the IANA standard names in TLS cipher
+    configuration.
+  * The `x509`, `ca`, and `req` apps now always produce X.509v3 certificates.
+  * Support for Argon2d, Argon2i, Argon2id KDFs has been added along with
+    a basic thread pool implementation for select platforms.
 
 OpenSSL 3.1
 -----------
