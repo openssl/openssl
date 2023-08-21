@@ -99,15 +99,6 @@ B<SSL_INCOMING_STREAM_POLICY_ACCEPT>. See the man page for further details. This
 is not relevant if the default stream has been disabed as described in
 L</THE DEFAULT STREAM> above.
 
-=begin comment
-
-TODO(QUIC): What happens if SSL_accept_stream()/SSL_new_stream() is called and
-there is no default stream yet? incoming stream policy suggests that all
-incoming streams are rejected by default....but this only applies after a
-default stream has been created?
-
-=end comment
-
 Any stream may be bi-directional or uni-directional. If it is uni-directional
 then the initiator can write to it but not read from it, and vice-versa for the
 peer. You can determine what type of stream an B<SSL> object represents by

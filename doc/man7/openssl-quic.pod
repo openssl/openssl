@@ -97,6 +97,10 @@ in order to use L<SSL_accept_stream(3)> in this case. However, applications
 using additional streams are strongly recommended to use multi-stream mode
 instead.
 
+Calling L<SSL_new_stream(3)> or L<SSL_accept_stream(3)> before a default stream
+has been associated with the QUIC connection SSL object will inhibit future
+creation of a default stream.
+
 =head2 Multi-Stream Mode
 
 The recommended usage mode for new applications adopting QUIC is multi-stream

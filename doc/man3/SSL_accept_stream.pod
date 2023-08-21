@@ -34,6 +34,9 @@ blocking mode (see L<SSL_set_blocking_mode(3)>), but this may be bypassed by
 passing the flag B<SSL_ACCEPT_STREAM_NO_BLOCK> in I<flags>. If this flag is set,
 this function never blocks.
 
+Calling SSL_accept_stream() if there is no default stream already present
+inhibits the future creation of a default stream. See L<openssl-quic(7)>.
+
 SSL_get_accept_stream_queue_len() returns the number of incoming streams
 currently waiting in the accept queue.
 
