@@ -330,8 +330,8 @@ tsa_name		= yes	# Must the TSA name be included in the reply?
 				# (optional, default: no)
 ess_cert_id_chain	= no	# Must the ESS cert id chain be included?
 				# (optional, default: no)
-ess_cert_id_alg		= sha1	# algorithm to compute certificate
-				# identifier (optional, default: sha1)
+ess_cert_id_alg		= sha256	# algorithm to compute certificate
+				# identifier (optional, default: sha256)
 
 [insta] # CMP using Insta Demo CA
 # Message transfer
