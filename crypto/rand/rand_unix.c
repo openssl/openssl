@@ -840,7 +840,7 @@ static uint64_t get_timer_bits(void)
     if (res != 0)
         return res;
 
-# if defined(__sun) || defined(__hpux)
+# if defined(__sun)
     return gethrtime();
 # elif defined(_AIX)
     {
