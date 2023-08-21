@@ -241,8 +241,73 @@ client, so we won't repeat it here.
 
 We can also perform data transfer using a default QUIC stream that is
 automatically associated with the B<SSL> object for us. We can transmit data
-using L<SSL_write_ex(3)>, and receive data using L<SSL_read_ex(3)> in exactly
-the same way as for TLS. Again, we won't repeat it here.
+using L<SSL_write_ex(3)>, and receive data using L<SSL_read_ex(3)> in the same
+way as for TLS. The main difference is that we have to account for failures
+slightly differently. With QUIC the stream can be reset by the peer (which is
+fatal for that stream), but the underlying connection itself may still be
+healthy.
+
+    /*
+     * Get up to sizeof(buf) bytes of the response. We keep reading until the
+     * server closes the connection.
+     */
+    while (SSL_read_ex(ssl, buf, sizeof(buf), &readbytes)) {
+        /*
+        * OpenSSL does not guarantee that the returned data is a string or
+        * that it is NUL terminated so we use fwrite() to write the exact
+        * number of bytes that we read. The data could be non-printable or
+        * have NUL characters in the middle of it. For this simple example
+        * we're going to print it to stdout anyway.
+        */
+        fwrite(buf, 1, readbytes, stdout);
+    }
+    /* In case the response didn't finish with a newline we add one now */
+    printf("\n");
+
+    /*
+     * Check whether we finished the while loop above normally or as the
+     * result of an error. The 0 argument to SSL_get_error() is the return
+     * code we received from the SSL_read_ex() call. It must be 0 in order
+     * to get here. Normal completion is indicated by SSL_ERROR_ZERO_RETURN. In
+     * QUIC terms this means that the peer has sent FIN on the stream to
+     * indicate that no further data will be sent.
+     */
+    switch (SSL_get_error(ssl, 0)) {
+    case SSL_ERROR_ZERO_RETURN:
+        /* Normal completion of the stream */
+        break;
+
+    case SSL_ERROR_SSL:
+        /*
+         * Some stream fatal error occurred. This could be because of a stream
+         * reset - or some failure occurred on the underlying connection.
+         */
+        switch (SSL_get_stream_read_state(ssl)) {
+        case SSL_STREAM_STATE_RESET_REMOTE:
+            printf("Stream reset occurred\n");
+            /* The stream has been reset but the connection is still healthy. */
+            break;
+
+        case SSL_STREAM_STATE_CONN_CLOSED:
+            printf("Connection closed\n");
+            /* Connection is already closed. Skip SSL_shutdown() */
+            goto end;
+
+        default:
+            printf("Unknown stream failure\n");
+            break;
+        }
+        break;
+
+    default:
+        /* Some other unexpected error occurred */
+        printf ("Failed reading remaining data\n");
+        break;
+    }
+
+In the above code example you can see that B<SSL_ERROR_SSL> indicates a stream
+fatal error. We can use L<SSL_get_stream_read_state(3)> to determine whether the
+stream has been reset, or if some other fatal error has occurred.
 
 =head2 Shutting down the connection
 

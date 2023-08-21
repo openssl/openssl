@@ -288,13 +288,37 @@ int main(void)
      * QUIC terms this means that the peer has sent FIN on the stream to
      * indicate that no further data will be sent.
      */
-    if (SSL_get_error(stream1, 0) != SSL_ERROR_ZERO_RETURN) {
+    switch (SSL_get_error(stream1, 0)) {
+    case SSL_ERROR_ZERO_RETURN:
+        /* Normal completion of the stream */
+        break;
+
+    case SSL_ERROR_SSL:
         /*
-         * Some error occurred other than a graceful close down by the
-         * peer.
+         * Some stream fatal error occurred. This could be because of a stream
+         * reset - or some failure occurred on the underlying connection.
          */
-        printf ("Failed reading remaining data from stream 1\n");
-        goto end;
+        switch (SSL_get_stream_read_state(stream1)) {
+        case SSL_STREAM_STATE_RESET_REMOTE:
+            printf("Stream reset occurred\n");
+            /* The stream has been reset but the connection is still healthy. */
+            break;
+
+        case SSL_STREAM_STATE_CONN_CLOSED:
+            printf("Connection closed\n");
+            /* Connection is already closed. Skip SSL_shutdown() */
+            goto end;
+
+        default:
+            printf("Unknown stream failure\n");
+            break;
+        }
+        break;
+
+    default:
+        /* Some other unexpected error occurred */
+        printf ("Failed reading remaining data\n");
+        break;
     }
 
     /*
@@ -325,9 +349,30 @@ int main(void)
     printf("\n");
 
     /* Check for errors on the stream */
-    if (SSL_get_error(stream3, 0) != SSL_ERROR_ZERO_RETURN) {
-        printf ("Failed reading remaining data from stream 3\n");
-        goto end;
+    switch (SSL_get_error(stream3, 0)) {
+    case SSL_ERROR_ZERO_RETURN:
+        /* Normal completion of the stream */
+        break;
+
+    case SSL_ERROR_SSL:
+        switch (SSL_get_stream_read_state(stream3)) {
+        case SSL_STREAM_STATE_RESET_REMOTE:
+            printf("Stream reset occurred\n");
+            break;
+
+        case SSL_STREAM_STATE_CONN_CLOSED:
+            printf("Connection closed\n");
+            goto end;
+
+        default:
+            printf("Unknown stream failure\n");
+            break;
+        }
+        break;
+
+    default:
+        printf ("Failed reading remaining data\n");
+        break;
     }
 
     /*
