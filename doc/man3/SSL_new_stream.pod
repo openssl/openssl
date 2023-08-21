@@ -35,6 +35,9 @@ This function can only be used to create stream objects for locally-initiated
 streams. To accept incoming streams initiated by a peer, use
 L<SSL_accept_stream(3)>.
 
+Calling SSL_new_stream() if there is no default stream already present
+inhibits the future creation of a default stream. See L<openssl-quic(7)>.
+
 =head1 RETURN VALUES
 
 SSL_new_stream() returns a new stream object, or NULL on error.
