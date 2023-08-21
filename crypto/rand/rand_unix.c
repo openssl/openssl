@@ -830,7 +830,7 @@ static uint64_t get_time_stamp(void)
  * Get an arbitrary timer value of the highest possible resolution
  *
  * The timer value is added as random noise to the additional data,
- * which is not considered a trusted entropy sourec, so any result
+ * which is not considered a trusted entropy source, so any result
  * is acceptable.
  */
 static uint64_t get_timer_bits(void)
