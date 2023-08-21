@@ -35,7 +35,7 @@ data between the two peers. Each stream is also represented by an B<SSL>
 object. A stream is logically independent of all the other streams associated
 with the same connection. Data sent on a stream is guaranteed to be delivered
 in the order that it was sent within that stream. The same is not true across
-streams, e.g.if an application sends data on stream 1 first and then sends some
+streams, e.g. if an application sends data on stream 1 first and then sends some
 more data on stream 2 second, then the remote peer may receive the data sent on
 stream 2 before it receives the data sent on stream 1.
 
@@ -133,7 +133,8 @@ L<SSL_stream_reset(3)>.
 
 Once a stream object is no longer needed it should be freed via a call to
 L<SSL_free(3)>. An application should not call L<SSL_shutdown(3)> on it since
-this is only meaningful for connection level B<SSL> objects.
+this is only meaningful for connection level B<SSL> objects. Freeing the stream
+will automatically signal STOP_SENDING to the peer.
 
 =head1 STREAMS AND CONNECTIONS
 
@@ -144,7 +145,8 @@ object. Specifically, if you are handling each of your stream objects in a
 different thread and call L<SSL_get0_connection(3)> from within that thread then
 you must be careful to not to call any function that uses the connection object
 at the same time as one of the other threads is also using that connection
-object.
+object (with the exception of L<SSL_accept_stream(3)> and
+L<SSL_get_accept_stream_queue_len(3)> which are thread-safe).
 
 A stream object does not inherit all its settings and values from its parent
 B<SSL> connection object. Therefore certain function calls that are relevant to
@@ -156,8 +158,8 @@ object it will return NULL.
 =head1 SIMPLE MULTI-STREAM QUIC CLIENT EXAMPLE
 
 This section will present various source code samples demonstrating how to write
-a simple multi-stream QUIC client application which connects to a server, sends
-some HTTP/1.0 requests to it, and reads back the responses. Note that HTTP/1.0
+a simple multi-stream QUIC client application which connects to a server, send
+some HTTP/1.0 requests to it, and read back the responses. Note that HTTP/1.0
 over QUIC is non-standard and will not be supported by real world servers. This
 is for demonstration purposes only.
 
@@ -192,7 +194,7 @@ object and the value B<SSL_DEFAULT_STREAM_MODE_NONE>.
 For the purposes of this example we will create two different streams to send
 two different HTTP requests to the server. For the purposes of demonstration the
 first of these will be a bi-directional stream and the second one will be a
-uni-directional one
+uni-directional one:
 
     /*
      * We create two new client initiated streams. The first will be
@@ -258,7 +260,7 @@ as concluded).
 
 In a blocking application like this one calls to L<SSL_read_ex(3)> will either
 succeed immediately returning data that is already available, or they will block
-waiting for more data to become availabe and return it when it is, or it will
+waiting for more data to become available and return it when it is, or they will
 fail with a 0 response code.
 
 Once we exit the while loop above we know that the last call to
