@@ -322,7 +322,8 @@ With QUIC it means that the server has indicated "FIN" on the stream, meaning
 that it will no longer send any more data on that stream. However this only
 gives us information about the stream itself and does not tell us anything about
 the underlying connection. More data could still be sent from the server on some
-other stream.
+other stream. Additionally, although the server will not send any more data to
+the client, it does not prevent the client from sending more data to the server.
 
 In this tutorial, once we have finished reading data from the server on the one
 stream that we are using, we will close the connection down. As before we do
@@ -350,7 +351,7 @@ connection and no more data can be sent or received. L<SSL_shutdown(3)> returns
 0 once the first stage has been completed.
 
 In the second stage the connection enters a "closing" state. Application data
-cannot be sent or recieved in this state, but late arriving packets coming from
+cannot be sent or received in this state, but late arriving packets coming from
 the peer will be handled appropriately. Once this stage has completed
 successfully L<SSL_shutdown(3)> will return 1 to indicate success.
 
