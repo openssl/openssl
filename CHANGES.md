@@ -27,16 +27,68 @@ OpenSSL 3.2
 
  * Added client side support for QUIC
 
-   *Hugo Landau*
+   *Hugo Landau, Matt Caswell, Paul Dale, Tomáš Mráz, Richard Lewitte*
+
+ * Added multiple tutorials on the OpenSSL library and in particular
+   on writing various clients (using TLS and QUIC protocols) with libssl.
+
+   *Matt Caswell*
+
+ * Added secp384r1 implemetation using Solinas' reduction to improve
+   speed of the NIST P-384 elliptic curve. To enable the implementation
+   the build option `enable-ec_nistp_64_gcc_128` must be used.
+
+   *Rohan McLure*
+
+ * Improved RFC7468 compliance of the asn1parse command.
+
+   *Matthias St. Pierre*
 
  * Added SHA256/192 algorithm support.
 
    *Fergus Dall*
 
- * Provide a new configure option `no-http` that can be used to disable HTTP
-   support.
+ * Added support for securely getting root CA certificate update in
+   CMP.
+
+   *David von Oheimb*
+
+ * Improved contention on global write locks by using more read locks where
+   appropriate.
+
+   *Matt Caswell*
+
+ * Improved performance of OSSL_PARAM lookups in performance critical
+   provider functions.
+
+   *Paul Dale*
+
+ * Added the SSL_get0_group_name() function to provide access to the
+   name of the group used for the TLS key exchange.
+
+   *Alex Bozarth*
+
+ * Provide a new configure option `no-http` that can be used to disable the
+   HTTP support. Provide new configure options `no-apps` and `no-docs` to
+   disable building the openssl command line application and the documentation.
 
    *Vladimír Kotal*
+
+ * Provide a new configure option `no-ecx` that can be used to disable the
+   X25519, X448, and EdDSA support.
+
+   *Yi Li*
+
+ * When multiple OSSL_KDF_PARAM_INFO parameters are passed to
+   the EVP_KDF_CTX_set_params() function they are now concatenated not just
+   for the HKDF algorithm but also for SSKDF and X9.63 KDF algorithms.
+
+   *Paul Dale*
+
+ * Added OSSL_FUNC_keymgmt_im/export_types_ex() provider functions that get
+   the provider context as a parameter.
+
+   *Ingo Franzki*
 
  * TLS round-trip time calculation was added by a Brigham Young University
    Capstone team partnering with Sandia National Laboratories. A new function
@@ -51,17 +103,6 @@ OpenSSL 3.2
    is recommended.
 
    *Matt Caswell*
-
- * Reworked the Fix for the Timing Oracle in RSA Decryption ([CVE-2022-4304]).
-   The previous fix for this timing side channel turned out to cause
-   a severe 2-3x performance regression in the typical use case
-   compared to 3.0.7. The new fix uses existing constant time
-   code paths, and restores the previous performance level while
-   fully eliminating all existing timing side channels.
-   The fix was developed by Bernd Edlinger with testing support
-   by Hubert Kario.
-
-   *Bernd Edlinger*
 
  * Added an "advanced" command mode to s_client. Use this with the "-adv"
    option. The old "basic" command mode recognises certain letters that must
@@ -80,10 +121,52 @@ OpenSSL 3.2
 
    *Todd Short*
 
- * Added EC_GROUP_to_params which creates an OSSL_PARAM array
+ * Added support for modular exponentiation and CRT offloading for the
+   S390x architecture.
+
+   *Juergen Christ*
+
+ * Added further assembler code for the RISC-V architecture.
+
+   *Christoph Müllner*
+
+ * Added EC_GROUP_to_params() which creates an OSSL_PARAM array
    from a given EC_GROUP.
 
    *Oliver Mihatsch*
+
+ * Improved support for non-default library contexts and property queries
+   when parsing PKCS#12 files.
+
+   *Shane Lontis*
+
+ * Implemented support for all five instances of EdDSA from RFC8032:
+   Ed25519, Ed25519ctx, Ed25519ph, Ed448, and Ed448ph.
+   The streaming is not yet supported for the HashEdDSA variants
+   (Ed25519ph and Ed448ph).
+
+   *James Muir*
+
+ * Added SM4 optimization for ARM processors using ASIMD and AES HW
+   instructions.
+
+   *Xu Yizhou*
+
+ * Implemented SM4-XTS support.
+
+   *Xu Yizhou*
+
+ * Added platform-agnostic OSSL_sleep() function.
+
+   *Richard Levitte*
+
+ * Implemented deterministic ECDSA signatures (RFC6979) support.
+
+   *Shane Lontis*
+
+ * Implemented AES-GCM-SIV (RFC8452) support.
+
+   *Todd Short*
 
  * Added support for pluggable (provider-based) TLS signature algorithms.
    This enables TLS 1.3 authentication operations with algorithms embedded
@@ -91,6 +174,12 @@ OpenSSL 3.2
    the already available pluggable KEM and X.509 support, this enables
    for example suitable providers to deliver post-quantum or quantum-safe
    cryptography to OpenSSL users.
+
+   *Michael Baentsch*
+
+ * Added support for pluggable (provider-based) CMS signature algorithms.
+   This enables CMS sign and verify operations with algorithms embedded
+   in providers not included by default in OpenSSL.
 
    *Michael Baentsch*
 
@@ -102,6 +191,11 @@ OpenSSL 3.2
    include/openssl/hpke.h and documented in doc/man3/OSSL_HPKE_CTX_new.pod
 
    *Stephen Farrell*
+
+ * Implemented HPKE DHKEM support in providers used by HPKE (RFC9180)
+   API.
+
+   *Shane Lontis*
 
  * Add support for certificate compression (RFC8879), including
    library support for Brotli and Zstandard compression.
@@ -116,11 +210,7 @@ OpenSSL 3.2
 
    *Graham Woodward*
 
- * Major refactor of the libssl record layer
-
-   *Matt Caswell*
-
- * Added a new BIO_s_dgram_mem() to read/write datagrams to memory
+ * Major refactor of the libssl record layer.
 
    *Matt Caswell*
 
@@ -162,6 +252,24 @@ OpenSSL 3.2
 
    *Darshan Sen*
 
+ * The PKCS12_parse() function now supports MAC-less PKCS12 files.
+
+   *Daniel Fiala*
+
+ * Added ASYNC_set_mem_functions() and ASYNC_get_mem_functions() calls to be able
+   to change functions used for allocating the memory of asynchronous call stack.
+
+   *Arran Cudbard-Bell*
+
+ * Added support for signed BIGNUMs in the OSSL_PARAM APIs.
+
+   *Richard Levitte*
+
+ * A failure exit code is returned when using the openssl x509 command to check
+   certificate attributes and the checks fail.
+
+   *Rami Khaldi*
+
  * The default SSL/TLS security level has been changed from 1 to 2. RSA,
    DSA and DH keys of 1024 bits and above and less than 2048 bits and ECC keys
    of 160 bits and above and less than 224 bits were previously accepted by
@@ -181,6 +289,7 @@ OpenSSL 3.2
    will need to load the legacy crypto provider.
 
    *Paul Dale*
+
  * CCM8 cipher suites in TLS have been downgraded to security level zero
    because they use a short authentication tag which lowers their strength.
 
@@ -225,7 +334,7 @@ OpenSSL 3.2
 
  * `CMS_add0_cert()` and `CMS_add1_cert()` no more throw an error
    if a certificate to be added is already present.
- * `CMS_sign_ex()` and `CMS_sign()` now ignore any duplicate certificates
+   `CMS_sign_ex()` and `CMS_sign()` now ignore any duplicate certificates
    in their `certs` argument and no longer throw an error for them.
 
    *David von Oheimb*
@@ -235,6 +344,12 @@ OpenSSL 3.2
    The checks are meanwhile more complete and yield fewer false positives.
 
    *David von Oheimb*
+
+ * Added BIO_s_dgram_pair() and BIO_s_dgram_mem() that provide memory-based
+   BIOs with datagram semantics and support for BIO_sendmmsg() and BIO_recvmmsg()
+   calls. They can be used as the transport BIOs for QUIC.
+
+   *Hugo Landau, Matt Caswell and Tomáš Mráz*
 
  * Add new BIO_sendmmsg() and BIO_recvmmsg() BIO methods which allow
    sending and receiving multiple messages in a single call. An implementation
@@ -260,9 +375,30 @@ OpenSSL 3.2
 
    *Tianjia Zhang*
 
+ * Added `-ktls` option to `s_server` and `s_client` commands to enable the
+   KTLS support.
+
+   *Tianjia Zhang*
+
  * Zerocopy KTLS sendfile() support on Linux.
 
    *Maxim Mikityanskiy*
+
+ * The OBJ_ calls are now thread safe using a global lock.
+
+   *Paul Dale*
+
+ * New parameter `-digest` for openssl cms command allowing signing
+   pre-computed digests and new CMS API functions supporting that
+   functionality.
+
+   *Viktor Söderqvist*
+
+ * OPENSSL_malloc() and other allocation functions now raise errors on
+   allocation failures. The callers do not need to explicitly raise errors
+   unless they want to for tracing purposes.
+
+   *David von Oheimb*
 
  * Added and enabled by default implicit rejection in RSA PKCS#1 v1.5
    decryption as a protection against Bleichenbacher-like attacks.
@@ -276,6 +412,14 @@ OpenSSL 3.2
 
    *Hubert Kario*
 
+ * Added support of Brainpool curves in TLS-1.3.
+
+   *Bernd Edlinger and Matt Caswell*
+
+ * Added OpenBSD specific build targets.
+
+   *David Carlier*
+
  * Support for Argon2d, Argon2i, Argon2id KDFs has been added along with
    basic thread pool implementation for select platforms.
 
@@ -284,7 +428,7 @@ OpenSSL 3.2
 OpenSSL 3.1
 -----------
 
-### Changes between 3.1.1 and 3.1.2 [xx XXX xxxx]
+### Changes between 3.1.1 and 3.1.2 [1 Aug 2023]
 
  * Fix excessive time spent checking DH q parameter value.
 
@@ -393,6 +537,17 @@ OpenSSL 3.1
    ([CVE-2023-1255])
 
    *Nevine Ebeid*
+
+ * Reworked the Fix for the Timing Oracle in RSA Decryption ([CVE-2022-4304]).
+   The previous fix for this timing side channel turned out to cause
+   a severe 2-3x performance regression in the typical use case
+   compared to 3.0.7. The new fix uses existing constant time
+   code paths, and restores the previous performance level while
+   fully eliminating all existing timing side channels.
+   The fix was developed by Bernd Edlinger with testing support
+   by Hubert Kario.
+
+   *Bernd Edlinger*
 
  * Add FIPS provider configuration option to disallow the use of
    truncated digests with Hash and HMAC DRBGs (q.v. FIPS 140-3 IG D.R.).
