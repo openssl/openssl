@@ -195,7 +195,7 @@ $code.=<<___	if ($avx>1);
 	bt	\$`5+32`,%r9		# AVX2?
 	cmovc	%rax,%r10
 ___
-$code.=<<___	if ($avx>3);
+$code.=<<___	if ($avx>3 && !$win64);
 	mov	\$`(1<<31|1<<21|1<<16)`,%rax
 	shr	\$32,%r9
 	and	%rax,%r9
@@ -2724,7 +2724,7 @@ $code.=<<___;
 .cfi_endproc
 .size	poly1305_blocks_avx512,.-poly1305_blocks_avx512
 ___
-if ($avx>3) {
+if ($avx>3 && !$win64) {
 ########################################################################
 # VPMADD52 version using 2^44 radix.
 #
