@@ -81,7 +81,7 @@ struct helper {
     int (*qtf_handshake_cb)(struct helper *h,
                             unsigned char *buf, size_t buf_len);
     uint64_t inject_word0, inject_word1;
-    uint64_t scratch0, scratch1;
+    uint64_t scratch0, scratch1, fail_count;
 };
 
 struct helper_local {
@@ -151,9 +151,13 @@ struct script_op {
 #define OPK_C_SET_WRITE_BUF_SIZE                    45
 #define OPK_S_SET_INJECT_HANDSHAKE                  46
 #define OPK_S_NEW_TICKET                            47
+#define OPK_C_SKIP_IF_UNBOUND                       48
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
+
+/* OPK_C_NEW_STREAM */
+#define ALLOW_FAIL (1U << 16)
 
 #define C_BIDI_ID(ordinal) \
     (((ordinal) << 2) | QUIC_STREAM_INITIATOR_CLIENT | QUIC_STREAM_DIR_BIDI)
@@ -198,8 +202,14 @@ struct script_op {
     {OPK_C_ATTACH, NULL, 0, NULL, #stream_name},
 #define OP_C_NEW_STREAM_BIDI(stream_name, expect_id) \
     {OPK_C_NEW_STREAM, NULL, 0, NULL, #stream_name, (expect_id)},
+#define OP_C_NEW_STREAM_BIDI_EX(stream_name, expect_id, flags) \
+    {OPK_C_NEW_STREAM, NULL, (flags), NULL, #stream_name, (expect_id)},
 #define OP_C_NEW_STREAM_UNI(stream_name, expect_id) \
-    {OPK_C_NEW_STREAM, NULL, 1, NULL, #stream_name, (expect_id)},
+    {OPK_C_NEW_STREAM, NULL, SSL_STREAM_FLAG_UNI, \
+     NULL, #stream_name, (expect_id)},
+#define OP_C_NEW_STREAM_UNI_EX(stream_name, expect_id, flags) \
+    {OPK_C_NEW_STREAM, NULL, (flags) | SSL_STREAM_FLAG_UNI, \
+     NULL, #stream_name, (expect_id)},
 #define OP_S_NEW_STREAM_BIDI(stream_name, expect_id) \
     {OPK_S_NEW_STREAM, NULL, 0, NULL, #stream_name, (expect_id)},
 #define OP_S_NEW_STREAM_UNI(stream_name, expect_id) \
@@ -274,6 +284,8 @@ struct script_op {
     {OPK_S_SET_INJECT_HANDSHAKE, NULL, 0, NULL, NULL, 0, NULL, (f)},
 #define OP_S_NEW_TICKET() \
     {OPK_S_NEW_TICKET},
+#define OP_C_SKIP_IF_UNBOUND(stream_name, n) \
+    {OPK_C_SKIP_IF_UNBOUND, NULL, (n), NULL, #stream_name},
 
 static OSSL_TIME get_time(void *arg)
 {
@@ -911,6 +923,13 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             ++repeat_stack_len;
             break;
 
+        case OPK_C_SKIP_IF_UNBOUND:
+            if (c_tgt != NULL)
+                break;
+
+            op_idx += op->arg1;
+            break;
+
         case OPK_END_REPEAT:
             if (!TEST_size_t_gt(repeat_stack_len, 0))
                 goto out;
@@ -1159,7 +1178,10 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
         case OPK_C_NEW_STREAM:
             {
                 SSL *c_stream;
-                uint64_t flags = 0;
+                uint64_t flags = op->arg1;
+                int allow_fail = ((flags & ALLOW_FAIL) != 0);
+
+                flags &= ~(uint64_t)ALLOW_FAIL;
 
                 if (!TEST_ptr_null(c_tgt))
                     goto out; /* don't overwrite existing stream with same name */
@@ -1167,11 +1189,18 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_ptr(op->stream_name))
                     goto out;
 
-                if (op->arg1 != 0)
-                    flags |= SSL_STREAM_FLAG_UNI;
-
-                if (!TEST_ptr(c_stream = SSL_new_stream(h->c_conn, flags)))
+                c_stream = SSL_new_stream(h->c_conn, flags);
+                if (!allow_fail && !TEST_ptr(c_stream))
                     goto out;
+
+                if (allow_fail && c_stream == NULL) {
+                    if (!TEST_size_t_eq(ERR_GET_REASON(ERR_get_error()),
+                                        SSL_R_STREAM_COUNT_LIMITED))
+                        goto out;
+
+                    ++h->fail_count;
+                    break;
+                }
 
                 if (op->arg2 != UINT64_MAX
                     && !TEST_uint64_t_eq(SSL_get_stream_id(c_stream),
@@ -2073,7 +2102,7 @@ static const struct script_op script_15[] = {
      */
     OP_BEGIN_REPEAT         (200)
 
-    OP_C_NEW_STREAM_BIDI    (a, ANY_ID)
+    OP_C_NEW_STREAM_BIDI_EX (a, ANY_ID, SSL_STREAM_FLAG_ADVANCE)
     OP_C_WRITE              (a, "foo", 3)
     OP_C_CONCLUDE           (a)
     OP_C_FREE_STREAM        (a)
@@ -4325,6 +4354,62 @@ static const struct script_op script_71[] = {
     OP_END
 };
 
+/* 72. Test that APL stops handing out streams after limit reached (bidi) */
+static int script_72_check(struct helper *h, const struct script_op *op)
+{
+    if (!TEST_uint64_t_ge(h->fail_count, 50))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_72[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    /*
+     * Request more streams than a server will initially hand out and test that
+     * they fail properly.
+     */
+    OP_BEGIN_REPEAT         (200)
+
+    OP_C_NEW_STREAM_BIDI_EX (a, ANY_ID, ALLOW_FAIL)
+    OP_C_SKIP_IF_UNBOUND    (a, 2)
+    OP_C_WRITE              (a, "apple", 5)
+    OP_C_FREE_STREAM        (a)
+
+    OP_END_REPEAT           ()
+
+    OP_CHECK                (script_72_check, 0)
+
+    OP_END
+};
+
+/* 73. Test that APL stops handing out streams after limit reached (uni) */
+static const struct script_op script_73[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    /*
+     * Request more streams than a server will initially hand out and test that
+     * they fail properly.
+     */
+    OP_BEGIN_REPEAT         (200)
+
+    OP_C_NEW_STREAM_UNI_EX  (a, ANY_ID, ALLOW_FAIL)
+    OP_C_SKIP_IF_UNBOUND    (a, 2)
+    OP_C_WRITE              (a, "apple", 5)
+    OP_C_FREE_STREAM        (a)
+
+    OP_END_REPEAT           ()
+
+    OP_CHECK                (script_72_check, 0)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -4396,7 +4481,9 @@ static const struct script_op *const scripts[] = {
     script_68,
     script_69,
     script_70,
-    script_71
+    script_71,
+    script_72,
+    script_73
 };
 
 static int test_script(int idx)
