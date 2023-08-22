@@ -4721,10 +4721,10 @@ DEPEND[html/man7/life_cycle-rand.html]=man7/life_cycle-rand.pod
 GENERATE[html/man7/life_cycle-rand.html]=man7/life_cycle-rand.pod
 DEPEND[man/man7/life_cycle-rand.7]=man7/life_cycle-rand.pod
 GENERATE[man/man7/life_cycle-rand.7]=man7/life_cycle-rand.pod
-DEPEND[html/man7/migration_guide.html]=man7/migration_guide.pod
-GENERATE[html/man7/migration_guide.html]=man7/migration_guide.pod
-DEPEND[man/man7/migration_guide.7]=man7/migration_guide.pod
-GENERATE[man/man7/migration_guide.7]=man7/migration_guide.pod
+DEPEND[html/man7/ossl-guide-migration.html]=man7/ossl-guide-migration.pod
+GENERATE[html/man7/ossl-guide-migration.html]=man7/ossl-guide-migration.pod
+DEPEND[man/man7/ossl-guide-migration.7]=man7/ossl-guide-migration.pod
+GENERATE[man/man7/ossl-guide-migration.7]=man7/ossl-guide-migration.pod
 DEPEND[html/man7/openssl-core.h.html]=man7/openssl-core.h.pod
 GENERATE[html/man7/openssl-core.h.html]=man7/openssl-core.h.pod
 DEPEND[man/man7/openssl-core.h.7]=man7/openssl-core.h.pod
@@ -4985,7 +4985,7 @@ html/man7/life_cycle-kdf.html \
 html/man7/life_cycle-mac.html \
 html/man7/life_cycle-pkey.html \
 html/man7/life_cycle-rand.html \
-html/man7/migration_guide.html \
+html/man7/ossl-guide-migration.html \
 html/man7/openssl-core.h.html \
 html/man7/openssl-core_dispatch.h.html \
 html/man7/openssl-core_names.h.html \
@@ -5124,7 +5124,7 @@ man/man7/life_cycle-kdf.7 \
 man/man7/life_cycle-mac.7 \
 man/man7/life_cycle-pkey.7 \
 man/man7/life_cycle-rand.7 \
-man/man7/migration_guide.7 \
+man/man7/ossl-guide-migration.7 \
 man/man7/openssl-core.h.7 \
 man/man7/openssl-core_dispatch.h.7 \
 man/man7/openssl-core_names.h.7 \

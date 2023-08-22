@@ -42,7 +42,7 @@ EC_KEY_METHOD_new(), etc.)
 =back
 
 All of the above APIs are deprecated in OpenSSL 3.0 - so a simple rule is to
-avoid using all deprecated functions. See L<migration_guide(7)> for a list of
+avoid using all deprecated functions. See L<ossl-guide-migration(7)> for a list of
 deprecated functions.
 
 =head2 Making all applications use the FIPS module by default
@@ -393,7 +393,7 @@ explicitly loaded, the default provider will not automatically load. This means
 code using the default context by accident will fail because no algorithms will
 be available.
 
-See L<migration_guide(7)/Library Context> for additional information about the
+See L<ossl-guide-migration(7)/Library Context> for additional information about the
 Library Context.
 
 =head2 Using Encoders and Decoders with the FIPS module
@@ -500,7 +500,7 @@ want to operate in a FIPS approved manner.  The algorithms are:
 
 =head1 SEE ALSO
 
-L<migration_guide(7)>, L<crypto(7)>, L<fips_config(5)>,
+L<ossl-guide-migration(7)>, L<crypto(7)>, L<fips_config(5)>,
 L<https://www.openssl.org/source/>
 
 =head1 HISTORY
