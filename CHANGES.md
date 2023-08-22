@@ -27,14 +27,14 @@ OpenSSL 3.2
 
  * Added client side support for QUIC
 
-   *Hugo Landau, Matt Caswell, Paul Dale, Tomáš Mráz, Richard Lewitte*
+   *Hugo Landau, Matt Caswell, Paul Dale, Tomáš Mráz, Richard Levitte*
 
  * Added multiple tutorials on the OpenSSL library and in particular
    on writing various clients (using TLS and QUIC protocols) with libssl.
 
    *Matt Caswell*
 
- * Added secp384r1 implemetation using Solinas' reduction to improve
+ * Added secp384r1 implementation using Solinas' reduction to improve
    speed of the NIST P-384 elliptic curve. To enable the implementation
    the build option `enable-ec_nistp_64_gcc_128` must be used.
 
@@ -332,10 +332,10 @@ OpenSSL 3.2
 
    *David von Oheimb*
 
- * `CMS_add0_cert()` and `CMS_add1_cert()` no more throw an error
-   if a certificate to be added is already present.
-   `CMS_sign_ex()` and `CMS_sign()` now ignore any duplicate certificates
-   in their `certs` argument and no longer throw an error for them.
+ * `CMS_add0_cert()` and `CMS_add1_cert()` no longer throw an error if
+   a certificate to be added is already present. `CMS_sign_ex()` and
+   `CMS_sign()` now ignore any duplicate certificates in their `certs` argument
+   and no longer throw an error for them.
 
    *David von Oheimb*
 
@@ -412,7 +412,7 @@ OpenSSL 3.2
 
    *Hubert Kario*
 
- * Added support of Brainpool curves in TLS-1.3.
+ * Added support for Brainpool curves in TLS-1.3.
 
    *Bernd Edlinger and Matt Caswell*
 
@@ -421,7 +421,7 @@ OpenSSL 3.2
    *David Carlier*
 
  * Support for Argon2d, Argon2i, Argon2id KDFs has been added along with
-   basic thread pool implementation for select platforms.
+   a basic thread pool implementation for select platforms.
 
    *Čestmír Kalina*
 

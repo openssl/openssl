@@ -25,7 +25,7 @@ OpenSSL 3.2
   * Added client side support for QUIC.
   * Added multiple tutorials on the OpenSSL library and in particular
     on writing various clients (using TLS and QUIC protocols) with libssl.
-  * Added support of Brainpool curves in TLS-1.3.
+  * Added support for Brainpool curves in TLS-1.3.
   * Added Raw Public Key (RFC7250) support.
   * Added support for certificate compression (RFC8879), including
     library support for Brotli and Zstandard compression.
@@ -47,7 +47,7 @@ OpenSSL 3.2
     configuration.
   * The `x509`, `ca`, and `req` apps now always produce X.509v3 certificates.
   * Support for Argon2d, Argon2i, Argon2id KDFs has been added along with
-    basic thread pool implementation for select platforms.
+    a basic thread pool implementation for select platforms.
 
 OpenSSL 3.1
 -----------
