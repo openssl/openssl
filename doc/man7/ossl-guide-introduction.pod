@@ -81,6 +81,8 @@ The pages in the guide are as follows:
 
 =item L<ossl-guide-quic-client-block(7)>: Writing a simple blocking QUIC client
 
+=item L<ossl-guide-quic-multi-stream(7)>: Writing a simple multi-stream QUIC client
+
 =item L<ossl-guide-migration(7)>: Migrating from older OpenSSL versions
 
 =back
