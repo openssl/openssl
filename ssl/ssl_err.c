@@ -466,6 +466,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SSL_SESSION_VERSION_MISMATCH),
     "ssl session version mismatch"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_STILL_IN_INIT), "still in init"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_STREAM_COUNT_LIMITED),
+    "stream count limited"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_STREAM_FINISHED), "stream finished"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_STREAM_RECV_ONLY), "stream recv only"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_STREAM_RESET), "stream reset"},

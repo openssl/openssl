@@ -411,6 +411,12 @@ uint16_t ossl_quic_channel_get_diag_num_rx_ack(QUIC_CHANNEL *ch);
  */
 void ossl_quic_channel_get_diag_local_cid(QUIC_CHANNEL *ch, QUIC_CONN_ID *cid);
 
+/*
+ * Returns 1 if stream count flow control allows us to create a new
+ * locally-initiated stream.
+ */
+int ossl_quic_channel_is_new_local_stream_admissible(QUIC_CHANNEL *ch, int is_uni);
+
 # endif
 
 #endif

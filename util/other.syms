@@ -647,6 +647,8 @@ SSLv23_client_method                    define
 SSLv23_method                           define
 SSLv23_server_method                    define
 SSL_STREAM_FLAG_UNI                     define
+SSL_STREAM_FLAG_NO_BLOCK                define
+SSL_STREAM_FLAG_ADVANCE                 define
 SSL_STREAM_TYPE_NONE                    define
 SSL_STREAM_TYPE_READ                    define
 SSL_STREAM_TYPE_WRITE                   define

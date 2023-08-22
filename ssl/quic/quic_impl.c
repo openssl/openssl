@@ -1717,13 +1717,35 @@ err:
     return NULL;
 }
 
+struct quic_new_stream_wait_args {
+    QUIC_CONNECTION *qc;
+    int is_uni;
+};
+
+static int quic_new_stream_wait(void *arg)
+{
+    struct quic_new_stream_wait_args *args = arg;
+    QUIC_CONNECTION *qc = args->qc;
+
+    if (!quic_mutation_allowed(qc, /*req_active=*/1))
+        return -1;
+
+    if (ossl_quic_channel_is_new_local_stream_admissible(qc->ch, args->is_uni))
+        return 1;
+
+    return 0;
+}
+
 /* locking depends on need_lock */
 static SSL *quic_conn_stream_new(QCTX *ctx, uint64_t flags, int need_lock)
 {
+    int ret;
     QUIC_CONNECTION *qc = ctx->qc;
     QUIC_XSO *xso = NULL;
     QUIC_STREAM *qs = NULL;
     int is_uni = ((flags & SSL_STREAM_FLAG_UNI) != 0);
+    int no_blocking = ((flags & SSL_STREAM_FLAG_NO_BLOCK) != 0);
+    int advance = ((flags & SSL_STREAM_FLAG_ADVANCE) != 0);
 
     if (need_lock)
         quic_lock(qc);
@@ -1731,6 +1753,33 @@ static SSL *quic_conn_stream_new(QCTX *ctx, uint64_t flags, int need_lock)
     if (!quic_mutation_allowed(qc, /*req_active=*/0)) {
         QUIC_RAISE_NON_IO_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         goto err;
+    }
+
+    if (!advance
+        && !ossl_quic_channel_is_new_local_stream_admissible(qc->ch, is_uni)) {
+        struct quic_new_stream_wait_args args;
+
+        /*
+         * Stream count flow control currently doesn't permit this stream to be
+         * opened.
+         */
+        if (no_blocking || !qc_blocking_mode(qc)) {
+            QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_STREAM_COUNT_LIMITED, NULL);
+            goto err;
+        }
+
+        args.qc     = qc;
+        args.is_uni = is_uni;
+
+        /* Blocking mode - wait until we can get a stream. */
+        ret = block_until_pred(ctx->qc, quic_new_stream_wait, &args, 0);
+        if (!quic_mutation_allowed(qc, /*req_active=*/1)) {
+            QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+            goto err; /* Shutdown before completion */
+        } else if (ret <= 0) {
+            QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
+            goto err; /* Non-protocol error */
+        }
     }
 
     qs = ossl_quic_channel_new_stream_local(qc->ch, is_uni);
