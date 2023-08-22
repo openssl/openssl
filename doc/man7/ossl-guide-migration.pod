@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-migration_guide - OpenSSL migration guide
+ossl-guide-migration, migration_guide
+- OpenSSL Guide: Migrating from older OpenSSL versions
 
 =head1 SYNOPSIS
 
