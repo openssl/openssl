@@ -4721,10 +4721,6 @@ DEPEND[html/man7/life_cycle-rand.html]=man7/life_cycle-rand.pod
 GENERATE[html/man7/life_cycle-rand.html]=man7/life_cycle-rand.pod
 DEPEND[man/man7/life_cycle-rand.7]=man7/life_cycle-rand.pod
 GENERATE[man/man7/life_cycle-rand.7]=man7/life_cycle-rand.pod
-DEPEND[html/man7/ossl-guide-migration.html]=man7/ossl-guide-migration.pod
-GENERATE[html/man7/ossl-guide-migration.html]=man7/ossl-guide-migration.pod
-DEPEND[man/man7/ossl-guide-migration.7]=man7/ossl-guide-migration.pod
-GENERATE[man/man7/ossl-guide-migration.7]=man7/ossl-guide-migration.pod
 DEPEND[html/man7/openssl-core.h.html]=man7/openssl-core.h.pod
 GENERATE[html/man7/openssl-core.h.html]=man7/openssl-core.h.pod
 DEPEND[man/man7/openssl-core.h.7]=man7/openssl-core.h.pod
@@ -4775,6 +4771,10 @@ DEPEND[html/man7/ossl-guide-libssl-introduction.html]=man7/ossl-guide-libssl-int
 GENERATE[html/man7/ossl-guide-libssl-introduction.html]=man7/ossl-guide-libssl-introduction.pod
 DEPEND[man/man7/ossl-guide-libssl-introduction.7]=man7/ossl-guide-libssl-introduction.pod
 GENERATE[man/man7/ossl-guide-libssl-introduction.7]=man7/ossl-guide-libssl-introduction.pod
+DEPEND[html/man7/ossl-guide-migration.html]=man7/ossl-guide-migration.pod
+GENERATE[html/man7/ossl-guide-migration.html]=man7/ossl-guide-migration.pod
+DEPEND[man/man7/ossl-guide-migration.7]=man7/ossl-guide-migration.pod
+GENERATE[man/man7/ossl-guide-migration.7]=man7/ossl-guide-migration.pod
 DEPEND[html/man7/ossl-guide-quic-client-block.html]=man7/ossl-guide-quic-client-block.pod
 GENERATE[html/man7/ossl-guide-quic-client-block.html]=man7/ossl-guide-quic-client-block.pod
 DEPEND[man/man7/ossl-guide-quic-client-block.7]=man7/ossl-guide-quic-client-block.pod
@@ -4985,7 +4985,6 @@ html/man7/life_cycle-kdf.html \
 html/man7/life_cycle-mac.html \
 html/man7/life_cycle-pkey.html \
 html/man7/life_cycle-rand.html \
-html/man7/ossl-guide-migration.html \
 html/man7/openssl-core.h.html \
 html/man7/openssl-core_dispatch.h.html \
 html/man7/openssl-core_names.h.html \
@@ -4998,6 +4997,7 @@ html/man7/ossl-guide-introduction.html \
 html/man7/ossl-guide-libcrypto-introduction.html \
 html/man7/ossl-guide-libraries-introduction.html \
 html/man7/ossl-guide-libssl-introduction.html \
+html/man7/ossl-guide-migration.html \
 html/man7/ossl-guide-quic-client-block.html \
 html/man7/ossl-guide-quic-introduction.html \
 html/man7/ossl-guide-tls-client-block.html \
@@ -5124,7 +5124,6 @@ man/man7/life_cycle-kdf.7 \
 man/man7/life_cycle-mac.7 \
 man/man7/life_cycle-pkey.7 \
 man/man7/life_cycle-rand.7 \
-man/man7/ossl-guide-migration.7 \
 man/man7/openssl-core.h.7 \
 man/man7/openssl-core_dispatch.h.7 \
 man/man7/openssl-core_names.h.7 \
@@ -5137,6 +5136,7 @@ man/man7/ossl-guide-introduction.7 \
 man/man7/ossl-guide-libcrypto-introduction.7 \
 man/man7/ossl-guide-libraries-introduction.7 \
 man/man7/ossl-guide-libssl-introduction.7 \
+man/man7/ossl-guide-migration.7 \
 man/man7/ossl-guide-quic-client-block.7 \
 man/man7/ossl-guide-quic-introduction.7 \
 man/man7/ossl-guide-tls-client-block.7 \
