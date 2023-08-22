@@ -3429,6 +3429,23 @@ err:
     return 0;
 }
 
+static uint64_t *ch_get_local_stream_next_ordinal_ptr(QUIC_CHANNEL *ch,
+                                                      int is_uni)
+{
+    return is_uni ? &ch->next_local_stream_ordinal_uni
+                  : &ch->next_local_stream_ordinal_bidi;
+}
+
+int ossl_quic_channel_is_new_local_stream_admissible(QUIC_CHANNEL *ch,
+                                                     int is_uni)
+{
+    uint64_t *p_next_ordinal = ch_get_local_stream_next_ordinal_ptr(ch, is_uni);
+
+    return ossl_quic_stream_map_is_local_allowed_by_stream_limit(&ch->qsm,
+                                                                 *p_next_ordinal,
+                                                                 is_uni);
+}
+
 QUIC_STREAM *ossl_quic_channel_new_stream_local(QUIC_CHANNEL *ch, int is_uni)
 {
     QUIC_STREAM *qs;
@@ -3438,13 +3455,12 @@ QUIC_STREAM *ossl_quic_channel_new_stream_local(QUIC_CHANNEL *ch, int is_uni)
     type = ch->is_server ? QUIC_STREAM_INITIATOR_SERVER
                          : QUIC_STREAM_INITIATOR_CLIENT;
 
-    if (is_uni) {
-        p_next_ordinal = &ch->next_local_stream_ordinal_uni;
+    p_next_ordinal = ch_get_local_stream_next_ordinal_ptr(ch, is_uni);
+
+    if (is_uni)
         type |= QUIC_STREAM_DIR_UNI;
-    } else {
-        p_next_ordinal = &ch->next_local_stream_ordinal_bidi;
+    else
         type |= QUIC_STREAM_DIR_BIDI;
-    }
 
     if (*p_next_ordinal >= ((uint64_t)1) << 62)
         return NULL;

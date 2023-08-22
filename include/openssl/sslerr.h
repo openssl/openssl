@@ -290,6 +290,7 @@
 # define SSL_R_SSL_SESSION_ID_TOO_LONG                    408
 # define SSL_R_SSL_SESSION_VERSION_MISMATCH               210
 # define SSL_R_STILL_IN_INIT                              121
+# define SSL_R_STREAM_COUNT_LIMITED                       395
 # define SSL_R_STREAM_FINISHED                            365
 # define SSL_R_STREAM_RECV_ONLY                           366
 # define SSL_R_STREAM_RESET                               375

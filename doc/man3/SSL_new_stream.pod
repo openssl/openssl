@@ -2,13 +2,16 @@
 
 =head1 NAME
 
-SSL_new_stream, SSL_STREAM_FLAG_UNI - create a new locally-initiated QUIC stream
+SSL_new_stream, SSL_STREAM_FLAG_UNI, SSL_STREAM_FLAG_NO_BLOCK,
+SSL_STREAM_FLAG_ADVANCE - create a new locally-initiated QUIC stream
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
- #define SSL_STREAM_FLAG_UNI     (1U << 0)
+ #define SSL_STREAM_FLAG_UNI          (1U << 0)
+ #define SSL_STREAM_FLAG_NO_BLOCK     (1U << 1)
+ #define SSL_STREAM_FLAG_ADVANCE      (1U << 2)
  SSL *SSL_new_stream(SSL *ssl, uint64_t flags);
 
 =head1 DESCRIPTION
@@ -34,6 +37,27 @@ normal way using L<SSL_read(3)> and L<SSL_write(3)>.
 This function can only be used to create stream objects for locally-initiated
 streams. To accept incoming streams initiated by a peer, use
 L<SSL_accept_stream(3)>.
+
+The creation of new streams is subject to flow control by the QUIC protocol. If
+it is currently not possible to create a new locally initiated stream of the
+specified type, a call to SSL_new_stream() will either block (if the connection
+is configured in blocking mode) until a new stream can be created, or otherwise
+return NULL.
+
+This function operates in blocking mode if the QUIC connection SSL object is
+configured in blocking mode (see L<SSL_set_blocking_mode(3)>). It may also be
+used in nonblocking mode on a connection configured in blocking mode by passing
+the flag B<SSL_STREAM_FLAG_NO_BLOCK>.
+
+The flag B<SSL_STREAM_FLAG_ADVANCE> may be used to create a QUIC stream SSL
+object even if a new QUIC stream cannot yet be opened due to flow control. The
+caller may begin to use the new stream and fill the write buffer of the stream
+by calling L<SSL_write(3)>. However, no actual stream data (or QUIC frames
+regarding the stream) will be sent until QUIC flow control allows it. Any queued
+data will be sent as soon as a peer permits it. There is no guarantee the stream
+will be eventually created; for example, the connection could fail, or a peer
+might simply decide never to increase the number of allowed streams for the
+remainder of the connection lifetime.
 
 =head1 RETURN VALUES
 
