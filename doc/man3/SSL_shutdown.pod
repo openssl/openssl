@@ -359,6 +359,9 @@ either success or failure depending on whether a shutdown has occurred.
 If a locally initiated shutdown has already been triggered or the connection has
 started terminating for another reason, this flag has no effect.
 
+B<SSL_SHUTDOWN_FLAG_WAIT_PEER> implies B<SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH>, as
+stream data cannot be flushed after a peer closes the connection.
+
 =head2 Nonblocking Mode
 
 SSL_shutdown() and SSL_shutdown_ex() block if the connection is configured in
