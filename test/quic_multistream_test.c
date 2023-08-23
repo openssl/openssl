@@ -157,6 +157,7 @@ struct script_op {
 #define OPK_S_NEW_TICKET                            47
 #define OPK_C_SKIP_IF_UNBOUND                       48
 #define OPK_S_SET_INJECT_DATAGRAM                   49
+#define OPK_S_SHUTDOWN                              50
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -229,8 +230,8 @@ struct script_op {
     {OPK_C_SET_DEFAULT_STREAM_MODE, NULL, (mode), NULL, NULL},
 #define OP_C_SET_INCOMING_STREAM_POLICY(policy) \
     {OPK_C_SET_INCOMING_STREAM_POLICY, NULL, (policy), NULL, NULL},
-#define OP_C_SHUTDOWN_WAIT(reason) \
-    {OPK_C_SHUTDOWN_WAIT, (reason), 0, NULL, NULL},
+#define OP_C_SHUTDOWN_WAIT(reason, flags) \
+    {OPK_C_SHUTDOWN_WAIT, (reason), (flags), NULL, NULL},
 #define OP_C_EXPECT_CONN_CLOSE_INFO(ec, app, remote)                \
     {OPK_C_EXPECT_CONN_CLOSE_INFO, NULL,                            \
         ((app) ? EXPECT_CONN_CLOSE_APP : 0) |                       \
@@ -293,6 +294,8 @@ struct script_op {
     {OPK_C_SKIP_IF_UNBOUND, NULL, (n), NULL, #stream_name},
 #define OP_S_SET_INJECT_DATAGRAM(f) \
     {OPK_S_SET_INJECT_DATAGRAM, NULL, 0, NULL, NULL, 0, NULL, NULL, (f)},
+#define OP_S_SHUTDOWN(error_code) \
+    {OPK_S_SHUTDOWN, NULL, (error_code)},
 
 static OSSL_TIME get_time(void *arg)
 {
@@ -1354,12 +1357,18 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
 
                 args.quic_reason = (const char *)op->arg0;
 
-                ret = SSL_shutdown_ex(c_tgt, 0, &args, sizeof(args));
+                ret = SSL_shutdown_ex(c_tgt, op->arg1, &args, sizeof(args));
                 if (!TEST_int_ge(ret, 0))
                     goto out;
 
                 if (ret == 0)
                     SPIN_AGAIN();
+            }
+            break;
+
+        case OPK_S_SHUTDOWN:
+            {
+                ossl_quic_tserver_shutdown(h->s, op->arg1);
             }
             break;
 
@@ -1970,7 +1979,7 @@ static const struct script_op script_10[] = {
     OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
     OP_S_READ_EXPECT        (a, "apple", 5)
 
-    OP_C_SHUTDOWN_WAIT      (NULL)
+    OP_C_SHUTDOWN_WAIT      (NULL, 0)
     OP_C_EXPECT_CONN_CLOSE_INFO(0, 1, 0)
     OP_S_EXPECT_CONN_CLOSE_INFO(0, 1, 1)
 
@@ -3062,7 +3071,7 @@ static const struct script_op script_40[] = {
     OP_END_REPEAT           ()
 
     OP_C_CONCLUDE           (a)
-    OP_C_SHUTDOWN_WAIT      (NULL) /* disengages tick inhibition */
+    OP_C_SHUTDOWN_WAIT      (NULL, 0) /* disengages tick inhibition */
 
     OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
     OP_S_READ_EXPECT        (a, "apple", 5)
@@ -3967,7 +3976,7 @@ static const struct script_op script_60[] = {
     OP_S_READ_EXPECT        (a, "apple", 5)
 
     OP_CHECK                (init_reason, 0)
-    OP_C_SHUTDOWN_WAIT      (long_reason)
+    OP_C_SHUTDOWN_WAIT      (long_reason, 0)
     OP_CHECK                (check_shutdown_reason, 0)
 
     OP_END
@@ -4535,6 +4544,37 @@ static const struct script_op script_75[] = {
     OP_END
 };
 
+/* 74. Test peer-initiated shutdown wait */
+static int script_76_check(struct helper *h, const struct script_op *op)
+{
+    if (!TEST_false(SSL_shutdown_ex(h->c_conn, SSL_SHUTDOWN_FLAG_WAIT_PEER,
+                                    NULL, 0)))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_76[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    /* Check a WAIT_PEER call doesn't succeed yet. */
+    OP_CHECK                (script_76_check, 0)
+    OP_S_SHUTDOWN           (42)
+
+    OP_C_SHUTDOWN_WAIT      (NULL, SSL_SHUTDOWN_FLAG_WAIT_PEER)
+    OP_C_EXPECT_CONN_CLOSE_INFO(42, 1, 1)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -4610,7 +4650,8 @@ static const struct script_op *const scripts[] = {
     script_72,
     script_73,
     script_74,
-    script_75
+    script_75,
+    script_76
 };
 
 static int test_script(int idx)
