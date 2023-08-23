@@ -497,6 +497,7 @@ my @disablables = (
     "siphash",
     "siv",
     "sm2",
+    "sm2-precomp",
     "sm3",
     "sm4",
     "sock",
