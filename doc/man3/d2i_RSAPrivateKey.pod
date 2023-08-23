@@ -205,7 +205,7 @@ I<selection> and I<structure> as follows:
 
 =item B<i2d_I<TYPE>PrivateKey>() translates into:
 
- int selection = EVP_PKEY_PRIVATE_KEY;
+ int selection = EVP_PKEY_KEYPAIR;
  const char *structure = "type-specific";
 
 =item B<i2d_I<TYPE>PublicKey>() translates into:
