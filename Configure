@@ -188,6 +188,7 @@ my @clang_devteam_warn = qw(
     -Wno-parentheses-equality
     -Wno-language-extension-token
     -Wno-extended-offsetof
+    -Wno-missing-braces
     -Wconditional-uninitialized
     -Wincompatible-pointer-types-discards-qualifiers
     -Wmissing-variable-declarations
