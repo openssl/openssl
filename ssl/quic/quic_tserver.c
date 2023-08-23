@@ -502,9 +502,9 @@ OSSL_TIME ossl_quic_tserver_get_deadline(QUIC_TSERVER *srv)
                 ossl_quic_channel_get_reactor(srv->ch));
 }
 
-int ossl_quic_tserver_shutdown(QUIC_TSERVER *srv)
+int ossl_quic_tserver_shutdown(QUIC_TSERVER *srv, uint64_t app_error_code)
 {
-    ossl_quic_channel_local_close(srv->ch, 0, NULL);
+    ossl_quic_channel_local_close(srv->ch, app_error_code, NULL);
 
     /* TODO(QUIC): !SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH */
 

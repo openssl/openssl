@@ -182,7 +182,7 @@ OSSL_TIME ossl_quic_tserver_get_deadline(QUIC_TSERVER *srv);
  * Shutdown the QUIC connection. Returns 1 if the connection is terminated and
  * 0 otherwise.
  */
-int ossl_quic_tserver_shutdown(QUIC_TSERVER *srv);
+int ossl_quic_tserver_shutdown(QUIC_TSERVER *srv, uint64_t app_error_code);
 
 /* Force generation of an ACK-eliciting packet. */
 int ossl_quic_tserver_ping(QUIC_TSERVER *srv);
