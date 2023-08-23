@@ -33,6 +33,10 @@ connection establishment, and does not confer any guarantee about the
 destination address being used for communication at any later time in the
 connection lifecycle.
 
+This function makes a copy of the address passed by the caller; the B<BIO_ADDR>
+structure pointed to by I<addr> may be freed by the caller after this function
+returns.
+
 =head1 RETURN VALUES
 
 Returns 1 on success and 0 on failure.
