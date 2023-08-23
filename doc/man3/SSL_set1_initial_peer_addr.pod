@@ -2,17 +2,17 @@
 
 =head1 NAME
 
-SSL_set_initial_peer_addr - set the initial peer address for a QUIC connection
+SSL_set1_initial_peer_addr - set the initial peer address for a QUIC connection
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
- int SSL_set_initial_peer_addr(SSL *s, const BIO_ADDR *addr);
+ int SSL_set1_initial_peer_addr(SSL *s, const BIO_ADDR *addr);
 
 =head1 DESCRIPTION
 
-SSL_set_initial_peer_addr() sets the initial destination peer address to be used
+SSL_set1_initial_peer_addr() sets the initial destination peer address to be used
 for the purposes of establishing a QUIC connection in client mode. This function
 can be used only on a QUIC connection SSL object, and can be used only before a
 connection attempt is first made. I<addr> must point to a B<BIO_ADDR>
@@ -24,14 +24,18 @@ destination peer address can be detected automatically; if
 B<BIO_CTRL_DGRAM_GET_PEER> returns a valid (non-B<AF_UNSPEC>) peer address and
 no valid peer address has yet been set, this will be set automatically as the
 initial peer address. This behaviour can be overridden by calling
-SSL_set_initial_peer_addr() with a valid peer address explicitly.
+SSL_set1_initial_peer_addr() with a valid peer address explicitly.
 
 The destination address used by QUIC may change over time in response to
 connection events, such as connection migration (where supported).
-SSL_set_initial_peer_addr() configures the destination address used for initial
+SSL_set1_initial_peer_addr() configures the destination address used for initial
 connection establishment, and does not confer any guarantee about the
 destination address being used for communication at any later time in the
 connection lifecycle.
+
+This function makes a copy of the address passed by the caller; the B<BIO_ADDR>
+structure pointed to by I<addr> may be freed by the caller after this function
+returns.
 
 =head1 RETURN VALUES
 
@@ -43,7 +47,7 @@ L<BIO_ADDR(3)>, L<ssl(7)>
 
 =head1 HISTORY
 
-The SSL_set_initial_peer_addr() function was added in OpenSSL 3.2.
+The SSL_set1_initial_peer_addr() function was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

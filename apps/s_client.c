@@ -2252,7 +2252,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_QUIC
     if (isquic) {
         sbio = BIO_new_dgram(sock, BIO_NOCLOSE);
-        if (!SSL_set_initial_peer_addr(con, peer_addr)) {
+        if (!SSL_set1_initial_peer_addr(con, peer_addr)) {
             BIO_printf(bio_err, "Failed to set the initial peer address\n");
             goto shut;
         }

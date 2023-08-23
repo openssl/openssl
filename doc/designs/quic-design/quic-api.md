@@ -36,7 +36,7 @@ designs and the relevant design decisions.
       - [`SSL_get_rpoll_descriptor`, `SSL_get_wpoll_descriptor`](#-ssl-get-rpoll-descriptor----ssl-get-wpoll-descriptor-)
       - [`SSL_net_read_desired`, `SSL_net_write_desired`](#-ssl-want-net-read----ssl-want-net-write-)
       - [`SSL_want`, `SSL_want_read`, `SSL_want_write`](#-ssl-want----ssl-want-read----ssl-want-write-)
-      - [`SSL_set_initial_peer_addr`, `SSL_get_initial_peer_addr`](#-ssl-set-initial-peer-addr----ssl-get-initial-peer-addr-)
+      - [`SSL_set1_initial_peer_addr`](#-ssl-set-initial-peer-addr-)
       - [`SSL_shutdown_ex`](#-ssl-shutdown-ex-)
       - [`SSL_stream_conclude`](#-ssl-stream-conclude-)
       - [`SSL_stream_reset`](#-ssl-stream-reset-)
@@ -519,20 +519,20 @@ write), not both. This call will not be implemented for QUIC (e.g. always
 returns `SSL_NOTHING`) and `SSL_net_read_desired` and `SSL_net_write_desired`
 will be used instead.
 
-#### `SSL_set_initial_peer_addr`, `SSL_get_initial_peer_addr`
+#### `SSL_set1_initial_peer_addr`
 
 | Semantics | `SSL_get_error` | Can Tick? | CSHL          |
 | --------- | ------------- | --------- | ------------- |
 | New       | Never         | No        | CS            |
 
-`SSL_set_initial_peer_addr` sets the initial L4 UDP peer address for an outgoing
+`SSL_set1_initial_peer_addr` sets the initial L4 UDP peer address for an outgoing
 QUIC connection.
 
 The initial peer address may be autodetected if no peer address has already been
 set explicitly and the QUIC connection SSL object is provided with a
 `BIO_s_dgram` with a peer set.
 
-`SSL_set_initial_peer_addr` cannot be called after a connection is established.
+`SSL_set1_initial_peer_addr` cannot be called after a connection is established.
 
 #### `SSL_shutdown_ex`
 

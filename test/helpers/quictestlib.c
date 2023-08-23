@@ -146,7 +146,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
                                          (flags & QTEST_FLAG_BLOCK) != 0 ? 1 : 0)))
         goto err;
 
-    if (!TEST_true(SSL_set_initial_peer_addr(*cssl, peeraddr)))
+    if (!TEST_true(SSL_set1_initial_peer_addr(*cssl, peeraddr)))
         goto err;
 
     if (fault != NULL) {
