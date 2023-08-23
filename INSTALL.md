@@ -914,6 +914,10 @@ Do not create shared libraries, only static ones.
 
 See [Notes on shared libraries](#notes-on-shared-libraries) below.
 
+### no-sm2-precomp
+
+Disable using the SM2 precomputed table on aarch64 to make the library smaller.
+
 ### no-sock
 
 Don't build support for socket BIOs.

@@ -102,6 +102,7 @@ jobs:
           no-siphash,
           no-siv,
           no-sm2,
+          no-sm2-precomp,
           no-sm3,
           no-sm4,
           no-sock,

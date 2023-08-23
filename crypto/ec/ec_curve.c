@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -3111,8 +3111,13 @@ static const ec_list_element curve_list[] = {
      "RFC 5639 curve over a 512 bit prime field"},
     {NID_brainpoolP512t1, &_EC_brainpoolP512t1.h, 0,
      "RFC 5639 curve over a 512 bit prime field"},
-# ifndef OPENSSL_NO_SM2
-    {NID_sm2, &_EC_sm2p256v1.h, 0,
+#ifndef OPENSSL_NO_SM2
+    {NID_sm2, &_EC_sm2p256v1.h,
+# ifdef ECP_SM2P256_ASM
+     EC_GFp_sm2p256_method,
+# else
+     0,
+# endif
      "SM2 curve over a 256 bit prime field"},
 # endif
 };
