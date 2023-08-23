@@ -171,7 +171,7 @@ For details, see the B<-host> and B<-path> options described next.
 If the B<-host> option is present then the OCSP request is sent to the host
 I<host> on port I<port>.
 The I<host> may be a domain name or an IP (v4 or v6) address,
-such as C<127.0.0.1> or C<[::]> for localhost.
+such as C<127.0.0.1> or C<[::1]> for localhost.
 The B<-path> option specifies the HTTP pathname to use or "/" by default.
 This is equivalent to specifying B<-url> with scheme
 http:// and the given I<host>, I<port>, and optional I<pathname>.
