@@ -114,6 +114,8 @@ ok(run(app(['openssl', 'dgst', '-prverify', srctop_file('test', 'testrsa.pem'), 
    my $rsapss = "rsapss.key";
    ok(run(app(['openssl', 'genpkey', '-algorithm', 'RSA-PSS',
                '-pkeyopt', 'rsa_keygen_bits:1024',
+               '-pkeyopt', 'rsa_keygen_pubexp:65537',
+               '-pkeyopt', 'rsa_keygen_primes:2',
                '--out', $rsapss])));
    ok(run(app(['openssl', 'rsa', '-check',
                '-in', $rsapss])));
