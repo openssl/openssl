@@ -7365,7 +7365,7 @@ int SSL_get_blocking_mode(SSL *s)
 #endif
 }
 
-int SSL_set_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr)
+int SSL_set1_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr)
 {
 #ifndef OPENSSL_NO_QUIC
     if (!IS_QUIC(s))

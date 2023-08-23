@@ -2675,6 +2675,10 @@ DEPEND[html/man3/SSL_set1_host.html]=man3/SSL_set1_host.pod
 GENERATE[html/man3/SSL_set1_host.html]=man3/SSL_set1_host.pod
 DEPEND[man/man3/SSL_set1_host.3]=man3/SSL_set1_host.pod
 GENERATE[man/man3/SSL_set1_host.3]=man3/SSL_set1_host.pod
+DEPEND[html/man3/SSL_set1_initial_peer_addr.html]=man3/SSL_set1_initial_peer_addr.pod
+GENERATE[html/man3/SSL_set1_initial_peer_addr.html]=man3/SSL_set1_initial_peer_addr.pod
+DEPEND[man/man3/SSL_set1_initial_peer_addr.3]=man3/SSL_set1_initial_peer_addr.pod
+GENERATE[man/man3/SSL_set1_initial_peer_addr.3]=man3/SSL_set1_initial_peer_addr.pod
 DEPEND[html/man3/SSL_set1_server_cert_type.html]=man3/SSL_set1_server_cert_type.pod
 GENERATE[html/man3/SSL_set1_server_cert_type.html]=man3/SSL_set1_server_cert_type.pod
 DEPEND[man/man3/SSL_set1_server_cert_type.3]=man3/SSL_set1_server_cert_type.pod
@@ -2707,10 +2711,6 @@ DEPEND[html/man3/SSL_set_incoming_stream_policy.html]=man3/SSL_set_incoming_stre
 GENERATE[html/man3/SSL_set_incoming_stream_policy.html]=man3/SSL_set_incoming_stream_policy.pod
 DEPEND[man/man3/SSL_set_incoming_stream_policy.3]=man3/SSL_set_incoming_stream_policy.pod
 GENERATE[man/man3/SSL_set_incoming_stream_policy.3]=man3/SSL_set_incoming_stream_policy.pod
-DEPEND[html/man3/SSL_set_initial_peer_addr.html]=man3/SSL_set_initial_peer_addr.pod
-GENERATE[html/man3/SSL_set_initial_peer_addr.html]=man3/SSL_set_initial_peer_addr.pod
-DEPEND[man/man3/SSL_set_initial_peer_addr.3]=man3/SSL_set_initial_peer_addr.pod
-GENERATE[man/man3/SSL_set_initial_peer_addr.3]=man3/SSL_set_initial_peer_addr.pod
 DEPEND[html/man3/SSL_set_retry_verify.html]=man3/SSL_set_retry_verify.pod
 GENERATE[html/man3/SSL_set_retry_verify.html]=man3/SSL_set_retry_verify.pod
 DEPEND[man/man3/SSL_set_retry_verify.3]=man3/SSL_set_retry_verify.pod
@@ -3576,6 +3576,7 @@ html/man3/SSL_read_early_data.html \
 html/man3/SSL_rstate_string.html \
 html/man3/SSL_session_reused.html \
 html/man3/SSL_set1_host.html \
+html/man3/SSL_set1_initial_peer_addr.html \
 html/man3/SSL_set1_server_cert_type.html \
 html/man3/SSL_set_async_callback.html \
 html/man3/SSL_set_bio.html \
@@ -3584,7 +3585,6 @@ html/man3/SSL_set_connect_state.html \
 html/man3/SSL_set_default_stream_mode.html \
 html/man3/SSL_set_fd.html \
 html/man3/SSL_set_incoming_stream_policy.html \
-html/man3/SSL_set_initial_peer_addr.html \
 html/man3/SSL_set_retry_verify.html \
 html/man3/SSL_set_session.html \
 html/man3/SSL_set_shutdown.html \
@@ -4215,6 +4215,7 @@ man/man3/SSL_read_early_data.3 \
 man/man3/SSL_rstate_string.3 \
 man/man3/SSL_session_reused.3 \
 man/man3/SSL_set1_host.3 \
+man/man3/SSL_set1_initial_peer_addr.3 \
 man/man3/SSL_set1_server_cert_type.3 \
 man/man3/SSL_set_async_callback.3 \
 man/man3/SSL_set_bio.3 \
@@ -4223,7 +4224,6 @@ man/man3/SSL_set_connect_state.3 \
 man/man3/SSL_set_default_stream_mode.3 \
 man/man3/SSL_set_fd.3 \
 man/man3/SSL_set_incoming_stream_policy.3 \
-man/man3/SSL_set_initial_peer_addr.3 \
 man/man3/SSL_set_retry_verify.3 \
 man/man3/SSL_set_session.3 \
 man/man3/SSL_set_shutdown.3 \

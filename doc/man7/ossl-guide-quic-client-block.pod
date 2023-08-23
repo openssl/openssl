@@ -219,9 +219,9 @@ L<SSL_set_alpn_protos(3)> returns zero for success and nonzero for failure.
 An OpenSSL QUIC application must specify the target address of the server that
 is being connected to. In L</Creating the socket and BIO> above we saved that
 address away for future use. Now we need to use it via the
-L<SSL_set_initial_peer_addr(3)> function.
+L<SSL_set1_initial_peer_addr(3)> function.
 
-    if (!SSL_set_initial_peer_addr(ssl, peer_addr)) {
+    if (!SSL_set1_initial_peer_addr(ssl, peer_addr)) {
         printf("Failed to set the initial peer address\n");
         goto end;
     }

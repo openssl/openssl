@@ -629,8 +629,7 @@ Notes:
 | `SSL_get_wpoll_descriptor` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | `SSL_want_net_read` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | `SSL_want_net_write` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
-| `SSL_get_initial_peer_addr` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
-| `SSL_set_initial_peer_addr` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_set1_initial_peer_addr` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | `SSL_shutdown_ex` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_stream_conclude` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_stream_reset` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
