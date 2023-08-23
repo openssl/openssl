@@ -2312,6 +2312,8 @@ typedef struct ssl_shutdown_ex_args_st {
 
 #define SSL_SHUTDOWN_FLAG_RAPID             (1U << 0)
 #define SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH   (1U << 1)
+#define SSL_SHUTDOWN_FLAG_NO_BLOCK          (1U << 2)
+#define SSL_SHUTDOWN_FLAG_WAIT_PEER         (1U << 3)
 
 __owur int SSL_shutdown_ex(SSL *ssl, uint64_t flags,
                            const SSL_SHUTDOWN_EX_ARGS *args,

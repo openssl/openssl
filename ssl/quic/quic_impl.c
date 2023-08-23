@@ -1175,6 +1175,12 @@ static int quic_shutdown_flush_wait(void *arg)
         || qc_shutdown_flush_finished(qc);
 }
 
+static int quic_shutdown_peer_wait(void *arg)
+{
+    QUIC_CONNECTION *qc = arg;
+    return ossl_quic_channel_is_term_any(qc->ch);
+}
+
 QUIC_TAKES_LOCK
 int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
                             const SSL_SHUTDOWN_EX_ARGS *args,
@@ -1183,6 +1189,8 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
     int ret;
     QCTX ctx;
     int stream_flush = ((flags & SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH) == 0);
+    int no_block = ((flags & SSL_SHUTDOWN_FLAG_NO_BLOCK) != 0);
+    int wait_peer = ((flags & SSL_SHUTDOWN_FLAG_WAIT_PEER) != 0);
 
     if (!expect_quic(s, &ctx))
         return -1;
@@ -1200,11 +1208,11 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
     }
 
     /* Phase 1: Stream Flushing */
-    if (stream_flush) {
+    if (!wait_peer && stream_flush) {
         qc_shutdown_flush_init(ctx.qc);
 
         if (!qc_shutdown_flush_finished(ctx.qc)) {
-            if (qc_blocking_mode(ctx.qc)) {
+            if (!no_block && qc_blocking_mode(ctx.qc)) {
                 ret = block_until_pred(ctx.qc, quic_shutdown_flush_wait, ctx.qc, 0);
                 if (ret < 1) {
                     ret = 0;
@@ -1222,6 +1230,35 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
     }
 
     /* Phase 2: Connection Closure */
+    if (wait_peer && !ossl_quic_channel_is_term_any(ctx.qc->ch)) {
+        if (!no_block && qc_blocking_mode(ctx.qc)) {
+            ret = block_until_pred(ctx.qc, quic_shutdown_peer_wait, ctx.qc, 0);
+            if (ret < 1) {
+                ret = 0;
+                goto err;
+            }
+        } else {
+            ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+        }
+
+        if (!ossl_quic_channel_is_term_any(ctx.qc->ch)) {
+            ret = 0; /* peer hasn't closed yet - still not done */
+            goto err;
+        }
+
+        /*
+         * We are at least terminating - go through the normal process of
+         * waiting until we are in the TERMINATED state.
+         */
+    }
+
+    /* Block mutation ops regardless of if we did stream flush. */
+    ctx.qc->shutting_down = 1;
+
+    /*
+     * This call is a no-op if we are already terminating, so it doesn't
+     * affect the wait_peer case.
+     */
     ossl_quic_channel_local_close(ctx.qc->ch,
                                   args != NULL ? args->quic_error_code : 0,
                                   args != NULL ? args->quic_reason : NULL);
@@ -1234,7 +1271,8 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
     }
 
     /* Phase 3: Terminating Wait Time */
-    if (qc_blocking_mode(ctx.qc) && (flags & SSL_SHUTDOWN_FLAG_RAPID) == 0) {
+    if (!no_block && qc_blocking_mode(ctx.qc)
+        && (flags & SSL_SHUTDOWN_FLAG_RAPID) == 0) {
         ret = block_until_pred(ctx.qc, quic_shutdown_wait, ctx.qc, 0);
         if (ret < 1) {
             ret = 0;

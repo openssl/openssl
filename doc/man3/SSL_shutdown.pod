@@ -347,6 +347,25 @@ If an application calls SSL_shutdown_ex() with B<SSL_SHUTDOWN_FLAG_RAPID>, an
 application can subsequently change its mind about performing a rapid shutdown
 by making a subsequent call to SSL_shutdown_ex() without the flag set.
 
+=head2 Peer-Initiated Shutdown
+
+In some cases, an application may wish to wait for a shutdown initiated by the
+peer rather than triggered locally. To do this, call SSL_shutdown_ex() with
+I<SSL_SHUTDOWN_FLAG_WAIT_PEER> specified in I<flags>. In blocking mode, this
+waits until the peer initiates a shutdown or the connection otherwise becomes
+terminated for another reason. In nonblocking mode it exits immediately with
+either success or failure depending on whether a shutdown has occurred.
+
+If a locally initiated shutdown has already been triggered or the connection has
+started terminating for another reason, this flag has no effect.
+
+=head2 Nonblocking Mode
+
+SSL_shutdown() and SSL_shutdown_ex() block if the connection is configured in
+blocking mode. This may be overridden by specifying
+B<SSL_SHUTDOWN_FLAG_NO_BLOCK> in I<flags> when calling SSL_shutdown_ex(), which
+causes the call to operate as though in nonblocking mode.
+
 =head1 RETURN VALUES
 
 For both SSL_shutdown() and SSL_shutdown_ex() the following return values can occur:
