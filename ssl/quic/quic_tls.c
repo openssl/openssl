@@ -671,8 +671,8 @@ static int raise_error(QUIC_TLS *qtls, uint64_t error_code,
     ERR_new();
     ERR_set_debug(src_file, src_line, src_func);
     ERR_set_error(ERR_LIB_SSL, SSL_R_QUIC_HANDSHAKE_LAYER_ERROR,
-                  "handshake layer error, error code %zu (\"%s\")",
-                  error_code, error_msg);
+                  "handshake layer error, error code %llu (\"%s\")",
+                  (unsigned long long)error_code, error_msg);
     OSSL_ERR_STATE_save_to_mark(qtls->error_state);
 
     /*
