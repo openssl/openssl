@@ -277,6 +277,7 @@ sub load_tests {
         my $title = $fields[$description];
         next LOOP if (!defined($expected_result)
                       || ($expected_result ne 0 && $expected_result ne 1));
+        next LOOP if ($line =~ m/-server,\[.*:.*\]/ && !have_IPv6());
         @fields = grep {$_ ne 'BLANK'} @fields[$description + 1 .. @fields - 1];
         push @result, [$title, \@fields, $expected_result];
     }
