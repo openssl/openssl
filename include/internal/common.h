@@ -198,6 +198,20 @@ static ossl_inline int ossl_ends_with_dirsep(const char *path)
     return *path == '/';
 }
 
+static ossl_inline char ossl_determine_dirsep(const char *path)
+{
+    if (ossl_ends_with_dirsep(path))
+        return '\0';
+
+# if defined(_WIN32)
+    return '\\';
+# elif defined(__VMS)
+    return ':';
+# else
+    return '/';
+# endif
+}
+
 static ossl_inline int ossl_is_absolute_path(const char *path)
 {
 # if defined __VMS
