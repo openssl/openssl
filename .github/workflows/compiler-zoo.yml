@@ -7,7 +7,7 @@
 
 name: Compiler Zoo CI
 
-on: [push]
+on: [pull_request]
 
 permissions:
   contents: read
