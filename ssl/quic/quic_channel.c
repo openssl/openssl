@@ -262,7 +262,7 @@ static int ch_stateless_reset_token_handler(const unsigned char *data,
 
 static int ch_init(QUIC_CHANNEL *ch)
 {
-    OSSL_QUIC_TX_PACKETISER_ARGS txp_args = {{0}};
+    OSSL_QUIC_TX_PACKETISER_ARGS txp_args = {0};
     OSSL_QTX_ARGS qtx_args = {0};
     OSSL_QRX_ARGS qrx_args = {0};
     QUIC_TLS_ARGS tls_args = {0};
