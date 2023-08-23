@@ -22,7 +22,7 @@
 typedef struct tls_record_st {
     void *rechandle;
     int version;
-    int type;
+    uint8_t type;
     /* The data buffer containing bytes from the record */
     const unsigned char *data;
     /*
