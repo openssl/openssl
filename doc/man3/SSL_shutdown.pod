@@ -360,7 +360,9 @@ If a locally initiated shutdown has already been triggered or the connection has
 started terminating for another reason, this flag has no effect.
 
 B<SSL_SHUTDOWN_FLAG_WAIT_PEER> implies B<SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH>, as
-stream data cannot be flushed after a peer closes the connection.
+stream data cannot be flushed after a peer closes the connection. Stream data
+may still be sent to the peer in any time spent waiting before the peer closes
+the connection, though there is no guarantee of this.
 
 =head2 Nonblocking Mode
 
