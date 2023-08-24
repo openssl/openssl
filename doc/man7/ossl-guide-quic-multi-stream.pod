@@ -70,7 +70,7 @@ This behaviour can be controlled via the default stream mode. See
 L<SSL_set_default_stream_mode(3)> for further details.
 
 It is recommended that new multi-stream applications should not use a default
-stream at all and instead should use a spearate stream B<SSL> object for each
+stream at all and instead should use a separate stream B<SSL> object for each
 stream that is used. This requires calling L<SSL_set_default_stream_mode(3)>
 and setting the mode to B<SSL_DEFAULT_STREAM_MODE_NONE>.
 
