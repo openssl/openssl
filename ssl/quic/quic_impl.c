@@ -1764,7 +1764,7 @@ static SSL *quic_conn_stream_new(QCTX *ctx, uint64_t flags, int need_lock)
          * opened.
          */
         if (no_blocking || !qc_blocking_mode(qc)) {
-            QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_STREAM_COUNT_LIMITED, NULL);
+            QUIC_RAISE_NON_IO_ERROR(ctx, SSL_R_STREAM_COUNT_LIMITED, NULL);
             goto err;
         }
 
@@ -1777,7 +1777,7 @@ static SSL *quic_conn_stream_new(QCTX *ctx, uint64_t flags, int need_lock)
             QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
             goto err; /* Shutdown before completion */
         } else if (ret <= 0) {
-            QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
+            QUIC_RAISE_NON_IO_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
             goto err; /* Non-protocol error */
         }
     }
