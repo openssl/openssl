@@ -490,7 +490,7 @@ Default is no.  (Optional)
 =item B<ess_cert_id_alg>
 
 This option specifies the hash function to be used to calculate the TSA's
-public key certificate identifier. Default is sha1. (Optional)
+public key certificate identifier. Default is sha256. (Optional)
 
 =back
 
