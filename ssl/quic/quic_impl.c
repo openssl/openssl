@@ -1774,7 +1774,7 @@ static SSL *quic_conn_stream_new(QCTX *ctx, uint64_t flags, int need_lock)
         /* Blocking mode - wait until we can get a stream. */
         ret = block_until_pred(ctx->qc, quic_new_stream_wait, &args, 0);
         if (!quic_mutation_allowed(qc, /*req_active=*/1)) {
-            QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+            QUIC_RAISE_NON_IO_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
             goto err; /* Shutdown before completion */
         } else if (ret <= 0) {
             QUIC_RAISE_NON_IO_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
