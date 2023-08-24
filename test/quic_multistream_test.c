@@ -65,6 +65,8 @@ struct helper {
 #if defined(OPENSSL_THREADS)
     struct child_thread_args    *threads;
     size_t                      num_threads;
+    CRYPTO_MUTEX		*misc_m;
+    CRYPTO_CONDVAR		*misc_cv;
 #endif
 
     OSSL_TIME       start_time;
@@ -635,6 +637,8 @@ static void helper_cleanup(struct helper *h)
     h->time_lock = NULL;
 
 #if defined(OPENSSL_THREADS)
+    ossl_crypto_mutex_free(&h->misc_m);
+    ossl_crypto_condvar_free(&h->misc_cv);
     ossl_crypto_mutex_free(&h->server_thread.m);
     ossl_crypto_condvar_free(&h->server_thread.c);
 #endif
@@ -766,6 +770,13 @@ static int helper_init(struct helper *h, int free_order, int blocking,
 
     if (!TEST_true(SSL_set_blocking_mode(h->c_conn, h->blocking)))
         goto err;
+
+#if defined(OPENSSL_THREADS)
+    if (!TEST_ptr(h->misc_m = ossl_crypto_mutex_new()))
+      goto err;
+    if (!TEST_ptr(h->misc_cv = ossl_crypto_condvar_new()))
+      goto err;
+#endif
 
     if (h->blocking) {
 #if defined(OPENSSL_THREADS)
@@ -1060,6 +1071,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             /* Only allow certain opcodes on child threads. */
             switch (op->op) {
                 case OPK_END:
+                case OPK_CHECK:
                 case OPK_C_ACCEPT_STREAM_WAIT:
                 case OPK_C_NEW_STREAM:
                 case OPK_C_READ_EXPECT:
@@ -1160,7 +1172,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 ok = op->check_func(h, hl);
                 hl->check_op = NULL;
 
-                if (h->check_spin_again) {
+                if (thread_idx < 0 && h->check_spin_again) {
                     h->check_spin_again = 0;
                     S_SPIN_AGAIN();
                 }
@@ -2564,11 +2576,62 @@ static const struct script_op script_19[] = {
 };
 
 /* 20. Multiple threads accept stream with socket forcibly closed (error test) */
+static int script_20_trigger(struct helper *h, volatile uint64_t *counter)
+{
+#if defined(OPENSSL_THREADS)
+    ossl_crypto_mutex_lock(h->misc_m);
+    ++*counter;
+    ossl_crypto_mutex_unlock(h->misc_m);
+    ossl_crypto_condvar_broadcast(h->misc_cv);
+#endif
+    return 1;
+}
+
+static int script_20_wait(struct helper *h, volatile uint64_t *counter, uint64_t threshold)
+{
+#if defined(OPENSSL_THREADS)
+    int stop = 0;
+
+    ossl_crypto_mutex_lock(h->misc_m);
+    while (!stop) {
+        stop = (*counter >= threshold);
+        if (stop)
+            break;
+
+        ossl_crypto_condvar_wait(h->misc_cv, h->misc_m);
+    }
+
+    ossl_crypto_mutex_unlock(h->misc_m);
+#endif
+    return 1;
+}
+
+static int script_20_trigger1(struct helper *h, struct helper_local *hl)
+{
+    return script_20_trigger(h, &h->scratch0);
+}
+
+static int script_20_wait1(struct helper *h, struct helper_local *hl)
+{
+    return script_20_wait(h, &h->scratch0, hl->check_op->arg2);
+}
+
+static int script_20_trigger2(struct helper *h, struct helper_local *hl)
+{
+    return script_20_trigger(h, &h->scratch1);
+}
+
+static int script_20_wait2(struct helper *h, struct helper_local *hl)
+{
+    return script_20_wait(h, &h->scratch1, hl->check_op->arg2);
+}
+
 static const struct script_op script_20_child[] = {
     OP_C_ACCEPT_STREAM_WAIT (a)
     OP_C_READ_EXPECT        (a, "foo", 3)
 
-    OP_SLEEP                (500)
+    OP_CHECK                (script_20_trigger1, 0)
+    OP_CHECK                (script_20_wait2, 1)
 
     OP_C_READ_FAIL_WAIT     (a)
     OP_C_EXPECT_SSL_ERR     (a, SSL_ERROR_SYSCALL)
@@ -2594,9 +2657,10 @@ static const struct script_op script_20[] = {
 
     OP_END_REPEAT           ()
 
-    OP_SLEEP                (100)
+    OP_CHECK                (script_20_wait1, 5)
 
     OP_C_CLOSE_SOCKET       ()
+    OP_CHECK                (script_20_trigger2, 0)
 
     OP_END
 };
