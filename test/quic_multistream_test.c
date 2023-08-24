@@ -2577,15 +2577,18 @@ static const struct script_op script_19[] = {
 /* 20. Multiple threads accept stream with socket forcibly closed (error test) */
 static int script_20_trigger(struct helper *h, volatile uint64_t *counter)
 {
+#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_lock(h->misc_m);
     ++*counter;
     ossl_crypto_mutex_unlock(h->misc_m);
     ossl_crypto_condvar_broadcast(h->misc_cv);
+#endif
     return 1;
 }
 
 static int script_20_wait(struct helper *h, volatile uint64_t *counter, uint64_t threshold)
 {
+#if defined(OPENSSL_THREADS)
     int stop = 0;
 
     ossl_crypto_mutex_lock(h->misc_m);
@@ -2598,6 +2601,7 @@ static int script_20_wait(struct helper *h, volatile uint64_t *counter, uint64_t
     }
 
     ossl_crypto_mutex_unlock(h->misc_m);
+#endif
     return 1;
 }
 
