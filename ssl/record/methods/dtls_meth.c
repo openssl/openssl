@@ -693,7 +693,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
                                WPACKET *thispkt,
                                OSSL_RECORD_TEMPLATE *templ,
-                               unsigned int rectype,
+                               uint8_t rectype,
                                unsigned char **recdata)
 {
     size_t maxcomplen;

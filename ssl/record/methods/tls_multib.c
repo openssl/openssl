@@ -20,7 +20,7 @@
 # define EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0
 #endif
 
-static int tls_is_multiblock_capable(OSSL_RECORD_LAYER *rl, int type,
+static int tls_is_multiblock_capable(OSSL_RECORD_LAYER *rl, uint8_t type,
                                      size_t len, size_t fraglen)
 {
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
@@ -38,7 +38,7 @@ static int tls_is_multiblock_capable(OSSL_RECORD_LAYER *rl, int type,
     return 0;
 }
 
-size_t tls_get_max_records_multiblock(OSSL_RECORD_LAYER *rl, int type,
+size_t tls_get_max_records_multiblock(OSSL_RECORD_LAYER *rl, uint8_t type,
                                       size_t len, size_t maxfrag,
                                       size_t *preffrag)
 {

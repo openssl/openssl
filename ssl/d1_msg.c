@@ -9,8 +9,8 @@
 
 #include "ssl_local.h"
 
-int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
-                               size_t *written)
+int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
+                               size_t len, size_t *written)
 {
     int i;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);

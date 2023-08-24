@@ -24,7 +24,7 @@ static char *privkey = NULL;
 
 #define TOTAL_RECORD_OVERFLOW_TESTS 6
 
-static int write_record(BIO *b, size_t len, int rectype, int recversion)
+static int write_record(BIO *b, size_t len, uint8_t rectype, int recversion)
 {
     unsigned char header[SSL3_RT_HEADER_LENGTH];
     size_t written;
