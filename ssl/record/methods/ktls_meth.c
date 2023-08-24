@@ -493,7 +493,7 @@ static int ktls_initialise_write_packets(OSSL_RECORD_LAYER *rl,
 static int ktls_prepare_record_header(OSSL_RECORD_LAYER *rl,
                                       WPACKET *thispkt,
                                       OSSL_RECORD_TEMPLATE *templ,
-                                      unsigned int rectype,
+                                      uint8_t rectype,
                                       unsigned char **recdata)
 {
     /* The kernel writes the record header, so nothing to do */

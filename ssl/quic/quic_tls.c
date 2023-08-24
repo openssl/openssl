@@ -230,7 +230,8 @@ static int quic_processed_read_pending(OSSL_RECORD_LAYER *rl)
     return 0;
 }
 
-static size_t quic_get_max_records(OSSL_RECORD_LAYER *rl, int type, size_t len,
+static size_t quic_get_max_records(OSSL_RECORD_LAYER *rl, uint8_t type,
+                                   size_t len,
                                    size_t maxfrag, size_t *preffrag)
 {
     return 1;

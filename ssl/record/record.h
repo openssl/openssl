@@ -107,7 +107,7 @@ typedef struct record_layer_st {
     /* partial write - check the numbers match */
     /* number bytes written */
     size_t wpend_tot;
-    int wpend_type;
+    uint8_t wpend_type;
     /* number of bytes submitted */
     size_t wpend_ret;
     const unsigned char *wpend_buf;
@@ -148,21 +148,21 @@ int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl);
 __owur size_t ssl3_pending(const SSL *s);
-__owur int ssl3_write_bytes(SSL *s, int type, const void *buf, size_t len,
+__owur int ssl3_write_bytes(SSL *s, uint8_t type, const void *buf, size_t len,
                             size_t *written);
-__owur int ssl3_read_bytes(SSL *s, int type, int *recvd_type,
+__owur int ssl3_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
                            unsigned char *buf, size_t len, int peek,
                            size_t *readbytes);
 
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
-__owur int dtls1_read_bytes(SSL *s, int type, int *recvd_type,
+__owur int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
                             unsigned char *buf, size_t len, int peek,
                             size_t *readbytes);
-__owur int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
+__owur int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const void *buf,
                              size_t len, size_t *written);
-int do_dtls1_write(SSL_CONNECTION *s, int type, const unsigned char *buf,
+int do_dtls1_write(SSL_CONNECTION *s, uint8_t type, const unsigned char *buf,
                    size_t len, size_t *written);
 void dtls1_increment_epoch(SSL_CONNECTION *s, int rw);
 int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length);

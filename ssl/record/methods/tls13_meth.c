@@ -233,11 +233,11 @@ static int tls13_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
     return 1;
 }
 
-static unsigned int tls13_get_record_type(OSSL_RECORD_LAYER *rl,
-                                          OSSL_RECORD_TEMPLATE *template)
+static uint8_t tls13_get_record_type(OSSL_RECORD_LAYER *rl,
+                                     OSSL_RECORD_TEMPLATE *template)
 {
     if (rl->allow_plain_alerts && template->type == SSL3_RT_ALERT)
-        return  SSL3_RT_ALERT;
+        return SSL3_RT_ALERT;
 
     /*
      * Aside from the above case we always use the application data record type

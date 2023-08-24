@@ -111,7 +111,7 @@ void dtls1_hm_fragment_free(hm_fragment *frag)
  * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
  * SSL3_RT_CHANGE_CIPHER_SPEC)
  */
-int dtls1_do_write(SSL_CONNECTION *s, int type)
+int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
 {
     int ret;
     size_t written;
@@ -809,7 +809,8 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
 {
     unsigned char wire[DTLS1_HM_HEADER_LENGTH];
     size_t mlen, frag_off, frag_len;
-    int i, ret, recvd_type;
+    int i, ret;
+    uint8_t recvd_type;
     struct hm_header_st msg_hdr;
     size_t readbytes;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);

@@ -1487,7 +1487,8 @@ size_t tls_app_data_pending(OSSL_RECORD_LAYER *rl)
     return num;
 }
 
-size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, int type, size_t len,
+size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, uint8_t type,
+                                   size_t len,
                                    size_t maxfrag, size_t *preffrag)
 {
     /*
@@ -1511,7 +1512,7 @@ size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, int type, size_t len,
     return 1;
 }
 
-size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, int type, size_t len,
+size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, uint8_t type, size_t len,
                            size_t maxfrag, size_t *preffrag)
 {
     return rl->funcs->get_max_records(rl, type, len, maxfrag, preffrag);
@@ -1574,7 +1575,7 @@ int tls_initialise_write_packets_default(OSSL_RECORD_LAYER *rl,
 int tls_prepare_record_header_default(OSSL_RECORD_LAYER *rl,
                                       WPACKET *thispkt,
                                       OSSL_RECORD_TEMPLATE *templ,
-                                      unsigned int rectype,
+                                      uint8_t rectype,
                                       unsigned char **recdata)
 {
     size_t maxcomplen;
@@ -1755,7 +1756,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     memset(wr, 0, sizeof(wr));
     for (j = 0; j < numtempl + prefix; j++) {
         unsigned char *compressdata = NULL;
-        unsigned int rectype;
+        uint8_t rectype;
 
         thispkt = &pkt[j];
         thiswr = &wr[j];

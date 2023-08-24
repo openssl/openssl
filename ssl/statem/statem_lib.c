@@ -58,7 +58,7 @@ int ossl_statem_set_mutator(SSL *s,
  * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
  * SSL3_RT_CHANGE_CIPHER_SPEC)
  */
-int ssl3_do_write(SSL_CONNECTION *s, int type)
+int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
 {
     int ret;
     size_t written = 0;
@@ -1526,7 +1526,8 @@ WORK_STATE tls_finish_handshake(SSL_CONNECTION *s, ossl_unused WORK_STATE wst,
 int tls_get_message_header(SSL_CONNECTION *s, int *mt)
 {
     /* s->init_num < SSL3_HM_HEADER_LENGTH */
-    int skip_message, i, recvd_type;
+    int skip_message, i;
+    uint8_t recvd_type;
     unsigned char *p;
     size_t l, readbytes;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);

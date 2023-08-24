@@ -195,8 +195,9 @@ static void dtls_unbuffer_record(SSL_CONNECTION *s)
  *     Application data protocol
  *             none of our business
  */
-int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
-                     size_t len, int peek, size_t *readbytes)
+int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
+                     unsigned char *buf, size_t len,
+                     int peek, size_t *readbytes)
 {
     int i, j, ret;
     size_t n;
@@ -603,7 +604,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
  * Call this to write data in records of type 'type' It will return <= 0 if
  * not all data has been sent or non-blocking IO.
  */
-int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
+int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const void *buf,
                       size_t len, size_t *written)
 {
     int i;
@@ -617,7 +618,7 @@ int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
     return i;
 }
 
-int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
+int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
                    size_t len, size_t *written)
 {
     int i;

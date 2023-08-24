@@ -455,7 +455,7 @@ struct ossl_record_method_st {
      * exit the record layer may update this to an alternative fragment size to
      * be used. This must always be less than or equal to |maxfrag|.
      */
-    size_t (*get_max_records)(OSSL_RECORD_LAYER *rl, int type, size_t len,
+    size_t (*get_max_records)(OSSL_RECORD_LAYER *rl, uint8_t type, size_t len,
                               size_t maxfrag, size_t *preffrag);
 
     /*

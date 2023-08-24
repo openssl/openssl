@@ -138,7 +138,7 @@ struct record_functions_st
 
     /* Write related functions */
 
-    size_t (*get_max_records)(OSSL_RECORD_LAYER *rl, int type, size_t len,
+    size_t (*get_max_records)(OSSL_RECORD_LAYER *rl, uint8_t type, size_t len,
                               size_t maxfrag, size_t *preffrag);
 
     /* Return 1 for success or 0 for error */
@@ -167,13 +167,13 @@ struct record_functions_st
                                     size_t *wpinited);
 
     /* Get the actual record type to be used for a given template */
-    unsigned int (*get_record_type)(OSSL_RECORD_LAYER *rl,
-                                    OSSL_RECORD_TEMPLATE *template);
+    uint8_t (*get_record_type)(OSSL_RECORD_LAYER *rl,
+                               OSSL_RECORD_TEMPLATE *template);
 
     /* Write the record header data to the WPACKET */
     int (*prepare_record_header)(OSSL_RECORD_LAYER *rl, WPACKET *thispkt,
                                  OSSL_RECORD_TEMPLATE *templ,
-                                 unsigned int rectype,
+                                 uint8_t rectype,
                                  unsigned char **recdata);
 
     int (*add_record_padding)(OSSL_RECORD_LAYER *rl,
@@ -419,7 +419,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl);
 int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
                                WPACKET *thispkt,
                                OSSL_RECORD_TEMPLATE *templ,
-                               unsigned int rectype,
+                               uint8_t rectype,
                                unsigned char **recdata);
 int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
                                     size_t mac_size,
@@ -451,7 +451,7 @@ int tls_free(OSSL_RECORD_LAYER *rl);
 int tls_unprocessed_read_pending(OSSL_RECORD_LAYER *rl);
 int tls_processed_read_pending(OSSL_RECORD_LAYER *rl);
 size_t tls_app_data_pending(OSSL_RECORD_LAYER *rl);
-size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, int type, size_t len,
+size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, uint8_t type, size_t len,
                            size_t maxfrag, size_t *preffrag);
 int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                       size_t numtempl);
@@ -480,9 +480,10 @@ int tls_write_records_multiblock(OSSL_RECORD_LAYER *rl,
                                  OSSL_RECORD_TEMPLATE *templates,
                                  size_t numtempl);
 
-size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, int type, size_t len,
+size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, uint8_t type,
+                                   size_t len,
                                    size_t maxfrag, size_t *preffrag);
-size_t tls_get_max_records_multiblock(OSSL_RECORD_LAYER *rl, int type,
+size_t tls_get_max_records_multiblock(OSSL_RECORD_LAYER *rl, uint8_t type,
                                       size_t len, size_t maxfrag,
                                       size_t *preffrag);
 int tls_allocate_write_buffers_default(OSSL_RECORD_LAYER *rl,
@@ -508,7 +509,7 @@ int tls1_initialise_write_packets(OSSL_RECORD_LAYER *rl,
 int tls_prepare_record_header_default(OSSL_RECORD_LAYER *rl,
                                       WPACKET *thispkt,
                                       OSSL_RECORD_TEMPLATE *templ,
-                                      unsigned int rectype,
+                                      uint8_t rectype,
                                       unsigned char **recdata);
 int tls_prepare_for_encryption_default(OSSL_RECORD_LAYER *rl,
                                        size_t mac_size,
