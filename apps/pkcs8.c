@@ -17,6 +17,10 @@
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 
+#define PBE_SALT_LEN_DEFAULT 16
+#define STR(a) XSTR(a)
+#define XSTR(a) #a
+
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
@@ -54,7 +58,8 @@ const OPTIONS pkcs8_options[] = {
     {"traditional", OPT_TRADITIONAL, '-', "use traditional format private key"},
     {"iter", OPT_ITER, 'p', "Specify the iteration count"},
     {"noiter", OPT_NOITER, '-', "Use 1 as iteration count"},
-    {"saltlen", OPT_SALTLEN, 'p', "Specify the salt length"},
+    {"saltlen", OPT_SALTLEN, 'p', "Specify the salt length (in bytes)"},
+    {OPT_MORE_STR, 0, 0, "Default: " STR(PBE_SALT_LEN_DEFAULT)},
 
 #ifndef OPENSSL_NO_SCRYPT
     OPT_SECTION("Scrypt"),
@@ -87,7 +92,7 @@ int pkcs8_main(int argc, char **argv)
     int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
     int private = 0, traditional = 0;
-    int saltlen = 0;
+    int saltlen = PBE_SALT_LEN_DEFAULT;
 #ifndef OPENSSL_NO_SCRYPT
     long scrypt_N = 0, scrypt_r = 0, scrypt_p = 0;
 #endif

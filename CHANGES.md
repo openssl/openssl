@@ -25,6 +25,13 @@ OpenSSL 3.2
 
 ### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
+ * The openssl "pkcs8" commandline application has changed the default
+   PBE salt length to 16 bytes. Prior to the change it used 8 bytes,
+   which is not an acceptable value for FIPS algorithms (PBKDF2).
+   An additional "saltlen" option has also been added.
+
+   *Shane Lontis*
+
  * Added client side support for QUIC
 
    *Hugo Landau, Matt Caswell, Paul Dale, Tomáš Mráz, Richard Levitte*

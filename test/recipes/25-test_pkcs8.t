@@ -15,7 +15,53 @@ use OpenSSL::Test qw/:DEFAULT srctop_file ok_nofips is_nofips/;
 
 setup("test_pkcs8");
 
-plan tests => 3;
+plan tests => 9;
+
+ok(run(app(([ 'openssl', 'pkcs8', '-topk8',
+              '-in', srctop_file('test', 'certs', 'pc5-key.pem'),
+              '-out', 'pbkdf2_default_saltlen.pem',
+              '-passout', 'pass:password']))),
+   "Convert a private key to PKCS#5 v2.0 format using PBKDF2 with the default saltlen");
+
+# We expect the output to be of the form "0:d=0  hl=2 l=  16 prim: OCTET STRING      [HEX DUMP]:FAC7F37508E6B7A805BF4B13861B3687"
+# i.e. 2 byte header + 16 byte salt.
+ok(run(app(([ 'openssl', 'asn1parse',
+              '-in', 'pbkdf2_default_saltlen.pem',
+              '-offset', '34', '-length', '18']))),
+   "Check the default size of the PBKDF2 PARAM 'salt length' is 16");
+
+ok(run(app(([ 'openssl', 'pkcs8', '-topk8',
+              '-in', srctop_file('test', 'certs', 'pc5-key.pem'),
+              '-saltlen', '8',
+              '-out', 'pbkdf2_64bit_saltlen.pem',
+              '-passout', 'pass:password']))),
+   "Convert a private key to PKCS#5 v2.0 format using pbkdf2 with a salt length of 8 bytes");
+
+# We expect the output to be of the form "0:d=0  hl=2 l=   8 prim: OCTET STRING      [HEX DUMP]:3C1147976A2B61CA"
+# i.e. 2 byte header + 8 byte salt.
+ok(run(app(([ 'openssl', 'asn1parse',
+              '-in', 'pbkdf2_64bit_saltlen.pem',
+              '-offset', '34', '-length', '10']))),
+   "Check the size of the PBKDF2 PARAM 'salt length' is 8");
+
+SKIP: {
+    skip "scrypt is not supported by this OpenSSL build", 2
+        if disabled("scrypt");
+
+    ok(run(app(([ 'openssl', 'pkcs8', '-topk8',
+                  '-in', srctop_file('test', 'certs', 'pc5-key.pem'),
+                  '-scrypt',
+                  '-out', 'scrypt_default_saltlen.pem',
+                  '-passout', 'pass:password']))),
+       "Convert a private key to PKCS#5 v2.0 format using scrypt with the default saltlen");
+
+# We expect the output to be of the form "0:d=0  hl=2 l=  16 prim: OCTET STRING      [HEX DUMP]:FAC7F37508E6B7A805BF4B13861B3687"
+# i.e. 2 byte header + 16 byte salt.
+    ok(run(app(([ 'openssl', 'asn1parse',
+                  '-in', 'scrypt_default_saltlen.pem',
+                  '-offset', '34', '-length', '18']))),
+       "Check the default size of the SCRYPT PARAM 'salt length' = 16");
+}
 
 SKIP: {
     skip "SM2, SM3 or SM4 is not supported by this OpenSSL build", 3
