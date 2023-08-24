@@ -564,12 +564,12 @@ static unsigned int server_helper_thread(void *arg)
 
 #else
 
-static QUIC_TSERVER *s_lock(struct helper *h)
+static QUIC_TSERVER *s_lock(struct helper *h, struct helper_local *hl)
 {
     return h->s;
 }
 
-static void s_unlock(struct helper *h)
+static void s_unlock(struct helper *h, struct helper_local *hl)
 {}
 
 #endif
@@ -1039,7 +1039,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
         if (thread_idx < 0) {
             if (!h->blocking) {
                 ossl_quic_tserver_tick(h->s);
-            } else if (h->blocking && !h->server_thread.ready) {
+            }
+#if defined(OPENSSL_THREADS)
+            else if (h->blocking && !h->server_thread.ready) {
                 ossl_crypto_mutex_lock(h->server_thread.m);
                 h->server_thread.ready = 1;
                 ossl_crypto_mutex_unlock(h->server_thread.m);
@@ -1047,6 +1049,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             }
             if (h->blocking)
                 assert(h->s == NULL);
+#endif
         }
 
         if (thread_idx >= 0 || connect_started)
@@ -1150,9 +1153,12 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
 
         case OPK_CHECK:
             {
+                int ok;
+
                 hl->check_op = op;
-                int ok = op->check_func(h, hl);
+                ok = op->check_func(h, hl);
                 hl->check_op = NULL;
+
                 if (h->check_spin_again) {
                     h->check_spin_again = 0;
                     S_SPIN_AGAIN();
@@ -1581,6 +1587,12 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 uint64_t error_code = op->arg2;
 
                 if (!TEST_ptr(c_tgt))
+                    goto out;
+
+                if (h->blocking
+                    && !TEST_true(SSL_shutdown_ex(c_tgt,
+                                                  SSL_SHUTDOWN_FLAG_WAIT_PEER,
+                                                  NULL, 0)))
                     goto out;
 
                 if (!SSL_get_conn_close_info(c_tgt, &cc_info, sizeof(cc_info)))
