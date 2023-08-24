@@ -33,6 +33,7 @@ struct child_thread_args {
     CRYPTO_MUTEX *m;
     int testresult;
     int done;
+    int s_checked_out;
 };
 #endif
 
@@ -48,7 +49,11 @@ struct helper {
     int                     s_fd;
     BIO                     *s_net_bio, *s_net_bio_own, *s_qtf_wbio, *s_qtf_wbio_own;
     BIO_ADDR                *s_net_bio_addr;
-    QUIC_TSERVER            *s;
+    /*
+     * When doing a blocking mode test run, s_priv always points to the TSERVER
+     * and s is NULL when the main thread should not be touching s_priv.
+     */
+    QUIC_TSERVER            *s, *s_priv;
     LHASH_OF(STREAM_INFO)   *s_streams;
 
     int                     c_fd;
@@ -85,19 +90,29 @@ struct helper {
                            BIO_MSG *m, size_t stride);
     uint64_t inject_word0, inject_word1;
     uint64_t scratch0, scratch1, fail_count;
+#if defined(OPENSSL_THREADS)
+    struct {
+        CRYPTO_THREAD   *t;
+        CRYPTO_MUTEX    *m;
+        CRYPTO_CONDVAR  *c;
+        int             ready, stop;
+    } server_thread;
+    int s_checked_out;
+#endif
 };
 
 struct helper_local {
     struct helper           *h;
     LHASH_OF(STREAM_INFO)   *c_streams;
     int                     thread_idx;
+    const struct script_op  *check_op;
 };
 
 struct script_op {
     uint32_t        op;
     const void      *arg0;
     size_t          arg1;
-    int             (*check_func)(struct helper *h, const struct script_op *op);
+    int             (*check_func)(struct helper *h, struct helper_local *hl);
     const char      *stream_name;
     uint64_t        arg2;
     int             (*qtf_packet_plain_cb)(struct helper *h, QUIC_PKT_HDR *hdr,
@@ -312,23 +327,28 @@ static OSSL_TIME get_time(void *arg)
     return t;
 }
 
-static int skip_time_ms(struct helper *h, const struct script_op *op)
+static int skip_time_ms(struct helper *h, struct helper_local *hl)
 {
     if (!TEST_true(CRYPTO_THREAD_write_lock(h->time_lock)))
         return 0;
 
-    h->time_slip = ossl_time_add(h->time_slip, ossl_ms2time(op->arg2));
+    h->time_slip = ossl_time_add(h->time_slip, ossl_ms2time(hl->check_op->arg2));
 
     CRYPTO_THREAD_unlock(h->time_lock);
     return 1;
 }
 
-static int check_rejected(struct helper *h, const struct script_op *op)
-{
-    uint64_t stream_id = op->arg2;
+static QUIC_TSERVER *s_lock(struct helper *h, struct helper_local *hl);
+static void s_unlock(struct helper *h, struct helper_local *hl);
 
-    if (!ossl_quic_tserver_stream_has_peer_stop_sending(h->s, stream_id, NULL)
-        || !ossl_quic_tserver_stream_has_peer_reset_stream(h->s, stream_id, NULL)) {
+#define ACQUIRE_S() s_lock(h, hl)
+
+static int check_rejected(struct helper *h, struct helper_local *hl)
+{
+    uint64_t stream_id = hl->check_op->arg2;
+
+    if (!ossl_quic_tserver_stream_has_peer_stop_sending(ACQUIRE_S(), stream_id, NULL)
+        || !ossl_quic_tserver_stream_has_peer_reset_stream(ACQUIRE_S(), stream_id, NULL)) {
         h->check_spin_again = 1;
         return 0;
     }
@@ -336,11 +356,11 @@ static int check_rejected(struct helper *h, const struct script_op *op)
     return 1;
 }
 
-static int check_stream_reset(struct helper *h, const struct script_op *op)
+static int check_stream_reset(struct helper *h, struct helper_local *hl)
 {
-    uint64_t stream_id = op->arg2, aec = 0;
+    uint64_t stream_id = hl->check_op->arg2, aec = 0;
 
-    if (!ossl_quic_tserver_stream_has_peer_reset_stream(h->s, stream_id, &aec)) {
+    if (!ossl_quic_tserver_stream_has_peer_reset_stream(ACQUIRE_S(), stream_id, &aec)) {
         h->check_spin_again = 1;
         return 0;
     }
@@ -348,11 +368,11 @@ static int check_stream_reset(struct helper *h, const struct script_op *op)
     return TEST_uint64_t_eq(aec, 42);
 }
 
-static int check_stream_stopped(struct helper *h, const struct script_op *op)
+static int check_stream_stopped(struct helper *h, struct helper_local *hl)
 {
-    uint64_t stream_id = op->arg2;
+    uint64_t stream_id = hl->check_op->arg2;
 
-    if (!ossl_quic_tserver_stream_has_peer_stop_sending(h->s, stream_id, NULL)) {
+    if (!ossl_quic_tserver_stream_has_peer_stop_sending(ACQUIRE_S(), stream_id, NULL)) {
         h->check_spin_again = 1;
         return 0;
     }
@@ -360,15 +380,15 @@ static int check_stream_stopped(struct helper *h, const struct script_op *op)
     return 1;
 }
 
-static int override_key_update(struct helper *h, const struct script_op *op)
+static int override_key_update(struct helper *h, struct helper_local *hl)
 {
     QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
 
-    ossl_quic_channel_set_txku_threshold_override(ch, op->arg2);
+    ossl_quic_channel_set_txku_threshold_override(ch, hl->check_op->arg2);
     return 1;
 }
 
-static int trigger_key_update(struct helper *h, const struct script_op *op)
+static int trigger_key_update(struct helper *h, struct helper_local *hl)
 {
     if (!TEST_true(SSL_key_update(h->c_conn, SSL_KEY_UPDATE_REQUESTED)))
         return 0;
@@ -376,7 +396,7 @@ static int trigger_key_update(struct helper *h, const struct script_op *op)
     return 1;
 }
 
-static int check_key_update_ge(struct helper *h, const struct script_op *op)
+static int check_key_update_ge(struct helper *h, struct helper_local *hl)
 {
     QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
     int64_t txke = (int64_t)ossl_quic_channel_get_tx_key_epoch(ch);
@@ -391,19 +411,19 @@ static int check_key_update_ge(struct helper *h, const struct script_op *op)
         return 0;
 
     /* Caller specifies a minimum number of RXKEs which must have happened. */
-    if (!TEST_uint64_t_ge((uint64_t)rxke, op->arg2))
+    if (!TEST_uint64_t_ge((uint64_t)rxke, hl->check_op->arg2))
         return 0;
 
     return 1;
 }
 
-static int check_key_update_lt(struct helper *h, const struct script_op *op)
+static int check_key_update_lt(struct helper *h, struct helper_local *hl)
 {
     QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
     uint64_t txke = ossl_quic_channel_get_tx_key_epoch(ch);
 
     /* Caller specifies a maximum number of TXKEs which must have happened. */
-    if (!TEST_uint64_t_lt(txke, op->arg2))
+    if (!TEST_uint64_t_lt(txke, hl->check_op->arg2))
         return 0;
 
     return 1;
@@ -461,12 +481,105 @@ static int join_threads(struct child_thread_args *threads, size_t num_threads)
 
     return ok;
 }
+
+static int join_server_thread(struct helper *h)
+{
+    CRYPTO_THREAD_RETVAL rv;
+
+    if (h->server_thread.t == NULL)
+        return 1;
+
+    ossl_crypto_mutex_lock(h->server_thread.m);
+    h->server_thread.stop = 1;
+    ossl_crypto_mutex_unlock(h->server_thread.m);
+    ossl_crypto_condvar_signal(h->server_thread.c);
+
+    ossl_crypto_thread_native_join(h->server_thread.t, &rv);
+    ossl_crypto_thread_native_clean(h->server_thread.t);
+    h->server_thread.t = NULL;
+    return 1;
+}
+
+/* Ensure the server-state lock is currently held. Idempotent. */
+static int *s_checked_out_p(struct helper *h, int thread_idx)
+{
+    return (thread_idx < 0) ? &h->s_checked_out
+        : &h->threads[thread_idx].s_checked_out;
+}
+
+static QUIC_TSERVER *s_lock(struct helper *h, struct helper_local *hl)
+{
+    int *p_checked_out = s_checked_out_p(h, hl->thread_idx);
+
+    if (h->server_thread.m == NULL || *p_checked_out)
+        return h->s;
+
+    ossl_crypto_mutex_lock(h->server_thread.m);
+    h->s = h->s_priv;
+    *p_checked_out = 1;
+    return h->s;
+}
+
+/* Ensure the server-state lock is currently not held. Idempotent. */
+static void s_unlock(struct helper *h, struct helper_local *hl)
+{
+    int *p_checked_out = s_checked_out_p(h, hl->thread_idx);
+
+    if (h->server_thread.m == NULL || !*p_checked_out)
+        return;
+
+    *p_checked_out = 0;
+    h->s = NULL;
+    ossl_crypto_mutex_unlock(h->server_thread.m);
+}
+
+static unsigned int server_helper_thread(void *arg)
+{
+    struct helper *h = arg;
+
+    ossl_crypto_mutex_lock(h->server_thread.m);
+
+    for (;;) {
+        int ready, stop;
+
+        ready   = h->server_thread.ready;
+        stop    = h->server_thread.stop;
+
+        if (stop)
+            break;
+
+        if (!ready) {
+            ossl_crypto_condvar_wait(h->server_thread.c, h->server_thread.m);
+            continue;
+        }
+
+        ossl_quic_tserver_tick(h->s_priv);
+        ossl_crypto_mutex_unlock(h->server_thread.m);
+        OSSL_sleep(1);
+        ossl_crypto_mutex_lock(h->server_thread.m);
+    }
+
+    ossl_crypto_mutex_unlock(h->server_thread.m);
+    return 1;
+}
+
+#else
+
+static QUIC_TSERVER *s_lock(struct helper *h, struct helper_local *hl)
+{
+    return h->s;
+}
+
+static void s_unlock(struct helper *h, struct helper_local *hl)
+{}
+
 #endif
 
 static void helper_cleanup(struct helper *h)
 {
 #if defined(OPENSSL_THREADS)
     join_threads(h->threads, h->num_threads);
+    join_server_thread(h);
     OPENSSL_free(h->threads);
     h->threads = NULL;
     h->num_threads = 0;
@@ -487,8 +600,8 @@ static void helper_cleanup(struct helper *h)
     }
 
     helper_cleanup_streams(&h->s_streams);
-    ossl_quic_tserver_free(h->s);
-    h->s = NULL;
+    ossl_quic_tserver_free(h->s_priv);
+    h->s_priv = h->s = NULL;
 
     BIO_free(h->s_net_bio_own);
     h->s_net_bio_own = NULL;
@@ -520,9 +633,15 @@ static void helper_cleanup(struct helper *h)
 
     CRYPTO_THREAD_lock_free(h->time_lock);
     h->time_lock = NULL;
+
+#if defined(OPENSSL_THREADS)
+    ossl_crypto_mutex_free(&h->server_thread.m);
+    ossl_crypto_condvar_free(&h->server_thread.c);
+#endif
 }
 
-static int helper_init(struct helper *h, int free_order, int need_injector)
+static int helper_init(struct helper *h, int free_order, int blocking,
+                       int need_injector)
 {
     short port = 8186;
     struct in_addr ina = {0};
@@ -532,6 +651,7 @@ static int helper_init(struct helper *h, int free_order, int need_injector)
     h->c_fd = -1;
     h->s_fd = -1;
     h->free_order = free_order;
+    h->blocking = blocking;
     h->need_injector = need_injector;
     h->time_slip = ossl_time_zero();
 
@@ -593,11 +713,14 @@ static int helper_init(struct helper *h, int free_order, int need_injector)
     s_args.now_cb_arg   = h;
     s_args.ctx          = NULL;
 
-    if (!TEST_ptr(h->s = ossl_quic_tserver_new(&s_args, certfile, keyfile)))
+    if (!TEST_ptr(h->s_priv = ossl_quic_tserver_new(&s_args, certfile, keyfile)))
         goto err;
 
+    if (!blocking)
+        h->s = h->s_priv;
+
     if (need_injector) {
-        h->qtf = qtest_create_injector(h->s);
+        h->qtf = qtest_create_injector(h->s_priv);
         if (!TEST_ptr(h->qtf))
             goto err;
 
@@ -641,8 +764,26 @@ static int helper_init(struct helper *h, int free_order, int need_injector)
 
     SSL_set0_wbio(h->c_conn, h->c_net_bio);
 
-    if (!TEST_true(SSL_set_blocking_mode(h->c_conn, 0)))
+    if (!TEST_true(SSL_set_blocking_mode(h->c_conn, h->blocking)))
         goto err;
+
+    if (h->blocking) {
+#if defined(OPENSSL_THREADS)
+        if (!TEST_ptr(h->server_thread.m = ossl_crypto_mutex_new()))
+            goto err;
+
+        if (!TEST_ptr(h->server_thread.c = ossl_crypto_condvar_new()))
+            goto err;
+
+        h->server_thread.t
+            = ossl_crypto_thread_native_start(server_helper_thread, h, 1);
+        if (!TEST_ptr(h->server_thread.t))
+            goto err;
+#else
+        TEST_error("cannot support blocking mode without threads");
+        goto err;
+#endif
+    }
 
     h->start_time   = ossl_time_now();
     h->init         = 1;
@@ -844,20 +985,30 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
     int end_wait_warning = 0;
 #endif
     OSSL_TIME op_start_time = ossl_time_zero(), op_deadline = ossl_time_zero();
-    struct helper_local hl;
+    struct helper_local hl_, *hl = &hl_;
 #define REPEAT_SLOTS 8
     size_t repeat_stack_idx[REPEAT_SLOTS], repeat_stack_done[REPEAT_SLOTS];
     size_t repeat_stack_limit[REPEAT_SLOTS];
     size_t repeat_stack_len = 0;
 
-    if (!TEST_true(helper_local_init(&hl, h, thread_idx)))
+    if (!TEST_true(helper_local_init(hl, h, thread_idx)))
         goto out;
 
-#define SPIN_AGAIN() { OSSL_sleep(1); no_advance = 1; continue; }
+#define S_SPIN_AGAIN() { OSSL_sleep(1); no_advance = 1; continue; }
+#define C_SPIN_AGAIN()                                  \
+    {                                                   \
+        if (h->blocking) {                              \
+            TEST_error("spin again in blocking mode");  \
+            goto out;                                   \
+        }                                               \
+        S_SPIN_AGAIN();                                 \
+    }
 
     for (;;) {
         SSL *c_tgt              = h->c_conn;
         uint64_t s_stream_id    = UINT64_MAX;
+
+        s_unlock(h, hl);
 
         if (no_advance) {
             no_advance = 0;
@@ -879,15 +1030,28 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
         op = &script[op_idx];
 
         if (op->stream_name != NULL) {
-            c_tgt = helper_local_get_c_stream(&hl, op->stream_name);
+            c_tgt = helper_local_get_c_stream(hl, op->stream_name);
             if (thread_idx < 0)
                 s_stream_id = helper_get_s_stream(h, op->stream_name);
             else
                 s_stream_id = UINT64_MAX;
         }
 
-        if (thread_idx < 0)
-            ossl_quic_tserver_tick(h->s);
+        if (thread_idx < 0) {
+            if (!h->blocking) {
+                ossl_quic_tserver_tick(h->s);
+            }
+#if defined(OPENSSL_THREADS)
+            else if (h->blocking && !h->server_thread.ready) {
+                ossl_crypto_mutex_lock(h->server_thread.m);
+                h->server_thread.ready = 1;
+                ossl_crypto_mutex_unlock(h->server_thread.m);
+                ossl_crypto_condvar_signal(h->server_thread.c);
+            }
+            if (h->blocking)
+                assert(h->s == NULL);
+#endif
+        }
 
         if (thread_idx >= 0 || connect_started)
             SSL_handle_events(h->c_conn);
@@ -943,7 +1107,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                             end_wait_warning = 1;
                         }
 
-                        SPIN_AGAIN();
+                        S_SPIN_AGAIN();
                     }
                 }
             }
@@ -990,10 +1154,15 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
 
         case OPK_CHECK:
             {
-                int ok = op->check_func(h, op);
+                int ok;
+
+                hl->check_op = op;
+                ok = op->check_func(h, hl);
+                hl->check_op = NULL;
+
                 if (h->check_spin_again) {
                     h->check_spin_again = 0;
-                    SPIN_AGAIN();
+                    S_SPIN_AGAIN();
                 }
 
                 if (!TEST_true(ok))
@@ -1034,7 +1203,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     goto out;
                 if (ret != 1) {
                     if (!h->blocking && is_want(h->c_conn, ret))
-                        SPIN_AGAIN();
+                        C_SPIN_AGAIN();
 
                     if (op->arg1 == 0 && !TEST_int_eq(ret, 1))
                         goto out;
@@ -1065,7 +1234,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_uint64_t_ne(s_stream_id, UINT64_MAX))
                     goto out;
 
-                if (!TEST_true(ossl_quic_tserver_write(h->s, s_stream_id,
+                if (!TEST_true(ossl_quic_tserver_write(ACQUIRE_S(), s_stream_id,
                                                        op->arg0, op->arg1,
                                                        &bytes_written))
                     || !TEST_size_t_eq(bytes_written, op->arg1))
@@ -1085,7 +1254,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_uint64_t_ne(s_stream_id, UINT64_MAX))
                     goto out;
 
-                ossl_quic_tserver_conclude(h->s, s_stream_id);
+                ossl_quic_tserver_conclude(ACQUIRE_S(), s_stream_id);
             }
             break;
 
@@ -1099,7 +1268,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
 
                 if (!SSL_peek_ex(c_tgt, buf, sizeof(buf), &bytes_read)
                     || bytes_read == 0)
-                    SPIN_AGAIN();
+                    C_SPIN_AGAIN();
             }
             break;
 
@@ -1118,11 +1287,11 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     goto out;
 
                 if (!r)
-                    SPIN_AGAIN();
+                    C_SPIN_AGAIN();
 
                 if (bytes_read + offset != op->arg1) {
                     offset += bytes_read;
-                    SPIN_AGAIN();
+                    C_SPIN_AGAIN();
                 }
 
                 if (op->arg1 > 0
@@ -1145,7 +1314,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     && !TEST_ptr(tmp_buf = OPENSSL_malloc(op->arg1)))
                     goto out;
 
-                if (!TEST_true(ossl_quic_tserver_read(h->s, s_stream_id,
+                if (!TEST_true(ossl_quic_tserver_read(ACQUIRE_S(), s_stream_id,
                                                       tmp_buf + offset,
                                                       op->arg1 - offset,
                                                       &bytes_read)))
@@ -1153,7 +1322,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
 
                 if (bytes_read + offset != op->arg1) {
                     offset += bytes_read;
-                    SPIN_AGAIN();
+                    S_SPIN_AGAIN();
                 }
 
                 if (op->arg1 > 0
@@ -1178,7 +1347,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     goto out;
 
                 if (is_want(c_tgt, 0))
-                    SPIN_AGAIN();
+                    C_SPIN_AGAIN();
 
                 if (!TEST_int_eq(SSL_get_error(c_tgt, 0),
                                  SSL_ERROR_ZERO_RETURN))
@@ -1194,8 +1363,8 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_uint64_t_ne(s_stream_id, UINT64_MAX))
                     goto out;
 
-                if (!ossl_quic_tserver_has_read_ended(h->s, s_stream_id))
-                    SPIN_AGAIN();
+                if (!ossl_quic_tserver_has_read_ended(ACQUIRE_S(), s_stream_id))
+                    S_SPIN_AGAIN();
             }
             break;
 
@@ -1212,7 +1381,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_ptr(c_stream = ossl_quic_detach_stream(h->c_conn)))
                     goto out;
 
-                if (!TEST_true(helper_local_set_c_stream(&hl, op->stream_name, c_stream)))
+                if (!TEST_true(helper_local_set_c_stream(hl, op->stream_name, c_stream)))
                     goto out;
             }
             break;
@@ -1228,7 +1397,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_true(ossl_quic_attach_stream(h->c_conn, c_tgt)))
                     goto out;
 
-                if (!TEST_true(helper_local_set_c_stream(&hl, op->stream_name, NULL)))
+                if (!TEST_true(helper_local_set_c_stream(hl, op->stream_name, NULL)))
                     goto out;
             }
             break;
@@ -1265,7 +1434,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                                          op->arg2))
                     goto out;
 
-                if (!TEST_true(helper_local_set_c_stream(&hl, op->stream_name, c_stream)))
+                if (!TEST_true(helper_local_set_c_stream(hl, op->stream_name, c_stream)))
                     goto out;
             }
             break;
@@ -1280,7 +1449,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_ptr(op->stream_name))
                     goto out;
 
-                if (!TEST_true(ossl_quic_tserver_stream_new(h->s,
+                if (!TEST_true(ossl_quic_tserver_stream_new(ACQUIRE_S(),
                                                             op->arg1 > 0,
                                                             &stream_id)))
                     goto out;
@@ -1306,9 +1475,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     goto out;
 
                 if ((c_stream = SSL_accept_stream(h->c_conn, 0)) == NULL)
-                    SPIN_AGAIN();
+                    C_SPIN_AGAIN();
 
-                if (!TEST_true(helper_local_set_c_stream(&hl, op->stream_name,
+                if (!TEST_true(helper_local_set_c_stream(hl, op->stream_name,
                                                           c_stream)))
                     goto out;
             }
@@ -1324,9 +1493,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_ptr(op->stream_name))
                     goto out;
 
-                new_stream_id = ossl_quic_tserver_pop_incoming_stream(h->s);
+                new_stream_id = ossl_quic_tserver_pop_incoming_stream(ACQUIRE_S());
                 if (new_stream_id == UINT64_MAX)
-                    SPIN_AGAIN();
+                    S_SPIN_AGAIN();
 
                 if (!TEST_true(helper_set_s_stream(h, op->stream_name, new_stream_id)))
                     goto out;
@@ -1337,7 +1506,8 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             {
                 SSL *c_stream;
 
-                if (!TEST_ptr_null(c_stream = SSL_accept_stream(h->c_conn, 0))) {
+                if (!TEST_ptr_null(c_stream = SSL_accept_stream(h->c_conn,
+                                                                SSL_ACCEPT_STREAM_NO_BLOCK))) {
                     SSL_free(c_stream);
                     goto out;
                 }
@@ -1353,7 +1523,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_ptr(op->stream_name))
                     goto out;
 
-                if (!TEST_true(helper_local_set_c_stream(&hl, op->stream_name, NULL)))
+                if (!TEST_true(helper_local_set_c_stream(hl, op->stream_name, NULL)))
                     goto out;
 
                 SSL_free(c_tgt);
@@ -1400,13 +1570,13 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     goto out;
 
                 if (ret == 0)
-                    SPIN_AGAIN();
+                    C_SPIN_AGAIN();
             }
             break;
 
         case OPK_S_SHUTDOWN:
             {
-                ossl_quic_tserver_shutdown(h->s, op->arg1);
+                ossl_quic_tserver_shutdown(ACQUIRE_S(), op->arg1);
             }
             break;
 
@@ -1420,8 +1590,14 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_ptr(c_tgt))
                     goto out;
 
+                if (h->blocking
+                    && !TEST_true(SSL_shutdown_ex(c_tgt,
+                                                  SSL_SHUTDOWN_FLAG_WAIT_PEER,
+                                                  NULL, 0)))
+                    goto out;
+
                 if (!SSL_get_conn_close_info(c_tgt, &cc_info, sizeof(cc_info)))
-                    SPIN_AGAIN();
+                    C_SPIN_AGAIN();
 
                 if (!TEST_int_eq(expect_app,
                                  (cc_info.flags
@@ -1441,12 +1617,12 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 int expect_remote = (op->arg1 & EXPECT_CONN_CLOSE_REMOTE) != 0;
                 uint64_t error_code = op->arg2;
 
-                if (!ossl_quic_tserver_is_term_any(h->s)) {
-                    ossl_quic_tserver_ping(h->s);
-                    SPIN_AGAIN();
+                if (!ossl_quic_tserver_is_term_any(ACQUIRE_S())) {
+                    ossl_quic_tserver_ping(ACQUIRE_S());
+                    S_SPIN_AGAIN();
                 }
 
-                if (!TEST_ptr(tc = ossl_quic_tserver_get_terminate_cause(h->s)))
+                if (!TEST_ptr(tc = ossl_quic_tserver_get_terminate_cause(ACQUIRE_S())))
                     goto out;
 
                 if (!TEST_uint64_t_eq(error_code, tc->error_code)
@@ -1504,7 +1680,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_uint64_t_ne(s_stream_id, UINT64_MAX))
                     goto out;
 
-                if (!TEST_false(ossl_quic_tserver_write(h->s, s_stream_id,
+                if (!TEST_false(ossl_quic_tserver_write(ACQUIRE_S(), s_stream_id,
                                                        (const unsigned char *)"apple", 5,
                                                        &bytes_written)))
                     goto out;
@@ -1544,7 +1720,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     goto out;
 
                 if (is_want(c_tgt, 0))
-                    SPIN_AGAIN();
+                    C_SPIN_AGAIN();
             }
             break;
 
@@ -1556,7 +1732,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_uint64_t_ne(s_stream_id, UINT64_MAX))
                     goto out;
 
-                if (!TEST_false(ossl_quic_tserver_read(h->s, s_stream_id,
+                if (!TEST_false(ossl_quic_tserver_read(ACQUIRE_S(), s_stream_id,
                                                       buf, sizeof(buf),
                                                       &bytes_read)))
                     goto out;
@@ -1691,6 +1867,11 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             break;
 
         case OPK_SET_INJECT_WORD:
+            /*
+             * Must hold server tick lock - callbacks can be called from other
+             * thread when running test in blocking mode (tsan).
+             */
+            ACQUIRE_S();
             h->inject_word0 = op->arg1;
             h->inject_word1 = op->arg2;
             break;
@@ -1713,7 +1894,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             break;
 
         case OPK_S_NEW_TICKET:
-            if (!TEST_true(ossl_quic_tserver_new_ticket(h->s)))
+            if (!TEST_true(ossl_quic_tserver_new_ticket(ACQUIRE_S())))
                 goto out;
             break;
 
@@ -1724,6 +1905,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
     }
 
 out:
+    s_unlock(h, hl); /* idempotent */
     if (!testresult) {
         size_t i;
 
@@ -1738,18 +1920,19 @@ out:
     }
 
     OPENSSL_free(tmp_buf);
-    helper_local_cleanup(&hl);
+    helper_local_cleanup(hl);
     return testresult;
 }
 
 static int run_script(const struct script_op *script,
                       const char *script_name,
-                      int free_order)
+                      int free_order,
+                      int blocking)
 {
     int testresult = 0;
     struct helper h;
 
-    if (!TEST_true(helper_init(&h, free_order, 1)))
+    if (!TEST_true(helper_init(&h, free_order, blocking, 1)))
         goto out;
 
     if (!TEST_true(run_script_worker(&h, script, script_name, -1)))
@@ -3011,7 +3194,7 @@ static int script_39_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     size_t i, written;
     uint64_t seq_no = 0, retire_prior_to = 0;
     QUIC_CONN_ID new_cid = {0};
-    QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(h->s);
+    QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(h->s_priv);
 
     switch (h->inject_word1) {
     case 0:
@@ -3220,13 +3403,13 @@ static void script_41_trace(int write_p, int version, int content_type,
    ++h->scratch0;
 }
 
-static int script_41_setup(struct helper *h, const struct script_op *op)
+static int script_41_setup(struct helper *h, struct helper_local *hl)
 {
-    ossl_quic_tserver_set_msg_callback(h->s, script_41_trace, h);
+    ossl_quic_tserver_set_msg_callback(ACQUIRE_S(), script_41_trace, h);
     return 1;
 }
 
-static int script_41_check(struct helper *h, const struct script_op *op)
+static int script_41_check(struct helper *h, struct helper_local *hl)
 {
     /* At least one valid challenge/response echo? */
     if (!TEST_uint64_t_gt(h->scratch0, 0))
@@ -3393,21 +3576,21 @@ static const struct script_op script_44[] = {
 };
 
 /* 45. PING must generate ACK */
-static int force_ping(struct helper *h, const struct script_op *op)
+static int force_ping(struct helper *h, struct helper_local *hl)
 {
-    QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(h->s);
+    QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(ACQUIRE_S());
 
     h->scratch0 = ossl_quic_channel_get_diag_num_rx_ack(ch);
 
-    if (!TEST_true(ossl_quic_tserver_ping(h->s)))
+    if (!TEST_true(ossl_quic_tserver_ping(ACQUIRE_S())))
         return 0;
 
     return 1;
 }
 
-static int wait_incoming_acks_increased(struct helper *h, const struct script_op *op)
+static int wait_incoming_acks_increased(struct helper *h, struct helper_local *hl)
 {
-    QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(h->s);
+    QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(ACQUIRE_S());
     uint16_t count;
 
     count = ossl_quic_channel_get_diag_num_rx_ack(ch);
@@ -3997,7 +4180,7 @@ static const struct script_op script_59[] = {
 /* 60. Connection close reason truncation */
 static char long_reason[2048];
 
-static int init_reason(struct helper *h, const struct script_op *op)
+static int init_reason(struct helper *h, struct helper_local *hl)
 {
     memset(long_reason, '~', sizeof(long_reason));
     memcpy(long_reason, "This is a long reason string.", 29);
@@ -4005,9 +4188,9 @@ static int init_reason(struct helper *h, const struct script_op *op)
     return 1;
 }
 
-static int check_shutdown_reason(struct helper *h, const struct script_op *op)
+static int check_shutdown_reason(struct helper *h, struct helper_local *hl)
 {
-    const QUIC_TERMINATE_CAUSE *tc = ossl_quic_tserver_get_terminate_cause(h->s);
+    const QUIC_TERMINATE_CAUSE *tc = ossl_quic_tserver_get_terminate_cause(ACQUIRE_S());
 
     if (tc == NULL) {
         h->check_spin_again = 1;
@@ -4397,11 +4580,11 @@ static const struct script_op script_69[] = {
     OP_END
 };
 
-static int set_max_early_data(struct helper *h, const struct script_op *op)
+static int set_max_early_data(struct helper *h, struct helper_local *hl)
 {
 
-    if (!TEST_true(ossl_quic_tserver_set_max_early_data(h->s,
-                                                        (uint32_t)op->arg2)))
+    if (!TEST_true(ossl_quic_tserver_set_max_early_data(ACQUIRE_S(),
+                                                        (uint32_t)hl->check_op->arg2)))
         return 0;
 
     return 1;
@@ -4447,7 +4630,7 @@ static const struct script_op script_71[] = {
 };
 
 /* 72. Test that APL stops handing out streams after limit reached (bidi) */
-static int script_72_check(struct helper *h, const struct script_op *op)
+static int script_72_check(struct helper *h, struct helper_local *hl)
 {
     if (!TEST_uint64_t_ge(h->fail_count, 50))
         return 0;
@@ -4466,7 +4649,7 @@ static const struct script_op script_72[] = {
      */
     OP_BEGIN_REPEAT         (200)
 
-    OP_C_NEW_STREAM_BIDI_EX (a, ANY_ID, ALLOW_FAIL)
+    OP_C_NEW_STREAM_BIDI_EX (a, ANY_ID, ALLOW_FAIL | SSL_STREAM_FLAG_NO_BLOCK)
     OP_C_SKIP_IF_UNBOUND    (a, 2)
     OP_C_WRITE              (a, "apple", 5)
     OP_C_FREE_STREAM        (a)
@@ -4490,7 +4673,7 @@ static const struct script_op script_73[] = {
      */
     OP_BEGIN_REPEAT         (200)
 
-    OP_C_NEW_STREAM_UNI_EX  (a, ANY_ID, ALLOW_FAIL)
+    OP_C_NEW_STREAM_UNI_EX  (a, ANY_ID, ALLOW_FAIL | SSL_STREAM_FLAG_NO_BLOCK)
     OP_C_SKIP_IF_UNBOUND    (a, 2)
     OP_C_WRITE              (a, "apple", 5)
     OP_C_FREE_STREAM        (a)
@@ -4599,10 +4782,12 @@ static const struct script_op script_75[] = {
     OP_END
 };
 
-/* 74. Test peer-initiated shutdown wait */
-static int script_76_check(struct helper *h, const struct script_op *op)
+/* 76. Test peer-initiated shutdown wait */
+static int script_76_check(struct helper *h, struct helper_local *hl)
 {
-    if (!TEST_false(SSL_shutdown_ex(h->c_conn, SSL_SHUTDOWN_FLAG_WAIT_PEER,
+    if (!TEST_false(SSL_shutdown_ex(h->c_conn,
+                                    SSL_SHUTDOWN_FLAG_WAIT_PEER
+                                    | SSL_SHUTDOWN_FLAG_NO_BLOCK,
                                     NULL, 0)))
         return 0;
 
@@ -4711,14 +4896,32 @@ static const struct script_op *const scripts[] = {
 
 static int test_script(int idx)
 {
-    int script_idx = idx >> 1;
-    int free_order = idx & 1;
+    int script_idx, free_order, blocking;
     char script_name[64];
+
+    free_order = idx % 2;
+    idx /= 2;
+
+    blocking = idx % 2;
+    idx /= 2;
+
+    script_idx = idx;
+
+    if (blocking && free_order)
+        return 1; /* don't need to test free_order twice */
+
+#if !defined(OPENSSL_THREADS)
+    if (blocking) {
+        TEST_skip("cannot test in blocking mode without threads");
+        return 1;
+    }
+#endif
 
     snprintf(script_name, sizeof(script_name), "script %d", script_idx + 1);
 
-    TEST_info("Running script %d (order=%d)", script_idx + 1, free_order);
-    return run_script(scripts[script_idx], script_name, free_order);
+    TEST_info("Running script %d (order=%d, blocking=%d)", script_idx + 1,
+              free_order, blocking);
+    return run_script(scripts[script_idx], script_name, free_order, blocking);
 }
 
 /* Dynamically generated tests. */
@@ -4802,7 +5005,7 @@ static ossl_unused int test_dyn_frame_types(int idx)
     snprintf(script_name, sizeof(script_name),
              "dyn script %d", idx);
 
-    return run_script(dyn_frame_types_script, script_name, 0);
+    return run_script(dyn_frame_types_script, script_name, 0, 0);
 }
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -4819,6 +5022,6 @@ int setup_tests(void)
         return 0;
 
     ADD_ALL_TESTS(test_dyn_frame_types, OSSL_NELEM(forbidden_frame_types));
-    ADD_ALL_TESTS(test_script, OSSL_NELEM(scripts) * 2);
+    ADD_ALL_TESTS(test_script, OSSL_NELEM(scripts) * 2 * 2);
     return 1;
 }
