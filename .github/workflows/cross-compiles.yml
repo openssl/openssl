@@ -183,26 +183,26 @@ jobs:
       run: make -s -j4
 
     - name: install qemu
-      if: matrix.platform.tests != 'none'
+      if: github.event_name == 'push' && matrix.platform.tests != 'none'
       run: sudo apt-get -yq --force-yes install qemu-user
 
     - name: Set QEMU environment
-      if: matrix.platform.qemucpu != ''
+      if: github.event_name == 'push' && matrix.platform.qemucpu != ''
       run: echo "QEMU_CPU=${{ matrix.platform.qemucpu }}" >> $GITHUB_ENV
 
     - name: Set OpenSSL caps environment
-      if: matrix.platform.opensslcapsname != ''
+      if: github.event_name == 'push' && matrix.platform.opensslcapsname != ''
       run: echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=\
                  ${{ matrix.platform.opensslcaps }}" >> $GITHUB_ENV
 
     - name: make all tests
-      if: matrix.platform.tests == ''
+      if: github.event_name == 'push' && matrix.platform.tests == ''
       run: |
         make test HARNESS_JOBS=${HARNESS_JOBS:-4} \
                   TESTS="-test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make some tests
-      if: matrix.platform.tests != 'none' && matrix.platform.tests != ''
+      if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
       run: |
         make test HARNESS_JOBS=${HARNESS_JOBS:-4} \
                   TESTS="${{ matrix.platform.tests }} -test_afalg" \
