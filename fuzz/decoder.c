@@ -66,13 +66,15 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         EVP_PKEY_free(pkey2);
 
         ctx = EVP_PKEY_CTX_new(pkey, NULL);
-        EVP_PKEY_param_check(ctx);
-        EVP_PKEY_public_check(ctx);
-        EVP_PKEY_private_check(ctx);
-        EVP_PKEY_pairwise_check(ctx);
 #ifndef ERROR_INJECT
         OPENSSL_assert(ctx != NULL);
 #endif
+        if (ctx != NULL) {
+            EVP_PKEY_param_check(ctx);
+            EVP_PKEY_public_check(ctx);
+            EVP_PKEY_private_check(ctx);
+            EVP_PKEY_pairwise_check(ctx);
+        }
         EVP_PKEY_CTX_free(ctx);
         EVP_PKEY_free(pkey);
     }
