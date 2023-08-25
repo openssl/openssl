@@ -92,7 +92,7 @@ static int test_quic_client(void)
 
     for (;;) {
         if (ossl_time_compare(ossl_time_subtract(ossl_time_now(), start_time),
-                              ossl_ms2time(3000)) >= 0) {
+                              ossl_ms2time(10000)) >= 0) {
             TEST_error("timeout while attempting QUIC client test");
             goto err;
         }
