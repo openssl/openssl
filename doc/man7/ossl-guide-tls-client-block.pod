@@ -546,13 +546,17 @@ intermediate CAs, or the issuer is simply unrecognised).
 
 =head1 FURTHER READING
 
+See L<ossl-guide-tls-client-non-block(7)> to read a tutorial on how to modify
+the client devloped on this page to support a nonblocking socket.
+
 See L<ossl-guide-quic-client-block(7)> to read a tutorial on how to modify the
 client developed on this page to support QUIC instead of TLS.
 
 =head1 SEE ALSO
 
 L<ossl-guide-introduction(7)>, L<ossl-guide-libraries-introduction(7)>,
-L<ossl-guide-libssl-introduction(7)>, L<ossl-guide-tls-introduction(7)>
+L<ossl-guide-libssl-introduction(7)>, L<ossl-guide-tls-introduction(7)>,
+L<ossl-guide-tls-client-non-block(7)>, L<ossl-guide-quic-client-block(7)>
 
 =head1 COPYRIGHT
 
