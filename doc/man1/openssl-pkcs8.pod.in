@@ -283,7 +283,7 @@ The B<-iter> option was added in OpenSSL 1.1.0.
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
 The B<-saltlen> option was added in OpenSSL 3.2. Prior to this change
-the default value used internally was 8 bytes. It now uses a default\
+the default value used internally was 8 bytes. It now uses a default
 of 16 bytes.
 
 =head1 COPYRIGHT
