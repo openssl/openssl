@@ -242,9 +242,6 @@ int main(int argc, char *argv[])
             }
         } while(streamid == UINT64_MAX);
 
-    while (!ossl_quic_tserver_shutdown(qtserv, 0))
-        wait_for_activity(qtserv);
-
         /* Read the request */
         do {
             if (first)
