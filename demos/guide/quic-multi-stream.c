@@ -215,7 +215,7 @@ int main(void)
     }
 
     /* Set the IP address of the remote peer */
-    if (!SSL_set_initial_peer_addr(ssl, peer_addr)) {
+    if (!SSL_set1_initial_peer_addr(ssl, peer_addr)) {
         printf("Failed to set the initial peer address\n");
         goto end;
     }
