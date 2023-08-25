@@ -25,6 +25,13 @@ OpenSSL 3.2
 
 ### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
+ * Changed the default value of the `ess_cert_id_alg` configuration
+   option which is used to calculate the TSA's public key certificate
+   identifier. The default algorithm is updated to be sha256 instead
+   of sha1.
+
+   *Małgorzata Olszówka*
+
  * Added optimization for SM2 algorithm on aarch64. It uses a huge precomputed
    table for point multiplication of the base point, which increases the size of
    libcrypto from 4.4 MB to 4.9 MB. A new configure option `no-sm2-precomp` has
