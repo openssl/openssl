@@ -9,7 +9,7 @@
 
 /*
  * NB: Changes to this file should also be reflected in
- * doc/man7/ossl-guide-quic-client-block.pod
+ * doc/man7/ossl-guide-quic-client-non-block.pod
  */
 
 #include <string.h>
@@ -19,6 +19,7 @@
 # include <winsock2.h>
 #else /* Linux/Unix */
 # include <sys/socket.h>
+# include <sys/select.h>
 #endif
 
 #include <openssl/bio.h>
@@ -105,6 +106,96 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
     return bio;
 }
 
+static void wait_for_activity(SSL *ssl)
+{
+    fd_set wfds, rfds;
+    int width, sock, isinfinite;
+    struct timeval tv;
+    struct timeval *tvp = NULL;
+
+    /* Get hold of the underlying file descriptor for the socket */
+    sock = SSL_get_fd(ssl);
+
+    FD_ZERO(&wfds);
+    FD_ZERO(&rfds);
+
+    /*
+     * Find out if we would like to write to the socket, or read from it (or
+     * both)
+     */
+    if (SSL_net_write_desired(ssl))
+        FD_SET(sock, &wfds);
+    if (SSL_net_read_desired(ssl))
+        FD_SET(sock, &rfds);
+    width = sock + 1;
+
+    /*
+     * Find out when OpenSSL would next like to be called, regardless of
+     * whether the state of the underlying socket has changed or not.
+     */
+    if (SSL_get_event_timeout(ssl, &tv, &isinfinite) && !isinfinite)
+        tvp = &tv;
+
+    /*
+     * Wait until the socket is writeable or readable. We use select here
+     * for the sake of simplicity and portability, but you could equally use
+     * poll/epoll or similar functions. If we have a timeout we use it to
+     * ensure that OpenSSL is called when it wants to be.
+     */
+
+    select(width, &rfds, &wfds, NULL, tvp);
+}
+
+static int handle_io_failure(SSL *ssl, int res)
+{
+    switch (SSL_get_error(ssl, res)) {
+    case SSL_ERROR_WANT_READ:
+    case SSL_ERROR_WANT_WRITE:
+        /* Temporary failure. Wait until we can read/write and try again */
+        wait_for_activity(ssl);
+        return 1;
+
+    case SSL_ERROR_ZERO_RETURN:
+        /* EOF */
+        return 0;
+
+    case SSL_ERROR_SYSCALL:
+        return -1;
+
+    case SSL_ERROR_SSL:
+        /*
+         * Some stream fatal error occurred. This could be because of a stream
+         * reset - or some failure occurred on the underlying connection.
+         */
+        switch (SSL_get_stream_read_state(ssl)) {
+        case SSL_STREAM_STATE_RESET_REMOTE:
+            printf("Stream reset occurred\n");
+            /* The stream has been reset but the connection is still healthy. */
+            break;
+
+        case SSL_STREAM_STATE_CONN_CLOSED:
+            printf("Connection closed\n");
+            /* Connection is already closed. */
+            break;
+
+        default:
+            printf("Unknown stream failure\n");
+            break;
+        }
+        /*
+        * If the failure is due to a verification error we can get more
+        * information about it from SSL_get_verify_result().
+        */
+        if (SSL_get_verify_result(ssl) != X509_V_OK)
+            printf("Verify error: %s\n",
+                X509_verify_cert_error_string(SSL_get_verify_result(ssl)));
+        return -1;
+
+    default:
+        return -1;
+    }
+}
+
 /* Server hostname and port details. Must be in quotes */
 #ifndef HOSTNAME
 # define HOSTNAME "www.example.com"
@@ -132,6 +223,7 @@ int main(void)
     size_t written, readbytes;
     char buf[160];
     BIO_ADDR *peer_addr = NULL;
+    int eof = 0;
 
     /*
      * Create an SSL_CTX which we can use to create SSL objects from. We
@@ -207,93 +299,71 @@ int main(void)
         goto end;
     }
 
-    /* Connect to the server and perform the TLS handshake */
-    if ((ret = SSL_connect(ssl)) < 1) {
-        /*
-         * If the failure is due to a verification error we can get more
-         * information about it from SSL_get_verify_result().
-         */
-        if (SSL_get_verify_result(ssl) != X509_V_OK)
-            printf("Verify error: %s\n",
-                X509_verify_cert_error_string(SSL_get_verify_result(ssl)));
+    /*
+     * The underlying socket is always non-blocking with QUIC, but the default
+     * behaviour of the SSL object is still to block. We set it for non-blocking
+     * mode in this demo.
+     */
+    if (!SSL_set_blocking_mode(ssl, 0)) {
+        printf("Failed to turn off blocking mode\n");
         goto end;
+    }
+
+    /* Do the handshake with the server */
+    while ((ret = SSL_connect(ssl)) != 1) {
+        if (handle_io_failure(ssl, ret) == 1)
+            continue; /* Retry */
+        printf("Failed to connect to server\n");
+        goto end; /* Cannot retry: error */
     }
 
     /* Write an HTTP GET request to the peer */
-    if (!SSL_write_ex(ssl, request, strlen(request), &written)) {
+    while (!SSL_write_ex(ssl, request, strlen(request), &written)) {
+        if (handle_io_failure(ssl, 0) == 1)
+            continue; /* Retry */
         printf("Failed to write HTTP request\n");
-        goto end;
+        goto end; /* Cannot retry: error */
     }
 
-    /*
-     * Get up to sizeof(buf) bytes of the response. We keep reading until the
-     * server closes the connection.
-     */
-    while (SSL_read_ex(ssl, buf, sizeof(buf), &readbytes)) {
+    do {
         /*
-        * OpenSSL does not guarantee that the returned data is a string or
-        * that it is NUL terminated so we use fwrite() to write the exact
-        * number of bytes that we read. The data could be non-printable or
-        * have NUL characters in the middle of it. For this simple example
-        * we're going to print it to stdout anyway.
-        */
-        fwrite(buf, 1, readbytes, stdout);
-    }
+         * Get up to sizeof(buf) bytes of the response. We keep reading until
+         * the server closes the connection.
+         */
+        while (!eof && !SSL_read_ex(ssl, buf, sizeof(buf), &readbytes)) {
+            switch (handle_io_failure(ssl, 0)) {
+            case 1:
+                continue; /* Retry */
+            case 0:
+                eof = 1;
+                continue;
+            case -1:
+            default:
+                printf("Failed reading remaining data\n");
+                goto end; /* Cannot retry: error */
+            }
+        }
+        /*
+         * OpenSSL does not guarantee that the returned data is a string or
+         * that it is NUL terminated so we use fwrite() to write the exact
+         * number of bytes that we read. The data could be non-printable or
+         * have NUL characters in the middle of it. For this simple example
+         * we're going to print it to stdout anyway.
+         */
+        if (!eof)
+            fwrite(buf, 1, readbytes, stdout);
+    } while (!eof);
     /* In case the response didn't finish with a newline we add one now */
     printf("\n");
-
-    /*
-     * Check whether we finished the while loop above normally or as the
-     * result of an error. The 0 argument to SSL_get_error() is the return
-     * code we received from the SSL_read_ex() call. It must be 0 in order
-     * to get here. Normal completion is indicated by SSL_ERROR_ZERO_RETURN. In
-     * QUIC terms this means that the peer has sent FIN on the stream to
-     * indicate that no further data will be sent.
-     */
-    switch (SSL_get_error(ssl, 0)) {
-    case SSL_ERROR_ZERO_RETURN:
-        /* Normal completion of the stream */
-        break;
-
-    case SSL_ERROR_SSL:
-        /*
-         * Some stream fatal error occurred. This could be because of a stream
-         * reset - or some failure occurred on the underlying connection.
-         */
-        switch (SSL_get_stream_read_state(ssl)) {
-        case SSL_STREAM_STATE_RESET_REMOTE:
-            printf("Stream reset occurred\n");
-            /* The stream has been reset but the connection is still healthy. */
-            break;
-
-        case SSL_STREAM_STATE_CONN_CLOSED:
-            printf("Connection closed\n");
-            /* Connection is already closed. Skip SSL_shutdown() */
-            goto end;
-
-        default:
-            printf("Unknown stream failure\n");
-            break;
-        }
-        break;
-
-    default:
-        /* Some other unexpected error occurred */
-        printf ("Failed reading remaining data\n");
-        break;
-    }
 
     /*
      * Repeatedly call SSL_shutdown() until the connection is fully
      * closed.
      */
-    do {
-        ret = SSL_shutdown(ssl);
-        if (ret < 0) {
-            printf("Error shutting down: %d\n", ret);
-            goto end;
-        }
-    } while (ret != 1);
+    while ((ret = SSL_shutdown(ssl)) != 1) {
+        if (ret < 0 && handle_io_failure(ssl, ret) == 1)
+            continue; /* Retry */
+    }
 
     /* Success! */
     res = EXIT_SUCCESS;
