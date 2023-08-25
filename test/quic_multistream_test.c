@@ -156,7 +156,7 @@ struct script_op {
 #define OPK_S_SET_INJECT_HANDSHAKE                  46
 #define OPK_S_NEW_TICKET                            47
 #define OPK_C_SKIP_IF_UNBOUND                       48
-#define OPK_S_SET_INJECT_DATAGRAM                   48
+#define OPK_S_SET_INJECT_DATAGRAM                   49
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -4438,7 +4438,7 @@ static const struct script_op script_73[] = {
     OP_END
 };
 
-/* 73. Version negotiation: QUIC_VERSION_1 ignored */
+/* 74. Version negotiation: QUIC_VERSION_1 ignored */
 static int generate_version_neg(WPACKET *wpkt, uint32_t version)
 {
     QUIC_PKT_HDR hdr = {0};
@@ -4505,7 +4505,7 @@ err:
     return rc;
 }
 
-static const struct script_op script_73[] = {
+static const struct script_op script_74[] = {
     OP_S_SET_INJECT_DATAGRAM (server_gen_version_neg)
     OP_SET_INJECT_WORD       (1, 0)
 
@@ -4522,8 +4522,8 @@ static const struct script_op script_73[] = {
     OP_END
 };
 
-/* 74. Version negotiation: Unknown version causes connection abort */
-static const struct script_op script_74[] = {
+/* 75. Version negotiation: Unknown version causes connection abort */
+static const struct script_op script_75[] = {
     OP_S_SET_INJECT_DATAGRAM (server_gen_version_neg)
     OP_SET_INJECT_WORD       (2, 0)
 
@@ -4609,7 +4609,8 @@ static const struct script_op *const scripts[] = {
     script_71,
     script_72,
     script_73,
-    script_74
+    script_74,
+    script_75
 };
 
 static int test_script(int idx)
