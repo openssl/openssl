@@ -1166,7 +1166,7 @@ static size_t dgram_pair_write_inner(struct bio_dgram_pair_st *b, const uint8_t 
         if (dst_len == 0) {
             size_t new_len;
 
-            if (!b->fixed_size) /* resizeable only unless size not set explicitly */
+            if (b->fixed_size) /* resizeable only unless size not set explicitly */
                 break;
             /* increase the size */
             new_len = compute_rbuf_growth(b->req_buf_len + sz, b->req_buf_len);
