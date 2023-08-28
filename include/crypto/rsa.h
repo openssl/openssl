@@ -54,9 +54,9 @@ RSA *ossl_rsa_new_with_ctx(OSSL_LIB_CTX *libctx);
 OSSL_LIB_CTX *ossl_rsa_get0_libctx(RSA *r);
 void ossl_rsa_set0_libctx(RSA *r, OSSL_LIB_CTX *libctx);
 
-int ossl_rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
-                             const STACK_OF(BIGNUM) *exps,
-                             const STACK_OF(BIGNUM) *coeffs);
+int ossl_rsa_set0_all_params(RSA *r, STACK_OF(BIGNUM) *primes,
+                             STACK_OF(BIGNUM) *exps,
+                             STACK_OF(BIGNUM) *coeffs);
 int ossl_rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
                              STACK_OF(BIGNUM_const) *exps,
                              STACK_OF(BIGNUM_const) *coeffs);

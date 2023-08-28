@@ -348,6 +348,7 @@ my %params = (
     'PKEY_PARAM_RSA_MASKGENFUNC' =>      '*PKEY_PARAM_MASKGENFUNC',
     'PKEY_PARAM_RSA_MGF1_DIGEST' =>      '*PKEY_PARAM_MGF1_DIGEST',
     'PKEY_PARAM_RSA_PSS_SALTLEN' =>      "saltlen",
+    'PKEY_PARAM_RSA_DERIVE_FROM_PQ'    =>     "rsa-derive-from-pq",
 
 # EC, X25519 and X448 Key generation parameters
     'PKEY_PARAM_DHKEM_IKM' =>        "dhkem-ikm",
