@@ -480,6 +480,35 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
     return v;
 }
 
+int OSSL_STORE_delete(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
+                      const UI_METHOD *ui_method, void *ui_data,
+                      const OSSL_PARAM params[])
+{
+    OSSL_STORE_CTX *ctx = NULL;
+    char scheme[256], *p;
+    int res = 0;
+
+    OPENSSL_strlcpy(scheme, uri, sizeof(scheme));
+    if ((p = strchr(scheme, ':')) != NULL)
+        *p++ = '\0';
+    else /* We don't work without explicit scheme */
+        return 0;
+
+    ctx = OSSL_STORE_open_ex(uri, libctx, propq, ui_method, ui_data, params,
+                             NULL, NULL);
+
+    if (ctx == NULL)
+        return 0;
+
+    if (ctx->fetched_loader != NULL && ctx->fetched_loader->p_delete != NULL) {
+        OSSL_TRACE1(STORE, "Performing URI delete %s\n", uri);
+        res = ctx->fetched_loader->p_delete(ctx);
+    }
+    (void)OSSL_STORE_close(ctx);
+
+    return res;
+}
+
 int OSSL_STORE_error(OSSL_STORE_CTX *ctx)
 {
     int ret = 1;
