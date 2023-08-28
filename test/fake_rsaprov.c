@@ -30,11 +30,17 @@ static int has_selection;
 static int imptypes_selection;
 static int exptypes_selection;
 static int query_id;
+static int key_deleted;
 
 struct fake_rsa_keydata {
     int selection;
     int status;
 };
+
+void fake_rsa_restore_store_state(void)
+{
+    key_deleted = 0;
+}
 
 static void *fake_rsa_keymgmt_new(void *provctx)
 {
@@ -524,6 +530,7 @@ static OSSL_FUNC_store_set_ctx_params_fn fake_rsa_st_set_ctx_params;
 static OSSL_FUNC_store_load_fn fake_rsa_st_load;
 static OSSL_FUNC_store_eof_fn fake_rsa_st_eof;
 static OSSL_FUNC_store_close_fn fake_rsa_st_close;
+static OSSL_FUNC_store_delete_fn fake_rsa_st_delete;
 
 static const char fake_rsa_scheme[] = "fake_rsa:";
 
@@ -570,6 +577,11 @@ static int fake_rsa_st_load(void *loaderctx,
 
     switch (*storectx) {
     case 0:
+        if (key_deleted == 1) {
+            *storectx = 1;
+            break;
+	}
+
         /* Construct a new key using our keymgmt functions */
         if (!TEST_ptr(key = fake_rsa_keymgmt_new(NULL)))
             break;
@@ -600,11 +612,17 @@ static int fake_rsa_st_load(void *loaderctx,
 
     TEST_info("fake_rsa_load called - rv: %d", rv);
 
-    if (rv == 0) {
+    if (rv == 0 && key_deleted == 0) {
         fake_rsa_keymgmt_free(key);
         *storectx = 2;
     }
     return rv;
+}
+
+static int fake_rsa_st_delete(void *loaderctx)
+{
+    key_deleted = 1;
+    return 1;
 }
 
 static int fake_rsa_st_eof(void *loaderctx)
@@ -629,6 +647,7 @@ static const OSSL_DISPATCH fake_rsa_store_funcs[] = {
     { OSSL_FUNC_STORE_LOAD, (void (*)(void))fake_rsa_st_load },
     { OSSL_FUNC_STORE_EOF, (void (*)(void))fake_rsa_st_eof },
     { OSSL_FUNC_STORE_CLOSE, (void (*)(void))fake_rsa_st_close },
+    { OSSL_FUNC_STORE_DELETE, (void (*)(void))fake_rsa_st_delete },
     OSSL_DISPATCH_END,
 };
 
