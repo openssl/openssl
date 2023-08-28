@@ -64,22 +64,109 @@ static int collect_numbers(STACK_OF(BIGNUM) *numbers,
 int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
 {
     const OSSL_PARAM *param_n, *param_e,  *param_d = NULL;
-    BIGNUM *n = NULL, *e = NULL, *d = NULL;
+    const OSSL_PARAM *param_p, *param_q = NULL;
+    const OSSL_PARAM *param_derive = NULL;
+    BIGNUM *p = NULL, *q = NULL, *n = NULL, *e = NULL, *d = NULL;
     STACK_OF(BIGNUM) *factors = NULL, *exps = NULL, *coeffs = NULL;
     int is_private = 0;
+    int derive_from_pq = 0;
+    BN_CTX *ctx = NULL;
 
     if (rsa == NULL)
         return 0;
+
+    ctx = BN_CTX_new_ex(rsa->libctx);
+    if (ctx == NULL)
+        return 0;
+
+    param_derive = OSSL_PARAM_locate_const(params,
+                                           OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ);
+    if ((param_derive != NULL)
+        && !OSSL_PARAM_get_int(param_derive, &derive_from_pq))
+        goto err;
 
     param_n = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_N);
     param_e = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_E);
     if (include_private)
         param_d = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_D);
 
-    if ((param_n != NULL && !OSSL_PARAM_get_BN(param_n, &n))
-        || (param_e != NULL && !OSSL_PARAM_get_BN(param_e, &e))
-        || (param_d != NULL && !OSSL_PARAM_get_BN(param_d, &d)))
-        goto err;
+    if (derive_from_pq) {
+        /* we need at minimum p, q and e */
+        param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR1);
+        param_q = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR2);
+        if ((param_p == NULL || !OSSL_PARAM_get_BN(param_p, &p))
+            || (param_q == NULL || !OSSL_PARAM_get_BN(param_q, &q))
+            || (param_e == NULL || !OSSL_PARAM_get_BN(param_e, &e))) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_NULL_PARAMETER);
+            goto err;
+        }
+
+        /* compute n if its not provided */
+        if (param_n == NULL) {
+            n = BN_new();
+            if (n == NULL) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+            if (!BN_mul(n, p, q, ctx)) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        } else {
+            if (!OSSL_PARAM_get_BN(param_n, &n)) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_INVALID_ARGUMENT);
+                goto err;
+            }
+        }
+
+        /* compute d if it is not provided, and private key requested */
+        if (include_private && param_d == NULL) {
+            BIGNUM *lcm, *p1q1, *gcd, *p1, *q1;
+
+            lcm = BN_CTX_get(ctx);
+            p1q1 = BN_CTX_get(ctx);
+            gcd = BN_CTX_get(ctx);
+            p1 = BN_CTX_get(ctx);
+            q1 = BN_CTX_get(ctx);
+
+            if (lcm == NULL || p1q1 == NULL || gcd == NULL
+                || p1 == NULL || q1 == NULL) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+
+            d = BN_new();
+            if (d == NULL) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+
+            if (ossl_rsa_get_lcm(ctx, p, q, lcm, gcd, p1, q1, p1q1) != 1) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+
+            BN_set_flags(d, BN_FLG_CONSTTIME);
+
+            if (BN_mod_inverse(d, e, lcm, ctx) == NULL) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        } else {
+            if (!OSSL_PARAM_get_BN(param_d, &d)) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_INVALID_ARGUMENT);
+                goto err;
+            }
+        }
+
+    } else {
+        if ((param_n != NULL && !OSSL_PARAM_get_BN(param_n, &n))
+            || (param_e != NULL && !OSSL_PARAM_get_BN(param_e, &e))
+            || (param_d != NULL && !OSSL_PARAM_get_BN(param_d, &d))) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_INVALID_ARGUMENT);
+            goto err;
+        }
+    }
 
     is_private = (d != NULL);
 
@@ -96,25 +183,121 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
                                 ossl_rsa_mp_coeff_names))
             goto err;
 
-        /* It's ok if this private key just has n, e and d */
+        if (derive_from_pq && sk_BIGNUM_num(exps) == 0
+            && sk_BIGNUM_num(coeffs) == 0) {
+            /*
+             * If we want to use crt to derive our exponents/coefficients, we
+             * need to have at least 2 factors
+             */
+            if (sk_BIGNUM_num(factors) < 2) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_NULL_PARAMETER);
+                goto err;
+            }
+
+            /*
+             * if we have more than two factors, n and d must also have
+             * been provided
+             */
+            if (sk_BIGNUM_num(factors) > 2
+                && (param_n == NULL || param_d == NULL)) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_NULL_PARAMETER);
+                goto err;
+            }
+
+            /* build our exponents and coefficients here */
+            if (sk_BIGNUM_num(factors) == 2) {
+                /* for 2 factors we can use the sp800 functions to do this */
+                if (!RSA_set0_factors(rsa, sk_BIGNUM_value(factors, 0),
+                                      sk_BIGNUM_value(factors, 1))) {
+                    ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+                /*
+                 * once consumed by RSA_set0_factors, pop those off the stack
+                 * so we don't free them below
+                 */
+                sk_BIGNUM_pop(factors);
+                sk_BIGNUM_pop(factors);
+
+                /*
+                 * Note: Because we only have 2 factors here, there will be no
+                 * additional pinfo fields to hold additional factors, and
+                 * since we set our key and 2 factors above we can skip
+                 * the call to ossl_rsa_set0_all_params
+                 */
+                if (!ossl_rsa_sp800_56b_derive_params_from_pq(rsa,
+                                                              RSA_bits(rsa),
+                                                              NULL, ctx)) {
+                    ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+            } else {
+#ifndef FIPS_MODULE
+                /*
+                 * in the multiprime case we have to generate exps/coeffs here
+                 * for each additional prime
+                 */
+                if (!ossl_rsa_multiprime_derive(rsa, RSA_bits(rsa),
+                                                sk_BIGNUM_num(factors),
+                                                rsa->e, factors, exps,
+                                                coeffs)) {
+                    ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+
+                /*
+                 * Now we should have all our factors, exponents and
+                 * coefficients
+                 */
+                if (!ossl_rsa_set0_all_params(rsa, factors, exps, coeffs)) {
+                    ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+
+#else
+                /* multiprime case is disallowed in FIPS mode, raise an error */
+                ERR_raise(ERR_LIB_RSA, ERR_R_UNSUPPORTED);
+                goto err;
+#endif
+            }
+
+        } else {
+            /*
+             * It's ok if this private key just has n, e and d
+             * but only if we're not using derive_from_pq
+             */
+            if (sk_BIGNUM_num(factors) != 0
+                && !ossl_rsa_set0_all_params(rsa, factors, exps, coeffs))
+                goto err;
+        }
+        /* sanity check to ensure we used everything in our stacks */
         if (sk_BIGNUM_num(factors) != 0
-            && !ossl_rsa_set0_all_params(rsa, factors, exps, coeffs))
+            || sk_BIGNUM_num(exps) != 0
+            || sk_BIGNUM_num(coeffs) != 0) {
+            ERR_raise_data(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR,
+                           "There are %d, %d, %d elements left on our factors, exps, coeffs stacks\n",
+                           sk_BIGNUM_num(factors), sk_BIGNUM_num(exps),
+                           sk_BIGNUM_num(coeffs));
             goto err;
+        }
     }
 
-
+    BN_clear_free(p);
+    BN_clear_free(q);
     sk_BIGNUM_free(factors);
     sk_BIGNUM_free(exps);
     sk_BIGNUM_free(coeffs);
+    BN_CTX_free(ctx);
     return 1;
 
  err:
     BN_free(n);
     BN_free(e);
     BN_free(d);
-    sk_BIGNUM_pop_free(factors, BN_free);
-    sk_BIGNUM_pop_free(exps, BN_free);
-    sk_BIGNUM_pop_free(coeffs, BN_free);
+    sk_BIGNUM_pop_free(factors, BN_clear_free);
+    sk_BIGNUM_pop_free(exps, BN_clear_free);
+    sk_BIGNUM_pop_free(coeffs, BN_clear_free);
+    BN_CTX_free(ctx);
     return 0;
 }
 
@@ -152,7 +335,7 @@ int ossl_rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[],
             || !ossl_param_build_set_multi_key_bn(bld, params,
                                                   ossl_rsa_mp_coeff_names,
                                                   coeffs))
-        goto err;
+            goto err;
     }
 
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)

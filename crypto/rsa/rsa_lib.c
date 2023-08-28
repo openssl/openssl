@@ -744,9 +744,9 @@ int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2)
 
 DEFINE_STACK_OF(BIGNUM)
 
-int ossl_rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
-                             const STACK_OF(BIGNUM) *exps,
-                             const STACK_OF(BIGNUM) *coeffs)
+int ossl_rsa_set0_all_params(RSA *r, STACK_OF(BIGNUM) *primes,
+                             STACK_OF(BIGNUM) *exps,
+                             STACK_OF(BIGNUM) *coeffs)
 {
 #ifndef FIPS_MODULE
     STACK_OF(RSA_PRIME_INFO) *prime_infos, *old_infos = NULL;
@@ -773,6 +773,20 @@ int ossl_rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
         return 0;
     }
 
+    /*
+     * if we managed to set everything above, remove those elements from the
+     * stack
+     * Note, we do this after the above all to ensure that we have taken
+     * ownership of all the elements in the RSA key to avoid memory leaks
+     * we also use delete 0 here as we are grabbing items from the end of the
+     * stack rather than the start, otherwise we could use pop
+     */
+    sk_BIGNUM_delete(primes, 0);
+    sk_BIGNUM_delete(primes, 0);
+    sk_BIGNUM_delete(exps, 0);
+    sk_BIGNUM_delete(exps, 0);
+    sk_BIGNUM_delete(coeffs, 0);
+
 #ifndef FIPS_MODULE
     old_infos = r->prime_infos;
 #endif
@@ -786,9 +800,9 @@ int ossl_rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
             return 0;
 
         for (i = 2; i < pnum; i++) {
-            BIGNUM *prime = sk_BIGNUM_value(primes, i);
-            BIGNUM *exp = sk_BIGNUM_value(exps, i);
-            BIGNUM *coeff = sk_BIGNUM_value(coeffs, i - 1);
+            BIGNUM *prime = sk_BIGNUM_pop(primes);
+            BIGNUM *exp = sk_BIGNUM_pop(exps);
+            BIGNUM *coeff = sk_BIGNUM_pop(coeffs);
             RSA_PRIME_INFO *pinfo = NULL;
 
             if (!ossl_assert(prime != NULL && exp != NULL && coeff != NULL))
