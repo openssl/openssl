@@ -480,6 +480,53 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
     return v;
 }
 
+int OSSL_STORE_delete(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
+                      const UI_METHOD *ui_method, void *ui_data,
+                      const OSSL_PARAM params[])
+{
+    OSSL_STORE_LOADER *fetched_loader = NULL;
+    char scheme[256], *p;
+    int res = 0;
+    struct ossl_passphrase_data_st pwdata = {0};
+
+    OPENSSL_strlcpy(scheme, uri, sizeof(scheme));
+    if ((p = strchr(scheme, ':')) != NULL)
+        *p++ = '\0';
+    else /* We don't work without explicit scheme */
+        return 0;
+
+    if (ui_method != NULL
+        && (!ossl_pw_set_ui_method(&pwdata, ui_method, ui_data)
+            || !ossl_pw_enable_passphrase_caching(&pwdata))) {
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
+        return 0;
+    }
+
+    OSSL_TRACE1(STORE, "Looking up scheme %s\n", scheme);
+    fetched_loader = OSSL_STORE_LOADER_fetch(libctx, scheme, propq);
+
+    if (fetched_loader != NULL && fetched_loader->p_delete != NULL) {
+        const OSSL_PROVIDER *provider =
+            OSSL_STORE_LOADER_get0_provider(fetched_loader);
+        void *provctx = OSSL_PROVIDER_get0_provider_ctx(provider);
+
+        /*
+         * It's assumed that the loader's delete() method reports its own
+         * errors
+         */
+        OSSL_TRACE1(STORE, "Performing URI delete %s\n", uri);
+        res = fetched_loader->p_delete(provctx, uri, params,
+                                       ossl_pw_passphrase_callback_dec,
+                                       &pwdata);
+    }
+    /* Clear any internally cached passphrase */
+    (void)ossl_pw_clear_passphrase_cache(&pwdata);
+
+    OSSL_STORE_LOADER_free(fetched_loader);
+
+    return res;
+}
+
 int OSSL_STORE_error(OSSL_STORE_CTX *ctx)
 {
     int ret = 1;
