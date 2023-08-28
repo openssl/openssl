@@ -3080,6 +3080,70 @@ static int test_RSA_OAEP_set_null_label(void)
     return ret;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+static int test_RSA_legacy(void)
+{
+    int ret = 0;
+    BIGNUM *p = NULL;
+    BIGNUM *q = NULL;
+    BIGNUM *n = NULL;
+    BIGNUM *e = NULL;
+    BIGNUM *d = NULL;
+    const EVP_MD *md = EVP_sha256();
+    EVP_MD_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    RSA *rsa = NULL;
+
+    if (nullprov != NULL)
+        return TEST_skip("Test does not support a non-default library context");
+
+    if (!TEST_ptr(p = BN_dup(BN_value_one()))
+        || !TEST_ptr(q = BN_dup(BN_value_one()))
+        || !TEST_ptr(n = BN_dup(BN_value_one()))
+        || !TEST_ptr(e = BN_dup(BN_value_one()))
+        || !TEST_ptr(d = BN_dup(BN_value_one())))
+        goto err;
+
+    if (!TEST_ptr(rsa = RSA_new())
+        || !TEST_ptr(pkey = EVP_PKEY_new())
+        || !TEST_ptr(ctx = EVP_MD_CTX_new()))
+        goto err;
+
+    if (!TEST_true(RSA_set0_factors(rsa, p, q)))
+        goto err;
+    p = NULL;
+    q = NULL;
+
+    if (!TEST_true(RSA_set0_key(rsa, n, e, d)))
+        goto err;
+    n = NULL;
+    e = NULL;
+    d = NULL;
+
+    if (!TEST_true(EVP_PKEY_assign_RSA(pkey, rsa)))
+        goto err;
+
+    rsa = NULL;
+
+    if (!TEST_true(EVP_DigestSignInit(ctx, NULL, md, NULL, pkey)))
+        goto err;
+
+    ret = 1;
+
+err:
+    RSA_free(rsa);
+    EVP_MD_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    BN_free(p);
+    BN_free(q);
+    BN_free(n);
+    BN_free(e);
+    BN_free(d);
+
+    return ret;
+}
+#endif
+
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 static int test_decrypt_null_chunks(void)
 {
@@ -5520,6 +5584,9 @@ int setup_tests(void)
     ADD_TEST(test_RSA_get_set_params);
     ADD_TEST(test_RSA_OAEP_set_get_params);
     ADD_TEST(test_RSA_OAEP_set_null_label);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    ADD_TEST(test_RSA_legacy);
+#endif
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_TEST(test_decrypt_null_chunks);
 #endif
