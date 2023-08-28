@@ -21,6 +21,7 @@
 
 static OSSL_FUNC_cipher_newctx_fn chacha20_newctx;
 static OSSL_FUNC_cipher_freectx_fn chacha20_freectx;
+static OSSL_FUNC_cipher_dupctx_fn chacha20_dupctx;
 static OSSL_FUNC_cipher_get_params_fn chacha20_get_params;
 static OSSL_FUNC_cipher_get_ctx_params_fn chacha20_get_ctx_params;
 static OSSL_FUNC_cipher_set_ctx_params_fn chacha20_set_ctx_params;
@@ -62,6 +63,24 @@ static void chacha20_freectx(void *vctx)
         ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
         OPENSSL_clear_free(ctx, sizeof(*ctx));
     }
+}
+
+static void *chacha20_dupctx(void *vctx)
+{
+    PROV_CHACHA20_CTX *ctx = (PROV_CHACHA20_CTX *)vctx;
+    PROV_CHACHA20_CTX *dupctx = NULL;
+
+    if (ctx != NULL) {
+        dupctx = OPENSSL_memdup(ctx, sizeof(*dupctx));
+        if (dupctx != NULL && dupctx->base.tlsmac != NULL && dupctx->base.alloced) {
+            dupctx->base.tlsmac = OPENSSL_memdup(dupctx->base.tlsmac, dupctx->base.tlsmacsize);        
+            if (dupctx->base.tlsmac == NULL) {
+                OPENSSL_free(dupctx);
+                dupctx = NULL;
+            }
+        }
+    }
+    return dupctx;
 }
 
 static int chacha20_get_params(OSSL_PARAM params[])
@@ -187,6 +206,7 @@ int ossl_chacha20_dinit(void *vctx, const unsigned char *key, size_t keylen,
 const OSSL_DISPATCH ossl_chacha20_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))chacha20_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))chacha20_freectx },
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))chacha20_dupctx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_chacha20_einit },
     { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ossl_chacha20_dinit },
     { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))chacha20_update },
