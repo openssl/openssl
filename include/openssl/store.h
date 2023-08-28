@@ -99,6 +99,14 @@ OSSL_DEPRECATEDIN_3_0 int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd,
 OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx);
 
 /*
+ * Deletes the object in the store by URI.
+ * Returns 1 on success, 0 otherwise.
+ */
+int OSSL_STORE_delete(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
+                      const UI_METHOD *ui_method, void *ui_data,
+                      const OSSL_PARAM params[]);
+
+/*
  * Check if end of data (end of file) is reached
  * Returns 1 on end, 0 otherwise.
  */
