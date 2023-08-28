@@ -519,6 +519,8 @@ static int test_bio_dgram_pair(int idx)
     } else {
         if (!TEST_ptr(bio1 = bio2 = BIO_new(BIO_s_dgram_mem())))
             goto err;
+        if (idx == 1 && !TEST_true(BIO_set_write_buf_size(bio1, 20 * 1024)))
+            goto err;
     }
 
     mtu1 = BIO_dgram_get_mtu(bio1);
@@ -535,7 +537,7 @@ static int test_bio_dgram_pair(int idx)
     if (!TEST_int_le(mtu1, sizeof(scratch) - 4))
         goto err;
 
-    for (i = 0; idx == 0 || i < 9; ++i) {
+    for (i = 0; total < 1 * 1024 * 1024; ++i) {
         if (!TEST_int_eq(random_data(key, scratch, sizeof(scratch), i), 1))
             goto err;
 
@@ -548,9 +550,13 @@ static int test_bio_dgram_pair(int idx)
             goto err;
 
         total += blen;
-        if (!TEST_size_t_lt(total, 1 * 1024 * 1024))
-            goto err;
     }
+
+    if (idx <= 1 && !TEST_size_t_lt(total, 1 * 1024 * 1024))
+        goto err;
+
+    if (idx == 2 && !TEST_size_t_ge(total, 1 * 1024 * 1024))
+        goto err;
 
     /*
      * Should be able to fit at least 9 datagrams in default write buffer size
@@ -766,7 +772,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
     ADD_ALL_TESTS(test_bio_dgram, OSSL_NELEM(bio_dgram_cases));
 # if !defined(OPENSSL_NO_CHACHA)
-    ADD_ALL_TESTS(test_bio_dgram_pair, 2);
+    ADD_ALL_TESTS(test_bio_dgram_pair, 3);
 # endif
 #endif
 
