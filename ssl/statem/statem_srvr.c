@@ -1977,11 +1977,13 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
+        // change server randomness
+        for (int i = 0; i < 32; i++) {
+            pos[i] = (unsigned char)i;
+        }
     }
 
-     for (int i = 0; i < 32; i++) {
-         pos[i] = (unsigned char)i;
-     }
+
 
     if (!s->hit
             && s->version >= TLS1_VERSION
