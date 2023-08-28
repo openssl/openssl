@@ -888,33 +888,33 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
         return 0;
     }
 
-    for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
-        EXT_RETURN (*construct)(SSL_CONNECTION *s, WPACKET *pkt,
-                                unsigned int context,
-                                X509 *x, size_t chainidx);
-        EXT_RETURN ret;
-
-        /* Skip if not relevant for our context */
-        if (!should_add_extension(s, thisexd->context, context, max_version))
-            continue;
-
-        construct = s->server ? thisexd->construct_stoc
-                              : thisexd->construct_ctos;
-
-        if (construct == NULL)
-            continue;
-
-        ret = construct(s, pkt, context, x, chainidx);
-        if (ret == EXT_RETURN_FAIL) {
-            /* SSLfatal() already called */
-            return 0;
-        }
-        if (ret == EXT_RETURN_SENT
-                && (context & (SSL_EXT_CLIENT_HELLO
-                               | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST
-                               | SSL_EXT_TLS1_3_NEW_SESSION_TICKET)) != 0)
-            s->ext.extflags[i] |= SSL_EXT_FLAG_SENT;
-    }
+//    for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
+//        EXT_RETURN (*construct)(SSL_CONNECTION *s, WPACKET *pkt,
+//                                unsigned int context,
+//                                X509 *x, size_t chainidx);
+//        EXT_RETURN ret;
+//
+//        /* Skip if not relevant for our context */
+//        if (!should_add_extension(s, thisexd->context, context, max_version))
+//            continue;
+//
+//        construct = s->server ? thisexd->construct_stoc
+//                              : thisexd->construct_ctos;
+//
+//        if (construct == NULL)
+//            continue;
+//
+//        ret = construct(s, pkt, context, x, chainidx);
+//        if (ret == EXT_RETURN_FAIL) {
+//            /* SSLfatal() already called */
+//            return 0;
+//        }
+//        if (ret == EXT_RETURN_SENT
+//                && (context & (SSL_EXT_CLIENT_HELLO
+//                               | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST
+//                               | SSL_EXT_TLS1_3_NEW_SESSION_TICKET)) != 0)
+//            s->ext.extflags[i] |= SSL_EXT_FLAG_SENT;
+//    }
 
     if (!WPACKET_close(pkt)) {
         if (!for_comp)
