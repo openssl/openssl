@@ -12,6 +12,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/rand.h>
+#include "crypto/evp.h"
 
 /* PKCS#5 password based encryption structure */
 
@@ -45,7 +46,7 @@ int PKCS5_pbe_set0_algor_ex(X509_ALGOR *algor, int alg, int iter,
         goto err;
     }
     if (!saltlen)
-        saltlen = PKCS5_SALT_LEN;
+        saltlen = PKCS5_DEFAULT_PBE1_SALT_LEN;
     if (saltlen < 0)
         goto err;
 

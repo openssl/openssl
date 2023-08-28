@@ -17,6 +17,15 @@
 # include "crypto/ecx.h"
 
 /*
+ * Default PKCS5 PBE KDF salt lengths
+ * In RFC 8018, PBE1 uses 8 bytes (64 bits) for its salt length.
+ * It also specifies to use at least 8 bytes for PBES2.
+ * The NIST requirement for PBKDF2 is 128 bits so we use this as the
+ * default for PBE2 (scrypt and HKDF2)
+ */
+# define PKCS5_DEFAULT_PBE1_SALT_LEN     PKCS5_SALT_LEN
+# define PKCS5_DEFAULT_PBE2_SALT_LEN     16
+/*
  * Don't free up md_ctx->pctx in EVP_MD_CTX_reset, use the reserved flag
  * values in evp.h
  */

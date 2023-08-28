@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "crypto/asn1.h"
+#include "crypto/evp.h"
 #include <openssl/asn1t.h>
 #include <openssl/core.h>
 #include <openssl/core_names.h>
@@ -196,7 +197,7 @@ X509_ALGOR *PKCS5_pbkdf2_set_ex(int iter, unsigned char *salt, int saltlen,
         goto err;
     }
     if (saltlen == 0)
-        saltlen = PKCS5_SALT_LEN;
+        saltlen = PKCS5_DEFAULT_PBE2_SALT_LEN;
     if ((osalt->data = OPENSSL_malloc(saltlen)) == NULL)
         goto err;
 
