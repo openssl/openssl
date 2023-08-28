@@ -480,6 +480,39 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
     return v;
 }
 
+int OSSL_STORE_delete_object(OSSL_STORE_CTX *ctx)
+{
+    int rv;
+
+    if (ctx->loading != 1)
+        return 0;
+
+    if (ctx->fetched_loader == NULL || ctx->fetched_loader->p_delete == NULL)
+        return 0;
+
+    OSSL_TRACE(STORE, "Deleting current object\n");
+
+    /* We don't support object deletion in legacy API */
+    rv = ctx->fetched_loader->p_delete(ctx->loader_ctx,
+                                             ossl_pw_passphrase_callback_dec,
+                                             &ctx->pwdata);
+    if (rv == 0) { /* Error deleting object */
+        return 0;
+    }
+
+    if (ctx->cached_info != NULL) {
+        sk_OSSL_STORE_INFO_free(ctx->cached_info);
+        ctx->cached_info = NULL;
+    }
+
+    /* Clear any internally cached passphrase */
+    (void)ossl_pw_clear_passphrase_cache(&ctx->pwdata);
+
+    OSSL_TRACE(STORE, "Successfully deleted object\n");
+
+    return rv;
+}
+
 int OSSL_STORE_error(OSSL_STORE_CTX *ctx)
 {
     int ret = 1;

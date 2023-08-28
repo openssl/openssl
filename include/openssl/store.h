@@ -99,6 +99,12 @@ OSSL_DEPRECATEDIN_3_0 int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd,
 OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx);
 
 /*
+ * Deletes the currently loaded object in the store.
+ * Returns 1 on success, 0 otherwise.
+ */
+int OSSL_STORE_delete_object(OSSL_STORE_CTX *ctx);
+
+/*
  * Check if end of data (end of file) is reached
  * Returns 1 on end, 0 otherwise.
  */
