@@ -386,8 +386,9 @@ static int create_popo_signature(OSSL_CRMF_POPOSIGNINGKEY *ps,
         digest = NULL;
 
     return ASN1_item_sign_ex(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
-                             ps->algorithmIdentifier, NULL, ps->signature, cr,
-                             NULL, pkey, digest, libctx, propq);
+                             ps->algorithmIdentifier, /* sets this X509_ALGOR */
+                             NULL, ps->signature, /* sets the ASN1_BIT_STRING */
+                             cr, NULL, pkey, digest, libctx, propq);
 }
 
 int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,

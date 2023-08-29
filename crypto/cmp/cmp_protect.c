@@ -22,9 +22,11 @@
 /*
  * This function is also used by the internal verify_PBMAC() in cmp_vfy.c.
  *
- * Calculate protection for given PKImessage according to
- * the algorithm and parameters in the message header's protectionAlg
+ * Calculate protection for |msg| according to |msg->header->protectionAlg|
  * using the credentials, library context, and property criteria in the ctx.
+ * Unless |msg->header->protectionAlg| is PasswordBasedMAC,
+ * its value is completed according to |ctx->pkey| and |ctx->digest|,
+ * where the latter irrelevant in the case of Edwards curves.
  *
  * returns ASN1_BIT_STRING representing the protection on success, else NULL
  */
@@ -104,23 +106,22 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         OPENSSL_free(prot_part_der);
         return prot;
     } else {
-        int md_nid;
-        const EVP_MD *md = NULL;
+        const EVP_MD *md = ctx->digest;
+        char name[80] = "";
 
         if (ctx->pkey == NULL) {
             ERR_raise(ERR_LIB_CMP,
                       CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
             return NULL;
         }
-        if (!OBJ_find_sigid_algs(OBJ_obj2nid(algorOID), &md_nid, NULL)
-                || (md = EVP_get_digestbynid(md_nid)) == NULL) {
-            ERR_raise(ERR_LIB_CMP, CMP_R_UNKNOWN_ALGORITHM_ID);
-            return NULL;
-        }
+        if (EVP_PKEY_get_default_digest_name(ctx->pkey, name, sizeof(name)) > 0
+            && strcmp(name, "UNDEF") == 0) /* at least for Ed25519, Ed448 */
+            md = NULL;
 
         if ((prot = ASN1_BIT_STRING_new()) == NULL)
             return NULL;
-        if (ASN1_item_sign_ex(ASN1_ITEM_rptr(OSSL_CMP_PROTECTEDPART), NULL,
+        if (ASN1_item_sign_ex(ASN1_ITEM_rptr(OSSL_CMP_PROTECTEDPART),
+                              msg->header->protectionAlg, /* sets X509_ALGOR */
                               NULL, prot, &prot_part, NULL, ctx->pkey, md,
                               ctx->libctx, ctx->propq))
             return prot;
@@ -216,18 +217,6 @@ static X509_ALGOR *pbmac_algor(const OSSL_CMP_CTX *ctx)
     return alg;
 }
 
-static X509_ALGOR *sig_algor(const OSSL_CMP_CTX *ctx)
-{
-    int nid = 0;
-
-    if (!OBJ_find_sigid_by_algs(&nid, EVP_MD_get_type(ctx->digest),
-                                EVP_PKEY_get_id(ctx->pkey))) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_UNSUPPORTED_KEY_TYPE);
-        return 0;
-    }
-    return ossl_X509_ALGOR_from_nid(nid, V_ASN1_UNDEF, NULL);
-}
-
 static int set_senderKID(const OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg,
                          const ASN1_OCTET_STRING *id)
 {
@@ -275,7 +264,7 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             goto err;
         }
 
-        if ((msg->header->protectionAlg = sig_algor(ctx)) == NULL)
+        if ((msg->header->protectionAlg = X509_ALGOR_new()) == NULL)
             goto err;
         /* set senderKID to keyIdentifier of the cert according to 5.1.1 */
         if (!set_senderKID(ctx, msg, X509_get0_subject_key_id(ctx->cert)))
@@ -291,6 +280,7 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         goto err;
     }
     if (!ctx->unprotectedSend
+        /* protect according to msg->header->protectionAlg partly set above */
             && ((msg->protection = ossl_cmp_calc_protection(ctx, msg)) == NULL))
         goto err;
 
