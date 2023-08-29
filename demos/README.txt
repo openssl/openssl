@@ -51,9 +51,11 @@ pkread.c               Print out a description of a PKCS12 file.
 pkwrite.c              Add a password to an existing PKCS12 file.
 
 signature:
-EVP_Signature_demo.c   Compute and verify a signature from multiple buffers
-rsa_pss_direct.c       Compute and verify an RSA-PSS signature from a hash
-rsa_pss_hash.c         Compute and verify an RSA-PSS signature over a buffer
+EVP_EC_Signature_demo.c   Compute and verify an EC signature.
+EVP_DSA_Signature_demo.c  Compute and verify a DSA signature.
+EVP_ED_Signature_demo.c   Compute and verify an ED25519 signature.
+rsa_pss_direct.c          Compute and verify an RSA-PSS signature from a hash
+rsa_pss_hash.c            Compute and verify an RSA-PSS signature over a buffer
 
 sslecho:
 main.c                 Simple SSL echo client/server.
