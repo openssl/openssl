@@ -696,6 +696,9 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     int ok = 0, tmplen, chunklen, tmpflen, i;
     EVP_CIPHER_CTX *ctx_base = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
+    int fips_dupctx_supported = (fips_provider_version_gt(libctx, 3, 0, 12)
+                                && fips_provider_version_lt(libctx, 3, 1, 0))
+                                || fips_provider_version_ge(libctx, 3, 1, 3);
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(ctx_base = EVP_CIPHER_CTX_new()))
@@ -826,12 +829,20 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
 
     /* Test that the cipher dup functions correctly if it is supported */
     ERR_set_mark();
-    if (EVP_CIPHER_CTX_copy(ctx, ctx_base)) {
-        EVP_CIPHER_CTX_free(ctx_base);
-        ctx_base = NULL;
-    } else {
+    if (!EVP_CIPHER_CTX_copy(ctx, ctx_base)) {
+        if (fips_dupctx_supported) {
+            TEST_info("Doing a copy of Cipher %s Fails!\n",
+                      EVP_CIPHER_get0_name(expected->cipher));
+            ERR_print_errors_fp(stderr);
+            goto err;
+        } else {
+            TEST_info("Allowing copy fail as an old fips provider is in use.");
+        }
         EVP_CIPHER_CTX_free(ctx);
         ctx = ctx_base;
+    } else {
+        EVP_CIPHER_CTX_free(ctx_base);
+        ctx_base = NULL;
     }
     ERR_pop_to_mark();
 
@@ -1016,6 +1027,7 @@ static int cipher_test_run(EVP_TEST *t)
     int rv, frag = 0;
     size_t out_misalign, inp_misalign;
 
+    TEST_info("RUNNING TEST FOR CIPHER %s\n", EVP_CIPHER_get0_name(cdat->cipher));
     if (!cdat->key) {
         t->err = "NO_KEY";
         return 0;
