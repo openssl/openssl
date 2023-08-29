@@ -11,6 +11,8 @@
 # or
 #
 # Copyright (c) 2023, Christoph Müllner <christoph.muellner@vrull.eu>
+# Copyright (c) 2023, Jerry Shih <jerry.shih@sifive.com>
+# Copyright (c) 2023, Phoebe Chen <phoebe.chen@sifive.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -77,6 +79,88 @@ sub read_reg {
     return $1;
 }
 
+# Read the sew setting(8, 16, 32 and 64) and convert to vsew encoding.
+sub read_sew {
+    my $sew_setting = shift;
+
+    if ($sew_setting eq "e8") {
+        return 0;
+    } elsif ($sew_setting eq "e16") {
+        return 1;
+    } elsif ($sew_setting eq "e32") {
+        return 2;
+    } elsif ($sew_setting eq "e64") {
+        return 3;
+    } else {
+        my $trace = "";
+        if ($have_stacktrace) {
+            $trace = Devel::StackTrace->new->as_string;
+        }
+        die("Unsupported SEW setting:".$sew_setting."\n".$trace);
+    }
+}
+
+# Read the LMUL settings and convert to vlmul encoding.
+sub read_lmul {
+    my $lmul_setting = shift;
+
+    if ($lmul_setting eq "mf8") {
+        return 5;
+    } elsif ($lmul_setting eq "mf4") {
+        return 6;
+    } elsif ($lmul_setting eq "mf2") {
+        return 7;
+    } elsif ($lmul_setting eq "m1") {
+        return 0;
+    } elsif ($lmul_setting eq "m2") {
+        return 1;
+    } elsif ($lmul_setting eq "m4") {
+        return 2;
+    } elsif ($lmul_setting eq "m8") {
+        return 3;
+    } else {
+        my $trace = "";
+        if ($have_stacktrace) {
+            $trace = Devel::StackTrace->new->as_string;
+        }
+        die("Unsupported LMUL setting:".$lmul_setting."\n".$trace);
+    }
+}
+
+# Read the tail policy settings and convert to vta encoding.
+sub read_tail_policy {
+    my $tail_setting = shift;
+
+    if ($tail_setting eq "ta") {
+        return 1;
+    } elsif ($tail_setting eq "tu") {
+        return 0;
+    } else {
+        my $trace = "";
+        if ($have_stacktrace) {
+            $trace = Devel::StackTrace->new->as_string;
+        }
+        die("Unsupported tail policy setting:".$tail_setting."\n".$trace);
+    }
+}
+
+# Read the mask policy settings and convert to vma encoding.
+sub read_mask_policy {
+    my $mask_setting = shift;
+
+    if ($mask_setting eq "ma") {
+        return 1;
+    } elsif ($mask_setting eq "mu") {
+        return 0;
+    } else {
+        my $trace = "";
+        if ($have_stacktrace) {
+            $trace = Devel::StackTrace->new->as_string;
+        }
+        die("Unsupported mask policy setting:".$mask_setting."\n".$trace);
+    }
+}
+
 my @vregs = map("v$_",(0..31));
 my %vreglookup;
 @vreglookup{@vregs} = @vregs;
@@ -98,6 +182,27 @@ sub read_vreg {
         die("Could not process vector register ".$vreg."\n".$trace);
     }
     return $1;
+}
+
+# Read the vm settings and convert to mask encoding.
+sub read_mask_vreg {
+    my $vreg = shift;
+    # The default value is unmasked.
+    my $mask_bit = 1;
+
+    if (defined($vreg)) {
+        my $reg_id = read_vreg $vreg;
+        if ($reg_id == 0) {
+            $mask_bit = 0;
+        } else {
+            my $trace = "";
+            if ($have_stacktrace) {
+                $trace = Devel::StackTrace->new->as_string;
+            }
+            die("The ".$vreg." is not the mask register v0.\n".$trace);
+        }
+    }
+    return $mask_bit;
 }
 
 # Helper functions
@@ -282,12 +387,43 @@ sub rev8 {
 # Vector instructions
 
 sub vadd_vv {
-    # vadd.vv vd, vs2, vs1
-    my $template = 0b0000001_00000_00000_000_00000_1010111;
+    # vadd.vv vd, vs2, vs1, vm
+    my $template = 0b000000_0_00000_00000_000_00000_1010111;
     my $vd = read_vreg shift;
     my $vs2 = read_vreg shift;
     my $vs1 = read_vreg shift;
-    return ".word ".($template | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
+}
+
+sub vadd_vx {
+    # vadd.vx vd, vs2, rs1, vm
+    my $template = 0b000000_0_00000_00000_100_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $rs1 = read_reg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
+}
+
+sub vsub_vv {
+    # vsub.vv vd, vs2, vs1, vm
+    my $template = 0b000010_0_00000_00000_000_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $vs1 = read_vreg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
+}
+
+sub vsub_vx {
+    # vsub.vx vd, vs2, rs1, vm
+    my $template = 0b000010_0_00000_00000_100_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $rs1 = read_reg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
 }
 
 sub vid_v {
@@ -297,12 +433,22 @@ sub vid_v {
     return ".word ".($template | ($vd << 7));
 }
 
+sub viota_m {
+    # viota.m vd, vs2, vm
+    my $template = 0b010100_0_00000_10000_010_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($vd << 7));
+}
+
 sub vle32_v {
-    # vle32.v vd, (rs1)
-    my $template = 0b0000001_00000_00000_110_00000_0000111;
+    # vle32.v vd, (rs1), vm
+    my $template = 0b000000_0_00000_00000_110_00000_0000111;
     my $vd = read_vreg shift;
     my $rs1 = read_reg shift;
-    return ".word ".($template | ($rs1 << 15) | ($vd << 7));
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($rs1 << 15) | ($vd << 7));
 }
 
 sub vle64_v {
@@ -322,6 +468,17 @@ sub vlse32_v {
     return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($vd << 7));
 }
 
+sub vlsseg_nf_e32_v {
+    # vlsseg<nf>e32.v vd, (rs1), rs2
+    my $template = 0b0000101_00000_00000_110_00000_0000111;
+    my $nf = shift;
+    $nf -= 1;
+    my $vd = read_vreg shift;
+    my $rs1 = read_reg shift;
+    my $rs2 = read_reg shift;
+    return ".word ".($template | ($nf << 29) | ($rs2 << 20) | ($rs1 << 15) | ($vd << 7));
+}
+
 sub vlse64_v {
     # vlse64.v vd, (rs1), rs2
     my $template = 0b0000101_00000_00000_111_00000_0000111;
@@ -329,6 +486,16 @@ sub vlse64_v {
     my $rs1 = read_reg shift;
     my $rs2 = read_reg shift;
     return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($vd << 7));
+}
+
+sub vluxei8_v {
+    # vluxei8.v vd, (rs1), vs2, vm
+    my $template = 0b000001_0_00000_00000_000_00000_0000111;
+    my $vd = read_vreg shift;
+    my $rs1 = read_reg shift;
+    my $vs2 = read_vreg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
 }
 
 sub vmerge_vim {
@@ -346,16 +513,26 @@ sub vmerge_vvm {
     my $vd = read_vreg shift;
     my $vs2 = read_vreg shift;
     my $vs1 = read_vreg shift;
-    return ".word ".($template | ($vs2 << 20) | ($vs1 <<   15) | ($vd << 7))
+    return ".word ".($template | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7))
 }
 
 sub vmseq_vi {
-    # vmseq vd vs1, imm
+    # vmseq.vi vd vs1, imm
     my $template = 0b0110001_00000_00000_011_00000_1010111;
     my $vd = read_vreg shift;
     my $vs1 = read_vreg shift;
     my $imm = shift;
-    return ".word ".($template | ($vs1 << 20) | ($imm <<   15) | ($vd << 7))
+    return ".word ".($template | ($vs1 << 20) | ($imm << 15) | ($vd << 7))
+}
+
+sub vmsgtu_vx {
+    # vmsgtu.vx vd vs2, rs1, vm
+    my $template = 0b011110_0_00000_00000_100_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $rs1 = read_reg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7))
 }
 
 sub vmv_v_i {
@@ -364,6 +541,14 @@ sub vmv_v_i {
     my $vd = read_vreg shift;
     my $imm = shift;
     return ".word ".($template | ($imm << 15) | ($vd << 7));
+}
+
+sub vmv_v_x {
+    # vmv.v.x vd, rs1
+    my $template = 0b0101111_00000_00000_100_00000_1010111;
+    my $vd = read_vreg shift;
+    my $rs1 = read_reg shift;
+    return ".word ".($template | ($rs1 << 15) | ($vd << 7));
 }
 
 sub vmv_v_v {
@@ -384,11 +569,33 @@ sub vor_vv_v0t {
 }
 
 sub vse32_v {
-    # vse32.v vd, (rs1)
-    my $template = 0b0000001_00000_00000_110_00000_0100111;
+    # vse32.v vd, (rs1), vm
+    my $template = 0b000000_0_00000_00000_110_00000_0100111;
     my $vd = read_vreg shift;
     my $rs1 = read_reg shift;
-    return ".word ".($template | ($rs1 << 15) | ($vd << 7));
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($rs1 << 15) | ($vd << 7));
+}
+
+sub vssseg_nf_e32_v {
+    # vssseg<nf>e32.v vs3, (rs1), rs2
+    my $template = 0b0000101_00000_00000_110_00000_0100111;
+    my $nf = shift;
+    $nf -= 1;
+    my $vs3 = read_vreg shift;
+    my $rs1 = read_reg shift;
+    my $rs2 = read_reg shift;
+    return ".word ".($template | ($nf << 29) | ($rs2 << 20) | ($rs1 << 15) | ($vs3 << 7));
+}
+
+sub vsuxei8_v {
+   # vsuxei8.v vs3, (rs1), vs2, vm
+   my $template = 0b000001_0_00000_00000_000_00000_0100111;
+   my $vs3 = read_vreg shift;
+   my $rs1 = read_reg shift;
+   my $vs2 = read_vreg shift;
+   my $vm = read_mask_vreg shift;
+   return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($rs1 << 15) | ($vs3 << 7));
 }
 
 sub vse64_v {
@@ -419,6 +626,34 @@ sub vsetivli__x0_8_e32_m1_tu_mu {
     return ".word 0xc1047057";
 }
 
+sub vsetvli {
+    # vsetvli rd, rs1, vtypei
+    my $template = 0b0_00000000000_00000_111_00000_1010111;
+    my $rd = read_reg shift;
+    my $rs1 = read_reg shift;
+    my $sew = read_sew shift;
+    my $lmul = read_lmul shift;
+    my $tail_policy = read_tail_policy shift;
+    my $mask_policy = read_mask_policy shift;
+    my $vtypei = ($mask_policy << 7) | ($tail_policy << 6) | ($sew << 3) | $lmul;
+
+    return ".word ".($template | ($vtypei << 20) | ($rs1 << 15) | ($rd << 7));
+}
+
+sub vsetivli {
+    # vsetvli rd, uimm, vtypei
+    my $template = 0b11_0000000000_00000_111_00000_1010111;
+    my $rd = read_reg shift;
+    my $uimm = shift;
+    my $sew = read_sew shift;
+    my $lmul = read_lmul shift;
+    my $tail_policy = read_tail_policy shift;
+    my $mask_policy = read_mask_policy shift;
+    my $vtypei = ($mask_policy << 7) | ($tail_policy << 6) | ($sew << 3) | $lmul;
+
+    return ".word ".($template | ($vtypei << 20) | ($uimm << 15) | ($rd << 7));
+}
+
 sub vslidedown_vi {
     # vslidedown.vi vd, vs2, uimm
     my $template = 0b0011111_00000_00000_011_00000_1010111;
@@ -426,6 +661,15 @@ sub vslidedown_vi {
     my $vs2 = read_vreg shift;
     my $uimm = shift;
     return ".word ".($template | ($vs2 << 20) | ($uimm << 15) | ($vd << 7));
+}
+
+sub vslidedown_vx {
+    # vslidedown.vx vd, vs2, rs1
+    my $template = 0b0011111_00000_00000_100_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $rs1 = read_reg shift;
+    return ".word ".($template | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
 }
 
 sub vslideup_vi_v0t {
@@ -505,11 +749,24 @@ sub vxor_vv {
 ## Zvbb instructions
 
 sub vrev8_v {
-    # vrev8.v vd, vs2
-    my $template = 0b0100101_00000_01001_010_00000_1010111;
+    # vrev8.v vd, vs2, vm
+    my $template = 0b010010_0_00000_01001_010_00000_1010111;
     my $vd = read_vreg shift;
     my $vs2 = read_vreg shift;
-    return ".word ".($template | ($vs2 << 20) | ($vd << 7));
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($vd << 7));
+}
+
+sub vror_vi {
+    # vror.vi vd, vs2, uimm
+    my $template = 0b01010_0_1_00000_00000_011_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $uimm = shift;
+    my $uimm_i5 = $uimm >> 5;
+    my $uimm_i4_0 = $uimm & 0b11111;
+
+    return ".word ".($template | ($uimm_i5 << 26) | ($vs2 << 20) | ($uimm_i4_0 << 15) | ($vd << 7));
 }
 
 ## Zvbc instructions
