@@ -156,7 +156,7 @@ Notes:
 | **⇒ Method Manipulation** | |
 | `SSL_CTX_get_ssl_method` | Object | 🟩U | 🟩A | 🟩NC | 🟢Done |
 | `SSL_get_ssl_method` | Object | 🟩U | 🟩A | 🟩NC | 🟢Done |
-| `SSL_set_ssl_method` | Object | 🟩U | 🟩A | 🟥FC | 🟢Done |
+| `SSL_set_ssl_method` | Object | 🟩U | 🟥FC | 🟧QSI | 🟢Done |
 | **⇒ SRTP** | |
 | `SSL_get_selected_srtp_profile` | HL | 🟩U | 🟧NO | 🟨C\* | 🟢Done |
 | `SSL_get_srtp_profiles` | HL | 🟩U | 🟧NO | 🟨C\* | 🟢Done |
@@ -612,8 +612,8 @@ Notes:
 | `SSL_set_fd` | NDP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_key_update` | RL | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_get_key_update_type` | RL | 🟩U | 🟩A | 🟧QSI | 🟢Done |
-| `SSL_clear`  (connection) | CSSM | 🟩U | 🟩A | 🟥FC | 🟢Done |
-| `SSL_clear`  (stream) | CSSM | 🟩U | 🟩A | 🟥FC | 🟢Done |
+| `SSL_clear`  (connection) | CSSM | 🟩U | 🟥FC | 🟧QSI | 🟢Done |
+| `SSL_clear`  (stream) | CSSM | 🟩U | 🟥FC | 🟧QSI | 🟢Done |
 | `SSL_shutdown` | CSSM | 🟧C | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_want` | ADP | 🟧C | 🟩A | 🟧QSI | 🟢Done |
 | `BIO_new_ssl_connect` | Global | 🟩U | 🟩A | 🟧QSI | 🟢Done |
