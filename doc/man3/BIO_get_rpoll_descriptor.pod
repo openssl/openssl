@@ -10,10 +10,11 @@ can be used to determine when a BIO object can next be read or written
  #include <openssl/bio.h>
 
  typedef struct bio_poll_descriptor_st {
-     int type;
+     uint32_t type;
      union {
-         int     fd;
-         void    *custom;
+         int        fd;
+         void       *custom;
+         uintptr_t  custom_ui;
      } value;
  } BIO_POLL_DESCRIPTOR;
 
@@ -71,9 +72,8 @@ complete a BIO_write() operation.
 =item BIO_POLL_DESCRIPTOR_CUSTOM_START
 
 Type values beginning with this value (inclusive) are reserved for application
-allocation for custom poll descriptor types. The field I<value.custom> in the
-B<BIO_POLL_DESCRIPTOR> is an opaque pointer which can be used by the application
-arbitrarily.
+allocation for custom poll descriptor types. Any of the definitions in the union
+field I<value> can be used by the application arbitrarily as opaque values.
 
 =back
 
