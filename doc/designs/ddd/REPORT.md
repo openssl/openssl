@@ -151,7 +151,7 @@ The originally planned changes to enable applications for QUIC amounted to:
 - A change to how the `POLLIN`/`POLLOUT`/`POLLERR` flags to pass to poll(2)
   need to be determined.
 
-  Note that this is a subtantially smaller list of changes than for
+  Note that this is a substantially smaller list of changes than for
   ddd-02-conn-nonblocking.
 
 ### Actual changes

@@ -189,9 +189,9 @@ int rx(APP_CONN *conn, void *buf, int buf_len)
 
 /*
  * Called to get data which has been enqueued for transmission to the network
- * by OpenSSL. For QUIC, this always outputs a single frame.
+ * by OpenSSL. For QUIC, this always outputs a single datagram.
  *
- * IMPORTANT (QUIC): If buf_len is inadequate to hold the frame, it is truncated
+ * IMPORTANT (QUIC): If buf_len is inadequate to hold the datagram, it is truncated
  * (similar to read(2)). A buffer size of at least 1472 must be used by default
  * to guarantee this does not occur.
  */
@@ -203,7 +203,7 @@ int read_net_tx(APP_CONN *conn, void *buf, int buf_len)
 /*
  * Called to feed data which has been received from the network to OpenSSL.
  *
- * QUIC: buf must contain the entirety of a single frame. It will be consumed
+ * QUIC: buf must contain the entirety of a single datagram. It will be consumed
  * entirely (return value == buf_len) or not at all.
  */
 int write_net_rx(APP_CONN *conn, const void *buf, int buf_len)
