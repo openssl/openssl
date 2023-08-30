@@ -565,8 +565,8 @@ int ossl_quic_clear(SSL *s)
     if (!expect_quic(s, &ctx))
         return 0;
 
-    /* TODO(QUIC FUTURE): Currently a no-op. */
-    return 1;
+    ERR_raise(ERR_LIB_SSL, ERR_R_UNSUPPORTED);
+    return 0;
 }
 
 int ossl_quic_conn_set_override_now_cb(SSL *s,
