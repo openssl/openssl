@@ -156,7 +156,7 @@ Notes:
 | **⇒ Method Manipulation** | |
 | `SSL_CTX_get_ssl_method` | Object | 🟩U | 🟩A | 🟩NC | 🟢Done |
 | `SSL_get_ssl_method` | Object | 🟩U | 🟩A | 🟩NC | 🟢Done |
-| `SSL_set_ssl_method` | Object | 🟥TBD | 🟩A | 🟧QSI | 🟢Done |
+| `SSL_set_ssl_method` | Object | 🟩U | 🟥FC | 🟧QSI | 🟢Done |
 | **⇒ SRTP** | |
 | `SSL_get_selected_srtp_profile` | HL | 🟩U | 🟧NO | 🟨C\* | 🟢Done |
 | `SSL_get_srtp_profiles` | HL | 🟩U | 🟧NO | 🟨C\* | 🟢Done |
@@ -186,9 +186,9 @@ Notes:
 | `SSL_get_signature_nid` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | `SSL_get_signature_type_nid` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | **⇒ ALPN** | †2 |
-| `SSL_SESSION_set1_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
-| `SSL_SESSION_get0_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
-| `SSL_CTX_set_alpn_select_cb` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
+| `SSL_SESSION_set1_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟢Done |
+| `SSL_SESSION_get0_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟢Done |
+| `SSL_CTX_set_alpn_select_cb` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟢Done |
 | `SSL_set_alpn_protos` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟢Done |
 | `SSL_get0_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟢Done |
 | `SSL_CTX_set_alpn_protos` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟢Done |
@@ -594,7 +594,7 @@ Notes:
 | `SSL_write_ex` | ADP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_sendfile` | ADP | 🟩U | 🟥FC | 🟩NC\* | 🟢Done |
 | `SSL_pending` | ADP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
-| `SSL_has_pending` | ADP | TBD | 🟩A | 🟧QSI | 🟢Done |
+| `SSL_has_pending` | ADP | 🟧C | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_accept` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_connect` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_do_handshake` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟢Done |
@@ -603,7 +603,7 @@ Notes:
 | `SSL_set_bio` | NDP | 🟧C | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_get_wbio` | NDP | 🟧C | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_get_rbio` | NDP | 🟧C | 🟩A | 🟧QSI | 🟢Done |
-| `SSL_get_error` | NDP | 🟩U | 🟩A | 🟧QSI | Done — needs review |
+| `SSL_get_error` | NDP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_get_rfd` | NDP | 🟩U | 🟩A | 🟩NC | 🟢Done |
 | `SSL_get_wfd` | NDP | 🟩U | 🟩A | 🟩NC | 🟢Done |
 | `SSL_get_fd` | NDP | 🟩U | 🟩A | 🟩NC | 🟢Done |
@@ -612,42 +612,46 @@ Notes:
 | `SSL_set_fd` | NDP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_key_update` | RL | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_get_key_update_type` | RL | 🟩U | 🟩A | 🟧QSI | 🟢Done |
-| `SSL_clear`  (connection) | CSSM | TBD | 🟩A | 🟥FC | 🟢Done |
-| `SSL_clear`  (stream) | CSSM | TBD | 🟩A | 🟧QSI | 🟠Design TBD |
-| `SSL_shutdown` | CSSM | 🟧C | 🟩A | 🟧QSI | 🟡TODO |
+| `SSL_clear`  (connection) | CSSM | 🟩U | 🟥FC | 🟧QSI | 🟢Done |
+| `SSL_clear`  (stream) | CSSM | 🟩U | 🟥FC | 🟧QSI | 🟢Done |
+| `SSL_shutdown` | CSSM | 🟧C | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_want` | ADP | 🟧C | 🟩A | 🟧QSI | 🟢Done |
-| `BIO_new_ssl_connect` | Global | 🟩U | 🟩A | 🟧QSI | 🟡TODO |
-| `BIO_new_buffer_ssl_connect` | Global | 🟩U | 🟦U | 🟧QSI | 🟡TODO |
-| `SSL_get_shutdown` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟠Design TBD |
-| `SSL_set_shutdown` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟠Design TBD |
+| `BIO_new_ssl_connect` | Global | 🟩U | 🟩A | 🟧QSI | 🟢Done |
+| `BIO_new_buffer_ssl_connect` | Global | 🟩U | 🟦U | 🟧QSI | 🟢Done |
+| `SSL_get_shutdown` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟢Done |
+| `SSL_set_shutdown` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | **⇒ New APIs** | |
-| `SSL_tick` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
-| `SSL_get_tick_timeout` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_is_tls` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_is_quic` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_handle_events` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_get_event_timeout` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | `SSL_get_blocking_mode` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | `SSL_set_blocking_mode` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | `SSL_get_rpoll_descriptor` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | `SSL_get_wpoll_descriptor` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
-| `SSL_want_net_read` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
-| `SSL_want_net_write` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_net_read_desired` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_net_write_desired` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | `SSL_set1_initial_peer_addr` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
-| `SSL_shutdown_ex` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_stream_conclude` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_stream_reset` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_get_stream_read_state` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_get_stream_write_state` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_get_stream_read_error_code` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_get_stream_write_error_code` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_get_conn_close_info` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_shutdown_ex` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_stream_conclude` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_stream_reset` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_get_stream_read_state` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_get_stream_write_state` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_get_stream_read_error_code` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_get_stream_write_error_code` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_get_conn_close_info` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_inject_net_dgram` | NDP | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | **⇒ New APIs for Multi-Stream** | |
-| `SSL_get0_connection` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_is_connection` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_get_stream_id` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_get_stream_type` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_new_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_accept_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_get_accept_stream_queue_len` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_set_default_stream_mode` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_set_incoming_stream_policy` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_get0_connection` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_is_connection` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_get_stream_id` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_get_stream_type` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_is_stream_local` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_new_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_accept_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_get_accept_stream_queue_len` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_set_default_stream_mode` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
+| `SSL_set_incoming_stream_policy` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | **⇒ Currently Not Supported** | |
 | `SSL_copy_session_id` | Special | 🟩U | 🟥FC | 🟨C* | 🟢Done |
 | `BIO_ssl_copy_session_id` | Special | 🟩U | 🟥FC | 🟨C* | 🟢Done |
