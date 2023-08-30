@@ -12,6 +12,7 @@
 # pragma once
 
 # include <openssl/e_os2.h>              /* For 'ossl_inline' */
+# include "internal/safe_math.h"
 
 /*
  * ==================================================================
@@ -38,6 +39,10 @@ struct ring_buf {
      */
     uint64_t    ctail_offset;
 };
+
+OSSL_SAFE_MATH_UNSIGNED(u64, uint64_t)
+
+#define MAX_OFFSET   (((uint64_t)1) << 62) /* QUIC-imposed limit */
 
 static ossl_inline int ring_buf_init(struct ring_buf *r)
 {
@@ -74,11 +79,15 @@ static ossl_inline int ring_buf_write_at(struct ring_buf *r,
 {
     size_t avail, idx, l;
     unsigned char *start = r->start;
-    int i;
+    int i, err = 0;
 
     avail = ring_buf_avail(r);
     if (logical_offset < r->ctail_offset
-        || logical_offset + buf_len > r->head_offset + avail)
+        || safe_add_u64(logical_offset, buf_len, &err)
+           > safe_add_u64(r->head_offset, avail, &err)
+        || safe_add_u64(r->head_offset, buf_len, &err)
+           > MAX_OFFSET
+        || err)
         return 0;
 
     for (i = 0; buf_len > 0 && i < 2; ++i) {
@@ -112,6 +121,9 @@ static ossl_inline size_t ring_buf_push(struct ring_buf *r,
         avail = ring_buf_avail(r);
         if (buf_len > avail)
             buf_len = avail;
+
+        if (buf_len > MAX_OFFSET - r->head_offset)
+            buf_len = (size_t)(MAX_OFFSET - r->head_offset);
 
         if (buf_len == 0)
             break;
@@ -190,7 +202,7 @@ static ossl_inline void ring_buf_cpop_range(struct ring_buf *r,
 {
     assert(end >= start);
 
-    if (start > r->ctail_offset)
+    if (start > r->ctail_offset || end >= MAX_OFFSET)
         return;
 
     if (cleanse && r->alloc > 0 && end > r->ctail_offset) {
