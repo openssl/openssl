@@ -48,8 +48,9 @@ collectively for all connections created by that listener.
 descends from them. Thus, an application may free the `SSL_LISTENER`, but
 it will be retained until it is no longer depended on by any connection.
 
-The operation of an `SSL_LISTENER` is simple: call `SSL_LISTENER_accept_conn`.
-For QUIC, this returns a new QCSO, which is considered a child of the listener.
+The operation of an `SSL_LISTENER` is simple: call
+`SSL_LISTENER_accept_connection`. For QUIC, this returns a new QCSO, which is
+considered a child of the listener.
 
 ```c
 SSL_LISTENER *SSL_LISTENER_new(SSL_CTX *ctx, BIO *net_rbio, BIO *net_wbio);
@@ -61,7 +62,7 @@ BIO *SSL_LISTENER_get0_net_wbio(SSL_LISTENER *l);
 int SSL_LISTENER_set1_net_rbio(SSL_LISTENER *l, BIO *net_rbio);
 int SSL_LISTENER_set1_net_wbio(SSL_LISTENER *l, BIO *net_wbio);
 
-SSL *SSL_LISTENER_accept_conn(SSL_LISTENER *l, uint64_t flags);
+SSL *SSL_LISTENER_accept_connection(SSL_LISTENER *l, uint64_t flags);
 size_t SSL_LISTENER_get_accept_queue_len(SSL_LISTENER *l);
 ```
 
@@ -118,23 +119,24 @@ SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags);
  */
 
 /*
- * New API for QLSOs: SSL_accept_conn
- * ----------------------------------
+ * New API for QLSOs: SSL_accept_connection
+ * ----------------------------------------
  *
  * These APIs are exactly the same as  SSL_accept_stream, but made a separate
  * function to avoid confusion. Supported on QLSOs only.
  */
-SSL *SSL_accept_conn(SSL *ssl, uint64_t flags);
-size_t SSL_get_accept_conn_queue_len(SSL *ssl);
+SSL *SSL_accept_connection(SSL *ssl, uint64_t flags);
+size_t SSL_get_accept_connection_queue_len(SSL *ssl);
 
 /*
  * New API for QLSOs: SSL_listen
  * -----------------------------
  *
- * This is not usually needed as SSL_accept_conn will implicitly trigger this if
- * it has not been called yet. It is only needed if a server wishes to ensure it
- * has started to accept incoming connections but does not wish to actually call
- * SSL_accept_conn yet. In this regard it is similar to listen(2).
+ * This is not usually needed as SSL_accept_connection will implicitly trigger
+ * this if it has not been called yet. It is only needed if a server wishes to
+ * ensure it has started to accept incoming connections but does not wish to
+ * actually call SSL_accept_connection yet. In this regard it is similar to
+ * listen(2).
  */
 int SSL_listen(SSL *ssl);
 
@@ -150,6 +152,9 @@ int SSL_get_peer_addr(SSL *ssl, BIO_ADDR *peer_addr);
 
 /* Returns 1 for QLSOs (or future TLS/DTLS listeners) only. */
 int SSL_is_listener(SSL *ssl);
+
+/* Returns the QLSO (if any) from which a QCSO or QSSO is descended. */
+SSL *SSL_get0_listener(SSL *ssl);
 
 /* SSL_is_quic returns 1 */
 ```
@@ -315,7 +320,8 @@ TCP, at least in a server role:
     SSL_set_bio(l, tcp_listener, tcp_listener);
 
     for (;;) {
-        conn = SSL_accept_conn(l, 0); /* standard SSL_CONNECTION is returned */
+        /* standard SSL_CONNECTION is returned */
+        conn = SSL_accept_connection(l, 0);
 
         spawn_thread_to_process_conn(conn, &addr);
     }
@@ -324,8 +330,8 @@ TCP, at least in a server role:
 
 Essentially, when `SSL_new_listener` is given a `SSL_CTX` which is using a TLS
 method, it returns some different kind of object, say a `TCP_LISTENER`, which
-also is a kind of SSL object. `SSL_accept_conn` calls `accept(2)` via some BIO
-abstraction on the provided BIO, and constructs a new BIO on the resulting
+also is a kind of SSL object. `SSL_accept_connection` calls `accept(2)` via some
+BIO abstraction on the provided BIO, and constructs a new BIO on the resulting
 socket, wrapping it via standard `SSL_new` using the same `SSL_CTX`.
 
 Thus, this API should be compatible with any future adaptation to also support
@@ -502,6 +508,9 @@ Observations:
 Usage Example
 -------------
 
+The following is a blocking example, where `SSL_accept_connection` waits until a
+new connection is available.
+
 ```c
 {
     SSL *l, *conn;
@@ -513,9 +522,15 @@ Usage Example
 
     for (;;) {
         /* automatically starts and calls SSL_listen on first call */
-        conn = SSL_accept_conn(l, 0); /* standard QCSO is returned */
+        conn = SSL_accept_connection(l, 0); /* standard QCSO is returned */
 
         spawn_thread_to_process_conn(conn);
     }
 }
 ```
+
+In non-blocking mode, `SSL_accept_connection` will simply act in a non-blocking
+fashion and return immediately with NULL if no new incoming connection is
+available, just like `SSL_accept_stream`. The details of how polling and waiting
+for incoming stream events, and other events, will work will be discussed in the
+subsequent polling design document.
