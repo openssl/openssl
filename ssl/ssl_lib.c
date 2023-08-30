@@ -7474,6 +7474,18 @@ uint64_t SSL_get_stream_id(SSL *s)
 #endif
 }
 
+int SSL_is_stream_local(SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return -1;
+
+    return ossl_quic_is_stream_local(s);
+#else
+    return -1;
+#endif
+}
+
 int SSL_set_default_stream_mode(SSL *s, uint32_t mode)
 {
 #ifndef OPENSSL_NO_QUIC

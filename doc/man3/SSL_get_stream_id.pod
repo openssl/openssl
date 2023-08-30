@@ -3,8 +3,8 @@
 =head1 NAME
 
 SSL_get_stream_id, SSL_get_stream_type, SSL_STREAM_TYPE_NONE,
-SSL_STREAM_TYPE_READ, SSL_STREAM_TYPE_WRITE, SSL_STREAM_TYPE_BIDI - get QUIC
-stream ID and stream type information
+SSL_STREAM_TYPE_READ, SSL_STREAM_TYPE_WRITE, SSL_STREAM_TYPE_BIDI,
+SSL_is_stream_local - get QUIC stream ID and stream type information
 
 =head1 SYNOPSIS
 
@@ -17,6 +17,8 @@ stream ID and stream type information
  #define SSL_STREAM_TYPE_READ
  #define SSL_STREAM_TYPE_WRITE
  int SSL_get_stream_type(SSL *ssl);
+
+ int SSL_is_stream_local(SSL *ssl);
 
 =head1 DESCRIPTION
 
@@ -55,12 +57,16 @@ from.
 
 =back
 
+The SSL_is_stream_local() function determines whether a stream was locally
+created.
+
 =head1 NOTES
 
 While QUICv1 assigns specific meaning to the low two bits of a QUIC stream ID,
 QUIC stream IDs in future versions of QUIC are not required to have the same
 semantics. Do not determine stream properties using these bits. Instead, use
-SSL_get_stream_type() to determine the stream type.
+SSL_get_stream_type() to determine the stream type and SSL_get_stream_origin()
+to determine the stream initiator.
 
 The SSL_get_stream_type() identifies the type of a QUIC stream based on its
 identity, and does not indicate whether an operation can currently be
@@ -78,6 +84,11 @@ object without a default stream attached. Note that valid QUIC stream IDs are
 always below 2**62.
 
 SSL_get_stream_type() returns one of the B<SSL_STREAM_TYPE> values.
+
+SSL_is_stream_local() returns 1 if called on a QUIC stream SSL object which
+represents a stream which was locally initiated. It returns 0 if called on a
+QUIC stream SSL object which represents a stream which was remotely initiated by
+a peer, and -1 if called on any other kind of SSL object.
 
 =head1 SEE ALSO
 
