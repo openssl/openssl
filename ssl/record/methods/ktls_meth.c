@@ -95,7 +95,7 @@ int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c
             return 0;
         if (EVP_MD_is_a(md, "SHA1"))
             crypto_info->auth_algorithm = CRYPTO_SHA1_HMAC;
-        else if (EVP_MD_is_a(md, "SHA2-256")) {
+        else if (EVP_MD_is_a(md, "SHA2-256"))
             crypto_info->auth_algorithm = CRYPTO_SHA2_256_HMAC;
         else if (EVP_MD_is_a(md, "SHA2-384"))
             crypto_info->auth_algorithm = CRYPTO_SHA2_384_HMAC;
