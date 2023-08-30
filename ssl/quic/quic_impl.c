@@ -2695,6 +2695,25 @@ uint64_t ossl_quic_get_stream_id(SSL *s)
 }
 
 /*
+ * SSL_is_stream_local
+ * -------------------
+ */
+QUIC_TAKES_LOCK
+int ossl_quic_is_stream_local(SSL *s)
+{
+    QCTX ctx;
+    int is_local;
+
+    if (!expect_quic_with_stream_lock(s, /*remote_init=*/-1, &ctx))
+        return -1;
+
+    is_local = ossl_quic_stream_is_local_init(ctx.xso->stream);
+    quic_unlock(ctx.qc);
+
+    return is_local;
+}
+
+/*
  * SSL_set_default_stream_mode
  * ---------------------------
  */

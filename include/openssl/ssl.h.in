@@ -2278,6 +2278,7 @@ __owur int SSL_is_connection(SSL *s);
 __owur int SSL_get_stream_type(SSL *s);
 
 __owur uint64_t SSL_get_stream_id(SSL *s);
+__owur int SSL_is_stream_local(SSL *s);
 
 #define SSL_DEFAULT_STREAM_MODE_NONE        0
 #define SSL_DEFAULT_STREAM_MODE_AUTO_BIDI   1
