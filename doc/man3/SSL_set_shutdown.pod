@@ -57,6 +57,8 @@ If a close_notify was received, SSL_RECEIVED_SHUTDOWN will be set,
 for setting SSL_SENT_SHUTDOWN the application must however still call
 L<SSL_shutdown(3)> or SSL_set_shutdown() itself.
 
+These functions are not supported for QUIC SSL objects.
+
 =head1 RETURN VALUES
 
 SSL_set_shutdown() does not return diagnostic information.
