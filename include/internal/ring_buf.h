@@ -123,7 +123,7 @@ static ossl_inline size_t ring_buf_push(struct ring_buf *r,
             buf_len = avail;
 
         if (buf_len > MAX_OFFSET - r->head_offset)
-            buf_len = MAX_OFFSET - r->head_offset;
+            buf_len = (size_t)(MAX_OFFSET - r->head_offset);
 
         if (buf_len == 0)
             break;
