@@ -65,7 +65,7 @@ created.
 While QUICv1 assigns specific meaning to the low two bits of a QUIC stream ID,
 QUIC stream IDs in future versions of QUIC are not required to have the same
 semantics. Do not determine stream properties using these bits. Instead, use
-SSL_get_stream_type() to determine the stream type and SSL_get_stream_origin()
+SSL_get_stream_type() to determine the stream type and SSL_get_stream_is_local()
 to determine the stream initiator.
 
 The SSL_get_stream_type() identifies the type of a QUIC stream based on its

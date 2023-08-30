@@ -3343,7 +3343,7 @@ int ossl_quic_get_conn_close_info(SSL *ssl,
     info->reason_len    = tc->reason_len;
     info->flags         = 0;
     if (!tc->remote)
-       info->flags |= SSL_CONN_CLOSE_FLAG_LOCAL;
+        info->flags |= SSL_CONN_CLOSE_FLAG_LOCAL;
     if (!tc->app)
         info->flags |= SSL_CONN_CLOSE_FLAG_TRANSPORT;
     return 1;
