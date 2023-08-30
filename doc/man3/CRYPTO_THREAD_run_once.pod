@@ -8,7 +8,8 @@ CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free,
 CRYPTO_atomic_add, CRYPTO_atomic_or, CRYPTO_atomic_load,
 CRYPTO_atomic_load_int,
 OSSL_set_max_threads, OSSL_get_max_threads,
-OSSL_get_thread_support_flags - OpenSSL thread support
+OSSL_get_thread_support_flags, OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL,
+OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN - OpenSSL thread support
 
 =head1 SYNOPSIS
 
@@ -32,6 +33,9 @@ OSSL_get_thread_support_flags - OpenSSL thread support
  int OSSL_set_max_threads(OSSL_LIB_CTX *ctx, uint64_t max_threads);
  uint64_t OSSL_get_max_threads(OSSL_LIB_CTX *ctx);
  uint32_t OSSL_get_thread_support_flags(void);
+
+ #define OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL
+ #define OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN
 
 =head1 DESCRIPTION
 
@@ -121,6 +125,17 @@ spawned unless (and until) there is demand. Thread polling is disabled by
 default. To enable threading you must call OSSL_set_max_threads() explicitly.
 Under no circumstances is this done for you.
 
+=item *
+
+OSSL_get_thread_support_flags() determines what thread pool functionality
+OpenSSL is compiled with and is able to support in the current run time
+environment. B<OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL> indicates that the base
+thread pool functionality is available, and
+B<OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN> indicates that the default thread pool
+model is available. The default thread pool model is currently the only model
+available, therefore both of these flags must be set for thread pool
+functionality to be used.
+
 =back
 
 =head1 RETURN VALUES
@@ -139,6 +154,9 @@ necessary support).
 OSSL_get_max_threads() returns the maximum number of threads currently allowed
 to be used by the thread pool. If thread pooling is disabled or not available,
 returns 0.
+
+OSSL_get_thread_support_flags() returns zero or more B<OSSL_THREAD_SUPPORT_FLAG>
+values.
 
 The other functions return 1 on success, or 0 on error.
 
