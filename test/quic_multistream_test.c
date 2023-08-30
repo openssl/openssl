@@ -1004,14 +1004,24 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
     if (!TEST_true(helper_local_init(hl, h, thread_idx)))
         goto out;
 
-#define S_SPIN_AGAIN() { OSSL_sleep(1); no_advance = 1; continue; }
+#define COMMON_SPIN_AGAIN()                             \
+    {                                                   \
+        no_advance = 1;                                 \
+        continue;                                       \
+    }
+#define S_SPIN_AGAIN()                                  \
+    {                                                   \
+        s_lock(h, hl);                                  \
+        ossl_quic_tserver_tick(h->s);                   \
+        COMMON_SPIN_AGAIN();                            \
+    }
 #define C_SPIN_AGAIN()                                  \
     {                                                   \
         if (h->blocking) {                              \
             TEST_error("spin again in blocking mode");  \
             goto out;                                   \
         }                                               \
-        S_SPIN_AGAIN();                                 \
+        COMMON_SPIN_AGAIN();                            \
     }
 
     for (;;) {
