@@ -61,9 +61,9 @@ static int demo_sign(EVP_PKEY *priv,
         fprintf(stderr, "EVP_DigestSign using NULL buffer failed.\n");
         goto cleanup;
     }
-    sig_value = OPENSSL_zalloc(sig_len);
+    sig_value = OPENSSL_malloc(sig_len);
     if (sig_value == NULL) {
-        fprintf(stderr, "No memory.\n");
+        fprintf(stderr, "OPENSSL_malloc failed.\n");
         goto cleanup;
     }
     fprintf(stdout, "Generating signature:\n");
