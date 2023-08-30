@@ -72,7 +72,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
     OPT_CONFIG_FILE,
-    OPT_INPLACE,
+    OPT_IN_PLACE,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -117,7 +117,7 @@ static int process_mode_in_place;
 
 static int evp_test_process_mode(char *mode)
 {
-    if (strcmp(mode, "inplace") == 0)
+    if (strcmp(mode, "in_place") == 0)
         return 1;
     else if (strcmp(mode, "both") == 0)
         return 0;
@@ -4094,8 +4094,8 @@ const OPTIONS *test_get_options(void)
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("[file...]\n"),
         { "config", OPT_CONFIG_FILE, '<',
           "The configuration file to use for the libctx" },
-        { "process", OPT_INPLACE, 's',
-          "Mode for data processing by cipher tests [inplace/both],both by default"},
+        { "process", OPT_IN_PLACE, 's',
+          "Mode for data processing by cipher tests [in_place/both], both by default"},
         { OPT_HELP_STR, 1, '-', "file\tFile to run tests on.\n" },
         { NULL }
     };
@@ -4114,7 +4114,7 @@ int setup_tests(void)
         case OPT_CONFIG_FILE:
             config_file = opt_arg();
             break;
-        case OPT_INPLACE:
+        case OPT_IN_PLACE:
             if ((process_mode_in_place = evp_test_process_mode(opt_arg())) == -1)
                 return 0;
             break;
