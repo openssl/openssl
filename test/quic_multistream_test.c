@@ -1385,8 +1385,12 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!SSL_get_conn_close_info(c_tgt, &cc_info, sizeof(cc_info)))
                     SPIN_AGAIN();
 
-                if (!TEST_int_eq(expect_app, !cc_info.is_transport)
-                    || !TEST_int_eq(expect_remote, !cc_info.is_local)
+                if (!TEST_int_eq(expect_app,
+                                 (cc_info.flags
+                                  & SSL_CONN_CLOSE_FLAG_TRANSPORT) == 0)
+                    || !TEST_int_eq(expect_remote,
+                                    (cc_info.flags
+                                     & SSL_CONN_CLOSE_FLAG_LOCAL) == 0)
                     || !TEST_uint64_t_eq(error_code, cc_info.error_code))
                     goto out;
             }

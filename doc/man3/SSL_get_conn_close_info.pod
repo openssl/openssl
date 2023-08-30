@@ -2,18 +2,22 @@
 
 =head1 NAME
 
-SSL_get_conn_close_info - get information about why a QUIC connection was closed
+SSL_get_conn_close_info, SSL_CONN_CLOSE_FLAG_LOCAL,
+SSL_CONN_CLOSE_FLAG_TRANSPORT - get information about why a QUIC connection was
+closed
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
+ #define SSL_CONN_CLOSE_FLAG_LOCAL
+ #define SSL_CONN_CLOSE_FLAG_TRANSPORT
+
  typedef struct ssl_conn_close_info_st {
      uint64_t error_code;
      char     *reason;
      size_t   reason_len;
-     int      is_local;
-     int      is_transport;
+     uint32_t flags;
  } SSL_CONN_CLOSE_INFO;
 
  int SSL_get_conn_close_info(SSL *ssl, SSL_CONN_CLOSE_INFO *info,
@@ -34,8 +38,9 @@ The following fields are set:
 =item I<error_code>
 
 This is a 62-bit QUIC error code. It is either a 62-bit application error code
-(if I<is_transport> is 0) or a  62-bit standard QUIC transport error code (if
-I<is_transport> is 1).
+(if B<SSL_CONN_CLOSE_FLAG_TRANSPORT> not set in I<flags>) or a  62-bit standard
+QUIC transport error code (if B<SSL_CONN_CLOSE_FLAG_TRANSPORT> is set in
+I<flags>).
 
 =item I<reason>
 
@@ -49,20 +54,22 @@ of I<reason_len> is recommended.
 While it is intended as per the QUIC protocol that this be a UTF-8 string, there
 is no guarantee that this is the case for strings received from the peer.
 
-=item I<is_local>
+=item B<SSL_CONN_CLOSE_FLAG_LOCAL>
 
-If 1, connection closure was locally triggered. This could be due to an
-application request (e.g. if I<is_transport> is 0), or (if I<is_transport> is 1)
-due to logic internal to the QUIC implementation (for example, if the peer
-engages in a protocol violation, or an idle timeout occurs).
+If I<flags> has B<SSL_CONN_CLOSE_FLAG_LOCAL> set, connection closure was locally
+triggered. This could be due to an application request (e.g. if
+B<SSL_CONN_CLOSE_FLAG_TRANSPORT> is unset), or (if
+I<SSL_CONN_CLOSE_FLAG_TRANSPORT> is set) due to logic internal to the QUIC
+implementation (for example, if the peer engages in a protocol violation, or an
+idle timeout occurs).
 
-If 0, connection closure was remotely triggered.
+If unset, connection closure was remotely triggered.
 
-=item I<is_transport>
+=item B<SSL_CONN_CLOSE_FLAG_TRANSPORT>
 
-If 1, connection closure was triggered for QUIC protocol reasons.
-
-If 0, connection closure was triggered by the local or remote application.
+If I<flags> has B<SSL_CONN_CLOSE_FLAG_TRANSPORT> set, connection closure was
+triggered for QUIC protocol reasons. Otherwise, connection closure was triggered
+by the local or remote application.
 
 =back
 
