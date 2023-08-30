@@ -543,11 +543,6 @@ int ossl_ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx)
         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         goto err;
     }
-    /* Perform a second check on the public key */
-    if (!EC_POINT_mul(eckey->group, point, NULL, eckey->pub_key, order, ctx)) {
-        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
-        goto err;
-    }
     if (!EC_POINT_is_at_infinity(eckey->group, point)) {
         ERR_raise(ERR_LIB_EC, EC_R_WRONG_ORDER);
         goto err;
