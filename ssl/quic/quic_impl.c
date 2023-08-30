@@ -2817,7 +2817,7 @@ int ossl_quic_is_stream_local(SSL *s)
     QCTX ctx;
     int is_local;
 
-    if (!expect_quic_with_stream_lock(s, /*remote_init=*/-1, &ctx))
+    if (!expect_quic_with_stream_lock(s, /*remote_init=*/-1, /*io=*/0, &ctx))
         return -1;
 
     is_local = ossl_quic_stream_is_local_init(ctx.xso->stream);
