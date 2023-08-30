@@ -99,6 +99,10 @@ SSL_want_x509_lookup(), SSL_want_retry_verify(),
 SSL_want_async(), SSL_want_async_job(), and SSL_want_client_hello_cb()
 return 1 when the corresponding condition is true or 0 otherwise.
 
+=head1 QUIC-SPECIFIC CONSIDERATIONS
+
+For QUIC, these functions relate only to the TLS handshake layer.
+
 =head1 SEE ALSO
 
 L<ssl(7)>, L<SSL_get_error(3)>
