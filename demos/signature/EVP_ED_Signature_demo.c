@@ -18,7 +18,7 @@
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 
-/* A test message to sign */
+/* A test message to be signed (TBS) */
 static const unsigned char hamlet[] =
     "To be, or not to be, that is the question,\n"
     "Whether tis nobler in the minde to suffer\n"
@@ -48,8 +48,7 @@ static int demo_sign(EVP_PKEY *priv,
      * Notice that the digest name must NOT be used.
      * In this demo we don't specify any additional parameters via
      * OSSL_PARAM, which means it will use default values.
-     * For more information, refer to
-     * doc/man7/EVP_SIGNATURE-ED25519.pod
+     * For more information, refer to doc/man7/EVP_SIGNATURE-ED25519.pod
      * "ED25519 and ED448 Signature Parameters"
      */
     if (!EVP_DigestSignInit_ex(sign_context, NULL, NULL, libctx, NULL, priv, NULL)) {
@@ -79,7 +78,6 @@ static int demo_sign(EVP_PKEY *priv,
     ret = 1;
 
 cleanup:
-    /* OpenSSL free functions will ignore NULL arguments */
     if (!ret)
         OPENSSL_free(sig_value);
     EVP_MD_CTX_free(sign_context);
@@ -115,7 +113,7 @@ static int demo_verify(EVP_PKEY *pub,
      */
     if (!EVP_DigestVerify(verify_context, sig_value, sig_len,
                           tbs, tbs_len)) {
-        fprintf(stderr, "EVP_DigestVerifyUpdate(hamlet_1) failed.\n");
+        fprintf(stderr, "EVP_DigestVerify() failed.\n");
         goto cleanup;
     }
     fprintf(stdout, "Signature verified.\n");
