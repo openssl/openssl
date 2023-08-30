@@ -830,12 +830,14 @@ unidirectional stream), returns -1.
 | New       | Never         | No        | C             |
 
 ```c
+#define SSL_CONN_CLOSE_FLAG_LOCAL
+#define SSL_CONN_CLOSE_FLAG_TRANSPORT
+
 typedef struct ssl_conn_close_info_st {
     uint64_t error_code;
     char     *reason;
     size_t   reason_len;
-    int      is_local;
-    int      is_transport;
+    uint32_t flags;
 } SSL_CONN_CLOSE_INFO;
 
 int SSL_get_conn_close_info(SSL *ssl,
@@ -854,11 +856,12 @@ always be zero terminated, but since it is received from a potentially untrusted
 peer, may also contain zero bytes. `info->reason_len` is the true length of the
 reason string in bytes.
 
-`info->is_local` is 1 if the connection closure was locally initiated.
+`info->flags` has `SSL_CONN_CLOSE_FLAG_LOCAL` set if the connection closure was
+locally initiated.
 
-`info->is_transport` is 1 if the connection closure was initiated by QUIC, and 0
-if it was initiated by the application. The namespace of `info->error_code` is
-determined by this parameter.
+`info->flags` has `SSL_CONN_CLOSE_FLAG_TRANSPORT` if the connection closure was
+initiated by QUIC, and 0 if it was initiated by the application. The namespace
+of `info->error_code` is determined by this parameter.
 
 ### New APIs for Multi-Stream Operation
 

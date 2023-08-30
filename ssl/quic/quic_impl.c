@@ -3228,8 +3228,11 @@ int ossl_quic_get_conn_close_info(SSL *ssl,
     info->error_code    = tc->error_code;
     info->reason        = tc->reason;
     info->reason_len    = tc->reason_len;
-    info->is_local      = !tc->remote;
-    info->is_transport  = !tc->app;
+    info->flags         = 0;
+    if (!tc->remote)
+       info->flags |= SSL_CONN_CLOSE_FLAG_LOCAL;
+    if (!tc->app)
+        info->flags |= SSL_CONN_CLOSE_FLAG_TRANSPORT;
     return 1;
 }
 
