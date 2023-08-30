@@ -1607,7 +1607,7 @@ static int quic_do_handshake(QCTX *ctx)
      * Start connection process. Note we may come here multiple times in
      * non-blocking mode, which is fine.
      */
-    if (!ensure_channel_started(qc)) /* raises on failure */
+    if (!ensure_channel_started(ctx)) /* raises on failure */
         return -1; /* Non-protocol error */
 
     if (ossl_quic_channel_is_handshake_complete(qc->ch))

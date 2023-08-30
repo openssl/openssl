@@ -695,7 +695,7 @@ static long dgram_mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
 
     /* BIO_dgram_get_local_addr_enable */
     case BIO_CTRL_DGRAM_GET_LOCAL_ADDR_ENABLE: /* Non-threadsafe */
-        *(int *)ptr = (long)dgram_pair_ctrl_get_local_addr_enable(bio);
+        *(int *)ptr = (int)dgram_pair_ctrl_get_local_addr_enable(bio);
         break;
 
     /* BIO_dgram_set_local_addr_enable */
