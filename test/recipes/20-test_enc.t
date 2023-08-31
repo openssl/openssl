@@ -41,7 +41,7 @@ my @ciphers =
                      |rc2|rc4|seed)/x} @ciphers
     if disabled("legacy");
 
-plan tests => 2 + (scalar @ciphers)*2;
+plan tests => 5 + (scalar @ciphers)*2;
 
  SKIP: {
      skip "Problems getting ciphers...", 1 + scalar(@ciphers)
@@ -72,4 +72,22 @@ plan tests => 2 + (scalar @ciphers)*2;
                 && compare_text($test,$clearfile) == 0, $t);
          }
      }
+     ok(run(app([$cmd, "enc", "-in", $test, "-aes256", "-pbkdf2", "-out",
+                 "salted_default.cipher", "-pass", "pass:password"]))
+        && run(app([$cmd, "enc", "-d", "-in", "salted_default.cipher", "-aes256", "-pbkdf2",
+                    "-saltlen", "8", "-out", "salted_default.clear", "-pass", "pass:password"]))
+        && compare_text($test,"salted_default.clear") == 0,
+        "Check that the default salt length of 8 bytes is used for PKDF2");
+
+     ok(!run(app([$cmd, "enc", "-d", "-in", "salted_default.cipher", "-aes256", "-pbkdf2",
+                  "-saltlen", "16", "-out", "salted_fail.clear", "-pass", "pass:password"])),
+        "Check the decrypt fails if the saltlen is incorrect");
+
+     ok(run(app([$cmd, "enc", "-in", $test, "-aes256", "-pbkdf2", "-saltlen", "16",
+                 "-out", "salted.cipher", "-pass", "pass:password"]))
+        && run(app([$cmd, "enc", "-d", "-in", "salted.cipher", "-aes256", "-pbkdf2",
+                    "-saltlen", "16", "-out", "salted.clear", "-pass", "pass:password"]))
+        && compare_text($test,"salted.clear") == 0,
+        "Check that we can still use a salt length of 16 bytes for PKDF2");
+
 }
