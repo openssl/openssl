@@ -805,6 +805,29 @@ static int is_want(SSL *s, int ret)
     return ec == SSL_ERROR_WANT_READ || ec == SSL_ERROR_WANT_WRITE;
 }
 
+static int check_consistent_want(SSL *s, int ret)
+{
+    int ec = SSL_get_error(s, ret);
+    int w = SSL_want(s);
+
+    int ok = TEST_true(
+        (ec == SSL_ERROR_NONE                 && w == SSL_NOTHING)
+    ||  (ec == SSL_ERROR_ZERO_RETURN          && w == SSL_NOTHING)
+    ||  (ec == SSL_ERROR_SSL                  && w == SSL_NOTHING)
+    ||  (ec == SSL_ERROR_SYSCALL              && w == SSL_NOTHING)
+    ||  (ec == SSL_ERROR_WANT_READ            && w == SSL_READING)
+    ||  (ec == SSL_ERROR_WANT_WRITE           && w == SSL_WRITING)
+    ||  (ec == SSL_ERROR_WANT_CLIENT_HELLO_CB && w == SSL_CLIENT_HELLO_CB)
+    ||  (ec == SSL_ERROR_WANT_X509_LOOKUP     && w == SSL_X509_LOOKUP)
+    ||  (ec == SSL_ERROR_WANT_RETRY_VERIFY    && w == SSL_RETRY_VERIFY)
+    );
+
+    if (!ok)
+        TEST_error("got error=%d, want=%d", ec, w);
+
+    return ok;
+}
+
 static int run_script_worker(struct helper *h, const struct script_op *script,
                              const char *script_name,
                              int thread_idx)
@@ -1006,6 +1029,8 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 connect_started = 1;
 
                 ret = SSL_connect(h->c_conn);
+                if (!check_consistent_want(c_tgt, ret))
+                    goto out;
                 if (ret != 1) {
                     if (!h->blocking && is_want(h->c_conn, ret))
                         SPIN_AGAIN();
@@ -1019,12 +1044,14 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
         case OPK_C_WRITE:
             {
                 size_t bytes_written = 0;
+                int r;
 
                 if (!TEST_ptr(c_tgt))
                     goto out;
 
-                if (!TEST_true(SSL_write_ex(c_tgt, op->arg0, op->arg1,
-                                            &bytes_written))
+                r = SSL_write_ex(c_tgt, op->arg0, op->arg1, &bytes_written);
+                if (!TEST_true(r)
+                    || !check_consistent_want(c_tgt, r)
                     || !TEST_size_t_eq(bytes_written, op->arg1))
                     goto out;
             }
@@ -1078,13 +1105,18 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
         case OPK_C_READ_EXPECT:
             {
                 size_t bytes_read = 0;
+                int r;
 
                 if (op->arg1 > 0 && tmp_buf == NULL
                     && !TEST_ptr(tmp_buf = OPENSSL_malloc(op->arg1)))
                     goto out;
 
-                if (!SSL_read_ex(c_tgt, tmp_buf + offset, op->arg1 - offset,
-                                 &bytes_read))
+                r = SSL_read_ex(c_tgt, tmp_buf + offset, op->arg1 - offset,
+                                &bytes_read);
+                if (!check_consistent_want(c_tgt, r))
+                    goto out;
+
+                if (!r)
                     SPIN_AGAIN();
 
                 if (bytes_read + offset != op->arg1) {
@@ -1136,9 +1168,11 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             {
                 char buf[1];
                 size_t bytes_read = 0;
+                int r;
 
-                if (!TEST_false(SSL_read_ex(c_tgt, buf, sizeof(buf),
-                                            &bytes_read))
+                r = SSL_read_ex(c_tgt, buf, sizeof(buf), &bytes_read);
+                if (!check_consistent_want(c_tgt, r)
+                    || !TEST_false(r)
                     || !TEST_size_t_eq(bytes_read, 0))
                     goto out;
 
@@ -1147,6 +1181,9 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
 
                 if (!TEST_int_eq(SSL_get_error(c_tgt, 0),
                                  SSL_ERROR_ZERO_RETURN))
+                    goto out;
+
+                if (!TEST_int_eq(SSL_want(c_tgt), SSL_NOTHING))
                     goto out;
             }
             break;
@@ -1447,11 +1484,14 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
         case OPK_C_WRITE_FAIL:
             {
                 size_t bytes_written = 0;
+                int r;
 
                 if (!TEST_ptr(c_tgt))
                     goto out;
 
-                if (!TEST_false(SSL_write_ex(c_tgt, "apple", 5, &bytes_written)))
+                r = SSL_write_ex(c_tgt, "apple", 5, &bytes_written);
+                if (!TEST_false(r)
+                    || !check_consistent_want(c_tgt, r))
                     goto out;
             }
             break;
@@ -1474,11 +1514,15 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             {
                 size_t bytes_read = 0;
                 char buf[1];
+                int r;
 
                 if (!TEST_ptr(c_tgt))
                     goto out;
 
-                if (!TEST_false(SSL_read_ex(c_tgt, buf, sizeof(buf), &bytes_read)))
+                r = SSL_read_ex(c_tgt, buf, sizeof(buf), &bytes_read);
+                if (!TEST_false(r))
+                    goto out;
+                if (!check_consistent_want(c_tgt, r))
                     goto out;
             }
             break;
@@ -1487,11 +1531,15 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             {
                 size_t bytes_read = 0;
                 char buf[1];
+                int r;
 
                 if (!TEST_ptr(c_tgt))
                     goto out;
 
-                if (!TEST_false(SSL_read_ex(c_tgt, buf, sizeof(buf), &bytes_read)))
+                r = SSL_read_ex(c_tgt, buf, sizeof(buf), &bytes_read);
+                if (!TEST_false(r))
+                    goto out;
+                if (!check_consistent_want(c_tgt, r))
                     goto out;
 
                 if (is_want(c_tgt, 0))
@@ -1582,6 +1630,8 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
         case OPK_C_EXPECT_SSL_ERR:
             {
                 if (!TEST_size_t_eq((size_t)SSL_get_error(c_tgt, 0), op->arg1))
+                    goto out;
+                if (!TEST_int_eq(SSL_want(c_tgt), SSL_NOTHING))
                     goto out;
             }
             break;
