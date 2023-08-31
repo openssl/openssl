@@ -326,8 +326,8 @@ int enc_main(int argc, char **argv)
         goto opthelp;
     if (!app_RAND_load())
         goto end;
-    if (saltlen == 0)
-        saltlen = (pbkdf2 == 0 ? PKCS5_SALT_LEN : sizeof(salt));
+    if (saltlen == 0 || pbkdf2 == 0)
+        saltlen = PKCS5_SALT_LEN;
 
     /* Get the cipher name, either from progname (if set) or flag. */
     if (!opt_cipher(ciphername, &cipher))

@@ -136,7 +136,8 @@ unless otherwise specified by the B<-iter> command line option.
 =item B<-saltlen>
 
 Set the salt length to use when using the B<-pbkdf2> option.
-The default is 16 bytes. The maximum value is currently 16 bytes.
+For compatibility reasons, the default is 8 bytes.
+The maximum value is currently 16 bytes.
 If the B<-pbkdf2> option is not used, then this option is ignored
 and a fixed salt length of 8 is used. The salt length used when
 encrypting must also be used when decrypting.
@@ -475,9 +476,7 @@ The B<-list> option was added in OpenSSL 1.1.1e.
 
 The B<-ciphers> and B<-engine> options were deprecated in OpenSSL 3.0.
 
-The B<-saltlen> option was added in OpenSSL 3.2. Note that the default
-KDF salt length used for PBES2 (PBKDF2 and scrypt) was also changed
-from 8 bytes to 16 bytes.
+The B<-saltlen> option was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

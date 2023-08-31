@@ -73,21 +73,21 @@ plan tests => 5 + (scalar @ciphers)*2;
          }
      }
      ok(run(app([$cmd, "enc", "-in", $test, "-aes256", "-pbkdf2", "-out",
-                 "salted16.cipher", "-pass", "pass:password"]))
-        && run(app([$cmd, "enc", "-d", "-in", "salted16.cipher", "-aes256", "-pbkdf2",
-                    "-saltlen", "16", "-out", "salted16.clear", "-pass", "pass:password"]))
-        && compare_text($test,"salted16.clear") == 0,
-        "Check that the default salt length of 16 bytes is used for PKDF2");
+                 "salted_default.cipher", "-pass", "pass:password"]))
+        && run(app([$cmd, "enc", "-d", "-in", "salted_default.cipher", "-aes256", "-pbkdf2",
+                    "-saltlen", "8", "-out", "salted_default.clear", "-pass", "pass:password"]))
+        && compare_text($test,"salted_default.clear") == 0,
+        "Check that the default salt length of 8 bytes is used for PKDF2");
 
-     ok(!run(app([$cmd, "enc", "-d", "-in", "salted16.cipher", "-aes256", "-pbkdf2",
-                  "-saltlen", "8", "-out", "salted16_fail.clear", "-pass", "pass:password"])),
+     ok(!run(app([$cmd, "enc", "-d", "-in", "salted_default.cipher", "-aes256", "-pbkdf2",
+                  "-saltlen", "16", "-out", "salted_fail.clear", "-pass", "pass:password"])),
         "Check the decrypt fails if the saltlen is incorrect");
 
-     ok(run(app([$cmd, "enc", "-in", $test, "-aes256", "-pbkdf2", "-saltlen", "8",
+     ok(run(app([$cmd, "enc", "-in", $test, "-aes256", "-pbkdf2", "-saltlen", "16",
                  "-out", "salted.cipher", "-pass", "pass:password"]))
         && run(app([$cmd, "enc", "-d", "-in", "salted.cipher", "-aes256", "-pbkdf2",
-                    "-saltlen", "8", "-out", "salted.clear", "-pass", "pass:password"]))
+                    "-saltlen", "16", "-out", "salted.clear", "-pass", "pass:password"]))
         && compare_text($test,"salted.clear") == 0,
-        "Check that we can still use the old salt length of 8 bytes for PKDF2");
+        "Check that we can still use a salt length of 16 bytes for PKDF2");
 
 }
