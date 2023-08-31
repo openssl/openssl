@@ -28,6 +28,10 @@ provider-storemgmt - The OSSL_STORE library E<lt>-E<gt> provider functions
      (void *loaderctx, const void *objref, size_t objref_sz,
       OSSL_CALLBACK *export_cb, void *export_cbarg);
 
+ int OSSL_FUNC_store_delete(void *provctx, const char *uri,
+                    const OSSL_PARAM params[],
+                    OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg);
+
 =head1 DESCRIPTION
 
 The STORE operation is the provider side of the L<ossl_store(7)> API.
@@ -70,6 +74,7 @@ in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_store_eof                  OSSL_FUNC_STORE_EOF
  OSSL_FUNC_store_close                OSSL_FUNC_STORE_CLOSE
  OSSL_FUNC_store_export_object        OSSL_FUNC_STORE_EXPORT_OBJECT
+ OSSL_FUNC_store_delete               OSSL_FUNC_STORE_DELETE
 
 =head2 Functions
 
@@ -113,6 +118,11 @@ supports the type of the object and provides an import function.
 OSSL_FUNC_store_export_object() should export the object of size I<objref_sz>
 referenced by I<objref> as an L<OSSL_PARAM(3)> array and pass that to the
 I<export_cb> as well as the given I<export_cbarg>.
+
+OSSL_FUNC_store_delete() deletes the object identified by the I<uri>. The
+implementation is entirely responsible for the interpretation of the URI.  In
+case a passphrase needs to be prompted to remove an object, I<pw_cb> should be
+called.
 
 =head2 Load Parameters
 
@@ -185,6 +195,8 @@ L<provider(7)>
 =head1 HISTORY
 
 The STORE interface was introduced in OpenSSL 3.0.
+
+OSSL_FUNC_store_delete() callback was added in OpenSSL 3.2
 
 =head1 COPYRIGHT
 
