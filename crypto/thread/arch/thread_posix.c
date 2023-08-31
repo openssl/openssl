@@ -120,18 +120,22 @@ int ossl_crypto_mutex_try_lock(CRYPTO_MUTEX *mutex)
 
 void ossl_crypto_mutex_lock(CRYPTO_MUTEX *mutex)
 {
+    int rc;
     pthread_mutex_t *mutex_p;
 
     mutex_p = (pthread_mutex_t *)mutex;
-    pthread_mutex_lock(mutex_p);
+    rc = pthread_mutex_lock(mutex_p);
+    OPENSSL_assert(rc == 0);
 }
 
 void ossl_crypto_mutex_unlock(CRYPTO_MUTEX *mutex)
 {
+    int rc;
     pthread_mutex_t *mutex_p;
 
     mutex_p = (pthread_mutex_t *)mutex;
-    pthread_mutex_unlock(mutex_p);
+    rc = pthread_mutex_unlock(mutex_p);
+    OPENSSL_assert(rc == 0);
 }
 
 void ossl_crypto_mutex_free(CRYPTO_MUTEX **mutex)
