@@ -166,11 +166,16 @@ static int test_provider_ex(OSSL_LIB_CTX **libctx, const char *name)
     int ok = 0;
     long err;
     const char custom_buf[] = "Custom greeting";
-    OSSL_PARAM_BLD *bld = OSSL_PARAM_BLD_new();
+    OSSL_PARAM_BLD *bld;
     OSSL_PARAM *params = NULL;
 
-    OSSL_PARAM_BLD_push_utf8_string(bld, "greeting", custom_buf, strlen(custom_buf));
-    params = OSSL_PARAM_BLD_to_param(bld);
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+        || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld, "greeting", custom_buf,
+                                                      strlen(custom_buf)))
+        || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))) {
+        OSSL_PARAM_BLD_free(bld);
+        goto err;
+    }
 
     OSSL_PARAM_BLD_free(bld);
 
