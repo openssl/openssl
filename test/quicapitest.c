@@ -1003,6 +1003,64 @@ static int test_multiple_dgrams(void)
     return testresult;
 }
 
+static int non_io_retry_cert_verify_cb(X509_STORE_CTX *ctx, void *arg)
+{
+    int idx = SSL_get_ex_data_X509_STORE_CTX_idx();
+    SSL *ssl;
+    int *ctr = (int *)arg;
+
+    /* this should not happen but check anyway */
+    if (idx < 0
+        || (ssl = X509_STORE_CTX_get_ex_data(ctx, idx)) == NULL)
+        return 0;
+
+    /* If this is the first time we've been called then retry */
+    if (((*ctr)++) == 0)
+        return SSL_set_retry_verify(ssl);
+
+    /* Otherwise do nothing - verification succeeds. Continue as normal */
+    return 1;
+}
+
+/* Test that we can handle a non-io related retry error
+ * Test 0: Non-blocking
+ * Test 1: Blocking
+ */
+static int test_non_io_retry(int idx)
+{
+    SSL_CTX *cctx;
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+    int flags = 0, ctr = 0;
+
+    if (idx >= 1 && !qtest_supports_blocking())
+        return TEST_skip("Blocking tests not supported in this build");
+
+    cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    if (!TEST_ptr(cctx))
+        goto err;
+
+    SSL_CTX_set_cert_verify_callback(cctx, non_io_retry_cert_verify_cb, &ctr);
+
+    flags = (idx >= 1) ? QTEST_FLAG_BLOCK : 0;
+    if (!TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert, privkey,
+                                             flags, &qtserv, &clientquic, NULL))
+            || !TEST_true(qtest_create_quic_connection_ex(qtserv, clientquic,
+                            SSL_ERROR_WANT_RETRY_VERIFY))
+            || !TEST_int_eq(SSL_want(clientquic), SSL_RETRY_VERIFY)
+            || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+
+    testresult = 1;
+ err:
+    SSL_free(clientquic);
+    ossl_quic_tserver_free(qtserv);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
 int setup_tests(void)
@@ -1072,6 +1130,7 @@ int setup_tests(void)
     ADD_TEST(test_bio_ssl);
     ADD_TEST(test_back_pressure);
     ADD_TEST(test_multiple_dgrams);
+    ADD_ALL_TESTS(test_non_io_retry, 2);
     return 1;
  err:
     cleanup_tests();
