@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,9 @@
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 
+#define STR(a) XSTR(a)
+#define XSTR(a) #a
+
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
@@ -26,6 +29,7 @@ typedef enum OPTION_choice {
 #endif
     OPT_V2, OPT_V1, OPT_V2PRF, OPT_ITER, OPT_PASSIN, OPT_PASSOUT,
     OPT_TRADITIONAL,
+    OPT_SALTLEN,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -53,7 +57,8 @@ const OPTIONS pkcs8_options[] = {
     {"traditional", OPT_TRADITIONAL, '-', "use traditional format private key"},
     {"iter", OPT_ITER, 'p', "Specify the iteration count"},
     {"noiter", OPT_NOITER, '-', "Use 1 as iteration count"},
-
+    {"saltlen", OPT_SALTLEN, 'p', "Specify the salt length (in bytes)"},
+    {OPT_MORE_STR, 0, 0, "Default: 8 (For PBE1) or 16 (for PBE2)"},
 #ifndef OPENSSL_NO_SCRYPT
     OPT_SECTION("Scrypt"),
     {"scrypt", OPT_SCRYPT, '-', "Use scrypt algorithm"},
@@ -88,6 +93,7 @@ int pkcs8_main(int argc, char **argv)
 #ifndef OPENSSL_NO_SCRYPT
     long scrypt_N = 0, scrypt_r = 0, scrypt_p = 0;
 #endif
+    int saltlen = 0; /* A value of zero chooses the default */
 
     prog = opt_init(argc, argv, pkcs8_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -189,6 +195,10 @@ int pkcs8_main(int argc, char **argv)
                 goto opthelp;
             break;
 #endif
+        case OPT_SALTLEN:
+            if (!opt_int(opt_arg(), &saltlen))
+                goto opthelp;
+            break;
         }
     }
 
@@ -245,14 +255,14 @@ int pkcs8_main(int argc, char **argv)
             if (cipher) {
 #ifndef OPENSSL_NO_SCRYPT
                 if (scrypt_N && scrypt_r && scrypt_p)
-                    pbe = PKCS5_pbe2_set_scrypt(cipher, NULL, 0, NULL,
+                    pbe = PKCS5_pbe2_set_scrypt(cipher, NULL, saltlen, NULL,
                                                 scrypt_N, scrypt_r, scrypt_p);
                 else
 #endif
-                    pbe = PKCS5_pbe2_set_iv(cipher, iter, NULL, 0, NULL,
+                    pbe = PKCS5_pbe2_set_iv(cipher, iter, NULL, saltlen, NULL,
                                             pbe_nid);
             } else {
-                pbe = PKCS5_pbe_set(pbe_nid, iter, NULL, 0);
+                pbe = PKCS5_pbe_set(pbe_nid, iter, NULL, saltlen);
             }
             if (pbe == NULL) {
                 BIO_printf(bio_err, "Error setting PBE algorithm\n");

@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file ok_nofips is_nofips/;
 
 setup("test_pkcs8");
 
-plan tests => 9;
+plan tests => 15;
 
 ok(run(app(([ 'openssl', 'pkcs8', '-topk8',
               '-in', srctop_file('test', 'certs', 'pc5-key.pem'),
@@ -31,7 +31,7 @@ ok(run(app(([ 'openssl', 'asn1parse',
    "Check the default size of the PBKDF2 PARAM 'salt length' is 16");
 
 SKIP: {
-    skip "scrypt is not supported by this OpenSSL build", 2
+    skip "scrypt is not supported by this OpenSSL build", 4
         if disabled("scrypt");
 
     ok(run(app(([ 'openssl', 'pkcs8', '-topk8',
@@ -47,10 +47,25 @@ SKIP: {
                   '-in', 'scrypt_default_saltlen.pem',
                   '-offset', '34', '-length', '18']))),
        "Check the default size of the SCRYPT PARAM 'salt length' = 16");
+
+    ok(run(app(([ 'openssl', 'pkcs8', '-topk8',
+                  '-in', srctop_file('test', 'certs', 'pc5-key.pem'),
+                  '-scrypt',
+                  '-saltlen', '8',
+                  '-out', 'scrypt_64bit_saltlen.pem',
+                  '-passout', 'pass:password']))),
+       "Convert a private key to PKCS5 v2.0 format using scrypt with a salt length of 8 bytes");
+
+# We expect the output to be of the form "0:d=0  hl=2 l=   8 prim: OCTET STRING      [HEX DUMP]:3C1147976A2B61CA"
+# i.e. 2 byte header + 8 byte salt.
+    ok(run(app(([ 'openssl', 'asn1parse',
+                  '-in', 'scrypt_64bit_saltlen.pem',
+                  '-offset', '34', '-length', '10']))),
+       "Check the size of the SCRYPT PARAM 'salt length' is 8");
 }
 
 SKIP: {
-    skip "legacy provider is not supported by this OpenSSL build", 2
+    skip "legacy provider is not supported by this OpenSSL build", 4
         if disabled('legacy') || disabled("des");
 
     ok(run(app(([ 'openssl', 'pkcs8', '-topk8',
@@ -66,7 +81,38 @@ SKIP: {
                   '-in', 'pbe1.pem',
                   '-offset', '19', '-length', '10']))),
        "Check the default size of the PBE PARAM 'salt length' = 8");
+       
+    ok(run(app(([ 'openssl', 'pkcs8', '-topk8',
+                  '-in', srctop_file('test', 'certs', 'pc5-key.pem'),
+                  '-v1', "PBE-MD5-DES",
+                  '-saltlen', '16',
+                  '-provider', 'legacy',
+                  '-provider', 'default',
+                  '-out', 'pbe1_128bitsalt.pem',
+                  '-passout', 'pass:password']))),
+       "Convert a private key to PKCS5 v1.5 format using pbeWithMD5AndDES-CBC with the 16 byte saltlen");
+
+    ok(run(app(([ 'openssl', 'asn1parse',
+                  '-in', 'pbe1_128bitsalt.pem',
+                  '-offset', '19', '-length', '18']))),
+       "Check the size of the PBE PARAM 'salt length' = 16");
 };
+
+
+ok(run(app(([ 'openssl', 'pkcs8', '-topk8',
+              '-in', srctop_file('test', 'certs', 'pc5-key.pem'),
+              '-saltlen', '8',
+              '-out', 'pbkdf2_64bit_saltlen.pem',
+              '-passout', 'pass:password']))),
+   "Convert a private key to PKCS5 v2.0 format using pbkdf2 with a salt length of 8 bytes");
+
+# We expect the output to be of the form "0:d=0  hl=2 l=   8 prim: OCTET STRING      [HEX DUMP]:3C1147976A2B61CA"
+# i.e. 2 byte header + 8 byte salt.
+ok(run(app(([ 'openssl', 'asn1parse',
+              '-in', 'pbkdf2_64bit_saltlen.pem',
+              '-offset', '34', '-length', '10']))),
+   "Check the size of the PBKDF2 PARAM 'salt length' is 8");
+
 
 SKIP: {
     skip "SM2, SM3 or SM4 is not supported by this OpenSSL build", 3

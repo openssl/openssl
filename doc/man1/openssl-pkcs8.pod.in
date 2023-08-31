@@ -27,6 +27,7 @@ B<openssl> B<pkcs8>
 [B<-scrypt_N> I<N>]
 [B<-scrypt_r> I<r>]
 [B<-scrypt_p> I<p>]
+[B<-saltlen> I<size>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
@@ -147,6 +148,12 @@ B<-scrypt_p> and B<-v2> options.
 =item B<-scrypt_N> I<N>, B<-scrypt_r> I<r>, B<-scrypt_p> I<p>
 
 Sets the scrypt I<N>, I<r> or I<p> parameters.
+
+=item B<-saltlen>
+
+Sets the length (in bytes) of the salt to use for the PBE algorithm.
+If this value is not specified, the default for PBES2 is 16 (128 bits)
+and 8 (64 bits) for PBES1.
 
 {- $OpenSSL::safe::opt_r_item -}
 
