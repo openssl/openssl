@@ -4378,7 +4378,7 @@ __aesni_set_encrypt_key:
 	test	$key,$key
 	jz	.Lenc_key_ret
 
-	mov	\$`1<<28|1<<11`,%r10d	# AVX and XOP bits
+	mov	\$`1<<28|1<<25`,%r10d	# AVX and AES-NI bits
 	movups	($inp),%xmm0		# pull first 128 bits of *userKey
 	xorps	%xmm4,%xmm4		# low dword of xmm4 is assumed 0
 	and	OPENSSL_ia32cap_P+4(%rip),%r10d
@@ -4392,7 +4392,7 @@ __aesni_set_encrypt_key:
 
 .L10rounds:
 	mov	\$9,$bits			# 10 rounds for 128-bit key
-	cmp	\$`1<<28`,%r10d			# AVX, bit no XOP
+	cmp	\$`1<<28`,%r10d			# AVX, bit no AES-NI
 	je	.L10rounds_alt
 
 	$movkey	%xmm0,($key)			# round 0
