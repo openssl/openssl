@@ -44,7 +44,7 @@ static int demo_sign(EVP_PKEY *priv,
     }
 
     /*
-     * Initialize the sign context using a ED25519 private key
+     * Initialize the sign context using an ED25519 private key
      * Notice that the digest name must NOT be used.
      * In this demo we don't specify any additional parameters via
      * OSSL_PARAM, which means it will use default values.
