@@ -461,6 +461,10 @@ struct quic_channel_st {
 
     /* Saved error stack in case permanent error was encountered */
     ERR_STATE                       *err_state;
+
+    /* Scratch area for use by RXDP to store decoded ACK ranges. */
+    OSSL_QUIC_ACK_RANGE             *ack_range_scratch;
+    size_t                          num_ack_range_scratch;
 };
 
 # endif
