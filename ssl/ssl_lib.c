@@ -5501,6 +5501,11 @@ int SSL_want(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(s))
+        return ossl_quic_want(s);
+#endif
+
     if (sc == NULL)
         return SSL_NOTHING;
 

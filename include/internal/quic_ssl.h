@@ -57,6 +57,7 @@ __owur int ossl_quic_get_wpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *d);
 __owur int ossl_quic_get_net_read_desired(SSL *s);
 __owur int ossl_quic_get_net_write_desired(SSL *s);
 __owur int ossl_quic_get_error(const SSL *s, int i);
+__owur int ossl_quic_want(const SSL *s);
 __owur int ossl_quic_conn_get_blocking_mode(const SSL *s);
 __owur int ossl_quic_conn_set_blocking_mode(SSL *s, int blocking);
 __owur int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,

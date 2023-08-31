@@ -1912,6 +1912,7 @@ SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags)
  * above, all QUIC I/O is implemented using non-blocking mode internally.
  *
  *         SSL_get_error        => partially implemented by ossl_quic_get_error
+ *         SSL_want             => ossl_quic_want
  *   (BIO/)SSL_read             => ossl_quic_read
  *   (BIO/)SSL_write            => ossl_quic_write
  *         SSL_pending          => ossl_quic_pending
@@ -1937,6 +1938,47 @@ int ossl_quic_get_error(const SSL *s, int i)
         return SSL_ERROR_SYSCALL;
 
     return last_error;
+}
+
+/* Converts a code returned by SSL_get_error to a code returned by SSL_want. */
+static int error_to_want(int error)
+{
+    switch (error) {
+    case SSL_ERROR_WANT_CONNECT: /* never used - UDP is connectionless */
+    case SSL_ERROR_WANT_ACCEPT:  /* never used - UDP is connectionless */
+    case SSL_ERROR_ZERO_RETURN:
+    default:
+        return SSL_NOTHING;
+
+    case SSL_ERROR_WANT_READ:
+        return SSL_READING;
+
+    case SSL_ERROR_WANT_WRITE:
+        return SSL_WRITING;
+
+    case SSL_ERROR_WANT_CLIENT_HELLO_CB:
+        return SSL_CLIENT_HELLO_CB;
+
+    case SSL_ERROR_WANT_X509_LOOKUP:
+        return SSL_X509_LOOKUP;
+    }
+}
+
+/* SSL_want */
+int ossl_quic_want(const SSL *s)
+{
+    QCTX ctx;
+    int w;
+
+    if (!expect_quic(s, &ctx))
+        return SSL_NOTHING;
+
+    quic_lock(ctx.qc);
+
+    w = error_to_want(ctx.is_stream ? ctx.xso->last_error : ctx.qc->last_error);
+
+    quic_unlock(ctx.qc);
+    return w;
 }
 
 /*
