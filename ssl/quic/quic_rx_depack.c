@@ -64,18 +64,26 @@ static int depack_do_frame_ack(PACKET *pkt, QUIC_CHANNEL *ch,
                                OSSL_QRX_PKT *qpacket)
 {
     OSSL_QUIC_FRAME_ACK ack;
-    OSSL_QUIC_ACK_RANGE *ack_ranges = NULL;
+    OSSL_QUIC_ACK_RANGE *p;
     uint64_t total_ranges = 0;
     uint32_t ack_delay_exp = ch->rx_ack_delay_exp;
 
     if (!ossl_quic_wire_peek_frame_ack_num_ranges(pkt, &total_ranges)
         /* In case sizeof(uint64_t) > sizeof(size_t) */
-        || total_ranges > SIZE_MAX / sizeof(ack_ranges[0])
-        || (ack_ranges = OPENSSL_zalloc(sizeof(ack_ranges[0])
-                                        * (size_t)total_ranges)) == NULL)
+        || total_ranges > SIZE_MAX / sizeof(OSSL_QUIC_ACK_RANGE))
         goto malformed;
 
-    ack.ack_ranges = ack_ranges;
+    if (ch->num_ack_range_scratch < (size_t)total_ranges) {
+        if ((p = OPENSSL_realloc(ch->ack_range_scratch,
+                                 sizeof(OSSL_QUIC_ACK_RANGE)
+                                 * (size_t)total_ranges)) == NULL)
+            goto malformed;
+
+        ch->ack_range_scratch       = p;
+        ch->num_ack_range_scratch   = (size_t)total_ranges;
+    }
+
+    ack.ack_ranges = ch->ack_range_scratch;
     ack.num_ack_ranges = (size_t)total_ranges;
 
     if (!ossl_quic_wire_decode_frame_ack(pkt, ack_delay_exp, &ack, NULL))
@@ -120,7 +128,6 @@ static int depack_do_frame_ack(PACKET *pkt, QUIC_CHANNEL *ch,
         goto malformed;
 
     ++ch->diag_num_rx_ack;
-    OPENSSL_free(ack_ranges);
     return 1;
 
 malformed:
@@ -128,7 +135,6 @@ malformed:
                                            QUIC_ERR_FRAME_ENCODING_ERROR,
                                            frame_type,
                                            "decode error");
-    OPENSSL_free(ack_ranges);
     return 0;
 }
 

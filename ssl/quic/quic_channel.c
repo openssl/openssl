@@ -524,6 +524,7 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     OPENSSL_free(ch->local_transport_params);
     OPENSSL_free((char *)ch->terminate_cause.reason);
     OSSL_ERR_STATE_free(ch->err_state);
+    OPENSSL_free(ch->ack_range_scratch);
 
     /* Free the stateless reset tokens */
     for (srte = ossl_list_stateless_reset_tokens_head(&ch->srt_list_seq);
