@@ -32,6 +32,9 @@ OpenSSL 3.2
    requires a salt length of 128 bits. This affects OpenSSL command line
    applications such as "genrsa" and "pkcs8" and API's such as
    PEM_write_bio_PrivateKey() that are reliant on the default value.
+   The additional commandline option 'saltlen' has been added to the
+   OpenSSL command line applications for "pkcs8" and "enc" to allow the
+   salt length to be set to a non default value.
 
    *Shane Lontis*
 
