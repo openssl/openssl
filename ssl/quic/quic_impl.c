@@ -275,12 +275,11 @@ err:
  * Like expect_quic(), but fails if called on a QUIC_XSO. ctx->xso may still
  * be non-NULL if the QCSO has a default stream.
  */
-static int ossl_unused expect_quic_conn_only(const SSL *s, int in_io, QCTX *ctx)
+static int ossl_unused expect_quic_conn_only(const SSL *s, QCTX *ctx)
 {
     if (!expect_quic(s, ctx))
         return 0;
 
-    ctx->in_io = in_io;
     if (ctx->is_stream)
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_CONN_USE_ONLY, NULL);
 
@@ -1872,7 +1871,7 @@ SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags)
 {
     QCTX ctx;
 
-    if (!expect_quic_conn_only(s, /*io=*/0, &ctx))
+    if (!expect_quic_conn_only(s, &ctx))
         return NULL;
 
     return quic_conn_stream_new(&ctx, flags, /*need_lock=*/1);
@@ -2703,7 +2702,7 @@ int ossl_quic_set_default_stream_mode(SSL *s, uint32_t mode)
 {
     QCTX ctx;
 
-    if (!expect_quic_conn_only(s, /*io=*/0, &ctx))
+    if (!expect_quic_conn_only(s, &ctx))
         return 0;
 
     quic_lock(ctx.qc);
@@ -2740,7 +2739,7 @@ SSL *ossl_quic_detach_stream(SSL *s)
     QCTX ctx;
     QUIC_XSO *xso = NULL;
 
-    if (!expect_quic_conn_only(s, /*io=*/0, &ctx))
+    if (!expect_quic_conn_only(s, &ctx))
         return NULL;
 
     quic_lock(ctx.qc);
@@ -2765,7 +2764,7 @@ int ossl_quic_attach_stream(SSL *conn, SSL *stream)
     QUIC_XSO *xso;
     int nref;
 
-    if (!expect_quic_conn_only(conn, /*io=*/0, &ctx))
+    if (!expect_quic_conn_only(conn, &ctx))
         return 0;
 
     if (stream == NULL || stream->type != SSL_TYPE_QUIC_XSO)
@@ -2845,7 +2844,7 @@ int ossl_quic_set_incoming_stream_policy(SSL *s, int policy,
     int ret = 1;
     QCTX ctx;
 
-    if (!expect_quic_conn_only(s, /*io=*/0, &ctx))
+    if (!expect_quic_conn_only(s, &ctx))
         return 0;
 
     quic_lock(ctx.qc);
@@ -2909,7 +2908,7 @@ SSL *ossl_quic_accept_stream(SSL *s, uint64_t flags)
     QUIC_XSO *xso;
     OSSL_RTT_INFO rtt_info;
 
-    if (!expect_quic_conn_only(s, /*io=*/0, &ctx))
+    if (!expect_quic_conn_only(s, &ctx))
         return NULL;
 
     quic_lock(ctx.qc);
@@ -2972,7 +2971,7 @@ size_t ossl_quic_get_accept_stream_queue_len(SSL *s)
     QCTX ctx;
     size_t v;
 
-    if (!expect_quic_conn_only(s, /*io=*/0, &ctx))
+    if (!expect_quic_conn_only(s, &ctx))
         return 0;
 
     quic_lock(ctx.qc);
@@ -3199,7 +3198,7 @@ int ossl_quic_get_conn_close_info(SSL *ssl,
     QCTX ctx;
     const QUIC_TERMINATE_CAUSE *tc;
 
-    if (!expect_quic_conn_only(ssl, /*io=*/0, &ctx))
+    if (!expect_quic_conn_only(ssl, &ctx))
         return -1;
 
     tc = ossl_quic_channel_get_terminate_cause(ctx.qc->ch);
@@ -3222,7 +3221,7 @@ int ossl_quic_key_update(SSL *ssl, int update_type)
 {
     QCTX ctx;
 
-    if (!expect_quic_conn_only(ssl, /*io=*/0, &ctx))
+    if (!expect_quic_conn_only(ssl, &ctx))
         return 0;
 
     switch (update_type) {
@@ -3282,7 +3281,7 @@ long ossl_quic_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 {
     QCTX ctx;
 
-    if (!expect_quic_conn_only(s, /*io=*/0, &ctx))
+    if (!expect_quic_conn_only(s, &ctx))
         return 0;
 
     switch (cmd) {
@@ -3333,7 +3332,7 @@ QUIC_CHANNEL *ossl_quic_conn_get_channel(SSL *s)
 {
     QCTX ctx;
 
-    if (!expect_quic_conn_only(s, /*io=*/0, &ctx))
+    if (!expect_quic_conn_only(s, &ctx))
         return NULL;
 
     return ctx.qc->ch;
