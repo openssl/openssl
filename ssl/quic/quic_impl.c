@@ -26,6 +26,7 @@ static int qc_try_create_default_xso_for_write(QCTX *ctx);
 static int qc_wait_for_default_xso_for_read(QCTX *ctx);
 static void quic_lock(QUIC_CONNECTION *qc);
 static void quic_unlock(QUIC_CONNECTION *qc);
+static void quic_lock_for_io(QCTX *ctx);
 static int quic_do_handshake(QCTX *ctx);
 static void qc_update_reject_policy(QUIC_CONNECTION *qc);
 static void qc_touch_default_xso(QUIC_CONNECTION *qc);
@@ -107,6 +108,18 @@ struct qctx_st {
     int             is_stream, in_io;
 };
 
+QUIC_NEEDS_LOCK
+static void quic_set_last_error(QCTX *ctx, int last_error)
+{
+    if (!ctx->in_io)
+        return;
+
+    if (ctx->is_stream && ctx->xso != NULL)
+        ctx->xso->last_error = last_error;
+    else if (!ctx->is_stream && ctx->qc != NULL)
+        ctx->qc->last_error = last_error;
+}
+
 /*
  * Raise a 'normal' error, meaning one that can be reported via SSL_get_error()
  * rather than via ERR. Note that normal errors must always be raised while
@@ -116,10 +129,8 @@ QUIC_NEEDS_LOCK
 static int quic_raise_normal_error(QCTX *ctx,
                                    int err)
 {
-    if (ctx->is_stream)
-        ctx->xso->last_error = err;
-    else
-        ctx->qc->last_error = err;
+    assert(ctx->in_io);
+    quic_set_last_error(ctx, err);
 
     return 0;
 }
@@ -146,10 +157,7 @@ static int quic_raise_non_normal_error(QCTX *ctx,
     va_list args;
 
     if (ctx != NULL) {
-        if (ctx->in_io && ctx->is_stream && ctx->xso != NULL)
-            ctx->xso->last_error = SSL_ERROR_SSL;
-        else if (ctx->in_io && !ctx->is_stream && ctx->qc != NULL)
-            ctx->qc->last_error = SSL_ERROR_SSL;
+        quic_set_last_error(ctx, SSL_ERROR_SSL);
 
         if (reason == SSL_R_PROTOCOL_IS_SHUTDOWN && ctx->qc != NULL)
             ossl_quic_channel_restore_err_state(ctx->qc->ch);
@@ -234,8 +242,10 @@ static int ossl_unused expect_quic_with_stream_lock(const SSL *s, int remote_ini
     if (!expect_quic(s, ctx))
         return 0;
 
-    ctx->in_io = in_io;
-    quic_lock(ctx->qc);
+    if (in_io)
+        quic_lock_for_io(ctx);
+    else
+        quic_lock(ctx->qc);
 
     if (ctx->xso == NULL && remote_init >= 0) {
         if (!quic_mutation_allowed(ctx->qc, /*req_active=*/0)) {
@@ -297,6 +307,20 @@ static void quic_lock(QUIC_CONNECTION *qc)
 #if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_lock(qc->mutex);
 #endif
+}
+
+static void quic_lock_for_io(QCTX *ctx)
+{
+    quic_lock(ctx->qc);
+    ctx->in_io = 1;
+
+    /*
+     * We are entering an I/O function so we must update the values returned by
+     * SSL_get_error and SSL_want. Set no error. This will be overridden later
+     * if a call to QUIC_RAISE_NORMAL_ERROR or QUIC_RAISE_NON_NORMAL_ERROR
+     * occurs during the API call.
+     */
+    quic_set_last_error(ctx, SSL_ERROR_NONE);
 }
 
 /* Precondition: Channel mutex is held (unchecked) */
@@ -1563,8 +1587,7 @@ int ossl_quic_do_handshake(SSL *s)
     if (!expect_quic(s, &ctx))
         return 0;
 
-    ctx.in_io = 1;
-    quic_lock(ctx.qc);
+    quic_lock_for_io(&ctx);
 
     ret = quic_do_handshake(&ctx);
     quic_unlock(ctx.qc);
@@ -2413,8 +2436,7 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
     if (!expect_quic(s, &ctx))
         return 0;
 
-    ctx.in_io = 1;
-    quic_lock(ctx.qc);
+    quic_lock_for_io(&ctx);
 
     if (!quic_mutation_allowed(ctx.qc, /*req_active=*/0)) {
         ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
