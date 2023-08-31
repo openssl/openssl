@@ -239,6 +239,7 @@ int qtest_supports_blocking(void)
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
 static int globserverret = 0;
+static TSAN_QUALIFIER int abortserverthread = 0;
 static QUIC_TSERVER *globtserv;
 static const thread_t thread_zero;
 
@@ -253,7 +254,8 @@ static void run_server_thread(void)
 }
 #endif
 
-int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
+int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
+                                    int wanterr)
 {
     int retc = -1, rets = 0, abortctr = 0, ret = 0;
     int clienterr = 0, servererr = 0;
@@ -263,6 +265,9 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
      * t uninitialised
      */
     thread_t t = thread_zero;
+
+    if (clientssl != NULL)
+        abortserverthread = 0;
 #endif
 
     if (!TEST_ptr(qtserv)) {
@@ -295,10 +300,21 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
             if (retc <= 0) {
                 err = SSL_get_error(clientssl, retc);
 
-                if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
-                    TEST_info("SSL_connect() failed %d, %d", retc, err);
-                    TEST_openssl_errors();
-                    clienterr = 1;
+                if (err == wanterr) {
+                    retc = 1;
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+                    if (qtserv == NULL && rets > 0)
+                        tsan_store(&abortserverthread, 1);
+                    else
+#endif
+                        rets = 1;
+                } else {
+                    if (err != SSL_ERROR_WANT_READ
+                            && err != SSL_ERROR_WANT_WRITE) {
+                        TEST_info("SSL_connect() failed %d, %d", retc, err);
+                        TEST_openssl_errors();
+                        clienterr = 1;
+                    }
                 }
             }
         }
@@ -312,6 +328,7 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
          */
         if (!clienterr && retc <= 0)
             SSL_handle_events(clientssl);
+
         if (!servererr && rets <= 0) {
             qtest_add_time(1);
             ossl_quic_tserver_tick(qtserv);
@@ -327,7 +344,12 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
             TEST_info("No progress made");
             goto err;
         }
-    } while ((retc <= 0 && !clienterr) || (rets <= 0 && !servererr));
+    } while ((retc <= 0 && !clienterr)
+             || (rets <= 0 && !servererr
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+                 && !tsan_load(&abortserverthread)
+#endif
+                ));
 
     if (qtserv == NULL && rets > 0) {
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
@@ -343,6 +365,11 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
         ret = 1;
  err:
     return ret;
+}
+
+int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
+{
+    return qtest_create_quic_connection_ex(qtserv, clientssl, SSL_ERROR_NONE);
 }
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)

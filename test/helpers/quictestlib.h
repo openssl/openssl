@@ -63,6 +63,13 @@ int qtest_supports_blocking(void);
 int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl);
 
 /*
+ * Same as qtest_create_quic_connection but will stop (successfully) if the
+ * clientssl indicates SSL_ERROR_WANT_XXX as specified by |wanterr|
+ */
+int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
+                                    int wanterr);
+
+/*
  * Shutdown the client SSL object gracefully
  */
 int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl);
