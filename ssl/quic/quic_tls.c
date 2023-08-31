@@ -798,6 +798,9 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
         switch (err) {
         case SSL_ERROR_WANT_READ:
         case SSL_ERROR_WANT_WRITE:
+        case SSL_ERROR_WANT_CLIENT_HELLO_CB:
+        case SSL_ERROR_WANT_X509_LOOKUP:
+        case SSL_ERROR_WANT_RETRY_VERIFY:
             ERR_pop_to_mark();
             return 1;
 

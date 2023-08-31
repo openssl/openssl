@@ -1445,6 +1445,18 @@ struct quic_handshake_wait_args {
     QUIC_CONNECTION     *qc;
 };
 
+static int tls_wants_non_io_retry(QUIC_CONNECTION *qc)
+{
+    int want = SSL_want(qc->tls);
+
+    if (want == SSL_X509_LOOKUP
+            || want == SSL_CLIENT_HELLO_CB
+            || want == SSL_RETRY_VERIFY)
+        return 1;
+
+    return 0;
+}
+
 static int quic_handshake_wait(void *arg)
 {
     struct quic_handshake_wait_args *args = arg;
@@ -1453,6 +1465,9 @@ static int quic_handshake_wait(void *arg)
         return -1;
 
     if (ossl_quic_channel_is_handshake_complete(args->qc->ch))
+        return 1;
+
+    if (tls_wants_non_io_retry(args->qc))
         return 1;
 
     return 0;
@@ -1680,8 +1695,18 @@ static int quic_do_handshake(QCTX *ctx)
             return -1; /* Non-protocol error */
         }
 
+        if (tls_wants_non_io_retry(qc)) {
+            QUIC_RAISE_NORMAL_ERROR(ctx, SSL_get_error(qc->tls, 0));
+            return -1;
+        }
+
         assert(ossl_quic_channel_is_handshake_complete(qc->ch));
         return 1;
+    }
+
+    if (tls_wants_non_io_retry(qc)) {
+        QUIC_RAISE_NORMAL_ERROR(ctx, SSL_get_error(qc->tls, 0));
+        return -1;
     }
 
     /*
@@ -2068,6 +2093,9 @@ static int error_to_want(int error)
 
     case SSL_ERROR_WANT_WRITE:
         return SSL_WRITING;
+
+    case SSL_ERROR_WANT_RETRY_VERIFY:
+        return SSL_RETRY_VERIFY;
 
     case SSL_ERROR_WANT_CLIENT_HELLO_CB:
         return SSL_CLIENT_HELLO_CB;
