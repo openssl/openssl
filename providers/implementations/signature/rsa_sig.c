@@ -1271,7 +1271,13 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
             err_extra_text = "No padding not allowed with RSA-PSS";
             goto cont;
         case RSA_X931_PADDING:
+#ifndef FIPS_MODULE
             err_extra_text = "X.931 padding not allowed with RSA-PSS";
+#else /* !defined(FIPS_MODULE) */
+            err_extra_text = "X.931 padding no longer allowed in FIPS mode,"
+                             " since it was removed from FIPS 186-5";
+            goto bad_pad;
+#endif /* !defined(FIPS_MODULE) */
         cont:
             if (RSA_test_flags(prsactx->rsa,
                                RSA_FLAG_TYPE_MASK) == RSA_FLAG_TYPE_RSA)
