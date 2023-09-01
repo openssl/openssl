@@ -229,11 +229,27 @@ err:
     return ok;
 }
 
+#define HMAC_LEN 32
+/*
+ * The __attribute__ ensures we've created the .rodata1 section
+ * static ensures it's zero filled
+*/
+static const unsigned char __attribute__ ((section (".rodata1"))) fips_hmac_container[HMAC_LEN] = {0};
+
 /*
  * Calculate the HMAC SHA256 of data read using a BIO and read_cb, and verify
  * the result matches the expected value.
  * Return 1 if verified, or 0 if it fails.
  */
+#ifndef __USE_GNU
+#define __USE_GNU
+#include <dlfcn.h>
+#undef __USE_GNU
+#else
+#include <dlfcn.h>
+#endif
+#include <link.h>
+
 static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex_cb,
                             unsigned char *expected, size_t expected_len,
                             OSSL_LIB_CTX *libctx, OSSL_SELF_TEST *ev,
@@ -246,11 +262,22 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
     EVP_MAC *mac = NULL;
     EVP_MAC_CTX *ctx = NULL;
     OSSL_PARAM params[2], *p = params;
+    Dl_info info;
+    void *extra_info = NULL;
+    struct link_map *lm = NULL;
+    unsigned long paddr;
+    unsigned long off = 0;
 
     if (!integrity_self_test(ev, libctx))
         goto err;
 
     OSSL_SELF_TEST_onbegin(ev, event_type, OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);
+
+    if (!dladdr1 ((const void *)fips_hmac_container,
+                &info, &extra_info, RTLD_DL_LINKMAP))
+        goto err;
+    lm = extra_info;
+    paddr = (unsigned long)fips_hmac_container - lm->l_addr;
 
     mac = EVP_MAC_fetch(libctx, MAC_NAME, NULL);
     if (mac == NULL)
@@ -265,13 +292,42 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
     if (!EVP_MAC_init(ctx, fixed_key, sizeof(fixed_key), params))
         goto err;
 
-    while (1) {
-        status = read_ex_cb(bio, buf, sizeof(buf), &bytes_read);
+    while ((off + INTEGRITY_BUF_SIZE) <= paddr) {
+        status = read_ex_cb(bio, buf, INTEGRITY_BUF_SIZE, &bytes_read);
         if (status != 1)
             break;
         if (!EVP_MAC_update(ctx, buf, bytes_read))
             goto err;
+	off += bytes_read;
     }
+
+    if (off + INTEGRITY_BUF_SIZE > paddr) {
+        int delta = paddr - off;
+        status = read_ex_cb(bio, buf, delta, &bytes_read);
+        if (status != 1)
+            goto err;
+        if (!EVP_MAC_update(ctx, buf, bytes_read))
+            goto err;
+	off += bytes_read;
+
+        status = read_ex_cb(bio, buf, HMAC_LEN, &bytes_read);
+        memset(buf, 0, HMAC_LEN);
+        if (status != 1)
+            goto err;
+        if (!EVP_MAC_update(ctx, buf, bytes_read))
+            goto err;
+	off += bytes_read;
+    }
+
+    while (bytes_read > 0) {
+        status = read_ex_cb(bio, buf, INTEGRITY_BUF_SIZE, &bytes_read);
+        if (status != 1)
+            break;
+        if (!EVP_MAC_update(ctx, buf, bytes_read))
+            goto err;
+	off += bytes_read;
+    }
+
     if (!EVP_MAC_final(ctx, out, &out_len, sizeof(out)))
         goto err;
 
@@ -281,6 +337,7 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
         goto err;
     ret = 1;
 err:
+    OPENSSL_cleanse(out, sizeof(out));
     OSSL_SELF_TEST_onend(ev, ret);
     EVP_MAC_CTX_free(ctx);
     EVP_MAC_free(mac);
@@ -334,8 +391,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         return 0;
     }
 
-    if (st == NULL
-            || st->module_checksum_data == NULL) {
+    if (st == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CONFIG_DATA);
         goto end;
     }
@@ -344,8 +400,9 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     if (ev == NULL)
         goto end;
 
-    module_checksum = OPENSSL_hexstr2buf(st->module_checksum_data,
-                                         &checksum_len);
+    module_checksum = fips_hmac_container;
+    checksum_len = sizeof(fips_hmac_container);
+
     if (module_checksum == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
         goto end;
@@ -419,7 +476,6 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
 end:
     EVP_RAND_free(testrand);
     OSSL_SELF_TEST_free(ev);
-    OPENSSL_free(module_checksum);
     OPENSSL_free(indicator_checksum);
 
     if (st != NULL) {
