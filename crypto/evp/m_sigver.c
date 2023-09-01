@@ -23,6 +23,7 @@ static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
     ERR_raise(ERR_LIB_EVP, EVP_R_ONLY_ONESHOT_SUPPORTED);
     return 0;
 }
+#endif /* !defined(FIPS_MODULE) */
 
 /*
  * If we get the "NULL" md then the name comes back as "UNDEF". We want to use
@@ -58,8 +59,10 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         reinit = 0;
         if (e == NULL)
             ctx->pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, props);
+#ifndef FIPS_MODULE
         else
             ctx->pctx = EVP_PKEY_CTX_new(pkey, e);
+#endif /* !defined(FIPS_MODULE) */
     }
     if (ctx->pctx == NULL)
         return 0;
@@ -69,8 +72,10 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     locpctx = ctx->pctx;
     ERR_set_mark();
 
+#ifndef FIPS_MODULE
     if (evp_pkey_ctx_is_legacy(locpctx))
         goto legacy;
+#endif /* !defined(FIPS_MODULE) */
 
     /* do not reinitialize if pkey is set or operation is different */
     if (reinit
@@ -155,8 +160,10 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
             signature =
                 evp_signature_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
                                               supported_sig, locpctx->propquery);
+#ifndef FIPS_MODULE
             if (signature == NULL)
                 goto legacy;
+#endif /* !defined(FIPS_MODULE) */
             break;
         }
         if (signature == NULL)
@@ -240,6 +247,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
             ctx->fetched_digest = EVP_MD_fetch(locpctx->libctx, mdname, props);
             if (ctx->fetched_digest != NULL) {
                 ctx->digest = ctx->reqdigest = ctx->fetched_digest;
+#ifndef FIPS_MODULE
             } else {
                 /* legacy engine support : remove the mark when this is deleted */
                 ctx->reqdigest = ctx->digest = EVP_get_digestbyname(mdname);
@@ -252,6 +260,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
             (void)ERR_pop_to_mark();
         }
     }
+#endif /* !defined(FIPS_MODULE) */
 
     if (ver) {
         if (signature->digest_verify_init == NULL) {
@@ -284,6 +293,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     EVP_KEYMGMT_free(tmp_keymgmt);
     return 0;
 
+#ifndef FIPS_MODULE
  legacy:
     /*
      * If we don't have the full support we need with provided methods,
@@ -355,6 +365,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         ctx->pctx->flag_call_digest_custom = 1;
 
     ret = 1;
+#endif /* !defined(FIPS_MODULE) */
 
  end:
 #ifndef FIPS_MODULE
@@ -397,7 +408,6 @@ int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, e, pkey, 1,
                           NULL);
 }
-#endif /* FIPS_MDOE */
 
 int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
 {
@@ -469,23 +479,29 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
     return EVP_DigestUpdate(ctx, data, dsize);
 }
 
-#ifndef FIPS_MODULE
+
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                         size_t *siglen)
 {
-    int sctx = 0, r = 0;
-    EVP_PKEY_CTX *dctx = NULL, *pctx = ctx->pctx;
+    int r = 0;
+# ifndef FIPS_MODULE
+    int sctx = 0;
+    EVP_PKEY_CTX *dctx;
+# endif /* !defined(FIPS_MODULE) */
+    EVP_PKEY_CTX *pctx = ctx->pctx;
 
     if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
         return 0;
     }
 
+# ifndef FIPS_MODULE
     if (pctx == NULL
             || pctx->operation != EVP_PKEY_OP_SIGNCTX
             || pctx->op.sig.algctx == NULL
             || pctx->op.sig.signature == NULL)
         goto legacy;
+# endif
 
     if (sigret != NULL && (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) == 0) {
         /* try dup */
@@ -502,6 +518,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
         EVP_PKEY_CTX_free(dctx);
     return r;
 
+# ifndef FIPS_MODULE
  legacy:
     if (pctx == NULL || pctx->pmeth == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
@@ -574,6 +591,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
         }
     }
     return 1;
+#endif /* !defined(FIPS_MODULE) */
 }
 
 int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
@@ -612,22 +630,27 @@ int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
 int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
                           size_t siglen)
 {
-    unsigned char md[EVP_MAX_MD_SIZE];
     int r = 0;
+# ifndef FIPS_MODULE
+    unsigned char md[EVP_MAX_MD_SIZE];
     unsigned int mdlen = 0;
     int vctx = 0;
-    EVP_PKEY_CTX *dctx = NULL, *pctx = ctx->pctx;
+    EVP_PKEY_CTX *dctx;
+# endif /* !defined(FIPS_MODULE) */
+    EVP_PKEY_CTX *pctx = ctx->pctx;
 
     if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
         return 0;
     }
 
+# ifndef FIPS_MODULE
     if (pctx == NULL
             || pctx->operation != EVP_PKEY_OP_VERIFYCTX
             || pctx->op.sig.algctx == NULL
             || pctx->op.sig.signature == NULL)
         goto legacy;
+# endif /* !defined(FIPS_MODULE) */
 
     if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISE) == 0) {
         /* try dup */
@@ -643,6 +666,7 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
         EVP_PKEY_CTX_free(dctx);
     return r;
 
+# ifndef FIPS_MODULE
  legacy:
     if (pctx == NULL || pctx->pmeth == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
@@ -683,6 +707,7 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
     if (vctx || !r)
         return r;
     return EVP_PKEY_verify(pctx, sig, siglen, md, mdlen);
+# endif /* !defined(FIPS_MODULE) */
 }
 
 int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
@@ -715,4 +740,3 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
         return -1;
     return EVP_DigestVerifyFinal(ctx, sigret, siglen);
 }
-#endif /* FIPS_MODULE */
