@@ -53,6 +53,14 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
     if (mgf1Hash == NULL)
         mgf1Hash = Hash;
 
+#ifdef FIPS_MODULE
+    if (EVP_MD_is_a(Hash, "SHAKE-128") || EVP_MD_is_a(Hash, "SHAKE-256"))
+        goto err;
+
+    if (EVP_MD_is_a(mgf1Hash, "SHAKE-128") || EVP_MD_is_a(mgf1Hash, "SHAKE-256"))
+        goto err;
+#endif
+
     hLen = EVP_MD_get_size(Hash);
     if (hLen < 0)
         goto err;
@@ -165,6 +173,14 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 
     if (mgf1Hash == NULL)
         mgf1Hash = Hash;
+
+#ifdef FIPS_MODULE
+    if (EVP_MD_is_a(Hash, "SHAKE-128") || EVP_MD_is_a(Hash, "SHAKE-256"))
+        goto err;
+
+    if (EVP_MD_is_a(mgf1Hash, "SHAKE-128") || EVP_MD_is_a(mgf1Hash, "SHAKE-256"))
+        goto err;
+#endif
 
     hLen = EVP_MD_get_size(Hash);
     if (hLen < 0)
