@@ -434,6 +434,7 @@ struct rsa_gen_ctx {
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     /* ACVP test parameters */
     OSSL_PARAM *acvp_test_params;
+    void *prov_rsa_ctx;
 #endif
 };
 
@@ -446,6 +447,12 @@ static int rsa_gencb(int p, int n, BN_GENCB *cb)
     params[1] = OSSL_PARAM_construct_int(OSSL_GEN_PARAM_ITERATION, &n);
     return gctx->cb(params, gctx->cbarg);
 }
+
+#ifdef FIPS_MODULE
+void *rsa_newctx(void *provctx, const char *propq);
+void rsa_freectx(void *vctx);
+int do_rsa_pct(void *, const char *, void *);
+#endif
 
 static void *gen_init(void *provctx, int selection, int rsa_type,
                       const OSSL_PARAM params[])
@@ -474,6 +481,10 @@ static void *gen_init(void *provctx, int selection, int rsa_type,
 
     if (!rsa_gen_set_params(gctx, params))
         goto err;
+#ifdef FIPS_MODULE
+    if (gctx != NULL)
+        gctx->prov_rsa_ctx = rsa_newctx(provctx, NULL);
+#endif
     return gctx;
 
 err:
@@ -630,6 +641,11 @@ static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     rsa = rsa_tmp;
     rsa_tmp = NULL;
+#ifdef FIPS_MODULE
+    /* Pairwise consistency test */
+    if (do_rsa_pct(gctx->prov_rsa_ctx, "sha256", rsa) != 1)
+        abort();
+#endif
  err:
     BN_GENCB_free(gencb);
     RSA_free(rsa_tmp);
@@ -645,6 +661,8 @@ static void rsa_gen_cleanup(void *genctx)
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     ossl_rsa_acvp_test_gen_params_free(gctx->acvp_test_params);
     gctx->acvp_test_params = NULL;
+    rsa_freectx(gctx->prov_rsa_ctx);
+    gctx->prov_rsa_ctx = NULL;
 #endif
     BN_clear_free(gctx->pub_exp);
     OPENSSL_free(gctx);

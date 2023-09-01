@@ -489,6 +489,25 @@ int ecdh_plain_derive(void *vpecdhctx, unsigned char *secret,
     }
 
     ppubkey = EC_KEY_get0_public_key(pecdhctx->peerk);
+#ifdef FIPS_MODULE
+    {
+        BN_CTX *bn_ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(privk));
+        int check = 0;
+
+        if (bn_ctx == NULL) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            goto end;
+        }
+
+        check = ossl_ec_key_public_check(pecdhctx->peerk, bn_ctx);
+        BN_CTX_free(bn_ctx);
+
+        if (check <= 0) {
+            ERR_raise(ERR_LIB_PROV, EC_R_INVALID_PEER_KEY);
+            goto end;
+        }
+    }
+#endif
 
     retlen = ECDH_compute_key(secret, size, ppubkey, privk, NULL);
 

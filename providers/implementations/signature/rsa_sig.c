@@ -34,7 +34,7 @@
 
 #define RSA_DEFAULT_DIGEST_NAME OSSL_DIGEST_NAME_SHA1
 
-static OSSL_FUNC_signature_newctx_fn rsa_newctx;
+OSSL_FUNC_signature_newctx_fn rsa_newctx;
 static OSSL_FUNC_signature_sign_init_fn rsa_sign_init;
 static OSSL_FUNC_signature_verify_init_fn rsa_verify_init;
 static OSSL_FUNC_signature_verify_recover_init_fn rsa_verify_recover_init;
@@ -47,7 +47,7 @@ static OSSL_FUNC_signature_digest_sign_final_fn rsa_digest_sign_final;
 static OSSL_FUNC_signature_digest_verify_init_fn rsa_digest_verify_init;
 static OSSL_FUNC_signature_digest_verify_update_fn rsa_digest_signverify_update;
 static OSSL_FUNC_signature_digest_verify_final_fn rsa_digest_verify_final;
-static OSSL_FUNC_signature_freectx_fn rsa_freectx;
+OSSL_FUNC_signature_freectx_fn rsa_freectx;
 static OSSL_FUNC_signature_dupctx_fn rsa_dupctx;
 static OSSL_FUNC_signature_get_ctx_params_fn rsa_get_ctx_params;
 static OSSL_FUNC_signature_gettable_ctx_params_fn rsa_gettable_ctx_params;
@@ -170,7 +170,7 @@ static int rsa_check_parameters(PROV_RSA_CTX *prsactx, int min_saltlen)
     return 1;
 }
 
-static void *rsa_newctx(void *provctx, const char *propq)
+void *rsa_newctx(void *provctx, const char *propq)
 {
     PROV_RSA_CTX *prsactx = NULL;
     char *propq_copy = NULL;
@@ -974,7 +974,7 @@ int rsa_digest_verify_final(void *vprsactx, const unsigned char *sig,
     return rsa_verify(vprsactx, sig, siglen, digest, (size_t)dlen);
 }
 
-static void rsa_freectx(void *vprsactx)
+void rsa_freectx(void *vprsactx)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
@@ -1449,6 +1449,45 @@ static const OSSL_PARAM *rsa_settable_ctx_md_params(void *vprsactx)
 
     return EVP_MD_settable_ctx_params(prsactx->md);
 }
+
+#ifdef FIPS_MODULE
+int do_rsa_pct(void *vctx, const char *mdname, void *rsa)
+{
+    static const unsigned char data[32];
+    unsigned char *sigbuf = NULL;
+    size_t siglen = 0;
+    int ret = 0;
+
+    if (rsa_digest_sign_init(vctx, mdname, rsa, NULL) <= 0)
+        return 0;
+
+    if (rsa_digest_signverify_update(vctx, data, sizeof(data)) <= 0)
+        return 0;
+
+    if (rsa_digest_sign_final(vctx, NULL, &siglen, 0) <= 0)
+        return 0;
+
+    if ((sigbuf = OPENSSL_malloc(siglen)) == NULL)
+        return 0;
+
+    if (rsa_digest_sign_final(vctx, sigbuf, &siglen, siglen) <= 0)
+        goto err;
+
+    if (rsa_digest_verify_init(vctx, mdname, rsa, NULL) <= 0)
+        goto err;
+
+    if (rsa_digest_signverify_update(vctx, data, sizeof(data)) <= 0)
+        goto err;
+
+    if (rsa_digest_verify_final(vctx, sigbuf, siglen) <= 0)
+        goto err;
+    ret = 1;
+
+ err:
+    OPENSSL_free(sigbuf);
+    return ret;
+}
+#endif
 
 const OSSL_DISPATCH ossl_rsa_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))rsa_newctx },

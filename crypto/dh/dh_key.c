@@ -43,6 +43,9 @@ int ossl_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     BN_MONT_CTX *mont = NULL;
     BIGNUM *z = NULL, *pminus1;
     int ret = -1;
+#ifdef FIPS_MODULE
+    int validate = 0;
+#endif
 
     if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
         ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
@@ -53,6 +56,13 @@ int ossl_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
         ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_SMALL);
         return 0;
     }
+
+#ifdef FIPS_MODULE
+    if (DH_check_pub_key(dh, pub_key, &validate) <= 0) {
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_PUBKEY_INVALID);
+        return 0;
+    }
+#endif
 
     ctx = BN_CTX_new_ex(dh->libctx);
     if (ctx == NULL)
@@ -266,6 +276,9 @@ static int generate_key(DH *dh)
 #endif
     BN_CTX *ctx = NULL;
     BIGNUM *pub_key = NULL, *priv_key = NULL;
+#ifdef FIPS_MODULE
+    int validate = 0;
+#endif
 
     if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
         ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
@@ -358,8 +371,21 @@ static int generate_key(DH *dh)
     if (!ossl_dh_generate_public_key(ctx, dh, priv_key, pub_key))
         goto err;
 
+#ifdef FIPS_MODULE
+    if (DH_check_pub_key(dh, pub_key, &validate) <= 0) {
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_PUBKEY_INVALID);
+        goto err;
+    }
+#endif
+
     dh->pub_key = pub_key;
     dh->priv_key = priv_key;
+#ifdef FIPS_MODULE
+    if (ossl_dh_check_pairwise(dh) <= 0) {
+        abort();
+    }
+#endif
+
     dh->dirty_cnt++;
     ok = 1;
  err:
