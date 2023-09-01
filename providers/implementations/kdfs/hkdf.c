@@ -117,7 +117,7 @@ static void kdf_hkdf_reset(void *vctx)
     void *provctx = ctx->provctx;
 
     ossl_prov_digest_reset(&ctx->digest);
-    OPENSSL_free(ctx->salt);
+    OPENSSL_clear_free(ctx->salt, ctx->salt_len);
     OPENSSL_free(ctx->prefix);
     OPENSSL_free(ctx->label);
     OPENSSL_clear_free(ctx->data, ctx->data_len);

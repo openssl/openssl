@@ -90,7 +90,7 @@ static void *kdf_pbkdf2_new(void *provctx)
 static void kdf_pbkdf2_cleanup(KDF_PBKDF2 *ctx)
 {
     ossl_prov_digest_reset(&ctx->digest);
-    OPENSSL_free(ctx->salt);
+    OPENSSL_clear_free(ctx->salt, ctx->salt_len);
     OPENSSL_clear_free(ctx->pass, ctx->pass_len);
     memset(ctx, 0, sizeof(*ctx));
 }

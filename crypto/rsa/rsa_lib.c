@@ -159,8 +159,8 @@ void RSA_free(RSA *r)
     CRYPTO_THREAD_lock_free(r->lock);
     CRYPTO_FREE_REF(&r->references);
 
-    BN_free(r->n);
-    BN_free(r->e);
+    BN_clear_free(r->n);
+    BN_clear_free(r->e);
     BN_clear_free(r->d);
     BN_clear_free(r->p);
     BN_clear_free(r->q);
