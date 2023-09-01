@@ -166,7 +166,10 @@ is for demonstration purposes only.
 We will build on the example code for the simple blocking QUIC client that is
 covered on the L<ossl-guide-quic-client-block(7)> page and we assume that you
 are familiar with it. We will only describe the differences between the simple
-blocking QUIC client and the multi-stream QUIC client.
+blocking QUIC client and the multi-stream QUIC client. Although the example code
+uses blocking B<SSL> objects, you can equally use nonblocking B<SSL> objects.
+See L<ossl-guide-quic-client-non-block(7)> for more information about writing a
+nonblocking QUIC client.
 
 The complete source code for this example multi-stream QUIC client is available
 in the C<demos/guide> directory of the OpenSSL source distribution in the file
