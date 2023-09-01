@@ -686,6 +686,19 @@ static int rsa_verify_recover(void *vprsactx,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     int ret;
+# ifdef FIPS_MODULE
+    size_t rsabits = RSA_bits(prsactx->rsa);
+
+    if (rsabits < 2048) {
+        if (rsabits != 1024
+            && rsabits != 1280
+            && rsabits != 1536
+            && rsabits != 1792) {
+            ERR_raise(ERR_LIB_FIPS, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+# endif
 
     if (!ossl_prov_is_running())
         return 0;
@@ -774,6 +787,19 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     size_t rslen;
+# ifdef FIPS_MODULE
+    size_t rsabits = RSA_bits(prsactx->rsa);
+
+    if (rsabits < 2048) {
+        if (rsabits != 1024
+            && rsabits != 1280
+            && rsabits != 1536
+            && rsabits != 1792) {
+            ERR_raise(ERR_LIB_FIPS, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+# endif
 
     if (!ossl_prov_is_running())
         return 0;
