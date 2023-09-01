@@ -164,13 +164,17 @@ static int handle_io_failure(SSL *ssl, int res)
 
     case SSL_ERROR_SSL:
         /*
-         * Some stream fatal error occurred. This could be because of a stream
-         * reset - or some failure occurred on the underlying connection.
+         * Some stream fatal error occurred. This could be because of a
+         * stream reset - or some failure occurred on the underlying
+         * connection.
          */
         switch (SSL_get_stream_read_state(ssl)) {
         case SSL_STREAM_STATE_RESET_REMOTE:
             printf("Stream reset occurred\n");
-            /* The stream has been reset but the connection is still healthy. */
+            /*
+             * The stream has been reset but the connection is still
+             * healthy.
+             */
             break;
 
         case SSL_STREAM_STATE_CONN_CLOSED:
@@ -183,9 +187,9 @@ static int handle_io_failure(SSL *ssl, int res)
             break;
         }
         /*
-        * If the failure is due to a verification error we can get more
-        * information about it from SSL_get_verify_result().
-        */
+         * If the failure is due to a verification error we can get more
+         * information about it from SSL_get_verify_result().
+         */
         if (SSL_get_verify_result(ssl) != X509_V_OK)
             printf("Verify error: %s\n",
                 X509_verify_cert_error_string(SSL_get_verify_result(ssl)));
@@ -300,8 +304,8 @@ int main(void)
     }
 
     /*
-     * The underlying socket is always non-blocking with QUIC, but the default
-     * behaviour of the SSL object is still to block. We set it for non-blocking
+     * The underlying socket is always nonblocking with QUIC, but the default
+     * behaviour of the SSL object is still to block. We set it for nonblocking
      * mode in this demo.
      */
     if (!SSL_set_blocking_mode(ssl, 0)) {
