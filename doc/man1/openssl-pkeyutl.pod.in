@@ -301,7 +301,7 @@ These have the same meaning as the B<RSA> algorithm with some additional
 restrictions. The padding mode can only be set to B<pss> which is the
 default value.
 
-If the key has parameter restrictions than the digest, MGF1
+If the key has parameter restrictions then the digest, MGF1
 digest and salt length are set to the values specified in the parameters.
 The digest and MG cannot be changed and the salt length cannot be set to a
 value less than the minimum restriction.
