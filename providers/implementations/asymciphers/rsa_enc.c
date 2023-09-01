@@ -30,6 +30,9 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
+#ifdef FIPS_MODULE
+# include "crypto/rsa/rsa_local.h"
+#endif
 
 #include <stdlib.h>
 
@@ -77,6 +80,9 @@ typedef struct {
     unsigned int alt_version;
     /* PKCS#1 v1.5 decryption mode */
     unsigned int implicit_rejection;
+#ifdef FIPS_MODULE
+    char *redhat_st_oaep_seed;
+#endif /* FIPS_MODULE */
 } PROV_RSA_CTX;
 
 static void *rsa_newctx(void *provctx)
@@ -170,12 +176,21 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
             }
         }
         ret =
-            ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(prsactx->libctx, tbuf,
+#ifdef FIPS_MODULE
+            ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex2(
+#else
+            ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(
+#endif
+                                                    prsactx->libctx, tbuf,
                                                     rsasize, in, inlen,
                                                     prsactx->oaep_label,
                                                     prsactx->oaep_labellen,
                                                     prsactx->oaep_md,
-                                                    prsactx->mgf1_md);
+                                                    prsactx->mgf1_md
+#ifdef FIPS_MODULE
+                                                    , prsactx->redhat_st_oaep_seed
+#endif
+                                                    );
 
         if (!ret) {
             OPENSSL_free(tbuf);
@@ -297,6 +312,9 @@ static void rsa_freectx(void *vprsactx)
     EVP_MD_free(prsactx->oaep_md);
     EVP_MD_free(prsactx->mgf1_md);
     OPENSSL_free(prsactx->oaep_label);
+#ifdef FIPS_MODULE
+    OPENSSL_free(prsactx->redhat_st_oaep_seed);
+#endif /* FIPS_MODULE */
 
     OPENSSL_free(prsactx);
 }
@@ -421,6 +439,9 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION, NULL),
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION, NULL),
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION, NULL),
+#ifdef FIPS_MODULE
+    OSSL_PARAM_octet_string(OSSL_ASYM_CIPHER_PARAM_REDHAT_KAT_OEAP_SEED, NULL, 0),
+#endif /* FIPS_MODULE */
     OSSL_PARAM_END
 };
 
@@ -429,6 +450,10 @@ static const OSSL_PARAM *rsa_gettable_ctx_params(ossl_unused void *vprsactx,
 {
     return known_gettable_ctx_params;
 }
+
+#ifdef FIPS_MODULE
+extern int REDHAT_FIPS_asym_cipher_st;
+#endif /* FIPS_MODULE */
 
 static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 {
@@ -540,6 +565,18 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         prsactx->oaep_label = (unsigned char *)tmp_label;
         prsactx->oaep_labellen = tmp_labellen;
     }
+
+#ifdef FIPS_MODULE
+    p = OSSL_PARAM_locate_const(params, OSSL_ASYM_CIPHER_PARAM_REDHAT_KAT_OEAP_SEED);
+    if (p != NULL && REDHAT_FIPS_asym_cipher_st) {
+        void *tmp_oaep_seed = NULL;
+
+        if (!OSSL_PARAM_get_octet_string(p, &tmp_oaep_seed, 0, NULL))
+            return 0;
+        OPENSSL_free(prsactx->redhat_st_oaep_seed);
+        prsactx->redhat_st_oaep_seed = (char *)tmp_oaep_seed;
+    }
+#endif /* FIPS_MODULE */
 
     p = OSSL_PARAM_locate_const(params, OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION);
     if (p != NULL) {

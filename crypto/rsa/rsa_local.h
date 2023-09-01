@@ -193,4 +193,12 @@ int ossl_rsa_padding_add_PKCS1_type_2_ex(OSSL_LIB_CTX *libctx, unsigned char *to
                                          int tlen, const unsigned char *from,
                                          int flen);
 
+int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex2(OSSL_LIB_CTX *libctx,
+                                             unsigned char *to, int tlen,
+                                             const unsigned char *from, int flen,
+                                             const unsigned char *param,
+                                             int plen, const EVP_MD *md,
+                                             const EVP_MD *mgf1md,
+                                             const char *redhat_st_seed);
+
 #endif /* OSSL_CRYPTO_RSA_LOCAL_H */

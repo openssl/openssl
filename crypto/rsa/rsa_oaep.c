@@ -44,6 +44,10 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
                                                    param, plen, NULL, NULL);
 }
 
+#ifdef FIPS_MODULE
+extern int REDHAT_FIPS_asym_cipher_st;
+#endif /* FIPS_MODULE */
+
 /*
  * Perform the padding as per NIST 800-56B 7.2.2.3
  *      from (K) is the key material.
@@ -51,12 +55,13 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
  * Step numbers are included here but not in the constant time inverse below
  * to avoid complicating an already difficult enough function.
  */
-int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
-                                            unsigned char *to, int tlen,
-                                            const unsigned char *from, int flen,
-                                            const unsigned char *param,
-                                            int plen, const EVP_MD *md,
-                                            const EVP_MD *mgf1md)
+int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex2(OSSL_LIB_CTX *libctx,
+                                             unsigned char *to, int tlen,
+                                             const unsigned char *from, int flen,
+                                             const unsigned char *param,
+                                             int plen, const EVP_MD *md,
+                                             const EVP_MD *mgf1md,
+                                             const char *redhat_st_seed)
 {
     int rv = 0;
     int i, emlen = tlen - 1;
@@ -107,6 +112,11 @@ int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
     db[emlen - flen - mdlen - 1] = 0x01;
     memcpy(db + emlen - flen - mdlen, from, (unsigned int)flen);
     /* step 3d: generate random byte string */
+#ifdef FIPS_MODULE
+    if (redhat_st_seed != NULL && REDHAT_FIPS_asym_cipher_st) {
+        memcpy(seed, redhat_st_seed, mdlen);
+    } else
+#endif
     if (RAND_bytes_ex(libctx, seed, mdlen, 0) <= 0)
         goto err;
 
@@ -134,6 +144,18 @@ int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
     OPENSSL_cleanse(seedmask, sizeof(seedmask));
     OPENSSL_clear_free(dbmask, dbmask_len);
     return rv;
+}
+
+int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
+                                            unsigned char *to, int tlen,
+                                            const unsigned char *from, int flen,
+                                            const unsigned char *param,
+                                            int plen, const EVP_MD *md,
+                                            const EVP_MD *mgf1md)
+{
+    return ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex2(libctx, to, tlen, from,
+                                                    flen, param, plen, md,
+                                                    mgf1md, NULL);
 }
 
 int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,

@@ -641,14 +641,21 @@ static int self_test_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     return ret;
 }
 
+int REDHAT_FIPS_asym_cipher_st = 0;
+
 static int self_test_asym_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
     int i, ret = 1;
+
+    REDHAT_FIPS_asym_cipher_st = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_cipher_tests); ++i) {
         if (!self_test_asym_cipher(&st_kat_asym_cipher_tests[i], st, libctx))
             ret = 0;
     }
+
+    REDHAT_FIPS_asym_cipher_st = 0;
+
     return ret;
 }
 
