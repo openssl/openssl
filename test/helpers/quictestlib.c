@@ -265,10 +265,10 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
      * t uninitialised
      */
     thread_t t = thread_zero;
-#endif
 
     if (clientssl != NULL)
         abortserverthread = 0;
+#endif
 
     if (!TEST_ptr(qtserv)) {
         goto err;
@@ -302,9 +302,11 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
 
                 if (err == wanterr) {
                     retc = 1;
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
                     if (qtserv == NULL && rets > 0)
                         tsan_store(&abortserverthread, 1);
                     else
+#endif
                         rets = 1;
                 } else {
                     if (err != SSL_ERROR_WANT_READ
@@ -343,7 +345,11 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
             goto err;
         }
     } while ((retc <= 0 && !clienterr)
-             || (rets <= 0 && !servererr && !tsan_load(&abortserverthread)));
+             || (rets <= 0 && !servererr
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+                 && !tsan_load(&abortserverthread)
+#endif
+                ));
 
     if (qtserv == NULL && rets > 0) {
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
