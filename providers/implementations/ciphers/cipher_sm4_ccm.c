@@ -28,6 +28,15 @@ static void *sm4_ccm_newctx(void *provctx, size_t keybits)
     return ctx;
 }
 
+static void *sm4_ccm_dupctx(void *provctx)
+{
+    PROV_SM4_CCM_CTX *ctx = provctx;
+
+    if (ctx == NULL)
+        return NULL;
+    return OPENSSL_memdup(ctx, sizeof(*ctx));
+}
+
 static void sm4_ccm_freectx(void *vctx)
 {
     PROV_SM4_CCM_CTX *ctx = (PROV_SM4_CCM_CTX *)vctx;
