@@ -18,17 +18,28 @@
 # include "internal/e_os.h" /* ossl_inline in many files */
 # include "internal/nelem.h"
 
-#if defined(__GNUC__) || defined(__clang__)
-    #define likely(x) __builtin_expect(!!(x), 1)
-    #define unlikely(x) __builtin_expect(!!(x), 0)
-#else
-    #define likely(x) x
-    #define unlikely(x) x
-#endif
+# if defined(__GNUC__) || defined(__clang__)
+#  define likely(x)     __builtin_expect(!!(x), 1)
+#  define unlikely(x)   __builtin_expect(!!(x), 0)
+# else
+#  define likely(x)     x
+#  define unlikely(x)   x
+# endif
 
-#ifdef NDEBUG
-# define ossl_assert(x) ((x) != 0)
-#else
+# if defined(__GNUC__) || defined(__clang__)
+#  define ALIGN32       __attribute((aligned(32)))
+#  define ALIGN64       __attribute((aligned(64)))
+# elif defined(_MSC_VER)
+#  define ALIGN32       __declspec(align(32))
+#  define ALIGN64       __declspec(align(64))
+# else
+#  define ALIGN32
+#  define ALIGN64
+# endif
+
+# ifdef NDEBUG
+#  define ossl_assert(x) ((x) != 0)
+# else
 __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
                                               const char *file, int line)
 {
@@ -38,10 +49,10 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
     return expr;
 }
 
-# define ossl_assert(x) ossl_assert_int((x) != 0, "Assertion failed: "#x, \
+#  define ossl_assert(x) ossl_assert_int((x) != 0, "Assertion failed: "#x, \
                                          __FILE__, __LINE__)
 
-#endif
+# endif
 
 /* Check if |pre|, which must be a string literal, is a prefix of |str| */
 #define HAS_PREFIX(str, pre) (strncmp(str, pre "", sizeof(pre) - 1) == 0)

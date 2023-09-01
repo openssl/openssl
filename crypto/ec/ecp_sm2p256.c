@@ -18,18 +18,8 @@
 #include <openssl/err.h>
 #include "crypto/bn.h"
 #include "ec_local.h"
+#include "internal/common.h"
 #include "internal/constant_time.h"
-
-#if defined(__GNUC__)
-# define ALIGN32 __attribute((aligned(32)))
-# define ALIGN64 __attribute((aligned(64)))
-#elif defined(_MSC_VER)
-# define ALIGN32 __declspec(align(32))
-# define ALIGN64 __declspec(align(64))
-#else
-# define ALIGN32
-# define ALIGN64
-#endif
 
 #define P256_LIMBS (256 / BN_BITS2)
 
