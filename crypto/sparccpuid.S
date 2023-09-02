@@ -47,10 +47,14 @@ OPENSSL_wipe_cpu:
 	subcc	%g0,1,%o0
 	! Following is V9 "rd %ccr,%o0" instruction. However! V8
 	! specification says that it ("rd %asr2,%o0" in V8 terms) does
-	! not cause illegal_instruction trap. It therefore can be used
-	! to determine if the CPU the code is executing on is V8- or
-	! V9-compliant, as V9 returns a distinct value of 0x99,
-	! "negative" and "borrow" bits set in both %icc and %xcc.
+	! not cause illegal_instruction trap, however it may read from
+	! the %y register. It therefore can be used to determine if the
+	! CPU the code is executing on is V8- or V9-compliant, as V9
+	! returns a distinct value of 0x99, "negative" and "borrow"
+	! bits set in both %icc and %xcc. The %y register needs to be
+	! set away from 0x99 to avoid false-positives matches.
+	!
+	wr	0, %y
 	.word	0x91408000	!rd	%ccr,%o0
 	cmp	%o0,0x99
 	bne	.v8
@@ -178,6 +182,7 @@ walk_reg_wins:
 OPENSSL_atomic_add:
 #ifndef ABI64
 	subcc	%g0,1,%o2
+	wr	0, %y
 	.word	0x95408000	!rd	%ccr,%o2, see comment above
 	cmp	%o2,0x99
 	be	.v9
@@ -226,7 +231,8 @@ OPENSSL_atomic_add:
 .align	32
 _sparcv9_rdtick:
 	subcc	%g0,1,%o0
-	.word	0x91408000	!rd	%ccr,%o0
+	wr	0, %y
+	.word	0x91408000	!rd	%ccr,%o0, see comment above
 	cmp	%o0,0x99
 	bne	.notick
 	xor	%o0,%o0,%o0
@@ -388,7 +394,8 @@ OPENSSL_cleanse:
 #ifndef ABI64
 	subcc	%g0,1,%g1
 	! see above for explanation
-	.word	0x83408000	!rd	%ccr,%g1
+	wr	0, %y
+	.word	0x83408000	!rd	%ccr,%g1, see comment above
 	cmp	%g1,0x99
 	bne	.v8lot
 	nop
