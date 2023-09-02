@@ -53,6 +53,7 @@ B<openssl> B<req>
 [B<-vfyopt> I<nm>:I<v>]
 [B<-batch>]
 [B<-verbose>]
+[B<-quiet>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
@@ -401,6 +402,12 @@ Non-interactive mode.
 =item B<-verbose>
 
 Print extra details about the operations being performed.
+
+=item B<-quiet>
+
+Print fewer details about the operations being performed, which may be
+handy during batch scripts or pipelines (specifically "progress dots"
+during key generation are suppressed).
 
 =item B<-keygen_engine> I<id>
 

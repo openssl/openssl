@@ -90,7 +90,7 @@ typedef enum OPTION_choice {
     OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL,
     OPT_COPY_EXTENSIONS, OPT_EXTENSIONS, OPT_REQEXTS, OPT_ADDEXT,
     OPT_PRECERT, OPT_MD,
-    OPT_SECTION,
+    OPT_SECTION, OPT_QUIET,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -158,6 +158,7 @@ const OPTIONS req_options[] = {
     {"batch", OPT_BATCH, '-',
      "Do not ask anything during request generation"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+    {"quiet", OPT_QUIET, '-', "Terse output"},
     {"noenc", OPT_NOENC, '-', "Don't encrypt private keys"},
     {"nodes", OPT_NODES, '-', "Don't encrypt private keys; deprecated"},
     {"noout", OPT_NOOUT, '-', "Do not output REQ"},
@@ -259,7 +260,7 @@ int req_main(int argc, char **argv)
     const char *keyalg = NULL;
     OPTION_CHOICE o;
     int days = UNSET_DAYS;
-    int ret = 1, gen_x509 = 0, i = 0, newreq = 0, verbose = 0;
+    int ret = 1, gen_x509 = 0, i = 0, newreq = 0, verbose = 0, progress = 1;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyform = FORMAT_UNDEF;
     int modulus = 0, multirdn = 1, verify = 0, noout = 0, text = 0;
     int noenc = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0, x509v1 = 0;
@@ -389,6 +390,11 @@ int req_main(int argc, char **argv)
             break;
         case OPT_VERBOSE:
             verbose = 1;
+            progress = 1;
+            break;
+        case OPT_QUIET:
+            verbose = 0;
+            progress = 0;
             break;
         case OPT_UTF8:
             chtype = MBSTRING_UTF8;
@@ -652,8 +658,9 @@ int req_main(int argc, char **argv)
             }
         }
 
-        EVP_PKEY_CTX_set_cb(genctx, progress_cb);
         EVP_PKEY_CTX_set_app_data(genctx, bio_err);
+        if (progress)
+            EVP_PKEY_CTX_set_cb(genctx, progress_cb);
 
         pkey = app_keygen(genctx, keyalgstr, newkey_len, verbose);
 
