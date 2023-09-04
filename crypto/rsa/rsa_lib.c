@@ -757,21 +757,14 @@ int ossl_rsa_set0_all_params(RSA *r, STACK_OF(BIGNUM) *primes,
         return 0;
 
     pnum = sk_BIGNUM_num(primes);
+
+    /* we need at least 2 primes */
     if (pnum < 2)
         return 0;
 
     if (!RSA_set0_factors(r, sk_BIGNUM_value(primes, 0),
                           sk_BIGNUM_value(primes, 1)))
         return 0;
-
-    if (pnum == sk_BIGNUM_num(exps)
-        && pnum == sk_BIGNUM_num(coeffs) + 1) {
-
-        if (!RSA_set0_crt_params(r, sk_BIGNUM_value(exps, 0),
-                                 sk_BIGNUM_value(exps, 1),
-                                 sk_BIGNUM_value(coeffs, 0)))
-        return 0;
-    }
 
     /*
      * if we managed to set everything above, remove those elements from the
@@ -783,9 +776,20 @@ int ossl_rsa_set0_all_params(RSA *r, STACK_OF(BIGNUM) *primes,
      */
     sk_BIGNUM_delete(primes, 0);
     sk_BIGNUM_delete(primes, 0);
-    sk_BIGNUM_delete(exps, 0);
-    sk_BIGNUM_delete(exps, 0);
-    sk_BIGNUM_delete(coeffs, 0);
+
+    if (pnum == sk_BIGNUM_num(exps)
+        && pnum == sk_BIGNUM_num(coeffs) + 1) {
+
+        if (!RSA_set0_crt_params(r, sk_BIGNUM_value(exps, 0),
+                                 sk_BIGNUM_value(exps, 1),
+                                 sk_BIGNUM_value(coeffs, 0)))
+        return 0;
+
+        /* as above, once we consume the above params, delete them from the list */
+        sk_BIGNUM_delete(exps, 0);
+        sk_BIGNUM_delete(exps, 0);
+        sk_BIGNUM_delete(coeffs, 0);
+    }
 
 #ifndef FIPS_MODULE
     old_infos = r->prime_infos;
