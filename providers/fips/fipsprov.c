@@ -691,15 +691,8 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
 
     /*  Create a context. */
     if ((*provctx = ossl_prov_ctx_new()) == NULL
-        || (libctx = OSSL_LIB_CTX_new()) == NULL) {
-        /*
-         * We free libctx separately here and only here because it hasn't
-         * been attached to *provctx.  All other error paths below rely
-         * solely on fips_teardown.
-         */
-        OSSL_LIB_CTX_free(libctx);
+            || (libctx = OSSL_LIB_CTX_new()) == NULL)
         goto err;
-    }
 
     if ((fgbl = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_FIPS_PROV_INDEX)) == NULL)
         goto err;
