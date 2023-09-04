@@ -61,6 +61,31 @@
 #  define UINT64_MAX __MAXUINT__(uint64_t)
 # endif
 
+/*
+ * 64-bit processor with LP64 ABI
+ */
+# ifdef SIXTY_FOUR_BIT_LONG
+#  ifndef UINT32_C
+#   define UINT32_C(c) (c)
+#  endif
+#  ifndef UINT64_C
+#   define UINT64_C(c) (c##UL)
+#  endif
+# endif
+
+/*
+ * 64-bit processor other than LP64 ABI
+ */
+# ifdef SIXTY_FOUR_BIT
+#  ifndef UINT32_C
+#   define UINT32_C(c) (c##UL)
+#  endif
+#  ifndef UINT64_C
+#   define UINT64_C(c) (c##ULL)
+#  endif
+# endif
+
+
 # ifndef INT128_MAX
 #  if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__ == 16
 typedef __int128_t int128_t;
