@@ -217,7 +217,12 @@ int main(int argc, char *argv[])
     bio = NULL;
 
     if (trace)
+#ifndef OPENSSL_NO_SSL_TRACE
         ossl_quic_tserver_set_msg_callback(qtserv, SSL_trace, bio_err);
+#else
+        BIO_printf(bio_err,
+                   "Warning: -trace specified but no SSL tracing support present\n");
+#endif
 
     /* Wait for handshake to complete */
     ossl_quic_tserver_tick(qtserv);
