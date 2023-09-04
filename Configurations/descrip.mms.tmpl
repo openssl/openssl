@@ -275,7 +275,8 @@
   }
   foreach (grep /\[\.test\.helpers\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
-      push @{$unified_info{includes_extra}->{$obj}}, qw(../../ssl);
+      push @{$unified_info{includes_extra}->{$obj}},
+          qw(../../ssl ../../ssl/quic);
   }
 
   # This makes sure things get built in the order they need
