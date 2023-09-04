@@ -336,7 +336,7 @@ static size_t prov_drbg_get_nonce(PROV_DRBG *drbg, unsigned char **pout,
     memset(&data, 0, sizeof(data));
     data.drbg = drbg;
     if (!CRYPTO_atomic_add(&dngbl->rand_nonce_count, 1, &data.count,
-                      dngbl->rand_nonce_lock))
+                           dngbl->rand_nonce_lock))
         return 0;
     return ossl_prov_get_nonce(drbg->provctx, pout, min_len, max_len,
                                &data, sizeof(data));
