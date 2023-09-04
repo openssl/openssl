@@ -214,17 +214,9 @@ static int mem_check_on(void)
 
 static int mem_cmp(const MEM *a, const MEM *b)
 {
-#ifdef _WIN64
     const char *ap = (const char *)a->addr, *bp = (const char *)b->addr;
-    if (ap == bp)
-        return 0;
-    else if (ap > bp)
-        return 1;
-    else
-        return -1;
-#else
-    return (const char *)a->addr - (const char *)b->addr;
-#endif
+
+    return ap != bp;
 }
 
 static unsigned long mem_hash(const MEM *a)
@@ -329,10 +321,8 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
             CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
 
             if (!RUN_ONCE(&memdbg_init, do_memdbg_init)
-                || (m = OPENSSL_malloc(sizeof(*m))) == NULL) {
-                CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
-                return;
-            }
+                    || (m = OPENSSL_malloc(sizeof(*m))) == NULL)
+                goto err;
             if (mh == NULL) {
                 if ((mh = lh_MEM_new(mem_hash, mem_cmp)) == NULL) {
                     OPENSSL_free(m);
@@ -363,10 +353,12 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
 
             if ((mm = lh_MEM_insert(mh, m)) != NULL) {
                 /* Not good, but don't sweat it */
-                if (mm->app_info != NULL) {
-                    mm->app_info->references--;
-                }
+                app_info_free(mm->app_info);
                 OPENSSL_free(mm);
+            } else if (lh_MEM_error(mh)) {
+                if (amim != NULL)
+                    amim->references--;
+                OPENSSL_free(m);
             }
  err:
             CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
@@ -433,6 +425,10 @@ void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num,
                 mp->array_siz = backtrace(mp->array, OSSL_NELEM(mp->array));
 #endif
                 (void)lh_MEM_insert(mh, mp);
+                if (lh_MEM_error(mh)) {
+                    app_info_free(mp->app_info);
+                    OPENSSL_free(mp);
+                }
             }
 
             CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
