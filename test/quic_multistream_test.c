@@ -556,6 +556,10 @@ static unsigned int server_helper_thread(void *arg)
 
         ossl_quic_tserver_tick(h->s_priv);
         ossl_crypto_mutex_unlock(h->server_thread.m);
+        /*
+         * Give the main thread an opportunity to get the mutex, which is
+         * sometimes necessary in some script operations.
+         */
         OSSL_sleep(1);
         ossl_crypto_mutex_lock(h->server_thread.m);
     }
