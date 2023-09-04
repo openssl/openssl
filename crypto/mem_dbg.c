@@ -330,15 +330,12 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
 
             if (!RUN_ONCE(&memdbg_init, do_memdbg_init)
                 || (m = OPENSSL_malloc(sizeof(*m))) == NULL) {
-                OPENSSL_free(addr);
                 CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
                 return;
             }
             if (mh == NULL) {
                 if ((mh = lh_MEM_new(mem_hash, mem_cmp)) == NULL) {
-                    OPENSSL_free(addr);
                     OPENSSL_free(m);
-                    addr = NULL;
                     goto err;
                 }
             }
