@@ -18,6 +18,7 @@
 #if defined(OPENSSL_THREADS)
 # include "internal/thread_arch.h"
 #endif
+#include "internal/numbers.h"  /* UINT64_C */
 
 static const char *certfile, *keyfile;
 
