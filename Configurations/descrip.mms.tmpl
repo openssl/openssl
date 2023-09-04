@@ -211,7 +211,10 @@
   # format, relative to the directory where the .c file is located.  The logic
   # is that any inclusion, merged with one of these relative directories, will
   # find the requested inclusion file.
-  foreach (grep /\[\.crypto\.async\.arch\].*\.o$/, keys %{$unified_info{sources}}) {
+  # In the regexps, it's advisable to always start the file name with .*?, as
+  # the C source to OBJ file translation adds stuff at the beginning of the,
+  # name, such as [.ssl]bio_ssl.c -> [.ssl]libssl-shlib-bio_ssl.OBJ
+  foreach (grep /\[\.crypto\.async\.arch\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
       push @{$unified_info{includes_extra}->{$obj}}, qw(../);
   }
@@ -229,15 +232,14 @@
       # like "record/record.h".  Adding "./" as an inclusion directory helps
       # making this sort of header from these directories.
       push @{$unified_info{includes_extra}->{$obj}}, qw(./);
-  }
-  foreach (grep /\[\.ssl\].*?ssl_lib\.o$/, keys %{$unified_info{sources}}) {
-      my $obj = platform->obj($_);
-      # Some files in [.ssl] include "quic/quic_local.h", which in turn
-      # includes "../ssl_local.h".  Adding "./quic" as an inclusion directory
-      # helps making this sort of header from these directories.
+
+      # Additionally, an increasing amount of files in [.ssl] include
+      # "quic/quic_local.h", which in turn includes "../ssl_local.h".  Adding
+      # "./quic" as an inclusion directory helps making this sort of header
+      # from these directories.
       push @{$unified_info{includes_extra}->{$obj}}, qw(./quic);
   }
-  foreach (grep /\[\.ssl\.(?:record|statem)\].*?\.o$/, keys %{$unified_info{sources}}) {
+  foreach (grep /\[\.ssl\.(?:quic|record|statem)\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
       # Most of the files in [.ssl.record] and [.ssl.statem] include
       # "../ssl_local.h", which includes things like "record/record.h".
@@ -251,8 +253,10 @@
       # Most of the files in [.ssl.record.methods] include "../../ssl_local.h"
       # which includes things like "record/record.h".  Adding "../../" as an
       # inclusion directory helps making this sort of header from these
-      # directories.
-      push @{$unified_info{includes_extra}->{$obj}}, qw(../../);
+      # directories.  But this gets worse; through a series of inclusions,
+      # all of them based on the relative directory of the object file, there's
+      # a need to deal with an inclusion of "../ssl_local.h" as well.
+      push @{$unified_info{includes_extra}->{$obj}}, qw(../../), qw(../);
   }
   foreach (grep /\[\.test\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
@@ -264,6 +268,10 @@
       # directly, but that would end up with more whack-a-mole of this sort, so
       # nah, we do it broadly.
       push @{$unified_info{includes_extra}->{$obj}}, qw(../ssl/record/methods);
+      # Similarly, some include "../ssl/ssl_local.h", and somewhere down the
+      # line, "quic/quic_local.h" gets included, which includes "../ssl_local.h"
+      # The problem is fixed by adding ../ssl/quic too.
+      push @{$unified_info{includes_extra}->{$obj}}, qw(../ssl/quic);
   }
   foreach (grep /\[\.test\.helpers\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
