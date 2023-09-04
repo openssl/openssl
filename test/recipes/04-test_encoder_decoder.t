@@ -50,10 +50,10 @@ unless ($no_fips) {
 
     my $no_des = disabled("des");
 SKIP: {
-    skip "DES disabled", 2 if disabled("des");
-    ok(run(app([ 'openssl', 'genrsa', '-des3', '-out', 'epki.pem',
-                 '-passout', 'pass:pass' ])),
-       "rsa encrypt using a non fips algorithm");
+    skip "MD5 disabled", 2 if disabled("md5");
+    ok(run(app([ 'openssl', 'genrsa', '-aes128', '-out', 'epki.pem',
+                 '-traditional', '-passout', 'pass:pass' ])),
+       "rsa encrypted using a non fips algorithm MD5 in pbe");
 
     my $conf2 = srctop_file("test", "default-and-fips.cnf");
     ok(run(test(['decoder_propq_test', '-config', $conf2,
