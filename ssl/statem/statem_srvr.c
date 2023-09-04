@@ -2791,7 +2791,7 @@ CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
 
         if (EVP_DigestSignInit_ex(md_ctx, &pctx,
                                   md == NULL ? NULL : EVP_MD_get0_name(md),
-                                  sctx->libctx, sctx->propq, pkey,
+                                  sctx->libctx, SSL_CONNECTION_PROV_QUERRY(s), pkey,
                                   NULL) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
@@ -3004,7 +3004,7 @@ static int tls_process_cke_rsa(SSL_CONNECTION *s, PACKET *pkt)
         return 0;
     }
 
-    ctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, rsa, sctx->propq);
+    ctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, rsa, SSL_CONNECTION_PROV_QUERRY(s));
     if (ctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
@@ -3347,7 +3347,7 @@ static int tls_process_cke_gost18(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    pkey_ctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, pk, sctx->propq);
+    pkey_ctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, pk, SSL_CONNECTION_PROV_QUERRY(s));
     if (pkey_ctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
@@ -3670,7 +3670,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
         }
 
         certstart = certbytes;
-        x = X509_new_ex(sctx->libctx, sctx->propq);
+        x = X509_new_ex(sctx->libctx, SSL_CONNECTION_PROV_QUERRY(s));
         if (x == NULL) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_X509_LIB);
             goto err;
@@ -3993,7 +3993,7 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
      */
     const_p = senc;
     sess = d2i_SSL_SESSION_ex(NULL, &const_p, slen_full, sctx->libctx,
-                              sctx->propq);
+                              SSL_CONNECTION_PROV_QUERRY(s));
     if (sess == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -4069,7 +4069,7 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
         }
     } else {
         EVP_CIPHER *cipher = EVP_CIPHER_fetch(sctx->libctx, "AES-256-CBC",
-                                              sctx->propq);
+                                              SSL_CONNECTION_PROV_QUERRY(s));
 
         if (cipher == NULL) {
             /* Error is already recorded */

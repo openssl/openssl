@@ -47,7 +47,7 @@ static int tls1_PRF(SSL_CONNECTION *s,
     }
     kdf = EVP_KDF_fetch(SSL_CONNECTION_GET_CTX(s)->libctx,
                         OSSL_KDF_NAME_TLS1_PRF,
-                        SSL_CONNECTION_GET_CTX(s)->propq);
+                        SSL_CONNECTION_PROV_QUERRY(s));
     if (kdf == NULL)
         goto err;
     kctx = EVP_KDF_CTX_new(kdf);

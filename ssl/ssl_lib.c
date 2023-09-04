@@ -694,6 +694,26 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 }
 #endif
 
+SSL *SSL_new_ex(SSL_CTX *ctx, const char* propq)
+{
+    SSL *ret = NULL;
+
+    ret = SSL_new(ctx);
+    if (ret == NULL)
+        goto err;
+
+    if (propq != NULL) {
+        ret->propq = OPENSSL_strdup(propq);
+        if (ret->propq == NULL)
+            goto err;
+    }
+    return ret;
+err:
+    if (ret)
+        SSL_free(ret);
+    return NULL;
+}
+
 SSL *SSL_new(SSL_CTX *ctx)
 {
     if (ctx == NULL) {
@@ -1401,6 +1421,7 @@ void SSL_free(SSL *s)
     if (s->method != NULL)
         s->method->ssl_free(s);
 
+    OPENSSL_free(s->propq);
     SSL_CTX_free(s->ctx);
     CRYPTO_THREAD_lock_free(s->lock);
     CRYPTO_FREE_REF(&s->references);
@@ -6325,7 +6346,7 @@ int ssl_validate_ct(SSL_CONNECTION *s)
     }
 
     ctx = CT_POLICY_EVAL_CTX_new_ex(SSL_CONNECTION_GET_CTX(s)->libctx,
-                                    SSL_CONNECTION_GET_CTX(s)->propq);
+                                    SSL_CONNECTION_PROV_QUERRY(s));
     if (ctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CT_LIB);
         goto end;

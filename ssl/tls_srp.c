@@ -221,7 +221,7 @@ int ssl_srp_server_param_with_username_intern(SSL_CONNECTION *s, int *ad)
 
     return ((s->srp_ctx.B =
              SRP_Calc_B_ex(s->srp_ctx.b, s->srp_ctx.N, s->srp_ctx.g,
-                           s->srp_ctx.v, sctx->libctx, sctx->propq)) !=
+                           s->srp_ctx.v, sctx->libctx, SSL_CONNECTION_PROV_QUERRY(s))) !=
             NULL) ? SSL_ERROR_NONE : SSL3_AL_FATAL;
 }
 
@@ -259,7 +259,7 @@ int SSL_set_srp_server_param_pw(SSL *s, const char *user, const char *pass,
     sc->srp_ctx.s = NULL;
     if (!SRP_create_verifier_BN_ex(user, pass, &sc->srp_ctx.s, &sc->srp_ctx.v,
                                    sc->srp_ctx.N, sc->srp_ctx.g, s->ctx->libctx,
-                                   s->ctx->propq))
+                                   SSL_PROV_QUERRY(s)))
         return -1;
 
     return 1;
@@ -333,7 +333,7 @@ int srp_generate_server_master_secret(SSL_CONNECTION *s)
     if (!SRP_Verify_A_mod_N(s->srp_ctx.A, s->srp_ctx.N))
         goto err;
     if ((u = SRP_Calc_u_ex(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N,
-                           sctx->libctx, sctx->propq)) == NULL)
+                           sctx->libctx, SSL_CONNECTION_PROV_QUERRY(s))) == NULL)
         goto err;
     if ((K = SRP_Calc_server_key(s->srp_ctx.A, s->srp_ctx.v, u, s->srp_ctx.b,
                                  s->srp_ctx.N)) == NULL)
@@ -367,7 +367,7 @@ int srp_generate_client_master_secret(SSL_CONNECTION *s)
      */
     if (SRP_Verify_B_mod_N(s->srp_ctx.B, s->srp_ctx.N) == 0
             || (u = SRP_Calc_u_ex(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N,
-                                  sctx->libctx, sctx->propq))
+                                  sctx->libctx, SSL_CONNECTION_PROV_QUERRY(s)))
                == NULL
             || s->srp_ctx.SRP_give_srp_client_pwd_callback == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -380,12 +380,12 @@ int srp_generate_client_master_secret(SSL_CONNECTION *s)
         goto err;
     }
     if ((x = SRP_Calc_x_ex(s->srp_ctx.s, s->srp_ctx.login, passwd,
-                           sctx->libctx, sctx->propq)) == NULL
+                           sctx->libctx, SSL_CONNECTION_PROV_QUERRY(s))) == NULL
             || (K = SRP_Calc_client_key_ex(s->srp_ctx.N, s->srp_ctx.B,
                                            s->srp_ctx.g, x,
                                            s->srp_ctx.a, u,
                                            sctx->libctx,
-                                           sctx->propq)) == NULL) {
+                                           SSL_CONNECTION_PROV_QUERRY(s))) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }

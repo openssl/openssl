@@ -4747,7 +4747,7 @@ EVP_PKEY *ssl_generate_pkey(SSL_CONNECTION *s, EVP_PKEY *pm)
 
     if (pm == NULL)
         return NULL;
-    pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, pm, sctx->propq);
+    pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, pm, SSL_CONNECTION_PROV_QUERRY(s));
     if (pctx == NULL)
         goto err;
     if (EVP_PKEY_keygen_init(pctx) <= 0)
@@ -4776,7 +4776,7 @@ EVP_PKEY *ssl_generate_pkey_group(SSL_CONNECTION *s, uint16_t id)
     }
 
     pctx = EVP_PKEY_CTX_new_from_name(sctx->libctx, ginf->algorithm,
-                                      sctx->propq);
+                                      SSL_CONNECTION_PROV_QUERRY(s));
 
     if (pctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
@@ -4815,7 +4815,7 @@ EVP_PKEY *ssl_generate_param_group(SSL_CONNECTION *s, uint16_t id)
         goto err;
 
     pctx = EVP_PKEY_CTX_new_from_name(sctx->libctx, ginf->algorithm,
-                                      sctx->propq);
+                                      SSL_CONNECTION_PROV_QUERRY(s));
 
     if (pctx == NULL)
         goto err;
@@ -4875,7 +4875,7 @@ int ssl_derive(SSL_CONNECTION *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gense
         return 0;
     }
 
-    pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, privkey, sctx->propq);
+    pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, privkey, SSL_CONNECTION_PROV_QUERRY(s));
 
     if (EVP_PKEY_derive_init(pctx) <= 0
         || EVP_PKEY_derive_set_peer(pctx, pubkey) <= 0
@@ -4931,7 +4931,7 @@ int ssl_decapsulate(SSL_CONNECTION *s, EVP_PKEY *privkey,
         return 0;
     }
 
-    pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, privkey, sctx->propq);
+    pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, privkey, SSL_CONNECTION_PROV_QUERRY(s));
 
     if (EVP_PKEY_decapsulate_init(pctx, NULL) <= 0
             || EVP_PKEY_decapsulate(pctx, NULL, &pmslen, ct, ctlen) <= 0) {
@@ -4982,7 +4982,7 @@ int ssl_encapsulate(SSL_CONNECTION *s, EVP_PKEY *pubkey,
         return 0;
     }
 
-    pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, pubkey, sctx->propq);
+    pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, pubkey, SSL_CONNECTION_PROV_QUERRY(s));
 
     if (EVP_PKEY_encapsulate_init(pctx, NULL) <= 0
             || EVP_PKEY_encapsulate(pctx, NULL, &ctlen, NULL, &pmslen) <= 0

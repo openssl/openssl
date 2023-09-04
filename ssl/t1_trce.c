@@ -1285,7 +1285,7 @@ static int ssl_print_certificate(BIO *bio, const SSL_CONNECTION *sc, int indent,
     q = p + 3;
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "ASN.1Cert, length=%d", (int)clen);
-    x = X509_new_ex(ctx->libctx, ctx->propq);
+    x = X509_new_ex(ctx->libctx, SSL_CONNECTION_PROV_QUERRY(sc));
     if (x != NULL && d2i_X509(&x, &q, clen) == NULL) {
         X509_free(x);
         x = NULL;
@@ -1316,6 +1316,7 @@ static int ssl_print_raw_public_key(BIO *bio, const SSL *ssl, int server,
     size_t clen;
     const unsigned char *msg = *pmsg;
     size_t msglen = *pmsglen;
+    const char *propq = NULL;
 
     if (msglen < 3)
         return 0;
@@ -1328,7 +1329,10 @@ static int ssl_print_raw_public_key(BIO *bio, const SSL *ssl, int server,
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "raw_public_key, length=%d\n", (int)clen);
 
-    pkey = d2i_PUBKEY_ex(NULL, &msg, clen, ssl->ctx->libctx, ssl->ctx->propq);
+    propq = ssl->ctx->propq;
+    if (ssl && ssl->propq)
+        propq = ssl->propq;
+    pkey = d2i_PUBKEY_ex(NULL, &msg, clen, ssl->ctx->libctx, propq);
     if (pkey == NULL)
         return 0;
     EVP_PKEY_print_public(bio, pkey, indent + 2, NULL);

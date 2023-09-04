@@ -1203,6 +1203,7 @@ struct ssl_st {
     CRYPTO_RWLOCK *lock;
     /* extra application data */
     CRYPTO_EX_DATA ex_data;
+    char *propq;
 };
 
 struct ssl_connection_st {
@@ -1815,6 +1816,13 @@ struct ssl_connection_st {
     SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
 # define SSL_CONNECTION_GET_CTX(sc) ((sc)->ssl.ctx)
 # define SSL_CONNECTION_GET_SSL(sc) (&(sc)->ssl)
+# define SSL_CONNECTION_PROV_QUERRY(spq) \
+      (spq != NULL ? \
+          (SSL_CONNECTION_GET_SSL(spq) && SSL_CONNECTION_GET_SSL(spq)->propq != NULL ? \
+          SSL_CONNECTION_GET_SSL(spq)->propq : SSL_CONNECTION_GET_CTX(spq)->propq) : NULL)
+# define SSL_PROV_QUERRY(s) \
+      (s != NULL ? (s->propq ? s->propq : s->ctx->propq) : NULL)
+
 # ifndef OPENSSL_NO_QUIC
 #  include "quic/quic_local.h"
 #  define SSL_CONNECTION_FROM_SSL_int(ssl, c)                      \
