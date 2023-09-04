@@ -195,7 +195,6 @@ void *CRYPTO_zalloc(size_t num, const char *file, int line)
     void *ret;
 
     ret = CRYPTO_malloc(num, file, line);
-    FAILTEST();
     if (ret != NULL)
         memset(ret, 0, num);
 
@@ -208,7 +207,6 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     if (realloc_impl != CRYPTO_realloc)
         return realloc_impl(str, num, file, line);
 
-    FAILTEST();
     if (str == NULL)
         return CRYPTO_malloc(num, file, line);
 
@@ -217,6 +215,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return NULL;
     }
 
+    FAILTEST();
     return realloc(str, num);
 }
 
