@@ -1,6 +1,40 @@
 QUIC Polling API Design
 =======================
 
+- [QUIC Polling API Design](#quic-polling-api-design)
+  * [Background](#background)
+  * [Requirements](#requirements)
+  * [Reflections on Past Mistakes in Poller Interface Design](#reflections-on-past-mistakes-in-poller-interface-design)
+  * [Example Use Cases](#example-use-cases)
+    + [Use Case A: Simple Blocking or Non-Blocking Application](#use-case-a--simple-blocking-or-non-blocking-application)
+    + [Use Case B: Application-Controlled Hierarchical Polling](#use-case-b--application-controlled-hierarchical-polling)
+  * [Use of Poll Descriptors](#use-of-poll-descriptors)
+  * [Event Types and Representation](#event-types-and-representation)
+  * [Designs](#designs)
+    + [Sketch A: One-Shot/Immediate Mode API](#sketch-a--one-shot-immediate-mode-api)
+    + [Sketch B: Registered/Retained Mode API](#sketch-b--registered-retained-mode-api)
+      - [Use Case Examples](#use-case-examples)
+  * [Proposal](#proposal)
+  * [Custom Poller Methods](#custom-poller-methods)
+    + [Translation](#translation)
+    + [Custom Poller Methods API](#custom-poller-methods-api)
+    + [Internal Polling: Usage within SSL Objects](#internal-polling--usage-within-ssl-objects)
+    + [External Polling: Usage over SSL Objects](#external-polling--usage-over-ssl-objects)
+    + [Future Adaptation to Internal Pollable Resources](#future-adaptation-to-internal-pollable-resources)
+  * [Worked Examples](#worked-examples)
+    + [Internal Polling — Default Poll Method](#internal-polling---default-poll-method)
+    + [Internal Polling — Custom Poll Method](#internal-polling---custom-poll-method)
+    + [External Polling — Immediate Mode](#external-polling---immediate-mode)
+    + [External Polling — Retained Mode](#external-polling---retained-mode)
+    + [External Polling — Immediate Mode Without Event Handling](#external-polling---immediate-mode-without-event-handling)
+  * [Change Notification Callback Mechanism](#change-notification-callback-mechanism)
+  * [Q&A](#q-a)
+  * [Windows support](#windows-support)
+  * [Extra features on QUIC objects](#extra-features-on-quic-objects)
+    + [Low-watermark functionality](#low-watermark-functionality)
+    + [Timeouts](#timeouts)
+    + [Autotick control](#autotick-control)
+
 Background
 ----------
 
