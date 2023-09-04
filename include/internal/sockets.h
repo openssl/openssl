@@ -89,6 +89,9 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  endif
 
 #  include <netdb.h>
+#  if defined(OPENSSL_SYS_VMS)
+typedef size_t socklen_t;        /* Currently appears to be missing on VMS */
+#  endif
 #  if defined(OPENSSL_SYS_VMS_NODECC)
 #   include <socket.h>
 #   include <in.h>
