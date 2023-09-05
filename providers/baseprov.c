@@ -19,6 +19,7 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
+#include "prov/names.h"
 
 /*
  * Forward declarations to ensure that interface functions are correctly
@@ -90,6 +91,11 @@ static const OSSL_ALGORITHM base_store[] = {
 #undef STORE
 };
 
+static const OSSL_ALGORITHM base_rands[] = {
+    { PROV_NAMES_SEED_SRC, "provider=base", ossl_seed_src_functions },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM *base_query(void *provctx, int operation_id,
                                          int *no_cache)
 {
@@ -101,6 +107,8 @@ static const OSSL_ALGORITHM *base_query(void *provctx, int operation_id,
         return base_decoder;
     case OSSL_OP_STORE:
         return base_store;
+    case OSSL_OP_RAND:
+        return base_rands;
     }
     return NULL;
 }
