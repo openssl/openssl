@@ -58,7 +58,7 @@ IETF RFC 7292 (L<https://tools.ietf.org/html/rfc7292>)
 =head1 SEE ALSO
 
 L<d2i_PKCS12(3)>,
-L<EVP_KDF-PKCS12KDF(3)>,
+L<EVP_KDF-PKCS12KDF(7)>,
 L<PKCS12_create(3)>,
 L<passphrase-encoding(7)>
 
