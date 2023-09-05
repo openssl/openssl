@@ -100,14 +100,17 @@ int ossl_param_build_set_multi_key_bn(OSSL_PARAM_BLD *bld, OSSL_PARAM *params,
                                       STACK_OF(BIGNUM_const) *stk)
 {
     int i, sz = sk_BIGNUM_const_num(stk);
+    const BIGNUM *value = NULL;
     OSSL_PARAM *p;
 
 
     if (bld != NULL) {
         for (i = 0; i < sz && names[i] != NULL; ++i) {
-            if (!OSSL_PARAM_BLD_push_BN(bld, names[i],
-                                        sk_BIGNUM_const_value(stk, i)))
-                return 0;
+            value = sk_BIGNUM_const_value(stk, i);
+            if (value)
+                if (!OSSL_PARAM_BLD_push_BN(bld, names[i],
+                                            sk_BIGNUM_const_value(stk, i)))
+                    return 0;
         }
         return 1;
     }
@@ -115,8 +118,10 @@ int ossl_param_build_set_multi_key_bn(OSSL_PARAM_BLD *bld, OSSL_PARAM *params,
     for (i = 0; i < sz && names[i] != NULL; ++i) {
         p = OSSL_PARAM_locate(params, names[i]);
         if (p != NULL) {
-            if (!OSSL_PARAM_set_BN(p, sk_BIGNUM_const_value(stk, i)))
-                return 0;
+            value = sk_BIGNUM_const_value(stk, i);
+            if (value)
+                if (!OSSL_PARAM_set_BN(p, sk_BIGNUM_const_value(stk, i)))
+                    return 0;
         }
     }
     return 1;
