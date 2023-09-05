@@ -114,7 +114,7 @@ jobs:
         sudo apt-get update
         sudo apt-get -y install ${{ matrix.zoo.cc }}
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
 
