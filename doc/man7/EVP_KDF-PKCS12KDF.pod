@@ -47,7 +47,7 @@ RFC 7292 section B.3.
 =head1 NOTES
 
 This algorithm is not available in the FIPS provider as it is not FIPS
-approved.
+approvable.
 
 A typical application of this algorithm is to derive keying material for an
 encryption algorithm from a password in the "pass", a salt in "salt",

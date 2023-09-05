@@ -85,7 +85,7 @@ should be used.
 
 I<mac_iter> can be set to -1 and the MAC will then be omitted entirely.
 This can be useful when running with the FIPS provider as the PKCS12KDF
-is not a FIPS approved algorithm.
+is not a FIPS approvable algorithm.
 
 PKCS12_create() makes assumptions regarding the encoding of the given pass
 phrase.
