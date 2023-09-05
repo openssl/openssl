@@ -60,6 +60,13 @@ If there are insufficient data present to satisfy a call, an error is returned.
 Sets the bytes returned when the test generator is sent a nonce request.
 Each nonce request will return all of the bytes.
 
+=item "generate" (B<OSSL_RAND_PARAM_GENERATE>) <integer>
+
+If this parameter is zero, it will only emit the nonce and entropy data
+supplied via the aforementioned parameters.  Otherwise, low quality
+non-cryptographic pseudorandom output is produced.  This parameter defaults
+to zero.
+
 =back
 
 =head1 NOTES

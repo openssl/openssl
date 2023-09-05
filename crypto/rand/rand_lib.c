@@ -30,6 +30,7 @@
 # include "crypto/rand_pool.h"
 # include "prov/seeding.h"
 # include "internal/e_os.h"
+# include "internal/property.h"
 
 # ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
@@ -338,8 +339,6 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
     }
 #endif
 
-    if (num < 0)
-        return 0;
     rand = RAND_get0_private(ctx);
     if (rand != NULL)
         return EVP_RAND_generate(rand, buf, num, strength, 0, NULL, 0);
@@ -349,6 +348,8 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
 
 int RAND_priv_bytes(unsigned char *buf, int num)
 {
+    if (num < 0)
+        return 0;
     return RAND_priv_bytes_ex(NULL, buf, (size_t)num, 0);
 }
 
@@ -367,8 +368,6 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
     }
 #endif
 
-    if (num < 0)
-        return 0;
     rand = RAND_get0_public(ctx);
     if (rand != NULL)
         return EVP_RAND_generate(rand, buf, num, strength, 0, NULL, 0);
@@ -378,6 +377,8 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
 
 int RAND_bytes(unsigned char *buf, int num)
 {
+    if (num < 0)
+        return 0;
     return RAND_bytes_ex(NULL, buf, (size_t)num, 0);
 }
 
@@ -527,29 +528,104 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
 {
     EVP_RAND *rand;
     RAND_GLOBAL *dgbl = rand_get_global(libctx);
-    EVP_RAND_CTX *ctx;
-    char *name;
+    EVP_RAND_CTX *ctx = NULL;
+    const char *propq = dgbl->seed_propq;
+    char *name, *props = NULL;
+    size_t props_len;
+    OSSL_PROPERTY_LIST *pl1, *pl2, *pl3 = NULL;
 
     if (dgbl == NULL)
         return NULL;
-    name = dgbl->seed_name != NULL ? dgbl->seed_name : "SEED-SRC";
-    rand = EVP_RAND_fetch(libctx, name, dgbl->seed_propq);
+    if (dgbl->seed_name != NULL) {
+        name = dgbl->seed_name;
+    } else {
+        /*
+         * Default to our internal seed source.  This isn't part of the FIPS
+         * provider so we need to override any FIPS properties.
+         */
+        if (propq == NULL || *propq == '\0') {
+            propq = "-fips";
+        } else {
+            pl1 = ossl_parse_query(libctx, propq, 1);
+            if (pl1 == NULL) {
+                ERR_raise(ERR_LIB_RAND, RAND_R_INVALID_PROPERTY_QUERY);
+                return NULL;
+            }
+            pl2 = ossl_parse_query(libctx, "-fips", 1);
+            if (pl2 == NULL) {
+                ossl_property_free(pl1);
+                ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
+                return NULL;
+            }
+            pl3 = ossl_property_merge(pl2, pl1);
+            ossl_property_free(pl1);
+            ossl_property_free(pl2);
+            if (pl3 == NULL) {
+                ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
+                return NULL;
+            }
+            props_len = ossl_property_list_to_string(libctx, pl3, NULL, 0);
+            if (props_len == 0) {
+                /* Shouldn't happen since we added a query element */
+                ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
+                goto err;
+            } else {
+                props = OPENSSL_malloc(props_len);
+                if (props == NULL) {
+                    ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
+                    goto err;
+                }
+                if (ossl_property_list_to_string(libctx, pl3,
+                                                 props, props_len) == 0) {
+                    ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+                ossl_property_free(pl3);
+                pl3 = NULL;
+                propq = props;
+            }
+        }
+        name = "SEED-SRC";
+    }
+
+    rand = EVP_RAND_fetch(libctx, name, propq);
     if (rand == NULL) {
         ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
-        return NULL;
+        goto err;
     }
     ctx = EVP_RAND_CTX_new(rand, NULL);
     EVP_RAND_free(rand);
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_CREATE_DRBG);
-        return NULL;
+        goto err;
     }
     if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0, NULL)) {
         ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
         EVP_RAND_CTX_free(ctx);
-        return NULL;
+        goto err;
     }
+    OPENSSL_free(props);
     return ctx;
+ err:
+    EVP_RAND_CTX_free(ctx);
+    ossl_property_free(pl3);
+    OPENSSL_free(props);
+    return NULL;
+}
+
+EVP_RAND_CTX *ossl_rand_get0_seed_noncreating(OSSL_LIB_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+    EVP_RAND_CTX *ret;
+
+    if (dgbl == NULL)
+        return NULL;
+
+    if (!CRYPTO_THREAD_read_lock(dgbl->lock))
+        return NULL;
+    ret = dgbl->seed;
+    CRYPTO_THREAD_unlock(dgbl->lock);
+    return ret;
 }
 #endif
 
@@ -873,7 +949,7 @@ int RAND_set_seed_source_type(OSSL_LIB_CTX *ctx, const char *seed,
 
     if (dgbl == NULL)
         return 0;
-    if (dgbl->primary != NULL) {
+    if (dgbl->seed != NULL) {
         ERR_raise(ERR_LIB_CRYPTO, RAND_R_ALREADY_INSTANTIATED);
         return 0;
     }
