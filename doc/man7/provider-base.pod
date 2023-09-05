@@ -76,11 +76,17 @@ provider-base
  size_t get_entropy(const OSSL_CORE_HANDLE *handle,
                     unsigned char **pout, int entropy,
                     size_t min_len, size_t max_len);
+ size_t get_user_entropy(const OSSL_CORE_HANDLE *handle,
+                         unsigned char **pout, int entropy,
+                         size_t min_len, size_t max_len);
  void cleanup_entropy(const OSSL_CORE_HANDLE *handle,
                       unsigned char *buf, size_t len);
  size_t get_nonce(const OSSL_CORE_HANDLE *handle,
                   unsigned char **pout, size_t min_len, size_t max_len,
                   const void *salt, size_t salt_len);
+ size_t get_user_nonce(const OSSL_CORE_HANDLE *handle,
+                       unsigned char **pout, size_t min_len, size_t max_len,
+                       const void *salt, size_t salt_len);
  void cleanup_nonce(const OSSL_CORE_HANDLE *handle,
                     unsigned char *buf, size_t len);
 
@@ -171,8 +177,10 @@ provider):
  OPENSSL_cleanse                OSSL_FUNC_OPENSSL_CLEANSE
  OSSL_SELF_TEST_set_callback    OSSL_FUNC_SELF_TEST_CB
  ossl_rand_get_entropy          OSSL_FUNC_GET_ENTROPY
+ ossl_rand_get_user_entropy     OSSL_FUNC_GET_USER_ENTROPY
  ossl_rand_cleanup_entropy      OSSL_FUNC_CLEANUP_ENTROPY
  ossl_rand_get_nonce            OSSL_FUNC_GET_NONCE
+ ossl_rand_get_user_nonce       OSSL_FUNC_GET_USER_NONCE
  ossl_rand_cleanup_nonce        OSSL_FUNC_CLEANUP_NONCE
  provider_register_child_cb     OSSL_FUNC_PROVIDER_REGISTER_CHILD_CB
  provider_deregister_child_cb   OSSL_FUNC_PROVIDER_DEREGISTER_CHILD_CB
@@ -302,9 +310,15 @@ output will have at least I<min_len> and at most I<max_len> bytes.
 The buffer address is stored in I<*pout> and the buffer length is
 returned to the caller.  On error, zero is returned.
 
+get_user_entropy() is the same as get_entropy() except that it will
+attempt to gather seed material via the seed source specified by a call to
+L<RAND_set_seed_source_type(3)> or via L<config(5)/Random Configuration>.
+is the same as get_entropy() except it will attempt to use
+
 cleanup_entropy() is used to clean up and free the buffer returned by
-get_entropy().  The entropy pointer returned by get_entropy() is passed in
-B<buf> and its length in B<len>.
+get_entropy() or get_user_entropy().  The entropy pointer returned by
+get_entropy() or get_user_entropy() is passed in B<buf> and its length
+in B<len>.
 
 get_nonce() retrieves a nonce using the passed I<salt> parameter
 of length I<salt_len> and operating system specific information.
@@ -314,9 +328,14 @@ The output is stored in a buffer which contains at least I<min_len> and at
 most I<max_len> bytes.  The buffer address is stored in I<*pout> and the
 buffer length returned to the caller.  On error, zero is returned.
 
-cleanup_nonce() is used to clean up and free the buffer returned by
-get_nonce().  The nonce pointer returned by get_nonce() is passed in
-B<buf> and its length in B<len>.
+get_user_nonce() is the same as get_nonce() except that it will attempt
+to gather seed material via the seed source specified by a call to
+L<RAND_set_seed_source_type(3)> or via L<config(5)/Random Configuration>.
+
+cleanup_nonce() is used to clean up and free the buffer returned
+by get_nonce() or get_user_nonce().  The nonce pointer returned by
+get_nonce() or get_user_nonce() is passed in B<buf> and its length
+in B<len>.
 
 provider_register_child_cb() registers callbacks for being informed about the
 loading and unloading of providers in the application's library context.
