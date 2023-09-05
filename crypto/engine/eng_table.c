@@ -93,9 +93,11 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
         added = 1;
     if (!int_table_check(table, 1))
         goto end;
-    if (added)
-        /* The cleanup callback needs to be added */
-        engine_cleanup_add_first(cleanup);
+    /* The cleanup callback needs to be added */
+    if (added && !engine_cleanup_add_first(cleanup)) {
+        lh_ENGINE_PILE_free(&(*table)->piles);
+        *table = NULL;
+    }
     while (num_nids--) {
         tmplate.nid = *nids;
         fnd = lh_ENGINE_PILE_retrieve(&(*table)->piles, &tmplate);
