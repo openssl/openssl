@@ -345,6 +345,8 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
     }
 #endif
 
+    if (num < 0)
+        return 0;
     rand = RAND_get0_private(ctx);
     if (rand != NULL)
         return EVP_RAND_generate(rand, buf, num, strength, 0, NULL, 0);
@@ -354,8 +356,6 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
 
 int RAND_priv_bytes(unsigned char *buf, int num)
 {
-    if (num < 0)
-        return 0;
     return RAND_priv_bytes_ex(NULL, buf, (size_t)num, 0);
 }
 
@@ -374,6 +374,8 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
     }
 #endif
 
+    if (num < 0)
+        return 0;
     rand = RAND_get0_public(ctx);
     if (rand != NULL)
         return EVP_RAND_generate(rand, buf, num, strength, 0, NULL, 0);
@@ -383,8 +385,6 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
 
 int RAND_bytes(unsigned char *buf, int num)
 {
-    if (num < 0)
-        return 0;
     return RAND_bytes_ex(NULL, buf, (size_t)num, 0);
 }
 
@@ -737,6 +737,18 @@ EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
     }
     return rand;
 }
+
+#ifdef FIPS_MODULE
+EVP_RAND_CTX *ossl_rand_get0_private_noncreating(OSSL_LIB_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (dgbl == NULL)
+        return NULL;
+
+    return CRYPTO_THREAD_get_local(&dgbl->private);
+}
+#endif
 
 int RAND_set0_public(OSSL_LIB_CTX *ctx, EVP_RAND_CTX *rand)
 {
