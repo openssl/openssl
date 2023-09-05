@@ -125,4 +125,8 @@ void ossl_rand_cleanup_nonce(ossl_unused const OSSL_CORE_HANDLE *handle,
 size_t ossl_pool_acquire_entropy(RAND_POOL *pool);
 int ossl_pool_add_nonce_data(RAND_POOL *pool);
 
+# ifdef FIPS_MODULE
+EVP_RAND_CTX *ossl_rand_get0_private_noncreating(OSSL_LIB_CTX *ctx);
+# endif
+
 #endif
