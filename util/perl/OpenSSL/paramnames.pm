@@ -198,6 +198,7 @@ my %params = (
     'RAND_PARAM_MAX_REQUEST' =>             "max_request",
     'RAND_PARAM_TEST_ENTROPY' =>            "test_entropy",
     'RAND_PARAM_TEST_NONCE' =>              "test_nonce",
+    'RAND_PARAM_GENERATE' =>                "generate",
 
 # RAND/DRBG names
     'DRBG_PARAM_RESEED_REQUESTS' =>         "reseed_requests",

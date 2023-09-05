@@ -19,6 +19,7 @@
 #include "internal/e_os.h"
 #include "internal/tsan_assist.h"
 #include "prov/providercommon.h"
+#include "crypto/rand.h"
 
 /*
  * We're cheating here. Normally we don't allow RUN_ONCE usage inside the FIPS
@@ -406,14 +407,14 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     }
 
     /* Verify that the RNG has been restored properly */
-    testrand = EVP_RAND_fetch(st->libctx, "TEST-RAND", NULL);
-    if (testrand == NULL
-            || (rng = RAND_get0_private(st->libctx)) == NULL
-            || strcmp(EVP_RAND_get0_name(EVP_RAND_CTX_get0_rand(rng)),
-                      EVP_RAND_get0_name(testrand)) == 0) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
-        goto end;
-    }
+    rng = ossl_rand_get0_private_noncreating(st->libctx);
+    if (rng != NULL)
+        if ((testrand = EVP_RAND_fetch(st->libctx, "TEST-RAND", NULL)) == NULL
+                || strcmp(EVP_RAND_get0_name(EVP_RAND_CTX_get0_rand(rng)),
+                          EVP_RAND_get0_name(testrand)) == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
+            goto end;
+        }
 
     ok = 1;
 end:
