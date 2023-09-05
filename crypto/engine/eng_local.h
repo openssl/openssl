@@ -46,8 +46,8 @@ typedef struct st_engine_cleanup_item {
     ENGINE_CLEANUP_CB *cb;
 } ENGINE_CLEANUP_ITEM;
 DEFINE_STACK_OF(ENGINE_CLEANUP_ITEM)
-void engine_cleanup_add_first(ENGINE_CLEANUP_CB *cb);
-void engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb);
+int engine_cleanup_add_first(ENGINE_CLEANUP_CB *cb);
+int engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb);
 
 /* We need stacks of ENGINEs for use in eng_table.c */
 DEFINE_STACK_OF(ENGINE)
