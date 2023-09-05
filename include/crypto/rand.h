@@ -108,15 +108,21 @@ void ossl_random_add_conf_module(void);
 /*
  * Get and cleanup random seed material.
  */
-size_t ossl_rand_get_entropy(ossl_unused const OSSL_CORE_HANDLE *handle,
+size_t ossl_rand_get_entropy(OSSL_LIB_CTX *ctx,
                              unsigned char **pout, int entropy,
                              size_t min_len, size_t max_len);
-void ossl_rand_cleanup_entropy(ossl_unused const OSSL_CORE_HANDLE *handle,
+size_t ossl_rand_get_user_entropy(OSSL_LIB_CTX *ctx,
+                                  unsigned char **pout, int entropy,
+                                  size_t min_len, size_t max_len);
+void ossl_rand_cleanup_entropy(OSSL_LIB_CTX *ctx,
                                unsigned char *buf, size_t len);
-size_t ossl_rand_get_nonce(ossl_unused const OSSL_CORE_HANDLE *handle,
+size_t ossl_rand_get_nonce(OSSL_LIB_CTX *ctx,
                            unsigned char **pout, size_t min_len, size_t max_len,
                            const void *salt, size_t salt_len);
-void ossl_rand_cleanup_nonce(ossl_unused const OSSL_CORE_HANDLE *handle,
+size_t ossl_rand_get_user_nonce(OSSL_LIB_CTX *ctx, unsigned char **pout,
+                                size_t min_len, size_t max_len,
+                                const void *salt, size_t salt_len);
+void ossl_rand_cleanup_nonce(OSSL_LIB_CTX *ctx,
                              unsigned char *buf, size_t len);
 
 /*
@@ -127,6 +133,7 @@ int ossl_pool_add_nonce_data(RAND_POOL *pool);
 
 # ifdef FIPS_MODULE
 EVP_RAND_CTX *ossl_rand_get0_private_noncreating(OSSL_LIB_CTX *ctx);
+# else
+EVP_RAND_CTX *ossl_rand_get0_seed_noncreating(OSSL_LIB_CTX *ctx);
 # endif
-
 #endif
