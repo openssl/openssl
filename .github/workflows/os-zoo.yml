@@ -31,7 +31,7 @@ jobs:
       run: |
         apk --no-cache add build-base perl linux-headers git ${{ matrix.cc }}
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: config
       run: |
@@ -65,7 +65,7 @@ jobs:
         ]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -88,7 +88,7 @@ jobs:
         ]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - uses: ilammy/msvc-dev-cmd@v1

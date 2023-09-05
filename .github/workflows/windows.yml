@@ -27,7 +27,7 @@ jobs:
             config: --strict-warnings no-fips
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - uses: ilammy/msvc-dev-cmd@v1
@@ -65,7 +65,7 @@ jobs:
           - windows-2022
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - uses: ilammy/msvc-dev-cmd@v1
@@ -91,7 +91,7 @@ jobs:
           - windows-2022
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - uses: ilammy/msvc-dev-cmd@v1
@@ -131,7 +131,7 @@ jobs:
       MAKE_PARAMS: -j 4
     steps:
 # Checkout before cygwin can mess with PATH...
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: cygwin/cygwin-install-action@master
       with:
          packages: perl git make gcc-core
