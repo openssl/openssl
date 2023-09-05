@@ -47,7 +47,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
      */
     for (ai = res; ai != NULL; ai = BIO_ADDRINFO_next(ai)) {
         /*
-         * Create a TCP socket. We could equally use non-OpenSSL calls such
+         * Create a UDP socket. We could equally use non-OpenSSL calls such
          * as "socket" here for this and the subsequent connect and close
          * functions. But for portability reasons and also so that we get
          * errors on the OpenSSL stack in the event of a failure we use

@@ -48,7 +48,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
      */
     for (ai = res; ai != NULL; ai = BIO_ADDRINFO_next(ai)) {
         /*
-         * Create a TCP socket. We could equally use non-OpenSSL calls such
+         * Create a UDP socket. We could equally use non-OpenSSL calls such
          * as "socket" here for this and the subsequent connect and close
          * functions. But for portability reasons and also so that we get
          * errors on the OpenSSL stack in the event of a failure we use
@@ -139,8 +139,21 @@ static void wait_for_activity(SSL *ssl)
     /*
      * Wait until the socket is writeable or readable. We use select here
      * for the sake of simplicity and portability, but you could equally use
-     * poll/epoll or similar functions. If we have a timeout we use it to
-     * ensure that OpenSSL is called when it wants to be.
+     * poll/epoll or similar functions
+     *
+     * NOTE: For the purposes of this demonstration code this effectively
+     * makes this demo block until it has something more useful to do. In a
+     * real application you probably want to go and do other work here (e.g.
+     * update a GUI, or service other connections).
+     *
+     * Let's say for example that you want to update the progress counter on
+     * a GUI every 100ms. One way to do that would be to use the timeout in
+     * the last parameter to "select" below. If the tvp value is greater
+     * than 100ms then use 100ms instead. Then, when select returns, you
+     * check if it did so because of activity on the file descriptors or
+     * because of the timeout. If the 100ms GUI timeout has expired but the
+     * tvp timeout has not then go and update the GUI and then restart the
+     * "select" (with updated timeouts).
      */
 
     select(width, &rfds, &wfds, NULL, tvp);

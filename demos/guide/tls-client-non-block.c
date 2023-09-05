@@ -111,9 +111,21 @@ static void wait_for_activity(SSL *ssl, int write)
     width = sock + 1;
 
     /*
-     * Wait until the socket is writeable or readable. We use select here for
-     * the sake of simplicity and portability, but you could equally use
+     * Wait until the socket is writeable or readable. We use select here
+     * for the sake of simplicity and portability, but you could equally use
      * poll/epoll or similar functions
+     *
+     * NOTE: For the purposes of this demonstration code this effectively
+     * makes this demo block until it has something more useful to do. In a
+     * real application you probably want to go and do other work here (e.g.
+     * update a GUI, or service other connections).
+     *
+     * Let's say for example that you want to update the progress counter on
+     * a GUI every 100ms. One way to do that would be to add a 100ms timeout
+     * in the last parameter to "select" below. Then, when select returns,
+     * you check if it did so because of activity on the file descriptors or
+     * because of the timeout. If it is due to the timeout then update the
+     * GUI and then restart the "select".
      */
     if (write)
         select(width, NULL, &fds, NULL, NULL);
