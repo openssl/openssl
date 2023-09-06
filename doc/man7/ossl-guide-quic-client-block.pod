@@ -123,6 +123,7 @@ for TCP).
 
         /* Set to nonblocking mode */
         if (!BIO_socket_nbio(sock, 1)) {
+            BIO_closesocket(sock);
             sock = -1;
             continue;
         }
