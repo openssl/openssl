@@ -78,13 +78,17 @@ EVP_DigestSqueeze(ctx, out, outlen).
 ##### Pros
 
   - Seems like a better name.
+  - The existing function does not change, so it is not affected by logic that needs to
+    run for the multi squeeze case.
+  - The behaviour of the existing API is the same.
+  - At least one other toolkit uses this approach.
 
 ##### Cons
 
   - Adds an extra API.
   - The interaction between the 2 API's needs to be clearly documented.
-     - A call to EVP_DigestSqueeze() after EVP_DigestFinalXOF() would fail.
-     - A call to EVP_DigestFinalXOF() after the EVP_DigestSqueeze() would fail? Is this confusing.
+  - A call to EVP_DigestSqueeze() after EVP_DigestFinalXOF() would fail.
+  - A call to EVP_DigestFinalXOF() after the EVP_DigestSqueeze() would fail? Is this confusing.
 
 #### Proposal 3
 
@@ -99,6 +103,18 @@ Create a completely new type e.g. EVP_XOF_MD to implement XOF digests
 
   - XOF operations are required for Post Quantum signatures which currently use an EVP_MD object. This would then complicate the Signature API also.
   - Duplication of the EVP_MD code (although all legacy/engine code would be removed).
+
+Choosing a name for the API that allows multiple output calls
+-------------------------------------------------------------
+
+Currently OpenSSL only uses XOF's which use a sponge construction (which uses
+the terms absorb and squeeze).
+There will be other XOF's that do not use the sponge construction such as Blake2.
+
+The proposed API name to use is EVP_DigestSqueeze.
+The alternate name suggested was EVP_DigestExtract.
+The terms extract and expand are used by HKDF so I think this name would be confusing.
+
 
 API Discussion of other XOF API'S
 ---------------------------------
@@ -138,6 +154,13 @@ A reset can be done by calling:
 EVP_DigestInit_ex2(ctx, NULL, NULL);
 ```
 
+### State Copy
+
+The internal state can be copied by calling:
+```
+EVP_MD_CTX_copy_ex(ctx, newctx);
+```
+
 Low Level squeeze changes
 --------------------------
 
@@ -169,9 +192,9 @@ See https://github.com/openssl/openssl/pull/13470.
 #### Cons
 
   - The logic in the c reference has many if clauses.
-  - This C code also needs to be written in assembler, the logic would also be different in different assembler routines
-    due to the internal format of the state A being different.
-  - The general SHA3 case would be slower unless code was duplicated?
+  - This C code also needs to be written in assembler, the logic would also be different in
+    different assembler routines due to the internal format of the state A being different.
+  - The general SHA3 case would be slower unless code was duplicated.
 
 ### Solution 2
 
@@ -204,8 +227,8 @@ Perform a one-shot squeeze on the original absorbed data and throw away the firs
 
 ### Solution 4 (Proposed Solution)
 
-An alternative approach to solution 2 is to modify the SHA3_squeeze() slightly so that it can pass in a boolean that handles
-the call to KeccakF1600() correctly for multiple calls.
+An alternative approach to solution 2 is to modify the SHA3_squeeze() slightly so that it can pass in a boolean that
+handles the call to KeccakF1600() correctly for multiple calls.
 
 #### Pros
 
