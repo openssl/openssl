@@ -66,6 +66,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
 
         /* Set to nonblocking mode */
         if (!BIO_socket_nbio(sock, 1)) {
+            BIO_closesocket(sock);
             sock = -1;
             continue;
         }
