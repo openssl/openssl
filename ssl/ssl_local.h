@@ -2994,7 +2994,7 @@ void ossl_ssl_set_custom_record_layer(SSL_CONNECTION *s,
                                       void *rlarg);
 
 long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
-const char *ssl_connection_prov_querry(SSL_CONNECTION *ssl_con);
+const char *ssl_connection_prov_querry(const SSL_CONNECTION *ssl_con);
 
 /*
  * Options which no longer have any effect, but which can be implemented

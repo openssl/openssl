@@ -3049,7 +3049,7 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic)
     }
 }
 
-const char *ssl_connection_prov_querry(SSL_CONNECTION *ssl_conn)
+const char *ssl_connection_prov_querry(const SSL_CONNECTION *ssl_conn)
 {
     /* Return propq from SSL object prior when set,
      * otherwise use the SSL_CTX propq.
