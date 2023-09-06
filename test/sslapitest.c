@@ -11469,9 +11469,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_key_update_peer_in_read, 2);
     ADD_ALL_TESTS(test_key_update_local_in_write, 2);
     ADD_ALL_TESTS(test_key_update_local_in_read, 2);
+    ADD_ALL_TESTS(test_ssl_new_ex, 2);
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 2);
-    ADD_ALL_TESTS(test_ssl_new_ex, 2);
     ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));
 #if !defined(OPENSSL_NO_SRP) && !defined(OPENSSL_NO_TLS1_2)
     ADD_ALL_TESTS(test_srp, 6);
