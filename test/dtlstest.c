@@ -100,7 +100,7 @@ static int test_dtls_unprocessed(int testidx)
 
     /* BIO is freed by create_ssl_connection on error */
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl1, &clientssl1,
-                                      NULL, c_to_s_fbio)))
+                                      NULL, NULL, c_to_s_fbio)))
         goto end;
 
     DTLS_set_timer_cb(clientssl1, timer_cb);
@@ -223,7 +223,7 @@ static int test_dtls_drop_records(int idx)
     if (idx >= TOTAL_FULL_HAND_RECORDS) {
         /* We're going to do a resumption handshake. Get a session first. */
         if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                          NULL, NULL))
+                                          NULL, NULL, NULL))
                 || !TEST_true(create_ssl_connection(serverssl, clientssl,
                               SSL_ERROR_NONE))
                 || !TEST_ptr(sess = SSL_get1_session(clientssl)))
@@ -253,7 +253,7 @@ static int test_dtls_drop_records(int idx)
 
     /* BIO is freed by create_ssl_connection on error */
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                      NULL, c_to_s_fbio)))
+                                      NULL, NULL, c_to_s_fbio)))
         goto end;
 
     if (sess != NULL) {
@@ -331,7 +331,7 @@ static int test_cookie(void)
 #endif
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                      NULL, NULL))
+                                      NULL, NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE)))
         goto end;
@@ -367,7 +367,7 @@ static int test_dtls_duplicate_records(void)
 #endif
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                      NULL, NULL)))
+                                      NULL, NULL, NULL)))
         goto end;
 
     DTLS_set_timer_cb(clientssl, timer_cb);
@@ -502,7 +502,7 @@ static int test_swap_records(int idx)
 #endif
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl,
-                                      NULL, NULL)))
+                                      NULL, NULL, NULL)))
         goto end;
 
     /* Send flight 1: ClientHello */
@@ -612,7 +612,7 @@ static int test_listen(void)
     SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_cb);
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                      NULL, NULL)))
+                                      NULL, NULL, NULL)))
         goto end;
 
     DTLS_set_timer_cb(clientssl, timer_cb);

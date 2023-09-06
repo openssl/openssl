@@ -1816,12 +1816,8 @@ struct ssl_connection_st {
     SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
 # define SSL_CONNECTION_GET_CTX(sc) ((sc)->ssl.ctx)
 # define SSL_CONNECTION_GET_SSL(sc) (&(sc)->ssl)
-# define SSL_CONNECTION_PROV_QUERRY(spq) \
-      (spq != NULL ? \
-          (SSL_CONNECTION_GET_SSL(spq) && SSL_CONNECTION_GET_SSL(spq)->propq != NULL ? \
-          SSL_CONNECTION_GET_SSL(spq)->propq : SSL_CONNECTION_GET_CTX(spq)->propq) : NULL)
 # define SSL_PROV_QUERRY(s) \
-      (s != NULL ? (s->propq ? s->propq : s->ctx->propq) : NULL)
+      (s != NULL ? (s->propq != NULL ? s->propq : s->ctx->propq) : NULL)
 
 # ifndef OPENSSL_NO_QUIC
 #  include "quic/quic_local.h"
@@ -2998,6 +2994,7 @@ void ossl_ssl_set_custom_record_layer(SSL_CONNECTION *s,
                                       void *rlarg);
 
 long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
+const char *ssl_connection_prov_querry(SSL_CONNECTION *ssl_con);
 
 /*
  * Options which no longer have any effect, but which can be implemented

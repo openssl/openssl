@@ -120,7 +120,7 @@ static int test_record_overflow(int idx)
     }
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                      NULL, NULL)))
+                                      NULL, NULL, NULL)))
         goto end;
 
     serverbio = SSL_get_rbio(serverssl);

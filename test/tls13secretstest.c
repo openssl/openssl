@@ -412,3 +412,17 @@ int setup_tests(void)
     ADD_TEST(test_handshake_secrets);
     return 1;
 }
+
+const char *ssl_connection_prov_querry(SSL_CONNECTION *ssl_conn)
+{
+    /* Return propq from SSL object prior when set,
+     * otherwise use the SSL_CTX propq.
+     */
+    if (ssl_conn != NULL) {
+        if (SSL_CONNECTION_GET_SSL(ssl_conn) != NULL)
+            return SSL_CONNECTION_GET_SSL(ssl_conn)->propq;
+        else if (SSL_CONNECTION_GET_CTX(ssl_conn) != NULL)
+            return SSL_CONNECTION_GET_CTX(ssl_conn)->propq;
+    }
+    return NULL;
+}

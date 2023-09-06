@@ -1998,7 +1998,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
         }
 
         certstart = certbytes;
-        x = X509_new_ex(sctx->libctx, SSL_CONNECTION_PROV_QUERRY(s));
+        x = X509_new_ex(sctx->libctx, ssl_connection_prov_querry(s));
         if (x == NULL) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_ASN1_LIB);
             goto err;
@@ -2282,7 +2282,7 @@ static int tls_process_ske_dhe(SSL_CONNECTION *s, PACKET *pkt, EVP_PKEY **pkey)
         goto err;
     }
 
-    pctx = EVP_PKEY_CTX_new_from_name(sctx->libctx, "DH", SSL_CONNECTION_PROV_QUERRY(s));
+    pctx = EVP_PKEY_CTX_new_from_name(sctx->libctx, "DH", ssl_connection_prov_querry(s));
     if (pctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -2294,7 +2294,7 @@ static int tls_process_ske_dhe(SSL_CONNECTION *s, PACKET *pkt, EVP_PKEY **pkey)
     }
 
     EVP_PKEY_CTX_free(pctx);
-    pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, peer_tmp, SSL_CONNECTION_PROV_QUERRY(s));
+    pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, peer_tmp, ssl_connection_prov_querry(s));
     if (pctx == NULL
             /*
              * EVP_PKEY_param_check() will verify that the DH params are using
@@ -2502,7 +2502,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL_CONNECTION *s, PACKET *pkt)
 
         if (EVP_DigestVerifyInit_ex(md_ctx, &pctx,
                                     md == NULL ? NULL : EVP_MD_get0_name(md),
-                                    sctx->libctx, SSL_CONNECTION_PROV_QUERRY(s), pkey,
+                                    sctx->libctx, ssl_connection_prov_querry(s), pkey,
                                     NULL) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
             goto err;
@@ -2799,7 +2799,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
      * elsewhere in OpenSSL. The session ID is set to the SHA256 hash of the
      * ticket.
      */
-    sha256 = EVP_MD_fetch(sctx->libctx, "SHA2-256", SSL_CONNECTION_PROV_QUERRY(s));
+    sha256 = EVP_MD_fetch(sctx->libctx, "SHA2-256", ssl_connection_prov_querry(s));
     if (sha256 == NULL) {
         /* Error is already recorded */
         SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
@@ -3106,7 +3106,7 @@ static int tls_construct_cke_rsa(SSL_CONNECTION *s, WPACKET *pkt)
         goto err;
     }
 
-    pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, pkey, SSL_CONNECTION_PROV_QUERRY(s));
+    pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, pkey, ssl_connection_prov_querry(s));
     if (pctx == NULL || EVP_PKEY_encrypt_init(pctx) <= 0
         || EVP_PKEY_encrypt(pctx, NULL, &enclen, pms, pmslen) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
@@ -3279,7 +3279,7 @@ static int tls_construct_cke_gost(SSL_CONNECTION *s, WPACKET *pkt)
 
     pkey_ctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx,
                                           pkey,
-                                          SSL_CONNECTION_PROV_QUERRY(s));
+                                          ssl_connection_prov_querry(s));
     if (pkey_ctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         return 0;
@@ -3377,7 +3377,7 @@ int ossl_gost_ukm(const SSL_CONNECTION *s, unsigned char *dgst_buf)
     unsigned int md_len;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const EVP_MD *md = ssl_evp_md_fetch(sctx->libctx, NID_id_GostR3411_2012_256,
-                                        SSL_CONNECTION_PROV_QUERRY(s));
+                                        ssl_connection_prov_querry(s));
 
     if (md == NULL)
         return 0;
@@ -3444,7 +3444,7 @@ static int tls_construct_cke_gost18(SSL_CONNECTION *s, WPACKET *pkt)
 
     pkey_ctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx,
                                           pkey,
-                                          SSL_CONNECTION_PROV_QUERRY(s));
+                                          ssl_connection_prov_querry(s));
     if (pkey_ctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;

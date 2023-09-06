@@ -67,7 +67,7 @@ static int test_handshake_rtt(int tst)
                                                   : TLS1_3_VERSION,
                                        &sctx, &cctx, cert, privkey))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                             NULL, NULL)))
+                                             NULL, NULL, NULL)))
         goto end;
 
     s = SSL_CONNECTION_FROM_SSL(tst % 2 == 0 ? clientssl : serverssl);

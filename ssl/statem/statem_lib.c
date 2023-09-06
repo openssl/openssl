@@ -356,7 +356,7 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
 
     if (EVP_DigestSignInit_ex(mctx, &pctx,
                               md == NULL ? NULL : EVP_MD_get0_name(md),
-                              sctx->libctx, SSL_CONNECTION_PROV_QUERRY(s), pkey,
+                              sctx->libctx, ssl_connection_prov_querry(s), pkey,
                               NULL) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
@@ -534,7 +534,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
 
     if (EVP_DigestVerifyInit_ex(mctx, &pctx,
                                 md == NULL ? NULL : EVP_MD_get0_name(md),
-                                sctx->libctx, SSL_CONNECTION_PROV_QUERRY(s), pkey,
+                                sctx->libctx, ssl_connection_prov_querry(s), pkey,
                                 NULL) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
@@ -1026,7 +1026,7 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, i
 
     if (chain_store != NULL) {
         X509_STORE_CTX *xs_ctx = X509_STORE_CTX_new_ex(sctx->libctx,
-                                                       SSL_CONNECTION_PROV_QUERRY(s));
+                                                       ssl_connection_prov_querry(s));
 
         if (xs_ctx == NULL) {
             if (!for_comp)

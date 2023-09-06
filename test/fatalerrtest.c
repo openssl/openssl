@@ -44,7 +44,7 @@ static int test_fatalerr(void)
             || !TEST_true(SSL_CTX_set_ciphersuites(cctx,
                                                    "TLS_AES_256_GCM_SHA384"))
             || !TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL,
-                          NULL)))
+                          NULL, NULL)))
         goto err;
 
     wbio = SSL_get_wbio(cssl);

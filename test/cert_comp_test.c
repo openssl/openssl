@@ -190,7 +190,7 @@ static int test_ssl_cert_comp(int test)
     }
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                      NULL, NULL)))
+                                      NULL, NULL, NULL)))
         goto end;
 
     if (!TEST_true(SSL_set_app_data(clientssl, &client_seen)))

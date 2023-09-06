@@ -300,7 +300,7 @@ static int test_tls13ccs(int tst)
 
     if (tst >= 6) {
         /* Get a session suitable for early_data */
-        if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL))
+        if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL, NULL))
                 || !TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
             goto err;
         sess = SSL_get1_session(cssl);
@@ -336,7 +336,7 @@ static int test_tls13ccs(int tst)
     }
 
     /* BIOs get freed on error */
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, s_to_c_fbio,
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, s_to_c_fbio,
                                       c_to_s_fbio)))
         goto err;
 

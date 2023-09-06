@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_dup, SSL_new, SSL_up_ref - create an SSL structure for a connection
+SSL_dup, SSL_new, SSL_new_ex, SSL_up_ref - create an SSL structure for a connection
 
 =head1 SYNOPSIS
 
@@ -10,12 +10,15 @@ SSL_dup, SSL_new, SSL_up_ref - create an SSL structure for a connection
 
  SSL *SSL_dup(SSL *s);
  SSL *SSL_new(SSL_CTX *ctx);
+ SSL *SSL_new_ex(SSL_CTX *ctx, const char* propq);
  int SSL_up_ref(SSL *s);
 
 =head1 DESCRIPTION
 
-SSL_new() creates a new B<SSL> structure which is needed to hold the
-data for a TLS/SSL connection. The new structure inherits the settings
+SSL_new() and SSL_new_ex() creates a new B<SSL> structure which is needed to hold the
+data for a TLS/SSL connection. Using SSL_new_ex() allows the user to define the 
+provider search property used by the SSL object.
+The new structure inherits the settings
 of the underlying context B<ctx>: connection method,
 options, verification settings, timeout settings. An B<SSL> structure is
 reference counted. Creating an B<SSL> structure for the first time increments

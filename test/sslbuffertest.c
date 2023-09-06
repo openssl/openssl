@@ -70,7 +70,7 @@ static int test_func(int test)
     char buf[sizeof(testdata)];
 
     if (!TEST_true(create_ssl_objects(serverctx, clientctx, &serverssl, &clientssl,
-                                      NULL, NULL))) {
+                                      NULL, NULL, NULL))) {
         TEST_error("Test %d failed: Create SSL objects failed\n", test);
         goto end;
     }

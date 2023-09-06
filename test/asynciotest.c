@@ -323,7 +323,7 @@ static int test_asyncio(int test)
 
     /* BIOs get freed on error */
     if (!TEST_true(create_ssl_objects(serverctx, clientctx, &serverssl,
-                                      &clientssl, s_to_c_fbio, c_to_s_fbio))
+                                      &clientssl, NULL, s_to_c_fbio, c_to_s_fbio))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
                           SSL_ERROR_NONE)))
         goto end;

@@ -105,7 +105,7 @@ int tls13_hkdf_expand(SSL_CONNECTION *s, const EVP_MD *md,
     int ret;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    ret = tls13_hkdf_expand_ex(sctx->libctx, SSL_CONNECTION_PROV_QUERRY(s), md,
+    ret = tls13_hkdf_expand_ex(sctx->libctx, ssl_connection_prov_querry(s), md,
                                secret, label, labellen, data, datalen,
                                out, outlen, !fatal);
     if (ret == 0 && fatal)
@@ -178,7 +178,7 @@ int tls13_generate_secret(SSL_CONNECTION *s, const EVP_MD *md,
     static const char derived_secret_label[] = "\x64\x65\x72\x69\x76\x65\x64";
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    kdf = EVP_KDF_fetch(sctx->libctx, OSSL_KDF_NAME_TLS1_3_KDF, SSL_CONNECTION_PROV_QUERRY(s));
+    kdf = EVP_KDF_fetch(sctx->libctx, OSSL_KDF_NAME_TLS1_3_KDF, ssl_connection_prov_querry(s));
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL) {
@@ -273,9 +273,9 @@ size_t tls13_final_finish_mac(SSL_CONNECTION *s, const char *str, size_t slen,
         return 0;
 
     /* Safe to cast away const here since we're not "getting" any data */
-    if (SSL_CONNECTION_PROV_QUERRY(s) != NULL)
+    if (ssl_connection_prov_querry(s) != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES,
-                                                (char *)SSL_CONNECTION_PROV_QUERRY(s),
+                                                (char *)ssl_connection_prov_querry(s),
                                                 0);
     *p = OSSL_PARAM_construct_end();
 
@@ -296,7 +296,7 @@ size_t tls13_final_finish_mac(SSL_CONNECTION *s, const char *str, size_t slen,
         key = finsecret;
     }
 
-    if (!EVP_Q_mac(sctx->libctx, "HMAC", SSL_CONNECTION_PROV_QUERRY(s), mdname,
+    if (!EVP_Q_mac(sctx->libctx, "HMAC", ssl_connection_prov_querry(s), mdname,
                    params, key, hashlen, hash, hashlen,
                    /* outsize as per sizeof(peer_finish_md) */
                    out, EVP_MAX_MD_SIZE * 2, &len)) {

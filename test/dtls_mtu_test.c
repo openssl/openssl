@@ -60,7 +60,7 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
     memset(buf, 0x5a, sizeof(buf));
 
     if (!TEST_true(create_ssl_objects(ctx, ctx, &srvr_ssl, &clnt_ssl,
-                                      NULL, NULL)))
+                                      NULL, NULL, NULL)))
         goto end;
 
     if (no_etm)
@@ -209,7 +209,7 @@ static int test_server_mtu_larger_than_max_fragment_length(void)
 #endif
 
     if (!TEST_true(create_ssl_objects(ctx, ctx, &srvr_ssl, &clnt_ssl,
-                                      NULL, NULL)))
+                                      NULL, NULL, NULL)))
         goto end;
 
     SSL_set_options(srvr_ssl, SSL_OP_NO_QUERY_MTU);

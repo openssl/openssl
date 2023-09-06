@@ -210,7 +210,7 @@ static int server_setup_sni(void)
                                        TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                             NULL, NULL)))
+                                             NULL, NULL, NULL)))
         goto end;
 
     /* set SNI at server side */

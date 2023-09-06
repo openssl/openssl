@@ -1657,7 +1657,7 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     }
 
     mackey = EVP_PKEY_new_raw_private_key_ex(sctx->libctx, "HMAC",
-                                             SSL_CONNECTION_PROV_QUERRY(s), finishedkey,
+                                             ssl_connection_prov_querry(s), finishedkey,
                                              hashsize);
     if (mackey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1669,7 +1669,7 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
 
     bindersize = hashsize;
     if (EVP_DigestSignInit_ex(mctx, NULL, EVP_MD_get0_name(md), sctx->libctx,
-                              SSL_CONNECTION_PROV_QUERRY(s), mackey, NULL) <= 0
+                              ssl_connection_prov_querry(s), mackey, NULL) <= 0
             || EVP_DigestSignUpdate(mctx, hash, hashsize) <= 0
             || EVP_DigestSignFinal(mctx, binderout, &bindersize) <= 0
             || bindersize != hashsize) {

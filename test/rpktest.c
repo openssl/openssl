@@ -253,7 +253,7 @@ static int test_rpk(int idx)
     SSL_CTX_set_verify(cctx, SSL_VERIFY_PEER, rpk_verify_client_cb);
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                      NULL, NULL)))
+                                      NULL, NULL, NULL)))
         goto end;
 
     if (!TEST_int_gt(SSL_dane_enable(serverssl, NULL), 0))
@@ -529,7 +529,7 @@ static int test_rpk(int idx)
         serverssl = clientssl = NULL;
 
         if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                          NULL, NULL))
+                                          NULL, NULL, NULL))
                 || !TEST_true(SSL_set_session(clientssl, client_sess)))
             goto end;
 

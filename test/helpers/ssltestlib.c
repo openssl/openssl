@@ -1026,19 +1026,35 @@ int wait_until_sock_readable(int sock)
  * NOTE: Transfers control of the BIOs - this function will free them on error
  */
 int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
-                          SSL **cssl, BIO *s_to_c_fbio, BIO *c_to_s_fbio)
+                          SSL **cssl, char *propq, BIO *s_to_c_fbio, BIO *c_to_s_fbio)
 {
     SSL *serverssl = NULL, *clientssl = NULL;
     BIO *s_to_c_bio = NULL, *c_to_s_bio = NULL;
 
     if (*sssl != NULL)
         serverssl = *sssl;
-    else if (!TEST_ptr(serverssl = SSL_new(serverctx)))
-        goto error;
+    else {
+        if (propq == NULL) {
+            if (!TEST_ptr(serverssl = SSL_new(serverctx)))
+                goto error;
+        }
+        else {
+            if (!TEST_ptr(serverssl = SSL_new_ex(serverctx, propq)))
+                goto error;
+        }
+    }
     if (*cssl != NULL)
         clientssl = *cssl;
-    else if (!TEST_ptr(clientssl = SSL_new(clientctx)))
-        goto error;
+    else {
+        if (propq == NULL) {
+            if (!TEST_ptr(clientssl = SSL_new(clientctx)))
+                goto error;
+        }
+        else {
+            if (!TEST_ptr(clientssl = SSL_new_ex(clientctx, propq)))
+                goto error;
+        }
+    }
 
     if (SSL_is_dtls(clientssl)) {
         if (!TEST_ptr(s_to_c_bio = BIO_new(bio_s_mempacket_test()))

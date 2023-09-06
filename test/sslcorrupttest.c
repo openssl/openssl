@@ -219,7 +219,7 @@ static int test_ssl_corrupt(int testidx)
         goto end;
 
     /* BIO is freed by create_ssl_connection on error */
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL,
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL,
                                       c_to_s_fbio)))
         goto end;
 

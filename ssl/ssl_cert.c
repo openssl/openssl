@@ -437,7 +437,7 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     else
         verify_store = sctx->cert_store;
 
-    ctx = X509_STORE_CTX_new_ex(sctx->libctx, SSL_CONNECTION_PROV_QUERRY(s));
+    ctx = X509_STORE_CTX_new_ex(sctx->libctx, ssl_connection_prov_querry(s));
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         return 0;
@@ -1023,7 +1023,7 @@ int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags)
             untrusted = cpk->chain;
     }
 
-    xs_ctx = X509_STORE_CTX_new_ex(real_ctx->libctx, (s != NULL ? SSL_CONNECTION_PROV_QUERRY(s) : real_ctx->propq));
+    xs_ctx = X509_STORE_CTX_new_ex(real_ctx->libctx, (s != NULL ? ssl_connection_prov_querry(s) : real_ctx->propq));
     if (xs_ctx == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;

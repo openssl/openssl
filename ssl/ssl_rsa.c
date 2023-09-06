@@ -476,7 +476,7 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
     }
 
     propq = real_ctx->propq;
-    if (ssl && ssl->propq)
+    if (ssl != NULL && ssl->propq != NULL)
         propq = ssl->propq;
 
     x = X509_new_ex(real_ctx->libctx, propq);

@@ -709,8 +709,7 @@ SSL *SSL_new_ex(SSL_CTX *ctx, const char* propq)
     }
     return ret;
 err:
-    if (ret)
-        SSL_free(ret);
+    SSL_free(ret);
     return NULL;
 }
 
@@ -3050,6 +3049,20 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic)
     }
 }
 
+const char *ssl_connection_prov_querry(SSL_CONNECTION *ssl_conn)
+{
+    /* Return propq from SSL object prior when set,
+     * otherwise use the SSL_CTX propq.
+     */
+    if (ssl_conn != NULL) {
+        if (SSL_CONNECTION_GET_SSL(ssl_conn) != NULL)
+            return SSL_CONNECTION_GET_SSL(ssl_conn)->propq;
+        else if (SSL_CONNECTION_GET_CTX(ssl_conn) != NULL)
+            return SSL_CONNECTION_GET_CTX(ssl_conn)->propq;
+    }
+    return NULL;
+}
+
 long SSL_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 {
     return s->method->ssl_callback_ctrl(s, cmd, fp);
@@ -4927,7 +4940,7 @@ SSL *SSL_dup(SSL *s)
     /*
      * Otherwise, copy configuration state, and session if set.
      */
-    if ((ret = SSL_new(SSL_get_SSL_CTX(s))) == NULL)
+    if ((ret = SSL_new_ex(SSL_get_SSL_CTX(s), s->propq)) == NULL)
         return NULL;
     if ((retsc = SSL_CONNECTION_FROM_SSL_ONLY(ret)) == NULL)
         goto err;
@@ -6346,7 +6359,7 @@ int ssl_validate_ct(SSL_CONNECTION *s)
     }
 
     ctx = CT_POLICY_EVAL_CTX_new_ex(SSL_CONNECTION_GET_CTX(s)->libctx,
-                                    SSL_CONNECTION_PROV_QUERRY(s));
+                                    ssl_connection_prov_querry(s));
     if (ctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CT_LIB);
         goto end;

@@ -2316,7 +2316,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
         }
 
         aes256cbc = EVP_CIPHER_fetch(sctx->libctx, "AES-256-CBC",
-                                     SSL_CONNECTION_PROV_QUERRY(s));
+                                     ssl_connection_prov_querry(s));
         if (aes256cbc == NULL
             || ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,
                              sizeof(tctx->ext.secure->tick_hmac_key),
@@ -2384,7 +2384,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
     slen += declen;
     p = sdec;
 
-    sess = d2i_SSL_SESSION_ex(NULL, &p, slen, sctx->libctx, SSL_CONNECTION_PROV_QUERRY(s));
+    sess = d2i_SSL_SESSION_ex(NULL, &p, slen, sctx->libctx, ssl_connection_prov_querry(s));
     slen -= p - sdec;
     OPENSSL_free(sdec);
     if (sess) {
@@ -3409,7 +3409,7 @@ EVP_PKEY *ssl_get_auto_dh(SSL_CONNECTION *s)
     if (p == NULL)
         goto err;
 
-    pctx = EVP_PKEY_CTX_new_from_name(sctx->libctx, "DH", SSL_CONNECTION_PROV_QUERRY(s));
+    pctx = EVP_PKEY_CTX_new_from_name(sctx->libctx, "DH", ssl_connection_prov_querry(s));
     if (pctx == NULL
             || EVP_PKEY_fromdata_init(pctx) != 1)
         goto err;
@@ -3572,7 +3572,7 @@ static int check_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig,
         mdname = OBJ_nid2sn(sig->hash);
     supported = EVP_PKEY_digestsign_supports_digest(pkey, sctx->libctx,
                                                     mdname,
-                                                    SSL_CONNECTION_PROV_QUERRY(s));
+                                                    ssl_connection_prov_querry(s));
     if (supported <= 0)
         return 0;
 
