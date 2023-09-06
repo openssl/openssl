@@ -803,7 +803,7 @@ const OPTIONS s_server_options[] = {
      "Second certificate format (PEM or DER) PEM default"},
     {"dkey", OPT_DKEY, '<',
      "Second private key file to use (usually for DSA)"},
-    {"dkeyform", OPT_DKEYFORM, 'F',
+    {"dkeyform", OPT_DKEYFORM, 'f',
      "Second key format (PEM, DER or ENGINE) PEM default"},
     {"dpass", OPT_DPASS, 's', "Second private key file pass phrase source"},
     {"nbio_test", OPT_NBIO_TEST, '-', "Test with the non-blocking test bio"},
@@ -1238,7 +1238,7 @@ int s_server_main(int argc, char *argv[])
             s_dcert_file = opt_arg();
             break;
         case OPT_DKEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &s_dkey_format))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &s_dkey_format))
                 goto opthelp;
             break;
         case OPT_DPASS:
