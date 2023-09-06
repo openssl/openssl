@@ -78,6 +78,10 @@ IF[{- !$disabled{tests} -}]
                      quic_newcid_test quic_srt_gen_test
   ENDIF
 
+  IF[{- !$disabled{qlog} -}]
+    PROGRAMS{noinst}=json_test
+  ENDIF
+
   IF[{- !$disabled{comp} && (!$disabled{brotli} || !$disabled{zstd} || !$disabled{zlib}) -}]
     PROGRAMS{noinst}=cert_comp_test
   ENDIF
@@ -878,6 +882,12 @@ IF[{- !$disabled{tests} -}]
       SOURCE[quic_srt_gen_test]=quic_srt_gen_test.c helpers/ssltestlib.c $QUICTESTHELPERS
       INCLUDE[quic_srt_gen_test]=../include ../apps/include ..
       DEPEND[quic_srt_gen_test]=../libcrypto.a ../libssl.a libtestutil.a
+    ENDIF
+
+    IF[{- !$disabled{qlog} -}]
+      SOURCE[json_test]=json_test.c helpers/ssltestlib.c helpers/quictestlib.c
+      INCLUDE[json_test]=../include ../apps/include
+      DEPEND[json_test]=../libcrypto.a ../libssl.a libtestutil.a
     ENDIF
 
     SOURCE[dhtest]=dhtest.c
