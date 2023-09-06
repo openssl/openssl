@@ -165,10 +165,12 @@ associate it with a BIO object:
 
     BIO *bio;
 
-    /* Create a BIO to wrap the socket*/
+    /* Create a BIO to wrap the socket */
     bio = BIO_new(BIO_s_datagram());
-    if (bio == NULL)
+    if (bio == NULL) {
         BIO_closesocket(sock);
+        return NULL;
+    }
 
     /*
      * Associate the newly created BIO with the underlying socket. By

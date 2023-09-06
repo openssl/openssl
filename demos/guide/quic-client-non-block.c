@@ -90,10 +90,12 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
     if (sock == -1)
         return NULL;
 
-    /* Create a BIO to wrap the socket*/
+    /* Create a BIO to wrap the socket */
     bio = BIO_new(BIO_s_datagram());
-    if (bio == NULL)
+    if (bio == NULL) {
         BIO_closesocket(sock);
+        return NULL;
+    }
 
     /*
      * Associate the newly created BIO with the underlying socket. By
