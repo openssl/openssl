@@ -181,7 +181,7 @@ static int test_cha_cha_internal(int n)
 
 int setup_tests(void)
 {
-#ifdef CPUID_OBJ
+#ifdef OPENSSL_CPUID_OBJ
     OPENSSL_cpuid_setup();
 #endif
 
