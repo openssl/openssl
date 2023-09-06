@@ -93,7 +93,8 @@ static int engine_list_add(ENGINE *e)
          * The first time the list allocates, we should register the cleanup.
          */
         if (!engine_cleanup_add_last(engine_list_cleanup)) {
-            ENGINEerr(ENGINE_F_ENGINE_LIST_ADD, ENGINE_R_INTERNAL_LIST_ERROR);
+            CRYPTO_DOWN_REF(&e->struct_ref, &ref);
+            ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INTERNAL_LIST_ERROR);
             return 0;
         }
         engine_list_head = e;
