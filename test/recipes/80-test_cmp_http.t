@@ -314,7 +314,7 @@ sub start_server {
         $server_host = "127.0.0.1" if $server_host eq "0.0.0.0";
     }
     unless ($server_port > 0) {
-        stop_server($server_name, $pid);
+        stop_server($server_name, $pid) if $pid;
         print "Cannot get expected output from the $server_name server";
         return 0;
     }
