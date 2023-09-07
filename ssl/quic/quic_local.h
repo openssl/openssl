@@ -321,7 +321,7 @@ const SSL_METHOD *func_name(void)  \
                 NULL /* dispatch_alert */, \
                 ossl_quic_ctrl, \
                 ossl_quic_ctx_ctrl, \
-                NULL /* get_cipher_by_char */, \
+                ossl_quic_get_cipher_by_char, \
                 NULL /* put_cipher_by_char */, \
                 ossl_quic_pending, \
                 ossl_quic_num_ciphers, \
