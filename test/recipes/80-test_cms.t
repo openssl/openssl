@@ -394,6 +394,13 @@ my @smime_cms_tests = (
         "-out", "{output}.txt" ],
       \&final_compare
     ],
+
+    [ "encrypted content test streaming PEM format -noout, 128 bit AES key",
+      [ "{cmd1}", @prov, "-EncryptedData_encrypt", "-in", $smcont, "-outform", "PEM",
+	"-aes128", "-secretkey", "000102030405060708090A0B0C0D0E0F",
+	"-stream", "-noout" ],
+      [ "{cmd2}", @prov, "-help" ]
+    ],
 );
 
 my @smime_cms_cades_tests = (
