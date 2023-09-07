@@ -145,6 +145,7 @@ crypto/dsa/dsa_local.h
 crypto/dsa/dsa_ossl.c
 crypto/dsa/dsa_sign.c
 crypto/dsa/dsa_vrf.c
+crypto/ec/asm/ecp_nistp384-ppc64.pl
 crypto/ec/asm/ecp_nistp521-ppc64.pl
 crypto/ec/asm/ecp_nistz256-armv4.pl
 crypto/ec/asm/ecp_nistz256-armv8.pl
@@ -152,6 +153,7 @@ crypto/ec/asm/ecp_nistz256-ppc64.pl
 crypto/ec/asm/ecp_nistz256-sparcv9.pl
 crypto/ec/asm/ecp_nistz256-x86.pl
 crypto/ec/asm/ecp_nistz256-x86_64.pl
+crypto/ec/asm/ecp_sm2p256-armv8.pl
 crypto/ec/asm/x25519-ppc64.pl
 crypto/ec/asm/x25519-x86_64.pl
 crypto/ec/curve25519.c
@@ -270,6 +272,7 @@ crypto/param_build_set.c
 crypto/params.c
 crypto/params_dup.c
 crypto/params_from_text.c
+crypto/params_idx.c
 crypto/ppccap.c
 crypto/ppccpuid.pl
 crypto/property/defn_cache.c
@@ -381,6 +384,7 @@ include/crypto/bn_dh.h
 include/crypto/context.h
 include/crypto/cryptlib.h
 include/crypto/ctype.h
+include/crypto/decoder.h
 include/crypto/des_platform.h
 include/crypto/dh.h
 include/crypto/dsa.h
@@ -415,6 +419,7 @@ include/internal/nelem.h
 include/internal/numbers.h
 include/internal/packet.h
 include/internal/param_build_set.h
+include/internal/param_names.h.in
 include/internal/params.h
 include/internal/property.h
 include/internal/propertyerr.h
@@ -448,10 +453,12 @@ include/openssl/configuration.h.in
 include/openssl/conftypes.h
 include/openssl/core.h
 include/openssl/core_dispatch.h
-include/openssl/core_names.h
+include/openssl/core_names.h.in
 include/openssl/crypto.h.in
 include/openssl/cryptoerr.h
 include/openssl/cryptoerr_legacy.h
+include/openssl/decoder.h
+include/openssl/decodererr.h
 include/openssl/des.h
 include/openssl/dh.h
 include/openssl/dherr.h
