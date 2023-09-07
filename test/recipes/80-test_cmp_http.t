@@ -299,16 +299,19 @@ sub start_server {
     }
     print "$server_name server PID=$pid\n";
 
-    if ($server_port == 0) {
-        # Find out the actual server port and possibly different PID
+    if ($server_host eq '*' || $server_port == 0) {
+        # Find out the actual server host and port and possibly different PID
         $pid = 0;
         while (<$server_fh>) {
             print "$server_name server output: $_";
             next if m/using section/;
             s/\R$//;                # Better chomp
-            ($server_port, $pid) = ($1, $2) if /^ACCEPT\s.*:(\d+) PID=(\d+)$/;
+            ($server_host, $server_port, $pid) = ($1, $2, $3)
+                if /^ACCEPT\s(.*?):(\d+) PID=(\d+)$/;
             last; # Do not loop further to prevent hangs on server misbehavior
         }
+        $server_host = "[::1]" if $server_host eq "[::]";
+        $server_host = "127.0.0.1" if $server_host eq "0.0.0.0";
     }
     unless ($server_port > 0) {
         stop_server($server_name, $pid);
