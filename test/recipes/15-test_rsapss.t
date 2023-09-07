@@ -16,7 +16,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_rsapss");
 
-plan tests => 11;
+plan tests => 13;
 
 #using test/testrsa.pem which happens to be a 512 bit RSA
 ok(run(app(['openssl', 'dgst', '-sign', srctop_file('test', 'testrsa.pem'), '-sha1',
@@ -89,3 +89,11 @@ ok(run(app(['openssl', 'dgst', '-prverify', srctop_file('test', 'testrsa.pem'),
 ok(!run(app([ 'openssl', 'rsa',
              '-in' => data_file('negativesaltlen.pem')],
              '-out' => 'badout')));
+
+ok(run(app(['openssl', 'genpkey', '-algorithm', 'RSA-PSS', '-pkeyopt', 'rsa_keygen_bits:1024',
+            '-pkeyopt', 'rsa_pss_keygen_md:SHA256', '-pkeyopt', 'rsa_pss_keygen_saltlen:10',
+            '-out', 'testrsapss.pem'])),
+   "openssl genpkey RSA-PSS with pss parameters");
+ok(run(app(['openssl', 'pkey', '-in', 'testrsapss.pem', '-pubout', '-text'])),
+   "openssl pkey, execute rsa_pub_encode with pss parameters");
+unlink 'testrsapss.pem';
