@@ -38,7 +38,6 @@ static int eckey_param2type(int *pptype, void **ppval, const EC_KEY *ec_key)
         ASN1_OBJECT *asn1obj = OBJ_nid2obj(nid);
 
         if (asn1obj == NULL || OBJ_length(asn1obj) == 0) {
-            ASN1_OBJECT_free(asn1obj);
             ECerr(EC_F_ECKEY_PARAM2TYPE, EC_R_MISSING_OID);
             return 0;
         }
@@ -98,9 +97,7 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
                                ptype, pval, penc, penclen))
         return 1;
  err:
-    if (ptype == V_ASN1_OBJECT)
-        ASN1_OBJECT_free(pval);
-    else
+    if (ptype == V_ASN1_SEQUENCE)
         ASN1_STRING_free(pval);
     OPENSSL_free(penc);
     return 0;
