@@ -23,7 +23,7 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
-### Changes between 3.1 and 3.2 [xx XXX xxxx]
+### Changes between 3.1 and 3.2 alpha 1 [7 Sep 2023]
 
  * Changed the default salt length used by PBES2 KDF's (PBKDF2 and scrypt)
    from 8 bytes to 16 bytes.
