@@ -73,11 +73,7 @@ CMS_ContentInfo *CMS_ContentInfo_new(void)
 
 void CMS_ContentInfo_free(CMS_ContentInfo *cms)
 {
-    if (cms != NULL) {
-        ossl_cms_env_enc_content_free(cms);
-        OPENSSL_free(cms->ctx.propq);
-        ASN1_item_free((ASN1_VALUE *)cms, ASN1_ITEM_rptr(CMS_ContentInfo));
-    }
+    ASN1_item_free((ASN1_VALUE *)cms, ASN1_ITEM_rptr(CMS_ContentInfo));
 }
 
 const CMS_CTX *ossl_cms_get0_cmsctx(const CMS_ContentInfo *cms)

@@ -289,8 +289,10 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
                       secret == NULL ? cert : NULL, detached_data, bio, flags);
 
  end:
-    if (ci != NULL)
+    if (ci != NULL) {
         ci->d.envelopedData = NULL; /* do not indirectly free |env| */
+        ci->contentType = NULL;
+    }
     CMS_ContentInfo_free(ci);
     if (!res) {
         BIO_free(bio);

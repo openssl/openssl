@@ -51,6 +51,7 @@ static int cms_si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         EVP_PKEY_free(si->pkey);
         X509_free(si->signer);
         EVP_MD_CTX_free(si->mctx);
+        EVP_PKEY_CTX_free(si->pctx);
     }
     return 1;
 }
@@ -296,6 +297,8 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 {
     ASN1_STREAM_ARG *sarg = exarg;
     CMS_ContentInfo *cms = NULL;
+    CMS_EncryptedContentInfo *ec = NULL;
+
     if (pval)
         cms = (CMS_ContentInfo *)*pval;
     else
@@ -316,6 +319,23 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     case ASN1_OP_DETACHED_POST:
         if (CMS_dataFinal(cms, sarg->ndef_bio) <= 0)
             return 0;
+        break;
+
+    case ASN1_OP_FREE_PRE:
+        switch (OBJ_obj2nid(cms->contentType)) {
+            case NID_pkcs7_encrypted:
+                ec = cms->d.encryptedData->encryptedContentInfo;
+                break;
+            case NID_pkcs7_enveloped:
+                ec = cms->d.envelopedData->encryptedContentInfo;
+                break;
+            case NID_id_smime_ct_authEnvelopedData:
+                ec = cms->d.authEnvelopedData->authEncryptedContentInfo;
+                break;
+        }
+        if (ec != NULL && ec->key != NULL)
+            OPENSSL_clear_free(ec->key, ec->keylen);
+        OPENSSL_free(cms->ctx.propq);
         break;
 
     }
