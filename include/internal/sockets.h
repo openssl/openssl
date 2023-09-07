@@ -117,7 +117,9 @@ typedef size_t socklen_t;        /* Currently appears to be missing on VMS */
 #  endif
 
 #  ifdef OPENSSL_SYS_UNIX
-#    include <poll.h>
+#    ifndef OPENSSL_SYS_TANDEM
+#     include <poll.h>
+#    endif
 #    include <errno.h>
 #  endif
 
