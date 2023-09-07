@@ -256,24 +256,32 @@ static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
     eplen = i2d_ECPrivateKey(&ec_key, NULL);
     if (!eplen) {
+        if (ptype == V_ASN1_SEQUENCE)
+            ASN1_STRING_free(pval);
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_EC_LIB);
         return 0;
     }
     ep = OPENSSL_malloc(eplen);
     if (ep == NULL) {
+        if (ptype == V_ASN1_SEQUENCE)
+            ASN1_STRING_free(pval);
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     p = ep;
     if (!i2d_ECPrivateKey(&ec_key, &p)) {
-        OPENSSL_free(ep);
+        OPENSSL_clear_free(ep, eplen);
+        if (ptype == V_ASN1_SEQUENCE)
+            ASN1_STRING_free(pval);
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_EC_LIB);
         return 0;
     }
 
     if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_X9_62_id_ecPublicKey), 0,
                          ptype, pval, ep, eplen)) {
-        OPENSSL_free(ep);
+        OPENSSL_clear_free(ep, eplen);
+        if (ptype == V_ASN1_SEQUENCE)
+            ASN1_STRING_free(pval);
         return 0;
     }
 
