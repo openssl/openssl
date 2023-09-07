@@ -211,6 +211,10 @@ int ossl_quic_tserver_new_ticket(QUIC_TSERVER *srv);
 int ossl_quic_tserver_set_max_early_data(QUIC_TSERVER *srv,
                                          uint32_t max_early_data);
 
+/* Set the find session callback for getting a server PSK */
+void ossl_quic_tserver_set_psk_find_session_cb(QUIC_TSERVER *srv,
+                                               SSL_psk_find_session_cb_func cb);
+
 # endif
 
 #endif
