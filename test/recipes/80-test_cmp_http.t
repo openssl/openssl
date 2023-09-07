@@ -311,7 +311,7 @@ sub start_server {
         }
     }
     unless ($server_port > 0) {
-        stop_server($server_name, $pid);
+        stop_server($server_name, $pid) if $pid;
         print "Cannot get expected output from the $server_name server";
         return 0;
     }
