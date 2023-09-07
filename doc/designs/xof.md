@@ -8,6 +8,7 @@ An extendable output function (XOF) is defined as a variable-length hash
 function on a message in which the output can be extended to any desired length.
 
 At a minimum an XOF needs to support the following pseudo-code
+
 ```
 xof = xof.new();
 xof.absorb(bytes1);
@@ -16,6 +17,7 @@ xof.finalize();
 out1 = xof.squeeze(10);
 out2 = xof.squeeze(1000);
 ```
+
 ### Rules
 
 - absorb can be called multiple times
@@ -74,6 +76,7 @@ flag check.
 
 Keep EVP_DigestFinalXOF() as a one shot function and create a new API to handle
 the multi squeeze case e.g.
+
 ```
 EVP_DigestSqueeze(ctx, out, outlen).
 ```
@@ -129,6 +132,7 @@ API Discussion of other XOF API'S
 ### Init
 
 The digest can be initialized as normal using:
+
 ```
 md = EVP_MD_fetch(libctx, "SHAKE256", propq);
 ctx = EVP_MD_CTX_new();
@@ -138,6 +142,7 @@ EVP_DigestInit_ex2(ctx, md, NULL);
 ### Absorb
 
 Absorb can be done by multiple calls to:
+
 ```
 EVP_DigestUpdate(ctx, in, inlen);
 ```
@@ -145,6 +150,7 @@ EVP_DigestUpdate(ctx, in, inlen);
 #### Proposal:
 
 Do we want to have an Alias function?
+
 ```
 EVP_DigestAbsorb(ctx, in, inlen);
 ```
@@ -157,6 +163,7 @@ The finalize is just done as part of the squeeze operation.
 ### Reset
 
 A reset can be done by calling:
+
 ```
 EVP_DigestInit_ex2(ctx, NULL, NULL);
 ```
@@ -164,6 +171,7 @@ EVP_DigestInit_ex2(ctx, NULL, NULL);
 ### State Copy
 
 The internal state can be copied by calling:
+
 ```
 EVP_MD_CTX_copy_ex(ctx, newctx);
 ```
@@ -174,9 +182,11 @@ Low Level squeeze changes
 ### Description
 
 The existing one shot squeeze method is:
+
 ```
 SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t outlen, size_t r)
 ```
+
 It contains an opaque object for storing the state B<A>, that can be used to
 output to B<out>. After every B<r> bits, the state B<A> is updated internally
 by calling KeccakF1600().
@@ -190,7 +200,7 @@ since it was assumed that it was not required for a one shot operation.
 
 Modify the SHA3_squeeze code to accept a input/output parameter to track the
 position within the state B<A>.
-See https://github.com/openssl/openssl/pull/13470.
+See <https://github.com/openssl/openssl/pull/13470>
 
 #### Pros
 
@@ -208,7 +218,7 @@ See https://github.com/openssl/openssl/pull/13470.
 ### Solution 2
 
 Leave SHA3_squeeze() as it is and buffer calls to the SHA3_squeeze() function
-inside the final. See https://github.com/openssl/openssl/pull/7921.
+inside the final. See <https://github.com/openssl/openssl/pull/7921>
 
 #### Pros
 
