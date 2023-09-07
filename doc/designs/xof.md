@@ -19,8 +19,9 @@ out2 = xof.squeeze(1000);
 ### Rules
 
 - absorb can be called multiple times
-- finalize ends the absorb process (by adding padding bytes and doing a final absorb).
-  absorb must not be called once the finalize is done unless a reset happens.
+- finalize ends the absorb process (by adding padding bytes and doing a final
+  absorb). absorb must not be called once the finalize is done unless a reset
+  happens.
 - finalize may be done as part of the first squeeze operation
 - squeeze can be called multiple times.
 
@@ -28,16 +29,16 @@ OpenSSL XOF Requirements
 ------------------------
 
 The current OpenSSL implementation of XOF only supports a single call to squeeze.
-The assumption exists in both the high level call to EVP_DigestFinalXOF() as well
-as in the lower level SHA3_squeeze() operation (Of which there is a generic c version,
-as well as assembler code for different platforms).
+The assumption exists in both the high level call to EVP_DigestFinalXOF() as
+well as in the lower level SHA3_squeeze() operation (Of which there is a generic
+c version, as well as assembler code for different platforms).
 
-A decision has to be made as to whether a new API is required, as well as considering
-how the change may affect existing applications.
-The changes introduced should have a minimal affect on other related functions that
-share the same code (e.g SHAKE and SHA3 share functionality).
-Older providers that have not been updated to support this change should produce an
-error if a newer core is used that supports multiple squeeze operations.
+A decision has to be made as to whether a new API is required, as well as
+considering how the change may affect existing applications.
+The changes introduced should have a minimal affect on other related functions
+that share the same code (e.g SHAKE and SHA3 share functionality).
+Older providers that have not been updated to support this change should produce
+an error if a newer core is used that supports multiple squeeze operations.
 
 API Discussion of Squeeze
 -------------------------
@@ -45,19 +46,21 @@ API Discussion of Squeeze
 ### Squeeze
 
 Currently EVP_DigestFinalXOF() uses a flag to check that it is only invoked once.
-It returns an error if called more than once. When initially written it also did a 
-reset, but that code was removed as it was deemed to be incorrect.
+It returns an error if called more than once. When initially written it also did
+a reset, but that code was removed as it was deemed to be incorrect.
 
-If we remove the flag check, then the core code will potentially call low level squeeze code
-in a older provider that does not handle returning correct data for multiple calls.
-To counter this the provider needs a mechanism to indicate that multiple calls are allowed.
-This could just be a new gettable flag (having a separate provider function should not be necessary).
+If we remove the flag check, then the core code will potentially call low level
+squeeze code in a older provider that does not handle returning correct data for
+multiple calls. To counter this the provider needs a mechanism to indicate that
+multiple calls are allowed. This could just be a new gettable flag (having a
+separate provider function should not be necessary).
 
 #### Proposal 1
 
 Change EVP_DigestFinalXOF(ctx, out, outlen) to handle multiple calls.
 Possibly have EVP_DigestSqueeze() just as an alias method?
-Changing the code at this level should be a simple matter of removing the flag check.
+Changing the code at this level should be a simple matter of removing the
+flag check.
 
 ##### Pros
 
@@ -69,8 +72,8 @@ Changing the code at this level should be a simple matter of removing the flag c
 
 #### Proposal 2 (Proposed Solution)
 
-Keep EVP_DigestFinalXOF() as a one shot function and create a new API to handle the
-multi squeeze case e.g.
+Keep EVP_DigestFinalXOF() as a one shot function and create a new API to handle
+the multi squeeze case e.g.
 ```
 EVP_DigestSqueeze(ctx, out, outlen).
 ```
@@ -78,8 +81,8 @@ EVP_DigestSqueeze(ctx, out, outlen).
 ##### Pros
 
   - Seems like a better name.
-  - The existing function does not change, so it is not affected by logic that needs to
-    run for the multi squeeze case.
+  - The existing function does not change, so it is not affected by logic that
+    needs to run for the multi squeeze case.
   - The behaviour of the existing API is the same.
   - At least one other toolkit uses this approach.
 
@@ -88,7 +91,8 @@ EVP_DigestSqueeze(ctx, out, outlen).
   - Adds an extra API.
   - The interaction between the 2 API's needs to be clearly documented.
   - A call to EVP_DigestSqueeze() after EVP_DigestFinalXOF() would fail.
-  - A call to EVP_DigestFinalXOF() after the EVP_DigestSqueeze() would fail? Is this confusing.
+  - A call to EVP_DigestFinalXOF() after the EVP_DigestSqueeze() would fail?
+    Is this confusing.
 
 #### Proposal 3
 
@@ -96,13 +100,16 @@ Create a completely new type e.g. EVP_XOF_MD to implement XOF digests
 
 ##### Pros
 
-  - This would separate the XOF operations so that the interface consisted mainly of Init, Absorb and Squeeze API's
+  - This would separate the XOF operations so that the interface consisted
+    mainly of Init, Absorb and Squeeze API's
   - DigestXOF could then be deprecated.
 
 ##### Cons
 
-  - XOF operations are required for Post Quantum signatures which currently use an EVP_MD object. This would then complicate the Signature API also.
-  - Duplication of the EVP_MD code (although all legacy/engine code would be removed).
+  - XOF operations are required for Post Quantum signatures which currently use
+    an EVP_MD object. This would then complicate the Signature API also.
+  - Duplication of the EVP_MD code (although all legacy/engine code would be
+    removed).
 
 Choosing a name for the API that allows multiple output calls
 -------------------------------------------------------------
@@ -113,8 +120,8 @@ There will be other XOF's that do not use the sponge construction such as Blake2
 
 The proposed API name to use is EVP_DigestSqueeze.
 The alternate name suggested was EVP_DigestExtract.
-The terms extract and expand are used by HKDF so I think this name would be confusing.
-
+The terms extract and expand are used by HKDF so I think this name would be
+confusing.
 
 API Discussion of other XOF API'S
 ---------------------------------
@@ -170,18 +177,19 @@ The existing one shot squeeze method is:
 ```
 SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t outlen, size_t r)
 ```
-It contains an opaque object for storing the state B<A>, that can be used to output to B<out>.
-After every B<r> bits, the state B<A> is updated internally by calling KeccakF1600().
+It contains an opaque object for storing the state B<A>, that can be used to
+output to B<out>. After every B<r> bits, the state B<A> is updated internally
+by calling KeccakF1600().
 
-Unless you are using a multiple of B<r> as the B<outlen>, the function has no way
-of knowing where to start from if another call to SHA_squeeze() was attempted.
-The method also avoids doing a final call to KeccakF1600() currently since it was
-assumed that it was not required for a one shot operation.
+Unless you are using a multiple of B<r> as the B<outlen>, the function has no
+way of knowing where to start from if another call to SHA_squeeze() was
+attempted. The method also avoids doing a final call to KeccakF1600() currently
+since it was assumed that it was not required for a one shot operation.
 
 ### Solution 1
 
-Modify the SHA3_squeeze code to accept a input/output parameter to track the position
-within the state B<A>.
+Modify the SHA3_squeeze code to accept a input/output parameter to track the
+position within the state B<A>.
 See https://github.com/openssl/openssl/pull/13470.
 
 #### Pros
@@ -192,14 +200,15 @@ See https://github.com/openssl/openssl/pull/13470.
 #### Cons
 
   - The logic in the c reference has many if clauses.
-  - This C code also needs to be written in assembler, the logic would also be different in
-    different assembler routines due to the internal format of the state A being different.
+  - This C code also needs to be written in assembler, the logic would also be
+    different in different assembler routines due to the internal format of the
+    state A being different.
   - The general SHA3 case would be slower unless code was duplicated.
 
 ### Solution 2
 
-Leave SHA3_squeeze() as it is and buffer calls to the SHA3_squeeze() function inside the final.
-See https://github.com/openssl/openssl/pull/7921.
+Leave SHA3_squeeze() as it is and buffer calls to the SHA3_squeeze() function
+inside the final. See https://github.com/openssl/openssl/pull/7921.
 
 #### Pros
 
@@ -207,14 +216,17 @@ See https://github.com/openssl/openssl/pull/7921.
 
 #### Cons
 
-  - Because of the one shot nature of the SHA3_squeeze() it still needs to call the KeccakF1600() function directly.
-  - The Assembler function for KeccakF1600() needs to be exposed. This function was not intended to be exposed
-    since the internal format of the state B<A> can be different on different platform architectures.
+  - Because of the one shot nature of the SHA3_squeeze() it still needs to call
+    the KeccakF1600() function directly.
+  - The Assembler function for KeccakF1600() needs to be exposed. This function
+    was not intended to be exposed since the internal format of the state B<A>
+    can be different on different platform architectures.
   - When should this internal buffer state be cleared?
 
 ### Solution 3
 
-Perform a one-shot squeeze on the original absorbed data and throw away the first part of the output buffer,
+Perform a one-shot squeeze on the original absorbed data and throw away the
+first part of the output buffer,
 
 #### Pros
 
@@ -227,8 +239,9 @@ Perform a one-shot squeeze on the original absorbed data and throw away the firs
 
 ### Solution 4 (Proposed Solution)
 
-An alternative approach to solution 2 is to modify the SHA3_squeeze() slightly so that it can pass in a boolean that
-handles the call to KeccakF1600() correctly for multiple calls.
+An alternative approach to solution 2 is to modify the SHA3_squeeze() slightly
+so that it can pass in a boolean that handles the call to KeccakF1600()
+correctly for multiple calls.
 
 #### Pros
 
@@ -238,5 +251,7 @@ handles the call to KeccakF1600() correctly for multiple calls.
 
 #### Cons
 
-  - Requires small assembler change to pass the boolean and handle the call to KeccakF1600().
-  - Uses memcpy to store partial results for a single blob of squeezed data of size 'r' bytes.
+  - Requires small assembler change to pass the boolean and handle the call to
+    KeccakF1600().
+  - Uses memcpy to store partial results for a single blob of squeezed data of
+    size 'r' bytes.
