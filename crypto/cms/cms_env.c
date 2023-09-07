@@ -51,15 +51,6 @@ static int cms_get_enveloped_type(const CMS_ContentInfo *cms)
     return ret;
 }
 
-void ossl_cms_env_enc_content_free(const CMS_ContentInfo *cinf)
-{
-    if (cms_get_enveloped_type_simple(cinf) != 0) {
-        CMS_EncryptedContentInfo *ec = ossl_cms_get0_env_enc_content(cinf);
-        if (ec != NULL)
-            OPENSSL_clear_free(ec->key, ec->keylen);
-    }
-}
-
 CMS_EnvelopedData *ossl_cms_get0_enveloped(CMS_ContentInfo *cms)
 {
     if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_enveloped) {
@@ -289,8 +280,10 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
                       secret == NULL ? cert : NULL, detached_data, bio, flags);
 
  end:
-    if (ci != NULL)
+    if (ci != NULL) {
         ci->d.envelopedData = NULL; /* do not indirectly free |env| */
+        ci->contentType = NULL;
+    }
     CMS_ContentInfo_free(ci);
     if (!res) {
         BIO_free(bio);
