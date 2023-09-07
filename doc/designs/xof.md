@@ -9,7 +9,7 @@ function on a message in which the output can be extended to any desired length.
 
 At a minimum an XOF needs to support the following pseudo-code
 
-```
+```text
 xof = xof.new();
 xof.absorb(bytes1);
 xof.absorb(bytes2);
@@ -77,7 +77,7 @@ flag check.
 Keep EVP_DigestFinalXOF() as a one shot function and create a new API to handle
 the multi squeeze case e.g.
 
-```
+```text
 EVP_DigestSqueeze(ctx, out, outlen).
 ```
 
@@ -133,7 +133,7 @@ API Discussion of other XOF API'S
 
 The digest can be initialized as normal using:
 
-```
+```text
 md = EVP_MD_fetch(libctx, "SHAKE256", propq);
 ctx = EVP_MD_CTX_new();
 EVP_DigestInit_ex2(ctx, md, NULL);
@@ -143,7 +143,7 @@ EVP_DigestInit_ex2(ctx, md, NULL);
 
 Absorb can be done by multiple calls to:
 
-```
+```text
 EVP_DigestUpdate(ctx, in, inlen);
 ```
 
@@ -151,9 +151,10 @@ EVP_DigestUpdate(ctx, in, inlen);
 
 Do we want to have an Alias function?
 
-```
+```text
 EVP_DigestAbsorb(ctx, in, inlen);
 ```
+
 (The consensus was that this is not required).
 
 ### Finalize
@@ -164,7 +165,7 @@ The finalize is just done as part of the squeeze operation.
 
 A reset can be done by calling:
 
-```
+```text
 EVP_DigestInit_ex2(ctx, NULL, NULL);
 ```
 
@@ -172,7 +173,7 @@ EVP_DigestInit_ex2(ctx, NULL, NULL);
 
 The internal state can be copied by calling:
 
-```
+```text
 EVP_MD_CTX_copy_ex(ctx, newctx);
 ```
 
@@ -183,7 +184,7 @@ Low Level squeeze changes
 
 The existing one shot squeeze method is:
 
-```
+```text
 SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t outlen, size_t r)
 ```
 
