@@ -309,6 +309,8 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         break;
 
     case ASN1_OP_FREE_PRE:
+        if (cms->d.other == NULL)
+            break;
         switch (OBJ_obj2nid(cms->contentType)) {
             case NID_pkcs7_encrypted:
                 ec = cms->d.encryptedData->encryptedContentInfo;
