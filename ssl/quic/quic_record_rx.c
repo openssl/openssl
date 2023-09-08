@@ -68,6 +68,12 @@ struct rxe_st {
     uint64_t            key_epoch;
 
     /*
+     * Monotonically increases with each datagram received.
+     * For diagnostic use only.
+     */
+    uint64_t            datagram_id;
+
+    /*
      * alloc_len allocated bytes (of which data_len bytes are valid) follow this
      * structure.
      */
@@ -865,6 +871,7 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
         rxe->peer           = urxe->peer;
         rxe->local          = urxe->local;
         rxe->time           = urxe->time;
+        rxe->datagram_id    = urxe->datagram_id;
 
         /* Move RXE to pending. */
         ossl_list_rxe_remove(&qrx->rx_free, rxe);
@@ -1046,9 +1053,10 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
         qrx->largest_pn[pn_space] = rxe->pn;
 
     /* Copy across network addresses and RX time from URXE to RXE. */
-    rxe->peer   = urxe->peer;
-    rxe->local  = urxe->local;
-    rxe->time   = urxe->time;
+    rxe->peer           = urxe->peer;
+    rxe->local          = urxe->local;
+    rxe->time           = urxe->time;
+    rxe->datagram_id    = urxe->datagram_id;
 
     /* Move RXE to pending. */
     ossl_list_rxe_remove(&qrx->rx_free, rxe);
@@ -1227,6 +1235,7 @@ int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT **ppkt)
     rxe->pkt.local
         = BIO_ADDR_family(&rxe->local) != AF_UNSPEC ? &rxe->local : NULL;
     rxe->pkt.key_epoch      = rxe->key_epoch;
+    rxe->pkt.datagram_id    = rxe->datagram_id;
     rxe->pkt.qrx            = qrx;
     *ppkt = &rxe->pkt;
 

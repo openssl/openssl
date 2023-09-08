@@ -225,6 +225,12 @@ struct ossl_qrx_pkt_st {
      * packets.
      */
     uint64_t            key_epoch;
+
+    /*
+     * This monotonically increases with each datagram received.
+     * It is for diagnostic use only.
+     */
+    uint64_t            datagram_id;
 };
 
 /*
