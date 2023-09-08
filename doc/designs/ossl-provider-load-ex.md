@@ -1,5 +1,5 @@
-Providers run-time configuration
-================================
+OSSL_PROVIDER_load_ex - activating providers with run-time configuration
+========================================================================
 
 Currently any provider run-time activation requires the presence of the
 initialization parameters in the OpenSSL configuration file. Otherwise the
