@@ -20,7 +20,8 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 3.0.10 and OpenSSL 3.0.11 [under development]
 
-  * none
+  * Fix POLY1305 MAC implementation corrupting XMM registers on Windows
+    ([CVE-2023-4807])
 
 ### Major changes between OpenSSL 3.0.9 and OpenSSL 3.0.10 [1 Aug 2023]
 
@@ -1452,6 +1453,7 @@ OpenSSL 0.9.x
 
 <!-- Links -->
 
+[CVE-2023-4807]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-4807
 [CVE-2023-3817]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-3817
 [CVE-2023-3446]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-3446
 [CVE-2023-2975]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2975
