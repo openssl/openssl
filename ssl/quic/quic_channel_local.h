@@ -49,6 +49,9 @@ struct quic_channel_st {
     /* SRTM we register SRTs with. */
     QUIC_SRTM                       *srtm;
 
+    /* Optional QLOG instance (or NULL). */
+    QLOG                            *qlog;
+
     /*
      * The transport parameter block we will send or have sent.
      * Freed after sending or when connection is freed.
@@ -424,6 +427,9 @@ struct quic_channel_st {
 
     /* Are we on the QUIC_PORT linked list of channels? */
     unsigned int                    on_port_list                        : 1;
+
+    /* Has QLOG been requested? */
+    unsigned int                    use_qlog                            : 1;
 
     /* Saved error stack in case permanent error was encountered */
     ERR_STATE                       *err_state;

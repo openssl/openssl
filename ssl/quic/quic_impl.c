@@ -1504,6 +1504,9 @@ static int create_channel(QUIC_CONNECTION *qc)
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         return 0;
     }
+#ifndef OPENSSL_NO_QLOG
+    args.use_qlog   = 1; /* disabled if env not set */
+#endif
 
     port_args.channel_ctx = qc->ssl.ctx;
     qc->port = ossl_quic_engine_create_port(qc->engine, &port_args);

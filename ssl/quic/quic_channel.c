@@ -103,6 +103,36 @@ static void ch_raise_version_neg_failure(QUIC_CHANNEL *ch);
 
 DEFINE_LHASH_OF_EX(QUIC_SRT_ELEM);
 
+QUIC_NEEDS_LOCK
+static QLOG *ch_get_qlog(QUIC_CHANNEL *ch)
+{
+#ifndef OPENSSL_NO_QLOG
+    QLOG_TRACE_INFO qti = {0};
+
+    if (ch->qlog != NULL)
+        return ch->qlog;
+
+    if (!ch->use_qlog)
+        return NULL;
+
+    qti.odcid       = ch->init_dcid;
+    qti.title       = NULL;
+    qti.description = NULL;
+    qti.group_id    = NULL;
+    qti.is_server   = ch->is_server;
+    qti.now_cb      = get_time;
+    qti.now_cb_arg  = ch;
+    if ((ch->qlog = ossl_qlog_new_from_env(&qti)) == NULL) {
+        ch->use_qlog = 0; /* don't try again */
+        return NULL;
+    }
+
+    return ch->qlog;
+#else
+    return NULL;
+#endif
+}
+
 /*
  * QUIC Channel Initialization and Teardown
  * ========================================
@@ -364,6 +394,13 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
         ossl_list_ch_remove(&ch->port->channel_list, ch);
         ch->on_port_list = 0;
     }
+
+#ifndef OPENSSL_NO_QLOG
+    if (ch->qlog != NULL)
+        ossl_qlog_flush(ch->qlog); /* best effort */
+
+    ossl_qlog_free(ch->qlog);
+#endif
 }
 
 QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
@@ -378,6 +415,9 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
     ch->tls         = args->tls;
     ch->lcidm       = args->lcidm;
     ch->srtm        = args->srtm;
+#ifndef OPENSSL_NO_QLOG
+    ch->use_qlog    = args->use_qlog;
+#endif
 
     if (!ch_init(ch)) {
         OPENSSL_free(ch);
