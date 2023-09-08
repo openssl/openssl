@@ -107,6 +107,12 @@ struct quic_urxe_st {
     uint64_t        processed, hpr_removed;
 
     /*
+     * This monotonically increases with each datagram received. It is used for
+     * diagnostic purposes only.
+     */
+    uint64_t        datagram_id;
+
+    /*
      * Address of peer we received the datagram from, and the local interface
      * address we received it on. If local address support is not enabled, local
      * is zeroed.
