@@ -236,6 +236,9 @@
  */
 # define TLS1_TLSTREE 0x20000
 
+/* Ciphersuite supported in QUIC */
+# define SSL_QUIC                0x00040000U
+
 # define SSL_STRONG_MASK         0x0000001FU
 # define SSL_DEFAULT_MASK        0X00000020U
 

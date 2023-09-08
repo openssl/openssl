@@ -3535,6 +3535,16 @@ int ossl_quic_renegotiate_check(SSL *ssl, int initok)
     return 0;
 }
 
+const SSL_CIPHER *ossl_quic_get_cipher_by_char(const unsigned char *p)
+{
+    const SSL_CIPHER *ciph = ssl3_get_cipher_by_char(p);
+
+    if ((ciph->algorithm2 & SSL_QUIC) == 0)
+        return NULL;
+
+    return ciph;
+}
+
 /*
  * These functions define the TLSv1.2 (and below) ciphers that are supported by
  * the SSL_METHOD. Since QUIC only supports TLSv1.3 we don't support any.
