@@ -9,7 +9,27 @@
 
  Changes between 1.1.1v and 1.1.1w [xx XXX xxxx]
 
- *)
+ *) Fix POLY1305 MAC implementation corrupting XMM registers on Windows.
+
+    The POLY1305 MAC (message authentication code) implementation in OpenSSL
+    does not save the contents of non-volatile XMM registers on Windows 64
+    platform when calculating the MAC of data larger than 64 bytes. Before
+    returning to the caller all the XMM registers are set to zero rather than
+    restoring their previous content. The vulnerable code is used only on newer
+    x86_64 processors supporting the AVX512-IFMA instructions.
+
+    The consequences of this kind of internal application state corruption can
+    be various - from no consequences, if the calling application does not
+    depend on the contents of non-volatile XMM registers at all, to the worst
+    consequences, where the attacker could get complete control of the
+    application process. However given the contents of the registers are just
+    zeroized so the attacker cannot put arbitrary values inside, the most likely
+    consequence, if any, would be an incorrect result of some application
+    dependent calculations or a crash leading to a denial of service.
+
+    (CVE-2023-4807)
+    [Bernd Edlinger]
+
 
  Changes between 1.1.1u and 1.1.1v [1 Aug 2023]
 

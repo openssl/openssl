@@ -7,7 +7,8 @@
 
   Major changes between OpenSSL 1.1.1v and OpenSSL 1.1.1w [under development]
 
-      o
+      o Fix POLY1305 MAC implementation corrupting XMM registers on Windows
+        (CVE-2023-4807)
 
   Major changes between OpenSSL 1.1.1u and OpenSSL 1.1.1v [1 Aug 2023]
 
