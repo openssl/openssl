@@ -1506,6 +1506,7 @@ static int create_channel(QUIC_CONNECTION *qc)
     }
 #ifndef OPENSSL_NO_QLOG
     args.use_qlog   = 1; /* disabled if env not set */
+    args.qlog_title = qc->ssl.ctx->qlog_title;
 #endif
 
     port_args.channel_ctx = qc->ssl.ctx;
@@ -3700,4 +3701,20 @@ QUIC_CHANNEL *ossl_quic_conn_get_channel(SSL *s)
         return NULL;
 
     return ctx.qc->ch;
+}
+
+int ossl_quic_set_diag_title(SSL_CTX *ctx, const char *title)
+{
+#ifndef OPENSSL_NO_QLOG
+    OPENSSL_free(ctx->qlog_title);
+    ctx->qlog_title = NULL;
+
+    if (title == NULL)
+        return 1;
+
+    if ((ctx->qlog_title = OPENSSL_strdup(title)) == NULL)
+        return 0;
+#endif
+
+    return 1;
 }
