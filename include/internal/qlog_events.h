@@ -7,3 +7,4 @@
  * https://www.openssl.org/source/license.html
  */
 QLOG_EVENT(connectivity, connection_started)
+QLOG_EVENT(connectivity, connection_state_updated)

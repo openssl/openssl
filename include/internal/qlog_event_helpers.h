@@ -18,4 +18,11 @@
 void ossl_qlog_event_connectivity_connection_started(QLOG *qlog,
                                                      const QUIC_CONN_ID *init_dcid);
 
+/* connectivity:connection_state_updated */
+void ossl_qlog_event_connectivity_connection_state_updated(QLOG *qlog,
+                                                           uint32_t old_state,
+                                                           uint32_t new_state,
+                                                           int handshake_complete,
+                                                           int handshake_confirmed);
+
 #endif

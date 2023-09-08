@@ -101,6 +101,7 @@ static void ch_on_txp_ack_tx(const OSSL_QUIC_FRAME_ACK *ack, uint32_t pn_space,
                              void *arg);
 static void ch_rx_handle_version_neg(QUIC_CHANNEL *ch, OSSL_QRX_PKT *pkt);
 static void ch_raise_version_neg_failure(QUIC_CHANNEL *ch);
+static void ch_record_state_transition(QUIC_CHANNEL *ch, uint32_t new_state);
 
 DEFINE_LHASH_OF_EX(QUIC_SRT_ELEM);
 
@@ -1032,6 +1033,7 @@ static int ch_on_handshake_complete(void *arg)
         ossl_quic_tx_packetiser_schedule_handshake_done(ch->txp);
     }
 
+    ch_record_state_transition(ch, ch->state);
     return 1;
 }
 
@@ -2423,6 +2425,24 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
  * QUIC Channel: Lifecycle Events
  * ==============================
  */
+
+/*
+ * Record a state transition. This is not necessarily a change to ch->state but
+ * also includes the handshake becoming complete or confirmed, etc.
+ */
+static void ch_record_state_transition(QUIC_CHANNEL *ch, uint32_t new_state)
+{
+    uint32_t old_state = ch->state;
+
+    ch->state = new_state;
+
+    ossl_qlog_event_connectivity_connection_state_updated(ch_get_qlog(ch),
+                                                          old_state,
+                                                          new_state,
+                                                          ch->handshake_complete,
+                                                          ch->handshake_confirmed);
+}
+
 int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 {
     if (ch->is_server)
@@ -2449,7 +2469,7 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
         return 0;
 
     /* Change state. */
-    ch->state                   = QUIC_CHANNEL_STATE_ACTIVE;
+    ch_record_state_transition(ch, QUIC_CHANNEL_STATE_ACTIVE);
     ch->doing_proactive_ver_neg = 0; /* not currently supported */
 
     ossl_qlog_event_connectivity_connection_started(ch_get_qlog(ch),
@@ -2612,6 +2632,7 @@ int ossl_quic_channel_on_handshake_confirmed(QUIC_CHANNEL *ch)
 
     ch_discard_el(ch, QUIC_ENC_LEVEL_HANDSHAKE);
     ch->handshake_confirmed = 1;
+    ch_record_state_transition(ch, ch->state);
     ossl_ackm_on_handshake_confirmed(ch->ackm);
     return 1;
 }
@@ -2711,8 +2732,9 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
         copy_tcause(&ch->terminate_cause, tcause);
 
         if (!force_immediate) {
-            ch->state = tcause->remote ? QUIC_CHANNEL_STATE_TERMINATING_DRAINING
-                                       : QUIC_CHANNEL_STATE_TERMINATING_CLOSING;
+            ch_record_state_transition(ch, tcause->remote
+                                           ? QUIC_CHANNEL_STATE_TERMINATING_DRAINING
+                                           : QUIC_CHANNEL_STATE_TERMINATING_CLOSING);
             /*
              * RFC 9000 s. 10.2 Immediate Close
              *  These states SHOULD persist for at least three times
@@ -2757,7 +2779,7 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
              *  closing state if it receives a CONNECTION_CLOSE frame,
              *  which indicates that the peer is also closing or draining.
              */
-            ch->state = QUIC_CHANNEL_STATE_TERMINATING_DRAINING;
+            ch_record_state_transition(ch, QUIC_CHANNEL_STATE_TERMINATING_DRAINING);
 
         break;
 
@@ -3091,7 +3113,7 @@ void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
  */
 static void ch_on_terminating_timeout(QUIC_CHANNEL *ch)
 {
-    ch->state = QUIC_CHANNEL_STATE_TERMINATED;
+    ch_record_state_transition(ch, QUIC_CHANNEL_STATE_TERMINATED);
 }
 
 /*
@@ -3166,7 +3188,7 @@ static void ch_on_idle_timeout(QUIC_CHANNEL *ch)
     ch->terminate_cause.error_code  = UINT64_MAX;
     ch->terminate_cause.frame_type  = 0;
 
-    ch->state = QUIC_CHANNEL_STATE_TERMINATED;
+    ch_record_state_transition(ch, QUIC_CHANNEL_STATE_TERMINATED);
 }
 
 /* Called when we, as a server, get a new incoming connection. */
@@ -3210,7 +3232,7 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
         return 0;
 
     /* Change state. */
-    ch->state                   = QUIC_CHANNEL_STATE_ACTIVE;
+    ch_record_state_transition(ch, QUIC_CHANNEL_STATE_ACTIVE);
     ch->doing_proactive_ver_neg = 0; /* not currently supported */
     return 1;
 }
