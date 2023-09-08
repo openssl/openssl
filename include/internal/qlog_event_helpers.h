@@ -45,4 +45,12 @@ void ossl_qlog_event_transport_packet_sent(QLOG *qlog,
                                            size_t numn_iovec,
                                            uint64_t datagram_id);
 
+/* transport:packet_received */
+void ossl_qlog_event_transport_packet_received(QLOG *qlog,
+                                               const QUIC_PKT_HDR *hdr,
+                                               QUIC_PN pn,
+                                               const OSSL_QTX_IOVEC *iovec,
+                                               size_t numn_iovec,
+                                               uint64_t datagram_id);
+
 #endif

@@ -2098,6 +2098,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
 {
     uint32_t enc_level;
     int old_have_processed_any_pkt = ch->have_processed_any_pkt;
+    OSSL_QTX_IOVEC iovec;
 
     assert(ch->qrx_pkt != NULL);
 
@@ -2183,6 +2184,12 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
                                                0, "packet header reserved bits");
         return;
     }
+
+    iovec.buf       = ch->qrx_pkt->hdr->data;
+    iovec.buf_len   = ch->qrx_pkt->hdr->len;
+    ossl_qlog_event_transport_packet_received(ch_get_qlog(ch), ch->qrx_pkt->hdr,
+                                              ch->qrx_pkt->pn, &iovec, 1,
+                                              ch->qrx_pkt->datagram_id);
 
     /* Handle incoming packet. */
     switch (ch->qrx_pkt->hdr->type) {

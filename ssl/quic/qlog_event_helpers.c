@@ -611,3 +611,17 @@ void ossl_qlog_event_transport_packet_sent(QLOG *qlog,
     QLOG_EVENT_END()
 #endif
 }
+
+void ossl_qlog_event_transport_packet_received(QLOG *qlog,
+                                               const QUIC_PKT_HDR *hdr,
+                                               QUIC_PN pn,
+                                               const OSSL_QTX_IOVEC *iovec,
+                                               size_t num_iovec,
+                                               uint64_t datagram_id)
+{
+#ifndef OPENSSL_NO_QLOG
+    QLOG_EVENT_BEGIN(qlog, transport, packet_received)
+        log_packet(qlog, hdr, pn, iovec, num_iovec, datagram_id);
+    QLOG_EVENT_END()
+#endif
+}
