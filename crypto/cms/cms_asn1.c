@@ -322,6 +322,9 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         break;
 
     case ASN1_OP_FREE_PRE:
+        OPENSSL_free(cms->ctx.propq);
+        if (cms->d.other == NULL)
+            break;
         switch (OBJ_obj2nid(cms->contentType)) {
             case NID_pkcs7_encrypted:
                 ec = cms->d.encryptedData->encryptedContentInfo;
@@ -330,13 +333,11 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                 ec = cms->d.envelopedData->encryptedContentInfo;
                 break;
             case NID_id_smime_ct_authEnvelopedData:
-                if (cms->d.authEnvelopedData != NULL)
-                    ec = cms->d.authEnvelopedData->authEncryptedContentInfo;
+                ec = cms->d.authEnvelopedData->authEncryptedContentInfo;
                 break;
         }
         if (ec != NULL && ec->key != NULL)
             OPENSSL_clear_free(ec->key, ec->keylen);
-        OPENSSL_free(cms->ctx.propq);
         break;
 
     }
