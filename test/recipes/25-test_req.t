@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 14;
+plan tests => 16;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -212,3 +212,14 @@ sub run_conversion {
         done_testing();
     };
 }
+
+# Generate cert using req with '-modulus'
+ok(run(app(["openssl", "req", "-x509", "-new", "-days", "365",
+            "-key", srctop_file("test", "testrsa.pem"),
+            "-config", srctop_file('test', 'test.cnf'),
+            "-out", "testreq-cert.pem",
+            "-modulus"])), "cert req creation - with -modulus");
+
+# Verify cert
+ok(run(app(["openssl", "x509", "-in", "testreq-cert.pem",
+            "-noout", "-text"])), "cert verification");
