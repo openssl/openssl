@@ -285,7 +285,7 @@ char *ossl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep)
  */
 char *OPENSSL_buf2hexstr(const unsigned char *buf, long buflen)
 {
-    return ossl_buf2hexstr_sep(buf, buflen, ':');
+    return ossl_buf2hexstr_sep(buf, buflen, DEFAULT_SEPARATOR);
 }
 
 int openssl_strerror_r(int errnum, char *buf, size_t buflen)
