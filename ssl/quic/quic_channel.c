@@ -1269,6 +1269,8 @@ static int ch_on_transport_params(const unsigned char *params,
     int got_initial_max_stream_data_uni = 0;
     int got_initial_max_streams_bidi = 0;
     int got_initial_max_streams_uni = 0;
+    int got_stateless_reset_token = 0;
+    int got_preferred_addr = 0;
     int got_ack_delay_exp = 0;
     int got_max_ack_delay = 0;
     int got_max_udp_payload_size = 0;
@@ -1573,6 +1575,11 @@ static int ch_on_transport_params(const unsigned char *params,
             break;
 
         case QUIC_TPARAM_STATELESS_RESET_TOKEN:
+            if (got_stateless_reset_token) {
+                reason = TP_REASON_DUP("STATELESS_RESET_TOKEN");
+                goto malformed;
+            }
+
             /*
              * We must ensure a client doesn't send them because we don't have
              * processing for them.
@@ -1594,12 +1601,17 @@ static int ch_on_transport_params(const unsigned char *params,
                 goto malformed;
             }
 
+            got_stateless_reset_token = 1;
             break;
 
         case QUIC_TPARAM_PREFERRED_ADDR:
             {
                 /* TODO(QUIC FUTURE): Handle preferred address. */
                 QUIC_PREFERRED_ADDR pfa;
+                if (got_preferred_addr) {
+                    reason = TP_REASON_DUP("PREFERRED_ADDR");
+                    goto malformed;
+                }
 
                 /*
                  * RFC 9000 s. 18.2: "A server that chooses a zero-length
@@ -1628,6 +1640,8 @@ static int ch_on_transport_params(const unsigned char *params,
                     reason = "zero-length CID in PREFERRED_ADDR";
                     goto malformed;
                 }
+
+                got_preferred_addr = 1;
             }
             break;
 
