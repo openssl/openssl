@@ -17,4 +17,6 @@ SOURCE[$LIBSSL]=quic_trace.c
 SOURCE[$LIBSSL]=quic_srtm.c quic_srt_gen.c
 SOURCE[$LIBSSL]=quic_lcidm.c quic_rcidm.c
 SOURCE[$LIBSSL]=quic_types.c
-SOURCE[$LIBSSL]=quic_lcidm.c
+IF[{- !$disabled{qlog} -}]
+  SOURCE[$LIBSSL]=json_enc.c
+ENDIF
