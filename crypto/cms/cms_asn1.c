@@ -91,11 +91,21 @@ ASN1_SEQUENCE(CMS_OriginatorInfo) = {
         ASN1_IMP_SET_OF_OPT(CMS_OriginatorInfo, crls, CMS_RevocationInfoChoice, 1)
 } static_ASN1_SEQUENCE_END(CMS_OriginatorInfo)
 
-ASN1_NDEF_SEQUENCE(CMS_EncryptedContentInfo) = {
+static int cms_ec_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+                     void *exarg)
+{
+    CMS_EncryptedContentInfo *ec = (CMS_EncryptedContentInfo *)*pval;
+
+    if (operation == ASN1_OP_FREE_POST)
+        OPENSSL_clear_free(ec->key, ec->keylen);
+    return 1;
+}
+
+ASN1_NDEF_SEQUENCE_cb(CMS_EncryptedContentInfo, cms_ec_cb) = {
         ASN1_SIMPLE(CMS_EncryptedContentInfo, contentType, ASN1_OBJECT),
         ASN1_SIMPLE(CMS_EncryptedContentInfo, contentEncryptionAlgorithm, X509_ALGOR),
         ASN1_IMP_OPT(CMS_EncryptedContentInfo, encryptedContent, ASN1_OCTET_STRING_NDEF, 0)
-} static_ASN1_NDEF_SEQUENCE_END(CMS_EncryptedContentInfo)
+} ASN1_NDEF_SEQUENCE_END_cb(CMS_EncryptedContentInfo, CMS_EncryptedContentInfo)
 
 ASN1_SEQUENCE(CMS_KeyTransRecipientInfo) = {
         ASN1_EMBED(CMS_KeyTransRecipientInfo, version, INT32),
@@ -297,8 +307,6 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 {
     ASN1_STREAM_ARG *sarg = exarg;
     CMS_ContentInfo *cms = NULL;
-    CMS_EncryptedContentInfo *ec = NULL;
-
     if (pval)
         cms = (CMS_ContentInfo *)*pval;
     else
@@ -321,23 +329,8 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             return 0;
         break;
 
-    case ASN1_OP_FREE_PRE:
+    case ASN1_OP_FREE_POST:
         OPENSSL_free(cms->ctx.propq);
-        if (cms->d.other == NULL)
-            break;
-        switch (OBJ_obj2nid(cms->contentType)) {
-            case NID_pkcs7_encrypted:
-                ec = cms->d.encryptedData->encryptedContentInfo;
-                break;
-            case NID_pkcs7_enveloped:
-                ec = cms->d.envelopedData->encryptedContentInfo;
-                break;
-            case NID_id_smime_ct_authEnvelopedData:
-                ec = cms->d.authEnvelopedData->authEncryptedContentInfo;
-                break;
-        }
-        if (ec != NULL && ec->key != NULL)
-            OPENSSL_clear_free(ec->key, ec->keylen);
         break;
 
     }
