@@ -33,6 +33,9 @@ typedef struct quic_txpim_pkt_st {
     /* Reserved for FIFD use. */
     QUIC_FIFD          *fifd;
 
+    /* QUIC_PKT_TYPE value. For diagnostic use only. */
+    unsigned char       pkt_type;
+
     /* Regenerate-strategy frames. */
     unsigned int        had_handshake_done_frame    : 1;
     unsigned int        had_max_data_frame          : 1;

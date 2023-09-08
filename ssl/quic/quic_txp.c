@@ -2812,6 +2812,7 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp,
     tpkt->ackm_pkt.is_pto_probe     = 0;
     tpkt->ackm_pkt.is_mtu_probe     = 0;
     tpkt->ackm_pkt.time             = txp->args.now(txp->args.now_arg);
+    tpkt->pkt_type                  = pkt->phdr.type;
 
     /* Done. */
     return rc;
