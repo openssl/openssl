@@ -14,6 +14,7 @@
 #include "internal/quic_rx_depack.h"
 #include "internal/quic_lcidm.h"
 #include "internal/quic_srtm.h"
+#include "internal/qlog_event_helpers.h"
 #include "../ssl_local.h"
 #include "quic_channel_local.h"
 #include "quic_port_local.h"
@@ -2450,6 +2451,9 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     /* Change state. */
     ch->state                   = QUIC_CHANNEL_STATE_ACTIVE;
     ch->doing_proactive_ver_neg = 0; /* not currently supported */
+
+    ossl_qlog_event_connectivity_connection_started(ch_get_qlog(ch),
+                                                    &ch->init_dcid);
 
     /* Handshake layer: start (e.g. send CH). */
     if (!ch_tick_tls(ch, /*channel_only=*/0))
