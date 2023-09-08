@@ -8,6 +8,7 @@
  */
 
 #include "internal/quic_record_tx.h"
+#include "internal/qlog_event_helpers.h"
 #include "internal/bio_addr.h"
 #include "internal/common.h"
 #include "quic_record_shared.h"
@@ -59,6 +60,9 @@ struct ossl_qtx_st {
 
     /* TX BIO. */
     BIO                        *bio;
+
+    /* QLOG instance if in use, or NULL. */
+    QLOG                       *qlog;
 
     /* TX maximum datagram payload length. */
     size_t                      mdpl;
@@ -117,6 +121,7 @@ OSSL_QTX *ossl_qtx_new(const OSSL_QTX_ARGS *args)
     qtx->propq              = args->propq;
     qtx->bio                = args->bio;
     qtx->mdpl               = args->mdpl;
+    qtx->qlog               = args->qlog;
     return qtx;
 }
 

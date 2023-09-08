@@ -15,6 +15,7 @@
 # include "internal/quic_types.h"
 # include "internal/quic_predef.h"
 # include "internal/quic_record_util.h"
+# include "internal/qlog.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -47,6 +48,9 @@ typedef struct ossl_qtx_args_st {
 
     /* Maximum datagram payload length (MDPL) for TX purposes. */
     size_t          mdpl;
+
+    /* QLOG instance to use, or NULL. */
+    QLOG           *qlog;
 } OSSL_QTX_ARGS;
 
 /* Instantiates a new QTX. */
