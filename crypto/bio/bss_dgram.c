@@ -50,6 +50,17 @@
 # define M_METHOD_RECVFROM   3
 # define M_METHOD_WSARECVMSG 4
 
+# if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
+#  if !(__GLIBC_PREREQ(2, 14))
+#   undef NO_RECVMMSG
+    /*
+     * Some old glibc versions may have recvmmsg and MSG_WAITFORONE flag, but
+     * not sendmmsg. We need both so force this to be disabled on these old
+     * versions
+     */
+#   define NO_RECVMMSG
+#  endif
+# endif
 # if !defined(M_METHOD)
 #  if defined(OPENSSL_SYS_WINDOWS) && defined(BIO_HAVE_WSAMSG) && !defined(NO_WSARECVMSG)
 #   define M_METHOD  M_METHOD_WSARECVMSG
