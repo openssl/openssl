@@ -437,6 +437,9 @@ struct quic_channel_st {
     /* Scratch area for use by RXDP to store decoded ACK ranges. */
     OSSL_QUIC_ACK_RANGE             *ack_range_scratch;
     size_t                          num_ack_range_scratch;
+
+    /* Title for QLOG purposes. We own this copy. */
+    char                            *quic_channel_local;
 };
 
 # endif

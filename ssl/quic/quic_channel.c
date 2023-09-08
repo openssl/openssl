@@ -118,7 +118,7 @@ static QLOG *ch_get_qlog(QUIC_CHANNEL *ch)
         return NULL;
 
     qti.odcid       = ch->init_dcid;
-    qti.title       = NULL;
+    qti.title       = ch->qlog_title;
     qti.description = NULL;
     qti.group_id    = NULL;
     qti.is_server   = ch->is_server;
@@ -402,6 +402,7 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     if (ch->qlog != NULL)
         ossl_qlog_flush(ch->qlog); /* best effort */
 
+    OPENSSL_free(ch->qlog_title);
     ossl_qlog_free(ch->qlog);
 #endif
 }
@@ -420,6 +421,13 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
     ch->srtm        = args->srtm;
 #ifndef OPENSSL_NO_QLOG
     ch->use_qlog    = args->use_qlog;
+
+    if (ch->use_qlog && args->qlog_title != NULL) {
+        if ((ch->qlog_title = OPENSSL_strdup(args->qlog_title)) == NULL) {
+            OPENSSL_free(ch);
+            return NULL;
+        }
+    }
 #endif
 
     if (!ch_init(ch)) {
