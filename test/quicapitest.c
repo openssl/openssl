@@ -321,6 +321,49 @@ static int test_ciphersuites(void)
     return testresult;
 }
 
+static int test_cipher_find(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL;
+    struct {
+        const unsigned char *cipherbytes;
+        int ok;
+    } testciphers[]  = {
+        { TLS13_AES_128_GCM_SHA256_BYTES, 1 },
+        { TLS13_AES_256_GCM_SHA384_BYTES, 1 },
+        { TLS13_CHACHA20_POLY1305_SHA256_BYTES, 1 },
+        { TLS13_AES_128_CCM_SHA256_BYTES, 0 },
+        { TLS13_AES_128_CCM_8_SHA256_BYTES, 0 }
+    };
+    size_t i;
+    int testresult = 0;
+
+    if (!TEST_ptr(cctx))
+        goto err;
+
+    clientquic = SSL_new(cctx);
+    if (!TEST_ptr(clientquic))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(testciphers); i++)
+        if (testciphers[i].ok) {
+            if (!TEST_ptr(SSL_CIPHER_find(clientquic,
+                                          testciphers[i].cipherbytes)))
+                goto err;
+        } else {
+            if (!TEST_ptr_null(SSL_CIPHER_find(clientquic,
+                                               testciphers[i].cipherbytes)))
+                goto err;
+        }
+
+    testresult = 1;
+ err:
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 /*
  * Test that SSL_version, SSL_get_version, SSL_is_quic, SSL_is_tls and
  * SSL_is_dtls return the expected results for a QUIC connection. Compare with
@@ -1205,6 +1248,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_quic_write_read, 3);
     ADD_TEST(test_fin_only_blocking);
     ADD_TEST(test_ciphersuites);
+    ADD_TEST(test_cipher_find);
     ADD_TEST(test_version);
 #if defined(DO_SSL_TRACE_TEST)
     ADD_TEST(test_ssl_trace);
