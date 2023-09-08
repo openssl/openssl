@@ -662,12 +662,14 @@ static void helper_cleanup(struct helper *h)
 #endif
 }
 
-static int helper_init(struct helper *h, int free_order, int blocking,
+static int helper_init(struct helper *h, const char *script_name,
+                       int free_order, int blocking,
                        int need_injector)
 {
     struct in_addr ina = {0};
     QUIC_TSERVER_ARGS s_args = {0};
     union BIO_sock_info_u info;
+    char title[128];
 
     memset(h, 0, sizeof(*h));
     h->c_fd = -1;
@@ -771,6 +773,11 @@ static int helper_init(struct helper *h, int free_order, int blocking,
         goto err;
 
     if (!TEST_ptr(h->c_ctx = SSL_CTX_new(OSSL_QUIC_client_method())))
+        goto err;
+
+    /* Set title for QLOG purposes. */
+    snprintf(title, sizeof(title), "quic_multistream_test: %s", script_name);
+    if (!TEST_true(ossl_quic_set_diag_title(h->c_ctx, title)))
         goto err;
 
     if (!TEST_ptr(h->c_conn = SSL_new(h->c_ctx)))
@@ -2053,7 +2060,8 @@ static int run_script(const struct script_op *script,
     int testresult = 0;
     struct helper h;
 
-    if (!TEST_true(helper_init(&h, free_order, blocking, 1)))
+    if (!TEST_true(helper_init(&h, script_name,
+                               free_order, blocking, 1)))
         goto out;
 
     if (!TEST_true(run_script_worker(&h, script, script_name, -1)))
