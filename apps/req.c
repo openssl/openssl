@@ -918,10 +918,10 @@ int req_main(int argc, char **argv)
         else
             tpubkey = X509_REQ_get0_pubkey(req);
         if (tpubkey == NULL) {
-            fprintf(stdout, "Modulus=unavailable\n");
+            BIO_puts(bio_err, "Modulus=unavailable\n");
             goto end;
         }
-        fprintf(stdout, "Modulus=");
+        BIO_puts(out, "Modulus=");
 #ifndef OPENSSL_NO_RSA
         if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA) {
             const BIGNUM *n;
@@ -929,8 +929,8 @@ int req_main(int argc, char **argv)
             BN_print(out, n);
         } else
 #endif
-            fprintf(stdout, "Wrong Algorithm type");
-        fprintf(stdout, "\n");
+            BIO_puts(out, "Wrong Algorithm type");
+        BIO_puts(out, "\n");
     }
 
     if (!noout && !x509) {
