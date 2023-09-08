@@ -1189,6 +1189,10 @@ struct ssl_ctx_st {
     size_t client_cert_type_len;
     unsigned char *server_cert_type;
     size_t server_cert_type_len;
+
+# ifndef OPENSSL_NO_QLOG
+    char *qlog_title; /* Session title for QLOG */
+# endif
 };
 
 typedef struct cert_pkey_st CERT_PKEY;

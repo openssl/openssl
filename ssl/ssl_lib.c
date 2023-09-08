@@ -4214,6 +4214,9 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
 
     OPENSSL_free(a->propq);
+#ifndef OPENSSL_NO_QLOG
+    OPENSSL_free(a->qlog_title);
+#endif
 
     OPENSSL_free(a);
 }

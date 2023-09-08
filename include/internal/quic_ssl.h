@@ -129,6 +129,15 @@ QUIC_CHANNEL *ossl_quic_conn_get_channel(SSL *s);
 int ossl_quic_has_pending(const SSL *s);
 int ossl_quic_get_shutdown(const SSL *s);
 
+/*
+ * Set QLOG diagnostic title. String is copied internally on success and need
+ * not remain allocated. Only has any effect if logging has not already begun.
+ * For use by tests only. Setting this on a context affects any QCSO created
+ * after this is called but does not affect QCSOs already created from a
+ * context.
+ */
+int ossl_quic_set_diag_title(SSL_CTX *ctx, const char *title);
+
 # endif
 
 #endif
