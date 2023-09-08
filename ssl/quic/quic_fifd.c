@@ -9,6 +9,7 @@
 
 #include "internal/quic_fifd.h"
 #include "internal/quic_wire.h"
+#include "internal/qlog_event_helpers.h"
 
 DEFINE_LIST_OF(tx_history, OSSL_ACKM_TX_PKT);
 
@@ -118,6 +119,8 @@ static void on_lost(void *arg)
     QUIC_SSTREAM *sstream;
     QUIC_CFQ_ITEM *cfq_item, *cfq_item_next;
     int sstream_updated;
+
+    ossl_qlog_event_recovery_packet_lost(fifd->qlog, pkt);
 
     /* STREAM and CRYPTO stream chunks, FIN and stream FC frames */
     for (i = 0; i < num_chunks; ++i) {
