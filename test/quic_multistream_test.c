@@ -48,7 +48,11 @@ DEFINE_LHASH_OF_EX(STREAM_INFO);
 struct helper {
     int                     s_fd;
     BIO                     *s_net_bio, *s_net_bio_own, *s_qtf_wbio, *s_qtf_wbio_own;
+    /* The BIO_ADDR used for BIO_bind() */
+    BIO_ADDR                *s_net_bio_orig_addr;
+    /* The resulting address, which is the one to connect to */
     BIO_ADDR                *s_net_bio_addr;
+
     /*
      * When doing a blocking mode test run, s_priv always points to the TSERVER
      * and s is NULL when the main thread should not be touching s_priv.
@@ -633,6 +637,8 @@ static void helper_cleanup(struct helper *h)
 
     BIO_ADDR_free(h->s_net_bio_addr);
     h->s_net_bio_addr = NULL;
+    BIO_ADDR_free(h->s_net_bio_orig_addr);
+    h->s_net_bio_orig_addr = NULL;
 
     SSL_CTX_free(h->c_ctx);
     h->c_ctx = NULL;
@@ -651,9 +657,9 @@ static void helper_cleanup(struct helper *h)
 static int helper_init(struct helper *h, int free_order, int blocking,
                        int need_injector)
 {
-    short port = 8186;
     struct in_addr ina = {0};
     QUIC_TSERVER_ARGS s_args = {0};
+    union BIO_sock_info_u info;
 
     memset(h, 0, sizeof(*h));
     h->c_fd = -1;
@@ -683,14 +689,19 @@ static int helper_init(struct helper *h, int free_order, int blocking,
     if (!TEST_true(BIO_socket_nbio(h->s_fd, 1)))
         goto err;
 
-    if (!TEST_ptr(h->s_net_bio_addr = BIO_ADDR_new()))
+    if (!TEST_ptr(h->s_net_bio_orig_addr = BIO_ADDR_new())
+        || !TEST_ptr(h->s_net_bio_addr = BIO_ADDR_new()))
         goto err;
 
-    if (!TEST_true(BIO_ADDR_rawmake(h->s_net_bio_addr, AF_INET, &ina, sizeof(ina),
-                                    htons(port))))
+    if (!TEST_true(BIO_ADDR_rawmake(h->s_net_bio_orig_addr, AF_INET,
+                                    &ina, sizeof(ina), 0)))
         goto err;
 
-    if (!TEST_true(BIO_bind(h->s_fd, h->s_net_bio_addr, 0)))
+    if (!TEST_true(BIO_bind(h->s_fd, h->s_net_bio_orig_addr, 0)))
+        goto err;
+
+    info.addr = h->s_net_bio_addr;
+    if (!TEST_true(BIO_sock_info(h->s_fd, BIO_SOCK_INFO_ADDRESS, &info)))
         goto err;
 
     if (!TEST_int_gt(BIO_ADDR_rawport(h->s_net_bio_addr), 0))
