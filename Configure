@@ -490,6 +490,7 @@ my @disablables = (
     "posix-io",
     "psk",
     "quic",
+    "unstable-qlog",
     "rc2",
     "rc4",
     "rc5",
@@ -577,6 +578,7 @@ our %disabled = ( # "what"         => "comment"
                   "ktls"                => "default",
                   "md2"                 => "default",
                   "msan"                => "default",
+                  "unstable-qlog"       => "default",
                   "rc5"                 => "default",
                   "sctp"                => "default",
                   "ssl3"                => "default",
@@ -631,6 +633,7 @@ my @disable_cascades = (
     sub { 0 == scalar grep { !$disabled{$_} } @tls }
                         => [ "tls" ],
     "tls1_3"            => [ "quic" ],
+    "quic"              => [ "unstable-qlog" ],
 
     "crypto-mdebug"     => [ "crypto-mdebug-backtrace" ],
 
@@ -1550,6 +1553,10 @@ foreach (grep /^-fsanitize=/, @{$config{CFLAGS} || []}) {
 # code knows about it.  Any other flag is taken care of by the configs.
 unless($disabled{threads}) {
     push @{$config{openssl_feature_defines}}, "OPENSSL_THREADS";
+}
+
+if ($disabled{"unstable-qlog"}) {
+    $disabled{"qlog"} = 1;
 }
 
 my $no_shared_warn=0;
