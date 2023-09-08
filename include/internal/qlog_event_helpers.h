@@ -15,6 +15,8 @@
 # include "internal/quic_types.h"
 # include "internal/quic_channel.h"
 # include "internal/quic_txpim.h"
+# include "internal/quic_record_tx.h"
+# include "internal/quic_wire_pkt.h"
 
 /* connectivity:connection_started */
 void ossl_qlog_event_connectivity_connection_started(QLOG *qlog,
@@ -34,5 +36,13 @@ void ossl_qlog_event_connectivity_connection_closed(QLOG *qlog,
 /* recovery:packet_lost */
 void ossl_qlog_event_recovery_packet_lost(QLOG *qlog,
                                           const QUIC_TXPIM_PKT *tpkt);
+
+/* transport:packet_sent */
+void ossl_qlog_event_transport_packet_sent(QLOG *qlog,
+                                           const QUIC_PKT_HDR *hdr,
+                                           QUIC_PN pn,
+                                           const OSSL_QTX_IOVEC *iovec,
+                                           size_t numn_iovec,
+                                           uint64_t datagram_id);
 
 #endif
