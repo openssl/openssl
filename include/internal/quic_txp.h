@@ -21,6 +21,7 @@
 # include "internal/quic_fc.h"
 # include "internal/bio_addr.h"
 # include "internal/time.h"
+# include "internal/qlog.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -49,6 +50,7 @@ typedef struct ossl_quic_tx_packetiser_args_st {
     OSSL_CC_DATA    *cc_data;   /* QUIC Congestion Controller Instance */
     OSSL_TIME       (*now)(void *arg);  /* Callback to get current time. */
     void            *now_arg;
+    QLOG            *qlog;      /* Optional QLOG instance */
 
     /*
      * Injected dependencies - crypto streams.
