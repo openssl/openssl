@@ -1155,6 +1155,9 @@ static int ch_on_transport_params(const unsigned char *params,
     int got_disable_active_migration = 0;
     QUIC_CONN_ID cid;
     const char *reason = "bad transport parameter";
+    ossl_unused uint64_t rx_max_idle_timeout = 0;
+    ossl_unused const void *stateless_reset_token_p = NULL;
+    QUIC_PREFERRED_ADDR pfa;
 
     if (ch->got_remote_transport_params) {
         reason = "multiple transport parameter extensions";
@@ -1418,6 +1421,7 @@ static int ch_on_transport_params(const unsigned char *params,
 
             ch_update_idle(ch);
             got_max_idle_timeout = 1;
+            rx_max_idle_timeout = v;
             break;
 
         case QUIC_TPARAM_MAX_UDP_PAYLOAD_SIZE:
@@ -1482,13 +1486,13 @@ static int ch_on_transport_params(const unsigned char *params,
                 goto malformed;
             }
 
-            got_stateless_reset_token = 1;
+            stateless_reset_token_p     = body;
+            got_stateless_reset_token   = 1;
             break;
 
         case QUIC_TPARAM_PREFERRED_ADDR:
             {
                 /* TODO(QUIC FUTURE): Handle preferred address. */
-                QUIC_PREFERRED_ADDR pfa;
                 if (got_preferred_addr) {
                     reason = TP_REASON_DUP("PREFERRED_ADDR");
                     goto malformed;
@@ -1580,6 +1584,65 @@ static int ch_on_transport_params(const unsigned char *params,
     }
 
     ch->got_remote_transport_params = 1;
+
+#ifndef OPENSSL_NO_QLOG
+    QLOG_EVENT_BEGIN(ch_get_qlog(ch), transport, parameters_set)
+        QLOG_STR("owner", "remote");
+
+        if (got_orig_dcid)
+            QLOG_CID("original_destination_connection_id",
+                     &ch->init_dcid);
+        if (got_initial_scid)
+            QLOG_CID("original_source_connection_id",
+                     &ch->init_dcid);
+        if (got_retry_scid)
+            QLOG_CID("retry_source_connection_id",
+                     &ch->retry_scid);
+        if (got_initial_max_data)
+            QLOG_U64("initial_max_data",
+                     ossl_quic_txfc_get_cwm(&ch->conn_txfc));
+        if (got_initial_max_stream_data_bidi_local)
+            QLOG_U64("initial_max_stream_data_bidi_local",
+                     ch->rx_init_max_stream_data_bidi_local);
+        if (got_initial_max_stream_data_bidi_remote)
+            QLOG_U64("initial_max_stream_data_bidi_remote",
+                     ch->rx_init_max_stream_data_bidi_remote);
+        if (got_initial_max_stream_data_uni)
+            QLOG_U64("initial_max_stream_data_uni",
+                     ch->rx_init_max_stream_data_uni);
+        if (got_initial_max_streams_bidi)
+            QLOG_U64("initial_max_streams_bidi",
+                     ch->max_local_streams_bidi);
+        if (got_initial_max_streams_uni)
+            QLOG_U64("initial_max_streams_uni",
+                     ch->max_local_streams_uni);
+        if (got_ack_delay_exp)
+            QLOG_U64("ack_delay_exponent", ch->rx_ack_delay_exp);
+        if (got_max_ack_delay)
+            QLOG_U64("max_ack_delay", ch->rx_max_ack_delay);
+        if (got_max_udp_payload_size)
+            QLOG_U64("max_udp_payload_size", ch->rx_max_udp_payload_size);
+        if (got_max_idle_timeout)
+            QLOG_U64("max_idle_timeout", rx_max_idle_timeout);
+        if (got_active_conn_id_limit)
+            QLOG_U64("active_connection_id_limit", ch->rx_active_conn_id_limit);
+        if (got_stateless_reset_token)
+            QLOG_BIN("stateless_reset_token", stateless_reset_token_p,
+                     QUIC_STATELESS_RESET_TOKEN_LEN);
+        if (got_preferred_addr) {
+            QLOG_BEGIN("preferred_addr")
+                QLOG_U64("port_v4", pfa.ipv4_port);
+                QLOG_U64("port_v6", pfa.ipv6_port);
+                QLOG_BIN("ip_v4", pfa.ipv4, sizeof(pfa.ipv4));
+                QLOG_BIN("ip_v6", pfa.ipv6, sizeof(pfa.ipv6));
+                QLOG_BIN("stateless_reset_token", pfa.stateless_reset.token,
+                         sizeof(pfa.stateless_reset.token));
+                QLOG_CID("connection_id", &pfa.cid);
+            QLOG_END()
+        }
+        QLOG_BOOL("disable_active_migration", got_disable_active_migration);
+    QLOG_EVENT_END()
+#endif
 
     if (got_initial_max_data || got_initial_max_stream_data_bidi_remote
         || got_initial_max_streams_bidi || got_initial_max_streams_uni)
@@ -1704,6 +1767,34 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
     if (!ossl_quic_tls_set_transport_params(ch->qtls, ch->local_transport_params,
                                             buf_len))
         goto err;
+
+#ifndef OPENSSL_NO_QLOG
+    QLOG_EVENT_BEGIN(ch_get_qlog(ch), transport, parameters_set)
+        QLOG_STR("owner", "local");
+        QLOG_BOOL("disable_active_migration", 1);
+        if (ch->is_server) {
+            QLOG_CID("original_destination_connection_id", &ch->init_dcid);
+            QLOG_CID("initial_source_connection_id", &ch->cur_local_cid);
+        } else {
+            QLOG_STR("initial_source_connection_id", "");
+        }
+        QLOG_U64("max_idle_timeout", ch->max_idle_timeout);
+        QLOG_U64("max_udp_payload_size", QUIC_MIN_INITIAL_DGRAM_LEN);
+        QLOG_U64("active_connection_id_limit", QUIC_MIN_ACTIVE_CONN_ID_LIMIT);
+        QLOG_U64("max_ack_delay", ch->tx_max_ack_delay);
+        QLOG_U64("initial_max_data", ossl_quic_rxfc_get_cwm(&ch->conn_rxfc));
+        QLOG_U64("initial_max_stream_data_bidi_local",
+                 ch->tx_init_max_stream_data_bidi_local);
+        QLOG_U64("initial_max_stream_data_bidi_remote",
+                 ch->tx_init_max_stream_data_bidi_remote);
+        QLOG_U64("initial_max_stream_data_uni",
+                 ch->tx_init_max_stream_data_uni);
+        QLOG_U64("initial_max_streams_bidi",
+                 ossl_quic_rxfc_get_cwm(&ch->max_streams_bidi_rxfc));
+        QLOG_U64("initial_max_streams_uni",
+                 ossl_quic_rxfc_get_cwm(&ch->max_streams_uni_rxfc));
+    QLOG_EVENT_END()
+#endif
 
     ok = 1;
 err:

@@ -8,3 +8,4 @@
  */
 QLOG_EVENT(connectivity, connection_started)
 QLOG_EVENT(connectivity, connection_state_updated)
+QLOG_EVENT(transport, parameters_set)
