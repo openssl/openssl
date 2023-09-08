@@ -122,6 +122,9 @@ typedef struct quic_channel_args_st {
 
     /* Whether to use QLOG. */
     int             use_qlog;
+
+    /* Title to use for the QLOG session, or NULL. */
+    const char      *qlog_title;
 } QUIC_CHANNEL_ARGS;
 
 /* Represents the cause for a connection's termination. */
