@@ -171,6 +171,7 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     /* We plug in a network write BIO to the QTX later when we get one. */
     qtx_args.libctx = ch->port->engine->libctx;
+    qtx_args.qlog = ch_get_qlog(ch);
     qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
     ch->rx_max_udp_payload_size = qtx_args.mdpl;
 

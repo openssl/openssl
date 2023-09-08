@@ -95,6 +95,9 @@ struct ossl_qtx_st {
      */
     uint64_t                    epoch_pkt_count;
 
+    /* Datagram counter. Increases monotonically per datagram (not per packet). */
+    uint64_t                    datagram_count;
+
     ossl_mutate_packet_cb mutatecb;
     ossl_finish_mutate_cb finishmutatecb;
     void *mutatearg;
@@ -821,6 +824,9 @@ int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt)
 
         ret = qtx_write(qtx, pkt, txe, enc_level);
         if (ret == 1) {
+            ossl_qlog_event_transport_packet_sent(qtx->qlog, pkt->hdr, pkt->pn,
+                                                  pkt->iovec, pkt->num_iovec,
+                                                  qtx->datagram_count);
             break;
         } else if (ret == QTX_FAIL_INSUFFICIENT_LEN) {
             if (was_coalescing) {
@@ -879,6 +885,7 @@ void ossl_qtx_finish_dgram(OSSL_QTX *qtx)
 
     qtx->cons       = NULL;
     qtx->cons_count = 0;
+    ++qtx->datagram_count;
 }
 
 static void txe_to_msg(TXE *txe, BIO_MSG *msg)

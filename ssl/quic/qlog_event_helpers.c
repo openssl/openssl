@@ -9,6 +9,7 @@
 
 #include "internal/qlog_event_helpers.h"
 #include "internal/common.h"
+#include "internal/packet.h"
 #include "internal/quic_channel.h"
 #include "internal/quic_error.h"
 
@@ -178,6 +179,435 @@ void ossl_qlog_event_recovery_packet_lost(QLOG *qlog,
             if (ossl_quic_pkt_type_has_pn(tpkt->pkt_type))
                 QLOG_U64("packet_number", tpkt->ackm_pkt.pkt_num);
         QLOG_END()
+    QLOG_EVENT_END()
+#endif
+}
+
+#ifndef OPENSSL_NO_QLOG
+# define MAX_ACK_RANGES 32
+
+static void ignore_res(int x) {}
+
+/*
+ * For logging received packets, we need to parse all the frames in the packet
+ * to log them. We should do this separately to the RXDP code because we want to
+ * log the packet and its contents before we start to actually process it in
+ * case it causes an error. We also in general don't want to do other
+ * non-logging related work in the middle of an event logging transaction.
+ * Reparsing packet data allows us to meet these needs while avoiding the need
+ * to keep around bookkeeping data on what frames were in a packet, etc.
+ *
+ * For logging transmitted packets, we actually reuse the same code and reparse
+ * the outgoing packet's payload. This again has the advantage that we only log
+ * a packet when it is actually queued for transmission (and not if something
+ * goes wrong before then) while avoiding the need to keep around bookkeeping
+ * data on what frames it contained.
+ */
+static int log_frame(QLOG *qlog_instance, PACKET *pkt,
+                     uint64_t *need_skip)
+{
+    uint64_t frame_type;
+    OSSL_QUIC_FRAME_ACK ack;
+    OSSL_QUIC_ACK_RANGE ack_ranges[MAX_ACK_RANGES];
+    uint64_t num_ranges, total_ranges;
+    size_t i;
+    PACKET orig_pkt = *pkt;
+
+    if (!ossl_quic_wire_peek_frame_header(pkt, &frame_type, NULL))
+        return 0;
+
+    /*
+     * If something goes wrong decoding a frame we cannot log it as that frame
+     * as we need to know how to decode it in order to be able to do so, but in
+     * that case we log it as an unknown frame to assist with diagnosis.
+     */
+    switch (frame_type) {
+    case OSSL_QUIC_FRAME_TYPE_PADDING:
+        QLOG_STR("frame_type", "padding");
+        QLOG_U64("payload_length",
+                 ossl_quic_wire_decode_padding(pkt));
+        break;
+    case OSSL_QUIC_FRAME_TYPE_PING:
+        if (!ossl_quic_wire_decode_frame_ping(pkt))
+            goto unknown;
+
+        QLOG_STR("frame_type", "ping");
+        QLOG_U64("length", 1);
+        break;
+    case OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN:
+    case OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN:
+        if (!ossl_quic_wire_peek_frame_ack_num_ranges(pkt, &num_ranges))
+            goto unknown;
+
+        ack.ack_ranges      = ack_ranges;
+        ack.num_ack_ranges  = OSSL_NELEM(ack_ranges);
+        if (!ossl_quic_wire_decode_frame_ack(pkt, 3, &ack, &total_ranges))
+            goto unknown;
+
+        QLOG_STR("frame_type", "ack");
+        QLOG_U64("ack_delay", ossl_time2ms(ack.delay_time));
+        if (ack.ecn_present) {
+            QLOG_U64("ect1", ack.ect0);
+            QLOG_U64("ect0", ack.ect1);
+            QLOG_U64("ce", ack.ecnce);
+        }
+        QLOG_BEGIN_ARRAY("acked_ranges");
+        for (i = 0; i < ack.num_ack_ranges; ++i) {
+            QLOG_BEGIN_ARRAY(NULL)
+                QLOG_U64(NULL, ack.ack_ranges[i].start);
+                if (ack.ack_ranges[i].end != ack.ack_ranges[i].start)
+                    QLOG_U64(NULL, ack.ack_ranges[i].end);
+            QLOG_END_ARRAY()
+        }
+        QLOG_END_ARRAY()
+        break;
+    case OSSL_QUIC_FRAME_TYPE_RESET_STREAM:
+        {
+            OSSL_QUIC_FRAME_RESET_STREAM f;
+
+            if (!ossl_quic_wire_decode_frame_reset_stream(pkt, &f))
+                goto unknown;
+
+            QLOG_STR("frame_type", "reset_stream");
+            QLOG_U64("stream_id", f.stream_id);
+            QLOG_U64("error_code", f.app_error_code);
+            QLOG_U64("final_size", f.final_size);
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_STOP_SENDING:
+        {
+            OSSL_QUIC_FRAME_STOP_SENDING f;
+
+            if (!ossl_quic_wire_decode_frame_stop_sending(pkt, &f))
+                goto unknown;
+
+            QLOG_STR("frame_type", "stop_sending");
+            QLOG_U64("stream_id", f.stream_id);
+            QLOG_U64("error_code", f.app_error_code);
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_CRYPTO:
+        {
+            OSSL_QUIC_FRAME_CRYPTO f;
+
+            if (!ossl_quic_wire_decode_frame_crypto(pkt, 1, &f))
+                goto unknown;
+
+            QLOG_STR("frame_type", "crypto");
+            QLOG_U64("offset", f.offset);
+            QLOG_U64("payload_length", f.len);
+            *need_skip += f.len;
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_STREAM:
+    case OSSL_QUIC_FRAME_TYPE_STREAM_FIN:
+    case OSSL_QUIC_FRAME_TYPE_STREAM_LEN:
+    case OSSL_QUIC_FRAME_TYPE_STREAM_LEN_FIN:
+    case OSSL_QUIC_FRAME_TYPE_STREAM_OFF:
+    case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_FIN:
+    case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN:
+    case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN_FIN:
+        {
+            OSSL_QUIC_FRAME_STREAM f;
+
+            if (!ossl_quic_wire_decode_frame_stream(pkt, 1, &f))
+                goto unknown;
+
+            QLOG_STR("frame_type", "stream");
+            QLOG_U64("stream_id", f.stream_id);
+            QLOG_U64("offset", f.offset);
+            QLOG_U64("payload_length", f.len);
+            QLOG_BOOL("explicit_length", f.has_explicit_len);
+            if (f.is_fin)
+                QLOG_BOOL("fin", 1);
+            *need_skip = f.has_explicit_len ? *need_skip + f.len : UINT64_MAX;
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_MAX_DATA:
+        {
+            uint64_t x;
+
+            if (!ossl_quic_wire_decode_frame_max_data(pkt, &x))
+                goto unknown;
+
+            QLOG_STR("frame_type", "max_data");
+            QLOG_U64("maximum", x);
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI:
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI:
+        {
+            uint64_t x;
+
+            if (!ossl_quic_wire_decode_frame_max_streams(pkt, &x))
+                goto unknown;
+
+            QLOG_STR("frame_type", "max_streams");
+            QLOG_STR("stream_type",
+                     frame_type == OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI
+                        ? "bidirectional" : "unidirectional");
+            QLOG_U64("maximum", x);
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA:
+        {
+            uint64_t stream_id, max_data;
+
+            if (!ossl_quic_wire_decode_frame_max_stream_data(pkt, &stream_id,
+                                                             &max_data))
+                goto unknown;
+
+            QLOG_STR("frame_type", "max_stream_data");
+            QLOG_U64("stream_id", stream_id);
+            QLOG_U64("maximum", max_data);
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE:
+        {
+            uint64_t challenge;
+
+            if (!ossl_quic_wire_decode_frame_path_challenge(pkt, &challenge))
+                goto unknown;
+
+            QLOG_STR("frame_type", "path_challenge");
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE:
+        {
+            uint64_t challenge;
+
+            if (!ossl_quic_wire_decode_frame_path_response(pkt, &challenge))
+                goto unknown;
+
+            QLOG_STR("frame_type", "path_response");
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP:
+    case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT:
+        {
+            OSSL_QUIC_FRAME_CONN_CLOSE f;
+
+            if (!ossl_quic_wire_decode_frame_conn_close(pkt, &f))
+                goto unknown;
+
+            QLOG_STR("frame_type", "connection_close");
+            QLOG_STR("error_space", f.is_app ? "application" : "transport");
+            QLOG_U64("error_code_value", f.error_code);
+            if (f.is_app)
+                QLOG_U64("error_code", f.error_code);
+            if (!f.is_app && f.frame_type != 0)
+                QLOG_U64("trigger_frame_type", f.frame_type);
+            QLOG_STR_LEN("reason", f.reason, f.reason_len);
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE:
+        {
+            if (!ossl_quic_wire_decode_frame_handshake_done(pkt))
+                goto unknown;
+
+            QLOG_STR("frame_type", "handshake_done");
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID:
+        {
+            OSSL_QUIC_FRAME_NEW_CONN_ID f;
+
+            if (!ossl_quic_wire_decode_frame_new_conn_id(pkt, &f))
+                goto unknown;
+
+            QLOG_STR("frame_type", "new_connection_id");
+            QLOG_U64("sequence_number", f.seq_num);
+            QLOG_U64("retire_prior_to", f.retire_prior_to);
+            QLOG_CID("connection_id", &f.conn_id);
+            QLOG_BIN("stateless_reset_token",
+                     f.stateless_reset.token,
+                     sizeof(f.stateless_reset.token));
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID:
+        {
+            uint64_t seq_num;
+
+            if (!ossl_quic_wire_decode_frame_retire_conn_id(pkt, &seq_num))
+                goto unknown;
+
+            QLOG_STR("frame_type", "retire_connection_id");
+            QLOG_U64("sequence_number", seq_num);
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED:
+        {
+            uint64_t x;
+
+            if (!ossl_quic_wire_decode_frame_data_blocked(pkt, &x))
+                goto unknown;
+
+            QLOG_STR("frame_type", "data_blocked");
+            QLOG_U64("limit", x);
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED:
+        {
+            uint64_t stream_id, x;
+
+            if (!ossl_quic_wire_decode_frame_stream_data_blocked(pkt,
+                                                                 &stream_id, &x))
+                goto unknown;
+
+            QLOG_STR("frame_type", "stream_data_blocked");
+            QLOG_U64("stream_id", stream_id);
+            QLOG_U64("limit", x);
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI:
+    case OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI:
+        {
+            uint64_t x;
+
+            if (!ossl_quic_wire_decode_frame_streams_blocked(pkt, &x))
+                goto unknown;
+
+            QLOG_STR("frame_type", "streams_blocked");
+            QLOG_STR("stream_type",
+                     frame_type == OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI
+                        ? "bidirectional" : "unidirectional");
+            QLOG_U64("limit", x);
+        }
+        break;
+    case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
+        {
+            const unsigned char *token;
+            size_t token_len;
+
+            if (!ossl_quic_wire_decode_frame_new_token(pkt, &token, &token_len))
+                goto unknown;
+
+            QLOG_STR("frame_type", "new_token");
+            QLOG_BEGIN("token");
+                QLOG_BEGIN("raw");
+                    QLOG_BIN("data", token, token_len);
+                QLOG_END();
+            QLOG_END();
+        }
+        break;
+    default:
+unknown:
+        QLOG_STR("frame_type", "unknown");
+        QLOG_U64("frame_type_value", frame_type);
+
+        /*
+         * Can't continue scanning for frames in this case as the frame length
+         * is unknown. We log the entire body the rest of the packet payload
+         * as the raw data of the frame.
+         */
+        QLOG_BEGIN("raw");
+            QLOG_BIN("data", PACKET_data(&orig_pkt),
+                     PACKET_remaining(&orig_pkt));
+        QLOG_END();
+        ignore_res(PACKET_forward(pkt, PACKET_remaining(pkt)));
+        break;
+    }
+
+    return 1;
+}
+
+static int log_frames(QLOG *qlog_instance,
+                      const OSSL_QTX_IOVEC *iovec,
+                      size_t num_iovec)
+{
+    size_t i;
+    PACKET pkt;
+    size_t rem_before, rem_after;
+    uint64_t need_skip = 0;
+
+    for (i = 0; i < num_iovec; ++i) {
+        if (!PACKET_buf_init(&pkt, iovec[i].buf, iovec[i].buf_len))
+            return 0;
+
+        while (PACKET_remaining(&pkt) > 0) {
+            if (need_skip > 0) {
+                size_t adv = need_skip;
+
+                if (adv < PACKET_remaining(&pkt))
+                    adv = PACKET_remaining(&pkt);
+
+                if (!PACKET_forward(&pkt, adv))
+                    return 0;
+
+                need_skip -= adv;
+                continue;
+            }
+
+            rem_before = PACKET_remaining(&pkt);
+
+            QLOG_BEGIN(NULL)
+            {
+                if (!log_frame(qlog_instance, &pkt, &need_skip))
+                    goto cont;
+
+                rem_after = PACKET_remaining(&pkt);
+                QLOG_U64("length", rem_before - rem_after);
+            }
+cont:
+            QLOG_END()
+        }
+    }
+
+    return 1;
+}
+
+static void log_packet(QLOG *qlog_instance,
+                       const QUIC_PKT_HDR *hdr,
+                       QUIC_PN pn,
+                       const OSSL_QTX_IOVEC *iovec,
+                       size_t num_iovec,
+                       uint64_t datagram_id)
+{
+    const char *type_s;
+
+    QLOG_BEGIN("header")
+        type_s = quic_pkt_type_to_qlog(hdr->type);
+        if (type_s == NULL)
+            type_s = "unknown";
+
+        QLOG_STR("packet_type", type_s);
+        if (ossl_quic_pkt_type_has_pn(hdr->type))
+            QLOG_U64("packet_number", pn);
+
+        QLOG_CID("dcid", &hdr->dst_conn_id);
+        if (ossl_quic_pkt_type_has_scid(hdr->type))
+            QLOG_CID("scid", &hdr->src_conn_id);
+
+        if (hdr->token_len > 0) {
+            QLOG_BEGIN("token")
+                QLOG_BEGIN("raw")
+                    QLOG_BIN("data", hdr->token, hdr->token_len);
+                QLOG_END()
+            QLOG_END()
+        }
+        /* TODO(QLOG): flags, length */
+    QLOG_END()
+    QLOG_U64("datagram_id", datagram_id);
+
+    if (ossl_quic_pkt_type_is_encrypted(hdr->type)) {
+        QLOG_BEGIN_ARRAY("frames")
+            log_frames(qlog_instance, iovec, num_iovec);
+        QLOG_END_ARRAY()
+    }
+}
+
+#endif
+
+void ossl_qlog_event_transport_packet_sent(QLOG *qlog,
+                                           const QUIC_PKT_HDR *hdr,
+                                           QUIC_PN pn,
+                                           const OSSL_QTX_IOVEC *iovec,
+                                           size_t num_iovec,
+                                           uint64_t datagram_id)
+{
+#ifndef OPENSSL_NO_QLOG
+    QLOG_EVENT_BEGIN(qlog, transport, packet_sent)
+        log_packet(qlog, hdr, pn, iovec, num_iovec, datagram_id);
     QLOG_EVENT_END()
 #endif
 }
