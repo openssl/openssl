@@ -481,7 +481,8 @@ OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETIS
                              get_sstream_by_id, txp,
                              on_regen_notify, txp,
                              on_confirm_notify, txp,
-                             on_sstream_updated, txp)) {
+                             on_sstream_updated, txp,
+                             args->qlog)) {
         OPENSSL_free(txp);
         return NULL;
     }

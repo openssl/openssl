@@ -34,7 +34,8 @@ int ossl_quic_fifd_init(QUIC_FIFD *fifd,
                         void *confirm_frame_arg,
                         void (*sstream_updated)(uint64_t stream_id,
                                                 void *arg),
-                        void *sstream_updated_arg)
+                        void *sstream_updated_arg,
+                        QLOG *qlog)
 {
     if (cfq == NULL || ackm == NULL || txpim == NULL
         || get_sstream_by_id == NULL || regen_frame == NULL)
@@ -51,6 +52,7 @@ int ossl_quic_fifd_init(QUIC_FIFD *fifd,
     fifd->confirm_frame_arg     = confirm_frame_arg;
     fifd->sstream_updated       = sstream_updated;
     fifd->sstream_updated_arg   = sstream_updated_arg;
+    fifd->qlog                  = qlog;
     return 1;
 }
 

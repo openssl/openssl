@@ -338,7 +338,8 @@ static int test_fifd(int idx)
                                           get_sstream_by_id, NULL,
                                           regen_frame, NULL,
                                           confirm_frame, NULL,
-                                          sstream_updated, NULL)))
+                                          sstream_updated, NULL,
+                                          NULL)))
         goto err;
 
     for (i = 0; i < OSSL_NELEM(info.sstream); ++i)
