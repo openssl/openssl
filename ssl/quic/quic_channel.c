@@ -2822,6 +2822,8 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
     case QUIC_CHANNEL_STATE_ACTIVE:
         copy_tcause(&ch->terminate_cause, tcause);
 
+        ossl_qlog_event_connectivity_connection_closed(ch_get_qlog(ch), tcause);
+
         if (!force_immediate) {
             ch_record_state_transition(ch, tcause->remote
                                            ? QUIC_CHANNEL_STATE_TERMINATING_DRAINING

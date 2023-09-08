@@ -13,6 +13,7 @@
 # include <openssl/ssl.h>
 # include "internal/qlog.h"
 # include "internal/quic_types.h"
+# include "internal/quic_channel.h"
 
 /* connectivity:connection_started */
 void ossl_qlog_event_connectivity_connection_started(QLOG *qlog,
@@ -24,5 +25,9 @@ void ossl_qlog_event_connectivity_connection_state_updated(QLOG *qlog,
                                                            uint32_t new_state,
                                                            int handshake_complete,
                                                            int handshake_confirmed);
+
+/* connectivity:connection_closed */
+void ossl_qlog_event_connectivity_connection_closed(QLOG *qlog,
+                                                    const QUIC_TERMINATE_CAUSE *tcause);
 
 #endif
