@@ -38,6 +38,9 @@ struct quic_demux_st {
      */
     size_t                      mtu;
 
+    /* The datagram_id to use for the next datagram we receive. */
+    uint64_t                    next_datagram_id;
+
     /* Time retrieval callback. */
     OSSL_TIME                 (*now)(void *arg);
     void                       *now_arg;
@@ -300,6 +303,7 @@ static int demux_recv(QUIC_DEMUX *demux)
         urxe->data_len      = msg[i].data_len;
         /* Time we received datagram. */
         urxe->time          = now;
+        urxe->datagram_id   = demux->next_datagram_id++;
         /* Move from free list to pending list. */
         ossl_list_urxe_remove(&demux->urx_free, urxe);
         ossl_list_urxe_insert_tail(&demux->urx_pending, urxe);
