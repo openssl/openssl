@@ -455,6 +455,10 @@ OpenSSL 3.2
 OpenSSL 3.1
 -----------
 
+### Changes between 3.1.2 and 3.1.3 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.1.1 and 3.1.2 [1 Aug 2023]
 
  * Fix excessive time spent checking DH q parameter value.
