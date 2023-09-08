@@ -93,9 +93,9 @@ EVP_DigestSqueeze(ctx, out, outlen).
 
   - Adds an extra API.
   - The interaction between the 2 API's needs to be clearly documented.
-  - A call to EVP_DigestSqueeze() after EVP_DigestFinalXOF() would fail.
-  - A call to EVP_DigestFinalXOF() after the EVP_DigestSqueeze() would fail?
-    Is this confusing.
+  - A call to EVP_DigestSqueeze() after EVP_DigestFinalXOF() would fail since
+    EVP_DigestFinalXOF() indicates no more output can be retrieved.
+  - A call to EVP_DigestFinalXOF() after the EVP_DigestSqueeze() would fail.
 
 #### Proposal 3
 
