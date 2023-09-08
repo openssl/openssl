@@ -4329,7 +4329,7 @@ static int script_61_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
         || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /* stream ID */
                                                h->inject_word1))
         || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 123))
-        || (h->inject_word1 == OSSL_QUIC_FRAME_TYPE_RESET_STREAM
+        || (h->inject_word0 == OSSL_QUIC_FRAME_TYPE_RESET_STREAM
            && !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)))) /* final size */
         goto err;
 
