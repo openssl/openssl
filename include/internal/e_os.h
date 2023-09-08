@@ -11,6 +11,7 @@
 # define OSSL_E_OS_H
 
 # include <limits.h>
+# include <assert.h>
 # include <openssl/opensslconf.h>
 
 # include <openssl/e_os2.h>
@@ -22,8 +23,13 @@
  * outside; this file e_os.h is not part of the exported interface.
  */
 
-/* ossl_static_assert_type_eq: gcc-only variable type static assertion */
-# if defined(__GNUC__) && !defined(__clang__)
+/*
+ * ossl_static_assert_type_eq: gcc-only variable type static assertion
+ * Only available in gcc versions 4.6 & later.  It's available in g++
+ * from version 4.3 but we don't worry about that.
+ */
+# if defined(__GNUC__) && !defined(__clang__)                               \
+     && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
 #  define ossl_static_assert_type_eq(type, x)                                \
         _Static_assert((__builtin_types_compatible_p(type, __typeof__(x))),  \
                         #x " type check failed, expected: " #type)
