@@ -145,3 +145,39 @@ void ossl_qlog_event_connectivity_connection_closed(QLOG *qlog,
     QLOG_EVENT_END()
 #endif
 }
+
+#ifndef OPENSSL_NO_QLOG
+static const char *quic_pkt_type_to_qlog(uint32_t pkt_type)
+{
+    switch (pkt_type) {
+        case QUIC_PKT_TYPE_INITIAL:
+            return "initial";
+        case QUIC_PKT_TYPE_HANDSHAKE:
+            return "handshake";
+        case QUIC_PKT_TYPE_0RTT:
+            return "0RTT";
+        case QUIC_PKT_TYPE_1RTT:
+            return "1RTT";
+        case QUIC_PKT_TYPE_VERSION_NEG:
+            return "version_negotiation";
+        case QUIC_PKT_TYPE_RETRY:
+            return "retry";
+        default:
+            return "unknown";
+    }
+}
+#endif
+
+void ossl_qlog_event_recovery_packet_lost(QLOG *qlog,
+                                          const QUIC_TXPIM_PKT *tpkt)
+{
+#ifndef OPENSSL_NO_QLOG
+    QLOG_EVENT_BEGIN(qlog, recovery, packet_lost)
+        QLOG_BEGIN("header")
+            QLOG_STR("packet_type", quic_pkt_type_to_qlog(tpkt->pkt_type));
+            if (ossl_quic_pkt_type_has_pn(tpkt->pkt_type))
+                QLOG_U64("packet_number", tpkt->ackm_pkt.pkt_num);
+        QLOG_END()
+    QLOG_EVENT_END()
+#endif
+}

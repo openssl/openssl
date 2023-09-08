@@ -14,6 +14,7 @@
 # include "internal/qlog.h"
 # include "internal/quic_types.h"
 # include "internal/quic_channel.h"
+# include "internal/quic_txpim.h"
 
 /* connectivity:connection_started */
 void ossl_qlog_event_connectivity_connection_started(QLOG *qlog,
@@ -29,5 +30,9 @@ void ossl_qlog_event_connectivity_connection_state_updated(QLOG *qlog,
 /* connectivity:connection_closed */
 void ossl_qlog_event_connectivity_connection_closed(QLOG *qlog,
                                                     const QUIC_TERMINATE_CAUSE *tcause);
+
+/* recovery:packet_lost */
+void ossl_qlog_event_recovery_packet_lost(QLOG *qlog,
+                                          const QUIC_TXPIM_PKT *tpkt);
 
 #endif
