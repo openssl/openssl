@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-fips_module - OpenSSL fips module guide
+fips_module - OpenSSL FIPS module guide
 
 =head1 SYNOPSIS
 
@@ -314,12 +314,12 @@ base providers. The other library context will just use the default provider.
 
     OSSL_LIB_CTX *fips_libctx, *nonfips_libctx;
     OSSL_PROVIDER *defctxnull = NULL;
-    EVP_MD *fipssha256 = NULL, *nonfipssha256 = NULL;
+    EVP_MD *sha256 = NULL, *md5 = NULL;
     int ret = 1;
 
     /*
-     * Create two nondefault library contexts. One for fips usage and
-     * one for non-fips usage
+     * Create two nondefault library contexts. One for FIPS usage and
+     * one for non-FIPS usage
      */
     fips_libctx = OSSL_LIB_CTX_new();
     nonfips_libctx = OSSL_LIB_CTX_new();
@@ -356,13 +356,13 @@ base providers. The other library context will just use the default provider.
     /* As an example get some digests */
 
     /* Get a FIPS validated digest */
-    fipssha256 = EVP_MD_fetch(fips_libctx, "SHA2-256", NULL);
-    if (fipssha256 == NULL)
+    sha256 = EVP_MD_fetch(fips_libctx, "SHA2-256", NULL);
+    if (sha256 == NULL)
         goto err;
 
     /* Get a non-FIPS validated digest */
-    nonfipssha256 = EVP_MD_fetch(nonfips_libctx, "SHA2-256", NULL);
-    if (nonfipssha256 == NULL)
+    md5 = EVP_MD_fetch(nonfips_libctx, "MD5", NULL);
+    if (md5 == NULL)
         goto err;
 
     /* Use the digests */
@@ -371,8 +371,8 @@ base providers. The other library context will just use the default provider.
     ret = 0;
 
     err:
-    EVP_MD_free(fipssha256);
-    EVP_MD_free(nonfipssha256);
+    EVP_MD_free(sha256);
+    EVP_MD_free(md5);
     OSSL_LIB_CTX_free(fips_libctx);
     OSSL_LIB_CTX_free(nonfips_libctx);
     OSSL_PROVIDER_unload(defctxnull);
