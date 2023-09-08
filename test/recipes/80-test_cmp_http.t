@@ -283,7 +283,7 @@ sub start_mock_server {
         }
     }
     unless ($server_port > 0) {
-        stop_mock_server($pid);
+        stop_mock_server($pid) if $pid;
         return 0;
     }
     $server_tls = $kur_port = $pbm_port = $server_port;
