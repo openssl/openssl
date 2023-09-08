@@ -330,7 +330,8 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                 ec = cms->d.envelopedData->encryptedContentInfo;
                 break;
             case NID_id_smime_ct_authEnvelopedData:
-                ec = cms->d.authEnvelopedData->authEncryptedContentInfo;
+                if (cms->d.authEnvelopedData != NULL)
+                    ec = cms->d.authEnvelopedData->authEncryptedContentInfo;
                 break;
         }
         if (ec != NULL && ec->key != NULL)
