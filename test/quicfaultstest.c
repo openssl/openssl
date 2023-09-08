@@ -161,25 +161,27 @@ static int test_unknown_frame(void)
  * Test that a server that fails to provide transport params cannot be
  * connected to.
  */
-static int drop_transport_params_cb(QTEST_FAULT *fault,
+static int drop_extensions_cb(QTEST_FAULT *fault,
                                     QTEST_ENCRYPTED_EXTENSIONS *ee,
                                     size_t eelen, void *encextcbarg)
 {
-    if (!qtest_fault_delete_extension(fault,
-                                      TLSEXT_TYPE_quic_transport_parameters,
-                                      ee->extensions, &ee->extensionslen))
+    int *ext = (int *)encextcbarg;
+
+    if (!qtest_fault_delete_extension(fault, *ext, ee->extensions,
+                                      &ee->extensionslen))
         return 0;
 
     return 1;
 }
 
-static int test_no_transport_params(void)
+static int test_drop_extensions(int idx)
 {
     int testresult = 0;
     SSL_CTX *cctx = SSL_CTX_new(OSSL_QUIC_client_method());
     QUIC_TSERVER *qtserv = NULL;
     SSL *cssl = NULL;
     QTEST_FAULT *fault = NULL;
+    int ext, err;
 
     if (!TEST_ptr(cctx))
         goto err;
@@ -188,9 +190,17 @@ static int test_no_transport_params(void)
                                              &qtserv, &cssl, &fault)))
         goto err;
 
+    if (idx == 0) {
+        ext = TLSEXT_TYPE_quic_transport_parameters;
+        err = QUIC_ERR_CRYPTO_MISSING_EXT;
+    } else {
+        ext = TLSEXT_TYPE_application_layer_protocol_negotiation;
+        err = QUIC_ERR_CRYPTO_NO_APP_PROTO;
+    }
+
     if (!TEST_true(qtest_fault_set_hand_enc_ext_listener(fault,
-                                                         drop_transport_params_cb,
-                                                         NULL)))
+                                                         drop_extensions_cb,
+                                                         &ext)))
         goto err;
 
     /*
@@ -200,8 +210,7 @@ static int test_no_transport_params(void)
     if (!TEST_false(qtest_create_quic_connection(qtserv, cssl)))
         goto err;
 
-    if (!TEST_true(qtest_check_server_transport_err(qtserv,
-                                                    QUIC_ERR_CRYPTO_MISSING_EXT)))
+    if (!TEST_true(qtest_check_server_transport_err(qtserv, err)))
         goto err;
 
     testresult = 1;
@@ -384,7 +393,7 @@ int setup_tests(void)
 
     ADD_TEST(test_basic);
     ADD_TEST(test_unknown_frame);
-    ADD_TEST(test_no_transport_params);
+    ADD_ALL_TESTS(test_drop_extensions, 2);
     ADD_ALL_TESTS(test_corrupted_data, 2);
 
     return 1;
