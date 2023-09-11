@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.1.1v and OpenSSL 1.1.1w [under development]
+  Major changes between OpenSSL 1.1.1v and OpenSSL 1.1.1w [11 Sep 2023]
 
       o Fix POLY1305 MAC implementation corrupting XMM registers on Windows
         (CVE-2023-4807)
