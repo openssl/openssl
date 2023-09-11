@@ -44,6 +44,7 @@
  */
 #define DEFAULT_MAX_ACK_DELAY   QUIC_DEFAULT_MAX_ACK_DELAY
 
+static void ch_save_err_state(QUIC_CHANNEL *ch);
 static void ch_rx_pre(QUIC_CHANNEL *ch);
 static int ch_rx(QUIC_CHANNEL *ch);
 static int ch_tx(QUIC_CHANNEL *ch);
@@ -2730,8 +2731,19 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     ch->doing_proactive_ver_neg = 0; /* not currently supported */
 
     /* Handshake layer: start (e.g. send CH). */
-    if (!ossl_quic_tls_tick(ch->qtls))
+    if (!ossl_quic_tls_tick(ch->qtls)) {
+        uint64_t error_code;
+        const char *error_msg;
+        ERR_STATE *error_state = NULL;
+
+        if (ossl_quic_tls_get_error(ch->qtls, &error_code, &error_msg,
+                                    &error_state)) {
+            OSSL_ERR_STATE_restore(error_state);
+            ch_save_err_state(ch);
+        }
+
         return 0;
+    }
 
     ossl_quic_reactor_tick(&ch->rtor, 0); /* best effort */
     return 1;

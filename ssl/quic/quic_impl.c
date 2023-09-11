@@ -1524,6 +1524,7 @@ static int ensure_channel_started(QCTX *ctx)
         }
 
         if (!ossl_quic_channel_start(qc->ch)) {
+            ossl_quic_channel_restore_err_state(qc->ch);
             QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR,
                                         "failed to start channel");
             return 0;
