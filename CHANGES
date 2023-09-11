@@ -7,6 +7,10 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
+ Changes between 1.1.1w and 1.1.1x [xx XXX xxxx]
+
+ *)
+
  Changes between 1.1.1v and 1.1.1w [11 Sep 2023]
 
  *) Fix POLY1305 MAC implementation corrupting XMM registers on Windows.
