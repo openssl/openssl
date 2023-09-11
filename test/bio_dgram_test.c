@@ -559,10 +559,16 @@ static int test_bio_dgram_pair(int idx)
         goto err;
 
     /*
-     * Should be able to fit at least 9 datagrams in default write buffer size
-     * in worst case
+     * The number of datagrams we can fit depends on the size of the default
+     * write buffer size, the size of the datagram header and the size of the
+     * payload data we send in each datagram. The max payload data is based on
+     * the mtu (1472). On most systems we expect the header size to be small,
+     * but on one platform (NonStop) we had a report of a very large header
+     * (2064 bytes) - probably driven by sizeof(BIO_ADDR). The default write
+     * buffer size is 17408. So in the very worst case we should be able to fit
+     * at least 4 datagrams into the write buffer.
      */
-    if (!TEST_int_ge(i, 9))
+    if (!TEST_int_ge(i, 4))
         goto err;
 
     /* Check we read back the same data */
