@@ -1793,7 +1793,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
          * If we're not doing early-data and we're not going to send a dummy CCS
          * (i.e. no middlebox compat mode) then we can change the write keys
          * immediately. Otherwise we have to defer this until after all possible
-         * early data is written. We could just alway defer until the last
+         * early data is written. We could just always defer until the last
          * moment except QUIC needs it done at the same time as the read keys
          * are changed. Since QUIC doesn't do TLS early data or need middlebox
          * compat this doesn't cause a problem.

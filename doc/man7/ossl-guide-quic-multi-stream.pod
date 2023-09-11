@@ -96,7 +96,7 @@ When using a default stream OpenSSL will prevent new streams from being
 accepted. To override this behaviour you must call
 L<SSL_set_incoming_stream_policy(3)> to set the policy to
 B<SSL_INCOMING_STREAM_POLICY_ACCEPT>. See the man page for further details. This
-is not relevant if the default stream has been disabed as described in
+is not relevant if the default stream has been disabled as described in
 L</THE DEFAULT STREAM> above.
 
 Any stream may be bi-directional or uni-directional. If it is uni-directional

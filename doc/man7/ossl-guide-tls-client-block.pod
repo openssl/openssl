@@ -124,7 +124,7 @@ function and passing the B<SSL_CTX> we created as an argument.
 =head2 Creating the socket and BIO
 
 TLS data is transmitted over an underlying transport layer. Normally a TCP
-socket. It is the application's resonsibility for ensuring that the socket is
+socket. It is the application's responsibility for ensuring that the socket is
 created and associated with an SSL object (via a BIO).
 
 Socket creation for use by a client is typically a 2 step process, i.e.
@@ -549,7 +549,7 @@ intermediate CAs, or the issuer is simply unrecognised).
 =head1 FURTHER READING
 
 See L<ossl-guide-tls-client-non-block(7)> to read a tutorial on how to modify
-the client devloped on this page to support a nonblocking socket.
+the client developed on this page to support a nonblocking socket.
 
 See L<ossl-guide-quic-client-block(7)> to read a tutorial on how to modify the
 client developed on this page to support QUIC instead of TLS.

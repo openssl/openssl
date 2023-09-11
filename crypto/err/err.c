@@ -831,7 +831,7 @@ void ERR_add_error_vdata(int num, va_list args)
     i = es->top;
 
     /*
-     * If err_data is allocated already, re-use the space.
+     * If err_data is allocated already, reuse the space.
      * Otherwise, allocate a small new buffer.
      */
     if ((es->err_data_flags[i] & flags) == flags) {
