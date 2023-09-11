@@ -93,7 +93,7 @@ numeric identifier, as shown here:
  email.2 = steve@example.org
 
 The syntax of raw extensions is defined by the source code that parses
-the extension but should be documened.
+the extension but should be documented.
 See L</Certificate Policies> for an example of a raw extension.
 
 If an extension type is unsupported, then the I<arbitrary> extension syntax
