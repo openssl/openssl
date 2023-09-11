@@ -663,6 +663,8 @@ int req_main(int argc, char **argv)
             EVP_PKEY_CTX_set_cb(genctx, progress_cb);
 
         pkey = app_keygen(genctx, keyalgstr, newkey_len, verbose);
+        if (pkey == NULL)
+            goto end;
 
         EVP_PKEY_CTX_free(genctx);
         genctx = NULL;
