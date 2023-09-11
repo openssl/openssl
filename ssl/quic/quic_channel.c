@@ -2703,6 +2703,10 @@ int ossl_quic_channel_set_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio)
  */
 int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 {
+    uint64_t error_code;
+    const char *error_msg;
+    ERR_STATE *error_state = NULL;
+
     if (ch->is_server)
         /*
          * This is not used by the server. The server moves to active
@@ -2731,17 +2735,12 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     ch->doing_proactive_ver_neg = 0; /* not currently supported */
 
     /* Handshake layer: start (e.g. send CH). */
-    if (!ossl_quic_tls_tick(ch->qtls)) {
-        uint64_t error_code;
-        const char *error_msg;
-        ERR_STATE *error_state = NULL;
+    ossl_quic_tls_tick(ch->qtls);
 
-        if (ossl_quic_tls_get_error(ch->qtls, &error_code, &error_msg,
-                                    &error_state)) {
-            OSSL_ERR_STATE_restore(error_state);
-            ch_save_err_state(ch);
-        }
-
+    if (ossl_quic_tls_get_error(ch->qtls, &error_code, &error_msg,
+                                &error_state)) {
+        ossl_quic_channel_raise_protocol_error_state(ch, error_code, 0,
+                                                     error_msg, error_state);
         return 0;
     }
 
