@@ -181,7 +181,7 @@ EVP_MAC_CTX_set_params() passes chosen parameters to the underlying
 context, given a context I<ctx>.
 The set of parameters given with I<params> determine exactly what
 parameters are passed down.
-If I<params> are NULL, the unterlying context should do nothing and return 1.
+If I<params> are NULL, the underlying context should do nothing and return 1.
 Note that a parameter that is unknown in the underlying context is
 simply ignored.
 Also, what happens when a needed parameter isn't passed down is
