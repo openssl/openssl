@@ -1535,8 +1535,10 @@ int main(int argc, char *argv[])
             ERR_print_errors(bio_err);
             goto end;
         }
-        SSL_CTX_set0_tmp_dh_pkey(s_ctx, dhpkey);
-        SSL_CTX_set0_tmp_dh_pkey(s_ctx2, dhpkey);
+        if (!SSL_CTX_set0_tmp_dh_pkey(s_ctx, dhpkey))
+            EVP_PKEY_free(dhpkey);
+        if (!SSL_CTX_set0_tmp_dh_pkey(s_ctx2, dhpkey))
+            EVP_PKEY_free(dhpkey);
     }
 #endif
 
