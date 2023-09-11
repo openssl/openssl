@@ -1061,6 +1061,52 @@ static int test_non_io_retry(int idx)
     return testresult;
 }
 
+static int test_no_alpn(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+    int ret;
+
+    /*
+     * Ensure we only configure ciphersuites that are available with both the
+     * default and fips providers to get the same output in both cases
+     */
+    if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256")))
+        goto err;
+
+    if (!TEST_ptr(cctx)
+            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                                    privkey,
+                                                    QTEST_FLAG_FAKE_TIME,
+                                                    &qtserv,
+                                                    &clientquic, NULL)))
+        goto err;
+
+    /*
+     * Clear the ALPN we set in qtest_create_quic_objects. We use TEST_false
+     * because SSL_set_alpn_protos returns 0 for success.
+     */
+    if (!TEST_false(SSL_set_alpn_protos(clientquic, NULL, 0)))
+        goto err;
+
+    /* We expect an immediate error due to lack of ALPN */
+    ret = SSL_connect(clientquic);
+    if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientquic, ret), SSL_ERROR_SSL))
+        goto err;
+
+    testresult = 1;
+ err:
+    ossl_quic_tserver_free(qtserv);
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
 int setup_tests(void)
@@ -1131,6 +1177,7 @@ int setup_tests(void)
     ADD_TEST(test_back_pressure);
     ADD_TEST(test_multiple_dgrams);
     ADD_ALL_TESTS(test_non_io_retry, 2);
+    ADD_TEST(test_no_alpn);
     return 1;
  err:
     cleanup_tests();
