@@ -279,8 +279,9 @@ static int dgram_pair_init(BIO *bio)
     if (b == NULL)
         return 0;
 
-    b->req_buf_len = 17*1024; /* default buffer size */
     b->mtu         = 1472;    /* conservative default MTU */
+    /* default buffer size */
+    b->req_buf_len = 9 * (sizeof(struct dgram_hdr) + b->mtu);
 
     b->lock = CRYPTO_THREAD_lock_new();
     if (b->lock == NULL) {
