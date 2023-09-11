@@ -146,6 +146,8 @@ int gendsa_main(int argc, char **argv)
         goto end;
     }
     pkey = app_keygen(ctx, "DSA", nbits, verbose);
+    if (pkey == NULL)
+        goto end;
 
     assert(private);
     if (!PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, passout)) {

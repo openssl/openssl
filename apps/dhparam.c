@@ -222,6 +222,8 @@ int dhparam_main(int argc, char **argv)
         }
 
         tmppkey = app_paramgen(ctx, alg);
+        if (tmppkey == NULL)
+            goto end;
         EVP_PKEY_CTX_free(ctx);
         ctx = NULL;
         if (dsaparam) {

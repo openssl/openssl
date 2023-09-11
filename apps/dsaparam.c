@@ -218,6 +218,8 @@ int dsaparam_main(int argc, char **argv)
             goto end;
         }
         pkey = app_keygen(ctx, "DSA", numbits, verbose);
+        if (pkey == NULL)
+            goto end;
         assert(private);
         if (outformat == FORMAT_ASN1)
             i = i2d_PrivateKey_bio(out, pkey);

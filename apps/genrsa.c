@@ -203,6 +203,8 @@ opthelp:
         goto end;
     }
     pkey = app_keygen(ctx, "RSA", num, verbose);
+    if (pkey == NULL)
+        goto end;
 
     if (verbose) {
         BIGNUM *e = NULL;
