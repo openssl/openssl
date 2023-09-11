@@ -1061,7 +1061,12 @@ static int test_non_io_retry(int idx)
     return testresult;
 }
 
-static int test_no_alpn(void)
+/*
+ * Test that we correctly handle ALPN supplied by the application
+ * Test 0: ALPN is provided
+ * Test 1: No ALPN is provided
+ */
+static int test_alpn(int idx)
 {
     SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
     SSL *clientquic = NULL;
@@ -1084,18 +1089,28 @@ static int test_no_alpn(void)
                                                     &clientquic, NULL)))
         goto err;
 
-    /*
-     * Clear the ALPN we set in qtest_create_quic_objects. We use TEST_false
-     * because SSL_set_alpn_protos returns 0 for success.
-     */
-    if (!TEST_false(SSL_set_alpn_protos(clientquic, NULL, 0)))
-        goto err;
+    if (idx == 0) {
+        /*
+        * Clear the ALPN we set in qtest_create_quic_objects. We use TEST_false
+        * because SSL_set_alpn_protos returns 0 for success.
+        */
+        if (!TEST_false(SSL_set_alpn_protos(clientquic, NULL, 0)))
+            goto err;
+    }
 
-    /* We expect an immediate error due to lack of ALPN */
     ret = SSL_connect(clientquic);
-    if (!TEST_int_le(ret, 0)
-            || !TEST_int_eq(SSL_get_error(clientquic, ret), SSL_ERROR_SSL))
+    if (!TEST_int_le(ret, 0))
         goto err;
+    if (idx == 0) {
+        /* We expect an immediate error due to lack of ALPN */
+        if (!TEST_int_eq(SSL_get_error(clientquic, ret), SSL_ERROR_SSL))
+            goto err;
+    } else {
+        /* ALPN was provided so we expect the connection to succeed */
+        if (!TEST_int_eq(SSL_get_error(clientquic, ret), SSL_ERROR_WANT_READ)
+                || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+            goto err;
+    }
 
     testresult = 1;
  err:
@@ -1177,7 +1192,7 @@ int setup_tests(void)
     ADD_TEST(test_back_pressure);
     ADD_TEST(test_multiple_dgrams);
     ADD_ALL_TESTS(test_non_io_retry, 2);
-    ADD_TEST(test_no_alpn);
+    ADD_ALL_TESTS(test_alpn, 2);
     return 1;
  err:
     cleanup_tests();
