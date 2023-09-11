@@ -319,10 +319,10 @@ int dgst_main(int argc, char **argv)
         }
 
         sigkey = app_keygen(mac_ctx, mac_name, 0, 0 /* not verbose */);
-        if (sigkey == NULL)
-            goto end;
         /* Verbose output would make external-tests gost-engine fail */
         EVP_PKEY_CTX_free(mac_ctx);
+        if (sigkey == NULL)
+            goto end;
     }
 
     if (hmac_key != NULL) {
