@@ -43,7 +43,7 @@ L<SSL_read_ex(3)> or L<SSL_write_ex(3)> will return immediately with a non-fatal
 error if they are currently unable to read or write respectively.
 
 Since this page is building on the example developed on the
-L<ossl-guide-quic-client-block(7)> page we assume that you are familar with it
+L<ossl-guide-quic-client-block(7)> page we assume that you are familiar with it
 and we only explain how this example differs.
 
 =head2 Performing work while waiting for the socket
@@ -407,7 +407,7 @@ L<SSL_shutdown(3)>.
 
 Since our application is initiating the shutdown then we might expect to see
 L<SSL_shutdown(3)> give a return value of 0, and then we should continue to call
-it until we recieve a return value of 1 (meaning we have successfully completed
+it until we receive a return value of 1 (meaning we have successfully completed
 the shutdown). Since we are using a nonblocking B<SSL> object we might expect to
 have to retry this operation several times. If L<SSL_shutdown(3)> returns a
 negative result then we must call L<SSL_get_error(3)> to work out what to do

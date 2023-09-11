@@ -61,7 +61,7 @@ EVP_SIGNATURE_get0_provider() returns the provider that I<signature> was
 fetched from.
 
 EVP_SIGNATURE_do_all_provided() traverses all SIGNATURE implemented by all
-activated roviders in the given library context I<libctx>, and for each of the
+activated providers in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
 and the given I<arg> as argument.
 
