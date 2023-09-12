@@ -88,9 +88,6 @@ struct blake2b_md_data_st {
     BLAKE2B_PARAM params;
 };
 
-int ossl_blake2s256_init(void *ctx);
-int ossl_blake2b512_init(void *ctx);
-
 int ossl_blake2b_init(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P);
 int ossl_blake2b_init_key(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P,
                           const void *key);
