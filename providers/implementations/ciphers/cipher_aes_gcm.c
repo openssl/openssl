@@ -37,10 +37,16 @@ static void *aes_gcm_newctx(void *provctx, size_t keybits)
 static void *aes_gcm_dupctx(void *provctx)
 {
     PROV_AES_GCM_CTX *ctx = provctx;
+    PROV_AES_GCM_CTX *dctx = NULL;
 
     if (ctx == NULL)
         return NULL;
-    return OPENSSL_memdup(ctx, sizeof(*ctx));
+
+    dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (dctx != NULL && dctx->base.gcm.key != NULL)
+        dctx->base.gcm.key = &dctx->ks.ks;
+
+    return dctx;
 }
 
 static OSSL_FUNC_cipher_freectx_fn aes_gcm_freectx;
