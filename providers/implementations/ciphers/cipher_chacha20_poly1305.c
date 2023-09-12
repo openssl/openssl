@@ -23,7 +23,6 @@
 
 static OSSL_FUNC_cipher_newctx_fn chacha20_poly1305_newctx;
 static OSSL_FUNC_cipher_freectx_fn chacha20_poly1305_freectx;
-static OSSL_FUNC_cipher_dupctx_fn chacha20_poly1305_dupctx;
 static OSSL_FUNC_cipher_encrypt_init_fn chacha20_poly1305_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn chacha20_poly1305_dinit;
 static OSSL_FUNC_cipher_get_params_fn chacha20_poly1305_get_params;
@@ -57,25 +56,6 @@ static void *chacha20_poly1305_newctx(void *provctx)
         ossl_chacha20_initctx(&ctx->chacha);
     }
     return ctx;
-}
-
-static void *chacha20_poly1305_dupctx(void *provctx)
-{
-    PROV_CHACHA20_POLY1305_CTX *ctx = provctx;
-    PROV_CHACHA20_POLY1305_CTX *dctx = NULL;
-
-    if (ctx == NULL)
-        return NULL;
-    dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
-    if (dctx != NULL && dctx->base.tlsmac != NULL && dctx->base.alloced) {
-        dctx->base.tlsmac = OPENSSL_memdup(dctx->base.tlsmac,
-                                           dctx->base.tlsmacsize);
-        if (dctx->base.tlsmac == NULL) {
-            OPENSSL_free(dctx);
-            dctx = NULL;
-        }
-    }
-    return dctx;
 }
 
 static void chacha20_poly1305_freectx(void *vctx)
@@ -330,7 +310,6 @@ static int chacha20_poly1305_final(void *vctx, unsigned char *out, size_t *outl,
 const OSSL_DISPATCH ossl_chacha20_ossl_poly1305_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))chacha20_poly1305_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))chacha20_poly1305_freectx },
-    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))chacha20_poly1305_dupctx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))chacha20_poly1305_einit },
     { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))chacha20_poly1305_dinit },
     { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))chacha20_poly1305_update },
