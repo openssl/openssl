@@ -12,6 +12,7 @@
 #include <openssl/rand.h>
 #include "testutil.h"
 #include "internal/sockets.h"
+#include "internal/bio_addr.h"
 
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
 
@@ -519,13 +520,23 @@ static int test_bio_dgram_pair(int idx)
     } else {
         if (!TEST_ptr(bio1 = bio2 = BIO_new(BIO_s_dgram_mem())))
             goto err;
-        if (idx == 1 && !TEST_true(BIO_set_write_buf_size(bio1, 20 * 1024)))
-            goto err;
     }
 
     mtu1 = BIO_dgram_get_mtu(bio1);
     if (!TEST_int_ge(mtu1, 1280))
         goto err;
+
+    if (idx == 1) {
+        size_t bufsz;
+
+        /*
+         * Assume the header contains 2 BIO_ADDR structures and a length. We
+         * set a buffer big enough for 9 full sized datagrams.
+         */
+        bufsz = 9 * (mtu1 + (sizeof(BIO_ADDR) * 2) + sizeof(size_t));
+        if (!TEST_true(BIO_set_write_buf_size(bio1, bufsz)))
+            goto err;
+    }
 
     mtu2 = BIO_dgram_get_mtu(bio2);
     if (!TEST_int_ge(mtu2, 1280))
