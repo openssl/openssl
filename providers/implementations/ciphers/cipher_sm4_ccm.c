@@ -31,10 +31,16 @@ static void *sm4_ccm_newctx(void *provctx, size_t keybits)
 static void *sm4_ccm_dupctx(void *provctx)
 {
     PROV_SM4_CCM_CTX *ctx = provctx;
+    PROV_SM4_CCM_CTX *dctx = NULL;
 
     if (ctx == NULL)
         return NULL;
-    return OPENSSL_memdup(ctx, sizeof(*ctx));
+
+    dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (dctx != NULL && dctx->base.ccm_ctx.key != NULL)
+        dctx->base.ccm_ctx.key = &dctx->ks.ks;
+
+    return dctx;
 }
 
 static void sm4_ccm_freectx(void *vctx)
