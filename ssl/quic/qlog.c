@@ -30,18 +30,16 @@ static ossl_unused ossl_inline void bit_set(size_t *p, uint32_t bit_no, int enab
         p[bit_no / BITS_PER_WORD] &= mask;
 }
 
-/* TODO abort */
-
 struct qlog_st {
     QLOG_TRACE_INFO info;
 
-    BIO         *bio;
-    size_t      enabled[NUM_ENABLED_W];
-    uint32_t    event_type;
-    const char  *event_cat, *event_name, *event_combined_name;
-    OSSL_TIME   event_time, prev_event_time;
-    JSON_ENC    json;
-    int         header_done, first_event_done;
+    BIO             *bio;
+    size_t          enabled[NUM_ENABLED_W];
+    uint32_t        event_type;
+    const char      *event_cat, *event_name, *event_combined_name;
+    OSSL_TIME       event_time, prev_event_time;
+    OSSL_JSON_ENC   json;
+    int             header_done, first_event_done;
 };
 
 static OSSL_TIME default_now(void *arg)
@@ -78,7 +76,8 @@ QLOG *ossl_qlog_new(const QLOG_TRACE_INFO *info)
         && (qlog->info.group_id = OPENSSL_strdup(info->group_id)) == NULL)
             goto err;
 
-    if (!ossl_json_init(&qlog->json, NULL, JSON_FLAG_IJSON | JSON_FLAG_SEQ))
+    if (!ossl_json_init(&qlog->json, NULL,
+                        OSSL_JSON_FLAG_IJSON | OSSL_JSON_FLAG_SEQ))
         goto err;
 
     if (qlog->info.now_cb == NULL)
