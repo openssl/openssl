@@ -186,7 +186,7 @@ jobs:
   aes-const-time:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: config
       run: ./config --strict-warnings no-asm -DOPENSSL_AES_CONST_TIME && perl configdata.pm --dump
     - name: make

@@ -13,7 +13,7 @@ jobs:
   fuzzing_testrun:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: config
       run: ./config --strict-warnings enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -DERROR_INJECT -DERROR_CALLSTACK && perl configdata.pm --dump
     - name: make
