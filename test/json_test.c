@@ -14,10 +14,10 @@
 #include "internal/json_enc.h"
 
 struct helper {
-    JSON_ENC    j;
-    int         init;
-    uint32_t    flags;
-    BIO         *mem_bio;
+    OSSL_JSON_ENC   j;
+    int             init;
+    uint32_t        flags;
+    BIO             *mem_bio;
 };
 
 static int helper_ensure(struct helper *h)
@@ -81,24 +81,24 @@ typedef const struct script_info *(*info_func)(void);
 
 enum {
     OPK_END,
-    OPK_CALL,           /* (JSON_ENC *) */
-    OPK_CALL_P,         /* (JSON_ENC *, const void *) */
-    OPK_CALL_I,         /* (JSON_ENC *, int) */
-    OPK_CALL_U64,       /* (JSON_ENC *, uint64_t) */
-    OPK_CALL_I64,       /* (JSON_ENC *, int64_t) */
-    OPK_CALL_D,         /* (JSON_ENC *, double) */
-    OPK_CALL_PZ,        /* (JSON_ENC *, const void *, size_t) */
-    OPK_ASSERT_ERROR,   /* (JSON_ENC *, int expect_error) */
+    OPK_CALL,           /* (OSSL_JSON_ENC *) */
+    OPK_CALL_P,         /* (OSSL_JSON_ENC *, const void *) */
+    OPK_CALL_I,         /* (OSSL_JSON_ENC *, int) */
+    OPK_CALL_U64,       /* (OSSL_JSON_ENC *, uint64_t) */
+    OPK_CALL_I64,       /* (OSSL_JSON_ENC *, int64_t) */
+    OPK_CALL_D,         /* (OSSL_JSON_ENC *, double) */
+    OPK_CALL_PZ,        /* (OSSL_JSON_ENC *, const void *, size_t) */
+    OPK_ASSERT_ERROR,   /* (OSSL_JSON_ENC *, int expect_error) */
     OPK_INIT_FLAGS,     /* (uint32_t flags) */
 };
 
-typedef void (*fp_type)(JSON_ENC *);
-typedef void (*fp_p_type)(JSON_ENC *, const void *);
-typedef void (*fp_i_type)(JSON_ENC *, int);
-typedef void (*fp_u64_type)(JSON_ENC *, uint64_t);
-typedef void (*fp_i64_type)(JSON_ENC *, int64_t);
-typedef void (*fp_d_type)(JSON_ENC *, double);
-typedef void (*fp_pz_type)(JSON_ENC *, const void *, size_t);
+typedef void (*fp_type)(OSSL_JSON_ENC *);
+typedef void (*fp_p_type)(OSSL_JSON_ENC *, const void *);
+typedef void (*fp_i_type)(OSSL_JSON_ENC *, int);
+typedef void (*fp_u64_type)(OSSL_JSON_ENC *, uint64_t);
+typedef void (*fp_i64_type)(OSSL_JSON_ENC *, int64_t);
+typedef void (*fp_d_type)(OSSL_JSON_ENC *, double);
+typedef void (*fp_pz_type)(OSSL_JSON_ENC *, const void *, size_t);
 
 #define OP_END()              OP_U64(OPK_END)
 #define OP_CALL(f)            OP_U64(OPK_CALL)     OP_FP(f)
@@ -430,7 +430,7 @@ BEGIN_SCRIPT(err_utf8, "error test: only basic ASCII supported", 0)
     OP_ASSERT_ERROR(1)
 END_SCRIPT_EXPECTING_S("\"")
 
-BEGIN_SCRIPT(ijson_int, "I-JSON: large integer", JSON_FLAG_IJSON)
+BEGIN_SCRIPT(ijson_int, "I-JSON: large integer", OSSL_JSON_FLAG_IJSON)
     OPJ_BEGIN_A()
     OPJ_U64(1)
     OPJ_I64(-1)
@@ -450,7 +450,7 @@ BEGIN_SCRIPT(multi_item, "multiple top level items", 0)
     OPJ_END_A()
 END_SCRIPT_EXPECTING_S("nullnull[][]")
 
-BEGIN_SCRIPT(seq, "JSON-SEQ", JSON_FLAG_SEQ)
+BEGIN_SCRIPT(seq, "JSON-SEQ", OSSL_JSON_FLAG_SEQ)
     OPJ_NULL()
     OPJ_NULL()
     OPJ_NULL()
