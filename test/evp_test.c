@@ -876,7 +876,12 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
             goto err;
         } else {
             TEST_info("Allowing copy fail as an old fips provider is in use.");
+            EVP_CIPHER_CTX_free(ctx);
+            ctx = ctx_base;
         }
+    } else {
+        EVP_CIPHER_CTX_free(ctx_base);
+        ctx_base = NULL;
     }
     /* Likewise for dup */
     duped = EVP_CIPHER_CTX_dup(ctx);
