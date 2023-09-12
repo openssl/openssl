@@ -12,7 +12,7 @@
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 
-int ossl_blake2s256_init(void *ctx)
+static int ossl_blake2s256_init(void *ctx)
 {
     BLAKE2S_PARAM P;
 
@@ -20,7 +20,7 @@ int ossl_blake2s256_init(void *ctx)
     return ossl_blake2s_init((BLAKE2S_CTX *)ctx, &P);
 }
 
-int ossl_blake2b512_init(void *ctx)
+static int ossl_blake2b512_init(void *ctx)
 {
     struct blake2b_md_data_st *mdctx = ctx;
 
