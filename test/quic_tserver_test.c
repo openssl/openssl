@@ -312,7 +312,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 
                 ++idle_units_done;
                 ossl_quic_conn_force_assist_thread_wake(c_ssl);
-                OSSL_sleep(1); /* Ensure CPU scheduling for test purposes */
+                OSSL_sleep(100); /* Ensure CPU scheduling for test purposes */
             } else {
                 c_done_idle_test = 1;
             }
