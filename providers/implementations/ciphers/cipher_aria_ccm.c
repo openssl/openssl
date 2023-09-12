@@ -28,15 +28,6 @@ static void *aria_ccm_newctx(void *provctx, size_t keybits)
     return ctx;
 }
 
-static void *aria_ccm_dupctx(void *provctx)
-{
-    PROV_ARIA_CCM_CTX *ctx = provctx;
-
-    if (ctx == NULL)
-        return NULL;
-    return OPENSSL_memdup(ctx, sizeof(*ctx));
-}
-
 static void aria_ccm_freectx(void *vctx)
 {
     PROV_ARIA_CCM_CTX *ctx = (PROV_ARIA_CCM_CTX *)vctx;

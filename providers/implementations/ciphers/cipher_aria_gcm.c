@@ -27,15 +27,6 @@ static void *aria_gcm_newctx(void *provctx, size_t keybits)
     return ctx;
 }
 
-static void *aria_gcm_dupctx(void *provctx)
-{
-    PROV_ARIA_GCM_CTX *ctx = provctx;
-
-    if (ctx == NULL)
-        return NULL;
-    return OPENSSL_memdup(ctx, sizeof(*ctx));
-}
-
 static OSSL_FUNC_cipher_freectx_fn aria_gcm_freectx;
 static void aria_gcm_freectx(void *vctx)
 {
