@@ -448,11 +448,6 @@ typedef struct ossl_poll_group_st OSSL_POLL_GROUP;
 
 void OSSL_POLL_GROUP_free(OSSL_POLL_GROUP *pg);
 
-typedef union ossl_poll_cookie_u {
-    void        *ptr;
-    uintptr_t   ui;
-} OSSL_POLL_COOKIE;
-
 #define OSSL_POLL_EVENT_FLAG_NONE       0
 
 /*
@@ -485,15 +480,15 @@ typedef struct ossl_poll_change_st {
     size_t              instance;
 
     /* An opaque application value passed through in any reported event. */
-    OSSL_POLL_COOKIE    cookie;
+    void                *cookie;
 
     /*
-     * Disables and enables event flags. Any events in disable_mask are
-     * disabled, and then any events in enable_mask are enabled. disable_mask
-     * is processed before enable_mask, therefore the enabled event flags
-     * may be set (ignoring any previous value) by setting disable_events to
-     * UINT64_MAX and enable_events to the desired event flags. Non-existent
-     * event flags are ignored.
+     * Disables and enables event types. Any events in disable_mask are
+     * disabled, and then any events in enable_events are enabled. disable_events
+     * is processed before enable_events, therefore the enabled event types may
+     * be set (ignoring any previous value) by setting disable_events to
+     * UINT64_MAX and enable_events to the desired event types. Non-existent
+     * event types are ignored.
      */
     uint64_t            disable_events, enable_events;
 
@@ -508,7 +503,7 @@ typedef struct ossl_poll_change_st {
 typedef struct ossl_poll_event_st {
     BIO_POLL_DESCRIPTOR desc;
     size_t              instance;
-    BIO_POLL_COOKIE     cookie;
+    void                *cookie;
     uint64_t            revents;
 } OSSL_POLL_EVENT;
 
@@ -638,7 +633,7 @@ int OSSL_POLL_GROUP_change_poll(OSSL_POLL_GROUP *pg,
 static ossl_inline ossl_unused void OSSL_POLL_CHANGE_set(OSSL_POLL_CHANGE *chg,
                                                          BIO_POLL_DESCRIPTOR desc,
                                                          size_t instance,
-                                                         OSSL_POLL_COOKIE cookie,
+                                                         void *cookie,
                                                          uint64_t events,
                                                          uint64_t flags)
 {
@@ -695,6 +690,17 @@ OSSL_POLL_CHANGE_chflag(OSSL_POLL_CHANGE *chg,
     chg->disable_flags  = disable_flags;
     chg->enable_flags   = enable_flags;
 }
+
+static ossl_inline ossl_unused BIO_POLL_DESCRIPTOR
+SSL_as_poll_descriptor(SSL *s)
+{
+    BIO_POLL_DESCRIPTOR d;
+
+    d.type    = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    d.ssl     = s;
+
+    return d;
+}
 ```
 
 #### Use Case Examples
@@ -716,10 +722,8 @@ OSSL_POLL_CHANGE_chflag(OSSL_POLL_CHANGE *chg,
     OSSL_POLL_GROUP *pg = OSSL_POLL_GROUP_new();
     OSSL_POLL_CHANGE changes[32], *chg = changes;
     OSSL_POLL_EVENT events[32];
-    OSSL_POLL_COOKIE cookie;
+    void *cookie = some_app_ptr;
     size_t i, nchanges = 0, nevents = 0;
-
-    cookie.ptr = some_app_ptr;
 
     /* Wait for an incoming stream or conn error on conn 1 and 2. */
     OSSL_POLL_CHANGE_set(chg++, SSL_as_poll_descriptor(qconn1), 0, cookie,
@@ -1093,12 +1097,23 @@ only be configured on an event leader, but the getter function will return the
 custom poller configured on an event leader when called on any QUIC SSL object
 in the hierarchy, or NULL if none is configured.
 
-An `OSSL_POLL_METHOD` can be associated with an SSL object:
+An `OSSL_POLL_METHOD` can be associated with an SSL object. It can also be set
+on a `SSL_CTX` object, in which case it is inherited by SSL objects created from
+it:
 
 ```c
+int SSL_CTX_set1_poll_method(SSL_CTX *ctx, OSSL_POLL_METHOD *method);
+OSSL_POLL_METHOD *SSL_CTX_get0_poll_method(const SSL_CTX *ctx);
+
 int SSL_set1_poll_method(SSL *ssl, OSSL_POLL_METHOD *method);
 OSSL_POLL_METHOD *SSL_get0_poll_method(const SSL *ssl);
 ```
+
+An SSL object created from a `SSL_CTX` which has never had
+`SSL_set1_poll_method` called on it directly inherits the value set on the
+`SSL_CTX`, including if the poll method set on the `SSL_CTX` is changed after
+the SSL object is created. Calling `SSL_set1_poll_method(..., NULL)` overrides
+this behaviour.
 
 When a poll method is set on a QUIC domain, blocking API calls use that poller
 to block as needed.
@@ -1259,22 +1274,25 @@ The proposed API is as follows:
 #define SSL_LIFECYCLE_EVENT_FLAG_R              (1U << 0) /* read BIO changed */
 #define SSL_LIFECYCLE_EVENT_FLAG_W              (1U << 1) /* write BIO changed */
 
-typedef struct ssl_lifecycle_event_st {
-    uint32_t    type;
-    uint32_t    flags;
-    SSL         *ssl;
-    union {
-        struct {
-            /* ensure alignment for future additions */
-            void        *ptr[4];
-            uintptr_t   ui[4];
-        } generic;
-        struct {
-            BIO         *r_old, *r_new;
-            BIO         *w_old, *w_new;
-        } bio_change;
-    } data;
-} SSL_LIFECYCLE_EVENT;
+typedef struct ssl_lifecycle_event_st SSL_LIFECYCLE_EVENT;
+typedef struct ssl_lifecycle_cb_cookie_st *SSL_LIFECYCLE_CB_COOKIE;
+
+/* Returns SSL_LIFECYCLE_EVENT_TYPE */
+uint32_t SSL_LIFECYCLE_EVENT_get_type(const SSL_LIFECYCLE_EVENT *event);
+
+/* Returns SSL_LIFECYCLE_EVENT_FLAG */
+uint32_t SSL_LIFECYCLE_EVENT_get_flags(const SSL_LIFECYCLE_EVENT *event);
+
+/* Returns an SSL object associated with the event (if applicable) */
+SSL *SSL_LIFECYCLE_EVENT_get0_ssl(const SSL_LIFECYCLE_EVENT *event);
+
+/*
+ * For a BIO_CHANGE event, fills the passed pointers if non-NULL with the
+ * applicable values. For other event types, fails.
+ */
+int SSL_LIFECYCLE_EVENT_get0_bios(const SSL_LIFECYCLE_EVENT *event,
+                                  BIO **r_old, BIO **r_new,
+                                  BIO **w_old, BIO **w_new);
 
 /*
  * Register a lifecycle callback. Multiple lifecycle callbacks may be
@@ -1283,12 +1301,11 @@ typedef struct ssl_lifecycle_event_st {
  */
 int SSL_register_lifecycle_callback(SSL *ssl,
                                     void (*cb)(const SSL_LIFECYCLE_EVENT *event,
-                                               size_t event_len,
                                                void *arg),
                                     void *arg,
-                                    void **cookie);
+                                    SSL_LIFECYCLE_CB_COOKIE *cookie);
 
-int SSL_unregister_lifecycle_callback(SSL *ssl, void *cookie);
+int SSL_unregister_lifecycle_callback(SSL *ssl, SSL_LIFECYCLE_CB_COOKIE cookie);
 ```
 
 Q&A
@@ -1456,7 +1473,7 @@ supported:
    which are highly performant, like epoll/kqueue, and c) which use IOCPs to
    signal *readiness* rather than *completion*. In fact, this is what the
    `select` and `WSAPoll` functions use internally. Unlike those functions, this
-   is based around registering sockets in advice and submits readiness
+   is based around registering sockets in advance and submits readiness
    notifications to an IOCP, so this can be quite performant.
 
    `IOCTL_AFD_POLL` is an internal, undocumented API. It is however widely used,
@@ -1486,6 +1503,10 @@ can be implemented adequately on Windows.
 Extra features on QUIC objects
 ------------------------------
 
+These are unlikely to be implemented initially — this is just some exploration
+of features we might want to offer in future and how they would interact with
+the polling design.
+
 ### Low-watermark functionality
 
 Sometimes an application knows it does not need to do anything until at least N
@@ -1499,7 +1520,7 @@ an individual QUIC stream:
 ```c
 #define SSL_LOWAT_FLAG_ONESHOT     (1U << 0)
 
-int SSL_set_read_lowat(SSL *ssl, size_t loawt, uint64_t flags);
+int SSL_set_read_lowat(SSL *ssl, size_t lowat, uint64_t flags);
 int SSL_get_read_lowat(SSL *ssl, size_t *lowat);
 
 int SSL_set_write_lowat(SSL *ssl, size_t lowat, uint64_t flags);
@@ -1518,7 +1539,7 @@ less than the configured watermark.
 
 It is desirable to be able to cause blocking I/O operations to time out. For
 example, an application might want to perform a blocking read from a peer but
-not wait for a certain amount of time.
+only wait for a certain amount of time.
 
 We support this with a configurable timeout per each type of operation.
 
@@ -1548,8 +1569,8 @@ We support this with a configurable timeout per each type of operation.
  * operation. This may be called multiple times to set different timeouts
  * for different operations.
  */
-int SSL_set_timeout(SSL *ssl, uint64_t operation,
-                    const struct timeval *t, uint64_t flags);
+int SSL_set_io_timeout(SSL *ssl, uint64_t operation,
+                       const struct timeval *t, uint64_t flags);
 
 /*
  * Retrieves a configured timeout value. operation must be a single operation
@@ -1560,9 +1581,9 @@ int SSL_set_timeout(SSL *ssl, uint64_t operation,
  * is set to 0. Returns 1 on success (including if unset) and 0 on failure (for
  * example if called on an unsupported SSL object type).
  */
-int SSL_get_timeout(SSL *ssl, uint64_t operation,
-                    struct timeval *t, int *is_set,
-                    uint64_t *flags);
+int SSL_get_io_timeout(SSL *ssl, uint64_t operation,
+                       struct timeval *t, int *is_set,
+                       uint64_t *flags);
 
 /*
  * Returns 1 if the last invocation of an applicable operation specified by
