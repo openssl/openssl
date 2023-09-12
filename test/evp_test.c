@@ -73,10 +73,12 @@ typedef enum OPTION_choice {
     OPT_EOF = 0,
     OPT_CONFIG_FILE,
     OPT_IN_PLACE,
+    OPT_PROVIDER_NAME,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
 static OSSL_PROVIDER *prov_null = NULL;
+static OSSL_PROVIDER *libprov = NULL;
 static OSSL_LIB_CTX *libctx = NULL;
 
 /* List of public and private keys */
@@ -4117,6 +4119,8 @@ const OPTIONS *test_get_options(void)
           "The configuration file to use for the libctx" },
         { "process", OPT_IN_PLACE, 's',
           "Mode for data processing by cipher tests [in_place/both], both by default"},
+        { "provider", OPT_PROVIDER_NAME, 's',
+          "The provider to load (when no configuration file, the default value is 'default')" },
         { OPT_HELP_STR, 1, '-', "file\tFile to run tests on.\n" },
         { NULL }
     };
@@ -4127,6 +4131,7 @@ int setup_tests(void)
 {
     size_t n;
     char *config_file = NULL;
+    char *provider_name = NULL;
 
     OPTION_CHOICE o;
 
@@ -4138,6 +4143,9 @@ int setup_tests(void)
         case OPT_IN_PLACE:
             if ((process_mode_in_place = evp_test_process_mode(opt_arg())) == -1)
                 return 0;
+            break;
+        case OPT_PROVIDER_NAME:
+            provider_name = opt_arg();
             break;
         case OPT_TEST_CASES:
             break;
@@ -4152,7 +4160,9 @@ int setup_tests(void)
      * Load the 'null' provider into the default library context to ensure that
      * the tests do not fallback to using the default provider.
      */
-    if (!test_get_libctx(&libctx, &prov_null, config_file, NULL, NULL))
+    if (config_file == NULL && provider_name == NULL)
+        provider_name = "default";
+    if (!test_get_libctx(&libctx, &prov_null, config_file, &libprov, provider_name))
         return 0;
 
     n = test_get_argument_count();
@@ -4165,6 +4175,7 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
+    OSSL_PROVIDER_unload(libprov);
     OSSL_PROVIDER_unload(prov_null);
     OSSL_LIB_CTX_free(libctx);
 }
