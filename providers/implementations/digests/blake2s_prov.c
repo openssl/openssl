@@ -320,3 +320,13 @@ int ossl_blake2s_final(unsigned char *md, BLAKE2S_CTX *c)
     OPENSSL_cleanse(c, sizeof(BLAKE2S_CTX));
     return 1;
 }
+
+void ossl_blake2s_set_digest_length(BLAKE2S_CTX *c, uint8_t outlen)
+{
+    c->outlen = outlen;
+}
+
+uint8_t ossl_blake2s_get_digest_length(BLAKE2S_CTX *c)
+{
+    return c->outlen;
+}

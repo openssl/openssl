@@ -14,7 +14,6 @@
 
 # include <openssl/e_os2.h>
 # include <stddef.h>
-# include <crypto/evp.h>
 
 # define BLAKE2S_BLOCKBYTES    64
 # define BLAKE2S_OUTBYTES      32
@@ -83,22 +82,21 @@ struct blake2b_ctx_st {
 typedef struct blake2s_ctx_st BLAKE2S_CTX;
 typedef struct blake2b_ctx_st BLAKE2B_CTX;
 
-struct blake2b_md_data_st {
-    BLAKE2B_CTX ctx;
-    BLAKE2B_PARAM params;
-};
-
-int ossl_blake2s256_init(void *ctx);
-int ossl_blake2b512_init(void *ctx);
-
 int ossl_blake2b_init(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P);
 int ossl_blake2b_init_key(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P,
                           const void *key);
 int ossl_blake2b_update(BLAKE2B_CTX *c, const void *data, size_t datalen);
 int ossl_blake2b_final(unsigned char *md, BLAKE2B_CTX *c);
+void ossl_blake2b_set_digest_length(BLAKE2B_CTX *c, uint8_t outlen);
+uint8_t ossl_blake2b_get_digest_length(BLAKE2B_CTX *c);
 
-OSSL_FUNC_digest_set_ctx_params_fn ossl_blake2b_set_ctx_params;
-OSSL_FUNC_digest_settable_ctx_params_fn ossl_blake2b_settable_ctx_params;
+int ossl_blake2s_init(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P);
+int ossl_blake2s_init_key(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P,
+                          const void *key);
+int ossl_blake2s_update(BLAKE2S_CTX *c, const void *data, size_t datalen);
+int ossl_blake2s_final(unsigned char *md, BLAKE2S_CTX *c);
+void ossl_blake2s_set_digest_length(BLAKE2S_CTX *c, uint8_t outlen);
+uint8_t ossl_blake2s_get_digest_length(BLAKE2S_CTX *c);
 
 /*
  * These setters are internal and do not check the validity of their parameters.
@@ -112,11 +110,6 @@ void ossl_blake2b_param_set_personal(BLAKE2B_PARAM *P, const uint8_t *personal,
                                      size_t length);
 void ossl_blake2b_param_set_salt(BLAKE2B_PARAM *P, const uint8_t *salt,
                                  size_t length);
-int ossl_blake2s_init(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P);
-int ossl_blake2s_init_key(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P,
-                          const void *key);
-int ossl_blake2s_update(BLAKE2S_CTX *c, const void *data, size_t datalen);
-int ossl_blake2s_final(unsigned char *md, BLAKE2S_CTX *c);
 
 void ossl_blake2s_param_init(BLAKE2S_PARAM *P);
 void ossl_blake2s_param_set_digest_length(BLAKE2S_PARAM *P, uint8_t outlen);
