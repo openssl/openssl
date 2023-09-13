@@ -165,8 +165,7 @@ static int generic_sha3_squeeze(void *vctx, unsigned char *out, size_t outlen)
     return ossl_sha3_squeeze((KECCAK1600_CTX *)vctx, out, outlen);
 }
 
-static PROV_SHA3_METHOD sha3_generic_md =
-{
+static PROV_SHA3_METHOD sha3_generic_md = {
     generic_sha3_absorb,
     generic_sha3_final,
     NULL
@@ -362,29 +361,25 @@ static int s390x_kmac_squeeze(void *vctx, unsigned char *out, size_t outlen)
      return s390x_keccakc_squeeze(vctx, out, outlen, 0x04);
 }
 
-static PROV_SHA3_METHOD sha3_s390x_md =
-{
+static PROV_SHA3_METHOD sha3_s390x_md = {
     s390x_sha3_absorb,
     s390x_sha3_final,
     NULL,
 };
 
-static PROV_SHA3_METHOD keccak_s390x_md =
-{
+static PROV_SHA3_METHOD keccak_s390x_md = {
     s390x_sha3_absorb,
     s390x_keccak_final,
     s390x_keccak_squeeze,
 };
 
-static PROV_SHA3_METHOD shake_s390x_md =
-{
+static PROV_SHA3_METHOD shake_s390x_md = {
     s390x_sha3_absorb,
     s390x_shake_final,
     s390x_shake_squeeze,
 };
 
-static PROV_SHA3_METHOD kmac_s390x_md =
-{
+static PROV_SHA3_METHOD kmac_s390x_md = {
     s390x_sha3_absorb,
     s390x_kmac_final,
     s390x_kmac_squeeze,
@@ -429,8 +424,7 @@ static size_t armsha3_sha3_absorb(void *vctx, const void *inp, size_t len)
     return SHA3_absorb_cext(ctx->A, inp, len, ctx->block_size);
 }
 
-static PROV_SHA3_METHOD sha3_ARMSHA3_md =
-{
+static PROV_SHA3_METHOD sha3_ARMSHA3_md = {
     armsha3_sha3_absorb,
     generic_sha3_final
 };

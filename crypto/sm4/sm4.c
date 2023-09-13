@@ -283,8 +283,9 @@ int ossl_sm4_set_key(const uint8_t *key, SM4_KEY *ks)
     /*
      * Family Key
      */
-    static const uint32_t FK[4] =
-        { 0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc };
+    static const uint32_t FK[4] = {
+        0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc
+    };
 
     /*
      * Constant Key

@@ -903,8 +903,7 @@ int main(int argc, char *argv[])
     int ret = EXIT_FAILURE;
     int client_auth = 0;
     int server_auth = 0, i;
-    struct app_verify_arg app_verify_arg =
-        { APP_CALLBACK_STRING, 0 };
+    struct app_verify_arg app_verify_arg = { APP_CALLBACK_STRING, 0 };
     SSL_CTX *c_ctx = NULL;
     const SSL_METHOD *meth = NULL;
     SSL *c_ssl = NULL;

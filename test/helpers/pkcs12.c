@@ -531,8 +531,7 @@ static int check_attrs(const STACK_OF(X509_ATTRIBUTE) *bag_attrs, const PKCS12_A
                 if (!TEST_int_eq(X509_ATTRIBUTE_count(attr), 1))
                     goto err;
 
-                for (j = 0; j < X509_ATTRIBUTE_count(attr); j++)
-                {
+                for (j = 0; j < X509_ATTRIBUTE_count(attr); j++) {
                     av = X509_ATTRIBUTE_get0_type(attr, j);
                     if (!TEST_true(check_asn1_string(av, p_attr->value)))
                         goto err;
