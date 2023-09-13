@@ -1478,8 +1478,7 @@ static struct ktls_test_cipher {
 # endif
 };
 
-#define NUM_KTLS_TEST_CIPHERS \
-    (sizeof(ktls_test_ciphers) / sizeof(ktls_test_ciphers[0]))
+#define NUM_KTLS_TEST_CIPHERS OSSL_NELEM(ktls_test_ciphers)
 
 static int test_ktls(int test)
 {
