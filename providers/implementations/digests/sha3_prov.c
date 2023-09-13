@@ -249,7 +249,7 @@ static PROV_SHA3_METHOD kmac_s390x_md =
     } else {                                                                   \
         ctx->meth = sha3_generic_md;                                           \
     }
-#elif defined(__aarch64__)
+#elif defined(__aarch64__) && defined(KECCAK1600_ASM)
 # include "arm_arch.h"
 
 static sha3_absorb_fn armsha3_sha3_absorb;
