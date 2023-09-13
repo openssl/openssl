@@ -636,7 +636,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
         if (EVP_KEYMGMT_get0_provider(keymgmt) == provider) {
             /*
              * We have a match - so we could use this signature;
-             * Check proper object registration first, though. 
+             * Check proper object registration first, though.
              * Don't care about return value as this may have been
              * done within providers or previous calls to
              * add_provider_sigalgs.
@@ -724,7 +724,7 @@ int ssl_load_sigalgs(SSL_CTX *ctx)
         }
     }
 
-    /* 
+    /*
      * For now, leave it at this: legacy sigalgs stay in their own
      * data structures until "legacy cleanup" occurs.
      */

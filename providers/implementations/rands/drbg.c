@@ -423,7 +423,7 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
         }
 #ifndef PROV_RAND_GET_RANDOM_NONCE
         else { /* parent == NULL */
-            noncelen = prov_drbg_get_nonce(drbg, &nonce, drbg->min_noncelen, 
+            noncelen = prov_drbg_get_nonce(drbg, &nonce, drbg->min_noncelen,
                                            drbg->max_noncelen);
             if (noncelen < drbg->min_noncelen
                     || noncelen > drbg->max_noncelen) {

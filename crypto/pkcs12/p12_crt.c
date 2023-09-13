@@ -280,7 +280,7 @@ PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags,
                              NULL, NULL);
 }
 
-PKCS12_SAFEBAG *PKCS12_add_secret(STACK_OF(PKCS12_SAFEBAG) **pbags, 
+PKCS12_SAFEBAG *PKCS12_add_secret(STACK_OF(PKCS12_SAFEBAG) **pbags,
                                   int nid_type, const unsigned char *value, int len)
 {
     PKCS12_SAFEBAG *bag = NULL;
