@@ -735,9 +735,9 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     int ok = 0, tmplen, chunklen, tmpflen, i;
     EVP_CIPHER_CTX *ctx_base = NULL;
     EVP_CIPHER_CTX *ctx = NULL, *duped;
-    int fips_dupctx_supported = (fips_provider_version_ge(libctx, 3, 0, 11)
-                                && fips_provider_version_lt(libctx, 3, 1, 0))
-                                || fips_provider_version_ge(libctx, 3, 1, 3);
+    int fips_dupctx_supported = (fips_provider_version_ge(libctx, 3, 0, 12)
+                                 && fips_provider_version_lt(libctx, 3, 1, 0))
+                                || fips_provider_version_ge(libctx, 3, 1, 4);
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(ctx_base = EVP_CIPHER_CTX_new()))
