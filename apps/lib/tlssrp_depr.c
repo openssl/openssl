@@ -178,7 +178,7 @@ static int ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
         goto err;
     }
     BIO_printf(bio_err,
-               "SRP parameters set: username = \"%s\" info=\"%s\" \n",
+               "SRP parameters set: username = \"%s\" info=\"%s\"\n",
                p->login, p->user->info);
     ret = SSL_ERROR_NONE;
 
@@ -199,7 +199,7 @@ int set_up_srp_verifier_file(SSL_CTX *ctx, srpsrvparm *srp_callback_parm,
     srp_callback_parm->login = NULL;
 
     if (srp_callback_parm->vb == NULL) {
-        BIO_printf(bio_err, "Failed to initialize SRP verifier file \n");
+        BIO_printf(bio_err, "Failed to initialize SRP verifier file\n");
         return 0;
     }
     if ((ret =
