@@ -46,8 +46,7 @@ struct pq_elem_st {
 #endif
 };
 
-struct ossl_pqueue_st
-{
+struct ossl_pqueue_st {
     struct pq_heap_st *heap;
     struct pq_elem_st *elements;
     int (*compare)(const void *, const void *);
