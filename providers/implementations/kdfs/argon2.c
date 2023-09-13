@@ -1185,8 +1185,7 @@ static int kdf_argon2_ctx_set_lanes(KDF_ARGON2 *ctx, uint32_t lanes)
 
 static int kdf_argon2_ctx_set_t_cost(KDF_ARGON2 *ctx, uint32_t t_cost)
 {
-    /* ARGON2_MAX_MEMORY == max m_cost value, skip check, enforce type */
-    ossl_static_assert_type_eq(uint32_t, t_cost);
+    /* ARGON2_MAX_MEMORY == max m_cost value, so skip check  */
 
     if (t_cost < ARGON2_MIN_TIME) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_ITERATION_COUNT,
@@ -1200,8 +1199,7 @@ static int kdf_argon2_ctx_set_t_cost(KDF_ARGON2 *ctx, uint32_t t_cost)
 
 static int kdf_argon2_ctx_set_m_cost(KDF_ARGON2 *ctx, uint32_t m_cost)
 {
-    /* ARGON2_MAX_MEMORY == max m_cost value, skip check, enforce type */
-    ossl_static_assert_type_eq(uint32_t, m_cost);
+    /* ARGON2_MAX_MEMORY == max m_cost value, so skip check */
 
     if (m_cost < ARGON2_MIN_MEMORY) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_MEMORY_SIZE, "min: %u",
@@ -1218,11 +1216,8 @@ static int kdf_argon2_ctx_set_out_length(KDF_ARGON2 *ctx, uint32_t outlen)
     /*
      * ARGON2_MAX_OUT_LENGTH == max outlen value, so upper bounds checks
      * are always satisfied; to suppress compiler if statement tautology
-     * warnings, these checks are skipped; however, to ensure that these
-     * limits are met and implementation conforming to Argon2 RFC, we need
-     * to fix the type
+     * warnings, these checks are skipped.
      */
-    ossl_static_assert_type_eq(uint32_t, outlen);
 
     if (outlen < ARGON2_MIN_OUT_LENGTH) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH, "min: %u",
