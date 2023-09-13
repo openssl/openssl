@@ -179,7 +179,7 @@ jobs:
         # later providers.  Problems in these situations ought to be
         # caught by cross branch testing before the release.
         tree_a: [ branch-master, branch-3.1, branch-3.0,
-                  openssl-3.0.0, openssl-3.0.8, openssl-3.0.9, openssl-3.1.1 ]
+                  openssl-3.0.0, openssl-3.0.8, openssl-3.0.9, openssl-3.1.2 ]
         tree_b: [ branch-master, branch-3.1, branch-3.0  ]
     steps:
       - name: early exit checks
