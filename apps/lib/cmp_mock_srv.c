@@ -16,8 +16,7 @@
 #include <openssl/cmperr.h>
 
 /* the context for the CMP mock server */
-typedef struct
-{
+typedef struct {
     X509 *refCert;             /* cert to expect for oldCertID in kur/rr msg */
     X509 *certOut;             /* certificate to be returned in cp/ip/kup msg */
     X509_CRL *crlOut;          /* CRL to be returned in genp for crls */
