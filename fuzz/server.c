@@ -625,8 +625,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
     OPENSSL_assert((size_t)BIO_write(in, buf, len) == len);
 
-    if ((opt & 0x01) != 0)
-    {
+    if ((opt & 0x01) != 0) {
         do {
             char early_buf[16384];
             size_t early_len;

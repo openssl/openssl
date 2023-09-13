@@ -120,8 +120,7 @@ static int aes_siv_cipher(void *vctx, unsigned char *out,
     return ossl_siv128_decrypt(sctx, in, out, len) > 0;
 }
 
-static const PROV_CIPHER_HW_AES_SIV aes_siv_hw =
-{
+static const PROV_CIPHER_HW_AES_SIV aes_siv_hw = {
     aes_siv_initkey,
     aes_siv_cipher,
     aes_siv_setspeed,

@@ -480,8 +480,7 @@ end:
     return ret;
 }
 
-static int keygen_size[] =
-{
+static int keygen_size[] = {
     2048, 3072
 };
 
