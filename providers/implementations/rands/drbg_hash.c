@@ -405,9 +405,9 @@ static int drbg_hash_verify_zeroization(void *vdrbg)
     if (drbg->lock != NULL && !CRYPTO_THREAD_read_lock(drbg->lock))
         return 0;
 
-    PROV_DRBG_VERYIFY_ZEROIZATION(hash->V);
-    PROV_DRBG_VERYIFY_ZEROIZATION(hash->C);
-    PROV_DRBG_VERYIFY_ZEROIZATION(hash->vtmp);
+    PROV_DRBG_VERIFY_ZEROIZATION(hash->V);
+    PROV_DRBG_VERIFY_ZEROIZATION(hash->C);
+    PROV_DRBG_VERIFY_ZEROIZATION(hash->vtmp);
 
     ret = 1;
  err:

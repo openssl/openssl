@@ -507,10 +507,10 @@ static int drbg_ctr_verify_zeroization(void *vdrbg)
     if (drbg->lock != NULL && !CRYPTO_THREAD_read_lock(drbg->lock))
         return 0;
 
-    PROV_DRBG_VERYIFY_ZEROIZATION(ctr->K);
-    PROV_DRBG_VERYIFY_ZEROIZATION(ctr->V);
-    PROV_DRBG_VERYIFY_ZEROIZATION(ctr->bltmp);
-    PROV_DRBG_VERYIFY_ZEROIZATION(ctr->KX);
+    PROV_DRBG_VERIFY_ZEROIZATION(ctr->K);
+    PROV_DRBG_VERIFY_ZEROIZATION(ctr->V);
+    PROV_DRBG_VERIFY_ZEROIZATION(ctr->bltmp);
+    PROV_DRBG_VERIFY_ZEROIZATION(ctr->KX);
     if (ctr->bltmp_pos != 0)
         goto err;
 

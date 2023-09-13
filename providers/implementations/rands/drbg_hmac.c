@@ -298,8 +298,8 @@ static int drbg_hmac_verify_zeroization(void *vdrbg)
     if (drbg->lock != NULL && !CRYPTO_THREAD_read_lock(drbg->lock))
         return 0;
 
-    PROV_DRBG_VERYIFY_ZEROIZATION(hmac->K);
-    PROV_DRBG_VERYIFY_ZEROIZATION(hmac->V);
+    PROV_DRBG_VERIFY_ZEROIZATION(hmac->K);
+    PROV_DRBG_VERIFY_ZEROIZATION(hmac->V);
 
     ret = 1;
  err:
