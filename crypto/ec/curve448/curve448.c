@@ -55,8 +55,9 @@ static void gf_invert(gf y, const gf x, int assert_nonzero)
 }
 
 /** identity = (0,1) */
-const curve448_point_t ossl_curve448_point_identity =
-    { {{{{0}}}, {{{1}}}, {{{1}}}, {{{0}}}} };
+const curve448_point_t ossl_curve448_point_identity = {
+    {{{{0}}}, {{{1}}}, {{{1}}}, {{{0}}}}
+};
 
 static void point_double_internal(curve448_point_t p, const curve448_point_t q,
                                   int before_double)

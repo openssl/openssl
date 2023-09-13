@@ -611,8 +611,7 @@ time_t ossl_asn1_string_to_time_t(const char *asn1_string)
     time_t timestamp_utc;
 
     timestamp_asn1 = ASN1_TIME_new();
-    if (!ASN1_TIME_set_string(timestamp_asn1, asn1_string))
-    {
+    if (!ASN1_TIME_set_string(timestamp_asn1, asn1_string)) {
         ASN1_TIME_free(timestamp_asn1);
         return -1;
     }

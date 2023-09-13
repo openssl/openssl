@@ -132,8 +132,7 @@ static int generic_sha3_final(unsigned char *md, void *vctx)
     return ossl_sha3_final(md, (KECCAK1600_CTX *)vctx);
 }
 
-static PROV_SHA3_METHOD sha3_generic_md =
-{
+static PROV_SHA3_METHOD sha3_generic_md = {
     generic_sha3_absorb,
     generic_sha3_final
 };
@@ -211,26 +210,22 @@ static int s390x_kmac_final(unsigned char *md, void *vctx)
     return s390x_keccakc_final(md, vctx, 0x04);
 }
 
-static PROV_SHA3_METHOD sha3_s390x_md =
-{
+static PROV_SHA3_METHOD sha3_s390x_md = {
     s390x_sha3_absorb,
     s390x_sha3_final
 };
 
-static PROV_SHA3_METHOD keccak_s390x_md =
-{
+static PROV_SHA3_METHOD keccak_s390x_md = {
     s390x_sha3_absorb,
     s390x_keccak_final
 };
 
-static PROV_SHA3_METHOD shake_s390x_md =
-{
+static PROV_SHA3_METHOD shake_s390x_md = {
     s390x_sha3_absorb,
     s390x_shake_final
 };
 
-static PROV_SHA3_METHOD kmac_s390x_md =
-{
+static PROV_SHA3_METHOD kmac_s390x_md = {
     s390x_sha3_absorb,
     s390x_kmac_final
 };
@@ -266,8 +261,7 @@ static size_t armsha3_sha3_absorb(void *vctx, const void *inp, size_t len)
     return SHA3_absorb_cext(ctx->A, inp, len, ctx->block_size);
 }
 
-static PROV_SHA3_METHOD sha3_ARMSHA3_md =
-{
+static PROV_SHA3_METHOD sha3_ARMSHA3_md = {
     armsha3_sha3_absorb,
     generic_sha3_final
 };

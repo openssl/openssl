@@ -95,8 +95,8 @@ static int blake2b512_get_params(OSSL_PARAM params[])
     return ossl_digest_default_get_params(params, BLAKE2B_BLOCKBYTES, 64, 0);
 }
 
-const OSSL_DISPATCH ossl_blake2b512_functions[] =
-    { {OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))blake2b512_newctx},
+const OSSL_DISPATCH ossl_blake2b512_functions[] = {
+    {OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))blake2b512_newctx},
     {OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))ossl_blake2b_update},
     {OSSL_FUNC_DIGEST_FINAL, (void (*)(void))blake2b512_internal_final},
     {OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))blake2b512_freectx},
@@ -108,5 +108,6 @@ const OSSL_DISPATCH ossl_blake2b512_functions[] =
     {OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,
      (void (*)(void))ossl_blake2b_settable_ctx_params},
     {OSSL_FUNC_DIGEST_SET_CTX_PARAMS,
-     (void (*)(void))ossl_blake2b_set_ctx_params}, {0, NULL} };
+     (void (*)(void))ossl_blake2b_set_ctx_params}, {0, NULL}
+};
 

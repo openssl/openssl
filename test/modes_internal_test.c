@@ -40,8 +40,9 @@ static const unsigned char cts128_test_key[16] = "chicken teriyaki";
 static const unsigned char cts128_test_input[64] =
     "I would like the" " General Gau's C"
     "hicken, please, " "and wonton soup.";
-static const unsigned char cts128_test_iv[] =
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static const unsigned char cts128_test_iv[] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
 
 static const unsigned char vector_17[17] = {
     0xc6, 0x35, 0x35, 0x68, 0xf2, 0xbf, 0x8c, 0xb4,

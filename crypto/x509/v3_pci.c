@@ -54,8 +54,8 @@ static int i2r_pci(X509V3_EXT_METHOD *method, PROXY_CERT_INFO_EXTENSION *ext,
 static PROXY_CERT_INFO_EXTENSION *r2i_pci(X509V3_EXT_METHOD *method,
                                           X509V3_CTX *ctx, char *str);
 
-const X509V3_EXT_METHOD ossl_v3_pci =
-    { NID_proxyCertInfo, 0, ASN1_ITEM_ref(PROXY_CERT_INFO_EXTENSION),
+const X509V3_EXT_METHOD ossl_v3_pci = {
+    NID_proxyCertInfo, 0, ASN1_ITEM_ref(PROXY_CERT_INFO_EXTENSION),
     0, 0, 0, 0,
     0, 0,
     NULL, NULL,
