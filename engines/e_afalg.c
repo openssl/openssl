@@ -125,8 +125,7 @@ static ossl_inline int io_read(aio_context_t ctx, long n, struct iocb **iocb)
 }
 
 /* A version of 'struct timespec' with 32-bit time_t and nanoseconds.  */
-struct __timespec32
-{
+struct __timespec32 {
   __kernel_long_t tv_sec;
   __kernel_long_t tv_nsec;
 };

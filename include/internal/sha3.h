@@ -25,8 +25,7 @@ typedef struct keccak_st KECCAK1600_CTX;
 typedef size_t (sha3_absorb_fn)(void *vctx, const void *inp, size_t len);
 typedef int (sha3_final_fn)(unsigned char *md, void *vctx);
 
-typedef struct prov_sha3_meth_st
-{
+typedef struct prov_sha3_meth_st {
     sha3_absorb_fn *absorb;
     sha3_final_fn *final;
 } PROV_SHA3_METHOD;
