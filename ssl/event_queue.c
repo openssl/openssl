@@ -103,7 +103,7 @@ void ossl_event_set(OSSL_EVENT *event, uint32_t type, uint32_t priority,
     event->payload_size = payload_size;
 }
 
-OSSL_EVENT *ossl_event_queue_add_new(OSSL_EVENT_QUEUE *queue, 
+OSSL_EVENT *ossl_event_queue_add_new(OSSL_EVENT_QUEUE *queue,
                                      uint32_t type, uint32_t priority,
                                      OSSL_TIME when, void *ctx,
                                      void *payload, size_t payload_size)

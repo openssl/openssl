@@ -43,7 +43,7 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
                        unsigned char *out, const EVP_MD *md_type)
 {
     return PKCS12_key_gen_asc_ex(pass, passlen, salt, saltlen, id, iter, n,
-                                  out, md_type, NULL, NULL);    
+                                  out, md_type, NULL, NULL);
 }
 
 int PKCS12_key_gen_utf8_ex(const char *pass, int passlen, unsigned char *salt,
