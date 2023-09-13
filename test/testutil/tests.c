@@ -18,7 +18,7 @@
 
 /*
  * Output a failed test first line.
- * All items are optional are generally not preinted if passed as NULL.
+ * All items are optional are generally not printed if passed as NULL.
  * The special cases are for prefix where "ERROR" is assumed and for left
  * and right where a non-failure message is produced if either is NULL.
  */

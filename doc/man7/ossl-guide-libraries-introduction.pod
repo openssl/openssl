@@ -15,12 +15,12 @@ encryption, digital signatures, hash functions, etc. It additionally supplies
 supporting APIs for cryptography related standards, e.g. for reading and writing
 digital certificates (also known as X.509 certificates). Finally it also
 supplies various additional supporting APIs that are not directly cryptography
-related but are nonetheless useful and dependended upon by other APIs. For
+related but are nonetheless useful and depended upon by other APIs. For
 example the "BIO" functions provide capabilities for abstracting I/O, e.g. via a
 file or over a network.
 
 The C<libssl> library provides functions to perform secure communication between
-two peers across a network. Most signficiantly it implements support for the
+two peers across a network. Most significantly it implements support for the
 SSL/TLS, DTLS and QUIC standards.
 
 The C<libssl> library depends on and uses many of the capabilities supplied by

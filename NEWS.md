@@ -135,7 +135,7 @@ OpenSSL 3.0
   * Fixed a bug where the RC4-MD5 ciphersuite incorrectly used the
     AAD data as the MAC key ([CVE-2022-1434])
   * Fix a bug in the OPENSSL_LH_flush() function that breaks reuse of the memory
-    occuppied by the removed hash table entries ([CVE-2022-1473])
+    occupied by the removed hash table entries ([CVE-2022-1473])
 
 ### Major changes between OpenSSL 3.0.1 and OpenSSL 3.0.2 [15 Mar 2022]
 

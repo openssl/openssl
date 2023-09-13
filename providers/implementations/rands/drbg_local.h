@@ -206,7 +206,7 @@ OSSL_FUNC_rand_get_seed_fn ossl_drbg_get_seed;
 OSSL_FUNC_rand_clear_seed_fn ossl_drbg_clear_seed;
 
 /* Verify that an array of numeric values is all zero */
-#define PROV_DRBG_VERYIFY_ZEROIZATION(v)    \
+#define PROV_DRBG_VERIFY_ZEROIZATION(v)     \
     {                                       \
         size_t i;                           \
                                             \

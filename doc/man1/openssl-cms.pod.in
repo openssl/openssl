@@ -402,7 +402,7 @@ option.
 =item I<recipient-cert> ...
 
 This is an alternative to using the B<-recip> option when encrypting a message.
-One or more certificate filennames may be given.
+One or more certificate filenames may be given.
 
 =item B<-I<cipher>>
 
