@@ -145,7 +145,7 @@ int main(int argc, char **argv)
      * a proper FIPS 186-4 key validation which requires extra parameters
      */
     if (EVP_PKEY_param_check(ctx) <= 0) {
-        fprintf(stderr, "Simple EVP_PKEY_param_check() failed \n");
+        fprintf(stderr, "Simple EVP_PKEY_param_check() failed\n");
         goto cleanup;
     }
 
