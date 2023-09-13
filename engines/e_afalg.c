@@ -773,7 +773,7 @@ static int afalg_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 
     if (cipher == NULL) {
         *nids = afalg_cipher_nids;
-        return (sizeof(afalg_cipher_nids) / sizeof(afalg_cipher_nids[0]));
+        return OSSL_NELEM(afalg_cipher_nids);
     }
 
     switch (nid) {

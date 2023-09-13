@@ -12,11 +12,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <openssl/bio.h>
+#include "internal/nelem.h"
 #include "internal/numbers.h"
 #include "testutil.h"
 #include "testutil/output.h"
-
-#define nelem(x) (int)(sizeof(x) / sizeof((x)[0]))
 
 static int justprint = 0;
 
@@ -192,7 +191,7 @@ static int dofptest(int test, int sub, double val, const char *width, int prec)
     char format[80], result[80];
     int ret = 1, i;
 
-    for (i = 0; i < nelem(fspecs); i++) {
+    for (i = 0; i < (int)OSSL_NELEM(fspecs); i++) {
         const char *fspec = fspecs[i];
 
         if (prec >= 0)
@@ -287,9 +286,9 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_big);
-    ADD_ALL_TESTS(test_fp, nelem(pw_params));
-    ADD_ALL_TESTS(test_zu, nelem(zu_data));
-    ADD_ALL_TESTS(test_j, nelem(jf_data));
+    ADD_ALL_TESTS(test_fp, OSSL_NELEM(pw_params));
+    ADD_ALL_TESTS(test_zu, OSSL_NELEM(zu_data));
+    ADD_ALL_TESTS(test_j, OSSL_NELEM(jf_data));
     return 1;
 }
 
