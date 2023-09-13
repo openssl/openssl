@@ -711,9 +711,9 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
         unsigned int w = ((B2) << 16) | ((B1) << 8) | (B0);             \
         int i = (N);                                                    \
         while (i-- > 0) {                                               \
-                *cp++ = cov_2char[w & 0x3f];                            \
-                w >>= 6;                                                \
-            }                                                           \
+            *cp++ = cov_2char[w & 0x3f];                                \
+            w >>= 6;                                                    \
+        }                                                               \
     } while (0)
 
     switch (magic[0]) {
