@@ -612,7 +612,7 @@ err:
     EVP_CIPHER_CTX_free(ctr->ctx_ecb);
     EVP_CIPHER_CTX_free(ctr->ctx_ctr);
     ctr->ctx_ecb = ctr->ctx_ctr = NULL;
-    return 0;    
+    return 0;
 }
 
 static int drbg_ctr_new(PROV_DRBG *drbg)

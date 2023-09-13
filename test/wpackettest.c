@@ -426,7 +426,7 @@ static int test_WPACKET_init_der(void)
         if (i == 0) {
             if (!TEST_true(WPACKET_init_null_der(&pkt)))
                 return 0;
-        } else { 
+        } else {
             if (!TEST_true(WPACKET_init_der(&pkt, sbuf, sizeof(sbuf))))
                 return 0;
         }

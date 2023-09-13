@@ -80,7 +80,7 @@ static int blake2b512_internal_final(void *ctx, unsigned char *out,
                                      size_t *outl, size_t outsz)
 {
     struct blake2b_md_data_st *b_ctx;
-    
+
     b_ctx = (struct blake2b_md_data_st *)ctx;
     *outl = b_ctx->ctx.outlen;
 
