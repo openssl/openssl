@@ -71,6 +71,11 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stderr);
         goto err;
     }
+    if (!PKCS12_check_version(p12)) {
+        fprintf(stderr, "PKCS#12 file has incorrect version\n");
+        ERR_print_errors_fp(stderr);
+        goto err;
+    }
     if (!PKCS12_parse(p12, argv[2], &pkey, &cert, &ca)) {
         fprintf(stderr, "Error parsing PKCS#12 file\n");
         ERR_print_errors_fp(stderr);

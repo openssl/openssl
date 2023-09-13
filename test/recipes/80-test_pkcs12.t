@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => $no_fips ? 47 : 53;
+plan tests => $no_fips ? 50 : 56;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -356,5 +356,24 @@ ok(run(test(["pkcs12_api_test",
              "-has-key", 1,
              "-has-cert", 1,
              ])), "Test pkcs12_parse()");
+
+my $badversionfile = srctop_file("test", "recipes", "80-test_pkcs12_data",
+                                 "bad_version.p12");
+
+ok(run(app(["openssl", "pkcs12", "-info", "-noout",
+            "-in", $badversionfile,
+            "-noversioncheck",
+            "-passin", "pass:password"])),
+   "Test that a PKCS12 file with a bad version and -noversioncheck passes");
+ok(!run(app(["openssl", "pkcs12", "-info", "-noout",
+            "-in", $badversionfile,
+            "-passin", "pass:password"])),
+    "Test that a PKCS12 file with a bad version fails");
+
+ok(run(test(["pkcs12_api_test",
+             "-in", $badversionfile,
+             "-pass", "password",
+             "-badversion"])),
+   "Test PKCS12 version info is invalid");
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));

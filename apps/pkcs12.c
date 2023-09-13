@@ -110,6 +110,7 @@ typedef enum OPTION_choice {
     OPT_JDKTRUST,
     OPT_PBMAC1_PBKDF2,
     OPT_PBMAC1_PBKDF2_MD,
+    OPT_NOVERSIONCHECK,
 #ifndef OPENSSL_NO_DES
     OPT_LEGACY_ALG
 #endif
@@ -192,6 +193,8 @@ const OPTIONS pkcs12_options[] = {
     { "macsaltlen", OPT_MACSALTLEN, 'p', "Specify the salt len for MAC" },
     { "nomac", OPT_NOMAC, '-', "Don't generate MAC" },
     { "jdktrust", OPT_JDKTRUST, 's', "Mark certificate in PKCS#12 store as trusted for JDK compatibility" },
+    { "noversioncheck", OPT_NOVERSIONCHECK, '-',
+        "Don't check the loaded P12 version info is valid" },
     { NULL }
 };
 
@@ -207,6 +210,7 @@ int pkcs12_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DES
     int use_legacy = 0;
 #endif
+    int version_check = 1;
     /* use library defaults for the iter, maciter, cert, and key PBE */
     int iter = 0, maciter = 0, pbmac1_pbkdf2 = 0;
     int macsaltlen = PKCS12_SALT_LEN;
@@ -404,6 +408,9 @@ int pkcs12_main(int argc, char **argv)
             use_legacy = 1;
             break;
 #endif
+        case OPT_NOVERSIONCHECK:
+            version_check = 0;
+            break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
@@ -787,6 +794,10 @@ int pkcs12_main(int argc, char **argv)
     }
     if ((p12 = d2i_PKCS12_bio(in, &p12)) == NULL) {
         ERR_print_errors(bio_err);
+        goto end;
+    }
+    if (version_check && !PKCS12_check_version(p12)) {
+        BIO_printf(bio_err, "PKCS12 file contains an invalid version number\n");
         goto end;
     }
 

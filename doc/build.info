@@ -1947,6 +1947,10 @@ DEPEND[html/man3/PKCS12_add_safe.html]=man3/PKCS12_add_safe.pod
 GENERATE[html/man3/PKCS12_add_safe.html]=man3/PKCS12_add_safe.pod
 DEPEND[man/man3/PKCS12_add_safe.3]=man3/PKCS12_add_safe.pod
 GENERATE[man/man3/PKCS12_add_safe.3]=man3/PKCS12_add_safe.pod
+DEPEND[html/man3/PKCS12_check_version.html]=man3/PKCS12_check_version.pod
+GENERATE[html/man3/PKCS12_check_version.html]=man3/PKCS12_check_version.pod
+DEPEND[man/man3/PKCS12_check_version.3]=man3/PKCS12_check_version.pod
+GENERATE[man/man3/PKCS12_check_version.3]=man3/PKCS12_check_version.pod
 DEPEND[html/man3/PKCS12_create.html]=man3/PKCS12_create.pod
 GENERATE[html/man3/PKCS12_create.html]=man3/PKCS12_create.pod
 DEPEND[man/man3/PKCS12_create.3]=man3/PKCS12_create.pod
@@ -3528,6 +3532,7 @@ html/man3/PKCS12_add_cert.html \
 html/man3/PKCS12_add_friendlyname_asc.html \
 html/man3/PKCS12_add_localkeyid.html \
 html/man3/PKCS12_add_safe.html \
+html/man3/PKCS12_check_version.html \
 html/man3/PKCS12_create.html \
 html/man3/PKCS12_decrypt_skey.html \
 html/man3/PKCS12_gen_mac.html \
@@ -4199,6 +4204,7 @@ man/man3/PKCS12_add_cert.3 \
 man/man3/PKCS12_add_friendlyname_asc.3 \
 man/man3/PKCS12_add_localkeyid.3 \
 man/man3/PKCS12_add_safe.3 \
+man/man3/PKCS12_check_version.3 \
 man/man3/PKCS12_create.3 \
 man/man3/PKCS12_decrypt_skey.3 \
 man/man3/PKCS12_gen_mac.3 \
