@@ -300,6 +300,7 @@ DECLARE_ASN1_ITEM(PKCS12_SAFEBAGS)
 DECLARE_ASN1_ITEM(PKCS12_AUTHSAFES)
 
 void PKCS12_PBE_add(void);
+int PKCS12_check_version(const PKCS12 *p12);
 int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
     STACK_OF(X509) **ca);
 typedef int PKCS12_create_cb(PKCS12_SAFEBAG *bag, void *cbarg);
