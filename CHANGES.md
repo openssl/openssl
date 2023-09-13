@@ -111,6 +111,13 @@ OpenSSL 4.2
 
    *Dmitry Belyavskiy*
 
+ * Added `PKCS12_check_version()` API function, that verifies that the loaded
+   PKCS #12 file has its version in accordance with [RFC 7292 Section 4].
+   The check has been enabled in the `openssl pkcs12` command by default,
+   and can be disabled using the newly introduced `-noversioncheck` option.
+
+   *Shane Lontis*
+
  * Added the ASCON-AEAD128 cipher as specified in NIST SP 800-232. ASCON-AEAD128
    provides authenticated encryption with associated data (AEAD) using 128-bit
    keys, nonces, and tags. The cipher is available through the EVP interface and
@@ -24619,6 +24626,7 @@ ndif
 [RFC 5297]: https://datatracker.ietf.org/doc/html/rfc5297
 [RFC 5652]: https://datatracker.ietf.org/doc/html/rfc5652
 [RFC 7250]: https://datatracker.ietf.org/doc/html/rfc7250
+[RFC 7292 Section 4]: https://datatracker.ietf.org/doc/html/rfc7292#section-4
 [RFC 7685]: https://datatracker.ietf.org/doc/html/rfc7685
 [RFC 7919]: https://datatracker.ietf.org/doc/html/rfc7919
 [RFC 8422]: https://datatracker.ietf.org/doc/html/rfc8422
