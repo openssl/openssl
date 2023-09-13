@@ -10,6 +10,10 @@
 
 name: Provider compatibility across versions
 
+
+# NOTE: if this is being run on pull_request, it will **not** use the pull
+#       request's branch.  It is hardcoded to use the master branch.
+#
 on: #[pull_request]
   schedule:
     - cron: '0 15 * * *'
