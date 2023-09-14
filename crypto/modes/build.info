@@ -93,4 +93,4 @@ GENERATE[ghash-c64xplus.S]=asm/ghash-c64xplus.pl
 GENERATE[ghash-riscv64.s]=asm/ghash-riscv64.pl
 GENERATE[ghash-riscv64-zvkb-zvbc.s]=asm/ghash-riscv64-zvkb-zvbc.pl
 GENERATE[ghash-riscv64-zvkg.s]=asm/ghash-riscv64-zvkg.pl
-GENERATE[aes-gcm-riscv64-zvbb-zvkg-zvkned.s]=asm/aes-gcm-riscv64-zvbb-zvkg-zvkned.pl
+GENERATE[aes-gcm-riscv64-zvkb-zvkg-zvkned.s]=asm/aes-gcm-riscv64-zvkb-zvkg-zvkned.pl
