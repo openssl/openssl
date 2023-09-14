@@ -1141,8 +1141,13 @@ static int init_status_request(SSL_CONNECTION *s, unsigned int context)
          * Ensure we get sensible values passed to tlsext_status_cb in the event
          * that we don't receive a status message
          */
-        sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp, OCSP_RESPONSE_free);
-        s->ext.ocsp.resp = NULL;
+        if (s->ext.ocsp.resp != NULL) {
+            OPENSSL_free(s->ext.ocsp.resp);
+            s->ext.ocsp.resp = NULL;
+            s->ext.ocsp.resp_len = 0;
+        }
+        sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
+        s->ext.ocsp.resp_ex = NULL;
     }
 
     return 1;

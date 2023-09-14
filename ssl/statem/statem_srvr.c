@@ -2171,7 +2171,7 @@ static int tls_handle_status_request(SSL_CONNECTION *s)
                 break;
                 /* status request response should be sent */
             case SSL_TLSEXT_ERR_OK:
-                if (s->ext.ocsp.resp)
+                if (s->ext.ocsp.resp_ex)
                     s->ext.status_expected = 1;
                 break;
                 /* something bad happened */
@@ -4352,8 +4352,8 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
 
         /* find the correct OCSP response for the requested certificate */
         found = -1;
-        for (i = 0; i < sk_OCSP_RESPONSE_num(s->ext.ocsp.resp); i++) {
-            if ((resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp, i)) == NULL)
+        for (i = 0; i < sk_OCSP_RESPONSE_num(s->ext.ocsp.resp_ex); i++) {
+            if ((resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp_ex, i)) == NULL)
                 continue;
 
             if ((bs = OCSP_response_get1_basic(resp)) == NULL)
@@ -4378,8 +4378,8 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
          * TODO: check if the first response on the stack is indeed the one for the
          *       server certificate
          */
-        if (s->ext.ocsp.resp != NULL && sk_OCSP_RESPONSE_num(s->ext.ocsp.resp) > 0) {
-            resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp, 0);
+        if (s->ext.ocsp.resp_ex != NULL && sk_OCSP_RESPONSE_num(s->ext.ocsp.resp_ex) > 0) {
+            resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp_ex, 0);
         }
     }
 

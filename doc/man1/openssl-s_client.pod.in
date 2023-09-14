@@ -744,10 +744,14 @@ Checks end entity certificate validity with a OCSP response provided in the
 TLS handshake (OCSP stapling). If no valid OCSP response can be found no error
 occurs and the client should attempt to check to validity with a CRL.
 
+This implies B<-status>.
+
 =item B<-ocsp_check_all>
 
 Checks the validity of B<all> certificates in the chain by attempting
 to look up valid OCSP responses.
+
+This implies the B<-status> and B<-ocsp_check>.
 
 =item B<-alpn> I<protocols>, B<-nextprotoneg> I<protocols>
 

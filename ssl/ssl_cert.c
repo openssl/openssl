@@ -488,7 +488,7 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
         int status = SSL_get_tlsext_status_type(ssl);
 
         if (status == TLSEXT_STATUSTYPE_ocsp) {
-            X509_STORE_CTX_set_ocsp_resp(ctx, s->ext.ocsp.resp);
+            X509_STORE_CTX_set_ocsp_resp(ctx, s->ext.ocsp.resp_ex);
         }
     }
 #endif

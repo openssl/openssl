@@ -2881,12 +2881,18 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt
     }
 
 #ifndef OPENSSL_NO_OCSP
-    if (s->ext.ocsp.resp == NULL) {
-        s->ext.ocsp.resp = sk_OCSP_RESPONSE_new_null();
+    if (s->ext.ocsp.resp != NULL) {
+        OPENSSL_free(s->ext.ocsp.resp);
+        s->ext.ocsp.resp = NULL;
+        s->ext.ocsp.resp_len = 0;
+    }
+
+    if (s->ext.ocsp.resp_ex == NULL) {
+        s->ext.ocsp.resp_ex = sk_OCSP_RESPONSE_new_null();
     }
     if (!SSL_CONNECTION_IS_TLS13(s) && type == TLSEXT_STATUSTYPE_ocsp) {
-        sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp, OCSP_RESPONSE_free);
-        s->ext.ocsp.resp = sk_OCSP_RESPONSE_new_null();
+        sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
+        s->ext.ocsp.resp_ex = sk_OCSP_RESPONSE_new_null();
     }
     if (SSL_CONNECTION_IS_TLS13(s) || type == TLSEXT_STATUSTYPE_ocsp) {
         if (PACKET_remaining(pkt) > 0) {
@@ -2909,7 +2915,7 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt
                     SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE);
                     return 0;
                 }
-                sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp, resp, chainidx);
+                sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp_ex, resp, chainidx);
                 OPENSSL_free(respder);
             }
         }

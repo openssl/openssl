@@ -671,7 +671,7 @@ static int cert_status_cb(SSL *s, void *arg)
             goto err;
     }
 
-    SSL_set_tlsext_status_ocsp_resp(s, sk_resp, 0);
+    SSL_set_tlsext_status_ocsp_resp_ex(s, sk_resp);
     if (srctx->verbose) {
         BIO_puts(bio_err, "cert_status: ocsp response sent:\n");
         for (i = 0; i < sk_OCSP_RESPONSE_num(sk_resp); i++) {
