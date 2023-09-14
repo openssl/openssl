@@ -525,6 +525,7 @@ static const OSSL_ALGORITHM fake_rsa_sig_algs[] = {
 };
 
 static OSSL_FUNC_store_open_fn fake_rsa_st_open;
+static OSSL_FUNC_store_open_ex_fn fake_rsa_st_open_ex;
 static OSSL_FUNC_store_settable_ctx_params_fn fake_rsa_st_settable_ctx_params;
 static OSSL_FUNC_store_set_ctx_params_fn fake_rsa_st_set_ctx_params;
 static OSSL_FUNC_store_load_fn fake_rsa_st_load;
@@ -533,8 +534,13 @@ static OSSL_FUNC_store_close_fn fake_rsa_st_close;
 static OSSL_FUNC_store_delete_fn fake_rsa_st_delete;
 
 static const char fake_rsa_scheme[] = "fake_rsa:";
+static const char fake_rsa_openpwtest[] = "fake_rsa:openpwtest";
+static const char fake_rsa_prompt[] = "Fake Prompt Info";
 
-static void *fake_rsa_st_open(void *provctx, const char *uri)
+static void *fake_rsa_st_open_ex(void *provctx, const char *uri,
+                                 const OSSL_PARAM params[],
+                                 OSSL_PASSPHRASE_CALLBACK *pw_cb,
+                                 void *pw_cbarg)
 {
     unsigned char *storectx = NULL;
 
@@ -542,9 +548,46 @@ static void *fake_rsa_st_open(void *provctx, const char *uri)
     if (strncmp(uri, fake_rsa_scheme, sizeof(fake_rsa_scheme) - 1) != 0)
         return NULL;
 
+    if (strncmp(uri, fake_rsa_openpwtest,
+                sizeof(fake_rsa_openpwtest) - 1) == 0) {
+        const char *pw_check = FAKE_PASSPHRASE;
+        char fakepw[sizeof(FAKE_PASSPHRASE) + 1] = { 0 };
+        size_t fakepw_len = 0;
+        OSSL_PARAM pw_params[2] = {
+            OSSL_PARAM_utf8_string(OSSL_PASSPHRASE_PARAM_INFO,
+                                   (void *)fake_rsa_prompt,
+                                   sizeof(fake_rsa_prompt) - 1),
+            OSSL_PARAM_END,
+        };
+
+        if (pw_cb == NULL) {
+            return NULL;
+        }
+
+        if (!pw_cb(fakepw, sizeof(fakepw), &fakepw_len, pw_params, pw_cbarg)) {
+            TEST_info("fake_rsa_open_ex failed passphrase callback");
+            return NULL;
+        }
+        if (strncmp(pw_check, fakepw, sizeof(pw_check) - 1) != 0) {
+            TEST_info("fake_rsa_open_ex failed passphrase check");
+            return NULL;
+        }
+    }
+
     storectx = OPENSSL_zalloc(1);
     if (!TEST_ptr(storectx))
         return NULL;
+
+    TEST_info("fake_rsa_open_ex called");
+
+    return storectx;
+}
+
+static void *fake_rsa_st_open(void *provctx, const char *uri)
+{
+    unsigned char *storectx = NULL;
+
+    storectx = fake_rsa_st_open_ex(provctx, uri, NULL, NULL, NULL);
 
     TEST_info("fake_rsa_open called");
 
@@ -643,6 +686,7 @@ static int fake_rsa_st_close(void *loaderctx)
 
 static const OSSL_DISPATCH fake_rsa_store_funcs[] = {
     { OSSL_FUNC_STORE_OPEN, (void (*)(void))fake_rsa_st_open },
+    { OSSL_FUNC_STORE_OPEN_EX, (void (*)(void))fake_rsa_st_open_ex },
     { OSSL_FUNC_STORE_SETTABLE_CTX_PARAMS,
       (void (*)(void))fake_rsa_st_settable_ctx_params },
     { OSSL_FUNC_STORE_SET_CTX_PARAMS, (void (*)(void))fake_rsa_st_set_ctx_params },
