@@ -9,6 +9,11 @@
 
 #include <openssl/crypto.h>
 #include <openssl/opensslconf.h>
+#if defined (OPENSSL_NETCAP_ALLOW_ENV) && defined(__linux__)
+#include <linux/capability.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
+#endif
 
 #if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI) || defined(__wasi__)
 
@@ -44,10 +49,53 @@ int OPENSSL_issetugid(void)
 #  endif
 # endif
 
+/*
+ * Allows for slightly more permissive environment variable retrieval. Requires capability checks
+ */
+#if defined (OPENSSL_NETCAP_ALLOW_ENV) && defined(__linux__)
+/*
+ * Tests to see if a process has ONLY the requested capability
+ * see kernel/capability.c in the linux kernel source for more details
+ * structs are defined in sys/capability.h
+ */
+int HasOnlyCapability(int capability)
+{
+
+    if (!cap_valid(capability)) {
+        return 0;
+    }
+
+    struct __user_cap_data_struct cap_data[2];
+    struct __user_cap_header_struct cap_header_data = {
+        _LINUX_CAPABILITY_VERSION_3,
+        getpid()};
+
+    if (syscall(SYS_capget, &cap_header_data, &cap_data) != 0) {
+        return 0;
+    }
+
+    if (capability < 32) {
+        return cap_data[0].permitted == (CAP_TO_MASK(capability));
+    }
+    // Probably also need to check [1] - some capabilities are >32
+    // to check for ONLY net_bind we need to ensure these are 0 also
+    
+    return cap_data[1].permitted == (CAP_TO_MASK(capability));
+}
+#endif
+
 int OPENSSL_issetugid(void)
 {
 # ifdef OSSL_IMPLEMENT_GETAUXVAL
-    return getauxval(AT_SECURE) != 0;
+#   if defined (OPENSSL_NETCAP_ALLOW_ENV) && defined(__linux__)
+      /* AT_SECURE is set if privileged. We allow this if ONLY NET_BIND capability set */
+      int at_secure = getauxval(AT_SECURE);
+      int hasNetBindServiceOnly = HasOnlyCapability(CAP_NET_BIND_SERVICE);
+      return at_secure != 0 && !hasNetBindServiceOnly;
+      //return getauxval(AT_SECURE) != 0 && !HasOnlyCapability(CAP_NET_BIND_SERVICE);
+#   else
+      return getauxval(AT_SECURE) != 0;
+#   endif
 # else
     return getuid() != geteuid() || getgid() != getegid();
 # endif
