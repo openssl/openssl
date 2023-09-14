@@ -9,6 +9,8 @@
 
 #include <openssl/core_dispatch.h>
 
+#define FAKE_PASSPHRASE "Passphrase Testing"
+
 /* Fake RSA provider implementation */
 OSSL_PROVIDER *fake_rsa_start(OSSL_LIB_CTX *libctx);
 void fake_rsa_finish(OSSL_PROVIDER *p);
