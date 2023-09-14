@@ -17,14 +17,14 @@
  */
 static int blake2s_init(BLAKE2S_CTX *C)
 {
-    BLAKE2S_PARAM P;
+    BLAKE2S_PARAM P = { 0, };
 
     ossl_blake2s_param_init(&P);
     return ossl_blake2s_init(C, &P);
 }
 static int blake2b_init(BLAKE2B_CTX *C)
 {
-    BLAKE2B_PARAM P;
+    BLAKE2B_PARAM P = { 0, };
 
     ossl_blake2b_param_init(&P);
     return ossl_blake2b_init(C, &P);
