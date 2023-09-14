@@ -660,9 +660,9 @@ const OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_OCSP
     {"status", OPT_STATUS, '-', "Request certificate status from server"},
     {"ocsp_check", OPT_STATUS_OCSP_CHECK, '-',
-     "require leaf certificate status checking, trying OCSP stapling"},
+     "Require leaf certificate status checking, trying OCSP stapling"},
     {"ocsp_check_all", OPT_STATUS_OCSP_CHECK_ALL, '-',
-     "require certificate status checking on each cert in chain, trying OCSP stapling"},
+     "Require certificate status checking on each cert in chain, trying OCSP stapling"},
 #endif
     {"serverinfo", OPT_SERVERINFO, 's',
      "types  Send empty ClientHello extensions (comma-separated numbers)"},
@@ -1204,12 +1204,14 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_STATUS_OCSP_CHECK:
 #ifndef OPENSSL_NO_OCSP
+            c_status_req = 1;
             X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_OCSP_CHECK);
             vpmtouched++;
 #endif
             break;
         case OPT_STATUS_OCSP_CHECK_ALL:
 #ifndef OPENSSL_NO_OCSP
+            c_status_req = 1;
             X509_VERIFY_PARAM_set_flags(vpm,
                                         X509_V_FLAG_OCSP_CHECK |
                                         X509_V_FLAG_OCSP_CHECK_ALL);
@@ -3634,7 +3636,7 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     OCSP_RESPONSE *rsp;
 
-    SSL_get_tlsext_status_ocsp_resp(s, &sk_resp);
+    SSL_get_tlsext_status_ocsp_resp_ex(s, &sk_resp);
 
     BIO_puts(arg, "OCSP response: ");
 

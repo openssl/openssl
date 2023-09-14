@@ -1592,7 +1592,9 @@ struct ssl_connection_st {
             STACK_OF(OCSP_RESPID) *ids;
             X509_EXTENSIONS *exts;
             /* OCSP response received or to be sent */
-            STACK_OF(OCSP_RESPONSE) *resp;
+            unsigned char *resp;
+            size_t resp_len;
+            STACK_OF(OCSP_RESPONSE) *resp_ex;
         } ocsp;
 
         /* RFC4507 session ticket expected to be received or sent */

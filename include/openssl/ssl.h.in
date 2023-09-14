@@ -1339,6 +1339,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_SET_RETRY_VERIFY               136
 # define SSL_CTRL_GET_VERIFY_CERT_STORE          137
 # define SSL_CTRL_GET_CHAIN_CERT_STORE           138
+# define SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP_EX        139
+# define SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP_EX        140
 # define SSL_CERT_SET_FIRST                      1
 # define SSL_CERT_SET_NEXT                       2
 # define SSL_CERT_SET_SERVER                     3
