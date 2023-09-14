@@ -1250,6 +1250,34 @@ static int test_alpn(int idx)
     return testresult;
 }
 
+static int test_noisy_dgram(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(cctx)
+            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                                    privkey,
+                                                    QTEST_FLAG_NOISE,
+                                                    &qtserv,
+                                                    &clientquic, NULL)))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+            goto err;
+
+    testresult = 1;
+ err:
+    ossl_quic_tserver_free(qtserv);
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
 int setup_tests(void)
@@ -1323,6 +1351,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_non_io_retry, 2);
     ADD_TEST(test_quic_psk);
     ADD_ALL_TESTS(test_alpn, 2);
+    ADD_TEST(test_noisy_dgram);
+
     return 1;
  err:
     cleanup_tests();
@@ -1331,6 +1361,7 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
+    bio_f_noisy_dgram_filter_free();
     OPENSSL_free(cert);
     OPENSSL_free(privkey);
     OSSL_PROVIDER_unload(defctxnull);
