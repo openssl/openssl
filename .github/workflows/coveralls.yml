@@ -25,16 +25,14 @@ jobs:
       matrix:
         branches: [
           {
-            branch: OpenSSL_1_1_1-stable
-          }, {
             branch: openssl-3.1,
-            extra_config: enable-fips
+            extra_config: no-afalgeng enable-fips enable-ssl-trace enable-trace enable-zlib enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-ec_nistp_64_gcc_128
           }, {
             branch: openssl-3.0,
-            extra_config: enable-fips
+            extra_config: no-afalgeng enable-fips enable-ssl-trace enable-trace enable-zlib enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-ec_nistp_64_gcc_128
           }, {
             branch: master,
-            extra_config: no-afalgeng enable-fips enable-tfo
+            extra_config: no-afalgeng enable-fips enable-ssl-trace enable-trace enable-zlib enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-ec_nistp_64_gcc_128 enable-tfo
           }
         ]
     runs-on: ubuntu-latest
