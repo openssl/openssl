@@ -455,7 +455,9 @@ IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, enable_server_sctp_label_bug)
 static const test_enum ssl_certstatus[] = {
     {"None", SSL_TEST_CERT_STATUS_NONE},
     {"GoodResponse", SSL_TEST_CERT_STATUS_GOOD_RESPONSE},
-    {"BadResponse", SSL_TEST_CERT_STATUS_BAD_RESPONSE}
+    {"BadResponse", SSL_TEST_CERT_STATUS_BAD_RESPONSE},
+    {"GoodResponseExt", SSL_TEST_CERT_STATUS_GOOD_RESPONSE_EXT},
+    {"BadResponseExt", SSL_TEST_CERT_STATUS_BAD_RESPONSE_EXT}
 };
 
 __owur static int parse_certstatus(SSL_TEST_SERVER_CONF *server_conf,

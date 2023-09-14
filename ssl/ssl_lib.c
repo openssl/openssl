@@ -824,6 +824,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
     s->ext.ocsp.exts = NULL;
     s->ext.ocsp.resp = NULL;
     s->ext.ocsp.resp_len = 0;
+    s->ext.ocsp.resp_ex = NULL;
 
     if (!SSL_CTX_up_ref(ctx))
         goto err;
@@ -1486,9 +1487,10 @@ void ossl_ssl_connection_free(SSL *ssl)
     OPENSSL_free(s->ext.tuples);
     OPENSSL_free(s->ext.peer_supportedgroups);
     sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
+    
 #ifndef OPENSSL_NO_OCSP
     sk_OCSP_RESPID_pop_free(s->ext.ocsp.ids, OCSP_RESPID_free);
-    sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp, OCSP_RESPONSE_free);
+    sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
 #endif
 #ifndef OPENSSL_NO_CT
     SCT_LIST_free(s->scts);
@@ -6394,11 +6396,11 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
     STACK_OF(SCT) *scts = NULL;
     int i, j;
 
-    if (s->ext.ocsp.resp == NULL)
+    if (s->ext.ocsp.resp_ex == NULL)
         goto err;
 
-    for (j = 0; j < sk_OCSP_RESPONSE_num(s->ext.ocsp.resp); j++) {
-        rsp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp, j);
+    for (j = 0; j < sk_OCSP_RESPONSE_num(s->ext.ocsp.resp_ex); j++) {
+        rsp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp_ex, j);
         if (rsp == NULL)
             goto err;
 
