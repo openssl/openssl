@@ -1250,12 +1250,67 @@ static int test_alpn(int idx)
     return testresult;
 }
 
+#define MAX_LOOPS   40
+
+/*
+ * Keep retrying SSL_read_ex until it succeeds or we give up. Accept a stream
+ * if we don't already have one
+ */
+static int unreliable_client_read(SSL *clientquic, SSL **stream, void *buf,
+                                  size_t buflen, size_t *readbytes,
+                                  QUIC_TSERVER *qtserv)
+{
+    int abortctr;
+
+    /* We just do this in a loop with a sleep for simplicity */
+    for (abortctr = 0; abortctr < MAX_LOOPS; abortctr++) {
+        if (*stream == NULL) {
+            SSL_handle_events(clientquic);
+            *stream = SSL_accept_stream(clientquic, 0);
+        }
+
+        if (*stream != NULL) {
+            if (SSL_read_ex(*stream, buf, buflen, readbytes))
+                return 1;
+            if (SSL_get_error(*stream, 0) != SSL_ERROR_WANT_READ)
+                return 0;
+        }
+        ossl_quic_tserver_tick(qtserv);
+        OSSL_sleep(10);
+    }
+
+    return 0;
+}
+
+/* Keep retrying ossl_quic_tserver_read until it succeeds or we give up */
+static int unreliable_server_read(QUIC_TSERVER *qtserv, uint64_t sid,
+                                  void *buf, size_t buflen, size_t *readbytes,
+                                  SSL *clientquic)
+{
+    int abortctr;
+
+    /* We just do this in a loop with a sleep for simplicity */
+    for (abortctr = 0; abortctr < MAX_LOOPS; abortctr++) {
+        if (ossl_quic_tserver_read(qtserv, sid, buf, buflen, readbytes))
+            return 1;
+        ossl_quic_tserver_tick(qtserv);
+        SSL_handle_events(clientquic);
+        OSSL_sleep(10);
+    }
+
+    return 0;
+}
+
 static int test_noisy_dgram(void)
 {
     SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
-    SSL *clientquic = NULL;
+    SSL *clientquic = NULL, *stream[2] = { NULL, NULL };
     QUIC_TSERVER *qtserv = NULL;
     int testresult = 0;
+    uint64_t sid = 0;
+    char *msg = "Hello world!";
+    size_t msglen = strlen(msg), written, readbytes, i, j;
+    unsigned char buf[80];
 
     if (!TEST_ptr(cctx)
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
@@ -1268,9 +1323,68 @@ static int test_noisy_dgram(void)
     if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
             goto err;
 
+    if (!TEST_true(SSL_set_incoming_stream_policy(clientquic,
+                                                  SSL_INCOMING_STREAM_POLICY_ACCEPT,
+                                                  0))
+            || !TEST_true(SSL_set_default_stream_mode(clientquic,
+                                                      SSL_DEFAULT_STREAM_MODE_NONE)))
+        goto err;
+
+    for (j = 0; j < 2; j++) {
+        if (!TEST_true(ossl_quic_tserver_stream_new(qtserv, 0, &sid)))
+            goto err;
+        ossl_quic_tserver_tick(qtserv);
+
+        /*
+        * Send data from the server to the client. Some datagrams may get lost,
+        * dropped or re-ordered. We repeat 10 times to ensure we are sending
+        * enough datagrams for problems to be noticed.
+        */
+        for (i = 0; i < 10; i++) {
+            if (!TEST_true(ossl_quic_tserver_write(qtserv, sid,
+                                                   (unsigned char *)msg, msglen,
+                                                   &written))
+                    || !TEST_size_t_eq(msglen, written))
+                goto err;
+            ossl_quic_tserver_tick(qtserv);
+
+            /*
+            * Since the underlying BIO is now noisy we may get failures that
+            * need to be retried - so we use unreliable_client_read() to handle
+            * that
+            */
+            if (!TEST_true(unreliable_client_read(clientquic, &stream[j], buf,
+                                                  sizeof(buf), &readbytes,
+                                                  qtserv))
+                    || !TEST_mem_eq(msg, msglen, buf, readbytes))
+                goto err;
+        }
+
+        /* Send data from the client to the server */
+        for (i = 0; i < 10; i++) {
+            if (!TEST_true(SSL_write_ex(stream[j], (unsigned char *)msg,
+                                        msglen, &written))
+                    || !TEST_size_t_eq(msglen, written))
+                goto err;
+
+            ossl_quic_tserver_tick(qtserv);
+            /*
+            * Since the underlying BIO is now noisy we may get failures that
+            * need to be retried - so we use unreliable_server_read() to handle
+            * that
+            */
+            if (!TEST_true(unreliable_server_read(qtserv, sid, buf, sizeof(buf),
+                                                  &readbytes, clientquic))
+                    || !TEST_mem_eq(msg, msglen, buf, readbytes))
+                goto err;
+        }
+    }
+
     testresult = 1;
  err:
     ossl_quic_tserver_free(qtserv);
+    SSL_free(stream[0]);
+    SSL_free(stream[1]);
     SSL_free(clientquic);
     SSL_CTX_free(cctx);
 
