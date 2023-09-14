@@ -140,6 +140,14 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
             goto err;
     }
 
+    if ((flags & QTEST_FLAG_NOISE) != 0) {
+        BIO *noisebio = BIO_new(bio_f_noisy_dgram_filter());
+
+        if (!TEST_ptr(noisebio))
+            goto err;
+        cbio = BIO_push(noisebio, cbio);
+    }
+
     SSL_set_bio(*cssl, cbio, cbio);
 
     if (!TEST_true(SSL_set_blocking_mode(*cssl,

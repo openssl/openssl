@@ -27,9 +27,11 @@ typedef struct qtest_fault_encrypted_extensions {
 /* Flags for use with qtest_create_quic_objects() */
 
 /* Indicates whether we are using blocking mode or not */
-#define QTEST_FLAG_BLOCK        1
+#define QTEST_FLAG_BLOCK        (1 << 0)
 /* Use fake time rather than real time */
-#define QTEST_FLAG_FAKE_TIME    2
+#define QTEST_FLAG_FAKE_TIME    (1 << 1)
+/* Introduce noise in the BIO */
+#define QTEST_FLAG_NOISE        (1 << 2)
 
 /*
  * Given an SSL_CTX for the client and filenames for the server certificate and
@@ -230,3 +232,9 @@ int qtest_fault_set_datagram_listener(QTEST_FAULT *fault,
  * exceeds the over allocation.
  */
 int qtest_fault_resize_datagram(QTEST_FAULT *fault, size_t newlen);
+
+/* BIO filter for simulating a noisy UDP socket */
+const BIO_METHOD *bio_f_noisy_dgram_filter(void);
+
+/* Free the BIO filter method object */
+void bio_f_noisy_dgram_filter_free(void);
