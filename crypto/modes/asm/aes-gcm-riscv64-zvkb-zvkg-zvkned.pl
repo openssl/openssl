@@ -36,7 +36,7 @@
 
 # - RV64I
 # - RISC-V Vector ('V') with VLEN >= 128
-# - RISC-V Vector Basic Bit-manipulation extension ('Zvbb')
+# - RISC-V Vector Cryptography Bit-manipulation extension ('Zvkb')
 # - RISC-V Vector GCM/GMAC extension ('Zvkg')
 # - RISC-V Vector AES Block Cipher extension ('Zvkned')
 # - RISC-V Zicclsm(Main memory supports misaligned loads/stores)
@@ -601,16 +601,16 @@ ___
 }
 
 ################################################################################
-# size_t rv64i_zvbb_zvkg_zvkned_aes_gcm_encrypt(const unsigned char *in,
+# size_t rv64i_zvkb_zvkg_zvkned_aes_gcm_encrypt(const unsigned char *in,
 #                                               unsigned char *out, size_t len,
 #                                               const void *key,
 #                                               unsigned char ivec[16], u64 *Xi);
 {
 $code .= <<___;
 .p2align 3
-.globl rv64i_zvbb_zvkg_zvkned_aes_gcm_encrypt
-.type rv64i_zvbb_zvkg_zvkned_aes_gcm_encrypt,\@function
-rv64i_zvbb_zvkg_zvkned_aes_gcm_encrypt:
+.globl rv64i_zvkb_zvkg_zvkned_aes_gcm_encrypt
+.type rv64i_zvkb_zvkg_zvkned_aes_gcm_encrypt,\@function
+rv64i_zvkb_zvkg_zvkned_aes_gcm_encrypt:
     srli $T0, $LEN, 4
     beqz $T0, .Lenc_end
     slli $LEN32, $T0, 2
@@ -633,7 +633,7 @@ rv64i_zvbb_zvkg_zvkned_aes_gcm_encrypt:
     li $PROCESSED_LEN, 0
     ret
 
-.size rv64i_zvbb_zvkg_zvkned_aes_gcm_encrypt,.-rv64i_zvbb_zvkg_zvkned_aes_gcm_encrypt
+.size rv64i_zvkb_zvkg_zvkned_aes_gcm_encrypt,.-rv64i_zvkb_zvkg_zvkned_aes_gcm_encrypt
 ___
 
 $code .= <<___;
@@ -786,16 +786,16 @@ ___
 }
 
 ################################################################################
-# size_t rv64i_zvbb_zvkg_zvkned_aes_gcm_decrypt(const unsigned char *in,
+# size_t rv64i_zvkb_zvkg_zvkned_aes_gcm_decrypt(const unsigned char *in,
 #                                               unsigned char *out, size_t len,
 #                                               const void *key,
 #                                               unsigned char ivec[16], u64 *Xi);
 {
 $code .= <<___;
 .p2align 3
-.globl rv64i_zvbb_zvkg_zvkned_aes_gcm_decrypt
-.type rv64i_zvbb_zvkg_zvkned_aes_gcm_decrypt,\@function
-rv64i_zvbb_zvkg_zvkned_aes_gcm_decrypt:
+.globl rv64i_zvkb_zvkg_zvkned_aes_gcm_decrypt
+.type rv64i_zvkb_zvkg_zvkned_aes_gcm_decrypt,\@function
+rv64i_zvkb_zvkg_zvkned_aes_gcm_decrypt:
     srli $T0, $LEN, 4
     beqz $T0, .Ldec_end
     slli $LEN32, $T0, 2
@@ -817,7 +817,7 @@ rv64i_zvbb_zvkg_zvkned_aes_gcm_decrypt:
 .Ldec_end:
     li $PROCESSED_LEN, 0
     ret
-.size rv64i_zvbb_zvkg_zvkned_aes_gcm_decrypt,.-rv64i_zvbb_zvkg_zvkned_aes_gcm_decrypt
+.size rv64i_zvkb_zvkg_zvkned_aes_gcm_decrypt,.-rv64i_zvkb_zvkg_zvkned_aes_gcm_decrypt
 ___
 
 $code .= <<___;
