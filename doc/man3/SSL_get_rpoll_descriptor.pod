@@ -68,11 +68,11 @@ SSL_get_wpoll_descriptor() and SSL_get_event_timeout().
 
 On non-QUIC SSL objects, calls to SSL_get_rpoll_descriptor() and
 SSL_get_wpoll_descriptor() function the same as calls to
-BIO_get_rpoll_descriptor() and BIO_get_wpoll_descriptor() respectively on the
-respective read and write BIOs configured on the SSL object.
+BIO_get_rpoll_descriptor() and BIO_get_wpoll_descriptor() on the respective read
+and write BIOs configured on the SSL object.
 
 On non-QUIC SSL objects, calls to SSL_net_read_desired() and
-SSL_net_want_desired() function identically to calls to SSL_want_read() and
+SSL_net_write_desired() function identically to calls to SSL_want_read() and
 SSL_want_write() respectively.
 
 =head1 RETURN VALUES
