@@ -11,8 +11,12 @@
 #include "quictestlib.h"
 #include "../testutil.h"
 
+#define MSG_DATA_LEN_MAX    1472
+
 struct noisy_dgram_st {
-    size_t this_dgram;
+    uint64_t this_dgram;
+    BIO_MSG msg;
+    uint64_t delayed_dgram;
 };
 
 static int noisy_dgram_read(BIO *bio, char *out, int outl)
@@ -74,21 +78,31 @@ static int noisy_dgram_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
     return BIO_sendmmsg(next, msg, stride, num_msg, flags, msgs_processed);
 }
 
-static int should_drop(BIO *bio)
+static void get_noise(uint64_t *delay, int *should_drop)
 {
-    struct noisy_dgram_st *data = BIO_get_data(bio);
+    uint32_t type;
 
-    if (data == NULL)
-        return 0;
+    /* 20% of all datagrams should be noisy */
+    if (test_random() % 5 != 0) {
+        *delay = 0;
+        *should_drop = 0;
+        return;
+    }
+
+    type = test_random() % 3;
+
+    /* Of noisy datagrams, 33% drop only, 33% delay only, 33% drop and delay */
+
+    *should_drop = (type == 0 || type == 1);
+
+    /* Where a delay occurs we delay by 1 - 4 datagrams */
+    *delay = (type == 0) ? 0 : (uint64_t)((test_random() % 4) + 1);
 
     /*
-     * Drop datagram 1 for now.
-     * TODO(QUIC): Provide more control over this behaviour.
+     * No point in delaying by 1 datagram if we are also dropping, so we delay
+     * by an extra datagram in that case
      */
-    if (data->this_dgram == 1)
-        return 1;
-
-    return 0;
+    *delay += (uint64_t)(*should_drop);
 }
 
 /* There isn't a public function to do BIO_ADDR_copy() so we create one */
@@ -129,13 +143,36 @@ static int bio_addr_copy(BIO_ADDR *dst, BIO_ADDR *src)
     return res;
 }
 
+static int bio_msg_copy(BIO_MSG *dst, BIO_MSG *src)
+{
+    /*
+     * Note it is assumed that the originally allocated data sizes for dst and
+     * src are the same
+     */
+    memcpy(dst->data, src->data, src->data_len);
+    dst->data_len = src->data_len;
+    dst->flags = src->flags;
+    if (dst->local != NULL) {
+        if (src->local != NULL) {
+            if (!TEST_true(bio_addr_copy(dst->local, src->local)))
+                return 0;
+        } else {
+            BIO_ADDR_clear(dst->local);
+        }
+    }
+    if (!TEST_true(bio_addr_copy(dst->peer, src->peer)))
+        return 0;
+
+    return 1;
+}
+
 static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
                                 size_t num_msg, uint64_t flags,
                                 size_t *msgs_processed)
 {
     BIO *next = BIO_next(bio);
-    size_t i, data_len = 0, drop_cnt = 0;
-    BIO_MSG *src, *dst;
+    size_t i, j, data_len = 0, msg_cnt = 0;
+    BIO_MSG *thismsg;
     struct noisy_dgram_st *data;
 
     if (!TEST_ptr(next))
@@ -153,47 +190,92 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
      * code). We test the invariant here.
      */
     for (i = 0; i < num_msg; i++) {
-        if (i == 0)
+        if (i == 0) {
             data_len = msg[i].data_len;
-        else if (!TEST_size_t_eq(msg[i].data_len, data_len))
+            if (!TEST_size_t_le(data_len, MSG_DATA_LEN_MAX))
+                return 0;
+        } else if (!TEST_size_t_eq(msg[i].data_len, data_len)) {
             return 0;
+        }
     }
 
     if (!BIO_recvmmsg(next, msg, stride, num_msg, flags, msgs_processed))
         return 0;
 
-    /* Drop any messages */
-    for (i = 0, src = msg, dst = msg;
-         i < *msgs_processed;
-         i++, src++, data->this_dgram++) {
-        if (should_drop(bio)) {
-            drop_cnt++;
-            continue;
+    msg_cnt = *msgs_processed;
+
+    /* Introduce noise */
+    for (i = 0, thismsg = msg;
+         i < msg_cnt;
+         i++, thismsg++, data->this_dgram++) {
+        uint64_t delay;
+        int should_drop;
+
+        /* If we have a delayed message ready insert it now */
+        if (data->delayed_dgram > 0
+                && data->delayed_dgram == data->this_dgram) {
+            if (msg_cnt < num_msg) {
+                /* Make space for the inserted message */
+                for (j = msg_cnt; j > i; j--) {
+                    if (!bio_msg_copy(&msg[j], &msg[j - 1]))
+                        return 0;
+                }
+                if (!bio_msg_copy(thismsg, &data->msg))
+                    return 0;
+                msg_cnt++;
+                data->delayed_dgram = 0;
+                continue;
+            } /* else we have no space for the insertion, so just drop it */
+            data->delayed_dgram = 0;
         }
 
-        if (src != dst) {
-            /* Copy the src BIO_MSG to the dst BIO_MSG */
-            memcpy(dst->data, src->data, src->data_len);
-            dst->data_len = src->data_len;
-            dst->flags = src->flags;
-            if (src->local != NULL
-                    && !TEST_true(bio_addr_copy(dst->local, src->local)))
+        get_noise(&delay, &should_drop);
+
+        /* We ignore delay if a message is already delayed */
+        if (delay > 0 && data->delayed_dgram == 0) {
+            /*
+             * Note that a message may be delayed *and* dropped, or delayed
+             * and *not* dropped.
+             * Delayed and dropped means the message will not be sent now and
+             * will only be sent after the delay.
+             * Delayed and not dropped means the message will be sent now and
+             * a duplicate will also be sent after the delay.
+             */
+
+            if (!bio_msg_copy(&data->msg, thismsg))
                 return 0;
-            if (!TEST_true(bio_addr_copy(dst->peer, src->peer)))
-                return 0;
+
+            data->delayed_dgram = data->this_dgram + delay;
         }
 
-        dst++;
+        if (should_drop) {
+            for (j = i + 1; j < msg_cnt; j++) {
+                if (!bio_msg_copy(&msg[j - 1], &msg[j]))
+                    return 0;
+            }
+            msg_cnt--;
+        }
     }
 
-    *msgs_processed -= drop_cnt;
+    *msgs_processed = msg_cnt;
 
-    if (*msgs_processed == 0) {
+    if (msg_cnt == 0) {
         ERR_raise(ERR_LIB_BIO, BIO_R_NON_FATAL);
         return 0;
     }
 
     return 1;
+}
+
+static void data_free(struct noisy_dgram_st *data)
+{
+    if (data == NULL)
+        return;
+
+    OPENSSL_free(data->msg.data);
+    BIO_ADDR_free(data->msg.peer);
+    BIO_ADDR_free(data->msg.local);
+    OPENSSL_free(data);
 }
 
 static int noisy_dgram_new(BIO *bio)
@@ -203,6 +285,16 @@ static int noisy_dgram_new(BIO *bio)
     if (!TEST_ptr(data))
         return 0;
 
+    data->msg.data = OPENSSL_malloc(MSG_DATA_LEN_MAX);
+    data->msg.peer = BIO_ADDR_new();
+    data->msg.local = BIO_ADDR_new();
+    if (data->msg.data == NULL
+            || data->msg.peer == NULL
+            || data->msg.local == NULL) {
+        data_free(data);
+        return 0;
+    }
+
     BIO_set_data(bio, data);
     BIO_set_init(bio, 1);
 
@@ -211,7 +303,7 @@ static int noisy_dgram_new(BIO *bio)
 
 static int noisy_dgram_free(BIO *bio)
 {
-    OPENSSL_free(BIO_get_data(bio));
+    data_free(BIO_get_data(bio));
     BIO_set_data(bio, NULL);
     BIO_set_init(bio, 0);
 
