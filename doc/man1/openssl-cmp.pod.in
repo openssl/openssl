@@ -1281,7 +1281,7 @@ In order to update the enrolled certificate one may call
 
   openssl cmp -section insta,kur
 
-using with MAC-based protection with PBM or
+using MAC-based protection with PBM or
 
   openssl cmp -section insta,kur,signature
 
