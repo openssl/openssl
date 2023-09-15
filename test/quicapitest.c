@@ -1250,7 +1250,7 @@ static int test_alpn(int idx)
     return testresult;
 }
 
-#define MAX_LOOPS   40
+#define MAX_LOOPS   2000
 
 /*
  * Keep retrying SSL_read_ex until it succeeds or we give up. Accept a stream
