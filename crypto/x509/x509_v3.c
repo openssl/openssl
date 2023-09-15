@@ -61,7 +61,7 @@ int X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,
 int X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int crit,
                                int lastpos)
 {
-    int n;
+    int n, c;
     X509_EXTENSION *ex;
 
     if (sk == NULL)
@@ -72,7 +72,8 @@ int X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int crit,
     n = sk_X509_EXTENSION_num(sk);
     for (; lastpos < n; lastpos++) {
         ex = sk_X509_EXTENSION_value(sk, lastpos);
-        if (((ex->critical > 0) && crit) || ((ex->critical <= 0) && !crit))
+        c = X509_EXTENSION_get_critical(ex);
+        if (((c > 0) && crit) || ((c <= 0) && !crit))
             return lastpos;
     }
     return -1;
