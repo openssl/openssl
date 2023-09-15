@@ -157,8 +157,6 @@ static void tracedata_free(tracedata *data)
     OPENSSL_free(data);
 }
 
-static STACK_OF(tracedata) *trace_data_stack;
-
 static void cleanup_trace(void)
 {
     sk_tracedata_pop_free(trace_data_stack, tracedata_free);
