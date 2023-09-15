@@ -201,7 +201,7 @@ int X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit)
 {
     if (ex == NULL)
         return 0;
-    ex->critical = (crit) ? 0xFF : -1;
+    ex->critical = (crit) ? 0xFF : 0;
     return 1;
 }
 
