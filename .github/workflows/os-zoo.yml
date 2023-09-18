@@ -104,14 +104,12 @@ jobs:
       run: make -s -j4
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
   windows:
     strategy:
       fail-fast: false
       matrix:
-        os: [
-          windows-2019,
-          windows-2022
-        ]
+        os: [windows-2019, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -124,8 +122,7 @@ jobs:
       run: mkdir _build
     - name: config
       working-directory: _build
-      run: |
-        perl ..\Configure --banner=Configured no-makedepend enable-fips
+      run: perl ..\Configure --banner=Configured no-makedepend enable-fips
     - name: config dump
       working-directory: _build
       run: ./configdata.pm --dump
