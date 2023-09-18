@@ -15,80 +15,116 @@ permissions:
   contents: read
 
 jobs:
-  # This has to be a separate job, it seems, because we want to use a
-  # container for it.
-  unix-container:
+  alpine:
     strategy:
       fail-fast: false
       matrix:
-        image: ['alpine:edge', 'alpine:latest']
-        cc: ['gcc', 'clang']
+        tag: [edge, latest]
+        cc: [gcc, clang]
+        branch: [openssl-3.0, openssl-3.1, master]
     runs-on: ubuntu-latest
     container:
-      image: ${{ matrix.image }}
+      image: docker.io/library/alpine:${{ matrix.tag }}
+    env:
+      # https://www.openwall.com/lists/musl/2022/02/16/14
+      EXTRA_CFLAGS: ${{ matrix.cc == 'clang' && '-Wno-sign-compare' || '' }}
+      CC: ${{ matrix.cc }}
     steps:
     - name: install packages
-      run: |
-        apk --no-cache add build-base perl linux-headers git ${{ matrix.cc }}
-
+      run: apk --no-cache add build-base perl linux-headers ${{ matrix.cc }}
     - uses: actions/checkout@v4
-
+      with:
+        ref: ${{ matrix.branch }}
     - name: config
       run: |
-        cc="${{ matrix.cc }}"
-
-        extra_cflags=""
-        if [[ ${cc} == "clang" ]] ; then
-          # https://www.openwall.com/lists/musl/2022/02/16/14
-          extra_cflags="-Wno-sign-compare"
-        fi
-
-        CC=${{ matrix.cc }} ./config --banner=Configured no-shared \
-            -Wall -Werror enable-fips --strict-warnings -DOPENSSL_USE_IPV6=0 ${extra_cflags}
-
+        ./config --banner=Configured no-shared -Wall -Werror enable-fips --strict-warnings -DOPENSSL_USE_IPV6=0 \
+                 ${EXTRA_CFLAGS}
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
-  unix:
+
+  linux:
     strategy:
       fail-fast: false
       matrix:
-        os: [
-          macos-11,
-          macos-12,
-          macos-13,
-          ubuntu-20.04,
-          ubuntu-22.04,
-        ]
+        branch: [openssl-3.0, openssl-3.1, master]
+        zoo:
+          - image: docker.io/library/debian:10
+            install: apt-get update && apt-get install -y gcc make perl
+          - image: docker.io/library/debian:11
+            install: apt-get update && apt-get install -y gcc make perl
+          - image: docker.io/library/debian:12
+            install: apt-get update && apt-get install -y gcc make perl
+          - image: docker.io/library/ubuntu:20.04
+            install: apt-get update && apt-get install -y gcc make perl
+          - image: docker.io/library/ubuntu:22.04
+            install: apt-get update && apt-get install -y gcc make perl
+          - image: docker.io/library/fedora:38
+            install: dnf install -y gcc make perl-core
+          - image: docker.io/library/fedora:39
+            install: dnf install -y gcc make perl-core
+          - image: docker.io/library/centos:8
+            install: |
+              sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
+              sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-* && \
+              dnf install -y gcc make perl-core
+          - image: docker.io/library/rockylinux:8
+            install: dnf install -y gcc make perl-core
+          - image: docker.io/library/rockylinux:9
+            install: dnf install -y gcc make perl-core
+    runs-on: ubuntu-latest
+    container: ${{ matrix.zoo.image }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ matrix.branch }}
+    - name: install packages
+      run: ${{ matrix.zoo.install }}
+    - name: config
+      run: ./config
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [openssl-3.0, openssl-3.1, master]
+        os: [macos-11, macos-12, macos-13]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ matrix.branch }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: |
-        CC=${{ matrix.zoo.cc }} ./config --banner=Configured \
-            -Wall -Werror --strict-warnings enable-fips
+      run: ./config --banner=Configured -Wall -Werror --strict-warnings enable-fips
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
   windows:
     strategy:
       fail-fast: false
       matrix:
-        os: [
-          windows-2019,
-          windows-2022
-        ]
+        branch: [openssl-3.0, openssl-3.1, master]
+        os: [windows-2019, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ matrix.branch }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - uses: ilammy/msvc-dev-cmd@v1
@@ -98,8 +134,7 @@ jobs:
       run: mkdir _build
     - name: config
       working-directory: _build
-      run: |
-        perl ..\Configure --banner=Configured no-makedepend enable-fips
+      run: perl ..\Configure --banner=Configured no-makedepend enable-fips
     - name: config dump
       working-directory: _build
       run: ./configdata.pm --dump
