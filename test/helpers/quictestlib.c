@@ -66,6 +66,7 @@ struct qtest_fault {
 static void packet_plain_finish(void *arg);
 static void handshake_finish(void *arg);
 
+static int using_fake_time = 0;
 static OSSL_TIME fake_now;
 
 static OSSL_TIME fake_now_cb(void *arg)
@@ -180,11 +181,14 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         goto err;
     tserver_args.ctx = serverctx;
     if ((flags & QTEST_FLAG_FAKE_TIME) != 0) {
+        using_fake_time = 1;
         fake_now = ossl_time_zero();
         /* zero time can have a special meaning, bump it */
         qtest_add_time(1);
         tserver_args.now_cb = fake_now_cb;
         (void)ossl_quic_conn_set_override_now_cb(*cssl, fake_now_cb, NULL);
+    } else {
+        using_fake_time = 0;
     }
 
     if (!TEST_ptr(*qtserv = ossl_quic_tserver_new(&tserver_args, certfile,
@@ -262,6 +266,47 @@ static void run_server_thread(void)
 }
 #endif
 
+static int wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
+{
+    struct timeval tv;
+    OSSL_TIME ctimeout, stimeout, mintimeout, now;
+    int cinf;
+
+    /* We don't need to wait in blocking mode */
+    if (s == NULL || qtserv == NULL)
+        return 1;
+
+    /* Don't wait if either BIO has data waiting */
+    if (BIO_pending(SSL_get_rbio(s)) > 0
+            || BIO_pending(ossl_quic_tserver_get0_rbio(qtserv)) > 0)
+        return 1;
+
+    /*
+     * Neither endpoint has data waiting to be read. We assume data transmission
+     * is instantaneous due to using mem based BIOs, so there is no data "in
+     * flight" and no more data will be sent by either endpoint until some time
+     * based event has occurred. Therefore, wait for a timeout to occur. This
+     * might happen if we are using the noisy BIO and datagrams have been lost.
+     */
+    if (!SSL_get_event_timeout(s, &tv, &cinf))
+        return 0;
+    if (using_fake_time)
+        now = fake_now;
+    else
+        now = ossl_time_now();
+    ctimeout = cinf ? ossl_time_infinite() : ossl_time_from_timeval(tv);
+    stimeout = ossl_time_subtract(ossl_quic_tserver_get_deadline(qtserv), now);
+    mintimeout = ossl_time_min(ctimeout, stimeout);
+    if (ossl_time_is_infinite(mintimeout))
+        return 0;
+    if (using_fake_time)
+        fake_now = ossl_time_add(now, mintimeout);
+    else
+        OSSL_sleep(ossl_time2ms(mintimeout));
+
+    return 1;
+}
+
 int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
                                     int wanterr)
 {
@@ -327,13 +372,6 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
             }
         }
 
-        /*
-         * We're cheating. We don't take any notice of SSL_get_tick_timeout()
-         * and tick every time around the loop anyway. This is inefficient. We
-         * can get away with it in test code because we control both ends of
-         * the communications and don't expect network delays. This shouldn't
-         * be done in a real application.
-         */
         if (!clienterr && retc <= 0)
             SSL_handle_events(clientssl);
 
@@ -352,6 +390,9 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
             TEST_info("No progress made");
             goto err;
         }
+
+        if (!wait_for_timeout(clientssl, qtserv))
+            goto err;
     } while ((retc <= 0 && !clienterr)
              || (rets <= 0 && !servererr
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
