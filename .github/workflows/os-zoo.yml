@@ -90,22 +90,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [
-          macos-11,
-          macos-12,
-          macos-13,
-          ubuntu-20.04,
-          ubuntu-22.04,
-        ]
+        os: [macos-11, macos-12, macos-13]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: |
-        CC=${{ matrix.zoo.cc }} ./config --banner=Configured \
-            -Wall -Werror --strict-warnings enable-fips
+      run: ./config --banner=Configured -Wall -Werror --strict-warnings enable-fips
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
