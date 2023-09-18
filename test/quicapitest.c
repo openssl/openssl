@@ -1276,7 +1276,7 @@ static int unreliable_client_read(SSL *clientquic, SSL **stream, void *buf,
                 return 0;
         }
         ossl_quic_tserver_tick(qtserv);
-        OSSL_sleep(10);
+        qtest_add_time(1);
     }
 
     return 0;
@@ -1295,7 +1295,7 @@ static int unreliable_server_read(QUIC_TSERVER *qtserv, uint64_t sid,
             return 1;
         ossl_quic_tserver_tick(qtserv);
         SSL_handle_events(clientquic);
-        OSSL_sleep(10);
+        qtest_add_time(1);
     }
 
     return 0;
@@ -1315,7 +1315,8 @@ static int test_noisy_dgram(void)
     if (!TEST_ptr(cctx)
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
                                                     privkey,
-                                                    QTEST_FLAG_NOISE,
+                                                    QTEST_FLAG_NOISE
+                                                    | QTEST_FLAG_FAKE_TIME,
                                                     &qtserv,
                                                     &clientquic, NULL)))
         goto err;
@@ -1334,6 +1335,7 @@ static int test_noisy_dgram(void)
         if (!TEST_true(ossl_quic_tserver_stream_new(qtserv, 0, &sid)))
             goto err;
         ossl_quic_tserver_tick(qtserv);
+        qtest_add_time(1);
 
         /*
         * Send data from the server to the client. Some datagrams may get lost,
@@ -1347,6 +1349,7 @@ static int test_noisy_dgram(void)
                     || !TEST_size_t_eq(msglen, written))
                 goto err;
             ossl_quic_tserver_tick(qtserv);
+            qtest_add_time(1);
 
             /*
             * Since the underlying BIO is now noisy we may get failures that
@@ -1368,6 +1371,8 @@ static int test_noisy_dgram(void)
                 goto err;
 
             ossl_quic_tserver_tick(qtserv);
+            qtest_add_time(1);
+
             /*
             * Since the underlying BIO is now noisy we may get failures that
             * need to be retried - so we use unreliable_server_read() to handle
