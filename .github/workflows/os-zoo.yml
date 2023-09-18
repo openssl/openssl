@@ -42,7 +42,51 @@ jobs:
       run: make -s -j4
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
-  unix:
+
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        zoo:
+          - image: docker.io/library/debian:10
+            install: apt-get update && apt-get install -y gcc make perl
+          - image: docker.io/library/debian:11
+            install: apt-get update && apt-get install -y gcc make perl
+          - image: docker.io/library/debian:12
+            install: apt-get update && apt-get install -y gcc make perl
+          - image: docker.io/library/ubuntu:20.04
+            install: apt-get update && apt-get install -y gcc make perl
+          - image: docker.io/library/ubuntu:22.04
+            install: apt-get update && apt-get install -y gcc make perl
+          - image: docker.io/library/fedora:38
+            install: dnf install -y gcc make perl-core
+          - image: docker.io/library/fedora:39
+            install: dnf install -y gcc make perl-core
+          - image: docker.io/library/centos:8
+            install: |
+              sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
+              sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-* && \
+              dnf install -y gcc make perl-core
+          - image: docker.io/library/rockylinux:8
+            install: dnf install -y gcc make perl-core
+          - image: docker.io/library/rockylinux:9
+            install: dnf install -y gcc make perl-core
+    runs-on: ubuntu-latest
+    container: ${{ matrix.zoo.image }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: install packages
+      run: ${{ matrix.zoo.install }}
+    - name: config
+      run: ./config
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  macos:
     strategy:
       fail-fast: false
       matrix:
