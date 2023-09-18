@@ -202,6 +202,16 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
     if (!BIO_recvmmsg(next, msg, stride, num_msg, flags, msgs_processed))
         return 0;
 
+#ifdef OSSL_NOISY_DGRAM_DEBUG
+    printf("Pre-filter datagram list:\n");
+    for (i = 0; i < *msgs_processed; i++) {
+        printf("Pre-filter Datagram:\n");
+        BIO_dump_fp(stdout, msg[i].data, msg[i].data_len);
+        printf("\n");
+    }
+    printf("End of pre-filter datagram list\nApplying noise filters:\n");
+#endif
+
     msg_cnt = *msgs_processed;
 
     /* Introduce noise */
@@ -224,6 +234,11 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
                     return 0;
                 msg_cnt++;
                 data->delayed_dgram = 0;
+#ifdef OSSL_NOISY_DGRAM_DEBUG
+                printf("**Inserting a delayed datagram\n");
+                BIO_dump_fp(stdout, thismsg->data, thismsg->data_len);
+                printf("\n");
+#endif
                 continue;
             } /* else we have no space for the insertion, so just drop it */
             data->delayed_dgram = 0;
@@ -246,9 +261,21 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
                 return 0;
 
             data->delayed_dgram = data->this_dgram + delay;
+
+#ifdef OSSL_NOISY_DGRAM_DEBUG
+            printf("**Delaying a datagram for %u messages%s\n",
+                   (unsigned int)delay, should_drop ? "" : "(duplicating)");
+            BIO_dump_fp(stdout, thismsg->data, thismsg->data_len);
+            printf("\n");
+#endif
         }
 
         if (should_drop) {
+#ifdef OSSL_NOISY_DGRAM_DEBUG
+            printf("**Dropping a datagram\n");
+            BIO_dump_fp(stdout, thismsg->data, thismsg->data_len);
+            printf("\n");
+#endif
             for (j = i + 1; j < msg_cnt; j++) {
                 if (!bio_msg_copy(&msg[j - 1], &msg[j]))
                     return 0;
@@ -256,6 +283,16 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
             msg_cnt--;
         }
     }
+
+#ifdef OSSL_NOISY_DGRAM_DEBUG
+    printf("End of noise filters\nPost-filter datagram list:\n");
+    for (i = 0; i < msg_cnt; i++) {
+        printf("Post-filter Datagram:\n");
+        BIO_dump_fp(stdout, msg[i].data, msg[i].data_len);
+        printf("\n");
+    }
+    printf("End of post-filter datagram list\n");
+#endif
 
     *msgs_processed = msg_cnt;
 
