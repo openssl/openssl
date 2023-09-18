@@ -21,6 +21,7 @@ jobs:
       matrix:
         tag: [edge, latest]
         cc: [gcc, clang]
+        branch: [openssl-3.0, openssl-3.1, master]
     runs-on: ubuntu-latest
     container:
       image: docker.io/library/alpine:${{ matrix.tag }}
@@ -32,6 +33,8 @@ jobs:
     - name: install packages
       run: apk --no-cache add build-base perl linux-headers ${{ matrix.cc }}
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ matrix.branch }}
     - name: config
       run: |
         ./config --banner=Configured no-shared -Wall -Werror enable-fips --strict-warnings -DOPENSSL_USE_IPV6=0 \
@@ -47,6 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        branch: [openssl-3.0, openssl-3.1, master]
         zoo:
           - image: docker.io/library/debian:10
             install: apt-get update && apt-get install -y gcc make perl
@@ -75,6 +79,8 @@ jobs:
     container: ${{ matrix.zoo.image }}
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ matrix.branch }}
     - name: install packages
       run: ${{ matrix.zoo.install }}
     - name: config
@@ -90,10 +96,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        branch: [openssl-3.0, openssl-3.1, master]
         os: [macos-11, macos-12, macos-13]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ matrix.branch }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -109,10 +118,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        branch: [openssl-3.0, openssl-3.1, master]
         os: [windows-2019, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ matrix.branch }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - uses: ilammy/msvc-dev-cmd@v1
