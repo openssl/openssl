@@ -97,6 +97,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
     if (added && !engine_cleanup_add_first(cleanup)) {
         lh_ENGINE_PILE_free(&(*table)->piles);
         *table = NULL;
+        goto end;
     }
     while (num_nids--) {
         tmplate.nid = *nids;
