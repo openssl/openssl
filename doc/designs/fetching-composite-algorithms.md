@@ -29,6 +29,12 @@ EVP_DigestVerifyInit_ex2(EVP_PKEY_CTX **pctx,
                          OSSL_LIB_CTX *libctx, const OSSL_PARAM params[]);
 ```
 
+Because `EVP_SIGNATURE` isn't limited to composite algorithms, these
+functions can be used just as well with explicit fetches of simple
+algorithms, say "RSA".  In that case, the caller will need to pass necessary
+auxiliary parameters through the `OSSL_PARAM` array (for example, with the
+"RSA" algorithm, a digest name).
+
 ## Requirements on the providers
 
 Because it's not immediately obvious from a composite algorithm name what
@@ -48,6 +54,23 @@ There are two ways this could be implemented:
     ```
 
 2.  through a gettable `OSSL_PARAM`, using the param identity "keytype"
+
+## Fallback strategies
+
+Because existing providers haven't been updated to declare composite
+algorithms, or to respond to the key type query, some fallback strategies
+will be needed, such as:
+
+-   Attempt to fetch a keymgmt with the same name and in the same provider
+    as the passed `EVP_SIGNATURE`.  If one was found, its name can serve in
+    place of a queried key type.
+-   libcrypto currently has knowledge of some composite algorithm names and
+    what they are composed of, accessible with `OBJ_find_sigid_algs`.  This
+    knowledge is regarded legacy, but can be used to figure out the key
+    type.
+
+These strategies have their limitations, but the built-in legacy knowledge
+we currently have in libcrypto should be enough to cover most bases.
 
 -----
 
