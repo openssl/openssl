@@ -233,8 +233,23 @@ int qtest_fault_set_datagram_listener(QTEST_FAULT *fault,
  */
 int qtest_fault_resize_datagram(QTEST_FAULT *fault, size_t newlen);
 
+/* Copy a BIO_ADDR */
+int bio_addr_copy(BIO_ADDR *dst, BIO_ADDR *src);
+
+/* Copy a BIO_MSG */
+int bio_msg_copy(BIO_MSG *dst, BIO_MSG *src);
+
 /* BIO filter for simulating a noisy UDP socket */
 const BIO_METHOD *bio_f_noisy_dgram_filter(void);
 
 /* Free the BIO filter method object */
 void bio_f_noisy_dgram_filter_free(void);
+
+/*
+ * BIO filter for splitting QUIC datagrams containing multiple packets into
+ * individual datagrams.
+ */
+const BIO_METHOD *bio_f_pkt_split_dgram_filter(void);
+
+/* Free the BIO filter method object */
+void bio_f_pkt_split_dgram_filter_free(void);

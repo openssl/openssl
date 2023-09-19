@@ -105,67 +105,6 @@ static void get_noise(uint64_t *delay, int *should_drop)
     *delay += (uint64_t)(*should_drop);
 }
 
-/* There isn't a public function to do BIO_ADDR_copy() so we create one */
-static int bio_addr_copy(BIO_ADDR *dst, BIO_ADDR *src)
-{
-    size_t len;
-    void *data = NULL;
-    int res = 0;
-    int family;
-
-    if (src == NULL || dst == NULL)
-        return 0;
-
-    family = BIO_ADDR_family(src);
-    if (family == AF_UNSPEC) {
-        BIO_ADDR_clear(dst);
-        return 1;
-    }
-
-    if (!BIO_ADDR_rawaddress(src, NULL, &len))
-        return 0;
-
-    if (len > 0) {
-        data = OPENSSL_malloc(len);
-        if (!TEST_ptr(data))
-            return 0;
-    }
-
-    if (!BIO_ADDR_rawaddress(src, data, &len))
-        goto err;
-
-    if (!BIO_ADDR_rawmake(src, family, data, len, BIO_ADDR_rawport(src)))
-        goto err;
-
-    res = 1;
- err:
-    OPENSSL_free(data);
-    return res;
-}
-
-static int bio_msg_copy(BIO_MSG *dst, BIO_MSG *src)
-{
-    /*
-     * Note it is assumed that the originally allocated data sizes for dst and
-     * src are the same
-     */
-    memcpy(dst->data, src->data, src->data_len);
-    dst->data_len = src->data_len;
-    dst->flags = src->flags;
-    if (dst->local != NULL) {
-        if (src->local != NULL) {
-            if (!TEST_true(bio_addr_copy(dst->local, src->local)))
-                return 0;
-        } else {
-            BIO_ADDR_clear(dst->local);
-        }
-    }
-    if (!TEST_true(bio_addr_copy(dst->peer, src->peer)))
-        return 0;
-
-    return 1;
-}
-
 static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
                                 size_t num_msg, uint64_t flags,
                                 size_t *msgs_processed)

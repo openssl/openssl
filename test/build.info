@@ -339,7 +339,9 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[quic_client_test]=../include ../apps/include
   DEPEND[quic_client_test]=../libcrypto.a ../libssl.a libtestutil.a
 
-  SOURCE[quic_multistream_test]=quic_multistream_test.c helpers/ssltestlib.c helpers/quictestlib.c helpers/noisydgrambio.c
+  $QUICTESTHELPERS=helpers/quictestlib.c helpers/noisydgrambio.c helpers/pktsplitbio.c
+
+  SOURCE[quic_multistream_test]=quic_multistream_test.c helpers/ssltestlib.c $QUICTESTHELPERS
   INCLUDE[quic_multistream_test]=../include ../apps/include
   DEPEND[quic_multistream_test]=../libcrypto.a ../libssl.a libtestutil.a
 
@@ -818,15 +820,15 @@ IF[{- !$disabled{tests} -}]
       INCLUDE[event_queue_test]=../include ../apps/include
       DEPEND[event_queue_test]=../libcrypto ../libssl.a libtestutil.a
 
-      SOURCE[quicfaultstest]=quicfaultstest.c helpers/ssltestlib.c helpers/quictestlib.c helpers/noisydgrambio.c
+      SOURCE[quicfaultstest]=quicfaultstest.c helpers/ssltestlib.c $QUICTESTHELPERS
       INCLUDE[quicfaultstest]=../include ../apps/include ..
       DEPEND[quicfaultstest]=../libcrypto.a ../libssl.a libtestutil.a
 
-      SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c helpers/quictestlib.c helpers/noisydgrambio.c
+      SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c $QUICTESTHELPERS
       INCLUDE[quicapitest]=../include ../apps/include
       DEPEND[quicapitest]=../libcrypto.a ../libssl.a libtestutil.a
 
-      SOURCE[quic_newcid_test]=quic_newcid_test.c helpers/ssltestlib.c helpers/quictestlib.c helpers/noisydgrambio.c
+      SOURCE[quic_newcid_test]=quic_newcid_test.c helpers/ssltestlib.c $QUICTESTHELPERS
       INCLUDE[quic_newcid_test]=../include ../apps/include ..
       DEPEND[quic_newcid_test]=../libcrypto.a ../libssl.a libtestutil.a
     ENDIF
