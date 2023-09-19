@@ -1144,9 +1144,13 @@ with({ exit_checker => sub { return shift == 6; } },
 # Test case for return value mis-check reported in #21986
 with({ exit_checker => sub { return shift == 3; } },
     sub {
-        ok(run(app(['openssl', 'cms', '-sign',
-                    '-in', srctop_file("test", "smcont.txt"),
-                    '-signer', srctop_file("test/smime-certs", "smdsa1.pem"),
-                    '-md', 'SHAKE256'])),
-           "issue#21986");
+        SKIP: {
+          skip "DSA is not supported in this build", 1 if $no_dsa;
+
+          ok(run(app(['openssl', 'cms', '-sign',
+                      '-in', srctop_file("test", "smcont.txt"),
+                      '-signer', srctop_file("test/smime-certs", "smdsa1.pem"),
+                      '-md', 'SHAKE256'])),
+            "issue#21986");
+        }
     });
