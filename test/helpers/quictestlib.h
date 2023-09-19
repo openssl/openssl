@@ -68,6 +68,12 @@ int qtest_supports_blocking(void);
 int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl);
 
 /*
+ * Check if both client and server have no data to read and are waiting on a
+ * timeout. If so, wait until the timeout has expired.
+ */
+int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv);
+
+/*
  * Same as qtest_create_quic_connection but will stop (successfully) if the
  * clientssl indicates SSL_ERROR_WANT_XXX as specified by |wanterr|
  */

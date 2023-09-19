@@ -1274,13 +1274,15 @@ static int unreliable_client_read(SSL *clientquic, SSL **stream, void *buf,
         if (*stream != NULL) {
             if (SSL_read_ex(*stream, buf, buflen, readbytes))
                 return 1;
-            if (SSL_get_error(*stream, 0) != SSL_ERROR_WANT_READ)
+            if (!TEST_int_eq(SSL_get_error(*stream, 0), SSL_ERROR_WANT_READ))
                 return 0;
         }
         ossl_quic_tserver_tick(qtserv);
         qtest_add_time(1);
+        qtest_wait_for_timeout(clientquic, qtserv);
     }
 
+    TEST_error("No progress made");
     return 0;
 }
 
@@ -1293,13 +1295,16 @@ static int unreliable_server_read(QUIC_TSERVER *qtserv, uint64_t sid,
 
     /* We just do this in a loop with a sleep for simplicity */
     for (abortctr = 0; abortctr < MAX_LOOPS; abortctr++) {
-        if (ossl_quic_tserver_read(qtserv, sid, buf, buflen, readbytes))
+        if (ossl_quic_tserver_read(qtserv, sid, buf, buflen, readbytes)
+                && *readbytes > 1)
             return 1;
         ossl_quic_tserver_tick(qtserv);
         SSL_handle_events(clientquic);
         qtest_add_time(1);
+        qtest_wait_for_timeout(clientquic, qtserv);
     }
 
+    TEST_error("No progress made");
     return 0;
 }
 
