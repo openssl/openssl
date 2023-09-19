@@ -42,6 +42,10 @@ ecdsa_with_SHA384	sha384	X9_62_id_ecPublicKey
 ecdsa_with_SHA512	sha512	X9_62_id_ecPublicKey
 ecdsa_with_Recommended	undef	X9_62_id_ecPublicKey
 ecdsa_with_Specified	undef	X9_62_id_ecPublicKey
+ecdsa_with_SHA3_224     sha3_224    X9_62_id_ecPublicKey
+ecdsa_with_SHA3_256     sha3_256    X9_62_id_ecPublicKey
+ecdsa_with_SHA3_384     sha3_384    X9_62_id_ecPublicKey
+ecdsa_with_SHA3_512     sha3_512    X9_62_id_ecPublicKey
 
 dsa_with_SHA224		sha224	dsa
 dsa_with_SHA256		sha256	dsa
