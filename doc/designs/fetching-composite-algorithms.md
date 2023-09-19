@@ -1,6 +1,8 @@
-# Fetching composite algorithms and using them - adding the bits still missing
+Fetching composite algorithms and using them - adding the bits still missing
+============================================================================
 
-## Quick background
+Quick background
+----------------
 
 We currently support - at least in the public libcrypto API - explicitly
 fetching composite algorithms (such as AES-128-CBC or HMAC-SHA256), and
@@ -13,7 +15,8 @@ explicitly fetched algorithms is lacking: asymmetric algorithms.
 For a longer background and explanation, see
 [Background / tl;dr](#background-tldr) at the end of this design.
 
-## Public API - Add variants of `EVP_PKEY_CTX` initializers
+Public API - Add variants of `EVP_PKEY_CTX` initializers
+--------------------------------------------------------
 
 As far as this design is concerned, there is only class of APIs affected by
 this: DigestSign and DigestVerify.
@@ -35,7 +38,8 @@ algorithms, say "RSA".  In that case, the caller will need to pass necessary
 auxiliary parameters through the `OSSL_PARAM` array (for example, with the
 "RSA" algorithm, a digest name).
 
-## Requirements on the providers
+Requirements on the providers
+-----------------------------
 
 Because it's not immediately obvious from a composite algorithm name what
 key type it requires / supports, at least in code, allowing the use of an
@@ -47,7 +51,7 @@ There are two ways this could be implemented:
 1.  through an added provider function that would work like keymgmt's
     `query_operation_name` function, but would return a key type name
     instead:
-    
+
     ``` C
     # define OSSL_FUNC_SIGNATURE_QUERY_KEY_TYPE         26
     OSSL_CORE_MAKE_FUNC(const char *, signature_query_key_type, (void))
@@ -55,7 +59,8 @@ There are two ways this could be implemented:
 
 2.  through a gettable `OSSL_PARAM`, using the param identity "keytype"
 
-## Fallback strategies
+Fallback strategies
+-------------------
 
 Because existing providers haven't been updated to declare composite
 algorithms, or to respond to the key type query, some fallback strategies
@@ -76,7 +81,8 @@ we currently have in libcrypto should be enough to cover most bases.
 
 -----
 
-## Background / tl;dr
+Background / tl;dr
+------------------
 
 ### What is a composite algorithm?
 
