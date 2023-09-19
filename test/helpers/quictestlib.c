@@ -159,6 +159,11 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         if (!TEST_ptr(pktsplitbio))
             goto err;
         cbio = BIO_push(pktsplitbio, cbio);
+
+        pktsplitbio = BIO_new(bio_f_pkt_split_dgram_filter());
+        if (!TEST_ptr(pktsplitbio))
+            goto err;
+        sbio = BIO_push(pktsplitbio, sbio);
     }
 
     if ((flags & QTEST_FLAG_NOISE) != 0) {
@@ -167,6 +172,12 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         if (!TEST_ptr(noisebio))
             goto err;
         cbio = BIO_push(noisebio, cbio);
+
+        noisebio = BIO_new(bio_f_noisy_dgram_filter());
+
+        if (!TEST_ptr(noisebio))
+            goto err;
+        sbio = BIO_push(noisebio, sbio);
     }
 
     SSL_set_bio(*cssl, cbio, cbio);
@@ -228,9 +239,9 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
  err:
     SSL_CTX_free(tserver_args.ctx);
     BIO_ADDR_free(peeraddr);
-    BIO_free(cbio);
+    BIO_free_all(cbio);
     BIO_free(fisbio);
-    BIO_free(sbio);
+    BIO_free_all(sbio);
     SSL_free(*cssl);
     *cssl = NULL;
     ossl_quic_tserver_free(*qtserv);
@@ -289,14 +300,14 @@ static void run_server_thread(void)
 }
 #endif
 
-static int wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
+int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
 {
     struct timeval tv;
     OSSL_TIME ctimeout, stimeout, mintimeout, now;
     int cinf;
 
     /* We don't need to wait in blocking mode */
-    if (s == NULL || qtserv == NULL)
+    if (s == NULL || SSL_get_blocking_mode(s))
         return 1;
 
     /* Don't wait if either BIO has data waiting */
@@ -395,12 +406,13 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
             }
         }
 
-        if (!clienterr && retc <= 0)
+        qtest_add_time(1);
+        if (clientssl != NULL)
             SSL_handle_events(clientssl);
+        if (qtserv != NULL)
+            ossl_quic_tserver_tick(qtserv);
 
         if (!servererr && rets <= 0) {
-            qtest_add_time(1);
-            ossl_quic_tserver_tick(qtserv);
             servererr = ossl_quic_tserver_is_term_any(qtserv);
             if (!servererr)
                 rets = ossl_quic_tserver_is_handshake_confirmed(qtserv);
@@ -414,8 +426,10 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
             goto err;
         }
 
-        if (!wait_for_timeout(clientssl, qtserv))
-            goto err;
+        if ((retc <= 0 && !clienterr) || (rets <= 0 && !servererr)) {
+            if (!qtest_wait_for_timeout(clientssl, qtserv))
+                goto err;
+        }
     } while ((retc <= 0 && !clienterr)
              || (rets <= 0 && !servererr
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
