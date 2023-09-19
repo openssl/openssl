@@ -22,7 +22,7 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
-### Changes between 3.1.2 and 3.1.3 [xx XXX xxxx]
+### Changes between 3.1.2 and 3.1.3 [19 Sep 2023]
 
  * Fix POLY1305 MAC implementation corrupting XMM registers on Windows.
 
