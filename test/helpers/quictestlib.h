@@ -34,7 +34,8 @@ typedef struct qtest_fault_encrypted_extensions {
 #define QTEST_FLAG_NOISE        (1 << 2)
 /* Split datagrams such that each datagram contains one packet */
 #define QTEST_FLAG_PACKET_SPLIT (1 << 3)
-
+/* Turn on client side tracing */
+#define QTEST_FLAG_CLIENT_TRACE (1 << 4)
 /*
  * Given an SSL_CTX for the client and filenames for the server certificate and
  * keyfile, create a server and client instances as well as a fault injector
@@ -43,7 +44,7 @@ typedef struct qtest_fault_encrypted_extensions {
 int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
                               SSL_CTX *serverctx, char *certfile, char *keyfile,
                               int flags, QUIC_TSERVER **qtserv, SSL **cssl,
-                              QTEST_FAULT **fault);
+                              QTEST_FAULT **fault, BIO **tracebio);
 
 /* Where QTEST_FLAG_FAKE_TIME is used, add millis to the current time */
 void qtest_add_time(uint64_t millis);
