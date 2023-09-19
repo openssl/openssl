@@ -18,6 +18,10 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
+### Major changes between OpenSSL 3.0.11 and OpenSSL 3.0.12 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.0.10 and OpenSSL 3.0.11 [19 Sep 2023]
 
   * Fix POLY1305 MAC implementation corrupting XMM registers on Windows

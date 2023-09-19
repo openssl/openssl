@@ -28,6 +28,10 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
+### Changes between 3.0.11 and 3.0.12 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.0.10 and 3.0.11 [19 Sep 2023]
 
  * Fix POLY1305 MAC implementation corrupting XMM registers on Windows.
