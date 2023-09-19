@@ -35,7 +35,7 @@ static int test_basic(void)
         goto err;
 
     if (!TEST_true(qtest_create_quic_objects(NULL, cctx, NULL, cert, privkey, 0,
-                                             &qtserv, &cssl, NULL)))
+                                             &qtserv, &cssl, NULL, NULL)))
         goto err;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
@@ -105,7 +105,7 @@ static int test_unknown_frame(void)
         goto err;
 
     if (!TEST_true(qtest_create_quic_objects(NULL, cctx, NULL, cert, privkey, 0,
-                                             &qtserv, &cssl, &fault)))
+                                             &qtserv, &cssl, &fault, NULL)))
         goto err;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
@@ -187,7 +187,7 @@ static int test_drop_extensions(int idx)
         goto err;
 
     if (!TEST_true(qtest_create_quic_objects(NULL, cctx, NULL, cert, privkey, 0,
-                                             &qtserv, &cssl, &fault)))
+                                             &qtserv, &cssl, &fault, NULL)))
         goto err;
 
     if (idx == 0) {
@@ -275,7 +275,7 @@ static int test_corrupted_data(int idx)
 
     if (!TEST_true(qtest_create_quic_objects(NULL, cctx, NULL, cert, privkey,
                                              QTEST_FLAG_FAKE_TIME, &qtserv,
-                                             &cssl, &fault)))
+                                             &cssl, &fault, NULL)))
         goto err;
 
     if (idx == 0) {

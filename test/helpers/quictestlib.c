@@ -77,7 +77,7 @@ static OSSL_TIME fake_now_cb(void *arg)
 int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
                               SSL_CTX *serverctx, char *certfile, char *keyfile,
                               int flags, QUIC_TSERVER **qtserv, SSL **cssl,
-                              QTEST_FAULT **fault)
+                              QTEST_FAULT **fault, BIO **tracebio)
 {
     /* ALPN value as recognised by QUIC_TSERVER */
     unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
@@ -85,6 +85,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     BIO *cbio = NULL, *sbio = NULL, *fisbio = NULL;
     BIO_ADDR *peeraddr = NULL;
     struct in_addr ina = {0};
+    BIO *tmpbio = NULL;
 
     *qtserv = NULL;
     if (fault != NULL)
@@ -95,6 +96,17 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         if (!TEST_ptr(*cssl))
             return 0;
     }
+
+    if ((flags & QTEST_FLAG_CLIENT_TRACE) != 0) {
+        tmpbio = BIO_new_fp(stdout, BIO_NOCLOSE);
+        if (!TEST_ptr(tmpbio))
+            goto err;
+
+        SSL_set_msg_callback(*cssl, SSL_trace);
+        SSL_set_msg_callback_arg(*cssl, tmpbio);
+    }
+    if (tracebio != NULL)
+        *tracebio = tmpbio;
 
     /* SSL_set_alpn_protos returns 0 for success! */
     if (!TEST_false(SSL_set_alpn_protos(*cssl, alpn, sizeof(alpn))))
@@ -224,6 +236,9 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     ossl_quic_tserver_free(*qtserv);
     if (fault != NULL)
         OPENSSL_free(*fault);
+    BIO_free(tmpbio);
+    if (tracebio != NULL)
+        *tracebio = NULL;
 
     return 0;
 }

@@ -69,7 +69,7 @@ static int test_quic_write_read(int idx)
                                                             ? QTEST_FLAG_BLOCK
                                                             : 0,
                                                         &qtserv, &clientquic,
-                                                        NULL))
+                                                        NULL, NULL))
                 || !TEST_true(SSL_set_tlsext_host_name(clientquic, "localhost")))
             goto end;
 
@@ -220,7 +220,7 @@ static int test_fin_only_blocking(void)
                                                     cert, privkey,
                                                     QTEST_FLAG_BLOCK,
                                                     &qtserv, &clientquic,
-                                                    NULL))
+                                                    NULL, NULL))
             || !TEST_true(SSL_set_tlsext_host_name(clientquic, "localhost")))
         goto end;
 
@@ -380,7 +380,7 @@ static int test_version(void)
     if (!TEST_ptr(cctx)
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
                                                     privkey, 0, &qtserv,
-                                                    &clientquic, NULL))
+                                                    &clientquic, NULL, NULL))
             || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto err;
 
@@ -502,7 +502,7 @@ static int test_ssl_trace(void)
                                                     privkey,
                                                     QTEST_FLAG_FAKE_TIME,
                                                     &qtserv,
-                                                    &clientquic, NULL)))
+                                                    &clientquic, NULL, NULL)))
         goto err;
 
     SSL_set_msg_callback(clientquic, SSL_trace);
@@ -829,7 +829,8 @@ static int test_bio_ssl(void)
         goto err;
 
     if (!TEST_true(qtest_create_quic_objects(libctx, NULL, NULL, cert, privkey,
-                                             0, &qtserv, &clientquic, NULL)))
+                                             0, &qtserv, &clientquic, NULL,
+                                             NULL)))
         goto err;
 
     msglen = strlen(msg);
@@ -946,7 +947,7 @@ static int test_back_pressure(void)
     if (!TEST_ptr(cctx)
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
                                                     privkey, 0, &qtserv,
-                                                    &clientquic, NULL))
+                                                    &clientquic, NULL, NULL))
             || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto err;
 
@@ -1024,7 +1025,7 @@ static int test_multiple_dgrams(void)
             || !TEST_ptr(buf)
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
                                                     privkey, 0, &qtserv,
-                                                    &clientquic, NULL))
+                                                    &clientquic, NULL, NULL))
             || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto err;
 
@@ -1088,7 +1089,8 @@ static int test_non_io_retry(int idx)
 
     flags = (idx >= 1) ? QTEST_FLAG_BLOCK : 0;
     if (!TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert, privkey,
-                                             flags, &qtserv, &clientquic, NULL))
+                                             flags, &qtserv, &clientquic, NULL,
+                                             NULL))
             || !TEST_true(qtest_create_quic_connection_ex(qtserv, clientquic,
                             SSL_ERROR_WANT_RETRY_VERIFY))
             || !TEST_int_eq(SSL_want(clientquic), SSL_RETRY_VERIFY)
@@ -1156,7 +1158,7 @@ static int test_quic_psk(void)
                /* No cert or private key for the server, i.e. PSK only */
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, NULL,
                                                     NULL, 0, &qtserv,
-                                                    &clientquic, NULL)))
+                                                    &clientquic, NULL, NULL)))
         goto end;
 
     SSL_set_psk_use_session_callback(clientquic, use_session_cb);
@@ -1215,7 +1217,7 @@ static int test_alpn(int idx)
                                                     privkey,
                                                     QTEST_FLAG_FAKE_TIME,
                                                     &qtserv,
-                                                    &clientquic, NULL)))
+                                                    &clientquic, NULL, NULL)))
         goto err;
 
     if (idx == 0) {
@@ -1328,7 +1330,7 @@ static int test_noisy_dgram(int idx)
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
                                                     privkey, flags,
                                                     &qtserv,
-                                                    &clientquic, NULL)))
+                                                    &clientquic, NULL, NULL)))
         goto err;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))

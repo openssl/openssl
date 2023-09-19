@@ -215,7 +215,7 @@ typedef struct ossl_qf_encrypted_extensions {
 int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
                               SSL_CTX *serverctx, char *certfile, char *keyfile,
                               int block, QUIC_TSERVER **qtserv, SSL **cssl,
-                              OSSL_QUIC_FAULT **fault);
+                              OSSL_QUIC_FAULT **fault, BIO **tracebio);
 
 /*
  * Free up a Fault Injector instance
@@ -440,7 +440,7 @@ static int test_unknown_frame(void)
         goto err;
 
     if (!TEST_true(qtest_create_quic_objects(NULL, cctx, NULL, cert, privkey, 0,
-                                             &qtserv, &cssl, &fault)))
+                                             &qtserv, &cssl, &fault, NULL)))
         goto err;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
@@ -523,7 +523,7 @@ static int test_no_transport_params(void)
         goto err;
 
     if (!TEST_true(qtest_create_quic_objects(NULL, cctx, NULL, cert, privkey, 0,
-                                             &qtserv, &cssl, &fault)))
+                                             &qtserv, &cssl, &fault, NULL)))
         goto err;
 
     if (!TEST_true(ossl_quic_fault_set_hand_enc_ext_listener(fault,
