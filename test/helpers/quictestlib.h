@@ -32,6 +32,8 @@ typedef struct qtest_fault_encrypted_extensions {
 #define QTEST_FLAG_FAKE_TIME    (1 << 1)
 /* Introduce noise in the BIO */
 #define QTEST_FLAG_NOISE        (1 << 2)
+/* Split datagrams such that each datagram contains one packet */
+#define QTEST_FLAG_PACKET_SPLIT (1 << 3)
 
 /*
  * Given an SSL_CTX for the client and filenames for the server certificate and

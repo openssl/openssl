@@ -1301,7 +1301,15 @@ static int unreliable_server_read(QUIC_TSERVER *qtserv, uint64_t sid,
     return 0;
 }
 
-static int test_noisy_dgram(void)
+/*
+ * Create a connection and send data using an unreliable transport. We introduce
+ * random noise to drop, delay and duplicate datagrams.
+ * Test 0: Introduce random noise to datagrams
+ * Test 1: As with test 0 but also split datagrams containing multiple packets
+ *         into individual datagrams so that individual packets can be affected
+ *         by noise - not just a whole datagram.
+ */
+static int test_noisy_dgram(int idx)
 {
     SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
     SSL *clientquic = NULL, *stream[2] = { NULL, NULL };
@@ -1311,12 +1319,14 @@ static int test_noisy_dgram(void)
     char *msg = "Hello world!";
     size_t msglen = strlen(msg), written, readbytes, i, j;
     unsigned char buf[80];
+    int flags = QTEST_FLAG_NOISE | QTEST_FLAG_FAKE_TIME;
+
+    if (idx == 1)
+        flags |= QTEST_FLAG_PACKET_SPLIT;
 
     if (!TEST_ptr(cctx)
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                                    privkey,
-                                                    QTEST_FLAG_NOISE
-                                                    | QTEST_FLAG_FAKE_TIME,
+                                                    privkey, flags,
                                                     &qtserv,
                                                     &clientquic, NULL)))
         goto err;
@@ -1470,7 +1480,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_non_io_retry, 2);
     ADD_TEST(test_quic_psk);
     ADD_ALL_TESTS(test_alpn, 2);
-    ADD_TEST(test_noisy_dgram);
+    ADD_ALL_TESTS(test_noisy_dgram, 2);
 
     return 1;
  err:
@@ -1481,6 +1491,7 @@ int setup_tests(void)
 void cleanup_tests(void)
 {
     bio_f_noisy_dgram_filter_free();
+    bio_f_pkt_split_dgram_filter_free();
     OPENSSL_free(cert);
     OPENSSL_free(privkey);
     OSSL_PROVIDER_unload(defctxnull);

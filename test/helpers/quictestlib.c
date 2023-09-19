@@ -141,6 +141,14 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
             goto err;
     }
 
+    if ((flags & QTEST_FLAG_PACKET_SPLIT) != 0) {
+        BIO *pktsplitbio = BIO_new(bio_f_pkt_split_dgram_filter());
+
+        if (!TEST_ptr(pktsplitbio))
+            goto err;
+        cbio = BIO_push(pktsplitbio, cbio);
+    }
+
     if ((flags & QTEST_FLAG_NOISE) != 0) {
         BIO *noisebio = BIO_new(bio_f_noisy_dgram_filter());
 
