@@ -201,8 +201,12 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
 
     BIO_set_data(fisbio, fault == NULL ? NULL : *fault);
 
-    if (!TEST_ptr(BIO_push(fisbio, sbio)))
+    if (!BIO_up_ref(sbio))
         goto err;
+    if (!TEST_ptr(BIO_push(fisbio, sbio))) {
+        BIO_free(sbio);
+        goto err;
+    }
 
     tserver_args.libctx = libctx;
     tserver_args.net_rbio = sbio;
@@ -240,7 +244,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     SSL_CTX_free(tserver_args.ctx);
     BIO_ADDR_free(peeraddr);
     BIO_free_all(cbio);
-    BIO_free(fisbio);
+    BIO_free_all(fisbio);
     BIO_free_all(sbio);
     SSL_free(*cssl);
     *cssl = NULL;
