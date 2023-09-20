@@ -19,18 +19,6 @@ struct noisy_dgram_st {
     uint64_t delayed_dgram;
 };
 
-static int noisy_dgram_read(BIO *bio, char *out, int outl)
-{
-    /* We don't support this - not needed anyway */
-    return -1;
-}
-
-static int noisy_dgram_write(BIO *bio, const char *in, int inl)
-{
-    /* We don't support this - not needed anyway */
-    return -1;
-}
-
 static long noisy_dgram_ctrl(BIO *bio, int cmd, long num, void *ptr)
 {
     long ret;
@@ -48,18 +36,6 @@ static long noisy_dgram_ctrl(BIO *bio, int cmd, long num, void *ptr)
         break;
     }
     return ret;
-}
-
-static int noisy_dgram_gets(BIO *bio, char *buf, int size)
-{
-    /* We don't support this - not needed anyway */
-    return -1;
-}
-
-static int noisy_dgram_puts(BIO *bio, const char *str)
-{
-    /* We don't support this - not needed anyway */
-    return -1;
 }
 
 static int noisy_dgram_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
@@ -298,10 +274,6 @@ const BIO_METHOD *bio_f_noisy_dgram_filter(void)
         method_noisy_dgram = BIO_meth_new(BIO_TYPE_NOISY_DGRAM_FILTER,
                                           "Nosiy datagram filter");
         if (method_noisy_dgram == NULL
-            || !BIO_meth_set_write(method_noisy_dgram, noisy_dgram_write)
-            || !BIO_meth_set_read(method_noisy_dgram, noisy_dgram_read)
-            || !BIO_meth_set_puts(method_noisy_dgram, noisy_dgram_puts)
-            || !BIO_meth_set_gets(method_noisy_dgram, noisy_dgram_gets)
             || !BIO_meth_set_ctrl(method_noisy_dgram, noisy_dgram_ctrl)
             || !BIO_meth_set_sendmmsg(method_noisy_dgram, noisy_dgram_sendmmsg)
             || !BIO_meth_set_recvmmsg(method_noisy_dgram, noisy_dgram_recvmmsg)

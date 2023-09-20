@@ -11,18 +11,6 @@
 #include "quictestlib.h"
 #include "../testutil.h"
 
-static int pkt_split_dgram_read(BIO *bio, char *out, int outl)
-{
-    /* We don't support this - not needed anyway */
-    return -1;
-}
-
-static int pkt_split_dgram_write(BIO *bio, const char *in, int inl)
-{
-    /* We don't support this - not needed anyway */
-    return -1;
-}
-
 static long pkt_split_dgram_ctrl(BIO *bio, int cmd, long num, void *ptr)
 {
     long ret;
@@ -40,18 +28,6 @@ static long pkt_split_dgram_ctrl(BIO *bio, int cmd, long num, void *ptr)
         break;
     }
     return ret;
-}
-
-static int pkt_split_dgram_gets(BIO *bio, char *buf, int size)
-{
-    /* We don't support this - not needed anyway */
-    return -1;
-}
-
-static int pkt_split_dgram_puts(BIO *bio, const char *str)
-{
-    /* We don't support this - not needed anyway */
-    return -1;
 }
 
 static int pkt_split_dgram_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
@@ -149,10 +125,6 @@ const BIO_METHOD *bio_f_pkt_split_dgram_filter(void)
         method_pkt_split_dgram = BIO_meth_new(BIO_TYPE_PKT_SPLIT_DGRAM_FILTER,
                                               "Packet splitting datagram filter");
         if (method_pkt_split_dgram == NULL
-            || !BIO_meth_set_write(method_pkt_split_dgram, pkt_split_dgram_write)
-            || !BIO_meth_set_read(method_pkt_split_dgram, pkt_split_dgram_read)
-            || !BIO_meth_set_puts(method_pkt_split_dgram, pkt_split_dgram_puts)
-            || !BIO_meth_set_gets(method_pkt_split_dgram, pkt_split_dgram_gets)
             || !BIO_meth_set_ctrl(method_pkt_split_dgram, pkt_split_dgram_ctrl)
             || !BIO_meth_set_sendmmsg(method_pkt_split_dgram,
                                       pkt_split_dgram_sendmmsg)
