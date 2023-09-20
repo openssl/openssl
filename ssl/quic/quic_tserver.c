@@ -159,8 +159,8 @@ void ossl_quic_tserver_free(QUIC_TSERVER *srv)
         return;
 
     ossl_quic_channel_free(srv->ch);
-    BIO_free(srv->args.net_rbio);
-    BIO_free(srv->args.net_wbio);
+    BIO_free_all(srv->args.net_rbio);
+    BIO_free_all(srv->args.net_wbio);
     OPENSSL_free(srv->ssl);
     SSL_free(srv->tls);
     SSL_CTX_free(srv->ctx);

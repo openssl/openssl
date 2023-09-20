@@ -746,10 +746,8 @@ static int helper_init(struct helper *h, int free_order, int blocking,
         BIO_set_data(h->s_qtf_wbio, h->qtf);
     }
 
-    if (!need_injector)
-        h->s_net_bio_own = NULL;
-
-    h->s_qtf_wbio_own   = NULL;
+    h->s_net_bio_own = NULL;
+    h->s_qtf_wbio_own = NULL;
 
     h->c_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
     if (!TEST_int_ge(h->c_fd, 0))

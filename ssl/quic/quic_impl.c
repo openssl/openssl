@@ -545,8 +545,8 @@ void ossl_quic_free(SSL *s)
 
     ossl_quic_channel_free(ctx.qc->ch);
 
-    BIO_free(ctx.qc->net_rbio);
-    BIO_free(ctx.qc->net_wbio);
+    BIO_free_all(ctx.qc->net_rbio);
+    BIO_free_all(ctx.qc->net_wbio);
 
     /* Note: SSL_free calls OPENSSL_free(qc) for us */
 
@@ -876,7 +876,7 @@ void ossl_quic_conn_set0_net_rbio(SSL *s, BIO *net_rbio)
     if (!ossl_quic_channel_set_net_rbio(ctx.qc->ch, net_rbio))
         return;
 
-    BIO_free(ctx.qc->net_rbio);
+    BIO_free_all(ctx.qc->net_rbio);
     ctx.qc->net_rbio = net_rbio;
 
     if (net_rbio != NULL)
@@ -903,7 +903,7 @@ void ossl_quic_conn_set0_net_wbio(SSL *s, BIO *net_wbio)
     if (!ossl_quic_channel_set_net_wbio(ctx.qc->ch, net_wbio))
         return;
 
-    BIO_free(ctx.qc->net_wbio);
+    BIO_free_all(ctx.qc->net_wbio);
     ctx.qc->net_wbio = net_wbio;
 
     if (net_wbio != NULL)
