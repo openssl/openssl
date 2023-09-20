@@ -260,12 +260,12 @@ static void contract(OPENSSL_LHASH *lh)
         if (n == NULL) {
             /* fputs("realloc error in lhash", stderr); */
             lh->error++;
-            return;
+        } else {
+            lh->b = n;
         }
         lh->num_alloc_nodes /= 2;
         lh->pmax /= 2;
         lh->p = lh->pmax - 1;
-        lh->b = n;
     } else
         lh->p--;
 
