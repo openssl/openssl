@@ -54,8 +54,12 @@ Requirements on the providers
 
 Because it's not immediately obvious from a composite algorithm name what
 key type it requires / supports, at least in code, allowing the use of an
-explicitly fetched implementation requires that providers cooperate by
-declaring what key type is required / supported by each algorithm.
+explicitly fetched implementation of a composite algorithm requires that
+providers cooperate by declaring what key type is required / supported by
+each algorithm.
+
+For non-composite operation algorithms (like "RSA"), this is not necessary,
+see the fallback strategies below.
 
 There are two ways this could be implemented:
 
@@ -81,11 +85,16 @@ Fallback strategies
 
 Because existing providers haven't been updated to declare composite
 algorithms, or to respond to the key type query, some fallback strategies
-will be needed, such as:
+will be needed to find out if the `EVP_PKEY` key type is possible to use
+with the fetched algorithm:
 
--   Attempt to fetch a keymgmt with the same name and in the same provider
-    as the passed operation.  If one was found, its name can serve in place
-    of a queried key type.
+-   Check if the fetched operation name matches the key type (keymgmt name)
+    of the `EVP_PKEY` that's involved in the operation.  For example, this
+    is useful when someone fetched the `EVP_SIGNATURE` "RSA".
+-   Check if the fetched algorithm name matches the name returned by the
+    keymgmt's `query_operation_name` function.  For example, this is useful
+    when someone fetched the `EVP_SIGNATURE` "ECDSA", for which the key type
+    to use is "EC".
 -   libcrypto currently has knowledge of some composite algorithm names and
     what they are composed of, accessible with `OBJ_find_sigid_algs` and
     similar functionality.  This knowledge is regarded legacy, but can be
