@@ -1963,6 +1963,10 @@ DEPEND[html/man3/PKCS8_pkey_add1_attr.html]=man3/PKCS8_pkey_add1_attr.pod
 GENERATE[html/man3/PKCS8_pkey_add1_attr.html]=man3/PKCS8_pkey_add1_attr.pod
 DEPEND[man/man3/PKCS8_pkey_add1_attr.3]=man3/PKCS8_pkey_add1_attr.pod
 GENERATE[man/man3/PKCS8_pkey_add1_attr.3]=man3/PKCS8_pkey_add1_attr.pod
+DEPEND[html/man3/PKCS8_pkey_get0.html]=man3/PKCS8_pkey_get0.pod
+GENERATE[html/man3/PKCS8_pkey_get0.html]=man3/PKCS8_pkey_get0.pod
+DEPEND[man/man3/PKCS8_pkey_get0.3]=man3/PKCS8_pkey_get0.pod
+GENERATE[man/man3/PKCS8_pkey_get0.3]=man3/PKCS8_pkey_get0.pod
 DEPEND[html/man3/RAND_add.html]=man3/RAND_add.pod
 GENERATE[html/man3/RAND_add.html]=man3/RAND_add.pod
 DEPEND[man/man3/RAND_add.3]=man3/RAND_add.pod
@@ -3398,6 +3402,7 @@ html/man3/PKCS7_type_is_other.html \
 html/man3/PKCS7_verify.html \
 html/man3/PKCS8_encrypt.html \
 html/man3/PKCS8_pkey_add1_attr.html \
+html/man3/PKCS8_pkey_get0.html \
 html/man3/RAND_add.html \
 html/man3/RAND_bytes.html \
 html/man3/RAND_cleanup.html \
@@ -4037,6 +4042,7 @@ man/man3/PKCS7_type_is_other.3 \
 man/man3/PKCS7_verify.3 \
 man/man3/PKCS8_encrypt.3 \
 man/man3/PKCS8_pkey_add1_attr.3 \
+man/man3/PKCS8_pkey_get0.3 \
 man/man3/RAND_add.3 \
 man/man3/RAND_bytes.3 \
 man/man3/RAND_cleanup.3 \
