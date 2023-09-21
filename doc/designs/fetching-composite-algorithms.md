@@ -20,8 +20,9 @@ Public API - Add variants of `EVP_PKEY_CTX` initializers
 
 As far as this design is concerned, these API sets are affected:
 
-- DigestSign and DigestVerify.
+- SIGNATURE (DigestSign and DigestVerify)
 - ASYM_CIPHER
+- KEYEXCH
 
 The proposal is to add these functions:
 
@@ -37,20 +38,23 @@ int EVP_PKEY_encrypt_init_ex2(EVP_PKEY_CTX *ctx, EVP_ASYM_CIPHER,
                               const OSSL_PARAM params[]);
 int EVP_PKEY_decrypt_init_ex2(EVP_PKEY_CTX *ctx, EVP_ASYM_CIPHER,
                               const OSSL_PARAM params[]);
+
+int EVP_PKEY_derive_init_ex2(EVP_PKEY_CTX *ctx, EVP_KEYEXCH,
+                             const OSSL_PARAM params[]);
 ```
 
-Because `EVP_SIGNATURE` and `EVP_ASYM_CIPHER` aren't limited to composite
-algorithms, these functions can be used just as well with explicit fetches
-of simple algorithms, say "RSA".  In that case, the caller will need to pass
-necessary auxiliary parameters through the `OSSL_PARAM` or a call to a
-corresponding `set_params` function.
+Because `EVP_SIGNATURE`, `EVP_ASYM_CIPHER` and `EVP_KEYEXCH` aren't limited
+to composite algorithms, these functions can be used just as well with
+explicit fetches of simple algorithms, say "RSA".  In that case, the caller
+will need to pass necessary auxiliary parameters through the `OSSL_PARAM` or
+a call to a corresponding `set_params` function.
 
 Requirements on the providers
 -----------------------------
 
 Because it's not immediately obvious from a composite algorithm name what
 key type it requires / supports, at least in code, allowing the use of an
-explicitly fetched `EVP_SIGNATURE` requires that providers cooperate by
+explicitly fetched implementation requires that providers cooperate by
 declaring what key type is required / supported by each algorithm.
 
 There are two ways this could be implemented:
@@ -62,6 +66,12 @@ There are two ways this could be implemented:
     ``` C
     # define OSSL_FUNC_SIGNATURE_QUERY_KEY_TYPE         26
     OSSL_CORE_MAKE_FUNC(const char *, signature_query_key_type, (void))
+
+    # define OSSL_FUNC ASYM_CIPHER_QUERY_KEY_TYPE       12
+    OSSL_CORE_MAKE_FUNC(const char *, asym_cipher_query_key_type, (void))
+
+    # define OSSL_FUNC_KEYEXCH_QUERY_KEY_TYPE           11
+    OSSL_CORE_MAKE_FUNC(const char *, keyexch_query_key_type, (void))
     ```
 
 2.  through a gettable `OSSL_PARAM`, using the param identity "keytype"
@@ -74,12 +84,12 @@ algorithms, or to respond to the key type query, some fallback strategies
 will be needed, such as:
 
 -   Attempt to fetch a keymgmt with the same name and in the same provider
-    as the passed `EVP_SIGNATURE`.  If one was found, its name can serve in
-    place of a queried key type.
+    as the passed operation.  If one was found, its name can serve in place
+    of a queried key type.
 -   libcrypto currently has knowledge of some composite algorithm names and
-    what they are composed of, accessible with `OBJ_find_sigid_algs`.  This
-    knowledge is regarded legacy, but can be used to figure out the key
-    type.
+    what they are composed of, accessible with `OBJ_find_sigid_algs` and
+    similar functionality.  This knowledge is regarded legacy, but can be
+    used to figure out the key type.
 
 These strategies have their limitations, but the built-in legacy knowledge
 we currently have in libcrypto should be enough to cover most bases.
