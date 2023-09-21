@@ -34,12 +34,12 @@ EVP_DigestVerifyInit_ex2(EVP_PKEY_CTX **pctx,
                          EVP_SIGNATURE *sig, EVP_PKEY *pkey,
                          OSSL_LIB_CTX *libctx, const OSSL_PARAM params[]);
 
-int EVP_PKEY_encrypt_init_ex2(EVP_PKEY_CTX *ctx, EVP_ASYM_CIPHER,
+int EVP_PKEY_encrypt_init_ex2(EVP_PKEY_CTX *ctx, EVP_ASYM_CIPHER *asymciph,
                               const OSSL_PARAM params[]);
-int EVP_PKEY_decrypt_init_ex2(EVP_PKEY_CTX *ctx, EVP_ASYM_CIPHER,
+int EVP_PKEY_decrypt_init_ex2(EVP_PKEY_CTX *ctx, EVP_ASYM_CIPHER *asymciph,
                               const OSSL_PARAM params[]);
 
-int EVP_PKEY_derive_init_ex2(EVP_PKEY_CTX *ctx, EVP_KEYEXCH,
+int EVP_PKEY_derive_init_ex2(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange,
                              const OSSL_PARAM params[]);
 ```
 
