@@ -242,9 +242,6 @@ int qtest_fault_set_datagram_listener(QTEST_FAULT *fault,
  */
 int qtest_fault_resize_datagram(QTEST_FAULT *fault, size_t newlen);
 
-/* Copy a BIO_ADDR */
-int bio_addr_copy(BIO_ADDR *dst, BIO_ADDR *src);
-
 /* Copy a BIO_MSG */
 int bio_msg_copy(BIO_MSG *dst, BIO_MSG *src);
 
