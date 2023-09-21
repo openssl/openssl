@@ -522,6 +522,12 @@ IF[{- !$disabled{tests} -}]
       INCLUDE[http_test]=../include ../apps/include
       DEPEND[http_test]=../libcrypto libtestutil.a
     ENDIF
+
+    PROGRAMS{noinst}=bio_addr_test
+
+    SOURCE[bio_addr_test]=bio_addr_test.c
+    INCLUDE[bio_addr_test]=../include ../apps/include
+    DEPEND[bio_addr_test]=../libcrypto libtestutil.a
   ENDIF
 
   SOURCE[dtlstest]=dtlstest.c helpers/ssltestlib.c
