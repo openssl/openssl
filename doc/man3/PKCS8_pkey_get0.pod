@@ -1,0 +1,68 @@
+=pod
+
+=head1 NAME
+
+PKCS8_pkey_get0, PKCS8_pkey_set0, PKCS8_pkey_get0_ex, PKCS8_pkey_set0_ex -
+PKCS8 accessor functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509.h>
+
+ int PKCS8_pkey_get0(const ASN1_OBJECT **ppkalg,
+                     const unsigned char **pk, int *ppklen,
+                     const X509_ALGOR **pa, const PKCS8_PRIV_KEY_INFO *p8);
+ int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
+                     int version, int ptype, void *pval,
+                     unsigned char *penc, int penclen);
+ int PKCS8_pkey_get0_ex(const ASN1_OBJECT **ppkalg,
+                        const unsigned char **pprivk, int *pprivklen,
+                        const unsigned char **ppubk, int *ppubklen,
+                        const X509_ALGOR **pa, const PKCS8_PRIV_KEY_INFO *p8);
+ int PKCS8_pkey_set0_ex(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
+                        int version, int ptype, void *pval,
+                        unsigned char *privenc, int privenclen,
+                        unsigned char *pubenc, int pubenclen);
+
+=head1 DESCRIPTION
+
+PKCS#8 objects in OpenSSL match the ASN.1 definitions provided in RFC 5208 and RFC 5958.
+Functions described in this man page provide manipulation of basic fields of the structure.
+
+PKCS8_pkey_get0() retrieves pointers to the key algorithm B<*pa>, ASN1_OBJECT
+B<*ppkalg>, private key representation and length into B<**pk> and B<*ppklen>.
+Retrieved objects are internal pointers that MUST NOT be freed up after the
+call.
+
+PKCS8_pkey_get0_ex() is the extended version of the previous function also
+retrieving public key data, if present.
+
+PKCS8_pkey_set0() and PKCS8_pkey_set0_ex() are setting equivalents for the
+previously mentioned getters.
+
+=head1 RETURN VALUES
+
+PKCS8_pkey_get0(), PKCS8_pkey_get0_ex(), PKCS8_pkey_set0(), and
+PKCS8_pkey_set0_ex() return 1 for success and 0 for failure.
+
+=head1 SEE ALSO
+
+L<crypto(7)>, L<PKCS8_pkey_add1_attr(3)>, L<PKCS8_pkey_add1_attr_by_NID(3)>, and
+L<PKCS8_pkey_add1_attr_by_OBJ(3)>
+
+=head1 HISTORY
+
+PKCS8_pkey_get0() and PKCS8_pkey_set0() are present since OpenSSL 1.1.1
+
+PKCS8_pkey_get0_ex() and PKCS8_pkey_set0_ex() are added in OpenSSL 3.2
+
+=head1 COPYRIGHT
+
+Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
