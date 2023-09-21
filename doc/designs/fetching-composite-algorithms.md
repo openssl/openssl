@@ -18,8 +18,10 @@ For a longer background and explanation, see
 Public API - Add variants of `EVP_PKEY_CTX` initializers
 --------------------------------------------------------
 
-As far as this design is concerned, there is only class of APIs affected by
-this: DigestSign and DigestVerify.
+As far as this design is concerned, these API sets are affected:
+
+- DigestSign and DigestVerify.
+- ASYM_CIPHER
 
 The proposal is to add these functions:
 
@@ -30,13 +32,18 @@ EVP_DigestSignInit_ex2(EVP_PKEY_CTX **pctx,
 EVP_DigestVerifyInit_ex2(EVP_PKEY_CTX **pctx,
                          EVP_SIGNATURE *sig, EVP_PKEY *pkey,
                          OSSL_LIB_CTX *libctx, const OSSL_PARAM params[]);
+
+int EVP_PKEY_encrypt_init_ex2(EVP_PKEY_CTX *ctx, EVP_ASYM_CIPHER,
+                              const OSSL_PARAM params[]);
+int EVP_PKEY_decrypt_init_ex2(EVP_PKEY_CTX *ctx, EVP_ASYM_CIPHER,
+                              const OSSL_PARAM params[]);
 ```
 
-Because `EVP_SIGNATURE` isn't limited to composite algorithms, these
-functions can be used just as well with explicit fetches of simple
-algorithms, say "RSA".  In that case, the caller will need to pass necessary
-auxiliary parameters through the `OSSL_PARAM` array (for example, with the
-"RSA" algorithm, a digest name).
+Because `EVP_SIGNATURE` and `EVP_ASYM_CIPHER` aren't limited to composite
+algorithms, these functions can be used just as well with explicit fetches
+of simple algorithms, say "RSA".  In that case, the caller will need to pass
+necessary auxiliary parameters through the `OSSL_PARAM` or a call to a
+corresponding `set_params` function.
 
 Requirements on the providers
 -----------------------------
