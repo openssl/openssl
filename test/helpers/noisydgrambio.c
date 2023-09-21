@@ -16,7 +16,7 @@
 struct noisy_dgram_st {
     uint64_t this_dgram;
     BIO_MSG msg;
-    uint64_t delayed_dgram;
+    uint64_t reinject_dgram;
 };
 
 static long noisy_dgram_ctrl(BIO *bio, int cmd, long num, void *ptr)
@@ -54,31 +54,66 @@ static int noisy_dgram_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
     return BIO_sendmmsg(next, msg, stride, num_msg, flags, msgs_processed);
 }
 
-static void get_noise(uint64_t *delay, int *should_drop)
+/* 1 in NOISE_RATE datagrams will be noisy. With a value of 5 that is 20% */
+#define NOISE_RATE  5
+
+/*
+ * We have 3 different types of noise: drop, duplicate and delay
+ * Each of these have equal probability.
+ */
+#define NOISE_TYPE_DROP      0
+#define NOISE_TYPE_DUPLICATE 1
+#define NOISE_TYPE_DELAY     2
+#define NUM_NOISE_TYPES      3
+
+/*
+ * When a duplicate occurs we reinject the new datagram after up to
+ * MAX_DGRAM_REINJECT datagrams have been sent. A reinject of 1 means that the
+ * duplicate follows immediately after the original datagram. A reinject of 4
+ * means that original datagram plus 3 other datagrams are sent before the
+ * reinjected datagram is inserted.
+ * This also controls when a delay (not a duplicate) occurs. In that case
+ * we add 1 to the number because there is no point in skipping the current
+ * datagram only to immediately reinject it in the next datagram.
+ */
+#define MAX_DGRAM_REINJECT 4
+
+static void get_noise(uint64_t *reinject, int *should_drop)
 {
     uint32_t type;
 
-    /* 20% of all datagrams should be noisy */
-    if (test_random() % 5 != 0) {
-        *delay = 0;
+    if (test_random() % NOISE_RATE != 0) {
+        *reinject = 0;
         *should_drop = 0;
         return;
     }
 
-    type = test_random() % 3;
-
-    /* Of noisy datagrams, 33% drop only, 33% delay only, 33% drop and delay */
-
-    *should_drop = (type == 0 || type == 1);
-
-    /* Where a delay occurs we delay by 1 - 4 datagrams */
-    *delay = (type == 0) ? 0 : (uint64_t)((test_random() % 4) + 1);
+    type = test_random() % NUM_NOISE_TYPES;
 
     /*
-     * No point in delaying by 1 datagram if we are also dropping, so we delay
-     * by an extra datagram in that case
+     * Of noisy datagrams, 33% drop, 33% duplicate, 33% delay
+     * A duplicated datagram keeps the current datagram and reinjects a new
+     * identical one after up to MAX_DGRAM_DELAY datagrams have been sent.
+     * A delayed datagram is implemented as both a reinject and a drop, i.e. an
+     * identical datagram is reinjected after the given number of datagrams have
+     * been sent and the current datagram is dropped.
      */
-    *delay += (uint64_t)(*should_drop);
+    *should_drop = (type == NOISE_TYPE_DROP || type == NOISE_TYPE_DELAY);
+
+    /*
+     * Where a duplicate occurs we reinject the copy of the datagram up to
+     * MAX_DGRAM_DELAY datagrams later
+     */
+    *reinject = (type == NOISE_TYPE_DROP)
+                ? 0
+                : (uint64_t)((test_random() % MAX_DGRAM_REINJECT) + 1);
+
+    /*
+     * No point in reinjecting after 1 datagram if the current datagram is also
+     * dropped (i.e. this is a delay not a duplicate), so we reinject after an
+     * extra datagram in that case
+     */
+    *reinject += (uint64_t)(*should_drop);
 }
 
 static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
@@ -133,14 +168,14 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
     for (i = 0, thismsg = msg;
          i < msg_cnt;
          i++, thismsg++, data->this_dgram++) {
-        uint64_t delay;
+        uint64_t reinject;
         int should_drop;
 
-        /* If we have a delayed message ready insert it now */
-        if (data->delayed_dgram > 0
-                && data->delayed_dgram == data->this_dgram) {
+        /* If we have a message to reinject then insert it now */
+        if (data->reinject_dgram > 0
+                && data->reinject_dgram == data->this_dgram) {
             if (msg_cnt < num_msg) {
-                /* Make space for the inserted message */
+                /* Make space for the injected message */
                 for (j = msg_cnt; j > i; j--) {
                     if (!bio_msg_copy(&msg[j], &msg[j - 1]))
                         return 0;
@@ -148,38 +183,38 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
                 if (!bio_msg_copy(thismsg, &data->msg))
                     return 0;
                 msg_cnt++;
-                data->delayed_dgram = 0;
+                data->reinject_dgram = 0;
 #ifdef OSSL_NOISY_DGRAM_DEBUG
-                printf("**Inserting a delayed datagram\n");
+                printf("**Injecting a datagram\n");
                 BIO_dump_fp(stdout, thismsg->data, thismsg->data_len);
                 printf("\n");
 #endif
                 continue;
-            } /* else we have no space for the insertion, so just drop it */
-            data->delayed_dgram = 0;
+            } /* else we have no space for the injection, so just drop it */
+            data->reinject_dgram = 0;
         }
 
-        get_noise(&delay, &should_drop);
+        get_noise(&reinject, &should_drop);
 
-        /* We ignore delay if a message is already delayed */
-        if (delay > 0 && data->delayed_dgram == 0) {
+        /*
+         * We ignore reinjection if a message is already waiting to be
+         * reinjected
+         */
+        if (reinject > 0 && data->reinject_dgram == 0) {
             /*
-             * Note that a message may be delayed *and* dropped, or delayed
-             * and *not* dropped.
-             * Delayed and dropped means the message will not be sent now and
-             * will only be sent after the delay.
-             * Delayed and not dropped means the message will be sent now and
-             * a duplicate will also be sent after the delay.
+             * Both duplicated and delayed datagrams get reintroduced after the
+             * delay period. Datagrams that are delayed only (not duplicated)
+             * will also have the current copy of the datagram dropped (i.e
+             * should_drop below will be true).
              */
-
             if (!bio_msg_copy(&data->msg, thismsg))
                 return 0;
 
-            data->delayed_dgram = data->this_dgram + delay;
+            data->reinject_dgram = data->this_dgram + reinject;
 
 #ifdef OSSL_NOISY_DGRAM_DEBUG
-            printf("**Delaying a datagram for %u messages%s\n",
-                   (unsigned int)delay, should_drop ? "" : "(duplicating)");
+            printf("**Scheduling a reinject after %u messages%s\n",
+                   (unsigned int)reinject, should_drop ? "" : "(duplicating)");
             BIO_dump_fp(stdout, thismsg->data, thismsg->data_len);
             printf("\n");
 #endif
