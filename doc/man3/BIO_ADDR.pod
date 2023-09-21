@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-BIO_ADDR, BIO_ADDR_new, BIO_ADDR_dup, BIO_ADDR_clear, BIO_ADDR_free,
-BIO_ADDR_rawmake,
+BIO_ADDR, BIO_ADDR_new, BIO_ADDR_copy, BIO_ADDR_dup, BIO_ADDR_clear,
+BIO_ADDR_free, BIO_ADDR_rawmake,
 BIO_ADDR_family, BIO_ADDR_rawaddress, BIO_ADDR_rawport,
 BIO_ADDR_hostname_string, BIO_ADDR_service_string,
 BIO_ADDR_path_string - BIO_ADDR routines
@@ -16,6 +16,7 @@ BIO_ADDR_path_string - BIO_ADDR routines
  typedef union bio_addr_st BIO_ADDR;
 
  BIO_ADDR *BIO_ADDR_new(void);
+ int BIO_ADDR_copy(BIO_ADDR *dst, const BIO_ADDR *src);
  BIO_ADDR *BIO_ADDR_dup(const BIO_ADDR *ap);
  void BIO_ADDR_free(BIO_ADDR *);
  void BIO_ADDR_clear(BIO_ADDR *ap);
@@ -38,6 +39,9 @@ available on the platform at hand.
 BIO_ADDR_new() creates a new unfilled B<BIO_ADDR>, to be used
 with routines that will fill it with information, such as
 BIO_accept_ex().
+
+BIO_ADDR_copy() copies the contents of B<src> into B<dst>. Neither B<src> or
+B<dst> can be NULL.
 
 BIO_ADDR_dup() creates a new B<BIO_ADDR>, with a copy of the
 address data in B<ap>.
@@ -112,6 +116,8 @@ BIO_ADDR_service_string() and BIO_ADDR_path_string() will
 return B<NULL> on error and leave an error indication on the
 OpenSSL error stack.
 
+BIO_ADDR_copy() returns 1 on success or 0 on error.
+
 All other functions described here return 0 or B<NULL> when the
 information they should return isn't available.
 
@@ -121,7 +127,7 @@ L<BIO_connect(3)>, L<BIO_s_connect(3)>
 
 =head1 HISTORY
 
-BIO_ADDR_dup() was added in OpenSSL 3.2.
+BIO_ADDR_copy() and BIO_ADDR_dup() were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
