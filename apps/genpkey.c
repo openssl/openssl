@@ -292,6 +292,7 @@ int genpkey_main(int argc, char **argv)
     EVP_PKEY_CTX_free(ctx);
     EVP_CIPHER_free(cipher);
     BIO_free_all(out);
+    BIO_free_all(outpubkey);
     BIO_free(in);
     release_engine(e);
     OPENSSL_free(pass);
