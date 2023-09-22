@@ -100,6 +100,9 @@ with the fetched algorithm:
     similar functionality.  This knowledge is regarded legacy, but can be
     used to figure out the key type.
 
+If none of these strategies work out, the operation initialization should
+fail.
+
 These strategies have their limitations, but the built-in legacy knowledge
 we currently have in libcrypto should be enough to cover most bases.
 
