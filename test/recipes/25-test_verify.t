@@ -29,7 +29,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 185;
+plan tests => 193;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -339,7 +339,7 @@ ok(!verify("ee-cert-md5", "", ["root-cert"], ["ca-cert"]),
 
 # Explicit vs named curve tests
 SKIP: {
-    skip "EC is not supported by this OpenSSL build", 3
+    skip "EC is not supported by this OpenSSL build", 7
         if disabled("ec");
     ok(!verify("ee-cert-ec-explicit", "", ["root-cert"],
                ["ca-cert-ec-named"]),
@@ -350,6 +350,14 @@ SKIP: {
     ok(verify("ee-cert-ec-named-named", "", ["root-cert"],
               ["ca-cert-ec-named"]),
         "accept named curve leaf with named curve intermediate");
+    ok(verify("ee-cert-ec-sha3-224", "", ["root-cert"], ["ca-cert-ec-named"], ),
+        "accept cert generated with EC and SHA3-224");
+    ok(verify("ee-cert-ec-sha3-256", "", ["root-cert"], ["ca-cert-ec-named"], ),
+        "accept cert generated with EC and SHA3-256");
+    ok(verify("ee-cert-ec-sha3-384", "", ["root-cert"], ["ca-cert-ec-named"], ),
+        "accept cert generated with EC and SHA3-384");
+    ok(verify("ee-cert-ec-sha3-512", "", ["root-cert"], ["ca-cert-ec-named"], ),
+        "accept cert generated with EC and SHA3-512");
 }
 # Same as above but with base provider used for decoding
 SKIP: {
@@ -358,7 +366,7 @@ SKIP: {
     my $provpath = bldtop_dir("providers");
     my @prov = ("-provider-path", $provpath);
 
-    skip "EC is not supported or FIPS is disabled", 3
+    skip "EC is not supported or FIPS is disabled", 7
         if disabled("ec") || $no_fips;
 
     run(test(["fips_version_test", "-config", $provconf, ">3.0.0"]),
@@ -377,6 +385,14 @@ SKIP: {
     ok(verify("ee-cert-ec-named-named", "", ["root-cert"],
               ["ca-cert-ec-named"], @prov),
         "accept named curve leaf with named curve intermediate w/fips");
+    ok(verify("ee-cert-ec-sha3-224", "", ["root-cert"], ["ca-cert-ec-named"], @prov),
+        "accept cert generated with EC and SHA3-224 w/fips");
+    ok(verify("ee-cert-ec-sha3-256", "", ["root-cert"], ["ca-cert-ec-named"], @prov),
+        "accept cert generated with EC and SHA3-256 w/fips");
+    ok(verify("ee-cert-ec-sha3-384", "", ["root-cert"], ["ca-cert-ec-named"], @prov),
+        "accept cert generated with EC and SHA3-384 w/fips");
+    ok(verify("ee-cert-ec-sha3-512", "", ["root-cert"], ["ca-cert-ec-named"], @prov),
+        "accept cert generated with EC and SHA3-512 w/fips");
 
     delete $ENV{OPENSSL_CONF};
 }

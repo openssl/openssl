@@ -471,3 +471,9 @@ OPENSSL_SIGALG=ED448 OPENSSL_KEYALG=ed448 ./mkcert.sh genee ed448 \
 ./mkcert.sh geneeextra server.example ee-key ee-cert-policies ca-key ca-cert "certificatePolicies=1.3.6.1.4.1.16604.998855.1"
 # We can create a cert with a duplicate policy oid - but its actually invalid!
 ./mkcert.sh geneeextra server.example ee-key ee-cert-policies-bad ca-key ca-cert "certificatePolicies=1.3.6.1.4.1.16604.998855.1,1.3.6.1.4.1.16604.998855.1"
+
+# EC cert signed by curve ca with SHA3-224, SHA3-256, SHA3-384, SHA3-512
+OPENSSL_SIGALG="sha3-224" ./mkcert.sh genee server.example ee-key-ec-named-named ee-cert-ec-sha3-224 ca-key-ec-named ca-cert-ec-named
+OPENSSL_SIGALG="sha3-256" ./mkcert.sh genee server.example ee-key-ec-named-named ee-cert-ec-sha3-256 ca-key-ec-named ca-cert-ec-named
+OPENSSL_SIGALG="sha3-384" ./mkcert.sh genee server.example ee-key-ec-named-named ee-cert-ec-sha3-384 ca-key-ec-named ca-cert-ec-named
+OPENSSL_SIGALG="sha3-512" ./mkcert.sh genee server.example ee-key-ec-named-named ee-cert-ec-sha3-512 ca-key-ec-named ca-cert-ec-named
