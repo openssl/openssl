@@ -7,7 +7,7 @@ Quick background
 We currently support - at least in the public libcrypto API - explicitly
 fetching composite algorithms (such as AES-128-CBC or HMAC-SHA256), and
 using them in most cases.  In some cases (symmetric ciphers), our providers
-also provides them.
+also provide them.
 
 However, there is one class of algorithms where the support for *using*
 explicitly fetched algorithms is lacking: asymmetric algorithms.
