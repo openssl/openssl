@@ -27,7 +27,7 @@
  *
  * The FIPS provider tells libcrypto about which threads it is interested in
  * by calling "c_thread_start" which is a function pointer created during
- * provider initialisation (i.e. OSSL_init_provider).
+ * provider initialisation (i.e. OSSL_provider_init).
  */
 extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
 #endif
