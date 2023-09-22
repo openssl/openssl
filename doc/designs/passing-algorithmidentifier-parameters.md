@@ -107,3 +107,29 @@ crucially, the `EVP_PKEY` ctrls for PKCS#7 and CMS were not retained,
 because the way they were implemented violated the principle that provider
 implementations *MUST NOT* share complex OpenSSL specific structures with
 libcrypto.
+
+### Usage examples
+
+Quite a lot of the available examples today revolve around CMS, with a
+number of RFCs that specify what parameters should be passed with certain
+operations / algorithms.  This list is not exhaustive, the reader is
+encouraged to research further usages.
+
+- [DSA](https://www.rfc-editor.org/rfc/rfc3370#section-3.1) signatures
+  typically have the domain parameters *p*, *q* and *g*.
+- [RC2 key wrap](https://www.rfc-editor.org/rfc/rfc3370#section-4.3.2)
+- [PBKDF2](https://www.rfc-editor.org/rfc/rfc3370#section-4.4.1)
+- [3DES-CBC](https://www.rfc-editor.org/rfc/rfc3370#section-5.1)
+- [RC2-CBC](https://www.rfc-editor.org/rfc/rfc3370#section-5.2)
+
+- [GOST 28147-89](https://www.rfc-editor.org/rfc/rfc4490.html#section-5.1)
+
+- [RSA-OAEP](https://www.rfc-editor.org/rfc/rfc8017#appendix-A.2.1)
+- [RSA-PSS](https://www.rfc-editor.org/rfc/rfc8017#appendix-A.2.3)
+
+- [XOR-MD5](https://www.rfc-editor.org/rfc/rfc6210.html) is experimental,
+  but it does demonstrate the possibility of a parametrized hash algorithm.
+
+Some of it can be claimed to already have support in OpenSSL.  However, this
+is with old libcrypto code that has special knowledge of the algorithms that
+are involved.
