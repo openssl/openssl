@@ -71,8 +71,8 @@ Requirements on the providers
 
 Providers that implement ciphers or any operation that uses asymmetric keys
 will have to implement support for passing AlgorithmIdentifier parameter
-data, and will to process that data in whatever manner that's necessary to
-meet the standards for that operation.
+data, and will have to process that data in whatever manner that's necessary
+to meet the standards for that operation.
 
 Fallback strategies
 -------------------
