@@ -9,7 +9,6 @@
 
 #include <stdlib.h>
 #include "internal/event_queue.h"
-#include "crypto/sparse_array.h"
 #include "ssl_local.h"
 
 struct ossl_event_queue_st {
