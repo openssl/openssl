@@ -38,7 +38,7 @@ IF[{- !$disabled{tests} -}]
           ecstresstest gmdifftest pbelutest \
           destest mdc2test sha_test \
           exptest pbetest localetest evp_pkey_ctx_new_from_name \
-          evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
+          evp_pkey_provided_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test evp_libctx_test ossl_store_test \
           v3nametest v3ext punycode_test \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
@@ -65,6 +65,12 @@ IF[{- !$disabled{tests} -}]
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest
+
+  IF[{- !$disabled{'install-evp-test'} -}]
+    PROGRAMS=evp_test
+  ELSE
+    PROGRAMS{noinst}=evp_test
+  ENDIF
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
