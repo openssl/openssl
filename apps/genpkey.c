@@ -23,7 +23,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_ENGINE, OPT_OUTFORM, OPT_OUT, OPT_PASS, OPT_PARAMFILE,
     OPT_ALGORITHM, OPT_PKEYOPT, OPT_GENPARAM, OPT_TEXT, OPT_CIPHER,
-    OPT_VERBOSE, OPT_QUIET, OPT_CONFIG,
+    OPT_VERBOSE, OPT_QUIET, OPT_CONFIG, OPT_OUTPUBKEY,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -42,11 +42,12 @@ const OPTIONS genpkey_options[] = {
      OPT_CONFIG_OPTION,
 
     OPT_SECTION("Output"),
-    {"out", OPT_OUT, '>', "Output file"},
+    {"out", OPT_OUT, '>', "Output (private key) file"},
+    {"outpubkey", OPT_OUTPUBKEY, '>', "Output public key file"},
     {"outform", OPT_OUTFORM, 'F', "output format (DER or PEM)"},
     {"pass", OPT_PASS, 's', "Output file pass phrase source"},
     {"genparam", OPT_GENPARAM, '-', "Generate parameters, not key"},
-    {"text", OPT_TEXT, '-', "Print the in text"},
+    {"text", OPT_TEXT, '-', "Print the private key in text"},
     {"", OPT_CIPHER, '-', "Cipher to use to encrypt the key"},
 
     OPT_PROV_OPTIONS,
@@ -104,11 +105,12 @@ cleanup:
 int genpkey_main(int argc, char **argv)
 {
     CONF *conf = NULL;
-    BIO *in = NULL, *out = NULL;
+    BIO *in = NULL, *out = NULL, *outpubkey = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     char *outfile = NULL, *passarg = NULL, *pass = NULL, *prog, *p;
+    char *outpubkeyfile = NULL;
     const char *ciphername = NULL, *paramfile = NULL, *algname = NULL;
     EVP_CIPHER *cipher = NULL;
     OPTION_CHOICE o;
@@ -140,6 +142,9 @@ int genpkey_main(int argc, char **argv)
             break;
         case OPT_OUT:
             outfile = opt_arg();
+            break;
+        case OPT_OUTPUBKEY:
+            outpubkeyfile = opt_arg();
             break;
         case OPT_PASS:
             passarg = opt_arg();
@@ -228,6 +233,12 @@ int genpkey_main(int argc, char **argv)
     if (out == NULL)
         goto end;
 
+    if (outpubkeyfile != NULL) {
+        outpubkey = bio_open_owner(outpubkeyfile, outformat, private);
+        if (outpubkey == NULL)
+            goto end;
+    }
+
     if (verbose)
         EVP_PKEY_CTX_set_cb(ctx, progress_cb);
     EVP_PKEY_CTX_set_app_data(ctx, bio_err);
@@ -242,9 +253,13 @@ int genpkey_main(int argc, char **argv)
     } else if (outformat == FORMAT_PEM) {
         assert(private);
         rv = PEM_write_bio_PrivateKey(out, pkey, cipher, NULL, 0, NULL, pass);
+        if (rv > 0 && outpubkey != NULL)
+           rv = PEM_write_bio_PUBKEY(outpubkey, pkey);
     } else if (outformat == FORMAT_ASN1) {
         assert(private);
         rv = i2d_PrivateKey_bio(out, pkey);
+        if (rv > 0 && outpubkey != NULL)
+           rv = i2d_PUBKEY_bio(outpubkey, pkey);
     } else {
         BIO_printf(bio_err, "Bad format specified for key\n");
         goto end;
@@ -253,7 +268,7 @@ int genpkey_main(int argc, char **argv)
     ret = 0;
 
     if (rv <= 0) {
-        BIO_puts(bio_err, "Error writing key\n");
+        BIO_puts(bio_err, "Error writing key(s)\n");
         ret = 1;
     }
 
@@ -277,6 +292,7 @@ int genpkey_main(int argc, char **argv)
     EVP_PKEY_CTX_free(ctx);
     EVP_CIPHER_free(cipher);
     BIO_free_all(out);
+    BIO_free_all(outpubkey);
     BIO_free(in);
     release_engine(e);
     OPENSSL_free(pass);
