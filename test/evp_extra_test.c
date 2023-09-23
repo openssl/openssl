@@ -1179,6 +1179,88 @@ static int test_EVP_PKEY_sign(int tst)
     return ret;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+static int test_EVP_PKEY_sign_with_app_method(int tst)
+{
+    int ret = 0;
+    EVP_PKEY *pkey = NULL;
+    RSA *rsa = NULL;
+    RSA_METHOD *rsa_meth = NULL;
+#ifndef OPENSSL_NO_DSA
+    DSA *dsa = NULL;
+    DSA_METHOD *dsa_meth = NULL;
+#endif
+    unsigned char *sig = NULL;
+    size_t sig_len = 0, shortsig_len = 1;
+    EVP_PKEY_CTX *ctx = NULL;
+    unsigned char tbs[] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+        0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13
+    };
+
+    if (tst == 0) {
+        if (!TEST_ptr(pkey = load_example_rsa_key()))
+            goto out;
+        if (!TEST_ptr(rsa_meth = RSA_meth_dup(RSA_get_default_method())))
+            goto out;
+
+        if (!TEST_ptr(rsa = EVP_PKEY_get1_RSA(pkey))
+            || !TEST_int_gt(RSA_set_method(rsa, rsa_meth), 0)
+            || !TEST_int_gt(EVP_PKEY_assign_RSA(pkey, rsa), 0))
+            goto out;
+        rsa = NULL; /* now owned by the pkey */
+    } else {
+#ifndef OPENSSL_NO_DSA
+        if (!TEST_ptr(pkey = load_example_dsa_key()))
+                goto out;
+        if (!TEST_ptr(dsa_meth = DSA_meth_dup(DSA_get_default_method())))
+            goto out;
+
+        if (!TEST_ptr(dsa = EVP_PKEY_get1_DSA(pkey))
+            || !TEST_int_gt(DSA_set_method(dsa, dsa_meth), 0)
+            || !TEST_int_gt(EVP_PKEY_assign_DSA(pkey, dsa), 0))
+            goto out;
+        dsa = NULL; /* now owned by the pkey */
+#else
+        ret = 1;
+        goto out;
+#endif
+    }
+
+    ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, NULL);
+    if (!TEST_ptr(ctx)
+            || !TEST_int_gt(EVP_PKEY_sign_init(ctx), 0)
+            || !TEST_int_gt(EVP_PKEY_sign(ctx, NULL, &sig_len, tbs,
+                                          sizeof(tbs)), 0))
+        goto out;
+    sig = OPENSSL_malloc(sig_len);
+    if (!TEST_ptr(sig)
+            /* Test sending a signature buffer that is too short is rejected */
+            || !TEST_int_le(EVP_PKEY_sign(ctx, sig, &shortsig_len, tbs,
+                                          sizeof(tbs)), 0)
+            || !TEST_int_gt(EVP_PKEY_sign(ctx, sig, &sig_len, tbs, sizeof(tbs)),
+                            0)
+            /* Test the signature round-trips */
+            || !TEST_int_gt(EVP_PKEY_verify_init(ctx), 0)
+            || !TEST_int_gt(EVP_PKEY_verify(ctx, sig, sig_len, tbs, sizeof(tbs)),
+                            0))
+        goto out;
+
+    ret = 1;
+ out:
+    EVP_PKEY_CTX_free(ctx);
+    OPENSSL_free(sig);
+    EVP_PKEY_free(pkey);
+    RSA_free(rsa);
+    RSA_meth_free(rsa_meth);
+#ifndef OPENSSL_NO_DSA
+    DSA_free(dsa);
+    DSA_meth_free(dsa_meth);
+#endif
+    return ret;
+}
+#endif /* !OPENSSL_NO_DEPRECATED_3_0 */
+
 /*
  * n = 0 => test using legacy cipher
  * n = 1 => test using fetched cipher
@@ -4773,6 +4855,9 @@ int setup_tests(void)
     ADD_TEST(test_EVP_Digest);
     ADD_TEST(test_EVP_md_null);
     ADD_ALL_TESTS(test_EVP_PKEY_sign, 3);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    ADD_ALL_TESTS(test_EVP_PKEY_sign_with_app_method, 2);
+#endif
     ADD_ALL_TESTS(test_EVP_Enveloped, 2);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey, OSSL_NELEM(keydata));
     ADD_TEST(test_privatekey_to_pkcs8);
