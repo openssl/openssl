@@ -1133,11 +1133,11 @@ static int test_EVP_PKEY_sign(int tst)
 
     if (tst == 0 ) {
         if (!TEST_ptr(pkey = load_example_rsa_key()))
-                goto out;
+            goto out;
     } else if (tst == 1) {
 #ifndef OPENSSL_NO_DSA
         if (!TEST_ptr(pkey = load_example_dsa_key()))
-                goto out;
+            goto out;
 #else
         ret = 1;
         goto out;
@@ -1145,7 +1145,7 @@ static int test_EVP_PKEY_sign(int tst)
     } else {
 #ifndef OPENSSL_NO_EC
         if (!TEST_ptr(pkey = load_example_ec_key()))
-                goto out;
+            goto out;
 #else
         ret = 1;
         goto out;
