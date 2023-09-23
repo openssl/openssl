@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <openssl/configuration.h>
 #include <openssl/bio.h>
+#include "internal/e_os.h" /* For struct timeval */
 #include "quictestlib.h"
 #include "ssltestlib.h"
 #include "../testutil.h"
