@@ -184,7 +184,7 @@ static int cipher_hw_aes_xts_rv64i_zvkned_initkey(PROV_CIPHER_CTX *ctx,
     OSSL_xts_stream_fn stream_dec = NULL;
 
     /* Zvkned only supports 128 and 256 bit keys. */
-    if (keylen * 8 == 128 || keylen * 8 == 256) {
+    if (keylen * 8 == 128 * 2 || keylen * 8 == 256 * 2) {
         XTS_SET_KEY_FN(rv64i_zvkned_set_encrypt_key,
                        rv64i_zvkned_set_decrypt_key,
                        rv64i_zvkned_encrypt, rv64i_zvkned_decrypt,
@@ -202,7 +202,7 @@ static const PROV_CIPHER_HW aes_xts_rv64i_zknd_zkne = {                        \
     cipher_hw_aes_xts_rv64i_zknd_zkne_initkey,                                 \
     NULL,                                                                      \
     cipher_hw_aes_xts_copyctx                                                  \
-};
+};                                                                             \
 static const PROV_CIPHER_HW aes_xts_rv64i_zvkned = {                           \
     cipher_hw_aes_xts_rv64i_zvkned_initkey,                                    \
     NULL,                                                                      \
