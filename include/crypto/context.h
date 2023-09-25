@@ -21,6 +21,7 @@ void *ossl_child_prov_ctx_new(OSSL_LIB_CTX *);
 void *ossl_prov_drbg_nonce_ctx_new(OSSL_LIB_CTX *);
 void *ossl_self_test_set_callback_new(OSSL_LIB_CTX *);
 void *ossl_rand_crng_ctx_new(OSSL_LIB_CTX *);
+int ossl_thread_register_fips(OSSL_LIB_CTX *);
 void *ossl_thread_event_ctx_new(OSSL_LIB_CTX *);
 void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *);
 #if defined(OPENSSL_THREADS)
