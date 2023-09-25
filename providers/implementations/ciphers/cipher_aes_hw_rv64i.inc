@@ -93,6 +93,12 @@ static int cipher_hw_rv64i_zvkned_initkey(PROV_CIPHER_CTX *dat,
         if (RISCV_HAS_ZVKB()) {
             dat->stream.ctr = (ctr128_f) rv64i_zvkb_zvkned_ctr32_encrypt_blocks;
         }
+    } else if (dat->mode == EVP_CIPH_ECB_MODE) {
+        if (dat->enc) {
+            dat->stream.ecb = (ecb128_f) rv64i_zvkned_ecb_encrypt;
+        } else {
+            dat->stream.ecb = (ecb128_f) rv64i_zvkned_ecb_decrypt;
+        }
     }
 
     /* Zvkned supports aes-128/192/256 encryption and decryption. */
