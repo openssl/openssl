@@ -442,6 +442,15 @@ sub viota_m {
     return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($vd << 7));
 }
 
+sub vle8_v {
+    # vle8.v vd, (rs1), vm
+    my $template = 0b000000_0_00000_00000_000_00000_0000111;
+    my $vd = read_vreg shift;
+    my $rs1 = read_reg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($rs1 << 15) | ($vd << 7));
+}
+
 sub vle32_v {
     # vle32.v vd, (rs1), vm
     my $template = 0b000000_0_00000_00000_110_00000_0000111;
@@ -566,6 +575,15 @@ sub vor_vv_v0t {
     my $vs2 = read_vreg shift;
     my $vs1 = read_vreg shift;
     return ".word ".($template | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
+}
+
+sub vse8_v {
+    # vse8.v vd, (rs1), vm
+    my $template = 0b000000_0_00000_00000_000_00000_0100111;
+    my $vd = read_vreg shift;
+    my $rs1 = read_reg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($rs1 << 15) | ($vd << 7));
 }
 
 sub vse32_v {
@@ -744,6 +762,15 @@ sub vxor_vv {
     return ".word ".($template | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
 }
 
+sub vzext_vf2 {
+    # vzext.vf2 vd, vs2, vm
+    my $template = 0b010010_0_00000_00110_010_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($vd << 7));
+}
+
 # Vector crypto instructions
 
 ## Zvbb and Zvkb instructions
@@ -758,6 +785,15 @@ sub vxor_vv {
 ## vrol (also in zvkb)
 ## vror (also in zvkb)
 ## vwsll
+
+sub vbrev8_v {
+    # vbrev8.v vd, vs2, vm
+    my $template = 0b010010_0_00000_01000_010_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($vd << 7));
+}
 
 sub vrev8_v {
     # vrev8.v vd, vs2, vm
@@ -778,6 +814,16 @@ sub vror_vi {
     my $uimm_i4_0 = $uimm & 0b11111;
 
     return ".word ".($template | ($uimm_i5 << 26) | ($vs2 << 20) | ($uimm_i4_0 << 15) | ($vd << 7));
+}
+
+sub vwsll_vv {
+    # vwsll.vv vd, vs2, vs1, vm
+    my $template = 0b110101_0_00000_00000_000_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $vs1 = read_vreg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
 }
 
 ## Zvbc instructions

@@ -437,13 +437,13 @@ void aes256_t4_xts_decrypt(const unsigned char *in, unsigned char *out,
 
 /* Zkne and Zknd extensions (scalar crypto AES). */
 int rv64i_zkne_set_encrypt_key(const unsigned char *userKey, const int bits,
-                          AES_KEY *key);
+                               AES_KEY *key);
 int rv64i_zknd_set_decrypt_key(const unsigned char *userKey, const int bits,
-                          AES_KEY *key);
+                               AES_KEY *key);
 void rv64i_zkne_encrypt(const unsigned char *in, unsigned char *out,
-                   const AES_KEY *key);
+                        const AES_KEY *key);
 void rv64i_zknd_decrypt(const unsigned char *in, unsigned char *out,
-                   const AES_KEY *key);
+                        const AES_KEY *key);
 /* Zvkned extension (vector crypto AES). */
 int rv64i_zvkned_set_encrypt_key(const unsigned char *userKey, const int bits,
                                  AES_KEY *key);
@@ -484,6 +484,18 @@ size_t rv64i_zvkb_zvkg_zvkned_aes_gcm_decrypt(const unsigned char *in,
                                               unsigned char *out, size_t len,
                                               const void *key,
                                               unsigned char ivec[16], u64 *Xi);
+
+void rv64i_zvbb_zvkg_zvkned_aes_xts_encrypt(const unsigned char *in,
+                                            unsigned char *out, size_t length,
+                                            const AES_KEY *key1,
+                                            const AES_KEY *key2,
+                                            const unsigned char iv[16]);
+
+void rv64i_zvbb_zvkg_zvkned_aes_xts_decrypt(const unsigned char *in,
+                                            unsigned char *out, size_t length,
+                                            const AES_KEY *key1,
+                                            const AES_KEY *key2,
+                                            const unsigned char iv[16]);
 
 void gcm_ghash_rv64i_zvkg(u64 Xi[2], const u128 Htable[16], const u8 *inp,
                           size_t len);

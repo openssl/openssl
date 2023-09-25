@@ -126,6 +126,7 @@ GENERATE[aes-riscv64-zkn.s]=asm/aes-riscv64-zkn.pl
 GENERATE[aes-riscv32-zkn.s]=asm/aes-riscv32-zkn.pl
 GENERATE[aes-riscv64-zvkb-zvkned.s]=asm/aes-riscv64-zvkb-zvkned.pl
 GENERATE[aes-riscv64-zvkned.s]=asm/aes-riscv64-zvkned.pl
+GENERATE[aes-riscv64-zvbb-zvkg-zvkned.s]=asm/aes-riscv64-zvbb-zvkg-zvkned.pl
 
 GENERATE[aesv8-armx.S]=asm/aesv8-armx.pl
 INCLUDE[aesv8-armx.o]=..
