@@ -706,6 +706,15 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     fgbl->handle = handle;
 
     /*
+     * We need to register this thread to receive thread lifecycle callbacks.
+     * This wouldn't matter if the current thread is also the same thread that
+     * closes the FIPS provider down. But if that happens on a different thread
+     * then memory leaks could otherwise occur.
+     */
+    if (!ossl_thread_register_fips(libctx))
+        goto err;
+
+    /*
      * We did initial set up of selftest_params in a local copy, because we
      * could not create fgbl until c_CRYPTO_zalloc was defined in the loop
      * above.
