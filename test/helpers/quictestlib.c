@@ -16,6 +16,7 @@
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
 # include "../threadstest.h"
 #endif
+#include "internal/e_os.h" /* For struct timeval */
 #include "internal/quic_ssl.h"
 #include "internal/quic_wire_pkt.h"
 #include "internal/quic_record_tx.h"
