@@ -8,6 +8,7 @@
  */
 
 #include <assert.h>
+#include <openssl/e_os2.h>
 #include <openssl/configuration.h>
 #include <openssl/bio.h>
 #include "quictestlib.h"
