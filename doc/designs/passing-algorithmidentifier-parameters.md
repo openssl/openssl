@@ -22,7 +22,7 @@ We already have a parameter key, but it's currently only specified for
 `EVP_CIPHER`, in support of `EVP_CIPHER_param_to_asn1()` and
 `EVP_CIPHER_asn1_to_param()`.
 
-"alg_id_param", also known as the macro `OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS`
+"alg\_id\_param", also known as the macro `OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS`
 
 This parameter can be used in the exact same manner with other operations,
 with the value of the AlgorithmIdentifier parameter as an octet string, to
@@ -33,6 +33,27 @@ with the multitude of initialization functions that take such an array, or
 using specific operation `OSSL_PARAM` setters and getters (such as
 `EVP_PKEY_CTX_set_params`), or using other available convenience functions
 (see below).
+
+This parameter will have to be documented in the following files:
+
+- `doc/man7/provider-asym_cipher.pod`
+- `doc/man7/provider-cipher.pod`
+- `doc/man7/provider-digest.pod`
+- `doc/man7/provider-kdf.pod`
+- `doc/man7/provider-kem.pod`
+- `doc/man7/provider-keyexch.pod`
+- `doc/man7/provider-mac.pod`
+- `doc/man7/provider-signature.pod`
+
+That should cover all algorithms that are, or should be possible to fetch by
+AlgorithmIdentifier.algorithm, and for which there's potentially a relevant
+AlgorithmIdentifier.parameters field.
+
+We may arguably want to consider `doc/man7/provider-keymgmt.pod` too, but
+an AlgorithmIdentifier that's attached directly to a key is usually part of
+a PrivKeyInfo or SubjectÅublicKeyInfo structure, and those are handled by
+endoders and decoders as those see fit, and there's no tangible reason why
+that would have to change.
 
 Public convenience API
 ----------------------
