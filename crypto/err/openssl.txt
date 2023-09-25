@@ -1154,6 +1154,7 @@ RAND_R_FWRITE_ERROR:123:Error writing file
 RAND_R_GENERATE_ERROR:112:generate error
 RAND_R_INSUFFICIENT_DRBG_STRENGTH:139:insufficient drbg strength
 RAND_R_INTERNAL_ERROR:113:internal error
+RAND_R_INVALID_PROPERTY_QUERY:137:invalid property query
 RAND_R_IN_ERROR_STATE:114:in error state
 RAND_R_NOT_A_REGULAR_FILE:122:Not a regular file
 RAND_R_NOT_INSTANTIATED:115:not instantiated
