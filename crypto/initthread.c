@@ -249,6 +249,15 @@ void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
 
 #else
 
+static void ossl_arg_thread_stop(void *arg);
+
+/* Register the current thread so that we are informed if it gets stopped */
+int ossl_thread_register_fips(OSSL_LIB_CTX *libctx)
+{
+    return c_thread_start(FIPS_get_core_handle(libctx), ossl_arg_thread_stop,
+                          libctx);
+}
+
 void *ossl_thread_event_ctx_new(OSSL_LIB_CTX *libctx)
 {
     THREAD_EVENT_HANDLER **hands = NULL;
@@ -267,6 +276,16 @@ void *ossl_thread_event_ctx_new(OSSL_LIB_CTX *libctx)
 
     if (!CRYPTO_THREAD_set_local(tlocal, hands))
         goto err;
+
+    /*
+     * We should ideally call ossl_thread_register_fips() here. This function
+     * is called during the startup of the FIPS provider and we need to ensure
+     * that the main thread is registered to receive thread callbacks in order
+     * to free |hands| that we allocated above. However we are too early in
+     * the FIPS provider initialisation that FIPS_get_core_handle() doesn't work
+     * yet. So we defer this to the main provider OSSL_provider_init_int()
+     * function.
+     */
 
     return tlocal;
  err:
@@ -379,8 +398,7 @@ int ossl_init_thread_start(const void *index, void *arg,
          * libcrypto to tell us about later thread stop events. c_thread_start
          * is a callback to libcrypto defined in fipsprov.c
          */
-        if (!c_thread_start(FIPS_get_core_handle(ctx), ossl_arg_thread_stop,
-                            ctx))
+        if (!ossl_thread_register_fips(ctx))
             return 0;
     }
 #endif
