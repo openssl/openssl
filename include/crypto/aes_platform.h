@@ -475,6 +475,26 @@ void rv64i_zvkb_zvkned_ctr32_encrypt_blocks(const unsigned char *in,
                                             const void *key,
                                             const unsigned char ivec[16]);
 
+size_t rv64i_zvbb_zvkg_zvkned_aes_gcm_encrypt(const unsigned char *in,
+                                              unsigned char *out, size_t len,
+                                              const void *key,
+                                              unsigned char ivec[16], u64 *Xi);
+
+size_t rv64i_zvbb_zvkg_zvkned_aes_gcm_decrypt(const unsigned char *in,
+                                              unsigned char *out, size_t len,
+                                              const void *key,
+                                              unsigned char ivec[16], u64 *Xi);
+
+void gcm_ghash_rv64i_zvkg(u64 Xi[2], const u128 Htable[16], const u8 *inp,
+                          size_t len);
+
+#  define AES_GCM_ENC_BYTES 64
+#  define AES_GCM_DEC_BYTES 64
+#  define AES_gcm_encrypt rv64i_zvbb_zvkg_zvkned_aes_gcm_encrypt
+#  define AES_gcm_decrypt rv64i_zvbb_zvkg_zvkned_aes_gcm_decrypt
+#  define AES_GCM_ASM(ctx)    (ctx->ctr == rv64i_zvbb_zvkned_ctr32_encrypt_blocks && \
+                               ctx->gcm.funcs.ghash == gcm_ghash_rv64i_zvkg)
+
 # elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
 /* RISC-V 32 support */
 #  include "riscv_arch.h"
