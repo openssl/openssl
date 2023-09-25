@@ -15,6 +15,10 @@
 #include "internal/cryptlib.h"
 #include "internal/e_os.h"
 
+#if defined (OPENSSL_NETCAP_ALLOW_ENV) && defined(__linux__)
+# include "internal/nelem.h"
+#endif
+
 /*
  * Additional checks for securely allowing access to selected environment variables
  */
@@ -25,31 +29,25 @@
  */
 int str_in_list(const char *candidate, const char *list[], int n)
 {
-  if ( (candidate!=NULL) && (list!=NULL))
-  {
-    int len = n;
-    if (len>=1)
-    {
-        int i;
-        for ( i=0; i<len; i++)
-        {
-            if (strcmp(candidate,list[i])==0)
-              // found
-              return 1;
-        }
-    }
+
+  if (candidate == NULL || list == NULL || n < 1)
+    return 0;
+
+  int i;
+  for ( i=0; i<n; i++) {
+    if (strcmp(candidate, list[i]) == 0)
+      return 1;
   }
-  // drop-through case -- not found (or invalid parameters)
   return 0;
 }
 
 char *restricted_getenv(const char *name)
 {
     /* Environment variables to permit in secure mode (subject to conditions). Extend as needed */
-    const char * permitted_env [ ] = { "OPENSSL_MODULES", "OPENSSL_CONF" };
+    const char *permitted_env[] = { "OPENSSL_MODULES", "OPENSSL_CONF" };
     if(name!=NULL && (!OPENSSL_issetugid()))
     {
-      if (str_in_list(name,permitted_env,sizeof(permitted_env)/sizeof(char *)))
+      if (str_in_list(name,permitted_env,OSSL_NELEM(permitted_env)))
       {
         return getenv(name);
       }
@@ -135,15 +133,15 @@ char *ossl_safe_getenv(const char *name)
 #if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
 # if __GLIBC_PREREQ(2, 17)
 #  define SECURE_GETENV
-#   /* 
-     * Non-default option to permit selected additional variables to be read where 
-     * only the netcap capability is added, rather than follow the standard
-     * priviliged default of disallowing access. (libc > 2.17, linux only)
-     */
-#   if defined(OPENSSL_NETCAP_ALLOW_ENV) && defined(__linux__)
-     /* Use alternate implementation which allows some exceptions if in a secure environment */
+   /* 
+    * Non-default option to permit selected additional variables to be read where 
+    * only the netcap capability is added, rather than follow the standard
+    * priviliged default of disallowing access. (libc > 2.17, linux only)
+    */
+#  if defined(OPENSSL_NETCAP_ALLOW_ENV) && defined(__linux__)
+    /* Use alternate implementation which allows some exceptions if in a secure environment */
        return(restricted_getenv(name));
-#   else
+#  else
      /* Default to secure retrieval (std library) */
      return secure_getenv(name);
 #   endif

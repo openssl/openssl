@@ -89,10 +89,7 @@ int OPENSSL_issetugid(void)
 # ifdef OSSL_IMPLEMENT_GETAUXVAL
 #   if defined (OPENSSL_NETCAP_ALLOW_ENV) && defined(__linux__)
       /* AT_SECURE is set if privileged. We allow this if ONLY NET_BIND capability set */
-      int at_secure = getauxval(AT_SECURE);
-      int hasNetBindServiceOnly = HasOnlyCapability(CAP_NET_BIND_SERVICE);
-      return at_secure != 0 && !hasNetBindServiceOnly;
-      //return getauxval(AT_SECURE) != 0 && !HasOnlyCapability(CAP_NET_BIND_SERVICE);
+      return getauxval(AT_SECURE) != 0 && !HasOnlyCapability(CAP_NET_BIND_SERVICE);
 #   else
       return getauxval(AT_SECURE) != 0;
 #   endif
