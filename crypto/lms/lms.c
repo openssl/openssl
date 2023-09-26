@@ -225,126 +225,39 @@ static ossl_inline void INC16(unsigned char *tag)
 #define MAX_DIGEST_SIZE 32
 #define ISIZE 16
 
-/* Algorithm 4b */
-static int lmots_compute_pubkey(const LMOTS_SIG *sig,
-                                uint32_t pubtype, const unsigned char *I, uint32_t q,
-                                const unsigned char *msg, size_t msglen,
-                                unsigned char *Kc)
-{
-    int ret = 0;
-    int i, j;
-    EVP_MD *md;
-    EVP_MD_CTX *ctx = NULL, *ctxIq = NULL, *ctxKc = NULL;
-
-    unsigned char iq[ISIZE+4], *qbuf = &iq[ISIZE];
-    unsigned char tag[2+1], *tag2 = &tag[2];
-    unsigned char Q[MAX_DIGEST_SIZE+2], *Qsum;
-    uint16_t sum;
-    unsigned char z[MAX_DIGEST_SIZE];
-    int n = sig->params->n;
-    int p = sig->params->p;
-    int w = sig->params->w;
-    int end = (1 << sig->params->w) - 1;
-    int a;
-    unsigned char *y;
-
-//    if (sig->params->lmots_type != pubtype)
-//        return 0;
-
-    memcpy(iq, I, ISIZE);
-    U32STR(qbuf, q);
-    memcpy(tag, D_MESG, sizeof(D_MESG));
-
-    ctxIq = EVP_MD_CTX_create();
-    ctx = EVP_MD_CTX_create();
-    ctxKc = EVP_MD_CTX_create();
-    if (ctxIq == NULL || ctxKc == NULL || ctx == NULL)
-        goto err;
-
-    md = EVP_MD_fetch(NULL, sig->params->digestname, NULL);
-    if (md == NULL)
-        goto err;
-
-    if (!EVP_DigestInit_ex2(ctxIq, md, NULL)
-        || !EVP_DigestUpdate(ctxIq, iq, sizeof(iq))
-        || !EVP_MD_CTX_copy_ex(ctx, ctxIq))
-        goto err;
-
-    /* Q = H(I || u32str(q) || u16str(D_MESG) || sig->C || message) */
-    if (!EVP_DigestUpdate(ctx, D_MESG, sizeof(D_MESG))
-        || !EVP_DigestUpdate(ctx, sig->C, n)
-        || !EVP_DigestUpdate(ctx, msg, msglen)
-        || !EVP_DigestFinal_ex(ctx, Q, NULL))
-        goto err;
-
-    sum = checksum(sig->params, Q);
-    Qsum = Q + n;
-    /* Q || Cksm(Q) */
-    U16STR(Qsum, sum);
-
-    if (!(EVP_MD_CTX_copy_ex(ctxKc, ctxIq))
-        || !EVP_DigestUpdate(ctxKc, D_PBLC, sizeof(D_PBLC)))
-        goto err;
-
-    y = sig->y;
-    tag[0] = 0; tag[1] = 0;
-
-    for (i = 0; i < p; ++i) {
-        a = coef(Q, i, w);
-        memcpy(z, y, n);
-        y += n;
-        for (j = a; j < end; ++j) {
-            *tag2 = (j & 0xFF);
-            if (!(EVP_MD_CTX_copy_ex(ctx, ctxIq)))
-                goto err;
-            if (!EVP_DigestUpdate(ctx, tag, sizeof(tag))
-                || !EVP_DigestUpdate(ctx, z, n)
-                || !EVP_DigestFinal_ex(ctx, z, NULL))
-                goto err;
-        }
-        INC16(tag);
-        if (!EVP_DigestUpdate(ctxKc, z, n))
-            goto err;
-    }
-
-    /* Kc = H(I || u32str(q) || u16str(D_PBLC) || z[0] || ... || z[p-1]) */
-    if (!EVP_DigestFinal(ctxKc, Kc, NULL))
-        goto err;
-    ret = 1;
-err:
-    EVP_MD_free(md);
-    EVP_MD_CTX_free(ctx);
-    EVP_MD_CTX_free(ctxKc);
-    EVP_MD_CTX_free(ctxIq);
-    return ret;
-}
 
 typedef struct pubkey_ctx_st {
     const LMOTS_SIG *sig;
-} PUBKEY_CTX;
+    EVP_MD_CTX *ctx, *ctxIq;
+} LMOTS_PUBKEY_CTX;
+
+typedef struct lms_verify_ctx_st {
+    LMOTS_PUBKEY_CTX pubctx;
+    const LMS_SIG *lms_sig;
+    const LMS_PUB_KEY *key;
+    LMS_SIG siglist[16];
+    LMS_PUB_KEY publist[16];
+} LMS_VERIFY_CTX;
+
+static void lmots_compute_pubkey_cleanup(LMOTS_PUBKEY_CTX *pctx)
+{
+    EVP_MD_CTX_free(pctx->ctxIq);
+    EVP_MD_CTX_free(pctx->ctx);
+    pctx->ctx = NULL;
+    pctx->ctxIq = NULL;
+    pctx->sig = NULL;
+}
 
 /* Algorithm 4b */
-static int lmots_compute_pubkey_init(PUBKEY_CTX *pctx, const LMOTS_SIG *sig,
+static int lmots_compute_pubkey_init(LMOTS_PUBKEY_CTX *pctx,
+                                     const LMOTS_SIG *sig,
                                      uint32_t pubtype,
                                      const unsigned char *I, uint32_t q)
 {
     int ret = 0;
-    int i, j;
     EVP_MD *md;
-    EVP_MD_CTX *ctx = NULL, *ctxIq = NULL;
-
+    EVP_MD_CTX *ctx, *ctxIq;
     unsigned char iq[ISIZE+4], *qbuf = &iq[ISIZE];
-    unsigned char Q[MAX_DIGEST_SIZE+2], *Qsum;
-    uint16_t sum;
-    unsigned char z[MAX_DIGEST_SIZE];
-    int n = sig->params->n;
-    int p = sig->params->p;
-    int w = sig->params->w;
-    int end = (1 << sig->params->w) - 1;
-    int a;
-    unsigned char *y;
-
-    pctx->sig  = sig;
 
 //    if (sig->params->lmots_type != pubtype)
 //        return 0;
@@ -352,11 +265,15 @@ static int lmots_compute_pubkey_init(PUBKEY_CTX *pctx, const LMOTS_SIG *sig,
     memcpy(iq, I, ISIZE);
     U32STR(qbuf, q);
 
+    pctx->ctxIq = pctx->ctx = NULL;
+    pctx->sig  = sig;
+    pctx->sig = sig;
     ctxIq = EVP_MD_CTX_create();
     ctx = EVP_MD_CTX_create();
     if (ctxIq == NULL || ctx == NULL)
         goto err;
 
+    /* TODO - add libctx and propq */
     md = EVP_MD_fetch(NULL, sig->params->digestname, NULL);
     if (md == NULL)
         goto err;
@@ -366,30 +283,45 @@ static int lmots_compute_pubkey_init(PUBKEY_CTX *pctx, const LMOTS_SIG *sig,
         || !EVP_MD_CTX_copy_ex(ctx, ctxIq))
         goto err;
 
-    /* Q = H(I || u32str(q) || u16str(D_MESG) || sig->C || message) */
+    /* Q = H(I || u32str(q) || u16str(D_MESG) || C || ....) */
     if (!EVP_DigestUpdate(ctx, D_MESG, sizeof(D_MESG))
-        || !EVP_DigestUpdate(ctx, sig->C, n))
+        || !EVP_DigestUpdate(ctx, sig->C, sig->params->n))
         goto err;
-    ret = 1;
+    pctx->ctx = ctx;
+    pctx->ctxIq = ctxIq;
+    return 1;
 err:
     EVP_MD_free(md);
-    EVP_MD_CTX_free(ctx);
     EVP_MD_CTX_free(ctxIq);
+    EVP_MD_CTX_free(ctx);
     return ret;
 }
 
 /* Algorithm 4b */
-static int lmots_compute_pubkey_update(PUBKEY_CTX *pctx, const unsigned char *msg, size_t msglen)
+static int lmots_compute_pubkey_update(LMOTS_PUBKEY_CTX *pctx,
+                                       const unsigned char *msg, size_t msglen)
 {
-    return EVP_DigestUpdate(ctx, msg, msglen);
+    return EVP_DigestUpdate(pctx->ctx, msg, msglen) > 0;
 }
 
 /* Algorithm 4b */
-static int lmots_compute_pubkey_final(PUBKEY_CTX *pctx, unsigned char *Kc)
+static int lmots_compute_pubkey_final(LMOTS_PUBKEY_CTX *pctx, unsigned char *Kc)
 {
-    int ret = 0;
+    int ret = 0, i, j;
     EVP_MD_CTX *ctxKc = NULL;
+    EVP_MD_CTX *ctx = pctx->ctx;
+    EVP_MD_CTX *ctxIq = pctx->ctxIq;
     unsigned char tag[2 + 1], *tag2 = &tag[2];
+    unsigned char Q[MAX_DIGEST_SIZE+2], *Qsum;
+    unsigned char z[MAX_DIGEST_SIZE];
+    uint16_t sum;
+    const LMOTSParams *params = pctx->sig->params;
+    int n = params->n;
+    int p = params->p;
+    int w = params->w;
+    int end = (1 << w) - 1;
+    int a;
+    unsigned char *y;
 
     ctxKc = EVP_MD_CTX_create();
     if (ctxKc == NULL)
@@ -398,7 +330,7 @@ static int lmots_compute_pubkey_final(PUBKEY_CTX *pctx, unsigned char *Kc)
     if (!EVP_DigestFinal_ex(ctx, Q, NULL))
         goto err;
 
-    sum = checksum(sig->params, Q);
+    sum = checksum(pctx->sig->params, Q);
     Qsum = Q + n;
     /* Q || Cksm(Q) */
     U16STR(Qsum, sum);
@@ -407,7 +339,7 @@ static int lmots_compute_pubkey_final(PUBKEY_CTX *pctx, unsigned char *Kc)
         || !EVP_DigestUpdate(ctxKc, D_PBLC, sizeof(D_PBLC)))
         goto err;
 
-    y = sig->y;
+    y = pctx->sig->y;
     tag[0] = 0; tag[1] = 0;
 
     for (i = 0; i < p; ++i) {
@@ -433,170 +365,129 @@ static int lmots_compute_pubkey_final(PUBKEY_CTX *pctx, unsigned char *Kc)
         goto err;
     ret = 1;
 err:
-    EVP_MD_CTX_free(ctx);
     EVP_MD_CTX_free(ctxKc);
-    EVP_MD_CTX_free(ctxIq);
     return ret;
+}
+
+static int lms_sig_verify_init(LMS_VERIFY_CTX *vctx,
+                               const LMS_SIG *lms_sig,
+                               const LMS_PUB_KEY *key)
+{
+    vctx->lms_sig = lms_sig;
+    vctx->key = key;
+    return lmots_compute_pubkey_init(&vctx->pubctx, &lms_sig->sig, key->lms_type,
+                                     key->I, lms_sig->q);
+}
+
+static int lms_sig_verify_update(LMS_VERIFY_CTX *vctx,
+                                 const unsigned char *msg, size_t msglen)
+{
+    return lmots_compute_pubkey_update(&vctx->pubctx, msg, msglen);
+}
+
+static int lms_sig_verify_final(LMS_VERIFY_CTX *vctx)
+{
+    EVP_MD_CTX *ctx = vctx->pubctx.ctx;
+    EVP_MD_CTX *ctxI = vctx->pubctx.ctxIq;
+    const LMS_PUB_KEY *key = vctx->key;
+    const LMS_SIG *lms_sig = vctx->lms_sig;
+    unsigned char Kc[MAX_DIGEST_SIZE];
+    unsigned char Tc[MAX_DIGEST_SIZE];
+    unsigned char buf[4];
+    const LMSParams *lmsParams;
+    int node_num, m;
+    const unsigned char *path;
+
+    if (!lmots_compute_pubkey_final(&vctx->pubctx, Kc))
+        return 0;
+
+    /* Compute the candidate LMS root value Tc */
+    lmsParams = LMSParams_get(key->lms_type);
+    if (lmsParams == NULL)
+        goto err;
+    m = lmsParams->n;
+    node_num = (1 << lmsParams->h) + lms_sig->q;
+
+    U32STR(buf, node_num);
+    if (!EVP_DigestInit_ex2(ctx, NULL, NULL)
+        || !EVP_DigestUpdate(ctx, key->I, ISIZE)
+        || !EVP_MD_CTX_copy_ex(ctxI, ctx)
+        || !EVP_DigestUpdate(ctx, buf, sizeof(buf))
+        || !EVP_DigestUpdate(ctx, D_LEAF, sizeof(D_LEAF))
+        || !EVP_DigestUpdate(ctx, Kc, m)
+        || !EVP_DigestFinal_ex(ctx, Tc, NULL))
+        goto err;
+
+    path = lms_sig->paths;
+    while (node_num > 1) {
+        int odd = node_num & 1;
+
+        node_num = node_num >> 1;
+        U32STR(buf, node_num);
+
+        if (!EVP_MD_CTX_copy_ex(ctx, ctxI)
+            || !EVP_DigestUpdate(ctx, buf, sizeof(buf))
+            || !EVP_DigestUpdate(ctx, D_INTR, sizeof(D_INTR)))
+            goto err;
+
+        if (odd) {
+            if (!EVP_DigestUpdate(ctx, path, m)
+                || !EVP_DigestUpdate(ctx, Tc, m))
+                goto err;
+        } else {
+            if (!EVP_DigestUpdate(ctx, Tc, m)
+                || !EVP_DigestUpdate(ctx, path, m))
+                goto err;
+        }
+        if (!EVP_DigestFinal_ex(ctx, Tc, NULL))
+            goto err;
+        path += m;
+    }
+    return memcmp(key->K, Tc, m) == 0;
+err:
+    return 0;
+}
+
+static
+LMS_VERIFY_CTX *OSSL_HSS_verify_new(void)
+{
+    LMS_VERIFY_CTX *ctx;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    return ctx;
+}
+
+static
+void OSSL_HSS_verify_free(LMS_VERIFY_CTX *ctx)
+{
+    lmots_compute_pubkey_cleanup(&ctx->pubctx);
+    ctx->lms_sig = NULL;
+    ctx->key = NULL;
+    OPENSSL_free(ctx);
 }
 
 static int lms_sig_verify(const LMS_SIG *lms_sig,
                           const LMS_PUB_KEY *key,
                           const unsigned char *msg, size_t msglen)
 {
-    int ret = 0;
-    EVP_MD_CTX *ctx = NULL, *ctxI = NULL;
-    unsigned char Kc[MAX_DIGEST_SIZE];
-    unsigned char Tc[MAX_DIGEST_SIZE];
-    unsigned char buf[4];
-    const LMSParams *lmsParams;
-    int node_num, m;
-    const unsigned char *path;
-    EVP_MD *md = NULL;
+    int valid = 0;
+    LMS_VERIFY_CTX *ctx;
 
-    if (!lmots_compute_pubkey(&lms_sig->sig, key->lms_type, key->I, lms_sig->q,
-                              msg, msglen, Kc))
-        goto err;
+    ctx = OSSL_HSS_verify_new();
+    if (ctx == NULL)
+        return 0;
 
-    /* Compute the candidate LMS root value Tc */
-    lmsParams = LMSParams_get(key->lms_type);
-    if (lmsParams == NULL)
-        goto err;
-    m = lmsParams->n;
-    node_num = (1 << lmsParams->h) + lms_sig->q;
-
-    ctx = EVP_MD_CTX_new();
-    ctxI = EVP_MD_CTX_new();
-    md = EVP_MD_fetch(NULL, lmsParams->digestname, NULL);
-    if (ctx == NULL
-        || ctxI == NULL
-        || md == NULL)
-        goto err;
-
-    U32STR(buf, node_num);
-    if (!EVP_DigestInit_ex2(ctx, md, NULL)
-        || !EVP_DigestUpdate(ctx, key->I, ISIZE)
-        || !EVP_MD_CTX_copy_ex(ctxI, ctx)
-        || !EVP_DigestUpdate(ctx, buf, sizeof(buf))
-        || !EVP_DigestUpdate(ctx, D_LEAF, sizeof(D_LEAF))
-        || !EVP_DigestUpdate(ctx, Kc, m)
-        || !EVP_DigestFinal_ex(ctx, Tc, NULL))
-        goto err;
-
-    path = lms_sig->paths;
-    while (node_num > 1) {
-        int odd = node_num & 1;
-
-        node_num = node_num >> 1;
-        U32STR(buf, node_num);
-
-        if (!EVP_MD_CTX_copy_ex(ctx, ctxI)
-            || !EVP_DigestUpdate(ctx, buf, sizeof(buf))
-            || !EVP_DigestUpdate(ctx, D_INTR, sizeof(D_INTR)))
-            goto err;
-
-        if (odd) {
-            if (!EVP_DigestUpdate(ctx, path, m)
-                || !EVP_DigestUpdate(ctx, Tc, m))
-                goto err;
-        } else {
-            if (!EVP_DigestUpdate(ctx, Tc, m)
-                || !EVP_DigestUpdate(ctx, path, m))
-                goto err;
-        }
-        if (!EVP_DigestFinal_ex(ctx, Tc, NULL))
-            goto err;
-        path += m;
-    }
-    ret = memcmp(key->K, Tc, m) == 0;
-err:
-    EVP_MD_free(md);
-    EVP_MD_CTX_free(ctx);
-    EVP_MD_CTX_free(ctxI);
-    return ret;
+    if (!lms_sig_verify_init(ctx, lms_sig, key))
+        return 0;
+    if (!lms_sig_verify_update(ctx, msg, msglen))
+        goto end;
+    if (!lms_sig_verify_final(ctx))
+        goto end;
+    valid = 1;
+end:
+    OSSL_HSS_verify_free(ctx);
+    return valid;
 }
-
-static int lms_sig_verify_init(const LMS_SIG *lms_sig,
-                               const LMS_PUB_KEY *key)
-{
-    int ret = 0;
-    EVP_MD_CTX *ctx = NULL, *ctxI = NULL;
-    unsigned char Kc[MAX_DIGEST_SIZE];
-    unsigned char Tc[MAX_DIGEST_SIZE];
-    unsigned char buf[4];
-    const LMSParams *lmsParams;
-    int node_num, m;
-    const unsigned char *path;
-    EVP_MD *md = NULL;
-
-    if (!lmots_compute_pubkey_init(&lms_sig->sig, key->lms_type, key->I, lms_sig->q,
-                              msg, msglen, Kc))
-        goto err;
-
-    /* Compute the candidate LMS root value Tc */
-    lmsParams = LMSParams_get(key->lms_type);
-    if (lmsParams == NULL)
-        goto err;
-    m = lmsParams->n;
-    node_num = (1 << lmsParams->h) + lms_sig->q;
-
-    ctx = EVP_MD_CTX_new();
-    ctxI = EVP_MD_CTX_new();
-    md = EVP_MD_fetch(NULL, lmsParams->digestname, NULL);
-    if (ctx == NULL
-        || ctxI == NULL
-        || md == NULL)
-        goto err;
-
-    U32STR(buf, node_num);
-    if (!EVP_DigestInit_ex2(ctx, md, NULL)
-        || !EVP_DigestUpdate(ctx, key->I, ISIZE)
-        || !EVP_MD_CTX_copy_ex(ctxI, ctx)
-        || !EVP_DigestUpdate(ctx, buf, sizeof(buf))
-        || !EVP_DigestUpdate(ctx, D_LEAF, sizeof(D_LEAF))
-        || !EVP_DigestUpdate(ctx, Kc, m)
-        || !EVP_DigestFinal_ex(ctx, Tc, NULL))
-        goto err;
-
-    path = lms_sig->paths;
-    while (node_num > 1) {
-        int odd = node_num & 1;
-
-        node_num = node_num >> 1;
-        U32STR(buf, node_num);
-
-        if (!EVP_MD_CTX_copy_ex(ctx, ctxI)
-            || !EVP_DigestUpdate(ctx, buf, sizeof(buf))
-            || !EVP_DigestUpdate(ctx, D_INTR, sizeof(D_INTR)))
-            goto err;
-
-        if (odd) {
-            if (!EVP_DigestUpdate(ctx, path, m)
-                || !EVP_DigestUpdate(ctx, Tc, m))
-                goto err;
-        } else {
-            if (!EVP_DigestUpdate(ctx, Tc, m)
-                || !EVP_DigestUpdate(ctx, path, m))
-                goto err;
-        }
-        if (!EVP_DigestFinal_ex(ctx, Tc, NULL))
-            goto err;
-        path += m;
-    }
-    ret = memcmp(key->K, Tc, m) == 0;
-err:
-    EVP_MD_free(md);
-    EVP_MD_CTX_free(ctx);
-    EVP_MD_CTX_free(ctxI);
-    return ret;
-}
-
-if (!lmots_compute_pubkey_init(&lms_sig->sig, key->lms_type, key->I, lms_sig->q,
-                          msg, msglen, Kc))
-    goto err;
-
-const unsigned char *msg, size_t msglen
-
-
 
 static int lms_sig_from_pkt(PACKET *pkt, LMS_SIG *lsig)
 {
@@ -654,13 +545,12 @@ static int hss_pubkey_from_pkt(PACKET *pkt, HSS_PUB_KEY *key)
     return lms_pubkey_from_pkt(pkt, &key->pub);
 }
 
-int OSSL_HSS_verify_init(const unsigned char *pub, size_t publen,
-                         const unsigned char *sig, size_t siglen,
-                         const unsigned char *msg, size_t msglen)
+static
+int OSSL_HSS_verify_init(LMS_VERIFY_CTX *ctx,
+                         const unsigned char *pub, size_t publen,
+                         const unsigned char *sig, size_t siglen)
 {
     HSS_PUB_KEY hss_pub;
-    LMS_SIG siglist[16];
-    LMS_PUB_KEY publist[16];
     const unsigned char *pubkey_blob[16];
     size_t pubkey_bloblen[16];
     PACKET pkt;
@@ -673,7 +563,7 @@ int OSSL_HSS_verify_init(const unsigned char *pub, size_t publen,
         return 0;
     if (PACKET_remaining(&pkt) > 0)
         return 0;
-    publist[0] = hss_pub.pub;
+    ctx->publist[0] = hss_pub.pub;
 
     if (!PACKET_buf_init(&pkt, sig, siglen))
         return 0;
@@ -683,30 +573,56 @@ int OSSL_HSS_verify_init(const unsigned char *pub, size_t publen,
         return 0;
 
     for (i = 0; i < Nspk; ++i) {
-        if (!lms_sig_from_pkt(&pkt, &siglist[i]))
+        if (!lms_sig_from_pkt(&pkt, &ctx->siglist[i]))
             return 0;
         pubkey_blob[i] = PACKET_data(&pkt);
-        if (!lms_pubkey_from_pkt(&pkt, &publist[i+1]))
+        if (!lms_pubkey_from_pkt(&pkt, &ctx->publist[i+1]))
             return 0;
         pubkey_bloblen[i] = PACKET_data(&pkt) - pubkey_blob[i];
     }
-    if (!lms_sig_from_pkt(&pkt, &siglist[Nspk]))
+    if (!lms_sig_from_pkt(&pkt, &ctx->siglist[Nspk]))
         return 0;
     if (PACKET_remaining(&pkt) > 0)
         return 0;
 
     for (i = 0; i < Nspk; ++i) {
-        if (lms_sig_verify(&siglist[i], &publist[i],
+        if (lms_sig_verify(&ctx->siglist[i], &ctx->publist[i],
                            pubkey_blob[i], pubkey_bloblen[i]) != 1)
             goto err;
     }
-    if (lms_sig_verify_init(&siglist[Nspk], &publist[Nspk]) != 1)
-        goto err;
-    if (lms_sig_verify_update(msg, msglen) != 1)
-        goto err;
-    if (lms_sig_verify_final(msg, msglen) != 1)
+    if (lms_sig_verify_init(ctx, &ctx->siglist[Nspk], &ctx->publist[Nspk]) != 1)
         goto err;
     ret = 1;
 err:
+    return ret;
+}
+
+static
+int OSSL_HSS_verify_update(LMS_VERIFY_CTX *ctx,
+                           const unsigned char *msg, size_t msglen)
+{
+    return lms_sig_verify_update(ctx, msg, msglen);
+}
+
+static
+int OSSL_HSS_verify_final(LMS_VERIFY_CTX *ctx)
+{
+    return lms_sig_verify_final(ctx);
+}
+
+int OSSL_HSS_verify(const unsigned char *pub, size_t publen,
+                    const unsigned char *sig, size_t siglen,
+                    const unsigned char *msg, size_t msglen)
+{
+    int ret = 0;
+    LMS_VERIFY_CTX *ctx;
+
+    ctx = OSSL_HSS_verify_new();
+    if (ctx == NULL)
+        return 0;
+    ret = OSSL_HSS_verify_init(ctx, pub, publen, sig, siglen)
+          && OSSL_HSS_verify_update(ctx, msg, msglen)
+          && OSSL_HSS_verify_final(ctx);
+    OSSL_HSS_verify_free(ctx);
     return ret;
 }
