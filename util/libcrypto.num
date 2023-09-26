@@ -5536,3 +5536,4 @@ X509_STORE_CTX_set_get_crl              ?	3_2_0	EXIST::FUNCTION:
 X509_STORE_CTX_set_current_reasons      ?	3_2_0	EXIST::FUNCTION:
 OSSL_STORE_delete                       ?	3_2_0	EXIST::FUNCTION:
 BIO_ADDR_copy                           ?	3_2_0	EXIST::FUNCTION:SOCK
+EVP_DigestSqueeze                       ?	3_2_0	EXIST::FUNCTION:
