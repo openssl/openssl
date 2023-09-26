@@ -528,7 +528,7 @@ an L<OSSL_PARAM(3)> item with the key "micalg" (B<OSSL_DIGEST_PARAM_MICALG>).
 This control sets the digest length for extendable output functions to I<p1>.
 Sending this control directly should not be necessary, the use of
 EVP_DigestFinalXOF() is preferred.
-Currently only used by legacy code for SHAKE.
+Currently used by SHAKE.
 
 When used with a fetched B<EVP_MD>, EVP_MD_CTX_get_params() gets called with
 an L<OSSL_PARAM(3)> item with the key "xoflen" (B<OSSL_DIGEST_PARAM_XOFLEN>).
