@@ -251,7 +251,7 @@ void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
 
 static void ossl_arg_thread_stop(void *arg);
 
-/* Register the current thread so that we are infored if it gets stopped */
+/* Register the current thread so that we are informed if it gets stopped */
 int ossl_thread_register_fips(OSSL_LIB_CTX *libctx)
 {
     return c_thread_start(FIPS_get_core_handle(libctx), ossl_arg_thread_stop,
