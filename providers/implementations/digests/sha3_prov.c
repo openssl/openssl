@@ -113,9 +113,9 @@ static int keccak_final(void *vctx, unsigned char *out, size_t *outl,
     if (!ossl_prov_is_running())
         return 0;
     if (outlen > 0)
-        ret = ctx->meth.final(ctx, out, outlen);
+        ret = ctx->meth.final(ctx, out, ctx->md_size);
 
-    *outl = outlen;
+    *outl = ctx->md_size;
     return ret;
 }
 
@@ -428,6 +428,7 @@ static void *keccak_dupctx(void *ctx)
 }
 
 static const OSSL_PARAM known_shake_settable_ctx_params[] = {
+    {OSSL_DIGEST_PARAM_XOFLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *ctx,
@@ -438,8 +439,19 @@ static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *ctx,
 
 static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    if (vctx == NULL)
+    const OSSL_PARAM *p;
+    KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
+
+    if (ctx == NULL)
         return 0;
+    if (params == NULL)
+        return 1;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
+    if (p != NULL && !OSSL_PARAM_get_size_t(p, &ctx->md_size)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+        return 0;
+    }
     return 1;
 }
 

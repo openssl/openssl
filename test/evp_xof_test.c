@@ -9,6 +9,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <openssl/core_names.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 
@@ -183,7 +184,7 @@ static int shake_kat_test(void)
     if (!TEST_ptr(ctx = shake_setup("SHAKE256")))
         return 0;
     if (!TEST_true(EVP_DigestUpdate(ctx, shake256_input,
-                   sizeof(shake256_input)))
+                                    sizeof(shake256_input)))
         || !TEST_true(EVP_DigestFinalXOF(ctx, out, sizeof(out)))
         || !TEST_mem_eq(out, sizeof(out),
                         shake256_output,sizeof(shake256_output))
@@ -214,6 +215,41 @@ static int shake_kat_digestfinal_test(void)
         || !TEST_mem_eq(out, digest_length,
                         shake256_output, digest_length)
         || !TEST_false(EVP_DigestFinalXOF(ctx, out, sizeof(out))))
+        goto err;
+    ret = 1;
+err:
+    EVP_MD_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * Test that EVP_DigestFinal() returns the output length
+ * set by the OSSL_DIGEST_PARAM_XOFLEN param.
+ */
+static int shake_kat_digestfinal_xoflen_test(void)
+{
+    int ret = 0;
+    unsigned int digest_length = 0;
+    EVP_MD_CTX *ctx = NULL;
+    unsigned char out[sizeof(shake256_output)];
+    OSSL_PARAM params[2];
+    size_t sz = 12;
+
+    if (!TEST_ptr(ctx = shake_setup("SHAKE256")))
+        return 0;
+
+    memset(out, 0, sizeof(out));
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &sz);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_int_eq(EVP_MD_CTX_set_params(ctx, params), 1)
+        || !TEST_true(EVP_DigestUpdate(ctx, shake256_input,
+                                       sizeof(shake256_input)))
+        || !TEST_true(EVP_DigestFinal(ctx, out, &digest_length))
+        || !TEST_uint_eq(digest_length, (unsigned int)sz)
+        || !TEST_mem_eq(out, digest_length,
+                        shake256_output, digest_length)
+        || !TEST_uchar_eq(out[digest_length], 0))
         goto err;
     ret = 1;
 err:
@@ -447,6 +483,7 @@ int setup_tests(void)
 {
     ADD_TEST(shake_kat_test);
     ADD_TEST(shake_kat_digestfinal_test);
+    ADD_TEST(shake_kat_digestfinal_xoflen_test);
     ADD_TEST(shake_absorb_test);
     ADD_ALL_TESTS(shake_squeeze_kat_test, OSSL_NELEM(stride_tests));
     ADD_ALL_TESTS(shake_squeeze_large_test, OSSL_NELEM(stride_tests));

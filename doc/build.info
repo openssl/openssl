@@ -4705,10 +4705,6 @@ DEPEND[html/man7/life_cycle-digest.html]=man7/life_cycle-digest.pod
 GENERATE[html/man7/life_cycle-digest.html]=man7/life_cycle-digest.pod
 DEPEND[man/man7/life_cycle-digest.7]=man7/life_cycle-digest.pod
 GENERATE[man/man7/life_cycle-digest.7]=man7/life_cycle-digest.pod
-DEPEND[html/man7/life_cycle-digestxof.html]=man7/life_cycle-digestxof.pod
-GENERATE[html/man7/life_cycle-digestxof.html]=man7/life_cycle-digestxof.pod
-DEPEND[man/man7/life_cycle-digestxof.7]=man7/life_cycle-digestxof.pod
-GENERATE[man/man7/life_cycle-digestxof.7]=man7/life_cycle-digestxof.pod
 DEPEND[html/man7/life_cycle-kdf.html]=man7/life_cycle-kdf.pod
 GENERATE[html/man7/life_cycle-kdf.html]=man7/life_cycle-kdf.pod
 DEPEND[man/man7/life_cycle-kdf.7]=man7/life_cycle-kdf.pod
@@ -4997,7 +4993,6 @@ html/man7/evp.html \
 html/man7/fips_module.html \
 html/man7/life_cycle-cipher.html \
 html/man7/life_cycle-digest.html \
-html/man7/life_cycle-digestxof.html \
 html/man7/life_cycle-kdf.html \
 html/man7/life_cycle-mac.html \
 html/man7/life_cycle-pkey.html \
@@ -5140,7 +5135,6 @@ man/man7/evp.7 \
 man/man7/fips_module.7 \
 man/man7/life_cycle-cipher.7 \
 man/man7/life_cycle-digest.7 \
-man/man7/life_cycle-digestxof.7 \
 man/man7/life_cycle-kdf.7 \
 man/man7/life_cycle-mac.7 \
 man/man7/life_cycle-pkey.7 \
