@@ -192,7 +192,12 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
 #endif
     }
 
-    if (cipher->prov != NULL) {
+    if (!ossl_assert(cipher->prov != NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+
+    if (cipher != ctx->fetched_cipher) {
         if (!EVP_CIPHER_up_ref((EVP_CIPHER *)cipher)) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
