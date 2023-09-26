@@ -478,6 +478,9 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
                 i = -1;
                 bitse = 0;
                 sk_BIGNUM_pop_free(factors, BN_clear_free);
+                factors = sk_BIGNUM_new_null();
+                if (factors == NULL)
+                    goto err;
                 continue;
             }
             retries++;
