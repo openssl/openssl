@@ -97,6 +97,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
             return 0;
     }
 
+#ifndef OPENSSL_NO_SSL_TRACE
     if ((flags & QTEST_FLAG_CLIENT_TRACE) != 0) {
         tmpbio = BIO_new_fp(stdout, BIO_NOCLOSE);
         if (!TEST_ptr(tmpbio))
@@ -105,6 +106,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         SSL_set_msg_callback(*cssl, SSL_trace);
         SSL_set_msg_callback_arg(*cssl, tmpbio);
     }
+#endif
     if (tracebio != NULL)
         *tracebio = tmpbio;
 
