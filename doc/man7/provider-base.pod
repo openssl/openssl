@@ -313,7 +313,6 @@ returned to the caller.  On error, zero is returned.
 get_user_entropy() is the same as get_entropy() except that it will
 attempt to gather seed material via the seed source specified by a call to
 L<RAND_set_seed_source_type(3)> or via L<config(5)/Random Configuration>.
-is the same as get_entropy() except it will attempt to use
 
 cleanup_entropy() is used to clean up and free the buffer returned by
 get_entropy() or get_user_entropy().  The entropy pointer returned by
