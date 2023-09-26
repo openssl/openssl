@@ -1264,7 +1264,7 @@ providers/fips.module.sources.new: configdata.pm
 		   crypto/*cap.c; do \
 	    echo "$$x"; \
 	  done \
-	) | sort | uniq > providers/fips.module.sources.new
+	) | grep -v sm2p256 | sort | uniq > providers/fips.module.sources.new
 	rm -rf sources-tmp
 
 # Set to -force to force a rebuild
