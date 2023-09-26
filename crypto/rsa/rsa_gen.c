@@ -102,7 +102,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
     BN_CTX_start(ctx);
 
     pplist = sk_BIGNUM_new_null();
-    if (!pplist)
+    if (pplist == NULL)
         goto err;
 
     pdlist = sk_BIGNUM_new_null();
@@ -218,7 +218,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
     for (i = 2; i < sk_BIGNUM_num(factors); i++) {
         newpp = sk_BIGNUM_value(pplist, i - 2);
         newcoeff = BN_new();
-        if (!newcoeff)
+        if (newcoeff == NULL)
             goto err;
         if (!BN_mod_inverse(newcoeff, newpp, sk_BIGNUM_value(factors, i),
                             ctx)) {
