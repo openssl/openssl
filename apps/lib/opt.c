@@ -1005,12 +1005,7 @@ char **opt_rest(void)
 /* How many items in remaining args? */
 int opt_num_rest(void)
 {
-    int i = 0;
-    char **pp;
-
-    for (pp = opt_rest(); *pp; pp++, i++)
-        continue;
-    return i;
+    return argc - opt_index - 1;
 }
 
 /* Return a string describing the parameter type. */
