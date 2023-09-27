@@ -352,6 +352,11 @@ static int s390x_keccak_squeeze(void *vctx, unsigned char *out, size_t outlen)
      return s390x_keccakc_squeeze(vctx, out, outlen, 0x01);
 }
 
+static int s390x_kmac_squeeze(void *vctx, unsigned char *out, size_t outlen)
+{
+     return s390x_keccakc_squeeze(vctx, out, outlen, 0x04);
+}
+
 static PROV_SHA3_METHOD sha3_s390x_md =
 {
     s390x_sha3_absorb,
@@ -376,7 +381,8 @@ static PROV_SHA3_METHOD shake_s390x_md =
 static PROV_SHA3_METHOD kmac_s390x_md =
 {
     s390x_sha3_absorb,
-    s390x_kmac_final
+    s390x_kmac_final,
+    s390x_kmac_squeeze,
 };
 
 # define SHAKE_SET_MD(uname, typ)                                              \
