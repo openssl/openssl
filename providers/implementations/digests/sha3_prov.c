@@ -267,7 +267,8 @@ static int s390x_kmac_final(void *vctx, unsigned char *out, size_t outlen)
 static PROV_SHA3_METHOD sha3_s390x_md =
 {
     s390x_sha3_absorb,
-    s390x_sha3_final
+    s390x_sha3_final,
+    NULL,
 };
 
 static PROV_SHA3_METHOD keccak_s390x_md =
