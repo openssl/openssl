@@ -24,7 +24,10 @@ static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *defctxnull = NULL;
 static char *certsdir = NULL;
 static char *cert = NULL;
+static char *ccert = NULL;
+static char *cauthca = NULL;
 static char *privkey = NULL;
+static char *cprivkey = NULL;
 static char *datadir = NULL;
 
 static int is_fips = 0;
@@ -1192,6 +1195,83 @@ static int test_quic_psk(void)
     return testresult;
 }
 
+static int test_client_auth(int idx)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL_CTX *sctx = SSL_CTX_new_ex(libctx, NULL, TLS_method());
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+    unsigned char buf[20];
+    static char *msg = "A test message";
+    size_t msglen = strlen(msg);
+    size_t numbytes = 0;
+
+    if (!TEST_ptr(cctx) || !TEST_ptr(sctx))
+        goto err;
+
+    SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT
+                             | SSL_VERIFY_CLIENT_ONCE, NULL);
+
+    if (!TEST_true(SSL_CTX_load_verify_file(sctx, cauthca)))
+        goto err;
+
+    if (idx > 0
+        && (!TEST_true(SSL_CTX_use_certificate_chain_file(cctx, ccert))
+            || !TEST_true(SSL_CTX_use_PrivateKey_file(cctx, cprivkey,
+                                                      SSL_FILETYPE_PEM))))
+            goto err;
+
+    if (!TEST_true(qtest_create_quic_objects(libctx, cctx, sctx, cert,
+                                             privkey, 0, &qtserv,
+                                             &clientquic, NULL, NULL)))
+        goto err;
+
+    if (idx == 0) {
+        if (!TEST_false(qtest_create_quic_connection(qtserv, clientquic)))
+            goto err;
+
+        /* negative test passed */
+        testresult = 1;
+        goto err;
+    }
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+
+    /* Check that sending and receiving app data is ok */
+    if (!TEST_true(SSL_write_ex(clientquic, msg, msglen, &numbytes))
+        || !TEST_size_t_eq(numbytes, msglen))
+        goto err;
+
+    ossl_quic_tserver_tick(qtserv);
+    if (!TEST_true(ossl_quic_tserver_write(qtserv, 0,
+                                           (unsigned char *)msg,
+                                           msglen, &numbytes)))
+        goto err;
+
+    ossl_quic_tserver_tick(qtserv);
+    SSL_handle_events(clientquic);
+
+    if (!TEST_true(SSL_read_ex(clientquic, buf, sizeof(buf), &numbytes))
+            || !TEST_size_t_eq(numbytes, msglen)
+            || !TEST_mem_eq(buf, numbytes, msg, msglen))
+        goto err;
+
+    if (!TEST_true(qtest_shutdown(qtserv, clientquic)))
+        goto err;
+
+    testresult = 1;
+
+ err:
+    SSL_free(clientquic);
+    ossl_quic_tserver_free(qtserv);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 /*
  * Test that we correctly handle ALPN supplied by the application
  * Test 0: ALPN is provided
@@ -1465,7 +1545,19 @@ int setup_tests(void)
     if (cert == NULL)
         goto err;
 
+    ccert = test_mk_file_path(certsdir, "ee-client-chain.pem");
+    if (ccert == NULL)
+        goto err;
+
+    cauthca = test_mk_file_path(certsdir, "root-cert.pem");
+    if (cauthca == NULL)
+        goto err;
+
     privkey = test_mk_file_path(certsdir, "serverkey.pem");
+    if (privkey == NULL)
+        goto err;
+
+    cprivkey = test_mk_file_path(certsdir, "ee-key.pem");
     if (privkey == NULL)
         goto err;
 
@@ -1486,6 +1578,7 @@ int setup_tests(void)
     ADD_TEST(test_multiple_dgrams);
     ADD_ALL_TESTS(test_non_io_retry, 2);
     ADD_TEST(test_quic_psk);
+    ADD_ALL_TESTS(test_client_auth, 2);
     ADD_ALL_TESTS(test_alpn, 2);
     ADD_ALL_TESTS(test_noisy_dgram, 2);
 
@@ -1501,6 +1594,9 @@ void cleanup_tests(void)
     bio_f_pkt_split_dgram_filter_free();
     OPENSSL_free(cert);
     OPENSSL_free(privkey);
+    OPENSSL_free(ccert);
+    OPENSSL_free(cauthca);
+    OPENSSL_free(cprivkey);
     OSSL_PROVIDER_unload(defctxnull);
     OSSL_LIB_CTX_free(libctx);
 }
