@@ -225,6 +225,45 @@ static int s390x_shake_final(void *vctx, unsigned char *out, size_t outlen)
     return 1;
 }
 
+static int s390x_shake_squeeze(void *vctx, unsigned char *out, size_t outlen)
+{
+    KECCAK1600_CTX *ctx = vctx;
+    size_t len;
+
+    if (!ossl_prov_is_running())
+        return 0;
+    if (ctx->xof_state == XOF_STATE_FINAL)
+        return 0;
+    /*
+     * On the first squeeze call, finish the absorb process (incl. padding).
+     */
+    if (ctx->xof_state != XOF_STATE_SQUEEZE) {
+        ctx->xof_state = XOF_STATE_SQUEEZE;
+        s390x_klmd(ctx->buf, ctx->bufsz, out, outlen, ctx->pad, ctx->A);
+        ctx->bufsz = outlen % ctx->block_size;
+        /* reuse ctx->bufsz to count bytes squeezed from current sponge */
+        return 1;
+    }
+    ctx->xof_state = XOF_STATE_SQUEEZE;
+    if (ctx->bufsz != 0) {
+        len = ctx->block_size - ctx->bufsz;
+        if (outlen < len)
+            len = outlen;
+        memcpy(out, (char *)ctx->A + ctx->bufsz, len);
+        out += len;
+        outlen -= len;
+        ctx->bufsz += len;
+        if (ctx->bufsz == ctx->block_size)
+            ctx->bufsz = 0;
+    }
+    if (outlen == 0)
+        return 1;
+    s390x_klmd(NULL, 0, out, outlen, ctx->pad | S390X_KLMD_PS, ctx->A);
+    ctx->bufsz = outlen % ctx->block_size;
+
+    return 1;
+}
+
 static int s390x_keccakc_final(void *vctx, unsigned char *out, size_t outlen,
                                int padding)
 {
@@ -264,28 +303,86 @@ static int s390x_kmac_final(void *vctx, unsigned char *out, size_t outlen)
     return s390x_keccakc_final(vctx, out, outlen, 0x04);
 }
 
+static int s390x_keccakc_squeeze(void *vctx, unsigned char *out, size_t outlen,
+                                 int padding)
+{
+    KECCAK1600_CTX *ctx = vctx;
+    size_t len;
+
+    if (!ossl_prov_is_running())
+        return 0;
+    if (ctx->xof_state == XOF_STATE_FINAL)
+        return 0;
+    /*
+     * On the first squeeze call, finish the absorb process
+     * by adding the trailing padding and then doing
+     * a final absorb.
+     */
+    if (ctx->xof_state != XOF_STATE_SQUEEZE) {
+        len = ctx->block_size - ctx->bufsz;
+        memset(ctx->buf + ctx->bufsz, 0, len);
+        ctx->buf[ctx->bufsz] = padding;
+        ctx->buf[ctx->block_size - 1] |= 0x80;
+        s390x_kimd(ctx->buf, ctx->block_size, ctx->pad, ctx->A);
+        ctx->bufsz = 0;
+        /* reuse ctx->bufsz to count bytes squeezed from current sponge */
+    }
+    if (ctx->bufsz != 0 || ctx->xof_state != XOF_STATE_SQUEEZE) {
+        len = ctx->block_size - ctx->bufsz;
+        if (outlen < len)
+            len = outlen;
+        memcpy(out, (char *)ctx->A + ctx->bufsz, len);
+        out += len;
+        outlen -= len;
+        ctx->bufsz += len;
+        if (ctx->bufsz == ctx->block_size)
+            ctx->bufsz = 0;
+    }
+    ctx->xof_state = XOF_STATE_SQUEEZE;
+    if (outlen == 0)
+        return 1;
+    s390x_klmd(NULL, 0, out, outlen, ctx->pad | S390X_KLMD_PS, ctx->A);
+    ctx->bufsz = outlen % ctx->block_size;
+
+    return 1;
+}
+
+static int s390x_keccak_squeeze(void *vctx, unsigned char *out, size_t outlen)
+{
+     return s390x_keccakc_squeeze(vctx, out, outlen, 0x01);
+}
+
+static int s390x_kmac_squeeze(void *vctx, unsigned char *out, size_t outlen)
+{
+     return s390x_keccakc_squeeze(vctx, out, outlen, 0x04);
+}
+
 static PROV_SHA3_METHOD sha3_s390x_md =
 {
     s390x_sha3_absorb,
-    s390x_sha3_final
+    s390x_sha3_final,
+    NULL,
 };
 
 static PROV_SHA3_METHOD keccak_s390x_md =
 {
     s390x_sha3_absorb,
     s390x_keccak_final,
+    s390x_keccak_squeeze,
 };
 
 static PROV_SHA3_METHOD shake_s390x_md =
 {
     s390x_sha3_absorb,
-    s390x_shake_final
+    s390x_shake_final,
+    s390x_shake_squeeze,
 };
 
 static PROV_SHA3_METHOD kmac_s390x_md =
 {
     s390x_sha3_absorb,
-    s390x_kmac_final
+    s390x_kmac_final,
+    s390x_kmac_squeeze,
 };
 
 # define SHAKE_SET_MD(uname, typ)                                              \
