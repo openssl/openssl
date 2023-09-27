@@ -188,6 +188,10 @@ static size_t s390x_sha3_absorb(void *vctx, const void *inp, size_t len)
     KECCAK1600_CTX *ctx = vctx;
     size_t rem = len % ctx->block_size;
 
+    if (!(ctx->xof_state == XOF_STATE_INIT ||
+          ctx->xof_state == XOF_STATE_ABSORB))
+        return 0;
+    ctx->xof_state = XOF_STATE_ABSORB;
     s390x_kimd(inp, len - rem, ctx->pad, ctx->A);
     return rem;
 }
