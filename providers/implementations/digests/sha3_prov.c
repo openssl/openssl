@@ -143,6 +143,10 @@ static size_t generic_sha3_absorb(void *vctx, const void *inp, size_t len)
 {
     KECCAK1600_CTX *ctx = vctx;
 
+    if (!(ctx->xof_state == XOF_STATE_INIT ||
+          ctx->xof_state == XOF_STATE_ABSORB))
+        return 0;
+    ctx->xof_state = XOF_STATE_ABSORB;
     return SHA3_absorb(ctx->A, inp, len, ctx->block_size);
 }
 
