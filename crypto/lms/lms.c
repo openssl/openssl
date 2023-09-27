@@ -2,6 +2,9 @@
 #include <openssl/lms.h>
 #include "internal/packet.h"
 
+#define HSS_MIN_L 1
+#define HSS_MAX_L 8
+
 #define LMS_TYPE_SHA256_N32_H5   0x00000005
 #define LMS_TYPE_SHA256_N32_H10  0x00000006
 #define LMS_TYPE_SHA256_N32_H15  0x00000007
@@ -54,24 +57,24 @@ out[1] = (unsigned char)(in & 0xff)
 typedef struct LMOTSParams_st {
     uint32_t lmots_type;
     const char *digestname;   /* Hash Name */
-    int n;           /* Hash output size in bytes */
-    int w;           /* The width of the Winternitz coefficients in bits */
-    int p;           /* The number of n-byte elements used for LMOTS signature */
+    uint32_t n;           /* Hash output size in bytes */
+    uint32_t w;           /* The width of the Winternitz coefficients in bits */
+    uint32_t p;           /* The number of n-byte elements used for LMOTS signature */
 } LMOTSParams;
 
 typedef struct LMSParams_st {
     uint32_t lms_type;
     const char *digestname;
-    int n;
-    int h;
+    uint32_t n;
+    uint32_t h;
 } LMSParams;
 
 /*
  * OpenSSL does not have a "SHAKE256-192" algorithm, so we have to check the
  * digest size as well as the name.
  */
-#define HASH_MATCH(a, b) \
-    (a->n == b->n && (strcmp(a->digestname, b->digestname) == 0)
+#define HASH_NOT_MATCHED(a, b) \
+    a->n != b->n || (strcmp(a->digestname, b->digestname) != 0)
 
 static unsigned char D_PBLC[] = { 0x80, 0x80 };
 static unsigned char D_MESG[] = { 0x81, 0x81 };
@@ -139,10 +142,11 @@ typedef struct lms_signature_st {
 } LMS_SIG;
 
 typedef struct lms_public_key_st {
-  uint32_t lms_type;
-  uint32_t ots_alg_type;
-  unsigned char *I; /* 16 bytes */
-  unsigned char *K; /* n bytes */
+    const LMSParams *lms_params;
+    const LMOTSParams *ots_params;
+    unsigned char *I;               /* 16 bytes */
+    unsigned char *K;               /* n bytes */
+
 } LMS_PUB_KEY;
 
 typedef struct hss_public_key_st {
@@ -251,7 +255,7 @@ static void lmots_compute_pubkey_cleanup(LMOTS_PUBKEY_CTX *pctx)
 /* Algorithm 4b */
 static int lmots_compute_pubkey_init(LMOTS_PUBKEY_CTX *pctx,
                                      const LMOTS_SIG *sig,
-                                     uint32_t pubtype,
+                                     const LMOTSParams *pub,
                                      const unsigned char *I, uint32_t q)
 {
     int ret = 0;
@@ -259,15 +263,14 @@ static int lmots_compute_pubkey_init(LMOTS_PUBKEY_CTX *pctx,
     EVP_MD_CTX *ctx, *ctxIq;
     unsigned char iq[ISIZE+4], *qbuf = &iq[ISIZE];
 
-//    if (sig->params->lmots_type != pubtype)
-//        return 0;
+    if (sig->params != pub)
+        return 0;
 
     memcpy(iq, I, ISIZE);
     U32STR(qbuf, q);
 
     pctx->ctxIq = pctx->ctx = NULL;
     pctx->sig  = sig;
-    pctx->sig = sig;
     ctxIq = EVP_MD_CTX_create();
     ctx = EVP_MD_CTX_create();
     if (ctxIq == NULL || ctx == NULL)
@@ -375,8 +378,8 @@ static int lms_sig_verify_init(LMS_VERIFY_CTX *vctx,
 {
     vctx->lms_sig = lms_sig;
     vctx->key = key;
-    return lmots_compute_pubkey_init(&vctx->pubctx, &lms_sig->sig, key->lms_type,
-                                     key->I, lms_sig->q);
+    return lmots_compute_pubkey_init(&vctx->pubctx, &lms_sig->sig,
+                                     key->ots_params, key->I, lms_sig->q);
 }
 
 static int lms_sig_verify_update(LMS_VERIFY_CTX *vctx,
@@ -395,16 +398,14 @@ static int lms_sig_verify_final(LMS_VERIFY_CTX *vctx)
     unsigned char Tc[MAX_DIGEST_SIZE];
     unsigned char buf[4];
     const LMSParams *lmsParams;
-    int node_num, m;
+    uint32_t node_num, m;
     const unsigned char *path;
 
     if (!lmots_compute_pubkey_final(&vctx->pubctx, Kc))
         return 0;
 
     /* Compute the candidate LMS root value Tc */
-    lmsParams = LMSParams_get(key->lms_type);
-    if (lmsParams == NULL)
-        goto err;
+    lmsParams = key->lms_params;
     m = lmsParams->n;
     node_num = (1 << lmsParams->h) + lms_sig->q;
 
@@ -489,30 +490,36 @@ end:
     return valid;
 }
 
-static int lms_sig_from_pkt(PACKET *pkt, LMS_SIG *lsig)
+/* RFC 8554 Algorithm 6a: Steps 1 and 2 */
+static int lms_sig_from_pkt(PACKET *pkt, const LMS_PUB_KEY *pub, LMS_SIG *lsig)
 {
-    uint32_t lmots_type = 0, lms_type = 0;
-    const LMOTSParams *params;
+    uint32_t sig_ots_type = 0, sig_lms_type = 0;
+    const LMOTSParams *pub_ots_params = pub->ots_params;
+    const LMOTSParams *sig_params;
     const LMSParams *lparams;
 
     if (!PACKET_get_4_len(pkt, &lsig->q))    /* q = Leaf Index */
         return 0;
-    if (!PACKET_get_4_len(pkt, &lmots_type))
+    if (!PACKET_get_4_len(pkt, &sig_ots_type))
         return 0;
-    params = LMOTSParams_get(lmots_type);
-    if (params == NULL)
+    if (pub_ots_params->lmots_type != sig_ots_type)
         return 0;
-    lsig->sig.params = params;
+    sig_params = pub_ots_params;
+    lsig->sig.params = sig_params;
 
-    if (!PACKET_get_bytes_shallow(pkt, &lsig->sig.C, params->n)) /* Random bytes of size n */
+    if (!PACKET_get_bytes_shallow(pkt, &lsig->sig.C, sig_params->n)) /* Random bytes of size n */
         return 0;
-    if (!PACKET_get_bytes_shallow(pkt, &lsig->sig.y, params->p * params->n)) /* Y[P] hash values */
+    if (!PACKET_get_bytes_shallow(pkt, &lsig->sig.y, sig_params->p * sig_params->n)) /* Y[P] hash values */
         return 0;
 
-    if (!PACKET_get_4_len(pkt, &lms_type))
+    if (!PACKET_get_4_len(pkt, &sig_lms_type))
         return 0;
-    lparams = LMSParams_get(lms_type);
-    if (lparams == NULL)
+    if (pub->lms_params->lms_type != sig_lms_type)
+        return 0;
+    lparams = pub->lms_params;
+    if (HASH_NOT_MATCHED(pub->lms_params, sig_params))
+        return 0;
+    if (lsig->q >= (uint32_t)(1 << lparams->h))
         return 0;
 
     if (!PACKET_get_bytes_shallow(pkt, &lsig->paths, lparams->h * lparams->n)) /* path[h] hash values */
@@ -520,27 +527,70 @@ static int lms_sig_from_pkt(PACKET *pkt, LMS_SIG *lsig)
     return 1;
 }
 
+#if 0
+static int lms_sig_from_data(const unsigned char *sig, size_t siglen,
+                             const LMS_PUB_KEY *pub, LMS_SIG *out)
+{
+    PACKET pkt;
+
+    if (!PACKET_buf_init(&pkt, sig, siglen))
+        return 0;
+    if (!lms_sig_from_pkt(&pkt, pub, out))
+        return 0;
+    return PACKET_remaining(&pkt) == 0;
+}
+#endif
+
+/*
+ * RFC 8554 Algorithm 6: Steps 1 & 2.
+ * Steps that involve checking the size of the public key data are
+ * done indirectly by checking the return result of PACKET_get API's.
+ */
 static int lms_pubkey_from_pkt(PACKET *pkt, LMS_PUB_KEY *key)
 {
-    const LMOTSParams *params;
+    uint32_t lms_type;
+    uint32_t ots_type;
 
-    if (!PACKET_get_4_len(pkt, &key->lms_type))
+    if (!PACKET_get_4_len(pkt, &lms_type))
         return 0;
-    if (!PACKET_get_4_len(pkt, &key->ots_alg_type))
+    key->lms_params = LMSParams_get(lms_type);
+    if (key->lms_params == NULL)
+        return 0;
+
+    if (!PACKET_get_4_len(pkt, &ots_type))
+        return 0;
+    key->ots_params = LMOTSParams_get(ots_type);
+    if (key->ots_params == NULL)
+        return 0;
+
+    if (HASH_NOT_MATCHED(key->ots_params, key->lms_params))
         return 0;
     if (!PACKET_get_bytes_shallow(pkt, &key->I, ISIZE)) /* 16 byte Id */
         return 0;
-    params = LMOTSParams_get(key->ots_alg_type);
-    if (params == NULL)
-        return 0;
-    if (!PACKET_get_bytes_shallow(pkt, &key->K, params->n))
+    if (!PACKET_get_bytes_shallow(pkt, &key->K, key->lms_params->n))
         return 0;
     return 1;
 }
 
+#if 0
+static int lms_pubkey_from_data(const unsigned char *pub, size_t publen,
+                                LMS_PUB_KEY *key)
+{
+    PACKET pkt;
+
+    if (!PACKET_buf_init(&pkt, pub, publen))
+        return 0;
+    if (!lms_pubkey_from_pkt(&pkt, key))
+        return 0;
+    return PACKET_remaining(&pkt) == 0;
+}
+#endif
+
 static int hss_pubkey_from_pkt(PACKET *pkt, HSS_PUB_KEY *key)
 {
     if (!PACKET_get_4_len(pkt, &key->L))
+        return 0;
+    if (key->L < HSS_MIN_L || key->L > HSS_MAX_L)
         return 0;
     return lms_pubkey_from_pkt(pkt, &key->pub);
 }
@@ -573,14 +623,14 @@ int OSSL_HSS_verify_init(LMS_VERIFY_CTX *ctx,
         return 0;
 
     for (i = 0; i < Nspk; ++i) {
-        if (!lms_sig_from_pkt(&pkt, &ctx->siglist[i]))
+        if (!lms_sig_from_pkt(&pkt, &ctx->publist[i], &ctx->siglist[i]))
             return 0;
         pubkey_blob[i] = PACKET_data(&pkt);
         if (!lms_pubkey_from_pkt(&pkt, &ctx->publist[i+1]))
             return 0;
         pubkey_bloblen[i] = PACKET_data(&pkt) - pubkey_blob[i];
     }
-    if (!lms_sig_from_pkt(&pkt, &ctx->siglist[Nspk]))
+    if (!lms_sig_from_pkt(&pkt, &ctx->publist[Nspk], &ctx->siglist[Nspk]))
         return 0;
     if (PACKET_remaining(&pkt) > 0)
         return 0;
@@ -626,3 +676,21 @@ int OSSL_HSS_verify(const unsigned char *pub, size_t publen,
     OSSL_HSS_verify_free(ctx);
     return ret;
 }
+
+#if 0
+static
+int OSSL_LMS_verify(LMS_VERIFY_CTX *ctx,
+                    const unsigned char *pub, size_t publen,
+                    const unsigned char *sig, size_t siglen,
+                    const unsigned char *msg, size_t msglen)
+{
+    LMS_PUB_KEY pubkey;
+    LMS_SIG s;
+
+    if (!lms_pubkey_from_data(pub, publen, &pubkey))
+        return 0;
+    if (!lms_sig_from_data(sig, siglen, &pubkey, &s))
+        return 0;
+    return lms_sig_verify(&sig, &pubkey, msg, msglen);
+}
+#endif
