@@ -202,6 +202,10 @@ static int s390x_sha3_final(void *vctx, unsigned char *out, size_t outlen)
 
     if (!ossl_prov_is_running())
         return 0;
+    if (!(ctx->xof_state == XOF_STATE_INIT ||
+          ctx->xof_state == XOF_STATE_ABSORB))
+        return 0;
+    ctx->xof_state = XOF_STATE_FINAL;
     s390x_klmd(ctx->buf, ctx->bufsz, NULL, 0, ctx->pad, ctx->A);
     memcpy(out, ctx->A, outlen);
     return 1;
