@@ -235,6 +235,10 @@ static int s390x_keccakc_final(void *vctx, unsigned char *out, size_t outlen,
 
     if (!ossl_prov_is_running())
         return 0;
+    if (!(ctx->xof_state == XOF_STATE_INIT ||
+          ctx->xof_state == XOF_STATE_ABSORB))
+        return 0;
+    ctx->xof_state = XOF_STATE_FINAL;
     if (outlen == 0)
         return 1;
     memset(ctx->buf + num, 0, bsz - num);
