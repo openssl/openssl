@@ -34,7 +34,7 @@ static const PROV_CCM_HW rv64i_zvksed_sm4_ccm = {
 
 const PROV_CCM_HW *ossl_prov_sm4_hw_ccm(size_t keybits)
 {
-    if (RISCV_HAS_ZVBB_AND_ZVKSED() && riscv_vlen() >= 128)
+    if (RISCV_HAS_ZVKB_AND_ZVKSED() && riscv_vlen() >= 128)
         return &rv64i_zvksed_sm4_ccm;
     else
         return &ccm_sm4;

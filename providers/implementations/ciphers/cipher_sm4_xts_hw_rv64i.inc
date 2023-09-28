@@ -36,7 +36,7 @@ static const PROV_CIPHER_HW rv64i_zvksed_sm4_xts = {
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_sm4_xts(size_t keybits)
 {
-    if (RISCV_HAS_ZVBB_AND_ZVKSED() && riscv_vlen() >= 128)
+    if (RISCV_HAS_ZVKB_AND_ZVKSED() && riscv_vlen() >= 128)
         return &rv64i_zvksed_sm4_xts;
     else
         return &sm4_generic_xts;

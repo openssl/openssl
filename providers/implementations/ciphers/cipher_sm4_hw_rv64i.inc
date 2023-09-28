@@ -48,5 +48,5 @@ static const PROV_CIPHER_HW rv64i_zvksed_sm4_##mode = {                \
     cipher_hw_sm4_copyctx                                              \
 };
 #define PROV_CIPHER_HW_select(mode)                                    \
-if (RISCV_HAS_ZVBB_AND_ZVKSED() && riscv_vlen() >= 128)                \
+if (RISCV_HAS_ZVKB_AND_ZVKSED() && riscv_vlen() >= 128)                \
     return &rv64i_zvksed_sm4_##mode;

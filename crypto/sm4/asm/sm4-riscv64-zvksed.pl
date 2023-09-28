@@ -36,9 +36,9 @@
 
 # The generated code of this file depends on the following RISC-V extensions:
 # - RV64I
-# - RISC-V vector ('V') with VLEN >= 128
-# - Vector Bit-manipulation used in Cryptography ('Zvbb')
-# - Vector ShangMi Suite: SM4 Block Cipher ('Zvksed')
+# - RISC-V Vector ('V') with VLEN >= 128
+# - RISC-V Vector Cryptography Bit-manipulation extension ('Zvkb')
+# - RISC-V Vector SM4 Block Cipher extension ('Zvksed')
 
 use strict;
 use warnings;

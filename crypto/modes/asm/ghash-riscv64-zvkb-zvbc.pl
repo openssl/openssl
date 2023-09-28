@@ -35,9 +35,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # - RV64I
-# - RISC-V vector ('V') with VLEN >= 128
-# - Vector Bit-manipulation used in Cryptography ('Zvbb')
-# - Vector Carryless Multiplication ('Zvbc')
+# - RISC-V Vector ('V') with VLEN >= 128
+# - RISC-V Vector Cryptography Bit-manipulation extension ('Zvkb')
+# - RISC-V Vector Carryless Multiplication extension ('Zvbc')
 
 use strict;
 use warnings;
@@ -59,20 +59,20 @@ my $code=<<___;
 ___
 
 ################################################################################
-# void gcm_init_rv64i_zvbb_zvbc(u128 Htable[16], const u64 H[2]);
+# void gcm_init_rv64i_zvkb_zvbc(u128 Htable[16], const u64 H[2]);
 #
 # input:	H: 128-bit H - secret parameter E(K, 0^128)
-# output:	Htable: Preprocessed key data for gcm_gmult_rv64i_zvbb_zvbc and
-#                       gcm_ghash_rv64i_zvbb_zvbc
+# output:	Htable: Preprocessed key data for gcm_gmult_rv64i_zvkb_zvbc and
+#                       gcm_ghash_rv64i_zvkb_zvbc
 {
 my ($Htable,$H,$TMP0,$TMP1,$TMP2) = ("a0","a1","t0","t1","t2");
 my ($V0,$V1,$V2,$V3,$V4,$V5,$V6) = ("v0","v1","v2","v3","v4","v5","v6");
 
 $code .= <<___;
 .p2align 3
-.globl gcm_init_rv64i_zvbb_zvbc
-.type gcm_init_rv64i_zvbb_zvbc,\@function
-gcm_init_rv64i_zvbb_zvbc:
+.globl gcm_init_rv64i_zvkb_zvbc
+.type gcm_init_rv64i_zvkb_zvbc,\@function
+gcm_init_rv64i_zvkb_zvbc:
     # Load/store data in reverse order.
     # This is needed as a part of endianness swap.
     add $H, $H, 8
@@ -110,12 +110,12 @@ gcm_init_rv64i_zvbb_zvbc:
 
     @{[vse64_v $V1, $Htable]}        # vse64.v v1, (a0)
     ret
-.size gcm_init_rv64i_zvbb_zvbc,.-gcm_init_rv64i_zvbb_zvbc
+.size gcm_init_rv64i_zvkb_zvbc,.-gcm_init_rv64i_zvkb_zvbc
 ___
 }
 
 ################################################################################
-# void gcm_gmult_rv64i_zvbb_zvbc(u64 Xi[2], const u128 Htable[16]);
+# void gcm_gmult_rv64i_zvkb_zvbc(u64 Xi[2], const u128 Htable[16]);
 #
 # input:	Xi: current hash value
 #		Htable: preprocessed H
@@ -127,9 +127,9 @@ my ($V0,$V1,$V2,$V3,$V4,$V5,$V6) = ("v0","v1","v2","v3","v4","v5","v6");
 $code .= <<___;
 .text
 .p2align 3
-.globl gcm_gmult_rv64i_zvbb_zvbc
-.type gcm_gmult_rv64i_zvbb_zvbc,\@function
-gcm_gmult_rv64i_zvbb_zvbc:
+.globl gcm_gmult_rv64i_zvkb_zvbc
+.type gcm_gmult_rv64i_zvkb_zvbc,\@function
+gcm_gmult_rv64i_zvkb_zvbc:
     ld $TMP0, ($Htable)
     ld $TMP1, 8($Htable)
     li $TMP2, 63
@@ -228,12 +228,12 @@ gcm_gmult_rv64i_zvbb_zvbc:
     @{[vrev8_v $V2, $V2]}            # vrev8.v v2, v2
     @{[vsse64_v $V2, $Xi, $TMP4]}    # vsse64.v v2, (a0), t4
     ret
-.size gcm_gmult_rv64i_zvbb_zvbc,.-gcm_gmult_rv64i_zvbb_zvbc
+.size gcm_gmult_rv64i_zvkb_zvbc,.-gcm_gmult_rv64i_zvkb_zvbc
 ___
 }
 
 ################################################################################
-# void gcm_ghash_rv64i_zvbb_zvbc(u64 Xi[2], const u128 Htable[16],
+# void gcm_ghash_rv64i_zvkb_zvbc(u64 Xi[2], const u128 Htable[16],
 #                                const u8 *inp, size_t len);
 #
 # input:	Xi: current hash value
@@ -247,9 +247,9 @@ my ($V0,$V1,$V2,$V3,$V4,$V5,$V6,$Vinp) = ("v0","v1","v2","v3","v4","v5","v6","v7
 
 $code .= <<___;
 .p2align 3
-.globl gcm_ghash_rv64i_zvbb_zvbc
-.type gcm_ghash_rv64i_zvbb_zvbc,\@function
-gcm_ghash_rv64i_zvbb_zvbc:
+.globl gcm_ghash_rv64i_zvkb_zvbc
+.type gcm_ghash_rv64i_zvkb_zvbc,\@function
+gcm_ghash_rv64i_zvkb_zvbc:
     ld $TMP0, ($Htable)
     ld $TMP1, 8($Htable)
     li $TMP2, 63
@@ -361,7 +361,7 @@ Lstep:
 
     @{[vsse64_v $V5, $Xi, $M8]}    # vsse64.v v2, (a0), t4
     ret
-.size gcm_ghash_rv64i_zvbb_zvbc,.-gcm_ghash_rv64i_zvbb_zvbc
+.size gcm_ghash_rv64i_zvkb_zvbc,.-gcm_ghash_rv64i_zvkb_zvbc
 ___
 }
 
