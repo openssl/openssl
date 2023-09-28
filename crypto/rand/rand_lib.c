@@ -609,7 +609,6 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
     }
     if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0, NULL)) {
         ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
-        EVP_RAND_CTX_free(ctx);
         goto err;
     }
     OPENSSL_free(props);
