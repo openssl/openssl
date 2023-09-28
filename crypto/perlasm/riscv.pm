@@ -746,7 +746,18 @@ sub vxor_vv {
 
 # Vector crypto instructions
 
-## Zvbb instructions
+## Zvbb and Zvkb instructions
+##
+## vandn (also in zvkb)
+## vbrev
+## vbrev8 (also in zvkb)
+## vrev8 (also in zvkb)
+## vclz
+## vctz
+## vcpop
+## vrol (also in zvkb)
+## vror (also in zvkb)
+## vwsll
 
 sub vrev8_v {
     # vrev8.v vd, vs2, vm

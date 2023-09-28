@@ -35,8 +35,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # - RV64I
-# - RISC-V vector ('V') with VLEN >= 128
-# - RISC-V vector crypto GHASH extension ('Zvkg')
+# - RISC-V Vector ('V') with VLEN >= 128
+# - RISC-V Vector GCM/GMAC extension ('Zvkg')
+#
+# Optional:
+# - RISC-V Vector Cryptography Bit-manipulation extension ('Zvkb')
 
 use strict;
 use warnings;
@@ -59,7 +62,7 @@ ___
 
 ################################################################################
 # void gcm_init_rv64i_zvkg(u128 Htable[16], const u64 H[2]);
-# void gcm_init_rv64i_zvkg_zvbb(u128 Htable[16], const u64 H[2]);
+# void gcm_init_rv64i_zvkg_zvkb(u128 Htable[16], const u64 H[2]);
 #
 # input: H: 128-bit H - secret parameter E(K, 0^128)
 # output: Htable: Copy of secret parameter (in normalized byte order)
@@ -88,15 +91,15 @@ my ($Htable,$H,$V0) = ("a0","a1","v0");
 
 $code .= <<___;
 .p2align 3
-.globl gcm_init_rv64i_zvkg_zvbb
-.type gcm_init_rv64i_zvkg_zvbb,\@function
-gcm_init_rv64i_zvkg_zvbb:
-    @{[vsetivli__x0_2_e64_m1_tu_mu]} # vsetivli x0, 2, e64, m1, tu, mu
+.globl gcm_init_rv64i_zvkg_zvkb
+.type gcm_init_rv64i_zvkg_zvkb,\@function
+gcm_init_rv64i_zvkg_zvkb:
+    @{[vsetivli__x0_2_e64_m1_tu_mu]} # vsetivli x0, 2, e64, m1, ta, ma
     @{[vle64_v $V0, $H]}             # vle64.v v0, (a1)
     @{[vrev8_v $V0, $V0]}            # vrev8.v v0, v0
     @{[vse64_v $V0, $Htable]}        # vse64.v v0, (a0)
     ret
-.size gcm_init_rv64i_zvkg_zvbb,.-gcm_init_rv64i_zvkg_zvbb
+.size gcm_init_rv64i_zvkg_zvkb,.-gcm_init_rv64i_zvkg_zvkb
 ___
 }
 

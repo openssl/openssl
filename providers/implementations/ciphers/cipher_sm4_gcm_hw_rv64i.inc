@@ -35,7 +35,7 @@ static const PROV_GCM_HW rv64i_zvksed_sm4_gcm = {
 
 const PROV_GCM_HW *ossl_prov_sm4_hw_gcm(size_t keybits)
 {
-    if (RISCV_HAS_ZVBB_AND_ZVKSED() && riscv_vlen() >= 128)
+    if (RISCV_HAS_ZVKB_AND_ZVKSED() && riscv_vlen() >= 128)
         return &rv64i_zvksed_sm4_gcm;
     else
         return &sm4_gcm;
