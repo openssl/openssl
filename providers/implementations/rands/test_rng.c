@@ -47,6 +47,7 @@ typedef struct {
     unsigned char *entropy, *nonce;
     size_t entropy_len, entropy_pos, nonce_len;
     CRYPTO_RWLOCK *lock;
+    uint32_t seed;
 } PROV_TEST_RNG;
 
 static void *test_rng_new(void *provctx, void *parent,
@@ -88,6 +89,7 @@ static int test_rng_instantiate(void *vtest, unsigned int strength,
 
     t->state = EVP_RAND_STATE_READY;
     t->entropy_pos = 0;
+    t->seed = 221953166;    /* Value doesn't matter, so long as it isn't zero */
 
     return 1;
 }
@@ -103,7 +105,22 @@ static int test_rng_uninstantiate(void *vtest)
 
 static unsigned char gen_byte(PROV_TEST_RNG *t)
 {
-    return rand() & 0xff;
+    uint32_t n;
+
+    /*
+     * Implement the 32 bit xorshift as suggested by George Marsaglia in:
+     *      https://doi.org/10.18637/jss.v008.i14
+     *
+     * This is a very fast PRNG so there is no need to extract bytes one at a
+     * time and use the entire value each time.
+     */
+    n = t->seed;
+    n ^= n << 13;
+    n ^= n >> 17;
+    n ^= n << 5;
+    t->seed = n;
+
+    return n & 0xff;
 }
 
 static int test_rng_generate(void *vtest, unsigned char *out, size_t outlen,
