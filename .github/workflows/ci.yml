@@ -83,6 +83,10 @@ jobs:
       run: CC=gcc ./config --banner=Configured enable-fips enable-quic --strict-warnings && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -96,6 +100,10 @@ jobs:
       run: CC=clang ./config --banner=Configured no-fips --strict-warnings && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -109,6 +117,10 @@ jobs:
       run: ./config --banner=Configured --strict-warnings no-bulk no-pic no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
     - name: make
       run: make -j4 # verbose, so no -s here
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -122,6 +134,10 @@ jobs:
       run: ./config --banner=Configured --strict-warnings no-deprecated enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -138,6 +154,8 @@ jobs:
       run: ./config --banner=Configured --strict-warnings no-shared no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -151,6 +169,10 @@ jobs:
       run: ./config --banner=Configured --debug enable-asan enable-ubsan no-cached-fetch no-fips no-dtls no-tls1 no-tls1-method no-tls1_1 no-tls1_1-method no-async && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
 
@@ -164,6 +186,10 @@ jobs:
       run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
@@ -178,6 +204,10 @@ jobs:
       run: CC=clang ./config --banner=Configured --debug -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
@@ -191,6 +221,10 @@ jobs:
       run: CC=clang ./config --banner=Configured no-fips --strict-warnings -fsanitize=thread && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make V=1 TESTS="test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp test_quic*" test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -206,6 +240,10 @@ jobs:
       run: ./config --banner=Configured --strict-warnings no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd enable-ktls enable-fips no-threads && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -221,6 +259,10 @@ jobs:
       run: ./config --banner=Configured --strict-warnings enable-ktls enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -239,6 +281,10 @@ jobs:
       run: ./config enable-comp enable-brotli enable-brotli-dynamic && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -257,6 +303,10 @@ jobs:
       run: ./config enable-comp enable-zstd enable-zstd-dynamic && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -276,6 +326,10 @@ jobs:
       run: ./config enable-comp enable-brotli enable-brotli-dynamic enable-zstd enable-zstd-dynamic && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -294,6 +348,10 @@ jobs:
       run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-brotli -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -DPEDANTIC && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
@@ -312,6 +370,10 @@ jobs:
       run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-zstd -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -DPEDANTIC && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
@@ -325,6 +387,10 @@ jobs:
       run: ./config --banner=Configured --strict-warnings no-legacy enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -338,6 +404,10 @@ jobs:
       run: ./config --banner=Configured -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -354,6 +424,8 @@ jobs:
       run: CC=gcc ./config --banner=Configured enable-tfo --strict-warnings && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -367,6 +439,10 @@ jobs:
       run: ./config --banner=Configured no-asm no-makedepend enable-buildtest-c++ enable-fips --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -388,6 +464,9 @@ jobs:
       working-directory: ./build
     - name: make
       run: make -s -j4
+      working-directory: ./build
+    - name: get cpu info
+      run: ./util/opensslwrap.sh version -c
       working-directory: ./build
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
@@ -416,6 +495,10 @@ jobs:
       run: ./config --banner=Configured --strict-warnings --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: test external gost-engine
       run: make test TESTS="test_external_gost_engine"
     - name: test external krb5
@@ -451,6 +534,10 @@ jobs:
         toolchain: ${{ matrix.RUST }}
         override: true
         default: true
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: test external pyca
       run: make test TESTS="test_external_pyca" VERBOSE=1
 
@@ -469,5 +556,9 @@ jobs:
         profile: default
         toolchain: stable
         default: true
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: test external Cloudflare quiche
       run: make test TESTS="test_external_cf_quiche" VERBOSE=1

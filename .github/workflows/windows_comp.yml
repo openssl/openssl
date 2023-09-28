@@ -41,6 +41,17 @@ jobs:
     - name: build
       working-directory: _build
       run: nmake
+    - name: download coreinfo
+      uses: suisei-cn/actions-download-file@v1.3.0
+      with:
+        url: "https://download.sysinternals.com/files/Coreinfo.zip"
+        target: _build/coreinfo/
+    - name: get cpu info
+      working-directory: _build
+      run: |
+        7z.exe x coreinfo/Coreinfo.zip
+        ./Coreinfo64.exe -accepteula -f
+        ./apps/openssl.exe version -c
     - name: test
       working-directory: _build
       run: |
@@ -68,6 +79,17 @@ jobs:
     - name: build
       working-directory: _build
       run: nmake
+    - name: download coreinfo
+      uses: suisei-cn/actions-download-file@v1.3.0
+      with:
+        url: "https://download.sysinternals.com/files/Coreinfo.zip"
+        target: _build/coreinfo/
+    - name: get cpu info
+      working-directory: _build
+      run: |
+        7z.exe x coreinfo/Coreinfo.zip
+        ./Coreinfo64.exe -accepteula -f
+        ./apps/openssl.exe version -c
     - name: test
       working-directory: _build
       run: |

@@ -43,6 +43,10 @@ jobs:
       run: ./configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -89,6 +93,10 @@ jobs:
       run: ./configdata.pm --dump
     - name: make
       run: make -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -111,6 +119,10 @@ jobs:
       run: ./configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        sysctl machdep.cpu
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
@@ -141,6 +153,17 @@ jobs:
     - name: build
       working-directory: _build
       run: nmake /S
+    - name: download coreinfo
+      uses: suisei-cn/actions-download-file@v1.3.0
+      with:
+        url: "https://download.sysinternals.com/files/Coreinfo.zip"
+        target: _build/coreinfo/
+    - name: get cpu info
+      working-directory: _build
+      run: |
+        7z.exe x coreinfo/Coreinfo.zip
+        ./Coreinfo64.exe -accepteula -f
+        apps/openssl.exe version -c
     - name: test
       working-directory: _build
       run: nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
