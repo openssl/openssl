@@ -10,7 +10,6 @@
 
 name: Provider compatibility across versions
 
-
 # NOTE: if this is being run on pull_request, it will **not** use the pull
 #       request's branch.  It is hardcoded to use the master branch.
 #
@@ -160,6 +159,12 @@ jobs:
                                                  -providers
         working-directory: ${{ matrix.branch.dir }}
 
+      - name: get cpu info
+        run: |
+          cat /proc/cpuinfo
+          ./util/opensslwrap.sh version -c
+        working-directory: ${{ matrix.branch.dir }}
+
       - name: make test
         run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
         working-directory: ${{ matrix.branch.dir }}
@@ -229,6 +234,12 @@ jobs:
                                                  -provider legacy           \
                                                  -providers
         working-directory: ${{ matrix.tree_b }}
+
+      - name: get cpu info
+        run: |
+          cat /proc/cpuinfo
+          ./util/opensslwrap.sh version -c
+        working-directory: ${{ matrix.branch.dir }}
 
       - name: run cross validation tests of FIPS from A with tree from B
         if: steps.early_exit.outcome == 'success'

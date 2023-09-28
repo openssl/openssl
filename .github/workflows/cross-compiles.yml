@@ -195,6 +195,9 @@ jobs:
       run: echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=\
                  ${{ matrix.platform.opensslcaps }}" >> $GITHUB_ENV
 
+    - name: get cpu info
+      run: cat /proc/cpuinfo
+
     - name: make all tests
       if: github.event_name == 'push' && matrix.platform.tests == ''
       run: |

@@ -61,6 +61,10 @@ jobs:
       run: ./configdata.pm --dump
     - name: make
       run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} TESTS='-test_external_krb5'
     - name: generate coverage info
