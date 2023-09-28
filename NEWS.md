@@ -20,7 +20,7 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
-### Major changes between OpenSSL 3.1 and OpenSSL 3.2 alpha 2 [in pre-release]
+### Major changes between OpenSSL 3.1 and OpenSSL 3.2 [under development]
 
   * Added client side support for QUIC.
   * Added multiple tutorials on the OpenSSL library and in particular
