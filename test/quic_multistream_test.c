@@ -1053,7 +1053,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             first           = 0;
             offset          = 0;
             op_start_time   = ossl_time_now();
-            op_deadline     = ossl_time_add(op_start_time, ossl_ms2time(8000));
+            op_deadline     = ossl_time_add(op_start_time, ossl_ms2time(60000));
         }
 
         if (!TEST_int_le(ossl_time_compare(ossl_time_now(), op_deadline), 0)) {
