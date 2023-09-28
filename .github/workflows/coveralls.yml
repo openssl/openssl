@@ -64,7 +64,13 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} TESTS='-test_external_krb5'
     - name: generate coverage info
-      run: lcov -d . -c -o ./lcov.info
+      run: lcov -d . -c \
+             --exclude "${PWD}/test/*" \
+             --exclude "${PWD}/test/helpers/*" \
+             --exclude "${PWD}/test/testutil/*" \
+             --exclude "${PWD}/fuzz/*" \
+             --exclude "/usr/include/*" \
+              -o ./lcov.info
     - name: Coveralls upload
       uses: coverallsapp/github-action@v2.2.3
       with:
