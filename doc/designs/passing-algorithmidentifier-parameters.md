@@ -1,5 +1,5 @@
-Passing AgorithmIdentifier parameters to operations
-===================================================
+Passing AlgorithmIdentifier parameters to operations
+====================================================
 
 Quick background
 ----------------
@@ -22,7 +22,7 @@ We already have a parameter key, but it's currently only specified for
 `EVP_CIPHER`, in support of `EVP_CIPHER_param_to_asn1()` and
 `EVP_CIPHER_asn1_to_param()`.
 
-"alg\_id\_param", also known as the macro `OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS`
+"alg_id_param", also known as the macro `OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS`
 
 This parameter can be used in the exact same manner with other operations,
 with the value of the AlgorithmIdentifier parameter as an octet string, to
@@ -51,8 +51,8 @@ AlgorithmIdentifier.parameters field.
 
 We may arguably want to consider `doc/man7/provider-keymgmt.pod` too, but
 an AlgorithmIdentifier that's attached directly to a key is usually part of
-a PrivKeyInfo or SubjectÅublicKeyInfo structure, and those are handled by
-endoders and decoders as those see fit, and there's no tangible reason why
+a PrivKeyInfo or SubjectPublicKeyInfo structure, and those are handled by
+encoders and decoders as those see fit, and there's no tangible reason why
 that would have to change.
 
 Public convenience API
