@@ -1912,7 +1912,10 @@ if ($builder eq "unified") {
         # Make sure the directories we're building in exists
         mkpath($d);
 
+        # VMS catfile adds trailing dots, if found turns into ^. (libcrypto^.^..)
+        $f =~ s/\.$// if $^O eq 'VMS';
         my $res = abs2rel(catfile(absolutedir($d), $f), rel2abs($relativeto));
+        $res =~ s/\.$// if $^O eq 'VMS';
         #print STDERR "DEBUG[cleanfile]: $d , $f => $res\n";
         return $res;
     }
