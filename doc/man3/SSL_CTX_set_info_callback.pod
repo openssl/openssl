@@ -14,11 +14,13 @@ SSL_get_info_callback
 
  void SSL_CTX_set_info_callback(SSL_CTX *ctx,
                                 void (*callback) (const SSL *ssl, int type, int val));
- void (*SSL_CTX_get_info_callback(const SSL_CTX *ctx))();
+
+ void (*SSL_CTX_get_info_callback(SSL_CTX *ctx)) (const SSL *ssl, int type, int val);
 
  void SSL_set_info_callback(SSL *ssl,
                             void (*callback) (const SSL *ssl, int type, int val));
- void (*SSL_get_info_callback(const SSL *ssl))();
+
+ void (*SSL_get_info_callback(const SSL *ssl)) (const SSL *ssl, int type, int val);
 
 =head1 DESCRIPTION
 
