@@ -26,13 +26,13 @@ jobs:
         branches: [
           {
             branch: openssl-3.1,
-            extra_config: no-afalgeng enable-fips enable-ssl-trace enable-trace enable-zlib enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-ec_nistp_64_gcc_128
+            extra_config: no-afalgeng enable-fips
           }, {
             branch: openssl-3.0,
-            extra_config: no-afalgeng enable-fips enable-ssl-trace enable-trace enable-zlib enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-ec_nistp_64_gcc_128
+            extra_config: no-afalgeng enable-fips
           }, {
             branch: master,
-            extra_config: no-afalgeng enable-fips enable-ssl-trace enable-trace enable-zlib enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-ec_nistp_64_gcc_128 enable-tfo
+            extra_config: no-afalgeng enable-fips
           }
         ]
     runs-on: ubuntu-latest
@@ -56,7 +56,7 @@ jobs:
     - name: setup hostname workaround
       run: sudo hostname localhost
     - name: config
-      run: CC=gcc ./config --debug --coverage ${{ matrix.branches.extra_config }} no-asm enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+      run: CC=gcc ./config --debug --coverage ${{ matrix.branches.extra_config }} no-asm enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-buildtest-c++ enable-ssl-trace enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
