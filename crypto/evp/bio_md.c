@@ -140,6 +140,12 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
     ctx = BIO_get_data(b);
     next = BIO_next(b);
 
+    // add check against NULL
+    if(!ctx)
+    {
+        return 0;
+    }
+
     switch (cmd) {
     case BIO_CTRL_RESET:
         if (BIO_get_init(b))
