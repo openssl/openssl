@@ -33,10 +33,9 @@ static char *datadir = NULL;
 static int is_fips = 0;
 
 /* The ssltrace test assumes some options are switched on/off */
-#if !defined(OPENSSL_NO_SSL_TRACE) && !defined(OPENSSL_NO_EC) \
-    && defined(OPENSSL_NO_ZLIB) && defined(OPENSSL_NO_BROTLI) \
-    && defined(OPENSSL_NO_ZSTD) && !defined(OPENSSL_NO_ECX) \
-    && !defined(OPENSSL_NO_DH)
+#if !defined(OPENSSL_NO_SSL_TRACE) \
+    && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD) \
+    && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH)
 # define DO_SSL_TRACE_TEST
 #endif
 
@@ -426,7 +425,11 @@ static int compare_with_file(BIO *membio)
     int ret = 0;
     size_t i;
 
+#ifdef OPENSSL_NO_ZLIB
     reffile = test_mk_file_path(datadir, "ssltraceref.txt");
+#else
+    reffile = test_mk_file_path(datadir, "ssltraceref-zlib.txt");
+#endif
     if (!TEST_ptr(reffile))
         goto err;
 
