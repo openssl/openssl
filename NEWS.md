@@ -28,6 +28,8 @@ OpenSSL.
 
 This release is in development.
 
+  * Added initial Attribute Certificate (RFC 5755) support.
+
 OpenSSL 3.3
 -----------
 
