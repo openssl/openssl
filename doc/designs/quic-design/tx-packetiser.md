@@ -258,39 +258,39 @@ Packetisation and Processing
 
 Frames are taken from [RFC 9000 12.4 Frames and Frame Types].
 
-| Type | Name | I | H | 0 | 1 | N | C | P | F |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0x00 | padding | &check; | &check; | &check; | &check; | &check; | | &check;
-| 0x01 | ping | &check; | &check; | &check; | &check; | | | | |
-| 0x02 | ack 0x02 | &check; | &check; | | &check; | &check; | &check; | | |
-| 0x03 | ack 0x03 | &check; | &check; | | &check; | &check; | &check; | | |
-| 0x04 | reset_stream | | | &check; | &check; | | | | |
-| 0x05 | stop_sending | | | &check; | &check; | | | | |
-| 0x06 | crypto | &check; | &check; | | &check; | | | | |
-| 0x07 | new_token | | | | &check; | | | | |
-| 0x08 | stream 0x08 | | | &check; | &check; | | | | &check; |
-| 0x09 | stream 0x09 | | | &check; | &check; | | | | &check; |
-| 0x0A | stream 0x0A | | | &check; | &check; | | | | &check; |
-| 0x0B | stream 0x0B | | | &check; | &check; | | | | &check; |
-| 0x0C | stream 0x0C | | | &check; | &check; | | | | &check; |
-| 0x0D | stream 0x0D | | | &check; | &check; | | | | &check; |
-| 0x0E | stream 0x0E | | | &check; | &check; | | | | &check; |
-| 0x0F | stream 0x0F | | | &check; | &check; | | | | &check; |
-| 0x10 | max_data | | | &check; | &check; | | | | |
-| 0x11 | max_stream_data | | | &check; | &check; | | | | |
-| 0x12 | max_streams 0x12 | | | &check; | &check; | | | | |
-| 0x13 | max_streams 0x13 | | | &check; | &check; | | | | |
-| 0x14 | data_blocked | | | &check; | &check; | | | | |
-| 0x15 | stream_data_blocked | | | &check; | &check; | | | | |
-| 0x16 | streams_blocked 0x16 | | | &check; | &check; | | | | |
-| 0x17 | streams_blocked 0x17 | | | &check; | &check; | | | | |
-| 0x18 | new_connection_id | | | &check; | &check; | | | &check; | |
-| 0x19 | retire_connection_id | | | &check; | &check; | | | | |
-| 0x1A | path_challenge | | | &check; | &check; | | | &check; | |
-| 0x1B | path_response | | | | &check; | | | &check; | |
-| 0x1C | connection_close 0x1C | &check; | &check; | &check; | &check; | &check;
-| 0x1D | connection_close 0x1D | | | &check; | &check; | &check; | | | |
-| 0x1E | handshake_done | | | | &check; | | | | |
+| Type | Name                  | I       | H       | 0       | 1       | N       | C       | P       | F       |
+|------|-----------------------|---------|---------|---------|---------|---------|---------|---------|---------|
+| 0x00 | padding               | &check; | &check; | &check; | &check; | &check; |         | &check; |         |
+| 0x01 | ping                  | &check; | &check; | &check; | &check; |         |         |         |         |
+| 0x02 | ack 0x02              | &check; | &check; |         | &check; | &check; | &check; |         |         |
+| 0x03 | ack 0x03              | &check; | &check; |         | &check; | &check; | &check; |         |         |
+| 0x04 | reset_stream          |         |         | &check; | &check; |         |         |         |         |
+| 0x05 | stop_sending          |         |         | &check; | &check; |         |         |         |         |
+| 0x06 | crypto                | &check; | &check; |         | &check; |         |         |         |         |
+| 0x07 | new_token             |         |         |         | &check; |         |         |         |         |
+| 0x08 | stream 0x08           |         |         | &check; | &check; |         |         |         | &check; |
+| 0x09 | stream 0x09           |         |         | &check; | &check; |         |         |         | &check; |
+| 0x0A | stream 0x0A           |         |         | &check; | &check; |         |         |         | &check; |
+| 0x0B | stream 0x0B           |         |         | &check; | &check; |         |         |         | &check; |
+| 0x0C | stream 0x0C           |         |         | &check; | &check; |         |         |         | &check; |
+| 0x0D | stream 0x0D           |         |         | &check; | &check; |         |         |         | &check; |
+| 0x0E | stream 0x0E           |         |         | &check; | &check; |         |         |         | &check; |
+| 0x0F | stream 0x0F           |         |         | &check; | &check; |         |         |         | &check; |
+| 0x10 | max_data              |         |         | &check; | &check; |         |         |         |         |
+| 0x11 | max_stream_data       |         |         | &check; | &check; |         |         |         |         |
+| 0x12 | max_streams 0x12      |         |         | &check; | &check; |         |         |         |         |
+| 0x13 | max_streams 0x13      |         |         | &check; | &check; |         |         |         |         |
+| 0x14 | data_blocked          |         |         | &check; | &check; |         |         |         |         |
+| 0x15 | stream_data_blocked   |         |         | &check; | &check; |         |         |         |         |
+| 0x16 | streams_blocked 0x16  |         |         | &check; | &check; |         |         |         |         |
+| 0x17 | streams_blocked 0x17  |         |         | &check; | &check; |         |         |         |         |
+| 0x18 | new_connection_id     |         |         | &check; | &check; |         |         | &check; |         |
+| 0x19 | retire_connection_id  |         |         | &check; | &check; |         |         |         |         |
+| 0x1A | path_challenge        |         |         | &check; | &check; |         |         | &check; |         |
+| 0x1B | path_response         |         |         |         | &check; |         |         | &check; |         |
+| 0x1C | connection_close 0x1C | &check; | &check; | &check; | &check; | &check; |         |         |         |
+| 0x1D | connection_close 0x1D |         |         | &check; | &check; | &check; |         |         |         |
+| 0x1E | handshake_done        |         |         |         | &check; |         |         |         |         |
 
 The various fields are as defined in RFC 9000.
 
