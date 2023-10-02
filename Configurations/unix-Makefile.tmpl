@@ -1146,7 +1146,7 @@ doc-nits: build_generated_pods ## Evaluate OpenSSL documentation
 # Finally, there's a Node.js version, which we haven't tried, that
 # can be found at https://github.com/DavidAnson/markdownlint
 md-nits: ## Evaluate markdown files via "mdl"
-	mdl -s util/markdownlint.rb .
+	mdl -s $(SRCDIR)/util/markdownlint.rb .
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
