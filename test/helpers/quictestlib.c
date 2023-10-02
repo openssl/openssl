@@ -26,6 +26,13 @@
 
 #define GROWTH_ALLOWANCE 1024
 
+struct noise_args_data_st {
+    BIO *cbio;
+    BIO *sbio;
+    BIO *tracebio;
+    int flags;
+};
+
 struct qtest_fault {
     QUIC_TSERVER *qtserv;
 
@@ -62,6 +69,7 @@ struct qtest_fault {
     BIO_MSG msg;
     /* Allocated size of msg data buffer */
     size_t msgalloc;
+    struct noise_args_data_st noiseargs;
 };
 
 static void packet_plain_finish(void *arg);
@@ -73,6 +81,39 @@ static OSSL_TIME fake_now;
 static OSSL_TIME fake_now_cb(void *arg)
 {
     return fake_now;
+}
+
+static void noise_msg_callback(int write_p, int version, int content_type,
+                               const void *buf, size_t len, SSL *ssl,
+                               void *arg)
+{
+    struct noise_args_data_st *noiseargs = (struct noise_args_data_st *)arg;
+
+    if (content_type == SSL3_RT_QUIC_FRAME_FULL) {
+        PACKET pkt;
+        uint64_t frame_type;
+
+        if (!PACKET_buf_init(&pkt, buf, len))
+            return;
+
+        if (!ossl_quic_wire_peek_frame_header(&pkt, &frame_type, NULL))
+            return;
+
+        if (frame_type == OSSL_QUIC_FRAME_TYPE_PING) {
+            /*
+             * If either endpoint issues a ping frame then we are in danger
+             * of our noise being too much such that the connection itself
+             * fails. We back off on the noise for a bit to avoid that.
+             */
+            BIO_ctrl(noiseargs->cbio, BIO_CTRL_NOISE_BACK_OFF, 0, NULL);
+            BIO_ctrl(noiseargs->sbio, BIO_CTRL_NOISE_BACK_OFF, 0, NULL);
+        }
+    }
+
+    if ((noiseargs->flags & QTEST_FLAG_CLIENT_TRACE) != 0
+            && !SSL_is_server(ssl))
+        SSL_trace(write_p, version, content_type, buf, len, ssl,
+                  noiseargs->tracebio);
 }
 
 int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
@@ -91,6 +132,12 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     *qtserv = NULL;
     if (fault != NULL)
         *fault = NULL;
+
+    if (fault != NULL) {
+        *fault = OPENSSL_zalloc(sizeof(**fault));
+        if (*fault == NULL)
+            goto err;
+    }
 
     if (*cssl == NULL) {
         *cssl = SSL_new(clientctx);
@@ -170,7 +217,15 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     }
 
     if ((flags & QTEST_FLAG_NOISE) != 0) {
-        BIO *noisebio = BIO_new(bio_f_noisy_dgram_filter());
+        BIO *noisebio;
+
+        /*
+         * It is an error to not have a QTEST_FAULT object when introducing noise
+         */
+        if (!TEST_ptr(fault))
+            goto err;
+
+        noisebio = BIO_new(bio_f_noisy_dgram_filter());
 
         if (!TEST_ptr(noisebio))
             goto err;
@@ -181,6 +236,14 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         if (!TEST_ptr(noisebio))
             goto err;
         sbio = BIO_push(noisebio, sbio);
+
+        (*fault)->noiseargs.cbio = cbio;
+        (*fault)->noiseargs.sbio = sbio;
+        (*fault)->noiseargs.tracebio = tmpbio;
+        (*fault)->noiseargs.flags = flags;
+
+        SSL_set_msg_callback(*cssl, noise_msg_callback);
+        SSL_set_msg_callback_arg(*cssl, &(*fault)->noiseargs);
     }
 
     SSL_set_bio(*cssl, cbio, cbio);
@@ -191,12 +254,6 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
 
     if (!TEST_true(SSL_set1_initial_peer_addr(*cssl, peeraddr)))
         goto err;
-
-    if (fault != NULL) {
-        *fault = OPENSSL_zalloc(sizeof(**fault));
-        if (*fault == NULL)
-            goto err;
-    }
 
     fisbio = BIO_new(qtest_get_bio_method());
     if (!TEST_ptr(fisbio))
@@ -236,6 +293,10 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     /* Ownership of fisbio and sbio is now held by *qtserv */
     sbio = NULL;
     fisbio = NULL;
+
+    if ((flags & QTEST_FLAG_NOISE) != 0)
+        ossl_quic_tserver_set_msg_callback(*qtserv, noise_msg_callback,
+                                           &(*fault)->noiseargs);
 
     if (fault != NULL)
         (*fault)->qtserv = *qtserv;
