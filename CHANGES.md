@@ -25,6 +25,17 @@ OpenSSL 3.2
 
 ### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
+ * Added a function to delete objects from store by URI - OSSL_STORE_delete()
+   and the corresponding provider-storemgmt API function
+   OSSL_FUNC_store_delete().
+
+   *Dmitry Belyavskiy*
+
+ * Added OSSL_FUNC_store_open_ex() provider-storemgmt API function to pass
+   a passphrase callback when opening a store.
+
+   *Simo Sorce*
+
  * Changed the default salt length used by PBES2 KDF's (PBKDF2 and scrypt)
    from 8 bytes to 16 bytes.
    The PKCS5 (RFC 8018) standard uses a 64 bit salt length for PBE, and
