@@ -181,7 +181,7 @@ OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *
     } \
     LHASH_OF(type)
 
-# ifndef OPENSSL_NO_DEPRECATED_3_2
+# ifndef OPENSSL_NO_DEPRECATED_3_1
 #  define DEFINE_LHASH_OF_DEPRECATED(type) \
     static ossl_unused ossl_inline void \
     lh_##type##_node_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
