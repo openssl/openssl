@@ -568,6 +568,11 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         goto again;             /* get another record */
     }
 
+    if (rl->funcs->post_process_record && !rl->funcs->post_process_record(rl, rr)) {
+        /* RLAYERfatal already called */
+        return OSSL_RECORD_RETURN_FATAL;
+    }
+
     rl->num_recs = 1;
     return OSSL_RECORD_RETURN_SUCCESS;
 }
