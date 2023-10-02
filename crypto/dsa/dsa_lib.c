@@ -179,6 +179,8 @@ static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
         goto err;
 #endif
 
+    ossl_ffc_params_init(&ret->params);
+
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         ERR_raise(ERR_LIB_DSA, ERR_R_INIT_FAIL);
         goto err;
