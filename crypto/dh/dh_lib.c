@@ -119,6 +119,8 @@ static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
         goto err;
 #endif /* FIPS_MODULE */
 
+    ossl_ffc_params_init(&ret->params);
+
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         ERR_raise(ERR_LIB_DH, ERR_R_INIT_FAIL);
         goto err;

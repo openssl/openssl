@@ -194,7 +194,6 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 static int dh_init(DH *dh)
 {
     dh->flags |= DH_FLAG_CACHE_MONT_P;
-    ossl_ffc_params_init(&dh->params);
     dh->dirty_cnt++;
     return 1;
 }
