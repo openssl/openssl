@@ -241,7 +241,7 @@ static int dh_to_text(BIO *out, const void *key, int selection)
             return 0;
         }
     }
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         pub_key = DH_get0_pub_key(dh);
         if (pub_key == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PUBLIC_KEY);
@@ -316,7 +316,7 @@ static int dsa_to_text(BIO *out, const void *key, int selection)
             return 0;
         }
     }
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         pub_key = DSA_get0_pub_key(dsa);
         if (pub_key == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PUBLIC_KEY);
@@ -526,7 +526,7 @@ static int ec_to_text(BIO *out, const void *key, int selection)
         if (priv_len == 0)
             goto err;
     }
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         const EC_POINT *pub_pt = EC_KEY_get0_public_key(ec);
 
         if (pub_pt == NULL) {
@@ -577,26 +577,31 @@ static int ecx_to_text(BIO *out, const void *key, int selection)
         return 0;
     }
 
+    switch (ecx->type) {
+    case ECX_KEY_TYPE_X25519:
+        type_label = "X25519";
+        break;
+    case ECX_KEY_TYPE_X448:
+        type_label = "X448";
+        break;
+    case ECX_KEY_TYPE_ED25519:
+        type_label = "ED25519";
+        break;
+    case ECX_KEY_TYPE_ED448:
+        type_label = "ED448";
+        break;
+    }
+
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
         if (ecx->privkey == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PRIVATE_KEY);
             return 0;
         }
 
-        switch (ecx->type) {
-        case ECX_KEY_TYPE_X25519:
-            type_label = "X25519 Private-Key";
-            break;
-        case ECX_KEY_TYPE_X448:
-            type_label = "X448 Private-Key";
-            break;
-        case ECX_KEY_TYPE_ED25519:
-            type_label = "ED25519 Private-Key";
-            break;
-        case ECX_KEY_TYPE_ED448:
-            type_label = "ED448 Private-Key";
-            break;
-        }
+        if (BIO_printf(out, "%s Private-Key:\n", type_label) <= 0)
+            return 0;
+        if (!print_labeled_buf(out, "priv:", ecx->privkey, ecx->keylen))
+            return 0;
     } else if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         /* ecx->pubkey is an array, not a pointer... */
         if (!ecx->haspubkey) {
@@ -604,29 +609,11 @@ static int ecx_to_text(BIO *out, const void *key, int selection)
             return 0;
         }
 
-        switch (ecx->type) {
-        case ECX_KEY_TYPE_X25519:
-            type_label = "X25519 Public-Key";
-            break;
-        case ECX_KEY_TYPE_X448:
-            type_label = "X448 Public-Key";
-            break;
-        case ECX_KEY_TYPE_ED25519:
-            type_label = "ED25519 Public-Key";
-            break;
-        case ECX_KEY_TYPE_ED448:
-            type_label = "ED448 Public-Key";
-            break;
-        }
+        if (BIO_printf(out, "%s Public-Key:\n", type_label) <= 0)
+            return 0;
     }
 
-    if (BIO_printf(out, "%s:\n", type_label) <= 0)
-        return 0;
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
-        && !print_labeled_buf(out, "priv:", ecx->privkey, ecx->keylen))
-        return 0;
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0
-        && !print_labeled_buf(out, "pub:", ecx->pubkey, ecx->keylen))
+    if (!print_labeled_buf(out, "pub:", ecx->pubkey, ecx->keylen))
         return 0;
 
     return 1;
