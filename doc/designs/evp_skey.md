@@ -169,17 +169,14 @@ Accessing the current key object
 To get/set the currently set key as a EVP_SKEY object, we introduce the API
 
 ```C
-EVP_SKEY * EVP_CIPHER_CTX_get1_EVP_SKEY(const EVP_CIPHER_CTX *ctx, int format);
-EVP_SKEY * EVP_MAC_CTX_get1_EVP_SKEY(const EVP_MAC_CTX *ctx, EVP_SKEY *skey,
-                                     int format);
-EVP_SKEY * EVP_KDF_CTX_get1_EVP_SKEY(const EVP_KDF_CTX *ctx, EVP_SKEY *skey,
-                                     int format);
+EVP_SKEY * EVP_CIPHER_CTX_get1_EVP_SKEY(const EVP_CIPHER_CTX *ctx);
+EVP_SKEY * EVP_MAC_CTX_get1_EVP_SKEY(const EVP_MAC_CTX *ctx, EVP_SKEY *skey);
+EVP_SKEY * EVP_KDF_CTX_get1_EVP_SKEY(const EVP_KDF_CTX *ctx, EVP_SKEY *skey);
 int EVP_CIPHER_CTX_set1_EVP_SKEY(const EVP_CIPHER_CTX *ctx, EVP_SKEY *skey);
 int EVP_MAC_CTX_set1_EVP_SKEY(const EVP_MAC_CTX *ctx, EVP_SKEY *skey);
 int EVP_KDF_CTX_set1_EVP_SKEY(const EVP_KDF_CTX *ctx, EVP_SKEY *skey);
 ```
 
-The `format` argument of getters specifies whether we try to obtain raw bytes
-implementation or provider-backed opaque handle fits well for our purposes.
-
 The object returned by getter should be freed by `EVP_SKEY_free` function.
+
+**Open question:** do we need get0 methods?
