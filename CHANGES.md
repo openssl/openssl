@@ -47,6 +47,12 @@ OpenSSL 3.4
 
    *Tim Perry*
 
+ * Added Attribute Certificate (RFC 5755) support. Attribute
+   Certificates can be created, parsed, modified and printed via the
+   public API. There is no command-line tool support at this time.
+
+   *Damian Hobson-Garcia*
+
 OpenSSL 3.3
 -----------
 
