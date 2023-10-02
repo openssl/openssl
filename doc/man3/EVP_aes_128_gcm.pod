@@ -134,13 +134,7 @@ section for details.
 EVP_aes_192_wrap(),
 EVP_aes_256_wrap(),
 EVP_aes_128_wrap_pad(),
-EVP_aes_128_wrap(),
-EVP_aes_192_wrap(),
-EVP_aes_256_wrap(),
 EVP_aes_192_wrap_pad(),
-EVP_aes_128_wrap(),
-EVP_aes_192_wrap(),
-EVP_aes_256_wrap(),
 EVP_aes_256_wrap_pad()
 
 AES key wrap with 128, 192 and 256 bit keys, as according to RFC 3394 section
