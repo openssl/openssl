@@ -170,8 +170,10 @@ To get/set the currently set key as a EVP_SKEY object, we introduce the API
 
 ```C
 EVP_SKEY * EVP_CIPHER_CTX_get1_EVP_SKEY(const EVP_CIPHER_CTX *ctx, int format);
-EVP_SKEY * EVP_MAC_CTX_get1_EVP_SKEY(const EVP_MAC_CTX *ctx, EVP_SKEY *skey, int format);
-EVP_SKEY * EVP_KDF_CTX_get1_EVP_SKEY(const EVP_KDF_CTX *ctx, EVP_SKEY *skey, int format);
+EVP_SKEY * EVP_MAC_CTX_get1_EVP_SKEY(const EVP_MAC_CTX *ctx, EVP_SKEY *skey,
+                                     int format);
+EVP_SKEY * EVP_KDF_CTX_get1_EVP_SKEY(const EVP_KDF_CTX *ctx, EVP_SKEY *skey,
+                                     int format);
 int EVP_CIPHER_CTX_set1_EVP_SKEY(const EVP_CIPHER_CTX *ctx, EVP_SKEY *skey);
 int EVP_MAC_CTX_set1_EVP_SKEY(const EVP_MAC_CTX *ctx, EVP_SKEY *skey);
 int EVP_KDF_CTX_set1_EVP_SKEY(const EVP_KDF_CTX *ctx, EVP_SKEY *skey);
