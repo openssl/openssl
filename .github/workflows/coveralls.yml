@@ -32,7 +32,7 @@ jobs:
             extra_config: no-afalgeng enable-fips
           }, {
             branch: master,
-            extra_config: no-afalgeng enable-fips
+            extra_config: no-afalgeng enable-fips enable-tfo
           }
         ]
     runs-on: ubuntu-latest
