@@ -411,7 +411,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     const unsigned char *data;
     unsigned char *buf = NULL, *wbuf;
     size_t fragoff, fraglen, msglen;
-    unsigned int rectype, versmajor, msgseq, msgtype, clientvers, cookielen;
+    unsigned int rectype, versmajor, versminor, msgseq, msgtype, clientvers, cookielen;
     BIO *rbio, *wbio;
     BIO_ADDR *tmpclient = NULL;
     PACKET pkt, msgpkt, msgpayload, session, cookiepkt;
@@ -496,16 +496,17 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             goto end;
         }
 
-        if (s->msg_callback)
-            s->msg_callback(0, 0, SSL3_RT_HEADER, buf,
-                            DTLS1_RT_HEADER_LENGTH, ssl, s->msg_callback_arg);
-
         /* Get the record header */
         if (!PACKET_get_1(&pkt, &rectype)
-            || !PACKET_get_1(&pkt, &versmajor)) {
+            || !PACKET_get_1(&pkt, &versmajor)
+            || !PACKET_get_1(&pkt, &versminor)) {
             ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
+
+        if (s->msg_callback)
+            s->msg_callback(0, (versmajor << 8) | versminor, SSL3_RT_HEADER, buf,
+                            DTLS1_RT_HEADER_LENGTH, ssl, s->msg_callback_arg);
 
         if (rectype != SSL3_RT_HANDSHAKE) {
             ERR_raise(ERR_LIB_SSL, SSL_R_UNEXPECTED_MESSAGE);
@@ -521,9 +522,8 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             goto end;
         }
 
-        if (!PACKET_forward(&pkt, 1)
-            /* Save the sequence number: 64 bits, with top 2 bytes = epoch */
-            || !PACKET_copy_bytes(&pkt, seq, SEQ_NUM_SIZE)
+        /* Save the sequence number: 64 bits, with top 2 bytes = epoch */
+        if (!PACKET_copy_bytes(&pkt, seq, SEQ_NUM_SIZE)
             || !PACKET_get_length_prefixed_2(&pkt, &msgpkt)) {
             ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
             goto end;
