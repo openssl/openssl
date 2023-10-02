@@ -1410,6 +1410,7 @@ static int test_noisy_dgram(int idx)
     size_t msglen = strlen(msg), written, readbytes, i, j;
     unsigned char buf[80];
     int flags = QTEST_FLAG_NOISE | QTEST_FLAG_FAKE_TIME;
+    QTEST_FAULT *fault = NULL;
 
     if (idx == 1)
         flags |= QTEST_FLAG_PACKET_SPLIT;
@@ -1418,7 +1419,7 @@ static int test_noisy_dgram(int idx)
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
                                                     privkey, flags,
                                                     &qtserv,
-                                                    &clientquic, NULL, NULL)))
+                                                    &clientquic, &fault, NULL)))
         goto err;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
@@ -1492,6 +1493,7 @@ static int test_noisy_dgram(int idx)
     SSL_free(stream[1]);
     SSL_free(clientquic);
     SSL_CTX_free(cctx);
+    qtest_fault_free(fault);
 
     return testresult;
 }

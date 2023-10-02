@@ -17,6 +17,7 @@ struct noisy_dgram_st {
     uint64_t this_dgram;
     BIO_MSG msg;
     uint64_t reinject_dgram;
+    int backoff;
 };
 
 static long noisy_dgram_ctrl(BIO *bio, int cmd, long num, void *ptr)
@@ -31,6 +32,16 @@ static long noisy_dgram_ctrl(BIO *bio, int cmd, long num, void *ptr)
     case BIO_CTRL_DUP:
         ret = 0L;
         break;
+    case BIO_CTRL_NOISE_BACK_OFF: {
+            struct noisy_dgram_st *data;
+
+            data = BIO_get_data(bio);
+            if (!TEST_ptr(data))
+                return 0;
+            data->backoff = 1;
+            ret = 1;
+            break;
+        }
     default:
         ret = BIO_ctrl(next, cmd, num, ptr);
         break;
@@ -195,6 +206,17 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
         }
 
         get_noise(&reinject, &should_drop);
+        if (data->backoff) {
+            /*
+             * We might be asked to back off on introducing too much noise if
+             * there is a danger that the connection will fail. In that case
+             * we always ensure that the next datagram does not get dropped so
+             * that the connection always survives. After that we can resume
+             * with normal noise
+             */
+            should_drop = 0;
+            data->backoff = 0;
+        }
 
         /*
          * We ignore reinjection if a message is already waiting to be

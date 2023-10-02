@@ -245,6 +245,8 @@ int qtest_fault_resize_datagram(QTEST_FAULT *fault, size_t newlen);
 /* Copy a BIO_MSG */
 int bio_msg_copy(BIO_MSG *dst, BIO_MSG *src);
 
+#define BIO_CTRL_NOISE_BACK_OFF 1001
+
 /* BIO filter for simulating a noisy UDP socket */
 const BIO_METHOD *bio_f_noisy_dgram_filter(void);
 
