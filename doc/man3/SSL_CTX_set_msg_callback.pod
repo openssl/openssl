@@ -173,6 +173,12 @@ The pseudo content types B<SSL3_RT_QUIC_DATAGRAM>, B<SSL3_RT_QUIC_PACKET>,
 B<SSL3_RT_QUIC_FRAME_FULL>, B<SSL3_RT_QUIC_FRAME_HEADER> and
 B<SSL3_RT_QUIC_FRAME_PADDING> were added in OpenSSL 3.2.
 
+In versions previous to OpenSSL 3.0 I<cb> was called with 0 as I<version> for
+the pseudo content type B<SSL3_RT_HEADER> for TLS records.
+
+In versions previous to OpenSSL 3.2 I<cb> was called with 0 as I<version> for
+the pseudo content type B<SSL3_RT_HEADER> for DTLS records.
+
 =head1 COPYRIGHT
 
 Copyright 2001-2023 The OpenSSL Project Authors. All Rights Reserved.
