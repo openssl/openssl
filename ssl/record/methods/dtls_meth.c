@@ -430,10 +430,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 
         p = rl->packet;
 
-        if (rl->msg_callback != NULL)
-            rl->msg_callback(0, 0, SSL3_RT_HEADER, p, DTLS1_RT_HEADER_LENGTH,
-                            rl->cbarg);
-
         /* Pull apart the header into the DTLS1_RECORD */
         rr->type = *(p++);
         ssl_major = *(p++);
@@ -447,6 +443,10 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         p += 6;
 
         n2s(p, rr->length);
+
+        if (rl->msg_callback != NULL)
+            rl->msg_callback(0, rr->rec_version, SSL3_RT_HEADER, rl->packet, DTLS1_RT_HEADER_LENGTH,
+                             rl->cbarg);
 
         /*
          * Lets check the version. We tolerate alerts that don't have the exact
