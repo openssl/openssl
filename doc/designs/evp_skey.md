@@ -1,24 +1,22 @@
 EVP_SKEY Design
 ===============
 
-We currently presume that symmetric keys are represnted as octet buffer. It may
-be not relevant for the situation of hardware-backed providers, such as
+We currently presume that symmetric keys are represented as octet buffer. It
+may be not relevant for the situation of hardware-backed providers, such as
 PKCS#11 or TPM.
 
 This is a design of using opaque usage in symmetric encryption.
 
-It's quite obvious that EVP_SKEY will have to be modeled after EVP_PKEY insofar
-that it will have to have a cache of provider-specific instances of a key
-reference, for any provider that supports this key form.  It's also quite
-obvious that if the "origin" key is a reference to a provider-backed symmetric
-key that support exporting "a bunch of bytes", that can be cached and made
-unattached to any provider, and become useful to any current cipher.
+If the provider allows key exporting, the internal representation of the
+EVP_SKEY is "a bunch of bytes", that can be cached and made unattached to any
+provider, and become useful to any current cipher supporting the symmetric key
+in byte form.
 
 For the clarity, speaking about cipher algorithm below, we understand that
 *any* algorithm accepting a symmetric key should be suitable to deal with
 EVP_SKEY object.
 
-We do **not** plan EVP_PKEY for this purpose.
+We do **not** plan using EVP_PKEY for this purpose.
 
 Libcrypto perspective
 ---------------------
@@ -171,12 +169,15 @@ Accessing the current key object
 To get/set the currently set key as a EVP_SKEY object, we introduce the API
 
 ```C
-EVP_SKEY * EVP_CIPHER_CTX_get1_EVP_SKEY(const EVP_CIPHER_CTX *ctx);
-EVP_SKEY * EVP_MAC_CTX_get1_EVP_SKEY(const EVP_MAC_CTX *ctx, EVP_SKEY *skey);
-EVP_SKEY * EVP_KDF_CTX_get1_EVP_SKEY(const EVP_KDF_CTX *ctx, EVP_SKEY *skey);
+EVP_SKEY * EVP_CIPHER_CTX_get1_EVP_SKEY(const EVP_CIPHER_CTX *ctx, int format);
+EVP_SKEY * EVP_MAC_CTX_get1_EVP_SKEY(const EVP_MAC_CTX *ctx, EVP_SKEY *skey, int format);
+EVP_SKEY * EVP_KDF_CTX_get1_EVP_SKEY(const EVP_KDF_CTX *ctx, EVP_SKEY *skey, int format);
 int EVP_CIPHER_CTX_set1_EVP_SKEY(const EVP_CIPHER_CTX *ctx, EVP_SKEY *skey);
 int EVP_MAC_CTX_set1_EVP_SKEY(const EVP_MAC_CTX *ctx, EVP_SKEY *skey);
 int EVP_KDF_CTX_set1_EVP_SKEY(const EVP_KDF_CTX *ctx, EVP_SKEY *skey);
 ```
+
+The `format` argument of getters specifies whether we try to obtain raw bytes
+implementation or provider-backed opaque handle fits well for our purposes.
 
 The object returned by getter should be freed by `EVP_SKEY_free` function.
