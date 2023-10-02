@@ -85,6 +85,8 @@
 /* Easy to use macros for EVP_PKEY related selections */
 # define EVP_PKEY_KEY_PARAMETERS                                            \
     ( OSSL_KEYMGMT_SELECT_ALL_PARAMETERS )
+# define EVP_PKEY_PRIVATE_KEY                                               \
+    ( EVP_PKEY_KEY_PARAMETERS | OSSL_KEYMGMT_SELECT_PRIVATE_KEY )
 # define EVP_PKEY_PUBLIC_KEY                                                \
     ( EVP_PKEY_KEY_PARAMETERS | OSSL_KEYMGMT_SELECT_PUBLIC_KEY )
 # define EVP_PKEY_KEYPAIR                                                   \
