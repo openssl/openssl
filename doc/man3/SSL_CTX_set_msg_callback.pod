@@ -58,8 +58,9 @@ when a protocol message has been sent.
 
 The protocol version according to which the protocol message is
 interpreted by the library such as B<TLS1_3_VERSION>, B<TLS1_2_VERSION>,
-B<OSSL_QUIC1_VERSION> etc. This is set to 0 for the SSL3_RT_HEADER pseudo
-content type (see NOTES below).
+B<OSSL_QUIC1_VERSION> etc. For the SSL3_RT_HEADER pseudo
+content type (see NOTES below) this value will be the decoded
+version/legacy_version field of the record header.
 
 =item I<content_type>
 
