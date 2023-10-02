@@ -383,7 +383,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     size_t more, n;
     TLS_RL_RECORD *rr;
     unsigned char *p = NULL;
-    unsigned short version;
     DTLS_BITMAP *bitmap;
     unsigned int is_next_epoch;
 
@@ -438,7 +437,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         rr->type = *(p++);
         ssl_major = *(p++);
         ssl_minor = *(p++);
-        version = (ssl_major << 8) | ssl_minor;
+        rr->rec_version = (ssl_major << 8) | ssl_minor;
 
         /* sequence number is 64 bits, with top 2 bytes = epoch */
         n2s(p, rr->epoch);
@@ -453,7 +452,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
          * version number (e.g. because of protocol version errors)
          */
         if (!rl->is_first_record && rr->type != SSL3_RT_ALERT) {
-            if (version != rl->version) {
+            if (rr->rec_version != rl->version) {
                 /* unexpected version, silently discard */
                 rr->length = 0;
                 rl->packet_length = 0;
