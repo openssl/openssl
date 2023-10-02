@@ -110,10 +110,12 @@ static void noise_msg_callback(int write_p, int version, int content_type,
         }
     }
 
+#ifndef OPENSSL_NO_SSL_TRACE
     if ((noiseargs->flags & QTEST_FLAG_CLIENT_TRACE) != 0
             && !SSL_is_server(ssl))
         SSL_trace(write_p, version, content_type, buf, len, ssl,
                   noiseargs->tracebio);
+#endif
 }
 
 int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
@@ -130,19 +132,16 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     BIO *tmpbio = NULL;
 
     *qtserv = NULL;
-    if (fault != NULL)
-        *fault = NULL;
+    if (*cssl == NULL) {
+        *cssl = SSL_new(clientctx);
+        if (!TEST_ptr(*cssl))
+            return 0;
+    }
 
     if (fault != NULL) {
         *fault = OPENSSL_zalloc(sizeof(**fault));
         if (*fault == NULL)
             goto err;
-    }
-
-    if (*cssl == NULL) {
-        *cssl = SSL_new(clientctx);
-        if (!TEST_ptr(*cssl))
-            return 0;
     }
 
 #ifndef OPENSSL_NO_SSL_TRACE
