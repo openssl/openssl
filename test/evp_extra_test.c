@@ -4078,6 +4078,74 @@ static int test_evp_gcm_custom_iv(void)
     return testresult;
 }
 
+/*
+ * Test changing an AES GCM IV length after the IV has already been set
+ */
+static int test_evp_wrong_iv_seq(void)
+{
+    int testresult = 0;
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *type = NULL;
+    char *errmsg = NULL;
+    size_t gcm_ivlen = sizeof(iCFBIV);
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+    ctx = EVP_CIPHER_CTX_new();
+    if (ctx == NULL) {
+        errmsg = "CTX_ALLOC";
+        goto err;
+    }
+    if (!TEST_ptr(type = EVP_CIPHER_fetch(testctx, "aes-256-gcm",
+                                          testpropq))) {
+        errmsg = "CIPHER_FETCH";
+        goto err;
+    }
+
+    /* Increasing IV length after setting the IV should fail */
+    if (!TEST_true(EVP_CipherInit_ex(ctx, type, NULL, NULL, NULL, 1))) {
+        errmsg = "EMPTY_ENC_INIT";
+        goto err;
+    }
+    if (!TEST_true(EVP_CipherInit_ex(ctx, NULL, NULL, kGCMDefaultKey, iCFBIV,
+                                     -1))) {
+        errmsg = "SET_IV_BEFORE_IVLEN_LEGACY";
+        goto err;
+    }
+    if (!TEST_false(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, gcm_ivlen,
+                                        NULL))) {
+        errmsg = "SET_IVLEN_AFTER_IV_LEGACY";
+        goto err;
+    }
+
+    /* The same using params API */
+    if (!TEST_true(EVP_CipherInit_ex(ctx, type, NULL, kGCMDefaultKey, iCFBIV,
+                                     1))) {
+        errmsg = "SET_IV_BEFORE_IVLEN_PARAMS";
+        goto err;
+    }
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN,
+                                            &gcm_ivlen);
+    if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, params))) {
+        errmsg = "SET_IVLEN_AFTER_IV_PARAMS";
+        goto err;
+    }
+
+    /* The same using initialization with params */
+    if (!TEST_true(EVP_CipherInit_ex2(ctx, type, kGCMDefaultKey, iCFBIV, 1,
+                                      params))) {
+        errmsg = "SET_IVLEN_DURING_INIT_PARAMS";
+        goto err;
+    }
+
+    testresult = 1;
+ err:
+    if (errmsg != NULL)
+        TEST_info("test_evp_wrong_iv_seq %s", errmsg);
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(type);
+    return testresult;
+}
+
 typedef struct {
     const unsigned char *input;
     const unsigned char *expected;
@@ -5521,6 +5589,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_updated_iv, OSSL_NELEM(evp_updated_iv_tests));
 
     ADD_TEST(test_evp_gcm_custom_iv);
+    ADD_TEST(test_evp_wrong_iv_seq);
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_ALL_TESTS(test_custom_pmeth, 12);
