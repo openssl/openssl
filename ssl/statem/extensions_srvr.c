@@ -133,10 +133,10 @@ int tls_parse_ctos_server_name(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     /*
-     * In TLSv1.2 and below the SNI is associated with the session. In TLSv1.3
+     * In (D)TLSv1.2 and below the SNI is associated with the session. In (D)TLSv1.3
      * we always use the SNI value from the handshake.
      */
-    if (!s->hit || SSL_CONNECTION_IS_TLS13(s)) {
+    if (!s->hit || (SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))) {
         if (PACKET_remaining(&hostname) > TLSEXT_MAXLEN_host_name) {
             SSLfatal(s, SSL_AD_UNRECOGNIZED_NAME, SSL_R_BAD_EXTENSION);
             return 0;
@@ -161,9 +161,9 @@ int tls_parse_ctos_server_name(SSL_CONNECTION *s, PACKET *pkt,
         s->servername_done = 1;
     } else {
         /*
-         * In TLSv1.2 and below we should check if the SNI is consistent between
-         * the initial handshake and the resumption. In TLSv1.3 SNI is not
-         * associated with the session.
+         * In (D)TLSv1.2 and below we should check if the SNI is consistent
+         * between the initial handshake and the resumption. In (D)TLSv1.3 SNI
+         * is not associated with the session.
          */
         s->servername_done = (s->session->ext.hostname != NULL)
             && PACKET_equal(&hostname, s->session->ext.hostname,
@@ -664,13 +664,14 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         }
 
         /* Check if this share is for a group we can use */
+        const int version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
         if (!check_in_list(s, group_id, srvrgroups, srvr_num_groups, 1)
                 || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
                    /*
                     * We tolerate but ignore a group id that we don't think is
-                    * suitable for TLSv1.3
+                    * suitable for (D)TLSv1.3
                     */
-                || !tls_valid_group(s, group_id, TLS1_3_VERSION, TLS1_3_VERSION,
+                || !tls_valid_group(s, group_id, version, version,
                                     0, NULL)) {
             /* Share not suitable */
             continue;
@@ -788,7 +789,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
-    if (version != TLS1_3_VERSION) {
+    if (version != TLS1_3_VERSION && version != DTLS1_3_VERSION) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
         return 0;
@@ -924,7 +925,7 @@ int tls_parse_ctos_supported_groups(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    if (!s->hit || SSL_CONNECTION_IS_TLS13(s)) {
+    if (!s->hit || (SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))) {
         OPENSSL_free(s->ext.peer_supportedgroups);
         s->ext.peer_supportedgroups = NULL;
         s->ext.peer_supportedgroups_len = 0;
@@ -1069,7 +1070,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
                 /*
                  * We found a PSK using an old style callback. We don't know
-                 * the digest so we default to SHA256 as per the TLSv1.3 spec
+                 * the digest so we default to SHA256 as per the (D)TLSv1.3 spec
                  */
                 cipher = SSL_CIPHER_find(ssl, tls13_aes128gcmsha256_id);
                 if (cipher == NULL) {
@@ -1079,12 +1080,13 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 }
 
                 sess = SSL_SESSION_new();
+                const int version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
                 if (sess == NULL
                         || !SSL_SESSION_set1_master_key(sess, pskdata,
                                                         pskdatalen)
                         || !SSL_SESSION_set_cipher(sess, cipher)
                         || !SSL_SESSION_set_protocol_version(sess,
-                                                             TLS1_3_VERSION)) {
+                                                             version)) {
                     OPENSSL_cleanse(pskdata, pskdatalen);
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
@@ -1291,10 +1293,10 @@ EXT_RETURN tls_construct_stoc_server_name(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_NOT_SENT;
 
     /*
-     * Prior to TLSv1.3 we ignore any SNI in the current handshake if resuming.
+     * Prior to (D)TLSv1.3 we ignore any SNI in the current handshake if resuming.
      * We just use the servername from the initial handshake.
      */
-    if (s->hit && !SSL_CONNECTION_IS_TLS13(s))
+    if (s->hit && !(SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)))
         return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)
@@ -1445,7 +1447,7 @@ EXT_RETURN tls_construct_stoc_status_request(SSL_CONNECTION *s, WPACKET *pkt,
     if (!s->ext.status_expected)
         return EXT_RETURN_NOT_SENT;
 
-    if (SSL_CONNECTION_IS_TLS13(s) && chainidx != 0)
+    if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)) && chainidx != 0)
         return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)
@@ -1455,11 +1457,12 @@ EXT_RETURN tls_construct_stoc_status_request(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     /*
-     * In TLSv1.3 we include the certificate status itself. In <= TLSv1.2 we
+     * In (D)TLSv1.3 we include the certificate status itself. In <= (D)TLSv1.2 we
      * send back an empty extension, with the certificate status appearing as a
      * separate message
      */
-    if (SSL_CONNECTION_IS_TLS13(s) && !tls_construct_cert_status_body(s, pkt)) {
+    if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))
+            && !tls_construct_cert_status_body(s, pkt)) {
        /* SSLfatal() already called */
        return EXT_RETURN_FAIL;
     }
@@ -1595,7 +1598,7 @@ EXT_RETURN tls_construct_stoc_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
                                                  unsigned int context, X509 *x,
                                                  size_t chainidx)
 {
-    if (!ossl_assert(SSL_CONNECTION_IS_TLS13(s))) {
+    if (!ossl_assert((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)))) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
@@ -1766,13 +1769,14 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
+    const int version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cookie)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_get_total_written(pkt, &startlen)
             || !WPACKET_reserve_bytes(pkt, MAX_COOKIE_SIZE, &cookie)
             || !WPACKET_put_bytes_u16(pkt, COOKIE_STATE_FORMAT_VERSION)
-            || !WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION)
+            || !WPACKET_put_bytes_u16(pkt, version)
             || !WPACKET_put_bytes_u16(pkt, s->s3.group_id)
             || !ssl->method->put_cipher_by_char(s->s3.tmp.new_cipher, pkt,
                                                 &ciphlen)
@@ -1968,7 +1972,7 @@ EXT_RETURN tls_construct_stoc_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
 
     /*
      * Note: only supposed to send this if we are going to do a cert request,
-     * but TLSv1.3 could do a PHA request if the client supports it
+     * but (D)TLSv1.3 could do a PHA request if the client supports it
      */
     if ((!send_certificate_request(sc) && sc->post_handshake_auth != SSL_PHA_EXT_RECEIVED)
             || sc->ext.client_cert_type_ctos != OSSL_CERT_TYPE_CTOS_GOOD
