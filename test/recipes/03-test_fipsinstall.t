@@ -371,10 +371,10 @@ SKIP: {
     skip "FIPS provider version can run self tests on install", 1
         if !$exit;
     ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
-                '-provider_name', 'fips', '-mac_name', 'HMAC',
-                '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
-                '-section_name', 'fips_sect', '-self_test_oninstall',
-                '-ems_check'])),
+                 '-provider_name', 'fips', '-mac_name', 'HMAC',
+                 '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+                 '-section_name', 'fips_sect', '-self_test_oninstall',
+                 '-ems_check'])),
        "fipsinstall fails when attempting to run self tests on install");
 }
 
@@ -382,9 +382,9 @@ ok(find_line_file('drbg-no-trunc-md = 0', 'fips.cnf') == 1,
    'fipsinstall defaults to not banning truncated digests with DRBGs');
 
 ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
-           '-provider_name', 'fips', '-mac_name', 'HMAC',
-           '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
-           '-section_name', 'fips_sect', '-no_drbg_truncated_digests'])),
+            '-provider_name', 'fips', '-mac_name', 'HMAC',
+            '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+            '-section_name', 'fips_sect', '-no_drbg_truncated_digests'])),
    "fipsinstall knows about allowing truncated digests in DRBGs");
 
 ok(find_line_file('drbg-no-trunc-md = 1', 'fips.cnf') == 1,
@@ -394,9 +394,9 @@ ok(find_line_file('kmac-length-checks = 0', 'fips.cnf') == 1,
    'fipsinstall defaults to not enforcing KMAC length checks');
 
 ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
-           '-provider_name', 'fips', '-mac_name', 'HMAC',
-           '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
-           '-section_name', 'fips_sect', '-kmac_length_checks'])),
+            '-provider_name', 'fips', '-mac_name', 'HMAC',
+            '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+            '-section_name', 'fips_sect', '-kmac_length_checks'])),
    "fipsinstall knows about enforcing KMAC length checks");
 
 ok(find_line_file('kmac-length-checks = 1', 'fips.cnf') == 1,
