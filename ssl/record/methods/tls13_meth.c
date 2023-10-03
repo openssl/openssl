@@ -425,3 +425,24 @@ const struct record_functions_st tls_1_3_funcs = {
     tls_post_encryption_processing_default,
     NULL
 };
+
+const struct record_functions_st dtls_1_3_funcs = {
+    tls13_set_crypto_state,
+    tls13_cipher,
+    NULL,
+    tls_default_set_protocol_version,
+    tls_default_read_n,
+    dtls_get_more_records,
+    NULL,
+    tls13_post_process_record,
+    NULL,
+    tls_write_records_default,
+    tls_allocate_write_buffers_default,
+    tls_initialise_write_packets_default,
+    tls13_get_record_type,
+    dtls_prepare_record_header,
+    tls13_add_record_padding,
+    tls_prepare_for_encryption_default,
+    dtls_post_encryption_processing,
+    NULL
+};
