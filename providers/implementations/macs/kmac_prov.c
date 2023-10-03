@@ -59,6 +59,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+#include "prov/fipscommon.h"
 #include "internal/cryptlib.h" /* ossl_assert */
 
 /*
@@ -89,7 +90,7 @@ static OSSL_FUNC_mac_final_fn kmac_final;
 
 /*
  * Restrict the maximum length of the customisation string.  This must not
- * exceed 64 bits = 8k bytes.
+ * exceed 64k bits = 8k bytes.
  */
 #define KMAC_MAX_CUSTOM 512
 
@@ -99,6 +100,18 @@ static OSSL_FUNC_mac_final_fn kmac_final;
 /* Maximum key size in bytes = 512 (4096 bits) */
 #define KMAC_MAX_KEY 512
 #define KMAC_MIN_KEY 4
+
+/*
+ * SP 800-131Ar2 section 10 mandates a minimum KMAC key length of 112 for both
+ * generation and verification.
+ */
+#define KMAC_MIN_KEY_FIPS           (112 / 8)
+
+/*
+ * SP 800-185 section 8.4.2 mandates a minimum of 32 bits of output (64 without
+ * a careful risk assessment).
+ */
+#define KMAC_MIN_OUTPUT_LEN_FIPS    (32 / 8)
 
 /*
  * Maximum Encoded Key size will be padded to a multiple of the blocksize
@@ -244,8 +257,15 @@ static int kmac_setkey(struct kmac_data_st *kctx, const unsigned char *key,
 {
     const EVP_MD *digest = ossl_prov_digest_md(&kctx->digest);
     int w = EVP_MD_get_block_size(digest);
+    const size_t minkeylen =
+#ifdef FIPS_PROVIDER
+            FIPS_kmac_length_checks_enabled(PROV_LIBCTX_OF(kctx->provctx))
+            ? KMAC_MIN_KEY_FIPS
+            :
+#endif
+              KMAC_MIN_KEY;
 
-    if (keylen < KMAC_MIN_KEY || keylen > KMAC_MAX_KEY) {
+    if (keylen < minkeylen || keylen > KMAC_MAX_KEY) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
@@ -340,6 +360,14 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     if (!ossl_prov_is_running())
         return 0;
 
+#ifdef FIPS_PROVIDER
+    if (FIPS_kmac_length_checks_enabled(PROV_LIBCTX_OF(kctx->provctx))
+            && kctx->out_len < KMAC_MIN_OUTPUT_LEN_FIPS) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
+        return 0;
+    }
+#endif
+
     /* KMAC XOF mode sets the encoded length to 0 */
     lbits = (kctx->xof_mode ? 0 : (kctx->out_len * 8));
 
@@ -422,6 +450,13 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
             return 0;
         }
+#ifdef FIPS_PROVIDER
+        if (FIPS_kmac_length_checks_enabled(PROV_LIBCTX_OF(kctx->provctx))
+                && kctx->out_len < KMAC_MIN_OUTPUT_LEN_FIPS) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
+            return 0;
+        }
+#endif
         kctx->out_len = sz;
     }
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL

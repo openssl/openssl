@@ -70,6 +70,14 @@ extern "C" {
  */
 # define OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST  "drbg-no-trunc-md"
 
+/*
+ * A Boolean that determines if KMAC length checks should be enforced or not.
+ * SP 800-131Ar2 section 10 mandates a minimum key length of 112 for both
+ * generation and verification.  SP 800-185 section 8.4.2 mandates a minimum
+ * of 32 bits of output.
+ */
+# define OSSL_PROV_FIPS_PARAM_KMAC_LENGTH_CHECKS "kmac-length-checks"
+
 # ifdef __cplusplus
 }
 # endif

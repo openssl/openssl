@@ -14,6 +14,7 @@ my $conditional_errors = 1;
 my $security_checks = 1;
 my $ems_check = 1;
 my $drgb_no_trunc_dgst = 1;
+my $kmac_length_checks = 1;
 
 my $activate = 1;
 my $mac_key;
@@ -47,5 +48,6 @@ conditional-errors = $conditional_errors
 security-checks = $security_checks
 tls1-prf-ems-check = $ems_check
 drbg-no-trunc-md = $drgb_no_trunc_dgst
+kmac-length-checks = $kmac_length_checks
 module-mac = $module_mac
 _____

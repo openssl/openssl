@@ -89,6 +89,7 @@ typedef struct fips_global_st {
     FIPS_OPTION fips_security_checks;
     FIPS_OPTION fips_tls1_prf_ems_check;
     FIPS_OPTION fips_restricted_drgb_digests;
+    FIPS_OPTION fips_kmac_length_checks;
 } FIPS_GLOBAL;
 
 static void init_fips_option(FIPS_OPTION *opt, int enabled)
@@ -106,6 +107,7 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     init_fips_option(&fgbl->fips_security_checks, 1);
     init_fips_option(&fgbl->fips_tls1_prf_ems_check, 0); /* Disabled by default */
     init_fips_option(&fgbl->fips_restricted_drgb_digests, 0);
+    init_fips_option(&fgbl->fips_kmac_length_checks, 0);
     return fgbl;
 }
 
@@ -123,6 +125,7 @@ static const OSSL_PARAM fips_param_types[] = {
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_SECURITY_CHECKS, OSSL_PARAM_INTEGER, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK, OSSL_PARAM_INTEGER, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST, OSSL_PARAM_INTEGER, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_KMAC_LENGTH_CHECKS, OSSL_PARAM_INTEGER, NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -136,7 +139,7 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
     * OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS and
     * OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK are not self test parameters.
     */
-    OSSL_PARAM core_params[10], *p = core_params;
+    OSSL_PARAM core_params[11], *p = core_params;
 
     *p++ = OSSL_PARAM_construct_utf8_ptr(
             OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
@@ -175,9 +178,18 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
                         fips_tls1_prf_ems_check);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST,
                         fips_restricted_drgb_digests);
+    FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_KMAC_LENGTH_CHECKS,
+                        fips_kmac_length_checks);
 #undef FIPS_FEATURE_OPTION
 
     *p = OSSL_PARAM_construct_end();
+
+    /*
+     * Cause a hard failure if there is a coding error that has a mismatch
+     * for the size of the array vs the number of elements we inserted.
+     * Tracking down the resulting stack corruption is painful.
+     */
+    OPENSSL_assert(p - core_params != OSSL_NELEM(core_params));
 
     if (!c_get_params(fgbl->handle, core_params)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -222,6 +234,8 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
                      fips_tls1_prf_ems_check);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST,
                      fips_restricted_drgb_digests);
+    FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_KMAC_LENGTH_CHECKS,
+                     fips_kmac_length_checks);
 #undef FIPS_FEATURE_GET
     return 1;
 }
@@ -738,7 +752,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
         SELF_TEST_disable_conditional_error_state();
 
     /* Enable or disable FIPS provider options */
-#define FIPS_SET_OPTION(fgbl, field)                                            \
+#define FIPS_SET_OPTION(fgbl, field)                                        \
     if (fgbl->field.option != NULL) {                                       \
         if (strcmp(fgbl->field.option, "1") == 0)                           \
             fgbl->field.enabled = 1;                                        \
@@ -751,6 +765,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     FIPS_SET_OPTION(fgbl, fips_security_checks);
     FIPS_SET_OPTION(fgbl, fips_tls1_prf_ems_check);
     FIPS_SET_OPTION(fgbl, fips_restricted_drgb_digests);
+    FIPS_SET_OPTION(fgbl, fips_kmac_length_checks);
 #undef FIPS_SET_OPTION
 
     ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
@@ -952,6 +967,7 @@ FIPS_FEATURE_CHECK(FIPS_security_check_enabled, fips_security_checks)
 FIPS_FEATURE_CHECK(FIPS_tls_prf_ems_check, fips_tls1_prf_ems_check)
 FIPS_FEATURE_CHECK(FIPS_restricted_drbg_digests_enabled,
                    fips_restricted_drgb_digests)
+FIPS_FEATURE_CHECK(FIPS_kmac_length_checks_enabled, fips_kmac_length_checks)
 #undef FIPS_FEATURE_CHECK
 
 void OSSL_SELF_TEST_get_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK **cb,
