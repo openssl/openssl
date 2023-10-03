@@ -601,7 +601,7 @@ static int ecx_to_text(BIO *out, const void *key, int selection)
         if (BIO_printf(out, "%s Private-Key:\n", type_label) <= 0)
             return 0;
         if (!print_labeled_buf(out, "priv:", ecx->privkey, ecx->keylen))
-        return 0;
+            return 0;
     } else if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         /* ecx->pubkey is an array, not a pointer... */
         if (!ecx->haspubkey) {
