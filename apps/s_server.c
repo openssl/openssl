@@ -58,6 +58,7 @@ typedef unsigned int u_int;
 #endif
 #include "internal/sockets.h"
 #include "internal/statem.h"
+#include "ssl/ssl_local.h"
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(int s, int stype, int prot, unsigned char *context);
@@ -138,7 +139,8 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
     if (s_debug)
         BIO_printf(bio_s_out, "psk_server_cb\n");
 
-    if (!SSL_is_dtls(ssl) && SSL_version(ssl) >= TLS1_3_VERSION) {
+    if ((SSL_is_dtls(ssl) && DTLS_VERSION_GE(SSL_version(ssl), DTLS1_3_VERSION))
+        || (!SSL_is_dtls(ssl) && SSL_version(ssl) >= TLS1_3_VERSION)) {
         /*
          * This callback is designed for use in (D)TLSv1.2 (or below). It is
          * possible to use a single callback for all protocol versions - but it
@@ -1033,6 +1035,7 @@ typedef enum OPTION_choice {
     OPT_DTLS,
     OPT_DTLS1,
     OPT_DTLS1_2,
+    OPT_DTLS1_3,
     OPT_SCTP,
     OPT_TIMEOUT,
     OPT_MTU,
@@ -1263,7 +1266,7 @@ const OPTIONS s_server_options[] = {
         "The maximum number of bytes of early data (hard limit)" },
     { "early_data", OPT_EARLY_DATA, '-', "Attempt to read early data" },
     { "num_tickets", OPT_S_NUM_TICKETS, 'n',
-        "The number of TLSv1.3 session tickets that a server will automatically issue" },
+        "The number of (D)TLSv1.3 session tickets that a server will automatically issue" },
     { "anti_replay", OPT_ANTI_REPLAY, '-', "Switch on anti-replay protection (default)" },
     { "no_anti_replay", OPT_NO_ANTI_REPLAY, '-', "Switch off anti-replay protection" },
     { "http_server_binmode", OPT_HTTP_SERVER_BINMODE, '-', "opening files in binary mode when acting as http server (-WWW and -HTTP)" },
@@ -1296,6 +1299,9 @@ const OPTIONS s_server_options[] = {
 #ifndef OPENSSL_NO_DTLS1_2
     { "dtls1_2", OPT_DTLS1_2, '-', "Just talk DTLSv1.2" },
 #endif
+#ifndef OPENSSL_NO_DTLS1_3
+    { "dtls1_3", OPT_DTLS1_3, '-', "Just talk DTLSv1.3" },
+#endif
 #ifndef OPENSSL_NO_SCTP
     { "sctp", OPT_SCTP, '-', "Use SCTP" },
     { "sctp_label_bug", OPT_SCTP_LABEL_BUG, '-', "Enable SCTP label length bug" },
@@ -1326,9 +1332,10 @@ const OPTIONS s_server_options[] = {
     { NULL }
 };
 
-#define IS_PROT_FLAG(o)                                                   \
-    (o == OPT_SSL3 || o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
-        || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2)
+#define IS_PROT_FLAG(o)                                                           \
+    (o == OPT_SSL3 || o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2         \
+        || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2 \
+        || o == OPT_DTLS1_3)
 
 int s_server_main(int argc, char *argv[])
 {
@@ -1895,6 +1902,14 @@ int s_server_main(int argc, char *argv[])
             meth = DTLS_server_method();
             min_version = DTLS1_2_VERSION;
             max_version = DTLS1_2_VERSION;
+            socket_type = SOCK_DGRAM;
+#endif
+            break;
+        case OPT_DTLS1_3:
+#ifndef OPENSSL_NO_DTLS
+            meth = DTLS_server_method();
+            min_version = DTLS1_3_VERSION;
+            max_version = DTLS1_3_VERSION;
             socket_type = SOCK_DGRAM;
 #endif
             break;
