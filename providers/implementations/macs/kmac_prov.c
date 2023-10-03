@@ -258,7 +258,7 @@ static int kmac_setkey(struct kmac_data_st *kctx, const unsigned char *key,
     const EVP_MD *digest = ossl_prov_digest_md(&kctx->digest);
     int w = EVP_MD_get_block_size(digest);
     const size_t minkeylen =
-#ifdef FIPS_PROVIDER
+#ifdef FIPS_MODULE
             FIPS_kmac_length_checks_enabled(PROV_LIBCTX_OF(kctx->provctx))
             ? KMAC_MIN_KEY_FIPS
             :
@@ -360,7 +360,7 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     if (!ossl_prov_is_running())
         return 0;
 
-#ifdef FIPS_PROVIDER
+#ifdef FIPS_MODULE
     if (FIPS_kmac_length_checks_enabled(PROV_LIBCTX_OF(kctx->provctx))
             && kctx->out_len < KMAC_MIN_OUTPUT_LEN_FIPS) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
@@ -450,7 +450,7 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
             return 0;
         }
-#ifdef FIPS_PROVIDER
+#ifdef FIPS_MODULE
         if (FIPS_kmac_length_checks_enabled(PROV_LIBCTX_OF(kctx->provctx))
                 && kctx->out_len < KMAC_MIN_OUTPUT_LEN_FIPS) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
