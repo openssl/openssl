@@ -34,10 +34,11 @@ my $no_argon2 = disabled("argon2");
 
 # Default config depends on if the legacy module is built or not
 my $defaultcnf = $no_legacy ? 'default.cnf' : 'default-and-legacy.cnf';
+my $fipscnf = 'fips-and-base.cnf';
 
 my @configs = ( $defaultcnf );
 # Only add the FIPS config if the FIPS module has been built
-push @configs, 'fips-and-base.cnf' unless $no_fips;
+push @configs, $fipscnf unless $no_fips;
 
 # A list of tests that run with both the default and fips provider.
 my @files = qw(
@@ -133,9 +134,14 @@ push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpkdf_argon2.txt) unless $no_argon2;
 
+# A list of tests that only run with the FIPS provider
+# (i.e. The algorithms are not suitable with the default provider)
+my @fipsfiles = qw(fips_mac.txt);
+
 plan tests =>
     + (scalar(@configs) * scalar(@files))
     + scalar(@defltfiles)
+    + scalar(@fipsfiles)
     + 3; # error output tests
 
 foreach (@configs) {
@@ -155,6 +161,19 @@ foreach my $f ( @defltfiles ) {
                  "-config", $conf,
                  data_file("$f")])),
        "running evp_test -config $conf $f");
+}
+
+SKIP: {
+    skip "FIPS provider disabled", scalar(@fipsfiles)
+        if !disabled("no_fips");
+
+    my $conf = srctop_file("test", $fipscnf);
+    foreach my $f ( @fipsfiles ) {
+        ok(run(test(["evp_test",
+                     "-config", $conf,
+                     data_file("$f")])),
+           "running evp_test -config $conf $f");
+    }
 }
 
 # test_errors OPTIONS
