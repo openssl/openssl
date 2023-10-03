@@ -24,6 +24,7 @@ B<openssl fipsinstall>
 [B<-no_security_checks>]
 [B<-ems_check>]
 [B<-no_drbg_truncated_digests>]
+[B<-kmac_length_checks>]
 [B<-self_test_onload>]
 [B<-self_test_oninstall>]
 [B<-corrupt_desc> I<selftest_description>]
@@ -189,6 +190,11 @@ See RFC 7627 for information related to EMS.
 
 Configure the module to not allow truncated digests to be used with Hash and
 HMAC DRBGs.  See FIPS 140-3 IG D.R for details.
+
+=item B<-kmac_length_checks>
+
+Configure the module to enforce minimum key and output lengths.
+See SP 800-131Ar2 section 10 and SP 800-185 section 8.4.2 for details.
 
 =item B<-self_test_onload>
 

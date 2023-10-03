@@ -40,6 +40,7 @@ typedef enum OPTION_choice {
     OPT_NO_SECURITY_CHECKS,
     OPT_TLS_PRF_EMS_CHECK,
     OPT_DISALLOW_DRGB_TRUNC_DIGEST,
+    OPT_ENFORCE_KMAC_LENGTH_CHECKS,
     OPT_SELF_TEST_ONLOAD, OPT_SELF_TEST_ONINSTALL
 } OPTION_CHOICE;
 
@@ -66,6 +67,9 @@ const OPTIONS fipsinstall_options[] = {
      "Enable the run-time FIPS check for EMS during TLS1_PRF"},
     {"no_drbg_truncated_digests", OPT_DISALLOW_DRGB_TRUNC_DIGEST, '-',
      "Disallow truncated digests with Hash and HMAC DRBGs"},
+    {"kmac_length_checks", OPT_ENFORCE_KMAC_LENGTH_CHECKS, '-',
+     "Enforce length checks for KMAC"},
+
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input config file, used when verifying"},
 
@@ -88,6 +92,7 @@ typedef struct {
     unsigned int security_checks : 1;
     unsigned int tls_prf_ems_check : 1;
     unsigned int drgb_no_trunc_dgst : 1;
+    unsigned int kmac_length_checks : 1;
 } FIPS_OPTS;
 
 /* Pedantic FIPS compliance */
@@ -97,6 +102,7 @@ static const FIPS_OPTS pedantic_opts = {
     1,      /* security_checks */
     1,      /* tls_prf_ems_check */
     1,      /* drgb_no_trunc_dgst */
+    1,      /* kmac_length_checks */
 };
 
 /* Default FIPS settings for backward compatibility */
@@ -106,6 +112,7 @@ static FIPS_OPTS fips_opts = {
     1,      /* security_checks */
     0,      /* tls_prf_ems_check */
     0,      /* drgb_no_trunc_dgst */
+    0,      /* kmac_length_checks */
 };
 
 static int check_non_pedantic_fips(int pedantic, const char *name)
@@ -227,8 +234,10 @@ static int write_config_fips_section(BIO *out, const char *section,
                       opts->security_checks ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK,
                       opts->tls_prf_ems_check ? "1" : "0") <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST,
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST,
                       opts->drgb_no_trunc_dgst ? "1" : "0") <= 0
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_KMAC_LENGTH_CHECKS,
+                      opts->kmac_length_checks ? "1" : "0") <= 0
         || !print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
                       module_mac_len))
         goto end;
@@ -414,6 +423,9 @@ opthelp:
             break;
         case OPT_DISALLOW_DRGB_TRUNC_DIGEST:
             fips_opts.drgb_no_trunc_dgst = 1;
+            break;
+        case OPT_ENFORCE_KMAC_LENGTH_CHECKS:
+            fips_opts.kmac_length_checks = 1;
             break;
         case OPT_QUIET:
             quiet = 1;
