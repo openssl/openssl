@@ -383,6 +383,7 @@ extern const struct record_functions_st tls_1_funcs;
 extern const struct record_functions_st tls_1_3_funcs;
 extern const struct record_functions_st tls_any_funcs;
 extern const struct record_functions_st dtls_1_funcs;
+extern const struct record_functions_st dtls_1_3_funcs;
 extern const struct record_functions_st dtls_any_funcs;
 
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
