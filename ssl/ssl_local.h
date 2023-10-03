@@ -254,13 +254,18 @@
 # define SSL_CONNECTION_IS_DTLS(s) \
     (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
 
+/* Check if we are using DTLSv1.3 */
+# define SSL_CONNECTION_IS_DTLS13(s) (SSL_CONNECTION_IS_DTLS(s) \
+    && DTLS_VERSION_GE(SSL_CONNECTION_GET_SSL(s)->method->version, DTLS1_3_VERSION) \
+    && SSL_CONNECTION_GET_SSL(s)->method->version != DTLS_ANY_VERSION)
+
 /* Check if we are using TLSv1.3 */
 # define SSL_CONNECTION_IS_TLS13(s) (!SSL_CONNECTION_IS_DTLS(s) \
     && SSL_CONNECTION_GET_SSL(s)->method->version >= TLS1_3_VERSION \
     && SSL_CONNECTION_GET_SSL(s)->method->version != TLS_ANY_VERSION)
 
 # define SSL_CONNECTION_TREAT_AS_TLS13(s) \
-    (SSL_CONNECTION_IS_TLS13(s) \
+    ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)) \
      || (s)->early_data_state == SSL_EARLY_DATA_CONNECTING \
      || (s)->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY \
      || (s)->early_data_state == SSL_EARLY_DATA_WRITING \
@@ -2281,6 +2286,9 @@ __owur const SSL_METHOD *dtls_bad_ver_client_method(void);
 __owur const SSL_METHOD *dtlsv1_2_method(void);
 __owur const SSL_METHOD *dtlsv1_2_server_method(void);
 __owur const SSL_METHOD *dtlsv1_2_client_method(void);
+__owur const SSL_METHOD *dtlsv1_3_method(void);
+__owur const SSL_METHOD *dtlsv1_3_server_method(void);
+__owur const SSL_METHOD *dtlsv1_3_client_method(void);
 
 extern const SSL3_ENC_METHOD TLSv1_enc_data;
 extern const SSL3_ENC_METHOD TLSv1_1_enc_data;
@@ -2289,6 +2297,7 @@ extern const SSL3_ENC_METHOD TLSv1_3_enc_data;
 extern const SSL3_ENC_METHOD SSLv3_enc_data;
 extern const SSL3_ENC_METHOD DTLSv1_enc_data;
 extern const SSL3_ENC_METHOD DTLSv1_2_enc_data;
+extern const SSL3_ENC_METHOD DTLSv1_3_enc_data;
 
 /*
  * Flags for SSL methods

@@ -52,6 +52,21 @@ const SSL3_ENC_METHOD DTLSv1_2_enc_data = {
     dtls1_handshake_write
 };
 
+const SSL3_ENC_METHOD DTLSv1_3_enc_data = {
+    tls13_setup_key_block,
+    tls13_generate_master_secret,
+    tls13_change_cipher_state,
+    tls13_final_finish_mac,
+    TLS_MD_CLIENT_FINISH_CONST, TLS_MD_CLIENT_FINISH_CONST_SIZE,
+    TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
+    tls13_alert_code,
+    tls13_export_keying_material,
+    SSL_ENC_FLAG_DTLS | SSL_ENC_FLAG_SIGALGS | SSL_ENC_FLAG_SHA256_PRF,
+    dtls1_set_handshake_header,
+    dtls1_close_construct_packet,
+    dtls1_handshake_write
+};
+
 OSSL_TIME dtls1_default_timeout(void)
 {
     /*
