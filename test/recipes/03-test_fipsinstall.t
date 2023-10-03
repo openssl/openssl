@@ -391,7 +391,7 @@ ok(find_line_file('drbg-no-trunc-md = 1', 'fips.cnf') == 1,
    'fipsinstall will allow option for truncated digests with DRBGs');
 
 ok(find_line_file('kmac-length-checks = 0', 'fips.cnf') == 1,
-   'fipsinstall defaults to not banning truncated digests with DRBGs');
+   'fipsinstall defaults to not enforcing KMAC length checks');
 
 ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
            '-provider_name', 'fips', '-mac_name', 'HMAC',
