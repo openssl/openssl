@@ -554,7 +554,7 @@ Setting up a library context and property query:
  x = X509_new_ex(libctx, propq);
 
  if (d2i_X509(&x, &p, len) == NULL)
-     /* error, x is freed and NULL assigned to it */
+     /* error, x was freed and NULL assigned to it */
 
 =head1 WARNINGS
 
