@@ -539,6 +539,7 @@ typedef enum OPTION_choice {
     OPT_DTLS,
     OPT_DTLS1,
     OPT_DTLS1_2,
+    OPT_DTLS1_3,
     OPT_QUIC,
     OPT_SCTP,
     OPT_TIMEOUT,
@@ -788,6 +789,9 @@ const OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_DTLS1_2
     { "dtls1_2", OPT_DTLS1_2, '-', "Just use DTLSv1.2" },
 #endif
+#ifndef OPENSSL_NO_DTLS1_3
+    { "dtls1_3", OPT_DTLS1_3, '-', "Just use DTLSv1.3" },
+#endif
 #ifndef OPENSSL_NO_SCTP
     { "sctp", OPT_SCTP, '-', "Use SCTP" },
     { "sctp_label_bug", OPT_SCTP_LABEL_BUG, '-', "Enable SCTP label length bug" },
@@ -890,7 +894,7 @@ static const OPT_PAIR services[] = {
 #define IS_PROT_FLAG(o)                                                           \
     (o == OPT_SSL3 || o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2         \
         || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2 \
-        || o == OPT_QUIC)
+        || o == OPT_DTLS1_3 || o == OPT_QUIC)
 
 /* Free |*dest| and optionally set it to a copy of |source|. */
 static void freeandcopy(char **dest, const char *source)
@@ -1440,6 +1444,18 @@ int s_client_main(int argc, char **argv)
             socket_type = SOCK_DGRAM;
             isdtls = 1;
             isquic = 0;
+#endif
+            break;
+        case OPT_DTLS1_3:
+#ifndef OPENSSL_NO_DTLS1_3
+            meth = DTLS_client_method();
+            min_version = DTLS1_3_VERSION;
+            max_version = DTLS1_3_VERSION;
+            socket_type = SOCK_DGRAM;
+            isdtls = 1;
+#ifndef OPENSS_NO_QUIC
+            isquic = 0;
+#endif
 #endif
             break;
         case OPT_QUIC:
