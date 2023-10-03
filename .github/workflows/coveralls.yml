@@ -8,9 +8,9 @@
 name: Coverage
 
 # Run once a day
-on:
-  schedule:
-    - cron:  '49 0 * * *'
+on: [pull_request]
+#  schedule:
+#    - cron:  '49 0 * * *'
 
 permissions:
   contents: read
