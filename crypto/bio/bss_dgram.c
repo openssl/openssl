@@ -216,11 +216,13 @@ typedef struct bio_dgram_sctp_save_message_st {
     int length;
 } bio_dgram_sctp_save_message;
 
+/*
+ * Note: bio_dgram_data must be first here
+ * as we use dgram_ctrl for underlying dgram operations
+ * which will cast this struct to a bio_dgram_data
+ */
 typedef struct bio_dgram_sctp_data_st {
-    BIO_ADDR peer;
-    unsigned int connected;
-    unsigned int _errno;
-    unsigned int mtu;
+    bio_dgram_data dgram;
     struct bio_dgram_sctp_sndinfo sndinfo;
     struct bio_dgram_sctp_rcvinfo rcvinfo;
     struct bio_dgram_sctp_prinfo prinfo;
@@ -2101,7 +2103,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
         if (ret < 0) {
             if (BIO_dgram_should_retry(ret)) {
                 BIO_set_retry_read(b);
-                data->_errno = get_last_socket_error();
+                data->dgram._errno = get_last_socket_error();
             }
         }
 
@@ -2253,7 +2255,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
     if (ret <= 0) {
         if (BIO_dgram_should_retry(ret)) {
             BIO_set_retry_write(b);
-            data->_errno = get_last_socket_error();
+            data->dgram._errno = get_last_socket_error();
         }
     }
     return ret;
@@ -2275,16 +2277,16 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
          * Set to maximum (2^14) and ignore user input to enable transport
          * protocol fragmentation. Returns always 2^14.
          */
-        data->mtu = 16384;
-        ret = data->mtu;
+        data->dgram.mtu = 16384;
+        ret = data->dgram.mtu;
         break;
     case BIO_CTRL_DGRAM_SET_MTU:
         /*
          * Set to maximum (2^14) and ignore input to enable transport
          * protocol fragmentation. Returns always 2^14.
          */
-        data->mtu = 16384;
-        ret = data->mtu;
+        data->dgram.mtu = 16384;
+        ret = data->dgram.mtu;
         break;
     case BIO_CTRL_DGRAM_SET_CONNECTED:
     case BIO_CTRL_DGRAM_CONNECT:
