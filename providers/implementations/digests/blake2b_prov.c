@@ -121,8 +121,7 @@ static void blake2b_init_param(BLAKE2B_CTX *S, const BLAKE2B_PARAM *P)
 /* Initialize the parameter block with default values */
 void ossl_blake2b_param_init(BLAKE2B_PARAM *P)
 {
-    if (P->digest_length == 0)
-        P->digest_length = BLAKE2B_DIGEST_LENGTH;
+    P->digest_length = BLAKE2B_DIGEST_LENGTH;
     P->key_length    = 0;
     P->fanout        = 1;
     P->depth         = 1;
