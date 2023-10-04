@@ -48,7 +48,7 @@ jobs:
       working-directory: _build
       run: nmake /S
     - name: download coreinfo
-      uses: suisei-cn/actions-download-file@v1.3.0
+      uses: suisei-cn/actions-download-file@v1.4.0
       with:
         url: "https://download.sysinternals.com/files/Coreinfo.zip"
         target: _build/coreinfo/
@@ -92,7 +92,7 @@ jobs:
       working-directory: _build
       run: nmake /S
     - name: download coreinfo
-      uses: suisei-cn/actions-download-file@v1.3.0
+      uses: suisei-cn/actions-download-file@v1.4.0
       with:
         url: "https://download.sysinternals.com/files/Coreinfo.zip"
         target: _build/coreinfo/
@@ -129,7 +129,7 @@ jobs:
       working-directory: _build
       run: nmake # verbose, so no /S here
     - name: download coreinfo
-      uses: suisei-cn/actions-download-file@v1.3.0
+      uses: suisei-cn/actions-download-file@v1.4.0
       with:
         url: "https://download.sysinternals.com/files/Coreinfo.zip"
         target: _build/coreinfo/
