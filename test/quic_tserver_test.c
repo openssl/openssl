@@ -305,6 +305,9 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
         if (c_start_idle_test && !c_done_idle_test) {
             /* This is more than our default idle timeout of 30s. */
             if (idle_units_done < 600) {
+                struct timeval tv;
+                int isinf;
+
                 if (!TEST_true(CRYPTO_THREAD_write_lock(fake_time_lock)))
                     goto err;
                 fake_time = ossl_time_add(fake_time, ossl_ms2time(100));
@@ -312,7 +315,16 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 
                 ++idle_units_done;
                 ossl_quic_conn_force_assist_thread_wake(c_ssl);
-                OSSL_sleep(100); /* Ensure CPU scheduling for test purposes */
+
+                /*
+                 * If the event timeout has expired then give the assistance
+                 * thread a chance to catch up
+                 */
+                if (!TEST_true(SSL_get_event_timeout(c_ssl, &tv, &isinf)))
+                    goto err;
+                if (!isinf && ossl_time_compare(ossl_time_zero(),
+                                                ossl_time_from_timeval(tv)) >= 0)
+                    OSSL_sleep(100); /* Ensure CPU scheduling for test purposes */
             } else {
                 c_done_idle_test = 1;
             }
