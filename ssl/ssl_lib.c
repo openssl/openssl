@@ -4970,6 +4970,9 @@ const char *ssl_protocol_to_string(int version)
     case DTLS1_2_VERSION:
         return "DTLSv1.2";
 
+    case DTLS1_3_VERSION:
+        return "DTLSv1.3";
+
     default:
         return "unknown";
     }
