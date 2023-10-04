@@ -125,12 +125,10 @@ IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION, 0, SSL_OP_NO_DTLSv1_2,
     ossl_statem_accept,
     ossl_statem_connect, DTLSv1_2_enc_data)
 #endif
-#ifndef OPENSSL_NO_DTLS1_3_METHOD
 IMPLEMENT_dtls1_meth_func(DTLS1_3_VERSION, 0, SSL_OP_NO_DTLSv1_3,
     dtlsv1_3_method,
     ossl_statem_accept,
     ossl_statem_connect, DTLSv1_3_enc_data)
-#endif
 IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION, 0, 0,
     DTLS_method,
     ossl_statem_accept,
@@ -151,12 +149,10 @@ IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION, 0, SSL_OP_NO_DTLSv1_2,
     ossl_statem_accept,
     ssl_undefined_function, DTLSv1_2_enc_data)
 #endif
-#ifndef OPENSSL_NO_DTLS1_3_METHOD
 IMPLEMENT_dtls1_meth_func(DTLS1_3_VERSION, 0, SSL_OP_NO_DTLSv1_3,
     dtlsv1_3_server_method,
     ossl_statem_accept,
     ssl_undefined_function, DTLSv1_3_enc_data)
-#endif
 IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION, 0, 0,
     DTLS_server_method,
     ossl_statem_accept,
@@ -181,12 +177,10 @@ IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION, 0, SSL_OP_NO_DTLSv1_2,
     ssl_undefined_function,
     ossl_statem_connect, DTLSv1_2_enc_data)
 #endif
-#ifndef OPENSSL_NO_DTLS1_3_METHOD
 IMPLEMENT_dtls1_meth_func(DTLS1_3_VERSION, 0, SSL_OP_NO_DTLSv1_3,
     dtlsv1_3_client_method,
     ssl_undefined_function,
     ossl_statem_connect, DTLSv1_3_enc_data)
-#endif
 IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION, 0, 0,
     DTLS_client_method,
     ssl_undefined_function,
