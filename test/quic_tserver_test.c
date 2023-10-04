@@ -73,7 +73,6 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
     int s_begin_write = 0;
     OSSL_TIME start_time;
     unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
-    OSSL_TIME (*now_cb)(void *arg) = use_fake_time ? fake_now : real_now;
     size_t limit_ms = 1000;
 
 #if defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
@@ -194,10 +193,14 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
     if (!TEST_true(SSL_set_blocking_mode(c_ssl, 0)))
         goto err;
 
-    start_time = now_cb(NULL);
+    /*
+     * We use real time for the timeout not fake time. Otherwise with fake time
+     * we could hit a hang if we never increment the fake time
+     */
+    start_time = real_now(NULL);
 
     for (;;) {
-        if (ossl_time_compare(ossl_time_subtract(now_cb(NULL), start_time),
+        if (ossl_time_compare(ossl_time_subtract(real_now(NULL), start_time),
                               ossl_ms2time(limit_ms)) >= 0) {
             TEST_error("timeout while attempting QUIC server test");
             goto err;
