@@ -31,7 +31,7 @@ static BIO_ADDR *make_dummy_addr(int family)
         struct sockaddr_in6 sin6;
 #endif
 #ifndef OPENSSL_NO_UNIX_SOCK
-        struct sockaddr_un sun;
+        struct sockaddr_un sunaddr;
 #endif
     } sa;
     void *where;
@@ -51,9 +51,9 @@ static BIO_ADDR *make_dummy_addr(int family)
 #endif
 #ifndef OPENSSL_NO_UNIX_SOCK
     case AF_UNIX:
-        where = &(sa.sun.sun_path);
+        where = &(sa.sunaddr.sun_path);
         /* BIO_ADDR_rawmake needs an extra byte for a NUL-terminator*/
-        wherelen = sizeof(sa.sun.sun_path) - 1;
+        wherelen = sizeof(sa.sunaddr.sun_path) - 1;
         break;
 #endif
     default:
