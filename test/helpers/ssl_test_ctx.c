@@ -158,6 +158,7 @@ static const test_enum ssl_protocols[] = {
     { "SSLv3", SSL3_VERSION },
     { "DTLSv1", DTLS1_VERSION },
     { "DTLSv1.2", DTLS1_2_VERSION },
+    { "DTLSv1.3", DTLS1_3_VERSION },
 };
 
 __owur static int parse_protocol(SSL_TEST_CTX *test_ctx, const char *value)
