@@ -1,0 +1,55 @@
+name: Interoperability tests with GnuTLS and NSS
+on: [pull_request, push]
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        COMPONENT: [openssl-upstream-gnutls, openssl-upstream-nss]
+    env:
+      COMPONENT: ${{ matrix.COMPONENT }}
+    # Code below inspired by https://fedoramagazine.org/github-actions-use-podman-to-run-fedora-linux/
+    steps:
+      - name: Setup Docker
+        # Docker installation intructions https://docs.docker.com/engine/install/ubuntu/
+        run: |
+          sudo apt-get -y install ca-certificates curl gnupg
+          sudo install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          sudo chmod a+r /etc/apt/keyrings/docker.gpg
+          echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+          "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          sudo apt-get -y update
+          sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          echo "Docker version"
+          docker version
+          docker pull registry.fedoraproject.org/fedora:latest
+      - name: Create container
+        run: |
+          {
+              echo 'FROM fedora:38'
+              echo 'RUN dnf -y update'
+              echo 'RUN dnf -y install perl'
+              echo 'RUN dnf -y install git tmt-all'
+              echo 'RUN dnf -y remove openssl'
+              echo 'RUN mkdir /root/bin'
+              echo "RUN echo '#!/bin/bash /openssl/util/wrap.pl /openssl/apps/openssl' > /root/bin/openssl & chmod +x /root/bin/openssl"
+              echo 'RUN git clone -b interop-plans https://github.com/not4pedro/openssl.git'
+              echo 'WORKDIR /openssl/'
+              echo 'RUN  git submodule update --depth=1 --init interop'
+              echo 'RUN ./config --banner=Configured no-makedepend enable-fips --strict-warnings && perl configdata.pm --dump'
+              echo 'RUN make -s -j4'
+              echo 'WORKDIR /openssl/interop'
+          } > containerfile
+          docker build --tag fedoralatest -f ./containerfile .
+      - name : Run tests
+        run: |
+          docker run --sysctl net.ipv6.conf.lo.disable_ipv6=0 -di --name fedoralatest fedoralatest:latest
+          echo "Tests to run:"
+          docker exec -i fedoralatest tmt run plans -n $COMPONENT  discover -v
+          echo "Run the tests:"
+          docker exec -i fedoralatest tmt run -a plans -n $COMPONENT provision -h local execute -h tmt --interactive
+          echo "Finished - important to prevent partial output truncating"
