@@ -68,6 +68,7 @@ static const ssl_trace_tbl ssl_version_tbl[] = {
     {TLS1_3_VERSION, "TLS 1.3"},
     {DTLS1_VERSION, "DTLS 1.0"},
     {DTLS1_2_VERSION, "DTLS 1.2"},
+    {DTLS1_3_VERSION, "DTLS 1.3"},
     {DTLS1_BAD_VER, "DTLS 1.0 (bad)"}
 };
 
