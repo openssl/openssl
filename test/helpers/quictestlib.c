@@ -105,8 +105,8 @@ static void noise_msg_callback(int write_p, int version, int content_type,
              * of our noise being too much such that the connection itself
              * fails. We back off on the noise for a bit to avoid that.
              */
-            BIO_ctrl(noiseargs->cbio, BIO_CTRL_NOISE_BACK_OFF, 0, NULL);
-            BIO_ctrl(noiseargs->sbio, BIO_CTRL_NOISE_BACK_OFF, 0, NULL);
+            (void)BIO_ctrl(noiseargs->cbio, BIO_CTRL_NOISE_BACK_OFF, 0, NULL);
+            (void)BIO_ctrl(noiseargs->sbio, BIO_CTRL_NOISE_BACK_OFF, 0, NULL);
         }
     }
 
@@ -235,6 +235,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         if (!TEST_ptr(noisebio))
             goto err;
         sbio = BIO_push(noisebio, sbio);
+        (void)BIO_ctrl(sbio, BIO_CTRL_NOISE_BACK_OFF, 0, NULL);
 
         (*fault)->noiseargs.cbio = cbio;
         (*fault)->noiseargs.sbio = sbio;
