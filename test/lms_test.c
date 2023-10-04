@@ -1,5 +1,5 @@
-
-#include <openssl/lms.h>
+#include <openssl/core_names.h>
+#include <openssl/evp.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 
@@ -613,6 +613,7 @@ static const unsigned char sig2[] = {
 };
 
 typedef struct LMS_VERIFY_DATA_st{
+    const char *type;
     const unsigned char *pub;
     size_t publen;
     const unsigned char *msg;
@@ -621,21 +622,100 @@ typedef struct LMS_VERIFY_DATA_st{
     size_t siglen;
 } LMS_VERIFY_DATA;
 
+#define lms_sig_len (44 + 32 * (34 + 5))
+#define lms_pub_len (24 + 32)
+#define lms_sig (sig1 + sizeof(sig1) - lms_sig_len)
+#define lms_pub (lms_sig - lms_pub_len)
+
 static LMS_VERIFY_DATA testdata[] = {
-    { pub1, sizeof(pub1), msg1, sizeof(msg1), sig1, sizeof(sig1) },
-    { pub2, sizeof(pub2), msg2, sizeof(msg2), sig2, sizeof(sig2) }
+    { "LMS", lms_pub, lms_pub_len, msg1, sizeof(msg1), lms_sig, lms_sig_len },
+    { "HSS", pub1, sizeof(pub1), msg1, sizeof(msg1), sig1, sizeof(sig1) },
+    { "HSS", pub2, sizeof(pub2), msg2, sizeof(msg2), sig2, sizeof(sig2) }
 };
 
-static int lms_verify_test(int tst)
+static int hss_verify_update_test(int tst)
+{
+    LMS_VERIFY_DATA *td = &testdata[tst % OSSL_NELEM(testdata)];
+    int ret = 0;
+    EVP_MD_CTX *ctx = NULL;
+    EVP_PKEY_CTX *pkey_ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    OSSL_PARAM params[2];
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                                  (unsigned char *)td->pub,
+                                                  td->publen);
+    params[1] = OSSL_PARAM_construct_end();
+    pkey_ctx = EVP_PKEY_CTX_new_from_name(NULL, td->type, NULL);
+    if (pkey_ctx == NULL)
+        goto end;
+    if (EVP_PKEY_fromdata_init(pkey_ctx) != 1)
+        goto end;
+    if (EVP_PKEY_fromdata(pkey_ctx, &pkey, EVP_PKEY_PUBLIC_KEY, params) != 1)
+        goto end;
+
+    ctx = EVP_MD_CTX_create();
+    if(ctx == NULL)
+        goto end;
+
+    if (EVP_DigestVerifyInit_ex(ctx, NULL, NULL, NULL, NULL, pkey, NULL) != 1)
+        goto end;
+    if (EVP_DigestVerifyUpdate(ctx, td->msg, td->msglen) != 1)
+        goto end;
+    if (EVP_DigestVerifyFinal(ctx, td->sig, td->siglen) != 1)
+        goto end;
+
+    ret = 1;
+end:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(pkey_ctx);
+    EVP_MD_CTX_free(ctx);
+
+    return ret;
+}
+
+static int hss_verify_oneshot_test(int tst)
 {
     LMS_VERIFY_DATA *td = &testdata[tst];
+    int ret = 0;
+    EVP_MD_CTX *ctx = NULL;
+    EVP_PKEY_CTX *pkey_ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    OSSL_PARAM params[2];
 
-    return OSSL_HSS_verify(td->pub, td->publen, td->sig, td->siglen,
-                           td->msg, td->msglen);
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                                  (unsigned char *)td->pub,
+                                                  td->publen);
+    params[1] = OSSL_PARAM_construct_end();
+    pkey_ctx = EVP_PKEY_CTX_new_from_name(NULL, td->type, NULL);
+    if (pkey_ctx == NULL)
+        goto end;
+    if (EVP_PKEY_fromdata_init(pkey_ctx) != 1)
+        goto end;
+    if (EVP_PKEY_fromdata(pkey_ctx, &pkey, EVP_PKEY_PUBLIC_KEY, params) != 1)
+        goto end;
+
+    ctx = EVP_MD_CTX_create();
+    if(ctx == NULL)
+        goto end;
+
+    if (EVP_DigestVerifyInit_ex(ctx, NULL, NULL, NULL, NULL, pkey, NULL) != 1)
+        goto end;
+    if (EVP_DigestVerify(ctx, td->sig, td->siglen, td->msg, td->msglen) != 1)
+        goto end;
+
+    ret = 1;
+end:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(pkey_ctx);
+    EVP_MD_CTX_free(ctx);
+
+    return ret;
 }
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(lms_verify_test, OSSL_NELEM(testdata));
+    ADD_ALL_TESTS(hss_verify_update_test, OSSL_NELEM(testdata));
+    ADD_ALL_TESTS(hss_verify_oneshot_test, OSSL_NELEM(testdata));
     return 1;
 }

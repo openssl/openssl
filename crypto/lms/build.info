@@ -1,2 +1,2 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]=lms.c
+SOURCE[../../libcrypto]=lms_key.c lm_ots.c lms_params.c lms_decode.c
