@@ -1871,12 +1871,13 @@ static const version_info tls_version_table[] = {
     { 0, NULL, NULL },
 };
 
-#if DTLS_MAX_VERSION_INTERNAL != DTLS1_2_VERSION
-#error Code needs update for DTLS_method() support beyond DTLS1_2_VERSION.
+#if DTLS_MAX_VERSION_INTERNAL != DTLS1_3_VERSION
+#error Code needs update for DTLS_method() support beyond DTLS1_3_VERSION.
 #endif
 
 /* Must be in order high to low */
 static const version_info dtls_version_table[] = {
+    { DTLS1_3_VERSION, dtlsv1_3_client_method, dtlsv1_3_server_method },
 #ifndef OPENSSL_NO_DTLS1_2
     { DTLS1_2_VERSION, dtlsv1_2_client_method, dtlsv1_2_server_method },
 #else

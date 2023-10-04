@@ -48,7 +48,7 @@
 #endif
 
 #define TLS_MAX_VERSION_INTERNAL TLS1_3_VERSION
-#define DTLS_MAX_VERSION_INTERNAL DTLS1_2_VERSION
+#define DTLS_MAX_VERSION_INTERNAL DTLS1_3_VERSION
 
 /*
  * DTLS version numbers are strange because they're inverted. Except for

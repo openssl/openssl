@@ -192,7 +192,7 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
         if (mt == SSL3_MT_CERTIFICATE_REQUEST) {
 #if DTLS_MAX_VERSION_INTERNAL != DTLS1_2_VERSION
             /* Restore digest for PHA before adding message.*/
-#error Internal DTLS version error
+#warning Internal DTLS version error
 #endif
             if (!SSL_CONNECTION_IS_DTLS(s)
                 && s->post_handshake_auth == SSL_PHA_EXT_SENT) {
