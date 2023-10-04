@@ -23,8 +23,11 @@ static int ossl_blake2s256_init(void *ctx)
 static int ossl_blake2b512_init(void *ctx)
 {
     struct blake2b_md_data_st *mdctx = ctx;
+    uint8_t digest_length = mdctx->params.digest_length;
 
     ossl_blake2b_param_init(&mdctx->params);
+    if (digest_length != 0)
+        mdctx->params.digest_length = digest_length;
     return ossl_blake2b_init(&mdctx->ctx, &mdctx->params);
 }
 
