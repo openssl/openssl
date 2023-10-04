@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "crypto/x509.h"
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "pk7_local.h"
@@ -215,6 +216,8 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
                  BIO *indata, BIO *out, int flags)
 {
     STACK_OF(X509) *signers;
+    STACK_OF(X509) *included_certs;
+    STACK_OF(X509) *untrusted = NULL;
     X509 *signer;
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
     PKCS7_SIGNER_INFO *si;
@@ -272,21 +275,24 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
                                      ossl_pkcs7_ctx_get0_propq(p7_ctx));
     if (cert_ctx == NULL)
         goto err;
-    if (!(flags & PKCS7_NOVERIFY))
+    if ((flags & PKCS7_NOVERIFY) == 0) {
+        if (!ossl_x509_add_certs_new(&untrusted, certs, X509_ADD_FLAG_NO_DUP))
+            goto err;
+        included_certs = pkcs7_get0_certificates(p7);
+        if ((flags & PKCS7_NOCHAIN) == 0
+            && !ossl_x509_add_certs_new(&untrusted, included_certs,
+                                        X509_ADD_FLAG_NO_DUP))
+            goto err;
+
         for (k = 0; k < sk_X509_num(signers); k++) {
             signer = sk_X509_value(signers, k);
-            if (!(flags & PKCS7_NOCHAIN)) {
-                if (!X509_STORE_CTX_init(cert_ctx, store, signer,
-                                         p7->d.sign->cert)) {
-                    ERR_raise(ERR_LIB_PKCS7, ERR_R_X509_LIB);
-                    goto err;
-                }
-                if (!X509_STORE_CTX_set_default(cert_ctx, "smime_sign"))
-                    goto err;
-            } else if (!X509_STORE_CTX_init(cert_ctx, store, signer, NULL)) {
+            if (!X509_STORE_CTX_init(cert_ctx, store, signer, untrusted)) {
                 ERR_raise(ERR_LIB_PKCS7, ERR_R_X509_LIB);
                 goto err;
             }
+            if ((flags & PKCS7_NOCHAIN) == 0
+                    && !X509_STORE_CTX_set_default(cert_ctx, "smime_sign"))
+                goto err;
             if (!(flags & PKCS7_NOCRL))
                 X509_STORE_CTX_set0_crls(cert_ctx, p7->d.sign->crl);
             i = X509_verify_cert(cert_ctx);
@@ -299,6 +305,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
             }
             /* Check for revocation status here */
         }
+    }
 
     if ((p7bio = PKCS7_dataInit(p7, indata)) == NULL)
         goto err;
@@ -353,13 +360,14 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
         BIO_pop(p7bio);
     BIO_free_all(p7bio);
     sk_X509_free(signers);
+    sk_X509_free(untrusted);
     return ret;
 }
 
 STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
                                    int flags)
 {
-    STACK_OF(X509) *signers;
+    STACK_OF(X509) *signers, *included_certs;
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
     PKCS7_SIGNER_INFO *si;
     PKCS7_ISSUER_AND_SERIAL *ias;
@@ -375,6 +383,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_WRONG_CONTENT_TYPE);
         return NULL;
     }
+    included_certs = pkcs7_get0_certificates(p7);
 
     /* Collect all the signers together */
 
@@ -395,14 +404,11 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
         ias = si->issuer_and_serial;
         signer = NULL;
         /* If any certificates passed they take priority */
-        if (certs != NULL)
-            signer = X509_find_by_issuer_and_serial(certs,
+        signer = X509_find_by_issuer_and_serial(certs,
+                                                ias->issuer, ias->serial);
+        if (signer == NULL && (flags & PKCS7_NOINTERN) == 0)
+            signer = X509_find_by_issuer_and_serial(included_certs,
                                                     ias->issuer, ias->serial);
-        if (signer == NULL && !(flags & PKCS7_NOINTERN)
-            && p7->d.sign->cert)
-            signer =
-                X509_find_by_issuer_and_serial(p7->d.sign->cert,
-                                               ias->issuer, ias->serial);
         if (signer == NULL) {
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNER_CERTIFICATE_NOT_FOUND);
             sk_X509_free(signers);
