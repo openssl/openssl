@@ -119,16 +119,16 @@ static void get_noise(int long_header, uint64_t *reinject, int *should_drop,
      * Where a duplicate occurs we reinject the copy of the datagram up to
      * MAX_DGRAM_DELAY datagrams later
      */
-    *reinject = (type == NOISE_TYPE_DROP || type == NOISE_TYPE_BITFLIPS)
-                ? 0
-                : (uint64_t)((test_random() % MAX_DGRAM_REINJECT) + 1);
+    *reinject = (type == NOISE_TYPE_DUPLICATE || type == NOISE_TYPE_DELAY)
+                ? (uint64_t)((test_random() % MAX_DGRAM_REINJECT) + 1)
+                : 0;
 
     /*
      * No point in reinjecting after 1 datagram if the current datagram is also
      * dropped (i.e. this is a delay not a duplicate), so we reinject after an
      * extra datagram in that case
      */
-    *reinject += (uint64_t)(*should_drop);
+    *reinject += type == NOISE_TYPE_DELAY;
 
     /* flip some bits in the header */
     if (type == NOISE_TYPE_BITFLIPS) {
@@ -255,6 +255,9 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
              * that the connection always survives. After that we can resume
              * with normal noise
              */
+#ifdef OSSL_NOISY_DGRAM_DEBUG
+            printf("**Back off applied\n");
+#endif
             should_drop = 0;
             flip = 0;
             data->backoff = 0;
