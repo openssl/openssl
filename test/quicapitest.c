@@ -1230,6 +1230,12 @@ static int test_client_auth(int idx)
                                              &clientquic, NULL, NULL)))
         goto err;
 
+    if (idx > 1) {
+        if (!TEST_true(ssl_ctx_add_large_cert_chain(libctx, cctx, ccert))
+            || !TEST_true(ssl_ctx_add_large_cert_chain(libctx, sctx, cert)))
+            goto err;
+    }
+
     if (idx == 0) {
         if (!TEST_false(qtest_create_quic_connection(qtserv, clientquic)))
             goto err;
@@ -1629,7 +1635,7 @@ int setup_tests(void)
     ADD_TEST(test_multiple_dgrams);
     ADD_ALL_TESTS(test_non_io_retry, 2);
     ADD_TEST(test_quic_psk);
-    ADD_ALL_TESTS(test_client_auth, 2);
+    ADD_ALL_TESTS(test_client_auth, 3);
     ADD_ALL_TESTS(test_alpn, 2);
     ADD_ALL_TESTS(test_noisy_dgram, 2);
     ADD_TEST(test_get_shutdown);

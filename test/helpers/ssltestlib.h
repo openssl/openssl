@@ -68,4 +68,8 @@ DEFINE_STACK_OF(MEMPACKET)
 
 SSL_SESSION *create_a_psk(SSL *ssl, size_t mdsize);
 
+/* Add cert from `cert_file` multiple times to create large extra cert chain */
+int ssl_ctx_add_large_cert_chain(OSSL_LIB_CTX *libctx, SSL_CTX *sctx,
+                                 const char *cert_file);
+
 #endif /* OSSL_TEST_SSLTESTLIB_H */

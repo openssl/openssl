@@ -115,7 +115,6 @@ static int cdummyarg = 1;
 static X509 *ocspcert = NULL;
 #endif
 
-#define NUM_EXTRA_CERTS 40
 #define CLIENT_VERSION_LEN      2
 
 /*
@@ -954,51 +953,6 @@ end:
 }
 #endif
 
-static int add_large_cert_chain(SSL_CTX *sctx)
-{
-    BIO *certbio = NULL;
-    X509 *chaincert = NULL;
-    int certlen;
-    int ret = 0;
-    int i;
-
-    if (!TEST_ptr(certbio = BIO_new_file(cert, "r")))
-        goto end;
-
-    if (!TEST_ptr(chaincert = X509_new_ex(libctx, NULL)))
-        goto end;
-
-    if (PEM_read_bio_X509(certbio, &chaincert, NULL, NULL) == NULL)
-        goto end;
-    BIO_free(certbio);
-    certbio = NULL;
-
-    /*
-     * We assume the supplied certificate is big enough so that if we add
-     * NUM_EXTRA_CERTS it will make the overall message large enough. The
-     * default buffer size is requested to be 16k, but due to the way BUF_MEM
-     * works, it ends up allocating a little over 21k (16 * 4/3). So, in this
-     * test we need to have a message larger than that.
-     */
-    certlen = i2d_X509(chaincert, NULL);
-    OPENSSL_assert(certlen * NUM_EXTRA_CERTS >
-                   (SSL3_RT_MAX_PLAIN_LENGTH * 4) / 3);
-    for (i = 0; i < NUM_EXTRA_CERTS; i++) {
-        if (!X509_up_ref(chaincert))
-            goto end;
-        if (!SSL_CTX_add_extra_chain_cert(sctx, chaincert)) {
-            X509_free(chaincert);
-            goto end;
-        }
-    }
-
-    ret = 1;
- end:
-    BIO_free(certbio);
-    X509_free(chaincert);
-    return ret;
-}
-
 static int execute_test_large_message(const SSL_METHOD *smeth,
                                       const SSL_METHOD *cmeth,
                                       int min_version, int max_version,
@@ -1034,7 +988,7 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
         SSL_CTX_set_read_ahead(cctx, 1);
     }
 
-    if (!add_large_cert_chain(sctx))
+    if (!ssl_ctx_add_large_cert_chain(libctx, sctx, cert))
         goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
@@ -11087,7 +11041,7 @@ static int test_handshake_retry(int idx)
      * Add a large amount of data to fill the buffering BIO used by the SSL
      * object
      */
-    if ((idx & 1) == 1 && !add_large_cert_chain(sctx))
+    if ((idx & 1) == 1 && !ssl_ctx_add_large_cert_chain(libctx, sctx, cert))
         goto end;
 
     /*
