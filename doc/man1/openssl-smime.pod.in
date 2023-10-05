@@ -178,10 +178,10 @@ If not specified, AES-256-CBC is used as the default. Only used with B<-encrypt>
 =item B<-nointern>
 
 When verifying a message, normally certificates (if any) included in
-the message are searched for the signing certificate. With this option,
+the message are searched for the signer certificates. With this option,
 only the certificates given with the B<-certfile> option are used.
-However, unless the B<-nochain> option is given, the certificates included in
-the message are still used for chain building as certificates of untrusted CAs.
+However, the certificates included in the message are still used
+as candidate intermediate CA certificates during chain construction.
 
 =item B<-noverify>
 
@@ -189,8 +189,8 @@ Do not verify the signers certificate of a signed message.
 
 =item B<-nochain>
 
-During chain verification of signer certificates, do not use the certificates
-in the signed message as untrusted CA certificates for chain building.
+When verifying the signer certificates of a signed message, do not use the
+certificates in the message as candidate CA certificates for chain building.
 
 =item B<-nosigs>
 
@@ -198,7 +198,7 @@ Don't try to verify the signatures on the message.
 
 =item B<-nocerts>
 
-When signing a message, the signer's certificate and chain certificates are
+When signing a message, the signer certificates and chain certificates are
 normally included, but this option disables their inclusion.
 This will reduce the size of
 the signed message, but the verifier must have a copy of those certificates
@@ -235,16 +235,21 @@ option is present B<CRLF> is used instead.
 
 =item B<-certfile> I<file>
 
-Provide additional certificates.
+Provide extra certificates.
 When signing, these will be included (unless the B<-nocerts> option is given)
-with the message to help chain building and to provide extra signer certificates.
-When verifying, these will be searched first for signer certificates.
+with the message to help chain building and to provide fallback signer certificates.
+When verifying, the provided certificates take precedence over the
+signer certificates in the message as a source of candidate signers.
+With B<-nointern> these will be the only signer certificates considered.
+
+Note that a message can have multiple signers.
+When verifying a multi-signed message, all the signatures must be valid, and so all the signer certificates need to be available.
 
 The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-signer> I<file>
 
-A signing certificate when signing or resigning a message, this option can be
+A signer certificate when signing or resigning a message, this option can be
 used multiple times if more than one signer is required. If a message is being
 verified then the signers certificates will be written to this file if the
 verification was successful.

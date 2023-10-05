@@ -22,10 +22,13 @@ CMS_add0_crl, CMS_add1_crl, CMS_get1_crls
 
 CMS_add0_cert() and CMS_add1_cert() add certificate I<cert> to I<cms>
 unless it is already present.
-This can be used with L<CMS_sign_ex(3)> and L<CMS_sign(3)>
-to include a chain certificate or an extra signer certificate
-and may be used with L<CMS_verify(3)> to set a
-fallback signer certificate or to help chain building in certificate validation.
+Signer certificates and intermediate CA certificates are usually added
+to a CMS structure by L<CMS_sign_ex(3)> and L<CMS_sign(3)>, yet further
+such certificates may be added in advance by directly calling these functions.
+The verifier of the message can use the included certificates
+as candidate signer certificates and for chain building.
+These functions may also be used before calling L<CMS_verify(3)> to add
+fallback signer certificates or intermediate CA certificates for chain building.
 As the 0 implies, CMS_add0_cert() adds I<cert> internally to I<cms>
 and on success it must not be freed up by the caller.
 In contrast, the caller of CMS_add1_cert() must free I<cert>.

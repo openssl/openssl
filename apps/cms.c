@@ -932,7 +932,7 @@ int cms_main(int argc, char **argv)
         }
     }
 
-    if (certfile != NULL &&  !load_certs(certfile, 0, &other, NULL, "other certificates")) {
+    if (certfile != NULL && !load_certs(certfile, 0, &other, NULL, "extra certificates")) {
         ERR_print_errors(bio_err);
         goto end;
     }

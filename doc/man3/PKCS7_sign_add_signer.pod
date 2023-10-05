@@ -34,8 +34,8 @@ PKCS7_add_certificate() adds to the B<PKCS7> structure I<p7> the certificate
 I<cert>, which may be an end-entity (signer) certificate
 or a CA certificate useful for chain building.
 This is done internally by L<PKCS7_sign_ex(3)> and similar signing functions
-but can also be called directly to add a further such certificate.
-It may be used before calling L<PKCS7_verify(3)>
+but can also be called directly to add another such certificate.
+It may be used also before calling L<PKCS7_verify(3)>
 to provide any missing certificate(s) needed for chain building
 or to provide a fallback signer certificate.
 
@@ -66,8 +66,8 @@ B<PKCS7_SIGNER_INO> structure will not be finalized so additional attributes
 can be added. In this case an explicit call to PKCS7_SIGNER_INFO_sign() is
 needed to finalize it.
 
-If B<PKCS7_NOCERTS> is set the signer's certificate will not be included in the
-B<PKCS7> structure, the signer's certificate must still be supplied in the
+If B<PKCS7_NOCERTS> is set, the signer certificates will not be included in the
+B<PKCS7> structure. The signer certificates must still be supplied in the
 I<signcert> parameter though. This can reduce the size of the signature if the
 signers certificate can be obtained by other means: for example a previously
 signed message.
@@ -84,14 +84,12 @@ these algorithms is disabled then it will not be included.
 
 Certificates and CRLs are added to the I<cert> or
 I<crl> fields of PKCS7_SIGNED structure.
-A certificate or CRL may be added to the same PKCS7 structure
-more than once, although this does not make sense.
 
 =head1 RETURN VALUES
 
 PKCS7_sign_add_signers() returns an internal pointer to the B<PKCS7_SIGNER_INFO>
-structure just added, which can be used to set additional attributes
-before it is finalized, or NULL if an error occurs.
+structure just added (which can be used to set additional attributes
+before it is finalized), or NULL if an error occurs.
 
 PKCS7_add_certificate() and PKCS7_add_crl() return 1 on success, 0 on error.
 
