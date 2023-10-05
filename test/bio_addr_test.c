@@ -80,8 +80,9 @@ static BIO_ADDR *make_dummy_addr(int family)
 
 static int bio_addr_is_eq(const BIO_ADDR *a, const BIO_ADDR *b)
 {
-    struct sockaddr_storage adata, bdata;
+    unsigned char *adata = NULL, *bdata = NULL;
     size_t alen, blen;
+    int ret = 0;
 
     /* True even if a and b are NULL */
     if (a == b)
@@ -98,15 +99,11 @@ static int bio_addr_is_eq(const BIO_ADDR *a, const BIO_ADDR *b)
     if (BIO_ADDR_rawport(a) != BIO_ADDR_rawport(b))
         return 0;
 
-    if (!BIO_ADDR_rawaddress(a, NULL, &alen)
-            || alen > sizeof(adata)
-            || !BIO_ADDR_rawaddress(a, &adata, &alen))
+    if (!BIO_ADDR_rawaddress(a, NULL, &alen))
         return 0;
 
-    if (!BIO_ADDR_rawaddress(a, NULL, &blen)
-            || blen > sizeof(bdata)
-            || !BIO_ADDR_rawaddress(a, &bdata, &blen))
-        return 0;
+    if (!BIO_ADDR_rawaddress(b, NULL, &blen))
+        goto err;
 
     if (alen != blen)
         return 0;
@@ -114,7 +111,22 @@ static int bio_addr_is_eq(const BIO_ADDR *a, const BIO_ADDR *b)
     if (alen == 0)
         return 1;
 
-    return memcmp(&adata, &bdata, alen) == 0;
+    adata = OPENSSL_malloc(alen);
+    if (!TEST_ptr(adata)
+            || !BIO_ADDR_rawaddress(a, adata, &alen))
+        goto err;
+
+    bdata = OPENSSL_malloc(blen);
+    if (!TEST_ptr(bdata)
+            || !BIO_ADDR_rawaddress(b, bdata, &blen))
+        goto err;
+
+    ret = (memcmp(adata, bdata, alen) == 0);
+
+ err:
+    OPENSSL_free(adata);
+    OPENSSL_free(bdata);
+    return ret;
 }
 
 static int test_bio_addr_copy_dup(int idx)
