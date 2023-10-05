@@ -26,7 +26,7 @@
  */
 
 #define INIT_DCID_LEN           8
-#define INIT_CRYPTO_BUF_LEN     8192
+#define INIT_CRYPTO_BUF_LEN     65536
 #define INIT_APP_BUF_LEN        8192
 
 /*
