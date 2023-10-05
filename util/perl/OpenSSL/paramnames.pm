@@ -220,8 +220,8 @@ my %params = (
 # DRBG call back parameters
     'DRBG_PARAM_ENTROPY_REQUIRED' =>        "entropy_required",
     'DRBG_PARAM_PREDICTION_RESISTANCE' =>   "prediction_resistance",
-    'DRBG_PARAM_MIN_LENGTH' =>              "minium_length",
-    'DRBG_PARAM_MAX_LENGTH' =>              "maxium_length",
+    'DRBG_PARAM_MIN_LENGTH' =>              "minimum_length",
+    'DRBG_PARAM_MAX_LENGTH' =>              "maximum_length",
     'DRBG_PARAM_RANDOM_DATA' =>             "random_data",
     'DRBG_PARAM_SIZE' =>                    "size",
 
