@@ -265,10 +265,10 @@ static int ch_stateless_reset_token_handler(const unsigned char *data,
 
 static int ch_init(QUIC_CHANNEL *ch)
 {
-    OSSL_QUIC_TX_PACKETISER_ARGS txp_args = {0};
-    OSSL_QTX_ARGS qtx_args = {0};
-    OSSL_QRX_ARGS qrx_args = {0};
-    QUIC_TLS_ARGS tls_args = {0};
+    OSSL_QUIC_TX_PACKETISER_ARGS txp_args = {{0}};
+    OSSL_QTX_ARGS qtx_args = {{0}};
+    OSSL_QRX_ARGS qrx_args = {{0}};
+    QUIC_TLS_ARGS tls_args = {{0}};
     uint32_t pn_space;
     size_t rx_short_cid_len = ch->is_server ? INIT_DCID_LEN : 0;
 
@@ -2359,7 +2359,7 @@ static void ch_rx_handle_version_neg(QUIC_CHANNEL *ch, OSSL_QRX_PKT *pkt)
 
 static void ch_raise_version_neg_failure(QUIC_CHANNEL *ch)
 {
-    QUIC_TERMINATE_CAUSE tcause = {0};
+    QUIC_TERMINATE_CAUSE tcause = {{0}};
 
     tcause.error_code = QUIC_ERR_CONNECTION_REFUSED;
     tcause.reason     = "version negotiation failure";
@@ -2647,7 +2647,7 @@ BIO *ossl_quic_channel_get_net_wbio(QUIC_CHANNEL *ch)
 
 static int ch_update_poll_desc(QUIC_CHANNEL *ch, BIO *net_bio, int for_write)
 {
-    BIO_POLL_DESCRIPTOR d = {0};
+    BIO_POLL_DESCRIPTOR d = {{0}};
 
     if (net_bio == NULL
         || (!for_write && !BIO_get_rpoll_descriptor(net_bio, &d))
@@ -2766,7 +2766,7 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code,
                                    const char *app_reason)
 {
-    QUIC_TERMINATE_CAUSE tcause = {0};
+    QUIC_TERMINATE_CAUSE tcause = {{0}};
 
     if (ossl_quic_channel_is_term_any(ch))
         return;
@@ -3013,7 +3013,7 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
                                                    3));
 
             if (!tcause->remote) {
-                OSSL_QUIC_FRAME_CONN_CLOSE f = {0};
+                OSSL_QUIC_FRAME_CONN_CLOSE f = {{0}};
 
                 /* best effort */
                 f.error_code = ch->terminate_cause.error_code;
@@ -3070,7 +3070,7 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
 void ossl_quic_channel_on_remote_conn_close(QUIC_CHANNEL *ch,
                                             OSSL_QUIC_FRAME_CONN_CLOSE *f)
 {
-    QUIC_TERMINATE_CAUSE tcause = {0};
+    QUIC_TERMINATE_CAUSE tcause = {{0}};
 
     if (!ossl_quic_channel_is_active(ch))
         return;
@@ -3254,7 +3254,7 @@ static void ch_save_err_state(QUIC_CHANNEL *ch)
 
 static void ch_stateless_reset(QUIC_CHANNEL *ch)
 {
-    QUIC_TERMINATE_CAUSE tcause = {0};
+    QUIC_TERMINATE_CAUSE tcause = {{0}};
 
     tcause.error_code = QUIC_ERR_NO_ERROR;
     ch_start_terminating(ch, &tcause, 1);
@@ -3262,7 +3262,7 @@ static void ch_stateless_reset(QUIC_CHANNEL *ch)
 
 static void ch_raise_net_error(QUIC_CHANNEL *ch)
 {
-    QUIC_TERMINATE_CAUSE tcause = {0};
+    QUIC_TERMINATE_CAUSE tcause = {{0}};
 
     ch->net_error = 1;
 
@@ -3301,7 +3301,7 @@ void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
                                                 int src_line,
                                                 const char *src_func)
 {
-    QUIC_TERMINATE_CAUSE tcause = {0};
+    QUIC_TERMINATE_CAUSE tcause = {{0}};
     int err_reason = error_code == QUIC_ERR_INTERNAL_ERROR
                      ? ERR_R_INTERNAL_ERROR : SSL_R_QUIC_PROTOCOL_ERROR;
     const char *err_str = ossl_quic_err_to_string(error_code);
