@@ -538,7 +538,7 @@ static int bytepad(unsigned char *out, size_t *out_len,
     int len;
     unsigned char *p = out;
     int sz = w;
-    
+
     if (out == NULL) {
         if (out_len == NULL) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
