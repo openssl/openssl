@@ -185,6 +185,8 @@ struct evp_signature_st {
     OSSL_FUNC_signature_digest_verify_update_fn *digest_verify_update;
     OSSL_FUNC_signature_digest_verify_final_fn *digest_verify_final;
     OSSL_FUNC_signature_digest_verify_fn *digest_verify;
+    OSSL_FUNC_signature_digest_verify_pq_init_fn *digest_verify_pq_init;
+    OSSL_FUNC_signature_digest_verify_pq_final_fn *digest_verify_pq_final;
     OSSL_FUNC_signature_freectx_fn *freectx;
     OSSL_FUNC_signature_dupctx_fn *dupctx;
     OSSL_FUNC_signature_get_ctx_params_fn *get_ctx_params;

@@ -796,6 +796,12 @@ OSSL_CORE_MAKE_FUNC(int, signature_digest_sign_final,
 OSSL_CORE_MAKE_FUNC(int, signature_digest_sign,
                     (void *ctx, unsigned char *sigret, size_t *siglen,
                      size_t sigsize, const unsigned char *tbs, size_t tbslen))
+OSSL_CORE_MAKE_FUNC(int, signature_digest_verify_pq_init,
+                    (void *ctx, const char *mdname, void *provkey,
+                     const OSSL_PARAM params[],
+                     const unsigned char *sig, size_t siglen))
+OSSL_CORE_MAKE_FUNC(int, signature_digest_verify_pq_final,
+                    (void *ctx))
 OSSL_CORE_MAKE_FUNC(int, signature_digest_verify_init,
                     (void *ctx, const char *mdname, void *provkey,
                      const OSSL_PARAM params[]))

@@ -713,9 +713,53 @@ end:
     return ret;
 }
 
+static int hss_verify_pq_test(int tst)
+{
+    LMS_VERIFY_DATA *td = &testdata[tst % OSSL_NELEM(testdata)];
+    int ret = 0;
+    EVP_MD_CTX *ctx = NULL;
+    EVP_PKEY_CTX *pkey_ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    OSSL_PARAM params[2];
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                                  (unsigned char *)td->pub,
+                                                  td->publen);
+    params[1] = OSSL_PARAM_construct_end();
+    pkey_ctx = EVP_PKEY_CTX_new_from_name(NULL, td->type, NULL);
+    if (pkey_ctx == NULL)
+        goto end;
+    if (EVP_PKEY_fromdata_init(pkey_ctx) != 1)
+        goto end;
+    if (EVP_PKEY_fromdata(pkey_ctx, &pkey, EVP_PKEY_PUBLIC_KEY, params) != 1)
+        goto end;
+
+    ctx = EVP_MD_CTX_create();
+    if(ctx == NULL)
+        goto end;
+
+    if (EVP_DigestVerifyPQInit(ctx, NULL, NULL, NULL, NULL, pkey, NULL,
+                               td->sig, td->siglen) != 1)
+        goto end;
+    if (EVP_DigestVerifyPQUpdate(ctx, td->msg, td->msglen) != 1)
+        goto end;
+    if (EVP_DigestVerifyPQFinal(ctx) != 1)
+        goto end;
+
+    ret = 1;
+end:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(pkey_ctx);
+    EVP_MD_CTX_free(ctx);
+
+    return ret;
+}
+
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(hss_verify_update_test, OSSL_NELEM(testdata));
     ADD_ALL_TESTS(hss_verify_oneshot_test, OSSL_NELEM(testdata));
+    ADD_ALL_TESTS(hss_verify_pq_test, OSSL_NELEM(testdata));
     return 1;
 }

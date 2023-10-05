@@ -50,7 +50,7 @@ static LMS_SIG *lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub)
     const LMS_PARAMS *lparams;
     LMS_SIG *lsig = NULL;
 
-    lsig = OPENSSL_malloc(sizeof(*lsig));
+    lsig = ossl_lms_sig_new();
     if (lsig == NULL)
         return NULL;
 
@@ -81,14 +81,8 @@ static LMS_SIG *lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub)
         goto err;
     return lsig;
 err:
-    OPENSSL_free(lsig);
+    ossl_lms_sig_free(lsig);
     return NULL;
-}
-
-void ossl_lms_sig_free(LMS_SIG *sig)
-{
-    if (sig != NULL)
-        OPENSSL_free(sig);
 }
 
 LMS_SIG *ossl_lms_sig_from_data(const unsigned char *sig, size_t siglen,

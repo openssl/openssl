@@ -122,7 +122,7 @@ void ossl_lm_ots_ctx_free(LM_OTS_CTX *ctx)
     EVP_MD_CTX_free(ctx->mdctx);
     OPENSSL_free(ctx);
 }
-
+#if 0
 LM_OTS_CTX *ossl_lm_ots_ctx_dup(LM_OTS_CTX *src)
 {
     LM_OTS_CTX *ret = NULL;
@@ -134,6 +134,7 @@ LM_OTS_CTX *ossl_lm_ots_ctx_dup(LM_OTS_CTX *src)
     if (ret == NULL)
         return NULL;
 
+    ret->sig = src->sig;
     if (!EVP_MD_CTX_copy_ex(ret->mdctx, src->mdctx)
         || !EVP_MD_CTX_copy_ex(ret->mdctxIq, src->mdctxIq))
         goto err;
@@ -142,6 +143,7 @@ err:
     ossl_lm_ots_ctx_free(ret);
     return NULL;
 }
+#endif
 
 /* Algorithm 4b */
 int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *pctx,
@@ -154,13 +156,14 @@ int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *pctx,
     EVP_MD_CTX *ctx, *ctxIq;
     unsigned char iq[LMS_ISIZE+4], *qbuf = &iq[LMS_ISIZE];
 
+    pctx->sig = sig;
+
     if (sig->params != pub)
         return 0;
 
     memcpy(iq, I, LMS_ISIZE);
     U32STR(qbuf, q);
 
-    pctx->sig = sig;
     ctx = pctx->mdctx;
     ctxIq = pctx->mdctxIq;
 
@@ -173,8 +176,9 @@ int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *pctx,
     if (!EVP_DigestUpdate(ctx, D_MESG, sizeof(D_MESG))
         || !EVP_DigestUpdate(ctx, sig->C, sig->params->n))
         goto err;
-    ret = 1;
+    return 1;
 err:
+
     return ret;
 }
 

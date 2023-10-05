@@ -72,12 +72,23 @@ typedef struct lms_signature_st {
   uint32_t q;
   LM_OTS_SIG sig;
   unsigned char *paths; /* size is h * m */
+  CRYPTO_REF_COUNT references;
 } LMS_SIG;
 
 typedef struct lm_ots_ctx_st {
     const LM_OTS_SIG *sig;
     EVP_MD_CTX *mdctx, *mdctxIq;
 } LM_OTS_CTX;
+
+typedef struct {
+    LMS_KEY *pub;
+    LMS_SIG *sig;
+    LM_OTS_CTX *pubctx;
+    EVP_MD *md;
+    const unsigned char *msg;
+    size_t msglen;
+    int failed;
+} LMS_VALIDATE_CTX;
 
 DEFINE_STACK_OF(LMS_KEY)
 DEFINE_STACK_OF(LMS_SIG)
@@ -87,6 +98,10 @@ void ossl_lms_key_set0_libctx(LMS_KEY *key, OSSL_LIB_CTX *libctx);
 void ossl_lms_key_free(LMS_KEY *key);
 int ossl_lms_key_up_ref(LMS_KEY *key);
 LMS_KEY *ossl_lms_key_dup(const LMS_KEY *key, int selection);
+
+LMS_SIG *ossl_lms_sig_new(void);
+void ossl_lms_sig_free(LMS_SIG *sig);
+int ossl_lms_sig_up_ref(LMS_SIG *sig);
 
 int ossl_lms_pubkey_from_pkt(PACKET *pkt, LMS_KEY *key);
 int ossl_lms_pubkey_from_data(const unsigned char *pub, size_t publen,
@@ -111,7 +126,7 @@ const LMS_PARAMS *ossl_lms_params_get(uint32_t lms_type);
 
 LM_OTS_CTX *ossl_lm_ots_ctx_new(void);
 void ossl_lm_ots_ctx_free(LM_OTS_CTX *ctx);
-LM_OTS_CTX *ossl_lm_ots_ctx_dup(LM_OTS_CTX *src);
+//LM_OTS_CTX *ossl_lm_ots_ctx_dup(LM_OTS_CTX *src);
 
 int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *ctx,
                                  const EVP_MD *md,
@@ -122,6 +137,10 @@ int ossl_lm_ots_ctx_pubkey_update(LM_OTS_CTX *ctx,
                                    const unsigned char *msg, size_t msglen);
 int ossl_lm_ots_ctx_pubkey_final(LM_OTS_CTX *ctx, unsigned char *Kc);
 
+int ossl_lms_sig_verify_init(LMS_VALIDATE_CTX *ctx);
+int ossl_lms_sig_verify_update(LMS_VALIDATE_CTX *ctx,
+                               const unsigned char *msg, size_t msglen);
+int ossl_lms_sig_verify_final(LMS_VALIDATE_CTX *vctx);
 
 #define U32STR(out, in)                      \
 out[0] = (unsigned char)((in >> 24) & 0xff); \
