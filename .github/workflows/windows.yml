@@ -54,6 +54,7 @@ jobs:
         target: _build/coreinfo/
     - name: get cpu info
       working-directory: _build
+      continue-on-error: true
       run: |
         7z.exe x coreinfo/Coreinfo.zip
         ./Coreinfo64.exe -accepteula -f
@@ -98,6 +99,7 @@ jobs:
         target: _build/coreinfo/
     - name: get cpu info
       working-directory: _build
+      continue-on-error: true
       run: |
         7z.exe x coreinfo/Coreinfo.zip
         ./Coreinfo64.exe -accepteula -f
@@ -135,6 +137,7 @@ jobs:
         target: _build/coreinfo/
     - name: get cpu info
       working-directory: _build
+      continue-on-error: true
       run: |
         7z.exe x coreinfo/Coreinfo.zip
         ./Coreinfo64.exe -accepteula -f
