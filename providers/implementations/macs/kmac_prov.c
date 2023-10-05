@@ -249,7 +249,7 @@ static int kmac_setkey(struct kmac_data_st *kctx, const unsigned char *key,
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
-    if (w < 0) {
+    if (w <= 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
         return 0;
     }
@@ -289,7 +289,7 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
         return 0;
 
     t = EVP_MD_get_block_size(ossl_prov_digest_md(&kctx->digest));
-    if (t < 0) {
+    if (t <= 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
         return 0;
     }
@@ -539,9 +539,6 @@ static int bytepad(unsigned char *out, size_t *out_len,
     unsigned char *p = out;
     int sz = w;
     
-    if (w == 0)
-        return 0;
-
     if (out == NULL) {
         if (out_len == NULL) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
