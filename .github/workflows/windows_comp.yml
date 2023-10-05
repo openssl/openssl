@@ -7,13 +7,13 @@
 
 name: Windows Compression GitHub CI
 
-on:
-  pull_request:
-    paths:
-      - 'crypto/comp/*.c'
-  push:
-    paths:
-      - '**.c'
+on: [pull_request]
+#  pull_request:
+#    paths:
+#      - 'crypto/comp/*.c'
+#  push:
+#    paths:
+#      - '**.c'
 
 permissions:
   contents: read
