@@ -1532,7 +1532,9 @@ static int ensure_channel_started(QCTX *ctx)
 
 #if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
         if (qc->is_thread_assisted)
-            if (!ossl_quic_thread_assist_init_start(&qc->thread_assist, qc->ch)) {
+            if (!ossl_quic_thread_assist_init_start(&qc->thread_assist, qc->ch,
+                                                    qc->override_now_cb,
+                                                    qc->override_now_cb_arg)) {
                 QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR,
                                             "failed to start assist thread");
                 return 0;
