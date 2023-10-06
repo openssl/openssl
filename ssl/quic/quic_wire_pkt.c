@@ -115,6 +115,11 @@ static int hdr_generate_mask(QUIC_HDR_PROTECTOR *hpr,
         return 0;
     }
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    /* No matter what we did above we use the same mask in fuzzing mode */
+    memset(mask, 0, 5);
+#endif
+
     return 1;
 }
 

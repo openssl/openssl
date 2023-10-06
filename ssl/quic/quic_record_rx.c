@@ -757,12 +757,25 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
     if (EVP_CipherUpdate(cctx, dst, &l, src, src_len - el->tag_len) != 1)
         return 0;
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    /*
+     * Throw away what we just decrypted and just use the ciphertext instead
+     * (which should be unencrypted)
+     */
+    memcpy(dst, src, l);
+
+    /* Pretend to authenticate the tag but ignore it */
+    if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1) {
+        /* We don't care */
+    }
+#else
     /* Ensure authentication succeeded. */
     if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1) {
         /* Authentication failed, increment failed auth counter. */
         ++qrx->forged_pkt_count;
         return 0;
     }
+#endif
 
     *dec_len = l;
     return 1;
