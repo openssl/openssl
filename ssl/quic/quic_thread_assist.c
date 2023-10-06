@@ -28,11 +28,24 @@ static unsigned int assist_thread_main(void *arg)
     rtor = ossl_quic_channel_get_reactor(qta->ch);
 
     for (;;) {
+        OSSL_TIME deadline;
+
         if (qta->teardown)
             break;
 
-        ossl_crypto_condvar_wait_timeout(qta->cv, m,
-                                         ossl_quic_reactor_get_tick_deadline(rtor));
+        deadline = ossl_quic_reactor_get_tick_deadline(rtor);
+        if (qta->now_cb != NULL
+                && !ossl_time_is_zero(deadline)
+                && !ossl_time_is_infinite(deadline)) {
+            /*
+             * ossl_crypto_condvar_wait_timeout needs to use real time for the
+             * deadline
+             */
+            deadline = ossl_time_add(ossl_time_subtract(deadline,
+                                                        qta->now_cb(qta->now_cb_arg)),
+                                     ossl_time_now());
+        }
+        ossl_crypto_condvar_wait_timeout(qta->cv, m, deadline);
 
         /*
          * We have now been woken up. This can be for one of the following
@@ -56,7 +69,9 @@ static unsigned int assist_thread_main(void *arg)
 }
 
 int ossl_quic_thread_assist_init_start(QUIC_THREAD_ASSIST *qta,
-                                       QUIC_CHANNEL *ch)
+                                       QUIC_CHANNEL *ch,
+                                       OSSL_TIME (*now_cb)(void *arg),
+                                       void *now_cb_arg)
 {
     CRYPTO_MUTEX *mutex = ossl_quic_channel_get_mutex(ch);
 
@@ -66,6 +81,8 @@ int ossl_quic_thread_assist_init_start(QUIC_THREAD_ASSIST *qta,
     qta->ch         = ch;
     qta->teardown   = 0;
     qta->joined     = 0;
+    qta->now_cb     = now_cb;
+    qta->now_cb_arg = now_cb_arg;
 
     qta->cv = ossl_crypto_condvar_new();
     if (qta->cv == NULL)
