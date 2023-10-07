@@ -8,10 +8,11 @@ PKCS7_verify, PKCS7_get0_signers - verify a PKCS#7 signedData structure
 
  #include <openssl/pkcs7.h>
 
- int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
+ int PKCS7_verify(PKCS7 *p7, const STACK_OF(X509) *certs, X509_STORE *store,
                   BIO *indata, BIO *out, int flags);
 
- STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags);
+ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, const STACK_OF(X509) *certs,
+                                    int flags);
 
 =head1 DESCRIPTION
 
@@ -30,7 +31,7 @@ Otherwise I<indata> should be NULL, and then the signed data must be in I<p7>.
 The content is written to the BIO I<out> unless it is NULL.
 I<flags> is an optional set of flags, which can be used to modify the operation.
 
-PKCS7_get0_signers() retrieves the signer's certificates from I<p7>, it does
+PKCS7_get0_signers() retrieves the signer certificates from I<p7>, it does
 B<not> check their validity or whether any signatures are valid. The I<certs>
 and I<flags> parameters have the same meanings as in PKCS7_verify().
 

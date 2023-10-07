@@ -26,10 +26,10 @@ OCSP_RESPID_match, OCSP_basic_sign, OCSP_basic_sign_ctx
  int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert);
 
  int OCSP_basic_sign(OCSP_BASICRESP *brsp, X509 *signer, EVP_PKEY *key,
-                     const EVP_MD *dgst, STACK_OF(X509) *certs,
+                     const EVP_MD *dgst, const STACK_OF(X509) *certs,
                      unsigned long flags);
  int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp, X509 *signer, EVP_MD_CTX *ctx,
-                         STACK_OF(X509) *certs, unsigned long flags);
+                         const STACK_OF(X509) *certs, unsigned long flags);
 
 =head1 DESCRIPTION
 
