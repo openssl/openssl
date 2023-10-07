@@ -30,9 +30,13 @@ Otherwise I<indata> should be NULL, and then the signed data must be in I<p7>.
 The content is written to the BIO I<out> unless it is NULL.
 I<flags> is an optional set of flags, which can be used to modify the operation.
 
-PKCS7_get0_signers() retrieves the signer certificates from I<p7>, it does
+PKCS7_get0_signers() retrieves the signer certificates from I<p7>
+by matching the pairs of certificate issuer and serial number contained in
+the SignerInfos with available candidate signer certifcates. It does
 B<not> check their validity or whether any signatures are valid. The I<certs>
 and I<flags> parameters have the same meanings as in PKCS7_verify().
+If the result is not NULL, the caller must free the structure returned using
+sk_X509_free(), but must not free the certificates included there.
 
 =head1 VERIFY PROCESS
 
