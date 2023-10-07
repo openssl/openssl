@@ -359,7 +359,7 @@ TS_RESP *TS_RESP_create_response(TS_RESP_CTX *ctx, BIO *req_bio);
  * they are defined in ts/ts_resp_verify.c.
  */
 
-int TS_RESP_verify_signature(PKCS7 *token, STACK_OF(X509) *certs,
+int TS_RESP_verify_signature(PKCS7 *token, const STACK_OF(X509) *certs,
                              X509_STORE *store, X509 **signer_out);
 
 /* Context structure for the generic verify method. */
