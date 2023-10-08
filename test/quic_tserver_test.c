@@ -6,6 +6,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include "internal/e_os.h"
 #include <openssl/ssl.h>
 #include <openssl/quic.h>
 #include <openssl/bio.h>
