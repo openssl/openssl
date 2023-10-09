@@ -4079,6 +4079,108 @@ static int test_evp_gcm_custom_iv(void)
 }
 
 /*
+ * Test CCM encryption & decryption using custom IV length
+ */
+static int test_evp_ccm_custom_iv(void)
+{
+    int outlen1, outlen2;
+    int testresult = 0;
+    int ret = 0;
+    int ciphertext_len = 0;
+    unsigned char ciphertext[1024];
+    unsigned char decrypted[1024];
+    unsigned char tag[16];
+    size_t taglen = sizeof(tag);
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *type = NULL;
+    char *errmsg = NULL;
+    size_t ccm_ivlen = 13;
+    OSSL_PARAM params[3] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
+
+    ctx = EVP_CIPHER_CTX_new();
+    if (ctx == NULL) {
+        errmsg = "CTX_ALLOC";
+        goto err;
+    }
+    if (!TEST_ptr(type = EVP_CIPHER_fetch(testctx, "aes-256-ccm",
+                                          testpropq))) {
+        errmsg = "CIPHER_FETCH";
+        goto err;
+    }
+
+    /* Encrypt using the old API and a 13B IV */
+    if (!TEST_true(EVP_CipherInit_ex(ctx, type, NULL, NULL, NULL, 1))) {
+        errmsg = "CIPHER_INIT_LEGACY";
+        goto err;
+    }
+    if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, ccm_ivlen,
+                                       NULL))) {
+        errmsg = "SET_IVLEN_LEGACY";
+        goto err;
+    }
+    if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_TAG, taglen,
+                                       NULL))) {
+        errmsg = "SET_TAGLEN_LEGACY";
+        goto err;
+    }
+    if (!TEST_true(EVP_CipherInit_ex(ctx, NULL, NULL, kGCMDefaultKey, iCFBIV,
+                                     -1))) {
+        errmsg = "SET_IV_LEGACY";
+        goto err;
+    }
+    if (!TEST_true(EVP_CipherUpdate(ctx, ciphertext, &outlen1,
+                                    gcmDefaultPlaintext,
+                                    sizeof(gcmDefaultPlaintext)))) {
+        errmsg = "CIPHER_UPDATE_LEGACY";
+        goto err;
+    }
+    if (!TEST_true(EVP_CipherFinal_ex(ctx, ciphertext + outlen1, &outlen2))) {
+        errmsg = "CIPHER_FINAL_LEGACY";
+        goto err;
+    }
+    ret = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag);
+    if (!TEST_int_gt(ret, 0)) {
+        errmsg = "GET_TAG_LEGACY";
+        goto err;
+    }
+    ciphertext_len = outlen1 + outlen2;
+
+    /* Decrypt using the params API and a 13B IV */
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN,
+                                            &ccm_ivlen);
+    params[1] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+                                                  tag, taglen);
+    if (!TEST_true(EVP_CipherInit_ex2(ctx, type, kGCMDefaultKey, iCFBIV, 0,
+                                      params))) {
+        errmsg = "CIPHER_INIT_PARAMS";
+        goto err;
+    }
+    if (!TEST_true(EVP_CipherUpdate(ctx, decrypted, &outlen1, ciphertext,
+                                    ciphertext_len))) {
+        errmsg = "CIPHER_UPDATE_PARAMS";
+        goto err;
+    }
+    if (!TEST_true(EVP_CipherFinal_ex(ctx, decrypted + outlen1, &outlen2))) {
+        errmsg = "CIPHER_FINAL_PARAMS";
+        goto err;
+    }
+
+    if (!TEST_mem_eq(decrypted, outlen1 + outlen2, gcmDefaultPlaintext,
+                     sizeof(gcmDefaultPlaintext))) {
+        errmsg = "TAG_ERROR";
+        goto err;
+    }
+
+    testresult = 1;
+ err:
+    if (errmsg != NULL)
+        TEST_info("test_evp_gcm_custom_iv %s", errmsg);
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(type);
+    return testresult;
+}
+
+/*
  * Test changing an AES GCM IV length after the IV has already been set
  */
 static int test_evp_wrong_iv_seq(void)
@@ -5589,6 +5691,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_updated_iv, OSSL_NELEM(evp_updated_iv_tests));
 
     ADD_TEST(test_evp_gcm_custom_iv);
+    ADD_TEST(test_evp_ccm_custom_iv);
     ADD_TEST(test_evp_wrong_iv_seq);
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
