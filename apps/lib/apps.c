@@ -1106,8 +1106,6 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
         failed = FAIL_NAME;
         if (failed != NULL && !quiet)
             BIO_printf(bio_err, "Could not find");
-    } else if (!quiet) {
-        BIO_printf(bio_err, "Could not read");
     }
     if (failed != NULL && !quiet) {
         unsigned long err = ERR_peek_last_error();
