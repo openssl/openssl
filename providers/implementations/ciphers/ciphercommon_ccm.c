@@ -104,6 +104,10 @@ int ossl_ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
+        if (sz > ccm_get_ivlen(ctx) && ctx->iv_set) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+            return 0;
+        }
         ivlen = 15 - sz;
         if (ivlen < 2 || ivlen > 8) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
