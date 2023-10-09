@@ -80,8 +80,9 @@ static BIO_ADDR *make_dummy_addr(int family)
 
 static int bio_addr_is_eq(const BIO_ADDR *a, const BIO_ADDR *b)
 {
-    struct sockaddr_storage adata, bdata;
+    void *adata = NULL, *bdata = NULL;
     size_t alen, blen;
+    int ret;
 
     /* True even if a and b are NULL */
     if (a == b)
@@ -98,23 +99,42 @@ static int bio_addr_is_eq(const BIO_ADDR *a, const BIO_ADDR *b)
     if (BIO_ADDR_rawport(a) != BIO_ADDR_rawport(b))
         return 0;
 
-    if (!BIO_ADDR_rawaddress(a, NULL, &alen)
-            || alen > sizeof(adata)
-            || !BIO_ADDR_rawaddress(a, &adata, &alen))
-        return 0;
-
-    if (!BIO_ADDR_rawaddress(a, NULL, &blen)
-            || blen > sizeof(bdata)
-            || !BIO_ADDR_rawaddress(a, &bdata, &blen))
-        return 0;
+    /*
+     * BIO_ADDR_sockaddr_size() reliable returns the size of the underlying
+     * socket structure, or if the AF family is unspecified, the size of the
+     * BIO_ADDR structure.  Either way, it's an appropriate buffer size to
+     * use with BIO_ADDR_rawaddress().
+     */
+    alen = BIO_ADDR_sockaddr_size(a);
+    blen = BIO_ADDR_sockaddr_size(b);
 
     if (alen != blen)
         return 0;
 
-    if (alen == 0)
-        return 1;
+    adata = OPENSSL_zalloc(alen);
+    bdata = OPENSSL_zalloc(blen);
 
-    return memcmp(&adata, &bdata, alen) == 0;
+    ret = 0;
+    if (adata == NULL || bdata == NULL)
+        goto end;
+
+    if (!BIO_ADDR_rawaddress(a, adata, &alen))
+        goto end;
+
+    if (!BIO_ADDR_rawaddress(a, bdata, &blen))
+        goto end;
+
+    if (alen != blen)
+        goto end;
+
+    if (alen == 0)
+        ret = 1;
+    else
+        ret = memcmp(adata, bdata, alen) == 0;
+ end:
+    OPENSSL_free(adata);
+    OPENSSL_free(bdata);
+    return ret;
 }
 
 static int test_bio_addr_copy_dup(int idx)
