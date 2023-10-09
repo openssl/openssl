@@ -236,10 +236,11 @@ jobs:
         working-directory: ${{ matrix.tree_b }}
 
       - name: get cpu info
+        if: steps.early_exit.outcome == 'success'
         run: |
           cat /proc/cpuinfo
           ./util/opensslwrap.sh version -c
-        working-directory: ${{ matrix.branch.dir }}
+        working-directory: ${{ matrix.tree_b }}
 
       - name: run cross validation tests of FIPS from A with tree from B
         if: steps.early_exit.outcome == 'success'
