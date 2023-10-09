@@ -47,7 +47,7 @@ void ossl_gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
  * Called by EVP_CipherInit via the _einit and _dinit functions
  */
 static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
-                    const unsigned char *iv, size_t ivlen,
+                    const unsigned char *iv, ossl_unused size_t ivlen,
                     const OSSL_PARAM params[], int enc)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
@@ -57,13 +57,11 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
 
     ctx->enc = enc;
 
+    if (!ossl_gcm_set_ctx_params(ctx, params))
+        return 0;
+
     if (iv != NULL) {
-        if (ivlen == 0 || ivlen > sizeof(ctx->iv)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
-            return 0;
-        }
-        ctx->ivlen = ivlen;
-        memcpy(ctx->iv, iv, ivlen);
+        memcpy(ctx->iv, iv, ctx->ivlen);
         ctx->iv_state = IV_STATE_BUFFERED;
     }
 
@@ -76,7 +74,7 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
             return 0;
         ctx->tls_enc_records = 0;
     }
-    return ossl_gcm_set_ctx_params(ctx, params);
+    return 1;
 }
 
 int ossl_gcm_einit(void *vctx, const unsigned char *key, size_t keylen,
