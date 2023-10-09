@@ -1010,7 +1010,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     }
     if (expect > 0 && !OSSL_STORE_expect(ctx, expect)) {
         if (!quiet)
-            BIO_printf(bio_err, "Could not find");
+            BIO_printf(bio_err, "Internal error trying to load");
         goto end;
     }
 
