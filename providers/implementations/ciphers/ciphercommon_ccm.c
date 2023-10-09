@@ -220,7 +220,7 @@ int ossl_ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 }
 
 static int ccm_init(void *vctx, const unsigned char *key, size_t keylen,
-                    const unsigned char *iv, size_t ivlen,
+                    const unsigned char *iv, ossl_unused size_t ivlen,
                     const OSSL_PARAM params[], int enc)
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
@@ -230,12 +230,11 @@ static int ccm_init(void *vctx, const unsigned char *key, size_t keylen,
 
     ctx->enc = enc;
 
+    if (!ossl_ccm_set_ctx_params(ctx, params))
+        return 0;
+
     if (iv != NULL) {
-        if (ivlen != ccm_get_ivlen(ctx)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
-            return 0;
-        }
-        memcpy(ctx->iv, iv, ivlen);
+        memcpy(ctx->iv, iv, ccm_get_ivlen(ctx));
         ctx->iv_set = 1;
     }
     if (key != NULL) {
@@ -246,7 +245,7 @@ static int ccm_init(void *vctx, const unsigned char *key, size_t keylen,
         if (!ctx->hw->setkey(ctx, key, keylen))
             return 0;
     }
-    return ossl_ccm_set_ctx_params(ctx, params);
+    return 1;
 }
 
 int ossl_ccm_einit(void *vctx, const unsigned char *key, size_t keylen,
