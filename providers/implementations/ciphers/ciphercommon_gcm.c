@@ -280,6 +280,11 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
                 return 0;
             }
+            /* Disallow increasing the IV length after setting the IV */
+            if (sz > ctx->ivlen && ctx->iv_state == IV_STATE_BUFFERED) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+                return 0;
+            }
             ctx->ivlen = sz;
             break;
 
