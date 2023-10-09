@@ -1003,10 +1003,16 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
         ctx = OSSL_STORE_open_ex(uri, libctx, propq, get_ui_method(), &uidata,
                                  params, NULL, NULL);
     }
-    if (ctx == NULL)
+    if (ctx == NULL) {
+        if (!quiet)
+            BIO_printf(bio_err, "Could not open file or uri for loading");
         goto end;
-    if (expect > 0 && !OSSL_STORE_expect(ctx, expect))
+    }
+    if (expect > 0 && !OSSL_STORE_expect(ctx, expect)) {
+        if (!quiet)
+            BIO_printf(bio_err, "Internal error trying to load");
         goto end;
+    }
 
     failed = NULL;
     while ((ppkey != NULL || ppubkey != NULL || pparams != NULL
