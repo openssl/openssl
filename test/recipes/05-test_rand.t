@@ -29,12 +29,12 @@ SKIP: {
     @randdata = run(app(['openssl', 'rand', '-engine', 'ossltest', '-hex', '16' ]),
                     capture => 1, statusvar => \$success);
     chomp(@randdata);
-    ok($success and $randdata[0] eq $expected,
+    ok($success && $randdata[0] eq $expected,
        "rand with ossltest: Check rand output is as expected");
 
     @randdata = run(app(['openssl', 'rand', '-engine', 'dasync', '-hex', '16' ]),
                     capture => 1, statusvar => \$success);
     chomp(@randdata);
-    ok($success and length($randdata[0]) == 32,
+    ok($success && length($randdata[0]) == 32,
        "rand with dasync: Check rand output is of expected length");
 }
