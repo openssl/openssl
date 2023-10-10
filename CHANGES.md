@@ -25,7 +25,11 @@ OpenSSL 3.2
 
 ### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
- * Added a function to delete objects from store by URI - OSSL_STORE_delete()
+ * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
+
+   *Barry Fussell*
+
+* Added a function to delete objects from store by URI - OSSL_STORE_delete()
    and the corresponding provider-storemgmt API function
    OSSL_FUNC_store_delete().
 
