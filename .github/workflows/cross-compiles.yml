@@ -183,8 +183,10 @@ jobs:
       run: make -s -j4
 
     - name: install qemu
-      if: github.event_name == 'push' && matrix.platform.tests != 'none'
       run: sudo apt-get -yq --force-yes install qemu-user
+
+    - name: qemu support
+      run: ls -l `which qemu-arm | cut -f1 -d-`*
 
     - name: Set QEMU environment
       if: github.event_name == 'push' && matrix.platform.qemucpu != ''
