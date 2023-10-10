@@ -188,6 +188,9 @@ jobs:
     - name: qemu support
       run: ls -l `which qemu-arm | cut -f1 -d-`*
 
+    - name: qemu support
+      run: qemu-arm --version
+
     - name: Set QEMU environment
       if: github.event_name == 'push' && matrix.platform.qemucpu != ''
       run: echo "QEMU_CPU=${{ matrix.platform.qemucpu }}" >> $GITHUB_ENV
