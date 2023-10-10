@@ -757,17 +757,21 @@ int ossl_rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
         return 0;
 
     pnum = sk_BIGNUM_num(primes);
-    if (pnum < 2
-        || pnum != sk_BIGNUM_num(exps)
-        || pnum != sk_BIGNUM_num(coeffs) + 1)
+    if (pnum < 2)
         return 0;
 
     if (!RSA_set0_factors(r, sk_BIGNUM_value(primes, 0),
-                          sk_BIGNUM_value(primes, 1))
-        || !RSA_set0_crt_params(r, sk_BIGNUM_value(exps, 0),
-                                sk_BIGNUM_value(exps, 1),
-                                sk_BIGNUM_value(coeffs, 0)))
+                          sk_BIGNUM_value(primes, 1)))
         return 0;
+
+    if (pnum == sk_BIGNUM_num(exps)
+        && pnum == sk_BIGNUM_num(coeffs) + 1) {
+
+        if (!RSA_set0_crt_params(r, sk_BIGNUM_value(exps, 0),
+                                 sk_BIGNUM_value(exps, 1),
+                                 sk_BIGNUM_value(coeffs, 0)))
+        return 0;
+    }
 
 #ifndef FIPS_MODULE
     old_infos = r->prime_infos;
