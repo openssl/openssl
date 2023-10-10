@@ -4902,6 +4902,26 @@ static const struct script_op script_76[] = {
     OP_END
 };
 
+static const struct script_op script_77[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_SET_INCOMING_STREAM_POLICY(SSL_INCOMING_STREAM_POLICY_ACCEPT)
+
+    OP_S_NEW_STREAM_BIDI    (a, S_BIDI_ID(0))
+    OP_S_WRITE              (a, "Strawberry", 10)
+
+    OP_C_READ_EXPECT        (DEFAULT, "Strawberry", 10)
+
+    OP_S_NEW_STREAM_BIDI    (b, S_BIDI_ID(1))
+    OP_S_WRITE              (b, "xyz", 3)
+
+    OP_C_ACCEPT_STREAM_WAIT (b)
+    OP_C_READ_EXPECT        (b, "xyz", 3)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -4978,7 +4998,8 @@ static const struct script_op *const scripts[] = {
     script_73,
     script_74,
     script_75,
-    script_76
+    script_76,
+    script_77
 };
 
 static int test_script(int idx)

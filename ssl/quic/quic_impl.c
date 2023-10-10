@@ -1834,6 +1834,7 @@ static int qc_wait_for_default_xso_for_read(QCTX *ctx)
     QUIC_STREAM *qs;
     int res;
     struct quic_wait_for_stream_args wargs;
+    OSSL_RTT_INFO rtt_info;
 
     /*
      * If default stream functionality is disabled or we already detached
@@ -1888,8 +1889,15 @@ static int qc_wait_for_default_xso_for_read(QCTX *ctx)
     }
 
     /*
-     * We now have qs != NULL. Make it the default stream, creating the
-     * necessary XSO.
+     * We now have qs != NULL. Remove it from the incoming stream queue so that
+     * it isn't also returned by any future SSL_accept_stream calls.
+     */
+    ossl_statm_get_rtt_info(ossl_quic_channel_get_statm(qc->ch), &rtt_info);
+    ossl_quic_stream_map_remove_from_accept_queue(ossl_quic_channel_get_qsm(qc->ch),
+                                                  qs, rtt_info.smoothed_rtt);
+
+    /*
+     * Now make qs the default stream, creating the necessary XSO.
      */
     qc_set_default_xso(qc, create_xso_from_stream(qc, qs), /*touch=*/0);
     if (qc->default_xso == NULL)
