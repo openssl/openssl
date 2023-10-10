@@ -40,8 +40,6 @@ If a value is already set, the contents are replaced.
 
 =back
 
-=back
-
 =head1 NOTES
 
 A context for SNMPKDF can be obtained by calling:
