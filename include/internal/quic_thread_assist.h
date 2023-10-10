@@ -12,6 +12,7 @@
 
 # include <openssl/ssl.h>
 # include "internal/thread.h"
+# include "internal/time.h"
 
 # if defined(OPENSSL_NO_QUIC) || defined(OPENSSL_NO_THREAD_POOL)
 #  define OPENSSL_NO_QUIC_THREAD_ASSIST
@@ -46,6 +47,8 @@ typedef struct quic_thread_assist_st {
     CRYPTO_CONDVAR *cv;
     CRYPTO_THREAD *t;
     int teardown, joined;
+    OSSL_TIME (*now_cb)(void *arg);
+    void *now_cb_arg;
 } QUIC_THREAD_ASSIST;
 
 /*
@@ -55,7 +58,9 @@ typedef struct quic_thread_assist_st {
  * not affect the state of the mutex.
  */
 int ossl_quic_thread_assist_init_start(QUIC_THREAD_ASSIST *qta,
-                                       QUIC_CHANNEL *ch);
+                                       QUIC_CHANNEL *ch,
+                                       OSSL_TIME (*now_cb)(void *arg),
+                                       void *now_cb_arg);
 
 /*
  * Request the thread assist helper to begin stopping the assist thread. This

@@ -369,6 +369,19 @@ SKIP: {
     skip "EC is not supported or FIPS is disabled", 7
         if disabled("ec") || $no_fips;
 
+    $ENV{OPENSSL_CONF} = $provconf;
+
+    ok(verify("ee-cert-ec-sha3-224", "", ["root-cert"], ["ca-cert-ec-named"], @prov),
+        "accept cert generated with EC and SHA3-224 w/fips");
+    ok(verify("ee-cert-ec-sha3-256", "", ["root-cert"], ["ca-cert-ec-named"], @prov),
+        "accept cert generated with EC and SHA3-256 w/fips");
+    ok(verify("ee-cert-ec-sha3-384", "", ["root-cert"], ["ca-cert-ec-named"], @prov),
+        "accept cert generated with EC and SHA3-384 w/fips");
+    ok(verify("ee-cert-ec-sha3-512", "", ["root-cert"], ["ca-cert-ec-named"], @prov),
+        "accept cert generated with EC and SHA3-512 w/fips");
+
+    delete $ENV{OPENSSL_CONF};
+
     run(test(["fips_version_test", "-config", $provconf, ">3.0.0"]),
              capture => 1, statusvar => \my $exit);
     skip "FIPS provider version is too old", 3
@@ -385,15 +398,6 @@ SKIP: {
     ok(verify("ee-cert-ec-named-named", "", ["root-cert"],
               ["ca-cert-ec-named"], @prov),
         "accept named curve leaf with named curve intermediate w/fips");
-    ok(verify("ee-cert-ec-sha3-224", "", ["root-cert"], ["ca-cert-ec-named"], @prov),
-        "accept cert generated with EC and SHA3-224 w/fips");
-    ok(verify("ee-cert-ec-sha3-256", "", ["root-cert"], ["ca-cert-ec-named"], @prov),
-        "accept cert generated with EC and SHA3-256 w/fips");
-    ok(verify("ee-cert-ec-sha3-384", "", ["root-cert"], ["ca-cert-ec-named"], @prov),
-        "accept cert generated with EC and SHA3-384 w/fips");
-    ok(verify("ee-cert-ec-sha3-512", "", ["root-cert"], ["ca-cert-ec-named"], @prov),
-        "accept cert generated with EC and SHA3-512 w/fips");
-
     delete $ENV{OPENSSL_CONF};
 }
 

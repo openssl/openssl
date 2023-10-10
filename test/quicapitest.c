@@ -1439,11 +1439,11 @@ static int test_noisy_dgram(int idx)
         qtest_add_time(1);
 
         /*
-        * Send data from the server to the client. Some datagrams may get lost,
-        * dropped or re-ordered. We repeat 10 times to ensure we are sending
-        * enough datagrams for problems to be noticed.
-        */
-        for (i = 0; i < 10; i++) {
+         * Send data from the server to the client. Some datagrams may get
+         * lost, modified, dropped or re-ordered. We repeat 20 times to ensure
+         * we are sending enough datagrams for problems to be noticed.
+         */
+        for (i = 0; i < 20; i++) {
             if (!TEST_true(ossl_quic_tserver_write(qtserv, sid,
                                                    (unsigned char *)msg, msglen,
                                                    &written))
@@ -1453,10 +1453,10 @@ static int test_noisy_dgram(int idx)
             qtest_add_time(1);
 
             /*
-            * Since the underlying BIO is now noisy we may get failures that
-            * need to be retried - so we use unreliable_client_read() to handle
-            * that
-            */
+             * Since the underlying BIO is now noisy we may get failures that
+             * need to be retried - so we use unreliable_client_read() to
+             * handle that
+             */
             if (!TEST_true(unreliable_client_read(clientquic, &stream[j], buf,
                                                   sizeof(buf), &readbytes,
                                                   qtserv))
@@ -1465,7 +1465,7 @@ static int test_noisy_dgram(int idx)
         }
 
         /* Send data from the client to the server */
-        for (i = 0; i < 10; i++) {
+        for (i = 0; i < 20; i++) {
             if (!TEST_true(SSL_write_ex(stream[j], (unsigned char *)msg,
                                         msglen, &written))
                     || !TEST_size_t_eq(msglen, written))
@@ -1475,10 +1475,10 @@ static int test_noisy_dgram(int idx)
             qtest_add_time(1);
 
             /*
-            * Since the underlying BIO is now noisy we may get failures that
-            * need to be retried - so we use unreliable_server_read() to handle
-            * that
-            */
+             * Since the underlying BIO is now noisy we may get failures that
+             * need to be retried - so we use unreliable_server_read() to
+             * handle that
+             */
             if (!TEST_true(unreliable_server_read(qtserv, sid, buf, sizeof(buf),
                                                   &readbytes, clientquic))
                     || !TEST_mem_eq(msg, msglen, buf, readbytes))

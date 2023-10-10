@@ -75,7 +75,8 @@ static int noisy_dgram_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
 #define NOISE_TYPE_DROP      0
 #define NOISE_TYPE_DUPLICATE 1
 #define NOISE_TYPE_DELAY     2
-#define NUM_NOISE_TYPES      3
+#define NOISE_TYPE_BITFLIPS  3
+#define NUM_NOISE_TYPES      4
 
 /*
  * When a duplicate occurs we reinject the new datagram after up to
@@ -89,9 +90,12 @@ static int noisy_dgram_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
  */
 #define MAX_DGRAM_REINJECT 4
 
-static void get_noise(uint64_t *reinject, int *should_drop)
+static void get_noise(int long_header, uint64_t *reinject, int *should_drop,
+                      uint16_t *flip, size_t *flip_offset)
 {
     uint32_t type;
+
+    *flip = 0;
 
     if (test_random() % NOISE_RATE != 0) {
         *reinject = 0;
@@ -102,7 +106,7 @@ static void get_noise(uint64_t *reinject, int *should_drop)
     type = test_random() % NUM_NOISE_TYPES;
 
     /*
-     * Of noisy datagrams, 33% drop, 33% duplicate, 33% delay
+     * Of noisy datagrams, 25% drop, 25% duplicate, 25% delay, 25% flip bits
      * A duplicated datagram keeps the current datagram and reinjects a new
      * identical one after up to MAX_DGRAM_DELAY datagrams have been sent.
      * A delayed datagram is implemented as both a reinject and a drop, i.e. an
@@ -115,16 +119,50 @@ static void get_noise(uint64_t *reinject, int *should_drop)
      * Where a duplicate occurs we reinject the copy of the datagram up to
      * MAX_DGRAM_DELAY datagrams later
      */
-    *reinject = (type == NOISE_TYPE_DROP)
-                ? 0
-                : (uint64_t)((test_random() % MAX_DGRAM_REINJECT) + 1);
+    *reinject = (type == NOISE_TYPE_DUPLICATE || type == NOISE_TYPE_DELAY)
+                ? (uint64_t)((test_random() % MAX_DGRAM_REINJECT) + 1)
+                : 0;
 
     /*
      * No point in reinjecting after 1 datagram if the current datagram is also
      * dropped (i.e. this is a delay not a duplicate), so we reinject after an
      * extra datagram in that case
      */
-    *reinject += (uint64_t)(*should_drop);
+    *reinject += type == NOISE_TYPE_DELAY;
+
+    /* flip some bits in the header */
+    if (type == NOISE_TYPE_BITFLIPS) {
+        /* we flip at most 8 bits of the 16 bit value at once */
+        *flip = (test_random() % 255 + 1) << (test_random() % 8);
+        /*
+         * 25/50 bytes of guesstimated header size (it depends on CID length)
+         * It does not matter much if it is overestimated.
+         */
+        *flip_offset = test_random() % (25 * (1 + long_header));
+    }
+}
+
+static void flip_bits(unsigned char *msg, size_t msg_len, uint16_t flip,
+                      size_t flip_offset)
+{
+    if (flip == 0)
+        return;
+
+    /* None of these border conditions should happen but check them anyway */
+    if (msg_len < 2)
+        return;
+    if (msg_len < flip_offset + 2)
+        flip_offset = msg_len - 2;
+
+#ifdef OSSL_NOISY_DGRAM_DEBUG
+    printf("**Flipping bits in a datagram at offset %u\n",
+            (unsigned int)flip_offset);
+    BIO_dump_fp(stdout, msg, msg_len);
+    printf("\n");
+#endif
+
+    msg[flip_offset] ^= flip >> 8;
+    msg[flip_offset + 1] ^= flip & 0xff;
 }
 
 static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
@@ -181,6 +219,8 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
          i++, thismsg++, data->this_dgram++) {
         uint64_t reinject;
         int should_drop;
+        uint16_t flip;
+        size_t flip_offset;
 
         /* If we have a message to reinject then insert it now */
         if (data->reinject_dgram > 0
@@ -205,7 +245,8 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
             data->reinject_dgram = 0;
         }
 
-        get_noise(&reinject, &should_drop);
+        get_noise(/* long header */ (((uint8_t *)thismsg->data)[0] & 0x80) != 0,
+                  &reinject, &should_drop, &flip, &flip_offset);
         if (data->backoff) {
             /*
              * We might be asked to back off on introducing too much noise if
@@ -214,9 +255,15 @@ static int noisy_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
              * that the connection always survives. After that we can resume
              * with normal noise
              */
+#ifdef OSSL_NOISY_DGRAM_DEBUG
+            printf("**Back off applied\n");
+#endif
             should_drop = 0;
+            flip = 0;
             data->backoff = 0;
         }
+
+        flip_bits(thismsg->data, thismsg->data_len, flip, flip_offset);
 
         /*
          * We ignore reinjection if a message is already waiting to be
