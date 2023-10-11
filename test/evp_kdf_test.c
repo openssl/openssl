@@ -1329,7 +1329,6 @@ static int test_kdf_kbkdf_8009_prf2(void)
  * Test vector taken from
  * https://csrc.nist.gov/CSRC/media/Projects/
  *    Cryptographic-Algorithm-Validation-Program/documents/KBKDF800-108/CounterMode.zip
- *    Note: Only 32 bit counter is supported ([RLEN=32_BITS])
  */
 static int test_kdf_kbkdf_fixedinfo(void)
 {
