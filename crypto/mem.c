@@ -122,12 +122,13 @@ static void parseit(void)
 }
 
 /*
- * Windows doesn't have random(), but it has rand()
+ * Windows doesn't have random() and srandom(), but it has rand() and srand().
  * Some rand() implementations aren't good, but we're not
  * dealing with secure randomness here.
  */
 # ifdef _WIN32
 #  define random() rand()
+#  define srandom(seed) srand(seed)
 # endif
 /*
  * See if the current malloc should fail.
