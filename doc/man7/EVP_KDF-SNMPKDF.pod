@@ -73,7 +73,7 @@ This example derives an 8 byte IV using SHA-256 with a 1K "key" and appropriate
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                          SN_sha256, strlen(SN_sha256));
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASS,
-                                          password, 9);
+                                          pass, 9);
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SNMPKDF_EID,
                                           eid, 8);
  *p = OSSL_PARAM_construct_end();
