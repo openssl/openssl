@@ -575,6 +575,11 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
         }
     } else {
         j = EVP_DigestVerify(mctx, data, len, hdata, hdatalen);
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        /* Ignore bad signatures when fuzzing */
+        if (SSL_IS_QUIC_HANDSHAKE(s))
+            j = 1;
+#endif
         if (j <= 0) {
             SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_SIGNATURE);
             goto err;
