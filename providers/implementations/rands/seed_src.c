@@ -19,8 +19,13 @@
 #include <openssl/proverr.h>
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
+#include "prov/seeding.h"
 #include "crypto/rand.h"
 #include "crypto/rand_pool.h"
+#include "internal/safe_math.h"
+#include "internal/numbers.h"
+
+OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 
 static OSSL_FUNC_rand_newctx_fn seed_src_new;
 static OSSL_FUNC_rand_freectx_fn seed_src_free;
@@ -94,6 +99,11 @@ static int seed_src_generate(void *vseed, unsigned char *out, size_t outlen,
     PROV_SEED_SRC *s = (PROV_SEED_SRC *)vseed;
     size_t entropy_available;
     RAND_POOL *pool;
+    size_t i, outmax;
+    int err = 0;
+    const size_t e_scale = OS_ENTROPY_FACTOR > CPU_ENTROPY_FACTOR
+                           ? OS_ENTROPY_FACTOR
+                           : CPU_ENTROPY_FACTOR;
 
     if (s->state != EVP_RAND_STATE_READY) {
         ERR_raise(ERR_LIB_PROV,
@@ -102,7 +112,12 @@ static int seed_src_generate(void *vseed, unsigned char *out, size_t outlen,
         return 0;
     }
 
-    pool = ossl_rand_pool_new(strength, 1, outlen, outlen);
+    outmax = safe_mul_size_t(outlen, e_scale, &err);
+    if (err) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_RAND_LIB);
+        return 0;
+    }
+    pool = ossl_rand_pool_new(strength, 1, outlen, outmax);
     if (pool == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_RAND_LIB);
         return 0;
@@ -111,8 +126,18 @@ static int seed_src_generate(void *vseed, unsigned char *out, size_t outlen,
     /* Get entropy by polling system entropy sources. */
     entropy_available = ossl_pool_acquire_entropy(pool);
 
-    if (entropy_available > 0)
-        memcpy(out, ossl_rand_pool_buffer(pool), ossl_rand_pool_length(pool));
+    if (entropy_available > 0) {
+        const unsigned char *p = ossl_rand_pool_buffer(pool);
+        const size_t l = ossl_rand_pool_length(pool);
+
+        if (l <= outlen)
+            memcpy(out, p, l);
+        else {
+            memcpy(out, p, outlen);
+            for (i = outlen; i < l; i++)
+                out[i % outlen] ^= p[i];
+        }
+    }
 
     ossl_rand_pool_free(pool);
     return entropy_available > 0;
