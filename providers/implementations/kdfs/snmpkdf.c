@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,6 +27,7 @@
 /* See RFC 7860, Section 9.3 */
 /* See NIST SP800-135 Section 6.8 */
 static OSSL_FUNC_kdf_newctx_fn kdf_snmpkdf_new;
+static OSSL_FUNC_kdf_dupctx_fn kdf_snmpkdf_dup;
 static OSSL_FUNC_kdf_freectx_fn kdf_snmpkdf_free;
 static OSSL_FUNC_kdf_reset_fn kdf_snmpkdf_reset;
 static OSSL_FUNC_kdf_derive_fn kdf_snmpkdf_derive;
@@ -34,6 +35,8 @@ static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_snmpkdf_settable_ctx_params;
 static OSSL_FUNC_kdf_set_ctx_params_fn kdf_snmpkdf_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_snmpkdf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_snmpkdf_get_ctx_params;
+
+#define KDF_SNMP_PASSWORD_HASH_AMOUNT (1024 * 1024)
 
 static int SNMPKDF(const EVP_MD *evp_md,
                   const unsigned char *eid, size_t eid_len,
@@ -81,6 +84,27 @@ static void kdf_snmpkdf_reset(void *vctx)
     OPENSSL_clear_free(ctx->password, ctx->password_len);
     memset(ctx, 0, sizeof(*ctx));
     ctx->provctx = provctx;
+}
+
+static void *kdf_snmpkdf_dup(void *vctx)
+{
+    const KDF_SNMPKDF *src = (const KDF_SNMPKDF *)vctx;
+    KDF_SNMPKDF *dest;
+
+    dest = kdf_snmpkdf_new(src->provctx);
+    if (dest != NULL) {
+        if (!ossl_prov_memdup(src->eid, src->eid_len,
+                              &dest->eid, &dest->eid_len)
+                || !ossl_prov_memdup(src->password, src->password_len,
+                                     &dest->password , &dest->password_len)
+                || !ossl_prov_digest_copy(&dest->digest, &src->digest))
+            goto err;
+    }
+    return dest;
+
+ err:
+    kdf_snmpkdf_free(dest);
+    return NULL;
 }
 
 static int snmpkdf_set_membuf(unsigned char **dst, size_t *dst_len,
@@ -178,6 +202,7 @@ static const OSSL_PARAM *kdf_snmpkdf_gettable_ctx_params(ossl_unused void *ctx,
 
 const OSSL_DISPATCH ossl_kdf_snmpkdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_snmpkdf_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kdf_snmpkdf_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_snmpkdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_snmpkdf_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_snmpkdf_derive },
@@ -193,7 +218,8 @@ const OSSL_DISPATCH ossl_kdf_snmpkdf_functions[] = {
 
 
 
-/* SNMPKDF - In compliance with SP800-135 and RFC 7860, calculate
+/*
+  SNMPKDF - In compliance with SP800-135 and RFC 7860, calculate
              a master key using the engine ID and password.
 
   Denote engineLength and passwordlen to be the lengths (in bytes) of an
@@ -218,7 +244,6 @@ const OSSL_DISPATCH ossl_kdf_snmpkdf_functions[] = {
       password_len - password length
       digest -       pointer to key output, FIPS testing limited to SHA-1.
       return -       1 pass 0 for error
-
  */
 static int SNMPKDF(const EVP_MD *evp_md,
                    const unsigned char *e_id, size_t e_len,
