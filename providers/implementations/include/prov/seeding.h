@@ -10,7 +10,15 @@
 #include "prov/provider_ctx.h"
 #include "crypto/rand_pool.h"
 
-/* Entropy quality for different operating systems */
+/*
+ * Entropy quality for different operating systems
+ *
+ * The numbers given here must match the number given to
+ * ossl_rand_pool_bytes_needed() in the platform specific seeding
+ * implementations in providers/implementations/rand/seeding, and
+ * in case a platform has several possible implementations, the
+ * largest number given there.
+ */
 #if defined(OPENSSL_SYS_VOS)
 /*
  * The entropy source repeatedly samples the real-time clock (RTC) to
