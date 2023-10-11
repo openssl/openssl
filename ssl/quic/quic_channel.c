@@ -1311,11 +1311,13 @@ static int ch_on_transport_params(const unsigned char *params,
                 goto malformed;
             }
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             /* Must match our initial DCID. */
             if (!ossl_quic_conn_id_eq(&ch->init_dcid, &cid)) {
                 reason = TP_REASON_EXPECTED_VALUE("ORIG_DCID");
                 goto malformed;
             }
+#endif
 
             got_orig_dcid = 1;
             break;
