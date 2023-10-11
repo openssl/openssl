@@ -16,6 +16,7 @@
 #include <openssl/ec.h>
 #include <openssl/dh.h>
 #include <openssl/err.h>
+#include <openssl/bio.h>
 #include "fuzzer.h"
 #include "internal/sockets.h"
 
@@ -98,9 +99,14 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         BIO_free(in);
         goto end;
     }
-    if (SSL_set_alpn_protos(client, (const unsigned char *)"\x08quicfuzz", 9) != 0)
+    if (!BIO_dgram_set_caps(out, BIO_DGRAM_CAP_HANDLES_DST_ADDR)) {
+        BIO_free(in);
+        BIO_free(out);
         goto end;
+    }
     SSL_set_bio(client, in, out);
+    if (SSL_set_alpn_protos(client, (const unsigned char *)"\x08ossltest", 9) != 0)
+        goto end;
     if (SSL_set1_initial_peer_addr(client, peer_addr) != 1)
         goto end;
     SSL_set_connect_state(client);
@@ -118,10 +124,23 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         buf += size + 2;
 
         if (SSL_do_handshake(client) == 1) {
-            /* Keep reading application data until error or EOF. */
+            /*
+             * Keep reading application data until there are no more datagrams
+             * to inject or a fatal error occurs
+             */
             uint8_t tmp[1024];
-            if (SSL_read(client, tmp, sizeof(tmp)) <= 0)
-                break;
+            int ret;
+
+            ret = SSL_read(client, tmp, sizeof(tmp));
+            if (ret <= 0) {
+                switch (SSL_get_error(client, ret)) {
+                case SSL_ERROR_WANT_READ:
+                case SSL_ERROR_WANT_WRITE:
+                    break;
+                default:
+                    goto end;
+                }
+            }
         }
     }
  end:
