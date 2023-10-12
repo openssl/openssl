@@ -292,7 +292,7 @@ static void felem_diff64(felem out, const felem in)
  * in[i] < 2^63
  * out[i] < out_orig[i] + 2^64 + 2^48
  */
-static void felem_diff_128_64(widefelem out, const felem in)
+static void felem_diff_128_64_ref(widefelem out, const felem in)
 {
     /*
      * In order to prevent underflow, we add a multiple of p before subtracting.
@@ -329,7 +329,7 @@ static void felem_diff_128_64(widefelem out, const felem in)
  * in[i] < 2^127 - 2^119 - 2^71
  * out[i] < out_orig[i] + 2^127 + 2^111
  */
-static void felem_diff128(widefelem out, const widefelem in)
+static void felem_diff128_ref(widefelem out, const widefelem in)
 {
     /*
      * In order to prevent underflow, we add a multiple of p before subtracting.
@@ -680,6 +680,8 @@ static ossl_inline void felem_mul_reduce_ref(felem out, const felem in1, const f
 static void felem_square_wrapper(widefelem out, const felem in);
 static void felem_mul_wrapper(widefelem out, const felem in1, const felem in2);
 static void felem_reduce_wrapper(felem out, const widefelem in);
+static void felem_diff_128_64_wrapper(widefelem out, const felem in);
+static void felem_diff128_wrapper(widefelem out, const widefelem in);
 
 static void (*felem_square_p)(widefelem out, const felem in) =
     felem_square_wrapper;
@@ -687,10 +689,16 @@ static void (*felem_mul_p)(widefelem out, const felem in1, const felem in2) =
     felem_mul_wrapper;
 static void (*felem_reduce_p)(felem out, const widefelem in) =
     felem_reduce_wrapper;
+static void (*felem_diff_128_64_p)(widefelem out, const felem in) =
+    felem_diff_128_64_wrapper;
+static void (*felem_diff128_p)(widefelem out, const widefelem in) =
+    felem_diff128_wrapper;
 
 void p384_felem_square(widefelem out, const felem in);
 void p384_felem_mul(widefelem out, const felem in1, const felem in2);
 void p384_felem_reduce(felem out, const widefelem in);
+void p384_felem_diff_128_64(widefelem out, const felem in);
+void p384_felem_diff128(widefelem out, const widefelem in);
 
 # if defined(_ARCH_PPC64)
 #  include "crypto/ppc_arch.h"
@@ -705,6 +713,8 @@ static void felem_select(void)
         felem_square_reduce_p = p384_felem_square_reduce;
         felem_mul_reduce_p = p384_felem_mul_reduce;
         felem_reduce_p = p384_felem_reduce;
+        felem_diff_128_64_p = p384_felem_diff_128_64;
+        felem_diff128_p = p384_felem_diff128;
 
         return;
     }
@@ -716,6 +726,8 @@ static void felem_select(void)
     felem_square_reduce_p = felem_square_reduce_ref;
     felem_mul_reduce_p = felem_mul_reduce_ref;
     felem_reduce_p = felem_reduce_ref;
+    felem_diff_128_64_p = felem_diff_128_64_ref;
+    felem_diff128_p = felem_diff128_ref;
 }
 
 static void felem_square_wrapper(widefelem out, const felem in)
@@ -748,17 +760,33 @@ static void felem_reduce_wrapper(felem out, const widefelem in)
     felem_reduce_p(out, in);
 }
 
+static void felem_diff_128_64_wrapper(widefelem out, const felem in)
+{
+    felem_select();
+    felem_diff_128_64_p(out, in);
+}
+
+static void felem_diff128_wrapper(widefelem out, const widefelem in)
+{
+    felem_select();
+    felem_diff128_p(out, in);
+}
+
 # define felem_square felem_square_p
 # define felem_mul felem_mul_p
 # define felem_square_reduce felem_square_reduce_p
 # define felem_mul_reduce felem_mul_reduce_p
 # define felem_reduce felem_reduce_p
+# define felem_diff_128_64 felem_diff_128_64_p
+# define felem_diff128 felem_diff128_p
 #else
 # define felem_square felem_square_ref
 # define felem_mul felem_mul_ref
 # define felem_square_reduce felem_square_reduce_ref
 # define felem_mul_reduce felem_mul_reduce_ref
 # define felem_reduce felem_reduce_ref
+# define felem_diff_128_64 felem_diff_128_64_ref
+# define felem_diff128 felem_diff128_ref
 #endif
 
 static ossl_inline void felem_square_reduce_ref(felem out, const felem in)

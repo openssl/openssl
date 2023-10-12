@@ -625,6 +625,167 @@ ___
     .size p384_felem_reduce,.-p384_felem_reduce
 ___
     }
+
+    {
+        #
+        # p384_felem_diff_128_64
+        #
+
+        my $outp = "r3";
+        my $inp = "r4";
+        my @acc = map("v$_",(35..41));
+        my @t = map("v$_",(48..51));
+
+        startproc("p384_felem_diff_128_64");
+
+        $code.=<<___;
+    xxspltib    $vzero,0
+___
+
+        for (my $i = 0; $i < 7; $i++) {
+            $code.=<<___;
+    lxv         $acc[$i],$i*16($outp)
+___
+        }
+
+        $code.=<<___;
+    addis       $tbl,r2,.Ladd_128_64\@toc\@ha
+    addi        $tbl,$tbl,.Ladd_128_64\@toc\@l
+___
+
+        for (my $i = 0; $i < 4; $i++) {
+            $code.=<<___;
+    lxv         $t[$i],$i*16($tbl)
+___
+        }
+
+        $code.=<<___;
+    vadduqm     $acc[0],$acc[0],$t[0]
+    vadduqm     $acc[1],$acc[1],$t[1]
+    vadduqm     $acc[2],$acc[2],$t[2]
+    vadduqm     $acc[3],$acc[3],$t[3]
+    vadduqm     $acc[4],$acc[4],$t[3]
+    vadduqm     $acc[5],$acc[5],$t[3]
+    vadduqm     $acc[6],$acc[6],$t[3]
+___
+
+        for (my $i = 0; $i < 7; $i++) {
+            $code.=<<___;
+    ld          $tmp1,$i*8($inp)
+    mtvsrdd     $t[0],0,$tmp1
+    vsubuqm     $acc[$i],$acc[$i],$t[0]
+___
+        }
+
+        for (my $i = 0; $i < 7; $i++) {
+            $code.=<<___;
+    stxv        $acc[$i],$i*16($outp)
+___
+        }
+
+        $code.=<<___;
+
+    blr
+
+.align 4
+.Ladd_128_64:
+    # two64p48m16
+    .octa   0x00000000000000010000ffffffff0000
+    # two64m56m8
+    .octa   0x0000000000000000feffffffffffff00
+    # two64m32m8
+    .octa   0x0000000000000000fffffffeffffff00
+    # two64m8
+    .octa   0x0000000000000000ffffffffffffff00
+
+    .size p384_felem_diff_128_64,.-p384_felem_diff_128_64
+___
+    }
+
+    {
+        #
+        # p384_felem_diff128
+        #
+
+        my $outp = "r3";
+        my $inp = "r4";
+        my @acc = map("v$_",(35..47));
+        my @t = map("v$_",(48..51));
+
+        startproc("p384_felem_diff128");
+
+        $code.=<<___;
+    xxspltib    $vzero,0
+___
+
+        for (my $i = 0; $i < 13; $i++) {
+            $code.=<<___;
+    lxv         $acc[$i],$i*16($outp)
+___
+        }
+
+        $code.=<<___;
+    addis       $tbl,r2,.Ladd_128\@toc\@ha
+    addi        $tbl,$tbl,.Ladd_128\@toc\@l
+
+    lxv         $t[0],0*16($tbl)
+    vadduqm     $acc[0],$acc[0],$t[0]
+___
+
+        for (my $i = 1; $i < 5; $i++) {
+            $code.=<<___;
+    lxv         $t[${\($i-1)}],$i*16($tbl)
+___
+        }
+
+        $code.=<<___;
+    vadduqm     $acc[1],$acc[1],$t[0]
+    vadduqm     $acc[2],$acc[2],$t[0]
+    vadduqm     $acc[3],$acc[3],$t[0]
+    vadduqm     $acc[4],$acc[4],$t[0]
+    vadduqm     $acc[5],$acc[5],$t[0]
+    vadduqm     $acc[6],$acc[6],$t[1]
+    vadduqm     $acc[7],$acc[7],$t[2]
+    vadduqm     $acc[8],$acc[8],$t[3]
+    vadduqm     $acc[9],$acc[9],$t[0]
+    vadduqm     $acc[10],$acc[10],$t[0]
+    vadduqm     $acc[11],$acc[11],$t[0]
+    vadduqm     $acc[12],$acc[12],$t[0]
+___
+
+        for (my $i = 0; $i < 13; $i++) {
+            $code.=<<___;
+    lxv         $t[${\($i%4)}],$i*16($inp)
+    vsubuqm     $acc[$i],$acc[$i],$t[${\($i%4)}]
+___
+        }
+
+        for (my $i = 0; $i < 13; $i++) {
+            $code.=<<___;
+    stxv        $acc[$i],$i*16($outp)
+___
+        }
+
+        $code.=<<___;
+
+    blr
+
+.align 4
+.Ladd_128:
+    # two127
+    .octa   0x80000000000000000000000000000000
+    # two127m71
+    .octa   0x7fffffffffffff800000000000000000
+    # two127p111m79m71
+    .octa   0x80007fffffff7f800000000000000000
+    # two127m119m71
+    .octa   0x7f7fffffffffff800000000000000000
+    # two127m95m71
+    .octa   0x7fffffff7fffff800000000000000000
+
+    .size p384_felem_diff128,.-p384_felem_diff128
+___
+    }
 }
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
