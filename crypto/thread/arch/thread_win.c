@@ -32,6 +32,17 @@ static unsigned __stdcall thread_start_thunk(LPVOID vthread)
     return 0;
 }
 
+// To support Embarcadero's clang based compilers
+#if defined(__BORLANDC__) && defined(__clang__) && defined(_WIN32) 
+__forceinline void MemoryBarrier(void)
+{
+    long barrier;
+    __asm {
+        xchg barrier, eax
+    }
+}
+#endif
+
 int ossl_crypto_thread_native_spawn(CRYPTO_THREAD *thread)
 {
     HANDLE *handle;
