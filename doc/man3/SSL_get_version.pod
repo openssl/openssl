@@ -125,6 +125,10 @@ The connection uses the DTLSv1 protocol
 
 The connection uses the DTLSv1.2 protocol
 
+=item DTLS1_3_VERSION
+
+The connection uses the DTLSv1.3 protocol
+
 =item OSSL_QUIC1_VERSION
 
 The connection uses the QUICv1 protocol.
