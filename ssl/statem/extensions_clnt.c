@@ -1487,12 +1487,12 @@ int tls_parse_stoc_status_request(SSL_CONNECTION *s, PACKET *pkt,
         SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION, SSL_R_BAD_EXTENSION);
         return 0;
     }
-    if (!(SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)) && PACKET_remaining(pkt) > 0) {
+    if (!SSL_CONNECTION_IS_VERSION13(s) && PACKET_remaining(pkt) > 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
 
-    if (SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         /* We only know how to handle this if it's for the first Certificate in
          * the chain. We ignore any other responses.
          */
