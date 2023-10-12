@@ -31,7 +31,7 @@ accordance with RFC5705 (for TLSv1.2 and below) or RFC8446 (for TLSv1.3).
 SSL_export_keying_material() derives keying material using
 the F<exporter_master_secret> established in the handshake.
 
-SSL_export_keying_material_early() is only usable with TLSv1.3, and derives
+SSL_export_keying_material_early() is only usable with (D)TLSv1.3, and derives
 keying material using the F<early_exporter_master_secret> (as defined in the
 TLS 1.3 RFC). For the client, the F<early_exporter_master_secret> is only
 available when the client attempts to send 0-RTT data. For the server, it is

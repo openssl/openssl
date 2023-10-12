@@ -382,7 +382,7 @@ if certificate operations are permitted.
 
 This option indicates a file containing a set of certificates in PEM form.
 The subject names of the certificates are sent to the peer in the
-B<certificate_authorities> extension for TLS 1.3 (in ClientHello or
+B<certificate_authorities> extension for (D)TLS 1.3 (in ClientHello or
 CertificateRequest) or in a certificate request for previous versions or
 TLS.
 
