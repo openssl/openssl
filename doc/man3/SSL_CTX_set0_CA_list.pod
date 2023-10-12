@@ -47,7 +47,7 @@ server to the client when requesting a client certificate. So any list of CA
 names set is never sent from client to server and the list of CA names retrieved
 by SSL_get0_peer_CA_list() is always B<NULL>.
 
-For TLS 1.3 the list of CA names is sent using the B<certificate_authorities>
+For (D)TLS 1.3 the list of CA names is sent using the B<certificate_authorities>
 extension and may be sent by a client (in the ClientHello message) or by
 a server (when requesting a certificate).
 
