@@ -74,7 +74,7 @@ different to the digest used to calculate the MAC for encrypted records.
 
 SSL_CIPHER_get_kx_nid() returns the key exchange NID corresponding to the method
 used by B<c>. If there is no key exchange, then B<NID_undef> is returned.
-If any appropriate key exchange algorithm can be used (as in the case of TLS 1.3
+If any appropriate key exchange algorithm can be used (as in the case of (D)TLS 1.3
 cipher suites) B<NID_kx_any> is returned. Examples (not comprehensive):
 
  NID_kx_rsa
@@ -85,7 +85,7 @@ cipher suites) B<NID_kx_any> is returned. Examples (not comprehensive):
 SSL_CIPHER_get_auth_nid() returns the authentication NID corresponding to the method
 used by B<c>. If there is no authentication, then B<NID_undef> is returned.
 If any appropriate authentication algorithm can be used (as in the case of
-TLS 1.3 cipher suites) B<NID_auth_any> is returned. Examples (not comprehensive):
+(D)TLS 1.3 cipher suites) B<NID_auth_any> is returned. Examples (not comprehensive):
 
  NID_auth_rsa
  NID_auth_ecdsa
