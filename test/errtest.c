@@ -334,7 +334,12 @@ static int test_clear_error(void)
     return res;
 }
 
-static int test_save_restore(void)
+/*
+ * Test saving and restoring error state.
+ * Test 0: Save using OSSL_ERR_STATE_save()
+ * Test 1: Save using OSSL_ERR_STATE_save_to_mark()
+ */
+static int test_save_restore(int idx)
 {
     ERR_STATE *es;
     int res = 0, i, flags = -1;
@@ -350,15 +355,25 @@ static int test_save_restore(void)
     if (!TEST_ulong_gt(mallocfail, 0))
         goto err;
 
+    if (idx == 1 && !TEST_int_eq(ERR_set_mark(), 1))
+        goto err;
+
     ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR, testdata);
     interr = ERR_peek_last_error();
     if (!TEST_ulong_ne(mallocfail, ERR_peek_last_error()))
         goto err;
 
-    OSSL_ERR_STATE_save(es);
+    if (idx == 0) {
+        OSSL_ERR_STATE_save(es);
 
-    if (!TEST_ulong_eq(ERR_peek_last_error(), 0))
-        goto err;
+        if (!TEST_ulong_eq(ERR_peek_last_error(), 0))
+            goto err;
+    } else {
+        OSSL_ERR_STATE_save_to_mark(es);
+
+        if (!TEST_ulong_ne(ERR_peek_last_error(), 0))
+            goto err;
+    }
 
     for (i = 0; i < 2; i++) {
         OSSL_ERR_STATE_restore(es);
@@ -374,10 +389,12 @@ static int test_save_restore(void)
         OSSL_ERR_STATE_restore(es);
 
         /* verify them all */
-        if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
-                                             &data, &flags), mallocfail)
-            || !TEST_int_ne(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
-            goto err;
+        if (idx == 0 || i == 0) {
+            if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
+                                                 &data, &flags), mallocfail)
+                || !TEST_int_ne(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
+                goto err;
+        }
 
         if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
                                              &data, &flags), interr)
@@ -385,10 +402,12 @@ static int test_save_restore(void)
             || !TEST_int_eq(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
             goto err;
 
-        if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
-                                             &data, &flags), mallocfail)
-            || !TEST_int_ne(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
-            goto err;
+        if (idx == 0) {
+            if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
+                                                 &data, &flags), mallocfail)
+                || !TEST_int_ne(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
+                goto err;
+        }
 
         if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
                                              &data, &flags), interr)
@@ -415,7 +434,7 @@ int setup_tests(void)
     ADD_TEST(test_print_error_format);
 #endif
     ADD_TEST(test_marks);
-    ADD_TEST(test_save_restore);
+    ADD_ALL_TESTS(test_save_restore, 2);
     ADD_TEST(test_clear_error);
     return 1;
 }
