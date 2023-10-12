@@ -939,10 +939,19 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
      *
      * Relocate token buffer and fix pointer.
      */
-    if (rxe->hdr.type == QUIC_PKT_TYPE_INITIAL
-        && !qrx_relocate_buffer(qrx, &rxe, &i, &rxe->hdr.token,
-                                rxe->hdr.token_len))
-        goto malformed;
+    if (rxe->hdr.type == QUIC_PKT_TYPE_INITIAL) {
+        const unsigned char *token = rxe->hdr.token;
+
+        /*
+         * This may change the value of rxe and change the value of the token
+         * pointer as well. So we must make a temporary copy of the pointer to
+         * the token, and then copy it back into the new location of the rxe
+         */
+        if (!qrx_relocate_buffer(qrx, &rxe, &i, &token, rxe->hdr.token_len))
+            goto malformed;
+
+        rxe->hdr.token = token;
+    }
 
     /* Now remove header protection. */
     *pkt = orig_pkt;
