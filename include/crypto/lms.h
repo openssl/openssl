@@ -55,7 +55,7 @@ struct lms_key_st {
     const LM_OTS_PARAMS *ots_params;
     unsigned char *I;               /* 16 bytes - a pointer into pub */
     unsigned char *K;               /* n bytes - a ptr into pub */
-    int pub_allocated;              /* If 1 then pub needs to be freed */
+    uint32_t pub_allocated;         /* If 1 then pub needs to be freed */
 
     OSSL_LIB_CTX *libctx;
     char *propq;
@@ -87,7 +87,7 @@ typedef struct {
     EVP_MD *md;
     const unsigned char *msg;
     size_t msglen;
-    int failed;
+    uint32_t failed;
 } LMS_VALIDATE_CTX;
 
 DEFINE_STACK_OF(LMS_KEY)
@@ -129,12 +129,12 @@ void ossl_lm_ots_ctx_free(LM_OTS_CTX *ctx);
 //LM_OTS_CTX *ossl_lm_ots_ctx_dup(LM_OTS_CTX *src);
 
 int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *ctx,
-                                 const EVP_MD *md,
-                                 const LM_OTS_SIG *sig,
-                                 const LM_OTS_PARAMS *pub,
-                                 const unsigned char *I, uint32_t q);
+                                const EVP_MD *md,
+                                const LM_OTS_SIG *sig,
+                                const LM_OTS_PARAMS *pub,
+                                const unsigned char *I, uint32_t q);
 int ossl_lm_ots_ctx_pubkey_update(LM_OTS_CTX *ctx,
-                                   const unsigned char *msg, size_t msglen);
+                                  const unsigned char *msg, size_t msglen);
 int ossl_lm_ots_ctx_pubkey_final(LM_OTS_CTX *ctx, unsigned char *Kc);
 
 int ossl_lms_sig_verify_init(LMS_VALIDATE_CTX *ctx);

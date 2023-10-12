@@ -755,9 +755,10 @@ end:
     return ret;
 }
 
-
 int setup_tests(void)
 {
+    if (!OSSL_set_max_threads(NULL, 16))
+        return 0;
     ADD_ALL_TESTS(hss_verify_update_test, OSSL_NELEM(testdata));
     ADD_ALL_TESTS(hss_verify_oneshot_test, OSSL_NELEM(testdata));
     ADD_ALL_TESTS(hss_verify_pq_test, OSSL_NELEM(testdata));

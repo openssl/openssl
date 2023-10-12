@@ -8,14 +8,12 @@
 #define HSS_MIN_L 1
 #define HSS_MAX_L 8
 
-
 /*
  * OpenSSL does not have a "SHAKE256-192" algorithm, so we have to check the
  * digest size as well as the name.
  */
 #define HASH_NOT_MATCHED(a, b) \
     a->n != b->n || (strcmp(a->digestname, b->digestname) != 0)
-
 
 static ossl_inline int PACKET_get_bytes_shallow(PACKET *pkt,
                                                 unsigned char **out,
@@ -41,7 +39,14 @@ static ossl_inline int PACKET_get_4_len(PACKET *pkt, uint32_t *data)
     return ret;
 }
 
-/* RFC 8554 Algorithm 6a: Steps 1 and 2 */
+/*
+ * Create a LMS_SIG object from a HSS signature byte array in |pkt|.
+ * An error is returned if the passed in public key |pub| is not compatible
+ * with the decoded LMS_SIG object,
+ *
+ * This function may be called multiple times when parsing a HSS signature.
+ * See RFC 8554 Algorithm 6a: Steps 1 and 2
+ */
 static LMS_SIG *lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub)
 {
     uint32_t sig_ots_type = 0, sig_lms_type = 0;
@@ -63,6 +68,7 @@ static LMS_SIG *lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub)
     sig_params = pub_ots_params;
     lsig->sig.params = sig_params;
 
+    /* The C, y and paths pointers are just pointers to existing data */
     if (!PACKET_get_bytes_shallow(pkt, &lsig->sig.C, sig_params->n)) /* Random bytes of size n */
         goto err;
     if (!PACKET_get_bytes_shallow(pkt, &lsig->sig.y, sig_params->p * sig_params->n)) /* Y[P] hash values */
@@ -73,6 +79,7 @@ static LMS_SIG *lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub)
     if (pub->lms_params->lms_type != sig_lms_type)
         goto err;
     lparams = pub->lms_params;
+    /* The digest used must be the same */
     if (HASH_NOT_MATCHED(pub->lms_params, sig_params))
         goto err;
     if (lsig->q >= (uint32_t)(1 << lparams->h))
@@ -85,6 +92,10 @@ err:
     return NULL;
 }
 
+/*
+ * This function is used when LMS_SIGNATURES is defined.
+ * HSS signatures use lms_sig_from_pkt().
+ */
 LMS_SIG *ossl_lms_sig_from_data(const unsigned char *sig, size_t siglen,
                                 const LMS_KEY *pub)
 {
@@ -106,6 +117,8 @@ LMS_SIG *ossl_lms_sig_from_data(const unsigned char *sig, size_t siglen,
  * RFC 8554 Algorithm 6: Steps 1 & 2.
  * Steps that involve checking the size of the public key data are
  * done indirectly by checking the return result of PACKET_get API's.
+ * This function may be called multiple times when parsing a HSS signature.
+ * It is also used by ossl_lms_pubkey_from_data() to load a pubkey.
  */
 int ossl_lms_pubkey_from_pkt(PACKET *pkt, LMS_KEY *key)
 {
@@ -127,8 +140,10 @@ int ossl_lms_pubkey_from_pkt(PACKET *pkt, LMS_KEY *key)
     if (key->ots_params == NULL)
         goto err;
 
+    /* The digest used must be the same */
     if (HASH_NOT_MATCHED(key->ots_params, key->lms_params))
         goto err;
+    /* The I and K pointers are just pointers to existing data */
     if (!PACKET_get_bytes_shallow(pkt, &key->I, LMS_ISIZE)) /* 16 byte Id */
         goto err;
     if (!PACKET_get_bytes_shallow(pkt, &key->K, key->lms_params->n))
@@ -139,6 +154,11 @@ err:
     return 0;
 }
 
+/*
+ * Load a public LMS_KEY from a |pub| byte array of size |publen|.
+ * An error is returned if either |pub| is invalid or |publen| is
+ * not the correct size (i.e. trailing data is not allowed
+ */
 int ossl_lms_pubkey_from_data(const unsigned char *pub, size_t publen,
                               LMS_KEY *key)
 {
