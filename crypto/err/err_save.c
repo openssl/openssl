@@ -85,16 +85,18 @@ void OSSL_ERR_STATE_save_to_mark(ERR_STATE *es)
         es->err_line[i]         = thread_es->err_line[j];
         es->err_func[i]         = thread_es->err_func[j];
 
-        thread_es->err_flags[j]     = 0;
-        thread_es->err_buffer[j]    = 0;
-        thread_es->err_data[j]      = NULL;
-        thread_es->err_data_size[j] = 0;
-        thread_es->err_file[j]      = NULL;
-        thread_es->err_line[j]      = 0;
-        thread_es->err_func[j]      = NULL;
+        thread_es->err_flags[j]      = 0;
+        thread_es->err_buffer[j]     = 0;
+        thread_es->err_data[j]       = NULL;
+        thread_es->err_data_size[j]  = 0;
+        thread_es->err_data_flags[j] = 0;
+        thread_es->err_file[j]       = NULL;
+        thread_es->err_line[j]       = 0;
+        thread_es->err_func[j]       = NULL;
     }
 
     if (i > 0) {
+        thread_es->top = top;
         /* If we moved anything, es's stack always starts at [0]. */
         es->top     = i - 1;
         es->bottom  = ERR_NUM_ERRORS - 1;

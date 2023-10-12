@@ -834,7 +834,8 @@ void ERR_add_error_vdata(int num, va_list args)
      * If err_data is allocated already, reuse the space.
      * Otherwise, allocate a small new buffer.
      */
-    if ((es->err_data_flags[i] & flags) == flags) {
+    if ((es->err_data_flags[i] & flags) == flags
+            && ossl_assert(es->err_data[i] != NULL)) {
         str = es->err_data[i];
         size = es->err_data_size[i];
 
