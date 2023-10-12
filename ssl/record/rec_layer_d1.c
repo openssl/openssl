@@ -203,9 +203,12 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
     TLS_RECORD *rr;
     void (*cb)(const SSL *ssl, int type2, int val) = NULL;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    int is_dtls13;
 
     if (sc == NULL)
         return -1;
+
+    is_dtls13 = SSL_CONNECTION_IS_DTLS13(sc);
 
     if ((type && (type != SSL3_RT_APPLICATION_DATA) && (type != SSL3_RT_HANDSHAKE)) || (peek && (type != SSL3_RT_APPLICATION_DATA))) {
         SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -309,7 +312,8 @@ start:
 
     if (type == rr->type
         || (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC
-            && type == SSL3_RT_HANDSHAKE && recvd_type != NULL)) {
+            && type == SSL3_RT_HANDSHAKE && recvd_type != NULL
+            && !is_dtls13)) {
         /*
          * SSL3_RT_APPLICATION_DATA or
          * SSL3_RT_HANDSHAKE or
@@ -401,7 +405,8 @@ start:
             cb(s, SSL_CB_READ_ALERT, j);
         }
 
-        if (alert_level == SSL3_AL_WARNING) {
+        if ((!is_dtls13 && alert_level == SSL3_AL_WARNING)
+            || (is_dtls13 && alert_descr == SSL_AD_USER_CANCELLED)) {
             sc->s3.warn_alert = alert_descr;
             if (!ssl_release_record(sc, rr, 0))
                 return -1;
@@ -413,7 +418,13 @@ start:
                 return -1;
             }
 
-            if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
+            /*
+             * Apart from close_notify the only other warning alert in DTLSv1.3
+             * is user_cancelled - which we just ignore.
+             */
+            if (is_dtls13 && alert_descr == SSL_AD_USER_CANCELLED) {
+                goto start;
+            } else if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
 #ifndef OPENSSL_NO_SCTP
                 /*
                  * With SCTP and streams the socket may deliver app data
@@ -442,7 +453,7 @@ start:
                 SSLfatal(sc, SSL_AD_HANDSHAKE_FAILURE, SSL_R_NO_RENEGOTIATION);
                 return -1;
             }
-        } else if (alert_level == SSL3_AL_FATAL) {
+        } else if (alert_level == SSL3_AL_FATAL || is_dtls13) {
             sc->rwstate = SSL_NOTHING;
             sc->s3.fatal_alert = alert_descr;
             SSLfatal_data(sc, SSL_AD_NO_ALERT,
@@ -647,12 +658,14 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
     }
 
     tmpl.type = type;
+    if (sc->version == DTLS1_3_VERSION)
+        tmpl.version = DTLS1_2_VERSION;
     /*
      * Special case: for hello verify request, client version 1.0 and we
      * haven't decided which version to use yet send back using version 1.0
      * header: otherwise some clients will ignore it.
      */
-    if (s->method->version == DTLS_ANY_VERSION
+    else if (s->method->version == DTLS_ANY_VERSION
         && sc->max_proto_version != DTLS1_BAD_VER)
         tmpl.version = DTLS1_VERSION;
     else
