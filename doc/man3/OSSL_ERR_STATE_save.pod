@@ -70,6 +70,10 @@ missing the auxiliary error data.
 
 L<ERR_raise(3)>, L<ERR_get_error(3)>, L<ERR_clear_error(3)>
 
+=head1 HISTORY
+
+All of these functions were added in OpenSSL 3.2.
+
 =head1 COPYRIGHT
 
 Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
