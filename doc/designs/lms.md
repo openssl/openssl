@@ -9,7 +9,7 @@ have the potential to be broken using large scale quantum computers.
 
 The NSA have listed LMS as a quantum-resistant scheme for software and
 firmware signing for National Security Systems [3].
-LMS is a Stateful Hash Based Signature (HBS) scheme that depends only on the
+LMS is a Stateful Hash-Based Signature (HBS) scheme that depends only on the
 security of its underlying hash functions, and approved secure hash functions
 are believed to be quantum resistant.
 Stateful HBS schemes are not suitable for general use because they require
@@ -101,8 +101,13 @@ So we should:
   EVP_DigestVerifyInit_ex + EVP_DigestVerifyUpdate + EVP_DigestVerifyFinal.
   It could be done, but requires buffering of the message during updates.
 - EVP_VerifyInit etc should not be supported.
-- Add streaming via a new API that is similar to the existing DigestVerify API's,
-  but moves the signature |sig| from the final to the init. i.e.
+- In order to set the signature early one of the following methods should be
+  used:
+
+Proposal 1:
+
+Add streaming via a new API that is similar to the existing DigestVerify API's,
+but moves the signature |sig| from the final to the init. i.e.
 
 ```c
 __owur int EVP_DigestVerifyHBSInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
@@ -111,14 +116,28 @@ __owur int EVP_DigestVerifyHBSInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                    const char *props, EVP_PKEY *pkey,
                                    const OSSL_PARAM params[],
                                    const unsigned char *sig,
-                                   size_t siglen);
-   
+                                   size_t siglen);   
 /* Alias: since the function signature is identical */
 #define EVP_DigestVerifyHBSUpdate(a,b,c) EVP_DigestVerifyUpdate(a,b,c)
 
 __owur int EVP_DigestVerifyHBSFinal(EVP_MD_CTX *ctx);
-
 ```
+
+Proposal 2:
+
+Add a Init_ex function and leave the Final the same.
+
+i.e.
+EVP_DigestVerifyInit_ex3(..., const unsigned char *sig, size_t siglen);
+
+For the EVP_DigestVerifyFinal pass a NULL signature.
+The signature length must be zero in this case or an error will occur.
+If a signature is passed should it just ignore the value?
+
+Proposal 3:
+
+Pass the signature after the init via an OSSL_PARAM.
+
 
 Hash Function Selection
 -----------------------
@@ -159,6 +178,36 @@ Provider Support
 
 dupctx should not be supported by the provider since this would not apply to LMS.
 
+In order to support the new API calls there should be 2 additional dispatch
+functions..
+
+OSSL_CORE_MAKE_FUNC(int, signature_digest_verify_pbs_init,
+                    (void *ctx, const char *mdname, void *provkey,
+                     const OSSL_PARAM params[],
+                     const unsigned char *sig, size_t siglen))
+OSSL_CORE_MAKE_FUNC(int, signature_digest_verify_pbs_final,
+                    (void *ctx))
+
+
+A new HSS keymanager should support:
+
+OSSL_FUNC_KEYMGMT_NEW
+OSSL_FUNC_KEYMGMT_FREE
+OSSL_FUNC_KEYMGMT_SET_PARAMS
+OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS
+OSSL_FUNC_KEYMGMT_HAS
+OSSL_FUNC_KEYMGMT_MATCH
+OSSL_FUNC_KEYMGMT_VALIDATE
+OSSL_FUNC_KEYMGMT_IMPORT
+OSSL_FUNC_KEYMGMT_IMPORT_TYPES
+OSSL_FUNC_KEYMGMT_EXPORT
+OSSL_FUNC_KEYMGMT_EXPORT_TYPES
+OSSL_FUNC_KEYMGMT_LOAD
+
+A HSS public key requires 2 OSSL_PARAM fields:
+OSSL_PKEY_PARAM_HSS_L int 
+OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY octet_string
+
 FIPS Requirements
 ------------------
 
@@ -180,15 +229,15 @@ References
 
 The LMS/HSS implementation uses the following references.
 
-[1]: [RFC 8554 "Leighton-Micali Hash-Based Signatures"]
+- [1]: [RFC 8554 "Leighton-Micali Hash-Based Signatures"]
     <https://www.rfc-editor.org/rfc/rfc8708.pdf>
-[2]: [NIST SP 800-208 "Recommendation for Stateful Hash-Based Signature Schemes"]
+- [2]: [NIST SP 800-208 "Recommendation for Stateful Hash-Based Signature Schemes"]
     <https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-208.pdf>
-[3]: [Commercial National Security Algorithm Suite (CNSA 2.0)]
+- [3]: [Commercial National Security Algorithm Suite (CNSA 2.0)]
     <https://media.defense.gov/2022/Sep/07/2003071834/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS_.PDF>
-[4]: [RFC 8708 "Use of the HSS/LMS Hash-Based Signature Algorithm in CMS)"]
+- [4]: [RFC 8708 "Use of the HSS/LMS Hash-Based Signature Algorithm in CMS)"]
     <https://www.rfc-editor.org/rfc/rfc8708.pdf>
-[5]: [FIPS 140-3 IG]
+- [5]: [FIPS 140-3 IG]
     <https://csrc.nist.gov/csrc/media/Projects/cryptographic-module-validation-program/documents/fips%20140-3/FIPS%20140-3%20IG.pdf>
-[6]: [Additional Parameter sets for HSS/LMS Hash-Based Signatures]
+- [6]: [Additional Parameter sets for HSS/LMS Hash-Based Signatures]
     <https://datatracker.ietf.org/doc/html/draft-fluhrer-lms-more-parm-sets-11>
