@@ -898,11 +898,9 @@ int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
     if (group_minversion > 0)
         ret &= (ssl_version_cmp(s, maxversion, group_minversion) >= 0);
 
-    if (!SSL_CONNECTION_IS_DTLS(s)) {
-        if (ret && okfortls13 != NULL && maxversion == TLS1_3_VERSION)
-            *okfortls13 = (group_maxversion == 0)
-                || (group_maxversion >= TLS1_3_VERSION);
-    }
+    if (ret && okfortls13 != NULL && (maxversion == DTLS1_3_VERSION || maxversion == TLS1_3_VERSION))
+        *okfortls13 = (group_maxversion == 0)
+            || (ssl_version_cmp(s, group_maxversion, maxversion) >= 0);
 end:
     if (giptr != NULL)
         *giptr = ginfo;
