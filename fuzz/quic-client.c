@@ -8,13 +8,7 @@
  * or in the file LICENSE in the source distribution.
  */
 
-#include <time.h>
-#include <openssl/rand.h>
 #include <openssl/ssl.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/ec.h>
-#include <openssl/dh.h>
 #include <openssl/err.h>
 #include <openssl/bio.h>
 #include "fuzzer.h"
@@ -22,21 +16,6 @@
 
 /* unused, to avoid warning. */
 static int idx;
-
-#define FUZZTIME 1485898104
-
-#define TIME_IMPL(t) { if (t != NULL) *t = FUZZTIME; return FUZZTIME; }
-
-/*
- * This might not work in all cases (and definitely not on Windows
- * because of the way linkers are) and callees can still get the
- * current time instead of the fixed time. This will just result
- * in things not being fully reproducible and have a slightly
- * different coverage.
- */
-#if !defined(_WIN32)
-time_t time(time_t *t) TIME_IMPL(t)
-#endif
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
@@ -82,14 +61,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
     ina.s_addr = htonl(0x7f000001UL);
 
-    if (!BIO_ADDR_rawmake(peer_addr, AF_INET, &ina, sizeof(ina),
-                                    htons(4433)))
+    if (!BIO_ADDR_rawmake(peer_addr, AF_INET, &ina, sizeof(ina), htons(4433)))
        goto end;
 
-    /*
-    OPENSSL_assert(SSL_set_min_proto_version(client, 0) == 1);
-    OPENSSL_assert(SSL_set_cipher_list(client, "ALL:eNULL:@SECLEVEL=0") == 1);
-    */
     SSL_set_tlsext_host_name(client, "localhost");
     in = BIO_new(BIO_s_dgram_mem());
     if (in == NULL)
@@ -118,7 +92,6 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
             break;
 
         if (size > 0)
-            /* OPENSSL_assert((size_t)BIO_write(in, buf+2, size) == size); */
             BIO_write(in, buf+2, size);
         len -= size + 2;
         buf += size + 2;
