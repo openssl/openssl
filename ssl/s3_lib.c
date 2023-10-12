@@ -49,8 +49,8 @@ static SSL_CIPHER tls13_ciphers[] = {
         SSL_AEAD,
         TLS1_3_VERSION,
         TLS1_3_VERSION,
-        0,
-        0,
+        DTLS1_3_VERSION,
+        DTLS1_3_VERSION,
         SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256 | SSL_QUIC,
         128,
@@ -67,8 +67,8 @@ static SSL_CIPHER tls13_ciphers[] = {
         SSL_AEAD,
         TLS1_3_VERSION,
         TLS1_3_VERSION,
-        0,
-        0,
+        DTLS1_3_VERSION,
+        DTLS1_3_VERSION,
         SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | SSL_QUIC,
         256,
@@ -85,8 +85,8 @@ static SSL_CIPHER tls13_ciphers[] = {
         SSL_AEAD,
         TLS1_3_VERSION,
         TLS1_3_VERSION,
-        0,
-        0,
+        DTLS1_3_VERSION,
+        DTLS1_3_VERSION,
         SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256 | SSL_QUIC,
         256,
@@ -103,8 +103,8 @@ static SSL_CIPHER tls13_ciphers[] = {
         SSL_AEAD,
         TLS1_3_VERSION,
         TLS1_3_VERSION,
-        0,
-        0,
+        DTLS1_3_VERSION,
+        DTLS1_3_VERSION,
         SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256,
         128,
@@ -121,8 +121,8 @@ static SSL_CIPHER tls13_ciphers[] = {
         SSL_AEAD,
         TLS1_3_VERSION,
         TLS1_3_VERSION,
-        0,
-        0,
+        DTLS1_3_VERSION,
+        DTLS1_3_VERSION,
         SSL_NOT_DEFAULT | SSL_MEDIUM,
         SSL_HANDSHAKE_MAC_SHA256,
         64, /* CCM8 uses a short tag, so we have a low security strength */
@@ -140,8 +140,8 @@ static SSL_CIPHER tls13_ciphers[] = {
         SSL_SHA256,
         TLS1_3_VERSION,
         TLS1_3_VERSION,
-        0,
-        0,
+        DTLS1_3_VERSION,
+        DTLS1_3_VERSION,
         SSL_NOT_DEFAULT | SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_SHA256,
         0,
@@ -158,8 +158,8 @@ static SSL_CIPHER tls13_ciphers[] = {
         SSL_SHA384,
         TLS1_3_VERSION,
         TLS1_3_VERSION,
-        0,
-        0,
+        DTLS1_3_VERSION,
+        DTLS1_3_VERSION,
         SSL_NOT_DEFAULT | SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_SHA384,
         0,
@@ -4261,7 +4261,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_GET_NEGOTIATED_GROUP: {
         unsigned int id;
 
-        if (SSL_CONNECTION_IS_TLS13(sc) && sc->s3.did_kex)
+        if (SSL_CONNECTION_IS_VERSION13(sc) && sc->s3.did_kex)
             id = sc->s3.group_id;
         else
             id = (sc->session != NULL) ? sc->session->kex_group : NID_undef;
@@ -4865,7 +4865,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
         allow = srvr;
     }
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
 #ifndef OPENSSL_NO_PSK
         size_t j;
 
@@ -4906,7 +4906,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
          * Since TLS 1.3 ciphersuites can be used with any auth or
          * key exchange scheme skip tests.
          */
-        if (!SSL_CONNECTION_IS_TLS13(s)) {
+        if (!SSL_CONNECTION_IS_VERSION13(s)) {
             mask_k = s->s3.tmp.mask_k;
             mask_a = s->s3.tmp.mask_a;
 #ifndef OPENSSL_NO_SRP
@@ -5447,7 +5447,7 @@ int ssl_gensecret(SSL_CONNECTION *s, unsigned char *pms, size_t pmslen)
     int rv = 0;
 
     /* SSLfatal() called as appropriate in the below functions */
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         /*
          * If we are resuming then we already generated the early secret
          * when we created the ClientHello, so don't recreate it.
@@ -5490,7 +5490,7 @@ int ssl_derive(SSL_CONNECTION *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gense
         goto err;
     }
 
-    if (SSL_CONNECTION_IS_TLS13(s) && EVP_PKEY_is_a(privkey, "DH"))
+    if (SSL_CONNECTION_IS_VERSION13(s) && EVP_PKEY_is_a(privkey, "DH"))
         EVP_PKEY_CTX_set_dh_pad(pctx, 1);
 
     pms = OPENSSL_malloc(pmslen);
@@ -5645,7 +5645,7 @@ const char *SSL_get0_group_name(SSL *s)
     if (sc == NULL)
         return NULL;
 
-    if (SSL_CONNECTION_IS_TLS13(sc) && sc->s3.did_kex)
+    if (SSL_CONNECTION_IS_VERSION13(sc) && sc->s3.did_kex)
         id = sc->s3.group_id;
     else
         id = sc->session->kex_group;

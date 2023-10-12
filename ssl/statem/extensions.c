@@ -517,7 +517,7 @@ int extension_is_relevant(SSL_CONNECTION *s, unsigned int extctx,
     if ((thisctx & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0)
         is_version13 = 1;
     else
-        is_version13 = SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s);
+        is_version13 = SSL_CONNECTION_IS_VERSION13(s);
 
     if ((SSL_CONNECTION_IS_DTLS(s)
             && (extctx & SSL_EXT_TLS_IMPLEMENTATION_ONLY) != 0)
@@ -1020,7 +1020,7 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
 
     case SSL_TLSEXT_ERR_ALERT_WARNING:
         /* (D)TLSv1.3 doesn't have warning alerts so we suppress this */
-        if (!(SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)))
+        if (!SSL_CONNECTION_IS_VERSION13(s))
             ssl3_send_alert(s, SSL3_AL_WARNING, altmp);
         s->servername_done = 0;
         return 1;
@@ -1130,7 +1130,7 @@ static int final_alpn(SSL_CONNECTION *s, unsigned int context, int sent)
     if (!s->server && !sent && s->session->ext.alpn_selected != NULL)
         s->ext.early_data_ok = 0;
 
-    if (!s->server || !(SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)))
+    if (!s->server || !SSL_CONNECTION_IS_VERSION13(s))
         return 1;
 
     /*
@@ -1289,7 +1289,7 @@ static int init_srtp(SSL_CONNECTION *s, unsigned int context)
 
 static int final_sig_algs(SSL_CONNECTION *s, unsigned int context, int sent)
 {
-    if (!sent && (SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)) && !s->hit) {
+    if (!sent && SSL_CONNECTION_IS_VERSION13(s) && !s->hit) {
         SSLfatal(s, TLS13_AD_MISSING_EXTENSION,
             SSL_R_MISSING_SIGALGS_EXTENSION);
         return 0;
@@ -1313,7 +1313,7 @@ static int final_supported_versions(SSL_CONNECTION *s, unsigned int context,
 static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
 {
 #if !defined(OPENSSL_NO_TLS1_3)
-    if (!(SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)))
+    if (!SSL_CONNECTION_IS_VERSION13(s))
         return 1;
 
     /* Nothing to do for key_share in an HRR */

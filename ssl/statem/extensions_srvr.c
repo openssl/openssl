@@ -137,7 +137,7 @@ int tls_parse_ctos_server_name(SSL_CONNECTION *s, PACKET *pkt,
      * In (D)TLSv1.2 and below the SNI is associated with the session. In (D)TLSv1.3
      * we always use the SNI value from the handshake.
      */
-    if (!s->hit || (SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))) {
+    if (!s->hit || SSL_CONNECTION_IS_VERSION13(s)) {
         if (PACKET_remaining(&hostname) > TLSEXT_MAXLEN_host_name) {
             SSLfatal(s, SSL_AD_UNRECOGNIZED_NAME, SSL_R_BAD_EXTENSION);
             return 0;
@@ -1231,7 +1231,7 @@ int tls_parse_ctos_supported_groups(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    if (!s->hit || (SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))) {
+    if (!s->hit || SSL_CONNECTION_IS_VERSION13(s)) {
         OPENSSL_free(s->ext.peer_supportedgroups);
         s->ext.peer_supportedgroups = NULL;
         s->ext.peer_supportedgroups_len = 0;
@@ -1610,7 +1610,7 @@ EXT_RETURN tls_construct_stoc_server_name(SSL_CONNECTION *s, WPACKET *pkt,
      * Prior to (D)TLSv1.3 we ignore any SNI in the current handshake if resuming.
      * We just use the servername from the initial handshake.
      */
-    if (s->hit && !(SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)))
+    if (s->hit && !SSL_CONNECTION_IS_VERSION13(s))
         return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)
@@ -1919,7 +1919,7 @@ EXT_RETURN tls_construct_stoc_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
     unsigned int context, X509 *x,
     size_t chainidx)
 {
-    if (!ossl_assert((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)))) {
+    if (!ossl_assert(SSL_CONNECTION_IS_VERSION13(s))) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
