@@ -386,6 +386,9 @@ static const ST_KAT_PARAM pbkdf2_params[] = {
     ST_KAT_PARAM_END()
 };
 
+/*
+ * Sample parameters from NIST ACVP demo server
+ */
 static const char snmpkdf_digest[] = "SHA1";
 static const unsigned char snmpkdf_eid[] = {
       0x80, 0x00, 0x02, 0xb8, 0x05, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde,

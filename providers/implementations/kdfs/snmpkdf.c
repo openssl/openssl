@@ -39,9 +39,9 @@ static OSSL_FUNC_kdf_get_ctx_params_fn kdf_snmpkdf_get_ctx_params;
 #define KDF_SNMP_PASSWORD_HASH_AMOUNT (1024 * 1024)
 
 static int SNMPKDF(const EVP_MD *evp_md,
-                  const unsigned char *eid, size_t eid_len,
-                  unsigned char *password, size_t password_len,
-                  unsigned char *okey, size_t okeylen);
+                   const unsigned char *eid, size_t eid_len,
+                   unsigned char *password, size_t password_len,
+                   unsigned char *okey, size_t okeylen);
 
 typedef struct {
     void *provctx;
@@ -160,11 +160,11 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (!snmpkdf_set_membuf(&ctx->eid, &ctx->eid_len, p))
             return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD))
-        != NULL)
-        if (!snmpkdf_set_membuf(&ctx->password, &ctx->password_len, p))
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD))  != NULL) {
+        if (ctx->password_len > KDF_SNMP_PASSWORD_HASH_AMOUNT ||
+           !snmpkdf_set_membuf(&ctx->password, &ctx->password_len, p))
             return 0;
-
+    }
     return 1;
 }
 
@@ -234,7 +234,7 @@ const OSSL_DISPATCH ossl_kdf_snmpkdf_functions[] = {
   is the output of hashing the Expanded_password by SHA-1.
 
   Let Shared_key to be the key that the user shares with the authoritative
-  SNMP engine with ID snmpEngineID. The Shared_key is generated as follow:
+  SNMP engine with ID snmpEngineID. The Shared_key is generated as follows:
 
   Shared_key = SHA-1(Derived_password || snmpEngineID || Derived_password).
 
@@ -243,6 +243,7 @@ const OSSL_DISPATCH ossl_kdf_snmpkdf_functions[] = {
       password -     password
       password_len - password length
       digest -       pointer to key output, FIPS testing limited to SHA-1.
+      okey -         output key
       return -       1 pass 0 for error
  */
 static int SNMPKDF(const EVP_MD *evp_md,
@@ -257,51 +258,48 @@ static int SNMPKDF(const EVP_MD *evp_md,
     int ret = 0;
 
     /* Limited to SHA-1 and SHA-2 hashes presently */
-    if (okey == NULL || okeylen == 0 || okeylen > SHA512_DIGEST_LENGTH) {
+    if (okey == NULL || okeylen == 0 || okeylen > SHA512_DIGEST_LENGTH)
         return 0;
-    }
 
     md = EVP_MD_CTX_new();
-    if (!md) {
+    if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         goto err;
     }
 
     mdsize = EVP_MD_size(evp_md);
-    if (mdsize < 0)
+    if (mdsize <= 0 || mdsize < okeylen)
         goto err;
 
-    EVP_MD_CTX_init(md);
-    if (!EVP_DigestInit_ex(md, evp_md, NULL)) {
+    if (!EVP_DigestInit_ex(md, evp_md, NULL))
         goto err;
-    }
+
     for (len = 0; len < KDF_SNMP_PASSWORD_HASH_AMOUNT - password_len; len += password_len ) {
         if (!EVP_DigestUpdate(md, password, password_len)) {
             goto err;
         }
     }
-    if (!EVP_DigestUpdate(md, password, KDF_SNMP_PASSWORD_HASH_AMOUNT - len)) {
-        goto err;
-    }
-    if (!EVP_DigestFinal_ex(md, digest, &md_len)) {
-        goto err;
-    }
 
-    if (!EVP_DigestInit_ex(md, evp_md, NULL)) {
+    if (!EVP_DigestUpdate(md, password, KDF_SNMP_PASSWORD_HASH_AMOUNT - len))
         goto err;
-    }
-    if (!EVP_DigestUpdate(md, digest, mdsize)) {
+
+    if (!EVP_DigestFinal_ex(md, digest, &md_len))
         goto err;
-    }
-    if (!EVP_DigestUpdate(md, e_id, e_len)) {
+
+    if (!EVP_DigestInit_ex(md, evp_md, NULL))
         goto err;
-    }
-    if (!EVP_DigestUpdate(md, digest, mdsize)) {
+
+    if (!EVP_DigestUpdate(md, digest, mdsize))
         goto err;
-    }
-    if (!EVP_DigestFinal_ex(md, digest, &md_len)) {
+
+    if (!EVP_DigestUpdate(md, e_id, e_len))
         goto err;
-    }
+
+    if (!EVP_DigestUpdate(md, digest, mdsize))
+        goto err;
+
+    if (!EVP_DigestFinal_ex(md, digest, &md_len))
+        goto err;
 
     memcpy(okey, digest, okeylen);
 

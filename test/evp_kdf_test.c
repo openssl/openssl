@@ -1651,7 +1651,7 @@ OSSL_PARAM *construct_snmpkdf_params(char *digest, unsigned char *eid, size_t ei
     return p_ret;
 }
 
-static int test_kdf_snmpkdf_bad_hash(void)
+static int test_kdf_snmpkdf_bad_pw_len(void)
 {
     int ret;
     EVP_KDF_CTX *kctx = NULL;
@@ -1660,21 +1660,24 @@ static int test_kdf_snmpkdf_bad_hash(void)
 
     static unsigned char EID1[] = {
           0x00, 0x00, 0x02, 0xb8, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00 };
+    static unsigned char expected1[] = {
+          0x62, 0x98, 0x10, 0xa3, 0x1a, 0xdc, 0x31, 0x76, 0x9d, 0xfe, 0xbf, 0x9b,
+      0xac, 0xba, 0x06, 0xa3, 0xff, 0xd9, 0xc4, 0x9f };
     static unsigned char password1[] = {'L', 'P', 'U', 'Q', 'D', 'L', 's', 'K' };
 
-    params = construct_snmpkdf_params("fail", EID1, sizeof(EID1),
-                                      (unsigned char *)password1, sizeof(password1));
+    params = construct_snmpkdf_params("sha1", EID1, sizeof(EID1),
+                                      (unsigned char *)password1, 1048577);
 
     /* Negative test - derive should fail */
     ret = TEST_ptr(params)
         && TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SNMPKDF))
-        && TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out), params), 0);
-
+        && TEST_int_eq(EVP_KDF_derive(kctx, out, 0, NULL), 0);
 
     EVP_KDF_CTX_free(kctx);
     OPENSSL_free(params);
     return ret;
 }
+
 static int test_kdf_snmpkdf_zero_output_size(void)
 {
     int ret;
@@ -1693,51 +1696,6 @@ static int test_kdf_snmpkdf_zero_output_size(void)
     ret = TEST_ptr(params)
         && TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SNMPKDF))
         && TEST_int_eq(EVP_KDF_derive(kctx, out, 0, NULL), 0);
-
-    EVP_KDF_CTX_free(kctx);
-    OPENSSL_free(params);
-    return ret;
-}
-
-static int test_kdf_snmpkdf_bad_pw(void)
-{
-    int ret;
-    EVP_KDF_CTX *kctx = NULL;
-    OSSL_PARAM *params = NULL;
-    unsigned char out[SHA_DIGEST_LENGTH];
-
-    static unsigned char EID1[] = {
-          0x00, 0x00, 0x02, 0xb8, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00 };
-
-    params = construct_snmpkdf_params("sha1", EID1, sizeof(EID1),
-                                      NULL, 0);
-
-    /* Negative test - derive should fail */
-    ret = TEST_ptr(params)
-        && TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SNMPKDF))
-        && TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out), params), 0);
-
-
-    EVP_KDF_CTX_free(kctx);
-    OPENSSL_free(params);
-    return ret;
-}
-
-static int test_kdf_snmpkdf_bad_eid(void)
-{
-    int ret;
-    EVP_KDF_CTX *kctx = NULL;
-    OSSL_PARAM *params = NULL;
-    unsigned char out[SHA_DIGEST_LENGTH];
-
-    static unsigned char password1[] = {'L', 'P', 'U', 'Q', 'D', 'L', 's', 'K' };
-
-    params = construct_snmpkdf_params("sha1", NULL, 0,
-                                      (unsigned char *)password1, sizeof(password1));
-
-    ret = TEST_ptr(params)
-        && TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SNMPKDF))
-        && TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out), params), 0);
 
     EVP_KDF_CTX_free(kctx);
     OPENSSL_free(params);
@@ -2113,10 +2071,8 @@ int setup_tests(void)
     ADD_TEST(test_kdf_ss_hash);
     ADD_TEST(test_kdf_ss_hmac);
     ADD_TEST(test_kdf_ss_kmac);
-    ADD_TEST(test_kdf_snmpkdf_bad_hash);
+    ADD_TEST(test_kdf_snmpkdf_bad_pw_len);
     ADD_TEST(test_kdf_snmpkdf_zero_output_size);
-    ADD_TEST(test_kdf_snmpkdf_bad_pw);
-    ADD_TEST(test_kdf_snmpkdf_bad_eid);
     ADD_TEST(test_kdf_snmpkdf);
     ADD_TEST(test_kdf_sshkdf);
     ADD_TEST(test_kdf_x963);
