@@ -164,12 +164,13 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     EVP_PKEY_CTX *ret = NULL;
     const EVP_PKEY_METHOD *pmeth = NULL, *app_pmeth = NULL;
     EVP_KEYMGMT *keymgmt = NULL;
+    int pknid = pkey != NULL ? pkey->type : -1;
 
     /* Code below to be removed when legacy support is dropped. */
     /* BEGIN legacy */
     if (id == -1) {
         if (pkey != NULL && !evp_pkey_is_provided(pkey)) {
-            id = pkey->type;
+            id = pknid;
         } else {
             if (pkey != NULL) {
                 /* Must be provided if we get here */
@@ -292,7 +293,8 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     }
 
     if (pmeth == NULL && keymgmt == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_ALGORITHM);
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_UNSUPPORTED_ALGORITHM,
+                       "pkey nid=%d, id=%d, name=%s", pknid, id, keytype);
     } else {
         ret = OPENSSL_zalloc(sizeof(*ret));
     }
