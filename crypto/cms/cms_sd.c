@@ -19,6 +19,7 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/ess.h"
+#include "crypto/pkcs7.h" /* for ossl_pkcs7_get_default_digest() */
 #include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
 #include "cms_local.h"
 
@@ -225,7 +226,8 @@ int ossl_cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert)
         return -1;
 }
 
-static int cms_signature_nomd(EVP_PKEY *pkey)
+/* returns 1 at least for Ed25519, Ed448, ML-DSA, and SLH-DSA */
+static int cms_signature_no_md(EVP_PKEY *pkey)
 {
     char def_md[80];
 
@@ -233,7 +235,7 @@ static int cms_signature_nomd(EVP_PKEY *pkey)
         && strcmp(def_md, "UNDEF") == 0 ? 1 : 0;
 }
 
-/* Method to map any, incl. provider-implemented PKEY types to OIDs */
+/* Method to map any (also provider-implemented) PKEY type to its OID */
 /* (EC)DSA and all provider-delivered signatures implementation is the same */
 static int cms_generic_sign(CMS_SignerInfo *si, int verify)
 {
@@ -251,13 +253,13 @@ static int cms_generic_sign(CMS_SignerInfo *si, int verify)
         hnid = OBJ_obj2nid(alg1->algorithm);
         if (hnid == NID_undef)
             return -1;
-        if (pknid <= 0) { /* check whether a provider registered a NID */
+        if (pknid <= 0) { /* check whether a provider registered an NID */
             const char *typename = EVP_PKEY_get0_type_name(pkey);
 
             if (typename != NULL)
                 pknid = OBJ_txt2nid(typename);
         }
-        if (pknid > 0 && cms_signature_nomd(pkey))
+        if (pknid > 0 && cms_signature_no_md(pkey))
             snid = pknid;
         else if (!OBJ_find_sigid_by_algs(&snid, hnid, pknid))
             return -1;
@@ -398,22 +400,8 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     if (!ossl_cms_set1_SignerIdentifier(si->sid, signer, type, ctx))
         goto err;
 
-    if (md == NULL) {
-        int def_nid;
-
-        if (EVP_PKEY_get_default_digest_nid(pk, &def_nid) <= 0) {
-            ERR_raise_data(ERR_LIB_CMS, CMS_R_NO_DEFAULT_DIGEST,
-                           "pkey nid=%d", EVP_PKEY_get_id(pk));
-            goto err;
-        }
-        md = EVP_get_digestbynid(def_nid);
-        if (md == NULL) {
-            ERR_raise_data(ERR_LIB_CMS, CMS_R_NO_DEFAULT_DIGEST,
-                           "default md nid=%d", def_nid);
-            goto err;
-        }
-    }
-
+    if (md == NULL && (md = ossl_pkcs7_get_default_digest(pk)) == NULL)
+        goto err;
     X509_ALGOR_set_md(si->digestAlgorithm, md);
 
     /* See if digest is present in digestAlgorithms */
@@ -851,36 +839,44 @@ int ossl_cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain,
 
 int CMS_SignerInfo_sign(CMS_SignerInfo *si)
 {
+#define CMS_LEGACY_CODE /* TODO remove legacy code if possible */
+#ifdef CMS_LEGACY_CODE
     EVP_MD_CTX *mctx = si->mctx;
     EVP_PKEY_CTX *pctx = NULL;
     unsigned char *abuf = NULL;
     int alen;
     size_t siglen;
-    const CMS_CTX *ctx = si->cms_ctx;
-    char md_name_buf[OSSL_MAX_NAME_SIZE], *md_name;
+    char md_name_buf[OSSL_MAX_NAME_SIZE], *md_name = NULL;
+    OSSL_LIB_CTX *libctx = ossl_cms_ctx_get0_libctx(si->cms_ctx);
+    const char *propq = ossl_cms_ctx_get0_propq(si->cms_ctx);
 
-    if (OBJ_obj2txt(md_name_buf, sizeof(md_name_buf),
-                    si->digestAlgorithm->algorithm, 0) <= 0)
-        return 0;
-    md_name = cms_signature_nomd(si->pkey) ? NULL : md_name_buf;
+    if (!cms_signature_no_md(si->pkey)) {
+        if (OBJ_obj2txt(md_name_buf, sizeof(md_name_buf),
+                        si->digestAlgorithm->algorithm, 0) <= 0)
+            return 0;
+        md_name = md_name_buf;
+    }
+#endif
 
     if (!si->omit_signing_time
         && CMS_signed_get_attr_by_NID(si, NID_pkcs9_signingTime, -1) < 0) {
         if (!cms_add1_signingTime(si, NULL))
-            goto err;
+            return 0;
     }
 
     if (!ossl_cms_si_check_attributes(si))
-        goto err;
+        return 0;
 
-    if (si->pctx) {
+#ifndef CMS_LEGACY_CODE
+    return ASN1_item_sign_ctx(ASN1_ITEM_rptr(CMS_Attributes_Sign), NULL,
+                              NULL, si->signature, si->signedAttrs, si->mctx) > 0;
+#else
+    if (si->pctx != NULL) {
         pctx = si->pctx;
     } else {
         EVP_MD_CTX_reset(mctx);
         if (EVP_DigestSignInit_ex(mctx, &pctx, md_name,
-                                  ossl_cms_ctx_get0_libctx(ctx),
-                                  ossl_cms_ctx_get0_propq(ctx), si->pkey,
-                                  NULL) <= 0)
+                                  libctx, propq, si->pkey, NULL) <= 0)
             goto err;
         EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
         si->pctx = pctx;
@@ -918,19 +914,21 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
     OPENSSL_free(abuf);
     EVP_MD_CTX_reset(mctx);
     return 0;
+#endif
 }
 
 int CMS_SignerInfo_verify(CMS_SignerInfo *si)
 {
+#ifdef CMS_LEGACY_CODE
     EVP_MD_CTX *mctx = NULL;
     unsigned char *abuf = NULL;
     int alen, r = -1;
     char name[OSSL_MAX_NAME_SIZE];
     const EVP_MD *md;
     EVP_MD *fetched_md = NULL;
-    const CMS_CTX *ctx = si->cms_ctx;
-    OSSL_LIB_CTX *libctx = ossl_cms_ctx_get0_libctx(ctx);
-    const char *propq = ossl_cms_ctx_get0_propq(ctx);
+#endif
+    OSSL_LIB_CTX *libctx = ossl_cms_ctx_get0_libctx(si->cms_ctx);
+    const char *propq = ossl_cms_ctx_get0_propq(si->cms_ctx);
 
     if (si->pkey == NULL) {
         ERR_raise(ERR_LIB_CMS, CMS_R_NO_PUBLIC_KEY);
@@ -940,7 +938,13 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     if (!ossl_cms_si_check_attributes(si))
         return -1;
 
-    if (cms_signature_nomd(si->pkey)) {
+#ifndef CMS_LEGACY_CODE
+    return ASN1_item_verify_ex(ASN1_ITEM_rptr(CMS_Attributes_Sign),
+                               si->signatureAlgorithm, si->signature,
+                               si->signedAttrs, NULL, si->pkey,
+                               libctx, propq);
+#else
+    if (cms_signature_no_md(si->pkey)) {
         r = ASN1_item_verify_ex(ASN1_ITEM_rptr(CMS_Attributes_Sign),
                                 si->signatureAlgorithm, si->signature,
                                 si->signedAttrs, NULL, si->pkey,
@@ -1003,6 +1007,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     EVP_MD_free(fetched_md);
     EVP_MD_CTX_reset(mctx);
     return r;
+#endif
 }
 
 /* Create a chain of digest BIOs from a CMS ContentInfo */

@@ -313,38 +313,34 @@ static int pkcs7_ecdsa_or_dsa_sign_verify_setup(PKCS7_SIGNER_INFO *si,
 {
     if (!verify) {
         int snid, hnid;
-        X509_ALGOR *alg1, *alg2;
+        X509_ALGOR *digest, *sig;
         EVP_PKEY *pkey = si->pkey;
 
-        PKCS7_SIGNER_INFO_get0_algs(si, NULL, &alg1, &alg2);
-        if (alg1 == NULL || alg1->algorithm == NULL)
+        PKCS7_SIGNER_INFO_get0_algs(si, NULL, &digest, &sig);
+        if (digest == NULL || digest->algorithm == NULL)
             return -1;
-        hnid = OBJ_obj2nid(alg1->algorithm);
+        hnid = OBJ_obj2nid(digest->algorithm);
         if (hnid == NID_undef)
             return -1;
         if (!OBJ_find_sigid_by_algs(&snid, hnid, EVP_PKEY_get_id(pkey)))
             return -1;
-        return X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, NULL);
+        return X509_ALGOR_set0(sig, OBJ_nid2obj(snid), V_ASN1_UNDEF, NULL);
     }
     return 1;
 }
 
-static int pkcs7_rsa_sign_verify_setup(PKCS7_SIGNER_INFO *si, int verify)
+static int pkcs7_sign_setup(PKCS7_SIGNER_INFO *si, int pknid)
 {
-    if (!verify) {
-        X509_ALGOR *alg = NULL;
+    X509_ALGOR *sig = NULL;
 
-        PKCS7_SIGNER_INFO_get0_algs(si, NULL, NULL, &alg);
-        if (alg != NULL)
-            return X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption),
-                                   V_ASN1_NULL, NULL);
-    }
-    return 1;
+    PKCS7_SIGNER_INFO_get0_algs(si, NULL, NULL, &sig);
+    return X509_ALGOR_set0(sig, OBJ_nid2obj(pknid), V_ASN1_NULL, NULL);
 }
 
 int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
-                          const EVP_MD *dgst)
+                          const EVP_MD *md)
 {
+    int pknid = EVP_PKEY_get_id(pkey);
     int ret;
 
     /* We now need to add another PKCS7_SIGNER_INFO entry */
@@ -371,15 +367,17 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 
     /* Set the algorithms */
 
-    if (!X509_ALGOR_set0(p7i->digest_alg, OBJ_nid2obj(EVP_MD_get_type(dgst)),
+    if (!X509_ALGOR_set0(p7i->digest_alg, OBJ_nid2obj(EVP_MD_get_type(md)),
                          V_ASN1_NULL, NULL))
         return 0;
 
+    /* TODO generalize to avoid this ugly case distinction */
     if (EVP_PKEY_is_a(pkey, "EC") || EVP_PKEY_is_a(pkey, "DSA"))
         return pkcs7_ecdsa_or_dsa_sign_verify_setup(p7i, 0);
     if (EVP_PKEY_is_a(pkey, "RSA"))
-        return pkcs7_rsa_sign_verify_setup(p7i, 0);
-
+        return pkcs7_sign_setup(p7i, NID_rsaEncryption);
+    if (pknid == NID_ED25519 || pknid == NID_ED448)
+        return pkcs7_sign_setup(p7i, pknid);
     if (pkey->ameth != NULL && pkey->ameth->pkey_ctrl != NULL) {
         ret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_PKCS7_SIGN, 0, p7i);
         if (ret > 0)
@@ -393,22 +391,36 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
     return 0;
 }
 
+/* this is also used for CMS */
+const EVP_MD *ossl_pkcs7_get_default_digest(EVP_PKEY *pkey)
+{
+    const EVP_MD *md;
+    int def_nid, pknid = EVP_PKEY_get_id(pkey);
+
+    /* special cases first, for Edwards curves in CMS according to RFC 8419 */
+    if (pknid == NID_ED25519) {
+        def_nid = NID_sha3_512;
+    } else if (pknid == NID_ED448) {
+        def_nid = NID_shake256; /* TODO for CMS, output size MUST be 512 */
+    } else if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) <= 0) {
+        ERR_raise_data(ERR_LIB_PKCS7, PKCS7_R_NO_DEFAULT_DIGEST,
+                       "pkey nid=%d", pknid);
+        return NULL;
+    }
+    md = EVP_get_digestbynid(def_nid);
+    if (md == NULL)
+        ERR_raise_data(ERR_LIB_PKCS7, PKCS7_R_NO_DEFAULT_DIGEST,
+                       "default md nid=%d", def_nid);
+    return md;
+}
+
 PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey,
                                        const EVP_MD *dgst)
 {
     PKCS7_SIGNER_INFO *si = NULL;
 
-    if (dgst == NULL) {
-        int def_nid;
-        if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) <= 0)
-            goto err;
-        dgst = EVP_get_digestbynid(def_nid);
-        if (dgst == NULL) {
-            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_DEFAULT_DIGEST);
-            goto err;
-        }
-    }
-
+    if (dgst == NULL && (dgst = ossl_pkcs7_get_default_digest(pkey)) == NULL)
+        return 0;
     if ((si = PKCS7_SIGNER_INFO_new()) == NULL)
         goto err;
     if (PKCS7_SIGNER_INFO_set(si, x509, pkey, dgst) <= 0)
