@@ -24,7 +24,6 @@
 #include "prov/provider_util.h"
 
 /* See RFC 3414, Appendix A.2.2 */
-/* See RFC 7860, Section 9.3 */
 /* See NIST SP800-135 Section 6.8 */
 static OSSL_FUNC_kdf_newctx_fn kdf_snmpkdf_new;
 static OSSL_FUNC_kdf_dupctx_fn kdf_snmpkdf_dup;
