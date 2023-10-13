@@ -566,7 +566,7 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
                 md_name = "SHA512";
                 break;
             case NID_ED448: /* Follow CMS default given in RFC8419 */
-                md_name = "SHAKE256";
+                md_name = "SHAKE256"; /* TODO make sure to use 512 bits output */
                 break;
             default: /* Fall back to SHA-256 */
                 md_name = "SHA256";
