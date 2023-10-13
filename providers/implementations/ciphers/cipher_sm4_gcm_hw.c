@@ -20,7 +20,6 @@ static int sm4_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     PROV_SM4_GCM_CTX *actx = (PROV_SM4_GCM_CTX *)ctx;
     SM4_KEY *ks = &actx->ks.ks;
 
-    ctx->ks = ks;
 # ifdef HWSM4_CAPABLE
     if (HWSM4_CAPABLE) {
         HWSM4_set_encrypt_key(key, ks);
