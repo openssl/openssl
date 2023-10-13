@@ -1874,13 +1874,13 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
 
     pkeyid = EVP_PKEY_get_id(pkey);
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
-        /* Disallow DSA for TLS 1.3 */
+    if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))) {
+        /* Disallow DSA for (D)TLS 1.3 */
         if (pkeyid == EVP_PKEY_DSA) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
             return 0;
         }
-        /* Only allow PSS for TLS 1.3 */
+        /* Only allow PSS for (D)TLS 1.3 */
         if (pkeyid == EVP_PKEY_RSA)
             pkeyid = EVP_PKEY_RSA_PSS;
     }
@@ -1894,11 +1894,11 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
         return -1;
 
     /*
-     * Check sigalgs is known. Disallow SHA1/SHA224 with TLS 1.3. Check key type
+     * Check sigalgs is known. Disallow SHA1/SHA224 with (D)TLS 1.3. Check key type
      * is consistent with signature: RSA keys can be used for RSA-PSS
      */
     if (lu == NULL
-        || (SSL_CONNECTION_IS_TLS13(s)
+        || ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))
             && (lu->hash == NID_sha1 || lu->hash == NID_sha224))
         || (pkeyid != lu->sig
         && (lu->sig != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA))) {
@@ -1923,8 +1923,8 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
             return 0;
         }
 
-        /* For TLS 1.3 or Suite B check curve matches signature algorithm */
-        if (SSL_CONNECTION_IS_TLS13(s) || tls1_suiteb(s)) {
+        /* For (D)TLS 1.3 or Suite B check curve matches signature algorithm */
+        if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)) || tls1_suiteb(s)) {
             int curve = ssl_get_EC_curve_nid(pkey);
 
             if (lu->curve != NID_undef && curve != lu->curve) {
@@ -1932,7 +1932,7 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
                 return 0;
             }
         }
-        if (!SSL_CONNECTION_IS_TLS13(s)) {
+        if (!(SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))) {
             /* Check curve matches extensions */
             if (!tls1_check_group_id(s, tls1_get_group_id(pkey), 1)) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_CURVE);
@@ -2499,7 +2499,7 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
     if (lu == NULL || !lu->enabled)
         return 0;
     /* DSA is not allowed in TLS 1.3 */
-    if (SSL_CONNECTION_IS_TLS13(s) && lu->sig == EVP_PKEY_DSA)
+    if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)) && lu->sig == EVP_PKEY_DSA)
         return 0;
     /*
      * At some point we should fully axe DSA/etc. in ClientHello as per TLS 1.3
@@ -2520,7 +2520,7 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
             || lu->sig == NID_id_GostR3410_2012_512
             || lu->sig == NID_id_GostR3410_2001) {
         /* We never allow GOST sig algs on the server with TLSv1.3 */
-        if (s->server && SSL_CONNECTION_IS_TLS13(s))
+        if (s->server && (SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)))
             return 0;
         if (!s->server
                 && SSL_CONNECTION_GET_SSL(s)->method->version == TLS_ANY_VERSION
@@ -2616,7 +2616,7 @@ int tls12_copy_sigalgs(SSL_CONNECTION *s, WPACKET *pkt,
          * If TLS 1.3 must have at least one valid TLS 1.3 message
          * signing algorithm: i.e. neither RSA nor SHA1/SHA224
          */
-        if (rv == 0 && (!SSL_CONNECTION_IS_TLS13(s)
+        if (rv == 0 && (!(SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))
             || (lu->sig != EVP_PKEY_RSA
                 && lu->hash != NID_sha1
                 && lu->hash != NID_sha224)))
@@ -2767,7 +2767,7 @@ int tls1_process_sigalgs(SSL_CONNECTION *s)
         int idx = sigptr->sig_idx;
 
         /* Ignore PKCS1 based sig algs in TLSv1.3 */
-        if (SSL_CONNECTION_IS_TLS13(s) && sigptr->sig == EVP_PKEY_RSA)
+        if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)) && sigptr->sig == EVP_PKEY_RSA)
             continue;
         /* If not disabled indicate we can explicitly sign */
         if (pvalid[idx] == 0
@@ -3030,7 +3030,7 @@ static int tls1_check_sig_alg(SSL_CONNECTION *s, X509 *x, int default_nid)
     if (default_nid)
         return sig_nid == default_nid ? 1 : 0;
 
-    if (SSL_CONNECTION_IS_TLS13(s) && s->s3.tmp.peer_cert_sigalgs != NULL) {
+    if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)) && s->s3.tmp.peer_cert_sigalgs != NULL) {
         /*
          * If we're in TLSv1.3 then we only get here if we're checking the
          * chain. If the peer has specified peer_cert_sigalgs then we use them
@@ -3220,7 +3220,7 @@ int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
             }
         }
         /* Check signature algorithm of each cert in chain */
-        if (SSL_CONNECTION_IS_TLS13(s)) {
+        if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))) {
             /*
              * We only get here if the application has called SSL_check_chain(),
              * so check_flags is always set.
@@ -3717,7 +3717,7 @@ int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs)
     s->s3.tmp.cert = NULL;
     s->s3.tmp.sigalg = NULL;
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))) {
         lu = find_sig_alg(s, NULL, NULL);
         if (lu == NULL) {
             if (!fatalerrs)
