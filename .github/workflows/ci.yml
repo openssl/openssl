@@ -183,7 +183,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION && perl configdata.pm --dump
+      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -345,7 +345,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-brotli -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -DPEDANTIC && perl configdata.pm --dump
+      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-brotli -DPEDANTIC && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -367,7 +367,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-zstd -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -DPEDANTIC && perl configdata.pm --dump
+      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-zstd -DPEDANTIC && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
