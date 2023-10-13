@@ -391,30 +391,29 @@ static int test_save_restore(int idx)
         /* verify them all */
         if (idx == 0 || i == 0) {
             if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
-                                                &data, &flags), mallocfail)
+                                                 &data, &flags), mallocfail)
                 || !TEST_int_ne(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
                 goto err;
         }
 
         if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
-                                            &data, &flags), interr)
+                                             &data, &flags), interr)
             || !TEST_str_eq(data, testdata)
             || !TEST_int_eq(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
             goto err;
 
         if (idx == 0) {
             if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
-                                                &data, &flags), mallocfail)
+                                                 &data, &flags), mallocfail)
                 || !TEST_int_ne(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
                 goto err;
         }
 
         if (!TEST_ulong_eq(ERR_get_error_all(NULL, NULL, NULL,
-                                            &data, &flags), interr)
+                                             &data, &flags), interr)
             || !TEST_str_eq(data, testdata)
             || !TEST_int_eq(flags, ERR_TXT_STRING | ERR_TXT_MALLOCED))
             goto err;
-
 
         if (!TEST_ulong_eq(ERR_get_error(), 0))
             goto err;
