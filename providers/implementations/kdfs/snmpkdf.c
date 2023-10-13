@@ -258,7 +258,7 @@ static int SNMPKDF(const EVP_MD *evp_md,
     int ret = 0;
 
     /* Limited to SHA-1 and SHA-2 hashes presently */
-    if (okey == NULL || okeylen == 0 || okeylen > SHA512_DIGEST_LENGTH)
+    if (okey == NULL || okeylen == 0)
         return 0;
 
     md = EVP_MD_CTX_new();
