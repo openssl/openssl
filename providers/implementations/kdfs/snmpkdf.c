@@ -241,8 +241,7 @@ const OSSL_DISPATCH ossl_kdf_snmpkdf_functions[] = {
       e_len -        engineID length
       password -     password
       password_len - password length
-      digest -       pointer to key output, FIPS testing limited to SHA-1.
-      okey -         output key
+      okey -         pointer to key output, FIPS testing limited to SHA-1.
       return -       1 pass 0 for error
  */
 static int SNMPKDF(const EVP_MD *evp_md,
