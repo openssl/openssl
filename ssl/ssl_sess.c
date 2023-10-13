@@ -362,6 +362,7 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
     case DTLS1_BAD_VER:
     case DTLS1_VERSION:
     case DTLS1_2_VERSION:
+    case DTLS1_3_VERSION:
         ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
         break;
     default:
@@ -456,7 +457,7 @@ int ssl_get_new_session(SSL_CONNECTION *s, int session)
     s->session = NULL;
 
     if (session) {
-        if (SSL_CONNECTION_IS_TLS13(s)) {
+        if (SSL_CONNECTION_IS_VERSION13(s)) {
             /*
              * We generate the session id while constructing the
              * NewSessionTicket in TLSv1.3.
@@ -590,7 +591,7 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
     int try_session_cache = 0;
     SSL_TICKET_STATUS r;
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         /*
          * By default we will send a new ticket. This can be overridden in the
          * ticket processing.
@@ -685,8 +686,8 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
         goto err;
     }
 
-    if (!SSL_CONNECTION_IS_TLS13(s)) {
-        /* We already did this for TLS1.3 */
+    if (!SSL_CONNECTION_IS_VERSION13(s)) {
+        /* We already did this for (D)TLS1.3 */
         SSL_SESSION_free(s->session);
         s->session = ret;
     }
@@ -698,8 +699,8 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
  err:
     if (ret != NULL) {
         SSL_SESSION_free(ret);
-        /* In TLSv1.3 s->session was already set to ret, so we NULL it out */
-        if (SSL_CONNECTION_IS_TLS13(s))
+        /* In (D)TLSv1.3 s->session was already set to ret, so we NULL it out */
+        if (SSL_CONNECTION_IS_VERSION13(s))
             s->session = NULL;
 
         if (!try_session_cache) {
