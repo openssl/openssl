@@ -1579,7 +1579,7 @@ static int ssl_print_ticket(BIO *bio, int indent, const SSL_CONNECTION *sc,
     msg += 4;
     BIO_indent(bio, indent + 2, 80);
     BIO_printf(bio, "ticket_lifetime_hint=%u\n", tick_life);
-    if (SSL_CONNECTION_IS_TLS13(sc)) {
+    if (SSL_CONNECTION_IS_VERSION13(sc)) {
         unsigned int ticket_age_add;
 
         if (msglen < 4)
@@ -1598,7 +1598,7 @@ static int ssl_print_ticket(BIO *bio, int indent, const SSL_CONNECTION *sc,
     }
     if (!ssl_print_hexbuf(bio, indent + 2, "ticket", 2, &msg, &msglen))
         return 0;
-    if (SSL_CONNECTION_IS_TLS13(sc)
+    if (SSL_CONNECTION_IS_VERSION13(sc)
         && !ssl_print_extensions(bio, indent + 2, 0,
             SSL3_MT_NEWSESSION_TICKET, &msg, &msglen))
         return 0;
