@@ -85,6 +85,7 @@ struct ossl_record_layer_st {
 };
 
 static int quic_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio);
+static int quic_free(OSSL_RECORD_LAYER *r);
 
 static int
 quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
@@ -189,7 +190,7 @@ quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     return 1;
  err:
     *retrl = NULL;
-    OPENSSL_free(rl);
+    quic_free(rl);
     return 0;
 }
 
