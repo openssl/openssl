@@ -1771,6 +1771,9 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             }
             s->d1->cookie_verified = 1;
         }
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            SSL_clear_options(ssl, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+        }
     }
 
     s->hit = 0;
