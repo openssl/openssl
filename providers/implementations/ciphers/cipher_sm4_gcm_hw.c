@@ -15,7 +15,6 @@
 #include "crypto/sm4_platform.h"
 
 # define SM4_GCM_HW_SET_KEY_CTR_FN(ks, fn_set_enc_key, fn_block, fn_ctr)       \
-    ctx->ks = ks;                                                              \
     fn_set_enc_key(key, ks);                                                   \
     CRYPTO_gcm128_init(&ctx->gcm, ks, (block128_f)fn_block);                   \
     ctx->ctr = (ctr128_f)fn_ctr;                                               \
