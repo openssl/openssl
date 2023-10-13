@@ -287,7 +287,8 @@ static int cmd_Protocol(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL_INV("TLSv1.2", SSL_OP_NO_TLSv1_2),
         SSL_FLAG_TBL_INV("TLSv1.3", SSL_OP_NO_TLSv1_3),
         SSL_FLAG_TBL_INV("DTLSv1", SSL_OP_NO_DTLSv1),
-        SSL_FLAG_TBL_INV("DTLSv1.2", SSL_OP_NO_DTLSv1_2)
+        SSL_FLAG_TBL_INV("DTLSv1.2", SSL_OP_NO_DTLSv1_2),
+        SSL_FLAG_TBL_INV("DTLSv1.3", SSL_OP_NO_DTLSv1_3)
     };
     cctx->tbl = ssl_protocol_list;
     cctx->ntbl = OSSL_NELEM(ssl_protocol_list);
