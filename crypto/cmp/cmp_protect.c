@@ -106,24 +106,18 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         OPENSSL_free(prot_part_der);
         return prot;
     } else {
-        const EVP_MD *md = ctx->digest;
-        char name[80] = "";
-
         if (ctx->pkey == NULL) {
             ERR_raise(ERR_LIB_CMP,
                       CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
             return NULL;
         }
-        if (EVP_PKEY_get_default_digest_name(ctx->pkey, name, sizeof(name)) > 0
-            && strcmp(name, "UNDEF") == 0) /* at least for Ed25519, Ed448 */
-            md = NULL;
 
         if ((prot = ASN1_BIT_STRING_new()) == NULL)
             return NULL;
         if (ASN1_item_sign_ex(ASN1_ITEM_rptr(OSSL_CMP_PROTECTEDPART),
                               msg->header->protectionAlg, /* sets X509_ALGOR */
-                              NULL, prot, &prot_part, NULL, ctx->pkey, md,
-                              ctx->libctx, ctx->propq))
+                              NULL, prot, &prot_part, NULL, ctx->pkey,
+                              ctx->digest, ctx->libctx, ctx->propq))
             return prot;
         ASN1_BIT_STRING_free(prot);
         return NULL;
