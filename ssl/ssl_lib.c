@@ -2785,7 +2785,7 @@ int SSL_key_update(SSL *s, int updatetype)
     if (sc == NULL)
         return 0;
 
-    if (!SSL_CONNECTION_IS_TLS13(sc)) {
+    if (!SSL_CONNECTION_IS_VERSION13(sc)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_WRONG_SSL_VERSION);
         return 0;
     }
@@ -2832,7 +2832,7 @@ int SSL_get_key_update_type(const SSL *s)
  */
 static int can_renegotiate(const SSL_CONNECTION *sc)
 {
-    if (SSL_CONNECTION_IS_TLS13(sc)) {
+    if (SSL_CONNECTION_IS_VERSION13(sc)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_WRONG_SSL_VERSION);
         return 0;
     }
@@ -2899,7 +2899,7 @@ int SSL_new_session_ticket(SSL *s)
     /* If we are in init because we're sending tickets, okay to send more. */
     if ((SSL_in_init(s) && sc->ext.extra_tickets_expected == 0)
             || SSL_IS_FIRST_HANDSHAKE(sc) || !sc->server
-            || !SSL_CONNECTION_IS_TLS13(sc))
+            || !SSL_CONNECTION_IS_VERSION13(sc))
         return 0;
     sc->ext.extra_tickets_expected++;
     if (!RECORD_LAYER_write_pending(&sc->rlayer) && !SSL_in_init(s))
@@ -3457,21 +3457,21 @@ const char *SSL_get_servername(const SSL *s, const int type)
     if (server) {
         /**
          * Server side
-         * In TLSv1.3 on the server SNI is not associated with the session
-         * but in TLSv1.2 or below it is.
+         * In (D)TLSv1.3 on the server SNI is not associated with the session
+         * but in (D)TLSv1.2 or below it is.
          *
          * Before the handshake:
          *  - return NULL
          *
-         * During/after the handshake (TLSv1.2 or below resumption occurred):
+         * During/after the handshake ((D)TLSv1.2 or below resumption occurred):
          * - If a servername was accepted by the server in the original
          *   handshake then it will return that servername, or NULL otherwise.
          *
-         * During/after the handshake (TLSv1.2 or below resumption did not occur):
+         * During/after the handshake ((D)TLSv1.2 or below resumption did not occur):
          * - The function will return the servername requested by the client in
          *   this handshake or NULL if none was requested.
          */
-         if (sc->hit && !SSL_CONNECTION_IS_TLS13(sc))
+         if (sc->hit && !SSL_CONNECTION_IS_VERSION13(sc))
             return sc->session->ext.hostname;
     } else {
         /**
@@ -3480,29 +3480,32 @@ const char *SSL_get_servername(const SSL *s, const int type)
          * Before the handshake:
          *  - If a servername has been set via a call to
          *    SSL_set_tlsext_host_name() then it will return that servername
-         *  - If one has not been set, but a TLSv1.2 resumption is being
+         *  - If one has not been set, but a (D)TLSv1.2 resumption is being
          *    attempted and the session from the original handshake had a
          *    servername accepted by the server then it will return that
          *    servername
          *  - Otherwise it returns NULL
          *
-         * During/after the handshake (TLSv1.2 or below resumption occurred):
+         * During/after the handshake ((D)TLSv1.2 or below resumption occurred):
          * - If the session from the original handshake had a servername accepted
          *   by the server then it will return that servername.
          * - Otherwise it returns the servername set via
          *   SSL_set_tlsext_host_name() (or NULL if it was not called).
          *
-         * During/after the handshake (TLSv1.2 or below resumption did not occur):
+         * During/after the handshake ((D)TLSv1.2 or below resumption did not occur):
          * - It will return the servername set via SSL_set_tlsext_host_name()
          *   (or NULL if it was not called).
          */
         if (SSL_in_before(s)) {
+            const int version1_3 = SSL_CONNECTION_IS_DTLS(sc) ? DTLS1_3_VERSION
+                                                              : TLS1_3_VERSION;
+
             if (sc->ext.hostname == NULL
                     && sc->session != NULL
-                    && sc->session->ssl_version != TLS1_3_VERSION)
+                    && sc->session->ssl_version != version1_3)
                 return sc->session->ext.hostname;
         } else {
-            if (!SSL_CONNECTION_IS_TLS13(sc) && sc->hit
+            if (!SSL_CONNECTION_IS_VERSION13(sc) && sc->hit
                 && sc->session->ext.hostname != NULL)
                 return sc->session->ext.hostname;
         }
@@ -3807,12 +3810,15 @@ int SSL_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
                                      const unsigned char *context,
                                      size_t contextlen)
 {
+    int version1_3;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
     if (sc == NULL)
         return -1;
 
-    if (sc->version != TLS1_3_VERSION)
+    version1_3 = SSL_CONNECTION_IS_DTLS(sc) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
+    if (sc->version != version1_3)
         return 0;
 
     return tls13_export_keying_material_early(sc, out, olen, label, llen,
@@ -4649,7 +4655,7 @@ void ssl_update_cache(SSL_CONNECTION *s, int mode)
 
     i = s->session_ctx->session_cache_mode;
     if ((i & mode) != 0
-        && (!s->hit || SSL_CONNECTION_IS_TLS13(s))) {
+        && (!s->hit || SSL_CONNECTION_IS_VERSION13(s))) {
         /*
          * Add the session to the internal cache. In server side TLSv1.3 we
          * normally don't do this because by default it's a full stateless ticket
@@ -4662,7 +4668,7 @@ void ssl_update_cache(SSL_CONNECTION *s, int mode)
          * - SSL_OP_NO_TICKET is set in which case it is a stateful ticket
          */
         if ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE) == 0
-                && (!SSL_CONNECTION_IS_TLS13(s)
+                && (!SSL_CONNECTION_IS_VERSION13(s)
                     || !s->server
                     || (s->max_early_data > 0
                         && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0)
@@ -7275,7 +7281,7 @@ int SSL_verify_client_post_handshake(SSL *ssl)
     if (sc == NULL)
         return 0;
 
-    if (!SSL_CONNECTION_IS_TLS13(sc)) {
+    if (!SSL_CONNECTION_IS_VERSION13(sc)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_WRONG_SSL_VERSION);
         return 0;
     }
