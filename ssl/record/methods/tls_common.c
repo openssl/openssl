@@ -1721,12 +1721,13 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
 
     if (rl->msg_callback != NULL) {
         unsigned char *recordstart;
+        const int version1_3 = rl->isdtls ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
         recordstart = WPACKET_get_curr(thispkt) - len - headerlen;
         rl->msg_callback(1, thiswr->rec_version, SSL3_RT_HEADER, recordstart,
                          headerlen, rl->cbarg);
 
-        if (rl->version == TLS1_3_VERSION && rl->enc_ctx != NULL) {
+        if (rl->version == version1_3 && rl->enc_ctx != NULL) {
             unsigned char ctype = thistempl->type;
 
             rl->msg_callback(1, thiswr->rec_version, SSL3_RT_INNER_CONTENT_TYPE,
