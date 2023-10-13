@@ -434,12 +434,15 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
                        int argi, long argl, int ret, size_t *processed)
 {
     BIO *out;
+    BIO_MMSG_CB_ARGS *mmsgargs;
+    size_t i;
 
     out = (BIO *)BIO_get_callback_arg(bio);
     if (out == NULL)
         return ret;
 
-    if (cmd == (BIO_CB_READ | BIO_CB_RETURN)) {
+    switch (cmd) {
+    case (BIO_CB_READ | BIO_CB_RETURN):
         if (ret > 0 && processed != NULL) {
             BIO_printf(out, "read from %p [%p] (%zu bytes => %zu (0x%zX))\n",
                        (void *)bio, (void *)argp, len, *processed, *processed);
@@ -448,7 +451,9 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
             BIO_printf(out, "read from %p [%p] (%zu bytes => %d)\n",
                        (void *)bio, (void *)argp, len, ret);
         }
-    } else if (cmd == (BIO_CB_WRITE | BIO_CB_RETURN)) {
+        break;
+
+    case (BIO_CB_WRITE | BIO_CB_RETURN):
         if (ret > 0 && processed != NULL) {
             BIO_printf(out, "write to %p [%p] (%zu bytes => %zu (0x%zX))\n",
                        (void *)bio, (void *)argp, len, *processed, *processed);
@@ -457,6 +462,51 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
             BIO_printf(out, "write to %p [%p] (%zu bytes => %d)\n",
                        (void *)bio, (void *)argp, len, ret);
         }
+        break;
+
+    case (BIO_CB_RECVMMSG | BIO_CB_RETURN):
+        mmsgargs = (BIO_MMSG_CB_ARGS *)argp;
+        if (ret > 0) {
+            for (i = 0; i < *(mmsgargs->msgs_processed); i++) {
+                BIO_MSG *msg = (BIO_MSG *)((char *)mmsgargs->msg
+                                           + (i * mmsgargs->stride));
+
+                BIO_printf(out, "read from %p [%p] (%zu bytes => %zu (0x%zX))\n",
+                           (void *)bio, (void *)msg->data, msg->data_len,
+                           msg->data_len, msg->data_len);
+                BIO_dump(out, msg->data, msg->data_len);
+            }
+        } else if (mmsgargs->num_msg > 0) {
+            BIO_MSG *msg = mmsgargs->msg;
+
+            BIO_printf(out, "read from %p [%p] (%zu bytes => %d)\n",
+                       (void *)bio, (void *)msg->data, msg->data_len, ret);
+        }
+        break;
+
+    case (BIO_CB_SENDMMSG | BIO_CB_RETURN):
+        mmsgargs = (BIO_MMSG_CB_ARGS *)argp;
+        if (ret > 0) {
+            for (i = 0; i < *(mmsgargs->msgs_processed); i++) {
+                BIO_MSG *msg = (BIO_MSG *)((char *)mmsgargs->msg
+                                           + (i * mmsgargs->stride));
+
+                BIO_printf(out, "write to %p [%p] (%zu bytes => %zu (0x%zX))\n",
+                           (void *)bio, (void *)msg->data, msg->data_len,
+                           msg->data_len, msg->data_len);
+                BIO_dump(out, msg->data, msg->data_len);
+            }
+        } else if (mmsgargs->num_msg > 0) {
+            BIO_MSG *msg = mmsgargs->msg;
+
+            BIO_printf(out, "write to %p [%p] (%zu bytes => %d)\n",
+                       (void *)bio, (void *)msg->data, msg->data_len, ret);
+        }
+        break;
+
+    default:
+        /* do nothing */
+        break;
     }
     return ret;
 }
