@@ -1347,7 +1347,7 @@ static int ssl_print_certificates(BIO *bio, const SSL_CONNECTION *sc, int server
 {
     size_t clen;
 
-    if (SSL_CONNECTION_IS_TLS13(sc)
+    if (SSL_CONNECTION_IS_VERSION13(sc)
             && !ssl_print_hexbuf(bio, indent, "context", 1, &msg, &msglen))
         return 0;
 
@@ -1361,7 +1361,7 @@ static int ssl_print_certificates(BIO *bio, const SSL_CONNECTION *sc, int server
             || (!server && sc->ext.client_cert_type == TLSEXT_cert_type_rpk)) {
         if (!ssl_print_raw_public_key(bio, &sc->ssl, server, indent, &msg, &clen))
             return 0;
-        if (SSL_CONNECTION_IS_TLS13(sc)
+        if (SSL_CONNECTION_IS_VERSION13(sc)
             && !ssl_print_extensions(bio, indent + 2, server,
                                      SSL3_MT_CERTIFICATE, &msg, &clen))
             return 0;
@@ -1372,7 +1372,7 @@ static int ssl_print_certificates(BIO *bio, const SSL_CONNECTION *sc, int server
     while (clen > 0) {
         if (!ssl_print_certificate(bio, sc, indent + 2, &msg, &clen))
             return 0;
-        if (SSL_CONNECTION_IS_TLS13(sc)
+        if (SSL_CONNECTION_IS_VERSION13(sc)
             && !ssl_print_extensions(bio, indent + 2, server,
                                      SSL3_MT_CERTIFICATE, &msg, &clen))
             return 0;
@@ -1458,7 +1458,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL_CONNECTION *sc
     size_t xlen;
     unsigned int sigalg;
 
-    if (SSL_CONNECTION_IS_TLS13(sc)) {
+    if (SSL_CONNECTION_IS_VERSION13(sc)) {
         if (!ssl_print_hexbuf(bio, indent, "request_context", 1, &msg, &msglen))
             return 0;
         if (!ssl_print_extensions(bio, indent, 1,
@@ -1533,7 +1533,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL_CONNECTION *sc
         xlen -= dlen + 2;
         msg += dlen;
     }
-    if (SSL_CONNECTION_IS_TLS13(sc)) {
+    if (SSL_CONNECTION_IS_VERSION13(sc)) {
         if (!ssl_print_hexbuf(bio, indent, "request_extensions", 2,
                               &msg, &msglen))
             return 0;
