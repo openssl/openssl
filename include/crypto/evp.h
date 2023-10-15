@@ -949,6 +949,14 @@ int evp_keymgmt_get_number(const EVP_KEYMGMT *keymgmt);
 int evp_mac_get_number(const EVP_MAC *mac);
 int evp_md_get_number(const EVP_MD *md);
 int evp_rand_get_number(const EVP_RAND *rand);
+int evp_rand_can_seed(EVP_RAND_CTX *ctx);
+size_t evp_rand_get_seed(EVP_RAND_CTX *ctx,
+                         unsigned char **buffer,
+                         int entropy, size_t min_len, size_t max_len,
+                         int prediction_resistance,
+                         const unsigned char *adin, size_t adin_len);
+void evp_rand_clear_seed(EVP_RAND_CTX *ctx,
+                         unsigned char *buffer, size_t b_len);
 int evp_signature_get_number(const EVP_SIGNATURE *signature);
 
 #endif /* OSSL_CRYPTO_EVP_H */
