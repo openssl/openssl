@@ -177,33 +177,32 @@ static size_t seed_get_seed(void *vseed, unsigned char **pout,
                             int prediction_resistance,
                             const unsigned char *adin, size_t adin_len)
 {
-    size_t bytes_needed;
-    unsigned char *p;
+    size_t ret = 0;
+    size_t entropy_available = 0;
+    size_t i;
+    RAND_POOL *pool;
 
-    /*
-     * Figure out how many bytes we need.
-     * This assumes that the seed sources provide eight bits of entropy
-     * per byte.  For lower quality sources, the formula will need to be
-     * different.
-     */
-    bytes_needed = entropy >= 0 ? (entropy + 7) / 8 : 0;
-    if (bytes_needed < min_len)
-        bytes_needed = min_len;
-    if (bytes_needed > max_len) {
+    pool = ossl_rand_pool_new(entropy, 1, min_len, max_len);
+    if (pool == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_RAND_LIB);
+        return 0;
+    }
+
+    /* Get entropy by polling system entropy sources. */
+    entropy_available = ossl_pool_acquire_entropy(pool);
+
+    if (entropy_available > 0) {
+        ret = ossl_rand_pool_length(pool);
+        *pout = ossl_rand_pool_detach(pool);
+
+        /* xor the additional data into the output */
+        for (i = 0 ; i < adin_len ; ++i)
+            (*pout)[i % ret] ^= adin[i];
+    } else {
         ERR_raise(ERR_LIB_PROV, PROV_R_ENTROPY_SOURCE_STRENGTH_TOO_WEAK);
-        return 0;
     }
-
-    p = OPENSSL_secure_malloc(bytes_needed);
-    if (p == NULL)
-        return 0;
-    if (seed_src_generate(vseed, p, bytes_needed, 0, prediction_resistance,
-                          adin, adin_len) != 0) {
-        *pout = p;
-        return bytes_needed;
-    }
-    OPENSSL_secure_clear_free(p, bytes_needed);
-    return 0;
+    ossl_rand_pool_free(pool);
+    return ret;
 }
 
 static void seed_clear_seed(ossl_unused void *vdrbg,
