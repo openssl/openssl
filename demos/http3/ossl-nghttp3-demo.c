@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 {
     int ret = 1;
     SSL_CTX *ctx = NULL;
-    H3_CONN *conn = NULL;
+    OSSL_DEMO_H3_CONN *conn = NULL;
     nghttp3_nv nva[16];
     nghttp3_callbacks callbacks = {0};
     size_t num_nv = 0;
@@ -110,8 +110,8 @@ int main(int argc, char **argv)
     callbacks.end_stream    = on_end_stream;
 
     /* Create connection. */
-    if ((conn = H3_CONN_new_for_addr(ctx, addr, &callbacks,
-                                     NULL, NULL)) == NULL) {
+    if ((conn = OSSL_DEMO_H3_CONN_new_for_addr(ctx, addr, &callbacks,
+                                               NULL, NULL)) == NULL) {
         ERR_raise_data(ERR_LIB_USER, ERR_R_OPERATION_FAIL,
                        "cannot create HTTP/3 connection");
         goto err;
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
     make_nv(&nva[num_nv++], "user-agent", "OpenSSL-Demo/nghttp3");
 
     /* Submit request. */
-    if (!H3_CONN_submit_request(conn, nva, num_nv, NULL, NULL)) {
+    if (!OSSL_DEMO_H3_CONN_submit_request(conn, nva, num_nv, NULL, NULL)) {
         ERR_raise_data(ERR_LIB_USER, ERR_R_OPERATION_FAIL,
                        "cannot submit HTTP/3 request");
         goto err;
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
 
     /* Wait for request to complete. */
     while (!done)
-        if (!H3_CONN_handle_events(conn)) {
+        if (!OSSL_DEMO_H3_CONN_handle_events(conn)) {
             ERR_raise_data(ERR_LIB_USER, ERR_R_OPERATION_FAIL,
                            "cannot handle events");
             goto err;
@@ -144,7 +144,7 @@ err:
     if (ret != 0)
         ERR_print_errors_fp(stderr);
 
-    H3_CONN_free(conn);
+    OSSL_DEMO_H3_CONN_free(conn);
     SSL_CTX_free(ctx);
     return ret;
 }
