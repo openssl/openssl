@@ -3828,10 +3828,13 @@ skip_hmac:
             loopargs[i].kem_out[testnum] = out;
             loopargs[i].kem_send_secret[testnum] = send_secret;
             loopargs[i].kem_rcv_secret[testnum] = rcv_secret;
+            EVP_PKEY_free(pkey);
+            pkey = NULL;
             break;
 
         kem_err_break:
             ERR_print_errors(bio_err);
+            EVP_PKEY_free(pkey);
             op_count = 1;
             kem_checks = 0;
             break;
@@ -4005,10 +4008,13 @@ skip_hmac:
             loopargs[i].sig_max_sig_len[testnum] = max_sig_len;
             loopargs[i].sig_act_sig_len[testnum] = sig_len;
             loopargs[i].sig_sig[testnum] = sig;
+            EVP_PKEY_free(pkey);
+            pkey = NULL;
             break;
 
         sig_err_break:
             ERR_print_errors(bio_err);
+            EVP_PKEY_free(pkey);
             op_count = 1;
             sig_checks = 0;
             break;
@@ -4295,6 +4301,8 @@ skip_hmac:
         for (k = 0; k < RSA_NUM; k++) {
             EVP_PKEY_CTX_free(loopargs[i].rsa_sign_ctx[k]);
             EVP_PKEY_CTX_free(loopargs[i].rsa_verify_ctx[k]);
+            EVP_PKEY_CTX_free(loopargs[i].rsa_encrypt_ctx[k]);
+            EVP_PKEY_CTX_free(loopargs[i].rsa_decrypt_ctx[k]);
         }
 #ifndef OPENSSL_NO_DH
         OPENSSL_free(loopargs[i].secret_ff_a);
