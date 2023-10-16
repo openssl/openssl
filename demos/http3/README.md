@@ -24,7 +24,7 @@ trusted root CA certificates can be found.
 After building by running `make`, run `./ossl-nghttp3-demo` with a hostname and
 port as the sole argument:
 
-```
+```shell
 $ make
 $ ./ossl-nghttp3-demo www.google.com:443
 ```
