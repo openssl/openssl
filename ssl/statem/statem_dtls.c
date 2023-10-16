@@ -288,9 +288,19 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
                     p += DTLS1_HM_HEADER_LENGTH;
                     xlen = written - DTLS1_HM_HEADER_LENGTH;
                 }
-
-                if (!ssl3_finish_mac(s, p, xlen))
-                    return -1;
+                /*
+                 * should not be done for 'Hello Request's, but in that case we'll
+                 * ignore the result anyway
+                 * DTLS1.3 KeyUpdate and NewSessionTicket do not need to be added
+                 */
+                if (!SSL_CONNECTION_IS_DTLS13(s)
+                    || (s->statem.hand_state != TLS_ST_SW_SESSION_TICKET
+                        && s->statem.hand_state != TLS_ST_CW_KEY_UPDATE
+                        && s->statem.hand_state != TLS_ST_SW_KEY_UPDATE)) {
+                    if (!ssl3_finish_mac(s, p, xlen)) {
+                        return -1;
+                    }
+                }
             }
 
             if (written == s->init_num) {
