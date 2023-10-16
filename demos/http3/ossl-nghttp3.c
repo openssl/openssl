@@ -421,6 +421,10 @@ OSSL_DEMO_H3_CONN *OSSL_DEMO_H3_CONN_new_for_addr(SSL_CTX *ctx, const char *addr
     if (SSL_set1_host(qconn, bare_hostname) <= 0)
         goto err;
 
+    /* Configure SNI */
+    if (!SSL_set_tlsext_host_name(qconn, bare_hostname))
+        goto err;
+
     conn = OSSL_DEMO_H3_CONN_new_for_conn(qconn_bio, callbacks,
                                           settings, user_data);
     if (conn == NULL)
