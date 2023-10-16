@@ -245,9 +245,15 @@ H3_CONN *H3_CONN_new_for_conn(BIO *qconn_bio,
         goto err;
     }
 
+    /* Create the map of stream IDs to H3_STREAM structures. */
     if ((conn->streams = lh_H3_STREAM_new(h3_stream_hash, h3_stream_eq)) == NULL)
         goto err;
 
+    /*
+     * If the application has not started connecting yet, helpfully
+     * auto-configure ALPN. If the application wants to initiate the connection
+     * itself, it must take care of this itself.
+     */
     if (SSL_in_before(conn->qconn))
         if (SSL_set_alpn_protos(conn->qconn, alpn, sizeof(alpn))) {
             /* SSL_set_alpn_protos returns 1 on failure */
@@ -256,14 +262,33 @@ H3_CONN *H3_CONN_new_for_conn(BIO *qconn_bio,
             goto err;
         }
 
+    /*
+     * We use the QUIC stack in non-blocking mode so that we can react to
+     * incoming data on different streams, and e.g. incoming streams initiated
+     * by a server, as and when events occur.
+     */
     BIO_set_nbio(conn->qconn_bio, 1);
 
+    /*
+     * Disable default stream mode and create all streams explicitly. Each QUIC
+     * stream will be represented by its own QUIC stream SSL object (QSSO). This
+     * also automatically enables us to accept incoming streams (see
+     * SSL_set_incoming_stream_policy(3)).
+     */
     if (!SSL_set_default_stream_mode(conn->qconn, SSL_DEFAULT_STREAM_MODE_NONE)) {
         ERR_raise_data(ERR_LIB_USER, ERR_R_INTERNAL_ERROR,
                        "failed to configure default stream mode");
         goto err;
     }
 
+    /*
+     * HTTP/3 requires a couple of unidirectional management streams: a control
+     * stream and some QPACK state management streams for each side of a
+     * connection. These are the instances on our side (with us sending); the
+     * server will also create its own equivalent unidirectional streams on its
+     * side, which we handle subsequently as they come in (see SSL_accept_stream
+     * in the event handling code below).
+     */
     if ((s_ctl_send = h3_conn_create_stream(conn, H3_STREAM_TYPE_CTRL_SEND)) == NULL)
         goto err;
 
@@ -281,6 +306,10 @@ H3_CONN *H3_CONN_new_for_conn(BIO *qconn_bio,
     if (callbacks != NULL)
         intl_callbacks = *callbacks;
 
+    /*
+     * We need to do some of our own processing when many of these events occur,
+     * so we note the original callback functions and forward appropriately.
+     */
     conn->recv_data_cb          = intl_callbacks.recv_data;
     conn->stream_close_cb       = intl_callbacks.stream_close;
     conn->stop_sending_cb       = intl_callbacks.stop_sending;
@@ -293,6 +322,7 @@ H3_CONN *H3_CONN_new_for_conn(BIO *qconn_bio,
     intl_callbacks.reset_stream     = h3_conn_reset_stream;
     intl_callbacks.deferred_consume = h3_conn_deferred_consume;
 
+    /* Create the HTTP/3 client state. */
     ec = nghttp3_conn_client_new(&conn->h3conn, &intl_callbacks, settings,
                                  NULL, conn);
     if (ec < 0) {
@@ -302,6 +332,14 @@ H3_CONN *H3_CONN_new_for_conn(BIO *qconn_bio,
         goto err;
     }
 
+    /*
+     * Tell the HTTP/3 stack which stream IDs are used for our outgoing control
+     * and QPACK streams. Note that we don't have to tell the HTTP/3 stack what
+     * IDs are used for incoming streams as this is inferred automatically from
+     * the stream type byte which starts every incoming unidirectional stream,
+     * so it will autodetect the correct stream IDs for the incoming control and
+     * QPACK streams initiated by the server.
+     */
     ec = nghttp3_conn_bind_control_stream(conn->h3conn, s_ctl_send->id);
     if (ec < 0) {
         ERR_raise_data(ERR_LIB_USER, ERR_R_INTERNAL_ERROR,
@@ -346,9 +384,14 @@ H3_CONN *H3_CONN_new_for_addr(SSL_CTX *ctx, const char *addr,
     if ((qconn_bio = BIO_new_ssl_connect(ctx)) == NULL)
         goto err;
 
+    /* Pass the 'hostname:port' string into the ssl_connect BIO. */
     if (BIO_set_conn_hostname(qconn_bio, addr) == 0)
         goto err;
 
+    /*
+     * Get the 'bare' hostname out of the ssl_connect BIO. This is the hostname
+     * without the port.
+     */
     bare_hostname = BIO_get_conn_hostname(qconn_bio);
     if (bare_hostname == NULL)
         goto err;
@@ -356,6 +399,7 @@ H3_CONN *H3_CONN_new_for_addr(SSL_CTX *ctx, const char *addr,
     if (BIO_get_ssl(qconn_bio, &qconn) == 0)
         goto err;
 
+    /* Set the hostname we will validate the X.509 certificate against. */
     if (SSL_set1_host(qconn, bare_hostname) <= 0)
         goto err;
 
@@ -394,11 +438,20 @@ static void h3_conn_pump_stream(H3_STREAM *s, void *conn_)
     uint64_t aec;
 
     if (!conn->pump_res)
+        /*
+         * Handling of a previous stream in the iteration over all streams
+         * failed, so just do nothing.
+         */
         return;
 
     for (;;) {
-        if (s->s == NULL
+        if (s->s == NULL /* If we already did STOP_SENDING, ignore this stream. */
+            /* If this is a write-only stream, there is no read data to check. */
             || SSL_get_stream_read_state(s->s) == SSL_STREAM_STATE_WRONG_DIR
+            /*
+             * If we already got a FIN for this stream, there is nothing more to
+             * do for it.
+             */
             || s->done_recv_fin)
             break;
 
@@ -453,6 +506,11 @@ static void h3_conn_pump_stream(H3_STREAM *s, void *conn_)
         if (s->buf_cur == s->buf_total)
             break;
 
+        /*
+         * This function is confusingly named as it is is named from nghttp3's
+         * 'perspective'; it is used to pass data *into* the HTTP/3 stack which
+         * has been received from the network.
+         */
         assert(conn->consumed_app_data == 0);
         ec = nghttp3_conn_read_stream(conn->h3conn, s->id, s->buf + s->buf_cur,
                                       s->buf_total - s->buf_cur, /*fin=*/0);
@@ -463,6 +521,13 @@ static void h3_conn_pump_stream(H3_STREAM *s, void *conn_)
             goto err;
         }
 
+        /*
+         * read_stream reports the data it consumes from us in two different
+         * ways; the non-application data is returned as a number of bytes 'ec'
+         * above, but the number of bytes of application data has to be recorded
+         * by our callback. We sum the two to determine the total number of
+         * bytes which nghttp3 consumed.
+         */
         consumed = ec + conn->consumed_app_data;
         assert(consumed <= s->buf_total - s->buf_cur);
         s->buf_cur += consumed;
@@ -486,20 +551,38 @@ int H3_CONN_handle_events(H3_CONN *conn)
     if (conn == NULL)
         return 0;
 
-    /* Check for new incoming streams */
+    /*
+     * We handle events by doing three things:
+     *
+     * 1. Handle new incoming streams
+     * 2. Pump outgoing data from the HTTP/3 stack to the QUIC engine
+     * 3. Pump incoming data from the QUIC engine to the HTTP/3 stack
+     */
+
+    /* 1. Check for new incoming streams */
     for (;;) {
         if ((snew = SSL_accept_stream(conn->qconn, SSL_ACCEPT_STREAM_NO_BLOCK)) == NULL)
             break;
 
+        /*
+         * Each new incoming stream gets wrapped into an H3_STREAM object and
+         * added into our stream ID map.
+         */
         if (h3_conn_accept_stream(conn, snew) == NULL) {
             SSL_free(snew);
             return 0;
         }
     }
 
-    /* Pump outgoing data from HTTP/3 engine to QUIC. */
+    /* 2. Pump outgoing data from HTTP/3 engine to QUIC. */
     for (;;) {
-        /* Get a number of send vectors from the HTTP/3 engine. */
+        /*
+         * Get a number of send vectors from the HTTP/3 engine.
+         *
+         * Note that this function is confusingly named as it is named from
+         * nghttp3's 'perspective': this outputs pointers to data which nghttp3
+         * wants to *write* to the network.
+         */
         ec = nghttp3_conn_writev_stream(conn->h3conn, &stream_id, &fin,
                                         vecs, ARRAY_LEN(vecs));
         if (ec < 0)
@@ -523,9 +606,14 @@ int H3_CONN_handle_events(H3_CONN *conn)
                 continue;
 
             if (s->s == NULL) {
+                /* Already did STOP_SENDING and threw away stream, ignore */
                 written = vecs[i].len;
             } else if (!SSL_write_ex(s->s, vecs[i].base, vecs[i].len, &written)) {
                 if (SSL_get_error(s->s, 0) == SSL_ERROR_WANT_WRITE) {
+                    /*
+                     * We have filled our send buffer so tell nghttp3 to stop
+                     * generating more data; we have to do this explicitly.
+                     */
                     written = 0;
                     nghttp3_conn_block_stream(conn->h3conn, stream_id);
                 } else {
@@ -534,15 +622,30 @@ int H3_CONN_handle_events(H3_CONN *conn)
                     return 0;
                 }
             } else {
+                /*
+                 * Tell nghttp3 it can resume generating more data in case we
+                 * previously called block_stream.
+                 */
                 nghttp3_conn_unblock_stream(conn->h3conn, stream_id);
             }
 
             total_written += written;
             if (written > 0) {
+                /*
+                 * Tell nghttp3 we have consumed the data it output when we
+                 * called writev_stream, otherwise subsequent calls to
+                 * writev_stream will output the same data.
+                 */
                 ec = nghttp3_conn_add_write_offset(conn->h3conn, stream_id, written);
                 if (ec < 0)
                     return 0;
 
+                /*
+                 * Tell nghttp3 it can free the buffered data because we will
+                 * not need it again. In our case we can always do this right
+                 * away because we copy the data into our QUIC send buffers
+                 * rather than simply storing a reference to it.
+                 */
                 ec = nghttp3_conn_add_ack_offset(conn->h3conn, stream_id, written);
                 if (ec < 0)
                     return 0;
@@ -550,8 +653,18 @@ int H3_CONN_handle_events(H3_CONN *conn)
         }
 
         if (fin && total_written == total_len) {
+            /*
+             * We have written all the data so mark the stream as concluded
+             * (FIN).
+             */
             SSL_stream_conclude(s->s, 0);
+
             if (total_len == 0) {
+                /*
+                 * As a special case, if nghttp3 requested to write a
+                 * zero-length stream with a FIN, we have to tell it we did this
+                 * by calling add_write_offset(0).
+                 */
                 ec = nghttp3_conn_add_write_offset(conn->h3conn, stream_id, 0);
                 if (ec < 0)
                     return 0;
@@ -559,8 +672,8 @@ int H3_CONN_handle_events(H3_CONN *conn)
         }
     }
 
-    /* Pump incoming data from QUIC to HTTP/3 engine. */
-    conn->pump_res = 1;
+    /* 3. Pump incoming data from QUIC to HTTP/3 engine. */
+    conn->pump_res = 1; /* cleared in below call if an error occurs */
     lh_H3_STREAM_doall_arg(conn->streams, h3_conn_pump_stream, conn);
     if (!conn->pump_res)
         return 0;
@@ -581,6 +694,7 @@ int H3_CONN_submit_request(H3_CONN *conn, const nghttp3_nv *nva, size_t nvlen,
         return 0;
     }
 
+    /* Each HTTP/3 request is represented by a stream. */
     if ((s_req = h3_conn_create_stream(conn, H3_STREAM_TYPE_REQ)) == NULL)
         goto err;
 
