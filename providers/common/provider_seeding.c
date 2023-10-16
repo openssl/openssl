@@ -14,9 +14,11 @@
 static OSSL_FUNC_get_entropy_fn *c_get_entropy = NULL;
 static OSSL_FUNC_get_user_entropy_fn *c_get_user_entropy = NULL;
 static OSSL_FUNC_cleanup_entropy_fn *c_cleanup_entropy = NULL;
+static OSSL_FUNC_cleanup_user_entropy_fn *c_cleanup_user_entropy = NULL;
 static OSSL_FUNC_get_nonce_fn *c_get_nonce = NULL;
 static OSSL_FUNC_get_user_nonce_fn *c_get_user_nonce = NULL;
 static OSSL_FUNC_cleanup_nonce_fn *c_cleanup_nonce = NULL;
+static OSSL_FUNC_cleanup_user_nonce_fn *c_cleanup_user_nonce = NULL;
 
 #ifdef FIPS_MODULE
 /*
@@ -56,6 +58,9 @@ int ossl_prov_seeding_from_dispatch(const OSSL_DISPATCH *fns)
         case OSSL_FUNC_CLEANUP_ENTROPY:
             set_func(c_cleanup_entropy, OSSL_FUNC_cleanup_entropy(fns));
             break;
+        case OSSL_FUNC_CLEANUP_USER_ENTROPY:
+            set_func(c_cleanup_user_entropy, OSSL_FUNC_cleanup_user_entropy(fns));
+            break;
         case OSSL_FUNC_GET_NONCE:
             set_func(c_get_nonce, OSSL_FUNC_get_nonce(fns));
             break;
@@ -64,6 +69,9 @@ int ossl_prov_seeding_from_dispatch(const OSSL_DISPATCH *fns)
             break;
         case OSSL_FUNC_CLEANUP_NONCE:
             set_func(c_cleanup_nonce, OSSL_FUNC_cleanup_nonce(fns));
+            break;
+        case OSSL_FUNC_CLEANUP_USER_NONCE:
+            set_func(c_cleanup_user_nonce, OSSL_FUNC_cleanup_user_nonce(fns));
             break;
         }
 #undef set_func
@@ -86,8 +94,12 @@ size_t ossl_prov_get_entropy(PROV_CTX *prov_ctx, unsigned char **pout,
 void ossl_prov_cleanup_entropy(PROV_CTX *prov_ctx, unsigned char *buf,
                                size_t len)
 {
-    if (c_cleanup_entropy != NULL)
-        c_cleanup_entropy(CORE_HANDLE(prov_ctx), buf, len);
+    const OSSL_CORE_HANDLE *handle = CORE_HANDLE(prov_ctx);
+
+    if (c_cleanup_user_entropy != NULL)
+        c_cleanup_user_entropy(handle, buf, len);
+    else if (c_cleanup_entropy != NULL)
+        c_cleanup_entropy(handle, buf, len);
 }
 
 size_t ossl_prov_get_nonce(PROV_CTX *prov_ctx, unsigned char **pout,
@@ -105,6 +117,10 @@ size_t ossl_prov_get_nonce(PROV_CTX *prov_ctx, unsigned char **pout,
 
 void ossl_prov_cleanup_nonce(PROV_CTX *prov_ctx, unsigned char *buf, size_t len)
 {
-    if (c_cleanup_nonce != NULL)
-        c_cleanup_nonce(CORE_HANDLE(prov_ctx), buf, len);
+    const OSSL_CORE_HANDLE *handle = CORE_HANDLE(prov_ctx);
+
+    if (c_cleanup_user_nonce != NULL)
+        c_cleanup_user_nonce(handle, buf, len);
+    else if (c_cleanup_nonce != NULL)
+        c_cleanup_nonce(handle, buf, len);
 }
