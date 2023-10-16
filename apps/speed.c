@@ -3830,7 +3830,7 @@ skip_hmac:
             loopargs[i].kem_rcv_secret[testnum] = rcv_secret;
             EVP_PKEY_free(pkey);
             pkey = NULL;
-            break;
+            continue;
 
         kem_err_break:
             ERR_print_errors(bio_err);
@@ -4010,7 +4010,7 @@ skip_hmac:
             loopargs[i].sig_sig[testnum] = sig;
             EVP_PKEY_free(pkey);
             pkey = NULL;
-            break;
+            continue;
 
         sig_err_break:
             ERR_print_errors(bio_err);
