@@ -1084,6 +1084,12 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
 {
     OSSL_PARAM rsa_params[2], *p = rsa_params;
+    const char *empty = "";
+    /*
+     * Needed as we swap label with empty if it is NULL, and label is
+     * freed at the end of this function.
+     */
+    void *plabel = label;
     int ret;
 
     if (ctx == NULL || !EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
@@ -1096,9 +1102,13 @@ int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
     if (!EVP_PKEY_CTX_is_a(ctx, "RSA"))
         return -1;
 
+    /* Accept NULL for backward compatibility */
+    if (label == NULL && llen == 0)
+        plabel = (void *)empty;
+
     /* Cast away the const. This is read only so should be safe */
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL,
-                                             (void *)label, (size_t)llen);
+                                             (void *)plabel, (size_t)llen);
     *p++ = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, rsa_params);
