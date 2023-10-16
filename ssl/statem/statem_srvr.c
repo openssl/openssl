@@ -1608,6 +1608,8 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
         }
 
         if (SSL_CONNECTION_IS_DTLS(s)) {
+            int minversion, maxversion;
+
             if (!PACKET_get_length_prefixed_1(pkt, &cookie)) {
                 SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
                 goto err;
@@ -1618,16 +1620,22 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
+
             /*
-             * If we require cookies and this ClientHello doesn't contain one,
-             * just return since we do not want to allocate any memory yet.
-             * So check cookie length...
+             * If the connection supports DTLSv1.3:
+             *      We continue to process ClientHello's without cookies
+             *
+             * Otherwise, if we require cookies and this ClientHello doesn't
+             * contain one:
+             *      Return since we do not want to allocate any memory yet
              */
-            if (SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE) {
-                if (clienthello->dtls_cookie_len == 0) {
-                    OPENSSL_free(clienthello);
-                    return MSG_PROCESS_FINISHED_READING;
-                }
+            if ((SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE)
+                    && clienthello->dtls_cookie_len == 0
+                    && ossl_assert(ssl_get_min_max_version(s, &minversion,
+                                                           &maxversion, NULL) == 0)
+                    && ssl_version_cmp(s, maxversion, DTLS1_3_VERSION) < 0) {
+                OPENSSL_free(clienthello);
+                return MSG_PROCESS_FINISHED_READING;
             }
         }
 
@@ -1668,6 +1676,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
         /* SSLfatal already been called */
         goto err;
     }
+
     s->clienthello = clienthello;
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
@@ -1753,10 +1762,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_NOT_ON_RECORD_BOUNDARY);
         goto err;
     }
-
     if (SSL_CONNECTION_IS_DTLS(s)) {
-        /* Empty cookie was already handled above by returning early. */
-        if (SSL_get_options(ssl) & SSL_OP_COOKIE_EXCHANGE) {
+        if ((SSL_get_options(ssl) & SSL_OP_COOKIE_EXCHANGE) && clienthello->dtls_cookie_len != 0) {
             if (sctx->app_verify_cookie_cb != NULL) {
                 if (sctx->app_verify_cookie_cb(ussl, clienthello->dtls_cookie,
                                                clienthello->dtls_cookie_len) == 0) {
