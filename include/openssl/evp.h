@@ -35,6 +35,7 @@
 # define EVP_MAX_KEY_LENGTH              64
 # define EVP_MAX_IV_LENGTH               16
 # define EVP_MAX_BLOCK_LENGTH            32
+# define EVP_MAX_AEAD_TAG_LENGTH         16
 
 # define PKCS5_SALT_LEN                  8
 /* Default PKCS#5 iteration count */

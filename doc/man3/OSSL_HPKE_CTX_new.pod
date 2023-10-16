@@ -222,6 +222,10 @@ functions below. The constant I<OSSL_HPKE_MAX_PARMLEN> is defined as the limit
 of this value.  (We chose 66 octets so that we can validate all the test
 vectors present in RFC9180, Appendix A.)
 
+In accordance with RFC9180, section 9.5, we define a constant
+I<OSSL_HPKE_MIN_PSKLEN> with a value of 32 for the minimum length of a
+pre-shared key, passed in I<psklen>.
+
 While RFC9180 also RECOMMENDS a 64 octet limit for the I<infolen> parameter,
 that is not sufficient for TLS Encrypted ClientHello (ECH) processing, so we
 enforce a limit of I<OSSL_HPKE_MAX_INFOLEN> with a value of 1024 as the limit
