@@ -1854,12 +1854,14 @@ OSSL_FUNC_BIO_free_fn ossl_core_bio_free;
 OSSL_FUNC_BIO_vprintf_fn ossl_core_bio_vprintf;
 OSSL_FUNC_BIO_vsnprintf_fn BIO_vsnprintf;
 static OSSL_FUNC_self_test_cb_fn core_self_test_get_callback;
-static OSSL_FUNC_get_user_entropy_fn rand_get_user_entropy;
 static OSSL_FUNC_get_entropy_fn rand_get_entropy;
+static OSSL_FUNC_get_user_entropy_fn rand_get_user_entropy;
 static OSSL_FUNC_cleanup_entropy_fn rand_cleanup_entropy;
-static OSSL_FUNC_get_user_nonce_fn rand_get_user_nonce;
+static OSSL_FUNC_cleanup_user_entropy_fn rand_cleanup_user_entropy;
 static OSSL_FUNC_get_nonce_fn rand_get_nonce;
+static OSSL_FUNC_get_user_nonce_fn rand_get_user_nonce;
 static OSSL_FUNC_cleanup_nonce_fn rand_cleanup_nonce;
+static OSSL_FUNC_cleanup_user_nonce_fn rand_cleanup_user_nonce;
 #endif
 OSSL_FUNC_CRYPTO_malloc_fn CRYPTO_malloc;
 OSSL_FUNC_CRYPTO_zalloc_fn CRYPTO_zalloc;
@@ -2043,6 +2045,13 @@ static void rand_cleanup_entropy(const OSSL_CORE_HANDLE *handle,
                               buf, len);
 }
 
+static void rand_cleanup_user_entropy(const OSSL_CORE_HANDLE *handle,
+                                      unsigned char *buf, size_t len)
+{
+    ossl_rand_cleanup_user_entropy((OSSL_LIB_CTX *)core_get_libctx(handle),
+                                   buf, len);
+}
+
 static size_t rand_get_nonce(const OSSL_CORE_HANDLE *handle,
                              unsigned char **pout,
                              size_t min_len, size_t max_len,
@@ -2066,6 +2075,13 @@ static void rand_cleanup_nonce(const OSSL_CORE_HANDLE *handle,
 {
     ossl_rand_cleanup_nonce((OSSL_LIB_CTX *)core_get_libctx(handle),
                             buf, len);
+}
+
+static void rand_cleanup_user_nonce(const OSSL_CORE_HANDLE *handle,
+                               unsigned char *buf, size_t len)
+{
+    ossl_rand_cleanup_user_nonce((OSSL_LIB_CTX *)core_get_libctx(handle),
+                                 buf, len);
 }
 
 static const char *core_provider_get0_name(const OSSL_CORE_HANDLE *prov)
@@ -2162,11 +2178,13 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_BIO_VSNPRINTF, (void (*)(void))BIO_vsnprintf },
     { OSSL_FUNC_SELF_TEST_CB, (void (*)(void))core_self_test_get_callback },
     { OSSL_FUNC_GET_ENTROPY, (void (*)(void))rand_get_entropy },
-    { OSSL_FUNC_CLEANUP_ENTROPY, (void (*)(void))rand_cleanup_entropy },
-    { OSSL_FUNC_GET_NONCE, (void (*)(void))rand_get_nonce },
-    { OSSL_FUNC_CLEANUP_NONCE, (void (*)(void))rand_cleanup_nonce },
     { OSSL_FUNC_GET_USER_ENTROPY, (void (*)(void))rand_get_user_entropy },
+    { OSSL_FUNC_CLEANUP_ENTROPY, (void (*)(void))rand_cleanup_entropy },
+    { OSSL_FUNC_CLEANUP_USER_ENTROPY, (void (*)(void))rand_cleanup_user_entropy },
+    { OSSL_FUNC_GET_NONCE, (void (*)(void))rand_get_nonce },
     { OSSL_FUNC_GET_USER_NONCE, (void (*)(void))rand_get_user_nonce },
+    { OSSL_FUNC_CLEANUP_NONCE, (void (*)(void))rand_cleanup_nonce },
+    { OSSL_FUNC_CLEANUP_USER_NONCE, (void (*)(void))rand_cleanup_user_nonce },
 #endif
     { OSSL_FUNC_CRYPTO_MALLOC, (void (*)(void))CRYPTO_malloc },
     { OSSL_FUNC_CRYPTO_ZALLOC, (void (*)(void))CRYPTO_zalloc },

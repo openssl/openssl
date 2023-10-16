@@ -77,6 +77,12 @@ void ossl_rand_cleanup_entropy(ossl_unused OSSL_LIB_CTX *ctx,
     OPENSSL_secure_clear_free(buf, len);
 }
 
+void ossl_rand_cleanup_user_entropy(OSSL_LIB_CTX *ctx,
+                                    unsigned char *buf, size_t len)
+{
+    OPENSSL_secure_clear_free(buf, len);
+}
+
 size_t ossl_rand_get_nonce(ossl_unused OSSL_LIB_CTX *ctx,
                            unsigned char **pout,
                            size_t min_len, ossl_unused size_t max_len,
@@ -127,6 +133,12 @@ size_t ossl_rand_get_user_nonce(OSSL_LIB_CTX *ctx,
 
 void ossl_rand_cleanup_nonce(ossl_unused OSSL_LIB_CTX *ctx,
                              unsigned char *buf, size_t len)
+{
+    OPENSSL_clear_free(buf, len);
+}
+
+void ossl_rand_cleanup_user_nonce(ossl_unused OSSL_LIB_CTX *ctx,
+                                  unsigned char *buf, size_t len)
 {
     OPENSSL_clear_free(buf, len);
 }

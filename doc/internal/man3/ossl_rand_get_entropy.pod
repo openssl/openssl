@@ -2,8 +2,10 @@
 
 =head1 NAME
 
-ossl_rand_get_entropy, ossl_rand_get_user_entropy, ossl_rand_cleanup_entropy,
-ossl_rand_get_nonce, ossl_rand_get_user_nonce, ossl_rand_cleanup_nonce
+ossl_rand_get_entropy, ossl_rand_get_user_entropy,
+ossl_rand_cleanup_entropy, ossl_rand_cleanup_user_entropy,
+ossl_rand_get_nonce, ossl_rand_get_user_nonce,
+ossl_rand_cleanup_nonce, ossl_rand_cleanup_user_nonce
 - get seed material from the operating system
 
 =head1 SYNOPSIS
@@ -18,6 +20,8 @@ ossl_rand_get_nonce, ossl_rand_get_user_nonce, ossl_rand_cleanup_nonce
                                    size_t min_len, size_t max_len);
  void ossl_rand_cleanup_entropy(OSSL_CORE_HANDLE *handle,
                                 unsigned char *buf, size_t len);
+ void ossl_rand_cleanup_user_entropy(OSSL_CORE_HANDLE *handle,
+                                     unsigned char *buf, size_t len);
  size_t ossl_rand_get_nonce(OSSL_CORE_HANDLE *handle,
                             unsigned char **pout, size_t min_len,
                             size_t max_len, const void *salt, size_t salt_len);
@@ -26,6 +30,8 @@ ossl_rand_get_nonce, ossl_rand_get_user_nonce, ossl_rand_cleanup_nonce
                                  const void *salt, size_t salt_len);
  void ossl_rand_cleanup_nonce(OSSL_CORE_HANDLE *handle,
                               unsigned char *buf, size_t len);
+ void ossl_rand_cleanup_user_nonce(OSSL_CORE_HANDLE *handle,
+                                   unsigned char *buf, size_t len);
 
 =head1 DESCRIPTION
 
@@ -41,8 +47,12 @@ DRBG seed source.  By default this is the operating system but it can
 be changed by calling L<RAND_set_seed_source_type(3)>.
 
 ossl_rand_cleanup_entropy() cleanses and frees any storage allocated by
-ossl_rand_get_entropy() or ossl_rand_get_user_entropy().  The entropy
-buffer is pointed to by I<buf> and is of length I<len> bytes.
+ossl_rand_get_entropy().  The entropy buffer is pointed to by I<buf>
+and is of length I<len> bytes.
+
+ossl_rand_cleanup_user_entropy() cleanses and frees any storage allocated by
+ossl_rand_get_user_entropy().  The entropy buffer is pointed to by I<buf>
+and is of length I<len> bytes.
 
 ossl_rand_get_nonce() retrieves a nonce using the passed I<salt> parameter
 of length I<salt_len> and operating system specific information.
@@ -76,8 +86,9 @@ of bytes in I<*pout> or 0 on error.
 
 =head1 HISTORY
 
-The functions ossl_rand_get_user_entropy() and ossl_rand_get_user_nonce()
-were added in OpenSSL 3.0.12, 3.1.4 and 3.2.0.
+The functions ossl_rand_get_user_entropy(), ossl_rand_get_user_nonce(),
+ossl_rand_cleanup_user_entropy(), and ossl_rand_cleanup_user_nonce()
+were added in OpenSSL 3.1.4 and 3.2.0.
 
 The remaining functions described here were all added in OpenSSL 3.0.
 

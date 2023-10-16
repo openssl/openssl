@@ -116,6 +116,8 @@ size_t ossl_rand_get_user_entropy(OSSL_LIB_CTX *ctx,
                                   size_t min_len, size_t max_len);
 void ossl_rand_cleanup_entropy(OSSL_LIB_CTX *ctx,
                                unsigned char *buf, size_t len);
+void ossl_rand_cleanup_user_entropy(OSSL_LIB_CTX *ctx,
+                                    unsigned char *buf, size_t len);
 size_t ossl_rand_get_nonce(OSSL_LIB_CTX *ctx,
                            unsigned char **pout, size_t min_len, size_t max_len,
                            const void *salt, size_t salt_len);
@@ -124,6 +126,8 @@ size_t ossl_rand_get_user_nonce(OSSL_LIB_CTX *ctx, unsigned char **pout,
                                 const void *salt, size_t salt_len);
 void ossl_rand_cleanup_nonce(OSSL_LIB_CTX *ctx,
                              unsigned char *buf, size_t len);
+void ossl_rand_cleanup_user_nonce(OSSL_LIB_CTX *ctx,
+                                  unsigned char *buf, size_t len);
 
 /*
  * Get seeding material from the operating system sources.
