@@ -451,7 +451,8 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
          * Lets check the version. We tolerate alerts that don't have the exact
          * version number (e.g. because of protocol version errors)
          */
-        if (!rl->is_first_record && rr->type != SSL3_RT_ALERT) {
+        const int dtls13_match = rr->rec_version == DTLS1_2_VERSION && rl->version == DTLS1_3_VERSION;
+        if (!rl->is_first_record && rr->type != SSL3_RT_ALERT && !dtls13_match) {
             if (rr->rec_version != rl->version) {
                 /* unexpected version, silently discard */
                 rr->length = 0;
@@ -670,6 +671,9 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     case DTLS_ANY_VERSION:
         (*retrl)->funcs = &dtls_any_funcs;
         break;
+    case DTLS1_3_VERSION:
+        (*retrl)->funcs = &dtls_1_3_funcs;
+        break;
     case DTLS1_2_VERSION:
     case DTLS1_VERSION:
     case DTLS1_BAD_VER:
@@ -787,7 +791,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_get_alert_code,
     tls_set1_bio,
     tls_set_protocol_version,
-    NULL,
+    tls_set_plain_alerts,
     tls_set_first_handshake,
     tls_set_max_pipelines,
     dtls_set_in_init,
