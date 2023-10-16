@@ -982,7 +982,7 @@ typedef struct ossl_poll_method_funcs_st {
 } OSSL_POLL_METHOD_FUNCS;
 
 OSSL_POLL_METHOD *OSSL_POLL_METHOD_new(const OSSL_POLL_METHOD_FUNCS *funcs,
-                                      size_t funcs_len, size_t data_len);
+                                       size_t funcs_len, size_t data_len);
 
 void *OSSL_POLL_METHOD_get0_data(const OSSL_POLL_METHOD *self);
 
