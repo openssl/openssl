@@ -2,7 +2,7 @@ HTTP/3 Demo using OpenSSL QUIC and nghttp3
 ==========================================
 
 This is a simple demo of how to use HTTP/3 with OpenSSL QUIC using the HTTP/3
-library “nghttp3”.
+library “[nghttp3](https://github.com/ngtcp2/nghttp3)”.
 
 The demo is structured into two parts:
 
@@ -31,3 +31,8 @@ $ ./ossl-nghttp3-demo www.google.com:443
 
 The demo produces the HTTP response headers in textual form as output followed
 by the response body.
+
+See Also
+--------
+
+- [nghttp3](https://github.com/ngtcp2/nghttp3)
