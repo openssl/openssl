@@ -95,7 +95,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 
   SOURCE[quic-client]=quic-client.c driver.c fuzz_rand.c
   INCLUDE[quic-client]=../include {- $ex_inc -}
-  DEPEND[quic-client]=../libcrypto ../libssl {- $ex_lib -}
+  DEPEND[quic-client]=../libcrypto.a ../libssl.a {- $ex_lib -}
 
   SOURCE[server]=server.c driver.c fuzz_rand.c
   INCLUDE[server]=../include {- $ex_inc -}
@@ -194,7 +194,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[quic-client-test]=quic-client.c test-corpus.c fuzz_rand.c
   INCLUDE[quic-client-test]=../include
-  DEPEND[quic-client-test]=../libcrypto ../libssl
+  DEPEND[quic-client-test]=../libcrypto.a ../libssl.a
 
   SOURCE[server-test]=server.c test-corpus.c fuzz_rand.c
   INCLUDE[server-test]=../include
