@@ -2912,6 +2912,36 @@ static int test_RSA_OAEP_set_get_params(void)
     return ret;
 }
 
+/* https://github.com/openssl/openssl/issues/21288 */
+static int test_RSA_OAEP_set_null_label(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    EVP_PKEY_CTX *key_ctx = NULL;
+
+    if (!TEST_ptr(key = load_example_rsa_key())
+        || !TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(testctx, key, NULL))
+        || !TEST_true(EVP_PKEY_encrypt_init(key_ctx)))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_CTX_set_rsa_padding(key_ctx, RSA_PKCS1_OAEP_PADDING)))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_CTX_set0_rsa_oaep_label(key_ctx, OPENSSL_strdup("foo"), 0)))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_CTX_set0_rsa_oaep_label(key_ctx, NULL, 0)))
+        goto err;
+
+    ret = 1;
+
+ err:
+    EVP_PKEY_free(key);
+    EVP_PKEY_CTX_free(key_ctx);
+
+    return ret;
+}
+
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 static int test_decrypt_null_chunks(void)
 {
@@ -4899,6 +4929,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_RSA_get_set_params);
     ADD_TEST(test_RSA_OAEP_set_get_params);
+    ADD_TEST(test_RSA_OAEP_set_null_label);
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_TEST(test_decrypt_null_chunks);
 #endif
