@@ -26,6 +26,7 @@
  * Appendix A.6.1 with a 66 octet IKM so we'll allow that.
  */
 # define OSSL_HPKE_MAX_PARMLEN        66
+# define OSSL_HPKE_MIN_PSKLEN         32
 # define OSSL_HPKE_MAX_INFOLEN        1024
 
 /*
