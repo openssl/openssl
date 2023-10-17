@@ -146,6 +146,8 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_##mode(size_t keybits)           \
 # include "cipher_aes_hw_rv64i.inc"
 #elif defined(__riscv) && __riscv_xlen == 32
 # include "cipher_aes_hw_rv32i.inc"
+#elif defined (ARMv8_HWAES_CAPABLE)
+# include "cipher_aes_hw_armv8.inc"
 #else
 /* The generic case */
 # define PROV_CIPHER_HW_declare(mode)
