@@ -2598,6 +2598,13 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
                                                                     ossl_quic_enc_level_to_pn_space(i)));
             }
         }
+
+        /*
+         * When do we need to send an ACK-eliciting packet to reset the idle
+         * deadline timer for the peer?
+         */
+        if (!ossl_time_is_infinite(ch->ping_deadline))
+            deadline = ossl_time_min(deadline, ch->ping_deadline);
     }
 
     /* Apply TXP wakeup deadline. */
@@ -2611,14 +2618,6 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
     else if (!ossl_time_is_infinite(ch->idle_deadline))
         deadline = ossl_time_min(deadline,
                                  ch->idle_deadline);
-
-    /*
-     * When do we need to send an ACK-eliciting packet to reset the idle
-     * deadline timer for the peer?
-     */
-    if (!ossl_time_is_infinite(ch->ping_deadline))
-        deadline = ossl_time_min(deadline,
-                                 ch->ping_deadline);
 
     /* When does the RXKU process complete? */
     if (ch->rxku_in_progress)
