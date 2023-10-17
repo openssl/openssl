@@ -88,6 +88,7 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 # define ARMV8_SVE       (1<<13)
 # define ARMV8_SVE2      (1<<14)
 # define ARMV8_HAVE_SHA3_AND_WORTH_USING     (1<<15)
+# define ARMV8_UNROLL12_EOR3     (1<<16)
 
 /*
  * MIDR_EL1 system register
