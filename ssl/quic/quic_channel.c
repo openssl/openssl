@@ -2225,7 +2225,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
          * Initial or Retry packet from the server, it MUST discard any
          * subsequent Retry packets that it receives.
          */
-        if ((ch->el_discarded & (1U << QUIC_ENC_LEVEL_INITIAL)) != 0)
+        if (ch->have_received_enc_pkt)
             return;
 
         if (ch->qrx_pkt->hdr->len <= QUIC_RETRY_INTEGRITY_TAG_LEN)
