@@ -2302,7 +2302,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
              * non-zero Token Length field MUST either discard the packet or
              * generate a connection error of type PROTOCOL_VIOLATION.
              *
-             * TODO(QUIC): consider the implications of RFC 9000 s. 10.2.3
+             * TODO(QUIC FUTURE): consider the implications of RFC 9000 s. 10.2.3
              * Immediate Close during the Handshake:
              *      However, at the cost of reducing feedback about
              *      errors for legitimate peers, some forms of denial of
