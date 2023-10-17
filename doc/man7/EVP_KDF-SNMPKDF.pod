@@ -54,12 +54,11 @@ digest length, and pass that buffer to the L<EVP_KDF_derive(3)> function along w
 
 =head1 EXAMPLES
 
-This example derives an 8 byte IV using SHA-256 with a 1K "key" and appropriate
+This example derives an 8 byte IV using SHA1 with a 1K "key" and appropriate
 "xcghash" and "session_id" values:
 
  EVP_KDF *kdf;
  EVP_KDF_CTX *kctx;
- const char digest[] = "SHA1" 
  unsigned char eid[1024] = "01234...";
  unsigned char pass[32] = "012345...";
  unsigned char out[20];
