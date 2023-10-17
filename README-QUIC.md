@@ -1,7 +1,8 @@
-Using OpenSSL QUIC
-==================
+Using OpenSSL with QUIC
+=======================
 
-From OpenSSL 3.2, OpenSSL features support for client-side QUIC.
+From OpenSSL 3.2, OpenSSL features support for making QUIC connections as a
+client.
 
 Users interested in using the new QUIC functionality are encouraged to look at
 some of the following resources:
@@ -35,18 +36,18 @@ a number of advantages:
 - Since QUIC is the basis of HTTP/3, support for QUIC also enables applications
   to use HTTP/3 using a suitable third-party library.
 
-- Future implementations of OpenSSL QUIC will offer support for 0-RTT connection
+- Future versions of OpenSSL will offer support for 0-RTT connection
   initiation, allowing a connection to be initiated to a server and application
   data to be transmitted without any waiting time. This is similar to TLS 1.3's
   0-RTT functionality but also avoids the round trip needed to open a TCP
   socket; thus, it is similar to a combination of TLS 1.3 0-RTT and TCP Fast
   Open.
 
-- Future implementations of OpenSSL QUIC will offer support for connection
+- Future versions of OpenSSL will offer support for connection
   migration, allowing connections to seamlessly survive IP address changes.
 
-- Future implementations of OpenSSL QUIC will offer support for the QUIC
-  Datagram extension, allowing support for both TLS and DTLS-style use cases on
+- Future versions of OpenSSL will offer support for the QUIC
+  datagram extension, allowing support for both TLS and DTLS-style use cases on
   a single connection.
 
 - Because most QUIC implementations, including OpenSSL's implementation, are
@@ -62,7 +63,7 @@ a number of advantages:
 For more background information on OpenSSL's QUIC implementation, see the
 [openssl-quic(7) manpage].
 
-### How can I use HTTP/3 with OpenSSL QUIC?
+### How can I use HTTP/3 with OpenSSL?
 
 There are many HTTP/3 implementations in C available. The use of one such HTTP/3
 library with OpenSSL QUIC is demonstrated via the [demo found in `demos/http3`].
