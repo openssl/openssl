@@ -82,7 +82,7 @@ application.
 There is basic support for single-stream QUIC using `openssl s_client`:
 
 ```shell
-$ openssl s_client -quic -alpn ossltest -connect=www.example.com:12345
+$ openssl s_client -quic -alpn ossltest -connect www.example.com:12345
 ```
 
 This connects to a QUIC server using the specified ALPN protocol name and opens
