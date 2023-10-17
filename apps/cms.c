@@ -311,7 +311,7 @@ int cms_main(int argc, char **argv)
     int flags = CMS_DETACHED, binary_files = 0;
     int noout = 0, print = 0, keyidx = -1, vpmtouched = 0;
     int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
-    int operation = 0, ret = 1, rr_print = 0, rr_allorfirst = -1;
+    int operation = 0, ret = EXIT_FAILURE, rr_print = 0, rr_allorfirst = -1;
     int verify_retcode = 0, rctformat = FORMAT_SMIME, keyform = FORMAT_UNDEF;
     size_t secret_keylen = 0, secret_keyidlen = 0;
     unsigned char *pwri_pass = NULL, *pwri_tmp = NULL;
@@ -332,10 +332,11 @@ int cms_main(int argc, char **argv)
         case OPT_ERR:
  opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            ret = EXIT_FAILURE;
             goto end;
         case OPT_HELP:
             opt_help(cms_options);
-            ret = 0;
+            ret = EXIT_SUCCESS;
             goto end;
         case OPT_INFORM:
             if (!opt_format(opt_arg(), OPT_FMT_PDS, &informat))
@@ -1284,9 +1285,9 @@ int cms_main(int argc, char **argv)
             goto end;
         }
     }
-    ret = 0;
+    ret = EXIT_SUCCESS;
  end:
-    if (ret)
+    if (ret != EXIT_SUCCESS)
         ERR_print_errors(bio_err);
     OSSL_STACK_OF_X509_free(encerts);
     OSSL_STACK_OF_X509_free(other);
