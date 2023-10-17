@@ -635,7 +635,7 @@ int ossl_quic_channel_is_active(const QUIC_CHANNEL *ch)
     return ch != NULL && ch->state == QUIC_CHANNEL_STATE_ACTIVE;
 }
 
-static int ossl_quic_channel_is_closing(const QUIC_CHANNEL *ch)
+int ossl_quic_channel_is_closing(const QUIC_CHANNEL *ch)
 {
     return ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING;
 }

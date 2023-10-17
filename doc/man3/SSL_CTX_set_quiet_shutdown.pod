@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_CTX_set_quiet_shutdown, SSL_CTX_get_quiet_shutdown, SSL_set_quiet_shutdown, SSL_get_quiet_shutdown - manipulate shutdown behaviour
+SSL_CTX_set_quiet_shutdown, SSL_CTX_get_quiet_shutdown, SSL_set_quiet_shutdown,
+SSL_get_quiet_shutdown - manipulate shutdown behaviour
 
 =head1 SYNOPSIS
 
@@ -54,7 +55,7 @@ The default is normal shutdown behaviour as described by the TLS standard.
 SSL_CTX_set_quiet_shutdown() and SSL_set_quiet_shutdown() do not return
 diagnostic information.
 
-SSL_CTX_get_quiet_shutdown() and SSL_get_quiet_shutdown return the current
+SSL_CTX_get_quiet_shutdown() and SSL_get_quiet_shutdown() return the current
 setting.
 
 =head1 SEE ALSO

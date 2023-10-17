@@ -1335,6 +1335,52 @@ static int test_alpn(int idx)
     return testresult;
 }
 
+/*
+ * Test SSL_get_shutdown() behavior.
+ */
+static int test_get_shutdown(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(cctx)
+            || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+                                                    privkey,
+                                                    QTEST_FLAG_FAKE_TIME,
+                                                    &qtserv, &clientquic,
+                                                    NULL, NULL))
+            || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+
+    if (!TEST_int_eq(SSL_get_shutdown(clientquic), 0))
+        goto err;
+
+    if (!TEST_int_eq(SSL_shutdown(clientquic), 0))
+        goto err;
+
+    if (!TEST_int_eq(SSL_get_shutdown(clientquic), SSL_SENT_SHUTDOWN))
+        goto err;
+
+    do {
+        ossl_quic_tserver_tick(qtserv);
+        qtest_add_time(100);
+    } while (SSL_shutdown(clientquic) == 0);
+
+    if (!TEST_int_eq(SSL_get_shutdown(clientquic),
+                     SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN))
+        goto err;
+
+    testresult = 1;
+ err:
+    ossl_quic_tserver_free(qtserv);
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 #define MAX_LOOPS   2000
 
 /*
@@ -1586,6 +1632,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_client_auth, 2);
     ADD_ALL_TESTS(test_alpn, 2);
     ADD_ALL_TESTS(test_noisy_dgram, 2);
+    ADD_TEST(test_get_shutdown);
 
     return 1;
  err:
