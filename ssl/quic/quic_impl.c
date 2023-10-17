@@ -3572,6 +3572,27 @@ const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u)
 }
 
 /*
+ * SSL_get_shutdown()
+ * ------------------
+ */
+int ossl_quic_get_shutdown(const SSL *s)
+{
+    QCTX ctx;
+    int shut = 0;
+
+    if (!expect_quic_conn_only(s, &ctx))
+        return 0;
+
+    if (ossl_quic_channel_is_term_any(ctx.qc->ch)) {
+        shut |= SSL_SENT_SHUTDOWN;
+        if (!ossl_quic_channel_is_closing(ctx.qc->ch))
+            shut |= SSL_RECEIVED_SHUTDOWN;
+    }
+
+    return shut;
+}
+
+/*
  * Internal Testing APIs
  * =====================
  */
