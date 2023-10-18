@@ -740,13 +740,19 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
             continue;
 
         if (!txp_pkt_init(&pkt[enc_level], txp, enc_level, archetype,
-                          running_total))
+                          running_total)) {
             /*
-             * If this fails this is not a fatal error - it means the geometry
-             * planning determined there was not enough space for another
-             * packet. So just proceed with what we've already planned for.
+             * If this fails it may not be a fatal error - it could mean the
+             * geometry planning determined there was not enough space for
+             * another packet. In that case we just proceed with what we've
+             * already planned for.
              */
-            break;
+            if (running_total > 0)
+                break;
+
+            /* We failed to output anything. Treat as an error */
+            goto out;
+        }
 
         rc = txp_generate_for_el(txp, &pkt[enc_level],
                                  conn_close_enc_level == enc_level);
