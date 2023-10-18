@@ -168,6 +168,7 @@ static long status;
 static unsigned short channel = 0;
 # elif defined(_WIN32) && !defined(_WIN32_WCE)
 static DWORD tty_orig, tty_new;
+static HANDLE h_conin = INVALID_HANDLE_VALUE;
 # else
 #  if !defined(OPENSSL_SYS_MSDOS) || defined(__DJGPP__)
 static TTY_STRUCT tty_orig, tty_new;
@@ -302,8 +303,7 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
         if (GetEnvironmentVariableW(L"OPENSSL_WIN32_UTF8", NULL, 0) != 0) {
             WCHAR wresult[BUFSIZ];
 
-            if (ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE),
-                         wresult, maxsize, &numread, NULL)) {
+            if (ReadConsoleW(h_conin, wresult, maxsize, &numread, NULL)) {
                 if (numread >= 2 &&
                     wresult[numread-2] == L'\r' &&
                     wresult[numread-1] == L'\n') {
@@ -319,8 +319,7 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
             }
         } else
 #   endif
-        if (ReadConsoleA(GetStdHandle(STD_INPUT_HANDLE),
-                         result, maxsize, &numread, NULL)) {
+        if (ReadConsoleA(h_conin, result, maxsize, &numread, NULL)) {
             if (numread >= 2 &&
                 result[numread-2] == '\r' && result[numread-1] == '\n') {
                 result[numread-2] = '\n';
@@ -383,12 +382,35 @@ static int open_console(UI *ui)
     if ((tty_out = fopen("conout$", "w")) == NULL)
         tty_out = stderr;
 
+    /* invariant when done: h_conin is valid if and only if is_a_tty */
     if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &tty_orig)) {
         tty_in = stdin;
-    } else {
+        h_conin = GetStdHandle(STD_INPUT_HANDLE);
+    } else if ((tty_in = fopen("conin$", "r")) == NULL) {
+        tty_in = stdin;
         is_a_tty = 0;
-        if ((tty_in = fopen("conin$", "r")) == NULL)
-            tty_in = stdin;
+    } else {
+        /*
+         * tty_in is a console, but we also need a handle for
+         * console APIs. stdin is not a tty, so we can't use
+         * STD_INPUT_HANDLE. We could use _osf_gethandle on
+         * tty_in, but apparently this prohibits SetConsoleMode
+         * (error 5, access denied), even if we would have opened
+         * "conin$" with mode "rw". But CreateFile seems to work.
+         * tty_in becomes a fallback - if the code below fails.
+         */
+        h_conin = CreateFileA("CONIN$",
+                              GENERIC_READ | GENERIC_WRITE,
+                              FILE_SHARE_READ | FILE_SHARE_WRITE,
+                              NULL, OPEN_EXISTING, 0L, NULL);
+
+        if (h_conin == INVALID_HANDLE_VALUE) {
+            is_a_tty = 0;
+        } else if (!GetConsoleMode(h_conin, &tty_orig)) {
+            is_a_tty = 0;
+            CloseHandle(h_conin);
+            h_conin = INVALID_HANDLE_VALUE;
+        } /* else is_a_tty==1 and h_conin is its handle */
     }
 # else
 #  ifdef OPENSSL_SYS_MSDOS
@@ -512,7 +534,7 @@ static int noecho_console(UI *ui)
     if (is_a_tty) {
         tty_new = tty_orig;
         tty_new &= ~ENABLE_ECHO_INPUT;
-        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), tty_new);
+        SetConsoleMode(h_conin, tty_new);
     }
 # endif
     return 1;
@@ -543,7 +565,7 @@ static int echo_console(UI *ui)
 # if defined(_WIN32) && !defined(_WIN32_WCE)
     if (is_a_tty) {
         tty_new = tty_orig;
-        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), tty_new);
+        SetConsoleMode(h_conin, tty_new);
     }
 # endif
     return 1;
@@ -553,8 +575,15 @@ static int close_console(UI *ui)
 {
     int ret = 1;
 
-    if (tty_in != stdin)
+    if (tty_in != stdin) {
         fclose(tty_in);
+# if defined(_WIN32) && !defined(_WIN32_WCE)
+        if (is_a_tty) {  /* should be true */
+            CloseHandle(h_conin);
+            h_conin = INVALID_HANDLE_VALUE;
+        }
+# endif
+    }
     if (tty_out != stderr)
         fclose(tty_out);
 # ifdef OPENSSL_SYS_VMS
@@ -688,6 +717,7 @@ static int noecho_fgets(char *buf, int size, FILE *tty)
      * flushing the console appears to do the trick.
      */
     {
+        /* FIXME? this wouldn't work when stdin is not a tty */
         HANDLE inh;
         inh = GetStdHandle(STD_INPUT_HANDLE);
         FlushConsoleInputBuffer(inh);
