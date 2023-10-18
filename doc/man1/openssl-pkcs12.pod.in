@@ -68,6 +68,7 @@ PKCS#12 output (export) options:
 [B<-maciter>]
 [B<-macsaltlen>]
 [B<-nomac>]
+[B<-jdktrust> I<usage>]
 
 =head1 DESCRIPTION
 
@@ -380,6 +381,15 @@ is 8 bytes for backwards compatibility.
 Do not attempt to provide the MAC integrity. This can be useful with the FIPS
 provider as the PKCS12 MAC requires PKCS12KDF which is not an approved FIPS
 algorithm and cannot be supported by the FIPS provider.
+
+=item B<-jdktrust>
+
+Export pkcs12 file in a format compatible with Java keystore usage. This option
+accepts a string parameter indicating the trust oid name to be granted to the
+certificate it is associated with.  Currently only "anyExtendedKeyUsage" is
+defined. Note that, as Java keystores do not accept PKCS12 files with both
+trusted certificates and keypairs, use of this option implies the setting of the
+B<-nokeys> option
 
 =back
 
