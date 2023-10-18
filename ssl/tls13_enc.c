@@ -18,23 +18,27 @@
 
 #define TLS13_MAX_LABEL_LEN     249
 
+/* ASCII: "dtls13", in hex for EBCDIC compatibility */
+static const unsigned char label_prefix_dtls13[] = "\x64\x74\x6C\x73\x31\x33";
 /* ASCII: "tls13 ", in hex for EBCDIC compatibility */
-static const unsigned char label_prefix[] = "\x74\x6C\x73\x31\x33\x20";
+static const unsigned char label_prefix_tls13[] = "\x74\x6C\x73\x31\x33\x20";
 
 /*
- * Given a |secret|; a |label| of length |labellen|; and |data| of length
- * |datalen| (e.g. typically a hash of the handshake messages), derive a new
- * secret |outlen| bytes long and store it in the location pointed to be |out|.
+ * Given a |secret|; a |label_prefix| of length |label_prefix_len|; a |label|
+ * of length |labellen|; and |data| of length |datalen| (e.g. typically a hash
+ * of the handshake messages), derive a new secret |outlen| bytes long and
+ * store it in the location pointed to be |out|.
  * The |data| value may be zero length. Any errors will be treated as fatal if
  * |fatal| is set. Returns 1 on success  0 on failure.
  * If |raise_error| is set, ERR_raise is called on failure.
  */
-int tls13_hkdf_expand_ex(OSSL_LIB_CTX *libctx, const char *propq,
-                         const EVP_MD *md,
-                         const unsigned char *secret,
-                         const unsigned char *label, size_t labellen,
-                         const unsigned char *data, size_t datalen,
-                         unsigned char *out, size_t outlen, int raise_error)
+static int hkdf_expand(OSSL_LIB_CTX *libctx, const char *propq,
+                       const EVP_MD *md,
+                       const unsigned char *secret,
+                       const unsigned char *label_prefix, size_t label_prefix_len,
+                       const unsigned char *label, size_t labellen,
+                       const unsigned char *data, size_t datalen,
+                       unsigned char *out, size_t outlen, int raise_error)
 {
     EVP_KDF *kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_TLS1_3_KDF, propq);
     EVP_KDF_CTX *kctx;
@@ -76,7 +80,7 @@ int tls13_hkdf_expand_ex(OSSL_LIB_CTX *libctx, const char *propq,
                                              (unsigned char *)secret, hashlen);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
                                              (unsigned char *)label_prefix,
-                                             sizeof(label_prefix) - 1);
+                                             label_prefix_len);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_LABEL,
                                              (unsigned char *)label, labellen);
     if (data != NULL)
@@ -96,6 +100,18 @@ int tls13_hkdf_expand_ex(OSSL_LIB_CTX *libctx, const char *propq,
     return ret == 0;
 }
 
+int tls13_hkdf_expand_ex(OSSL_LIB_CTX *libctx, const char *propq,
+                         const EVP_MD *md,
+                         const unsigned char *secret,
+                         const unsigned char *label, size_t labellen,
+                         const unsigned char *data, size_t datalen,
+                         unsigned char *out, size_t outlen, int raise_error)
+{
+    return hkdf_expand(libctx, propq, md, secret, label_prefix_tls13, sizeof(label_prefix_tls13) - 1,
+                       label, labellen, data, datalen, out, outlen,
+                       raise_error);
+}
+
 int tls13_hkdf_expand(SSL_CONNECTION *s, const EVP_MD *md,
                       const unsigned char *secret,
                       const unsigned char *label, size_t labellen,
@@ -105,9 +121,16 @@ int tls13_hkdf_expand(SSL_CONNECTION *s, const EVP_MD *md,
     int ret;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    ret = tls13_hkdf_expand_ex(sctx->libctx, sctx->propq, md,
-                               secret, label, labellen, data, datalen,
-                               out, outlen, !fatal);
+    const char *label_prefix = SSL_CONNECTION_IS_TLS13(s) ? label_prefix_tls13
+                                : label_prefix_dtls13;
+
+    size_t label_prefix_len = SSL_CONNECTION_IS_TLS13(s)
+                                ? sizeof(label_prefix_tls13) - 1
+                                : sizeof(label_prefix_dtls13) - 1;
+
+    ret = hkdf_expand(sctx->libctx, sctx->propq, md, secret, label_prefix,
+                      label_prefix_len, label, labellen, data,
+                      datalen, out, outlen, !fatal);
     if (ret == 0 && fatal)
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
 
@@ -205,9 +228,15 @@ int tls13_generate_secret(SSL_CONNECTION *s, const EVP_MD *md,
     if (prevsecret != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
                                                  (unsigned char *)prevsecret, mdlen);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
-                                             (unsigned char *)label_prefix,
-                                             sizeof(label_prefix) - 1);
+    if (SSL_CONNECTION_IS_TLS13(s))
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+                                                 (unsigned char *)label_prefix_tls13,
+                                                 sizeof(label_prefix_tls13) - 1);
+    else
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+                                                 (unsigned char *)label_prefix_dtls13,
+                                                 sizeof(label_prefix_dtls13) - 1);
+
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_LABEL,
                                              (unsigned char *)derived_secret_label,
                                              sizeof(derived_secret_label) - 1);
