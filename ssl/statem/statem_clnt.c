@@ -1427,6 +1427,10 @@ static int set_client_ciphersuite(SSL_CONNECTION *s,
         if (SSL_CONNECTION_IS_TLS13(s)) {
             const EVP_MD *md = ssl_md(sctx, c->algorithm2);
 
+            if (!ossl_assert(s->session->cipher != NULL)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
             /*
              * In TLSv1.3 it is valid for the server to select a different
              * ciphersuite as long as the hash is the same.
