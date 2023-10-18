@@ -1348,7 +1348,7 @@ static int set_client_ciphersuite(SSL *s, const unsigned char *cipherchars)
         if (SSL_IS_TLS13(s)) {
             const EVP_MD *md = ssl_md(s->ctx, c->algorithm2);
            /*
-            * This code eliminates UB if in sslapitest.c at the line #4790
+            * This code eliminates UB if in sslapitest.c at the line #4780
             * clntsess->cipher = NULL;
             */
             if (s->session->cipher == NULL) {
