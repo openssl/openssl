@@ -172,9 +172,8 @@ ok(grep(/Trusted key usage (Oracle)/, @pkcs12info) == 0,
 
 # Test with Oracle Trusted Key Usage specified in openssl.cnf
 {
-    $ENV{OPENSSL_CONF} = srctop_file("test", "recipes", "80-test_pkcs12_data", "jdk_trusted.cnf");
     ok(run(app(["openssl", "pkcs12", "-export", "-out", $outfile7,
-                "-in", srctop_file(@path, "ee-cert.pem"),
+                "-jdktrust", "anyExtendedKeyUsage", "-in", srctop_file(@path, "ee-cert.pem"),
                 "-nokeys", "-passout", "pass:", "-certpbe", "NONE"])),
        "test nokeys single cert");
 

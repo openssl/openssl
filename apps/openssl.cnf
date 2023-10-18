@@ -388,10 +388,3 @@ oldcert = $insta::certout # insta.cert.pem
 # Certificate revocation
 cmd = rr
 oldcert = $insta::certout # insta.cert.pem
-
-[pkcs12]
-certBagAttr = cb_attr
-
-# Uncomment this if you need Java compatible PKCS12 files
-[cb_attr]
-#jdkTrustedKeyUsage = anyExtendedKeyUsage
