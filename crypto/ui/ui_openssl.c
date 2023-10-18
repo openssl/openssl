@@ -280,7 +280,12 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
     int ok;
     char result[BUFSIZ];
     int maxsize = BUFSIZ - 1;
-# if !defined(OPENSSL_SYS_WINCE)
+    /*
+     * _WIN32_WCE is probably never defined without OPENSSL_SYS_WINCE,
+     * making it redundant at the condition, but because h_conin below
+     * doesn't exist when _WIN32_WCE is defined, test it explicitly.
+     */
+# if !defined(OPENSSL_SYS_WINCE) && !defined(_WIN32_WCE)
     char *p = NULL;
     int echo_eol = !echo;
 
