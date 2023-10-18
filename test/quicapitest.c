@@ -1347,8 +1347,10 @@ static int test_get_shutdown(void)
 
     if (!TEST_ptr(cctx)
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
-                                                    privkey, 0, &qtserv,
-                                                    &clientquic, NULL, NULL))
+                                                    privkey,
+                                                    QTEST_FLAG_FAKE_TIME,
+                                                    &qtserv, &clientquic,
+                                                    NULL, NULL))
             || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto err;
 
@@ -1363,7 +1365,7 @@ static int test_get_shutdown(void)
 
     do {
         ossl_quic_tserver_tick(qtserv);
-        OSSL_sleep(1);
+        qtest_add_time(100);
     } while (SSL_shutdown(clientquic) == 0);
 
     if (!TEST_int_eq(SSL_get_shutdown(clientquic),
