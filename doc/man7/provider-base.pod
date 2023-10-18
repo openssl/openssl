@@ -340,10 +340,13 @@ get_user_nonce() is the same as get_nonce() except that it will attempt
 to gather seed material via the seed source specified by a call to
 L<RAND_set_seed_source_type(3)> or via L<config(5)/Random Configuration>.
 
-cleanup_nonce() is used to clean up and free the buffer returned
-by get_nonce() or get_user_nonce().  The nonce pointer returned by
-get_nonce() or get_user_nonce() is passed in B<buf> and its length
-in B<len>.
+cleanup_nonce() is used to clean up and free the buffer returned by
+get_nonce().  The nonce pointer returned by get_nonce()
+is passed in B<buf> and its length in B<len>.
+
+cleanup_user_nonce() is used to clean up and free the buffer returned by
+get_user_nonce().  The nonce pointer returned by get_user_nonce()
+is passed in B<buf> and its length in B<len>.
 
 provider_register_child_cb() registers callbacks for being informed about the
 loading and unloading of providers in the application's library context.
