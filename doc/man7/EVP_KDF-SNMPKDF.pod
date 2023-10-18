@@ -47,10 +47,9 @@ A context for SNMPKDF can be obtained by calling:
  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "SNMPKDF", NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
-The output length of the SNMPKDF derivation is specified via length the I<digest>
-parameter to the L<EVP_KDF_derive(3)> function.
-Since the SNMPKDF output length is variable, the caller should allocate a buffer of the
-digest length, and pass that buffer to the L<EVP_KDF_derive(3)> function along with the desired length.
+The expected length of the SNMPKDF derivation output is the size of the I<digest>.
+Since the SNMPKDF output length can vary depending on the digest used, the caller should allocate a buffer of the
+digest size and pass that buffer in the L<EVP_KDF_derive(3)> function along with the expected length.
 
 =head1 EXAMPLES
 

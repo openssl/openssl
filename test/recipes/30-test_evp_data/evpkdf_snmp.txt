@@ -85,3 +85,10 @@ Ctrl.eid = hexeid:000002B87766554433221100
 Ctrl.pass = pass:gdRkZksOndMLQCLmDdrWCMFBZQrerfTX
 Output = BB1640B442255E9C1C6357F64230506B011DCD0D
 Result = KDF_CTRL_ERROR
+
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:800002b805123456789abcdef0123456789abcdef0123456789abcdef0123456
+Ctrl.pass = pass:IFUcNbM
+Output = 6ab11fc4cada4ce96f4cc5cf8f37acfb18c1d992
+Result = KDF_CTRL_ERROR

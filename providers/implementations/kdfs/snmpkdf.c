@@ -36,6 +36,7 @@ static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_snmpkdf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_snmpkdf_get_ctx_params;
 
 #define KDF_SNMP_PASSWORD_HASH_AMOUNT (1024 * 1024)
+#define KDF_SNMP_MIN_PASSWORD_LEN 8
 
 static int SNMPKDF(const EVP_MD *evp_md,
                    const unsigned char *eid, size_t eid_len,
@@ -139,8 +140,8 @@ static int kdf_snmpkdf_derive(void *vctx, unsigned char *key, size_t keylen,
     }
 
     return SNMPKDF(md, ctx->eid, ctx->eid_len,
-                  ctx->password, ctx->password_len,
-                  key, keylen);
+                   ctx->password, ctx->password_len,
+                   key, keylen);
 }
 
 static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -160,8 +161,10 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD))  != NULL) {
-        if (ctx->password_len > KDF_SNMP_PASSWORD_HASH_AMOUNT ||
-           !snmpkdf_set_membuf(&ctx->password, &ctx->password_len, p))
+        if (!snmpkdf_set_membuf(&ctx->password, &ctx->password_len, p))
+            return 0;
+        if (ctx->password_len > KDF_SNMP_PASSWORD_HASH_AMOUNT
+            || ctx->password_len < KDF_SNMP_MIN_PASSWORD_LEN)
             return 0;
     }
     return 1;
