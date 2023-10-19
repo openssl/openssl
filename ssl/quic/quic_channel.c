@@ -2809,8 +2809,18 @@ static int ch_retry(QUIC_CHANNEL *ch,
     if ((buf = OPENSSL_memdup(retry_token, retry_token_len)) == NULL)
         return 0;
 
-    ossl_quic_tx_packetiser_set_initial_token(ch->txp, buf, retry_token_len,
-                                              free_token, NULL);
+    if (!ossl_quic_tx_packetiser_set_initial_token(ch->txp, buf,
+                                                   retry_token_len,
+                                                   free_token, NULL)) {
+        /*
+         * This may fail if the token we receive is too big for us to ever be
+         * able to transmit in an outgoing Initial packet.
+         */
+        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INVALID_TOKEN, 0,
+                                               "received oversize token");
+        OPENSSL_free(buf);
+        return 0;
+    }
 
     ch->retry_scid  = *retry_scid;
     ch->doing_retry = 1;

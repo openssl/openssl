@@ -4902,6 +4902,7 @@ static const struct script_op script_76[] = {
     OP_END
 };
 
+/* 77. Ensure default stream popping operates correctly */
 static const struct script_op script_77[] = {
     OP_C_SET_ALPN           ("ossltest")
     OP_C_CONNECT_WAIT       ()
