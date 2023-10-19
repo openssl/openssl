@@ -3200,7 +3200,7 @@ err:
     return res;
 }
 
-static int test_mod_exp_simple(void)
+static int test_mod_exp_alias(int idx)
 {
     int res = 0;
     char *str = NULL;
@@ -3209,25 +3209,46 @@ static int test_mod_exp_simple(void)
     BIGNUM *c = NULL;
     BIGNUM *r = NULL;
 
-    if (!TEST_true(BN_dec2bn(&a, "3")))
+    if (!TEST_true(BN_dec2bn(&a, "15")))
         goto err;
-    if (!TEST_true(BN_dec2bn(&b, "1")))
+    if (!TEST_true(BN_dec2bn(&b, "10")))
         goto err;
-    if (!TEST_true(BN_dec2bn(&c, "11")))
+    if (!TEST_true(BN_dec2bn(&c, "39")))
         goto err;
     if (!TEST_ptr(r = BN_new()))
         goto err;
 
-    if (!TEST_int_eq(BN_mod_exp_simple(r, a, b, c, ctx), 1))
+    if (!TEST_int_eq((idx == 0 ? BN_mod_exp_simple
+                               : BN_mod_exp_recp)(r, a, b, c, ctx), 1))
         goto err;
     if (!TEST_ptr_ne(str = BN_bn2dec(r), NULL))
         goto err;
-    if (!TEST_int_eq(strcmp(str, "3"), 0))
+    if (!TEST_str_eq(str, "36"))
         goto err;
 
-    /* Note that this aliases the result with the modulus. */
-    if (!TEST_int_eq(BN_mod_exp_simple(c, a, b, c, ctx), 0))
+    BN_copy(r, b);
+
+    /* Aliasing with exponent must work. */
+    if (!TEST_int_eq((idx == 0 ? BN_mod_exp_simple
+                               : BN_mod_exp_recp)(r, a, r, c, ctx), 1))
         goto err;
+    if (!TEST_ptr_ne(str = BN_bn2dec(r), NULL))
+        goto err;
+    if (!TEST_str_eq(str, "36"))
+        goto err;
+
+    /* Aliasing with modulus should return failure for the simple call. */
+    if (idx == 0) {
+        if (!TEST_int_eq(BN_mod_exp_simple(c, a, b, c, ctx), 0))
+            goto err;
+    } else {
+        if (!TEST_int_eq(BN_mod_exp_recp(c, a, b, c, ctx), 1))
+            goto err;
+        if (!TEST_ptr_ne(str = BN_bn2dec(c), NULL))
+            goto err;
+        if (!TEST_str_eq(str, "36"))
+            goto err;
+    }
 
     res = 1;
 
@@ -3350,7 +3371,7 @@ int setup_tests(void)
         ADD_ALL_TESTS(test_signed_mod_replace_ba, OSSL_NELEM(signed_mod_tests));
         ADD_TEST(test_mod);
         ADD_TEST(test_mod_inverse);
-        ADD_TEST(test_mod_exp_simple);
+        ADD_ALL_TESTS(test_mod_exp_alias, 2);
         ADD_TEST(test_modexp_mont5);
         ADD_TEST(test_kronecker);
         ADD_TEST(test_rand);
