@@ -21,17 +21,6 @@ static int ossl_blake2s256_init(void *ctx)
     return ossl_blake2s_init((BLAKE2S_CTX *)ctx, &P);
 }
 
-static int ossl_blake2b512_init(void *ctx)
-{
-    struct blake2b_md_data_st *mdctx = ctx;
-    uint8_t digest_length = mdctx->params.digest_length;
-
-    ossl_blake2b_param_init(&mdctx->params);
-    if (digest_length != 0)
-        mdctx->params.digest_length = digest_length;
-    return ossl_blake2b_init(&mdctx->ctx, &mdctx->params);
-}
-
 /* ossl_blake2s256_functions */
 IMPLEMENT_digest_functions(blake2s256, BLAKE2S_CTX,
                            BLAKE2S_BLOCKBYTES, BLAKE2S_DIGEST_LENGTH, 0,
@@ -41,6 +30,17 @@ IMPLEMENT_digest_functions(blake2s256, BLAKE2S_CTX,
 /* ossl_blake2b512_functions */
 
 #define IMPLEMENT_BLAKE_functions(variant, VARIANT, variantsize) \
+static int ossl_blake##variantsize##_init(void *ctx) \
+{ \
+    struct blake##variant##_md_data_st *mdctx = ctx; \
+    uint8_t digest_length = mdctx->params.digest_length; \
+ \
+    ossl_blake##variant##_param_init(&mdctx->params); \
+    if (digest_length != 0) \
+        mdctx->params.digest_length = digest_length; \
+    return ossl_blake##variant##_init(&mdctx->ctx, &mdctx->params); \
+} \
+ \
 static OSSL_FUNC_digest_init_fn blake##variantsize##_internal_init; \
 static OSSL_FUNC_digest_newctx_fn blake##variantsize##_newctx; \
 static OSSL_FUNC_digest_freectx_fn blake##variantsize##_freectx; \
