@@ -241,6 +241,8 @@ void BN_MONT_CTX_init(BN_MONT_CTX *ctx)
 {
     ctx->ri = 0;
     bn_init(&ctx->RR);
+    bn_init(&ctx->RRR);
+    bn_init(&ctx->RR16);
     bn_init(&ctx->N);
     bn_init(&ctx->Ni);
     ctx->n0[0] = ctx->n0[1] = 0;
@@ -399,6 +401,13 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
         mont->RR.d[i] = 0;
     mont->RR.top = ret;
     mont->RR.flags |= BN_FLG_FIXED_TOP;
+
+    BN_mod_mul_montgomery(&mont->RRR, &mont->RR, &mont->RR, mont, ctx);
+
+    BN_mod_mul_montgomery(&mont->RR16, &mont->RRR, &mont->RRR, mont, ctx);
+    for (int j = 0; j < (15 - 1); j++) {
+    	BN_mod_mul_montgomery(&mont->RR16, &mont->RR16, &mont->RR16, mont, ctx);
+    }
 
     ret = 1;
  err:

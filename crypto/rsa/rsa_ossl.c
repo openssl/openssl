@@ -15,6 +15,7 @@
 
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
+#include "crypto/bn/bn_local.h"
 #include "rsa_local.h"
 #include "internal/constant_time.h"
 #include <openssl/evp.h>
@@ -716,9 +717,25 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
                                     rsa->n, ctx))
             goto err;
 
-    if (!rsa->meth->bn_mod_exp(ret, f, rsa->e, rsa->n, ctx,
-                               rsa->_method_mod_n))
-        goto err;
+    BN_ULONG exp = BN_get_word(rsa->e);
+    if(exp == RSA_3) {
+        BN_mod_mul_montgomery(ret, f, f, rsa->_method_mod_n, ctx);
+	    BN_mod_mul_montgomery(ret, f, ret, rsa->_method_mod_n, ctx);
+	    BN_mod_mul_montgomery(ret, ret, &rsa->_method_mod_n->RRR, rsa->_method_mod_n, ctx);
+    } else if(exp == RSA_F4) {
+        BN_mod_mul_montgomery(ret, f, f, rsa->_method_mod_n, ctx);
+
+        for (int j = 0; j < 15; j++) {
+            BN_mod_mul_montgomery(ret, ret, ret, rsa->_method_mod_n, ctx);
+        }
+
+        BN_mod_mul_montgomery(ret, f, ret, rsa->_method_mod_n, ctx);
+        BN_mod_mul_montgomery(ret, ret, &rsa->_method_mod_n->RR16, rsa->_method_mod_n, ctx);
+    } else {
+        if (!rsa->meth->bn_mod_exp(ret, f, rsa->e, rsa->n, ctx,
+                                rsa->_method_mod_n))
+            goto err;
+    }
 
     if ((padding == RSA_X931_PADDING) && ((bn_get_words(ret)[0] & 0xf) != 12))
         if (!BN_sub(ret, rsa->n, ret))
