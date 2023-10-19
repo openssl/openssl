@@ -15,6 +15,9 @@ use OpenSSL::Test::Utils;
 my $fuzzer = "quic-client";
 setup("test_fuzz_${fuzzer}");
 
+plan skip_all => "This test requires quic support"
+    if disabled("quic");
+
 plan tests => 2; # one more due to below require_ok(...)
 
 require_ok(srctop_file('test','recipes','fuzz.pl'));
