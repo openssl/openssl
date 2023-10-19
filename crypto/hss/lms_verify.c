@@ -2,20 +2,18 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include "internal/packet.h"
-#include "crypto/lms.h"
-
-#define MAX_DIGEST_SIZE 32
-#define HSS_MIN_L 1
-#define HSS_MAX_L 8
+#include "crypto/hss.h"
+#include "lms_local.h"
 
 static unsigned char D_LEAF[] = { 0x82, 0x82 };
 static unsigned char D_INTR[] = { 0x83, 0x83 };
 
-/* We upref ctx->sig and ctx->pub here since they need to exist until
- * ossl_lms_sig_verify_final() is called. Since the final may be delayed until
+/*
+ * upref ctx->sig and ctx->pub here since they need to exist until
+ * ossl_lms_sig_verify_final() is called, since the final may be delayed until
  * some later time,
  * If either ossl_lms_sig_verify_update() or ossl_lms_sig_verify_final() fail
- * they need to be downrefed.
+ * they need to be down refed.
  */
 int ossl_lms_sig_verify_init(LMS_VALIDATE_CTX *ctx)
 {
@@ -42,7 +40,7 @@ int ossl_lms_sig_verify_update(LMS_VALIDATE_CTX *ctx,
 
     if (!ret) {
         ossl_lms_sig_free(ctx->sig);
-        ossl_lms_key_up_ref(ctx->pub);
+        ossl_lms_key_free(ctx->pub);
     }
     return ret;
 }
@@ -71,12 +69,12 @@ int ossl_lms_sig_verify_final(LMS_VALIDATE_CTX *vctx)
 
     U32STR(buf, node_num);
     if (!EVP_DigestInit_ex2(ctx, NULL, NULL)
-        || !EVP_DigestUpdate(ctx, key->I, LMS_ISIZE)
-        || !EVP_MD_CTX_copy_ex(ctxI, ctx)
-        || !EVP_DigestUpdate(ctx, buf, sizeof(buf))
-        || !EVP_DigestUpdate(ctx, D_LEAF, sizeof(D_LEAF))
-        || !EVP_DigestUpdate(ctx, Kc, m)
-        || !EVP_DigestFinal_ex(ctx, Tc, NULL))
+            || !EVP_DigestUpdate(ctx, key->I, LMS_ISIZE)
+            || !EVP_MD_CTX_copy_ex(ctxI, ctx)
+            || !EVP_DigestUpdate(ctx, buf, sizeof(buf))
+            || !EVP_DigestUpdate(ctx, D_LEAF, sizeof(D_LEAF))
+            || !EVP_DigestUpdate(ctx, Kc, m)
+            || !EVP_DigestFinal_ex(ctx, Tc, NULL))
         goto err;
 
     path = lms_sig->paths;
@@ -87,8 +85,8 @@ int ossl_lms_sig_verify_final(LMS_VALIDATE_CTX *vctx)
         U32STR(buf, node_num);
 
         if (!EVP_MD_CTX_copy_ex(ctx, ctxI)
-            || !EVP_DigestUpdate(ctx, buf, sizeof(buf))
-            || !EVP_DigestUpdate(ctx, D_INTR, sizeof(D_INTR)))
+                || !EVP_DigestUpdate(ctx, buf, sizeof(buf))
+                || !EVP_DigestUpdate(ctx, D_INTR, sizeof(D_INTR)))
             goto err;
 
         if (odd) {

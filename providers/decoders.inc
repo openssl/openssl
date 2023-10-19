@@ -95,3 +95,5 @@ DECODER("DER", pem, der, yes),
  * form to the next decoder.
  */
 DECODER_w_structure("DER", der, EncryptedPrivateKeyInfo, der, yes),
+
+DECODER("HSS", hssblob, key, yes),

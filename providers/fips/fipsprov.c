@@ -476,6 +476,7 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_mac_legacy_cmac_signature_functions },
 #endif
+    { PROV_NAMES_HSS, FIPS_DEFAULT_PROPERTIES, ossl_hss_signature_functions },
     { NULL, NULL, NULL }
 };
 
@@ -528,6 +529,8 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_cmac_legacy_keymgmt_functions, PROV_DESCS_CMAC_SIGN },
 #endif
+    { PROV_NAMES_HSS, FIPS_DEFAULT_PROPERTIES, ossl_hss_keymgmt_functions,
+      PROV_DESCS_HSS },
     { NULL, NULL, NULL }
 };
 

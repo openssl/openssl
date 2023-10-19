@@ -29,7 +29,8 @@ typedef struct dsa_st DSA;
 typedef struct ecx_key_st ECX_KEY;
 # endif
 
-# ifndef OPENSSL_NO_LMS
+# ifndef OPENSSL_NO_HSS
+typedef struct hss_key_st HSS_KEY;
 typedef struct lms_key_st LMS_KEY;
 # endif
 

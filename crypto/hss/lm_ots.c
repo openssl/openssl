@@ -10,12 +10,11 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/core_names.h>
 #include <openssl/proverr.h>
-#include "crypto/lms.h"
 #include "internal/refcount.h"
-
-static unsigned char D_PBLC[] = { 0x80, 0x80 };
-static unsigned char D_MESG[] = { 0x81, 0x81 };
+#include "crypto/hss.h"
+#include "lms_local.h"
 
 #define U16STR(out, in)                      \
 out[0] = (unsigned char)((in >> 8) & 0xff);  \
@@ -37,6 +36,9 @@ out[1] = (unsigned char)(in & 0xff)
 #define LM_OTS_TYPE_SHAKE_N24_W2  0x0000000E
 #define LM_OTS_TYPE_SHAKE_N24_W4  0x0000000F
 #define LM_OTS_TYPE_SHAKE_N24_W8  0x00000010
+
+static unsigned char D_PBLC[] = { 0x80, 0x80 };
+static unsigned char D_MESG[] = { 0x81, 0x81 };
 
 static const LM_OTS_PARAMS lm_ots_params[] = {
     { LM_OTS_TYPE_SHA256_N32_W1, "SHA256",     32, 1, 265 },
@@ -122,41 +124,19 @@ void ossl_lm_ots_ctx_free(LM_OTS_CTX *ctx)
     EVP_MD_CTX_free(ctx->mdctx);
     OPENSSL_free(ctx);
 }
-#if 0
-LM_OTS_CTX *ossl_lm_ots_ctx_dup(LM_OTS_CTX *src)
-{
-    LM_OTS_CTX *ret = NULL;
-
-    if (src == NULL)
-        return NULL;
-
-    ret = ossl_lm_ots_ctx_new();
-    if (ret == NULL)
-        return NULL;
-
-    ret->sig = src->sig;
-    if (!EVP_MD_CTX_copy_ex(ret->mdctx, src->mdctx)
-        || !EVP_MD_CTX_copy_ex(ret->mdctxIq, src->mdctxIq))
-        goto err;
-    return ret;
-err:
-    ossl_lm_ots_ctx_free(ret);
-    return NULL;
-}
-#endif
 
 /* Algorithm 4b */
 int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *pctx,
-                                 const EVP_MD *md,
-                                 const LM_OTS_SIG *sig,
-                                 const LM_OTS_PARAMS *pub,
-                                 const unsigned char *I, uint32_t q)
+                                const EVP_MD *md,
+                                const LM_OTS_SIG *sig,
+                                const LM_OTS_PARAMS *pub,
+                                const unsigned char *I, uint32_t q)
 {
     int ret = 0;
     EVP_MD_CTX *ctx, *ctxIq;
     unsigned char iq[LMS_ISIZE+4], *qbuf = &iq[LMS_ISIZE];
-
-    pctx->sig = sig;
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    OSSL_PARAM *p = NULL;
 
     if (sig->params != pub)
         return 0;
@@ -167,15 +147,23 @@ int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *pctx,
     ctx = pctx->mdctx;
     ctxIq = pctx->mdctxIq;
 
-    if (!EVP_DigestInit_ex2(ctxIq, md, NULL)
-        || !EVP_DigestUpdate(ctxIq, iq, sizeof(iq))
-        || !EVP_MD_CTX_copy_ex(ctx, ctxIq))
+    if (strncmp(sig->params->digestname, "SHAKE", 5) == 0) {
+        size_t len = sig->params->n;
+
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &len);
+        p = params;
+    }
+
+    if (!EVP_DigestInit_ex2(ctxIq, md, p)
+            || !EVP_DigestUpdate(ctxIq, iq, sizeof(iq))
+            || !EVP_MD_CTX_copy_ex(ctx, ctxIq))
         goto err;
 
     /* Q = H(I || u32str(q) || u16str(D_MESG) || C || ....) */
     if (!EVP_DigestUpdate(ctx, D_MESG, sizeof(D_MESG))
-        || !EVP_DigestUpdate(ctx, sig->C, sig->params->n))
+            || !EVP_DigestUpdate(ctx, sig->C, sig->params->n))
         goto err;
+    pctx->sig = sig;
     return 1;
 err:
 
@@ -184,7 +172,7 @@ err:
 
 /* Algorithm 4b */
 int ossl_lm_ots_ctx_pubkey_update(LM_OTS_CTX *pctx,
-                                   const unsigned char *msg, size_t msglen)
+                                  const unsigned char *msg, size_t msglen)
 {
     return EVP_DigestUpdate(pctx->mdctx, msg, msglen) > 0;
 }
@@ -221,7 +209,7 @@ int ossl_lm_ots_ctx_pubkey_final(LM_OTS_CTX *pctx, unsigned char *Kc)
     U16STR(Qsum, sum);
 
     if (!(EVP_MD_CTX_copy_ex(ctxKc, ctxIq))
-        || !EVP_DigestUpdate(ctxKc, D_PBLC, sizeof(D_PBLC)))
+            || !EVP_DigestUpdate(ctxKc, D_PBLC, sizeof(D_PBLC)))
         goto err;
 
     y = pctx->sig->y;
@@ -233,11 +221,10 @@ int ossl_lm_ots_ctx_pubkey_final(LM_OTS_CTX *pctx, unsigned char *Kc)
         y += n;
         for (j = a; j < end; ++j) {
             *tag2 = (j & 0xFF);
-            if (!(EVP_MD_CTX_copy_ex(ctx, ctxIq)))
-                goto err;
-            if (!EVP_DigestUpdate(ctx, tag, sizeof(tag))
-                || !EVP_DigestUpdate(ctx, z, n)
-                || !EVP_DigestFinal_ex(ctx, z, NULL))
+            if (!(EVP_MD_CTX_copy_ex(ctx, ctxIq))
+                    || !EVP_DigestUpdate(ctx, tag, sizeof(tag))
+                    || !EVP_DigestUpdate(ctx, z, n)
+                    || !EVP_DigestFinal_ex(ctx, z, NULL))
                 goto err;
         }
         INC16(tag);

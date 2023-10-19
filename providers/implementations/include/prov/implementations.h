@@ -320,7 +320,6 @@ extern const OSSL_DISPATCH ossl_cmac_legacy_keymgmt_functions[];
 #ifndef OPENSSL_NO_SM2
 extern const OSSL_DISPATCH ossl_sm2_keymgmt_functions[];
 #endif
-extern const OSSL_DISPATCH ossl_lms_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_hss_keymgmt_functions[];
 
 /* Key Exchange */
@@ -590,3 +589,5 @@ extern const OSSL_DISPATCH ossl_pem_to_der_decoder_functions[];
 
 extern const OSSL_DISPATCH ossl_file_store_functions[];
 extern const OSSL_DISPATCH ossl_winstore_store_functions[];
+
+extern const OSSL_DISPATCH ossl_hssblob_to_key_decoder_functions[];

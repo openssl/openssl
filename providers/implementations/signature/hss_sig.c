@@ -15,7 +15,7 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "internal/thread.h"
-#include "crypto/lms.h"
+#include "crypto/hss.h"
 
 #if defined(OPENSSL_NO_DEFAULT_THREAD_POOL) && defined(OPENSSL_NO_THREAD_POOL)
 # define LMS_NO_THREADS
@@ -25,18 +25,15 @@
 # define LMS_NO_THREADS
 #endif
 
-/* We may not need LMS signatures, just HSS signatures */
-#define LMS_SIGNATURES
 
-static OSSL_FUNC_signature_newctx_fn lms_newctx;
+static OSSL_FUNC_signature_newctx_fn hss_newctx;
+static OSSL_FUNC_signature_freectx_fn hss_freectx;
 static OSSL_FUNC_signature_digest_verify_init_fn lms_digest_verify_init;
 static OSSL_FUNC_signature_digest_verify_update_fn lms_digest_verify_update;
 static OSSL_FUNC_signature_digest_verify_final_fn lms_digest_verify_final;
 static OSSL_FUNC_signature_digest_verify_fn lms_digest_verify;
 static OSSL_FUNC_signature_digest_verify_pq_init_fn lms_digest_verify_pq_init;
 static OSSL_FUNC_signature_digest_verify_pq_final_fn lms_digest_verify_pq_final;
-static OSSL_FUNC_signature_freectx_fn lms_freectx;
-//static OSSL_FUNC_signature_dupctx_fn lms_dupctx;
 static OSSL_FUNC_signature_get_ctx_params_fn lms_get_ctx_params;
 static OSSL_FUNC_signature_gettable_ctx_params_fn lms_gettable_ctx_params;
 static OSSL_FUNC_signature_set_ctx_params_fn lms_set_ctx_params;
@@ -49,7 +46,7 @@ static OSSL_FUNC_signature_settable_ctx_md_params_fn lms_settable_ctx_md_params;
 typedef struct {
     OSSL_LIB_CTX *libctx;
     char *propq;
-    LMS_KEY *key;
+    HSS_KEY *key;
     LMS_VALIDATE_CTX ctx;
 #if !defined(LMS_NO_THREADS)
     LMS_VALIDATE_CTX *thread_data;
@@ -61,77 +58,18 @@ typedef struct {
     size_t msglen;
     unsigned char *sig;
     size_t siglen;
-#if defined(LMS_SIGNATURES)
-    uint32_t hss;
-#endif
     uint32_t pqmode;
-} PROV_LMS_CTX;
+} PROV_HSS_CTX;
 
-#if 0
-static void *lms_dupctx(void *vctx)
+static void *hss_newctx(void *provctx, const char *propq)
 {
-    PROV_LMS_CTX *srcctx = (PROV_LMS_CTX *)vctx;
-    PROV_LMS_CTX *dstctx;
-
-    if (!ossl_prov_is_running())
-        return NULL;
-
-    dstctx = OPENSSL_zalloc(sizeof(*srcctx));
-    if (dstctx == NULL)
-        return NULL;
-
-    *dstctx = *srcctx;
-    dstctx->key = NULL;
-    dstctx->md = NULL;
-    dstctx->pubctx = NULL;
-    dstctx->propq = NULL;
-    dstctx->sig = NULL;
-
-    if (srcctx->msg != NULL) {
-        dstctx->msg = OPENSSL_memdup(srcctx->msg, srcctx->msglen);
-        if (dstctx->msg == NULL)
-            goto err;
-    }
-    if (srcctx->sig != NULL) {
-        dstctx->sig = OPENSSL_memdup(srcctx->sig, srcctx->siglen);
-        if (dstctx->sig == NULL)
-            goto err;
-    }
-    if (srcctx->propq != NULL) {
-        dstctx->propq = OPENSSL_strdup(srcctx->propq);
-        if (dstctx->propq == NULL)
-            goto err;
-    }
-    if (srcctx->pubctx != NULL) {
-        dstctx->pubctx = ossl_lm_ots_ctx_dup(srcctx->pubctx);
-        if (dstctx->pubctx == NULL)
-            goto err;
-    }
-
-    if (srcctx->md != NULL && !EVP_MD_up_ref(srcctx->md))
-        goto err;
-    dstctx->md = srcctx->md;
-
-    if (srcctx->key != NULL && !ossl_lms_key_up_ref(srcctx->key))
-        goto err;
-    dstctx->key = srcctx->key;
-
-    return dstctx;
- err:
-    lms_freectx(dstctx);
-    return NULL;
-}
-#endif
-
-static void *lms_newctx(void *provctx, const char *propq)
-{
-    PROV_LMS_CTX *ctx;
+    PROV_HSS_CTX *ctx;
     LM_OTS_CTX *pubctx = NULL;
 
     if (!ossl_prov_is_running())
         return NULL;
 
-    ctx = OPENSSL_zalloc(sizeof(PROV_LMS_CTX));
+    ctx = OPENSSL_zalloc(sizeof(PROV_HSS_CTX));
     if (ctx == NULL)
         return NULL;
     pubctx = ossl_lm_ots_ctx_new();
@@ -151,25 +89,14 @@ err:
     return NULL;
 }
 
-static void *hss_newctx(void *provctx, const char *propq)
+static void hss_freectx(void *vctx)
 {
-    PROV_LMS_CTX *ctx = lms_newctx(provctx, propq);
-
-#if defined(LMS_SIGNATURES)
-    if (ctx != NULL)
-        ctx->hss = 1;
-#endif
-    return ctx;
-}
-
-static void lms_freectx(void *vctx)
-{
-    PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
+    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
 
     if (ctx == NULL)
         return;
 
-    ossl_lms_key_free(ctx->key);
+    ossl_hss_key_free(ctx->key);
     OPENSSL_free(ctx->propq);
     ossl_lm_ots_ctx_free(ctx->ctx.pubctx);
     OPENSSL_free(ctx->sig);
@@ -183,7 +110,7 @@ static void lms_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static int setdigest(PROV_LMS_CTX *ctx, const char *digestname)
+static int setdigest(PROV_HSS_CTX *ctx, const char *digestname)
 {
     /*
      * Since only one digest can be used by LSS/HSS. Just set the digest
@@ -191,7 +118,7 @@ static int setdigest(PROV_LMS_CTX *ctx, const char *digestname)
      * If the optional digestname passed in by the user is different
      * then return an error.
      */
-    const char *pub_digestname = ctx->key->ots_params->digestname;
+    const char *pub_digestname = ctx->key->lms_pub.ots_params->digestname;
 
     if (ctx->ctx.md != NULL) {
         if (EVP_MD_is_a(ctx->ctx.md, pub_digestname))
@@ -205,10 +132,10 @@ end:
     return digestname == NULL || EVP_MD_is_a(ctx->ctx.md, digestname);
 }
 
-static int lms_verify_init(void *vctx, void *key, const OSSL_PARAM params[],
+static int hss_verify_init(void *vctx, void *key, const OSSL_PARAM params[],
                            const char *mdname)
 {
-    PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
+    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
 
     if (!ossl_prov_is_running() || ctx == NULL)
         return 0;
@@ -218,19 +145,17 @@ static int lms_verify_init(void *vctx, void *key, const OSSL_PARAM params[],
         return 0;
     }
 
-    if (key != NULL) {
-        if (!ossl_lms_key_up_ref(key))
-            return 0;
-        ossl_lms_key_free(ctx->key);
-        ctx->key = key;
-        if (!setdigest(ctx, mdname))
-            return 0;
-    }
+    if (!ossl_hss_key_up_ref(key))
+        return 0;
+    ossl_hss_key_free(ctx->key);
+    ctx->key = key;
+    if (!setdigest(ctx, mdname))
+        return 0;
     return lms_set_ctx_params(ctx, params);
 }
 
 #if !defined(LMS_NO_THREADS)
-static int alloc_threads(PROV_LMS_CTX *ctx)
+static int alloc_threads(PROV_HSS_CTX *ctx)
 {
     if (ctx->threads != NULL || ctx->max_threads <= 1)
         return 1;
@@ -260,7 +185,7 @@ static CRYPTO_THREAD_RETVAL verify_thread(void *ctx)
     return ret;
 }
 
-static int add_verify_job(PROV_LMS_CTX *ctx, LMS_SIG *lms_sig, LMS_KEY *key,
+static int add_verify_job(PROV_HSS_CTX *ctx, LMS_SIG *lms_sig, LMS_KEY *key,
                           const unsigned char *msg, size_t msglen)
 {
 #if !defined(LMS_NO_THREADS)
@@ -317,7 +242,7 @@ static int add_verify_job(PROV_LMS_CTX *ctx, LMS_SIG *lms_sig, LMS_KEY *key,
     return verify_thread(&ctx->ctx) == 1;
 }
 
-static int check_jobs(PROV_LMS_CTX *ctx)
+static int check_jobs(PROV_HSS_CTX *ctx)
 {
 #if !defined(LMS_NO_THREADS)
     uint32_t i, pass = 1;
@@ -342,7 +267,7 @@ static int check_jobs(PROV_LMS_CTX *ctx)
 #endif
 }
 
-static int lms_sig_verify(PROV_LMS_CTX *ctx,
+static int lms_sig_verify(PROV_HSS_CTX *ctx,
                           LMS_SIG *lms_sig,
                           LMS_KEY *key,
                           const unsigned char *msg, size_t msglen)
@@ -355,29 +280,12 @@ static int lms_sig_verify(PROV_LMS_CTX *ctx,
         if (!ossl_lms_sig_verify_init(cur))
             return 0;
     } else {
-        add_verify_job(ctx, lms_sig, key, msg, msglen);
+        return add_verify_job(ctx, lms_sig, key, msg, msglen);
     }
     return 1;
 }
 
-#if defined(LMS_SIGNATURES)
-static int lms_verify_int(PROV_LMS_CTX *ctx,
-                          const unsigned char *sig, size_t siglen,
-                          const unsigned char *msg, size_t msglen)
-{
-    int ret;
-    LMS_SIG *s;
-
-    s = ossl_lms_sig_from_data(sig, siglen, ctx->key);
-    if (s == NULL)
-        return 0;
-    ret = lms_sig_verify(ctx, s, ctx->key, msg, msglen);
-    ossl_lms_sig_free(s);
-    return ret;
-}
-#endif
-
-static int hss_verify_int(PROV_LMS_CTX *ctx,
+static int hss_verify_int(PROV_HSS_CTX *ctx,
                           const unsigned char *sig, size_t siglen,
                           const unsigned char *msg, size_t msglen)
 {
@@ -391,10 +299,10 @@ static int hss_verify_int(PROV_LMS_CTX *ctx,
         goto err;
 
     /* Add the public key to the stack */
-    if (!ossl_lms_key_up_ref(ctx->key))
+    if (!ossl_hss_key_up_ref(ctx->key))
         goto err;
-    if (sk_LMS_KEY_push(publist, ctx->key) <= 0) {
-        ossl_lms_key_free(ctx->key);
+    if (sk_LMS_KEY_push(publist, &ctx->key->lms_pub) <= 0) {
+        ossl_hss_key_free(ctx->key);
         goto err;
     }
 
@@ -442,17 +350,12 @@ static int lms_digest_verify(void *vctx,
                              const unsigned char *sig, size_t siglen,
                              const unsigned char *msg, size_t msglen)
 {
-    PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
+    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
     int ret = 0;
 
     if (!ossl_prov_is_running() || ctx == NULL)
         return 0;
-#if defined(LMS_SIGNATURES)
-    if (ctx->hss == 0)
-        ret = lms_verify_int(ctx, sig, siglen, msg, msglen);
-    else
-#endif
-        ret = hss_verify_int(ctx, sig, siglen, msg, msglen);
+    ret = hss_verify_int(ctx, sig, siglen, msg, msglen);
     if (msg != NULL && !check_jobs(ctx))
         ret = 0;
     return ret;
@@ -461,13 +364,13 @@ static int lms_digest_verify(void *vctx,
 static int lms_digest_verify_init(void *vctx, const char *mdname, void *key,
                                   const OSSL_PARAM params[])
 {
-    return lms_verify_init(vctx, key, params, mdname);
+    return hss_verify_init(vctx, key, params, mdname);
 }
 
 int lms_digest_verify_update(void *vctx,
                              const unsigned char *data, size_t datalen)
 {
-    PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
+    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
     void *ptr;
 
     if (ctx->pqmode)
@@ -491,7 +394,7 @@ int lms_digest_verify_update(void *vctx,
 int lms_digest_verify_final(void *vctx,
                             const unsigned char *sig, size_t siglen)
 {
-    PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
+    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
     int ret = 0;
 
     if (ctx == NULL)
@@ -506,9 +409,9 @@ static int lms_digest_verify_pq_init(void *vctx, const char *mdname, void *key,
                                      const OSSL_PARAM params[],
                                      const unsigned char *sig, size_t siglen)
 {
-    PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
+    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
 
-    if (!lms_verify_init(vctx, key, params, mdname))
+    if (!hss_verify_init(vctx, key, params, mdname))
         return 0;
     ctx->pqmode = 1;
     return lms_digest_verify(vctx, sig, siglen, NULL, 0);
@@ -516,7 +419,7 @@ static int lms_digest_verify_pq_init(void *vctx, const char *mdname, void *key,
 
 static int lms_digest_verify_pq_final(void *vctx)
 {
-    PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
+    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
     int ret = 0;
 
     if (!ctx->pqmode)
@@ -544,7 +447,7 @@ static const OSSL_PARAM *lms_gettable_ctx_params(ossl_unused void *vctx,
 
 static int lms_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
+    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
 
     if (ctx == NULL)
         return 0;
@@ -584,44 +487,9 @@ static const OSSL_PARAM *lms_settable_ctx_md_params(void *vctx)
     return NULL;
 }
 
-#if defined(LMS_SIGNATURES)
-const OSSL_DISPATCH ossl_lms_signature_functions[] = {
-    { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))lms_newctx },
-    { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))lms_freectx },
-//    { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))lms_dupctx },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_PQ_INIT,
-      (void (*)(void))lms_digest_verify_pq_init },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_PQ_FINAL,
-      (void (*)(void))lms_digest_verify_pq_final },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,
-      (void (*)(void))lms_digest_verify_init },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE,
-      (void (*)(void))lms_digest_verify_update },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL,
-      (void (*)(void))lms_digest_verify_final },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY, (void (*)(void))lms_digest_verify },
-    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS, (void (*)(void))lms_get_ctx_params },
-    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,
-      (void (*)(void))lms_gettable_ctx_params },
-    { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))lms_set_ctx_params },
-    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
-      (void (*)(void))lms_settable_ctx_params },
-    { OSSL_FUNC_SIGNATURE_GET_CTX_MD_PARAMS,
-      (void (*)(void))lms_get_ctx_md_params },
-    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_MD_PARAMS,
-      (void (*)(void))lms_gettable_ctx_md_params },
-    { OSSL_FUNC_SIGNATURE_SET_CTX_MD_PARAMS,
-      (void (*)(void))lms_set_ctx_md_params },
-    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS,
-      (void (*)(void))lms_settable_ctx_md_params },
-    OSSL_DISPATCH_END
-};
-#endif
-
 const OSSL_DISPATCH ossl_hss_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))hss_newctx },
-    { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))lms_freectx },
-//    { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))lms_dupctx },
+    { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))hss_freectx },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_PQ_INIT,
       (void (*)(void))lms_digest_verify_pq_init },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_PQ_FINAL,

@@ -8,7 +8,7 @@ $ECX_GOAL=../../libdefault.a ../../libfips.a
 $KDF_GOAL=../../libdefault.a ../../libfips.a
 $MAC_GOAL=../../libdefault.a ../../libfips.a
 $RSA_GOAL=../../libdefault.a ../../libfips.a
-$LMS_GOAL=../../libdefault.a
+$HSS_GOAL=../../libdefault.a ../../libfips.a
 
 IF[{- !$disabled{dh} -}]
   SOURCE[$DH_GOAL]=dh_kmgmt.c
@@ -43,4 +43,4 @@ SOURCE[$KDF_GOAL]=kdf_legacy_kmgmt.c
 
 SOURCE[$MAC_GOAL]=mac_legacy_kmgmt.c
 
-SOURCE[$LMS_GOAL]=lms_kmgmt.c
+SOURCE[$HSS_GOAL]=hss_kmgmt.c
