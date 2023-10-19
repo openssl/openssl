@@ -957,13 +957,11 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
                                  params, NULL, NULL);
     }
     if (ctx == NULL) {
-        if (!quiet)
-            BIO_printf(bio_err, "Could not open file or uri for loading");
+        BIO_printf(bio_err, "Could not open file or uri for loading");
         goto end;
     }
     if (expect > 0 && !OSSL_STORE_expect(ctx, expect)) {
-        if (!quiet)
-            BIO_printf(bio_err, "Internal error trying to load");
+        BIO_printf(bio_err, "Internal error trying to load");
         goto end;
     }
 
