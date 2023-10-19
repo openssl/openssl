@@ -88,6 +88,11 @@ struct blake2b_md_data_st {
     BLAKE2B_PARAM params;
 };
 
+struct blake2s_md_data_st {
+    BLAKE2S_CTX ctx;
+    BLAKE2S_PARAM params;
+};
+
 int ossl_blake2b_init(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P);
 int ossl_blake2b_init_key(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P,
                           const void *key);
@@ -124,5 +129,10 @@ void ossl_blake2s_param_set_personal(BLAKE2S_PARAM *P, const uint8_t *personal,
                                      size_t length);
 void ossl_blake2s_param_set_salt(BLAKE2S_PARAM *P, const uint8_t *salt,
                                  size_t length);
+
+OSSL_FUNC_digest_get_ctx_params_fn ossl_blake2s_get_ctx_params;
+OSSL_FUNC_digest_set_ctx_params_fn ossl_blake2s_set_ctx_params;
+OSSL_FUNC_digest_gettable_ctx_params_fn ossl_blake2s_gettable_ctx_params;
+OSSL_FUNC_digest_settable_ctx_params_fn ossl_blake2s_settable_ctx_params;
 
 #endif /* OSSL_PROV_BLAKE2_H */

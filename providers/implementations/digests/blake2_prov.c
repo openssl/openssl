@@ -15,22 +15,6 @@
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 
-static int ossl_blake2s256_init(void *ctx)
-{
-    BLAKE2S_PARAM P;
-
-    ossl_blake2s_param_init(&P);
-    return ossl_blake2s_init((BLAKE2S_CTX *)ctx, &P);
-}
-
-/* ossl_blake2s256_functions */
-IMPLEMENT_digest_functions(blake2s256, BLAKE2S_CTX,
-                           BLAKE2S_BLOCKBYTES, BLAKE2S_DIGEST_LENGTH, 0,
-                           ossl_blake2s256_init, ossl_blake2s_update,
-                           ossl_blake2s_final)
-
-/* ossl_blake2b512_functions */
-
 #define IMPLEMENT_BLAKE_functions(variant, VARIANT, variantsize) \
 static const OSSL_PARAM known_blake##variant##_ctx_params[] = { \
     {OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0}, \
@@ -200,4 +184,5 @@ const OSSL_DISPATCH ossl_blake##variantsize##_functions[] = { \
     {0, NULL} \
 };
 
+IMPLEMENT_BLAKE_functions(2s, 2S, 2s256)
 IMPLEMENT_BLAKE_functions(2b, 2B, 2b512)
