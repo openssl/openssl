@@ -4928,7 +4928,7 @@ static size_t new_session_count;
 static int on_new_session(SSL *s, SSL_SESSION *sess)
 {
     ++new_session_count;
-    return 1;
+    return 0; /* do not ref session, we aren't keeping it */
 }
 
 static int setup_session(struct helper *h, struct helper_local *hl)
