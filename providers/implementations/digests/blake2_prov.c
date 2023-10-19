@@ -8,7 +8,9 @@
  */
 
 #include <openssl/crypto.h>
+#include <openssl/core_names.h>
 #include <openssl/proverr.h>
+#include <openssl/err.h>
 #include "prov/blake2.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
@@ -30,6 +32,74 @@ IMPLEMENT_digest_functions(blake2s256, BLAKE2S_CTX,
 /* ossl_blake2b512_functions */
 
 #define IMPLEMENT_BLAKE_functions(variant, VARIANT, variantsize) \
+static const OSSL_PARAM known_blake##variant##_ctx_params[] = { \
+    {OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0}, \
+    OSSL_PARAM_END \
+}; \
+ \
+const OSSL_PARAM *ossl_blake##variant##_gettable_ctx_params(ossl_unused void *ctx, \
+                                                   ossl_unused void *pctx) \
+{ \
+    return known_blake##variant##_ctx_params; \
+} \
+ \
+const OSSL_PARAM *ossl_blake##variant##_settable_ctx_params(ossl_unused void *ctx, \
+                                                   ossl_unused void *pctx) \
+{ \
+    return known_blake##variant##_ctx_params; \
+} \
+ \
+int ossl_blake##variant##_get_ctx_params(void *vctx, OSSL_PARAM params[]) \
+{ \
+    struct blake##variant##_md_data_st *mdctx = vctx; \
+    OSSL_PARAM *p; \
+ \
+    BLAKE##VARIANT##_CTX *ctx = &mdctx->ctx; \
+ \
+    if (ctx == NULL) \
+        return 0; \
+    if (params == NULL) \
+        return 1; \
+ \
+    p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_SIZE); \
+    if (p != NULL \
+        && !OSSL_PARAM_set_uint(p, (unsigned int)mdctx->params.digest_length)) { \
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER); \
+        return 0; \
+    } \
+ \
+    return 1; \
+} \
+ \
+int ossl_blake##variant##_set_ctx_params(void *vctx, const OSSL_PARAM params[]) \
+{ \
+    size_t size; \
+    struct blake##variant##_md_data_st *mdctx = vctx; \
+    const OSSL_PARAM *p; \
+ \
+    BLAKE##VARIANT##_CTX *ctx = &mdctx->ctx; \
+ \
+    if (ctx == NULL) \
+        return 0; \
+    if (params == NULL) \
+        return 1; \
+ \
+    p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_SIZE); \
+    if (p != NULL) { \
+        if (!OSSL_PARAM_get_size_t(p, &size)) { \
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER); \
+            return 0; \
+        } \
+        if (size < 1 || size > UINT8_MAX) { \
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_SIZE); \
+            return 0; \
+        } \
+        ossl_blake##variant##_param_set_digest_length(&mdctx->params, (uint8_t)size); \
+    } \
+ \
+    return 1; \
+} \
+ \
 static int ossl_blake##variantsize##_init(void *ctx) \
 { \
     struct blake##variant##_md_data_st *mdctx = ctx; \
