@@ -3226,6 +3226,9 @@ static int test_mod_exp_alias(int idx)
     if (!TEST_str_eq(str, "36"))
         goto err;
 
+    OPENSSL_free(str);
+    str = NULL;
+
     BN_copy(r, b);
 
     /* Aliasing with exponent must work. */
@@ -3236,6 +3239,9 @@ static int test_mod_exp_alias(int idx)
         goto err;
     if (!TEST_str_eq(str, "36"))
         goto err;
+
+    OPENSSL_free(str);
+    str = NULL;
 
     /* Aliasing with modulus should return failure for the simple call. */
     if (idx == 0) {
