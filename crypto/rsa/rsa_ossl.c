@@ -662,6 +662,7 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
     int i, j, num = 0, r = -1;
     unsigned char *buf = NULL;
     BN_CTX *ctx = NULL;
+    BN_ULONG exp = 0;
 
     if (BN_num_bits(rsa->n) > OPENSSL_RSA_MAX_MODULUS_BITS) {
         ERR_raise(ERR_LIB_RSA, RSA_R_MODULUS_TOO_LARGE);
@@ -717,7 +718,7 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
                                     rsa->n, ctx))
             goto err;
 
-    BN_ULONG exp = BN_get_word(rsa->e);
+    exp = BN_get_word(rsa->e);
     if (exp == RSA_3) {
         BN_mod_mul_montgomery(ret, f, f, rsa->_method_mod_n, ctx);
 	    BN_mod_mul_montgomery(ret, f, ret, rsa->_method_mod_n, ctx);
