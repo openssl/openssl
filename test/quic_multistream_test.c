@@ -4923,6 +4923,66 @@ static const struct script_op script_77[] = {
     OP_END
 };
 
+/* 78. Post-connection session ticket handling */
+static size_t new_session_count;
+
+static int on_new_session(SSL *s, SSL_SESSION *sess)
+{
+    ++new_session_count;
+    return 0; /* do not ref session, we aren't keeping it */
+}
+
+static int setup_session(struct helper *h, struct helper_local *hl)
+{
+    SSL_CTX_set_session_cache_mode(h->c_ctx, SSL_SESS_CACHE_BOTH);
+    SSL_CTX_sess_set_new_cb(h->c_ctx, on_new_session);
+    return 1;
+}
+
+static int trigger_late_session_ticket(struct helper *h, struct helper_local *hl)
+{
+    new_session_count = 0;
+
+    if (!TEST_true(ossl_quic_tserver_new_ticket(ACQUIRE_S())))
+        return 0;
+
+    return 1;
+}
+
+static int check_got_session_ticket(struct helper *h, struct helper_local *hl)
+{
+    if (!TEST_size_t_gt(new_session_count, 0))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_78[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_CHECK                (setup_session, 0)
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (a, "orange", 6)
+
+    OP_CHECK                (trigger_late_session_ticket, 0)
+
+    OP_S_WRITE              (a, "Strawberry", 10)
+    OP_C_READ_EXPECT        (a, "Strawberry", 10)
+
+    OP_CHECK                (check_got_session_ticket, 0)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -5000,7 +5060,8 @@ static const struct script_op *const scripts[] = {
     script_74,
     script_75,
     script_76,
-    script_77
+    script_77,
+    script_78
 };
 
 static int test_script(int idx)
