@@ -262,7 +262,7 @@ void BN_MONT_CTX_free(BN_MONT_CTX *mont)
 
 int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 {
-    int i, ret = 0;
+    int i, j, ret = 0;
     BIGNUM *Ri, *R;
 
     if (BN_is_zero(mod))
@@ -405,7 +405,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
     BN_mod_mul_montgomery(&mont->RRR, &mont->RR, &mont->RR, mont, ctx);
 
     BN_mod_mul_montgomery(&mont->RR16, &mont->RRR, &mont->RRR, mont, ctx);
-    for (int j = 0; j < (15 - 1); j++) {
+    for (j = 0; j < (15 - 1); j++) {
     	BN_mod_mul_montgomery(&mont->RR16, &mont->RR16, &mont->RR16, mont, ctx);
     }
 

@@ -659,7 +659,7 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
                                   unsigned char *to, RSA *rsa, int padding)
 {
     BIGNUM *f, *ret;
-    int i, num = 0, r = -1;
+    int i, j, num = 0, r = -1;
     unsigned char *buf = NULL;
     BN_CTX *ctx = NULL;
 
@@ -718,14 +718,14 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
             goto err;
 
     BN_ULONG exp = BN_get_word(rsa->e);
-    if(exp == RSA_3) {
+    if (exp == RSA_3) {
         BN_mod_mul_montgomery(ret, f, f, rsa->_method_mod_n, ctx);
 	    BN_mod_mul_montgomery(ret, f, ret, rsa->_method_mod_n, ctx);
 	    BN_mod_mul_montgomery(ret, ret, &rsa->_method_mod_n->RRR, rsa->_method_mod_n, ctx);
-    } else if(exp == RSA_F4) {
+    } else if (exp == RSA_F4) {
         BN_mod_mul_montgomery(ret, f, f, rsa->_method_mod_n, ctx);
 
-        for (int j = 0; j < 15; j++) {
+        for (j = 0; j < 15; j++) {
             BN_mod_mul_montgomery(ret, ret, ret, rsa->_method_mod_n, ctx);
         }
 
