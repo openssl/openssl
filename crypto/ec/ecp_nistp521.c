@@ -136,6 +136,41 @@ typedef uint128_t largefelem[NLIMBS];
 static const limb bottom57bits = 0x1ffffffffffffff;
 static const limb bottom58bits = 0x3ffffffffffffff;
 
+#ifdef B_ENDIAN
+#define MASK(n) ((((uint64_t) 1) << (n)) - 1)
+#define TOP(l, n) ((l) & ((((uint64_t) 1) << (n)) - 1) << (64-(n))) >> (64-(n))
+static void bin66_to_felem(felem out, const u8 in[66])
+{
+    unsigned int i, b;
+    uint64_t tmp[9];
+
+    ec_nistp_pre_comp_deserialize(tmp, in, 64/8, 66, 521);
+    for (i = NLIMBS-1; i > 0; i--) {
+        b = 6*i;
+        tmp[i] <<= b;
+        tmp[i] |= TOP(tmp[i-1], b);
+        tmp[i-1] &= MASK(64-b);
+    }
+    memcpy(out, tmp, sizeof(felem));
+}
+#undef TOP
+
+static void felem_to_bin66(u8 out[66], const felem in)
+{
+    unsigned int i, b;
+    uint64_t tmp[9];
+
+    memcpy(tmp, in, sizeof(felem));
+    for (i = 0; i < NLIMBS-1; i++) {
+        b = 6*(i+1);
+        tmp[i] |= (tmp[i+1] & MASK(b)) << (64-b);
+        tmp[i+1] >>= b;
+    }
+
+    ec_nistp_pre_comp_serialize(out, tmp, 64/8, 66);
+}
+#undef MASK
+#else
 /*
  * bin66_to_felem takes a little-endian byte array and converts it into felem
  * form. This assumes that the CPU is little-endian.
@@ -170,6 +205,7 @@ static void felem_to_bin66(u8 out[66], const felem in)
     (*((limb_aX *) & out[50])) |= in[7] << 6;
     (*((limb_aX *) & out[58])) = in[8];
 }
+#endif /* B_ENDIAN */
 
 /* BN_to_felem converts an OpenSSL BIGNUM into an felem */
 static int BN_to_felem(felem out, const BIGNUM *bn)
