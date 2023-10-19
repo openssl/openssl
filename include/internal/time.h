@@ -45,6 +45,13 @@ typedef struct {
 #define ossl_us2time(us) ossl_ticks2time((us) * OSSL_TIME_US)
 #define ossl_time2us(t) (ossl_time2ticks(t) / OSSL_TIME_US)
 
+/*
+ * Arithmetic operations on times.
+ * These operations are saturating, in that an overflow or underflow returns
+ * the largest or smallest value respectively.
+ */
+OSSL_SAFE_MATH_UNSIGNED(time, uint64_t)
+
 /* Convert a tick count into a time */
 static ossl_unused ossl_inline
 OSSL_TIME ossl_ticks2time(uint64_t ticks)
@@ -84,6 +91,15 @@ static ossl_unused ossl_inline
 struct timeval ossl_time_to_timeval(OSSL_TIME t)
 {
     struct timeval tv;
+    int err = 0;
+
+    /*
+     * Round up any nano secs which struct timeval doesn't support. Ensures that
+     * we never return a zero time if the input time is non zero
+     */
+    t.t = safe_add_time(t.t, OSSL_TIME_US - 1, &err);
+    if (err)
+        t = ossl_time_infinite();
 
 #ifdef _WIN32
     tv.tv_sec = (long int)(t.t / OSSL_TIME_SECOND);
@@ -150,13 +166,6 @@ int ossl_time_is_infinite(OSSL_TIME t)
 {
     return ossl_time_compare(t, ossl_time_infinite()) == 0;
 }
-
-/*
- * Arithmetic operations on times.
- * These operations are saturating, in that an overflow or underflow returns
- * the largest or smallest value respectively.
- */
-OSSL_SAFE_MATH_UNSIGNED(time, uint64_t)
 
 static ossl_unused ossl_inline
 OSSL_TIME ossl_time_add(OSSL_TIME a, OSSL_TIME b)
