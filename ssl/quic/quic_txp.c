@@ -510,12 +510,63 @@ void ossl_quic_tx_packetiser_free(OSSL_QUIC_TX_PACKETISER *txp)
     OPENSSL_free(txp);
 }
 
-void ossl_quic_tx_packetiser_set_initial_token(OSSL_QUIC_TX_PACKETISER *txp,
-                                               const unsigned char *token,
-                                               size_t token_len,
-                                               ossl_quic_initial_token_free_fn *free_cb,
-                                               void *free_cb_arg)
+/*
+ * Determine if an Initial packet token length is reasonable based on the
+ * current MDPL, returning 1 if it is OK.
+ *
+ * The real PMTU to the peer could differ from our (pessimistic) understanding
+ * of the PMTU, therefore it is possible we could receive an Initial token from
+ * a server in a Retry packet which is bigger than the MDPL. In this case it is
+ * impossible for us ever to make forward progress and we need to error out
+ * and fail the connection attempt.
+ *
+ * The specific boundary condition is complex: for example, after the size of
+ * the Initial token, there are the Initial packet header overheads and then
+ * encryption/AEAD tag overheads. After that, the minimum room for frame data in
+ * order to guarantee forward progress must be guaranteed. For example, a crypto
+ * stream needs to always be able to serialize at least one byte in a CRYPTO
+ * frame in order to make forward progress. Because the offset field of a CRYPTO
+ * frame uses a variable-length integer, the number of bytes needed to ensure
+ * this also varies.
+ *
+ * Rather than trying to get this boundary condition check actually right,
+ * require a reasonable amount of slack to avoid pathological behaviours. (After
+ * all, transmitting a CRYPTO stream one byte at a time is probably not
+ * desirable anyway.)
+ *
+ * We choose 160 bytes as the required margin, which is double the rough
+ * estimation of the minimum we would require to guarantee forward progress
+ * under worst case packet overheads.
+ */
+#define TXP_REQUIRED_TOKEN_MARGIN       160
+
+static int txp_check_token_len(size_t token_len, size_t mdpl)
 {
+    if (token_len == 0)
+        return 1;
+
+    if (token_len >= mdpl)
+        return 0;
+
+    if (TXP_REQUIRED_TOKEN_MARGIN >= mdpl)
+        /* (should not be possible because MDPL must be at least 1200) */
+        return 0;
+
+    if (token_len > mdpl - TXP_REQUIRED_TOKEN_MARGIN)
+        return 0;
+
+    return 1;
+}
+
+int ossl_quic_tx_packetiser_set_initial_token(OSSL_QUIC_TX_PACKETISER *txp,
+                                              const unsigned char *token,
+                                              size_t token_len,
+                                              ossl_quic_initial_token_free_fn *free_cb,
+                                              void *free_cb_arg)
+{
+    if (!txp_check_token_len(token_len, txp_get_mdpl(txp)))
+        return 0;
+
     if (txp->initial_token != NULL && txp->initial_token_free_cb != NULL)
         txp->initial_token_free_cb(txp->initial_token, txp->initial_token_len,
                                    txp->initial_token_free_cb_arg);
@@ -524,6 +575,7 @@ void ossl_quic_tx_packetiser_set_initial_token(OSSL_QUIC_TX_PACKETISER *txp,
     txp->initial_token_len          = token_len;
     txp->initial_token_free_cb      = free_cb;
     txp->initial_token_free_cb_arg  = free_cb_arg;
+    return 1;
 }
 
 int ossl_quic_tx_packetiser_set_cur_dcid(OSSL_QUIC_TX_PACKETISER *txp,
