@@ -34,7 +34,7 @@ IF[{- !$disabled{tests} -}]
           confdump \
           versions \
           aborttest test_test pkcs12_format_test pkcs12_api_test \
-          sanitytest rsa_complex exdatatest bntest \
+          sanitytest time_test rsa_complex exdatatest bntest \
           ecstresstest gmdifftest pbelutest \
           destest mdc2test sha_test \
           exptest pbetest localetest evp_pkey_ctx_new_from_name \
@@ -96,6 +96,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sanitytest]=sanitytest.c
   INCLUDE[sanitytest]=../include ../apps/include
   DEPEND[sanitytest]=../libcrypto.a libtestutil.a
+
+  SOURCE[time_test]=time_test.c
+  INCLUDE[time_test]=../include ../apps/include
+  DEPEND[time_test]=../libcrypto.a libtestutil.a
 
   SOURCE[rand_test]=rand_test.c
   INCLUDE[rand_test]=../include ../apps/include
