@@ -15,6 +15,7 @@
 #include <openssl/cms.h>
 #include <openssl/rand.h>
 #include "crypto/evp.h"
+#include "crypto/asn1.h"
 #include "cms_local.h"
 
 /* CMS EncryptedData Utilities */
