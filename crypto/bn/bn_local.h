@@ -260,10 +260,6 @@ struct bn_mont_ctx_st {
     int ri;                     /* number of bits in R */
     BIGNUM RR;                  /* used to convert to montgomery form,
                                    possibly zero-padded */
-    BIGNUM RRR;                 /* RRR = 2^(3*|N|) mod N; n = |N| */
-                                /* Speed up Montgomery exponentiation with public exponent RSA_3  */
-    BIGNUM RR16;                /* RR16 = 2^((2^16 + 1) * n) mod N = 2^(65537 * n) mod N; n = |N| */
-                                /* Speed up Montgomery exponentiation with public exponent RSA_F4 */
     BIGNUM N;                   /* The modulus */
     BIGNUM Ni;                  /* R*(1/R mod N) - N*Ni = 1 (Ni is only
                                  * stored for bignum algorithm) */

@@ -720,18 +720,21 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
 
     exp = BN_get_word(rsa->e);
     if (exp == RSA_3) {
-        BN_mod_mul_montgomery(ret, f, f, rsa->_method_mod_n, ctx);
-	    BN_mod_mul_montgomery(ret, f, ret, rsa->_method_mod_n, ctx);
-	    BN_mod_mul_montgomery(ret, ret, &rsa->_method_mod_n->RRR, rsa->_method_mod_n, ctx);
+        if(!BN_mod_mul_montgomery(ret, f, &rsa->_method_mod_n->RR, rsa->_method_mod_n, ctx))
+            goto err;
+        if(!BN_mod_mul_montgomery(ret, f, &rsa->_method_mod_n->RR, rsa->_method_mod_n, ctx))
+            goto err;
+        if(!BN_mod_mul_montgomery(ret, ret, f, rsa->_method_mod_n, ctx))
+            goto err;
     } else if (exp == RSA_F4) {
-        BN_mod_mul_montgomery(ret, f, f, rsa->_method_mod_n, ctx);
-
-        for (j = 0; j < 15; j++) {
-            BN_mod_mul_montgomery(ret, ret, ret, rsa->_method_mod_n, ctx);
+        if(!BN_mod_mul_montgomery(ret, f, &rsa->_method_mod_n->RR, rsa->_method_mod_n, ctx))
+            goto err;
+        for (j = 0; j < 16; j++) {
+            if(!BN_mod_mul_montgomery(ret, ret, ret, rsa->_method_mod_n, ctx))
+                goto err;
         }
-
-        BN_mod_mul_montgomery(ret, f, ret, rsa->_method_mod_n, ctx);
-        BN_mod_mul_montgomery(ret, ret, &rsa->_method_mod_n->RR16, rsa->_method_mod_n, ctx);
+        if(!BN_mod_mul_montgomery(ret, ret, f, rsa->_method_mod_n, ctx))
+            goto err;
     } else {
         if (!rsa->meth->bn_mod_exp(ret, f, rsa->e, rsa->n, ctx,
                                 rsa->_method_mod_n))
