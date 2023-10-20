@@ -168,7 +168,7 @@ You can also use environment variables to override the default location that
 OpenSSL will look for its trusted certificate store. Set the B<SSL_CERT_PATH>
 environment variable to give the directory where OpenSSL should looks for its
 certificates or the B<SSL_CERT_FILE> environment variable to give the name of
-a single file containing all of the certifictes. See L<openssl-env(7)> for
+a single file containing all of the certificates. See L<openssl-env(7)> for
 further details about OpenSSL environment variables. For example you could use
 this capability to have multiple versions of OpenSSL all installed on the same
 system using different values for B<OPENSSLDIR> but all using the same
@@ -194,7 +194,7 @@ If its not working as expected then you might see output like this instead:
  Verification error: unable to get local issuer certificate
 
 The "unable to get local issuer certificate" error means that OpenSSL has been
-unable to find a trusted CA for the chain of certifictes provided by the server
+unable to find a trusted CA for the chain of certificates provided by the server
 in its trusted certificate store. Check your trusted certificate store
 configuration again.
 
