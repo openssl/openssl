@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,6 +23,102 @@
 #if !defined(OPENSSL_NO_SCTP) && !defined(OPENSSL_NO_SOCK)
 #include <netinet/sctp.h>
 #endif
+
+/* Shamelessly copied from test/helpers/ssl_test_ctx.c */
+/* Maps string names to various enumeration type */
+typedef struct {
+    const char *name;
+    int value;
+} enum_name_map;
+
+static const enum_name_map connect_phase_names[] = {
+    {"Handshake", HANDSHAKE},
+    {"RenegAppData", RENEG_APPLICATION_DATA},
+    {"RenegSetup", RENEG_SETUP},
+    {"RenegHandshake", RENEG_HANDSHAKE},
+    {"AppData", APPLICATION_DATA},
+    {"Shutdown", SHUTDOWN},
+    {"ConnectionDone", CONNECTION_DONE}
+};
+
+static const enum_name_map peer_status_names[] = {
+    {"PeerSuccess", PEER_SUCCESS},
+    {"PeerRetry", PEER_RETRY},
+    {"PeerError", PEER_ERROR},
+    {"PeerWaiting", PEER_WAITING},
+    {"PeerTestFail", PEER_TEST_FAILURE}
+};
+
+static const enum_name_map handshake_status_names[] = {
+    {"HandshakeSuccess", HANDSHAKE_SUCCESS},
+    {"ClientError", CLIENT_ERROR},
+    {"ServerError", SERVER_ERROR},
+    {"InternalError", INTERNAL_ERROR},
+    {"HandshakeRetry", HANDSHAKE_RETRY}
+};
+
+/* Shamelessly copied from test/helpers/ssl_test_ctx.c */
+static const char *enum_name(const enum_name_map *enums, size_t num_enums,
+                             int value)
+{
+    size_t i;
+    for (i = 0; i < num_enums; i++) {
+        if (enums[i].value == value) {
+            return enums[i].name;
+        }
+    }
+    return "InvalidValue";
+}
+
+const char *handshake_connect_phase_name(connect_phase_t phase)
+{
+    return enum_name(connect_phase_names, OSSL_NELEM(connect_phase_names),
+                     (int)phase);
+}
+
+const char *handshake_status_name(handshake_status_t handshake_status)
+{
+    return enum_name(handshake_status_names, OSSL_NELEM(handshake_status_names),
+                     (int)handshake_status);
+}
+
+const char *handshake_peer_status_name(peer_status_t peer_status)
+{
+    return enum_name(peer_status_names, OSSL_NELEM(peer_status_names),
+                     (int)peer_status);
+}
+
+static void save_loop_history(HANDSHAKE_HISTORY *history,
+                              connect_phase_t phase,
+                              handshake_status_t handshake_status,
+                              peer_status_t server_status,
+                              peer_status_t client_status,
+                              int client_turn_count,
+                              int is_client_turn)
+{
+    HANDSHAKE_HISTORY_ENTRY *new_entry = NULL;
+
+    /*
+     * Create a new history entry for a handshake loop with statuses given in
+     * the arguments. Potentially evicting the oldest entry when the
+     * ring buffer is full.
+     */
+    ++(history->last_idx);
+    history->last_idx &= MAX_HANDSHAKE_HISTORY_ENTRY_IDX_MASK;
+
+    new_entry = &((history->entries)[history->last_idx]);
+    new_entry->phase = phase;
+    new_entry->handshake_status = handshake_status;
+    new_entry->server_status = server_status;
+    new_entry->client_status = client_status;
+    new_entry->client_turn_count = client_turn_count;
+    new_entry->is_client_turn = is_client_turn;
+
+    /* Evict the oldest handshake loop entry when the ring buffer is full. */
+    if (history->entry_count < MAX_HANDSHAKE_HISTORY_ENTRY) {
+        ++(history->entry_count);
+    }
+}
 
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void)
 {
@@ -719,15 +815,6 @@ static void configure_handshake_ssl(SSL *server, SSL *client,
         SSL_set_post_handshake_auth(client, 1);
 }
 
-/* The status for each connection phase. */
-typedef enum {
-    PEER_SUCCESS,
-    PEER_RETRY,
-    PEER_ERROR,
-    PEER_WAITING,
-    PEER_TEST_FAILURE
-} peer_status_t;
-
 /* An SSL object and associated read-write buffers. */
 typedef struct peer_st {
     SSL *ssl;
@@ -1074,17 +1161,6 @@ static void do_shutdown_step(PEER *peer)
     }
 }
 
-typedef enum {
-    HANDSHAKE,
-    RENEG_APPLICATION_DATA,
-    RENEG_SETUP,
-    RENEG_HANDSHAKE,
-    APPLICATION_DATA,
-    SHUTDOWN,
-    CONNECTION_DONE
-} connect_phase_t;
-
-
 static int renegotiate_op(const SSL_TEST_CTX *test_ctx)
 {
     switch (test_ctx->handshake_mode) {
@@ -1161,19 +1237,6 @@ static void do_connect_step(const SSL_TEST_CTX *test_ctx, PEER *peer,
         break;
     }
 }
-
-typedef enum {
-    /* Both parties succeeded. */
-    HANDSHAKE_SUCCESS,
-    /* Client errored. */
-    CLIENT_ERROR,
-    /* Server errored. */
-    SERVER_ERROR,
-    /* Peers are in inconsistent state. */
-    INTERNAL_ERROR,
-    /* One or both peers not done. */
-    HANDSHAKE_RETRY
-} handshake_status_t;
 
 /*
  * Determine the handshake outcome.
@@ -1539,6 +1602,10 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     start = time(NULL);
 
+    save_loop_history(&(ret->history),
+                      phase, status, server.status, client.status,
+                      client_turn_count, client_turn);
+
     /*
      * Half-duplex handshake loop.
      * Client and server speak to each other synchronously in the same process.
@@ -1559,6 +1626,10 @@ static HANDSHAKE_RESULT *do_handshake_internal(
             status = handshake_status(server.status, client.status,
                                       0 /* server went last */);
         }
+
+        save_loop_history(&(ret->history),
+                          phase, status, server.status, client.status,
+                          client_turn_count, client_turn);
 
         switch (status) {
         case HANDSHAKE_SUCCESS:
