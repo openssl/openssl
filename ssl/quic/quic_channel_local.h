@@ -388,6 +388,11 @@ struct quic_channel_st {
      */
     unsigned int                    have_new_rx_secret      : 1;
 
+    /* Have we ever called QUIC_TLS yet during RX processing? */
+    unsigned int                    did_tls_tick            : 1;
+    /* Has any CRYPTO frame been processed during this tick? */
+    unsigned int                    did_crypto_frame        : 1;
+
     /*
      * Have we sent an ack-eliciting packet since the last successful packet
      * reception? Used to determine when to bump idle timer (see RFC 9000 s.
