@@ -33,5 +33,5 @@ test: all
 	@echo "\nCipher tests:"
 	@set -e; for tst in $(TESTS); do \
 		echo "\n"$$tst; \
-		./$$tst; \
+		LD_LIBRARY_PATH=../.. ./$$tst; \
 	done
