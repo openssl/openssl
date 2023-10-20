@@ -421,6 +421,12 @@ OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void)
 
 
 #ifndef OPENSSL_NO_STDIO
+/*
+ * If CRYPTO_set_mem_functions is called after this, then
+ * memory allocation and deallocation in this function can
+ * become disjointed. Avoid this by always using standard
+ * strdup & free instead of OPENSSL_strdup & OPENSSL_free.
+ */
 int OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
                                      const char *filename)
 {
@@ -444,6 +450,12 @@ void OPENSSL_INIT_set_config_file_flags(OPENSSL_INIT_SETTINGS *settings,
     settings->flags = flags;
 }
 
+/*
+ * If CRYPTO_set_mem_functions is called after this, then
+ * memory allocation and deallocation in this function can
+ * become disjointed. Avoid this by always using standard
+ * strdup & free instead of OPENSSL_strdup & OPENSSL_free.
+ */
 int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *settings,
                                     const char *appname)
 {
