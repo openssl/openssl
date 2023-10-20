@@ -46,10 +46,11 @@
 
 static void ch_save_err_state(QUIC_CHANNEL *ch);
 static void ch_rx_pre(QUIC_CHANNEL *ch);
-static int ch_rx(QUIC_CHANNEL *ch);
+static int ch_rx(QUIC_CHANNEL *ch, int channel_only);
 static int ch_tx(QUIC_CHANNEL *ch);
 static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
-static void ch_rx_handle_packet(QUIC_CHANNEL *ch);
+static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only);
+static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only);
 static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch);
 static int ch_retry(QUIC_CHANNEL *ch,
                     const unsigned char *retry_token,
@@ -1850,9 +1851,6 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
     OSSL_TIME now, deadline;
     QUIC_CHANNEL *ch = arg;
     int channel_only = (flags & QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY) != 0;
-    uint64_t error_code;
-    const char *error_msg;
-    ERR_STATE *error_state = NULL;
 
     /*
      * When we tick the QUIC connection, we do everything we need to do
@@ -1898,21 +1896,16 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
 
         do {
             /* Process queued incoming packets. */
-            ch_rx(ch);
+            ch->did_tls_tick        = 0;
+            ch->have_new_rx_secret  = 0;
+            ch_rx(ch, channel_only);
 
             /*
              * Allow the handshake layer to check for any new incoming data and
              * generate new outgoing data.
              */
-            ch->have_new_rx_secret = 0;
-            if (!channel_only) {
-                ossl_quic_tls_tick(ch->qtls);
-
-                if (ossl_quic_tls_get_error(ch->qtls, &error_code, &error_msg,
-                                            &error_state))
-                    ossl_quic_channel_raise_protocol_error_state(ch, error_code, 0,
-                                                                 error_msg, error_state);
-            }
+            if (!ch->did_tls_tick)
+                ch_tick_tls(ch, channel_only);
 
             /*
              * If the handshake layer gave us a new secret, we need to do RX
@@ -1983,6 +1976,28 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
            && ossl_qtx_get_queue_len_datagrams(ch->qtx) > 0);
 }
 
+static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only)
+{
+    uint64_t error_code;
+    const char *error_msg;
+    ERR_STATE *error_state = NULL;
+
+    if (channel_only)
+        return 1;
+
+    ch->did_tls_tick = 1;
+    ossl_quic_tls_tick(ch->qtls);
+
+    if (ossl_quic_tls_get_error(ch->qtls, &error_code, &error_msg,
+                                &error_state)) {
+        ossl_quic_channel_raise_protocol_error_state(ch, error_code, 0,
+                                                     error_msg, error_state);
+        return 0;
+    }
+
+    return 1;
+}
+
 /* Process incoming datagrams, if any. */
 static void ch_rx_pre(QUIC_CHANNEL *ch)
 {
@@ -2042,7 +2057,7 @@ static void ch_rx_check_forged_pkt_limit(QUIC_CHANNEL *ch)
 }
 
 /* Process queued incoming packets and handle frames, if any. */
-static int ch_rx(QUIC_CHANNEL *ch)
+static int ch_rx(QUIC_CHANNEL *ch, int channel_only)
 {
     int handled_any = 0;
     const int closing = ossl_quic_channel_is_closing(ch);
@@ -2070,7 +2085,7 @@ static int ch_rx(QUIC_CHANNEL *ch)
             ch_update_ping_deadline(ch);
         }
 
-        ch_rx_handle_packet(ch); /* best effort */
+        ch_rx_handle_packet(ch, channel_only); /* best effort */
 
         /*
          * Regardless of the outcome of frame handling, unref the packet.
@@ -2122,7 +2137,7 @@ static int bio_addr_eq(const BIO_ADDR *a, const BIO_ADDR *b)
 }
 
 /* Handles the packet currently in ch->qrx_pkt->hdr. */
-static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
+static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
 {
     uint32_t enc_level;
     int old_have_processed_any_pkt = ch->have_processed_any_pkt;
@@ -2323,6 +2338,10 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
 
         /* This packet contains frames, pass to the RXDP. */
         ossl_quic_handle_frames(ch, ch->qrx_pkt); /* best effort */
+
+        if (ch->did_crypto_frame)
+            ch_tick_tls(ch, channel_only);
+
         break;
 
     case QUIC_PKT_TYPE_VERSION_NEG:
@@ -2726,10 +2745,6 @@ int ossl_quic_channel_set_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio)
  */
 int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 {
-    uint64_t error_code;
-    const char *error_msg;
-    ERR_STATE *error_state = NULL;
-
     if (ch->is_server)
         /*
          * This is not used by the server. The server moves to active
@@ -2758,14 +2773,8 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     ch->doing_proactive_ver_neg = 0; /* not currently supported */
 
     /* Handshake layer: start (e.g. send CH). */
-    ossl_quic_tls_tick(ch->qtls);
-
-    if (ossl_quic_tls_get_error(ch->qtls, &error_code, &error_msg,
-                                &error_state)) {
-        ossl_quic_channel_raise_protocol_error_state(ch, error_code, 0,
-                                                     error_msg, error_state);
+    if (!ch_tick_tls(ch, /*channel_only=*/0))
         return 0;
-    }
 
     ossl_quic_reactor_tick(&ch->rtor, 0); /* best effort */
     return 1;

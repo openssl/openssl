@@ -317,6 +317,7 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CHANNEL *ch,
         return 0;
     }
 
+    ch->did_crypto_frame = 1;
     *datalen = f.len;
 
     return 1;
@@ -1421,6 +1422,8 @@ int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
 
     if (ch == NULL)
         goto end;
+
+    ch->did_crypto_frame = 0;
 
     /* Initialize |ackm_data| (and reinitialize |ok|)*/
     memset(&ackm_data, 0, sizeof(ackm_data));
