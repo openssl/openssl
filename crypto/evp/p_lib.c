@@ -68,7 +68,11 @@ int EVP_PKEY_get_bits(const EVP_PKEY *pkey)
         if (pkey->ameth != NULL && pkey->ameth->pkey_bits != NULL)
             size = pkey->ameth->pkey_bits(pkey);
     }
-    return size < 0 ? 0 : size;
+    if (size <= 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNKNOWN_BITS);
+        return 0;
+    }
+    return size;
 }
 
 int EVP_PKEY_get_security_bits(const EVP_PKEY *pkey)
@@ -80,7 +84,11 @@ int EVP_PKEY_get_security_bits(const EVP_PKEY *pkey)
         if (pkey->ameth != NULL && pkey->ameth->pkey_security_bits != NULL)
             size = pkey->ameth->pkey_security_bits(pkey);
     }
-    return size < 0 ? 0 : size;
+    if (size <= 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNKNOWN_SECURITY_BITS);
+        return 0;
+    }
+    return size;
 }
 
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
@@ -1812,7 +1820,11 @@ int EVP_PKEY_get_size(const EVP_PKEY *pkey)
             size = pkey->ameth->pkey_size(pkey);
 #endif
     }
-    return size < 0 ? 0 : size;
+    if (size <= 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNKNOWN_MAX_SIZE);
+        return 0;
+    }
+    return size;
 }
 
 const char *EVP_PKEY_get0_description(const EVP_PKEY *pkey)

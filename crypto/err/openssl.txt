@@ -781,11 +781,14 @@ EVP_R_UNABLE_TO_GET_MAXIMUM_REQUEST_SIZE:215:unable to get maximum request size
 EVP_R_UNABLE_TO_GET_RANDOM_STRENGTH:216:unable to get random strength
 EVP_R_UNABLE_TO_LOCK_CONTEXT:211:unable to lock context
 EVP_R_UNABLE_TO_SET_CALLBACKS:217:unable to set callbacks
+EVP_R_UNKNOWN_BITS:166:unknown bits
 EVP_R_UNKNOWN_CIPHER:160:unknown cipher
 EVP_R_UNKNOWN_DIGEST:161:unknown digest
 EVP_R_UNKNOWN_KEY_TYPE:207:unknown key type
+EVP_R_UNKNOWN_MAX_SIZE:167:unknown max size
 EVP_R_UNKNOWN_OPTION:169:unknown option
 EVP_R_UNKNOWN_PBE_ALGORITHM:121:unknown pbe algorithm
+EVP_R_UNKNOWN_SECURITY_BITS:168:unknown security bits
 EVP_R_UNSUPPORTED_ALGORITHM:156:unsupported algorithm
 EVP_R_UNSUPPORTED_CIPHER:107:unsupported cipher
 EVP_R_UNSUPPORTED_KEYLENGTH:123:unsupported keylength
