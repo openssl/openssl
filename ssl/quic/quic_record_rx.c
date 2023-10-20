@@ -280,7 +280,7 @@ static void qrx_requeue_deferred(OSSL_QRX *qrx)
 
     while ((e = ossl_list_urxe_head(&qrx->urx_deferred)) != NULL) {
         ossl_list_urxe_remove(&qrx->urx_deferred, e);
-        ossl_list_urxe_insert_head(&qrx->urx_pending, e);
+        ossl_list_urxe_insert_tail(&qrx->urx_pending, e);
     }
 }
 
