@@ -834,10 +834,9 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
                     goto err;
             } else {
                 unsigned char *abuf = NULL;
-                unsigned int abuflen;
-                abuflen = EVP_PKEY_get_size(si->pkey);
-                abuf = OPENSSL_malloc(abuflen);
-                if (abuf == NULL)
+                unsigned int abuflen = EVP_PKEY_get_size(si->pkey);
+
+                if (abuflen == 0 || (abuf = OPENSSL_malloc(abuflen)) == NULL)
                     goto err;
 
                 if (!EVP_SignFinal_ex(ctx_tmp, abuf, &abuflen, si->pkey,
