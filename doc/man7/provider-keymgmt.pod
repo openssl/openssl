@@ -380,6 +380,9 @@ the result of asymmmetric encryption / decryption (I<out> in
 L<provider-asym_cipher(7)>, a derived secret (I<secret> in
 L<provider-keyexch(7)>, and similar data).
 
+Providers need to implement this parameter
+in order to properly support various use cases such as CMS signing.
+
 Because an EVP_KEYMGMT method is always tightly bound to another method
 (signature, asymmetric cipher, key exchange, ...) and must be of the
 same provider, this number only needs to be synchronised with the
@@ -448,6 +451,9 @@ always return a constant L<OSSL_PARAM(3)> array.
 
 =head1 SEE ALSO
 
+L<EVP_PKEY_get_size(3)>,
+L<EVP_PKEY_get_bits(3)>,
+L<EVP_PKEY_get_security_bits(3)>,
 L<provider(7)>,
 L<EVP_PKEY-X25519(7)>, L<EVP_PKEY-X448(7)>, L<EVP_PKEY-ED25519(7)>,
 L<EVP_PKEY-ED448(7)>, L<EVP_PKEY-EC(7)>, L<EVP_PKEY-RSA(7)>,
