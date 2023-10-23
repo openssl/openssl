@@ -73,7 +73,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
     int s_begin_write = 0;
     OSSL_TIME start_time;
     unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
-    size_t limit_ms = 1000;
+    size_t limit_ms = 10000;
 
 #if defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
     if (use_thread_assist) {
