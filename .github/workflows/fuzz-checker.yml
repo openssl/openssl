@@ -23,6 +23,7 @@ jobs:
             config: enable-fuzz-afl no-module,
             install: afl++-clang,
             cc: afl-clang-fast
+            tests: -
           }, {
             name: libFuzzer,
             config: enable-fuzz-libfuzzer enable-asan enable-ubsan,
