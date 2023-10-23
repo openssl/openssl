@@ -25,9 +25,10 @@
  * TODO(QUIC SERVER): Implement retry logic
  */
 
-#define INIT_DCID_LEN           8
-#define INIT_CRYPTO_BUF_LEN     8192
-#define INIT_APP_BUF_LEN        8192
+#define INIT_DCID_LEN                   8
+#define INIT_CRYPTO_RECV_BUF_LEN    16384
+#define INIT_CRYPTO_SEND_BUF_LEN    16384
+#define INIT_APP_BUF_LEN             8192
 
 /*
  * Interval before we force a PING to ensure NATs don't timeout. This is based
@@ -323,7 +324,7 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space)
         if (!ossl_quic_rxfc_init_standalone(&ch->crypto_rxfc[pn_space],
-                                            INIT_CRYPTO_BUF_LEN,
+                                            INIT_CRYPTO_RECV_BUF_LEN,
                                             get_time, ch))
             goto err;
 
@@ -375,7 +376,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     txp_args.now_arg                = ch;
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
-        ch->crypto_send[pn_space] = ossl_quic_sstream_new(INIT_CRYPTO_BUF_LEN);
+        ch->crypto_send[pn_space] = ossl_quic_sstream_new(INIT_CRYPTO_SEND_BUF_LEN);
         if (ch->crypto_send[pn_space] == NULL)
             goto err;
 
