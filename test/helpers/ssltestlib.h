@@ -44,6 +44,15 @@ const BIO_METHOD *bio_s_always_retry(void);
 void bio_s_always_retry_free(void);
 void set_always_retry_err_val(int err);
 
+/*
+ * Maybe retry BIO ctrls. We make them large enough to not clash with standard
+ * BIO ctrl codes.
+ */
+#define MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT       (1 << 15)
+
+const BIO_METHOD *bio_s_maybe_retry(void);
+void bio_s_maybe_retry_free(void);
+
 /* Packet types - value 0 is reserved */
 #define INJECT_PACKET                   1
 #define INJECT_PACKET_IGNORE_REC_SEQ    2
