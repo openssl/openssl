@@ -7,14 +7,15 @@ client.
 Users interested in using the new QUIC functionality are encouraged to look at
 some of the following resources:
 
-- The [openssl-quic(7) manpage], which provides a basic reference overview of
-  QUIC functionality and how use of QUIC differs from use of TLS with regard to
-  our API;
+- The [openssl-quic(7) manual page], which provides a basic reference overview
+  of QUIC functionality and how use of QUIC differs from use of TLS with regard
+  to our API;
 - The new [OpenSSL Guide], which provides introductory guides
   on the use of TLS, QUIC, and other OpenSSL functionality. See the
-  [ossl-guide-introduction(7) manpage] for the index.
-- The [DDD demos], which demonstrate the use of QUIC using simple examples.
-  These can be [found in the source tree under `doc/designs/ddd`].
+  [ossl-guide-introduction(7) manual page][OpenSSL Guide] for the index.
+- The [Demo-Driven Design (DDD)][DDD] demos, which demonstrate the use of QUIC
+  using simple examples. These can be [found in the source tree under
+  `doc/designs/ddd`].
 - The [demo found in `demos/http3`], which provides an HTTP/3 client example
   using the nghttp3 HTTP/3 library.
 
@@ -61,7 +62,7 @@ a number of advantages:
   on the same UDP socket as some other UDP-based protocols, such as RTP.
 
 For more background information on OpenSSL's QUIC implementation, see the
-[openssl-quic(7) manpage].
+[openssl-quic(7) manual page].
 
 ### How can I use HTTP/3 with OpenSSL?
 
@@ -73,9 +74,9 @@ library with OpenSSL QUIC is demonstrated via the [demo found in `demos/http3`].
 The [OpenSSL Guide] provides introductory examples for how to make use of
 OpenSSL QUIC.
 
-The [openssl-quic(7) manpage] and the [DDD demos] may also be helpful to
-illustrate the changes needed if you are trying to adapt an existing
-application.
+The [openssl-quic(7) manual page] and the [Demo-Driven Design (DDD)][DDD] demos
+may also be helpful to illustrate the changes needed if you are trying to adapt
+an existing application.
 
 ### How can I test QUIC using `openssl s_client`?
 
@@ -89,10 +90,9 @@ This connects to a QUIC server using the specified ALPN protocol name and opens
 a single bidirectional stream. Data can be passed via stdin/stdout as usual.
 This allows test usage of QUIC using simple TCP/TLS-like usage.
 
-[openssl-quic(7) manpage]: https://www.openssl.org/docs/manmaster/man7/openssl-quic.html
+[openssl-quic(7) manual page]: https://www.openssl.org/docs/manmaster/man7/openssl-quic.html
 [OpenSSL guide]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
-[ossl-guide-introduction(7) manpage]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
-[DDD demos]: https://github.com/openssl/openssl/tree/master/doc/designs/ddd
+[DDD]: https://github.com/openssl/openssl/tree/master/doc/designs/ddd
 [found in the source tree under `doc/designs/ddd`]: ./doc/designs/ddd/
 [demo found in `demos/http3`]: ./demos/http3/
-[openssl-quic-background(7) manpage]: https://www.openssl.org/docs/manmaster/man7/openssl-quic-background.html
+[openssl-quic-background(7) manual page]: https://www.openssl.org/docs/manmaster/man7/openssl-quic-background.html
