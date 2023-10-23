@@ -54,5 +54,7 @@ jobs:
       run: |
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
+    - name: Check platform symbol usage
+      run: ./util/checkplatformsyms.pl ./util/platform_symbols/unix-symbols.txt ./libcrypto.so ./libssl.so 
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
