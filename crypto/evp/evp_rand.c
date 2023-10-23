@@ -714,7 +714,6 @@ static size_t evp_rand_get_seed_locked(EVP_RAND_CTX *ctx,
     return 0;
 }
 
-
 size_t evp_rand_get_seed(EVP_RAND_CTX *ctx,
                          unsigned char **buffer,
                          int entropy, size_t min_len, size_t max_len,
