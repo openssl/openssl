@@ -15,6 +15,8 @@
 # include <openssl/core.h>
 # include <openssl/indicator.h>
 
+typedef uint32_t (*OSSL_thread_start_handler_fn)(void *);
+
 # ifdef __cplusplus
 extern "C" {
 # endif
@@ -92,11 +94,24 @@ OSSL_CORE_MAKE_FUNC(int, core_clear_last_error_mark,
 # define OSSL_FUNC_CORE_POP_ERROR_TO_MARK     10
 OSSL_CORE_MAKE_FUNC(int, core_pop_error_to_mark, (const OSSL_CORE_HANDLE *prov))
 
+# define OSSL_FUNC_CORE_GET_AVAIL_THREADS     11
+OSSL_CORE_MAKE_FUNC(uint64_t, core_get_avail_threads,
+                    (const OSSL_CORE_HANDLE *prov))
+
+# define OSSL_FUNC_CORE_CRYPTO_THREAD_START   12
+OSSL_CORE_MAKE_FUNC(void *, core_crypto_thread_start,
+                    (const OSSL_CORE_HANDLE *prov,
+                     OSSL_thread_start_handler_fn start,
+                     void *data))
+# define OSSL_FUNC_CORE_CRYPTO_THREAD_JOIN    13
+OSSL_CORE_MAKE_FUNC(int, core_crypto_thread_join, (void *task, uint32_t *ret))
+# define OSSL_FUNC_CORE_CRYPTO_THREAD_CLEAN   14
+OSSL_CORE_MAKE_FUNC(int, core_crypto_thread_clean, (void *vhandle))
 
 /* Functions to access the OBJ database */
 
-#define OSSL_FUNC_CORE_OBJ_ADD_SIGID          11
-#define OSSL_FUNC_CORE_OBJ_CREATE             12
+#define OSSL_FUNC_CORE_OBJ_ADD_SIGID          15
+#define OSSL_FUNC_CORE_OBJ_CREATE             16
 
 OSSL_CORE_MAKE_FUNC(int, core_obj_add_sigid,
                     (const OSSL_CORE_HANDLE *prov, const char  *sign_name,

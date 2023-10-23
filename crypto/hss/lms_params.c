@@ -8,6 +8,7 @@
  */
 
 #include "crypto/hss.h"
+#include "lms_local.h"
 
 #define LMS_TYPE_SHA256_N32_H5   0x00000005
 #define LMS_TYPE_SHA256_N32_H10  0x00000006

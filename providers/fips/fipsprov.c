@@ -57,6 +57,10 @@ extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
 static OSSL_FUNC_core_gettable_params_fn *c_gettable_params;
 static OSSL_FUNC_core_get_params_fn *c_get_params;
 OSSL_FUNC_core_thread_start_fn *c_thread_start;
+static OSSL_FUNC_core_get_avail_threads_fn *c_get_avail_threads;
+static OSSL_FUNC_core_crypto_thread_start_fn *c_crypto_thread_start;
+static OSSL_FUNC_core_crypto_thread_join_fn *c_crypto_thread_join;
+static OSSL_FUNC_core_crypto_thread_clean_fn *c_crypto_thread_clean;
 static OSSL_FUNC_core_new_error_fn *c_new_error;
 static OSSL_FUNC_core_set_error_debug_fn *c_set_error_debug;
 static OSSL_FUNC_core_vset_error_fn *c_vset_error;
@@ -476,7 +480,9 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_mac_legacy_cmac_signature_functions },
 #endif
+#ifndef OPENSSL_NO_HSS
     { PROV_NAMES_HSS, FIPS_DEFAULT_PROPERTIES, ossl_hss_signature_functions },
+#endif
     { NULL, NULL, NULL }
 };
 
@@ -529,8 +535,10 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_cmac_legacy_keymgmt_functions, PROV_DESCS_CMAC_SIGN },
 #endif
+#ifndef OPENSSL_NO_HSS
     { PROV_NAMES_HSS, FIPS_DEFAULT_PROPERTIES, ossl_hss_keymgmt_functions,
       PROV_DESCS_HSS },
+#endif
     { NULL, NULL, NULL }
 };
 
@@ -661,6 +669,21 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
             break;
         case OSSL_FUNC_CORE_THREAD_START:
             set_func(c_thread_start, OSSL_FUNC_core_thread_start(in));
+            break;
+        case OSSL_FUNC_CORE_GET_AVAIL_THREADS:
+            set_func(c_get_avail_threads, OSSL_FUNC_core_get_avail_threads(in));
+            break;
+        case OSSL_FUNC_CORE_CRYPTO_THREAD_START:
+            set_func(c_crypto_thread_start,
+                     OSSL_FUNC_core_crypto_thread_start(in));
+            break;
+        case OSSL_FUNC_CORE_CRYPTO_THREAD_JOIN:
+            set_func(c_crypto_thread_join,
+                     OSSL_FUNC_core_crypto_thread_join(in));
+            break;
+        case OSSL_FUNC_CORE_CRYPTO_THREAD_CLEAN:
+            set_func(c_crypto_thread_clean,
+                     OSSL_FUNC_core_crypto_thread_clean(in));
             break;
         case OSSL_FUNC_CORE_NEW_ERROR:
             set_func(c_new_error, OSSL_FUNC_core_new_error(in));
@@ -1039,4 +1062,26 @@ void OSSL_INDICATOR_get_callback(OSSL_LIB_CTX *libctx,
         if (cb != NULL)
             *cb = NULL;
     }
+}
+
+uint64_t ossl_prov_get_avail_threads(OSSL_LIB_CTX *libctx)
+{
+    return c_get_avail_threads(FIPS_get_core_handle(libctx));
+}
+
+void *ossl_prov_thread_start(OSSL_LIB_CTX *libctx,
+                             OSSL_thread_start_handler_fn start,
+                             void *data)
+{
+    return c_crypto_thread_start(FIPS_get_core_handle(libctx), start, data);
+}
+
+int ossl_prov_thread_join(void *task, uint32_t *ret)
+{
+    return c_crypto_thread_join(task, ret);
+}
+
+int ossl_prov_thread_clean(void *vhandle)
+{
+    return c_crypto_thread_clean(vhandle);
 }

@@ -464,6 +464,7 @@ my %params = (
     'SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK' => "sign-x931-pad-check",
     'SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
     'SIGNATURE_PARAM_SIGNATURE' =>          "signature",
+    'SIGNATURE_PARAM_THREADS' =>            "threads", # uint32_t
 
 # Asym cipher parameters
     'ASYM_CIPHER_PARAM_DIGEST' =>                   '*PKEY_PARAM_DIGEST',

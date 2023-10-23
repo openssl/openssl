@@ -60,7 +60,7 @@ static int hssblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                               OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     struct hssblob2key_ctx_st *ctx = vctx;
-    LMS_KEY *key = NULL;
+    HSS_KEY *key = NULL;
     unsigned char buf[HSS_MAX_PUBKEY];
     size_t length;
     int ok = 0;
@@ -82,9 +82,9 @@ static int hssblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     if (BIO_read(in, buf + 8, length - 8) != (int)(length - 8))
         goto next;
     if (selection == 0 || (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
-        key = ossl_lms_key_new(PROV_LIBCTX_OF(ctx->provctx), NULL);
+        key = ossl_hss_key_new(PROV_LIBCTX_OF(ctx->provctx), NULL);
         if (key == NULL || !ossl_hss_pubkey_from_data(buf, length, key)) {
-            ossl_lms_key_free(key);
+            ossl_hss_key_free(key);
             key = NULL;
         }
     }
@@ -123,7 +123,7 @@ static int hssblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     }
 
     BIO_free(in);
-    ossl_lms_key_free(key);
+    ossl_hss_key_free(key);
     return ok;
 }
 

@@ -33,4 +33,6 @@ DEPEND[sm2_sig.o]=../../common/include/prov/der_sm2.h
 
 SOURCE[$MAC_GOAL]=mac_legacy_sig.c
 
-SOURCE[$HSS_GOAL]=hss_sig.c
+IF[{- !$disabled{hss} -}]
+  SOURCE[$HSS_GOAL]=hss_sig.c
+ENDIF

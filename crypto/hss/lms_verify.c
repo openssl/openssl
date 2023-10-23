@@ -17,32 +17,15 @@ static unsigned char D_INTR[] = { 0x83, 0x83 };
  */
 int ossl_lms_sig_verify_init(LMS_VALIDATE_CTX *ctx)
 {
-    int ret;
-
-    ret = ossl_lm_ots_ctx_pubkey_init(ctx->pubctx, ctx->md, &ctx->sig->sig,
-                                      ctx->pub->ots_params, ctx->pub->I,
-                                      ctx->sig->q);
-    if (ret) {
-        if (!ossl_lms_sig_up_ref(ctx->sig))
-            return 0;
-        if (!ossl_lms_key_up_ref(ctx->pub)) {
-            ossl_lms_sig_free(ctx->sig);
-            return 0;
-        }
-    }
-    return ret;
+    return ossl_lm_ots_ctx_pubkey_init(ctx->pubctx, ctx->md, &ctx->sig->sig,
+                                       ctx->pub->ots_params, ctx->pub->I,
+                                       ctx->sig->q);
 }
 
 int ossl_lms_sig_verify_update(LMS_VALIDATE_CTX *ctx,
                                const unsigned char *msg, size_t msglen)
 {
-    int ret = ossl_lm_ots_ctx_pubkey_update(ctx->pubctx, msg, msglen);
-
-    if (!ret) {
-        ossl_lms_sig_free(ctx->sig);
-        ossl_lms_key_free(ctx->pub);
-    }
-    return ret;
+    return ossl_lm_ots_ctx_pubkey_update(ctx->pubctx, msg, msglen);
 }
 
 int ossl_lms_sig_verify_final(LMS_VALIDATE_CTX *vctx)
@@ -104,7 +87,5 @@ int ossl_lms_sig_verify_final(LMS_VALIDATE_CTX *vctx)
     }
     ret = (memcmp(key->K, Tc, m) == 0);
 err:
-    ossl_lms_sig_free(vctx->sig);
-    ossl_lms_key_free(vctx->pub);
     return ret;
 }

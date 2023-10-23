@@ -1,3 +1,12 @@
+/*
+ * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 #include <openssl/core_names.h>
 #include <openssl/decoder.h>
 #include <openssl/evp.h>
@@ -870,8 +879,7 @@ static EVP_PKEY *hsspubkey_from_data(const unsigned char *data, size_t datalen)
     params[1] = OSSL_PARAM_construct_end();
     ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "HSS", propq))
           && TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
-          && TEST_int_eq(EVP_PKEY_fromdata(ctx, &key, EVP_PKEY_PUBLIC_KEY,
-                                           params), 1);
+          && (EVP_PKEY_fromdata(ctx, &key, EVP_PKEY_PUBLIC_KEY, params) == 1);
     if (ret == 0) {
         EVP_PKEY_free(key);
         key = NULL;
@@ -1070,7 +1078,9 @@ static int hss_verify_bad_pub_sig_test(void)
             pub[i - step] ^= 1;
         }
         pub[i] ^= 1;
-        if (!TEST_ptr(pkey = hsspubkey_from_data(pub, td->publen)))
+        /* Corrupting the public key may cause the key load to fail */
+        pkey = hsspubkey_from_data(pub, td->publen);
+        if (pkey == NULL)
             continue;
         /* Either the init or final are expected to fail */
         if (EVP_DigestVerifyPQInit(ctx, NULL, NULL, libctx, propq, pkey, NULL,
@@ -1117,16 +1127,24 @@ end:
 }
 
 /* Verify a HSS signature that was generated using another toolkit */
-static int hss_verify_hss_file_test(void)
+static int hss_verify_hss_file_test(int tst)
 {
     int ret = 0;
     EVP_MD_CTX *ctx = NULL;
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    OSSL_PARAM *p = NULL;
 
     ctx = EVP_MD_CTX_create();
     if(ctx == NULL)
         goto end;
 
-    if (EVP_DigestVerifyPQInit(ctx, NULL, NULL, libctx, propq, pubkey, NULL,
+    if (tst == 1) {
+        uint32_t threads = 8;
+        p = params;
+        params[0] = OSSL_PARAM_construct_uint32(OSSL_SIGNATURE_PARAM_THREADS,
+                                                &threads);
+    }
+    if (EVP_DigestVerifyPQInit(ctx, NULL, NULL, libctx, propq, pubkey, p,
                                sigdata, sigdatalen) != 1)
         goto end;
     if (EVP_DigestVerifyPQUpdate(ctx, "ABC", 3) != 1)
@@ -1250,7 +1268,7 @@ static size_t load_file(const char *filename, unsigned char **out)
     while (!BIO_eof(in)) {
         if (!BIO_read_ex(in, buf, sizeof(buf), &bytes))
             break;
-        if (BIO_write(membio, buf, bytes) != bytes)
+        if (BIO_write(membio, buf, bytes) != (int)bytes)
             break;
     }
     retl = BIO_get_mem_data(membio, out);
@@ -1362,10 +1380,6 @@ int setup_tests(void)
     char *config_file = NULL;
     char *pubfilename = NULL, *sigfilename = NULL;
 
-    libctx = OSSL_LIB_CTX_new();
-    if (!TEST_ptr(libctx))
-        return 0;
-
     /* Swap the libctx to test non-default context only */
     propq = "provider=default";
 
@@ -1392,7 +1406,7 @@ int setup_tests(void)
     if (!test_get_libctx(&libctx, &nullprov, config_file, &libprov, NULL))
         return 0;
 
-    if (!OSSL_set_max_threads(NULL, 16))
+    if (!OSSL_set_max_threads(libctx, 16))
         return 0;
     if (pubfilename != NULL && sigfilename != NULL) {
         if (!TEST_ptr(pubkey = load_key(pubfilename)))
@@ -1401,7 +1415,7 @@ int setup_tests(void)
         if (!TEST_int_gt(sigdatalen, 0))
             return 0;
 
-        ADD_TEST(hss_verify_hss_file_test);
+        ADD_ALL_TESTS(hss_verify_hss_file_test, 2);
     } else {
         ADD_ALL_TESTS(hss_verify_update_test, OSSL_NELEM(testdata));
         ADD_ALL_TESTS(hss_verify_oneshot_test, OSSL_NELEM(testdata));

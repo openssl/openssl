@@ -176,3 +176,7 @@ ENDIF
 # include all the object files that are needed.
 $NULLGOAL=../libcrypto
 SOURCE[$NULLGOAL]=nullprov.c prov_running.c
+
+IF[{- !$disabled{'thread-pool'} -}]
+  SOURCE[$NULLGOAL]=prov_threads.c
+ENDIF

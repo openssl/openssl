@@ -28,6 +28,7 @@
 #include "internal/refcount.h"
 #include "internal/bio.h"
 #include "internal/core.h"
+#include "internal/thread.h"
 #include "provider_local.h"
 #include "crypto/context.h"
 #ifndef FIPS_MODULE
@@ -1918,7 +1919,13 @@ static OSSL_FUNC_core_gettable_params_fn core_gettable_params;
 static OSSL_FUNC_core_get_params_fn core_get_params;
 static OSSL_FUNC_core_get_libctx_fn core_get_libctx;
 static OSSL_FUNC_core_thread_start_fn core_thread_start;
+
 #ifndef FIPS_MODULE
+static OSSL_FUNC_core_get_avail_threads_fn core_get_avail_threads;
+static OSSL_FUNC_core_crypto_thread_start_fn core_crypto_thread_start;
+OSSL_FUNC_core_crypto_thread_join_fn ossl_crypto_thread_join;
+OSSL_FUNC_core_crypto_thread_clean_fn ossl_crypto_thread_clean;
+
 static OSSL_FUNC_core_new_error_fn core_new_error;
 static OSSL_FUNC_core_set_error_debug_fn core_set_error_debug;
 static OSSL_FUNC_core_vset_error_fn core_vset_error;
@@ -2045,6 +2052,22 @@ static int core_thread_start(const OSSL_CORE_HANDLE *handle,
  * ones.
  */
 #ifndef FIPS_MODULE
+static uint64_t core_get_avail_threads(const OSSL_CORE_HANDLE *handle)
+{
+    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
+
+    return ossl_get_avail_threads(prov->libctx);
+}
+
+static void *core_crypto_thread_start(const OSSL_CORE_HANDLE *handle,
+                                      CRYPTO_THREAD_ROUTINE start, void *data)
+{
+    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
+
+    return ossl_crypto_thread_start(prov->libctx, start, data);
+}
+
+
 /*
  * These error functions should use |handle| to select the proper
  * library context to report in the correct error stack if error
@@ -2247,6 +2270,10 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GET_LIBCTX, (void (*)(void))core_get_libctx },
     { OSSL_FUNC_CORE_THREAD_START, (void (*)(void))core_thread_start },
 #ifndef FIPS_MODULE
+    { OSSL_FUNC_CORE_GET_AVAIL_THREADS, (void (*)(void))core_get_avail_threads },
+    { OSSL_FUNC_CORE_CRYPTO_THREAD_START, (void (*)(void))core_crypto_thread_start },
+    { OSSL_FUNC_CORE_CRYPTO_THREAD_JOIN, (void (*)(void))ossl_crypto_thread_join },
+    { OSSL_FUNC_CORE_CRYPTO_THREAD_CLEAN, (void (*)(void))ossl_crypto_thread_clean },
     { OSSL_FUNC_CORE_NEW_ERROR, (void (*)(void))core_new_error },
     { OSSL_FUNC_CORE_SET_ERROR_DEBUG, (void (*)(void))core_set_error_debug },
     { OSSL_FUNC_CORE_VSET_ERROR, (void (*)(void))core_vset_error },

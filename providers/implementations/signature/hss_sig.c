@@ -9,6 +9,7 @@
 
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
+#include <openssl/core_names.h>
 #include <openssl/proverr.h>
 #include <openssl/params.h>
 #include <openssl/evp.h>
@@ -25,23 +26,19 @@
 # define LMS_NO_THREADS
 #endif
 
+# define HSS_MIN_THREADS 1u
+# define HSS_MAX_THREADS 8u
 
 static OSSL_FUNC_signature_newctx_fn hss_newctx;
 static OSSL_FUNC_signature_freectx_fn hss_freectx;
-static OSSL_FUNC_signature_digest_verify_init_fn lms_digest_verify_init;
-static OSSL_FUNC_signature_digest_verify_update_fn lms_digest_verify_update;
-static OSSL_FUNC_signature_digest_verify_final_fn lms_digest_verify_final;
-static OSSL_FUNC_signature_digest_verify_fn lms_digest_verify;
-static OSSL_FUNC_signature_digest_verify_pq_init_fn lms_digest_verify_pq_init;
-static OSSL_FUNC_signature_digest_verify_pq_final_fn lms_digest_verify_pq_final;
-static OSSL_FUNC_signature_get_ctx_params_fn lms_get_ctx_params;
-static OSSL_FUNC_signature_gettable_ctx_params_fn lms_gettable_ctx_params;
-static OSSL_FUNC_signature_set_ctx_params_fn lms_set_ctx_params;
-static OSSL_FUNC_signature_settable_ctx_params_fn lms_settable_ctx_params;
-static OSSL_FUNC_signature_get_ctx_md_params_fn lms_get_ctx_md_params;
-static OSSL_FUNC_signature_gettable_ctx_md_params_fn lms_gettable_ctx_md_params;
-static OSSL_FUNC_signature_set_ctx_md_params_fn lms_set_ctx_md_params;
-static OSSL_FUNC_signature_settable_ctx_md_params_fn lms_settable_ctx_md_params;
+static OSSL_FUNC_signature_digest_verify_init_fn hss_digest_verify_init;
+static OSSL_FUNC_signature_digest_verify_update_fn hss_digest_verify_update;
+static OSSL_FUNC_signature_digest_verify_final_fn hss_digest_verify_final;
+static OSSL_FUNC_signature_digest_verify_fn hss_digest_verify;
+static OSSL_FUNC_signature_digest_verify_pq_init_fn hss_digest_verify_pq_init;
+static OSSL_FUNC_signature_digest_verify_pq_final_fn hss_digest_verify_pq_final;
+static OSSL_FUNC_signature_set_ctx_params_fn hss_set_ctx_params;
+static OSSL_FUNC_signature_settable_ctx_params_fn hss_settable_ctx_params;
 
 typedef struct {
     OSSL_LIB_CTX *libctx;
@@ -59,6 +56,9 @@ typedef struct {
     unsigned char *sig;
     size_t siglen;
     uint32_t pqmode;
+
+    STACK_OF(LMS_KEY) *publist;
+    STACK_OF(LMS_SIG) *siglist;
 } PROV_HSS_CTX;
 
 static void *hss_newctx(void *provctx, const char *propq)
@@ -82,6 +82,11 @@ static void *hss_newctx(void *provctx, const char *propq)
     ctx->libctx = PROV_LIBCTX_OF(provctx);
     ctx->ctx.pubctx = pubctx;
 
+    ctx->publist = sk_LMS_KEY_new_null();
+    ctx->siglist = sk_LMS_SIG_new_null();
+    if (ctx->publist == NULL || ctx->siglist == NULL)
+        goto err;
+
     return ctx;
 err:
     ossl_lm_ots_ctx_free(pubctx);
@@ -95,6 +100,9 @@ static void hss_freectx(void *vctx)
 
     if (ctx == NULL)
         return;
+
+    sk_LMS_SIG_pop_free(ctx->siglist, ossl_lms_sig_free);
+    sk_LMS_KEY_pop_free(ctx->publist, ossl_lms_key_free);
 
     ossl_hss_key_free(ctx->key);
     OPENSSL_free(ctx->propq);
@@ -151,7 +159,7 @@ static int hss_verify_init(void *vctx, void *key, const OSSL_PARAM params[],
     ctx->key = key;
     if (!setdigest(ctx, mdname))
         return 0;
-    return lms_set_ctx_params(ctx, params);
+    return hss_set_ctx_params(ctx, params);
 }
 
 #if !defined(LMS_NO_THREADS)
@@ -181,7 +189,7 @@ static CRYPTO_THREAD_RETVAL verify_thread(void *ctx)
     ret = ossl_lms_sig_verify_init(cur)
           && ossl_lms_sig_verify_update(cur, cur->msg, cur->msglen)
           && ossl_lms_sig_verify_final(cur);
-    cur->failed = ret;
+    cur->failed = (ret != 1);
     return ret;
 }
 
@@ -191,10 +199,10 @@ static int add_verify_job(PROV_HSS_CTX *ctx, LMS_SIG *lms_sig, LMS_KEY *key,
 #if !defined(LMS_NO_THREADS)
     if (ctx->max_threads > 1) {
         uint32_t i;
-        uint64_t avail = ossl_get_avail_threads(ctx->libctx);
+        uint64_t avail = ossl_prov_get_avail_threads(ctx->libctx);
         void *thread;
 
-        if (ctx->max_threads > ossl_get_avail_threads(ctx->libctx)) {
+        if (ctx->max_threads > avail) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_THREAD_POOL_SIZE,
                            "requested %u threads, available: %u",
                            ctx->max_threads, avail);
@@ -206,23 +214,22 @@ static int add_verify_job(PROV_HSS_CTX *ctx, LMS_SIG *lms_sig, LMS_KEY *key,
         i = ctx->next_thread;
         thread = ctx->threads[i];
         if (ctx->thread_data[i].pubctx != NULL) {
-            if (!ossl_crypto_thread_join(thread, NULL)
-                || !ossl_crypto_thread_clean(thread))
+            if (!ossl_prov_thread_join(thread, NULL)
+                || !ossl_prov_thread_clean(thread))
                 return 0;
             ossl_lm_ots_ctx_free(ctx->thread_data[i].pubctx);
             ctx->thread_data[i].pubctx = NULL;
             if (ctx->thread_data[i].failed)
                 return 0;
         }
-
         ctx->thread_data[i].pub = key;
         ctx->thread_data[i].sig = lms_sig;
         ctx->thread_data[i].md = ctx->ctx.md;
         ctx->thread_data[i].pubctx = ossl_lm_ots_ctx_new();
         ctx->thread_data[i].msg = msg;
         ctx->thread_data[i].msglen = msglen;
-        ctx->threads[i] = ossl_crypto_thread_start(ctx->libctx, verify_thread,
-                                                   &ctx->thread_data[i]);
+        ctx->threads[i] = ossl_prov_thread_start(ctx->libctx, verify_thread,
+                                                 &ctx->thread_data[i]);
         if (ctx->threads[i] == NULL) {
             ossl_lm_ots_ctx_free(ctx->thread_data[i].pubctx);
             ctx->thread_data[i].pubctx = NULL;
@@ -253,8 +260,8 @@ static int check_jobs(PROV_HSS_CTX *ctx)
         void *thread = ctx->threads[i];
 
         if (ctx->thread_data[i].pubctx != NULL) {
-            ossl_crypto_thread_join(thread, NULL);
-            ossl_crypto_thread_clean(thread);
+            ossl_prov_thread_join(thread, NULL);
+            ossl_prov_thread_clean(thread);
             ossl_lm_ots_ctx_free(ctx->thread_data[i].pubctx);
             ctx->thread_data[i].pubctx = NULL;
         }
@@ -267,7 +274,7 @@ static int check_jobs(PROV_HSS_CTX *ctx)
 #endif
 }
 
-static int lms_sig_verify(PROV_HSS_CTX *ctx,
+static int hss_sig_verify(PROV_HSS_CTX *ctx,
                           LMS_SIG *lms_sig,
                           LMS_KEY *key,
                           const unsigned char *msg, size_t msglen)
@@ -290,18 +297,12 @@ static int hss_verify_int(PROV_HSS_CTX *ctx,
                           const unsigned char *msg, size_t msglen)
 {
     int ret = 0, i;
-    STACK_OF(LMS_KEY) *publist;
-    STACK_OF(LMS_SIG) *siglist;
 
-    publist = sk_LMS_KEY_new_null();
-    siglist = sk_LMS_SIG_new_null();
-    if (publist == NULL || siglist == NULL)
-        goto err;
 
     /* Add the public key to the stack */
     if (!ossl_hss_key_up_ref(ctx->key))
         goto err;
-    if (sk_LMS_KEY_push(publist, &ctx->key->lms_pub) <= 0) {
+    if (sk_LMS_KEY_push(ctx->publist, &ctx->key->lms_pub) <= 0) {
         ossl_hss_key_free(ctx->key);
         goto err;
     }
@@ -310,12 +311,12 @@ static int hss_verify_int(PROV_HSS_CTX *ctx,
      * Decode the HSS signature data which contains signatures and public keys
      * This can just be a single level tree for the simple LMS case.
      */
-    if (!ossl_hss_decode(ctx->key, sig, siglen, publist, siglist))
+    if (!ossl_hss_decode(ctx->key, sig, siglen, ctx->publist, ctx->siglist))
         goto err;
 
     /* Verify each tree */
-    for (i = 0; i < sk_LMS_SIG_num(siglist) - 1; ++i) {
-        LMS_KEY *next = sk_LMS_KEY_value(publist, i + 1);
+    for (i = 0; i < sk_LMS_SIG_num(ctx->siglist) - 1; ++i) {
+        LMS_KEY *next = sk_LMS_KEY_value(ctx->publist, i + 1);
 
         if (next == NULL)
             goto err;
@@ -323,30 +324,32 @@ static int hss_verify_int(PROV_HSS_CTX *ctx,
          * As this call may create a thread to do the work it may not indicate
          * a verification failure until check_jobs() is called later
          */
-        if (lms_sig_verify(ctx, sk_LMS_SIG_value(siglist, i),
-                           sk_LMS_KEY_value(publist, i),
+        if (hss_sig_verify(ctx, sk_LMS_SIG_value(ctx->siglist, i),
+                           sk_LMS_KEY_value(ctx->publist, i),
                            next->pub, next->publen) != 1)
             goto err;
     }
     if (msg == NULL) {
-        ctx->ctx.sig = sk_LMS_SIG_value(siglist, i);
-        ctx->ctx.pub = sk_LMS_KEY_value(publist, i);
+        /*
+         * If the msg is not passed in the last verify will be done on the
+         * main thread.
+         */
+        ctx->ctx.sig = sk_LMS_SIG_value(ctx->siglist, i);
+        ctx->ctx.pub = sk_LMS_KEY_value(ctx->publist, i);
         if (!ossl_lms_sig_verify_init(&ctx->ctx))
             goto err;
     } else {
-        if (lms_sig_verify(ctx, sk_LMS_SIG_value(siglist, i),
-                           sk_LMS_KEY_value(publist, i),
+        if (hss_sig_verify(ctx, sk_LMS_SIG_value(ctx->siglist, i),
+                           sk_LMS_KEY_value(ctx->publist, i),
                            msg, msglen) != 1)
             goto err;
     }
     ret = 1;
 err:
-    sk_LMS_KEY_pop_free(publist, ossl_lms_key_free);
-    sk_LMS_SIG_pop_free(siglist, ossl_lms_sig_free);
     return ret;
 }
 
-static int lms_digest_verify(void *vctx,
+static int hss_digest_verify(void *vctx,
                              const unsigned char *sig, size_t siglen,
                              const unsigned char *msg, size_t msglen)
 {
@@ -361,13 +364,13 @@ static int lms_digest_verify(void *vctx,
     return ret;
 }
 
-static int lms_digest_verify_init(void *vctx, const char *mdname, void *key,
+static int hss_digest_verify_init(void *vctx, const char *mdname, void *key,
                                   const OSSL_PARAM params[])
 {
     return hss_verify_init(vctx, key, params, mdname);
 }
 
-int lms_digest_verify_update(void *vctx,
+int hss_digest_verify_update(void *vctx,
                              const unsigned char *data, size_t datalen)
 {
     PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
@@ -375,6 +378,7 @@ int lms_digest_verify_update(void *vctx,
 
     if (ctx->pqmode)
         return ossl_lms_sig_verify_update(&ctx->ctx, data, datalen);
+    /* TODO - remove this caching part and return -1 */
     /*
      * Since the signature is required before we can process the message
      * we need to buffer the message, if we use the normal pattern of passing
@@ -391,7 +395,7 @@ int lms_digest_verify_update(void *vctx,
     return 1;
 }
 
-int lms_digest_verify_final(void *vctx,
+int hss_digest_verify_final(void *vctx,
                             const unsigned char *sig, size_t siglen)
 {
     PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
@@ -401,11 +405,11 @@ int lms_digest_verify_final(void *vctx,
         return 0;
     if (ctx->pqmode)
         return 0;
-    ret = lms_digest_verify(vctx, sig, siglen, ctx->msg, ctx->msglen);
+    ret = hss_digest_verify(vctx, sig, siglen, ctx->msg, ctx->msglen);
     return ret;
 }
 
-static int lms_digest_verify_pq_init(void *vctx, const char *mdname, void *key,
+static int hss_digest_verify_pq_init(void *vctx, const char *mdname, void *key,
                                      const OSSL_PARAM params[],
                                      const unsigned char *sig, size_t siglen)
 {
@@ -414,10 +418,10 @@ static int lms_digest_verify_pq_init(void *vctx, const char *mdname, void *key,
     if (!hss_verify_init(vctx, key, params, mdname))
         return 0;
     ctx->pqmode = 1;
-    return lms_digest_verify(vctx, sig, siglen, NULL, 0);
+    return hss_digest_verify(vctx, sig, siglen, NULL, 0);
 }
 
-static int lms_digest_verify_pq_final(void *vctx)
+static int hss_digest_verify_pq_final(void *vctx)
 {
     PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
     int ret = 0;
@@ -430,90 +434,73 @@ static int lms_digest_verify_pq_final(void *vctx)
     return ret;
 }
 
-static int lms_get_ctx_params(void *vctx, OSSL_PARAM *params)
+static int hss_ctx_set_threads(PROV_HSS_CTX *ctx, uint32_t threads)
 {
+    if (threads > HSS_MAX_THREADS) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER,
+                       "max threads: %u", HSS_MAX_THREADS);
+        return 0;
+    }
+
+    if (threads < HSS_MIN_THREADS) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER,
+                       "min threads: %u", HSS_MIN_THREADS);
+        return 0;
+    }
+
+    ctx->max_threads = threads;
     return 1;
 }
 
-static const OSSL_PARAM known_gettable_ctx_params[] = {
-    OSSL_PARAM_END
-};
-
-static const OSSL_PARAM *lms_gettable_ctx_params(ossl_unused void *vctx,
-                                                 ossl_unused void *provctx)
+static int hss_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    return known_gettable_ctx_params;
-}
+    const OSSL_PARAM *p;
+    PROV_HSS_CTX *ctx;
+    uint32_t u32_value;
 
-static int lms_set_ctx_params(void *vctx, const OSSL_PARAM params[])
-{
-    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
-
+    ctx = (PROV_HSS_CTX *)vctx;
     if (ctx == NULL)
         return 0;
     if (params == NULL)
         return 1;
-
+    if ((p = OSSL_PARAM_locate_const(params,
+                                     OSSL_SIGNATURE_PARAM_THREADS)) != NULL) {
+        if (!OSSL_PARAM_get_uint32(p, &u32_value))
+            return 0;
+        if (!hss_ctx_set_threads(ctx, u32_value))
+            return 0;
+    }
     return 1;
 }
 
 static const OSSL_PARAM settable_ctx_params[] = {
+    OSSL_PARAM_uint32(OSSL_SIGNATURE_PARAM_THREADS, NULL),
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *lms_settable_ctx_params(void *vctx,
+static const OSSL_PARAM *hss_settable_ctx_params(void *vctx,
                                                  ossl_unused void *provctx)
 {
     return settable_ctx_params;
-}
-
-static int lms_get_ctx_md_params(void *vctx, OSSL_PARAM *params)
-{
-    return 1;
-}
-
-static const OSSL_PARAM *lms_gettable_ctx_md_params(void *vctx)
-{
-    return NULL;
-}
-
-static int lms_set_ctx_md_params(void *vctx, const OSSL_PARAM params[])
-{
-    return 1;
-}
-
-static const OSSL_PARAM *lms_settable_ctx_md_params(void *vctx)
-{
-    return NULL;
 }
 
 const OSSL_DISPATCH ossl_hss_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))hss_newctx },
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))hss_freectx },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_PQ_INIT,
-      (void (*)(void))lms_digest_verify_pq_init },
+      (void (*)(void))hss_digest_verify_pq_init },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_PQ_FINAL,
-      (void (*)(void))lms_digest_verify_pq_final },
+      (void (*)(void))hss_digest_verify_pq_final },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,
-      (void (*)(void))lms_digest_verify_init },
+      (void (*)(void))hss_digest_verify_init },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE,
-      (void (*)(void))lms_digest_verify_update },
+      (void (*)(void))hss_digest_verify_update },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL,
-      (void (*)(void))lms_digest_verify_final },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY, (void (*)(void))lms_digest_verify },
-    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS, (void (*)(void))lms_get_ctx_params },
-    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,
-      (void (*)(void))lms_gettable_ctx_params },
-    { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))lms_set_ctx_params },
+      (void (*)(void))hss_digest_verify_final },
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY, (void (*)(void))hss_digest_verify },
+    { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))hss_set_ctx_params },
     { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
-      (void (*)(void))lms_settable_ctx_params },
-    { OSSL_FUNC_SIGNATURE_GET_CTX_MD_PARAMS,
-      (void (*)(void))lms_get_ctx_md_params },
-    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_MD_PARAMS,
-      (void (*)(void))lms_gettable_ctx_md_params },
-    { OSSL_FUNC_SIGNATURE_SET_CTX_MD_PARAMS,
-      (void (*)(void))lms_set_ctx_md_params },
-    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS,
-      (void (*)(void))lms_settable_ctx_md_params },
+      (void (*)(void))hss_settable_ctx_params },
+
     OSSL_DISPATCH_END
 };
