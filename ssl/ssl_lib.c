@@ -2908,6 +2908,9 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic)
     long l;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
+    if (sc == NULL)
+        return 0;
+
     /*
      * Routing of ctrl calls for QUIC is a little counterintuitive:
      *
