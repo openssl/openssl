@@ -464,6 +464,15 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
     int rv = 0;
 
     /*
+     * RFC 5705 embeds context length as uint16; reject longer context
+     * before proceeding.
+     */
+    if (contextlen > 0xffff) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    /*
      * construct PRF arguments we construct the PRF argument ourself rather
      * than passing separate values into the TLS PRF to ensure that the
      * concatenation of values does not create a prohibited label.
