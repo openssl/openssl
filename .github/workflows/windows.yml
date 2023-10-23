@@ -58,6 +58,9 @@ jobs:
         7z.exe x coreinfo/Coreinfo.zip
         ./Coreinfo64.exe -accepteula -f
         ./apps/openssl.exe version -c
+    - name: Check platform symbol usage
+      working-directory: _build
+      run: perl ../util/checkplatformsyms.pl ../util/platform_symbols/windows-symbols.txt libcrypto-3-x64.dll ./libssl-3-x64.dll
     - name: test
       working-directory: _build
       run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
