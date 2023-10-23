@@ -137,9 +137,6 @@ Received Packet
 Received Frame: Crypto
     Offset: 0
     Len: 1022
-Received Frame: Crypto
-    Offset: 1022
-    Len: 192
 Received TLS Record
 Header:
   Version = TLS 1.2 (0x303)
@@ -245,6 +242,9 @@ YeeuLO02zToHhnQ6KbPXOrQAqcL1kngO4g+j/ru+4AZThFkdkGnltvk=
 ------------------
         No extensions
 
+Received Frame: Crypto
+    Offset: 1022
+    Len: 192
 Received TLS Record
 Header:
   Version = TLS 1.2 (0x303)
