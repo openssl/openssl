@@ -4005,7 +4005,7 @@ skip_hmac:
             loopargs[i].sig_max_sig_len[testnum] = max_sig_len;
             loopargs[i].sig_act_sig_len[testnum] = sig_len;
             loopargs[i].sig_sig[testnum] = sig;
-            break;
+            continue;
 
         sig_err_break:
             ERR_print_errors(bio_err);
