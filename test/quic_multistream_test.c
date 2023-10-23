@@ -1640,8 +1640,10 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     || !TEST_int_eq(expect_remote,
                                     (cc_info.flags
                                      & SSL_CONN_CLOSE_FLAG_LOCAL) == 0)
-                    || !TEST_uint64_t_eq(error_code, cc_info.error_code))
+                    || !TEST_uint64_t_eq(error_code, cc_info.error_code)) {
+                    TEST_info("Connection close reason: %s", cc_info.reason);
                     goto out;
+                }
             }
             break;
 
