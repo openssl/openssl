@@ -22,6 +22,9 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 plan skip_all => "QUIC protocol is not supported by this OpenSSL build"
     if disabled('quic');
 
+plan skip_all => "These tests are not supported in a fuzz build"
+    if config('options') =~ /-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION|enable-fuzz-afl/;
+
 plan tests =>
     ($no_fips ? 0 : 1)          # quicapitest with fips
     + 1;                        # quicapitest with default provider
