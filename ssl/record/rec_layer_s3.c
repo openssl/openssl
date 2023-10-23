@@ -294,8 +294,10 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
         /* Retry needed */
         i = HANDLE_RLAYER_WRITE_RETURN(s,
                 s->rlayer.wrlmethod->retry_write_records(s->rlayer.wrl));
-        if (i <= 0)
+        if (i <= 0) {
+            s->rlayer.wnum = tot;
             return i;
+        }
         tot += s->rlayer.wpend_tot;
         s->rlayer.wpend_tot = 0;
     } /* else no retry required */
@@ -321,6 +323,7 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
         i = ssl->method->ssl_dispatch_alert(ssl);
         if (i <= 0) {
             /* SSLfatal() already called if appropriate */
+            s->rlayer.wnum = tot;
             return i;
         }
         /* if it went, fall through and send more stuff */
