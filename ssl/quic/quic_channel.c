@@ -2608,25 +2608,23 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
         deadline = ossl_time_infinite();
 
     /*
-     * If the CC will let us send acks, check the ack deadline for all
-     * enc_levels that are actually provisioned
+     * Check the ack deadline for all enc_levels that are actually provisioned.
+     * ACKs aren't restricted by CC.
      */
-    if (ch->cc_method->get_tx_allowance(ch->cc_data) > 0) {
-        for (i = 0; i < QUIC_ENC_LEVEL_NUM; i++) {
-            if (ossl_qtx_is_enc_level_provisioned(ch->qtx, i)) {
-                deadline = ossl_time_min(deadline,
-                                         ossl_ackm_get_ack_deadline(ch->ackm,
-                                                                    ossl_quic_enc_level_to_pn_space(i)));
-            }
+    for (i = 0; i < QUIC_ENC_LEVEL_NUM; i++) {
+        if (ossl_qtx_is_enc_level_provisioned(ch->qtx, i)) {
+            deadline = ossl_time_min(deadline,
+                                     ossl_ackm_get_ack_deadline(ch->ackm,
+                                                                ossl_quic_enc_level_to_pn_space(i)));
         }
-
-        /*
-         * When do we need to send an ACK-eliciting packet to reset the idle
-         * deadline timer for the peer?
-         */
-        if (!ossl_time_is_infinite(ch->ping_deadline))
-            deadline = ossl_time_min(deadline, ch->ping_deadline);
     }
+
+    /*
+     * When do we need to send an ACK-eliciting packet to reset the idle
+     * deadline timer for the peer?
+     */
+    if (!ossl_time_is_infinite(ch->ping_deadline))
+        deadline = ossl_time_min(deadline, ch->ping_deadline);
 
     /* Apply TXP wakeup deadline. */
     deadline = ossl_time_min(deadline,
