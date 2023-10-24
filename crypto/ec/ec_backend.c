@@ -184,8 +184,7 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
     param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_P);
     param_a = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_A);
     param_b = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_B);
-    if (tmpl != NULL || param_p != NULL || param_a != NULL || param_b != NULL)
-    {
+    if (tmpl != NULL || param_p != NULL || param_a != NULL || param_b != NULL) {
         BIGNUM *p = BN_CTX_get(bnctx);
         BIGNUM *a = BN_CTX_get(bnctx);
         BIGNUM *b = BN_CTX_get(bnctx);

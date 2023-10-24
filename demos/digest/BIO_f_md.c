@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
     /*
      * Fetch a message digest by name
-     * The algorithm name is case insensitive. 
+     * The algorithm name is case insensitive.
      * See providers(7) for details about algorithm fetching
      */
     md = EVP_MD_fetch(library_context, "SHA3-512", NULL);

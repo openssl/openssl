@@ -12,7 +12,7 @@
 #include "internal/nelem.h"
 #include "crypto/dh.h"
 
-typedef struct dh_name2id_st{
+typedef struct dh_name2id_st {
     const char *name;
     int id;
     int type;
@@ -28,8 +28,7 @@ typedef struct dh_name2id_st{
 # define TYPE_DHX   0
 #endif
 
-static const DH_GENTYPE_NAME2ID dhtype2id[] =
-{
+static const DH_GENTYPE_NAME2ID dhtype2id[] = {
     { "group", DH_PARAMGEN_TYPE_GROUP, TYPE_ANY },
     { "generator", DH_PARAMGEN_TYPE_GENERATOR, TYPE_DH },
     { "fips186_4", DH_PARAMGEN_TYPE_FIPS_186_4, TYPE_DHX },

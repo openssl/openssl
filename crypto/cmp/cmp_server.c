@@ -20,8 +20,7 @@
 #include <openssl/err.h>
 
 /* the context for the generic CMP server */
-struct ossl_cmp_srv_ctx_st
-{
+struct ossl_cmp_srv_ctx_st {
     void *custom_ctx;  /* pointer to application-specific server context */
     OSSL_CMP_CTX *ctx; /* Client CMP context, reusing transactionID etc. */
     int certReqId; /* id of last ir/cr/kur, OSSL_CMP_CERTREQID_NONE for p10cr */

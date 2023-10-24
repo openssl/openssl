@@ -21,7 +21,7 @@ size_t ossl_calculate_comp_expansion(int alg, size_t length)
      * Brotli: per RFC7932: N + 5 + 3 * (N >> 16)
      * ZSTD: N + 4 + 14 + 3 * (N >> 17) + 4
      */
-    
+
     switch (alg) {
     case TLSEXT_comp_cert_zlib:
         ret = length + 11 + 5 * (length >> 14);

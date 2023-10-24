@@ -162,8 +162,7 @@ static int add_params(OSSL_PARAM_BLD *bld, const ST_KAT_PARAM *params,
 
     if (params == NULL)
         return 1;
-    for (p = params; p->data != NULL; ++p)
-    {
+    for (p = params; p->data != NULL; ++p) {
         switch (p->type) {
         case OSSL_PARAM_UNSIGNED_INTEGER: {
             BIGNUM *bn = BN_CTX_get(ctx);
