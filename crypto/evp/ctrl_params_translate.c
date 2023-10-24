@@ -1636,11 +1636,12 @@ static int get_payload_public_key(enum state state,
             BN_CTX *bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eckey));
             const EC_GROUP *ecg = EC_KEY_get0_group(eckey);
             const EC_POINT *point = EC_KEY_get0_public_key(eckey);
+            const point_conversion_form_t format = EC_KEY_get_conv_form(eckey);
 
             if (bnctx == NULL)
                 return 0;
             ctx->sz = EC_POINT_point2buf(ecg, point,
-                                         POINT_CONVERSION_COMPRESSED,
+                                         format,
                                          &buf, bnctx);
             ctx->p2 = buf;
             BN_CTX_free(bnctx);

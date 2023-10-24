@@ -495,6 +495,13 @@ OpenSSL 3.1
 
 ### Changes between 3.1.4 and 3.1.5 [xx XXX xxxx]
 
+ * Exporting `OSSL_PKEY_PARAM_PUB_KEY` with legacy keys now honor
+   `OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT` instead of
+   unconditionally using `POINT_CONVERSION_COMPRESSED`.  Non-legacy
+   keys had already been honoring this setting since version 3.0.8.
+
+   *Max Kellermann*
+
  * Fix excessive time spent in DH check / generation with large Q parameter
    value.
 
