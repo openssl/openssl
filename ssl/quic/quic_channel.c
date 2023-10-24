@@ -1951,6 +1951,15 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
             int pn_space = ossl_quic_enc_level_to_pn_space(ch->tx_enc_level);
 
             ossl_quic_tx_packetiser_schedule_ack_eliciting(ch->txp, pn_space);
+
+            /*
+             * If we have no CC budget at this time we cannot process the above
+             * PING request immediately. In any case we have scheduled the
+             * request so bump the ping deadline. If we don't do this we will
+             * busy-loop endlessly as the above deadline comparison condition
+             * will still be met.
+             */
+            ch_update_ping_deadline(ch);
         }
 
         /* Write any data to the network due to be sent. */
