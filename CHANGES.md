@@ -22,6 +22,10 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
+### Changes between 3.1.4 and 3.1.5 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.1.3 and 3.1.4 [24 Oct 2023]
 
  * Fix incorrect key and IV resizing issues when calling EVP_EncryptInit_ex2(),
