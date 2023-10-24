@@ -3441,6 +3441,7 @@ int ossl_quic_get_conn_close_info(SSL *ssl,
         return 0;
 
     info->error_code    = tc->error_code;
+    info->frame_type    = tc->frame_type;
     info->reason        = tc->reason;
     info->reason_len    = tc->reason_len;
     info->flags         = 0;
