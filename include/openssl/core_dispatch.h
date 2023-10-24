@@ -177,6 +177,8 @@ OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO *bio,
                                     int cmd, long num, void *ptr))
 
 /* New seeding functions prototypes with the 101-104 series */
+#define OSSL_FUNC_CLEANUP_USER_ENTROPY        96
+#define OSSL_FUNC_CLEANUP_USER_NONCE          97
 #define OSSL_FUNC_GET_USER_ENTROPY            98
 #define OSSL_FUNC_GET_USER_NONCE              99
 
@@ -197,6 +199,8 @@ OSSL_CORE_MAKE_FUNC(size_t, get_user_entropy, (const OSSL_CORE_HANDLE *handle,
                                                size_t min_len, size_t max_len))
 OSSL_CORE_MAKE_FUNC(void, cleanup_entropy, (const OSSL_CORE_HANDLE *handle,
                                             unsigned char *buf, size_t len))
+OSSL_CORE_MAKE_FUNC(void, cleanup_user_entropy, (const OSSL_CORE_HANDLE *handle,
+                                                 unsigned char *buf, size_t len))
 OSSL_CORE_MAKE_FUNC(size_t, get_nonce, (const OSSL_CORE_HANDLE *handle,
                                         unsigned char **pout, size_t min_len,
                                         size_t max_len, const void *salt,
@@ -207,6 +211,8 @@ OSSL_CORE_MAKE_FUNC(size_t, get_user_nonce, (const OSSL_CORE_HANDLE *handle,
                                              size_t salt_len))
 OSSL_CORE_MAKE_FUNC(void, cleanup_nonce, (const OSSL_CORE_HANDLE *handle,
                                           unsigned char *buf, size_t len))
+OSSL_CORE_MAKE_FUNC(void, cleanup_user_nonce, (const OSSL_CORE_HANDLE *handle,
+                                               unsigned char *buf, size_t len))
 
 /* Functions to access the core's providers */
 #define OSSL_FUNC_PROVIDER_REGISTER_CHILD_CB   105

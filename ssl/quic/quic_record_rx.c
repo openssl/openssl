@@ -757,12 +757,25 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
     if (EVP_CipherUpdate(cctx, dst, &l, src, src_len - el->tag_len) != 1)
         return 0;
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    /*
+     * Throw away what we just decrypted and just use the ciphertext instead
+     * (which should be unencrypted)
+     */
+    memcpy(dst, src, l);
+
+    /* Pretend to authenticate the tag but ignore it */
+    if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1) {
+        /* We don't care */
+    }
+#else
     /* Ensure authentication succeeded. */
     if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1) {
         /* Authentication failed, increment failed auth counter. */
         ++qrx->forged_pkt_count;
         return 0;
     }
+#endif
 
     *dec_len = l;
     return 1;
@@ -926,10 +939,19 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
      *
      * Relocate token buffer and fix pointer.
      */
-    if (rxe->hdr.type == QUIC_PKT_TYPE_INITIAL
-        && !qrx_relocate_buffer(qrx, &rxe, &i, &rxe->hdr.token,
-                                rxe->hdr.token_len))
-        goto malformed;
+    if (rxe->hdr.type == QUIC_PKT_TYPE_INITIAL) {
+        const unsigned char *token = rxe->hdr.token;
+
+        /*
+         * This may change the value of rxe and change the value of the token
+         * pointer as well. So we must make a temporary copy of the pointer to
+         * the token, and then copy it back into the new location of the rxe
+         */
+        if (!qrx_relocate_buffer(qrx, &rxe, &i, &token, rxe->hdr.token_len))
+            goto malformed;
+
+        rxe->hdr.token = token;
+    }
 
     /* Now remove header protection. */
     *pkt = orig_pkt;

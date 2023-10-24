@@ -100,6 +100,9 @@ void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount)
  *    or    100;100@25;0
  * This means 100 mallocs succeed, then next 100 fail 25% of the time, and
  * all remaining (count is zero) succeed.
+ * The failure percentge can have 2 digits after the comma.  For example:
+ *          0@0.01
+ * This means 0.01% of all allocations will fail.
  */
 static void parseit(void)
 {
@@ -112,26 +115,27 @@ static void parseit(void)
     /* Get the count (atol will stop at the @ if there), and percentage */
     md_count = atol(md_failstring);
     atsign = strchr(md_failstring, '@');
-    md_fail_percent = atsign == NULL ? 0 : atoi(atsign + 1);
+    md_fail_percent = atsign == NULL ? 0 : (int)(atof(atsign + 1) * 100 + 0.5);
 
     if (semi != NULL)
         md_failstring = semi;
 }
 
 /*
- * Windows doesn't have random(), but it has rand()
+ * Windows doesn't have random() and srandom(), but it has rand() and srand().
  * Some rand() implementations aren't good, but we're not
  * dealing with secure randomness here.
  */
 # ifdef _WIN32
 #  define random() rand()
+#  define srandom(seed) srand(seed)
 # endif
 /*
  * See if the current malloc should fail.
  */
 static int shouldfail(void)
 {
-    int roll = (int)(random() % 100);
+    int roll = (int)(random() % 10000);
     int shoulditfail = roll < md_fail_percent;
 # ifndef _WIN32
 /* suppressed on Windows as POSIX-like file descriptors are non-inheritable */
@@ -165,6 +169,8 @@ void ossl_malloc_setup_failures(void)
         parseit();
     if ((cp = getenv("OPENSSL_MALLOC_FD")) != NULL)
         md_tracefd = atoi(cp);
+    if ((cp = getenv("OPENSSL_MALLOC_SEED")) != NULL)
+        srandom(atoi(cp));
 }
 #endif
 

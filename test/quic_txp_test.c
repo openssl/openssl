@@ -1198,6 +1198,54 @@ static const struct script_op script_17[] = {
     OP_END
 };
 
+/* 18. Big Token Rejection */
+static const unsigned char big_token[1950];
+
+static int try_big_token(struct helper *h)
+{
+    size_t i;
+
+    /* Ensure big token is rejected */
+    if (!TEST_false(ossl_quic_tx_packetiser_set_initial_token(h->txp,
+                                                              big_token,
+                                                              sizeof(big_token),
+                                                              NULL,
+                                                              NULL)))
+        return 0;
+
+    /*
+     * Keep trying until we find an acceptable size, then make sure
+     * that works for generation
+     */
+    for (i = sizeof(big_token) - 1;; --i) {
+        if (!TEST_size_t_gt(i, 0))
+            return 0;
+
+        if (ossl_quic_tx_packetiser_set_initial_token(h->txp, big_token, i,
+                                                      NULL, NULL))
+            break;
+    }
+
+    return 1;
+}
+
+static const struct script_op script_18[] = {
+    OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM, secret_1)
+    OP_TXP_GENERATE_NONE()
+    OP_CHECK(try_big_token)
+    OP_TXP_GENERATE_NONE()
+    OP_CRYPTO_SEND(QUIC_PN_SPACE_INITIAL, crypto_1)
+    OP_TXP_GENERATE()
+    OP_RX_PKT()
+    OP_EXPECT_DGRAM_LEN(1200, 1200)
+    OP_NEXT_FRAME()
+    OP_EXPECT_FRAME(OSSL_QUIC_FRAME_TYPE_CRYPTO)
+    OP_EXPECT_NO_FRAME()
+    OP_RX_PKT_NONE()
+    OP_TXP_GENERATE_NONE()
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -1215,7 +1263,8 @@ static const struct script_op *const scripts[] = {
     script_14,
     script_15,
     script_16,
-    script_17
+    script_17,
+    script_18
 };
 
 static void skip_padding(struct helper *h)

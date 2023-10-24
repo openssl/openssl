@@ -183,7 +183,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION && perl configdata.pm --dump
+      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -192,6 +192,23 @@ jobs:
         ./util/opensslwrap.sh version -c
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
+
+  fuzz_tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: config
+      run: ./config --banner=Configured --debug -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-weak-ssl-ciphers enable-ssl3 enable-ssl3-method enable-nextprotoneg && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
 
   memory_sanitizer:
     runs-on: ubuntu-latest
@@ -237,7 +254,7 @@ jobs:
     - name: modprobe tls
       run: sudo modprobe tls
     - name: config
-      run: ./config --banner=Configured --strict-warnings no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd enable-ktls enable-fips no-threads && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-egd enable-ktls enable-fips no-threads && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -345,7 +362,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-brotli -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -DPEDANTIC && perl configdata.pm --dump
+      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-brotli -DPEDANTIC && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -367,7 +384,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-zstd -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -DPEDANTIC && perl configdata.pm --dump
+      run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-zstd -DPEDANTIC && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info

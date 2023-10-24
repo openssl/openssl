@@ -635,7 +635,7 @@ int ossl_quic_channel_is_active(const QUIC_CHANNEL *ch)
     return ch != NULL && ch->state == QUIC_CHANNEL_STATE_ACTIVE;
 }
 
-static int ossl_quic_channel_is_closing(const QUIC_CHANNEL *ch)
+int ossl_quic_channel_is_closing(const QUIC_CHANNEL *ch)
 {
     return ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING;
 }
@@ -1311,11 +1311,13 @@ static int ch_on_transport_params(const unsigned char *params,
                 goto malformed;
             }
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             /* Must match our initial DCID. */
             if (!ossl_quic_conn_id_eq(&ch->init_dcid, &cid)) {
                 reason = TP_REASON_EXPECTED_VALUE("ORIG_DCID");
                 goto malformed;
             }
+#endif
 
             got_orig_dcid = 1;
             break;
@@ -2220,6 +2222,14 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
              */
             return;
 
+        /*
+         * RFC 9000 s 17.2.5.2: After the client has received and processed an
+         * Initial or Retry packet from the server, it MUST discard any
+         * subsequent Retry packets that it receives.
+         */
+        if (ch->have_received_enc_pkt)
+            return;
+
         if (ch->qrx_pkt->hdr->len <= QUIC_RETRY_INTEGRITY_TAG_LEN)
             /* Packets with zero-length Retry Tokens are invalid. */
             return;
@@ -2294,7 +2304,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
              * non-zero Token Length field MUST either discard the packet or
              * generate a connection error of type PROTOCOL_VIOLATION.
              *
-             * TODO(QUIC): consider the implications of RFC 9000 s. 10.2.3
+             * TODO(QUIC FUTURE): consider the implications of RFC 9000 s. 10.2.3
              * Immediate Close during the Handshake:
              *      However, at the cost of reducing feedback about
              *      errors for legitimate peers, some forms of denial of
@@ -2590,6 +2600,13 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
                                                                     ossl_quic_enc_level_to_pn_space(i)));
             }
         }
+
+        /*
+         * When do we need to send an ACK-eliciting packet to reset the idle
+         * deadline timer for the peer?
+         */
+        if (!ossl_time_is_infinite(ch->ping_deadline))
+            deadline = ossl_time_min(deadline, ch->ping_deadline);
     }
 
     /* Apply TXP wakeup deadline. */
@@ -2603,14 +2620,6 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
     else if (!ossl_time_is_infinite(ch->idle_deadline))
         deadline = ossl_time_min(deadline,
                                  ch->idle_deadline);
-
-    /*
-     * When do we need to send an ACK-eliciting packet to reset the idle
-     * deadline timer for the peer?
-     */
-    if (!ossl_time_is_infinite(ch->ping_deadline))
-        deadline = ossl_time_min(deadline,
-                                 ch->ping_deadline);
 
     /* When does the RXKU process complete? */
     if (ch->rxku_in_progress)
@@ -2809,8 +2818,18 @@ static int ch_retry(QUIC_CHANNEL *ch,
     if ((buf = OPENSSL_memdup(retry_token, retry_token_len)) == NULL)
         return 0;
 
-    ossl_quic_tx_packetiser_set_initial_token(ch->txp, buf, retry_token_len,
-                                              free_token, NULL);
+    if (!ossl_quic_tx_packetiser_set_initial_token(ch->txp, buf,
+                                                   retry_token_len,
+                                                   free_token, NULL)) {
+        /*
+         * This may fail if the token we receive is too big for us to ever be
+         * able to transmit in an outgoing Initial packet.
+         */
+        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INVALID_TOKEN, 0,
+                                               "received oversize token");
+        OPENSSL_free(buf);
+        return 0;
+    }
 
     ch->retry_scid  = *retry_scid;
     ch->doing_retry = 1;

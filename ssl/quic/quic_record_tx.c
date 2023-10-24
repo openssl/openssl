@@ -543,6 +543,11 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
             return 0;
         }
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        /* Ignore what we just encrypted and overwrite it with the plaintext */
+        memcpy(txe_data(txe) + txe->data_len, src, l);
+#endif
+
         assert(l > 0 && src_len == (size_t)l);
         txe->data_len += src_len;
     }

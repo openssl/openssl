@@ -392,7 +392,7 @@ static int dh_validate_public(const DH *dh, int checktype)
         && ossl_dh_is_named_safe_prime_group(dh))
         return ossl_dh_check_pub_key_partial(dh, pub_key, &res);
 
-    return DH_check_pub_key(dh, pub_key, &res);
+    return DH_check_pub_key_ex(dh, pub_key);
 }
 
 static int dh_validate_private(const DH *dh)

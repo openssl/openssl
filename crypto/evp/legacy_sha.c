@@ -71,7 +71,11 @@ static int sha1_int_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
 
 static int shake_ctrl(EVP_MD_CTX *evp_ctx, int cmd, int p1, void *p2)
 {
-    KECCAK1600_CTX *ctx = evp_ctx->md_data;
+    KECCAK1600_CTX *ctx;
+
+    if (evp_ctx == NULL)
+        return 0;
+    ctx = evp_ctx->md_data;
 
     switch (cmd) {
     case EVP_MD_CTRL_XOF_LEN:

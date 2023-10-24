@@ -48,7 +48,6 @@ static int vaes_gcm_setkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     AES_KEY *ks = &actx->ks.ks;
 
-    ctx->ks = ks;
     aesni_set_encrypt_key(key, keylen * 8, ks);
     memset(gcmctx, 0, sizeof(*gcmctx));
     gcmctx->key = ks;
@@ -77,7 +76,7 @@ static int vaes_gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv,
     if (ivlen > (U64(1) << 61))
         return 0;
 
-    ossl_aes_gcm_setiv_avx512(ctx->ks, gcmctx, iv, ivlen);
+    ossl_aes_gcm_setiv_avx512(gcmctx->key, gcmctx, iv, ivlen);
 
     return 1;
 }
@@ -162,9 +161,9 @@ static int vaes_gcm_cipherupdate(PROV_GCM_CTX *ctx, const unsigned char *in,
     }
 
     if (ctx->enc)
-        ossl_aes_gcm_encrypt_avx512(ctx->ks, gcmctx, &gcmctx->mres, in, len, out);
+        ossl_aes_gcm_encrypt_avx512(gcmctx->key, gcmctx, &gcmctx->mres, in, len, out);
     else
-        ossl_aes_gcm_decrypt_avx512(ctx->ks, gcmctx, &gcmctx->mres, in, len, out);
+        ossl_aes_gcm_decrypt_avx512(gcmctx->key, gcmctx, &gcmctx->mres, in, len, out);
 
     return 1;
 }

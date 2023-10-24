@@ -125,6 +125,7 @@ void ossl_quic_conn_force_assist_thread_wake(SSL *s);
 QUIC_CHANNEL *ossl_quic_conn_get_channel(SSL *s);
 
 int ossl_quic_has_pending(const SSL *s);
+int ossl_quic_get_shutdown(const SSL *s);
 
 # endif
 

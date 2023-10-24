@@ -221,22 +221,42 @@ void ossl_obj_cleanup_int(void)
     objs_free_locks();
 }
 
-int OBJ_new_nid(int num)
+/*
+ * Requires that the ossl_obj_lock be held
+ * if TSAN_REQUIRES_LOCKING defined
+ */
+static int obj_new_nid_unlocked(int num)
 {
     static TSAN_QUALIFIER int new_nid = NUM_NID;
 #ifdef TSAN_REQUIRES_LOCKING
     int i;
 
-    if (!CRYPTO_THREAD_write_lock(ossl_obj_nid_lock)) {
-        ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
-        return NID_undef;
-    }
     i = new_nid;
     new_nid += num;
-    CRYPTO_THREAD_unlock(ossl_obj_nid_lock);
+
     return i;
 #else
     return tsan_add(&new_nid, num);
+#endif
+}
+
+int OBJ_new_nid(int num)
+{
+#ifdef TSAN_REQUIRES_LOCKING
+    int i;
+
+    if (!ossl_obj_write_lock(1)) {
+        ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
+        return NID_undef;
+    }
+
+    i = obj_new_nid_unlocked(num);
+
+    ossl_obj_unlock(1);
+
+    return i;
+#else
+    return obj_new_nid_unlocked(num);
 #endif
 }
 
@@ -677,13 +697,14 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
     if (p == NULL) {
         const char *base_ = base;
         int l, h, i = 0, c = 0;
+        char *p1;
 
         for (i = 0; i < num; ++i) {
-            p = &(base_[i * size]);
-            c = (*cmp) (key, p);
+            p1 = &(base_[i * size]);
+            c = (*cmp) (key, p1);
             if (c == 0
                 || (c < 0 && (flags & OBJ_BSEARCH_VALUE_ON_NOMATCH)))
-                return p;
+                return p1;
         }
     }
 #endif
@@ -784,7 +805,8 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
         goto err;
     }
 
-    tmpoid->nid = OBJ_new_nid(1);
+    tmpoid->nid = obj_new_nid_unlocked(1);
+
     if (tmpoid->nid == NID_undef)
         goto err;
 

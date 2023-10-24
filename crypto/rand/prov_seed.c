@@ -8,6 +8,7 @@
  */
 
 #include "rand_local.h"
+#include "crypto/evp.h"
 #include "crypto/rand.h"
 #include "crypto/rand_pool.h"
 #include "internal/core.h"
@@ -44,37 +45,30 @@ size_t ossl_rand_get_user_entropy(OSSL_LIB_CTX *ctx,
                                   unsigned char **pout, int entropy,
                                   size_t min_len, size_t max_len)
 {
-    unsigned char *buf;
     EVP_RAND_CTX *rng = ossl_rand_get0_seed_noncreating(ctx);
-    size_t ret;
 
-    if (rng == NULL)
+    if (rng != NULL && evp_rand_can_seed(rng))
+        return evp_rand_get_seed(rng, pout, entropy, min_len, max_len,
+                                 0, NULL, 0);
+    else
         return ossl_rand_get_entropy(ctx, pout, entropy, min_len, max_len);
-
-    /* Determine how many bytes to generate */
-    ret = entropy > 0 ? (size_t)(7 + entropy) / 8 : min_len;
-    if (ret < min_len)
-        ret = min_len;
-    else if (ret > max_len)
-        ret = max_len;
-
-    /* Allocate the return buffer */
-    if ((buf = OPENSSL_secure_malloc(ret)) == NULL)
-        return 0;
-
-    /* Fill the buffer */
-    if (!EVP_RAND_generate(rng, buf, ret, entropy, 0, NULL, 0)) {
-        OPENSSL_free(buf);
-        return 0;
-    }
-    *pout = buf;
-    return ret;
 }
 
 void ossl_rand_cleanup_entropy(ossl_unused OSSL_LIB_CTX *ctx,
                                unsigned char *buf, size_t len)
 {
     OPENSSL_secure_clear_free(buf, len);
+}
+
+void ossl_rand_cleanup_user_entropy(OSSL_LIB_CTX *ctx,
+                                    unsigned char *buf, size_t len)
+{
+    EVP_RAND_CTX *rng = ossl_rand_get0_seed_noncreating(ctx);
+
+    if (rng != NULL && evp_rand_can_seed(rng))
+        evp_rand_clear_seed(rng, buf, len);
+    else
+        OPENSSL_secure_clear_free(buf, len);
 }
 
 size_t ossl_rand_get_nonce(ossl_unused OSSL_LIB_CTX *ctx,
@@ -127,6 +121,12 @@ size_t ossl_rand_get_user_nonce(OSSL_LIB_CTX *ctx,
 
 void ossl_rand_cleanup_nonce(ossl_unused OSSL_LIB_CTX *ctx,
                              unsigned char *buf, size_t len)
+{
+    OPENSSL_clear_free(buf, len);
+}
+
+void ossl_rand_cleanup_user_nonce(ossl_unused OSSL_LIB_CTX *ctx,
+                                  unsigned char *buf, size_t len)
 {
     OPENSSL_clear_free(buf, len);
 }
