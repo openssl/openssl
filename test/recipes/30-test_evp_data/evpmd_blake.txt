@@ -99,3 +99,9 @@ Digest = BLAKE2b512
 Input = 61
 OutputSize = 32
 Output = 8928aae63c84d87ea098564d1e03ad813f107add474e56aedd286349c0c03ea4
+
+Digest = BLAKE2b512
+Input = 61
+OutputSize = 48
+Output = 8928aae63c84d87ea098564d1e03ad813f107add474e56aedd286349c0c03ea4
+Result = DIGESTFINALXOF_ERROR
