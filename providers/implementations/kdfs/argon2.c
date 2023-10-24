@@ -828,7 +828,7 @@ static int blake2b_md(EVP_MD *md, void *out, size_t outlen, const void *in,
 
     ret = EVP_DigestInit_ex2(ctx, md, par) == 1
         && EVP_DigestUpdate(ctx, in, inlen) == 1
-        && EVP_DigestFinalXOF(ctx, out, outlen) == 1;
+        && EVP_DigestFinalVarLen(ctx, out, outlen) == 1;
 
     EVP_MD_CTX_free(ctx);
     return ret;
@@ -874,7 +874,7 @@ static int blake2b_long(EVP_MD *md, EVP_MAC *mac, unsigned char *out,
     ret = EVP_DigestInit_ex2(ctx, md, par) == 1
         && EVP_DigestUpdate(ctx, outlen_bytes, sizeof(outlen_bytes)) == 1
         && EVP_DigestUpdate(ctx, in, inlen) == 1
-        && EVP_DigestFinalXOF(ctx, (outlen > BLAKE2B_OUTBYTES) ? outbuf : out,
+        && EVP_DigestFinalVarLen(ctx, (outlen > BLAKE2B_OUTBYTES) ? outbuf : out,
                 outlen_md) == 1;
 
     if (ret == 0)
