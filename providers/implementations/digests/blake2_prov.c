@@ -8,6 +8,7 @@
  */
 
 #include <openssl/crypto.h>
+#include <openssl/proverr.h>
 #include "prov/blake2.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
@@ -83,14 +84,23 @@ static int blake2b512_internal_final(void *ctx, unsigned char *out,
                                      size_t *outl, size_t outsz)
 {
     struct blake2b_md_data_st *b_ctx;
-    
+
     b_ctx = (struct blake2b_md_data_st *)ctx;
-    *outl = b_ctx->ctx.outlen;
 
     if (!ossl_prov_is_running())
         return 0;
 
-    return (outsz > 0) ? ossl_blake2b_final(out, ctx) : 1;
+    *outl = b_ctx->ctx.outlen;
+
+    if (outsz == 0)
+       return 1;
+
+    if (outsz != *outl) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_SIZE);
+        return 0;
+    }
+
+    return ossl_blake2b_final(out, ctx);
 }
 
 static int blake2b512_get_params(OSSL_PARAM params[])
