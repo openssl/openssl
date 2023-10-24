@@ -19,7 +19,7 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
-### Major changes between OpenSSL 3.1.3 and OpenSSL 3.1.4 [under development]
+### Major changes between OpenSSL 3.1.3 and OpenSSL 3.1.4 [24 Oct 2023]
 
   * Mitigate incorrect resize handling for symmetric cipher keys and IVs.
     ([CVE-2023-5363])
