@@ -95,7 +95,7 @@ static int blake2b512_internal_final(void *ctx, unsigned char *out,
     if (outsz == 0)
        return 1;
 
-    if (outsz != *outl) {
+    if (outsz < *outl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_SIZE);
         return 0;
     }
