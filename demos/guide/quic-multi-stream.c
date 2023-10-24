@@ -47,7 +47,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
      */
     for (ai = res; ai != NULL; ai = BIO_ADDRINFO_next(ai)) {
         /*
-         * Create a TCP socket. We could equally use non-OpenSSL calls such
+         * Create a UDP socket. We could equally use non-OpenSSL calls such
          * as "socket" here for this and the subsequent connect and close
          * functions. But for portability reasons and also so that we get
          * errors on the OpenSSL stack in the event of a failure we use
@@ -82,7 +82,6 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
         }
     }
 
-
     /* Free the address information resources we allocated earlier */
     BIO_ADDRINFO_free(res);
 
@@ -96,6 +95,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
         BIO_closesocket(sock);
         return NULL;
     }
+
     /*
      * Associate the newly created BIO with the underlying socket. By
      * passing BIO_CLOSE here the socket will be automatically closed when
@@ -222,8 +222,9 @@ int main(void)
         goto end;
     }
 
-    /* Connect to the server and perform the TLS handshake */
-    if ((ret = SSL_connect(ssl)) < 1) {
+    /* Do the handshake with the server */
+    if (SSL_connect(ssl) < 1) {
+        printf("Failed to connect to the server\n");
         /*
          * If the failure is due to a verification error we can get more
          * information about it from SSL_get_verify_result().

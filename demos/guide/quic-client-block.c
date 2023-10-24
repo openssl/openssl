@@ -210,8 +210,9 @@ int main(void)
         goto end;
     }
 
-    /* Connect to the server and perform the TLS handshake */
-    if ((ret = SSL_connect(ssl)) < 1) {
+    /* Do the handshake with the server */
+    if (SSL_connect(ssl) < 1) {
+        printf("Failed to connect to the server\n");
         /*
          * If the failure is due to a verification error we can get more
          * information about it from SSL_get_verify_result().
