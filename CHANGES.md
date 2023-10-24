@@ -28,7 +28,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
-### Changes between 3.0.11 and 3.0.12 [xx XXX xxxx]
+### Changes between 3.0.11 and 3.0.12 [24 Oct 2023]
 
  * Fix incorrect key and IV resizing issues when calling EVP_EncryptInit_ex2(),
    EVP_DecryptInit_ex2() or EVP_CipherInit_ex2() with OSSL_PARAM parameters
