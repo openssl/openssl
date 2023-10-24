@@ -282,9 +282,11 @@ data.
 Retrieves the digest value from I<ctx> and places it in I<md>. If the I<s>
 parameter is not NULL then the number of bytes of data written (i.e. the
 length of the digest) will be written to the integer at I<s>, at most
-B<EVP_MAX_MD_SIZE> bytes will be written.  After calling EVP_DigestFinal_ex()
-no additional calls to EVP_DigestUpdate() can be made, but
-EVP_DigestInit_ex2() can be called to initialize a new digest operation.
+B<EVP_MAX_MD_SIZE> bytes will be written unless the digest implementation
+allows changing the digest size and it is set to a larger value by the
+application. After calling EVP_DigestFinal_ex() no additional calls to
+EVP_DigestUpdate() can be made, but EVP_DigestInit_ex2() can be called to
+initialize a new digest operation.
 
 =item EVP_DigestFinalXOF()
 

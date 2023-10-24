@@ -30,6 +30,21 @@ Known names are "BLAKE2B-512" and "BLAKE2b512".
 This implementation supports the common gettable parameters described
 in L<EVP_MD-common(7)>.
 
+=head2 Settable Context Parameters
+
+The BLAKE2B-512 implementation supports the following L<OSSL_PARAM(3)> entries,
+settable for an B<EVP_MD_CTX> with L<EVP_MD_CTX_set_params(3)>:
+
+=over 4
+
+=item "size" (B<OSSL_DIGEST_PARAM_SIZE>) <unsigned integer>
+
+Sets a different digest length for the L<EVP_DigestFinal(3)> output.
+The value of the "size" parameter should not exceed 255 and it must be set
+during the L<EVP_DigestInit_ex2(3)> call.
+
+=back
+
 =head1 SEE ALSO
 
 L<provider-digest(7)>, L<OSSL_PROVIDER-default(7)>
