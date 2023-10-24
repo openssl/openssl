@@ -1347,14 +1347,7 @@ static int set_client_ciphersuite(SSL *s, const unsigned char *cipherchars)
     if (s->hit && (s->session->cipher_id != c->id)) {
         if (SSL_IS_TLS13(s)) {
             const EVP_MD *md = ssl_md(s->ctx, c->algorithm2);
-           /*
-            * This code eliminates UB if in sslapitest.c at the line #4780
-            * clntsess->cipher = NULL;
-            */
-            if (s->session->cipher == NULL) {
-                 SSLfatal( s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR );
-                 return EXT_RETURN_FAIL;
-            }
+
             /*
              * In TLSv1.3 it is valid for the server to select a different
              * ciphersuite as long as the hash is the same.
