@@ -2906,8 +2906,9 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic)
 {
     long l;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (s == NULL)
+    if (sc == NULL)
         return 0;
 
     /*
@@ -2927,11 +2928,6 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic)
      */
     if (!no_quic && IS_QUIC(s))
         return s->method->ssl_ctrl(s, cmd, larg, parg);
-
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-
-    if (sc == NULL)
-        return 0;
 
     switch (cmd) {
     case SSL_CTRL_GET_READ_AHEAD:
