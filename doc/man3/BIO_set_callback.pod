@@ -227,19 +227,19 @@ the actual call parameter, see B<BIO_callback_ctrl>.
 
 =item B<BIO_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t num_msg, uint64_t flags, size_t *msgs_processed)>
 
-  callback_ex(b, BIO_CB_SENDMMSG, args, 0, 0, 0, 0, NULL)
+  callback_ex(b, BIO_CB_SENDMMSG, args, 0, 0, 0, 1, NULL)
 
 or
 
-  callback(b, BIO_CB_SENDMMSG, args, 0, 0, 0)
+  callback(b, BIO_CB_SENDMMSG, args, 0, 0, 1)
 
 is called before the call and
 
-  callback_ex(b, BIO_CB_SENDMMSG | BIO_CB_RETURN, args, ret, 0, 0, 0, NULL)
+  callback_ex(b, BIO_CB_SENDMMSG | BIO_CB_RETURN, args, ret, 0, 0, ret, NULL)
 
 or
 
-  callback(b, BIO_CB_SENDMMSG | BIO_CB_RETURN, args, ret, 0, 0, 0)
+  callback(b, BIO_CB_SENDMMSG | BIO_CB_RETURN, args, ret, 0, 0, ret)
 
 after.
 
