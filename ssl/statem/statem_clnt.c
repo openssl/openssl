@@ -1347,6 +1347,7 @@ static int set_client_ciphersuite(SSL *s, const unsigned char *cipherchars)
     if (s->hit && (s->session->cipher_id != c->id)) {
         if (SSL_IS_TLS13(s)) {
             const EVP_MD *md = ssl_md(s->ctx, c->algorithm2);
+
             if (!ossl_assert(s->esssion->cipher != NULL)) {
                  SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                  return 0;
