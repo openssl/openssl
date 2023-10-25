@@ -11,7 +11,9 @@
 CFLAGS = $(OPENSSL_INCS_LOCATION) -Wall
 LDFLAGS = $(OPENSSL_LIBS_LOCATION) -lssl -lcrypto
 
-all: gmac hmac-sha512 cmac-aes256 poly1305
+TESTS=gmac hmac-sha512 cmac-aes256 poly1305
+
+all: $(TESTS)
 
 gmac: gmac.o
 hmac-sha512: hmac-sha512.o
@@ -22,4 +24,12 @@ gmac hmac-sha512 cmac-aes256 poly1305:
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 clean:
-	$(RM) gmac hmac-sha512 cmac-aes256 poly1305 *.o
+	$(RM) *.o $(TESTS)
+
+.PHONY: test
+test: all
+	@echo "\nMAC tests:"
+	@set -e; for tst in $(TESTS); do \
+		echo "\n"$$tst; \
+		LD_LIBRARY_PATH=../.. ./$$tst; \
+	done

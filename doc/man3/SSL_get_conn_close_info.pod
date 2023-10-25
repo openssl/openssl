@@ -14,7 +14,7 @@ closed
  #define SSL_CONN_CLOSE_FLAG_TRANSPORT
 
  typedef struct ssl_conn_close_info_st {
-     uint64_t error_code;
+     uint64_t error_code, frame_type;
      char     *reason;
      size_t   reason_len;
      uint32_t flags;
@@ -41,6 +41,13 @@ This is a 62-bit QUIC error code. It is either a 62-bit application error code
 (if B<SSL_CONN_CLOSE_FLAG_TRANSPORT> not set in I<flags>) or a  62-bit standard
 QUIC transport error code (if B<SSL_CONN_CLOSE_FLAG_TRANSPORT> is set in
 I<flags>).
+
+=item I<frame_type>
+
+If B<SSL_CONN_CLOSE_FLAG_TRANSPORT> is set, this may be set to a QUIC frame type
+number which caused the connection to be closed. It may also be set to 0 if no
+frame type was specified as causing the connection to be closed. If
+B<SSL_CONN_CLOSE_FLAG_TRANSPORT> is not set, this is set to 0.
 
 =item I<reason>
 

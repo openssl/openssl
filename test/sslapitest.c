@@ -115,7 +115,6 @@ static int cdummyarg = 1;
 static X509 *ocspcert = NULL;
 #endif
 
-#define NUM_EXTRA_CERTS 40
 #define CLIENT_VERSION_LEN      2
 
 /*
@@ -954,51 +953,6 @@ end:
 }
 #endif
 
-static int add_large_cert_chain(SSL_CTX *sctx)
-{
-    BIO *certbio = NULL;
-    X509 *chaincert = NULL;
-    int certlen;
-    int ret = 0;
-    int i;
-
-    if (!TEST_ptr(certbio = BIO_new_file(cert, "r")))
-        goto end;
-
-    if (!TEST_ptr(chaincert = X509_new_ex(libctx, NULL)))
-        goto end;
-
-    if (PEM_read_bio_X509(certbio, &chaincert, NULL, NULL) == NULL)
-        goto end;
-    BIO_free(certbio);
-    certbio = NULL;
-
-    /*
-     * We assume the supplied certificate is big enough so that if we add
-     * NUM_EXTRA_CERTS it will make the overall message large enough. The
-     * default buffer size is requested to be 16k, but due to the way BUF_MEM
-     * works, it ends up allocating a little over 21k (16 * 4/3). So, in this
-     * test we need to have a message larger than that.
-     */
-    certlen = i2d_X509(chaincert, NULL);
-    OPENSSL_assert(certlen * NUM_EXTRA_CERTS >
-                   (SSL3_RT_MAX_PLAIN_LENGTH * 4) / 3);
-    for (i = 0; i < NUM_EXTRA_CERTS; i++) {
-        if (!X509_up_ref(chaincert))
-            goto end;
-        if (!SSL_CTX_add_extra_chain_cert(sctx, chaincert)) {
-            X509_free(chaincert);
-            goto end;
-        }
-    }
-
-    ret = 1;
- end:
-    BIO_free(certbio);
-    X509_free(chaincert);
-    return ret;
-}
-
 static int execute_test_large_message(const SSL_METHOD *smeth,
                                       const SSL_METHOD *cmeth,
                                       int min_version, int max_version,
@@ -1034,7 +988,7 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
         SSL_CTX_set_read_ahead(cctx, 1);
     }
 
-    if (!add_large_cert_chain(sctx))
+    if (!ssl_ctx_add_large_cert_chain(libctx, sctx, cert))
         goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
@@ -11087,7 +11041,7 @@ static int test_handshake_retry(int idx)
      * Add a large amount of data to fill the buffering BIO used by the SSL
      * object
      */
-    if ((idx & 1) == 1 && !add_large_cert_chain(sctx))
+    if ((idx & 1) == 1 && !ssl_ctx_add_large_cert_chain(libctx, sctx, cert))
         goto end;
 
     /*
@@ -11135,6 +11089,102 @@ end:
     BIO_free(bretry);
     BIO_free(tmp);
     set_always_retry_err_val(-1);
+    return testresult;
+}
+
+/*
+ * Test that receiving retries when writing application data works as expected
+ */
+static int test_data_retry(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    unsigned char inbuf[1200], outbuf[1200];
+    size_t i;
+    BIO *tmp = NULL;
+    BIO *bretry = BIO_new(bio_s_maybe_retry());
+    size_t written, readbytes, totread = 0;
+
+    if (!TEST_ptr(bretry))
+        goto end;
+
+    for (i = 0; i < sizeof(inbuf); i++)
+        inbuf[i] = (unsigned char)(0xff & i);
+    memset(outbuf, 0, sizeof(outbuf));
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), 0, 0, &sctx, &cctx,
+                                       cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+                                      NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Smallest possible max send fragment is 512 */
+    if (!TEST_true(SSL_set_max_send_fragment(clientssl, 512)))
+        goto end;
+
+    tmp = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(tmp))
+        goto end;
+    if (!TEST_true(BIO_up_ref(tmp)))
+        goto end;
+    BIO_push(bretry, tmp);
+    tmp = NULL;
+    SSL_set0_wbio(clientssl, bretry);
+    if (!BIO_up_ref(bretry)) {
+        bretry = NULL;
+        goto end;
+    }
+
+    for (i = 0; i < 3; i++) {
+        /* We expect this call to make no progress and indicate retry */
+        if (!TEST_false(SSL_write_ex(clientssl, inbuf, sizeof(inbuf), &written)))
+            goto end;
+        if (!TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_WRITE))
+            goto end;
+
+        /* Allow one write to progess, but the next one to signal retry */
+        if (!TEST_true(BIO_ctrl(bretry, MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT, 1,
+                                NULL)))
+            goto end;
+
+        if (i == 2)
+            break;
+
+        /*
+         * This call will hopefully make progress but will still indicate retry
+         * because there is more data than will fit into a single record.
+         */
+        if (!TEST_false(SSL_write_ex(clientssl, inbuf, sizeof(inbuf), &written)))
+            goto end;
+        if (!TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_WRITE))
+            goto end;
+    }
+
+    /* The final call should write the last chunk of data and succeed */
+    if (!TEST_true(SSL_write_ex(clientssl, inbuf, sizeof(inbuf), &written)))
+        goto end;
+    /* Read all the data available */
+    while (SSL_read_ex(serverssl, outbuf + totread, sizeof(outbuf) - totread,
+                       &readbytes))
+        totread += readbytes;
+    if (!TEST_mem_eq(inbuf, sizeof(inbuf), outbuf, totread))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free_all(bretry);
+    BIO_free(tmp);
     return testresult;
 }
 
@@ -11444,6 +11494,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_version, 6);
     ADD_TEST(test_rstate_string);
     ADD_ALL_TESTS(test_handshake_retry, 16);
+    ADD_TEST(test_data_retry);
     return 1;
 
  err:
@@ -11473,6 +11524,7 @@ void cleanup_tests(void)
     OPENSSL_free(privkey8192);
     bio_s_mempacket_test_free();
     bio_s_always_retry_free();
+    bio_s_maybe_retry_free();
     OSSL_PROVIDER_unload(defctxnull);
     OSSL_LIB_CTX_free(libctx);
 }

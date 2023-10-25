@@ -418,8 +418,8 @@ int BIO_sendmmsg(BIO *b, BIO_MSG *msg,
         args.msgs_processed = msgs_processed;
 
         ret = (size_t)bio_call_callback(b, BIO_CB_SENDMMSG, (void *)&args,
-                                        0, 0, 0, 0, NULL);
-        if (ret == 0)
+                                        0, 0, 0, 1, NULL);
+        if (ret <= 0)
             return 0;
     }
 
@@ -433,7 +433,7 @@ int BIO_sendmmsg(BIO *b, BIO_MSG *msg,
 
     if (HAS_CALLBACK(b))
         ret = (size_t)bio_call_callback(b, BIO_CB_SENDMMSG | BIO_CB_RETURN,
-                                        (void *)&args, ret, 0, 0, 0, NULL);
+                                        (void *)&args, ret, 0, 0, ret, NULL);
 
     return ret;
 }
@@ -465,8 +465,8 @@ int BIO_recvmmsg(BIO *b, BIO_MSG *msg,
         args.msgs_processed = msgs_processed;
 
         ret = bio_call_callback(b, BIO_CB_RECVMMSG, (void *)&args,
-                                0, 0, 0, 0, NULL);
-        if (ret == 0)
+                                0, 0, 0, 1, NULL);
+        if (ret <= 0)
             return 0;
     }
 
@@ -480,7 +480,7 @@ int BIO_recvmmsg(BIO *b, BIO_MSG *msg,
 
     if (HAS_CALLBACK(b))
         ret = (size_t)bio_call_callback(b, BIO_CB_RECVMMSG | BIO_CB_RETURN,
-                                        (void *)&args, ret, 0, 0, 0, NULL);
+                                        (void *)&args, ret, 0, 0, ret, NULL);
 
     return ret;
 }

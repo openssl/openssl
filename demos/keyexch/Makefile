@@ -1,31 +1,28 @@
 #
 # To run the demos when linked with a shared library (default):
 #
-#    LD_LIBRARY_PATH=../.. ./hkdf
+#    LD_LIBRARY_PATH=../.. ./x25519
 
-CFLAGS = -I../../include -g
+CFLAGS = -I../../include -g -Wall
 LDFLAGS = -L../..
 LDLIBS = -lcrypto
 
-TESTS=hkdf pbkdf2 scrypt argon2
+TESTS=x25519
 
 all: $(TESTS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
-hkdf: hkdf.o
-pbkdf2: pbkdf2.o
-scrypt: scrypt.o
-argon2: argon2.o
-
-clean:
-	$(RM) *.o $(TESTS)
+%x25519: %x25519.o
 
 .PHONY: test
 test: all
-	@echo "\nKDF tests:"
+	@echo "\nKeyExchange tests:"
 	@set -e; for tst in $(TESTS); do \
 		echo "\n"$$tst; \
 		LD_LIBRARY_PATH=../.. ./$$tst; \
 	done
+
+clean:
+	$(RM) *.o $(TESTS)

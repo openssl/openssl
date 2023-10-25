@@ -7,7 +7,9 @@ CFLAGS = -I../../include -g -Wall
 LDFLAGS = -L../..
 LDLIBS = -lcrypto
 
-all: EVP_MD_demo EVP_MD_stdin EVP_MD_xof BIO_f_md
+TESTS=EVP_MD_demo EVP_MD_stdin EVP_MD_xof BIO_f_md
+
+all: $(TESTS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
@@ -17,7 +19,14 @@ EVP_MD_stdin: EVP_MD_stdin.o
 EVP_MD_xof: EVP_MD_xof.o
 BIO_f_md: BIO_f_md.o
 
-test: ;
+.PHONY: test
+# Since some of these tests use stdin we use the source file as stdin when running the exes
+test: all
+	@echo "\nDigest tests:"
+	@set -e; for tst in $(TESTS); do \
+		echo "\n"$$tst; \
+		cat $$tst.c | ./$$tst; \
+	done
 
 clean:
-	$(RM) *.o EVP_MD_demo EVP_MD_stdin EVP_MD_xof BIO_f_md
+	$(RM) *.o $(TESTS)

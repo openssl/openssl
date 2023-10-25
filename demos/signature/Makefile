@@ -11,7 +11,9 @@ CFLAGS = -I../../include -g -Wall
 LDFLAGS = -L../..
 LDLIBS = -lcrypto
 
-all: EVP_EC_Signature_demo EVP_DSA_Signature_demo EVP_ED_Signature_demo rsa_pss_direct rsa_pss_hash
+TESTS=EVP_EC_Signature_demo EVP_DSA_Signature_demo EVP_ED_Signature_demo rsa_pss_direct rsa_pss_hash
+
+all: $(TESTS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
@@ -22,7 +24,13 @@ EVP_ED_Signature_demo: EVP_ED_Signature_demo.o
 rsa_pss_direct: rsa_pss_direct.o
 rsa_pss_hash: rsa_pss_hash.o
 
-test: ;
-
 clean:
-	$(RM) *.o EVP_EC_Signature_demo EVP_DSA_Signature_demo EVP_ED_Signature_demo rsa_pss_direct rsa_pss_hash
+	$(RM) *.o $(TESTS)
+
+.PHONY: test
+test: all
+	@echo "\nSignature tests:"
+	@set -e; for tst in $(TESTS); do \
+		echo "\n"$$tst; \
+		LD_LIBRARY_PATH=../.. ./$$tst; \
+	done

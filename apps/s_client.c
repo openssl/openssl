@@ -2969,10 +2969,13 @@ int s_client_main(int argc, char **argv)
             } while (!write_ssl
                      && cbuf_len == 0
                      && user_data_has_data(&user_data));
-            if (cbuf_len > 0)
+            if (cbuf_len > 0) {
                 read_tty = 0;
-            else
+                timeout.tv_sec = 0;
+                timeout.tv_usec = 0;
+            } else {
                 read_tty = 1;
+            }
         }
 
         ssl_pending = read_ssl && SSL_has_pending(con);
@@ -3266,6 +3269,7 @@ int s_client_main(int argc, char **argv)
                 ret = 0;
                 goto shut;
             }
+
             if (i > 0 && !user_data_add(&user_data, i)) {
                 ret = 0;
                 goto shut;

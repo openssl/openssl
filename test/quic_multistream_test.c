@@ -1640,8 +1640,10 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     || !TEST_int_eq(expect_remote,
                                     (cc_info.flags
                                      & SSL_CONN_CLOSE_FLAG_LOCAL) == 0)
-                    || !TEST_uint64_t_eq(error_code, cc_info.error_code))
+                    || !TEST_uint64_t_eq(error_code, cc_info.error_code)) {
+                    TEST_info("Connection close reason: %s", cc_info.reason);
                     goto out;
+                }
             }
             break;
 
@@ -1943,6 +1945,8 @@ out:
     s_unlock(h, hl); /* idempotent */
     if (!testresult) {
         size_t i;
+        const QUIC_TERMINATE_CAUSE *tcause;
+        const char *e_str, *f_str;
 
         TEST_error("failed in script \"%s\" at op %zu, thread %d\n",
                    script_name, op_idx + 1, thread_idx);
@@ -1952,6 +1956,56 @@ out:
                       repeat_stack_done[i],
                       repeat_stack_limit[i],
                       repeat_stack_idx[i]);
+
+        ERR_print_errors_fp(stderr);
+
+        if (h->c_conn != NULL) {
+            SSL_CONN_CLOSE_INFO cc_info = {0};
+
+            if (SSL_get_conn_close_info(h->c_conn, &cc_info, sizeof(cc_info))) {
+                e_str = ossl_quic_err_to_string(cc_info.error_code);
+                f_str = ossl_quic_frame_type_to_string(cc_info.frame_type);
+
+                if (e_str == NULL)
+                    e_str = "?";
+                if (f_str == NULL)
+                    f_str = "?";
+
+                TEST_info("client side is closed: %llu(%s)/%llu(%s), "
+                          "%s, %s, reason: \"%s\"",
+                          (unsigned long long)cc_info.error_code,
+                          e_str,
+                          (unsigned long long)cc_info.frame_type,
+                          f_str,
+                          (cc_info.flags & SSL_CONN_CLOSE_FLAG_LOCAL) != 0
+                            ? "local" : "remote",
+                          (cc_info.flags & SSL_CONN_CLOSE_FLAG_TRANSPORT) != 0
+                            ? "transport" : "app",
+                          cc_info.reason != NULL ? cc_info.reason : "-");
+            }
+        }
+
+        tcause = (h->s != NULL
+                  ? ossl_quic_tserver_get_terminate_cause(h->s) : NULL);
+        if (tcause != NULL) {
+            e_str = ossl_quic_err_to_string(tcause->error_code);
+            f_str = ossl_quic_frame_type_to_string(tcause->frame_type);
+
+            if (e_str == NULL)
+                e_str = "?";
+            if (f_str == NULL)
+                f_str = "?";
+
+            TEST_info("server side is closed: %llu(%s)/%llu(%s), "
+                     "%s, %s, reason: \"%s\"",
+                      (unsigned long long)tcause->error_code,
+                      e_str,
+                      (unsigned long long)tcause->frame_type,
+                      f_str,
+                      tcause->remote ? "remote" : "local",
+                      tcause->app ? "app" : "transport",
+                      tcause->reason != NULL ? tcause->reason : "-");
+        }
     }
 
     OPENSSL_free(tmp_buf);

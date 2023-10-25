@@ -125,18 +125,15 @@ Received Packet
   Version: 0x00000001
   Destination Conn Id: <zero length id>
   Source Conn Id: 0x????????????????
-  Payload length: 213
-  Packet Number: 0x00000001
+  Payload length: 1042
+  Packet Number: 0x00000000
 Received Packet
   Packet Type: Handshake
   Version: 0x00000001
   Destination Conn Id: <zero length id>
   Source Conn Id: 0x????????????????
-  Payload length: 1042
-  Packet Number: 0x00000000
-Received Frame: Crypto
-    Offset: 1022
-    Len: 192
+  Payload length: 213
+  Packet Number: 0x00000001
 Received Frame: Crypto
     Offset: 0
     Len: 1022
@@ -245,6 +242,9 @@ YeeuLO02zToHhnQ6KbPXOrQAqcL1kngO4g+j/ru+4AZThFkdkGnltvk=
 ------------------
         No extensions
 
+Received Frame: Crypto
+    Offset: 1022
+    Len: 192
 Received TLS Record
 Header:
   Version = TLS 1.2 (0x303)

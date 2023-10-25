@@ -62,7 +62,7 @@ passes the connection B<SSL> object as a parameter.
 
 If a client application calls L<SSL_write_ex(3)> or L<SSL_write(3)> first then
 (by default) the default stream will be a client-initiated bi-directional
-stream. If the client applications call L<SSL_read_ex(3)> or L<SSL_read(3)>
+stream. If a client application calls L<SSL_read_ex(3)> or L<SSL_read(3)>
 first then the first stream initiated by the server will be used as the default
 stream (whether it is bi-directional or uni-directional).
 
@@ -285,7 +285,7 @@ these different cases.
      * QUIC terms this means that the peer has sent FIN on the stream to
      * indicate that no further data will be sent.
      */
-    switch (SSL_get_error(ssl, 0)) {
+    switch (SSL_get_error(stream1, 0)) {
     case SSL_ERROR_ZERO_RETURN:
         /* Normal completion of the stream */
         break;
@@ -295,7 +295,7 @@ these different cases.
          * Some stream fatal error occurred. This could be because of a stream
          * reset - or some failure occurred on the underlying connection.
          */
-        switch (SSL_get_stream_read_state(ssl)) {
+        switch (SSL_get_stream_read_state(stream1)) {
         case SSL_STREAM_STATE_RESET_REMOTE:
             printf("Stream reset occurred\n");
             /* The stream has been reset but the connection is still healthy. */
