@@ -528,6 +528,7 @@ static int test_param_construct(int tstid)
     size_t j, k, s;
     double d, d2;
     BIGNUM *bn = NULL, *bn2 = NULL;
+    unsigned char teststr[] = "abcdefghi";
 
     params[n++] = OSSL_PARAM_construct_int("int", &i);
     params[n++] = OSSL_PARAM_construct_uint("uint", &u);
@@ -542,8 +543,8 @@ static int test_param_construct(int tstid)
     params[n++] = OSSL_PARAM_construct_BN("bignum", ubuf, sizeof(ubuf));
     params[n++] = OSSL_PARAM_construct_utf8_string("utf8str", buf, sizeof(buf));
     params[n++] = OSSL_PARAM_construct_octet_string("octstr", buf, sizeof(buf));
-    params[n++] = OSSL_PARAM_construct_utf8_ptr("utf8ptr", &bufp, 0);
     params[n++] = OSSL_PARAM_construct_octet_ptr("octptr", &vp, 0);
+    params[n++] = OSSL_PARAM_construct_utf8_ptr("utf8ptr", &bufp, 0);
     params[n] = OSSL_PARAM_construct_end();
 
     switch (tstid) {
@@ -627,6 +628,13 @@ static int test_param_construct(int tstid)
                                                   sizeof("abcdefghi")))
         || !TEST_size_t_eq(cp->return_size, sizeof("abcdefghi")))
         goto err;
+    /* OCTET string */
+    if (!TEST_ptr(cp = OSSL_PARAM_locate(p, "octstr"))
+        || !TEST_true(OSSL_PARAM_set_octet_string_or_ptr(cp, "abcdefghi",
+                                                         sizeof("abcdefghi")))
+        || !TEST_size_t_eq(cp->return_size, sizeof("abcdefghi")))
+        goto err;
+
     /* Match the return size to avoid trailing garbage bytes */
     cp->data_size = cp->return_size;
     if (!TEST_true(OSSL_PARAM_get_octet_string(cp, &vpn, 0, &s))
@@ -647,6 +655,15 @@ static int test_param_construct(int tstid)
         || !TEST_size_t_eq(cp->return_size, sizeof(ul))
         || (tstid <= 1 && !TEST_ptr_eq(vp, &ul)))
         goto err;
+    /* OCTET pointer */
+    vp = &buf;
+    if (!TEST_ptr(cp = OSSL_PARAM_locate(p, "octptr"))
+        || !TEST_true(OSSL_PARAM_set_octet_string_or_ptr(cp, &ul, sizeof(ul)))
+        || !TEST_size_t_eq(cp->return_size, sizeof(ul))
+        || (tstid <= 1 && !TEST_ptr_eq(vp, &ul)))
+        goto err;
+
+
     /* Match the return size to avoid trailing garbage bytes */
     cp->data_size = cp->return_size;
     if (!TEST_true(OSSL_PARAM_get_octet_ptr(cp, (const void **)&vp2, &k))

@@ -31,6 +31,7 @@ OSSL_PARAM_set_time_t, OSSL_PARAM_set_uint, OSSL_PARAM_set_uint32,
 OSSL_PARAM_set_uint64, OSSL_PARAM_set_ulong, OSSL_PARAM_set_BN,
 OSSL_PARAM_set_utf8_string, OSSL_PARAM_set_octet_string,
 OSSL_PARAM_set_utf8_ptr, OSSL_PARAM_set_octet_ptr,
+OSSL_PARAM_set_octet_string_or_ptr,
 OSSL_PARAM_UNMODIFIED, OSSL_PARAM_modified, OSSL_PARAM_set_all_unmodified
 - OSSL_PARAM helpers
 
@@ -99,6 +100,8 @@ OSSL_PARAM_UNMODIFIED, OSSL_PARAM_modified, OSSL_PARAM_set_all_unmodified
                               size_t *used_len);
  int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
                               size_t used_len);
+ int OSSL_PARAM_set_octet_string_or_ptr(OSSL_PARAM *p,
+                                        const void *val, size_t len)
 
  int OSSL_PARAM_get_utf8_string_ptr(const OSSL_PARAM *p, const char **val);
  int OSSL_PARAM_get_octet_string_ptr(const OSSL_PARAM *p, const void **val,
@@ -287,6 +290,13 @@ OSSL_PARAM_set_octet_ptr() sets the OCTET string pointer in the parameter
 referenced by I<p> to the values I<val>.
 The length of the OCTET string is provided by I<used_len>.
 
+OSSL_PARAM_set_octet_string_or_ptr() uses the data_type in the parameter
+referenced by I<p> to internally call either OSSL_PARAM_set_octet_string() or
+OSSL_PARAM_set_octet_ptr().
+This is equivalent to the following code
+OSSL_PARAM_set_octet_string(p, val, len) || OSSL_PARAM_set_octet_ptr(p, val, len)
+except that an error is not raised if the data_type is octet_ptr.
+
 OSSL_PARAM_get_utf8_string_ptr() retrieves the pointer to a UTF8 string from
 the parameter pointed to by I<p>, and stores that pointer in I<*val>.
 This is different from OSSL_PARAM_get_utf8_string(), which copies the
@@ -398,7 +408,8 @@ L<openssl-core.h(7)>, L<OSSL_PARAM(3)>
 
 =head1 HISTORY
 
-These APIs were introduced in OpenSSL 3.0.
+The function OSSL_PARAM_set_octet_string_or_ptr() was added in OpenSSL 3.3
+All other APIs were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

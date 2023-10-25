@@ -1491,6 +1491,27 @@ int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
     return set_ptr_internal(p, val, OSSL_PARAM_OCTET_PTR, used_len);
 }
 
+int OSSL_PARAM_set_octet_string_or_ptr(OSSL_PARAM *p,
+                                       const void *val, size_t len)
+{
+    if (p == NULL) {
+        err_null_argument;
+        return 0;
+    }
+    p->return_size = 0;
+
+    if (p->data_type == OSSL_PARAM_OCTET_PTR) {
+        return set_ptr_internal(p, val, OSSL_PARAM_OCTET_PTR, len);
+    } else {
+        if (val == NULL) {
+            err_null_argument;
+            return 0;
+        }
+        return set_string_internal(p, val, len, OSSL_PARAM_OCTET_STRING);
+    }
+}
+
+
 OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, char **buf,
                                          size_t bsize)
 {

@@ -3375,6 +3375,9 @@ static int test_rand_agglomeration(void)
  */
 static int test_evp_iv_aes(int idx)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    const unsigned char *poiv, *piv;
+#endif
     int ret = 0;
     EVP_CIPHER_CTX *ctx = NULL;
     unsigned char key[16] = {0x4c, 0x43, 0xdb, 0xdd, 0x42, 0x73, 0x47, 0xd1,
@@ -3407,6 +3410,8 @@ static int test_evp_iv_aes(int idx)
 
     if (nullprov != NULL && idx < 6)
         return TEST_skip("Test does not support a non-default library context");
+
+    ERR_clear_error();
 
     switch (idx) {
     case 0:
@@ -3482,13 +3487,25 @@ static int test_evp_iv_aes(int idx)
             || !TEST_true(EVP_EncryptUpdate(ctx, ciphertext, &len, msg,
                           (int)sizeof(msg)))
             || !TEST_true(EVP_CIPHER_CTX_get_original_iv(ctx, oiv, sizeof(oiv)))
-            || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)))
-            || !TEST_true(EVP_EncryptFinal_ex(ctx, ciphertext, &len)))
+            || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv))))
         goto err;
+
     ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (!TEST_ptr(poiv = EVP_CIPHER_CTX_original_iv(ctx))
+            || !TEST_ptr(piv = EVP_CIPHER_CTX_iv(ctx))
+            || !TEST_mem_eq(poiv, ivlen, oiv, ivlen)
+            || !TEST_mem_eq(piv, ivlen, iv, ivlen))
+        goto err;
+#endif /* OPENSSL_NO_DEPRECATED_3_0_0 */
+
     if (!TEST_mem_eq(init_iv, ivlen, oiv, ivlen)
             || !TEST_mem_eq(ref_iv, ref_len, iv, ivlen))
         goto err;
+
+    if (!TEST_true(EVP_EncryptFinal_ex(ctx, ciphertext, &len)))
+        goto err;
+
 
     /* CBC, OFB, and CFB modes: the updated iv must be reset after reinit */
     if (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, NULL))
@@ -3502,6 +3519,8 @@ static int test_evp_iv_aes(int idx)
             goto err;
     }
 
+    if (!TEST_ulong_eq(ERR_peek_error(), 0))
+        goto err;
     ret = 1;
 err:
     EVP_CIPHER_CTX_free(ctx);
