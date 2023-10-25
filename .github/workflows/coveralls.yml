@@ -11,6 +11,8 @@ name: Coverage
 on:
   schedule:
     - cron:  '49 0 * * *'
+  pull_request:
+  push:
 
 permissions:
   contents: read

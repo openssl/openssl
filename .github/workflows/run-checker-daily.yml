@@ -11,6 +11,9 @@ name: Run-checker daily
 on:
   schedule:
     - cron: '0 6 * * *'
+  pull_request:
+  push:
+
 permissions:
   contents: read
 

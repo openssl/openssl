@@ -11,6 +11,8 @@ name: Static Analysis
 on:
   schedule:
     - cron:  '20 0 * * *'
+  pull_request:
+  push:
 
 permissions:
   contents: read

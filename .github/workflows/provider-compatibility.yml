@@ -16,6 +16,8 @@ name: Provider compatibility across versions
 on: #[pull_request]
   schedule:
     - cron: '0 15 * * *'
+  pull_request:
+  push:
 
 permissions:
   contents: read
