@@ -141,7 +141,7 @@ This option is identical to the B<-mac> option.
 
 Specifies the name of a supported KDF algorithm which will be used.
 The supported algorithms names include TLS1-PRF, HKDF, SSKDF, PBKDF2,
-SSHKDF, SNMPKDF X942KDF-ASN1, X942KDF-CONCAT, X963KDF and SCRYPT.
+SSHKDF, SNMPKDF, X942KDF-ASN1, X942KDF-CONCAT, X963KDF and SCRYPT.
 
 =back
 
