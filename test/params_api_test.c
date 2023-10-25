@@ -528,7 +528,6 @@ static int test_param_construct(int tstid)
     size_t j, k, s;
     double d, d2;
     BIGNUM *bn = NULL, *bn2 = NULL;
-    unsigned char teststr[] = "abcdefghi";
 
     params[n++] = OSSL_PARAM_construct_int("int", &i);
     params[n++] = OSSL_PARAM_construct_uint("uint", &u);
