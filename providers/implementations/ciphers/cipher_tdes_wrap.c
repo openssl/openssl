@@ -153,6 +153,9 @@ static int tdes_wrap_update(void *vctx, unsigned char *out, size_t *outl,
                             size_t inl)
 {
     *outl = 0;
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (inl == 0)
         return 1;
     if (outsize < inl) {

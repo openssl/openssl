@@ -269,6 +269,9 @@ int ossl_ccm_stream_update(void *vctx, unsigned char *out, size_t *outl,
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
