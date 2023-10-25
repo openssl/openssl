@@ -38,7 +38,7 @@
 # endif
 
 # ifdef NDEBUG
-#  define ossl_assert(x) ((x) != 0)
+#  define ossl_assert(x) likely((x) != 0)
 # else
 __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
                                               const char *file, int line)
