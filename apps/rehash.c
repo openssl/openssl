@@ -355,9 +355,9 @@ static int do_dir(const char *dirname, enum Hash h)
     OPENSSL_DIR_CTX *d = NULL;
     struct stat st;
     unsigned char idmask[MAX_COLLISIONS / 8];
-    int n, numfiles, nextid, buflen, errs = 0;
+    int n, numfiles, nextid, dirlen, buflen, errs = 0;
     size_t i;
-    const char *pathsep;
+    const char *pathsep = "";
     const char *filename;
     char *buf, *copy = NULL;
     STACK_OF(OPENSSL_STRING) *files = NULL;
@@ -366,9 +366,12 @@ static int do_dir(const char *dirname, enum Hash h)
         BIO_printf(bio_err, "Skipping %s, can't write\n", dirname);
         return 1;
     }
-    buflen = strlen(dirname);
-    pathsep = (buflen && !ends_with_dirsep(dirname)) ? "/": "";
-    buflen += NAME_MAX + 1 + 1;
+    dirlen = strlen(dirname);
+    if (dirlen != 0 && !ends_with_dirsep(dirname)) {
+        pathsep = "/";
+        dirlen++;
+    }
+    buflen = dirlen + NAME_MAX + 1;
     buf = app_malloc(buflen, "filename buffer");
 
     if (verbose)
@@ -427,12 +430,12 @@ static int do_dir(const char *dirname, enum Hash h)
                     while (bit_isset(idmask, nextid))
                         nextid++;
 
-                    BIO_snprintf(buf, buflen, "%s%s%n%08x.%s%d",
-                                 dirname, pathsep, &n, bp->hash,
+                    BIO_snprintf(buf, buflen, "%s%s%08x.%s%d",
+                                 dirname, pathsep, bp->hash,
                                  suffixes[bp->type], nextid);
                     if (verbose)
                         BIO_printf(bio_out, "link %s -> %s\n",
-                                   ep->filename, &buf[n]);
+                                   ep->filename, &buf[dirlen]);
                     if (unlink(buf) < 0 && errno != ENOENT) {
                         BIO_printf(bio_err,
                                    "%s: Can't unlink %s, %s\n",
@@ -449,12 +452,12 @@ static int do_dir(const char *dirname, enum Hash h)
                     bit_set(idmask, nextid);
                 } else if (remove_links) {
                     /* Link to be deleted */
-                    BIO_snprintf(buf, buflen, "%s%s%n%08x.%s%d",
-                                 dirname, pathsep, &n, bp->hash,
+                    BIO_snprintf(buf, buflen, "%s%s%08x.%s%d",
+                                 dirname, pathsep, bp->hash,
                                  suffixes[bp->type], ep->old_id);
                     if (verbose)
                         BIO_printf(bio_out, "unlink %s\n",
-                                   &buf[n]);
+                                   &buf[dirlen]);
                     if (unlink(buf) < 0 && errno != ENOENT) {
                         BIO_printf(bio_err,
                                    "%s: Can't unlink %s, %s\n",
