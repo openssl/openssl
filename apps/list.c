@@ -1210,9 +1210,9 @@ static int collect_providers(OSSL_PROVIDER *provider, void *stack)
 {
     STACK_OF(OSSL_PROVIDER) *provider_stack = stack;
     /*
-	 * If OK - result is the index of inserted data
-	 * Error - result is -1 or 0
-	 */
+     * If OK - result is the index of inserted data
+     * Error - result is -1 or 0
+     */
     return sk_OSSL_PROVIDER_push(provider_stack, provider) > 0 ? 1 : 0;
 }
 
