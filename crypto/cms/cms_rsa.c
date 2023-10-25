@@ -114,6 +114,7 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     const EVP_MD *md, *mgf1md;
     RSA_OAEP_PARAMS *oaep = NULL;
     ASN1_STRING *os = NULL;
+    ASN1_OCTET_STRING *los = NULL;
     X509_ALGOR *alg;
     EVP_PKEY_CTX *pkctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
     int pad_mode = RSA_PKCS1_PADDING, rv = 0, labellen;
@@ -147,20 +148,21 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     if (!ossl_x509_algor_md_to_mgf1(&oaep->maskGenFunc, mgf1md))
         goto err;
     if (labellen > 0) {
-        ASN1_OCTET_STRING *los = ASN1_OCTET_STRING_new();
+        los = ASN1_OCTET_STRING_new();
 
         if (los == NULL)
             goto err;
-        if (!ASN1_OCTET_STRING_set(los, label, labellen)) {
-            ASN1_OCTET_STRING_free(los);
+        if (!ASN1_OCTET_STRING_set(los, label, labellen))
             goto err;
-        }
+
         oaep->pSourceFunc = ossl_X509_ALGOR_from_nid(NID_pSpecified,
                                                      V_ASN1_OCTET_STRING, los);
         if (oaep->pSourceFunc == NULL)
             goto err;
+
+        los = NULL;
     }
-    /* create string with pss parameter encoding. */
+    /* create string with oaep parameter encoding. */
     if (!ASN1_item_pack(oaep, ASN1_ITEM_rptr(RSA_OAEP_PARAMS), &os))
         goto err;
     if (!X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaesOaep), V_ASN1_SEQUENCE, os))
@@ -170,6 +172,7 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
  err:
     RSA_OAEP_PARAMS_free(oaep);
     ASN1_STRING_free(os);
+    ASN1_OCTET_STRING_free(los);
     return rv;
 }
 
