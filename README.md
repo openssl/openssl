@@ -7,7 +7,8 @@ Welcome to the OpenSSL Project
 [![appveyor badge]][appveyor jobs]
 
 OpenSSL is a robust, commercial-grade, full-featured Open Source Toolkit
-for the TLS (formerly SSL), DTLS and QUIC (client side only) protocols.
+for the TLS (formerly SSL), DTLS and QUIC (currently client side only)
+protocols.
 
 The protocol implementations are based on a full-strength general purpose
 cryptographic library, which can also be used stand-alone. Also included is a
@@ -38,7 +39,7 @@ The OpenSSL toolkit includes:
 - **libssl**
   an implementation of all TLS protocol versions up to TLSv1.3 ([RFC 8446]),
   DTLS protocol versions up to DTLSv1.2 ([RFC 6347]) and
-  the QUIC (client side only) version 1 protocol ([RFC 9000]).
+  the QUIC (currently client side only) version 1 protocol ([RFC 9000]).
 
 - **libcrypto**
   a full-strength general purpose cryptographic library. It constitutes the
@@ -239,11 +240,11 @@ All rights reserved.
      <https://tools.ietf.org/html/rfc9000>
 
 [Binaries]:
-    https://wiki.openssl.org/index.php/Binaries
+    <https://wiki.openssl.org/index.php/Binaries>
     "List of third party OpenSSL binaries"
 
 [OpenSSL Guide]:
-    https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
+    <https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html>
     "An introduction to OpenSSL"
 
 <!-- Logos and Badges -->
