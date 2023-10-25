@@ -843,7 +843,7 @@ int pkcs12_main(int argc, char **argv)
 
  dump:
     assert(private);
-    if (!dump_certs_keys_p12(out, p12, cpass, -1, options, passout, enc)) {
+    if (!dump_certs_keys_p12(out, p12, cpass, -1, options, passin, enc)) {
         BIO_printf(bio_err, "Error outputting keys and certificates\n");
         ERR_print_errors(bio_err);
         goto end;
