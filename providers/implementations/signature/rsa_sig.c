@@ -896,7 +896,7 @@ static int rsa_digest_signverify_update(void *vprsactx,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
-    if (prsactx == NULL || prsactx->mdctx == NULL)
+    if (!ossl_prov_is_running() || prsactx == NULL || prsactx->mdctx == NULL)
         return 0;
 
     return EVP_DigestUpdate(prsactx->mdctx, data, datalen);
