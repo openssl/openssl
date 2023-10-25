@@ -11156,7 +11156,7 @@ static int test_data_retry(void)
         goto end;
 
     for (i = 0; i < sizeof(inbuf); i++)
-        inbuf[i] = i;
+        inbuf[i] = (unsigned char)(0xff & i);
     memset(outbuf, 0, sizeof(outbuf));
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
