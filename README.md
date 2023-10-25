@@ -154,6 +154,12 @@ available online.
 - [OpenSSL 3.0](https://www.openssl.org/docs/man3.0)
 - [OpenSSL 3.1](https://www.openssl.org/docs/man3.1)
 
+Demos
+-----
+
+The are numerous source code demos for using various OpenSSL capabilities in the
+[demos subfolder](./demos).
+
 Wiki
 ----
 
