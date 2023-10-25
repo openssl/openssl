@@ -140,4 +140,15 @@ EVP_RAND_CTX *ossl_rand_get0_private_noncreating(OSSL_LIB_CTX *ctx);
 # else
 EVP_RAND_CTX *ossl_rand_get0_seed_noncreating(OSSL_LIB_CTX *ctx);
 # endif
+
+/* Generate a uniformly distributed random integer in the interval [0, upper) */
+uint32_t ossl_rand_uniform_uint32(OSSL_LIB_CTX *ctx, uint32_t upper, int *err);
+
+/*
+ * Generate a uniformly distributed random integer in the interval
+ * [lower, upper).
+ */
+uint32_t ossl_rand_range_uint32(OSSL_LIB_CTX *ctx, uint32_t lower, uint32_t upper,
+                                int *err);
+
 #endif
