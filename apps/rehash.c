@@ -427,9 +427,16 @@ static int do_dir(const char *dirname, enum Hash h)
                     while (bit_isset(idmask, nextid))
                         nextid++;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+                    /*
+                     * false positive (implemented in _dopr() function):
+                     * warning: '%n' specifier not supported on this platform
+                     */
                     BIO_snprintf(buf, buflen, "%s%s%n%08x.%s%d",
                                  dirname, pathsep, &n, bp->hash,
                                  suffixes[bp->type], nextid);
+#pragma GCC diagnostic pop
                     if (verbose)
                         BIO_printf(bio_out, "link %s -> %s\n",
                                    ep->filename, &buf[n]);
@@ -449,9 +456,16 @@ static int do_dir(const char *dirname, enum Hash h)
                     bit_set(idmask, nextid);
                 } else if (remove_links) {
                     /* Link to be deleted */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+                    /*
+                     * false positive (implemented in _dopr() function):
+                     * warning: '%n' specifier not supported on this platform
+                     */
                     BIO_snprintf(buf, buflen, "%s%s%n%08x.%s%d",
                                  dirname, pathsep, &n, bp->hash,
                                  suffixes[bp->type], ep->old_id);
+#pragma GCC diagnostic pop
                     if (verbose)
                         BIO_printf(bio_out, "unlink %s\n",
                                    &buf[n]);
