@@ -30,10 +30,10 @@ QUIC is a state-of-the-art secure transport protocol carried over UDP. It can
 serve many of the use cases of SSL/TLS as well as those of DTLS.
 
 QUIC delivers a number of advantages such as support for multiple streams of
-communication; it is the basis for HTTP/3; fast connection initiation; and
-connection migration (enabling a connection to survive IP address changes).
-For a more complete description of what QUIC is and its advantages see the
-[QUIC Introduction] in the OpenSSL Guide.
+communication; it is the basis for HTTP/3 [RFC 9114]; fast connection
+initiation; and connection migration (enabling a connection to survive IP
+address changes). For a more complete description of what QUIC is and its
+advantages see the [QUIC Introduction] in the OpenSSL Guide.
 
 For a more comprehensive overview of OpenSSL's QUIC implementation, see the
 [openssl-quic(7) manual page].
@@ -63,7 +63,7 @@ $ openssl s_client -quic -alpn myalpn -connect host:port
 In the above example replace `host` with the hostname of the server (e.g.
 `www.example.com`) and `port` with the port for the server (e.g. `443`). Replace
 `myalpn` with the Application Layer Protocol to use (e.g.`h3` represents
-HTTP/3).
+HTTP/3). IANA matains a standard list of [ALPN ids] that can be used.
 
 This example connects to a QUIC server and opens a single bidirectional stream.
 Data can be passed via stdin/stdout as usual. This allows test usage of QUIC
@@ -78,3 +78,5 @@ HTTP/3 request or receiving any response data is not.
 [demo found in `demos/http3`]: ./demos/http3/
 [openssl-quic(7) manual page]: https://www.openssl.org/docs/manmaster/man7/openssl-quic.html
 [QUIC Introduction](https://www.openssl.org/docs/manmaster/man7/ossl-guide-quic-introduction.html)
+[RFC 9114]: https://tools.ietf.org/html/rfc9114
+[ALPN ids]: https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids
