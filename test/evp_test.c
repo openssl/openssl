@@ -480,8 +480,8 @@ static int digest_test_run(EVP_TEST *t)
     if (expected->pad_type > 0)
         *p++ = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_PAD_TYPE,
                                         &expected->pad_type);
-    *p++ = OSSL_PARAM_construct_end();
-    OPENSSL_assert(p - params <= (int)OSSL_NELEM(params));
+    *p = OSSL_PARAM_construct_end();
+    OPENSSL_assert(p - params < (int)OSSL_NELEM(params));
 
     if (!EVP_DigestInit_ex2(mctx, expected->digest, params)) {
         t->err = "DIGESTINIT_ERROR";
