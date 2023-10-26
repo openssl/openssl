@@ -8,7 +8,7 @@
  * This is an example of (part of) an application which uses libssl in an
  * asynchronous, nonblocking fashion. The client is responsible for creating the
  * socket and passing it to libssl. The functions show all interactions with
- * libssl the application makes, and wouldn hypothetically be linked into a
+ * libssl the application makes, and would hypothetically be linked into a
  * larger application.
  */
 typedef struct app_conn_st {
@@ -297,7 +297,7 @@ int main(int argc, char **argv)
     static char tx_msg[300];
     const char *tx_p = tx_msg;
     char rx_buf[2048];
-    int l, tx_len = sizeof(tx_msg)-1;
+    int l, tx_len;
 #ifdef USE_QUIC
     struct timeval timeout;
 #else
@@ -316,8 +316,8 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    snprintf(tx_msg, sizeof(tx_msg),
-             "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
+    tx_len = snprintf(tx_msg, sizeof(tx_msg),
+                      "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {

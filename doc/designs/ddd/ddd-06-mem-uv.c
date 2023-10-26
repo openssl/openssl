@@ -294,7 +294,7 @@ static void net_read_alloc(uv_handle_t *handle,
 static void on_rx_push(APP_CONN *conn)
 {
     int srd, rc;
-    size_t buf_len = 4096;
+    int buf_len = 4096;
 
     do {
         if (!conn->app_read_cb)
@@ -696,6 +696,7 @@ static void post_write_get(APP_CONN *conn, int status, void *arg)
 }
 
 char tx_msg[300];
+int mlen;
 
 static void post_connect(APP_CONN *conn, int status, void *arg)
 {
@@ -707,8 +708,8 @@ static void post_connect(APP_CONN *conn, int status, void *arg)
         return;
     }
 
-    wr = app_write(conn, tx_msg, sizeof(tx_msg)-1, post_write_get, NULL);
-    if (wr < sizeof(tx_msg)-1) {
+    wr = app_write(conn, tx_msg, mlen, post_write_get, NULL);
+    if (wr < mlen) {
         fprintf(stderr, "error writing request");
         return;
     }
@@ -726,8 +727,8 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    snprintf(tx_msg, sizeof(tx_msg),
-             "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
+    mlen = snprintf(tx_msg, sizeof(tx_msg),
+                    "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (!ctx)
