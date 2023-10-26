@@ -473,8 +473,7 @@ static int digest_test_run(EVP_TEST *t)
         xof |= 1;
         *p++ = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN,
                                            &expected->output_len);
-    }
-    if (expected->digest_size > 0) {
+    } else if (expected->digest_size > 0) {
         *p++ = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE,
                                            &expected->digest_size);
     }
@@ -482,6 +481,7 @@ static int digest_test_run(EVP_TEST *t)
         *p++ = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_PAD_TYPE,
                                         &expected->pad_type);
     *p++ = OSSL_PARAM_construct_end();
+    OPENSSL_assert(p - params <= (int)OSSL_NELEM(params));
 
     if (!EVP_DigestInit_ex2(mctx, expected->digest, params)) {
         t->err = "DIGESTINIT_ERROR";
