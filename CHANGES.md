@@ -10,6 +10,7 @@ pick the appropriate release branch.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 3.3](#openssl-33)
  - [OpenSSL 3.2](#openssl-32)
  - [OpenSSL 3.1](#openssl-31)
  - [OpenSSL 3.0](#openssl-30)
@@ -20,12 +21,15 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 3.2
+OpenSSL 3.3
 -----------
 
 ### Changes between 3.2 and 3.3 [xx XXX xxxx]
 
  * none yet
+
+OpenSSL 3.2
+-----------
 
 ### Changes between 3.1 and 3.2 [xx XXX xxxx]
 

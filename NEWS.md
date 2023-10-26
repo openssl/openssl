@@ -7,6 +7,7 @@ release. For more details please read the CHANGES file.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 3.3](#openssl-33)
  - [OpenSSL 3.2](#openssl-32)
  - [OpenSSL 3.1](#openssl-31)
  - [OpenSSL 3.0](#openssl-30)
@@ -17,12 +18,15 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 3.2
+OpenSSL 3.3
 -----------
 
 ### Major changes between OpenSSL 3.2 and OpenSSL 3.3 [under development]
 
   * none
+
+OpenSSL 3.2
+-----------
 
 ### Major changes between OpenSSL 3.1 and OpenSSL 3.2 [under development]
 
