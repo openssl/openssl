@@ -115,7 +115,7 @@ int custom_ext_parse(SSL_CONNECTION *s, unsigned int context,
                      const unsigned char *ext_data, size_t ext_size, X509 *x,
                      size_t chainidx)
 {
-    int al;
+    int al = 0;
     custom_ext_methods *exts = &s->cert->custext;
     custom_ext_method *meth;
     ENDPOINT role = ENDPOINT_BOTH;
