@@ -34,7 +34,7 @@ initiation; and connection migration (enabling a connection to survive IP
 address changes). For a more complete description of what QUIC is and its
 advantages see the [QUIC Introduction] in the [OpenSSL Guide].
 
-For a more comprehensive overview of OpenSSL's QUIC implementation, see the
+For a comprehensive overview of OpenSSL's QUIC implementation, see the
 [openssl-quic(7) manual page].
 
 ### How can I use HTTP/3 with OpenSSL?
