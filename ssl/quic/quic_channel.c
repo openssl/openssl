@@ -1283,8 +1283,10 @@ static int ch_on_transport_params(const unsigned char *params,
     QUIC_CONN_ID cid;
     const char *reason = "bad transport parameter";
 
-    if (ch->got_remote_transport_params)
+    if (ch->got_remote_transport_params) {
+        reason = "multiple transport parameter extensions";
         goto malformed;
+    }
 
     if (!PACKET_buf_init(&pkt, params, params_len)) {
         ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
