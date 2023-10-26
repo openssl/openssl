@@ -1561,7 +1561,7 @@ enum {
     TPARAM_OP_INJECT_TWICE,
     TPARAM_OP_INJECT_RAW,
     TPARAM_OP_DROP_INJECT,
-    TPARAM_OP_MUTATE,
+    TPARAM_OP_MUTATE
 };
 
 #define TPARAM_CHECK_DUP(name, reason) \
@@ -2054,13 +2054,12 @@ static int test_tparam(int idx)
 err:
     if (!testresult) {
         if (ctx.t->expect_fail != NULL)
-            TEST_info("failed during test for id=%zu, op=%d, bl=%zu, "
-                      "expected failure='%s'", ctx.t->id, ctx.t->op,
-                      ctx.t->buf_len,
-                      ctx.t->expect_fail);
+            TEST_info("failed during test for id=%llu, op=%d, bl=%zu, "
+                      "expected failure='%s'", (unsigned long long)ctx.t->id,
+                      ctx.t->op, ctx.t->buf_len, ctx.t->expect_fail);
         else
-            TEST_info("failed during test for id=%zu, op=%d, bl=%zu",
-                      ctx.t->id, ctx.t->op, ctx.t->buf_len);
+            TEST_info("failed during test for id=%llu, op=%d, bl=%zu",
+                      (unsigned long long)ctx.t->id, ctx.t->op, ctx.t->buf_len);
     }
 
     ossl_quic_tserver_free(s);
