@@ -929,12 +929,14 @@ int qtest_fault_resize_message(QTEST_FAULT *fault, size_t newlen)
 
 int qtest_fault_delete_extension(QTEST_FAULT *fault,
                                  unsigned int exttype, unsigned char *ext,
-                                 size_t *extlen)
+                                 size_t *extlen,
+                                 BUF_MEM *old_ext)
 {
     PACKET pkt, sub, subext;
+    WPACKET old_ext_wpkt;
     unsigned int type;
     const unsigned char *start, *end;
-    size_t newlen;
+    size_t newlen, w;
     size_t msglen = fault->handbuflen;
 
     if (!PACKET_buf_init(&pkt, ext, *extlen))
@@ -953,6 +955,21 @@ int qtest_fault_delete_extension(QTEST_FAULT *fault,
 
     /* Found it */
     end = PACKET_data(&sub);
+
+    if (old_ext != NULL) {
+        if (!WPACKET_init(&old_ext_wpkt, old_ext))
+            return 0;
+
+        if (!WPACKET_memcpy(&old_ext_wpkt, PACKET_data(&subext),
+                            PACKET_remaining(&subext))
+            || !WPACKET_get_total_written(&old_ext_wpkt, &w)) {
+            WPACKET_cleanup(&old_ext_wpkt);
+            return 0;
+        }
+
+        WPACKET_finish(&old_ext_wpkt);
+        old_ext->length = w;
+    }
 
     /*
      * If we're not the last extension we need to move the rest earlier. The

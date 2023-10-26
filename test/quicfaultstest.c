@@ -168,7 +168,7 @@ static int drop_extensions_cb(QTEST_FAULT *fault,
     int *ext = (int *)encextcbarg;
 
     if (!qtest_fault_delete_extension(fault, *ext, ee->extensions,
-                                      &ee->extensionslen))
+                                      &ee->extensionslen, NULL))
         return 0;
 
     return 1;
