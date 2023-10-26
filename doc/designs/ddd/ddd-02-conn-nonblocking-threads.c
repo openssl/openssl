@@ -2,7 +2,7 @@
 #include <openssl/ssl.h>
 
 /*
- * Demo 2: Client — Managed Connection — Asynchronous Nonblocking
+ * Demo 2: Client — Managed Connection — Nonblocking
  * ==============================================================
  *
  * This is an example of (part of) an application which uses libssl in an
@@ -260,7 +260,7 @@ int main(int argc, char **argv)
     static char tx_msg[384], host_port[300];
     const char *tx_p = tx_msg;
     char rx_buf[2048];
-    int res = 1, l, tx_len = sizeof(tx_msg)-1;
+    int res = 1, l, tx_len;
     int timeout = 2000 /* ms */;
     APP_CONN *conn = NULL;
     SSL_CTX *ctx = NULL;
@@ -271,8 +271,8 @@ int main(int argc, char **argv)
     }
 
     snprintf(host_port, sizeof(host_port), "%s:%s", argv[1], argv[2]);
-    snprintf(tx_msg, sizeof(tx_msg),
-             "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
+    tx_len = snprintf(tx_msg, sizeof(tx_msg),
+                      "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {

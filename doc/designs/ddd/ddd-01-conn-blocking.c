@@ -141,16 +141,16 @@ int main(int argc, char **argv)
     SSL_CTX *ctx = NULL;
     BIO *b = NULL;
     char buf[2048];
-    int l, res = 1;
+    int l, mlen, res = 1;
 
     if (argc < 3) {
         fprintf(stderr, "usage: %s host port\n", argv[0]);
         goto fail;
     }
 
-    snprintf(host_port, sizeof(host_port), "%s:%s\n", argv[1], argv[2]);
-    snprintf(msg, sizeof(msg),
-             "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
+    snprintf(host_port, sizeof(host_port), "%s:%s", argv[1], argv[2]);
+    mlen = snprintf(msg, sizeof(msg),
+                    "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {
@@ -160,11 +160,12 @@ int main(int argc, char **argv)
 
     b = new_conn(ctx, host_port);
     if (b == NULL) {
-        fprintf(stderr, "could not create conn\n");
+        fprintf(stderr, "could not create connection\n");
         goto fail;
     }
 
-    if (tx(b, msg, sizeof(msg)) < sizeof(msg)) {
+    l = tx(b, msg, mlen);
+    if (l < mlen) {
         fprintf(stderr, "tx error\n");
         goto fail;
     }
