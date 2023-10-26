@@ -23,7 +23,7 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
-### Changes between 3.1 and 3.2 beta 1 [26 Oct 2023]
+### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
  * Enable extra Arm64 optimization on Windows for GHASH, RAND and AES.
 
