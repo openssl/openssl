@@ -23,6 +23,10 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
+### Changes between 3.2 and 3.3 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
  * Enable extra Arm64 optimization on Windows for GHASH, RAND and AES.
