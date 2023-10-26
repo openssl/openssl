@@ -722,7 +722,7 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
     if (exp == RSA_3) {
         if(!BN_mod_mul_montgomery(ret, f, &rsa->_method_mod_n->RR, rsa->_method_mod_n, ctx))
             goto err;
-        if(!BN_mod_mul_montgomery(ret, f, &rsa->_method_mod_n->RR, rsa->_method_mod_n, ctx))
+        if(!BN_mod_mul_montgomery(ret, ret, ret, rsa->_method_mod_n, ctx))
             goto err;
         if(!BN_mod_mul_montgomery(ret, ret, f, rsa->_method_mod_n, ctx))
             goto err;
