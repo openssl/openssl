@@ -740,7 +740,12 @@ static int ec_pki_priv_to_der(const void *veckey, unsigned char **pder)
 # define ec_pem_type            "EC"
 
 # ifndef OPENSSL_NO_SM2
-#  define sm2_evp_type          EVP_PKEY_SM2
+/*
+ * SM2 is really an ECC key, and where it matters for encoding (in all places
+ * where an AlgorithmIdentifier is produced, such as PrivateKeyInfo and
+ * SubjectPublicKeyInfo), that's the algorithm OID that should be used.
+ */
+#  define sm2_evp_type          ec_evp_type
 #  define sm2_input_type        "SM2"
 #  define sm2_pem_type          "SM2"
 # endif
