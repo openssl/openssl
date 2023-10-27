@@ -1301,8 +1301,8 @@ int ossl_ackm_on_timeout(OSSL_ACKM *ackm)
     if (!ossl_time_is_zero(earliest_loss_time)) {
         /* Time threshold loss detection. */
         lost_pkts = ackm_detect_and_remove_lost_pkts(ackm, pkt_space);
-        assert(lost_pkts != NULL);
-        ackm_on_pkts_lost(ackm, pkt_space, lost_pkts, /*pseudo=*/0);
+        if (lost_pkts != NULL)
+            ackm_on_pkts_lost(ackm, pkt_space, lost_pkts, /*pseudo=*/0);
         ackm_set_loss_detection_timer(ackm);
         return 1;
     }
