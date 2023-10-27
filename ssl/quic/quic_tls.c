@@ -654,6 +654,8 @@ QUIC_TLS *ossl_quic_tls_new(const QUIC_TLS_ARGS *args)
 
 void ossl_quic_tls_free(QUIC_TLS *qtls)
 {
+    if (qtls == NULL)
+        return;
     OSSL_ERR_STATE_free(qtls->error_state);
     OPENSSL_free(qtls);
 }
