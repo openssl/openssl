@@ -24,6 +24,12 @@ OpenSSL 3.1
 
 ### Changes between 3.1.4 and 3.1.5 [xx XXX xxxx]
 
+ * Restore the encoding of SM2 PrivateKeyInfo and SubjectPublicKeyInfo to
+   have the contained AlgorithmIdentifier.algorithm set to id-ecPublicKey
+   rather than SM2.
+
+   *Richard Levitte*
+
  * The POLY1305 MAC (message authentication code) implementation in OpenSSL
    for PowerPC CPUs saves the contents of vector registers in different
    order than they are restored. Thus the contents of some of these vector
