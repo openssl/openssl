@@ -3410,27 +3410,38 @@ static void ch_on_terminating_timeout(QUIC_CHANNEL *ch)
 }
 
 /*
+ * Determines the effective idle timeout duration. This is based on the idle
+ * timeout values that we and our peer signalled in transport parameters
+ * but have some limits applied.
+ */
+static OSSL_TIME ch_get_effective_idle_timeout_duration(QUIC_CHANNEL *ch)
+{
+    OSSL_TIME pto;
+
+    if (ch->max_idle_timeout == 0)
+        return ossl_time_infinite();
+
+    /*
+     * RFC 9000 s. 10.1: Idle Timeout
+     *  To avoid excessively small idle timeout periods, endpoints
+     *  MUST increase the idle timeout period to be at least three
+     *  times the current Probe Timeout (PTO). This allows for
+     *  multiple PTOs to expire, and therefore multiple probes to
+     *  be sent and lost, prior to idle timeout.
+     */
+    pto = ossl_ackm_get_pto_duration(ch->ackm);
+    return ossl_time_max(ossl_ms2time(ch->max_idle_timeout),
+                                      ossl_time_multiply(pto, 3));
+}
+
+/*
  * Updates our idle deadline. Called when an event happens which should bump the
  * idle timeout.
  */
 static void ch_update_idle(QUIC_CHANNEL *ch)
 {
-    if (ch->max_idle_timeout == 0)
-        ch->idle_deadline = ossl_time_infinite();
-    else {
-        /* RFC 9000 s. 10.1: Idle Timeout
-         *  To avoid excessively small idle timeout periods, endpoints
-         *  MUST increase the idle timeout period to be at least three
-         *  times the current Probe Timeout (PTO). This allows for
-         *  multiple PTOs to expire, and therefore multiple probes to
-         *  be sent and lost, prior to idle timeout.
-         */
-        OSSL_TIME pto = ossl_ackm_get_pto_duration(ch->ackm);
-        OSSL_TIME timeout = ossl_time_max(ossl_ms2time(ch->max_idle_timeout),
-                                          ossl_time_multiply(pto, 3));
-
-        ch->idle_deadline = ossl_time_add(get_time(ch), timeout);
-    }
+    ch->idle_deadline = ossl_time_add(get_time(ch),
+                                      ch_get_effective_idle_timeout_duration(ch));
 }
 
 /*
@@ -3439,22 +3450,23 @@ static void ch_update_idle(QUIC_CHANNEL *ch)
  */
 static void ch_update_ping_deadline(QUIC_CHANNEL *ch)
 {
-    if (ch->max_idle_timeout > 0) {
-        /*
-         * Maximum amount of time without traffic before we send a PING to keep
-         * the connection open. Usually we use max_idle_timeout/2, but ensure
-         * the period never exceeds the assumed NAT interval to ensure NAT
-         * devices don't have their state time out (RFC 9000 s. 10.1.2).
-         */
-        OSSL_TIME max_span
-            = ossl_time_divide(ossl_ms2time(ch->max_idle_timeout), 2);
+    OSSL_TIME max_span, idle_duration;
 
-        max_span = ossl_time_min(max_span, MAX_NAT_INTERVAL);
-
-        ch->ping_deadline = ossl_time_add(get_time(ch), max_span);
-    } else {
+    idle_duration = ch_get_effective_idle_timeout_duration(ch);
+    if (ossl_time_is_infinite(idle_duration)) {
         ch->ping_deadline = ossl_time_infinite();
+        return;
     }
+
+    /*
+     * Maximum amount of time without traffic before we send a PING to keep
+     * the connection open. Usually we use max_idle_timeout/2, but ensure
+     * the period never exceeds the assumed NAT interval to ensure NAT
+     * devices don't have their state time out (RFC 9000 s. 10.1.2).
+     */
+    max_span = ossl_time_divide(idle_duration, 2);
+    max_span = ossl_time_min(max_span, MAX_NAT_INTERVAL);
+    ch->ping_deadline = ossl_time_add(get_time(ch), max_span);
 }
 
 /* Called when the idle timeout expires. */
