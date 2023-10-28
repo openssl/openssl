@@ -103,7 +103,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[rand_test]=rand_test.c
   INCLUDE[rand_test]=../include ../apps/include
-  DEPEND[rand_test]=../libcrypto libtestutil.a
+  DEPEND[rand_test]=../libcrypto.a libtestutil.a
 
   SOURCE[rsa_complex]=rsa_complex.c
   INCLUDE[rsa_complex]=../include ../apps/include
