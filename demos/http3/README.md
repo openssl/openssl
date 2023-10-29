@@ -12,7 +12,8 @@ The demo is structured into two parts:
   layer (`ossl-nghttp3-demo.c`).
 
 The Makefile in this directory can be used to build the demo on \*nix-style
-systems. You will need to have the `nghttp3` library available.
+systems.  You will need the `nghttp3` library and header file.  On
+Ubuntu, these can be obtained by installing the package `libnghttp3-dev`.
 
 Running the Demo
 ----------------
@@ -26,7 +27,7 @@ port as the sole argument:
 
 ```shell
 $ make
-$ ./ossl-nghttp3-demo www.google.com:443
+$ LD_LIBRARY_PATH=../.. ./ossl-nghttp3-demo www.google.com:443
 ```
 
 The demo produces the HTTP response headers in textual form as output followed
