@@ -5,6 +5,9 @@ The demos in this directory are the complete source code for the applications
 developed in the OpenSSL Guide tutorials. Refer to the various tutorial pages in
 the [guide] for an extensive discussion on the demos available here.
 
+They must be built before they can be run. An example UNIX style Makefile is
+supplied. Just type "make" from this directory on a Linux/UNIX system.
+
 Running the TLS Demos
 ---------------------
 
@@ -44,6 +47,31 @@ Note that the test server certificate used here is only suitable for use on
 
 The tls-client-non-block demo can be run in exactly the same way. Just replace
 "tls-client-block" in the above example commands with "tls-client-non-block".
+
+Running the QUIC Demos
+----------------------
+
+The QUIC demos can be run in a very similar way to the TLS demos. However, a
+different server implementation will need to be used.
+
+The OpenSSL source distribution includes a test QUIC server implementation for
+use with the demos. Note that, although this server does get built when building
+OpenSSL from source, it does not get installed via "make install". After
+building OpenSSL from source you will find the "quicserver" utility in the
+"util" sub-directory of the top of the build tree. This server utility is not
+suitable for production use and exists for test purposes only. It will be
+removed from a future version of OpenSSL.
+
+While in the demos directory the quic server can be run like this:
+
+./../util/quicserver localhost 4443 servercert.pem serverkey.pem
+
+The QUIC demos can then be run in the same was as the TLS demos. For example
+to run the quic-client-block demo:
+
+SSL_CERT_FILE=rootcert.pem LD_LIBRARY_PATH=../.. ./quic-client-block localhost 4443
+
+<!-- Links  -->
 
 [guide]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
 [TLS Introduction]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-tls-introduction.html
