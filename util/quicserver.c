@@ -94,23 +94,23 @@ static BIO *create_dgram_bio(int family, const char *hostname, const char *port)
         /* Start listening on the socket */
         if (!BIO_listen(sock, BIO_ADDRINFO_address(ai), 0)) {
             BIO_closesocket(sock);
-            sock = -1;
             continue;
         }
 
         /* Set to non-blocking mode */
         if (!BIO_socket_nbio(sock, 1)) {
             BIO_closesocket(sock);
-            sock = -1;
             continue;
         }
+
+        break; /* stop searching if we found an addr */
     }
 
     /* Free the address information resources we allocated earlier */
     BIO_ADDRINFO_free(res);
 
-    /* If sock is -1 then we've been unable to connect to the server */
-    if (sock == -1)
+    /* If we didn't bind any sockets, fail */
+    if (ai == NULL)
         return NULL;
 
     /* Create a BIO to wrap the socket */
