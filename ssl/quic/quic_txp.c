@@ -2126,8 +2126,7 @@ static int txp_plan_stream_chunk(OSSL_QUIC_TX_PACKETISER *txp,
 /*
  * Returns 0 on fatal error (e.g. allocation failure), 1 on success.
  * *packet_full is set to 1 if there is no longer enough room for another STREAM
- * frame, and *stream_drained is set to 1 if all stream buffers have now been
- * sent.
+ * frame.
  */
 static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
                                       struct txp_pkt *pkt,
@@ -2138,7 +2137,6 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
                                       size_t min_ppl,
                                       int *have_ack_eliciting,
                                       int *packet_full,
-                                      int *stream_drained,
                                       uint64_t *new_credit_consumed)
 {
     int rc = 0;
@@ -2172,7 +2170,6 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
 
         if (i == 0 && !chunks[i].valid) {
             /* No chunks, nothing to do. */
-            *stream_drained = 1;
             rc = 1;
             goto err;
         }
@@ -2183,7 +2180,6 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
 
         if (!chunks[i % 2].valid) {
             /* Out of chunks; we're done. */
-            *stream_drained = 1;
             rc = 1;
             goto err;
         }
@@ -2376,7 +2372,6 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
         stream->txp_sent_fc                  = 0;
         stream->txp_sent_stop_sending        = 0;
         stream->txp_sent_reset_stream        = 0;
-        stream->txp_drained                  = 0;
         stream->txp_blocked                  = 0;
         stream->txp_txfc_new_credit_consumed = 0;
 
@@ -2490,7 +2485,7 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
          */
         if (ossl_quic_stream_has_send_buffer(stream)
             && !ossl_quic_stream_send_is_reset(stream)) {
-            int packet_full = 0, stream_drained = 0;
+            int packet_full = 0;
 
             if (!ossl_assert(!stream->want_reset_stream))
                 return 0;
@@ -2501,15 +2496,11 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
                                             snext, min_ppl,
                                             have_ack_eliciting,
                                             &packet_full,
-                                            &stream_drained,
                                             &stream->txp_txfc_new_credit_consumed)) {
                 /* Fatal error (allocation, etc.) */
                 txp_enlink_tmp(tmp_head, stream);
                 return 0;
             }
-
-            if (stream_drained)
-                stream->txp_drained = 1;
 
             if (packet_full) {
                 txp_enlink_tmp(tmp_head, stream);
@@ -2960,16 +2951,14 @@ static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp,
          */
         ossl_quic_stream_map_update_state(txp->args.qsm, stream);
 
-        if (stream->txp_drained) {
-            assert(!ossl_quic_sstream_has_pending(stream->sstream));
-
+        if (ossl_quic_stream_has_send_buffer(stream)
+            && !ossl_quic_sstream_has_pending(stream->sstream)
+            && ossl_quic_sstream_get_final_size(stream->sstream, NULL))
             /*
              * Transition to DATA_SENT if stream has a final size and we have
              * sent all data.
              */
-            if (ossl_quic_sstream_get_final_size(stream->sstream, NULL))
-                ossl_quic_stream_map_notify_all_data_sent(txp->args.qsm, stream);
-        }
+            ossl_quic_stream_map_notify_all_data_sent(txp->args.qsm, stream);
     }
 
     /* We have now sent the packet, so update state accordingly. */
