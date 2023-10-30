@@ -213,23 +213,43 @@ uni-directional one:
 =head2 Writing data to the streams
 
 Once the streams are successfully created we can start writing data to them. In
-this example we will be sending a different HTTP request on each stream. We
-assume the strings B<request1> and B<request2> hold the appropriate HTTP
-requests. For the sake of simplicity this example does this sequentially,
-writing to B<stream1> first and, when this is successful, writing to B<stream2>
-second. Remember that our client is blocking so these calls will only return
-once they have been successfully completed. A real application would not need to
-do these writes sequentially or in any particular order. For example we could
-start two threads (one for each stream) and write the requests to each stream
-simultaneously.
+this example we will be sending a different HTTP request on each stream. To
+avoid repeating too much code we write a simple helper function to send an HTTP
+request to a stream:
+
+    int write_a_request(SSL *stream, const char *request_start,
+                        const char *hostname)
+    {
+        const char *request_end = "\r\n\r\n";
+        size_t written;
+
+        if (!SSL_write_ex(stream, request_start, strlen(request_start), &written))
+            return 0;
+        if (!SSL_write_ex(stream, hostname, strlen(hostname), &written))
+            return 0;
+        if (!SSL_write_ex(stream, request_end, strlen(request_end), &written))
+            return 0;
+
+        return 1;
+    }
+
+We assume the strings B<request1_start> and B<request2_start> hold the
+appropriate HTTP requests. We can then call our helper function above to send
+the requests on the two streams. For the sake of simplicity this example does
+this sequentially, writing to B<stream1> first and, when this is successful,
+writing to B<stream2> second. Remember that our client is blocking so these
+calls will only return once they have been successfully completed. A real
+application would not need to do these writes sequentially or in any particular
+order. For example we could start two threads (one for each stream) and write
+the requests to each stream simultaneously.
 
     /* Write an HTTP GET request on each of our streams to the peer */
-    if (!SSL_write_ex(stream1, request1, strlen(request1), &written)) {
+    if (!write_a_request(stream1, request1_start, hostname)) {
         printf("Failed to write HTTP request on stream 1\n");
         goto end;
     }
 
-    if (!SSL_write_ex(stream2, request2, strlen(request2), &written)) {
+    if (!write_a_request(stream2, request2_start, hostname)) {
         printf("Failed to write HTTP request on stream 2\n");
         goto end;
     }
