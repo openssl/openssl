@@ -93,29 +93,30 @@ static BIO *create_socket_bio(const char *hostname, const char *port)
     return bio;
 }
 
-/* Server hostname and port details. Must be in quotes */
-#ifndef HOSTNAME
-# define HOSTNAME "www.example.com"
-#endif
-#ifndef PORT
-# define PORT     "443"
-#endif
-
 /*
  * Simple application to send a basic HTTP/1.0 request to a server and
  * print the response on the screen.
  */
-int main(void)
+int main(int argc, char *argv[])
 {
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
     BIO *bio = NULL;
     int res = EXIT_FAILURE;
     int ret;
-    const char *request =
-        "GET / HTTP/1.0\r\nConnection: close\r\nHost: "HOSTNAME"\r\n\r\n";
+    const char *request_start = "GET / HTTP/1.0\r\nConnection: close\r\nHost: ";
+    const char *request_end = "\r\n\r\n";
     size_t written, readbytes;
     char buf[160];
+    char *hostname, *port;
+
+    if (argc != 3) {
+        printf("Usage: tls-client-block hostname port\n");
+        goto end;
+    }
+
+    hostname = argv[1];
+    port = argv[2];
 
     /*
      * Create an SSL_CTX which we can use to create SSL objects from. We
@@ -161,7 +162,7 @@ int main(void)
      * Create the underlying transport socket/BIO and associate it with the
      * connection.
      */
-    bio = create_socket_bio(HOSTNAME, PORT);
+    bio = create_socket_bio(hostname, port);
     if (bio == NULL) {
         printf("Failed to crete the BIO\n");
         goto end;
@@ -172,7 +173,7 @@ int main(void)
      * Tell the server during the handshake which hostname we are attempting
      * to connect to in case the server supports multiple hosts.
      */
-    if (!SSL_set_tlsext_host_name(ssl, HOSTNAME)) {
+    if (!SSL_set_tlsext_host_name(ssl, hostname)) {
         printf("Failed to set the SNI hostname\n");
         goto end;
     }
@@ -183,7 +184,7 @@ int main(void)
      * Virtually all clients should do this unless you really know what you
      * are doing.
      */
-    if (!SSL_set1_host(ssl, HOSTNAME)) {
+    if (!SSL_set1_host(ssl, hostname)) {
         printf("Failed to set the certificate verification hostname");
         goto end;
     }
@@ -202,8 +203,16 @@ int main(void)
     }
 
     /* Write an HTTP GET request to the peer */
-    if (!SSL_write_ex(ssl, request, strlen(request), &written)) {
-        printf("Failed to write HTTP request\n");
+    if (!SSL_write_ex(ssl, request_start, strlen(request_start), &written)) {
+        printf("Failed to write start of HTTP request\n");
+        goto end;
+    }
+    if (!SSL_write_ex(ssl, hostname, strlen(hostname), &written)) {
+        printf("Failed to write hostname in HTTP request\n");
+        goto end;
+    }
+    if (!SSL_write_ex(ssl, request_end, strlen(request_end), &written)) {
+        printf("Failed to write end of HTTP request\n");
         goto end;
     }
 
