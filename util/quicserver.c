@@ -70,6 +70,7 @@ static BIO *create_dgram_bio(int family, const char *hostname, const char *port)
     BIO_ADDRINFO *res;
     const BIO_ADDRINFO *ai = NULL;
     BIO *bio;
+    int bound_socks = 0;
 
     if (BIO_sock_init() != 1)
         return NULL;
@@ -94,23 +95,22 @@ static BIO *create_dgram_bio(int family, const char *hostname, const char *port)
         /* Start listening on the socket */
         if (!BIO_listen(sock, BIO_ADDRINFO_address(ai), 0)) {
             BIO_closesocket(sock);
-            sock = -1;
             continue;
         }
 
         /* Set to non-blocking mode */
         if (!BIO_socket_nbio(sock, 1)) {
             BIO_closesocket(sock);
-            sock = -1;
             continue;
         }
+        bound_socks++;
     }
 
     /* Free the address information resources we allocated earlier */
     BIO_ADDRINFO_free(res);
 
-    /* If sock is -1 then we've been unable to connect to the server */
-    if (sock == -1)
+    /* If we didn't bind any sockets, fail */
+    if (bound_socks == 0)
         return NULL;
 
     /* Create a BIO to wrap the socket */
