@@ -231,6 +231,11 @@ int main(int argc, char *argv[])
     while(!ossl_quic_tserver_is_handshake_confirmed(qtserv)) {
         wait_for_activity(qtserv);
         ossl_quic_tserver_tick(qtserv);
+        if (ossl_quic_tserver_is_terminated(qtserv)) {
+            BIO_printf(bio_err, "Failed waiting for handshake completion\n");
+            ret = EXIT_FAILURE;
+            goto end;
+        }
     }
 
     for (;; respnum++) {
@@ -257,6 +262,11 @@ int main(int argc, char *argv[])
                 wait_for_activity(qtserv);
 
             ossl_quic_tserver_tick(qtserv);
+            if (ossl_quic_tserver_is_terminated(qtserv)) {
+                BIO_printf(bio_err, "Failed reading request\n");
+                ret = EXIT_FAILURE;
+                goto end;
+            }
 
             if (ossl_quic_tserver_read(qtserv, streamid, reqbuf + reqbytes,
                                     sizeof(reqbuf) - reqbytes,
