@@ -148,7 +148,7 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    snprintf(host_port, sizeof(host_port), "%s:%s\n", argv[1], argv[2]);
+    snprintf(host_port, sizeof(host_port), "%s:%s", argv[1], argv[2]);
     snprintf(msg, sizeof(msg),
              "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
