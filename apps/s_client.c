@@ -3798,7 +3798,7 @@ static void user_data_init(struct user_data_st *user_data, SSL *con, char *buf,
 
 static int user_data_add(struct user_data_st *user_data, size_t i)
 {
-    if (user_data->buflen != 0 || i > user_data->bufmax - 1)
+    if (user_data->buflen != 0 || i > user_data->bufmax)
         return 0;
 
     user_data->buflen = i;
