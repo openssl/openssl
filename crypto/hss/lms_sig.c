@@ -7,55 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
-#include <openssl/err.h>
-#include <openssl/proverr.h>
 #include "crypto/hss.h"
-#include "internal/refcount.h"
 #include "lms_local.h"
-
-LMS_SIG *ossl_lms_sig_new(void)
-{
-    LMS_SIG *ret = OPENSSL_zalloc(sizeof(*ret));
-
-    if (ret == NULL)
-        return NULL;
-
-    if (!CRYPTO_NEW_REF(&ret->references, 1)) {
-        OPENSSL_free(ret);
-        ret = NULL;
-    }
-    return ret;
-}
-
-void ossl_lms_sig_free(LMS_SIG *sig)
-{
-    int i;
-
-    if (sig == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&sig->references, &i);
-    REF_PRINT_COUNT("LMS_SIG", sig);
-    if (i > 0)
-        return;
-    REF_ASSERT_ISNT(i < 0);
-
-    CRYPTO_FREE_REF(&sig->references);
-    OPENSSL_free(sig);
-}
-
-int ossl_lms_sig_up_ref(LMS_SIG *sig)
-{
-    int i;
-
-    if (CRYPTO_UP_REF(&sig->references, &i) <= 0)
-        return 0;
-
-    REF_PRINT_COUNT("LMS_SIG", sig);
-    REF_ASSERT_ISNT(i < 2);
-    return ((i > 1) ? 1 : 0);
-}
 
 /*
  * Create an LMS_SIG object from a HSS signature byte array in |pkt|.
@@ -73,7 +26,7 @@ LMS_SIG *ossl_lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub)
     const LM_OTS_PARAMS *sig_params;
     LMS_SIG *lsig = NULL;
 
-    lsig = ossl_lms_sig_new();
+    lsig = OPENSSL_zalloc(sizeof(*lsig));
     if (lsig == NULL)
         return NULL;
 
@@ -98,4 +51,10 @@ LMS_SIG *ossl_lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub)
 err:
     ossl_lms_sig_free(lsig);
     return NULL;
+}
+
+
+void ossl_lms_sig_free(LMS_SIG *sig)
+{
+    OPENSSL_free(sig);
 }

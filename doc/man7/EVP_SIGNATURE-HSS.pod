@@ -1,0 +1,60 @@
+=pod
+
+=head1 NAME
+
+EVP_SIGNATURE-HSS
+- The EVP_PKEY Hierarchical signature scheme (HSS) implementation
+
+=head1 DESCRIPTION
+
+The B<HSS> EVP_PKEY implementation supports Hash-based stateful signature
+verification using the HSS scheme described in RFC 8554. HSS uses a tree of
+Leighton-Micali Signatures (LMS).
+
+=head2 Signature Parameters
+
+The following signature parameters can be set using EVP_PKEY_CTX_set_params().
+This may be called after 
+
+=over 4
+
+=item "threads" (B<OSSL_SIGNATURE_PARAM_THREADS>) <uint32_t>
+
+Set the number of threads used for signature verification ranging from 1 to 8.
+The default value of 1 does not use multithreading.
+This can only be used with built-in thread support. Threading must be
+explicitly enabled by using OSSL_set_max_threads().
+
+=back
+
+EVP_PKEY_CTX_get_params() is not supported.
+
+=head1 NOTES
+
+The "digest" is not specified as a settable parameter because the both the 
+HSS EVP_PKEY and the HSS signature contain this information.
+
+=head1 SEE ALSO
+
+L<EVP_PKEY-HSS(7)>,
+L<EVP_PKEY_CTX_set_params(3)>,
+L<provider-signature(7)>,
+
+=head1 Example
+
+Refer to the example in demos/signature/EVP_HSS_SignatureVerify_demo.c
+
+=head1 HISTORY
+
+This functionality was added in OpenSSL 3.3.
+
+=head1 COPYRIGHT
+
+Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

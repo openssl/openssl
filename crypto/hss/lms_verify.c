@@ -9,11 +9,9 @@ static unsigned char D_LEAF[] = { 0x82, 0x82 };
 static unsigned char D_INTR[] = { 0x83, 0x83 };
 
 /*
- * upref ctx->sig and ctx->pub here since they need to exist until
+ * NOTE: The passed in ctx->sig and ctx->pub need to exist until
  * ossl_lms_sig_verify_final() is called, since the final may be delayed until
  * some later time,
- * If either ossl_lms_sig_verify_update() or ossl_lms_sig_verify_final() fail
- * they need to be down refed.
  */
 int ossl_lms_sig_verify_init(LMS_VALIDATE_CTX *ctx)
 {

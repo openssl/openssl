@@ -27,12 +27,6 @@ HSS_KEY *ossl_hss_key_new(OSSL_LIB_CTX *libctx, const char *propq)
         OPENSSL_free(key);
         return NULL;
     }
-
-    if (!ossl_lms_key_init(&key->lms_pub, libctx, propq)) {
-        CRYPTO_FREE_REF(&key->lms_pub.references);
-        OPENSSL_free(key);
-        key = NULL;
-    }
     return key;
 }
 

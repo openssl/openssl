@@ -155,32 +155,12 @@ static const OSSL_PARAM *hss_imexport_types(int selection)
     return NULL;
 }
 
-static int set_property_query(HSS_KEY *key, const char *propq)
-{
-    OPENSSL_free(key->lms_pub.propq);
-    key->lms_pub.propq = NULL;
-    if (propq != NULL) {
-        key->lms_pub.propq = OPENSSL_strdup(propq);
-        if (key->lms_pub.propq == NULL)
-            return 0;
-    }
-    return 1;
-}
-
 static int hss_set_params(void *key, const OSSL_PARAM params[])
 {
     HSS_KEY *hsskey = key;
-    const OSSL_PARAM *p;
 
     if (params == NULL)
         return 1;
-
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PROPERTIES);
-    if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING
-            || !set_property_query(hsskey, p->data))
-            return 0;
-    }
     return ossl_hss_pubkey_from_params(params, hsskey);
 }
 

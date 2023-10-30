@@ -21,12 +21,11 @@ static int add_decoded_sig(PACKET *pkt, const LMS_KEY *key,
     return 1;
 }
 
-static LMS_KEY *add_decoded_pubkey(PACKET *pkt, const LMS_KEY *pub,
-                                   STACK_OF(LMS_KEY) *keylist)
+static LMS_KEY *add_decoded_pubkey(PACKET *pkt, STACK_OF(LMS_KEY) *keylist)
 {
     LMS_KEY *key;
 
-    key = ossl_lms_key_new(pub->libctx, pub->propq);
+    key = ossl_lms_key_new();
     if (key == NULL)
         return NULL;
 
@@ -60,7 +59,7 @@ int ossl_hss_decode(const HSS_KEY *pub,
     for (i = 0; i < Nspk; ++i) {
         if (!add_decoded_sig(&pkt, key, siglist))
             goto err;
-        key = add_decoded_pubkey(&pkt, key, publist);
+        key = add_decoded_pubkey(&pkt, publist);
         if (key == NULL)
             goto err;
     }

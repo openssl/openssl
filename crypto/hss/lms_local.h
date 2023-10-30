@@ -25,7 +25,6 @@ out[1] = (unsigned char)((in >> 16) & 0xff); \
 out[2] = (unsigned char)((in >> 8) & 0xff);  \
 out[3] = (unsigned char)(in & 0xff)
 
-int ossl_lms_key_init(LMS_KEY *key, OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *ctx,
                                 const EVP_MD *md,
                                 const LM_OTS_SIG *sig,
@@ -62,4 +61,4 @@ static ossl_inline int PACKET_get_4_len(PACKET *pkt, uint32_t *data)
     return ret;
 }
 
-#endif
+#endif /* OSSL_LMS_LOCAL_H */

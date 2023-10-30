@@ -14,7 +14,7 @@
 #include "internal/refcount.h"
 #include "lms_local.h"
 
-LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx, const char *propq)
+LMS_KEY *ossl_lms_key_new(void)
 {
     LMS_KEY *key = OPENSSL_zalloc(sizeof(*key));
 
@@ -24,25 +24,7 @@ LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx, const char *propq)
         OPENSSL_free(key);
         return NULL;
     }
-    if (!ossl_lms_key_init(key, libctx, propq)) {
-        CRYPTO_FREE_REF(&key->references);
-        OPENSSL_free(key);
-        key = NULL;
-    }
     return key;
-}
-
-int ossl_lms_key_init(LMS_KEY *key, OSSL_LIB_CTX *libctx, const char *propq)
-{
-    key->libctx = libctx;
-    OPENSSL_free(key->propq);
-    key->propq = NULL;
-    if (propq != NULL) {
-        key->propq = OPENSSL_strdup(propq);
-        if (key->propq == NULL)
-            return 0;
-    }
-    return 1;
 }
 
 int ossl_lms_key_up_ref(LMS_KEY *key)
@@ -72,7 +54,6 @@ void ossl_lms_key_free(LMS_KEY *key)
 
     if (key->pub_allocated)
         OPENSSL_free(key->pub);
-    OPENSSL_free(key->propq);
     CRYPTO_FREE_REF(&key->references);
     OPENSSL_free(key);
 }

@@ -53,8 +53,6 @@ struct lms_key_st {
     unsigned char *K;               /* n bytes - a pointer into pub */
     uint32_t pub_allocated;         /* If 1 then pub needs to be freed */
 
-    OSSL_LIB_CTX *libctx;
-    char *propq;
     CRYPTO_REF_COUNT references;
 };
 
@@ -78,7 +76,6 @@ typedef struct lms_signature_st {
   uint32_t q;
   LM_OTS_SIG sig;
   unsigned char *paths; /* size is h * m */
-  CRYPTO_REF_COUNT references;
 } LMS_SIG;
 
 typedef struct lm_ots_ctx_st {
@@ -112,17 +109,15 @@ int ossl_hss_pubkey_from_data(const unsigned char *pub, size_t publen,
                               HSS_KEY *key);
 int ossl_hss_pubkey_from_params(const OSSL_PARAM params[], HSS_KEY *key);
 
-LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx, const char *propq);
+LMS_KEY *ossl_lms_key_new(void);
 void ossl_lms_key_free(LMS_KEY *key);
 int ossl_lms_key_up_ref(LMS_KEY *key);
 int ossl_lms_pubkey_from_pkt(PACKET *pkt, LMS_KEY *key);
 int ossl_lms_pubkey_from_data(const unsigned char *pub, size_t publen,
                               LMS_KEY *key);
 
-LMS_SIG *ossl_lms_sig_new(void);
-void ossl_lms_sig_free(LMS_SIG *sig);
-int ossl_lms_sig_up_ref(LMS_SIG *sig);
 LMS_SIG *ossl_lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub);
+void ossl_lms_sig_free(LMS_SIG *sig);
 
 LM_OTS_CTX *ossl_lm_ots_ctx_new(void);
 void ossl_lm_ots_ctx_free(LM_OTS_CTX *ctx);
