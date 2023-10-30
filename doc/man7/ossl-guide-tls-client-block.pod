@@ -272,13 +272,13 @@ like this:
      * Tell the server during the handshake which hostname we are attempting
      * to connect to in case the server supports multiple hosts.
      */
-    if (!SSL_set_tlsext_host_name(ssl, HOSTNAME)) {
+    if (!SSL_set_tlsext_host_name(ssl, hostname)) {
         printf("Failed to set the SNI hostname\n");
         goto end;
     }
 
-Here the HOSTNAME argument is a string representing the hostname of the server,
-e.g. "www.example.com".
+Here the C<hostname> argument is a string representing the hostname of the
+server, e.g. "www.example.com".
 
 Secondly, we need to tell OpenSSL what hostname we expect to see in the
 certificate coming back from the server. This is almost always the same one that
@@ -293,7 +293,7 @@ itself. We do this via the L<SSL_set1_host(3)> function:
      * Virtually all clients should do this unless you really know what you
      * are doing.
      */
-    if (!SSL_set1_host(ssl, HOSTNAME)) {
+    if (!SSL_set1_host(ssl, hostname)) {
         printf("Failed to set the certificate verification hostname");
         goto end;
     }
@@ -345,15 +345,26 @@ connection.
 
 To send data to the server we use the L<SSL_write_ex(3)> function and to receive
 data from the server we use the L<SSL_read_ex(3)> function. In HTTP 1.0 the
-client always writes data first.
+client always writes data first. Our HTTP request will include the hostname that
+we are connecting to. For simplicitly, we write the HTTP request in three
+chunks. First we write the start of the request. Secondly we write the hostname
+we are sending the request to. Finally we send the end of the request.
 
     size_t written;
-    const char *request =
-        "GET / HTTP/1.0\r\nConnection: close\r\nHost: "HOSTNAME"\r\n\r\n";
+    const char *request_start = "GET / HTTP/1.0\r\nConnection: close\r\nHost: ";
+    const char *request_end = "\r\n\r\n";
 
     /* Write an HTTP GET request to the peer */
-    if (!SSL_write_ex(ssl, request, strlen(request), &written)) {
-        printf("Failed to write HTTP request\n");
+    if (!SSL_write_ex(ssl, request_start, strlen(request_start), &written)) {
+        printf("Failed to write start of HTTP request\n");
+        goto end;
+    }
+    if (!SSL_write_ex(ssl, hostname, strlen(hostname), &written)) {
+        printf("Failed to write hostname in HTTP request\n");
+        goto end;
+    }
+    if (!SSL_write_ex(ssl, request_end, strlen(request_end), &written)) {
+        printf("Failed to write end of HTTP request\n");
         goto end;
     }
 
