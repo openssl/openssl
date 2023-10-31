@@ -252,7 +252,8 @@ retry. An optional mode does exist (B<SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER>)
 which will configure OpenSSL to allow the buffer being written to change from
 one retry to the next. However, in this case, you must still retry exactly the
 same data - even though the buffer that contains that data may change location.
-See L<SSL_CTX_set_mode(3)> for further details. As before we write the request
+See L<SSL_CTX_set_mode(3)> for further details. As in the TLS client
+blocking tutorial (L<ossl-guide-tls-client-block(7)>) we write the request
 in three chunks.
 
     /* Write an HTTP GET request to the peer */
