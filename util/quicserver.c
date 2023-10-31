@@ -70,7 +70,6 @@ static BIO *create_dgram_bio(int family, const char *hostname, const char *port)
     BIO_ADDRINFO *res;
     const BIO_ADDRINFO *ai = NULL;
     BIO *bio;
-    int bound_socks = 0;
 
     if (BIO_sock_init() != 1)
         return NULL;
@@ -103,7 +102,7 @@ static BIO *create_dgram_bio(int family, const char *hostname, const char *port)
             BIO_closesocket(sock);
             continue;
         }
-        bound_socks++;
+
         break; /* stop searching if we found an addr */
     }
 
@@ -111,7 +110,7 @@ static BIO *create_dgram_bio(int family, const char *hostname, const char *port)
     BIO_ADDRINFO_free(res);
 
     /* If we didn't bind any sockets, fail */
-    if (bound_socks == 0)
+    if (ai == NULL)
         return NULL;
 
     /* Create a BIO to wrap the socket */
