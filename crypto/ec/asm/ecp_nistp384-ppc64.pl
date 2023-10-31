@@ -87,6 +87,17 @@ ___
     }
 }
 
+sub forward_vrs($$)
+{
+    my ($dst_vrs, $src_vrs) = @_;
+
+    for (my $i = 0; $i <= 12; $i++) {
+        $code.=<<___;
+    xxmr        $dst_vrs->[$i],$src_vrs->[$i]
+___
+    }
+}
+
 $code.=<<___;
 .machine    "any"
 .text
@@ -98,6 +109,25 @@ ___
     my ($t1, $t2, $t3, $t4) = ("v33", "v34", "v42", "v43");
     my ($zero, $one) = ("r8", "r9");
     my $out = "v51";
+    my @r = map("v$_",(0..12));
+
+    # reduce's inputs
+    my @acc = map("v$_",(35..47));
+
+    sub writeback($$)
+    {
+        my ($eager, $idx) = @_; 
+
+        if ($eager) {
+            $code.=<<___;
+    stxv        $out,$idx*16($outp)
+___
+        } else {
+            $code.=<<___;
+    xxmr        $r[$idx],$out
+___
+        }
+    }
 
     {
         #
@@ -108,43 +138,47 @@ ___
         my @in1 = map("v$_",(44..50));
         my @in2 = map("v$_",(35..41));
 
-        startproc("p384_felem_mul");
-
-        $code.=<<___;
-    vspltisw    $vzero,0
-___
-
-        load_vrs($in1p, \@in1);
-        load_vrs($in2p, \@in2);
-
-        $code.=<<___;
+        sub mul_body($)
+        {
+            my $eager = $_[0];
+            $code.=<<___;
     vmsumudm    $out,$in1[0],$in2[0],$vzero
-    stxv        $out,0($outp)
+___
+            writeback($eager, 0);
 
+        $code.=<<___;
     xxpermdi    $t1,$in1[0],$in1[1],0b00
     xxpermdi    $t2,$in2[1],$in2[0],0b00
     vmsumudm    $out,$t1,$t2,$vzero
-    stxv        $out,16($outp)
+___
+            writeback($eager, 1);
 
+            $code.=<<___;
     xxpermdi    $t2,$in2[2],$in2[1],0b00
     vmsumudm    $out,$t1,$t2,$vzero
     vmsumudm    $out,$in1[2],$in2[0],$out
-    stxv        $out,32($outp)
+___
+            writeback($eager, 2);
 
+            $code.=<<___;
     xxpermdi    $t2,$in2[1],$in2[0],0b00
     xxpermdi    $t3,$in1[2],$in1[3],0b00
     xxpermdi    $t4,$in2[3],$in2[2],0b00
     vmsumudm    $out,$t1,$t4,$vzero
     vmsumudm    $out,$t3,$t2,$out
-    stxv        $out,48($outp)
+___
+            writeback($eager, 3);
 
+            $code.=<<___;
     xxpermdi    $t2,$in2[4],$in2[3],0b00
     xxpermdi    $t4,$in2[2],$in2[1],0b00
     vmsumudm    $out,$t1,$t2,$vzero
     vmsumudm    $out,$t3,$t4,$out
     vmsumudm    $out,$in1[4],$in2[0],$out
-    stxv        $out,64($outp)
+___
+            writeback($eager, 4);
 
+            $code.=<<___;
     xxpermdi    $t2,$in2[5],$in2[4],0b00
     xxpermdi    $t4,$in2[3],$in2[2],0b00
     vmsumudm    $out,$t1,$t2,$vzero
@@ -152,8 +186,10 @@ ___
     xxpermdi    $t4,$in2[1],$in2[0],0b00
     xxpermdi    $t1,$in1[4],$in1[5],0b00
     vmsumudm    $out,$t1,$t4,$out
-    stxv        $out,80($outp)
+___
+            writeback($eager, 5);
 
+            $code.=<<___;
     xxpermdi    $t1,$in1[0],$in1[1],0b00
     xxpermdi    $t2,$in2[6],$in2[5],0b00
     xxpermdi    $t4,$in2[4],$in2[3],0b00
@@ -163,8 +199,10 @@ ___
     xxpermdi    $t1,$in1[4],$in1[5],0b00
     vmsumudm    $out,$t1,$t2,$out
     vmsumudm    $out,$in1[6],$in2[0],$out
-    stxv        $out,96($outp)
+___
+            writeback($eager, 6);
 
+            $code.=<<___;
     xxpermdi    $t1,$in1[1],$in1[2],0b00
     xxpermdi    $t2,$in2[6],$in2[5],0b00
     xxpermdi    $t3,$in1[3],$in1[4],0b00
@@ -173,33 +211,76 @@ ___
     xxpermdi    $t3,$in2[2],$in2[1],0b00
     xxpermdi    $t1,$in1[5],$in1[6],0b00
     vmsumudm    $out,$t1,$t3,$out
-    stxv        $out,112($outp)
+___
+            writeback($eager, 7);
 
+            $code.=<<___;
     xxpermdi    $t1,$in1[2],$in1[3],0b00
     xxpermdi    $t3,$in1[4],$in1[5],0b00
     vmsumudm    $out,$t1,$t2,$vzero
     vmsumudm    $out,$t3,$t4,$out
     vmsumudm    $out,$in1[6],$in2[2],$out
-    stxv        $out,128($outp)
+___
+            writeback($eager, 8);
 
+            $code.=<<___;
     xxpermdi    $t1,$in1[3],$in1[4],0b00
     vmsumudm    $out,$t1,$t2,$vzero
     xxpermdi    $t1,$in1[5],$in1[6],0b00
     vmsumudm    $out,$t1,$t4,$out
-    stxv        $out,144($outp)
+___
+            writeback($eager, 9);
 
+            $code.=<<___;
     vmsumudm    $out,$t3,$t2,$vzero
     vmsumudm    $out,$in1[6],$in2[4],$out
-    stxv        $out,160($outp)
+___
+            writeback($eager, 10);
 
+            $code.=<<___;
     vmsumudm    $out,$t1,$t2,$vzero
-    stxv        $out,176($outp)
+___
+            writeback($eager, 11);
 
+            $code.=<<___;
     vmsumudm    $out,$in1[6],$in2[6],$vzero
-    stxv        $out,192($outp)
+___
+            writeback($eager, 12);
+        }
+
+        startproc("p384_felem_mul");
+
+        $code.=<<___;
+    vspltisw    $vzero,0
 ___
 
+        load_vrs($in1p, \@in1);
+        load_vrs($in2p, \@in2);
+
+        mul_body(1);
+
         endproc("p384_felem_mul");
+
+        #
+        # p384_felem_mul_reduce
+        #
+        
+        startproc("p384_felem_mul_reduce");
+
+        $code.=<<___;
+    vspltisw    $vzero,0
+___
+
+        load_vrs($in1p, \@in1);
+        load_vrs($in2p, \@in2);
+
+        mul_body(0);
+        forward_vrs(\@acc,\@r);
+
+            $code.=<<___;
+    b           .Lreduce_common
+    .size p384_felem_mul_reduce,.-p384_felem_mul_reduce
+___
     }
 
     {
@@ -207,9 +288,95 @@ ___
         # p384_felem_square
         #
 
-        my ($inp) = ("r4");
+        my $inp = "r4";
         my @in = map("v$_",(44..50));
         my @inx2 = map("v$_",(35..41));
+
+        sub square_body($)
+        {
+            my $eager = $_[0];
+
+            $code.=<<___;
+    vmsumudm    $out,$in[0],$in[0],$vzero
+___
+            writeback($eager, 0);
+
+            $code.=<<___;
+    vmsumudm    $out,$in[0],$inx2[1],$vzero
+___
+            writeback($eager, 1);
+
+            $code.=<<___;
+    vmsumudm    $out,$in[0],$inx2[2],$vzero
+    vmsumudm    $out,$in[1],$in[1],$out
+___
+            writeback($eager, 2);
+
+            $code.=<<___;
+    xxpermdi    $t1,$in[0],$in[1],0b00
+    xxpermdi    $t2,$inx2[3],$inx2[2],0b00
+    vmsumudm    $out,$t1,$t2,$vzero
+___
+            writeback($eager, 3);
+
+            $code.=<<___;
+    xxpermdi    $t4,$inx2[4],$inx2[3],0b00
+    vmsumudm    $out,$t1,$t4,$vzero
+    vmsumudm    $out,$in[2],$in[2],$out
+___
+            writeback($eager, 4);
+
+            $code.=<<___;
+    xxpermdi    $t2,$inx2[5],$inx2[4],0b00
+    vmsumudm    $out,$t1,$t2,$vzero
+    vmsumudm    $out,$in[2],$inx2[3],$out
+___
+            writeback($eager, 5);
+
+            $code.=<<___;
+    xxpermdi    $t2,$inx2[6],$inx2[5],0b00
+    vmsumudm    $out,$t1,$t2,$vzero
+    vmsumudm    $out,$in[2],$inx2[4],$out
+    vmsumudm    $out,$in[3],$in[3],$out
+___
+            writeback($eager, 6);
+
+            $code.=<<___;
+    xxpermdi    $t3,$in[1],$in[2],0b00
+    vmsumudm    $out,$t3,$t2,$vzero
+    vmsumudm    $out,$in[3],$inx2[4],$out
+___
+            writeback($eager, 7);
+
+            $code.=<<___;
+    xxpermdi    $t1,$in[2],$in[3],0b00
+    vmsumudm    $out,$t1,$t2,$vzero
+    vmsumudm    $out,$in[4],$in[4],$out
+___
+            writeback($eager, 8);
+
+            $code.=<<___;
+    xxpermdi    $t1,$in[3],$in[4],0b00
+    vmsumudm    $out,$t1,$t2,$vzero
+___
+            writeback($eager, 9);
+
+            $code.=<<___;
+    vmsumudm    $out,$in[4],$inx2[6],$vzero
+    vmsumudm    $out,$in[5],$in[5],$out
+___
+            writeback($eager, 10);
+
+            $code.=<<___;
+    vmsumudm    $out,$in[5],$inx2[6],$vzero
+___
+            writeback($eager, 11);
+
+            $code.=<<___;
+    vmsumudm    $out,$in[6],$in[6],$vzero
+___
+            writeback($eager, 12);
+        }
 
         startproc("p384_felem_square");
 
@@ -231,64 +398,41 @@ ___
 ___
         }
 
-        $code.=<<___;
-    vmsumudm    $out,$in[0],$in[0],$vzero
-    stxv        $out,0($outp)
-
-    vmsumudm    $out,$in[0],$inx2[1],$vzero
-    stxv        $out,16($outp)
-
-    vmsumudm    $out,$in[0],$inx2[2],$vzero
-    vmsumudm    $out,$in[1],$in[1],$out
-    stxv        $out,32($outp)
-
-    xxpermdi    $t1,$in[0],$in[1],0b00
-    xxpermdi    $t2,$inx2[3],$inx2[2],0b00
-    vmsumudm    $out,$t1,$t2,$vzero
-    stxv        $out,48($outp)
-
-    xxpermdi    $t4,$inx2[4],$inx2[3],0b00
-    vmsumudm    $out,$t1,$t4,$vzero
-    vmsumudm    $out,$in[2],$in[2],$out
-    stxv        $out,64($outp)
-
-    xxpermdi    $t2,$inx2[5],$inx2[4],0b00
-    vmsumudm    $out,$t1,$t2,$vzero
-    vmsumudm    $out,$in[2],$inx2[3],$out
-    stxv        $out,80($outp)
-
-    xxpermdi    $t2,$inx2[6],$inx2[5],0b00
-    vmsumudm    $out,$t1,$t2,$vzero
-    vmsumudm    $out,$in[2],$inx2[4],$out
-    vmsumudm    $out,$in[3],$in[3],$out
-    stxv        $out,96($outp)
-
-    xxpermdi    $t3,$in[1],$in[2],0b00
-    vmsumudm    $out,$t3,$t2,$vzero
-    vmsumudm    $out,$in[3],$inx2[4],$out
-    stxv        $out,112($outp)
-
-    xxpermdi    $t1,$in[2],$in[3],0b00
-    vmsumudm    $out,$t1,$t2,$vzero
-    vmsumudm    $out,$in[4],$in[4],$out
-    stxv        $out,128($outp)
-
-    xxpermdi    $t1,$in[3],$in[4],0b00
-    vmsumudm    $out,$t1,$t2,$vzero
-    stxv        $out,144($outp)
-
-    vmsumudm    $out,$in[4],$inx2[6],$vzero
-    vmsumudm    $out,$in[5],$in[5],$out
-    stxv        $out,160($outp)
-
-    vmsumudm    $out,$in[5],$inx2[6],$vzero
-    stxv        $out,176($outp)
-
-    vmsumudm    $out,$in[6],$in[6],$vzero
-    stxv        $out,192($outp)
-___
+        square_body(1);
 
         endproc("p384_felem_square");
+
+        #
+        # p384_felem_square_reduce
+        #
+        
+        startproc("p384_felem_square_reduce");
+
+        $code.=<<___;
+    vspltisw    $vzero,0
+___
+
+        load_vrs($inp, \@in);
+
+        $code.=<<___;
+    li        $zero,0
+    li        $one,1
+    mtvsrdd        $t1,$one,$zero
+___
+
+        for (my $i = 0; $i <= 6; $i++) {
+            $code.=<<___;
+    vsld        $inx2[$i],$in[$i],$t1
+___
+        }
+
+        square_body(0);
+        forward_vrs(\@acc,\@r);
+
+            $code.=<<___;
+    b           .Lreduce_common
+    .size p384_felem_square_reduce,.-p384_felem_square_reduce
+___
     }
 
     {
@@ -297,7 +441,6 @@ ___
         #
 
         my $inp = "r4";
-        my @acc = map("v$_",(35..47));
         my @t = map("v$_",(48..51));
         my @delta1 = map("v$_",(0..3));
         my @delta2 = map("v$_",(4..6));
@@ -318,6 +461,7 @@ ___
         }
 
         $code.=<<___;
+.Lreduce_common:
     addis       $tbl,r2,.Ladd\@toc\@ha
     addi        $tbl,$tbl,.Ladd\@toc\@l
 ___
