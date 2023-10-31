@@ -48,6 +48,10 @@ static int test_sstream_simple(void)
     if (!TEST_ptr(sstream = ossl_quic_sstream_new(init_size)))
         goto err;
 
+    /* A stream with nothing yet appended is totally acked */
+    if (!TEST_true(ossl_quic_sstream_is_totally_acked(sstream)))
+        goto err;
+
     /* Should not have any data yet */
     num_iov = OSSL_NELEM(iov);
     if (!TEST_false(ossl_quic_sstream_get_stream_frame(sstream, 0, &hdr, iov,
@@ -58,6 +62,10 @@ static int test_sstream_simple(void)
     if (!TEST_true(ossl_quic_sstream_append(sstream, data_1, sizeof(data_1),
                                             &wr))
         || !TEST_size_t_eq(wr, sizeof(data_1)))
+        goto err;
+
+    /* No longer totally acked */
+    if (!TEST_false(ossl_quic_sstream_is_totally_acked(sstream)))
         goto err;
 
     /* Read data */
@@ -194,6 +202,9 @@ static int test_sstream_simple(void)
 
     /* Acknowledge fin. */
     if (!TEST_true(ossl_quic_sstream_mark_acked_fin(sstream)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_sstream_is_totally_acked(sstream)))
         goto err;
 
     testresult = 1;
