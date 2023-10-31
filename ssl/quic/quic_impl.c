@@ -384,6 +384,12 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
         goto err;
     }
+#if defined(OPENSSL_THREADS)
+    if ((qc->mutex = ossl_crypto_mutex_new()) == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
+        goto err;
+    }
+#endif
 
     /* Initialise the QUIC_CONNECTION's stub header. */
     ssl_base = &qc->ssl;
@@ -405,13 +411,6 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     /* Restrict options derived from the SSL_CTX. */
     sc->options &= OSSL_QUIC_PERMITTED_OPTIONS_CONN;
     sc->pha_enabled = 0;
-
-#if defined(OPENSSL_THREADS)
-    if ((qc->mutex = ossl_crypto_mutex_new()) == NULL) {
-        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
-        goto err;
-    }
-#endif
 
 #if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
     qc->is_thread_assisted
@@ -450,14 +449,14 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     return ssl_base;
 
 err:
-    if (qc != NULL) {
+    if (ssl_base == NULL) {
 #if defined(OPENSSL_THREADS)
         ossl_crypto_mutex_free(qc->mutex);
 #endif
-        ossl_quic_channel_free(qc->ch);
-        SSL_free(qc->tls);
+        OPENSSL_free(qc);
+    } else {
+        SSL_free(ssl_base);
     }
-    OPENSSL_free(qc);
     return NULL;
 }
 
