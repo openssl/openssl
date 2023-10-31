@@ -104,6 +104,7 @@ static BIO *create_dgram_bio(int family, const char *hostname, const char *port)
             continue;
         }
         bound_socks++;
+        break; /* stop searching if we found an addr */
     }
 
     /* Free the address information resources we allocated earlier */
