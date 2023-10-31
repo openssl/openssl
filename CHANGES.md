@@ -25,6 +25,11 @@ OpenSSL 3.2
 
 ### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
+ * The BLAKE2b hash algorithm supports a configurable output length
+   by setting the "size" parameter.
+
+   *Čestmír Kalina and Tomáš Mráz*
+
  * Enable extra Arm64 optimization on Windows for GHASH, RAND and AES.
 
    *Evgeny Karpov*
