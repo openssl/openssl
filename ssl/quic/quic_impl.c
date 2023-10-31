@@ -2177,6 +2177,11 @@ struct quic_write_again_args {
     int                 err;
 };
 
+/*
+ * Absolute maximum write buffer size, enforced to prevent a rogue peer from
+ * deliberately inducing DoS. This has been chosen based on the optimal buffer
+ * size for an RTT of 500ms and a bandwidth of 100 Mb/s.
+ */
 #define MAX_WRITE_BUF_SIZE      (6 * 1024 * 1024)
 
 /*
