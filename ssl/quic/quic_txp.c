@@ -1786,7 +1786,7 @@ static int txp_generate_pre_token(OSSL_QUIC_TX_PACKETISER *txp,
     /* ACK Frames (Regenerate) */
     if (a->allow_ack
         && tx_helper_get_space_left(h) >= MIN_FRAME_SIZE_ACK
-        && (txp->want_ack
+        && (((txp->want_ack & (1UL << pn_space)) != 0)
             || ossl_ackm_is_ack_desired(txp->args.ackm, pn_space))
         && (ack = ossl_ackm_get_ack_frame(txp->args.ackm, pn_space)) != NULL) {
         WPACKET *wpkt = tx_helper_begin(h);
