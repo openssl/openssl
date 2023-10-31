@@ -1696,7 +1696,6 @@ int ossl_ec_GFp_nistp384_point_get_affine_coordinates(const EC_GROUP *group,
                                                       BN_CTX *ctx)
 {
     felem z1, z2, x_in, y_in, x_out, y_out;
-    widefelem tmp;
 
     if (EC_POINT_is_at_infinity(group, point)) {
         ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
@@ -1706,10 +1705,8 @@ int ossl_ec_GFp_nistp384_point_get_affine_coordinates(const EC_GROUP *group,
         (!BN_to_felem(z1, point->Z)))
         return 0;
     felem_inv(z2, z1);
-    felem_square(tmp, z2);
-    felem_reduce(z1, tmp);
-    felem_mul(tmp, x_in, z1);
-    felem_reduce(x_in, tmp);
+    felem_square_reduce(z1, z2);
+    felem_mul_reduce(x_in, x_in, z1);
     felem_contract(x_out, x_in);
     if (x != NULL) {
         if (!felem_to_BN(x, x_out)) {
@@ -1717,10 +1714,8 @@ int ossl_ec_GFp_nistp384_point_get_affine_coordinates(const EC_GROUP *group,
             return 0;
         }
     }
-    felem_mul(tmp, z1, z2);
-    felem_reduce(z1, tmp);
-    felem_mul(tmp, y_in, z1);
-    felem_reduce(y_in, tmp);
+    felem_mul_reduce(z1, z1, z2);
+    felem_mul_reduce(y_in, y_in, z1);
     felem_contract(y_out, y_in);
     if (y != NULL) {
         if (!felem_to_BN(y, y_out)) {
