@@ -450,14 +450,11 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     return ssl_base;
 
 err:
-    if (qc != NULL) {
-#if defined(OPENSSL_THREADS)
-        ossl_crypto_mutex_free(qc->mutex);
-#endif
-        ossl_quic_channel_free(qc->ch);
-        SSL_free(qc->tls);
-    }
-    OPENSSL_free(qc);
+    if (ssl_base != NULL)
+        SSL_free(ssl_base);
+    else
+        OPENSSL_free(qc);
+
     return NULL;
 }
 
