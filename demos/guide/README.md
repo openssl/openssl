@@ -29,7 +29,7 @@ You can run a test server to try out these demos using the "openssl s_server"
 command line utility and using the test server certificate and key provided in
 this directory. For example:
 
-openssl s_server -www -accept localhost:4443 -cert servercert.pem -key serverkey.pem
+LD_LIBRARY_PATH=../.. ../../apps/openssl s_server -www -accept localhost:4443 -cert servercert.pem -key serverkey.pem
 
 The test server certificate in this directory will use a CA that will not be in
 your default trusted certificate store. The CA certificate to use is also
