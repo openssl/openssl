@@ -48,7 +48,7 @@ uint32_t ossl_rand_uniform_uint32(OSSL_LIB_CTX *ctx, uint32_t upper, int *err)
      * Multiplying this by the range gives us a number on [0, upper).
      * The high word of the multiplication result represents the integral
      * part we want.  The lower word is the fractional part.  We can early exit if
-     * the fractional part is small enough that no carry from the next lower
+     * if the fractional part is small enough that no carry from the next lower
      * word can cause an overflow and carry into the integer part.  This
      * happens when the fractional part is bounded by 2^32 - upper which
      * can be simplified to just -upper (as an unsigned integer).
