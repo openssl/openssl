@@ -75,18 +75,6 @@ ___
     }
 }
 
-sub store_vrs($$)
-{
-    my ($pointer, $reg_list) = @_;
-
-    for (my $i = 0; $i <= 12; $i++) {
-        my $offset = $i * 16;
-        $code.=<<___;
-    stxv        $reg_list->[$i],$offset($pointer)
-___
-    }
-}
-
 sub forward_vrs($$)
 {
     my ($dst_vrs, $src_vrs) = @_;
