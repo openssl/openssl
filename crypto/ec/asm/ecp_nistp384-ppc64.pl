@@ -35,7 +35,8 @@ open OUT,"| \"$^X\" $xlate $flavour $output";
 
 my $code = "";
 
-my ($sp, $outp, $savelr, $savesp) = ("r1", "r3", "r10", "r12");
+my ($sp, $outp, $savelr, $tbl) = ("r1", "r3", "r0", "r10");
+my ($tmp1, $tmp2) = ("r8", "r9");
 
 my $vzero = "v32";
 
@@ -288,6 +289,197 @@ ___
 ___
 
         endproc("p384_felem_square");
+    }
+
+    {
+        #
+        # p384_felem_reduce
+        #
+
+        my $inp = "r4";
+        my @acc = map("v$_",(35..47));
+        my @t = map("v$_",(48..51));
+        my @delta1 = map("v$_",(0..3));
+        my @delta2 = map("v$_",(4..6));
+        my $l56  = "v7";
+
+        startproc("p384_felem_reduce");
+
+        $code.=<<___;
+    xxspltib    $vzero,0
+___
+
+    # Load the input
+
+        for (my $i = 0; $i < 13; $i++) {
+            $code.=<<___;
+    lxv         $acc[$i],$i*16($inp)
+___
+        }
+
+        $code.=<<___;
+    addis       $tbl,r2,.Ladd\@toc\@ha
+    addi        $tbl,$tbl,.Ladd\@toc\@l
+___
+
+    # Underflow avoidance
+
+        for (my $i = 0; $i < 4; $i++) {
+            $code.=<<___;
+    lxv         $t[$i],$i*16($tbl)
+___
+        }
+
+        $code.=<<___;
+    vadduqm     $acc[0],$acc[0],$t[0]
+    vadduqm     $acc[1],$acc[1],$t[1]
+    vadduqm     $acc[2],$acc[2],$t[2]
+    vadduqm     $acc[3],$acc[3],$t[3]
+    vadduqm     $acc[4],$acc[4],$t[3]
+    vadduqm     $acc[5],$acc[5],$t[3]
+    vadduqm     $acc[6],$acc[6],$t[3]
+___
+
+    # [1-2]: Delta-substitutions
+
+        for (my $i = 0; $i < 4; $i++) {
+            $code.=<<___;
+    lxv         $delta1[$i],${\($i+4)}*16($tbl)
+___
+        }
+
+    # vsldoi instructions used as cheap rightward logical shifts
+
+        for (my $k = 12; $k >= 7; $k--) {
+            $code.=<<___;
+    vmr         $t[1],$vzero
+    vsldoi      $t[0],$vzero,$acc[$k],16-4
+    xxpermr     $t[1],$acc[$k],$delta1[0]
+    vadduqm     $acc[${\($k-4)}],$acc[${\($k-4)}],$t[0]
+    vadduqm     $acc[${\($k-5)}],$acc[${\($k-5)}],$t[1]
+
+    vmr         $t[1],$vzero
+    vsldoi      $t[0],$vzero,$acc[$k],16-1
+    xxpermr     $t[1],$acc[$k],$delta1[1]
+    vadduqm     $acc[${\($k-5)}],$acc[${\($k-5)}],$t[0]
+    vadduqm     $acc[${\($k-6)}],$acc[${\($k-6)}],$t[1]
+
+    vmr         $t[1],$vzero
+    vsldoi      $t[0],$vzero,$acc[$k],16-2
+    xxpermr     $t[1],$acc[$k],$delta1[2]
+    vsubuqm     $acc[${\($k-6)}],$acc[${\($k-6)}],$t[0]
+    vsubuqm     $acc[${\($k-7)}],$acc[${\($k-7)}],$t[1]
+
+    vmr         $t[1],$vzero
+    vsldoi      $t[0],$vzero,$acc[$k],16-6
+    xxpermr     $t[1],$acc[$k],$delta1[3]
+    vadduqm     $acc[${\($k-6)}],$acc[${\($k-6)}],$t[0]
+    vadduqm     $acc[${\($k-7)}],$acc[${\($k-7)}],$t[1]
+___
+
+        }
+
+    # Preemptive Carry
+
+        $code.=<<___;
+    li          $tmp1,-1
+    clrldi      $tmp1,$tmp1,64-56
+    mtvsrdd     $l56,0,$tmp1
+
+    xxspltib    $t[0],56
+
+    vsro        $t[1],$acc[4],$t[0]
+    xxland      $acc[4],$acc[4],$l56
+    vadduqm     $acc[5],$acc[5],$t[1]
+
+    vsro        $t[2],$acc[5],$t[0]
+    xxland      $acc[5],$acc[5],$l56
+    vadduqm     $acc[6],$acc[6],$t[2]
+___
+
+    # [3]: Delta-substitution
+        $code.=<<___;
+    vsldoi      $t[3],$vzero,$acc[6],16-6
+    li          $tmp1,-1
+    clrldi      $tmp1,$tmp1,64-48
+    mtvsrdd     $t[0],0,$tmp1
+    xxland      $acc[6],$acc[6],$t[0]
+___
+
+        for (my $i = 0; $i < 3; $i++) {
+            $code.=<<___;
+    lxv         $delta2[$i],${\($i+8)}*16($tbl)
+___
+        }
+
+        $code.=<<___;
+    vmr         $t[1],$vzero
+    vsldoi      $t[0],$vzero,$t[3],16-5
+    xxpermr     $t[1],$t[3],$delta2[0]
+    vadduqm     $acc[3],$acc[3],$t[0]
+    vadduqm     $acc[2],$acc[2],$t[1]
+
+    vmr         $t[1],$vzero
+    vsldoi      $t[0],$vzero,$t[3],16-2
+    xxpermr     $t[1],$t[3],$delta2[1]
+    vadduqm     $acc[2],$acc[2],$t[0]
+    vadduqm     $acc[1],$acc[1],$t[1]
+
+    vmr         $t[1],$vzero
+    vsldoi      $t[0],$vzero,$t[3],16-3
+    xxpermr     $t[1],$t[3],$delta2[2]
+    vsubuqm     $acc[1],$acc[1],$t[0]
+    vsubuqm     $acc[0],$acc[0],$t[1]
+    vadduqm     $acc[0],$acc[0],$t[3]
+___
+
+    # Full Carry
+
+        for (my $i = 0; $i < 6; $i++) {
+            $code.=<<___;
+    vsldoi      $t[1],$vzero,$acc[$i],16-7
+    xxland      $acc[$i],$acc[$i],$l56
+    vadduqm     $acc[${\($i+1)}],$acc[${\($i+1)}],$t[1]
+___
+
+        }
+
+    # Write out reduced form
+        for (my $i = 0; $i < 6; $i += 2) {
+            $code.=<<___;
+    xxpermdi    $acc[$i],$acc[${\($i+1)}],$acc[$i],0b11
+    stxv        $acc[$i],$i*8($outp)
+___
+        }
+
+        $code.=<<___;
+    xxpermdi    $acc[6],$acc[6],$vzero,0b11
+    stxsd       $acc[6],6*8($outp)
+
+    blr
+
+.align 4
+.Ladd:
+    # two124p108m76
+    .octa   0x10000ffffffff0000000000000000000
+    # two124m116m68
+    .octa   0x0feffffffffffff00000000000000000
+    # two124m92m68
+    .octa   0x0fffffffeffffff00000000000000000
+    # two124m68
+    .octa   0x0ffffffffffffff00000000000000000
+    # Delta-substitutions [1-2]
+    .octa	0x00000000000000000013121110000000
+    .octa	0x00000000000000000010000000000000
+    .octa	0x00000000000000000011100000000000
+    .octa	0x00000000000000000015141312111000
+    # Delta-substitution [3]
+    .octa	0x00000000000000000014131211100000
+    .octa	0x00000000000000000011100000000000
+    .octa	0x00000000000000000012111000000000
+
+    .size p384_felem_reduce,.-p384_felem_reduce
+___
     }
 }
 

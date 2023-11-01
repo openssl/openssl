@@ -503,7 +503,7 @@ static void felem_mul_ref(widefelem out, const felem in1, const felem in2)
  * [3]: Y = 2^48 (acc[6] >> 48)
  * (Where a | b | c | d = (2^56)^3 a + (2^56)^2 b + (2^56) c + d)
  */
-static void felem_reduce(felem out, const widefelem in)
+static void felem_reduce_ref(felem out, const widefelem in)
 {
     /*
      * In order to prevent underflow, we add a multiple of p before subtracting.
@@ -676,14 +676,18 @@ static void felem_reduce(felem out, const widefelem in)
 #if defined(ECP_NISTP384_ASM)
 static void felem_square_wrapper(widefelem out, const felem in);
 static void felem_mul_wrapper(widefelem out, const felem in1, const felem in2);
+static void felem_reduce_wrapper(felem out, const widefelem in);
 
 static void (*felem_square_p)(widefelem out, const felem in) =
     felem_square_wrapper;
 static void (*felem_mul_p)(widefelem out, const felem in1, const felem in2) =
     felem_mul_wrapper;
+static void (*felem_reduce_p)(felem out, const widefelem in) =
+    felem_reduce_wrapper;
 
 void p384_felem_square(widefelem out, const felem in);
 void p384_felem_mul(widefelem out, const felem in1, const felem in2);
+void p384_felem_reduce(felem out, const widefelem in);
 
 # if defined(_ARCH_PPC64)
 #  include "crypto/ppc_arch.h"
@@ -695,6 +699,7 @@ static void felem_select(void)
     if ((OPENSSL_ppccap_P & PPC_MADD300) && (OPENSSL_ppccap_P & PPC_ALTIVEC)) {
         felem_square_p = p384_felem_square;
         felem_mul_p = p384_felem_mul;
+        felem_reduce_p = p384_felem_reduce;
 
         return;
     }
@@ -703,6 +708,7 @@ static void felem_select(void)
     /* Default */
     felem_square_p = felem_square_ref;
     felem_mul_p = felem_mul_ref;
+    felem_reduce_p = felem_reduce_ref;
 }
 
 static void felem_square_wrapper(widefelem out, const felem in)
@@ -717,11 +723,19 @@ static void felem_mul_wrapper(widefelem out, const felem in1, const felem in2)
     felem_mul_p(out, in1, in2);
 }
 
+static void felem_reduce_wrapper(felem out, const widefelem in)
+{
+    felem_select();
+    felem_reduce_p(out, in);
+}
+
 # define felem_square felem_square_p
 # define felem_mul felem_mul_p
+# define felem_reduce felem_reduce_p
 #else
 # define felem_square felem_square_ref
 # define felem_mul felem_mul_ref
+# define felem_reduce felem_reduce_ref
 #endif
 
 static ossl_inline void felem_square_reduce(felem out, const felem in)
