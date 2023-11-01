@@ -1233,6 +1233,8 @@ static int fix_ecdh_cofactor(enum state state,
         }
     } else if (state == PRE_PARAMS_TO_CTRL && ctx->action_type == GET) {
         ctx->p1 = -2;
+    } else if (state == POST_PARAMS_TO_CTRL && ctx->action_type == GET) {
+        ctx->p1 = ret;
     }
 
     return ret;
