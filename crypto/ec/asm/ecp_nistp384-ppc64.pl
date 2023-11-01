@@ -72,10 +72,6 @@ sub load_vrs($$)
     lxsd        $reg_list->[$i],$offset($pointer)
 ___
     }
-
-    $code.=<<___;
-
-___
 }
 
 sub store_vrs($$)
@@ -88,10 +84,6 @@ sub store_vrs($$)
     stxv        $reg_list->[$i],$offset($pointer)
 ___
     }
-
-    $code.=<<___;
-
-___
 }
 
 $code.=<<___;
@@ -119,7 +111,6 @@ ___
 
         $code.=<<___;
     vspltisw    $vzero,0
-
 ___
 
         load_vrs($in1p, \@in1);
@@ -223,7 +214,6 @@ ___
 
         $code.=<<___;
     vspltisw    $vzero,0
-
 ___
 
         load_vrs($inp, \@in);
