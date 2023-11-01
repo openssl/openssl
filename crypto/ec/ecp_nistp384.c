@@ -677,28 +677,18 @@ static ossl_inline void felem_square_reduce_ref(felem out, const felem in);
 static ossl_inline void felem_mul_reduce_ref(felem out, const felem in1, const felem in2);
 
 #if defined(ECP_NISTP384_ASM)
-static void felem_square_wrapper(widefelem out, const felem in);
-static void felem_mul_wrapper(widefelem out, const felem in1, const felem in2);
-static void felem_reduce_wrapper(felem out, const widefelem in);
-static void felem_diff_128_64_wrapper(widefelem out, const felem in);
-static void felem_diff128_wrapper(widefelem out, const widefelem in);
+# define LINK_ENTRY(name, ...)                              \
+    static void name##_wrapper(__VA_ARGS__);                \
+    static void (*name##_p)(__VA_ARGS__) = name##_wrapper;  \
+    void p384_##name(__VA_ARGS__);
 
-static void (*felem_square_p)(widefelem out, const felem in) =
-    felem_square_wrapper;
-static void (*felem_mul_p)(widefelem out, const felem in1, const felem in2) =
-    felem_mul_wrapper;
-static void (*felem_reduce_p)(felem out, const widefelem in) =
-    felem_reduce_wrapper;
-static void (*felem_diff_128_64_p)(widefelem out, const felem in) =
-    felem_diff_128_64_wrapper;
-static void (*felem_diff128_p)(widefelem out, const widefelem in) =
-    felem_diff128_wrapper;
-
-void p384_felem_square(widefelem out, const felem in);
-void p384_felem_mul(widefelem out, const felem in1, const felem in2);
-void p384_felem_reduce(felem out, const widefelem in);
-void p384_felem_diff_128_64(widefelem out, const felem in);
-void p384_felem_diff128(widefelem out, const widefelem in);
+LINK_ENTRY(felem_square, widefelem out, const felem in);
+LINK_ENTRY(felem_mul, widefelem out, const felem in1, const felem in2);
+LINK_ENTRY(felem_square_reduce, felem out, const felem in);
+LINK_ENTRY(felem_mul_reduce, felem out, const felem in1, const felem in2);
+LINK_ENTRY(felem_reduce, felem out, const widefelem in);
+LINK_ENTRY(felem_diff_128_64, widefelem out, const felem in);
+LINK_ENTRY(felem_diff128, widefelem out, const widefelem in);
 
 # if defined(_ARCH_PPC64)
 #  include "crypto/ppc_arch.h"
