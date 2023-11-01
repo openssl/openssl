@@ -200,10 +200,16 @@ my $vsl		= sub { vsr2vr("vsl",		3, @_); };
 my $vspltisb	= sub { vsr2vr("vspltisb",	1, @_); };
 my $vspltisw	= sub { vsr2vr("vspltisw",	1, @_); };
 my $vsr		= sub { vsr2vr("vsr",		3, @_); };
+my $vslo	= sub { vsr2vr("vslo",		3, @_); };
 my $vsro	= sub { vsr2vr("vsro",		3, @_); };
+my $vor     = sub { vsr2vr("vor",       3, @_); };
+my $vsldoi  = sub { vsr2vr("vsldoi",    3, @_); };
 
 # ISA 3.0
 my $lxsd	= sub { vsr2vr("lxsd",		1, @_); };
+my $lvx	    = sub { vsr2vr("lvx",       3, @_); };
+my $stxsd   = sub { vsr2vr("stxsd",     1, @_); };
+my $stvx    = sub { vsr2vr("stvx",      3, @_); };
 
 ################################################################
 # simplified mnemonics not handled by at least one assembler
@@ -251,7 +257,13 @@ my $extrdi = sub {
 };
 my $vmr = sub {
     my ($f,$vx,$vy) = @_;
+    $vx = vsr2vr1($vx);
+    $vy = vsr2vr1($vy);
     "	vor	$vx,$vy,$vy";
+};
+my $xxmr = sub {
+    my ($f,$vx,$vy) = @_;
+    "	xxlor	$vx,$vy,$vy";
 };
 
 # Some ABIs specify vrsave, special-purpose register #256, as reserved
@@ -336,6 +348,7 @@ my $vrld	= sub { vcrypto_op(@_, 196);  };
 my $vsld	= sub { vcrypto_op(@_, 1476); };
 my $vsrd	= sub { vcrypto_op(@_, 1732); };
 my $vsubudm	= sub { vcrypto_op(@_, 1216); };
+my $vsubuqm	= sub { vcrypto_op(@_, 1280); };
 my $vaddcuq	= sub { vcrypto_op(@_, 320);  };
 my $vaddeuqm	= sub { vfour_vsr(@_,60); };
 my $vaddecuq	= sub { vfour_vsr(@_,61); };
@@ -348,6 +361,10 @@ my $mtsle	= sub {
 };
 
 # VSX instructions masqueraded as AltiVec/VMX
+my $mtvrdd = sub {
+    my ($f, $vrt, $ra, $rb) = @_;
+    "	.long	".sprintf "0x%X",(31<<26)|($vrt<<21)|($ra<<16)|($rb<<15)|(435<<1)|1;
+};
 my $mtvrd	= sub {
     my ($f, $vrt, $ra) = @_;
     "	.long	".sprintf "0x%X",(31<<26)|($vrt<<21)|($ra<<16)|(179<<1)|1;
