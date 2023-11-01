@@ -43,6 +43,10 @@ int FuzzerInitialize(int *argc, char ***argv)
     return 1;
 }
 
+#define HANDSHAKING 0
+#define READING     1
+#define WRITING     2
+
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
     SSL *client = NULL;
@@ -52,6 +56,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     BIO_ADDR *peer_addr = NULL;
     struct in_addr ina = {0};
     struct timeval tv;
+    int state = HANDSHAKING;
 
     if (len == 0)
         return 0;
@@ -113,14 +118,29 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         }
 
         for (;;) {
-            if ((ret = SSL_do_handshake(client)) == 1) {
-                /*
-                * Keep reading application data until there are no more
-                * datagrams to inject or a fatal error occurs
-                */
-                uint8_t tmp[1024];
+            uint8_t tmp[1024];
+            int writelen = 0;
 
+            switch (state) {
+            case HANDSHAKING:
+                ret = SSL_do_handshake(client);
+                if (ret == 1)
+                    state = READING;
+                break;
+
+            case READING:
                 ret = SSL_read(client, tmp, sizeof(tmp));
+                if (ret > 0) {
+                    state = WRITING;
+                    writelen = ret;
+                    assert(writelen <= sizeof(tmp));
+                }
+                break;
+            case WRITING:
+                ret = SSL_write(client, tmp, writelen);
+                if (ret > 0)
+                    state = READING;
+                break;
             }
             if (ret <= 0) {
                 switch (SSL_get_error(client, ret)) {
