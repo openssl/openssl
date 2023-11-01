@@ -4178,7 +4178,6 @@ static int test_ivlen_change(int idx)
     int outlen;
     int res = 0;
     unsigned char outbuf[1024];
-
     static const unsigned char iv[] = {
          0x57, 0x71, 0x7d, 0xad, 0xdb, 0x9b, 0x98, 0x82,
          0x5a, 0x55, 0x91, 0x81, 0x42, 0xa8, 0x89, 0x34
@@ -4204,6 +4203,77 @@ static int test_ivlen_change(int idx)
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN,
                                             &ivlen);
+    if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, params)))
+        goto err;
+
+    ERR_set_mark();
+    if (!TEST_false(EVP_CipherUpdate(ctx, outbuf, &outlen, gcmDefaultPlaintext,
+                                    sizeof(gcmDefaultPlaintext)))) {
+        ERR_clear_last_mark();
+        goto err;
+    }
+    ERR_pop_to_mark();
+
+    res = 1;
+ err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(ciph);
+    return res;
+}
+
+static const char *keylen_change_ciphers[] = {
+#ifndef OPENSSL_NO_BF
+    "BF-ECB",
+#endif
+#ifndef OPENSSL_NO_CAST
+    "CAST5-ECB",
+#endif
+#ifndef OPENSSL_NO_RC2
+    "RC2-ECB",
+#endif
+#ifndef OPENSSL_NO_RC4
+    "RC4",
+#endif
+#ifndef OPENSSL_NO_RC5
+    "RC5-ECB",
+#endif
+    NULL
+};
+
+/* Negative test for keylen change after key was set */
+static int test_keylen_change(int idx)
+{
+    int outlen;
+    int res = 0;
+    unsigned char outbuf[1024];
+    static const unsigned char key[] = {
+         0x57, 0x71, 0x7d, 0xad, 0xdb, 0x9b, 0x98, 0x82,
+         0x5a, 0x55, 0x91, 0x81, 0x42, 0xa8, 0x89, 0x34
+    };
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *ciph = NULL;
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    size_t keylen = 12; /* non-default key length */
+
+    if (lgcyprov == NULL)
+        return TEST_skip("Test requires legacy provider to be loaded");
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+
+    if (!TEST_ptr(ciph = EVP_CIPHER_fetch(testctx, keylen_change_ciphers[idx],
+                                          testpropq)))
+        goto err;
+
+    if (!TEST_true(EVP_CipherInit_ex(ctx, ciph, NULL, key, NULL, 1)))
+        goto err;
+
+    if (!TEST_true(EVP_CipherUpdate(ctx, outbuf, &outlen, gcmDefaultPlaintext,
+                                    sizeof(gcmDefaultPlaintext))))
+        goto err;
+
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN,
+                                            &keylen);
     if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, params)))
         goto err;
 
@@ -5274,6 +5344,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_gcm_reinit, OSSL_NELEM(gcm_reinit_tests));
     ADD_ALL_TESTS(test_evp_updated_iv, OSSL_NELEM(evp_updated_iv_tests));
     ADD_ALL_TESTS(test_ivlen_change, OSSL_NELEM(ivlen_change_ciphers));
+    if (OSSL_NELEM(keylen_change_ciphers) - 1 > 0)
+        ADD_ALL_TESTS(test_keylen_change, OSSL_NELEM(keylen_change_ciphers) - 1);
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_ALL_TESTS(test_custom_pmeth, 12);
