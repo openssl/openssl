@@ -344,20 +344,6 @@ OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
 /* copy from include/openssl/prov_ssl.h */
 #define SSL_MAX_MASTER_KEY_LENGTH 48
 
-#define SSL_MASTER_KEY(ctx, arglen) ({                                       \
-         int ssl_master_key = 0;                                             \
-         do {                                                                \
-            int pad_mode = 0;                                                \
-            if (EVP_PKEY_CTX_get_rsa_padding(ctx, &pad_mode) <= 0)           \
-                break;                                                       \
-            if (pad_mode == RSA_PKCS1_WITH_TLS_PADDING &&                    \
-                arglen  == SSL_MAX_MASTER_KEY_LENGTH)                        \
-                ssl_master_key = 1;                                          \
-         } while (0);                                                        \
-         ssl_master_key;                                                     \
-})
-
-
 #define M_check_autoarg(ctx, arg, arglen, err) \
     if (ctx->pmeth->flags & EVP_PKEY_FLAG_AUTOARGLEN) {           \
         size_t pksize = (size_t)EVP_PKEY_get_size(ctx->pkey);         \
@@ -370,7 +356,12 @@ OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
             *arglen = pksize;                                     \
             return 1;                                             \
         }                                                         \
-        if (*arglen < pksize && !SSL_MASTER_KEY(ctx, *arglen)) {  \
+        int pad_mode = 0;                                         \
+        if (*arglen < pksize &&                                   \
+            /* and not decryptyng SSL Master Key */               \
+            (EVP_PKEY_CTX_get_rsa_padding(ctx, &pad_mode) <= 0 || \
+                pad_mode != RSA_PKCS1_WITH_TLS_PADDING         || \
+                arglen   != SSL_MAX_MASTER_KEY_LENGTH)) {         \
             ERR_raise(ERR_LIB_EVP, EVP_R_BUFFER_TOO_SMALL); /*ckerr_ignore*/ \
             return 0;                                             \
         }                                                         \

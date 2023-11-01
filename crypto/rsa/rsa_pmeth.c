@@ -361,7 +361,7 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx,
     RSA *rsa = (RSA *)EVP_PKEY_get0_RSA(ctx->pkey);
 
     if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING
-         || rctx->pad_mode == RSA_PKCS1_WITH_TLS_PADDING) {
+            || rctx->pad_mode == RSA_PKCS1_WITH_TLS_PADDING) {
         if (!setup_tbuf(rctx, ctx))
             return -1;
         ret = RSA_private_decrypt(inlen, in, rctx->tbuf, rsa, RSA_NO_PADDING);
@@ -370,18 +370,19 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx,
 
         if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
             ret = RSA_padding_check_PKCS1_OAEP_mgf1(out, ret, rctx->tbuf,
-                                                ret, ret,
-                                                rctx->oaep_label,
-                                                rctx->oaep_labellen,
-                                                rctx->md, rctx->mgf1md);
+                                                    ret, ret,
+                                                    rctx->oaep_label,
+                                                    rctx->oaep_labellen,
+                                                    rctx->md, rctx->mgf1md);
         } else {
             /* RSA_PKCS1_WITH_TLS_PADDING */
             if (rctx->client_version <= 0) {
                 ERR_raise(ERR_LIB_RSA, RSA_R_BAD_TLS_CLIENT_VERSION);
                 return 0;
             }
-            ret = ossl_rsa_padding_check_PKCS1_type_2_TLS(NULL, out, *outlen,
-                            rctx->tbuf, ret, rctx->client_version, rctx->alt_version);
+            ret = ossl_rsa_padding_check_PKCS1_type_2_TLS(
+                        NULL, out, *outlen, rctx->tbuf, ret,
+                        rctx->client_version, rctx->alt_version);
         }
     } else {
         if (rctx->pad_mode == RSA_PKCS1_PADDING &&
