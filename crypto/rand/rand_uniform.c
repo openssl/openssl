@@ -45,7 +45,7 @@ uint32_t ossl_rand_uniform_uint32(OSSL_LIB_CTX *ctx, uint32_t upper, int *err)
 
     /*
      * We are generating a fixed point number on the interval [0, 1).
-     * Multiplying this but the range gives us a number on [0, upper).
+     * Multiplying this by the range gives us a number on [0, upper).
      * The high word of the multiplication result represents the integral
      * part we want.  The lower word is the fractional part.  We can early exit if
      * the fractional part is small enough that no carry from the next lower
@@ -66,7 +66,7 @@ uint32_t ossl_rand_uniform_uint32(OSSL_LIB_CTX *ctx, uint32_t upper, int *err)
      * it overflows, the carry propagates to the integer part (return i+1).
      * If it can no longer overflow regardless of further lower order bits,
      * we are done (return i).  If there is still a chance of overflow, we
-     * repreat the process with the next lower word.
+     * repeat the process with the next lower word.
      *
      * Each *bit* of randomness has a probability of one half of terminating
      * this process, so each each word beyond the first has a probability
