@@ -121,7 +121,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         size_t size;
         uint64_t nxtpktms = 0;
         OSSL_TIME nxtpkt = ossl_time_zero(), nxttimeout;
-        int isinf, ret;
+        int isinf, ret = 0;
 
         if (len >= 2) {
             if (len >= 5 && buf[0] == 0xff && buf[1] == 0xff) {
@@ -135,7 +135,6 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                         state = CREATING_STREAM;
                     break;
                 case 0x02:
-                    assert(0);
                     if (state == READING)
                         state = SWAPPING_STREAM;
                     break;
@@ -165,7 +164,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                 if (ret > 0) {
                     state = WRITING;
                     writelen = ret;
-                    assert(writelen <= sizeof(tmp));
+                    assert(writelen <= (int)sizeof(tmp));
                 }
                 break;
 
