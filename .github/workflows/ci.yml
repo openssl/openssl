@@ -275,7 +275,7 @@ jobs:
     - name: Enable sctp
       run: sudo modprobe sctp
     - name: Enable auth in sctp
-      run: sudo echo 1 > /proc/sys/net/sctp/auth_enable
+      run: sudo sysctl -w net.sctp.auth_enable=1 
     - name: install extra config support
       run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
     - name: config
