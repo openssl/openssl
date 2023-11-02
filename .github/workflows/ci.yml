@@ -264,27 +264,6 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
-  check_abi_compatibility:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install sctp headers
-      run: sudo apt-get install libsctp-dev
-    - name: config
-      run: ./config --banner=Configured --strict-warnings enable-egd enable-md2 enable-rc5 enable-sctp enable-tfo enable-weak-ssl-ciphers enable-zlib enable-ssl3 enable-ssl3-method enable-zstd && perl configdata.pm --dump
-    - name: make
-      run: make -s -j4
-    - name: get cpu info
-      run: |
-        cat /proc/cpuinfo
-        ./util/opensslwrap.sh version -c
-    - name: install abigail tools
-      run: sudo apt-get -y install abigail-tools
-    - name: Check libcrypto abi differences
-      run: abidiff ./.github/workflows/libcrypto-abi.xml ./libcrypto.so
-    - name: Check libssl abi differences
-      run: abidiff ./.github/workflows/libssl-abi.xml ./libssl.so
-
   fips_and_ktls:
     runs-on: ubuntu-latest
     steps:
@@ -293,14 +272,20 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: modprobe tls
       run: sudo modprobe tls
+    - name: install extra config support
+      run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
     - name: config
-      run: ./config --banner=Configured --strict-warnings enable-ktls enable-fips && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings enable-ktls enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
+    - name: Check ABI compatibility for libcrypto
+      run: abidiff ./.github/workflows/libcrypto-abi.xml ./libcrypto.so
+    - name: Check ABI compatibility for libssl
+      run: abidiff ./.github/workflows/libssl-abi.xml ./libssl.so
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
