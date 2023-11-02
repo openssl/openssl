@@ -2073,6 +2073,7 @@ static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
 
 struct chunk_info {
     OSSL_QUIC_FRAME_STREAM shdr;
+    uint64_t orig_len;
     OSSL_QTX_IOVEC iov[2];
     size_t num_stream_iovec;
     int valid;
@@ -2098,6 +2099,8 @@ static int txp_plan_stream_chunk(OSSL_QUIC_TX_PACKETISER *txp,
     if (!ossl_assert(chunk->shdr.len > 0 || chunk->shdr.is_fin))
         /* Should only have 0-length chunk if FIN */
         return 0;
+
+    chunk->orig_len = chunk->shdr.len;
 
     /* Clamp according to connection and stream-level TXFC. */
     fc_credit   = ossl_quic_txfc_get_credit(stream_txfc);
@@ -2199,7 +2202,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
             goto err;
 
         shdr = &chunks[i % 2].shdr;
-        orig_len = shdr->len;
+        orig_len = chunks[i % 2].orig_len;
         if (i > 0)
             /* Load next chunk for lookahead. */
             if (!txp_plan_stream_chunk(txp, h, sstream, stream_txfc, i + 1,
@@ -2331,8 +2334,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
         if (shdr->len < orig_len) {
             /*
              * If we did not serialize all of this chunk we definitely do not
-             * want to try the next chunk (and we must not mark the stream
-             * as drained).
+             * want to try the next chunk
              */
             rc = 1;
             goto err;
