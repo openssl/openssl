@@ -85,7 +85,7 @@ uint32_t ossl_rand_uniform_uint32(OSSL_LIB_CTX *ctx, uint32_t upper, int *err)
         if (f < f2)
             return i + 1;
         /* For not all 1 bits, there is no carry so return the result */
-        if (unlikely(f != 0xffffffff))
+        if (likely(f != 0xffffffff))
             return i;
         /* setup for the next word of randomness */
         f = prod & 0xffffffff;
