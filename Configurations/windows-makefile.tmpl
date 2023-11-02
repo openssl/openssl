@@ -254,7 +254,7 @@ MODULESDIR=$(MODULESDIR_dev)$(MODULESDIR_dir)
 libdir={- file_name_is_absolute($libdir)
           ? $libdir : '$(INSTALLTOP)\$(LIBDIR)' -}
 
-CMAKECONFIGDIR=$(INSTALLTOP)\share\cmake\OpenSSL
+CMAKECONFIGDIR=$(libdir)\cmake\OpenSSL
 
 ##### User defined commands and flags ################################
 

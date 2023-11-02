@@ -333,7 +333,7 @@ bindir={- file_name_is_absolute($bindir)
           ? $bindir : '$(INSTALLTOP)/$(BINDIR)' -}
 
 PKGCONFIGDIR=$(libdir)/pkgconfig
-CMAKECONFIGDIR=$(INSTALLTOP)/share/cmake/OpenSSL
+CMAKECONFIGDIR=$(libdir)/cmake/OpenSSL
 
 MANDIR=$(INSTALLTOP)/share/man
 DOCDIR=$(INSTALLTOP)/share/doc/$(BASENAME)
