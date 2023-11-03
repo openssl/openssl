@@ -59,6 +59,8 @@ int main(int argc, char **argv)
     if (!CMS_decrypt(cms, rkey, rcert, NULL, out, 0))
         goto err;
 
+    printf("Decryption Successful\n");
+
     ret = EXIT_SUCCESS;
 
  err:

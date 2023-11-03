@@ -77,6 +77,8 @@ int main(int argc, char **argv)
     if (!SMIME_write_CMS(out, cms, in, CMS_STREAM))
         goto err;
 
+    printf("Signing Successful\n");
+
     ret = EXIT_SUCCESS;
  err:
     if (ret != EXIT_SUCCESS) {
