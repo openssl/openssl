@@ -77,10 +77,15 @@ static void handshake_finish(void *arg);
 
 static int using_fake_time = 0;
 static OSSL_TIME fake_now;
+CRYPTO_RWLOCK *fake_now_lock = NULL;
 
 static OSSL_TIME fake_now_cb(void *arg)
 {
-    return fake_now;
+    OSSL_TIME ret;
+    CRYPTO_THREAD_read_lock(fake_now_lock);
+    ret = fake_now;
+    CRYPTO_THREAD_unlock(fake_now_lock);
+    return ret;
 }
 
 static void noise_msg_callback(int write_p, int version, int content_type,
@@ -282,9 +287,13 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     if (serverctx != NULL && !TEST_true(SSL_CTX_up_ref(serverctx)))
         goto err;
     tserver_args.ctx = serverctx;
+    if (fake_now_lock == NULL)
+        fake_now_lock = CRYPTO_THREAD_lock_new();
     if ((flags & QTEST_FLAG_FAKE_TIME) != 0) {
         using_fake_time = 1;
+        CRYPTO_THREAD_write_lock(fake_now_lock);
         fake_now = ossl_time_zero();
+        CRYPTO_THREAD_unlock(fake_now_lock);
         /* zero time can have a special meaning, bump it */
         qtest_add_time(1);
         tserver_args.now_cb = fake_now_cb;
@@ -331,7 +340,9 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
 
 void qtest_add_time(uint64_t millis)
 {
+    CRYPTO_THREAD_write_lock(fake_now_lock);
     fake_now = ossl_time_add(fake_now, ossl_ms2time(millis));
+    CRYPTO_THREAD_unlock(fake_now_lock);
 }
 
 QTEST_FAULT *qtest_create_injector(QUIC_TSERVER *ts)
@@ -399,19 +410,25 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
      */
     if (!SSL_get_event_timeout(s, &tv, &cinf))
         return 0;
-    if (using_fake_time)
+    if (using_fake_time) {
+        CRYPTO_THREAD_read_lock(fake_now_lock);
         now = fake_now;
-    else
+        CRYPTO_THREAD_unlock(fake_now_lock);
+    } else {
         now = ossl_time_now();
+    }
     ctimeout = cinf ? ossl_time_infinite() : ossl_time_from_timeval(tv);
     stimeout = ossl_time_subtract(ossl_quic_tserver_get_deadline(qtserv), now);
     mintimeout = ossl_time_min(ctimeout, stimeout);
     if (ossl_time_is_infinite(mintimeout))
         return 0;
-    if (using_fake_time)
+    if (using_fake_time) {
+        CRYPTO_THREAD_write_lock(fake_now_lock);
         fake_now = ossl_time_add(now, mintimeout);
-    else
+        CRYPTO_THREAD_unlock(fake_now_lock);
+    } else {
         OSSL_sleep(ossl_time2ms(mintimeout));
+    }
 
     return 1;
 }
