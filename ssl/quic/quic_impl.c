@@ -382,7 +382,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc = OPENSSL_zalloc(sizeof(*qc));
     if (qc == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
-        goto err;
+        return NULL;
     }
 #if defined(OPENSSL_THREADS)
     if ((qc->mutex = ossl_crypto_mutex_new()) == NULL) {
