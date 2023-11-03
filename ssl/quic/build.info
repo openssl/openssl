@@ -15,3 +15,4 @@ SOURCE[$LIBSSL]=quic_tls.c
 SOURCE[$LIBSSL]=quic_thread_assist.c
 SOURCE[$LIBSSL]=quic_trace.c
 SOURCE[$LIBSSL]=quic_srtm.c quic_srt_gen.c
+SOURCE[$LIBSSL]=quic_lcidm.c
