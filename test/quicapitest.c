@@ -1994,12 +1994,8 @@ static int tparam_on_enc_ext(QTEST_FAULT *qtf, QTEST_ENCRYPTED_EXTENSIONS *ee,
 
     rc = 1;
 err:
-    if (have_wpkt) {
-        if (rc)
-            WPACKET_finish(&wpkt);
-        else
-            WPACKET_cleanup(&wpkt);
-    }
+    if (have_wpkt)
+        WPACKET_cleanup(&wpkt);
     BUF_MEM_free(old_bufm);
     BUF_MEM_free(new_bufm);
     return rc;
