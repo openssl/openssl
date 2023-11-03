@@ -174,6 +174,11 @@ else()
 {- output_on() if $no_shared; "" -}
 endif()
 
+set_target_properties(OpenSSL::Crypto PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${OPENSSL_INCLUDE_DIR")
+set_target_properties(OpenSSL::SSL PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${OPENSSL_INCLUDE_DIR")
+
 {- output_off() if $disabled{uplink}; "" -}
 add_library(OpenSSL::applink INTERFACE IMPORTED)
 set_property(TARGET OpenSSL::applink PROPERTY
