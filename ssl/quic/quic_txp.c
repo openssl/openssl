@@ -437,7 +437,8 @@ static int txp_determine_ppl_from_pl(OSSL_QUIC_TX_PACKETISER *txp,
 static size_t txp_get_mdpl(OSSL_QUIC_TX_PACKETISER *txp);
 static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp,
                                struct txp_pkt *pkt,
-                               int chosen_for_conn_close);
+                               int chosen_for_conn_close,
+                               int force_explicit);
 static int txp_pkt_init(struct txp_pkt *pkt, OSSL_QUIC_TX_PACKETISER *txp,
                         uint32_t enc_level, uint32_t archetype,
                         size_t running_total);
@@ -801,7 +802,8 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
             break;
 
         rc = txp_generate_for_el(txp, &pkt[enc_level],
-                                 conn_close_enc_level == enc_level);
+                                 conn_close_enc_level == enc_level,
+                                 need_padding);
         if (rc != TXP_ERR_SUCCESS)
             goto out;
 
@@ -2135,6 +2137,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
                                       QUIC_TXFC *stream_txfc,
                                       QUIC_STREAM *next_stream,
                                       size_t min_ppl,
+                                      int force_explicit,
                                       int *have_ack_eliciting,
                                       int *packet_full,
                                       uint64_t *new_credit_consumed)
@@ -2243,7 +2246,8 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
 
         /* Choose between explicit or implicit length representations. */
         use_explicit_len = !((can_fill_payload || !could_have_following_chunk)
-                             && !needs_padding_if_implicit);
+                             && !needs_padding_if_implicit)
+                           || force_explicit;
 
         if (use_explicit_len) {
             /*
@@ -2353,6 +2357,7 @@ static void txp_enlink_tmp(QUIC_STREAM **tmp_head, QUIC_STREAM *stream)
 static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
                                        struct txp_pkt *pkt,
                                        size_t min_ppl,
+                                       int force_explicit,
                                        int *have_ack_eliciting,
                                        QUIC_STREAM **tmp_head)
 {
@@ -2493,7 +2498,7 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
             if (!txp_generate_stream_frames(txp, pkt,
                                             stream->id, stream->sstream,
                                             &stream->txfc,
-                                            snext, min_ppl,
+                                            snext, min_ppl, force_explicit,
                                             have_ack_eliciting,
                                             &packet_full,
                                             &stream->txp_txfc_new_credit_consumed)) {
@@ -2516,7 +2521,8 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
 
 static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp,
                                struct txp_pkt *pkt,
-                               int chosen_for_conn_close)
+                               int chosen_for_conn_close,
+                               int force_explicit)
 {
     int rc = TXP_ERR_SUCCESS;
     const uint32_t enc_level = pkt->h.enc_level;
@@ -2696,6 +2702,7 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp,
                  * allowed maximum datagram size of 1200 bytes.
                  */
                 pkt->force_pad = 1;
+                force_explicit = 1;
                 break;
             default:
                 if (!a.allow_cfq_other)
@@ -2738,7 +2745,7 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp,
 
     /* Stream-specific frames */
     if (a.allow_stream_rel && txp->handshake_complete)
-        if (!txp_generate_stream_related(txp, pkt, min_ppl,
+        if (!txp_generate_stream_related(txp, pkt, min_ppl, force_explicit,
                                          &have_ack_eliciting,
                                          &pkt->stream_head))
             goto fatal_err;
