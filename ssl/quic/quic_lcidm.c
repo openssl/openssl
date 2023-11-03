@@ -58,6 +58,9 @@ struct quic_lcidm_st {
     LHASH_OF(QUIC_LCID)         *lcids; /* (QUIC_CONN_ID) -> (QUIC_LCID *)  */
     LHASH_OF(QUIC_LCIDM_CONN)   *conns; /* (void *opaque) -> (QUIC_LCIDM_CONN *) */
     size_t                      lcid_len; /* Length in bytes for all LCIDs */
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    QUIC_CONN_ID                next_lcid;
+#endif
 };
 
 static unsigned long bin_hash(const unsigned char *buf, size_t buf_len)
@@ -233,6 +236,8 @@ size_t ossl_quic_lcidm_get_num_active_lcid(const QUIC_LCIDM *lcidm,
     return conn->num_active_lcid;
 }
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+
 static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
 {
     if (len > QUIC_MAX_CONN_ID_LEN)
@@ -249,10 +254,25 @@ static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
     return 1;
 }
 
+#endif
+
 static int lcidm_generate_cid(QUIC_LCIDM *lcidm,
                               QUIC_CONN_ID *cid)
 {
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    int i;
+
+    lcidm->next_lcid.id_len = (unsigned char)lcidm->lcid_len;
+    *cid = lcidm->next_lcid;
+
+    for (i = lcidm->lcid_len - 1; i >= 0; --i)
+        if (++lcidm->next_lcid.id[i] != 0)
+            break;
+
+    return 1;
+#else
     return gen_rand_conn_id(lcidm->libctx, lcidm->lcid_len, cid);
+#endif
 }
 
 static int lcidm_generate(QUIC_LCIDM *lcidm,
