@@ -843,7 +843,12 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
             }
 
         if (first_el != QUIC_ENC_LEVEL_NUM
-            && total_dgram_size < min_dpl) {
+            && total_dgram_size < min_dpl
+            /*
+             * We might not be able to add padding, for example if we are using
+             * the ACK_ONLY archetype.
+             */
+            && pkt[first_el].geom.adata.allow_padding) {
             size_t deficit = min_dpl - total_dgram_size;
 
             if (!ossl_assert(!pkt[first_el].h.done_implicit))
@@ -852,11 +857,25 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
             if (!txp_pkt_append_padding(&pkt[first_el], txp, deficit))
                 goto out;
 
+            total_dgram_size += deficit;
+
             /*
              * Padding frames make a packet ineligible for being a non-inflight
              * packet.
              */
             pkt[first_el].tpkt->ackm_pkt.is_inflight = 1;
+        }
+
+        /*
+         * If we have failed to make a datagram of adequate size, for example
+         * because we have a padding requirement but are using the ACK_ONLY
+         * archetype (because we are CC limited), which precludes us from
+         * sending padding, give up on generating the datagram - there is
+         * nothing we can do.
+         */
+        if (total_dgram_size < min_dpl) {
+            res = 1;
+            goto out;
         }
     }
 
@@ -875,10 +894,16 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
 
         rc = txp_pkt_commit(txp, &pkt[enc_level], archetype,
                             &txpim_pkt_reffed);
-        if (rc)
+        if (rc) {
             status->sent_ack_eliciting
                 = status->sent_ack_eliciting
                 || pkt[enc_level].tpkt->ackm_pkt.is_ack_eliciting;
+
+            if (enc_level == QUIC_ENC_LEVEL_HANDSHAKE)
+                status->sent_handshake
+                    = (pkt[enc_level].h_valid
+                       && pkt[enc_level].h.bytes_appended > 0);
+        }
 
         if (txpim_pkt_reffed)
             pkt[enc_level].tpkt = NULL; /* don't free */
@@ -888,10 +913,6 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
 
         ++pkts_done;
     }
-
-    status->sent_handshake
-        = (pkt[QUIC_ENC_LEVEL_HANDSHAKE].h_valid
-           && pkt[QUIC_ENC_LEVEL_HANDSHAKE].h.bytes_appended > 0);
 
     /* Flush & Cleanup */
     res = 1;
