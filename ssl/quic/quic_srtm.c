@@ -476,8 +476,11 @@ static void check_count(SRTM_ITEM *item, void *arg)
     }
 }
 
+#endif
+
 void ossl_quic_srtm_check(const QUIC_SRTM *srtm)
 {
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     struct check_args args = {0};
     size_t tokens_expected, tokens_expected_old;
 
@@ -513,6 +516,5 @@ void ossl_quic_srtm_check(const QUIC_SRTM *srtm)
 
     assert(tokens_seen == tokens_expected);
     assert(tokens_seen == tokens_expected_old);
-}
-
 #endif
+}

@@ -101,12 +101,8 @@ int ossl_quic_srtm_lookup(QUIC_SRTM *srtm,
                           size_t idx,
                           void **opaque, uint64_t *seq_num);
 
-#  ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-
 /* Verify internal invariants and assert if they are not met. */
 void ossl_quic_srtm_check(const QUIC_SRTM *srtm);
-
-#  endif
 
 # endif
 
