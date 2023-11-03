@@ -30,7 +30,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   ENDIF
 
   IF[{- !$disabled{"quic"} -}]
-    PROGRAMS{noinst}=quic-client quic-srtm
+    PROGRAMS{noinst}=quic-client quic-srtm quic-lcidm
   ENDIF
 
   SOURCE[asn1]=asn1.c driver.c fuzz_rand.c
@@ -101,6 +101,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   INCLUDE[quic-srtm]=../include {- $ex_inc -}
   DEPEND[quic-srtm]=../libcrypto.a ../libssl.a {- $ex_lib -}
 
+  SOURCE[quic-lcidm]=quic-lcidm.c driver.c fuzz_rand.c
+  INCLUDE[quic-lcidm]=../include {- $ex_inc -}
+  DEPEND[quic-lcidm]=../libcrypto.a ../libssl.a {- $ex_lib -}
+
   SOURCE[server]=server.c driver.c fuzz_rand.c
   INCLUDE[server]=../include {- $ex_inc -}
   DEPEND[server]=../libcrypto ../libssl {- $ex_lib -}
@@ -132,7 +136,7 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   IF[{- !$disabled{"quic"} -}]
-    PROGRAMS{noinst}=quic-client-test quic-srtm-test
+    PROGRAMS{noinst}=quic-client-test quic-srtm-test quic-lcidm-test
   ENDIF
 
   SOURCE[asn1-test]=asn1.c test-corpus.c fuzz_rand.c
@@ -203,6 +207,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[quic-srtm-test]=quic-srtm.c test-corpus.c fuzz_rand.c
   INCLUDE[quic-srtm-test]=../include
   DEPEND[quic-srtm-test]=../libcrypto.a ../libssl.a
+
+  SOURCE[quic-lcidm-test]=quic-lcidm.c test-corpus.c fuzz_rand.c
+  INCLUDE[quic-lcidm-test]=../include
+  DEPEND[quic-lcidm-test]=../libcrypto.a ../libssl.a
 
   SOURCE[server-test]=server.c test-corpus.c fuzz_rand.c
   INCLUDE[server-test]=../include
