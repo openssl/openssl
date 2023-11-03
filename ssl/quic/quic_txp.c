@@ -828,33 +828,30 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
     if (need_padding) {
         size_t total_dgram_size = 0;
         const size_t min_dpl = QUIC_MIN_INITIAL_DGRAM_LEN;
-        uint32_t first_el = QUIC_ENC_LEVEL_NUM;
+        uint32_t pad_el = QUIC_ENC_LEVEL_NUM;
 
         for (enc_level = QUIC_ENC_LEVEL_INITIAL;
              enc_level < QUIC_ENC_LEVEL_NUM;
              ++enc_level)
             if (pkt[enc_level].h_valid && pkt[enc_level].h.bytes_appended > 0) {
-                if (first_el == QUIC_ENC_LEVEL_NUM)
-                    first_el = enc_level;
+                if (pad_el == QUIC_ENC_LEVEL_NUM
+                    /*
+                     * We might not be able to add padding, for example if we
+                     * are using the ACK_ONLY archetype.
+                     */
+                    && pkt[enc_level].geom.adata.allow_padding
+                    && !pkt[enc_level].h.done_implicit)
+                    pad_el = enc_level;
 
                 txp_pkt_postgen_update_pkt_overhead(&pkt[enc_level], txp);
                 total_dgram_size += pkt[enc_level].geom.pkt_overhead
                     + pkt[enc_level].h.bytes_appended;
             }
 
-        if (first_el != QUIC_ENC_LEVEL_NUM
-            && total_dgram_size < min_dpl
-            /*
-             * We might not be able to add padding, for example if we are using
-             * the ACK_ONLY archetype.
-             */
-            && pkt[first_el].geom.adata.allow_padding) {
+        if (pad_el != QUIC_ENC_LEVEL_NUM && total_dgram_size < min_dpl) {
             size_t deficit = min_dpl - total_dgram_size;
 
-            if (!ossl_assert(!pkt[first_el].h.done_implicit))
-                goto out;
-
-            if (!txp_pkt_append_padding(&pkt[first_el], txp, deficit))
+            if (!txp_pkt_append_padding(&pkt[pad_el], txp, deficit))
                 goto out;
 
             total_dgram_size += deficit;
@@ -863,7 +860,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
              * Padding frames make a packet ineligible for being a non-inflight
              * packet.
              */
-            pkt[first_el].tpkt->ackm_pkt.is_inflight = 1;
+            pkt[pad_el].tpkt->ackm_pkt.is_inflight = 1;
         }
 
         /*
