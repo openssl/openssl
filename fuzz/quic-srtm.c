@@ -97,7 +97,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                 || !PACKET_get_net_8(&pkt, &arg_idx))
                 continue; /* just stop */
 
-            ossl_quic_srtm_lookup(srtm, &arg_token, arg_idx,
+            ossl_quic_srtm_lookup(srtm, &arg_token, (size_t)arg_idx,
                                   NULL, NULL);
             ossl_quic_srtm_check(srtm);
             break;
