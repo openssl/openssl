@@ -74,13 +74,16 @@ struct qtest_fault {
 
 static void packet_plain_finish(void *arg);
 static void handshake_finish(void *arg);
+static OSSL_TIME qtest_get_time(void);
+static void qtest_reset_time(void);
 
 static int using_fake_time = 0;
 static OSSL_TIME fake_now;
+static CRYPTO_RWLOCK *fake_now_lock = NULL;
 
 static OSSL_TIME fake_now_cb(void *arg)
 {
-    return fake_now;
+    return qtest_get_time();
 }
 
 static void noise_msg_callback(int write_p, int version, int content_type,
@@ -282,11 +285,14 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     if (serverctx != NULL && !TEST_true(SSL_CTX_up_ref(serverctx)))
         goto err;
     tserver_args.ctx = serverctx;
+    if (fake_now_lock == NULL) {
+        fake_now_lock = CRYPTO_THREAD_lock_new();
+        if (fake_now_lock == NULL)
+            goto err;
+    }
     if ((flags & QTEST_FLAG_FAKE_TIME) != 0) {
         using_fake_time = 1;
-        fake_now = ossl_time_zero();
-        /* zero time can have a special meaning, bump it */
-        qtest_add_time(1);
+        qtest_reset_time();
         tserver_args.now_cb = fake_now_cb;
         (void)ossl_quic_conn_set_override_now_cb(*cssl, fake_now_cb, NULL);
     } else {
@@ -331,7 +337,31 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
 
 void qtest_add_time(uint64_t millis)
 {
+    if (!CRYPTO_THREAD_write_lock(fake_now_lock))
+        return;
     fake_now = ossl_time_add(fake_now, ossl_ms2time(millis));
+    CRYPTO_THREAD_unlock(fake_now_lock);
+}
+
+static OSSL_TIME qtest_get_time(void)
+{
+    OSSL_TIME ret;
+
+    if (!CRYPTO_THREAD_read_lock(fake_now_lock))
+        return ossl_time_zero();
+    ret = fake_now;
+    CRYPTO_THREAD_unlock(fake_now_lock);
+    return ret;
+}
+
+static void qtest_reset_time(void)
+{
+    if (!CRYPTO_THREAD_write_lock(fake_now_lock))
+        return;
+    fake_now = ossl_time_zero();
+    CRYPTO_THREAD_unlock(fake_now_lock);
+    /* zero time can have a special meaning, bump it */
+    qtest_add_time(1);
 }
 
 QTEST_FAULT *qtest_create_injector(QUIC_TSERVER *ts)
@@ -399,17 +429,20 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
      */
     if (!SSL_get_event_timeout(s, &tv, &cinf))
         return 0;
+
     if (using_fake_time)
-        now = fake_now;
+        now = qtest_get_time();
     else
         now = ossl_time_now();
+
     ctimeout = cinf ? ossl_time_infinite() : ossl_time_from_timeval(tv);
     stimeout = ossl_time_subtract(ossl_quic_tserver_get_deadline(qtserv), now);
     mintimeout = ossl_time_min(ctimeout, stimeout);
     if (ossl_time_is_infinite(mintimeout))
         return 0;
+
     if (using_fake_time)
-        fake_now = ossl_time_add(now, mintimeout);
+        qtest_add_time(ossl_time2ms(mintimeout));
     else
         OSSL_sleep(ossl_time2ms(mintimeout));
 
