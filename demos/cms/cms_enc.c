@@ -73,6 +73,8 @@ int main(int argc, char **argv)
     if (!SMIME_write_CMS(out, cms, in, flags))
         goto err;
 
+    printf("Encryption Successful\n");
+
     ret = EXIT_SUCCESS;
  err:
     if (ret != EXIT_SUCCESS) {
