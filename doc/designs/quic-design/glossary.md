@@ -201,6 +201,11 @@ forming. This is the CMPPL minus any bytes we have already put into the payload.
 
 **SCID:** Source Connection ID. Found in some QUIC packet headers.
 
+**SRT:** Stateless reset token.
+
+**SRTM:** Stateless reset token manager. Object which tracks SRTs we have
+received.
+
 **SSTREAM:** Send stream. Internal send buffer management object used to store
 data which has been passed to libssl for sending but which has not yet been
 transmitted, or not yet been acknowledged.
