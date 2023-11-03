@@ -51,7 +51,7 @@ It is an optional value with a length of at most 512 bytes, and is empty by defa
 =item "size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
 
 Sets the MAC size.
-By default, it is 16 for C<KMAC-128> and 32 for C<KMAC-256>.
+By default, it is 32 for C<KMAC-128> and 64 for C<KMAC-256>.
 
 =item "block-size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
 
