@@ -77,13 +77,15 @@ static void handshake_finish(void *arg);
 
 static int using_fake_time = 0;
 static OSSL_TIME fake_now;
-CRYPTO_RWLOCK *fake_now_lock = NULL;
+static CRYPTO_RWLOCK *fake_now_lock = NULL;
 
 static OSSL_TIME fake_now_cb(void *arg)
 {
     OSSL_TIME ret;
-    CRYPTO_THREAD_read_lock(fake_now_lock);
-    ret = fake_now;
+    if (!CRYPTO_THREAD_read_lock(fake_now_lock))
+        ret.t = 0;
+    else
+        ret = fake_now;
     CRYPTO_THREAD_unlock(fake_now_lock);
     return ret;
 }
@@ -291,7 +293,8 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         fake_now_lock = CRYPTO_THREAD_lock_new();
     if ((flags & QTEST_FLAG_FAKE_TIME) != 0) {
         using_fake_time = 1;
-        CRYPTO_THREAD_write_lock(fake_now_lock);
+        if (!CRYPTO_THREAD_write_lock(fake_now_lock))
+            goto err;
         fake_now = ossl_time_zero();
         CRYPTO_THREAD_unlock(fake_now_lock);
         /* zero time can have a special meaning, bump it */
@@ -340,7 +343,8 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
 
 void qtest_add_time(uint64_t millis)
 {
-    CRYPTO_THREAD_write_lock(fake_now_lock);
+    if (!CRYPTO_THREAD_write_lock(fake_now_lock))
+        return;
     fake_now = ossl_time_add(fake_now, ossl_ms2time(millis));
     CRYPTO_THREAD_unlock(fake_now_lock);
 }
@@ -411,7 +415,8 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
     if (!SSL_get_event_timeout(s, &tv, &cinf))
         return 0;
     if (using_fake_time) {
-        CRYPTO_THREAD_read_lock(fake_now_lock);
+        if (!CRYPTO_THREAD_read_lock(fake_now_lock))
+            return 0;
         now = fake_now;
         CRYPTO_THREAD_unlock(fake_now_lock);
     } else {
@@ -423,7 +428,8 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
     if (ossl_time_is_infinite(mintimeout))
         return 0;
     if (using_fake_time) {
-        CRYPTO_THREAD_write_lock(fake_now_lock);
+        if (!CRYPTO_THREAD_write_lock(fake_now_lock))
+            return 0;
         fake_now = ossl_time_add(now, mintimeout);
         CRYPTO_THREAD_unlock(fake_now_lock);
     } else {
