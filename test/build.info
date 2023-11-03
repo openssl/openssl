@@ -328,6 +328,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[quic_txpim_test]=../include ../apps/include
   DEPEND[quic_txpim_test]=../libcrypto.a ../libssl.a libtestutil.a
 
+  SOURCE[quic_srtm_test]=quic_srtm_test.c
+  INCLUDE[quic_srtm_test]=../include ../apps/include
+  DEPEND[quic_srtm_test]=../libcrypto.a ../libssl.a libtestutil.a
+
   SOURCE[quic_fifd_test]=quic_fifd_test.c cc_dummy.c
   INCLUDE[quic_fifd_test]=../include ../apps/include
   DEPEND[quic_fifd_test]=../libcrypto.a ../libssl.a libtestutil.a
@@ -1129,6 +1133,7 @@ ENDIF
   IF[{- !$disabled{'quic'} -}]
     PROGRAMS{noinst}=quic_wire_test quic_ackm_test quic_record_test
     PROGRAMS{noinst}=quic_fc_test quic_stream_test quic_cfq_test quic_txpim_test
+    PROGRAMS{noinst}=quic_srtm_test
     PROGRAMS{noinst}=quic_fifd_test quic_txp_test quic_tserver_test
     PROGRAMS{noinst}=quic_client_test quic_cc_test quic_multistream_test
   ENDIF
