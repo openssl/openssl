@@ -497,8 +497,8 @@ static int join_server_thread(struct helper *h)
 
     ossl_crypto_mutex_lock(h->server_thread.m);
     h->server_thread.stop = 1;
-    ossl_crypto_mutex_unlock(h->server_thread.m);
     ossl_crypto_condvar_signal(h->server_thread.c);
+    ossl_crypto_mutex_unlock(h->server_thread.m);
 
     ossl_crypto_thread_native_join(h->server_thread.t, &rv);
     ossl_crypto_thread_native_clean(h->server_thread.t);
@@ -1079,8 +1079,8 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             else if (h->blocking && !h->server_thread.ready) {
                 ossl_crypto_mutex_lock(h->server_thread.m);
                 h->server_thread.ready = 1;
-                ossl_crypto_mutex_unlock(h->server_thread.m);
                 ossl_crypto_condvar_signal(h->server_thread.c);
+                ossl_crypto_mutex_unlock(h->server_thread.m);
             }
             if (h->blocking)
                 assert(h->s == NULL);
@@ -2658,8 +2658,8 @@ static int script_20_trigger(struct helper *h, volatile uint64_t *counter)
 #if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_lock(h->misc_m);
     ++*counter;
-    ossl_crypto_mutex_unlock(h->misc_m);
     ossl_crypto_condvar_broadcast(h->misc_cv);
+    ossl_crypto_mutex_unlock(h->misc_m);
 #endif
     return 1;
 }
