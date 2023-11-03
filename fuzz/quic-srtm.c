@@ -27,10 +27,10 @@ int FuzzerInitialize(int *argc, char ***argv)
  * Fuzzer input "protocol":
  *   Big endian
  *   Zero or more of:
- *     ADD    - u8(0x01) u64(opaque) u64(seq_num) u128(token)
- *     REMOVE - u8(0x02) u64(opaque) u64(seq_num)
- *     CULL   - u8(0x03) u64(opaque)
- *     LOOKUP - u8(0x04) u128(token) u64(idx)
+ *     ADD    - u8(0x00) u64(opaque) u64(seq_num) u128(token)
+ *     REMOVE - u8(0x01) u64(opaque) u64(seq_num)
+ *     CULL   - u8(0x02) u64(opaque)
+ *     LOOKUP - u8(0x03) u128(token) u64(idx)
  */
 enum {
     CMD_ADD,
