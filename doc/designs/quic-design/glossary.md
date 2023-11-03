@@ -84,6 +84,12 @@ may be maintained at a given time. See `quic_record_rx.h` for details.
 
 **KU:** Key update. See also TXKU, RXKU.
 
+**LCID:** Local CID. Refers to a CID which will be recognised as identifying a
+connection if found in the DCID field of an incoming packet. See also RCID.
+
+**LCIDM:** Local CID Manager. Tracks LCIDs which have been advertised to a peer.
+See also RCIDM.
+
 **Locally-initiated:** Refers to a QUIC stream which was initiated by the local
 application rather than the remote peer.
 
@@ -164,6 +170,12 @@ connection in the APL.
 not part of the APL. An XSO wraps a QUIC_STREAM once that stream is exposed as
 an API object. As such, a `QUIC_CONNECTION` is to a `QUIC_CHANNEL` what a
 `QUIC_XSO` is to a `QUIC_STREAM`.
+
+**RCID:** Remote CID. Refers to a CID which has been provided to us by a peer
+and which we can place in the DCID field of an outgoing packet. See also LCID.
+
+**RCIDM:** Remote CID Manager. Tracks RCIDs which have been provided to us by a
+peer. See also LCIDM.
 
 **REGEN:** A strategy for regenerating lost frames. This strategy regenerates
 the frame from canonical data sources without having to store a copy of the
