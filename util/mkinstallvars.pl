@@ -16,7 +16,8 @@ use File::Spec;
 my @absolutes = qw(PREFIX);
 # These may be absolute directories, and if not, they are expected to be set up
 # as subdirectories to PREFIX
-my @subdirs = qw(BINDIR LIBDIR INCLUDEDIR ENGINESDIR MODULESDIR APPLINKDIR);
+my @subdirs = qw(BINDIR LIBDIR INCLUDEDIR APPLINKDIR ENGINESDIR MODULESDIR
+                 PKGCONFIGDIR CMAKECONFIGDIR);
 
 my %keys = ();
 foreach (@ARGV) {
@@ -24,6 +25,7 @@ foreach (@ARGV) {
     $keys{$k} = 1;
     $ENV{$k} = $v;
 }
+
 foreach my $k (sort keys %keys) {
     my $v = $ENV{$k};
     $v = File::Spec->rel2abs($v) if $v && grep { $k eq $_ } @absolutes;
@@ -31,9 +33,21 @@ foreach my $k (sort keys %keys) {
 }
 foreach my $k (sort keys %keys) {
     my $v = $ENV{$k} || '.';
-    $v = File::Spec->rel2abs($v, $ENV{PREFIX})
-        if ($v && !File::Spec->file_name_is_absolute($v)
-            && grep { $k eq $_ } @subdirs);
+
+    # Absolute paths for the subdir variables are computed.  This provides
+    # the usual form of values for names that have become norm, known as GNU
+    # installation paths.
+    # For the benefit of those that need it, the subdirectories are preserved
+    # as they are, using the same variable names, suffixed with '_REL', if they
+    # are indeed subdirectories.
+    if (grep { $k eq $_ } @subdirs) {
+        if (File::Spec->file_name_is_absolute($v)) {
+            $ENV{"${k}_REL"} = File::Spec->abs2rel($v, $ENV{PREFIX});
+        } else {
+            $ENV{"${k}_REL"} = $v;
+            $v = File::Spec->rel2abs($v, $ENV{PREFIX});
+        }
+    }
     $ENV{$k} = $v;
 }
 
@@ -44,18 +58,36 @@ use strict;
 use warnings;
 use Exporter;
 our \@ISA = qw(Exporter);
-our \@EXPORT = qw(\$PREFIX \$BINDIR \$LIBDIR \$INCLUDEDIR \$APPLINKDIR
-                  \$ENGINESDIR \$MODULESDIR \$VERSION \$LDLIBS);
+our \@EXPORT = qw(\$PREFIX
+                  \$BINDIR \$BINDIR_REL
+                  \$LIBDIR \$LIBDIR_REL
+                  \$INCLUDEDIR \$INCLUDEDIR_REL
+                  \$APPLINKDIR \$APPLINKDIR_REL
+                  \$ENGINESDIR \$ENGINESDIR_REL
+                  \$MODULESDIR \$MODULESDIR_REL
+                  \$PKGCONFIGDIR \$PKGCONFIGDIR_REL
+                  \$CMAKECONFIGDIR \$CMAKECONFIGDIR_REL
+                  \$VERSION \@LDLIBS);
 
-our \$PREFIX     = '$ENV{PREFIX}';
-our \$BINDIR     = '$ENV{BINDIR}';
-our \$LIBDIR     = '$ENV{LIBDIR}';
-our \$INCLUDEDIR = '$ENV{INCLUDEDIR}';
-our \$ENGINESDIR = '$ENV{ENGINESDIR}';
-our \$MODULESDIR = '$ENV{MODULESDIR}';
-our \$APPLINKDIR = '$ENV{APPLINKDIR}';
-our \$VERSION    = '$ENV{VERSION}';
-our \@LDLIBS     =
+our \$PREFIX             = '$ENV{PREFIX}';
+our \$BINDIR             = '$ENV{BINDIR}';
+our \$BINDIR_REL         = '$ENV{BINDIR_REL}';
+our \$LIBDIR             = '$ENV{LIBDIR}';
+our \$LIBDIR_REL         = '$ENV{LIBDIR_REL}';
+our \$INCLUDEDIR         = '$ENV{INCLUDEDIR}';
+our \$INCLUDEDIR_REL     = '$ENV{INCLUDEDIR_REL}';
+our \$APPLINKDIR         = '$ENV{APPLINKDIR}';
+our \$APPLINKDIR_REL     = '$ENV{APPLINKDIR_REL}';
+our \$ENGINESDIR         = '$ENV{ENGINESDIR}';
+our \$ENGINESDIR_REL     = '$ENV{ENGINESDIR_REL}';
+our \$MODULESDIR         = '$ENV{MODULESDIR}';
+our \$MODULESDIR_REL     = '$ENV{MODULESDIR_REL}';
+our \$PKGCONFIGDIR       = '$ENV{PKGCONFIGDIR}';
+our \$PKGCONFIGDIR_REL   = '$ENV{PKGCONFIGDIR_REL}';
+our \$CMAKECONFIGDIR     = '$ENV{CMAKECONFIGDIR}';
+our \$CMAKECONFIGDIR_REL = '$ENV{CMAKECONFIGDIR_REL}';
+our \$VERSION            = '$ENV{VERSION}';
+our \@LDLIBS             =
     # Unix and Windows use space separation, VMS uses comma separation
     split(/ +| *, */, '$ENV{LDLIBS}');
 
