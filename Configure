@@ -3324,6 +3324,8 @@ sub usage
                 }
         print STDERR "\n";
 
+        disable();
+
         # Do some color wizardry.  Ideally, this would be done by a library and
         # would use proper termcap/terminfo, but we would rather avoid external
         # dependencies.  It's disabled by default unless you define CLICOLOR in
