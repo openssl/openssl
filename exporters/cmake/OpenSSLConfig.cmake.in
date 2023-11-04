@@ -99,8 +99,19 @@ if(_ossl_prefix STREQUAL "/")
 endif()
 
 {- output_off() unless $disabled{shared}; "" -}
-set(OPENSSL_USE_STATIC_LIBS True)
+set(_ossl_use_static_libs True)
 {- output_on() unless $disabled{shared}; "" -}
+if(OPENSSL_USE_STATIC_LIBS)
+  set(_ossl_use_static_libs True)
+elseif(DEFINED OPENSSL_USE_STATIC_LIBS)
+  # We know OPENSSL_USE_STATIC_LIBS is defined and False
+  if(_ossl_use_static_libs)
+    # OPENSSL_USE_STATIC_LIBS is explicitly false, indicating that shared libraries are
+    # required.  However, _ossl_use_static_libs indicates that no shared libraries are
+    # available.  The best course of action is to quit with an error in that case.
+    message(ERROR "Shared libraries are required, but this OpenSSL build doesn't provide them")
+  endif()
+endif()
 
 # Version, copied from what find_package() gives, for compatibility with FindOpenSSL.cmake
 set(OPENSSL_VERSION "${OpenSSL_VERSION}")
@@ -121,7 +132,7 @@ set(OPENSSL_APPLINK_SOURCE "${_ossl_prefix}/{- unixify($OpenSSL::safe::installda
 set(OPENSSL_PROGRAM "${OPENSSL_RUNTIME_DIR}/{- platform->bin('openssl') -}")
 
 # Set up the imported targets
-if(OPENSSL_USE_STATIC_LIBS)
+if(_ossl_use_static_libs)
 {- output_off() unless $no_static; "" -}
   # Static libraries are UNSUPPORTED in this configuration
 {- output_on() unless $no_static; output_off() if $no_static; "" -}
@@ -220,3 +231,4 @@ set_property(TARGET OpenSSL::applink PROPERTY
 {- output_on() if $disabled{uplink}; "" -}
 
 unset(_ossl_prefix)
+unset(_ossl_use_static_libs)
