@@ -45,6 +45,40 @@
 # Commands may need to know the format version.
 set(CMAKE_IMPORT_FILE_VERSION 1)
 
+# Avoid duplicate find_package()
+set(_ossl_expected_targets OpenSSL::Crypto OpenSSL::SSL
+    {- output_off() if $disabled{uplink}; "" -}OpenSSL::applink{- output_on() if $disabled{uplink}; "" -})
+set(_ossl_defined_targets)
+set(_ossl_undefined_targets)
+foreach(t IN LISTS _ossl_expected_targets)
+  if(TARGET "${t}")
+    LIST(APPEND _ossl_defined_targets "${t}")
+  else()
+    LIST(APPEND _ossl_undefined_targets "${t}")
+  endif()
+endforeach()
+message(DEBUG "_ossl_expected_targets = ${_ossl_expected_targets}")
+message(DEBUG "_ossl_defined_targets = ${_ossl_defined_targets}")
+message(DEBUG "_ossl_undefined_targets = ${_ossl_undefined_targets}")
+if(NOT _ossl_undefined_targets)
+  # All targets are defined, we're good, just undo everything and return
+  unset(_ossl_expected_targets)
+  unset(_ossl_defined_targets)
+  unset(_ossl_undefined_targets)
+  unset(CMAKE_IMPORT_FILE_VERSION)
+  return()
+endif()
+if(_ossl_defined_targets)
+  # We have a mix of defined and undefined targets.  This is hard to reconcile,
+  # and probably the result of another config, or FindOpenSSL.cmake having been
+  # called, or whatever.  Therefore, the best course of action is to quit with a
+  # hard error.
+  message(FATAL_ERROR "Some targets defined, others not:\nNot defined: ${_ossl_undefined_targets}\nDefined: ${_ossl_defined_targets}")
+endif()
+unset(_ossl_expected_targets)
+unset(_ossl_defined_targets)
+unset(_ossl_undefined_targets)
+
 {-
   # It can be argued that 'cmake_path' would be the better choice here.  However,
   # cmake_path is relatively new, while get_filename_component has been around
