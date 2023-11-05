@@ -14,12 +14,14 @@ B<openssl rand>
 [B<-hex>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
-I<num>
+I<num>[k|m|g|t]
 
 =head1 DESCRIPTION
 
 This command generates I<num> random bytes using a cryptographically
-secure pseudo random number generator (CSPRNG).
+secure pseudo random number generator (CSPRNG). the suffix k, m, g or t may be
+added to the num value to indicate the request value be scaled as a multiple of
+kiB/MiB/GiB/TiB respectively. Note that suffixes are case insensitive.
 
 The random bytes are generated using the L<RAND_bytes(3)> function,
 which provides a security level of 256 bits, provided it managed to
