@@ -70,6 +70,29 @@
  *
  * Both (2) and (3) are retired normally via RETIRE_CONNECTION_ID frames, as it
  * has a sequence number of 0.
+ *
+ *
+ * ODCID Peculiarities
+ * -------------------
+ *
+ * Almost all LCIDs are issued by the receiver responsible for routing them,
+ * which means that almost all LCIDs will have the same length (specified in
+ * lcid_len below). The only exception to this is (1); the ODCID is the only
+ * case where we recognise an LCID we didn't ourselves generate. Since an ODCID
+ * is chosen by the peer, it can be any length and doesn't necessarily match the
+ * length we use for LCIDs we generate ourselves.
+ *
+ * Since DCID decoding for short-header packets requires an implicitly known
+ * DCID length, it logically follows that an ODCID can never be used in a 1-RTT
+ * packet. This is fine as by the time the 1-RTT EL is reached the peer should
+ * already have switched away from the ODCID to a CID we generated ourselves,
+ * and if this is not happened we can consider that a protocol violation.
+ *
+ * In any case, this means that the LCIDM must necessarily support LCIDs of
+ * different lengths, even if it always generates LCIDs of a given length.
+ *
+ * An ODCID has no sequence number associated with it. It is the only CID to
+ * lack one.
  */
 typedef struct quic_lcidm_st QUIC_LCIDM;
 
@@ -109,7 +132,9 @@ size_t ossl_quic_lcidm_get_num_active_lcid(const QUIC_LCIDM *lcidm,
  * LCIDM_ODCID_SEQ_NUM internally for our purposes.
  *
  * Note that this is the *only* circumstance where we recognise an LCID we did
- * not generate ourselves.
+ * not generate ourselves, or allow an LCID with a different length to lcid_len.
+ *
+ * An ODCID MUST be at least 8 bytes in length (RFC 9000 s. 7.2).
  *
  * This function may only be called once for a given connection.
  * Returns 1 on success or 0 on failure.
