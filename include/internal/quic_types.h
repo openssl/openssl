@@ -73,6 +73,7 @@ static ossl_unused ossl_inline int ossl_quic_pn_valid(QUIC_PN pn)
 
 /* QUIC connection ID representation. */
 #  define QUIC_MAX_CONN_ID_LEN   20
+#  define QUIC_MIN_ODCID_LEN     8   /* RFC 9000 s. 7.2 */
 
 typedef struct quic_conn_id_st {
     unsigned char id_len, id[QUIC_MAX_CONN_ID_LEN];

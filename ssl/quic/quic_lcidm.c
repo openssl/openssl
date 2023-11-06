@@ -318,7 +318,8 @@ int ossl_quic_lcidm_enrol_odcid(QUIC_LCIDM *lcidm,
     QUIC_LCIDM_CONN *conn;
     QUIC_LCID key, *lcid_obj;
 
-    if (initial_odcid == NULL)
+    if (initial_odcid == NULL || initial_odcid->id_len < QUIC_MIN_ODCID_LEN
+        || initial_odcid->id_len > QUIC_MAX_CONN_ID_LEN)
         return 0;
 
     if ((conn = lcidm_upsert_conn(lcidm, opaque)) == NULL)
