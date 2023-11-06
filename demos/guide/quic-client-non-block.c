@@ -245,6 +245,10 @@ int main(int argc, char *argv[])
     }
 
     if (!strcmp(argv[argnext], "-6")) {
+        if (argc < 4) {
+            printf("Usage: quic-client-non-block [-6] hostname port\n");
+            goto end;
+        }
         ipv6 = 1;
         argnext++;
     }
