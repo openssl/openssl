@@ -22,7 +22,7 @@ static int test_lcidm(void)
 {
     int testresult = 0;
     QUIC_LCIDM *lcidm;
-    size_t lcid_len = 8;
+    size_t lcid_len = 10; /* != ODCID len */
     QUIC_CONN_ID lcid_1, lcid_dummy, lcid_init;
     OSSL_QUIC_FRAME_NEW_CONN_ID ncid_frame_1, ncid_frame_2, ncid_frame_3;
     void *opaque = NULL;
