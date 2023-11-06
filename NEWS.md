@@ -23,7 +23,8 @@ OpenSSL 3.3
 
 ### Major changes between OpenSSL 3.2 and OpenSSL 3.3 [under development]
 
-  * none
+  * Added exporter for CMake on Unix and Windows, alongside the pkg-config
+    exporter.
 
 OpenSSL 3.2
 -----------
