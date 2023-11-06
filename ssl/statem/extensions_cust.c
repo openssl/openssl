@@ -225,6 +225,9 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || (outlen > 0 && !WPACKET_memcpy(pkt, out, outlen))
                 || !WPACKET_close(pkt)) {
+            if (meth->free_cb != NULL)
+                meth->free_cb(SSL_CONNECTION_GET_SSL(s), meth->ext_type, context,
+                              out, meth->add_arg);
             if (!for_comp)
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
