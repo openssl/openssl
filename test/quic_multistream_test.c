@@ -2658,8 +2658,8 @@ static int script_20_trigger(struct helper *h, volatile uint64_t *counter)
 #if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_lock(h->misc_m);
     ++*counter;
-    ossl_crypto_mutex_unlock(h->misc_m);
     ossl_crypto_condvar_broadcast(h->misc_cv);
+    ossl_crypto_mutex_unlock(h->misc_m);
 #endif
     return 1;
 }
