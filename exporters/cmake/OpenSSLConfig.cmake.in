@@ -91,7 +91,7 @@ get_filename_component(_ossl_prefix "${CMAKE_CURRENT_LIST_FILE}" PATH)
   # out the parent directory.
   my $d = unixify($OpenSSL::safe::installdata::CMAKECONFIGDIR_REL);
   $OUT = '';
-  $OUT .= 'get_filename_component(_ossl_import_path "${_ossl_import_path}" PATH)' . "\n"
+  $OUT .= 'get_filename_component(_ossl_prefix "${_ossl_prefix}" PATH)' . "\n"
       foreach (split '/', $d);
 -}
 if(_ossl_prefix STREQUAL "/")
