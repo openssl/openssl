@@ -237,6 +237,9 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
              * We can't send duplicates: code logic should prevent this.
              */
             if (!ossl_assert((meth->ext_flags & SSL_EXT_FLAG_SENT) == 0)) {
+                if (meth->free_cb != NULL)
+                    meth->free_cb(SSL_CONNECTION_GET_SSL(s), meth->ext_type,
+                                  context, out, meth->add_arg);
                 if (!for_comp)
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
