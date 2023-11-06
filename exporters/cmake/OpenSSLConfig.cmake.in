@@ -108,8 +108,11 @@ elseif(DEFINED OPENSSL_USE_STATIC_LIBS)
   if(_ossl_use_static_libs)
     # OPENSSL_USE_STATIC_LIBS is explicitly false, indicating that shared libraries are
     # required.  However, _ossl_use_static_libs indicates that no shared libraries are
-    # available.  The best course of action is to quit with an error in that case.
-    message(ERROR "Shared libraries are required, but this OpenSSL build doesn't provide them")
+    # available.  The best course of action is to simply return and leave it to CMake to
+    # use another OpenSSL config.
+    unset(_ossl_use_static_libs)
+    unset(CMAKE_IMPORT_FILE_VERSION)
+    return()
   endif()
 endif()
 
