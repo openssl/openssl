@@ -27,7 +27,7 @@ insensitive, and that the suffixes represent binary multiples
 
 The string 'max' may be substituted for a numercial value in num, to request the
 maximum number of bytes the CSPRNG can produce per instantiation.  Currently,
-this is restricted to 2^64 bytes as per NIST SP 800-90C.
+this is restricted to 2^61 bytes as per NIST SP 800-90C.
 
 The random bytes are generated using the L<RAND_bytes(3)> function,
 which provides a security level of 256 bits, provided it managed to

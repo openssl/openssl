@@ -105,7 +105,11 @@ int rand_main(int argc, char **argv)
          * number of random bytes to be generated
          */
         if (!strcmp(argv[0], "max")) {
-            scaled_num = SIZE_MAX;
+            /*
+             * 2^61 bytes is the limit of random output
+             * per drbg instantiation
+             */
+            scaled_num = SIZE_MAX >> 3;
         } else {
             /*
              * iterate over the value and check to see if there are
@@ -157,7 +161,7 @@ int rand_main(int argc, char **argv)
         if (shift != 0)
             argv[0][factoridx] = '\0';
 
-        if ((scaled_num != SIZE_MAX) && (!opt_long(argv[0], &num) || num <= 0))
+        if ((scaled_num == 0) && (!opt_long(argv[0], &num) || num <= 0))
             goto opthelp;
 
         if (shift != 0) {
@@ -168,6 +172,10 @@ int rand_main(int argc, char **argv)
                 goto opthelp;
             }
             scaled_num = num << shift;
+            if (scaled_num > (SIZE_MAX >> 3)) {
+                BIO_printf(bio_err, "Request exceeds max allowed output\n");
+                goto opthelp;
+            }
         } else {
             if (scaled_num == 0)
                 scaled_num = num;
