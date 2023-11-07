@@ -380,9 +380,10 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx,
                 ERR_raise(ERR_LIB_RSA, RSA_R_BAD_TLS_CLIENT_VERSION);
                 return 0;
             }
-            ret = ossl_rsa_padding_check_PKCS1_type_2_TLS(
-                        NULL, out, *outlen, rctx->tbuf, ret,
-                        rctx->client_version, rctx->alt_version);
+            ret = ossl_rsa_padding_check_PKCS1_type_2_TLS(NULL, out, *outlen,
+                                                          rctx->tbuf, ret,
+                                                          rctx->client_version,
+                                                          rctx->alt_version);
         }
     } else {
         if (rctx->pad_mode == RSA_PKCS1_PADDING &&
