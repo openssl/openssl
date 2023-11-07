@@ -207,6 +207,9 @@ struct quic_rcidm_st {
      */
     OSSL_LIST(retiring)         retiring_list;
 
+    /* Number of entries on the retiring_list. */
+    size_t                      num_retiring;
+
     /* preferred_rcid has been changed? */
     unsigned int    preferred_rcid_changed          : 1;
 
@@ -250,6 +253,8 @@ static void rcidm_check_rcid(QUIC_RCIDM *rcidm, RCID *rcid)
     assert(rcid->seq_num >= rcidm->retire_prior_to
             || rcid->state == RCID_STATE_RETIRING);
     assert(rcidm->num_changes == 0 || rcidm->handshake_complete);
+    assert(rcid->state != RCID_STATE_RETIRING || rcidm->num_retiring > 0);
+    assert(rcidm->num_retiring < SIZE_MAX / 2);
 }
 
 static int rcid_cmp(const RCID *a, const RCID *b)
@@ -355,6 +360,7 @@ static RCID *rcidm_create_rcid(QUIC_RCIDM *rcidm, uint64_t seq_num,
         rcid->state     = RCID_STATE_RETIRING;
         rcid->pq_idx    = SIZE_MAX;
         ossl_list_retiring_insert_tail(&rcidm->retiring_list, rcid);
+        ++rcidm->num_retiring;
     }
 
     rcidm_check_rcid(rcidm, rcid);
@@ -390,6 +396,7 @@ static void rcidm_transition_rcid(QUIC_RCIDM *rcidm, RCID *rcid,
             rcidm->cur_rcid = NULL;
 
         ossl_list_retiring_insert_tail(&rcidm->retiring_list, rcid);
+        ++rcidm->num_retiring;
     }
 
     rcidm_check_rcid(rcidm, rcid);
@@ -411,6 +418,7 @@ static void rcidm_free_rcid(QUIC_RCIDM *rcidm, RCID *rcid)
         break;
     case RCID_STATE_RETIRING:
         ossl_list_retiring_remove(&rcidm->retiring_list, rcid);
+        --rcidm->num_retiring;
         break;
     default:
         assert(0);
@@ -658,4 +666,14 @@ int ossl_quic_rcidm_get_preferred_tx_dcid_changed(QUIC_RCIDM *rcidm,
     return r;
 }
 
-// TODO expose counters for enforcement
+size_t ossl_quic_rcidm_get_num_active(const QUIC_RCIDM *rcidm)
+{
+    return ossl_pqueue_RCID_num(rcidm->rcids)
+        + (rcidm->cur_rcid != NULL ? 1 : 0)
+        + ossl_quic_rcidm_get_num_retiring(rcidm);
+}
+
+size_t ossl_quic_rcidm_get_num_retiring(const QUIC_RCIDM *rcidm)
+{
+    return rcidm->num_retiring;
+}

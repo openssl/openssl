@@ -166,6 +166,19 @@ int ossl_quic_rcidm_get_preferred_tx_dcid(QUIC_RCIDM *rcidm,
 int ossl_quic_rcidm_get_preferred_tx_dcid_changed(QUIC_RCIDM *rcidm,
                                                   int clear);
 
+/*
+ * Returns the number of active numbered RCIDs we have. Note that this includes
+ * RCIDs on the retir*ing* queue accessed via
+ * ossl_quic_rcidm_pop_retire_seq_num() as these are still active until actually
+ * retired.
+ */
+size_t ossl_quic_rcidm_get_num_active(const QUIC_RCIDM *rcidm);
+
+/*
+ * Returns the number of retir*ing* numbered RCIDs we have.
+ */
+size_t ossl_quic_rcidm_get_num_retiring(const QUIC_RCIDM *rcidm);
+
 # endif
 
 #endif
