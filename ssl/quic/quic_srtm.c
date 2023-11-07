@@ -478,8 +478,8 @@ static void check_mark(SRTM_ITEM *item, void *arg)
 {
     struct check_args *arg_ = arg;
     uint32_t token = arg_->token;
-    uint64_t prev_seq_num;
-    void *prev_opaque;
+    uint64_t prev_seq_num = 0;
+    void *prev_opaque = NULL;
     int have_prev = 0;
 
     assert(item != NULL);
