@@ -486,9 +486,13 @@ OpenSSL 3.2
 OpenSSL 3.1
 -----------
 
-### Changes between 3.1.3 and 3.1.4 [xx XXX xxxx]
+### Changes between 3.1.4 and 3.1.5 [xx XXX xxxx]
 
-* Fix incorrect key and IV resizing issues when calling EVP_EncryptInit_ex2(),
+ * none yet
+
+### Changes between 3.1.3 and 3.1.4 [24 Oct 2023]
+
+ * Fix incorrect key and IV resizing issues when calling EVP_EncryptInit_ex2(),
    EVP_DecryptInit_ex2() or EVP_CipherInit_ex2() with OSSL_PARAM parameters
    that alter the key or IV length ([CVE-2023-5363]).
 
