@@ -30,7 +30,19 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.12 and 3.0.13 [xx XXX xxxx]
 
- * none yet
+ * Fix excessive time spent in DH check / generation with large Q parameter
+   value.
+
+   Applications that use the functions DH_generate_key() to generate an
+   X9.42 DH key may experience long delays. Likewise, applications that use
+   DH_check_pub_key(), DH_check_pub_key_ex() or EVP_PKEY_public_check()
+   to check an X9.42 DH key or X9.42 DH parameters may experience long delays.
+   Where the key or parameters that are being checked have been obtained from
+   an untrusted source this may lead to a Denial of Service.
+
+   ([CVE-2023-5678])
+
+   *Richard Levitte*
 
 ### Changes between 3.0.11 and 3.0.12 [24 Oct 2023]
 
@@ -19744,6 +19756,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2023-5678]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5678
 [CVE-2023-5363]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5363
 [CVE-2023-4807]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-4807
 [CVE-2023-3817]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-3817
