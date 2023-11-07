@@ -356,7 +356,7 @@ static OSSL_TIME qtest_get_time(void)
 
 static void qtest_reset_time(void)
 {
-    if (!CRYPTO_THREAD_read_lock(fake_now_lock))
+    if (!CRYPTO_THREAD_write_lock(fake_now_lock))
         return;
     fake_now = ossl_time_zero();
     CRYPTO_THREAD_unlock(fake_now_lock);
