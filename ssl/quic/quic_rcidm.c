@@ -88,19 +88,24 @@ static void rcidm_set_preferred_rcid(QUIC_RCIDM *rcidm,
  *       the RCID is not in the priority queue;
  *       the RCID is not in the retiring_list.
  *
- *   RETIRE
+ *   RETIRING
  *     Invariants:
- *       rcid->state == RCID_STATE_RETIRE;
+ *       rcid->state == RCID_STATE_RETIRING;
  *       rcid->pq_idx == SIZE_MAX (debug assert only);
  *       the RCID is not the current RCID, rcidm->cur_rcid != rcid;
  *       the RCID is not in the priority queue;
- *       the RCID is not in the retiring_list.
+ *       the RCID is in the retiring_list.
  *
  *   Invariant: At most one RCID object is in the CURRENT state at any one time.
  *
  *      (If no RCID object is in the CURRENT state, this means either
  *       an unnumbered RCID is being used as the preferred RCID
  *       or we currently have no preferred RCID.)
+ *
+ *   All of the above states can be considered substates of the 'ACTIVE' state
+ *   for an RCID as specified in RFC 9000. A CID only ceases to be active
+ *   when we send a RETIRE_CONN_ID frame, which is the responsibility of the
+ *   user of the RCIDM and happens after the above state machine is terminated.
  */
 enum {
     RCID_STATE_PENDING,
@@ -221,6 +226,9 @@ struct quic_rcidm_st {
     unsigned int    roll_requested                  : 1;
 };
 
+static void rcidm_transition_rcid(QUIC_RCIDM *rcidm, RCID *rcid,
+                                  unsigned int state);
+
 /* Check invariants of an RCID */
 static void rcidm_check_rcid(QUIC_RCIDM *rcidm, RCID *rcid)
 {
@@ -249,6 +257,10 @@ static int rcid_cmp(const RCID *a, const RCID *b)
     if (a->seq_num < b->seq_num)
         return -1;
     if (a->seq_num > b->seq_num)
+        return 1;
+    if ((uintptr_t)a < (uintptr_t)b)
+        return -1;
+    if ((uintptr_t)a > (uintptr_t)b)
         return 1;
     return 0;
 }
@@ -319,17 +331,30 @@ static RCID *rcidm_create_rcid(QUIC_RCIDM *rcidm, uint64_t seq_num,
 {
     RCID *rcid;
 
+    if (cid->id_len < 1 || cid->id_len > QUIC_MAX_CONN_ID_LEN
+        || seq_num > OSSL_QUIC_VLINT_MAX)
+        return NULL;
+
     if ((rcid = OPENSSL_zalloc(sizeof(*rcid))) == NULL)
         return NULL;
 
     rcid->seq_num           = seq_num;
     rcid->cid               = *cid;
     rcid->type              = type;
-    rcid->state             = RCID_STATE_PENDING;
 
-    if (!ossl_pqueue_RCID_push(rcidm->rcids, rcid, &rcid->pq_idx)) {
-        OPENSSL_free(rcid);
-        return NULL;
+    if (rcid->seq_num >= rcidm->retire_prior_to) {
+        rcid->state = RCID_STATE_PENDING;
+
+        if (!ossl_pqueue_RCID_push(rcidm->rcids, rcid, &rcid->pq_idx)) {
+            assert(0);
+            OPENSSL_free(rcid);
+            return NULL;
+        }
+    } else {
+        /* RCID is immediately retired upon creation. */
+        rcid->state     = RCID_STATE_RETIRING;
+        rcid->pq_idx    = SIZE_MAX;
+        ossl_list_retiring_insert_tail(&rcidm->retiring_list, rcid);
     }
 
     rcidm_check_rcid(rcidm, rcid);
@@ -403,16 +428,22 @@ static void rcidm_handle_retire_prior_to(QUIC_RCIDM *rcidm,
     if (retire_prior_to <= rcidm->retire_prior_to)
         return;
 
-    rcidm->retire_prior_to = retire_prior_to;
+    /*
+     * Retire the current RCID (if any) if it is affected.
+     */
+    if (rcidm->cur_rcid != NULL && rcidm->cur_rcid->seq_num < retire_prior_to)
+        rcidm_transition_rcid(rcidm, rcidm->cur_rcid, RCID_STATE_RETIRING);
 
     /*
-     * Any RCIDs needing retirement will be at the start of the priority queue,
-     * so just stop once we see a higher sequence number exceeding the
+     * Any other RCIDs needing retirement will be at the start of the priority
+     * queue, so just stop once we see a higher sequence number exceeding the
      * threshold.
      */
     while ((rcid = ossl_pqueue_RCID_peek(rcidm->rcids)) != NULL
            && rcid->seq_num < retire_prior_to)
         rcidm_transition_rcid(rcidm, rcid, RCID_STATE_RETIRING);
+
+    rcidm->retire_prior_to = retire_prior_to;
 }
 
 /*
@@ -424,10 +455,9 @@ static void rcidm_roll(QUIC_RCIDM *rcidm)
 {
     RCID *rcid;
 
-    if (ossl_pqueue_RCID_num(rcidm->rcids) < 1)
+    if ((rcid = ossl_pqueue_RCID_peek(rcidm->rcids)) == NULL)
         return;
 
-    rcid = ossl_pqueue_RCID_peek(rcidm->rcids);
     rcidm_transition_rcid(rcidm, rcid, RCID_STATE_CUR);
 
     ++rcidm->num_changes;
@@ -441,6 +471,17 @@ static void rcidm_roll(QUIC_RCIDM *rcidm)
 
 static void rcidm_update(QUIC_RCIDM *rcidm)
 {
+    RCID *rcid;
+
+    /*
+     * If we have no current numbered RCID but have one or more pending, use it.
+     */
+    if (rcidm->cur_rcid == NULL
+        && (rcid = ossl_pqueue_RCID_peek(rcidm->rcids)) != NULL) {
+        rcidm_transition_rcid(rcidm, rcid, RCID_STATE_CUR);
+        assert(rcidm->cur_rcid != NULL);
+    }
+
     /* Prefer use of any current numbered RCID we have, if possible. */
     if (rcidm->cur_rcid != NULL) {
         rcidm_check_rcid(rcidm, rcidm->cur_rcid);
@@ -554,12 +595,11 @@ int ossl_quic_rcidm_add_from_ncid(QUIC_RCIDM *rcidm,
 {
     RCID *rcid;
 
-    rcidm_handle_retire_prior_to(rcidm, ncid->retire_prior_to);
-
     rcid = rcidm_create_rcid(rcidm, ncid->seq_num, &ncid->conn_id, RCID_TYPE_NCID);
     if (rcid == NULL)
         return 0;
 
+    rcidm_handle_retire_prior_to(rcidm, ncid->retire_prior_to);
     rcidm_tick(rcidm);
     return 1;
 }
@@ -617,3 +657,5 @@ int ossl_quic_rcidm_get_preferred_tx_dcid_changed(QUIC_RCIDM *rcidm,
 
     return r;
 }
+
+// TODO expose counters for enforcement
