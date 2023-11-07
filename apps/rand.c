@@ -25,7 +25,7 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS rand_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] num[k|m|g|t]\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] num[K|M|G|T]\n"},
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -99,67 +99,78 @@ int rand_main(int argc, char **argv)
     if (argc == 1) {
         int factoridx = 0;
         int shift = 0;
-        /*
-         * iterate over the value and check to see if there are
-         * any non-numerical chars
-         * A non digit suffix indicates we need to shift the
-         * number of requested bytes by a factor of:
-         * k = 1024^1 (1 << (10 * 1))
-         * m = 1024^2 (1 << (10 * 2))
-         * g = 1024^3 (1 << (10 * 3))
-         * t = 1024^4 (1 << (10 * 4))
-         * which can be achieved by bit-shifting the number
-         */
-        while (argv[0][factoridx]) {
-            if (!isdigit((int)(argv[0][factoridx]))) {
-                switch(argv[0][factoridx]) {
-                case 'k':
-                case 'K':
-                    shift = 10;
-                    break;
-                case 'm':
-                case 'M':
-                    shift = 20;
-                    break;
-                case 'g':
-                case 'G':
-                    shift = 30;
-                    break;
-                case 't':
-                case 'T':
-                    shift = 40;
-                    break;
-                default:
-                    BIO_printf(bio_err, "Invalid size suffix %s\n",
-                               &argv[0][factoridx]);
-                    goto opthelp;
-                }
-                break;
-            }
-            factoridx++;
-        }
 
-        if (factoridx && strlen(&argv[0][factoridx]) != 1) {
-            BIO_printf(bio_err, "Invalid size suffix %s\n", &argv[0][factoridx]);
-            goto opthelp;
+        /*
+         * special case for requesting the max allowed
+         * number of random bytes to be generated
+         */
+        if (!strcmp(argv[0], "max")) {
+            scaled_num = SIZE_MAX;
+        } else {
+            /*
+             * iterate over the value and check to see if there are
+             * any non-numerical chars
+             * A non digit suffix indicates we need to shift the
+             * number of requested bytes by a factor of:
+             * k = 1024^1 (1 << (10 * 1))
+             * m = 1024^2 (1 << (10 * 2))
+             * g = 1024^3 (1 << (10 * 3))
+             * t = 1024^4 (1 << (10 * 4))
+             * which can be achieved by bit-shifting the number
+             */
+            while (argv[0][factoridx]) {
+                if (!isdigit((int)(argv[0][factoridx]))) {
+                    switch(argv[0][factoridx]) {
+                    case 'k':
+                    case 'K':
+                        shift = 10;
+                        break;
+                    case 'm':
+                    case 'M':
+                        shift = 20;
+                        break;
+                    case 'g':
+                    case 'G':
+                        shift = 30;
+                        break;
+                    case 't':
+                    case 'T':
+                        shift = 40;
+                        break;
+                    default:
+                        BIO_printf(bio_err, "Invalid size suffix %s\n",
+                                   &argv[0][factoridx]);
+                        goto opthelp;
+                    }
+                    break;
+                }
+                factoridx++;
+            }
+
+            if (shift != 0 && strlen(&argv[0][factoridx]) != 1) {
+                BIO_printf(bio_err, "Invalid size suffix %s\n",
+                           &argv[0][factoridx]);
+                goto opthelp;
+            }
         }
         /* Remove the suffix from the arg so that opt_long works */
         if (shift != 0)
             argv[0][factoridx] = '\0';
 
-        if (!opt_long(argv[0], &num) || num <= 0)
+        if ((scaled_num != SIZE_MAX) && (!opt_long(argv[0], &num) || num <= 0))
             goto opthelp;
 
         if (shift != 0) {
             /* check for overflow */
             if ((SIZE_MAX >> shift) < (size_t)num) {
-                BIO_printf(bio_err, "%lu bytes with provided suffix overflows\n",
+                BIO_printf(bio_err, "%lu bytes with suffix overflows\n",
                            num);
                 goto opthelp;
             }
             scaled_num = num << shift;
         } else {
-            scaled_num = num;
+            if (scaled_num == 0)
+                scaled_num = num;
         }
     } else if (!opt_check_rest_arg(NULL)) {
         goto opthelp;
