@@ -75,10 +75,6 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
     if (rsa == NULL)
         return 0;
 
-    ctx = BN_CTX_new_ex(rsa->libctx);
-    if (ctx == NULL)
-        return 0;
-
     param_derive = OSSL_PARAM_locate_const(params,
                                            OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ);
     if ((param_derive != NULL)
@@ -91,6 +87,11 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
         param_d = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_D);
 
     if (derive_from_pq) {
+
+        ctx = BN_CTX_new_ex(rsa->libctx);
+        if (ctx == NULL)
+            goto err;
+
         /* we need at minimum p, q and e */
         param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR1);
         param_q = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR2);
