@@ -2264,6 +2264,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
 
             shdr->len = payload_len_explicit;
         } else {
+            *packet_full = 1;
             shdr->has_explicit_len = 0;
             shdr->len = payload_len_implicit;
         }
