@@ -235,6 +235,23 @@ int ossl_quic_lcidm_lookup(QUIC_LCIDM *lcidm,
                            uint64_t *seq_num,
                            void **opaque);
 
+/*
+ * Debug call to manually remove a specific LCID. Should not be needed in normal
+ * usage. Returns 1 if the LCID was successfully found and removed and 0
+ * otherwise.
+ */
+int ossl_quic_lcidm_debug_remove(QUIC_LCIDM *lcidm,
+                                 const QUIC_CONN_ID *lcid);
+
+/*
+ * Debug call to manually add a numbered LCID with a specific CID value and
+ * sequence number. Should not be needed in normal usage. Returns 1 on success
+ * and 0 on failure.
+ */
+int ossl_quic_lcidm_debug_add(QUIC_LCIDM *lcidm, void *opaque,
+                              const QUIC_CONN_ID *lcid,
+                              uint64_t seq_num);
+
 # endif
 
 #endif
