@@ -64,6 +64,11 @@ Input = 61
 OutputSize = 10
 Output = b60d322755eebca92b5e
 
+Digest = BLAKE2s256
+Input = 61
+OutputSize = 33
+Result = DIGESTINIT_ERROR
+
 Digest = BLAKE2b512
 Input =
 Output = 786a02f742015903c6c6fd852552d272912f4740e15847618a86e217f71f5419d25e1031afee585313896444934eb04b903a685b1448b755d56f701afe9be2ce
@@ -109,3 +114,8 @@ Digest = BLAKE2b512
 Input = 61
 OutputSize = 32
 Output = 8928aae63c84d87ea098564d1e03ad813f107add474e56aedd286349c0c03ea4
+
+Digest = BLAKE2b512
+Input = 61
+OutputSize = 65
+Result = DIGESTINIT_ERROR
