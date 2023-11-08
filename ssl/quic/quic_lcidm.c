@@ -473,3 +473,41 @@ int ossl_quic_lcidm_lookup(QUIC_LCIDM *lcidm,
 
     return 1;
 }
+
+int ossl_quic_lcidm_debug_remove(QUIC_LCIDM *lcidm,
+                                 const QUIC_CONN_ID *lcid)
+{
+    QUIC_LCID key, *lcid_obj;
+
+    key.cid = *lcid;
+    if ((lcid_obj = lh_QUIC_LCID_retrieve(lcidm->lcids, &key)) == NULL)
+        return 0;
+
+    lcidm_delete_conn_lcid(lcidm, lcid_obj);
+    return 1;
+}
+
+int ossl_quic_lcidm_debug_add(QUIC_LCIDM *lcidm, void *opaque,
+                              const QUIC_CONN_ID *lcid,
+                              uint64_t seq_num)
+{
+    QUIC_LCIDM_CONN *conn;
+    QUIC_LCID key, *lcid_obj;
+
+    if (lcid == NULL || lcid->id_len > QUIC_MAX_CONN_ID_LEN)
+        return 0;
+
+    if ((conn = lcidm_upsert_conn(lcidm, opaque)) == NULL)
+        return 0;
+
+    key.cid = *lcid;
+    if (lh_QUIC_LCID_retrieve(lcidm->lcids, &key) != NULL)
+        return 0;
+
+    if ((lcid_obj = lcidm_conn_new_lcid(lcidm, conn, lcid)) == NULL)
+        return 0;
+
+    lcid_obj->seq_num   = seq_num;
+    lcid_obj->type      = LCID_TYPE_NCID;
+    return 1;
+}
