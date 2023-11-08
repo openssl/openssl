@@ -125,19 +125,15 @@ int rand_main(int argc, char **argv)
             while (argv[0][factoridx]) {
                 if (!isdigit((int)(argv[0][factoridx]))) {
                     switch(argv[0][factoridx]) {
-                    case 'k':
                     case 'K':
                         shift = 10;
                         break;
-                    case 'm':
                     case 'M':
                         shift = 20;
                         break;
-                    case 'g':
                     case 'G':
                         shift = 30;
                         break;
-                    case 't':
                     case 'T':
                         shift = 40;
                         break;
