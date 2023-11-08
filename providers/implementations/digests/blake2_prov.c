@@ -74,7 +74,7 @@ int ossl_blake##variant##_set_ctx_params(void *vctx, const OSSL_PARAM params[]) 
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER); \
             return 0; \
         } \
-        if (size < 1 || size > UINT8_MAX) { \
+        if (size < 1 || size > BLAKE##VARIANT##_OUTBYTES) { \
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_SIZE); \
             return 0; \
         } \
