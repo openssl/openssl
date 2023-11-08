@@ -429,21 +429,22 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
      */
     if (!SSL_get_event_timeout(s, &tv, &cinf))
         return 0;
-    if (using_fake_time) {
+
+    if (using_fake_time)
         now = qtest_get_time();
-    } else {
+    else
         now = ossl_time_now();
-    }
+
     ctimeout = cinf ? ossl_time_infinite() : ossl_time_from_timeval(tv);
     stimeout = ossl_time_subtract(ossl_quic_tserver_get_deadline(qtserv), now);
     mintimeout = ossl_time_min(ctimeout, stimeout);
     if (ossl_time_is_infinite(mintimeout))
         return 0;
-    if (using_fake_time) {
+
+    if (using_fake_time)
         qtest_add_time(ossl_time2ms(mintimeout));
-    } else {
+    else
         OSSL_sleep(ossl_time2ms(mintimeout));
-    }
 
     return 1;
 }
