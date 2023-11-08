@@ -17,8 +17,8 @@ Title = KMAC length failure tests
 # Verify that a too short key fails
 FIPSversion = >3.1.3
 MAC = KMAC128
-Key = 01
-Input = 00010203
+Key = 0102030405060708
+Input = 00
 Custom = ""
 Result = MAC_INIT_ERROR
 OutputSize = 32
