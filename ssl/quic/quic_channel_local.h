@@ -87,14 +87,7 @@ struct quic_channel_st {
     const OSSL_CC_METHOD            *cc_method;
     OSSL_ACKM                       *ackm;
 
-    /*
-     * RX demuxer. We register incoming DCIDs with this. Since we currently only
-     * support client operation and use one L4 port per connection, we own the
-     * demuxer and register a single zero-length DCID with it.
-     */
-    QUIC_DEMUX                      *demux;
-
-    /* Record layers in the TX and RX directions, plus the RX demuxer. */
+    /* Record layers in the TX and RX directions. */
     OSSL_QTX                        *qtx;
     OSSL_QRX                        *qrx;
 
