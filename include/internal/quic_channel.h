@@ -106,6 +106,10 @@
 #  define QUIC_CHANNEL_STATE_TERMINATED                  4
 
 typedef struct quic_channel_args_st {
+    /*
+     * The QUIC_PORT which the channel is to belong to. The lifetime of the
+     * QUIC_PORT must exceed that of the created channel.
+     */
     QUIC_PORT       *port;
 
     OSSL_LIB_CTX    *libctx;
