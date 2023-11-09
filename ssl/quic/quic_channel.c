@@ -2532,21 +2532,6 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
 }
 
 /*
- * QUIC Channel: Network BIO Configuration
- * =======================================
- */
-
-int ossl_quic_channel_set_net_rbio(QUIC_CHANNEL *ch, BIO *net_rbio)
-{
-    return ossl_quic_port_set_net_rbio(ch->port, net_rbio);
-}
-
-int ossl_quic_channel_set_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio)
-{
-    return ossl_quic_port_set_net_wbio(ch->port, net_wbio);
-}
-
-/*
  * QUIC Channel: Lifecycle Events
  * ==============================
  */
