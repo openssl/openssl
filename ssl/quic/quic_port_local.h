@@ -87,6 +87,12 @@ struct quic_port_st {
 
     /* Inhibit tick for testing purposes? */
     unsigned int                    inhibit_tick                    : 1;
+
+    /* Has this port sent any packet of any kind yet? */
+    unsigned int                    have_sent_any_pkt               : 1;
+
+    /* Does this port allow incoming connections? */
+    unsigned int                    is_server                       : 1;
 };
 
 # endif
