@@ -134,15 +134,23 @@ void ossl_quic_port_set_inhibit_tick(QUIC_PORT *port, int inhibit);
 int ossl_quic_port_is_running(const QUIC_PORT *port);
 
 /*
+ * Restores port-level error to the error stack. To be called only if
+ * the port is no longer running.
+ */
+void ossl_quic_port_restore_err_state(const QUIC_PORT *port);
+
+/*
  * Events
  * ======
  */
 
 /*
  * Called if a permanent network error occurs. Terminates all channels
- * immediately.
+ * immediately. triggering_ch is an optional argument designating
+ * a channel which encountered the network error.
  */
-void ossl_quic_port_raise_net_error(QUIC_PORT *port);
+void ossl_quic_port_raise_net_error(QUIC_PORT *port,
+                                    QUIC_CHANNEL *triggering_ch);
 
 # endif
 
