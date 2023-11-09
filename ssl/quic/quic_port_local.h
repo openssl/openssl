@@ -19,7 +19,12 @@ struct quic_port_st {
     OSSL_LIB_CTX                    *libctx;
     const char                      *propq;
 
-    /* Mutex for the entire QUIC event domain. */
+    /*
+     * Master synchronisation mutex for the entire QUIC event domain. Used for
+     * thread assisted mode synchronisation. We don't own this; the instantiator
+     * of the port passes it to us and is responsible for freeing it after port
+     * destruction.
+     */
     CRYPTO_MUTEX                    *mutex;
 
     /* Callback used to get the current time. */

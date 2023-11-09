@@ -38,23 +38,6 @@ DEFINE_LIST_OF(stateless_reset_tokens, QUIC_SRT_ELEM);
 struct quic_channel_st {
     QUIC_PORT                       *port;
 
-    OSSL_LIB_CTX                    *libctx;
-    const char                      *propq;
-
-    /*
-     * Master synchronisation mutex used for thread assisted mode
-     * synchronisation. We don't own this; the instantiator of the channel
-     * passes it to us and is responsible for freeing it after channel
-     * destruction.
-     */
-    CRYPTO_MUTEX                    *mutex;
-
-    /*
-     * Callback used to get the current time.
-     */
-    OSSL_TIME                       (*now_cb)(void *arg);
-    void                            *now_cb_arg;
-
     /*
      * The associated TLS 1.3 connection data. Used to provide the handshake
      * layer; its 'network' side is plugged into the crypto stream for each EL
