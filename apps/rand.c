@@ -55,7 +55,7 @@ int rand_main(int argc, char **argv)
     int format = FORMAT_BINARY, r, i, ret = 1;
     size_t buflen = (1 << 16); /* max rand chunk size is 2^16 bytes */
     long num = -1;
-    size_t scaled_num = 0;
+    uint64_t scaled_num = 0;
     uint8_t *buf = NULL;
 
     prog = opt_init(argc, argv, rand_options);
@@ -109,7 +109,7 @@ int rand_main(int argc, char **argv)
              * 2^61 bytes is the limit of random output
              * per drbg instantiation
              */
-            scaled_num = SIZE_MAX >> 3;
+            scaled_num = UINT64_MAX >> 3;
         } else {
             /*
              * iterate over the value and check to see if there are
@@ -162,13 +162,13 @@ int rand_main(int argc, char **argv)
 
         if (shift != 0) {
             /* check for overflow */
-            if ((SIZE_MAX >> shift) < (size_t)num) {
+            if ((UINT64_MAX >> shift) < (size_t)num) {
                 BIO_printf(bio_err, "%lu bytes with suffix overflows\n",
                            num);
                 goto opthelp;
             }
             scaled_num = num << shift;
-            if (scaled_num > (SIZE_MAX >> 3)) {
+            if (scaled_num > (UINT64_MAX >> 3)) {
                 BIO_printf(bio_err, "Request exceeds max allowed output\n");
                 goto opthelp;
             }

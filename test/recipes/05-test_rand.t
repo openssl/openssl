@@ -32,7 +32,7 @@ SKIP: {
     ok($success && $randdata[0] eq $expected,
        "rand with ossltest: Check rand output is as expected");
 
-    @randdata = run(app(['openssl', 'rand', '-hex', '2k' ]),
+    @randdata = run(app(['openssl', 'rand', '-hex', '2K' ]),
                     capture => 1, statusvar => \$success);
     chomp(@randdata);
 
