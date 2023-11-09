@@ -59,6 +59,9 @@ struct quic_port_st {
 
     /* Is this port created to support multiple connections? */
     unsigned int                    is_multi_conn                   : 1;
+
+    /* Inhibit tick for testing purposes? */
+    unsigned int                    inhibit_tick                    : 1;
 };
 
 # endif

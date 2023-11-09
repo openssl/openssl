@@ -14,6 +14,7 @@
 #include "internal/quic_ssl.h"
 #include "internal/quic_error.h"
 #include "internal/quic_stream_map.h"
+#include "internal/quic_port.h"
 #include "testutil.h"
 #include "helpers/quictestlib.h"
 #if defined(OPENSSL_THREADS)
@@ -1594,7 +1595,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
                 SSL_SHUTDOWN_EX_ARGS args = {0};
 
-                ossl_quic_channel_set_inhibit_tick(ch, 0);
+                ossl_quic_port_set_inhibit_tick(ossl_quic_channel_get0_port(ch), 0);
 
                 if (!TEST_ptr(c_tgt))
                     goto out;
@@ -1918,7 +1919,8 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             {
                 QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
 
-                ossl_quic_channel_set_inhibit_tick(ch, op->arg1);
+                ossl_quic_port_set_inhibit_tick(ossl_quic_channel_get0_port(ch),
+                                                op->arg1);
             }
             break;
 
