@@ -64,7 +64,7 @@ static int block_until_pred(QUIC_CONNECTION *qc,
      * Any attempt to block auto-disables tick inhibition as otherwise we will
      * hang around forever.
      */
-    ossl_quic_channel_set_inhibit_tick(qc->ch, 0);
+    ossl_quic_port_set_inhibit_tick(qc->port, 0);
 
     rtor = ossl_quic_channel_get_reactor(qc->ch);
     return ossl_quic_reactor_block_until_pred(rtor, pred, pred_arg, flags,
@@ -856,7 +856,7 @@ static int qc_can_support_blocking_cached(QUIC_CONNECTION *qc)
 
 static void qc_update_can_support_blocking(QUIC_CONNECTION *qc)
 {
-    ossl_quic_channel_update_poll_descriptors(qc->ch); /* best effort */
+    ossl_quic_port_update_poll_descriptors(qc->port); /* best effort */
 }
 
 static void qc_update_blocking_mode(QUIC_CONNECTION *qc)

@@ -24,6 +24,7 @@ static void port_cleanup(QUIC_PORT *port);
 static OSSL_TIME get_time(void *arg);
 static void port_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
 static void port_default_packet_handler(QUIC_URXE *e, void *arg);
+static void port_rx_pre(QUIC_PORT *port);
 
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 
@@ -217,13 +218,17 @@ int ossl_quic_port_set_net_rbio(QUIC_PORT *port, BIO *net_rbio)
 
 int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio)
 {
+    QUIC_CHANNEL *ch;
+
     if (port->net_wbio == net_wbio)
         return 1;
 
     if (!port_update_poll_desc(port, net_wbio, /*for_write=*/1))
         return 0;
 
-    //ossl_qtx_set_bio(port->qtx, net_wbio);
+    LIST_FOREACH(ch, ch, &port->channel_list)
+        ossl_qtx_set_bio(ch->qtx, net_wbio);
+
     port->net_wbio = net_wbio;
     return 1;
 }
@@ -301,7 +306,49 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
  */
 static void port_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
 {
-    /* TODO */
+    QUIC_PORT *port = arg;
+    QUIC_CHANNEL *ch;
+
+    res->net_read_desired   = 0;
+    res->net_write_desired  = 0;
+    res->tick_deadline      = ossl_time_infinite();
+
+    if (!port->inhibit_tick) {
+        /* Handle any incoming data from network. */
+        port_rx_pre(port);
+
+        /* Iterate through all channels and service them. */
+        LIST_FOREACH(ch, ch, &port->channel_list) {
+            QUIC_TICK_RESULT subr = {0};
+
+            ossl_quic_channel_subtick(ch, &subr, flags);
+            ossl_quic_tick_result_merge_into(res, &subr);
+        }
+    }
+}
+
+/* Process incoming datagrams, if any. */
+static void port_rx_pre(QUIC_PORT *port)
+{
+    int ret;
+
+    // TODO !have_sent_any_pkt
+
+    /*
+     * Get DEMUX to BIO_recvmmsg from the network and queue incoming datagrams
+     * to the appropriate QRX instances.
+     */
+    ret = ossl_quic_demux_pump(port->demux);
+    // TODO: handle ret, stateless reset
+
+    if (ret == QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL)
+        /*
+         * We don't care about transient failure, but permanent failure means we
+         * should tear down the port. All connections skip straight to the
+         * Terminated state as there is no point trying to send CONNECTION_CLOSE
+         * frames if the network BIO is not operating correctly.
+         */
+        ossl_quic_port_raise_net_error(port);
 }
 
 /*
@@ -336,8 +383,16 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg)
     QUIC_PKT_HDR hdr;
     QUIC_CHANNEL *new_ch = NULL;
 
+    // TODO review this
     if (port->tserver_ch == NULL)
         goto undesirable;
+
+    // TODO allow_incoming
+    //if (!ossl_assert(ch->is_server))
+    //    goto undesirable;
+
+    //TODO if (ch->state != QUIC_CHANNEL_STATE_IDLE)
+    //    goto undesirable;
 
     /*
      * We have got a packet for an unknown DCID. This might be an attempt to
@@ -394,4 +449,19 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg)
 
 undesirable:
     ossl_quic_demux_release_urxe(port->demux, e);
+}
+
+void ossl_quic_port_set_inhibit_tick(QUIC_PORT *port, int inhibit)
+{
+    port->inhibit_tick = (inhibit != 0);
+}
+
+void ossl_quic_port_raise_net_error(QUIC_PORT *port)
+{
+    QUIC_CHANNEL *ch;
+
+    // TODO fsm
+
+    LIST_FOREACH(ch, ch, &port->channel_list)
+        ossl_quic_channel_raise_net_error(ch);
 }

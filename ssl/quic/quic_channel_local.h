@@ -58,14 +58,8 @@ struct quic_channel_st {
      */
     unsigned char                   *local_transport_params;
 
-    /* Asynchronous I/O reactor. */
-    QUIC_REACTOR                    rtor;
-
     /* Our current L4 peer address, if any. */
     BIO_ADDR                        cur_peer_addr;
-
-    /* Network-side read and write BIOs. */
-    BIO                             *net_rbio, *net_wbio;
 
     /*
      * Subcomponents of the connection. All of these components are instantiated
@@ -441,9 +435,6 @@ struct quic_channel_st {
      * if it happens during the TERMINATING state.
      */
     unsigned int                    protocol_error                      : 1;
-
-    /* Inhibit tick for testing purposes? */
-    unsigned int                    inhibit_tick                        : 1;
 
     /* Are we using addressed mode? */
     unsigned int                    addressed_mode                      : 1;
