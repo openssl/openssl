@@ -692,7 +692,7 @@ QUIC_PORT *ossl_quic_channel_get0_port(QUIC_CHANNEL *ch)
 
 CRYPTO_MUTEX *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch)
 {
-    return ch->port->mutex;
+    return ossl_quic_port_get0_mutex(ch->port);
 }
 
 int ossl_quic_channel_has_pending(const QUIC_CHANNEL *ch)
@@ -711,10 +711,7 @@ static OSSL_TIME get_time(void *arg)
 {
     QUIC_CHANNEL *ch = arg;
 
-    if (ch->port->now_cb == NULL)
-        return ossl_time_now();
-
-    return ch->port->now_cb(ch->port->now_cb_arg);
+    return ossl_quic_port_get_time(ch->port);
 }
 
 /* Used by QSM. */

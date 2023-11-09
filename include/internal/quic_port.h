@@ -80,6 +80,9 @@ QUIC_DEMUX *ossl_quic_port_get0_demux(QUIC_PORT *port);
 /* Gets the mutex used by the port. */
 CRYPTO_MUTEX *ossl_quic_port_get0_mutex(QUIC_PORT *port);
 
+/* Gets the current time. */
+OSSL_TIME ossl_quic_port_get_time(QUIC_PORT *port);
+
 # endif
 
 #endif
