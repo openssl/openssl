@@ -21,7 +21,7 @@ static const QUIC_CONN_ID empty_conn_id = {0, {0}};
 #define RX_TEST_OP_END                     0 /* end of script */
 #define RX_TEST_OP_SET_SCID_LEN            1 /* change SCID length */
 #define RX_TEST_OP_SET_INIT_LARGEST_PN     2 /* set initial largest PN */
-#define RX_TEST_OP_ADD_RX_DCID             3 /* register an RX DCID */
+#define RX_TEST_OP_SET_RX_DCID             3 /* register an RX DCID */
 #define RX_TEST_OP_INJECT                  4 /* inject a datagram into demux */
 #define RX_TEST_OP_PROVIDE_SECRET          5 /* provide RX secret */
 #define RX_TEST_OP_PROVIDE_SECRET_INITIAL  6 /* provide RX secret for initial */
@@ -54,8 +54,8 @@ struct rx_test_op {
     { RX_TEST_OP_SET_SCID_LEN, 0, NULL, 0, NULL, (scid_len), 0, 0, NULL, NULL },
 #define RX_OP_SET_INIT_LARGEST_PN(largest_pn) \
     { RX_TEST_OP_SET_INIT_LARGEST_PN, 0, NULL, 0, NULL, 0, 0, (largest_pn), NULL, NULL },
-#define RX_OP_ADD_RX_DCID(dcid) \
-    { RX_TEST_OP_ADD_RX_DCID, 0, NULL, 0, NULL, 0, 0, 0, &(dcid), NULL },
+#define RX_OP_SET_RX_DCID(dcid) \
+    { RX_TEST_OP_SET_RX_DCID, 0, NULL, 0, NULL, 0, 0, 0, &(dcid), NULL },
 #define RX_OP_INJECT(dgram) \
     { RX_TEST_OP_INJECT, 0, (dgram), sizeof(dgram), NULL, 0, 0, 0, NULL },
 #define RX_OP_PROVIDE_SECRET(el, suite, key)                           \
@@ -138,7 +138,7 @@ static const QUIC_PKT_HDR rx_script_1_expect_hdr = {
 static const struct rx_test_op rx_script_1[] = {
     RX_OP_SET_SCID_LEN(2)
     RX_OP_SET_INIT_LARGEST_PN(0)
-    RX_OP_ADD_RX_DCID(empty_conn_id)
+    RX_OP_SET_RX_DCID(empty_conn_id)
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_1_dcid)
     RX_OP_INJECT_CHECK(1)
     RX_OP_CHECK_NO_PKT()
@@ -173,7 +173,7 @@ static const QUIC_PKT_HDR rx_script_2_expect_hdr = {
 static const struct rx_test_op rx_script_2[] = {
     RX_OP_ALLOW_1RTT()
     RX_OP_SET_INIT_LARGEST_PN(654360560)
-    RX_OP_ADD_RX_DCID(empty_conn_id)
+    RX_OP_SET_RX_DCID(empty_conn_id)
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_CHACHA20POLY1305,
                          rx_script_2_secret)
     RX_OP_INJECT_CHECK(2)
@@ -218,7 +218,7 @@ static const unsigned char rx_script_3_body[] = {
 };
 
 static const struct rx_test_op rx_script_3[] = {
-    RX_OP_ADD_RX_DCID(empty_conn_id)
+    RX_OP_SET_RX_DCID(empty_conn_id)
     /*
      * This is a version negotiation packet, so doesn't have any frames.
      * However, the depacketizer still handles this sort of packet, so
@@ -279,7 +279,7 @@ static const unsigned char rx_script_4_body[] = {
 };
 
 static const struct rx_test_op rx_script_4[] = {
-    RX_OP_ADD_RX_DCID(empty_conn_id)
+    RX_OP_SET_RX_DCID(empty_conn_id)
     RX_OP_INJECT_CHECK(4)
     RX_OP_CHECK_NO_PKT()
     RX_OP_END
@@ -592,7 +592,7 @@ static const unsigned char rx_script_5c_body[] = {
 
 static const struct rx_test_op rx_script_5[] = {
     RX_OP_ALLOW_1RTT()
-    RX_OP_ADD_RX_DCID(empty_conn_id)
+    RX_OP_SET_RX_DCID(empty_conn_id)
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_5_c2s_init_dcid)
     RX_OP_INJECT_N(5)
     RX_OP_CHECK_PKT_N(5a)
@@ -629,7 +629,7 @@ static const struct rx_test_op rx_script_5[] = {
 
     /* Recreate QRL, test reading packets received before key */
     RX_OP_SET_SCID_LEN(0)
-    RX_OP_ADD_RX_DCID(empty_conn_id)
+    RX_OP_SET_RX_DCID(empty_conn_id)
     RX_OP_INJECT_N(5)
     RX_OP_CHECK_NO_PKT()
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_5_c2s_init_dcid)
@@ -961,7 +961,7 @@ static const unsigned char rx_script_6c_body[] = {
 
 static const struct rx_test_op rx_script_6[] = {
     RX_OP_ALLOW_1RTT()
-    RX_OP_ADD_RX_DCID(empty_conn_id)
+    RX_OP_SET_RX_DCID(empty_conn_id)
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_6_c2s_init_dcid)
     RX_OP_INJECT_N(6)
     RX_OP_CHECK_PKT_N(6a)
@@ -998,7 +998,7 @@ static const struct rx_test_op rx_script_6[] = {
 
     /* Recreate QRL, test reading packets received before key */
     RX_OP_SET_SCID_LEN(0)
-    RX_OP_ADD_RX_DCID(empty_conn_id)
+    RX_OP_SET_RX_DCID(empty_conn_id)
     RX_OP_INJECT_N(6)
     RX_OP_CHECK_NO_PKT()
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_6_c2s_init_dcid)
@@ -1324,7 +1324,7 @@ static const unsigned char rx_script_7c_body[] = {
 
 static const struct rx_test_op rx_script_7[] = {
     RX_OP_ALLOW_1RTT()
-    RX_OP_ADD_RX_DCID(empty_conn_id)
+    RX_OP_SET_RX_DCID(empty_conn_id)
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_7_c2s_init_dcid)
     RX_OP_INJECT_N(7)
     RX_OP_CHECK_PKT_N(7a)
@@ -1361,7 +1361,7 @@ static const struct rx_test_op rx_script_7[] = {
 
     /* Recreate QRL, test reading packets received before key */
     RX_OP_SET_SCID_LEN(0)
-    RX_OP_ADD_RX_DCID(empty_conn_id)
+    RX_OP_SET_RX_DCID(empty_conn_id)
     RX_OP_INJECT_N(7)
     RX_OP_CHECK_NO_PKT()
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_7_c2s_init_dcid)
@@ -1583,7 +1583,7 @@ static const unsigned char rx_script_8f_body[] = {
 
 static const struct rx_test_op rx_script_8[] = {
     RX_OP_ALLOW_1RTT()
-    RX_OP_ADD_RX_DCID(empty_conn_id)
+    RX_OP_SET_RX_DCID(empty_conn_id)
     /* Inject before we get the keys */
     RX_OP_INJECT_N(8a)
     /* Nothing yet */
@@ -1676,7 +1676,7 @@ static const struct rx_test_op rx_script_8[] = {
 
 /* 9. 1-RTT Deferral Test */
 static const struct rx_test_op rx_script_9[] = {
-    RX_OP_ADD_RX_DCID(empty_conn_id)
+    RX_OP_SET_RX_DCID(empty_conn_id)
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_5_c2s_init_dcid)
     RX_OP_INJECT_N(5)
 
@@ -1723,6 +1723,8 @@ struct rx_state {
     SSL_CTX            *quic_ssl_ctx;
     QUIC_CONNECTION    *quic_conn;
 
+    QUIC_CONN_ID        rx_dcid;
+
     int                 allow_1rtt;
 };
 
@@ -1760,6 +1762,17 @@ static OSSL_TIME fake_time(void *arg)
     return expected_time(++time_counter);
 }
 
+static void demux_default_handler(QUIC_URXE *e, void *arg,
+                                  const QUIC_CONN_ID *dcid)
+{
+    struct rx_state *s = arg;
+
+    if (dcid == NULL || !ossl_quic_conn_id_eq(dcid, &s->rx_dcid))
+        return;
+
+    ossl_qrx_inject_urxe(s->qrx, e);
+}
+
 static int rx_state_ensure(struct rx_state *s)
 {
     if (s->demux == NULL
@@ -1776,6 +1789,8 @@ static int rx_state_ensure(struct rx_state *s)
     if (s->qrx == NULL
         && !TEST_ptr(s->qrx = ossl_qrx_new(&s->args)))
         return 0;
+
+    ossl_quic_demux_set_default_handler(s->demux, demux_default_handler, s);
 
     if (s->allow_1rtt)
         ossl_qrx_allow_1rtt_processing(s->qrx);
@@ -1803,11 +1818,10 @@ static int rx_run_script(const struct rx_test_op *script)
                 for (i = 0; i < QUIC_PN_SPACE_NUM; ++i)
                     s.args.init_largest_pn[i] = op->largest_pn;
                 break;
-            case RX_TEST_OP_ADD_RX_DCID:
+            case RX_TEST_OP_SET_RX_DCID:
                 if (!TEST_true(rx_state_ensure(&s)))
                     goto err;
-                if (!TEST_true(ossl_qrx_add_dst_conn_id(s.qrx, op->dcid)))
-                    goto err;
+                s.rx_dcid = *op->dcid;
                 break;
             case RX_TEST_OP_PROVIDE_SECRET:
                 if (!TEST_true(rx_state_ensure(&s)))
