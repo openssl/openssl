@@ -87,6 +87,9 @@ static int port_init(QUIC_PORT *port)
     if ((port->srtm = ossl_quic_srtm_new(port->libctx, port->propq)) == NULL)
         goto err;
 
+    if ((port->lcidm = ossl_quic_lcidm_new(port->libctx, rx_short_dcid_len)) == NULL)
+        goto err;
+
     ossl_quic_reactor_init(&port->rtor, port_tick, port, ossl_time_zero());
     port->rx_short_dcid_len = (unsigned char)rx_short_dcid_len;
     port->tx_init_dcid_len  = INIT_DCID_LEN;
@@ -106,6 +109,9 @@ static void port_cleanup(QUIC_PORT *port)
 
     ossl_quic_srtm_free(port->srtm);
     port->srtm = NULL;
+
+    ossl_quic_lcidm_free(port->lcidm);
+    port->lcidm = NULL;
 }
 
 QUIC_REACTOR *ossl_quic_port_get0_reactor(QUIC_PORT *port)
