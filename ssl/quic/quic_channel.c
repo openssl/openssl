@@ -2255,6 +2255,7 @@ static int ch_tx(QUIC_CHANNEL *ch)
         res = ossl_quic_tx_packetiser_generate(ch->txp, &status);
         if (status.sent_pkt > 0) {
             ch->have_sent_any_pkt = 1; /* Packet(s) were sent */
+            ch->port->have_sent_any_pkt = 1;
 
             /*
             * RFC 9000 s. 10.1. 'An endpoint also restarts its idle timer when
