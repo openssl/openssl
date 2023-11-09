@@ -323,6 +323,7 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
 
     ch = port_make_channel(port, tls, /*is_server=*/1);
     port->tserver_ch = ch;
+    port->is_server  = 1;
     return ch;
 }
 
@@ -364,6 +365,25 @@ static void port_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
 static void port_rx_pre(QUIC_PORT *port)
 {
     int ret;
+
+    /*
+     * Originally, this check (don't RX before we have sent anything if we are
+     * not a server, because there can't be anything) was just intended as a
+     * minor optimisation. However, it is actually required on Windows, and
+     * removing this check will cause Windows to break.
+     *
+     * The reason is that under Win32, recvfrom() does not work on a UDP socket
+     * which has not had bind() called (???). However, calling sendto() will
+     * automatically bind an unbound UDP socket. Therefore, if we call a Winsock
+     * recv-type function before calling a Winsock send-type function, that call
+     * will fail with WSAEINVAL, which we will regard as a permanent network
+     * error.
+     *
+     * Therefore, this check is essential as we do not require our API users to
+     * bind a socket first when using the API in client mode.
+     */
+    if (!port->is_server && !port->have_sent_any_pkt)
+        return;
 
     /*
      * Get DEMUX to BIO_recvmmsg from the network and queue incoming datagrams
