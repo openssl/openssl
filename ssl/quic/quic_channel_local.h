@@ -7,9 +7,9 @@
 
 #  include <openssl/lhash.h>
 #  include "internal/list.h"
-
-
-typedef struct quic_srt_elem_st QUIC_SRT_ELEM;
+#  include "internal/quic_predef.h"
+#  include "internal/quic_fc.h"
+#  include "internal/quic_stream_map.h"
 
 struct quic_srt_elem_st {
     OSSL_LIST_MEMBER(stateless_reset_tokens, QUIC_SRT_ELEM);
