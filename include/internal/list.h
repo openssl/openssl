@@ -30,12 +30,14 @@
         OSSL_LIST_DBG(struct ossl_list_st_ ## name *list)                   \
     } ossl_list_ ## name
 
-# define DEFINE_LIST_OF(name, type)                                         \
+# define DECLARE_LIST_OF(name, type)                                        \
     typedef struct ossl_list_st_ ## name OSSL_LIST(name);                   \
     struct ossl_list_st_ ## name {                                          \
         type *alpha, *omega;                                                \
         size_t num_elems;                                                   \
-    };                                                                      \
+    }                                                                       \
+
+# define DEFINE_LIST_OF_IMPL(name, type)                                    \
     static ossl_unused ossl_inline void                                     \
     ossl_list_##name##_init(OSSL_LIST(name) *list)                          \
     {                                                                       \
@@ -165,5 +167,9 @@
         list->num_elems++;                                                  \
     }                                                                       \
     struct ossl_list_st_ ## name
+
+# define DEFINE_LIST_OF(name, type)                                         \
+    DECLARE_LIST_OF(name, type);                                            \
+    DEFINE_LIST_OF_IMPL(name, type)
 
 #endif
