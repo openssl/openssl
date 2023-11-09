@@ -18,6 +18,19 @@
  */
 DECLARE_LIST_OF(ch, QUIC_CHANNEL);
 
+/* A port is always in one of the following states: */
+enum {
+    /* Initial and steady state. */
+    QUIC_PORT_STATE_RUNNING,
+
+    /*
+     * Terminal state indicating port is no longer functioning. There are no
+     * transitions out of this state. May be triggered by e.g. a permanent
+     * network BIO error.
+     */
+    QUIC_PORT_STATE_FAILED
+};
+
 struct quic_port_st {
     OSSL_LIB_CTX                    *libctx;
     const char                      *propq;
@@ -62,6 +75,9 @@ struct quic_port_st {
     unsigned char                   rx_short_dcid_len;
     /* For clients, CID length used for outgoing Initial packets. */
     unsigned char                   tx_init_dcid_len;
+
+    /* Port state (QUIC_PORT_STATE_*). */
+    unsigned int                    state                           : 1;
 
     /* Is this port created to support multiple connections? */
     unsigned int                    is_multi_conn                   : 1;

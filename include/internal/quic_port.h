@@ -130,6 +130,9 @@ int ossl_quic_port_get_tx_init_dcid_len(const QUIC_PORT *port);
 /* For testing use. While enabled, ticking is not performed. */
 void ossl_quic_port_set_inhibit_tick(QUIC_PORT *port, int inhibit);
 
+/* Returns 1 if the port is running/healthy, 0 if it has failed. */
+int ossl_quic_port_is_running(const QUIC_PORT *port);
+
 /*
  * Events
  * ======
