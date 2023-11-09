@@ -3,6 +3,7 @@
 
 # include "internal/quic_port.h"
 # include "internal/quic_reactor.h"
+# include "internal/list.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -15,6 +16,8 @@
  *
  * Other components should not include this header.
  */
+DECLARE_LIST_OF(ch, QUIC_CHANNEL);
+
 struct quic_port_st {
     OSSL_LIB_CTX                    *libctx;
     const char                      *propq;
@@ -39,6 +42,9 @@ struct quic_port_st {
 
     /* RX demuxer. We register incoming DCIDs with this. */
     QUIC_DEMUX                      *demux;
+
+    /* List of all child channels. */
+    OSSL_LIST(ch)                   channel_list;
 };
 
 # endif
