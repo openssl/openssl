@@ -17,11 +17,13 @@
  * QUIC Port Structure
  * ===================
  */
+#define INIT_DCID_LEN                   8
+
 static int port_init(QUIC_PORT *port);
 static void port_cleanup(QUIC_PORT *port);
 static OSSL_TIME get_time(void *arg);
 static void port_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
-//static void port_default_packet_handler(QUIC_URXE *e, void *arg);
+static void port_default_packet_handler(QUIC_URXE *e, void *arg);
 
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 
@@ -32,12 +34,13 @@ QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
     if ((port = OPENSSL_zalloc(sizeof(QUIC_PORT))) == NULL)
         return NULL;
 
-    port->libctx      = args->libctx;
-    port->propq       = args->propq;
-    port->mutex       = args->mutex;
-    port->now_cb      = args->now_cb;
-    port->now_cb_arg  = args->now_cb_arg;
-    port->channel_ctx = args->channel_ctx;
+    port->libctx        = args->libctx;
+    port->propq         = args->propq;
+    port->mutex         = args->mutex;
+    port->now_cb        = args->now_cb;
+    port->now_cb_arg    = args->now_cb_arg;
+    port->channel_ctx   = args->channel_ctx;
+    port->is_multi_conn = args->is_multi_conn;
 
     if (!port_init(port)) {
         OPENSSL_free(port);
@@ -58,13 +61,13 @@ void ossl_quic_port_free(QUIC_PORT *port)
 
 static int port_init(QUIC_PORT *port)
 {
-    size_t rx_short_cid_len = 8;
+    size_t rx_short_dcid_len = (port->is_multi_conn ? INIT_DCID_LEN : 0);
 
     if (port->channel_ctx == NULL)
         goto err;
 
     if ((port->demux = ossl_quic_demux_new(/*BIO=*/NULL,
-                                           /*Short CID Len=*/rx_short_cid_len,
+                                           /*Short CID Len=*/rx_short_dcid_len,
                                            get_time, port)) == NULL)
         goto err;
 
@@ -74,11 +77,13 @@ static int port_init(QUIC_PORT *port)
      * connections.
      */
     // if (is_server)
-    //ossl_quic_demux_set_default_handler(port->demux,
-    //                                    port_default_packet_handler,
-    //                                    port);
+    ossl_quic_demux_set_default_handler(port->demux,
+                                        port_default_packet_handler,
+                                        port);
 
     ossl_quic_reactor_init(&port->rtor, port_tick, port, ossl_time_zero());
+    port->rx_short_dcid_len = (unsigned char)rx_short_dcid_len;
+    port->tx_init_dcid_len  = INIT_DCID_LEN;
     return 1;
 
 err:
@@ -121,6 +126,15 @@ static OSSL_TIME get_time(void *port)
     return ossl_quic_port_get_time(port);
 }
 
+int ossl_quic_port_get_rx_short_dcid_len(const QUIC_PORT *port)
+{
+    return port->rx_short_dcid_len;
+}
+
+int ossl_quic_port_get_tx_init_dcid_len(const QUIC_PORT *port)
+{
+    return port->tx_init_dcid_len;
+}
 
 /*
  * QUIC Port: Network BIO Configuration
@@ -266,7 +280,13 @@ QUIC_CHANNEL *ossl_quic_port_create_outgoing(QUIC_PORT *port, SSL *tls)
 
 QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
 {
-    return port_make_channel(port, tls, /*is_server=*/1);
+    QUIC_CHANNEL *ch;
+
+    assert(port->tserver_ch == NULL);
+
+    ch = port_make_channel(port, tls, /*is_server=*/1);
+    port->tserver_ch = ch;
+    return ch;
 }
 
 /*
@@ -282,4 +302,96 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
 static void port_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
 {
     /* TODO */
+}
+
+/*
+ * Handles an incoming connection request and potentially decides to make a
+ * connection from it. If a new connection is made, the new channel is written
+ * to *new_ch.
+ */
+static void port_on_new_conn(QUIC_PORT *port, const BIO_ADDR *peer,
+                             const QUIC_CONN_ID *scid,
+                             const QUIC_CONN_ID *dcid,
+                             QUIC_CHANNEL **new_ch)
+{
+    if (port->tserver_ch != NULL) {
+        /* Specially assign to existing channel */
+        if (!ossl_quic_channel_on_new_conn(port->tserver_ch, peer, scid, dcid))
+            return;
+
+        *new_ch = port->tserver_ch;
+        port->tserver_ch = NULL;
+        return;
+    }
+}
+
+/*
+ * This is called by the demux when we get a packet not destined for any known
+ * DCID.
+ */
+static void port_default_packet_handler(QUIC_URXE *e, void *arg)
+{
+    QUIC_PORT *port = arg;
+    PACKET pkt;
+    QUIC_PKT_HDR hdr;
+    QUIC_CHANNEL *new_ch = NULL;
+
+    if (port->tserver_ch == NULL)
+        goto undesirable;
+
+    /*
+     * We have got a packet for an unknown DCID. This might be an attempt to
+     * open a new connection.
+     */
+    if (e->data_len < QUIC_MIN_INITIAL_DGRAM_LEN)
+        goto undesirable;
+
+    if (!PACKET_buf_init(&pkt, ossl_quic_urxe_data(e), e->data_len))
+        goto undesirable;
+
+    /*
+     * We set short_conn_id_len to SIZE_MAX here which will cause the decode
+     * operation to fail if we get a 1-RTT packet. This is fine since we only
+     * care about Initial packets.
+     */
+    if (!ossl_quic_wire_decode_pkt_hdr(&pkt, SIZE_MAX, 1, 0, &hdr, NULL))
+        goto undesirable;
+
+    switch (hdr.version) {
+        case QUIC_VERSION_1:
+            break;
+
+        case QUIC_VERSION_NONE:
+        default:
+            /* Unknown version or proactive version negotiation request, bail. */
+            /* TODO(QUIC SERVER): Handle version negotiation on server side */
+            goto undesirable;
+    }
+
+    /*
+     * We only care about Initial packets which might be trying to establish a
+     * connection.
+     */
+    if (hdr.type != QUIC_PKT_TYPE_INITIAL)
+        goto undesirable;
+
+    /*
+     * Try to process this as a valid attempt to initiate a connection.
+     *
+     * We do not register the DCID in the Initial packet we received as
+     * that DCID is not actually used again, thus after provisioning
+     * the new connection and associated Initial keys, we inject the
+     * received packet directly to the new channel's QRX so that it can
+     * process it as a one-time thing, instead of going through the usual
+     * DEMUX DCID-based routing.
+     */
+    port_on_new_conn(port, &e->peer, &hdr.src_conn_id, &hdr.dst_conn_id,
+                     &new_ch);
+    if (new_ch != NULL)
+        ossl_qrx_inject_urxe(new_ch->qrx, e);
+
+    return;
+
+undesirable:
+    ossl_quic_demux_release_urxe(port->demux, e);
 }

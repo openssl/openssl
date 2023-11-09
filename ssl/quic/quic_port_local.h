@@ -48,6 +48,17 @@ struct quic_port_st {
 
     /* List of all child channels. */
     OSSL_LIST(ch)                   channel_list;
+
+    /* Special TSERVER channel. To be removed in the future. */
+    QUIC_CHANNEL                    *tserver_ch;
+
+    /* DCID length used for incoming short header packets. */
+    unsigned char                   rx_short_dcid_len;
+    /* For clients, CID length used for outgoing Initial packets. */
+    unsigned char                   tx_init_dcid_len;
+
+    /* Is this port created to support multiple connections? */
+    unsigned int                    is_multi_conn                   : 1;
 };
 
 # endif
