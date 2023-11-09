@@ -15,6 +15,7 @@
 # include "internal/time.h"
 # include "internal/quic_types.h"
 # include "internal/quic_wire.h"
+# include "internal/quic_predef.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -95,7 +96,6 @@
  * An ODCID has no sequence number associated with it. It is the only CID to
  * lack one.
  */
-typedef struct quic_lcidm_st QUIC_LCIDM;
 
 /*
  * Creates a new LCIDM. lcid_len is the length to use for LCIDs in bytes, which

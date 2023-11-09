@@ -75,8 +75,6 @@ typedef struct quic_port_args_st {
     int             is_multi_conn;
 } QUIC_PORT_ARGS;
 
-typedef struct quic_port_st QUIC_PORT;
-
 QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args);
 
 void ossl_quic_port_free(QUIC_PORT *port);

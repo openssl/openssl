@@ -12,6 +12,7 @@
 
 # include <openssl/ssl.h>
 # include "internal/quic_types.h"
+# include "internal/quic_predef.h"
 # include "internal/bio_addr.h"
 # include "internal/time.h"
 # include "internal/list.h"
@@ -81,8 +82,6 @@
  * received immediately follows this URXE header structure and is part of the
  * same allocation.
  */
-
-typedef struct quic_urxe_st QUIC_URXE;
 
 /* Maximum number of packets we allow to exist in one datagram. */
 #define QUIC_MAX_PKT_PER_URXE       (sizeof(uint64_t) * 8)
@@ -157,9 +156,6 @@ typedef OSSL_LIST(urxe) QUIC_URXE_LIST;
 void ossl_quic_urxe_remove(QUIC_URXE_LIST *l, QUIC_URXE *e);
 void ossl_quic_urxe_insert_head(QUIC_URXE_LIST *l, QUIC_URXE *e);
 void ossl_quic_urxe_insert_tail(QUIC_URXE_LIST *l, QUIC_URXE *e);
-
-/* Opaque type representing a demuxer. */
-typedef struct quic_demux_st QUIC_DEMUX;
 
 /*
  * Called when a datagram is received for a given connection ID.
