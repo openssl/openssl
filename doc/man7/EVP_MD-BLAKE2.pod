@@ -44,8 +44,9 @@ Sets a different digest length for the L<EVP_DigestFinal(3)> output.
 The value of the "size" parameter must not exceed the default digest length
 of the respective BLAKE2 algorithm variants, 64 for BLAKE2B-512 and
 32 for BLAKE2S-256. The parameter must be set with the
-L<EVP_DigestInit_ex2(3)> call. When set with L<EVP_MD_CTX_set_params(3)>
-it will have an effect only if the B<EVP_MD_CTX> context is reinitialized.
+L<EVP_DigestInit_ex2(3)> call to have an immediate effect. When set with
+L<EVP_MD_CTX_set_params(3)> it will have an effect only if the B<EVP_MD_CTX>
+context is reinitialized.
 
 =back
 
