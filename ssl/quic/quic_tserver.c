@@ -120,6 +120,7 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     port_args.libctx        = srv->args.libctx;
     port_args.propq         = srv->args.propq;
     port_args.mutex         = srv->mutex;
+    port_args.channel_ctx   = srv->ctx;
     port_args.now_cb        = srv->args.now_cb;
     port_args.now_cb_arg    = srv->args.now_cb_arg;
 

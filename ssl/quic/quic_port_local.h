@@ -34,6 +34,9 @@ struct quic_port_st {
     OSSL_TIME                       (*now_cb)(void *arg);
     void                            *now_cb_arg;
 
+    /* Used to create handshake layer objects inside newly created channels. */
+    SSL_CTX                         *channel_ctx;
+
     /* Asynchronous I/O reactor. */
     QUIC_REACTOR                    rtor;
 

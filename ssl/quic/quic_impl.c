@@ -1501,6 +1501,7 @@ static int create_channel(QUIC_CONNECTION *qc)
     port_args.libctx        = qc->ssl.ctx->libctx;
     port_args.propq         = qc->ssl.ctx->propq;
     port_args.mutex         = qc->mutex;
+    port_args.channel_ctx   = qc->ssl.ctx;
     port_args.now_cb        = get_time_cb;
     port_args.now_cb_arg    = qc;
 

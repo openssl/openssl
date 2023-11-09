@@ -13,6 +13,7 @@
 # include "internal/quic_types.h"
 # include "internal/quic_reactor.h"
 # include "internal/quic_demux.h"
+# include "internal/quic_predef.h"
 # include "internal/thread_arch.h"
 
 # ifndef OPENSSL_NO_QUIC
@@ -50,6 +51,12 @@ typedef struct quic_port_args_st {
      */
     OSSL_TIME       (*now_cb)(void *arg);
     void            *now_cb_arg;
+
+    /*
+     * This SSL_CTX will be used when constructing the handshake layer object
+     * inside newly created channels.
+     */
+    SSL_CTX         *channel_ctx;
 } QUIC_PORT_ARGS;
 
 typedef struct quic_port_st QUIC_PORT;
