@@ -196,12 +196,9 @@ int rand_main(int argc, char **argv)
 
     buf = app_malloc(buflen, "buffer for output file");
     while (scaled_num > 0) {
-        long chunk;
+        int chunk;
 
-        chunk = buflen;
-        if ((long)scaled_num < chunk)
-            chunk = (long)scaled_num;
-
+        chunk = scaled_num > buflen ? (int)buflen : (int)scaled_num;
         r = RAND_bytes(buf, chunk);
         if (r <= 0)
             goto end;
