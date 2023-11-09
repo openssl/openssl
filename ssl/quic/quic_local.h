@@ -118,6 +118,9 @@ struct quic_conn_st {
 
     SSL                             *tls;
 
+    /* The QUIC port representing the QUIC listener and socket. */
+    QUIC_PORT                       *port;
+
     /*
      * The QUIC channel providing the core QUIC connection implementation. Note
      * that this is not instantiated until we actually start trying to do the

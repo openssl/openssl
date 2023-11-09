@@ -15,6 +15,7 @@
 #include "internal/quic_tls.h"
 #include "internal/quic_rx_depack.h"
 #include "internal/quic_error.h"
+#include "internal/quic_port.h"
 #include "internal/time.h"
 
 typedef struct qctx_st QCTX;
@@ -549,6 +550,7 @@ void ossl_quic_free(SSL *s)
 #endif
 
     ossl_quic_channel_free(ctx.qc->ch);
+    ossl_quic_port_free(ctx.qc->port);
 
     BIO_free_all(ctx.qc->net_rbio);
     BIO_free_all(ctx.qc->net_wbio);
@@ -1493,19 +1495,34 @@ static int configure_channel(QUIC_CONNECTION *qc)
 QUIC_NEEDS_LOCK
 static int create_channel(QUIC_CONNECTION *qc)
 {
-    QUIC_CHANNEL_ARGS args = {0};
+    QUIC_PORT_ARGS port_args = {0};
+    QUIC_CHANNEL_ARGS ch_args = {0};
 
-    args.libctx     = qc->ssl.ctx->libctx;
-    args.propq      = qc->ssl.ctx->propq;
-    args.is_server  = qc->as_server;
-    args.tls        = qc->tls;
-    args.mutex      = qc->mutex;
-    args.now_cb     = get_time_cb;
-    args.now_cb_arg = qc;
+    port_args.libctx        = qc->ssl.ctx->libctx;
+    port_args.propq         = qc->ssl.ctx->propq;
+    port_args.mutex         = qc->mutex;
+    port_args.now_cb        = get_time_cb;
+    port_args.now_cb_arg    = qc;
 
-    qc->ch = ossl_quic_channel_new(&args);
+    qc->port = ossl_quic_port_new(&port_args);
+    if (qc->port == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        return 0;
+    }
+
+    ch_args.port       = qc->port;
+    ch_args.libctx     = qc->ssl.ctx->libctx;
+    ch_args.propq      = qc->ssl.ctx->propq;
+    ch_args.is_server  = qc->as_server;
+    ch_args.tls        = qc->tls;
+    ch_args.mutex      = qc->mutex;
+    ch_args.now_cb     = get_time_cb;
+    ch_args.now_cb_arg = qc;
+
+    qc->ch = ossl_quic_channel_new(&ch_args);
     if (qc->ch == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        ossl_quic_port_free(qc->port);
         return 0;
     }
 
