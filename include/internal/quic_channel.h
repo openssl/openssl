@@ -273,6 +273,9 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *r,
 /* For use by QUIC_PORT only. */
 void ossl_quic_channel_raise_net_error(QUIC_CHANNEL *ch);
 
+/* For use by QUIC_PORT only. */
+void ossl_quic_channel_on_stateless_reset(QUIC_CHANNEL *ch);
+
 /*
  * Queries and Accessors
  * =====================

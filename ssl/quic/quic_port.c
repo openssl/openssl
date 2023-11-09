@@ -381,6 +381,52 @@ static void port_on_new_conn(QUIC_PORT *port, const BIO_ADDR *peer,
     }
 }
 
+static int port_try_handle_stateless_reset(QUIC_PORT *port, const QUIC_URXE *e)
+{
+    size_t i;
+    const unsigned char *data = ossl_quic_urxe_data(e);
+    void *opaque = NULL;
+
+    /*
+     * Perform some fast and cheap checks for a packet not being a stateless
+     * reset token.  RFC 9000 s. 10.3 specifies this layout for stateless
+     * reset packets:
+     *
+     *  Stateless Reset {
+     *      Fixed Bits (2) = 1,
+     *      Unpredictable Bits (38..),
+     *      Stateless Reset Token (128),
+     *  }
+     *
+     * It also specifies:
+     *      However, endpoints MUST treat any packet ending in a valid
+     *      stateless reset token as a Stateless Reset, as other QUIC
+     *      versions might allow the use of a long header.
+     *
+     * We can rapidly check for the minimum length and that the first pair
+     * of bits in the first byte are 01 or 11.
+     *
+     * The function returns 1 if it is a stateless reset packet, 0 if it isn't
+     * and -1 if an error was encountered.
+     */
+    if (e->data_len < QUIC_STATELESS_RESET_TOKEN_LEN + 5
+        || (0100 & *data) != 0100)
+        return 0;
+
+    for (i = 0;; ++i) {
+        if (!ossl_quic_srtm_lookup(port->srtm,
+                                   (QUIC_STATELESS_RESET_TOKEN *)(data + e->data_len
+                                       - sizeof(QUIC_STATELESS_RESET_TOKEN)),
+                                   i, &opaque, NULL))
+            break;
+
+        assert(opaque != NULL);
+        ossl_quic_channel_on_stateless_reset((QUIC_CHANNEL *)opaque);
+    }
+
+    return i > 0;
+}
+
 /*
  * This is called by the demux when we get a packet not destined for any known
  * DCID.
@@ -391,6 +437,9 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg)
     PACKET pkt;
     QUIC_PKT_HDR hdr;
     QUIC_CHANNEL *new_ch = NULL;
+
+    if (port_try_handle_stateless_reset(port, e))
+        goto undesirable;
 
     // TODO review this
     if (port->tserver_ch == NULL)
