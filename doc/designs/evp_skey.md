@@ -157,7 +157,8 @@ An alternate approach will be providing a function
 
 ```C
 EVP_CipherInit_skey(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
-                   const EVP_SKEY *key, const unsigned char *iv,
+                   const EVP_SKEY *key,
+                   const unsigned char *iv, size_t iv_len,
                    int enc, const OSSL_PARAM ctx_params[]);
 ```
 
