@@ -1858,14 +1858,14 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
 
         case OPK_EXPECT_ERR_REASON:
             {
-                if (!TEST_size_t_eq((size_t)ERR_GET_REASON(ERR_get_error()), op->arg1))
+                if (!TEST_size_t_eq((size_t)ERR_GET_REASON(ERR_peek_last_error()), op->arg1))
                     goto out;
             }
             break;
 
         case OPK_EXPECT_ERR_LIB:
             {
-                if (!TEST_size_t_eq((size_t)ERR_GET_LIB(ERR_get_error()), op->arg1))
+                if (!TEST_size_t_eq((size_t)ERR_GET_LIB(ERR_peek_last_error()), op->arg1))
                     goto out;
             }
             break;
@@ -2723,8 +2723,14 @@ static const struct script_op script_20_child[] = {
 
     OP_C_READ_FAIL_WAIT     (a)
     OP_C_EXPECT_SSL_ERR     (a, SSL_ERROR_SYSCALL)
-    OP_EXPECT_ERR_LIB       (ERR_LIB_SYS)
+
+    OP_EXPECT_ERR_LIB       (ERR_LIB_SSL)
+    OP_EXPECT_ERR_REASON    (SSL_R_PROTOCOL_IS_SHUTDOWN)
+
+    OP_POP_ERR              ()
+    OP_EXPECT_ERR_LIB       (ERR_LIB_SSL)
     OP_EXPECT_ERR_REASON    (SSL_R_QUIC_NETWORK_ERROR)
+
     OP_C_FREE_STREAM        (a)
 
     OP_END
