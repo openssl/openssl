@@ -79,7 +79,6 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
 {
     QUIC_TSERVER *srv = NULL;
     QUIC_PORT_ARGS port_args = {0};
-    QUIC_CHANNEL_ARGS ch_args = {0};
     QUIC_CONNECTION *qc = NULL;
 
     if (args->net_rbio == NULL || args->net_wbio == NULL)
@@ -127,11 +126,7 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     if ((srv->port = ossl_quic_port_new(&port_args)) == NULL)
         goto err;
 
-    ch_args.port        = srv->port;
-    ch_args.tls         = srv->tls;
-    ch_args.is_server   = 1;
-
-    if ((srv->ch = ossl_quic_channel_new(&ch_args)) == NULL)
+    if ((srv->ch = ossl_quic_port_create_incoming(srv->port, srv->tls)) == NULL)
         goto err;
 
     if (!ossl_quic_channel_set_net_rbio(srv->ch, srv->args.net_rbio)

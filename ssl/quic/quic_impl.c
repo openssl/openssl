@@ -1496,7 +1496,6 @@ QUIC_NEEDS_LOCK
 static int create_channel(QUIC_CONNECTION *qc)
 {
     QUIC_PORT_ARGS port_args = {0};
-    QUIC_CHANNEL_ARGS ch_args = {0};
 
     port_args.libctx        = qc->ssl.ctx->libctx;
     port_args.propq         = qc->ssl.ctx->propq;
@@ -1511,11 +1510,7 @@ static int create_channel(QUIC_CONNECTION *qc)
         return 0;
     }
 
-    ch_args.port       = qc->port;
-    ch_args.is_server  = qc->as_server;
-    ch_args.tls        = qc->tls;
-
-    qc->ch = ossl_quic_channel_new(&ch_args);
+    qc->ch = ossl_quic_port_create_outgoing(qc->port, qc->tls);
     if (qc->ch == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         ossl_quic_port_free(qc->port);
