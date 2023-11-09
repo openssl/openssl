@@ -116,10 +116,10 @@ int rand_main(int argc, char **argv)
              * any non-numerical chars
              * A non digit suffix indicates we need to shift the
              * number of requested bytes by a factor of:
-             * k = 1024^1 (1 << (10 * 1))
-             * m = 1024^2 (1 << (10 * 2))
-             * g = 1024^3 (1 << (10 * 3))
-             * t = 1024^4 (1 << (10 * 4))
+             * K = 1024^1 (1 << (10 * 1))
+             * M = 1024^2 (1 << (10 * 2))
+             * G = 1024^3 (1 << (10 * 3))
+             * T = 1024^4 (1 << (10 * 4))
              * which can be achieved by bit-shifting the number
              */
             while (argv[0][factoridx]) {
