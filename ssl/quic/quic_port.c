@@ -344,8 +344,6 @@ static void port_rx_pre(QUIC_PORT *port)
 {
     int ret;
 
-    // TODO !have_sent_any_pkt
-
     /*
      * Get DEMUX to BIO_recvmmsg from the network and queue incoming datagrams
      * to the appropriate QRX instances.
@@ -451,16 +449,19 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     if (port_try_handle_stateless_reset(port, e))
         goto undesirable;
 
-    // TODO review this
+    /*
+     * If we have an incoming packet which doesn't match any existing connection
+     * we assume this is an attempt to make a new connection. Currently we
+     * require our caller to have precreated a latent 'incoming' channel via
+     * TSERVER which then gets turned into the new connection.
+     *
+     * TODO(QUIC SERVER): In the future we will construct channels dynamically
+     * in this case.
+     */
     if (port->tserver_ch == NULL)
         goto undesirable;
 
-    // TODO allow_incoming
-    //if (!ossl_assert(ch->is_server))
-    //    goto undesirable;
-
-    //TODO if (ch->state != QUIC_CHANNEL_STATE_IDLE)
-    //    goto undesirable;
+    // TODO fsm
 
     /*
      * We have got a packet for an unknown DCID. This might be an attempt to
@@ -501,12 +502,9 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     /*
      * Try to process this as a valid attempt to initiate a connection.
      *
-     * We do not register the DCID in the Initial packet we received as
-     * that DCID is not actually used again, thus after provisioning
-     * the new connection and associated Initial keys, we inject the
-     * received packet directly to the new channel's QRX so that it can
-     * process it as a one-time thing, instead of going through the usual
-     * DEMUX DCID-based routing.
+     * The channel will do all the LCID registration needed, but as an
+     * optimization inject this packet directly into the channel's QRX for
+     * processing without going through the DEMUX again.
      */
     port_on_new_conn(port, &e->peer, &hdr.src_conn_id, &hdr.dst_conn_id,
                      &new_ch);
