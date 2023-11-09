@@ -79,6 +79,9 @@ void ossl_qrx_set_msg_callback_arg(OSSL_QRX *qrx,
  * input to this function. This function fails if the DCID is already
  * registered.
  *
+ * TODO(QUIC SERVER): DEPRECATED in favour of explicit routing by QUIC_PORT with
+ * reference to QUIC_LCIDM. To be removed.
+ *
  * Returns 1 on success or 0 on error.
  */
 int ossl_qrx_add_dst_conn_id(OSSL_QRX *qrx,
@@ -88,6 +91,9 @@ int ossl_qrx_add_dst_conn_id(OSSL_QRX *qrx,
  * Remove a DCID previously registered with ossl_qrx_add_dst_conn_id. The DCID
  * is unregistered from the demuxer. Fails if the DCID is not registered with
  * the demuxer.
+ *
+ * TODO(QUIC SERVER): DEPRECATED in favour of explicit routing by QUIC_PORT with
+ * reference to QUIC_LCIDM. To be removed.
  *
  * Returns 1 on success or 0 on error.
  */
