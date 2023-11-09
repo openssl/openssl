@@ -57,6 +57,13 @@ typedef struct quic_port_args_st {
      * inside newly created channels.
      */
     SSL_CTX         *channel_ctx;
+
+    /*
+     * If 1, this port is to be used for multiple connections, so
+     * non-zero-length CIDs should be used. If 0, this port will only be used
+     * for a single connection, so a zero-length local CID can be used.
+     */
+    int             is_multi_conn;
 } QUIC_PORT_ARGS;
 
 typedef struct quic_port_st QUIC_PORT;
@@ -103,6 +110,9 @@ CRYPTO_MUTEX *ossl_quic_port_get0_mutex(QUIC_PORT *port);
 
 /* Gets the current time. */
 OSSL_TIME ossl_quic_port_get_time(QUIC_PORT *port);
+
+int ossl_quic_port_get_rx_short_dcid_len(const QUIC_PORT *port);
+int ossl_quic_port_get_tx_init_dcid_len(const QUIC_PORT *port);
 
 # endif
 

@@ -122,6 +122,7 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     port_args.channel_ctx   = srv->ctx;
     port_args.now_cb        = srv->args.now_cb;
     port_args.now_cb_arg    = srv->args.now_cb_arg;
+    port_args.is_multi_conn = 1;
 
     if ((srv->port = ossl_quic_port_new(&port_args)) == NULL)
         goto err;

@@ -262,6 +262,11 @@ void ossl_quic_channel_on_remote_conn_close(QUIC_CHANNEL *ch,
 void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
                                       OSSL_QUIC_FRAME_NEW_CONN_ID *f);
 
+/* Temporarily exposed during QUIC_PORT transition. */
+int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
+                                  const QUIC_CONN_ID *peer_scid,
+                                  const QUIC_CONN_ID *peer_dcid);
+
 /*
  * Queries and Accessors
  * =====================
