@@ -70,6 +70,9 @@ static int port_init(QUIC_PORT *port)
     if (port->channel_ctx == NULL)
         goto err;
 
+    if ((port->err_state = OSSL_ERR_STATE_new()) == NULL)
+        goto err;
+
     if ((port->demux = ossl_quic_demux_new(/*BIO=*/NULL,
                                            /*Short CID Len=*/rx_short_dcid_len,
                                            get_time, port)) == NULL)
@@ -108,6 +111,9 @@ static void port_cleanup(QUIC_PORT *port)
 
     ossl_quic_lcidm_free(port->lcidm);
     port->lcidm = NULL;
+
+    OSSL_ERR_STATE_free(port->err_state);
+    port->err_state = NULL;
 }
 
 static void port_transition_failed(QUIC_PORT *port)
@@ -341,7 +347,8 @@ static void port_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
 
     if (!port->inhibit_tick) {
         /* Handle any incoming data from network. */
-        port_rx_pre(port);
+        if (ossl_quic_port_is_running(port))
+            port_rx_pre(port);
 
         /* Iterate through all channels and service them. */
         LIST_FOREACH(ch, ch, &port->channel_list) {
@@ -370,7 +377,7 @@ static void port_rx_pre(QUIC_PORT *port)
          * Terminated state as there is no point trying to send CONNECTION_CLOSE
          * frames if the network BIO is not operating correctly.
          */
-        ossl_quic_port_raise_net_error(port);
+        ossl_quic_port_raise_net_error(port, NULL);
 }
 
 /*
@@ -538,12 +545,35 @@ void ossl_quic_port_set_inhibit_tick(QUIC_PORT *port, int inhibit)
     port->inhibit_tick = (inhibit != 0);
 }
 
-void ossl_quic_port_raise_net_error(QUIC_PORT *port)
+void ossl_quic_port_raise_net_error(QUIC_PORT *port,
+                                    QUIC_CHANNEL *triggering_ch)
 {
     QUIC_CHANNEL *ch;
 
+    if (!ossl_quic_port_is_running(port))
+        return;
+
+    /*
+     * Immediately capture any triggering error on the error stack, with a
+     * cover error.
+     */
+    ERR_raise_data(ERR_LIB_SSL, SSL_R_QUIC_NETWORK_ERROR,
+                   "port failed due to network BIO I/O error");
+    OSSL_ERR_STATE_save(port->err_state);
+
     port_transition_failed(port);
 
+    /* Give the triggering channel (if any) the first notification. */
+    if (triggering_ch != NULL)
+        ossl_quic_channel_raise_net_error(triggering_ch);
+
     LIST_FOREACH(ch, ch, &port->channel_list)
-        ossl_quic_channel_raise_net_error(ch);
+        if (ch != triggering_ch)
+            ossl_quic_channel_raise_net_error(ch);
+}
+
+void ossl_quic_port_restore_err_state(const QUIC_PORT *port)
+{
+    ERR_clear_error();
+    OSSL_ERR_STATE_restore(port->err_state);
 }
