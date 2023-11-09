@@ -12,6 +12,7 @@
 
 # include <openssl/ssl.h>
 # include "internal/quic_types.h"
+# include "internal/quic_predef.h"
 # include "internal/quic_cfq.h"
 # include "internal/quic_ackm.h"
 
@@ -21,8 +22,6 @@
  * QUIC Transmitted Packet Information Manager
  * ===========================================
  */
-typedef struct quic_txpim_st QUIC_TXPIM;
-typedef struct quic_fifd_st QUIC_FIFD;
 
 typedef struct quic_txpim_pkt_st {
     /* ACKM-specific data. Caller should fill this. */

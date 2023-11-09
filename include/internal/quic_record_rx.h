@@ -13,6 +13,7 @@
 # include <openssl/ssl.h>
 # include "internal/quic_wire_pkt.h"
 # include "internal/quic_types.h"
+# include "internal/quic_predef.h"
 # include "internal/quic_record_util.h"
 # include "internal/quic_demux.h"
 
@@ -178,7 +179,7 @@ int ossl_qrx_discard_enc_level(OSSL_QRX *qrx, uint32_t enc_level);
  */
 
 /* Information about a received packet. */
-typedef struct ossl_qrx_pkt_st {
+struct ossl_qrx_pkt_st {
     /*
      * Points to a logical representation of the decoded QUIC packet header. The
      * data and len fields point to the decrypted QUIC payload (i.e., to a
@@ -224,7 +225,7 @@ typedef struct ossl_qrx_pkt_st {
      * packets.
      */
     uint64_t            key_epoch;
-} OSSL_QRX_PKT;
+};
 
 /*
  * Tries to read a new decrypted packet from the QRX.
