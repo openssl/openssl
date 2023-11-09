@@ -267,6 +267,13 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
                                   const QUIC_CONN_ID *peer_scid,
                                   const QUIC_CONN_ID *peer_dcid);
 
+/* For use by QUIC_PORT. You should not need to call this directly. */
+void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *r,
+                               uint32_t flags);
+
+/* For use by QUIC_PORT only. */
+void ossl_quic_channel_raise_net_error(QUIC_CHANNEL *ch);
+
 /*
  * Queries and Accessors
  * =====================
@@ -293,12 +300,6 @@ BIO *ossl_quic_channel_get_net_rbio(QUIC_CHANNEL *ch);
 BIO *ossl_quic_channel_get_net_wbio(QUIC_CHANNEL *ch);
 int ossl_quic_channel_set_net_rbio(QUIC_CHANNEL *ch, BIO *net_rbio);
 int ossl_quic_channel_set_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio);
-
-/*
- * Re-poll the network BIOs already set to determine if their support
- * for polling has changed.
- */
-int ossl_quic_channel_update_poll_descriptors(QUIC_CHANNEL *ch);
 
 /*
  * Returns an existing stream by stream ID. Returns NULL if the stream does not
@@ -395,9 +396,6 @@ int ossl_quic_channel_has_pending(const QUIC_CHANNEL *ch);
 
 /* Force transmission of an ACK-eliciting packet. */
 int ossl_quic_channel_ping(QUIC_CHANNEL *ch);
-
-/* For testing use. While enabled, ticking is not performed. */
-void ossl_quic_channel_set_inhibit_tick(QUIC_CHANNEL *ch, int inhibit);
 
 /*
  * These queries exist for diagnostic purposes only. They may roll over.
