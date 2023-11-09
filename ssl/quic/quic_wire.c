@@ -9,6 +9,7 @@
 
 #include <openssl/macros.h>
 #include <openssl/objects.h>
+#include <openssl/rand.h>
 #include "internal/quic_ssl.h"
 #include "internal/quic_vlint.h"
 #include "internal/quic_wire.h"
@@ -1075,4 +1076,21 @@ const char *ossl_quic_err_to_string(uint64_t error_code)
     default:
         return NULL;
     }
+}
+
+int ossl_quic_gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len,
+                               QUIC_CONN_ID *cid)
+{
+    if (len > QUIC_MAX_CONN_ID_LEN)
+        return 0;
+
+    cid->id_len = (unsigned char)len;
+
+    if (RAND_bytes_ex(libctx, cid->id, len, len * 8) != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_RAND_LIB);
+        cid->id_len = 0;
+        return 0;
+    }
+
+    return 1;
 }
