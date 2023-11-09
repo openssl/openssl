@@ -97,6 +97,10 @@ BIO *ossl_quic_port_get_net_wbio(QUIC_PORT *port);
 int ossl_quic_port_set_net_rbio(QUIC_PORT *port, BIO *net_rbio);
 int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio);
 
+/*
+ * Re-poll the network BIOs already set to determine if their support
+ * for polling has changed.
+ */
 int ossl_quic_port_update_poll_descriptors(QUIC_PORT *port);
 
 /* Gets the reactor which can be used to tick/poll on the port. */
@@ -113,6 +117,20 @@ OSSL_TIME ossl_quic_port_get_time(QUIC_PORT *port);
 
 int ossl_quic_port_get_rx_short_dcid_len(const QUIC_PORT *port);
 int ossl_quic_port_get_tx_init_dcid_len(const QUIC_PORT *port);
+
+/* For testing use. While enabled, ticking is not performed. */
+void ossl_quic_port_set_inhibit_tick(QUIC_PORT *port, int inhibit);
+
+/*
+ * Events
+ * ======
+ */
+
+/*
+ * Called if a permanent network error occurs. Terminates all channels
+ * immediately.
+ */
+void ossl_quic_port_raise_net_error(QUIC_PORT *port);
 
 # endif
 

@@ -48,10 +48,8 @@
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 
 static void ch_save_err_state(QUIC_CHANNEL *ch);
-static void ch_rx_pre(QUIC_CHANNEL *ch);
 static int ch_rx(QUIC_CHANNEL *ch, int channel_only);
 static int ch_tx(QUIC_CHANNEL *ch);
-static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
 static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only);
 static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only);
 static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch);
@@ -92,7 +90,6 @@ static void ch_on_idle_timeout(QUIC_CHANNEL *ch);
 static void ch_update_idle(QUIC_CHANNEL *ch);
 static void ch_update_ping_deadline(QUIC_CHANNEL *ch);
 static void ch_stateless_reset(QUIC_CHANNEL *ch);
-static void ch_raise_net_error(QUIC_CHANNEL *ch);
 static void ch_on_terminating_timeout(QUIC_CHANNEL *ch);
 static void ch_start_terminating(QUIC_CHANNEL *ch,
                                  const QUIC_TERMINATE_CAUSE *tcause,
@@ -467,8 +464,6 @@ static int ch_init(QUIC_CHANNEL *ch)
         goto err;
 
     ch_update_idle(ch);
-    ossl_quic_reactor_init(&ch->rtor, ch_tick, ch,
-                           ch_determine_next_tick_deadline(ch));
     ossl_list_ch_insert_tail(&ch->port->channel_list, ch);
     ch->on_port_list = 1;
     return 1;
@@ -601,7 +596,7 @@ int ossl_quic_channel_set_peer_addr(QUIC_CHANNEL *ch, const BIO_ADDR *peer_addr)
 
 QUIC_REACTOR *ossl_quic_channel_get_reactor(QUIC_CHANNEL *ch)
 {
-    return &ch->rtor;
+    return ossl_quic_port_get0_reactor(ch->port);
 }
 
 QUIC_STREAM_MAP *ossl_quic_channel_get_qsm(QUIC_CHANNEL *ch)
@@ -1839,20 +1834,20 @@ err:
  * at least everything network I/O related. Best effort - not allowed to fail
  * "loudly".
  */
-static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
+void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
+                               uint32_t flags)
 {
     OSSL_TIME now, deadline;
-    QUIC_CHANNEL *ch = arg;
     int channel_only = (flags & QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY) != 0;
 
     /*
      * When we tick the QUIC connection, we do everything we need to do
-     * periodically. In order, we:
+     * periodically. Network I/O handling will already have been performed
+     * as necessary by the QUIC port. Thus, in order, we:
      *
-     *   - handle any incoming data from the network;
-     *   - handle any timer events which are due to fire (ACKM, etc.)
-     *   - write any data to the network due to be sent, to the extent
-     *     possible;
+     *   - handle any packets the DEMUX has queued up for us;
+     *   - handle any timer events which are due to fire (ACKM, etc.);
+     *   - generate any packets which need to be sent;
      *   - determine the time at which we should next be ticked.
      */
 
@@ -1880,12 +1875,9 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
         }
     }
 
-    if (!ch->inhibit_tick) {
+    if (!ch->port->inhibit_tick) {
         /* Handle RXKU timeouts. */
         ch_rxku_tick(ch);
-
-        /* Handle any incoming data from network. */
-        ch_rx_pre(ch);
 
         do {
             /* Process queued incoming packets. */
@@ -1923,7 +1915,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
          * Idle timeout differs from normal protocol violation because we do
          * not send a CONN_CLOSE frame; go straight to TERMINATED.
          */
-        if (!ch->inhibit_tick)
+        if (!ch->port->inhibit_tick)
             ch_on_idle_timeout(ch);
 
         res->net_read_desired   = 0;
@@ -1932,7 +1924,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
         return;
     }
 
-    if (!ch->inhibit_tick) {
+    if (!ch->port->inhibit_tick) {
         deadline = ossl_ackm_get_loss_detection_deadline(ch->ackm);
         if (!ossl_time_is_zero(deadline)
             && ossl_time_compare(now, deadline) >= 0)
@@ -1954,7 +1946,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
             ch_update_ping_deadline(ch);
         }
 
-        /* Write any data to the network due to be sent. */
+        /* Queue any data to be sent for transmission. */
         ch_tx(ch);
 
         /* Do stream GC. */
@@ -1965,14 +1957,13 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
     res->tick_deadline = ch_determine_next_tick_deadline(ch);
 
     /*
-     * Always process network input unless we are now terminated.
-     * Although we had not terminated at the beginning of this tick, network
-     * errors in ch_rx_pre() or ch_tx() may have caused us to transition to the
-     * Terminated state.
+     * Always process network input unless we are now terminated. Although we
+     * had not terminated at the beginning of this tick, network errors in
+     * ch_tx() may have caused us to transition to the Terminated state.
      */
     res->net_read_desired = !ossl_quic_channel_is_terminated(ch);
 
-    /* We want to write to the network if we have any in our queue. */
+    /* We want to write to the network if we have any data in our TX queue. */
     res->net_write_desired
         = (!ossl_quic_channel_is_terminated(ch)
            && ossl_qtx_get_queue_len_datagrams(ch->qtx) > 0);
@@ -1998,32 +1989,6 @@ static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only)
     }
 
     return 1;
-}
-
-/* Process incoming datagrams, if any. */
-static void ch_rx_pre(QUIC_CHANNEL *ch)
-{
-    int ret;
-
-    if (!ch->is_server && !ch->have_sent_any_pkt)
-        return;
-
-    /*
-     * Get DEMUX to BIO_recvmmsg from the network and queue incoming datagrams
-     * to the appropriate QRX instance.
-     */
-    ret = ossl_quic_demux_pump(ch->port->demux);
-    if (ret == QUIC_DEMUX_PUMP_RES_STATELESS_RESET)
-        ch_stateless_reset(ch);
-    else if (ret == QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL)
-        /*
-         * We don't care about transient failure, but permanent failure means we
-         * should tear down the connection as though a protocol violation
-         * occurred. Skip straight to the Terminating state as there is no point
-         * trying to send CONNECTION_CLOSE frames if the network BIO is not
-         * operating correctly.
-         */
-        ch_raise_net_error(ch);
 }
 
 /* Check incoming forged packet limit and terminate connection if needed. */
@@ -2508,7 +2473,7 @@ static int ch_tx(QUIC_CHANNEL *ch)
     case QTX_FLUSH_NET_RES_PERMANENT_FAIL:
     default:
         /* Permanent underlying network BIO, start terminating. */
-        ch_raise_net_error(ch);
+        ossl_quic_port_raise_net_error(ch->port);
         break;
     }
 
@@ -2571,91 +2536,14 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
  * =======================================
  */
 
-/* Determines whether we can support a given poll descriptor. */
-static int validate_poll_descriptor(const BIO_POLL_DESCRIPTOR *d)
-{
-    if (d->type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD && d->value.fd < 0) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
-    }
-
-    return 1;
-}
-
-BIO *ossl_quic_channel_get_net_rbio(QUIC_CHANNEL *ch)
-{
-    return ch->net_rbio;
-}
-
-BIO *ossl_quic_channel_get_net_wbio(QUIC_CHANNEL *ch)
-{
-    return ch->net_wbio;
-}
-
-static int ch_update_poll_desc(QUIC_CHANNEL *ch, BIO *net_bio, int for_write)
-{
-    BIO_POLL_DESCRIPTOR d = {0};
-
-    if (net_bio == NULL
-        || (!for_write && !BIO_get_rpoll_descriptor(net_bio, &d))
-        || (for_write && !BIO_get_wpoll_descriptor(net_bio, &d)))
-        /* Non-pollable BIO */
-        d.type = BIO_POLL_DESCRIPTOR_TYPE_NONE;
-
-    if (!validate_poll_descriptor(&d))
-        return 0;
-
-    if (for_write)
-        ossl_quic_reactor_set_poll_w(&ch->rtor, &d);
-    else
-        ossl_quic_reactor_set_poll_r(&ch->rtor, &d);
-
-    return 1;
-}
-
-int ossl_quic_channel_update_poll_descriptors(QUIC_CHANNEL *ch)
-{
-    int ok = 1;
-
-    if (!ch_update_poll_desc(ch, ch->net_rbio, /*for_write=*/0))
-        ok = 0;
-
-    if (!ch_update_poll_desc(ch, ch->net_wbio, /*for_write=*/1))
-        ok = 0;
-
-    return ok;
-}
-
-/*
- * QUIC_CHANNEL does not ref any BIO it is provided with, nor is any ref
- * transferred to it. The caller (i.e., QUIC_CONNECTION) is responsible for
- * ensuring the BIO lasts until the channel is freed or the BIO is switched out
- * for another BIO by a subsequent successful call to this function.
- */
 int ossl_quic_channel_set_net_rbio(QUIC_CHANNEL *ch, BIO *net_rbio)
 {
-    if (ch->net_rbio == net_rbio)
-        return 1;
-
-    if (!ch_update_poll_desc(ch, net_rbio, /*for_write=*/0))
-        return 0;
-
-    ossl_quic_demux_set_bio(ch->port->demux, net_rbio);
-    ch->net_rbio = net_rbio;
-    return 1;
+    return ossl_quic_port_set_net_rbio(ch->port, net_rbio);
 }
 
 int ossl_quic_channel_set_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio)
 {
-    if (ch->net_wbio == net_wbio)
-        return 1;
-
-    if (!ch_update_poll_desc(ch, net_wbio, /*for_write=*/1))
-        return 0;
-
-    ossl_qtx_set_bio(ch->qtx, net_wbio);
-    ch->net_wbio = net_wbio;
-    return 1;
+    return ossl_quic_port_set_net_wbio(ch->port, net_wbio);
 }
 
 /*
@@ -2695,7 +2583,7 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     if (!ch_tick_tls(ch, /*channel_only=*/0))
         return 0;
 
-    ossl_quic_reactor_tick(&ch->rtor, 0); /* best effort */
+    ossl_quic_reactor_tick(ossl_quic_port_get0_reactor(ch->port), 0); /* best effort */
     return 1;
 }
 
@@ -3199,7 +3087,7 @@ static void ch_save_err_state(QUIC_CHANNEL *ch)
     OSSL_ERR_STATE_save(ch->err_state);
 }
 
-static void ch_stateless_reset(QUIC_CHANNEL *ch)
+static void ossl_unused ch_stateless_reset(QUIC_CHANNEL *ch)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
 
@@ -3207,7 +3095,7 @@ static void ch_stateless_reset(QUIC_CHANNEL *ch)
     ch_start_terminating(ch, &tcause, 1);
 }
 
-static void ch_raise_net_error(QUIC_CHANNEL *ch)
+void ossl_quic_channel_raise_net_error(QUIC_CHANNEL *ch)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
 
@@ -3696,11 +3584,6 @@ int ossl_quic_channel_ping(QUIC_CHANNEL *ch)
     ossl_quic_tx_packetiser_schedule_ack_eliciting(ch->txp, pn_space);
 
     return 1;
-}
-
-void ossl_quic_channel_set_inhibit_tick(QUIC_CHANNEL *ch, int inhibit)
-{
-    ch->inhibit_tick = (inhibit != 0);
 }
 
 uint16_t ossl_quic_channel_get_diag_num_rx_ack(QUIC_CHANNEL *ch)
