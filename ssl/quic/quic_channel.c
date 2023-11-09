@@ -46,6 +46,8 @@
  */
 #define DEFAULT_MAX_ACK_DELAY   QUIC_DEFAULT_MAX_ACK_DELAY
 
+DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
+
 static void ch_save_err_state(QUIC_CHANNEL *ch);
 static void ch_rx_pre(QUIC_CHANNEL *ch);
 static int ch_rx(QUIC_CHANNEL *ch, int channel_only);
@@ -486,6 +488,8 @@ static int ch_init(QUIC_CHANNEL *ch)
     ch_update_idle(ch);
     ossl_quic_reactor_init(&ch->rtor, ch_tick, ch,
                            ch_determine_next_tick_deadline(ch));
+    ossl_list_ch_insert_tail(&ch->port->channel_list, ch);
+    ch->on_port_list = 1;
     return 1;
 
 err:
@@ -543,6 +547,10 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
         OPENSSL_free(srte);
     }
     lh_QUIC_SRT_ELEM_free(ch->srt_hash_tok);
+    if (ch->on_port_list) {
+        ossl_list_ch_remove(&ch->port->channel_list, ch);
+        ch->on_port_list = 0;
+    }
 }
 
 QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)

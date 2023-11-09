@@ -39,6 +39,12 @@ struct quic_channel_st {
     QUIC_PORT                       *port;
 
     /*
+     * QUIC_PORT keeps the channels which belong to it on a list for bookkeeping
+     * purposes.
+     */
+    OSSL_LIST_MEMBER(ch, struct quic_channel_st);
+
+    /*
      * The associated TLS 1.3 connection data. Used to provide the handshake
      * layer; its 'network' side is plugged into the crypto stream for each EL
      * (other than the 0-RTT EL).
@@ -448,6 +454,9 @@ struct quic_channel_st {
 
     /* Are we using addressed mode? */
     unsigned int                    addressed_mode                      : 1;
+
+    /* Are we on the QUIC_PORT linked list of channels? */
+    unsigned int                    on_port_list                        : 1;
 
     /* Saved error stack in case permanent error was encountered */
     ERR_STATE                       *err_state;
