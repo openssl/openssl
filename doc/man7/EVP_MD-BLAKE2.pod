@@ -32,8 +32,9 @@ in L<EVP_MD-common(7)>.
 
 =head2 Settable Context Parameters
 
-The BLAKE2B-512 implementation supports the following L<OSSL_PARAM(3)> entries,
-settable for an B<EVP_MD_CTX> with L<EVP_MD_CTX_set_params(3)>:
+The BLAKE2B-512 implementation supports the following L<OSSL_PARAM(3)> entries
+which are settable for an B<EVP_MD_CTX> with L<EVP_DigestInit_ex2(3)> or
+L<EVP_MD_CTX_set_params(3)>:
 
 =over 4
 
@@ -41,7 +42,10 @@ settable for an B<EVP_MD_CTX> with L<EVP_MD_CTX_set_params(3)>:
 
 Sets a different digest length for the L<EVP_DigestFinal(3)> output.
 The value of the "size" parameter must not exceed the default digest length
-(64) and it must be set during the L<EVP_DigestInit_ex2(3)> call.
+(64 for BLAKE2B-512). The parameter must be set with the
+L<EVP_DigestInit_ex2(3)> call to have an immediate effect. When set with
+L<EVP_MD_CTX_set_params(3)> it will have an effect only if the B<EVP_MD_CTX>
+context is reinitialized.
 
 =back
 
