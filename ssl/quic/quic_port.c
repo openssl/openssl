@@ -88,6 +88,7 @@ static int port_init(QUIC_PORT *port)
     ossl_quic_reactor_init(&port->rtor, port_tick, port, ossl_time_zero());
     port->rx_short_dcid_len = (unsigned char)rx_short_dcid_len;
     port->tx_init_dcid_len  = INIT_DCID_LEN;
+    port->state             = QUIC_PORT_STATE_RUNNING;
     return 1;
 
 err:
@@ -107,6 +108,19 @@ static void port_cleanup(QUIC_PORT *port)
 
     ossl_quic_lcidm_free(port->lcidm);
     port->lcidm = NULL;
+}
+
+static void port_transition_failed(QUIC_PORT *port)
+{
+    if (port->state == QUIC_PORT_STATE_FAILED)
+        return;
+
+    port->state = QUIC_PORT_STATE_FAILED;
+}
+
+int ossl_quic_port_is_running(const QUIC_PORT *port)
+{
+    return port->state == QUIC_PORT_STATE_RUNNING;
 }
 
 QUIC_REACTOR *ossl_quic_port_get0_reactor(QUIC_PORT *port)
@@ -438,6 +452,10 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     QUIC_PKT_HDR hdr;
     QUIC_CHANNEL *ch = NULL, *new_ch = NULL;
 
+    /* Don't handle anything if we are no longer running. */
+    if (!ossl_quic_port_is_running(port))
+        goto undesirable;
+
     if (dcid != NULL
         && ossl_quic_lcidm_lookup(port->lcidm, dcid, NULL,
                                   (void **)&ch)) {
@@ -460,8 +478,6 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      */
     if (port->tserver_ch == NULL)
         goto undesirable;
-
-    // TODO fsm
 
     /*
      * We have got a packet for an unknown DCID. This might be an attempt to
@@ -526,7 +542,7 @@ void ossl_quic_port_raise_net_error(QUIC_PORT *port)
 {
     QUIC_CHANNEL *ch;
 
-    // TODO fsm
+    port_transition_failed(port);
 
     LIST_FOREACH(ch, ch, &port->channel_list)
         ossl_quic_channel_raise_net_error(ch);
