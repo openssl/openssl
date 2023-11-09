@@ -371,7 +371,9 @@ static int ch_init(QUIC_CHANNEL *ch)
                                     ch))
         goto err;
 
-    if (!ch->is_server && !ossl_qrx_add_dst_conn_id(ch->qrx, &txp_args.cur_scid))
+    /* TODO plug this correctly */
+    if (!ch->is_server
+        && !ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &txp_args.cur_scid))
         goto err;
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
@@ -3242,11 +3244,8 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     if (!ossl_assert(ch->state == QUIC_CHANNEL_STATE_IDLE && ch->is_server))
         return 0;
 
-
-    /* Generate a SCID we will use for the connection. */
-    if (!gen_rand_conn_id(ch->port->libctx,
-                          ossl_quic_port_get_tx_init_dcid_len(ch->port),
-                          &ch->cur_local_cid))
+    /* Generate an Initial LCID we will use for the connection. */
+    if (!ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &ch->cur_local_cid))
         return 0;
 
     /* Note our newly learnt peer address and CIDs. */
@@ -3273,8 +3272,8 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
                                           ch->qrx, ch->qtx))
         return 0;
 
-    /* Register our local CID in the DEMUX. */
-    if (!ossl_qrx_add_dst_conn_id(ch->qrx, &ch->cur_local_cid))
+    /* Register the peer ODCID in the LCIDM. */
+    if (!ossl_quic_lcidm_enrol_odcid(ch->lcidm, ch, &ch->init_dcid))
         return 0;
 
     /* Change state. */
@@ -3468,15 +3467,16 @@ void ossl_quic_channel_reject_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs)
 int ossl_quic_channel_replace_local_cid(QUIC_CHANNEL *ch,
                                         const QUIC_CONN_ID *conn_id)
 {
-    /* Remove the current local CID from the DEMUX. */
-    if (!ossl_qrx_remove_dst_conn_id(ch->qrx, &ch->cur_local_cid))
+    /* Remove the current LCID from the LCIDM. */
+    if (!ossl_quic_lcidm_debug_remove(ch->lcidm, &ch->cur_local_cid))
         return 0;
     ch->cur_local_cid = *conn_id;
     /* Set in the TXP, used only for long header packets. */
     if (!ossl_quic_tx_packetiser_set_cur_scid(ch->txp, &ch->cur_local_cid))
         return 0;
-    /* Register our new local CID in the DEMUX. */
-    if (!ossl_qrx_add_dst_conn_id(ch->qrx, &ch->cur_local_cid))
+    /* Add the new LCID to the LCIDM. */
+    if (!ossl_quic_lcidm_debug_add(ch->lcidm, ch, &ch->cur_local_cid,
+                                   100))
         return 0;
     return 1;
 }
