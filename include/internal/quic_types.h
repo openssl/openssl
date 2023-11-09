@@ -87,6 +87,13 @@ static ossl_unused ossl_inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
     return memcmp(a->id, b->id, a->id_len) == 0;
 }
 
+/*
+ * Generates a random CID of the given length. libctx may be NULL.
+ * Returns 1 on success or 0 on failure.
+ */
+int ossl_quic_gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len,
+                               QUIC_CONN_ID *cid);
+
 #  define QUIC_MIN_INITIAL_DGRAM_LEN  1200
 
 #  define QUIC_DEFAULT_ACK_DELAY_EXP  3

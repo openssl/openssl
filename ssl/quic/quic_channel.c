@@ -102,22 +102,6 @@ static void ch_raise_version_neg_failure(QUIC_CHANNEL *ch);
 
 DEFINE_LHASH_OF_EX(QUIC_SRT_ELEM);
 
-static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
-{
-    if (len > QUIC_MAX_CONN_ID_LEN)
-        return 0;
-
-    cid->id_len = (unsigned char)len;
-
-    if (RAND_bytes_ex(libctx, cid->id, len, len * 8) != 1) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_RAND_LIB);
-        cid->id_len = 0;
-        return 0;
-    }
-
-    return 1;
-}
-
 /*
  * QUIC Channel Initialization and Teardown
  * ========================================
@@ -145,7 +129,8 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     /* For clients, generate our initial DCID. */
     if (!ch->is_server
-        && !gen_rand_conn_id(ch->port->libctx, tx_init_dcid_len, &ch->init_dcid))
+        && !ossl_quic_gen_rand_conn_id(ch->port->libctx, tx_init_dcid_len,
+                                       &ch->init_dcid))
         goto err;
 
     /* We plug in a network write BIO to the QTX later when we get one. */
