@@ -221,6 +221,10 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     ch->have_qsm = 1;
 
+    if (!ch->is_server
+        && !ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &txp_args.cur_scid))
+        goto err;
+
     /* We use a zero-length SCID. */
     txp_args.cur_dcid               = ch->init_dcid;
     txp_args.ack_delay_exponent     = 3;
@@ -268,11 +272,6 @@ static int ch_init(QUIC_CHANNEL *ch)
     if (!ossl_qrx_set_key_update_cb(ch->qrx,
                                     rxku_detected,
                                     ch))
-        goto err;
-
-    /* TODO plug this correctly */
-    if (!ch->is_server
-        && !ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &txp_args.cur_scid))
         goto err;
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
