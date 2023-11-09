@@ -198,7 +198,10 @@ int rand_main(int argc, char **argv)
     while (scaled_num > 0) {
         long chunk;
 
-        chunk = (scaled_num > buflen) ? buflen : scaled_num;
+        chunk = buflen;
+        if ((long)scaled_num < chunk)
+            chunk = (long)scaled_num;
+
         r = RAND_bytes(buf, chunk);
         if (r <= 0)
             goto end;
