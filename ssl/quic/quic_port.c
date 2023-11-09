@@ -23,6 +23,8 @@ static OSSL_TIME get_time(void *arg);
 static void port_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
 //static void port_default_packet_handler(QUIC_URXE *e, void *arg);
 
+DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
+
 QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
 {
     QUIC_PORT *port;
@@ -82,6 +84,7 @@ err:
 
 static void port_cleanup(QUIC_PORT *port)
 {
+    assert(ossl_list_ch_num(&port->channel_list) == 0);
     ossl_quic_demux_free(port->demux);
     port->demux = NULL;
 }
