@@ -113,6 +113,8 @@ typedef struct quic_channel_args_st {
     QUIC_PORT       *port;
     /* LCIDM to register LCIDs with. */
     QUIC_LCIDM      *lcidm;
+    /* SRTM to register SRTs with. */
+    QUIC_SRTM       *srtm;
 
     int             is_server;
     SSL             *tls;
