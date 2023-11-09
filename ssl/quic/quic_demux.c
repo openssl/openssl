@@ -46,10 +46,6 @@ struct quic_demux_st {
     ossl_quic_demux_cb_fn      *default_cb;
     void                       *default_cb_arg;
 
-    /* The stateless reset token checker handler, if any. */
-    ossl_quic_stateless_reset_cb_fn *reset_token_cb;
-    void                            *reset_token_cb_arg;
-
     /*
      * List of URXEs which are not currently in use (i.e., not filled with
      * unconsumed data). These are moved to the pending list as they are filled.
@@ -151,14 +147,6 @@ void ossl_quic_demux_set_default_handler(QUIC_DEMUX *demux,
 {
     demux->default_cb       = cb;
     demux->default_cb_arg   = cb_arg;
-}
-
-void ossl_quic_demux_set_stateless_reset_handler(
-        QUIC_DEMUX *demux,
-        ossl_quic_stateless_reset_cb_fn *cb, void *cb_arg)
-{
-    demux->reset_token_cb       = cb;
-    demux->reset_token_cb_arg   = cb_arg;
 }
 
 static QUIC_URXE *demux_alloc_urxe(size_t alloc_len)
@@ -334,41 +322,18 @@ static int demux_identify_conn_id(QUIC_DEMUX *demux,
 
 /*
  * Process a single pending URXE.
- * Returning 1 on success, 0 on failure and -1 on stateless reset.
+ * Returning 1 on success, 0 on failure.
  */
 static int demux_process_pending_urxe(QUIC_DEMUX *demux, QUIC_URXE *e)
 {
     QUIC_CONN_ID dst_conn_id;
-    int r, dst_conn_id_ok = 0;
+    int dst_conn_id_ok = 0;
 
     /* The next URXE we process should be at the head of the pending list. */
     if (!ossl_assert(e == ossl_list_urxe_head(&demux->urx_pending)))
         return 0;
 
     assert(e->demux_state == URXE_DEMUX_STATE_PENDING);
-
-    /*
-     * Check if the packet ends with a stateless reset token and if it does
-     * skip it after dropping the connection.
-     *
-     * RFC 9000 s. 10.3.1 Detecting a Stateless Reset
-     *      If the last 16 bytes of the datagram are identical in value to
-     *      a stateless reset token, the endpoint MUST enter the draining
-     *      period and not send any further packets on this connection.
-     *
-     * Returning a failure here causes the connection to enter the terminating
-     * state which achieves the desired outcome.
-     *
-     * TODO(QUIC FUTURE): only try to match unparsable packets
-     */
-    if (demux->reset_token_cb != NULL) {
-        r = demux->reset_token_cb(ossl_quic_urxe_data(e), e->data_len,
-                                  demux->reset_token_cb_arg);
-        if (r > 0)      /* Received a stateless reset */
-            return -1;
-        if (r < 0)      /* Error during stateless reset detection */
-            return 0;
-    }
 
     /* Determine the DCID of the first packet in the datagram. */
     dst_conn_id_ok = demux_identify_conn_id(demux, e, &dst_conn_id);
@@ -428,8 +393,7 @@ int ossl_quic_demux_pump(QUIC_DEMUX *demux)
     }
 
     if ((ret = demux_process_pending_urxl(demux)) <= 0)
-        return ret == 0 ? QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL
-                        : QUIC_DEMUX_PUMP_RES_STATELESS_RESET;
+        return QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL;
 
     return QUIC_DEMUX_PUMP_RES_OK;
 }
