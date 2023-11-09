@@ -101,15 +101,19 @@ CRYPTO_MUTEX *ossl_quic_port_get0_mutex(QUIC_PORT *port)
     return port->mutex;
 }
 
-static OSSL_TIME get_time(void *arg)
+OSSL_TIME ossl_quic_port_get_time(QUIC_PORT *port)
 {
-    QUIC_PORT *port = arg;
-
     if (port->now_cb == NULL)
         return ossl_time_now();
 
     return port->now_cb(port->now_cb_arg);
 }
+
+static OSSL_TIME get_time(void *port)
+{
+    return ossl_quic_port_get_time(port);
+}
+
 
 /*
  * QUIC Port: Network BIO Configuration
