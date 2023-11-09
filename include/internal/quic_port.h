@@ -44,6 +44,10 @@ typedef struct quic_port_args_st {
      */
     CRYPTO_MUTEX    *mutex;
 
+    /*
+     * Optional function pointer to use to retrieve the current time. If NULL,
+     * ossl_time_now() is used.
+     */
     OSSL_TIME       (*now_cb)(void *arg);
     void            *now_cb_arg;
 } QUIC_PORT_ARGS;
