@@ -149,6 +149,9 @@ static QUIC_LCID *lcidm_get_lcid(const QUIC_LCIDM *lcidm, const QUIC_CONN_ID *lc
 
     key.cid = *lcid;
 
+    if (key.cid.id_len > QUIC_MAX_CONN_ID_LEN)
+        return NULL;
+
     return lh_QUIC_LCID_retrieve(lcidm->lcids, &key);
 }
 
@@ -207,6 +210,9 @@ static QUIC_LCID *lcidm_conn_new_lcid(QUIC_LCIDM *lcidm, QUIC_LCIDM_CONN *conn,
                                       const QUIC_CONN_ID *lcid)
 {
     QUIC_LCID *lcid_obj;
+
+    if (lcid->id_len > QUIC_MAX_CONN_ID_LEN)
+        return NULL;
 
     if ((lcid_obj = OPENSSL_zalloc(sizeof(*lcid_obj))) == NULL)
         return NULL;
