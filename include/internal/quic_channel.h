@@ -12,9 +12,9 @@
 
 # include <openssl/ssl.h>
 # include "internal/quic_types.h"
-# include "internal/quic_stream_map.h"
-# include "internal/quic_reactor.h"
-# include "internal/quic_statm.h"
+# include "internal/quic_record_tx.h"
+# include "internal/quic_wire.h"
+# include "internal/quic_predef.h"
 # include "internal/time.h"
 # include "internal/thread.h"
 
