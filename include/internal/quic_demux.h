@@ -270,7 +270,6 @@ void ossl_quic_demux_reinject_urxe(QUIC_DEMUX *demux,
 #define QUIC_DEMUX_PUMP_RES_OK              1
 #define QUIC_DEMUX_PUMP_RES_TRANSIENT_FAIL  (-1)
 #define QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL  (-2)
-#define QUIC_DEMUX_PUMP_RES_STATELESS_RESET (-3)
 
 int ossl_quic_demux_pump(QUIC_DEMUX *demux);
 
