@@ -112,30 +112,8 @@ typedef struct quic_channel_args_st {
      */
     QUIC_PORT       *port;
 
-    OSSL_LIB_CTX    *libctx;
-    const char      *propq;
     int             is_server;
     SSL             *tls;
-
-    /*
-     * This must be a mutex the lifetime of which will exceed that of the
-     * channel. The instantiator of the channel is responsible for providing a
-     * mutex as this makes it easier to handle instantiation and teardown of
-     * channels in situations potentially requiring locking.
-     *
-     * Note that this is a MUTEX not a RWLOCK as it needs to be an OS mutex for
-     * compatibility with an OS's condition variable wait API, whereas RWLOCK
-     * may, depending on the build configuration, be implemented using an OS's
-     * mutex primitive or using its RW mutex primitive.
-     */
-    CRYPTO_MUTEX    *mutex;
-
-    /*
-     * Optional function pointer to use to retrieve the current time. If NULL,
-     * ossl_time_now() is used.
-     */
-    OSSL_TIME       (*now_cb)(void *arg);
-    void            *now_cb_arg;
 } QUIC_CHANNEL_ARGS;
 
 typedef struct quic_channel_st QUIC_CHANNEL;

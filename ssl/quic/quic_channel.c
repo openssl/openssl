@@ -14,6 +14,7 @@
 #include "internal/quic_rx_depack.h"
 #include "../ssl_local.h"
 #include "quic_channel_local.h"
+#include "quic_port_local.h"
 
 /*
  * NOTE: While this channel implementation currently has basic server support,
@@ -285,11 +286,11 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     /* For clients, generate our initial DCID. */
     if (!ch->is_server
-        && !gen_rand_conn_id(ch->libctx, INIT_DCID_LEN, &ch->init_dcid))
+        && !gen_rand_conn_id(ch->port->libctx, INIT_DCID_LEN, &ch->init_dcid))
         goto err;
 
     /* We plug in a network write BIO to the QTX later when we get one. */
-    qtx_args.libctx = ch->libctx;
+    qtx_args.libctx = ch->port->libctx;
     qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
     ch->rx_max_udp_payload_size = qtx_args.mdpl;
 
@@ -414,7 +415,7 @@ static int ch_init(QUIC_CHANNEL *ch)
                                             ch_default_packet_handler,
                                             ch);
 
-    qrx_args.libctx             = ch->libctx;
+    qrx_args.libctx             = ch->port->libctx;
     qrx_args.demux              = ch->demux;
     qrx_args.short_conn_id_len  = rx_short_cid_len;
     qrx_args.max_deferred       = 32;
@@ -552,13 +553,8 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
         return NULL;
 
     ch->port        = args->port;
-    ch->libctx      = args->libctx;
-    ch->propq       = args->propq;
     ch->is_server   = args->is_server;
     ch->tls         = args->tls;
-    ch->mutex       = args->mutex;
-    ch->now_cb      = args->now_cb;
-    ch->now_cb_arg  = args->now_cb_arg;
 
     if (!ch_init(ch)) {
         OPENSSL_free(ch);
@@ -696,7 +692,7 @@ QUIC_PORT *ossl_quic_channel_get0_port(QUIC_CHANNEL *ch)
 
 CRYPTO_MUTEX *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch)
 {
-    return ch->mutex;
+    return ch->port->mutex;
 }
 
 int ossl_quic_channel_has_pending(const QUIC_CHANNEL *ch)
@@ -715,10 +711,10 @@ static OSSL_TIME get_time(void *arg)
 {
     QUIC_CHANNEL *ch = arg;
 
-    if (ch->now_cb == NULL)
+    if (ch->port->now_cb == NULL)
         return ossl_time_now();
 
-    return ch->now_cb(ch->now_cb_arg);
+    return ch->port->now_cb(ch->port->now_cb_arg);
 }
 
 /* Used by QSM. */
@@ -2279,8 +2275,8 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
          * than allow the QRX to emit a potentially malformed packet to the
          * upper layers. However, special casing this will do for now.
          */
-        if (!ossl_quic_validate_retry_integrity_tag(ch->libctx,
-                                                    ch->propq,
+        if (!ossl_quic_validate_retry_integrity_tag(ch->port->libctx,
+                                                    ch->port->propq,
                                                     ch->qrx_pkt->hdr,
                                                     &ch->init_dcid))
             /* Malformed retry packet, ignore. */
@@ -2780,8 +2776,8 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
         return 0;
 
     /* Plug in secrets for the Initial EL. */
-    if (!ossl_quic_provide_initial_secret(ch->libctx,
-                                          ch->propq,
+    if (!ossl_quic_provide_initial_secret(ch->port->libctx,
+                                          ch->port->propq,
                                           &ch->init_dcid,
                                           ch->is_server,
                                           ch->qrx, ch->qtx))
@@ -2880,8 +2876,8 @@ static int ch_retry(QUIC_CHANNEL *ch,
      * Plug in new secrets for the Initial EL. This is the only time we change
      * the secrets for an EL after we already provisioned it.
      */
-    if (!ossl_quic_provide_initial_secret(ch->libctx,
-                                          ch->propq,
+    if (!ossl_quic_provide_initial_secret(ch->port->libctx,
+                                          ch->port->propq,
                                           &ch->retry_scid,
                                           /*is_server=*/0,
                                           ch->qrx, ch->qtx))
@@ -3504,7 +3500,7 @@ static int ch_server_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
         return 0;
 
     /* Generate a SCID we will use for the connection. */
-    if (!gen_rand_conn_id(ch->libctx, INIT_DCID_LEN,
+    if (!gen_rand_conn_id(ch->port->libctx, INIT_DCID_LEN,
                           &ch->cur_local_cid))
         return 0;
 
@@ -3525,8 +3521,8 @@ static int ch_server_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
         return 0;
 
     /* Plug in secrets for the Initial EL. */
-    if (!ossl_quic_provide_initial_secret(ch->libctx,
-                                          ch->propq,
+    if (!ossl_quic_provide_initial_secret(ch->port->libctx,
+                                          ch->port->propq,
                                           &ch->init_dcid,
                                           /*is_server=*/1,
                                           ch->qrx, ch->qtx))
