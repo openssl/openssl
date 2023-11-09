@@ -11,6 +11,7 @@
 
 # include "internal/time.h"
 # include "internal/sockets.h"
+# include "internal/quic_predef.h"
 # include <openssl/bio.h>
 
 # ifndef OPENSSL_NO_QUIC
@@ -67,11 +68,11 @@
  * adaptation layer on top of our internal asynchronous I/O API as exposed by
  * the reactor interface.
  */
-typedef struct quic_tick_result_st {
+struct quic_tick_result_st {
     char        net_read_desired;
     char        net_write_desired;
     OSSL_TIME   tick_deadline;
-} QUIC_TICK_RESULT;
+};
 
 static ossl_inline ossl_unused void
 ossl_quic_tick_result_merge_into(QUIC_TICK_RESULT *r,
@@ -82,7 +83,7 @@ ossl_quic_tick_result_merge_into(QUIC_TICK_RESULT *r,
     r->tick_deadline     = ossl_time_min(r->tick_deadline, src->tick_deadline);
 }
 
-typedef struct quic_reactor_st {
+struct quic_reactor_st {
     /*
      * BIO poll descriptors which can be polled. poll_r is a poll descriptor
      * which becomes readable when the QUIC state machine can potentially do
@@ -110,7 +111,7 @@ typedef struct quic_reactor_st {
      */
     unsigned int can_poll_r : 1;
     unsigned int can_poll_w : 1;
-} QUIC_REACTOR;
+};
 
 void ossl_quic_reactor_init(QUIC_REACTOR *rtor,
                             void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,

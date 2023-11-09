@@ -12,9 +12,7 @@
 
 # include <openssl/ssl.h>
 # include "internal/quic_stream.h"
-
-
-typedef struct quic_tls_st QUIC_TLS;
+# include "internal/quic_predef.h"
 
 typedef struct quic_tls_args_st {
     /*

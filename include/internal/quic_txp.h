@@ -12,6 +12,7 @@
 
 # include <openssl/ssl.h>
 # include "internal/quic_types.h"
+# include "internal/quic_predef.h"
 # include "internal/quic_record_tx.h"
 # include "internal/quic_cfq.h"
 # include "internal/quic_txpim.h"
@@ -58,8 +59,6 @@ typedef struct ossl_quic_tx_packetiser_args_st {
     QUIC_SSTREAM    *crypto[QUIC_PN_SPACE_NUM];
 
  } OSSL_QUIC_TX_PACKETISER_ARGS;
-
-typedef struct ossl_quic_tx_packetiser_st OSSL_QUIC_TX_PACKETISER;
 
 OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETISER_ARGS *args);
 
