@@ -167,8 +167,6 @@ struct ossl_qrx_st {
     SSL *msg_callback_ssl;
 };
 
-static void qrx_on_rx(QUIC_URXE *urxe, void *arg, const QUIC_CONN_ID *dcid);
-
 OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
 {
     OSSL_QRX *qrx;
@@ -222,9 +220,6 @@ void ossl_qrx_free(OSSL_QRX *qrx)
     if (qrx == NULL)
         return;
 
-    /* Unregister from the RX DEMUX. */
-    ossl_quic_demux_unregister_by_cb(qrx->demux, qrx_on_rx, qrx);
-
     /* Free RXE queue data. */
     qrx_cleanup_rxl(&qrx->rx_free);
     qrx_cleanup_rxl(&qrx->rx_pending);
@@ -250,28 +245,6 @@ void ossl_qrx_inject_urxe(OSSL_QRX *qrx, QUIC_URXE *urxe)
         qrx->msg_callback(0, OSSL_QUIC1_VERSION, SSL3_RT_QUIC_DATAGRAM, urxe + 1,
                           urxe->data_len, qrx->msg_callback_ssl,
                           qrx->msg_callback_arg);
-}
-
-static void qrx_on_rx(QUIC_URXE *urxe, void *arg, const QUIC_CONN_ID *dcid)
-{
-    OSSL_QRX *qrx = arg;
-
-    ossl_qrx_inject_urxe(qrx, urxe);
-}
-
-int ossl_qrx_add_dst_conn_id(OSSL_QRX *qrx,
-                             const QUIC_CONN_ID *dst_conn_id)
-{
-    return ossl_quic_demux_register(qrx->demux,
-                                    dst_conn_id,
-                                    qrx_on_rx,
-                                    qrx);
-}
-
-int ossl_qrx_remove_dst_conn_id(OSSL_QRX *qrx,
-                                const QUIC_CONN_ID *dst_conn_id)
-{
-    return ossl_quic_demux_unregister(qrx->demux, dst_conn_id);
 }
 
 static void qrx_requeue_deferred(OSSL_QRX *qrx)
