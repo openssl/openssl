@@ -108,6 +108,17 @@ static void helper_cleanup(struct helper *h)
     BIO_free(h->bio2);
 }
 
+static void demux_default_handler(QUIC_URXE *e, void *arg,
+                                  const QUIC_CONN_ID *dcid)
+{
+    struct helper *h = arg;
+
+    if (dcid == NULL || !ossl_quic_conn_id_eq(dcid, &dcid_1))
+        return;
+
+    ossl_qrx_inject_urxe(h->qrx, e);
+}
+
 static int helper_init(struct helper *h)
 {
     int rc = 0;
@@ -204,14 +215,13 @@ static int helper_init(struct helper *h)
                                                  fake_now, NULL)))
         goto err;
 
+    ossl_quic_demux_set_default_handler(h->demux, demux_default_handler, h);
+
     h->qrx_args.demux                  = h->demux;
     h->qrx_args.short_conn_id_len      = 8;
     h->qrx_args.max_deferred           = 32;
 
     if (!TEST_ptr(h->qrx = ossl_qrx_new(&h->qrx_args)))
-        goto err;
-
-    if (!TEST_true(ossl_qrx_add_dst_conn_id(h->qrx, &dcid_1)))
         goto err;
 
     ossl_qrx_allow_1rtt_processing(h->qrx);
