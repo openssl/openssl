@@ -94,14 +94,7 @@ void dtls1_hm_fragment_free(hm_fragment *frag)
 {
     if (!frag)
         return;
-    if (frag->msg_header.is_ccs) {
-        /*
-         * If we're freeing the CCS then we're done with the old wrl and it
-         * can bee freed
-         */
-        if (frag->msg_header.saved_retransmit_state.wrlmethod != NULL)
-            frag->msg_header.saved_retransmit_state.wrlmethod->free(frag->msg_header.saved_retransmit_state.wrl);
-    }
+
     OPENSSL_free(frag->fragment);
     OPENSSL_free(frag->reassembly);
     OPENSSL_free(frag);
