@@ -106,6 +106,8 @@
 #  define QUIC_CHANNEL_STATE_TERMINATED                  4
 
 typedef struct quic_channel_args_st {
+    QUIC_PORT       *port;
+
     OSSL_LIB_CTX    *libctx;
     const char      *propq;
     int             is_server;
@@ -326,6 +328,7 @@ int ossl_quic_channel_is_active(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_handshake_complete(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_handshake_confirmed(const QUIC_CHANNEL *ch);
 
+QUIC_PORT *ossl_quic_channel_get0_port(QUIC_CHANNEL *ch);
 QUIC_DEMUX *ossl_quic_channel_get0_demux(QUIC_CHANNEL *ch);
 
 SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch);

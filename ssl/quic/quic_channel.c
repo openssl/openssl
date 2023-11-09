@@ -548,6 +548,7 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
     if ((ch = OPENSSL_zalloc(sizeof(*ch))) == NULL)
         return NULL;
 
+    ch->port        = args->port;
     ch->libctx      = args->libctx;
     ch->propq       = args->propq;
     ch->is_server   = args->is_server;
@@ -683,6 +684,11 @@ int ossl_quic_channel_is_handshake_confirmed(const QUIC_CHANNEL *ch)
 QUIC_DEMUX *ossl_quic_channel_get0_demux(QUIC_CHANNEL *ch)
 {
     return ch->demux;
+}
+
+QUIC_PORT *ossl_quic_channel_get0_port(QUIC_CHANNEL *ch)
+{
+    return ch->port;
 }
 
 CRYPTO_MUTEX *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch)
