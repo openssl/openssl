@@ -21,37 +21,6 @@
 
 #define DEMUX_DEFAULT_MTU        1500
 
-/* Structure used to track a given connection ID. */
-typedef struct quic_demux_conn_st QUIC_DEMUX_CONN;
-
-struct quic_demux_conn_st {
-    QUIC_DEMUX_CONN                 *next; /* used when unregistering only */
-    QUIC_CONN_ID                    dst_conn_id;
-    ossl_quic_demux_cb_fn           *cb;
-    void                            *cb_arg;
-};
-
-DEFINE_LHASH_OF_EX(QUIC_DEMUX_CONN);
-
-static unsigned long demux_conn_hash(const QUIC_DEMUX_CONN *conn)
-{
-    size_t i;
-    unsigned long v = 0;
-
-    assert(conn->dst_conn_id.id_len <= QUIC_MAX_CONN_ID_LEN);
-
-    for (i = 0; i < conn->dst_conn_id.id_len; ++i)
-        v ^= ((unsigned long)conn->dst_conn_id.id[i])
-             << ((i * 8) % (sizeof(unsigned long) * 8));
-
-    return v;
-}
-
-static int demux_conn_cmp(const QUIC_DEMUX_CONN *a, const QUIC_DEMUX_CONN *b)
-{
-    return !ossl_quic_conn_id_eq(&a->dst_conn_id, &b->dst_conn_id);
-}
-
 struct quic_demux_st {
     /* The underlying transport BIO with datagram semantics. */
     BIO                        *net_bio;
@@ -72,9 +41,6 @@ struct quic_demux_st {
     /* Time retrieval callback. */
     OSSL_TIME                 (*now)(void *arg);
     void                       *now_arg;
-
-    /* Hashtable mapping connection IDs to QUIC_DEMUX_CONN structures. */
-    LHASH_OF(QUIC_DEMUX_CONN)  *conns_by_id;
 
     /* The default packet handler, if any. */
     ossl_quic_demux_cb_fn      *default_cb;
@@ -121,24 +87,12 @@ QUIC_DEMUX *ossl_quic_demux_new(BIO *net_bio,
     demux->now                      = now;
     demux->now_arg                  = now_arg;
 
-    demux->conns_by_id
-        = lh_QUIC_DEMUX_CONN_new(demux_conn_hash, demux_conn_cmp);
-    if (demux->conns_by_id == NULL) {
-        OPENSSL_free(demux);
-        return NULL;
-    }
-
     if (net_bio != NULL
         && BIO_dgram_get_local_addr_cap(net_bio)
         && BIO_dgram_set_local_addr_enable(net_bio, 1))
         demux->use_local_addr = 1;
 
     return demux;
-}
-
-static void demux_free_conn_it(QUIC_DEMUX_CONN *conn, void *arg)
-{
-    OPENSSL_free(conn);
 }
 
 static void demux_free_urxl(QUIC_URXE_LIST *l)
@@ -156,10 +110,6 @@ void ossl_quic_demux_free(QUIC_DEMUX *demux)
 {
     if (demux == NULL)
         return;
-
-    /* Free all connection structures. */
-    lh_QUIC_DEMUX_CONN_doall_arg(demux->conns_by_id, demux_free_conn_it, NULL);
-    lh_QUIC_DEMUX_CONN_free(demux->conns_by_id);
 
     /* Free all URXEs we are holding. */
     demux_free_urxl(&demux->urx_free);
@@ -193,104 +143,6 @@ int ossl_quic_demux_set_mtu(QUIC_DEMUX *demux, unsigned int mtu)
 
     demux->mtu = mtu;
     return 1;
-}
-
-static QUIC_DEMUX_CONN *demux_get_by_conn_id(QUIC_DEMUX *demux,
-                                             const QUIC_CONN_ID *dst_conn_id)
-{
-    QUIC_DEMUX_CONN key;
-
-    if (dst_conn_id->id_len > QUIC_MAX_CONN_ID_LEN)
-        return NULL;
-
-    key.dst_conn_id = *dst_conn_id;
-    return lh_QUIC_DEMUX_CONN_retrieve(demux->conns_by_id, &key);
-}
-
-int ossl_quic_demux_register(QUIC_DEMUX *demux,
-                             const QUIC_CONN_ID *dst_conn_id,
-                             ossl_quic_demux_cb_fn *cb, void *cb_arg)
-{
-    QUIC_DEMUX_CONN *conn;
-
-    if (dst_conn_id == NULL
-        || dst_conn_id->id_len > QUIC_MAX_CONN_ID_LEN
-        || cb == NULL)
-        return 0;
-
-    /* Ensure not already registered. */
-    if (demux_get_by_conn_id(demux, dst_conn_id) != NULL)
-        /* Handler already registered with this connection ID. */
-        return 0;
-
-    conn = OPENSSL_zalloc(sizeof(QUIC_DEMUX_CONN));
-    if (conn == NULL)
-        return 0;
-
-    conn->dst_conn_id   = *dst_conn_id;
-    conn->cb            = cb;
-    conn->cb_arg        = cb_arg;
-
-    lh_QUIC_DEMUX_CONN_insert(demux->conns_by_id, conn);
-    return 1;
-}
-
-static void demux_unregister(QUIC_DEMUX *demux,
-                             QUIC_DEMUX_CONN *conn)
-{
-    lh_QUIC_DEMUX_CONN_delete(demux->conns_by_id, conn);
-    OPENSSL_free(conn);
-}
-
-int ossl_quic_demux_unregister(QUIC_DEMUX *demux,
-                               const QUIC_CONN_ID *dst_conn_id)
-{
-    QUIC_DEMUX_CONN *conn;
-
-    if (dst_conn_id == NULL
-        || dst_conn_id->id_len > QUIC_MAX_CONN_ID_LEN)
-        return 0;
-
-    conn = demux_get_by_conn_id(demux, dst_conn_id);
-    if (conn == NULL)
-        return 0;
-
-    demux_unregister(demux, conn);
-    return 1;
-}
-
-struct unreg_arg {
-    ossl_quic_demux_cb_fn *cb;
-    void *cb_arg;
-    QUIC_DEMUX_CONN *head;
-};
-
-static void demux_unregister_by_cb(QUIC_DEMUX_CONN *conn, void *arg_)
-{
-    struct unreg_arg *arg = arg_;
-
-    if (conn->cb == arg->cb && conn->cb_arg == arg->cb_arg) {
-        conn->next = arg->head;
-        arg->head = conn;
-    }
-}
-
-void ossl_quic_demux_unregister_by_cb(QUIC_DEMUX *demux,
-                                      ossl_quic_demux_cb_fn *cb,
-                                      void *cb_arg)
-{
-    QUIC_DEMUX_CONN *conn, *cnext;
-    struct unreg_arg arg = {0};
-    arg.cb      = cb;
-    arg.cb_arg  = cb_arg;
-
-    lh_QUIC_DEMUX_CONN_doall_arg(demux->conns_by_id,
-                                 demux_unregister_by_cb, &arg);
-
-    for (conn = arg.head; conn != NULL; conn = cnext) {
-        cnext = conn->next;
-        demux_unregister(demux, conn);
-    }
 }
 
 void ossl_quic_demux_set_default_handler(QUIC_DEMUX *demux,
@@ -480,29 +332,12 @@ static int demux_identify_conn_id(QUIC_DEMUX *demux,
                                                   dst_conn_id);
 }
 
-/* Identify the connection structure corresponding to a given URXE. */
-static QUIC_DEMUX_CONN *demux_identify_conn(QUIC_DEMUX *demux, QUIC_URXE *e,
-                                            QUIC_CONN_ID *dst_conn_id,
-                                            int *dst_conn_id_ok)
-{
-    if (!demux_identify_conn_id(demux, e, dst_conn_id))
-        /*
-         * Datagram is so badly malformed we can't get the DCID from the first
-         * packet in it, so just give up.
-         */
-        return NULL;
-
-    *dst_conn_id_ok = 1;
-    return demux_get_by_conn_id(demux, dst_conn_id);
-}
-
 /*
  * Process a single pending URXE.
  * Returning 1 on success, 0 on failure and -1 on stateless reset.
  */
 static int demux_process_pending_urxe(QUIC_DEMUX *demux, QUIC_URXE *e)
 {
-    QUIC_DEMUX_CONN *conn;
     QUIC_CONN_ID dst_conn_id;
     int r, dst_conn_id_ok = 0;
 
@@ -535,35 +370,25 @@ static int demux_process_pending_urxe(QUIC_DEMUX *demux, QUIC_URXE *e)
             return 0;
     }
 
-    conn = demux_identify_conn(demux, e, &dst_conn_id, &dst_conn_id_ok);
-    if (conn == NULL) {
+    /* Determine the DCID of the first packet in the datagram. */
+    dst_conn_id_ok = demux_identify_conn_id(demux, e, &dst_conn_id);
+
+    ossl_list_urxe_remove(&demux->urx_pending, e);
+    if (demux->default_cb != NULL) {
         /*
-         * We could not identify a connection. If we have a default packet
-         * handler, pass it to the handler. Otherwise, we will never be able to
-         * process this datagram, so get rid of it.
+         * Pass to default handler for routing. The URXE now belongs to the
+         * callback.
          */
-        ossl_list_urxe_remove(&demux->urx_pending, e);
-        if (demux->default_cb != NULL) {
-            /* Pass to default handler. */
-            e->demux_state = URXE_DEMUX_STATE_ISSUED;
-            demux->default_cb(e, demux->default_cb_arg,
-                              dst_conn_id_ok ? &dst_conn_id : NULL);
-        } else {
-            /* Discard. */
-            ossl_list_urxe_insert_tail(&demux->urx_free, e);
-            e->demux_state = URXE_DEMUX_STATE_FREE;
-        }
-        return 1; /* keep processing pending URXEs */
+        e->demux_state = URXE_DEMUX_STATE_ISSUED;
+        demux->default_cb(e, demux->default_cb_arg,
+                          dst_conn_id_ok ? &dst_conn_id : NULL);
+    } else {
+        /* Discard. */
+        ossl_list_urxe_insert_tail(&demux->urx_free, e);
+        e->demux_state = URXE_DEMUX_STATE_FREE;
     }
 
-    /*
-     * Remove from list and invoke callback. The URXE now belongs to the
-     * callback. (QUIC_DEMUX_CONN never has non-NULL cb.)
-     */
-    ossl_list_urxe_remove(&demux->urx_pending, e);
-    e->demux_state = URXE_DEMUX_STATE_ISSUED;
-    conn->cb(e, conn->cb_arg, dst_conn_id_ok ? &dst_conn_id : NULL);
-    return 1;
+    return 1; /* keep processing pending URXEs */
 }
 
 /* Process pending URXEs to generate callbacks. */
