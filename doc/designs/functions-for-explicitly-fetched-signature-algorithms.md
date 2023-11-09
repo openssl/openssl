@@ -73,7 +73,8 @@ int EVP_PKEY_verify_update(EVP_PKEY_CTX *ctx, unsigned char *in, size_t *inlen);
 int EVP_PKEY_verify_final(EVP_PKEY_CTX *ctx);
 
 int EVP_PKEY_verify_recover_update(EVP_PKEY_CTX *ctx, unsigned char *in, size_t *inlen);
-int EVP_PKEY_verify_recover_final(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_verify_recover_final(EVP_PKEY_CTX *ctx,
+                                  unsigned char *rout, size_t *routlen);
 ```
 
 Requirements on the providers
