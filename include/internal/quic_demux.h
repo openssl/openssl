@@ -243,6 +243,9 @@ int ossl_quic_demux_set_mtu(QUIC_DEMUX *demux, unsigned int mtu);
  * Only one handler can be set for a given connection ID. If a handler is
  * already set for the given connection ID, returns 0.
  *
+ * TODO(QUIC SERVER): DEPRECATED in favour of explicit routing by QUIC_PORT with
+ * reference to QUIC_LCIDM. To be removed.
+ *
  * Returns 1 on success or 0 on failure.
  */
 int ossl_quic_demux_register(QUIC_DEMUX *demux,
@@ -254,6 +257,9 @@ int ossl_quic_demux_register(QUIC_DEMUX *demux,
  * Unregisters any datagram handler callback set for the given connection ID.
  * Fails if no handler is registered for the given connection ID.
  *
+ * TODO(QUIC SERVER): DEPRECATED in favour of explicit routing by QUIC_PORT with
+ * reference to QUIC_LCIDM. To be removed.
+ *
  * Returns 1 on success or 0 on failure.
  */
 int ossl_quic_demux_unregister(QUIC_DEMUX *demux,
@@ -263,6 +269,9 @@ int ossl_quic_demux_unregister(QUIC_DEMUX *demux,
  * Unregisters any datagram handler callback from all connection IDs it is used
  * for. cb and cb_arg must both match the values passed to
  * ossl_quic_demux_register.
+ *
+ * TODO(QUIC SERVER): DEPRECATED in favour of explicit routing by QUIC_PORT with
+ * reference to QUIC_LCIDM. To be removed.
  */
 void ossl_quic_demux_unregister_by_cb(QUIC_DEMUX *demux,
                                       ossl_quic_demux_cb_fn *cb,
@@ -277,6 +286,11 @@ void ossl_quic_demux_unregister_by_cb(QUIC_DEMUX *demux,
  * The handler is responsible for ensuring that ossl_quic_demux_reinject_urxe or
  * ossl_quic_demux_release_urxe is called on the passed packet at some point in
  * the future, which may or may not be before the handler returns.
+ *
+ * TODO(QUIC SERVER): In the future all RX handling will go via this function
+ * and the QUIC_PORT will be responsible for routing. DEMUX will then handle
+ * URXE memory management and datagram DCID parsing only. The MVP LCID routing
+ * functionality of the DEMUX will be removed in favour of LCIDM.
  */
 void ossl_quic_demux_set_default_handler(QUIC_DEMUX *demux,
                                          ossl_quic_demux_cb_fn *cb,
