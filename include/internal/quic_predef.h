@@ -16,6 +16,7 @@ typedef struct quic_port_st QUIC_PORT;
 typedef struct quic_channel_st QUIC_CHANNEL;
 typedef struct quic_tls_st QUIC_TLS;
 typedef struct quic_txpim_st QUIC_TXPIM;
+typedef struct quic_fifd_st QUIC_FIFD;
 typedef struct quic_cfq_st QUIC_CFQ;
 typedef struct ossl_quic_tx_packetiser_st OSSL_QUIC_TX_PACKETISER;
 typedef struct ossl_ackm_st OSSL_ACKM;

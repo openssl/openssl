@@ -12,9 +12,9 @@
 
 # include <openssl/ssl.h>
 # include "internal/quic_stream.h"
+# include "internal/quic_predef.h"
 
-
-typedef struct quic_tls_st QUIC_TLS;
+# ifndef OPENSSL_NO_QUIC
 
 typedef struct quic_tls_args_st {
     /*
@@ -102,5 +102,7 @@ int ossl_quic_tls_get_error(QUIC_TLS *qtls,
 
 int ossl_quic_tls_is_cert_request(QUIC_TLS *qtls);
 int ossl_quic_tls_has_bad_max_early_data(QUIC_TLS *qtls);
+
+# endif
 
 #endif

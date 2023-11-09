@@ -15,6 +15,7 @@
 # include "internal/time.h"
 # include "internal/common.h"
 # include "internal/quic_types.h"
+# include "internal/quic_predef.h"
 # include "internal/quic_stream.h"
 # include "internal/quic_fc.h"
 # include <openssl/lhash.h>
@@ -27,7 +28,6 @@
  *
  * Logical QUIC stream composing all relevant send and receive components.
  */
-typedef struct quic_stream_st QUIC_STREAM;
 
 typedef struct quic_stream_list_node_st QUIC_STREAM_LIST_NODE;
 
@@ -514,7 +514,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_recv_get_final_size(const QU
  *   - allows iteration over the active streams only.
  *
  */
-typedef struct quic_stream_map_st {
+struct quic_stream_map_st {
     LHASH_OF(QUIC_STREAM)   *map;
     QUIC_STREAM_LIST_NODE   active_list;
     QUIC_STREAM_LIST_NODE   accept_list;
@@ -527,7 +527,7 @@ typedef struct quic_stream_map_st {
     QUIC_RXFC               *max_streams_bidi_rxfc;
     QUIC_RXFC               *max_streams_uni_rxfc;
     int                     is_server;
-} QUIC_STREAM_MAP;
+};
 
 /*
  * get_stream_limit is a callback which is called to retrieve the current stream

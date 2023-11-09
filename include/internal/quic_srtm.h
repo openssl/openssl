@@ -15,6 +15,7 @@
 # include "internal/time.h"
 # include "internal/quic_types.h"
 # include "internal/quic_wire.h"
+# include "internal/quic_predef.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -53,7 +54,6 @@
  * The opaque pointer may be used for any purpose but is intended to represent a
  * connection identity and must therefore be consistent (usefully comparable).
  */
-typedef struct quic_srtm_st QUIC_SRTM;
 
 /* Creates a new empty SRTM instance. */
 QUIC_SRTM *ossl_quic_srtm_new(OSSL_LIB_CTX *libctx, const char *propq);

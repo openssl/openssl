@@ -120,8 +120,6 @@ typedef struct quic_channel_args_st {
     SSL             *tls;
 } QUIC_CHANNEL_ARGS;
 
-typedef struct quic_channel_st QUIC_CHANNEL;
-
 /* Represents the cause for a connection's termination. */
 typedef struct quic_terminate_cause_st {
     /*
