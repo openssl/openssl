@@ -287,26 +287,6 @@ size_t ossl_quic_lcidm_get_num_active_lcid(const QUIC_LCIDM *lcidm,
     return conn->num_active_lcid;
 }
 
-#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-
-static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
-{
-    if (len > QUIC_MAX_CONN_ID_LEN)
-        return 0;
-
-    cid->id_len = (unsigned char)len;
-
-    if (RAND_bytes_ex(libctx, cid->id, len, len * 8) != 1) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_RAND_LIB);
-        cid->id_len = 0;
-        return 0;
-    }
-
-    return 1;
-}
-
-#endif
-
 static int lcidm_generate_cid(QUIC_LCIDM *lcidm,
                               QUIC_CONN_ID *cid)
 {
@@ -322,7 +302,7 @@ static int lcidm_generate_cid(QUIC_LCIDM *lcidm,
 
     return 1;
 #else
-    return gen_rand_conn_id(lcidm->libctx, lcidm->lcid_len, cid);
+    return ossl_quic_gen_rand_conn_id(lcidm->libctx, lcidm->lcid_len, cid);
 #endif
 }
 
