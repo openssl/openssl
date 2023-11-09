@@ -3029,6 +3029,11 @@ static void ch_save_err_state(QUIC_CHANNEL *ch)
     OSSL_ERR_STATE_save(ch->err_state);
 }
 
+void ossl_quic_channel_inject(QUIC_CHANNEL *ch, QUIC_URXE *e)
+{
+    ossl_qrx_inject_urxe(ch->qrx, e);
+}
+
 void ossl_quic_channel_on_stateless_reset(QUIC_CHANNEL *ch)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};

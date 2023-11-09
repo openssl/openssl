@@ -444,7 +444,15 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     QUIC_PORT *port = arg;
     PACKET pkt;
     QUIC_PKT_HDR hdr;
-    QUIC_CHANNEL *new_ch = NULL;
+    QUIC_CHANNEL *ch = NULL, *new_ch = NULL;
+
+    if (dcid != NULL
+        && ossl_quic_lcidm_lookup(port->lcidm, dcid, NULL,
+                                  (void **)&ch)) {
+        assert(ch != NULL);
+        ossl_quic_channel_inject(ch, e);
+        return;
+    }
 
     if (port_try_handle_stateless_reset(port, e))
         goto undesirable;
