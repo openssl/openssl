@@ -89,12 +89,10 @@ static int ch_discard_el(QUIC_CHANNEL *ch,
 static void ch_on_idle_timeout(QUIC_CHANNEL *ch);
 static void ch_update_idle(QUIC_CHANNEL *ch);
 static void ch_update_ping_deadline(QUIC_CHANNEL *ch);
-static void ch_stateless_reset(QUIC_CHANNEL *ch);
 static void ch_on_terminating_timeout(QUIC_CHANNEL *ch);
 static void ch_start_terminating(QUIC_CHANNEL *ch,
                                  const QUIC_TERMINATE_CAUSE *tcause,
                                  int force_immediate);
-static int ch_stateless_reset_token_handler(const unsigned char *data, size_t datalen, void *arg);
 static void ch_on_txp_ack_tx(const OSSL_QUIC_FRAME_ACK *ack, uint32_t pn_space,
                              void *arg);
 static void ch_rx_handle_version_neg(QUIC_CHANNEL *ch, OSSL_QRX_PKT *pkt);
@@ -205,47 +203,6 @@ static void chan_remove_reset_token(QUIC_CHANNEL *ch, uint64_t seq_num)
             return;
         }
     }
-}
-
-/*
- * This is called by the demux whenever a new datagram arrives
- *
- * TODO(QUIC FUTURE): optimise this to only be called for unparsable packets
- */
-static int ossl_unused ch_stateless_reset_token_handler(const unsigned char *data,
-                                            size_t datalen, void *arg)
-{
-    QUIC_SRT_ELEM srte;
-    QUIC_CHANNEL *ch = (QUIC_CHANNEL *)arg;
-
-    /*
-     * Perform some fast and cheap checks for a packet not being a stateless
-     * reset token.  RFC 9000 s. 10.3 specifies this layout for stateless
-     * reset packets:
-     *
-     *  Stateless Reset {
-     *      Fixed Bits (2) = 1,
-     *      Unpredictable Bits (38..),
-     *      Stateless Reset Token (128),
-     *  }
-     *
-     * It also specifies:
-     *      However, endpoints MUST treat any packet ending in a valid
-     *      stateless reset token as a Stateless Reset, as other QUIC
-     *      versions might allow the use of a long header.
-     *
-     * We can rapidly check for the minimum length and that the first pair
-     * of bits in the first byte are 01 or 11.
-     *
-     * The function returns 1 if it is a stateless reset packet, 0 if it isn't
-     * and -1 if an error was encountered.
-     */
-    if (datalen < QUIC_STATELESS_RESET_TOKEN_LEN + 5 || (0100 & *data) != 0100)
-        return 0;
-    memset(&srte, 0, sizeof(srte));
-    if (!reset_token_obfuscate(&srte, data + datalen - sizeof(srte.token)))
-        return -1;
-    return lh_QUIC_SRT_ELEM_retrieve(ch->srt_hash_tok, &srte) != NULL;
 }
 
 /*
@@ -3072,12 +3029,13 @@ static void ch_save_err_state(QUIC_CHANNEL *ch)
     OSSL_ERR_STATE_save(ch->err_state);
 }
 
-static void ossl_unused ch_stateless_reset(QUIC_CHANNEL *ch)
+void ossl_quic_channel_on_stateless_reset(QUIC_CHANNEL *ch)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
 
-    tcause.error_code = QUIC_ERR_NO_ERROR;
-    ch_start_terminating(ch, &tcause, 1);
+    tcause.error_code   = QUIC_ERR_NO_ERROR;
+    tcause.remote       = 1;
+    ch_start_terminating(ch, &tcause, 0);
 }
 
 void ossl_quic_channel_raise_net_error(QUIC_CHANNEL *ch)
