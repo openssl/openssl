@@ -481,18 +481,19 @@ static int demux_identify_conn_id(QUIC_DEMUX *demux,
 }
 
 /* Identify the connection structure corresponding to a given URXE. */
-static QUIC_DEMUX_CONN *demux_identify_conn(QUIC_DEMUX *demux, QUIC_URXE *e)
+static QUIC_DEMUX_CONN *demux_identify_conn(QUIC_DEMUX *demux, QUIC_URXE *e,
+                                            QUIC_CONN_ID *dst_conn_id,
+                                            int *dst_conn_id_ok)
 {
-    QUIC_CONN_ID dst_conn_id;
-
-    if (!demux_identify_conn_id(demux, e, &dst_conn_id))
+    if (!demux_identify_conn_id(demux, e, dst_conn_id))
         /*
          * Datagram is so badly malformed we can't get the DCID from the first
          * packet in it, so just give up.
          */
         return NULL;
 
-    return demux_get_by_conn_id(demux, &dst_conn_id);
+    *dst_conn_id_ok = 1;
+    return demux_get_by_conn_id(demux, dst_conn_id);
 }
 
 /*
@@ -502,7 +503,8 @@ static QUIC_DEMUX_CONN *demux_identify_conn(QUIC_DEMUX *demux, QUIC_URXE *e)
 static int demux_process_pending_urxe(QUIC_DEMUX *demux, QUIC_URXE *e)
 {
     QUIC_DEMUX_CONN *conn;
-    int r;
+    QUIC_CONN_ID dst_conn_id;
+    int r, dst_conn_id_ok = 0;
 
     /* The next URXE we process should be at the head of the pending list. */
     if (!ossl_assert(e == ossl_list_urxe_head(&demux->urx_pending)))
@@ -533,7 +535,7 @@ static int demux_process_pending_urxe(QUIC_DEMUX *demux, QUIC_URXE *e)
             return 0;
     }
 
-    conn = demux_identify_conn(demux, e);
+    conn = demux_identify_conn(demux, e, &dst_conn_id, &dst_conn_id_ok);
     if (conn == NULL) {
         /*
          * We could not identify a connection. If we have a default packet
@@ -544,7 +546,8 @@ static int demux_process_pending_urxe(QUIC_DEMUX *demux, QUIC_URXE *e)
         if (demux->default_cb != NULL) {
             /* Pass to default handler. */
             e->demux_state = URXE_DEMUX_STATE_ISSUED;
-            demux->default_cb(e, demux->default_cb_arg);
+            demux->default_cb(e, demux->default_cb_arg,
+                              dst_conn_id_ok ? &dst_conn_id : NULL);
         } else {
             /* Discard. */
             ossl_list_urxe_insert_tail(&demux->urx_free, e);
@@ -559,7 +562,7 @@ static int demux_process_pending_urxe(QUIC_DEMUX *demux, QUIC_URXE *e)
      */
     ossl_list_urxe_remove(&demux->urx_pending, e);
     e->demux_state = URXE_DEMUX_STATE_ISSUED;
-    conn->cb(e, conn->cb_arg);
+    conn->cb(e, conn->cb_arg, dst_conn_id_ok ? &dst_conn_id : NULL);
     return 1;
 }
 
