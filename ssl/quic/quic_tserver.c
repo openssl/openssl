@@ -10,6 +10,7 @@
 #include "internal/quic_tserver.h"
 #include "internal/quic_channel.h"
 #include "internal/quic_statm.h"
+#include "internal/quic_port.h"
 #include "internal/common.h"
 #include "internal/time.h"
 #include "quic_local.h"
@@ -25,8 +26,10 @@ struct quic_tserver_st {
     SSL *ssl;
 
     /*
-     * The QUIC channel providing the core QUIC connection implementation.
+     * The QUIC port and channel providing the core QUIC connection
+     * implementation.
      */
+    QUIC_PORT       *port;
     QUIC_CHANNEL    *ch;
 
     /* The mutex we give to the QUIC channel. */
@@ -75,6 +78,7 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
                                     const char *certfile, const char *keyfile)
 {
     QUIC_TSERVER *srv = NULL;
+    QUIC_PORT_ARGS port_args = {0};
     QUIC_CHANNEL_ARGS ch_args = {0};
     QUIC_CONNECTION *qc = NULL;
 
@@ -113,6 +117,16 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     if (srv->tls == NULL)
         goto err;
 
+    port_args.libctx        = srv->args.libctx;
+    port_args.propq         = srv->args.propq;
+    port_args.mutex         = srv->mutex;
+    port_args.now_cb        = srv->args.now_cb;
+    port_args.now_cb_arg    = srv->args.now_cb_arg;
+
+    if ((srv->port = ossl_quic_port_new(&port_args)) == NULL)
+        goto err;
+
+    ch_args.port        = srv->port;
     ch_args.libctx      = srv->args.libctx;
     ch_args.propq       = srv->args.propq;
     ch_args.tls         = srv->tls;
@@ -143,6 +157,7 @@ err:
             SSL_CTX_free(srv->ctx);
         SSL_free(srv->tls);
         ossl_quic_channel_free(srv->ch);
+        ossl_quic_port_free(srv->port);
 #if defined(OPENSSL_THREADS)
         ossl_crypto_mutex_free(&srv->mutex);
 #endif
@@ -159,6 +174,7 @@ void ossl_quic_tserver_free(QUIC_TSERVER *srv)
         return;
 
     ossl_quic_channel_free(srv->ch);
+    ossl_quic_port_free(srv->port);
     BIO_free_all(srv->args.net_rbio);
     BIO_free_all(srv->args.net_wbio);
     OPENSSL_free(srv->ssl);
