@@ -164,6 +164,8 @@ typedef struct quic_terminate_cause_st {
 /*
  * Create a new QUIC channel using the given arguments. The argument structure
  * does not need to remain allocated. Returns NULL on failure.
+ *
+ * Only QUIC_PORT should use this function.
  */
 QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args);
 

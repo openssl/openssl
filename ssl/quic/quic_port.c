@@ -215,6 +215,61 @@ int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio)
 }
 
 /*
+ * QUIC Port: Channel Lifecycle
+ * ============================
+ */
+
+static SSL *port_new_handshake_layer(QUIC_PORT *port)
+{
+    SSL *tls = NULL;
+    SSL_CONNECTION *tls_conn = NULL;
+
+    tls = ossl_ssl_connection_new_int(port->channel_ctx, TLS_method());
+    if (tls == NULL || (tls_conn = SSL_CONNECTION_FROM_SSL(tls)) == NULL)
+        return NULL;
+
+    /* Override the user_ssl of the inner connection. */
+    tls_conn->s3.flags      |= TLS1_FLAGS_QUIC;
+
+    /* Restrict options derived from the SSL_CTX. */
+    tls_conn->options       &= OSSL_QUIC_PERMITTED_OPTIONS_CONN;
+    tls_conn->pha_enabled   = 0;
+    return tls;
+}
+
+static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, int is_server)
+{
+    QUIC_CHANNEL_ARGS args = {0};
+    QUIC_CHANNEL *ch;
+
+    args.port       = port;
+    args.is_server  = is_server;
+    args.tls        = (tls != NULL ? tls : port_new_handshake_layer(port));
+    if (args.tls == NULL)
+        return NULL;
+
+    ch = ossl_quic_channel_new(&args);
+    if (ch == NULL) {
+        if (tls == NULL)
+            SSL_free(args.tls);
+
+        return NULL;
+    }
+
+    return ch;
+}
+
+QUIC_CHANNEL *ossl_quic_port_create_outgoing(QUIC_PORT *port, SSL *tls)
+{
+    return port_make_channel(port, tls, /*is_server=*/0);
+}
+
+QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
+{
+    return port_make_channel(port, tls, /*is_server=*/1);
+}
+
+/*
  * QUIC Port: Ticker-Mutator
  * =========================
  */
