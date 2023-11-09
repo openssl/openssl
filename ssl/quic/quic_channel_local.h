@@ -54,6 +54,8 @@ struct quic_channel_st {
 
     /* Port LCIDM we use to register LCIDs. */
     QUIC_LCIDM                      *lcidm;
+    /* SRTM we register SRTs with. */
+    QUIC_SRTM                       *srtm;
 
     /*
      * The transport parameter block we will send or have sent.
@@ -124,14 +126,6 @@ struct quic_channel_st {
 
     /*
      * The DCID we currently use to talk to the peer and its sequence num.
-     *
-     * TODO(QUIC FUTURE) consider removing the second two, both are contained in
-     * srt_list_seq (defined below).
-     *
-     * cur_remote_seq_num is same as the sequence number in the last element.
-     * cur_retire_prior_to corresponds to the sequence number in first element.
-     *
-     * Leaving them here avoids null checking etc
      */
     QUIC_CONN_ID                    cur_remote_dcid;
     uint64_t                        cur_remote_seq_num;
@@ -139,12 +133,6 @@ struct quic_channel_st {
 
     /* Server only: The DCID we currently expect the peer to use to talk to us. */
     QUIC_CONN_ID                    cur_local_cid;
-
-    /* Hash of stateless reset tokens keyed on the token */
-    LHASH_OF(QUIC_SRT_ELEM)        *srt_hash_tok;
-
-    /* List of the stateless reset tokens ordered by sequence number */
-    OSSL_LIST(stateless_reset_tokens) srt_list_seq;
 
     /* Transport parameter values we send to our peer. */
     uint64_t                        tx_init_max_stream_data_bidi_local;
