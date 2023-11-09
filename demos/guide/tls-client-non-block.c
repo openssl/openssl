@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
      * Create the underlying transport socket/BIO and associate it with the
      * connection.
      */
-    bio = create_socket_bio(hostname, port, ipv6 == 0 ? AF_INET : AF_INET6);
+    bio = create_socket_bio(hostname, port, ipv6 ? AF_INET6 : AF_INET);
     if (bio == NULL) {
         printf("Failed to crete the BIO\n");
         goto end;
