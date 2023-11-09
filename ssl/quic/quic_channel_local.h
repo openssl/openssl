@@ -36,6 +36,8 @@ DEFINE_LIST_OF(stateless_reset_tokens, QUIC_SRT_ELEM);
  * Other components should not include this header.
  */
 struct quic_channel_st {
+    QUIC_PORT                       *port;
+
     OSSL_LIB_CTX                    *libctx;
     const char                      *propq;
 
