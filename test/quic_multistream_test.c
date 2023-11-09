@@ -182,6 +182,7 @@ struct script_op {
 #define OPK_C_SKIP_IF_UNBOUND                       48
 #define OPK_S_SET_INJECT_DATAGRAM                   49
 #define OPK_S_SHUTDOWN                              50
+#define OPK_POP_ERR                                 51
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -320,6 +321,8 @@ struct script_op {
     {OPK_S_SET_INJECT_DATAGRAM, NULL, 0, NULL, NULL, 0, NULL, NULL, (f)},
 #define OP_S_SHUTDOWN(error_code) \
     {OPK_S_SHUTDOWN, NULL, (error_code)},
+#define OP_POP_ERR() \
+    {OPK_POP_ERR},
 
 static OSSL_TIME get_time(void *arg)
 {
@@ -1110,6 +1113,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 case OPK_C_EXPECT_SSL_ERR:
                 case OPK_EXPECT_ERR_REASON:
                 case OPK_EXPECT_ERR_LIB:
+                case OPK_POP_ERR:
                 case OPK_SLEEP:
                     break;
 
@@ -1864,6 +1868,10 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 if (!TEST_size_t_eq((size_t)ERR_GET_LIB(ERR_get_error()), op->arg1))
                     goto out;
             }
+            break;
+
+        case OPK_POP_ERR:
+            ERR_pop();
             break;
 
         case OPK_SLEEP:
