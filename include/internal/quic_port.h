@@ -66,6 +66,20 @@ QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args);
 void ossl_quic_port_free(QUIC_PORT *port);
 
 /*
+ * Operations
+ * ==========
+ */
+
+/* Create an outgoing channel using this port. */
+QUIC_CHANNEL *ossl_quic_port_create_outgoing(QUIC_PORT *port, SSL *tls);
+
+/*
+ * Create an incoming channel using this port. XXX for temporary TSERVER use
+ * only - will be removed.
+ */
+QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls);
+
+/*
  * Queries and Accessors
  * =====================
  */
