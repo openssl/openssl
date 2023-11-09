@@ -274,6 +274,9 @@ static int ch_init(QUIC_CHANNEL *ch)
     uint32_t pn_space;
     size_t rx_short_cid_len = ch->is_server ? INIT_DCID_LEN : 0;
 
+    if (ch->port == NULL)
+        goto err;
+
     ossl_list_stateless_reset_tokens_init(&ch->srt_list_seq);
     ch->srt_hash_tok = lh_QUIC_SRT_ELEM_new(&chan_reset_token_hash,
                                             &chan_reset_token_cmp);
