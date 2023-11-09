@@ -120,7 +120,8 @@ X509at_add1_attr() pushes a copy of the passed in B<X509_ATTRIBUTE> object
 to the list I<x>.
 Both I<x> and I<attr> must be non NULL or an error will occur.
 If I<*x> is NULL then a new list is created, otherwise it uses the
-passed in list.
+passed in list. An error will occur if an existing attribute (with the same
+attribute type) already exists in the attribute list.
 
 X509at_add1_attr_by_OBJ() creates a new B<X509_ATTRIBUTE> using 
 X509_ATTRIBUTE_set1_object() and X509_ATTRIBUTE_set1_data() to assign a new
@@ -187,15 +188,15 @@ the B<ANS1_TYPE> object at index I<idx> OR if I<atrtype> is either
 B<V_ASN1_BOOLEAN> or B<V_ASN1_NULL> OR if the I<idx> is not in the
 range 0 to X509_ATTRIBUTE_count() - 1.
 
-X509at_get0_data_by_OBJ() finds the first attribute in a list I<x> that matches
-the I<obj> starting at index I<lastpos> and returns the data retrieved from
-the found attributes first B<ASN1_TYPE> object. An error will occur if the
-attribute type I<type> does not match the type of the B<ANS1_TYPE> object OR
-if I<type> is either B<V_ASN1_BOOLEAN> or B<V_ASN1_NULL> OR
-the attribute is not found.
-If I<lastpos> is smaller than -1 then an error will occur if there is multiple
+X509at_get0_data_by_OBJ() finds the first attribute in an attribute list I<x>
+that matches the I<obj> starting at index I<lastpos> and returns the data
+retrieved from the found attributes first B<ASN1_TYPE> object. An error will
+occur if the attribute type I<type> does not match the type of the B<ANS1_TYPE>
+object OR if I<type> is either B<V_ASN1_BOOLEAN> or B<V_ASN1_NULL> OR the
+attribute is not found.
+If I<lastpos> is less than -1 then an error will occur if there is multiple
 objects in the list I<x> that match I<obj>.
-If I<lastpos> is smaller than -2 then an error will occur if there is more than
+If I<lastpos> is less than -2 then an error will occur if there is more than
 one B<ASN1_TYPE> object in the found attribute.
 
 =head1 RETURN VALUES

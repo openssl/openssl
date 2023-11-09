@@ -55,7 +55,7 @@ the I<key> attribute list.
 
 EVP_PKEY_add1_attr() pushes a copy of the passed in B<X509_ATTRIBUTE> object
 to the I<key> attribute list. A new I<key> attribute list is created if required.
-An error occurs id I<attr> is NULL.
+An error occurs if either I<attr> is NULL, or the attribute already exists.
 
 EVP_PKEY_add1_attr_by_OBJ() creates a new B<X509_ATTRIBUTE> using 
 X509_ATTRIBUTE_set1_object() and X509_ATTRIBUTE_set1_data() to assign a new

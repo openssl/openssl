@@ -49,9 +49,9 @@ X509_REQ_get_attr_count() - 1.
 X509_REQ_delete_attr() removes the B<X509_ATTRIBUTE> object at index I<loc> in
 the I<req> objects list of attributes. An error occurs if I<req> is NULL.
 
-X509_REQ_add1_attr() pushes a copy of the passed in B<X509_ATTRIBUTE> object
-to the I<req> objects attribute list. An error will occur if the attribute list
-is NULL.
+X509_REQ_add1_attr() pushes a copy of the passed in B<X509_ATTRIBUTE> I<>attr>
+to the I<req> objects attribute list. An error will occur if either the
+attribute list is NULL or the attribute already exists.
 
 X509_REQ_add1_attr_by_OBJ() creates a new B<X509_ATTRIBUTE> using 
 X509_ATTRIBUTE_set1_object() and X509_ATTRIBUTE_set1_data() to assign a new
