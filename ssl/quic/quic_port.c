@@ -25,7 +25,8 @@ static int port_init(QUIC_PORT *port);
 static void port_cleanup(QUIC_PORT *port);
 static OSSL_TIME get_time(void *arg);
 static void port_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
-static void port_default_packet_handler(QUIC_URXE *e, void *arg);
+static void port_default_packet_handler(QUIC_URXE *e, void *arg,
+                                        const QUIC_CONN_ID *dcid);
 static void port_rx_pre(QUIC_PORT *port);
 
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
@@ -437,7 +438,8 @@ static int port_try_handle_stateless_reset(QUIC_PORT *port, const QUIC_URXE *e)
  * This is called by the demux when we get a packet not destined for any known
  * DCID.
  */
-static void port_default_packet_handler(QUIC_URXE *e, void *arg)
+static void port_default_packet_handler(QUIC_URXE *e, void *arg,
+                                        const QUIC_CONN_ID *dcid)
 {
     QUIC_PORT *port = arg;
     PACKET pkt;

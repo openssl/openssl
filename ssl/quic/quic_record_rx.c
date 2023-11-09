@@ -167,7 +167,7 @@ struct ossl_qrx_st {
     SSL *msg_callback_ssl;
 };
 
-static void qrx_on_rx(QUIC_URXE *urxe, void *arg);
+static void qrx_on_rx(QUIC_URXE *urxe, void *arg, const QUIC_CONN_ID *dcid);
 
 OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
 {
@@ -252,7 +252,7 @@ void ossl_qrx_inject_urxe(OSSL_QRX *qrx, QUIC_URXE *urxe)
                           qrx->msg_callback_arg);
 }
 
-static void qrx_on_rx(QUIC_URXE *urxe, void *arg)
+static void qrx_on_rx(QUIC_URXE *urxe, void *arg, const QUIC_CONN_ID *dcid)
 {
     OSSL_QRX *qrx = arg;
 
