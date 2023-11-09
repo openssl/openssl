@@ -52,6 +52,12 @@ struct quic_port_st {
     /* Special TSERVER channel. To be removed in the future. */
     QUIC_CHANNEL                    *tserver_ch;
 
+    /* LCIDM used for incoming packet routing by DCID. */
+    QUIC_LCIDM                      *lcidm;
+
+    /* SRTM used for incoming packet routing by SRT. */
+    QUIC_SRTM                       *srtm;
+
     /* DCID length used for incoming short header packets. */
     unsigned char                   rx_short_dcid_len;
     /* For clients, CID length used for outgoing Initial packets. */
