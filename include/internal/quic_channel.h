@@ -111,6 +111,8 @@ typedef struct quic_channel_args_st {
      * QUIC_PORT must exceed that of the created channel.
      */
     QUIC_PORT       *port;
+    /* LCIDM to register LCIDs with. */
+    QUIC_LCIDM      *lcidm;
 
     int             is_server;
     SSL             *tls;

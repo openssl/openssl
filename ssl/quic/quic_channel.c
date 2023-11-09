@@ -12,6 +12,7 @@
 #include "internal/quic_channel.h"
 #include "internal/quic_error.h"
 #include "internal/quic_rx_depack.h"
+#include "internal/quic_lcidm.h"
 #include "../ssl_local.h"
 #include "quic_channel_local.h"
 #include "quic_port_local.h"
@@ -227,7 +228,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     size_t rx_short_dcid_len = ossl_quic_port_get_rx_short_dcid_len(ch->port);
     size_t tx_init_dcid_len = ossl_quic_port_get_tx_init_dcid_len(ch->port);
 
-    if (ch->port == NULL)
+    if (ch->port == NULL || ch->lcidm == NULL)
         goto err;
 
     ossl_list_stateless_reset_tokens_init(&ch->srt_list_seq);
@@ -441,6 +442,7 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
              ++pn_space)
             ossl_ackm_on_pkt_space_discarded(ch->ackm, pn_space);
 
+    ossl_quic_lcidm_cull(ch->lcidm, ch);
     ossl_quic_tx_packetiser_free(ch->txp);
     ossl_quic_txpim_free(ch->txpim);
     ossl_quic_cfq_free(ch->cfq);
@@ -495,6 +497,7 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
     ch->port        = args->port;
     ch->is_server   = args->is_server;
     ch->tls         = args->tls;
+    ch->lcidm       = args->lcidm;
 
     if (!ch_init(ch)) {
         OPENSSL_free(ch);
