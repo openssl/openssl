@@ -125,8 +125,8 @@ contain a large number of design issues:
 
 - There are separate `EPOLL_CTL_ADD` and `EPOLL_CTL_MOD` calls which are needed
   to add a new FD registration and modify an existing FD registration, when
-  most of the time what is desired is an “upsert” call. Thus callers have to
-  track whether an FD has already been added or not.
+  most of the time what is desired is an “upsert” (update or inser) call. Thus
+  callers have to track whether an FD has already been added or not.
 
 - Only one FD can be registered, modified, or unregistered per syscall, rather
   than several FDs at once (syscall overhead).
