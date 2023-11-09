@@ -169,6 +169,9 @@ typedef struct quic_demux_st QUIC_DEMUX;
  * to mutate this buffer; once the demuxer calls this callback, it will never
  * read the buffer again.
  *
+ * If a DCID was identified for the datagram, dcid is non-NULL; otherwise
+ * it is NULL.
+ *
  * The callee must arrange for ossl_quic_demux_release_urxe or
  * ossl_quic_demux_reinject_urxe to be called on the URXE at some point in the
  * future (this need not be before the callback returns).
@@ -176,7 +179,8 @@ typedef struct quic_demux_st QUIC_DEMUX;
  * At the time the callback is made, the URXE will not be in any queue,
  * therefore the callee can use the prev and next fields as it wishes.
  */
-typedef void (ossl_quic_demux_cb_fn)(QUIC_URXE *e, void *arg);
+typedef void (ossl_quic_demux_cb_fn)(QUIC_URXE *e, void *arg,
+                                     const QUIC_CONN_ID *dcid);
 
 /*
  * Called when a datagram is received.
