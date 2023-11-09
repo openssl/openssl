@@ -5537,3 +5537,4 @@ X509_STORE_CTX_set_current_reasons      5664	3_2_0	EXIST::FUNCTION:
 OSSL_STORE_delete                       5665	3_2_0	EXIST::FUNCTION:
 BIO_ADDR_copy                           5666	3_2_0	EXIST::FUNCTION:SOCK
 EVP_DigestSqueeze                       ?	3_3_0	EXIST::FUNCTION:
+ERR_pop                                 ?	3_3_0	EXIST::FUNCTION:
