@@ -2310,7 +2310,7 @@ static int ch_tx(QUIC_CHANNEL *ch)
     case QTX_FLUSH_NET_RES_PERMANENT_FAIL:
     default:
         /* Permanent underlying network BIO, start terminating. */
-        ossl_quic_port_raise_net_error(ch->port);
+        ossl_quic_port_raise_net_error(ch->port, ch);
         break;
     }
 
@@ -2927,13 +2927,14 @@ void ossl_quic_channel_raise_net_error(QUIC_CHANNEL *ch)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
 
+    if (ch->net_error)
+        return;
+
     ch->net_error = 1;
 
-    ERR_raise_data(ERR_LIB_SSL, SSL_R_QUIC_NETWORK_ERROR,
-                   "connection terminated due to network error");
-    ch_save_err_state(ch);
-
     tcause.error_code = QUIC_ERR_INTERNAL_ERROR;
+    tcause.reason     = "network BIO I/O error";
+    tcause.reason_len = strlen(tcause.reason);
 
     /*
      * Skip Terminating state and go directly to Terminated, no point trying to
@@ -2952,7 +2953,10 @@ void ossl_quic_channel_restore_err_state(QUIC_CHANNEL *ch)
     if (ch == NULL)
         return;
 
-    OSSL_ERR_STATE_restore(ch->err_state);
+    if (!ossl_quic_port_is_running(ch->port))
+        ossl_quic_port_restore_err_state(ch->port);
+    else
+        OSSL_ERR_STATE_restore(ch->err_state);
 }
 
 void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
