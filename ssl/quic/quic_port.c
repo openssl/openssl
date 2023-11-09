@@ -9,6 +9,8 @@
 
 #include "internal/quic_port.h"
 #include "internal/quic_channel.h"
+#include "internal/quic_lcidm.h"
+#include "internal/quic_srtm.h"
 #include "quic_port_local.h"
 #include "quic_channel_local.h"
 #include "../ssl_local.h"
@@ -82,6 +84,9 @@ static int port_init(QUIC_PORT *port)
                                         port_default_packet_handler,
                                         port);
 
+    if ((port->srtm = ossl_quic_srtm_new(port->libctx, port->propq)) == NULL)
+        goto err;
+
     ossl_quic_reactor_init(&port->rtor, port_tick, port, ossl_time_zero());
     port->rx_short_dcid_len = (unsigned char)rx_short_dcid_len;
     port->tx_init_dcid_len  = INIT_DCID_LEN;
@@ -95,8 +100,12 @@ err:
 static void port_cleanup(QUIC_PORT *port)
 {
     assert(ossl_list_ch_num(&port->channel_list) == 0);
+
     ossl_quic_demux_free(port->demux);
     port->demux = NULL;
+
+    ossl_quic_srtm_free(port->srtm);
+    port->srtm = NULL;
 }
 
 QUIC_REACTOR *ossl_quic_port_get0_reactor(QUIC_PORT *port)
