@@ -73,6 +73,15 @@ typedef struct quic_tick_result_st {
     OSSL_TIME   tick_deadline;
 } QUIC_TICK_RESULT;
 
+static ossl_inline ossl_unused void
+ossl_quic_tick_result_merge_into(QUIC_TICK_RESULT *r,
+                                 const QUIC_TICK_RESULT *src)
+{
+    r->net_read_desired  = r->net_read_desired  || src->net_read_desired;
+    r->net_write_desired = r->net_write_desired || src->net_write_desired;
+    r->tick_deadline     = ossl_time_min(r->tick_deadline, src->tick_deadline);
+}
+
 typedef struct quic_reactor_st {
     /*
      * BIO poll descriptors which can be polled. poll_r is a poll descriptor
