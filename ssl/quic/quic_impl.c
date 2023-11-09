@@ -880,7 +880,7 @@ void ossl_quic_conn_set0_net_rbio(SSL *s, BIO *net_rbio)
     if (ctx.qc->net_rbio == net_rbio)
         return;
 
-    if (!ossl_quic_channel_set_net_rbio(ctx.qc->ch, net_rbio))
+    if (!ossl_quic_port_set_net_rbio(ctx.qc->port, net_rbio))
         return;
 
     BIO_free_all(ctx.qc->net_rbio);
@@ -907,7 +907,7 @@ void ossl_quic_conn_set0_net_wbio(SSL *s, BIO *net_wbio)
     if (ctx.qc->net_wbio == net_wbio)
         return;
 
-    if (!ossl_quic_channel_set_net_wbio(ctx.qc->ch, net_wbio))
+    if (!ossl_quic_port_set_net_wbio(ctx.qc->port, net_wbio))
         return;
 
     BIO_free_all(ctx.qc->net_wbio);
@@ -1484,8 +1484,8 @@ static int configure_channel(QUIC_CONNECTION *qc)
 {
     assert(qc->ch != NULL);
 
-    if (!ossl_quic_channel_set_net_rbio(qc->ch, qc->net_rbio)
-        || !ossl_quic_channel_set_net_wbio(qc->ch, qc->net_wbio)
+    if (!ossl_quic_port_set_net_rbio(qc->port, qc->net_rbio)
+        || !ossl_quic_port_set_net_wbio(qc->port, qc->net_wbio)
         || !ossl_quic_channel_set_peer_addr(qc->ch, &qc->init_peer_addr))
         return 0;
 

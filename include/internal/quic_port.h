@@ -26,6 +26,15 @@
  * zero or more subsidiary QUIC_CHANNEL instances, each of which represents a
  * single QUIC connection. All QUIC_CHANNEL instances must belong to a
  * QUIC_PORT.
+ *
+ * A QUIC port is responsible for managing a set of channels which all use the
+ * same UDP socket, and (in future) for automatically creating new channels when
+ * incoming connections are received.
+ *
+ * In order to retain compatibility with QUIC_TSERVER, it also supports a point
+ * of legacy compatibility where a caller can create an incoming (server role)
+ * channel and that channel will be automatically be bound to the next incoming
+ * connection. In the future this will go away once QUIC_TSERVER is removed.
  */
 typedef struct quic_port_args_st {
     /* All channels in a QUIC event domain share the same (libctx, propq). */
