@@ -182,14 +182,6 @@ typedef void (ossl_quic_demux_cb_fn)(QUIC_URXE *e, void *arg,
                                      const QUIC_CONN_ID *dcid);
 
 /*
- * Called when a datagram is received.
- * Returns 1 if the datagram ends with a stateless reset token and
- * 0 if not.
- */
-typedef int (ossl_quic_stateless_reset_cb_fn)(const unsigned char *data,
-                                              size_t data_len, void *arg);
-
-/*
  * Creates a new demuxer. The given BIO is used to receive datagrams from the
  * network using BIO_recvmmsg. short_conn_id_len is the length of destination
  * connection IDs used in RX'd packets; it must have the same value for all
@@ -236,18 +228,6 @@ int ossl_quic_demux_set_mtu(QUIC_DEMUX *demux, unsigned int mtu);
 void ossl_quic_demux_set_default_handler(QUIC_DEMUX *demux,
                                          ossl_quic_demux_cb_fn *cb,
                                          void *cb_arg);
-
-/*
- * Sets a callback for stateless reset processing.
- *
- * If set, this callback is called for datagrams for which we cannot identify
- * a CID.  This function should return 1 if there is a stateless reset token
- * present and 0 if not.  If there is a token present, the connection should
- * also be reset.
- */
-void ossl_quic_demux_set_stateless_reset_handler(
-        QUIC_DEMUX *demux,
-        ossl_quic_stateless_reset_cb_fn *cb, void *cb_arg);
 
 /*
  * Releases a URXE back to the demuxer. No reference must be made to the URXE or

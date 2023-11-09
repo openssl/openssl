@@ -75,12 +75,6 @@ static int port_init(QUIC_PORT *port)
                                            get_time, port)) == NULL)
         goto err;
 
-    /*
-     * If we are a server, setup our handler for packets not corresponding to
-     * any known DCID on our end. This is for handling clients establishing new
-     * connections.
-     */
-    // if (is_server)
     ossl_quic_demux_set_default_handler(port->demux,
                                         port_default_packet_handler,
                                         port);
@@ -357,8 +351,6 @@ static void port_rx_pre(QUIC_PORT *port)
      * to the appropriate QRX instances.
      */
     ret = ossl_quic_demux_pump(port->demux);
-    // TODO: handle ret, stateless reset
-
     if (ret == QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL)
         /*
          * We don't care about transient failure, but permanent failure means we
