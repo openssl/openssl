@@ -160,7 +160,6 @@ typedef struct quic_terminate_cause_st {
     unsigned int                    remote : 1;
 } QUIC_TERMINATE_CAUSE;
 
-
 /*
  * Create a new QUIC channel using the given arguments. The argument structure
  * does not need to remain allocated. Returns NULL on failure.
@@ -294,12 +293,6 @@ OSSL_STATM *ossl_quic_channel_get_statm(QUIC_CHANNEL *ch);
  */
 int ossl_quic_channel_get_peer_addr(QUIC_CHANNEL *ch, BIO_ADDR *peer_addr);
 int ossl_quic_channel_set_peer_addr(QUIC_CHANNEL *ch, const BIO_ADDR *peer_addr);
-
-/* Gets/sets the underlying network read and write BIOs. */
-BIO *ossl_quic_channel_get_net_rbio(QUIC_CHANNEL *ch);
-BIO *ossl_quic_channel_get_net_wbio(QUIC_CHANNEL *ch);
-int ossl_quic_channel_set_net_rbio(QUIC_CHANNEL *ch, BIO *net_rbio);
-int ossl_quic_channel_set_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio);
 
 /*
  * Returns an existing stream by stream ID. Returns NULL if the stream does not

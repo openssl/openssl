@@ -130,8 +130,8 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     if ((srv->ch = ossl_quic_port_create_incoming(srv->port, srv->tls)) == NULL)
         goto err;
 
-    if (!ossl_quic_channel_set_net_rbio(srv->ch, srv->args.net_rbio)
-        || !ossl_quic_channel_set_net_wbio(srv->ch, srv->args.net_wbio))
+    if (!ossl_quic_port_set_net_rbio(srv->port, srv->args.net_rbio)
+        || !ossl_quic_port_set_net_wbio(srv->port, srv->args.net_wbio))
         goto err;
 
     qc = OPENSSL_zalloc(sizeof(*qc));
