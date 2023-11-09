@@ -13,6 +13,7 @@
 #include "internal/quic_tserver.h"
 #include "internal/quic_ssl.h"
 #include "internal/quic_error.h"
+#include "internal/quic_stream_map.h"
 #include "testutil.h"
 #include "helpers/quictestlib.h"
 #if defined(OPENSSL_THREADS)
