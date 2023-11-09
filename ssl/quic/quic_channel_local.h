@@ -52,6 +52,9 @@ struct quic_channel_st {
     QUIC_TLS                        *qtls;
     SSL                             *tls;
 
+    /* Port LCIDM we use to register LCIDs. */
+    QUIC_LCIDM                      *lcidm;
+
     /*
      * The transport parameter block we will send or have sent.
      * Freed after sending or when connection is freed.

@@ -280,6 +280,7 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, int is_server)
     args.port       = port;
     args.is_server  = is_server;
     args.tls        = (tls != NULL ? tls : port_new_handshake_layer(port));
+    args.lcidm      = port->lcidm;
     if (args.tls == NULL)
         return NULL;
 
