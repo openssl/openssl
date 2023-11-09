@@ -37,6 +37,7 @@ QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
     port->mutex       = args->mutex;
     port->now_cb      = args->now_cb;
     port->now_cb_arg  = args->now_cb_arg;
+    port->channel_ctx = args->channel_ctx;
 
     if (!port_init(port)) {
         OPENSSL_free(port);
@@ -58,6 +59,9 @@ void ossl_quic_port_free(QUIC_PORT *port)
 static int port_init(QUIC_PORT *port)
 {
     size_t rx_short_cid_len = 8;
+
+    if (port->channel_ctx == NULL)
+        goto err;
 
     if ((port->demux = ossl_quic_demux_new(/*BIO=*/NULL,
                                            /*Short CID Len=*/rx_short_cid_len,
