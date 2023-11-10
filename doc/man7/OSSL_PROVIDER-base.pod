@@ -57,25 +57,93 @@ currently permitted.
 
 The OpenSSL base provider supports these operations and algorithms:
 
-=head2 Asymmetric Key Encoder
+=head2 Random Number Generation
 
-In addition to "provider=base", some of these encoders define the
-property "fips=yes", to allow them to be used together with the FIPS
-provider.
+The default provider all includes the "SEED-SRC" algorithm, which has the
+property "fips=yes", to allow it to be used together with the FIPS provider.
 
 =over 4
 
-=item RSA, see L<OSSL_ENCODER-RSA(7)>
+=item SEED-SRC,  see L<EVP_RAND-SEED-SRC(7)>
 
-=item DH, see L<OSSL_ENCODER-DH(7)>
+=back
 
-=item DSA, see L<OSSL_ENCODER-DSA(7)>
+=head2 Asymmetric Key Encoder
 
-=item EC, see L<OSSL_ENCODER-EC(7)>
+The default provider also includes all of these encoding algorithms . Some of
+these have the property "fips=yes", to allow them to be used together with the
+FIPS provider.
 
-=item X25519, see L<OSSL_ENCODER-X25519(7)>
+=over 4
 
-=item X448, see L<OSSL_ENCODER-X448(7)>
+=item RSA
+
+=item RSA-PSS
+
+=item DH
+
+=item DHX
+
+=item DSA
+
+=item EC
+
+=item ED25519
+
+=item ED448
+
+=item X25519
+
+=item X448
+
+=item SM2
+
+=back
+
+=head2 Asymmetric Key Decoder
+
+The default provider also includes all of these decoding algorithms . Some of
+thesehave the property "fips=yes", to allow them to be used together with the
+FIPS provider.
+
+=over 4
+
+=item RSA
+
+=item RSA-PSS
+
+=item DH
+
+=item DHX
+
+=item DSA
+
+=item EC
+
+=item ED25519
+
+=item ED448
+
+=item X25519
+
+=item X448
+
+=item SM2
+
+=item DER
+
+=back
+
+
+=head2 Stores
+
+The default provider also includes all of these store algorithms.
+
+=over 4
+
+=item file
+
+=item org.openssl.winstore
 
 =back
 
