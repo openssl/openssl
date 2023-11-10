@@ -41,6 +41,15 @@ enum {
 };
 
 struct quic_port_st {
+    /* The engine which this port is a child of. */
+    QUIC_ENGINE                     *engine;
+
+    /*
+     * QUIC_ENGINE keeps the channels which belong to it on a list for
+     * bookkeeping purposes.
+     */
+    OSSL_LIST_MEMBER(port, QUIC_PORT);
+
     OSSL_LIB_CTX                    *libctx;
     const char                      *propq;
 
@@ -102,6 +111,9 @@ struct quic_port_st {
 
     /* Does this port allow incoming connections? */
     unsigned int                    is_server                       : 1;
+
+    /* Are we on the QUIC_ENGINE linked list of ports? */
+    unsigned int                    on_engine_list                  : 1;
 };
 
 # endif

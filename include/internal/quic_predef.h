@@ -36,6 +36,7 @@ typedef struct quic_tick_result_st QUIC_TICK_RESULT;
 typedef struct quic_srtm_st QUIC_SRTM;
 typedef struct quic_lcidm_st QUIC_LCIDM;
 typedef struct quic_urxe_st QUIC_URXE;
+typedef struct quic_engine_st QUIC_ENGINE;
 
 # endif
 
