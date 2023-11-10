@@ -1780,6 +1780,7 @@
     <elf-symbol name='EVP_DigestSignInit' version='OPENSSL_3.0.0' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
     <elf-symbol name='EVP_DigestSignInit_ex' version='OPENSSL_3.0.0' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
     <elf-symbol name='EVP_DigestSignUpdate' version='OPENSSL_3.0.0' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='EVP_DigestSqueeze' version='OPENSSL_3.3.0' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
     <elf-symbol name='EVP_DigestUpdate' version='OPENSSL_3.0.0' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
     <elf-symbol name='EVP_DigestVerify' version='OPENSSL_3.0.0' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
     <elf-symbol name='EVP_DigestVerifyFinal' version='OPENSSL_3.0.0' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
