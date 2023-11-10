@@ -15,17 +15,27 @@ TESTS = cms_comp \
         cms_uncomp \
         cms_ver
 
-CFLAGS  = -I../../include -g
+CFLAGS  = -I../../include -g -Wall
 LDFLAGS = -L../..
 LDLIBS  = -lcrypto
 
 all: $(TESTS)
 
+cms_comp: cms_comp.o
+cms_ddec: cms_ddec.o
+cms_dec: cms_dec.o
+cms_denc: cms_denc.o
+cms_enc: cms_enc.o
+cms_sign: cms_sign.o
+cms_sign2: cms_sign2.o
+cms_uncomp: cms_uncomp.o
+cms_ver: cms_ver.o
+
+$(TESTS):
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
+
 clean:
 	$(RM) $(TESTS) *.o
-
-cms_%: cms_%.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o "$@" "$<" $(LDLIBS)
 
 test: all
 	@echo "\nCMS tests:"
