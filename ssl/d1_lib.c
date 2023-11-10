@@ -133,9 +133,9 @@ void dtls1_clear_sent_buffer(SSL *s)
 
         if (frag->msg_header.is_ccs) {
             /*
-            * If we're freeing the CCS then we're done with the old
-            * enc_write_ctx/write_hash and they can be freed
-            */
+             * If we're freeing the CCS then we're done with the old
+             * enc_write_ctx/write_hash and they can be freed
+             */
             if (s->enc_write_ctx
                     != frag->msg_header.saved_retransmit_state.enc_write_ctx)
                 EVP_CIPHER_CTX_free(frag->msg_header.saved_retransmit_state
