@@ -42,30 +42,6 @@ typedef struct quic_port_args_st {
     /* The engine which the QUIC port is to be a child of. */
     QUIC_ENGINE     *engine;
 
-    /* All channels in a QUIC event domain share the same (libctx, propq). */
-    OSSL_LIB_CTX    *libctx;
-    const char      *propq;
-
-    /*
-     * This must be a mutex the lifetime of which will exceed that of the port
-     * and all channels. The instantiator of the port is responsible for
-     * providing a mutex as this makes it easier to handle instantiation and
-     * teardown of channels in situations potentially requiring locking.
-     *
-     * Note that this is a MUTEX not a RWLOCK as it needs to be an OS mutex for
-     * compatibility with an OS's condition variable wait API, whereas RWLOCK
-     * may, depending on the build configuration, be implemented using an OS's
-     * mutex primitive or using its RW mutex primitive.
-     */
-    CRYPTO_MUTEX    *mutex;
-
-    /*
-     * Optional function pointer to use to retrieve the current time. If NULL,
-     * ossl_time_now() is used.
-     */
-    OSSL_TIME       (*now_cb)(void *arg);
-    void            *now_cb_arg;
-
     /*
      * This SSL_CTX will be used when constructing the handshake layer object
      * inside newly created channels.
@@ -133,9 +109,6 @@ OSSL_TIME ossl_quic_port_get_time(QUIC_PORT *port);
 
 int ossl_quic_port_get_rx_short_dcid_len(const QUIC_PORT *port);
 int ossl_quic_port_get_tx_init_dcid_len(const QUIC_PORT *port);
-
-/* For testing use. While enabled, ticking is not performed. */
-void ossl_quic_port_set_inhibit_tick(QUIC_PORT *port, int inhibit);
 
 /* Returns 1 if the port is running/healthy, 0 if it has failed. */
 int ossl_quic_port_is_running(const QUIC_PORT *port);

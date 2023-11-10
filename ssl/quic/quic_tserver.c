@@ -11,6 +11,7 @@
 #include "internal/quic_channel.h"
 #include "internal/quic_statm.h"
 #include "internal/quic_port.h"
+#include "internal/quic_engine.h"
 #include "internal/common.h"
 #include "internal/time.h"
 #include "quic_local.h"
@@ -26,9 +27,10 @@ struct quic_tserver_st {
     SSL *ssl;
 
     /*
-     * The QUIC port and channel providing the core QUIC connection
+     * The QUIC engine, port and channel providing the core QUIC connection
      * implementation.
      */
+    QUIC_ENGINE     *engine;
     QUIC_PORT       *port;
     QUIC_CHANNEL    *ch;
 
@@ -78,6 +80,7 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
                                     const char *certfile, const char *keyfile)
 {
     QUIC_TSERVER *srv = NULL;
+    QUIC_ENGINE_ARGS engine_args = {0};
     QUIC_PORT_ARGS port_args = {0};
     QUIC_CONNECTION *qc = NULL;
 
@@ -116,15 +119,19 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     if (srv->tls == NULL)
         goto err;
 
-    port_args.libctx        = srv->args.libctx;
-    port_args.propq         = srv->args.propq;
-    port_args.mutex         = srv->mutex;
-    port_args.channel_ctx   = srv->ctx;
-    port_args.now_cb        = srv->args.now_cb;
-    port_args.now_cb_arg    = srv->args.now_cb_arg;
-    port_args.is_multi_conn = 1;
+    engine_args.libctx          = srv->args.libctx;
+    engine_args.propq           = srv->args.propq;
+    engine_args.mutex           = srv->mutex;
+    engine_args.now_cb          = srv->args.now_cb;
+    engine_args.now_cb_arg      = srv->args.now_cb_arg;
 
-    if ((srv->port = ossl_quic_port_new(&port_args)) == NULL)
+    if ((srv->engine = ossl_quic_engine_new(&engine_args)) == NULL)
+        goto err;
+
+    port_args.channel_ctx       = srv->ctx;
+    port_args.is_multi_conn     = 1;
+
+    if ((srv->port = ossl_quic_engine_create_port(srv->engine, &port_args)) == NULL)
         goto err;
 
     if ((srv->ch = ossl_quic_port_create_incoming(srv->port, srv->tls)) == NULL)
@@ -150,6 +157,7 @@ err:
         SSL_free(srv->tls);
         ossl_quic_channel_free(srv->ch);
         ossl_quic_port_free(srv->port);
+        ossl_quic_engine_free(srv->engine);
 #if defined(OPENSSL_THREADS)
         ossl_crypto_mutex_free(&srv->mutex);
 #endif
@@ -167,6 +175,7 @@ void ossl_quic_tserver_free(QUIC_TSERVER *srv)
 
     ossl_quic_channel_free(srv->ch);
     ossl_quic_port_free(srv->port);
+    ossl_quic_engine_free(srv->engine);
     BIO_free_all(srv->args.net_rbio);
     BIO_free_all(srv->args.net_wbio);
     OPENSSL_free(srv->ssl);
