@@ -13,6 +13,7 @@
 #include "internal/quic_srtm.h"
 #include "quic_port_local.h"
 #include "quic_channel_local.h"
+#include "quic_engine_local.h"
 #include "../ssl_local.h"
 
 /*
@@ -24,12 +25,13 @@
 static int port_init(QUIC_PORT *port);
 static void port_cleanup(QUIC_PORT *port);
 static OSSL_TIME get_time(void *arg);
-static void port_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
 static void port_default_packet_handler(QUIC_URXE *e, void *arg,
                                         const QUIC_CONN_ID *dcid);
 static void port_rx_pre(QUIC_PORT *port);
+static void port_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
 
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
+DEFINE_LIST_OF_IMPL(port, QUIC_PORT);
 
 QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
 {
@@ -38,6 +40,7 @@ QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
     if ((port = OPENSSL_zalloc(sizeof(QUIC_PORT))) == NULL)
         return NULL;
 
+    port->engine        = args->engine;
     port->libctx        = args->libctx;
     port->propq         = args->propq;
     port->mutex         = args->mutex;
@@ -88,10 +91,16 @@ static int port_init(QUIC_PORT *port)
     if ((port->lcidm = ossl_quic_lcidm_new(port->libctx, rx_short_dcid_len)) == NULL)
         goto err;
 
-    ossl_quic_reactor_init(&port->rtor, port_tick, port, ossl_time_zero());
+    if (port->engine == NULL)
+        ossl_quic_reactor_init(&port->rtor, port_tick, port, ossl_time_zero());
+
     port->rx_short_dcid_len = (unsigned char)rx_short_dcid_len;
     port->tx_init_dcid_len  = INIT_DCID_LEN;
     port->state             = QUIC_PORT_STATE_RUNNING;
+    if (port->engine != NULL) {
+        ossl_list_port_insert_tail(&port->engine->port_list, port);
+        port->on_engine_list    = 1;
+    }
     return 1;
 
 err:
@@ -114,6 +123,11 @@ static void port_cleanup(QUIC_PORT *port)
 
     OSSL_ERR_STATE_free(port->err_state);
     port->err_state = NULL;
+
+    if (port->on_engine_list) {
+        ossl_list_port_remove(&port->engine->port_list, port);
+        port->on_engine_list = 0;
+    }
 }
 
 static void port_transition_failed(QUIC_PORT *port)
@@ -129,9 +143,14 @@ int ossl_quic_port_is_running(const QUIC_PORT *port)
     return port->state == QUIC_PORT_STATE_RUNNING;
 }
 
+QUIC_ENGINE *ossl_quic_port_get0_engine(QUIC_PORT *port)
+{
+    return port->engine;
+}
+
 QUIC_REACTOR *ossl_quic_port_get0_reactor(QUIC_PORT *port)
 {
-    return &port->rtor;
+    return port->engine != NULL ? &port->engine->rtor : &port->rtor;
 }
 
 QUIC_DEMUX *ossl_quic_port_get0_demux(QUIC_PORT *port)
@@ -333,13 +352,17 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
  */
 
 /*
- * The central ticker function called by the reactor. This does everything, or
- * at least everything network I/O related. Best effort - not allowed to fail
- * "loudly".
+ * Tick function for this port. This does everything related to network I/O for
+ * this port's network BIOs, and services child channels.
  */
 static void port_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
 {
-    QUIC_PORT *port = arg;
+    ossl_quic_port_subtick(arg, res, flags);
+}
+
+void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *res,
+                            uint32_t flags)
+{
     QUIC_CHANNEL *ch;
 
     res->net_read_desired   = 0;
