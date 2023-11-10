@@ -35,8 +35,13 @@
  * of legacy compatibility where a caller can create an incoming (server role)
  * channel and that channel will be automatically be bound to the next incoming
  * connection. In the future this will go away once QUIC_TSERVER is removed.
+ *
+ * All QUIC_PORT instances are created by a QUIC_ENGINE.
  */
 typedef struct quic_port_args_st {
+    /* The engine which the QUIC port is to be a child of. */
+    QUIC_ENGINE     *engine;
+
     /* All channels in a QUIC event domain share the same (libctx, propq). */
     OSSL_LIB_CTX    *libctx;
     const char      *propq;
@@ -75,6 +80,7 @@ typedef struct quic_port_args_st {
     int             is_multi_conn;
 } QUIC_PORT_ARGS;
 
+/* Only QUIC_ENGINE should use this function. */
 QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args);
 
 void ossl_quic_port_free(QUIC_PORT *port);
@@ -110,6 +116,9 @@ int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio);
  */
 int ossl_quic_port_update_poll_descriptors(QUIC_PORT *port);
 
+/* Gets the engine which this port is a child of. */
+QUIC_ENGINE *ossl_quic_port_get0_engine(QUIC_PORT *port);
+
 /* Gets the reactor which can be used to tick/poll on the port. */
 QUIC_REACTOR *ossl_quic_port_get0_reactor(QUIC_PORT *port);
 
@@ -136,6 +145,10 @@ int ossl_quic_port_is_running(const QUIC_PORT *port);
  * the port is no longer running.
  */
 void ossl_quic_port_restore_err_state(const QUIC_PORT *port);
+
+/* For use by QUIC_ENGINE. You should not need to call this directly. */
+void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *r,
+                            uint32_t flags);
 
 /*
  * Events
