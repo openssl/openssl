@@ -135,9 +135,9 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
                 && frag->msg_header.saved_retransmit_state.wrlmethod != NULL
                 && s->rlayer.wrl != frag->msg_header.saved_retransmit_state.wrl) {
             /*
-            * If we're freeing the CCS then we're done with the old wrl and it
-            * can bee freed
-            */
+             * If we're freeing the CCS then we're done with the old wrl and it
+             * can bee freed
+             */
             frag->msg_header.saved_retransmit_state.wrlmethod->free(frag->msg_header.saved_retransmit_state.wrl);
         }
 
