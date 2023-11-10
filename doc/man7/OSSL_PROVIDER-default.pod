@@ -89,8 +89,6 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item 3DES, see L<EVP_CIPHER-DES(7)>
 
-=item SEED, see L<EVP_CIPHER-SEED(7)>
-
 =item SM4, see L<EVP_CIPHER-SM4(7)>
 
 =item ChaCha20, see L<EVP_CIPHER-CHACHA(7)>
