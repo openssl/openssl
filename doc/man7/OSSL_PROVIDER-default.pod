@@ -89,8 +89,6 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item 3DES, see L<EVP_CIPHER-DES(7)>
 
-=item SEED, see L<EVP_CIPHER-SEED(7)>
-
 =item SM4, see L<EVP_CIPHER-SM4(7)>
 
 =item ChaCha20, see L<EVP_CIPHER-CHACHA(7)>
@@ -126,6 +124,8 @@ The OpenSSL default provider supports these operations and algorithms:
 =over 4
 
 =item HKDF, see L<EVP_KDF-HKDF(7)>
+
+=item TLS13-KDF, see L<EVP_KDF-TLS13_KDF(7)>
 
 =item SSKDF, see L<EVP_KDF-SS(7)>
 
@@ -167,6 +167,12 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item X448, see L<EVP_KEYEXCH-X448(7)>
 
+=item TLS1-PRF
+
+=item HKDF
+
+=item SCRYPT
+
 =back
 
 =head2 Asymmetric Signature
@@ -176,6 +182,14 @@ The OpenSSL default provider supports these operations and algorithms:
 =item DSA, see L<EVP_SIGNATURE-DSA(7)>
 
 =item RSA, see L<EVP_SIGNATURE-RSA(7)>
+
+=item ED25519, see L<EVP_SIGNATURE-ED25519(7)>
+
+=item ED448, see L<EVP_SIGNATURE-ED448(7)>
+
+=item ECDSA, see L<EVP_SIGNATURE-ECDSA(7)>
+
+=item SM2
 
 =item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
 
@@ -205,6 +219,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item X25519, see L<EVP_KEM-X25519(7)>
 
+=item X448, see L<EVP_KEM-X448(7)>
+
 =item EC, see L<EVP_KEM-EC(7)>
 
 =back
@@ -221,11 +237,33 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item RSA, see L<EVP_KEYMGMT-RSA(7)>
 
+=item RSA-PSS
+
 =item EC, see L<EVP_KEYMGMT-EC(7)>
 
 =item X25519, see L<EVP_KEYMGMT-X25519(7)>
 
 =item X448, see L<EVP_KEYMGMT-X448(7)>
+
+=item ED25519, see L<EVP_KEYMGMT-ED25519(7)>
+
+=item ED448, see L<EVP_KEYMGMT-ED448(7)>
+
+=item TLS1-PRF
+
+=item HKDF
+
+=item SCRYPT
+
+=item HMAC, see L<EVP_KEYMGMT-HMAC(7)>
+
+=item SIPHASH, see L<EVP_KEYMGMT-Siphash(7)>
+
+=item POLY1305, see L<EVP_KEYMGMT-Poly1305(7)>
+
+=item CMAC, see L<EVP_KEYMGMT-CMAC(7)>
+
+=item SM2, see L<EVP_KEYMGMT-SM2(7)>
 
 =back
 
@@ -245,27 +283,87 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =back
 
-=head2 Asymmetric Key Encoder
+In addition to this provider, the "SEED-SRC" algorithm is also available in the
+base provider.
 
-The default provider also includes all of the encoding algorithms
-present in the base provider.  Some of these have the property "fips=yes",
-to allow them to be used together with the FIPS provider.
+=head2 Asymmetric Key Encoder
 
 =over 4
 
-=item RSA, see L<OSSL_ENCODER-RSA(7)>
+=item RSA
 
-=item DH, see L<OSSL_ENCODER-DH(7)>
+=item RSA-PSS
 
-=item DSA, see L<OSSL_ENCODER-DSA(7)>
+=item DH
 
-=item EC, see L<OSSL_ENCODER-EC(7)>
+=item DHX
 
-=item X25519, see L<OSSL_ENCODER-X25519(7)>
+=item DSA
 
-=item X448, see L<OSSL_ENCODER-X448(7)>
+=item EC
+
+=item ED25519
+
+=item ED448
+
+=item X25519
+
+=item X448
+
+=item SM2
 
 =back
+
+In addition to this provider, all of these encoding algorithms are also
+available in the base provider. Some of these algorithms may be used in
+combination with the FIPS provider.
+
+=head2 Asymmetric Key Decoder
+
+=over 4
+
+=item RSA
+
+=item RSA-PSS
+
+=item DH
+
+=item DHX
+
+=item DSA
+
+=item EC
+
+=item ED25519
+
+=item ED448
+
+=item X25519
+
+=item X448
+
+=item SM2
+
+=item DER
+
+=back
+
+In addition to this provider, all of these decoding algorithms are also
+available in the base provider. Some of these algorithms may be used in
+combination with the FIPS provider.
+
+=head2 Stores
+
+=over 4
+
+=item file
+
+=item org.openssl.winstore
+
+=back
+
+In addition to this provider, all of these store algorithms are also
+available in the base provider.
 
 =head1 SEE ALSO
 

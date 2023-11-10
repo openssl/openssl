@@ -72,6 +72,8 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item KECCAK-KMAC, see L<EVP_MD-KECCAK-KMAC(7)>
 
+=item SHAKE, see L<EVP_MD-SHAKE(7)>
+
 =back
 
 =head2 Symmetric Ciphers
@@ -79,6 +81,10 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 =over 4
 
 =item AES, see L<EVP_CIPHER-AES(7)>
+
+=item 3DES, see L<EVP_CIPHER-DES(7)>
+
+This is an unapproved algorithm.
 
 =back
 
@@ -134,6 +140,10 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item X448, see L<EVP_KEYEXCH-X448(7)>
 
+=item TLS1-PRF
+
+=item HKDF
+
 =back
 
 =head2 Asymmetric Signature
@@ -142,9 +152,17 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item RSA, see L<EVP_SIGNATURE-RSA(7)>
 
-=item X25519, see L<EVP_SIGNATURE-ED25519(7)>
+=item DSA, see L<EVP_SIGNATURE-DSA(7)>
 
-=item X448, see L<EVP_SIGNATURE-ED448(7)>
+=item ED25519, see L<EVP_SIGNATURE-ED25519(7)>
+
+This is an unapproved algorithm.
+
+=item ED448, see L<EVP_SIGNATURE-ED448(7)>
+
+This is an unapproved algorithm.
+
+=item ECDSA, see L<EVP_SIGNATURE-ECDSA(7)>
 
 =item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
 
@@ -180,11 +198,29 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item RSA, see L<EVP_KEYMGMT-RSA(7)>
 
+=item RSA-PSS
+
 =item EC, see L<EVP_KEYMGMT-EC(7)>
 
 =item X25519, see L<EVP_KEYMGMT-X25519(7)>
 
 =item X448, see L<EVP_KEYMGMT-X448(7)>
+
+=item ED25519, see L<EVP_KEYMGMT-ED25519(7)>
+
+This is an unapproved algorithm.
+
+=item ED448, see L<EVP_KEYMGMT-ED448(7)>
+
+This is an unapproved algorithm.
+
+=item TLS1-PRF
+
+=item HKDF
+
+=item HMAC, see L<EVP_KEYMGMT-HMAC(7)>
+
+=item CMAC, see L<EVP_KEYMGMT-CMAC(7)>
 
 =back
 
