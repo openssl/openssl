@@ -23,12 +23,12 @@ jobs:
           no-dh,
           no-dtls,
           no-ec,
-          no-ec2m,
           no-ecx,
           no-http,
           no-legacy,
           no-sock,
           enable-ssl-trace,
+          no-stdio,
           no-threads,
           no-thread-pool,
           no-default-thread-pool,
@@ -53,6 +53,6 @@ jobs:
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
-        ./util/opensslwrap.sh version -c
+        if [ -x apps/openssl ] ; then ./util/opensslwrap.sh version -c ; fi
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
