@@ -15,6 +15,7 @@
 #include "internal/quic_tls.h"
 #include "internal/quic_rx_depack.h"
 #include "internal/quic_error.h"
+#include "internal/quic_engine.h"
 #include "internal/quic_port.h"
 #include "internal/time.h"
 
@@ -64,7 +65,7 @@ static int block_until_pred(QUIC_CONNECTION *qc,
      * Any attempt to block auto-disables tick inhibition as otherwise we will
      * hang around forever.
      */
-    ossl_quic_port_set_inhibit_tick(qc->port, 0);
+    ossl_quic_engine_set_inhibit_tick(qc->engine, 0);
 
     rtor = ossl_quic_channel_get_reactor(qc->ch);
     return ossl_quic_reactor_block_until_pred(rtor, pred, pred_arg, flags,
@@ -545,6 +546,7 @@ void ossl_quic_free(SSL *s)
 
     ossl_quic_channel_free(ctx.qc->ch);
     ossl_quic_port_free(ctx.qc->port);
+    ossl_quic_engine_free(ctx.qc->engine);
 
     BIO_free_all(ctx.qc->net_rbio);
     BIO_free_all(ctx.qc->net_wbio);
@@ -1489,18 +1491,25 @@ static int configure_channel(QUIC_CONNECTION *qc)
 QUIC_NEEDS_LOCK
 static int create_channel(QUIC_CONNECTION *qc)
 {
+    QUIC_ENGINE_ARGS engine_args = {0};
     QUIC_PORT_ARGS port_args = {0};
 
-    port_args.libctx        = qc->ssl.ctx->libctx;
-    port_args.propq         = qc->ssl.ctx->propq;
-    port_args.mutex         = qc->mutex;
-    port_args.channel_ctx   = qc->ssl.ctx;
-    port_args.now_cb        = get_time_cb;
-    port_args.now_cb_arg    = qc;
+    engine_args.libctx        = qc->ssl.ctx->libctx;
+    engine_args.propq         = qc->ssl.ctx->propq;
+    engine_args.mutex         = qc->mutex;
+    engine_args.now_cb        = get_time_cb;
+    engine_args.now_cb_arg    = qc;
+    qc->engine = ossl_quic_engine_new(&engine_args);
+    if (qc->engine == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        return 0;
+    }
 
-    qc->port = ossl_quic_port_new(&port_args);
+    port_args.channel_ctx = qc->ssl.ctx;
+    qc->port = ossl_quic_engine_create_port(qc->engine, &port_args);
     if (qc->port == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        ossl_quic_engine_free(qc->engine);
         return 0;
     }
 
@@ -1508,6 +1517,7 @@ static int create_channel(QUIC_CONNECTION *qc)
     if (qc->ch == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         ossl_quic_port_free(qc->port);
+        ossl_quic_engine_free(qc->engine);
         return 0;
     }
 

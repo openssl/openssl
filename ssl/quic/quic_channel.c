@@ -17,6 +17,7 @@
 #include "../ssl_local.h"
 #include "quic_channel_local.h"
 #include "quic_port_local.h"
+#include "quic_engine_local.h"
 
 /*
  * NOTE: While this channel implementation currently has basic server support,
@@ -129,12 +130,12 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     /* For clients, generate our initial DCID. */
     if (!ch->is_server
-        && !ossl_quic_gen_rand_conn_id(ch->port->libctx, tx_init_dcid_len,
+        && !ossl_quic_gen_rand_conn_id(ch->port->engine->libctx, tx_init_dcid_len,
                                        &ch->init_dcid))
         goto err;
 
     /* We plug in a network write BIO to the QTX later when we get one. */
-    qtx_args.libctx = ch->port->libctx;
+    qtx_args.libctx = ch->port->engine->libctx;
     qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
     ch->rx_max_udp_payload_size = qtx_args.mdpl;
 
@@ -241,7 +242,7 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     ossl_quic_tx_packetiser_set_ack_tx_cb(ch->txp, ch_on_txp_ack_tx, ch);
 
-    qrx_args.libctx             = ch->port->libctx;
+    qrx_args.libctx             = ch->port->engine->libctx;
     qrx_args.demux              = ch->port->demux;
     qrx_args.short_conn_id_len  = rx_short_dcid_len;
     qrx_args.max_deferred       = 32;
@@ -507,6 +508,11 @@ QUIC_DEMUX *ossl_quic_channel_get0_demux(QUIC_CHANNEL *ch)
 QUIC_PORT *ossl_quic_channel_get0_port(QUIC_CHANNEL *ch)
 {
     return ch->port;
+}
+
+QUIC_ENGINE *ossl_quic_channel_get0_engine(QUIC_CHANNEL *ch)
+{
+    return ossl_quic_port_get0_engine(ch->port);
 }
 
 CRYPTO_MUTEX *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch)
@@ -1712,7 +1718,7 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
         }
     }
 
-    if (!ch->port->inhibit_tick) {
+    if (!ch->port->engine->inhibit_tick) {
         /* Handle RXKU timeouts. */
         ch_rxku_tick(ch);
 
@@ -1752,7 +1758,7 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
          * Idle timeout differs from normal protocol violation because we do
          * not send a CONN_CLOSE frame; go straight to TERMINATED.
          */
-        if (!ch->port->inhibit_tick)
+        if (!ch->port->engine->inhibit_tick)
             ch_on_idle_timeout(ch);
 
         res->net_read_desired   = 0;
@@ -1761,7 +1767,7 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
         return;
     }
 
-    if (!ch->port->inhibit_tick) {
+    if (!ch->port->engine->inhibit_tick) {
         deadline = ossl_ackm_get_loss_detection_deadline(ch->ackm);
         if (!ossl_time_is_zero(deadline)
             && ossl_time_compare(now, deadline) >= 0)
@@ -2062,8 +2068,8 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
          * than allow the QRX to emit a potentially malformed packet to the
          * upper layers. However, special casing this will do for now.
          */
-        if (!ossl_quic_validate_retry_integrity_tag(ch->port->libctx,
-                                                    ch->port->propq,
+        if (!ossl_quic_validate_retry_integrity_tag(ch->port->engine->libctx,
+                                                    ch->port->engine->propq,
                                                     ch->qrx_pkt->hdr,
                                                     &ch->init_dcid))
             /* Malformed retry packet, ignore. */
@@ -2391,8 +2397,8 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
         return 0;
 
     /* Plug in secrets for the Initial EL. */
-    if (!ossl_quic_provide_initial_secret(ch->port->libctx,
-                                          ch->port->propq,
+    if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
+                                          ch->port->engine->propq,
                                           &ch->init_dcid,
                                           ch->is_server,
                                           ch->qrx, ch->qtx))
@@ -2491,8 +2497,8 @@ static int ch_retry(QUIC_CHANNEL *ch,
      * Plug in new secrets for the Initial EL. This is the only time we change
      * the secrets for an EL after we already provisioned it.
      */
-    if (!ossl_quic_provide_initial_secret(ch->port->libctx,
-                                          ch->port->propq,
+    if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
+                                          ch->port->engine->propq,
                                           &ch->retry_scid,
                                           /*is_server=*/0,
                                           ch->qrx, ch->qtx))
@@ -3145,8 +3151,8 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
         return 0;
 
     /* Plug in secrets for the Initial EL. */
-    if (!ossl_quic_provide_initial_secret(ch->port->libctx,
-                                          ch->port->propq,
+    if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
+                                          ch->port->engine->propq,
                                           &ch->init_dcid,
                                           /*is_server=*/1,
                                           ch->qrx, ch->qtx))
