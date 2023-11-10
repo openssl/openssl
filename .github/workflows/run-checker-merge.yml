@@ -22,6 +22,7 @@ jobs:
           no-ct,
           no-dso,
           no-dynamic-engine,
+          no-ec2m,
           no-engine no-shared,
           no-err,
           no-filenames,
