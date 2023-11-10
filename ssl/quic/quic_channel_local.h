@@ -11,14 +11,6 @@
 #  include "internal/quic_fc.h"
 #  include "internal/quic_stream_map.h"
 
-struct quic_srt_elem_st {
-    OSSL_LIST_MEMBER(stateless_reset_tokens, QUIC_SRT_ELEM);
-    QUIC_STATELESS_RESET_TOKEN token;
-    uint64_t seq_num;
-};
-
-DEFINE_LIST_OF(stateless_reset_tokens, QUIC_SRT_ELEM);
-
 /*
  * QUIC Channel Structure
  * ======================
