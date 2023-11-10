@@ -29,7 +29,8 @@
 #define IMPLEMENT_LEGACY_EVP_MD_METH_SHA3(nm, fn, tag)                         \
 static int nm##_init(EVP_MD_CTX *ctx)                                          \
 {                                                                              \
-    return fn##_init(EVP_MD_CTX_get0_md_data(ctx), tag, ctx->digest->md_size * 8); \
+    size_t bits = ctx->digest->md_size * 8;                                    \
+    return fn##_init(EVP_MD_CTX_get0_md_data(ctx), tag, bits, bits);           \
 }                                                                              \
 static int nm##_update(EVP_MD_CTX *ctx, const void *data, size_t count)        \
 {                                                                              \
@@ -43,7 +44,8 @@ static int nm##_final(EVP_MD_CTX *ctx, unsigned char *md)                      \
 #define IMPLEMENT_LEGACY_EVP_MD_METH_SHAKE(nm, fn, tag)                        \
 static int nm##_init(EVP_MD_CTX *ctx)                                          \
 {                                                                              \
-    return fn##_init(EVP_MD_CTX_get0_md_data(ctx), tag, ctx->digest->md_size * 8); \
+    size_t bits = ctx->digest->md_size * 8;                                    \
+    return fn##_init(EVP_MD_CTX_get0_md_data(ctx), tag, bits, bits);           \
 }                                                                              \
 
 #define sha512_224_Init    sha512_224_init
@@ -86,8 +88,6 @@ static int shake_ctrl(EVP_MD_CTX *evp_ctx, int cmd, int p1, void *p2)
         return 0;
     }
 }
-
-
 
 static const EVP_MD sha1_md = {
     NID_sha1,
