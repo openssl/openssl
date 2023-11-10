@@ -154,15 +154,15 @@ void dtls1_free(SSL *ssl)
     if (s == NULL)
         return;
 
-    DTLS_RECORD_LAYER_free(&s->rlayer);
-
-    ssl3_free(ssl);
-
     if (s->d1 != NULL) {
         dtls1_clear_queues(s);
         pqueue_free(s->d1->buffered_messages);
         pqueue_free(s->d1->sent_messages);
     }
+
+    DTLS_RECORD_LAYER_free(&s->rlayer);
+
+    ssl3_free(ssl);
 
     OPENSSL_free(s->d1);
     s->d1 = NULL;
