@@ -118,6 +118,9 @@ struct quic_conn_st {
 
     SSL                             *tls;
 
+    /* The QUIC engine representing the QUIC event domain. */
+    QUIC_ENGINE                     *engine;
+
     /* The QUIC port representing the QUIC listener and socket. */
     QUIC_PORT                       *port;
 

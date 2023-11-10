@@ -98,6 +98,10 @@ QUIC_PORT *ossl_quic_engine_create_port(QUIC_ENGINE *qeng,
 {
     QUIC_PORT_ARGS largs = *args;
 
+    if (ossl_list_port_num(&qeng->port_list) > 0)
+        /* TODO(QUIC MULTIPORT): We currently support only one port. */
+        return NULL;
+
     if (largs.engine != NULL)
         return NULL;
 

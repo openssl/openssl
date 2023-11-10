@@ -319,6 +319,7 @@ int ossl_quic_channel_is_handshake_complete(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_handshake_confirmed(const QUIC_CHANNEL *ch);
 
 QUIC_PORT *ossl_quic_channel_get0_port(QUIC_CHANNEL *ch);
+QUIC_ENGINE *ossl_quic_channel_get0_engine(QUIC_CHANNEL *ch);
 QUIC_DEMUX *ossl_quic_channel_get0_demux(QUIC_CHANNEL *ch);
 
 SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch);

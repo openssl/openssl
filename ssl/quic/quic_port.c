@@ -28,7 +28,6 @@ static OSSL_TIME get_time(void *arg);
 static void port_default_packet_handler(QUIC_URXE *e, void *arg,
                                         const QUIC_CONN_ID *dcid);
 static void port_rx_pre(QUIC_PORT *port);
-static void port_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
 
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(port, QUIC_PORT);
@@ -41,11 +40,6 @@ QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
         return NULL;
 
     port->engine        = args->engine;
-    port->libctx        = args->libctx;
-    port->propq         = args->propq;
-    port->mutex         = args->mutex;
-    port->now_cb        = args->now_cb;
-    port->now_cb_arg    = args->now_cb_arg;
     port->channel_ctx   = args->channel_ctx;
     port->is_multi_conn = args->is_multi_conn;
 
@@ -70,7 +64,7 @@ static int port_init(QUIC_PORT *port)
 {
     size_t rx_short_dcid_len = (port->is_multi_conn ? INIT_DCID_LEN : 0);
 
-    if (port->channel_ctx == NULL)
+    if (port->engine == NULL || port->channel_ctx == NULL)
         goto err;
 
     if ((port->err_state = OSSL_ERR_STATE_new()) == NULL)
@@ -85,14 +79,13 @@ static int port_init(QUIC_PORT *port)
                                         port_default_packet_handler,
                                         port);
 
-    if ((port->srtm = ossl_quic_srtm_new(port->libctx, port->propq)) == NULL)
+    if ((port->srtm = ossl_quic_srtm_new(port->engine->libctx,
+                                         port->engine->propq)) == NULL)
         goto err;
 
-    if ((port->lcidm = ossl_quic_lcidm_new(port->libctx, rx_short_dcid_len)) == NULL)
+    if ((port->lcidm = ossl_quic_lcidm_new(port->engine->libctx,
+                                           rx_short_dcid_len)) == NULL)
         goto err;
-
-    if (port->engine == NULL)
-        ossl_quic_reactor_init(&port->rtor, port_tick, port, ossl_time_zero());
 
     port->rx_short_dcid_len = (unsigned char)rx_short_dcid_len;
     port->tx_init_dcid_len  = INIT_DCID_LEN;
@@ -150,7 +143,7 @@ QUIC_ENGINE *ossl_quic_port_get0_engine(QUIC_PORT *port)
 
 QUIC_REACTOR *ossl_quic_port_get0_reactor(QUIC_PORT *port)
 {
-    return port->engine != NULL ? &port->engine->rtor : &port->rtor;
+    return ossl_quic_engine_get0_reactor(port->engine);
 }
 
 QUIC_DEMUX *ossl_quic_port_get0_demux(QUIC_PORT *port)
@@ -160,15 +153,12 @@ QUIC_DEMUX *ossl_quic_port_get0_demux(QUIC_PORT *port)
 
 CRYPTO_MUTEX *ossl_quic_port_get0_mutex(QUIC_PORT *port)
 {
-    return port->mutex;
+    return ossl_quic_engine_get0_mutex(port->engine);
 }
 
 OSSL_TIME ossl_quic_port_get_time(QUIC_PORT *port)
 {
-    if (port->now_cb == NULL)
-        return ossl_time_now();
-
-    return port->now_cb(port->now_cb_arg);
+    return ossl_quic_engine_get_time(port->engine);
 }
 
 static OSSL_TIME get_time(void *port)
@@ -225,10 +215,19 @@ static int port_update_poll_desc(QUIC_PORT *port, BIO *net_bio, int for_write)
     if (!validate_poll_descriptor(&d))
         return 0;
 
+    /*
+     * TODO(QUIC MULTIPORT): We currently only support one port per
+     * engine/domain. This is necessitated because QUIC_REACTOR only supports a
+     * single pollable currently. In the future, once complete polling
+     * infrastructure has been implemented, this limitation can be removed.
+     *
+     * For now, just update the descriptor on the the engine's reactor as we are
+     * guaranteed to be the only port under it.
+     */
     if (for_write)
-        ossl_quic_reactor_set_poll_w(&port->rtor, &d);
+        ossl_quic_reactor_set_poll_w(&port->engine->rtor, &d);
     else
-        ossl_quic_reactor_set_poll_r(&port->rtor, &d);
+        ossl_quic_reactor_set_poll_r(&port->engine->rtor, &d);
 
     return 1;
 }
@@ -355,11 +354,6 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls)
  * Tick function for this port. This does everything related to network I/O for
  * this port's network BIOs, and services child channels.
  */
-static void port_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
-{
-    ossl_quic_port_subtick(arg, res, flags);
-}
-
 void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *res,
                             uint32_t flags)
 {
@@ -369,7 +363,7 @@ void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *res,
     res->net_write_desired  = 0;
     res->tick_deadline      = ossl_time_infinite();
 
-    if (!port->inhibit_tick) {
+    if (!port->engine->inhibit_tick) {
         /* Handle any incoming data from network. */
         if (ossl_quic_port_is_running(port))
             port_rx_pre(port);
@@ -581,11 +575,6 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
 
 undesirable:
     ossl_quic_demux_release_urxe(port->demux, e);
-}
-
-void ossl_quic_port_set_inhibit_tick(QUIC_PORT *port, int inhibit)
-{
-    port->inhibit_tick = (inhibit != 0);
 }
 
 void ossl_quic_port_raise_net_error(QUIC_PORT *port,

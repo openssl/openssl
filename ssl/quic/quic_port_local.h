@@ -50,26 +50,8 @@ struct quic_port_st {
      */
     OSSL_LIST_MEMBER(port, QUIC_PORT);
 
-    OSSL_LIB_CTX                    *libctx;
-    const char                      *propq;
-
-    /*
-     * Master synchronisation mutex for the entire QUIC event domain. Used for
-     * thread assisted mode synchronisation. We don't own this; the instantiator
-     * of the port passes it to us and is responsible for freeing it after port
-     * destruction.
-     */
-    CRYPTO_MUTEX                    *mutex;
-
-    /* Callback used to get the current time. */
-    OSSL_TIME                       (*now_cb)(void *arg);
-    void                            *now_cb_arg;
-
     /* Used to create handshake layer objects inside newly created channels. */
     SSL_CTX                         *channel_ctx;
-
-    /* Asynchronous I/O reactor. */
-    QUIC_REACTOR                    rtor;
 
     /* Network-side read and write BIOs. */
     BIO                             *net_rbio, *net_wbio;
@@ -102,9 +84,6 @@ struct quic_port_st {
 
     /* Is this port created to support multiple connections? */
     unsigned int                    is_multi_conn                   : 1;
-
-    /* Inhibit tick for testing purposes? */
-    unsigned int                    inhibit_tick                    : 1;
 
     /* Has this port sent any packet of any kind yet? */
     unsigned int                    have_sent_any_pkt               : 1;

@@ -28,6 +28,7 @@
 DECLARE_LIST_OF(port, QUIC_PORT);
 
 struct quic_engine_st {
+    /* All objects in a QUIC event domain share the same (libctx, propq). */
     OSSL_LIB_CTX                    *libctx;
     const char                      *propq;
 
