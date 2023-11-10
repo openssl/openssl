@@ -10,11 +10,13 @@ LDLIBS  = -lcrypto -lssl -lnghttp3
 
 all: ossl-nghttp3-demo
 
+ossl-nghttp3-demo: ossl-nghttp3-demo.o ossl-nghttp3.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
 clean:
 	$(RM) ossl-nghttp3-demo *.o
 
-ossl-nghttp3-demo: ossl-nghttp3-demo.o ossl-nghttp3.o
-	$(CC) $(CFLAGS) -o "$@" $^ $(LDFLAGS) $(LDLIBS)
-
-%.o: %.c
-	$(CC) $(CFLAGS) -c -o "$@" "$<"
+.PHONY: test
+test: all
+	@echo "\nHTTP/3 tests:"
+	@echo "skipped"

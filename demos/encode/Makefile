@@ -1,22 +1,28 @@
 #
-# To run the demos when linked with a shared library (default):
+# To run the demos when linked with a shared library (default) ensure
+# that libcrypto is on the library path.  For example:
 #
 #    LD_LIBRARY_PATH=../.. ./rsa_encode
 
-CFLAGS = -I../../include -g -Wall
-LDFLAGS = -L../..
-LDLIBS = -lcrypto
+TESTS = ec_encode \
+        rsa_encode
 
-TESTS=ec_encode rsa_encode
+CFLAGS  = -I../../include -g -Wall
+LDFLAGS = -L../..
+LDLIBS  = -lcrypto
 
 all: $(TESTS)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $<
+ec_encode: ec_encode.o
+rsa_encode: rsa_encode.o
 
-%_encode: %_encode.o
-
-test:
+$(TESTS):
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
 
 clean:
 	$(RM) *.o $(TESTS)
+
+.PHONY: test
+test: all
+	@echo "\nencode tests:"
+	@echo "skipped"

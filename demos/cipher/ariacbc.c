@@ -58,9 +58,7 @@ int aria_cbc_encrypt(void)
     EVP_CIPHER_CTX *ctx;
     EVP_CIPHER *cipher = NULL;
     int outlen, tmplen;
-    size_t cbc_ivlen = sizeof(cbc_iv);
     unsigned char outbuf[1024];
-    unsigned char outtag[16];
 
     printf("ARIA CBC Encrypt:\n");
     printf("Plaintext:\n");
@@ -115,8 +113,7 @@ int aria_cbc_decrypt(void)
     int ret = 0;
     EVP_CIPHER_CTX *ctx;
     EVP_CIPHER *cipher = NULL;
-    int outlen, tmplen, rv;
-    size_t cbc_ivlen = sizeof(cbc_iv);
+    int outlen, tmplen;
     unsigned char outbuf[1024];
 
     printf("ARIA CBC Decrypt:\n");
