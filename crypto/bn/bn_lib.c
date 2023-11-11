@@ -995,7 +995,7 @@ int BN_security_bits(int L, int N)
     return bits >= secbits ? secbits : bits;
 }
 
-void BN_zero_ex(BIGNUM *a)
+void* BN_zero_ex(BIGNUM *a)
 {
     a->neg = 0;
     a->top = 0;
