@@ -997,9 +997,13 @@ int BN_security_bits(int L, int N)
 
 void* BN_zero_ex(BIGNUM *a)
 {
-    a->neg = 0;
-    a->top = 0;
-    a->flags &= ~BN_FLG_FIXED_TOP;
+    if (a != NULL)
+    {
+        a->neg = 0;
+        a->top = 0;
+        a->flags &= ~BN_FLG_FIXED_TOP;
+    }
+    return a;
 }
 
 int BN_abs_is_word(const BIGNUM *a, const BN_ULONG w)
