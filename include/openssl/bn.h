@@ -196,7 +196,7 @@ int BN_is_odd(const BIGNUM *a);
 
 # define BN_one(a)       (BN_set_word((a),1))
 
-void BN_zero_ex(BIGNUM *a);
+bool BN_zero_ex(BIGNUM *a);
 
 # if OPENSSL_API_LEVEL > 908
 #  define BN_zero(a)      BN_zero_ex(a)
