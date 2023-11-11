@@ -107,8 +107,7 @@ Furthermore, the public API above requires added provider functionality:
 ``` C
 # define OSSL_FUNC_SIGNATURE_SIGN_UPDATE            26
 # define OSSL_FUNC_SIGNATURE_SIGN_FINAL             27
-OSSL_CORE_MAKE_FUNC(int, signature_sign_update, (void *ctx,  unsigned char *sig,
-                                                 size_t *siglen, size_t sigsize,
+OSSL_CORE_MAKE_FUNC(int, signature_sign_update, (void *ctx,
                                                  const unsigned char *in,
                                                  size_t inlen))
 OSSL_CORE_MAKE_FUNC(int, signature_sign_final, (void *ctx,  unsigned char *sig,
@@ -116,9 +115,8 @@ OSSL_CORE_MAKE_FUNC(int, signature_sign_final, (void *ctx,  unsigned char *sig,
 
 # define OSSL_FUNC_SIGNATURE_VERIFY_UPDATE          28
 # define OSSL_FUNC_SIGNATURE_VERIFY_FINAL           29
-OSSL_CORE_MAKE_FUNC(int, signature_verify_update, (void *ctx,
-                                                   const unsigned char *in,
-                                                   size_t inlen))
+OSSL_CORE_MAKE_FUNC(int, signature_verify_update,
+                    (void *ctx, const unsigned char *in, size_t inlen))
 /*
  * signature_verify_final requires that the signature to be verified against
  * is specified via an OSSL_PARAM.
@@ -133,7 +131,8 @@ OSSL_CORE_MAKE_FUNC(int, signature_verify_recover_update,
  * signature_verify_recover_final requires that the signature to be verified
  * against is specified via an OSSL_PARAM.
  */
-OSSL_CORE_MAKE_FUNC(int, signature_verify_recover_final, (void *ctx))
+OSSL_CORE_MAKE_FUNC(int, signature_verify_recover_final,
+                    (void *ctx, unsigned char *rout, size_t *routlen))
 ```
 
 Fallback strategies
