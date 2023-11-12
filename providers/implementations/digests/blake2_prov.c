@@ -160,7 +160,7 @@ static int blake##variantsize##_internal_final(void *ctx, unsigned char *out, \
  \
 static int blake##variantsize##_get_params(OSSL_PARAM params[]) \
 { \
-    return ossl_digest_default_get_params(params, BLAKE##VARIANT##_BLOCKBYTES, 64, 0); \
+    return ossl_digest_default_get_params(params, BLAKE##VARIANT##_BLOCKBYTES, BLAKE##VARIANT##_OUTBYTES, 0); \
 } \
  \
 const OSSL_DISPATCH ossl_blake##variantsize##_functions[] = { \
