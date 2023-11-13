@@ -11,6 +11,7 @@ MODULES = bio \
           mac \
           pkey \
           signature \
+          smime \
           sslecho
 
 all:

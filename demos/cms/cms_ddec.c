@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 
     rcert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
 
-    if (BIO_reset(tbio))
+    if (BIO_reset(tbio) < 0)
         goto err;
 
     rkey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
