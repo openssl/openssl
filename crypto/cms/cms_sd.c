@@ -764,8 +764,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
             md = computed_md;
         }
         siglen = EVP_PKEY_get_size(si->pkey);
-        sig = OPENSSL_malloc(siglen);
-        if (sig == NULL)
+        if (siglen == 0 || (sig = OPENSSL_malloc(siglen)) == NULL)
             goto err;
         if (EVP_PKEY_sign(pctx, sig, &siglen, md, mdlen) <= 0) {
             OPENSSL_free(sig);
@@ -780,8 +779,8 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
             ERR_raise(ERR_LIB_CMS, CMS_R_OPERATION_UNSUPPORTED);
             goto err;
         }
-        sig = OPENSSL_malloc(EVP_PKEY_get_size(si->pkey));
-        if (sig == NULL)
+        siglen = EVP_PKEY_get_size(si->pkey);
+        if (siglen == 0 || (sig = OPENSSL_malloc(siglen)) == NULL)
             goto err;
         if (!EVP_SignFinal_ex(mctx, sig, &siglen, si->pkey,
                               ossl_cms_ctx_get0_libctx(ctx),

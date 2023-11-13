@@ -356,7 +356,7 @@ int main(int argc, char **argv)
     static char tx_msg[300];
     const char *tx_p = tx_msg;
     char rx_buf[2048];
-    int l, tx_len = sizeof(tx_msg)-1;
+    int l, tx_len;
     int timeout = 2000 /* ms */;
     APP_CONN *conn = NULL;
     struct addrinfo hints = {0}, *result = NULL;
@@ -367,9 +367,9 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    snprintf(tx_msg, sizeof(tx_msg),
-             "GET / HTTP/1.0\r\nHost: %s\r\n\r\n",
-             argv[1]);
+    tx_len = snprintf(tx_msg, sizeof(tx_msg),
+                      "GET / HTTP/1.0\r\nHost: %s\r\n\r\n",
+                      argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {

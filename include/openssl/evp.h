@@ -35,6 +35,7 @@
 # define EVP_MAX_KEY_LENGTH              64
 # define EVP_MAX_IV_LENGTH               16
 # define EVP_MAX_BLOCK_LENGTH            32
+# define EVP_MAX_AEAD_TAG_LENGTH         16
 
 # define PKCS5_SALT_LEN                  8
 /* Default PKCS#5 iteration count */
@@ -728,8 +729,10 @@ __owur int EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in);
 __owur int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
 __owur int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
                            unsigned int *s);
-__owur int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md,
-                              size_t len);
+__owur int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *out,
+                              size_t outlen);
+__owur int EVP_DigestSqueeze(EVP_MD_CTX *ctx, unsigned char *out,
+                             size_t outlen);
 
 __owur EVP_MD *EVP_MD_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                             const char *properties);

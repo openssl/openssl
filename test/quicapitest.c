@@ -19,6 +19,7 @@
 #include "testutil.h"
 #include "testutil/output.h"
 #include "../ssl/ssl_local.h"
+#include "internal/quic_error.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *defctxnull = NULL;
@@ -1553,6 +1554,517 @@ static int test_noisy_dgram(int idx)
     return testresult;
 }
 
+enum {
+    TPARAM_OP_DUP,
+    TPARAM_OP_DROP,
+    TPARAM_OP_INJECT,
+    TPARAM_OP_INJECT_TWICE,
+    TPARAM_OP_INJECT_RAW,
+    TPARAM_OP_DROP_INJECT,
+    TPARAM_OP_MUTATE
+};
+
+#define TPARAM_CHECK_DUP(name, reason) \
+    { QUIC_TPARAM_##name, TPARAM_OP_DUP, (reason) },
+#define TPARAM_CHECK_DROP(name, reason) \
+    { QUIC_TPARAM_##name, TPARAM_OP_DROP, (reason) },
+#define TPARAM_CHECK_INJECT(name, buf, buf_len, reason) \
+    { QUIC_TPARAM_##name, TPARAM_OP_INJECT, (reason), \
+      (buf), (buf_len) },
+#define TPARAM_CHECK_INJECT_A(name, buf, reason) \
+    TPARAM_CHECK_INJECT(name, buf, sizeof(buf), reason)
+#define TPARAM_CHECK_DROP_INJECT(name, buf, buf_len, reason) \
+    { QUIC_TPARAM_##name, TPARAM_OP_DROP_INJECT, (reason), \
+      (buf), (buf_len) },
+#define TPARAM_CHECK_DROP_INJECT_A(name, buf, reason) \
+    TPARAM_CHECK_DROP_INJECT(name, buf, sizeof(buf), reason)
+#define TPARAM_CHECK_INJECT_TWICE(name, buf, buf_len, reason) \
+    { QUIC_TPARAM_##name, TPARAM_OP_INJECT_TWICE, (reason), \
+      (buf), (buf_len) },
+#define TPARAM_CHECK_INJECT_TWICE_A(name, buf, reason) \
+    TPARAM_CHECK_INJECT_TWICE(name, buf, sizeof(buf), reason)
+#define TPARAM_CHECK_INJECT_RAW(buf, buf_len, reason) \
+    { 0, TPARAM_OP_INJECT_RAW, (reason), \
+      (buf), (buf_len) },
+#define TPARAM_CHECK_INJECT_RAW_A(buf, reason) \
+    TPARAM_CHECK_INJECT_RAW(buf, sizeof(buf), reason)
+#define TPARAM_CHECK_MUTATE(name, reason) \
+    { QUIC_TPARAM_##name, TPARAM_OP_MUTATE, (reason) },
+#define TPARAM_CHECK_INT(name, reason) \
+    TPARAM_CHECK_DROP_INJECT(name, NULL, 0, reason) \
+    TPARAM_CHECK_DROP_INJECT_A(name, bogus_int, reason) \
+    TPARAM_CHECK_DROP_INJECT_A(name, int_with_trailer, reason)
+
+struct tparam_test {
+    uint64_t    id;
+    int         op;
+    const char  *expect_fail; /* substring to expect in reason */
+    const void  *buf;
+    size_t      buf_len;
+};
+
+static const unsigned char retry_scid_1[8] = { 0 };
+
+static const unsigned char disable_active_migration_1[] = {
+    0x00
+};
+
+static const unsigned char malformed_stateless_reset_token_1[] = {
+    0x02, 0xff
+};
+
+static const unsigned char malformed_stateless_reset_token_2[] = {
+    0x01
+};
+
+static const unsigned char malformed_stateless_reset_token_3[15] = { 0 };
+
+static const unsigned char malformed_stateless_reset_token_4[17] = { 0 };
+
+static const unsigned char malformed_preferred_addr_1[] = {
+    0x0d, 0xff
+};
+
+static const unsigned char malformed_preferred_addr_2[42] = {
+    0x0d, 0x28, /* too short */
+};
+
+static const unsigned char malformed_preferred_addr_3[64] = {
+    0x0d, 0x3e, /* too long */
+};
+
+static const unsigned char malformed_preferred_addr_4[] = {
+    /* TPARAM too short for CID length indicated */
+    0x0d, 0x29, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x01, 0x55,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
+static const unsigned char malformed_unknown_1[] = {
+    0xff
+};
+
+static const unsigned char malformed_unknown_2[] = {
+    0x55, 0x55,
+};
+
+static const unsigned char malformed_unknown_3[] = {
+    0x55, 0x55, 0x01,
+};
+
+static const unsigned char ack_delay_exp[] = {
+    0x03
+};
+
+static const unsigned char stateless_reset_token[16] = { 0x42 };
+
+static const unsigned char preferred_addr[] = {
+    0x44, 0x44, 0x44, 0x44,
+    0x55, 0x55,
+    0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+    0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+    0x77, 0x77,
+    0x02, 0xAA, 0xBB,
+    0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99,
+    0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99,
+};
+
+static const unsigned char long_cid[21] = { 0x42 };
+
+static const unsigned char excess_ack_delay_exp[] = {
+    0x15,
+};
+
+static const unsigned char excess_max_ack_delay[] = {
+    0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00,
+};
+
+static const unsigned char excess_initial_max_streams[] = {
+    0xD0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+};
+
+static const unsigned char undersize_udp_payload_size[] = {
+    0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xaf,
+};
+
+static const unsigned char undersize_active_conn_id_limit[] = {
+    0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+};
+
+static const unsigned char bogus_int[9] = { 0 };
+
+static const unsigned char int_with_trailer[2] = { 0x01 };
+
+#define QUIC_TPARAM_UNKNOWN_1   0xf1f1
+
+static const struct tparam_test tparam_tests[] = {
+    TPARAM_CHECK_DUP(ORIG_DCID,
+                     "ORIG_DCID appears multiple times")
+    TPARAM_CHECK_DUP(INITIAL_SCID,
+                     "INITIAL_SCID appears multiple times")
+    TPARAM_CHECK_DUP(INITIAL_MAX_DATA,
+                     "INITIAL_MAX_DATA appears multiple times")
+    TPARAM_CHECK_DUP(INITIAL_MAX_STREAM_DATA_BIDI_LOCAL,
+                     "INITIAL_MAX_STREAM_DATA_BIDI_LOCAL appears multiple times")
+    TPARAM_CHECK_DUP(INITIAL_MAX_STREAM_DATA_BIDI_REMOTE,
+                     "INITIAL_MAX_STREAM_DATA_BIDI_REMOTE appears multiple times")
+    TPARAM_CHECK_DUP(INITIAL_MAX_STREAM_DATA_UNI,
+                     "INITIAL_MAX_STREAM_DATA_UNI appears multiple times")
+    TPARAM_CHECK_DUP(INITIAL_MAX_STREAMS_BIDI,
+                     "INITIAL_MAX_STREAMS_BIDI appears multiple times")
+    TPARAM_CHECK_DUP(INITIAL_MAX_STREAMS_UNI,
+                     "INITIAL_MAX_STREAMS_UNI appears multiple times")
+    TPARAM_CHECK_DUP(MAX_IDLE_TIMEOUT,
+                     "MAX_IDLE_TIMEOUT appears multiple times")
+    TPARAM_CHECK_DUP(MAX_UDP_PAYLOAD_SIZE,
+                     "MAX_UDP_PAYLOAD_SIZE appears multiple times")
+    TPARAM_CHECK_DUP(ACTIVE_CONN_ID_LIMIT,
+                     "ACTIVE_CONN_ID_LIMIT appears multiple times")
+    TPARAM_CHECK_DUP(DISABLE_ACTIVE_MIGRATION,
+                     "DISABLE_ACTIVE_MIGRATION appears multiple times")
+
+    TPARAM_CHECK_DROP(INITIAL_SCID,
+                      "INITIAL_SCID was not sent but is required")
+    TPARAM_CHECK_DROP(ORIG_DCID,
+                      "ORIG_DCID was not sent but is required")
+
+    TPARAM_CHECK_INJECT_A(RETRY_SCID, retry_scid_1,
+                          "RETRY_SCID sent when not performing a retry")
+    TPARAM_CHECK_DROP_INJECT_A(DISABLE_ACTIVE_MIGRATION, disable_active_migration_1,
+                               "DISABLE_ACTIVE_MIGRATION is malformed")
+    TPARAM_CHECK_INJECT(UNKNOWN_1, NULL, 0,
+                        NULL)
+    TPARAM_CHECK_INJECT_RAW_A(malformed_stateless_reset_token_1,
+                              "STATELESS_RESET_TOKEN is malformed")
+    TPARAM_CHECK_INJECT_A(STATELESS_RESET_TOKEN,
+                          malformed_stateless_reset_token_2,
+                          "STATELESS_RESET_TOKEN is malformed")
+    TPARAM_CHECK_INJECT_A(STATELESS_RESET_TOKEN,
+                          malformed_stateless_reset_token_3,
+                          "STATELESS_RESET_TOKEN is malformed")
+    TPARAM_CHECK_INJECT_A(STATELESS_RESET_TOKEN,
+                          malformed_stateless_reset_token_4,
+                          "STATELESS_RESET_TOKEN is malformed")
+    TPARAM_CHECK_INJECT(STATELESS_RESET_TOKEN,
+                        NULL, 0,
+                        "STATELESS_RESET_TOKEN is malformed")
+    TPARAM_CHECK_INJECT_RAW_A(malformed_preferred_addr_1,
+                              "PREFERRED_ADDR is malformed")
+    TPARAM_CHECK_INJECT_RAW_A(malformed_preferred_addr_2,
+                              "PREFERRED_ADDR is malformed")
+    TPARAM_CHECK_INJECT_RAW_A(malformed_preferred_addr_3,
+                              "PREFERRED_ADDR is malformed")
+    TPARAM_CHECK_INJECT_RAW_A(malformed_preferred_addr_4,
+                              "PREFERRED_ADDR is malformed")
+    TPARAM_CHECK_INJECT_RAW_A(malformed_unknown_1,
+                              "bad transport parameter")
+    TPARAM_CHECK_INJECT_RAW_A(malformed_unknown_2,
+                              "bad transport parameter")
+    TPARAM_CHECK_INJECT_RAW_A(malformed_unknown_3,
+                              "bad transport parameter")
+
+    TPARAM_CHECK_INJECT_A(ACK_DELAY_EXP, excess_ack_delay_exp,
+                          "ACK_DELAY_EXP is malformed")
+    TPARAM_CHECK_INJECT_A(MAX_ACK_DELAY, excess_max_ack_delay,
+                          "MAX_ACK_DELAY is malformed")
+    TPARAM_CHECK_DROP_INJECT_A(INITIAL_MAX_STREAMS_BIDI, excess_initial_max_streams,
+                               "INITIAL_MAX_STREAMS_BIDI is malformed")
+    TPARAM_CHECK_DROP_INJECT_A(INITIAL_MAX_STREAMS_UNI, excess_initial_max_streams,
+                               "INITIAL_MAX_STREAMS_UNI is malformed")
+
+    TPARAM_CHECK_DROP_INJECT_A(MAX_UDP_PAYLOAD_SIZE, undersize_udp_payload_size,
+                               "MAX_UDP_PAYLOAD_SIZE is malformed")
+    TPARAM_CHECK_DROP_INJECT_A(ACTIVE_CONN_ID_LIMIT, undersize_active_conn_id_limit,
+                               "ACTIVE_CONN_ID_LIMIT is malformed")
+
+    TPARAM_CHECK_INJECT_TWICE_A(ACK_DELAY_EXP, ack_delay_exp,
+                                "ACK_DELAY_EXP appears multiple times")
+    TPARAM_CHECK_INJECT_TWICE_A(MAX_ACK_DELAY, ack_delay_exp,
+                                "MAX_ACK_DELAY appears multiple times")
+    TPARAM_CHECK_INJECT_TWICE_A(STATELESS_RESET_TOKEN, stateless_reset_token,
+                                "STATELESS_RESET_TOKEN appears multiple times")
+    TPARAM_CHECK_INJECT_TWICE_A(PREFERRED_ADDR, preferred_addr,
+                                "PREFERRED_ADDR appears multiple times")
+
+    TPARAM_CHECK_MUTATE(ORIG_DCID,
+                        "ORIG_DCID does not match expected value")
+    TPARAM_CHECK_MUTATE(INITIAL_SCID,
+                        "INITIAL_SCID does not match expected value")
+
+    TPARAM_CHECK_DROP_INJECT_A(ORIG_DCID, long_cid,
+                               "ORIG_DCID is malformed")
+    TPARAM_CHECK_DROP_INJECT_A(INITIAL_SCID, long_cid,
+                               "INITIAL_SCID is malformed")
+
+    TPARAM_CHECK_INT(INITIAL_MAX_DATA,
+                     "INITIAL_MAX_DATA is malformed")
+    TPARAM_CHECK_INT(INITIAL_MAX_STREAM_DATA_BIDI_LOCAL,
+                     "INITIAL_MAX_STREAM_DATA_BIDI_LOCAL is malformed")
+    TPARAM_CHECK_INT(INITIAL_MAX_STREAM_DATA_BIDI_REMOTE,
+                     "INITIAL_MAX_STREAM_DATA_BIDI_REMOTE is malformed")
+    TPARAM_CHECK_INT(INITIAL_MAX_STREAM_DATA_UNI,
+                     "INITIAL_MAX_STREAM_DATA_UNI is malformed")
+    TPARAM_CHECK_INT(ACK_DELAY_EXP,
+                     "ACK_DELAY_EXP is malformed")
+    TPARAM_CHECK_INT(MAX_ACK_DELAY,
+                     "MAX_ACK_DELAY is malformed")
+    TPARAM_CHECK_INT(INITIAL_MAX_STREAMS_BIDI,
+                     "INITIAL_MAX_STREAMS_BIDI is malformed")
+    TPARAM_CHECK_INT(INITIAL_MAX_STREAMS_UNI,
+                     "INITIAL_MAX_STREAMS_UNI is malformed")
+    TPARAM_CHECK_INT(MAX_IDLE_TIMEOUT,
+                     "MAX_IDLE_TIMEOUT is malformed")
+    TPARAM_CHECK_INT(MAX_UDP_PAYLOAD_SIZE,
+                     "MAX_UDP_PAYLOAD_SIZE is malformed")
+    TPARAM_CHECK_INT(ACTIVE_CONN_ID_LIMIT,
+                     "ACTIVE_CONN_ID_LIMIT is malformed")
+};
+
+struct tparam_ctx {
+    const struct tparam_test *t;
+};
+
+static int tparam_handle(struct tparam_ctx *ctx,
+                         uint64_t id, unsigned char *data,
+                         size_t data_len,
+                         WPACKET *wpkt)
+{
+    const struct tparam_test *t = ctx->t;
+
+    switch (t->op) {
+    case TPARAM_OP_DUP:
+        if (!TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(wpkt, id,
+                                                                  data, data_len)))
+            return 0;
+
+        /*
+         * If this is the matching ID, write it again, duplicating the TPARAM.
+         */
+        if (id == t->id
+            && !TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(wpkt, id,
+                                                                     data, data_len)))
+            return 0;
+
+        return 1;
+
+    case TPARAM_OP_DROP:
+    case TPARAM_OP_DROP_INJECT:
+        /* Pass through unless ID matches. */
+        if (id != t->id
+            && !TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(wpkt, id,
+                                                                     data, data_len)))
+            return 0;
+
+        return 1;
+
+    case TPARAM_OP_INJECT:
+    case TPARAM_OP_INJECT_TWICE:
+    case TPARAM_OP_INJECT_RAW:
+        /* Always pass through. */
+        if (!TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(wpkt, id,
+                                                                  data, data_len)))
+            return 0;
+
+        return 1;
+
+    case TPARAM_OP_MUTATE:
+        if (id == t->id) {
+            if (!TEST_size_t_gt(data_len, 0))
+                return 0;
+
+            data[0] ^= 1;
+        }
+
+        if (!TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(wpkt, id,
+                                                                  data, data_len)))
+            return 0;
+
+        if (id == t->id)
+            data[0] ^= 1;
+
+        return 1;
+
+    default:
+        return 0;
+    }
+}
+
+static int tparam_on_enc_ext(QTEST_FAULT *qtf, QTEST_ENCRYPTED_EXTENSIONS *ee,
+                             size_t ee_len, void *arg)
+{
+    int rc = 0;
+    struct tparam_ctx *ctx = arg;
+    PACKET pkt = {0};
+    WPACKET wpkt;
+    int have_wpkt = 0;
+    BUF_MEM *old_bufm = NULL, *new_bufm = NULL;
+    unsigned char *tp_p;
+    size_t tp_len, written, old_len, eb_len;
+    uint64_t id;
+
+    if (!TEST_ptr(old_bufm = BUF_MEM_new()))
+        goto err;
+
+    /*
+     * Delete transport parameters TLS extension and capture the contents of the
+     * extension which was removed.
+     */
+    if (!TEST_true(qtest_fault_delete_extension(qtf, TLSEXT_TYPE_quic_transport_parameters,
+                                                ee->extensions, &ee->extensionslen,
+                                                old_bufm)))
+        goto err;
+
+    if (!TEST_true(PACKET_buf_init(&pkt, (unsigned char *)old_bufm->data, old_bufm->length))
+        || !TEST_ptr(new_bufm = BUF_MEM_new())
+        || !TEST_true(WPACKET_init(&wpkt, new_bufm)))
+        goto err;
+
+    have_wpkt = 1;
+
+    /*
+     * Open transport parameters TLS extension:
+     *
+     *   u16  Extension ID (quic_transport_parameters)
+     *   u16  Extension Data Length
+     *   ...  Extension Data
+     *
+     */
+    if (!TEST_true(WPACKET_put_bytes_u16(&wpkt,
+                                         TLSEXT_TYPE_quic_transport_parameters))
+        || !TEST_true(WPACKET_start_sub_packet_u16(&wpkt)))
+        goto err;
+
+    for (; PACKET_remaining(&pkt) > 0; ) {
+        tp_p = (unsigned char *)ossl_quic_wire_decode_transport_param_bytes(&pkt,
+                                                                            &id,
+                                                                            &tp_len);
+        if (!TEST_ptr(tp_p)) {
+            TEST_mem_eq(PACKET_data(&pkt), PACKET_remaining(&pkt), NULL, 0);
+            goto err;
+        }
+
+        if (!TEST_true(tparam_handle(ctx, id, tp_p, tp_len, &wpkt)))
+            goto err;
+    }
+
+    if (ctx->t->op == TPARAM_OP_INJECT || ctx->t->op == TPARAM_OP_DROP_INJECT
+        || ctx->t->op == TPARAM_OP_INJECT_TWICE) {
+        if (!TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(&wpkt, ctx->t->id,
+                                                                  ctx->t->buf,
+                                                                  ctx->t->buf_len)))
+            goto err;
+
+        if (ctx->t->op == TPARAM_OP_INJECT_TWICE
+            && !TEST_ptr(ossl_quic_wire_encode_transport_param_bytes(&wpkt, ctx->t->id,
+                                                                     ctx->t->buf,
+                                                                     ctx->t->buf_len)))
+            goto err;
+    } else if (ctx->t->op == TPARAM_OP_INJECT_RAW) {
+        if (!TEST_true(WPACKET_memcpy(&wpkt, ctx->t->buf, ctx->t->buf_len)))
+            goto err;
+    }
+
+    if (!TEST_true(WPACKET_close(&wpkt))) /* end extension data, set length */
+        goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        goto err;
+
+    WPACKET_finish(&wpkt);
+    have_wpkt = 0;
+
+    /*
+     * Append the constructed extension blob to the extension block.
+     */
+    old_len = ee->extensionslen;
+
+    if (!qtest_fault_resize_message(qtf, ee->extensionslen + written))
+        goto err;
+
+    memcpy(ee->extensions + old_len, new_bufm->data, written);
+
+    /* Fixup the extension block header (u16 length of entire block). */
+    eb_len = (((uint16_t)ee->extensions[0]) << 8) + (uint16_t)ee->extensions[1];
+    eb_len += written;
+    ee->extensions[0] = (unsigned char)((eb_len >> 8) & 0xFF);
+    ee->extensions[1] = (unsigned char)( eb_len       & 0xFF);
+
+    rc = 1;
+err:
+    if (have_wpkt)
+        WPACKET_cleanup(&wpkt);
+    BUF_MEM_free(old_bufm);
+    BUF_MEM_free(new_bufm);
+    return rc;
+}
+
+static int test_tparam(int idx)
+{
+    int testresult = 0;
+    SSL_CTX *c_ctx = NULL;
+    SSL *c_ssl = NULL;
+    QUIC_TSERVER *s = NULL;
+    QTEST_FAULT *qtf = NULL;
+    struct tparam_ctx ctx = {0};
+
+    ctx.t = &tparam_tests[idx];
+
+    if (!TEST_ptr(c_ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method())))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_objects(libctx, c_ctx, NULL, cert,
+                                             privkey, 0, &s,
+                                             &c_ssl, &qtf, NULL)))
+        goto err;
+
+    if (!TEST_true(qtest_fault_set_hand_enc_ext_listener(qtf, tparam_on_enc_ext,
+                                                         &ctx)))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_connection_ex(s, c_ssl,
+                                                   ctx.t->expect_fail != NULL)))
+        goto err;
+
+    if (ctx.t->expect_fail != NULL) {
+        SSL_CONN_CLOSE_INFO info = {0};
+
+        if (!TEST_true(SSL_get_conn_close_info(c_ssl, &info, sizeof(info))))
+            goto err;
+
+        if (!TEST_true((info.flags & SSL_CONN_CLOSE_FLAG_TRANSPORT) != 0)
+            || !TEST_uint64_t_eq(info.error_code, QUIC_ERR_TRANSPORT_PARAMETER_ERROR)
+            || !TEST_ptr(strstr(info.reason, ctx.t->expect_fail))) {
+            TEST_error("expected connection closure information mismatch"
+                       " during TPARAM test: flags=%llu ec=%llu reason='%s'",
+                       (unsigned long long)info.flags,
+                       (unsigned long long)info.error_code,
+                       info.reason);
+            goto err;
+        }
+    }
+
+    testresult = 1;
+err:
+    if (!testresult) {
+        if (ctx.t->expect_fail != NULL)
+            TEST_info("failed during test for id=%llu, op=%d, bl=%zu, "
+                      "expected failure='%s'", (unsigned long long)ctx.t->id,
+                      ctx.t->op, ctx.t->buf_len, ctx.t->expect_fail);
+        else
+            TEST_info("failed during test for id=%llu, op=%d, bl=%zu",
+                      (unsigned long long)ctx.t->id, ctx.t->op, ctx.t->buf_len);
+    }
+
+    ossl_quic_tserver_free(s);
+    SSL_free(c_ssl);
+    SSL_CTX_free(c_ctx);
+    qtest_fault_free(qtf);
+    return testresult;
+}
+/***********************************************************************************/
 
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
@@ -1642,6 +2154,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_alpn, 2);
     ADD_ALL_TESTS(test_noisy_dgram, 2);
     ADD_TEST(test_get_shutdown);
+    ADD_ALL_TESTS(test_tparam, OSSL_NELEM(tparam_tests));
 
     return 1;
  err:

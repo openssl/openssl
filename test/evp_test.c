@@ -355,6 +355,8 @@ typedef struct digest_data_st {
     int pad_type;
     /* XOF mode? */
     int xof;
+    /* Size for variable output length but non-XOF */
+    size_t digest_size;
 } DIGEST_DATA;
 
 static int digest_test_init(EVP_TEST *t, const char *alg)
@@ -410,6 +412,15 @@ static int digest_test_parse(EVP_TEST *t,
         return (mdata->pad_type = atoi(value)) > 0;
     if (strcmp(keyword, "XOF") == 0)
         return (mdata->xof = atoi(value)) > 0;
+    if (strcmp(keyword, "OutputSize") == 0) {
+        int sz;
+
+        sz = atoi(value);
+        if (sz < 0)
+            return -1;
+        mdata->digest_size = sz;
+        return 1;
+    }
     return 0;
 }
 
@@ -447,7 +458,7 @@ static int digest_test_run(EVP_TEST *t)
     unsigned int got_len;
     size_t size = 0;
     int xof = 0;
-    OSSL_PARAM params[3], *p = &params[0];
+    OSSL_PARAM params[4], *p = &params[0];
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
@@ -462,6 +473,10 @@ static int digest_test_run(EVP_TEST *t)
         xof |= 1;
         *p++ = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN,
                                            &expected->output_len);
+    }
+    if (expected->digest_size > 0) {
+        *p++ = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE,
+                                           &expected->digest_size);
     }
     if (expected->pad_type > 0)
         *p++ = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_PAD_TYPE,

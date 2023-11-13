@@ -136,7 +136,7 @@ void teardown_ctx(SSL_CTX *ctx)
 
 int main(int argc, char **argv)
 {
-    int rc, fd = -1, l, res = 1;
+    int rc, fd = -1, l, mlen, res = 1;
     static char msg[300];
     struct addrinfo hints = {0}, *result = NULL;
     SSL *ssl = NULL;
@@ -148,8 +148,8 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    snprintf(msg, sizeof(msg),
-             "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
+    mlen = snprintf(msg, sizeof(msg),
+                    "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", argv[1]);
 
     ctx = create_ssl_ctx();
     if (ctx == NULL) {
@@ -190,7 +190,8 @@ int main(int argc, char **argv)
         goto fail;
     }
 
-    if (tx(ssl, msg, sizeof(msg)-1) < sizeof(msg)-1) {
+    l = tx(ssl, msg, mlen);
+    if (l < mlen) {
         fprintf(stderr, "tx error\n");
         goto fail;
     }

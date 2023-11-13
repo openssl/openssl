@@ -43,7 +43,7 @@ IF[{- !$disabled{asm} -}]
   $MODESASM_c64xplus=ghash-c64xplus.s
   $MODESDEF_c64xplus=GHASH_ASM
 
-  $MODESASM_riscv64=ghash-riscv64.s
+  $MODESASM_riscv64=ghash-riscv64.s ghash-riscv64-zvkb-zvbc.s ghash-riscv64-zvkg.s aes-gcm-riscv64-zvkb-zvkg-zvkned.s
   $MODESDEF_riscv64=GHASH_ASM
 
   # Now that we have defined all the arch specific variables, use the
@@ -91,3 +91,6 @@ GENERATE[ghash-s390x.S]=asm/ghash-s390x.pl
 INCLUDE[ghash-s390x.o]=..
 GENERATE[ghash-c64xplus.S]=asm/ghash-c64xplus.pl
 GENERATE[ghash-riscv64.s]=asm/ghash-riscv64.pl
+GENERATE[ghash-riscv64-zvkb-zvbc.s]=asm/ghash-riscv64-zvkb-zvbc.pl
+GENERATE[ghash-riscv64-zvkg.s]=asm/ghash-riscv64-zvkg.pl
+GENERATE[aes-gcm-riscv64-zvkb-zvkg-zvkned.s]=asm/aes-gcm-riscv64-zvkb-zvkg-zvkned.pl

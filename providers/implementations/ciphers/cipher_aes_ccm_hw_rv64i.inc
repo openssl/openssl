@@ -31,7 +31,41 @@ static const PROV_CCM_HW rv64i_zknd_zkne_ccm = {
     ossl_ccm_generic_gettag
 };
 
+/*-
+ * RISC-V RV64 ZVKNED support for AES CCM.
+ * This file is included by cipher_aes_ccm_hw.c
+ */
+
+static int ccm_rv64i_zvkned_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
+                                    size_t keylen)
+{
+    PROV_AES_CCM_CTX *actx = (PROV_AES_CCM_CTX *)ctx;
+
+    /* Zvkned only supports 128 and 256 bit keys for key schedule generation. */
+    if (keylen * 8 == 128 || keylen * 8 == 256) {
+        AES_HW_CCM_SET_KEY_FN(rv64i_zvkned_set_encrypt_key, rv64i_zvkned_encrypt,
+                              NULL, NULL);
+    } else {
+        AES_HW_CCM_SET_KEY_FN(AES_set_encrypt_key, rv64i_zvkned_encrypt, NULL, NULL)
+    }
+    return 1;
+}
+
+static const PROV_CCM_HW rv64i_zvkned_ccm = {
+    ccm_rv64i_zvkned_initkey,
+    ossl_ccm_generic_setiv,
+    ossl_ccm_generic_setaad,
+    ossl_ccm_generic_auth_encrypt,
+    ossl_ccm_generic_auth_decrypt,
+    ossl_ccm_generic_gettag
+};
+
 const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
 {
-    return RISCV_HAS_ZKND_AND_ZKNE() ? &rv64i_zknd_zkne_ccm : &aes_ccm;
+    if (RISCV_HAS_ZVKNED() && riscv_vlen() >= 128)
+        return &rv64i_zvkned_ccm;
+    else if (RISCV_HAS_ZKND_AND_ZKNE())
+        return &rv64i_zknd_zkne_ccm;
+    else
+        return &aes_ccm;
 }

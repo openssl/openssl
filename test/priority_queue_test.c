@@ -157,6 +157,94 @@ static int test_large_priority_queue(void)
                                           1, 1);
 }
 
+typedef struct info_st {
+    uint64_t seq_num, sub_seq;
+    size_t   idx;
+} INFO;
+
+DEFINE_PRIORITY_QUEUE_OF(INFO);
+
+static int cmp(const INFO *a, const INFO *b)
+{
+    if (a->seq_num < b->seq_num)
+        return -1;
+    if (a->seq_num > b->seq_num)
+        return 1;
+    if (a->sub_seq < b->sub_seq)
+        return -1;
+    if (a->sub_seq > b->sub_seq)
+        return 1;
+    return 0;
+}
+
+static int test_22644(void)
+{
+    size_t i;
+    INFO infos[32];
+    int res = 0;
+    PRIORITY_QUEUE_OF(INFO) *pq = ossl_pqueue_INFO_new(cmp);
+
+    memset(infos, 0, sizeof(infos));
+    for (i = 0; i < 32; ++i)
+        infos[i].sub_seq = i;
+
+    infos[0].seq_num = 70650219160667140;
+    if (!TEST_true(ossl_pqueue_INFO_push(pq, &infos[0], &infos[0].idx))
+            || !TEST_size_t_eq(infos[0].idx, 7)
+            || !TEST_ptr(ossl_pqueue_INFO_remove(pq, infos[0].idx)))
+        goto err;
+
+    infos[1].seq_num = 289360691352306692;
+    if (!TEST_true(ossl_pqueue_INFO_push(pq, &infos[1], &infos[1].idx))
+            || !TEST_size_t_eq(infos[1].idx, 7)
+            || !TEST_ptr(ossl_pqueue_INFO_remove(pq, infos[1].idx)))
+        goto err;
+    
+    infos[2].seq_num = 289360691352306692;
+    if (!TEST_true(ossl_pqueue_INFO_push(pq, &infos[2], &infos[2].idx))
+            || !TEST_size_t_eq(infos[2].idx, 7))
+        goto err;
+
+    infos[3].seq_num = 289360691352306692;
+    if (!TEST_true(ossl_pqueue_INFO_push(pq, &infos[3], &infos[3].idx))
+            || !TEST_size_t_eq(infos[3].idx, 6))
+        goto err;
+
+    infos[4].seq_num = 289360691352306692;
+    if (!TEST_true(ossl_pqueue_INFO_push(pq, &infos[4], &infos[4].idx))
+            || !TEST_size_t_eq(infos[4].idx, 5))
+        goto err;
+
+    infos[5].seq_num = 289360691352306692;
+    if (!TEST_true(ossl_pqueue_INFO_push(pq, &infos[5], &infos[5].idx))
+            || !TEST_size_t_eq(infos[5].idx, 4))
+        goto err;
+
+    infos[6].seq_num = 289360691352306692;
+    if (!TEST_true(ossl_pqueue_INFO_push(pq, &infos[6], &infos[6].idx))
+            || !TEST_size_t_eq(infos[6].idx, 3))
+        goto err;
+
+    infos[7].seq_num = 289360691352306692;
+    if (!TEST_true(ossl_pqueue_INFO_push(pq, &infos[7], &infos[7].idx))
+            || !TEST_size_t_eq(infos[7].idx, 2))
+        goto err;
+
+    infos[8].seq_num = 289360691352306692;
+    if (!TEST_true(ossl_pqueue_INFO_push(pq, &infos[8], &infos[8].idx))
+            || !TEST_size_t_eq(infos[8].idx, 1))
+        goto err;
+
+    if (!TEST_ptr(ossl_pqueue_INFO_pop(pq))
+            || !TEST_ptr(ossl_pqueue_INFO_pop(pq)))     /* crash if bug present */
+        goto err;
+    res = 1;
+
+ err:
+    ossl_pqueue_INFO_free(pq);
+    return res;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_size_t_priority_queue,
@@ -167,5 +255,6 @@ int setup_tests(void)
                   * 6                                       /* remove */
                   * 2);                                     /* pop & free */
     ADD_TEST(test_large_priority_queue);
+    ADD_TEST(test_22644);
     return 1;
 }

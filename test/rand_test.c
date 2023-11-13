@@ -11,6 +11,7 @@
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/core_names.h>
+#include "crypto/rand.h"
 #include "testutil.h"
 
 static int test_rand(void)
@@ -44,10 +45,42 @@ static int test_rand(void)
     return 1;
 }
 
+static int test_rand_uniform(void)
+{
+    uint32_t x, i, j;
+    int err = 0, res = 0;
+    OSSL_LIB_CTX *ctx;
+
+    if (!test_get_libctx(&ctx, NULL, NULL, NULL, NULL))
+        goto err;
+
+    for (i = 1; i < 100; i += 13) {
+        x = ossl_rand_uniform_uint32(ctx, i, &err);
+        if (!TEST_int_eq(err, 0)
+                || !TEST_uint_ge(x, 0)
+                || !TEST_uint_lt(x, i))
+            return 0;
+    }
+    for (i = 1; i < 100; i += 17)
+        for (j = i + 1; j < 150; j += 11) {
+            x = ossl_rand_range_uint32(ctx, i, j, &err);
+            if (!TEST_int_eq(err, 0)
+                    || !TEST_uint_ge(x, i)
+                    || !TEST_uint_lt(x, j))
+                return 0;
+        }
+
+    res = 1;
+ err:
+    OSSL_LIB_CTX_free(ctx);
+    return res;
+}
+
 int setup_tests(void)
 {
     if (!TEST_true(RAND_set_DRBG_type(NULL, "TEST-RAND", NULL, NULL, NULL)))
         return 0;
     ADD_TEST(test_rand);
+    ADD_TEST(test_rand_uniform);
     return 1;
 }

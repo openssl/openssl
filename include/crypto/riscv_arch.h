@@ -60,5 +60,20 @@ static const size_t kRISCVNumCaps =
 #define RISCV_HAS_ZBB_AND_ZBC() (RISCV_HAS_ZBB() && RISCV_HAS_ZBC())
 #define RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE() (RISCV_HAS_ZBKB() && RISCV_HAS_ZKND() && RISCV_HAS_ZKNE())
 #define RISCV_HAS_ZKND_AND_ZKNE() (RISCV_HAS_ZKND() && RISCV_HAS_ZKNE())
+/*
+ * The ZVBB is the superset of ZVKB extension. We use macro here to replace the
+ * `RISCV_HAS_ZVKB()` with `RISCV_HAS_ZVBB() || RISCV_HAS_ZVKB()`.
+ */
+#define RISCV_HAS_ZVKB() (RISCV_HAS_ZVBB() || RISCV_HAS_ZVKB())
+#define RISCV_HAS_ZVKB_AND_ZVKNHA() (RISCV_HAS_ZVKB() && RISCV_HAS_ZVKNHA())
+#define RISCV_HAS_ZVKB_AND_ZVKNHB() (RISCV_HAS_ZVKB() && RISCV_HAS_ZVKNHB())
+#define RISCV_HAS_ZVKB_AND_ZVKSED() (RISCV_HAS_ZVKB() && RISCV_HAS_ZVKSED())
+#define RISCV_HAS_ZVKB_AND_ZVKSH() (RISCV_HAS_ZVKB() && RISCV_HAS_ZVKSH())
+
+/*
+ * Get the size of a vector register in bits (VLEN).
+ * If RISCV_HAS_V() is false, then this returns 0.
+ */
+size_t riscv_vlen(void);
 
 #endif

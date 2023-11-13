@@ -62,7 +62,8 @@ IF[{- !$disabled{tests} -}]
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
           provfetchtest prov_config_test rand_test ca_internals_test \
           bio_tfo_test membio_test bio_dgram_test list_test fips_version_test \
-          x509_test hpke_test pairwise_fail_test nodefltctxtest
+          x509_test hpke_test pairwise_fail_test nodefltctxtest \
+          evp_xof_test
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -103,7 +104,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[rand_test]=rand_test.c
   INCLUDE[rand_test]=../include ../apps/include
-  DEPEND[rand_test]=../libcrypto libtestutil.a
+  DEPEND[rand_test]=../libcrypto.a libtestutil.a
 
   SOURCE[rsa_complex]=rsa_complex.c
   INCLUDE[rsa_complex]=../include ../apps/include
@@ -557,6 +558,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_kdf_test]=evp_kdf_test.c
   INCLUDE[evp_kdf_test]=../include ../apps/include
   DEPEND[evp_kdf_test]=../libcrypto libtestutil.a
+
+  SOURCE[evp_xof_test]=evp_xof_test.c
+  INCLUDE[evp_xof_test]=../include ../apps/include
+  DEPEND[evp_xof_test]=../libcrypto libtestutil.a
 
   SOURCE[evp_pkey_dparams_test]=evp_pkey_dparams_test.c
   INCLUDE[evp_pkey_dparams_test]=../include ../apps/include

@@ -17,47 +17,9 @@
 #include <assert.h>
 #include <string.h>
 #include <openssl/crypto.h>
-#include <openssl/core_names.h>
-#include <openssl/proverr.h>
-#include <openssl/err.h>
+#include "internal/numbers.h"
 #include "blake2_impl.h"
 #include "prov/blake2.h"
-
-static const OSSL_PARAM known_blake2b_settable_ctx_params[] = {
-    {OSSL_DIGEST_PARAM_XOFLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
-    OSSL_PARAM_END
-};
-
-const OSSL_PARAM *ossl_blake2b_settable_ctx_params(ossl_unused void *ctx,
-                                                   ossl_unused void *pctx)
-{
-    return known_blake2b_settable_ctx_params;
-}
-
-int ossl_blake2b_set_ctx_params(void *vctx, const OSSL_PARAM params[])
-{
-    size_t xoflen;
-    struct blake2b_md_data_st *mdctx = vctx;
-    const OSSL_PARAM *p;
-
-    BLAKE2B_CTX *ctx = &mdctx->ctx;
-
-    if (ctx == NULL)
-        return 0;
-    if (params == NULL)
-        return 1;
-
-    p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
-    if (p != NULL) {
-        if (!OSSL_PARAM_get_size_t(p, &xoflen)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-            return 0;
-        }
-        ossl_blake2b_param_set_digest_length(&mdctx->params, (uint8_t)xoflen);
-    }
-
-    return 1;
-}
 
 static const uint64_t blake2b_IV[8] =
 {

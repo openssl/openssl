@@ -382,8 +382,14 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc = OPENSSL_zalloc(sizeof(*qc));
     if (qc == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
+        return NULL;
+    }
+#if defined(OPENSSL_THREADS)
+    if ((qc->mutex = ossl_crypto_mutex_new()) == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
         goto err;
     }
+#endif
 
     /* Initialise the QUIC_CONNECTION's stub header. */
     ssl_base = &qc->ssl;
@@ -405,13 +411,6 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     /* Restrict options derived from the SSL_CTX. */
     sc->options &= OSSL_QUIC_PERMITTED_OPTIONS_CONN;
     sc->pha_enabled = 0;
-
-#if defined(OPENSSL_THREADS)
-    if ((qc->mutex = ossl_crypto_mutex_new()) == NULL) {
-        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
-        goto err;
-    }
-#endif
 
 #if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
     qc->is_thread_assisted
@@ -450,14 +449,14 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     return ssl_base;
 
 err:
-    if (qc != NULL) {
+    if (ssl_base == NULL) {
 #if defined(OPENSSL_THREADS)
         ossl_crypto_mutex_free(qc->mutex);
 #endif
-        ossl_quic_channel_free(qc->ch);
-        SSL_free(qc->tls);
+        OPENSSL_free(qc);
+    } else {
+        SSL_free(ssl_base);
     }
-    OPENSSL_free(qc);
     return NULL;
 }
 
@@ -2177,6 +2176,58 @@ struct quic_write_again_args {
     int                 err;
 };
 
+/*
+ * Absolute maximum write buffer size, enforced to prevent a rogue peer from
+ * deliberately inducing DoS. This has been chosen based on the optimal buffer
+ * size for an RTT of 500ms and a bandwidth of 100 Mb/s.
+ */
+#define MAX_WRITE_BUF_SIZE      (6 * 1024 * 1024)
+
+/*
+ * Ensure spare buffer space available (up until a limit, at least).
+ */
+QUIC_NEEDS_LOCK
+static int sstream_ensure_spare(QUIC_SSTREAM *sstream, uint64_t spare)
+{
+    size_t cur_sz = ossl_quic_sstream_get_buffer_size(sstream);
+    size_t avail = ossl_quic_sstream_get_buffer_avail(sstream);
+    size_t spare_ = (spare > SIZE_MAX) ? SIZE_MAX : (size_t)spare;
+    size_t new_sz, growth;
+
+    if (spare_ <= avail || cur_sz == MAX_WRITE_BUF_SIZE)
+        return 1;
+
+    growth = spare_ - avail;
+    if (cur_sz + growth > MAX_WRITE_BUF_SIZE)
+        new_sz = MAX_WRITE_BUF_SIZE;
+    else
+        new_sz = cur_sz + growth;
+
+    return ossl_quic_sstream_set_buffer_size(sstream, new_sz);
+}
+
+/*
+ * Append to a QUIC_STREAM's QUIC_SSTREAM, ensuring buffer space is expanded
+ * as needed according to flow control.
+ */
+QUIC_NEEDS_LOCK
+static int xso_sstream_append(QUIC_XSO *xso, const unsigned char *buf,
+                              size_t len, size_t *actual_written)
+{
+    QUIC_SSTREAM *sstream = xso->stream->sstream;
+    uint64_t cur = ossl_quic_sstream_get_cur_size(sstream);
+    uint64_t cwm = ossl_quic_txfc_get_cwm(&xso->stream->txfc);
+    uint64_t permitted = (cwm >= cur ? cwm - cur : 0);
+
+    if (len > permitted)
+        len = (size_t)permitted;
+
+    if (!sstream_ensure_spare(sstream, len))
+        return 0;
+
+    return ossl_quic_sstream_append(sstream, buf, len, actual_written);
+}
+
 QUIC_NEEDS_LOCK
 static int quic_write_again(void *arg)
 {
@@ -2195,8 +2246,7 @@ static int quic_write_again(void *arg)
         return -2;
 
     args->err = ERR_R_INTERNAL_ERROR;
-    if (!ossl_quic_sstream_append(args->xso->stream->sstream,
-                                  args->buf, args->len, &actual_written))
+    if (!xso_sstream_append(args->xso, args->buf, args->len, &actual_written))
         return -2;
 
     quic_post_write(args->xso, actual_written > 0, 0);
@@ -2223,8 +2273,7 @@ static int quic_write_blocking(QCTX *ctx, const void *buf, size_t len,
     size_t actual_written = 0;
 
     /* First make a best effort to append as much of the data as possible. */
-    if (!ossl_quic_sstream_append(xso->stream->sstream, buf, len,
-                                  &actual_written)) {
+    if (!xso_sstream_append(xso, buf, len, &actual_written)) {
         /* Stream already finished or allocation error. */
         *written = 0;
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
@@ -2317,8 +2366,7 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const void *buf,
     }
 
     /* First make a best effort to append as much of the data as possible. */
-    if (!ossl_quic_sstream_append(xso->stream->sstream, actual_buf, actual_len,
-                                  &actual_written)) {
+    if (!xso_sstream_append(xso, actual_buf, actual_len, &actual_written)) {
         /* Stream already finished or allocation error. */
         *written = 0;
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
@@ -2379,7 +2427,7 @@ static int quic_write_nonblocking_epw(QCTX *ctx, const void *buf, size_t len,
     QUIC_XSO *xso = ctx->xso;
 
     /* Simple best effort operation. */
-    if (!ossl_quic_sstream_append(xso->stream->sstream, buf, len, written)) {
+    if (!xso_sstream_append(xso, buf, len, written)) {
         /* Stream already finished or allocation error. */
         *written = 0;
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);

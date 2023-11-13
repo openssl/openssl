@@ -497,8 +497,8 @@ static int join_server_thread(struct helper *h)
 
     ossl_crypto_mutex_lock(h->server_thread.m);
     h->server_thread.stop = 1;
-    ossl_crypto_mutex_unlock(h->server_thread.m);
     ossl_crypto_condvar_signal(h->server_thread.c);
+    ossl_crypto_mutex_unlock(h->server_thread.m);
 
     ossl_crypto_thread_native_join(h->server_thread.t, &rv);
     ossl_crypto_thread_native_clean(h->server_thread.t);
@@ -1079,8 +1079,8 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
             else if (h->blocking && !h->server_thread.ready) {
                 ossl_crypto_mutex_lock(h->server_thread.m);
                 h->server_thread.ready = 1;
-                ossl_crypto_mutex_unlock(h->server_thread.m);
                 ossl_crypto_condvar_signal(h->server_thread.c);
+                ossl_crypto_mutex_unlock(h->server_thread.m);
             }
             if (h->blocking)
                 assert(h->s == NULL);
@@ -2658,8 +2658,8 @@ static int script_20_trigger(struct helper *h, volatile uint64_t *counter)
 #if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_lock(h->misc_m);
     ++*counter;
-    ossl_crypto_mutex_unlock(h->misc_m);
     ossl_crypto_condvar_broadcast(h->misc_cv);
+    ossl_crypto_mutex_unlock(h->misc_m);
 #endif
     return 1;
 }
@@ -2832,7 +2832,7 @@ static int script_23_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     unsigned char frame_buf[16];
     size_t written;
 
-    if (h->inject_word0 == 0)
+    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
 
     if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
@@ -2885,7 +2885,7 @@ static int script_24_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     unsigned char frame_buf[16];
     size_t written;
 
-    if (h->inject_word0 == 0)
+    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
 
     if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
@@ -2995,7 +2995,7 @@ static int script_28_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     unsigned char frame_buf[32];
     size_t written;
 
-    if (h->inject_word0 == 0)
+    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
 
     if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
@@ -3129,6 +3129,9 @@ static int script_32_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     unsigned char frame_buf[64];
     size_t written;
     uint64_t type = OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN, offset, flen, i;
+
+    if (hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
 
     switch (h->inject_word1) {
     default:
@@ -3316,8 +3319,15 @@ static const struct script_op script_38[] = {
     OP_C_CONNECT_WAIT       ()
     OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
 
-    OP_S_NEW_STREAM_UNI     (b, S_UNI_ID(0))
+    OP_C_NEW_STREAM_UNI     (a, C_UNI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+
+    OP_S_BIND_STREAM_ID     (a, C_UNI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+
     OP_SET_INJECT_WORD      (C_BIDI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED)
+
+    OP_S_NEW_STREAM_UNI     (b, S_UNI_ID(0))
     OP_S_WRITE              (b, "orange", 5)
 
     OP_C_EXPECT_CONN_CLOSE_INFO(QUIC_ERR_STREAM_STATE_ERROR,0,0)
@@ -3336,6 +3346,9 @@ static int script_39_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     uint64_t seq_no = 0, retire_prior_to = 0;
     QUIC_CONN_ID new_cid = {0};
     QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(h->s_priv);
+
+    if (hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
 
     switch (h->inject_word1) {
     case 0:
@@ -3480,7 +3493,7 @@ static int script_41_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     unsigned char frame_buf[16];
     size_t written;
 
-    if (h->inject_word0 == 0)
+    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
 
     if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
@@ -3674,7 +3687,7 @@ static int script_44_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     unsigned char frame_buf[16];
     size_t written;
 
-    if (h->inject_word0 == 0)
+    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
 
     if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
@@ -3986,7 +3999,7 @@ static int script_52_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     WPACKET wpkt;
     uint64_t type = h->inject_word1;
 
-    if (h->inject_word0 == 0)
+    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
 
     --h->inject_word0;
@@ -4075,7 +4088,7 @@ static int script_53_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     unsigned char *frame_buf = NULL;
     size_t frame_len, i;
 
-    if (h->inject_word0 == 0)
+    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
 
     h->inject_word0 = 0;
@@ -4247,7 +4260,7 @@ static int script_58_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     size_t written;
     WPACKET wpkt;
 
-    if (h->inject_word0 == 0)
+    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
 
     if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
@@ -4370,7 +4383,7 @@ static int script_61_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     unsigned char frame_buf[32];
     size_t written;
 
-    if (h->inject_word0 == 0)
+    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
 
     if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
@@ -4550,7 +4563,7 @@ static int script_66_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
     unsigned char frame_buf[64];
     size_t written;
 
-    if (h->inject_word0 == 0)
+    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
         return 1;
 
     if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,

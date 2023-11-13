@@ -454,6 +454,15 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
     if (ctx->digest->prov == NULL)
         goto legacy;
 
+    if (ctx->digest->gettable_ctx_params != NULL) {
+        OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE,
+                                                &mdsize);
+        if (!EVP_MD_CTX_get_params(ctx, params))
+            return 0;
+    }
+
     if (ctx->digest->dfinal == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
         return 0;
@@ -493,6 +502,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
     return ret;
 }
 
+/* This is a one shot operation */
 int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
 {
     int ret = 0;
@@ -517,10 +527,15 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
         return 0;
     }
 
+    /*
+     * For backward compatibility we pass the XOFLEN via a param here so that
+     * older providers can use the supplied value. Ideally we should have just
+     * used the size passed into ctx->digest->dfinal().
+     */
     params[i++] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &size);
     params[i++] = OSSL_PARAM_construct_end();
 
-    if (EVP_MD_CTX_set_params(ctx, params) > 0)
+    if (EVP_MD_CTX_set_params(ctx, params) >= 0)
         ret = ctx->digest->dfinal(ctx->algctx, md, &size, size);
 
     ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
@@ -542,6 +557,27 @@ legacy:
     }
 
     return ret;
+}
+
+/* EVP_DigestSqueeze() can be called multiple times */
+int EVP_DigestSqueeze(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
+{
+    if (ctx->digest == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
+        return 0;
+    }
+
+    if (ctx->digest->prov == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+        return 0;
+    }
+
+    if (ctx->digest->dsqueeze == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_METHOD_NOT_SUPPORTED);
+        return 0;
+    }
+
+    return ctx->digest->dsqueeze(ctx->algctx, md, &size, size);
 }
 
 EVP_MD_CTX *EVP_MD_CTX_dup(const EVP_MD_CTX *in)
@@ -1023,6 +1059,12 @@ static void *evp_md_from_algorithm(int name_id,
                 fncnt++;
             }
             break;
+        case OSSL_FUNC_DIGEST_SQUEEZE:
+            if (md->dsqueeze == NULL) {
+                md->dsqueeze = OSSL_FUNC_digest_squeeze(fns);
+                fncnt++;
+            }
+            break;
         case OSSL_FUNC_DIGEST_DIGEST:
             if (md->digest == NULL)
                 md->digest = OSSL_FUNC_digest_digest(fns);
@@ -1066,7 +1108,7 @@ static void *evp_md_from_algorithm(int name_id,
             break;
         }
     }
-    if ((fncnt != 0 && fncnt != 5)
+    if ((fncnt != 0 && fncnt != 5 && fncnt != 6)
         || (fncnt == 0 && md->digest == NULL)) {
         /*
          * In order to be a consistent set of functions we either need the

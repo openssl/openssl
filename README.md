@@ -7,10 +7,12 @@ Welcome to the OpenSSL Project
 [![appveyor badge]][appveyor jobs]
 
 OpenSSL is a robust, commercial-grade, full-featured Open Source Toolkit
-for the Transport Layer Security (TLS) protocol formerly known as the
-Secure Sockets Layer (SSL) protocol. The protocol implementation is based
-on a full-strength general purpose cryptographic library, which can also
-be used stand-alone.
+for the TLS (formerly SSL), DTLS and QUIC (currently client side only)
+protocols.
+
+The protocol implementations are based on a full-strength general purpose
+cryptographic library, which can also be used stand-alone. Also included is a
+cryptographic module validated to conform with FIPS standards.
 
 OpenSSL is descended from the SSLeay library developed by Eric A. Young
 and Tim J. Hudson.
@@ -35,7 +37,9 @@ Overview
 The OpenSSL toolkit includes:
 
 - **libssl**
-  an implementation of all TLS protocol versions up to TLSv1.3 ([RFC 8446]).
+  an implementation of all TLS protocol versions up to TLSv1.3 ([RFC 8446]),
+  DTLS protocol versions up to DTLSv1.2 ([RFC 6347]) and
+  the QUIC (currently client side only) version 1 protocol ([RFC 9000]).
 
 - **libcrypto**
   a full-strength general purpose cryptographic library. It constitutes the
@@ -48,7 +52,8 @@ The OpenSSL toolkit includes:
   - creation of X.509 certificates, CSRs and CRLs
   - calculation of message digests
   - encryption and decryption
-  - SSL/TLS client and server tests
+  - SSL/TLS/DTLS and client and server tests
+  - QUIC client tests
   - handling of S/MIME signed or encrypted mail
   - and more...
 
@@ -66,6 +71,10 @@ However, for a large variety of operating systems precompiled versions
 of the OpenSSL toolkit are available. In particular, on Linux and other
 Unix operating systems, it is normally recommended to link against the
 precompiled shared libraries provided by the distributor or vendor.
+
+We also maintain a list of third parties that produce OpenSSL binaries for
+various Operating Systems (including Windows) on the [Binaries] page on our
+wiki.
 
 For Testing and Development
 ---------------------------
@@ -113,11 +122,28 @@ document.
  * [Notes on Perl](NOTES-PERL.md)
  * [Notes on Valgrind](NOTES-VALGRIND.md)
 
-Specific notes on upgrading to OpenSSL 3.0 from previous versions can be found
+Specific notes on upgrading to OpenSSL 3.x from previous versions can be found
 in the [ossl-guide-migration(7ossl)] manual page.
 
 Documentation
 =============
+
+README Files
+------------
+
+There are some README.md files in the top level of the source distribution
+containing additional information on specific topics.
+
+ * [Information about the OpenSSL QUIC protocol implementation](README-QUIC.md)
+ * [Information about the OpenSSL Provider architecture](README-PROVIDERS.md)
+ * [Information about using the OpenSSL FIPS validated module](README-FIPS.md)
+ * [Information about the legacy OpenSSL Engine architecture](README-ENGINES.md)
+
+The OpenSSL Guide
+-----------------
+
+There are some tutorial and introductory pages on some important OpenSSL topics
+within the [OpenSSL Guide].
 
 Manual Pages
 ------------
@@ -127,7 +153,13 @@ available online.
 
 - [OpenSSL master](https://www.openssl.org/docs/manmaster)
 - [OpenSSL 3.0](https://www.openssl.org/docs/man3.0)
-- [OpenSSL 1.1.1](https://www.openssl.org/docs/man1.1.1)
+- [OpenSSL 3.1](https://www.openssl.org/docs/man3.1)
+
+Demos
+-----
+
+The are numerous source code demos for using various OpenSSL capabilities in the
+[demos subfolder](./demos).
 
 Wiki
 ----
@@ -200,6 +232,20 @@ All rights reserved.
 
 [RFC 8446]:
      <https://tools.ietf.org/html/rfc8446>
+
+[RFC 6347]:
+     <https://tools.ietf.org/html/rfc6347>
+
+[RFC 9000]:
+     <https://tools.ietf.org/html/rfc9000>
+
+[Binaries]:
+    <https://wiki.openssl.org/index.php/Binaries>
+    "List of third party OpenSSL binaries"
+
+[OpenSSL Guide]:
+    <https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html>
+    "An introduction to OpenSSL"
 
 <!-- Logos and Badges -->
 

@@ -108,13 +108,22 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
     return bio;
 }
 
-/* Server hostname and port details. Must be in quotes */
-#ifndef HOSTNAME
-# define HOSTNAME "www.example.com"
-#endif
-#ifndef PORT
-# define PORT     "443"
-#endif
+int write_a_request(SSL *stream, const char *request_start,
+                    const char *hostname)
+{
+    const char *request_end = "\r\n\r\n";
+    size_t written;
+
+    if (!SSL_write_ex(stream, request_start, strlen(request_start),
+                      &written))
+        return 0;
+    if (!SSL_write_ex(stream, hostname, strlen(hostname), &written))
+        return 0;
+    if (!SSL_write_ex(stream, request_end, strlen(request_end), &written))
+        return 0;
+
+    return 1;
+}
 
 /*
  * Simple application to send basic HTTP/1.0 requests to a server and print the
@@ -122,7 +131,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
  * and will not be supported by real world servers. This is for demonstration
  * purposes only.
  */
-int main(void)
+int main(int argc, char *argv[])
 {
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
@@ -131,13 +140,22 @@ int main(void)
     int res = EXIT_FAILURE;
     int ret;
     unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '1', '.', '0' };
-    const char *request1 =
-        "GET /request1.html HTTP/1.0\r\nConnection: close\r\nHost: "HOSTNAME"\r\n\r\n";
-    const char *request2 =
-        "GET /request2.html HTTP/1.0\r\nConnection: close\r\nHost: "HOSTNAME"\r\n\r\n";
-    size_t written, readbytes;
+    const char *request1_start =
+        "GET /request1.html HTTP/1.0\r\nConnection: close\r\nHost: ";
+    const char *request2_start =
+        "GET /request2.html HTTP/1.0\r\nConnection: close\r\nHost: ";
+    size_t readbytes;
     char buf[160];
     BIO_ADDR *peer_addr = NULL;
+    char *hostname, *port;
+
+    if (argc != 3) {
+        printf("Usage: quic-client-non-block hostname port\n");
+        goto end;
+    }
+
+    hostname = argv[1];
+    port = argv[2];
 
     /*
      * Create an SSL_CTX which we can use to create SSL objects from. We
@@ -183,7 +201,7 @@ int main(void)
      * Create the underlying transport socket/BIO and associate it with the
      * connection.
      */
-    bio = create_socket_bio(HOSTNAME, PORT, &peer_addr);
+    bio = create_socket_bio(hostname, port, &peer_addr);
     if (bio == NULL) {
         printf("Failed to crete the BIO\n");
         goto end;
@@ -194,7 +212,7 @@ int main(void)
      * Tell the server during the handshake which hostname we are attempting
      * to connect to in case the server supports multiple hosts.
      */
-    if (!SSL_set_tlsext_host_name(ssl, HOSTNAME)) {
+    if (!SSL_set_tlsext_host_name(ssl, hostname)) {
         printf("Failed to set the SNI hostname\n");
         goto end;
     }
@@ -205,7 +223,7 @@ int main(void)
      * Virtually all clients should do this unless you really know what you
      * are doing.
      */
-    if (!SSL_set1_host(ssl, HOSTNAME)) {
+    if (!SSL_set1_host(ssl, hostname)) {
         printf("Failed to set the certificate verification hostname");
         goto end;
     }
@@ -247,12 +265,12 @@ int main(void)
     }
 
     /* Write an HTTP GET request on each of our streams to the peer */
-    if (!SSL_write_ex(stream1, request1, strlen(request1), &written)) {
+    if (!write_a_request(stream1, request1_start, hostname)) {
         printf("Failed to write HTTP request on stream 1\n");
         goto end;
     }
 
-    if (!SSL_write_ex(stream2, request2, strlen(request2), &written)) {
+    if (!write_a_request(stream2, request2_start, hostname)) {
         printf("Failed to write HTTP request on stream 2\n");
         goto end;
     }

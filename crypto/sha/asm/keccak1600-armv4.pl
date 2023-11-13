@@ -966,6 +966,8 @@ SHA3_squeeze:
 	stmdb	sp!,{r6-r9}
 
 	mov	r14,$A_flat
+	cmp	r4, #0                 @ r4 = 'next' argument
+	bne	.Lnext_block
 	b	.Loop_squeeze
 
 .align	4
@@ -1037,7 +1039,7 @@ SHA3_squeeze:
 
 	subs	$bsz,$bsz,#8		@ bsz -= 8
 	bhi	.Loop_squeeze
-
+.Lnext_block:
 	mov	r0,r14			@ original $A_flat
 
 	bl	KeccakF1600

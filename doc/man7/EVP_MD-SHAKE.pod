@@ -65,7 +65,20 @@ For backwards compatibility reasons the default xoflen length for SHAKE-256 is
 32 (bytes) which results in a security strength of only 128 bits. To ensure the
 maximum security strength of 256 bits, the xoflen should be set to at least 64.
 
+This parameter may be used when calling either EVP_DigestFinal_ex() or
+EVP_DigestFinal(), since these functions were not designed to handle variable
+length output. It is recommended to either use EVP_DigestSqueeze() or
+EVP_DigestFinalXOF() instead.
+
 =back
+
+=head1 NOTES
+
+For SHAKE-128, to ensure the maximum security strength of 128 bits, the output
+length passed to EVP_DigestFinalXOF() should be at least 32.
+
+For SHAKE-256, to ensure the maximum security strength of 256 bits, the output
+length passed to EVP_DigestFinalXOF() should be at least 64.
 
 =head1 SEE ALSO
 
@@ -73,7 +86,7 @@ L<EVP_MD_CTX_set_params(3)>, L<provider-digest(7)>, L<OSSL_PROVIDER-default(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

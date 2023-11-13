@@ -379,8 +379,13 @@ int ossl_quic_sstream_is_totally_acked(QUIC_SSTREAM *qss)
     UINT_RANGE r;
     uint64_t cur_size;
 
-    if ((qss->have_final_size && !qss->acked_final_size)
-        || ossl_list_uint_set_num(&qss->acked_set) != 1)
+    if (qss->have_final_size && !qss->acked_final_size)
+        return 0;
+
+    if (ossl_quic_sstream_get_cur_size(qss) == 0)
+        return 1;
+
+    if (ossl_list_uint_set_num(&qss->acked_set) != 1)
         return 0;
 
     r = ossl_list_uint_set_head(&qss->acked_set)->range;

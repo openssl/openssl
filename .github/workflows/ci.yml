@@ -272,14 +272,24 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: modprobe tls
       run: sudo modprobe tls
+    - name: Enable sctp
+      run: sudo modprobe sctp
+    - name: Enable auth in sctp
+      run: sudo sysctl -w net.sctp.auth_enable=1 
+    - name: install extra config support
+      run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
     - name: config
-      run: ./config --banner=Configured --strict-warnings enable-ktls enable-fips && perl configdata.pm --dump
+      run: ./config --banner=Configured --strict-warnings enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
+    - name: Check ABI compatibility for libcrypto
+      run: abidiff ./.github/workflows/libcrypto-abi.xml ./libcrypto.so
+    - name: Check ABI compatibility for libssl
+      run: abidiff ./.github/workflows/libssl-abi.xml ./libssl.so
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 

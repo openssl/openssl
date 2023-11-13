@@ -194,11 +194,13 @@ int qtest_fault_resize_message(QTEST_FAULT *fault, size_t newlen);
  * Helper function to delete an extension from an extension block. |exttype| is
  * the type of the extension to be deleted. |ext| points to the extension block.
  * On entry |*extlen| contains the length of the extension block. It is updated
- * with the new length on exit.
+ * with the new length on exit. If old_ext is non-NULL, the deleted extension
+ * is appended to the given BUF_MEM.
  */
 int qtest_fault_delete_extension(QTEST_FAULT *fault,
                                  unsigned int exttype, unsigned char *ext,
-                                 size_t *extlen);
+                                 size_t *extlen,
+                                 BUF_MEM *old_ext);
 
 /*
  * Add additional helper functions for querying extensions here (e.g.

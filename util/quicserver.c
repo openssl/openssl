@@ -94,23 +94,23 @@ static BIO *create_dgram_bio(int family, const char *hostname, const char *port)
         /* Start listening on the socket */
         if (!BIO_listen(sock, BIO_ADDRINFO_address(ai), 0)) {
             BIO_closesocket(sock);
-            sock = -1;
             continue;
         }
 
         /* Set to non-blocking mode */
         if (!BIO_socket_nbio(sock, 1)) {
             BIO_closesocket(sock);
-            sock = -1;
             continue;
         }
+
+        break; /* stop searching if we found an addr */
     }
 
     /* Free the address information resources we allocated earlier */
     BIO_ADDRINFO_free(res);
 
-    /* If sock is -1 then we've been unable to connect to the server */
-    if (sock == -1)
+    /* If we didn't bind any sockets, fail */
+    if (ai == NULL)
         return NULL;
 
     /* Create a BIO to wrap the socket */
@@ -231,6 +231,11 @@ int main(int argc, char *argv[])
     while(!ossl_quic_tserver_is_handshake_confirmed(qtserv)) {
         wait_for_activity(qtserv);
         ossl_quic_tserver_tick(qtserv);
+        if (ossl_quic_tserver_is_terminated(qtserv)) {
+            BIO_printf(bio_err, "Failed waiting for handshake completion\n");
+            ret = EXIT_FAILURE;
+            goto end;
+        }
     }
 
     for (;; respnum++) {
@@ -257,6 +262,11 @@ int main(int argc, char *argv[])
                 wait_for_activity(qtserv);
 
             ossl_quic_tserver_tick(qtserv);
+            if (ossl_quic_tserver_is_terminated(qtserv)) {
+                BIO_printf(bio_err, "Failed reading request\n");
+                ret = EXIT_FAILURE;
+                goto end;
+            }
 
             if (ossl_quic_tserver_read(qtserv, streamid, reqbuf + reqbytes,
                                     sizeof(reqbuf) - reqbytes,
