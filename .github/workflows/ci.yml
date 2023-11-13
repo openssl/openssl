@@ -279,7 +279,7 @@ jobs:
     - name: install extra config support
       run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
     - name: config
-      run: ./config --banner=Configured --strict-warnings enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
+      run: ./config --banner=Configured -g --strict-warnings enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
