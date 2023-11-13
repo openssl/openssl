@@ -46,21 +46,21 @@ int ossl_quic_txfc_bump_cwm(QUIC_TXFC *txfc, uint64_t cwm)
     return 1;
 }
 
-uint64_t ossl_quic_txfc_get_credit_local(QUIC_TXFC *txfc)
+uint64_t ossl_quic_txfc_get_credit_local(QUIC_TXFC *txfc, uint64_t consumed)
 {
-    assert(txfc->swm <= txfc->cwm);
-    return txfc->cwm - txfc->swm;
+    assert((txfc->swm + consumed) <= txfc->cwm);
+    return txfc->cwm - (consumed + txfc->swm);
 }
 
-uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc)
+uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc, uint64_t consumed)
 {
     uint64_t r, conn_r;
 
-    r = ossl_quic_txfc_get_credit_local(txfc);
+    r = ossl_quic_txfc_get_credit_local(txfc, 0);
 
     if (txfc->parent != NULL) {
         assert(txfc->parent->parent == NULL);
-        conn_r = ossl_quic_txfc_get_credit_local(txfc->parent);
+        conn_r = ossl_quic_txfc_get_credit_local(txfc->parent, consumed);
         if (conn_r < r)
             r = conn_r;
     }
@@ -71,7 +71,7 @@ uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc)
 int ossl_quic_txfc_consume_credit_local(QUIC_TXFC *txfc, uint64_t num_bytes)
 {
     int ok = 1;
-    uint64_t credit = ossl_quic_txfc_get_credit_local(txfc);
+    uint64_t credit = ossl_quic_txfc_get_credit_local(txfc, 0);
 
     if (num_bytes > credit) {
         ok = 0;
