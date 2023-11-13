@@ -1,39 +1,47 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   version="1.1"
-   id="svg2"
-   viewBox="0 0 637.79534 637.79487"
-   height="180mm"
-   width="180mm">
-  <defs
-     id="defs4" />
-  <g
-     id="g18"
-     transform="translate(-98.687904,69.699168)">
-    <text
-       id="text3336"
-       y="-189.42012"
-       x="135.43579"
-       style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       xml:space="preserve"><tspan
-           id="tspan3340"
-           y="241.43443"
-           x="138.16101"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:180px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#480e0c;fill-opacity:1">Open</tspan></text>
-    <text
-       id="text3436"
-       y="54.807796"
-       x="489.36517"
-       style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       xml:space="preserve"><tspan
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:180px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'"
-         y="385.66235"
-         x="392.09039"
-         id="tspan3438">SSL</tspan></text>
-  </g>
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+ "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+ width="510.000000pt" height="510.000000pt" viewBox="0 0 510.000000 510.000000"
+ preserveAspectRatio="xMidYMid meet">
+
+<g transform="translate(0.000000,510.000000) scale(0.100000,-0.100000)"
+ stroke="none">
+<path d="M663 3926 c-35 -8 -91 -29 -125 -46 -307 -151 -433 -513 -284 -815
+75 -152 229 -275 396 -316 78 -19 232 -17 305 5 266 79 445 313 445 582 0 254
+-168 486 -413 571 -89 31 -233 39 -324 19z m242 -152 c156 -40 277 -165 320
+-329 53 -204 -50 -428 -238 -515 -272 -126 -579 38 -628 337 -9 54 -9 86 0
+139 47 269 293 434 546 368z" fill="#6e2421"/>
+<path d="M2630 3438 c-54 -18 -76 -33 -130 -87 -54 -54 -70 -78 -89 -134 -33
+-94 -27 -208 14 -293 94 -192 321 -264 534 -168 89 39 93 47 44 96 l-41 41
+-58 -29 c-76 -37 -177 -40 -239 -7 -67 35 -135 123 -135 173 0 7 96 10 286 10
+l287 0 -6 68 c-21 256 -234 407 -467 330z m196 -117 c23 -10 53 -32 69 -47 32
+-34 69 -110 60 -124 -9 -14 -412 -13 -420 1 -11 17 44 117 78 143 65 48 144
+58 213 27z" fill="#6e2421"/>
+<path d="M1857 3440 c-54 -14 -112 -46 -156 -85 l-38 -35 -7 31 c-3 17 -6 42
+-6 55 0 23 -3 24 -67 24 l-68 0 3 -505 2 -505 75 0 75 0 0 212 0 212 33 -31
+c138 -132 409 -99 516 63 47 71 64 141 59 240 -7 141 -76 248 -196 304 -52 25
+-166 35 -225 20z m143 -144 c57 -29 104 -90 120 -157 52 -216 -218 -379 -382
+-231 -54 48 -68 85 -68 176 0 88 7 111 52 161 66 76 186 98 278 51z"
+ fill="#6e2421"/>
+<path d="M3550 3441 c-82 -18 -171 -78 -186 -123 -10 -32 -24 -2 -24 55 l0 47
+-70 0 -70 0 2 -337 3 -338 73 -3 72 -3 0 175 c0 96 5 198 11 226 28 132 171
+218 266 160 60 -36 63 -53 63 -320 l0 -240 75 0 75 0 0 275 c0 210 -3 283 -14
+308 -15 37 -59 83 -98 103 -34 17 -131 26 -178 15z" fill="#6e2421"/>
+<path d="M2450 2394 c-106 -28 -190 -99 -232 -192 -32 -70 -31 -220 0 -280 51
+-97 100 -134 277 -211 166 -73 208 -110 208 -182 0 -143 -216 -173 -420 -59
+l-51 29 -52 -90 c-59 -104 -62 -95 47 -149 130 -64 326 -89 448 -56 175 46
+275 169 275 335 0 176 -76 271 -284 355 -202 81 -261 150 -211 245 39 77 210
+80 355 6 27 -14 53 -25 58 -25 5 0 28 39 51 87 40 83 42 88 24 101 -33 26
+-142 72 -206 87 -78 19 -216 18 -287 -1z" fill="#000000"/>
+<path d="M3402 2395 c-66 -18 -152 -73 -186 -117 -51 -67 -70 -126 -70 -218
+-1 -176 70 -253 333 -364 138 -58 191 -116 175 -190 -27 -128 -241 -143 -427
+-28 -22 13 -41 22 -43 19 -2 -2 -26 -44 -54 -92 l-50 -89 43 -26 c62 -39 134
+-67 217 -86 101 -23 262 -16 342 15 71 28 155 102 188 167 22 43 25 62 25 159
+0 95 -3 116 -23 152 -50 94 -100 133 -257 198 -169 69 -225 116 -225 185 0
+126 180 158 371 65 29 -14 56 -25 61 -25 13 0 90 161 84 176 -6 16 -89 59
+-166 86 -75 27 -263 34 -338 13z" fill="#000000"/>
+<path d="M4140 1805 l0 -605 400 0 400 0 0 115 0 115 -285 0 -285 0 0 490 0
+490 -115 0 -115 0 0 -605z" fill="#000000"/>
+</g>
 </svg>
