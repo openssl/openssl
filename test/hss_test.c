@@ -1374,6 +1374,43 @@ end:
     return ret;
 }
 
+static int hss_pkey_sign(void)
+{
+    int ret = 0;
+    EVP_PKEY_CTX *genctx = NULL;
+    EVP_MD_CTX *signctx = NULL;
+    EVP_PKEY *key = NULL;
+    OSSL_PARAM params[4];
+    uint32_t levels = 1;
+    uint32_t lms_type = 5;
+    uint32_t ots_type = 4;
+    unsigned char sig[2048];
+    size_t siglen = sizeof(sig);
+    unsigned char msg[] = "ABC";
+
+    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, "HSS", propq))
+            || !TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1))
+        goto err;
+
+    params[0] = OSSL_PARAM_construct_uint32("levels", &levels);
+    params[1] = OSSL_PARAM_construct_uint32("l0_lms_type", &lms_type);
+    params[2] = OSSL_PARAM_construct_uint32("l0_ots_type", &ots_type);
+    params[3] = OSSL_PARAM_construct_end();
+    if (!TEST_ptr(EVP_PKEY_generate(genctx, &key) <= 0))
+        goto err;
+
+    if (!TEST_ptr(signctx = EVP_MD_CTX_new())
+        || !TEST_int_eq(EVP_DigestSignInit_ex(signctx, NULL, NULL, libctx, propq,
+                                              pkey, NULL), 1)
+        || !TEST_int_eq(EVP_DigestSign(signctx, sig, &siglen, msg, sizeof(msg)), 1))
+        goto err;
+    ret = 1;
+err:
+    EVP_MD_CTX_free(signctx);
+    EVP_PKEY_CTX_free(genctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -1429,6 +1466,7 @@ int setup_tests(void)
         ADD_TEST(hss_key_eq_test);
         ADD_TEST(hss_key_validate_test);
         ADD_TEST(hss_pkey_verify_fail_test);
+        ADD_TEST(hss_pkey_sign);
     }
     return 1;
 }

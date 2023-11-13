@@ -49,9 +49,12 @@ struct lms_key_st {
     size_t publen;
     const LMS_PARAMS *lms_params;
     const LM_OTS_PARAMS *ots_params;
-    unsigned char *I;               /* 16 bytes - a pointer into pub */
+    unsigned char *I;               /* 16 bytes - a pointer into pub or priv_bytes */
     unsigned char *K;               /* n bytes - a pointer into pub */
     uint32_t pub_allocated;         /* If 1 then pub needs to be freed */
+    unsigned char *priv_seed;       /* Private key seed - a pointer into priv_bytes */
+    unsigned char *priv_bytes;      /* A buffer for holding private key data */
+    uint32_t q;                     /* Key Pair leaf index (0..(2^h - 1)) */
 
     CRYPTO_REF_COUNT references;
 };
@@ -95,6 +98,7 @@ typedef struct {
 
 DEFINE_STACK_OF(LMS_KEY)
 DEFINE_STACK_OF(LMS_SIG)
+
 
 int ossl_hss_decode(const HSS_KEY *pub,
                     const unsigned char *sig, size_t siglen,

@@ -62,6 +62,40 @@ static const LM_OTS_PARAMS lm_ots_params[] = {
     { 0, NULL, 0, 0, 0 },
 };
 
+/*
+ * i is 0..p (ots private key index)
+ * q = 0..2^h (leaf index)
+ *
+ * x_q[i] = H(I || u32str(q) || u16str(i) || u8str(0xff) || SEED)
+ * The first call for a key to this function will allocate a buffer
+ * to hold all parts of the above hash.
+ */
+int ossl_lm_ots_get_private(LMS_KEY *key, uint16_t i, EVP_MD *md,
+                            unsigned char *out)
+{
+    unsigned char *p;
+
+    if (key->priv_bytes == NULL) {
+        key->priv_bytes = OPENSSL_malloc(16 + 4 + 2 + 1 + 32);
+        if (key->priv_bytes == NULL)
+            return 0;
+        key->I = key->priv_bytes;
+        key->priv_seed = key->priv_bytes + 23;
+        if (!RAND_priv_bytes(key->I, 16))
+            return 0;
+        if (!RAND_priv_bytes(key->priv_seed, 32))
+            return 0;
+        key->q = 0;
+    }
+
+    p = key->priv_bytes + LMS_ISIZE;
+    U32STR(p, key->q); p += 4;
+    U16STR(p, i); p += 4;
+    *p = 0xFF;
+
+    return EVP_Digest(key->priv_bytes, 23 + 32, out, NULL, md, NULL);
+}
+
 const LM_OTS_PARAMS *ossl_lm_ots_params_get(uint32_t ots_type)
 {
     const LM_OTS_PARAMS *p;
