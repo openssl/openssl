@@ -422,7 +422,7 @@ int ossl_qtx_calculate_plaintext_payload_len(OSSL_QTX *qtx, uint32_t enc_level,
 
     tag_len = ossl_qrl_get_suite_cipher_tag_len(el->suite_id);
 
-    if (ciphertext_len < tag_len) {
+    if (ciphertext_len <= tag_len) {
         *plaintext_len = 0;
         return 0;
     }
