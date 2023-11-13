@@ -22,7 +22,9 @@
 
 /* Create the safe math instances we're interested in */
 OSSL_SAFE_MATH_SIGNED(int, int)
+OSSL_SAFE_MATH_SIGNED(int16, int16_t)
 OSSL_SAFE_MATH_UNSIGNED(uint, unsigned int)
+OSSL_SAFE_MATH_UNSIGNED(uint16, uint16_t)
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 
 static const struct {
@@ -361,6 +363,95 @@ static int test_uint_muldiv(int n)
     return 1;
 }
 
+static const struct {
+    int16_t a;
+    int b;
+    int errleft;
+    int16_t left;
+    int errright;
+    int16_t right;
+    int err_a_right;
+    int16_t a_right;
+} test_shift_ints[] = {
+    { 1, 10,        0,  1 << 10,    0,  0,          0, 0 },
+    { 1, -10,       0,  0,          0,  1 << 10,    1, 0 },
+    { 1, 0x8000,    1,  0,          0,  0,          0, 0 },
+    { -1, 0x8000,   1,  0,          0,  0,          0, -1 },
+    { 1, -40,       0,  0,          1,  0,          1, 0 },
+    { 0, -40,       0,  0,          0,  0,          0, 0 },
+    { 1, 16,        1,  0,          0,  0,          0, 0 },
+    { 1, -16,       0,  0,          1,  0,          1, 0 },
+    { 8, 2,         0,  32,         0,  2,          0, 2 },
+    { 8, -2,        0,  2,          0,  32,         1, 0 },
+    { -8, 2,        1, 0,           0, 16382,       0, -2 },
+    { -8, -2,       0, 16382,       1,  0,          1, 0 },
+    { -32768, 8,    1, 0,           0, 128,         0, -128 },
+};
+
+static int test_int16_shifts(int n)
+{
+    int err = 0;
+    int16_t r;
+    const int16_t a = test_shift_ints[n].a;
+    const int b = test_shift_ints[n].b;
+
+    r = safe_shl_int16(a, b, &err);
+    if (!TEST_int_eq(err, test_shift_ints[n].errleft)
+            || !TEST_int_eq(r, test_shift_ints[n].left)) {
+        TEST_info("%d << %d  r = %d  err = %d", a, b, r, err);
+        return 0;
+    }
+    err = 0;
+    r = safe_shr_int16(a, b, &err);
+    if (!TEST_int_eq(err, test_shift_ints[n].errright)
+            || !TEST_int_eq(r, test_shift_ints[n].right)) {
+        TEST_info("%d >> %d  r = %d  err = %d", a, b, r, err);
+        return 0;
+    }
+    err = 0;
+    r = safe_ashr_int16(a, b, &err);
+    if (!TEST_int_eq(err, test_shift_ints[n].err_a_right)
+            || !TEST_int_eq(r, test_shift_ints[n].a_right)) {
+        TEST_info("%d >>> %d  r = %d  err = %d", a, b, r, err);
+        return 0;
+    }
+    return 1;
+}
+
+static const struct {
+    uint16_t a;
+    int b;
+    uint16_t left, right;
+} test_shift_uints[] = {
+    { 1, 10,        1 << 10,    0       },
+    { 1, -10,       0,          1 << 10 },
+    { 1, INT_MIN,   0,          0       },
+    { 1, 16,        0,          0       },
+    { 1, -16,       0,          0       },
+    { 8, -2,        2,          32      },
+};
+
+static int test_uint16_shifts(int n)
+{
+    int err = 0;
+    uint16_t r;
+    const uint16_t a = test_shift_uints[n].a;
+    const int b = test_shift_uints[n].b;
+
+    r = safe_shl_uint16(a, b);
+    if (!TEST_uint_eq(r, test_shift_uints[n].left)) {
+        TEST_info("%u << %d  r = %u  err = %d", a, b, r, err);
+        return 0;
+    }
+    err = 0;
+    r = safe_shr_uint16(a, b);
+    if (!TEST_uint_eq(r, test_shift_uints[n].right)) {
+        TEST_info("%u >> %d  r = %u  err = %d", a, b, r, err);
+        return 0;
+    }
+    return 1;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_int_ops, OSSL_NELEM(test_ints));
@@ -368,5 +459,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_size_t_ops, OSSL_NELEM(test_size_ts));
     ADD_ALL_TESTS(test_int_muldiv, OSSL_NELEM(test_muldiv_ints));
     ADD_ALL_TESTS(test_uint_muldiv, OSSL_NELEM(test_muldiv_uints));
+    ADD_ALL_TESTS(test_int16_shifts, OSSL_NELEM(test_shift_ints));
+    ADD_ALL_TESTS(test_uint16_shifts, OSSL_NELEM(test_shift_uints));
     return 1;
 }

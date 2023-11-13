@@ -293,6 +293,112 @@
     }
 
 /*
+ * Safe shift operations.
+ *
+ * The C standard defines shifts by negative values and shifts larger than
+ * the width of the type to be undefined behaviours.  We treat negative shifts
+ * as shifts in the other direction and too large shifts push everything out.
+ *
+ * Signed left shifts that move a 1 bit into or out of the sign bit are
+ * undefined.  Right shifts of negative values are implemenetation defined.
+ */
+
+/*
+ * Signed shift left fails if set bits are shifted into or out of the sign bit.
+ * Shifts zero bits into the lower order end.
+ */
+# define OSSL_SAFE_MATH_SHLS(type_name, type) \
+    static ossl_inline ossl_unused type safe_shr_ ## type_name(type a,      \
+                                                               int n,       \
+                                                               int *err);   \
+    static ossl_inline ossl_unused type safe_shl_ ## type_name(type a,      \
+                                                               int n,       \
+                                                               int *err)    \
+    {                                                                       \
+        if (n == 0)                                                         \
+            return a;                                                       \
+        if (n < 0)                                                          \
+            return safe_shr_ ## type_name(a, -n, err);                      \
+        if (n >= 8 * (int)sizeof(type)) {                                   \
+            *err |= a != 0;                                                 \
+            return 0;                                                       \
+        }                                                                   \
+        if ((a & ~((1 << ((int)sizeof(type) * 8 - n - 1)) - 1)) != 0) {     \
+            *err = 1;                                                       \
+            return 0;                                                       \
+        }                                                                   \
+        return a << n;                                                      \
+    }
+
+/*
+ * Signed shift right inserts zero bits into the top.
+ */
+# define OSSL_SAFE_MATH_SHRS(type_name, type) \
+    static ossl_inline ossl_unused type safe_shr_ ## type_name(type a,      \
+                                                               int n,       \
+                                                               int *err)    \
+    {                                                                       \
+        if (n < 0)                                                          \
+            return safe_shl_ ## type_name(a, -n, err);                      \
+        if (n >= 8 * (int)sizeof(type))                                     \
+            return 0;                                                       \
+        return (a >> n) & ((1 << ((int)sizeof(type) * 8 - n)) - 1);         \
+    }
+
+/*
+ * Arithmetic signed shift right replicates the sign bit into the top.
+ */
+# define OSSL_SAFE_MATH_ASHRS(type_name, type) \
+    static ossl_inline ossl_unused type safe_ashr_ ## type_name(type a,     \
+                                                                int n,      \
+                                                                int *err)   \
+    {                                                                       \
+        if (n < 0) {                                                        \
+            *err |= a != 0;                                                 \
+            return 0;                                                       \
+        }                                                                   \
+        if (n >= 8 * (int)sizeof(type))                                     \
+            return a < 0 ? -1 : 0;                                          \
+        if (a < 0)                                                          \
+            return (a >> n) | ~((1 << ((int)sizeof(type) * 8 - n)) - 1);    \
+        return (a >> n) & ((1 << ((int)sizeof(type) * 8 - n)) - 1);         \
+    }
+
+/*
+ * Unsigned left shift, inserts zero bit at the top.
+ */
+# define OSSL_SAFE_MATH_SHLU(type_name, type) \
+    static ossl_inline ossl_unused type safe_shl_ ## type_name(type a,      \
+                                                               int n)       \
+    {                                                                       \
+        if (n < 0) {                                                        \
+            if (n <= -8 * (int)sizeof(type))                                \
+                return 0;                                                   \
+            return a >> -n;                                                 \
+        }                                                                   \
+        if (n >= 8 * (int)sizeof(type))                                     \
+            return 0;                                                       \
+        return a << n;                                                      \
+    }
+
+/*
+ * Unsigned right shift, inserts zero bit at the bottom.
+ */
+# define OSSL_SAFE_MATH_SHRU(type_name, type) \
+    static ossl_inline ossl_unused type safe_shr_ ## type_name(type a,      \
+                                                               int n)       \
+    {                                                                       \
+        if (n < 0) {                                                        \
+            if (n <= -8 * (int)sizeof(type))                                \
+                return 0;                                                   \
+            return a << -n;                                                 \
+        }                                                                   \
+        if (n >= 8 * (int)sizeof(type))                                     \
+            return 0;                                                       \
+        return a >> n;                                                      \
+    }
+
+/*
  * Safe fused multiply divide helpers
  *
  * These are a bit obscure:
@@ -404,9 +510,9 @@
     }
 
 /* Calculate ranges of types */
-# define OSSL_SAFE_MATH_MINS(type) ((type)1 << (sizeof(type) * 8 - 1))
-# define OSSL_SAFE_MATH_MAXS(type) (~OSSL_SAFE_MATH_MINS(type))
-# define OSSL_SAFE_MATH_MAXU(type) (~(type)0)
+# define OSSL_SAFE_MATH_MINS(type) (type)((type)1 << (sizeof(type) * 8 - 1))
+# define OSSL_SAFE_MATH_MAXS(type) (type)(~OSSL_SAFE_MATH_MINS(type))
+# define OSSL_SAFE_MATH_MAXU(type) (type)(~(type)0)
 
 /*
  * Wrapper macros to create all the functions of a given type
@@ -426,7 +532,10 @@
                                 OSSL_SAFE_MATH_MAXS(type))              \
     OSSL_SAFE_MATH_MULDIVS(type_name, type, OSSL_SAFE_MATH_MAXS(type))  \
     OSSL_SAFE_MATH_NEGS(type_name, type, OSSL_SAFE_MATH_MINS(type))     \
-    OSSL_SAFE_MATH_ABSS(type_name, type, OSSL_SAFE_MATH_MINS(type))
+    OSSL_SAFE_MATH_ABSS(type_name, type, OSSL_SAFE_MATH_MINS(type))     \
+    OSSL_SAFE_MATH_SHLS(type_name, type)                                \
+    OSSL_SAFE_MATH_SHRS(type_name, type)                                \
+    OSSL_SAFE_MATH_ASHRS(type_name, type)
 
 # define OSSL_SAFE_MATH_UNSIGNED(type_name, type) \
     OSSL_SAFE_MATH_ADDU(type_name, type, OSSL_SAFE_MATH_MAXU(type))     \
@@ -438,6 +547,8 @@
                                 OSSL_SAFE_MATH_MAXU(type))              \
     OSSL_SAFE_MATH_MULDIVU(type_name, type, OSSL_SAFE_MATH_MAXU(type))  \
     OSSL_SAFE_MATH_NEGU(type_name, type)                                \
-    OSSL_SAFE_MATH_ABSU(type_name, type)
+    OSSL_SAFE_MATH_ABSU(type_name, type)                                \
+    OSSL_SAFE_MATH_SHLU(type_name, type)                                \
+    OSSL_SAFE_MATH_SHRU(type_name, type)
 
 #endif                          /* OSSL_INTERNAL_SAFE_MATH_H */
