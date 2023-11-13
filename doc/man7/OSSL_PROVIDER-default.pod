@@ -269,8 +269,7 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =head2 Random Number Generation
 
-The base provider all includes the "SEED-SRC" algorithm, which has the property
-"fips=yes", to allow it to be used together with the FIPS provider.
+The base provider also includes the "SEED-SRC" algorithm.
 
 =over 4
 
@@ -288,9 +287,8 @@ The base provider all includes the "SEED-SRC" algorithm, which has the property
 
 =head2 Asymmetric Key Encoder
 
-The base provider also includes all of these encoding algorithms . Some of these
-have the property "fips=yes", to allow them to be used together with the FIPS
-provider.
+The base provider also includes all of these encoding algorithms.  Some of
+these may be used in combination with the FIPS provider.
 
 =over 4
 
@@ -320,9 +318,8 @@ provider.
 
 =head2 Asymmetric Key Decoder
 
-The base provider also includes all of these decoding algorithms . Some of these
-have the property "fips=yes", to allow them to be used together with the FIPS
-provider.
+The base provider also includes all of these decoding algorithms.  Some of
+these may be used in combination with the FIPS provider.
 
 =over 4
 
@@ -351,7 +348,6 @@ provider.
 =item DER
 
 =back
-
 
 =head2 Stores
 
