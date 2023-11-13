@@ -40,9 +40,16 @@ static int test_txfc(int is_stream)
     if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit_local(txfc, 0), 2000))
         goto err;
 
-    if (is_stream && !TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc, 0),
-                                       2000))
+    if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit_local(txfc, 100), 1900))
         goto err;
+
+    if (is_stream) {
+        if ( !TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc, 0), 2000))
+            goto err;
+
+        if ( !TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc, 100), 1900))
+            goto err;
+    }
 
     if (!TEST_false(ossl_quic_txfc_has_become_blocked(txfc, 0)))
         goto err;
@@ -138,6 +145,9 @@ static int test_txfc(int is_stream)
         ossl_quic_txfc_has_become_blocked(parent_txfc, 1);
 
     if (is_stream) {
+        if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc, 400), 0))
+            goto err;
+
         if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, 399)))
             goto err;
 
