@@ -269,7 +269,7 @@ static int stream_has_data_to_send(QUIC_STREAM *s)
                                             &num_iov))
         return 0;
 
-    fc_credit = ossl_quic_txfc_get_credit(&s->txfc);
+    fc_credit = ossl_quic_txfc_get_credit(&s->txfc, 0);
     fc_swm    = ossl_quic_txfc_get_swm(&s->txfc);
     fc_limit  = fc_swm + fc_credit;
 

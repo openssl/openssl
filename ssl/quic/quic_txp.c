@@ -2111,7 +2111,8 @@ static int txp_plan_stream_chunk(OSSL_QUIC_TX_PACKETISER *txp,
                                  QUIC_SSTREAM *sstream,
                                  QUIC_TXFC *stream_txfc,
                                  size_t skip,
-                                 struct chunk_info *chunk)
+                                 struct chunk_info *chunk,
+                                 uint64_t consumed)
 {
     uint64_t fc_credit, fc_swm, fc_limit;
 
@@ -2130,7 +2131,7 @@ static int txp_plan_stream_chunk(OSSL_QUIC_TX_PACKETISER *txp,
     chunk->orig_len = chunk->shdr.len;
 
     /* Clamp according to connection and stream-level TXFC. */
-    fc_credit   = ossl_quic_txfc_get_credit(stream_txfc);
+    fc_credit   = ossl_quic_txfc_get_credit(stream_txfc, consumed);
     fc_swm      = ossl_quic_txfc_get_swm(stream_txfc);
     fc_limit    = fc_swm + fc_credit;
 
@@ -2166,7 +2167,8 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
                                       QUIC_STREAM *next_stream,
                                       int *have_ack_eliciting,
                                       int *packet_full,
-                                      uint64_t *new_credit_consumed)
+                                      uint64_t *new_credit_consumed,
+                                      uint64_t conn_consumed)
 {
     int rc = 0;
     struct chunk_info chunks[2] = {0};
@@ -2194,7 +2196,8 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
      * determining when we can use an implicit length in a STREAM frame.
      */
     for (i = 0; i < 2; ++i) {
-        if (!txp_plan_stream_chunk(txp, h, sstream, stream_txfc, i, &chunks[i]))
+        if (!txp_plan_stream_chunk(txp, h, sstream, stream_txfc, i, &chunks[i],
+                                   conn_consumed))
             goto err;
 
         if (i == 0 && !chunks[i].valid) {
@@ -2232,7 +2235,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
         if (i > 0)
             /* Load next chunk for lookahead. */
             if (!txp_plan_stream_chunk(txp, h, sstream, stream_txfc, i + 1,
-                                       &chunks[(i + 1) % 2]))
+                                       &chunks[(i + 1) % 2], conn_consumed))
                 goto err;
 
         /*
@@ -2382,6 +2385,7 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
     uint64_t cwm;
     QUIC_STREAM *stream, *snext;
     struct tx_helper *h = &pkt->h;
+    uint64_t conn_consumed = 0;
 
     for (ossl_quic_stream_iter_init(&it, txp->args.qsm, 1);
          it.stream != NULL;) {
@@ -2517,11 +2521,13 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
                                             snext,
                                             have_ack_eliciting,
                                             &packet_full,
-                                            &stream->txp_txfc_new_credit_consumed)) {
+                                            &stream->txp_txfc_new_credit_consumed,
+                                            conn_consumed)) {
                 /* Fatal error (allocation, etc.) */
                 txp_enlink_tmp(tmp_head, stream);
                 return 0;
             }
+            conn_consumed += stream->txp_txfc_new_credit_consumed;
 
             if (packet_full) {
                 txp_enlink_tmp(tmp_head, stream);
