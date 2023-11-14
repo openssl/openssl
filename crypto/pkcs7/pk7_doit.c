@@ -1234,13 +1234,14 @@ static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
                          void *value)
 {
     X509_ATTRIBUTE *attr = NULL;
-    int i;
+    int i, n;
 
     if (*sk == NULL) {
         if ((*sk = sk_X509_ATTRIBUTE_new_null()) == NULL)
             return 0;
     }
-    for (i = 0; i < sk_X509_ATTRIBUTE_num(*sk); i++) {
+    n = sk_X509_ATTRIBUTE_num(*sk);
+    for (i = 0; i < n; i++) {
         attr = sk_X509_ATTRIBUTE_value(*sk, i);
         if (OBJ_obj2nid(X509_ATTRIBUTE_get0_object(attr)) == nid)
             goto end;
@@ -1250,8 +1251,11 @@ static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
 
  end:
     attr = X509_ATTRIBUTE_create(nid, atrtype, value);
-    if (attr == NULL)
+    if (attr == NULL) {
+        if (i == n)
+            sk_X509_ATTRIBUTE_pop(*sk);
         return 0;
+    }
     X509_ATTRIBUTE_free(sk_X509_ATTRIBUTE_value(*sk, i));
     (void) sk_X509_ATTRIBUTE_set(*sk, i, attr);
     return 1;
