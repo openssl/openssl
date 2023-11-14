@@ -1,9 +1,9 @@
 Notes for Windows platforms
 ===========================
 
- - [Native builds using Visual C++](#native-builds-using-visual-c++)
+ - [Native builds using Visual C++](#native-builds-using-visual-c)
  - [Native builds using Embarcadero C++Builder](
-   #native-builds-using-embarcadero-c++-builder)
+   #native-builds-using-embarcadero-cbuilder)
  - [Native builds using MinGW](#native-builds-using-mingw)
  - [Linking native applications](#linking-native-applications)
  - [Hosted builds using Cygwin](#hosted-builds-using-cygwin)
