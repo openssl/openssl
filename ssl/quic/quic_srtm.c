@@ -8,6 +8,7 @@
  */
 
 #include "internal/quic_srtm.h"
+#include "internal/common.h"
 #include <openssl/lhash.h>
 #include <openssl/core_names.h>
 #include <openssl/rand.h>
@@ -53,8 +54,7 @@ struct srtm_item_st {
 
 struct quic_srtm_st {
     /* Crypto context used to calculate blinded SRTs H(srt). */
-    EVP_MAC                     *blind_mac;
-    EVP_MAC_CTX                 *blind_ctx; /* kept with key */
+    EVP_CIPHER_CTX              *blind_ctx; /* kept with key */
 
     LHASH_OF(SRTM_ITEM)         *items_fwd; /* (opaque)  -> SRTM_ITEM */
     LHASH_OF(SRTM_ITEM)         *items_rev; /* (H(srt))  -> SRTM_ITEM */
@@ -110,37 +110,27 @@ static int srtm_check_lh(QUIC_SRTM *srtm, LHASH_OF(SRTM_ITEM) *lh)
 QUIC_SRTM *ossl_quic_srtm_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
     QUIC_SRTM *srtm = NULL;
-    OSSL_PARAM params[3], *p = params;
     unsigned char key[16];
-
-    if ((srtm = OPENSSL_zalloc(sizeof(*srtm))) == NULL)
-        return NULL;
-
-    /*
-     * Construct our blinding context using a random key. Since this only exists
-     * for side channel mitigation, we don't need to make the key configurable
-     * and simply use a random key each time. We never reconfigure the
-     * EVP_MAC_CTX after setup so we don't need to keep the key around.
-     */
-    if ((srtm->blind_mac = EVP_MAC_fetch(libctx, "CMAC", propq)) == NULL)
-        goto err;
-
-    if ((srtm->blind_ctx = EVP_MAC_CTX_new(srtm->blind_mac)) == NULL)
-        goto err;
-
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
-                                            "AES-128-CBC", 12);
-    if (propq != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
-                                                (char *)propq, 0);
-
-    *p++ = OSSL_PARAM_construct_end();
+    EVP_CIPHER *ecb = NULL;
 
     if (RAND_priv_bytes_ex(libctx, key, sizeof(key), sizeof(key) * 8) != 1)
         goto err;
 
-    if (!EVP_MAC_init(srtm->blind_ctx, key, sizeof(key), params))
+    if ((srtm = OPENSSL_zalloc(sizeof(*srtm))) == NULL)
+        return NULL;
+
+    /* Use AES-128-ECB as a permutation over 128-bit SRTs. */
+    if ((ecb = EVP_CIPHER_fetch(libctx, "AES-128-ECB", propq)) == NULL)
         goto err;
+
+    if ((srtm->blind_ctx = EVP_CIPHER_CTX_new()) == NULL)
+        goto err;
+
+    if (!EVP_EncryptInit_ex2(srtm->blind_ctx, ecb, key, NULL, NULL))
+        goto err;
+
+    EVP_CIPHER_free(ecb);
+    ecb = NULL;
 
     /* Create mappings. */
     if ((srtm->items_fwd = lh_SRTM_ITEM_new(items_fwd_hash, items_fwd_cmp)) == NULL
@@ -155,6 +145,7 @@ err:
      * mitigation.
      */
     ossl_quic_srtm_free(srtm);
+    EVP_CIPHER_free(ecb);
     return NULL;
 }
 
@@ -181,8 +172,7 @@ void ossl_quic_srtm_free(QUIC_SRTM *srtm)
         lh_SRTM_ITEM_free(srtm->items_fwd);
     }
 
-    EVP_MAC_CTX_free(srtm->blind_ctx);
-    EVP_MAC_free(srtm->blind_mac);
+    EVP_CIPHER_CTX_free(srtm->blind_ctx);
     OPENSSL_free(srtm);
 }
 
@@ -272,18 +262,18 @@ static void sorted_insert_srt(SRTM_ITEM *head, SRTM_ITEM *item, SRTM_ITEM **new_
 static int srtm_compute_blinded(QUIC_SRTM *srtm, SRTM_ITEM *item,
                                 const QUIC_STATELESS_RESET_TOKEN *token)
 {
-    size_t outl = 0;
+    int outl = 0;
 
-    if (!EVP_MAC_init(srtm->blind_ctx, NULL, 0, NULL))
+    /*
+     * We use AES-128-ECB as a permutation using a random key to facilitate
+     * blinding for side-channel purposes. Encrypt the token as a single AES
+     * block.
+     */
+    if (!EVP_EncryptUpdate(srtm->blind_ctx, item->srt_blinded, &outl,
+                           (const unsigned char *)token, sizeof(*token)))
         return 0;
 
-    if (!EVP_MAC_update(srtm->blind_ctx, (const unsigned char *)token,
-                        sizeof(*token)))
-        return 0;
-
-    if (!EVP_MAC_final(srtm->blind_ctx, item->srt_blinded,
-                       &outl, sizeof(item->srt_blinded))
-        || outl != sizeof(item->srt_blinded))
+    if (!ossl_assert(outl == sizeof(*token)))
         return 0;
 
     return 1;
@@ -544,7 +534,6 @@ void ossl_quic_srtm_check(const QUIC_SRTM *srtm)
     ++token_next;
 
     assert(srtm != NULL);
-    assert(srtm->blind_mac != NULL);
     assert(srtm->blind_ctx != NULL);
     assert(srtm->items_fwd != NULL);
     assert(srtm->items_rev != NULL);
