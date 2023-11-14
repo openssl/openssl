@@ -98,12 +98,18 @@ int PKCS7_add_attrib_content_type(PKCS7_SIGNER_INFO *si, ASN1_OBJECT *coid)
 
 int PKCS7_add0_attrib_signing_time(PKCS7_SIGNER_INFO *si, ASN1_TIME *t)
 {
-    if (t == NULL && (t = X509_gmtime_adj(NULL, 0)) == NULL) {
+    ASN1_TIME *tmp = NULL;
+
+    if (t == NULL && (tmp = t = X509_gmtime_adj(NULL, 0)) == NULL) {
         ERR_raise(ERR_LIB_PKCS7, ERR_R_X509_LIB);
         return 0;
     }
-    return PKCS7_add_signed_attribute(si, NID_pkcs9_signingTime,
-                                      V_ASN1_UTCTIME, t);
+    if (!PKCS7_add_signed_attribute(si, NID_pkcs9_signingTime,
+                                    V_ASN1_UTCTIME, t)) {
+        ASN1_STRING_free(tmp);
+        return 0;
+    }
+    return 1;
 }
 
 int PKCS7_add1_attrib_digest(PKCS7_SIGNER_INFO *si,
