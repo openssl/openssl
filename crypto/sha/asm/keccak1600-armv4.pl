@@ -932,19 +932,28 @@ SHA3_absorb:
 .size	SHA3_absorb,.-SHA3_absorb
 ___
 }
-{ my ($out,$len,$A_flat,$bsz) = map("r$_", (4,5,10,12));
+
+{ my ($out,$len,$A_flat,$bsz,$next) = map("r$_", (4,5,10,12,11));
+
+
+# void SHA3_squeeze(uint64_t A[5][5],
+#                   unsigned char *out, size_t len, size_t r, int next)
+#
+# The first 4 parameters are passed in via r0..r3,
+# next is passed on the stack [sp, #0]
 
 $code.=<<___;
 .global	SHA3_squeeze
 .type	SHA3_squeeze,%function
 .align	5
 SHA3_squeeze:
-	stmdb	sp!,{r0,r3-r10,lr}
+	stmdb	sp!,{r0,r3-r11,lr} @ push 11 registers
 
 	mov	$A_flat,r0
 	mov	$out,r1
 	mov	$len,r2
 	mov	$bsz,r3
+	ldr	$next, [sp, #48]  @ next is after the 11 pushed registers (12*4)
 
 #ifdef	__thumb2__
 	mov	r9,#0x00ff00ff
@@ -966,8 +975,8 @@ SHA3_squeeze:
 	stmdb	sp!,{r6-r9}
 
 	mov	r14,$A_flat
-	cmp	r4, #0                 @ r4 = 'next' argument
-	bne	.Lnext_block
+	cmp	$next, #1
+	beq	.Lnext_block
 	b	.Loop_squeeze
 
 .align	4
@@ -1081,9 +1090,9 @@ SHA3_squeeze:
 .Lsqueeze_done:
 	add	sp,sp,#24
 #if __ARM_ARCH__>=5
-	ldmia	sp!,{r4-r10,pc}
+	ldmia	sp!,{r4-r11,pc}
 #else
-	ldmia	sp!,{r4-r10,lr}
+	ldmia	sp!,{r4-r11,lr}
 	tst	lr,#1
 	moveq	pc,lr		@ be binary compatible with V4, yet
 	bx	lr		@ interoperable with Thumb ISA:-)
