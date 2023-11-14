@@ -59,18 +59,16 @@ The OpenSSL base provider supports these operations and algorithms:
 
 =head2 Random Number Generation
 
-The default provider also includes the "SEED-SRC" algorithm.
-
 =over 4
 
 =item SEED-SRC,  see L<EVP_RAND-SEED-SRC(7)>
 
 =back
 
-=head2 Asymmetric Key Encoder
+In addition to this provider, the "SEED-SRC" algorithm is also available in the
+default provider.
 
-The default provider also includes all of these encoding algorithms. Some of
-these may be used in combination with the FIPS provider.
+=head2 Asymmetric Key Encoder
 
 =over 4
 
@@ -98,10 +96,11 @@ these may be used in combination with the FIPS provider.
 
 =back
 
-=head2 Asymmetric Key Decoder
+In addition to this provider, all of these encoding algorithms are also
+available in the default provider. Some of these algorithms may be used in
+combination with the FIPS provider.
 
-The default provider also includes all of these decoding algorithms.  Some of
-these may be used in combination with the FIPS provider.
+=head2 Asymmetric Key Decoder
 
 =over 4
 
@@ -131,10 +130,11 @@ these may be used in combination with the FIPS provider.
 
 =back
 
+In addition to this provider, all of these decoding algorithms are also
+available in the default provider. Some of these algorithms may be used in
+combination with the FIPS provider.
 
 =head2 Stores
-
-The default provider also includes all of these store algorithms.
 
 =over 4
 
@@ -143,6 +143,9 @@ The default provider also includes all of these store algorithms.
 =item org.openssl.winstore
 
 =back
+
+In addition to this provider, all of these store algorithms are also
+available in the default provider.
 
 =head1 SEE ALSO
 
