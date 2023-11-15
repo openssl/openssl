@@ -28,8 +28,12 @@ int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si,
     }
     seq->length = ASN1_item_i2d((ASN1_VALUE *)cap, &seq->data,
                                 ASN1_ITEM_rptr(X509_ALGORS));
-    return PKCS7_add_signed_attribute(si, NID_SMIMECapabilities,
-                                      V_ASN1_SEQUENCE, seq);
+    if (!PKCS7_add_signed_attribute(si, NID_SMIMECapabilities,
+                                    V_ASN1_SEQUENCE, seq)) {
+        ASN1_STRING_free(seq);
+        return 0;
+    }
+    return 1;
 }
 
 STACK_OF(X509_ALGOR) *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si)
