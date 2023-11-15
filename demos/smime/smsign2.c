@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* S/MIME signing example: 2 signers. OpenSSL 0.9.9 only */
+/* S/MIME signing example: 2 signers */
 #include <openssl/pem.h>
 #include <openssl/pkcs7.h>
 #include <openssl/err.h>
@@ -30,7 +30,8 @@ int main(int argc, char **argv)
 
     scert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
 
-    BIO_reset(tbio);
+    if (BIO_reset(tbio) < 0)
+        goto err;
 
     skey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
 
@@ -43,7 +44,8 @@ int main(int argc, char **argv)
 
     scert2 = PEM_read_bio_X509(tbio, NULL, 0, NULL);
 
-    BIO_reset(tbio);
+    if (BIO_reset(tbio) < 0)
+        goto err;
 
     skey2 = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
 
@@ -77,8 +79,9 @@ int main(int argc, char **argv)
     if (!SMIME_write_PKCS7(out, p7, in, PKCS7_STREAM))
         goto err;
 
-    ret = EXIT_SUCCESS;
+    printf("Success\n");
 
+    ret = EXIT_SUCCESS;
  err:
     if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Signing Data\n");

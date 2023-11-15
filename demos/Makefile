@@ -1,4 +1,18 @@
-MODULES=bio digest encode encrypt kdf keyexch mac pkey signature sslecho
+MODULES = bio \
+          cipher \
+          cms \
+          digest \
+          encode \
+          encrypt \
+          guide \
+          http3 \
+          kdf \
+          keyexch \
+          mac \
+          pkey \
+          signature \
+          smime \
+          sslecho
 
 all:
 	@set -e; for i in $(MODULES); do \

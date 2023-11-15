@@ -30,6 +30,13 @@ OpenSSL 3.3
 
    *Barry Fussell*
 
+ * The build of exporters (such as `.pc` files for pkg-config) cleaned up to
+   be less hard coded in the build file templates, and to allow easier
+   addition of more exporters.  With that, an exporter for CMake is also
+   added.
+
+   *Richard Levitte*
+
  * The BLAKE2s hash algorithm matches BLAKE2b's support
    for configurable output length.
 

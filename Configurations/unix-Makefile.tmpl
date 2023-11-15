@@ -199,6 +199,18 @@ INSTALL_PROGRAMS={-
                         grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
                         @{$unified_info{programs}}))
 -}
+INSTALL_EXPORTERS_PKGCONFIG={-
+        join(" \\\n" . ' ' x 28,
+             fill_lines(" ", $COLUMNS - 28,
+                        grep { $unified_info{attributes}->{generate}->{$_}->{exporter} eq 'pkg-config'}
+                        sort keys %{$unified_info{generate}}))
+-}
+INSTALL_EXPORTERS_CMAKE={-
+        join(" \\\n" . ' ' x 24,
+             fill_lines(" ", $COLUMNS - 24,
+                        grep { $unified_info{attributes}->{generate}->{$_}->{exporter} eq 'cmake'}
+                        sort keys %{$unified_info{generate}}))
+-}
 BIN_SCRIPTS={-
         join(" \\\n" . ' ' x 12,
              fill_lines(" ", $COLUMNS - 12,
@@ -319,6 +331,9 @@ BINDIR={- our $bindir = $config{bindir};
           file_name_is_absolute($bindir) ? "" : $bindir -}
 bindir={- file_name_is_absolute($bindir)
           ? $bindir : '$(INSTALLTOP)/$(BINDIR)' -}
+
+PKGCONFIGDIR=$(libdir)/pkgconfig
+CMAKECONFIGDIR=$(libdir)/cmake/OpenSSL
 
 MANDIR=$(INSTALLTOP)/share/man
 DOCDIR=$(INSTALLTOP)/share/doc/$(BASENAME)
@@ -521,7 +536,7 @@ build_man_docs: $(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7) ## Create manpag
 build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7) ## Create HTML documentation
 
 build_generated: $(GENERATED_MANDATORY)
-build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
+build_libs_nodep: $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // platform->sharedlib_import($_) // platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
 build_modules_nodep: $(MODULES)
 build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
 
@@ -606,7 +621,6 @@ clean: libclean ## Clean the workspace, keep the configuration
 	$(RM) tags TAGS doc-nits md-nits
 	$(RM) -r test/test-runs
 	$(RM) providers/fips*.new
-	$(RM) openssl.pc libcrypto.pc libssl.pc
 	-find . -type l \! -name '.*' -exec $(RM) {} \;
 
 distclean: clean ## Clean and remove the configuration
@@ -776,16 +790,20 @@ install_dev: install_runtime_libs
 		: {- output_off() if sharedaix(); output_on(); "" -}; \
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(libdir)/pkgconfig"
-	@$(ECHO) "install libcrypto.pc -> $(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc"
-	@cp libcrypto.pc "$(DESTDIR)$(libdir)/pkgconfig"
-	@chmod 644 "$(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc"
-	@$(ECHO) "install libssl.pc -> $(DESTDIR)$(libdir)/pkgconfig/libssl.pc"
-	@cp libssl.pc "$(DESTDIR)$(libdir)/pkgconfig"
-	@chmod 644 "$(DESTDIR)$(libdir)/pkgconfig/libssl.pc"
-	@$(ECHO) "install openssl.pc -> $(DESTDIR)$(libdir)/pkgconfig/openssl.pc"
-	@cp openssl.pc "$(DESTDIR)$(libdir)/pkgconfig"
-	@chmod 644 "$(DESTDIR)$(libdir)/pkgconfig/openssl.pc"
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(PKGCONFIGDIR)"
+	@for e in $(INSTALL_EXPORTERS_PKGCONFIG); do \
+		fn=`basename $$e`; \
+		$(ECHO) "install $$e -> $(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
+		cp $$e "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
+		chmod 644 "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
+	done
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(CMAKECONFIGDIR)
+	@for e in $(INSTALL_EXPORTERS_CMAKE); do \
+		fn=`basename $$e`; \
+		$(ECHO) "install $$e -> $(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
+		cp $$e $(DESTDIR)$(CMAKECONFIGDIR)/$$fn; \
+		chmod 644 $(DESTDIR)$(CMAKECONFIGDIR)/$$fn; \
+	done
 
 uninstall_dev: uninstall_runtime_libs
 	@$(ECHO) "*** Uninstalling development files"
@@ -829,10 +847,16 @@ uninstall_dev: uninstall_runtime_libs
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
-	$(RM) "$(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc"
-	$(RM) "$(DESTDIR)$(libdir)/pkgconfig/libssl.pc"
-	$(RM) "$(DESTDIR)$(libdir)/pkgconfig/openssl.pc"
-	-$(RMDIR) "$(DESTDIR)$(libdir)/pkgconfig"
+	@for e in $(INSTALL_EXPORTERS_PKGCONFIG); do \
+		fn=`basename "$$e"`; \
+		$(RM) "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
+	done
+	@for e in $(INSTALL_EXPORTERS_CMAKE); do \
+		fn=`basename "$$e"`; \
+		$(RM) "$(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
+	done
+	-$(RMDIR) "$(DESTDIR)$(PKGCONFIGDIR)"
+	-$(RMDIR) "$(DESTDIR)$(CMAKECONFIGDIR)"
 	-$(RMDIR) "$(DESTDIR)$(libdir)"
 
 _install_modules_deps: install_runtime_libs build_modules
@@ -1434,59 +1458,6 @@ $(BLDDIR)/apps/openssl.cnf: Makefile
 FORCE:
 
 # Building targets ###################################################
-
-libcrypto.pc libssl.pc openssl.pc: Makefile $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // platform->sharedlib_import($_) // platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
-
-libcrypto.pc:
-	@ ( echo 'prefix=$(INSTALLTOP)'; \
-	    echo 'exec_prefix=$${prefix}'; \
-	    if [ -n "$(LIBDIR)" ]; then \
-	        echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
-	    else \
-	        echo 'libdir=$(libdir)'; \
-	    fi; \
-	    echo 'includedir=$${prefix}/include'; \
-	    echo 'enginesdir=$${libdir}/engines-{- $sover_dirname -}'; \
-	    echo 'modulesdir=$${libdir}/ossl-modules'; \
-	    echo ''; \
-	    echo 'Name: OpenSSL-libcrypto'; \
-	    echo 'Description: OpenSSL cryptography library'; \
-	    echo 'Version: '$(VERSION); \
-	    echo 'Libs: -L$${libdir} -lcrypto'; \
-	    echo 'Libs.private: $(LIB_EX_LIBS)'; \
-	    echo 'Cflags: -I$${includedir}' ) > libcrypto.pc
-
-libssl.pc:
-	@ ( echo 'prefix=$(INSTALLTOP)'; \
-	    echo 'exec_prefix=$${prefix}'; \
-	    if [ -n "$(LIBDIR)" ]; then \
-	        echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
-	    else \
-	        echo 'libdir=$(libdir)'; \
-	    fi; \
-	    echo 'includedir=$${prefix}/include'; \
-	    echo ''; \
-	    echo 'Name: OpenSSL-libssl'; \
-	    echo 'Description: Secure Sockets Layer and cryptography libraries'; \
-	    echo 'Version: '$(VERSION); \
-	    echo 'Requires.private: libcrypto'; \
-	    echo 'Libs: -L$${libdir} -lssl'; \
-	    echo 'Cflags: -I$${includedir}' ) > libssl.pc
-
-openssl.pc:
-	@ ( echo 'prefix=$(INSTALLTOP)'; \
-	    echo 'exec_prefix=$${prefix}'; \
-	    if [ -n "$(LIBDIR)" ]; then \
-	        echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
-	    else \
-	        echo 'libdir=$(libdir)'; \
-	    fi; \
-	    echo 'includedir=$${prefix}/include'; \
-	    echo ''; \
-	    echo 'Name: OpenSSL'; \
-	    echo 'Description: Secure Sockets Layer and cryptography libraries and tools'; \
-	    echo 'Version: '$(VERSION); \
-	    echo 'Requires: libssl libcrypto' ) > openssl.pc
 
 Makefile: configdata.pm \
           {- join(" \\\n" . ' ' x 10,

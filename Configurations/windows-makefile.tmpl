@@ -155,6 +155,11 @@ MISC_SCRIPTS={-
                          && $unified_info{attributes}->{scripts}->{$_}->{misc} }
                   @{$unified_info{scripts}})
 -}
+INSTALL_EXPORTERS_CMAKE={-
+        join(" ", map { quotify1($_) }
+                  grep { $unified_info{attributes}->{generate}->{$_}->{exporter} eq 'cmake'}
+                  sort keys %{$unified_info{generate}})
+-}
 IMAGEDOCS1={- our @IMAGEDOCS1 = @{$unified_info{imagedocs}->{man1}};
              join(" ", @IMAGEDOCS1) -}
 IMAGEDOCS3={- our @IMAGEDOCS3 = @{$unified_info{imagedocs}->{man3}};
@@ -248,6 +253,8 @@ MODULESDIR=$(MODULESDIR_dev)$(MODULESDIR_dir)
 # $(libdir) is chosen to be compatible with the GNU coding standards
 libdir={- file_name_is_absolute($libdir)
           ? $libdir : '$(INSTALLTOP)\$(LIBDIR)' -}
+
+CMAKECONFIGDIR=$(libdir)\cmake\OpenSSL
 
 ##### User defined commands and flags ################################
 
@@ -557,6 +564,8 @@ install_dev: install_runtime_libs
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_LIBS) "$(libdir)"
 	@if "$(SHLIBS)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" ossl_static.pdb "$(libdir)"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(CMAKECONFIGDIR)"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_EXPORTERS_CMAKE) "$(CMAKECONFIGDIR)"
 
 uninstall_dev:
 

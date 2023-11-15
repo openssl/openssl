@@ -1,20 +1,21 @@
 #
-# To run the demos when linked with a shared library (default):
+# To run the demos when linked with a shared library (default) ensure
+# that libcrypto is on the library path. For example:
 #
 #    LD_LIBRARY_PATH=../.. ./rsa_encrypt
 
-CFLAGS = -I../../include -g
-LDFLAGS = -L../..
-LDLIBS = -lcrypto
+TESTS = rsa_encrypt
 
-TESTS=rsa_encrypt
+CFLAGS  = -I../../include -g -Wall
+LDFLAGS = -L../..
+LDLIBS  = -lcrypto
 
 all: $(TESTS)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $<
-
 rsa_encrypt: rsa_encrypt.o
+
+$(TESTS):
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
 
 clean:
 	$(RM) *.o $(TESTS)

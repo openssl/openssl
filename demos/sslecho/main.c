@@ -156,7 +156,7 @@ int main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
 
     /* Splash */
-    printf("\nsslecho : Simple Echo Client/Server (OpenSSL 3.0.1-dev) : %s : %s\n\n", __DATE__,
+    printf("\nsslecho : Simple Echo Client/Server : %s : %s\n\n", __DATE__,
     __TIME__);
 
     /* Need to know if client or server */

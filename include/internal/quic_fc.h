@@ -61,16 +61,18 @@ int ossl_quic_txfc_bump_cwm(QUIC_TXFC *txfc, uint64_t cwm);
  *
  * If called on a stream-level TXFC, ossl_quic_txfc_get_credit is called on
  * the connection-level TXFC as well, and the lesser of the two values is
- * returned.
+ * returned. The consumed value is the amount already consumed on the connection
+ * level TXFC.
  */
-uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc);
+uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc, uint64_t consumed);
 
 /*
  * Like ossl_quic_txfc_get_credit(), but when called on a stream-level TXFC,
  * retrieves only the stream-level credit value and does not clamp it based on
- * connection-level flow control.
+ * connection-level flow control. Any credit value is reduced by the consumed
+ * amount.
  */
-uint64_t ossl_quic_txfc_get_credit_local(QUIC_TXFC *txfc);
+uint64_t ossl_quic_txfc_get_credit_local(QUIC_TXFC *txfc, uint64_t consumed);
 
 /*
  * Consume num_bytes of credit. This is the 'On TX' operation. This should be

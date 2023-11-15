@@ -181,6 +181,8 @@ int main(int argc, char **argv)
     if (verify(libctx, sig, sig_len) == 0)
         goto end;
 
+    printf("Success\n");
+
     ret = EXIT_SUCCESS;
 end:
     OPENSSL_free(sig);
