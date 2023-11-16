@@ -933,7 +933,7 @@ SHA3_absorb:
 ___
 }
 
-{ my ($out,$len,$A_flat,$bsz,$next) = map("r$_", (4,5,10,12,11));
+{ my ($out,$len,$A_flat,$bsz,$next) = map("r$_", (4,5,10,12,0));
 
 
 # void SHA3_squeeze(uint64_t A[5][5],
@@ -947,13 +947,13 @@ $code.=<<___;
 .type	SHA3_squeeze,%function
 .align	5
 SHA3_squeeze:
-	stmdb	sp!,{r0,r3-r11,lr} @ push 11 registers
+	stmdb	sp!,{r0,r3-r10,lr}
 
 	mov	$A_flat,r0
 	mov	$out,r1
 	mov	$len,r2
 	mov	$bsz,r3
-	ldr	$next, [sp, #48]  @ next is after the 11 pushed registers (12*4)
+	ldr	$next, [sp, #40]  @ next is after the 10 pushed registers (10*4)
 
 #ifdef	__thumb2__
 	mov	r9,#0x00ff00ff
@@ -1090,9 +1090,9 @@ SHA3_squeeze:
 .Lsqueeze_done:
 	add	sp,sp,#24
 #if __ARM_ARCH__>=5
-	ldmia	sp!,{r4-r11,pc}
+	ldmia	sp!,{r4-r10,pc}
 #else
-	ldmia	sp!,{r4-r11,lr}
+	ldmia	sp!,{r4-r10,lr}
 	tst	lr,#1
 	moveq	pc,lr		@ be binary compatible with V4, yet
 	bx	lr		@ interoperable with Thumb ISA:-)
