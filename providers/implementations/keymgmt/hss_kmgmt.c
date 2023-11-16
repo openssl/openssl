@@ -36,6 +36,12 @@ static OSSL_FUNC_keymgmt_export_fn hss_export;
 static OSSL_FUNC_keymgmt_import_types_fn hss_imexport_types;
 static OSSL_FUNC_keymgmt_export_types_fn hss_imexport_types;
 
+static OSSL_FUNC_keymgmt_gen_init_fn hss_gen_init;
+static OSSL_FUNC_keymgmt_gen_set_params_fn hss_gen_set_params;
+static OSSL_FUNC_keymgmt_gen_settable_params_fn hss_gen_settable_params;
+static OSSL_FUNC_keymgmt_gen_fn hss_gen;
+static OSSL_FUNC_keymgmt_gen_cleanup_fn hss_gen_cleanup;
+
 #define HSS_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
 
 static void *hss_new_key(void *provctx)
@@ -201,6 +207,158 @@ static int hss_validate(const void *keydata, int selection, int checktype)
     return (key->lms_pub.pub != NULL && key->lms_pub.publen > 0);
 }
 
+struct hss_gen_ctx {
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+    uint32_t levels;
+    uint32_t lms_types[8];
+    uint32_t ots_types[8];
+};
+
+const char *ossl_hss_lms_type_names[] = {
+    OSSL_PKEY_PARAM_HSS_LMS_TYPE_L1,
+    OSSL_PKEY_PARAM_HSS_LMS_TYPE_L2,
+    OSSL_PKEY_PARAM_HSS_LMS_TYPE_L3,
+    OSSL_PKEY_PARAM_HSS_LMS_TYPE_L4,
+    OSSL_PKEY_PARAM_HSS_LMS_TYPE_L5,
+    OSSL_PKEY_PARAM_HSS_LMS_TYPE_L6,
+    OSSL_PKEY_PARAM_HSS_LMS_TYPE_L7,
+    OSSL_PKEY_PARAM_HSS_LMS_TYPE_L8,
+    NULL
+};
+
+const char *ossl_hss_ots_type_names[] = {
+    OSSL_PKEY_PARAM_HSS_OTS_TYPE_L1,
+    OSSL_PKEY_PARAM_HSS_OTS_TYPE_L2,
+    OSSL_PKEY_PARAM_HSS_OTS_TYPE_L3,
+    OSSL_PKEY_PARAM_HSS_OTS_TYPE_L4,
+    OSSL_PKEY_PARAM_HSS_OTS_TYPE_L5,
+    OSSL_PKEY_PARAM_HSS_OTS_TYPE_L6,
+    OSSL_PKEY_PARAM_HSS_OTS_TYPE_L7,
+    OSSL_PKEY_PARAM_HSS_OTS_TYPE_L8,
+    NULL
+};
+
+static void *hss_gen_init(void *provctx, int selection,
+                          const OSSL_PARAM params[])
+{
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
+    struct hss_gen_ctx *gctx = NULL;
+
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
+        return NULL;
+
+    gctx = OPENSSL_zalloc(sizeof(*gctx));
+    if (gctx == NULL)
+        goto err;
+
+    gctx->libctx = libctx;
+    if (!hss_gen_set_params(gctx, params))
+        goto err;
+    return gctx;
+
+err:
+    if (gctx != NULL) {
+    }
+    OPENSSL_free(gctx);
+    return NULL;
+}
+
+static int hss_gen_set_params(void *genctx, const OSSL_PARAM params[])
+{
+    struct hss_gen_ctx *gctx = genctx;
+    const OSSL_PARAM *p, *p1;
+
+    if (params == NULL)
+        return 1;
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_HSS_LEVELS);
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_int(p, &gctx->levels))
+            return 0;
+        if (gctx->levels == 0 || gctx->levels > 8)
+            return 0;
+    }
+    for (i = 0; i < 8; ++i) {
+        p = OSSL_PARAM_locate_const(params, ossl_hss_lms_type_names[i]);
+        if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->lms_types[i]))
+            return 0;
+        p = OSSL_PARAM_locate_const(params, ossl_hss_ots_type_names[i]);
+        if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->ots_types[i]))
+            return 0;
+    }
+    return 1;
+}
+
+static const OSSL_PARAM *hss_gen_settable_params(ossl_unused void *genctx,
+                                                 ossl_unused void *provctx)
+{
+    static OSSL_PARAM settable[] = {
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_LEVELS, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L1, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L2, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L3, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L4, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L5, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L6, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L7, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L8, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L1, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L2, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L3, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L4, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L5, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L6, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L7, NULL),
+        OSSL_PARAM_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L8, NULL),
+        OSSL_PARAM_END
+    };
+    return settable;
+}
+
+static void *hss_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+{
+    struct hss_gen_ctx *gctx = genctx;
+    HSS_KEY *key = NULL;
+
+    if (!ossl_prov_is_running() || gctx == NULL)
+        return NULL;
+
+    for (i = 0; i < gctx->levels; ++i) {
+        if (gctx->lms_types[i] == 0)
+            return NULL;
+        if (gctx->ots_types[i] == 0)
+            return NULL;
+    }
+    while (i < 8) {
+        if (gctx->lms_types[i] != 0)
+            return NULL;
+        if (gctx->ots_types[i] != 0)
+            return NULL;
+        ++i;
+    }
+    key = ossl_hss_key_new(gctx->libctx, NULL);
+    if (key == NULL)
+        return NULL;
+    if (!ossl_hss_generate_key(key, gctx->levels,
+                               gctx->lms_types, gctx->ots_types)) {
+        ossl_hss_key_free(key);
+        key = NULL;
+    }
+    return key;
+}
+
+static void hss_gen_cleanup(void *genctx)
+{
+    struct hss_gen_ctx *gctx = genctx;
+
+    if (gctx == NULL)
+        return;
+    OPENSSL_free(gctx);
+}
+
 const OSSL_DISPATCH ossl_hss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))hss_new_key },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))hss_free_key },
@@ -214,5 +372,12 @@ const OSSL_DISPATCH ossl_hss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))hss_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))hss_imexport_types },
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))hss_load },
+
+    { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))hss_gen_init },
+    { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))hss_gen_set_params },
+    { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
+      (void (*)(void))hss_gen_settable_params },
+    { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))hss_gen },
+    { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))hss_gen_cleanup },
     OSSL_DISPATCH_END
 };

@@ -27,10 +27,10 @@
 /* Section 4.1 */
 typedef struct lm_ots_params_st {
     uint32_t lm_ots_type;
+    uint8_t n;              /* Hash output size in bytes */
+    uint8_t w;              /* The width of the Winternitz coefficients in bits */
+    uint16_t p;             /* The number of n-byte elements used for an LMOTS signature */
     const char *digestname; /* Hash Name */
-    uint32_t n;             /* Hash output size in bytes */
-    uint32_t w;             /* The width of the Winternitz coefficients in bits */
-    uint32_t p;             /* The number of n-byte elements used for LMOTS signature */
 } LM_OTS_PARAMS;
 
 typedef struct lms_params_st {
@@ -40,10 +40,7 @@ typedef struct lms_params_st {
     uint32_t h;
 } LMS_PARAMS;
 
-/*
- * As only signature validation is implemented only public key fields are
- * required in this object.
- */
+
 struct lms_key_st {
     unsigned char *pub;             /* encoded public key data */
     size_t publen;
@@ -52,6 +49,7 @@ struct lms_key_st {
     unsigned char *I;               /* 16 bytes - a pointer into pub or priv_bytes */
     unsigned char *K;               /* n bytes - a pointer into pub */
     uint32_t pub_allocated;         /* If 1 then pub needs to be freed */
+
     unsigned char *priv_seed;       /* Private key seed - a pointer into priv_bytes */
     unsigned char *priv_bytes;      /* A buffer for holding private key data */
     uint32_t q;                     /* Key Pair leaf index (0..(2^h - 1)) */
@@ -59,14 +57,17 @@ struct lms_key_st {
     CRYPTO_REF_COUNT references;
 };
 
-/*
+/* TODO
  * A HSS public key object contains a L value and a LMS public key
  * The lms_pub field must be first so that it is possible to treat a HSS_KEY
  * like a LMS_KEY when a list of LMS_KEY pointers are required.
  */
 struct hss_key_st {
-    struct lms_key_st lms_pub;   /* This MUST BE the first field */
-    uint32_t L;                  /* HSS number of levels */
+    uint32_t L;                     /* HSS number of levels */
+    uint32_t height;
+    STACK_OF(LMS_KEY) *keys;
+    STACK_OF(LMS_SIG) *sigs;
+    uint64_t index;
 };
 
 typedef struct lm_ots_sig_st {
@@ -121,6 +122,7 @@ int ossl_lms_pubkey_from_data(const unsigned char *pub, size_t publen,
                               LMS_KEY *key);
 
 LMS_SIG *ossl_lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub);
+LMS_SIG *ossl_lms_sig_new(void);
 void ossl_lms_sig_free(LMS_SIG *sig);
 
 LM_OTS_CTX *ossl_lm_ots_ctx_new(void);

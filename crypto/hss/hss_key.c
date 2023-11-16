@@ -92,3 +92,90 @@ int ossl_hss_pubkey_from_params(const OSSL_PARAM params[], HSS_KEY *key)
  err:
     return ok;
 }
+
+int ossl_hss_generate_key(HSS_KEY *hsskey, uint32_t levels,
+                          uint32_t *lms_types, uint32_t *ots_types)
+{
+    uint32_t i, height = 0;
+    LMS_SIG *sig;
+    LMS_KEY *key;
+
+    hsskey->L = levels;
+    /* Set up lists of LMS keypairs and signatures */
+    hsskey->keys = sk_LMS_KEY_new_null();
+    if (levels > 1) {
+        hsskey->sigs = sk_LMS_SIG_new_null();
+    }
+
+    for (i = 0; i < levels; ++i) {
+        key = ossl_lms_key_new();
+        key->lms_params = ossl_lms_params_get(lms_types[i]);
+        key->ots_params = ossl_lm_ots_params_get(ots_types[i]);
+        if (key->lms_params == NULL || key->ots_params == NULL)
+            goto err;
+        height += key->lms_params->h;
+        sk_LMS_KEY_push(hsskey->keys, key);
+
+        if (i != 0) {
+            sig = ossl_lms_sig_new();
+            sk_LMS_SIG_push(hsskey->sigs, sig);
+        }
+    }
+    hsskey->height = height;
+    return 1;
+err:
+    sk_LMS_SIG_pop_free(hsskey->sigs, ossl_lms_sig_free);
+    sk_LMS_KEY_pop_free(hsskey->keys, ossl_lms_key_free);
+    return 0;
+}
+
+int ossl_hss_sign(HSS_KEY *hsskey, const unsigned char *msg, size_t msglen,
+                  unsigned char *sig, size_t siglen)
+{
+    LMS_KEY *key, *newkey;
+    uint32_t d, L = hsskey->L;
+    WPACKET pkt;
+
+    for (d = L; d > 0; --d) {
+        key = sk_LMS_KEY_value(hsskey->keys, d - 1);
+        if (key->q < (1 << key->lms_params->h))
+            break;
+    }
+    if (d == 0)
+        return 0;
+    for ( ; d < L; ++d) {
+       /* Replace the exhausted key pair */
+       key = sk_LMS_KEY_value(hsskey->keys, d);
+       ossl_lms_key_free(key);
+       sk_LMS_KEY_set(hsskey->keys, d, newkey);
+
+       sig = ossl_lms_signature(newkey->pub, newkey->publen,
+                                sk_LMS_KEY_value(hsskey->keys, d));
+       sk_LMS_SIG_set(hsskey->sigs, d - 1, sig);
+    }
+    sig = ossl_lms_signature(msg, msglen,
+                             sk_LMS_KEY_value(hsskey->keys, L - 1));
+    sk_LMS_SIG_set(hsskey->sigs, L - 1, sig);
+
+
+    if (!WPACKET_init_static_len(&pkt, sig, siglen, 0)
+            || !WPACKET_put_bytes_u32(&pkt, L- 1));
+            goto err;
+    for (i = 0; i < L - 1; ++i) {
+        /* Write out signed public keys */
+        sig = sk_LMS_SIG_value(hsskey->sigs, i);
+        key = sk_LMS_KEY_value(hsskey->keys, i + 1);
+        if (!WPACKET_memcpy(&pkt, sigdata, sigdata_len)
+            || !WPACKET_memcpy(&pkt, key->pub, key->publen))
+            goto err;
+    }
+    /* Write out the signed message */
+    sig = sk_LMS_SIG_value(hsskey->sigs, L - 1);
+    if (!WPACKET_memcpy(&pkt, sigdata, sigdata_len)
+        ||!WPACKET_get_total_written(&pkt, &labeled_infolen)
+        ||!WPACKET_finish(&pkt))
+        goto err;
+    return 1;
+err:
+    return 0;
+}

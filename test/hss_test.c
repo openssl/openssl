@@ -1392,9 +1392,11 @@ static int hss_pkey_sign(void)
             || !TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1))
         goto err;
 
-    params[0] = OSSL_PARAM_construct_uint32("levels", &levels);
-    params[1] = OSSL_PARAM_construct_uint32("l0_lms_type", &lms_type);
-    params[2] = OSSL_PARAM_construct_uint32("l0_ots_type", &ots_type);
+    params[0] = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_LEVELS, &levels);
+    params[1] = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L1,
+                                            &lms_type);
+    params[2] = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L1,
+                                            &ots_type);
     params[3] = OSSL_PARAM_construct_end();
     if (!TEST_ptr(EVP_PKEY_generate(genctx, &key) <= 0))
         goto err;

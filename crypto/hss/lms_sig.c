@@ -10,6 +10,11 @@
 #include "crypto/hss.h"
 #include "lms_local.h"
 
+LMS_SIG *ossl_lms_sig_new(void)
+{
+    return OPENSSL_zalloc(sizeof(LMS_SIG));
+}
+
 /*
  * Create an LMS_SIG object from a HSS signature byte array in |pkt|.
  * An error is returned if the passed in LMS public key |pub| is not compatible
