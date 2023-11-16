@@ -953,7 +953,7 @@ SHA3_squeeze:
 	mov	$out,r1
 	mov	$len,r2
 	mov	$bsz,r3
-	ldr	$next, [sp, #48]  @ next is after the 11 pushed registers (12*4)
+	ldr	$next, [sp, #44]  @ next is after the 11 pushed registers (11*4)
 
 #ifdef	__thumb2__
 	mov	r9,#0x00ff00ff
