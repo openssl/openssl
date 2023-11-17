@@ -194,7 +194,7 @@ retrieved from the found attributes first B<ASN1_TYPE> object. An error will
 occur if the attribute type I<type> does not match the type of the B<ANS1_TYPE>
 object OR if I<type> is either B<V_ASN1_BOOLEAN> or B<V_ASN1_NULL> OR the
 attribute is not found.
-If I<lastpos> is less than -1 then an error will occur if there is multiple
+If I<lastpos> is less than -1 then an error will occur if there are multiple
 objects in the list I<x> that match I<obj>.
 If I<lastpos> is less than -2 then an error will occur if there is more than
 one B<ASN1_TYPE> object in the found attribute.
@@ -210,10 +210,10 @@ is not found, otherwise it returns the location of the object in the list.
 X509at_get_attr_by_NID() is similar to X509at_get_attr_by_OBJ(), except that
 it returns -2 if the I<nid> is not known by OpenSSL.
 
-X509at_get_attr() returns either a B<X509_ATTRIBUTE> or NULL if there is an error.
+X509at_get_attr() returns either a B<X509_ATTRIBUTE> or NULL if there is a error.
 
 X509at_delete_attr() returns either the removed B<X509_ATTRIBUTE> or NULL if
-there is an error.
+there is a error.
 
 X509_ATTRIBUTE_count() returns -1 on error, otherwise it returns the number
 of B<ASN1_TYPE> elements.
@@ -229,7 +229,7 @@ success, or 0 otherwise.
 
 X509_ATTRIBUTE_create(), X509_ATTRIBUTE_create_by_OBJ(),
 X509_ATTRIBUTE_create_by_NID() and X509_ATTRIBUTE_create_by_txt() return either
-a B<X509_ATTRIBUTE> on success, or NULL if there is an error.
+a B<X509_ATTRIBUTE> on success, or NULL if there is a error.
 
 X509at_add1_attr(), X509at_add1_attr_by_OBJ(), X509at_add1_attr_by_NID() and
 X509at_add1_attr_by_txt() return NULL on error, otherwise they return a list

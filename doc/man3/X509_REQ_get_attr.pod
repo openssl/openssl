@@ -84,7 +84,7 @@ it returns -2 if the I<nid> is not known by OpenSSL.
 X509_REQ_get_attr() returns either a B<X509_ATTRIBUTE> or NULL on error.
 
 X509_REQ_delete_attr() returns either the removed B<X509_ATTRIBUTE> or NULL if
-there is an error.
+there is a error.
 
 X509_REQ_add1_attr(), X509_REQ_add1_attr_by_OBJ(), X509_REQ_add1_attr_by_NID()
 and X509_REQ_add1_attr_by_txt() return 1 on success or 0 on error.
@@ -92,7 +92,7 @@ and X509_REQ_add1_attr_by_txt() return 1 on success or 0 on error.
 =head1 NOTES
 
 Any functions that modify the attributes (add or delete) internally set a flag
-to indicate the ANS.1 encoding has been modified.
+to indicate the ANSN.1 encoding has been modified.
 
 =head1 SEE ALSO
 

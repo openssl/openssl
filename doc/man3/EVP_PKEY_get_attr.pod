@@ -82,11 +82,11 @@ is not found, otherwise it returns the location of the object in the list.
 EVP_PKEY_get_attr_by_NID() is similar to EVP_PKEY_get_attr_by_OBJ(), except that
 it returns -2 if the I<nid> is not known by OpenSSL.
 
-EVP_PKEY_get_attr() returns either a B<X509_ATTRIBUTE> or NULL if there is an
+EVP_PKEY_get_attr() returns either a B<X509_ATTRIBUTE> or NULL if there is a
 error.
 
 EVP_PKEY_delete_attr() returns either the removed B<X509_ATTRIBUTE> or NULL if
-there is an error.
+there is a error.
 
 EVP_PKEY_add1_attr(), EVP_PKEY_add1_attr_by_OBJ(), EVP_PKEY_add1_attr_by_NID()
 and EVP_PKEY_add1_attr_by_txt() return 1 on success or 0 otherwise.
