@@ -110,6 +110,9 @@ int X509_ALGOR_copy(X509_ALGOR *dest, const X509_ALGOR *src)
     if (src == NULL || dest == NULL)
         return 0;
 
+    if (src == dest)
+        return 1;
+
     if (dest->algorithm)
          ASN1_OBJECT_free(dest->algorithm);
     dest->algorithm = NULL;
