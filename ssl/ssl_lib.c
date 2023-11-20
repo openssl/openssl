@@ -6052,6 +6052,8 @@ IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
  * If |dst| points to a NULL pointer, a new stack will be created and owned by
  * the caller.
  * Returns the number of SCTs moved, or a negative integer if an error occurs.
+ * The |dst| stack is created and possibly partially populated even in case
+ * of error, likewise the |src| stack may be left in an intermediate state.
  */
 static int ct_move_scts(STACK_OF(SCT) **dst, STACK_OF(SCT) *src,
                         sct_source_t origin)
