@@ -3061,7 +3061,7 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             return tls1_set_groups_list(ctx, NULL, NULL, parg);
         case SSL_CTRL_SET_SIGALGS_LIST:
         case SSL_CTRL_SET_CLIENT_SIGALGS_LIST:
-            return tls1_set_sigalgs_list(NULL, parg, 0);
+            return tls1_set_sigalgs_list(ctx, NULL, parg, 0);
         default:
             return 0;
         }
