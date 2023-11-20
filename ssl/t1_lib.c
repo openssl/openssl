@@ -714,6 +714,7 @@ int ssl_load_sigalgs(SSL_CTX *ctx)
 
     /* now populate ctx->ssl_cert_info */
     if (ctx->sigalg_list_len > 0) {
+        OPENSSL_free(ctx->ssl_cert_info);
         ctx->ssl_cert_info = OPENSSL_zalloc(sizeof(lu) * ctx->sigalg_list_len);
         if (ctx->ssl_cert_info == NULL)
             return 0;
@@ -2851,6 +2852,7 @@ typedef struct {
     size_t sigalgcnt;
     /* TLSEXT_SIGALG_XXX values */
     uint16_t sigalgs[TLS_MAX_SIGALGCNT];
+    SSL_CTX *ctx;
 } sig_cb_st;
 
 static void get_sigorhash(int *psig, int *phash, const char *str)
@@ -2875,7 +2877,7 @@ static void get_sigorhash(int *psig, int *phash, const char *str)
 static int sig_cb(const char *elem, int len, void *arg)
 {
     sig_cb_st *sarg = arg;
-    size_t i;
+    size_t i = 0;
     const SIGALG_LOOKUP *s;
     char etmp[TLS_MAX_SIGSTRING_LEN], *p;
     int sig_alg = NID_undef, hash_alg = NID_undef;
@@ -2898,15 +2900,31 @@ static int sig_cb(const char *elem, int len, void *arg)
      * in the table.
      */
     if (p == NULL) {
-        for (i = 0, s = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
-             i++, s++) {
-            if (s->name != NULL && strcmp(etmp, s->name) == 0) {
-                sarg->sigalgs[sarg->sigalgcnt++] = s->sigalg;
-                break;
+        /* Load provider sigalgs */
+        if (sarg->ctx != NULL) {
+            /* Check if a provider supports the sigalg */
+            for (i = 0; i < sarg->ctx->sigalg_list_len; i++) {
+                if (sarg->ctx->sigalg_list[i].sigalg_name != NULL
+                    && strcmp(etmp,
+                              sarg->ctx->sigalg_list[i].sigalg_name) == 0) {
+                    sarg->sigalgs[sarg->sigalgcnt++] =
+                        sarg->ctx->sigalg_list[i].code_point;
+                    break;
+                }
             }
         }
-        if (i == OSSL_NELEM(sigalg_lookup_tbl))
-            return 0;
+        /* Check the built-in sigalgs */
+        if (sarg->ctx == NULL || i == sarg->ctx->sigalg_list_len) {
+            for (i = 0, s = sigalg_lookup_tbl;
+                 i < OSSL_NELEM(sigalg_lookup_tbl); i++, s++) {
+                if (s->name != NULL && strcmp(etmp, s->name) == 0) {
+                    sarg->sigalgs[sarg->sigalgcnt++] = s->sigalg;
+                    break;
+                }
+            }
+            if (i == OSSL_NELEM(sigalg_lookup_tbl))
+                return 0;
+        }
     } else {
         *p = 0;
         p++;
@@ -2941,10 +2959,14 @@ static int sig_cb(const char *elem, int len, void *arg)
  * Set supported signature algorithms based on a colon separated list of the
  * form sig+hash e.g. RSA+SHA512:DSA+SHA512
  */
-int tls1_set_sigalgs_list(CERT *c, const char *str, int client)
+int tls1_set_sigalgs_list(SSL_CTX *ctx, CERT *c, const char *str, int client)
 {
     sig_cb_st sig;
     sig.sigalgcnt = 0;
+
+    if (ctx != NULL && ssl_load_sigalgs(ctx)) {
+        sig.ctx = ctx;
+    }
     if (!CONF_parse_list(str, ':', 1, sig_cb, &sig))
         return 0;
     if (c == NULL)
