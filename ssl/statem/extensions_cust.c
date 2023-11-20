@@ -333,6 +333,8 @@ void custom_exts_free(custom_ext_methods *exts)
         OPENSSL_free(meth->parse_arg);
     }
     OPENSSL_free(exts->meths);
+    exts->meths = NULL;
+    exts->meths_count = 0;
 }
 
 /* Return true if a client custom extension exists, false otherwise */
