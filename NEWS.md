@@ -22,32 +22,87 @@ OpenSSL 3.2
 
 ### Major changes between OpenSSL 3.1 and OpenSSL 3.2 [under development]
 
-  * Added client side support for QUIC.
-  * Added multiple tutorials on the OpenSSL library and in particular
-    on writing various clients (using TLS and QUIC protocols) with libssl.
-  * Added support for Brainpool curves in TLS-1.3.
-  * Added Raw Public Key (RFC7250) support.
-  * Added support for certificate compression (RFC8879), including
-    library support for Brotli and Zstandard compression.
-  * Implemented support for all five instances of EdDSA from RFC8032.
-  * Implemented SM4-XTS support.
-  * Implemented deterministic ECDSA signatures (RFC6979) support.
-  * Implemented AES-GCM-SIV (RFC8452) support.
-  * Implemented Hybrid Public Key Encryption (HPKE) as defined in RFC9180.
-  * Multiple new features and improvements of the CMP protocol support.
+OpenSSL 3.2.0 is a feature release adding significant new functionality to
+OpenSSL.
+
+This release incorporates the following potentially significant or incompatible
+changes:
+
+  * The default SSL/TLS security level has been changed from 1 to 2.
+
+  * The `x509`, `ca`, and `req` apps now always produce X.509v3 certificates.
+
   * Subject or issuer names in X.509 objects are now displayed as UTF-8 strings
     by default.
-  * TCP Fast Open (RFC7413) support is available on Linux, macOS, and FreeBSD
-    where enabled and supported.
-  * The default SSL/TLS security level has been changed from 1 to 2.
-  * Full support for provider-based/pluggable signature algorithms in TLS 1.3
-    operations as well as CMS and X.509 data structure support. With a suitable
-    provider this fully enables use of post-quantum/quantum-safe cryptography.
-  * It is now possible to use the IANA standard names in TLS cipher
-    configuration.
-  * The `x509`, `ca`, and `req` apps now always produce X.509v3 certificates.
-  * Support for Argon2d, Argon2i, Argon2id KDFs has been added along with
-    a basic thread pool implementation for select platforms.
+
+This release adds the following new features:
+
+  * Support for client side QUIC, including support for
+    multiple streams (RFC 9000)
+
+  * Support for Ed25519ctx, Ed25519ph and Ed448ph in addition
+    to existing support for Ed25519 and Ed448 (RFC 8032)
+
+  * Support for deterministic ECDSA signatures (RFC 6979)
+
+  * Support for AES-GCM-SIV, a nonce-misuse-resistant AEAD (RFC 8452)
+
+  * Support for the Argon2 KDF, along with supporting thread pool
+    functionality (RFC 9106)
+
+  * Support for Hybrid Public Key Encryption (HPKE) (RFC 9180)
+
+  * Support for SM4-XTS
+
+  * Support for Brainpool curves in TLS 1.3
+
+  * Support for TLS Raw Public Keys (RFC 7250)
+
+  * Support for TCP Fast Open on Linux, macOS and FreeBSD,
+    where enabled and supported (RFC 7413)
+
+  * Support for TLS certificate compression, including library
+    support for zlib, Brotli and zstd (RFC 8879)
+
+  * Support for provider-based pluggable signature algorithms
+    in TLS 1.3 with supporting CMS and X.509 functionality
+
+    With a suitable provider this enables the use of post-quantum/quantum-safe
+    cryptography.
+
+  * Support for using the Windows system certificate store as a source of
+    trusted root certificates
+
+    This is not yet enabled by default and must be activated using an
+    environment variable. This is likely to become enabled by default
+    in a future feature release.
+
+  * Support for using the IANA standard names in TLS ciphersuite configuration
+
+  * Multiple new features and improvements to CMP protocol support
+
+The following known issues are present in this release and will be rectified
+in a future release:
+
+  * Provider-based signature algorithms cannot be configured using the
+    SignatureAlgorithms configuration file parameter (#22761)
+
+This release incorporates the following documentation enhancements:
+
+  * Added multiple tutorials on the OpenSSL library and in particular
+    on writing various clients (using TLS and QUIC protocols) with libssl
+
+    See [OpenSSL Guide].
+
+A more detailed list of changes in this release can be found in the
+[CHANGES.md] file.
+
+Users interested in using the new QUIC functionality are encouraged to read the
+[README file for QUIC][README-QUIC.md], which provides links to relevant
+documentation and example code.
+
+As always, bug reports and issues relating to OpenSSL can be [filed on our issue
+tracker][issue tracker].
 
 OpenSSL 3.1
 -----------
@@ -1677,3 +1732,7 @@ OpenSSL 0.9.x
 [CVE-2006-2940]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-2940
 [CVE-2006-2937]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-2937
 [CVE-2005-2969]: https://www.openssl.org/news/vulnerabilities.html#CVE-2005-2969
+[OpenSSL Guide]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
+[CHANGES.md]: ./CHANGES.md
+[README-QUIC.md]: ./README-QUIC.md
+[issue tracker]: https://github.com/openssl/openssl/issues
