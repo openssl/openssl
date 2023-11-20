@@ -22,9 +22,20 @@ guidelines:
  1. Anything other than a trivial contribution requires a [Contributor
     License Agreement] (CLA), giving us permission to use your code.
     If your contribution is too small to require a CLA (e.g. fixing a spelling
-    mistake), place the text "`CLA: trivial`" on a line by itself separated by
-    an empty line from the rest of the commit message. It is not sufficient to
-    only place the text in the GitHub pull request description.
+    mistake), then place the text "`CLA: trivial`" on a line by itself below
+    the rest of your commit message separated by an empty line, like this:
+
+    ```
+        One-line summary of trivial change
+
+        Optional main body of commit message. It might contain a sentence
+        or two explaining the trivial change.
+
+        CLA: trivial
+    ```
+
+    It is not sufficient to only place the text "`CLA: trivial`" in the GitHub
+    pull request description.
 
     [Contributor License Agreement]: <https://www.openssl.org/policies/cla.html>
 
@@ -32,8 +43,8 @@ guidelines:
 
     ```
         git commit --amend
-        [add the line, save and quit the editor]
-        git push -f
+        # add the line, save and quit the editor
+        git push -f [<repository> [<branch>]]
     ```
 
  2. All source files should start with the following text (with
