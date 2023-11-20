@@ -524,7 +524,7 @@ SHA3_squeeze:
 	mov	%rsi,$out
 	mov	%rdx,$len
 	mov	%rcx,$bsz
-	bt	\$0,$next
+	bt	\$0,${next}d
 	jc	.Lnext_block
 	jmp	.Loop_squeeze
 

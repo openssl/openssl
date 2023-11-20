@@ -483,7 +483,7 @@ SHA3_squeeze:
 	mov	$out,x1
 	mov	$len,x2
 	mov	$bsz,x3
-	cmp	x4, #0				// x4 = 'next' argument
+	cmp	w4, #0				// w4 = 'next' argument
 	bne	.Lnext_block
 
 .Loop_squeeze:

@@ -668,7 +668,7 @@ SHA3_squeeze:
 	subi	$out,r4,1		; prepare for stbu
 	mr	$len,r5
 	mr	$bsz,r6
-	${UCMP}i r7,0                   ; r7 = 'next' argument
+	cmplwi	r7,0                    ; r7 = 'next' argument
 	bne	.Lnext_block
 	b	.Loop_squeeze
 
