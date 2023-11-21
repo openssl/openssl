@@ -65,7 +65,7 @@ This release adds the following new features:
     support for zlib, Brotli and zstd (RFC 8879)
 
   * Support for provider-based pluggable signature algorithms
-    in TLS 1.3 with supporting CMS and X.509 functionaliy
+    in TLS 1.3 with supporting CMS and X.509 functionality
 
     With a suitable provider this enables the use of post-quantum/quantum-safe
     cryptography.
