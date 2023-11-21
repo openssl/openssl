@@ -133,6 +133,22 @@ possible and practical.
 
 List features in descending order of significance (approximately).
 
+#### Listing known issues
+
+Known issues can be called out as follows:
+
+```text
+The following known issues are present in this release and will be rectified in
+a future release:
+
+    * xxx (#12345)
+
+```
+
+The editorial conventions for this block are similar to those for feature
+additions, except that an issue number is listed rather than a reference to a
+standard.
+
 #### Listing documentation enhancements
 
 Significant documentation enhancements can be called out as follows:
