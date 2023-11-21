@@ -383,7 +383,7 @@ static const struct {
 
 static const struct {
     EC_CURVE_DATA h;
-    unsigned char data[20 + 32 * 6];
+    unsigned char data[20 + 32 * 8];
 } _EC_X9_62_PRIME_256V1 = {
     {
         NID_X9_62_prime_field, 20, 32, 1
@@ -415,7 +415,15 @@ static const struct {
         /* order */
         0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
         0xFF, 0xFF, 0xFF, 0xFF, 0xBC, 0xE6, 0xFA, 0xAD, 0xA7, 0x17, 0x9E, 0x84,
-        0xF3, 0xB9, 0xCA, 0xC2, 0xFC, 0x63, 0x25, 0x51
+        0xF3, 0xB9, 0xCA, 0xC2, 0xFC, 0x63, 0x25, 0x51,
+        /* RR for prime */
+        0x00, 0x00, 0x00, 0x04, 0xff, 0xff, 0xff, 0xfd, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xfb, 0xff, 0xff, 0xff, 0xff,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
+        /* RR for order */
+        0x66, 0xe1, 0x2d, 0x94, 0xf3, 0xd9, 0x56, 0x20, 0x28, 0x45, 0xb2, 0x39,
+        0x2b, 0x6b, 0xec, 0x59, 0x46, 0x99, 0x79, 0x9c, 0x49, 0xbd, 0x6f, 0xa6,
+        0x83, 0x24, 0x4c, 0x95, 0xbe, 0x79, 0xee, 0xa2
     }
 };
 
@@ -3168,6 +3176,24 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
     seed_len = data->seed_len;
     param_len = data->param_len;
     params = (const unsigned char *)(data + 1); /* skip header */
+
+    if (curve.meth != NULL) {
+        meth = curve.meth();
+        if ((group = ossl_ec_group_new_ex(libctx, propq, meth)) == NULL) {
+            ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+            goto err;
+        }
+        if (group->meth->group_full_init != NULL) {
+            if (!group->meth->group_full_init(group, params)){
+                ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+                goto err;
+            }
+            EC_GROUP_set_curve_name(group, curve.nid);
+            BN_CTX_free(ctx);
+            return group;
+        }
+    }
+
     params += seed_len;         /* skip seed */
 
     if ((p = BN_bin2bn(params + 0 * param_len, param_len, NULL)) == NULL
@@ -3177,10 +3203,8 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
         goto err;
     }
 
-    if (curve.meth != 0) {
-        meth = curve.meth();
-        if (((group = ossl_ec_group_new_ex(libctx, propq, meth)) == NULL) ||
-            (!(group->meth->group_set_curve(group, p, a, b, ctx)))) {
+    if (group != NULL) {
+        if (group->meth->group_set_curve(group, p, a, b, ctx) == 0) {
             ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
             goto err;
         }

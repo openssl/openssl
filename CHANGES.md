@@ -95,6 +95,11 @@ OpenSSL 3.4
 
    *Alexander Kanavin*
 
+ * ECC groups may now customize their initialization to save CPU by using
+   precomputed values. This is used by the P-256 implementation.
+
+   *Watson Ladd*
+
 OpenSSL 3.3
 -----------
 
