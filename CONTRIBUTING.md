@@ -43,8 +43,8 @@ guidelines:
 
     ```
         git commit --amend
-        [add the line, save and quit the editor]
-        git push -f <repository> <branch>
+        # add the line, save and quit the editor
+        git push -f [<repository> [<branch>]]
     ```
 
  2. All source files should start with the following text (with
