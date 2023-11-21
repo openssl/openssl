@@ -37,7 +37,7 @@ changes:
 
 This release adds the following new features:
 
-  * Support for for client side QUIC, including support for
+  * Support for client side QUIC, including support for
     multiple streams (RFC 9000)
 
   * Support for Ed25519ctx, Ed25519ph and Ed448ph in addition
