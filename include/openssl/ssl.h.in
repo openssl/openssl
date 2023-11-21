@@ -426,6 +426,8 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
     /* Enable KTLS TX zerocopy on Linux */
 # define SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE         SSL_OP_BIT(34)
 
+#define SSL_OP_PREFER_NO_DHE_KEX                         SSL_OP_BIT(35)
+
 /*
  * Option "collections."
  */
