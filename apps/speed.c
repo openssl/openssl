@@ -310,7 +310,7 @@ enum {
 /* name of algorithms to test. MUST BE KEEP IN SYNC with above enum ! */
 static const char *names[ALGOR_NUM] = {
     "md2", "mdc2", "md4", "md5", "sha1", "rmd160",
-    "sha256", "sha512", "whirlpool", "hmac(md5)",
+    "sha256", "sha512", "whirlpool", "hmac(sha256)",
     "des-cbc", "des-ede3", "rc4", "idea-cbc", "seed-cbc",
     "rc2-cbc", "rc5-cbc", "blowfish", "cast-cbc",
     "aes-128-cbc", "aes-192-cbc", "aes-256-cbc",
@@ -570,7 +570,7 @@ static int run_benchmark(int async_jobs, int (*loop_function) (void *),
 
 static unsigned int testnum;
 
-static char *evp_mac_mdname = "md5";
+static char *evp_mac_mdname = "sha256";
 static char *evp_hmac_name = NULL;
 static const char *evp_md_name = NULL;
 static char *evp_mac_ciphername = "aes-128-cbc";
@@ -2544,7 +2544,7 @@ int speed_main(int argc, char **argv)
                 goto end;
 
             if (!EVP_MAC_CTX_set_params(loopargs[i].mctx, params))
-                goto skip_hmac; /* Digest not found */
+                goto end; /* Digest not found */
         }
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_HMAC], lengths[testnum], seconds.sym);
@@ -2560,7 +2560,7 @@ int speed_main(int argc, char **argv)
         EVP_MAC_free(mac);
         mac = NULL;
     }
-skip_hmac:
+
     if (doit[D_CBC_DES]) {
         int st = 1;
 
