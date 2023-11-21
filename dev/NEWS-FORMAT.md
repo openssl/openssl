@@ -172,7 +172,7 @@ the same.
 For consistency, use the wording `Added ...` or `Clarified ...` as the summary
 line if possible.
 
-#### Listing bug fixes and miitgations
+#### Listing bug fixes and mitigations
 
 Significant bug fixes or mitigations can be called out as follows:
 
