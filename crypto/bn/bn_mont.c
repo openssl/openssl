@@ -465,3 +465,25 @@ BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, CRYPTO_RWLOCK *lock,
     CRYPTO_THREAD_unlock(lock);
     return ret;
 }
+
+int ossl_bn_mont_ctx_set(BN_MONT_CTX *ctx, const BIGNUM *modulus, int ri, const unsigned char *rr,
+                         size_t rrlen, uint32_t nlo, uint32_t nhi)
+{
+    if (BN_copy(&ctx->N, modulus) == NULL)
+        return 0;
+    if (BN_bin2bn(rr, rrlen, &ctx->RR) == NULL)
+        return 0;
+    ctx->ri = ri;
+#if (BN_BITS2 <=32) && defined(OPENSSL_BN_ASM_MONT)
+    ctx->n0[0] = nlo;
+    ctx->n0[1] = nhi;
+#elif BN_BITS2<=32
+    ctx->n0[0] = nlo;
+    ctx->n0[1] = 0;
+#else
+    ctx->n0[0] = ((BN_ULONG)nhi<<32)|nlo;
+    ctx->n0[1] = 0;
+#endif
+
+    return 1;
+}
