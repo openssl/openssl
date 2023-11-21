@@ -110,6 +110,12 @@ this option to enable it.
 In TLSv1.3 allow a non-(ec)dhe based key exchange mode on resumption. This means
 that there will be no forward secrecy for the resumed session.
 
+=item SSL_OP_PREFER_NO_DHE_KEX
+
+In TLSv1.3, on resumption let the server prefer a non-(ec)dhe based key
+exchange mode over an (ec)dhe based one. Ignored without B<SSL_OP_ALLOW_NO_DHE_KEX>
+being set as well. Always ignored on the client.
+
 =item SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
 
 Allow legacy insecure renegotiation between OpenSSL and unpatched clients or

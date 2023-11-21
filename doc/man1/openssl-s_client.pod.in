@@ -93,6 +93,7 @@ B<openssl> B<s_client>
 [B<-legacy_server_connect>]
 [B<-no_legacy_server_connect>]
 [B<-allow_no_dhe_kex>]
+[B<-prefer_no_dhe_kex>]
 [B<-sigalgs> I<sigalglist>]
 [B<-curves> I<curvelist>]
 [B<-cipher> I<cipherlist>]
