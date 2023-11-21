@@ -12,10 +12,12 @@
                   ? platform->sharedlib_simple($_)
                   : undef)
                  // platform->sharedlib($_);
-             my $lib_shared_import = platform->sharedlib_import($_);
              $x{static} = $lib_static if $lib_static;
              $x{shared} = $lib_shared if $lib_shared;
-             $x{shared_import} = $lib_shared_import if $lib_shared_import;
+             if (platform->can("sharedlib_import")) {
+                 my $lib_shared_import = platform->sharedlib_import($_);
+                 $x{shared_import} = $lib_shared_import if $lib_shared_import;
+             }
              %x ? ( $_ => \%x ) : () }
        grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
        @{$unified_info{libraries}}
