@@ -1393,7 +1393,8 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
      *             the client sent a key_share extension
      *             AND
      *             (we are not resuming
-     *              OR the kex_mode allows key_share resumes)
+     *              OR (the kex_mode allows key_share resumes
+     *                  AND (kex_mode doesn't allow non-dh resumes OR non-dh is not preferred)))
      *             AND
      *             a shared group exists
      *         THEN
@@ -1428,10 +1429,18 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
             }
         } else {
             /* No suitable key_share */
+
+            /* Do DHE PSK? */
+            int dhe_psk =
+                /* kex_mode allows key_share resume */
+                (((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) != 0)
+
+                /* and psk-only is not available or not explicitly preferred */
+                && ((((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0)
+                    || (s->options & SSL_OP_PREFER_NO_DHE_KEX) == 0)));
+
             if (s->hello_retry_request == SSL_HRR_NONE && sent
-                    && (!s->hit
-                        || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE)
-                           != 0)) {
+                    && (!s->hit || dhe_psk)) {
                 const uint16_t *pgroups, *clntgroups;
                 size_t num_groups, clnt_num_groups, i;
                 unsigned int group_id = 0;

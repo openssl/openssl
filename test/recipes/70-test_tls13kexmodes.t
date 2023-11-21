@@ -191,7 +191,7 @@ $proxy->clientflags("-no_rx_cert_comp -sess_out ".$session);
 $proxy->serverflags("-no_rx_cert_comp -servername localhost");
 $proxy->sessionfile($session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 11;
+plan tests => 13;
 ok(TLSProxy::Message->success(), "Initial connection");
 
 #Test 2: Attempt a resume with no kex modes extension. Should fail (server
@@ -251,10 +251,11 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                | checkhandshake::PSK_CLI_EXTENSION,
                "Resume with unrecognized kex mode");
 
-#Test 7: Attempt a resume with both non-dhe and dhe kex mode. Should resume with
-#        a key_share
+#Test 7: Attempt a resume with both, non-dhe and dhe kex mode. Should resume with
+#        a key_share, even though non-dhe is allowed, but not explicitly preferred.
 $proxy->clear();
-$proxy->clientflags("-no_rx_cert_comp -sess_in ".$session);
+$proxy->clientflags("-no_rx_cert_comp -allow_no_dhe_kex -sess_in ".$session);
+$proxy->serverflags("-allow_no_dhe_kex");
 $testtype = BOTH_KEX_MODES;
 $proxy->start();
 checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
@@ -263,9 +264,38 @@ checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
                | checkhandshake::KEY_SHARE_SRV_EXTENSION
                | checkhandshake::PSK_CLI_EXTENSION
                | checkhandshake::PSK_SRV_EXTENSION,
-               "Resume with non-dhe kex mode");
+               "Resume with both kex modes");
 
-#Test 8: Attempt a resume with both non-dhe and dhe kex mode, but unacceptable
+#Test 8: Attempt a resume with both, non-dhe and dhe kex mode, but with server-side
+#        preference for non-dhe. Should resume without a key_share.
+$proxy->clear();
+$proxy->clientflags("-no_rx_cert_comp -allow_no_dhe_kex -sess_in ".$session);
+$proxy->serverflags("-allow_no_dhe_kex -prefer_no_dhe_kex");
+$testtype = BOTH_KEX_MODES;
+$proxy->start();
+checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::PSK_KEX_MODES_EXTENSION
+               | checkhandshake::PSK_CLI_EXTENSION
+               | checkhandshake::PSK_SRV_EXTENSION,
+               "Resume with both kex modes, preference for non-dhe");
+
+#Test 9: Attempt a resume with both, non-dhe and dhe kex mode, with server-side
+#        preference for non-dhe, but non-dhe not allowed. Should resume with a key_share.
+$proxy->clear();
+$proxy->clientflags("-no_rx_cert_comp -allow_no_dhe_kex -sess_in ".$session);
+$proxy->serverflags("-prefer_no_dhe_kex");
+$testtype = BOTH_KEX_MODES;
+$proxy->start();
+checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::PSK_KEX_MODES_EXTENSION
+               | checkhandshake::KEY_SHARE_SRV_EXTENSION
+               | checkhandshake::PSK_CLI_EXTENSION
+               | checkhandshake::PSK_SRV_EXTENSION,
+               "Resume with both kex modes, preference for but disabled non-dhe");
+
+#Test 10: Attempt a resume with both non-dhe and dhe kex mode, but unacceptable
 #        initial key_share. Should resume with a key_share following an HRR
 $proxy->clear();
 $proxy->clientflags("-no_rx_cert_comp -sess_in ".$session);
@@ -281,7 +311,7 @@ checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
                | checkhandshake::PSK_SRV_EXTENSION,
                "Resume with both kex modes and HRR");
 
-#Test 9: Attempt a resume with dhe kex mode only and an unacceptable initial
+#Test 11: Attempt a resume with dhe kex mode only and an unacceptable initial
 #        key_share. Should resume with a key_share following an HRR
 $proxy->clear();
 $proxy->clientflags("-no_rx_cert_comp -sess_in ".$session);
@@ -297,7 +327,7 @@ checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
                | checkhandshake::PSK_SRV_EXTENSION,
                "Resume with dhe kex mode and HRR");
 
-#Test 10: Attempt a resume with both non-dhe and dhe kex mode, unacceptable
+#Test 12: Attempt a resume with both non-dhe and dhe kex mode, unacceptable
 #         initial key_share and no overlapping groups. Should resume without a
 #         key_share
 $proxy->clear();
@@ -312,7 +342,7 @@ checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
                | checkhandshake::PSK_SRV_EXTENSION,
                "Resume with both kex modes, no overlapping groups");
 
-#Test 11: Attempt a resume with dhe kex mode only, unacceptable
+#Test 13: Attempt a resume with dhe kex mode only, unacceptable
 #         initial key_share and no overlapping groups. Should fail
 $proxy->clear();
 $proxy->clientflags("-no_rx_cert_comp -curves P-384 -sess_in ".$session);
@@ -351,7 +381,7 @@ sub modify_kex_modes_filter
                     0xfe,       #unknown
                     0xff;       #unknown
             } elsif ($testtype == BOTH_KEX_MODES) {
-                #We deliberately list psk_ke first...should still use psk_dhe_ke
+                #We deliberately list psk_ke first...should still use psk_dhe_ke, except if the server is configured otherwise.
                 $ext = pack "C3",
                     0x02,       #List length
                     0x00,       #psk_ke

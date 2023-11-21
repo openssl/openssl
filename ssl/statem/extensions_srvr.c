@@ -1645,12 +1645,25 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         }
         return EXT_RETURN_NOT_SENT;
     }
-    if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0) {
+    if (s->hit) {
+        /* PSK ('hit') */
+
         /*
-         * PSK ('hit') and explicitly not doing DHE (if the client sent the
-         * DHE option we always take it); don't send key share.
+         * If we're doing PSK ('hit') but the client doesn't support psk-dhe,
+         * we don't need to send a key share.
          */
-        return EXT_RETURN_NOT_SENT;
+        if ((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
+            return EXT_RETURN_NOT_SENT;
+
+        /*
+         * If both, psk_ke and psk_dh_ke are available, we do psk_dh_ke and
+         * send a key share by default, but not if the server is explicitly
+         * configured to prefer psk_ke.
+         */
+        if (((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) != 0)
+                && ((s->options & SSL_OP_PREFER_NO_DHE_KEX) != 0)) {
+            return EXT_RETURN_NOT_SENT;
+        }
     }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
