@@ -147,10 +147,12 @@ IF[{- !$disabled{legacy} -}]
     # In this case, we can work with dependencies
     $LEGACYGOAL=legacy
     MODULES=$LEGACYGOAL
-    DEPEND[$LEGACYGOAL]=$LIBLEGACY ../libcrypto
     IF[{- defined $target{shared_defflag} -}]
       SOURCE[legacy]=legacy.ld
       GENERATE[legacy.ld]=../util/providers.num
+      DEPEND[$LEGACYGOAL]=$LIBLEGACY
+    ELSE
+      DEPEND[$LEGACYGOAL]=$LIBLEGACY ../libcrypto
     ENDIF
 
     # Add VERSIONINFO resource for windows

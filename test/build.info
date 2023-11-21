@@ -190,7 +190,11 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[evp_extra_test]=evp_extra_test.c fake_rsaprov.c
   INCLUDE[evp_extra_test]=../include ../apps/include
-  DEPEND[evp_extra_test]=../libcrypto.a libtestutil.a
+  IF[{- defined $target{shared_defflag} -}]
+    DEPEND[evp_extra_test]=-Wl,-E ../libcrypto.a libtestutil.a
+  ELSE
+    DEPEND[evp_extra_test]=../libcrypto.a libtestutil.a
+  ENDIF
 
   SOURCE[hpke_test]=hpke_test.c
   INCLUDE[hpke_test]=../include ../apps/include
@@ -235,6 +239,11 @@ IF[{- !$disabled{tests} -}]
   SOURCE[provider_status_test]=provider_status_test.c
   INCLUDE[provider_status_test]=../include ../apps/include
   DEPEND[provider_status_test]=../libcrypto.a libtestutil.a
+  IF[{- defined $target{shared_defflag} -}]
+    DEPEND[provider_status_test]=-Wl,-E ../libcrypto.a libtestutil.a
+  ELSE
+    DEPEND[provider_status_test]=../libcrypto.a libtestutil.a
+  ENDIF
 
   SOURCE[pairwise_fail_test]=pairwise_fail_test.c
   INCLUDE[pairwise_fail_test]=../include ../apps/include
@@ -953,7 +962,11 @@ IF[{- !$disabled{tests} -}]
 
     SOURCE[ssl_old_test]=ssl_old_test.c helpers/predefined_dhparams.c
     INCLUDE[ssl_old_test]=.. ../include ../apps/include
-    DEPEND[ssl_old_test]=../libcrypto.a ../libssl.a libtestutil.a
+    IF[{- defined $target{shared_defflag} -}]
+      DEPEND[ssl_old_test]=-Wl,-E ../libcrypto.a ../libssl.a libtestutil.a
+    ELSE
+      DEPEND[ssl_old_test]=../libcrypto.a ../libssl.a libtestutil.a
+    ENDIF
 
     PROGRAMS{noinst}=ext_internal_test
     SOURCE[ext_internal_test]=ext_internal_test.c

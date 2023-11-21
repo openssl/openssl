@@ -1510,7 +1510,8 @@ reconfigure reconf:
       # Depending on shared libraries:
       # On Windows POSIX layers, we depend on {libname}.dll.a
       # On Unix platforms, we depend on {shlibname}.so
-      return map { platform->sharedlib_simple($_)
+      return map { platform->hide_ldflag($_)
+                   // platform->sharedlib_simple($_)
                    // platform->sharedlib_import($_)
                    // platform->sharedlib($_)
                    // platform->staticlib($_)
@@ -1955,7 +1956,9 @@ EOF
       my @linklibs = ();
       foreach (@{$args{deps}}) {
           next unless defined $_;
-          if (platform->isstaticlib($_)) {
+          if (platform->isflag($_)) {
+              push @linklibs, $_;
+          } elsif (platform->isstaticlib($_)) {
               push @linklibs, platform->convertext($_);
           } else {
               my $d = "-L" . dirname($_);

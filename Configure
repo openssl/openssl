@@ -1907,6 +1907,7 @@ if ($builder eq "unified") {
         my $file = shift;
         my $relativeto = shift || ".";
 
+        return $file if $file =~ m|^-|;
         $file = catfile($base,$file) unless isabsolute($file);
 
         my $d = dirname($file);

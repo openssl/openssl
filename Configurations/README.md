@@ -411,6 +411,14 @@ support building static libraries and DLLs at the same time, so using
 static libraries on Windows can only be done when configured
 `no-shared`.
 
+It's possible to pass simple links flags in DEPEND on UNIX.
+
+    DEPEND[foo]=libsomething.a -Wl,-E
+
+It is not currently possible to pass complex expressions in `DEPEND`.
+`./Configure` uses an intermediate hash map to process data, which
+cannot present order.
+
 In some cases, it's desirable to include some source files in the
 shared form of a library only:
 
