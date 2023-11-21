@@ -134,38 +134,42 @@ to different combinations of design choices:
 
 The remaining possible demos to be produced are as follows:
 
-    FORK        POLLABLE        ADDRESSED
-    FORK        POLLABLE        UNADDRESSED
-    FORK        NON-POLLABLE    ADDRESSED
-    FORK        NON-POLLABLE    UNADDRESSED
-    PREFORK     POLLABLE        ADDRESSED
-    PREFORK     POLLABLE        UNADDRESSED
-    PREFORK     NON-POLLABLE    ADDRESSED
-    PREFORK     NON-POLLABLE    UNADDRESSED
-    MT          POLLABLE        ADDRESSED
-    MT          POLLABLE        UNADDRESSED
-    MT          NON-POLLABLE    ADDRESSED
-    MT          NON-POLLABLE    UNADDRESSED
-    ASYNC       POLLABLE        ADDRESSED
-    ASYNC       POLLABLE        UNADDRESSED
-    ASYNC       NON-POLLABLE    ADDRESSED
-    ASYNC       NON-POLLABLE    UNADDRESSED
+```text
+FORK        POLLABLE        ADDRESSED
+FORK        POLLABLE        UNADDRESSED
+FORK        NON-POLLABLE    ADDRESSED
+FORK        NON-POLLABLE    UNADDRESSED
+PREFORK     POLLABLE        ADDRESSED
+PREFORK     POLLABLE        UNADDRESSED
+PREFORK     NON-POLLABLE    ADDRESSED
+PREFORK     NON-POLLABLE    UNADDRESSED
+MT          POLLABLE        ADDRESSED
+MT          POLLABLE        UNADDRESSED
+MT          NON-POLLABLE    ADDRESSED
+MT          NON-POLLABLE    UNADDRESSED
+ASYNC       POLLABLE        ADDRESSED
+ASYNC       POLLABLE        UNADDRESSED
+ASYNC       NON-POLLABLE    ADDRESSED
+ASYNC       NON-POLLABLE    UNADDRESSED
+```
 
 Further reductions can now be identified. As previously established during the
 design of the client-side QUIC API, we are unable to support synchronous
 (blocking) operation unless we have a pollable network-side BIO. Some of the
 above design points are therefore nonsensical and can be removed:
 
-    FORK        POLLABLE        ADDRESSED
-    FORK        POLLABLE        UNADDRESSED
-    PREFORK     POLLABLE        ADDRESSED
-    PREFORK     POLLABLE        UNADDRESSED
-    MT          POLLABLE        ADDRESSED
-    MT          POLLABLE        UNADDRESSED
-    ASYNC       POLLABLE        ADDRESSED
-    ASYNC       POLLABLE        UNADDRESSED
-    ASYNC       NON-POLLABLE    ADDRESSED
-    ASYNC       NON-POLLABLE    UNADDRESSED
+```text
+FORK        POLLABLE        ADDRESSED
+FORK        POLLABLE        UNADDRESSED
+PREFORK     POLLABLE        ADDRESSED
+PREFORK     POLLABLE        UNADDRESSED
+MT          POLLABLE        ADDRESSED
+MT          POLLABLE        UNADDRESSED
+ASYNC       POLLABLE        ADDRESSED
+ASYNC       POLLABLE        UNADDRESSED
+ASYNC       NON-POLLABLE    ADDRESSED
+ASYNC       NON-POLLABLE    UNADDRESSED
+```
 
 We now have reduced our set to 10 demos. Note that all of the synchronous
 examples here use a pollable network BIO (e.g. a socket BIO), whereas the
@@ -210,12 +214,14 @@ addressing mode will be orthogonal to issues of concurrency and the
 application-side programming model. Therefore, we model unaddressed operation in
 only a single demo representing the most complex use case (non-pollable async):
 
-    FORK        POLLABLE        ADDRESSED
-    PREFORK     POLLABLE        ADDRESSED
-    MT          POLLABLE        ADDRESSED
-    ASYNC       POLLABLE        ADDRESSED
-    ASYNC       NON-POLLABLE    ADDRESSED
-    ASYNC       NON-POLLABLE    UNADDRESSED
+```text
+FORK        POLLABLE        ADDRESSED
+PREFORK     POLLABLE        ADDRESSED
+MT          POLLABLE        ADDRESSED
+ASYNC       POLLABLE        ADDRESSED
+ASYNC       NON-POLLABLE    ADDRESSED
+ASYNC       NON-POLLABLE    UNADDRESSED
+```
 
 We have now reduced the set of demos to 6, which is comparable to the number of
 demos which were developed during the client-side DDD process. We consider the
