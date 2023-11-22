@@ -354,7 +354,7 @@ int BIO_socket_nbio(int s, int mode)
     int l;
 
     l = mode;
-# if defined(FIONBIO) && !defined(OPENSSL_SYS_TANDEM)
+# ifdef FIONBIO
     l = mode;
 
     ret = BIO_socket_ioctl(s, FIONBIO, &l);
