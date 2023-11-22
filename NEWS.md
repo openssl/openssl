@@ -84,13 +84,6 @@ This release adds the following new features:
 The following known issues are present in this release and will be rectified
 in a future release:
 
-  * Untriaged Coverity issues
-
-    This release is made with a number of untriaged issues identified by
-    Coverity. This is due to an update to the hosted Coverity service
-    immediately prior to this release which identified a number of new potential
-    issues without time to triage them.
-
   * Provider-based signature algorithms cannot be configured using the
     SignatureAlgorithms configuration file parameter (#22761)
 
