@@ -38,6 +38,12 @@ OpenSSL 3.3
 
    *Ahelenia Ziemiańska*
 
+ * New option `SSL_OP_PREFER_NO_DHE_KEX`, which allows configuring a TLS1.3
+   server to prefer session resumption using PSK-only key exchange over PSK
+   with DHE, if both are available.
+
+   *Markus Minichmayr, Tapkey GmbH*
+
 OpenSSL 3.2
 -----------
 
