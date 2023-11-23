@@ -65,7 +65,7 @@ static int test_srt_gen(int idx)
                                                          &token)))
             goto err;
 
-        if (!TEST_mem_eq(&token, sizeof(token),
+        if (!TEST_mem_eq(token.token, sizeof(token.token),
                          &t->expected, sizeof(t->expected)))
             goto err;
     }

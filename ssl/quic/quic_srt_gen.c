@@ -65,7 +65,7 @@ int ossl_quic_srt_gen_calculate_token(QUIC_SRT_GEN *srt_gen,
                                       QUIC_STATELESS_RESET_TOKEN *token)
 {
     size_t outl = 0;
-    unsigned char mac[32];
+    unsigned char mac[SHA256_DIGEST_LENGTH];
 
     if (!EVP_MAC_init(srt_gen->mac_ctx, NULL, 0, NULL))
         return 0;
@@ -78,6 +78,7 @@ int ossl_quic_srt_gen_calculate_token(QUIC_SRT_GEN *srt_gen,
         || outl != sizeof(mac))
         return 0;
 
-    memcpy(token, mac, sizeof(*token));
+    assert(sizeof(mac) >= sizeof(token->token));
+    memcpy(token->token, mac, sizeof(token->token));
     return 1;
 }
