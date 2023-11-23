@@ -107,7 +107,7 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
-  self-hosted-runners:
+  self-hosted:
     strategy:
       matrix:
         os: [freebsd-13.2, ubuntu-arm64-22.04]
@@ -116,7 +116,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: config
-      run: ./config
+      run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
