@@ -269,8 +269,6 @@ size_t CRYPTO_secure_used(void)
     ret = secure_mem_used;
 
     CRYPTO_THREAD_unlock(sec_malloc_lock);
-#else
-    ret = 0;
 #endif /* OPENSSL_NO_SECURE_MEMORY */
     return ret;
 }
