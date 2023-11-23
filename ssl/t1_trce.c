@@ -545,6 +545,8 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {258, "ffdhe4096"},
     {259, "ffdhe6144"},
     {260, "ffdhe8192"},
+    {25497, "X25519Kyber768Draft00"},
+    {25498, "SecP256r1Kyber768Draft00"},
     {0xFF01, "arbitrary_explicit_prime_curves"},
     {0xFF02, "arbitrary_explicit_char2_curves"}
 };
