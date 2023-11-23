@@ -107,6 +107,25 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
+  self-hosted-runners:
+    strategy:
+      matrix:
+        os: [freebsd-13.2, ubuntu-arm64-22.04]
+    runs-on: ${{ matrix.os }}-self-hosted
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v4
+    - name: config
+      run: ./config
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -j4
+    - name: get cpu info
+      run: ./util/opensslwrap.sh version -c
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
   minimal:
     runs-on: ubuntu-latest
     steps:
