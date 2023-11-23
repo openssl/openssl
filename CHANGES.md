@@ -25,7 +25,7 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
-### Changes between 3.1 and 3.2 [xx XXX xxxx]
+### Changes between 3.1 and 3.2.0 [23 Nov 2023]
 
  * The BLAKE2b hash algorithm supports a configurable output length
    by setting the "size" parameter.

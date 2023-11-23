@@ -20,7 +20,7 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
-### Major changes between OpenSSL 3.1 and OpenSSL 3.2 [under development]
+### Major changes between OpenSSL 3.1 and OpenSSL 3.2.0 [23 Nov 2023]
 
 OpenSSL 3.2.0 is a feature release adding significant new functionality to
 OpenSSL.
