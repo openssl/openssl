@@ -203,8 +203,8 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
      * if we don't have EC support then we don't send this extension.
      */
     if (!use_ecc(s, min_version, max_version)
-           && (!SSL_CONNECTION_IS_DTLS(s) && max_version < TLS1_3_VERSION)
-           && (SSL_CONNECTION_IS_DTLS(s) && DTLS_VERSION_LT(max_version, DTLS1_3_VERSION)))
+           && ((!SSL_CONNECTION_IS_DTLS(s) && max_version < TLS1_3_VERSION)
+           || (SSL_CONNECTION_IS_DTLS(s) && DTLS_VERSION_LT(max_version, DTLS1_3_VERSION))))
         return EXT_RETURN_NOT_SENT;
 
     /*
