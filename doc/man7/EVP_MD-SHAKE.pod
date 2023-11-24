@@ -25,14 +25,14 @@ provider, and includes the following varieties:
 
 Known names are "KECCAK-KMAC-128" and "KECCAK-KMAC128".  This is used
 by L<EVP_MAC-KMAC128(7)>.  Using the notation from NIST FIPS 202
-(Section 6.2), we have KECCAK-KMAC-128(M, d) = KECCAK[256](M || 00, d)
+(Section 6.2), we have S<KECCAK-KMAC-128(M, d)> = S<KECCAK[256](M || 00, d)>
 (see the description of KMAC128 in Appendix A of NIST SP 800-185).
 
 =item KECCAK-KMAC-256
 
 Known names are "KECCAK-KMAC-256" and "KECCAK-KMAC256".  This is used
 by L<EVP_MAC-KMAC256(7)>.  Using the notation from NIST FIPS 202
-(Section 6.2), we have KECCAK-KMAC-256(M, d) = KECCAK[512](M || 00, d)
+(Section 6.2), we have S<KECCAK-KMAC-256(M, d)> = S<KECCAK[512](M || 00, d)>
 (see the description of KMAC256 in Appendix A of NIST SP 800-185).
 
 =item SHAKE-128
