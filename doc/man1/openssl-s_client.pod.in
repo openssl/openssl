@@ -554,13 +554,13 @@ This option must be provided in order to use a PSK cipher.
 =item B<-psk_session> I<file>
 
 Use the pem encoded SSL_SESSION data stored in I<file> as the basis of a PSK.
-Note that this will only work if TLSv1.3 is negotiated.
+Note that this will only work if (D)TLSv1.3 is negotiated.
 
 =item B<-sctp>
 
 Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
-conjunction with B<-dtls>, B<-dtls1> or B<-dtls1_2>. This option is only
-available where OpenSSL has support for SCTP enabled.
+conjunction with B<-dtls>, B<-dtls1>, B<-dtls1_2> or B<-dtls1_3>. This option
+is only available where OpenSSL has support for SCTP enabled.
 
 =item B<-sctp_label_bug>
 
@@ -630,11 +630,11 @@ option enables various workarounds.
 
 =item B<-no_tx_cert_comp>
 
-Disables support for sending TLSv1.3 compressed certificates.
+Disables support for sending (D)TLSv1.3 compressed certificates.
 
 =item B<-no_rx_cert_comp>
 
-Disables support for receiving TLSv1.3 compressed certificate.
+Disables support for receiving (D)TLSv1.3 compressed certificate.
 
 =item B<-comp>
 
@@ -763,7 +763,8 @@ for example "http/1.1" or "spdy/3".
 An empty list of protocols is treated specially and will cause the
 client to advertise support for the TLS extension but disconnect just
 after receiving ServerHello with a list of server supported protocols.
-The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
+The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> or B<-dtls1_3> is
+used.
 
 =item B<-ct>, B<-noct>
 
@@ -793,8 +794,8 @@ data and when the server accepts the early data.
 
 =item B<-enable_pha>
 
-For TLSv1.3 only, send the Post-Handshake Authentication extension. This will
-happen whether or not a certificate has been provided via B<-cert>.
+For (D)TLSv1.3 only, send the Post-Handshake Authentication extension. This
+will happen whether or not a certificate has been provided via B<-cert>.
 
 =item B<-use_srtp> I<value>
 
@@ -905,7 +906,7 @@ End the current SSL connection and exit.
 
 =item B<R>
 
-Renegotiate the SSL session (TLSv1.2 and below only).
+Renegotiate the SSL session ((D)TLSv1.2 and below only).
 
 =item B<C>
 
@@ -913,11 +914,11 @@ Attempt to reconnect to the server using a resumption handshake.
 
 =item B<k>
 
-Send a key update message to the server (TLSv1.3 only)
+Send a key update message to the server ((D)TLSv1.3 only)
 
 =item B<K>
 
-Send a key update message to the server and request one back (TLSv1.3 only)
+Send a key update message to the server and request one back ((D)TLSv1.3 only)
 
 =back
 
@@ -958,7 +959,7 @@ Reconnect to the peer and attempt a resumption handshake
 
 =item B<keyup>
 
-Send a Key Update message. TLSv1.3 only. This command takes an optional
+Send a Key Update message. (D)TLSv1.3 only. This command takes an optional
 argument. If the argument "req" is supplied then the peer is also requested to
 update its keys. Otherwise if "noreq" is supplied the peer is not requested
 to update its keys. The default is "req".

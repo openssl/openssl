@@ -609,12 +609,12 @@ the B<no_> options.
 The B<no_*> options do not work with B<s_time> and B<ciphers> commands but work with
 B<s_client> and B<s_server> commands.
 
-=item B<-dtls>, B<-dtls1>, B<-dtls1_2>
+=item B<-dtls>, B<-dtls1>, B<-dtls1_2>, B<-dtls1_3>
 
 These options specify to use DTLS instead of TLS.
 With B<-dtls>, clients will negotiate any supported DTLS protocol version.
-Use the B<-dtls1> or B<-dtls1_2> options to support only DTLS1.0 or DTLS1.2,
-respectively.
+Use the B<-dtls1>, B<-dtls1_2> or B<-dtls1_3> options to support only DTLS1.0,
+DTLS1.2 or DTLS1.3 respectively.
 
 =back
 
