@@ -632,6 +632,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     while (PACKET_remaining(&key_share_list) > 0) {
+        const int version;
         if (!PACKET_get_net_2(&key_share_list, &group_id)
                 || !PACKET_get_length_prefixed_2(&key_share_list, &encoded_pt)
                 || PACKET_remaining(&encoded_pt) == 0) {
@@ -663,8 +664,9 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
             return 0;
         }
 
+        version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
         /* Check if this share is for a group we can use */
-        const int version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
         if (!check_in_list(s, group_id, srvrgroups, srvr_num_groups, 1)
                 || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
                    /*
@@ -1067,6 +1069,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             } else if (pskdatalen > 0) {
                 const SSL_CIPHER *cipher;
                 const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
+                const int version;
 
                 /*
                  * We found a PSK using an old style callback. We don't know
@@ -1080,7 +1083,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 }
 
                 sess = SSL_SESSION_new();
-                const int version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+                version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
                 if (sess == NULL
                         || !SSL_SESSION_set1_master_key(sess, pskdata,
                                                         pskdatalen)
@@ -1760,6 +1764,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     int ret = EXT_RETURN_FAIL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    const int version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if ((s->s3.flags & TLS1_FLAGS_STATELESS) == 0)
         return EXT_RETURN_NOT_SENT;
@@ -1769,7 +1774,6 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    const int version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cookie)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_start_sub_packet_u16(pkt)

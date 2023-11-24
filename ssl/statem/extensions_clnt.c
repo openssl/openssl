@@ -686,10 +686,13 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         curve_id = s->s3.group_id;
     } else {
         for (i = 0; i < num_groups; i++) {
+            const int version;
+
             if (!tls_group_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
                 continue;
 
-            const int version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+            version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
             if (!tls_valid_group(s, pgroups[i], version, version,
                                  0, NULL))
                 continue;
@@ -791,6 +794,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
         } else if (psklen > 0) {
             const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
             const SSL_CIPHER *cipher;
+            const int version;
 
             idlen = strlen(identity);
             if (idlen > PSK_MAX_IDENTITY_LEN) {
@@ -810,7 +814,8 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
             }
 
             psksess = SSL_SESSION_new();
-            const int version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+            version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
             if (psksess == NULL
                     || !SSL_SESSION_set1_master_key(psksess, psk, psklen)
                     || !SSL_SESSION_set_cipher(psksess, cipher)
@@ -1793,6 +1798,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
     if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
         const uint16_t *pgroups = NULL;
         size_t i, num_groups;
+        const int version;
 
         if (PACKET_remaining(pkt) != 0) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
@@ -1815,7 +1821,8 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
                 break;
         }
 
-        const int version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+        version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
         if (i >= num_groups
                 || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
                 || !tls_valid_group(s, group_id, version, version, 0, NULL)) {
