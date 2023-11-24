@@ -691,7 +691,6 @@ EOF
                 $disable = [];
             }
             return { target => "linux64-loongarch64",
-                     defines => [ 'L_ENDIAN' ],
                      disable => $disable, };
         }
       ],
