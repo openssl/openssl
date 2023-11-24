@@ -315,8 +315,8 @@ static info_cb get_callback(SSL_CONNECTION *s)
 
     if (s->info_callback != NULL)
         return s->info_callback;
-    else if (sctx->info_callback != NULL)
-        return sctx->info_callback;
+    else if (sctx->cnf->info_callback != NULL)
+        return sctx->cnf->info_callback;
 
     return NULL;
 }

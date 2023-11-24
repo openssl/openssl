@@ -390,7 +390,7 @@ EXT_RETURN tls_construct_ctos_npn(SSL_CONNECTION *s, WPACKET *pkt,
                                   unsigned int context,
                                   X509 *x, size_t chainidx)
 {
-    if (SSL_CONNECTION_GET_CTX(s)->ext.npn_select_cb == NULL
+    if (SSL_CONNECTION_GET_CTX(s)->cnf->ext.npn_select_cb == NULL
         || !SSL_IS_FIRST_HANDSHAKE(s))
         return EXT_RETURN_NOT_SENT;
 
@@ -1546,7 +1546,7 @@ int tls_parse_stoc_npn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         return 1;
 
     /* We must have requested it. */
-    if (sctx->ext.npn_select_cb == NULL) {
+    if (sctx->cnf->ext.npn_select_cb == NULL) {
         SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION, SSL_R_BAD_EXTENSION);
         return 0;
     }
@@ -1557,10 +1557,10 @@ int tls_parse_stoc_npn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         /* SSLfatal() already called */
         return 0;
     }
-    if (sctx->ext.npn_select_cb(SSL_CONNECTION_GET_SSL(s),
+    if (sctx->cnf->ext.npn_select_cb(SSL_CONNECTION_GET_SSL(s),
                                 &selected, &selected_len,
                                 PACKET_data(pkt), PACKET_remaining(pkt),
-                                sctx->ext.npn_select_cb_arg) !=
+                                sctx->cnf->ext.npn_select_cb_arg) !=
              SSL_TLSEXT_ERR_OK) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_BAD_EXTENSION);
         return 0;

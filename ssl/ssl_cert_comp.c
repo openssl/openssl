@@ -401,7 +401,7 @@ int SSL_CTX_compress_certs(SSL_CTX *ctx, int alg)
     if (new == NULL)
         return 0;
 
-    ret = ssl_compress_certs(new, ctx->cert->pkeys, alg);
+    ret = ssl_compress_certs(new, ctx->cnf->cert->pkeys, alg);
     SSL_free(new);
 #endif
     return ret;
@@ -416,7 +416,7 @@ size_t SSL_get1_compressed_cert(SSL *ssl, int alg, unsigned char **data, size_t 
     if (sc->cert != NULL)
         cpk = sc->cert->key;
     else
-        cpk = ssl->ctx->cert->key;
+        cpk = ssl->ctx->cnf->cert->key;
 
     return ssl_get_compressed_cert(ssl, cpk, alg, data, orig_len);
 #else
@@ -430,7 +430,7 @@ size_t SSL_CTX_get1_compressed_cert(SSL_CTX *ctx, int alg, unsigned char **data,
     size_t ret;
     SSL *new = SSL_new(ctx);
 
-    ret = ssl_get_compressed_cert(new, ctx->cert->key, alg, data, orig_len);
+    ret = ssl_get_compressed_cert(new, ctx->cnf->cert->key, alg, data, orig_len);
     SSL_free(new);
     return ret;
 #else
@@ -442,7 +442,7 @@ int SSL_CTX_set1_compressed_cert(SSL_CTX *ctx, int algorithm, unsigned char *com
                                  size_t comp_length, size_t orig_length)
 {
 #ifndef OPENSSL_NO_COMP_ALG
-    return ossl_set1_compressed_cert(ctx->cert, algorithm, comp_data, comp_length, orig_length);
+    return ossl_set1_compressed_cert(ctx->cnf->cert, algorithm, comp_data, comp_length, orig_length);
 #else
     return 0;
 #endif

@@ -156,7 +156,7 @@ size_t ssl3_pending(const SSL *s)
 
 void SSL_CTX_set_default_read_buffer_len(SSL_CTX *ctx, size_t len)
 {
-    ctx->default_read_buf_len = len;
+    ctx->cnf->default_read_buf_len = len;
 }
 
 void SSL_set_default_read_buffer_len(SSL *s, size_t len)
@@ -823,8 +823,8 @@ int ssl3_read_bytes(SSL *ssl, uint8_t type, uint8_t *recvd_type,
 
         if (s->info_callback != NULL)
             cb = s->info_callback;
-        else if (ssl->ctx->info_callback != NULL)
-            cb = ssl->ctx->info_callback;
+        else if (ssl->ctx->cnf->info_callback != NULL)
+            cb = ssl->ctx->cnf->info_callback;
 
         if (cb != NULL) {
             j = (alert_level << 8) | alert_descr;

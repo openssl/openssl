@@ -404,16 +404,16 @@ int ssl_load_groups(SSL_CTX *ctx)
     if (num_deflt_grps == 0)
         return 1;
 
-    ctx->ext.supported_groups_default
+    ctx->cnf->ext.supported_groups_default
         = OPENSSL_malloc(sizeof(uint16_t) * num_deflt_grps);
 
-    if (ctx->ext.supported_groups_default == NULL)
+    if (ctx->cnf->ext.supported_groups_default == NULL)
         return 0;
 
-    memcpy(ctx->ext.supported_groups_default,
+    memcpy(ctx->cnf->ext.supported_groups_default,
            tmp_supp_groups,
            num_deflt_grps * sizeof(tmp_supp_groups[0]));
-    ctx->ext.supported_groups_default_len = num_deflt_grps;
+    ctx->cnf->ext.supported_groups_default_len = num_deflt_grps;
 
     return 1;
 }
@@ -832,8 +832,8 @@ void tls1_get_supported_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
 
     default:
         if (s->ext.supportedgroups == NULL) {
-            *pgroups = sctx->ext.supported_groups_default;
-            *pgroupslen = sctx->ext.supported_groups_default_len;
+            *pgroups = sctx->cnf->ext.supported_groups_default;
+            *pgroupslen = sctx->cnf->ext.supported_groups_default_len;
         } else {
             *pgroups = s->ext.supportedgroups;
             *pgroupslen = s->ext.supportedgroups_len;
@@ -2274,24 +2274,24 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
         goto end;
     }
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-    if (tctx->ext.ticket_key_evp_cb != NULL || tctx->ext.ticket_key_cb != NULL)
+    if (tctx->cnf->ext.ticket_key_evp_cb != NULL || tctx->cnf->ext.ticket_key_cb != NULL)
 #else
-    if (tctx->ext.ticket_key_evp_cb != NULL)
+    if (tctx->cnf->ext.ticket_key_evp_cb != NULL)
 #endif
     {
         unsigned char *nctick = (unsigned char *)etick;
         int rv = 0;
 
-        if (tctx->ext.ticket_key_evp_cb != NULL)
-            rv = tctx->ext.ticket_key_evp_cb(SSL_CONNECTION_GET_SSL(s), nctick,
+        if (tctx->cnf->ext.ticket_key_evp_cb != NULL)
+            rv = tctx->cnf->ext.ticket_key_evp_cb(SSL_CONNECTION_GET_SSL(s), nctick,
                                              nctick + TLSEXT_KEYNAME_LENGTH,
                                              ctx,
                                              ssl_hmac_get0_EVP_MAC_CTX(hctx),
                                              0);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-        else if (tctx->ext.ticket_key_cb != NULL)
+        else if (tctx->cnf->ext.ticket_key_cb != NULL)
             /* if 0 is returned, write an empty ticket */
-            rv = tctx->ext.ticket_key_cb(SSL_CONNECTION_GET_SSL(s), nctick,
+            rv = tctx->cnf->ext.ticket_key_cb(SSL_CONNECTION_GET_SSL(s), nctick,
                                          nctick + TLSEXT_KEYNAME_LENGTH,
                                          ctx, ssl_hmac_get0_HMAC_CTX(hctx), 0);
 #endif
@@ -2309,7 +2309,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
         EVP_CIPHER *aes256cbc = NULL;
 
         /* Check key name matches */
-        if (memcmp(etick, tctx->ext.tick_key_name,
+        if (memcmp(etick, tctx->cnf->ext.tick_key_name,
                    TLSEXT_KEYNAME_LENGTH) != 0) {
             ret = SSL_TICKET_NO_DECRYPT;
             goto end;
@@ -2318,11 +2318,11 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
         aes256cbc = EVP_CIPHER_fetch(sctx->libctx, "AES-256-CBC",
                                      sctx->propq);
         if (aes256cbc == NULL
-            || ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,
-                             sizeof(tctx->ext.secure->tick_hmac_key),
+            || ssl_hmac_init(hctx, tctx->cnf->ext.secure->tick_hmac_key,
+                             sizeof(tctx->cnf->ext.secure->tick_hmac_key),
                              "SHA256") <= 0
             || EVP_DecryptInit_ex(ctx, aes256cbc, NULL,
-                                  tctx->ext.secure->tick_aes_key,
+                                  tctx->cnf->ext.secure->tick_aes_key,
                                   etick + TLSEXT_KEYNAME_LENGTH) <= 0) {
             EVP_CIPHER_free(aes256cbc);
             ret = SSL_TICKET_FATAL_ERR_OTHER;
@@ -2426,7 +2426,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
      * detected above. The callback is responsible for checking |ret| before it
      * performs any action
      */
-    if (s->session_ctx->decrypt_ticket_cb != NULL
+    if (s->session_ctx->cnf->decrypt_ticket_cb != NULL
             && (ret == SSL_TICKET_EMPTY
                 || ret == SSL_TICKET_NO_DECRYPT
                 || ret == SSL_TICKET_SUCCESS
@@ -2436,10 +2436,10 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
 
         if (keyname_len > TLSEXT_KEYNAME_LENGTH)
             keyname_len = TLSEXT_KEYNAME_LENGTH;
-        retcb = s->session_ctx->decrypt_ticket_cb(SSL_CONNECTION_GET_SSL(s),
+        retcb = s->session_ctx->cnf->decrypt_ticket_cb(SSL_CONNECTION_GET_SSL(s),
                                                   sess, etick, keyname_len,
                                                   ret,
-                                                  s->session_ctx->ticket_cb_data);
+                                                  s->session_ctx->cnf->ticket_cb_data);
         switch (retcb) {
         case SSL_TICKET_RETURN_ABORT:
             ret = SSL_TICKET_FATAL_ERR_OTHER;
@@ -3858,7 +3858,7 @@ int SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, uint8_t mode)
         return 0;
     }
 
-    ctx->ext.max_fragment_len_mode = mode;
+    ctx->cnf->ext.max_fragment_len_mode = mode;
     return 1;
 }
 
@@ -3896,8 +3896,8 @@ SSL_HMAC *ssl_hmac_new(const SSL_CTX *ctx)
     if (ret == NULL)
         return NULL;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-    if (ctx->ext.ticket_key_evp_cb == NULL
-            && ctx->ext.ticket_key_cb != NULL) {
+    if (ctx->cnf->ext.ticket_key_evp_cb == NULL
+            && ctx->cnf->ext.ticket_key_cb != NULL) {
         if (!ssl_hmac_old_new(ret))
             goto err;
         return ret;

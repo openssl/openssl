@@ -2737,7 +2737,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
             goto err;
         }
 
-        if ((s->session_ctx->session_cache_mode & SSL_SESS_CACHE_CLIENT) != 0
+        if ((s->session_ctx->cnf->session_cache_mode & SSL_SESS_CACHE_CLIENT) != 0
                 && !SSL_CONNECTION_IS_TLS13(s)) {
             /*
              * In TLSv1.2 and below the arrival of a new tickets signals that
@@ -2932,9 +2932,9 @@ int tls_process_initial_server_flight(SSL_CONNECTION *s)
      * message, or NULL and -1 otherwise
      */
     if (s->ext.status_type != TLSEXT_STATUSTYPE_nothing
-            && sctx->ext.status_cb != NULL) {
-        int ret = sctx->ext.status_cb(SSL_CONNECTION_GET_SSL(s),
-                                      sctx->ext.status_arg);
+            && sctx->cnf->ext.status_cb != NULL) {
+        int ret = sctx->cnf->ext.status_cb(SSL_CONNECTION_GET_SSL(s),
+                                      sctx->cnf->ext.status_arg);
 
         if (ret == 0) {
             SSLfatal(s, SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE,
@@ -4051,14 +4051,14 @@ int ssl_do_client_cert_cb(SSL_CONNECTION *s, X509 **px509, EVP_PKEY **ppkey)
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
 #ifndef OPENSSL_NO_ENGINE
-    if (sctx->client_cert_engine) {
+    if (sctx->cnf->client_cert_engine) {
         i = tls_engine_load_ssl_client_cert(s, px509, ppkey);
         if (i != 0)
             return i;
     }
 #endif
-    if (sctx->client_cert_cb)
-        i = sctx->client_cert_cb(SSL_CONNECTION_GET_SSL(s), px509, ppkey);
+    if (sctx->cnf->client_cert_cb)
+        i = sctx->cnf->client_cert_cb(SSL_CONNECTION_GET_SSL(s), px509, ppkey);
     return i;
 }
 

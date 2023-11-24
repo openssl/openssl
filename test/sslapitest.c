@@ -9600,6 +9600,55 @@ static int test_pluggable_signature(int idx)
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
+static int test_ssl_ctx_dup(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL_CTX *cctx_dup = NULL, *sctx_dup = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(),
+                                       0,
+                                       0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_ptr(cctx_dup = SSL_CTX_dup(libctx, cctx, NULL, TLS_client_method())))
+        goto end;
+
+    if (!TEST_ptr(sctx_dup = SSL_CTX_dup(libctx, sctx, NULL, TLS_server_method())))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx_dup, cctx_dup, &serverssl, &clientssl,
+                                             NULL, NULL)))
+        goto end;
+
+    if (!TEST_ptr(clientssl)
+            || !TEST_ptr_ne(sctx, sctx_dup)
+            || !TEST_ptr_ne(cctx, cctx_dup))
+        goto end;
+
+    if (!TEST_true(SSL_set_min_proto_version(clientssl, TLS1_2_VERSION))
+            || !TEST_true(SSL_set_max_proto_version(clientssl, TLS1_2_VERSION)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx_dup);
+    SSL_CTX_free(cctx_dup);
+
+    return testresult;
+}
+
 static int test_ssl_dup(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
@@ -11486,6 +11535,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_pluggable_signature, 4);
 #endif
 #ifndef OPENSSL_NO_TLS1_2
+    ADD_TEST(test_ssl_ctx_dup);
     ADD_TEST(test_ssl_dup);
 # ifndef OPENSSL_NO_DH
     ADD_ALL_TESTS(test_set_tmp_dh, 11);

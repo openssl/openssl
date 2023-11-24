@@ -147,8 +147,8 @@ int ssl3_dispatch_alert(SSL *s)
 
         if (sc->info_callback != NULL)
             cb = sc->info_callback;
-        else if (s->ctx->info_callback != NULL)
-            cb = s->ctx->info_callback;
+        else if (s->ctx->cnf->info_callback != NULL)
+            cb = s->ctx->cnf->info_callback;
 
         if (cb != NULL) {
             j = (sc->s3.send_alert[0] << 8) | sc->s3.send_alert[1];

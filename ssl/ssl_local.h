@@ -804,36 +804,38 @@ typedef struct {
 
 # define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE|TLS_GROUP_ONLY_FOR_TLS1_3)
 
-struct ssl_ctx_st {
-    OSSL_LIB_CTX *libctx;
-
+struct ssl_ctx_cnf_st {
     const SSL_METHOD *method;
     STACK_OF(SSL_CIPHER) *cipher_list;
+
     /* same as above but sorted for lookup */
     STACK_OF(SSL_CIPHER) *cipher_list_by_id;
+
     /* TLSv1.3 specific ciphersuites */
     STACK_OF(SSL_CIPHER) *tls13_ciphersuites;
+
     struct x509_store_st /* X509_STORE */ *cert_store;
-    LHASH_OF(SSL_SESSION) *sessions;
+
     /*
      * Most session-ids that will be cached, default is
      * SSL_SESSION_CACHE_MAX_SIZE_DEFAULT. 0 is unlimited.
      */
     size_t session_cache_size;
-    struct ssl_session_st *session_cache_head;
-    struct ssl_session_st *session_cache_tail;
-    /*
-     * This can have one of 2 values, ored together, SSL_SESS_CACHE_CLIENT,
-     * SSL_SESS_CACHE_SERVER, Default is SSL_SESSION_CACHE_SERVER, which
-     * means only SSL_accept will cache SSL_SESSIONS.
-     */
-    uint32_t session_cache_mode;
+
     /*
      * If timeout is not 0, it is the default timeout value set when
      * SSL_new() is called.  This has been put in to make life easier to set
      * things up
      */
     OSSL_TIME session_timeout;
+
+    /*
+     * This can have one of 2 values, ored together, SSL_SESS_CACHE_CLIENT,
+     * SSL_SESS_CACHE_SERVER, Default is SSL_SESSION_CACHE_SERVER, which
+     * means only SSL_accept will cache SSL_SESSIONS.
+     */
+    uint32_t session_cache_mode;
+
     /*
      * If this callback is not null, it will be called each time a session id
      * is added to the cache.  If this function returns 1, it means that the
@@ -848,39 +850,15 @@ struct ssl_ctx_st {
     SSL_SESSION *(*get_session_cb) (struct ssl_st *ssl,
                                     const unsigned char *data, int len,
                                     int *copy);
-    struct {
-        TSAN_QUALIFIER int sess_connect;       /* SSL new conn - started */
-        TSAN_QUALIFIER int sess_connect_renegotiate; /* SSL reneg - requested */
-        TSAN_QUALIFIER int sess_connect_good;  /* SSL new conne/reneg - finished */
-        TSAN_QUALIFIER int sess_accept;        /* SSL new accept - started */
-        TSAN_QUALIFIER int sess_accept_renegotiate; /* SSL reneg - requested */
-        TSAN_QUALIFIER int sess_accept_good;   /* SSL accept/reneg - finished */
-        TSAN_QUALIFIER int sess_miss;          /* session lookup misses */
-        TSAN_QUALIFIER int sess_timeout;       /* reuse attempt on timeouted session */
-        TSAN_QUALIFIER int sess_cache_full;    /* session removed due to full cache */
-        TSAN_QUALIFIER int sess_hit;           /* session reuse actually done */
-        TSAN_QUALIFIER int sess_cb_hit;        /* session-id that was not in
-                                                * the cache was passed back via
-                                                * the callback. This indicates
-                                                * that the application is
-                                                * supplying session-id's from
-                                                * other processes - spooky
-                                                * :-) */
-    } stats;
-#ifdef TSAN_REQUIRES_LOCKING
-    CRYPTO_RWLOCK *tsan_lock;
-#endif
-
-    CRYPTO_REF_COUNT references;
 
     /* if defined, these override the X509_verify_cert() calls */
     int (*app_verify_callback) (X509_STORE_CTX *, void *);
     void *app_verify_arg;
+
     /*
      * before OpenSSL 0.9.7, 'app_verify_arg' was ignored
      * ('app_verify_callback' was called with just one argument)
      */
-
     /* Default password callback. */
     pem_password_cb *default_passwd_callback;
 
@@ -908,11 +886,7 @@ struct ssl_ctx_st {
 
     CRYPTO_EX_DATA ex_data;
 
-    const EVP_MD *md5;          /* For SSLv3/TLSv1 'ssl3-md5' */
-    const EVP_MD *sha1;         /* For SSLv3/TLSv1 'ssl3-sha1' */
-
     STACK_OF(X509) *extra_certs;
-    STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, SSLv3/TLSv1 */
 
     /* Default values used when no per-SSL value is defined follow */
 
@@ -940,7 +914,7 @@ struct ssl_ctx_st {
     size_t max_cert_list;
 
     struct cert_st /* CERT */ *cert;
-    SSL_CERT_LOOKUP *ssl_cert_info;
+
     int read_ahead;
 
     /* callback that allows applications to peek at protocol messages */
@@ -961,7 +935,6 @@ struct ssl_ctx_st {
     int quiet_shutdown;
 
 # ifndef OPENSSL_NO_CT
-    CTLOG_STORE *ctlog_store;   /* CT Log Store */
     /*
      * Validates that the SCTs (Signed Certificate Timestamps) are sufficient.
      * If they are not, the connection should be aborted.
@@ -969,6 +942,7 @@ struct ssl_ctx_st {
     ssl_ct_validation_cb ct_validation_callback;
     void *ct_validation_callback_arg;
 # endif
+
 
     /*
      * If we're using more than one pipeline how should we divide the data
@@ -1091,24 +1065,11 @@ struct ssl_ctx_st {
     SSL_psk_find_session_cb_func psk_find_session_cb;
     SSL_psk_use_session_cb_func psk_use_session_cb;
 
-# ifndef OPENSSL_NO_SRP
-    SRP_CTX srp_ctx;            /* ctx for SRP authentication */
-# endif
-
-    /* Shared DANE context */
-    struct dane_ctx_st dane;
-
-# ifndef OPENSSL_NO_SRTP
-    /* SRTP profiles we are willing to do from RFC 5764 */
-    STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
-# endif
     /*
      * Callback for disabling session caching and ticket support on a session
      * basis, depending on the chosen cipher.
      */
     int (*not_resumable_session_cb) (SSL *ssl, int is_forward_secure);
-
-    CRYPTO_RWLOCK *lock;
 
     /*
      * Callback for logging key material for use with debugging tools like
@@ -1151,6 +1112,64 @@ struct ssl_ctx_st {
     /* Callback for SSL async handling */
     SSL_async_callback_fn async_cb;
     void *async_cb_arg;
+
+};
+
+struct ssl_ctx_st {
+    OSSL_LIB_CTX *libctx;
+    struct ssl_ctx_cnf_st *cnf;
+
+    LHASH_OF(SSL_SESSION) *sessions;
+    struct ssl_session_st *session_cache_head;
+    struct ssl_session_st *session_cache_tail;
+    struct {
+        TSAN_QUALIFIER int sess_connect;       /* SSL new conn - started */
+        TSAN_QUALIFIER int sess_connect_renegotiate; /* SSL reneg - requested */
+        TSAN_QUALIFIER int sess_connect_good;  /* SSL new conne/reneg - finished */
+        TSAN_QUALIFIER int sess_accept;        /* SSL new accept - started */
+        TSAN_QUALIFIER int sess_accept_renegotiate; /* SSL reneg - requested */
+        TSAN_QUALIFIER int sess_accept_good;   /* SSL accept/reneg - finished */
+        TSAN_QUALIFIER int sess_miss;          /* session lookup misses */
+        TSAN_QUALIFIER int sess_timeout;       /* reuse attempt on timeouted session */
+        TSAN_QUALIFIER int sess_cache_full;    /* session removed due to full cache */
+        TSAN_QUALIFIER int sess_hit;           /* session reuse actually done */
+        TSAN_QUALIFIER int sess_cb_hit;        /* session-id that was not in
+                                                * the cache was passed back via
+                                                * the callback. This indicates
+                                                * that the application is
+                                                * supplying session-id's from
+                                                * other processes - spooky
+                                                * :-) */
+    } stats;
+#ifdef TSAN_REQUIRES_LOCKING
+    CRYPTO_RWLOCK *tsan_lock;
+#endif
+
+    CRYPTO_REF_COUNT references;
+
+    const EVP_MD *md5;          /* For SSLv3/TLSv1 'ssl3-md5' */
+    const EVP_MD *sha1;         /* For SSLv3/TLSv1 'ssl3-sha1' */
+    SSL_CERT_LOOKUP *ssl_cert_info;
+
+    STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, SSLv3/TLSv1 */
+
+# ifndef OPENSSL_NO_CT
+    CTLOG_STORE *ctlog_store;   /* CT Log Store */
+# endif
+
+# ifndef OPENSSL_NO_SRP
+    SRP_CTX srp_ctx;            /* ctx for SRP authentication */
+# endif
+
+    /* Shared DANE context */
+    struct dane_ctx_st dane;
+
+# ifndef OPENSSL_NO_SRTP
+    /* SRTP profiles we are willing to do from RFC 5764 */
+    STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
+# endif
+
+    CRYPTO_RWLOCK *lock;
 
     char *propq;
 

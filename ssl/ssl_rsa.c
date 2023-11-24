@@ -239,7 +239,7 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
         ERR_raise(ERR_LIB_SSL, rv);
         return 0;
     }
-    return ssl_set_cert(ctx->cert, x, ctx);
+    return ssl_set_cert(ctx->cnf->cert, x, ctx);
 }
 
 static int ssl_set_cert(CERT *c, X509 *x, SSL_CTX *ctx)
@@ -321,8 +321,8 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
         cert = d2i_X509_bio(in, &x);
     } else if (type == SSL_FILETYPE_PEM) {
         j = ERR_R_PEM_LIB;
-        cert = PEM_read_bio_X509(in, &x, ctx->default_passwd_callback,
-                                 ctx->default_passwd_callback_userdata);
+        cert = PEM_read_bio_X509(in, &x, ctx->cnf->default_passwd_callback,
+                                 ctx->cnf->default_passwd_callback_userdata);
     } else {
         ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
         goto end;
@@ -367,7 +367,7 @@ int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    return ssl_set_pkey(ctx->cert, pkey, ctx);
+    return ssl_set_pkey(ctx->cnf->cert, pkey, ctx);
 }
 
 int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
@@ -389,8 +389,8 @@ int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
     if (type == SSL_FILETYPE_PEM) {
         j = ERR_R_PEM_LIB;
         pkey = PEM_read_bio_PrivateKey_ex(in, NULL,
-                                       ctx->default_passwd_callback,
-                                       ctx->default_passwd_callback_userdata,
+                                       ctx->cnf->default_passwd_callback,
+                                       ctx->cnf->default_passwd_callback_userdata,
                                        ctx->libctx, ctx->propq);
     } else if (type == SSL_FILETYPE_ASN1) {
         j = ERR_R_ASN1_LIB;
@@ -450,8 +450,8 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
                                  * SSL_CTX_use_certificate() */
 
     if (ctx != NULL) {
-        passwd_callback = ctx->default_passwd_callback;
-        passwd_callback_userdata = ctx->default_passwd_callback_userdata;
+        passwd_callback = ctx->cnf->default_passwd_callback;
+        passwd_callback_userdata = ctx->cnf->default_passwd_callback_userdata;
     } else {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
@@ -798,17 +798,17 @@ int SSL_CTX_use_serverinfo_ex(SSL_CTX *ctx, unsigned int version,
         ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_SERVERINFO_DATA);
         return 0;
     }
-    if (ctx->cert->key == NULL) {
+    if (ctx->cnf->cert->key == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    new_serverinfo = OPENSSL_realloc(ctx->cert->key->serverinfo,
+    new_serverinfo = OPENSSL_realloc(ctx->cnf->cert->key->serverinfo,
                                      serverinfo_length);
     if (new_serverinfo == NULL)
         return 0;
-    ctx->cert->key->serverinfo = new_serverinfo;
-    memcpy(ctx->cert->key->serverinfo, serverinfo, serverinfo_length);
-    ctx->cert->key->serverinfo_length = serverinfo_length;
+    ctx->cnf->cert->key->serverinfo = new_serverinfo;
+    memcpy(ctx->cnf->cert->key->serverinfo, serverinfo, serverinfo_length);
+    ctx->cnf->cert->key->serverinfo_length = serverinfo_length;
 
     /*
      * Now that the serverinfo is validated and stored, go ahead and
@@ -958,7 +958,7 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
         (sc = SSL_CONNECTION_FROM_SSL(ssl)) == NULL)
         return 0;
 
-    c = sc != NULL ? sc->cert : ctx->cert;
+    c = sc != NULL ? sc->cert : ctx->cnf->cert;
     /* Do all security checks before anything else */
     rv = ssl_security_cert(sc, ctx, x509, 0, 1);
     if (rv != 1) {

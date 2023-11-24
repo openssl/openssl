@@ -3845,7 +3845,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         }
 #endif
     case SSL_CTRL_SET_DH_AUTO:
-        ctx->cert->dh_tmp_auto = larg;
+        ctx->cnf->cert->dh_tmp_auto = larg;
         return 1;
 #if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_ECDH:
@@ -3854,21 +3854,21 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                 ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             }
-            return ssl_set_tmp_ecdh_groups(&ctx->ext.supportedgroups,
-                                           &ctx->ext.supportedgroups_len,
+            return ssl_set_tmp_ecdh_groups(&ctx->cnf->ext.supportedgroups,
+                                           &ctx->cnf->ext.supportedgroups_len,
                                            parg);
         }
 #endif                          /* !OPENSSL_NO_DEPRECATED_3_0 */
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
-        ctx->ext.servername_arg = parg;
+        ctx->cnf->ext.servername_arg = parg;
         break;
     case SSL_CTRL_SET_TLSEXT_TICKET_KEYS:
     case SSL_CTRL_GET_TLSEXT_TICKET_KEYS:
         {
             unsigned char *keys = parg;
-            long tick_keylen = (sizeof(ctx->ext.tick_key_name) +
-                                sizeof(ctx->ext.secure->tick_hmac_key) +
-                                sizeof(ctx->ext.secure->tick_aes_key));
+            long tick_keylen = (sizeof(ctx->cnf->ext.tick_key_name) +
+                                sizeof(ctx->cnf->ext.secure->tick_hmac_key) +
+                                sizeof(ctx->cnf->ext.secure->tick_aes_key));
             if (keys == NULL)
                 return tick_keylen;
             if (larg != tick_keylen) {
@@ -3876,46 +3876,46 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                 return 0;
             }
             if (cmd == SSL_CTRL_SET_TLSEXT_TICKET_KEYS) {
-                memcpy(ctx->ext.tick_key_name, keys,
-                       sizeof(ctx->ext.tick_key_name));
-                memcpy(ctx->ext.secure->tick_hmac_key,
-                       keys + sizeof(ctx->ext.tick_key_name),
-                       sizeof(ctx->ext.secure->tick_hmac_key));
-                memcpy(ctx->ext.secure->tick_aes_key,
-                       keys + sizeof(ctx->ext.tick_key_name) +
-                       sizeof(ctx->ext.secure->tick_hmac_key),
-                       sizeof(ctx->ext.secure->tick_aes_key));
+                memcpy(ctx->cnf->ext.tick_key_name, keys,
+                       sizeof(ctx->cnf->ext.tick_key_name));
+                memcpy(ctx->cnf->ext.secure->tick_hmac_key,
+                       keys + sizeof(ctx->cnf->ext.tick_key_name),
+                       sizeof(ctx->cnf->ext.secure->tick_hmac_key));
+                memcpy(ctx->cnf->ext.secure->tick_aes_key,
+                       keys + sizeof(ctx->cnf->ext.tick_key_name) +
+                       sizeof(ctx->cnf->ext.secure->tick_hmac_key),
+                       sizeof(ctx->cnf->ext.secure->tick_aes_key));
             } else {
-                memcpy(keys, ctx->ext.tick_key_name,
-                       sizeof(ctx->ext.tick_key_name));
-                memcpy(keys + sizeof(ctx->ext.tick_key_name),
-                       ctx->ext.secure->tick_hmac_key,
-                       sizeof(ctx->ext.secure->tick_hmac_key));
-                memcpy(keys + sizeof(ctx->ext.tick_key_name) +
-                       sizeof(ctx->ext.secure->tick_hmac_key),
-                       ctx->ext.secure->tick_aes_key,
-                       sizeof(ctx->ext.secure->tick_aes_key));
+                memcpy(keys, ctx->cnf->ext.tick_key_name,
+                       sizeof(ctx->cnf->ext.tick_key_name));
+                memcpy(keys + sizeof(ctx->cnf->ext.tick_key_name),
+                       ctx->cnf->ext.secure->tick_hmac_key,
+                       sizeof(ctx->cnf->ext.secure->tick_hmac_key));
+                memcpy(keys + sizeof(ctx->cnf->ext.tick_key_name) +
+                       sizeof(ctx->cnf->ext.secure->tick_hmac_key),
+                       ctx->cnf->ext.secure->tick_aes_key,
+                       sizeof(ctx->cnf->ext.secure->tick_aes_key));
             }
             return 1;
         }
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE:
-        return ctx->ext.status_type;
+        return ctx->cnf->ext.status_type;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE:
-        ctx->ext.status_type = larg;
+        ctx->cnf->ext.status_type = larg;
         break;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG:
-        ctx->ext.status_arg = parg;
+        ctx->cnf->ext.status_arg = parg;
         return 1;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG:
-        *(void**)parg = ctx->ext.status_arg;
+        *(void**)parg = ctx->cnf->ext.status_arg;
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB:
-        *(int (**)(SSL*, void*))parg = ctx->ext.status_cb;
+        *(int (**)(SSL*, void*))parg = ctx->cnf->ext.status_cb;
         break;
 
 #ifndef OPENSSL_NO_SRP
@@ -3955,69 +3955,69 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 #endif
 
     case SSL_CTRL_SET_GROUPS:
-        return tls1_set_groups(&ctx->ext.supportedgroups,
-                               &ctx->ext.supportedgroups_len,
+        return tls1_set_groups(&ctx->cnf->ext.supportedgroups,
+                               &ctx->cnf->ext.supportedgroups_len,
                                parg, larg);
 
     case SSL_CTRL_SET_GROUPS_LIST:
-        return tls1_set_groups_list(ctx, &ctx->ext.supportedgroups,
-                                    &ctx->ext.supportedgroups_len,
+        return tls1_set_groups_list(ctx, &ctx->cnf->ext.supportedgroups,
+                                    &ctx->cnf->ext.supportedgroups_len,
                                     parg);
 
     case SSL_CTRL_SET_SIGALGS:
-        return tls1_set_sigalgs(ctx->cert, parg, larg, 0);
+        return tls1_set_sigalgs(ctx->cnf->cert, parg, larg, 0);
 
     case SSL_CTRL_SET_SIGALGS_LIST:
-        return tls1_set_sigalgs_list(ctx->cert, parg, 0);
+        return tls1_set_sigalgs_list(ctx->cnf->cert, parg, 0);
 
     case SSL_CTRL_SET_CLIENT_SIGALGS:
-        return tls1_set_sigalgs(ctx->cert, parg, larg, 1);
+        return tls1_set_sigalgs(ctx->cnf->cert, parg, larg, 1);
 
     case SSL_CTRL_SET_CLIENT_SIGALGS_LIST:
-        return tls1_set_sigalgs_list(ctx->cert, parg, 1);
+        return tls1_set_sigalgs_list(ctx->cnf->cert, parg, 1);
 
     case SSL_CTRL_SET_CLIENT_CERT_TYPES:
-        return ssl3_set_req_cert_type(ctx->cert, parg, larg);
+        return ssl3_set_req_cert_type(ctx->cnf->cert, parg, larg);
 
     case SSL_CTRL_BUILD_CERT_CHAIN:
         return ssl_build_cert_chain(NULL, ctx, larg);
 
     case SSL_CTRL_SET_VERIFY_CERT_STORE:
-        return ssl_cert_set_cert_store(ctx->cert, parg, 0, larg);
+        return ssl_cert_set_cert_store(ctx->cnf->cert, parg, 0, larg);
 
     case SSL_CTRL_SET_CHAIN_CERT_STORE:
-        return ssl_cert_set_cert_store(ctx->cert, parg, 1, larg);
+        return ssl_cert_set_cert_store(ctx->cnf->cert, parg, 1, larg);
 
     case SSL_CTRL_GET_VERIFY_CERT_STORE:
-        return ssl_cert_get_cert_store(ctx->cert, parg, 0);
+        return ssl_cert_get_cert_store(ctx->cnf->cert, parg, 0);
 
     case SSL_CTRL_GET_CHAIN_CERT_STORE:
-        return ssl_cert_get_cert_store(ctx->cert, parg, 1);
+        return ssl_cert_get_cert_store(ctx->cnf->cert, parg, 1);
 
         /* A Thawte special :-) */
     case SSL_CTRL_EXTRA_CHAIN_CERT:
-        if (ctx->extra_certs == NULL) {
-            if ((ctx->extra_certs = sk_X509_new_null()) == NULL) {
+        if (ctx->cnf->extra_certs == NULL) {
+            if ((ctx->cnf->extra_certs = sk_X509_new_null()) == NULL) {
                 ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
                 return 0;
             }
         }
-        if (!sk_X509_push(ctx->extra_certs, (X509 *)parg)) {
+        if (!sk_X509_push(ctx->cnf->extra_certs, (X509 *)parg)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
             return 0;
         }
         break;
 
     case SSL_CTRL_GET_EXTRA_CHAIN_CERTS:
-        if (ctx->extra_certs == NULL && larg == 0)
-            *(STACK_OF(X509) **)parg = ctx->cert->key->chain;
+        if (ctx->cnf->extra_certs == NULL && larg == 0)
+            *(STACK_OF(X509) **)parg = ctx->cnf->cert->key->chain;
         else
-            *(STACK_OF(X509) **)parg = ctx->extra_certs;
+            *(STACK_OF(X509) **)parg = ctx->cnf->extra_certs;
         break;
 
     case SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS:
-        OSSL_STACK_OF_X509_free(ctx->extra_certs);
-        ctx->extra_certs = NULL;
+        OSSL_STACK_OF_X509_free(ctx->cnf->extra_certs);
+        ctx->cnf->extra_certs = NULL;
         break;
 
     case SSL_CTRL_CHAIN:
@@ -4033,14 +4033,14 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             return ssl_cert_add0_chain_cert(NULL, ctx, (X509 *)parg);
 
     case SSL_CTRL_GET_CHAIN_CERTS:
-        *(STACK_OF(X509) **)parg = ctx->cert->key->chain;
+        *(STACK_OF(X509) **)parg = ctx->cnf->cert->key->chain;
         break;
 
     case SSL_CTRL_SELECT_CURRENT_CERT:
-        return ssl_cert_select_current(ctx->cert, (X509 *)parg);
+        return ssl_cert_select_current(ctx->cnf->cert, (X509 *)parg);
 
     case SSL_CTRL_SET_CURRENT_CERT:
-        return ssl_cert_set_current(ctx->cert, larg);
+        return ssl_cert_set_current(ctx->cnf->cert, larg);
 
     default:
         return 0;
@@ -4054,21 +4054,21 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 #if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH_CB:
         {
-            ctx->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
+            ctx->cnf->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
         }
         break;
 #endif
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
-        ctx->ext.servername_cb = (int (*)(SSL *, int *, void *))fp;
+        ctx->cnf->ext.servername_cb = (int (*)(SSL *, int *, void *))fp;
         break;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB:
-        ctx->ext.status_cb = (int (*)(SSL *, void *))fp;
+        ctx->cnf->ext.status_cb = (int (*)(SSL *, void *))fp;
         break;
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
     case SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB:
-        ctx->ext.ticket_key_cb = (int (*)(SSL *, unsigned char *,
+        ctx->cnf->ext.ticket_key_cb = (int (*)(SSL *, unsigned char *,
                                           unsigned char *,
                                           EVP_CIPHER_CTX *,
                                           HMAC_CTX *, int))fp;
@@ -4093,7 +4093,7 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 #endif
     case SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB:
         {
-            ctx->not_resumable_session_cb = (int (*)(SSL *, int))fp;
+            ctx->cnf->not_resumable_session_cb = (int (*)(SSL *, int))fp;
         }
         break;
     default:
@@ -4106,7 +4106,7 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb
     (SSL_CTX *ctx, int (*fp)(SSL *, unsigned char *, unsigned char *,
                              EVP_CIPHER_CTX *, EVP_MAC_CTX *, int))
 {
-    ctx->ext.ticket_key_evp_cb = fp;
+    ctx->cnf->ext.ticket_key_evp_cb = fp;
     return 1;
 }
 

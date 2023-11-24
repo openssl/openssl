@@ -1382,8 +1382,8 @@ CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
     unsigned int cookie_leni;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    if (sctx->app_gen_cookie_cb == NULL
-        || sctx->app_gen_cookie_cb(SSL_CONNECTION_GET_SSL(s), s->d1->cookie,
+    if (sctx->cnf->app_gen_cookie_cb == NULL
+        || sctx->cnf->app_gen_cookie_cb(SSL_CONNECTION_GET_SSL(s), s->d1->cookie,
                                    &cookie_leni) == 0
         || cookie_leni > DTLS1_COOKIE_LENGTH) {
         SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
@@ -1700,9 +1700,9 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 
     /* Finished parsing the ClientHello, now we can start processing it */
     /* Give the ClientHello callback a crack at things */
-    if (sctx->client_hello_cb != NULL) {
+    if (sctx->cnf->client_hello_cb != NULL) {
         /* A failure in the ClientHello callback terminates the connection. */
-        switch (sctx->client_hello_cb(ssl, &al, sctx->client_hello_cb_arg)) {
+        switch (sctx->cnf->client_hello_cb(ssl, &al, sctx->cnf->client_hello_cb_arg)) {
         case SSL_CLIENT_HELLO_SUCCESS:
             break;
         case SSL_CLIENT_HELLO_RETRY:
@@ -1766,8 +1766,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     if (SSL_CONNECTION_IS_DTLS(s)) {
         /* Empty cookie was already handled above by returning early. */
         if (SSL_get_options(ssl) & SSL_OP_COOKIE_EXCHANGE) {
-            if (sctx->app_verify_cookie_cb != NULL) {
-                if (sctx->app_verify_cookie_cb(ssl, clienthello->dtls_cookie,
+            if (sctx->cnf->app_verify_cookie_cb != NULL) {
+                if (sctx->cnf->app_verify_cookie_cb(ssl, clienthello->dtls_cookie,
                         clienthello->dtls_cookie_len) == 0) {
                     SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                              SSL_R_COOKIE_MISMATCH);
@@ -2169,7 +2169,7 @@ static int tls_handle_status_request(SSL_CONNECTION *s)
      * influence which certificate is sent
      */
     if (s->ext.status_type != TLSEXT_STATUSTYPE_nothing && sctx != NULL
-            && sctx->ext.status_cb != NULL) {
+            && sctx->cnf->ext.status_cb != NULL) {
         int ret;
 
         /* If no certificate can't return certificate status */
@@ -2179,8 +2179,8 @@ static int tls_handle_status_request(SSL_CONNECTION *s)
              * et al can pick it up.
              */
             s->cert->key = s->s3.tmp.cert;
-            ret = sctx->ext.status_cb(SSL_CONNECTION_GET_SSL(s),
-                                      sctx->ext.status_arg);
+            ret = sctx->cnf->ext.status_cb(SSL_CONNECTION_GET_SSL(s),
+                                      sctx->cnf->ext.status_arg);
             switch (ret) {
                 /* We don't want to send a status request response */
             case SSL_TLSEXT_ERR_NOACK:
@@ -2213,12 +2213,12 @@ int tls_handle_alpn(SSL_CONNECTION *s)
     unsigned char selected_len = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    if (sctx->ext.alpn_select_cb != NULL && s->s3.alpn_proposed != NULL) {
-        int r = sctx->ext.alpn_select_cb(SSL_CONNECTION_GET_SSL(s),
+    if (sctx->cnf->ext.alpn_select_cb != NULL && s->s3.alpn_proposed != NULL) {
+        int r = sctx->cnf->ext.alpn_select_cb(SSL_CONNECTION_GET_SSL(s),
                                          &selected, &selected_len,
                                          s->s3.alpn_proposed,
                                          (unsigned int)s->s3.alpn_proposed_len,
-                                         sctx->ext.alpn_select_cb_arg);
+                                         sctx->cnf->ext.alpn_select_cb_arg);
 
         if (r == SSL_TLSEXT_ERR_OK) {
             OPENSSL_free(s->s3.alpn_selected);
@@ -2446,7 +2446,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
      * to send back.
      */
     if (s->session->not_resumable ||
-        (!(SSL_CONNECTION_GET_CTX(s)->session_cache_mode & SSL_SESS_CACHE_SERVER)
+        (!(SSL_CONNECTION_GET_CTX(s)->cnf->session_cache_mode & SSL_SESS_CACHE_SERVER)
          && !s->hit))
         s->session->session_id_length = 0;
 
@@ -4019,21 +4019,21 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
      * all the work otherwise use generated values from parent ctx.
      */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-    if (tctx->ext.ticket_key_evp_cb != NULL || tctx->ext.ticket_key_cb != NULL)
+    if (tctx->cnf->ext.ticket_key_evp_cb != NULL || tctx->cnf->ext.ticket_key_cb != NULL)
 #else
-    if (tctx->ext.ticket_key_evp_cb != NULL)
+    if (tctx->cnf->ext.ticket_key_evp_cb != NULL)
 #endif
     {
         int ret = 0;
 
-        if (tctx->ext.ticket_key_evp_cb != NULL)
-            ret = tctx->ext.ticket_key_evp_cb(ssl, key_name, iv, ctx,
+        if (tctx->cnf->ext.ticket_key_evp_cb != NULL)
+            ret = tctx->cnf->ext.ticket_key_evp_cb(ssl, key_name, iv, ctx,
                                               ssl_hmac_get0_EVP_MAC_CTX(hctx),
                                               1);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-        else if (tctx->ext.ticket_key_cb != NULL)
+        else if (tctx->cnf->ext.ticket_key_cb != NULL)
             /* if 0 is returned, write an empty ticket */
-            ret = tctx->ext.ticket_key_cb(ssl, key_name, iv, ctx,
+            ret = tctx->cnf->ext.ticket_key_cb(ssl, key_name, iv, ctx,
                                           ssl_hmac_get0_HMAC_CTX(hctx), 1);
 #endif
 
@@ -4081,17 +4081,17 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
         if (iv_len < 0
                 || RAND_bytes_ex(sctx->libctx, iv, iv_len, 0) <= 0
                 || !EVP_EncryptInit_ex(ctx, cipher, NULL,
-                                       tctx->ext.secure->tick_aes_key, iv)
-                || !ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,
-                                  sizeof(tctx->ext.secure->tick_hmac_key),
+                                       tctx->cnf->ext.secure->tick_aes_key, iv)
+                || !ssl_hmac_init(hctx, tctx->cnf->ext.secure->tick_hmac_key,
+                                  sizeof(tctx->cnf->ext.secure->tick_hmac_key),
                                   "SHA256")) {
             EVP_CIPHER_free(cipher);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
         EVP_CIPHER_free(cipher);
-        memcpy(key_name, tctx->ext.tick_key_name,
-               sizeof(tctx->ext.tick_key_name));
+        memcpy(key_name, tctx->cnf->ext.tick_key_name,
+               sizeof(tctx->cnf->ext.tick_key_name));
     }
 
     if (!create_ticket_prequel(s, pkt, age_add, tick_nonce)) {
@@ -4262,9 +4262,9 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
         s->session->ext.max_early_data = s->max_early_data;
     }
 
-    if (tctx->generate_ticket_cb != NULL &&
-        tctx->generate_ticket_cb(SSL_CONNECTION_GET_SSL(s),
-                                 tctx->ticket_cb_data) == 0) {
+    if (tctx->cnf->generate_ticket_cb != NULL &&
+        tctx->cnf->generate_ticket_cb(SSL_CONNECTION_GET_SSL(s),
+                                 tctx->cnf->ticket_cb_data) == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }

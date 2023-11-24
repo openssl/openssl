@@ -246,7 +246,7 @@ int ossl_quic_trace(int write_p, int version, int content_type,
 #  define IS_QUIC_METHOD(m) \
     ((m) == OSSL_QUIC_client_method() || \
      (m) == OSSL_QUIC_client_thread_method())
-#  define IS_QUIC_CTX(ctx)          IS_QUIC_METHOD((ctx)->method)
+#  define IS_QUIC_CTX(ctx)          IS_QUIC_METHOD((ctx)->cnf->method)
 
 #  define QUIC_CONNECTION_FROM_SSL_int(ssl, c)   \
      ((ssl) == NULL ? NULL                       \

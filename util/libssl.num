@@ -520,6 +520,8 @@ SSL_load_client_CA_file_ex              520	3_0_0	EXIST::FUNCTION:
 SSL_set0_tmp_dh_pkey                    521	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set0_tmp_dh_pkey                522	3_0_0	EXIST::FUNCTION:
 SSL_group_to_name                       523	3_0_0	EXIST::FUNCTION:
+
+<<<<<<< HEAD
 SSL_client_hello_get_extension_order    524	3_2_0	EXIST::FUNCTION:
 OSSL_QUIC_client_method                 525	3_2_0	EXIST::FUNCTION:QUIC
 OSSL_QUIC_client_thread_method          526	3_2_0	EXIST::FUNCTION:QUIC
@@ -577,3 +579,5 @@ SSL_handle_events                       577	3_2_0	EXIST::FUNCTION:
 SSL_get_event_timeout                   578	3_2_0	EXIST::FUNCTION:
 SSL_get0_group_name                     579	3_2_0	EXIST::FUNCTION:
 SSL_is_stream_local                     580	3_2_0	EXIST::FUNCTION:
+SSL_CTX_dup                             581	3_2_0	EXIST::FUNCTION:
+

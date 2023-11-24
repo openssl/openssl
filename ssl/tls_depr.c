@@ -69,7 +69,7 @@ int tls_engine_load_ssl_client_cert(SSL_CONNECTION *s, X509 **px509,
 {
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
-    return ENGINE_load_ssl_client_cert(SSL_CONNECTION_GET_CTX(s)->client_cert_engine,
+    return ENGINE_load_ssl_client_cert(SSL_CONNECTION_GET_CTX(s)->cnf->client_cert_engine,
                                        ssl,
                                        SSL_get_client_CA_list(ssl),
                                        px509, ppkey, NULL, NULL, NULL);
@@ -88,7 +88,7 @@ int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e)
         ENGINE_finish(e);
         return 0;
     }
-    ctx->client_cert_engine = e;
+    ctx->cnf->client_cert_engine = e;
     return 1;
 }
 #endif

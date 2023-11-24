@@ -1020,14 +1020,14 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, i
     if (cpk->chain != NULL)
         extra_certs = cpk->chain;
     else
-        extra_certs = sctx->extra_certs;
+        extra_certs = sctx->cnf->extra_certs;
 
     if ((s->mode & SSL_MODE_NO_AUTO_CHAIN) || extra_certs)
         chain_store = NULL;
     else if (s->cert->chain_store)
         chain_store = s->cert->chain_store;
     else
-        chain_store = sctx->cert_store;
+        chain_store = sctx->cnf->cert_store;
 
     if (chain_store != NULL) {
         X509_STORE_CTX *xs_ctx = X509_STORE_CTX_new_ex(sctx->libctx,
@@ -1480,7 +1480,7 @@ WORK_STATE tls_finish_handshake(SSL_CONNECTION *s, ossl_unused WORK_STATE wst,
                  * We encourage applications to only use TLSv1.3 tickets once,
                  * so we remove this one from the cache.
                  */
-                if ((s->session_ctx->session_cache_mode
+                if ((s->session_ctx->cnf->session_cache_mode
                      & SSL_SESS_CACHE_CLIENT) != 0)
                     SSL_CTX_remove_session(s->session_ctx, s->session);
             } else {
@@ -1510,8 +1510,8 @@ WORK_STATE tls_finish_handshake(SSL_CONNECTION *s, ossl_unused WORK_STATE wst,
 
     if (s->info_callback != NULL)
         cb = s->info_callback;
-    else if (sctx->info_callback != NULL)
-        cb = sctx->info_callback;
+    else if (sctx->cnf->info_callback != NULL)
+        cb = sctx->cnf->info_callback;
 
     /* The callback may expect us to not be in init at handshake done */
     ossl_statem_set_in_init(s, 0);
@@ -1907,8 +1907,8 @@ static int is_tls13_capable(const SSL_CONNECTION *s)
      * A servername callback can change the available certs, so if a servername
      * cb is set then we just assume TLSv1.3 will be ok
      */
-    if (sctx->ext.servername_cb != NULL
-            || s->session_ctx->ext.servername_cb != NULL)
+    if (sctx->cnf->ext.servername_cb != NULL
+            || s->session_ctx->cnf->ext.servername_cb != NULL)
         return 1;
 
 #ifndef OPENSSL_NO_PSK

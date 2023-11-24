@@ -335,7 +335,7 @@ static int min_max_proto(SSL_CONF_CTX *cctx, const char *value, int *bound)
     int new_version;
 
     if (cctx->ctx != NULL)
-        method_version = cctx->ctx->method->version;
+        method_version = cctx->ctx->cnf->method->version;
     else if (cctx->ssl != NULL)
         method_version = cctx->ssl->defltmeth->version;
     else
@@ -437,7 +437,7 @@ static int cmd_Certificate(SSL_CONF_CTX *cctx, const char *value)
     CERT *c = NULL;
     if (cctx->ctx != NULL) {
         rv = SSL_CTX_use_certificate_chain_file(cctx->ctx, value);
-        c = cctx->ctx->cert;
+        c = cctx->ctx->cnf->cert;
     }
     if (cctx->ssl != NULL) {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
@@ -492,7 +492,7 @@ static int do_store(SSL_CONF_CTX *cctx,
     const char *propq = NULL;
 
     if (cctx->ctx != NULL) {
-        cert = cctx->ctx->cert;
+        cert = cctx->ctx->cnf->cert;
         ctx = cctx->ctx;
     } else if (cctx->ssl != NULL) {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
@@ -1003,7 +1003,7 @@ int SSL_CONF_CTX_finish(SSL_CONF_CTX *cctx)
     CERT *c = NULL;
 
     if (cctx->ctx != NULL) {
-        c = cctx->ctx->cert;
+        c = cctx->ctx->cnf->cert;
     } else if (cctx->ssl != NULL) {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
 
@@ -1103,11 +1103,11 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx)
     cctx->ctx = ctx;
     cctx->ssl = NULL;
     if (ctx) {
-        cctx->poptions = &ctx->options;
-        cctx->min_version = &ctx->min_proto_version;
-        cctx->max_version = &ctx->max_proto_version;
-        cctx->pcert_flags = &ctx->cert->cert_flags;
-        cctx->pvfy_flags = &ctx->verify_mode;
+        cctx->poptions = &ctx->cnf->options;
+        cctx->min_version = &ctx->cnf->min_proto_version;
+        cctx->max_version = &ctx->cnf->max_proto_version;
+        cctx->pcert_flags = &ctx->cnf->cert->cert_flags;
+        cctx->pvfy_flags = &ctx->cnf->verify_mode;
     } else {
         cctx->poptions = NULL;
         cctx->min_version = NULL;
