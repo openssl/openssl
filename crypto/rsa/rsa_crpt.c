@@ -59,13 +59,26 @@ int RSA_flags(const RSA *r)
     return r == NULL ? 0 : r->meth->flags;
 }
 
-void RSA_blinding_off(RSA *rsa)
+static void RSA_blinding_off_locked(RSA *rsa)
 {
 
     BN_BLINDING_free(rsa->blinding);
     rsa->blinding = NULL;
     rsa->flags &= ~RSA_FLAG_BLINDING;
     rsa->flags |= RSA_FLAG_NO_BLINDING;
+}
+
+void RSA_blinding_off(RSA *rsa)
+{
+    if (!CRYPTO_THREAD_write_lock(rsa->lock)) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
+        return;
+    }
+
+    RSA_blinding_off_locked(rsa);
+
+    CRYPTO_THREAD_unlock(rsa->lock);
+    return;
 }
 
 int RSA_blinding_on(RSA *rsa, BN_CTX *ctx)
@@ -77,7 +90,7 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *ctx)
             return 0;
 
     if (rsa->blinding != NULL)
-        RSA_blinding_off(rsa);
+        RSA_blinding_off_locked(rsa);
 
     rsa->blinding = RSA_setup_blinding(rsa, ctx);
     if (rsa->blinding == NULL)
