@@ -104,7 +104,7 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
         if (ctx == NULL)
             goto err;
 
-        /* we need at minimum p, q, e, n and d*/
+        /* we need at minimum p, q */
         param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR1);
         param_q = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR2);
         if ((param_p == NULL || !OSSL_PARAM_get_BN(param_p, &p))
