@@ -17,6 +17,14 @@ my ($a0,$a1,$a2,$a3,$a4,$a5,$a6,$a7)=map("\$r$_",(4..11));
 my ($t0,$t1,$t2,$t3,$t4,$t5,$t6,$t7,$t8,$x)=map("\$r$_",(12..21));
 my ($s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7,$s8)=map("\$r$_",(23..31));
 
+# The saved floating-point registers in the LP64D ABI.  In LoongArch
+# with vector extension, the low 64 bits of a vector register alias with
+# the corresponding FPR.  So we must save and restore the corresponding
+# FPR if we'll write into a vector register.  The ABI only requires
+# saving and restoring the FPR (i.e. 64 bits of the corresponding vector
+# register), not the entire vector register.
+my ($fs0,$fs1,$fs2,$fs3,$fs4,$fs5,$fs6,$fs7)=map("\$f$_",(24..31));
+
 # Here is the 128-bit vector register layout for LSX extension.
 my ($vr0,$vr1,$vr2,$vr3,$vr4,$vr5,$vr6,$vr7,$vr8,$vr9,$vr10,
     $vr11,$vr12,$vr13,$vr14,$vr15,$vr16,$vr17,$vr18,$vr19,
@@ -66,13 +74,25 @@ ChaCha20_ctr32:
 	la.pcrel	$t0,OPENSSL_loongarch_hwcap_P
 	ld.w		$t0,$t0,0
 
+	bleu		$len,$t3,.LChaCha20_1x  # goto 1x when len <= 64
+
+	andi		$t0,$t0,LOONGARCH_HWCAP_LASX | LOONGARCH_HWCAP_LSX
+	beqz		$t0,.LChaCha20_1x
+
+	addi.d		$sp,$sp,-64
+	fst.d		$fs0,$sp,0
+	fst.d		$fs1,$sp,8
+	fst.d		$fs2,$sp,16
+	fst.d		$fs3,$sp,24
+	fst.d		$fs4,$sp,32
+	fst.d		$fs5,$sp,40
+	fst.d		$fs6,$sp,48
+	fst.d		$fs7,$sp,56
+
 	andi		$t1,$t0,LOONGARCH_HWCAP_LASX
 	bnez		$t1,.LChaCha20_8x
 
-	andi		$t2,$t0,LOONGARCH_HWCAP_LSX
-	bnez		$t2,.LChaCha20_4x
-
-	b			.LChaCha20_1x
+	b		.LChaCha20_4x
 
 EOF
 
@@ -442,8 +462,6 @@ $code .= <<EOF;
 .align 6
 .LChaCha20_4x:
 	ori			$t3,$zero,64
-	bleu		$len,$t3,.LChaCha20_1x  # goto 1x when len <= 64
-
 	addi.d		$sp,$sp,-128
 
 	# Save the initial block counter in $t4
@@ -783,7 +801,7 @@ $code .= <<EOF;
 
 .Ldone_4x:
 	addi.d		$sp,$sp,128
-	b			.Lend
+	b			.Lrestore_saved_fpr
 
 EOF
 }
@@ -869,8 +887,6 @@ $code .= <<EOF;
 .align 6
 .LChaCha20_8x:
 	ori			$t3,$zero,64
-	bleu		$len,$t3,.LChaCha20_1x  # goto 1x when len <= 64
-
 	addi.d		$sp,$sp,-128
 
 	# Save the initial block counter in $t4
@@ -1394,12 +1410,22 @@ $code .= <<EOF;
 
 .Ldone_8x:
 	addi.d		$sp,$sp,128
-	b			.Lend
+	b			.Lrestore_saved_fpr
 
 EOF
 }
 
 $code .= <<EOF;
+.Lrestore_saved_fpr:
+	fld.d		$fs0,$sp,0
+	fld.d		$fs1,$sp,8
+	fld.d		$fs2,$sp,16
+	fld.d		$fs3,$sp,24
+	fld.d		$fs4,$sp,32
+	fld.d		$fs5,$sp,40
+	fld.d		$fs6,$sp,48
+	fld.d		$fs7,$sp,56
+	addi.d		$sp,$sp,64
 .Lno_data:
 .Lend:
 	jr	$ra
