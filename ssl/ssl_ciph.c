@@ -2238,7 +2238,7 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
 
 int ssl_cert_is_disabled(SSL_CTX *ctx, size_t idx)
 {
-    SSL_CERT_LOOKUP *cl;
+    const SSL_CERT_LOOKUP *cl;
 
     /* A provider-loaded key type is always enabled */
     if (idx >= SSL_PKEY_NUM)
