@@ -140,7 +140,7 @@ int tls1_clear(SSL *s)
 }
 
 /* Legacy NID to group_id mapping. Only works for groups we know about */
-static struct {
+static const struct {
     int nid;
     uint16_t group_id;
 } nid_to_group[] = {
