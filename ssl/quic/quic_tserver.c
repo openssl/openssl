@@ -53,7 +53,7 @@ static int alpn_select_cb(SSL *ssl, const unsigned char **out,
     static const unsigned char alpndeflt[] = {
         8, 'o', 's', 's', 'l', 't', 'e', 's', 't'
     };
-    static const unsigned char *alpn;
+    const unsigned char *alpn;
     size_t alpnlen;
 
     if (srv->args.alpn == NULL) {
