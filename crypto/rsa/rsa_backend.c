@@ -96,23 +96,23 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
             ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_NULL_PARAMETER);
             goto err;
         }
-    }
 
-    if (derive_from_pq) {
+        if (derive_from_pq) {
 
-        ctx = BN_CTX_new_ex(rsa->libctx);
-        if (ctx == NULL)
-            goto err;
+            ctx = BN_CTX_new_ex(rsa->libctx);
+            if (ctx == NULL)
+                goto err;
 
-        /* we need at minimum p, q */
-        param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR1);
-        param_q = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR2);
-        if ((param_p == NULL || !OSSL_PARAM_get_BN(param_p, &p))
-            || (param_q == NULL || !OSSL_PARAM_get_BN(param_q, &q))) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_NULL_PARAMETER);
-            goto err;
+            /* we need at minimum p, q */
+            param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR1);
+            param_q = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR2);
+            if ((param_p == NULL || !OSSL_PARAM_get_BN(param_p, &p))
+                || (param_q == NULL || !OSSL_PARAM_get_BN(param_q, &q))) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_NULL_PARAMETER);
+                goto err;
+            }
+
         }
-
     }
 
     is_private = (d != NULL);
