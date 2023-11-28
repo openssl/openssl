@@ -172,16 +172,25 @@ static QUIC_LCIDM_CONN *lcidm_upsert_conn(const QUIC_LCIDM *lcidm, void *opaque)
         return conn;
 
     if ((conn = OPENSSL_zalloc(sizeof(*conn))) == NULL)
-        return NULL;
+        goto err;
 
-    if ((conn->lcids = lh_QUIC_LCID_new(lcid_hash, lcid_comp)) == NULL) {
-        OPENSSL_free(conn);
-        return NULL;
-    }
+    if ((conn->lcids = lh_QUIC_LCID_new(lcid_hash, lcid_comp)) == NULL)
+        goto err;
 
     conn->opaque = opaque;
+
     lh_QUIC_LCIDM_CONN_insert(lcidm->conns, conn);
+    if (lh_QUIC_LCIDM_CONN_error(lcidm->conns))
+        goto err;
+
     return conn;
+
+err:
+    if (conn != NULL) {
+        lh_QUIC_LCID_free(conn->lcids);
+        OPENSSL_free(conn);
+    }
+    return NULL;
 }
 
 static void lcidm_delete_conn_lcid(QUIC_LCIDM *lcidm, QUIC_LCID *lcid_obj)
@@ -209,20 +218,33 @@ static void lcidm_delete_conn(QUIC_LCIDM *lcidm, QUIC_LCIDM_CONN *conn)
 static QUIC_LCID *lcidm_conn_new_lcid(QUIC_LCIDM *lcidm, QUIC_LCIDM_CONN *conn,
                                       const QUIC_CONN_ID *lcid)
 {
-    QUIC_LCID *lcid_obj;
+    QUIC_LCID *lcid_obj = NULL;
 
     if (lcid->id_len > QUIC_MAX_CONN_ID_LEN)
         return NULL;
 
     if ((lcid_obj = OPENSSL_zalloc(sizeof(*lcid_obj))) == NULL)
-        return NULL;
+        goto err;
 
     lcid_obj->cid = *lcid;
     lcid_obj->conn = conn;
+
     lh_QUIC_LCID_insert(conn->lcids, lcid_obj);
+    if (lh_QUIC_LCID_error(conn->lcids))
+        goto err;
+
     lh_QUIC_LCID_insert(lcidm->lcids, lcid_obj);
+    if (lh_QUIC_LCID_error(lcidm->lcids)) {
+        lh_QUIC_LCID_delete(conn->lcids, lcid_obj);
+        goto err;
+    }
+
     ++conn->num_active_lcid;
     return lcid_obj;
+
+err:
+    OPENSSL_free(lcid_obj);
+    return NULL;
 }
 
 size_t ossl_quic_lcidm_get_lcid_len(const QUIC_LCIDM *lcidm)
