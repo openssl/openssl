@@ -354,21 +354,33 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
-  out-of-source-and-install:
+  # out-of-source-and-install checks multiple things at the same time:
+  # - That building, testing and installing works from an out-of-source
+  #   build tree
+  # - That building, testing and installing works with a read-only source
+  #   tree
+  out-of-readonly-source-and-install:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest ]
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v4
+      with:
+        path: ./source
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - name: extra preparations
+      working-directory: ./source
+    - name: make source read-only
+      run: chmod -R a-w ./source
+    - name: create build and install directories
       run: |
         mkdir ./build
         mkdir ./install
     - name: config
-      run: ../config --banner=Configured enable-fips enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd) && perl configdata.pm --dump
+      run: |
+        ../source/config --banner=Configured enable-fips enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
+        perl configdata.pm --dump
       working-directory: ./build
     - name: make
       run: make -s -j4
