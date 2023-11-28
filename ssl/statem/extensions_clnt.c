@@ -203,10 +203,10 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
      * We only support EC groups in (D)TLSv1.2 or below, and in DTLS. Therefore
      * if we don't have EC support then we don't send this extension.
      */
-    if (!use_ecc(s, min_version, max_version)
-           && ((!isdtls && max_version < TLS1_3_VERSION)
-           || (isdtls && DTLS_VERSION_LT(max_version, DTLS1_3_VERSION))))
-        return EXT_RETURN_NOT_SENT;
+    if (!use_ecc(s, min_version, max_version))
+        if ((!isdtls && max_version < TLS1_3_VERSION)
+                || (isdtls && DTLS_VERSION_LT(max_version, DTLS1_3_VERSION)))
+            return EXT_RETURN_NOT_SENT;
 
     /*
      * Add TLS extension supported_groups to the ClientHello message
@@ -248,7 +248,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     if (tls13added == 0 && (max_version == TLS1_3_VERSION
-            || max_version == DTLS1_3_VERSION)) {
+                            || max_version == DTLS1_3_VERSION)) {
         SSLfatal_data(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_GROUPS,
                       "No groups enabled for max supported SSL/TLS version");
         return EXT_RETURN_FAIL;
