@@ -87,7 +87,7 @@
  * DCID length, it logically follows that an ODCID can never be used in a 1-RTT
  * packet. This is fine as by the time the 1-RTT EL is reached the peer should
  * already have switched away from the ODCID to a CID we generated ourselves,
- * and if this is not happened we can consider that a protocol violation.
+ * and if this has not happened we can consider that a protocol violation.
  *
  * In any case, this means that the LCIDM must necessarily support LCIDs of
  * different lengths, even if it always generates LCIDs of a given length.

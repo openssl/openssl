@@ -46,7 +46,7 @@ struct quic_lcidm_conn_st {
     size_t              num_active_lcid;
     LHASH_OF(QUIC_LCID) *lcids;
     void                *opaque;
-    QUIC_LCID           *odcid_lcid;
+    QUIC_LCID           *odcid_lcid_obj;
     uint64_t            next_seq_num;
 
     /* Have we enrolled an ODCID? */
@@ -74,9 +74,9 @@ static unsigned long bin_hash(const unsigned char *buf, size_t buf_len)
     return hash;
 }
 
-static unsigned long lcid_hash(const QUIC_LCID *lcid)
+static unsigned long lcid_hash(const QUIC_LCID *lcid_obj)
 {
-    return bin_hash(lcid->cid.id, lcid->cid.id_len);
+    return bin_hash(lcid_obj->cid.id, lcid_obj->cid.id_len);
 }
 
 static int lcid_comp(const QUIC_LCID *a, const QUIC_LCID *b)
@@ -143,7 +143,7 @@ void ossl_quic_lcidm_free(QUIC_LCIDM *lcidm)
     OPENSSL_free(lcidm);
 }
 
-static QUIC_LCID *lcidm_get_lcid(const QUIC_LCIDM *lcidm, const QUIC_CONN_ID *lcid)
+static QUIC_LCID *lcidm_get0_lcid(const QUIC_LCIDM *lcidm, const QUIC_CONN_ID *lcid)
 {
     QUIC_LCID key;
 
@@ -155,7 +155,7 @@ static QUIC_LCID *lcidm_get_lcid(const QUIC_LCIDM *lcidm, const QUIC_CONN_ID *lc
     return lh_QUIC_LCID_retrieve(lcidm->lcids, &key);
 }
 
-static QUIC_LCIDM_CONN *lcidm_get_conn(const QUIC_LCIDM *lcidm, void *opaque)
+static QUIC_LCIDM_CONN *lcidm_get0_conn(const QUIC_LCIDM *lcidm, void *opaque)
 {
     QUIC_LCIDM_CONN key;
 
@@ -166,7 +166,7 @@ static QUIC_LCIDM_CONN *lcidm_get_conn(const QUIC_LCIDM *lcidm, void *opaque)
 
 static QUIC_LCIDM_CONN *lcidm_upsert_conn(const QUIC_LCIDM *lcidm, void *opaque)
 {
-    QUIC_LCIDM_CONN *conn = lcidm_get_conn(lcidm, opaque);
+    QUIC_LCIDM_CONN *conn = lcidm_get0_conn(lcidm, opaque);
 
     if (conn != NULL)
         return conn;
@@ -184,18 +184,18 @@ static QUIC_LCIDM_CONN *lcidm_upsert_conn(const QUIC_LCIDM *lcidm, void *opaque)
     return conn;
 }
 
-static void lcidm_delete_conn_lcid(QUIC_LCIDM *lcidm, QUIC_LCID *lcid)
+static void lcidm_delete_conn_lcid(QUIC_LCIDM *lcidm, QUIC_LCID *lcid_obj)
 {
-    lh_QUIC_LCID_delete(lcidm->lcids, lcid);
-    lh_QUIC_LCID_delete(lcid->conn->lcids, lcid);
-    --lcid->conn->num_active_lcid;
-    OPENSSL_free(lcid);
+    lh_QUIC_LCID_delete(lcidm->lcids, lcid_obj);
+    lh_QUIC_LCID_delete(lcid_obj->conn->lcids, lcid_obj);
+    --lcid_obj->conn->num_active_lcid;
+    OPENSSL_free(lcid_obj);
 }
 
 /* doall_arg wrapper */
-static void lcidm_delete_conn_lcid_(QUIC_LCID *lcid, void *arg)
+static void lcidm_delete_conn_lcid_(QUIC_LCID *lcid_obj, void *arg)
 {
-    lcidm_delete_conn_lcid((QUIC_LCIDM *)arg, lcid);
+    lcidm_delete_conn_lcid((QUIC_LCIDM *)arg, lcid_obj);
 }
 
 static void lcidm_delete_conn(QUIC_LCIDM *lcidm, QUIC_LCIDM_CONN *conn)
@@ -235,7 +235,7 @@ size_t ossl_quic_lcidm_get_num_active_lcid(const QUIC_LCIDM *lcidm,
 {
     QUIC_LCIDM_CONN *conn;
 
-    conn = lcidm_get_conn(lcidm, opaque);
+    conn = lcidm_get0_conn(lcidm, opaque);
     if (conn == NULL)
         return 0;
 
@@ -341,11 +341,11 @@ int ossl_quic_lcidm_enrol_odcid(QUIC_LCIDM *lcidm,
     if ((lcid_obj = lcidm_conn_new_lcid(lcidm, conn, initial_odcid)) == NULL)
         return 0;
 
-    lcid_obj->seq_num   = LCIDM_ODCID_SEQ_NUM;
-    lcid_obj->type      = LCID_TYPE_ODCID;
+    lcid_obj->seq_num       = LCIDM_ODCID_SEQ_NUM;
+    lcid_obj->type          = LCID_TYPE_ODCID;
 
-    conn->odcid_lcid    = lcid_obj;
-    conn->done_odcid    = 1;
+    conn->odcid_lcid_obj    = lcid_obj;
+    conn->done_odcid        = 1;
     return 1;
 }
 
@@ -376,31 +376,31 @@ int ossl_quic_lcidm_retire_odcid(QUIC_LCIDM *lcidm, void *opaque)
     if ((conn = lcidm_upsert_conn(lcidm, opaque)) == NULL)
         return 0;
 
-    if (conn->odcid_lcid == NULL)
+    if (conn->odcid_lcid_obj == NULL)
         return 0;
 
-    lcidm_delete_conn_lcid(lcidm, conn->odcid_lcid);
-    conn->odcid_lcid = NULL;
+    lcidm_delete_conn_lcid(lcidm, conn->odcid_lcid_obj);
+    conn->odcid_lcid_obj = NULL;
     return 1;
 }
 
 struct retire_args {
-    QUIC_LCID           *earliest_seq_num_lcid;
+    QUIC_LCID           *earliest_seq_num_lcid_obj;
     uint64_t            earliest_seq_num, retire_prior_to;
 };
 
-static void retire_for_conn(QUIC_LCID *lcid, void *arg)
+static void retire_for_conn(QUIC_LCID *lcid_obj, void *arg)
 {
     struct retire_args *args = arg;
 
     /* ODCID LCID cannot be retired via this API */
-    if (lcid->type == LCID_TYPE_ODCID
-        || lcid->seq_num >= args->retire_prior_to)
+    if (lcid_obj->type == LCID_TYPE_ODCID
+        || lcid_obj->seq_num >= args->retire_prior_to)
         return;
 
-    if (lcid->seq_num < args->earliest_seq_num) {
-        args->earliest_seq_num = lcid->seq_num;
-        args->earliest_seq_num_lcid = lcid;
+    if (lcid_obj->seq_num < args->earliest_seq_num) {
+        args->earliest_seq_num          = lcid_obj->seq_num;
+        args->earliest_seq_num_lcid_obj = lcid_obj;
     }
 }
 
@@ -427,21 +427,21 @@ int ossl_quic_lcidm_retire(QUIC_LCIDM *lcidm,
     args.retire_prior_to    = retire_prior_to;
     args.earliest_seq_num   = UINT64_MAX;
     lh_QUIC_LCID_doall_arg(conn->lcids, retire_for_conn, &args);
-    if (args.earliest_seq_num_lcid == NULL)
+    if (args.earliest_seq_num_lcid_obj == NULL)
         return 1;
 
     if (containing_pkt_dcid != NULL
-        && ossl_quic_conn_id_eq(&args.earliest_seq_num_lcid->cid,
+        && ossl_quic_conn_id_eq(&args.earliest_seq_num_lcid_obj->cid,
                                 containing_pkt_dcid))
         return 0;
 
     *did_retire = 1;
     if (retired_lcid != NULL)
-        *retired_lcid = args.earliest_seq_num_lcid->cid;
+        *retired_lcid = args.earliest_seq_num_lcid_obj->cid;
     if (retired_seq_num != NULL)
-        *retired_seq_num = args.earliest_seq_num_lcid->seq_num;
+        *retired_seq_num = args.earliest_seq_num_lcid_obj->seq_num;
 
-    lcidm_delete_conn_lcid(lcidm, args.earliest_seq_num_lcid);
+    lcidm_delete_conn_lcid(lcidm, args.earliest_seq_num_lcid_obj);
     return 1;
 }
 
@@ -468,7 +468,7 @@ int ossl_quic_lcidm_lookup(QUIC_LCIDM *lcidm,
     if (lcid == NULL)
         return 0;
 
-    if ((lcid_obj = lcidm_get_lcid(lcidm, lcid)) == NULL)
+    if ((lcid_obj = lcidm_get0_lcid(lcidm, lcid)) == NULL)
         return 0;
 
     if (seq_num != NULL)
