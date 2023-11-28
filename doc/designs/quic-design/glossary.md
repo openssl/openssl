@@ -127,6 +127,10 @@ in which API calls can be made on different threads.
 **MSST:** Multi-stream single-thread. Refers to a type of multi-stream QUIC
 usage in which API calls must not be made concurrently.
 
+**ODCID:** Original Destination CID. This is the DCID found in the first Initial
+packet sent by a client, and is used to generate the secrets for encrypting
+Initial packets. It is only used temporarily.
+
 **PN:** Packet number. Most QUIC packet types have a packet number (PN); see RFC
 9000.
 
