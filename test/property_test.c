@@ -136,6 +136,7 @@ static const struct {
     { "n=0x3", "n=3", 1 },
     { "n=0x3", "n=-3", -1 },
     { "n=0x33", "n=51", 1 },
+    { "n=0x123456789abcdef", "n=0x123456789abcdef", 1 },
     { "n=033", "n=27", 1 },
     { "n=0", "n=00", 1 },
     { "n=0x0", "n=0", 1 },
@@ -198,6 +199,9 @@ static const struct {
     { 1, "a=2, n=012345678" },  /* Bad octal digit */
     { 0, "n=0x28FG, a=3" },     /* Bad hex digit */
     { 0, "n=145d, a=2" },       /* Bad decimal digit */
+    { 0, "n=0xffffffffffffffff, a=3" },      /* Hex overflow */
+    { 0, "n=9223372037000000000d, a=2" },    /* Decimal overflow */
+    { 0, "a=2, n=01000000000000000000000" }, /* Octal overflow */
     { 1, "@='hello'" },         /* Invalid name */
     { 1, "n0123456789012345678901234567890123456789"
          "0123456789012345678901234567890123456789"
