@@ -132,7 +132,7 @@ static int parse_hex(const char *t[], OSSL_PROPERTY_DEFINITION *res)
         if (ossl_isdigit(*s))
             sval = *s - '0';
         else if (ossl_isxdigit(*s))
-            sval = ossl_tolower(*s) - 'W';
+            sval = ossl_tolower(*s) - 'a' + 10;
         else {
             ERR_raise_data(ERR_LIB_PROP, PROP_R_NOT_AN_HEXADECIMAL_DIGIT,
                            "%s", s);
