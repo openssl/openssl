@@ -92,6 +92,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
     BIGNUM *dmp1 = NULL, *dmq1 = NULL, *iqmp = NULL;
     BIGNUM *r0 = NULL, *r1 = NULL, *r2 = NULL;
     BN_CTX *ctx = NULL;
+    BIGNUM *tmp = NULL;
     int i;
     int ret = 0;
 
@@ -141,14 +142,22 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
             /* second prime q */
             if (!BN_mul(r1, p, q, ctx))
                 goto err;
-            sk_BIGNUM_insert(pplist, BN_dup(r1), sk_BIGNUM_num(pplist));
+            tmp = BN_dup(r1);
+            if (tmp == NULL)
+                goto err;
+            if (!sk_BIGNUM_insert(pplist, tmp, sk_BIGNUM_num(pplist)))
+                goto err;
             break;
         default:
             factor = sk_BIGNUM_value(factors, i);
             /* all other primes */
             if (!BN_mul(r1, r1, factor, ctx))
                 goto err;
-            sk_BIGNUM_insert(pplist, BN_dup(r1), sk_BIGNUM_num(pplist));
+            tmp = BN_dup(r1);
+            if (tmp == NULL)
+                goto err;
+            if (!sk_BIGNUM_insert(pplist, tmp, sk_BIGNUM_num(pplist)))
+                goto err;
             break;
         }
     }
@@ -164,14 +173,15 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
     for (i = 2; i < sk_BIGNUM_num(factors); i++) {
         factor = sk_BIGNUM_value(factors, i);
         dval = BN_new();
-        if (!dval)
+        if (dval == NULL)
             goto err;
         BN_set_flags(dval, BN_FLG_CONSTTIME);
         if (!BN_sub(dval, factor, BN_value_one()))
             goto err;
         if (!BN_mul(r0, r0, dval, ctx))
             goto err;
-        sk_BIGNUM_insert(pdlist, dval, sk_BIGNUM_num(pdlist));
+        if (!sk_BIGNUM_insert(pdlist, dval, sk_BIGNUM_num(pdlist)))
+            goto err;
     }
 
     /* Calculate dmp1, dmq1 and additional exponents */
@@ -184,24 +194,27 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
 
     if (!BN_mod(dmp1, rsa->d, r1, ctx))
         goto err;
-    sk_BIGNUM_insert(exps, dmp1, sk_BIGNUM_num(exps));
+    if (!sk_BIGNUM_insert(exps, dmp1, sk_BIGNUM_num(exps)))
+        goto err;
     dmp1 = NULL;
 
     if (!BN_mod(dmq1, rsa->d, r2, ctx))
         goto err;
-    sk_BIGNUM_insert(exps, dmq1, sk_BIGNUM_num(exps));
+    if (!sk_BIGNUM_insert(exps, dmq1, sk_BIGNUM_num(exps)))
+        goto err;
     dmq1 = NULL;
 
     for (i = 2; i < sk_BIGNUM_num(factors); i++) {
         newpd = sk_BIGNUM_value(pdlist, i - 2);
         newexp = BN_new();
-        if (!newexp)
+        if (newexp == NULL)
             goto err;
         if (!BN_mod(newexp, rsa->d, newpd, ctx)) {
             BN_free(newexp);
             goto err;
         }
-        sk_BIGNUM_insert(exps, newexp, sk_BIGNUM_num(exps));
+        if (!sk_BIGNUM_insert(exps, newexp, sk_BIGNUM_num(exps)))
+            goto err;
     }
 
     /* Calculate iqmp and additional coefficients */
@@ -212,7 +225,8 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
     if (!BN_mod_inverse(iqmp, sk_BIGNUM_value(factors, 1),
                         sk_BIGNUM_value(factors, 0), ctx))
         goto err;
-    sk_BIGNUM_insert(coeffs, iqmp, sk_BIGNUM_num(coeffs));
+    if (!sk_BIGNUM_insert(coeffs, iqmp, sk_BIGNUM_num(coeffs)))
+        goto err;
     iqmp = NULL;
 
     for (i = 2; i < sk_BIGNUM_num(factors); i++) {
@@ -225,7 +239,8 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
             BN_free(newcoeff);
             goto err;
         }
-        sk_BIGNUM_insert(coeffs, newcoeff, sk_BIGNUM_num(coeffs));
+        if (!sk_BIGNUM_insert(coeffs, newcoeff, sk_BIGNUM_num(coeffs)))
+            goto err;
     }
 
     ret = 1;
@@ -427,7 +442,8 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
             tmp = BN_dup(prime);
             if (tmp == NULL)
                 goto err;
-            sk_BIGNUM_insert(factors, tmp, sk_BIGNUM_num(factors));
+            if (!sk_BIGNUM_insert(factors, tmp, sk_BIGNUM_num(factors)))
+                goto err;
             continue;
         }
 
@@ -496,7 +512,8 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
         tmp = BN_dup(prime);
         if (tmp == NULL)
             goto err;
-        sk_BIGNUM_insert(factors, tmp, sk_BIGNUM_num(factors));
+        if (!sk_BIGNUM_insert(factors, tmp, sk_BIGNUM_num(factors)))
+            goto err;
     }
 
     if (BN_cmp(rsa->p, rsa->q) < 0) {
@@ -504,7 +521,8 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
         rsa->p = rsa->q;
         rsa->q = tmp;
         /* mirror this in our factor stack */
-        sk_BIGNUM_insert(factors, sk_BIGNUM_delete(factors, 0), 1);
+        if (!sk_BIGNUM_insert(factors, sk_BIGNUM_delete(factors, 0), 1))
+            goto err;
     }
 
     /* calculate d */

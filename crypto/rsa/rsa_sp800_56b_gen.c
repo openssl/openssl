@@ -228,6 +228,10 @@ static int rsa_validate_rng_strength(EVP_RAND_CTX *rng, int nbits)
  * Returns: -1 = error,
  *           0 = d is too small,
  *           1 = success.
+ *
+ * SP800-56b key generation always passes a non NULL value for e.
+ * For other purposes, if e is NULL then it is assumed that e, n and d are
+ * already set in the RSA key and do not need to be recalculated.
  */
 int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
                                              const BIGNUM *e, BN_CTX *ctx)
@@ -254,7 +258,7 @@ int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
         goto err;
 
     /*
-     * if e is provided as a parameter, don't recompute e, d or n 
+     * if e is provided as a parameter, don't recompute e, d or n
      */
     if (e != NULL) {
         /* copy e */
