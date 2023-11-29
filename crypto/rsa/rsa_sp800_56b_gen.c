@@ -305,6 +305,7 @@ int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
         goto err;
     BN_set_flags(rsa->dmq1, BN_FLG_CONSTTIME);
     if (!BN_mod(rsa->dmq1, rsa->d, q1, ctx))
+        goto err;
 
     /* (Step 5c) qInv = (inverse of q) mod p */
     BN_free(rsa->iqmp);
