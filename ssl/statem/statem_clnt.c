@@ -190,19 +190,8 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
             return 1;
         }
         if (mt == SSL3_MT_CERTIFICATE_REQUEST) {
-#if DTLS_MAX_VERSION_INTERNAL != DTLS1_2_VERSION
-            /* Restore digest for PHA before adding message.*/
-#warning Internal DTLS version error
-#endif
-            if (!SSL_CONNECTION_IS_DTLS(s)
-                && s->post_handshake_auth == SSL_PHA_EXT_SENT) {
+            if (s->post_handshake_auth == SSL_PHA_EXT_SENT) {
                 s->post_handshake_auth = SSL_PHA_REQUESTED;
-                /*
-                 * In TLS, this is called before the message is added to the
-                 * digest. In DTLS, this is expected to be called after adding
-                 * to the digest. Either move the digest restore, or add the
-                 * message here after the swap, or do it after the clientFinished?
-                 */
                 if (!tls13_restore_handshake_digest_for_pha(s)) {
                     /* SSLfatal() already called */
                     return 0;
