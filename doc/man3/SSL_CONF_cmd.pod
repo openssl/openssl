@@ -74,7 +74,7 @@ B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
 
 =item B<-no_renegotiation>
 
-Disables all attempts at renegotiation in TLSv1.2 and earlier, same as setting
+Disables all attempts at renegotiation in (D)TLSv1.2 and earlier, same as setting
 B<SSL_OP_NO_RENEGOTIATION>.
 
 =item B<-no_resumption_on_reneg>
@@ -95,8 +95,8 @@ Only used by servers. Requires B<-serverpref>.
 
 =item B<-allow_no_dhe_kex>
 
-In TLSv1.3 allow a non-(ec)dhe based key exchange mode on resumption. This means
-that there will be no forward secrecy for the resumed session.
+In (D)TLSv1.3 allow a non-(ec)dhe based key exchange mode on resumption. This
+means that there will be no forward secrecy for the resumed session.
 
 =item B<-prefer_no_dhe_kex>
 
@@ -111,7 +111,7 @@ B<SSL_CERT_FLAG_TLS_STRICT>.
 
 =item B<-sigalgs> I<algs>
 
-This sets the supported signature algorithms for TLSv1.2 and TLSv1.3.
+This sets the supported signature algorithms for (D)TLSv1.2 and (D)TLSv1.3.
 For clients this value is used directly for the supported signature
 algorithms extension. For servers it is used to determine which signature
 algorithms to support.
@@ -123,7 +123,7 @@ B<algorithm> is one of B<RSA>, B<DSA> or B<ECDSA> and
 B<hash> is a supported algorithm OID short name such as B<SHA1>, B<SHA224>,
 B<SHA256>, B<SHA384> or B<SHA512>.  Note: algorithm and hash names are case
 sensitive.  B<signature_scheme> is one of the signature schemes defined in
-TLSv1.3, specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>,
+(D)TLSv1.3, specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>,
 B<ed25519>, or B<rsa_pss_pss_sha256>. Additional providers may make available
 further algorithms via the TLS-SIGALG capability.
 See L<provider-base(7)>.
@@ -133,12 +133,12 @@ activated providers are permissible.
 
 Note: algorithms which specify a PKCS#1 v1.5 signature scheme (either by
 using B<RSA> as the B<algorithm> or by using one of the B<rsa_pkcs1_*>
-identifiers) are ignored in TLSv1.3 and will not be negotiated.
+identifiers) are ignored in (D)TLSv1.3 and will not be negotiated.
 
 =item B<-client_sigalgs> I<algs>
 
 This sets the supported signature algorithms associated with client
-authentication for TLSv1.2 and TLSv1.3.  For servers the B<algs> is used
+authentication for (D)TLSv1.2 and (D)TLSv1.3.  For servers the B<algs> is used
 in the B<signature_algorithms> field of a B<CertificateRequest> message.
 For clients it is used to determine which signature algorithm to use with
 the client certificate.  If a server does not request a certificate this
@@ -151,9 +151,9 @@ value set for B<-sigalgs> will be used instead.
 
 This sets the supported groups. For clients, the groups are sent using
 the supported groups extension. For servers, it is used to determine which
-group to use. This setting affects groups used for signatures (in TLSv1.2
+group to use. This setting affects groups used for signatures (in (D)TLSv1.2
 and earlier) and key exchange. The first group listed will also be used
-for the B<key_share> sent by a client in a TLSv1.3 B<ClientHello>.
+for the B<key_share> sent by a client in a (D)TLSv1.3 B<ClientHello>.
 
 The B<groups> argument is a colon separated list of groups. The group can
 be either the B<NIST> name (e.g. B<P-256>), some other commonly used name
@@ -161,7 +161,7 @@ where applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
 (e.g. B<prime256v1>). Group names are case sensitive. The list should be
 in order of preference with the most preferred group first.
 
-Groups for B<TLSv1.3> in the default provider are B<P-256>, B<P-384>,
+Groups for B<TLSv1.3> and B<DTLSv1.3> in the default provider are B<P-256>, B<P-384>,
 B<P-521>, B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>,
 B<ffdhe6144>, B<ffdhe8192>, B<brainpoolP256r1tls13>,
 B<brainpoolP384r1tls13> and B<brainpoolP512r1tls13>.
@@ -179,19 +179,19 @@ by servers.
 
 =item B<-tx_cert_comp>
 
-Enables support for sending TLSv1.3 compressed certificates.
+Enables support for sending (D)TLSv1.3 compressed certificates.
 
 =item B<-no_tx_cert_comp>
 
-Disables support for sending TLSv1.3 compressed certificates.
+Disables support for sending (D)TLSv1.3 compressed certificates.
 
 =item B<-rx_cert_comp>
 
-Enables support for receiving TLSv1.3 compressed certificates.
+Enables support for receiving (D)TLSv1.3 compressed certificates.
 
 =item B<-no_rx_cert_comp>
 
-Disables support for receiving TLSv1.3 compressed certificates.
+Disables support for receiving (D)TLSv1.3 compressed certificates.
 
 =item B<-comp>
 
@@ -202,24 +202,24 @@ curve can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
 
 =item B<-cipher> I<ciphers>
 
-Sets the TLSv1.2 and below ciphersuite list to B<ciphers>. This list will be
-combined with any configured TLSv1.3 ciphersuites. Note: syntax checking
+Sets the (D)TLSv1.2 and below ciphersuite list to B<ciphers>. This list will be
+combined with any configured (D)TLSv1.3 ciphersuites. Note: syntax checking
 of B<ciphers> is currently not performed unless a B<SSL> or B<SSL_CTX>
 structure is associated with B<ctx>.
 
 =item B<-ciphersuites> I<1.3ciphers>
 
-Sets the available ciphersuites for TLSv1.3 to value. This is a
-colon-separated list of TLSv1.3 ciphersuite names in order of preference. This
-list will be combined any configured TLSv1.2 and below ciphersuites.
+Sets the available ciphersuites for (D)TLSv1.3 to value. This is a
+colon-separated list of (D)TLSv1.3 ciphersuite names in order of preference.
+This list will be combined any configured (D)TLSv1.2 and below ciphersuites.
 See L<openssl-ciphers(1)> for more information.
 
 =item B<-min_protocol> I<minprot>, B<-max_protocol> I<maxprot>
 
 Sets the minimum and maximum supported protocol.
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
-B<TLSv1.2>, B<TLSv1.3> for TLS; B<DTLSv1>, B<DTLSv1.2> for DTLS, and B<None>
-for no limit.
+B<TLSv1.2>, B<TLSv1.3> for TLS; B<DTLSv1>, B<DTLSv1.2>, B<DTLSv1.3> for DTLS,
+and B<None> for no limit.
 If either the lower or upper bound is not specified then only the other bound
 applies, if specified.
 If your application supports both TLS and DTLS you can specify any of these
@@ -230,15 +230,11 @@ deprecated alternative commands below.
 
 =item B<-record_padding> I<padding>
 
-Controls use of TLSv1.3 record layer padding.  B<padding> is a string of the
-form "number[,number]" where the (required) first number is the padding block
-size (in octets) for application data, and the optional second number is the
-padding block size for handshake and alert messages.  If the optional second
-number is omitted, the same padding will be applied to all messages.
-
-Padding attempts to pad TLSv1.3 records so that they are a multiple of the set
-length on send. A value of 0 or 1 turns off padding as relevant. Otherwise, the
-values must be >1 or <=16384.
+==== BASE ====
+Attempts to pad TLSv1.3 records so that they are a multiple of B<padding>
+in length on send. A B<padding> of 0 or 1 turns off padding. Otherwise,
+the B<padding> must be >1 or <=16384.
+==== BASE ====
 
 =item B<-debug_broken_protocol>
 
@@ -290,11 +286,11 @@ B<-max_protocol> instead.
 
 Switches replay protection, on or off respectively. With replay protection on,
 OpenSSL will automatically detect if a session ticket has been used more than
-once, TLSv1.3 has been negotiated, and early data is enabled on the server. A
-full handshake is forced if a session ticket is used a second or subsequent
+once, (D)TLSv1.3 has been negotiated, and early data is enabled on the server.
+A full handshake is forced if a session ticket is used a second or subsequent
 time. Anti-Replay is on by default unless overridden by a configuration file and
 is only used by servers. Anti-replay measures are required for compliance with
-the TLSv1.3 specification. Some applications may be able to mitigate the replay
+the (D)TLSv1.3 specification. Some applications may be able to mitigate the replay
 risks in other ways and in such cases the built-in OpenSSL functionality is not
 required. Switching off anti-replay is equivalent to B<SSL_OP_NO_ANTI_REPLAY>.
 
@@ -314,16 +310,16 @@ Note: the command prefix (if set) alters the recognised B<option> values.
 
 =item B<CipherString>
 
-Sets the ciphersuite list for TLSv1.2 and below to B<value>. This list will be
-combined with any configured TLSv1.3 ciphersuites. Note: syntax
+Sets the ciphersuite list for (D)TLSv1.2 and below to B<value>. This list will
+be combined with any configured (D)TLSv1.3 ciphersuites. Note: syntax
 checking of B<value> is currently not performed unless an B<SSL> or B<SSL_CTX>
 structure is associated with B<ctx>.
 
 =item B<Ciphersuites>
 
-Sets the available ciphersuites for TLSv1.3 to B<value>. This is a
-colon-separated list of TLSv1.3 ciphersuite names in order of preference. This
-list will be combined any configured TLSv1.2 and below ciphersuites.
+Sets the available ciphersuites for (D)TLSv1.3 to B<value>. This is a
+colon-separated list of (D)TLSv1.3 ciphersuite names in order of preference.
+This list will be combined any configured (D)TLSv1.2 and below ciphersuites.
 See L<openssl-ciphers(1)> for more information.
 
 =item B<Certificate>
@@ -351,7 +347,7 @@ if certificate operations are permitted.
 
 This option indicates a file containing a set of certificates in PEM form.
 The subject names of the certificates are sent to the peer in the
-B<certificate_authorities> extension for (D)TLS 1.3 (in ClientHello or
+B<certificate_authorities> extension for (D)TLSv1.3 (in ClientHello or
 CertificateRequest) or in a certificate request for previous versions or
 TLS.
 
@@ -368,19 +364,15 @@ operations are permitted.
 
 =item B<RecordPadding>
 
-Controls use of TLSv1.3 record layer padding.  B<value> is a string of the form
-"number[,number]" where the (required) first number is the padding block size
-(in octets) for application data, and the optional second number is the padding
-block size for handshake and alert messages.  If the optional second number is
-omitted, the same padding will be applied to all messages.
-
-Padding attempts to pad TLSv1.3 records so that they are a multiple of the set
-length on send. A value of 0 or 1 turns off padding as relevant. Otherwise, the
-values must be >1 or <=16384.
+==== BASE ====
+Attempts to pad TLSv1.3 records so that they are a multiple of B<value> in
+length on send. A B<value> of 0 or 1 turns off padding. Otherwise, the
+B<value> must be >1 or <=16384.
+==== BASE ====
 
 =item B<SignatureAlgorithms>
 
-This sets the supported signature algorithms for TLSv1.2 and TLSv1.3.
+This sets the supported signature algorithms for (D)TLSv1.2 and (D)TLSv1.3.
 For clients this
 value is used directly for the supported signature algorithms extension. For
 servers it is used to determine which signature algorithms to support.
@@ -392,7 +384,7 @@ B<algorithm> is one of B<RSA>, B<DSA> or B<ECDSA> and B<hash> is a supported
 algorithm OID short name such as B<SHA1>, B<SHA224>, B<SHA256>, B<SHA384>
 or B<SHA512>.
 Note: algorithm and hash names are case sensitive.
-B<signature_scheme> is one of the signature schemes defined in TLSv1.3,
+B<signature_scheme> is one of the signature schemes defined in (D)TLSv1.3,
 specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>, B<ed25519>,
 or B<rsa_pss_pss_sha256>.
 Additional providers may make available further algorithms via the TLS_SIGALG
@@ -403,12 +395,12 @@ activated providers are permissible.
 
 Note: algorithms which specify a PKCS#1 v1.5 signature scheme (either by
 using B<RSA> as the B<algorithm> or by using one of the B<rsa_pkcs1_*>
-identifiers) are ignored in TLSv1.3 and will not be negotiated.
+identifiers) are ignored in (D)TLSv1.3 and will not be negotiated.
 
 =item B<ClientSignatureAlgorithms>
 
 This sets the supported signature algorithms associated with client
-authentication for TLSv1.2 and TLSv1.3.
+authentication for (D)TLSv1.2 and (D)TLSv1.3.
 For servers the value is used in the
 B<signature_algorithms> field of a B<CertificateRequest> message.
 For clients it is
@@ -423,8 +415,8 @@ the value set for B<SignatureAlgorithms> will be used instead.
 This sets the supported groups. For clients, the groups are
 sent using the supported groups extension. For servers, it is used
 to determine which group to use. This setting affects groups used for
-signatures (in TLSv1.2 and earlier) and key exchange. The first group listed
-will also be used for the B<key_share> sent by a client in a TLSv1.3
+signatures (in (D)TLSv1.2 and earlier) and key exchange. The first group listed
+will also be used for the B<key_share> sent by a client in a (D)TLSv1.3
 B<ClientHello>.
 
 The B<value> argument is a colon separated list of groups. The group can be
@@ -433,9 +425,9 @@ applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
 (e.g. B<prime256v1>). Group names are case sensitive. The list should be in
 order of preference with the most preferred group first.
 
-Currently supported groups for B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>,
-B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144>,
-B<ffdhe8192>.
+Currently supported groups for B<TLSv1.3> and B<DTLSv1.3> are B<P-256>,
+B<P-384>, B<P-521>, B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>,
+B<ffdhe4096>, B<ffdhe6144>, B<ffdhe8192>.
 
 =item B<Curves>
 
@@ -446,7 +438,7 @@ This is a synonym for the "Groups" command.
 This sets the minimum supported SSL, TLS or DTLS version.
 
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
-B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
+B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1>, B<DTLSv1.2> and B<DTLSv1.3>.
 The SSL and TLS bounds apply only to TLS-based contexts, while the DTLS bounds
 apply only to DTLS-based contexts.
 The command can be repeated with one instance setting a TLS bound, and the
@@ -458,7 +450,7 @@ The value B<None> applies to both types of contexts and disables the limits.
 This sets the maximum supported SSL, TLS or DTLS version.
 
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
-B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
+B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1>, B<DTLSv1.2> and B<DTLSv1.3>.
 The SSL and TLS bounds apply only to TLS-based contexts, while the DTLS bounds
 apply only to DTLS-based contexts.
 The command can be repeated with one instance setting a TLS bound, and the
@@ -481,7 +473,7 @@ Only enabling some protocol versions does not disable the other protocol
 versions.
 
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
-B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
+B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1>, B<DTLSv1.2> and B<DTLSv1.3>.
 The special value B<ALL> refers to all supported versions.
 
 This can't enable protocols that are disabled using B<MinProtocol>
@@ -536,7 +528,7 @@ Only used by servers.
 B<NoResumptionOnRenegotiation>: set
 B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> flag. Only used by servers.
 
-B<NoRenegotiation>: disables all attempts at renegotiation in TLSv1.2 and
+B<NoRenegotiation>: disables all attempts at renegotiation in (D)TLSv1.2 and
 earlier, same as setting B<SSL_OP_NO_RENEGOTIATION>.
 
 B<UnsafeLegacyRenegotiation>: permits the use of unsafe legacy renegotiation.
@@ -549,7 +541,7 @@ B<EncryptThenMac>: use encrypt-then-mac extension, enabled by
 default. Inverse of B<SSL_OP_NO_ENCRYPT_THEN_MAC>: that is,
 B<-EncryptThenMac> is the same as setting B<SSL_OP_NO_ENCRYPT_THEN_MAC>.
 
-B<AllowNoDHEKEX>: In TLSv1.3 allow a non-(ec)dhe based key exchange mode on
+B<AllowNoDHEKEX>: In (D)TLSv1.3 allow a non-(ec)dhe based key exchange mode on
 resumption. This means that there will be no forward secrecy for the resumed
 session. Equivalent to B<SSL_OP_ALLOW_NO_DHE_KEX>.
 
@@ -565,10 +557,10 @@ option is set by default. A future version of OpenSSL may not set this by
 default. Equivalent to B<SSL_OP_ENABLE_MIDDLEBOX_COMPAT>.
 
 B<AntiReplay>: If set then OpenSSL will automatically detect if a session ticket
-has been used more than once, TLSv1.3 has been negotiated, and early data is
+has been used more than once, (D)TLSv1.3 has been negotiated, and early data is
 enabled on the server. A full handshake is forced if a session ticket is used a
 second or subsequent time. This option is set by default and is only used by
-servers. Anti-replay measures are required to comply with the TLSv1.3
+servers. Anti-replay measures are required to comply with the (D)TLSv1.3
 specification. Some applications may be able to mitigate the replay risks in
 other ways and in such cases the built-in OpenSSL functionality is not required.
 Disabling anti-replay is equivalent to setting B<SSL_OP_NO_ANTI_REPLAY>.
@@ -628,13 +620,13 @@ B<RequestPostHandshake> configures the connection to support requests but does
 not require a certificate from the client post-handshake. A certificate will
 not be requested during the initial handshake. The server application must
 provide a mechanism to request a certificate post-handshake. Servers only.
-TLSv1.3 only.
+(D)TLSv1.3 only.
 
 B<RequiresPostHandshake> configures the connection to support requests and
 requires a certificate from the client post-handshake: an error occurs if the
 client does not present a certificate. A certificate will not be requested
 during the initial handshake. The server application must provide a mechanism
-to request a certificate post-handshake. Servers only. TLSv1.3 only.
+to request a certificate post-handshake. Servers only. (D)TLSv1.3 only.
 
 =item B<ClientCAFile>, B<ClientCAPath>
 
