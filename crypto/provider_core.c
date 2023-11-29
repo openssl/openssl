@@ -970,7 +970,7 @@ static int provider_init(OSSL_PROVIDER *prov)
     prov->provctx = tmp_provctx;
     prov->dispatch = provider_dispatch;
 
-    if (provider_dispatch != NULL)
+    if (provider_dispatch != NULL) {
         for (; provider_dispatch->function_id != 0; provider_dispatch++) {
             switch (provider_dispatch->function_id) {
             case OSSL_FUNC_PROVIDER_TEARDOWN:
@@ -1010,6 +1010,7 @@ static int provider_init(OSSL_PROVIDER *prov)
 # endif
 #endif
             }
+        }
     }
 
 #ifndef OPENSSL_NO_ERR
