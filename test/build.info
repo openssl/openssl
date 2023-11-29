@@ -1038,6 +1038,13 @@ IF[{- !$disabled{tests} -}]
       SOURCE[p_test]=p_test.ld
       GENERATE[p_test.ld]=../util/providers.num
     ENDIF
+    MODULES{noinst}=p_minimal
+    SOURCE[p_minimal]=p_minimal.c
+    INCLUDE[p_minimal]=../include ..
+    IF[{- defined $target{shared_defflag} -}]
+      SOURCE[p_minimal]=p_minimal.ld
+      GENERATE[p_minimal.ld]=../util/providers.num
+    ENDIF
   ENDIF
   IF[{- $disabled{module} || !$target{dso_scheme} -}]
     DEFINE[provider_test]=NO_PROVIDER_MODULE
