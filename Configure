@@ -385,6 +385,12 @@ if (defined env($local_config_envname)) {
     }
 }
 
+# Fail if no configuration is apparent
+if (!%table) {
+    print "Failed to find any os/compiler configurations. Please make sure the Configurations directory is included.\n";
+    &usage;
+}
+
 # Save away perl command information
 $config{perl_cmd} = $^X;
 $config{perl_version} = $Config{version};
