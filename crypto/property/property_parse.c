@@ -100,13 +100,13 @@ static int parse_number(const char *t[], OSSL_PROPERTY_DEFINITION *res)
     do {
         if (!ossl_isdigit(*s)) {
             ERR_raise_data(ERR_LIB_PROP, PROP_R_NOT_A_DECIMAL_DIGIT,
-                       "HERE-->%s", *t);
+                           "HERE-->%s", *t);
             return 0;
         }
         /* overflow check */
-        if (v > ((INT64_MAX-(*s - '0'))/10)) {
+        if (v > ((INT64_MAX - (*s - '0')) / 10)) {
             ERR_raise_data(ERR_LIB_PROP, PROP_R_PARSE_FAILED,
-                           "Property %s overflows", s);
+                           "Property %s overflows", *t);
             return 0;
         }
         v = v * 10 + (*s++ - '0');
@@ -129,19 +129,19 @@ static int parse_hex(const char *t[], OSSL_PROPERTY_DEFINITION *res)
     int sval;
 
     do {
-        if (ossl_isdigit(*s))
+        if (ossl_isdigit(*s)) {
             sval = *s - '0';
-        else if (ossl_isxdigit(*s))
+        } else if (ossl_isxdigit(*s)) {
             sval = ossl_tolower(*s) - 'a' + 10;
-        else {
+        } else {
             ERR_raise_data(ERR_LIB_PROP, PROP_R_NOT_AN_HEXADECIMAL_DIGIT,
-                           "%s", s);
+                           "%s", *t);
             return 0;
         }
 
-        if (v > ((INT64_MAX - sval)/16)) {
+        if (v > ((INT64_MAX - sval) / 16)) {
             ERR_raise_data(ERR_LIB_PROP, PROP_R_PARSE_FAILED,
-                           "Property %s overflows", s);
+                           "Property %s overflows", *t);
             return 0;
         }
 
@@ -167,12 +167,12 @@ static int parse_oct(const char *t[], OSSL_PROPERTY_DEFINITION *res)
     do {
         if (*s == '9' || *s == '8' || !ossl_isdigit(*s)) {
             ERR_raise_data(ERR_LIB_PROP, PROP_R_NOT_AN_OCTAL_DIGIT,
-                       "HERE-->%s", *t);
+                           "HERE-->%s", *t);
             return 0;
         }
-        if (v > ((INT64_MAX - (*s-'0'))/8)) {
+        if (v > ((INT64_MAX - (*s - '0')) / 8)) {
             ERR_raise_data(ERR_LIB_PROP, PROP_R_PARSE_FAILED,
-                           "Property %s overflows", s);
+                           "Property %s overflows", *t);
             return 0;
         }
 
