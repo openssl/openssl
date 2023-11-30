@@ -38,6 +38,10 @@
 #include "crypto/evp.h"
 #include "fake_rsaprov.h"
 
+#ifdef STATIC_LEGACY
+OSSL_provider_init_fn ossl_legacy_provider_init;
+#endif
+
 static OSSL_LIB_CTX *testctx = NULL;
 static char *testpropq = NULL;
 
@@ -5437,6 +5441,15 @@ int setup_tests(void)
             testctx = OSSL_LIB_CTX_new();
             if (!TEST_ptr(testctx))
                 return 0;
+#ifdef STATIC_LEGACY
+	    /*
+	     * This test is always statically linked against libcrypto. We must not
+	     * attempt to load legacy.so that might be dynamically linked against
+	     * libcrypto. Instead we use a built-in version of the legacy provider.
+	     */
+	    if (!OSSL_PROVIDER_add_builtin(testctx, "legacy", ossl_legacy_provider_init))
+		return 0;
+#endif
             /* Swap the libctx to test non-default context only */
             nullprov = OSSL_PROVIDER_load(NULL, "null");
             deflprov = OSSL_PROVIDER_load(testctx, "default");
