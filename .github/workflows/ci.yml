@@ -308,13 +308,13 @@ jobs:
     - name: Check ABI compatibility for libcrypto
       run: |
         if ! abidiff ./.github/workflows/libcrypto-abi.xml ./libcrypto.so ; then
-          abidw --out-file libcrypto-abi-new.xml ./libcrypto.so
+          abidw --headers-dir include/openssl --drop-private-types --no-show-locs --no-corpus-path --no-comp-dir-path --no-parameter-names --exported-interfaces-only --no-elf-needed --out-file libcrypto-abi-new.xml libcrypto.so
           diff -u ./.github/workflows/libcrypto-abi.xml libcrypto-abi-new.xml
         fi
     - name: Check ABI compatibility for libssl
       run: |
         if ! abidiff ./.github/workflows/libssl-abi.xml ./libssl.so ; then
-          abidw --out-file libssl-abi-new.xml ./libssl.so
+          abidw --headers-dir include/openssl --drop-private-types --no-show-locs --no-corpus-path --no-comp-dir-path --no-parameter-names --exported-interfaces-only --no-elf-needed --out-file libssl-abi-new.xml ./libssl.so
           diff -u ./.github/workflows/libssl-abi.xml libssl-abi-new.xml
         fi
     - name: make test
