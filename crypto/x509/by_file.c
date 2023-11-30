@@ -128,6 +128,17 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
                 count = 0;
                 goto err;
             }
+            /*
+             * X509_STORE_add_cert() added a reference rather than a copy,
+             * so we need a fresh X509 object.
+             */
+            X509_free(x);
+            x = X509_new_ex(libctx, propq);
+            if (x == NULL) {
+                ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
+                count = 0;
+                goto err;
+            }
             count++;
         }
     } else if (type == X509_FILETYPE_ASN1) {
