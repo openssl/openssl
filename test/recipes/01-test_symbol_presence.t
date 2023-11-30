@@ -80,7 +80,13 @@ foreach my $libname (@libnames) {
                 # Return the result
                 $_
             }
-            grep(m|.* [BCDST] .*|, @nm_lines);
+            # Drop any symbol starting with a double underscore, they
+            # are reserved for the compiler / system ABI and are none
+            # of our business
+            grep !m|^__|,
+            # Only look at external definitions
+            grep m|.* [BCDST] .*|,
+            @nm_lines;
 
         # Massage the mkdef.pl output to only contain global symbols
         # The output we got is in Unix .map format, which has a global
