@@ -1513,7 +1513,8 @@ static int mac_test_run_mac(EVP_TEST *t)
     MAC_DATA *expected = t->data;
     EVP_MAC_CTX *ctx = NULL;
     unsigned char *got = NULL;
-    size_t got_len = 0, size = 0, size_val = 0;
+    size_t got_len = 0, size = 0;
+    size_t size_before_init, size_after_init, size_val = 0;
     int i, block_size = -1, output_size = -1;
     OSSL_PARAM params[21], sizes[3], *psizes = sizes;
     size_t params_n = 0;
@@ -1621,20 +1622,24 @@ static int mac_test_run_mac(EVP_TEST *t)
         t->err = "MAC_CREATE_ERROR";
         goto err;
     }
-    /* get mac-size before init */
-    size = EVP_MAC_CTX_get_mac_size(ctx);
+    size_before_init = EVP_MAC_CTX_get_mac_size(ctx);
     if (!EVP_MAC_init(ctx, expected->key, expected->key_len, params)) {
         t->err = "MAC_INIT_ERROR";
         goto err;
     }
-    if (size != 0) {
-        /* check mac-size after init */
-        if (size_val == 0 && !TEST_size_t_eq(size, EVP_MAC_CTX_get_mac_size(ctx))) {
+    size_after_init = EVP_MAC_CTX_get_mac_size(ctx);
+    if (!TEST_false(size_before_init == 0 && size_after_init == 0)) {
+        t->err = "MAC SIZE not set";
+        goto err;
+    }
+    if (size_before_init != 0) {
+        /* mac-size not modified by init params */
+        if (size_val == 0 && !TEST_size_t_eq(size_before_init, size_after_init)) {
             t->err = "MAC SIZE check failed";
             goto err;
         }
-        /* mac-size may have been modified by init params */
-        if (size_val != 0 && !TEST_size_t_eq(size_val, EVP_MAC_CTX_get_mac_size(ctx))) {
+        /* mac-size modified by init params */
+        if (size_val != 0 && !TEST_size_t_eq(size_val, size_after_init)) {
             t->err = "MAC SIZE check failed";
             goto err;
         }
