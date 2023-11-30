@@ -62,7 +62,8 @@ IF[{- !$disabled{tests} -}]
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
           provfetchtest prov_config_test rand_test ca_internals_test \
           bio_tfo_test membio_test bio_dgram_test list_test fips_version_test \
-          x509_test hpke_test pairwise_fail_test nodefltctxtest
+          x509_test hpke_test pairwise_fail_test nodefltctxtest \
+          x509_load_cert_file_test
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -585,6 +586,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[x509_dup_cert_test]=x509_dup_cert_test.c
   INCLUDE[x509_dup_cert_test]=../include ../apps/include
   DEPEND[x509_dup_cert_test]=../libcrypto libtestutil.a
+
+  SOURCE[x509_load_cert_file_test]=x509_load_cert_file_test.c
+  INCLUDE[x509_load_cert_file_test]=../include ../apps/include
+  DEPEND[x509_load_cert_file_test]=../libcrypto libtestutil.a
 
   SOURCE[x509_check_cert_pkey_test]=x509_check_cert_pkey_test.c
   INCLUDE[x509_check_cert_pkey_test]=../include ../apps/include
