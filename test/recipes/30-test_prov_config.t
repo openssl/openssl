@@ -20,10 +20,14 @@ use lib bldtop_dir('.');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 2;
+plan tests => 3;
 
 ok(run(test(["prov_config_test", srctop_file("test", "default.cnf")])),
     "running prov_config_test default.cnf");
+
+ok(run(test(["prov_recurse_config_test", srctop_file("test", "recursive.cnf")])),
+    "running prov_recurse_config_test");
+
 SKIP: {
     skip "Skipping FIPS test in this build", 1 if $no_fips;
 

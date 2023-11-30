@@ -20,6 +20,9 @@
 
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
+typedef const char NAMEVAL;
+DEFINE_STACK_OF(NAMEVAL)
+
 /* PROVIDER config module */
 
 typedef struct {
@@ -64,10 +67,11 @@ static const char *skip_dot(const char *name)
     return name;
 }
 
-static int provider_conf_params(OSSL_PROVIDER *prov,
-                                OSSL_PROVIDER_INFO *provinfo,
-                                const char *name, const char *value,
-                                const CONF *cnf)
+static int provider_conf_params_internal(OSSL_PROVIDER *prov,
+                                         OSSL_PROVIDER_INFO *provinfo,
+                                         const char *name, const char *value,
+                                         const CONF *cnf,
+                                         STACK_OF(NAMEVAL) *visited)
 {
     STACK_OF(CONF_VALUE) *sect;
     int ok = 1;
@@ -80,6 +84,25 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
 
         OSSL_TRACE1(CONF, "Provider params: start section %s\n", value);
 
+        /*
+         * Check to see if the provided section value has already
+         * been visited.  If it has, then we have a recursive lookup
+         * in the configuration which isn't valid.  As such we should error
+         * out
+         */
+        for (i = 0; i < sk_NAMEVAL_num(visited); i++) {
+            if ((const char *)sk_NAMEVAL_value(visited, i) == value) {
+                ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        }
+
+        /*
+         * We've not visited this node yet, so record it on the stack
+         */
+        if (!sk_NAMEVAL_push(visited, value))
+            return 0;
+
         if (name != NULL) {
             OPENSSL_strlcpy(buffer, name, sizeof(buffer));
             OPENSSL_strlcat(buffer, ".", sizeof(buffer));
@@ -89,14 +112,19 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
         for (i = 0; i < sk_CONF_VALUE_num(sect); i++) {
             CONF_VALUE *sectconf = sk_CONF_VALUE_value(sect, i);
 
-            if (buffer_len + strlen(sectconf->name) >= sizeof(buffer))
+            if (buffer_len + strlen(sectconf->name) >= sizeof(buffer)) {
+                sk_NAMEVAL_pop(visited);
                 return 0;
+            }
             buffer[buffer_len] = '\0';
             OPENSSL_strlcat(buffer, sectconf->name, sizeof(buffer));
-            if (!provider_conf_params(prov, provinfo, buffer, sectconf->value,
-                                      cnf))
+            if (!provider_conf_params_internal(prov, provinfo, buffer,
+                                               sectconf->value, cnf, visited)) {
+                sk_NAMEVAL_pop(visited);
                 return 0;
+            }
         }
+        sk_NAMEVAL_pop(visited);
 
         OSSL_TRACE1(CONF, "Provider params: finish section %s\n", value);
     } else {
@@ -108,6 +136,25 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
     }
 
     return ok;
+}
+
+static int provider_conf_params(OSSL_PROVIDER *prov,
+                                OSSL_PROVIDER_INFO *provinfo,
+                                const char *name, const char *value,
+                                const CONF *cnf)
+{
+    int rc;
+    STACK_OF(NAMEVAL) *visited = sk_NAMEVAL_new_null();
+
+    if (visited == NULL)
+        return 0;
+
+    rc = provider_conf_params_internal(prov, provinfo, name,
+                                       value, cnf, visited);
+
+    sk_NAMEVAL_free(visited);
+
+    return rc;
 }
 
 static int prov_already_activated(const char *name,
@@ -301,7 +348,7 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
     for (i = 0; i < sk_CONF_VALUE_num(elist); i++) {
         cval = sk_CONF_VALUE_value(elist, i);
         if (!provider_conf_load(NCONF_get0_libctx((CONF *)cnf),
-                    cval->name, cval->value, cnf))
+                                cval->name, cval->value, cnf))
             return 0;
     }
 

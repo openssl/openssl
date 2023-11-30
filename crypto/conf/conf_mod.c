@@ -161,16 +161,21 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         vl = sk_CONF_VALUE_value(values, i);
-        ERR_set_mark();
+        /*
+         * we have to condition our mark setting here
+         * because parsing failures in the provider config
+         * aren't considered fatal and return success
+         */
+        if (flags & CONF_MFLAGS_IGNORE_ERRORS)
+            ERR_set_mark();
         ret = module_run(cnf, vl->name, vl->value, flags);
         OSSL_TRACE3(CONF, "Running module %s (%s) returned %d\n",
                     vl->name, vl->value, ret);
+
         if (ret <= 0)
-            if (!(flags & CONF_MFLAGS_IGNORE_ERRORS)) {
-                ERR_clear_last_mark();
-                return ret;
-            }
-        ERR_pop_to_mark();
+            return ret;
+        if (flags & CONF_MFLAGS_IGNORE_ERRORS)
+            ERR_pop_to_mark();
     }
 
     return 1;
@@ -184,7 +189,14 @@ int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
     CONF *conf = NULL;
     int ret = 0, diagnostics = 0;
 
-    ERR_set_mark();
+    /*
+     * loading a config file can return success even if its
+     * faulty (see comment at the bottom of provider_conf_load
+     * So don't mark errors for masking if we're not ignoring
+     * them, regardless of the return status of CONF_modules_load
+     */
+    if (flags & CONF_MFLAGS_IGNORE_ERRORS)
+        ERR_set_mark();
 
     if (filename == NULL) {
         file = CONF_get1_default_config_file();
@@ -222,10 +234,8 @@ int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
     if ((flags & CONF_MFLAGS_IGNORE_RETURN_CODES) != 0 && !diagnostics)
         ret = 1;
 
-    if (ret > 0)
+    if (flags & CONF_MFLAGS_IGNORE_ERRORS)
         ERR_pop_to_mark();
-    else
-        ERR_clear_last_mark();
 
     return ret;
 }
