@@ -39,9 +39,9 @@
                         if (is_complete) for (ii = (((msg_len) - 1) >> 3) - 1; ii >= 0 ; ii--) \
                                 if (bitmask[ii] != 0xff) { is_complete = 0; break; } }
 
-static unsigned char bitmask_start_values[] =
+static const unsigned char bitmask_start_values[] =
     { 0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x80 };
-static unsigned char bitmask_end_values[] =
+static const unsigned char bitmask_end_values[] =
     { 0xff, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f };
 
 static void dtls1_fix_message_header(SSL_CONNECTION *s, size_t frag_off,
@@ -62,7 +62,7 @@ static hm_fragment *dtls1_hm_fragment_new(size_t frag_len, int reassembly)
     unsigned char *buf = NULL;
     unsigned char *bitmask = NULL;
 
-    if ((frag = OPENSSL_malloc(sizeof(*frag))) == NULL)
+    if ((frag = OPENSSL_zalloc(sizeof(*frag))) == NULL)
         return NULL;
 
     if (frag_len) {
@@ -94,14 +94,7 @@ void dtls1_hm_fragment_free(hm_fragment *frag)
 {
     if (!frag)
         return;
-    if (frag->msg_header.is_ccs) {
-        /*
-         * If we're freeing the CCS then we're done with the old wrl and it
-         * can bee freed
-         */
-        if (frag->msg_header.saved_retransmit_state.wrlmethod != NULL)
-            frag->msg_header.saved_retransmit_state.wrlmethod->free(frag->msg_header.saved_retransmit_state.wrl);
-    }
+
     OPENSSL_free(frag->fragment);
     OPENSSL_free(frag->reassembly);
     OPENSSL_free(frag);

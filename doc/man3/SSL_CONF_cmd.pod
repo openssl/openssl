@@ -95,6 +95,12 @@ Only used by servers. Requires B<-serverpref>.
 In TLSv1.3 allow a non-(ec)dhe based key exchange mode on resumption. This means
 that there will be no forward secrecy for the resumed session.
 
+=item B<-prefer_no_dhe_kex>
+
+In TLSv1.3, on resumption let the server prefer a non-(ec)dhe based key
+exchange mode over an (ec)dhe based one. Requires B<-allow_no_dhe_kex>.
+Equivalent to B<SSL_OP_PREFER_NO_DHE_KEX>. Only used by servers.
+
 =item B<-strict>
 
 Enables strict mode protocol handling. Equivalent to setting
@@ -523,6 +529,11 @@ B<AllowNoDHEKEX>: In TLSv1.3 allow a non-(ec)dhe based key exchange mode on
 resumption. This means that there will be no forward secrecy for the resumed
 session. Equivalent to B<SSL_OP_ALLOW_NO_DHE_KEX>.
 
+B<PreferNoDHEKEX>: In TLSv1.3, on resumption let the server prefer a
+non-(ec)dhe based key exchange mode over an (ec)dhe based one. Requires
+B<AllowNoDHEKEX>. Equivalent to B<SSL_OP_PREFER_NO_DHE_KEX>. Only used by
+servers.
+
 B<MiddleboxCompat>: If set then dummy Change Cipher Spec (CCS) messages are sent
 in TLSv1.3. This has the effect of making TLSv1.3 look more like TLSv1.2 so that
 middleboxes that do not understand TLSv1.3 will not drop the connection. This
@@ -777,6 +788,8 @@ OpenSSL 3.0.
 
 The B<TxCertificateCompression> and B<RxCertificateCompression> options were
 added in OpenSSL 3.2.
+
+B<PreferNoDHEKEX> was added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 

@@ -174,7 +174,7 @@ integrate into the OpenSSL error system to log error data, e.g.
     /*
      * Lookup IP address info for the server.
      */
-    if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, 0, SOCK_STREAM, 0,
+    if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, family, SOCK_STREAM, 0,
                        &res))
         return NULL;
 
@@ -212,7 +212,9 @@ See L<BIO_lookup_ex(3)>, L<BIO_socket(3)>, L<BIO_connect(3)>,
 L<BIO_closesocket(3)>, L<BIO_ADDRINFO_next(3)>, L<BIO_ADDRINFO_address(3)> and
 L<BIO_ADDRINFO_free(3)> for further information on the functions used here. In
 the above example code the B<hostname> and B<port> variables are strings, e.g.
-"www.example.com" and "443".
+"www.example.com" and "443".  Note also the use of the family variable, which
+can take the values of AF_INET or AF_INET6 based on the command line -6 option,
+to allow specific connections to an ipv4 or ipv6 enabled host.
 
 Sockets created using the methods described above will automatically be blocking
 sockets - which is exactly what we want for this example.

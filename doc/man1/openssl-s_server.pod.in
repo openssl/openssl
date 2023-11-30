@@ -102,6 +102,7 @@ B<openssl> B<s_server>
 [B<-no_renegotiation>]
 [B<-no_resumption_on_reneg>]
 [B<-allow_no_dhe_kex>]
+[B<-prefer_no_dhe_kex>]
 [B<-prioritize_chacha>]
 [B<-strict>]
 [B<-sigalgs> I<val>]

@@ -391,6 +391,7 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL_INV("EncryptThenMac", SSL_OP_NO_ENCRYPT_THEN_MAC),
         SSL_FLAG_TBL("NoRenegotiation", SSL_OP_NO_RENEGOTIATION),
         SSL_FLAG_TBL("AllowNoDHEKEX", SSL_OP_ALLOW_NO_DHE_KEX),
+        SSL_FLAG_TBL("PreferNoDHEKEX", SSL_OP_PREFER_NO_DHE_KEX),
         SSL_FLAG_TBL("PrioritizeChaCha", SSL_OP_PRIORITIZE_CHACHA),
         SSL_FLAG_TBL("MiddleboxCompat", SSL_OP_ENABLE_MIDDLEBOX_COMPAT),
         SSL_FLAG_TBL_INV("AntiReplay", SSL_OP_NO_ANTI_REPLAY),
@@ -725,6 +726,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_SWITCH("no_resumption_on_reneg", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("no_legacy_server_connect", SSL_CONF_FLAG_CLIENT),
     SSL_CONF_CMD_SWITCH("allow_no_dhe_kex", 0),
+    SSL_CONF_CMD_SWITCH("prefer_no_dhe_kex", 0),
     SSL_CONF_CMD_SWITCH("prioritize_chacha", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("strict", 0),
     SSL_CONF_CMD_SWITCH("no_middlebox", 0),
@@ -816,6 +818,8 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
     {SSL_OP_LEGACY_SERVER_CONNECT, SSL_TFLAG_INV},
     /* allow_no_dhe_kex */
     {SSL_OP_ALLOW_NO_DHE_KEX, 0},
+    /* prefer_no_dhe_kex */
+    {SSL_OP_PREFER_NO_DHE_KEX, 0},
     /* chacha reprioritization */
     {SSL_OP_PRIORITIZE_CHACHA, 0},
     {SSL_CERT_FLAG_TLS_STRICT, SSL_TFLAG_CERT}, /* strict */

@@ -107,17 +107,21 @@ void gcm_ghash_p8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
 #    define HWAES_cbc_encrypt aes_v8_cbc_encrypt
 #    define HWAES_ecb_encrypt aes_v8_ecb_encrypt
 #    if __ARM_MAX_ARCH__>=8 && (defined(__aarch64__) || defined(_M_ARM64))
+#     define ARMv8_HWAES_CAPABLE (OPENSSL_armcap_P & ARMV8_AES)
 #     define HWAES_xts_encrypt aes_v8_xts_encrypt
 #     define HWAES_xts_decrypt aes_v8_xts_decrypt
 #    endif
 #    define HWAES_ctr32_encrypt_blocks aes_v8_ctr32_encrypt_blocks
+#    define HWAES_ctr32_encrypt_blocks_unroll12_eor3 aes_v8_ctr32_encrypt_blocks_unroll12_eor3
 #    define AES_PMULL_CAPABLE ((OPENSSL_armcap_P & ARMV8_PMULL) && (OPENSSL_armcap_P & ARMV8_AES))
+#    define AES_UNROLL12_EOR3_CAPABLE (OPENSSL_armcap_P & ARMV8_UNROLL12_EOR3)
 #    define AES_GCM_ENC_BYTES 512
 #    define AES_GCM_DEC_BYTES 512
 #    if __ARM_MAX_ARCH__>=8 && (defined(__aarch64__) || defined(_M_ARM64))
 #     define AES_gcm_encrypt armv8_aes_gcm_encrypt
 #     define AES_gcm_decrypt armv8_aes_gcm_decrypt
-#     define AES_GCM_ASM(gctx) ((gctx)->ctr==aes_v8_ctr32_encrypt_blocks && \
+#     define AES_GCM_ASM(gctx) (((gctx)->ctr==aes_v8_ctr32_encrypt_blocks_unroll12_eor3 || \
+                                 (gctx)->ctr==aes_v8_ctr32_encrypt_blocks) && \
                                 (gctx)->gcm.funcs.ghash==gcm_ghash_v8)
 /* The [unroll8_eor3_]aes_gcm_(enc|dec)_(128|192|256)_kernel() functions
  * take input length in BITS and return number of BYTES processed */
@@ -545,6 +549,11 @@ void HWAES_ecb_encrypt(const unsigned char *in, unsigned char *out,
 void HWAES_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
                                 size_t len, const void *key,
                                 const unsigned char ivec[16]);
+#  if defined(AES_UNROLL12_EOR3_CAPABLE)
+void HWAES_ctr32_encrypt_blocks_unroll12_eor3(const unsigned char *in, unsigned char *out,
+                                              size_t len, const void *key,
+                                              const unsigned char ivec[16]);
+#  endif
 void HWAES_xts_encrypt(const unsigned char *inp, unsigned char *out,
                        size_t len, const AES_KEY *key1,
                        const AES_KEY *key2, const unsigned char iv[16]);

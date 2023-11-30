@@ -107,6 +107,25 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
+  self-hosted:
+    strategy:
+      matrix:
+        os: [freebsd-13.2, ubuntu-arm64-22.04]
+    runs-on: ${{ matrix.os }}-self-hosted
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v4
+    - name: config
+      run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -j4
+    - name: get cpu info
+      run: ./util/opensslwrap.sh version -c
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
   minimal:
     runs-on: ubuntu-latest
     steps:
@@ -264,7 +283,7 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
-  fips_and_ktls:
+  full_feat_w_abidiff:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -287,9 +306,17 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: Check ABI compatibility for libcrypto
-      run: abidiff ./.github/workflows/libcrypto-abi.xml ./libcrypto.so
+      run: |
+        if ! abidiff ./.github/workflows/libcrypto-abi.xml ./libcrypto.so ; then
+          abidw --out-file libcrypto-abi-new.xml ./libcrypto.so
+          diff -u ./.github/workflows/libcrypto-abi.xml libcrypto-abi-new.xml
+        fi
     - name: Check ABI compatibility for libssl
-      run: abidiff ./.github/workflows/libssl-abi.xml ./libssl.so
+      run: |
+        if ! abidiff ./.github/workflows/libssl-abi.xml ./libssl.so ; then
+          abidw --out-file libssl-abi-new.xml ./libssl.so
+          diff -u ./.github/workflows/libssl-abi.xml libssl-abi-new.xml
+        fi
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 

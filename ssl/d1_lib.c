@@ -130,6 +130,17 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
 
     while ((item = pqueue_pop(s->d1->sent_messages)) != NULL) {
         frag = (hm_fragment *)item->data;
+
+        if (frag->msg_header.is_ccs
+                && frag->msg_header.saved_retransmit_state.wrlmethod != NULL
+                && s->rlayer.wrl != frag->msg_header.saved_retransmit_state.wrl) {
+            /*
+             * If we're freeing the CCS then we're done with the old wrl and it
+             * can bee freed
+             */
+            frag->msg_header.saved_retransmit_state.wrlmethod->free(frag->msg_header.saved_retransmit_state.wrl);
+        }
+
         dtls1_hm_fragment_free(frag);
         pitem_free(item);
     }
@@ -143,15 +154,15 @@ void dtls1_free(SSL *ssl)
     if (s == NULL)
         return;
 
-    DTLS_RECORD_LAYER_free(&s->rlayer);
-
-    ssl3_free(ssl);
-
     if (s->d1 != NULL) {
         dtls1_clear_queues(s);
         pqueue_free(s->d1->buffered_messages);
         pqueue_free(s->d1->sent_messages);
     }
+
+    DTLS_RECORD_LAYER_free(&s->rlayer);
+
+    ssl3_free(ssl);
 
     OPENSSL_free(s->d1);
     s->d1 = NULL;

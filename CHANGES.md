@@ -1,9 +1,11 @@
 OpenSSL CHANGES
 ===============
 
-This is a high-level summary of the most important changes.
-For a full list of changes, see the [git commit log][log] and
-pick the appropriate release branch.
+This is a detailed breakdown of significant changes. For a high-level overview
+of changes in each release, see [NEWS.md](./NEWS.md).
+
+For a full list of changes, see the [git commit log][log] and pick the
+appropriate release branch.
 
   [log]: https://github.com/openssl/openssl/commits/
 
@@ -30,6 +32,11 @@ OpenSSL 3.3
 
    *Barry Fussell*
 
+ * In `openssl speed`, changed the default hash function used with `hmac` from
+   `md5` to `sha256`.
+
+   *James Muir*
+
  * The build of exporters (such as `.pc` files for pkg-config) cleaned up to
    be less hard coded in the build file templates, and to allow easier
    addition of more exporters.  With that, an exporter for CMake is also
@@ -41,6 +48,12 @@ OpenSSL 3.3
    for configurable output length.
 
    *Ahelenia Ziemiańska*
+
+ * New option `SSL_OP_PREFER_NO_DHE_KEX`, which allows configuring a TLS1.3
+   server to prefer session resumption using PSK-only key exchange over PSK
+   with DHE, if both are available.
+
+   *Markus Minichmayr, Tapkey GmbH*
 
 OpenSSL 3.2
 -----------

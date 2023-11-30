@@ -305,17 +305,18 @@ enum {
     D_CBC_RC2, D_CBC_RC5, D_CBC_BF, D_CBC_CAST,
     D_CBC_128_AES, D_CBC_192_AES, D_CBC_256_AES,
     D_CBC_128_CML, D_CBC_192_CML, D_CBC_256_CML,
-    D_EVP, D_GHASH, D_RAND, D_EVP_CMAC, ALGOR_NUM
+    D_EVP, D_GHASH, D_RAND, D_EVP_CMAC, D_KMAC128, D_KMAC256,
+    ALGOR_NUM
 };
 /* name of algorithms to test. MUST BE KEEP IN SYNC with above enum ! */
 static const char *names[ALGOR_NUM] = {
     "md2", "mdc2", "md4", "md5", "sha1", "rmd160",
-    "sha256", "sha512", "whirlpool", "hmac(md5)",
+    "sha256", "sha512", "whirlpool", "hmac(sha256)",
     "des-cbc", "des-ede3", "rc4", "idea-cbc", "seed-cbc",
     "rc2-cbc", "rc5-cbc", "blowfish", "cast-cbc",
     "aes-128-cbc", "aes-192-cbc", "aes-256-cbc",
     "camellia-128-cbc", "camellia-192-cbc", "camellia-256-cbc",
-    "evp", "ghash", "rand", "cmac"
+    "evp", "ghash", "rand", "cmac", "kmac128", "kmac256"
 };
 
 /* list of configured algorithm (remaining), with some few alias */
@@ -356,7 +357,9 @@ static const OPT_PAIR doit_choices[] = {
     {"cast", D_CBC_CAST},
     {"cast5", D_CBC_CAST},
     {"ghash", D_GHASH},
-    {"rand", D_RAND}
+    {"rand", D_RAND},
+    {"kmac128", D_KMAC128},
+    {"kmac256", D_KMAC256},
 };
 
 static double results[ALGOR_NUM][SIZE_NUM];
@@ -570,7 +573,7 @@ static int run_benchmark(int async_jobs, int (*loop_function) (void *),
 
 static unsigned int testnum;
 
-static char *evp_mac_mdname = "md5";
+static char *evp_mac_mdname = "sha256";
 static char *evp_hmac_name = NULL;
 static const char *evp_md_name = NULL;
 static char *evp_mac_ciphername = "aes-128-cbc";
@@ -655,6 +658,41 @@ static int MD5_loop(void *args)
     return EVP_Digest_loop("md5", D_MD5, args);
 }
 
+static int mac_setup(const char *name,
+                     EVP_MAC **mac, OSSL_PARAM params[],
+                     loopargs_t *loopargs, unsigned int loopargs_len)
+{
+    unsigned int i;
+
+    *mac = EVP_MAC_fetch(app_get0_libctx(), name, app_get0_propq());
+    if (*mac == NULL)
+        return 0;
+
+    for (i = 0; i < loopargs_len; i++) {
+        loopargs[i].mctx = EVP_MAC_CTX_new(*mac);
+        if (loopargs[i].mctx == NULL)
+            return 0;
+
+        if (!EVP_MAC_CTX_set_params(loopargs[i].mctx, params))
+            return 0;
+    }
+
+    return 1;
+}
+
+static void mac_teardown(EVP_MAC **mac,
+                         loopargs_t *loopargs, unsigned int loopargs_len)
+{
+    unsigned int i;
+
+    for (i = 0; i < loopargs_len; i++)
+        EVP_MAC_CTX_free(loopargs[i].mctx);
+    EVP_MAC_free(*mac);
+    *mac = NULL;
+
+    return;
+}
+
 static int EVP_MAC_loop(ossl_unused int algindex, void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -682,6 +720,16 @@ static int HMAC_loop(void *args)
 static int CMAC_loop(void *args)
 {
     return EVP_MAC_loop(D_EVP_CMAC, args);
+}
+
+static int KMAC128_loop(void *args)
+{
+    return EVP_MAC_loop(D_KMAC128, args);
+}
+
+static int KMAC256_loop(void *args)
+{
+    return EVP_MAC_loop(D_KMAC256, args);
 }
 
 static int SHA1_loop(void *args)
@@ -2222,6 +2270,14 @@ int speed_main(int argc, char **argv)
             do_sigs = 1;
             algo_found = 1;
         }
+        if (strcmp(algo, "kmac") == 0) {
+            doit[D_KMAC128] = doit[D_KMAC256] = 1;
+            algo_found = 1;
+        }
+        if (strcmp(algo, "cmac") == 0) {
+            doit[D_EVP_CMAC] = 1;
+            algo_found = 1;
+        }
 
         if (!algo_found) {
             BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, algo);
@@ -2521,10 +2577,8 @@ int speed_main(int argc, char **argv)
         int len = strlen(hmac_key);
         OSSL_PARAM params[3];
 
-        mac = EVP_MAC_fetch(app_get0_libctx(), "HMAC", app_get0_propq());
-        if (mac == NULL || evp_mac_mdname == NULL)
+        if (evp_mac_mdname == NULL)
             goto end;
-
         evp_hmac_name = app_malloc(sizeof("hmac()") + strlen(evp_mac_mdname),
                                    "HMAC name");
         sprintf(evp_hmac_name, "hmac(%s)", evp_mac_mdname);
@@ -2538,14 +2592,8 @@ int speed_main(int argc, char **argv)
                                               (char *)hmac_key, len);
         params[2] = OSSL_PARAM_construct_end();
 
-        for (i = 0; i < loopargs_len; i++) {
-            loopargs[i].mctx = EVP_MAC_CTX_new(mac);
-            if (loopargs[i].mctx == NULL)
-                goto end;
-
-            if (!EVP_MAC_CTX_set_params(loopargs[i].mctx, params))
-                goto skip_hmac; /* Digest not found */
-        }
+        if (mac_setup("HMAC", &mac, params, loopargs, loopargs_len) < 1)
+            goto end;
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_HMAC], lengths[testnum], seconds.sym);
             Time_F(START);
@@ -2555,12 +2603,9 @@ int speed_main(int argc, char **argv)
             if (count < 0)
                 break;
         }
-        for (i = 0; i < loopargs_len; i++)
-            EVP_MAC_CTX_free(loopargs[i].mctx);
-        EVP_MAC_free(mac);
-        mac = NULL;
+        mac_teardown(&mac, loopargs, loopargs_len);
     }
-skip_hmac:
+
     if (doit[D_CBC_DES]) {
         int st = 1;
 
@@ -2677,25 +2722,22 @@ skip_hmac:
     }
     if (doit[D_GHASH]) {
         static const char gmac_iv[] = "0123456789ab";
-        OSSL_PARAM params[3];
-
-        mac = EVP_MAC_fetch(app_get0_libctx(), "GMAC", app_get0_propq());
-        if (mac == NULL)
-            goto end;
+        OSSL_PARAM params[4];
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_CIPHER,
                                                      "aes-128-gcm", 0);
         params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_IV,
                                                       (char *)gmac_iv,
                                                       sizeof(gmac_iv) - 1);
-        params[2] = OSSL_PARAM_construct_end();
+        params[2] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                                      (void *)key32, 16);
+        params[3] = OSSL_PARAM_construct_end();
 
+        if (mac_setup("GMAC", &mac, params, loopargs, loopargs_len) < 1)
+            goto end;
+        /* b/c of the definition of GHASH_loop(), init() calls are needed here */
         for (i = 0; i < loopargs_len; i++) {
-            loopargs[i].mctx = EVP_MAC_CTX_new(mac);
-            if (loopargs[i].mctx == NULL)
-                goto end;
-
-            if (!EVP_MAC_init(loopargs[i].mctx, key32, 16, params))
+            if (!EVP_MAC_init(loopargs[i].mctx, NULL, 0, NULL))
                 goto end;
         }
         for (testnum = 0; testnum < size_num; testnum++) {
@@ -2707,10 +2749,7 @@ skip_hmac:
             if (count < 0)
                 break;
         }
-        for (i = 0; i < loopargs_len; i++)
-            EVP_MAC_CTX_free(loopargs[i].mctx);
-        EVP_MAC_free(mac);
-        mac = NULL;
+        mac_teardown(&mac, loopargs, loopargs_len);
     }
 
     if (doit[D_RAND]) {
@@ -2809,9 +2848,6 @@ skip_hmac:
         OSSL_PARAM params[3];
         EVP_CIPHER *cipher = NULL;
 
-        mac = EVP_MAC_fetch(app_get0_libctx(), "CMAC", app_get0_propq());
-        if (mac == NULL || evp_mac_ciphername == NULL)
-            goto end;
         if (!opt_cipher(evp_mac_ciphername, &cipher))
             goto end;
 
@@ -2832,15 +2868,8 @@ skip_hmac:
                                                       (char *)key32, keylen);
         params[2] = OSSL_PARAM_construct_end();
 
-        for (i = 0; i < loopargs_len; i++) {
-            loopargs[i].mctx = EVP_MAC_CTX_new(mac);
-            if (loopargs[i].mctx == NULL)
-                goto end;
-
-            if (!EVP_MAC_CTX_set_params(loopargs[i].mctx, params))
-                goto end;
-        }
-
+        if (mac_setup("CMAC", &mac, params, loopargs, loopargs_len) < 1)
+            goto end;
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_EVP_CMAC], lengths[testnum], seconds.sym);
             Time_F(START);
@@ -2850,10 +2879,49 @@ skip_hmac:
             if (count < 0)
                 break;
         }
-        for (i = 0; i < loopargs_len; i++)
-            EVP_MAC_CTX_free(loopargs[i].mctx);
-        EVP_MAC_free(mac);
-        mac = NULL;
+        mac_teardown(&mac, loopargs, loopargs_len);
+    }
+
+    if (doit[D_KMAC128]) {
+        OSSL_PARAM params[2];
+
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                                      (void *)key32, 16);
+        params[1] = OSSL_PARAM_construct_end();
+
+        if (mac_setup("KMAC-128", &mac, params, loopargs, loopargs_len) < 1)
+            goto end;
+        for (testnum = 0; testnum < size_num; testnum++) {
+            print_message(names[D_KMAC128], lengths[testnum], seconds.sym);
+            Time_F(START);
+            count = run_benchmark(async_jobs, KMAC128_loop, loopargs);
+            d = Time_F(STOP);
+            print_result(D_KMAC128, testnum, count, d);
+            if (count < 0)
+                break;
+        }
+        mac_teardown(&mac, loopargs, loopargs_len);
+    }
+
+    if (doit[D_KMAC256]) {
+        OSSL_PARAM params[2];
+
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                                      (void *)key32, 32);
+        params[1] = OSSL_PARAM_construct_end();
+
+        if (mac_setup("KMAC-256", &mac, params, loopargs, loopargs_len) < 1)
+            goto end;
+        for (testnum = 0; testnum < size_num; testnum++) {
+            print_message(names[D_KMAC256], lengths[testnum], seconds.sym);
+            Time_F(START);
+            count = run_benchmark(async_jobs, KMAC256_loop, loopargs);
+            d = Time_F(STOP);
+            print_result(D_KMAC256, testnum, count, d);
+            if (count < 0)
+                break;
+        }
+        mac_teardown(&mac, loopargs, loopargs_len);
     }
 
     for (i = 0; i < loopargs_len; i++)
