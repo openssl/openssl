@@ -131,10 +131,6 @@ foreach (sort keys %stlibname) {
                   s| .*||;
                   # Drop OpenSSL dynamic version information if there is any
                   s|\@\@.+$||;
-                  # Drop any symbol starting with a double underscore, they
-                  # are reserved for the compiler / system ABI and are none
-                  # of our business
-                  s|^__||;
                   # Return the result
                   $_
               }
