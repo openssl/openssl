@@ -82,7 +82,7 @@ my $guess_patterns = [
     [ 'HP-UX:.*',
       sub {
           my $HPUXVER = $RELEASE;
-          $HPUXVER = s/[^.]*.[0B]*//;
+          $HPUXVER =~ s/[^.]*.[0B]*//;
           # HPUX 10 and 11 targets are unified
           return "${MACHINE}-hp-hpux1x" if $HPUXVER =~ m@1[0-9]@;
           return "${MACHINE}-hp-hpux";
@@ -321,6 +321,7 @@ sub determine_compiler_settings {
 
             # If we got a version number, process it
             if ($v) {
+                $v =~ s/[^.]*.0*// if $SYSTEM eq 'HP-UX';
                 $CCVENDOR = $k;
 
                 # The returned version is expected to be one of
