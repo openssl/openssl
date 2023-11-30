@@ -129,6 +129,8 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
                 goto err;
             }
             count++;
+            X509_free(x);
+            x = NULL;
         }
     } else if (type == X509_FILETYPE_ASN1) {
         if (d2i_X509_bio(in, &x) == NULL) {
