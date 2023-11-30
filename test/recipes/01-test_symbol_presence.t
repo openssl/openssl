@@ -124,7 +124,13 @@ foreach (sort keys %stlibname) {
                 # Return the result
                 $_
             }
-            grep(m|.* [BCDST] .*|, @$_);
+            # Drop any symbol starting with a double underscore, they
+            # are reserved for the compiler / system ABI and are none
+            # of our business
+            grep !m|^__|,
+            # Only look at external definitions
+            grep m|.* [BCDST] .*|,
+            @$_ ),
     }
 
     # Massage the mkdef.pl output to only contain global symbols
