@@ -37,6 +37,10 @@
 #include "internal/sizes.h"
 #include "crypto/evp.h"
 
+#ifdef STATIC_LEGACY
+OSSL_provider_init_fn ossl_legacy_provider_init;
+#endif
+
 static OSSL_LIB_CTX *testctx = NULL;
 static char *testpropq = NULL;
 
@@ -5229,6 +5233,16 @@ static int test_aes_rc4_keylen_change_cve_2023_5363(void)
 int setup_tests(void)
 {
     OPTION_CHOICE o;
+
+#ifdef STATIC_LEGACY
+    /*
+     * This test is always statically linked against libcrypto. We must not
+     * attempt to load legacy.so that might be dynamically linked against
+     * libcrypto. Instead we use a built-in version of the legacy provider.
+     */
+    if (!OSSL_PROVIDER_add_builtin(testctx, "legacy", ossl_legacy_provider_init))
+        return 0;
+#endif
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
