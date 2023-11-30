@@ -5593,6 +5593,119 @@ static int test_tls13_psk(int idx)
     return testresult;
 }
 
+#ifndef OSSL_NO_USABLE_TLS1_3
+/*
+ * Test TLS1.3 connection establishment succeeds with various configurations of
+ * the options `SSL_OP_ALLOW_NO_DHE_KEX` and `SSL_OP_PREFER_NO_DHE_KEX`.
+ * The verification of whether the right KEX mode is choosen is not covered by
+ * this test but by `test_tls13kexmodes`.
+ *
+ * Tests (idx & 1): Server has `SSL_OP_ALLOW_NO_DHE_KEX` set.
+ * Tests (idx & 2): Server has `SSL_OP_PREFER_NO_DHE_KEX` set.
+ * Tests (idx & 4): Client has `SSL_OP_ALLOW_NO_DHE_KEX` set.
+ */
+static int test_tls13_no_dhe_kex(const int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+    size_t j;
+    SSL_SESSION *saved_session;
+
+    int server_allow_no_dhe = (idx & 1) != 0;
+    int server_prefer_no_dhe = (idx & 2) != 0;
+    int client_allow_no_dhe = (idx & 4) != 0;
+
+    uint64_t server_options = 0
+            | (server_allow_no_dhe ? SSL_OP_ALLOW_NO_DHE_KEX : 0)
+            | (server_prefer_no_dhe ? SSL_OP_PREFER_NO_DHE_KEX : 0);
+
+    uint64_t client_options = 0
+            | (client_allow_no_dhe ? SSL_OP_ALLOW_NO_DHE_KEX : 0);
+
+    new_called = 0;
+    do_cache = 1;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), TLS1_3_VERSION, 0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT
+                                          | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+
+    SSL_CTX_set_options(sctx, server_options);
+    SSL_CTX_set_options(cctx, client_options);
+
+    SSL_CTX_sess_set_new_cb(cctx, new_cachesession_cb);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                         SSL_ERROR_NONE))
+            /* Check we got the number of tickets we were expecting */
+            || !TEST_int_eq(2, new_called))
+        goto end;
+
+    /* We'll reuse the last ticket. */
+    saved_session = sesscache[new_called - 1];
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(cctx);
+    clientssl = serverssl = NULL;
+    cctx = NULL;
+
+    /*
+     * Now we resume with the last ticket we created.
+     */
+
+    /* The server context already exists, so we only create the client. */
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), TLS1_3_VERSION, 0,
+                                       NULL, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_CTX_set_options(cctx, client_options);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl, saved_session)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                         SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * Make sure, the session was resumed.
+     */
+    if (!TEST_true(SSL_session_reused(clientssl)))
+        goto end;
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    for (j = 0; j < OSSL_NELEM(sesscache); j++) {
+        SSL_SESSION_free(sesscache[j]);
+        sesscache[j] = NULL;
+    }
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif /* OSSL_NO_USABLE_TLS1_3 */
+
 static unsigned char cookie_magic_value[] = "cookie magic";
 
 static int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
@@ -11426,6 +11539,9 @@ int setup_tests(void)
 # else
     ADD_ALL_TESTS(test_tls13_psk, 4);
 # endif  /* OPENSSL_NO_PSK */
+#ifndef OSSL_NO_USABLE_TLS1_3
+    ADD_ALL_TESTS(test_tls13_no_dhe_kex, 8);
+#endif /* OSSL_NO_USABLE_TLS1_3 */
 # ifndef OPENSSL_NO_TLS1_2
     /* Test with both TLSv1.3 and 1.2 versions */
     ADD_ALL_TESTS(test_key_exchange, 14);
