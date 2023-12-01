@@ -11,13 +11,14 @@
 
 #include "testutil.h"
 
-static int test_load_cert_file(int n)
+static const char *chain;
+
+static int test_load_cert_file(void)
 {
     int ret = 0;
     X509_STORE *store = NULL;
     X509_LOOKUP *lookup = NULL;
     STACK_OF(X509) *certs = NULL;
-    const char *chain = test_get_argument(n);
 
     if (TEST_ptr(store = X509_STORE_new())
         && TEST_ptr(lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file()))
@@ -35,17 +36,15 @@ OPT_TEST_DECLARE_USAGE("cert.pem...\n")
 
 int setup_tests(void)
 {
-    size_t n;
-
     if (!test_skip_common_options()) {
         TEST_error("Error parsing test options\n");
         return 0;
     }
 
-    n = test_get_argument_count();
-    if (!TEST_int_gt(n, 0))
+    chain = test_get_argument(0);
+    if (chain == NULL)
         return 0;
 
-    ADD_ALL_TESTS(test_load_cert_file, n);
+    ADD_TEST(test_load_cert_file);
     return 1;
 }
