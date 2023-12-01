@@ -89,7 +89,7 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
          */
         for (i = 0; i < sk_OPENSSL_CSTRING_num(visited); i++) {
             if (sk_OPENSSL_CSTRING_value(visited, i) == value) {
-                ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+                ERR_raise(ERR_LIB_CONF, CONF_R_RECURSIVE_SECTION_REFERENCE);
                 return 0;
             }
         }

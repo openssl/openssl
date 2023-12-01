@@ -8,6 +8,7 @@
  */
 
 #include <openssl/evp.h>
+#include <openssl/err.h>
 #include "testutil.h"
 
 static char *configfile = NULL;
@@ -18,18 +19,11 @@ static char *configfile = NULL;
  * load
  */
 
-static int errfound = 0;
-
-static int err_cb(const char *str, size_t len, void *u)
-{
-    errfound = 1;
-    return 1;
-}
-
 static int test_recursive_config(void)
 {
     OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
     int testresult = 0;
+    unsigned long err;
 
     if (!TEST_ptr(configfile))
         goto err;
@@ -40,10 +34,9 @@ static int test_recursive_config(void)
     if (!TEST_true(OSSL_LIB_CTX_load_config(ctx, configfile)))
         goto err;
 
-    ERR_print_errors_cb(err_cb, NULL);
-
-    /* test passes if we found a load error */
-    if (errfound == 1)
+    err = ERR_peek_error();
+    /* We expect to get a recursion error here */
+    if (ERR_GET_REASON(err) == CONF_R_RECURSIVE_SECTION_REFERENCE)
         testresult = 1;
  err:
     OSSL_LIB_CTX_free(ctx);
