@@ -1434,11 +1434,13 @@ static void tls_int_free(OSSL_RECORD_LAYER *rl)
     tls_release_write_buffer(rl);
 
     EVP_CIPHER_CTX_free(rl->enc_ctx);
+    EVP_MAC_CTX_free(rl->mac_ctx);
     EVP_MD_CTX_free(rl->md_ctx);
 #ifndef OPENSSL_NO_COMP
     COMP_CTX_free(rl->compctx);
 #endif
-
+    OPENSSL_free(rl->iv);
+    OPENSSL_free(rl->nonce);
     if (rl->version == SSL3_VERSION)
         OPENSSL_cleanse(rl->mac_secret, sizeof(rl->mac_secret));
 

@@ -163,6 +163,13 @@ int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     return 0;
 }
 
+int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
+                              const EVP_MD **md,
+                              int *mac_pkey_type, size_t *mac_secret_size)
+{
+    return 0;
+}
+
 int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
                        const EVP_CIPHER **enc, const EVP_MD **md,
                        int *mac_pkey_type, size_t *mac_secret_size,

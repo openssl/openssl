@@ -1064,7 +1064,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
                             tmp + out_misalign, tmplen + tmpflen))
         goto err;
     if (enc && expected->aead && !expected->tls_aad) {
-        unsigned char rtag[16];
+        unsigned char rtag[48]; /* longest known for TLS_SHA384_SHA384 */
 
         if (!TEST_size_t_le(expected->tag_len, sizeof(rtag))) {
             t->err = "TAG_LENGTH_INTERNAL_ERROR";
