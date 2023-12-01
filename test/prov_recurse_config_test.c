@@ -9,6 +9,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/conferr.h>
 #include "testutil.h"
 
 static char *configfile = NULL;
