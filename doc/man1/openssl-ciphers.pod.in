@@ -738,6 +738,15 @@ Note: the CBC modes mentioned in this RFC are not supported.
  TLS_AES_128_CCM_SHA256                     TLS_AES_128_CCM_SHA256
  TLS_AES_128_CCM_8_SHA256                   TLS_AES_128_CCM_8_SHA256
 
+=head2 TLS v1.3 integrity-only cipher suites according to RFC 9150
+
+ TLS_SHA256_SHA256          TLS_SHA256_SHA256
+ TLS_SHA384_SHA384          TLS_SHA384_SHA384
+
+Note: these ciphers are purely HMAC based and do not provide any confidentiality
+and thus are disabled by default.
+These ciphers are only available at security level 0.
+
 =head2 Older names used by OpenSSL
 
 The following names are accepted by older releases:
@@ -801,6 +810,8 @@ The B<-convert> option was added in OpenSSL 1.1.1.
 
 Support for standard IANA names in cipher lists was added in
 OpenSSL 3.2.0.
+
+The support for TLS v1.3 integrity-only cipher suites was added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

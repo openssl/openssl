@@ -529,6 +529,7 @@ my @disablables = (
     "thread-pool",
     "threads",
     "tls",
+    "integrity-only-ciphers",
     "trace",
     "ts",
     "ubsan",

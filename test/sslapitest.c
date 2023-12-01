@@ -3915,7 +3915,13 @@ static const char *ciphersuites[] = {
     "TLS_AES_256_GCM_SHA384",
     "TLS_AES_128_CCM_SHA256",
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
-    "TLS_CHACHA20_POLY1305_SHA256"
+    "TLS_CHACHA20_POLY1305_SHA256",
+#else
+    NULL,
+#endif
+#if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
+    "TLS_SHA256_SHA256",
+    "TLS_SHA384_SHA384"
 #endif
 };
 
@@ -3936,8 +3942,11 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
     unsigned char buf[20];
     size_t readbytes, written;
 
-    if (is_fips && cipher == 4)
+    if (is_fips && cipher >= 4)
         return 1;
+
+    if (ciphersuites[cipher] == NULL)
+        return TEST_skip("Cipher not supported");
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                               TLS_client_method(),
@@ -3945,7 +3954,7 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
                                               &sctx, &cctx, cert, privkey)))
         goto end;
 
-    if (cipher == 0) {
+    if (cipher == 0 || cipher == 5 || cipher == 6) {
         SSL_CTX_set_security_level(sctx, 0);
         SSL_CTX_set_security_level(cctx, 0);
     }
@@ -3956,8 +3965,9 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
                                         &serverssl, &sess, idx,
-                                        cipher == 2 ? SHA384_DIGEST_LENGTH
-                                                    : SHA256_DIGEST_LENGTH)))
+                                        (cipher == 2 || cipher == 6)
+                                            ? SHA384_DIGEST_LENGTH
+                                            : SHA256_DIGEST_LENGTH)))
         goto end;
 
     if (testtype == 1 || testtype == 2) {
@@ -4414,12 +4424,14 @@ static int test_early_data_psk(int idx)
 }
 
 /*
- * Test TLSv1.3 PSK can be used to send early_data with all 5 ciphersuites
+ * Test TLSv1.3 PSK can be used to send early_data with all 7 ciphersuites
  * idx == 0: Test with TLS1_3_RFC_AES_128_GCM_SHA256
  * idx == 1: Test with TLS1_3_RFC_AES_256_GCM_SHA384
  * idx == 2: Test with TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
  * idx == 3: Test with TLS1_3_RFC_AES_128_CCM_SHA256
  * idx == 4: Test with TLS1_3_RFC_AES_128_CCM_8_SHA256
+ * idx == 5: Test with TLS1_3_RFC_SHA256_SHA256
+ * idx == 6: Test with TLS1_3_RFC_SHA384_SHA384
  */
 static int test_early_data_psk_with_all_ciphers(int idx)
 {
@@ -4440,7 +4452,14 @@ static int test_early_data_psk_with_all_ciphers(int idx)
         NULL,
 # endif
         TLS1_3_RFC_AES_128_CCM_SHA256,
-        TLS1_3_RFC_AES_128_CCM_8_SHA256
+        TLS1_3_RFC_AES_128_CCM_8_SHA256,
+# if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
+        TLS1_3_RFC_SHA256_SHA256,
+        TLS1_3_RFC_SHA384_SHA384
+#else
+        NULL,
+        NULL
+#endif
     };
     const unsigned char *cipher_bytes[] = {
         TLS13_AES_128_GCM_SHA256_BYTES,
@@ -4451,13 +4470,23 @@ static int test_early_data_psk_with_all_ciphers(int idx)
         NULL,
 # endif
         TLS13_AES_128_CCM_SHA256_BYTES,
-        TLS13_AES_128_CCM_8_SHA256_BYTES
+        TLS13_AES_128_CCM_8_SHA256_BYTES,
+# if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
+        TLS13_SHA256_SHA256_BYTES,
+        TLS13_SHA384_SHA384_BYTES
+#else
+        NULL,
+        NULL
+#endif
     };
 
     if (cipher_str[idx] == NULL)
         return 1;
-    /* Skip ChaCha20Poly1305 as currently FIPS module does not support it */
-    if (idx == 2 && is_fips == 1)
+    /*
+     * Skip ChaCha20Poly1305 and TLS_SHA{256,384}_SHA{256,384} ciphers
+     * as currently FIPS module does not support them.
+     */
+    if ((idx == 2 || idx == 5 || idx == 6) && is_fips == 1)
         return 1;
 
     /* We always set this up with a final parameter of "2" for PSK */
@@ -4466,8 +4495,11 @@ static int test_early_data_psk_with_all_ciphers(int idx)
                                         SHA384_DIGEST_LENGTH)))
         goto end;
 
-    if (idx == 4) {
-        /* CCM8 ciphers are considered low security due to their short tag */
+    if (idx == 4 || idx == 5 || idx == 6) {
+        /*
+         * CCM8 ciphers are considered low security due to their short tag.
+         * Integrity-only cipher do not provide any confidentiality.
+         */
         SSL_set_security_level(clientssl, 0);
         SSL_set_security_level(serverssl, 0);
     }
@@ -5318,7 +5350,12 @@ static int test_tls13_ciphersuite(int idx)
 # endif
         /* CCM8 ciphers are considered low security due to their short tag */
         { TLS1_3_RFC_AES_128_CCM_8_SHA256
-          ":" TLS1_3_RFC_AES_128_CCM_SHA256, 1, 1 }
+          ":" TLS1_3_RFC_AES_128_CCM_SHA256, 1, 1 },
+# if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
+        /* Integrity-only cipher do not provide any confidentiality */
+        { TLS1_3_RFC_SHA256_SHA256, 0, 1 },
+        { TLS1_3_RFC_SHA384_SHA384, 0, 1 }
+# endif
     };
     const char *t13_cipher = NULL;
     const char *t12_cipher = NULL;
@@ -12152,7 +12189,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_early_data_skip_abort, OSSL_NELEM(ciphersuites) * 3);
     ADD_ALL_TESTS(test_early_data_not_sent, 3);
     ADD_ALL_TESTS(test_early_data_psk, 8);
-    ADD_ALL_TESTS(test_early_data_psk_with_all_ciphers, 5);
+    ADD_ALL_TESTS(test_early_data_psk_with_all_ciphers, 7);
     ADD_ALL_TESTS(test_early_data_not_expected, 3);
 # ifndef OPENSSL_NO_TLS1_2
     ADD_ALL_TESTS(test_early_data_tls1_2, 3);

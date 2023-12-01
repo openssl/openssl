@@ -50,6 +50,10 @@ ciphersuite names in order of preference. Valid TLSv1.3 ciphersuite names are:
 
 =item TLS_AES_128_CCM_8_SHA256
 
+=item TLS_SHA384_SHA384 - integrity-only
+
+=item TLS_SHA256_SHA256 - integrity-only
+
 =back
 
 An empty list is permissible. The default value for the this setting is:

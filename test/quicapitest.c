@@ -342,7 +342,11 @@ static int test_cipher_find(void)
         { TLS13_AES_256_GCM_SHA384_BYTES, 1 },
         { TLS13_CHACHA20_POLY1305_SHA256_BYTES, 1 },
         { TLS13_AES_128_CCM_SHA256_BYTES, 0 },
-        { TLS13_AES_128_CCM_8_SHA256_BYTES, 0 }
+        { TLS13_AES_128_CCM_8_SHA256_BYTES, 0 },
+#if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
+        { TLS13_SHA256_SHA256_BYTES, 0 },
+        { TLS13_SHA384_SHA384_BYTES, 0 }
+#endif
     };
     size_t i;
     int testresult = 0;
@@ -588,7 +592,9 @@ static int test_quic_forbidden_apis_ctx(void)
 #define NON_QUIC_CIPHERSUITES           \
     "TLS_AES_128_CCM_SHA256:"           \
     "TLS_AES_256_CCM_SHA384:"           \
-    "TLS_AES_128_CCM_8_SHA256"
+    "TLS_AES_128_CCM_8_SHA256:"         \
+    "TLS_SHA256_SHA256:"                \
+    "TLS_SHA384_SHA384"
 
     /* Set TLSv1.3 ciphersuite list for the SSL_CTX. */
     if (!TEST_true(SSL_CTX_set_ciphersuites(ctx,

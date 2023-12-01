@@ -1117,6 +1117,10 @@ synonymous with `no-ssl3`.  Note this only affects version negotiation.
 OpenSSL will still provide the methods for applications to explicitly select
 the individual protocol versions.
 
+### no-integrity-only-ciphers
+
+Don't build support for integrity only ciphers in tls.
+
 ### no-{protocol}-method
 
     no-{ssl3|tls1|tls1_1|tls1_2|dtls1|dtls1_2}-method

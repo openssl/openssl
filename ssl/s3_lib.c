@@ -112,7 +112,40 @@ static SSL_CIPHER tls13_ciphers[] = {
         SSL_HANDSHAKE_MAC_SHA256,
         64, /* CCM8 uses a short tag, so we have a low security strength */
         128,
-    }
+    },
+#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
+    {
+        1,
+        TLS1_3_RFC_SHA256_SHA256,
+        TLS1_3_RFC_SHA256_SHA256,
+        TLS1_3_CK_SHA256_SHA256,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_eNULL,
+        SSL_SHA256,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        0, 0,
+        SSL_NOT_DEFAULT | SSL_STRONG_NONE,
+        SSL_HANDSHAKE_MAC_SHA256,
+        0,
+        256,
+    }, {
+        1,
+        TLS1_3_RFC_SHA384_SHA384,
+        TLS1_3_RFC_SHA384_SHA384,
+        TLS1_3_CK_SHA384_SHA384,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_eNULL,
+        SSL_SHA384,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        0, 0,
+        SSL_NOT_DEFAULT | SSL_STRONG_NONE,
+        SSL_HANDSHAKE_MAC_SHA384,
+        0,
+        384,
+    },
+#endif
 };
 
 /*
@@ -126,6 +159,7 @@ static SSL_CIPHER tls13_ciphers[] = {
  *      Weak ciphers
  */
 static SSL_CIPHER ssl3_ciphers[] = {
+#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
     {
      1,
      SSL3_TXT_RSA_NULL_MD5,
@@ -158,6 +192,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+#endif
 #ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
@@ -352,6 +387,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
     {
      1,
      TLS1_TXT_RSA_WITH_NULL_SHA256,
@@ -368,6 +404,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+#endif
     {
      1,
      TLS1_TXT_RSA_WITH_AES_128_SHA256,
@@ -944,6 +981,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      64, /* CCM8 uses a short tag, so we have a low security strength */
      256,
      },
+#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
     {
      1,
      TLS1_TXT_ECDHE_ECDSA_WITH_NULL_SHA,
@@ -960,6 +998,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+#endif
 # ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
@@ -1010,6 +1049,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
     {
      1,
      TLS1_TXT_ECDHE_RSA_WITH_NULL_SHA,
@@ -1026,6 +1066,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+#endif
 # ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
@@ -1076,6 +1117,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
     {
      1,
      TLS1_TXT_ECDH_anon_WITH_NULL_SHA,
@@ -1092,6 +1134,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+#endif
 # ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
@@ -1270,6 +1313,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
     {
      1,
      TLS1_TXT_PSK_WITH_NULL_SHA,
@@ -1318,6 +1362,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+#endif
 # ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
@@ -1596,6 +1641,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
     {
      1,
      TLS1_TXT_PSK_WITH_NULL_SHA256,
@@ -1628,6 +1674,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+#endif
     {
      1,
      TLS1_TXT_DHE_PSK_WITH_AES_128_CBC_SHA256,
@@ -1660,6 +1707,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
     {
      1,
      TLS1_TXT_DHE_PSK_WITH_NULL_SHA256,
@@ -1692,6 +1740,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+#endif
     {
      1,
      TLS1_TXT_RSA_PSK_WITH_AES_128_CBC_SHA256,
@@ -1724,6 +1773,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
     {
      1,
      TLS1_TXT_RSA_PSK_WITH_NULL_SHA256,
@@ -1756,6 +1806,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+#endif
 #  ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
@@ -1838,6 +1889,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
     {
      1,
      TLS1_TXT_ECDHE_PSK_WITH_NULL_SHA,
@@ -1886,7 +1938,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
-
+#endif
 # ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
@@ -2613,6 +2665,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+# ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
     {
      1,
      "GOST2001-NULL-GOST94",
@@ -2629,6 +2682,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+# endif
     {
      1,
      "IANA-GOST2012-GOST8912-GOST8912",
@@ -2661,6 +2715,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+# ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
     {
      1,
      "GOST2012-NULL-GOST12",
@@ -2677,6 +2732,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+# endif
     {
      1,
      "GOST2012-KUZNYECHIK-KUZNYECHIKOMAC",
