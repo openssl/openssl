@@ -96,6 +96,11 @@ OpenSSL 3.3
 
    *Richard Levitte*
 
+ * Added to TLS v1.3 support for integrity-only cipher suites
+   TLS_SHA256_SHA256 and TLS_SHA384_SHA384, as defined in RFC 9150.
+
+   *Rajeev Ranjan, Siemens AG*
+
  * The BLAKE2s hash algorithm matches BLAKE2b's support
    for configurable output length.
 
