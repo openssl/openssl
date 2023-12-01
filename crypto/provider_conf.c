@@ -20,9 +20,6 @@
 
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
-typedef const char NAMEVAL;
-DEFINE_STACK_OF(NAMEVAL)
-
 /* PROVIDER config module */
 
 typedef struct {
@@ -71,7 +68,7 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
                                          OSSL_PROVIDER_INFO *provinfo,
                                          const char *name, const char *value,
                                          const CONF *cnf,
-                                         STACK_OF(NAMEVAL) *visited)
+                                         STACK_OF(OPENSSL_CSTRING) *visited)
 {
     STACK_OF(CONF_VALUE) *sect;
     int ok = 1;
@@ -90,8 +87,8 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
          * in the configuration which isn't valid.  As such we should error
          * out
          */
-        for (i = 0; i < sk_NAMEVAL_num(visited); i++) {
-            if ((const char *)sk_NAMEVAL_value(visited, i) == value) {
+        for (i = 0; i < sk_OPENSSL_CSTRING_num(visited); i++) {
+            if (sk_OPENSSL_CSTRING_value(visited, i) == value) {
                 ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
@@ -100,7 +97,7 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
         /*
          * We've not visited this node yet, so record it on the stack
          */
-        if (!sk_NAMEVAL_push(visited, value))
+        if (!sk_OPENSSL_CSTRING_push(visited, value))
             return 0;
 
         if (name != NULL) {
@@ -113,18 +110,18 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
             CONF_VALUE *sectconf = sk_CONF_VALUE_value(sect, i);
 
             if (buffer_len + strlen(sectconf->name) >= sizeof(buffer)) {
-                sk_NAMEVAL_pop(visited);
+                sk_OPENSSL_CSTRING_pop(visited);
                 return 0;
             }
             buffer[buffer_len] = '\0';
             OPENSSL_strlcat(buffer, sectconf->name, sizeof(buffer));
             if (!provider_conf_params_internal(prov, provinfo, buffer,
                                                sectconf->value, cnf, visited)) {
-                sk_NAMEVAL_pop(visited);
+                sk_OPENSSL_CSTRING_pop(visited);
                 return 0;
             }
         }
-        sk_NAMEVAL_pop(visited);
+        sk_OPENSSL_CSTRING_pop(visited);
 
         OSSL_TRACE1(CONF, "Provider params: finish section %s\n", value);
     } else {
@@ -144,7 +141,7 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
                                 const CONF *cnf)
 {
     int rc;
-    STACK_OF(NAMEVAL) *visited = sk_NAMEVAL_new_null();
+    STACK_OF(OPENSSL_CSTRING) *visited = sk_OPENSSL_CSTRING_new_null();
 
     if (visited == NULL)
         return 0;
@@ -152,7 +149,7 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
     rc = provider_conf_params_internal(prov, provinfo, name,
                                        value, cnf, visited);
 
-    sk_NAMEVAL_free(visited);
+    sk_OPENSSL_CSTRING_free(visited);
 
     return rc;
 }
