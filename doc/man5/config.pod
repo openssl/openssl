@@ -265,8 +265,11 @@ Specifies the pathname of the module (typically a shared library) to load.
 
 =item B<activate>
 
-If present, the module is activated. The value assigned to this name is not
-significant.
+If present and set to one of the values yes, on, true or 1, then the associated
+provider will be activated. Conversely, setting this value to no, off, false, or
+0 will prevent the provider from being activated. Settings can be given in lower
+or uppercase. Setting activate to any other setting, or omitting a setting
+value will result in an error.
 
 =back
 
