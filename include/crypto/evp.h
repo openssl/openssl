@@ -848,6 +848,8 @@ void *evp_keymgmt_dup(const EVP_KEYMGMT *keymgmt,
 EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
                                          const char *name,
                                          const char *properties);
+void *evp_keymgmt_reserve(const EVP_KEYMGMT *keymgmt, void *keydata,
+                          uint64_t count);
 
 /* Pulling defines out of C source files */
 

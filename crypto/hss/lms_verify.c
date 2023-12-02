@@ -5,9 +5,6 @@
 #include "crypto/hss.h"
 #include "lms_local.h"
 
-static unsigned char D_LEAF[] = { 0x82, 0x82 };
-static unsigned char D_INTR[] = { 0x83, 0x83 };
-
 /*
  * NOTE: The passed in ctx->sig and ctx->pub need to exist until
  * ossl_lms_sig_verify_final() is called, since the final may be delayed until
@@ -50,10 +47,10 @@ int ossl_lms_sig_verify_final(LMS_VALIDATE_CTX *vctx)
 
     U32STR(buf, node_num);
     if (!EVP_DigestInit_ex2(ctx, NULL, NULL)
-            || !EVP_DigestUpdate(ctx, key->I, LMS_ISIZE)
+            || !EVP_DigestUpdate(ctx, key->I, LMS_SIZE_I)
             || !EVP_MD_CTX_copy_ex(ctxI, ctx)
             || !EVP_DigestUpdate(ctx, buf, sizeof(buf))
-            || !EVP_DigestUpdate(ctx, D_LEAF, sizeof(D_LEAF))
+            || !EVP_DigestUpdate(ctx, &OSSL_LMS_D_LEAF, sizeof(OSSL_LMS_D_LEAF))
             || !EVP_DigestUpdate(ctx, Kc, m)
             || !EVP_DigestFinal_ex(ctx, Tc, NULL))
         goto err;
@@ -67,7 +64,7 @@ int ossl_lms_sig_verify_final(LMS_VALIDATE_CTX *vctx)
 
         if (!EVP_MD_CTX_copy_ex(ctx, ctxI)
                 || !EVP_DigestUpdate(ctx, buf, sizeof(buf))
-                || !EVP_DigestUpdate(ctx, D_INTR, sizeof(D_INTR)))
+                || !EVP_DigestUpdate(ctx, &OSSL_LMS_D_INTR, sizeof(OSSL_LMS_D_INTR)))
             goto err;
 
         if (odd) {
@@ -83,7 +80,7 @@ int ossl_lms_sig_verify_final(LMS_VALIDATE_CTX *vctx)
             goto err;
         path += m;
     }
-    ret = (memcmp(key->K, Tc, m) == 0);
+    ret = (memcmp(key->pub.K, Tc, m) == 0);
 err:
     return ret;
 }

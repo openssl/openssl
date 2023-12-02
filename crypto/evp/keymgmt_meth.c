@@ -222,6 +222,10 @@ static void *keymgmt_from_algorithm(int name_id,
                 keymgmt->export_types_ex = OSSL_FUNC_keymgmt_export_types_ex(fns);
             }
             break;
+        case OSSL_FUNC_KEYMGMT_RESERVE:
+            if (keymgmt->reserve == NULL)
+                keymgmt->reserve = OSSL_FUNC_keymgmt_reserve(fns);
+            break;
         }
     }
     /*
@@ -542,6 +546,14 @@ const OSSL_PARAM *evp_keymgmt_import_types(const EVP_KEYMGMT *keymgmt,
     if (keymgmt->import_types == NULL)
         return NULL;
     return keymgmt->import_types(selection);
+}
+
+void *evp_keymgmt_reserve(const EVP_KEYMGMT *keymgmt, void *keydata,
+                          uint64_t count)
+{
+    if (keymgmt->reserve == NULL)
+        return NULL;
+    return keymgmt->reserve(keydata, count);
 }
 
 int evp_keymgmt_export(const EVP_KEYMGMT *keymgmt, void *keydata,

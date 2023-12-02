@@ -136,6 +136,7 @@ struct evp_keymgmt_st {
     OSSL_FUNC_keymgmt_export_types_fn *export_types;
     OSSL_FUNC_keymgmt_export_types_ex_fn *export_types_ex;
     OSSL_FUNC_keymgmt_dup_fn *dup;
+    OSSL_FUNC_keymgmt_reserve_fn *reserve;
 } /* EVP_KEYMGMT */ ;
 
 struct evp_keyexch_st {

@@ -10,10 +10,78 @@
 #include "crypto/hss.h"
 #include "lms_local.h"
 
+int ossl_lms_sig_encode(LMS_SIG *sig, unsigned char *out, size_t *outlen)
+{
+    int ret;
+    WPACKET pkt;
+    const LM_OTS_PARAMS *prms = sig->sig.params;
+    const LMS_PARAMS *lprms = sig->params;
+
+    if (out != NULL) {
+        if (!WPACKET_init_static_len(&pkt, out, *outlen, 0))
+            return 0;
+    } else {
+        if (!WPACKET_init_null(&pkt, *outlen))
+            return 0;
+    }
+    ret = WPACKET_put_bytes_u32(&pkt, sig->q)
+          && WPACKET_put_bytes_u32(&pkt, prms->lm_ots_type)
+          && WPACKET_memcpy(&pkt, sig->sig.C, prms->n)
+          && WPACKET_memcpy(&pkt, sig->sig.y, prms->n * prms->p)
+          && WPACKET_put_bytes_u32(&pkt, lprms->lms_type)
+          && WPACKET_memcpy(&pkt, sig->paths, lprms->h * lprms->n)
+          && WPACKET_get_total_written(&pkt, outlen);
+    WPACKET_finish(&pkt);
+    return ret;
+}
+
 LMS_SIG *ossl_lms_sig_new(void)
 {
     return OPENSSL_zalloc(sizeof(LMS_SIG));
 }
+
+LMS_SIG *ossl_lms_sig_deep_copy(const LMS_SIG *src)
+{
+    LMS_SIG *dst;
+    const LM_OTS_PARAMS *prms;
+    const LMS_PARAMS *lprms;
+
+    if (src == NULL)
+        return NULL;
+    dst = ossl_lms_sig_new();
+    if (dst == NULL)
+        return NULL;
+
+    prms = src->sig.params;
+    lprms = src->params;
+
+    dst->q = src->q;
+    dst->params = lprms;
+    dst->sig.params = prms;
+    if (src->sig.C != NULL) {
+        dst->sig.C = OPENSSL_memdup(src->sig.C, lprms->n);
+        if (dst->sig.C == NULL)
+            goto err;
+    }
+    if (src->sig.y != NULL) {
+        dst->sig.y = OPENSSL_memdup(src->sig.y, lprms->n * prms->p);
+        if (dst->sig.y == NULL)
+            goto err;
+    }
+    if (src->paths != NULL) {
+        dst->paths = OPENSSL_memdup(src->paths, lprms->n * lprms->h);
+        if (dst->paths == NULL)
+            goto err;
+    }
+    return dst;
+err:
+    OPENSSL_free(dst->sig.C);
+    OPENSSL_free(dst->sig.y);
+    OPENSSL_free(dst->paths);
+    ossl_lms_sig_free(dst);
+    return NULL;
+}
+
 
 /*
  * Create an LMS_SIG object from a HSS signature byte array in |pkt|.
@@ -41,6 +109,7 @@ LMS_SIG *ossl_lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub)
         goto err;
     sig_params = pub_ots_params;
     lsig->sig.params = sig_params;
+    lsig->params = lparams;
 
     if (!PACKET_get_bytes_shallow(pkt, &lsig->sig.C, sig_params->n)
             || !PACKET_get_bytes_shallow(pkt, &lsig->sig.y,
@@ -63,3 +132,4 @@ void ossl_lms_sig_free(LMS_SIG *sig)
 {
     OPENSSL_free(sig);
 }
+

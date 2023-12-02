@@ -28,6 +28,7 @@
 #include "crypto/ec.h"           /* ossl_ec_key_get_libctx */
 #include "crypto/ecx.h"          /* ECX_KEY, etc... */
 #include "crypto/rsa.h"          /* RSA_PSS_PARAMS_30, etc... */
+#include "crypto/hss.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "endecoder_local.h"
@@ -784,6 +785,48 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
 
 /* ---------------------------------------------------------------------- */
 
+#if !defined(OPENSSL_NO_HSS)
+
+static int hss_to_text(BIO *out, const void *key, int selection)
+{
+    const HSS_KEY *hsskey = key;
+    LMS_KEY *lmskey;
+    int ret = 0, i = 0;
+    int height = 0;
+
+    if (!BIO_printf(out, "levels: %d\n", hsskey->L))
+        goto err;
+    lmskey = sk_LMS_KEY_value(hsskey->lmskeys, 0);
+    if (lmskey == NULL)
+        goto err;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (hsskey->lmskeys != NULL && sk_LMS_KEY_num(hsskey->lmskeys) > 0) {
+            if (!ossl_lms_key_to_text(out, lmskey, 0,
+                                      OSSL_KEYMGMT_SELECT_PUBLIC_KEY))
+                goto err;
+        }
+    }
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        while ((lmskey = sk_LMS_KEY_value(hsskey->lmskeys, i++)) != NULL) {
+            if (lmskey->priv.data == NULL)
+                break;
+            if (!BIO_printf(out, "\nPrivate Key Level %d: \n", i))
+                goto err;
+            height += lmskey->lms_params->h;
+            if (!ossl_lms_key_to_text(out, lmskey, height,
+                                      OSSL_KEYMGMT_SELECT_PRIVATE_KEY))
+                goto err;
+        }
+    }
+    ret = 1;
+err:
+    return ret;
+}
+#endif
+
+
+
 static void *key2text_newctx(void *provctx)
 {
     return provctx;
@@ -878,3 +921,7 @@ MAKE_TEXT_ENCODER(x448, ecx);
 #endif
 MAKE_TEXT_ENCODER(rsa, rsa);
 MAKE_TEXT_ENCODER(rsapss, rsa);
+
+#ifndef OPENSSL_NO_HSS
+MAKE_TEXT_ENCODER(hss, hss);
+#endif

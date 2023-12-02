@@ -18,6 +18,7 @@
 #include <openssl/rand.h>
 #include "internal/param_build_set.h"
 #include <openssl/param_build.h>
+#include <openssl/hss.h>
 #include "crypto/hss.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -41,8 +42,9 @@ static OSSL_FUNC_keymgmt_gen_set_params_fn hss_gen_set_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn hss_gen_settable_params;
 static OSSL_FUNC_keymgmt_gen_fn hss_gen;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn hss_gen_cleanup;
+static OSSL_FUNC_keymgmt_reserve_fn hss_reserve;
 
-#define HSS_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
+#define HSS_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_KEYPAIR)
 
 static void *hss_new_key(void *provctx)
 {
@@ -60,34 +62,53 @@ static void hss_free_key(void *keydata)
 
 static int hss_has(const void *keydata, int selection)
 {
-    const HSS_KEY *key = keydata;
+    const HSS_KEY *hsskey = keydata;
     int ok = 1;
+    LMS_KEY *key;
 
-    if (!ossl_prov_is_running() || key == NULL)
+    if (!ossl_prov_is_running() || hsskey == NULL)
         return 0;
     if ((selection & HSS_POSSIBLE_SELECTIONS) == 0)
         return 1; /* the selection is not missing */
 
+    key = sk_LMS_KEY_value(hsskey->lmskeys, 0);
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = (key->lms_pub.pub != NULL && key->lms_pub.publen > 0);
-
+        ok = (key != NULL && key->pub.K != NULL);
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        ok = (key != NULL && key->priv.data != NULL);
     return ok;
 }
 
 static int hss_match(const void *keydata1, const void *keydata2, int selection)
 {
-    const HSS_KEY *key1 = keydata1;
-    const HSS_KEY *key2 = keydata2;
+    const HSS_KEY *hsskey1 = keydata1;
+    const HSS_KEY *hsskey2 = keydata2;
+    LMS_KEY *key1, *key2;
     int ok = 1;
 
     if (!ossl_prov_is_running())
         return 0;
+    if (hsskey1 == NULL || hsskey2 == NULL)
+        return 0;
 
+    key1 = sk_LMS_KEY_value(hsskey1->lmskeys, 0);
+    key2 = sk_LMS_KEY_value(hsskey2->lmskeys, 0);
+    if (key1 == NULL || key2 == NULL)
+        return 0;
+
+    ok = (hsskey1->L == hsskey2->L
+          && key1->q == key2->q
+          && key1->lms_params == key2->lms_params
+          && key1->ots_params == key2->ots_params);
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
-        ok = (key1->L == key2->L
-              && key1->lms_pub.publen == key2->lms_pub.publen
-              && memcmp(key1->lms_pub.pub, key2->lms_pub.pub,
-                        key1->lms_pub.publen) == 0);
+        ok = ok
+             && key1->pub.encodedlen == key2->pub.encodedlen
+             && (memcmp(key1->pub.encoded, key2->pub.encoded,
+                        key1->pub.encodedlen) == 0);
+    }
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        ok = ok && (memcmp(key1->priv.seed, key2->priv.seed,
+                           key1->ots_params->n) == 0);
     }
     return ok;
 }
@@ -108,27 +129,31 @@ static int hss_import(void *keydata, int selection, const OSSL_PARAM params[])
 static int hss_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
                       void *cbarg)
 {
-    HSS_KEY *key = keydata;
+    HSS_KEY *hsskey = keydata;
     OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params = NULL;
     int ret = 0, L;
+    LMS_KEY *lmskey;
 
-    if (!ossl_prov_is_running() || key == NULL)
+    if (!ossl_prov_is_running() || hsskey == NULL)
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
         return 0;
 
+    lmskey = sk_LMS_KEY_value(hsskey->lmskeys, 0);
+
     tmpl = OSSL_PARAM_BLD_new();
     if (tmpl == NULL)
         return 0;
 
-    L = key->L;
+    L = hsskey->L;
     if (!ossl_param_build_set_int(tmpl, params, OSSL_PKEY_PARAM_HSS_L, L))
-        goto err;;
+        goto err;
     if (!ossl_param_build_set_octet_string(tmpl, params,
                                            OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
-                                           key->lms_pub.pub, key->lms_pub.publen))
+                                           lmskey->pub.encoded,
+                                           lmskey->pub.encodedlen))
         goto err;
 
     params = OSSL_PARAM_BLD_to_param(tmpl);
@@ -196,7 +221,8 @@ static void *hss_load(const void *reference, size_t reference_sz)
 
 static int hss_validate(const void *keydata, int selection, int checktype)
 {
-    const HSS_KEY *key = keydata;
+    const HSS_KEY *hsskey = keydata;
+    LMS_KEY *lmskey;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -204,7 +230,8 @@ static int hss_validate(const void *keydata, int selection, int checktype)
     if ((selection & HSS_POSSIBLE_SELECTIONS) == 0)
         return 1; /* nothing to validate */
 
-    return (key->lms_pub.pub != NULL && key->lms_pub.publen > 0);
+    lmskey = sk_LMS_KEY_value(hsskey->lmskeys, 0);
+    return (lmskey->pub.encoded != NULL && lmskey->pub.encodedlen > 0);
 }
 
 struct hss_gen_ctx {
@@ -270,23 +297,24 @@ err:
 static int hss_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
     struct hss_gen_ctx *gctx = genctx;
-    const OSSL_PARAM *p, *p1;
+    const OSSL_PARAM *p;
+    int i;
 
     if (params == NULL)
         return 1;
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_HSS_LEVELS);
     if (p != NULL) {
-        if (!OSSL_PARAM_get_int(p, &gctx->levels))
+        if (!OSSL_PARAM_get_uint32(p, &gctx->levels))
             return 0;
         if (gctx->levels == 0 || gctx->levels > 8)
             return 0;
     }
     for (i = 0; i < 8; ++i) {
         p = OSSL_PARAM_locate_const(params, ossl_hss_lms_type_names[i]);
-        if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->lms_types[i]))
+        if (p != NULL && !OSSL_PARAM_get_uint32(p, &gctx->lms_types[i]))
             return 0;
         p = OSSL_PARAM_locate_const(params, ossl_hss_ots_type_names[i]);
-        if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->ots_types[i]))
+        if (p != NULL && !OSSL_PARAM_get_uint32(p, &gctx->ots_types[i]))
             return 0;
     }
     return 1;
@@ -322,6 +350,7 @@ static void *hss_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     struct hss_gen_ctx *gctx = genctx;
     HSS_KEY *key = NULL;
+    uint32_t i;
 
     if (!ossl_prov_is_running() || gctx == NULL)
         return NULL;
@@ -359,6 +388,24 @@ static void hss_gen_cleanup(void *genctx)
     OPENSSL_free(gctx);
 }
 
+static void *hss_reserve(void *keydata, uint64_t count)
+{
+    HSS_KEY *curkey = (HSS_KEY *)keydata;
+    HSS_KEY *newkey = NULL;
+
+    if (count == 0)
+        return NULL;
+    newkey = ossl_hss_key_reserve(curkey, count);
+    if (newkey == NULL)
+        return NULL;
+
+    if (!ossl_hss_key_advance(curkey, count)) {
+        ossl_hss_key_free(newkey);
+        return NULL;
+    }
+    return newkey;
+}
+
 const OSSL_DISPATCH ossl_hss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))hss_new_key },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))hss_free_key },
@@ -379,5 +426,6 @@ const OSSL_DISPATCH ossl_hss_keymgmt_functions[] = {
       (void (*)(void))hss_gen_settable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))hss_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))hss_gen_cleanup },
+    { OSSL_FUNC_KEYMGMT_RESERVE, (void (*)(void))hss_reserve },
     OSSL_DISPATCH_END
 };

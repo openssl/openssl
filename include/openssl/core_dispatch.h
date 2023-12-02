@@ -699,6 +699,10 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_import_types_ex,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_export_types_ex,
                     (void *provctx, int selection))
 
+# define OSSL_FUNC_KEYMGMT_RESERVE                    47
+OSSL_CORE_MAKE_FUNC(void *, keymgmt_reserve,
+                    (void *keydata, uint64_t count))
+
 /* Key Exchange */
 
 # define OSSL_FUNC_KEYEXCH_NEWCTX                      1

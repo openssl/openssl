@@ -1,7 +1,7 @@
 LIBS=../../libcrypto
 
-$COMMON=hss_decode.c hss_key.c lms_key.c lm_ots.c lms_params.c \
-        lms_sig.c lms_verify.c
+$COMMON=hss_key.c lms_key.c lms_sig.c lms_params.c lm_ots.c lm_ots_params.c \
+        lms_sign.c lms_verify.c lms_hash.c hss_decode.c lms_nodecache.c
 
-SOURCE[../../libcrypto]=$COMMON
+SOURCE[../../libcrypto]=$COMMON hss_encode.c
 SOURCE[../../providers/libfips.a]=$COMMON

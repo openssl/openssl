@@ -8,9 +8,12 @@
  */
 
 #include <openssl/core_names.h>
+#include <openssl/encoder.h>
 #include <openssl/decoder.h>
 #include <openssl/evp.h>
 #include <openssl/thread.h>
+#include <openssl/hss.h>
+#include <openssl/rand.h>
 #include "crypto/hss.h"
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -22,6 +25,9 @@ static unsigned char *sigdata = NULL;
 static size_t sigdatalen = 0;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *libprov = NULL;
+
+static fake_random_generate_cb fbytes;
+static OSSL_PROVIDER *fake_rand = NULL;
 
 static const unsigned char msg1[] = {
 0x54,0x68,0x65,0x20,0x70,0x6f,0x77,0x65,0x72,0x73,0x20,0x6e,0x6f,0x74,0x20,0x64,
@@ -843,6 +849,32 @@ static const unsigned char pub_bad_OTSType[] = {
 0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0xAA
 };
 
+static unsigned char entropy[4096];
+static int rpos = 0;
+
+static int set_entropy(const unsigned char *ent1, size_t ent1len,
+                       const unsigned char *ent2, size_t ent2len)
+{
+    if ((ent1len + ent2len) > sizeof(entropy))
+        return 0;
+    memcpy(entropy, ent1, ent1len);
+    if (ent2 != NULL)
+        memcpy(entropy + ent1len, ent2, ent2len);
+    return 1;
+}
+
+static int fbytes(unsigned char *buf, size_t num, ossl_unused const char *name,
+                  EVP_RAND_CTX *ctx)
+{
+    if (rpos + num > sizeof(entropy)) {
+        memset(buf, 0, num);
+    } else {
+        memcpy(buf, entropy + rpos, num);
+        rpos += num;
+    }
+    return 1;
+}
+
 
 typedef struct LMS_VERIFY_DATA_st{
     const unsigned char *pub;
@@ -1163,27 +1195,18 @@ static int hss_decode_fail_test(void)
 {
     int ret = 0;
     HSS_KEY *pub;
-    STACK_OF(LMS_KEY) *publist;
-    STACK_OF(LMS_SIG) *siglist;
-
-    publist = sk_LMS_KEY_new_null();
-    siglist = sk_LMS_SIG_new_null();
 
     if (!TEST_ptr(pub = ossl_hss_key_new(libctx, propq)))
         goto end;
-    if (!TEST_true(ossl_hss_pubkey_from_data(pub1, sizeof(pub1), pub)))
+    if (!TEST_true(ossl_hss_pub_key_decode(pub1, sizeof(pub1), pub)))
         goto end;
-    if (!TEST_int_eq(ossl_hss_decode(pub, sig1, sizeof(sig1), publist, NULL), 0))
+    if (!TEST_int_eq(ossl_hss_decode(pub, sig1, 1), 0))
         goto end;
-    if (!TEST_int_eq(ossl_hss_decode(pub, sig1, sizeof(sig1), NULL, siglist), 0))
-        goto end;
-    if (!TEST_int_eq(ossl_hss_decode(pub, sig1, SIZE_MAX, publist, siglist), 0))
+    if (!TEST_int_eq(ossl_hss_decode(pub, sig1, SIZE_MAX), 0))
         goto end;
 
     ret = 1;
 end:
-    sk_LMS_KEY_pop_free(publist, ossl_lms_key_free);
-    sk_LMS_SIG_pop_free(siglist, ossl_lms_sig_free);
     ossl_hss_key_free(pub);
     return ret;
 }
@@ -1374,19 +1397,36 @@ end:
     return ret;
 }
 
+static const unsigned char rfc8554_testcase_private[] = {
+  /* Top level LMS tree */
+  0x55,0x8b,0x89,0x66,0xc4,0x8a,0xe9,0xcb,0x89,0x8b,0x42,0x3c,0x83,0x44,0x3a,0xae,  /* SEED */
+  0x01,0x4a,0x72,0xf1,0xb1,0xab,0x5c,0xc8,0x5c,0xf1,0xd8,0x92,0x90,0x3b,0x54,0x39,
+  0xd0,0x8f,0xab,0xd4,0xa2,0x09,0x1f,0xf0,0xa8,0xcb,0x4e,0xd8,0x34,0xe7,0x45,0x34,  /* I */
+  /* Second level LMS tree */
+  0xa1,0xc4,0x69,0x6e,0x26,0x08,0x03,0x5a,0x88,0x61,0x00,0xd0,0x5c,0xd9,0x99,0x45,  /* SEED */
+  0xeb,0x33,0x70,0x73,0x18,0x84,0xa8,0x23,0x5e,0x2f,0xb3,0xd4,0xd7,0x1f,0x25,0x47,
+  0x21,0x5f,0x83,0xb7,0xcc,0xb9,0xac,0xbc,0xd0,0x8d,0xb9,0x7b,0x0d,0x04,0xdc,0x2b  /* I */
+};
+
+#define LEVELS 2
 static int hss_pkey_sign(void)
 {
-    int ret = 0;
+    int ret = 0, i;
     EVP_PKEY_CTX *genctx = NULL;
-    EVP_MD_CTX *signctx = NULL;
-    EVP_PKEY *key = NULL;
-    OSSL_PARAM params[4];
-    uint32_t levels = 1;
-    uint32_t lms_type = 5;
-    uint32_t ots_type = 4;
-    unsigned char sig[2048];
-    size_t siglen = sizeof(sig);
-    unsigned char msg[] = "ABC";
+    EVP_MD_CTX *signctx = NULL, *vctx = NULL;
+    EVP_PKEY *key = NULL, *reserve = NULL;
+    uint32_t levels = LEVELS;
+    uint32_t lms_type[LEVELS] = { OSSL_LMS_TYPE_SHA256_N32_H10, OSSL_LMS_TYPE_SHA256_N32_H5 };
+    uint32_t ots_type[LEVELS] = { OSSL_LM_OTS_TYPE_SHA256_N32_W4, OSSL_LM_OTS_TYPE_SHA256_N32_W8 };
+    OSSL_PARAM params[2 + 2 * LEVELS];
+    unsigned char *sig;
+    size_t siglen = 0;
+    unsigned char *hsspubdata = NULL;
+    const unsigned char *p = hsspubdata;
+    size_t hsspubdatalen = 0;
+    EVP_PKEY *pub = NULL;
+    OSSL_ENCODER_CTX *ectx = NULL;
+    OSSL_DECODER_CTX *dctx = NULL;
 
     if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, "HSS", propq))
             || !TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1))
@@ -1394,20 +1434,96 @@ static int hss_pkey_sign(void)
 
     params[0] = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_LEVELS, &levels);
     params[1] = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L1,
-                                            &lms_type);
+                                            &lms_type[0]);
     params[2] = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L1,
-                                            &ots_type);
-    params[3] = OSSL_PARAM_construct_end();
-    if (!TEST_ptr(EVP_PKEY_generate(genctx, &key) <= 0))
+                                            &ots_type[0]);
+    params[3] = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_LMS_TYPE_L2,
+                                            &lms_type[1]);
+    params[4] = OSSL_PARAM_construct_uint32(OSSL_PKEY_PARAM_HSS_OTS_TYPE_L2,
+                                            &ots_type[1]);
+    params[5] = OSSL_PARAM_construct_end();
+    if (!TEST_int_gt(EVP_PKEY_CTX_set_params(genctx, params), 0))
         goto err;
 
-    if (!TEST_ptr(signctx = EVP_MD_CTX_new())
-        || !TEST_int_eq(EVP_DigestSignInit_ex(signctx, NULL, NULL, libctx, propq,
-                                              pkey, NULL), 1)
-        || !TEST_int_eq(EVP_DigestSign(signctx, sig, &siglen, msg, sizeof(msg)), 1))
+    fake_rand_set_callback(RAND_get0_private(libctx), &fbytes);
+    if (!TEST_true(set_entropy(rfc8554_testcase_private,
+                               sizeof(rfc8554_testcase_private), NULL, 0)))
         goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_generate(genctx, &key), 0))
+        goto err;
+
+    //EVP_PKEY_print_private(bio_out, key, 0, NULL);
+
+    if (!TEST_ptr(ectx = OSSL_ENCODER_CTX_new_for_pkey(key, OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+                                                       "blob", NULL, NULL)))
+        goto err;
+    /* Save the public key for verifying later */
+    hsspubdata = NULL;
+    if (!TEST_true(OSSL_ENCODER_to_data(ectx, &hsspubdata, &hsspubdatalen)))
+        goto err;
+
+    if (!TEST_ptr(reserve = EVP_PKEY_reserve(key, 7)))
+        goto err;
+    EVP_PKEY_free(reserve);
+
+    for (i = 7; i < 128*32; i += 7) {
+        BIO *bout = NULL;
+        char filename[64];
+        if (i == 32)
+           BIO_snprintf(filename, sizeof(filename), "sigadv%d.bin", i);
+        else
+            BIO_snprintf(filename, sizeof(filename), "sigadv%d.bin", i);
+        if (!TEST_ptr(signctx = EVP_MD_CTX_new())
+            || !TEST_int_eq(EVP_DigestSignInit_ex(signctx, NULL, NULL, libctx, propq,
+                                                  key, NULL), 1)
+            || !TEST_int_eq(EVP_DigestSign(signctx, NULL, &siglen,
+                                           msg2, sizeof(msg2)), 1)
+            || !TEST_ptr(sig = OPENSSL_malloc(siglen))
+            || !TEST_int_eq(EVP_DigestSign(signctx, sig, &siglen,
+                                            msg2, sizeof(msg2)), 1))
+            goto err;
+
+        if (!TEST_ptr(reserve = EVP_PKEY_reserve(key, 6)))
+            goto err;
+        EVP_PKEY_free(reserve);
+
+        bout = BIO_new_file(filename, "w");
+        BIO_write(bout, sig, siglen);
+        BIO_free(bout);
+        BIO_printf(bio_out, "\n");
+    }
+
+    /* load the hss public key */
+    if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_for_pkey(&pub, "hssblob", NULL,
+                                                       "HSS", OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+                                                       libctx, NULL)))
+        goto err;
+    p = hsspubdata;
+    if (!TEST_true(OSSL_DECODER_from_data(dctx, &p, &hsspubdatalen)))
+            goto err;
+    //EVP_PKEY_print_public(bio_out, pub, 0, NULL);
+
+    if (!TEST_ptr(vctx = EVP_MD_CTX_new())
+        || !TEST_int_eq(EVP_DigestVerifyInit_ex(vctx, NULL, NULL, libctx, propq,
+                                              pub, NULL), 1)
+        || !TEST_int_eq(EVP_DigestVerify(vctx, sig, siglen, msg2, sizeof(msg2)), 1))
+        goto err;
+
+
+//    test_output_memory("\n\nsignature", sig, siglen);
+
+#if 0
+
+
+
+
+    EVP_PKEY_print_private(bio_out, pub, 0, NULL);
+#endif
+
     ret = 1;
 err:
+    OPENSSL_free(sig);
     EVP_MD_CTX_free(signctx);
     EVP_PKEY_CTX_free(genctx);
     return ret;
@@ -1445,6 +1561,7 @@ int setup_tests(void)
     if (!test_get_libctx(&libctx, &nullprov, config_file, &libprov, NULL))
         return 0;
 
+    fake_rand = fake_rand_start(libctx);
     if (!OSSL_set_max_threads(libctx, 16))
         return 0;
     if (pubfilename != NULL && sigfilename != NULL) {
@@ -1454,8 +1571,6 @@ int setup_tests(void)
         if (!TEST_int_gt(sigdatalen, 0))
             return 0;
 
-        ADD_ALL_TESTS(hss_verify_hss_file_test, 2);
-    } else {
         ADD_ALL_TESTS(hss_verify_update_test, OSSL_NELEM(testdata));
         ADD_ALL_TESTS(hss_verify_oneshot_test, OSSL_NELEM(testdata));
         ADD_ALL_TESTS(hss_verify_pq_test, OSSL_NELEM(testdata));
@@ -1468,6 +1583,10 @@ int setup_tests(void)
         ADD_TEST(hss_key_eq_test);
         ADD_TEST(hss_key_validate_test);
         ADD_TEST(hss_pkey_verify_fail_test);
+
+        ADD_ALL_TESTS(hss_verify_hss_file_test, 2);
+    } else {
+
         ADD_TEST(hss_pkey_sign);
     }
     return 1;
@@ -1475,6 +1594,7 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
+    fake_rand_finish(fake_rand);
     EVP_PKEY_free(pubkey);
     OPENSSL_free(sigdata);
     OSSL_PROVIDER_unload(nullprov);

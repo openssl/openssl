@@ -12,105 +12,20 @@
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/proverr.h>
+#include <openssl/rand.h>
 #include "internal/refcount.h"
 #include "crypto/hss.h"
 #include "lms_local.h"
 
-#define U16STR(out, in)                      \
-out[0] = (unsigned char)((in >> 8) & 0xff);  \
-out[1] = (unsigned char)(in & 0xff)
+#define U16STR(out, in)                        \
+(out)[0] = (unsigned char)((in >> 8) & 0xff);  \
+(out)[1] = (unsigned char)(in & 0xff)
 
-#define LM_OTS_TYPE_SHA256_N32_W1 0x00000001
-#define LM_OTS_TYPE_SHA256_N32_W2 0x00000002
-#define LM_OTS_TYPE_SHA256_N32_W4 0x00000003
-#define LM_OTS_TYPE_SHA256_N32_W8 0x00000004
-#define LM_OTS_TYPE_SHA256_N24_W1 0x00000005
-#define LM_OTS_TYPE_SHA256_N24_W2 0x00000006
-#define LM_OTS_TYPE_SHA256_N24_W4 0x00000007
-#define LM_OTS_TYPE_SHA256_N24_W8 0x00000008
-#define LM_OTS_TYPE_SHAKE_N32_W1  0x00000009
-#define LM_OTS_TYPE_SHAKE_N32_W2  0x0000000A
-#define LM_OTS_TYPE_SHAKE_N32_W4  0x0000000B
-#define LM_OTS_TYPE_SHAKE_N32_W8  0x0000000C
-#define LM_OTS_TYPE_SHAKE_N24_W1  0x0000000D
-#define LM_OTS_TYPE_SHAKE_N24_W2  0x0000000E
-#define LM_OTS_TYPE_SHAKE_N24_W4  0x0000000F
-#define LM_OTS_TYPE_SHAKE_N24_W8  0x00000010
-
-static const uint16_t D_PBLC = 0x8080;
-static const uint16_t D_MESG = 0x8181;
-
-static const LM_OTS_PARAMS lm_ots_params[] = {
-    { LM_OTS_TYPE_SHA256_N32_W1, 32, 1, 265, "SHA256"},
-    { LM_OTS_TYPE_SHA256_N32_W2, 32, 2, 133, "SHA256"},
-    { LM_OTS_TYPE_SHA256_N32_W4, 32, 4,  67, "SHA256"},
-    { LM_OTS_TYPE_SHA256_N32_W8, 32, 8,  34, "SHA256"},
-    { LM_OTS_TYPE_SHA256_N24_W1, 24, 1, 200, "SHA256-192"},
-    { LM_OTS_TYPE_SHA256_N24_W2, 24, 2, 101, "SHA256-192"},
-    { LM_OTS_TYPE_SHA256_N24_W4, 24, 4,  51, "SHA256-192"},
-    { LM_OTS_TYPE_SHA256_N24_W8, 24, 8,  26, "SHA256-192"},
-    { LM_OTS_TYPE_SHAKE_N32_W1,  32, 1, 265, "SHAKE-256"},
-    { LM_OTS_TYPE_SHAKE_N32_W2,  32, 2, 133, "SHAKE-256"},
-    { LM_OTS_TYPE_SHAKE_N32_W4,  32, 4,  67, "SHAKE-256"},
-    { LM_OTS_TYPE_SHAKE_N32_W8,  32, 8,  34, "SHAKE-256"},
-    /* SHAKE-256/192 */
-    { LM_OTS_TYPE_SHAKE_N24_W1,  24, 1, 200, "SHAKE-256"},
-    { LM_OTS_TYPE_SHAKE_N24_W2,  24, 2, 101, "SHAKE-256"},
-    { LM_OTS_TYPE_SHAKE_N24_W4,  24, 4,  51, "SHAKE-256"},
-    { LM_OTS_TYPE_SHAKE_N24_W8,  24, 8,  26, "SHAKE-256"},
-
-    { 0, NULL, 0, 0, 0 },
-};
 
 /*
- * From Appendix A.
- * x_q[i] = H(I || u32str(q) || u16str(i) || u8str(0xff) || SEED).
+ * Appendix A: OTS Private Key generation
  *
- * So we store I || q || i || 0xFF || seed into a single ordered buffer
- * called priv_bytes.
- */
-
-#define Q_OFFSET LMS_ISIZE
-#define INDEX_OFFSET Q_OFFSET + 4
-#define TAG_OFFSET INDEX_OFFSET + 2
-#define SEED_OFFSET TAG_OFFSET + 1
-
-#define J_OFFSET TAG_OFFSET
-
-int ossl_lm_ots_init_private(LMS_KEY *key)
-{
-    if (key->priv_bytes == NULL) {
-        uint32_t seedlen = key->ots_params->n;
-
-        key->priv_bytes = OPENSSL_zalloc(SEED_OFFSET + seedlen);
-        if (key->priv_bytes == NULL)
-            return 0;
-        key->priv_bytes[TAG_OFFSET] = 0xFF;
-        key->I = key->priv_bytes;
-        key->priv_seed = key->priv_bytes + SEED_OFFSET;
-        if (RAND_priv_bytes(key->I, LMS_ISIZE) <= 0)
-            return 0;
-        if (!RAND_priv_bytes(key->priv_seed, seedlen))
-            return 0;
-        key->q = 0;
-    }
-    return 1;
-}
-
-static int Hash(EVP_MD_CTX *ctx,
-                const unsigned char *in1, size_t in1len,
-                const unsigned char *in2, size_t in2len,
-                unsigned char *out)
-{
-    return EVP_DigestInit_ex2(ctx, NULL, NULL)
-           && EVP_DigestUpdate(ctx, in1, in1len)
-           && (in2 == NULL || EVP_DigestUpdate(ctx, in2, in2len))
-           && EVP_DigestFinal_ex(ctx, out, NULL);
-}
-
-/*
  * Returns an element of the LM-OTS private keys x_q[i].
- * See Appendix A.
  *
  * i is 0..p (ots private key index)
  * q = 0..2^h (leaf index)
@@ -119,43 +34,43 @@ static int Hash(EVP_MD_CTX *ctx,
  * The first call for a key to this function will allocate a buffer
  * to hold all parts of the above hash.
  */
-int ossl_lm_ots_get_private_xq(LMS_KEY *key, uint32_t q, uint16_t index,
-                               EVP_MD_CTX *mdctx,
-                               unsigned char *out)
+static int ossl_lm_ots_get_private_xq(LMS_KEY *key, uint32_t q, uint16_t i,
+                                      EVP_MD_CTX *mdctx,
+                                      unsigned char *out)
 {
     uint32_t seedlen = key->ots_params->n;
 
-    U32STR(key->priv_bytes + Q_OFFSET, q);
-    U16STR(key->priv_bytes + INDEX_OFFSET, i);
+    U32STR(key->priv.data + LMS_OFFSET_q, q);
+    U16STR(key->priv.data + LMS_OFFSET_i, i);
 
-    return Hash(mdctx, key->priv_bytes, SEED_OFFSET + seedlen, NULL, NULL, out);
+    return ossl_lms_hash(mdctx, key->priv.data, LMS_OFFSET_SEED + seedlen,
+                         NULL, 0, out);
 }
 
-const LM_OTS_PARAMS *ossl_lm_ots_params_get(uint32_t ots_type)
+/*
+ * Section 3.1.3: Strings of w-bit Elements
+ *
+ * w: Is one of {1,2,4,8}
+ */
+static uint8_t coef(const unsigned char *S, uint16_t i, uint8_t w)
 {
-    const LM_OTS_PARAMS *p;
-
-    for (p = lm_ots_params; p->lm_ots_type != 0; ++p) {
-        if (p->lm_ots_type == ots_type)
-            return p;
-    }
-    return NULL;
-}
-
-static int coef(const unsigned char *S, int i, int w)
-{
-    int bitmask = (1 << w) - 1;
+    uint8_t bitmask = (1 << w) - 1;
+    uint8_t shift = 8 - (w * (i % (8 / w)) + w);
     int id = (i * w) / 8;
-    int shift = 8 - (w * (i % (8 / w)) + w);
 
     return (S[id] >> shift) & bitmask;
 }
 
-static int checksum(const LM_OTS_PARAMS *params, const unsigned char *S)
+/*
+ * Section 4.4 Checksum
+ */
+static uint16_t checksum(const LM_OTS_PARAMS *params, const unsigned char *S)
 {
-    int i, sum = 0;
-    int bytes = 8 * params->n / params->w;
-    int end = (1 << params->w) - 1;
+    uint16_t sum = 0;
+    uint16_t i;
+    /* Largest size is 8 * 32 / 1 = 256 (which doesnt quite fit into 8 bits) */
+    uint16_t bytes = (8 * params->n / params->w );
+    uint16_t end = (1 << params->w) - 1;
 
     for (i = 0; i < bytes; ++i)
         sum += end - coef(S, i, params->w);
@@ -194,154 +109,167 @@ void ossl_lm_ots_ctx_free(LM_OTS_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
-int ossl_lm_ots_signature_gen(EVP_MD_CTX *mdctx, LMS_KEY *key,
+/*
+ * Section 4.3. OTS Public Key
+ * Algorithm 1 (Steps 1..4)
+ *
+ * Generate a LM-OTS public key from a Private Key
+ *
+ * Params:
+ *   key: Contains OTS params and private key related data
+ *   q: Index of the OTS private key (0 ... 2^h - 1)
+ *   outK: The output OTS public key K (of size n bytes) associated with the
+ *         private key
+ */
+int ossl_lm_ots_pubK_from_priv(LMS_KEY *key, uint32_t q, unsigned char *outK)
+{
+    int ret = 0;
+    uint16_t i;
+    const LM_OTS_PARAMS *prms = key->ots_params;
+    uint8_t n = prms->n;
+    uint16_t p = prms->p;
+    WPACKET pkt;
+    EVP_MD_CTX *ctxK = NULL;
+    /*
+     * This function uses the following data for its Hash function H()
+     *   I || u32str(q) || u16str(i)      || u8str(j) || ....
+     *   I || u32str(q) || u16str(D_PBLC) || ....
+     * So we use a buffer to store the above parts.
+     */
+    unsigned char tmpbuf[LMS_SIZE_I + LMS_SIZE_q + LMS_SIZE_i + LMS_SIZE_j];
+    unsigned char yi[LMS_MAX_DIGEST_SIZE];
+    uint8_t j, end = (1 << prms->w) - 1;
+    size_t len;
+
+    /* tmpbuf[] = I || q || D_PBLC */
+    if (!WPACKET_init_static_len(&pkt, tmpbuf, sizeof(tmpbuf), 0)
+            || !WPACKET_memcpy(&pkt, key->I, LMS_SIZE_I)
+            || !WPACKET_put_bytes_u32(&pkt, q)
+            || !WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_PBLC)
+            || !WPACKET_get_total_written(&pkt, &len))
+        return 0;
+
+    /* K partial = H(I || q || D_PBLC */
+    ctxK = EVP_MD_CTX_dup(key->mdctx);
+    if (ctxK == NULL
+            || !EVP_DigestInit_ex2(ctxK, NULL, NULL)
+            || !EVP_DigestUpdate(ctxK, tmpbuf, len)
+            /* Rewind the tmpbuf back to I || u32str(q) */
+            || !WPACKET_backward(&pkt, LMS_SIZE_DTAG))
+        goto err;
+
+    for (i = 0; i < p; ++i) {
+        if (!ossl_lm_ots_get_private_xq(key, q, i, key->mdctx, yi) /* y[i] = x[i] */
+                || !WPACKET_put_bytes_u16(&pkt, i))
+            goto err;
+        for (j = 0; j < end; ++j) {
+            /* y[i] = H(I || q || i || j || y[i]) */
+            if (!WPACKET_put_bytes_u8(&pkt, j)
+                    || !ossl_lms_hash(key->mdctx, tmpbuf, len + 1, yi, n, yi)
+                    || !WPACKET_backward(&pkt, LMS_SIZE_j))
+                    goto err;
+        }
+        /* K = H(I || q || D_PBLC || y[i] || .. || y[p-1]) */
+        if (!EVP_DigestUpdate(ctxK, yi, n))
+            goto err;
+
+        if (!WPACKET_backward(&pkt, LMS_SIZE_i))
+            goto err;
+    }
+    if (!EVP_DigestFinal_ex(ctxK, outK, NULL))
+        goto err;
+    ret = 1;
+err:
+    WPACKET_finish(&pkt);
+    EVP_MD_CTX_free(ctxK);
+    return ret;
+}
+
+/*
+ * Section 4.5 OTS Signature Generation
+ * Algorithm 3: Generate a LM-OTS signature from a private key and message
+ */
+int ossl_lm_ots_signature_gen(LMS_KEY *key,
                               const unsigned char *msg, size_t msglen,
                               LM_OTS_SIG *sig)
 {
-    unsigned char tmp[LMS_ISIZE + 4 + 2 + LMS_MAX_DIGEST_SIZE];
-    unsigned char C[LMS_MAX_DIGEST_SIZE];
-    unsigned char xqi[LMS_MAX_DIGEST_SIZE];
-    unsigned char Q[LMS_MAX_DIGEST_SIZE];
     const LM_OTS_PARAMS *prms = key->ots_params;
     uint32_t n = prms->n;
-    uint32_t i, j;
-    int a;
+    unsigned char tmp[LMS_SIZE_I + LMS_SIZE_q + LMS_SIZE_DTAG + LMS_MAX_DIGEST_SIZE];
+    unsigned char Q[LMS_MAX_DIGEST_SIZE + LMS_SIZE_CHECKSUM], *Qsum = Q + n;
+    uint8_t j, a;
+    uint16_t i;
     WPACKET pkt;
     size_t len;
     unsigned char *psig;
 
     if (sig->C == NULL) {
-        /* Allocate space for C & y */
+        /* Allocate space for C & y[] */
         sig->C = OPENSSL_malloc(n * (1 + prms->p));
         if (sig->C == NULL)
             return 0;
         sig->y = sig->C + n;
     }
-    if (RAND_priv_bytes(sig->C, n) <= 0)
+    if (!WPACKET_init_static_len(&pkt, tmp, sizeof(tmp), 0)
+            || !WPACKET_memcpy(&pkt, key->I, LMS_SIZE_I)
+            || !WPACKET_put_bytes_u32(&pkt, key->q)
+            || !WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_C)
+            || !WPACKET_put_bytes_u8(&pkt, 0xFF)
+            || !WPACKET_get_total_written(&pkt, &len))
+        return 0;
+    if (!ossl_lms_hash(key->mdctx, tmp, len, key->priv.seed, n, sig->C))
         return 0;
 
-    if (!ossl_lm_ots_init_private(key))
-        return 0;
 
-    if (!WPACKET_init_static_len(pkt, tmp, sizeof(tmp), 0)
-            || !WPACKET_memcpy(pkt, key->I, LMS_ISIZE)
-            || !WPACKET_put_bytes_u32(pkt, key->q)
-            || !WPACKET_put_bytes_u16(pkt, D_MESG)
-            || !WPACKET_memcpy(pkt, sig->C, n)
+    if (!WPACKET_backward(&pkt, 3)
+            || !WPACKET_put_bytes_u16(&pkt, OSSL_LMS_D_MESG)
+            || !WPACKET_memcpy(&pkt, sig->C, n)
             || !WPACKET_get_total_written(&pkt, &len)
-            || !WPACKET_finish(&pkt))
+            || !WPACKET_backward(&pkt, n))
         return 0;
-    if (!Hash(mdctx, tmp, len, msg, msglen, Q))
+    if (!ossl_lms_hash(key->mdctx, tmp, len, msg, msglen, Q))
         return 0;
+
+    /* Q || Cksm(Q) */
+    U16STR(Qsum, checksum(prms, Q));
 
     psig = sig->y;
     for (i = 0; i < prms->p; ++i) {
-
         a = coef(Q, i, prms->w);
-        if (!ossl_lm_ots_get_private_xq(key, i, key->q, mdctx, psig))
+        /* get psig = x_q[i] */
+        if (!ossl_lm_ots_get_private_xq(key, key->q, i, key->mdctx, psig))
             return 0;
 
-        U16STR(tmp + INDEX_OFFSET, i);
+        WPACKET_backward(&pkt, 2);
+        WPACKET_put_bytes_u16(&pkt, i);
         for (j = 0; j < a; ++j) {
-            tmp[J_OFFSET] = j;
-            if (!Hash(mdctx, tmp, J_OFFSET + 1, psig, n, psig)) {
-                //Clear the sig here!
+            WPACKET_put_bytes_u8(&pkt, j);
+            if (!ossl_lms_hash(key->mdctx, tmp, LMS_OFFSET_SEED, psig, n, psig)) {
+                // Clear the sig here!
                 return 0;
             }
+            WPACKET_backward(&pkt, 1);
         }
         psig += n;
     }
     return 1;
 }
 
-int WPACKET_backward(WPACKET *pkt, size_t len)
-{
-    if (len > pkt->written)
-        return 0;
-    pkt->curr -= len;
-    pkt->written -= len;
-    return 1;
-}
-
-int WPACKET_remaining(WPACKET *pkt)
-{
-    return pkt->maxsize - pkt->curr;
-}
-
 /*
- * Algorithm 1: Generate a LM-OTS public key from a Private Key
- * The Input key should contain:
- *    ots_params
- *    I
- *    q
- * The Output key will contain the following fields related to the public key:
- *    pub : The encoded key
- *    publen : Length of pub.
- *    pub_allocated : set to 1.
- *    K : is a pointer into pub which is the OTS_PUB_HASH[q] value.
+ * Section 4.6 Signature Verification
+ * Algorithm 4b: Compute a Public Key Candidate Kc from a signature, message,
+ * and public key parameters.
+ *
+ * The function has been broken into 3 parts in order to deal with streaming
+ * messages.
+ *  (1) ossl_lm_ots_ctx_pubkey_init()
+ *  (2) ossl_lm_ots_ctx_pubkey_update()
+ *  (3) ossl_lm_ots_ctx_pubkey_final()
+ *  Part (2) is the stage that allows the input message to be streamed.
+ *
+ * ossl_lm_ots_ctx_pubkey_init() sets up the initial part of Q
+ * Q = H(I || u32str(q) || u16str(D_MESG) || C)
  */
-int ossl_lm_ots_pub_from_priv(LMS_KEY *key, uint32_t q, EVP_MD_CTX *mdctx)
-{
-    uint16_t i;
-    const LM_OTS_PARAMS *prms = key->ots_params;
-    uint8_t n = prms->n;
-    uint16_t p = prms->p;
-    WPACKET pkt, pubpkt, Kpkt;
-    EVP_MD_CTX *ctxK = NULL;
-    unsigned char tmpbuf[LMS_ISIZE + 4 + 2 + 1];
-    unsigned char yi[LMS_MAX_DIGEST_SIZE];
-    unsigned char *K = yi;
-    uint8_t j, end = (1 << prms->w) - 1;
-    size_t len;
-
-    /* tmpbuf[] = I || q || D_PBLC */
-    if (!WPACKET_init_static_len(pkt, tmpbuf, sizeof(tmpbuf), 0)
-            || !WPACKET_memcpy(pkt, key->I, LMS_ISIZE)
-            || !WPACKET_put_bytes_u32(pkt, q)
-            || !WPACKET_put_bytes_u16(pkt, D_PBLC)
-            || !WPACKET_get_total_written(pkt, &len))
-        return 0;
-
-    /* K partial = H(I || q || D_PBLC */
-    ctxK = EVP_MD_CTX_dup(mdctx);
-    EVP_DigestInit_ex2(ctxK, NULL, NULL);
-    EVP_DigestUpdate(ctxK, tmpbuf, len);
-
-    WPACKET_backward(pkt, 2);
-    for (i = 0; i < p; ++i) {
-        if (!WPACKET_put_bytes_u16(pkt, i))
-            goto err;
-        /* y[i] = x[i] */
-        ossl_lm_ots_get_private_xq(key, i, q, mdctx, yi);
-        for (j = 0; j < end; ++j) {
-            WPACKET_put_bytes_u8(pkt, j);
-            /* y[i] = H(I || q || i || j || y[i]) */
-            Hash(mdctx, tmpbuf, len + 1, yi, n, yi);
-            WPACKET_backward(pkt, 1);
-        }
-        /* K = H(I || q || D_PBLC || y[i] || .. || y[p-1]) */
-        EVP_DigestUpdate(ctxK, yi, n);
-
-        WPACKET_backward(pkt, 2);
-    }
-    /* key->pub[] = ots_type || I || q || K */
-    key->publen = 4 + LMS_ISIZE + 4 + n;
-    key->pub = OPENSSL_malloc(key->publen);
-    key->pub_allocated = 1;
-    WPACKET_init_static_len(&pubpkt, key->pub, key->publen, 0);
-    WPACKET_put_bytes_u32(&pubpkt, prms->lm_ots_type);
-    WPACKET_memcpy(&pubpkt, key->I, LMS_ISIZE);
-    WPACKET_put_bytes_u32(&pubpkt, q);
-    key->K = WPACKET_get_curr(pubpkt);
-    assert(WPACKET_remaining(&pubpkt) == n);
-    EVP_DigestFinal_ex(ctxK, key->K, NULL);
-err:
-    WPACKET_finish(&pkt);
-    WPACKET_finish(&pubpkt);
-    EVP_MD_CTX_free(ctxK);
-}
-
-/* Algorithm 4b */
 int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *pctx,
                                 const EVP_MD *md,
                                 const LM_OTS_SIG *sig,
@@ -350,14 +278,14 @@ int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *pctx,
 {
     int ret = 0;
     EVP_MD_CTX *ctx, *ctxIq;
-    unsigned char iq[LMS_ISIZE+4], *qbuf = &iq[LMS_ISIZE];
+    unsigned char iq[LMS_SIZE_I + LMS_SIZE_q], *qbuf = &iq[LMS_SIZE_I];
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     OSSL_PARAM *p = NULL;
 
     if (sig->params != pub)
         return 0;
 
-    memcpy(iq, I, LMS_ISIZE);
+    memcpy(iq, I, LMS_SIZE_I);
     U32STR(qbuf, q);
 
     ctx = pctx->mdctx;
@@ -372,43 +300,52 @@ int ossl_lm_ots_ctx_pubkey_init(LM_OTS_CTX *pctx,
 
     if (!EVP_DigestInit_ex2(ctxIq, md, p)
             || !EVP_DigestUpdate(ctxIq, iq, sizeof(iq))
-            || !EVP_MD_CTX_copy_ex(ctx, ctxIq))
-        goto err;
-
-    /* Q = H(I || u32str(q) || u16str(D_MESG) || C || ....) */
-    if (!EVP_DigestUpdate(ctx, D_MESG, sizeof(D_MESG))
+            || !EVP_MD_CTX_copy_ex(ctx, ctxIq)
+            /* Q = H(I || u32str(q) || u16str(D_MESG) || C || ....) */
+            || !EVP_DigestUpdate(ctx, &OSSL_LMS_D_MESG, sizeof(OSSL_LMS_D_MESG))
             || !EVP_DigestUpdate(ctx, sig->C, sig->params->n))
         goto err;
     pctx->sig = sig;
-    return 1;
+    ret = 1;
 err:
-
     return ret;
 }
 
-/* Algorithm 4b */
+/*
+ * Section 4.3 Signature Verification
+ * Algorithm 4b - Part 2
+ *
+ * update the msg part of
+ * Q = H(.... || msg)
+ */
 int ossl_lm_ots_ctx_pubkey_update(LM_OTS_CTX *pctx,
                                   const unsigned char *msg, size_t msglen)
 {
     return EVP_DigestUpdate(pctx->mdctx, msg, msglen) > 0;
 }
 
-/* Algorithm 4b */
+#define LMS_SIZE_QSUM 2
+
+
+/*
+ * Section 4.3 Signature Verification
+ * Algorithm 4b - Part 3
+ * Steps 3 (Finalizes Q) and 4
+ */
 int ossl_lm_ots_ctx_pubkey_final(LM_OTS_CTX *pctx, unsigned char *Kc)
 {
-    int ret = 0, i, j;
+    int ret = 0, i;
     EVP_MD_CTX *ctxKc = NULL;
     EVP_MD_CTX *ctx = pctx->mdctx;
     EVP_MD_CTX *ctxIq = pctx->mdctxIq;
     unsigned char tag[2 + 1], *tag2 = &tag[2];
-    unsigned char Q[LMS_MAX_DIGEST_SIZE+2], *Qsum;
+    unsigned char Q[LMS_MAX_DIGEST_SIZE + LMS_SIZE_QSUM], *Qsum;
     unsigned char z[LMS_MAX_DIGEST_SIZE];
     uint16_t sum;
     const LM_OTS_PARAMS *params = pctx->sig->params;
     int n = params->n;
     int p = params->p;
-    int w = params->w;
-    int end = (1 << w) - 1;
+    uint8_t j, w = params->w, end = (1 << w) - 1;
     int a;
     unsigned char *y;
 
@@ -425,7 +362,7 @@ int ossl_lm_ots_ctx_pubkey_final(LM_OTS_CTX *pctx, unsigned char *Kc)
     U16STR(Qsum, sum);
 
     if (!(EVP_MD_CTX_copy_ex(ctxKc, ctxIq))
-            || !EVP_DigestUpdate(ctxKc, D_PBLC, sizeof(D_PBLC)))
+            || !EVP_DigestUpdate(ctxKc, &OSSL_LMS_D_PBLC, sizeof(OSSL_LMS_D_PBLC)))
         goto err;
 
     y = pctx->sig->y;

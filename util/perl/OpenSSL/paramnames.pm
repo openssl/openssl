@@ -414,6 +414,25 @@ my %params = (
 
 # EC, X25519 and X448 Key generation parameters
     'PKEY_PARAM_DHKEM_IKM' =>        "dhkem-ikm",
+    
+# HSS Key generation parameters
+    'PKEY_PARAM_HSS_LEVELS' => "hss-levels",
+    'PKEY_PARAM_HSS_LMS_TYPE_L1' => "lms-type-l1",
+    'PKEY_PARAM_HSS_LMS_TYPE_L2' => "lms-type-l2",
+    'PKEY_PARAM_HSS_LMS_TYPE_L3' => "lms-type-l3",
+    'PKEY_PARAM_HSS_LMS_TYPE_L4' => "lms-type-l4",
+    'PKEY_PARAM_HSS_LMS_TYPE_L5' => "lms-type-l5",
+    'PKEY_PARAM_HSS_LMS_TYPE_L6' => "lms-type-l6",
+    'PKEY_PARAM_HSS_LMS_TYPE_L7' => "lms-type-l7",
+    'PKEY_PARAM_HSS_LMS_TYPE_L8' => "lms-type-l8",
+    'PKEY_PARAM_HSS_OTS_TYPE_L1' => "ots-type-l1",
+    'PKEY_PARAM_HSS_OTS_TYPE_L2' => "ots-type-l2",
+    'PKEY_PARAM_HSS_OTS_TYPE_L3' => "ots-type-l3",
+    'PKEY_PARAM_HSS_OTS_TYPE_L4' => "ots-type-l4",
+    'PKEY_PARAM_HSS_OTS_TYPE_L5' => "ots-type-l5",
+    'PKEY_PARAM_HSS_OTS_TYPE_L6' => "ots-type-l6",
+    'PKEY_PARAM_HSS_OTS_TYPE_L7' => "ots-type-l7",
+    'PKEY_PARAM_HSS_OTS_TYPE_L8' => "ots-type-l8",
 
 # Key generation parameters
     'PKEY_PARAM_FFC_TYPE' =>         "type",

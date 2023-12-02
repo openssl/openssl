@@ -31,6 +31,8 @@
 
 static OSSL_FUNC_signature_newctx_fn hss_newctx;
 static OSSL_FUNC_signature_freectx_fn hss_freectx;
+static OSSL_FUNC_signature_digest_sign_init_fn hss_digest_sign_init;
+static OSSL_FUNC_signature_digest_sign_fn hss_digest_sign;
 static OSSL_FUNC_signature_digest_verify_init_fn hss_digest_verify_init;
 static OSSL_FUNC_signature_digest_verify_update_fn hss_digest_verify_update;
 static OSSL_FUNC_signature_digest_verify_final_fn hss_digest_verify_final;
@@ -56,9 +58,7 @@ typedef struct {
     unsigned char *sig;
     size_t siglen;
     uint32_t pqmode;
-
-    STACK_OF(LMS_KEY) *publist;
-    STACK_OF(LMS_SIG) *siglist;
+    EVP_MD_CTX *mdctx;
 } PROV_HSS_CTX;
 
 static void *hss_newctx(void *provctx, const char *propq)
@@ -81,12 +81,6 @@ static void *hss_newctx(void *provctx, const char *propq)
     ctx->max_threads = 1;
     ctx->libctx = PROV_LIBCTX_OF(provctx);
     ctx->ctx.pubctx = pubctx;
-
-    ctx->publist = sk_LMS_KEY_new_null();
-    ctx->siglist = sk_LMS_SIG_new_null();
-    if (ctx->publist == NULL || ctx->siglist == NULL)
-        goto err;
-
     return ctx;
 err:
     ossl_lm_ots_ctx_free(pubctx);
@@ -100,9 +94,6 @@ static void hss_freectx(void *vctx)
 
     if (ctx == NULL)
         return;
-
-    sk_LMS_SIG_pop_free(ctx->siglist, ossl_lms_sig_free);
-    sk_LMS_KEY_pop_free(ctx->publist, ossl_lms_key_free);
 
     ossl_hss_key_free(ctx->key);
     OPENSSL_free(ctx->propq);
@@ -121,12 +112,14 @@ static void hss_freectx(void *vctx)
 static int setdigest(PROV_HSS_CTX *ctx, const char *digestname)
 {
     /*
-     * Since only one digest can be used by LSS/HSS. Just set the digest
-     * to the one contained in the public key.
+     * Assume that only one digest can be used by LSS/HSS.
+     * Set the digest to the one contained in the public key.
      * If the optional digestname passed in by the user is different
      * then return an error.
      */
-    const char *pub_digestname = ctx->key->lms_pub.ots_params->digestname;
+    HSS_KEY *hsskey = ctx->key;
+    LMS_KEY *key = sk_LMS_KEY_value(hsskey->lmskeys, 0);
+    const char *pub_digestname = key->ots_params->digestname;
 
     if (ctx->ctx.md != NULL) {
         if (EVP_MD_is_a(ctx->ctx.md, pub_digestname))
@@ -135,6 +128,9 @@ static int setdigest(PROV_HSS_CTX *ctx, const char *digestname)
     }
     ctx->ctx.md = EVP_MD_fetch(ctx->libctx, pub_digestname, ctx->propq);
     if (ctx->ctx.md == NULL)
+        return 0;
+    ctx->mdctx = EVP_MD_CTX_new();
+    if (!EVP_DigestInit_ex2(ctx->mdctx, ctx->ctx.md, NULL))
         return 0;
 end:
     return digestname == NULL || EVP_MD_is_a(ctx->ctx.md, digestname);
@@ -297,26 +293,18 @@ static int hss_verify_int(PROV_HSS_CTX *ctx,
                           const unsigned char *msg, size_t msglen)
 {
     int ret = 0, i;
-
-
-    /* Add the public key to the stack */
-    if (!ossl_hss_key_up_ref(ctx->key))
-        goto err;
-    if (sk_LMS_KEY_push(ctx->publist, &ctx->key->lms_pub) <= 0) {
-        ossl_hss_key_free(ctx->key);
-        goto err;
-    }
+    HSS_KEY *hsskey = ctx->key;
 
     /*
      * Decode the HSS signature data which contains signatures and public keys
      * This can just be a single level tree for the simple LMS case.
      */
-    if (!ossl_hss_decode(ctx->key, sig, siglen, ctx->publist, ctx->siglist))
+    if (!ossl_hss_decode(hsskey, sig, siglen))
         goto err;
 
     /* Verify each tree */
-    for (i = 0; i < sk_LMS_SIG_num(ctx->siglist) - 1; ++i) {
-        LMS_KEY *next = sk_LMS_KEY_value(ctx->publist, i + 1);
+    for (i = 0; i < sk_LMS_SIG_num(hsskey->lmssigs) - 1; ++i) {
+        LMS_KEY *next = sk_LMS_KEY_value(hsskey->lmskeys, i + 1);
 
         if (next == NULL)
             goto err;
@@ -324,9 +312,9 @@ static int hss_verify_int(PROV_HSS_CTX *ctx,
          * As this call may create a thread to do the work it may not indicate
          * a verification failure until check_jobs() is called later
          */
-        if (hss_sig_verify(ctx, sk_LMS_SIG_value(ctx->siglist, i),
-                           sk_LMS_KEY_value(ctx->publist, i),
-                           next->pub, next->publen) != 1)
+        if (hss_sig_verify(ctx, sk_LMS_SIG_value(hsskey->lmssigs, i),
+                           sk_LMS_KEY_value(hsskey->lmskeys, i),
+                           next->pub.encoded, next->pub.encodedlen) != 1)
             goto err;
     }
     if (msg == NULL) {
@@ -334,13 +322,13 @@ static int hss_verify_int(PROV_HSS_CTX *ctx,
          * If the msg is not passed in the last verify will be done on the
          * main thread.
          */
-        ctx->ctx.sig = sk_LMS_SIG_value(ctx->siglist, i);
-        ctx->ctx.pub = sk_LMS_KEY_value(ctx->publist, i);
+        ctx->ctx.sig = sk_LMS_SIG_value(hsskey->lmssigs, i);
+        ctx->ctx.pub = sk_LMS_KEY_value(hsskey->lmskeys, i);
         if (!ossl_lms_sig_verify_init(&ctx->ctx))
             goto err;
     } else {
-        if (hss_sig_verify(ctx, sk_LMS_SIG_value(ctx->siglist, i),
-                           sk_LMS_KEY_value(ctx->publist, i),
+        if (hss_sig_verify(ctx, sk_LMS_SIG_value(hsskey->lmssigs, i),
+                           sk_LMS_KEY_value(hsskey->lmskeys, i),
                            msg, msglen) != 1)
             goto err;
     }
@@ -484,9 +472,30 @@ static const OSSL_PARAM *hss_settable_ctx_params(void *vctx,
     return settable_ctx_params;
 }
 
+static int hss_digest_sign_init(void *vctx, const char *mdname,
+                                void *vkey,
+                                const OSSL_PARAM params[])
+{
+    return hss_verify_init(vctx, vkey, params, mdname);
+}
+
+static int hss_digest_sign(void *vctx, unsigned char *sigout,
+                           size_t *siglen, size_t sigsize,
+                           const unsigned char *tbs, size_t tbslen)
+{
+    PROV_HSS_CTX *ctx = (PROV_HSS_CTX *)vctx;
+
+    return ossl_hss_sign(ctx->key, tbs, tbslen, sigout, siglen, sigsize,
+                         ctx->libctx, ctx->mdctx);
+}
+
 const OSSL_DISPATCH ossl_hss_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))hss_newctx },
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))hss_freectx },
+    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
+      (void (*)(void))hss_digest_sign_init },
+    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,
+      (void (*)(void))hss_digest_sign },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_PQ_INIT,
       (void (*)(void))hss_digest_verify_pq_init },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_PQ_FINAL,

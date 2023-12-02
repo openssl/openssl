@@ -28,8 +28,7 @@ static LMS_KEY *add_decoded_pubkey(PACKET *pkt, STACK_OF(LMS_KEY) *keylist)
     key = ossl_lms_key_new();
     if (key == NULL)
         return NULL;
-
-    if (!ossl_lms_pubkey_from_pkt(pkt, key)
+    if (!ossl_lms_pub_key_from_pkt(pkt, key)
             || (sk_LMS_KEY_push(keylist, key) <= 0)) {
             ossl_lms_key_free(key);
             key = NULL;
@@ -41,29 +40,29 @@ static LMS_KEY *add_decoded_pubkey(PACKET *pkt, STACK_OF(LMS_KEY) *keylist)
  * Create lists of LMS_KEY and LMS_SIG objects by decoding a HSS signature in
  * |sig| of size |siglen| bytes.
  */
-int ossl_hss_decode(const HSS_KEY *pub,
-                    const unsigned char *sig, size_t siglen,
-                    STACK_OF(LMS_KEY) *publist,
-                    STACK_OF(LMS_SIG) *siglist)
+int ossl_hss_decode(HSS_KEY *hsskey,
+                    const unsigned char *sig, size_t siglen)
 {
     int ret = 0;
     uint32_t Nspk, i;
-    LMS_KEY *key = (LMS_KEY *)&pub->lms_pub;
+    LMS_KEY *key;
     PACKET pkt;
+
+    key = sk_LMS_KEY_value(hsskey->lmskeys, 0);
 
     if (!PACKET_buf_init(&pkt, sig, siglen)
             || !PACKET_get_4_len(&pkt, &Nspk)
-            || Nspk != (pub->L - 1))
+            || Nspk != (hsskey->L - 1))
         return 0;
 
     for (i = 0; i < Nspk; ++i) {
-        if (!add_decoded_sig(&pkt, key, siglist))
+        if (!add_decoded_sig(&pkt, key, hsskey->lmssigs))
             goto err;
-        key = add_decoded_pubkey(&pkt, publist);
+        key = add_decoded_pubkey(&pkt, hsskey->lmskeys);
         if (key == NULL)
             goto err;
     }
-    if (!add_decoded_sig(&pkt, key, siglist))
+    if (!add_decoded_sig(&pkt, key, hsskey->lmssigs))
         goto err;
     if (PACKET_remaining(&pkt) > 0)
         goto err;
