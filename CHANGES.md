@@ -25,7 +25,7 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 3.4
+OpenSSL 3.5
 -----------
 
 ### Changes between 3.4 and 3.5 [xx XXX xxxx]
@@ -214,6 +214,11 @@ OpenSSL 3.4
    public API. There is no command-line tool support at this time.
 
    *Damian Hobson-Garcia*
+
+ * The `-rawin` option of the `pkeyutl` command is now implied (and thus no more
+   required) when signing or verifying with an Ed25519 or Ed448 key.
+
+   *David von Oheimb*
 
  * Added support to build Position Independent Executables (PIE). Configuration
    option `enable-pie` configures the cflag '-fPIE' and ldflag '-pie' to
