@@ -208,6 +208,11 @@ OpenSSL 3.4
 
    *Damian Hobson-Garcia*
 
+ * The `-rawin` option of the `pkeyutl` command is now implied (and thus no more
+   required) when signing or verifying with an Ed25519 or Ed448 key.
+
+   *David von Oheimb*
+
  * Added support to build Position Independent Executables (PIE). Configuration
    option `enable-pie` configures the cflag '-fPIE' and ldflag '-pie' to
    support Address Space Layout Randomization (ASLR) in the openssl executable,
