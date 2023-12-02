@@ -248,7 +248,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         OSSL_PARAM *q = param_lens;
         const OSSL_PARAM *p;
 
-        p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN); 
+        p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
         if (p != NULL)
             memcpy(q++, p, sizeof(*q));
 
@@ -1331,7 +1331,8 @@ int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
     int r = 0;
     const OSSL_PARAM *p;
 
-    if (ctx->cipher != NULL && ctx->cipher->set_ctx_params != NULL) {
+    if (ctx != NULL && ctx->cipher != NULL &&
+                                        ctx->cipher->set_ctx_params != NULL) {
         r = ctx->cipher->set_ctx_params(ctx->algctx, params);
         if (r > 0) {
             p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
@@ -1353,7 +1354,7 @@ int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
 
 int EVP_CIPHER_CTX_get_params(EVP_CIPHER_CTX *ctx, OSSL_PARAM params[])
 {
-    if (ctx->cipher != NULL && ctx->cipher->get_ctx_params != NULL)
+    if (ctx != NULL && ctx->cipher != NULL && ctx->cipher->get_ctx_params != NULL)
         return ctx->cipher->get_ctx_params(ctx->algctx, params);
     return 0;
 }
@@ -1392,7 +1393,8 @@ const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(EVP_CIPHER_CTX *cctx)
 {
     void *alg;
 
-    if (cctx != NULL && cctx->cipher->settable_ctx_params != NULL) {
+    if (cctx != NULL && cctx->cipher != NULL &&
+                        cctx->cipher->settable_ctx_params != NULL) {
         alg = ossl_provider_ctx(EVP_CIPHER_get0_provider(cctx->cipher));
         return cctx->cipher->settable_ctx_params(cctx->algctx, alg);
     }
@@ -1403,7 +1405,8 @@ const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(EVP_CIPHER_CTX *cctx)
 {
     void *provctx;
 
-    if (cctx != NULL && cctx->cipher->gettable_ctx_params != NULL) {
+    if (cctx != NULL && cctx->cipher != NULL &&
+                        cctx->cipher->gettable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(EVP_CIPHER_get0_provider(cctx->cipher));
         return cctx->cipher->gettable_ctx_params(cctx->algctx, provctx);
     }
