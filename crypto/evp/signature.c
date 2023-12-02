@@ -369,8 +369,10 @@ const OSSL_PARAM *EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig)
 {
     void *provctx;
 
-    if (sig == NULL || sig->gettable_ctx_params == NULL)
+    if (sig == NULL || sig->gettable_ctx_params == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GETTABLE_CTX_PARAMS);
         return NULL;
+    }
 
     provctx = ossl_provider_ctx(EVP_SIGNATURE_get0_provider(sig));
     return sig->gettable_ctx_params(NULL, provctx);
@@ -380,8 +382,10 @@ const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig)
 {
     void *provctx;
 
-    if (sig == NULL || sig->settable_ctx_params == NULL)
+    if (sig == NULL || sig->settable_ctx_params == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_SETTABLE_CTX_PARAMS);
         return NULL;
+    }
 
     provctx = ossl_provider_ctx(EVP_SIGNATURE_get0_provider(sig));
     return sig->settable_ctx_params(NULL, provctx);

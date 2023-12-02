@@ -588,7 +588,8 @@ OSSL_DECODER_gettable_params(OSSL_DECODER *decoder)
 
         return decoder->gettable_params(provctx);
     }
-    return NULL;
+    ERR_raise(ERR_LIB_OSSL_DECODER, OSSL_DECODER_R_MISSING_GETTABLE_PARAMS);
+   return NULL;
 }
 
 int OSSL_DECODER_get_params(OSSL_DECODER *decoder, OSSL_PARAM params[])
@@ -606,6 +607,7 @@ OSSL_DECODER_settable_ctx_params(OSSL_DECODER *decoder)
 
         return decoder->settable_ctx_params(provctx);
     }
+    ERR_raise(ERR_LIB_OSSL_DECODER, OSSL_DECODER_R_MISSING_SETTABLE_CTX_PARAMS);
     return NULL;
 }
 

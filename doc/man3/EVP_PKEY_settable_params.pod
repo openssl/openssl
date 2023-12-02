@@ -55,7 +55,9 @@ These functions only work for B<EVP_PKEY>s that contain a provider side key.
 
 =head1 RETURN VALUES
 
-EVP_PKEY_settable_params() returns NULL on error or if it is not supported,
+EVP_PKEY_gettable_params() and EVP_PKEY_settable_params()
+return a constant L<OSSL_PARAM(3)> array on success or NULL on error,
+which may mean that the operation is not supported.
 
 All other methods return 1 if a value was successfully set, or 0 if
 there was an error.

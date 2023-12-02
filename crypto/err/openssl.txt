@@ -749,7 +749,12 @@ EVP_R_LOCKING_NOT_SUPPORTED:213:locking not supported
 EVP_R_MEMORY_LIMIT_EXCEEDED:172:memory limit exceeded
 EVP_R_MESSAGE_DIGEST_IS_NULL:159:message digest is null
 EVP_R_METHOD_NOT_SUPPORTED:144:method not supported
+EVP_R_MISSING_GETTABLE_CTX_PARAMS:226:missing gettable ctx params
+EVP_R_MISSING_GETTABLE_PARAMS:229:missing gettable params
+EVP_R_MISSING_GET_CTX_PARAMS:230:missing get ctx params
 EVP_R_MISSING_PARAMETERS:103:missing parameters
+EVP_R_MISSING_SETTABLE_CTX_PARAMS:228:missing settable ctx params
+EVP_R_MISSING_SET_CTX_PARAMS:231:missing set ctx params
 EVP_R_NOT_ABLE_TO_COPY_CTX:190:not able to copy ctx
 EVP_R_NOT_XOF_OR_INVALID_LENGTH:178:not XOF or invalid length
 EVP_R_NO_CIPHER_SET:131:no cipher set
@@ -868,10 +873,14 @@ OCSP_R_UNKNOWN_NID:120:unknown nid
 OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE:129:unsupported requestorname type
 OSSL_DECODER_R_COULD_NOT_DECODE_OBJECT:101:could not decode object
 OSSL_DECODER_R_DECODER_NOT_FOUND:102:decoder not found
+OSSL_DECODER_R_MISSING_GETTABLE_PARAMS:103:missing gettable params
 OSSL_DECODER_R_MISSING_GET_PARAMS:100:missing get params
+OSSL_DECODER_R_MISSING_SETTABLE_CTX_PARAMS:104:missing settable ctx params
 OSSL_ENCODER_R_ENCODER_NOT_FOUND:101:encoder not found
 OSSL_ENCODER_R_INCORRECT_PROPERTY_QUERY:100:incorrect property query
+OSSL_ENCODER_R_MISSING_GETTABLE_PARAMS:103:missing gettable params
 OSSL_ENCODER_R_MISSING_GET_PARAMS:102:missing get params
+OSSL_ENCODER_R_MISSING_SETTABLE_CTX_PARAMS:104:missing settable ctx params
 OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE:107:ambiguous content type
 OSSL_STORE_R_BAD_PASSWORD_READ:115:bad password read
 OSSL_STORE_R_ERROR_VERIFYING_PKCS12_MAC:113:error verifying pkcs12 mac

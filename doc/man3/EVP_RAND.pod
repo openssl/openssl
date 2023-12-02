@@ -385,7 +385,7 @@ EVP_RAND_get_strength() returns the strength of the random number generator
 in bits.
 
 EVP_RAND_gettable_params(), EVP_RAND_gettable_ctx_params() and
-EVP_RAND_settable_ctx_params() return an array of OSSL_PARAMs.
+EVP_RAND_settable_ctx_params() return an array of OSSL_PARAMs or NULL on error.
 
 EVP_RAND_verify_zeroization() returns 1 if the internal DRBG state is
 currently zeroed, and 0 if not.

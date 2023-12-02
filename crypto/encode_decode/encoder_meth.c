@@ -579,6 +579,7 @@ OSSL_ENCODER_gettable_params(OSSL_ENCODER *encoder)
 
         return encoder->gettable_params(provctx);
     }
+    ERR_raise(ERR_LIB_OSSL_ENCODER, OSSL_ENCODER_R_MISSING_GETTABLE_PARAMS);
     return NULL;
 }
 
@@ -596,6 +597,7 @@ const OSSL_PARAM *OSSL_ENCODER_settable_ctx_params(OSSL_ENCODER *encoder)
 
         return encoder->settable_ctx_params(provctx);
     }
+    ERR_raise(ERR_LIB_OSSL_ENCODER, OSSL_ENCODER_R_MISSING_SETTABLE_CTX_PARAMS);
     return NULL;
 }
 
