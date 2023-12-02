@@ -52,13 +52,16 @@ void ENGINE_set_table_flags(unsigned int flags)
 }
 
 /* Internal functions for the "piles" hash table */
-static unsigned long engine_pile_hash(const ENGINE_PILE *c)
+static unsigned long engine_pile_hash(const void *d)
 {
+    const ENGINE_PILE *c = (const ENGINE_PILE *)d;
     return c->nid;
 }
 
-static int engine_pile_cmp(const ENGINE_PILE *a, const ENGINE_PILE *b)
+static int engine_pile_cmp(const void *da, const void *db)
 {
+    const ENGINE_PILE *a = (const ENGINE_PILE *)da;
+    const ENGINE_PILE *b = (const ENGINE_PILE *)db;
     return a->nid - b->nid;
 }
 

@@ -47,13 +47,17 @@ typedef struct {
 #endif
 } PROPERTY_STRING_DATA;
 
-static unsigned long property_hash(const PROPERTY_STRING *a)
+static unsigned long property_hash(const void *d)
 {
+    const PROPERTY_STRING *a = (const PROPERTY_STRING *)d;
     return OPENSSL_LH_strhash(a->s);
 }
 
-static int property_cmp(const PROPERTY_STRING *a, const PROPERTY_STRING *b)
+static int property_cmp(const void *da, const void *db)
 {
+    const PROPERTY_STRING *a = (const PROPERTY_STRING *)da;
+    const PROPERTY_STRING *b = (const PROPERTY_STRING *)db;
+
     return strcmp(a->s, b->s);
 }
 

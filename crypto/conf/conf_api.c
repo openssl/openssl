@@ -95,13 +95,18 @@ char *_CONF_get_string(const CONF *conf, const char *section,
     return v->value;
 }
 
-static unsigned long conf_value_hash(const CONF_VALUE *v)
+static unsigned long conf_value_hash(const void *dv)
 {
+    const CONF_VALUE *v = (const CONF_VALUE *)dv;
+
     return (OPENSSL_LH_strhash(v->section) << 2) ^ OPENSSL_LH_strhash(v->name);
 }
 
-static int conf_value_cmp(const CONF_VALUE *a, const CONF_VALUE *b)
+static int conf_value_cmp(const void *da, const void *db)
 {
+    const CONF_VALUE *a = (const CONF_VALUE *)da;
+    const CONF_VALUE *b = (const CONF_VALUE *)db;
+
     int i;
 
     if (a->section != b->section) {

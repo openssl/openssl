@@ -444,13 +444,17 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
     return 1;
 }
 
-static int function_cmp(const FUNCTION *a, const FUNCTION *b)
+static int function_cmp(const void *da, const void *db)
 {
+    const FUNCTION *a = (const FUNCTION *)da;
+    const FUNCTION *b = (const FUNCTION *)db;
+
     return strncmp(a->name, b->name, 8);
 }
 
-static unsigned long function_hash(const FUNCTION *a)
+static unsigned long function_hash(const void *d)
 {
+    const FUNCTION *a = (const FUNCTION *)d;
     return OPENSSL_LH_strhash(a->name);
 }
 

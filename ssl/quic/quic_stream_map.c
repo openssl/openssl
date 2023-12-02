@@ -73,13 +73,17 @@ static QUIC_STREAM *list_next(QUIC_STREAM_LIST_NODE *l, QUIC_STREAM_LIST_NODE *n
 #define ready_for_gc_head(l)    list_next((l), (l), \
                                           offsetof(QUIC_STREAM, ready_for_gc_node))
 
-static unsigned long hash_stream(const QUIC_STREAM *s)
+static unsigned long hash_stream(const void *d)
 {
+    const QUIC_STREAM *s = (const QUIC_STREAM *)d;
     return (unsigned long)s->id;
 }
 
-static int cmp_stream(const QUIC_STREAM *a, const QUIC_STREAM *b)
+static int cmp_stream(const void *da, const void *db)
 {
+    const QUIC_STREAM *a = (const QUIC_STREAM *)da;
+    const QUIC_STREAM *b = (const QUIC_STREAM *)db;
+
     if (a->id < b->id)
         return -1;
     if (a->id > b->id)

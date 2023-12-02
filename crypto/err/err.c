@@ -168,8 +168,9 @@ static unsigned long get_error_values(ERR_GET_ACTION g,
                                       int *flags);
 
 #ifndef OPENSSL_NO_ERR
-static unsigned long err_string_data_hash(const ERR_STRING_DATA *a)
+static unsigned long err_string_data_hash(const void *da)
 {
+    const ERR_STRING_DATA *a = (const ERR_STRING_DATA *)da;
     unsigned long ret, l;
 
     l = a->error;
@@ -177,9 +178,12 @@ static unsigned long err_string_data_hash(const ERR_STRING_DATA *a)
     return (ret ^ ret % 19 * 13);
 }
 
-static int err_string_data_cmp(const ERR_STRING_DATA *a,
-                               const ERR_STRING_DATA *b)
+static int err_string_data_cmp(const void *da,
+                               const void *db)
 {
+    const ERR_STRING_DATA *a = (const ERR_STRING_DATA *)da;
+    const ERR_STRING_DATA *b = (const ERR_STRING_DATA *)db;
+
     if (a->error == b->error)
         return 0;
     return a->error > b->error ? 1 : -1;

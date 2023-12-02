@@ -3805,8 +3805,9 @@ int SSL_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
                                               context, contextlen);
 }
 
-static unsigned long ssl_session_hash(const SSL_SESSION *a)
+static unsigned long ssl_session_hash(const void *d)
 {
+    const SSL_SESSION *a = (const SSL_SESSION *)d;
     const unsigned char *session_id = a->session_id;
     unsigned long l;
     unsigned char tmp_storage[4];
@@ -3832,8 +3833,11 @@ static unsigned long ssl_session_hash(const SSL_SESSION *a)
  * being able to construct an SSL_SESSION that will collide with any existing
  * session with a matching session ID.
  */
-static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
+static int ssl_session_cmp(const void *da, const void *db)
 {
+    const SSL_SESSION *a = (const SSL_SESSION *)da;
+    const SSL_SESSION *b = (const SSL_SESSION *)db;
+
     if (a->ssl_version != b->ssl_version)
         return 1;
     if (a->session_id_length != b->session_id_length)

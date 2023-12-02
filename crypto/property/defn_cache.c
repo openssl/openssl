@@ -31,14 +31,18 @@ typedef struct {
 
 DEFINE_LHASH_OF_EX(PROPERTY_DEFN_ELEM);
 
-static unsigned long property_defn_hash(const PROPERTY_DEFN_ELEM *a)
+static unsigned long property_defn_hash(const void *d)
 {
+    const PROPERTY_DEFN_ELEM *a = (const PROPERTY_DEFN_ELEM *)d;
     return OPENSSL_LH_strhash(a->prop);
 }
 
-static int property_defn_cmp(const PROPERTY_DEFN_ELEM *a,
-                             const PROPERTY_DEFN_ELEM *b)
+static int property_defn_cmp(const void *da,
+                             const void *db)
 {
+    const PROPERTY_DEFN_ELEM *a = (const PROPERTY_DEFN_ELEM *)da;
+    const PROPERTY_DEFN_ELEM *b = (const PROPERTY_DEFN_ELEM *)db;
+
     return strcmp(a->prop, b->prop);
 }
 

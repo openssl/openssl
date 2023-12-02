@@ -35,13 +35,17 @@ static const unsigned int n_int_tests = OSSL_NELEM(int_tests);
 static short int_found[OSSL_NELEM(int_tests)];
 static short int_not_found;
 
-static unsigned long int int_hash(const int *p)
+static unsigned long int int_hash(const void *d)
 {
+    const int *p = (const int *)d;
     return 3 & *p;      /* To force collisions */
 }
 
-static int int_cmp(const int *p, const int *q)
+static int int_cmp(const void *da, const void *db)
 {
+    const int *p = (const int *)da;
+    const int *q = (const int *)db;
+
     return *p != *q;
 }
 
@@ -180,8 +184,9 @@ end:
     return testresult;
 }
 
-static unsigned long int stress_hash(const int *p)
+static unsigned long int stress_hash(const void *d)
 {
+    const int *p = (const int *)d;
     return *p;
 }
 

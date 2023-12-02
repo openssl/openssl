@@ -435,13 +435,17 @@ static int check_key_update_lt(struct helper *h, struct helper_local *hl)
     return 1;
 }
 
-static unsigned long stream_info_hash(const STREAM_INFO *info)
+static unsigned long stream_info_hash(const void *d)
 {
+    const STREAM_INFO *info = (const STREAM_INFO *)d;
     return OPENSSL_LH_strhash(info->name);
 }
 
-static int stream_info_cmp(const STREAM_INFO *a, const STREAM_INFO *b)
+static int stream_info_cmp(const void *da, const void *db)
 {
+    const STREAM_INFO *a = (const STREAM_INFO *)da;
+    const STREAM_INFO *b = (const STREAM_INFO *)db;
+
     return strcmp(a->name, b->name);
 }
 

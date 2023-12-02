@@ -181,13 +181,17 @@ static int ossl_property_unlock(OSSL_METHOD_STORE *p)
     return p != 0 ? CRYPTO_THREAD_unlock(p->lock) : 0;
 }
 
-static unsigned long query_hash(const QUERY *a)
+static unsigned long query_hash(const void *d)
 {
+    const QUERY *a = (const QUERY *)d;
     return OPENSSL_LH_strhash(a->query);
 }
 
-static int query_cmp(const QUERY *a, const QUERY *b)
+static int query_cmp(const void *da, const void *db)
 {
+    const QUERY *a = (const QUERY *)da;
+    const QUERY *b = (const QUERY *)db;
+
     int res = strcmp(a->query, b->query);
 
     if (res == 0 && a->provider != NULL && b->provider != NULL)

@@ -136,14 +136,18 @@ int OSSL_STORE_LOADER_set_close(OSSL_STORE_LOADER *loader,
  *  Functions for registering OSSL_STORE_LOADERs
  */
 
-static unsigned long store_loader_hash(const OSSL_STORE_LOADER *v)
+static unsigned long store_loader_hash(const void *d)
 {
+    const OSSL_STORE_LOADER *v = (OSSL_STORE_LOADER *)d;
     return OPENSSL_LH_strhash(v->scheme);
 }
 
-static int store_loader_cmp(const OSSL_STORE_LOADER *a,
-                            const OSSL_STORE_LOADER *b)
+static int store_loader_cmp(const void *da,
+                            const void *db)
 {
+    const OSSL_STORE_LOADER *a = (const OSSL_STORE_LOADER *)da;
+    const OSSL_STORE_LOADER *b = (const OSSL_STORE_LOADER *)db;
+
     assert(a->scheme != NULL && b->scheme != NULL);
     return strcmp(a->scheme, b->scheme);
 }

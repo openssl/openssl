@@ -700,8 +700,11 @@ int SSL_CTX_add_client_CA(SSL_CTX *ctx, X509 *x)
     return add_ca_name(&ctx->client_ca_names, x);
 }
 
-static int xname_cmp(const X509_NAME *a, const X509_NAME *b)
+static int xname_cmp(const void *da, const void *db)
 {
+    const X509_NAME *a = (const X509_NAME *)da;
+    const X509_NAME *b = (const X509_NAME *)db;
+
     unsigned char *abuf = NULL, *bbuf = NULL;
     int alen, blen, ret;
 
@@ -729,8 +732,9 @@ static int xname_sk_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
     return xname_cmp(*a, *b);
 }
 
-static unsigned long xname_hash(const X509_NAME *a)
+static unsigned long xname_hash(const void *d)
 {
+    const X509_NAME *a = (const X509_NAME *)d;
     /* This returns 0 also if SHA1 is not available */
     return X509_NAME_hash_ex((X509_NAME *)a, NULL, NULL, NULL);
 }

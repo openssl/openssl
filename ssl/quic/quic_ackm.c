@@ -58,15 +58,19 @@ struct tx_pkt_history_st {
 
 DEFINE_LHASH_OF_EX(OSSL_ACKM_TX_PKT);
 
-static unsigned long tx_pkt_info_hash(const OSSL_ACKM_TX_PKT *pkt)
+static unsigned long tx_pkt_info_hash(const void *d)
 {
+    const OSSL_ACKM_TX_PKT *pkt = (const OSSL_ACKM_TX_PKT *)d;
     /* Using low bits of the packet number as the hash should be enough */
     return (unsigned long)pkt->pkt_num;
 }
 
-static int tx_pkt_info_compare(const OSSL_ACKM_TX_PKT *a,
-                               const OSSL_ACKM_TX_PKT *b)
+static int tx_pkt_info_compare(const void *da,
+                               const void *db)
 {
+    const OSSL_ACKM_TX_PKT *a = (const OSSL_ACKM_TX_PKT *)da;
+    const OSSL_ACKM_TX_PKT *b = (const OSSL_ACKM_TX_PKT *)db;
+
     if (a->pkt_num < b->pkt_num)
         return -1;
     if (a->pkt_num > b->pkt_num)

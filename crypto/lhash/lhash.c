@@ -288,7 +288,7 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
     unsigned long hash, nn;
     OPENSSL_LH_COMPFUNC cf;
 
-    hash = (*(lh->hash)) (data);
+    hash = lh->hash(data);
     *rhash = hash;
 
     nn = hash % lh->pmax;

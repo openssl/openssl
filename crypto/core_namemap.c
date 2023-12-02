@@ -42,13 +42,17 @@ struct ossl_namemap_st {
 
 /* LHASH callbacks */
 
-static unsigned long namenum_hash(const NAMENUM_ENTRY *n)
+static unsigned long namenum_hash(const void *d)
 {
+    const NAMENUM_ENTRY *n = (const NAMENUM_ENTRY *)d;
     return ossl_lh_strcasehash(n->name);
 }
 
-static int namenum_cmp(const NAMENUM_ENTRY *a, const NAMENUM_ENTRY *b)
+static int namenum_cmp(const void *da, const void *db)
 {
+    const NAMENUM_ENTRY *a = (const NAMENUM_ENTRY *)da;
+    const NAMENUM_ENTRY *b = (const NAMENUM_ENTRY *)db;
+
     return OPENSSL_strcasecmp(a->name, b->name);
 }
 

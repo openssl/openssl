@@ -613,8 +613,9 @@ static void decoder_cache_entry_free(DECODER_CACHE_ENTRY *entry)
     OPENSSL_free(entry);
 }
 
-static unsigned long decoder_cache_entry_hash(const DECODER_CACHE_ENTRY *cache)
+static unsigned long decoder_cache_entry_hash(const void *d)
 {
+    const DECODER_CACHE_ENTRY *cache = (const DECODER_CACHE_ENTRY *)d;
     unsigned long hash = 17;
 
     hash = (hash * 23)
@@ -654,9 +655,11 @@ static ossl_inline int nullstrcmp(const char *a, const char *b, int casecmp)
     }
 }
 
-static int decoder_cache_entry_cmp(const DECODER_CACHE_ENTRY *a,
-                                   const DECODER_CACHE_ENTRY *b)
+static int decoder_cache_entry_cmp(const void *da,
+                                   const void *db)
 {
+    const DECODER_CACHE_ENTRY *a = (const DECODER_CACHE_ENTRY *)da;
+    const DECODER_CACHE_ENTRY *b = (const DECODER_CACHE_ENTRY *)db;
     int cmp;
 
     if (a->selection != b->selection)

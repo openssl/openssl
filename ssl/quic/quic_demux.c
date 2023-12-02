@@ -33,8 +33,9 @@ struct quic_demux_conn_st {
 
 DEFINE_LHASH_OF_EX(QUIC_DEMUX_CONN);
 
-static unsigned long demux_conn_hash(const QUIC_DEMUX_CONN *conn)
+static unsigned long demux_conn_hash(const void *d)
 {
+    const QUIC_DEMUX_CONN *conn = (const QUIC_DEMUX_CONN *)d;
     size_t i;
     unsigned long v = 0;
 
@@ -47,8 +48,11 @@ static unsigned long demux_conn_hash(const QUIC_DEMUX_CONN *conn)
     return v;
 }
 
-static int demux_conn_cmp(const QUIC_DEMUX_CONN *a, const QUIC_DEMUX_CONN *b)
+static int demux_conn_cmp(const void *da, const void *db)
 {
+    const QUIC_DEMUX_CONN *a = (const QUIC_DEMUX_CONN *)da;
+    const QUIC_DEMUX_CONN *b = (const QUIC_DEMUX_CONN *)db;
+
     return !ossl_quic_conn_id_eq(&a->dst_conn_id, &b->dst_conn_id);
 }
 

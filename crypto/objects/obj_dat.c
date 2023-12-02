@@ -118,8 +118,9 @@ static int ln_cmp(const ASN1_OBJECT *const *a, const unsigned int *b)
 
 IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, ln);
 
-static unsigned long added_obj_hash(const ADDED_OBJ *ca)
+static unsigned long added_obj_hash(const void *d)
 {
+    const ADDED_OBJ *ca = (const ADDED_OBJ *)d;
     const ASN1_OBJECT *a;
     int i;
     unsigned long ret = 0;
@@ -151,8 +152,10 @@ static unsigned long added_obj_hash(const ADDED_OBJ *ca)
     return ret;
 }
 
-static int added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
+static int added_obj_cmp(const void *da, const void *db)
 {
+    const ADDED_OBJ *ca = (const ADDED_OBJ *)da;
+    const ADDED_OBJ *cb = (const ADDED_OBJ *)db;
     ASN1_OBJECT *a, *b;
     int i;
 

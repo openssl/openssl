@@ -43,8 +43,8 @@ static STACK_OF(NAME_FUNCS) *name_funcs_stack;
  * casting without the need for macro-generated wrapper functions.
  */
 
-static unsigned long obj_name_hash(const OBJ_NAME *a);
-static int obj_name_cmp(const OBJ_NAME *a, const OBJ_NAME *b);
+static unsigned long obj_name_hash(const void *d);
+static int obj_name_cmp(const void *da, const void *db);
 
 static CRYPTO_ONCE init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(o_names_init)
@@ -116,8 +116,11 @@ out:
     return ret;
 }
 
-static int obj_name_cmp(const OBJ_NAME *a, const OBJ_NAME *b)
+static int obj_name_cmp(const void *da, const void *db)
 {
+    const OBJ_NAME *a = (const OBJ_NAME *)da;
+    const OBJ_NAME *b = (const OBJ_NAME *)db;
+
     int ret;
 
     ret = a->type - b->type;
@@ -132,8 +135,9 @@ static int obj_name_cmp(const OBJ_NAME *a, const OBJ_NAME *b)
     return ret;
 }
 
-static unsigned long obj_name_hash(const OBJ_NAME *a)
+static unsigned long obj_name_hash(const void *d)
 {
+    const OBJ_NAME *a = (const OBJ_NAME *)d;
     unsigned long ret;
 
     if ((name_funcs_stack != NULL)

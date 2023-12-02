@@ -123,8 +123,9 @@ static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
     return 1;
 }
 
-static unsigned long chan_reset_token_hash(const QUIC_SRT_ELEM *a)
+static unsigned long chan_reset_token_hash(const void *d)
 {
+    const QUIC_SRT_ELEM *a = (const QUIC_SRT_ELEM *)d;
     unsigned long h;
 
     assert(sizeof(h) <= sizeof(a->token));
@@ -132,8 +133,11 @@ static unsigned long chan_reset_token_hash(const QUIC_SRT_ELEM *a)
     return h;
 }
 
-static int chan_reset_token_cmp(const QUIC_SRT_ELEM *a, const QUIC_SRT_ELEM *b)
+static int chan_reset_token_cmp(const void *da, const void *db)
 {
+    const QUIC_SRT_ELEM *a = (const QUIC_SRT_ELEM *)da;
+    const QUIC_SRT_ELEM *b = (const QUIC_SRT_ELEM *)db;
+
     /* RFC 9000 s. 10.3.1:
      *      When comparing a datagram to stateless reset token values,
      *      endpoints MUST perform the comparison without leaking

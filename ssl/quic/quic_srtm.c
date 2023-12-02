@@ -66,18 +66,23 @@ struct quic_srtm_st {
     unsigned int                alloc_failed : 1;
 };
 
-static unsigned long items_fwd_hash(const SRTM_ITEM *item)
+static unsigned long items_fwd_hash(const void *d)
 {
+    const SRTM_ITEM *item = (const SRTM_ITEM *)d;
     return (unsigned long)(uintptr_t)item->opaque;
 }
 
-static int items_fwd_cmp(const SRTM_ITEM *a, const SRTM_ITEM *b)
+static int items_fwd_cmp(const void *da, const void *db)
 {
+    const SRTM_ITEM *a = (const SRTM_ITEM *)da;
+    const SRTM_ITEM *b = (const SRTM_ITEM *)db;
+
     return a->opaque != b->opaque;
 }
 
-static unsigned long items_rev_hash(const SRTM_ITEM *item)
+static unsigned long items_rev_hash(const void *d)
 {
+    const SRTM_ITEM *item = (const SRTM_ITEM *)d;
     /*
      * srt_blinded has already been through a crypto-grade hash function, so we
      * can just use bits from that.
@@ -88,8 +93,11 @@ static unsigned long items_rev_hash(const SRTM_ITEM *item)
     return l;
 }
 
-static int items_rev_cmp(const SRTM_ITEM *a, const SRTM_ITEM *b)
+static int items_rev_cmp(const void *da, const void *db)
 {
+    const SRTM_ITEM *a = (const SRTM_ITEM *)da;
+    const SRTM_ITEM *b = (const SRTM_ITEM *)db;
+
     /*
      * We don't need to use CRYPTO_memcmp here as the relationship of
      * srt_blinded to srt is already cryptographically obfuscated.
