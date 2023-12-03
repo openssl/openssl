@@ -6,6 +6,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -30,9 +31,17 @@ struct stack_st {
     int sorted;
     int num_alloc;
     OPENSSL_sk_compfunc comp;
+    int (*thunk)(const void *, const void *,
+                 OPENSSL_sk_compfunc fn);
+    void (*pop_free_thunk)(void *node,
+                           OPENSSL_sk_freefunc fn);
+    void *(*deep_cpy_thunk)(const void *a,
+                            OPENSSL_sk_copyfunc fn);
 };
 
 OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk,
+                                            int (*t)(const void *, const void *,
+                                            OPENSSL_sk_compfunc),
                                             OPENSSL_sk_compfunc c)
 {
     OPENSSL_sk_compfunc old = sk->comp;
@@ -40,6 +49,7 @@ OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk,
     if (sk->comp != c)
         sk->sorted = 0;
     sk->comp = c;
+    sk->thunk = t;
 
     return old;
 }
@@ -55,6 +65,7 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
         ret->num = 0;
         ret->sorted = 0;
         ret->comp = NULL;
+        ret->thunk = NULL;
     } else {
         /* direct structure assignment */
         *ret = *sk;
@@ -93,6 +104,7 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
         ret->num = 0;
         ret->sorted = 0;
         ret->comp = NULL;
+        ret->thunk = NULL;
     } else {
         /* direct structure assignment */
         *ret = *sk;
@@ -113,7 +125,11 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
     for (i = 0; i < ret->num; ++i) {
         if (sk->data[i] == NULL)
             continue;
-        if ((ret->data[i] = copy_func(sk->data[i])) == NULL) {
+        if (sk->deep_cpy_thunk)
+            ret->data[i] = sk->deep_cpy_thunk(sk->data[i], copy_func);
+        else
+            ret->data[i] = copy_func(sk->data[i]);
+        if (ret->data[i] == NULL) {
             while (--i >= 0)
                 if (ret->data[i] != NULL)
                     free_func((void *)ret->data[i]);
@@ -135,6 +151,22 @@ OPENSSL_STACK *OPENSSL_sk_new_null(void)
 OPENSSL_STACK *OPENSSL_sk_new(OPENSSL_sk_compfunc c)
 {
     return OPENSSL_sk_new_reserve(c, 0);
+}
+
+OPENSSL_STACK *OPENSSL_sk_set_thunks(OPENSSL_STACK *sk,
+                                     int (*thunk)(const void *, const void *,
+                                                  OPENSSL_sk_compfunc fn),
+                                     void (*pop_free_thunk)(void *node,
+                                                  OPENSSL_sk_freefunc fna),
+                                     void* (*deep_cpy_thunk)(const void *a,
+                                                  OPENSSL_sk_copyfunc fn))
+{
+    if (sk == NULL)
+        return NULL;
+    sk->thunk = thunk;
+    sk->pop_free_thunk = pop_free_thunk;
+    sk->deep_cpy_thunk = deep_cpy_thunk;
+    return sk;
 }
 
 /*
@@ -231,6 +263,7 @@ OPENSSL_STACK *OPENSSL_sk_new_reserve(OPENSSL_sk_compfunc c, int n)
         return NULL;
 
     st->comp = c;
+    st->thunk = NULL;
 
     if (n <= 0)
         return st;
@@ -344,7 +377,7 @@ static int internal_find(OPENSSL_STACK *st, const void *data,
         int res = -1;
 
         for (i = 0; i < st->num; i++)
-            if (st->comp(&data, st->data + i) == 0) {
+            if (st->thunk(&data, st->data + i, st->comp) == 0) {
                 if (res == -1)
                     res = i;
                 ++*pnum;
@@ -359,8 +392,8 @@ static int internal_find(OPENSSL_STACK *st, const void *data,
 
     if (pnum_matched != NULL)
         ret_val_options |= OSSL_BSEARCH_FIRST_VALUE_ON_MATCH;
-    r = ossl_bsearch(&data, st->data, st->num, sizeof(void *), st->comp,
-                     ret_val_options);
+    r = ossl_bsearch_thunk(&data, st->data, st->num, sizeof(void *), st->thunk,
+                     st->comp, ret_val_options);
 
     if (pnum_matched != NULL) {
         *pnum = 0;
@@ -368,7 +401,7 @@ static int internal_find(OPENSSL_STACK *st, const void *data,
             const void **p = (const void **)r;
 
             while (p < st->data + st->num) {
-                if (st->comp(&data, p) != 0)
+                if (st->thunk(&data, p, st->comp) != 0)
                     break;
                 ++*pnum;
                 ++p;
@@ -435,8 +468,12 @@ void OPENSSL_sk_pop_free(OPENSSL_STACK *st, OPENSSL_sk_freefunc func)
     if (st == NULL)
         return;
     for (i = 0; i < st->num; i++)
-        if (st->data[i] != NULL)
-            func((char *)st->data[i]);
+        if (st->data[i] != NULL) {
+            if (st->pop_free_thunk)
+                st->pop_free_thunk((void *)st->data[i], func);
+            else
+                func((char *)st->data[i]);
+        }
     OPENSSL_sk_free(st);
 }
 
@@ -476,11 +513,22 @@ void *OPENSSL_sk_set(OPENSSL_STACK *st, int i, const void *data)
     return (void *)st->data[i];
 }
 
+static int qsort_thunk_cmp(const void *a, const void *b, void *data)
+{
+    OPENSSL_STACK *st = (OPENSSL_STACK *)data;
+    if (st->thunk != NULL)
+        return st->thunk(a, b, st->comp);
+    else {
+        fprintf(stderr, "Using non thunked stack!\n");
+        return st->comp(a, b);
+    }
+}
+
 void OPENSSL_sk_sort(OPENSSL_STACK *st)
 {
     if (st != NULL && !st->sorted && st->comp != NULL) {
         if (st->num > 1)
-            qsort(st->data, st->num, sizeof(void *), st->comp);
+            qsort_r(st->data, st->num, sizeof(void *), qsort_thunk_cmp, st);
         st->sorted = 1; /* empty or single-element stack is considered sorted */
     }
 }

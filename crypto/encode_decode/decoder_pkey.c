@@ -518,7 +518,7 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
     if (src->decoder_insts != NULL) {
         dest->decoder_insts
             = sk_OSSL_DECODER_INSTANCE_deep_copy(src->decoder_insts,
-                                                 ossl_decoder_instance_dup,
+                                                 (sk_OSSL_DECODER_INSTANCE_copyfunc)ossl_decoder_instance_dup,
                                                  ossl_decoder_instance_free);
         if (dest->decoder_insts == NULL) {
             ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
@@ -550,7 +550,7 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
         if (process_data_src->keymgmts != NULL) {
             process_data_dest->keymgmts
                 = sk_EVP_KEYMGMT_deep_copy(process_data_src->keymgmts,
-                                           keymgmt_dup,
+                                           (sk_EVP_KEYMGMT_copyfunc)keymgmt_dup,
                                            EVP_KEYMGMT_free);
             if (process_data_dest->keymgmts == NULL) {
                 ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_EVP_LIB);

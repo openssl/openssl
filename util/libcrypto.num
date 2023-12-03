@@ -5539,3 +5539,4 @@ BIO_ADDR_copy                           5666	3_2_0	EXIST::FUNCTION:SOCK
 EVP_DigestSqueeze                       ?	3_3_0	EXIST::FUNCTION:
 OPENSSL_LH_set_thunks                   ?	3_3_0	EXIST::FUNCTION:
 OPENSSL_LH_doall_arg_thunk              ?	3_3_0	EXIST::FUNCTION:
+OPENSSL_sk_set_thunks                   ?	3_3_0	EXIST::FUNCTION:
