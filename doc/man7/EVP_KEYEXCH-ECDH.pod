@@ -55,6 +55,8 @@ See L<provider-keyexch(7)/Common Key Exchange parameters>.
 
 =head1 EXAMPLES
 
+Examples of key agreement can be found in demos/keyexch.
+
 Keys for the host and peer must be generated as shown in
 L<EVP_PKEY-EC(7)/Examples> using the same curve name.
 
