@@ -18,11 +18,20 @@
 
 # define DEFINE_PRIORITY_QUEUE_OF_INTERNAL(type, ctype)                     \
     typedef struct ossl_priority_queue_st_ ## type PRIORITY_QUEUE_OF(type); \
+    static ossl_unused ossl_inline int                                      \
+        ossl_pqueue_##type##_cmp_thunk(const void *a, const void *b,        \
+                                   int (*cmp)(const void *,const void *b))  \
+    {                                                                       \
+        int (*cmp_conv)(const type *a, const type *b) =                     \
+            (int(*)(const type *a, const type *b))cmp;                      \
+        return cmp_conv((const type *)a, (const type *)b);                  \
+    }                                                                       \
     static ossl_unused ossl_inline PRIORITY_QUEUE_OF(type) *                \
     ossl_pqueue_##type##_new(int (*compare)(const ctype *, const ctype *))  \
     {                                                                       \
         return (PRIORITY_QUEUE_OF(type) *)ossl_pqueue_new(                  \
-                    (int (*)(const void *, const void *))compare);          \
+                    (int (*)(const void *, const void *))compare,           \
+                    ossl_pqueue_##type##_cmp_thunk);                        \
     }                                                                       \
     static ossl_unused ossl_inline void                                     \
     ossl_pqueue_##type##_free(PRIORITY_QUEUE_OF(type) *pq)                  \
@@ -74,7 +83,9 @@
 
 typedef struct ossl_pqueue_st OSSL_PQUEUE;
 
-OSSL_PQUEUE *ossl_pqueue_new(int (*compare)(const void *, const void *));
+OSSL_PQUEUE *ossl_pqueue_new(int (*compare)(const void *, const void *),
+                             int (*compare_thunk)(const void *,
+                             const void *, int (*)(const void *, const void *)));
 void ossl_pqueue_free(OSSL_PQUEUE *pq);
 void ossl_pqueue_pop_free(OSSL_PQUEUE *pq, void (*freefunc)(void *));
 int ossl_pqueue_reserve(OSSL_PQUEUE *pq, size_t n);
