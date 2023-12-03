@@ -628,7 +628,8 @@ int cms_main(int argc, char **argv)
                                  "recipient certificate file");
                 if (cert == NULL)
                     goto end;
-                sk_X509_push(encerts, cert);
+                if (!sk_X509_push(encerts, cert))
+                    goto end;
                 cert = NULL;
             } else {
                 recipfile = opt_arg();
@@ -837,7 +838,8 @@ int cms_main(int argc, char **argv)
                              "recipient certificate file");
             if (cert == NULL)
                 goto end;
-            sk_X509_push(encerts, cert);
+            if (!sk_X509_push(encerts, cert))
+                goto end;
             cert = NULL;
         }
     }
