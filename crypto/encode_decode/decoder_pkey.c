@@ -370,6 +370,11 @@ static void collect_keymgmt(EVP_KEYMGMT *keymgmt, void *arg)
     }
 }
 
+static void collect_keymgmt_thunk(void *data, void *arg)
+{
+    collect_keymgmt((EVP_KEYMGMT *)data, arg);
+}
+
 /*
  * This function does the actual binding of decoders to the OSSL_DECODER_CTX. It
  * searches for decoders matching 'keytype', which is a string like "RSA", "DH",
@@ -438,7 +443,9 @@ static int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
     collect_data.libctx     = libctx;
     collect_data.keymgmts   = keymgmts;
     collect_data.keytype    = keytype;
-    EVP_KEYMGMT_do_all_provided(libctx, collect_keymgmt, &collect_data);
+    EVP_KEYMGMT_do_all_provided(libctx,
+                                (void (*)(EVP_KEYMGMT *, void*))collect_keymgmt_thunk,
+                                &collect_data);
 
     if (collect_data.error_occurred)
         goto err;

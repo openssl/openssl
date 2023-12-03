@@ -17,6 +17,18 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+static int EVP_KEYMGMT_up_ref_thunk(void *data)
+{
+    EVP_KEYMGMT *k = (EVP_KEYMGMT *)data;
+    return EVP_KEYMGMT_up_ref(k);
+}
+
+static void EVP_KEYMGMT_free_thunk(void *data)
+{
+    EVP_KEYMGMT *k = (EVP_KEYMGMT *)data;
+    EVP_KEYMGMT_free(k);
+}
+
 static void *keymgmt_new(void)
 {
     EVP_KEYMGMT *keymgmt = NULL;
@@ -228,8 +240,8 @@ EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
     return evp_generic_fetch_from_prov(prov, OSSL_OP_KEYMGMT,
                                        name, properties,
                                        keymgmt_from_algorithm,
-                                       (int (*)(void *))EVP_KEYMGMT_up_ref,
-                                       (void (*)(void *))EVP_KEYMGMT_free);
+                                       EVP_KEYMGMT_up_ref_thunk,
+                                       EVP_KEYMGMT_free_thunk);
 }
 
 EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
@@ -237,8 +249,8 @@ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 {
     return evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
                              keymgmt_from_algorithm,
-                             (int (*)(void *))EVP_KEYMGMT_up_ref,
-                             (void (*)(void *))EVP_KEYMGMT_free);
+                             EVP_KEYMGMT_up_ref_thunk,
+                             EVP_KEYMGMT_free_thunk);
 }
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
@@ -298,8 +310,8 @@ void EVP_KEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
     evp_generic_do_all(libctx, OSSL_OP_KEYMGMT,
                        (void (*)(void *, void *))fn, arg,
                        keymgmt_from_algorithm,
-                       (int (*)(void *))EVP_KEYMGMT_up_ref,
-                       (void (*)(void *))EVP_KEYMGMT_free);
+                       EVP_KEYMGMT_up_ref_thunk,
+                       EVP_KEYMGMT_free_thunk);
 }
 
 int EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
