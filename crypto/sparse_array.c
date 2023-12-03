@@ -124,28 +124,50 @@ void ossl_sa_free_leaves(OPENSSL_SA *sa)
 /* Wrap this in a structure to avoid compiler warnings */
 struct trampoline_st {
     void (*func)(ossl_uintmax_t, void *);
+    void (*func_arg)(ossl_uintmax_t , void *, void *);
+    void (*func_thunk)(ossl_uintmax_t, void *, void(*)(ossl_uintmax_t, void *));
+    void (*func_thunk_arg)(ossl_uintmax_t, void *, void *, void(*)(ossl_uintmax_t, void *, void *));
+    void *arg;
 };
 
 static void trampoline(ossl_uintmax_t n, void *l, void *arg)
 {
-    ((const struct trampoline_st *)arg)->func(n, l);
+    const struct trampoline_st* st = (const struct trampoline_st *)arg;
+    st->func_thunk(n, l, st->func);
 }
 
-void ossl_sa_doall(const OPENSSL_SA *sa, void (*leaf)(ossl_uintmax_t, void *))
+static void trampoline_arg(ossl_uintmax_t n, void *l, void *arg)
+{
+    const struct trampoline_st* st = (const struct trampoline_st *)arg;
+    st->func_thunk_arg(n, l, st->arg, st->func_arg);
+}
+
+void ossl_sa_doall(const OPENSSL_SA *sa,
+                   void (*leaf)(ossl_uintmax_t, void *),
+                   void (*thunk)(ossl_uintmax_t, void *,
+                   void (*)(ossl_uintmax_t, void *)))
 {
     struct trampoline_st tramp;
 
     tramp.func = leaf;
+    tramp.func_thunk = thunk;
+    tramp.arg = NULL;
     if (sa != NULL)
         sa_doall(sa, NULL, &trampoline, &tramp);
 }
 
 void ossl_sa_doall_arg(const OPENSSL_SA *sa,
                           void (*leaf)(ossl_uintmax_t, void *, void *),
+                          void (*thunk)(ossl_uintmax_t, void *, void *,
+                          void (*)(ossl_uintmax_t, void *, void *)),
                           void *arg)
 {
+    struct trampoline_st tramp;
+    tramp.func_arg = leaf;
+    tramp.func_thunk_arg = thunk;
+    tramp.arg = arg;
     if (sa != NULL)
-        sa_doall(sa, NULL, leaf, arg);
+        sa_doall(sa, NULL, &trampoline_arg, &tramp);
 }
 
 size_t ossl_sa_num(const OPENSSL_SA *sa)
