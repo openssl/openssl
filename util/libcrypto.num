@@ -5544,3 +5544,5 @@ OSSL_CMP_SRV_CTX_init_trans             ?	3_3_0	EXIST::FUNCTION:CMP
 EVP_DigestSqueeze                       ?	3_3_0	EXIST::FUNCTION:
 ERR_pop                                 ?	3_3_0	EXIST::FUNCTION:
 X509_STORE_get1_objects                 ?	3_3_0	EXIST::FUNCTION:
+OPENSSL_LH_set_thunks                   ?	3_3_0	EXIST::FUNCTION:
+OPENSSL_LH_doall_arg_thunk              ?	3_3_0	EXIST::FUNCTION:
