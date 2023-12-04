@@ -1290,7 +1290,9 @@ struct ssl_connection_st {
     SSL *user_ssl;
 
     /*
-     * protocol version (one of TLS1_VERSION, DTLS1_VERSION)
+     * protocol version (one of TLS1_VERSION, TLS1_1_VERSION,
+     * TLS1_2_VERSION, TLS1_3_VERSION, DTLS1_VERSION, DTLS1_2_VERSION,
+     * DTLS1_3_VERSION)
      */
     int version;
     /*
