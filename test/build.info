@@ -63,7 +63,7 @@ IF[{- !$disabled{tests} -}]
           provfetchtest prov_config_test rand_test ca_internals_test \
           bio_tfo_test membio_test bio_dgram_test list_test fips_version_test \
           x509_test hpke_test pairwise_fail_test nodefltctxtest \
-          evp_xof_test
+          evp_xof_test x509_load_cert_file_test
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -595,6 +595,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[x509_dup_cert_test]=../include ../apps/include
   DEPEND[x509_dup_cert_test]=../libcrypto libtestutil.a
 
+  SOURCE[x509_load_cert_file_test]=x509_load_cert_file_test.c
+  INCLUDE[x509_load_cert_file_test]=../include ../apps/include
+  DEPEND[x509_load_cert_file_test]=../libcrypto libtestutil.a
+
   SOURCE[x509_check_cert_pkey_test]=x509_check_cert_pkey_test.c
   INCLUDE[x509_check_cert_pkey_test]=../include ../apps/include
   DEPEND[x509_check_cert_pkey_test]=../libcrypto libtestutil.a
@@ -1037,6 +1041,13 @@ IF[{- !$disabled{tests} -}]
     IF[{- defined $target{shared_defflag} -}]
       SOURCE[p_test]=p_test.ld
       GENERATE[p_test.ld]=../util/providers.num
+    ENDIF
+    MODULES{noinst}=p_minimal
+    SOURCE[p_minimal]=p_minimal.c
+    INCLUDE[p_minimal]=../include ..
+    IF[{- defined $target{shared_defflag} -}]
+      SOURCE[p_minimal]=p_minimal.ld
+      GENERATE[p_minimal.ld]=../util/providers.num
     ENDIF
   ENDIF
   IF[{- $disabled{module} || !$target{dso_scheme} -}]

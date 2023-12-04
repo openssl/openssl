@@ -114,17 +114,34 @@ foreach (sort keys %stlibname) {
     my @arrays = ( \@stlib_lines );
     push @arrays, \@shlib_lines unless disabled('shared');
     foreach (@arrays) {
+        my %commons;
+        foreach (@$_) {
+            if (m|^(.*) C .*|) {
+                $commons{$1}++;
+            }
+        }
+        foreach (sort keys %commons) {
+            note "Common symbol: $_";
+        }
+
         @$_ =
             sort
-            map {
-                # Drop the first space and everything following it
-                s| .*||;
-                # Drop OpenSSL dynamic version information if there is any
-                s|\@\@.+$||;
-                # Return the result
-                $_
-            }
-            grep(m|.* [BCDST] .*|, @$_);
+            ( map {
+                  # Drop the first space and everything following it
+                  s| .*||;
+                  # Drop OpenSSL dynamic version information if there is any
+                  s|\@\@.+$||;
+                  # Return the result
+                  $_
+              }
+              # Drop any symbol starting with a double underscore, they
+              # are reserved for the compiler / system ABI and are none
+              # of our business
+              grep !m|^__|,
+              # Only look at external definitions
+              grep m|.* [BDST] .*|,
+              @$_ ),
+            keys %commons;
     }
 
     # Massage the mkdef.pl output to only contain global symbols
