@@ -41,6 +41,11 @@ OpenSSL 3.3
 
     *Neil Horman*
 
+ * OPENSSL_sk_push() and sk_<TYPE>_push() functions now return 0 instead of -1
+   if called with a NULL stack argument.
+
+   *Tomáš Mráz*
+
  * In `openssl speed`, changed the default hash function used with `hmac` from
    `md5` to `sha256`.
 
