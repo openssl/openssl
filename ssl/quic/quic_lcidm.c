@@ -197,6 +197,7 @@ static void lcidm_delete_conn_lcid(QUIC_LCIDM *lcidm, QUIC_LCID *lcid_obj)
 {
     lh_QUIC_LCID_delete(lcidm->lcids, lcid_obj);
     lh_QUIC_LCID_delete(lcid_obj->conn->lcids, lcid_obj);
+    assert(lcid_obj->conn->num_active_lcid > 0);
     --lcid_obj->conn->num_active_lcid;
     OPENSSL_free(lcid_obj);
 }
@@ -311,6 +312,8 @@ static int lcidm_generate(QUIC_LCIDM *lcidm,
 {
     QUIC_LCIDM_CONN *conn;
     QUIC_LCID key, *lcid_obj;
+    size_t i;
+#define MAX_RETRIES 8
 
     if ((conn = lcidm_upsert_conn(lcidm, opaque)) == NULL)
         return 0;
@@ -319,12 +322,21 @@ static int lcidm_generate(QUIC_LCIDM *lcidm,
         || conn->next_seq_num > OSSL_QUIC_VLINT_MAX)
         return 0;
 
-    if (!lcidm_generate_cid(lcidm, lcid_out))
-        return 0;
+    i = 0;
+    do {
+        if (i++ >= MAX_RETRIES)
+            /*
+             * Too many retries; should not happen but if it does, don't loop
+             * endlessly.
+             */
+            return 0;
 
-    key.cid = *lcid_out;
-    if (lh_QUIC_LCID_retrieve(lcidm->lcids, &key) != NULL)
-        return 0;
+        if (!lcidm_generate_cid(lcidm, lcid_out))
+            return 0;
+
+        key.cid = *lcid_out;
+        /* If a collision occurs, retry. */
+    } while (lh_QUIC_LCID_retrieve(lcidm->lcids, &key) != NULL);
 
     if ((lcid_obj = lcidm_conn_new_lcid(lcidm, conn, lcid_out)) == NULL)
         return 0;
