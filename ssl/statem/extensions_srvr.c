@@ -632,7 +632,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     while (PACKET_remaining(&key_share_list) > 0) {
-        const int version;
+        int version;
         if (!PACKET_get_net_2(&key_share_list, &group_id)
                 || !PACKET_get_length_prefixed_2(&key_share_list, &encoded_pt)
                 || PACKET_remaining(&encoded_pt) == 0) {
@@ -1069,7 +1069,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             } else if (pskdatalen > 0) {
                 const SSL_CIPHER *cipher;
                 const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
-                const int version;
+                int version;
 
                 /*
                  * We found a PSK using an old style callback. We don't know
