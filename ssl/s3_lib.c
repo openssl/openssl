@@ -3579,6 +3579,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP:
+        *(unsigned char **)parg = NULL;
         ret = -1;
 
 #ifndef OPENSSL_NO_OCSP
@@ -3633,6 +3634,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP_EX:
+        *(unsigned char **)parg = NULL;
         ret = -1;
 
 #ifndef OPENSSL_NO_OCSP
