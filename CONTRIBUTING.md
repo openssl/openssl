@@ -72,8 +72,8 @@ guidelines:
     finding code formatting mistakes and other coding style nits.
     Where `gcc` or `clang` is available, you should use the
     `--strict-warnings` `Configure` option.  OpenSSL compiles on many varied
-    platforms: try to ensure you only use portable features.  Clean builds via
-    GitHub Actions and AppVeyor are required. They are started automatically
+    platforms: try to ensure you only use portable features.
+    Clean builds via GitHub Actions are required. They are started automatically
     whenever a PR is created or updated by committers.
 
     [coding style]: https://www.openssl.org/policies/technical/coding-style.html
