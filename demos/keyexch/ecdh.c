@@ -132,13 +132,13 @@ static int generate_secret(PEER_DATA *peerA, EVP_PKEY *peerBpub,
      *                                                "X963KDF", 0);
      *   params[1] = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_DIGEST,
      *                                                "SHA256", 0);
-     *  params[2] = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN,
-     *                                          &outlen);
-     *  params[3] = OSSL_PARAM_construct_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM,
-     *                                                ukm, sizeof(ukm));
-     *  params[4] = OSSL_PARAM_construct_end();
-     *  if (!EVP_PKEY_CTX_set_params(derivectx, params))
-     *      goto cleanup;
+     *   params[2] = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN,
+     *                                           &outlen);
+     *   params[3] = OSSL_PARAM_construct_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM,
+     *                                                 ukm, sizeof(ukm));
+     *   params[4] = OSSL_PARAM_construct_end();
+     *   if (!EVP_PKEY_CTX_set_params(derivectx, params))
+     *       goto cleanup;
      *
      * Note: After the secret is generated below, the peer could alternatively
      * pass the secret to a KDF to derive additional key data from the secret.
@@ -179,7 +179,6 @@ int main(void)
     /* Initialise the 2 peers that will share a secret */
     PEER_DATA peer1 = {"peer 1", "P-256"};
     PEER_DATA peer2 = {"peer 2", "P-256"};
-
     /*
      * Setting libctx to NULL uses the default library context
      * Use OSSL_LIB_CTX_new() to create a non default library context
