@@ -397,7 +397,7 @@ int OPENSSL_sk_find_all(OPENSSL_STACK *st, const void *data, int *pnum)
 int OPENSSL_sk_push(OPENSSL_STACK *st, const void *data)
 {
     if (st == NULL)
-        return -1;
+        return 0;
     return OPENSSL_sk_insert(st, data, st->num);
 }
 
