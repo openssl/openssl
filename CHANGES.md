@@ -28,10 +28,6 @@ OpenSSL 3.3
 
 ### Changes between 3.2 and 3.3 [xx XXX xxxx]
 
- * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
-
-   *Barry Fussell*
-
  * In `openssl speed`, changed the default hash function used with `hmac` from
    `md5` to `sha256`.
 

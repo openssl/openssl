@@ -191,7 +191,6 @@ my %params = (
     'KDF_PARAM_ARGON2_LANES' =>   "lanes",                  # uint32_t
     'KDF_PARAM_ARGON2_MEMCOST' => "memcost",                # uint32_t
     'KDF_PARAM_ARGON2_VERSION' => "version",                # uint32_t
-    'KDF_PARAM_SNMPKDF_EID ' =>  "eid",                     # octet string
 
 # Known RAND names
     'RAND_PARAM_STATE' =>                   "state",
