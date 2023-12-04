@@ -281,26 +281,14 @@ static int SNMPKDF(const EVP_MD *evp_md,
         }
     }
 
-    if (!EVP_DigestUpdate(md, password, KDF_SNMP_PASSWORD_HASH_AMOUNT - len))
-        goto err;
-
-    if (!EVP_DigestFinal_ex(md, digest, &md_len))
-        goto err;
-
-    if (!EVP_DigestInit_ex(md, evp_md, NULL))
-        goto err;
-
-    if (!EVP_DigestUpdate(md, digest, mdsize))
-        goto err;
-
-    if (!EVP_DigestUpdate(md, e_id, e_len))
-        goto err;
-
-    if (!EVP_DigestUpdate(md, digest, mdsize))
-        goto err;
-
-    if (!EVP_DigestFinal_ex(md, digest, &md_len))
-        goto err;
+    if (!EVP_DigestUpdate(md, password, KDF_SNMP_PASSWORD_HASH_AMOUNT - len)
+        || !EVP_DigestFinal_ex(md, digest, &md_len)
+        || !EVP_DigestInit_ex(md, evp_md, NULL)
+        || !EVP_DigestUpdate(md, digest, mdsize)
+        || !EVP_DigestUpdate(md, e_id, e_len)
+        || !EVP_DigestUpdate(md, digest, mdsize)
+        || !EVP_DigestFinal_ex(md, digest, &md_len))
+      goto err;
 
     memcpy(okey, digest, okeylen);
 
