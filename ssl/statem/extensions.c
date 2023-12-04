@@ -1446,7 +1446,7 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
                  * Find the first group we allow that is also in client's list
                  */
                 for (i = 0; i < num_groups; i++) {
-                    const int version;
+                    int version;
 
                     group_id = pgroups[i];
                     version = SSL_CONNECTION_IS_DTLS(s) ?
