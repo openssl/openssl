@@ -996,6 +996,10 @@ static int ssl_add_cert_to_wpacket(SSL_CONNECTION *s, WPACKET *pkt,
         return 0;
     }
 
+    /* Count number of certificates added to packet handshake */
+    if(!for_comp)
+        s->s3.tmp.send_certs_prepared++;
+
     return 1;
 }
 

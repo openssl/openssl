@@ -841,6 +841,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     s->ext.ocsp.exts = NULL;
     s->ext.ocsp.resp = NULL;
     s->ext.ocsp.resp_len = 0;
+    s->ext.ocsp.resp_ex = NULL;    
     SSL_CTX_up_ref(ctx);
     s->session_ctx = ctx;
     if (ctx->ext.ecpointformats) {
@@ -1468,6 +1469,7 @@ void ossl_ssl_connection_free(SSL *ssl)
     sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
 #ifndef OPENSSL_NO_OCSP
     sk_OCSP_RESPID_pop_free(s->ext.ocsp.ids, OCSP_RESPID_free);
+    sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
 #endif
 #ifndef OPENSSL_NO_CT
     SCT_LIST_free(s->scts);
@@ -6136,12 +6138,15 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
     OCSP_RESPONSE *rsp = NULL;
     STACK_OF(SCT) *scts = NULL;
     int i;
+    long resp_len;
+    unsigned char *resp;
 
-    if (s->ext.ocsp.resp == NULL || s->ext.ocsp.resp_len == 0)
+    resp_len = SSL_get_tlsext_status_ocsp_resp(&s->ssl, &resp);
+    if (resp_len <= 0 || resp == NULL)
         goto err;
 
-    p = s->ext.ocsp.resp;
-    rsp = d2i_OCSP_RESPONSE(NULL, &p, (int)s->ext.ocsp.resp_len);
+    p = resp;
+    rsp = d2i_OCSP_RESPONSE(NULL, &p, (int)resp_len);
     if (rsp == NULL)
         goto err;
 

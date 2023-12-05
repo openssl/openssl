@@ -2188,7 +2188,7 @@ static int tls_handle_status_request(SSL_CONNECTION *s)
                 break;
                 /* status request response should be sent */
             case SSL_TLSEXT_ERR_OK:
-                if (s->ext.ocsp.resp)
+                if (s->ext.ocsp.resp_ex)
                     s->ext.status_expected = 1;
                 break;
                 /* something bad happened */
@@ -3835,6 +3835,9 @@ CON_FUNC_RETURN tls_construct_server_certificate(SSL_CONNECTION *s, WPACKET *pkt
         return CON_FUNC_ERROR;
     }
 
+    /* Count number of certificates added to packet handshake */
+    s->s3.tmp.send_certs_prepared = 0;
+
     /*
      * In TLSv1.3 the certificate chain is always preceded by a 0 length context
      * for the server Certificate message
@@ -4320,14 +4323,97 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
  */
 int tls_construct_cert_status_body(SSL_CONNECTION *s, WPACKET *pkt)
 {
-    if (!WPACKET_put_bytes_u8(pkt, s->ext.status_type)
-            || !WPACKET_sub_memcpy_u24(pkt, s->ext.ocsp.resp,
-                                       s->ext.ocsp.resp_len)) {
+    int send_status_type = s->ext.status_type;
+    unsigned char *ptmp = NULL;
+    long ptmp_len = 0;
+
+    /* Even if we use new RFC 6961 extension, client can still request old format */
+    if(send_status_type == TLSEXT_STATUSTYPE_ocsp_multi)
+        send_status_type = s->ext.status_sub_type;
+
+    /* Add CertificateStatusType status_type */
+    if (!WPACKET_put_bytes_u8(pkt, send_status_type))
+        goto err;
+
+#ifndef OPENSSL_NO_OCSP
+
+    switch (send_status_type) 
+    {
+    case TLSEXT_STATUSTYPE_ocsp_multi:
+        {
+            long i, n = 0, data_len;
+            OCSP_RESPONSE *resp = NULL;
+            unsigned char *p;
+
+            if (s->ext.ocsp.resp_ex)
+                n = sk_OCSP_RESPONSE_num(s->ext.ocsp.resp_ex);
+
+            /* Should send at max, number of certificates */
+            if (n > s->s3.tmp.send_certs_prepared)
+                n = s->s3.tmp.send_certs_prepared;
+
+            if (!WPACKET_start_sub_packet_u24(pkt))
+                goto err;
+
+            for (i = 0; i < n; ++i) {
+
+                data_len = 0;
+                resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp_ex, i);
+                if (resp) {
+                    data_len = i2d_OCSP_RESPONSE(resp, NULL);
+
+                    if (data_len > ptmp_len) {
+                        OPENSSL_free(ptmp);
+                        ptmp = OPENSSL_malloc(data_len);
+                        if (!ptmp)
+                            goto err;
+                        ptmp_len = data_len;
+                    }
+
+                    p = ptmp;
+                    data_len = i2d_OCSP_RESPONSE(resp, &p);    /* p is changed! */
+                }
+
+                if (!WPACKET_sub_memcpy_u24(pkt, ptmp, data_len))
+                    goto err;
+            }
+
+            if (ptmp)
+                OPENSSL_free(ptmp);
+
+            if (!WPACKET_close(pkt))
+                goto err;
+        }
+        break;
+
+    case TLSEXT_STATUSTYPE_ocsp:
+        {
+            long resp_len;
+            unsigned char *resp;
+            resp_len = SSL_get_tlsext_status_ocsp_resp(&s->ssl, &resp);
+            if (!WPACKET_sub_memcpy_u24(pkt, resp, resp_len < 0 ? 0 : resp_len))
+                goto err;
+        }
+        break;
+
+    default: goto err;
+    }
+
+#else
+    /* Send empty packet */
+    if (!WPACKET_sub_memcpy_u24(pkt, ptmp, ptmp_len)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+#endif
 
     return 1;
+err:
+	if(ptmp)
+        OPENSSL_free(ptmp);
+
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+    return 0;
 }
 
 CON_FUNC_RETURN tls_construct_cert_status(SSL_CONNECTION *s, WPACKET *pkt)

@@ -107,7 +107,7 @@ static size_t client_log_buffer_index = 0;
 static int error_writing_log = 0;
 
 #ifndef OPENSSL_NO_OCSP
-static const unsigned char orespder[] = "Dummy OCSP Response";
+static OCSP_RESPONSE *dummy_ocsp_resp = NULL;
 static int ocsp_server_called = 0;
 static int ocsp_client_called = 0;
 
@@ -1810,9 +1810,10 @@ static int test_cleanse_plaintext(void)
 static int ocsp_server_cb(SSL *s, void *arg)
 {
     int *argi = (int *)arg;
-    unsigned char *copy = NULL;
     STACK_OF(OCSP_RESPID) *ids = NULL;
     OCSP_RESPID *id = NULL;
+    unsigned char *respder = NULL;
+    int resplen = 0;
 
     if (*argi == 2) {
         /* In this test we are expecting exactly 1 OCSP_RESPID */
@@ -1827,14 +1828,21 @@ static int ocsp_server_cb(SSL *s, void *arg)
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
 
-    if (!TEST_ptr(copy = OPENSSL_memdup(orespder, sizeof(orespder))))
-        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, NULL);
 
-    if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, copy,
-                                                   sizeof(orespder)))) {
-        OPENSSL_free(copy);
+    if (!TEST_ptr(dummy_ocsp_resp)) {
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
+
+    resplen = i2d_OCSP_RESPONSE(dummy_ocsp_resp, &respder);
+
+    OCSP_RESPONSE_free(dummy_ocsp_resp);
+
+    if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, respder, resplen))) {
+        OPENSSL_free(respder);
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+
     ocsp_server_called = 1;
     return SSL_TLSEXT_ERR_OK;
 }
@@ -1842,14 +1850,24 @@ static int ocsp_server_cb(SSL *s, void *arg)
 static int ocsp_client_cb(SSL *s, void *arg)
 {
     int *argi = (int *)arg;
-    const unsigned char *respderin;
-    size_t len;
+    const unsigned char *resp, *p;
+    OCSP_RESPONSE *rsp;
+    int len, i;
 
     if (*argi != 1 && *argi != 2)
         return 0;
 
-    len = SSL_get_tlsext_status_ocsp_resp(s, &respderin);
-    if (!TEST_mem_eq(orespder, len, respderin, len))
+    len = SSL_get_tlsext_status_ocsp_resp(s, &resp);
+
+    p = resp;
+    rsp = d2i_OCSP_RESPONSE(NULL, &p, len);
+
+    i = OCSP_response_status(rsp);
+
+    OCSP_RESPONSE_free(rsp);
+    SSL_set_tlsext_status_ocsp_resp(s, NULL, 0);
+
+    if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
         return 0;
 
     ocsp_client_called = 1;

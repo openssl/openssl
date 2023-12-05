@@ -27,6 +27,7 @@
 # include <openssl/async.h>
 # include <openssl/symhacks.h>
 # include <openssl/ct.h>
+# include <openssl/ocsp.h>
 # include "internal/recordmethod.h"
 # include "internal/statem.h"
 # include "internal/packet.h"
@@ -688,6 +689,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_supported_groups,
     TLSEXT_IDX_session_ticket,
     TLSEXT_IDX_status_request,
+    TLSEXT_IDX_status_request_v2,
     TLSEXT_IDX_next_proto_neg,
     TLSEXT_IDX_application_layer_protocol_negotiation,
     TLSEXT_IDX_use_srtp,
@@ -1318,6 +1320,8 @@ struct ssl_connection_st {
             /* Certificate types in certificate request message. */
             uint8_t *ctype;
             size_t ctype_len;
+            /* Certificates prepared to be send during server to client handshake phase */
+            long send_certs_prepared;
             /* Certificate authorities list peer sent */
             STACK_OF(X509_NAME) *peer_ca_names;
             size_t key_block_length;
@@ -1573,8 +1577,15 @@ struct ssl_connection_st {
         void *debug_arg;
         char *hostname;
         /* certificate status request info */
-        /* Status type or -1 if no status type */
+        /* Status EXTENSION type requested to sent or (server to client or client to server request) :
+         * -1 if no status type extension requested,
+         * TLSEXT_STATUSTYPE_ocsp if RFC 6066 extension will be sent/requested,
+         * TLSEXT_STATUSTYPE_ocsp_multi if RFC 6961 extension will be sent/requested.
+         */
         int status_type;
+        /* Choosen server response type if status_type = TLSEXT_STATUSTYPE_ocsp_multi (RFC 6961) :
+            TLSEXT_STATUSTYPE_ocsp or TLSEXT_STATUSTYPE_ocsp_multi */
+        int status_sub_type;
         /* Raw extension data, if seen */
         unsigned char *scts;
         /* Length of raw extension data, if seen */
@@ -1589,6 +1600,7 @@ struct ssl_connection_st {
             /* OCSP response received or to be sent */
             unsigned char *resp;
             size_t resp_len;
+            STACK_OF(OCSP_RESPONSE) *resp_ex;
         } ocsp;
 
         /* RFC4507 session ticket expected to be received or sent */

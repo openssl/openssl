@@ -476,6 +476,7 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_use_srtp, "use_srtp"},
     {TLSEXT_TYPE_application_layer_protocol_negotiation,
      "application_layer_protocol_negotiation"},
+    {TLSEXT_TYPE_status_request_v2, "status_request_v2"},
     {TLSEXT_TYPE_signed_certificate_timestamp, "signed_certificate_timestamps"},
     {TLSEXT_TYPE_client_cert_type, "client_cert_type"},
     {TLSEXT_TYPE_server_cert_type, "server_cert_type"},

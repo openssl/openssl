@@ -60,6 +60,8 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 
 # ifndef OPENSSL_NO_OCSP
 
+DEFINE_STACK_OF(OCSP_RESPONSE)
+
 #  include <openssl/x509.h>
 #  include <openssl/x509v3.h>
 #  include <openssl/safestack.h>

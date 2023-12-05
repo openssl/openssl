@@ -2868,34 +2868,128 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
  */
 int tls_process_cert_status_body(SSL_CONNECTION *s, PACKET *pkt)
 {
-    size_t resplen;
     unsigned int type;
+#ifndef OPENSSL_NO_OCSP
+    size_t resplen;
+    int num_certs;
+    PACKET ocsp_response_list;
+    int nrespnmbr;
+    OCSP_RESPONSE *resp = NULL;
+    const unsigned char *p;
+#endif
 
-    if (!PACKET_get_1(pkt, &type)
-        || type != TLSEXT_STATUSTYPE_ocsp) {
+    if (!PACKET_get_1(pkt, &type)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+
+#ifndef OPENSSL_NO_OCSP
+    if (type == TLSEXT_STATUSTYPE_ocsp)
+    {
+        /* In case of status request inside certificate itself, s->ext.status_type == TLSEXT_STATUSTYPE_nothing */
+        if ((s->ext.status_type != TLSEXT_STATUSTYPE_nothing) && (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_UNSOLICITED_EXTENSION);
+            return 0;
+        }
+
+        /* Parse OCSPResponse - RFC 6066, TLS 1.2, 1.3 (also OCSP can be attached to certificate itself)  */
+        if(s->ext.ocsp.resp_ex)
+            sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
+        s->ext.ocsp.resp_ex = NULL;
+
+        if (!PACKET_get_net_3_len(pkt, &resplen)
+            || PACKET_remaining(pkt) != resplen) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+            return 0;
+        }
+
+        if (resplen) {
+            p = (const unsigned char *) PACKET_data(pkt);
+            resp = d2i_OCSP_RESPONSE(NULL, &p, resplen);
+            if (resp == NULL) {
+                SSLfatal(s, TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE,
+                         SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE);
+                return 0;
+            }
+
+            s->ext.ocsp.resp_ex = sk_OCSP_RESPONSE_new_null();
+            if (s->ext.ocsp.resp_ex == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+                return 0;
+            }
+
+            sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp_ex, resp, 0);
+        }
+    }
+    else if (type == TLSEXT_STATUSTYPE_ocsp_multi)
+    {
+        if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp_multi) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_UNSOLICITED_EXTENSION);
+            return 0;
+        }
+
+        /* Parse OCSPResponseList - RFC 6961, TLS 1.2 */
+        /* Reset internal holder */
+        sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
+        s->ext.ocsp.resp_ex = sk_OCSP_RESPONSE_new_null();
+        if (s->ext.ocsp.resp_ex == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+            return 0;
+        }
+
+        /* OCSP Responses should be less or equal to sent certificates */
+        /* OCSP Responses should be sent just before CertificateStatus message, so we should know certificates in advance */
+        num_certs = sk_X509_num(s->session->peer_chain);
+
+        if (!PACKET_get_length_prefixed_3 (pkt, &ocsp_response_list)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+
+        nrespnmbr = 0;
+        while(PACKET_remaining(&ocsp_response_list) > 0) {
+
+            /* OCSP responses must be <= number of sent certificates */
+            if (nrespnmbr >= num_certs) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+                return 0;
+            }
+
+            if (!PACKET_get_net_3_len(&ocsp_response_list, &resplen)
+                || PACKET_remaining(&ocsp_response_list) < resplen) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+                return 0;
+            }
+
+            if (resplen) {
+                p = (const unsigned char *) PACKET_data(&ocsp_response_list);
+                resp = d2i_OCSP_RESPONSE(NULL, &p, resplen);
+                if (resp == NULL) {
+                    SSLfatal(s, TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE,
+                                SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE);
+                    return 0;
+                }
+
+                sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp_ex, resp, nrespnmbr);
+
+                /* Should not fail, but make compiler happy */
+                if (!PACKET_forward(&ocsp_response_list, resplen))
+                    return 0;
+            }
+            else
+                sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp_ex, NULL, nrespnmbr);    /* Preserve stack sequence */
+
+            nrespnmbr++;
+        }
+    }
+    else
+    {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_UNSUPPORTED_STATUS_TYPE);
         return 0;
     }
-    if (!PACKET_get_net_3_len(pkt, &resplen)
-        || PACKET_remaining(pkt) != resplen) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-        return 0;
-    }
-    s->ext.ocsp.resp = OPENSSL_malloc(resplen);
-    if (s->ext.ocsp.resp == NULL) {
-        s->ext.ocsp.resp_len = 0;
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
-        return 0;
-    }
-    s->ext.ocsp.resp_len = resplen;
-    if (!PACKET_copy_bytes(pkt, s->ext.ocsp.resp, resplen)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-        return 0;
-    }
-
+#endif
     return 1;
 }
-
 
 MSG_PROCESS_RETURN tls_process_cert_status(SSL_CONNECTION *s, PACKET *pkt)
 {
@@ -2927,8 +3021,8 @@ int tls_process_initial_server_flight(SSL_CONNECTION *s)
     }
 
     /*
-     * Call the ocsp status callback if needed. The |ext.ocsp.resp| and
-     * |ext.ocsp.resp_len| values will be set if we actually received a status
+     * Call the ocsp status callback if needed. The |ext.ocsp.resp_ex| 
+     * value will be set if we actually received a status
      * message, or NULL and -1 otherwise
      */
     if (s->ext.status_type != TLSEXT_STATUSTYPE_nothing

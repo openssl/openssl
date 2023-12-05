@@ -526,6 +526,7 @@ int SSL_extension_supported(unsigned int ext_type)
 #endif
 #ifndef OPENSSL_NO_OCSP
     case TLSEXT_TYPE_status_request:
+    case TLSEXT_TYPE_status_request_v2:
 #endif
 #ifndef OPENSSL_NO_CT
     case TLSEXT_TYPE_signed_certificate_timestamp:

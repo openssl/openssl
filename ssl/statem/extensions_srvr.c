@@ -311,32 +311,12 @@ int tls_parse_ctos_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
 }
 
 #ifndef OPENSSL_NO_OCSP
-int tls_parse_ctos_status_request(SSL_CONNECTION *s, PACKET *pkt,
-                                  unsigned int context,
-                                  X509 *x, size_t chainidx)
+
+/* Parse OCSPStatusRequest */
+static int tls_parse_ctos_status_request_item(SSL_CONNECTION *s, PACKET *pkt,
+                                  unsigned int context)
 {
     PACKET responder_id_list, exts;
-
-    /* We ignore this in a resumption handshake */
-    if (s->hit)
-        return 1;
-
-    /* Not defined if we get one of these in a client Certificate */
-    if (x != NULL)
-        return 1;
-
-    if (!PACKET_get_1(pkt, (unsigned int *)&s->ext.status_type)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        return 0;
-    }
-
-    if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp) {
-        /*
-         * We don't know what to do with any other type so ignore it.
-         */
-        s->ext.status_type = TLSEXT_STATUSTYPE_nothing;
-        return 1;
-    }
 
     if (!PACKET_get_length_prefixed_2 (pkt, &responder_id_list)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -393,7 +373,7 @@ int tls_parse_ctos_status_request(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     /* Read in request_extensions */
-    if (!PACKET_as_length_prefixed_2(pkt, &exts)) {
+    if (!PACKET_get_length_prefixed_2(pkt, &exts)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
@@ -413,7 +393,113 @@ int tls_parse_ctos_status_request(SSL_CONNECTION *s, PACKET *pkt,
 
     return 1;
 }
-#endif
+
+int tls_parse_ctos_status_request(SSL_CONNECTION *s, PACKET *pkt,
+                                  unsigned int context,
+                                  X509 *x, size_t chainidx)
+{
+    int nres;
+
+    /* We ignore this in a resumption handshake */
+    if(s->hit)
+        return 1;
+
+    /* Not defined if we get one of these in a client Certificate */
+    if(x != NULL)
+        return 1;
+
+    if(!PACKET_get_1(pkt, (unsigned int *)&s->ext.status_type)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp) {
+        /*
+         * We don't know what to do with any other type so ignore it.
+         */
+        s->ext.status_type = TLSEXT_STATUSTYPE_nothing;
+        return 1;
+    }
+
+    nres = tls_parse_ctos_status_request_item(s, pkt, context);
+    if(!nres) {
+        /* SSLfatal already called */
+        return nres; /* parse error */
+    }
+
+    /* Check if all data is consumed if parsed at all */
+    if((s->ext.status_type != TLSEXT_STATUSTYPE_nothing) && (PACKET_remaining(pkt) != 0)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    return 1;
+}
+
+/* RFC 6961 */
+int tls_parse_ctos_status_request_v2(SSL_CONNECTION *s, PACKET *pkt,
+                                  unsigned int context,
+                                  X509 *x, size_t chainidx)
+{
+    PACKET certificate_status_req_list, sub_request_list;
+
+    /* We ignore this in a resumption handshake */
+    if (s->hit)
+        return 1;
+
+    /* Not defined if we get one of these in a client Certificate */
+    if (x != NULL)
+        return 1;
+
+    /* Fail if more data after the list */
+    if (!PACKET_as_length_prefixed_2(pkt, &certificate_status_req_list)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    /* Find first recognizable item is preferrable one */
+    s->ext.status_type = TLSEXT_STATUSTYPE_nothing;
+    s->ext.status_sub_type = TLSEXT_STATUSTYPE_nothing;
+
+    while (PACKET_remaining(&certificate_status_req_list) > 0) {
+        /* status_type */
+        if (!PACKET_get_1(&certificate_status_req_list, (unsigned int *)&s->ext.status_sub_type)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+
+        /* We must rely on some future structure, in order to have forward compatibility.
+         * At least following item format should be preserved in new types of multiple status request items :
+         * [type][length][data]
+         * If extension is not recognized, we must consume extension data, 
+         * so we may continue with next item in the list.
+         * That's why, following 2 are reversed.
+         */
+        if(!PACKET_get_length_prefixed_2(&certificate_status_req_list, &sub_request_list)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+
+        /* If recognizable item, parse it */
+        if((s->ext.status_sub_type == TLSEXT_STATUSTYPE_ocsp) ||
+            (s->ext.status_sub_type == TLSEXT_STATUSTYPE_ocsp_multi)){
+
+            int nres = tls_parse_ctos_status_request_item(s, &sub_request_list, context);
+            if(!nres) {
+                /* SSLfatal already called */
+                return nres; /* parse error */
+            }
+
+            /* We found suitable item, return as OCSP multi stapling */
+            s->ext.status_type = TLSEXT_STATUSTYPE_ocsp_multi;
+            break;
+        }
+    }
+
+    return 1;
+}
+
+#endif /* #ifndef OPENSSL_NO_OCSP */
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
 int tls_parse_ctos_npn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
@@ -1449,10 +1535,14 @@ EXT_RETURN tls_construct_stoc_session_ticket(SSL_CONNECTION *s, WPACKET *pkt,
 }
 
 #ifndef OPENSSL_NO_OCSP
+
 EXT_RETURN tls_construct_stoc_status_request(SSL_CONNECTION *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
                                              size_t chainidx)
 {
+    if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp)
+        return EXT_RETURN_NOT_SENT;
+
     /* We don't currently support this extension inside a CertificateRequest */
     if (context == SSL_EXT_TLS1_3_CERTIFICATE_REQUEST)
         return EXT_RETURN_NOT_SENT;
@@ -1485,7 +1575,33 @@ EXT_RETURN tls_construct_stoc_status_request(SSL_CONNECTION *s, WPACKET *pkt,
 
     return EXT_RETURN_SENT;
 }
-#endif
+
+/* Empty TLSEXT_TYPE_status_request_v2 extension in ServerHello TLS 1.2 */
+EXT_RETURN tls_construct_stoc_status_request_v2(SSL_CONNECTION *s, WPACKET *pkt,
+                                             unsigned int context, X509 *x,
+                                             size_t chainidx)
+{
+    if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp_multi)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!s->ext.status_expected)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request_v2)
+            || !WPACKET_start_sub_packet_u16(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    if (!WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}
+
+#endif /* #ifndef OPENSSL_NO_OCSP */
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
 EXT_RETURN tls_construct_stoc_next_proto_neg(SSL_CONNECTION *s, WPACKET *pkt,

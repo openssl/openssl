@@ -321,28 +321,16 @@ EXT_RETURN tls_construct_ctos_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
 }
 
 #ifndef OPENSSL_NO_OCSP
-EXT_RETURN tls_construct_ctos_status_request(SSL_CONNECTION *s, WPACKET *pkt,
-                                             unsigned int context, X509 *x,
-                                             size_t chainidx)
+
+/* Construct OCSPStatusRequest */
+static int tls_construct_ctos_status_request_item(SSL_CONNECTION *s, WPACKET *pkt)
 {
     int i;
 
-    /* This extension isn't defined for client Certificates */
-    if (x != NULL)
-        return EXT_RETURN_NOT_SENT;
+    /* Sub-packet for the ids */
+    if (!WPACKET_start_sub_packet_u16(pkt))
+        goto err;
 
-    if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp)
-        return EXT_RETURN_NOT_SENT;
-
-    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)
-               /* Sub-packet for status request extension */
-            || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_put_bytes_u8(pkt, TLSEXT_STATUSTYPE_ocsp)
-               /* Sub-packet for the ids */
-            || !WPACKET_start_sub_packet_u16(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return EXT_RETURN_FAIL;
-    }
     for (i = 0; i < sk_OCSP_RESPID_num(s->ext.ocsp.ids); i++) {
         unsigned char *idbytes;
         OCSP_RESPID *id = sk_OCSP_RESPID_value(s->ext.ocsp.ids, i);
@@ -351,39 +339,128 @@ EXT_RETURN tls_construct_ctos_status_request(SSL_CONNECTION *s, WPACKET *pkt,
         if (idlen <= 0
                    /* Sub-packet for an individual id */
                 || !WPACKET_sub_allocate_bytes_u16(pkt, idlen, &idbytes)
-                || i2d_OCSP_RESPID(id, &idbytes) != idlen) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
+                || i2d_OCSP_RESPID(id, &idbytes) != idlen)
+            goto err;
     }
-    if (!WPACKET_close(pkt)
-            || !WPACKET_start_sub_packet_u16(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return EXT_RETURN_FAIL;
-    }
+
+    if (!WPACKET_close(pkt))
+        goto err;
+
+    /* Sub-packet for the extensions */
+    if (!WPACKET_start_sub_packet_u16(pkt))
+        goto err;
+
     if (s->ext.ocsp.exts) {
         unsigned char *extbytes;
         int extlen = i2d_X509_EXTENSIONS(s->ext.ocsp.exts, NULL);
 
-        if (extlen < 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
+        if (extlen < 0)
+            goto err;
+
         if (!WPACKET_allocate_bytes(pkt, extlen, &extbytes)
                 || i2d_X509_EXTENSIONS(s->ext.ocsp.exts, &extbytes)
-                   != extlen) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-       }
+                   != extlen)
+            goto err;
     }
-    if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+
+    if (!WPACKET_close(pkt))
+        goto err;
+
+    return 1;
+
+err:
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+    return 0;
+}
+
+EXT_RETURN tls_construct_ctos_status_request(SSL_CONNECTION *s, WPACKET *pkt,
+                                             unsigned int context, X509 *x,
+                                             size_t chainidx)
+{
+    /* This extension isn't defined for client Certificates */
+    if(x != NULL)
+        return EXT_RETURN_NOT_SENT;
+
+    if(s->ext.status_type != TLSEXT_STATUSTYPE_ocsp)
+        return EXT_RETURN_NOT_SENT;
+
+    /* Construct extension pkt */
+    if(!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)
+            || !WPACKET_start_sub_packet_u16(pkt))
+        goto err;
+
+    /* Set CertificateStatusType status_type */
+    if(!WPACKET_put_bytes_u8(pkt, TLSEXT_STATUSTYPE_ocsp))
+        goto err;
+
+    /* Construct OCSPStatusRequest */
+    if(!tls_construct_ctos_status_request_item(s, pkt))
+        return EXT_RETURN_FAIL;
+
+    /* Close extension pkt */
+    if(!WPACKET_close(pkt))
+        goto err;
+
+    return EXT_RETURN_SENT;
+
+err:
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+    return EXT_RETURN_FAIL;
+}
+
+EXT_RETURN tls_construct_ctos_status_request_v2(SSL_CONNECTION *s, WPACKET *pkt,
+                                             unsigned int context, X509 *x,
+                                             size_t chainidx)
+{
+    if(s->ext.status_type != TLSEXT_STATUSTYPE_ocsp_multi)
+        return EXT_RETURN_NOT_SENT;
+
+    /* Construct extension pkt */
+    if(!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request_v2)
+            || !WPACKET_start_sub_packet_u16(pkt))
+        goto err;
+
+    /* Construct CertificateStatusRequestListV2 */
+    if(!WPACKET_start_sub_packet_u16(pkt))
+        goto err;
+
+    /* Set CertificateStatusType status_type.
+     * Only one type requested of TLSEXT_STATUSTYPE_ocsp_multi, 
+     * suppose if server support this extension, it will know what 
+     * TLSEXT_STATUSTYPE_ocsp_multi means and how to handle it */
+    if(!WPACKET_put_bytes_u8(pkt, TLSEXT_STATUSTYPE_ocsp_multi)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
 
+    /* Construct OCSPStatusRequest */
+    {
+        if(!WPACKET_start_sub_packet_u16(pkt))
+            goto err;
+
+        if(!tls_construct_ctos_status_request_item(s, pkt))
+            return EXT_RETURN_FAIL;
+
+        if(!WPACKET_close(pkt))
+            goto err;
+    }
+
+    /* Close CertificateStatusRequestListV2 */
+    if(!WPACKET_close(pkt))
+        goto err;
+
+    /* Close extension pkt */
+    if(!WPACKET_close(pkt))
+        goto err;
+
     return EXT_RETURN_SENT;
+
+err:
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+    return EXT_RETURN_FAIL;
 }
-#endif
+
+#endif /* #ifndef OPENSSL_NO_OCSP */
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
 EXT_RETURN tls_construct_ctos_npn(SSL_CONNECTION *s, WPACKET *pkt,
@@ -1408,6 +1485,7 @@ int tls_parse_stoc_session_ticket(SSL_CONNECTION *s, PACKET *pkt,
 }
 
 #ifndef OPENSSL_NO_OCSP
+
 int tls_parse_stoc_status_request(SSL_CONNECTION *s, PACKET *pkt,
                                   unsigned int context,
                                   X509 *x, size_t chainidx)
@@ -1425,6 +1503,7 @@ int tls_parse_stoc_status_request(SSL_CONNECTION *s, PACKET *pkt,
         SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION, SSL_R_BAD_EXTENSION);
         return 0;
     }
+
     if (!SSL_CONNECTION_IS_TLS13(s) && PACKET_remaining(pkt) > 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
@@ -1446,7 +1525,33 @@ int tls_parse_stoc_status_request(SSL_CONNECTION *s, PACKET *pkt,
 
     return 1;
 }
-#endif
+
+/* Basically same as tls_parse_stoc_status_request() except extension type */
+int tls_parse_stoc_status_request_v2(SSL_CONNECTION *s, PACKET *pkt,
+                                  unsigned int context,
+                                  X509 *x, size_t chainidx)
+{
+    /*
+     * MUST only be sent if we've requested a status
+     * request message. In TLS <= 1.2 it must also be empty.
+     */
+    if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp_multi) {
+        SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    if (PACKET_remaining(pkt) > 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    /* Set flag to expect CertificateStatus message */
+    s->ext.status_expected = 1;
+
+    return 1;
+}
+
+#endif /* #ifndef OPENSSL_NO_OCSP */
 
 
 #ifndef OPENSSL_NO_CT

@@ -14,7 +14,7 @@
 
 #define EXT_ENTRY(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_##name, #name }
 #define EXT_EXCEPTION(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_invalid, #name }
-#define EXT_END(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_out_of_range, #name }
+#define EXT_ENTRY_END(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_out_of_range, #name }
 
 typedef struct {
     size_t idx;
@@ -38,8 +38,10 @@ static EXT_LIST ext_list[] = {
     EXT_ENTRY(session_ticket),
 #ifndef OPENSSL_NO_OCSP
     EXT_ENTRY(status_request),
+    EXT_ENTRY(status_request_v2),
 #else
     EXT_EXCEPTION(status_request),
+    EXT_EXCEPTION(status_request_v2),
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     EXT_ENTRY(next_proto_neg),
@@ -74,7 +76,7 @@ static EXT_LIST ext_list[] = {
     EXT_ENTRY(certificate_authorities),
     EXT_ENTRY(padding),
     EXT_ENTRY(psk),
-    EXT_END(num_builtins)
+    EXT_ENTRY_END(num_builtins)
 };
 
 static int test_extension_list(void)

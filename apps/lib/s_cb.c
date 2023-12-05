@@ -722,6 +722,7 @@ static STRINT_PAIR tlsext_types[] = {
     {"use SRTP", TLSEXT_TYPE_use_srtp},
     {"session ticket", TLSEXT_TYPE_session_ticket},
     {"renegotiation info", TLSEXT_TYPE_renegotiate},
+    {"status request v2", TLSEXT_TYPE_status_request_v2},
     {"signed certificate timestamps", TLSEXT_TYPE_signed_certificate_timestamp},
     {"client cert type", TLSEXT_TYPE_client_cert_type},
     {"server cert type", TLSEXT_TYPE_server_cert_type},

@@ -229,7 +229,15 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_parse_stoc_status_request, tls_construct_stoc_status_request,
         tls_construct_ctos_status_request, NULL
     },
+    {
+        TLSEXT_TYPE_status_request_v2,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO,
+        init_status_request, tls_parse_ctos_status_request_v2,
+        tls_parse_stoc_status_request_v2, tls_construct_stoc_status_request_v2,
+        tls_construct_ctos_status_request_v2, NULL
+    },
 #else
+    INVALID_EXTENSION,
     INVALID_EXTENSION,
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1141,9 +1149,8 @@ static int init_status_request(SSL_CONNECTION *s, unsigned int context)
          * Ensure we get sensible values passed to tlsext_status_cb in the event
          * that we don't receive a status message
          */
-        OPENSSL_free(s->ext.ocsp.resp);
-        s->ext.ocsp.resp = NULL;
-        s->ext.ocsp.resp_len = 0;
+        sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
+        s->ext.ocsp.resp_ex = NULL;
     }
 
     return 1;

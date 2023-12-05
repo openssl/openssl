@@ -3446,6 +3446,10 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
     int ret = 0;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+#ifndef OPENSSL_NO_OCSP
+    unsigned char *p;
+    OCSP_RESPONSE *resp = NULL;
+#endif
 
     if (sc == NULL)
         return ret;
@@ -3574,16 +3578,73 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP:
-        *(unsigned char **)parg = sc->ext.ocsp.resp;
-        if (sc->ext.ocsp.resp_len == 0
-                || sc->ext.ocsp.resp_len > LONG_MAX)
-            return -1;
-        return (long)sc->ext.ocsp.resp_len;
+        ret = -1;
+        *(unsigned char **)parg = NULL;
+
+#ifndef OPENSSL_NO_OCSP
+        /* This is used for temporary buffer only */
+        if (sc->ext.ocsp.resp != NULL) {
+            OPENSSL_free(sc->ext.ocsp.resp);
+            sc->ext.ocsp.resp = NULL;
+            sc->ext.ocsp.resp_len = 0;
+        }
+
+        resp = sk_OCSP_RESPONSE_value(sc->ext.ocsp.resp_ex, 0);
+
+        if (resp != NULL) {
+            sc->ext.ocsp.resp_len = i2d_OCSP_RESPONSE(resp, NULL);
+
+            if (sc->ext.ocsp.resp_len > 0 && sc->ext.ocsp.resp_len <= LONG_MAX) {
+                sc->ext.ocsp.resp = OPENSSL_malloc(sc->ext.ocsp.resp_len);
+
+                if (sc->ext.ocsp.resp != NULL) {
+                    *(unsigned char **)parg = sc->ext.ocsp.resp;
+                    p = sc->ext.ocsp.resp;
+                    sc->ext.ocsp.resp_len = i2d_OCSP_RESPONSE(resp, &p);
+                    ret = sc->ext.ocsp.resp_len;
+                } else {
+                    ret = -1;
+                }
+            }
+        } else {
+            ret = -1;
+        }
+#endif
+        break;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP:
-        OPENSSL_free(sc->ext.ocsp.resp);
-        sc->ext.ocsp.resp = parg;
-        sc->ext.ocsp.resp_len = larg;
+#ifndef OPENSSL_NO_OCSP
+        sk_OCSP_RESPONSE_pop_free(sc->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
+        sc->ext.ocsp.resp_ex = NULL;
+
+        if (parg != NULL) {
+            sc->ext.ocsp.resp_ex = sk_OCSP_RESPONSE_new_null();
+
+            p = parg;
+            resp = d2i_OCSP_RESPONSE(NULL, (const unsigned char **)&p, larg);
+            sk_OCSP_RESPONSE_push(sc->ext.ocsp.resp_ex, resp);
+
+            OPENSSL_free(parg); /* Should be consumed as old API does */
+        }
+#endif
+        ret = 1;
+        break;
+
+    case SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP_EX:
+        ret = -1;
+        *(unsigned char **)parg = NULL;
+
+#ifndef OPENSSL_NO_OCSP
+        *(STACK_OF(OCSP_RESPONSE) **)parg = sc->ext.ocsp.resp_ex;
+        ret = sk_OCSP_RESPONSE_num(sc->ext.ocsp.resp_ex);    /* -1 if resp_ex is NULL, intended behaviour */
+#endif
+        break;
+
+    case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP_EX:
+#ifndef OPENSSL_NO_OCSP
+        sk_OCSP_RESPONSE_pop_free(sc->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
+        sc->ext.ocsp.resp_ex = (STACK_OF(OCSP_RESPONSE) *)parg;
+#endif
         ret = 1;
         break;
 

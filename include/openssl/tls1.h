@@ -116,6 +116,8 @@ extern "C" {
 /* ExtensionType value from RFC7301 */
 # define TLSEXT_TYPE_application_layer_protocol_negotiation 16
 
+/* ExtensionType value from RFC6961 */
+# define TLSEXT_TYPE_status_request_v2           17
 /*
  * Extension type for Certificate Transparency
  * https://tools.ietf.org/html/rfc6962#section-3.3.1
@@ -172,6 +174,8 @@ extern "C" {
 # define TLSEXT_NAMETYPE_host_name 0
 /* status request value from RFC3546 */
 # define TLSEXT_STATUSTYPE_ocsp 1
+/* status request v2 value from RFC6961 */
+# define TLSEXT_STATUSTYPE_ocsp_multi 2
 
 /* ECPointFormat values from RFC4492 */
 # define TLSEXT_ECPOINTFORMAT_first                      0
@@ -320,6 +324,12 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 
 # define SSL_set_tlsext_status_ocsp_resp(ssl, arg, arglen) \
         SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP,arglen,arg)
+
+# define SSL_get_tlsext_status_ocsp_resp_ex(ssl, arg) \
+        SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP_EX,0,arg)
+
+# define SSL_set_tlsext_status_ocsp_resp_ex(ssl, arg) \
+        SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP_EX,0,arg)
 
 # define SSL_CTX_set_tlsext_servername_callback(ctx, cb) \
         SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,\
