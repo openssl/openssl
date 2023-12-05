@@ -447,6 +447,8 @@ all: build_sw {- "build_docs" if !$disabled{docs}; -}
 
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep copy-utils
+	$(MAKE) /$(MAKEFLAGS) run_tests
+run_tests:
 	@{- output_off() if $disabled{tests}; "\@rem" -}
 	cmd /C "set "SRCTOP=$(SRCDIR)" & set "BLDTOP=$(BLDDIR)" & set "PERL=$(PERL)" & set "FIPSKEY=$(FIPSKEY)" & "$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)"
 	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
