@@ -79,6 +79,8 @@ jobs:
                 }
               }
             }
+      - name: 'Cleanup artifact'
+        run: rm artifact.zip pr_num
 
       - name: 'Download abidiff artifact'
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
