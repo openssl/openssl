@@ -721,7 +721,7 @@ ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey)
 # endif
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-static void detect_foreign_key(EVP_PKEY *pkey)
+void ossl_detect_foreign_pkey(EVP_PKEY *pkey)
 {
     switch (pkey->type) {
     case EVP_PKEY_RSA:
@@ -783,7 +783,7 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
         return 0;
 
     pkey->pkey.ptr = key;
-    detect_foreign_key(pkey);
+    ossl_detect_foreign_pkey(pkey);
 
     return (key != NULL);
 }
