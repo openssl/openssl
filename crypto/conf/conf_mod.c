@@ -172,8 +172,11 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
         OSSL_TRACE3(CONF, "Running module %s (%s) returned %d\n",
                     vl->name, vl->value, ret);
 
-        if (ret <= 0)
+        if (ret <= 0) {
+            if (flags & CONF_MFLAGS_IGNORE_ERRORS)
+                ERR_clear_last_mark();
             return ret;
+        }
         if (flags & CONF_MFLAGS_IGNORE_ERRORS)
             ERR_pop_to_mark();
     }
