@@ -516,7 +516,8 @@ build_all_generated : $(GENERATED_MANDATORY) $(GENERATED) build_docs
 all : build_sw build_docs
 
 test : tests
-{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep run_tests
+{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep
+	$(MMS) $(MMSQUALIFIERS) run_tests
 run_tests :
         @ ! {- output_off() if $disabled{tests}; "" -}
         DEFINE SRCTOP "$(SRCDIR)"
