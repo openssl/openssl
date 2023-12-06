@@ -243,7 +243,6 @@ static int test_x509_algo(void)
 err:
     X509_ALGOR_free(algo);
     X509_ALGOR_free(algo_second);
-    EVP_MD_free(md);
     return ret;
 }
 
