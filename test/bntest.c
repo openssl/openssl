@@ -910,6 +910,14 @@ static int test_gf2m_modinv(void)
             || !TEST_ptr(d = BN_new()))
         goto err;
 
+    /* Test that a non-sensical, too small value causes a failure */
+    if (!TEST_true(BN_one(b[0])))
+        goto err;
+    if (!TEST_true(BN_bntest_rand(a, 512, 0, 0)))
+        goto err;
+    if (!TEST_false(BN_GF2m_mod_inv(c, a, b[0], ctx)))
+        goto err;
+
     if (!(TEST_true(BN_GF2m_arr2poly(p0, b[0]))
             && TEST_true(BN_GF2m_arr2poly(p1, b[1]))))
         goto err;
