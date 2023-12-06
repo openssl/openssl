@@ -73,6 +73,9 @@ static OSSL_FUNC_signature_get_ctx_params_fn eddsa_get_ctx_params;
 static OSSL_FUNC_signature_gettable_ctx_params_fn eddsa_gettable_ctx_params;
 static OSSL_FUNC_signature_set_ctx_params_fn eddsa_set_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn eddsa_settable_ctx_params;
+static OSSL_FUNC_signature_digest_verify_update_fn ed25519_verify_update;
+static OSSL_FUNC_signature_digest_verify_final_fn ed25519_verify_final;
+static OSSL_FUNC_signature_set_signature_fn ed25519_verify_set_signature;
 
 /* there are five EdDSA instances:
 
@@ -124,6 +127,7 @@ static OSSL_FUNC_signature_settable_ctx_params_fn eddsa_settable_ctx_params;
 typedef struct {
     OSSL_LIB_CTX *libctx;
     ECX_KEY *key;
+    EVP_MD_CTX *mdctx;
 
     /* The Algorithm Identifier of the signature algorithm */
     unsigned char aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
@@ -141,6 +145,8 @@ typedef struct {
 
     unsigned char context_string[EDDSA_MAX_CONTEXT_STRING_LEN];
     size_t context_string_len;
+    unsigned char *sig;
+    size_t siglen;
 
 } PROV_EDDSA_CTX;
 
@@ -375,6 +381,68 @@ int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
     return 1;
 }
 
+int ed25519_verify_set_signature(void *vpeddsactx,
+                                 const unsigned char *sig, size_t siglen)
+{
+    PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
+    const ECX_KEY *edkey = peddsactx->key;
+
+    if (!ossl_prov_is_running())
+        return 0;
+    if (siglen != ED25519_SIGSIZE)
+        return 0;
+    if (edkey == NULL)
+        return 0;
+
+    if (peddsactx->mdctx == NULL) {
+        peddsactx->mdctx = EVP_MD_CTX_new();
+        if (peddsactx->mdctx == NULL)
+            return 0;
+    } else {
+        if (!EVP_MD_CTX_reset(peddsactx->mdctx))
+            return 0;
+    }
+    /* Multiple calls of ed25519_verify_set_signature are not allowed */
+    if (peddsactx->sig != NULL)
+        return 0;
+    peddsactx->sig = OPENSSL_memdup(sig, siglen);
+    if (peddsactx->sig == NULL)
+        return 0;
+    peddsactx->siglen = siglen;
+    return ossl_ed25519_verify_init(peddsactx->mdctx,
+                                    peddsactx->sig, edkey->pubkey,
+                                    peddsactx->dom2_flag, peddsactx->prehash_flag,
+                                    peddsactx->context_string_flag,
+                                    peddsactx->context_string,
+                                    peddsactx->context_string_len,
+                                    peddsactx->libctx, edkey->propq);
+}
+
+int ed25519_verify_update(void *vpeddsactx,
+                          const unsigned char *tbs, size_t tbslen)
+{
+    PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
+
+    if (!ossl_prov_is_running())
+        return 0;
+    if (peddsactx->mdctx == NULL)
+        return 0;
+    return ossl_ed25519_verify_update(peddsactx->mdctx, tbs, tbslen);
+}
+
+int ed25519_verify_final(void *vpeddsactx, const unsigned char *sig,
+                        size_t siglen)
+{
+    PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
+    const ECX_KEY *edkey = peddsactx->key;
+
+    if (!ossl_prov_is_running())
+        return 0;
+
+    return ossl_ed25519_verify_final(peddsactx->mdctx,
+                                     peddsactx->sig, edkey->pubkey);
+}
+
 int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
                           size_t siglen, const unsigned char *tbs,
                           size_t tbslen)
@@ -450,6 +518,8 @@ static void eddsa_freectx(void *vpeddsactx)
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
 
+    OPENSSL_free(peddsactx->sig);
+    EVP_MD_CTX_free(peddsactx->mdctx);
     ossl_ecx_key_free(peddsactx->key);
 
     OPENSSL_free(peddsactx);
@@ -469,6 +539,19 @@ static void *eddsa_dupctx(void *vpeddsactx)
 
     *dstctx = *srcctx;
     dstctx->key = NULL;
+    dstctx->mdctx = NULL;
+    dstctx->sig = NULL;
+
+    if (srcctx->mdctx != NULL) {
+        dstctx->mdctx = EVP_MD_CTX_dup(srcctx->mdctx);
+        if (dstctx->mdctx == NULL)
+            goto err;
+    }
+    if (srcctx->sig != NULL) {
+        dstctx->sig = OPENSSL_memdup(srcctx->sig, srcctx->siglen);
+        if (dstctx->sig == NULL)
+            goto err;
+    }
 
     if (srcctx->key != NULL && !ossl_ecx_key_up_ref(srcctx->key)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
@@ -607,6 +690,12 @@ const OSSL_DISPATCH ossl_ed25519_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))eddsa_set_ctx_params },
     { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
       (void (*)(void))eddsa_settable_ctx_params },
+    { OSSL_FUNC_SIGNATURE_SET_SIGNATURE,
+      (void (*)(void))ed25519_verify_set_signature },
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE,
+      (void (*)(void))ed25519_verify_update },
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL,
+      (void (*)(void))ed25519_verify_final },
     OSSL_DISPATCH_END
 };
 

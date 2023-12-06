@@ -730,6 +730,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keyexch_gettable_ctx_params,
 # define OSSL_FUNC_SIGNATURE_GETTABLE_CTX_MD_PARAMS 23
 # define OSSL_FUNC_SIGNATURE_SET_CTX_MD_PARAMS      24
 # define OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS 25
+# define OSSL_FUNC_SIGNATURE_SET_SIGNATURE          26
 
 OSSL_CORE_MAKE_FUNC(void *, signature_newctx, (void *provctx,
                                                   const char *propq))
@@ -790,6 +791,8 @@ OSSL_CORE_MAKE_FUNC(int, signature_set_ctx_md_params,
                     (void *ctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, signature_settable_ctx_md_params,
                     (void *ctx))
+OSSL_CORE_MAKE_FUNC(int, signature_set_signature,
+                    (void *ctx, const unsigned char *sig, size_t siglen))
 
 
 /* Asymmetric Ciphers */

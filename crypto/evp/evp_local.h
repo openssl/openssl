@@ -185,6 +185,7 @@ struct evp_signature_st {
     OSSL_FUNC_signature_gettable_ctx_md_params_fn *gettable_ctx_md_params;
     OSSL_FUNC_signature_set_ctx_md_params_fn *set_ctx_md_params;
     OSSL_FUNC_signature_settable_ctx_md_params_fn *settable_ctx_md_params;
+    OSSL_FUNC_signature_set_signature_fn *set_signature;
 } /* EVP_SIGNATURE */;
 
 struct evp_asym_cipher_st {

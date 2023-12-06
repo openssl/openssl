@@ -1904,6 +1904,15 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
                   const unsigned char *tbs, size_t tbslen);
 int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_verify_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[]);
+
+int EVP_PKEY_CTX_set_signature(EVP_PKEY_CTX *ctx, const unsigned char *sig,
+                               size_t siglen);
+int EVP_PKEY_verify_init_ex2(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
+                             const OSSL_PARAM params[]);
+int EVP_PKEY_verify_update(EVP_PKEY_CTX *ctx,
+                           const unsigned char *tbs, size_t tbslen);
+int EVP_PKEY_verify_final(EVP_PKEY_CTX *ctx,
+                          const unsigned char *sig, size_t siglen);
 int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
                     const unsigned char *sig, size_t siglen,
                     const unsigned char *tbs, size_t tbslen);

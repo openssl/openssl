@@ -5540,42 +5540,18 @@ err:
 
 static const char allzeroes[15];
 
-int
-ossl_ed25519_verify(const uint8_t *tbs, size_t tbs_len,
-                    const uint8_t signature[64], const uint8_t public_key[32],
-                    const uint8_t dom2flag, const uint8_t phflag, const uint8_t csflag,
-                    const uint8_t *context, size_t context_len,
-                    OSSL_LIB_CTX *libctx, const char *propq)
+static int
+ossl_ed25519_verify_hash(EVP_MD_CTX *ctx, const uint8_t signature[64],
+                         const uint8_t public_key[32])
 {
     int i;
-    ge_p3 A;
-    const uint8_t *r, *s;
-    EVP_MD *sha512;
-    EVP_MD_CTX *hash_ctx = NULL;
-    unsigned int sz;
-    int res = 0;
-    ge_p2 R;
-    uint8_t rcheck[32];
-    uint8_t h[SHA512_DIGEST_LENGTH];
+    const uint8_t *r = signature;
+    const uint8_t *s = signature + 32;
     /* 27742317777372353535851937790883648493 in little endian format */
     const uint8_t l_low[16] = {
         0xED, 0xD3, 0xF5, 0x5C, 0x1A, 0x63, 0x12, 0x58, 0xD6, 0x9C, 0xF7, 0xA2,
         0xDE, 0xF9, 0xDE, 0x14
     };
-
-    if (context == NULL)
-        context_len = 0;
-
-    /* if csflag is set, then a non-empty context-string is required */
-    if (csflag && context_len == 0)
-        return 0;
-
-    /* if dom2flag is not set, then an empty context-string is required */
-    if (!dom2flag && context_len > 0)
-        return 0;
-
-    r = signature;
-    s = signature + 32;
 
     /*
      * Check 0 <= s < L where L = 2^252 + 27742317777372353535851937790883648493
@@ -5603,32 +5579,74 @@ ossl_ed25519_verify(const uint8_t *tbs, size_t tbs_len,
         if (i < 0)
             return 0;
     }
+    return EVP_DigestUpdate(ctx, r, 32)
+           && EVP_DigestUpdate(ctx, public_key, 32);
+}
 
-    if (ge_frombytes_vartime(&A, public_key) != 0) {
+int
+ossl_ed25519_verify_init(EVP_MD_CTX *ctx,
+                         const uint8_t signature[64],
+                         const uint8_t public_key[32],
+                         const uint8_t dom2flag, const uint8_t phflag,
+                         const uint8_t csflag,
+                         const uint8_t *context, size_t context_len,
+                         OSSL_LIB_CTX *libctx, const char *propq)
+{
+    EVP_MD *sha512;
+    int ret = 0;
+
+    if (context == NULL)
+        context_len = 0;
+
+    /* if csflag is set, then a non-empty context-string is required */
+    if (csflag && context_len == 0)
         return 0;
-    }
 
-    fe_neg(A.X, A.X);
-    fe_neg(A.T, A.T);
+    /* if dom2flag is not set, then an empty context-string is required */
+    if (!dom2flag && context_len > 0)
+        return 0;
 
     sha512 = EVP_MD_fetch(libctx, SN_sha512, propq);
     if (sha512 == NULL)
         return 0;
-    hash_ctx = EVP_MD_CTX_new();
-    if (hash_ctx == NULL)
-        goto err;
 
-    if (!hash_init_with_dom(hash_ctx, sha512, dom2flag, phflag, context, context_len)
-        || !EVP_DigestUpdate(hash_ctx, r, 32)
-        || !EVP_DigestUpdate(hash_ctx, public_key, 32)
-        || !EVP_DigestUpdate(hash_ctx, tbs, tbs_len)
-        || !EVP_DigestFinal_ex(hash_ctx, h, &sz))
-        goto err;
+    ret = hash_init_with_dom(ctx, sha512, dom2flag, phflag,
+                             context, context_len)
+          && ossl_ed25519_verify_hash(ctx, signature, public_key);
+    EVP_MD_free(sha512);
+    return ret;
+}
 
+int
+ossl_ed25519_verify_update(EVP_MD_CTX *ctx, const uint8_t *tbs, size_t tbs_len)
+{
+    return EVP_DigestUpdate(ctx, tbs, tbs_len);
+}
+
+int
+ossl_ed25519_verify_final(EVP_MD_CTX *ctx, const uint8_t signature[64],
+                          const uint8_t public_key[32])
+{
+    ge_p3 A;
+    unsigned int sz;
+    int res = 0;
+    ge_p2 R;
+    uint8_t rcheck[32];
+    uint8_t h[SHA512_DIGEST_LENGTH];
+    const uint8_t *r = signature;
+    const uint8_t *s = signature + 32;
+
+    if (ge_frombytes_vartime(&A, public_key) != 0)
+        return 0;
+
+    if (!EVP_DigestFinal_ex(ctx, h, &sz))
+        goto err;
     x25519_sc_reduce(h);
 
-    ge_double_scalarmult_vartime(&R, h, &A, s);
+    fe_neg(A.X, A.X);
+    fe_neg(A.T, A.T);
 
+    ge_double_scalarmult_vartime(&R, h, &A, s);
     ge_tobytes(rcheck, &R);
 
     res = CRYPTO_memcmp(rcheck, r, sizeof(rcheck)) == 0;
@@ -5641,9 +5659,30 @@ ossl_ed25519_verify(const uint8_t *tbs, size_t tbs_len,
      *          [h*8](-A) + [s*8]B == [8]R
      */
 err:
-    EVP_MD_free(sha512);
-    EVP_MD_CTX_free(hash_ctx);
     return res;
+}
+
+int
+ossl_ed25519_verify(const uint8_t *tbs, size_t tbs_len,
+                    const uint8_t signature[64], const uint8_t public_key[32],
+                    const uint8_t dom2flag, const uint8_t phflag, const uint8_t csflag,
+                    const uint8_t *context, size_t context_len,
+                    OSSL_LIB_CTX *libctx, const char *propq)
+{
+    int ret;
+    EVP_MD_CTX *ctx;
+
+    ctx = EVP_MD_CTX_new();
+    if (ctx == NULL)
+        return 0;
+
+    ret = ossl_ed25519_verify_init(ctx, signature, public_key,
+                                   dom2flag, phflag, csflag,
+                                   context, context_len, libctx, propq)
+          && ossl_ed25519_verify_update(ctx, tbs, tbs_len)
+          && ossl_ed25519_verify_final(ctx, signature, public_key);
+    EVP_MD_CTX_free(ctx);
+    return ret;
 }
 
 int

@@ -221,6 +221,12 @@ static void *evp_signature_from_algorithm(int name_id,
                 = OSSL_FUNC_signature_settable_ctx_md_params(fns);
             smdparamfncnt++;
             break;
+        case OSSL_FUNC_SIGNATURE_SET_SIGNATURE:
+            if (signature->set_signature != NULL)
+                break;
+            signature->set_signature
+                = OSSL_FUNC_signature_set_signature(fns);
+            break;
         }
     }
     if (ctxfncnt != 2
@@ -233,6 +239,7 @@ static void *evp_signature_from_algorithm(int name_id,
             && signature->digest_verify == NULL)
         || (signfncnt != 0 && signfncnt != 2)
         || (verifyfncnt != 0 && verifyfncnt != 2)
+        || (verifyfncnt != 0 && signature->set_signature != NULL)
         || (verifyrecfncnt != 0 && verifyrecfncnt != 2)
         || (digsignfncnt != 0 && digsignfncnt != 2)
         || (digsignfncnt == 2 && signature->digest_sign_init == NULL)
@@ -665,6 +672,137 @@ int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx)
 int EVP_PKEY_verify_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 {
     return evp_pkey_signature_init(ctx, EVP_PKEY_OP_VERIFY, params);
+}
+
+int EVP_PKEY_verify_init_ex2(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
+                             const OSSL_PARAM params[])
+{
+    int ret = 0;
+    void *provkey = NULL;
+    EVP_KEYMGMT *tmp_keymgmt = NULL, *tmp_keymgmt_tofree = NULL;
+    const OSSL_PROVIDER *tmp_prov = NULL;
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
+    evp_pkey_ctx_free_old_ops(ctx);
+    ctx->operation = EVP_PKEY_OP_UNDEFINED;
+    if (evp_pkey_ctx_is_legacy(ctx))
+        return 0;
+
+    if (ctx->pkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
+        goto err;
+    }
+    ctx->operation = EVP_PKEY_OP_VERIFY;
+
+    tmp_prov = EVP_SIGNATURE_get0_provider(signature);
+    tmp_keymgmt_tofree = tmp_keymgmt =
+        evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+                                    EVP_KEYMGMT_get0_name(ctx->keymgmt),
+                                    ctx->propquery);
+    provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
+                                          &tmp_keymgmt, ctx->propquery);
+    if (tmp_keymgmt == NULL)
+        EVP_KEYMGMT_free(tmp_keymgmt_tofree);
+
+    if (provkey == NULL)
+        goto err;
+
+    if (!EVP_SIGNATURE_up_ref(signature))
+        goto err;
+    ctx->op.sig.signature = signature;
+    ctx->op.sig.algctx = signature->newctx(ossl_provider_ctx(signature->prov),
+                                           ctx->propquery);
+    if (ctx->op.sig.algctx == NULL) {
+        /* The provider key can stay in the cache */
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        goto err;
+    }
+
+    if (signature->verify_init == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ret = -2;
+        goto err;
+    }
+    ret = signature->verify_init(ctx->op.sig.algctx, provkey, params);
+    if (ret <= 0)
+        goto err;
+
+#ifndef FIPS_MODULE
+    if (ret > 0)
+        ret = evp_pkey_ctx_use_cached_data(ctx);
+#endif
+
+    EVP_KEYMGMT_free(tmp_keymgmt);
+    return ret;
+ err:
+    evp_pkey_ctx_free_old_ops(ctx);
+    ctx->operation = EVP_PKEY_OP_UNDEFINED;
+    EVP_KEYMGMT_free(tmp_keymgmt);
+    return ret;
+}
+
+int EVP_PKEY_CTX_set_signature(EVP_PKEY_CTX *ctx, const unsigned char *sig,
+                               size_t siglen)
+{
+    if (ctx == NULL
+            || sig == NULL
+            || siglen == 0)
+        return 0;
+    if (ctx->operation != EVP_PKEY_OP_VERIFY) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+    if (ctx->op.sig.algctx == NULL)
+        return 0;
+    return ctx->op.sig.signature->set_signature(ctx->op.sig.algctx, sig, siglen);
+}
+
+int EVP_PKEY_verify_update(EVP_PKEY_CTX *ctx,
+                           const unsigned char *tbs, size_t tbslen)
+{
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
+    if (ctx->operation != EVP_PKEY_OP_VERIFY) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
+        return -1;
+    }
+
+    if (ctx->op.sig.algctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
+    return ctx->op.sig.signature->digest_verify_update(ctx->op.sig.algctx,
+                                                       tbs, tbslen);
+}
+
+int EVP_PKEY_verify_final(EVP_PKEY_CTX *ctx,
+                          const unsigned char *sig, size_t siglen)
+{
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
+    if (ctx->operation != EVP_PKEY_OP_VERIFY) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
+        return -1;
+    }
+
+    if (ctx->op.sig.algctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
+    return ctx->op.sig.signature->digest_verify_final(ctx->op.sig.algctx,
+                                                      sig, siglen);
 }
 
 int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,

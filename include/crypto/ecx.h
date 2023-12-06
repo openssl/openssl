@@ -107,6 +107,21 @@ ossl_ed25519_verify(const uint8_t *tbs, size_t tbs_len,
                     const uint8_t dom2flag, const uint8_t phflag, const uint8_t csflag,
                     const uint8_t *context, size_t context_len,
                     OSSL_LIB_CTX *libctx, const char *propq);
+
+int
+ossl_ed25519_verify_init(EVP_MD_CTX *ctx,
+                         const uint8_t signature[64],
+                         const uint8_t public_key[32],
+                         const uint8_t dom2flag, const uint8_t phflag,
+                         const uint8_t csflag,
+                         const uint8_t *context, size_t context_len,
+                         OSSL_LIB_CTX *libctx, const char *propq);
+int
+ossl_ed25519_verify_update(EVP_MD_CTX *ctx, const uint8_t *tbs, size_t tbs_len);
+int
+ossl_ed25519_verify_final(EVP_MD_CTX *ctx, const uint8_t signature[64],
+                          const uint8_t public_key[32]);
+
 int
 ossl_ed448_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[57],
                                const uint8_t private_key[57], const char *propq);

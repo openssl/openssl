@@ -1787,6 +1787,7 @@ static const EVP_TEST_METHOD mac_test_method = {
 typedef struct pkey_data_st {
     /* Context for this operation */
     EVP_PKEY_CTX *ctx;
+    EVP_SIGNATURE *signature;
     /* Key operation to perform */
     int (*keyop) (EVP_PKEY_CTX *ctx,
                   unsigned char *sig, size_t *siglen,
@@ -1829,7 +1830,6 @@ static int pkey_test_init(EVP_TEST *t, const char *name,
         EVP_PKEY_free(pkey);
         return 0;
     }
-    kdata->keyop = keyop;
     if (!TEST_ptr(kdata->ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propquery))) {
         EVP_PKEY_free(pkey);
         OPENSSL_free(kdata);
@@ -1845,6 +1845,7 @@ static void pkey_test_cleanup(EVP_TEST *t)
 {
     PKEY_DATA *kdata = t->data;
 
+    EVP_SIGNATURE_free(kdata->signature);
     OPENSSL_free(kdata->input);
     OPENSSL_free(kdata->output);
     EVP_PKEY_CTX_free(kdata->ctx);
@@ -1890,6 +1891,9 @@ static int pkey_test_parse(EVP_TEST *t,
         return parse_bin(value, &kdata->output, &kdata->output_len);
     if (strcmp(keyword, "Ctrl") == 0)
         return pkey_test_ctrl(t, kdata->ctx, value);
+    if (strcmp(keyword, "SignatureAlg") == 0)
+        return TEST_ptr(kdata->signature =
+                          EVP_SIGNATURE_fetch(libctx, value, propquery));
     return 0;
 }
 
@@ -2009,6 +2013,65 @@ static const EVP_TEST_METHOD pverify_test_method = {
     pkey_test_cleanup,
     pkey_test_parse,
     verify_test_run
+};
+
+static int pkey_test_verify_init(EVP_TEST *t, const char *alg)
+{
+    PKEY_DATA *kdata;
+    EVP_PKEY *pkey = NULL;
+    int rv = 0;
+
+    rv = find_key(&pkey, alg, public_keys);
+    if (rv == 0)
+        rv = find_key(&pkey, alg, private_keys);
+    if (rv == 0 || pkey == NULL) {
+        TEST_info("skipping, key '%s' is disabled", alg);
+        t->skip = 1;
+        return 1;
+    }
+
+    if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata)))) {
+        EVP_PKEY_free(pkey);
+        return 0;
+    }
+    if (!TEST_ptr(kdata->ctx =
+                      EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propquery))) {
+        EVP_PKEY_free(pkey);
+        OPENSSL_free(kdata);
+        return 0;
+    }
+    t->data = kdata;
+    if (EVP_PKEY_verify_init_ex2(kdata->ctx, kdata->signature, NULL) <= 0) {
+        t->err = "KEY_VERIFY_INIT_ERROR";
+        return 1;
+    }
+    if (!EVP_PKEY_CTX_set_signature(kdata->ctx, kdata->output, kdata->output_len))
+        t->err = "KEY_SET_SIGNATURE_ERROR";
+    return 1;
+}
+
+static int pkey_test_verify_update_run(EVP_TEST *t)
+{
+    PKEY_DATA *kdata = t->data;
+    size_t i;
+
+    for (i = 0; i < kdata->input_len; ++i) {
+        if (EVP_PKEY_verify_update(kdata->ctx, kdata->input + i, 1) <= 0) {
+            t->err = "PKEY_VERIFY_UPDATE_ERROR";
+            return 1;
+        }
+    }
+    if (EVP_PKEY_verify_final(kdata->ctx, kdata->output, kdata->output_len) <= 0)
+        t->err = "PKEY_VERIFY_FINAL_ERROR";
+    return 1;
+}
+
+static const EVP_TEST_METHOD pverify_update_test_method = {
+    "PKEY_VerifyUpdate",
+    pkey_test_verify_init,
+    pkey_test_cleanup,
+    pkey_test_parse,
+    pkey_test_verify_update_run
 };
 
 static int pderive_test_init(EVP_TEST *t, const char *name)
@@ -3663,6 +3726,7 @@ static const EVP_TEST_METHOD *evp_test_list[] = {
     &psign_test_method,
     &pverify_recover_test_method,
     &pverify_test_method,
+    &pverify_update_test_method,
     NULL
 };
 
