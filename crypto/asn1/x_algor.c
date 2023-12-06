@@ -107,17 +107,27 @@ int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b)
 
 int X509_ALGOR_copy(X509_ALGOR *dest, const X509_ALGOR *src)
 {
+    X509_ALGOR* tmp = NULL;
     if (src == NULL || dest == NULL)
         return 0;
 
     if (src == dest)
         return 1;
 
-    dest = X509_ALGOR_dup(src);
-
-    if (dest == NULL)
+    tmp = X509_ALGOR_dup(src);
+    if (tmp == NULL)
         return 0;
+    
+    ASN1_OBJECT_free(dest->algorithm);
+    dest->algorithm = tmp->algorithm;
 
+    ASN1_TYPE_free(dest->parameter);
+    dest->parameter = tmp->parameter;
+
+    tmp->algorithm = NULL;
+    tmp->parameter = NULL;
+
+    X509_ALGOR_free(tmp);
     return 1;
 }
 
