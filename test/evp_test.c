@@ -2029,7 +2029,6 @@ static int pkey_test_verify_init(EVP_TEST *t, const char *alg)
         t->skip = 1;
         return 1;
     }
-
     if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata)))) {
         EVP_PKEY_free(pkey);
         return 0;
