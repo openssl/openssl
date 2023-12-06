@@ -273,7 +273,7 @@ jobs:
         mkdir ./install
     - name: config
       run: |
-        ../source/config --banner=Configured enable-fips enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
+        ../source/config --banner=Configured enable-fips enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
         perl configdata.pm --dump
       working-directory: ./build
     - name: make
