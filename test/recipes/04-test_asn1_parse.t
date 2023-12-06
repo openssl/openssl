@@ -14,7 +14,7 @@ setup("test_asn1_parse");
 
 plan tests => 3;
 
-$ENV{OPENSSL_CONF} = srctop_file("test", "asn1test.cnf");
+$ENV{OPENSSL_CONF} = srctop_file("test", "test_asn1_parse.cnf");
 
 ok(run(app(([ 'openssl', 'asn1parse',
               '-genstr', 'OID:1.2.3.4.1']))));
