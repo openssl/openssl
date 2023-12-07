@@ -18,7 +18,7 @@ PKCS#12 safeBag. I<bag> is the B<PKCS12_SAFEBAG> to assign the attributes to.
 
 =head1 RETURN VALUES
 
-PKCS12_SAFEBAG_set0_attrs() does not return a value. 
+PKCS12_SAFEBAG_set0_attrs() does not return a value.
 
 =head1 COPYRIGHT
 
