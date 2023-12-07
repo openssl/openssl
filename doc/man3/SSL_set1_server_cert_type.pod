@@ -156,7 +156,7 @@ To connect to this server, set the client SSL_CTX and SSL as follows:
 
  /* Do SSL_connect() handshake and handle errors here */
 
- /* Optional: verify the peer RPK */ 
+ /* Optional: verify the peer RPK */
  verify_result = SSL_get_verify_result(ssl);
  if (verify_result == X509_V_OK) {
      /* The server's raw public key matched the TLSA record */
