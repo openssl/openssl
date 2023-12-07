@@ -95,10 +95,10 @@ to the I<si> signed attribute list. A new signed attribute list is created if
 required. An error occurs if either I<attr> is NULL or the attribute already
 exists.
 
-CMS_signed_add1_attr_by_OBJ() creates a new signed B<X509_ATTRIBUTE> using 
+CMS_signed_add1_attr_by_OBJ() creates a new signed B<X509_ATTRIBUTE> using
 X509_ATTRIBUTE_set1_object() and X509_ATTRIBUTE_set1_data() to assign a new
 I<obj> with type I<type> and data I<bytes> of length I<len> and then pushes it
-to the I<key> objects attribute list. If I<obj> already exists in the signed
+to the I<key> object's attribute list. If I<obj> already exists in the signed
 attribute list then an error occurs.
 
 CMS_signed_add1_attr_by_NID() is similar to CMS_signed_add1_attr_by_OBJ() except
@@ -106,14 +106,14 @@ that it passes the numerical identifier (NID) I<nid> associated with the object.
 See <openssl/obj_mac.h> for a list of NID_*.
 
 CMS_signed_add1_attr_by_txt() is similar to CMS_signed_add1_attr_by_OBJ()
-except that is passes a name I<attrname> associated with the object.
+except that it passes a name I<attrname> associated with the object.
 See <openssl/obj_mac.h> for a list of SN_* names.
 
 CMS_signed_get0_data_by_OBJ() finds the first attribute in a I<si> signed
 attributes list that matches the I<obj> starting at index I<lastpos>
 and returns the data retrieved from the found attributes first B<ASN1_TYPE>
 object. An error will occur if the attribute type I<type> does not match the
-type of the B<ANS1_TYPE> object OR if I<type> is either B<V_ASN1_BOOLEAN> or
+type of the B<ASN1_TYPE> object OR if I<type> is either B<V_ASN1_BOOLEAN> or
 B<V_ASN1_NULL> OR the attribute is not found.
 If I<lastpos> is less than -1 then an error will occur if there are multiple
 objects in the signed attribute list that match I<obj>.
@@ -176,7 +176,7 @@ NID_pkcs9_contentType
 NID_pkcs9_messageDigest
 NID_pkcs9_signingTime
 
-= item ESS Signed Attributes
+=item ESS Signed Attributes
 
 NID_id_smime_aa_signingCertificate
 NID_id_smime_aa_signingCertificateV2

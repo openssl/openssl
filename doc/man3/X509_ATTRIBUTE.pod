@@ -73,16 +73,16 @@ B<X509_ATTRIBUTE> objects are used by many standards including X509, X509_REQ,
 PKCS12, PKCS8, PKCS7 and CMS.
 
 The B<X509_ATTRIBUTE> object is used to represent the ASN.1 Attribute as defined
-in RFC 5280. i.e.
+in RFC 5280, i.e.
 
  Attribute ::= SEQUENCE {
    type             AttributeType,
    values    SET OF AttributeValue }
 
  AttributeType ::= OBJECT IDENTIFIER
- AttributeValue ::= ANY -- DEFINED BY AttributeType         
+ AttributeValue ::= ANY -- DEFINED BY AttributeType
 
- For example CMS defines the signing-time attribute as:
+For example CMS defines the signing-time attribute as:
 
   id-signingTime OBJECT IDENTIFIER ::= { iso(1) member-body(2)
       us(840) rsadsi(113549) pkcs(1) pkcs9(9) 5 }
@@ -91,7 +91,7 @@ in RFC 5280. i.e.
 
   Time ::= CHOICE {
     utcTime UTCTime,
-    generalizedTime GeneralizedTime } 
+    generalizedTime GeneralizedTime }
 
 In OpenSSL B<AttributeType> maps to an B<ASN1_OBJECT> object
 and B<AttributeValue> maps to a list of B<ASN1_TYPE> objects.
@@ -100,7 +100,7 @@ The following functions are used for B<X509_ATTRIBUTE> objects.
 
 X509at_get_attr_by_OBJ() finds the location of the first matching object I<obj>
 in a list of attributes I<sk>. The search starts at the position after I<lastpos>.
-If the returned value is positive then it can be used on the next call to 
+If the returned value is positive then it can be used on the next call to
 X509at_get_attr_by_OBJ() as the value of I<lastpos> in order to iterate through
 the remaining attributes. I<lastpos> can be set to any negative value on the
 first call, in order to start searching from the start of the list.
@@ -123,7 +123,7 @@ If I<*x> is NULL then a new list is created, otherwise it uses the
 passed in list. An error will occur if an existing attribute (with the same
 attribute type) already exists in the attribute list.
 
-X509at_add1_attr_by_OBJ() creates a new B<X509_ATTRIBUTE> using 
+X509at_add1_attr_by_OBJ() creates a new B<X509_ATTRIBUTE> using
 X509_ATTRIBUTE_set1_object() and X509_ATTRIBUTE_set1_data() to assign a new
 I<obj> with type I<type> and data I<bytes> of length I<len> and then pushes it
 to the attribute list I<x>. Both I<x> and I<attr> must be non NULL or an error
@@ -147,7 +147,7 @@ X509_ATTRIBUTE_set1_data() pushes a new B<ASN1_TYPE> object onto the I<attr>
 attributes list. The new object is assigned a copy of the data in I<data> of
 size I<len>.
 If I<attrtype> has flag I<MBSTRING_FLAG> set then a table lookup using the
-I<attr> attributes NID is used to set an B<ANS1_STRING> using
+I<attr> attributes NID is used to set an B<ASN1_STRING> using
 ASN1_STRING_set_by_NID(), and the passed in I<data> must be in the format
 required for that object type or an error will occur.
 If I<len> is not -1 then internally ASN1_STRING_type_new() is
@@ -158,13 +158,13 @@ X509_ATTRIBUTE_create() creates a new B<X509_ATTRIBUTE> using the I<nid>
 to set the B<ASN1_OBJECT> OID and the I<atrtype> and I<value> to set the
 B<ASN1_TYPE>.
 
-X509_ATTRIBUTE_create_by_OBJ() uses X509_ATTRIBUTE_set1_object() and 
-X509_ATTRIBUTE_set1_data() to assign a new I<obj> with type I<atrtype> and 
+X509_ATTRIBUTE_create_by_OBJ() uses X509_ATTRIBUTE_set1_object() and
+X509_ATTRIBUTE_set1_data() to assign a new I<obj> with type I<atrtype> and
 data I<data> of length I<len>. If the passed in attribute I<attr> OR I<*attr> is
-NULL then a new B<X509_ATTRIBUTE> will be returned, otherwise the passed in 
+NULL then a new B<X509_ATTRIBUTE> will be returned, otherwise the passed in
 B<X509_ATTRIBUTE> is used. Note that the ASN1_OBJECT I<obj> is pushed onto the
-attributes existing list of objects, which could be a issue if the attributes
-<ASN1_OBJECT> was different. 
+attributes existing list of objects, which could be an issue if the attributes
+<ASN1_OBJECT> was different.
 
 X509_ATTRIBUTE_create_by_NID() is similar to X509_ATTRIBUTE_create_by_OBJ()
 except that it passes the numerical identifier (NID) I<nid> associated with the
@@ -179,19 +179,19 @@ attribute I<attr>.
 
 X509_ATTRIBUTE_get0_type() returns the B<ASN1_TYPE> object at index I<idx> in
 the attribute list I<attr>. I<idx> should be in the
-range of 0 to X509_ATTRIBUTE_count() - 1 or an error will occur
+range of 0 to X509_ATTRIBUTE_count() - 1 or an error will occur.
 
 X509_ATTRIBUTE_get0_data() returns the data of an B<ASN1_TYPE> object at
 index I<idx> in the attribute I<attr>. I<data> is unused and can be set to NULL.
 An error will occur if the attribute type I<atrtype> does not match the type of
-the B<ANS1_TYPE> object at index I<idx> OR if I<atrtype> is either
+the B<ASN1_TYPE> object at index I<idx> OR if I<atrtype> is either
 B<V_ASN1_BOOLEAN> or B<V_ASN1_NULL> OR if the I<idx> is not in the
 range 0 to X509_ATTRIBUTE_count() - 1.
 
 X509at_get0_data_by_OBJ() finds the first attribute in an attribute list I<x>
 that matches the I<obj> starting at index I<lastpos> and returns the data
 retrieved from the found attributes first B<ASN1_TYPE> object. An error will
-occur if the attribute type I<type> does not match the type of the B<ANS1_TYPE>
+occur if the attribute type I<type> does not match the type of the B<ASN1_TYPE>
 object OR if I<type> is either B<V_ASN1_BOOLEAN> or B<V_ASN1_NULL> OR the
 attribute is not found.
 If I<lastpos> is less than -1 then an error will occur if there are multiple
@@ -202,7 +202,7 @@ one B<ASN1_TYPE> object in the found attribute.
 =head1 RETURN VALUES
 
 X509at_get_attr_count() returns the number of attributes in the list I<x> or -1
-if I<x> is NULL
+if I<x> is NULL.
 
 X509at_get_attr_by_OBJ() returns -1 if either the list is empty OR the object
 is not found, otherwise it returns the location of the object in the list.
@@ -210,7 +210,7 @@ is not found, otherwise it returns the location of the object in the list.
 X509at_get_attr_by_NID() is similar to X509at_get_attr_by_OBJ(), except that
 it returns -2 if the I<nid> is not known by OpenSSL.
 
-X509at_get_attr() returns either a B<X509_ATTRIBUTE> or NULL if there is a error.
+X509at_get_attr() returns either an B<X509_ATTRIBUTE> or NULL if there is a error.
 
 X509at_delete_attr() returns either the removed B<X509_ATTRIBUTE> or NULL if
 there is a error.
@@ -222,7 +222,7 @@ X509_ATTRIBUTE_get0_type() returns NULL on error, otherwise it returns a
 B<ASN1_TYPE> object.
 
 X509_ATTRIBUTE_get0_data() returns NULL if an error occurs,
-otherwise it returns the data associated with an B<ASN1_TYPE> object. 
+otherwise it returns the data associated with an B<ASN1_TYPE> object.
 
 X509_ATTRIBUTE_set1_object() and X509_ATTRIBUTE_set1_data() returns 1 on
 success, or 0 otherwise.

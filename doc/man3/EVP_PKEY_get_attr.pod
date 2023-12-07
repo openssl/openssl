@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_PKEY_get_attr, 
+EVP_PKEY_get_attr,
 EVP_PKEY_get_attr_count,
 EVP_PKEY_get_attr_by_NID, EVP_PKEY_get_attr_by_OBJ,
 EVP_PKEY_delete_attr,
@@ -37,7 +37,7 @@ These functions are used by B<PKCS12>.
 
 EVP_PKEY_get_attr_by_OBJ() finds the location of the first matching object I<obj>
 in the I<key> attribute list. The search starts at the position after I<lastpos>.
-If the returned value is positive then it can be used on the next call to 
+If the returned value is positive then it can be used on the next call to
 EVP_PKEY_get_attr_by_OBJ() as the value of I<lastpos> in order to iterate through
 the remaining attributes. I<lastpos> can be set to any negative value on the
 first call, in order to start searching from the start of the attribute list.
@@ -57,10 +57,10 @@ EVP_PKEY_add1_attr() pushes a copy of the passed in B<X509_ATTRIBUTE> object
 to the I<key> attribute list. A new I<key> attribute list is created if required.
 An error occurs if either I<attr> is NULL, or the attribute already exists.
 
-EVP_PKEY_add1_attr_by_OBJ() creates a new B<X509_ATTRIBUTE> using 
+EVP_PKEY_add1_attr_by_OBJ() creates a new B<X509_ATTRIBUTE> using
 X509_ATTRIBUTE_set1_object() and X509_ATTRIBUTE_set1_data() to assign a new
 I<obj> with type I<type> and data I<bytes> of length I<len> and then pushes it
-to the I<key> objects attribute list. If I<obj> already exists in the attribute
+to the I<key> object's attribute list. If I<obj> already exists in the attribute
 list then an error occurs.
 
 EVP_PKEY_add1_attr_by_NID() is similar to EVP_PKEY_add1_attr_by_OBJ() except
@@ -68,7 +68,7 @@ that it passes the numerical identifier (NID) I<nid> associated with the object.
 See <openssl/obj_mac.h> for a list of NID_*.
 
 EVP_PKEY_add1_attr_by_txt() is similar to EVP_PKEY_add1_attr_by_OBJ() except
-that is passes a name I<attrname> associated with the object.
+that it passes a name I<attrname> associated with the object.
 See <openssl/obj_mac.h> for a list of SN_* names.
 
 =head1 RETURN VALUES
@@ -93,13 +93,13 @@ and EVP_PKEY_add1_attr_by_txt() return 1 on success or 0 otherwise.
 
 =head1 NOTES
 
-A B<EVP_PKEY> objects attribute list is initially NULL. All the above functions
+A B<EVP_PKEY> object's attribute list is initially NULL. All the above functions
 listed will return an error unless EVP_PKEY_add1_attr() is called.
 All functions listed assume that the I<key> is not NULL.
 
 =head1 SEE ALSO
 
-L<X509_ATTRIBUTE(3)>,
+L<X509_ATTRIBUTE(3)>
 
 =head1 COPYRIGHT
 
