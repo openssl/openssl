@@ -57,6 +57,7 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
                                   UI_METHOD *ui_method, void *callback_data)
 {
     EVP_PKEY *pkey;
+    int copied_key;
 
     if (e == NULL) {
         ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
@@ -80,11 +81,13 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
         return NULL;
     }
     /* We enforce check for legacy key */
+    copied_key = 0;
     switch (EVP_PKEY_get_id(pkey)) {
     case EVP_PKEY_RSA:
         {
         RSA *rsa = EVP_PKEY_get1_RSA(pkey);
         EVP_PKEY_set1_RSA(pkey, rsa);
+        copied_key = 1;
         RSA_free(rsa);
         }
         break;
@@ -94,6 +97,7 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
         {
         EC_KEY *ec = EVP_PKEY_get1_EC_KEY(pkey);
         EVP_PKEY_set1_EC_KEY(pkey, ec);
+        copied_key = 1;
         EC_KEY_free(ec);
         }
         break;
@@ -103,6 +107,7 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
         {
         DSA *dsa = EVP_PKEY_get1_DSA(pkey);
         EVP_PKEY_set1_DSA(pkey, dsa);
+        copied_key = 1;
         DSA_free(dsa);
         }
         break;
@@ -112,6 +117,7 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
         {
         DH *dh = EVP_PKEY_get1_DH(pkey);
         EVP_PKEY_set1_DH(pkey, dh);
+        copied_key = 1;
         DH_free(dh);
         }
         break;
@@ -119,6 +125,12 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
     default:
         /*Do nothing */
         break;
+    }
+
+    /* Preserve pkey->pmeth_engine so that custom methods set on this key by an
+     * engine are preserved (for example in the libp11 pkcs11 engine). */
+    if (copied_key) {
+        EVP_PKEY_set1_engine(pkey, e);
     }
 
     return pkey;
