@@ -447,7 +447,7 @@ static int convert_asn1_to_time_t(int idx)
  * this test is here to exercise ossl_asn1_time_from_tm
  * with an integer year close to INT_MAX.
  */
-static int convert_tm_to_asn1_time()
+static int convert_tm_to_asn1_time(void)
 {
   /* we need 64 bit time_t */
 #if ( (ULONG_MAX >> 31) >> 31 ) >= 1
