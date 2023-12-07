@@ -443,6 +443,24 @@ static int convert_asn1_to_time_t(int idx)
     return 1;
 }
 
+/*
+ * this test is here to exercise ossl_asn1_time_from_tm
+ * with an integer year close to INT_MAX.
+ */
+static int convert_tm_to_asn1_time()
+{
+  /* we need 64 bit time_t */
+#if ( (ULONG_MAX >> 31) >> 31 ) >= 1
+    TEST_int_ge(sizeof(time_t) * CHAR_BIT, 64);
+    time_t t = 67768011791126057ULL;
+    ASN1_TIME* at = ASN1_TIME_set(NULL, t);
+    if (at != NULL) {
+      ASN1_STRING_free(at);
+    }
+#endif
+    return 1;
+}
+
 int setup_tests(void)
 {
     /*
@@ -479,5 +497,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_table_compare, OSSL_NELEM(tbl_compare_testdata));
     ADD_TEST(test_time_dup);
     ADD_ALL_TESTS(convert_asn1_to_time_t, OSSL_NELEM(asn1_to_utc));
+    ADD_TEST(convert_tm_to_asn1_time);
     return 1;
 }
