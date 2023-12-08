@@ -122,11 +122,14 @@ static int ch_init(QUIC_CHANNEL *ch)
     OSSL_QRX_ARGS qrx_args = {0};
     QUIC_TLS_ARGS tls_args = {0};
     uint32_t pn_space;
-    size_t rx_short_dcid_len = ossl_quic_port_get_rx_short_dcid_len(ch->port);
-    size_t tx_init_dcid_len = ossl_quic_port_get_tx_init_dcid_len(ch->port);
+    size_t rx_short_dcid_len;
+    size_t tx_init_dcid_len;
 
     if (ch->port == NULL || ch->lcidm == NULL || ch->srtm == NULL)
         goto err;
+
+    rx_short_dcid_len = ossl_quic_port_get_rx_short_dcid_len(ch->port);
+    tx_init_dcid_len = ossl_quic_port_get_tx_init_dcid_len(ch->port);
 
     /* For clients, generate our initial DCID. */
     if (!ch->is_server
