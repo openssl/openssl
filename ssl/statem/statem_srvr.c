@@ -1746,16 +1746,14 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         s->client_version = clienthello->legacy_version;
     }
     /*
-     * Do SSL/TLS version negotiation if applicable. For DTLS we just check
-     * versions are potentially compatible. Version negotiation comes later.
+     * Do SSL/TLS version negotiation if applicable.
      */
-    if (!SSL_CONNECTION_IS_DTLS(s)) {
-        protverr = ssl_choose_server_version(s, clienthello, &dgrd);
-    } else if (ssl->method->version != DTLS_ANY_VERSION &&
-               DTLS_VERSION_LT((int)clienthello->legacy_version, s->version)) {
+    if (SSL_CONNECTION_IS_DTLS(s)
+            && ssl->method->version != DTLS_ANY_VERSION
+            && DTLS_VERSION_LT((int)clienthello->legacy_version, s->version)) {
         protverr = SSL_R_VERSION_TOO_LOW;
     } else {
-        protverr = 0;
+        protverr = ssl_choose_server_version(s, clienthello, &dgrd);
     }
 
     if (protverr) {
@@ -1798,14 +1796,6 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
                 goto err;
             }
             s->d1->cookie_verified = 1;
-        }
-        if (ssl->method->version == DTLS_ANY_VERSION) {
-            protverr = ssl_choose_server_version(s, clienthello, &dgrd);
-            if (protverr != 0) {
-                s->version = s->client_version;
-                SSLfatal(s, SSL_AD_PROTOCOL_VERSION, protverr);
-                goto err;
-            }
         }
     }
 
