@@ -63,7 +63,7 @@ CMS_unsigned_get0_data_by_OBJ
 
 =head1 DESCRIPTION
 
-CMS_signerInfo contains seperate attribute lists for signed and unsigned
+CMS_signerInfo contains separate attribute lists for signed and unsigned
 attributes. Each CMS_signed_XXX() function is used for signed attributes, and
 each CMS_unsigned_XXX() function is used for unsigned attributes.
 Since the CMS_unsigned_XXX() functions work in the same way as the
@@ -124,8 +124,8 @@ Refer to L<X509_ATTRIBUTE(3)> for information related to attributes.
 
 =head1 RETURN VALUES
 
-CMS_unsigned_XXX() functions are similiar to the return values of the matching
-CMS_signed_XXX() functions.
+The CMS_unsigned_XXX() functions return values similar to those of the
+equivalent CMS_signed_XXX() functions.
 
 CMS_signed_get_attr_count() returns the number of signed attributes in the
 SignerInfo I<si>, or -1 if the signed attribute list is NULL.
