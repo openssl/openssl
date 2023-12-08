@@ -744,7 +744,8 @@ With this option, this command will listen on a UDP port for incoming
 connections.
 Any ClientHellos that arrive will be checked to see if they have a cookie in
 them or not.
-Any without a cookie will be responded to with a HelloVerifyRequest.
+Any without a cookie will be responded to with a HelloVerifyRequest
+(DTLSv1.0-1.2) or a HelloRetryRequest with the cookie extension (DTLSv1.3).
 If a ClientHello with a cookie is received then this command will
 connect to that peer and complete the handshake.
 
