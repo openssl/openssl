@@ -173,11 +173,11 @@ OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
     size_t i;
 
     if (args->demux == NULL || args->max_deferred == 0)
-        return 0;
+        return NULL;
 
     qrx = OPENSSL_zalloc(sizeof(OSSL_QRX));
     if (qrx == NULL)
-        return 0;
+        return NULL;
 
     for (i = 0; i < OSSL_NELEM(qrx->largest_pn); ++i)
         qrx->largest_pn[i] = args->init_largest_pn[i];
