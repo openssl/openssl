@@ -152,10 +152,11 @@ end:
 static int read_utf8_string(const uint8_t **buf, size_t *len, char **res)
 {
     int r;
+    size_t i;
     const uint8_t *ptr = *buf;
     int found = 0;
 
-    for (size_t i = 0; i < *len; ++i) {
+    for (i = 0; i < *len; ++i) {
         if (*ptr == 0) {
             ptr++;
             found = 1;
@@ -194,10 +195,11 @@ static int read_utf8_ptr(const uint8_t **buf, size_t *len, char **res)
 static int read_octet_string(const uint8_t **buf, size_t *len, char **res)
 {
     int r;
+    size_t i;
     const uint8_t *ptr = *buf;
     int found = 0;
 
-    for (size_t i = 0; i < *len; ++i) {
+    for (i = 0; i < *len; ++i) {
         if (*ptr == 0xFF &&
             (i + 1 < *len && *(ptr + 1) == 0xFF)) {
             ptr++;
@@ -252,13 +254,14 @@ static uint64_t UBLOCKSIZE = 8;
 static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *len)
 {
     OSSL_PARAM *p;
+    OSSL_PARAM *fuzzed_parameters;
     int p_num = 0;
 
     for (p = param; p != NULL && p->key != NULL; p++) {
         p_num++;
     }
 
-    OSSL_PARAM *fuzzed_parameters = OPENSSL_zalloc(sizeof(OSSL_PARAM) * (p_num + 1));
+    fuzzed_parameters = OPENSSL_zalloc(sizeof(OSSL_PARAM) * (p_num + 1));
     p = fuzzed_parameters;
 
     for (; param != NULL && param->key != NULL; param++) {
@@ -573,11 +576,12 @@ end:
 #define EVP_FUZZ(source, evp, f) \
     do { \
         evp * alg = sk_##evp##_value(source, *algorithm % sk_##evp##_num(source)); \
+        OSSL_PARAM *fuzzed_params; \
         \
         if (!alg) { \
             break; \
         } \
-        OSSL_PARAM *fuzzed_params = fuzz_params((OSSL_PARAM*) evp##_settable_ctx_params(alg), &buf, &len); \
+        fuzzed_params = fuzz_params((OSSL_PARAM*) evp##_settable_ctx_params(alg), &buf, &len); \
         if (fuzzed_params) { \
             f(alg, fuzzed_params); \
         } \
