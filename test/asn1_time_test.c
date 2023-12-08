@@ -452,11 +452,13 @@ static int convert_tm_to_asn1_time(void)
   /* we need 64 bit time_t */
 #if ( (ULONG_MAX >> 31) >> 31 ) >= 1
     TEST_int_ge(sizeof(time_t) * CHAR_BIT, 64);
-    time_t t = 67768011791126057ULL;
-    ASN1_TIME* at = ASN1_TIME_set(NULL, t);
-    if (at != NULL) {
+    time_t t;
+    ASN1_TIME* at;
+
+    t = 67768011791126057ULL;
+    at = ASN1_TIME_set(NULL, t);
+    if (at != NULL)
       ASN1_STRING_free(at);
-    }
 #endif
     return 1;
 }
