@@ -295,13 +295,12 @@ ASN1_TIME *ossl_asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type)
     tmps->type = type;
     p = (char*)tmps->data;
 
-    if (ts->tm_mon > INT_MAX - 1) {
+    if (ts->tm_mon > INT_MAX - 1)
         goto err;
-    }
+
     if (type == V_ASN1_GENERALIZEDTIME) {
-        if (ts->tm_year > INT_MAX - 1900) {
+        if (ts->tm_year > INT_MAX - 1900)
             goto err;
-        }
         tmps->length = BIO_snprintf(p, len, "%04d%02d%02d%02d%02d%02dZ",
                                     ts->tm_year + 1900, ts->tm_mon + 1,
                                     ts->tm_mday, ts->tm_hour, ts->tm_min,
