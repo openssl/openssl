@@ -157,15 +157,6 @@ For example:
  /* Then the hash table itself can be deallocated */
  lh_TYPE_free(hashtable);
 
-When doing this, be careful if you delete entries from the hash table
-in your callbacks: the table may decrease in size, moving the item
-that you are currently on down lower in the hash table - this could
-cause some entries to be skipped during the iteration.  The second
-best solution to this problem is to set hash-E<gt>down_load=0 before
-you start (which will stop the hash table ever decreasing in size).
-The best solution is probably to avoid deleting items from the hash
-table inside a "doall" callback!
-
 B<lh_I<TYPE>_doall_arg>() is the same as B<lh_I<TYPE>_doall>() except that
 I<func> will be called with I<arg> as the second argument and I<func>
 should be of type B<LHASH_DOALL_ARG_FN>(B<I<TYPE>>) (a callback prototype
@@ -187,6 +178,23 @@ that is provided by the caller):
  lh_TYPE_doall_arg(hashtable, LHASH_DOALL_ARG_FN(TYPE_print), BIO,
                    logging_bio);
 
+Note that it is by default B<not> safe to use B<lh_I<TYPE>_delete>() inside a
+callback passed to B<lh_I<TYPE>_doall>() or B<lh_I<TYPE>_doall_arg>(). The
+reason for this is that deleting an item from the hash table may result in the
+hash table being contracted to a smaller size and rehashed.
+B<lh_I<TYPE>_doall>() and B<lh_I<TYPE>_doall_arg>() are unsafe and will exhibit
+undefined behaviour under these conditions, as these functions assume the hash
+table size and bucket pointers do not change during the call.
+
+If it is desired to use B<lh_I<TYPE>_doall>() or B<lh_I<TYPE>_doall_arg>() with
+B<lh_I<TYPE>_delete>(), it is essential that you call
+B<lh_I<TYPE>_set_down_load>() with a I<down_load> argument of 0 first. This
+disables hash table contraction and guarantees that it will be safe to delete
+items from a hash table during a call to B<lh_I<TYPE>_doall>() or
+B<lh_I<TYPE>_doall_arg>().
+
+It is never safe to call B<lh_I<TYPE>_insert>() during a call to
+B<lh_I<TYPE>_doall>() or B<lh_I<TYPE>_doall_arg>().
 
 B<lh_I<TYPE>_error>() can be used to determine if an error occurred in the last
 operation.
