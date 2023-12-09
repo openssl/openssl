@@ -44,13 +44,15 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
     int i = 0;
-    unsigned int l;
+    int l;
 
     if (type != NULL) {
         unsigned char iv[EVP_MAX_IV_LENGTH];
 
         l = EVP_CIPHER_CTX_get_iv_length(ctx);
-        if (!ossl_assert(l <= sizeof(iv)))
+        if (l < 0)
+            return -1;
+        if (!ossl_assert((long unsigned int)l <= sizeof(iv)))
             return -1;
         i = ASN1_TYPE_get_octetstring(type, iv, l);
         if (i != (int)l)
@@ -81,8 +83,12 @@ int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
                                 evp_cipher_aead_asn1_params *asn1_params)
 {
     int ret = -1;                /* Assume the worst */
-    const EVP_CIPHER *cipher = c->cipher;
+    const EVP_CIPHER *cipher;
 
+    if (c == NULL || c->cipher == NULL)
+        return -1;
+
+    cipher = c->cipher;
     /*
      * For legacy implementations, we detect custom AlgorithmIdentifier
      * parameter handling by checking if the function pointer
@@ -172,8 +178,12 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
                                 evp_cipher_aead_asn1_params *asn1_params)
 {
     int ret = -1;                /* Assume the worst */
-    const EVP_CIPHER *cipher = c->cipher;
+    const EVP_CIPHER *cipher;
 
+    if (c == NULL || c->cipher == NULL)
+        return -1;
+
+    cipher = c->cipher;
     /*
      * For legacy implementations, we detect custom AlgorithmIdentifier
      * parameter handling by checking if there the function pointer
@@ -387,7 +397,7 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
 
 int EVP_CIPHER_get_block_size(const EVP_CIPHER *cipher)
 {
-    return cipher->block_size;
+    return (cipher == NULL) ? -1 : cipher->block_size;
 }
 
 int EVP_CIPHER_CTX_get_block_size(const EVP_CIPHER_CTX *ctx)
@@ -403,6 +413,9 @@ int EVP_CIPHER_impl_ctx_size(const EVP_CIPHER *e)
 int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                const unsigned char *in, unsigned int inl)
 {
+    if (ctx == NULL || ctx->cipher == NULL)
+        return 0;
+
     if (ctx->cipher->prov != NULL) {
         /*
          * If the provided implementation has a ccipher function, we use it,
@@ -454,7 +467,7 @@ EVP_CIPHER *EVP_CIPHER_CTX_get1_cipher(EVP_CIPHER_CTX *ctx)
 {
     EVP_CIPHER *cipher;
 
-    if (ctx == NULL)
+    if (ctx == NULL || ctx->cipher == NULL)
         return NULL;
     cipher = (EVP_CIPHER *)ctx->cipher;
     if (!EVP_CIPHER_up_ref(cipher))
@@ -499,7 +512,7 @@ void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data)
 
 int EVP_CIPHER_get_iv_length(const EVP_CIPHER *cipher)
 {
-    return cipher->iv_len;
+    return (cipher == NULL) ? -1 : cipher->iv_len;
 }
 
 int EVP_CIPHER_CTX_get_iv_length(const EVP_CIPHER_CTX *ctx)
@@ -508,6 +521,9 @@ int EVP_CIPHER_CTX_get_iv_length(const EVP_CIPHER_CTX *ctx)
         int rv, len = EVP_CIPHER_get_iv_length(ctx->cipher);
         size_t v = len;
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+        if (len == -1)
+            return -1;
 
         if (ctx->cipher->get_ctx_params != NULL) {
             params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN,
@@ -678,12 +694,12 @@ int EVP_CIPHER_CTX_get_key_length(const EVP_CIPHER_CTX *ctx)
 
 int EVP_CIPHER_get_nid(const EVP_CIPHER *cipher)
 {
-    return cipher->nid;
+    return (cipher == NULL) ? NID_undef : cipher->nid;
 }
 
 int EVP_CIPHER_CTX_get_nid(const EVP_CIPHER_CTX *ctx)
 {
-    return ctx->cipher->nid;
+    return EVP_CIPHER_get_nid(ctx->cipher);
 }
 
 int EVP_CIPHER_is_a(const EVP_CIPHER *cipher, const char *name)
