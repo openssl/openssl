@@ -1248,7 +1248,7 @@ EVP_DecryptFinal_ex() returns 0 if the decrypt failed or 1 for success.
 EVP_CipherInit_ex2() and EVP_CipherUpdate() return 1 for success and 0 for failure.
 EVP_CipherFinal_ex() returns 0 for a decryption failure or 1 for success.
 
-EVP_Cipher() returns 1 on success and >= 0 on failure, if the flag
+EVP_Cipher() returns 1 on success and <= 0 on failure, if the flag
 B<EVP_CIPH_FLAG_CUSTOM_CIPHER> is not set for the cipher, or if the cipher has
 not been initalized via a call to B<EVP_CipherInint>.
 EVP_Cipher() returns the number of bytes written to I<out> for encryption / decryption, or
