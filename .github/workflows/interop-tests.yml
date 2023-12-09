@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        COMPONENT: [openssl-upstream-gnutls, openssl-upstream-nss]
+        COMPONENT: [gnutls, nss]
     env:
       COMPONENT: ${{ matrix.COMPONENT }}
     # Code below inspired by https://fedoramagazine.org/github-actions-use-podman-to-run-fedora-linux/
@@ -39,6 +39,6 @@ jobs:
       - name: Run interop tests
         run: |
           cd interop
-          tmt run -av plans -n $COMPONENT tests -f "tag: interop-openssl" provision -h local execute -h tmt --interactive
+          tmt run -av plans -n interop tests -f "tag: interop-openssl & tag: interop-$COMPONENT" provision -h local execute -h tmt --interactive
           openssl version
           echo "Finished - important to prevent unwanted output truncating"
