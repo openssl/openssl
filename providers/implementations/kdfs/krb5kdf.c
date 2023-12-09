@@ -416,6 +416,12 @@ static int KRB5KDF(const EVP_CIPHER *cipher, ENGINE *engine,
     /* Initialize input block */
     blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
 
+    if (blocksize == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CIPHER);
+        ret = 0;
+        goto out;
+    }
+
     if (constant_len > blocksize) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONSTANT_LENGTH);
         ret = 0;

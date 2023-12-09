@@ -3568,6 +3568,10 @@ static int test_evp_iv_aes(int idx)
             || !TEST_true(EVP_EncryptFinal_ex(ctx, ciphertext, &len)))
         goto err;
     ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
+
+    if (!TEST_int_gt(ivlen, 0))
+        goto err;
+
     if (!TEST_mem_eq(init_iv, ivlen, oiv, ivlen)
             || !TEST_mem_eq(ref_iv, ref_len, iv, ivlen))
         goto err;
@@ -3679,6 +3683,10 @@ static int test_evp_iv_des(int idx)
             || !TEST_true(EVP_EncryptFinal_ex(ctx, ciphertext, &len)))
         goto err;
     ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
+
+    if (!TEST_int_gt(ivlen, 0))
+        goto err;
+
     if (!TEST_mem_eq(init_iv, ivlen, oiv, ivlen)
             || !TEST_mem_eq(ref_iv, ref_len, iv, ivlen))
         goto err;
@@ -4293,7 +4301,8 @@ static int test_evp_updated_iv(int idx)
         errmsg = "CIPHER_CTX_GET_UPDATED_IV";
         goto err;
     }
-    if (!TEST_true(iv_len = EVP_CIPHER_CTX_get_iv_length(ctx))) {
+    iv_len = EVP_CIPHER_CTX_get_iv_length(ctx);
+    if (!TEST_int_ge(iv_len,0)) {
         errmsg = "CIPHER_CTX_GET_IV_LEN";
         goto err;
     }

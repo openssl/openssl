@@ -593,6 +593,7 @@ int enc_main(int argc, char **argv)
         }
         if (hiv != NULL) {
             int siz = EVP_CIPHER_get_iv_length(cipher);
+
             if (siz == 0) {
                 BIO_printf(bio_err, "warning: iv not used by this cipher\n");
             } else if (!set_hex(hiv, iv, siz)) {

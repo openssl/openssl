@@ -26,6 +26,7 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
     int outlen, i;
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     int max_out_len, mac_len = 0;
+    int block_size;
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_EVP_LIB);
@@ -43,7 +44,14 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
      * It's appended to encrypted text on encrypting
      * MAC should be processed on decrypting separately from plain text
      */
-    max_out_len = inlen + EVP_CIPHER_CTX_get_block_size(ctx);
+    block_size = EVP_CIPHER_CTX_get_block_size(ctx);
+
+    if (block_size == 0) {
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
+
+    max_out_len = inlen + block_size;
     if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ctx))
                 & EVP_CIPH_FLAG_CIPHER_WITH_MAC) != 0) {
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD, 0, &mac_len) < 0) {

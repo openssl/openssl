@@ -120,6 +120,7 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
     md_len = (size_t)mdi;
     key_len = EVP_CIPHER_get_key_length(ciph);
     iv_len = EVP_CIPHER_get_iv_length(ciph);
+
     if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
         (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
         mac_secret = &(p[0]);

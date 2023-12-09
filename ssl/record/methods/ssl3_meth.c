@@ -119,6 +119,9 @@ static int ssl3_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *inrecs,
     l = rec->length;
     bs = EVP_CIPHER_CTX_get_block_size(ds);
 
+    if (bs == 0)
+        return 0;
+
     /* COMPRESS */
 
     if ((bs != 1) && sending && !provided) {

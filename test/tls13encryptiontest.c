@@ -326,6 +326,10 @@ static int test_tls13_encryption(void)
     for (ctr = 0; ctr < OSSL_NELEM(refdata); ctr++) {
         /* Load the record */
         ivlen = EVP_CIPHER_get_iv_length(ciph);
+        if (TEST_int_eq((int)ivlen, -1)) {
+            TEST_error("IV length undefined");
+            goto err;
+        }
         if (!load_record(&rec, &refdata[ctr], &key, iv, ivlen, seqbuf)) {
             TEST_error("Failed loading key into EVP_CIPHER_CTX");
             goto err;
