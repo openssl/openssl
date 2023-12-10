@@ -124,7 +124,7 @@ Refer to L<X509_ATTRIBUTE(3)> for information related to attributes.
 
 =head1 RETURN VALUES
 
-The CMS_unsigned_XXX() functions return values similar to those of the
+The CMS_unsigned_XXX() functions return values are similar to those of the
 equivalent CMS_signed_XXX() functions.
 
 CMS_signed_get_attr_count() returns the number of signed attributes in the
