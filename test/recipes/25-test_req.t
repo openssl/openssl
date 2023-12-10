@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 104;
+plan tests => 106;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -40,10 +40,14 @@ my @addext_args = ( "openssl", "req", "-new", "-out", "testreq.pem",
                     "-key",  srctop_file(@certs, "ee-key.pem"),
     "-config", srctop_file("test", "test.cnf"), @req_new );
 my $val = "subjectAltName=DNS:example.com";
+my $val1 = "subjectAltName=otherName:1.2.3.4;UTF8:test,email:info\@example.com";
 my $val2 = " " . $val;
 my $val3 = $val;
 $val3 =~ s/=/    =/;
 ok( run(app([@addext_args, "-addext", $val])));
+ok( run(app([@addext_args, "-addext", $val1])));
+$val1 =~ s/UTF8/XXXX/; # execute the error handling in do_othername
+ok(!run(app([@addext_args, "-addext", $val1])));
 ok(!run(app([@addext_args, "-addext", $val, "-addext", $val])));
 ok(!run(app([@addext_args, "-addext", $val, "-addext", $val2])));
 ok(!run(app([@addext_args, "-addext", $val, "-addext", $val3])));
