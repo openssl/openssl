@@ -111,12 +111,12 @@ static int cmac_setkey(struct cmac_data_st *macctx,
 static int cmac_setsize(CMAC_CTX *cmacctx, OSSL_PARAM *p)
 {
     EVP_CIPHER_CTX *ctx = CMAC_CTX_get0_cipher_ctx(cmacctx);
-    int sz = -1;
+    int sz = 0;
 
-    if (ctx != NULL)
+    if (ctx != NULL && EVP_CIPHER_CTX_get0_cipher(ctx) != NULL)
         sz = EVP_CIPHER_CTX_get_block_size(ctx);
-    return sz > 0
-           && OSSL_PARAM_set_size_t(p, sz);
+
+    return OSSL_PARAM_set_size_t(p, sz >= 0 ? sz : 0);
 }
 
 static int cmac_init(void *vmacctx, const unsigned char *key,
