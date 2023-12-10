@@ -246,7 +246,8 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         else if (strcmp(confname, "activate") == 0)
             if ((strcmp(confvalue, "1") == 0)
                 || (strcmp(confvalue, "yes") == 0)
-                || (strcmp(confvalue, "true") == 0))
+                || (strcmp(confvalue, "true") == 0)
+                || (strcmp(confvalue, "on") == 0))
                 activate = 1;
     }
 
