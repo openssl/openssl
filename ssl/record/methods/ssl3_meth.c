@@ -98,6 +98,7 @@ static int ssl3_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *inrecs,
     size_t bs;
     const EVP_CIPHER *enc;
     int provided;
+    int blocksz;
 
     rec = inrecs;
     /*
@@ -113,7 +114,10 @@ static int ssl3_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *inrecs,
     provided = (EVP_CIPHER_get0_provider(enc) != NULL);
 
     l = rec->length;
-    bs = EVP_CIPHER_CTX_get_block_size(ds);
+    blocksz = EVP_CIPHER_CTX_get_block_size(ds);
+    if (blocksz <= 0)
+        return 0;
+    bs = blocksz;
 
     /* COMPRESS */
 

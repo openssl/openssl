@@ -742,11 +742,15 @@ int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
 
 static size_t dtls_get_max_record_overhead(OSSL_RECORD_LAYER *rl)
 {
+    int blksz = 0;
     size_t blocksize = 0;
 
     if (rl->enc_ctx != NULL &&
-        (EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE))
-        blocksize = EVP_CIPHER_CTX_get_block_size(rl->enc_ctx);
+        (EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE)) {
+        blksz = EVP_CIPHER_CTX_get_block_size(rl->enc_ctx);
+        assert(blksz >= 0);
+        blocksize = (blksz >= 0 ? blksz : 0);
+    }
 
     /*
      * If we have a cipher in place then the tag is mandatory. If the cipher is

@@ -387,7 +387,7 @@ static int KRB5KDF(const EVP_CIPHER *cipher, ENGINE *engine,
 #ifndef OPENSSL_NO_DES
     int des3_no_fixup = 0;
 #endif
-    int ret;
+    int ret = 0, blksz;
 
     if (key_len != okey_len) {
 #ifndef OPENSSL_NO_DES
@@ -409,16 +409,17 @@ static int KRB5KDF(const EVP_CIPHER *cipher, ENGINE *engine,
     if (ctx == NULL)
         return 0;
 
-    ret = cipher_init(ctx, cipher, engine, key, key_len);
-    if (!ret)
+    if (!cipher_init(ctx, cipher, engine, key, key_len))
+        goto out;
+
+    blksz = EVP_CIPHER_CTX_get_block_size(ctx);
+    if (blksz < 0)
         goto out;
 
     /* Initialize input block */
-    blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
-
+    blocksize = blksz;
     if (constant_len > blocksize) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONSTANT_LENGTH);
-        ret = 0;
         goto out;
     }
 

@@ -413,8 +413,10 @@ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
          */
         int ret = -1;
         size_t outl = 0;
-        size_t blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
+        int blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
 
+        if (blocksize < 0)
+            return 0;
         if (ctx->cipher->ccipher != NULL)
             ret =  ctx->cipher->ccipher(ctx->algctx, out, &outl,
                                         inl + (blocksize == 1 ? 0 : blocksize),

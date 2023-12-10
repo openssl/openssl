@@ -98,17 +98,6 @@ static void *cmac_dup(void *vsrc)
     return dst;
 }
 
-static size_t cmac_size(void *vmacctx)
-{
-    struct cmac_data_st *macctx = vmacctx;
-    const EVP_CIPHER_CTX *cipherctx = CMAC_CTX_get0_cipher_ctx(macctx->ctx);
-
-    if (EVP_CIPHER_CTX_get0_cipher(cipherctx) == NULL)
-        return 0;
-
-    return EVP_CIPHER_CTX_get_block_size(cipherctx);
-}
-
 static int cmac_setkey(struct cmac_data_st *macctx,
                        const unsigned char *key, size_t keylen)
 {
@@ -117,6 +106,17 @@ static int cmac_setkey(struct cmac_data_st *macctx,
                        ossl_prov_cipher_engine(&macctx->cipher));
     ossl_prov_cipher_reset(&macctx->cipher);
     return rv;
+}
+
+static int cmac_setsize(CMAC_CTX *cmacctx, OSSL_PARAM *p)
+{
+    EVP_CIPHER_CTX *ctx = CMAC_CTX_get0_cipher_ctx(cmacctx);
+    int sz = -1;
+
+    if (ctx != NULL)
+        sz = EVP_CIPHER_CTX_get_block_size(ctx);
+    return sz > 0
+           && OSSL_PARAM_set_size_t(p, sz);
 }
 
 static int cmac_init(void *vmacctx, const unsigned char *key,
@@ -164,16 +164,14 @@ static const OSSL_PARAM *cmac_gettable_ctx_params(ossl_unused void *ctx,
 
 static int cmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 {
+    struct cmac_data_st *macctx = vmacctx;
     OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL
-            && !OSSL_PARAM_set_size_t(p, cmac_size(vmacctx)))
+    p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE);
+    if (p == NULL)
+        p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_BLOCK_SIZE);
+    if (p != NULL && !cmac_setsize(macctx->ctx, p))
         return 0;
-
-    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_BLOCK_SIZE)) != NULL
-            && !OSSL_PARAM_set_size_t(p, cmac_size(vmacctx)))
-        return 0;
-
     return 1;
 }
 
