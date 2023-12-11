@@ -71,6 +71,42 @@ static const char *getname(int id)
 }
 #endif
 
+static int test_evp_cipher_api_safety(void)
+{
+    int ret = 0;
+    EVP_CIPHER_CTX *ctx = NULL;
+
+    ctx = EVP_CIPHER_CTX_new();
+
+    if (!TEST_ptr(ctx)) {
+        TEST_info("Unable to allocate cipher context");
+        goto err;
+    }
+
+    /*
+     * Ensure that EVP_CIPHER_get_block_size returns 0
+     * if we haven't initalized the cipher in this context
+     */
+    if (!TEST_int_eq(EVP_CIPHER_CTX_get_block_size(ctx), 0)) {
+        TEST_info("EVP_CIPHER_get_block_size returns non-zero");
+        goto err_free;
+    }
+
+    /*
+     * Ensure that EVP_CIPHER_get_iv_length returns -1
+     * if we haven't initalized the cipher in this context
+     */
+    if (!TEST_int_eq(EVP_CIPHER_CTX_get_iv_length(ctx), -1)) {
+        TEST_info("EVP_CIPHER_get_iv_length did not return -1");
+        goto err_free;
+    }
+    ret = 1;
+err_free:
+    EVP_CIPHER_CTX_free(ctx);
+err:
+    return ret;
+}
+
 /*
  * We're using some DH specific values in this test, so we skip compilation if
  * we're in a no-dh build.
@@ -726,6 +762,8 @@ int setup_tests(void)
 
     if (!test_get_libctx(&libctx, &nullprov, config_file, &libprov, prov_name))
         return 0;
+
+    ADD_TEST(test_evp_cipher_api_safety);
 
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DH)
     ADD_ALL_TESTS(test_dsa_param_keygen, 3 * 3 * 3);
