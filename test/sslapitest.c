@@ -6335,6 +6335,7 @@ static int test_export_key_mat(int tst)
     const unsigned char context[] = "context";
     const unsigned char *emptycontext = NULL;
     unsigned char longcontext[1280];
+    int test_longcontext = fips_provider_version_ge(libctx, 3, 3, 0);
     unsigned char ckeymat1[80], ckeymat2[80], ckeymat3[80], ckeymat4[80];
     unsigned char skeymat1[80], skeymat2[80], skeymat3[80], skeymat4[80];
     size_t labellen;
@@ -6429,12 +6430,14 @@ static int test_export_key_mat(int tst)
                                                        sizeof(ckeymat3), label,
                                                        labellen,
                                                        NULL, 0, 0), 1)
-            || !TEST_int_eq(SSL_export_keying_material(clientssl, ckeymat4,
-                                                       sizeof(ckeymat4), label,
-                                                       labellen,
-                                                       longcontext,
-                                                       sizeof(longcontext), 1),
-                            1)
+            || (test_longcontext
+                && !TEST_int_eq(SSL_export_keying_material(clientssl,
+                                                           ckeymat4,
+                                                           sizeof(ckeymat4), label,
+                                                           labellen,
+                                                           longcontext,
+                                                           sizeof(longcontext), 1),
+                                1))
             || !TEST_int_eq(SSL_export_keying_material(serverssl, skeymat1,
                                                        sizeof(skeymat1), label,
                                                        labellen,
@@ -6450,12 +6453,13 @@ static int test_export_key_mat(int tst)
                                                        sizeof(skeymat3), label,
                                                        labellen,
                                                        NULL, 0, 0), 1)
-            || !TEST_int_eq(SSL_export_keying_material(serverssl, skeymat4,
-                                                       sizeof(skeymat4), label,
-                                                       labellen,
-                                                       longcontext,
-                                                       sizeof(longcontext), 1),
-                            1)
+            || (test_longcontext
+                && !TEST_int_eq(SSL_export_keying_material(serverssl, skeymat4,
+                                                           sizeof(skeymat4), label,
+                                                           labellen,
+                                                           longcontext,
+                                                           sizeof(longcontext), 1),
+                                1))
                /*
                 * Check that both sides created the same key material with the
                 * same context.
@@ -6478,8 +6482,9 @@ static int test_export_key_mat(int tst)
                 * Check that both sides created the same key material with a
                 * long context.
                 */
-            || !TEST_mem_eq(ckeymat4, sizeof(ckeymat4), skeymat4,
-                            sizeof(skeymat4))
+            || (test_longcontext
+                && !TEST_mem_eq(ckeymat4, sizeof(ckeymat4), skeymat4,
+                                sizeof(skeymat4)))
                /* Different contexts should produce different results */
             || !TEST_mem_ne(ckeymat1, sizeof(ckeymat1), ckeymat2,
                             sizeof(ckeymat2)))
