@@ -1495,6 +1495,14 @@ if ($target =~ /linux.*-mips/ && !$disabled{asm}
         unshift @{$config{cxxflags}}, $value if $config{CXX};
 }
 
+if ($target =~ /linux.*-loongarch.*/ && !$disabled{asm}) {
+        my $cc = $config{CROSS_COMPILE}.$config{CC};
+        if (!OpenSSL::config::okrun('echo xvadd.w \$xr0,\$xr0,\$xr0',
+                   "$cc -c -x assembler - -o /dev/null 2>/dev/null")) {
+            $disabled{asm} = 'no-asm';
+        }
+}
+
 # If threads aren't disabled, check how possible they are
 unless ($disabled{threads}) {
     if ($auto_threads) {
