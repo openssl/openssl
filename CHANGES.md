@@ -28,6 +28,11 @@ OpenSSL 3.3
 
 ### Changes between 3.2 and 3.3 [xx XXX xxxx]
 
+ * The activate configuration setting for providers in openssl.cnf has been
+   updated to require a value of [1|yes|true|on] to activate the provider.
+
+    *Neil Horman*
+
  * In `openssl speed`, changed the default hash function used with `hmac` from
    `md5` to `sha256`.
 
