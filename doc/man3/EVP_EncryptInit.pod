@@ -523,7 +523,8 @@ length to any value other than the fixed value is an error.
 =item EVP_CIPHER_get_iv_length() and EVP_CIPHER_CTX_get_iv_length()
 
 Return the IV length of a cipher when passed an B<EVP_CIPHER> or
-B<EVP_CIPHER_CTX>. It will return zero if the cipher does not use an IV.
+B<EVP_CIPHER_CTX>. It will return zero if the cipher does not use an IV, or -1
+in the event an error occurs (such as the cipher not yet being initalized).
 The constant B<EVP_MAX_IV_LENGTH> is the maximum IV length for all ciphers.
 
 =item EVP_CIPHER_CTX_get_tag_length()
@@ -536,7 +537,7 @@ the tag length has not been set.
 
 Return the block size of a cipher when passed an B<EVP_CIPHER> or
 B<EVP_CIPHER_CTX> structure. The constant B<EVP_MAX_BLOCK_LENGTH> is also the
-maximum block length for all ciphers. A value of -1 is returned if the cipher
+maximum block length for all ciphers. A value of 0 is returned if the cipher
 has not been properly initalized with a call to B<EVP_CipherInit>.
 
 =item EVP_CIPHER_get_type() and EVP_CIPHER_CTX_get_type()
@@ -1263,7 +1264,7 @@ return an B<EVP_CIPHER> structure or NULL on error.
 EVP_CIPHER_get_nid() and EVP_CIPHER_CTX_get_nid() return a NID.
 
 EVP_CIPHER_get_block_size() and EVP_CIPHER_CTX_get_block_size() return the
-block size.
+block size, or 0 on error.
 
 EVP_CIPHER_get_key_length() and EVP_CIPHER_CTX_get_key_length() return the key
 length.

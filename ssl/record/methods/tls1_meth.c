@@ -222,6 +222,11 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
 
     bs = EVP_CIPHER_get_block_size(EVP_CIPHER_CTX_get0_cipher(ds));
 
+    if (bs == 0) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_CIPHER);
+        return 0;
+    }
+
     if (n_recs > 1) {
         if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ds))
                  & EVP_CIPH_FLAG_PIPELINE) == 0) {

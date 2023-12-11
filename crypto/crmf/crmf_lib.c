@@ -668,6 +668,9 @@ X509
                                   ecert->encSymmKey->length) <= 0)
         goto end;
 
+    if (EVP_CIPHER_get_iv_length(cipher) < 0)
+        goto end;
+
     if ((iv = OPENSSL_malloc(EVP_CIPHER_get_iv_length(cipher))) == NULL)
         goto end;
     if (ASN1_TYPE_get_octetstring(ecert->symmAlg->parameter, iv,

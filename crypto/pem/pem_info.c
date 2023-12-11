@@ -234,6 +234,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
     if (enc != NULL) {
         objstr = EVP_CIPHER_get0_name(enc);
         if (objstr == NULL
+            || EVP_CIPHER_get_iv_length(enc) < 0
                /*
                 * Check "Proc-Type: 4,Encrypted\nDEK-Info: objstr,hex-iv\n"
                 * fits into buf
@@ -270,6 +271,11 @@ int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
             objstr = EVP_CIPHER_get0_name(xi->enc_cipher.cipher);
             if (objstr == NULL) {
                 ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_CIPHER);
+                goto err;
+            }
+
+            if (EVP_CIPHER_get_iv_length(enc) < 0) {
+                ERR_raise(ERR_LIB_PEM, PEM_R_CIPHER_IS_NULL);
                 goto err;
             }
 

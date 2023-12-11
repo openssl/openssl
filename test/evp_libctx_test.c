@@ -439,6 +439,8 @@ static int test_cipher_reinit_partialupdate(int test_id)
         goto err;
 
     in_len = EVP_CIPHER_get_block_size(cipher) / 2;
+    if (!TEST_int_ge(in_len, 0))
+        goto err;
 
     /* skip any ciphers that don't allow partial updates */
     if (((EVP_CIPHER_get_flags(cipher)

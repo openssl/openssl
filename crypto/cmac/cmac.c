@@ -95,7 +95,7 @@ int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
 
     if (in->nlast_block == -1)
         return 0;
-    if ((bl = EVP_CIPHER_CTX_get_block_size(in->cctx)) < 0)
+    if ((bl = EVP_CIPHER_CTX_get_block_size(in->cctx)) == 0)
         return 0;
     if (!EVP_CIPHER_CTX_copy(out->cctx, in->cctx))
         return 0;
@@ -111,6 +111,7 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
               const EVP_CIPHER *cipher, ENGINE *impl)
 {
     static const unsigned char zero_iv[EVP_MAX_BLOCK_LENGTH] = { 0 };
+    int block_len;
 
     /* All zeros means restart */
     if (!key && !cipher && !impl && keylen == 0) {
@@ -119,7 +120,10 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
             return 0;
         if (!EVP_EncryptInit_ex(ctx->cctx, NULL, NULL, NULL, zero_iv))
             return 0;
-        memset(ctx->tbl, 0, EVP_CIPHER_CTX_get_block_size(ctx->cctx));
+        block_len = EVP_CIPHER_CTX_get_block_size(ctx->cctx);
+        if (block_len == 0)
+            return 0;
+        memset(ctx->tbl, 0, block_len);
         ctx->nlast_block = 0;
         return 1;
     }
@@ -170,7 +174,7 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
         return 0;
     if (dlen == 0)
         return 1;
-    if ((bl = EVP_CIPHER_CTX_get_block_size(ctx->cctx)) < 0)
+    if ((bl = EVP_CIPHER_CTX_get_block_size(ctx->cctx)) == 0)
         return 0;
     /* Copy into partial block if we need to */
     if (ctx->nlast_block > 0) {
@@ -234,7 +238,7 @@ int CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
 
     if (ctx->nlast_block == -1)
         return 0;
-    if ((bl = EVP_CIPHER_CTX_get_block_size(ctx->cctx)) < 0)
+    if ((bl = EVP_CIPHER_CTX_get_block_size(ctx->cctx)) == 0)
         return 0;
     if (poutlen != NULL)
         *poutlen = (size_t)bl;

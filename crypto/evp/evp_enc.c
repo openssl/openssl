@@ -275,6 +275,11 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
             return 0;
         }
 
+        if (EVP_CIPHER_CTX_get_iv_length(ctx) < 0) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_IV_LENGTH);
+            return 0;
+        }
+
         return ctx->cipher->einit(ctx->algctx,
                                   key,
                                   key == NULL ? 0

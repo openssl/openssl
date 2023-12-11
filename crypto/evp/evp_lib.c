@@ -397,7 +397,7 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
 
 int EVP_CIPHER_get_block_size(const EVP_CIPHER *cipher)
 {
-    return (cipher == NULL) ? -1 : cipher->block_size;
+    return (cipher == NULL) ? 0 : cipher->block_size;
 }
 
 int EVP_CIPHER_CTX_get_block_size(const EVP_CIPHER_CTX *ctx)
@@ -427,6 +427,9 @@ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         int ret = -1;
         size_t outl = 0;
         size_t blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
+
+        if (blocksize == 0)
+            return 0;
 
         if (ctx->cipher->ccipher != NULL)
             ret =  ctx->cipher->ccipher(ctx->algctx, out, &outl,

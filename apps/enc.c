@@ -563,6 +563,9 @@ int enc_main(int argc, char **argv)
                 /* not needed if HASH_UPDATE() is fixed : */
                 int islen = (sptr != NULL ? saltlen : 0);
 
+                if (ivlen < 0)
+                    goto end;
+
                 if (!PKCS5_PBKDF2_HMAC(str, str_len, sptr, islen,
                                        iter, dgst, iklen+ivlen, tmpkeyiv)) {
                     BIO_printf(bio_err, "PKCS5_PBKDF2_HMAC failed\n");
@@ -593,6 +596,11 @@ int enc_main(int argc, char **argv)
         }
         if (hiv != NULL) {
             int siz = EVP_CIPHER_get_iv_length(cipher);
+
+            if (siz < 0) {
+                BIO_printf(bio_err, "warning, cipher not initalized\n");
+                goto end;
+            }
             if (siz == 0) {
                 BIO_printf(bio_err, "warning: iv not used by this cipher\n");
             } else if (!set_hex(hiv, iv, siz)) {
@@ -601,7 +609,7 @@ int enc_main(int argc, char **argv)
             }
         }
         if ((hiv == NULL) && (str == NULL)
-            && EVP_CIPHER_get_iv_length(cipher) != 0
+            && EVP_CIPHER_get_iv_length(cipher) <= 0
             && wrap == 0) {
             /*
              * No IV was explicitly set and no IV was generated.

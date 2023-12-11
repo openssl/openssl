@@ -1081,6 +1081,9 @@ static int s390x_aes_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     int n = cctx->res;
     int rem;
 
+    if (ivlen < 0)
+        return 0;
+
     memcpy(cctx->kmo.param.cv, iv, ivlen);
     while (n && len) {
         *out = *in ^ cctx->kmo.param.cv[n];
@@ -1234,6 +1237,9 @@ static int s390x_aes_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     S390X_AES_CFB_CTX *cctx = EVP_C_DATA(S390X_AES_CFB_CTX, ctx);
     const int ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
     unsigned char *iv = EVP_CIPHER_CTX_iv_noconst(ctx);
+
+    if (ivlen < 0)
+        return 0;
 
     memcpy(cctx->kmf.param.cv, iv, ivlen);
     s390x_kmf(in, len, out, cctx->fc, &cctx->kmf.param);
@@ -1450,6 +1456,8 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
     switch (type) {
     case EVP_CTRL_INIT:
         ivlen = EVP_CIPHER_get_iv_length(c->cipher);
+        if (ivlen < 0)
+            return 0;
         gctx->key_set = 0;
         gctx->iv_set = 0;
         gctx->ivlen = ivlen;
@@ -2658,6 +2666,8 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
     EVP_AES_GCM_CTX *gctx = EVP_C_DATA(EVP_AES_GCM_CTX,c);
     switch (type) {
     case EVP_CTRL_INIT:
+        if (EVP_CIPHER_get_iv_length(c->cipher) < 0)
+            return 0;
         gctx->key_set = 0;
         gctx->iv_set = 0;
         gctx->ivlen = EVP_CIPHER_get_iv_length(c->cipher);
@@ -3858,6 +3868,8 @@ static int aes_ocb_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
     switch (type) {
     case EVP_CTRL_INIT:
+        if (EVP_CIPHER_get_iv_length(c->cipher) < 0)
+            return 0;
         octx->key_set = 0;
         octx->iv_set = 0;
         octx->ivlen = EVP_CIPHER_get_iv_length(c->cipher);

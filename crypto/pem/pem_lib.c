@@ -331,7 +331,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 
     if (enc != NULL) {
         objstr = EVP_CIPHER_get0_name(enc);
-        if (objstr == NULL || EVP_CIPHER_get_iv_length(enc) == 0
+        if (objstr == NULL || EVP_CIPHER_get_iv_length(enc) <= 0
                 || EVP_CIPHER_get_iv_length(enc) > (int)sizeof(iv)
                    /*
                     * Check "Proc-Type: 4,Encrypted\nDEK-Info: objstr,hex-iv\n"
@@ -552,6 +552,10 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
         return 0;
     }
     ivlen = EVP_CIPHER_get_iv_length(enc);
+    if (ivlen < 0) {
+        ERR_raise(ERR_LIB_PEM, PEM_R_CIPHER_IS_NULL);
+        return 0;
+    }
     if (ivlen > 0 && *header++ != ',') {
         ERR_raise(ERR_LIB_PEM, PEM_R_MISSING_DEK_IV);
         return 0;

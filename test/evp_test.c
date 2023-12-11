@@ -1131,7 +1131,7 @@ static int cipher_test_run(EVP_TEST *t)
         t->err = "NO_KEY";
         return 0;
     }
-    if (!cdat->iv && EVP_CIPHER_get_iv_length(cdat->cipher)) {
+    if (!cdat->iv && EVP_CIPHER_get_iv_length(cdat->cipher) > 0) {
         /* IV is optional and usually omitted in wrap mode */
         if (EVP_CIPHER_get_mode(cdat->cipher) != EVP_CIPH_WRAP_MODE) {
             t->err = "NO_IV";
