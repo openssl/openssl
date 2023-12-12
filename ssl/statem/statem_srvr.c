@@ -1734,16 +1734,9 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         /* SSLv3/TLS */
         s->client_version = clienthello->legacy_version;
     }
-    /*
-     * Do SSL/TLS version negotiation if applicable.
-     */
-    if (SSL_CONNECTION_IS_DTLS(s)
-            && ssl->method->version != DTLS_ANY_VERSION
-            && DTLS_VERSION_LT((int)clienthello->legacy_version, s->version)) {
-        protverr = SSL_R_VERSION_TOO_LOW;
-    } else {
-        protverr = ssl_choose_server_version(s, clienthello, &dgrd);
-    }
+
+    /* Choose the server SSL/TLS/DTLS version. */
+    protverr = ssl_choose_server_version(s, clienthello, &dgrd);
 
     if (protverr) {
         if (SSL_IS_FIRST_HANDSHAKE(s)) {
