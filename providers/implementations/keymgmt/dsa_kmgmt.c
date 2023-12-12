@@ -477,6 +477,12 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
+
+        /*
+         * Ony assign context gen_type if it was set by dsa_gen_type_name2id
+         * must be in range:
+         * DSA_PARAMGEN_TYPE_FIPS_186_4 <= gen_type <= DSA_PARAMGEN_TYPE_FIPS_DEFAULT
+         */
         if (gen_type != -1)
             gctx->gen_type = gen_type;
     }
@@ -571,7 +577,12 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         gctx->gen_type = (gctx->pbits >= 2048 ? DSA_PARAMGEN_TYPE_FIPS_186_4 :
                                                 DSA_PARAMGEN_TYPE_FIPS_186_2);
 
-    /* Bounds check on context gen_type */
+    /*
+     * Do a bounds check on context gen_type. Must be in range:
+     * DSA_PARAMGEN_TYPE_FIPS_186_4 <= gen_type <= DSA_PARAMGEN_TYPE_FIPS_DEFAULT
+     * Noted here as this needs to be adjusted if a new type is
+     * added.
+     */
     if (!ossl_assert((gctx->gen_type >= DSA_PARAMGEN_TYPE_FIPS_186_4)
                     && (gctx->gen_type <= DSA_PARAMGEN_TYPE_FIPS_DEFAULT))) {
         ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,

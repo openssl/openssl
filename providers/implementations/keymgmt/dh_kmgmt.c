@@ -710,7 +710,12 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (gctx->group_nid != NID_undef)
         gctx->gen_type = DH_PARAMGEN_TYPE_GROUP;
 
-    /* Bounds check on context gen_type */
+    /*
+     * Do a bounds check on context gen_type. Must be in range:
+     * DH_PARAMGEN_TYPE_GENERATOR <= gen_type <= DH_PARAMGEN_TYPE_GROUP
+     * Noted here as this needs to be adjusted if a new group type is
+     * added.
+     */
     if (!ossl_assert((gctx->gen_type >= DH_PARAMGEN_TYPE_GENERATOR)
                     && (gctx->gen_type <= DH_PARAMGEN_TYPE_GROUP))) {
         ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
