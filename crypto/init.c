@@ -620,44 +620,51 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
 
 #ifndef OPENSSL_NO_ENGINE
-    if ((opts & OPENSSL_INIT_ENGINE_OPENSSL)
-            && !RUN_ONCE(&engine_openssl, ossl_init_engine_openssl))
-        return 0;
-    engine_init_done = 1;
+    if (opts & OPENSSL_INIT_ENGINE_OPENSSL) {
+        if(!RUN_ONCE(&engine_openssl, ossl_init_engine_openssl))
+            return 0;
+        engine_init_done = 1;
+    }
 # ifndef OPENSSL_NO_RDRAND
-    if ((opts & OPENSSL_INIT_ENGINE_RDRAND)
-            && !RUN_ONCE(&engine_rdrand, ossl_init_engine_rdrand))
-        return 0;
-    engine_init_done = 1;
+    if (opts & OPENSSL_INIT_ENGINE_RDRAND) {
+        if (!RUN_ONCE(&engine_rdrand, ossl_init_engine_rdrand))
+            return 0;
+        engine_init_done = 1;
+    }
 # endif
-    if ((opts & OPENSSL_INIT_ENGINE_DYNAMIC)
-            && !RUN_ONCE(&engine_dynamic, ossl_init_engine_dynamic))
-        return 0;
-    engine_init_done = 1;
+    if (opts & OPENSSL_INIT_ENGINE_DYNAMIC) {
+        if (!RUN_ONCE(&engine_dynamic, ossl_init_engine_dynamic))
+            return 0;
+        engine_init_done = 1;
+    }
 # ifndef OPENSSL_NO_STATIC_ENGINE
 #  ifndef OPENSSL_NO_DEVCRYPTOENG
-    if ((opts & OPENSSL_INIT_ENGINE_CRYPTODEV)
-            && !RUN_ONCE(&engine_devcrypto, ossl_init_engine_devcrypto))
-        return 0;
-    engine_init_done = 1;
+    if (opts & OPENSSL_INIT_ENGINE_CRYPTODEV) {
+        if (!RUN_ONCE(&engine_devcrypto, ossl_init_engine_devcrypto))
+            return 0;
+        engine_init_done = 1;
+    }
 #  endif
 #  if !defined(OPENSSL_NO_PADLOCKENG)
-    if ((opts & OPENSSL_INIT_ENGINE_PADLOCK)
-            && !RUN_ONCE(&engine_padlock, ossl_init_engine_padlock))
-        return 0;
-    engine_init_done = 1;
+    if (opts & OPENSSL_INIT_ENGINE_PADLOCK) {
+        if (!RUN_ONCE(&engine_padlock, ossl_init_engine_padlock))
+            return 0;
+        engine_init_done = 1;
+    }
 #  endif
 #  if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
-    if ((opts & OPENSSL_INIT_ENGINE_CAPI)
-            && !RUN_ONCE(&engine_capi, ossl_init_engine_capi))
-        return 0;
-    engine_init_done = 1;
+    if (opts & OPENSSL_INIT_ENGINE_CAPI) {
+        if (!RUN_ONCE(&engine_capi, ossl_init_engine_capi))
+            return 0;
+        engine_init_done = 1;
+    }
 #  endif
 #  if !defined(OPENSSL_NO_AFALGENG)
-    if ((opts & OPENSSL_INIT_ENGINE_AFALG)
-            && !RUN_ONCE(&engine_afalg, ossl_init_engine_afalg))
-        return 0;
-    engine_init_done = 1;
+    if (opts & OPENSSL_INIT_ENGINE_AFALG) {
+        if (!RUN_ONCE(&engine_afalg, ossl_init_engine_afalg))
+            return 0;
+        engine_init_done = 1;
+    }
 #  endif
 # endif
     if ((engine_init_done == 1) && (opts & (OPENSSL_INIT_ENGINE_ALL_BUILTIN
