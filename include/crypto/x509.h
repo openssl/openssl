@@ -367,4 +367,21 @@ EVP_PKEY *ossl_d2i_PUBKEY_legacy(EVP_PKEY **a, const unsigned char **pp,
 
 int x509v3_add_len_value_uchar(const char *name, const unsigned char *value,
                                size_t vallen, STACK_OF(CONF_VALUE) **extlist);
+/* Attribute addition functions not checking for duplicate attributes */
+STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
+                                                X509_ATTRIBUTE *attr);
+STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr_by_OBJ(STACK_OF(X509_ATTRIBUTE) **x,
+                                                       const ASN1_OBJECT *obj,
+                                                       int type,
+                                                       const unsigned char *bytes,
+                                                       int len);
+STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr_by_NID(STACK_OF(X509_ATTRIBUTE) **x,
+                                                       int nid, int type,
+                                                       const unsigned char *bytes,
+                                                       int len);
+STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) **x,
+                                                       const char *attrname,
+                                                       int type,
+                                                       const unsigned char *bytes,
+                                                       int len);
 #endif  /* OSSL_CRYPTO_X509_H */
