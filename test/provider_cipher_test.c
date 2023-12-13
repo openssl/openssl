@@ -149,6 +149,7 @@ static int dummy_pbe_keygen(EVP_CIPHER_CTX *ctx, const char *pass,
     return EVP_CipherInit_ex2(ctx, cipher, NULL, NULL, 1, NULL);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 /* Test that PKCS12_pbe_crypt_ex() handles an invalid blocksize */
 static int pkcs12_pbe_cipher_bad_blocksize_test(void)
 {
@@ -193,6 +194,7 @@ err:
     X509_ALGOR_free(algor);
     return ret;
 }
+#endif
 
 int setup_tests(void)
 {
@@ -223,8 +225,9 @@ int setup_tests(void)
     ADD_TEST(evp_cipher_bad_blocksize_test);
     ADD_TEST(bio_cipher_read_bad_blocksize_test);
     ADD_TEST(krb5kdf_cipher_bad_blocksize_test);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(pkcs12_pbe_cipher_bad_blocksize_test);
-
+#endif
     return 1;
 }
 
