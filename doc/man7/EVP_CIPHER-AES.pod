@@ -63,6 +63,12 @@ FIPS provider:
 This implementation supports the parameters described in
 L<EVP_EncryptInit(3)/PARAMETERS>.
 
+=head1 NOTES
+
+The XTS, SIV and WRAP mode implementations do not support streaming. That
+means to obtain correct results there can be only one L<EVP_EncryptUpdate(3)>
+or L<EVP_DecryptUpdate(3)> call after the initialization of the context.
+
 =head1 SEE ALSO
 
 L<provider-cipher(7)>, L<OSSL_PROVIDER-FIPS(7)>, L<OSSL_PROVIDER-default(7)>
