@@ -2910,9 +2910,11 @@ static int sig_cb(const char *elem, int len, void *arg)
     if (p == NULL) {
         /* First check the providers */
         SSL_CTX *ctx_helper = OPENSSL_zalloc(sizeof(*ctx_helper));
+
         /* Load provider sigalgs */
         if (!ctx_helper || !ssl_load_sigalgs(ctx_helper)) {
           ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+          SSL_CTX_free(ctx_helper);
           return 0;
         }
         /* Check if a provider supports the sigalg */
@@ -2920,8 +2922,17 @@ static int sig_cb(const char *elem, int len, void *arg)
           if (ctx_helper->sigalg_list[i].sigalg_name != NULL
               && strcmp(etmp, ctx_helper->sigalg_list[i].sigalg_name) == 0) {
             sarg->sigalgs[sarg->sigalgcnt++] = ctx_helper->sigalg_list[i].code_point;
-            SSL_CTX_free(ctx_helper);
-            return 1;
+            break;
+          }
+        }
+        /* Check the built-in sigalgs */
+        if (i == ctx_helper->sigalg_list_len) {
+          for (i = 0, s = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
+               i++, s++) {
+            if (s->name != NULL && strcmp(etmp, s->name) == 0) {
+              sarg->sigalgs[sarg->sigalgcnt++] = s->sigalg;
+              break;
+            }
           }
         }
         SSL_CTX_free(ctx_helper);
