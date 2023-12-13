@@ -2801,7 +2801,7 @@ __owur int tls_use_ticket(SSL_CONNECTION *s);
 
 void ssl_set_sig_mask(uint32_t *pmask_a, SSL_CONNECTION *s, int op);
 
-__owur int tls1_set_sigalgs_list(CERT *c, const char *str, int client);
+__owur int tls1_set_sigalgs_list(SSL_CTX *ctx, CERT *c, const char *str, int client);
 __owur int tls1_set_raw_sigalgs(CERT *c, const uint16_t *psigs, size_t salglen,
                                 int client);
 __owur int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen,
