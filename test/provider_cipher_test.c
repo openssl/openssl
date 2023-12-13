@@ -137,6 +137,7 @@ end:
     return ret;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 /*
  * A dummy PBE keygen - For the tests purposes all it is required to do is set
  * up the cipher in the ctx
@@ -149,7 +150,6 @@ static int dummy_pbe_keygen(EVP_CIPHER_CTX *ctx, const char *pass,
     return EVP_CipherInit_ex2(ctx, cipher, NULL, NULL, 1, NULL);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
 /* Test that PKCS12_pbe_crypt_ex() handles an invalid blocksize */
 static int pkcs12_pbe_cipher_bad_blocksize_test(void)
 {

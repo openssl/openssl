@@ -213,7 +213,6 @@ static const OSSL_DISPATCH fake_good_cipher_functions[] = {
     OSSL_DISPATCH_END
 };
 
-
 static const OSSL_ALGORITHM fake_cipher_algs[] = {
     { "Good", "provider=fake-cipher", fake_good_cipher_functions, "Fake Cipher" },
     { "Bad", "provider=fake-cipher", fake_bad_cipher_functions, "Fake Cipher" },
