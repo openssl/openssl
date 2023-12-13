@@ -456,7 +456,8 @@ static OSSL_PROVIDER *provider_new(const char *name,
 
     if ((prov->opbits_lock = CRYPTO_THREAD_lock_new()) == NULL
         || (prov->flag_lock = CRYPTO_THREAD_lock_new()) == NULL
-        || (prov->parameters = sk_INFOPAIR_deep_copy(parameters,
+        || (prov->parameters = (parameters == NULL) ? sk_INFOPAIR_new_null() :
+                                                     sk_INFOPAIR_deep_copy(parameters,
                                                      infopair_copy,
                                                      infopair_free)) == NULL) {
         ossl_provider_free(prov);

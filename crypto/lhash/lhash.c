@@ -228,6 +228,9 @@ void OPENSSL_LH_doall(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNC func)
 {
     struct lhash_extended_st *elh = (struct lhash_extended_st *)lh;
 
+    if (lh == NULL)
+        return;
+
     doall_util_fn(lh, 0, elh->daw, func, (OPENSSL_LH_DOALL_FUNCARG)0,
                   (OPENSSL_LH_DOALL_FUNCARG_THUNK)0, NULL);
 }
@@ -236,6 +239,9 @@ void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh,
                           OPENSSL_LH_DOALL_FUNCARG func, void *arg)
 {
     struct lhash_extended_st *elh = (struct lhash_extended_st *)lh;
+
+    if (lh == NULL)
+        return;
 
     doall_util_fn(lh, 1, (OPENSSL_LH_DOALL_FUNC_THUNK)0,
                           (OPENSSL_LH_DOALL_FUNC)0, func, elh->daaw, arg);
