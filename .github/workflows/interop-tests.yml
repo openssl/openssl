@@ -1,5 +1,5 @@
 name: Interoperability tests with GnuTLS and NSS
-on: [pull_request, push]
+on: [push]
 jobs:
   test:
     runs-on: ubuntu-22.04
