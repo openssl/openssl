@@ -306,7 +306,7 @@ struct ossl_record_method_st {
 
     /*
      * The maximum expansion in bytes that the record layer might add while
-     * writing a record
+     * writing a record. A return value of zero indicates an error.
      */
     size_t (*get_max_record_overhead)(OSSL_RECORD_LAYER *rl);
 

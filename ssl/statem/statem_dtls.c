@@ -127,6 +127,8 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
     }
 
     overhead = s->rlayer.wrlmethod->get_max_record_overhead(s->rlayer.wrl);
+    if (overhead == 0)
+        return -1;
 
     frag_off = 0;
     s->rwstate = SSL_NOTHING;
