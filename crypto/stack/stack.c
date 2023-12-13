@@ -45,7 +45,6 @@ OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk,
                                             OPENSSL_sk_compfunc c)
 {
     OPENSSL_sk_compfunc old = sk->comp;
-
     if (sk->comp != c)
         sk->sorted = 0;
     sk->comp = c;
@@ -97,15 +96,10 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
     OPENSSL_STACK *ret;
     int i;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         goto err;
 
-    if (sk == NULL) {
-        ret->num = 0;
-        ret->sorted = 0;
-        ret->comp = NULL;
-        ret->thunk = NULL;
-    } else {
+    if (sk != NULL) {
         /* direct structure assignment */
         *ret = *sk;
     }
@@ -263,7 +257,6 @@ OPENSSL_STACK *OPENSSL_sk_new_reserve(OPENSSL_sk_compfunc c, int n)
         return NULL;
 
     st->comp = c;
-    st->thunk = NULL;
 
     if (n <= 0)
         return st;
@@ -469,10 +462,11 @@ void OPENSSL_sk_pop_free(OPENSSL_STACK *st, OPENSSL_sk_freefunc func)
         return;
     for (i = 0; i < st->num; i++)
         if (st->data[i] != NULL) {
-            if (st->pop_free_thunk)
+            if (st->pop_free_thunk) {
                 st->pop_free_thunk((void *)st->data[i], func);
-            else
+            } else {
                 func((char *)st->data[i]);
+            }
         }
     OPENSSL_sk_free(st);
 }
@@ -519,7 +513,6 @@ static int qsort_thunk_cmp(const void *a, const void *b, void *data)
     if (st->thunk != NULL)
         return st->thunk(a, b, st->comp);
     else {
-        fprintf(stderr, "Using non thunked stack!\n");
         return st->comp(a, b);
     }
 }
