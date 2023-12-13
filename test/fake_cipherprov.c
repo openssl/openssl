@@ -167,7 +167,7 @@ static int fake_cipher_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 /* This cipher is used to test an invalid blocksize being used by API's */
-const OSSL_DISPATCH fake_bad_cipher_functions[] = {
+static const OSSL_DISPATCH fake_bad_cipher_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX,
       (void (*)(void)) fake_cipher_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) fake_cipher_freectx },
@@ -190,7 +190,7 @@ const OSSL_DISPATCH fake_bad_cipher_functions[] = {
     OSSL_DISPATCH_END
 };
 
-const OSSL_DISPATCH fake_good_cipher_functions[] = {
+static const OSSL_DISPATCH fake_good_cipher_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX,
       (void (*)(void)) fake_cipher_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) fake_cipher_freectx },
