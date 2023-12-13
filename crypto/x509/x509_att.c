@@ -322,6 +322,9 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
         }
     } else {
         ASN1_TYPE_set(ttmp, atype, stmp);
+        if (atype == V_ASN1_BOOLEAN) {
+            ASN1_STRING_free(stmp);
+        }
         stmp = NULL;
     }
     if (!sk_ASN1_TYPE_push(attr->set, ttmp)) {
