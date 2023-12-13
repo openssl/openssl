@@ -8,6 +8,7 @@
  */
 
 #include <openssl/evp.h>
+#include <openssl/conf.h>
 #include "testutil.h"
 
 static char *configfile = NULL;
