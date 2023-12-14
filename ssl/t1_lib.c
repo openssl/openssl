@@ -1044,9 +1044,15 @@ static int gid_cb(const char *elem, int len, void *arg)
     size_t i;
     uint16_t gid = 0;
     char etmp[GROUP_NAME_BUFFER_LENGTH];
+    int ignore_unknown = 0;
 
     if (elem == NULL)
         return 0;
+    if (elem[0] == '?') {
+        ignore_unknown = 1;
+        ++elem;
+        --len;
+    }
     if (garg->gidcnt == garg->gidmax) {
         uint16_t *tmp =
             OPENSSL_realloc(garg->gid_arr,
@@ -1063,13 +1069,14 @@ static int gid_cb(const char *elem, int len, void *arg)
 
     gid = tls1_group_name2id(garg->ctx, etmp);
     if (gid == 0) {
-        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
-                       "group '%s' cannot be set", etmp);
-        return 0;
+        /* Unknown group - ignore, if ignore_unknown */
+        return ignore_unknown;
     }
     for (i = 0; i < garg->gidcnt; i++)
-        if (garg->gid_arr[i] == gid)
-            return 0;
+        if (garg->gid_arr[i] == gid) {
+            /* Duplicate group - ignore */
+            return 1;
+        }
     garg->gid_arr[garg->gidcnt++] = gid;
     return 1;
 }
@@ -1090,6 +1097,11 @@ int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
     gcb.ctx = ctx;
     if (!CONF_parse_list(str, ':', 1, gid_cb, &gcb))
         goto end;
+    if (gcb.gidcnt == 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "No valid groups in '%s'", str);
+        goto end;
+    }
     if (pext == NULL) {
         ret = 1;
         goto end;
@@ -2870,8 +2882,15 @@ static int sig_cb(const char *elem, int len, void *arg)
     const SIGALG_LOOKUP *s;
     char etmp[TLS_MAX_SIGSTRING_LEN], *p;
     int sig_alg = NID_undef, hash_alg = NID_undef;
+    int ignore_unknown = 0;
+
     if (elem == NULL)
         return 0;
+    if (elem[0] == '?') {
+        ignore_unknown = 1;
+        ++elem;
+        --len;
+    }
     if (sarg->sigalgcnt == TLS_MAX_SIGALGCNT)
         return 0;
     if (len > (int)(sizeof(etmp) - 1))
@@ -2896,8 +2915,10 @@ static int sig_cb(const char *elem, int len, void *arg)
                 break;
             }
         }
-        if (i == OSSL_NELEM(sigalg_lookup_tbl))
-            return 0;
+        if (i == OSSL_NELEM(sigalg_lookup_tbl)) {
+            /* Ignore unknown algorithms if ignore_unknown */
+            return ignore_unknown;
+        }
     } else {
         *p = 0;
         p++;
@@ -2905,8 +2926,10 @@ static int sig_cb(const char *elem, int len, void *arg)
             return 0;
         get_sigorhash(&sig_alg, &hash_alg, etmp);
         get_sigorhash(&sig_alg, &hash_alg, p);
-        if (sig_alg == NID_undef || hash_alg == NID_undef)
-            return 0;
+        if (sig_alg == NID_undef || hash_alg == NID_undef) {
+            /* Ignore unknown algorithms if ignore_unknown */
+            return ignore_unknown;
+        }
         for (i = 0, s = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
              i++, s++) {
             if (s->hash == hash_alg && s->sig == sig_alg) {
@@ -2914,15 +2937,17 @@ static int sig_cb(const char *elem, int len, void *arg)
                 break;
             }
         }
-        if (i == OSSL_NELEM(sigalg_lookup_tbl))
-            return 0;
+        if (i == OSSL_NELEM(sigalg_lookup_tbl)) {
+            /* Ignore unknown algorithms if ignore_unknown */
+            return ignore_unknown;
+        }
     }
 
-    /* Reject duplicates */
+    /* Ignore duplicates */
     for (i = 0; i < sarg->sigalgcnt - 1; i++) {
         if (sarg->sigalgs[i] == sarg->sigalgs[sarg->sigalgcnt - 1]) {
             sarg->sigalgcnt--;
-            return 0;
+            return 1;
         }
     }
     return 1;
@@ -2938,6 +2963,11 @@ int tls1_set_sigalgs_list(CERT *c, const char *str, int client)
     sig.sigalgcnt = 0;
     if (!CONF_parse_list(str, ':', 1, sig_cb, &sig))
         return 0;
+    if (sig.sigalgcnt == 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "No valid signature algorithms in '%s'", str);
+        return 0;
+    }
     if (c == NULL)
         return 1;
     return tls1_set_raw_sigalgs(c, sig.sigalgs, sig.sigalgcnt, client);
