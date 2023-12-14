@@ -6,7 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#define _GNU_SOURCE
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -517,11 +516,49 @@ static int qsort_thunk_cmp(const void *a, const void *b, void *data)
     }
 }
 
+static int openssl_sk_partition(OPENSSL_STACK *st, int low, int high)
+{
+    void *pivot = (void *)st->data[high];
+    int i = low - 1; /* Note this can be negative */
+    int j;
+    void *tmp;
+
+    for (j = low; j <= high; j++) {
+        /* If node arr[j] compares less than pivot */
+        if (qsort_thunk_cmp(&st->data[j], &pivot, (void *)st) == -1) {
+            /* increment the low index, and swap with the j element */
+            i++;
+            tmp = (void *)st->data[i];
+            st->data[i] = st->data[j];
+            st->data[j] = tmp;
+        }
+    }
+    /* swap the high element with the i+1 element */
+    tmp = (void *)st->data[i+1];
+    st->data[i+1] = st->data[high];
+    st->data[high] = tmp;
+    return i+1;
+}
+
+static void openssl_sk_quicksort(OPENSSL_STACK *st, int low, int high)
+{
+    int pi;
+
+    if (low < high) {
+        /* determine our pivot point */
+        pi = openssl_sk_partition(st, low, high);
+
+        /* recursively sort each partition */
+        openssl_sk_quicksort(st, low, pi-1);
+        openssl_sk_quicksort(st, pi+1, high);
+    }
+}
+
 void OPENSSL_sk_sort(OPENSSL_STACK *st)
 {
     if (st != NULL && !st->sorted && st->comp != NULL) {
         if (st->num > 1)
-            qsort_r(st->data, st->num, sizeof(void *), qsort_thunk_cmp, st);
+            openssl_sk_quicksort(st, 0, st->num-1);
         st->sorted = 1; /* empty or single-element stack is considered sorted */
     }
 }
