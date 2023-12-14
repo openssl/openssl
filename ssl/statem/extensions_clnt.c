@@ -539,6 +539,7 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
                                                  size_t chainidx)
 {
     int currv, min_version, max_version, reason;
+    int isdtls = SSL_CONNECTION_IS_DTLS(s);
 
     reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
     if (reason != 0) {
@@ -549,8 +550,8 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
     /*
      * Don't include this if we can't negotiate (D)TLSv1.3.
      */
-    if ((!SSL_CONNECTION_IS_DTLS(s) && max_version < TLS1_3_VERSION)
-        || (SSL_CONNECTION_IS_DTLS(s) && DTLS_VERSION_LT(max_version, DTLS1_3_VERSION)))
+    if ((!isdtls && max_version < TLS1_3_VERSION)
+        || (isdtls && DTLS_VERSION_LT(max_version, DTLS1_3_VERSION)))
         return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
@@ -560,10 +561,19 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
         return EXT_RETURN_FAIL;
     }
 
-    for (currv = max_version; currv >= min_version; currv--) {
-        if (!WPACKET_put_bytes_u16(pkt, currv)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
+    if (isdtls) {
+        for (currv = max_version; DTLS_VERSION_GE(currv, min_version); currv++) {
+            if (!WPACKET_put_bytes_u16(pkt, currv)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return EXT_RETURN_FAIL;
+            }
+        }
+    } else {
+        for (currv = max_version; currv >= min_version; currv--) {
+            if (!WPACKET_put_bytes_u16(pkt, currv)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return EXT_RETURN_FAIL;
+            }
         }
     }
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
