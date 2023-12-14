@@ -21,9 +21,13 @@ on: [pull_request, push]
 permissions:
   contents: read
 
+env:
+  UBUNTU_RUNNER: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+  MACOS_RUNNER: ${{ github.server_url == 'https://github.com' && 'macos-latest' || 'macos-self-hosted' }}
+
 jobs:
   check_update:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - name: install unifdef
       run: |
@@ -42,7 +46,7 @@ jobs:
       run: git diff --exit-code
 
   check_docs:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -62,7 +66,7 @@ jobs:
   # We are not as strict with libraries, but rather adapt to what's
   # expected to be available in a certain version of each platform.
   check-ansi:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -71,7 +75,7 @@ jobs:
       run: make -s -j4
 
   basic_gcc:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -91,7 +95,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   basic_clang:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -127,7 +131,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   minimal:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -144,7 +148,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   no-deprecated:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -163,7 +167,7 @@ jobs:
   no-shared:
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ${{ env.UBUNTU_RUNNER }}, ${{ env.MACOS_RUNNER }} ]
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v4
@@ -179,7 +183,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   non-caching:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -196,7 +200,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
 
   address_ub_sanitizer:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -213,7 +217,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
   fuzz_tests:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -230,7 +234,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
 
   memory_sanitizer:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -248,7 +252,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
   threads_sanitizer:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -265,7 +269,7 @@ jobs:
       run: make V=1 TESTS="test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp test_quic*" test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   enable_non-default_options:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -284,7 +288,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   full_featured:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -309,7 +313,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   no-legacy:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -326,7 +330,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   legacy:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -350,7 +354,7 @@ jobs:
   out-of-readonly-source-and-install:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest ]
+        os:  [${{ env.UBUNTU_RUNNER }}, ${{ env.MACOS_RUNNER }} ]
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v4
@@ -384,7 +388,7 @@ jobs:
       working-directory: ./build
 
   external-tests:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -417,7 +421,7 @@ jobs:
       run: make test TESTS="test_external_oqsprovider"
 
   external-test-pyca:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     strategy:
       matrix:
         RUST:
@@ -450,7 +454,7 @@ jobs:
       run: make test TESTS="test_external_pyca" VERBOSE=1
 
   external-test-cf-quiche:
-    runs-on: ubuntu-latest
+    runs-on: ${{ env.UBUNTU_RUNNER }}
     steps:
     - uses: actions/checkout@v4
       with:
