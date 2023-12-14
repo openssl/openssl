@@ -39,9 +39,12 @@ L<EVP_EncryptInit(3)/PARAMETERS>.
 
 =head1 NOTES
 
-The XTS mode implementation does not support streaming. That means to obtain
-correct results there can be only one L<EVP_EncryptUpdate(3)> or
-L<EVP_DecryptUpdate(3)> call after the initialization of the context.
+The SM4-XTS implementation allows streaming to be performed, but each
+L<EVP_EncryptUpdate(3)> or L<EVP_DecryptUpdate(3)> call requires each input
+to be a multiple of the blocksize. Only the final EVP_EncryptUpdate() or
+EVP_DecryptUpdate() call can optionally have an input that is not a multiple
+of the blocksize but is larger than one block. In that case ciphertext
+stealing (CTS) is used to fill the block.
 
 =head1 SEE ALSO
 
