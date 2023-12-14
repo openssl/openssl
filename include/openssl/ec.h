@@ -929,17 +929,19 @@ int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1,
 #  endif
 
 EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
+void *d2i_ECPKParameters_ECG_thunk(void **a, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
+int i2d_ECPKParameters_ECG_thunk(const void *, unsigned char **out);
 
 #  define d2i_ECPKParameters_bio(bp,x) \
-    ASN1_d2i_bio_of(EC_GROUP, NULL, d2i_ECPKParameters, bp, x)
+    ASN1_d2i_bio_of(EC_GROUP, NULL, d2i_ECPKParameters_ECG_thunk, bp, x)
 #  define i2d_ECPKParameters_bio(bp,x) \
-    ASN1_i2d_bio_of(EC_GROUP, i2d_ECPKParameters, bp, x)
+    ASN1_i2d_bio_of(EC_GROUP, i2d_ECPKParameters_ECG_thunk, bp, x)
 #  define d2i_ECPKParameters_fp(fp,x) \
-    (EC_GROUP *)ASN1_d2i_fp(NULL, (d2i_of_void *)d2i_ECPKParameters, (fp), \
+    (EC_GROUP *)ASN1_d2i_fp(NULL, d2i_ECPKParameters_ECG_thunk, (fp), \
                             (void **)(x))
 #  define i2d_ECPKParameters_fp(fp,x) \
-    ASN1_i2d_fp((i2d_of_void *)i2d_ECPKParameters, (fp), (void *)(x))
+    ASN1_i2d_fp(i2d_ECPKParameters_ECG_thunk, (fp), (void *)(x))
 
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 int ECPKParameters_print(BIO *bp, const EC_GROUP *x,
