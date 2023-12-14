@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   check_update:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - name: install unifdef
       run: |
@@ -42,7 +42,7 @@ jobs:
       run: git diff --exit-code
 
   check_docs:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -60,7 +60,7 @@ jobs:
   # We are not as strict with libraries, but rather adapt to what's
   # expected to be available in a certain version of each platform.
   check-ansi:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -69,7 +69,7 @@ jobs:
       run: make -s -j4
 
   basic_gcc:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: localegen
@@ -82,7 +82,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   basic_clang:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -112,7 +112,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   minimal:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -123,7 +123,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   no-deprecated:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -133,11 +133,20 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
-  no-shared:
-    strategy:
-      matrix:
-        os: [ ubuntu-latest, macos-latest ]
-    runs-on: ${{matrix.os}}
+  no-shared-ubuntu:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: config
+      run: ./config --banner=Configured --strict-warnings no-shared no-fips && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  no-shared-macos:
+    runs-on: macos-latest
+    if: github.server_url == 'https://github.com'
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -148,7 +157,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   non-caching:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -159,7 +168,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
 
   address_ub_sanitizer:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -170,7 +179,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
   memory_sanitizer:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -182,7 +191,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
   threads_sanitizer:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -193,7 +202,7 @@ jobs:
       run: make V=1 TESTS="test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp" test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   enable_non-default_options:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: modprobe tls
@@ -206,7 +215,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   fips_and_ktls:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: modprobe tls
@@ -219,7 +228,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   no-legacy:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -230,7 +239,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   legacy:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
     - name: config
@@ -256,11 +265,36 @@ jobs:
   #   build tree
   # - That building, testing and installing works with a read-only source
   #   tree
-  out-of-readonly-source-and-install:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest ]
-    runs-on: ${{matrix.os}}
+  out-of-readonly-source-and-install-ubuntu:
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        path: ./source
+    - name: make source read-only
+      run: chmod -R a-w ./source
+    - name: create build and install directories
+      run: |
+        mkdir ./build
+        mkdir ./install
+    - name: config
+      run: |
+        ../source/config --banner=Configured enable-fips enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
+        perl configdata.pm --dump
+      working-directory: ./build
+    - name: make
+      run: make -s -j4
+      working-directory: ./build
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      working-directory: ./build
+    - name: make install
+      run: make install
+      working-directory: ./build
+
+  out-of-readonly-source-and-install-macos:
+    runs-on: macos-latest
+    if: github.server_url == 'https://github.com'
     steps:
     - uses: actions/checkout@v4
       with:
@@ -287,7 +321,7 @@ jobs:
       working-directory: ./build
 
   external-tests:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -312,7 +346,7 @@ jobs:
       run: make test TESTS="test_external_krb5"
 
   external-test-pyca:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
     strategy:
       matrix:
         RUST:
@@ -339,3 +373,27 @@ jobs:
         default: true
     - name: test external pyca
       run: make test TESTS="test_external_pyca" VERBOSE=1
+==== BASE ====
+
+  external-test-cf-quiche:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    - name: Configure OpenSSL
+      run: ./config --banner=Configured --strict-warnings enable-external-tests && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: default
+        toolchain: stable
+        default: true
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: test external Cloudflare quiche
+      run: make test TESTS="test_external_cf_quiche" VERBOSE=1
+==== BASE ====
