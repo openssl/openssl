@@ -73,13 +73,8 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
 
         conf_ssl_get_cmd(cmds, i, &cmdstr, &arg);
         rv = SSL_CONF_cmd(cctx, cmdstr, arg);
-        if (rv <= 0) {
-            int errcode = rv == -2 ? SSL_R_UNKNOWN_COMMAND : SSL_R_BAD_VALUE;
-
-            ERR_raise_data(ERR_LIB_SSL, errcode,
-                           "section=%s, cmd=%s, arg=%s", name, cmdstr, arg);
+        if (rv <= 0)
             ++err;
-        }
     }
     if (!SSL_CONF_CTX_finish(cctx))
         ++err;
