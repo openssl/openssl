@@ -359,6 +359,15 @@ algorithms from providers. This created object can then be used when loading
 binary data using B<d2i_I<TYPE>>().
 
 B<I<TYPE>_dup>() copies an existing object, leaving it untouched.
+Note, however, that the internal representation of the object
+may contain extra data besides the ASN.1 structure.
+For instance, an B<X509> object usually is augmented
+by cached information on X.509v3 extensions, etc.
+Such extra data is not copied.
+If it needs to be retained, maybe better use B<I<TYPE>_up_ref>().
+For the case of B<X509> objects, an alternative to using L<X509_up_ref(3)>
+is to still call, e.g., I<copied_cert = X509_dup(cert)>, yet followed by
+I<X509_check_purpose(copied_cert, -1, 0)>, which re-builds the cached data.
 
 B<I<TYPE>_free>() releases the object and all pointers and sub-objects
 within it.
@@ -375,6 +384,10 @@ B<I<TYPE>_new>(), B<I<TYPE>_new_ex>() and B<I<TYPE>_dup>() return a pointer to
 the object or NULL on failure.
 
 B<I<TYPE>_print_ctx>() returns 1 on success or zero on failure.
+
+=head1 SEE ALSO
+
+L<X509_up_ref(3)>
 
 =head1 HISTORY
 
