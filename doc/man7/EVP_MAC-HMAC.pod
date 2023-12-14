@@ -51,11 +51,15 @@ B<OSSL_MAC_PARAM_DIGEST>) to be considered valid.
 A flag to set the MAC digest to not initialise the implementation
 specific data.
 The value 0 or 1 is expected.
+This option is deprecated and will be removed in a future release.
+It may be set but is currently ignored
 
 =item "digest-oneshot" (B<OSSL_MAC_PARAM_DIGEST_ONESHOT>) <integer>
 
 A flag to set the MAC digest to be a one-shot operation.
 The value 0 or 1 is expected.
+This option is deprecated and will be removed in a future release.
+It may be set but is currently ignored.
 
 =item "tls-data-size" (B<OSSL_MAC_PARAM_TLS_DATA_SIZE>) <unsigned integer>
 
