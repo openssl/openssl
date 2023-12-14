@@ -208,7 +208,7 @@ int init_client(int *sock, const char *host, const char *port,
 
         hostname = BIO_ADDR_hostname_string(BIO_ADDRINFO_address(ai), 1);
         if (hostname != NULL) {
-            BIO_printf(bio_out, "Connecting to %s\n", hostname);
+            BIO_printf(bio_err, "Connecting to %s\n", hostname);
             OPENSSL_free(hostname);
         }
         /* Remove any stale errors from previous connection attempts */
