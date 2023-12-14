@@ -405,7 +405,7 @@ C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 This option can be used with the B<-new> and B<-force_pubkey> options to create
 a new certificate without providing an input certificate or certificate request.
 
-=item B<-subj> I<arg>
+=item B<-set_subject> I<arg>
 
 When a certificate is created set its subject name to the given value.
 When the certificate is self-signed the issuer name is set to the same value,
@@ -424,6 +424,10 @@ C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 This option can be used with the B<-new> and B<-force_pubkey> options to create
 a new certificate without providing an input certificate or certificate request.
+
+=item B<-subj> I<arg>
+
+This option is an alias of B<-set_subject>.
 
 =item B<-force_pubkey> I<filename>
 
