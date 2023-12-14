@@ -114,7 +114,7 @@ L<OSSL_CMP_CTX_new(3)>, L<OSSL_CMP_CTX_free(3)>, L<ASN1_TYPE_set(3)>
 The OpenSSL CMP support was added in OpenSSL 3.0.
 
 OSSL_CMP_ITAV_new0_certProfile() and OSSL_CMP_ITAV_get0_certProfile()
-were added in OpenSSL 3.2.
+were added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 

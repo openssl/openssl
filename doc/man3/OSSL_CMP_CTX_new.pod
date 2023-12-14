@@ -849,11 +849,11 @@ in OpenSSL 3.2.
 
 OSSL_CMP_CTX_reset_geninfo_ITAVs() was added in OpenSSL 3.0.8.
 
-OSSL_CMP_CTX_get0_libctx(), OSSL_CMP_CTX_get0_propq(),
-OSSL_CMP_CTX_get0_geninfo_ITAVs(), and
+OSSL_CMP_CTX_set1_serialNumber(),
+OSSL_CMP_CTX_get0_libctx(), OSSL_CMP_CTX_get0_propq(), and
 OSSL_CMP_CTX_get0_validatedSrvCert() were added in OpenSSL 3.2.
 
-OSSL_CMP_CTX_set1_serialNumber() was added in OpenSSL 3.2.
+OSSL_CMP_CTX_get0_geninfo_ITAVs() was added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 

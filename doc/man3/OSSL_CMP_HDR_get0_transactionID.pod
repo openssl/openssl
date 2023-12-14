@@ -41,6 +41,8 @@ or NULL if the respective entry does not exist and on error.
 
 The OpenSSL CMP support was added in OpenSSL 3.0.
 
+OSSL_CMP_HDR_get0_geninfo_ITAVs() was added in OpenSSL 3.3.
+
 =head1 COPYRIGHT
 
 Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
