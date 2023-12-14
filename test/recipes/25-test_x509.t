@@ -81,11 +81,11 @@ ok(run(app(["openssl", "pkey", "-in", $pkey, "-pubout", "-out", $pubkey]))
 # not unlinking $pubkey
 # not unlinking $selfout
 
-# test -issu option
+# test -set_issuer option
 my $ca_issu = srctop_file(@certs, "ca-cert.pem"); # issuer cert
 my $caout_issu = "ca-issu.out";
 ok(run(app(["openssl", "x509", "-new", "-force_pubkey", $key, "-subj", "/CN=EE",
-            "-issu", "/CN=TEST-CA", "-extfile", $extfile, "-CA", $ca_issu,
+            "-set_issuer", "/CN=TEST-CA", "-extfile", $extfile, "-CA", $ca_issu,
             "-CAkey", $pkey, "-text", "-out", $caout_issu])));
 ok (get_issuer($caout_issu) =~ /CN=TEST-CA/);
 # not unlinking $caout

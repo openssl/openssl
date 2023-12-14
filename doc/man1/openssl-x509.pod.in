@@ -56,7 +56,7 @@ B<openssl> B<x509>
 [B<-next_serial>]
 [B<-days> I<arg>]
 [B<-preserve_dates>]
-[B<-issu> I<arg>]
+[B<-set_issuer> I<arg>]
 [B<-subj> I<arg>]
 [B<-force_pubkey> I<filename>]
 [B<-clrext>]
@@ -387,7 +387,7 @@ When signing a certificate, preserve "notBefore" and "notAfter" dates of any
 input certificate instead of adjusting them to current time and duration.
 Cannot be used together with the B<-days> option.
 
-=item B<-issu> I<arg>
+=item B<-set_issuer> I<arg>
 
 When a certificate is created set its issuer name to the given value.
 
@@ -409,7 +409,7 @@ a new certificate without providing an input certificate or certificate request.
 
 When a certificate is created set its subject name to the given value.
 When the certificate is self-signed the issuer name is set to the same value,
-unless the B<-issu> option is given.
+unless the B<-set_issuer> option is given.
 
 The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
 Special characters may be escaped by C<\> (backslash), whitespace is retained.
