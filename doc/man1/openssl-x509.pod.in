@@ -57,6 +57,7 @@ B<openssl> B<x509>
 [B<-days> I<arg>]
 [B<-preserve_dates>]
 [B<-set_issuer> I<arg>]
+[B<-set_subject> I<arg>]
 [B<-subj> I<arg>]
 [B<-force_pubkey> I<filename>]
 [B<-clrext>]
