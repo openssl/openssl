@@ -140,7 +140,7 @@ const OPTIONS x509_options[] = {
      "Preserve existing validity dates"},
     {"set_issuer", OPT_ISSU, 's', "Set or override certificate issuer"},
     {"set_subject", OPT_SUBJ, 's', "Set or override certificate subject (and issuer)"},
-    {"subj", OPT_SUBJ, 's', "Set or override certificate subject (and issuer)"},
+    {"subj", OPT_SUBJ, 's', "Alias for -set_subject"},
     {"force_pubkey", OPT_FORCE_PUBKEY, '<',
      "Key to be placed in new certificate or certificate request"},
     {"clrext", OPT_CLREXT, '-',
