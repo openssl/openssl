@@ -97,7 +97,7 @@ const OPTIONS x509_options[] = {
     {"enddate", OPT_ENDDATE, '-', "Print the notAfter field"},
     {"dates", OPT_DATES, '-', "Print both notBefore and notAfter fields"},
     {"subject", OPT_SUBJECT, '-', "Print subject DN"},
-    {"issuer", OPT_ISSUER, '-', "Print issuer DN"},
+    {"set_issuer", OPT_ISSUER, '-', "Print issuer DN"},
     {"nameopt", OPT_NAMEOPT, 's',
      "Certificate subject/issuer name printing options"},
     {"email", OPT_EMAIL, '-', "Print email address(es)"},
