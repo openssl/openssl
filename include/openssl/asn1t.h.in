@@ -806,7 +806,11 @@ typedef struct ASN1_STREAM_ARG_st {
         pre void fname##_free(stname *a) \
         { \
                 ASN1_item_free((ASN1_VALUE *)a, ASN1_ITEM_rptr(itname)); \
-        }
+        } \
+        pre ossl_unused void fname##_free_thunk(void *a) \
+        { \
+                fname##_free((stname *)a); \
+        } \
 
 # define IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(stname, itname, fname) \
         stname *fname##_new(void) \
@@ -849,6 +853,19 @@ typedef struct ASN1_STREAM_ARG_st {
         { \
                 return ASN1_item_i2d((const ASN1_VALUE *)a, out, \
                                      ASN1_ITEM_rptr(stname)); \
+        } \
+        static ossl_unused int i2d_##stname##_thunk(void *a, \
+                                                    unsigned char **out) \
+        { \
+            return i2d_##stname((const stname *)a, out);\
+        } \
+        static ossl_unused void *d2i_##stname##_thunk(void **a, \
+                                                     unsigned char **in, \
+                                                     long len) \
+        { \
+            return (void *)d2i_##stname((stname **)a, \
+                                        (const unsigned char **)in, \
+                                        len); \
         }
 
 # define IMPLEMENT_ASN1_DUP_FUNCTION(stname) \
