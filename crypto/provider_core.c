@@ -1617,7 +1617,7 @@ void ossl_provider_teardown(const OSSL_PROVIDER *prov)
             && !prov->ischild
 #endif
        )
-        prov->teardown(prov->provctx);
+        prov->teardown((void *)prov->provctx);
 }
 
 const OSSL_PARAM *ossl_provider_gettable_params(const OSSL_PROVIDER *prov)

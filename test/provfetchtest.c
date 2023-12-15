@@ -192,9 +192,14 @@ static const OSSL_ALGORITHM *dummy_query(void *provctx, int operation_id,
     return NULL;
 }
 
+static void dummy_teardown(void *provctx)
+{
+    OSSL_LIB_CTX_free((OSSL_LIB_CTX *)provctx);
+}
+
 static const OSSL_DISPATCH dummy_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))dummy_query },
-    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OSSL_LIB_CTX_free },
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))dummy_teardown },
     OSSL_DISPATCH_END
 };
 

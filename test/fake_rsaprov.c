@@ -720,9 +720,14 @@ static const OSSL_ALGORITHM *fake_rsa_query(void *provctx,
     return NULL;
 }
 
+static void fake_rsa_teardown(void *provctx)
+{
+    OSSL_LIB_CTX_free((OSSL_LIB_CTX *)provctx);
+}
+
 /* Functions we provide to the core */
 static const OSSL_DISPATCH fake_rsa_method[] = {
-    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OSSL_LIB_CTX_free },
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))fake_rsa_teardown },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fake_rsa_query },
     OSSL_DISPATCH_END
 };
