@@ -5540,3 +5540,5 @@ EVP_DigestSqueeze                       ?	3_3_0	EXIST::FUNCTION:
 OPENSSL_LH_set_thunks                   ?	3_3_0	EXIST::FUNCTION:
 OPENSSL_LH_doall_arg_thunk              ?	3_3_0	EXIST::FUNCTION:
 OPENSSL_sk_set_thunks                   ?	3_3_0	EXIST::FUNCTION:
+d2i_ECPKParameters_ECG_thunk            ?	3_3_0	EXIST::FUNCTION:EC
+i2d_ECPKParameters_ECG_thunk            ?	3_3_0	EXIST::FUNCTION:EC
