@@ -227,10 +227,10 @@ my @smime_pkcs7_tests = (
         "-stream", "-out", "{output}.cms",
         $smrsa1,
         catfile($smdir, "smrsa2.pem"),
-        catfile($smdir, "smrsa3.crt") ],
+        catfile($smdir, "smrsa3-cert.pem") ],
       [ "{cmd2}", @defaultprov, "-decrypt",
-	"-recip", catfile($smdir, "smrsa3.crt"),
-	"-inkey", catfile($smdir, "smrsa3.pri"),
+	"-recip", catfile($smdir, "smrsa3-cert.pem"),
+	"-inkey", catfile($smdir, "smrsa3-key.pem"),
         "-in", "{output}.cms", "-out", "{output}.txt" ],
       \&final_compare
     ],
@@ -1201,7 +1201,7 @@ subtest "encrypt to three recipients with RSA-OAEP, key only decrypt" => sub {
 		'-keyopt', 'rsa_padding_mode:oaep',
 		'-recip', catfile($smdir, "smrsa2.pem"),
 		'-keyopt', 'rsa_padding_mode:oaep',
-		'-recip', catfile($smdir, "smrsa3.crt"),
+		'-recip', catfile($smdir, "smrsa3-cert.pem"),
 		'-keyopt', 'rsa_padding_mode:oaep',
 	       ])),
        "encrypt to three recipients with RSA-OAEP (avoid openssl/project issue#380)");
@@ -1210,7 +1210,7 @@ subtest "encrypt to three recipients with RSA-OAEP, key only decrypt" => sub {
 		'-decrypt',
 		'-in', $ct,
 		'-out', $ptpt,
-		'-inkey', catfile($smdir, "smrsa3.pri"),
+		'-inkey', catfile($smdir, "smrsa3-key.pem"),
 	       ])),
        "decrypt with key only");
     is(compare($pt, $ptpt), 0, "compare original message with decrypted ciphertext");
