@@ -15,7 +15,6 @@ jobs:
         COMPONENT: [gnutls, nss]
     env:
       COMPONENT: ${{ matrix.COMPONENT }}
-    # Code below inspired by https://fedoramagazine.org/github-actions-use-podman-to-run-fedora-linux/
     steps:
       - uses: actions/checkout@v4
       - name : Install needed tools
