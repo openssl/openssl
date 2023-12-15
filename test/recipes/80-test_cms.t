@@ -222,7 +222,7 @@ my @smime_pkcs7_tests = (
       \&final_compare
     ],
 
-    [ "enveloped content test streaming S/MIME format, DES, 3 recipients, crt and pri files used",
+    [ "enveloped content test streaming S/MIME format, DES, 3 recipients, cert and key files used",
       [ "{cmd1}", @defaultprov, "-encrypt", "-in", $smcont,
         "-stream", "-out", "{output}.cms",
         $smrsa1,
