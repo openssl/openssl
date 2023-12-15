@@ -16,13 +16,13 @@ struct ossl_core_bio_st {
     BIO *bio;
 };
 
-static int tst_bio_core_read_ex(OSSL_CORE_BIO *bio, char *data, size_t data_len,
+static int tst_bio_core_read_ex(OSSL_CORE_BIO *bio, void *data, size_t data_len,
                                 size_t *bytes_read)
 {
     return BIO_read_ex(bio->bio, data, data_len, bytes_read);
 }
 
-static int tst_bio_core_write_ex(OSSL_CORE_BIO *bio, const char *data,
+static int tst_bio_core_write_ex(OSSL_CORE_BIO *bio, const void *data,
                                  size_t data_len, size_t *written)
 {
     return BIO_write_ex(bio->bio, data, data_len, written);
