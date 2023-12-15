@@ -1,3 +1,8 @@
+# Notes:
+# /__w/openssl is the path that github bind-mounts into the container so the ci
+# filesystem for this job can be reached.  Please note that any changes made to
+# this job involving file system paths should be made prefixed with, or relative
+# to that directory
 name: Interoperability tests with GnuTLS and NSS
 on:
   schedule:
