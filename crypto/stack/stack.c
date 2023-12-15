@@ -525,7 +525,7 @@ static int openssl_sk_partition(OPENSSL_STACK *st, int low, int high)
 
     for (j = low; j <= high; j++) {
         /* If node arr[j] compares less than pivot */
-        if (qsort_thunk_cmp(&st->data[j], &pivot, (void *)st) == -1) {
+        if (qsort_thunk_cmp(&st->data[j], &pivot, (void *)st) < 0) {
             /* increment the low index, and swap with the j element */
             i++;
             tmp = (void *)st->data[i];
