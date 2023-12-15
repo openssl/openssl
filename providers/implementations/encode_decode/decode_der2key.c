@@ -434,8 +434,13 @@ static void *ec_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                              (key_from_pkcs8_t *)ossl_ec_key_from_pkcs8);
 }
 
+static void ec_key_free(void *d)
+{
+    EC_KEY_free((EC_KEY *)d);
+}
+
 # define ec_d2i_PUBKEY                  (d2i_of_void *)d2i_EC_PUBKEY
-# define ec_free                        (free_key_fn *)EC_KEY_free
+# define ec_free                        ec_key_free
 
 static int ec_check(void *key, struct der2key_ctx_st *ctx)
 {
@@ -524,7 +529,7 @@ static void *sm2_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
 }
 
 #  define sm2_d2i_PUBKEY                (d2i_of_void *)d2i_EC_PUBKEY
-#  define sm2_free                      (free_key_fn *)EC_KEY_free
+#  define sm2_free                      ec_key_free
 #  define sm2_check                     ec_check
 #  define sm2_adjust                    ec_adjust
 # endif
