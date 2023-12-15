@@ -12,7 +12,13 @@
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 
+static int ossl_sm3_update_thunk(void *c, const unsigned char *data,
+                                 unsigned long len)
+{
+    return ossl_sm3_update((SM3_CTX *)c, (const void *)data, (size_t)len);
+}
+
 /* ossl_sm3_functions */
 IMPLEMENT_digest_functions(sm3, SM3_CTX,
                            SM3_CBLOCK, SM3_DIGEST_LENGTH, 0,
-                           ossl_sm3_init, ossl_sm3_update, ossl_sm3_final)
+                           ossl_sm3_init, ossl_sm3_update_thunk, ossl_sm3_final)
