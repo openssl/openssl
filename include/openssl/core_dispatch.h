@@ -173,7 +173,7 @@ OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (OSSL_CORE_BIO *bio, const char *format,
                                        va_list args))
 OSSL_CORE_MAKE_FUNC(int, BIO_vsnprintf,
                    (char *buf, size_t n, const char *fmt, va_list args))
-OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO *bio,
+OSSL_CORE_MAKE_FUNC(long, BIO_ctrl, (OSSL_CORE_BIO *bio,
                                     int cmd, long num, void *ptr))
 
 /* New seeding functions prototypes with the 101-104 series */
