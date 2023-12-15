@@ -61,7 +61,12 @@ It is an error if the infoType of I<itav> is not B<certProfile>.
 
 =head1 NOTES
 
-CMP is defined in RFC 4210 (and CRMF in RFC 4211).
+CMP is defined in RFC 4210 and RFC 9480 (and CRMF in RFC 4211).
+
+OIDs to use as types in B<OSSL_CMP_ITAV> can be found at
+L<https://datatracker.ietf.org/doc/html/rfc9480#section-4.2.2>.
+The respective OpenSSL NIDs, such as B<NID_id_it_certProfile>,
+are defined in the F<< <openssl/obj_mac.h> >> header file.
 
 =head1 RETURN VALUES
 

@@ -1859,7 +1859,8 @@ static int add_certProfile(OSSL_CMP_CTX *ctx, const char *name)
        ASN1_STRING_free(utf8string);
        goto err;
    }
-   (void)sk_ASN1_UTF8STRING_push(sk, utf8string); /* must succeed */
+   /* Due to sk_ASN1_UTF8STRING_new_reserve(NULL, 1), this surely succeeds: */
+   (void)sk_ASN1_UTF8STRING_push(sk, utf8string);
    if ((itav = OSSL_CMP_ITAV_new0_certProfile(sk)) == NULL)
        goto err;
    if (OSSL_CMP_CTX_push0_geninfo_ITAV(ctx, itav))
