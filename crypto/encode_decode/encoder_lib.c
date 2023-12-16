@@ -399,6 +399,11 @@ static int encoder_process(struct encoder_process_data_st *data)
     int ok = -1;  /* -1 signifies that the lookup loop gave nothing */
     int top = 0;
 
+    if (data->ctx->cleanup == NULL) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_INVALID_PROVIDER_FUNCTIONS);
+        return -1;
+    }
+
     if (data->next_encoder_inst == NULL) {
         /* First iteration, where we prepare for what is to come */
 
