@@ -250,7 +250,12 @@ static void rsa_adjust(void *key, struct msblob2key_ctx_st *ctx)
     ossl_rsa_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
 }
 
-#define rsa_free                        (void (*)(void *))RSA_free
+static void RSA_free_thunk(void *rsa)
+{
+    RSA_free((RSA *)rsa);
+}
+
+#define rsa_free                        RSA_free_thunk
 
 /* ---------------------------------------------------------------------- */
 
