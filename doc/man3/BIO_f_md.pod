@@ -36,7 +36,7 @@ BIO_set_md() sets the message digest of BIO B<b> to B<md>: this
 must be called to initialize a digest BIO before any data is
 passed through it. It is a BIO_ctrl() macro.
 
-BIO_get_md() places the a pointer to the digest BIOs digest method
+BIO_get_md() places a pointer to the digest BIOs digest method
 in B<mdp>, it is a BIO_ctrl() macro.
 
 BIO_get_md_ctx() returns the digest BIOs context into B<mdcp>.

@@ -237,12 +237,12 @@ This sets the RSA padding mode. Acceptable values for I<mode> are B<pkcs1> for
 PKCS#1 padding, B<none> for no padding, B<oaep>
 for B<OAEP> mode, B<x931> for X9.31 mode and B<pss> for PSS.
 
-In PKCS#1 padding if the message digest is not set then the supplied data is
+In PKCS#1 padding, if the message digest is not set, then the supplied data is
 signed or verified directly instead of using a B<DigestInfo> structure. If a
-digest is set then the a B<DigestInfo> structure is used and its the length
+digest is set, then the B<DigestInfo> structure is used and its length
 must correspond to the digest type.
 
-Note, for B<pkcs1> padding, as a protection against Bleichenbacher attack,
+Note, for B<pkcs1> padding, as a protection against the Bleichenbacher attack,
 the decryption will not fail in case of padding check failures. Use B<none>
 and manual inspection of the decrypted message to verify if the decrypted
 value has correct PKCS#1 v1.5 padding.
