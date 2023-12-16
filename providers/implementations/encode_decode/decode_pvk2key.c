@@ -229,11 +229,16 @@ static int pvk2key_export_object(void *vctx,
     return 0;
 }
 
+static void DSA_free_thunk(void *dsa)
+{
+    DSA_free((DSA *)dsa);
+}
+
 /* ---------------------------------------------------------------------- */
 
 #define dsa_private_key_bio     (b2i_PVK_of_bio_pw_fn *)b2i_DSA_PVK_bio_ex
 #define dsa_adjust              NULL
-#define dsa_free                (void (*)(void *))DSA_free
+#define dsa_free                DSA_free_thunk
 
 /* ---------------------------------------------------------------------- */
 

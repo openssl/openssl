@@ -233,12 +233,17 @@ msblob2key_export_object(void *vctx,
     return 0;
 }
 
+static void DSA_free_thunk(void *dsa)
+{
+    DSA_free((DSA *)dsa);
+}
+
 /* ---------------------------------------------------------------------- */
 
 #define dsa_decode_private_key  (b2i_of_void_fn *)ossl_b2i_DSA_after_header
 #define dsa_decode_public_key   (b2i_of_void_fn *)ossl_b2i_DSA_after_header
 #define dsa_adjust              NULL
-#define dsa_free                (void (*)(void *))DSA_free
+#define dsa_free                DSA_free_thunk
 
 /* ---------------------------------------------------------------------- */
 

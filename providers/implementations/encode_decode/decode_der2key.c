@@ -415,8 +415,13 @@ static void *dsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                              (key_from_pkcs8_t *)ossl_dsa_key_from_pkcs8);
 }
 
+static void DSA_free_thunk(void *dsa)
+{
+    DSA_free((DSA *)dsa);
+}
+
 # define dsa_d2i_PUBKEY                 (d2i_of_void *)ossl_d2i_DSA_PUBKEY
-# define dsa_free                       (free_key_fn *)DSA_free
+# define dsa_free                       DSA_free_thunk
 # define dsa_check                      NULL
 
 static void dsa_adjust(void *key, struct der2key_ctx_st *ctx)
@@ -548,11 +553,17 @@ static void *sm2_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
 #define rsa_d2i_public_key              (d2i_of_void *)d2i_RSAPublicKey
 #define rsa_d2i_key_params              NULL
 
+static void *rsa_key_from_pkcs8_thunk(const PKCS8_PRIV_KEY_INFO *p8inf,
+                                        OSSL_LIB_CTX *libctx, const char *propq)
+{
+    return (void *)ossl_rsa_key_from_pkcs8(p8inf, libctx, propq);
+}
+
 static void *rsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                            struct der2key_ctx_st *ctx)
 {
     return der2key_decode_p8(der, der_len, ctx,
-                             (key_from_pkcs8_t *)ossl_rsa_key_from_pkcs8);
+                             rsa_key_from_pkcs8_thunk);
 }
 
 static void *rsa_d2i_PUBKEY(void **a, const unsigned char **pp, long len)
