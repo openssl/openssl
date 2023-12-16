@@ -375,7 +375,13 @@ static void *dh_d2i_PUBKEY(void **a, const unsigned char **pp, long len)
 
     return (void *)ret; 
 }
-# define dh_free                        (free_key_fn *)DH_free
+
+static void DH_free_thunk(void *dh)
+{
+    DH_free((DH *)dh);
+}
+
+# define dh_free                        DH_free_thunk
 # define dh_check                       NULL
 
 static void dh_adjust(void *key, struct der2key_ctx_st *ctx)
@@ -389,7 +395,7 @@ static void dh_adjust(void *key, struct der2key_ctx_st *ctx)
 # define dhx_d2i_key_params             (d2i_of_void *)d2i_DHxparams
 # define dhx_d2i_PKCS8                  dh_d2i_PKCS8
 # define dhx_d2i_PUBKEY                 (d2i_of_void *)ossl_d2i_DHx_PUBKEY
-# define dhx_free                       (free_key_fn *)DH_free
+# define dhx_free                       DH_free_thunk
 # define dhx_check                      NULL
 # define dhx_adjust                     dh_adjust
 #endif
