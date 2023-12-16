@@ -47,6 +47,11 @@ int OSSL_ENCODER_up_ref(OSSL_ENCODER *encoder)
     return 1;
 }
 
+static int OSSL_ENCODER_up_ref_thunk(void *meth)
+{
+    return OSSL_ENCODER_up_ref((OSSL_ENCODER *)meth);
+}
+
 void OSSL_ENCODER_free(OSSL_ENCODER *encoder)
 {
     int ref = 0;
@@ -191,7 +196,7 @@ static int put_encoder_in_store(void *store, void *method,
         return 0;
 
     return ossl_method_store_add(store, prov, id, propdef, method,
-                                 (int (*)(void *))OSSL_ENCODER_up_ref,
+                                 OSSL_ENCODER_up_ref_thunk,
                                  (void (*)(void *))OSSL_ENCODER_free);
 }
 
