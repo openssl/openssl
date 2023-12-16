@@ -80,6 +80,11 @@ void ossl_ecx_key_free(ECX_KEY *key)
     OPENSSL_free(key);
 }
 
+void ossl_ecx_key_free_thunk(void *key)
+{
+    ossl_ecx_key_free((ECX_KEY *)key);
+}
+
 void ossl_ecx_key_set0_libctx(ECX_KEY *key, OSSL_LIB_CTX *libctx)
 {
     key->libctx = libctx;

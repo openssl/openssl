@@ -80,6 +80,7 @@ ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type,
 void ossl_ecx_key_set0_libctx(ECX_KEY *key, OSSL_LIB_CTX *libctx);
 unsigned char *ossl_ecx_key_allocate_privkey(ECX_KEY *key);
 void ossl_ecx_key_free(ECX_KEY *key);
+void ossl_ecx_key_free_thunk(void *);
 int ossl_ecx_key_up_ref(ECX_KEY *key);
 ECX_KEY *ossl_ecx_key_dup(const ECX_KEY *key, int selection);
 int ossl_ecx_compute_key(ECX_KEY *peer, ECX_KEY *priv, size_t keylen,
