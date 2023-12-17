@@ -107,6 +107,7 @@ int tls13_hkdf_expand_ex(OSSL_LIB_CTX *libctx, const char *propq,
                          const unsigned char *data, size_t datalen,
                          unsigned char *out, size_t outlen, int raise_error)
 {
+    // TODO: Should we support DTLS labels from here? This interface is only used by QUIC.
     return hkdf_expand(libctx, propq, md, secret, label_prefix_tls13, sizeof(label_prefix_tls13) - 1,
                        label, labellen, data, datalen, out, outlen,
                        raise_error);
@@ -121,12 +122,12 @@ int tls13_hkdf_expand(SSL_CONNECTION *s, const EVP_MD *md,
     int ret;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    const char *label_prefix = SSL_CONNECTION_IS_TLS13(s) ? label_prefix_tls13
-                                : label_prefix_dtls13;
+    const char *label_prefix = SSL_CONNECTION_IS_DTLS(s) ? label_prefix_dtls13
+                                : label_prefix_tls13;
 
-    size_t label_prefix_len = SSL_CONNECTION_IS_TLS13(s)
-                                ? sizeof(label_prefix_tls13) - 1
-                                : sizeof(label_prefix_dtls13) - 1;
+    size_t label_prefix_len = SSL_CONNECTION_IS_DTLS(s)
+                                ? sizeof(label_prefix_dtls13) - 1
+                                : sizeof(label_prefix_tls13) - 1;
 
     ret = hkdf_expand(sctx->libctx, sctx->propq, md, secret, label_prefix,
                       label_prefix_len, label, labellen, data,
@@ -200,6 +201,7 @@ int tls13_generate_secret(SSL_CONNECTION *s, const EVP_MD *md,
     /* ASCII: "derived", in hex for EBCDIC compatibility */
     static const char derived_secret_label[] = "\x64\x65\x72\x69\x76\x65\x64";
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    int isdtls = SSL_CONNECTION_IS_DTLS(s);
 
     kdf = EVP_KDF_fetch(sctx->libctx, OSSL_KDF_NAME_TLS1_3_KDF, sctx->propq);
     kctx = EVP_KDF_CTX_new(kdf);
@@ -228,14 +230,14 @@ int tls13_generate_secret(SSL_CONNECTION *s, const EVP_MD *md,
     if (prevsecret != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
                                                  (unsigned char *)prevsecret, mdlen);
-    if (SSL_CONNECTION_IS_TLS13(s))
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
-                                                 (unsigned char *)label_prefix_tls13,
-                                                 sizeof(label_prefix_tls13) - 1);
-    else
+    if (isdtls)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
                                                  (unsigned char *)label_prefix_dtls13,
                                                  sizeof(label_prefix_dtls13) - 1);
+    else
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+                                                 (unsigned char *)label_prefix_tls13,
+                                                 sizeof(label_prefix_tls13) - 1);
 
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_LABEL,
                                              (unsigned char *)derived_secret_label,
