@@ -40,28 +40,28 @@ typedef struct {
 
 #if !defined(OPENSSL_NO_SM2_PRECOMP)
 /* Coordinates of G, for which we have precomputed tables */
-static const BN_ULONG def_xG[P256_LIMBS] ALIGN32 = {
+ALIGN32 static const BN_ULONG def_xG[P256_LIMBS] = {
     0x715a4589334c74c7, 0x8fe30bbff2660be1,
     0x5f9904466a39c994, 0x32c4ae2c1f198119
 };
 
-static const BN_ULONG def_yG[P256_LIMBS] ALIGN32 = {
+ALIGN32 static const BN_ULONG def_yG[P256_LIMBS] = {
     0x02df32e52139f0a0, 0xd0a9877cc62a4740,
     0x59bdcee36b692153, 0xbc3736a2f4f6779c,
 };
 #endif
 
 /* p and order for SM2 according to GB/T 32918.5-2017 */
-static const BN_ULONG def_p[P256_LIMBS] ALIGN32 = {
+ALIGN32 static const BN_ULONG def_p[P256_LIMBS] = {
     0xffffffffffffffff, 0xffffffff00000000,
     0xffffffffffffffff, 0xfffffffeffffffff
 };
-static const BN_ULONG def_ord[P256_LIMBS] ALIGN32 = {
+ALIGN32 static const BN_ULONG def_ord[P256_LIMBS] = {
     0x53bbf40939d54123, 0x7203df6b21c6052b,
     0xffffffffffffffff, 0xfffffffeffffffff
 };
 
-static const BN_ULONG ONE[P256_LIMBS] ALIGN32 = {1, 0, 0, 0};
+ALIGN32 static const BN_ULONG ONE[P256_LIMBS] = {1, 0, 0, 0};
 
 /* Functions implemented in assembly */
 /*
@@ -139,10 +139,10 @@ static ossl_inline int is_greater(const BN_ULONG *a, const BN_ULONG *b)
 /* Binary algorithm for inversion in Fp */
 #define BN_MOD_INV(out, in, mod_div, mod_sub, mod) \
     do {                                           \
-        BN_ULONG u[4] ALIGN32;                     \
-        BN_ULONG v[4] ALIGN32;                     \
-        BN_ULONG x1[4] ALIGN32 = {1, 0, 0, 0};     \
-        BN_ULONG x2[4] ALIGN32 = {0};              \
+        ALIGN32 BN_ULONG u[4];                     \
+        ALIGN32 BN_ULONG v[4];                     \
+        ALIGN32 BN_ULONG x1[4] = {1, 0, 0, 0};     \
+        ALIGN32 BN_ULONG x2[4] = {0};              \
                                                    \
         if (is_zeros(in))                          \
             return;                                \
@@ -188,9 +188,9 @@ static ossl_inline void ecp_sm2p256_mod_ord_inverse(BN_ULONG* out,
 static void ecp_sm2p256_point_double(P256_POINT *R, const P256_POINT *P)
 {
     unsigned int i;
-    BN_ULONG tmp0[P256_LIMBS] ALIGN32;
-    BN_ULONG tmp1[P256_LIMBS] ALIGN32;
-    BN_ULONG tmp2[P256_LIMBS] ALIGN32;
+    ALIGN32 BN_ULONG tmp0[P256_LIMBS];
+    ALIGN32 BN_ULONG tmp1[P256_LIMBS];
+    ALIGN32 BN_ULONG tmp2[P256_LIMBS];
 
     /* zero-check P->Z */
     if (is_zeros(P->Z)) {
@@ -225,10 +225,10 @@ static void ecp_sm2p256_point_add_affine(P256_POINT *R, const P256_POINT *P,
                                          const P256_POINT_AFFINE *Q)
 {
     unsigned int i;
-    BN_ULONG tmp0[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG tmp1[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG tmp2[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG tmp3[P256_LIMBS] ALIGN32 = {0};
+    ALIGN32 BN_ULONG tmp0[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG tmp1[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG tmp2[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG tmp3[P256_LIMBS] = {0};
 
     /* zero-check P->Z */
     if (is_zeros(P->Z)) {
@@ -288,9 +288,9 @@ static void ecp_sm2p256_point_add(P256_POINT *R, const P256_POINT *P,
                                   const P256_POINT *Q)
 {
     unsigned int i;
-    BN_ULONG tmp0[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG tmp1[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG tmp2[P256_LIMBS] ALIGN32 = {0};
+    ALIGN32 BN_ULONG tmp0[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG tmp1[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG tmp2[P256_LIMBS] = {0};
 
     /* zero-check P | Q ->Z */
     if (is_zeros(P->Z)) {
@@ -382,7 +382,7 @@ static void ecp_sm2p256_point_P_mul_by_scalar(P256_POINT *R, const BN_ULONG *k,
 {
     int i, init = 0;
     unsigned int index, mask = 0x0f;
-    P256_POINT precomputed[16] ALIGN64;
+    ALIGN64 P256_POINT precomputed[16];
 
     memset(R, 0, sizeof(P256_POINT));
 
@@ -427,8 +427,8 @@ static void ecp_sm2p256_point_P_mul_by_scalar(P256_POINT *R, const BN_ULONG *k,
 static void ecp_sm2p256_point_get_affine(P256_POINT_AFFINE *R,
                                          const P256_POINT *P)
 {
-    BN_ULONG z_inv3[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG z_inv2[P256_LIMBS] ALIGN32 = {0};
+    ALIGN32 BN_ULONG z_inv3[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG z_inv2[P256_LIMBS] = {0};
 
     if (is_one(P->Z)) {
         memcpy(R->X, P->X, 32);
@@ -461,13 +461,13 @@ static int ecp_sm2p256_get_affine(const EC_GROUP *group,
                                   const EC_POINT *point,
                                   BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 {
-    BN_ULONG z_inv2[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG z_inv3[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG x_aff[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG y_aff[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG point_x[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG point_y[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG point_z[P256_LIMBS] ALIGN32 = {0};
+    ALIGN32 BN_ULONG z_inv2[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG z_inv3[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG x_aff[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG y_aff[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG point_x[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG point_y[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG point_z[P256_LIMBS] = {0};
 
     if (EC_POINT_is_at_infinity(group, point)) {
         ECerr(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
@@ -510,7 +510,7 @@ static int ecp_sm2p256_windowed_mul(const EC_GROUP *group,
     unsigned int i;
     int ret = 0;
     const BIGNUM **scalars = NULL;
-    BN_ULONG k[P256_LIMBS] ALIGN32 = {0};
+    ALIGN32 BN_ULONG k[P256_LIMBS] = {0};
     P256_POINT kP;
     ALIGN32 union {
         P256_POINT p;
@@ -572,7 +572,7 @@ static int ecp_sm2p256_points_mul(const EC_GROUP *group,
 {
     int ret = 0, p_is_infinity = 0;
     const EC_POINT *generator = NULL;
-    BN_ULONG k[P256_LIMBS] ALIGN32 = {0};
+    ALIGN32 BN_ULONG k[P256_LIMBS] = {0};
     ALIGN32 union {
         P256_POINT p;
         P256_POINT_AFFINE a;
@@ -646,9 +646,9 @@ err:
 static int ecp_sm2p256_field_mul(const EC_GROUP *group, BIGNUM *r,
                                  const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
-    BN_ULONG a_fe[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG b_fe[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG r_fe[P256_LIMBS] ALIGN32 = {0};
+    ALIGN32 BN_ULONG a_fe[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG b_fe[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG r_fe[P256_LIMBS] = {0};
 
     if (a == NULL || b == NULL || r == NULL)
         return 0;
@@ -670,8 +670,8 @@ static int ecp_sm2p256_field_mul(const EC_GROUP *group, BIGNUM *r,
 static int ecp_sm2p256_field_sqr(const EC_GROUP *group, BIGNUM *r,
                                  const BIGNUM *a, BN_CTX *ctx)
 {
-    BN_ULONG a_fe[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG r_fe[P256_LIMBS] ALIGN32 = {0};
+    ALIGN32 BN_ULONG a_fe[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG r_fe[P256_LIMBS] = {0};
 
     if (a == NULL || r == NULL)
         return 0;
@@ -693,8 +693,8 @@ static int ecp_sm2p256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
                                              const BIGNUM *x, BN_CTX *ctx)
 {
     int ret = 0;
-    BN_ULONG t[P256_LIMBS] ALIGN32 = {0};
-    BN_ULONG out[P256_LIMBS] ALIGN32 = {0};
+    ALIGN32 BN_ULONG t[P256_LIMBS] = {0};
+    ALIGN32 BN_ULONG out[P256_LIMBS] = {0};
 
     if (bn_wexpand(r, P256_LIMBS) == NULL) {
         ECerr(ERR_LIB_EC, ERR_R_BN_LIB);
