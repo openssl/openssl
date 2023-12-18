@@ -69,7 +69,7 @@ jobs:
       - name: save PR number
         run: echo ${{ github.event.number }} > ./artifact/pr_num
       - name: save artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fips_checksum
           path: artifact/
@@ -113,7 +113,7 @@ jobs:
       - name: save PR number
         run: echo ${{ github.event.number }} > ./artifact/pr_num
       - name: save artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: abidiff
           path: artifact/
