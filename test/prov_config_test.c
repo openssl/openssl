@@ -58,7 +58,7 @@ static int test_recursive_config(void)
     if (!TEST_ptr(ctx))
         goto err;
 
-    if (!TEST_true(OSSL_LIB_CTX_load_config(ctx, recurseconfigfile)))
+    if (!TEST_false(OSSL_LIB_CTX_load_config(ctx, recurseconfigfile)))
         goto err;
 
     err = ERR_peek_error();

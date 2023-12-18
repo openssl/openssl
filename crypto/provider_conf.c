@@ -64,6 +64,13 @@ static const char *skip_dot(const char *name)
     return name;
 }
 
+/*
+ * Parse the provider params section
+ * Returns:
+ * 1 for success
+ * 0 for non-fatal errors
+ * < 0 for fatal errors
+ */
 static int provider_conf_params_internal(OSSL_PROVIDER *prov,
                                          OSSL_PROVIDER_INFO *provinfo,
                                          const char *name, const char *value,
@@ -72,6 +79,7 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
 {
     STACK_OF(CONF_VALUE) *sect;
     int ok = 1;
+    int rc = 0;
 
     sect = NCONF_get_section(cnf, value);
     if (sect != NULL) {
@@ -90,7 +98,7 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
         for (i = 0; i < sk_OPENSSL_CSTRING_num(visited); i++) {
             if (sk_OPENSSL_CSTRING_value(visited, i) == value) {
                 ERR_raise(ERR_LIB_CONF, CONF_R_RECURSIVE_SECTION_REFERENCE);
-                return 0;
+                return -1;
             }
         }
 
@@ -115,10 +123,11 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
             }
             buffer[buffer_len] = '\0';
             OPENSSL_strlcat(buffer, sectconf->name, sizeof(buffer));
-            if (!provider_conf_params_internal(prov, provinfo, buffer,
-                                               sectconf->value, cnf, visited)) {
+            rc = provider_conf_params_internal(prov, provinfo, buffer,
+                                               sectconf->value, cnf, visited);
+            if (rc < 0) {
                 sk_OPENSSL_CSTRING_pop(visited);
-                return 0;
+                return rc;
             }
         }
         sk_OPENSSL_CSTRING_pop(visited);
@@ -135,6 +144,14 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
     return ok;
 }
 
+/*
+ * recursively parse the provider configuration section
+ * of the config file. 
+ * Returns
+ * 1 on success
+ * 0 on non-fatal error
+ * < 0 on fatal errors
+ */
 static int provider_conf_params(OSSL_PROVIDER *prov,
                                 OSSL_PROVIDER_INFO *provinfo,
                                 const char *name, const char *value,
@@ -174,6 +191,13 @@ static int prov_already_activated(const char *name,
     return 0;
 }
 
+/*
+ * Attempt to activate a provider
+ * Returns:
+ * 1 on successful activation
+ * 0 on failed activation for non-fatal error
+ * < 0 on failed activation for fatal errors
+ */
 static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
                                   const char *value, const char *path,
                                   int soft, const CONF *cnf)
@@ -215,7 +239,7 @@ static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
 
         ok = provider_conf_params(prov, NULL, NULL, value, cnf);
 
-        if (ok) {
+        if (ok == 1) {
             if (!ossl_provider_activate(prov, 1, 0)) {
                 ok = 0;
             } else if (!ossl_provider_add_to_store(prov, &actual, 0)) {
@@ -239,7 +263,8 @@ static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
                 }
             }
         }
-        if (!ok)
+
+        if (ok <= 0)
             ossl_provider_free(prov);
     }
     CRYPTO_THREAD_unlock(pcgbl->lock);
@@ -319,10 +344,14 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
     }
 
     /*
-     * Even if ok is 0, we still return success. Failure to load a provider is
-     * not fatal. We want to continue to load the rest of the config file.
+     * Provider activation returns a tristate:
+     * 1 for successful activation
+     * 0 for non-fatal activation failure
+     * < 0 for fatal activation failure
+     * We return success (1) for activation, (1) for non-fatal activation
+     * failure, and (0) for fatal activation failure
      */
-    return 1;
+    return ok >= 0;
 }
 
 static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
