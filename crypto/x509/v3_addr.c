@@ -285,7 +285,7 @@ static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
 static int IPAddressOrRange_cmp(const IPAddressOrRange *a,
                                 const IPAddressOrRange *b, const int length)
 {
-    unsigned char addr_a[ADDR_RAW_BUF_LEN], addr_b[ADDR_RAW_BUF_LEN];
+    unsigned char addr_a[ADDR_RAW_BUF_LEN] = {0}, addr_b[ADDR_RAW_BUF_LEN] = {0};
     int prefixlen_a = 0, prefixlen_b = 0;
     int r;
 
