@@ -38,6 +38,9 @@ int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
     if (flen > (tlen - RSA_PKCS1_PADDING_SIZE)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
+    } else if (flen < 0) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_LENGTH);
+        return 0;
     }
 
     p = (unsigned char *)to;

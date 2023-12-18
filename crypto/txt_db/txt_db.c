@@ -130,7 +130,7 @@ OPENSSL_STRING *TXT_DB_get_by_index(TXT_DB *db, int idx,
     OPENSSL_STRING *ret;
     LHASH_OF(OPENSSL_STRING) *lh;
 
-    if (idx >= db->num_fields) {
+    if (idx < 0 || idx >= db->num_fields) {
         db->error = DB_ERROR_INDEX_OUT_OF_RANGE;
         return NULL;
     }
@@ -151,7 +151,7 @@ int TXT_DB_create_index(TXT_DB *db, int field, int (*qual) (OPENSSL_STRING *),
     OPENSSL_STRING *r, *k;
     int i, n;
 
-    if (field >= db->num_fields) {
+    if (field < 0 || field >= db->num_fields) {
         db->error = DB_ERROR_INDEX_OUT_OF_RANGE;
         return 0;
     }
