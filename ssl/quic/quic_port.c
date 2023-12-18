@@ -90,10 +90,9 @@ static int port_init(QUIC_PORT *port)
     port->rx_short_dcid_len = (unsigned char)rx_short_dcid_len;
     port->tx_init_dcid_len  = INIT_DCID_LEN;
     port->state             = QUIC_PORT_STATE_RUNNING;
-    if (port->engine != NULL) {
-        ossl_list_port_insert_tail(&port->engine->port_list, port);
-        port->on_engine_list    = 1;
-    }
+
+    ossl_list_port_insert_tail(&port->engine->port_list, port);
+    port->on_engine_list    = 1;
     return 1;
 
 err:
