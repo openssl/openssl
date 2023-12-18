@@ -1099,7 +1099,7 @@ subtest "encrypt to three recipients with RSA-OAEP, key only decrypt" => sub {
 
     ok(run(app(['openssl', 'cms',
 		@defaultprov,
-		'-encrypt',
+		'-encrypt', '-aes128',
 		'-in', $pt,
 		'-out', $ct,
 		'-stream',
@@ -1113,7 +1113,7 @@ subtest "encrypt to three recipients with RSA-OAEP, key only decrypt" => sub {
        "encrypt to three recipients with RSA-OAEP (avoid openssl/project issue#380)");
     ok(run(app(['openssl', 'cms',
 		@defaultprov,
-		'-decrypt',
+		'-decrypt', '-aes128',
 		'-in', $ct,
 		'-out', $ptpt,
 		'-inkey', catfile($smdir, "smrsa3-key.pem"),
