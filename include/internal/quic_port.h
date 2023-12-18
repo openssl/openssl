@@ -70,8 +70,9 @@ void ossl_quic_port_free(QUIC_PORT *port);
 QUIC_CHANNEL *ossl_quic_port_create_outgoing(QUIC_PORT *port, SSL *tls);
 
 /*
- * Create an incoming channel using this port. XXX for temporary TSERVER use
- * only - will be removed.
+ * Create an incoming channel using this port.
+ *
+ * TODO(QUIC SERVER): temporary TSERVER use only - will be removed.
  */
 QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls);
 
