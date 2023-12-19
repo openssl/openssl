@@ -281,6 +281,7 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
     const char *path = NULL;
     long activate = 0;
     int ok = 0;
+    int added = 0;
 
     name = skip_dot(name);
     OSSL_TRACE1(CONF, "Configuring provider %s\n", name);
@@ -335,13 +336,12 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         }
         if (ok)
             ok = provider_conf_params(NULL, &entry, NULL, value, cnf);
-        if (ok == 1 && (entry.path != NULL || entry.parameters != NULL)) {
+        if (ok >= 1 && (entry.path != NULL || entry.parameters != NULL)) {
             ok = ossl_provider_info_add_to_store(libctx, &entry);
-            if (!ok || (entry.path == NULL && entry.parameters == NULL)) {
-                ossl_provider_info_clear(&entry);
-            }
+            added = 1;
         }
-
+        if (added == 0)
+            ossl_provider_info_clear(&entry);
     }
 
     /*
