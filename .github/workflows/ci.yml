@@ -373,27 +373,3 @@ jobs:
         default: true
     - name: test external pyca
       run: make test TESTS="test_external_pyca" VERBOSE=1
-==== BASE ====
-
-  external-test-cf-quiche:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
-    - name: Configure OpenSSL
-      run: ./config --banner=Configured --strict-warnings enable-external-tests && perl configdata.pm --dump
-    - name: make
-      run: make -s -j4
-    - uses: actions-rs/toolchain@v1
-      with:
-        profile: default
-        toolchain: stable
-        default: true
-    - name: get cpu info
-      run: |
-        cat /proc/cpuinfo
-        ./util/opensslwrap.sh version -c
-    - name: test external Cloudflare quiche
-      run: make test TESTS="test_external_cf_quiche" VERBOSE=1
-==== BASE ====
