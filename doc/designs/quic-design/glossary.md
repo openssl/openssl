@@ -186,7 +186,7 @@ more `QUIC_PORT` instances, each of which owns zero or more `QUIC_CHANNEL`
 objects representing QUIC connections.
 
 **QUIC_PORT:** Internal object in the QUIC core implementation corresponding to
-a listing port/network BIO. Has zero or more child `QUIC_CHANNEL` objects
+a listening port/network BIO. Has zero or more child `QUIC_CHANNEL` objects
 associated with it and belongs to a `QUIC_ENGINE`.
 
 **QUIC_STREAM**: Internal object tracking a QUIC stream. Unlike an XSO this is
