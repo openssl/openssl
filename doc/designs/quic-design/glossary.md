@@ -25,8 +25,7 @@ limits on transmissions accordingly.
 the CFQ strategy for frame in flight management. For details, see FIFM
 design document.
 
-**Channel:** Core QUIC connection handling object and connection state machine
-implementation. This is fused tightly with the RXDP.
+**Channel:** See `QUIC_CHANNEL`.
 
 **CID:** Connection ID.
 
@@ -54,6 +53,8 @@ DCID.
 dispatches calls to libssl public APIs to the APL.
 
 **EL:** Encryption level. See RFC 9000.
+
+**Engine:** See `QUIC_ENGINE`.
 
 **FC:** Flow control. Comprises TXFC and RXFC.
 
@@ -134,6 +135,8 @@ Initial packets. It is only used temporarily.
 **PN:** Packet number. Most QUIC packet types have a packet number (PN); see RFC
 9000.
 
+**Port:** See `QUIC_PORT`.
+
 **PTO:** Probe timeout. See RFC 9000.
 
 **QC:** See `QUIC_CONNECTION`.
@@ -167,8 +170,24 @@ wrapping libssl TLS code to implement the QUIC-specific aspects of QUIC TLS.
 
 **QTX:** QUIC Record Layer TX. Encrypts and sends packets in datagrams.
 
+**QUIC_CHANNEL:** Internal object in the QUIC core implementation corresponding
+to a QUIC connection. Ties together other components and provides connection
+handling and state machine implementation. Belongs to a `QUIC_PORT` representing
+a UDP socket/BIO, which in turn belongs to a `QUIC_ENGINE`. Owns some number of
+`QUIC_STREAM` instances. The `QUIC_CHANNEL` code is fused tightly with the RXDP.
+
 **QUIC_CONNECTION:** QUIC connection. This is the object representing a QUIC
-connection in the APL.
+connection in the APL. It internally corresponds to a `QUIC_CHANNEL` object in
+the QUIC core implementation.
+
+**QUIC_ENGINE:** Internal object in the QUIC core implementation constituting
+the top-level object of a QUIC event and I/O processing domain. Owns zero or
+more `QUIC_PORT` instances, each of which owns zero or more `QUIC_CHANNEL`
+objects representing QUIC connections.
+
+**QUIC_PORT:** Internal object in the QUIC core implementation corresponding to
+a listing port/network BIO. Has zero or more child `QUIC_CHANNEL` objects
+associated with it and belongs to a `QUIC_ENGINE`.
 
 **QUIC_STREAM**: Internal object tracking a QUIC stream. Unlike an XSO this is
 not part of the APL. An XSO wraps a QUIC_STREAM once that stream is exposed as
