@@ -266,9 +266,10 @@ Specifies the pathname of the module (typically a shared library) to load.
 =item B<activate>
 
 If present and set to one of the values yes, on, true or 1, then the associated
-provider will be activated.  Omitting this item, or setting it to
-any other value, will prevent the associated provider from being activated.
-Note that the above activation values are case sensitive
+provider will be activated. Conversely, setting this value to no, off, false, or
+0 will prevent the provider from being activated.  Note that the listed settings
+case insensitive.  Setting activate to any other setting, or omitting a setting
+value will result in an error.
 
 =back
 

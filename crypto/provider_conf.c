@@ -236,19 +236,43 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         /* First handle some special pseudo confs */
 
         /* Override provider name to use */
-        if (strcmp(confname, "identity") == 0)
+        if (strcmp(confname, "identity") == 0) {
             name = confvalue;
-        else if (strcmp(confname, "soft_load") == 0)
+        } else if (strcmp(confname, "soft_load") == 0) {
             soft = 1;
         /* Load a dynamic PROVIDER */
-        else if (strcmp(confname, "module") == 0)
+        } else if (strcmp(confname, "module") == 0) {
             path = confvalue;
-        else if (strcmp(confname, "activate") == 0)
+        } else if (strcmp(confname, "activate") == 0) {
+            if (confvalue == NULL) {
+                ERR_raise_data(ERR_LIB_CRYPTO, CRYPTO_R_PROVIDER_SECTION_ERROR,
+                               "section=%s activate set to unrecognized value",
+                               value);
+                return 0;
+            }
             if ((strcmp(confvalue, "1") == 0)
                 || (strcmp(confvalue, "yes") == 0)
+                || (strcmp(confvalue, "YES") == 0)
                 || (strcmp(confvalue, "true") == 0)
-                || (strcmp(confvalue, "on") == 0))
+                || (strcmp(confvalue, "TRUE") == 0)
+                || (strcmp(confvalue, "on") == 0)
+                || (strcmp(confvalue, "ON") == 0)) {
                 activate = 1;
+            } else if ((strcmp(confvalue, "0") == 0)
+                       || (strcmp(confvalue, "no") == 0)
+                       || (strcmp(confvalue, "NO") == 0)
+                       || (strcmp(confvalue, "false") == 0)
+                       || (strcmp(confvalue, "FALSE") == 0)
+                       || (strcmp(confvalue, "off") == 0)
+                       || (strcmp(confvalue, "OFF") == 0)) {
+                activate = 0;
+            } else {
+                ERR_raise_data(ERR_LIB_CRYPTO, CRYPTO_R_PROVIDER_SECTION_ERROR,
+                               "section=%s activate set to unrecognized value",
+                               value);
+                return 0;
+            }
+        }
     }
 
     if (activate) {
