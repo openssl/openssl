@@ -1516,7 +1516,9 @@ static int mac_test_run_mac(EVP_TEST *t)
         t->err = "MAC_CREATE_ERROR";
         goto err;
     }
-    if (fips_provider_version_gt(libctx, 3, 0, 12))
+    if (fips_provider_version_gt(libctx, 3, 1, 4)
+        || (fips_provider_version_lt(libctx, 3, 1, 0)
+            && fips_provider_version_gt(libctx, 3, 0, 12)))
         size_before_init = EVP_MAC_CTX_get_mac_size(ctx);
     if (!EVP_MAC_init(ctx, expected->key, expected->key_len, params)) {
         t->err = "MAC_INIT_ERROR";
