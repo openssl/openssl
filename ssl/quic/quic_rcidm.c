@@ -110,13 +110,13 @@ static void rcidm_set_preferred_rcid(QUIC_RCIDM *rcidm,
 enum {
     RCID_STATE_PENDING,
     RCID_STATE_CUR,
-    RCID_STATE_RETIRING,
+    RCID_STATE_RETIRING
 };
 
 enum {
     RCID_TYPE_INITIAL,      /* CID is from an peer INITIAL packet     (seq 0) */
     RCID_TYPE_PREF_ADDR,    /* CID is from a preferred_address TPARAM (seq 1) */
-    RCID_TYPE_NCID,         /* CID is from a NCID frame */
+    RCID_TYPE_NCID          /* CID is from a NCID frame */
     /*
      * INITIAL_ODCID and RETRY_ODCID also conceptually exist but are tracked
      * separately.
