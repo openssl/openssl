@@ -6023,6 +6023,7 @@ uint64_t SSL_set_options(SSL *s, uint64_t op)
 
     /* Ignore return value */
     sc->rlayer.rrlmethod->set_options(sc->rlayer.rrl, options);
+    sc->rlayer.wrlmethod->set_options(sc->rlayer.wrl, options);
 
     return sc->options;
 }
@@ -6035,6 +6036,7 @@ uint64_t SSL_CTX_clear_options(SSL_CTX *ctx, uint64_t op)
 uint64_t SSL_clear_options(SSL *s, uint64_t op)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    OSSL_PARAM options[2], *opts = options;
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
@@ -6044,7 +6046,17 @@ uint64_t SSL_clear_options(SSL *s, uint64_t op)
     if (sc == NULL)
         return 0;
 
-    return sc->options &= ~op;
+    sc->options &= ~op;
+
+    *opts++ = OSSL_PARAM_construct_uint64(OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS,
+                                          &sc->options);
+    *opts = OSSL_PARAM_construct_end();
+
+    /* Ignore return value */
+    sc->rlayer.rrlmethod->set_options(sc->rlayer.rrl, options);
+    sc->rlayer.wrlmethod->set_options(sc->rlayer.wrl, options);
+
+    return sc->options;
 }
 
 STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s)
