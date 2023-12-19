@@ -162,7 +162,7 @@ OSSL_TIME ossl_quic_port_get_time(QUIC_PORT *port)
 
 static OSSL_TIME get_time(void *port)
 {
-    return ossl_quic_port_get_time(port);
+    return ossl_quic_port_get_time((QUIC_PORT *)port);
 }
 
 int ossl_quic_port_get_rx_short_dcid_len(const QUIC_PORT *port)
