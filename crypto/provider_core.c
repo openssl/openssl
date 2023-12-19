@@ -456,7 +456,8 @@ static OSSL_PROVIDER *provider_new(const char *name,
 
     if ((prov->opbits_lock = CRYPTO_THREAD_lock_new()) == NULL
         || (prov->flag_lock = CRYPTO_THREAD_lock_new()) == NULL
-        || (prov->parameters = sk_INFOPAIR_deep_copy(parameters,
+        || (prov->parameters = (parameters == NULL) ? sk_INFOPAIR_new_null() :
+                                                     sk_INFOPAIR_deep_copy(parameters,
                                                      infopair_copy,
                                                      infopair_free)) == NULL) {
         ossl_provider_free(prov);
@@ -1616,7 +1617,7 @@ void ossl_provider_teardown(const OSSL_PROVIDER *prov)
             && !prov->ischild
 #endif
        )
-        prov->teardown(prov->provctx);
+        prov->teardown((void *)prov->provctx);
 }
 
 const OSSL_PARAM *ossl_provider_gettable_params(const OSSL_PROVIDER *prov)

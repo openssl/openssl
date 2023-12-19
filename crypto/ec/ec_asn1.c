@@ -911,6 +911,11 @@ EC_GROUP *d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
     return group;
 }
 
+void *d2i_ECPKParameters_ECG_thunk(void **a, const unsigned char **in, long len)
+{
+    return (void *)d2i_ECPKParameters((EC_GROUP **)a, in, len);
+}
+
 int i2d_ECPKParameters(const EC_GROUP *a, unsigned char **out)
 {
     int ret = 0;
@@ -926,6 +931,11 @@ int i2d_ECPKParameters(const EC_GROUP *a, unsigned char **out)
     }
     ECPKPARAMETERS_free(tmp);
     return ret;
+}
+
+int i2d_ECPKParameters_ECG_thunk(const void *a, unsigned char **out)
+{
+    return i2d_ECPKParameters((const EC_GROUP *)a, out);
 }
 
 /* some EC_KEY functions */

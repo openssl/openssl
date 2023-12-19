@@ -370,6 +370,11 @@ static void collect_keymgmt(EVP_KEYMGMT *keymgmt, void *arg)
     }
 }
 
+static void collect_keymgmt_thunk(void *data, void *arg)
+{
+    collect_keymgmt((EVP_KEYMGMT *)data, arg);
+}
+
 /*
  * This function does the actual binding of decoders to the OSSL_DECODER_CTX. It
  * searches for decoders matching 'keytype', which is a string like "RSA", "DH",
@@ -438,7 +443,9 @@ static int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
     collect_data.libctx     = libctx;
     collect_data.keymgmts   = keymgmts;
     collect_data.keytype    = keytype;
-    EVP_KEYMGMT_do_all_provided(libctx, collect_keymgmt, &collect_data);
+    EVP_KEYMGMT_do_all_provided(libctx,
+                                (void (*)(EVP_KEYMGMT *, void*))collect_keymgmt_thunk,
+                                &collect_data);
 
     if (collect_data.error_occurred)
         goto err;
@@ -518,7 +525,7 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
     if (src->decoder_insts != NULL) {
         dest->decoder_insts
             = sk_OSSL_DECODER_INSTANCE_deep_copy(src->decoder_insts,
-                                                 ossl_decoder_instance_dup,
+                                                 (sk_OSSL_DECODER_INSTANCE_copyfunc)ossl_decoder_instance_dup,
                                                  ossl_decoder_instance_free);
         if (dest->decoder_insts == NULL) {
             ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
@@ -550,7 +557,7 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
         if (process_data_src->keymgmts != NULL) {
             process_data_dest->keymgmts
                 = sk_EVP_KEYMGMT_deep_copy(process_data_src->keymgmts,
-                                           keymgmt_dup,
+                                           (sk_EVP_KEYMGMT_copyfunc)keymgmt_dup,
                                            EVP_KEYMGMT_free);
             if (process_data_dest->keymgmts == NULL) {
                 ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_EVP_LIB);

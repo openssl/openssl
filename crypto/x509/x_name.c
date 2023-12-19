@@ -195,6 +195,12 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
     ret = x509_name_canon(nm.x);
     if (!ret)
         goto err;
+
+    OPENSSL_sk_set_thunks((OPENSSL_STACK *)intname.s,
+                          sk_STACK_OF_X509_NAME_ENTRY_compfunc_thunk,
+                          sk_STACK_OF_X509_NAME_ENTRY_pop_free_thunk,
+                          sk_STACK_OF_X509_NAME_ENTRY_deep_copy_thunk);
+
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
                                          local_sk_X509_NAME_ENTRY_free);
     nm.x->modified = 0;

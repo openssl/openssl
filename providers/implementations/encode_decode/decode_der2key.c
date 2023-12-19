@@ -369,7 +369,12 @@ static void *dh_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                              (key_from_pkcs8_t *)ossl_dh_key_from_pkcs8);
 }
 
-# define dh_d2i_PUBKEY                  (d2i_of_void *)ossl_d2i_DH_PUBKEY
+static void *dh_d2i_PUBKEY(void **a, const unsigned char **pp, long len)
+{
+    DH *ret = ossl_d2i_DH_PUBKEY((DH **)a, pp, len);
+
+    return (void *)ret; 
+}
 # define dh_free                        (free_key_fn *)DH_free
 # define dh_check                       NULL
 
@@ -539,8 +544,17 @@ static void *rsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                              (key_from_pkcs8_t *)ossl_rsa_key_from_pkcs8);
 }
 
-#define rsa_d2i_PUBKEY                  (d2i_of_void *)d2i_RSA_PUBKEY
-#define rsa_free                        (free_key_fn *)RSA_free
+static void *rsa_d2i_PUBKEY(void **a, const unsigned char **pp, long len)
+{
+    RSA *ret = d2i_RSA_PUBKEY((RSA **)a, pp, len);
+
+    return (void *)ret;
+}
+
+static void rsa_free(void *d)
+{
+    RSA_free((RSA *)d);
+}
 
 static int rsa_check(void *key, struct der2key_ctx_st *ctx)
 {

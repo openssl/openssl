@@ -230,8 +230,8 @@ static TEST_PACKAGE long_test_package_32bit = {
     sizeof(long_expected_32bit), sizeof(long_expected_32bit[0]),
     long_encdec_data_32bit,
     sizeof(long_encdec_data_32bit), sizeof(long_encdec_data_32bit[0]),
-    (i2d_fn *)i2d_ASN1_LONG_DATA, (d2i_fn *)d2i_ASN1_LONG_DATA,
-    (ifree_fn *)ASN1_LONG_DATA_free
+    i2d_ASN1_LONG_DATA_thunk, d2i_ASN1_LONG_DATA_thunk,
+    ASN1_LONG_DATA_free_thunk
 };
 
 static ASN1_LONG_DATA long_expected_64bit[] = {
@@ -266,8 +266,8 @@ static TEST_PACKAGE long_test_package_64bit = {
     sizeof(long_expected_64bit), sizeof(long_expected_64bit[0]),
     long_encdec_data_64bit,
     sizeof(long_encdec_data_64bit), sizeof(long_encdec_data_64bit[0]),
-    (i2d_fn *)i2d_ASN1_LONG_DATA, (d2i_fn *)d2i_ASN1_LONG_DATA,
-    (ifree_fn *)ASN1_LONG_DATA_free
+    i2d_ASN1_LONG_DATA_thunk, d2i_ASN1_LONG_DATA_thunk,
+    ASN1_LONG_DATA_free_thunk
 };
 #endif
 
@@ -315,8 +315,8 @@ static TEST_PACKAGE int32_test_package = {
     ASN1_ITEM_ref(ASN1_INT32_DATA), "INT32", 0,
     int32_expected, sizeof(int32_expected), sizeof(int32_expected[0]),
     int32_encdec_data, sizeof(int32_encdec_data), sizeof(int32_encdec_data[0]),
-    (i2d_fn *)i2d_ASN1_INT32_DATA, (d2i_fn *)d2i_ASN1_INT32_DATA,
-    (ifree_fn *)ASN1_INT32_DATA_free
+    i2d_ASN1_INT32_DATA_thunk, d2i_ASN1_INT32_DATA_thunk,
+    ASN1_INT32_DATA_free_thunk
 };
 
 /***** UINT32 ****************************************************************/
@@ -363,8 +363,8 @@ static TEST_PACKAGE uint32_test_package = {
     ASN1_ITEM_ref(ASN1_UINT32_DATA), "UINT32", 0,
     uint32_expected, sizeof(uint32_expected), sizeof(uint32_expected[0]),
     uint32_encdec_data, sizeof(uint32_encdec_data), sizeof(uint32_encdec_data[0]),
-    (i2d_fn *)i2d_ASN1_UINT32_DATA, (d2i_fn *)d2i_ASN1_UINT32_DATA,
-    (ifree_fn *)ASN1_UINT32_DATA_free
+    i2d_ASN1_UINT32_DATA_thunk, d2i_ASN1_UINT32_DATA_thunk,
+    ASN1_UINT32_DATA_free_thunk
 };
 
 /***** INT64 *****************************************************************/
@@ -412,8 +412,8 @@ static TEST_PACKAGE int64_test_package = {
     ASN1_ITEM_ref(ASN1_INT64_DATA), "INT64", 0,
     int64_expected, sizeof(int64_expected), sizeof(int64_expected[0]),
     int64_encdec_data, sizeof(int64_encdec_data), sizeof(int64_encdec_data[0]),
-    (i2d_fn *)i2d_ASN1_INT64_DATA, (d2i_fn *)d2i_ASN1_INT64_DATA,
-    (ifree_fn *)ASN1_INT64_DATA_free
+    i2d_ASN1_INT64_DATA_thunk, d2i_ASN1_INT64_DATA_thunk,
+    ASN1_INT64_DATA_free_thunk
 };
 
 /***** UINT64 ****************************************************************/
@@ -461,8 +461,8 @@ static TEST_PACKAGE uint64_test_package = {
     ASN1_ITEM_ref(ASN1_UINT64_DATA), "UINT64", 0,
     uint64_expected, sizeof(uint64_expected), sizeof(uint64_expected[0]),
     uint64_encdec_data, sizeof(uint64_encdec_data), sizeof(uint64_encdec_data[0]),
-    (i2d_fn *)i2d_ASN1_UINT64_DATA, (d2i_fn *)d2i_ASN1_UINT64_DATA,
-    (ifree_fn *)ASN1_UINT64_DATA_free
+    i2d_ASN1_UINT64_DATA_thunk, d2i_ASN1_UINT64_DATA_thunk,
+    ASN1_UINT64_DATA_free_thunk
 };
 
 /***** General testing functions *********************************************/

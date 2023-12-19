@@ -42,12 +42,25 @@ extern "C" {
     { \
         return ossl_sa_num((OPENSSL_SA *)sa); \
     } \
+    static void ossl_sa_##type##_doall_thunk(ossl_uintmax_t val, void *node, \
+                                            void (*leaf)(ossl_uintmax_t, void *)) \
+    { \
+       void (*leaf_conv)(ossl_uintmax_t, type *) = (void (*)(ossl_uintmax_t, type *))leaf; \
+       leaf_conv(val, (type *)node); \
+    } \
     static ossl_unused ossl_inline void \
     ossl_sa_##type##_doall(const SPARSE_ARRAY_OF(type) *sa, \
                            void (*leaf)(ossl_uintmax_t, type *)) \
     { \
         ossl_sa_doall((OPENSSL_SA *)sa, \
-                      (void (*)(ossl_uintmax_t, void *))leaf); \
+                      (void (*)(ossl_uintmax_t, void *))leaf, \
+                      ossl_sa_##type##_doall_thunk); \
+    } \
+    static void ossl_sa_##type##_doall_arg_thunk(ossl_uintmax_t val, void *node, void *arg, \
+                                                void(*leaf)(ossl_uintmax_t, void *, void *)) \
+    { \
+        void (*leaf_conv)(ossl_uintmax_t, type *, void *) = (void (*)(ossl_uintmax_t, type *, void *))leaf; \
+        leaf_conv(val, (type *)node, arg); \
     } \
     static ossl_unused ossl_inline void \
     ossl_sa_##type##_doall_arg(const SPARSE_ARRAY_OF(type) *sa, \
@@ -55,7 +68,9 @@ extern "C" {
                                void *arg) \
     { \
         ossl_sa_doall_arg((OPENSSL_SA *)sa, \
-                          (void (*)(ossl_uintmax_t, void *, void *))leaf, arg); \
+                          (void (*)(ossl_uintmax_t, void *, void *))leaf, \
+                          ossl_sa_##type##_doall_arg_thunk, \
+                          arg); \
     } \
     static ossl_unused ossl_inline ctype \
     *ossl_sa_##type##_get(const SPARSE_ARRAY_OF(type) *sa, ossl_uintmax_t n) \
@@ -80,9 +95,14 @@ OPENSSL_SA *ossl_sa_new(void);
 void ossl_sa_free(OPENSSL_SA *sa);
 void ossl_sa_free_leaves(OPENSSL_SA *sa);
 size_t ossl_sa_num(const OPENSSL_SA *sa);
-void ossl_sa_doall(const OPENSSL_SA *sa, void (*leaf)(ossl_uintmax_t, void *));
+void ossl_sa_doall(const OPENSSL_SA *sa,
+                   void (*leaf)(ossl_uintmax_t, void *),
+                   void (*leaf_thunk)(ossl_uintmax_t, void *,
+                    void (*)(ossl_uintmax_t, void *)));
 void ossl_sa_doall_arg(const OPENSSL_SA *sa,
-                       void (*leaf)(ossl_uintmax_t, void *, void *), void *);
+                       void (*leaf)(ossl_uintmax_t, void *, void *),
+                       void (*leaf_thunk)(ossl_uintmax_t, void *, void *,
+                        void(*)(ossl_uintmax_t, void*, void *)), void *);
 void *ossl_sa_get(const OPENSSL_SA *sa, ossl_uintmax_t n);
 int ossl_sa_set(OPENSSL_SA *sa, ossl_uintmax_t n, void *val);
 

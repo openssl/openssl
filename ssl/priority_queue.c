@@ -51,6 +51,8 @@ struct ossl_pqueue_st
     struct pq_heap_st *heap;
     struct pq_elem_st *elements;
     int (*compare)(const void *, const void *);
+    int (*compare_thunk)(const void *, const void *,
+                         int (*)(const void *, const void *));
     size_t htop;        /* Highest used heap element */
     size_t hmax;        /* Allocated heap & element space */
     size_t freelist;    /* Index into elements[], start of free element list */
@@ -159,7 +161,7 @@ static ossl_inline void pqueue_move_down(OSSL_PQUEUE *pq, size_t n)
         const size_t p = (n - 1) / 2;
 
         ASSERT_USED(pq, p);
-        if (pq->compare(h[n].data, h[p].data) >= 0)
+        if (pq->compare_thunk(h[n].data, h[p].data, pq->compare) >= 0)
             break;
         pqueue_swap_elem(pq, n, p);
         n = p;
@@ -179,17 +181,18 @@ static ossl_inline void pqueue_move_up(OSSL_PQUEUE *pq, size_t n)
     if (pq->htop > p + 1) {
         ASSERT_USED(pq, p);
         ASSERT_USED(pq, p + 1);
-        if (pq->compare(h[p].data, h[p + 1].data) > 0)
+        if (pq->compare_thunk(h[p].data, h[p + 1].data, pq->compare) > 0)
             p++;
     }
-    while (pq->htop > p && pq->compare(h[p].data, h[n].data) < 0) {
+    while (pq->htop > p
+           && pq->compare_thunk(h[p].data, h[n].data, pq->compare) < 0) {
         ASSERT_USED(pq, p);
         pqueue_swap_elem(pq, n, p);
         n = p;
         p = n * 2 + 1;
         if (pq->htop > p + 1) {
             ASSERT_USED(pq, p + 1);
-            if (pq->compare(h[p].data, h[p + 1].data) > 0)
+            if (pq->compare_thunk(h[p].data, h[p + 1].data, pq->compare) > 0)
                 p++;
         }
     }
@@ -326,17 +329,22 @@ int ossl_pqueue_reserve(OSSL_PQUEUE *pq, size_t n)
     return 1;
 }
 
-OSSL_PQUEUE *ossl_pqueue_new(int (*compare)(const void *, const void *))
+OSSL_PQUEUE *ossl_pqueue_new(int (*compare)(const void *, const void *),
+                             int (*compare_thunk)(const void *,
+                             const void *, int (*)(const void *, const void *)))
 {
     OSSL_PQUEUE *pq;
 
     if (compare == NULL)
+        return NULL;
+    if (compare_thunk == NULL)
         return NULL;
 
     pq = OPENSSL_malloc(sizeof(*pq));
     if (pq == NULL)
         return NULL;
     pq->compare = compare;
+    pq->compare_thunk = compare_thunk;
     pq->hmax = min_nodes;
     pq->htop = 0;
     pq->freelist = 0;

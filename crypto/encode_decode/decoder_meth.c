@@ -47,6 +47,11 @@ int OSSL_DECODER_up_ref(OSSL_DECODER *decoder)
     return 1;
 }
 
+static int OSSL_DECODER_up_ref_thunk(void *d)
+{
+    return OSSL_DECODER_up_ref((OSSL_DECODER *)d);
+}
+
 void OSSL_DECODER_free(OSSL_DECODER *decoder)
 {
     int ref = 0;
@@ -62,6 +67,11 @@ void OSSL_DECODER_free(OSSL_DECODER *decoder)
     ossl_provider_free(decoder->base.prov);
     CRYPTO_FREE_REF(&decoder->base.refcnt);
     OPENSSL_free(decoder);
+}
+
+static void OSSL_DECODER_free_thunk(void *d)
+{
+    OSSL_DECODER_free((OSSL_DECODER *)d);
 }
 
 /* Data to be passed through ossl_method_construct() */
@@ -191,8 +201,8 @@ static int put_decoder_in_store(void *store, void *method,
         return 0;
 
     return ossl_method_store_add(store, prov, id, propdef, method,
-                                 (int (*)(void *))OSSL_DECODER_up_ref,
-                                 (void (*)(void *))OSSL_DECODER_free);
+                                 OSSL_DECODER_up_ref_thunk,
+                                 OSSL_DECODER_free_thunk);
 }
 
 /* Create and populate a decoder method */
