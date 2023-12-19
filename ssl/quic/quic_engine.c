@@ -65,7 +65,6 @@ static void qeng_cleanup(QUIC_ENGINE *qeng)
 }
 
 QUIC_REACTOR *ossl_quic_engine_get0_reactor(QUIC_ENGINE *qeng)
-
 {
     return &qeng->rtor;
 }

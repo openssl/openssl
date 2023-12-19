@@ -35,8 +35,8 @@ struct quic_engine_st {
     /*
      * Master synchronisation mutex for the entire QUIC event domain. Used for
      * thread assisted mode synchronisation. We don't own this; the instantiator
-     * of the port passes it to us and is responsible for freeing it after port
-     * destruction.
+     * of the engine passes it to us and is responsible for freeing it after
+     * engine destruction.
      */
     CRYPTO_MUTEX                    *mutex;
 

@@ -45,8 +45,8 @@ struct quic_port_st {
     QUIC_ENGINE                     *engine;
 
     /*
-     * QUIC_ENGINE keeps the channels which belong to it on a list for
-     * bookkeeping purposes.
+     * QUIC_ENGINE keeps the ports which belong to it on a list for bookkeeping
+     * purposes.
      */
     OSSL_LIST_MEMBER(port, QUIC_PORT);
 
