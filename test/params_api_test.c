@@ -200,7 +200,7 @@ static int test_param_int(int n)
                        sizeof(int) : raw_values[n].len;
     OSSL_PARAM param = OSSL_PARAM_int("a", NULL);
 
-    if (!TEST_int_eq(test_param_type_null(&param),1))
+    if (!TEST_int_eq(test_param_type_null(&param), 1))
         return 0;
 
     memset(buf, 0, sizeof(buf));
