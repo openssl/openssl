@@ -468,7 +468,7 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
             /* Ignore DTLS1_BAD_VER */
             min_version = DTLS1_VERSION;
         if (max_version == 0)
-            max_version = DTLS1_2_VERSION;
+            max_version = DTLS1_3_VERSION;
 #ifdef OPENSSL_NO_DTLS1_2
         if (max_version == DTLS1_2_VERSION)
             max_version = DTLS1_VERSION;
