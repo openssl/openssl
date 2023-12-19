@@ -33,6 +33,15 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added client-side TLS session caching support. Applications can now
+   set a per-connection cache identifier via `SSL_set1_cache_id()`, which
+   the session cache uses instead of the server-provided session ID.  This
+   allows clients to reliably resume sessions when connecting to server
+   pools or load-balanced endpoints that rotate session IDs.  The cache
+   identifier can be retrieved with `SSL_SESSION_get1_cache_id()`.
+
+   *Todd Short*
+
  * s390x: Disable mod-expo offloading to a crypto card for small exponents.
    Add a new keyword `cex_min_bits:<bits>` for the `OPENSSL_s390xcap`
    environment variable to specify the minimum number of bits that the
