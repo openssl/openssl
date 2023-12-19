@@ -28,7 +28,11 @@
  * represents a single QUIC connection. All QUIC_PORT instances must belong
  * to a QUIC_ENGINE.
  *
- * A QUIC engine is the root engine in a QUIC event domain, and is responsible
+ * TODO(QUIC SERVER): Currently a QUIC_PORT belongs to a single QUIC_CHANNEL.
+ * This will cease to be the case once connection migration and/or multipath is
+ * implemented, so in future a channel might be associated with multiple ports.
+ *
+ * A QUIC engine is the root object in a QUIC event domain, and is responsible
  * for managing event processing for all QUIC ports and channels (e.g. timeouts,
  * clock management, the QUIC_REACTOR instance, etc.).
  */
@@ -37,9 +41,9 @@ typedef struct quic_engine_args_st {
     const char      *propq;
 
     /*
-     * This must be a mutex the lifetime of which will exceed that of the port
-     * and all channels. The instantiator of the port is responsible for
-     * providing a mutex as this makes it easier to handle instantiation and
+     * This must be a mutex the lifetime of which will exceed that of the engine
+     * and all ports and channels. The instantiator of the engine is responsible
+     * for providing a mutex as this makes it easier to handle instantiation and
      * teardown of channels in situations potentially requiring locking.
      *
      * Note that this is a MUTEX not a RWLOCK as it needs to be an OS mutex for
