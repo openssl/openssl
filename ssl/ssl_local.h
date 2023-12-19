@@ -550,6 +550,8 @@ struct ssl_session_st {
 #ifndef OPENSSL_NO_SRP
     char *srp_username;
 #endif
+    unsigned char *cache_id;
+    size_t cache_id_len;
     unsigned char *ticket_appdata;
     size_t ticket_appdata_len;
     uint32_t flags;
@@ -1837,6 +1839,9 @@ struct ssl_connection_st {
     SSL_async_callback_fn async_cb;
     void *async_cb_arg;
 
+    /* Client cache data */
+    unsigned char *cache_id;
+    size_t cache_id_len;
     /*
      * Signature algorithms shared by client and server: cached because these
      * are used most often.
