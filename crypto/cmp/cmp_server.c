@@ -513,11 +513,6 @@ static OSSL_CMP_MSG *process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
 
     pr = sk_OSSL_CMP_POLLREQ_value(prc, 0);
     certReqId = ossl_cmp_asn1_get_int(pr->certReqId);
-    if (srv_ctx->certReqId != OSSL_CMP_CERTREQID_INVALID
-            && certReqId != srv_ctx->certReqId) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_BAD_REQUEST_ID);
-        return NULL;
-    }
     if (!srv_ctx->process_pollReq(srv_ctx, req, certReqId,
                                   &orig_req, &check_after))
         return NULL;
