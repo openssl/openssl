@@ -106,7 +106,7 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
          * We've not visited this node yet, so record it on the stack
          */
         if (!sk_OPENSSL_CSTRING_push(visited, value))
-            return 0;
+            return -1;
 
         if (name != NULL) {
             OPENSSL_strlcpy(buffer, name, sizeof(buffer));
@@ -119,7 +119,7 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
 
             if (buffer_len + strlen(sectconf->name) >= sizeof(buffer)) {
                 sk_OPENSSL_CSTRING_pop(visited);
-                return 0;
+                return -1;
             }
             buffer[buffer_len] = '\0';
             OPENSSL_strlcat(buffer, sectconf->name, sizeof(buffer));
@@ -161,7 +161,7 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
     STACK_OF(OPENSSL_CSTRING) *visited = sk_OPENSSL_CSTRING_new_null();
 
     if (visited == NULL)
-        return 0;
+        return -1;
 
     rc = provider_conf_params_internal(prov, provinfo, name,
                                        value, cnf, visited);
@@ -335,10 +335,11 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         }
         if (ok)
             ok = provider_conf_params(NULL, &entry, NULL, value, cnf);
-        if (ok && (entry.path != NULL || entry.parameters != NULL))
+        if (ok == 1 && (entry.path != NULL || entry.parameters != NULL)) {
             ok = ossl_provider_info_add_to_store(libctx, &entry);
-        if (!ok || (entry.path == NULL && entry.parameters == NULL)) {
-            ossl_provider_info_clear(&entry);
+            if (!ok || (entry.path == NULL && entry.parameters == NULL)) {
+                ossl_provider_info_clear(&entry);
+            }
         }
 
     }
