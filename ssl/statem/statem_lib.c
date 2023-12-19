@@ -2181,7 +2181,7 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
 
     if (suppversions->present) {
         unsigned int candidate_vers = 0;
-        unsigned int best_vers = 0;
+        unsigned int best_vers = SSL_CONNECTION_IS_DTLS(s) ? INT_MAX : 0;
         const SSL_METHOD *best_method = NULL;
         PACKET versionslist;
 
@@ -2204,11 +2204,6 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
         if (client_version <= SSL3_VERSION)
             return SSL_R_BAD_LEGACY_VERSION;
 
-        /* Initialise best_vers and best_method */
-        if (!PACKET_get_net_2(&versionslist, &best_vers)
-                || !ssl_version_supported(s, best_vers, &best_method)) {
-            return SSL_R_UNSUPPORTED_PROTOCOL;
-        }
         while (PACKET_get_net_2(&versionslist, &candidate_vers)) {
             if (version_cmp(s, candidate_vers, best_vers) <= 0)
                 continue;
@@ -2224,9 +2219,9 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             if (s->hello_retry_request != SSL_HRR_NONE) {
                 /*
                  * This is after a HelloRetryRequest so we better check that we
-                 * negotiated TLSv1.3
+                 * negotiated (D)TLSv1.3
                  */
-                if (best_vers != TLS1_3_VERSION || best_vers != DTLS1_3_VERSION)
+                if (best_vers != TLS1_3_VERSION && best_vers != DTLS1_3_VERSION)
                     return SSL_R_UNSUPPORTED_PROTOCOL;
                 return 0;
             }
