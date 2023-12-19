@@ -421,32 +421,33 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
                          SSL_R_TOO_MANY_WARN_ALERTS);
                 return -1;
             }
+        }
 
-            /*
-            * Apart from close_notify the only other warning alert in DTLSv1.3
-            * is user_cancelled - which we just ignore.
-            */
-            if (is_dtls13 && alert_descr == SSL_AD_USER_CANCELLED) {
-                goto start;
-            } else if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
+        /*
+         * Apart from close_notify the only other warning alert in DTLSv1.3
+         * is user_cancelled - which we just ignore.
+         */
+        if (is_dtls13 && alert_descr == SSL_AD_USER_CANCELLED) {
+            goto start;
+        } else if (alert_descr == SSL_AD_CLOSE_NOTIFY
+                   && (is_dtls13 || alert_level == SSL3_AL_WARNING)) {
 #ifndef OPENSSL_NO_SCTP
-                /*
-                 * With SCTP and streams the socket may deliver app data
-                 * after a close_notify alert. We have to check this first so
-                 * that nothing gets discarded.
-                 */
-                if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
-                    BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s)) > 0) {
-                    sc->d1->shutdown_received = 1;
-                    sc->rwstate = SSL_READING;
-                    BIO_clear_retry_flags(SSL_get_rbio(s));
-                    BIO_set_retry_read(SSL_get_rbio(s));
-                    return -1;
-                }
-#endif
-                sc->shutdown |= SSL_RECEIVED_SHUTDOWN;
-                return 0;
+            /*
+            * With SCTP and streams the socket may deliver app data
+            * after a close_notify alert. We have to check this first so
+            * that nothing gets discarded.
+            */
+            if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
+            BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s)) > 0) {
+                sc->d1->shutdown_received = 1;
+                sc->rwstate = SSL_READING;
+                BIO_clear_retry_flags(SSL_get_rbio(s));
+                BIO_set_retry_read(SSL_get_rbio(s));
+                return -1;
             }
+#endif
+            sc->shutdown |= SSL_RECEIVED_SHUTDOWN;
+            return 0;
         } else if (alert_level == SSL3_AL_FATAL || is_dtls13) {
             sc->rwstate = SSL_NOTHING;
             sc->s3.fatal_alert = alert_descr;
@@ -458,12 +459,13 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
                 return -1;
             SSL_CTX_remove_session(sc->session_ctx, sc->session);
             return 0;
-        } else {
-            SSLfatal(sc, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_ALERT_TYPE);
-            return -1;
+        } else if (alert_level == SSL3_AL_WARNING) {
+            /* We ignore any other warning alert in (D)TLSv1.2 and below */
+            goto start;
         }
 
-        goto start;
+        SSLfatal(sc, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_ALERT_TYPE);
+        return -1;
     }
 
     if (sc->shutdown & SSL_SENT_SHUTDOWN) { /* but we have not received a
