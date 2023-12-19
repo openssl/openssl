@@ -865,6 +865,9 @@ int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
             ret = DTLS_VERSION_LE(minversion, ginfo->maxdtls);
         if (ginfo->mindtls > 0)
             ret &= DTLS_VERSION_GE(maxversion, ginfo->mindtls);
+        if (ret && okfortls13 != NULL && maxversion == DTLS1_3_VERSION)
+            *okfortls13 = (ginfo->maxdtls == 0)
+                          || DTLS_VERSION_GE(ginfo->maxdtls, DTLS1_3_VERSION);
     } else {
         if (ginfo->mintls < 0 || ginfo->maxtls < 0)
             return 0;
@@ -1207,7 +1210,7 @@ static int tls1_check_pkey_comp(SSL_CONNECTION *s, EVP_PKEY *pkey)
         return 0;
     if (point_conv == POINT_CONVERSION_UNCOMPRESSED) {
             comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
-    } else if (SSL_CONNECTION_IS_TLS13(s)) {
+    } else if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))) {
         /*
          * ec_point_formats extension is not used in TLSv1.3 so we ignore
          * this check.
