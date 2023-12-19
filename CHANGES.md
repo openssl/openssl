@@ -33,6 +33,11 @@ OpenSSL 3.3
 
    *James Muir*
 
+ * The `-rawin` option of the `pkeyutl` apps is now implied (and thus no more
+   required) when signing or verifying with an Ed25519 or Ed448 key.
+
+   *David von Oheimb*
+
  * The build of exporters (such as `.pc` files for pkg-config) cleaned up to
    be less hard coded in the build file templates, and to allow easier
    addition of more exporters.  With that, an exporter for CMake is also

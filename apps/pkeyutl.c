@@ -20,10 +20,13 @@
 #define KEY_PUBKEY      2
 #define KEY_CERT        3
 
+static EVP_PKEY *get_pkey(const char *kdfalg,
+                          const char *keyfile, int keyform, int key_type,
+                          char *passinarg, int pkey_op, ENGINE *e);
 static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
-                              const char *keyfile, int keyform, int key_type,
-                              char *passinarg, int pkey_op, ENGINE *e,
-                              const int impl, int rawin, EVP_PKEY **ppkey,
+                              int pkey_op, ENGINE *e,
+                              const int impl, int rawin,
+                              EVP_PKEY *pkey /* may get deallocated */,
                               EVP_MD_CTX *mctx, const char *digestname,
                               OSSL_LIB_CTX *libctx, const char *propq);
 
@@ -38,6 +41,14 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
                         EVP_PKEY *pkey, BIO *in,
                         int filesize, unsigned char *sig, int siglen,
                         unsigned char **out, size_t *poutlen);
+
+static int only_rawin(const EVP_PKEY *pkey)
+{
+    if (pkey == NULL)
+        return 0;
+    return EVP_PKEY_get_id(pkey) == EVP_PKEY_ED25519
+        || EVP_PKEY_get_id(pkey) == EVP_PKEY_ED448;
+}
 
 typedef enum OPTION_choice {
     OPT_COMMON,
@@ -68,7 +79,7 @@ const OPTIONS pkeyutl_options[] = {
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file - default stdin"},
-    {"rawin", OPT_RAWIN, '-', "Indicate the input data is in raw form"},
+    {"rawin", OPT_RAWIN, '-', "Indicate that signature input data is not hashed"},
     {"inkey", OPT_INKEY, 's', "Input key, by default private key"},
     {"pubin", OPT_PUBIN, '-', "Input key is a public key"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
@@ -259,26 +270,6 @@ int pkeyutl_main(int argc, char **argv)
     if (!app_RAND_load())
         goto end;
 
-    if (rawin && pkey_op != EVP_PKEY_OP_SIGN && pkey_op != EVP_PKEY_OP_VERIFY) {
-        BIO_printf(bio_err,
-                   "%s: -rawin can only be used with -sign or -verify\n",
-                   prog);
-        goto opthelp;
-    }
-
-    if (digestname != NULL && !rawin) {
-        BIO_printf(bio_err,
-                   "%s: -digest can only be used with -rawin\n",
-                   prog);
-        goto opthelp;
-    }
-
-    if (rawin && rev) {
-        BIO_printf(bio_err, "%s: -rev cannot be used with raw input\n",
-                   prog);
-        goto opthelp;
-    }
-
     if (kdfalg != NULL) {
         if (kdflen == 0) {
             BIO_printf(bio_err,
@@ -295,14 +286,33 @@ int pkeyutl_main(int argc, char **argv)
         goto opthelp;
     }
 
+    pkey = get_pkey(kdfalg, inkey, keyform, key_type, passinarg, pkey_op, e);
+    if (pkey_op == EVP_PKEY_OP_SIGN || pkey_op == EVP_PKEY_OP_VERIFY) {
+        if (only_rawin(pkey))
+            rawin = 1; /* implied for Ed25519 and Ed448 */
+    } else if (rawin) {
+        BIO_printf(bio_err,
+                   "%s: -rawin can only be used with -sign or -verify\n", prog);
+        goto opthelp;
+    }
+    if (digestname != NULL && !rawin) {
+        BIO_printf(bio_err,
+                   "%s: -digest can only be used with -rawin\n", prog);
+        goto opthelp;
+    }
+
+    if (rawin && rev) {
+        BIO_printf(bio_err, "%s: -rev cannot be used with raw input\n", prog);
+        goto opthelp;
+    }
+
     if (rawin) {
         if ((mctx = EVP_MD_CTX_new()) == NULL) {
             BIO_printf(bio_err, "Error: out of memory\n");
             goto end;
         }
     }
-    ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
-                   passinarg, pkey_op, e, engine_impl, rawin, &pkey,
+    ctx = init_ctx(kdfalg, &keysize, pkey_op, e, engine_impl, rawin, pkey,
                    mctx, digestname, libctx, app_get0_propq());
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
@@ -356,8 +366,10 @@ int pkeyutl_main(int argc, char **argv)
                     goto end;
                 }
             } else {
-                /* Get password as a passin argument: First split option name
-                 * and passphrase argument into two strings */
+                /*
+                 * Get password as a passin argument: First split option name
+                 * and passphrase argument into two strings
+                 */
                 *passin = 0;
                 passin++;
                 if (app_passwd(passin, NULL, &passwd, NULL) == 0) {
@@ -429,6 +441,7 @@ int pkeyutl_main(int argc, char **argv)
             size_t i;
             unsigned char ctmp;
             size_t l = (size_t)buf_inlen;
+
             for (i = 0; i < l / 2; i++) {
                 ctmp = buf_in[i];
                 buf_in[i] = buf_in[l - 1 - i];
@@ -519,29 +532,23 @@ int pkeyutl_main(int argc, char **argv)
     return ret;
 }
 
-static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
-                              const char *keyfile, int keyform, int key_type,
-                              char *passinarg, int pkey_op, ENGINE *e,
-                              const int engine_impl, int rawin,
-                              EVP_PKEY **ppkey, EVP_MD_CTX *mctx, const char *digestname,
-                              OSSL_LIB_CTX *libctx, const char *propq)
+static EVP_PKEY *get_pkey(const char *kdfalg,
+                          const char *keyfile, int keyform, int key_type,
+                          char *passinarg, int pkey_op, ENGINE *e)
 {
     EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
-    ENGINE *impl = NULL;
     char *passin = NULL;
-    int rv = -1;
     X509 *x;
 
     if (((pkey_op == EVP_PKEY_OP_SIGN) || (pkey_op == EVP_PKEY_OP_DECRYPT)
          || (pkey_op == EVP_PKEY_OP_DERIVE))
         && (key_type != KEY_PRIVKEY && kdfalg == NULL)) {
         BIO_printf(bio_err, "A private key is needed for this operation\n");
-        goto end;
+        return NULL;
     }
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
-        goto end;
+        return NULL;
     }
     switch (key_type) {
     case KEY_PRIVKEY:
@@ -564,6 +571,20 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         break;
 
     }
+    OPENSSL_free(passin);
+    return pkey;
+}
+
+static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
+                              int pkey_op, ENGINE *e,
+                              const int engine_impl, int rawin,
+                              EVP_PKEY *pkey /* may get deallocated */,
+                              EVP_MD_CTX *mctx, const char *digestname,
+                              OSSL_LIB_CTX *libctx, const char *propq)
+{
+    EVP_PKEY_CTX *ctx = NULL;
+    ENGINE *impl = NULL;
+    int rv = -1;
 
 #ifndef OPENSSL_NO_ENGINE
     if (engine_impl)
@@ -578,7 +599,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
             if (kdfnid == NID_undef) {
                 BIO_printf(bio_err, "The given KDF \"%s\" is unknown.\n",
                            kdfalg);
-                goto end;
+                return NULL;
             }
         }
         if (impl != NULL)
@@ -587,20 +608,18 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
             ctx = EVP_PKEY_CTX_new_from_name(libctx, kdfalg, propq);
     } else {
         if (pkey == NULL)
-            goto end;
+            return NULL;
 
         *pkeysize = EVP_PKEY_get_size(pkey);
         if (impl != NULL)
             ctx = EVP_PKEY_CTX_new(pkey, impl);
         else
             ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
-        if (ppkey != NULL)
-            *ppkey = pkey;
         EVP_PKEY_free(pkey);
     }
 
     if (ctx == NULL)
-        goto end;
+        return NULL;
 
     if (rawin) {
         EVP_MD_CTX_set_pkey_ctx(mctx, ctx);
@@ -650,8 +669,6 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         ctx = NULL;
     }
 
- end:
-    OPENSSL_free(passin);
     return ctx;
 
 }
@@ -682,6 +699,7 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     const unsigned char *in, size_t inlen)
 {
     int rv = 0;
+
     switch (pkey_op) {
     case EVP_PKEY_OP_VERIFYRECOVER:
         rv = EVP_PKEY_verify_recover(ctx, out, poutlen, in, inlen);
@@ -720,8 +738,7 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
     int buf_len = 0;
 
     /* Some algorithms only support oneshot digests */
-    if (EVP_PKEY_get_id(pkey) == EVP_PKEY_ED25519
-            || EVP_PKEY_get_id(pkey) == EVP_PKEY_ED448) {
+    if (only_rawin(pkey)) {
         if (filesize < 0) {
             BIO_printf(bio_err,
                        "Error: unable to determine file size for oneshot operation\n");

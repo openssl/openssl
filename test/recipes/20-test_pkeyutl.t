@@ -61,24 +61,24 @@ SKIP: {
     ok(run(app(([ 'openssl', 'pkeyutl', '-sign', '-in',
                   srctop_file('test', 'certs', 'server-ed25519-cert.pem'),
                   '-inkey', srctop_file('test', 'certs', 'server-ed25519-key.pem'),
-                  '-out', 'Ed25519.sig', '-rawin']))),
+                  '-out', 'Ed25519.sig']))),
                   "Sign a piece of data using Ed25519");
     ok(run(app(([ 'openssl', 'pkeyutl', '-verify', '-certin', '-in',
                   srctop_file('test', 'certs', 'server-ed25519-cert.pem'),
                   '-inkey', srctop_file('test', 'certs', 'server-ed25519-cert.pem'),
-                  '-sigfile', 'Ed25519.sig', '-rawin']))),
+                  '-sigfile', 'Ed25519.sig']))),
                   "Verify an Ed25519 signature against a piece of data");
 
     # Ed448
     ok(run(app(([ 'openssl', 'pkeyutl', '-sign', '-in',
                   srctop_file('test', 'certs', 'server-ed448-cert.pem'),
                   '-inkey', srctop_file('test', 'certs', 'server-ed448-key.pem'),
-                  '-out', 'Ed448.sig', '-rawin']))),
+                  '-out', 'Ed448.sig']))),
                   "Sign a piece of data using Ed448");
     ok(run(app(([ 'openssl', 'pkeyutl', '-verify', '-certin', '-in',
                   srctop_file('test', 'certs', 'server-ed448-cert.pem'),
                   '-inkey', srctop_file('test', 'certs', 'server-ed448-cert.pem'),
-                  '-sigfile', 'Ed448.sig', '-rawin']))),
+                  '-sigfile', 'Ed448.sig']))),
                   "Verify an Ed448 signature against a piece of data");
 }
 
@@ -189,14 +189,12 @@ SKIP: {
     subtest "Ed2559 CLI signature generation and verification" => sub {
         tsignverify("Ed25519",
                     srctop_file("test","tested25519.pem"),
-                    srctop_file("test","tested25519pub.pem"),
-                    "-rawin");
+                    srctop_file("test","tested25519pub.pem"));
     };
 
     subtest "Ed448 CLI signature generation and verification" => sub {
         tsignverify("Ed448",
                     srctop_file("test","tested448.pem"),
-                    srctop_file("test","tested448pub.pem"),
-                    "-rawin");
+                    srctop_file("test","tested448pub.pem"));
     };
 }
