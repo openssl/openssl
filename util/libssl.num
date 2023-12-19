@@ -577,3 +577,12 @@ SSL_handle_events                       577	3_2_0	EXIST::FUNCTION:
 SSL_get_event_timeout                   578	3_2_0	EXIST::FUNCTION:
 SSL_get0_group_name                     579	3_2_0	EXIST::FUNCTION:
 SSL_is_stream_local                     580	3_2_0	EXIST::FUNCTION:
+SSL_CTX_get0_session_id_context         ?	3_2_0	EXIST::FUNCTION:
+SSL_get0_session_id_context             ?	3_2_0	EXIST::FUNCTION:
+SSL_SESSION_get_verify_result           ?	3_2_0	EXIST::FUNCTION:
+SSL_get1_previous_client_session        ?	3_2_0	EXIST::FUNCTION:
+SSL_SESSION_set_timeout_update_cache    ?	3_2_0	EXIST::FUNCTION:
+SSL_set1_cache_id                       ?	3_2_0	EXIST::FUNCTION:
+SSL_get0_cache_id                       ?	3_2_0	EXIST::FUNCTION:
+SSL_SESSION_set1_cache_id               ?	3_2_0	EXIST::FUNCTION:
+SSL_SESSION_get0_cache_id               ?	3_2_0	EXIST::FUNCTION:
