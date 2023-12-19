@@ -364,10 +364,11 @@ may contain extra data besides the ASN.1 structure.
 For instance, an B<X509> object usually is augmented
 by cached information on X.509v3 extensions, etc.
 Such extra data is not copied.
-If it needs to be retained, maybe better use B<I<TYPE>_up_ref>().
+If it needs to be retained, it may be better to use B<I<TYPE>_up_ref>().
 For the case of B<X509> objects, an alternative to using L<X509_up_ref(3)>
-is to still call, e.g., I<copied_cert = X509_dup(cert)>, yet followed by
-I<X509_check_purpose(copied_cert, -1, 0)>, which re-builds the cached data.
+is to still call B<I<TYPE>_dup>(), e.g., I<copied_cert = X509_dup(cert)>,
+followed by I<X509_check_purpose(copied_cert, -1, 0)>,
+which re-builds the cached data.
 
 B<I<TYPE>_free>() releases the object and all pointers and sub-objects
 within it.
