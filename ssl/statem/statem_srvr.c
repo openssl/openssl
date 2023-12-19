@@ -1737,6 +1737,10 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         goto err;
     }
 
+    if (SSL_CONNECTION_IS_DTLS13(s)) {
+        SSL_clear_options(ssl, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+    }
+
     /* TLSv1.3 specifies that a ClientHello must end on a record boundary */
     if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))
         && RECORD_LAYER_processed_read_pending(&s->rlayer)) {
