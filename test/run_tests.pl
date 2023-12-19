@@ -216,13 +216,20 @@ $eres = eval {
                             my @asan_array = split("\n", $output_buffer);
                             foreach (@asan_array) {
                                 if ($_ =~ /.*Indirect leak of.*/ == 1) {
+                                    if ($in_indirect != 1) {
+                                        print "::group::Indirect Leaks\n";
+                                    }
                                     $in_indirect = 1;
-                                } else {
+                                }
+                                print "$_\n";
+                                if ($_ =~ /.*Indirect leak of.*/ != 1) {
                                     if ($_ =~ /^    #.*/ == 0) {
+                                        if ($in_indirect != 0) {
+                                            print "\n::endgroup::\n";
+                                        }
                                         $in_indirect = 0;
                                     }
                                 }
-                                print "$_\n" if !$in_indirect;
                             }
                         } else {
                             print $output_buffer if !$is_ok;
