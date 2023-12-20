@@ -209,7 +209,7 @@ static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
 
     if (pcgbl == NULL || !CRYPTO_THREAD_write_lock(pcgbl->lock)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return -1;
     }
     if (!prov_already_activated(name, pcgbl->activated_providers)) {
         /*
@@ -222,7 +222,7 @@ static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
         if (!ossl_provider_disable_fallback_loading(libctx)) {
             CRYPTO_THREAD_unlock(pcgbl->lock);
             ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-            return 0;
+            return -1;
         }
         prov = ossl_provider_find(libctx, name, 1);
         if (prov == NULL)
@@ -231,7 +231,7 @@ static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
             CRYPTO_THREAD_unlock(pcgbl->lock);
             if (soft)
                 ERR_clear_error();
-            return 0;
+            return (soft == 0) ? -1 : 0;
         }
 
         if (path != NULL)
