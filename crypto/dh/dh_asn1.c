@@ -87,6 +87,7 @@ ASN1_SEQUENCE(DHxparams) = {
 int_dhx942_dh *d2i_int_dhx(int_dhx942_dh **a,
                            const unsigned char **pp, long length);
 int i2d_int_dhx(const int_dhx942_dh *a, unsigned char **pp);
+int i2d_int_dhx_thunk(const void *a, unsigned char **out);
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(int_dhx942_dh, DHxparams, int_dhx)
 

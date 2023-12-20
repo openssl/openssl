@@ -834,7 +834,12 @@ typedef struct ASN1_STREAM_ARG_st {
         int i2d_##fname(const stname *a, unsigned char **out) \
         { \
                 return ASN1_item_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(itname));\
-        }
+        } \
+        int i2d_##fname##_thunk(const void *a, unsigned char **out) \
+        { \
+                return i2d_##fname((stname *)a, out); \
+        } \
+
 
 # define IMPLEMENT_ASN1_NDEF_FUNCTION(stname) \
         int i2d_##stname##_NDEF(const stname *a, unsigned char **out) \

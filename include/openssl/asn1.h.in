@@ -268,7 +268,9 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 
 # define DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(attr, type, name)          \
     attr type *d2i_##name(type **a, const unsigned char **in, long len);    \
-    attr int i2d_##name(const type *a, unsigned char **out);
+    attr int i2d_##name(const type *a, unsigned char **out);                \
+    attr int i2d_##name##_thunk(const void *a, unsigned char **out);        \
+
 # define DECLARE_ASN1_ENCODE_FUNCTIONS_only(type, name)                     \
     DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(extern, type, name)
 
