@@ -220,7 +220,7 @@ The OpenSSL CMP support was added in OpenSSL 3.0.
 OSSL_CMP_get1_caCerts() and OSSL_CMP_get1_rootCaKeyUpdate()
 were added in OpenSSL 3.2.
 
-Support for delayed delivery of all types of responses
+Support for delayed delivery of all types of response messages
 was added in OpenSSL 3.3.
 
 =head1 COPYRIGHT

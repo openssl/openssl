@@ -530,12 +530,13 @@ static int process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
 {
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
+    if (req != NULL)
+        *req = NULL;
     if (ctx == NULL || pollReq == NULL
             || req == NULL || check_after == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    *req = NULL;
 
     if (ctx->sendError == 1
             || ctx->sendError == OSSL_CMP_MSG_get_bodytype(pollReq)) {
