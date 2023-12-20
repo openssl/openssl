@@ -123,7 +123,8 @@ Zstandard may be found at L<https://github.com/facebook/zstd>.
 Compression of SSL/TLS records is not recommended, as it has been
 shown to lead to the CRIME attack L<https://en.wikipedia.org/wiki/CRIME>.
 It is disabled by default, and may be enabled by clearing the
-SSL_OP_NO_COMPRESSION options of the L<SSL_CTX_set_options(3)> or
+SSL_OP_NO_COMPRESSION option and setting the security level as appropriate.
+See the documentation for the L<SSL_CTX_set_options(3)> and
 L<SSL_set_options(3)> functions.
 
 Compression is also used to support certificate compression as described

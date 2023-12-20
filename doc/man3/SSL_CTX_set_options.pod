@@ -250,8 +250,12 @@ and compressed certificates will not be accepted from the peer.
 
 =item SSL_OP_NO_COMPRESSION
 
-Do not use compression even if it is supported. This option is set by default.
-To switch it off use SSL_clear_options().
+Do not use TLS record compression even if it is supported. This option is set by
+default. To switch it off use SSL_clear_options(). Note that TLS record
+compression is not recommended and is not available at security level 2 or
+above. From OpenSSL 3.2 the default security level is 2, so clearing this option
+will have no effect without also changing the default security level. See
+L<SSL_CTX_set_security_level(3)>.
 
 =item SSL_OP_NO_ENCRYPT_THEN_MAC
 
