@@ -301,6 +301,47 @@ static const RSA_PSS_PARAMS_30 default_RSASSA_PSS_params = {
     1                            /* default trailerField (0xBC) */
 };
 
+/*
+ * If the hash algorithm is Shake128 OR Shake256 then the algorithm
+ * parameters are restricted to use the following parameters.
+ * These values are not saved to ASN1
+ */
+static const RSA_PSS_PARAMS_30 shake128_RSASSA_PSS_params = {
+    NID_shake128,                /* default hashAlgorithm */
+    {
+        NID_mgf1,                /* default maskGenAlgorithm */
+        NID_shake128             /* default MGF1 hash */
+    },
+    32,                          /* default saltLength */
+    1                            /* default trailerField (0xBC) */
+};
+
+static const RSA_PSS_PARAMS_30 shake256_RSASSA_PSS_params = {
+    NID_shake256,                /* default hashAlgorithm */
+    {
+        NID_mgf1,                /* default maskGenAlgorithm */
+        NID_shake256             /* default MGF1 hash */
+    },
+    32,                          /* default saltLength */
+    64                           /* default trailerField (0xBC) */
+};
+
+/*
+ * If the passed in params hash_algorithm_nid is shake then it returns either
+ * shake128_RSASSA_PSS_params or shake256_RSASSA_PSS_params
+ * If the input param is NULL then it returns default_RSASSA_PSS_params,
+ * otherwise it returns the passed in params object.
+ */
+static const RSA_PSS_PARAMS_30 *get_params(const RSA_PSS_PARAMS_30 *params) {
+    if (params == NULL)
+        return &default_RSASSA_PSS_params;
+    if (params->hash_algorithm_nid == NID_shake128)
+        return &shake128_RSASSA_PSS_params;
+    if (params->hash_algorithm_nid == NID_shake256)
+        return &shake256_RSASSA_PSS_params;
+    return params;
+}
+
 int ossl_rsa_pss_params_30_set_defaults(RSA_PSS_PARAMS_30 *rsa_pss_params)
 {
     if (rsa_pss_params == NULL)
@@ -325,75 +366,69 @@ int ossl_rsa_pss_params_30_copy(RSA_PSS_PARAMS_30 *to,
     return 1;
 }
 
-int ossl_rsa_pss_params_30_set_hashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
+int ossl_rsa_pss_params_30_set_hashalg(RSA_PSS_PARAMS_30 *params,
                                        int hashalg_nid)
 {
-    if (rsa_pss_params == NULL)
+    if (params == NULL)
         return 0;
-    rsa_pss_params->hash_algorithm_nid = hashalg_nid;
+    params->hash_algorithm_nid = hashalg_nid;
     return 1;
 }
 
-int ossl_rsa_pss_params_30_set_maskgenhashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
+/*
+ * Note that we do not restrict the setters when the shake algorithm
+ * is set. The values will be ignored when getting. This avoids any
+ * issues with the order that they are set it.
+ */
+int ossl_rsa_pss_params_30_set_maskgenhashalg(RSA_PSS_PARAMS_30 *params,
                                               int maskgenhashalg_nid)
 {
-    if (rsa_pss_params == NULL)
+    if (params == NULL)
         return 0;
-    rsa_pss_params->mask_gen.hash_algorithm_nid = maskgenhashalg_nid;
+    params->mask_gen.hash_algorithm_nid = maskgenhashalg_nid;
     return 1;
 }
 
-int ossl_rsa_pss_params_30_set_saltlen(RSA_PSS_PARAMS_30 *rsa_pss_params,
-                                       int saltlen)
+int ossl_rsa_pss_params_30_set_saltlen(RSA_PSS_PARAMS_30 *params, int saltlen)
 {
-    if (rsa_pss_params == NULL)
+    if (params == NULL)
         return 0;
-    rsa_pss_params->salt_len = saltlen;
+    params->salt_len = saltlen;
     return 1;
 }
 
-int ossl_rsa_pss_params_30_set_trailerfield(RSA_PSS_PARAMS_30 *rsa_pss_params,
+int ossl_rsa_pss_params_30_set_trailerfield(RSA_PSS_PARAMS_30 *params,
                                             int trailerfield)
 {
-    if (rsa_pss_params == NULL)
+    if (params == NULL)
         return 0;
-    rsa_pss_params->trailer_field = trailerfield;
+    params->trailer_field = trailerfield;
     return 1;
 }
 
-int ossl_rsa_pss_params_30_hashalg(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+int ossl_rsa_pss_params_30_hashalg(const RSA_PSS_PARAMS_30 *params)
 {
-    if (rsa_pss_params == NULL)
-        return default_RSASSA_PSS_params.hash_algorithm_nid;
-    return rsa_pss_params->hash_algorithm_nid;
+    return get_params(params)->hash_algorithm_nid;
 }
 
-int ossl_rsa_pss_params_30_maskgenalg(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+int ossl_rsa_pss_params_30_maskgenalg(const RSA_PSS_PARAMS_30 *params)
 {
-    if (rsa_pss_params == NULL)
-        return default_RSASSA_PSS_params.mask_gen.algorithm_nid;
-    return rsa_pss_params->mask_gen.algorithm_nid;
+    return get_params(params)->mask_gen.algorithm_nid;
 }
 
-int ossl_rsa_pss_params_30_maskgenhashalg(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+int ossl_rsa_pss_params_30_maskgenhashalg(const RSA_PSS_PARAMS_30 *params)
 {
-    if (rsa_pss_params == NULL)
-        return default_RSASSA_PSS_params.hash_algorithm_nid;
-    return rsa_pss_params->mask_gen.hash_algorithm_nid;
+    return get_params(params)->mask_gen.hash_algorithm_nid;
 }
 
-int ossl_rsa_pss_params_30_saltlen(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+int ossl_rsa_pss_params_30_saltlen(const RSA_PSS_PARAMS_30 *params)
 {
-    if (rsa_pss_params == NULL)
-        return default_RSASSA_PSS_params.salt_len;
-    return rsa_pss_params->salt_len;
+    return get_params(params)->salt_len;
 }
 
-int ossl_rsa_pss_params_30_trailerfield(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+int ossl_rsa_pss_params_30_trailerfield(const RSA_PSS_PARAMS_30 *params)
 {
-    if (rsa_pss_params == NULL)
-        return default_RSASSA_PSS_params.trailer_field;
-    return rsa_pss_params->trailer_field;
+    return get_params(params)->trailer_field;
 }
 
 #if defined(_MSC_VER)
