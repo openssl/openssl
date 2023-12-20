@@ -28,11 +28,11 @@ OpenSSL 3.3
 
 ### Changes between 3.2 and 3.3 [xx XXX xxxx]
 
- * The activate configuration setting for providers in openssl.cnf has been
-   updated to require a value of [1|yes|true|on] (in lower or UPPER case) to
-   activate the provider.  Conversely a setting [0|no|false|off] will prevent
-   provider activation.  All other values, or the omission of a value for this
-   setting will result in an error.
+ * The activate and soft_load configuration settings for providers in
+   openssl.cnf have been updated to require a value of [1|yes|true|on]
+   (in lower or UPPER case) to enable the setting. Conversely a value
+   of [0|no|false|off] will disable the setting. All other values, or the
+   omission of a value for these settings will result in an error.
 
     *Neil Horman*
 
