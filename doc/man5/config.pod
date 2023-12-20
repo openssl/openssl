@@ -267,8 +267,8 @@ Specifies the pathname of the module (typically a shared library) to load.
 
 If present and set to one of the values yes, on, true or 1, then the associated
 provider will be activated. Conversely, setting this value to no, off, false, or
-0 will prevent the provider from being activated.  Note that the listed settings
-case insensitive.  Setting activate to any other setting, or omitting a setting
+0 will prevent the provider from being activated. Settings can be given in lower
+or uppercase. Setting activate to any other setting, or omitting a setting
 value will result in an error.
 
 =back
