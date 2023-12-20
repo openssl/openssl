@@ -10,6 +10,7 @@
 # define OSSL_INTERNAL_REFCOUNT_H
 # pragma once
 
+# include <assert.h>
 # include <openssl/e_os2.h>
 # include <openssl/trace.h>
 
@@ -134,6 +135,7 @@ static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret,
 static __inline int CRYPTO_UP_REF(volatile int *val, int *ret,
                                   ossl_unused void *lock)
 {
+    assert(sizeof(int) == sizeof(long));
     *ret = _InterlockedExchangeAdd((long volatile *)val, 1) + 1;
     return 1;
 }
@@ -141,6 +143,7 @@ static __inline int CRYPTO_UP_REF(volatile int *val, int *ret,
 static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret,
                                     ossl_unused void *lock)
 {
+    assert(sizeof(int) == sizeof(long));
     *ret = _InterlockedExchangeAdd((long volatile *)val, -1) - 1;
     return 1;
 }
