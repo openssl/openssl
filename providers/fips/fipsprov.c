@@ -299,6 +299,8 @@ static const OSSL_ALGORITHM fips_digests[] = {
       ossl_shake_256_256_functions },
     { PROV_NAMES_SHAKE_256_512, FIPS_DEFAULT_PROPERTIES,
       ossl_shake_256_512_functions },
+    { PROV_NAMES_SHAKE_128_256, FIPS_DEFAULT_PROPERTIES,
+      ossl_shake_128_256_functions },
 
     /*
      * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for

@@ -34,6 +34,7 @@ extern const OSSL_DISPATCH ossl_shake_256_functions[];
 extern const OSSL_DISPATCH ossl_shake_256_192_functions[];
 extern const OSSL_DISPATCH ossl_shake_256_256_functions[];
 extern const OSSL_DISPATCH ossl_shake_256_512_functions[];
+extern const OSSL_DISPATCH ossl_shake_128_256_functions[];
 
 extern const OSSL_DISPATCH ossl_blake2s256_functions[];
 extern const OSSL_DISPATCH ossl_blake2b512_functions[];

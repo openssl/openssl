@@ -671,6 +671,8 @@ IMPLEMENT_SHAKE_FIXED_functions(256, 192)
 IMPLEMENT_SHAKE_FIXED_functions(256, 256)
 /* ossl_shake_256_512_functions */
 IMPLEMENT_SHAKE_FIXED_functions(256, 512)
+/* ossl_shake_128_256_functions */
+IMPLEMENT_SHAKE_FIXED_functions(128, 256)
 
 /* ossl_keccak_kmac_128_functions */
 IMPLEMENT_KMAC_functions(128)

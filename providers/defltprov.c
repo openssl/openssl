@@ -138,6 +138,8 @@ static const OSSL_ALGORITHM deflt_digests[] = {
       ossl_shake_256_256_functions },
     { PROV_NAMES_SHAKE_256_512, "provider=default",
       ossl_shake_256_512_functions },
+    { PROV_NAMES_SHAKE_128_256, "provider=default",
+      ossl_shake_128_256_functions },
 #ifndef OPENSSL_NO_BLAKE2
     /*
      * https://blake2.net/ doesn't specify size variants,
