@@ -1963,6 +1963,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
             goto end;
         }
         EVP_KEYMGMT_free(tmp_keymgmt); /* refcnt-- */
+        tmp_keymgmt = NULL;
 
         /* Check to make sure some other thread didn't get there first */
         op = evp_keymgmt_util_find_operation_cache(pk, tmp_keymgmt, selection);
