@@ -88,6 +88,10 @@ L<OSSL_PROVIDER-FIPS(7)/OPERATIONS AND ALGORITHMS>,
 L<OSSL_PROVIDER-legacy(7)/OPERATIONS AND ALGORITHMS> and
 L<OSSL_PROVIDER-base(7)/OPERATIONS AND ALGORITHMS>.
 
+Note, while providers may register algorithms against a list of names using a
+string with a colon separated list of names, fetching algorithms using that
+format is currently unsupported.
+
 =item A property query string
 
 The property query string used to guide selection of the algorithm
