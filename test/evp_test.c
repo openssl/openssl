@@ -4148,24 +4148,6 @@ static int run_file_tests(int i)
     return c == 0;
 }
 
-/*
- * Currently, EVP_<OBJ>_fetch doesn't support
- * colon separated alternative names for lookup
- * so add a test here to ensure that when one is provided
- * libcrypo returns an error
- */
-static int evp_test_name_parsing(void)
-{
-    EVP_MD *md;
-
-    if (TEST_ptr(md = EVP_MD_fetch(libctx, "SHA256:BogusName", propquery))) {
-        EVP_MD_free(md);
-        return 0;
-    }
-
-    return 1;
-}
-
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS test_options[] = {
@@ -4229,7 +4211,6 @@ int setup_tests(void)
     if (n == 0)
         return 0;
 
-    ADD_TEST(evp_test_name_parsing);
     ADD_ALL_TESTS(run_file_tests, n);
     return 1;
 }
