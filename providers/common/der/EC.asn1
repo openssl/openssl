@@ -88,3 +88,16 @@ id-ecdsa-with-sha3-256 OBJECT IDENTIFIER ::= { sigAlgs 10 }
 id-ecdsa-with-sha3-384 OBJECT IDENTIFIER ::= { sigAlgs 11 }
 id-ecdsa-with-sha3-512 OBJECT IDENTIFIER ::= { sigAlgs 12 }
 
+-- -------------------------------------------------------------------
+-- Taken from RFC 8692
+-- (https://www.rfc-editor.org/rfc/rfc8692.html#section-3)
+
+id-ecdsa-with-shake128 OBJECT IDENTIFIER ::= { iso(1)
+    identified-organization(3) dod(6) internet(1)
+    security(5) mechanisms(5) pkix(7) algorithms(6)
+    32 }
+
+id-ecdsa-with-shake256 OBJECT IDENTIFIER ::= { iso(1)
+    identified-organization(3) dod(6) internet(1)
+    security(5) mechanisms(5) pkix(7) algorithms(6)
+    33 }
