@@ -223,7 +223,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
         goto err;
 
     if (BN_mod_inverse(iqmp, sk_BIGNUM_value(factors, 1),
-                        sk_BIGNUM_value(factors, 0), ctx) == NULL)
+                       sk_BIGNUM_value(factors, 0), ctx) == NULL)
         goto err;
     if (!sk_BIGNUM_insert(coeffs, iqmp, sk_BIGNUM_num(coeffs)))
         goto err;
@@ -235,7 +235,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
         if (newcoeff == NULL)
             goto err;
         if (BN_mod_inverse(newcoeff, newpp, sk_BIGNUM_value(factors, i),
-                            ctx) == NULL) {
+                           ctx) == NULL) {
             BN_free(newcoeff);
             goto err;
         }

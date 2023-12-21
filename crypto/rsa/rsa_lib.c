@@ -745,7 +745,7 @@ int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2)
 DEFINE_STACK_OF(BIGNUM)
 
 /*
- * Note: This functions deletes values from the parameter
+ * Note: This function deletes values from the parameter
  * stack values as they are consumed and set in the RSA key.
  */
 int ossl_rsa_set0_all_params(RSA *r, STACK_OF(BIGNUM) *primes,
