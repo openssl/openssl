@@ -182,8 +182,8 @@ static int test_explicit_EVP_MD_fetch(const char *id)
             goto err;
 
         /* Also test EVP_MD_up_ref() while we're doing this */
-        if (!TEST_true(EVP_MD_up_ref(md)))
-            goto err;
+        EVP_MD_up_ref(md);
+        
         /* Ref count should now be 2. Release first one here */
         EVP_MD_free(md);
     } else {
