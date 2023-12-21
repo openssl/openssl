@@ -2221,7 +2221,8 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             return SSL_R_LENGTH_MISMATCH;
         }
 
-        if (best_vers > 0) {
+        /* Did best_vers change from the initial value? */
+        if (best_vers != SSL_CONNECTION_IS_DTLS(s) ? INT_MAX : 0) {
             if (s->hello_retry_request != SSL_HRR_NONE) {
                 /*
                  * This is after a HelloRetryRequest so we better check that we
