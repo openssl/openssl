@@ -296,6 +296,11 @@ int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature)
     return 1;
 }
 
+static int EVP_SIGNATURE_up_ref_thunk(void *sig)
+{
+    return EVP_SIGNATURE_up_ref((EVP_SIGNATURE *)sig);
+}
+
 OSSL_PROVIDER *EVP_SIGNATURE_get0_provider(const EVP_SIGNATURE *signature)
 {
     return signature->prov;
@@ -306,7 +311,7 @@ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 {
     return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
                              evp_signature_from_algorithm,
-                             (int (*)(void *))EVP_SIGNATURE_up_ref,
+                             EVP_SIGNATURE_up_ref_thunk,
                              (void (*)(void *))EVP_SIGNATURE_free);
 }
 
@@ -317,7 +322,7 @@ EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,
     return evp_generic_fetch_from_prov(prov, OSSL_OP_SIGNATURE,
                                        algorithm, properties,
                                        evp_signature_from_algorithm,
-                                       (int (*)(void *))EVP_SIGNATURE_up_ref,
+                                       EVP_SIGNATURE_up_ref_thunk,
                                        (void (*)(void *))EVP_SIGNATURE_free);
 }
 
@@ -350,7 +355,7 @@ void EVP_SIGNATURE_do_all_provided(OSSL_LIB_CTX *libctx,
     evp_generic_do_all(libctx, OSSL_OP_SIGNATURE,
                        (void (*)(void *, void *))fn, arg,
                        evp_signature_from_algorithm,
-                       (int (*)(void *))EVP_SIGNATURE_up_ref,
+                       EVP_SIGNATURE_up_ref_thunk,
                        (void (*)(void *))EVP_SIGNATURE_free);
 }
 
