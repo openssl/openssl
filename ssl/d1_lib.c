@@ -654,7 +654,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
 
     do {
         /* Get a packet */
-        unsigned int ciphersuites_len;
+        int legacy_version;
 
         clear_sys_error();
         n = BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH
@@ -697,8 +697,10 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             goto end;
         }
 
+        legacy_version = (versmajor << 8) | versminor;
+
         if (s->msg_callback)
-            s->msg_callback(0, (versmajor << 8) | versminor, SSL3_RT_HEADER, buf,
+            s->msg_callback(0, legacy_version, SSL3_RT_HEADER, buf,
                             DTLS1_RT_HEADER_LENGTH, ssl, s->msg_callback_arg);
 
         if (rectype != SSL3_RT_HANDSHAKE) {
@@ -791,35 +793,54 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
         }
 
         if (!PACKET_forward(&msgpayload, SSL3_RANDOM_SIZE)
-            || !PACKET_get_length_prefixed_1(&msgpayload, &session)
-            || !PACKET_get_length_prefixed_1(&msgpayload, &cookiepkt)
-            || !PACKET_get_net_2(&msgpayload, &ciphersuites_len)
-            || !PACKET_forward(&msgpayload, ciphersuites_len)) {
+                || !PACKET_get_length_prefixed_1(&msgpayload, &session)
+                || !PACKET_get_length_prefixed_1(&msgpayload, &cookiepkt)) {
             /*
              * Could be malformed or the cookie does not fit within the initial
              * ClientHello fragment. Either way we can't handle it.
              */
             ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
             goto end;
+
         }
 
-        // Check if this is a DTLSv1.3 record
-        int is_dtls13_record = PACKET_remaining(&msgpayload) > 0
-                               && clientvers == DTLS1_2_VERSION;
+        /*
+         * If we have a DTLSv1.3 ClientHello the cookie is supplied in an extension
+         */
+        if (clientvers == DTLS1_2_VERSION
+                && PACKET_remaining(&cookiepkt) == 0) {
+            int i;
+            PACKET extensions;
+            size_t pre_proc_exts_len;
+            RAW_EXTENSION *pre_proc_exts, *suppversions;
+            unsigned int ciphersuites_len, legacy_compressions_len;
 
-        int server_accepts_dtls13 = ssl->method->version == DTLS_ANY_VERSION
-                                    || ssl->method->version == DTLS1_3_VERSION;
-        if (is_dtls13_record) {
-            if (!server_accepts_dtls13) {
-                ERR_raise(ERR_LIB_SSL, SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
+            if (PACKET_remaining(&msgpayload) != 0
+                && (!PACKET_get_net_2(&msgpayload, &ciphersuites_len)
+                    || !PACKET_forward(&msgpayload, ciphersuites_len))) {
+                ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
                 goto end;
             }
-            //DTLSv1.3 records store cookies in an extension
-            PACKET extensions;
-            int i;
-            size_t pre_proc_exts_len;
-            RAW_EXTENSION *pre_proc_exts, *extension;
-            PACKET_get_length_prefixed_2(&msgpayload, &extensions);
+            if (PACKET_remaining(&msgpayload) != 0
+                && (!PACKET_get_1(&msgpayload, &legacy_compressions_len)
+                    || !PACKET_forward(&msgpayload, legacy_compressions_len))) {
+                ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
+                goto end;
+            }
+            /*
+             * Now parse the ClientHello extensions.
+             * Could be empty.
+             */
+            if (PACKET_remaining(&msgpayload) == 0) {
+                PACKET_null_init(&extensions);
+            } else {
+                if (!PACKET_get_length_prefixed_2(&msgpayload, &extensions)
+                    || PACKET_remaining(&msgpayload) != 0) {
+                    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+                    goto end;
+                }
+            }
+
             if (!tls_collect_extensions(s, &extensions,
                                         SSL_EXT_CLIENT_HELLO,
                                         &pre_proc_exts, &pre_proc_exts_len,
@@ -827,17 +848,55 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
                 /* SSLfatal already been called */
                 goto end;
             }
+
             for (i = 0; i < pre_proc_exts_len; i++) {
-                extension = pre_proc_exts + i;
+                RAW_EXTENSION *extension = pre_proc_exts + i;
+
                 if (extension->present
-                    && extension->type == TLSEXT_TYPE_cookie) {
+                        && extension->type == TLSEXT_TYPE_cookie) {
                     size_t cookie_len = PACKET_remaining(&extension->data);
+
                     if (!PACKET_get_sub_packet(&extension->data,
                                                &cookiepkt, cookie_len)) {
                         ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
                         goto end;
                     }
-                    // TODO: Check that client does offer dtls1.3 in "supported_versions"?
+                }
+            }
+
+            /*
+             * Check if client wants DTLSv1.3 because that decides how to
+             * respond i.e. HelloRetryRequest (DTLSv1.3) or HelloVerifyRequest
+             * (DTLSv1.2 and below).
+             */
+            suppversions = &pre_proc_exts[TLSEXT_IDX_supported_versions];
+            if (suppversions->present) {
+                PACKET versionslist;
+                unsigned int candidate_vers = 0;
+                unsigned int best_vers = INT_MAX;
+                const SSL_METHOD *best_method = NULL;
+
+                if (!PACKET_as_length_prefixed_1(&suppversions->data, &versionslist)) {
+                    /* Trailing or invalid data? */
+                    ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
+                    goto end;
+                }
+
+                while (PACKET_get_net_2(&versionslist, &candidate_vers)) {
+                    if (DTLS_VERSION_LE(candidate_vers, best_vers))
+                        continue;
+                    if (ssl_version_supported(s, candidate_vers, &best_method))
+                        best_vers = candidate_vers;
+                }
+
+                if (best_vers == DTLS1_3_VERSION) {
+                    s->hello_retry_request = SSL_HRR_PENDING;
+                }
+
+                if (PACKET_remaining(&versionslist) != 0) {
+                    /* Trailing data? */
+                    ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
+                    goto end;
                 }
             }
         }
@@ -847,9 +906,6 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
          * HelloVerifyRequest or a HelloRetryRequest (DTLSv1.3).
          */
         if (PACKET_remaining(&cookiepkt) == 0) {
-            if (is_dtls13_record && server_accepts_dtls13) {
-                s->hello_retry_request = SSL_HRR_PENDING;
-            }
             next = LISTEN_SEND_COOKIE_REQUEST;
         } else {
             /*
@@ -885,9 +941,9 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
              */
 
             /* Generate the cookie */
-            if (ssl->ctx->app_gen_cookie_cb == NULL ||
-                ssl->ctx->app_gen_cookie_cb(ssl, cookie, &cookielen) == 0 ||
-                cookielen > 255) {
+            if (ssl->ctx->app_gen_cookie_cb == NULL
+                    || ssl->ctx->app_gen_cookie_cb(ssl, cookie, &cookielen) == 0
+                    || cookielen > 255) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
                 /* This is fatal */
                 ret = -1;
@@ -895,28 +951,25 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             }
 
             /* Construct the record and message headers */
-            if (is_dtls13_record) {
+            if (s->hello_retry_request == SSL_HRR_PENDING) {
                 /*
                  * Record sequence number is always the same as in the
                  * received ClientHello
                  */
-                if (construct_hello_retry_request(ssl, &wpkt, wbuf, seq,
-                                                  cookie, cookielen) == 0) {
-                    /* This is fatal */
-                    ret = -1;
-                    goto end;
-                }
+                wreclen = construct_hello_retry_request(ssl, &wpkt, wbuf, seq,
+                                                        cookie, cookielen);
             } else {
                 /*
                  * Record sequence number is always the same as in the
                  * received ClientHello
                  */
-                if (construct_hello_verify_request(ssl, &wpkt, wbuf, seq,
-                                                   cookie, cookielen) == 0) {
-                    /* This is fatal */
-                    ret = -1;
-                    goto end;
-                }
+                wreclen = construct_hello_verify_request(ssl, &wpkt, wbuf, seq,
+                                                         cookie, cookielen);
+            }
+            if (wreclen == 0) {
+                /* This is fatal */
+                ret = -1;
+                goto end;
             }
 
             if (s->msg_callback)
