@@ -3107,7 +3107,6 @@ static int test_RSA_legacy(void)
 
     if (!TEST_true(RSA_set0_factors(rsa, p, q)))
         goto err;
-
     p = NULL;
     q = NULL;
 

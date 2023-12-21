@@ -75,12 +75,6 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
     if (rsa == NULL)
         return 0;
 
-    param_derive = OSSL_PARAM_locate_const(params,
-                                           OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ);
-    if ((param_derive != NULL)
-        && !OSSL_PARAM_get_int(param_derive, &derive_from_pq))
-        goto err;
-
     param_n = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_N);
     param_e = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_E);
 
@@ -91,6 +85,13 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
     }
 
     if (include_private) {
+
+        param_derive = OSSL_PARAM_locate_const(params,
+                                           OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ);
+        if ((param_derive != NULL)
+            && !OSSL_PARAM_get_int(param_derive, &derive_from_pq))
+            goto err;
+
         param_d = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_D);
         if (param_d != NULL && !OSSL_PARAM_get_BN(param_d, &d)) {
             ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_NULL_PARAMETER);
@@ -98,7 +99,6 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
         }
 
         if (derive_from_pq) {
-
             ctx = BN_CTX_new_ex(rsa->libctx);
             if (ctx == NULL)
                 goto err;

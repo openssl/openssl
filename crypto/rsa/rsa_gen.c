@@ -135,7 +135,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
             if (!BN_sub(r2, p, BN_value_one()))
                 goto err;
             BN_set_flags(r2, BN_FLG_CONSTTIME);
-            if (!BN_mod_inverse(r1, r2, rsa->e, ctx))
+            if (BN_mod_inverse(r1, r2, rsa->e, ctx) == NULL)
                 goto err;
             break;
         case 1:
@@ -222,8 +222,8 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
     if (iqmp == NULL)
         goto err;
 
-    if (!BN_mod_inverse(iqmp, sk_BIGNUM_value(factors, 1),
-                        sk_BIGNUM_value(factors, 0), ctx))
+    if (BN_mod_inverse(iqmp, sk_BIGNUM_value(factors, 1),
+                        sk_BIGNUM_value(factors, 0), ctx) == NULL)
         goto err;
     if (!sk_BIGNUM_insert(coeffs, iqmp, sk_BIGNUM_num(coeffs)))
         goto err;
@@ -234,8 +234,8 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
         newcoeff = BN_new();
         if (newcoeff == NULL)
             goto err;
-        if (!BN_mod_inverse(newcoeff, newpp, sk_BIGNUM_value(factors, i),
-                            ctx)) {
+        if (BN_mod_inverse(newcoeff, newpp, sk_BIGNUM_value(factors, i),
+                            ctx) == NULL) {
             BN_free(newcoeff);
             goto err;
         }
