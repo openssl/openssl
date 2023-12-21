@@ -2190,7 +2190,9 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
 
     if (suppversions->present) {
         unsigned int candidate_vers = 0;
-        unsigned int best_vers = SSL_CONNECTION_IS_DTLS(s) ? INT_MAX : 0;
+        const unsigned int best_vers_init = SSL_CONNECTION_IS_DTLS(s) ? UINT_MAX
+                                                                      : 0;
+        unsigned int best_vers = best_vers_init;
         const SSL_METHOD *best_method = NULL;
         PACKET versionslist;
 
@@ -2224,7 +2226,8 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             return SSL_R_LENGTH_MISMATCH;
         }
 
-        if (best_vers > 0) {
+        /* Did best_vers change from the initial value? */
+        if (best_vers != best_vers_init) {
             if (s->hello_retry_request != SSL_HRR_NONE) {
                 /*
                  * This is after a HelloRetryRequest so we better check that we
