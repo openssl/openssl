@@ -128,6 +128,12 @@ in which API calls can be made on different threads.
 **MSST:** Multi-stream single-thread. Refers to a type of multi-stream QUIC
 usage in which API calls must not be made concurrently.
 
+**NCID:** New Connection ID. Refers to a QUIC `NEW_CONNECTION_ID` frame.
+
+**Numbered CID:** Refers to a Connection ID which has a sequence number assigned
+to it. All CIDs other than Initial ODCIDs and Retry ODCIDs have a sequence
+number assigned. See also Unnumbered CID.
+
 **ODCID:** Original Destination CID. This is the DCID found in the first Initial
 packet sent by a client, and is used to generate the secrets for encrypting
 Initial packets. It is only used temporarily.
@@ -195,7 +201,8 @@ an API object. As such, a `QUIC_CONNECTION` is to a `QUIC_CHANNEL` what a
 `QUIC_XSO` is to a `QUIC_STREAM`.
 
 **RCID:** Remote CID. Refers to a CID which has been provided to us by a peer
-and which we can place in the DCID field of an outgoing packet. See also LCID.
+and which we can place in the DCID field of an outgoing packet. See also LCID,
+Unnumbered CID and Numbered CID.
 
 **RCIDM:** Remote CID Manager. Tracks RCIDs which have been provided to us by a
 peer. See also LCIDM.
@@ -283,6 +290,12 @@ to a *send stream buffer*, and that data is eventually TX'd by the TXP and QTX.)
 
 **Uni:** Abbreviation of unidirectional, referring to a QUIC unidirectional
 stream.
+
+**Unnumbered CID:** Refers to a CID which does not have a sequence number
+associated with it and therefore cannot be referred to by a `NEW_CONNECTION_ID`
+or `RETIRE_CONNECTION_ID` frame's sequence number fields. The only unnumbered
+CIDs are Initial ODCIDs and Retry ODCIDs. These CIDs are exceptionally retired
+automatically during handshake confirmation. See also Numbered CID.
 
 **URXE:** Unprocessed RX entry. Structure containing yet-undecrypted received
 datagrams pending processing. Stored in a queue known as the URXL.

@@ -129,7 +129,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                 goto err;
             }
 
-            ossl_quic_rcidm_add_from_initial(rcidm, &arg_cid);
+            ossl_quic_rcidm_add_from_server_retry(rcidm, &arg_cid);
             break;
 
         case CMD_ADD_FROM_NCID:

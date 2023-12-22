@@ -42,8 +42,8 @@ typedef struct quic_rcidm_st QUIC_RCIDM;
 /*
  * Creates a new RCIDM. Returns NULL on failure.
  *
- * For a client, initial_rcid is the client's Initial ODCID.
- * For a server, initial_rcid is NULL.
+ * For a client, initial_odcid is the client's Initial ODCID.
+ * For a server, initial_odcid is NULL.
  */
 QUIC_RCIDM *ossl_quic_rcidm_new(const QUIC_CONN_ID *initial_odcid);
 
