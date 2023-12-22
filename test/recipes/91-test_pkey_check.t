@@ -70,7 +70,7 @@ push(@positive_tests, (
     "dhpkey.pem"
     )) unless disabled("dh");
 
-my @negative_pubtests = ();
+my @negative_pubtests = ("rsapub_17k.pem");  # Too big RSA public key
 
 push(@negative_pubtests, (
     "dsapub_noparam.der"
