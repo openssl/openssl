@@ -22,10 +22,10 @@
  * QUIC Remote Connection ID Manager
  * =================================
  *
- * This manages connection IDs for the TX side, which  is to say that it tracks
- * remote CIDs (RCIDs) which a peer has issued to us and which we can use as the
- * DCID of packets we transmit. It is entirely separate from the LCIDM, which
- * handles routing received packets by their DCIDs.
+ * This manages connection IDs for the TX side. The RCIDM tracks remote CIDs
+ * (RCIDs) which a peer has issued to us and which we can use as the DCID of
+ * packets we transmit. It is entirely separate from the LCIDM, which handles
+ * routing received packets by their DCIDs.
  *
  * RCIDs fall into four categories:
  *
@@ -42,8 +42,8 @@ typedef struct quic_rcidm_st QUIC_RCIDM;
 /*
  * Creates a new RCIDM. Returns NULL on failure.
  *
- * For a client, initial_rcid is the client's Initial ODCID.
- * For a server, initial_rcid is NULL.
+ * For a client, initial_odcid is the client's Initial ODCID.
+ * For a server, initial_odcid is NULL.
  */
 QUIC_RCIDM *ossl_quic_rcidm_new(const QUIC_CONN_ID *initial_odcid);
 
@@ -135,12 +135,13 @@ void ossl_quic_rcidm_request_roll(QUIC_RCIDM *rcidm);
  * packets using the RCID may still be in flight. The caller must determine an
  * appropriate delay using knowledge of network conditions (RTT, etc.) which is
  * outside the scope of the RCIDM. The caller is responsible for implementing
- * this delay.
+ * this delay based on the last time a packet was transmitted using the RCID
+ * being retired.
  */
 int ossl_quic_rcidm_pop_retire_seq_num(QUIC_RCIDM *rcid, uint64_t *seq_num);
 
 /*
- * Like ossl_quic_rcidm_pop_retire_seek_num, but does not pop the item from the
+ * Like ossl_quic_rcidm_pop_retire_seq_num, but does not pop the item from the
  * queue. If this call succeeds, the next call to
  * ossl_quic_rcidm_pop_retire_seq_num is guaranteed to output the same sequence
  * number.

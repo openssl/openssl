@@ -37,7 +37,7 @@ static void rcidm_update(QUIC_RCIDM *rcidm);
 static void rcidm_set_preferred_rcid(QUIC_RCIDM *rcidm,
                                      const QUIC_CONN_ID *rcid);
 
-#define PACKETS_PER_RCID        1000
+#define PACKETS_PER_RCID        10000
 
 #define INITIAL_SEQ_NUM         0
 #define PREF_ADDR_SEQ_NUM       1
@@ -124,7 +124,7 @@ enum {
 };
 
 typedef struct rcid_st {
-    OSSL_LIST_MEMBER(retiring, struct rcid_st); /* valid iff retire == 1 */
+    OSSL_LIST_MEMBER(retiring, struct rcid_st); /* valid iff RETIRING */
 
     QUIC_CONN_ID    cid;        /* The actual CID string for this RCID */
     uint64_t        seq_num;
@@ -162,6 +162,11 @@ struct quic_rcidm_st {
     /*
      * The current RCID we prefer to use (value undefined if
      * !have_preferred_rcid).
+     *
+     * This is preferentially set to a numbered RCID (represented by an RCID
+     * object) if we have one (in which case preferred_rcid == cur_rcid->cid);
+     * otherwise it is set to one of the unnumbered RCIDs (the Initial ODCID or
+     * Retry ODCID) if available (and cur_rcid == NULL).
      */
     QUIC_CONN_ID                preferred_rcid;
 
@@ -189,11 +194,11 @@ struct quic_rcidm_st {
     PRIORITY_QUEUE_OF(RCID)     *rcids;
 
     /*
-     * Current RCID we are using. This may differ from the first item in the
-     * priority queue if we received NCID frames out of order. For example if we
-     * get seq 5, switch to it immediately, then get seq 4, we want to keep
-     * using seq 5 until we decide to roll again rather than immediately switch
-     * to seq 4. Never points to an object on the retiring_list.
+     * Current RCID object we are using. This may differ from the first item in
+     * the priority queue if we received NCID frames out of order. For example
+     * if we get seq 5, switch to it immediately, then get seq 4, we want to
+     * keep using seq 5 until we decide to roll again rather than immediately
+     * switch to seq 4. Never points to an object on the retiring_list.
      */
     RCID                        *cur_rcid;
 
@@ -229,6 +234,14 @@ struct quic_rcidm_st {
     unsigned int    roll_requested                  : 1;
 };
 
+/*
+ * Caller must periodically pop retired RCIDs and handle them. If the caller
+ * fails to do so, fail safely rather than start exhibiting integer rollover.
+ * Limit the total number of numbered RCIDs to an implausibly large but safe
+ * value.
+ */
+#define MAX_NUMBERED_RCIDS      (SIZE_MAX / 2)
+
 static void rcidm_transition_rcid(QUIC_RCIDM *rcidm, RCID *rcid,
                                   unsigned int state);
 
@@ -254,7 +267,6 @@ static void rcidm_check_rcid(QUIC_RCIDM *rcidm, RCID *rcid)
             || rcid->state == RCID_STATE_RETIRING);
     assert(rcidm->num_changes == 0 || rcidm->handshake_complete);
     assert(rcid->state != RCID_STATE_RETIRING || rcidm->num_retiring > 0);
-    assert(rcidm->num_retiring < SIZE_MAX / 2);
 }
 
 static int rcid_cmp(const RCID *a, const RCID *b)
@@ -262,10 +274,6 @@ static int rcid_cmp(const RCID *a, const RCID *b)
     if (a->seq_num < b->seq_num)
         return -1;
     if (a->seq_num > b->seq_num)
-        return 1;
-    if ((uintptr_t)a < (uintptr_t)b)
-        return -1;
-    if ((uintptr_t)a > (uintptr_t)b)
         return 1;
     return 0;
 }
@@ -337,7 +345,9 @@ static RCID *rcidm_create_rcid(QUIC_RCIDM *rcidm, uint64_t seq_num,
     RCID *rcid;
 
     if (cid->id_len < 1 || cid->id_len > QUIC_MAX_CONN_ID_LEN
-        || seq_num > OSSL_QUIC_VLINT_MAX)
+        || seq_num > OSSL_QUIC_VLINT_MAX
+        || ossl_pqueue_RCID_num(rcidm->rcids) + rcidm->num_retiring
+            > MAX_NUMBERED_RCIDS)
         return NULL;
 
     if ((rcid = OPENSSL_zalloc(sizeof(*rcid))) == NULL)
@@ -351,7 +361,6 @@ static RCID *rcidm_create_rcid(QUIC_RCIDM *rcidm, uint64_t seq_num,
         rcid->state = RCID_STATE_PENDING;
 
         if (!ossl_pqueue_RCID_push(rcidm->rcids, rcid, &rcid->pq_idx)) {
-            assert(0);
             OPENSSL_free(rcid);
             return NULL;
         }
@@ -501,7 +510,7 @@ static void rcidm_update(QUIC_RCIDM *rcidm)
      * If there are no RCIDs from NCID frames we can use, go through the various
      * kinds of bootstrapping RCIDs we can use in order of priority.
      */
-    if (rcidm->added_retry_odcid) {
+    if (rcidm->added_retry_odcid && !rcidm->handshake_complete) {
         rcidm_set_preferred_rcid(rcidm, &rcidm->retry_odcid);
         return;
     }

@@ -16,6 +16,11 @@ static const QUIC_CONN_ID cid8_3 = { 8, { 3 } };
 static const QUIC_CONN_ID cid8_4 = { 8, { 4 } };
 static const QUIC_CONN_ID cid8_5 = { 8, { 5 } };
 
+/*
+ * 0: Client, Initial ODCID
+ * 1: Client, Initial ODCID + Retry ODCID
+ * 2: Server, doesn't start with Initial ODCID
+ */
 static int test_rcidm(int idx)
 {
     int testresult = 0;
