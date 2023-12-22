@@ -348,7 +348,7 @@ connection.
 To send data to the server we use the L<SSL_write_ex(3)> function and to receive
 data from the server we use the L<SSL_read_ex(3)> function. In HTTP 1.0 the
 client always writes data first. Our HTTP request will include the hostname that
-we are connecting to. For simplicitly, we write the HTTP request in three
+we are connecting to. For simplicity, we write the HTTP request in three
 chunks. First we write the start of the request. Secondly we write the hostname
 we are sending the request to. Finally we send the end of the request.
 
