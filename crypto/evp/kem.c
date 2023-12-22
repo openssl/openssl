@@ -143,9 +143,9 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
     }
 
     if (provkey == NULL) {
-        if(kem == NULL) {
-           EVP_KEM_free(kem);
-           kem = NULL;
+        if (kem != NULL) {
+            EVP_KEM_free(kem);
+            kem = NULL;
         }
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
