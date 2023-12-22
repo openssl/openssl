@@ -927,7 +927,7 @@ ___
 $code.=<<___;
 	ld1	{$ivec1.4s},[$ivp]
 	ld1	{@datax[0].4s,@datax[1].4s,@datax[2].4s,@datax[3].4s},[$inp],#64
-	// note ivec1 and vtmpx[3] are resuing the same register
+	// note ivec1 and vtmpx[3] are reusing the same register
 	// care needs to be taken to avoid conflict
 	eor	@vtmp[0].16b,@vtmp[0].16b,$ivec1.16b
 	ld1	{@vtmpx[0].4s,@vtmpx[1].4s,@vtmpx[2].4s,@vtmpx[3].4s},[$inp],#64

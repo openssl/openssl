@@ -582,7 +582,7 @@ int tls_parse_ctos_psk_kex_modes(SSL_CONNECTION *s, PACKET *pkt,
          * mode. DHE PSK will not be used for sure, because in any case where
          * it would be supported (i.e. if a key share is present), NO_DHE would
          * be supported as well. As the latter is preferred it would be
-         * choosen. By removing DHE PSK here, we don't have to deal with the
+         * chosen. By removing DHE PSK here, we don't have to deal with the
          * SSL_OP_PREFER_NO_DHE_KEX option in any other place.
          */
         s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_KE;
