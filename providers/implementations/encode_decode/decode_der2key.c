@@ -449,11 +449,17 @@ static void *ec_d2i_private_key_thunk(void **a,
     return (void *)d2i_ECPrivateKey((EC_KEY **)a, in, len);
 }
 
+static void *ec_d2i_ec_parameters_thunk(void **a,
+                                        const unsigned char **in, long len)
+{
+    return (void *)d2i_ECParameters((EC_KEY **)a, in, len);
+}
+
 #ifndef OPENSSL_NO_EC
 # define ec_evp_type                    EVP_PKEY_EC
 # define ec_d2i_private_key             ec_d2i_private_key_thunk
 # define ec_d2i_public_key              NULL
-# define ec_d2i_key_params              (d2i_of_void *)d2i_ECParameters
+# define ec_d2i_key_params              ec_d2i_ec_parameters_thunk 
 
 static void *ec_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                           struct der2key_ctx_st *ctx)
@@ -547,7 +553,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 #  define sm2_evp_type                  EVP_PKEY_SM2
 #  define sm2_d2i_private_key           ec_d2i_private_key_thunk
 #  define sm2_d2i_public_key            NULL
-#  define sm2_d2i_key_params            (d2i_of_void *)d2i_ECParameters
+#  define sm2_d2i_key_params            ec_d2i_ec_parameters_thunk
 
 static void *sm2_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                            struct der2key_ctx_st *ctx)
