@@ -1330,13 +1330,13 @@ err:
  * Currently, EVP_<OBJ>_fetch doesn't support
  * colon separated alternative names for lookup
  * so add a test here to ensure that when one is provided
- * libcrypo returns an error
+ * libcrypto returns an error
  */
 static int evp_test_name_parsing(void)
 {
     EVP_MD *md;
 
-    if (TEST_ptr(md = EVP_MD_fetch(NULL, "SHA256:BogusName", NULL))) {
+    if (TEST_ptr(md = EVP_MD_fetch(mainctx, "SHA256:BogusName", NULL))) {
         EVP_MD_free(md);
         return 0;
     }
