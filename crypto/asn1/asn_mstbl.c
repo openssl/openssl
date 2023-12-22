@@ -73,7 +73,7 @@ static int do_tcreate(const char *value, const char *name)
     for (i = 0; i < sk_CONF_VALUE_num(lst); i++) {
         cnf = sk_CONF_VALUE_value(lst, i);
         if (cnf->value == NULL)
-            continue;
+            goto err;
         if (strcmp(cnf->name, "min") == 0) {
             tbl_min = strtoul(cnf->value, &eptr, 0);
             if (*eptr)
@@ -100,7 +100,8 @@ static int do_tcreate(const char *value, const char *name)
     if (rv == 0) {
         if (cnf)
             ERR_raise_data(ERR_LIB_ASN1, ASN1_R_INVALID_STRING_TABLE_VALUE,
-                           "field=%s, value=%s", cnf->name, cnf->value);
+                           "field=%s, value=%s", cnf->name,
+                                                 cnf->value ? cnf->value : value);
         else
             ERR_raise_data(ERR_LIB_ASN1, ASN1_R_INVALID_STRING_TABLE_VALUE,
                            "name=%s, value=%s", name, value);

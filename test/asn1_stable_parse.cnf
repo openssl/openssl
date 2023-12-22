@@ -1,4 +1,5 @@
 openssl_conf = openssl_init
+config_diagnostics = 1
 
 [openssl_init]
 s = mstbl
