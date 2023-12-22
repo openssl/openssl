@@ -98,7 +98,7 @@
     || M_METHOD == M_METHOD_WSARECVMSG
 #  if defined(__APPLE__)
     /*
-     * CMSG_SPACE is not a constant expresson on OSX even though POSIX
+     * CMSG_SPACE is not a constant expression on OSX even though POSIX
      * says it's supposed to be. This should be adequate.
      */
 #   define BIO_CMSG_ALLOC_LEN   64

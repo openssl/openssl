@@ -26,7 +26,7 @@
  * The stateless reset token manager is responsible for mapping stateless reset
  * tokens to connections. It is used to identify stateless reset tokens in
  * incoming packets. In this regard it can be considered an alternate "routing"
- * mechanism for incoming packets, and is somewhat analagous with the LCIDM,
+ * mechanism for incoming packets, and is somewhat analogous with the LCIDM,
  * except that it uses SRTs to route rather than DCIDs.
  *
  * The SRTM specifically stores a bidirectional mapping of the form
