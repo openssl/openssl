@@ -548,7 +548,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
 
 
     BN_set_flags(r0, BN_FLG_CONSTTIME);
-    if (!BN_mod_inverse(rsa->d, rsa->e, r0, ctx)) {
+    if (BN_mod_inverse(rsa->d, rsa->e, r0, ctx) == NULL) {
         goto err;               /* d */
     }
 
