@@ -362,18 +362,24 @@ static int der2key_export_object(void *vctx,
 # define dh_d2i_public_key              NULL
 # define dh_d2i_key_params              (d2i_of_void *)d2i_DHparams
 
+static void *dh_key_from_pkcs8_thunk(const PKCS8_PRIV_KEY_INFO *p8inf,
+                               OSSL_LIB_CTX *libctx, const char *propq)
+{
+    return (void *)ossl_dh_key_from_pkcs8(p8inf, libctx, propq);
+}
+
 static void *dh_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                           struct der2key_ctx_st *ctx)
 {
     return der2key_decode_p8(der, der_len, ctx,
-                             (key_from_pkcs8_t *)ossl_dh_key_from_pkcs8);
+                             dh_key_from_pkcs8_thunk);
 }
 
 static void *dh_d2i_PUBKEY(void **a, const unsigned char **pp, long len)
 {
     DH *ret = ossl_d2i_DH_PUBKEY((DH **)a, pp, len);
 
-    return (void *)ret; 
+    return (void *)ret;
 }
 
 static void DH_free_thunk(void *dh)
@@ -432,9 +438,15 @@ static void dsa_adjust(void *key, struct der2key_ctx_st *ctx)
 
 /* ---------------------------------------------------------------------- */
 
+static void *ec_d2i_private_key_thunk(void **a,
+                                      const unsigned char **in, long len)
+{
+    return (void *)d2i_ECPrivateKey((EC_KEY **)a, in, len);
+}
+
 #ifndef OPENSSL_NO_EC
 # define ec_evp_type                    EVP_PKEY_EC
-# define ec_d2i_private_key             (d2i_of_void *)d2i_ECPrivateKey
+# define ec_d2i_private_key             ec_d2i_private_key_thunk
 # define ec_d2i_public_key              NULL
 # define ec_d2i_key_params              (d2i_of_void *)d2i_ECParameters
 
@@ -528,7 +540,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 
 # ifndef OPENSSL_NO_SM2
 #  define sm2_evp_type                  EVP_PKEY_SM2
-#  define sm2_d2i_private_key           (d2i_of_void *)d2i_ECPrivateKey
+#  define sm2_d2i_private_key           ec_d2i_private_key_thunk
 #  define sm2_d2i_public_key            NULL
 #  define sm2_d2i_key_params            (d2i_of_void *)d2i_ECParameters
 
