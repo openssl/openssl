@@ -407,10 +407,15 @@ static void dh_adjust(void *key, struct der2key_ctx_st *ctx)
 #endif
 
 /* ---------------------------------------------------------------------- */
+static void *dsa_d2i_private_key_thunk(void **a,
+                                       const unsigned char **in, long len)
+{
+    return (void *)d2i_DSAPrivateKey((DSA **)a, in, len);
+}
 
 #ifndef OPENSSL_NO_DSA
 # define dsa_evp_type                   EVP_PKEY_DSA
-# define dsa_d2i_private_key            (d2i_of_void *)d2i_DSAPrivateKey
+# define dsa_d2i_private_key            dsa_d2i_private_key_thunk
 # define dsa_d2i_public_key             (d2i_of_void *)d2i_DSAPublicKey
 # define dsa_d2i_key_params             (d2i_of_void *)d2i_DSAparams
 
