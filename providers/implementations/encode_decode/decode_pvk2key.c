@@ -235,8 +235,13 @@ static void DSA_free_thunk(void *dsa)
 }
 
 /* ---------------------------------------------------------------------- */
+static void *b2i_PVK_bio_pw_thunk(BIO *in, pem_password_cb *cb, void *u,
+                                     OSSL_LIB_CTX *libctx, const char *propq)
+{
+    return (void *)b2i_DSA_PVK_bio_ex(in, cb, u, libctx, propq);
+}
 
-#define dsa_private_key_bio     (b2i_PVK_of_bio_pw_fn *)b2i_DSA_PVK_bio_ex
+#define dsa_private_key_bio     b2i_PVK_bio_pw_thunk
 #define dsa_adjust              NULL
 #define dsa_free                DSA_free_thunk
 
