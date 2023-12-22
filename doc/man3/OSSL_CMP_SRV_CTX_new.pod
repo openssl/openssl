@@ -127,7 +127,7 @@ OSSL_CMP_SRV_CTX_init_trans() sets in I<srv_ctx> the optional callback
 functions for initiating delayed delivery and cleaning up a transaction.
 If the <delay> function is NULL then delivery of responses is never delayed.
 Otherwise I<delay> takes a custom server context and a request message as input.
-It must return 1 if delivery of the respecive response shall be delayed,
+It must return 1 if delivery of the respective response shall be delayed,
 0 if not, and -1 on error.
 If the <clean> function is NULL then no specific cleanup is performed.
 Otherwise I<clean> takes a custom server context and a transaction ID pointer
