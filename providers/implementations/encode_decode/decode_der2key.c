@@ -395,10 +395,16 @@ static void dh_adjust(void *key, struct der2key_ctx_st *ctx)
     ossl_dh_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
 }
 
+static void *dhx_d2i_key_params_thunk(void **a,
+                                      const unsigned char **in, long len)
+{
+    return (void *)d2i_DHxparams((DH **)a, in, len);
+}
+
 # define dhx_evp_type                   EVP_PKEY_DHX
 # define dhx_d2i_private_key            NULL
 # define dhx_d2i_public_key             NULL
-# define dhx_d2i_key_params             (d2i_of_void *)d2i_DHxparams
+# define dhx_d2i_key_params             dhx_d2i_key_params_thunk
 # define dhx_d2i_PKCS8                  dh_d2i_PKCS8
 # define dhx_d2i_PUBKEY                 (d2i_of_void *)ossl_d2i_DHx_PUBKEY
 # define dhx_free                       DH_free_thunk
