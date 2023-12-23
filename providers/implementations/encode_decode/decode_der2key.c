@@ -456,7 +456,13 @@ static void DSA_free_thunk(void *dsa)
     DSA_free((DSA *)dsa);
 }
 
-# define dsa_d2i_PUBKEY                 (d2i_of_void *)ossl_d2i_DSA_PUBKEY
+static void *d2i_dsa_public_key_thunk(void **a,
+                                      const unsigned char **in, long len)
+{
+    return (void *)ossl_d2i_DSA_PUBKEY((DSA **)a, in, len);
+}
+
+# define dsa_d2i_PUBKEY                 d2i_dsa_public_key_thunk
 # define dsa_free                       DSA_free_thunk
 # define dsa_check                      NULL
 
