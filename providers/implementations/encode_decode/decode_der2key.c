@@ -524,6 +524,16 @@ static void *ed25519_d2i_thunk(void **a, const unsigned char **in, long len)
     return (void *)ossl_d2i_ED25519_PUBKEY((ECX_KEY **)a, in, len);
 }
 
+static void *x25519_d2i_thunk(void **a, const unsigned char **in, long len)
+{
+    return (void *)ossl_d2i_X25519_PUBKEY((ECX_KEY **)a, in, len);
+}
+
+static void *x448_d2i_thunk(void **a, const unsigned char **in, long len)
+{
+    return (void *)ossl_d2i_X448_PUBKEY((ECX_KEY **)a, in, len);
+}
+
 #  define ed25519_evp_type               EVP_PKEY_ED25519
 #  define ed25519_d2i_private_key        NULL
 #  define ed25519_d2i_public_key         NULL
@@ -549,7 +559,7 @@ static void *ed25519_d2i_thunk(void **a, const unsigned char **in, long len)
 #  define x25519_d2i_public_key          NULL
 #  define x25519_d2i_key_params          NULL
 #  define x25519_d2i_PKCS8               ecx_d2i_PKCS8
-#  define x25519_d2i_PUBKEY              (d2i_of_void *)ossl_d2i_X25519_PUBKEY
+#  define x25519_d2i_PUBKEY              x25519_d2i_thunk
 #  define x25519_free                    ossl_ecx_key_free_thunk
 #  define x25519_check                   NULL
 #  define x25519_adjust                  ecx_key_adjust
@@ -559,7 +569,7 @@ static void *ed25519_d2i_thunk(void **a, const unsigned char **in, long len)
 #  define x448_d2i_public_key            NULL
 #  define x448_d2i_key_params            NULL
 #  define x448_d2i_PKCS8                 ecx_d2i_PKCS8
-#  define x448_d2i_PUBKEY                (d2i_of_void *)ossl_d2i_X448_PUBKEY
+#  define x448_d2i_PUBKEY                x448_d2i_thunk
 #  define x448_free                      ossl_ecx_key_free_thunk
 #  define x448_check                     NULL
 #  define x448_adjust                    ecx_key_adjust
