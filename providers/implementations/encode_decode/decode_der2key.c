@@ -514,6 +514,11 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
     ossl_ecx_key_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
 }
 
+static void *ed448_d2i_thunk(void **a, const unsigned char **in, long len)
+{
+    return (void *)ossl_d2i_ED448_PUBKEY((ECX_KEY **)a, in, len);
+}
+
 #  define ed25519_evp_type               EVP_PKEY_ED25519
 #  define ed25519_d2i_private_key        NULL
 #  define ed25519_d2i_public_key         NULL
@@ -529,7 +534,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 #  define ed448_d2i_public_key           NULL
 #  define ed448_d2i_key_params           NULL
 #  define ed448_d2i_PKCS8                ecx_d2i_PKCS8
-#  define ed448_d2i_PUBKEY               (d2i_of_void *)ossl_d2i_ED448_PUBKEY
+#  define ed448_d2i_PUBKEY               ed448_d2i_thunk
 #  define ed448_free                     ossl_ecx_key_free_thunk
 #  define ed448_check                    NULL
 #  define ed448_adjust                   ecx_key_adjust
