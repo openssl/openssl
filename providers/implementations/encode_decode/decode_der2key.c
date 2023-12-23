@@ -432,11 +432,17 @@ static void *dsa_d2i_public_key_thunk(void **a,
     return (void *)d2i_DSAPublicKey((DSA **)a, in, len);
 }
 
+static void *dsa_d2i_key_param_thunk(void **a,
+                                     const unsigned char **in, long len)
+{
+    return (void *)d2i_DSAparams((DSA **)a, in, len);
+}
+
 #ifndef OPENSSL_NO_DSA
 # define dsa_evp_type                   EVP_PKEY_DSA
 # define dsa_d2i_private_key            dsa_d2i_private_key_thunk
 # define dsa_d2i_public_key             dsa_d2i_public_key_thunk
-# define dsa_d2i_key_params             (d2i_of_void *)d2i_DSAparams
+# define dsa_d2i_key_params             dsa_d2i_key_param_thunk
 
 static void *dsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                            struct der2key_ctx_st *ctx)
