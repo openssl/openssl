@@ -401,12 +401,18 @@ static void *dhx_d2i_key_params_thunk(void **a,
     return (void *)d2i_DHxparams((DH **)a, in, len);
 }
 
+static void *dhx_d2i_dhx_pubkey_thunk(void **a,
+                                      const unsigned char **in, long len)
+{
+    return (void *)ossl_d2i_DHx_PUBKEY((DH **)a, in, len);
+}
+
 # define dhx_evp_type                   EVP_PKEY_DHX
 # define dhx_d2i_private_key            NULL
 # define dhx_d2i_public_key             NULL
 # define dhx_d2i_key_params             dhx_d2i_key_params_thunk
 # define dhx_d2i_PKCS8                  dh_d2i_PKCS8
-# define dhx_d2i_PUBKEY                 (d2i_of_void *)ossl_d2i_DHx_PUBKEY
+# define dhx_d2i_PUBKEY                 dhx_d2i_dhx_pubkey_thunk
 # define dhx_free                       DH_free_thunk
 # define dhx_check                      NULL
 # define dhx_adjust                     dh_adjust
