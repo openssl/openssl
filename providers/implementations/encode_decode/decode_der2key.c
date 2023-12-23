@@ -519,12 +519,17 @@ static void *ed448_d2i_thunk(void **a, const unsigned char **in, long len)
     return (void *)ossl_d2i_ED448_PUBKEY((ECX_KEY **)a, in, len);
 }
 
+static void *ed25519_d2i_thunk(void **a, const unsigned char **in, long len)
+{
+    return (void *)ossl_d2i_ED25519_PUBKEY((ECX_KEY **)a, in, len);
+}
+
 #  define ed25519_evp_type               EVP_PKEY_ED25519
 #  define ed25519_d2i_private_key        NULL
 #  define ed25519_d2i_public_key         NULL
 #  define ed25519_d2i_key_params         NULL
 #  define ed25519_d2i_PKCS8              ecx_d2i_PKCS8
-#  define ed25519_d2i_PUBKEY             (d2i_of_void *)ossl_d2i_ED25519_PUBKEY
+#  define ed25519_d2i_PUBKEY             ed25519_d2i_thunk 
 #  define ed25519_free                   ossl_ecx_key_free_thunk
 #  define ed25519_check                  NULL
 #  define ed25519_adjust                 ecx_key_adjust
