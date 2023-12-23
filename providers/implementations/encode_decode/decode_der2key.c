@@ -662,7 +662,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
 #define rsapss_d2i_public_key           (d2i_of_void *)d2i_RSAPublicKey
 #define rsapss_d2i_key_params           NULL
 #define rsapss_d2i_PKCS8                rsa_d2i_PKCS8
-#define rsapss_d2i_PUBKEY               (d2i_of_void *)d2i_RSA_PUBKEY
+#define rsapss_d2i_PUBKEY               rsa_d2i_PUBKEY
 #define rsapss_free                     rsa_free
 #define rsapss_check                    rsa_check
 #define rsapss_adjust                   rsa_adjust
