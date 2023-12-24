@@ -356,11 +356,16 @@ static int der2key_export_object(void *vctx,
 
 /* ---------------------------------------------------------------------- */
 
+static void* dh_d2i_key_params_thunk(void **a, const unsigned char **in, long len)
+{
+    return (void *)d2i_DHparams((DH **)a, in, len);
+}
+
 #ifndef OPENSSL_NO_DH
 # define dh_evp_type                    EVP_PKEY_DH
 # define dh_d2i_private_key             NULL
 # define dh_d2i_public_key              NULL
-# define dh_d2i_key_params              (d2i_of_void *)d2i_DHparams
+# define dh_d2i_key_params              dh_d2i_key_params_thunk
 
 static void *dh_key_from_pkcs8_thunk(const PKCS8_PRIV_KEY_INFO *p8inf,
                                OSSL_LIB_CTX *libctx, const char *propq)
