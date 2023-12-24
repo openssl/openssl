@@ -49,7 +49,7 @@ struct ossl_param_bld_st {
 };
 
 static OSSL_PARAM_BLD_DEF *param_push(OSSL_PARAM_BLD *bld, const char *key,
-                                      int size, size_t alloc, int type,
+                                      size_t size, size_t alloc, int type,
                                       int secure)
 {
     OSSL_PARAM_BLD_DEF *pd = OPENSSL_zalloc(sizeof(*pd));
@@ -257,10 +257,6 @@ int OSSL_PARAM_BLD_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
 
     if (bsize == 0)
         bsize = strlen(buf);
-    if (bsize > INT_MAX) {
-        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_STRING_TOO_LONG);
-        return 0;
-    }
     secure = CRYPTO_secure_allocated(buf);
     pd = param_push(bld, key, bsize, bsize + 1, OSSL_PARAM_UTF8_STRING, secure);
     if (pd == NULL)
@@ -276,10 +272,6 @@ int OSSL_PARAM_BLD_push_utf8_ptr(OSSL_PARAM_BLD *bld, const char *key,
 
     if (bsize == 0)
         bsize = strlen(buf);
-    if (bsize > INT_MAX) {
-        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_STRING_TOO_LONG);
-        return 0;
-    }
     pd = param_push(bld, key, bsize, sizeof(buf), OSSL_PARAM_UTF8_PTR, 0);
     if (pd == NULL)
         return 0;
@@ -293,10 +285,6 @@ int OSSL_PARAM_BLD_push_octet_string(OSSL_PARAM_BLD *bld, const char *key,
     OSSL_PARAM_BLD_DEF *pd;
     int secure;
 
-    if (bsize > INT_MAX) {
-        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_STRING_TOO_LONG);
-        return 0;
-    }
     secure = CRYPTO_secure_allocated(buf);
     pd = param_push(bld, key, bsize, bsize, OSSL_PARAM_OCTET_STRING, secure);
     if (pd == NULL)
@@ -310,10 +298,6 @@ int OSSL_PARAM_BLD_push_octet_ptr(OSSL_PARAM_BLD *bld, const char *key,
 {
     OSSL_PARAM_BLD_DEF *pd;
 
-    if (bsize > INT_MAX) {
-        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_STRING_TOO_LONG);
-        return 0;
-    }
     pd = param_push(bld, key, bsize, sizeof(buf), OSSL_PARAM_OCTET_PTR, 0);
     if (pd == NULL)
         return 0;
