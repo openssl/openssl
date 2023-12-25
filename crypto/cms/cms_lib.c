@@ -41,6 +41,11 @@ CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,
     return ci;
 }
 
+void *d2i_CMS_ContentInfo_thunk(void **a, const unsigned char **in, long len)
+{
+    return (void *)d2i_CMS_ContentInfo((CMS_ContentInfo **)a, in, len);
+}
+
 int i2d_CMS_ContentInfo(const CMS_ContentInfo *a, unsigned char **out)
 {
     return ASN1_item_i2d((const ASN1_VALUE *)a, out, (CMS_ContentInfo_it()));

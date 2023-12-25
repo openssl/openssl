@@ -81,6 +81,11 @@ PKCS7 *d2i_PKCS7(PKCS7 **a, const unsigned char **in, long len)
     return ret;
 }
 
+void *d2i_PKCS7_thunk(void **a, const unsigned char **in, long len)
+{
+    return (void *)d2i_PKCS7((PKCS7 **)a, in, len);
+}
+
 int i2d_PKCS7(const PKCS7 *a, unsigned char **out)
 {
     return ASN1_item_i2d((const ASN1_VALUE *)a, out, (PKCS7_it()));\

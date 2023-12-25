@@ -259,6 +259,12 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 {
     return d2i_SSL_SESSION_ex(a, pp, length, NULL, NULL);
 }
+
+void * d2i_SSL_SESSION_thunk(void **a, const unsigned char **pp, long length)
+{
+    return (void *)d2i_SSL_SESSION((SSL_SESSION **)a, pp, length);
+}
+
 SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
                                 long length, OSSL_LIB_CTX *libctx,
                                 const char *propq)

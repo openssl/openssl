@@ -144,14 +144,6 @@ extern "C" {
 # endif
 
 # define IMPLEMENT_PEM_read_bio(name, type, str, asn1)                  \
-    static ossl_unused ossl_inline                                      \
-    void* d2i_##asn1##_thunk(void **a,                                  \
-                             const unsigned char **pp, long len)        \
-    {                                                                   \
-        type *ret;                                                      \
-        ret = d2i_##asn1((type **)a, pp, len);                          \
-        return (void *)ret;                                             \
-    } \
     type *PEM_read_bio_##name(BIO *bp, type **x,                        \
                               pem_password_cb *cb, void *u)             \
     {                                                                   \

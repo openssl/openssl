@@ -14,6 +14,9 @@
 #include <openssl/cms.h>
 #include "cms_local.h"
 
+extern void *d2i_CMS_ContentInfo_thunk(void **a,
+                                       const unsigned char **in, long len);
+
 /* unfortunately cannot constify BIO_new_NDEF() due to this and PKCS7_stream() */
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
 {

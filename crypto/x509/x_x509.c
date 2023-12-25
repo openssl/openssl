@@ -217,6 +217,11 @@ X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length)
     return NULL;
 }
 
+void * d2i_X509_AUX_thunk(void **a, const unsigned char **in, long len)
+{
+    return (void *)d2i_X509_AUX((X509 **)a, in, len);
+}
+
 /*
  * Serialize trusted certificate to *pp or just return the required buffer
  * length if pp == NULL.  We ultimately want to avoid modifying *pp in the

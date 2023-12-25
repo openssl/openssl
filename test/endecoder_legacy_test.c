@@ -141,7 +141,7 @@ static struct test_stanza_st {
       (d2i_of_void *)d2i_DSAPrivateKey,
       (d2i_of_void *)d2i_DSAPublicKey,
       (d2i_of_void *)d2i_DSAparams,
-      (d2i_of_void *)d2i_DSA_PUBKEY,
+      d2i_DSA_PUBKEY_thunk,
       (PEM_read_bio_of_void *)PEM_read_bio_DSAPrivateKey,
       NULL,                      /* No PEM_write_bio_DSAPublicKey */
       (PEM_read_bio_of_void *)PEM_read_bio_DSAparams,

@@ -624,6 +624,11 @@ RSA *d2i_RSA_PUBKEY(RSA **a, const unsigned char **pp, long length)
     return key;
 }
 
+void *d2i_RSA_PUBKEY_thunk(void **a, const unsigned char **pp, long length)
+{
+    return (void *)d2i_RSA_PUBKEY((RSA **)a, pp, length);
+}
+
 int i2d_RSA_PUBKEY(const RSA *a, unsigned char **pp)
 {
     EVP_PKEY *pktmp;
@@ -749,6 +754,11 @@ DSA *d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp, long length)
     return key;
 }
 
+void *d2i_DSA_PUBKEY_thunk(void **a, const unsigned char **pp, long len)
+{
+    return (void *)d2i_DSA_PUBKEY((DSA **)a, pp, len);
+}
+
 /* Called from decoders; disallows provided DSA keys without parameters. */
 DSA *ossl_d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp, long length)
 {
@@ -816,6 +826,11 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length)
         *a = key;
     }
     return key;
+}
+
+void *d2i_EC_PUBKEY_thunk(void **a, const unsigned char **pp, long len)
+{
+    return (void *)d2i_EC_PUBKEY((EC_KEY **)a, pp, len);
 }
 
 int i2d_EC_PUBKEY(const EC_KEY *a, unsigned char **pp)

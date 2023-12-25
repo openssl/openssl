@@ -88,6 +88,7 @@ int_dhx942_dh *d2i_int_dhx(int_dhx942_dh **a,
                            const unsigned char **pp, long length);
 int i2d_int_dhx(const int_dhx942_dh *a, unsigned char **pp);
 int i2d_int_dhx_thunk(const void *a, unsigned char **out);
+void *d2i_int_dhx_thunk(void **a, const unsigned char **in, long len);
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(int_dhx942_dh, DHxparams, int_dhx)
 
