@@ -634,8 +634,8 @@ static void *sm2_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
 /* ---------------------------------------------------------------------- */
 
 #define rsa_evp_type                    EVP_PKEY_RSA
-#define rsa_d2i_private_key             (d2i_of_void *)d2i_RSAPrivateKey
-#define rsa_d2i_public_key              (d2i_of_void *)d2i_RSAPublicKey
+#define rsa_d2i_private_key             d2i_RSAPrivateKey_thunk
+#define rsa_d2i_public_key              d2i_RSAPublicKey_thunk
 #define rsa_d2i_key_params              NULL
 
 static void *rsa_key_from_pkcs8_thunk(const PKCS8_PRIV_KEY_INFO *p8inf,
