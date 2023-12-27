@@ -119,6 +119,11 @@ int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp)
     return -1;
 }
 
+int i2d_PrivateKey_thunk(const void *a, unsigned char **pp)
+{
+    return i2d_PrivateKey((const EVP_PKEY *)a, pp);
+}
+
 int i2d_PublicKey(const EVP_PKEY *a, unsigned char **pp)
 {
     if (evp_pkey_is_provided(a)) {

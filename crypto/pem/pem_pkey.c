@@ -359,7 +359,7 @@ int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
         return 0;
     }
     BIO_snprintf(pem_str, 80, "%s PRIVATE KEY", x->ameth->pem_str);
-    ret = PEM_ASN1_write_bio((i2d_of_void *)i2d_PrivateKey,
+    ret = PEM_ASN1_write_bio((i2d_of_void *)i2d_PrivateKey_thunk,
                              pem_str, bp, x, enc, kstr, klen, cb, u);
 
     EVP_PKEY_free(copy);

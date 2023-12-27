@@ -690,7 +690,7 @@ int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, const EVP_PKEY *key)
 
 int i2d_PrivateKey_fp(FILE *fp, const EVP_PKEY *pkey)
 {
-    return ASN1_i2d_fp_of(EVP_PKEY, i2d_PrivateKey, fp, pkey);
+    return ASN1_i2d_fp_of(EVP_PKEY, (int (*)(const EVP_PKEY *, unsigned char **))i2d_PrivateKey_thunk, fp, pkey);
 }
 
 EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
@@ -771,7 +771,7 @@ int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, const EVP_PKEY *key)
 
 int i2d_PrivateKey_bio(BIO *bp, const EVP_PKEY *pkey)
 {
-    return ASN1_i2d_bio_of(EVP_PKEY, i2d_PrivateKey, bp, pkey);
+    return ASN1_i2d_bio_of(EVP_PKEY, (int (*)(const EVP_PKEY *, unsigned char **))i2d_PrivateKey_thunk, bp, pkey);
 }
 
 EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
