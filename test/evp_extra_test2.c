@@ -1336,7 +1336,7 @@ static int evp_test_name_parsing(void)
 {
     EVP_MD *md;
 
-    if (TEST_ptr(md = EVP_MD_fetch(mainctx, "SHA256:BogusName", NULL))) {
+    if (!TEST_ptr_null(md = EVP_MD_fetch(mainctx, "SHA256:BogusName", NULL))) {
         EVP_MD_free(md);
         return 0;
     }
