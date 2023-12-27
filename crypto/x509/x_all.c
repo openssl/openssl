@@ -622,7 +622,7 @@ X509_SIG *d2i_PKCS8_fp(FILE *fp, X509_SIG **p8)
 
 int i2d_PKCS8_fp(FILE *fp, const X509_SIG *p8)
 {
-    return ASN1_i2d_fp_of(X509_SIG, i2d_X509_SIG, fp, p8);
+    return ASN1_i2d_fp_of(X509_SIG, (int (*)(const X509_SIG *, unsigned char **))i2d_X509_SIG_thunk, fp, p8);
 }
 #endif
 
@@ -633,7 +633,7 @@ X509_SIG *d2i_PKCS8_bio(BIO *bp, X509_SIG **p8)
 
 int i2d_PKCS8_bio(BIO *bp, const X509_SIG *p8)
 {
-    return ASN1_i2d_bio_of(X509_SIG, i2d_X509_SIG, bp, p8);
+    return ASN1_i2d_bio_of(X509_SIG, (int (*)(const X509_SIG *, unsigned char **))i2d_X509_SIG_thunk, bp, p8);
 }
 
 #ifndef OPENSSL_NO_STDIO
