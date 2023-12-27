@@ -647,6 +647,11 @@ int i2d_RSA_PUBKEY(const RSA *a, unsigned char **pp)
     return ret;
 }
 
+int i2d_RSA_PUBKEY_thunk(const void *a, unsigned char **pp)
+{
+    return i2d_RSA_PUBKEY((const RSA *)a, pp);
+}
+
 #ifndef OPENSSL_NO_DH
 DH *ossl_d2i_DH_PUBKEY(DH **a, const unsigned char **pp, long length)
 {
@@ -800,6 +805,12 @@ int i2d_DSA_PUBKEY(const DSA *a, unsigned char **pp)
     EVP_PKEY_free(pktmp);
     return ret;
 }
+
+int i2d_DSA_PUBKEY_thunk(const void *a, unsigned char **pp)
+{
+    return i2d_DSA_PUBKEY((const DSA *)a, pp);
+}
+
 #endif
 
 #ifndef OPENSSL_NO_EC
@@ -849,6 +860,11 @@ int i2d_EC_PUBKEY(const EC_KEY *a, unsigned char **pp)
     pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
     return ret;
+}
+
+int i2d_EC_PUBKEY_thunk(const void *a, unsigned char **pp)
+{
+    return i2d_EC_PUBKEY((const EC_KEY *)a, pp);
 }
 
 # ifndef OPENSSL_NO_ECX

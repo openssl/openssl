@@ -289,6 +289,11 @@ int i2d_X509_AUX(const X509 *a, unsigned char **pp)
     return length;
 }
 
+int i2d_X509_AUX_thunk(const void *a, unsigned char **pp)
+{
+    return i2d_X509_AUX((const X509 *)a, pp);
+}
+
 int i2d_re_X509_tbs(X509 *x, unsigned char **pp)
 {
     x->cert_info.enc.modified = 1;

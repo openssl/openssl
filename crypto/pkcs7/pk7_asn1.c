@@ -91,6 +91,11 @@ int i2d_PKCS7(const PKCS7 *a, unsigned char **out)
     return ASN1_item_i2d((const ASN1_VALUE *)a, out, (PKCS7_it()));\
 }
 
+int i2d_PKCS7_thunk(const void *a, unsigned char **out)
+{
+    return i2d_PKCS7((const PKCS7 *)a, out);
+}
+
 PKCS7 *PKCS7_new(void)
 {
     return (PKCS7 *)ASN1_item_new(ASN1_ITEM_rptr(PKCS7));

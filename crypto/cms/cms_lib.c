@@ -51,6 +51,11 @@ int i2d_CMS_ContentInfo(const CMS_ContentInfo *a, unsigned char **out)
     return ASN1_item_i2d((const ASN1_VALUE *)a, out, (CMS_ContentInfo_it()));
 }
 
+int i2d_CMS_ContentInfo_thunk(const void *a, unsigned char **out)
+{
+    return i2d_CMS_ContentInfo((const CMS_ContentInfo *)a, out);
+}
+
 CMS_ContentInfo *CMS_ContentInfo_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     CMS_ContentInfo *ci;

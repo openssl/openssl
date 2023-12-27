@@ -167,3 +167,8 @@ err:
     BN_free(dhv.counter);
     return ret;
 }
+
+int i2d_DHxparams_thunk(const void *dh, unsigned char **pp)
+{
+    return i2d_DHxparams((const DH *)dh, pp);
+}

@@ -222,6 +222,11 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
     return ret;
 }
 
+int i2d_SSL_SESSION_thunk(const void *a, unsigned char **out)
+{
+    return i2d_SSL_SESSION((const SSL_SESSION *)a, out);
+}
+
 /* Utility functions for d2i_SSL_SESSION */
 
 /* OPENSSL_strndup an OCTET STRING */
