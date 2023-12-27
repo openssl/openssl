@@ -80,6 +80,11 @@ static struct key2ms_ctx_st *key2ms_newctx(void *provctx)
     return ctx;
 }
 
+static void *key2ms_newctx_thunk(void *provctx)
+{
+    return (void *)key2ms_newctx(provctx);
+}
+
 static void key2ms_freectx(void *vctx)
 {
     struct key2ms_ctx_st *ctx = vctx;
@@ -210,7 +215,7 @@ static int key2pvk_encode(void *vctx, const void *key, int selection,
     }                                                                         \
     const OSSL_DISPATCH ossl_##impl##_to_##output##_encoder_functions[] = {   \
         { OSSL_FUNC_ENCODER_NEWCTX,                                           \
-          (void (*)(void))key2ms_newctx },                                    \
+          (void (*)(void))key2ms_newctx_thunk },                              \
         { OSSL_FUNC_ENCODER_FREECTX,                                          \
           (void (*)(void))key2ms_freectx },                                   \
         output##_set_params                                                   \
