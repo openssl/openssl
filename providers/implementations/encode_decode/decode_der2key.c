@@ -453,7 +453,7 @@ static void *dsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                            struct der2key_ctx_st *ctx)
 {
     return der2key_decode_p8(der, der_len, ctx,
-                             (key_from_pkcs8_t *)ossl_dsa_key_from_pkcs8);
+                             ossl_dsa_key_from_pkcs8_thunk);
 }
 
 static void DSA_free_thunk(void *dsa)

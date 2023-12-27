@@ -36,7 +36,8 @@ int ossl_dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[],
                           int include_private);
 DSA *ossl_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
                              OSSL_LIB_CTX *libctx, const char *propq);
-
+void *ossl_dsa_key_from_pkcs8_thunk(const PKCS8_PRIV_KEY_INFO *p8inf,
+                                    OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_dsa_generate_public_key(BN_CTX *ctx, const DSA *dsa,
                                  const BIGNUM *priv_key, BIGNUM *pub_key);
 int ossl_dsa_check_params(const DSA *dsa, int checktype, int *ret);

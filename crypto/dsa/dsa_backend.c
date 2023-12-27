@@ -192,4 +192,11 @@ DSA *ossl_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
     ASN1_STRING_clear_free(privkey);
     return dsa;
 }
+
+void *ossl_dsa_key_from_pkcs8_thunk(const PKCS8_PRIV_KEY_INFO *p8inf,
+                                    OSSL_LIB_CTX *libctx, const char *propq)
+{
+    return (void *)ossl_dsa_key_from_pkcs8(p8inf, libctx, propq);
+}
+
 #endif
