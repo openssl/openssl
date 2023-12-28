@@ -545,11 +545,18 @@ static void ec_adjust(void *key, struct der2key_ctx_st *ctx)
  * so no d2i functions to be had.
  */
 
+static void *ossl_ecx_key_from_pkcs8_thunk(const PKCS8_PRIV_KEY_INFO *p8inf,
+                                           OSSL_LIB_CTX *libctx,
+                                           const char *propq)
+{
+    return (void *)ossl_ecx_key_from_pkcs8(p8inf, libctx, propq);
+}
+
 static void *ecx_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                            struct der2key_ctx_st *ctx)
 {
     return der2key_decode_p8(der, der_len, ctx,
-                             (key_from_pkcs8_t *)ossl_ecx_key_from_pkcs8);
+                             ossl_ecx_key_from_pkcs8_thunk);
 }
 
 static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
