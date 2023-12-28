@@ -111,6 +111,7 @@ int SHA224_Final(unsigned char *md, SHA256_CTX *c)
         } while (0)
 
 #define HASH_UPDATE             SHA256_Update
+#define HASH_UPDATE_THUNK       SHA256_Update_thunk
 #define HASH_TRANSFORM          SHA256_Transform
 #define HASH_FINAL              SHA256_Final
 #define HASH_BLOCK_DATA_ORDER   sha256_block_data_order

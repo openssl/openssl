@@ -20,6 +20,7 @@ void md4_block_data_order(MD4_CTX *c, const void *p, size_t num);
 #define HASH_CTX                MD4_CTX
 #define HASH_CBLOCK             MD4_CBLOCK
 #define HASH_UPDATE             MD4_Update
+#define HASH_UPDATE_THUNK       MD4_Update_thunk
 #define HASH_TRANSFORM          MD4_Transform
 #define HASH_FINAL              MD4_Final
 #define HASH_MAKE_STRING(c,s)   do {    \

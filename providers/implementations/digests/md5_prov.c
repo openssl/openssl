@@ -21,4 +21,4 @@
 /* ossl_md5_functions */
 IMPLEMENT_digest_functions(md5, MD5_CTX,
                            MD5_CBLOCK, MD5_DIGEST_LENGTH, 0,
-                           MD5_Init, MD5_Update, MD5_Final)
+                           MD5_Init, MD5_Update_thunk, MD5_Final)

@@ -209,6 +209,11 @@ int HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
     return 1;
 }
 
+int HASH_UPDATE_THUNK(void *c, const unsigned char *data_, size_t len)
+{
+    return HASH_UPDATE((HASH_CTX *)c, (void *)data_, len);
+}
+
 void HASH_TRANSFORM(HASH_CTX *c, const unsigned char *data)
 {
     HASH_BLOCK_DATA_ORDER(c, data, 1);

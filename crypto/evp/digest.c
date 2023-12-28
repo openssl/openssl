@@ -385,6 +385,8 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
 int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
+    int (*digestupd_thunk)(void *, const unsigned char *, size_t);
+
     if (count == 0)
         return 1;
 
@@ -421,7 +423,8 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
         ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
         return 0;
     }
-    return ctx->digest->dupdate(ctx->algctx, data, count);
+    digestupd_thunk = (int (*)(void *, const unsigned char *, size_t))ctx->digest->dupdate;
+    return digestupd_thunk((void *)ctx->algctx, (const unsigned char *)data, count);
 
     /* Code below to be removed when legacy support is dropped. */
  legacy:

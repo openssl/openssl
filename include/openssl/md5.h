@@ -48,6 +48,7 @@ typedef struct MD5state_st {
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 int MD5_Init(MD5_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int MD5_Update(MD5_CTX *c, const void *data, size_t len);
+OSSL_DEPRECATEDIN_3_0 int MD5_Update_thunk(void *c, const unsigned char *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int MD5_Final(unsigned char *md, MD5_CTX *c);
 OSSL_DEPRECATEDIN_3_0 unsigned char *MD5(const unsigned char *d, size_t n,
                                          unsigned char *md);

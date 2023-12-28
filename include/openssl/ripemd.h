@@ -45,6 +45,8 @@ typedef struct RIPEMD160state_st {
 OSSL_DEPRECATEDIN_3_0 int RIPEMD160_Init(RIPEMD160_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int RIPEMD160_Update(RIPEMD160_CTX *c, const void *data,
                                            size_t len);
+OSSL_DEPRECATEDIN_3_0 int RIPEMD160_Update_thunk(void *c, const unsigned char *data,
+                                                 size_t len);
 OSSL_DEPRECATEDIN_3_0 int RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c);
 OSSL_DEPRECATEDIN_3_0 unsigned char *RIPEMD160(const unsigned char *d, size_t n,
                                                unsigned char *md);

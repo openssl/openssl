@@ -32,6 +32,7 @@ void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
 #define HASH_CTX                MD5_CTX
 #define HASH_CBLOCK             MD5_CBLOCK
 #define HASH_UPDATE             MD5_Update
+#define HASH_UPDATE_THUNK       MD5_Update_thunk
 #define HASH_TRANSFORM          MD5_Transform
 #define HASH_FINAL              MD5_Final
 #define HASH_MAKE_STRING(c,s)   do {    \

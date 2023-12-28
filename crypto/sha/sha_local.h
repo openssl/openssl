@@ -29,6 +29,7 @@
         } while (0)
 
 #define HASH_UPDATE                     SHA1_Update
+#define HASH_UPDATE_THUNK               SHA1_Update_thunk
 #define HASH_TRANSFORM                  SHA1_Transform
 #define HASH_FINAL                      SHA1_Final
 #define HASH_INIT                       SHA1_Init

@@ -49,6 +49,7 @@ typedef struct MD4state_st {
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 int MD4_Init(MD4_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int MD4_Update(MD4_CTX *c, const void *data, size_t len);
+OSSL_DEPRECATEDIN_3_0 int MD4_Update_thunk(void *c, const unsigned char *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int MD4_Final(unsigned char *md, MD4_CTX *c);
 OSSL_DEPRECATEDIN_3_0 unsigned char *MD4(const unsigned char *d, size_t n,
                                          unsigned char *md);

@@ -57,22 +57,10 @@ static int sha1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 
-static int SHA1_Update_thunk(void *c, const unsigned char *data,
-                               unsigned long len)
-{
-    return SHA1_Update((SHA_CTX *)c, (const void *)data, (size_t)len);
-}
-
 static int SHA224_Update_thunk(void *c, const unsigned char *data,
                                unsigned long len)
 {
     return SHA224_Update((SHA256_CTX *)c, (const void *)data, (size_t)len);
-}
-
-static int SHA256_Update_thunk(void *c, const unsigned char *data,
-                               unsigned long len)
-{
-    return SHA256_Update((SHA256_CTX *)c, (const void*)data, (size_t)len);
 }
 
 static int SHA512_Update_thunk(void *c, const unsigned char *data,

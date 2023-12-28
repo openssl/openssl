@@ -48,6 +48,7 @@ typedef struct SHAstate_st {
 
 OSSL_DEPRECATEDIN_3_0 int SHA1_Init(SHA_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA1_Update(SHA_CTX *c, const void *data, size_t len);
+OSSL_DEPRECATEDIN_3_0 int SHA1_Update_thunk(void *c, const unsigned char *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int SHA1_Final(unsigned char *md, SHA_CTX *c);
 OSSL_DEPRECATEDIN_3_0 void SHA1_Transform(SHA_CTX *c, const unsigned char *data);
 # endif
@@ -73,6 +74,8 @@ OSSL_DEPRECATEDIN_3_0 int SHA224_Final(unsigned char *md, SHA256_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
                                         const void *data, size_t len);
+OSSL_DEPRECATEDIN_3_0 int SHA256_Update_thunk(void *c,
+                                              const unsigned char *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
 OSSL_DEPRECATEDIN_3_0 void SHA256_Transform(SHA256_CTX *c,
                                             const unsigned char *data);

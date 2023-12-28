@@ -18,6 +18,7 @@
 #define HASH_CTX                SM3_CTX
 #define HASH_CBLOCK             SM3_CBLOCK
 #define HASH_UPDATE             ossl_sm3_update
+#define HASH_UPDATE_THUNK       ossl_sm3_update_thunk
 #define HASH_TRANSFORM          ossl_sm3_transform
 #define HASH_FINAL              ossl_sm3_final
 #define HASH_MAKE_STRING(c, s)              \
