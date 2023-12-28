@@ -247,7 +247,13 @@ static void *b2i_PVK_bio_pw_thunk(BIO *in, pem_password_cb *cb, void *u,
 
 /* ---------------------------------------------------------------------- */
 
-#define rsa_private_key_bio     (b2i_PVK_of_bio_pw_fn *)b2i_RSA_PVK_bio_ex
+static void *b2i_RSA_PVK_bio_ex_thunk(BIO *in, pem_password_cb *cb, void *u,
+                                     OSSL_LIB_CTX *libctx, const char *propq)
+{
+    return (void *)b2i_RSA_PVK_bio_ex(in, cb, u, libctx, propq);
+}
+
+#define rsa_private_key_bio     b2i_RSA_PVK_bio_ex_thunk
 
 static void rsa_adjust(void *key, struct pvk2key_ctx_st *ctx)
 {
