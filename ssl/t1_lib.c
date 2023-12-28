@@ -855,6 +855,7 @@ int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
     const TLS_GROUP_INFO *ginfo = tls1_group_id_lookup(SSL_CONNECTION_GET_CTX(s),
                                                        group_id);
     int ret;
+    int group_minversion, group_maxversion;
 
     if (okfortls13 != NULL)
         *okfortls13 = 0;
@@ -862,27 +863,22 @@ int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
     if (ginfo == NULL)
         return 0;
 
-    if (SSL_CONNECTION_IS_DTLS(s)) {
-        if (ginfo->mindtls < 0 || ginfo->maxdtls < 0)
-            return 0;
-        if (ginfo->maxdtls == 0)
-            ret = 1;
-        else
-            ret = DTLS_VERSION_LE(minversion, ginfo->maxdtls);
-        if (ginfo->mindtls > 0)
-            ret &= DTLS_VERSION_GE(maxversion, ginfo->mindtls);
-    } else {
-        if (ginfo->mintls < 0 || ginfo->maxtls < 0)
-            return 0;
-        if (ginfo->maxtls == 0)
-            ret = 1;
-        else
-            ret = (minversion <= ginfo->maxtls);
-        if (ginfo->mintls > 0)
-            ret &= (maxversion >= ginfo->mintls);
+    group_minversion = SSL_CONNECTION_IS_DTLS(s) ? ginfo->mindtls : ginfo->mintls;
+    group_maxversion = SSL_CONNECTION_IS_DTLS(s) ? ginfo->maxdtls : ginfo->maxtls;
+
+    if (group_minversion < 0 || group_maxversion < 0)
+        return 0;
+    if (group_maxversion == 0)
+        ret = 1;
+    else
+        ret = (ssl_version_cmp(s, minversion, group_maxversion) <= 0);
+    if (group_minversion > 0)
+        ret &= (ssl_version_cmp(s, maxversion, group_minversion) >= 0);
+
+    if (!SSL_CONNECTION_IS_DTLS(s)) {
         if (ret && okfortls13 != NULL && maxversion == TLS1_3_VERSION)
-            *okfortls13 = (ginfo->maxtls == 0)
-                          || (ginfo->maxtls >= TLS1_3_VERSION);
+            *okfortls13 = (group_maxversion == 0)
+                          || (group_maxversion >= TLS1_3_VERSION);
     }
     ret &= !isec
            || strcmp(ginfo->algorithm, "EC") == 0
@@ -968,6 +964,7 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
         const TLS_GROUP_INFO *inf;
+        int minversion, maxversion;
 
         if (!tls1_in_list(id, supp, num_supp)
                 || !tls_group_allowed(s, id, SSL_SECOP_CURVE_SHARED))
@@ -975,20 +972,17 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
         inf = tls1_group_id_lookup(ctx, id);
         if (!ossl_assert(inf != NULL))
             return 0;
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            if (inf->maxdtls == -1)
-                continue;
-            if ((inf->mindtls != 0 && DTLS_VERSION_LT(s->version, inf->mindtls))
-                    || (inf->maxdtls != 0
-                        && DTLS_VERSION_GT(s->version, inf->maxdtls)))
-                continue;
-        } else {
-            if (inf->maxtls == -1)
-                continue;
-            if ((inf->mintls != 0 && s->version < inf->mintls)
-                    || (inf->maxtls != 0 && s->version > inf->maxtls))
-                continue;
-        }
+
+        minversion = SSL_CONNECTION_IS_DTLS(s)
+                         ? inf->mindtls : inf->mintls;
+        maxversion = SSL_CONNECTION_IS_DTLS(s)
+                         ? inf->maxdtls : inf->maxtls;
+        if (maxversion == -1)
+            continue;
+        if ((minversion != 0 && ssl_version_cmp(s, s->version, minversion) < 0)
+            || (maxversion != 0
+                && ssl_version_cmp(s, s->version, maxversion) > 0))
+            continue;
 
         if (nmatch == k)
             return id;
@@ -2066,6 +2060,9 @@ int ssl_set_client_disabled(SSL_CONNECTION *s)
 int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
                         int op, int ecdhe)
 {
+    int minversion = SSL_CONNECTION_IS_DTLS(s) ? c->min_dtls : c->min_tls;
+    int maxversion = SSL_CONNECTION_IS_DTLS(s) ? c->max_dtls : c->max_tls;
+
     if (c->algorithm_mkey & s->s3.tmp.mask_k
         || c->algorithm_auth & s->s3.tmp.mask_a)
         return 1;
@@ -2083,23 +2080,17 @@ int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
             return 1;
         }
 
-    if (!SSL_CONNECTION_IS_DTLS(s)) {
-        int min_tls = c->min_tls;
+    /*
+     * For historical reasons we will allow ECHDE to be selected by a server
+     * in SSLv3 if we are a client
+     */
+    if (minversion == TLS1_VERSION
+            && ecdhe
+            && (c->algorithm_mkey & (SSL_kECDHE | SSL_kECDHEPSK)) != 0)
+        minversion = SSL3_VERSION;
 
-        /*
-         * For historical reasons we will allow ECHDE to be selected by a server
-         * in SSLv3 if we are a client
-         */
-        if (min_tls == TLS1_VERSION && ecdhe
-                && (c->algorithm_mkey & (SSL_kECDHE | SSL_kECDHEPSK)) != 0)
-            min_tls = SSL3_VERSION;
-
-        if ((min_tls > s->s3.tmp.max_ver) || (c->max_tls < s->s3.tmp.min_ver))
-            return 1;
-    }
-    if (SSL_CONNECTION_IS_DTLS(s)
-            && (DTLS_VERSION_GT(c->min_dtls, s->s3.tmp.max_ver)
-                || DTLS_VERSION_LT(c->max_dtls, s->s3.tmp.min_ver)))
+    if (ssl_version_cmp(s, minversion, s->s3.tmp.max_ver) > 0
+        || ssl_version_cmp(s, maxversion, s->s3.tmp.min_ver) < 0)
         return 1;
 
     return !ssl_security(s, op, c->strength_bits, 0, (void *)c);
