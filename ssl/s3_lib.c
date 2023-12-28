@@ -4287,15 +4287,15 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
     }
 
     for (i = 0; i < sk_SSL_CIPHER_num(prio); i++) {
+        int minversion, maxversion;
+
         c = sk_SSL_CIPHER_value(prio, i);
+        minversion = SSL_CONNECTION_IS_DTLS(s) ? c->min_dtls : c->min_tls;
+        maxversion = SSL_CONNECTION_IS_DTLS(s) ? c->max_dtls : c->max_tls;
 
         /* Skip ciphers not supported by the protocol version */
-        if (!SSL_CONNECTION_IS_DTLS(s) &&
-            ((s->version < c->min_tls) || (s->version > c->max_tls)))
-            continue;
-        if (SSL_CONNECTION_IS_DTLS(s) &&
-            (DTLS_VERSION_LT(s->version, c->min_dtls) ||
-             DTLS_VERSION_GT(s->version, c->max_dtls)))
+        if (ssl_version_cmp(s, s->version, minversion) < 0
+            || ssl_version_cmp(s, s->version, maxversion) > 0)
             continue;
 
         /*
