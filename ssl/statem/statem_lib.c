@@ -156,17 +156,12 @@ int tls_setup_handshake(SSL_CONNECTION *s)
 
     /* Sanity check that we have MD5-SHA1 if we need it */
     if (sctx->ssl_digest_methods[SSL_MD_MD5_SHA1_IDX] == NULL) {
-        int md5sha1_needed = 0;
+        int negotiated_minversion;
+        int md5sha1_needed_maxversion = SSL_CONNECTION_IS_DTLS(s)
+                                        ? DTLS1_VERSION : TLS1_1_VERSION;
 
         /* We don't have MD5-SHA1 - do we need it? */
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            if (DTLS_VERSION_LE(ver_max, DTLS1_VERSION))
-                md5sha1_needed = 1;
-        } else {
-            if (ver_max <= TLS1_1_VERSION)
-                md5sha1_needed = 1;
-        }
-        if (md5sha1_needed) {
+        if (ssl_version_cmp(s, ver_max, md5sha1_needed_maxversion) <= 0) {
             SSLfatal_data(s, SSL_AD_HANDSHAKE_FAILURE,
                           SSL_R_NO_SUITABLE_DIGEST_ALGORITHM,
                           "The max supported SSL/TLS version needs the"
@@ -177,14 +172,12 @@ int tls_setup_handshake(SSL_CONNECTION *s)
         }
 
         ok = 1;
+
         /* Don't allow TLSv1.1 or below to be negotiated */
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            if (DTLS_VERSION_LT(ver_min, DTLS1_2_VERSION))
-                ok = SSL_set_min_proto_version(ssl, DTLS1_2_VERSION);
-        } else {
-            if (ver_min < TLS1_2_VERSION)
-                ok = SSL_set_min_proto_version(ssl, TLS1_2_VERSION);
-        }
+        negotiated_minversion = SSL_CONNECTION_IS_DTLS(s) ?
+                                DTLS1_2_VERSION : TLS1_2_VERSION;
+        if (ssl_version_cmp(s, ver_min, negotiated_minversion) < 0)
+                ok = SSL_set_min_proto_version(ssl, negotiated_minversion);
         if (!ok) {
             /* Shouldn't happen */
             SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, ERR_R_INTERNAL_ERROR);
@@ -204,16 +197,16 @@ int tls_setup_handshake(SSL_CONNECTION *s)
          */
         for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
             const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
+            int cipher_minprotover = SSL_CONNECTION_IS_DTLS(s)
+                                     ? c->min_dtls : c->min_tls;
+            int cipher_maxprotover = SSL_CONNECTION_IS_DTLS(s)
+                                     ? c->max_dtls : c->max_tls;
 
-            if (SSL_CONNECTION_IS_DTLS(s)) {
-                if (DTLS_VERSION_GE(ver_max, c->min_dtls) &&
-                        DTLS_VERSION_LE(ver_max, c->max_dtls))
-                    ok = 1;
-            } else if (ver_max >= c->min_tls && ver_max <= c->max_tls) {
+            if (ssl_version_cmp(s, ver_max, cipher_minprotover) >= 0
+                    && ssl_version_cmp(s, ver_max, cipher_maxprotover) <= 0) {
                 ok = 1;
-            }
-            if (ok)
                 break;
+            }
         }
         if (!ok) {
             SSLfatal_data(s, SSL_AD_HANDSHAKE_FAILURE,
@@ -1788,15 +1781,23 @@ int ssl_allow_compression(SSL_CONNECTION *s)
     return ssl_security(s, SSL_SECOP_COMPRESSION, 0, 0, NULL);
 }
 
-static int version_cmp(const SSL_CONNECTION *s, int a, int b)
+/*
+ * SSL/TLS/DTLS version comparison
+ *
+ * Returns
+ *      0 if versiona is equal to versionb
+ *      1 if versiona is greater than versionb
+ *     -1 if versiona is less than versionb
+ */
+int ssl_version_cmp(const SSL_CONNECTION *s, int versiona, int versionb)
 {
     int dtls = SSL_CONNECTION_IS_DTLS(s);
 
-    if (a == b)
+    if (versiona == versionb)
         return 0;
     if (!dtls)
-        return a < b ? -1 : 1;
-    return DTLS_VERSION_LT(a, b) ? -1 : 1;
+        return versiona < versionb ? -1 : 1;
+    return DTLS_VERSION_LT(versiona, versionb) ? -1 : 1;
 }
 
 typedef struct {
@@ -1873,12 +1874,12 @@ static int ssl_method_error(const SSL_CONNECTION *s, const SSL_METHOD *method)
     int version = method->version;
 
     if ((s->min_proto_version != 0 &&
-         version_cmp(s, version, s->min_proto_version) < 0) ||
+        ssl_version_cmp(s, version, s->min_proto_version) < 0) ||
         ssl_security(s, SSL_SECOP_VERSION, 0, version, NULL) == 0)
         return SSL_R_VERSION_TOO_LOW;
 
     if (s->max_proto_version != 0 &&
-        version_cmp(s, version, s->max_proto_version) > 0)
+        ssl_version_cmp(s, version, s->max_proto_version) > 0)
         return SSL_R_VERSION_TOO_HIGH;
 
     if ((s->options & method->mask) != 0)
@@ -1966,7 +1967,7 @@ int ssl_version_supported(const SSL_CONNECTION *s, int version,
     switch (SSL_CONNECTION_GET_SSL(s)->method->version) {
     default:
         /* Version should match method version for non-ANY method */
-        return version_cmp(s, version, s->version) == 0;
+        return ssl_version_cmp(s, version, s->version) == 0;
     case TLS_ANY_VERSION:
         table = tls_version_table;
         break;
@@ -1976,10 +1977,10 @@ int ssl_version_supported(const SSL_CONNECTION *s, int version,
     }
 
     for (vent = table;
-         vent->version != 0 && version_cmp(s, version, vent->version) <= 0;
+         vent->version != 0 && ssl_version_cmp(s, version, vent->version) <= 0;
          ++vent) {
         if (vent->cmeth != NULL
-                && version_cmp(s, version, vent->version) == 0
+                && ssl_version_cmp(s, version, vent->version) == 0
                 && ssl_method_error(s, vent->cmeth()) == 0
                 && (!s->server
                     || version != TLS1_3_VERSION
@@ -2153,7 +2154,7 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
     switch (server_version) {
     default:
         if (!SSL_CONNECTION_IS_TLS13(s)) {
-            if (version_cmp(s, client_version, s->version) < 0)
+            if (ssl_version_cmp(s, client_version, s->version) < 0)
                 return SSL_R_WRONG_SSL_VERSION;
             *dgrd = DOWNGRADE_NONE;
             /*
@@ -2210,7 +2211,7 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             return SSL_R_BAD_LEGACY_VERSION;
 
         while (PACKET_get_net_2(&versionslist, &candidate_vers)) {
-            if (version_cmp(s, candidate_vers, best_vers) <= 0)
+            if (ssl_version_cmp(s, candidate_vers, best_vers) <= 0)
                 continue;
             if (ssl_version_supported(s, candidate_vers, &best_method))
                 best_vers = candidate_vers;
@@ -2245,7 +2246,7 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
      * If the supported versions extension isn't present, then the highest
      * version we can negotiate is TLSv1.2
      */
-    if (version_cmp(s, client_version, TLS1_3_VERSION) >= 0)
+    if (ssl_version_cmp(s, client_version, TLS1_3_VERSION) >= 0)
         client_version = TLS1_2_VERSION;
 
     /*
@@ -2256,7 +2257,7 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
         const SSL_METHOD *method;
 
         if (vent->smeth == NULL ||
-            version_cmp(s, client_version, vent->version) < 0)
+            ssl_version_cmp(s, client_version, vent->version) < 0)
             continue;
         method = vent->smeth();
         if (ssl_method_error(s, method) == 0) {
@@ -2344,13 +2345,8 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
         SSLfatal(s, SSL_AD_PROTOCOL_VERSION, ret);
         return 0;
     }
-    if (SSL_CONNECTION_IS_DTLS(s) ? DTLS_VERSION_LT(s->version, ver_min)
-                                  : s->version < ver_min) {
-        s->version = origv;
-        SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_UNSUPPORTED_PROTOCOL);
-        return 0;
-    } else if (SSL_CONNECTION_IS_DTLS(s) ? DTLS_VERSION_GT(s->version, ver_max)
-                                         : s->version > ver_max) {
+    if (ssl_version_cmp(s, s->version, ver_min) < 0
+        || ssl_version_cmp(s, s->version, ver_max) > 0) {
         s->version = origv;
         SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_UNSUPPORTED_PROTOCOL);
         return 0;
