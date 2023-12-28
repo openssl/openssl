@@ -497,11 +497,18 @@ static void *ec_d2i_ec_parameters_thunk(void **a,
 # define ec_d2i_public_key              NULL
 # define ec_d2i_key_params              ec_d2i_ec_parameters_thunk 
 
+static void *ossl_ec_key_from_pkcs8_thunk(const PKCS8_PRIV_KEY_INFO *p8inf,
+                                          OSSL_LIB_CTX *libctx,
+                                          const char *propq)
+{
+    return (void *)ossl_ec_key_from_pkcs8(p8inf, libctx, propq);
+}
+
 static void *ec_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                           struct der2key_ctx_st *ctx)
 {
     return der2key_decode_p8(der, der_len, ctx,
-                             (key_from_pkcs8_t *)ossl_ec_key_from_pkcs8);
+                             ossl_ec_key_from_pkcs8_thunk);
 }
 
 static void ec_key_free(void *d)
@@ -621,7 +628,7 @@ static void *sm2_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                            struct der2key_ctx_st *ctx)
 {
     return der2key_decode_p8(der, der_len, ctx,
-                             (key_from_pkcs8_t *)ossl_ec_key_from_pkcs8);
+                             ossl_ec_key_from_pkcs8_thunk);
 }
 
 #  define sm2_d2i_PUBKEY                ec_d2i_pubkey_thunk 

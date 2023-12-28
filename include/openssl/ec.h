@@ -1242,6 +1242,9 @@ OSSL_DEPRECATEDIN_3_0 EC_KEY *d2i_ECParameters(EC_KEY **key,
 OSSL_DEPRECATEDIN_3_0 int i2d_ECParameters(const EC_KEY *key,
                                            unsigned char **out);
 
+OSSL_DEPRECATEDIN_3_0 int i2d_ECParameters_thunk(const void *a,
+                                                 unsigned char **out);
+
 /********************************************************************/
 /*         de- and encoding functions for EC public key             */
 /*         (octet string, not DER -- hence 'o2i' and 'i2o')         */

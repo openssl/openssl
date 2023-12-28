@@ -1104,6 +1104,12 @@ int i2d_ECParameters(const EC_KEY *a, unsigned char **out)
     return i2d_ECPKParameters(a->group, out);
 }
 
+int i2d_ECParameters_thunk(const void *a, unsigned char **out)
+{
+    return i2d_ECParameters((const EC_KEY *)a, out);
+}
+
+
 EC_KEY *d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
 {
     EC_KEY *ret;
