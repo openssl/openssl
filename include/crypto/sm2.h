@@ -28,7 +28,7 @@ int ossl_sm2_key_private_check(const EC_KEY *eckey);
 int ossl_sm2_compute_z_digest(uint8_t *out,
                               const EVP_MD *digest,
                               const uint8_t *id,
-                              const size_t id_len,
+                              size_t id_len,
                               const EC_KEY *key);
 
 /*

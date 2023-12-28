@@ -23,7 +23,7 @@
 int ossl_sm2_compute_z_digest(uint8_t *out,
                               const EVP_MD *digest,
                               const uint8_t *id,
-                              const size_t id_len,
+                              size_t id_len,
                               const EC_KEY *key)
 {
     int rc = 0;
@@ -72,6 +72,11 @@ int ossl_sm2_compute_z_digest(uint8_t *out,
     }
 
     /* Z = h(ENTL || ID || a || b || xG || yG || xA || yA) */
+
+    if (id == NULL) {
+        id = (const uint8_t *)SM2_DEFAULT_USERID;
+        id_len = strlen(SM2_DEFAULT_USERID);
+    }
 
     if (id_len >= (UINT16_MAX / 8)) {
         /* too large */
