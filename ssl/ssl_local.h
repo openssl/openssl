@@ -2629,6 +2629,7 @@ __owur int ssl3_handshake_write(SSL_CONNECTION *s);
 
 __owur int ssl_allow_compression(SSL_CONNECTION *s);
 
+__owur int ssl_version_cmp(const SSL_CONNECTION *s, int a, int b);
 __owur int ssl_version_supported(const SSL_CONNECTION *s, int version,
                                  const SSL_METHOD **meth);
 
