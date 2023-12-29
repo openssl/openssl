@@ -360,7 +360,7 @@ length is specific to the key cryptosystem.
 
 The value should be the maximum size that a caller should allocate to
 safely store a signature (called I<sig> in L<provider-signature(7)>),
-the result of asymmmetric encryption / decryption (I<out> in
+the result of asymmetric encryption / decryption (I<out> in
 L<provider-asym_cipher(7)>, a derived secret (I<secret> in
 L<provider-keyexch(7)>, and similar data).
 
