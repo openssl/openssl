@@ -4060,9 +4060,11 @@ int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
 {
     int i;
     size_t totlen = 0, len, maxlen, maxverok = 0;
+    int min_proto_version_limit = SSL_CONNECTION_IS_DTLS(s)
+                                  ? DTLS1_3_VERSION : TLS1_3_VERSION;
     int empty_reneg_info_scsv = !s->renegotiate
-                                && ((SSL_CONNECTION_IS_DTLS(s) && DTLS_VERSION_LT(s->min_proto_version, DTLS1_3_VERSION))
-                                    || (!SSL_CONNECTION_IS_DTLS(s) && s->min_proto_version < TLS1_3_VERSION));
+                                && (ssl_version_cmp(s, s->min_proto_version, min_proto_version_limit) < 0
+                                    || s->min_proto_version == 0);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     /* Set disabled masks for this session */

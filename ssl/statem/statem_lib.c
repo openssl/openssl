@@ -1788,7 +1788,7 @@ int ssl_allow_compression(SSL_CONNECTION *s)
     return ssl_security(s, SSL_SECOP_COMPRESSION, 0, 0, NULL);
 }
 
-static int version_cmp(const SSL_CONNECTION *s, int a, int b)
+int ssl_version_cmp(const SSL_CONNECTION *s, int a, int b)
 {
     int dtls = SSL_CONNECTION_IS_DTLS(s);
 
@@ -1874,12 +1874,12 @@ static int ssl_method_error(const SSL_CONNECTION *s, const SSL_METHOD *method)
     int version = method->version;
 
     if ((s->min_proto_version != 0 &&
-         version_cmp(s, version, s->min_proto_version) < 0) ||
+        ssl_version_cmp(s, version, s->min_proto_version) < 0) ||
         ssl_security(s, SSL_SECOP_VERSION, 0, version, NULL) == 0)
         return SSL_R_VERSION_TOO_LOW;
 
     if (s->max_proto_version != 0 &&
-        version_cmp(s, version, s->max_proto_version) > 0)
+        ssl_version_cmp(s, version, s->max_proto_version) > 0)
         return SSL_R_VERSION_TOO_HIGH;
 
     if ((s->options & method->mask) != 0)
@@ -1967,7 +1967,7 @@ int ssl_version_supported(const SSL_CONNECTION *s, int version,
     switch (SSL_CONNECTION_GET_SSL(s)->method->version) {
     default:
         /* Version should match method version for non-ANY method */
-        return version_cmp(s, version, s->version) == 0;
+        return ssl_version_cmp(s, version, s->version) == 0;
     case TLS_ANY_VERSION:
         table = tls_version_table;
         break;
@@ -1977,11 +1977,11 @@ int ssl_version_supported(const SSL_CONNECTION *s, int version,
     }
 
     for (vent = table;
-         vent->version != 0 && version_cmp(s, version, vent->version) <= 0;
+         vent->version != 0 && ssl_version_cmp(s, version, vent->version) <= 0;
          ++vent) {
         if (vent->cmeth != NULL
-                && version_cmp(s, version, vent->version) == 0
-                && ssl_method_error(s, vent->cmeth()) == 0
+            && ssl_version_cmp(s, version, vent->version) == 0
+            && ssl_method_error(s, vent->cmeth()) == 0
                 && (!s->server
                     || (version != TLS1_3_VERSION && version != DTLS1_3_VERSION)
                     || is_tls13_capable(s))) {
@@ -2154,7 +2154,7 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
     switch (server_version) {
     default:
         if (!(SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))) {
-            if (version_cmp(s, client_version, s->version) < 0)
+            if (ssl_version_cmp(s, client_version, s->version) < 0)
                 return SSL_R_WRONG_SSL_VERSION;
             *dgrd = DOWNGRADE_NONE;
             /*
@@ -2211,7 +2211,7 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             return SSL_R_BAD_LEGACY_VERSION;
 
         while (PACKET_get_net_2(&versionslist, &candidate_vers)) {
-            if (version_cmp(s, candidate_vers, best_vers) <= 0)
+            if (ssl_version_cmp(s, candidate_vers, best_vers) <= 0)
                 continue;
             if (ssl_version_supported(s, candidate_vers, &best_method))
                 best_vers = candidate_vers;
@@ -2249,7 +2249,7 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
      */
     const int version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
     const int forcedversion = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_2_VERSION : TLS1_2_VERSION;
-    if (version_cmp(s, client_version, version) >= 0)
+    if (ssl_version_cmp(s, client_version, version) >= 0)
         client_version = forcedversion;
 
     /*
@@ -2260,7 +2260,7 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
         const SSL_METHOD *method;
 
         if (vent->smeth == NULL ||
-            version_cmp(s, client_version, vent->version) < 0)
+            ssl_version_cmp(s, client_version, vent->version) < 0)
             continue;
         method = vent->smeth();
         if (ssl_method_error(s, method) == 0) {
