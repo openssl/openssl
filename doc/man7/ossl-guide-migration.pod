@@ -157,12 +157,13 @@ To ensure the future compatibility, the engines should be turned to providers.
 To prefer the provider-based hardware offload, you can specify the default
 properties to prefer your provider.
 
-Setting engine-based default low-level crypto method such as B<RSA_METHOD> or
-B<EC_KEY_METHOD> is still possible and keys inside the default provider will
-use the engine-based implementation for the crypto operations. However
-B<EVP_PKEY>s created in such circumstances will be provider-based. To create
-a fully legacy B<EVP_PKEY>s L<EVP_PKEY_set1_RSA(3)>,
-L<EVP_PKEY_set1_EC_KEY(3)> or similar functions must be used.
+Setting engine-based or application-based default low-level crypto method such
+as B<RSA_METHOD> or B<EC_KEY_METHOD> is still possible and keys inside the
+default provider will use the engine-based implementation for the crypto
+operations. However B<EVP_PKEY>s created by decoding by using B<OSSL_DECODER>,
+B<PEM_> or B<d2i_> APIs will be provider-based. To create a fully legacy
+B<EVP_PKEY>s L<EVP_PKEY_set1_RSA(3)>, L<EVP_PKEY_set1_EC_KEY(3)> or similar
+functions must be used.
 
 =head3 Versioning Scheme
 
