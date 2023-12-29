@@ -904,7 +904,7 @@ static int prepare_rsa_params(const void *rsa, int nid, int save,
 #define rsa_epki_priv_to_der            rsa_type_specific_priv_to_der
 #define rsa_spki_pub_to_der             rsa_type_specific_pub_to_der
 #define rsa_type_specific_priv_to_der   i2d_RSAPrivateKey_thunk
-#define rsa_type_specific_pub_to_der    (i2d_of_void *)i2d_RSAPublicKey
+#define rsa_type_specific_pub_to_der    i2d_RSAPublicKey_thunk
 #define rsa_type_specific_params_to_der NULL
 
 static int rsa_check_key_type(const void *rsa, int expected_type)

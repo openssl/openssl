@@ -168,7 +168,7 @@ static struct test_stanza_st {
 #endif
     { "RSA", { "RSA", "type-specific" }, EVP_PKEY_RSA,
       i2d_RSAPrivateKey_thunk,
-      (i2d_of_void *)i2d_RSAPublicKey,
+      i2d_RSAPublicKey_thunk,
       NULL,                      /* No i2d_RSAparams */
       (i2d_of_void *)i2d_RSA_PUBKEY,
       (PEM_write_bio_of_void_protected *)PEM_write_bio_RSAPrivateKey,
