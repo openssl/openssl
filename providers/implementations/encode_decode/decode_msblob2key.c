@@ -252,9 +252,14 @@ static void *ossl_b2i_DSA_after_header_thunk(const unsigned char **in,
 #define dsa_free                DSA_free_thunk
 
 /* ---------------------------------------------------------------------- */
+static void *ossl_b2i_RSA_after_header_thunk(const unsigned char **in,
+                                             unsigned int bitlen, int ispub)
+{
+    return (void *)ossl_b2i_RSA_after_header(in, bitlen, ispub);
+}
 
-#define rsa_decode_private_key  (b2i_of_void_fn *)ossl_b2i_RSA_after_header
-#define rsa_decode_public_key   (b2i_of_void_fn *)ossl_b2i_RSA_after_header
+#define rsa_decode_private_key  ossl_b2i_RSA_after_header_thunk
+#define rsa_decode_public_key   ossl_b2i_RSA_after_header_thunk
 
 static void rsa_adjust(void *key, struct msblob2key_ctx_st *ctx)
 {
