@@ -25,7 +25,7 @@ multiple of KiB/MiB/GiB/TiB respectively. Note that suffixes are case
 sensitive, and that the suffixes represent binary multiples
 (K = 1024 bytes, M = 1024*1024 bytes, etc).
 
-The string 'max' may be substituted for a numercial value in num, to request the
+The string 'max' may be substituted for a numerical value in num, to request the
 maximum number of bytes the CSPRNG can produce per instantiation.  Currently,
 this is restricted to 2^61 bytes as per NIST SP 800-90C.
 

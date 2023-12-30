@@ -479,7 +479,7 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
         }
 
         /*
-         * Ony assign context gen_type if it was set by dsa_gen_type_name2id
+         * Only assign context gen_type if it was set by dsa_gen_type_name2id
          * must be in range:
          * DSA_PARAMGEN_TYPE_FIPS_186_4 <= gen_type <= DSA_PARAMGEN_TYPE_FIPS_DEFAULT
          */

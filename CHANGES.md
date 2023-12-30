@@ -28,6 +28,11 @@ OpenSSL 3.3
 
 ### Changes between 3.2 and 3.3 [xx XXX xxxx]
 
+ * Disable building QUIC server utility when OpenSSL is configured with
+   `no-apps`
+
+   *Vitalii Koshura*
+
  * The activate and soft_load configuration settings for providers in
    openssl.cnf have been updated to require a value of [1|yes|true|on]
    (in lower or UPPER case) to enable the setting. Conversely a value
