@@ -544,6 +544,55 @@ err:
     return ret;
 }
 
+static int test_kdf_pbkdf1_key_too_long(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    unsigned char out[EVP_MAX_MD_SIZE + 1];
+    unsigned int iterations = 4096;
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PARAM *params = NULL;
+    OSSL_PROVIDER *legacyprov = NULL;
+    OSSL_PROVIDER *defprov = NULL;
+
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new()))
+        goto err;
+
+    /* PBKDF1 only available in the legacy provider */
+    legacyprov = OSSL_PROVIDER_load(libctx, "legacy");
+    if (legacyprov == NULL) {
+        OSSL_LIB_CTX_free(libctx);
+        return TEST_skip("PBKDF1 only available in legacy provider");
+    }
+
+    if (!TEST_ptr(defprov = OSSL_PROVIDER_load(libctx, "default")))
+        goto err;
+
+    params = construct_pbkdf1_params("passwordPASSWORDpassword", "sha256",
+                                     "saltSALTsaltSALTsaltSALTsaltSALTsalt",
+                                     &iterations);
+
+    /*
+     * This is the same test sequence as test_kdf_pbkdf1, but we expect
+     * failure here as the requested key size is longer than the digest
+     * can provide
+     */
+    if (!TEST_ptr(params)
+        || !TEST_ptr(kctx = get_kdfbyname_libctx(libctx, OSSL_KDF_NAME_PBKDF1))
+        || !TEST_true(EVP_KDF_CTX_set_params(kctx, params))
+        || !TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out), NULL), 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_KDF_CTX_free(kctx);
+    OPENSSL_free(params);
+    OSSL_PROVIDER_unload(defprov);
+    OSSL_PROVIDER_unload(legacyprov);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+
 static OSSL_PARAM *construct_pbkdf2_params(char *pass, char *digest, char *salt,
     unsigned int *iter, int *mode)
 {
@@ -1920,6 +1969,7 @@ err:
 int setup_tests(void)
 {
     ADD_TEST(test_kdf_pbkdf1);
+    ADD_TEST(test_kdf_pbkdf1_key_too_long);
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
     ADD_TEST(test_kdf_kbkdf_6803_128);
     ADD_TEST(test_kdf_kbkdf_6803_256);
