@@ -69,6 +69,22 @@ typedef int EVP_PKEY_print_fn(BIO *out, const EVP_PKEY *pkey,
                               int indent, ASN1_PCTX *pctx);
 typedef int EVP_PKEY_eq_fn(const EVP_PKEY *a, const EVP_PKEY *b);
 
+static int PEM_write_bio_DHparams_thunk(BIO *out, const void *obj)
+{
+    return PEM_write_bio_DHparams(out, (const DH *)obj);
+}
+
+static void* PEM_read_bio_DHparams_thunk(BIO *bp, void **x,
+                                         pem_password_cb *cb, void *u)
+{
+    return  (void *)PEM_read_bio_DHparams(bp, (DH **)x, cb, u);
+}
+
+static int PEM_write_bio_DHxparams_thunk(BIO *out, const void *obj)
+{
+    return PEM_write_bio_DHxparams(out, (const DH *)obj);
+}
+
 static struct test_stanza_st {
     const char *keytype;
     const char *structure[2];
@@ -96,32 +112,32 @@ static struct test_stanza_st {
     { "DH", { "DH", "type-specific" }, EVP_PKEY_DH,
       NULL,                      /* No i2d_DHPrivateKey */
       NULL,                      /* No i2d_DHPublicKey */
-      (i2d_of_void *)i2d_DHparams,
+      i2d_DHparams_thunk,
       NULL,                      /* No i2d_DH_PUBKEY */
       NULL,                      /* No PEM_write_bio_DHPrivateKey */
       NULL,                      /* No PEM_write_bio_DHPublicKey */
-      (PEM_write_bio_of_void_unprotected *)PEM_write_bio_DHparams,
+      PEM_write_bio_DHparams_thunk,
       NULL,                      /* No PEM_write_bio_DH_PUBKEY */
       NULL,                      /* No d2i_DHPrivateKey */
       NULL,                      /* No d2i_DHPublicKey */
-      (d2i_of_void *)d2i_DHparams,
+      d2i_DHparams_thunk,
       NULL,                      /* No d2i_DH_PUBKEY */
       NULL,                      /* No PEM_read_bio_DHPrivateKey */
       NULL,                      /* No PEM_read_bio_DHPublicKey */
-      (PEM_read_bio_of_void *)PEM_read_bio_DHparams,
+      PEM_read_bio_DHparams_thunk,
       NULL },                    /* No PEM_read_bio_DH_PUBKEY */
     { "DHX", { "DHX", "type-specific" }, EVP_PKEY_DHX,
       NULL,                      /* No i2d_DHxPrivateKey */
       NULL,                      /* No i2d_DHxPublicKey */
-      (i2d_of_void *)i2d_DHxparams,
+      i2d_DHxparams_thunk,
       NULL,                      /* No i2d_DHx_PUBKEY */
       NULL,                      /* No PEM_write_bio_DHxPrivateKey */
       NULL,                      /* No PEM_write_bio_DHxPublicKey */
-      (PEM_write_bio_of_void_unprotected *)PEM_write_bio_DHxparams,
+      PEM_write_bio_DHxparams_thunk,
       NULL,                      /* No PEM_write_bio_DHx_PUBKEY */
       NULL,                      /* No d2i_DHxPrivateKey */
       NULL,                      /* No d2i_DHxPublicKey */
-      (d2i_of_void *)d2i_DHxparams,
+      d2i_DHxparams_thunk,
       NULL,                      /* No d2i_DHx_PUBKEY */
       NULL,                      /* No PEM_read_bio_DHxPrivateKey */
       NULL,                      /* No PEM_read_bio_DHxPublicKey */

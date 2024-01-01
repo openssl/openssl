@@ -69,6 +69,11 @@ void OSSL_ENCODER_free(OSSL_ENCODER *encoder)
     OPENSSL_free(encoder);
 }
 
+static void OSSL_ENCODER_free_thunk(void *encoder)
+{
+    OSSL_ENCODER_free((OSSL_ENCODER *)encoder);
+}
+
 /* Data to be passed through ossl_method_construct() */
 struct encoder_data_st {
     OSSL_LIB_CTX *libctx;
@@ -197,7 +202,7 @@ static int put_encoder_in_store(void *store, void *method,
 
     return ossl_method_store_add(store, prov, id, propdef, method,
                                  OSSL_ENCODER_up_ref_thunk,
-                                 (void (*)(void *))OSSL_ENCODER_free);
+                                 OSSL_ENCODER_free_thunk);
 }
 
 /* Create and populate a encoder method */

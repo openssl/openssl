@@ -134,6 +134,11 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
     return dh;
 }
 
+void *d2i_DHxparams_thunk(void **a, const unsigned char **pp, long length)
+{
+    return (void *)d2i_DHxparams((DH **)a, pp, length);
+}
+
 int i2d_DHxparams(const DH *dh, unsigned char **pp)
 {
     int ret = 0;
