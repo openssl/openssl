@@ -71,6 +71,11 @@ static int kdf_pbkdf1_do_derive(const unsigned char *pass, size_t passlen,
     mdsize = EVP_MD_size(md_type);
     if (mdsize < 0)
         goto err;
+    if (n > (size_t)mdsize) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_LENGTH_TOO_LARGE);
+        goto err;
+    }
+
     for (i = 1; i < iter; i++) {
         if (!EVP_DigestInit_ex(ctx, md_type, NULL))
             goto err;
