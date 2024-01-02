@@ -136,7 +136,7 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
                 in += AES_BLOCK_SIZE;
                 out += AES_BLOCK_SIZE;
             }
-            memcpy(ivec, ivp->data, AES_BLOCK_SIZE);
+            memmove(ivec, ivp->data, AES_BLOCK_SIZE);
             memcpy(ivec + AES_BLOCK_SIZE, iv2p->data, AES_BLOCK_SIZE);
         } else {
             aes_block_t tmp, tmp2;
