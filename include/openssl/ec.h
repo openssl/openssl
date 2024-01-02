@@ -1209,6 +1209,10 @@ OSSL_DEPRECATEDIN_3_0 EC_KEY *d2i_ECPrivateKey(EC_KEY **key,
                                                const unsigned char **in,
                                                long len);
 
+OSSL_DEPRECATEDIN_3_0 void *d2i_ECPrivateKey_thunk(void **a,
+                                                   const unsigned char **in,
+                                                   long len);
+
 /** Encodes a private key object and stores the result in a buffer.
  *  \param  key  the EC_KEY object to encode
  *  \param  out  the buffer for the result (if NULL the function returns number
@@ -1218,6 +1222,7 @@ OSSL_DEPRECATEDIN_3_0 EC_KEY *d2i_ECPrivateKey(EC_KEY **key,
 OSSL_DEPRECATEDIN_3_0 int i2d_ECPrivateKey(const EC_KEY *key,
                                            unsigned char **out);
 
+OSSL_DEPRECATEDIN_3_0 int i2d_ECPrivateKey_thunk(const void *a, unsigned char **out);
 /********************************************************************/
 /*        de- and encoding functions for EC parameters              */
 /********************************************************************/
@@ -1232,6 +1237,10 @@ OSSL_DEPRECATEDIN_3_0 int i2d_ECPrivateKey(const EC_KEY *key,
 OSSL_DEPRECATEDIN_3_0 EC_KEY *d2i_ECParameters(EC_KEY **key,
                                                const unsigned char **in,
                                                long len);
+
+OSSL_DEPRECATEDIN_3_0 void *d2i_ECParameters_thunk(void **a,
+                                                   const unsigned char **in,
+                                                   long len);
 
 /** Encodes ec parameter and stores the result in a buffer.
  *  \param  key  the EC_KEY object with ec parameters to encode

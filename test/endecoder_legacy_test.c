@@ -69,20 +69,16 @@ typedef int EVP_PKEY_print_fn(BIO *out, const EVP_PKEY *pkey,
                               int indent, ASN1_PCTX *pctx);
 typedef int EVP_PKEY_eq_fn(const EVP_PKEY *a, const EVP_PKEY *b);
 
-static int PEM_write_bio_DHparams_thunk(BIO *out, const void *obj)
-{
-    return PEM_write_bio_DHparams(out, (const DH *)obj);
-}
-
-static void* PEM_read_bio_DHparams_thunk(BIO *bp, void **x,
-                                         pem_password_cb *cb, void *u)
+void* PEM_read_bio_DHparams_thunk(BIO *bp, void **x,
+                                  pem_password_cb *cb, void *u)
 {
     return  (void *)PEM_read_bio_DHparams(bp, (DH **)x, cb, u);
 }
 
-static int PEM_write_bio_DHxparams_thunk(BIO *out, const void *obj)
+void *PEM_read_bio_DSAPrivateKey_thunk(BIO *bp, void **x,
+                                       pem_password_cb *cb, void *u)
 {
-    return PEM_write_bio_DHxparams(out, (const DH *)obj);
+    return (void *)PEM_read_bio_DSAPrivateKey(bp, (DSA **)x, cb, u);
 }
 
 static struct test_stanza_st {
@@ -146,59 +142,59 @@ static struct test_stanza_st {
 #endif
 #ifndef OPENSSL_NO_DSA
     { "DSA", { "DSA", "type-specific" }, EVP_PKEY_DSA,
-      (i2d_of_void *)i2d_DSAPrivateKey,
-      (i2d_of_void *)i2d_DSAPublicKey,
-      (i2d_of_void *)i2d_DSAparams,
-      (i2d_of_void *)i2d_DSA_PUBKEY,
-      (PEM_write_bio_of_void_protected *)PEM_write_bio_DSAPrivateKey,
+      i2d_DSAPrivateKey_thunk,
+      i2d_DSAPublicKey_thunk,
+      i2d_DSAparams_thunk,
+      i2d_DSA_PUBKEY_thunk,
+      PEM_write_bio_DSAPrivateKey_thunk,
       NULL,                      /* No PEM_write_bio_DSAPublicKey */
-      (PEM_write_bio_of_void_unprotected *)PEM_write_bio_DSAparams,
-      (PEM_write_bio_of_void_unprotected *)PEM_write_bio_DSA_PUBKEY,
-      (d2i_of_void *)d2i_DSAPrivateKey,
-      (d2i_of_void *)d2i_DSAPublicKey,
-      (d2i_of_void *)d2i_DSAparams,
+      PEM_write_bio_DSAparams_thunk,
+      PEM_write_bio_DSA_PUBKEY_thunk,
+      d2i_DSAPrivateKey_thunk,
+      d2i_DSAPublicKey_thunk,
+      d2i_DSAparams_thunk,
       d2i_DSA_PUBKEY_thunk,
-      (PEM_read_bio_of_void *)PEM_read_bio_DSAPrivateKey,
+      PEM_read_bio_DSAPrivateKey_thunk,
       NULL,                      /* No PEM_write_bio_DSAPublicKey */
-      (PEM_read_bio_of_void *)PEM_read_bio_DSAparams,
-      (PEM_read_bio_of_void *)PEM_read_bio_DSA_PUBKEY },
+      PEM_read_bio_DSAparams_thunk,
+      PEM_read_bio_DSA_PUBKEY_thunk },
 #endif
 #ifndef OPENSSL_NO_EC
     { "EC", { "EC", "type-specific" }, EVP_PKEY_EC,
-      (i2d_of_void *)i2d_ECPrivateKey,
+      i2d_ECPrivateKey_thunk,
       NULL,                      /* No i2d_ECPublicKey */
-      (i2d_of_void *)i2d_ECParameters,
-      (i2d_of_void *)i2d_EC_PUBKEY,
-      (PEM_write_bio_of_void_protected *)PEM_write_bio_ECPrivateKey,
+      i2d_ECParameters_thunk,
+      i2d_EC_PUBKEY_thunk,
+      PEM_write_bio_ECPrivateKey_thunk,
       NULL,                      /* No PEM_write_bio_ECPublicKey */
       NULL,                      /* No PEM_write_bio_ECParameters */
-      (PEM_write_bio_of_void_unprotected *)PEM_write_bio_EC_PUBKEY,
-      (d2i_of_void *)d2i_ECPrivateKey,
+      PEM_write_bio_EC_PUBKEY_thunk,
+      d2i_ECPrivateKey_thunk,
       NULL,                      /* No d2i_ECPublicKey */
-      (d2i_of_void *)d2i_ECParameters,
-      (d2i_of_void *)d2i_EC_PUBKEY,
-      (PEM_read_bio_of_void *)PEM_read_bio_ECPrivateKey,
+      d2i_ECParameters_thunk,
+      d2i_EC_PUBKEY_thunk,
+      PEM_read_bio_ECPrivateKey_thunk,
       NULL,                      /* No PEM_read_bio_ECPublicKey */
       NULL,                      /* No PEM_read_bio_ECParameters */
-      (PEM_read_bio_of_void *)PEM_read_bio_EC_PUBKEY, },
+      PEM_read_bio_EC_PUBKEY_thunk, },
 #endif
     { "RSA", { "RSA", "type-specific" }, EVP_PKEY_RSA,
       i2d_RSAPrivateKey_thunk,
       i2d_RSAPublicKey_thunk,
       NULL,                      /* No i2d_RSAparams */
-      (i2d_of_void *)i2d_RSA_PUBKEY,
-      (PEM_write_bio_of_void_protected *)PEM_write_bio_RSAPrivateKey,
-      (PEM_write_bio_of_void_unprotected *)PEM_write_bio_RSAPublicKey,
+      i2d_RSA_PUBKEY_thunk,
+      PEM_write_bio_RSAPrivateKey_thunk,
+      PEM_write_bio_RSAPublicKey_thunk,
       NULL,                      /* No PEM_write_bio_RSAparams */
-      (PEM_write_bio_of_void_unprotected *)PEM_write_bio_RSA_PUBKEY,
-      (d2i_of_void *)d2i_RSAPrivateKey,
-      (d2i_of_void *)d2i_RSAPublicKey,
+      PEM_write_bio_RSA_PUBKEY_thunk,
+      d2i_RSAPrivateKey_thunk,
+      d2i_RSAPublicKey_thunk,
       NULL,                      /* No d2i_RSAparams */
-      (d2i_of_void *)d2i_RSA_PUBKEY,
-      (PEM_read_bio_of_void *)PEM_read_bio_RSAPrivateKey,
-      (PEM_read_bio_of_void *)PEM_read_bio_RSAPublicKey,
+      d2i_RSA_PUBKEY_thunk,
+      PEM_read_bio_RSAPrivateKey_thunk,
+      PEM_read_bio_RSAPublicKey_thunk,
       NULL,                      /* No PEM_read_bio_RSAparams */
-      (PEM_read_bio_of_void *)PEM_read_bio_RSA_PUBKEY }
+      PEM_read_bio_RSA_PUBKEY_thunk }
 };
 
 /*

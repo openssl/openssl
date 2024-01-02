@@ -1024,6 +1024,11 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
     return NULL;
 }
 
+void *d2i_ECPrivateKey_thunk(void **a, const unsigned char **in, long len)
+{
+    return (void *)d2i_ECPrivateKey((EC_KEY **)a, in, len);
+}
+
 int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
 {
     int ret = 0, ok = 0;
@@ -1095,6 +1100,11 @@ int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
     return (ok ? ret : 0);
 }
 
+int i2d_ECPrivateKey_thunk(const void *a, unsigned char **out)
+{
+    return i2d_ECPrivateKey((const EC_KEY *)a, out);
+}
+
 int i2d_ECParameters(const EC_KEY *a, unsigned char **out)
 {
     if (a == NULL) {
@@ -1144,6 +1154,11 @@ EC_KEY *d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
         *a = ret;
 
     return ret;
+}
+
+void *d2i_ECParameters_thunk(void **a, const unsigned char **in, long len)
+{
+    return (void *)d2i_ECParameters((EC_KEY **)a, in, len);
 }
 
 EC_KEY *o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)

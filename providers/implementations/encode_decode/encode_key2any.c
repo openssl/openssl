@@ -626,8 +626,8 @@ static int dsa_pki_priv_to_der(const void *dsa, unsigned char **pder)
 
 # define dsa_epki_priv_to_der dsa_pki_priv_to_der
 
-# define dsa_type_specific_priv_to_der   (i2d_of_void *)i2d_DSAPrivateKey
-# define dsa_type_specific_pub_to_der    (i2d_of_void *)i2d_DSAPublicKey
+# define dsa_type_specific_priv_to_der   i2d_DSAPrivateKey_thunk
+# define dsa_type_specific_pub_to_der    i2d_DSAPublicKey_thunk
 # define dsa_type_specific_params_to_der i2d_DSAparams_thunk
 
 # define dsa_check_key_type     NULL
@@ -732,7 +732,7 @@ static int ec_pki_priv_to_der(const void *veckey, unsigned char **pder)
 
 # define ec_type_specific_params_to_der i2d_ECParameters_thunk
 /* No ec_type_specific_pub_to_der, there simply is no such thing */
-# define ec_type_specific_priv_to_der   (i2d_of_void *)i2d_ECPrivateKey
+# define ec_type_specific_priv_to_der   i2d_ECPrivateKey_thunk
 
 # define ec_check_key_type      NULL
 # define ec_evp_type            EVP_PKEY_EC

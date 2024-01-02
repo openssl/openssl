@@ -74,6 +74,12 @@ RSA *PEM_read_bio_RSAPrivateKey(BIO *bp, RSA **rsa, pem_password_cb *cb,
     return pkey_get_rsa(pktmp, rsa);
 }
 
+void *PEM_read_bio_RSAPrivateKey_thunk(BIO *bp, void **x,
+                                      pem_password_cb *cb, void *u)
+{
+    return (void *)PEM_read_bio_RSAPrivateKey(bp, (RSA **)x, cb, u);
+}
+
 # ifndef OPENSSL_NO_STDIO
 
 RSA *PEM_read_RSAPrivateKey(FILE *fp, RSA **rsa, pem_password_cb *cb, void *u)
@@ -153,6 +159,12 @@ EC_KEY *PEM_read_bio_ECPrivateKey(BIO *bp, EC_KEY **key, pem_password_cb *cb,
     EVP_PKEY *pktmp;
     pktmp = PEM_read_bio_PrivateKey(bp, NULL, cb, u);
     return pkey_get_eckey(pktmp, key); /* will free pktmp */
+}
+
+void *PEM_read_bio_ECPrivateKey_thunk(BIO *bp, void **x, pem_password_cb *cb,
+                                      void *u)
+{
+    return (void *)PEM_read_bio_ECPrivateKey(bp, (EC_KEY **)x, cb, u);
 }
 
 IMPLEMENT_PEM_rw(ECPKParameters, EC_GROUP, PEM_STRING_ECPARAMETERS,

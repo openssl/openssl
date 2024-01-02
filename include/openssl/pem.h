@@ -72,7 +72,10 @@ extern "C" {
 
 # define PEM_read_cb_fnsig(name, type, INTYPE, readname)                \
     type *PEM_##readname##_##name(INTYPE *out, type **x,                \
-                                 pem_password_cb *cb, void *u)
+                                 pem_password_cb *cb, void *u);         \
+    void *PEM_##readname##_##name##_thunk(INTYPE *out, void **x,        \
+                                 pem_password_cb *cb, void *u)          \
+
 # define PEM_read_cb_ex_fnsig(name, type, INTYPE, readname)             \
     type *PEM_##readname##_##name##_ex(INTYPE *out, type **x,           \
                                        pem_password_cb *cb, void *u,    \
@@ -147,15 +150,24 @@ extern "C" {
     type *PEM_read_bio_##name(BIO *bp, type **x,                        \
                               pem_password_cb *cb, void *u)             \
     {                                                                   \
-        return PEM_ASN1_read_bio((d2i_of_void *)d2i_##asn1##_thunk, str, bp, \
+        return PEM_ASN1_read_bio(d2i_##asn1##_thunk, str, bp, \
                                  (void **)x, cb, u);                    \
-    }
+    }                                                                   \
+    void *PEM_read_bio_##name##_thunk(BIO *bp, void **x,                \
+                                      pem_password_cb *cb, void *u)     \
+    {                                                                   \
+        return (void *)PEM_read_bio_##name(bp, (type **)x, cb, u);      \
+    }\
 
 # define IMPLEMENT_PEM_write_bio(name, type, str, asn1)                 \
     PEM_write_fnsig(name, type, BIO, write_bio)                         \
     {                                                                   \
         return PEM_ASN1_write_bio(i2d_##asn1##_thunk, str, out,  \
                                   x, NULL,NULL,0,NULL,NULL);            \
+    }                                                                   \
+    int PEM_write_bio_##name##_thunk(BIO *out, const void *x)           \
+    {                                                                   \
+        return PEM_write_bio_##name(out, (const type *)x);              \
     }
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -166,8 +178,15 @@ extern "C" {
 # define IMPLEMENT_PEM_write_cb_bio(name, type, str, asn1)              \
     PEM_write_cb_fnsig(name, type, BIO, write_bio)                      \
     {                                                                   \
-        return PEM_ASN1_write_bio((i2d_of_void *)i2d_##asn1, str, out,  \
+        return PEM_ASN1_write_bio(i2d_##asn1##_thunk, str, out,         \
                                   x, enc, kstr, klen, cb, u);           \
+    }                                                                   \
+    int PEM_write_bio_##name##_thunk(BIO *out, const void *x,           \
+                                     const EVP_CIPHER *enc,             \
+                                     unsigned char *kstr, int klen,     \
+                                     pem_password_cb *cb, void *u)      \
+    {                                                                   \
+        return PEM_write_bio_##name(out, (const type *)x, enc, kstr, klen, cb, u); \
     }
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -279,7 +298,9 @@ extern "C" {
     DECLARE_PEM_read_bio_ex_attr(extern, name, type)
 
 # define DECLARE_PEM_write_bio_attr(attr, name, type)                       \
-    attr PEM_write_fnsig(name, type, BIO, write_bio);
+    attr PEM_write_fnsig(name, type, BIO, write_bio);                       \
+    attr int PEM_write_bio_##name##_thunk(BIO *, const void *);             \
+
 # define DECLARE_PEM_write_bio_ex_attr(attr, name, type)                    \
     attr PEM_write_fnsig(name, type, BIO, write_bio);                       \
     attr PEM_write_ex_fnsig(name, type, BIO, write_bio);
@@ -296,7 +317,13 @@ extern "C" {
 # endif
 
 # define DECLARE_PEM_write_cb_bio_attr(attr, name, type)                    \
-    attr PEM_write_cb_fnsig(name, type, BIO, write_bio);
+    attr PEM_write_cb_fnsig(name, type, BIO, write_bio);                    \
+    attr int PEM_write_bio_##name##_thunk(BIO *out, const void *x,          \
+                                          const EVP_CIPHER *enc,            \
+                                          unsigned char *kstr,              \
+                                          int klen, pem_password_cb *cb,    \
+                                          void *u);
+
 # define DECLARE_PEM_write_cb_bio_ex_attr(attr, name, type)                 \
     attr PEM_write_cb_fnsig(name, type, BIO, write_bio);                    \
     attr PEM_write_cb_ex_fnsig(name, type, BIO, write_bio);
