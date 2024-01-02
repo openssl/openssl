@@ -545,6 +545,11 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
             goto err;
         }
 
+        if (val->value == NULL) {
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
+            goto err;
+        }
+
         /*
          * Handle inheritance.
          */
