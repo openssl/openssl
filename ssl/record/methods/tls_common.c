@@ -916,11 +916,17 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
         }
 
         /*
-         * Check if the received packet overflows the current
-         * Max Fragment Length setting.
-         * Note: rl->max_frag_len > 0 and KTLS are mutually exclusive.
+         * Record overflow checking (e.g. checking if
+         * thisrr->length > SSL3_RT_MAX_PLAIN_LENGTH) is the responsibility of
+         * the post_process_record() function above. However we check here if
+         * the received packet overflows the current Max Fragment Length setting
+         * if there is one.
+         * Note: rl->max_frag_len != SSL3_RT_MAX_PLAIN_LENGTH and KTLS are
+         * mutually exclusive. Also note that with KTLS thisrr->length can
+         * be > SSL3_RT_MAX_PLAIN_LENGTH (and rl->max_frag_len must be ignored)
          */
-        if (thisrr->length > rl->max_frag_len) {
+        if (rl->max_frag_len != SSL3_RT_MAX_PLAIN_LENGTH
+                && thisrr->length > rl->max_frag_len) {
             RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW, SSL_R_DATA_LENGTH_TOO_LONG);
             goto end;
         }
