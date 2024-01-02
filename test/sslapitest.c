@@ -1135,6 +1135,10 @@ static int execute_test_ktls(int cis_ktls, int sis_ktls,
     int cfd = -1, sfd = -1;
     int rx_supported;
     SSL_CONNECTION *clientsc, *serversc;
+    unsigned char *buf = NULL;
+    const size_t bufsz = SSL3_RT_MAX_PLAIN_LENGTH + 16;
+    int ret;
+    size_t offset = 0, i;
 
     if (!TEST_true(create_test_sockets(&cfd, &sfd, SOCK_STREAM, NULL)))
         goto end;
@@ -1240,8 +1244,39 @@ static int execute_test_ktls(int cis_ktls, int sis_ktls,
     if (!TEST_true(ping_pong_query(clientssl, serverssl)))
         goto end;
 
+    buf = OPENSSL_zalloc(bufsz);
+    if (!TEST_ptr(buf))
+        goto end;
+
+    /*
+     * Write some data that exceeds the maximum record length. KTLS may choose
+     * to coalesce this data into a single buffer when we read it again.
+     */
+    while ((ret = SSL_write(clientssl, buf, bufsz)) != (int)bufsz) {
+        if (!TEST_true(SSL_get_error(clientssl, ret) == SSL_ERROR_WANT_WRITE))
+            goto end;
+    }
+
+    /* Now check that we can read all the data we wrote */
+    do {
+        ret = SSL_read(serverssl, buf + offset, bufsz - offset);
+        if (ret <= 0) {
+            if (!TEST_true(SSL_get_error(serverssl, ret) == SSL_ERROR_WANT_READ))
+                goto end;
+        } else {
+            offset += ret;
+        }
+    } while (offset < bufsz);
+
+    if (!TEST_true(offset == bufsz))
+        goto end;
+    for (i = 0; i < bufsz; i++)
+        if (!TEST_true(buf[i] == 0))
+            goto end;
+
     testresult = 1;
 end:
+    OPENSSL_free(buf);
     if (clientssl) {
         SSL_shutdown(clientssl);
         SSL_free(clientssl);
