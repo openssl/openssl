@@ -80,6 +80,12 @@ static ossl_inline int ktls_start(int fd, ktls_crypto_info_t *tls_en, int is_tx)
 #   endif
 }
 
+/* Not supported on FreeBSD */
+static ossl_inline int ktls_enable_tx_zerocopy_sendfile(int fd)
+{
+    return 0;
+}
+
 /*
  * Send a TLS record using the tls_en provided in ktls_start and use
  * record_type instead of the default SSL3_RT_APPLICATION_DATA.
