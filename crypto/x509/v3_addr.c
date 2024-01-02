@@ -984,6 +984,10 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
          * the other input values.
          */
         if (safi != NULL) {
+            if (val->value == NULL) {
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_MISSING_VALUE);
+                goto err;
+            }
             *safi = strtoul(val->value, &t, 0);
             t += strspn(t, " \t");
             if (*safi > 0xFF || *t++ != ':') {
