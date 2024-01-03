@@ -45,7 +45,7 @@ echo "   OPENSSL_ROOT_DIR:   $OPENSSL_ROOT_DIR"
 echo "   OpenSSL version:    $OPENSSL_VERSION"
 echo "------------------------------------------------------------------"
 
-cmake $SRCTOP/gost-engine -DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR"
+cmake $SRCTOP/gost-engine -DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR" -DOPENSSL_ENGINES_DIR="$OPENSSL_ROOT_DIR/engines"
 make
 export CTEST_OUTPUT_ON_FAILURE=1
 export HARNESS_OSSL_PREFIX=''
