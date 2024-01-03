@@ -1955,9 +1955,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     }
 
     if (!s->hit
-            && s->version >= TLS1_VERSION
-            && !SSL_CONNECTION_IS_TLS13(s)
-            && !SSL_CONNECTION_IS_DTLS(s)
+            && ssl_version_cmp(s, s->version, SSL_CONNECTION_IS_DTLS(s) ? DTLS1_VERSION : TLS1_VERSION) >= 0
+            && !(SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))
             && s->ext.session_secret_cb != NULL) {
         const SSL_CIPHER *pref_cipher = NULL;
         /*

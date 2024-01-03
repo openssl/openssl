@@ -1312,10 +1312,10 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
         return CON_FUNC_ERROR;
     }
 #ifndef OPENSSL_NO_COMP
+    int maxversion = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
     if (ssl_allow_compression(s)
             && sctx->comp_methods
-            && ((SSL_CONNECTION_IS_DTLS(s) && DTLS_VERSION_LT(s->s3.tmp.max_ver, DTLS1_3_VERSION))
-                || (!SSL_CONNECTION_IS_DTLS(s) && s->s3.tmp.max_ver < TLS1_3_VERSION))) {
+            && ssl_version_cmp(s, s->s3.tmp.max_ver, maxversion) < 0) {
         int compnum = sk_SSL_COMP_num(sctx->comp_methods);
         for (i = 0; i < compnum; i++) {
             comp = sk_SSL_COMP_value(sctx->comp_methods, i);
