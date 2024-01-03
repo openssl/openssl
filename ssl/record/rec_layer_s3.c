@@ -32,7 +32,6 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     rl->handshake_fragment_len = 0;
     rl->wpend_tot = 0;
     rl->wpend_type = 0;
-    rl->wpend_ret = 0;
     rl->wpend_buf = NULL;
 
     if (rl->rrlmethod != NULL)
@@ -310,7 +309,6 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
         s->rlayer.wpend_tot = 0;
         s->rlayer.wpend_type = type;
         s->rlayer.wpend_buf = buf;
-        s->rlayer.wpend_ret = len;
     }
 
     if (tot == len) {           /* done? */
