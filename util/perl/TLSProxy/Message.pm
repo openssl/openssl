@@ -50,6 +50,7 @@ use constant {
     AL_DESC_DECODE_ERROR => 50,
     AL_DESC_DECRYPT_ERROR => 51,
     AL_DESC_PROTOCOL_VERSION => 70,
+    AL_DESC_INAPPROPRIATE_FALLBACK => 86,
     AL_DESC_NO_RENEGOTIATION => 100,
     AL_DESC_MISSING_EXTENSION => 109
 };
@@ -230,11 +231,11 @@ sub get_messages
                     $payload .= substr($record->decrypt_data, 0, $recoffset);
                     push @message_frag_lens, $recoffset;
                     if ($isdtls) {
-                        # We must set $msgseq, $msgfrag, $msgfragoffs
+                        # We must set $msgseq, $msgfraglen, $msgfragoffs
                         die "Internal error: cannot handle partial dtls messages\n"
                     }
                     $message = create_message($server, $mt,
-                        #$msgseq, $msgfrag, $msgfragoffs,
+                        #$msgseq, $msgfraglen, $msgfragoffs,
                         0, 0, 0,
                         $payload, $startoffset, $isdtls);
                     push @messages, $message;
@@ -261,16 +262,16 @@ sub get_messages
                 my $lenhi;
                 my $lenlo;
                 my $msgseq;
-                my $msgfrag;
+                my $msgfraglen;
                 my $msgfragoffs;
                 if ($isdtls) {
-                    my $msgfraghi;
-                    my $msgfraglo;
+                    my $msgfraglenhi;
+                    my $msgfraglenlo;
                     my $msgfragoffshi;
                     my $msgfragoffslo;
-                    ($mt, $lenhi, $lenlo, $msgseq, $msgfraghi, $msgfraglo, $msgfragoffshi, $msgfragoffslo) =
+                    ($mt, $lenhi, $lenlo, $msgseq, $msgfragoffshi, $msgfragoffslo, $msgfraglenhi, $msgfraglenlo) =
                         unpack('CnCnnCnC', substr($record->decrypt_data, $recoffset));
-                    $msgfrag = ($msgfraghi << 8) | $msgfraglo;
+                    $msgfraglen = ($msgfraglenhi << 8) | $msgfraglenlo;
                     $msgfragoffs = ($msgfragoffshi << 8) | $msgfragoffslo;
                 } else {
                     ($mt, $lenhi, $lenlo) =
@@ -279,6 +280,10 @@ sub get_messages
                 $messlen = ($lenhi << 8) | $lenlo;
                 print "  Message type: $message_type{$mt}($mt)\n";
                 print "  Message Length: $messlen\n";
+                if ($isdtls) {
+                    print "  Message fragment length: $msgfraglen\n";
+                    print "  Message fragment offset: $msgfragoffs\n";
+                }
                 $startoffset = $recoffset;
                 $recoffset += $msgheaderlen;
                 $payload = "";
@@ -292,7 +297,7 @@ sub get_messages
                         $recoffset += $messlen;
                         push @message_frag_lens, $messlen;
                         $message = create_message($server, $mt, $msgseq,
-                                                  $msgfrag, $msgfragoffs,
+                                                  $msgfraglen, $msgfragoffs,
                                                   $payload, $startoffset, $isdtls);
                         push @messages, $message;
 
@@ -342,7 +347,7 @@ sub get_messages
 #construct it
 sub create_message
 {
-    my ($server, $mt, $msgseq, $msgfrag, $msgfragoffs, $data, $startoffset, $isdtls) = @_;
+    my ($server, $mt, $msgseq, $msgfraglen, $msgfragoffs, $data, $startoffset, $isdtls) = @_;
     my $message;
 
     if ($mt == MT_CLIENT_HELLO) {
@@ -350,7 +355,7 @@ sub create_message
             $isdtls,
             $server,
             $msgseq,
-            $msgfrag,
+            $msgfraglen,
             $msgfragoffs,
             $data,
             [@message_rec_list],
@@ -363,7 +368,7 @@ sub create_message
             $isdtls,
             $server,
             $msgseq,
-            $msgfrag,
+            $msgfraglen,
             $msgfragoffs,
             $data,
             [@message_rec_list],
@@ -376,7 +381,7 @@ sub create_message
             $isdtls,
             $server,
             $msgseq,
-            $msgfrag,
+            $msgfraglen,
             $msgfragoffs,
             $data,
             [@message_rec_list],
@@ -389,7 +394,7 @@ sub create_message
             $isdtls,
             $server,
             $msgseq,
-            $msgfrag,
+            $msgfraglen,
             $msgfragoffs,
             $data,
             [@message_rec_list],
@@ -402,7 +407,7 @@ sub create_message
             $isdtls,
             $server,
             $msgseq,
-            $msgfrag,
+            $msgfraglen,
             $msgfragoffs,
             $data,
             [@message_rec_list],
@@ -415,7 +420,7 @@ sub create_message
             $isdtls,
             $server,
             $msgseq,
-            $msgfrag,
+            $msgfraglen,
             $msgfragoffs,
             $data,
             [@message_rec_list],
@@ -428,7 +433,7 @@ sub create_message
             $isdtls,
             $server,
             $msgseq,
-            $msgfrag,
+            $msgfraglen,
             $msgfragoffs,
             $data,
             [@message_rec_list],
@@ -441,7 +446,7 @@ sub create_message
             $isdtls,
             $server,
             $msgseq,
-            $msgfrag,
+            $msgfraglen,
             $msgfragoffs,
             $data,
             [@message_rec_list],
@@ -454,7 +459,7 @@ sub create_message
             $message = TLSProxy::NewSessionTicket->new_dtls(
                 $server,
                 $msgseq,
-                $msgfrag,
+                $msgfraglen,
                 $msgfragoffs,
                 $data,
                 [@message_rec_list],
@@ -476,7 +481,7 @@ sub create_message
             $isdtls,
             $server,
             $msgseq,
-            $msgfrag,
+            $msgfraglen,
             $msgfragoffs,
             $data,
             [@message_rec_list],
@@ -491,7 +496,7 @@ sub create_message
             $server,
             $mt,
             $msgseq,
-            $msgfrag,
+            $msgfraglen,
             $msgfragoffs,
             $data,
             [@message_rec_list],
@@ -531,7 +536,7 @@ sub new
         $server,
         $mt,
         $msgseq,
-        $msgfrag,
+        $msgfraglen,
         $msgfragoffs,
         $data,
         $records,
@@ -545,7 +550,7 @@ sub new
         records => $records,
         mt => $mt,
         msgseq => $msgseq,
-        msgfrag => $msgfrag,
+        msgfraglen => $msgfraglen,
         msgfragoffs => $msgfragoffs,
         startoffset => $startoffset,
         message_frag_lens => $message_frag_lens,
@@ -579,14 +584,21 @@ sub repack
     my $lenhi = length($self->data) >> 8;
 
     if ($self->{isdtls}) {
-        my $msgfraghi = $self->msgfrag >> 8;
-        my $msgfraglo = $self->msgfrag & 0xff;
+        my $msgfraglenhi = $self->msgfraglen >> 8;
+        my $msgfraglenlo = $self->msgfraglen & 0xff;
         my $msgfragoffshi = $self->msgfragoffs >> 8;
         my $msgfragoffslo = $self->msgfragoffs & 0xff;
 
+        if (length($self->data) != $self->msgfraglen) {
+            # TLSProxy does not support message fragmentation hence we can just
+            # overwrite the fragment lengths
+            $msgfraglenhi = $lenhi;
+            $msgfraglenlo = $lenlo;
+            print "DTLS Message Fragment Length overwritten with actual message size.\n"
+        }
         $msgdata = pack('CnCnnCnC', $self->mt, $lenhi, $lenlo, $self->msgseq,
-                                    $msgfraghi, $msgfraglo,
-                                    $msgfragoffshi, $msgfragoffslo).$self->data;
+                                    $msgfragoffshi, $msgfragoffslo,
+                                    $msgfraglenhi, $msgfraglenlo).$self->data;
     } else {
         $msgdata = pack('CnC', $self->mt, $lenhi, $lenlo).$self->data;
     }
@@ -708,13 +720,13 @@ sub msgseq
     }
     return $self->{msgseq};
 }
-sub msgfrag
+sub msgfraglen
 {
     my $self = shift;
     if (@_) {
-        $self->{msgfrag} = shift;
+        $self->{msgfraglen} = shift;
     }
-    return $self->{msgfrag};
+    return $self->{msgfraglen};
 }
 sub msgfragoffs
 {
