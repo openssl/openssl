@@ -356,6 +356,11 @@ void ossl_sm4_encrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *ks)
     store_u32_be(B0, out + 12);
 }
 
+void ossl_sm4_encrypt_thunk(const uint8_t *in, uint8_t *out, const void *ks)
+{
+    ossl_sm4_encrypt(in, out, (const SM4_KEY *)ks);
+}
+
 void ossl_sm4_decrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *ks)
 {
     uint32_t B0 = load_u32_be(in, 0);

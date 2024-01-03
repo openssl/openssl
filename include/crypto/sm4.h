@@ -32,6 +32,7 @@ typedef struct SM4_KEY_st {
 int ossl_sm4_set_key(const uint8_t *key, SM4_KEY *ks);
 
 void ossl_sm4_encrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *ks);
+void ossl_sm4_encrypt_thunk(const uint8_t *in, uint8_t *out, const void *ks);
 
 void ossl_sm4_decrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *ks);
 

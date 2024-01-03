@@ -70,7 +70,7 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
 #endif
         {
             ossl_sm4_set_key(key, ks);
-            ctx->block = (block128_f)ossl_sm4_encrypt;
+            ctx->block = ossl_sm4_encrypt_thunk;
         }
     } else {
 #ifdef HWSM4_CAPABLE

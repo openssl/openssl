@@ -130,7 +130,7 @@ static int sm4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     } else
 #endif
     {
-        dat->block = (block128_f) ossl_sm4_encrypt;
+        dat->block = ossl_sm4_encrypt_thunk;
         ossl_sm4_set_key(key, EVP_CIPHER_CTX_get_cipher_data(ctx));
     }
     return 1;
