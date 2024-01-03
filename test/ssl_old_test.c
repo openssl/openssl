@@ -992,6 +992,7 @@ int main(int argc, char *argv[])
         if (strcmp(*argv, "-F") == 0) {
             fprintf(stderr,
                     "not compiled with FIPS support, so exiting without running.\n");
+            ret = EXIT_SUCCESS;
             goto end;
         } else if (strcmp(*argv, "-server_auth") == 0)
             server_auth = 1;
