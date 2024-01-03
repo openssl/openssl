@@ -108,8 +108,6 @@ typedef struct record_layer_st {
     /* number bytes written */
     size_t wpend_tot;
     uint8_t wpend_type;
-    /* number of bytes submitted */
-    size_t wpend_ret;
     const unsigned char *wpend_buf;
 
     /* Count of the number of consecutive warning alerts received */
