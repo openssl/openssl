@@ -569,6 +569,9 @@ int GENERAL_NAME_get0_otherName(const GENERAL_NAME *gen,
 
 char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
                             const ASN1_OCTET_STRING *ia5);
+char *i2s_ASN1_OCTET_STRING_thunk(const X509V3_EXT_METHOD *method,
+                                  void *ext);
+
 ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
                                          X509V3_CTX *ctx, const char *str);
 

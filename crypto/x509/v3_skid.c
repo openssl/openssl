@@ -18,7 +18,7 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
 const X509V3_EXT_METHOD ossl_v3_skey_id = {
     NID_subject_key_identifier, 0, ASN1_ITEM_ref(ASN1_OCTET_STRING),
     0, 0, 0, 0,
-    (X509V3_EXT_I2S)i2s_ASN1_OCTET_STRING,
+    i2s_ASN1_OCTET_STRING_thunk,
     (X509V3_EXT_S2I)s2i_skey_id,
     0, 0, 0, 0,
     NULL
@@ -28,6 +28,12 @@ char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
                             const ASN1_OCTET_STRING *oct)
 {
     return OPENSSL_buf2hexstr(oct->data, oct->length);
+}
+
+char *i2s_ASN1_OCTET_STRING_thunk(const X509V3_EXT_METHOD *method,
+                                  void *ext)
+{
+    return i2s_ASN1_OCTET_STRING((X509V3_EXT_METHOD *)method, (const ASN1_OCTET_STRING *)ext);
 }
 
 ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
