@@ -16,26 +16,27 @@
 #include "crypto/x509.h"
 #include "ext_dat.h"
 
-static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
-                                                 AUTHORITY_KEYID *akeyid,
-                                                 STACK_OF(CONF_VALUE)
-                                                 *extlist);
 static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
                                             X509V3_CTX *ctx,
                                             STACK_OF(CONF_VALUE) *values);
+
+static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID_thunk(const X509V3_EXT_METHOD *meth,
+                                                       void *akeyid,
+                                                       STACK_OF(CONF_VALUE)
+                                                       *extlist);
 
 const X509V3_EXT_METHOD ossl_v3_akey_id = {
     NID_authority_key_identifier,
     X509V3_EXT_MULTILINE, ASN1_ITEM_ref(AUTHORITY_KEYID),
     0, 0, 0, 0,
     0, 0,
-    (X509V3_EXT_I2V) i2v_AUTHORITY_KEYID,
+    i2v_AUTHORITY_KEYID_thunk,
     (X509V3_EXT_V2I)v2i_AUTHORITY_KEYID,
     0, 0,
     NULL
 };
 
-static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
+static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(const X509V3_EXT_METHOD *method,
                                                  AUTHORITY_KEYID *akeyid,
                                                  STACK_OF(CONF_VALUE)
                                                  *extlist)
@@ -82,6 +83,13 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     if (origextlist == NULL)
         sk_CONF_VALUE_pop_free(extlist, X509V3_conf_free);
     return NULL;
+}
+
+static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID_thunk(const X509V3_EXT_METHOD *meth,
+                                                       void *ext,
+                                                       STACK_OF(CONF_VALUE) *extlist)
+{
+    return i2v_AUTHORITY_KEYID(meth, (AUTHORITY_KEYID *)ext, extlist);
 }
 
 /*-
