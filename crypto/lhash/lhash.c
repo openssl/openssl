@@ -44,53 +44,42 @@ static int expand(OPENSSL_LHASH *lh);
 static void contract(OPENSSL_LHASH *lh);
 static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh, const void *data, unsigned long *rhash);
 
-struct lhash_extended_st {
-    OPENSSL_LHASH lh; /* must be first */
-    OPENSSL_LH_HASHFUNCTHUNK hashw;
-    OPENSSL_LH_COMPFUNCTHUNK compw; 
-    OPENSSL_LH_DOALL_FUNC_THUNK daw;
-    OPENSSL_LH_DOALL_FUNCARG_THUNK daaw;
-};
-
 OPENSSL_LHASH *OPENSSL_LH_set_thunks(OPENSSL_LHASH *lh,
                                      OPENSSL_LH_HASHFUNCTHUNK hw,
                                      OPENSSL_LH_COMPFUNCTHUNK cw,
                                      OPENSSL_LH_DOALL_FUNC_THUNK daw,
                                      OPENSSL_LH_DOALL_FUNCARG_THUNK daaw)
 {
-    struct lhash_extended_st *elh = (struct lhash_extended_st *)lh;
 
-    if (elh == NULL)
+    if (lh == NULL)
         return NULL;
-    elh->compw = cw;
-    elh->hashw = hw;
-    elh->daw = daw;
-    elh->daaw = daaw;
+    lh->compw = cw;
+    lh->hashw = hw;
+    lh->daw = daw;
+    lh->daaw = daaw;
     return lh;
 }
 
 OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
 {
-    struct lhash_extended_st *new;
-    OPENSSL_LHASH *ret;
+    struct lhash_st *new;
 
     if ((new = OPENSSL_zalloc(sizeof(*new))) == NULL)
         return NULL;
-    ret = (OPENSSL_LHASH *)new;
-    if ((ret->b = OPENSSL_zalloc(sizeof(*ret->b) * MIN_NODES)) == NULL)
+    if ((new->b = OPENSSL_zalloc(sizeof(*new->b) * MIN_NODES)) == NULL)
         goto err;
-    ret->comp = ((c == NULL) ? (OPENSSL_LH_COMPFUNC)strcmp : c);
-    ret->hash = ((h == NULL) ? (OPENSSL_LH_HASHFUNC)OPENSSL_LH_strhash : h);
-    ret->num_nodes = MIN_NODES / 2;
-    ret->num_alloc_nodes = MIN_NODES;
-    ret->pmax = MIN_NODES / 2;
-    ret->up_load = UP_LOAD;
-    ret->down_load = DOWN_LOAD;
-    return ret;
+    new->comp = ((c == NULL) ? (OPENSSL_LH_COMPFUNC)strcmp : c);
+    new->hash = ((h == NULL) ? (OPENSSL_LH_HASHFUNC)OPENSSL_LH_strhash : h);
+    new->num_nodes = MIN_NODES / 2;
+    new->num_alloc_nodes = MIN_NODES;
+    new->pmax = MIN_NODES / 2;
+    new->up_load = UP_LOAD;
+    new->down_load = DOWN_LOAD;
+    return new;
 
 err:
-    OPENSSL_free(ret->b);
-    OPENSSL_free(ret);
+    OPENSSL_free(new->b);
+    OPENSSL_free(new);
     return NULL;
 }
 
@@ -226,19 +215,21 @@ static void doall_util_fn(OPENSSL_LHASH *lh, int use_arg,
 
 void OPENSSL_LH_doall(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNC func)
 {
-    struct lhash_extended_st *elh = (struct lhash_extended_st *)lh;
+    if (lh == NULL)
+        return;
 
-    doall_util_fn(lh, 0, elh->daw, func, (OPENSSL_LH_DOALL_FUNCARG)0,
+    doall_util_fn(lh, 0, lh->daw, func, (OPENSSL_LH_DOALL_FUNCARG)0,
                   (OPENSSL_LH_DOALL_FUNCARG_THUNK)0, NULL);
 }
 
 void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh,
                           OPENSSL_LH_DOALL_FUNCARG func, void *arg)
 {
-    struct lhash_extended_st *elh = (struct lhash_extended_st *)lh;
+    if (lh == NULL)
+        return;
 
     doall_util_fn(lh, 1, (OPENSSL_LH_DOALL_FUNC_THUNK)0,
-                          (OPENSSL_LH_DOALL_FUNC)0, func, elh->daaw, arg);
+                          (OPENSSL_LH_DOALL_FUNC)0, func, lh->daaw, arg);
 }
 
 void OPENSSL_LH_doall_arg_thunk(OPENSSL_LHASH *lh,
@@ -332,10 +323,9 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
 {
     OPENSSL_LH_NODE **ret, *n1;
     unsigned long hash, nn;
-    struct lhash_extended_st *elh = (struct lhash_extended_st *)lh;
 
-    if (elh->hashw)
-        hash = elh->hashw(data, lh->hash);
+    if (lh->hashw)
+        hash = lh->hashw(data, lh->hash);
     else
         hash = lh->hash(data);
 
@@ -352,8 +342,8 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
             continue;
         }
 
-        if (elh->compw) {
-            if (elh->compw(n1->data, data, lh->comp) == 0)
+        if (lh->compw) {
+            if (lh->compw(n1->data, data, lh->comp) == 0)
                 break;
         } else {
             if (lh->comp(n1->data, data) == 0)
