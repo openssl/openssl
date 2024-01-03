@@ -2495,18 +2495,19 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
 {
     unsigned char sigalgstr[2];
     int secbits;
+    int dsa_version_limit;
 
     if (lu == NULL || !lu->enabled)
         return 0;
-    /* DSA is not allowed in TLS 1.3 */
+    /* DSA is not allowed in (D)TLSv1.3 */
     if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)) && lu->sig == EVP_PKEY_DSA)
         return 0;
     /*
-     * At some point we should fully axe DSA/etc. in ClientHello as per TLS 1.3
+     * At some point we should fully axe DSA/etc. in ClientHello as per (D)TLSv1.3
      * spec
      */
-    if (!s->server && !SSL_CONNECTION_IS_DTLS(s)
-        && s->s3.tmp.min_ver >= TLS1_3_VERSION
+    dsa_version_limit = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+    if (!s->server && ssl_version_cmp(s, s->s3.tmp.min_ver, dsa_version_limit) >= 0
         && (lu->sig == EVP_PKEY_DSA || lu->hash_idx == SSL_MD_SHA1_IDX
             || lu->hash_idx == SSL_MD_MD5_IDX
             || lu->hash_idx == SSL_MD_SHA224_IDX))
@@ -2519,22 +2520,25 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
     if (lu->sig == NID_id_GostR3410_2012_256
             || lu->sig == NID_id_GostR3410_2012_512
             || lu->sig == NID_id_GostR3410_2001) {
-        /* We never allow GOST sig algs on the server with TLSv1.3 */
+        int any_version = SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION : TLS_ANY_VERSION;
+        int gost_version_limit = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
+        /* We never allow GOST sig algs on the server with (D)TLSv1.3 */
         if (s->server && (SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)))
             return 0;
         if (!s->server
-                && SSL_CONNECTION_GET_SSL(s)->method->version == TLS_ANY_VERSION
-                && s->s3.tmp.max_ver >= TLS1_3_VERSION) {
+                && SSL_CONNECTION_GET_SSL(s)->method->version == any_version
+                && ssl_version_cmp(s, s->s3.tmp.max_ver, gost_version_limit) >= 0) {
             int i, num;
             STACK_OF(SSL_CIPHER) *sk;
 
             /*
-             * We're a client that could negotiate TLSv1.3. We only allow GOST
-             * sig algs if we could negotiate TLSv1.2 or below and we have GOST
+             * We're a client that could negotiate (D)TLSv1.3. We only allow GOST
+             * sig algs if we could negotiate (D)TLSv1.2 or below and we have GOST
              * ciphersuites enabled.
              */
 
-            if (s->s3.tmp.min_ver >= TLS1_3_VERSION)
+            if (ssl_version_cmp(s, s->s3.tmp.min_ver, gost_version_limit) >= 0)
                 return 0;
 
             sk = SSL_get_ciphers(SSL_CONNECTION_GET_SSL(s));
