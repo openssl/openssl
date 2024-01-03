@@ -1945,6 +1945,12 @@ typedef struct sigalg_lookup_st {
     int maxdtls;
 } SIGALG_LOOKUP;
 
+typedef enum downgrade_en {
+    DOWNGRADE_NONE,
+    DOWNGRADE_TO_1_2,
+    DOWNGRADE_TO_1_1
+} DOWNGRADE;
+
 /* DTLS structures */
 
 #ifndef OPENSSL_NO_SCTP
@@ -2023,7 +2029,9 @@ typedef struct dtls1_state_st {
     pqueue *sent_messages;
     /* Flag to indicate current HelloVerifyRequest status */
     enum { SSL_HVR_NONE = 0,
-        SSL_HVR_RECEIVED } hello_verify_request;
+        SSL_HVR_RECEIVED,
+        SSL_HVR_SENT } hello_verify_request;
+    DOWNGRADE downgrade_after_hvr; /* Only used by a stateful server */
     size_t link_mtu; /* max on-the-wire DTLS packet size */
     size_t mtu; /* max DTLS packet size */
     dtls_msg_info w_msg;
@@ -2255,12 +2263,6 @@ typedef struct ssl3_enc_method {
  * apply to others in future.
  */
 #define SSL_ENC_FLAG_TLS1_2_CIPHERS 0x10
-
-typedef enum downgrade_en {
-    DOWNGRADE_NONE,
-    DOWNGRADE_TO_1_2,
-    DOWNGRADE_TO_1_1
-} DOWNGRADE;
 
 /*
  * Dummy status type for the status_type extension. Indicates no status type

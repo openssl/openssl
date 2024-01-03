@@ -2126,23 +2126,27 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
 
 static void check_for_downgrade(SSL_CONNECTION *s, int vers, DOWNGRADE *dgrd)
 {
-    if (vers == TLS1_2_VERSION
-        && ssl_version_supported(s, TLS1_3_VERSION, NULL)) {
+    int version12 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_2_VERSION : TLS1_2_VERSION;
+    int version13 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
+    if (vers == version12 && ssl_version_supported(s, version13, NULL)) {
         *dgrd = DOWNGRADE_TO_1_2;
-    } else if (!SSL_CONNECTION_IS_DTLS(s)
-        && vers < TLS1_2_VERSION
+    } else if (ssl_version_cmp(s, vers, version12) < 0
         /*
-         * We need to ensure that a server that disables TLSv1.2
-         * (creating a hole between TLSv1.3 and TLSv1.1) can still
-         * complete handshakes with clients that support TLSv1.2 and
-         * below. Therefore we do not enable the sentinel if TLSv1.3 is
-         * enabled and TLSv1.2 is not.
+         * We need to ensure that a server that disables (D)TLSv1.2
+         * (creating a hole between (D)TLSv1.3 and (D)TLSv1.1) can still
+         * complete handshakes with clients that support (D)TLSv1.2 and
+         * below. Therefore we do not enable the sentinel if (D)TLSv1.3 is
+         * enabled and (D)TLSv1.2 is not.
          */
-        && ssl_version_supported(s, TLS1_2_VERSION, NULL)) {
+        && ssl_version_supported(s, version12, NULL)) {
         *dgrd = DOWNGRADE_TO_1_1;
     } else {
         *dgrd = DOWNGRADE_NONE;
     }
+
+    if (SSL_CONNECTION_IS_DTLS(s))
+        s->d1->downgrade_after_hvr = *dgrd;
 }
 
 /*
@@ -2188,7 +2192,20 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
         if (!SSL_CONNECTION_IS_VERSION13(s)) {
             if (ssl_version_cmp(s, client_version, s->version) < 0)
                 return SSL_R_WRONG_SSL_VERSION;
-            *dgrd = DOWNGRADE_NONE;
+
+            /*
+             * The downgrade sentinel is selected when parsing the first
+             * ClientHello. If this server has sent a HelloVerifyRequest, the
+             * sentinel is recovered while parsing the second ClientHello in
+             * order to apply it to the ServerHello random value.
+             */
+            if (SSL_CONNECTION_IS_DTLS(s)
+                && s->d1->hello_verify_request != SSL_HVR_NONE) {
+                *dgrd = s->d1->downgrade_after_hvr;
+            } else {
+                *dgrd = DOWNGRADE_NONE;
+            }
+
             /*
              * If this SSL handle is not from a version flexible method we don't
              * (and never did) check min/max FIPS or Suite B constraints.  Hope
@@ -2394,8 +2411,7 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
         real_max = ver_max;
 
     /* Check for downgrades */
-    /* TODO(DTLSv1.3): Update this code for DTLSv1.3 */
-    if (!SSL_CONNECTION_IS_DTLS(s) && real_max > s->version) {
+    if (ssl_version_cmp(s, real_max, s->version) > 0) {
         /* Signal applies to all versions */
         if (memcmp(tls11downgrade,
                 s->s3.server_random + SSL3_RANDOM_SIZE
@@ -2407,8 +2423,8 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
                 SSL_R_INAPPROPRIATE_FALLBACK);
             return 0;
         }
-        /* Only when accepting TLS1.3 */
-        if (real_max == TLS1_3_VERSION
+        /* Only when accepting (D)TLS1.3 */
+        if (real_max == version1_3
             && memcmp(tls12downgrade,
                    s->s3.server_random + SSL3_RANDOM_SIZE
                        - sizeof(tls12downgrade),
