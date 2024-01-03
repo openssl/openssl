@@ -4524,14 +4524,14 @@ void ssl_update_cache(SSL_CONNECTION *s, int mode)
                         && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0)
                     || s->session_ctx->remove_session_cb != NULL
                     || (s->options & SSL_OP_NO_TICKET) != 0))
-            SSL_CTX_add_session(s->session_ctx, s->session);
+            int ret = SSL_CTX_add_session(s->session_ctx, s->session);
 
         /*
          * Add the session to the external cache. We do this even in server side
          * TLSv1.3 without early data because some applications just want to
          * know about the creation of a session and aren't doing a full cache.
          */
-        if (s->session_ctx->new_session_cb != NULL) {
+        if (s->session_ctx->new_session_cb != NULL && ret) {
             SSL_SESSION_up_ref(s->session);
             if (!s->session_ctx->new_session_cb(SSL_CONNECTION_GET_SSL(s),
                                                 s->session))
