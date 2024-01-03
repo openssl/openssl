@@ -89,6 +89,7 @@ static int kdf_pbkdf1_do_derive(const unsigned char *pass, size_t passlen,
     memcpy(out, md_tmp, n);
     ret = 1;
 err:
+    OPENSSL_cleanse(md_tmp, EVP_MAX_MD_SIZE);
     EVP_MD_CTX_free(ctx);
     return ret;
 }
