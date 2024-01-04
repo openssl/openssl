@@ -160,10 +160,6 @@ int TXT_DB_create_index(TXT_DB *db, int field, int (*qual) (OPENSSL_STRING *),
         db->error = DB_ERROR_MALLOC;
         return 0;
     }
-    OPENSSL_LH_set_thunks((OPENSSL_LHASH *)idx, lh_OPENSSL_STRING_hash_thunk,
-                           lh_OPENSSL_STRING_comp_thunk,
-                           lh_OPENSSL_STRING_doall_thunk,
-                           lh_OPENSSL_STRING_doall_arg_thunk);
     n = sk_OPENSSL_PSTRING_num(db->data);
     for (i = 0; i < n; i++) {
         r = sk_OPENSSL_PSTRING_value(db->data, i);
