@@ -37,13 +37,14 @@ const OPTIONS *test_get_options(void)
  */
 static int test_asn1_stable_parse(void)
 {
-    int testret = 1;
+    int testret = 0;
     unsigned long errcode;
     OSSL_LIB_CTX *newctx = OSSL_LIB_CTX_new();
 
     if (!TEST_ptr(newctx))
         goto out;
 
+    fprintf(stderr, "Loading config %s\n", config_file);
     if (!TEST_int_eq(OSSL_LIB_CTX_load_config(newctx, config_file), 0))
         goto err;
 
@@ -55,7 +56,7 @@ static int test_asn1_stable_parse(void)
 
     ERR_clear_error();
 
-    testret = 0;
+    testret = 1;
 err:
     OSSL_LIB_CTX_free(newctx);
 out:

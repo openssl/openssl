@@ -101,7 +101,8 @@ static int do_tcreate(const char *value, const char *name)
         if (cnf)
             ERR_raise_data(ERR_LIB_ASN1, ASN1_R_INVALID_STRING_TABLE_VALUE,
                            "field=%s, value=%s", cnf->name,
-                                                 cnf->value ? cnf->value : value);
+                                                 cnf->value != NULL ? cnf->value
+                                                 : value);
         else
             ERR_raise_data(ERR_LIB_ASN1, ASN1_R_INVALID_STRING_TABLE_VALUE,
                            "name=%s, value=%s", name, value);

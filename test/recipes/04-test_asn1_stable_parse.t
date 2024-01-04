@@ -15,8 +15,7 @@ use Cwd qw(abs_path);
 BEGIN {
 setup("test_asn1_stable_parse");
 }
-
-my $config_path = abs_path(srctop_file("test", "asn_stable_parse.cnf"));
+my $config_path = srctop_file("test", "recipes", "04-test_asn1_stable_parse_data", "asn1_stable_parse.cnf");
 
 plan tests => 1;
 
