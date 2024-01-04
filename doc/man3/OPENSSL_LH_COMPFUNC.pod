@@ -241,6 +241,9 @@ B<lh_I<TYPE>> functions are implemented as type checked wrappers around the
 B<OPENSSL_LH> functions. Most applications should not call the B<OPENSSL_LH>
 functions directly.
 
+OPENSSL_LH_set_thunks() and OPENSSL_LH_doall_arg_thunk(), while public by
+necessity, are actualy internal functions and should not be used.
+
 =head1 RETURN VALUES
 
 B<lh_I<TYPE>_new>() and OPENSSL_LH_new() return NULL on error, otherwise a

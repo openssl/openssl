@@ -62,24 +62,24 @@ OPENSSL_LHASH *OPENSSL_LH_set_thunks(OPENSSL_LHASH *lh,
 
 OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
 {
-    struct lhash_st *new;
+    OPENSSL_LHASH *ret;
 
-    if ((new = OPENSSL_zalloc(sizeof(*new))) == NULL)
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return NULL;
-    if ((new->b = OPENSSL_zalloc(sizeof(*new->b) * MIN_NODES)) == NULL)
+    if ((ret->b = OPENSSL_zalloc(sizeof(*ret->b) * MIN_NODES)) == NULL)
         goto err;
-    new->comp = ((c == NULL) ? (OPENSSL_LH_COMPFUNC)strcmp : c);
-    new->hash = ((h == NULL) ? (OPENSSL_LH_HASHFUNC)OPENSSL_LH_strhash : h);
-    new->num_nodes = MIN_NODES / 2;
-    new->num_alloc_nodes = MIN_NODES;
-    new->pmax = MIN_NODES / 2;
-    new->up_load = UP_LOAD;
-    new->down_load = DOWN_LOAD;
-    return new;
+    ret->comp = ((c == NULL) ? (OPENSSL_LH_COMPFUNC)strcmp : c);
+    ret->hash = ((h == NULL) ? (OPENSSL_LH_HASHFUNC)OPENSSL_LH_strhash : h);
+    ret->num_nodes = MIN_NODES / 2;
+    ret->num_alloc_nodes = MIN_NODES;
+    ret->pmax = MIN_NODES / 2;
+    ret->up_load = UP_LOAD;
+    ret->down_load = DOWN_LOAD;
+    return ret;
 
 err:
-    OPENSSL_free(new->b);
-    OPENSSL_free(new);
+    OPENSSL_free(ret->b);
+    OPENSSL_free(ret);
     return NULL;
 }
 
@@ -324,7 +324,7 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
     OPENSSL_LH_NODE **ret, *n1;
     unsigned long hash, nn;
 
-    if (lh->hashw)
+    if (lh->hashw != NULL)
         hash = lh->hashw(data, lh->hash);
     else
         hash = lh->hash(data);
@@ -342,7 +342,7 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
             continue;
         }
 
-        if (lh->compw) {
+        if (lh->compw != NULL) {
             if (lh->compw(n1->data, data, lh->comp) == 0)
                 break;
         } else {
