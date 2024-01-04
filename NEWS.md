@@ -22,7 +22,9 @@ OpenSSL 3.2
 
 ### Major changes between OpenSSL 3.2.0 and OpenSSL 3.2.1 [under development]
 
-  * none
+  * Fix POLY1305 MAC implementation corrupting vector registers on PowerPC
+    CPUs which support PowerISA 2.07
+    ([CVE-2023-6129])
 
 ### Major changes between OpenSSL 3.1 and OpenSSL 3.2.0 [23 Nov 2023]
 
@@ -1571,6 +1573,7 @@ OpenSSL 0.9.x
 
 <!-- Links -->
 
+[CVE-2023-6129]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6129
 [CVE-2023-5678]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5678
 [CVE-2023-5363]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5363
 [CVE-2023-4807]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-4807
