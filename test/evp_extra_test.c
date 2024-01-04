@@ -493,6 +493,10 @@ static const unsigned char cfbPlaintext[] = {
     0x6B, 0xC1, 0xBE, 0xE2, 0x2E, 0x40, 0x9F, 0x96, 0xE9, 0x3D, 0x7E, 0x11,
     0x73, 0x93, 0x17, 0x2A
 };
+static const unsigned char cfbPlaintext_partial[] = {
+    0x6B, 0xC1, 0xBE, 0xE2, 0x2E, 0x40, 0x9F, 0x96, 0xE9, 0x3D, 0x7E, 0x11,
+    0x73, 0x93, 0x17, 0x2A, 0x6B, 0xC1, 0xBE, 0xE2, 0x2E, 0x40, 0x9F, 0x96,
+};
 
 static const unsigned char gcmDefaultPlaintext[16] = { 0 };
 
@@ -507,6 +511,16 @@ static const unsigned char gcmResetPlaintext[] = {
 static const unsigned char cfbCiphertext[] = {
     0x3B, 0x3F, 0xD9, 0x2E, 0xB7, 0x2D, 0xAD, 0x20, 0x33, 0x34, 0x49, 0xF8,
     0xE8, 0x3C, 0xFB, 0x4A
+};
+
+static const unsigned char cfbCiphertext_partial[] = {
+    0x3B, 0x3F, 0xD9, 0x2E, 0xB7, 0x2D, 0xAD, 0x20, 0x33, 0x34, 0x49, 0xF8,
+    0xE8, 0x3C, 0xFB, 0x4A, 0x0D, 0x4A, 0x71, 0x82, 0x90, 0xF0, 0x9A, 0x35
+};
+
+static const unsigned char ofbCiphertext_partial[] = {
+    0x3B, 0x3F, 0xD9, 0x2E, 0xB7, 0x2D, 0xAD, 0x20, 0x33, 0x34, 0x49, 0xF8,
+    0xE8, 0x3C, 0xFB, 0x4A, 0xB2, 0x65, 0x64, 0x38, 0x26, 0xD2, 0xBC, 0x09
 };
 
 static const unsigned char gcmDefaultCiphertext[] = {
@@ -3878,6 +3892,30 @@ static const EVP_INIT_TEST_st evp_init_tests[] = {
     }
 };
 
+/* use same key, iv and plaintext for cfb and ofb */
+static const EVP_INIT_TEST_st evp_reinit_tests[] = {
+    {
+        "aes-128-cfb", kCFBDefaultKey, iCFBIV, cfbPlaintext_partial,
+        cfbCiphertext_partial, NULL, 0, sizeof(cfbPlaintext_partial),
+        sizeof(cfbCiphertext_partial), 0, 0, 1, 0
+    },
+    {
+        "aes-128-cfb", kCFBDefaultKey, iCFBIV, cfbCiphertext_partial,
+        cfbPlaintext_partial, NULL, 0, sizeof(cfbCiphertext_partial),
+        sizeof(cfbPlaintext_partial), 0, 0, 0, 0
+    },
+    {
+        "aes-128-ofb", kCFBDefaultKey, iCFBIV, cfbPlaintext_partial,
+        ofbCiphertext_partial, NULL, 0, sizeof(cfbPlaintext_partial),
+        sizeof(ofbCiphertext_partial), 0, 0, 1, 0
+    },
+    {
+        "aes-128-ofb", kCFBDefaultKey, iCFBIV, ofbCiphertext_partial,
+        cfbPlaintext_partial, NULL, 0, sizeof(ofbCiphertext_partial),
+        sizeof(cfbPlaintext_partial), 0, 0, 0, 0
+    },
+};
+
 static int evp_init_seq_set_iv(EVP_CIPHER_CTX *ctx, const EVP_INIT_TEST_st *t)
 {
     int res = 0;
@@ -3977,6 +4015,44 @@ static int test_evp_init_seq(int idx)
  err:
     if (errmsg != NULL)
         TEST_info("evp_init_test %d: %s", idx, errmsg);
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(type);
+    return testresult;
+}
+
+/*
+ * Test re-initialization of cipher context without changing key or iv.
+ * The result of both iteration should be the same.
+ */
+static int test_evp_reinit_seq(int idx)
+{
+    int outlen1, outlen2, outlen_final;
+    int testresult = 0;
+    unsigned char outbuf1[1024];
+    unsigned char outbuf2[1024];
+    const EVP_INIT_TEST_st *t = &evp_reinit_tests[idx];
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *type = NULL;
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+            || !TEST_ptr(type = EVP_CIPHER_fetch(testctx, t->cipher, testpropq))
+            /* setup cipher context */
+            || !TEST_true(EVP_CipherInit_ex2(ctx, type, t->key, t->iv, t->initenc, NULL))
+            /* first iteration */
+            || !TEST_true(EVP_CipherUpdate(ctx, outbuf1, &outlen1, t->input, t->inlen))
+            || !TEST_true(EVP_CipherFinal_ex(ctx, outbuf1, &outlen_final))
+            /* check test results iteration 1 */
+            || !TEST_mem_eq(t->expected, t->expectedlen, outbuf1, outlen1 + outlen_final)
+            /* now re-init the context (same cipher, key and iv) */
+            || !TEST_true(EVP_CipherInit_ex2(ctx, NULL, NULL, NULL, -1, NULL))
+            /* second iteration */
+            || !TEST_true(EVP_CipherUpdate(ctx, outbuf2, &outlen2, t->input, t->inlen))
+            || !TEST_true(EVP_CipherFinal_ex(ctx, outbuf2, &outlen_final))
+            /* check test results iteration 2 */
+            || !TEST_mem_eq(t->expected, t->expectedlen, outbuf2, outlen2 + outlen_final))
+        goto err;
+    testresult = 1;
+ err:
     EVP_CIPHER_CTX_free(ctx);
     EVP_CIPHER_free(type);
     return testresult;
@@ -5558,6 +5634,7 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_evp_init_seq, OSSL_NELEM(evp_init_tests));
     ADD_ALL_TESTS(test_evp_reset, OSSL_NELEM(evp_reset_tests));
+    ADD_ALL_TESTS(test_evp_reinit_seq, OSSL_NELEM(evp_reinit_tests));
     ADD_ALL_TESTS(test_gcm_reinit, OSSL_NELEM(gcm_reinit_tests));
     ADD_ALL_TESTS(test_evp_updated_iv, OSSL_NELEM(evp_updated_iv_tests));
     ADD_ALL_TESTS(test_ivlen_change, OSSL_NELEM(ivlen_change_ciphers));
