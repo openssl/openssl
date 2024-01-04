@@ -20,6 +20,9 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 3.0.12 and OpenSSL 3.0.13 [under development]
 
+  * Fix POLY1305 MAC implementation corrupting vector registers on PowerPC
+    CPUs which support PowerISA 2.07
+    ([CVE-2023-6129])
   * Fix excessive time spent in DH check / generation with large Q parameter
     value ([CVE-2023-5678])
 
@@ -1463,6 +1466,7 @@ OpenSSL 0.9.x
 
 <!-- Links -->
 
+[CVE-2023-6129]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6129
 [CVE-2023-5678]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5678
 [CVE-2023-5363]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5363
 [CVE-2023-4807]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-4807
