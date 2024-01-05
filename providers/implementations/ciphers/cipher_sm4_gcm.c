@@ -29,6 +29,21 @@ static void *sm4_gcm_newctx(void *provctx, size_t keybits)
     return ctx;
 }
 
+static void *sm4_gcm_dupctx(void *provctx)
+{
+    PROV_SM4_GCM_CTX *ctx = provctx;
+    PROV_SM4_GCM_CTX *dctx = NULL;
+
+    if (ctx == NULL)
+        return NULL;
+
+    dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (dctx != NULL && dctx->base.gcm.key != NULL)
+        dctx->base.gcm.key = &dctx->ks.ks;
+
+    return dctx;
+}
+
 static void sm4_gcm_freectx(void *vctx)
 {
     PROV_SM4_GCM_CTX *ctx = (PROV_SM4_GCM_CTX *)vctx;
