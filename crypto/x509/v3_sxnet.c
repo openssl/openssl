@@ -123,7 +123,11 @@ int SXNET_add_id_asc(SXNET **psx, const char *zone, const char *user, int userle
         ERR_raise(ERR_LIB_X509V3, X509V3_R_ERROR_CONVERTING_ZONE);
         return 0;
     }
-    return SXNET_add_id_INTEGER(psx, izone, user, userlen);
+    if (!SXNET_add_id_INTEGER(psx, izone, user, userlen)) {
+        ASN1_INTEGER_free(izone);
+        return 0;
+    }
+    return 1;
 }
 
 /* Add an id given the zone as an unsigned long */
@@ -139,8 +143,11 @@ int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
         ASN1_INTEGER_free(izone);
         return 0;
     }
-    return SXNET_add_id_INTEGER(psx, izone, user, userlen);
-
+    if (!SXNET_add_id_INTEGER(psx, izone, user, userlen)) {
+        ASN1_INTEGER_free(izone);
+        return 0;
+    }
+    return 1;
 }
 
 /*
