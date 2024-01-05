@@ -679,3 +679,14 @@ void dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
         s->rlayer.d->w_epoch++;
     }
 }
+
+uint16_t dtls1_get_epoch(SSL_CONNECTION *s, int rw) {
+    uint16_t epoch;
+
+    if (rw & SSL3_CC_READ)
+        epoch = s->rlayer.d->r_epoch;
+    else
+        epoch = s->rlayer.d->w_epoch;
+
+    return epoch;
+}

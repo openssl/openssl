@@ -15,7 +15,3 @@
  *****************************************************************************/
 
 #define MAX_WARN_ALERT_COUNT    5
-
-/* Functions/macros provided by the RECORD_LAYER component */
-
-#define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
