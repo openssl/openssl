@@ -994,9 +994,6 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             /* SSLfatal() already called */
             return WORK_ERROR;
         }
-
-        if (SSL_CONNECTION_IS_DTLS(s))
-            dtls1_increment_epoch(s, SSL3_CC_WRITE);
         break;
 
     case TLS_ST_SW_SRVR_DONE:
