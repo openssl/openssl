@@ -808,15 +808,7 @@ MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL_CONNECTION *s,
         return MSG_PROCESS_ERROR;
     }
 
-    /*
-     * Increment epoch before changing cipher state because the cipher
-     * state will create a new record layer that reads the updated epoch
-     */
-    if (SSL_CONNECTION_IS_DTLS(s))
-        dtls1_increment_epoch(s, SSL3_CC_READ);
-
     s->s3.change_cipher_spec = 1;
-
     if (!ssl3_do_change_cipher_spec(s)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return MSG_PROCESS_ERROR;

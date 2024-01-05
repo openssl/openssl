@@ -865,13 +865,6 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             return WORK_ERROR;
         }
 
-        /*
-         * Increment epoch before changing cipher state because the cipher
-         * state will create a new record layer that reads the updated epoch
-         */
-        if (SSL_CONNECTION_IS_DTLS(s))
-            dtls1_increment_epoch(s, SSL3_CC_WRITE);
-
         if (!ssl->method->ssl3_enc->change_cipher_state(s,
                                           SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
             /* SSLfatal() already called */
