@@ -117,13 +117,19 @@ static SXNET *sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 
 int SXNET_add_id_asc(SXNET **psx, const char *zone, const char *user, int userlen)
 {
+    int rc;
     ASN1_INTEGER *izone;
 
     if ((izone = s2i_ASN1_INTEGER(NULL, zone)) == NULL) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_ERROR_CONVERTING_ZONE);
         return 0;
     }
-    return SXNET_add_id_INTEGER(psx, izone, user, userlen);
+
+    rc = SXNET_add_id_INTEGER(psx, izone, user, userlen);
+    if (rc == 0)
+        ASN1_INTEGER_free(izone);
+
+    return rc;
 }
 
 /* Add an id given the zone as an unsigned long */
