@@ -32,7 +32,7 @@ export LD_LIBRARY_PATH="$O_LIB:$LD_LIBRARY_PATH"
 export OPENSSL_ROOT_DIR="$O_LIB"
 
 # Check/Set openssl version
-OPENSSL_VERSION=`openssl version | cut -f 2 -d ' '`
+OPENSSL_VERSION=$(${O_EXE}/openssl version | cut -f 2 -d ' ')
 
 CLI="${O_EXE}/openssl"
 SERV="${O_EXE}/openssl"
