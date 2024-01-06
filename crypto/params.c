@@ -198,7 +198,7 @@ static int unsigned_from_unsigned(void *dest, size_t dest_len,
 static int general_get_int(const OSSL_PARAM *p, void *val, size_t val_size)
 {
     if (p->data == NULL) {
-        err_not_integer;
+        err_null_argument;
         return 0;
     }
     if (p->data_type == OSSL_PARAM_INTEGER)
@@ -232,7 +232,7 @@ static int general_get_uint(const OSSL_PARAM *p, void *val, size_t val_size)
 {
 
     if (p->data == NULL) {
-        err_not_integer;
+        err_null_argument;
         return 0;
     }
     if (p->data_type == OSSL_PARAM_INTEGER)
@@ -395,7 +395,7 @@ int OSSL_PARAM_get_int32(const OSSL_PARAM *p, int32_t *val)
     }
 
     if (p->data == NULL) {
-        err_not_integer;
+        err_null_argument;
         return 0;
     }
 
@@ -549,7 +549,7 @@ int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val)
     }
 
     if (p->data == NULL) {
-        err_not_integer;
+        err_null_argument;
         return 0;
     }
 
@@ -705,7 +705,7 @@ int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
     }
 
     if (p->data == NULL) {
-        err_not_integer;
+        err_null_argument;
         return 0;
     }
 
@@ -854,7 +854,7 @@ int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
     }
 
     if (p->data == NULL) {
-        err_not_integer;
+        err_null_argument;
         return 0;
     }
 
