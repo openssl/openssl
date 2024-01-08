@@ -244,6 +244,15 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
 {
 }
 
+uint16_t dtls1_get_epoch(SSL_CONNECTION *s, int rw)
+{
+    return 0;
+}
+
+void dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
+{
+}
+
 /* End of mocked out code */
 
 static int test_secret(SSL_CONNECTION *s, unsigned char *prk,
