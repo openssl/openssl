@@ -68,8 +68,14 @@ int tls_engine_load_ssl_client_cert(SSL_CONNECTION *s, X509 **px509,
                                     EVP_PKEY **ppkey)
 {
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    ENGINE *engine = NULL;
 
-    return ENGINE_load_ssl_client_cert(SSL_CONNECTION_GET_CTX(s)->cnf->client_cert_engine,
+    if (CRYPTO_THREAD_read_lock(SSL_CONNECTION_GET_CTX(s)->cnf->cnf_lock)) {
+        engine = SSL_CONNECTION_GET_CTX(s)->cnf->client_cert_engine;
+        CRYPTO_THREAD_unlock(SSL_CONNECTION_GET_CTX(s)->cnf->cnf_lock);
+    }
+
+    return ENGINE_load_ssl_client_cert(engine,
                                        ssl,
                                        SSL_get_client_CA_list(ssl),
                                        px509, ppkey, NULL, NULL, NULL);
@@ -88,7 +94,10 @@ int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e)
         ENGINE_finish(e);
         return 0;
     }
-    ctx->cnf->client_cert_engine = e;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->client_cert_engine = e;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
     return 1;
 }
 #endif

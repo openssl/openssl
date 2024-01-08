@@ -1381,9 +1381,14 @@ CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
 {
     unsigned int cookie_leni;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    APP_GEN_COOKIE_CB gen_cookie_cb = NULL;
 
-    if (sctx->cnf->app_gen_cookie_cb == NULL
-        || sctx->cnf->app_gen_cookie_cb(SSL_CONNECTION_GET_SSL(s), s->d1->cookie,
+    if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+        gen_cookie_cb = sctx->cnf->app_gen_cookie_cb;
+        CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+    }
+    if (gen_cookie_cb == NULL
+        || gen_cookie_cb(SSL_CONNECTION_GET_SSL(s), s->d1->cookie,
                                    &cookie_leni) == 0
         || cookie_leni > DTLS1_COOKIE_LENGTH) {
         SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
@@ -1700,19 +1705,25 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 
     /* Finished parsing the ClientHello, now we can start processing it */
     /* Give the ClientHello callback a crack at things */
-    if (sctx->cnf->client_hello_cb != NULL) {
-        /* A failure in the ClientHello callback terminates the connection. */
-        switch (sctx->cnf->client_hello_cb(ssl, &al, sctx->cnf->client_hello_cb_arg)) {
-        case SSL_CLIENT_HELLO_SUCCESS:
-            break;
-        case SSL_CLIENT_HELLO_RETRY:
-            s->rwstate = SSL_CLIENT_HELLO_CB;
-            return -1;
-        case SSL_CLIENT_HELLO_ERROR:
-        default:
-            SSLfatal(s, al, SSL_R_CALLBACK_FAILED);
-            goto err;
+    if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+        if (sctx->cnf->client_hello_cb != NULL) {
+            /* A failure in the ClientHello callback terminates the connection. */
+            int val = sctx->cnf->client_hello_cb(ssl, &al, sctx->cnf->client_hello_cb_arg);
+            CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+            switch (val) {
+            case SSL_CLIENT_HELLO_SUCCESS:
+                break;
+            case SSL_CLIENT_HELLO_RETRY:
+                s->rwstate = SSL_CLIENT_HELLO_CB;
+                return -1;
+            case SSL_CLIENT_HELLO_ERROR:
+            default:
+                SSLfatal(s, al, SSL_R_CALLBACK_FAILED);
+                goto err;
+            }
         }
+        else
+            CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
     }
 
     /* Set up the client_random */
@@ -1766,8 +1777,13 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     if (SSL_CONNECTION_IS_DTLS(s)) {
         /* Empty cookie was already handled above by returning early. */
         if (SSL_get_options(ssl) & SSL_OP_COOKIE_EXCHANGE) {
-            if (sctx->cnf->app_verify_cookie_cb != NULL) {
-                if (sctx->cnf->app_verify_cookie_cb(ssl, clienthello->dtls_cookie,
+            APP_VERIFY_COOKIE_CB verify_cookie_cb = NULL;
+            if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+                verify_cookie_cb = sctx->cnf->app_verify_cookie_cb;
+                CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+            }
+            if (verify_cookie_cb != NULL) {
+                if (verify_cookie_cb(ssl, clienthello->dtls_cookie,
                         clienthello->dtls_cookie_len) == 0) {
                     SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                              SSL_R_COOKIE_MISMATCH);
@@ -2168,36 +2184,44 @@ static int tls_handle_status_request(SSL_CONNECTION *s)
      * and must be called after the cipher has been chosen because this may
      * influence which certificate is sent
      */
-    if (s->ext.status_type != TLSEXT_STATUSTYPE_nothing && sctx != NULL
-            && sctx->cnf->ext.status_cb != NULL) {
-        int ret;
+    if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+        if (s->ext.status_type != TLSEXT_STATUSTYPE_nothing && sctx != NULL
+                && sctx->cnf->ext.status_cb != NULL) {
+            int ret;
 
-        /* If no certificate can't return certificate status */
-        if (s->s3.tmp.cert != NULL) {
-            /*
+            /* If no certificate can't return certificate status */
+            if (s->s3.tmp.cert != NULL) {
+                /*
              * Set current certificate to one we will use so SSL_get_certificate
              * et al can pick it up.
              */
-            s->cert->key = s->s3.tmp.cert;
-            ret = sctx->cnf->ext.status_cb(SSL_CONNECTION_GET_SSL(s),
-                                      sctx->cnf->ext.status_arg);
-            switch (ret) {
+                s->cert->key = s->s3.tmp.cert;
+                ret = sctx->cnf->ext.status_cb(SSL_CONNECTION_GET_SSL(s),
+                                               sctx->cnf->ext.status_arg);
+                CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+
+                switch (ret) {
                 /* We don't want to send a status request response */
-            case SSL_TLSEXT_ERR_NOACK:
-                s->ext.status_expected = 0;
-                break;
-                /* status request response should be sent */
-            case SSL_TLSEXT_ERR_OK:
-                if (s->ext.ocsp.resp)
-                    s->ext.status_expected = 1;
-                break;
-                /* something bad happened */
-            case SSL_TLSEXT_ERR_ALERT_FATAL:
-            default:
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CLIENTHELLO_TLSEXT);
-                return 0;
+                case SSL_TLSEXT_ERR_NOACK:
+                    s->ext.status_expected = 0;
+                    break;
+                    /* status request response should be sent */
+                case SSL_TLSEXT_ERR_OK:
+                    if (s->ext.ocsp.resp)
+                        s->ext.status_expected = 1;
+                    break;
+                    /* something bad happened */
+                case SSL_TLSEXT_ERR_ALERT_FATAL:
+                default:
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CLIENTHELLO_TLSEXT);
+                    return 0;
+                }
             }
+            else
+                CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
         }
+        else
+            CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
     }
 
     return 1;
@@ -2213,67 +2237,72 @@ int tls_handle_alpn(SSL_CONNECTION *s)
     unsigned char selected_len = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    if (sctx->cnf->ext.alpn_select_cb != NULL && s->s3.alpn_proposed != NULL) {
-        int r = sctx->cnf->ext.alpn_select_cb(SSL_CONNECTION_GET_SSL(s),
-                                         &selected, &selected_len,
-                                         s->s3.alpn_proposed,
-                                         (unsigned int)s->s3.alpn_proposed_len,
-                                         sctx->cnf->ext.alpn_select_cb_arg);
+    if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+        if (sctx->cnf->ext.alpn_select_cb != NULL && s->s3.alpn_proposed != NULL) {
+            int r = sctx->cnf->ext.alpn_select_cb(SSL_CONNECTION_GET_SSL(s),
+                                                  &selected, &selected_len,
+                                                  s->s3.alpn_proposed,
+                                                  (unsigned int)s->s3.alpn_proposed_len,
+                                                  sctx->cnf->ext.alpn_select_cb_arg);
+            CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
 
-        if (r == SSL_TLSEXT_ERR_OK) {
-            OPENSSL_free(s->s3.alpn_selected);
-            s->s3.alpn_selected = OPENSSL_memdup(selected, selected_len);
-            if (s->s3.alpn_selected == NULL) {
-                s->s3.alpn_selected_len = 0;
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
-            s->s3.alpn_selected_len = selected_len;
+            if (r == SSL_TLSEXT_ERR_OK) {
+                OPENSSL_free(s->s3.alpn_selected);
+                s->s3.alpn_selected = OPENSSL_memdup(selected, selected_len);
+                if (s->s3.alpn_selected == NULL) {
+                    s->s3.alpn_selected_len = 0;
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+                s->s3.alpn_selected_len = selected_len;
 #ifndef OPENSSL_NO_NEXTPROTONEG
-            /* ALPN takes precedence over NPN. */
-            s->s3.npn_seen = 0;
+                /* ALPN takes precedence over NPN. */
+                s->s3.npn_seen = 0;
 #endif
 
-            /* Check ALPN is consistent with session */
-            if (s->session->ext.alpn_selected == NULL
+                /* Check ALPN is consistent with session */
+                if (s->session->ext.alpn_selected == NULL
                         || selected_len != s->session->ext.alpn_selected_len
                         || memcmp(selected, s->session->ext.alpn_selected,
                                   selected_len) != 0) {
-                /* Not consistent so can't be used for early_data */
-                s->ext.early_data_ok = 0;
+                    /* Not consistent so can't be used for early_data */
+                    s->ext.early_data_ok = 0;
 
-                if (!s->hit) {
-                    /*
+                    if (!s->hit) {
+                        /*
                      * This is a new session and so alpn_selected should have
                      * been initialised to NULL. We should update it with the
                      * selected ALPN.
                      */
-                    if (!ossl_assert(s->session->ext.alpn_selected == NULL)) {
-                        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                                 ERR_R_INTERNAL_ERROR);
-                        return 0;
+                        if (!ossl_assert(s->session->ext.alpn_selected == NULL)) {
+                            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                                     ERR_R_INTERNAL_ERROR);
+                            return 0;
+                        }
+                        s->session->ext.alpn_selected = OPENSSL_memdup(selected,
+                                                                       selected_len);
+                        if (s->session->ext.alpn_selected == NULL) {
+                            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                                     ERR_R_INTERNAL_ERROR);
+                            return 0;
+                        }
+                        s->session->ext.alpn_selected_len = selected_len;
                     }
-                    s->session->ext.alpn_selected = OPENSSL_memdup(selected,
-                                                                   selected_len);
-                    if (s->session->ext.alpn_selected == NULL) {
-                        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                                 ERR_R_INTERNAL_ERROR);
-                        return 0;
-                    }
-                    s->session->ext.alpn_selected_len = selected_len;
                 }
-            }
 
-            return 1;
-        } else if (r != SSL_TLSEXT_ERR_NOACK) {
-            SSLfatal(s, SSL_AD_NO_APPLICATION_PROTOCOL,
-                     SSL_R_NO_APPLICATION_PROTOCOL);
-            return 0;
-        }
-        /*
+                return 1;
+            } else if (r != SSL_TLSEXT_ERR_NOACK) {
+                SSLfatal(s, SSL_AD_NO_APPLICATION_PROTOCOL,
+                         SSL_R_NO_APPLICATION_PROTOCOL);
+                return 0;
+            }
+            /*
          * If r == SSL_TLSEXT_ERR_NOACK then behave as if no callback was
          * present.
          */
+        }
+        else
+            CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
     }
 
     /* Check ALPN is consistent with session */
@@ -2410,6 +2439,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
     size_t sl, len;
     int version;
     unsigned char *session_id;
+    uint32_t cache_mode = 0;
     int usetls13 = SSL_CONNECTION_IS_TLS13(s)
                    || s->hello_retry_request == SSL_HRR_PENDING;
 
@@ -2445,8 +2475,12 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
      * so the following won't overwrite an ID that we're supposed
      * to send back.
      */
+    if (CRYPTO_THREAD_read_lock(SSL_CONNECTION_GET_CTX(s)->cnf->cnf_lock)) {
+        cache_mode = SSL_CONNECTION_GET_CTX(s)->cnf->session_cache_mode;
+        CRYPTO_THREAD_unlock(SSL_CONNECTION_GET_CTX(s)->cnf->cnf_lock);
+    }
     if (s->session->not_resumable ||
-        (!(SSL_CONNECTION_GET_CTX(s)->cnf->session_cache_mode & SSL_SESS_CACHE_SERVER)
+        (!(cache_mode & SSL_SESS_CACHE_SERVER)
          && !s->hit))
         s->session->session_id_length = 0;
 
@@ -4018,80 +4052,86 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
      * Initialize HMAC and cipher contexts. If callback present it does
      * all the work otherwise use generated values from parent ctx.
      */
+    if (CRYPTO_THREAD_read_lock(tctx->cnf->cnf_lock)) {
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-    if (tctx->cnf->ext.ticket_key_evp_cb != NULL || tctx->cnf->ext.ticket_key_cb != NULL)
+        if (tctx->cnf->ext.ticket_key_evp_cb != NULL || tctx->cnf->ext.ticket_key_cb != NULL)
 #else
-    if (tctx->cnf->ext.ticket_key_evp_cb != NULL)
-#endif
-    {
-        int ret = 0;
-
         if (tctx->cnf->ext.ticket_key_evp_cb != NULL)
-            ret = tctx->cnf->ext.ticket_key_evp_cb(ssl, key_name, iv, ctx,
-                                              ssl_hmac_get0_EVP_MAC_CTX(hctx),
-                                              1);
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-        else if (tctx->cnf->ext.ticket_key_cb != NULL)
-            /* if 0 is returned, write an empty ticket */
-            ret = tctx->cnf->ext.ticket_key_cb(ssl, key_name, iv, ctx,
-                                          ssl_hmac_get0_HMAC_CTX(hctx), 1);
 #endif
+        {
+            int ret = 0;
 
-        if (ret == 0) {
-            /*
+            if (tctx->cnf->ext.ticket_key_evp_cb != NULL)
+                ret = tctx->cnf->ext.ticket_key_evp_cb(ssl, key_name, iv, ctx,
+                                                       ssl_hmac_get0_EVP_MAC_CTX(hctx),
+                                                       1);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+            else if (tctx->cnf->ext.ticket_key_cb != NULL)
+                /* if 0 is returned, write an empty ticket */
+                ret = tctx->cnf->ext.ticket_key_cb(ssl, key_name, iv, ctx,
+                                                   ssl_hmac_get0_HMAC_CTX(hctx), 1);
+#endif
+            CRYPTO_THREAD_unlock(tctx->cnf->cnf_lock);
+
+            if (ret == 0) {
+                /*
              * In TLSv1.2 we construct a 0 length ticket. In TLSv1.3 a 0
              * length ticket is not allowed so we abort construction of the
              * ticket
              */
-            if (SSL_CONNECTION_IS_TLS13(s)) {
-                ok = CON_FUNC_DONT_SEND;
+                if (SSL_CONNECTION_IS_TLS13(s)) {
+                    ok = CON_FUNC_DONT_SEND;
+                    goto err;
+                }
+                /* Put timeout and length */
+                if (!WPACKET_put_bytes_u32(pkt, 0)
+                        || !WPACKET_put_bytes_u16(pkt, 0)) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+                OPENSSL_free(senc);
+                EVP_CIPHER_CTX_free(ctx);
+                ssl_hmac_free(hctx);
+                return CON_FUNC_SUCCESS;
+            }
+            if (ret < 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CALLBACK_FAILED);
                 goto err;
             }
-            /* Put timeout and length */
-            if (!WPACKET_put_bytes_u32(pkt, 0)
-                    || !WPACKET_put_bytes_u16(pkt, 0)) {
+            iv_len = EVP_CIPHER_CTX_get_iv_length(ctx);
+            if (iv_len < 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            OPENSSL_free(senc);
-            EVP_CIPHER_CTX_free(ctx);
-            ssl_hmac_free(hctx);
-            return CON_FUNC_SUCCESS;
-        }
-        if (ret < 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CALLBACK_FAILED);
-            goto err;
-        }
-        iv_len = EVP_CIPHER_CTX_get_iv_length(ctx);
-        if (iv_len < 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-    } else {
-        EVP_CIPHER *cipher = EVP_CIPHER_fetch(sctx->libctx, "AES-256-CBC",
-                                              sctx->propq);
+        } else {
+            EVP_CIPHER *cipher = EVP_CIPHER_fetch(sctx->libctx, "AES-256-CBC",
+                                                  sctx->propq);
 
-        if (cipher == NULL) {
-            /* Error is already recorded */
-            SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
-            goto err;
-        }
+            if (cipher == NULL) {
+                CRYPTO_THREAD_unlock(tctx->cnf->cnf_lock);
+                /* Error is already recorded */
+                SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
+                goto err;
+            }
 
-        iv_len = EVP_CIPHER_get_iv_length(cipher);
-        if (iv_len < 0
-                || RAND_bytes_ex(sctx->libctx, iv, iv_len, 0) <= 0
-                || !EVP_EncryptInit_ex(ctx, cipher, NULL,
-                                       tctx->cnf->ext.secure->tick_aes_key, iv)
-                || !ssl_hmac_init(hctx, tctx->cnf->ext.secure->tick_hmac_key,
-                                  sizeof(tctx->cnf->ext.secure->tick_hmac_key),
-                                  "SHA256")) {
+            iv_len = EVP_CIPHER_get_iv_length(cipher);
+            if (iv_len < 0
+                    || RAND_bytes_ex(sctx->libctx, iv, iv_len, 0) <= 0
+                    || !EVP_EncryptInit_ex(ctx, cipher, NULL,
+                                           tctx->cnf->ext.secure->tick_aes_key, iv)
+                    || !ssl_hmac_init(hctx, tctx->cnf->ext.secure->tick_hmac_key,
+                                      sizeof(tctx->cnf->ext.secure->tick_hmac_key),
+                                      "SHA256")) {
+                CRYPTO_THREAD_unlock(tctx->cnf->cnf_lock);
+                EVP_CIPHER_free(cipher);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
             EVP_CIPHER_free(cipher);
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
+            memcpy(key_name, tctx->cnf->ext.tick_key_name,
+                   sizeof(tctx->cnf->ext.tick_key_name));
+            CRYPTO_THREAD_unlock(tctx->cnf->cnf_lock);
         }
-        EVP_CIPHER_free(cipher);
-        memcpy(key_name, tctx->cnf->ext.tick_key_name,
-               sizeof(tctx->cnf->ext.tick_key_name));
     }
 
     if (!create_ticket_prequel(s, pkt, age_add, tick_nonce)) {
@@ -4262,11 +4302,15 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
         s->session->ext.max_early_data = s->max_early_data;
     }
 
-    if (tctx->cnf->generate_ticket_cb != NULL &&
-        tctx->cnf->generate_ticket_cb(SSL_CONNECTION_GET_SSL(s),
-                                 tctx->cnf->ticket_cb_data) == 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
+    if (CRYPTO_THREAD_read_lock(tctx->cnf->cnf_lock)) {
+        if (tctx->cnf->generate_ticket_cb != NULL &&
+            tctx->cnf->generate_ticket_cb(SSL_CONNECTION_GET_SSL(s),
+                                     tctx->cnf->ticket_cb_data) == 0) {
+            CRYPTO_THREAD_unlock(tctx->cnf->cnf_lock);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        CRYPTO_THREAD_unlock(tctx->cnf->cnf_lock);
     }
     /*
      * If we are using anti-replay protection then we behave as if

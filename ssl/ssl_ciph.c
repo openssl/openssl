@@ -1423,11 +1423,15 @@ static int update_cipher_list(SSL_CTX *ctx,
 
 int SSL_CTX_set_ciphersuites(SSL_CTX *ctx, const char *str)
 {
-    int ret = set_ciphersuites(&(ctx->cnf->tls13_ciphersuites), str);
+    int ret = 0;
 
-    if (ret && ctx->cnf->cipher_list != NULL)
-        return update_cipher_list(ctx, &ctx->cnf->cipher_list, &ctx->cnf->cipher_list_by_id,
-                                  ctx->cnf->tls13_ciphersuites);
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ret = set_ciphersuites(&(ctx->cnf->tls13_ciphersuites), str);
+        if (ret && ctx->cnf->cipher_list != NULL)
+            ret = update_cipher_list(ctx, &ctx->cnf->cipher_list, &ctx->cnf->cipher_list_by_id,
+                                     ctx->cnf->tls13_ciphersuites);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 
     return ret;
 }
@@ -1468,7 +1472,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
     const char *rule_p;
     CIPHER_ORDER *co_list = NULL, *head = NULL, *tail = NULL, *curr;
     const SSL_CIPHER **ca_list = NULL;
-    const SSL_METHOD *ssl_method = ctx->cnf->method;
+    const SSL_METHOD *ssl_method = ctx->method;
 
     /*
      * Return with error if nothing to do.

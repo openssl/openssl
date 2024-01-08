@@ -397,8 +397,13 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
 
         if (sc->info_callback != NULL)
             cb = sc->info_callback;
-        else if (s->ctx->cnf->info_callback != NULL)
-            cb = s->ctx->cnf->info_callback;
+        else {
+            if (CRYPTO_THREAD_read_lock(s->ctx->cnf->cnf_lock)) {
+                if (s->ctx->cnf->info_callback != NULL)
+                    cb = s->ctx->cnf->info_callback;
+                CRYPTO_THREAD_unlock(s->ctx->cnf->cnf_lock);
+            }
+        }
 
         if (cb != NULL) {
             j = (alert_level << 8) | alert_descr;

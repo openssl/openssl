@@ -679,17 +679,21 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
         return 0;
     }
 
-    ctx->cnf->method = meth;
+    ctx->method = meth;
 
     if (!SSL_CTX_set_ciphersuites(ctx, OSSL_default_ciphersuites())) {
         ERR_raise(ERR_LIB_SSL, SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
         return 0;
     }
-    sk = ssl_create_cipher_list(ctx,
-                                ctx->cnf->tls13_ciphersuites,
-                                &(ctx->cnf->cipher_list),
-                                &(ctx->cnf->cipher_list_by_id),
-                                OSSL_default_cipher_list(), ctx->cnf->cert);
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        sk = ssl_create_cipher_list(ctx,
+                                    ctx->cnf->tls13_ciphersuites,
+                                    &(ctx->cnf->cipher_list),
+                                    &(ctx->cnf->cipher_list_by_id),
+                                    OSSL_default_cipher_list(), ctx->cnf->cert);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
     if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= 0)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
         return 0;
@@ -704,11 +708,11 @@ SSL *SSL_new(SSL_CTX *ctx)
         ERR_raise(ERR_LIB_SSL, SSL_R_NULL_SSL_CTX);
         return NULL;
     }
-    if (ctx->cnf->method == NULL) {
+    if (ctx->method == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_SSL_CTX_HAS_NO_DEFAULT_SSL_VERSION);
         return NULL;
     }
-    return ctx->cnf->method->ssl_new(ctx);
+    return ctx->method->ssl_new(ctx);
 }
 
 int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, const SSL_METHOD *method, int type)
@@ -743,6 +747,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
 {
     SSL_CONNECTION *s;
     SSL *ssl;
+    int rv = 0;
 
     s = OPENSSL_zalloc(sizeof(*s));
     if (s == NULL)
@@ -758,128 +763,145 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
 
     RECORD_LAYER_init(&s->rlayer, s);
 
-    s->options = ctx->cnf->options;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        s->options = ctx->cnf->options;
+        s->dane.flags = ctx->dane.flags;
+        if (method->version == ctx->method->version) {
+            s->min_proto_version = ctx->cnf->min_proto_version;
+            s->max_proto_version = ctx->cnf->max_proto_version;
+        }
+        s->mode = ctx->cnf->mode;
+        s->max_cert_list = ctx->cnf->max_cert_list;
+        s->max_early_data = ctx->cnf->max_early_data;
+        s->recv_max_early_data = ctx->cnf->recv_max_early_data;
+        s->num_tickets = ctx->cnf->num_tickets;
+        s->pha_enabled = ctx->cnf->pha_enabled;
 
-    s->dane.flags = ctx->dane.flags;
-    if (method->version == ctx->cnf->method->version) {
-        s->min_proto_version = ctx->cnf->min_proto_version;
-        s->max_proto_version = ctx->cnf->max_proto_version;
-    }
+        /* Shallow copy of the ciphersuites stack */
+        s->tls13_ciphersuites = sk_SSL_CIPHER_dup(ctx->cnf->tls13_ciphersuites);
 
-    s->mode = ctx->cnf->mode;
-    s->max_cert_list = ctx->cnf->max_cert_list;
-    s->max_early_data = ctx->cnf->max_early_data;
-    s->recv_max_early_data = ctx->cnf->recv_max_early_data;
+        if (s->tls13_ciphersuites == NULL) {
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+            goto cerr;
+        }
 
-    s->num_tickets = ctx->cnf->num_tickets;
-    s->pha_enabled = ctx->cnf->pha_enabled;
+        /*
+         * Earlier library versions used to copy the pointer to the CERT, not
+         * its contents; only when setting new parameters for the per-SSL
+         * copy, ssl_cert_new would be called (and the direct reference to
+         * the per-SSL_CTX settings would be lost, but those still were
+         * indirectly accessed for various purposes, and for that reason they
+         * used to be known as s->ctx->default_cert). Now we don't look at the
+         * SSL_CTX's CERT after having duplicated it once.
+         */
+        s->cert = ssl_cert_dup(ctx->cnf->cert);
+        if (s->cert == NULL) {
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+            goto sslerr;
+        }
 
-    /* Shallow copy of the ciphersuites stack */
-    s->tls13_ciphersuites = sk_SSL_CIPHER_dup(ctx->cnf->tls13_ciphersuites);
-    if (s->tls13_ciphersuites == NULL)
-        goto cerr;
-
-    /*
-     * Earlier library versions used to copy the pointer to the CERT, not
-     * its contents; only when setting new parameters for the per-SSL
-     * copy, ssl_cert_new would be called (and the direct reference to
-     * the per-SSL_CTX settings would be lost, but those still were
-     * indirectly accessed for various purposes, and for that reason they
-     * used to be known as s->ctx->default_cert). Now we don't look at the
-     * SSL_CTX's CERT after having duplicated it once.
-     */
-    s->cert = ssl_cert_dup(ctx->cnf->cert);
-    if (s->cert == NULL)
-        goto sslerr;
-
-    RECORD_LAYER_set_read_ahead(&s->rlayer, ctx->cnf->read_ahead);
-    s->msg_callback = ctx->cnf->msg_callback;
-    s->msg_callback_arg = ctx->cnf->msg_callback_arg;
-    s->verify_mode = ctx->cnf->verify_mode;
-    s->not_resumable_session_cb = ctx->cnf->not_resumable_session_cb;
-    s->rlayer.record_padding_cb = ctx->cnf->record_padding_cb;
-    s->rlayer.record_padding_arg = ctx->cnf->record_padding_arg;
-    s->rlayer.block_padding = ctx->cnf->block_padding;
-    s->sid_ctx_length = ctx->cnf->sid_ctx_length;
-    if (!ossl_assert(s->sid_ctx_length <= sizeof(s->sid_ctx)))
-        goto err;
-    memcpy(&s->sid_ctx, &ctx->cnf->sid_ctx, sizeof(s->sid_ctx));
-    s->verify_callback = ctx->cnf->default_verify_callback;
-    s->generate_session_id = ctx->cnf->generate_session_id;
-
-    s->param = X509_VERIFY_PARAM_new();
-    if (s->param == NULL)
-        goto asn1err;
-    X509_VERIFY_PARAM_inherit(s->param, ctx->cnf->param);
-    s->quiet_shutdown = IS_QUIC_CTX(ctx) ? 0 : ctx->cnf->quiet_shutdown;
-
-    if (!IS_QUIC_CTX(ctx))
-        s->ext.max_fragment_len_mode = ctx->cnf->ext.max_fragment_len_mode;
-
-    s->max_send_fragment = ctx->cnf->max_send_fragment;
-    s->split_send_fragment = ctx->cnf->split_send_fragment;
-    s->max_pipelines = ctx->cnf->max_pipelines;
-    s->rlayer.default_read_buf_len = ctx->cnf->default_read_buf_len;
-
-    s->ext.debug_cb = 0;
-    s->ext.debug_arg = NULL;
-    s->ext.ticket_expected = 0;
-    s->ext.status_type = ctx->cnf->ext.status_type;
-    s->ext.status_expected = 0;
-    s->ext.ocsp.ids = NULL;
-    s->ext.ocsp.exts = NULL;
-    s->ext.ocsp.resp = NULL;
-    s->ext.ocsp.resp_len = 0;
-    SSL_CTX_up_ref(ctx);
-    s->session_ctx = ctx;
-    if (ctx->cnf->ext.ecpointformats) {
-        s->ext.ecpointformats =
-            OPENSSL_memdup(ctx->cnf->ext.ecpointformats,
-                           ctx->cnf->ext.ecpointformats_len);
-        if (!s->ext.ecpointformats) {
-            s->ext.ecpointformats_len = 0;
+        RECORD_LAYER_set_read_ahead(&s->rlayer, ctx->cnf->read_ahead);
+        s->msg_callback = ctx->cnf->msg_callback;
+        s->msg_callback_arg = ctx->cnf->msg_callback_arg;
+        s->verify_mode = ctx->cnf->verify_mode;
+        s->not_resumable_session_cb = ctx->cnf->not_resumable_session_cb;
+        s->rlayer.record_padding_cb = ctx->cnf->record_padding_cb;
+        s->rlayer.record_padding_arg = ctx->cnf->record_padding_arg;
+        s->rlayer.block_padding = ctx->cnf->block_padding;
+        s->sid_ctx_length = ctx->cnf->sid_ctx_length;
+        if (!ossl_assert(s->sid_ctx_length <= sizeof(s->sid_ctx))) {
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
             goto err;
         }
-        s->ext.ecpointformats_len =
-            ctx->cnf->ext.ecpointformats_len;
-    }
-    if (ctx->cnf->ext.supportedgroups) {
-        s->ext.supportedgroups =
-            OPENSSL_memdup(ctx->cnf->ext.supportedgroups,
-                           ctx->cnf->ext.supportedgroups_len
-                                * sizeof(*ctx->cnf->ext.supportedgroups));
-        if (!s->ext.supportedgroups) {
-            s->ext.supportedgroups_len = 0;
-            goto err;
+        memcpy(&s->sid_ctx, &ctx->cnf->sid_ctx, sizeof(s->sid_ctx));
+        s->verify_callback = ctx->cnf->default_verify_callback;
+        s->generate_session_id = ctx->cnf->generate_session_id;
+
+        s->param = X509_VERIFY_PARAM_new();
+        if (s->param == NULL) {
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+            goto asn1err;
         }
-        s->ext.supportedgroups_len = ctx->cnf->ext.supportedgroups_len;
-    }
+
+        X509_VERIFY_PARAM_inherit(s->param, ctx->cnf->param);
+        s->quiet_shutdown = IS_QUIC_CTX(ctx) ? 0 : ctx->cnf->quiet_shutdown;
+
+        if (!IS_QUIC_CTX(ctx))
+            s->ext.max_fragment_len_mode = ctx->cnf->ext.max_fragment_len_mode;
+
+        s->max_send_fragment = ctx->cnf->max_send_fragment;
+        s->split_send_fragment = ctx->cnf->split_send_fragment;
+        s->max_pipelines = ctx->cnf->max_pipelines;
+        s->rlayer.default_read_buf_len = ctx->cnf->default_read_buf_len;
+
+        s->ext.debug_cb = 0;
+        s->ext.debug_arg = NULL;
+        s->ext.ticket_expected = 0;
+        s->ext.status_type = ctx->cnf->ext.status_type;
+        s->ext.status_expected = 0;
+        s->ext.ocsp.ids = NULL;
+        s->ext.ocsp.exts = NULL;
+        s->ext.ocsp.resp = NULL;
+        s->ext.ocsp.resp_len = 0;
+        SSL_CTX_up_ref(ctx);
+        s->session_ctx = ctx;
+
+        if (ctx->cnf->ext.ecpointformats) {
+            s->ext.ecpointformats =
+                    OPENSSL_memdup(ctx->cnf->ext.ecpointformats,
+                                   ctx->cnf->ext.ecpointformats_len);
+            if (!s->ext.ecpointformats) {
+                s->ext.ecpointformats_len = 0;
+                CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+                goto err;
+            }
+            s->ext.ecpointformats_len =
+                    ctx->cnf->ext.ecpointformats_len;
+        }
+        if (ctx->cnf->ext.supportedgroups) {
+            s->ext.supportedgroups =
+                    OPENSSL_memdup(ctx->cnf->ext.supportedgroups,
+                                   ctx->cnf->ext.supportedgroups_len
+                                   * sizeof(*ctx->cnf->ext.supportedgroups));
+            if (!s->ext.supportedgroups) {
+                s->ext.supportedgroups_len = 0;
+                CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+                goto err;
+            }
+            s->ext.supportedgroups_len = ctx->cnf->ext.supportedgroups_len;
+        }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-    s->ext.npn = NULL;
+        s->ext.npn = NULL;
 #endif
 
-    if (ctx->cnf->ext.alpn != NULL) {
-        s->ext.alpn = OPENSSL_malloc(ctx->cnf->ext.alpn_len);
-        if (s->ext.alpn == NULL) {
-            s->ext.alpn_len = 0;
-            goto err;
+        if (ctx->cnf->ext.alpn != NULL) {
+            s->ext.alpn = OPENSSL_malloc(ctx->cnf->ext.alpn_len);
+            if (s->ext.alpn == NULL) {
+                s->ext.alpn_len = 0;
+                CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+                goto err;
+            }
+            memcpy(s->ext.alpn, ctx->cnf->ext.alpn, ctx->cnf->ext.alpn_len);
+            s->ext.alpn_len = ctx->cnf->ext.alpn_len;
         }
-        memcpy(s->ext.alpn, ctx->cnf->ext.alpn, ctx->cnf->ext.alpn_len);
-        s->ext.alpn_len = ctx->cnf->ext.alpn_len;
+
+        s->verified_chain = NULL;
+        s->verify_result = X509_V_OK;
+
+        s->default_passwd_callback = ctx->cnf->default_passwd_callback;
+        s->default_passwd_callback_userdata = ctx->cnf->default_passwd_callback_userdata;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
     }
-
-    s->verified_chain = NULL;
-    s->verify_result = X509_V_OK;
-
-    s->default_passwd_callback = ctx->cnf->default_passwd_callback;
-    s->default_passwd_callback_userdata = ctx->cnf->default_passwd_callback_userdata;
 
     s->key_update = SSL_KEY_UPDATE_NONE;
 
     if (!IS_QUIC_CTX(ctx)) {
-        s->allow_early_data_cb = ctx->cnf->allow_early_data_cb;
-        s->allow_early_data_cb_data = ctx->cnf->allow_early_data_cb_data;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            s->allow_early_data_cb = ctx->cnf->allow_early_data_cb;
+            s->allow_early_data_cb_data = ctx->cnf->allow_early_data_cb_data;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
     }
 
     if (!method->ssl_init(ssl))
@@ -890,15 +912,18 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     if (!method->ssl_reset(ssl))
         goto sslerr;
 
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
 #ifndef OPENSSL_NO_PSK
-    s->psk_client_callback = ctx->cnf->psk_client_callback;
-    s->psk_server_callback = ctx->cnf->psk_server_callback;
+        s->psk_client_callback = ctx->cnf->psk_client_callback;
+        s->psk_server_callback = ctx->cnf->psk_server_callback;
 #endif
-    s->psk_find_session_cb = ctx->cnf->psk_find_session_cb;
-    s->psk_use_session_cb = ctx->cnf->psk_use_session_cb;
+        s->psk_find_session_cb = ctx->cnf->psk_find_session_cb;
+        s->psk_use_session_cb = ctx->cnf->psk_use_session_cb;
 
-    s->async_cb = ctx->cnf->async_cb;
-    s->async_cb_arg = ctx->cnf->async_cb_arg;
+        s->async_cb = ctx->cnf->async_cb;
+        s->async_cb_arg = ctx->cnf->async_cb_arg;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 
     s->job = NULL;
 
@@ -921,8 +946,13 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     }
 
 #ifndef OPENSSL_NO_CT
-    if (!SSL_set_ct_validation_callback(ssl, ctx->cnf->ct_validation_callback,
-                                        ctx->cnf->ct_validation_callback_arg))
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        rv = SSL_set_ct_validation_callback(ssl, ctx->cnf->ct_validation_callback,
+                                            ctx->cnf->ct_validation_callback_arg);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    if (!rv)
         goto sslerr;
 #endif
 
@@ -943,7 +973,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
 
 SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
 {
-    return ossl_ssl_connection_new_int(ctx, ctx->cnf->method);
+    return ossl_ssl_connection_new_int(ctx, ctx->method);
 }
 
 int SSL_is_dtls(const SSL *s)
@@ -1004,8 +1034,12 @@ int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx,
         ERR_raise(ERR_LIB_SSL, SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
         return 0;
     }
-    ctx->cnf->sid_ctx_length = sid_ctx_len;
-    memcpy(ctx->cnf->sid_ctx, sid_ctx, sid_ctx_len);
+
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->sid_ctx_length = sid_ctx_len;
+        memcpy(ctx->cnf->sid_ctx, sid_ctx, sid_ctx_len);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 
     return 1;
 }
@@ -1030,10 +1064,10 @@ int SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx,
 
 int SSL_CTX_set_generate_session_id(SSL_CTX *ctx, GEN_SESSION_CB cb)
 {
-    if (!CRYPTO_THREAD_write_lock(ctx->lock))
-        return 0;
-    ctx->cnf->generate_session_id = cb;
-    CRYPTO_THREAD_unlock(ctx->lock);
+    if (CRYPTO_THREAD_write_lock(ctx->lock)) {
+        ctx->cnf->generate_session_id = cb;
+        CRYPTO_THREAD_unlock(ctx->lock);
+    }
     return 1;
 }
 
@@ -1041,10 +1075,14 @@ int SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB cb)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
-    if (sc == NULL || !CRYPTO_THREAD_write_lock(ssl->lock))
+    if (sc == NULL)
         return 0;
-    sc->generate_session_id = cb;
-    CRYPTO_THREAD_unlock(ssl->lock);
+
+    if (CRYPTO_THREAD_write_lock(ssl->lock)) {
+        sc->generate_session_id = cb;
+        CRYPTO_THREAD_unlock(ssl->lock);
+    }
+
     return 1;
 }
 
@@ -1077,7 +1115,14 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 
 int SSL_CTX_set_purpose(SSL_CTX *s, int purpose)
 {
-    return X509_VERIFY_PARAM_set_purpose(s->cnf->param, purpose);
+    int ret = 0;
+
+    if (CRYPTO_THREAD_write_lock(s->cnf->cnf_lock)) {
+        ret = X509_VERIFY_PARAM_set_purpose(s->cnf->param, purpose);
+        CRYPTO_THREAD_unlock(s->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 int SSL_set_purpose(SSL *s, int purpose)
@@ -1092,7 +1137,14 @@ int SSL_set_purpose(SSL *s, int purpose)
 
 int SSL_CTX_set_trust(SSL_CTX *s, int trust)
 {
-    return X509_VERIFY_PARAM_set_trust(s->cnf->param, trust);
+    int ret = 0;
+
+    if (CRYPTO_THREAD_write_lock(s->cnf->cnf_lock)) {
+        ret = X509_VERIFY_PARAM_set_trust(s->cnf->param, trust);
+        CRYPTO_THREAD_unlock(s->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 int SSL_set_trust(SSL *s, int trust)
@@ -1350,7 +1402,14 @@ int SSL_CTX_dane_mtype_set(SSL_CTX *ctx, const EVP_MD *md, uint8_t mtype,
 
 int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm)
 {
-    return X509_VERIFY_PARAM_set1(ctx->cnf->param, vpm);
+    int ret = 0;
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = X509_VERIFY_PARAM_set1(ctx->cnf->param, vpm);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm)
@@ -1365,7 +1424,14 @@ int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm)
 
 X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx)
 {
-    return ctx->cnf->param;
+    X509_VERIFY_PARAM *ret = NULL;
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->param;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl)
@@ -1831,16 +1897,37 @@ int (*SSL_get_verify_callback(const SSL *s)) (int, X509_STORE_CTX *) {
 
 int SSL_CTX_get_verify_mode(const SSL_CTX *ctx)
 {
-    return ctx->cnf->verify_mode;
+    int ret = 0;
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->verify_mode;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 int SSL_CTX_get_verify_depth(const SSL_CTX *ctx)
 {
-    return X509_VERIFY_PARAM_get_depth(ctx->cnf->param);
+    int ret = 0;
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = X509_VERIFY_PARAM_get_depth(ctx->cnf->param);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 int (*SSL_CTX_get_verify_callback(const SSL_CTX *ctx)) (int, X509_STORE_CTX *) {
-    return ctx->cnf->default_verify_callback;
+    DEFAULT_VERIFY_CALLBACK ret = NULL;
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->default_verify_callback;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 void SSL_set_verify(SSL *s, int mode,
@@ -2035,16 +2122,31 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
 /* Fix this so it checks all the valid key/cert options */
 int SSL_CTX_check_private_key(const SSL_CTX *ctx)
 {
-    if ((ctx == NULL) || (ctx->cnf->cert->key->x509 == NULL)) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_NO_CERTIFICATE_ASSIGNED);
-        return 0;
+    int rv = 0;
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        if ((ctx == NULL) || (ctx->cnf->cert->key->x509 == NULL)) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_NO_CERTIFICATE_ASSIGNED);
+            goto end;
+        }
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
     }
-    if (ctx->cnf->cert->key->privatekey == NULL) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_NO_PRIVATE_KEY_ASSIGNED);
-        return 0;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        if (ctx->cnf->cert->key->privatekey == NULL) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_NO_PRIVATE_KEY_ASSIGNED);
+            rv = 0;
+            goto end;
+        }
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
     }
-    return X509_check_private_key
-            (ctx->cnf->cert->key->x509, ctx->cnf->cert->key->privatekey);
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        rv = X509_check_private_key
+                (ctx->cnf->cert->key->x509, ctx->cnf->cert->key->privatekey);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+end:
+    return rv;
 }
 
 /* Fix this function so that it takes an optional type parameter */
@@ -2111,13 +2213,21 @@ int SSL_get_changed_async_fds(SSL *s, OSSL_ASYNC_FD *addfd, size_t *numaddfds,
 
 int SSL_CTX_set_async_callback(SSL_CTX *ctx, SSL_async_callback_fn callback)
 {
-    ctx->cnf->async_cb = callback;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->async_cb = callback;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
     return 1;
 }
 
 int SSL_CTX_set_async_callback_arg(SSL_CTX *ctx, void *arg)
 {
-    ctx->cnf->async_cb_arg = arg;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->async_cb_arg = arg;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
     return 1;
 }
 
@@ -3075,39 +3185,70 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
     switch (cmd) {
     case SSL_CTRL_GET_READ_AHEAD:
-        return ctx->cnf->read_ahead;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            l = ctx->cnf->read_ahead;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return l;
     case SSL_CTRL_SET_READ_AHEAD:
-        l = ctx->cnf->read_ahead;
-        ctx->cnf->read_ahead = larg;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            l = ctx->cnf->read_ahead;
+            ctx->cnf->read_ahead = larg;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         return l;
 
     case SSL_CTRL_SET_MSG_CALLBACK_ARG:
-        ctx->cnf->msg_callback_arg = parg;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            ctx->cnf->msg_callback_arg = parg;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         return 1;
 
     case SSL_CTRL_GET_MAX_CERT_LIST:
-        return (long)ctx->cnf->max_cert_list;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            l = (long)ctx->cnf->max_cert_list;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return l;
     case SSL_CTRL_SET_MAX_CERT_LIST:
         if (larg < 0)
             return 0;
-        l = (long)ctx->cnf->max_cert_list;
-        ctx->cnf->max_cert_list = (size_t)larg;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            l = (long)ctx->cnf->max_cert_list;
+            ctx->cnf->max_cert_list = (size_t)larg;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         return l;
 
     case SSL_CTRL_SET_SESS_CACHE_SIZE:
         if (larg < 0)
             return 0;
-        l = (long)ctx->cnf->session_cache_size;
-        ctx->cnf->session_cache_size = (size_t)larg;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            l = (long)ctx->cnf->session_cache_size;
+            ctx->cnf->session_cache_size = (size_t)larg;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         return l;
     case SSL_CTRL_GET_SESS_CACHE_SIZE:
-        return (long)ctx->cnf->session_cache_size;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            l = (long)ctx->cnf->session_cache_size;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return l;
     case SSL_CTRL_SET_SESS_CACHE_MODE:
-        l = ctx->cnf->session_cache_mode;
-        ctx->cnf->session_cache_mode = larg;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            l = ctx->cnf->session_cache_mode;
+            ctx->cnf->session_cache_mode = larg;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         return l;
     case SSL_CTRL_GET_SESS_CACHE_MODE:
-        return ctx->cnf->session_cache_mode;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            l = ctx->cnf->session_cache_mode;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return l;
 
     case SSL_CTRL_SESS_NUMBER:
         return lh_SSL_SESSION_num_items(ctx->sessions);
@@ -3134,44 +3275,91 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_SESS_CACHE_FULL:
         return ssl_tsan_load(ctx, &ctx->stats.sess_cache_full);
     case SSL_CTRL_MODE:
-        return (ctx->cnf->mode |= larg);
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            l = (ctx->cnf->mode |= larg);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return l;
     case SSL_CTRL_CLEAR_MODE:
-        return (ctx->cnf->mode &= ~larg);
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            l = (ctx->cnf->mode &= ~larg);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return l;
     case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
         if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
             return 0;
-        ctx->cnf->max_send_fragment = larg;
-        if (ctx->cnf->max_send_fragment < ctx->cnf->split_send_fragment)
-            ctx->cnf->split_send_fragment = ctx->cnf->max_send_fragment;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            ctx->cnf->max_send_fragment = larg;
+            if (ctx->cnf->max_send_fragment < ctx->cnf->split_send_fragment)
+                ctx->cnf->split_send_fragment = ctx->cnf->max_send_fragment;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         return 1;
-    case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT:
-        if ((size_t)larg > ctx->cnf->max_send_fragment || larg == 0)
-            return 0;
-        ctx->cnf->split_send_fragment = larg;
+    case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT: {
+            size_t max_send_fragment = 0;
+            if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+                max_send_fragment = ctx->cnf->max_send_fragment;
+                CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+            }
+            if ((size_t)larg > max_send_fragment || larg == 0)
+                return 0;
+            if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+                ctx->cnf->split_send_fragment = larg;
+                CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+            }
+        }
         return 1;
     case SSL_CTRL_SET_MAX_PIPELINES:
         if (larg < 1 || larg > SSL_MAX_PIPELINES)
             return 0;
-        ctx->cnf->max_pipelines = larg;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            ctx->cnf->max_pipelines = larg;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         return 1;
     case SSL_CTRL_CERT_FLAGS:
-        return (ctx->cnf->cert->cert_flags |= larg);
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            l = (ctx->cnf->cert->cert_flags |= larg);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return l;
     case SSL_CTRL_CLEAR_CERT_FLAGS:
-        return (ctx->cnf->cert->cert_flags &= ~larg);
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            l = (ctx->cnf->cert->cert_flags &= ~larg);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return l;
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
-        return ssl_check_allowed_versions(larg, ctx->cnf->max_proto_version)
-               && ssl_set_version_bound(ctx->cnf->method->version, (int)larg,
-                                        &ctx->cnf->min_proto_version);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            l = ssl_check_allowed_versions(larg, ctx->cnf->max_proto_version)
+                    && ssl_set_version_bound(ctx->method->version, (int)larg,
+                                             &ctx->cnf->min_proto_version);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return l;
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
-        return ctx->cnf->min_proto_version;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            l = ctx->cnf->min_proto_version;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return l;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
-        return ssl_check_allowed_versions(ctx->cnf->min_proto_version, larg)
-               && ssl_set_version_bound(ctx->cnf->method->version, (int)larg,
-                                        &ctx->cnf->max_proto_version);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            l = ssl_check_allowed_versions(ctx->cnf->min_proto_version, larg)
+                 && ssl_set_version_bound(ctx->method->version, (int)larg,
+                                            &ctx->cnf->max_proto_version);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return l;
     case SSL_CTRL_GET_MAX_PROTO_VERSION:
-        return ctx->cnf->max_proto_version;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            l = ctx->cnf->max_proto_version;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return l;
     default:
-        return ctx->cnf->method->ssl_ctx_ctrl(ctx, cmd, larg, parg);
+        return ctx->method->ssl_ctx_ctrl(ctx, cmd, larg, parg);
     }
 }
 
@@ -3179,14 +3367,17 @@ long SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 {
     switch (cmd) {
     case SSL_CTRL_SET_MSG_CALLBACK:
-        ctx->cnf->msg_callback = (void (*)
-                             (int write_p, int version, int content_type,
-                              const void *buf, size_t len, SSL *ssl,
-                              void *arg))(fp);
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            ctx->cnf->msg_callback = (void (*)
+                                 (int write_p, int version, int content_type,
+                                  const void *buf, size_t len, SSL *ssl,
+                                  void *arg))(fp);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         return 1;
 
     default:
-        return ctx->cnf->method->ssl_ctx_callback_ctrl(ctx, cmd, fp);
+        return ctx->method->ssl_ctx_callback_ctrl(ctx, cmd, fp);
     }
 }
 
@@ -3216,15 +3407,19 @@ int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
 STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    STACK_OF(SSL_CIPHER) * ret = NULL;
 
     if (sc != NULL) {
         if (sc->cipher_list != NULL) {
-            return sc->cipher_list;
-        } else if ((s->ctx != NULL) && (s->ctx->cnf->cipher_list != NULL)) {
-            return s->ctx->cnf->cipher_list;
+            ret = sc->cipher_list;
+        } else if (s->ctx != NULL) {
+            if (CRYPTO_THREAD_read_lock(s->ctx->cnf->cnf_lock)) {
+                ret = s->ctx->cnf->cipher_list;
+                CRYPTO_THREAD_unlock(s->ctx->cnf->cnf_lock);
+            }
         }
     }
-    return NULL;
+    return ret;
 }
 
 STACK_OF(SSL_CIPHER) *SSL_get_client_ciphers(const SSL *s)
@@ -3270,14 +3465,18 @@ STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s)
  * algorithm id */
 STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL_CONNECTION *s)
 {
+    STACK_OF(SSL_CIPHER) *ret = NULL;
     if (s != NULL) {
         if (s->cipher_list_by_id != NULL)
-            return s->cipher_list_by_id;
-        else if (s->ssl.ctx != NULL
-                 && s->ssl.ctx->cnf->cipher_list_by_id != NULL)
-            return s->ssl.ctx->cnf->cipher_list_by_id;
+            ret = s->cipher_list_by_id;
+        else if (s->ssl.ctx != NULL) {
+            if (CRYPTO_THREAD_read_lock(s->ssl.ctx->cnf->cnf_lock)) {
+                ret = s->ssl.ctx->cnf->cipher_list_by_id;
+                CRYPTO_THREAD_unlock(s->ssl.ctx->cnf->cnf_lock);
+            }
+        }
     }
-    return NULL;
+    return ret;
 }
 
 /** The old interface to get the same thing as SSL_get_ciphers() */
@@ -3301,9 +3500,14 @@ const char *SSL_get_cipher_list(const SSL *s, int n)
  * preference */
 STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx)
 {
-    if (ctx != NULL)
-        return ctx->cnf->cipher_list;
-    return NULL;
+    STACK_OF(SSL_CIPHER) *ret = NULL;
+    if (ctx != NULL) {
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            ret = ctx->cnf->cipher_list;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+    }
+    return ret;
 }
 
 /*
@@ -3329,11 +3533,15 @@ static int cipher_list_tls12_num(STACK_OF(SSL_CIPHER) *sk)
 /** specify the ciphers to be used by default by the SSL_CTX */
 int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 {
-    STACK_OF(SSL_CIPHER) *sk;
+    STACK_OF(SSL_CIPHER) *sk = NULL;
 
-    sk = ssl_create_cipher_list(ctx, ctx->cnf->tls13_ciphersuites,
-                                &ctx->cnf->cipher_list, &ctx->cnf->cipher_list_by_id, str,
-                                ctx->cnf->cert);
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        sk = ssl_create_cipher_list(ctx, ctx->cnf->tls13_ciphersuites,
+                                    &ctx->cnf->cipher_list, &ctx->cnf->cipher_list_by_id, str,
+                                    ctx->cnf->cert);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
     /*
      * ssl_create_cipher_list may return an empty stack if it was unable to
      * find a cipher matching the given rule string (for example if the rule
@@ -3616,8 +3824,11 @@ void SSL_CTX_set_npn_advertised_cb(SSL_CTX *ctx,
         /* NPN not allowed for QUIC */
         return;
 
-    ctx->cnf->ext.npn_advertised_cb = cb;
-    ctx->cnf->ext.npn_advertised_cb_arg = arg;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->ext.npn_advertised_cb = cb;
+        ctx->cnf->ext.npn_advertised_cb_arg = arg;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 /*
@@ -3638,8 +3849,11 @@ void SSL_CTX_set_npn_select_cb(SSL_CTX *ctx,
         /* NPN not allowed for QUIC */
         return;
 
-    ctx->cnf->ext.npn_select_cb = cb;
-    ctx->cnf->ext.npn_select_cb_arg = arg;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->ext.npn_select_cb = cb;
+        ctx->cnf->ext.npn_select_cb_arg = arg;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 #endif
 
@@ -3667,9 +3881,12 @@ int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
     unsigned char *alpn;
 
     if (protos_len == 0 || protos == NULL) {
-        OPENSSL_free(ctx->cnf->ext.alpn);
-        ctx->cnf->ext.alpn = NULL;
-        ctx->cnf->ext.alpn_len = 0;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            OPENSSL_free(ctx->cnf->ext.alpn);
+            ctx->cnf->ext.alpn = NULL;
+            ctx->cnf->ext.alpn_len = 0;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         return 0;
     }
     /* Not valid per RFC */
@@ -3679,9 +3896,13 @@ int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
     alpn = OPENSSL_memdup(protos, protos_len);
     if (alpn == NULL)
         return 1;
-    OPENSSL_free(ctx->cnf->ext.alpn);
-    ctx->cnf->ext.alpn = alpn;
-    ctx->cnf->ext.alpn_len = protos_len;
+
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        OPENSSL_free(ctx->cnf->ext.alpn);
+        ctx->cnf->ext.alpn = alpn;
+        ctx->cnf->ext.alpn_len = protos_len;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 
     return 0;
 }
@@ -3729,8 +3950,11 @@ void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
                                 SSL_CTX_alpn_select_cb_func cb,
                                 void *arg)
 {
-    ctx->cnf->ext.alpn_select_cb = cb;
-    ctx->cnf->ext.alpn_select_cb_arg = arg;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->ext.alpn_select_cb = cb;
+        ctx->cnf->ext.alpn_select_cb_arg = arg;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 /*
@@ -3835,153 +4059,19 @@ SSL_CTX *SSL_CTX_dup(OSSL_LIB_CTX *libctx, SSL_CTX *source,
 {
     SSL_CTX *ret = NULL;
     int ok = 0;
+    int i = 0;
+    int rv = 0;
 
     if (source == NULL)
         goto exit;
 
     ret = SSL_CTX_new_ex(libctx, propq, meth);
     if (ret) {
-        if (meth != NULL)
-            ret->cnf->method = meth;
-        else
-            ret->cnf->method = source->cnf->method;
-        if (source->cnf->cipher_list) {
-            sk_SSL_CIPHER_free(ret->cnf->cipher_list);
-            ret->cnf->cipher_list = sk_SSL_CIPHER_dup(source->cnf->cipher_list);
-        }
-        if (source->cnf->cipher_list_by_id) {
-            sk_SSL_CIPHER_free(ret->cnf->cipher_list_by_id);
-            ret->cnf->cipher_list_by_id = sk_SSL_CIPHER_dup(source->cnf->cipher_list_by_id);
-        }
-        if (source->cnf->tls13_ciphersuites) {
-            sk_SSL_CIPHER_free(ret->cnf->tls13_ciphersuites);
-            ret->cnf->tls13_ciphersuites = sk_SSL_CIPHER_dup(source->cnf->tls13_ciphersuites);
-        }
-        SSL_CTX_set1_cert_store(ret, source->cnf->cert_store);
-        ret->cnf->session_cache_size = source->cnf->session_cache_size;
-        ret->cnf->session_timeout.t = source->cnf->session_timeout.t;
-        ret->cnf->session_cache_mode = source->cnf->session_cache_mode;
-        ret->cnf->new_session_cb = source->cnf->new_session_cb;
-        ret->cnf->remove_session_cb = source->cnf->remove_session_cb;
-        ret->cnf->get_session_cb = source->cnf->get_session_cb;
-        ret->cnf->app_verify_callback = source->cnf->app_verify_callback;
-        ret->cnf->app_verify_arg = source->cnf->app_verify_arg;
-        ret->cnf->default_passwd_callback = source->cnf->default_passwd_callback;
-        ret->cnf->default_passwd_callback_userdata = source->cnf->default_passwd_callback_userdata;
-        ret->cnf->client_cert_cb = source->cnf->client_cert_cb;
-        ret->cnf->app_gen_cookie_cb = source->cnf->app_gen_cookie_cb;
-        ret->cnf->app_verify_cookie_cb = source->cnf->app_verify_cookie_cb;
-        ret->cnf->gen_stateless_cookie_cb = source->cnf->gen_stateless_cookie_cb;
-        ret->cnf->verify_stateless_cookie_cb = source->cnf->verify_stateless_cookie_cb;
-        ret->cnf->ex_data.ctx = source->cnf->ex_data.ctx;
-        if (source->cnf->ex_data.sk != NULL) {
-            sk_void_free(ret->cnf->ex_data.sk);
-            ret->cnf->ex_data.sk = sk_void_dup(source->cnf->ex_data.sk);
-        }
-        if (source->cnf->extra_certs != NULL) {
-            sk_X509_free(ret->cnf->extra_certs);
-            ret->cnf->extra_certs = sk_X509_dup(source->cnf->extra_certs);
-        }
-        ret->cnf->info_callback = source->cnf->info_callback;
-        if (source->cnf->ca_names != NULL) {
-            sk_X509_NAME_free(ret->cnf->ca_names);
-            ret->cnf->ca_names = sk_X509_NAME_dup(source->cnf->ca_names);
-        }
-        if (source->cnf->client_ca_names != NULL) {
-            sk_X509_NAME_free(ret->cnf->client_ca_names);
-            ret->cnf->client_ca_names = sk_X509_NAME_dup(source->cnf->client_ca_names);
-        }
-        ret->cnf->options = source->cnf->options;
-        ret->cnf->mode = source->cnf->mode;
-        ret->cnf->min_proto_version = source->cnf->min_proto_version;
-        ret->cnf->max_proto_version = source->cnf->max_proto_version;
-        ret->cnf->max_cert_list = source->cnf->max_cert_list;
-        if (source->cnf->cert) {
-            ssl_cert_free(ret->cnf->cert);
-            ret->cnf->cert = ssl_cert_dup(source->cnf->cert);
-        }
-        ret->cnf->read_ahead = source->cnf->read_ahead;
-        ret->cnf->msg_callback = source->cnf->msg_callback;
-        ret->cnf->msg_callback_arg = source->cnf->msg_callback_arg;
-        ret->cnf->verify_mode = source->cnf->verify_mode;
-        ret->cnf->sid_ctx_length = source->cnf->sid_ctx_length;
-        memcpy(ret->cnf->sid_ctx, source->cnf->sid_ctx, sizeof(source->cnf->sid_ctx_length));
-        ret->cnf->default_verify_callback = source->cnf->default_verify_callback;
-        ret->cnf->generate_session_id = source->cnf->generate_session_id;
-        X509_VERIFY_PARAM_inherit(ret->cnf->param, source->cnf->param);
-        ret->cnf->quiet_shutdown = source->cnf->quiet_shutdown;
-# ifndef OPENSSL_NO_CT
-        ret->cnf->ct_validation_callback = source->cnf->ct_validation_callback;
-        ret->cnf->ct_validation_callback_arg = source->cnf->ct_validation_callback_arg;
-#endif
-        ret->cnf->split_send_fragment = source->cnf->split_send_fragment;
-        ret->cnf->max_send_fragment = source->cnf->max_send_fragment;
-        ret->cnf->max_pipelines = source->cnf->max_pipelines;
-        ret->cnf->default_read_buf_len = source->cnf->default_read_buf_len;
-#ifndef OPENSSL_NO_ENGINE
-        if (source->cnf->client_cert_engine) {
-            if (SSL_CTX_set_client_cert_engine(ret, source->cnf->client_cert_engine) == 0)
-                goto exit;
-        }
-#endif
-        ret->cnf->client_hello_cb = source->cnf->client_hello_cb;
-        ret->cnf->client_hello_cb_arg = source->cnf->client_hello_cb_arg;
+        ret->cnf = source->cnf;
+        rv = CRYPTO_UP_REF(&source->cnf->references, &i);
+        if (rv <= 0)
+          goto exit;
 
-        /* Duplicate ext structure */
-        ret->cnf->ext.servername_cb = source->cnf->ext.servername_cb;
-        ret->cnf->ext.servername_arg = source->cnf->ext.servername_arg;
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-        /* Callback to support customisation of ticket key setting */
-        ret->cnf->ext.ticket_key_cb = source->cnf->ext.ticket_key_cb;
-#endif
-        ret->cnf->ext.ticket_key_evp_cb = source->cnf->ext.ticket_key_evp_cb;
-        ret->cnf->ext.status_cb = source->cnf->ext.status_cb;
-        ret->cnf->ext.status_arg = source->cnf->ext.status_arg;
-        ret->cnf->ext.status_type = source->cnf->ext.status_type;
-        ret->cnf->ext.max_fragment_len_mode = source->cnf->ext.max_fragment_len_mode;
-        ret->cnf->ext.ecpointformats_len = source->cnf->ext.ecpointformats_len;
-        if (source->cnf->ext.ecpointformats != NULL) {
-            OPENSSL_free(ret->cnf->ext.ecpointformats);
-            ret->cnf->ext.ecpointformats = OPENSSL_memdup(source->cnf->ext.ecpointformats,
-                                                          source->cnf->ext.ecpointformats_len);
-        }
-        ret->cnf->ext.supportedgroups_len = source->cnf->ext.supportedgroups_len;
-        if (source->cnf->ext.supportedgroups != NULL) {
-            OPENSSL_free(ret->cnf->ext.supportedgroups);
-            ret->cnf->ext.supportedgroups = OPENSSL_memdup(source->cnf->ext.supportedgroups,
-                                                           source->cnf->ext.supportedgroups_len);
-        }
-        ret->cnf->ext.alpn_select_cb = source->cnf->ext.alpn_select_cb;
-        ret->cnf->ext.alpn_select_cb_arg = source->cnf->ext.alpn_select_cb_arg;
-        ok = SSL_CTX_set_alpn_protos(ret, source->cnf->ext.alpn, source->cnf->ext.alpn_len);
-# ifndef OPENSSL_NO_NEXTPROTONEG
-        ret->cnf->ext.npn_advertised_cb = source->cnf->ext.npn_advertised_cb;
-        ret->cnf->ext.npn_advertised_cb_arg = source->cnf->ext.npn_advertised_cb_arg;
-        ret->cnf->ext.npn_select_cb = source->cnf->ext.npn_select_cb;
-        ret->cnf->ext.npn_select_cb_arg = source->cnf->ext.npn_select_cb_arg;
-#endif
-# ifndef OPENSSL_NO_PSK
-        ret->cnf->psk_client_callback = source->cnf->psk_client_callback;
-        ret->cnf->psk_server_callback = source->cnf->psk_server_callback;
-# endif
-        ret->cnf->psk_find_session_cb = source->cnf->psk_find_session_cb;
-        ret->cnf->psk_use_session_cb = source->cnf->psk_use_session_cb;
-        ret->cnf->not_resumable_session_cb = source->cnf->not_resumable_session_cb;
-        ret->cnf->keylog_callback = source->cnf->keylog_callback;
-        ret->cnf->max_early_data = source->cnf->max_early_data;
-        ret->cnf->recv_max_early_data = source->cnf->recv_max_early_data;
-        ret->cnf->record_padding_cb = source->cnf->record_padding_cb;
-        ret->cnf->record_padding_arg = source->cnf->record_padding_arg;
-        ret->cnf->block_padding = source->cnf->block_padding;
-        ret->cnf->generate_ticket_cb = source->cnf->generate_ticket_cb;
-        ret->cnf->decrypt_ticket_cb = source->cnf->decrypt_ticket_cb;
-        ret->cnf->ticket_cb_data = source->cnf->ticket_cb_data;
-        ret->cnf->num_tickets = source->cnf->num_tickets;
-        ret->cnf->allow_early_data_cb = source->cnf->allow_early_data_cb;
-        ret->cnf->allow_early_data_cb_data = source->cnf->allow_early_data_cb_data;
-        ret->cnf->pha_enabled = source->cnf->pha_enabled;
-        ret->cnf->async_cb = source->cnf->async_cb;
-        ret->cnf->async_cb_arg = source->cnf->async_cb_arg;
         ok = 1;
     }
 exit:
@@ -4038,6 +4128,12 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     if (cnf == NULL)
         return NULL;
 
+    if (!CRYPTO_NEW_REF(&cnf->references, 1)) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
+    cnf->cnf_lock = CRYPTO_THREAD_lock_new();
     ret->cnf = cnf;
 
     ret->lock = CRYPTO_THREAD_lock_new();
@@ -4061,7 +4157,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
             goto err;
     }
 
-    ret->cnf->method = meth;
+    ret->method = meth;
     ret->cnf->min_proto_version = 0;
     ret->cnf->max_proto_version = 0;
     ret->cnf->mode = SSL_MODE_AUTO_RETRY;
@@ -4123,13 +4219,20 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     }
 
-    if (!ssl_create_cipher_list(ret,
-                                ret->cnf->tls13_ciphersuites,
-                                &ret->cnf->cipher_list, &ret->cnf->cipher_list_by_id,
-                                OSSL_default_cipher_list(), ret->cnf->cert)
-        || sk_SSL_CIPHER_num(ret->cnf->cipher_list) <= 0) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_LIBRARY_HAS_NO_CIPHERS);
-        goto err;
+    if (CRYPTO_THREAD_write_lock(ret->cnf->cnf_lock)) 
+    {
+        int ciph_list_cnt = 0;
+        STACK_OF(SSL_CIPHER) *sk_cipher = ssl_create_cipher_list(ret,
+                                                          ret->cnf->tls13_ciphersuites,
+                                                          &ret->cnf->cipher_list, &ret->cnf->cipher_list_by_id,
+                                                          OSSL_default_cipher_list(), ret->cnf->cert);
+        if (sk_cipher != NULL) 
+            ciph_list_cnt = sk_SSL_CIPHER_num(ret->cnf->cipher_list);
+        CRYPTO_THREAD_unlock(ret->cnf->cnf_lock);
+        if (!sk_cipher || ciph_list_cnt <= 0) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_LIBRARY_HAS_NO_CIPHERS);
+            goto err;
+        }
     }
 
     ret->cnf->param = X509_VERIFY_PARAM_new();
@@ -4282,9 +4385,11 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 
 int SSL_CTX_up_ref(SSL_CTX *ctx)
 {
-    int i;
+    int i, ii;
 
     if (CRYPTO_UP_REF(&ctx->references, &i) <= 0)
+        return 0;
+    if (CRYPTO_UP_REF(&ctx->cnf->references, &ii) <= 0)
         return 0;
 
     REF_PRINT_COUNT("SSL_CTX", ctx);
@@ -4292,9 +4397,37 @@ int SSL_CTX_up_ref(SSL_CTX *ctx)
     return ((i > 1) ? 1 : 0);
 }
 
+void ssl_ctx_cnf_free(SSL_CTX *a, int refcount)
+{
+    if (refcount == 0) {
+        sk_SSL_CIPHER_free(a->cnf->cipher_list);
+        sk_SSL_CIPHER_free(a->cnf->cipher_list_by_id);
+        sk_SSL_CIPHER_free(a->cnf->tls13_ciphersuites);
+        ssl_cert_free(a->cnf->cert);
+        sk_X509_NAME_pop_free(a->cnf->ca_names, X509_NAME_free);
+        sk_X509_NAME_pop_free(a->cnf->client_ca_names, X509_NAME_free);
+        OSSL_STACK_OF_X509_free(a->cnf->extra_certs);
+#ifndef OPENSSL_NO_ENGINE
+        tls_engine_finish(a->cnf->client_cert_engine);
+#endif
+        X509_STORE_free(a->cnf->cert_store);
+        OPENSSL_free(a->cnf->ext.ecpointformats);
+        OPENSSL_free(a->cnf->ext.supportedgroups);
+        OPENSSL_free(a->cnf->ext.supported_groups_default);
+        OPENSSL_free(a->cnf->ext.alpn);
+        OPENSSL_secure_free(a->cnf->ext.secure);
+        X509_VERIFY_PARAM_free(a->cnf->param);
+        CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, a, &a->cnf->ex_data);
+        CRYPTO_THREAD_lock_free(a->cnf->cnf_lock);
+        CRYPTO_FREE_REF(&a->cnf->references);
+        OPENSSL_free(a->cnf);
+        a->cnf = NULL;
+    }
+}
+
 void SSL_CTX_free(SSL_CTX *a)
 {
-    int i;
+    int i, ii;
     size_t j;
 
     if (a == NULL)
@@ -4302,11 +4435,12 @@ void SSL_CTX_free(SSL_CTX *a)
 
     CRYPTO_DOWN_REF(&a->references, &i);
     REF_PRINT_COUNT("SSL_CTX", a);
+    CRYPTO_DOWN_REF(&a->cnf->references, &ii);
+    REF_PRINT_COUNT("SSL_CTX_CNF", a->cnf);
+
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
-
-    X509_VERIFY_PARAM_free(a->cnf->param);
     dane_ctx_final(&a->dane);
 
     /*
@@ -4318,39 +4452,23 @@ void SSL_CTX_free(SSL_CTX *a)
      * free ex_data, then finally free the cache.
      * (See ticket [openssl.org #212].)
      */
+
     if (a->sessions != NULL)
         SSL_CTX_flush_sessions(a, 0);
 
-    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, a, &a->cnf->ex_data);
     lh_SSL_SESSION_free(a->sessions);
-    X509_STORE_free(a->cnf->cert_store);
+    ssl_ctx_cnf_free(a, ii);
 #ifndef OPENSSL_NO_CT
     CTLOG_STORE_free(a->ctlog_store);
 #endif
-    sk_SSL_CIPHER_free(a->cnf->cipher_list);
-    sk_SSL_CIPHER_free(a->cnf->cipher_list_by_id);
-    sk_SSL_CIPHER_free(a->cnf->tls13_ciphersuites);
-    ssl_cert_free(a->cnf->cert);
-    sk_X509_NAME_pop_free(a->cnf->ca_names, X509_NAME_free);
-    sk_X509_NAME_pop_free(a->cnf->client_ca_names, X509_NAME_free);
-    OSSL_STACK_OF_X509_free(a->cnf->extra_certs);
     a->comp_methods = NULL;
 #ifndef OPENSSL_NO_SRTP
     sk_SRTP_PROTECTION_PROFILE_free(a->srtp_profiles);
 #endif
+
 #ifndef OPENSSL_NO_SRP
     ssl_ctx_srp_ctx_free_intern(a);
 #endif
-#ifndef OPENSSL_NO_ENGINE
-    tls_engine_finish(a->cnf->client_cert_engine);
-#endif
-
-    OPENSSL_free(a->cnf->ext.ecpointformats);
-    OPENSSL_free(a->cnf->ext.supportedgroups);
-    OPENSSL_free(a->cnf->ext.supported_groups_default);
-    OPENSSL_free(a->cnf->ext.alpn);
-    OPENSSL_secure_free(a->cnf->ext.secure);
-
     ssl_evp_md_free(a->md5);
     ssl_evp_md_free(a->sha1);
 
@@ -4389,7 +4507,6 @@ void SSL_CTX_free(SSL_CTX *a)
 #ifdef TSAN_REQUIRES_LOCKING
     CRYPTO_THREAD_lock_free(a->tsan_lock);
 #endif
-    OPENSSL_free(a->cnf);
     OPENSSL_free(a->propq);
 
     OPENSSL_free(a);
@@ -4397,22 +4514,42 @@ void SSL_CTX_free(SSL_CTX *a)
 
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb)
 {
-    ctx->cnf->default_passwd_callback = cb;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->default_passwd_callback = cb;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u)
 {
-    ctx->cnf->default_passwd_callback_userdata = u;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->default_passwd_callback_userdata = u;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 pem_password_cb *SSL_CTX_get_default_passwd_cb(SSL_CTX *ctx)
 {
-    return ctx->cnf->default_passwd_callback;
+    pem_password_cb *ret = NULL;
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->default_passwd_callback;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 void *SSL_CTX_get_default_passwd_cb_userdata(SSL_CTX *ctx)
 {
-    return ctx->cnf->default_passwd_callback_userdata;
+    void *ret = NULL;
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->default_passwd_callback_userdata;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 void SSL_set_default_passwd_cb(SSL *s, pem_password_cb *cb)
@@ -4459,25 +4596,37 @@ void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx,
                                       int (*cb) (X509_STORE_CTX *, void *),
                                       void *arg)
 {
-    ctx->cnf->app_verify_callback = cb;
-    ctx->cnf->app_verify_arg = arg;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->app_verify_callback = cb;
+        ctx->cnf->app_verify_arg = arg;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 void SSL_CTX_set_verify(SSL_CTX *ctx, int mode,
                         int (*cb) (int, X509_STORE_CTX *))
 {
-    ctx->cnf->verify_mode = mode;
-    ctx->cnf->default_verify_callback = cb;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->verify_mode = mode;
+        ctx->cnf->default_verify_callback = cb;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 void SSL_CTX_set_verify_depth(SSL_CTX *ctx, int depth)
 {
-    X509_VERIFY_PARAM_set_depth(ctx->cnf->param, depth);
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        X509_VERIFY_PARAM_set_depth(ctx->cnf->param, depth);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 void SSL_CTX_set_cert_cb(SSL_CTX *c, int (*cb) (SSL *ssl, void *arg), void *arg)
 {
-    ssl_cert_set_cert_cb(c->cnf->cert, cb, arg);
+    if (CRYPTO_THREAD_read_lock(c->cnf->cnf_lock)) {
+        ssl_cert_set_cert_cb(c->cnf->cert, cb, arg);
+        CRYPTO_THREAD_unlock(c->cnf->cnf_lock);
+    }
 }
 
 void SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg)
@@ -4663,7 +4812,10 @@ void ssl_update_cache(SSL_CONNECTION *s, int mode)
             && (s->verify_mode & SSL_VERIFY_PEER) != 0)
         return;
 
-    i = s->session_ctx->cnf->session_cache_mode;
+    if (CRYPTO_THREAD_read_lock(s->session_ctx->cnf->cnf_lock)) {
+        i = s->session_ctx->cnf->session_cache_mode;
+        CRYPTO_THREAD_unlock(s->session_ctx->cnf->cnf_lock);
+    }
     if ((i & mode) != 0
         && (!s->hit || SSL_CONNECTION_IS_TLS13(s))) {
         /*
@@ -4677,25 +4829,28 @@ void ssl_update_cache(SSL_CONNECTION *s, int mode)
          *   session timeout events
          * - SSL_OP_NO_TICKET is set in which case it is a stateful ticket
          */
-        if ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE) == 0
-                && (!SSL_CONNECTION_IS_TLS13(s)
-                    || !s->server
-                    || (s->max_early_data > 0
-                        && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0)
-                    || s->session_ctx->cnf->remove_session_cb != NULL
-                    || (s->options & SSL_OP_NO_TICKET) != 0))
-            SSL_CTX_add_session(s->session_ctx, s->session);
+        if (CRYPTO_THREAD_read_lock(s->session_ctx->cnf->cnf_lock)) {
+            if ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE) == 0
+                    && (!SSL_CONNECTION_IS_TLS13(s)
+                        || !s->server
+                        || (s->max_early_data > 0
+                            && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0)
+                        || s->session_ctx->cnf->remove_session_cb != NULL
+                        || (s->options & SSL_OP_NO_TICKET) != 0))
+                SSL_CTX_add_session(s->session_ctx, s->session);
 
-        /*
+            /*
          * Add the session to the external cache. We do this even in server side
          * TLSv1.3 without early data because some applications just want to
          * know about the creation of a session and aren't doing a full cache.
          */
-        if (s->session_ctx->cnf->new_session_cb != NULL) {
-            SSL_SESSION_up_ref(s->session);
-            if (!s->session_ctx->cnf->new_session_cb(SSL_CONNECTION_GET_SSL(s),
-                                                s->session))
-                SSL_SESSION_free(s->session);
+            if (s->session_ctx->cnf->new_session_cb != NULL) {
+                SSL_SESSION_up_ref(s->session);
+                if (!s->session_ctx->cnf->new_session_cb(SSL_CONNECTION_GET_SSL(s),
+                                                         s->session))
+                    SSL_SESSION_free(s->session);
+            }
+            CRYPTO_THREAD_unlock(s->session_ctx->cnf->cnf_lock);
         }
     }
 
@@ -4714,7 +4869,7 @@ void ssl_update_cache(SSL_CONNECTION *s, int mode)
 
 const SSL_METHOD *SSL_CTX_get_ssl_method(const SSL_CTX *ctx)
 {
-    return ctx->cnf->method;
+    return ctx->method;
 }
 
 const SSL_METHOD *SSL_get_ssl_method(const SSL *s)
@@ -5204,18 +5359,28 @@ EVP_PKEY *SSL_get_privatekey(const SSL *s)
 
 X509 *SSL_CTX_get0_certificate(const SSL_CTX *ctx)
 {
-    if (ctx->cnf->cert != NULL)
-        return ctx->cnf->cert->key->x509;
-    else
-        return NULL;
+    X509 *ret = NULL;
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        if (ctx->cnf->cert != NULL)
+            ret = ctx->cnf->cert->key->x509;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 EVP_PKEY *SSL_CTX_get0_privatekey(const SSL_CTX *ctx)
 {
-    if (ctx->cnf->cert != NULL)
-        return ctx->cnf->cert->key->privatekey;
-    else
-        return NULL;
+    EVP_PKEY *ret = NULL;
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        if (ctx->cnf->cert != NULL)
+            ret = ctx->cnf->cert->key->privatekey;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 const SSL_CIPHER *SSL_get_current_cipher(const SSL *s)
@@ -5308,12 +5473,22 @@ int ssl_free_wbio_buffer(SSL_CONNECTION *s)
 
 void SSL_CTX_set_quiet_shutdown(SSL_CTX *ctx, int mode)
 {
-    ctx->cnf->quiet_shutdown = mode;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->quiet_shutdown = mode;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 int SSL_CTX_get_quiet_shutdown(const SSL_CTX *ctx)
 {
-    return ctx->cnf->quiet_shutdown;
+    int ret = 0;
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->quiet_shutdown;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 void SSL_set_quiet_shutdown(SSL *s, int mode)
@@ -5413,7 +5588,12 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
         return ssl->ctx;
     if (ctx == NULL)
         ctx = sc->session_ctx;
-    new_cert = ssl_cert_dup(ctx->cnf->cert);
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        new_cert = ssl_cert_dup(ctx->cnf->cert);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
     if (new_cert == NULL) {
         return NULL;
     }
@@ -5439,11 +5619,14 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
      * not match (i.e., it was set per-ssl with SSL_set_session_id_context),
      * leave it unchanged.
      */
-    if ((ssl->ctx != NULL) &&
-        (sc->sid_ctx_length == ssl->ctx->cnf->sid_ctx_length) &&
-        (memcmp(sc->sid_ctx, ssl->ctx->cnf->sid_ctx, sc->sid_ctx_length) == 0)) {
-        sc->sid_ctx_length = ctx->cnf->sid_ctx_length;
-        memcpy(&sc->sid_ctx, &ctx->cnf->sid_ctx, sizeof(sc->sid_ctx));
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        if ((ssl->ctx != NULL) &&
+                (sc->sid_ctx_length == ssl->ctx->cnf->sid_ctx_length) &&
+                (memcmp(sc->sid_ctx, ssl->ctx->cnf->sid_ctx, sc->sid_ctx_length) == 0)) {
+            sc->sid_ctx_length = ctx->cnf->sid_ctx_length;
+            memcpy(&sc->sid_ctx, &ctx->cnf->sid_ctx, sizeof(sc->sid_ctx));
+        }
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
     }
 
     SSL_CTX_up_ref(ctx);
@@ -5455,15 +5638,24 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
 
 int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx)
 {
-    return X509_STORE_set_default_paths_ex(ctx->cnf->cert_store, ctx->libctx,
-                                           ctx->propq);
+    int ret = 0;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = X509_STORE_set_default_paths_ex(ctx->cnf->cert_store, ctx->libctx,
+                                               ctx->propq);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return ret;
 }
 
 int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx)
 {
     X509_LOOKUP *lookup;
 
-    lookup = X509_STORE_add_lookup(ctx->cnf->cert_store, X509_LOOKUP_hash_dir());
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        lookup = X509_STORE_add_lookup(ctx->cnf->cert_store, X509_LOOKUP_hash_dir());
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
     if (lookup == NULL)
         return 0;
 
@@ -5481,7 +5673,11 @@ int SSL_CTX_set_default_verify_file(SSL_CTX *ctx)
 {
     X509_LOOKUP *lookup;
 
-    lookup = X509_STORE_add_lookup(ctx->cnf->cert_store, X509_LOOKUP_file());
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        lookup = X509_STORE_add_lookup(ctx->cnf->cert_store, X509_LOOKUP_file());
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
     if (lookup == NULL)
         return 0;
 
@@ -5500,7 +5696,11 @@ int SSL_CTX_set_default_verify_store(SSL_CTX *ctx)
 {
     X509_LOOKUP *lookup;
 
-    lookup = X509_STORE_add_lookup(ctx->cnf->cert_store, X509_LOOKUP_store());
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        lookup = X509_STORE_add_lookup(ctx->cnf->cert_store, X509_LOOKUP_store());
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
     if (lookup == NULL)
         return 0;
 
@@ -5516,19 +5716,34 @@ int SSL_CTX_set_default_verify_store(SSL_CTX *ctx)
 
 int SSL_CTX_load_verify_file(SSL_CTX *ctx, const char *CAfile)
 {
-    return X509_STORE_load_file_ex(ctx->cnf->cert_store, CAfile, ctx->libctx,
-                                   ctx->propq);
+    int ret = 0;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = X509_STORE_load_file_ex(ctx->cnf->cert_store, CAfile, ctx->libctx,
+                                      ctx->propq);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return ret;
 }
 
 int SSL_CTX_load_verify_dir(SSL_CTX *ctx, const char *CApath)
 {
-    return X509_STORE_load_path(ctx->cnf->cert_store, CApath);
+    int ret = 0;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = X509_STORE_load_path(ctx->cnf->cert_store, CApath);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return ret;
 }
 
 int SSL_CTX_load_verify_store(SSL_CTX *ctx, const char *CAstore)
 {
-    return X509_STORE_load_store_ex(ctx->cnf->cert_store, CAstore, ctx->libctx,
-                                    ctx->propq);
+    int ret = 0;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = X509_STORE_load_store_ex(ctx->cnf->cert_store, CAstore, ctx->libctx,
+                                       ctx->propq);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return ret;
 }
 
 int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
@@ -5654,23 +5869,45 @@ void *SSL_get_ex_data(const SSL *s, int idx)
 
 int SSL_CTX_set_ex_data(SSL_CTX *s, int idx, void *arg)
 {
-    return CRYPTO_set_ex_data(&s->cnf->ex_data, idx, arg);
+    int ret = 0;
+
+    if (CRYPTO_THREAD_write_lock(s->cnf->cnf_lock)) {
+        ret = CRYPTO_set_ex_data(&s->cnf->ex_data, idx, arg);
+        CRYPTO_THREAD_unlock(s->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 void *SSL_CTX_get_ex_data(const SSL_CTX *s, int idx)
 {
-    return CRYPTO_get_ex_data(&s->cnf->ex_data, idx);
+    void *ret = NULL;
+
+    if (CRYPTO_THREAD_write_lock(s->cnf->cnf_lock)) {
+        ret = CRYPTO_get_ex_data(&s->cnf->ex_data, idx);
+        CRYPTO_THREAD_unlock(s->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 X509_STORE *SSL_CTX_get_cert_store(const SSL_CTX *ctx)
 {
-    return ctx->cnf->cert_store;
+    X509_STORE *ret = NULL;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->cert_store;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return ret;
 }
 
 void SSL_CTX_set_cert_store(SSL_CTX *ctx, X509_STORE *store)
 {
-    X509_STORE_free(ctx->cnf->cert_store);
-    ctx->cnf->cert_store = store;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        X509_STORE_free(ctx->cnf->cert_store);
+        ctx->cnf->cert_store = store;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 void SSL_CTX_set1_cert_store(SSL_CTX *ctx, X509_STORE *store)
@@ -5698,18 +5935,24 @@ int SSL_want(const SSL *s)
 #ifndef OPENSSL_NO_PSK
 int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint)
 {
+    int ret = 0;
     if (identity_hint != NULL && strlen(identity_hint) > PSK_MAX_IDENTITY_LEN) {
         ERR_raise(ERR_LIB_SSL, SSL_R_DATA_LENGTH_TOO_LONG);
         return 0;
     }
     OPENSSL_free(ctx->cnf->cert->psk_identity_hint);
-    if (identity_hint != NULL) {
-        ctx->cnf->cert->psk_identity_hint = OPENSSL_strdup(identity_hint);
-        if (ctx->cnf->cert->psk_identity_hint == NULL)
-            return 0;
-    } else
-        ctx->cnf->cert->psk_identity_hint = NULL;
-    return 1;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        if (identity_hint != NULL) {
+            ctx->cnf->cert->psk_identity_hint = OPENSSL_strdup(identity_hint);
+            if (ctx->cnf->cert->psk_identity_hint == NULL)
+                ret = 0;
+        } else
+            ctx->cnf->cert->psk_identity_hint = NULL;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    ret = 1;
+    return ret;
 }
 
 int SSL_use_psk_identity_hint(SSL *s, const char *identity_hint)
@@ -5765,7 +6008,10 @@ void SSL_set_psk_client_callback(SSL *s, SSL_psk_client_cb_func cb)
 
 void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx, SSL_psk_client_cb_func cb)
 {
-    ctx->cnf->psk_client_callback = cb;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->psk_client_callback = cb;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 void SSL_set_psk_server_callback(SSL *s, SSL_psk_server_cb_func cb)
@@ -5780,7 +6026,10 @@ void SSL_set_psk_server_callback(SSL *s, SSL_psk_server_cb_func cb)
 
 void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx, SSL_psk_server_cb_func cb)
 {
-    ctx->cnf->psk_server_callback = cb;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->psk_server_callback = cb;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 #endif
 
@@ -5797,7 +6046,10 @@ void SSL_set_psk_find_session_callback(SSL *s, SSL_psk_find_session_cb_func cb)
 void SSL_CTX_set_psk_find_session_callback(SSL_CTX *ctx,
                                            SSL_psk_find_session_cb_func cb)
 {
-    ctx->cnf->psk_find_session_cb = cb;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->psk_find_session_cb = cb;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 void SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb)
@@ -5813,7 +6065,10 @@ void SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb)
 void SSL_CTX_set_psk_use_session_callback(SSL_CTX *ctx,
                                            SSL_psk_use_session_cb_func cb)
 {
-    ctx->cnf->psk_use_session_cb = cb;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->psk_use_session_cb = cb;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 void SSL_CTX_set_msg_callback(SSL_CTX *ctx,
@@ -5853,32 +6108,50 @@ void SSL_CTX_set_record_padding_callback(SSL_CTX *ctx,
                                          size_t (*cb) (SSL *ssl, int type,
                                                        size_t len, void *arg))
 {
-    ctx->cnf->record_padding_cb = cb;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->record_padding_cb = cb;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 void SSL_CTX_set_record_padding_callback_arg(SSL_CTX *ctx, void *arg)
 {
-    ctx->cnf->record_padding_arg = arg;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->record_padding_arg = arg;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 void *SSL_CTX_get_record_padding_callback_arg(const SSL_CTX *ctx)
 {
-    return ctx->cnf->record_padding_arg;
+    void *ret = NULL;
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->record_padding_arg;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 int SSL_CTX_set_block_padding(SSL_CTX *ctx, size_t block_size)
 {
+    int ret = 1;
+
     if (IS_QUIC_CTX(ctx) && block_size > 1)
         return 0;
 
     /* block size of 0 or 1 is basically no padding */
-    if (block_size == 1)
-        ctx->cnf->block_padding = 0;
-    else if (block_size <= SSL3_RT_MAX_PLAIN_LENGTH)
-        ctx->cnf->block_padding = block_size;
-    else
-        return 0;
-    return 1;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        if (block_size == 1)
+            ctx->cnf->block_padding = 0;
+        else if (block_size <= SSL3_RT_MAX_PLAIN_LENGTH)
+            ctx->cnf->block_padding = block_size;
+        else
+            ret = 0;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return ret;
 }
 
 int SSL_set_record_padding_callback(SSL *ssl,
@@ -5960,14 +6233,23 @@ size_t SSL_get_num_tickets(const SSL *s)
 
 int SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets)
 {
-    ctx->cnf->num_tickets = num_tickets;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->num_tickets = num_tickets;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 
     return 1;
 }
 
 size_t SSL_CTX_get_num_tickets(const SSL_CTX *ctx)
 {
-    return ctx->cnf->num_tickets;
+    size_t ret = 0;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->num_tickets;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 /* Retrieve handshake hashes */
@@ -6101,12 +6383,20 @@ void *SSL_get0_security_ex_data(const SSL *s)
 
 void SSL_CTX_set_security_level(SSL_CTX *ctx, int level)
 {
-    ctx->cnf->cert->sec_level = level;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->cert->sec_level = level;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 int SSL_CTX_get_security_level(const SSL_CTX *ctx)
 {
-    return ctx->cnf->cert->sec_level;
+    int ret = 0;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->cert->sec_level;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return ret;
 }
 
 void SSL_CTX_set_security_callback(SSL_CTX *ctx,
@@ -6114,7 +6404,10 @@ void SSL_CTX_set_security_callback(SSL_CTX *ctx,
                                               int op, int bits, int nid,
                                               void *other, void *ex))
 {
-    ctx->cnf->cert->sec_cb = cb;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->cert->sec_cb = cb;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 int (*SSL_CTX_get_security_callback(const SSL_CTX *ctx)) (const SSL *s,
@@ -6123,22 +6416,43 @@ int (*SSL_CTX_get_security_callback(const SSL_CTX *ctx)) (const SSL *s,
                                                           int nid,
                                                           void *other,
                                                           void *ex) {
-    return ctx->cnf->cert->sec_cb;
+    int (*ret) (const SSL *s, const SSL_CTX *ctx, int op, int bits, int nid,
+                   void *other, void *ex);
+    ret = NULL;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->cert->sec_cb;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return ret;
 }
 
 void SSL_CTX_set0_security_ex_data(SSL_CTX *ctx, void *ex)
 {
-    ctx->cnf->cert->sec_ex = ex;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->cert->sec_ex = ex;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx)
 {
-    return ctx->cnf->cert->sec_ex;
+    void *ret = NULL;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->cert->sec_ex;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 uint64_t SSL_CTX_get_options(const SSL_CTX *ctx)
 {
-    return ctx->cnf->options;
+    uint64_t ret = 0;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->options;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return ret;
 }
 
 uint64_t SSL_get_options(const SSL *s)
@@ -6158,7 +6472,12 @@ uint64_t SSL_get_options(const SSL *s)
 
 uint64_t SSL_CTX_set_options(SSL_CTX *ctx, uint64_t op)
 {
-    return ctx->cnf->options |= op;
+    uint64_t ret = 0;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->options |= op;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return ret;
 }
 
 uint64_t SSL_set_options(SSL *s, uint64_t op)
@@ -6189,7 +6508,12 @@ uint64_t SSL_set_options(SSL *s, uint64_t op)
 
 uint64_t SSL_CTX_clear_options(SSL_CTX *ctx, uint64_t op)
 {
-    return ctx->cnf->options &= ~op;
+    uint64_t ret = 0;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->options &= ~op;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return ret;
 }
 
 uint64_t SSL_clear_options(SSL *s, uint64_t op)
@@ -6450,8 +6774,11 @@ int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx,
         return 0;
     }
 
-    ctx->cnf->ct_validation_callback = callback;
-    ctx->cnf->ct_validation_callback_arg = arg;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->ct_validation_callback = callback;
+        ctx->cnf->ct_validation_callback_arg = arg;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
     return 1;
 }
 
@@ -6467,7 +6794,12 @@ int SSL_ct_is_enabled(const SSL *s)
 
 int SSL_CTX_ct_is_enabled(const SSL_CTX *ctx)
 {
-    return ctx->cnf->ct_validation_callback != NULL;
+    int ret = 0;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->ct_validation_callback != NULL;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return ret;
 }
 
 int ssl_validate_ct(SSL_CONNECTION *s)
@@ -6623,8 +6955,11 @@ const CTLOG_STORE *SSL_CTX_get0_ctlog_store(const SSL_CTX *ctx)
 void SSL_CTX_set_client_hello_cb(SSL_CTX *c, SSL_client_hello_cb_fn cb,
                                  void *arg)
 {
-    c->cnf->client_hello_cb = cb;
-    c->cnf->client_hello_cb_arg = arg;
+    if (CRYPTO_THREAD_write_lock(c->cnf->cnf_lock)) {
+        c->cnf->client_hello_cb = cb;
+        c->cnf->client_hello_cb_arg = arg;
+        CRYPTO_THREAD_unlock(c->cnf->cnf_lock);
+    }
 }
 
 int SSL_client_hello_isv2(SSL *s)
@@ -6844,12 +7179,20 @@ int SSL_alloc_buffers(SSL *ssl)
 
 void SSL_CTX_set_keylog_callback(SSL_CTX *ctx, SSL_CTX_keylog_cb_func cb)
 {
-    ctx->cnf->keylog_callback = cb;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->keylog_callback = cb;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 SSL_CTX_keylog_cb_func SSL_CTX_get_keylog_callback(const SSL_CTX *ctx)
 {
-    return ctx->cnf->keylog_callback;
+    SSL_CTX_keylog_cb_func ret = NULL;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->keylog_callback;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return ret;
 }
 
 static int nss_keylog_int(const char *prefix,
@@ -6865,8 +7208,14 @@ static int nss_keylog_int(const char *prefix,
     size_t i;
     size_t prefix_len;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(sc);
+    int rv = 0;
 
-    if (sctx->cnf->keylog_callback == NULL)
+    if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+        if (sctx->cnf->keylog_callback == NULL)
+            rv = 1;
+        CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+    }
+    if (rv)
         return 1;
 
     /*
@@ -6898,7 +7247,10 @@ static int nss_keylog_int(const char *prefix,
     }
     *cursor = '\0';
 
-    sctx->cnf->keylog_callback(SSL_CONNECTION_GET_SSL(sc), (const char *)out);
+    if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+        sctx->cnf->keylog_callback(SSL_CONNECTION_GET_SSL(sc), (const char *)out);
+        CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+    }
     OPENSSL_clear_free(out, out_len);
     return 1;
 
@@ -7107,14 +7459,23 @@ int ossl_bytes_to_cipher_list(SSL_CONNECTION *s, PACKET *cipher_suites,
 
 int SSL_CTX_set_max_early_data(SSL_CTX *ctx, uint32_t max_early_data)
 {
-    ctx->cnf->max_early_data = max_early_data;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->max_early_data = max_early_data;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 
     return 1;
 }
 
 uint32_t SSL_CTX_get_max_early_data(const SSL_CTX *ctx)
 {
-    return ctx->cnf->max_early_data;
+    uint32_t ret = 0;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->max_early_data;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 int SSL_set_max_early_data(SSL *s, uint32_t max_early_data)
@@ -7141,14 +7502,23 @@ uint32_t SSL_get_max_early_data(const SSL *s)
 
 int SSL_CTX_set_recv_max_early_data(SSL_CTX *ctx, uint32_t recv_max_early_data)
 {
-    ctx->cnf->recv_max_early_data = recv_max_early_data;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->recv_max_early_data = recv_max_early_data;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 
     return 1;
 }
 
 uint32_t SSL_CTX_get_recv_max_early_data(const SSL_CTX *ctx)
 {
-    return ctx->cnf->recv_max_early_data;
+    uint32_t ret = 0;
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ret = ctx->cnf->recv_max_early_data;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+
+    return ret;
 }
 
 int SSL_set_recv_max_early_data(SSL *s, uint32_t recv_max_early_data)
@@ -7227,7 +7597,10 @@ int SSL_stateless(SSL *s)
 
 void SSL_CTX_set_post_handshake_auth(SSL_CTX *ctx, int val)
 {
-    ctx->cnf->pha_enabled = val;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->pha_enabled = val;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 void SSL_set_post_handshake_auth(SSL *ssl, int val)
@@ -7304,9 +7677,12 @@ int SSL_CTX_set_session_ticket_cb(SSL_CTX *ctx,
                                   SSL_CTX_decrypt_session_ticket_fn dec_cb,
                                   void *arg)
 {
-    ctx->cnf->generate_ticket_cb = gen_cb;
-    ctx->cnf->decrypt_ticket_cb = dec_cb;
-    ctx->cnf->ticket_cb_data = arg;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->generate_ticket_cb = gen_cb;
+        ctx->cnf->decrypt_ticket_cb = dec_cb;
+        ctx->cnf->ticket_cb_data = arg;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
     return 1;
 }
 
@@ -7314,8 +7690,11 @@ void SSL_CTX_set_allow_early_data_cb(SSL_CTX *ctx,
                                      SSL_allow_early_data_cb_fn cb,
                                      void *arg)
 {
-    ctx->cnf->allow_early_data_cb = cb;
-    ctx->cnf->allow_early_data_cb_data = arg;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->allow_early_data_cb = cb;
+        ctx->cnf->allow_early_data_cb_data = arg;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 }
 
 void SSL_set_allow_early_data_cb(SSL *s,
@@ -7447,8 +7826,11 @@ int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey)
         ERR_raise(ERR_LIB_SSL, SSL_R_DH_KEY_TOO_SMALL);
         return 0;
     }
-    EVP_PKEY_free(ctx->cnf->cert->dh_tmp);
-    ctx->cnf->cert->dh_tmp = dhpkey;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        EVP_PKEY_free(ctx->cnf->cert->dh_tmp);
+        ctx->cnf->cert->dh_tmp = dhpkey;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
     return 1;
 }
 

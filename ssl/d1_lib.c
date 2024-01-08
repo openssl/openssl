@@ -629,13 +629,18 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             /*
              * We have a cookie, so lets check it.
              */
-            if (ssl->ctx->cnf->app_verify_cookie_cb == NULL) {
+            APP_VERIFY_COOKIE_CB verify_cookie_cb = NULL;
+            if (CRYPTO_THREAD_read_lock(ssl->ctx->cnf->cnf_lock)) {
+                verify_cookie_cb = ssl->ctx->cnf->app_verify_cookie_cb;
+                CRYPTO_THREAD_unlock(ssl->ctx->cnf->cnf_lock);
+            }
+            if (verify_cookie_cb == NULL) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_NO_VERIFY_COOKIE_CALLBACK);
                 /* This is fatal */
                 ret = -1;
                 goto end;
             }
-            if (ssl->ctx->cnf->app_verify_cookie_cb(ssl, PACKET_data(&cookiepkt),
+            if (verify_cookie_cb(ssl, PACKET_data(&cookiepkt),
                     (unsigned int)PACKET_remaining(&cookiepkt)) == 0) {
                 /*
                  * We treat invalid cookies in the same was as no cookie as
@@ -652,16 +657,20 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             WPACKET wpkt;
             unsigned int version;
             size_t wreclen;
-
+            APP_GEN_COOKIE_CB gen_cookie_cb = NULL;
             /*
              * There was no cookie in the ClientHello so we need to send a
              * HelloVerifyRequest. If this fails we do not worry about trying
              * to resend, we just drop it.
              */
+            if (CRYPTO_THREAD_read_lock(ssl->ctx->cnf->cnf_lock)) {
+                gen_cookie_cb = ssl->ctx->cnf->app_gen_cookie_cb;
+                CRYPTO_THREAD_unlock(ssl->ctx->cnf->cnf_lock);
+            }
 
             /* Generate the cookie */
-            if (ssl->ctx->cnf->app_gen_cookie_cb == NULL ||
-                ssl->ctx->cnf->app_gen_cookie_cb(ssl, cookie, &cookielen) == 0 ||
+            if (gen_cookie_cb == NULL ||
+                gen_cookie_cb(ssl, cookie, &cookielen) == 0 ||
                 cookielen > 255) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
                 /* This is fatal */

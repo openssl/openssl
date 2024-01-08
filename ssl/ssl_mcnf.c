@@ -56,7 +56,7 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
         SSL_CONF_CTX_set_ssl(cctx, s);
         libctx = s->ctx->libctx;
     } else {
-        meth = ctx->cnf->method;
+        meth = ctx->method;
         SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
         libctx = ctx->libctx;
     }

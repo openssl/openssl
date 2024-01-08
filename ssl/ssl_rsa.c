@@ -228,7 +228,7 @@ int SSL_use_PrivateKey_ASN1(int type, SSL *ssl, const unsigned char *d,
 
 int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
 {
-    int rv;
+    int rv = 0;
     if (x == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
@@ -239,7 +239,12 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
         ERR_raise(ERR_LIB_SSL, rv);
         return 0;
     }
-    return ssl_set_cert(ctx->cnf->cert, x, ctx);
+
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        rv = ssl_set_cert(ctx->cnf->cert, x, ctx);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return rv;
 }
 
 static int ssl_set_cert(CERT *c, X509 *x, SSL_CTX *ctx)
@@ -321,8 +326,11 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
         cert = d2i_X509_bio(in, &x);
     } else if (type == SSL_FILETYPE_PEM) {
         j = ERR_R_PEM_LIB;
-        cert = PEM_read_bio_X509(in, &x, ctx->cnf->default_passwd_callback,
-                                 ctx->cnf->default_passwd_callback_userdata);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            cert = PEM_read_bio_X509(in, &x, ctx->cnf->default_passwd_callback,
+                                     ctx->cnf->default_passwd_callback_userdata);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
     } else {
         ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
         goto end;
@@ -363,11 +371,16 @@ int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, const unsigned char *d)
 
 int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
 {
+    int rv = 0;
     if (pkey == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    return ssl_set_pkey(ctx->cnf->cert, pkey, ctx);
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        rv = ssl_set_pkey(ctx->cnf->cert, pkey, ctx);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
+    return rv;
 }
 
 int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
@@ -388,10 +401,13 @@ int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
     }
     if (type == SSL_FILETYPE_PEM) {
         j = ERR_R_PEM_LIB;
-        pkey = PEM_read_bio_PrivateKey_ex(in, NULL,
-                                       ctx->cnf->default_passwd_callback,
-                                       ctx->cnf->default_passwd_callback_userdata,
-                                       ctx->libctx, ctx->propq);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            pkey = PEM_read_bio_PrivateKey_ex(in, NULL,
+                                              ctx->cnf->default_passwd_callback,
+                                              ctx->cnf->default_passwd_callback_userdata,
+                                              ctx->libctx, ctx->propq);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
     } else if (type == SSL_FILETYPE_ASN1) {
         j = ERR_R_ASN1_LIB;
         pkey = d2i_PrivateKey_ex_bio(in, NULL, ctx->libctx, ctx->propq);
@@ -450,8 +466,11 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
                                  * SSL_CTX_use_certificate() */
 
     if (ctx != NULL) {
-        passwd_callback = ctx->cnf->default_passwd_callback;
-        passwd_callback_userdata = ctx->cnf->default_passwd_callback_userdata;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            passwd_callback = ctx->cnf->default_passwd_callback;
+            passwd_callback_userdata = ctx->cnf->default_passwd_callback_userdata;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
     } else {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
@@ -798,17 +817,30 @@ int SSL_CTX_use_serverinfo_ex(SSL_CTX *ctx, unsigned int version,
         ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_SERVERINFO_DATA);
         return 0;
     }
-    if (ctx->cnf->cert->key == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        return 0;
+
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        if (ctx->cnf->cert->key == NULL) {
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
     }
-    new_serverinfo = OPENSSL_realloc(ctx->cnf->cert->key->serverinfo,
-                                     serverinfo_length);
+
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        new_serverinfo = OPENSSL_realloc(ctx->cnf->cert->key->serverinfo,
+                                         serverinfo_length);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
     if (new_serverinfo == NULL)
         return 0;
-    ctx->cnf->cert->key->serverinfo = new_serverinfo;
-    memcpy(ctx->cnf->cert->key->serverinfo, serverinfo, serverinfo_length);
-    ctx->cnf->cert->key->serverinfo_length = serverinfo_length;
+
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->cert->key->serverinfo = new_serverinfo;
+        memcpy(ctx->cnf->cert->key->serverinfo, serverinfo, serverinfo_length);
+        ctx->cnf->cert->key->serverinfo_length = serverinfo_length;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 
     /*
      * Now that the serverinfo is validated and stored, go ahead and
@@ -958,7 +990,14 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
         (sc = SSL_CONNECTION_FROM_SSL(ssl)) == NULL)
         return 0;
 
-    c = sc != NULL ? sc->cert : ctx->cnf->cert;
+    if (sc != NULL)
+        c = sc->cert;
+    else {
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            c = ctx->cnf->cert;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+    }
     /* Do all security checks before anything else */
     rv = ssl_security_cert(sc, ctx, x509, 0, 1);
     if (rv != 1) {

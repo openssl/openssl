@@ -997,12 +997,15 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
         return 0;
     }
 
-    if (sctx->cnf->ext.servername_cb != NULL)
-        ret = sctx->cnf->ext.servername_cb(ssl, &altmp,
-                                      sctx->cnf->ext.servername_arg);
-    else if (s->session_ctx->cnf->ext.servername_cb != NULL)
-        ret = s->session_ctx->cnf->ext.servername_cb(ssl, &altmp,
-                                       s->session_ctx->cnf->ext.servername_arg);
+    if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+        if (sctx->cnf->ext.servername_cb != NULL)
+            ret = sctx->cnf->ext.servername_cb(ssl, &altmp,
+                                               sctx->cnf->ext.servername_arg);
+        else if (s->session_ctx->cnf->ext.servername_cb != NULL)
+            ret = s->session_ctx->cnf->ext.servername_cb(ssl, &altmp,
+                                                         s->session_ctx->cnf->ext.servername_arg);
+        CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+    }
 
     /*
      * For servers, propagate the SNI hostname from the temporary

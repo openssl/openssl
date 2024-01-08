@@ -716,9 +716,15 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     uint64_t tm, now;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    VERIFY_STATELESS_COOKIE_CB verify_stateless_cookie_cb = NULL;
+
+    if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+        verify_stateless_cookie_cb = sctx->cnf->verify_stateless_cookie_cb;
+        CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+    }
 
     /* Ignore any cookie if we're not set up to verify it */
-    if (sctx->cnf->verify_stateless_cookie_cb == NULL
+    if (verify_stateless_cookie_cb == NULL
             || (s->s3.flags & TLS1_FLAGS_STATELESS) == 0)
         return 1;
 
@@ -739,10 +745,14 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
     /* Verify the HMAC of the cookie */
     hctx = EVP_MD_CTX_create();
-    pkey = EVP_PKEY_new_raw_private_key_ex(sctx->libctx, "HMAC",
-                                           sctx->propq,
-                                           s->session_ctx->cnf->ext.cookie_hmac_key,
-                                           sizeof(s->session_ctx->cnf->ext.cookie_hmac_key));
+    if (CRYPTO_THREAD_read_lock(s->session_ctx->cnf->cnf_lock)) {
+        pkey = EVP_PKEY_new_raw_private_key_ex(sctx->libctx, "HMAC",
+                                               sctx->propq,
+                                               s->session_ctx->cnf->ext.cookie_hmac_key,
+                                               sizeof(s->session_ctx->cnf->ext.cookie_hmac_key));
+        CRYPTO_THREAD_unlock(s->session_ctx->cnf->cnf_lock);
+    }
+
     if (hctx == NULL || pkey == NULL) {
         EVP_MD_CTX_free(hctx);
         EVP_PKEY_free(pkey);
@@ -832,7 +842,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     /* Verify the app cookie */
-    if (sctx->cnf->verify_stateless_cookie_cb(ssl,
+    if (verify_stateless_cookie_cb(ssl,
                                          PACKET_data(&appcookie),
                                          PACKET_remaining(&appcookie)) == 0) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_COOKIE_MISMATCH);
@@ -1484,11 +1494,18 @@ EXT_RETURN tls_construct_stoc_next_proto_neg(SSL_CONNECTION *s, WPACKET *pkt,
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     s->s3.npn_seen = 0;
-    if (!npn_seen || sctx->cnf->ext.npn_advertised_cb == NULL)
-        return EXT_RETURN_NOT_SENT;
 
-    ret = sctx->cnf->ext.npn_advertised_cb(SSL_CONNECTION_GET_SSL(s), &npa, &npalen,
-                                      sctx->cnf->ext.npn_advertised_cb_arg);
+    if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+        if (!npn_seen || sctx->cnf->ext.npn_advertised_cb == NULL) {
+            CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+            return EXT_RETURN_NOT_SENT;
+        }
+
+        ret = sctx->cnf->ext.npn_advertised_cb(SSL_CONNECTION_GET_SSL(s), &npa, &npalen,
+                                               sctx->cnf->ext.npn_advertised_cb_arg);
+        CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+    }
+
     if (ret == SSL_TLSEXT_ERR_OK) {
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_next_proto_neg)
                 || !WPACKET_sub_memcpy_u16(pkt, npa, npalen)) {
@@ -1757,11 +1774,17 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     int ret = EXT_RETURN_FAIL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    GEN_STATELESS_COOKIE_CB gen_stateless_cookie_cb = NULL;
 
     if ((s->s3.flags & TLS1_FLAGS_STATELESS) == 0)
         return EXT_RETURN_NOT_SENT;
 
-    if (sctx->cnf->gen_stateless_cookie_cb == NULL) {
+    if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+        gen_stateless_cookie_cb = sctx->cnf->gen_stateless_cookie_cb;
+        CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+    }
+
+    if (gen_stateless_cookie_cb == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_COOKIE_CALLBACK_SET);
         return EXT_RETURN_FAIL;
     }
@@ -1806,7 +1829,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     /* Generate the application cookie */
-    if (sctx->cnf->gen_stateless_cookie_cb(ssl, appcookie1,
+    if (gen_stateless_cookie_cb(ssl, appcookie1,
                                       &appcookielen) == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
         return EXT_RETURN_FAIL;
@@ -1830,10 +1853,13 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
 
     /* HMAC the cookie */
     hctx = EVP_MD_CTX_create();
-    pkey = EVP_PKEY_new_raw_private_key_ex(sctx->libctx, "HMAC",
-                                           sctx->propq,
-                                           s->session_ctx->cnf->ext.cookie_hmac_key,
-                                           sizeof(s->session_ctx->cnf->ext.cookie_hmac_key));
+    if (CRYPTO_THREAD_read_lock(s->session_ctx->cnf->cnf_lock)) {
+        pkey = EVP_PKEY_new_raw_private_key_ex(sctx->libctx, "HMAC",
+                                               sctx->propq,
+                                               s->session_ctx->cnf->ext.cookie_hmac_key,
+                                               sizeof(s->session_ctx->cnf->ext.cookie_hmac_key));
+        CRYPTO_THREAD_unlock(s->session_ctx->cnf->cnf_lock);
+    }
     if (hctx == NULL || pkey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;

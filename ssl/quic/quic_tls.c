@@ -742,7 +742,13 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
 
         /* ALPN is a requirement for QUIC and must be set */
         if (qtls->args.is_server) {
-            if (sctx->cnf->ext.alpn_select_cb == NULL)
+            int iserror = 0;
+            if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+                if (sctx->cnf->ext.alpn_select_cb == NULL)
+                    iserror = 1;
+                CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+            }
+            if (iserror == 1)
                 return RAISE_INTERNAL_ERROR(qtls);
         } else {
             if (sc->ext.alpn == NULL || sc->ext.alpn_len == 0)

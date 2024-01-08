@@ -3818,6 +3818,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 
 long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
+    int rv = 0;
     switch (cmd) {
 #if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH:
@@ -3845,18 +3846,26 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         }
 #endif
     case SSL_CTRL_SET_DH_AUTO:
-        ctx->cnf->cert->dh_tmp_auto = larg;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            ctx->cnf->cert->dh_tmp_auto = larg;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         return 1;
 #if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_ECDH:
         {
+            int rv = 0;
             if (parg == NULL) {
                 ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             }
-            return ssl_set_tmp_ecdh_groups(&ctx->cnf->ext.supportedgroups,
-                                           &ctx->cnf->ext.supportedgroups_len,
-                                           parg);
+            if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+                rv = ssl_set_tmp_ecdh_groups(&ctx->cnf->ext.supportedgroups,
+                                               &ctx->cnf->ext.supportedgroups_len,
+                                               parg);
+                CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+            }
+            return rv;
         }
 #endif                          /* !OPENSSL_NO_DEPRECATED_3_0 */
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
@@ -3866,9 +3875,13 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_GET_TLSEXT_TICKET_KEYS:
         {
             unsigned char *keys = parg;
-            long tick_keylen = (sizeof(ctx->cnf->ext.tick_key_name) +
-                                sizeof(ctx->cnf->ext.secure->tick_hmac_key) +
-                                sizeof(ctx->cnf->ext.secure->tick_aes_key));
+            long tick_keylen = 0;
+            if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+                tick_keylen = (sizeof(ctx->cnf->ext.tick_key_name) +
+                               sizeof(ctx->cnf->ext.secure->tick_hmac_key) +
+                               sizeof(ctx->cnf->ext.secure->tick_aes_key));
+                CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+            }
             if (keys == NULL)
                 return tick_keylen;
             if (larg != tick_keylen) {
@@ -3876,46 +3889,68 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                 return 0;
             }
             if (cmd == SSL_CTRL_SET_TLSEXT_TICKET_KEYS) {
-                memcpy(ctx->cnf->ext.tick_key_name, keys,
-                       sizeof(ctx->cnf->ext.tick_key_name));
-                memcpy(ctx->cnf->ext.secure->tick_hmac_key,
-                       keys + sizeof(ctx->cnf->ext.tick_key_name),
-                       sizeof(ctx->cnf->ext.secure->tick_hmac_key));
-                memcpy(ctx->cnf->ext.secure->tick_aes_key,
-                       keys + sizeof(ctx->cnf->ext.tick_key_name) +
-                       sizeof(ctx->cnf->ext.secure->tick_hmac_key),
-                       sizeof(ctx->cnf->ext.secure->tick_aes_key));
+                if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+                    memcpy(ctx->cnf->ext.tick_key_name, keys,
+                           sizeof(ctx->cnf->ext.tick_key_name));
+                    memcpy(ctx->cnf->ext.secure->tick_hmac_key,
+                           keys + sizeof(ctx->cnf->ext.tick_key_name),
+                           sizeof(ctx->cnf->ext.secure->tick_hmac_key));
+                    memcpy(ctx->cnf->ext.secure->tick_aes_key,
+                           keys + sizeof(ctx->cnf->ext.tick_key_name) +
+                           sizeof(ctx->cnf->ext.secure->tick_hmac_key),
+                           sizeof(ctx->cnf->ext.secure->tick_aes_key));
+                    CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+                }
             } else {
-                memcpy(keys, ctx->cnf->ext.tick_key_name,
-                       sizeof(ctx->cnf->ext.tick_key_name));
-                memcpy(keys + sizeof(ctx->cnf->ext.tick_key_name),
-                       ctx->cnf->ext.secure->tick_hmac_key,
-                       sizeof(ctx->cnf->ext.secure->tick_hmac_key));
-                memcpy(keys + sizeof(ctx->cnf->ext.tick_key_name) +
-                       sizeof(ctx->cnf->ext.secure->tick_hmac_key),
-                       ctx->cnf->ext.secure->tick_aes_key,
-                       sizeof(ctx->cnf->ext.secure->tick_aes_key));
+                if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+                    memcpy(keys, ctx->cnf->ext.tick_key_name,
+                           sizeof(ctx->cnf->ext.tick_key_name));
+                    memcpy(keys + sizeof(ctx->cnf->ext.tick_key_name),
+                           ctx->cnf->ext.secure->tick_hmac_key,
+                           sizeof(ctx->cnf->ext.secure->tick_hmac_key));
+                    memcpy(keys + sizeof(ctx->cnf->ext.tick_key_name) +
+                           sizeof(ctx->cnf->ext.secure->tick_hmac_key),
+                           ctx->cnf->ext.secure->tick_aes_key,
+                           sizeof(ctx->cnf->ext.secure->tick_aes_key));
+                    CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+                }
             }
             return 1;
         }
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE:
-        return ctx->cnf->ext.status_type;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            rv = ctx->cnf->ext.status_type;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE:
-        ctx->cnf->ext.status_type = larg;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            ctx->cnf->ext.status_type = larg;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         break;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG:
-        ctx->cnf->ext.status_arg = parg;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            ctx->cnf->ext.status_arg = parg;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         return 1;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG:
-        *(void**)parg = ctx->cnf->ext.status_arg;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            *(void**)parg = ctx->cnf->ext.status_arg;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB:
-        *(int (**)(SSL*, void*))parg = ctx->cnf->ext.status_cb;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            *(int (**)(SSL*, void*))parg = ctx->cnf->ext.status_cb;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         break;
 
 #ifndef OPENSSL_NO_SRP
@@ -3955,69 +3990,128 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 #endif
 
     case SSL_CTRL_SET_GROUPS:
-        return tls1_set_groups(&ctx->cnf->ext.supportedgroups,
-                               &ctx->cnf->ext.supportedgroups_len,
-                               parg, larg);
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            rv = tls1_set_groups(&ctx->cnf->ext.supportedgroups,
+                                 &ctx->cnf->ext.supportedgroups_len,
+                                 parg, larg);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
 
     case SSL_CTRL_SET_GROUPS_LIST:
-        return tls1_set_groups_list(ctx, &ctx->cnf->ext.supportedgroups,
-                                    &ctx->cnf->ext.supportedgroups_len,
-                                    parg);
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            rv =tls1_set_groups_list(ctx, &ctx->cnf->ext.supportedgroups,
+                                     &ctx->cnf->ext.supportedgroups_len,
+                                     parg);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
 
     case SSL_CTRL_SET_SIGALGS:
-        return tls1_set_sigalgs(ctx->cnf->cert, parg, larg, 0);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            rv = tls1_set_sigalgs(ctx->cnf->cert, parg, larg, 0);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
 
     case SSL_CTRL_SET_SIGALGS_LIST:
-        return tls1_set_sigalgs_list(ctx->cnf->cert, parg, 0);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            rv = tls1_set_sigalgs_list(ctx->cnf->cert, parg, 0);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
 
     case SSL_CTRL_SET_CLIENT_SIGALGS:
-        return tls1_set_sigalgs(ctx->cnf->cert, parg, larg, 1);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            rv = tls1_set_sigalgs(ctx->cnf->cert, parg, larg, 1);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
 
     case SSL_CTRL_SET_CLIENT_SIGALGS_LIST:
-        return tls1_set_sigalgs_list(ctx->cnf->cert, parg, 1);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            rv = tls1_set_sigalgs_list(ctx->cnf->cert, parg, 1);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
 
     case SSL_CTRL_SET_CLIENT_CERT_TYPES:
-        return ssl3_set_req_cert_type(ctx->cnf->cert, parg, larg);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            rv = ssl3_set_req_cert_type(ctx->cnf->cert, parg, larg);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
 
     case SSL_CTRL_BUILD_CERT_CHAIN:
-        return ssl_build_cert_chain(NULL, ctx, larg);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            rv = ssl_build_cert_chain(NULL, ctx, larg);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
 
     case SSL_CTRL_SET_VERIFY_CERT_STORE:
-        return ssl_cert_set_cert_store(ctx->cnf->cert, parg, 0, larg);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            rv = ssl_cert_set_cert_store(ctx->cnf->cert, parg, 0, larg);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
 
     case SSL_CTRL_SET_CHAIN_CERT_STORE:
-        return ssl_cert_set_cert_store(ctx->cnf->cert, parg, 1, larg);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            rv = ssl_cert_set_cert_store(ctx->cnf->cert, parg, 1, larg);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
 
     case SSL_CTRL_GET_VERIFY_CERT_STORE:
-        return ssl_cert_get_cert_store(ctx->cnf->cert, parg, 0);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            rv = ssl_cert_get_cert_store(ctx->cnf->cert, parg, 0);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
 
     case SSL_CTRL_GET_CHAIN_CERT_STORE:
-        return ssl_cert_get_cert_store(ctx->cnf->cert, parg, 1);
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            rv = ssl_cert_get_cert_store(ctx->cnf->cert, parg, 1);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
 
         /* A Thawte special :-) */
     case SSL_CTRL_EXTRA_CHAIN_CERT:
-        if (ctx->cnf->extra_certs == NULL) {
-            if ((ctx->cnf->extra_certs = sk_X509_new_null()) == NULL) {
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            if (ctx->cnf->extra_certs == NULL) {
+                if ((ctx->cnf->extra_certs = sk_X509_new_null()) == NULL) {
+                    CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+                    ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+                    return 0;
+                }
+            }
+            if (!sk_X509_push(ctx->cnf->extra_certs, (X509 *)parg)) {
+                CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
                 ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
                 return 0;
             }
-        }
-        if (!sk_X509_push(ctx->cnf->extra_certs, (X509 *)parg)) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
-            return 0;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
         }
         break;
 
     case SSL_CTRL_GET_EXTRA_CHAIN_CERTS:
-        if (ctx->cnf->extra_certs == NULL && larg == 0)
-            *(STACK_OF(X509) **)parg = ctx->cnf->cert->key->chain;
-        else
-            *(STACK_OF(X509) **)parg = ctx->cnf->extra_certs;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            if (ctx->cnf->extra_certs == NULL && larg == 0)
+                *(STACK_OF(X509) **)parg = ctx->cnf->cert->key->chain;
+            else
+                *(STACK_OF(X509) **)parg = ctx->cnf->extra_certs;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         break;
 
     case SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS:
-        OSSL_STACK_OF_X509_free(ctx->cnf->extra_certs);
-        ctx->cnf->extra_certs = NULL;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            OSSL_STACK_OF_X509_free(ctx->cnf->extra_certs);
+            ctx->cnf->extra_certs = NULL;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         break;
 
     case SSL_CTRL_CHAIN:
@@ -4033,15 +4127,31 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             return ssl_cert_add0_chain_cert(NULL, ctx, (X509 *)parg);
 
     case SSL_CTRL_GET_CHAIN_CERTS:
-        *(STACK_OF(X509) **)parg = ctx->cnf->cert->key->chain;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            *(STACK_OF(X509) **)parg = ctx->cnf->cert->key->chain;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         break;
 
     case SSL_CTRL_SELECT_CURRENT_CERT:
-        return ssl_cert_select_current(ctx->cnf->cert, (X509 *)parg);
+    {
+        int rv = 0;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            rv = ssl_cert_select_current(ctx->cnf->cert, (X509 *)parg);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
+    }
 
     case SSL_CTRL_SET_CURRENT_CERT:
-        return ssl_cert_set_current(ctx->cnf->cert, larg);
-
+    {
+        int rv = 0;
+        if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+            rv = ssl_cert_set_current(ctx->cnf->cert, larg);
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
+        return rv;
+    }
     default:
         return 0;
     }
@@ -4054,24 +4164,36 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 #if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH_CB:
         {
-            ctx->cnf->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
+            if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+                ctx->cnf->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
+                CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+            }
         }
         break;
 #endif
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
-        ctx->cnf->ext.servername_cb = (int (*)(SSL *, int *, void *))fp;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            ctx->cnf->ext.servername_cb = (int (*)(SSL *, int *, void *))fp;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         break;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB:
-        ctx->cnf->ext.status_cb = (int (*)(SSL *, void *))fp;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            ctx->cnf->ext.status_cb = (int (*)(SSL *, void *))fp;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         break;
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
     case SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB:
-        ctx->cnf->ext.ticket_key_cb = (int (*)(SSL *, unsigned char *,
-                                          unsigned char *,
-                                          EVP_CIPHER_CTX *,
-                                          HMAC_CTX *, int))fp;
+        if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+            ctx->cnf->ext.ticket_key_cb = (int (*)(SSL *, unsigned char *,
+                                           unsigned char *,
+                                           EVP_CIPHER_CTX *,
+                                           HMAC_CTX *, int))fp;
+            CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+        }
         break;
 #endif
 
@@ -4093,7 +4215,10 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 #endif
     case SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB:
         {
-            ctx->cnf->not_resumable_session_cb = (int (*)(SSL *, int))fp;
+            if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+                ctx->cnf->not_resumable_session_cb = (int (*)(SSL *, int))fp;
+                CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+            }
         }
         break;
     default:
@@ -4106,7 +4231,10 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb
     (SSL_CTX *ctx, int (*fp)(SSL *, unsigned char *, unsigned char *,
                              EVP_CIPHER_CTX *, EVP_MAC_CTX *, int))
 {
-    ctx->cnf->ext.ticket_key_evp_cb = fp;
+    if (CRYPTO_THREAD_write_lock(ctx->cnf->cnf_lock)) {
+        ctx->cnf->ext.ticket_key_evp_cb = fp;
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
     return 1;
 }
 

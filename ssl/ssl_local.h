@@ -804,8 +804,39 @@ typedef struct {
 
 # define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE|TLS_GROUP_ONLY_FOR_TLS1_3)
 
+typedef int (*CLIENT_CERT_CB) (SSL *ssl, X509 **x509, EVP_PKEY **pkey);
+typedef int (*APP_GEN_COOKIE_CB) (SSL *ssl, unsigned char *cookie,
+                                  unsigned int *cookie_len);
+typedef int (*APP_VERIFY_COOKIE_CB) (SSL *ssl, const unsigned char *cookie,
+                                     unsigned int cookie_len);
+typedef int (*GEN_STATELESS_COOKIE_CB) (SSL *ssl, unsigned char *cookie,
+                                       size_t *cookie_len);
+typedef int (*VERIFY_STATELESS_COOKIE_CB) (SSL *ssl, const unsigned char *cookie,
+                                          size_t cookie_len);
+typedef int (*DEFAULT_VERIFY_CALLBACK) (int ok, X509_STORE_CTX *ctx);
+
+typedef void (*INFO_CALLBACK) (const SSL *ssl, int type, int val);
+
+typedef SSL_SESSION *(*GET_SESSION_CB) (struct ssl_st *ssl,
+                                        const unsigned char *data, int len,
+                                        int *copy);
+
+typedef int (*NEW_SESSION_CB) (struct ssl_st *ssl, SSL_SESSION *sess);
+typedef void (*REMOVE_SESSION_CB) (struct ssl_ctx_st *ctx, SSL_SESSION *sess);
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+        /* Callback to support customisation of ticket key setting */
+typedef int (*TICKET_KEY_CB) (SSL *ssl,
+                              unsigned char *name, unsigned char *iv,
+                              EVP_CIPHER_CTX *ectx, HMAC_CTX *hctx, int enc);
+#endif
+typedef int (*TICKET_KEY_EVP_CB) (SSL *ssl,
+                                  unsigned char *name, unsigned char *iv,
+                                  EVP_CIPHER_CTX *ectx, EVP_MAC_CTX *hctx,
+                                  int enc);
+
 struct ssl_ctx_cnf_st {
-    const SSL_METHOD *method;
+    CRYPTO_RWLOCK *cnf_lock;
+    CRYPTO_REF_COUNT references;
     STACK_OF(SSL_CIPHER) *cipher_list;
 
     /* same as above but sorted for lookup */
@@ -845,11 +876,9 @@ struct ssl_ctx_cnf_st {
      * removed from the cache.  After the call, OpenSSL will
      * SSL_SESSION_free() it.
      */
-    int (*new_session_cb) (struct ssl_st *ssl, SSL_SESSION *sess);
-    void (*remove_session_cb) (struct ssl_ctx_st *ctx, SSL_SESSION *sess);
-    SSL_SESSION *(*get_session_cb) (struct ssl_st *ssl,
-                                    const unsigned char *data, int len,
-                                    int *copy);
+    NEW_SESSION_CB new_session_cb;
+    REMOVE_SESSION_CB remove_session_cb;
+    GET_SESSION_CB get_session_cb;
 
     /* if defined, these override the X509_verify_cert() calls */
     int (*app_verify_callback) (X509_STORE_CTX *, void *);
@@ -866,23 +895,19 @@ struct ssl_ctx_cnf_st {
     void *default_passwd_callback_userdata;
 
     /* get client cert callback */
-    int (*client_cert_cb) (SSL *ssl, X509 **x509, EVP_PKEY **pkey);
+    CLIENT_CERT_CB client_cert_cb;
 
     /* cookie generate callback */
-    int (*app_gen_cookie_cb) (SSL *ssl, unsigned char *cookie,
-                              unsigned int *cookie_len);
+    APP_GEN_COOKIE_CB app_gen_cookie_cb;
 
     /* verify cookie callback */
-    int (*app_verify_cookie_cb) (SSL *ssl, const unsigned char *cookie,
-                                 unsigned int cookie_len);
+    APP_VERIFY_COOKIE_CB app_verify_cookie_cb;
 
     /* TLS1.3 app-controlled cookie generate callback */
-    int (*gen_stateless_cookie_cb) (SSL *ssl, unsigned char *cookie,
-                                    size_t *cookie_len);
+    GEN_STATELESS_COOKIE_CB gen_stateless_cookie_cb;
 
     /* TLS1.3 verify app-controlled cookie callback */
-    int (*verify_stateless_cookie_cb) (SSL *ssl, const unsigned char *cookie,
-                                       size_t cookie_len);
+    VERIFY_STATELESS_COOKIE_CB verify_stateless_cookie_cb;
 
     CRYPTO_EX_DATA ex_data;
 
@@ -891,7 +916,7 @@ struct ssl_ctx_cnf_st {
     /* Default values used when no per-SSL value is defined follow */
 
     /* used if SSL's info_callback is NULL */
-    void (*info_callback) (const SSL *ssl, int type, int val);
+    INFO_CALLBACK info_callback;
 
     /*
      * What we put in certificate_authorities extension for TLS 1.3
@@ -925,7 +950,7 @@ struct ssl_ctx_cnf_st {
     size_t sid_ctx_length;
     unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
     /* called 'verify_callback' in the SSL */
-    int (*default_verify_callback) (int ok, X509_STORE_CTX *ctx);
+    DEFAULT_VERIFY_CALLBACK default_verify_callback;
 
     /* Default generate session ID callback. */
     GEN_SESSION_CB generate_session_id;
@@ -1118,6 +1143,7 @@ struct ssl_ctx_cnf_st {
 struct ssl_ctx_st {
     OSSL_LIB_CTX *libctx;
     struct ssl_ctx_cnf_st *cnf;
+    const SSL_METHOD *method;
 
     LHASH_OF(SSL_SESSION) *sessions;
     struct ssl_session_st *session_cache_head;

@@ -312,13 +312,19 @@ typedef void (*info_cb) (const SSL *, int, int);
 static info_cb get_callback(SSL_CONNECTION *s)
 {
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    info_cb ret = NULL;
 
     if (s->info_callback != NULL)
         return s->info_callback;
-    else if (sctx->cnf->info_callback != NULL)
-        return sctx->cnf->info_callback;
+    else {
+        if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+            if (sctx->cnf->info_callback != NULL)
+                ret = sctx->cnf->info_callback;
+            CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+        }
+    }
 
-    return NULL;
+    return ret;
 }
 
 /*

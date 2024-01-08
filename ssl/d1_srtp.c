@@ -140,7 +140,7 @@ static int ssl_ctx_make_profiles(const char *profiles_string,
 
 int SSL_CTX_set_tlsext_use_srtp(SSL_CTX *ctx, const char *profiles)
 {
-    if (IS_QUIC_METHOD(ctx->cnf->method))
+    if (IS_QUIC_METHOD(ctx->method))
         return 1;
 
     return ssl_ctx_make_profiles(profiles, &ctx->srtp_profiles);

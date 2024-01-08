@@ -393,7 +393,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
 
     /* Initialise the QUIC_CONNECTION's stub header. */
     ssl_base = &qc->ssl;
-    if (!ossl_ssl_init(ssl_base, ctx, ctx->cnf->method, SSL_TYPE_QUIC_CONNECTION)) {
+    if (!ossl_ssl_init(ssl_base, ctx, ctx->method, SSL_TYPE_QUIC_CONNECTION)) {
         ssl_base = NULL;
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         goto err;
@@ -421,8 +421,11 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->as_server_state = qc->as_server;
 
     qc->default_stream_mode     = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
-    qc->default_ssl_mode        = qc->ssl.ctx->cnf->mode;
-    qc->default_ssl_options     = qc->ssl.ctx->cnf->options & OSSL_QUIC_PERMITTED_OPTIONS;
+    if (CRYPTO_THREAD_read_lock(qc->ssl.ctx->cnf->cnf_lock)) {
+        qc->default_ssl_mode        = qc->ssl.ctx->cnf->mode;
+        qc->default_ssl_options     = qc->ssl.ctx->cnf->options & OSSL_QUIC_PERMITTED_OPTIONS;
+        CRYPTO_THREAD_unlock(qc->ssl.ctx->cnf->cnf_lock);
+    }
     qc->desires_blocking        = 1;
     qc->blocking                = 0;
     qc->incoming_stream_policy  = SSL_INCOMING_STREAM_POLICY_AUTO;
@@ -431,8 +434,11 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     if (!create_channel(qc))
         goto err;
 
-    ossl_quic_channel_set_msg_callback(qc->ch, ctx->cnf->msg_callback, ssl_base);
-    ossl_quic_channel_set_msg_callback_arg(qc->ch, ctx->cnf->msg_callback_arg);
+    if (CRYPTO_THREAD_read_lock(ctx->cnf->cnf_lock)) {
+        ossl_quic_channel_set_msg_callback(qc->ch, ctx->cnf->msg_callback, ssl_base);
+        ossl_quic_channel_set_msg_callback_arg(qc->ch, ctx->cnf->msg_callback_arg);
+        CRYPTO_THREAD_unlock(ctx->cnf->cnf_lock);
+    }
 
     qc_update_reject_policy(qc);
 

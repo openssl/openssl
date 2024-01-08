@@ -390,9 +390,14 @@ EXT_RETURN tls_construct_ctos_npn(SSL_CONNECTION *s, WPACKET *pkt,
                                   unsigned int context,
                                   X509 *x, size_t chainidx)
 {
-    if (SSL_CONNECTION_GET_CTX(s)->cnf->ext.npn_select_cb == NULL
-        || !SSL_IS_FIRST_HANDSHAKE(s))
-        return EXT_RETURN_NOT_SENT;
+    if (CRYPTO_THREAD_read_lock(SSL_CONNECTION_GET_CTX(s)->cnf->cnf_lock)) {
+        if (SSL_CONNECTION_GET_CTX(s)->cnf->ext.npn_select_cb == NULL
+                || !SSL_IS_FIRST_HANDSHAKE(s)) {
+            CRYPTO_THREAD_unlock(SSL_CONNECTION_GET_CTX(s)->cnf->cnf_lock);
+            return EXT_RETURN_NOT_SENT;
+        }
+        CRYPTO_THREAD_unlock(SSL_CONNECTION_GET_CTX(s)->cnf->cnf_lock);
+    }
 
     /*
      * The client advertises an empty extension to indicate its support
@@ -1546,9 +1551,13 @@ int tls_parse_stoc_npn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         return 1;
 
     /* We must have requested it. */
-    if (sctx->cnf->ext.npn_select_cb == NULL) {
-        SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION, SSL_R_BAD_EXTENSION);
-        return 0;
+    if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+        if (sctx->cnf->ext.npn_select_cb == NULL) {
+            CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+            SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+        CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
     }
 
     /* The data must be valid */
@@ -1557,13 +1566,17 @@ int tls_parse_stoc_npn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         /* SSLfatal() already called */
         return 0;
     }
-    if (sctx->cnf->ext.npn_select_cb(SSL_CONNECTION_GET_SSL(s),
-                                &selected, &selected_len,
-                                PACKET_data(pkt), PACKET_remaining(pkt),
-                                sctx->cnf->ext.npn_select_cb_arg) !=
-             SSL_TLSEXT_ERR_OK) {
-        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_BAD_EXTENSION);
-        return 0;
+    if (CRYPTO_THREAD_read_lock(sctx->cnf->cnf_lock)) {
+        if (sctx->cnf->ext.npn_select_cb(SSL_CONNECTION_GET_SSL(s),
+                                    &selected, &selected_len,
+                                    PACKET_data(pkt), PACKET_remaining(pkt),
+                                    sctx->cnf->ext.npn_select_cb_arg) !=
+                 SSL_TLSEXT_ERR_OK) {
+            CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+        CRYPTO_THREAD_unlock(sctx->cnf->cnf_lock);
     }
 
     /*
