@@ -502,7 +502,7 @@ start:
          * This may just be a stale retransmit. Also sanity check that we have
          * at least enough record bytes for a message header
          */
-        if (rr->epoch != sc->rlayer.d->r_epoch
+        if (rr->epoch != dtls1_get_epoch(sc, SSL3_CC_READ)
             || rr->length < DTLS1_HM_HEADER_LENGTH) {
             if (!ssl_release_record(sc, rr, 0))
                 return -1;
