@@ -333,7 +333,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                 method = NULL;
             } else {
                 meth_id = evp_method_id(name_id, operation_id);
-                if (name_id != 0)
+                if (meth_id != 0)
                     ossl_method_store_cache_set(store, prov, meth_id, propq,
                                                 method, up_ref_method, free_method);
             }
