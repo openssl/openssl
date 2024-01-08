@@ -1780,8 +1780,12 @@ $code.=<<___	if ($flavour =~ /64/);
 ${prefix}_ctr32_encrypt_blocks_unroll12_eor3:
 	AARCH64_VALID_CALL_TARGET
 	// Armv8.3-A PAuth: even though x30 is pushed to stack it is not popped later.
-	 stp		x29,x30,[sp,#-16]!
-	 add		x29,sp,#0
+	stp		x29,x30,[sp,#-80]!
+	stp		d8,d9,[sp, #16]
+	stp		d10,d11,[sp, #32]
+	stp		d12,d13,[sp, #48]
+	stp		d14,d15,[sp, #64]
+	add		x29,sp,#0
 
 	 ldr		$rounds,[$key,#240]
 
@@ -2486,7 +2490,11 @@ ${prefix}_ctr32_encrypt_blocks_unroll12_eor3:
 	vst1.8		{$in0},[$out],#16
 
 .Lctr32_done_unroll:
-	ldr		x29,[sp],#16
+	ldp		d8,d9,[sp, #16]
+	ldp		d10,d11,[sp, #32]
+	ldp		d12,d13,[sp, #48]
+	ldp		d15,d16,[sp, #64]
+	ldr		x29,[sp],#80
 	ret
 .size	${prefix}_ctr32_encrypt_blocks_unroll12_eor3,.-${prefix}_ctr32_encrypt_blocks_unroll12_eor3
 ___
