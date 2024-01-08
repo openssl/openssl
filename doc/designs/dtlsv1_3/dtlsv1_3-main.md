@@ -65,6 +65,11 @@ This is enforced by the macro `SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(sc)`.
 The DTLSv1.3 implementation uses the label "dtls1.3" as described by RFC9147
 section 5.9.
 
+#### DTLS 1.3 Epoch
+
+The DTLSv1.3 implementation modifies the epoch according to RFC9147 section 6.1
+for DTLSv1.3 connections.
+
 Implementation progress
 -----------------------
 
@@ -83,7 +88,6 @@ is not covered by these workitems and must be implemented separately.
 | ACK messages                                        | -              |
 | Use HelloRetryRequest instead of HelloVerifyRequest | #22985, #22400 |
 | Message transcript                                  | -              |
-| DTLSv1.3 epoch                                      | #23553         |
 | ClientHello                                         | #23320         |
 | EndOfEarlyData message                              | -              |
 | Variable length header                              | -              |
@@ -128,13 +132,6 @@ handle them as described in:
 And
 
 > 4.2.3. Record Number Encryption
-
-#### DTLSv1.3 epoch
-
-The epoch is maintained differently from DTLS 1.2
-
-> The DTLS epoch ...  is set as the least significant 2 octets of the connection
-> epoch, which is an 8 octet counter incremented on every KeyUpdate
 
 #### ClientHello
 

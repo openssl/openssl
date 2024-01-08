@@ -1,0 +1,121 @@
+#! /usr/bin/env perl
+# Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+use strict;
+use feature 'state';
+
+use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
+use OpenSSL::Test::Utils;
+use TLSProxy::Proxy;
+use TLSProxy::Message;
+use Cwd qw(abs_path);
+
+my $test_name = "test_dtls13epoch";
+setup($test_name);
+
+plan skip_all => "DTLSProxy isn't usable on $^O"
+    if ($^O =~ /^(VMS)$/) || ($^O =~ /^(MSWin32)$/);
+
+plan skip_all => "$test_name needs the module feature enabled"
+    if disabled("module");
+
+plan skip_all => "$test_name needs the sock feature enabled"
+    if disabled("sock");
+
+# TODO(DTLSv1.3): Implement support for partial messages for DTLS
+plan skip_all => "DTLSProxy does not support partial messages"
+    if disabled("ec");
+
+plan skip_all => "$test_name needs DTLSv1.3 enabled"
+    if disabled("dtls1_3");
+
+$ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
+
+my $proxy = TLSProxy::Proxy->new_dtls(
+    undef,
+    cmdstr(app(["openssl"]), display => 1),
+    srctop_file("apps", "server.pem"),
+    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+);
+
+plan tests => 1;
+
+my $epoch_check_failed;
+my $latest_epoch;
+
+#Test 1: Check that epoch is incremented as expected during a handshake
+$epoch_check_failed = 0;
+$latest_epoch = 0;
+$proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
+$proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
+$proxy->filter(\&current_record_epoch_filter);
+TLSProxy::Message->successondata(1);
+skip "TLS Proxy did not start", 1 if !$proxy->start();
+ok(!$epoch_check_failed
+   && $latest_epoch == 3, "Epoch changes correctly during handshake");
+
+sub current_record_epoch_filter
+{
+    my $records = $proxy->record_list;
+    my $latest_record = @{$records}[-1];
+    my $epoch = $latest_record->epoch;
+    my @badmessagetypes = undef;
+
+    $latest_epoch = $epoch;
+
+    if ($epoch == 0) {
+        @badmessagetypes = (
+            TLSProxy::Message::MT_NEW_SESSION_TICKET,
+            TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS,
+            TLSProxy::Message::MT_CERTIFICATE,
+            TLSProxy::Message::MT_SERVER_KEY_EXCHANGE,
+            TLSProxy::Message::MT_CERTIFICATE_REQUEST,
+            TLSProxy::Message::MT_SERVER_HELLO_DONE,
+            TLSProxy::Message::MT_CERTIFICATE_VERIFY,
+            TLSProxy::Message::MT_CLIENT_KEY_EXCHANGE,
+            TLSProxy::Message::MT_FINISHED,
+            TLSProxy::Message::MT_CERTIFICATE_STATUS,
+            TLSProxy::Message::MT_COMPRESSED_CERTIFICATE,
+            TLSProxy::Message::MT_NEXT_PROTO
+        );
+    } elsif ($epoch == 1) {
+        @badmessagetypes = (
+            TLSProxy::Message::MT_NEW_SESSION_TICKET,
+            TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS,
+            TLSProxy::Message::MT_CERTIFICATE,
+            TLSProxy::Message::MT_SERVER_KEY_EXCHANGE,
+            TLSProxy::Message::MT_CERTIFICATE_REQUEST,
+            TLSProxy::Message::MT_SERVER_HELLO_DONE,
+            TLSProxy::Message::MT_CERTIFICATE_VERIFY,
+            TLSProxy::Message::MT_CLIENT_KEY_EXCHANGE,
+            TLSProxy::Message::MT_FINISHED,
+            TLSProxy::Message::MT_CERTIFICATE_STATUS,
+            TLSProxy::Message::MT_COMPRESSED_CERTIFICATE,
+            TLSProxy::Message::MT_NEXT_PROTO
+        );
+
+    } elsif ($epoch == 2) {
+        @badmessagetypes = (
+            TLSProxy::Message::MT_NEW_SESSION_TICKET,
+            TLSProxy::Message::MT_CERTIFICATE_STATUS,
+            TLSProxy::Message::MT_COMPRESSED_CERTIFICATE,
+            TLSProxy::Message::MT_NEXT_PROTO
+        );
+    }
+
+    # Check that message types are acceptable
+    foreach (@{$proxy->message_list})
+    {
+        my $mt = $_->mt;
+
+        if (grep(/^$mt$/, @badmessagetypes)) {
+            print "Did not expect $mt in epoch $latest_epoch\n";
+            $epoch_check_failed = 1;
+        }
+    }
+}
