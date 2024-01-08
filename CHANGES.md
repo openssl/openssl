@@ -71,7 +71,7 @@ OpenSSL 3.2
 ### Changes between 3.2.0 and 3.2.1 [xx XXX xxxx]
 
  * The POLY1305 MAC (message authentication code) implementation in OpenSSL
-   for PowerPC CPUs saves the the contents of vector registers in different
+   for PowerPC CPUs saves the contents of vector registers in different
    order than they are restored. Thus the contents of some of these vector
    registers is corrupted when returning to the caller. The vulnerable code is
    used only on newer PowerPC processors supporting the PowerISA 2.07
