@@ -28,6 +28,10 @@ OpenSSL 3.3
 
 ### Changes between 3.2 and 3.3 [xx XXX xxxx]
 
+ * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
+
+   *Barry Fussell*
+
  * Disable building QUIC server utility when OpenSSL is configured with
    `no-apps`
 
