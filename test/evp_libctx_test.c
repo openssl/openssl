@@ -96,8 +96,8 @@ static int test_evp_cipher_api_safety(void)
      * Ensure that EVP_CIPHER_get_iv_length returns -1
      * if we haven't initalized the cipher in this context
      */
-    if (!TEST_int_eq(EVP_CIPHER_CTX_get_iv_length(ctx), -1)) {
-        TEST_info("EVP_CIPHER_get_iv_length did not return -1");
+    if (!TEST_int_eq(EVP_CIPHER_CTX_get_iv_length(ctx), 0)) {
+        TEST_info("EVP_CIPHER_get_iv_length did not return 0");
         goto err_free;
     }
     ret = 1;
