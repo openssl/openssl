@@ -1,6 +1,6 @@
 # Generated with generate_ssl_tests.pl
 
-num_tests = 169
+num_tests = 171
 
 test-0 = 0-version-negotiation
 test-1 = 1-version-negotiation
@@ -171,6 +171,8 @@ test-165 = 165-version-negotiation
 test-166 = 166-version-negotiation
 test-167 = 167-version-negotiation
 test-168 = 168-version-negotiation
+test-169 = 169-ciphersuite-sanity-check-dtls-client
+test-170 = 170-ciphersuite-sanity-check-dtls-server
 # ===========================================================
 
 [0-version-negotiation]
@@ -4829,6 +4831,58 @@ VerifyMode = Peer
 [test-168]
 ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[169-ciphersuite-sanity-check-dtls-client]
+ssl_conf = 169-ciphersuite-sanity-check-dtls-client-ssl
+
+[169-ciphersuite-sanity-check-dtls-client-ssl]
+server = 169-ciphersuite-sanity-check-dtls-client-server
+client = 169-ciphersuite-sanity-check-dtls-client-client
+
+[169-ciphersuite-sanity-check-dtls-client-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+MaxProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[169-ciphersuite-sanity-check-dtls-client-client]
+CipherString = AES128-SHA
+Ciphersuites = 
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-169]
+ExpectedResult = ClientFail
+Method = DTLS
+
+
+# ===========================================================
+
+[170-ciphersuite-sanity-check-dtls-server]
+ssl_conf = 170-ciphersuite-sanity-check-dtls-server-ssl
+
+[170-ciphersuite-sanity-check-dtls-server-ssl]
+server = 170-ciphersuite-sanity-check-dtls-server-server
+client = 170-ciphersuite-sanity-check-dtls-server-client
+
+[170-ciphersuite-sanity-check-dtls-server-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = AES128-SHA
+Ciphersuites = 
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[170-ciphersuite-sanity-check-dtls-server-client]
+CipherString = AES128-SHA
+MaxProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-170]
+ExpectedResult = ServerFail
 Method = DTLS
 
 
