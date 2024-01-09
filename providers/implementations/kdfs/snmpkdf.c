@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -160,7 +160,7 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (!snmpkdf_set_membuf(&ctx->eid, &ctx->eid_len, p))
             return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD))  != NULL) {
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD)) != NULL) {
         if (!snmpkdf_set_membuf(&ctx->password, &ctx->password_len, p))
             return 0;
         if (ctx->password_len > KDF_SNMP_PASSWORD_HASH_AMOUNT
@@ -276,9 +276,8 @@ static int SNMPKDF(const EVP_MD *evp_md,
         goto err;
 
     for (len = 0; len < KDF_SNMP_PASSWORD_HASH_AMOUNT - password_len; len += password_len ) {
-        if (!EVP_DigestUpdate(md, password, password_len)) {
+        if (!EVP_DigestUpdate(md, password, password_len))
             goto err;
-        }
     }
 
     if (!EVP_DigestUpdate(md, password, KDF_SNMP_PASSWORD_HASH_AMOUNT - len)
