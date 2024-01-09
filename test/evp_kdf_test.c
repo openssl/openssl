@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2018-2020, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -1680,7 +1680,7 @@ static int test_kdf_ss_kmac(void)
 
 static 
 OSSL_PARAM *construct_snmpkdf_params(char *digest, unsigned char *eid, size_t eid_len,
-                                      unsigned char *password, size_t password_len)
+                                     unsigned char *password, size_t password_len)
 
 {
     OSSL_PARAM *p = OPENSSL_malloc(sizeof(OSSL_PARAM) * 4);
@@ -1706,17 +1706,13 @@ static int test_kdf_snmpkdf_null_output_buf(void)
     EVP_KDF_CTX *kctx = NULL;
     OSSL_PARAM *params = NULL;
     unsigned char out[SHA_DIGEST_LENGTH];
-
+    static unsigned char password1[] = {'L', 'P', 'U', 'Q', 'D', 'L', 's', 'K' };
+    
     static unsigned char EID1[] = {
           0x00, 0x00, 0x02, 0xb8, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00 };
-    unsigned char *password1 = NULL;
-
-    password1 = OPENSSL_malloc(1048577);
-    if (!TEST_ptr(password1))
-        return 0;
 
     params = construct_snmpkdf_params("sha1", EID1, sizeof(EID1),
-                                      password1, 1048577);
+                                      password1, sizeof(password1));
 
     /* Negative test - derive should fail */
     ret = TEST_ptr(params)
@@ -1724,7 +1720,6 @@ static int test_kdf_snmpkdf_null_output_buf(void)
         && TEST_int_eq(EVP_KDF_derive(kctx, NULL, sizeof(out), NULL), 0);
 
     EVP_KDF_CTX_free(kctx);
-    OPENSSL_free(password1);
     OPENSSL_free(params);
     return ret;
 }
@@ -1765,7 +1760,7 @@ static int test_kdf_snmpkdf_bad_output_size(void)
     static unsigned char password1[] = {'L', 'P', 'U', 'Q', 'D', 'L', 's', 'K' };
 
     params = construct_snmpkdf_params("sha1", EID1, sizeof(EID1),
-                                      (unsigned char *)password1, sizeof(password1));
+                                      password1, sizeof(password1));
 
     /* Negative test - derive should fail */
     ret = TEST_ptr(params)
@@ -1792,7 +1787,7 @@ static int test_kdf_snmpkdf(void)
     static unsigned char password1[] = {'L', 'P', 'U', 'Q', 'D', 'L', 's', 'K' };
 
     params = construct_snmpkdf_params("sha1", EID1, sizeof(EID1),
-                                      (unsigned char *)password1, sizeof(password1));
+                                      password1, sizeof(password1));
 
     ret = TEST_ptr(params)
         && TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SNMPKDF))
