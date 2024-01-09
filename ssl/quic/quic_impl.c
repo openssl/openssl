@@ -423,8 +423,8 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->as_server_state = qc->as_server;
 
     qc->default_stream_mode     = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
-    qc->default_ssl_mode        = qc->ssl.ctx->mode;
-    qc->default_ssl_options     = qc->ssl.ctx->options & OSSL_QUIC_PERMITTED_OPTIONS;
+    qc->default_ssl_mode        = qc->ssl.ctx->cnf->mode;
+    qc->default_ssl_options     = qc->ssl.ctx->cnf->options & OSSL_QUIC_PERMITTED_OPTIONS;
     qc->desires_blocking        = 1;
     qc->blocking                = 0;
     qc->incoming_stream_policy  = SSL_INCOMING_STREAM_POLICY_AUTO;
@@ -433,8 +433,8 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     if (!create_channel(qc))
         goto err;
 
-    ossl_quic_channel_set_msg_callback(qc->ch, ctx->msg_callback, ssl_base);
-    ossl_quic_channel_set_msg_callback_arg(qc->ch, ctx->msg_callback_arg);
+    ossl_quic_channel_set_msg_callback(qc->ch, ctx->cnf->msg_callback, ssl_base);
+    ossl_quic_channel_set_msg_callback_arg(qc->ch, ctx->cnf->msg_callback_arg);
 
     qc_update_reject_policy(qc);
 

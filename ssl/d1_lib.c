@@ -629,13 +629,13 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             /*
              * We have a cookie, so lets check it.
              */
-            if (ssl->ctx->app_verify_cookie_cb == NULL) {
+            if (ssl->ctx->cnf->app_verify_cookie_cb == NULL) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_NO_VERIFY_COOKIE_CALLBACK);
                 /* This is fatal */
                 ret = -1;
                 goto end;
             }
-            if (ssl->ctx->app_verify_cookie_cb(ssl, PACKET_data(&cookiepkt),
+            if (ssl->ctx->cnf->app_verify_cookie_cb(ssl, PACKET_data(&cookiepkt),
                     (unsigned int)PACKET_remaining(&cookiepkt)) == 0) {
                 /*
                  * We treat invalid cookies in the same was as no cookie as
@@ -660,8 +660,8 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
              */
 
             /* Generate the cookie */
-            if (ssl->ctx->app_gen_cookie_cb == NULL ||
-                ssl->ctx->app_gen_cookie_cb(ssl, cookie, &cookielen) == 0 ||
+            if (ssl->ctx->cnf->app_gen_cookie_cb == NULL ||
+                ssl->ctx->cnf->app_gen_cookie_cb(ssl, cookie, &cookielen) == 0 ||
                 cookielen > 255) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
                 /* This is fatal */

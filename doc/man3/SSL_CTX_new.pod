@@ -3,7 +3,7 @@
 =head1 NAME
 
 TLSv1_2_method, TLSv1_2_server_method, TLSv1_2_client_method,
-SSL_CTX_new, SSL_CTX_new_ex, SSL_CTX_up_ref, SSLv3_method,
+SSL_CTX_new, SSL_CTX_new_ex, SSL_CTX_dup, SSL_CTX_up_ref, SSLv3_method,
 SSLv3_server_method, SSLv3_client_method, TLSv1_method, TLSv1_server_method,
 TLSv1_client_method, TLSv1_1_method, TLSv1_1_server_method,
 TLSv1_1_client_method, TLS_method, TLS_server_method, TLS_client_method,
@@ -21,6 +21,8 @@ functions
  SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
                          const SSL_METHOD *method);
  SSL_CTX *SSL_CTX_new(const SSL_METHOD *method);
+ SSL_CTX *SSL_CTX_dup(OSSL_LIB_CTX *libctx, SSL_CTX *source,
+                      const char *propq, const SSL_METHOD *meth);
  int SSL_CTX_up_ref(SSL_CTX *ctx);
 
  const SSL_METHOD *TLS_method(void);
@@ -87,6 +89,9 @@ parameters may be NULL.
 
 SSL_CTX_new() does the same as SSL_CTX_new_ex() except that the default
 library context is used and no property query string is specified.
+
+SSL_CTX_dup() creates a new SSL_CTX object and uses the current configuration from
+an existing SSL_CTX.
 
 An B<SSL_CTX> object is reference counted. Creating an B<SSL_CTX> object for the
 first time increments the reference count. Freeing the B<SSL_CTX> (using
