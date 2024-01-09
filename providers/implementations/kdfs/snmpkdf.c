@@ -217,9 +217,6 @@ const OSSL_DISPATCH ossl_kdf_snmpkdf_functions[] = {
     OSSL_DISPATCH_END
 };
 
-
-
-
 /*
   SNMPKDF - In compliance with SP800-135 and RFC 7860, calculate
              a master key using the engine ID and password.
