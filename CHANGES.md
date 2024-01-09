@@ -28,7 +28,7 @@ OpenSSL 3.3
 
 ### Changes between 3.2 and 3.3 [xx XXX xxxx]
 
- * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
+ * Added SNMP KDF (SNMPKDF) to EVP_KDF.
 
    *Barry Fussell*
 
