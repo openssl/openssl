@@ -523,9 +523,10 @@ length to any value other than the fixed value is an error.
 =item EVP_CIPHER_get_iv_length() and EVP_CIPHER_CTX_get_iv_length()
 
 Return the IV length of a cipher when passed an B<EVP_CIPHER> or
-B<EVP_CIPHER_CTX>. It will return zero if the cipher does not use an IV, or -1
-in the event an error occurs (such as the cipher not yet being initalized).
-The constant B<EVP_MAX_IV_LENGTH> is the maximum IV length for all ciphers.
+B<EVP_CIPHER_CTX>. It will return zero if the cipher does not use an IV, or if
+the cipher has not yet been initalized within the B<EVP_CIPHER_CTX>, or if the
+passed cipher is NULL.  The constant B<EVP_MAX_IV_LENGTH> is the maximum IV
+length for all ciphers.
 
 =item EVP_CIPHER_CTX_get_tag_length()
 
