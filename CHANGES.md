@@ -75,6 +75,22 @@ OpenSSL 3.2
 
 ### Changes between 3.2.0 and 3.2.1 [xx XXX xxxx]
 
+ * The function EVP_PKEY_public_check() performs various checks on the RSA
+   public key. Among these checks the RSA modulus value n is checked whether
+   it is not a prime. As the n value must be a product of two or more large
+   prime values this check does not take long time on valid RSA keys. However
+   if the n value is overly large prime value this check would take a long
+   time.
+
+   An application that calls EVP_PKEY_public_check() and supplies an RSA key
+   obtained from an untrusted source could be vulnerable to a Denial of Service
+   attack.
+
+   Keys larger than OPENSSL_RSA_MAX_MODULUS_BITS will now fail the check
+   immediately with RSA_R_MODULUS_TOO_LARGE error reason.
+
+   ([CVE-2023-6237])
+
  * The POLY1305 MAC (message authentication code) implementation in OpenSSL
    for PowerPC CPUs saves the contents of vector registers in different
    order than they are restored. Thus the contents of some of these vector
@@ -20400,6 +20416,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2023-6237]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6237
 [CVE-2023-6129]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6129
 [CVE-2023-5678]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5678
 [CVE-2023-5363]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5363
