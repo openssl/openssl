@@ -107,7 +107,7 @@ $max_dtls_enabled_fips = max_prot_enabled(\@dtls_protocols_fips, \@is_dtls_disab
 sub no_tests {
     my ($dtls, $fips) = @_;
     if ($dtls && $fips) {
-        return disabled("dtls1_2", "dtls1_3");
+        return alldisabled("dtls1_2", "dtls1_3");
     }
     return $dtls ? alldisabled("dtls1", "dtls1_2", "dtls1_3") :
       alldisabled("ssl3", "tls1", "tls1_1", "tls1_2", "tls1_3");
@@ -181,42 +181,82 @@ sub generate_version_tests {
             }
         }
     }
-    return @tests
-        if disabled("tls1_3")
-           || disabled("tls1_2")
-           || (disabled("ec") && disabled("dh"))
-           || $dtls;
 
-    #Add some version/ciphersuite sanity check tests
-    push @tests, {
-        "name" => "ciphersuite-sanity-check-client",
-        "client" => {
-            #Offering only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
-            "CipherString" => "AES128-SHA",
-            "Ciphersuites" => "",
-        },
-        "server" => {
-            "MaxProtocol" => "TLSv1.2"
-        },
-        "test" => {
-            "ExpectedResult" => "ClientFail",
-        }
-    };
-    push @tests, {
-        "name" => "ciphersuite-sanity-check-server",
-        "client" => {
-            "CipherString" => "AES128-SHA",
-            "MaxProtocol" => "TLSv1.2"
-        },
-        "server" => {
-            #Allowing only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
-            "CipherString" => "AES128-SHA",
-            "Ciphersuites" => "",
-        },
-        "test" => {
-            "ExpectedResult" => "ServerFail",
-        }
-    };
+    if (!$dtls && !(disabled("tls1_3")
+                    || disabled("tls1_2")
+                    || (disabled("ec") && disabled("dh"))))
+    {
+        #Add some version/ciphersuite sanity check tests
+        push @tests, {
+            "name"   => "ciphersuite-sanity-check-tls-client",
+            "client" => {
+                #Offering only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
+                "CipherString" => "AES128-SHA",
+                "Ciphersuites" => "",
+            },
+            "server" => {
+                "MaxProtocol" => "TLSv1.2"
+            },
+            "test"   => {
+                "Method"         => "TLS",
+                "ExpectedResult" => "ClientFail",
+            }
+        };
+        push @tests, {
+            "name"   => "ciphersuite-sanity-check-tls-server",
+            "client" => {
+                "CipherString" => "AES128-SHA",
+                "MaxProtocol"  => "TLSv1.2"
+            },
+            "server" => {
+                #Allowing only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
+                "CipherString" => "AES128-SHA",
+                "Ciphersuites" => "",
+            },
+            "test"   => {
+                "Method"         => "TLS",
+                "ExpectedResult" => "ServerFail",
+            }
+        };
+    }
+
+    if ($dtls && !(disabled("dtls1_3")
+                   || disabled("dtls1_2")
+                   || (disabled("ec") && disabled("dh"))))
+    {
+        #Add some version/ciphersuite sanity check tests
+        push @tests, {
+            "name"   => "ciphersuite-sanity-check-dtls-client",
+            "client" => {
+                #Offering only <=DTLSv1.2 ciphersuites with DTLSv1.3 should fail
+                "CipherString" => "AES128-SHA",
+                "Ciphersuites" => "",
+            },
+            "server" => {
+                "MaxProtocol" => "DTLSv1.2"
+            },
+            "test"   => {
+                "Method"         => "DTLS",
+                "ExpectedResult" => "ClientFail",
+            }
+        };
+        push @tests, {
+            "name"   => "ciphersuite-sanity-check-dtls-server",
+            "client" => {
+                "CipherString" => "AES128-SHA",
+                "MaxProtocol"  => "DTLSv1.2"
+            },
+            "server" => {
+                #Allowing only <=DTLSv1.2 ciphersuites with DTLSv1.3 should fail
+                "CipherString" => "AES128-SHA",
+                "Ciphersuites" => "",
+            },
+            "test"   => {
+                "Method"         => "DTLS",
+                "ExpectedResult" => "ServerFail",
+            }
+        };
+    }
 
     return @tests;
 }
@@ -325,7 +365,7 @@ sub generate_resumption_tests {
 
     if (!disabled("tls1_3") && (!disabled("ec") || !disabled("dh")) && !$dtls) {
         push @client_tests, {
-            "name" => "resumption-with-hrr",
+            "name" => "tls13-resumption-with-hrr",
             "client" => {
             },
             "server" => {
@@ -336,6 +376,25 @@ sub generate_resumption_tests {
             "test" => {
                 "ExpectedProtocol" => "TLSv1.3",
                 "Method" => "TLS",
+                "HandshakeMode" => "Resume",
+                "ResumptionExpected" => "Yes",
+            }
+        };
+    }
+
+    if (!disabled("dtls1_3") && (!disabled("ec") || !disabled("dh")) && $dtls) {
+        push @client_tests, {
+            "name" => "dtls13-resumption-with-hrr",
+            "client" => {
+            },
+            "server" => {
+                "Curves" => disabled("ec") ? "ffdhe3072" : "P-256"
+            },
+            "resume_client" => {
+            },
+            "test" => {
+                "ExpectedProtocol" => "DTLSv1.3",
+                "Method" => "DTLS",
                 "HandshakeMode" => "Resume",
                 "ResumptionExpected" => "Yes",
             }
