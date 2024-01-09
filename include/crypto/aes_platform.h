@@ -60,7 +60,7 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
 # endif /* AES_XTS_ASM */
 
 # if defined(OPENSSL_CPUID_OBJ)
-#  if (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
+#  if (defined(__powerpc__) || defined(__POWERPC__) || defined(_ARCH_PPC))
 #   include "crypto/ppc_arch.h"
 #   ifdef VPAES_ASM
 #    define VPAES_CAPABLE (OPENSSL_ppccap_P & PPC_ALTIVEC)
