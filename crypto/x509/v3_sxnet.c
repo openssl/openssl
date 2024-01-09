@@ -204,6 +204,7 @@ int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, const char *user,
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         goto err;
     }
+    ASN1_INTEGER_free(id->zone);
     id->zone = zone;
     *psx = sx;
     return 1;
