@@ -33,11 +33,11 @@ plan tests => 2;
 
 my $sm2_re = qr|
    ^
-   .*?\Qcons: SEQUENCE\E\s+?\n
-   .*?\Qprim:  INTEGER           :00\E\n
-   .*?\Qcons:  SEQUENCE\E\s+?\n
-   .*?\Qprim:   OBJECT            :id-ecPublicKey\E\n
-   .*?\Qprim:   OBJECT            :sm2\E\n
+   .*?\Qcons: SEQUENCE\E\s+?\R
+   .*?\Qprim:  INTEGER           :00\E\R
+   .*?\Qcons:  SEQUENCE\E\s+?\R
+   .*?\Qprim:   OBJECT            :id-ecPublicKey\E\R
+   .*?\Qprim:   OBJECT            :sm2\E\R
    .*?\Qprim:  OCTET STRING      [HEX DUMP]:\E
    |mx;
 
@@ -54,7 +54,7 @@ my $result_ec = join("", run(pipe($cmd_genec, $cmd_asn1parse),
 like($result_ec, $sm2_re,
      "Check that 'genpkey -algorithm EC' resulted in a correctly encoded SM2 key");
 
-my $result_sm2 = join("", run(pipe($cmd_genec, $cmd_asn1parse),
+my $result_sm2 = join("", run(pipe($cmd_gensm2, $cmd_asn1parse),
                               capture => 1));
 
 like($result_sm2, $sm2_re,
