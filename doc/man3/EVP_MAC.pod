@@ -147,7 +147,7 @@ Providing non-NULL I<params> to this function is equivalent to calling
 EVP_MAC_CTX_set_params() with those I<params> for the same I<ctx> beforehand.
 Note: There are additional requirements for some MAC algorithms during
 re-initalization (i.e. calling EVP_MAC_init() on an EVP_MAC after EVP_MAC_final()
-has been called on the same object.  See the NOTES section below.
+has been called on the same object).  See the NOTES section below.
 
 EVP_MAC_init() should be called before EVP_MAC_update() and EVP_MAC_final().
 
