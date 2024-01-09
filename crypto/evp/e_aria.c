@@ -259,8 +259,6 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
     switch (type) {
     case EVP_CTRL_INIT:
-        if (EVP_CIPHER_get_iv_length(c->cipher) < 0)
-            return 0;
         gctx->key_set = 0;
         gctx->iv_set = 0;
         gctx->ivlen = EVP_CIPHER_get_iv_length(c->cipher);

@@ -44,15 +44,13 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
     int i = 0;
-    int l;
+    unsigned int l;
 
     if (type != NULL) {
         unsigned char iv[EVP_MAX_IV_LENGTH];
 
         l = EVP_CIPHER_CTX_get_iv_length(ctx);
-        if (l < 0)
-            return -1;
-        if (!ossl_assert((long unsigned int)l <= sizeof(iv)))
+        if (!ossl_assert(l <= sizeof(iv)))
             return -1;
         i = ASN1_TYPE_get_octetstring(type, iv, l);
         if (i != (int)l)
@@ -485,7 +483,7 @@ int EVP_CIPHER_CTX_is_encrypting(const EVP_CIPHER_CTX *ctx)
 
 unsigned long EVP_CIPHER_get_flags(const EVP_CIPHER *cipher)
 {
-    return cipher->flags;
+    return cipher == NULL ? 0 : cipher->flags;
 }
 
 void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx)
@@ -515,18 +513,18 @@ void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data)
 
 int EVP_CIPHER_get_iv_length(const EVP_CIPHER *cipher)
 {
-    return (cipher == NULL) ? -1 : cipher->iv_len;
+    return (cipher == NULL) ? 0 : cipher->iv_len;
 }
 
 int EVP_CIPHER_CTX_get_iv_length(const EVP_CIPHER_CTX *ctx)
 {
+    if (ctx->cipher == NULL)
+        return 0;
+
     if (ctx->iv_len < 0) {
         int rv, len = EVP_CIPHER_get_iv_length(ctx->cipher);
         size_t v = len;
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-
-        if (len == -1)
-            return -1;
 
         if (ctx->cipher->get_ctx_params != NULL) {
             params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN,

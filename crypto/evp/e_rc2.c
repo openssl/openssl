@@ -162,8 +162,7 @@ static int rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
     if (type != NULL) {
         num = rc2_meth_to_magic(c);
         j = EVP_CIPHER_CTX_get_iv_length(c);
-        if (j >= 0)
-            i = ASN1_TYPE_set_int_octetstring(type, num, c->oiv, j);
+        i = ASN1_TYPE_set_int_octetstring(type, num, c->oiv, j);
     }
     return i;
 }

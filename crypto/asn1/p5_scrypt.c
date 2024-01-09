@@ -83,7 +83,7 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
     }
 
     /* Create random IV */
-    if (EVP_CIPHER_get_iv_length(cipher) > 0) {
+    if (EVP_CIPHER_get_iv_length(cipher)) {
         if (aiv)
             memcpy(iv, aiv, EVP_CIPHER_get_iv_length(cipher));
         else if (RAND_bytes(iv, EVP_CIPHER_get_iv_length(cipher)) <= 0)

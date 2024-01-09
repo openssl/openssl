@@ -234,7 +234,6 @@ int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
     if (enc != NULL) {
         objstr = EVP_CIPHER_get0_name(enc);
         if (objstr == NULL
-            || EVP_CIPHER_get_iv_length(enc) < 0
                /*
                 * Check "Proc-Type: 4,Encrypted\nDEK-Info: objstr,hex-iv\n"
                 * fits into buf
