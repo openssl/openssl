@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 48;
+plan tests => 49;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -52,6 +52,7 @@ ok(!run(app([@addext_args, "-addext", $val, "-addext", $val])));
 ok(!run(app([@addext_args, "-addext", $val, "-addext", $val2])));
 ok(!run(app([@addext_args, "-addext", $val, "-addext", $val3])));
 ok(!run(app([@addext_args, "-addext", $val2, "-addext", $val3])));
+ok(run(app([@addext_args, "-addext", "SXNetID=1:one, 2:two, 3:three"])));
 
 # If a CSR is provided with neither of -key or -CA/-CAkey, this should fail.
 ok(!run(app(["openssl", "req", "-x509",
