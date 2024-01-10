@@ -329,7 +329,7 @@ int ossl_rsa_sp800_56b_check_public(const RSA *rsa)
         goto err;
     }
 
-    /* Number of MR rounds 5 from FIPS 186-5 Table B.1 - the highest one */
+    /* Highest number of MR rounds from FIPS 186-5 Section B.3 Table B.1 */
     ret = ossl_bn_miller_rabin_is_prime(rsa->n, 5, ctx, NULL, 1, &status);
 #ifdef FIPS_MODULE
     if (ret != 1 || status != BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME) {
