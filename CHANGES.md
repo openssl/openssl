@@ -75,18 +75,23 @@ OpenSSL 3.2
 
 ### Changes between 3.2.0 and 3.2.1 [xx XXX xxxx]
 
- * The function EVP_PKEY_public_check() performs various checks on the RSA
-   public key. Among these checks, a computation is done to confirm that the
-   RSA modulus, n, is composite.  For valid RSA keys, n is a product of two
-   or more large primes and this computation completes quickly. However, if
-   n is an overly large prime, then this computation would take a long time.
+ * When function EVP_PKEY_public_check() is called on RSA public keys,
+   a computation is done to confirm that the RSA modulus, n, is composite.
+   For valid RSA keys, n is a product of two or more large primes and this
+   computation completes quickly. However, if n is an overly large prime,
+   then this computation would take a long time.
 
    An application that calls EVP_PKEY_public_check() and supplies an RSA key
    obtained from an untrusted source could be vulnerable to a Denial of Service
    attack.
 
-   Keys larger than OPENSSL_RSA_MAX_MODULUS_BITS will now fail the check
-   immediately with an RSA_R_MODULUS_TOO_LARGE error reason.
+   The function EVP_PKEY_public_check() is not called from other OpenSSL
+   functions however it is called from the OpenSSL pkey command line
+   application. For that reason that application is also vulnerable if used
+   with the "-pubin" and "-check" options on untrusted data.
+
+   To resolve this issue RSA keys larger than OPENSSL_RSA_MAX_MODULUS_BITS will
+   now fail the check immediately with an RSA_R_MODULUS_TOO_LARGE error reason.
 
    ([CVE-2023-6237])
 
