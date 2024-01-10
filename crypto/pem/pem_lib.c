@@ -331,8 +331,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 
     if (enc != NULL) {
         objstr = EVP_CIPHER_get0_name(enc);
-        if (objstr == NULL || EVP_CIPHER_get_iv_length(enc) <= 0
-                || EVP_CIPHER_get_iv_length(enc) > (int)sizeof(iv)
+        if (objstr == NULL || EVP_CIPHER_get_iv_length(enc) > (int)sizeof(iv)
                    /*
                     * Check "Proc-Type: 4,Encrypted\nDEK-Info: objstr,hex-iv\n"
                     * fits into buf

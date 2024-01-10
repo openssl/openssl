@@ -2221,7 +2221,7 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
             in = 1; /* padding length byte */
             out = EVP_CIPHER_get_iv_length(e_ciph);
             blk = EVP_CIPHER_get_block_size(e_ciph);
-            if (blk == 0 || out < 0)
+            if (blk == 0)
                 return 0;
         }
     }

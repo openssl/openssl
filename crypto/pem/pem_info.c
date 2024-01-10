@@ -273,11 +273,6 @@ int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
                 goto err;
             }
 
-            if (EVP_CIPHER_get_iv_length(enc) < 0) {
-                ERR_raise(ERR_LIB_PEM, PEM_R_CIPHER_IS_NULL);
-                goto err;
-            }
-
             /* Create the right magic header stuff */
             buf[0] = '\0';
             PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);

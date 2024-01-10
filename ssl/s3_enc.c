@@ -120,10 +120,7 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
     md_len = (size_t)mdi;
     key_len = EVP_CIPHER_get_key_length(ciph);
     iv_len = EVP_CIPHER_get_iv_length(ciph);
-    if (iv_len < 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
+
     if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
         (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
         mac_secret = &(p[0]);
@@ -192,9 +189,6 @@ int ssl3_setup_key_block(SSL_CONNECTION *s)
 
     num = EVP_MD_get_size(hash);
     if (num < 0)
-        return 0;
-
-    if (EVP_CIPHER_get_iv_length(c) < 0)
         return 0;
 
     num = EVP_CIPHER_get_key_length(c) + num + EVP_CIPHER_get_iv_length(c);
