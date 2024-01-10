@@ -316,6 +316,11 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, int is_server)
     if (args.tls == NULL)
         return NULL;
 
+#ifndef OPENSSL_NO_QLOG
+    args.use_qlog   = 1; /* disabled if env not set */
+    args.qlog_title = args.tls->ctx->qlog_title;
+#endif
+
     ch = ossl_quic_channel_new(&args);
     if (ch == NULL) {
         if (tls == NULL)

@@ -885,7 +885,7 @@ IF[{- !$disabled{tests} -}]
     ENDIF
 
     IF[{- !$disabled{qlog} -}]
-      SOURCE[json_test]=json_test.c helpers/ssltestlib.c helpers/quictestlib.c
+      SOURCE[json_test]=json_test.c helpers/ssltestlib.c $QUICTESTHELPERS
       INCLUDE[json_test]=../include ../apps/include
       DEPEND[json_test]=../libcrypto.a ../libssl.a libtestutil.a
     ENDIF
