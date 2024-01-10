@@ -365,12 +365,15 @@ signature algorithm and digest algorithm for the signature operation.
 
 =item "nonce-type" (B<OSSL_SIGNATURE_PARAM_NONCE_TYPE>) <unsigned integer>
 
-Set this to 1 to use a deterministic ECDSA or DSA digital signature as
-defined in RFC #6979 (See Section 3.2 "Generation of k").
-The default value of 0 uses a random value for the nonce B<k> as defined in
-FIPS 186-4 Section 6.3 "Secret Number Generation".
-Before using deterministic digital signature please read
-RFC #6979 Section 4 "Security Considerations".
+Set this to 1 to use deterministic digital signature generation with
+ECDSA or DSA, as defined in RFC 6979 (see Section 3.2 "Generation of
+k").  In this case, the "digest" parameter must be explicitly set
+(otherwise, deterministic nonce generation will fail).  Before using
+deterministic digital signature generation, please read RFC 6979
+Section 4 "Security Considerations".  The default value for
+"nonce-type" is 0 and results in a random value being used for the
+nonce B<k> as defined in FIPS 186-4 Section 6.3 "Secret Number
+Generation".
 
 =item "kat" (B<OSSL_SIGNATURE_PARAM_KAT>) <unsigned integer>
 
