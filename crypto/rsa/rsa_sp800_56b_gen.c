@@ -105,8 +105,8 @@ int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
 
     BN_CTX_start(ctx);
     tmp = BN_CTX_get(ctx);
-    Xpo = (Xpout != NULL) ? Xpout : BN_CTX_get(ctx);
-    Xqo = (Xqout != NULL) ? Xqout : BN_CTX_get(ctx);
+    Xpo = BN_CTX_get(ctx);
+    Xqo = BN_CTX_get(ctx);
     if (tmp == NULL || Xpo == NULL || Xqo == NULL)
         goto err;
     BN_set_flags(Xpo, BN_FLG_CONSTTIME);
