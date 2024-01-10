@@ -560,17 +560,35 @@ void OPENSSL_VPROC_FUNC(void) {}
 
 static int clear_record_layer(SSL_CONNECTION *s)
 {
-    int ret;
+    int ret = 1;
+
+    /* Clear any buffered records we no longer need */
+    while (s->rlayer.curr_rec < s->rlayer.num_recs)
+        ret &= ssl_release_record(s,
+                                  &(s->rlayer.tlsrecs[s->rlayer.curr_rec ++]),
+                                  0);
+
+    BIO_free(s->rlayer.rrlnext);
+    s->rlayer.rrlnext = NULL;
+
+    /* Reset various fields */
+    s->rlayer.wnum = 0;
+    s->rlayer.handshake_fragment_len = 0;
+    s->rlayer.wpend_tot = 0;
+    s->rlayer.wpend_type = 0;
+    s->rlayer.wpend_buf = NULL;
+    s->rlayer.alert_count = 0;
+    s->rlayer.num_recs = 0;
+    s->rlayer.curr_rec = 0;
 
     /* We try and reset both record layers even if one fails */
-
-    ret = ssl_set_new_record_layer(s,
-                                   SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION
-                                                             : TLS_ANY_VERSION,
-                                   OSSL_RECORD_DIRECTION_READ,
-                                   OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
-                                   NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                   NID_undef, NULL, NULL, NULL);
+    ret &= ssl_set_new_record_layer(s,
+                                    SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION
+                                                              : TLS_ANY_VERSION,
+                                    OSSL_RECORD_DIRECTION_READ,
+                                    OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
+                                    NULL, 0, NULL, 0, NULL,  0, NULL, 0,
+                                    NID_undef, NULL, NULL, NULL);
 
     ret &= ssl_set_new_record_layer(s,
                                     SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION
