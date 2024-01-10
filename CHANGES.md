@@ -36,6 +36,12 @@ OpenSSL 3.3
 
     *Neil Horman*
 
+ * Added `-set_issuer` and `-set_subject` options to `openssl x509` to
+   override the Issuer and Subject when creating a certificate. The `-subj`
+   option now is an alias for `-set_subject`.
+
+    *Job Snijders, George Michaelson*
+
  * OPENSSL_sk_push() and sk_<TYPE>_push() functions now return 0 instead of -1
    if called with a NULL stack argument.
 

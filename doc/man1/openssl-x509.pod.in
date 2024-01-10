@@ -56,6 +56,8 @@ B<openssl> B<x509>
 [B<-next_serial>]
 [B<-days> I<arg>]
 [B<-preserve_dates>]
+[B<-set_issuer> I<arg>]
+[B<-set_subject> I<arg>]
 [B<-subj> I<arg>]
 [B<-force_pubkey> I<filename>]
 [B<-clrext>]
@@ -123,7 +125,7 @@ see L<openssl-passphrase-options(1)>.
 Generate a certificate from scratch, not using an input certificate
 or certificate request.
 So this excludes the B<-in> and B<-req> options.
-Instead, the B<-subj> option needs to be given.
+Instead, the B<-set_subject> option needs to be given.
 The public key to include can be given with the B<-force_pubkey> option
 and defaults to the key given with the B<-key> (or B<-signkey>) option,
 which implies self-signature.
@@ -386,10 +388,17 @@ When signing a certificate, preserve "notBefore" and "notAfter" dates of any
 input certificate instead of adjusting them to current time and duration.
 Cannot be used together with the B<-days> option.
 
-=item B<-subj> I<arg>
+=item B<-set_issuer> I<arg>
+
+When a certificate is created set its issuer name to the given value.
+
+See B<-set_subject> on how the arg must be formatted.
+
+=item B<-set_subject> I<arg>
 
 When a certificate is created set its subject name to the given value.
-When the certificate is self-signed the issuer name is set to the same value.
+When the certificate is self-signed the issuer name is set to the same value,
+unless the B<-set_issuer> option is given.
 
 The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
 Special characters may be escaped by C<\> (backslash), whitespace is retained.
@@ -405,6 +414,10 @@ C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 This option can be used with the B<-new> and B<-force_pubkey> options to create
 a new certificate without providing an input certificate or certificate request.
 
+=item B<-subj> I<arg>
+
+This option is an alias of B<-set_subject>.
+
 =item B<-force_pubkey> I<filename>
 
 When a new certificate or certificate request is created
@@ -413,7 +426,7 @@ instead of the key contained in the input
 or given with the B<-key> (or B<-signkey>) option.
 If the input contains no public key but a private key, its public part is used.
 
-This option can be used in conjunction with b<-new> and B<-subj>
+This option can be used in conjunction with b<-new> and B<-set_subject>
 to directly generate a certificate containing any desired public key.
 
 This option is also useful for creating self-issued certificates that are not
