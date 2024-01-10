@@ -37,7 +37,7 @@ static void rcidm_update(QUIC_RCIDM *rcidm);
 static void rcidm_set_preferred_rcid(QUIC_RCIDM *rcidm,
                                      const QUIC_CONN_ID *rcid);
 
-#define PACKETS_PER_RCID        1000
+#define PACKETS_PER_RCID        10000
 
 #define INITIAL_SEQ_NUM         0
 #define PREF_ADDR_SEQ_NUM       1
@@ -275,10 +275,6 @@ static int rcid_cmp(const RCID *a, const RCID *b)
         return -1;
     if (a->seq_num > b->seq_num)
         return 1;
-    if ((uintptr_t)a < (uintptr_t)b)
-        return -1;
-    if ((uintptr_t)a > (uintptr_t)b)
-        return 1;
     return 0;
 }
 
@@ -365,7 +361,6 @@ static RCID *rcidm_create_rcid(QUIC_RCIDM *rcidm, uint64_t seq_num,
         rcid->state = RCID_STATE_PENDING;
 
         if (!ossl_pqueue_RCID_push(rcidm->rcids, rcid, &rcid->pq_idx)) {
-            assert(0);
             OPENSSL_free(rcid);
             return NULL;
         }
