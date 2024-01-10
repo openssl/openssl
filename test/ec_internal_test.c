@@ -445,13 +445,10 @@ static int check_bn_mont_ctx(BN_MONT_CTX *mont, BIGNUM *mod, BN_CTX *ctx)
     if (!TEST_ptr(mont))
         goto err;
     
-    if (!BN_MONT_CTX_set(regenerated, mod, ctx)) {
-        TEST_error("failure to compute correct answer");
-        goto err;
-    }
+    if (!TEST_true(BN_MONT_CTX_set(regenerated, mod, ctx)))
+         goto err;
 
-    if (!ossl_bn_mont_ctx_eq(regenerated, mont)) {
-        TEST_error("recomputed and original montgomery structure are not equal");
+    if (!TEST_true(ossl_bn_mont_ctx_eq(regenerated, mont))) {
         goto err;
     }
     ret = 1;
@@ -469,15 +466,13 @@ static int montgomery_correctness_test(EC_GROUP *group)
     ctx = BN_CTX_new();
     if (ctx == NULL)
         return ret;
-    if (!check_bn_mont_ctx(group->mont_data, group->order, ctx)){
+    if (!TEST_true(check_bn_mont_ctx(group->mont_data, group->order, ctx))){
         TEST_error("group order issue");
         goto err;
     }
     if (group->field_data1 != NULL) {
-      if (!check_bn_mont_ctx(group->field_data1, group->field, ctx)){
-          TEST_error("field issue");
-          goto err;
-      }
+        if (!TEST_true(check_bn_mont_ctx(group->field_data1, group->field, ctx)))
+            goto err;
     }
     ret = 1;
  err:
