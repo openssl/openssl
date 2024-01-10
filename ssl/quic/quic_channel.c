@@ -117,6 +117,9 @@ static QLOG *ch_get_qlog(QUIC_CHANNEL *ch)
     if (!ch->use_qlog)
         return NULL;
 
+    if (ch->is_server && ch->init_dcid.id_len == 0)
+        return NULL;
+
     qti.odcid       = ch->init_dcid;
     qti.title       = ch->qlog_title;
     qti.description = NULL;
