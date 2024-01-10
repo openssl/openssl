@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 44;
+plan tests => 46;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -80,6 +80,15 @@ ok(run(app(["openssl", "pkey", "-in", $pkey, "-pubout", "-out", $pubkey]))
             "-trusted", $selfout, "-partial_chain", $testcert])));
 # not unlinking $pubkey
 # not unlinking $selfout
+
+# test -set_issuer option
+my $ca_issu = srctop_file(@certs, "ca-cert.pem"); # issuer cert
+my $caout_issu = "ca-issu.out";
+ok(run(app(["openssl", "x509", "-new", "-force_pubkey", $key, "-subj", "/CN=EE",
+            "-set_issuer", "/CN=TEST-CA", "-extfile", $extfile, "-CA", $ca_issu,
+            "-CAkey", $pkey, "-text", "-out", $caout_issu])));
+ok(get_issuer($caout_issu) =~ /CN=TEST-CA/);
+# not unlinking $caout
 
 # simple way of directly producing a CA-signed cert with private/pubkey input
 my $ca = srctop_file(@certs, "ca-cert.pem"); # issuer cert
