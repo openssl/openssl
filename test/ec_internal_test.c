@@ -16,7 +16,7 @@
 #include "testutil.h"
 #include <openssl/ec.h>
 #include "ec_local.h"
-#include "../bn/bn_local.h"
+#include <crypto/bn.h>
 #include <openssl/objects.h>
 
 static size_t crv_len = 0;
@@ -440,39 +440,22 @@ static int check_bn_mont_ctx(BN_MONT_CTX *mont, BIGNUM *mod, BN_CTX *ctx)
     int ret = 0;
     BN_MONT_CTX *regenerated = BN_MONT_CTX_new();
 
-    if (!TEST_ptr(regenerated)) {
-       return ret;
-    }
-    if (!TEST_ptr(mont)) {
-       goto err;
-    }
+    if (!TEST_ptr(regenerated))
+        return ret;
+    if (!TEST_ptr(mont))
+        goto err;
+    
     if (!BN_MONT_CTX_set(regenerated, mod, ctx)) {
-      TEST_error("failure to compute correct answer");
-      goto err;
+        TEST_error("failure to compute correct answer");
+        goto err;
     }
 
-    /* Check equality of all components */
-    if (!TEST_int_eq(regenerated->ri, mont->ri)) {
-       goto err;
-    }
-    if (!TEST_BN_eq(&regenerated->RR, &mont->RR)) {
-      goto err;
-    }
-    /*  TODO: properly handle bignum case */
-    if (regenerated->n0[0] != mont->n0[0]) {
-      TEST_error("mismatch in n0[0]: expected: " BN_DEC_FMT1
-                 " got: " BN_DEC_FMT1, regenerated->n0[0], mont->n0[0]);
-      goto err;
-    }
-    if (regenerated->n0[1] != mont->n0[1]) {
-      TEST_error("mismatch in n0[1]");
-      goto err;
-    }
-    if (regenerated->flags != mont->flags) {
-      TEST_error("mismatch in flags");
-      goto err;
+    if (!ossl_bn_mont_ctx_eq(regenerated, mont)) {
+        TEST_error("recomputed and original montgomery structure are not equal");
+        goto err;
     }
     ret = 1;
+
  err:
     BN_MONT_CTX_free(regenerated);
     return ret;
@@ -485,15 +468,15 @@ static int montgomery_correctness_test(EC_GROUP *group)
 
     ctx = BN_CTX_new();
     if (ctx == NULL)
-      return ret;
+        return ret;
     if (!check_bn_mont_ctx(group->mont_data, group->order, ctx)){
-      TEST_error("group order issue");
-      goto err;
+        TEST_error("group order issue");
+        goto err;
     }
     if (group->field_data1 != NULL) {
       if (!check_bn_mont_ctx(group->field_data1, group->field, ctx)){
-        TEST_error("field issue");
-        goto err;
+          TEST_error("field issue");
+          goto err;
       }
     }
     ret = 1;

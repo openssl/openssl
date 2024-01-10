@@ -1484,7 +1484,7 @@ static int ecp_nistz256group_full_init(EC_GROUP *group,
     if (mont == NULL)
         goto err;
 
-    if (!ossl_bn_mont_ctx_set(mont, p, 256, params+6*param_len, param_len,
+    if (!ossl_bn_mont_ctx_set(mont, p, 256, params + 6 * param_len, param_len,
                               1, 0))
       goto err;
 
