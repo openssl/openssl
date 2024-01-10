@@ -44,7 +44,6 @@ static int test_asn1_stable_parse(void)
     if (!TEST_ptr(newctx))
         goto out;
 
-    fprintf(stderr, "Loading config %s\n", config_file);
     if (!TEST_int_eq(OSSL_LIB_CTX_load_config(newctx, config_file), 0))
         goto err;
 
