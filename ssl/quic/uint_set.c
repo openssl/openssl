@@ -237,7 +237,7 @@ int ossl_uint_set_insert(UINT_SET *s, const UINT_RANGE *range)
                  * If this closes a gap we now need to merge
                  * consecutive nodes.
                  */
-                uint_set_merge_adjacent(s, z);
+                uint_set_merge_adjacent(s, zprev);
             } else {
                 /*
                  * The new interval is between intervals without overlapping or
