@@ -3017,6 +3017,20 @@ SSL *ossl_quic_get0_connection(SSL *s)
 }
 
 /*
+ * SSL_get0_listener
+ * -----------------
+ */
+SSL *ossl_quic_get0_listener(SSL *s)
+{
+    QCTX ctx;
+
+    if (!expect_quic(s, &ctx))
+        return NULL;
+
+    return NULL; // XXX TODO
+}
+
+/*
  * SSL_get_stream_type
  * -------------------
  */
@@ -4003,6 +4017,21 @@ err:
 
     OPENSSL_free(ql);
     return NULL;
+}
+
+SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
+{
+    return NULL; // TODO XXX
+}
+
+size_t ossl_quic_get_accept_connection_queue_len(SSL *ssl)
+{
+    return 0; // TODO XXX
+}
+
+int ossl_quic_listen(SSL *ssl)
+{
+    return 0; // TODO XXX
 }
 
 /*
