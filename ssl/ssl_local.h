@@ -1216,9 +1216,12 @@ typedef struct ossl_quic_tls_callbacks_st {
 
 typedef struct cert_pkey_st CERT_PKEY;
 
-#define SSL_TYPE_SSL_CONNECTION  0
-#define SSL_TYPE_QUIC_CONNECTION 1
-#define SSL_TYPE_QUIC_XSO        2
+#define SSL_TYPE_SSL_CONNECTION     0
+#define SSL_TYPE_QUIC_CONNECTION    0x80
+#define SSL_TYPE_QUIC_XSO           0x81
+#define SSL_TYPE_QUIC_LISTENER      0x82
+
+#define SSL_TYPE_IS_QUIC(x)         (((x) & 0x80) != 0)
 
 struct ssl_st {
     int type;

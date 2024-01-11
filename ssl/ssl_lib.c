@@ -991,11 +991,7 @@ int SSL_is_tls(const SSL *s)
 
 int SSL_is_quic(const SSL *s)
 {
-#ifndef OPENSSL_NO_QUIC
-    if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_XSO)
-        return 1;
-#endif
-    return 0;
+    return IS_QUIC(s);
 }
 
 int SSL_up_ref(SSL *s)
