@@ -2296,6 +2296,8 @@ __owur int SSL_set1_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr);
 __owur SSL *SSL_get0_connection(SSL *s);
 __owur int SSL_is_connection(SSL *s);
 
+__owur SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags);
+
 #define SSL_STREAM_TYPE_NONE        0
 #define SSL_STREAM_TYPE_READ        (1U << 0)
 #define SSL_STREAM_TYPE_WRITE       (1U << 1)
