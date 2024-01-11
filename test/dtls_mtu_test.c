@@ -19,6 +19,7 @@
 
 /* for SSL_READ_ETM() */
 #include "../ssl/ssl_local.h"
+#include "internal/ssl_unwrap.h"
 
 static int debug = 0;
 

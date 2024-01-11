@@ -26,6 +26,7 @@
 #include "ssl_local.h"
 #include "ssl_cert_table.h"
 #include "internal/thread_once.h"
+#include "internal/ssl_unwrap.h"
 #ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 # ifdef _WIN32

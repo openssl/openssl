@@ -11,6 +11,7 @@
 #include "../ssl_local.h"
 #include "statem_local.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 
 #define COOKIE_STATE_FORMAT_VERSION     1
 
