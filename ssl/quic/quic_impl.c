@@ -3953,6 +3953,59 @@ int ossl_quic_get_key_update_type(const SSL *s)
 }
 
 /*
+ * QUIC Front-End I/O API: Listeners
+ * =================================
+ */
+
+SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
+{
+    QUIC_LISTENER *ql = NULL;
+    QUIC_ENGINE_ARGS engine_args = {0};
+    QUIC_PORT_ARGS port_args = {0};
+
+#if defined(OPENSSL_THREADS)
+    if ((ql->mutex = ossl_crypto_mutex_new()) == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
+        goto err;
+    }
+#endif
+
+    if ((ql = OPENSSL_zalloc(sizeof(*ql))) == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
+        goto err;
+    }
+
+    engine_args.libctx  = ctx->libctx;
+    engine_args.propq   = ctx->propq;
+    engine_args.mutex   = ql->mutex;
+    if ((ql->engine = ossl_quic_engine_new(&engine_args)) == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        goto err;
+    }
+
+    port_args.channel_ctx = ctx;
+    ql->port = ossl_quic_engine_create_port(ql->engine, &port_args);
+    if (ql->port == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        goto err;
+    }
+
+    /* Initialise the QUIC_LISTENER'S object header. */
+    if (!ossl_quic_obj_init(&ql->obj, ctx, SSL_TYPE_QUIC_LISTENER, NULL,
+                            ql->engine, ql->port))
+        goto err;
+
+    return &ql->obj.ssl;
+
+err:
+    if (ql != NULL)
+        ossl_quic_engine_free(ql->engine);
+
+    OPENSSL_free(ql);
+    return NULL;
+}
+
+/*
  * QUIC Front-End I/O API: SSL_CTX Management
  * ==========================================
  */

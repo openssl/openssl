@@ -257,6 +257,18 @@ struct quic_conn_st {
 struct quic_listener_st {
     /* QUIC_OBJ common header, including SSL object common header. */
     QUIC_OBJ                        obj;
+
+    /* The QUIC engine representing the QUIC event domain. */
+    QUIC_ENGINE                     *engine;
+
+    /* The QUIC port representing the QUIC listener and socket. */
+    QUIC_PORT                       *port;
+
+    /*
+     * The mutex used to synchronise access to the QUIC_ENGINE. We own this but
+     * provide it to the engine.
+     */
+    CRYPTO_MUTEX                    *mutex;
 };
 
 /* Internal calls to the QUIC CSM which come from various places. */
