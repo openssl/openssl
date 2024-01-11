@@ -485,7 +485,7 @@ EVP_CIPHER_free().
 Return the NID of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
 structure.  The actual NID value is an internal value which may not have a
 corresponding OBJECT IDENTIFIER.  NID_undef is returned in the event that the
-nid is unknown of if the cipher has not been properly initalized via a call to
+nid is unknown or if the cipher has not been properly initalized via a call to
 B<EVP_CipherInit>.
 
 =item EVP_CIPHER_CTX_set_flags(), EVP_CIPHER_CTX_clear_flags() and EVP_CIPHER_CTX_test_flags()
@@ -523,7 +523,7 @@ length to any value other than the fixed value is an error.
 =item EVP_CIPHER_get_iv_length() and EVP_CIPHER_CTX_get_iv_length()
 
 Return the IV length of a cipher when passed an B<EVP_CIPHER> or
-B<EVP_CIPHER_CTX>. It will return zero if the cipher does not use an IV, or if
+B<EVP_CIPHER_CTX>. It will return zero if the cipher does not use an IV, if
 the cipher has not yet been initalized within the B<EVP_CIPHER_CTX>, or if the
 passed cipher is NULL.  The constant B<EVP_MAX_IV_LENGTH> is the maximum IV
 length for all ciphers.
@@ -618,7 +618,7 @@ typically include any parameters and an IV. The cipher IV (if any) must be set
 when this call is made. This call should be made before the cipher is actually
 "used" (before any EVP_EncryptUpdate(), EVP_DecryptUpdate() calls for example).
 This function may fail if the cipher does not have any ASN1 support, or if an
-uninitalized cipher is passed to it.
+uninitialized cipher is passed to it.
 
 =item EVP_CIPHER_asn1_to_param()
 
@@ -1252,7 +1252,7 @@ EVP_CipherFinal_ex() returns 0 for a decryption failure or 1 for success.
 
 EVP_Cipher() returns 1 on success and <= 0 on failure, if the flag
 B<EVP_CIPH_FLAG_CUSTOM_CIPHER> is not set for the cipher, or if the cipher has
-not been initalized via a call to B<EVP_CipherInint>.
+not been initalized via a call to B<EVP_CipherInit_ex2>.
 EVP_Cipher() returns the number of bytes written to I<out> for encryption / decryption, or
 the number of bytes authenticated in a call specifying AAD for an AEAD cipher, if the flag
 B<EVP_CIPH_FLAG_CUSTOM_CIPHER> is set for the cipher.

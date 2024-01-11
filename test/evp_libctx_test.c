@@ -78,28 +78,23 @@ static int test_evp_cipher_api_safety(void)
 
     ctx = EVP_CIPHER_CTX_new();
 
-    if (!TEST_ptr(ctx)) {
-        TEST_info("Unable to allocate cipher context");
+    if (!TEST_ptr(ctx))
         goto err;
-    }
 
     /*
      * Ensure that EVP_CIPHER_get_block_size returns 0
      * if we haven't initalized the cipher in this context
      */
-    if (!TEST_int_eq(EVP_CIPHER_CTX_get_block_size(ctx), 0)) {
-        TEST_info("EVP_CIPHER_get_block_size returns non-zero");
+    if (!TEST_int_eq(EVP_CIPHER_CTX_get_block_size(ctx), 0))
         goto err_free;
-    }
 
     /*
-     * Ensure that EVP_CIPHER_get_iv_length returns 0 
+     * Ensure that EVP_CIPHER_get_iv_length returns 0
      * if we haven't initalized the cipher in this context
      */
-    if (!TEST_int_eq(EVP_CIPHER_CTX_get_iv_length(ctx), 0)) {
-        TEST_info("EVP_CIPHER_get_iv_length did not return 0");
+    if (!TEST_int_eq(EVP_CIPHER_CTX_get_iv_length(ctx), 0))
         goto err_free;
-    }
+
     ret = 1;
 err_free:
     EVP_CIPHER_CTX_free(ctx);
@@ -474,9 +469,11 @@ static int test_cipher_reinit_partialupdate(int test_id)
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, name, NULL)))
         goto err;
 
-    in_len = EVP_CIPHER_get_block_size(cipher) / 2;
-    if (!TEST_int_ge(in_len, 0))
+    in_len = EVP_CIPHER_get_block_size(cipher);
+    if (!TEST_int_gt(in_len, 0))
         goto err;
+    if (in_len > 1)
+        in_len /= 2;
 
     /* skip any ciphers that don't allow partial updates */
     if (((EVP_CIPHER_get_flags(cipher)
@@ -494,16 +491,18 @@ static int test_cipher_reinit_partialupdate(int test_id)
         || !TEST_true(EVP_EncryptUpdate(ctx, out2, &out2_len, in, in_len)))
         goto err;
 
-    if (!TEST_mem_eq(out1, out1_len, out2, out2_len))
-        goto err;
+    if (EVP_CIPHER_get_iv_length(cipher) != 0)
+        if (!TEST_mem_eq(out1, out1_len, out2, out2_len))
+            goto err;
 
     if (EVP_CIPHER_get_mode(cipher) != EVP_CIPH_SIV_MODE) {
         if (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv))
             || !TEST_true(EVP_EncryptUpdate(ctx, out3, &out3_len, in, in_len)))
             goto err;
 
-        if (!TEST_mem_eq(out1, out1_len, out3, out3_len))
-            goto err;
+        if (EVP_CIPHER_get_iv_length(cipher) != 0)
+            if (!TEST_mem_eq(out1, out1_len, out3, out3_len))
+                goto err;
     }
     ret = 1;
 err:

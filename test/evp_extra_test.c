@@ -3491,7 +3491,7 @@ static int test_evp_iv_aes(int idx)
         goto err;
     ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
 
-    if (!TEST_int_ge(ivlen, 0))
+    if (!TEST_int_gt(ivlen, 0))
         goto err;
 
     if (!TEST_mem_eq(init_iv, ivlen, oiv, ivlen)
@@ -3606,7 +3606,7 @@ static int test_evp_iv_des(int idx)
         goto err;
     ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
 
-    if (!TEST_int_ge(ivlen, 0))
+    if (!TEST_int_gt(ivlen, 0))
         goto err;
 
     if (!TEST_mem_eq(init_iv, ivlen, oiv, ivlen)
