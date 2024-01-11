@@ -10,6 +10,7 @@ use strict;
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
+use TLSProxy::Message;
 
 my $test_name = "test_tls13hrr";
 setup($test_name);
@@ -122,7 +123,7 @@ sub hrr_filter
         # and the unexpected_message alert from client
         if ($proxy->flight == 4) {
             $fatal_alert = 1
-                if @{$proxy->record_list}[-1]->is_fatal_alert(0) == 10;
+                if @{$proxy->record_list}[-1]->is_fatal_alert(0) == TLSProxy::Message::AL_DESC_UNEXPECTED_MESSAGE;
             return;
         }
         if ($proxy->flight != 3) {

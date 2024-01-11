@@ -12,6 +12,7 @@ use feature 'state';
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
+use TLSProxy::Message;
 
 my $test_name = "test_sslrecords";
 setup($test_name);
@@ -273,7 +274,7 @@ sub add_empty_recs_filter
 
     # We're only interested in the initial ClientHello
     if ($proxy->flight != 0) {
-        $fatal_alert = 1 if @{$records}[-1]->is_fatal_alert(1) == 10;
+        $fatal_alert = 1 if @{$records}[-1]->is_fatal_alert(1) == TLSProxy::Message::AL_DESC_UNEXPECTED_MESSAGE;
         return;
     }
 
@@ -301,7 +302,7 @@ sub add_frag_alert_filter
 
     # We're only interested in the initial ClientHello
     if ($proxy->flight != 0) {
-        $fatal_alert = 1 if @{$records}[-1]->is_fatal_alert(1) == 10;
+        $fatal_alert = 1 if @{$records}[-1]->is_fatal_alert(1) == TLSProxy::Message::AL_DESC_UNEXPECTED_MESSAGE;
         return;
     }
 
@@ -507,7 +508,7 @@ sub add_unknown_record_type
         $added_record = 0;
         return;
     } elsif ($proxy->flight != 1 || $added_record) {
-        $fatal_alert = 1 if @{$records}[-1]->is_fatal_alert(0) == 10;
+        $fatal_alert = 1 if @{$records}[-1]->is_fatal_alert(0) == TLSProxy::Message::AL_DESC_UNEXPECTED_MESSAGE;
         return;
     }
 
@@ -541,7 +542,7 @@ sub change_version
 
     # We'll change a version after the initial version neg has taken place
     if ($proxy->flight != 1) {
-        $fatal_alert = 1 if @{$records}[-1]->is_fatal_alert(0) == 70;
+        $fatal_alert = 1 if @{$records}[-1]->is_fatal_alert(0) == TLSProxy::Message::AL_DESC_PROTOCOL_VERSION;
         return;
     }
 
@@ -578,7 +579,7 @@ sub change_outer_record_type
 
     # We'll change a record after the initial version neg has taken place
     if ($proxy->flight != 1) {
-        $fatal_alert = 1 if @{$records}[-1]->is_fatal_alert(0) == 10;
+        $fatal_alert = 1 if @{$records}[-1]->is_fatal_alert(0) == TLSProxy::Message::AL_DESC_UNEXPECTED_MESSAGE;
         return;
     }
 
@@ -601,7 +602,7 @@ sub not_on_record_boundary
 
     #Find server's first flight
     if ($proxy->flight != 1) {
-        $fatal_alert = 1 if @{$records}[-1]->is_fatal_alert(0) == 10;
+        $fatal_alert = 1 if @{$records}[-1]->is_fatal_alert(0) == TLSProxy::Message::AL_DESC_UNEXPECTED_MESSAGE;
         return;
     }
 

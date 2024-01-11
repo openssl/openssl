@@ -12,18 +12,74 @@ package TLSProxy::NewSessionTicket;
 use vars '@ISA';
 push @ISA, 'TLSProxy::Message';
 
+sub new_dtls
+{
+    my $class = shift;
+
+    my ($server,
+        $msgseq,
+        $msgfrag,
+        $msgfragoffs,
+        $data,
+        $records,
+        $startoffset,
+        $message_frag_lens) = @_;
+
+    return $class->init(
+        1,
+        $server,
+        $msgseq,
+        $msgfrag,
+        $msgfragoffs,
+        $data,
+        $records,
+        $startoffset,
+        $message_frag_lens
+    )
+}
+
 sub new
 {
     my $class = shift;
+
     my ($server,
         $data,
         $records,
         $startoffset,
         $message_frag_lens) = @_;
 
+    return $class->init(
+        0,
+        $server,
+        0, # msgseq
+        0, # msgfrag
+        0, # $msgfragoffs
+        $data,
+        $records,
+        $startoffset,
+        $message_frag_lens
+    )
+}
+
+sub init{
+    my $class = shift;
+    my ($isdtls,
+        $server,
+        $msgseq,
+        $msgfrag,
+        $msgfragoffs,
+        $data,
+        $records,
+        $startoffset,
+        $message_frag_lens) = @_;
+
     my $self = $class->SUPER::new(
+        $isdtls,
         $server,
         TLSProxy::Message::MT_NEW_SESSION_TICKET,
+        $msgseq,
+        $msgfrag,
+        $msgfragoffs,
         $data,
         $records,
         $startoffset,
