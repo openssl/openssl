@@ -19,6 +19,7 @@
 # ifndef OPENSSL_NO_QUIC
 
 __owur SSL *ossl_quic_new(SSL_CTX *ctx);
+__owur SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags);
 __owur int ossl_quic_init(SSL *s);
 void ossl_quic_deinit(SSL *s);
 void ossl_quic_free(SSL *s);
