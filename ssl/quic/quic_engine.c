@@ -120,7 +120,7 @@ QUIC_PORT *ossl_quic_engine_create_port(QUIC_ENGINE *qeng,
 
 /*
  * QUIC Engine: Ticker-Mutator
- * ==========================
+ * ===========================
  */
 
 /*
