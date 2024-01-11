@@ -275,6 +275,8 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
                         prsactx->client_version, prsactx->alt_version);
         }
         OPENSSL_free(tbuf);
+        if(ret < 0)
+            return ret;
     } else {
         if ((prsactx->implicit_rejection == 0) &&
                 (prsactx->pad_mode == RSA_PKCS1_PADDING))
