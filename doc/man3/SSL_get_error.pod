@@ -73,7 +73,7 @@ for a blocking B<BIO>.
 See L<SSL_read(3)> for more information.
 
 For non-QUIC SSL objects, B<SSL_ERROR_WANT_WRITE> is returned when the last
-operation was a write to a nonblocking B<BIO> and it was unable to sent all data
+operation was a write to a nonblocking B<BIO> and it was unable to send all data
 to the B<BIO>. When the B<BIO> is writable again, the same function can be
 called again.
 
