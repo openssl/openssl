@@ -50,7 +50,8 @@ struct ssl_connection_st *ossl_quic_obj_get0_handshake_layer(QUIC_OBJ *obj);
 
 #  define IS_QUIC_METHOD(m) \
     ((m) == OSSL_QUIC_client_method() || \
-     (m) == OSSL_QUIC_client_thread_method())
+     (m) == OSSL_QUIC_client_thread_method() || \
+     (m) == OSSL_QUIC_server_method())
 
 #  define IS_QUIC_CTX(ctx)          IS_QUIC_METHOD((ctx)->method)
 
