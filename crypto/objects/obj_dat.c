@@ -790,6 +790,10 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     } else {
         /* Create a no-OID ASN1_OBJECT */
         tmpoid = ASN1_OBJECT_new();
+        if (tmpoid == NULL) {
+            ERR_raise(ERR_LIB_OBJ, ERR_R_ASN1_LIB);
+            return 0;
+        }
     }
 
     if (!ossl_obj_write_lock(1)) {
