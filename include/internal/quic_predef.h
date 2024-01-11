@@ -37,6 +37,7 @@ typedef struct quic_lcidm_st QUIC_LCIDM;
 typedef struct quic_urxe_st QUIC_URXE;
 typedef struct quic_engine_st QUIC_ENGINE;
 typedef struct quic_obj_st QUIC_OBJ;
+typedef struct quic_conn_st QUIC_CONNECTION;
 
 # endif
 

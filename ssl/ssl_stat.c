@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include "ssl_local.h"
+#include "internal/ssl_unwrap.h"
 
 const char *SSL_state_string_long(const SSL *s)
 {

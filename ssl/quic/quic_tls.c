@@ -12,6 +12,7 @@
 #include "../ssl_local.h"
 #include "internal/quic_error.h"
 #include "internal/quic_types.h"
+#include "internal/ssl_unwrap.h"
 
 #define QUIC_TLS_FATAL(rl, ad, err) \
     do { \

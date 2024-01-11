@@ -16,6 +16,7 @@
 #include "statem_local.h"
 #include "internal/constant_time.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
