@@ -301,6 +301,9 @@ QUIC_STREAM_MAP *ossl_quic_channel_get_qsm(QUIC_CHANNEL *ch);
 /* Gets the statistics manager used with the channel. */
 OSSL_STATM *ossl_quic_channel_get_statm(QUIC_CHANNEL *ch);
 
+/* Gets the TLS handshake layer used with the channel. */
+SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch);
+
 /*
  * Gets/sets the current peer address. Generally this should be used before
  * starting a channel in client mode.

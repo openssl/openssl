@@ -170,9 +170,6 @@ struct quic_conn_st {
      */
     QUIC_XSO                        *default_xso;
 
-    /* The network read and write BIOs. */
-    BIO                             *net_rbio, *net_wbio;
-
     /* Initial peer L4 address. */
     BIO_ADDR                        init_peer_addr;
 
@@ -246,6 +243,11 @@ struct quic_conn_st {
     uint64_t                        incoming_stream_aec;
 
     /*
+     * Last network BIO epoch at which blocking mode compatibility was checked.
+     */
+    uint64_t                        last_net_bio_epoch;
+
+    /*
      * Last 'normal' error during an app-level I/O operation, used by
      * SSL_get_error(); used to track data-path errors like SSL_ERROR_WANT_READ
      * and SSL_ERROR_WANT_WRITE.
@@ -272,6 +274,9 @@ struct quic_listener_st {
      * provide it to the engine.
      */
     CRYPTO_MUTEX                    *mutex;
+
+    /* Have we started listening yet? */
+    unsigned int                    listening               : 1;
 };
 
 /* Internal calls to the QUIC CSM which come from various places. */
