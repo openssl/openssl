@@ -7881,6 +7881,18 @@ int SSL_set_value_uint(SSL *s, uint32_t class_, uint32_t id,
     return 0;
 }
 
+SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC_CTX(ctx))
+        return NULL;
+
+    return ossl_quic_new_listener(ctx, flags);
+#else
+    return NULL;
+#endif
+}
+
 int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk)
 {
     unsigned char *data = NULL;
