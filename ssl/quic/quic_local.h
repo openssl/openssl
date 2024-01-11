@@ -23,6 +23,7 @@
 # include "internal/quic_reactor.h"
 # include "internal/quic_thread_assist.h"
 # include "../ssl_local.h"
+# include "quic_obj_local.h"
 
 # ifndef OPENSSL_NO_QUIC
 
