@@ -291,6 +291,11 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port)
     SSL *tls = NULL;
     SSL_CONNECTION *tls_conn = NULL;
 
+    /*
+     * TODO(QUIC SERVER): NULL below needs to be replaced with a real user SSL
+     * object of either the listener or the domain which is associated with
+     * the port. https://github.com/openssl/project/issues/918
+     */
     tls = ossl_ssl_connection_new_int(port->channel_ctx, NULL, TLS_method());
     if (tls == NULL || (tls_conn = SSL_CONNECTION_FROM_SSL(tls)) == NULL)
         return NULL;
