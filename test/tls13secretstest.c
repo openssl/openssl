@@ -11,6 +11,7 @@
 #include <openssl/evp.h>
 
 #include "../ssl/ssl_local.h"
+#include "internal/ssl_unwrap.h"
 #include "testutil.h"
 
 #define IVLEN   12

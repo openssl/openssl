@@ -12,6 +12,7 @@
 #include <openssl/sslerr.h>
 #include <crypto/rand.h>
 #include "quic_local.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/quic_tls.h"
 #include "internal/quic_rx_depack.h"
 #include "internal/quic_error.h"
