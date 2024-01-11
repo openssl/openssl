@@ -7698,6 +7698,23 @@ int SSL_is_connection(SSL *s)
     return SSL_get0_connection(s) == s;
 }
 
+SSL *SSL_get0_listener(SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return s;
+
+    return ossl_quic_get0_listener(s);
+#else
+    return s;
+#endif
+}
+
+int SSL_is_listener(SSL *s)
+{
+    return SSL_get0_listener(s) == s;
+}
+
 int SSL_get_stream_type(SSL *s)
 {
 #ifndef OPENSSL_NO_QUIC
@@ -7890,6 +7907,42 @@ SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags)
     return ossl_quic_new_listener(ctx, flags);
 #else
     return NULL;
+#endif
+}
+
+SSL *SSL_accept_connection(SSL *ssl, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(ssl))
+        return NULL;
+
+    return ossl_quic_accept_connection(ssl, flags);
+#else
+    return NULL;
+#endif
+}
+
+size_t SSL_get_accept_connection_queue_len(SSL *ssl)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(ssl))
+        return 0;
+
+    return ossl_quic_get_accept_connection_queue_len(ssl);
+#else
+    return 0;
+#endif
+}
+
+int SSL_listen(SSL *ssl)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(ssl))
+        return 0;
+
+    return ossl_quic_listen(ssl);
+#else
+    return 0;
 #endif
 }
 
