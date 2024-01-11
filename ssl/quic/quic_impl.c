@@ -51,32 +51,6 @@ static int qctx_should_autotick(QCTX *ctx);
  * ========================================
  */
 
-/*
- * Block until a predicate is met.
- *
- * Precondition: Must have a channel.
- * Precondition: Must hold channel lock (unchecked).
- */
-QUIC_NEEDS_LOCK
-static int block_until_pred(QUIC_CONNECTION *qc,
-                            int (*pred)(void *arg), void *pred_arg,
-                            uint32_t flags)
-{
-    QUIC_REACTOR *rtor;
-
-    assert(qc->ch != NULL);
-
-    /*
-     * Any attempt to block auto-disables tick inhibition as otherwise we will
-     * hang around forever.
-     */
-    ossl_quic_engine_set_inhibit_tick(qc->engine, 0);
-
-    rtor = ossl_quic_channel_get_reactor(qc->ch);
-    return ossl_quic_reactor_block_until_pred(rtor, pred, pred_arg, flags,
-                                              qc->mutex);
-}
-
 static OSSL_TIME get_time(QUIC_CONNECTION *qc)
 {
     if (qc->override_now_cb != NULL)
@@ -412,6 +386,34 @@ static int quic_mutation_allowed(QUIC_CONNECTION *qc, int req_active)
         return 0;
 
     return 1;
+}
+
+/*
+ * Block until a predicate is met.
+ *
+ * Precondition: Must have a channel.
+ * Precondition: Must hold channel lock (unchecked).
+ */
+QUIC_NEEDS_LOCK
+static int block_until_pred(QCTX *ctx,
+                            int (*pred)(void *arg), void *pred_arg,
+                            uint32_t flags)
+{
+    QUIC_ENGINE *qeng;
+    QUIC_REACTOR *rtor;
+
+    qeng = ossl_quic_obj_get0_engine(ctx->obj);
+    assert(qeng != NULL);
+
+    /*
+     * Any attempt to block auto-disables tick inhibition as otherwise we will
+     * hang around forever.
+     */
+    ossl_quic_engine_set_inhibit_tick(qeng, 0);
+
+    rtor = ossl_quic_engine_get0_reactor(qeng);
+    return ossl_quic_reactor_block_until_pred(rtor, pred, pred_arg, flags,
+                                              ossl_quic_engine_get0_mutex(qeng));
 }
 
 /*
@@ -1373,7 +1375,7 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
 
         if (!qc_shutdown_flush_finished(ctx.qc)) {
             if (!no_block && qc_blocking_mode(ctx.qc)) {
-                ret = block_until_pred(ctx.qc, quic_shutdown_flush_wait, ctx.qc, 0);
+                ret = block_until_pred(&ctx, quic_shutdown_flush_wait, ctx.qc, 0);
                 if (ret < 1) {
                     ret = 0;
                     goto err;
@@ -1392,7 +1394,7 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
     /* Phase 2: Connection Closure */
     if (wait_peer && !ossl_quic_channel_is_term_any(ctx.qc->ch)) {
         if (!no_block && qc_blocking_mode(ctx.qc)) {
-            ret = block_until_pred(ctx.qc, quic_shutdown_peer_wait, ctx.qc, 0);
+            ret = block_until_pred(&ctx, quic_shutdown_peer_wait, ctx.qc, 0);
             if (ret < 1) {
                 ret = 0;
                 goto err;
@@ -1433,7 +1435,7 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
     /* Phase 3: Terminating Wait Time */
     if (!no_block && qc_blocking_mode(ctx.qc)
         && (flags & SSL_SHUTDOWN_FLAG_RAPID) == 0) {
-        ret = block_until_pred(ctx.qc, quic_shutdown_wait, ctx.qc, 0);
+        ret = block_until_pred(&ctx, quic_shutdown_wait, ctx.qc, 0);
         if (ret < 1) {
             ret = 0;
             goto err;
@@ -1780,7 +1782,7 @@ static int quic_do_handshake(QCTX *ctx)
 
         args.qc     = qc;
 
-        ret = block_until_pred(qc, quic_handshake_wait, &args, 0);
+        ret = block_until_pred(ctx, quic_handshake_wait, &args, 0);
         if (!quic_mutation_allowed(qc, /*req_active=*/1)) {
             QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
             return 0; /* Shutdown before completion */
@@ -1974,7 +1976,7 @@ static int qc_wait_for_default_xso_for_read(QCTX *ctx, int peek)
         wargs.ctx       = ctx;
         wargs.expect_id = expect_id;
 
-        res = block_until_pred(qc, quic_wait_for_stream, &wargs, 0);
+        res = block_until_pred(ctx, quic_wait_for_stream, &wargs, 0);
         if (res == 0)
             return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
         else if (res < 0 || wargs.qs == NULL)
@@ -2097,7 +2099,7 @@ static SSL *quic_conn_stream_new(QCTX *ctx, uint64_t flags, int need_lock)
         args.is_uni = is_uni;
 
         /* Blocking mode - wait until we can get a stream. */
-        ret = block_until_pred(ctx->qc, quic_new_stream_wait, &args, 0);
+        ret = block_until_pred(ctx, quic_new_stream_wait, &args, 0);
         if (!quic_mutation_allowed(qc, /*req_active=*/1)) {
             QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
             goto err; /* Shutdown before completion */
@@ -2406,7 +2408,7 @@ static int quic_write_blocking(QCTX *ctx, const void *buf, size_t len,
     args.err            = ERR_R_INTERNAL_ERROR;
     args.flags          = flags;
 
-    res = block_until_pred(xso->conn, quic_write_again, &args, 0);
+    res = block_until_pred(ctx, quic_write_again, &args, 0);
     if (res <= 0) {
         if (!quic_mutation_allowed(xso->conn, /*req_active=*/1))
             return QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
@@ -2885,7 +2887,7 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
         args.bytes_read = bytes_read;
         args.peek       = peek;
 
-        res = block_until_pred(ctx.qc, quic_read_again, &args, 0);
+        res = block_until_pred(&ctx, quic_read_again, &args, 0);
         if (res == 0) {
             ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_INTERNAL_ERROR, NULL);
             goto out;
@@ -3675,7 +3677,7 @@ SSL *ossl_quic_accept_stream(SSL *s, uint64_t flags)
             args.ctx = &ctx;
             args.qs = NULL;
 
-            ret = block_until_pred(ctx.qc, wait_for_incoming_stream, &args, 0);
+            ret = block_until_pred(&ctx, wait_for_incoming_stream, &args, 0);
             if (ret == 0) {
                 QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_INTERNAL_ERROR, NULL);
                 goto out;
