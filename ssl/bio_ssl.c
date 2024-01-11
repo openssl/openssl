@@ -15,6 +15,8 @@
 #include "internal/bio.h"
 #include <openssl/err.h>
 #include "ssl_local.h"
+#include "internal/ssl_unwrap.h"
+#include "internal/sockets.h"
 
 static int ssl_write(BIO *h, const char *buf, size_t size, size_t *written);
 static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes);

@@ -9,6 +9,7 @@
 
 #include "quic_obj_local.h"
 #include "quic_local.h"
+#include "internal/ssl_unwrap.h"
 
 static int obj_update_cache(QUIC_OBJ *obj);
 

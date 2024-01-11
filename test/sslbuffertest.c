@@ -22,11 +22,17 @@
 #include <openssl/err.h>
 #include <openssl/engine.h>
 
+#ifndef OPENSSL_NO_QUIC
+/* This test does not link libssl so avoid pulling in QUIC unwrappers. */
+# define OPENSSL_NO_QUIC
+#endif
+
 /* We include internal headers so we can check if the buffers are allocated */
 #include "../ssl/ssl_local.h"
 #include "../ssl/record/record_local.h"
 #include "internal/recordmethod.h"
 #include "../ssl/record/methods/recmethod_local.h"
+#include "internal/ssl_unwrap.h"
 
 #include "internal/packet.h"
 

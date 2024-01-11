@@ -11,6 +11,7 @@
 #include "internal/quic_channel.h"
 #include "internal/quic_lcidm.h"
 #include "internal/quic_srtm.h"
+#include "internal/ssl_unwrap.h"
 #include "quic_port_local.h"
 #include "quic_channel_local.h"
 #include "quic_engine_local.h"

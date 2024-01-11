@@ -12,6 +12,7 @@
 
 #include <openssl/engine.h>
 #include "ssl_local.h"
+#include "internal/ssl_unwrap.h"
 
 /*
  * Engine APIs are only used to support applications that still use ENGINEs.
