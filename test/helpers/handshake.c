@@ -15,6 +15,7 @@
 #include <openssl/core_names.h>
 
 #include "../../ssl/ssl_local.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/sockets.h"
 #include "internal/nelem.h"
 #include "handshake.h"
