@@ -47,7 +47,7 @@ static int test_do_updatedb(void)
     }
 
     testdate = test_get_argument(2);
-    testdateutc = ossl_asn1_string_to_time_t(testdate);
+    testdateutc = test_asn1_string_to_time_t(testdate);
     if (TEST_time_t_lt(testdateutc, 0)) {
         return 0;
     }
