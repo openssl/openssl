@@ -95,6 +95,8 @@ struct evp_keymgmt_st {
     int id;                      /* libcrypto internal */
 
     int name_id;
+    /* NID for the legacy alg if there is one */
+    int legacy_alg;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
