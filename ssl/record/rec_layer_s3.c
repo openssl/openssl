@@ -22,6 +22,7 @@
 #include "record_local.h"
 #include "internal/packet.h"
 #include "internal/comp.h"
+#include "internal/ssl_unwrap.h"
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL_CONNECTION *s)
 {
