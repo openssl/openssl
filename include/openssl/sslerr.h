@@ -166,6 +166,7 @@
 # define SSL_R_LENGTH_TOO_SHORT                           160
 # define SSL_R_LIBRARY_BUG                                274
 # define SSL_R_LIBRARY_HAS_NO_CIPHERS                     161
+# define SSL_R_LISTENER_USE_ONLY                          412
 # define SSL_R_MAXIMUM_ENCRYPTED_PKTS_REACHED             395
 # define SSL_R_MISSING_DSA_SIGNING_CERT                   165
 # define SSL_R_MISSING_ECDSA_SIGNING_CERT                 381

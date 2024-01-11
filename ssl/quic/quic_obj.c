@@ -37,11 +37,11 @@ int ossl_quic_obj_init(QUIC_OBJ *obj,
     obj->parent_obj         = parent_obj;
     obj->is_event_leader    = is_event_leader;
     obj->is_port_leader     = is_port_leader;
+    obj->engine             = engine;
+    obj->port               = port;
     if (!obj_update_cache(obj))
         goto err;
 
-    obj->engine             = engine;
-    obj->port               = port;
     obj->init_done          = 1;
     return 1;
 
