@@ -21,6 +21,7 @@
 #include "ssl_local.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 
 /* NB: make sure indices in these tables match values above */
 

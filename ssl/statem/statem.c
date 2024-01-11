@@ -13,6 +13,7 @@
 #endif
 
 #include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
 #include <openssl/rand.h>
 #include "../ssl_local.h"
 #include "statem_local.h"
