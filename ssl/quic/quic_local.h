@@ -119,6 +119,10 @@ struct quic_xso_st {
     int                             last_error;
 };
 
+/*
+ * QUIC connection SSL object (QCSO) type. This implements the API personality
+ * layer for QCSO objects, wrapping the QUIC-native QUIC_CHANNEL object.
+ */
 struct quic_conn_st {
     /*
      * ssl_st is a common header for ordinary SSL objects, QUIC connection
@@ -245,6 +249,15 @@ struct quic_conn_st {
     int                             last_error;
 };
 
+/*
+ * QUIC listener SSL object (QLSO) type. This implements the API personality
+ * layer for QLSO objects, wrapping the QUIC-native QUIC_PORT object.
+ */
+struct quic_listener_st {
+    /* Common header for SSL objects. */
+    struct ssl_st                   ssl;
+};
+
 /* Internal calls to the QUIC CSM which come from various places. */
 int ossl_quic_conn_on_handshake_confirmed(QUIC_CONNECTION *qc);
 
@@ -292,14 +305,26 @@ int ossl_quic_trace(int write_p, int version, int content_type,
          ? (c SSL_CONNECTION *)((c QUIC_CONNECTION *)(ssl))->tls \
          : NULL))
 
-#  define IS_QUIC(ssl) ((ssl) != NULL                                   \
-                        && ((ssl)->type == SSL_TYPE_QUIC_CONNECTION     \
-                            || (ssl)->type == SSL_TYPE_QUIC_XSO))
+#  define QUIC_LISTENER_FROM_SSL_int(ssl, c)                            \
+    ((ssl) == NULL                                                      \
+     ? NULL                                                             \
+     : ((ssl)->type == SSL_TYPE_QUIC_LISTENER                           \
+        ? (c QUIC_LISTENER *)(ssl)                                      \
+        : NULL))
+
+#  define IS_QUIC_CS(ssl) ((ssl) != NULL                                \
+                           && ((ssl)->type == SSL_TYPE_QUIC_CONNECTION  \
+                               || (ssl)->type == SSL_TYPE_QUIC_XSO))
+
+#  define IS_QUIC(ssl)                                                  \
+    ((ssl) != NULL && SSL_TYPE_IS_QUIC((ssl)->type))
 # else
 #  define QUIC_CONNECTION_FROM_SSL_int(ssl, c) NULL
 #  define QUIC_XSO_FROM_SSL_int(ssl, c) NULL
+#  define QUIC_LISTENER_FROM_SSL_int(ssl, c) NULL
 #  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c) NULL
 #  define IS_QUIC(ssl) 0
+#  define IS_QUIC_CS(ssl) 0
 #  define IS_QUIC_CTX(ctx) 0
 #  define IS_QUIC_METHOD(m) 0
 # endif
@@ -312,6 +337,10 @@ int ossl_quic_trace(int write_p, int version, int content_type,
     QUIC_XSO_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
 # define QUIC_XSO_FROM_CONST_SSL(ssl) \
     QUIC_XSO_FROM_SSL_int(ssl, const)
+# define QUIC_LISTENER_FROM_SSL(ssl) \
+    QUIC_LISTENER_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
+# define QUIC_LISTENER_FROM_CONST_SSL(ssl) \
+    QUIC_LISTENER_FROM_SSL_int(ssl, const)
 # define SSL_CONNECTION_FROM_QUIC_SSL(ssl) \
     SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
 # define SSL_CONNECTION_FROM_CONST_QUIC_SSL(ssl) \
