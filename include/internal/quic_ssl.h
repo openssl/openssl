@@ -45,6 +45,7 @@ int ossl_quic_renegotiate_check(SSL *ssl, int initok);
 
 typedef struct quic_conn_st QUIC_CONNECTION;
 typedef struct quic_xso_st QUIC_XSO;
+typedef struct quic_listener_st QUIC_LISTENER;
 
 int ossl_quic_do_handshake(SSL *s);
 void ossl_quic_set_connect_state(SSL *s);
