@@ -165,6 +165,7 @@ static ossl_inline ossl_unused QUIC_ENGINE *
 ossl_quic_obj_get0_engine(const QUIC_OBJ *obj)
 {
     assert(obj->init_done);
+    assert(obj->engine != NULL);
     return obj->engine;
 }
 
