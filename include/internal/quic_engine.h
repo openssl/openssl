@@ -79,6 +79,9 @@ void ossl_quic_engine_set_inhibit_tick(QUIC_ENGINE *qeng, int inhibit);
 /* Gets the reactor which can be used to tick/poll on the port. */
 QUIC_REACTOR *ossl_quic_engine_get0_reactor(QUIC_ENGINE *qeng);
 
+OSSL_LIB_CTX *ossl_quic_engine_get0_libctx(QUIC_ENGINE *qeng);
+const char *ossl_quic_engine_get0_propq(QUIC_ENGINE *qeng);
+
 # endif
 
 #endif

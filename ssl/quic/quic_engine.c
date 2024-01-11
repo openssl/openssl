@@ -87,6 +87,16 @@ void ossl_quic_engine_set_inhibit_tick(QUIC_ENGINE *qeng, int inhibit)
     qeng->inhibit_tick = (inhibit != 0);
 }
 
+OSSL_LIB_CTX *ossl_quic_engine_get0_libctx(QUIC_ENGINE *qeng)
+{
+    return qeng->libctx;
+}
+
+const char *ossl_quic_engine_get0_propq(QUIC_ENGINE *qeng)
+{
+    return qeng->propq;
+}
+
 /*
  * QUIC Engine: Child Object Lifecycle Management
  * ==============================================

@@ -26,3 +26,4 @@ IF[{- !$disabled{quic} -}]
     SHARED_SOURCE[$LIBSSL]=../../crypto/getenv.c ../../crypto/ctype.c
   ENDIF
 ENDIF
+SOURCE[$LIBSSL]=quic_obj.c
