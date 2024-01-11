@@ -29,6 +29,7 @@
 #include "internal/refcount.h"
 #include "internal/ktls.h"
 #include "internal/to_hex.h"
+#include "internal/ssl_unwrap.h"
 #include "quic/quic_local.h"
 
 static int ssl_undefined_function_3(SSL_CONNECTION *sc, unsigned char *r,
