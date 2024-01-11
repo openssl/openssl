@@ -37,6 +37,7 @@
 # include "internal/time.h"
 # include "internal/ssl.h"
 # include "internal/cryptlib.h"
+# include "internal/quic_predef.h"
 # include "record/record.h"
 # include "internal/quic_predef.h"
 # include "internal/quic_tls.h"
@@ -1855,39 +1856,6 @@ struct ssl_connection_st {
     unsigned char *server_cert_type;
     size_t server_cert_type_len;
 };
-
-# define SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, c) \
-    ((ssl) == NULL ? NULL                         \
-     : ((ssl)->type == SSL_TYPE_SSL_CONNECTION    \
-       ? (c SSL_CONNECTION *)(ssl)                \
-       : NULL))
-# define SSL_CONNECTION_NO_CONST
-# define SSL_CONNECTION_FROM_SSL_ONLY(ssl) \
-    SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, SSL_CONNECTION_NO_CONST)
-# define SSL_CONNECTION_FROM_CONST_SSL_ONLY(ssl) \
-    SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
-# define SSL_CONNECTION_GET_CTX(sc) ((sc)->ssl.ctx)
-# define SSL_CONNECTION_GET_SSL(sc) (&(sc)->ssl)
-# define SSL_CONNECTION_GET_USER_SSL(sc) ((sc)->user_ssl)
-# ifndef OPENSSL_NO_QUIC
-#  include "quic/quic_local.h"
-#  define SSL_CONNECTION_FROM_SSL_int(ssl, c)                      \
-    ((ssl) == NULL ? NULL                                          \
-     : ((ssl)->type == SSL_TYPE_SSL_CONNECTION                     \
-        ? (c SSL_CONNECTION *)(ssl)                                \
-        : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                 \
-           ? (c SSL_CONNECTION *)((c QUIC_CONNECTION *)(ssl))->tls \
-           : NULL)))
-#  define SSL_CONNECTION_FROM_SSL(ssl) \
-    SSL_CONNECTION_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
-#  define SSL_CONNECTION_FROM_CONST_SSL(ssl) \
-    SSL_CONNECTION_FROM_SSL_int(ssl, const)
-# else
-#  define SSL_CONNECTION_FROM_SSL(ssl) \
-    SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, SSL_CONNECTION_NO_CONST)
-#  define SSL_CONNECTION_FROM_CONST_SSL(ssl) \
-    SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
-# endif
 
 /*
  * Structure containing table entry of values associated with the signature

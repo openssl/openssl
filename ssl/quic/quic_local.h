@@ -33,8 +33,8 @@
  * state required by the libssl API personality.
  */
 struct quic_xso_st {
-    /* SSL object common header. */
-    struct ssl_st                   ssl;
+    /* QUIC_OBJ common header, including SSL object common header. */
+    QUIC_OBJ                        obj;
 
     /* The connection this stream is associated with. Always non-NULL. */
     QUIC_CONNECTION                 *conn;
@@ -126,13 +126,13 @@ struct quic_xso_st {
  */
 struct quic_conn_st {
     /*
-     * ssl_st is a common header for ordinary SSL objects, QUIC connection
-     * objects and QUIC stream objects, allowing objects of these different
-     * types to be disambiguated at runtime and providing some common fields.
+     * QUIC_OBJ is a common header for QUIC APL objects, allowing objects of
+     * these different types to be disambiguated at runtime and providing some
+     * common fields.
      *
      * Note: This must come first in the QUIC_CONNECTION structure.
      */
-    struct ssl_st                   ssl;
+    QUIC_OBJ                        obj;
 
     SSL                             *tls;
 
@@ -255,8 +255,8 @@ struct quic_conn_st {
  * layer for QLSO objects, wrapping the QUIC-native QUIC_PORT object.
  */
 struct quic_listener_st {
-    /* Common header for SSL objects. */
-    struct ssl_st                   ssl;
+    /* QUIC_OBJ common header, including SSL object common header. */
+    QUIC_OBJ                        obj;
 };
 
 /* Internal calls to the QUIC CSM which come from various places. */
@@ -276,76 +276,8 @@ void ossl_quic_conn_raise_protocol_error(QUIC_CONNECTION *qc,
 void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
                                          OSSL_QUIC_FRAME_CONN_CLOSE *f);
 
-int ossl_quic_trace(int write_p, int version, int content_type,
-                    const void *buf, size_t msglen, SSL *ssl, void *arg);
-
 #  define OSSL_QUIC_ANY_VERSION 0xFFFFF
-#  define IS_QUIC_METHOD(m) \
-    ((m) == OSSL_QUIC_client_method() || \
-     (m) == OSSL_QUIC_client_thread_method())
-#  define IS_QUIC_CTX(ctx)          IS_QUIC_METHOD((ctx)->method)
-
-#  define QUIC_CONNECTION_FROM_SSL_int(ssl, c)   \
-     ((ssl) == NULL ? NULL                       \
-      : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION \
-         ? (c QUIC_CONNECTION *)(ssl)            \
-         : NULL))
-
-#  define QUIC_XSO_FROM_SSL_int(ssl, c)                             \
-    ((ssl) == NULL                                                  \
-     ? NULL                                                         \
-     : (((ssl)->type == SSL_TYPE_QUIC_XSO                           \
-        ? (c QUIC_XSO *)(ssl)                                       \
-        : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                  \
-           ? (c QUIC_XSO *)((QUIC_CONNECTION *)(ssl))->default_xso  \
-           : NULL))))
-
-#  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c)               \
-     ((ssl) == NULL ? NULL                                       \
-      : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                 \
-         ? (c SSL_CONNECTION *)((c QUIC_CONNECTION *)(ssl))->tls \
-         : NULL))
-
-#  define QUIC_LISTENER_FROM_SSL_int(ssl, c)                            \
-    ((ssl) == NULL                                                      \
-     ? NULL                                                             \
-     : ((ssl)->type == SSL_TYPE_QUIC_LISTENER                           \
-        ? (c QUIC_LISTENER *)(ssl)                                      \
-        : NULL))
-
-#  define IS_QUIC_CS(ssl) ((ssl) != NULL                                \
-                           && ((ssl)->type == SSL_TYPE_QUIC_CONNECTION  \
-                               || (ssl)->type == SSL_TYPE_QUIC_XSO))
-
-#  define IS_QUIC(ssl)                                                  \
-    ((ssl) != NULL && SSL_TYPE_IS_QUIC((ssl)->type))
-# else
-#  define QUIC_CONNECTION_FROM_SSL_int(ssl, c) NULL
-#  define QUIC_XSO_FROM_SSL_int(ssl, c) NULL
-#  define QUIC_LISTENER_FROM_SSL_int(ssl, c) NULL
-#  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c) NULL
-#  define IS_QUIC(ssl) 0
-#  define IS_QUIC_CS(ssl) 0
-#  define IS_QUIC_CTX(ctx) 0
-#  define IS_QUIC_METHOD(m) 0
 # endif
-
-# define QUIC_CONNECTION_FROM_SSL(ssl) \
-    QUIC_CONNECTION_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
-# define QUIC_CONNECTION_FROM_CONST_SSL(ssl) \
-    QUIC_CONNECTION_FROM_SSL_int(ssl, const)
-# define QUIC_XSO_FROM_SSL(ssl) \
-    QUIC_XSO_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
-# define QUIC_XSO_FROM_CONST_SSL(ssl) \
-    QUIC_XSO_FROM_SSL_int(ssl, const)
-# define QUIC_LISTENER_FROM_SSL(ssl) \
-    QUIC_LISTENER_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
-# define QUIC_LISTENER_FROM_CONST_SSL(ssl) \
-    QUIC_LISTENER_FROM_SSL_int(ssl, const)
-# define SSL_CONNECTION_FROM_QUIC_SSL(ssl) \
-    SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
-# define SSL_CONNECTION_FROM_CONST_QUIC_SSL(ssl) \
-    SSL_CONNECTION_FROM_CONST_QUIC_SSL_int(ssl, const)
 
 # define IMPLEMENT_quic_meth_func(version, func_name, q_accept, \
                                  q_connect, enc_data) \
