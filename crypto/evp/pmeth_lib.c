@@ -133,24 +133,6 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
     pmeth->flags = flags | EVP_PKEY_FLAG_DYNAMIC;
     return pmeth;
 }
-
-static void help_get_legacy_alg_type_from_keymgmt(const char *keytype,
-                                                  void *arg)
-{
-    int *type = arg;
-
-    if (*type == NID_undef)
-        *type = evp_pkey_name2type(keytype);
-}
-
-static int get_legacy_alg_type_from_keymgmt(const EVP_KEYMGMT *keymgmt)
-{
-    int type = NID_undef;
-
-    EVP_KEYMGMT_names_do_all(keymgmt, help_get_legacy_alg_type_from_keymgmt,
-                             &type);
-    return type;
-}
 #endif /* FIPS_MODULE */
 
 int evp_pkey_ctx_state(const EVP_PKEY_CTX *ctx)
@@ -288,7 +270,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
          * directly.
          */
         if (keymgmt != NULL) {
-            int tmp_id = get_legacy_alg_type_from_keymgmt(keymgmt);
+            int tmp_id = evp_keymgmt_get_legacy_alg(keymgmt);
 
             if (tmp_id != NID_undef) {
                 if (id == -1) {
