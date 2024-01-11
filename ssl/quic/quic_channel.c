@@ -513,6 +513,11 @@ OSSL_STATM *ossl_quic_channel_get_statm(QUIC_CHANNEL *ch)
     return &ch->statm;
 }
 
+SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch)
+{
+    return ch->tls;
+}
+
 QUIC_STREAM *ossl_quic_channel_get_stream_by_id(QUIC_CHANNEL *ch,
                                                 uint64_t stream_id)
 {

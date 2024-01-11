@@ -35,7 +35,8 @@ struct quic_channel_st {
      * QUIC_PORT keeps the channels which belong to it on a list for bookkeeping
      * purposes.
      */
-    OSSL_LIST_MEMBER(ch, struct quic_channel_st);
+    OSSL_LIST_MEMBER(ch,            QUIC_CHANNEL);
+    OSSL_LIST_MEMBER(incoming_ch,   QUIC_CHANNEL);
 
     /*
      * The associated TLS 1.3 connection data. Used to provide the handshake

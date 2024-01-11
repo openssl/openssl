@@ -26,6 +26,7 @@ static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock);
 static void aon_write_finish(QUIC_XSO *xso);
 static int create_channel(QUIC_CONNECTION *qc, SSL_CTX *ctx);
 static QUIC_XSO *create_xso_from_stream(QUIC_CONNECTION *qc, QUIC_STREAM *qs);
+static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHANNEL *ch);
 static int qc_try_create_default_xso_for_write(QCTX *ctx);
 static int qc_wait_for_default_xso_for_read(QCTX *ctx, int peek);
 static void qctx_lock(QCTX *qctx);
@@ -494,6 +495,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->blocking                = 0;
     qc->incoming_stream_policy  = SSL_INCOMING_STREAM_POLICY_AUTO;
     qc->last_error              = SSL_ERROR_NONE;
+    qc->last_net_bio_epoch      = UINT64_MAX;
 
     qc_update_reject_policy(qc);
 
@@ -528,12 +530,6 @@ static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock)
 
     ossl_quic_engine_free(qc->engine);
     qc->engine = NULL;
-
-    BIO_free_all(qc->net_rbio);
-    qc->net_rbio = NULL;
-
-    BIO_free_all(qc->net_wbio);
-    qc->net_wbio = NULL;
 
     SSL_free(qc->tls);
     qc->tls = NULL;
@@ -942,78 +938,96 @@ static void qc_update_blocking_mode(QUIC_CONNECTION *qc)
     qc->blocking = qc->desires_blocking && qc_can_support_blocking_cached(qc);
 }
 
+static int
+quic_set0_net_rbio(QUIC_OBJ *obj, BIO *net_rbio)
+{
+    QUIC_PORT *port;
+    BIO *old_rbio = NULL;
+
+    port = ossl_quic_obj_get0_port(obj);
+    old_rbio = ossl_quic_port_get_net_rbio(port);
+    if (old_rbio == net_rbio)
+        return 0;
+
+    if (!ossl_quic_port_set_net_rbio(port, net_rbio))
+        return 0;
+
+    BIO_free_all(old_rbio);
+    if (net_rbio != NULL)
+        BIO_set_nbio(net_rbio, 1); /* best effort autoconfig */
+
+    return 1;
+}
+
+static int
+quic_set0_net_wbio(QUIC_OBJ *obj, BIO *net_wbio)
+{
+    QUIC_PORT *port;
+    BIO *old_wbio = NULL;
+
+    port = ossl_quic_obj_get0_port(obj);
+    old_wbio = ossl_quic_port_get_net_wbio(port);
+    if (old_wbio == net_wbio)
+        return 0;
+
+    if (!ossl_quic_port_set_net_wbio(port, net_wbio))
+        return 0;
+
+    BIO_free_all(old_wbio);
+    if (net_wbio != NULL)
+        BIO_set_nbio(net_wbio, 1); /* best effort autoconfig */
+
+    return 1;
+}
+
 void ossl_quic_conn_set0_net_rbio(SSL *s, BIO *net_rbio)
 {
     QCTX ctx;
 
-    if (!expect_quic(s, &ctx))
+    if (!expect_quic_any(s, &ctx))
         return;
 
-    if (ctx.qc->net_rbio == net_rbio)
+    /* Returns 0 if no change. */
+    if (!quic_set0_net_rbio(ctx.obj, net_rbio))
         return;
-
-    if (!ossl_quic_port_set_net_rbio(ctx.qc->port, net_rbio))
-        return;
-
-    BIO_free_all(ctx.qc->net_rbio);
-    ctx.qc->net_rbio = net_rbio;
-
-    if (net_rbio != NULL)
-        BIO_set_nbio(net_rbio, 1); /* best effort autoconfig */
-
-    /*
-     * Determine if the current pair of read/write BIOs now set allows blocking
-     * mode to be supported.
-     */
-    qc_update_can_support_blocking(ctx.qc);
-    qc_update_blocking_mode(ctx.qc);
 }
 
 void ossl_quic_conn_set0_net_wbio(SSL *s, BIO *net_wbio)
 {
     QCTX ctx;
 
-    if (!expect_quic(s, &ctx))
+    if (!expect_quic_any(s, &ctx))
         return;
 
-    if (ctx.qc->net_wbio == net_wbio)
+    /* Returns 0 if no change. */
+    if (!quic_set0_net_wbio(ctx.obj, net_wbio))
         return;
-
-    if (!ossl_quic_port_set_net_wbio(ctx.qc->port, net_wbio))
-        return;
-
-    BIO_free_all(ctx.qc->net_wbio);
-    ctx.qc->net_wbio = net_wbio;
-
-    if (net_wbio != NULL)
-        BIO_set_nbio(net_wbio, 1); /* best effort autoconfig */
-
-    /*
-     * Determine if the current pair of read/write BIOs now set allows blocking
-     * mode to be supported.
-     */
-    qc_update_can_support_blocking(ctx.qc);
-    qc_update_blocking_mode(ctx.qc);
 }
 
 BIO *ossl_quic_conn_get_net_rbio(const SSL *s)
 {
     QCTX ctx;
+    QUIC_PORT *port;
 
-    if (!expect_quic(s, &ctx))
+    if (!expect_quic_any(s, &ctx))
         return NULL;
 
-    return ctx.qc->net_rbio;
+    port = ossl_quic_obj_get0_port(ctx.obj);
+    assert(port != NULL);
+    return ossl_quic_port_get_net_rbio(port);
 }
 
 BIO *ossl_quic_conn_get_net_wbio(const SSL *s)
 {
     QCTX ctx;
+    QUIC_PORT *port;
 
-    if (!expect_quic(s, &ctx))
+    if (!expect_quic_any(s, &ctx))
         return NULL;
 
-    return ctx.qc->net_wbio;
+    port = ossl_quic_obj_get0_port(ctx.obj);
+    assert(port != NULL);
+    return ossl_quic_port_get_net_wbio(port);
 }
 
 int ossl_quic_conn_get_blocking_mode(const SSL *s)
@@ -1109,10 +1123,23 @@ int ossl_quic_conn_set_initial_peer_addr(SSL *s,
  *   (BIO/)SSL_get_poll_fd          => ossl_quic_get_poll_fd
  *
  */
+static void qc_try_update_blocking(QUIC_CONNECTION *qc)
+{
+    uint64_t cur_epoch;
+
+    cur_epoch = ossl_quic_port_get_net_bio_epoch(qc->port);
+    if (qc->last_net_bio_epoch == cur_epoch)
+        return;
+
+    qc_update_can_support_blocking(qc);
+    qc_update_blocking_mode(qc);
+    qc->last_net_bio_epoch = cur_epoch;
+}
 
 /* Returns 1 if the connection is being used in blocking mode. */
 static int qc_blocking_mode(const QUIC_CONNECTION *qc)
 {
+    qc_try_update_blocking((QUIC_CONNECTION *)qc);
     return qc->blocking;
 }
 
@@ -1187,30 +1214,38 @@ int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite)
 int ossl_quic_get_rpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
 {
     QCTX ctx;
+    QUIC_PORT *port = NULL;
+    BIO *net_rbio;
 
-    if (!expect_quic(s, &ctx))
+    if (!expect_quic_any(s, &ctx))
         return 0;
 
-    if (desc == NULL || ctx.qc->net_rbio == NULL)
+    port = ossl_quic_obj_get0_port(ctx.obj);
+    net_rbio = ossl_quic_port_get_net_rbio(port);
+    if (desc == NULL || net_rbio == NULL)
         return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_PASSED_INVALID_ARGUMENT,
                                        NULL);
 
-    return BIO_get_rpoll_descriptor(ctx.qc->net_rbio, desc);
+    return BIO_get_rpoll_descriptor(net_rbio, desc);
 }
 
 /* SSL_get_wpoll_descriptor */
 int ossl_quic_get_wpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
 {
     QCTX ctx;
+    QUIC_PORT *port = NULL;
+    BIO *net_wbio;
 
-    if (!expect_quic(s, &ctx))
+    if (!expect_quic_any(s, &ctx))
         return 0;
 
-    if (desc == NULL || ctx.qc->net_wbio == NULL)
+    port = ossl_quic_obj_get0_port(ctx.obj);
+    net_wbio = ossl_quic_port_get_net_wbio(port);
+    if (desc == NULL || net_wbio == NULL)
         return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_PASSED_INVALID_ARGUMENT,
                                        NULL);
 
-    return BIO_get_wpoll_descriptor(ctx.qc->net_wbio, desc);
+    return BIO_get_wpoll_descriptor(net_wbio, desc);
 }
 
 /* SSL_net_read_desired */
@@ -1558,9 +1593,7 @@ static int configure_channel(QUIC_CONNECTION *qc)
 {
     assert(qc->ch != NULL);
 
-    if (!ossl_quic_port_set_net_rbio(qc->port, qc->net_rbio)
-        || !ossl_quic_port_set_net_wbio(qc->port, qc->net_wbio)
-        || !ossl_quic_channel_set_peer_addr(qc->ch, &qc->init_peer_addr))
+    if (!ossl_quic_channel_set_peer_addr(qc->ch, &qc->init_peer_addr))
         return 0;
 
     return 1;
@@ -1646,6 +1679,8 @@ static int quic_do_handshake(QCTX *ctx)
 {
     int ret;
     QUIC_CONNECTION *qc = ctx->qc;
+    QUIC_PORT *port;
+    BIO *net_rbio, *net_wbio;
 
     if (ossl_quic_channel_is_handshake_complete(qc->ch))
         /* Handshake already completed. */
@@ -1659,55 +1694,16 @@ static int quic_do_handshake(QCTX *ctx)
         return -1; /* Non-protocol error */
     }
 
-    if (qc->net_rbio == NULL || qc->net_wbio == NULL) {
+    port = ossl_quic_obj_get0_port(ctx->obj);
+    net_rbio = ossl_quic_port_get_net_rbio(port);
+    net_wbio = ossl_quic_port_get_net_wbio(port);
+    if (net_rbio == NULL || net_wbio == NULL) {
         /* Need read and write BIOs. */
         QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_BIO_NOT_SET, NULL);
         return -1; /* Non-protocol error */
     }
 
-    /*
-     * We need to determine our addressing mode. There are basically two
-     * ways we can use L4 addresses:
-     *
-     *   - Addressed mode, in which our BIO_sendmmsg calls have destination
-     *     addresses attached to them which we expect the underlying network BIO
-     *     to handle;
-     *
-     *   - Unaddressed mode, in which the BIO provided to us on the
-     *     network side neither provides us with L4 addresses nor is capable of
-     *     honouring ones we provide. We don't know where the QUIC traffic we
-     *     send ends up exactly and trust the application to know what it is
-     *     doing.
-     *
-     * Addressed mode is preferred because it enables support for connection
-     * migration, multipath, etc. in the future. Addressed mode is automatically
-     * enabled if we are using e.g. BIO_s_datagram, with or without
-     * BIO_s_connect.
-     *
-     * If we are passed a BIO_s_dgram_pair (or some custom BIO) we may have to
-     * use unaddressed mode unless that BIO supports capability flags indicating
-     * it can provide and honour L4 addresses.
-     *
-     * Our strategy for determining address mode is simple: we probe the
-     * underlying network BIOs for their capabilities. If the network BIOs
-     * support what we need, we use addressed mode. Otherwise, we use
-     * unaddressed mode.
-     *
-     * If addressed mode is chosen, we require an initial peer address to be
-     * set. If this is not set, we fail. If unaddressed mode is used, we do not
-     * require this, as such an address is superfluous, though it can be set if
-     * desired.
-     */
-    if (!qc->started && !qc->addressing_probe_done) {
-        long rcaps = BIO_dgram_get_effective_caps(qc->net_rbio);
-        long wcaps = BIO_dgram_get_effective_caps(qc->net_wbio);
-
-        qc->addressed_mode_r = ((rcaps & BIO_DGRAM_CAP_PROVIDES_SRC_ADDR) != 0);
-        qc->addressed_mode_w = ((wcaps & BIO_DGRAM_CAP_HANDLES_DST_ADDR) != 0);
-        qc->addressing_probe_done = 1;
-    }
-
-    if (!qc->started && qc->addressed_mode_w
+    if (!qc->started && ossl_quic_port_is_addressed_w(port)
         && BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC) {
         /*
          * We are trying to connect and are using addressed mode, which means we
@@ -1721,7 +1717,7 @@ static int quic_do_handshake(QCTX *ctx)
          * (e.g. with setter calls), which might happen after SSL_set_bio is
          * called.
          */
-        if (!csm_analyse_init_peer_addr(qc->net_wbio, &qc->init_peer_addr))
+        if (!csm_analyse_init_peer_addr(net_wbio, &qc->init_peer_addr))
             /* best effort */
             BIO_ADDR_clear(&qc->init_peer_addr);
         else
@@ -1729,7 +1725,7 @@ static int quic_do_handshake(QCTX *ctx)
     }
 
     if (!qc->started
-        && qc->addressed_mode_w
+        && ossl_quic_port_is_addressed_w(port)
         && BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC) {
         /*
          * If we still don't have a peer address in addressed mode, we can't do
@@ -4030,17 +4026,17 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
     QUIC_ENGINE_ARGS engine_args = {0};
     QUIC_PORT_ARGS port_args = {0};
 
+    if ((ql = OPENSSL_zalloc(sizeof(*ql))) == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
+        goto err;
+    }
+
 #if defined(OPENSSL_THREADS)
     if ((ql->mutex = ossl_crypto_mutex_new()) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
         goto err;
     }
 #endif
-
-    if ((ql = OPENSSL_zalloc(sizeof(*ql))) == NULL) {
-        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
-        goto err;
-    }
 
     engine_args.libctx  = ctx->libctx;
     engine_args.propq   = ctx->propq;
@@ -4050,12 +4046,15 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
         goto err;
     }
 
-    port_args.channel_ctx = ctx;
+    port_args.channel_ctx       = ctx;
+    port_args.is_multi_conn     = 1;
     ql->port = ossl_quic_engine_create_port(ql->engine, &port_args);
     if (ql->port == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         goto err;
     }
+
+    ossl_quic_port_set_allow_incoming(ql->port, 1);
 
     /* Initialise the QUIC_LISTENER'S object header. */
     if (!ossl_quic_obj_init(&ql->obj, ctx, SSL_TYPE_QUIC_LISTENER, NULL,
@@ -4072,19 +4071,138 @@ err:
     return NULL;
 }
 
-SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
+/*
+ * SSL_listen
+ * ----------
+ */
+QUIC_NEEDS_LOCK
+static int ql_listen(QUIC_LISTENER *ql)
 {
-    return NULL; // TODO XXX
+    if (ql->listening)
+        return 1;
+
+    ql->listening = 1;
+    return 1;
 }
 
-size_t ossl_quic_get_accept_connection_queue_len(SSL *ssl)
-{
-    return 0; // TODO XXX
-}
-
+QUIC_TAKES_LOCK
 int ossl_quic_listen(SSL *ssl)
 {
-    return 0; // TODO XXX
+    QCTX ctx;
+    int ret;
+
+    if (!expect_quic_listener(ssl, &ctx))
+        return 0;
+
+    qctx_lock(&ctx);
+
+    ret = ql_listen(ctx.ql);
+
+    qctx_unlock(&ctx);
+    return ret;
+}
+
+/*
+ * SSL_accept_connection
+ * ---------------------
+ */
+QUIC_TAKES_LOCK
+SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
+{
+    QCTX ctx;
+    QUIC_CONNECTION *qc = NULL;
+    QUIC_CHANNEL *new_ch = NULL;
+
+    if (!expect_quic_listener(ssl, &ctx))
+        return NULL;
+
+    qctx_lock(&ctx);
+
+    if (!ql_listen(ctx.ql))
+        goto out;
+
+    /* TODO autotick/block */
+
+    new_ch = ossl_quic_port_pop_incoming(ctx.ql->port);
+    if (new_ch == NULL) {
+        /* No connections already queued. */
+        ossl_quic_reactor_tick(ossl_quic_engine_get0_reactor(ctx.ql->engine), 0);
+
+        new_ch = ossl_quic_port_pop_incoming(ctx.ql->port);
+        if (new_ch == NULL)
+            goto out;
+    }
+
+    qc = create_qc_from_incoming_conn(ctx.ql, new_ch);
+    if (qc == NULL) {
+        ossl_quic_channel_free(new_ch);
+        goto out;
+    }
+
+out:
+    qctx_unlock(&ctx);
+    return qc != NULL ? &qc->obj.ssl : NULL;
+}
+
+static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHANNEL *ch)
+{
+    QUIC_CONNECTION *qc = NULL;
+
+    if ((qc = OPENSSL_zalloc(sizeof(*qc))) == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
+        goto err;
+    }
+
+    if (!ossl_quic_obj_init(&qc->obj, ql->obj.ssl.ctx,
+                            SSL_TYPE_QUIC_CONNECTION,
+                            &ql->obj.ssl, NULL, NULL)) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        goto err;
+    }
+
+    ossl_quic_channel_get_peer_addr(ch, &qc->init_peer_addr); /* best effort */
+    qc->listener                = ql;
+    qc->engine                  = ql->engine;
+    qc->port                    = ql->port;
+    qc->ch                      = ch;
+    qc->mutex                   = ql->mutex;
+    qc->tls                     = ossl_quic_channel_get0_tls(ch);
+    qc->last_net_bio_epoch      = UINT64_MAX;
+    qc->started                 = 1;
+    qc->as_server               = 1;
+    qc->as_server_state         = 1;
+    qc->desires_blocking        = 1;
+    qc->default_stream_mode     = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
+    qc->default_ssl_options     = ql->obj.ssl.ctx->options & OSSL_QUIC_PERMITTED_OPTIONS;
+    qc->incoming_stream_policy  = SSL_INCOMING_STREAM_POLICY_AUTO;
+    qc->last_error              = SSL_ERROR_NONE;
+    qc_update_reject_policy(qc);
+    return qc;
+
+err:
+    OPENSSL_free(qc);
+    return NULL;
+}
+
+/*
+ * SSL_get_accept_connection_queue_len
+ * -----------------------------------
+ */
+QUIC_TAKES_LOCK
+size_t ossl_quic_get_accept_connection_queue_len(SSL *ssl)
+{
+    QCTX ctx;
+    int ret;
+
+    if (!expect_quic_listener(ssl, &ctx))
+        return 0;
+
+    qctx_lock(&ctx);
+
+    ret = ossl_quic_port_get_num_incoming_channels(ctx.ql->port);
+
+    qctx_unlock(&ctx);
+    return ret;
 }
 
 /*
