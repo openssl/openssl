@@ -62,6 +62,11 @@ __owur const SSL_METHOD *OSSL_QUIC_client_thread_method(void);
 #  define OSSL_QUIC_LOCAL_ERR_IDLE_TIMEOUT        \
     ((uint64_t)0xFFFFFFFFFFFFFFFFULL)
 
+/*
+ * Method used for QUIC server operation.
+ */
+__owur const SSL_METHOD *OSSL_QUIC_server_method(void);
+
 #  ifdef __cplusplus
 }
 #  endif

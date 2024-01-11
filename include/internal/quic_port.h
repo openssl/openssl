@@ -77,6 +77,12 @@ QUIC_CHANNEL *ossl_quic_port_create_outgoing(QUIC_PORT *port, SSL *tls);
 QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls);
 
 /*
+ * Pop an incoming channel from the incoming channel queue. Returns NULL if
+ * there are no pending incoming channels.
+ */
+QUIC_CHANNEL *ossl_quic_port_pop_incoming(QUIC_PORT *port);
+
+/*
  * Queries and Accessors
  * =====================
  */
@@ -123,6 +129,27 @@ void ossl_quic_port_restore_err_state(const QUIC_PORT *port);
 /* For use by QUIC_ENGINE. You should not need to call this directly. */
 void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *r,
                             uint32_t flags);
+
+/* Returns the number of queued incoming channels. */
+size_t ossl_quic_port_get_num_incoming_channels(const QUIC_PORT *port);
+
+/* Returns 1 if incoming connections should currently be allowed. */
+void ossl_quic_port_set_allow_incoming(QUIC_PORT *port, int allow_incoming);
+
+/* Returns 1 if we are using addressed mode on the read side. */
+int ossl_quic_port_is_addressed_r(const QUIC_PORT *port);
+
+/* Returns 1 if we are using addressed mode on the write side. */
+int ossl_quic_port_is_addressed_w(const QUIC_PORT *port);
+
+/* Returns 1 if we are using addressed mode. */
+int ossl_quic_port_is_addressed(const QUIC_PORT *port);
+
+/*
+ * Returns the current network BIO epoch. This increments whenever the network
+ * BIO configuration changes.
+ */
+uint64_t ossl_quic_port_get_net_bio_epoch(const QUIC_PORT *port);
 
 /*
  * Events
