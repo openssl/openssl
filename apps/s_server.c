@@ -1670,6 +1670,11 @@ int s_server_main(int argc, char *argv[])
         BIO_printf(bio_err, "Can only use -listen with DTLS\n");
         goto end;
     }
+
+    if (rev && socket_type == SOCK_DGRAM) {
+        BIO_printf(bio_err, "Can't use -rev with DTLS\n");
+        goto end;
+    }
 #endif
 
     if (stateless && socket_type != SOCK_STREAM) {
