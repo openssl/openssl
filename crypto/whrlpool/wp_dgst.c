@@ -173,7 +173,7 @@ void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c, const void *_inp, size_t bits)
             } else
 #endif
             if (bits > 8) {
-                b = ((inp[0] << inpgap) | (inp[1] >> (8 - inpgap)));
+                b = inpgap ? ((inp[0] << inpgap) | (inp[1] >> (8 - inpgap))) : (inp[0] << inpgap);
                 b &= 0xff;
                 if (bitrem)
                     c->data[byteoff++] |= b >> bitrem;
