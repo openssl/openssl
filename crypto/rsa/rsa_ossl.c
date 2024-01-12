@@ -1027,7 +1027,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
                 goto err;
             }
 
-            if (!BN_mul(r2, r1, pinfo->t, ctx)) {
+            if (!BN_mul(r2, r2, pinfo->t, ctx)) {
                 BN_free(pr2);
                 goto err;
             }
