@@ -994,6 +994,9 @@ Private 1		: enterprises		: Enterprises
 # RFC 2247
 Enterprises 1466 344	: dcobject		: dcObject
 
+# Wi-SUN Assigned Value Registry
+Enterprises 45605 1     : id-kp-wisun-fan-device : Wi-SUN Alliance Field Area Network (FAN)
+
 # RFC 1495
 Mail 1			: mime-mhs		: MIME MHS
 mime-mhs 1		: mime-mhs-headings	: mime-mhs-headings
