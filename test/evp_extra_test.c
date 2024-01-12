@@ -1164,7 +1164,7 @@ static int test_EC_priv_only_legacy(void)
         goto err;
     eckey = NULL;
 
-    while (dup_pk == NULL) {
+    for (;;) {
         ret = 0;
         ctx = EVP_MD_CTX_new();
         if (!TEST_ptr(ctx))
@@ -1180,6 +1180,9 @@ static int test_EC_priv_only_legacy(void)
         EVP_MD_CTX_free(ctx);
         ctx = NULL;
 
+        if (dup_pk != NULL)
+            break;
+
         if (!TEST_ptr(dup_pk = EVP_PKEY_dup(pkey)))
             goto err;
         /* EVP_PKEY_eq() returns -2 with missing public keys */
@@ -1189,6 +1192,7 @@ static int test_EC_priv_only_legacy(void)
         if (!ret)
             goto err;
     }
+    ret = 1;
 
  err:
     EVP_MD_CTX_free(ctx);
