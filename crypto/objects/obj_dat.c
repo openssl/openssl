@@ -136,7 +136,7 @@ static unsigned long added_obj_hash(const ADDED_OBJ *ca)
     a = ca->obj;
     switch (ca->type) {
     case ADDED_DATA:
-        ret = a->length << 20L;
+        ret = (unsigned long)a->length << 20UL;
         p = (unsigned char *)a->data;
         for (i = 0; i < a->length; i++)
             ret ^= p[i] << ((i * 3) % 24);
