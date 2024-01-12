@@ -103,9 +103,6 @@ static int i2r_issuer_sign_tool(X509V3_EXT_METHOD *method,
         return 0;
     }
     if (ist->signTool != NULL) {
-        if (new_line == 1) {
-            BIO_write(out, "\n", 1);
-        }
         BIO_printf(out, "%*ssignTool    : ", indent, "");
         BIO_write(out, ist->signTool->data, ist->signTool->length);
         new_line = 1;
