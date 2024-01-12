@@ -105,9 +105,6 @@ int ossl_rsa_multip_cap(int bits)
         cap = 3;
     else if (bits < 8192)
         cap = 4;
-
-    if (cap > RSA_MAX_PRIME_NUM)
-        cap = RSA_MAX_PRIME_NUM;
-
+    
     return cap;
 }
