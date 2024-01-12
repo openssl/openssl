@@ -178,9 +178,10 @@ static int julian_adj(const struct tm *tm, int off_day, long offset_sec,
  */
 static long date_to_julian(int y, int m, int d)
 {
-    return (1461 * (y + 4800 + (m - 14) / 12)) / 4 +
-        (367 * (m - 2 - 12 * ((m - 14) / 12))) / 12 -
-        (3 * ((y + 4900 + (m - 14) / 12) / 100)) / 4 + d - 32075;
+    long yl = y, ml = m, dl = d;
+    return (1461L * (yl + 4800L + (ml - 14L) / 12L)) / 4L +
+            (367L * (ml - 2L - 12L * ((ml - 14L) / 12L))) / 12L -
+            (3L * ((yl + 4900L + (ml - 14L) / 12L) / 100L)) / 4L + dl - 32075L;
 }
 
 static void julian_to_date(long jd, int *y, int *m, int *d)
