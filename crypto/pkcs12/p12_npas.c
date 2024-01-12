@@ -212,8 +212,7 @@ static int alg_get(const X509_ALGOR *alg, int *pnid, int *piter,
         if (pbe2 == NULL)
             goto done;
 
-        X509_ALGOR_get0(&aoid, &aparamtype, &aparam, pbe2->keyfunc);
-        pbenid = OBJ_obj2nid(aoid);
+        X509_ALGOR_get0(NULL, &aparamtype, &aparam, pbe2->keyfunc);
         X509_ALGOR_get0(&aoid, NULL, NULL, pbe2->encryption);
         encnid = OBJ_obj2nid(aoid);
 
