@@ -9,6 +9,8 @@
 
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
+#include "internal/rcu.h"
+#include "rcu_internal.h"
 
 #if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)
 
@@ -16,6 +18,82 @@
 #  include <sys/types.h>
 #  include <unistd.h>
 # endif
+
+struct rcu_lock_st {
+    struct rcu_cb_item *cb_items;
+};
+
+CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
+{
+    CRYPTO_RCU_LOCK lock;
+
+    lock = OPENSSL_zalloc(sizeof(struct rcu_lock_st));
+    return lock;
+}
+
+void ossl_rcu_lock_free(CRYPTO_RCU_LOCK lock)
+{
+    OPENSSL_free(lock);
+}
+
+void ossl_rcu_read_lock(CRYPTO_RCU_LOCK lock)
+{
+    return;
+}
+
+void ossl_rcu_write_lock(CRYPTO_RCU_LOCK lock)
+{
+    return;
+}
+
+void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK lock)
+{
+    return;
+}
+
+void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK lock)
+{
+    return;
+}
+
+void ossl_synchronize_rcu(CRYPTO_RCU_LOCK lock)
+{
+    struct rcu_cb_item *items = lock->cb_items;
+    struct rcu_cb_item *tmp;
+
+    lock->cb_items = NULL;
+
+    while (items != NULL) {
+        tmp = items->next;
+        items->fn(items->data);
+        OPENSSL_free(items);
+        items = tmp;
+    }
+}
+
+int ossl_rcu_call(CRYPTO_RCU_LOCK lock, rcu_cb_fn cb, void *data)
+{
+    struct rcu_cb_item *new = OPENSSL_zalloc(sizeof(struct rcu_cb_item));
+
+    if (new == NULL)
+        return 0;
+
+    new->fn = cb;
+    new->data = data;
+    new->next = lock->cb_items;
+    lock->cb_items = new;
+    return 1;
+}
+
+void *ossl_rcu_uptr_deref(void **p)
+{
+    return (void *)*p;
+}
+
+void ossl_rcu_assign_uptr(void **p, void **v)
+{
+    *(void **)p = *(void **)v;
+}
 
 CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 {

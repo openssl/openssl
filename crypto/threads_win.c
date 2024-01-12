@@ -13,6 +13,7 @@
 #  define USE_RWLOCK
 # endif
 #endif
+#include <assert.h>
 
 /*
  * VC++ 2008 or earlier x86 compilers do not have an inline implementation
@@ -27,6 +28,10 @@
 #endif
 
 #include <openssl/crypto.h>
+#include <crypto/cryptlib.h>
+#include "internal/common.h"
+#include "internal/rcu.h"
+#include "rcu_internal.h"
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && defined(OPENSSL_SYS_WINDOWS)
 
@@ -37,20 +42,344 @@ typedef struct {
 } CRYPTO_win_rwlock;
 # endif
 
+CRYPTO_THREAD_LOCAL rcu_thr_key;
+
+# define READER_SHIFT 0
+# define ID_SHIFT 32 
+# define READER_SIZE 32 
+# define ID_SIZE 32 
+
+# define READER_MASK     (((LONG64)1 << READER_SIZE)-1)
+# define ID_MASK         (((LONG64)1 << ID_SIZE)-1)
+# define READER_COUNT(x) (((LONG64)(x) >> READER_SHIFT) & READER_MASK)
+# define ID_VAL(x)       (((LONG64)(x) >> ID_SHIFT) & ID_MASK)
+# define VAL_READER      ((LONG64)1 << READER_SHIFT)
+# define VAL_ID(x)       ((LONG64)x << ID_SHIFT)
+
+struct rcu_qp {
+    volatile LONG64 users;
+};
+
+struct thread_qp {
+    struct rcu_qp *qp;
+    CRYPTO_RCU_LOCK lock;
+};
+
+#define MAX_QPS 10
+/*
+ * This is the per thread tracking data
+ * that is assigned to each thread participating
+ * in an rcu qp
+ *
+ * qp points to the qp that it last acquired
+ *
+ */
+struct rcu_thr_data {
+    struct thread_qp thread_qps[MAX_QPS];
+};
+
+/*
+ * This is the internal version of a CRYPTO_RCU_LOCK
+ * it is cast from CRYPTO_RCU_LOCK
+ */
+struct rcu_lock_st {
+    struct rcu_cb_item *cb_items;
+    uint32_t id_ctr;
+    struct rcu_qp *qp_group;
+    size_t group_count;
+    uint32_t next_to_retire;
+    volatile long int reader_idx;
+    uint32_t current_alloc_idx;
+    uint32_t writers_alloced;
+    CRITICAL_SECTION write_lock;
+    CRITICAL_SECTION alloc_lock;
+    CONDITION_VARIABLE alloc_signal;
+    CRITICAL_SECTION prior_lock;
+    CONDITION_VARIABLE prior_signal;
+};
+
+
+/*
+ * Called on thread exit to free the pthread key
+ * associated with this thread, if any
+ */
+static void free_rcu_thr_data(void *ptr)
+{
+    struct rcu_thr_data *data =
+                        (struct rcu_thr_data *)CRYPTO_THREAD_get_local(&rcu_thr_key);
+
+    OPENSSL_free(data);
+    CRYPTO_THREAD_set_local(&rcu_thr_key, NULL);
+}
+
+
+static void ossl_rcu_init(void)
+{
+   CRYPTO_THREAD_init_local(&rcu_thr_key, NULL);
+   ossl_init_thread_start(NULL, NULL, free_rcu_thr_data);
+}
+
+static struct rcu_qp *allocate_new_qp_group(CRYPTO_RCU_LOCK lock,
+                                            int count)
+{
+    struct rcu_qp *new =
+        OPENSSL_zalloc(sizeof(struct rcu_qp) * count);
+
+    lock->group_count = count;
+    return new;
+}
+
+static CRYPTO_ONCE rcu_init_once = CRYPTO_ONCE_STATIC_INIT;
+
+CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
+{
+    struct rcu_lock_st *new =
+        OPENSSL_zalloc(sizeof(struct rcu_lock_st));
+
+    if (!CRYPTO_THREAD_run_once(&rcu_init_once, ossl_rcu_init))
+        return NULL;
+
+    if (num_writers < 1)
+        num_writers = 1;
+
+    if (new == NULL)
+        return NULL;
+
+    InitializeCriticalSection(&new->write_lock);
+    InitializeConditionVariable(&new->alloc_signal);
+    InitializeConditionVariable(&new->prior_signal);
+    InitializeCriticalSection(&new->alloc_lock);
+    InitializeCriticalSection(&new->prior_lock);
+    new->qp_group = allocate_new_qp_group(new, num_writers + 1);
+    if (new->qp_group == NULL) {
+        OPENSSL_free(new);
+        new = NULL;
+    }
+    return (CRYPTO_RCU_LOCK)new;
+
+}
+
+void ossl_rcu_lock_free(CRYPTO_RCU_LOCK lock)
+{
+    OPENSSL_free(lock->qp_group);
+    OPENSSL_free(lock);
+}
+
+static inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK lock)
+{
+    uint32_t qp_idx;
+
+    /* get the current qp index */
+    for (;;) {
+        qp_idx = InterlockedOr(&lock->reader_idx, 0);
+        InterlockedAdd64(&lock->qp_group[qp_idx].users, VAL_READER);
+        if (qp_idx == InterlockedOr(&lock->reader_idx, 0))
+            break;
+        InterlockedAdd64(&lock->qp_group[qp_idx].users, -VAL_READER);
+    }
+
+    return &lock->qp_group[qp_idx];
+}
+
+
+void ossl_rcu_read_lock(CRYPTO_RCU_LOCK lock)
+{
+    struct rcu_thr_data *data;
+    int i;
+    int available_qp = -1;
+
+    /*
+     * we're going to access current_qp here so ask the
+     * processor to fetch it
+     */
+    data = CRYPTO_THREAD_get_local(&rcu_thr_key);
+
+    if (data == NULL) {
+        for (;;) {
+            data = OPENSSL_zalloc(sizeof(struct rcu_thr_data));
+            if (data != NULL)
+                break;
+        }
+        CRYPTO_THREAD_set_local(&rcu_thr_key, data);
+    }
+
+    for (i = 0; i < MAX_QPS; i++) {
+        if (data->thread_qps[i].qp == NULL && available_qp == -1)
+            available_qp = i;
+        /* If we have a hold on this lock already, we're good */
+        if (data->thread_qps[i].lock == lock)
+            return;
+    }
+
+    /*
+     * if we get here, then we don't have a hold on this lock yet
+     */
+    assert(available_qp != -1);
+
+    data->thread_qps[available_qp].qp = get_hold_current_qp(lock);
+    data->thread_qps[available_qp].lock = lock;
+}
+
+void ossl_rcu_write_lock(CRYPTO_RCU_LOCK lock)
+{
+    EnterCriticalSection(&lock->write_lock);
+}
+
+void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK lock)
+{
+    LeaveCriticalSection(&lock->write_lock);
+}
+
+void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK lock)
+{
+    struct rcu_thr_data *data = CRYPTO_THREAD_get_local(&rcu_thr_key);
+    int i;
+
+    assert(data != NULL);
+
+    for (i = 0; i < MAX_QPS; i++) {
+        if (data->thread_qps[i].lock == lock) {
+            InterlockedAdd64(&data->thread_qps[i].qp->users, -VAL_READER);
+            data->thread_qps[i].qp = NULL;
+            data->thread_qps[i].lock = NULL;
+            return;
+        }
+    }
+}
+
+static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK lock)
+{
+    uint64_t new_id;
+    uint32_t current_idx;
+    uint32_t tmp;
+
+    EnterCriticalSection(&lock->alloc_lock);
+    /*
+     * we need at least one qp to be available with one
+     * left over, so that readers can start working on
+     * one that isn't yet being waited on
+     */
+    while (lock->group_count - lock->writers_alloced < 2)
+        SleepConditionVariableCS(&lock->alloc_signal, &lock->alloc_lock, INFINITE);
+
+    current_idx = lock->current_alloc_idx;
+    /* Allocate the qp */
+    lock->writers_alloced++;
+
+    /* increment the allocation index */
+    lock->current_alloc_idx =
+        (lock->current_alloc_idx + 1) % lock->group_count;
+
+    /* get and insert a new id */
+    new_id = lock->id_ctr;
+    lock->id_ctr++;
+
+    new_id = VAL_ID(new_id);
+    InterlockedAnd64(&lock->qp_group[current_idx].users, ID_MASK);
+    InterlockedAdd64(&lock->qp_group[current_idx].users, new_id);
+
+    /* update the reader index to be the prior qp */
+    tmp = lock->current_alloc_idx;
+    InterlockedExchange(&lock->reader_idx, tmp);
+
+    /* wake up any waiters */
+    WakeAllConditionVariable(&lock->alloc_signal);
+    LeaveCriticalSection(&lock->alloc_lock);
+    return (struct rcu_qp *)&lock->qp_group[current_idx];
+}
+
+static void retire_qp(CRYPTO_RCU_LOCK lock,
+                      struct rcu_qp *qp)
+{
+    EnterCriticalSection(&lock->alloc_lock);
+    lock->writers_alloced--;
+    WakeAllConditionVariable(&lock->alloc_signal);
+    LeaveCriticalSection(&lock->alloc_lock);
+}
+
+
+void ossl_synchronize_rcu(CRYPTO_RCU_LOCK lock)
+{
+    struct rcu_qp *qp;
+    uint64_t count;
+    struct rcu_cb_item *cb_items, *tmpcb;
+
+    /* before we do anything else, lets grab the cb list */
+    cb_items = InterlockedExchangePointer((void * volatile *)&lock->cb_items, NULL);
+
+    qp = update_qp(lock);
+
+    /* wait for the reader count to reach zero */
+    do {
+        count = InterlockedOr64(&qp->users, 0);
+    } while (READER_COUNT(count) != 0);
+
+    /* retire in order */
+    EnterCriticalSection(&lock->prior_lock);
+    while (lock->next_to_retire != ID_VAL(count))
+        SleepConditionVariableCS(&lock->prior_signal, &lock->prior_lock, INFINITE);
+
+    lock->next_to_retire++;
+    WakeAllConditionVariable(&lock->prior_signal);
+    LeaveCriticalSection(&lock->prior_lock);
+
+    retire_qp(lock, qp);
+
+    /* handle any callbacks that we have */
+    while (cb_items != NULL) {
+        tmpcb = cb_items;
+        cb_items = cb_items->next;
+        tmpcb->fn(tmpcb->data);
+        OPENSSL_free(tmpcb);
+    }
+
+    /* and we're done */
+    return;
+
+}
+
+int ossl_rcu_call(CRYPTO_RCU_LOCK lock, rcu_cb_fn cb, void *data)
+{
+	struct rcu_cb_item *new;
+	struct rcu_cb_item *prev;
+
+    new = OPENSSL_zalloc(sizeof(struct rcu_cb_item));
+    if (new != NULL)
+        return 0; 
+    prev = new;
+	new->data = data;
+	new->fn = cb;
+
+	InterlockedExchangePointer((void * volatile *)&lock->cb_items, prev);
+	new->next = prev;
+    return 1;
+}
+
+void *ossl_rcu_uptr_deref(void **p)
+{
+	return (void *)*p;
+}
+
+void ossl_rcu_assign_uptr(void **p, void **v)
+{
+	InterlockedExchangePointer((void * volatile *)p, (void *)*v);
+}
+
+
 CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 {
     CRYPTO_RWLOCK *lock;
 # ifdef USE_RWLOCK
     CRYPTO_win_rwlock *rwlock;
 
-    if ((lock = CRYPTO_zalloc(sizeof(CRYPTO_win_rwlock), NULL, 0)) == NULL)
+    if ((lock = OPENSSL_zalloc(sizeof(CRYPTO_win_rwlock))) == NULL)
         /* Don't set error, to avoid recursion blowup. */
         return NULL;
     rwlock = lock;
     InitializeSRWLock(&rwlock->lock);
 # else
 
-    if ((lock = CRYPTO_zalloc(sizeof(CRITICAL_SECTION), NULL, 0)) == NULL)
+    if ((lock = OPENSSL_zalloc(sizeof(CRITICAL_SECTION))) == NULL)
         /* Don't set error, to avoid recursion blowup. */
         return NULL;
 
