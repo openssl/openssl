@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[8487] = {
+static const unsigned char so[8504] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1183,9 +1183,11 @@ static const unsigned char so[8487] = {
     0x55,0x1D,0x4A,                                /* [ 8469] OBJ_alt_signature_value */
     0x55,0x1D,0x4B,                                /* [ 8472] OBJ_associated_information */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x33,  /* [ 8475] OBJ_id_ct_rpkiSignedPrefixList */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x04,       /* [ 8486] OBJ_id_on_hardwareModuleName */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0xE4,0x25,0x01,  /* [ 8494] OBJ_id_kp_wisun_fan_device */
 };
 
-#define NUM_NID 1321
+#define NUM_NID 1323
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2508,9 +2510,11 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"altSignatureValue", "X509v3 Alternative Signature Value", NID_alt_signature_value, 3, &so[8469]},
     {"associatedInformation", "X509v3 Associated Information", NID_associated_information, 3, &so[8472]},
     {"id-ct-rpkiSignedPrefixList", "id-ct-rpkiSignedPrefixList", NID_id_ct_rpkiSignedPrefixList, 11, &so[8475]},
+    {"id-on-hardwareModuleName", "Hardware Module Name", NID_id_on_hardwareModuleName, 8, &so[8486]},
+    {"id-kp-wisun-fan-device", "Wi-SUN Alliance Field Area Network (FAN)", NID_id_kp_wisun_fan_device, 9, &so[8494]},
 };
 
-#define NUM_SN 1312
+#define NUM_SN 1314
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3217,6 +3221,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      128,    /* "id-kp" */
     1221,    /* "id-kp-BrandIndicatorforMessageIdentification" */
     1220,    /* "id-kp-bgpsec-router" */
+    1322,    /* "id-kp-wisun-fan-device" */
      280,    /* "id-mod-attribute-cert" */
      274,    /* "id-mod-cmc" */
      277,    /* "id-mod-cmp" */
@@ -3236,6 +3241,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1211,    /* "id-on-NAIRealm" */
     1208,    /* "id-on-SmtpUTF8Mailbox" */
     1210,    /* "id-on-dnsSRV" */
+    1321,    /* "id-on-hardwareModuleName" */
      858,    /* "id-on-permanentIdentifier" */
      347,    /* "id-on-personalData" */
     1209,    /* "id-on-xmppAddr" */
@@ -3826,7 +3832,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1312
+#define NUM_LN 1314
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3921,6 +3927,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      988,    /* "HMAC GOST 34.11-2012 256 bit" */
      989,    /* "HMAC GOST 34.11-2012 512 bit" */
      810,    /* "HMAC GOST 34.11-94" */
+    1321,    /* "Hardware Module Name" */
      432,    /* "Hold Instruction Call Issuer" */
      430,    /* "Hold Instruction Code" */
      431,    /* "Hold Instruction None" */
@@ -4029,6 +4036,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      133,    /* "Time Stamping" */
      375,    /* "Trust Root" */
     1283,    /* "Trusted key usage (Oracle)" */
+    1322,    /* "Wi-SUN Alliance Field Area Network (FAN)" */
     1034,    /* "X25519" */
     1035,    /* "X448" */
       12,    /* "X509" */
@@ -5142,7 +5150,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1178
+#define NUM_OBJ 1180
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5862,6 +5870,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      346,    /* OBJ_id_cmc_confirmCertAcceptance 1 3 6 1 5 5 7 7 24 */
      347,    /* OBJ_id_on_personalData           1 3 6 1 5 5 7 8 1 */
      858,    /* OBJ_id_on_permanentIdentifier    1 3 6 1 5 5 7 8 3 */
+    1321,    /* OBJ_id_on_hardwareModuleName     1 3 6 1 5 5 7 8 4 */
     1209,    /* OBJ_XmppAddr                     1 3 6 1 5 5 7 8 5 */
     1210,    /* OBJ_SRVName                      1 3 6 1 5 5 7 8 7 */
     1211,    /* OBJ_NAIRealm                     1 3 6 1 5 5 7 8 8 */
@@ -5999,6 +6008,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1293,    /* OBJ_ms_cert_templ                1 3 6 1 4 1 311 21 7 */
     1294,    /* OBJ_ms_app_policies              1 3 6 1 4 1 311 21 10 */
     1292,    /* OBJ_ms_ntds_sec_ext              1 3 6 1 4 1 311 25 2 */
+    1322,    /* OBJ_id_kp_wisun_fan_device       1 3 6 1 4 1 45605 1 */
      390,    /* OBJ_dcObject                     1 3 6 1 4 1 1466 344 */
       91,    /* OBJ_bf_cbc                       1 3 6 1 4 1 3029 1 2 */
      973,    /* OBJ_id_scrypt                    1 3 6 1 4 1 11591 4 11 */
