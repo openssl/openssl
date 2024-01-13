@@ -411,9 +411,7 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata,
 
     if ((id != 0 || name != NULL) && method == NULL) {
         int code = unsupported ? ERR_R_UNSUPPORTED : ERR_R_FETCH_FAILED;
-
-        if (name == NULL)
-            name = ossl_namemap_num2name(namemap, id, 0);
+        
         ERR_raise_data(ERR_LIB_OSSL_ENCODER, code,
                        "%s, Name (%s : %d), Properties (%s)",
                        ossl_lib_ctx_get_descriptor(methdata->libctx),
