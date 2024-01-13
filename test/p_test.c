@@ -108,15 +108,11 @@ static int p_get_params(void *provctx, OSSL_PARAM params[])
             opensslv = provname = greeting = NULL;
 
             if (c_get_params(hand, counter_request)) {
-                if (greeting) {
-                    strcpy(buf, greeting);
-                } else {
-                    const char *versionp = *(void **)counter_request[0].data;
-                    const char *namep = *(void **)counter_request[1].data;
+                const char *versionp = *(void **)counter_request[0].data;
+                const char *namep = *(void **)counter_request[1].data;
 
-                    sprintf(buf, "Hello OpenSSL %.20s, greetings from %s!",
-                            versionp, namep);
-                }
+                sprintf(buf, "Hello OpenSSL %.20s, greetings from %s!",
+                        versionp, namep);
             } else {
                 sprintf(buf, "Howdy stranger...");
             }
