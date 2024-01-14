@@ -9,6 +9,7 @@
 
 /* Time tests for the asn1 module */
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -449,16 +450,20 @@ static int convert_asn1_to_time_t(int idx)
  */
 static int convert_tm_to_asn1_time(void)
 {
-  /* we need 64 bit time_t */
-#if ( (ULONG_MAX >> 31) >> 31 ) >= 1
+    /* we need 64 bit time_t */
+#if ((ULONG_MAX >> 31) >> 31) >= 1
     time_t t;
-    ASN1_TIME* at;
+    ASN1_TIME *at;
 
-    TEST_int_ge(sizeof(time_t) * CHAR_BIT, 64);
-    t = 67768011791126057ULL;
-    at = ASN1_TIME_set(NULL, t);
-    if (at != NULL)
-      ASN1_STRING_free(at);
+    if (sizeof(time_t) * CHAR_BIT >= 64) {
+        t = 67768011791126057ULL;
+        at = ASN1_TIME_set(NULL, t);
+        /*
+         * If ASN1_TIME_set returns NULL, it means it could not handle the input
+         * which is fine for this edge case.
+         */
+        ASN1_STRING_free(at);
+    }
 #endif
     return 1;
 }
