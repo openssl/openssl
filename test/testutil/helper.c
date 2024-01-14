@@ -8,9 +8,9 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-
 #include <time.h>
+#include <openssl/asn1t.h>
+#include "../testutil.h"
 
 /*
  * tweak for Windows
@@ -22,8 +22,6 @@
 #if defined(__FreeBSD__) || defined(__wasi__)
 # define USE_TIMEGM
 #endif
-
-#include "../testutil.h"
 
 time_t test_asn1_string_to_time_t(const char *asn1_string)
 {

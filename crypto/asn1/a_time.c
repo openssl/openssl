@@ -587,14 +587,3 @@ int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b)
         return -1;
     return 0;
 }
-
-/*
- * tweak for Windows
- */
-#ifdef WIN32
-# define timezone _timezone
-#endif
-
-#if defined(__FreeBSD__) || defined(__wasi__)
-# define USE_TIMEGM
-#endif
