@@ -71,6 +71,7 @@ ChaCha20_ctr32:
 	# $a4 = arg #5 (counter array)
 
 	beqz		$len,.Lno_data
+	ori			$t3,$zero,64
 	la.pcrel	$t0,OPENSSL_loongarch_hwcap_P
 	ld.w		$t0,$t0,0
 
@@ -461,7 +462,6 @@ EOF
 $code .= <<EOF;
 .align 6
 .LChaCha20_4x:
-	ori			$t3,$zero,64
 	addi.d		$sp,$sp,-128
 
 	# Save the initial block counter in $t4
@@ -886,7 +886,6 @@ EOF
 $code .= <<EOF;
 .align 6
 .LChaCha20_8x:
-	ori			$t3,$zero,64
 	addi.d		$sp,$sp,-128
 
 	# Save the initial block counter in $t4
