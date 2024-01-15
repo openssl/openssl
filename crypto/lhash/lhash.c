@@ -218,8 +218,8 @@ void OPENSSL_LH_doall(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNC func)
     if (lh == NULL)
         return;
 
-    doall_util_fn(lh, 0, lh->daw, func, (OPENSSL_LH_DOALL_FUNCARG)0,
-                  (OPENSSL_LH_DOALL_FUNCARG_THUNK)0, NULL);
+    doall_util_fn(lh, 0, lh->daw, func, (OPENSSL_LH_DOALL_FUNCARG)NULL,
+                  (OPENSSL_LH_DOALL_FUNCARG_THUNK)NULL, NULL);
 }
 
 void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh,
@@ -228,17 +228,16 @@ void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh,
     if (lh == NULL)
         return;
 
-    doall_util_fn(lh, 1, (OPENSSL_LH_DOALL_FUNC_THUNK)0,
-                          (OPENSSL_LH_DOALL_FUNC)0, func, lh->daaw, arg);
+    doall_util_fn(lh, 1, (OPENSSL_LH_DOALL_FUNC_THUNK)NULL,
+                  (OPENSSL_LH_DOALL_FUNC)NULL, func, lh->daaw, arg);
 }
 
 void OPENSSL_LH_doall_arg_thunk(OPENSSL_LHASH *lh,
-                          OPENSSL_LH_DOALL_FUNCARG_THUNK daaw,
-                          OPENSSL_LH_DOALL_FUNCARG fn, void *arg)
+                                OPENSSL_LH_DOALL_FUNCARG_THUNK daaw,
+                                OPENSSL_LH_DOALL_FUNCARG fn, void *arg)
 {
-    doall_util_fn(lh, 1,(OPENSSL_LH_DOALL_FUNC_THUNK)0,
-                        (OPENSSL_LH_DOALL_FUNC)0,
-                        fn, daaw, arg);
+    doall_util_fn(lh, 1, (OPENSSL_LH_DOALL_FUNC_THUNK)NULL,
+                  (OPENSSL_LH_DOALL_FUNC)NULL, fn, daaw, arg);
 }
 
 static int expand(OPENSSL_LHASH *lh)
