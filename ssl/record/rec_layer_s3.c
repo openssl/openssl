@@ -300,6 +300,10 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
                     SSL_set_shutdown(s, SSL_RECEIVED_SHUTDOWN);
                     s->s3.warn_alert = SSL_AD_CLOSE_NOTIFY;
                 } else {
+                    /*
+                     * This reason code is part of the API and may be used by
+                     * applications for control flow decisions.
+                     */
                     SSLfatal(s, SSL_AD_DECODE_ERROR,
                              SSL_R_UNEXPECTED_EOF_WHILE_READING);
                 }
