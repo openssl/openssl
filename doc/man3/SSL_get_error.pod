@@ -33,7 +33,8 @@ On an unexpected EOF, versions before OpenSSL 3.0 returned
 B<SSL_ERROR_SYSCALL>, nothing was added to the error stack, and errno was 0.
 Since OpenSSL 3.0 the returned error is B<SSL_ERROR_SSL> with a meaningful
 error on the error stack (SSL_R_UNEXPECTED_EOF_WHILE_READING). This error reason
-code may be used for control flow decisions.
+code may be used for control flow decisions (see the man page for
+L<ERR_GET_REASON(3)> for further details on this).
 
 =head1 RETURN VALUES
 
