@@ -466,6 +466,10 @@ int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
             } else {
                 ERR_new();
                 ERR_set_debug(file, line, 0);
+                /*
+                 * This reason code is part of the API and may be used by
+                 * applications for control flow decisions.
+                 */
                 ossl_statem_fatal(s, SSL_AD_DECODE_ERROR,
                                   SSL_R_UNEXPECTED_EOF_WHILE_READING, NULL);
             }
