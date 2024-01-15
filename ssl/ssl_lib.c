@@ -4804,12 +4804,6 @@ int ssl_undefined_const_function(const SSL *s)
     return 0;
 }
 
-const SSL_METHOD *ssl_bad_method(int ver)
-{
-    ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-    return NULL;
-}
-
 const char *ssl_protocol_to_string(int version)
 {
     switch (version)
