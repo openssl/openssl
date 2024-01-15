@@ -90,6 +90,7 @@ static EVP_PKEY *load_pkey_asn1(const unsigned char *bytes, int len)
     EVP_PKEY *pkey = NULL;
 
     pkey = d2i_AutoPrivateKey(NULL, &bytes, len);
+    TEST_ptr(pkey);
     return pkey;
 }
 
