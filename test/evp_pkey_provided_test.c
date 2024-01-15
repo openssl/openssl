@@ -1704,6 +1704,15 @@ static int test_fromdata_ec(void)
             || !TEST_BN_eq(group_b, b))
             goto err;
 
+        EC_GROUP_free(group);
+        group = NULL;
+        BN_free(group_p);
+        group_p = NULL;
+        BN_free(group_a);
+        group_a = NULL;
+        BN_free(group_b);
+        group_b = NULL;
+
         if (!EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_GROUP_NAME,
                                             out_curve_name,
                                             sizeof(out_curve_name),
