@@ -27,7 +27,7 @@ CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
 {
     CRYPTO_RCU_LOCK lock;
 
-    lock = OPENSSL_zalloc(sizeof(struct rcu_lock_st));
+    lock = OPENSSL_zalloc(sizeof(*lock));
     return lock;
 }
 
@@ -73,7 +73,7 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK lock)
 
 int ossl_rcu_call(CRYPTO_RCU_LOCK lock, rcu_cb_fn cb, void *data)
 {
-    struct rcu_cb_item *new = OPENSSL_zalloc(sizeof(struct rcu_cb_item));
+    struct rcu_cb_item *new = OPENSSL_zalloc(sizeof(*new));
 
     if (new == NULL)
         return 0;

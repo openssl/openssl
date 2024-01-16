@@ -345,7 +345,7 @@ static void writer1_fn(void)
 static void writer2_fn(void)
 {
     int local;
-    TEST_info("Starting writer 2");
+    TEST_info("Starting writer2");
     writer_fn(2, &writer2_iterations);
     CRYPTO_atomic_add(&writer2_done, 1, &local, NULL);
 }

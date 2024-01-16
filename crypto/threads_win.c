@@ -56,6 +56,12 @@ CRYPTO_THREAD_LOCAL rcu_thr_key;
 # define VAL_READER      ((LONG64)1 << READER_SHIFT)
 # define VAL_ID(x)       ((LONG64)x << ID_SHIFT)
 
+/*
+ * This defines a quescent point (qp)
+ * This is the barrier beyond which a writer
+ * must wait before freeing data that was
+ * atomically updated
+ */
 struct rcu_qp {
     volatile LONG64 users;
 };
@@ -123,7 +129,7 @@ static struct rcu_qp *allocate_new_qp_group(CRYPTO_RCU_LOCK lock,
                                             int count)
 {
     struct rcu_qp *new =
-        OPENSSL_zalloc(sizeof(struct rcu_qp) * count);
+        OPENSSL_zalloc(sizeof(*new) * count);
 
     lock->group_count = count;
     return new;
@@ -134,7 +140,7 @@ static CRYPTO_ONCE rcu_init_once = CRYPTO_ONCE_STATIC_INIT;
 CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
 {
     struct rcu_lock_st *new =
-        OPENSSL_zalloc(sizeof(struct rcu_lock_st));
+        OPENSSL_zalloc(sizeof(*new));
 
     if (!CRYPTO_THREAD_run_once(&rcu_init_once, ossl_rcu_init))
         return NULL;
@@ -196,7 +202,7 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK lock)
 
     if (data == NULL) {
         for (;;) {
-            data = OPENSSL_zalloc(sizeof(struct rcu_thr_data));
+            data = OPENSSL_zalloc(sizeof(*data));
             if (data != NULL)
                 break;
         }

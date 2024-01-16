@@ -543,7 +543,6 @@ void CONF_modules_unload(int all)
     ossl_synchronize_rcu(module_list_lock);
     sk_CONF_MODULE_free(old_modules);
     sk_CONF_MODULE_pop_free(to_delete, module_free);
-
 }
 
 /* unload a single module */

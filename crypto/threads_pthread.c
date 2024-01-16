@@ -73,6 +73,7 @@ static inline void* fallback_atomic_load_n(void **p)
 static inline void* fallback_atomic_store_n(void **p, void *v)
 {
     void *ret;
+
     pthread_mutex_lock(&atomic_sim_lock);
     ret = *p;
     *p = v;
@@ -187,13 +188,9 @@ static CRYPTO_THREAD_LOCAL rcu_thr_key;
 # define VAL_ID(x)       ((uint64_t)x << ID_SHIFT)
 
 /*
- * This is the core of an rcu lock
- * it tracks the the readers and writers
- * for the current quiescence point for
- * a given lock
- * users is the 64 bit value that stores
- * the READERS/ID as defined
- * above
+ * This is the core of an rcu lock it tracks the readers and writers for the
+ * current quiescence point for a given lock users is the 64 bit value that
+ * stores the READERS/ID as defined above
  *
  */
 struct rcu_qp {
@@ -343,7 +340,7 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK lock)
 
     if (data == NULL) {
         for (;;) {
-            data = OPENSSL_zalloc(sizeof(struct rcu_thr_data));
+            data = OPENSSL_zalloc(sizeof(*data));
             if (data != NULL)
                 break;
         }
@@ -464,7 +461,7 @@ static struct rcu_qp *allocate_new_qp_group(CRYPTO_RCU_LOCK lock,
                                             int count)
 {
     struct rcu_qp *new =
-        OPENSSL_zalloc(sizeof(struct rcu_qp) * count);
+        OPENSSL_zalloc(sizeof(*new) * count);
 
     lock->group_count = count;
     return new;
@@ -529,7 +526,7 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK lock)
 int ossl_rcu_call(CRYPTO_RCU_LOCK lock, rcu_cb_fn cb, void *data)
 {
     struct rcu_cb_item *new =
-        OPENSSL_zalloc(sizeof(struct rcu_cb_item));
+        OPENSSL_zalloc(sizeof(*new));
 
     if (new == NULL)
         return 0;
@@ -561,7 +558,7 @@ static CRYPTO_ONCE rcu_init_once = CRYPTO_ONCE_STATIC_INIT;
 CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
 {
     struct rcu_lock_st *new =
-        OPENSSL_zalloc(sizeof(struct rcu_lock_st));
+        OPENSSL_zalloc(sizeof(*new));
 
     if (!CRYPTO_THREAD_run_once(&rcu_init_once, ossl_rcu_init))
         return NULL;
