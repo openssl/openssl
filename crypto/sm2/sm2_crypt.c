@@ -46,25 +46,12 @@ IMPLEMENT_ASN1_FUNCTIONS(SM2_Ciphertext)
 
 static size_t ec_field_size(const EC_GROUP *group)
 {
-    /* Is there some simpler way to do this? */
-    BIGNUM *p = BN_new();
-    BIGNUM *a = BN_new();
-    BIGNUM *b = BN_new();
-    size_t field_size = 0;
+    const BIGNUM *p = EC_GROUP_get0_field(group);
 
-    if (p == NULL || a == NULL || b == NULL)
-       goto done;
+    if (p == NULL)
+        return 0;
 
-    if (!EC_GROUP_get_curve(group, p, a, b, NULL))
-        goto done;
-    field_size = (BN_num_bits(p) + 7) / 8;
-
- done:
-    BN_free(p);
-    BN_free(a);
-    BN_free(b);
-
-    return field_size;
+    return BN_num_bytes(p);
 }
 
 int ossl_sm2_plaintext_size(const unsigned char *ct, size_t ct_size,
