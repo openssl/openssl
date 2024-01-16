@@ -90,12 +90,12 @@ For non-composite operation algorithms (like "RSA"), this is not necessary,
 see the fallback strategies below.
 
 This is to be implemented through an added provider function that would work
-like keymgmt's `query_operation_name` function, but would return a key type
-name instead:
+like keymgmt's `query_operation_name` function, but would return a NULL
+terminated array of key type name instead:
 
 ``` C
 # define OSSL_FUNC_SIGNATURE_QUERY_KEY_TYPE         26
-OSSL_CORE_MAKE_FUNC(const char *, signature_query_key_type, (void))
+OSSL_CORE_MAKE_FUNC(const char **, signature_query_key_type, (void))
 ```
 
 Furthermore, the public API above requires added provider functionality:
