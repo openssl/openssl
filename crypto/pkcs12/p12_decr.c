@@ -46,8 +46,10 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
      */
     block_size = EVP_CIPHER_CTX_get_block_size(ctx);
 
-    if (block_size == 0)
+    if (block_size == 0) {
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
+    }
 
     max_out_len = inlen + block_size;
     if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ctx))

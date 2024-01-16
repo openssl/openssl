@@ -84,7 +84,7 @@ int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
     const EVP_CIPHER *cipher;
 
     if (c == NULL || c->cipher == NULL)
-        return -1;
+        goto err;
 
     cipher = c->cipher;
     /*
@@ -179,7 +179,7 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
     const EVP_CIPHER *cipher;
 
     if (c == NULL || c->cipher == NULL)
-        return -1;
+        goto err;
 
     cipher = c->cipher;
     /*
@@ -238,6 +238,7 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
         ret = -2;
     }
 
+err:
     if (ret == -2)
         ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_CIPHER);
     else if (ret <= 0)
