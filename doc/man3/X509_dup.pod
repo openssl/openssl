@@ -360,7 +360,7 @@ binary data using B<d2i_I<TYPE>>().
 
 B<I<TYPE>_dup>() copies an existing object, leaving it untouched.
 Note, however, that the internal representation of the object
-may contain besides the ASN.1 structure further data, which is not copied.
+may contain (besides the ASN.1 structure) further data, which is not copied.
 For instance, an B<X509> object usually is augmented by cached information
 on X.509v3 extensions, etc., and losing it can lead to wrong validation results.
 To avoid such situations, better use B<I<TYPE>_up_ref>() if available.
