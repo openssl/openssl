@@ -27,7 +27,7 @@ static ossl_unused ossl_inline void bit_set(size_t *p, uint32_t bit_no, int enab
     if (enable)
         p[bit_no / BITS_PER_WORD] |= mask;
     else
-        p[bit_no / BITS_PER_WORD] &= mask;
+        p[bit_no / BITS_PER_WORD] &= ~mask;
 }
 
 struct qlog_st {
