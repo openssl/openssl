@@ -58,11 +58,10 @@ QLOG *ossl_qlog_new(const QLOG_TRACE_INFO *info)
     if (qlog == NULL)
         return NULL;
 
-    qlog->info = *info;
-
-    qlog->info.title        = NULL;
-    qlog->info.description  = NULL;
-    qlog->info.group_id     = NULL;
+    qlog->info.odcid        = info->odcid;
+    qlog->info.is_server    = info->is_server;
+    qlog->info.now_cb       = info->now_cb;
+    qlog->info.now_cb_arg   = info->now_cb_arg;
 
     if (info->title != NULL
         && (qlog->info.title = OPENSSL_strdup(info->title)) == NULL)
@@ -97,16 +96,19 @@ err:
 
 QLOG *ossl_qlog_new_from_env(const QLOG_TRACE_INFO *info)
 {
-    QLOG *qlog;
+    QLOG *qlog = NULL;
     const char *qlogdir = ossl_safe_getenv("QLOGDIR");
     const char *qfilter = ossl_safe_getenv("QFILTER");
     char qlogdir_sep, *filename = NULL;
     size_t i, l, strl;
 
-    if (info == NULL || qlogdir == NULL || strlen(qlogdir) == 0)
+    if (info == NULL || qlogdir == NULL)
         return NULL;
 
     l = strlen(qlogdir);
+    if (l == 0)
+        return NULL;
+
     qlogdir_sep = ossl_determine_dirsep(qlogdir);
 
     /* strlen("client" / "server"); strlen(".sqlog"); _; separator; _; NUL */
@@ -122,29 +124,26 @@ QLOG *ossl_qlog_new_from_env(const QLOG_TRACE_INFO *info)
     for (i = 0; i < info->odcid.id_len; ++i)
         l += sprintf(filename + l, "%02x", info->odcid.id[i]);
 
-    l += snprintf(filename + l, strl, "_%s.sqlog",
+    l += snprintf(filename + l, strl - l, "_%s.sqlog",
                   info->is_server ? "server" : "client");
 
     qlog = ossl_qlog_new(info);
-    if (qlog == NULL) {
-        OPENSSL_free(filename);
-        return NULL;
-    }
+    if (qlog == NULL)
+        goto err;
 
-    if (!ossl_qlog_set_sink_filename(qlog, filename)) {
-        OPENSSL_free(filename);
-        ossl_qlog_free(qlog);
-        return NULL;
-    }
+    if (!ossl_qlog_set_sink_filename(qlog, filename))
+        goto err;
 
-    if (qfilter != NULL && !ossl_qlog_set_filter(qlog, qfilter)) {
-        OPENSSL_free(filename);
-        ossl_qlog_free(qlog);
-        return NULL;
-    }
+    if (qfilter != NULL && !ossl_qlog_set_filter(qlog, qfilter))
+        goto err;
 
     OPENSSL_free(filename);
     return qlog;
+
+err:
+    OPENSSL_free(filename);
+    ossl_qlog_free(qlog);
+    return NULL;
 }
 
 void ossl_qlog_free(QLOG *qlog)
@@ -293,7 +292,7 @@ static void qlog_event_seq_header(QLOG *qlog)
                 ossl_json_array_begin(&qlog->json);
                 {
                     ossl_json_str(&qlog->json, "QUIC");
-                }
+                } /* protocol_type */
                 ossl_json_array_end(&qlog->json);
 
                 write_str_once(qlog, "group_id", (char **)&qlog->info.group_id);
@@ -303,9 +302,9 @@ static void qlog_event_seq_header(QLOG *qlog)
                 {
                     ossl_json_key(&qlog->json, "process_id");
                     ossl_json_u64(&qlog->json, (uint64_t)getpid());
-                }
+                } /* system_info */
                 ossl_json_object_end(&qlog->json);
-            }
+            } /* common_fields */
             ossl_json_object_end(&qlog->json);
 
             ossl_json_key(&qlog->json, "vantage_point");
@@ -314,9 +313,9 @@ static void qlog_event_seq_header(QLOG *qlog)
                 ossl_json_key(&qlog->json, "type");
                 ossl_json_str(&qlog->json, qlog->info.is_server
                                     ? "server" : "client");
-            }
+            } /* vantage_point */
             ossl_json_object_end(&qlog->json);
-        }
+        } /* trace */
         ossl_json_object_end(&qlog->json);
     }
     ossl_json_object_end(&qlog->json);
@@ -380,23 +379,13 @@ int ossl_qlog_event_try_begin(QLOG *qlog,
     return 1;
 }
 
-static void qlog_event_end(QLOG *qlog, int abort)
+void ossl_qlog_event_end(QLOG *qlog)
 {
     if (!ossl_assert(qlog != NULL && qlog->event_type != QLOG_EVENT_TYPE_NONE))
         return;
 
     qlog_event_epilogue(qlog);
     qlog->event_type = QLOG_EVENT_TYPE_NONE;
-}
-
-void ossl_qlog_event_end(QLOG *qlog)
-{
-    qlog_event_end(qlog, /*abort=*/0);
-}
-
-void ossl_qlog_event_abort(QLOG *qlog)
-{
-    qlog_event_end(qlog, /*abort=*/1);
 }
 
 /*
@@ -625,6 +614,9 @@ static void filter_apply(size_t *enabled, int add,
 
 static int lex_fail(struct lexer *lex, const char *msg)
 {
+    /*
+     * TODO(QLOG): Determine how to print log messages about bad filter strings
+     */
     lex->p = lex->term_end = lex->end;
     return 0;
 }

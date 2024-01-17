@@ -292,11 +292,6 @@ int ossl_json_in_error(OSSL_JSON_ENC *json)
 static void json_write_qstring(OSSL_JSON_ENC *json, const char *str);
 static void json_indent(OSSL_JSON_ENC *json);
 
-static ossl_inline int json_in_error(const OSSL_JSON_ENC *json)
-{
-    return json->error;
-}
-
 static void json_raise_error(OSSL_JSON_ENC *json)
 {
     json->error = 1;
@@ -312,7 +307,7 @@ static void json_undefer(OSSL_JSON_ENC *json)
 
 static void json_write_char(OSSL_JSON_ENC *json, char ch)
 {
-    if (json_in_error(json))
+    if (ossl_json_in_error(json))
         return;
 
     json_undefer(json);
@@ -322,7 +317,7 @@ static void json_write_char(OSSL_JSON_ENC *json, char ch)
 
 static void json_write_str(OSSL_JSON_ENC *json, const char *s)
 {
-    if (json_in_error(json))
+    if (ossl_json_in_error(json))
         return;
 
     json_undefer(json);
@@ -350,7 +345,7 @@ static int json_pre_item(OSSL_JSON_ENC *json)
 {
     int s;
 
-    if (json_in_error(json))
+    if (ossl_json_in_error(json))
         return 0;
 
     switch (json->state) {
@@ -364,7 +359,7 @@ static int json_pre_item(OSSL_JSON_ENC *json)
 
         if (s == 1) {
             json_write_char(json, ',');
-            if (json_in_error(json))
+            if (ossl_json_in_error(json))
                 return 0;
 
             json_indent(json);
@@ -422,21 +417,25 @@ static void composite_end(OSSL_JSON_ENC *json, int type, char ch)
 {
     int was_defer = json->defer_indent;
 
-    if (json_in_error(json))
+    if (ossl_json_in_error(json))
         return;
 
     json->defer_indent = 0;
 
-    if (json_peek(json) != type)
+    if (json_peek(json) != type) {
+        json_raise_error(json);
         return;
+    }
 
     if (type == 0 && json->state == STATE_PRE_ITEM) {
         json_raise_error(json);
         return;
     }
 
-    if (!json_pop(json))
+    if (!json_pop(json)) {
+        json_raise_error(json);
         return;
+    }
 
     if (!was_defer)
         json_indent(json);
@@ -477,7 +476,7 @@ void ossl_json_array_end(OSSL_JSON_ENC *json)
  */
 void ossl_json_key(OSSL_JSON_ENC *json, const char *key)
 {
-    if (json_in_error(json))
+    if (ossl_json_in_error(json))
         return;
 
     if (json_peek(json) != 0) {
@@ -498,7 +497,7 @@ void ossl_json_key(OSSL_JSON_ENC *json, const char *key)
     }
 
     json_write_qstring(json, key);
-    if (json_in_error(json))
+    if (ossl_json_in_error(json))
         return;
 
     json_write_char(json, ':');
@@ -587,7 +586,7 @@ void ossl_json_i64(OSSL_JSON_ENC *json, int64_t value)
         : (uint64_t)-value;
     json_u64(json, uv, /*noquote=*/1);
 
-    if (quote && !json_in_error(json))
+    if (quote && !ossl_json_in_error(json))
         json_write_char(json, '"');
 }
 
@@ -626,7 +625,7 @@ json_write_qstring_inner(OSSL_JSON_ENC *json, const char *str, size_t str_len,
     int i;
     size_t j;
 
-    if (json_in_error(json))
+    if (ossl_json_in_error(json))
         return;
 
     json_write_char(json, '"');
@@ -651,7 +650,7 @@ json_write_qstring_inner(OSSL_JSON_ENC *json, const char *str, size_t str_len,
                 obuf[0] = '\\';
                 obuf[1] = 'u';
                 for (i = 0; i < 4; ++i)
-                    obuf[2 + i] = hex_digit((c >> ((3 - i) * 4)) & 0xF);
+                    obuf[2 + i] = hex_digit((c >> ((3 - i) * 4)) & 0x0F);
                 obuf[6] = '\0';
                 o = obuf;
             } else {

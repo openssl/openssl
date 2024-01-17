@@ -203,8 +203,8 @@ static void ignore_res(int x) {}
  * goes wrong before then) while avoiding the need to keep around bookkeeping
  * data on what frames it contained.
  */
-static int log_frame(QLOG *qlog_instance, PACKET *pkt,
-                     uint64_t *need_skip)
+static int log_frame_actual(QLOG *qlog_instance, PACKET *pkt,
+                            uint64_t *need_skip)
 {
     uint64_t frame_type;
     OSSL_QUIC_FRAME_ACK ack;
@@ -232,7 +232,6 @@ static int log_frame(QLOG *qlog_instance, PACKET *pkt,
             goto unknown;
 
         QLOG_STR("frame_type", "ping");
-        QLOG_U64("length", 1);
         break;
     case OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN:
     case OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN:
@@ -451,7 +450,8 @@ static int log_frame(QLOG *qlog_instance, PACKET *pkt,
             uint64_t stream_id, x;
 
             if (!ossl_quic_wire_decode_frame_stream_data_blocked(pkt,
-                                                                 &stream_id, &x))
+                                                                 &stream_id,
+                                                                 &x))
                 goto unknown;
 
             QLOG_STR("frame_type", "stream_data_blocked");
@@ -511,13 +511,26 @@ unknown:
     return 1;
 }
 
+static void log_frame(QLOG *qlog_instance, PACKET *pkt,
+                      uint64_t *need_skip)
+{
+    size_t rem_before, rem_after;
+
+    rem_before = PACKET_remaining(pkt);
+
+    if (!log_frame_actual(qlog_instance, pkt, need_skip))
+        return;
+
+    rem_after = PACKET_remaining(pkt);
+    QLOG_U64("length", rem_before - rem_after);
+}
+
 static int log_frames(QLOG *qlog_instance,
                       const OSSL_QTX_IOVEC *iovec,
                       size_t num_iovec)
 {
     size_t i;
     PACKET pkt;
-    size_t rem_before, rem_after;
     uint64_t need_skip = 0;
 
     for (i = 0; i < num_iovec; ++i) {
@@ -538,17 +551,10 @@ static int log_frames(QLOG *qlog_instance,
                 continue;
             }
 
-            rem_before = PACKET_remaining(&pkt);
-
             QLOG_BEGIN(NULL)
             {
-                if (!log_frame(qlog_instance, &pkt, &need_skip))
-                    goto cont;
-
-                rem_after = PACKET_remaining(&pkt);
-                QLOG_U64("length", rem_before - rem_after);
+                log_frame(qlog_instance, &pkt, &need_skip);
             }
-cont:
             QLOG_END()
         }
     }
