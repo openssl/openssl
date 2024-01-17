@@ -5,10 +5,11 @@ Approach
 --------
 
 The JSON encoder exists to support QLOG implementation. There is no intention to
-implement a decoder at this time. The encoder is intended to support
-zero-allocation automation using immediate calls without the use of an
-intermediate syntax tree representation. This enables highly efficient
-serialization when called from QUIC code without dynamic memory allocation.
+implement a decoder at this time. The encoder is intended to support automation
+using immediate calls without the use of an intermediate syntax tree
+representation and is expected to be zero-allocation in most cases. This enables
+highly efficient serialization when called from QUIC code without dynamic memory
+allocation.
 
 An example usage is as follows:
 

@@ -63,7 +63,6 @@ int ossl_qlog_event_try_begin(QLOG *qlog, uint32_t event_type,
                               const char *event_cat, const char *event_name,
                               const char *event_combined_name);
 void ossl_qlog_event_end(QLOG *qlog);
-void ossl_qlog_event_abort(QLOG *qlog);
 
 void ossl_qlog_group_begin(QLOG *qlog, const char *name);
 void ossl_qlog_group_end(QLOG *qlog);
