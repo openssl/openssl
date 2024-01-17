@@ -1,0 +1,100 @@
+# Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Performance Testing
+
+#Run manually
+on: [pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  performance:
+    runs-on: ubuntu-latest
+    steps:
+    - name: setup environment
+      run: |
+        echo "UNAME_VAR=$(uname -r)" >> $GITHUB_ENV
+        echo "TARGET_OSSL_INCLUDE_PATH=${GITHUB_WORKSPACE}/include" >> $GITHUB_ENV
+        echo "TARGET_OSSL_LIBRARY_PATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+        echo "THREAD_COUNT=16" >> $GITHUB_ENV
+    - name: Checkout openssl
+      uses: actions/checkout@v4
+    - name: tools install
+      run: |
+        sudo apt-get install -y curl linux-tools-common linux-tools-generic linux-tools-$UNAME_VAR
+    - name: clone performance suite
+      run: git clone https://github.com/openssl/tools.git perf
+    - name: config
+      run: ./config --banner=Configured --debug -fno-omit-frame-pointer && ./configdata.pm --dump
+    - name: build openssl
+      run: make -s -j4
+    - name: build performance suite
+      run: |
+        cd perf/perf
+        CFLAGS="-Wl,-rpath,${GITHUB_WORKSPACE} -fno-omit-frame-pointer" make
+    - name: run pemread test
+      run: |
+        cd perf/perf
+        sudo perf record -a -g -o ./perf.data.pemread -- ./pemread $THREAD_COUNT | awk '{print $7}' | sed -e"s/us//" > ./pemread.throughput
+        echo "PEMREAD_THROUGHPUT=$(cat ./pemread.throughput)" >> $GITHUB_ENV
+    - name: run newrawkey test
+      run: |
+        cd perf/perf
+        sudo perf record -a -g -o ./perf.data.newrawkey -- ./newrawkey $THREAD_COUNT | awk '{print $7}' | sed -e"s/us//" > ./newrawkey.throughput
+        echo "NEWRAWKEY_THROUGHPUT=$(cat ./newrawkey.throughput)" >> $GITHUB_ENV
+    - name: run providerdoall test
+      run: |
+        cd perf/perf
+        sudo perf record -a -g -o ./perf.data.providerdoall -- ./providerdoall $THREAD_COUNT | awk '{print $7}' | sed -e"s/us//" > ./providerdoall.throughput
+        echo "PROVIDERDOALL_THROUGHPUT=$(cat ./providerdoall.throughput)" >> $GITHUB_ENV
+    - name: run rsasign test
+      run: |
+        cd perf/perf
+        sudo perf record -a -g -o ./perf.data.rsasign -- ./rsasign $THREAD_COUNT | awk '{print $8}' | sed -e"s/us//" > ./rsasign.throughput
+        echo "RSASIGN_THROUGHPUT=$(cat ./rsasign.throughput)" >> $GITHUB_ENV
+    - name: run sslnew test
+      run: |
+        cd perf/perf
+        sudo perf record -a -g -o ./perf.data.sslnew -- ./sslnew $THREAD_COUNT | awk '{print $8}' | sed -e"s/us//" > ./sslnew.throughput
+        echo "SSLNEW_THROUGHPUT=$(cat ./sslnew.throughput)" >> $GITHUB_ENV
+    - name: run handshake test
+      run: |
+        cd perf/perf
+        sudo perf record -a -g -o ./perf.data.handshake -- ./handshake ${GITHUB_WORKSPACE}/test/certs $THREAD_COUNT | awk '/Average/ {print $5}' | sed -e"s/us//" > ./handshake.throughput
+        echo "HANDSHAKE_THROUGHPUT=$(cat ./handshake.throughput)" >> $GITHUB_ENV
+    - name: report pemread performance
+      run: |
+        cd perf/perf
+        echo "PEMREAD COMPLETES 100 iterations in $PEMREAD_THROUGHPUT usecs"
+        sudo perf report --call-graph=flat,2 -i ./perf.data.pemread
+    - name: report newrawkey performance
+      run: |
+        cd perf/perf
+        echo "NEWRAWKEY COMPLETES 100 iterations in $NEWRAWKEY_THROUGHPUT usecs"
+        sudo perf report --call-graph=flat,2 -i ./perf.data.newrawkey
+    - name: report providerdoall performance
+      run: |
+        cd perf/perf
+        echo "PROVIDERDOALL COMPLETES 100 iterations in $PROVIDERDOALL_THROUGHPUT usecs"
+        sudo perf report --call-graph=flat,2 -i ./perf.data.providerdoall
+    - name: report rsasign performance
+      run: |
+        cd perf/perf
+        echo "RSASIGN COMPLETES 100 iterations in $RSASIGN_THROUGHPUT usecs"
+        sudo perf report --call-graph=flat,2 -i ./perf.data.rsasign
+    - name: report sslnew performance
+      run: |
+        cd perf/perf
+        echo "SSLNEW COMPLETES 100 iterations in $SSLNEW_THROUGHPUT usecs"
+        sudo perf report --call-graph=flat,2 -i ./perf.data.sslnew
+    - name: report handshake performance
+      run: |
+        cd perf/perf
+        echo "HANDSHAKE COMPLETES 100 iterations in $HANDSHAKE_THROUGHPUT usecs"
+        sudo perf report --call-graph=flat,2 -i ./perf.data.handshake
