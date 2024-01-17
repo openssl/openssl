@@ -1185,7 +1185,7 @@ static const unsigned char so[8487] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x33,  /* [ 8475] OBJ_id_ct_rpkiSignedPrefixList */
 };
 
-#define NUM_NID 1321
+#define NUM_NID 1327
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2508,14 +2508,22 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"altSignatureValue", "X509v3 Alternative Signature Value", NID_alt_signature_value, 3, &so[8469]},
     {"associatedInformation", "X509v3 Associated Information", NID_associated_information, 3, &so[8472]},
     {"id-ct-rpkiSignedPrefixList", "id-ct-rpkiSignedPrefixList", NID_id_ct_rpkiSignedPrefixList, 11, &so[8475]},
+    {"AES-128-CBC-HMAC-SHA1-ETM", "aes-128-cbc-hmac-sha1-etm", NID_aes_128_cbc_hmac_sha1_etm},
+    {"AES-192-CBC-HMAC-SHA1-ETM", "aes-192-cbc-hmac-sha1-etm", NID_aes_192_cbc_hmac_sha1_etm},
+    {"AES-256-CBC-HMAC-SHA1-ETM", "aes-256-cbc-hmac-sha1-etm", NID_aes_256_cbc_hmac_sha1_etm},
+    {"AES-128-CBC-HMAC-SHA256-ETM", "aes-128-cbc-hmac-sha256-etm", NID_aes_128_cbc_hmac_sha256_etm},
+    {"AES-192-CBC-HMAC-SHA256-ETM", "aes-192-cbc-hmac-sha256-etm", NID_aes_192_cbc_hmac_sha256_etm},
+    {"AES-256-CBC-HMAC-SHA256-ETM", "aes-256-cbc-hmac-sha256-etm", NID_aes_256_cbc_hmac_sha256_etm},
 };
 
-#define NUM_SN 1312
+#define NUM_SN 1318
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
      916,    /* "AES-128-CBC-HMAC-SHA1" */
+    1321,    /* "AES-128-CBC-HMAC-SHA1-ETM" */
      948,    /* "AES-128-CBC-HMAC-SHA256" */
+    1324,    /* "AES-128-CBC-HMAC-SHA256-ETM" */
      421,    /* "AES-128-CFB" */
      650,    /* "AES-128-CFB1" */
      653,    /* "AES-128-CFB8" */
@@ -2527,7 +2535,9 @@ static const unsigned int sn_objs[NUM_SN] = {
      913,    /* "AES-128-XTS" */
      423,    /* "AES-192-CBC" */
      917,    /* "AES-192-CBC-HMAC-SHA1" */
+    1322,    /* "AES-192-CBC-HMAC-SHA1-ETM" */
      949,    /* "AES-192-CBC-HMAC-SHA256" */
+    1325,    /* "AES-192-CBC-HMAC-SHA256-ETM" */
      425,    /* "AES-192-CFB" */
      651,    /* "AES-192-CFB1" */
      654,    /* "AES-192-CFB8" */
@@ -2538,7 +2548,9 @@ static const unsigned int sn_objs[NUM_SN] = {
     1199,    /* "AES-192-SIV" */
      427,    /* "AES-256-CBC" */
      918,    /* "AES-256-CBC-HMAC-SHA1" */
+    1323,    /* "AES-256-CBC-HMAC-SHA1-ETM" */
      950,    /* "AES-256-CBC-HMAC-SHA256" */
+    1326,    /* "AES-256-CBC-HMAC-SHA256-ETM" */
      429,    /* "AES-256-CFB" */
      652,    /* "AES-256-CFB1" */
      655,    /* "AES-256-CFB8" */
@@ -3826,7 +3838,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1312
+#define NUM_LN 1318
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4096,7 +4108,9 @@ static const unsigned int ln_objs[NUM_LN] = {
      606,    /* "additional verification" */
      419,    /* "aes-128-cbc" */
      916,    /* "aes-128-cbc-hmac-sha1" */
+    1321,    /* "aes-128-cbc-hmac-sha1-etm" */
      948,    /* "aes-128-cbc-hmac-sha256" */
+    1324,    /* "aes-128-cbc-hmac-sha256-etm" */
      896,    /* "aes-128-ccm" */
      421,    /* "aes-128-cfb" */
      650,    /* "aes-128-cfb1" */
@@ -4110,7 +4124,9 @@ static const unsigned int ln_objs[NUM_LN] = {
      913,    /* "aes-128-xts" */
      423,    /* "aes-192-cbc" */
      917,    /* "aes-192-cbc-hmac-sha1" */
+    1322,    /* "aes-192-cbc-hmac-sha1-etm" */
      949,    /* "aes-192-cbc-hmac-sha256" */
+    1325,    /* "aes-192-cbc-hmac-sha256-etm" */
      899,    /* "aes-192-ccm" */
      425,    /* "aes-192-cfb" */
      651,    /* "aes-192-cfb1" */
@@ -4123,7 +4139,9 @@ static const unsigned int ln_objs[NUM_LN] = {
     1199,    /* "aes-192-siv" */
      427,    /* "aes-256-cbc" */
      918,    /* "aes-256-cbc-hmac-sha1" */
+    1323,    /* "aes-256-cbc-hmac-sha1-etm" */
      950,    /* "aes-256-cbc-hmac-sha256" */
+    1326,    /* "aes-256-cbc-hmac-sha256-etm" */
      902,    /* "aes-256-ccm" */
      429,    /* "aes-256-cfb" */
      652,    /* "aes-256-cfb1" */

@@ -437,6 +437,8 @@ int opt_cipher(const char *name, EVP_CIPHER **cipherp)
             opt_printf_stderr("%s XTS ciphers not supported\n", prog);
         } else if ((flags & EVP_CIPH_FLAG_AEAD_CIPHER) != 0) {
             opt_printf_stderr("%s: AEAD ciphers not supported\n", prog);
+        } else if ((flags & EVP_CIPH_FLAG_ENC_THEN_MAC) != 0) {
+            opt_printf_stderr("%s: ENC-then-MAC cipher not supported\n", prog);
         } else {
             ret = 1;
             if (cipherp != NULL)
