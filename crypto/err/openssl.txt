@@ -278,7 +278,7 @@ CMP_R_UNEXPECTED_PKIBODY:133:unexpected pkibody
 CMP_R_UNEXPECTED_PKISTATUS:185:unexpected pkistatus
 CMP_R_UNEXPECTED_POLLREQ:105:unexpected pollreq
 CMP_R_UNEXPECTED_PVNO:153:unexpected pvno
-CMP_R_UNEXPECTED_SENDER:197:unexpected sender
+CMP_R_UNEXPECTED_SENDER:106:unexpected sender
 CMP_R_UNKNOWN_ALGORITHM_ID:134:unknown algorithm id
 CMP_R_UNKNOWN_CERT_TYPE:135:unknown cert type
 CMP_R_UNKNOWN_PKISTATUS:186:unknown pkistatus
