@@ -118,6 +118,7 @@ static void rwwriter_fn(int id, int *iterations)
     int *old, *new;
     OSSL_TIME t1, t2;
     t1 = ossl_time_now();
+
     for (count = 0; ; count++) {
         new = CRYPTO_zalloc(sizeof (int), NULL, 0);
         if (contention == 0)
@@ -146,6 +147,7 @@ static void rwwriter_fn(int id, int *iterations)
 static void rwwriter1_fn(void)
 {
     int local;
+
     TEST_info("Starting writer1");
     rwwriter_fn(1, &rwwriter1_iterations);
     CRYPTO_atomic_add(&rwwriter1_done, 1, &local, NULL);
@@ -154,6 +156,7 @@ static void rwwriter1_fn(void)
 static void rwwriter2_fn(void)
 {
     int local;
+
     TEST_info("Starting writer 2");
     rwwriter_fn(2, &rwwriter2_iterations);
     CRYPTO_atomic_add(&rwwriter2_done, 1, &local, NULL);
@@ -162,6 +165,7 @@ static void rwwriter2_fn(void)
 static void rwreader_fn(int *iterations)
 {
     unsigned int count = 0;
+
     int old = 0;
     int lw1 = 0;
     int lw2 = 0;
@@ -337,6 +341,7 @@ static void writer_fn(int id, int *iterations)
 static void writer1_fn(void)
 {
     int local;
+
     TEST_info("Starting writer1");
     writer_fn(1, &writer1_iterations);
     CRYPTO_atomic_add(&writer1_done, 1, &local, NULL);
@@ -345,6 +350,7 @@ static void writer1_fn(void)
 static void writer2_fn(void)
 {
     int local;
+
     TEST_info("Starting writer2");
     writer_fn(2, &writer2_iterations);
     CRYPTO_atomic_add(&writer2_done, 1, &local, NULL);

@@ -87,6 +87,7 @@ static inline void fallback_atomic_store(void **p, void **v)
 {
     void *ret;
     pthread_mutex_lock(&atomic_sim_lock);
+
     ret = *p;
     *p = *v;
     v = ret;
@@ -98,6 +99,7 @@ static inline void fallback_atomic_store(void **p, void **v)
 static inline void* fallback_atomic_exchange_n(void **p, void *v)
 {
     void *ret;
+
     pthread_mutex_lock(&atomic_sim_lock);
     ret = *p;
     *p = v;
@@ -110,6 +112,7 @@ static inline void* fallback_atomic_exchange_n(void **p, void *v)
 static inline uint64_t fallback_atomic_add_fetch(uint64_t *p, uint64_t v)
 {
     uint64_t ret;
+
     pthread_mutex_lock(&atomic_sim_lock);
     *p += v;
     ret = *p;
@@ -122,6 +125,7 @@ static inline uint64_t fallback_atomic_add_fetch(uint64_t *p, uint64_t v)
 static inline uint64_t fallback_atomic_fetch_add(uint64_t *p, uint64_t v)
 {
     uint64_t ret;
+
     pthread_mutex_lock(&atomic_sim_lock);
     ret = *p;
     *p += v;
@@ -134,6 +138,7 @@ static inline uint64_t fallback_atomic_fetch_add(uint64_t *p, uint64_t v)
 static inline uint64_t fallback_atomic_sub_fetch(uint64_t *p, uint64_t v)
 {
     uint64_t ret;
+
     pthread_mutex_lock(&atomic_sim_lock);
     *p -= v;
     ret = *p;
@@ -158,6 +163,7 @@ static inline uint64_t fallback_atomic_and_fetch(uint64_t *p, uint64_t m)
 static inline uint64_t fallback_atomic_or_fetch(uint64_t *p, uint64_t m)
 {
     uint64_t ret;
+
     pthread_mutex_lock(&atomic_sim_lock);
     *p |= m;
     ret = *p;
@@ -323,7 +329,7 @@ static struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK lock)
                          __ATOMIC_RELEASE);
     }
 
-    return (struct rcu_qp *)&lock->qp_group[qp_idx];
+    return &lock->qp_group[qp_idx];
 }
 
 void ossl_rcu_read_lock(CRYPTO_RCU_LOCK lock)
@@ -445,11 +451,10 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK lock)
     /* wake up any waiters */
     pthread_cond_signal(&lock->alloc_signal);
     pthread_mutex_unlock(&lock->alloc_lock);
-    return (struct rcu_qp *)&lock->qp_group[current_idx];
+    return &lock->qp_group[current_idx];
 }
 
-static void retire_qp(CRYPTO_RCU_LOCK lock,
-                      struct rcu_qp *qp)
+static void retire_qp(CRYPTO_RCU_LOCK lock, struct rcu_qp *qp)
 {
     pthread_mutex_lock(&lock->alloc_lock);
     lock->writers_alloced--;
@@ -518,9 +523,6 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK lock)
         tmpcb->fn(tmpcb->data);
         OPENSSL_free(tmpcb);
     }
-
-    /* and we're done */
-    return;
 }
 
 int ossl_rcu_call(CRYPTO_RCU_LOCK lock, rcu_cb_fn cb, void *data)
