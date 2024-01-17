@@ -1469,7 +1469,7 @@ $code.=<<___;
 	mov @tweak[1].16b,@tweak[0].16b
 ___
 	&rev32_armeb(@tweak[1],@tweak[1]);
-	&compute_tweak_vec(@tweak[1],@tweak[2]);
+	&compute_tweak_vec(@tweak[1],@tweak[2],$std);
 $code.=<<___;
 	b .check_dec${std}
 
@@ -1479,12 +1479,12 @@ $code.=<<___;
 .check_dec${std}:
 	// encryption:1 decryption:0
 	cmp $enc,1
-	b.eq .prcess_last_2blks${std}
+	b.eq .process_last_2blks${std}
 	mov @vtmp[0].16B,@tweak[1].16b
 	mov @tweak[1].16B,@tweak[2].16b
 	mov @tweak[2].16B,@vtmp[0].16b
 
-.prcess_last_2blks${std}:
+.process_last_2blks${std}:
 ___
 	&rev32_armeb(@tweak[1],@tweak[1]);
 	&rev32_armeb(@tweak[2],@tweak[2]);
