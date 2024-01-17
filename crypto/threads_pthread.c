@@ -345,11 +345,8 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK lock)
     data = CRYPTO_THREAD_get_local(&rcu_thr_key);
 
     if (data == NULL) {
-        for (;;) {
-            data = OPENSSL_zalloc(sizeof(*data));
-            if (data != NULL)
-                break;
-        }
+        data = OPENSSL_zalloc(sizeof(*data));
+        OPENSSL_assert(data != NULL);
         CRYPTO_THREAD_set_local(&rcu_thr_key, data);
         ossl_init_thread_start(NULL, NULL, free_rcu_thr_data);
     }
