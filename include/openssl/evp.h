@@ -376,6 +376,7 @@ OSSL_DEPRECATEDIN_3_0 int
 /* For supplementary wrap cipher support */
 # define         EVP_CIPH_FLAG_GET_WRAP_CIPHER   0x4000000
 # define         EVP_CIPH_FLAG_INVERSE_CIPHER    0x8000000
+# define         EVP_CIPH_FLAG_ENC_THEN_MAC      0x10000000
 
 /*
  * Cipher context flag to indicate we can handle wrap mode: if allowed in
