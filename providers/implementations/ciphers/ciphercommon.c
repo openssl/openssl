@@ -17,6 +17,7 @@
 #include "ciphercommon_local.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "internal/constant_time.h"
 
 /*-
  * Generic cipher functions for OSSL_PARAM gettables and settables
@@ -395,6 +396,9 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t blksz = ctx->blocksize;
+    size_t i;
+    size_t i_bufsz_lt;
+    int ret;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -449,19 +453,26 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
         return 0;
     }
 
-    if (ctx->pad && !ossl_cipher_unpadblock(ctx->buf, &ctx->bufsz, blksz)) {
-        /* ERR_raise already called */
-        return 0;
-    }
+    ret = 1;
+
+    if (ctx->pad)
+        ret = ossl_cipher_unpadblock(ctx->buf, &ctx->bufsz, blksz);
 
     if (outsize < ctx->bufsz) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
-    memcpy(out, ctx->buf, ctx->bufsz);
+
+    /* Copy ctx->buf to out in constant time */
+    for (i = 0; i < blksz; i++) {
+        i_bufsz_lt = constant_time_lt_s(i, ctx->bufsz);
+        out[i] = constant_time_select_8((unsigned char)(i_bufsz_lt & 0xff), ctx->buf[i], out[i]);
+    }
+
     *outl = ctx->bufsz;
     ctx->bufsz = 0;
-    return 1;
+
+    return ret;
 }
 
 int ossl_cipher_generic_stream_update(void *vctx, unsigned char *out,

@@ -16,6 +16,7 @@
 #include "internal/ssl3_cbc.h"
 #include "ciphercommon_local.h"
 
+
 /*
  * Fills a single block of buffered data from the input, and returns the amount
  * of data remaining in the input that is a multiple of the blocksize. The buffer
@@ -88,11 +89,18 @@ void ossl_cipher_padblock(unsigned char *buf, size_t *buflen, size_t blocksize)
         buf[i] = pad;
 }
 
+/*
+ * ossl_cipher_unpadblock removes the padding from the final block in constant time.
+ */
 int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
 {
     size_t pad, i;
     size_t len = *buflen;
+    size_t gp;
+    size_t buf_pad_eq;
+    size_t i_pad_lt;
 
+    /* len and blocksize are public so they can be tested in non-constant time */
     if (len != blocksize) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -103,18 +111,19 @@ int ossl_cipher_unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
      * Otherwise it provides a padding oracle.
      */
     pad = buf[blocksize - 1];
-    if (pad == 0 || pad > blocksize) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
-        return 0;
+    gp = ~(constant_time_is_zero_s(pad) | constant_time_lt_s(blocksize, pad));
+
+    for (i = 0; i < blocksize; i++) {
+        i_pad_lt = constant_time_lt_s(i, pad);
+        buf_pad_eq = constant_time_eq_s(buf[blocksize - i - 1], pad);
+        gp = constant_time_select_s(i_pad_lt, gp & buf_pad_eq, gp);
+        *buflen = constant_time_select_s(gp & i_pad_lt, blocksize - i - 1, *buflen);
     }
-    for (i = 0; i < pad; i++) {
-        if (buf[--len] != pad) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
-            return 0;
-        }
-    }
-    *buflen = len;
-    return 1;
+
+    ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
+    ERR_clear_last_constant_time(1 & gp);
+
+    return constant_time_select_int_s(gp, 1, 0);
 }
 
 /*-
