@@ -1269,8 +1269,10 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
 
     /* Session ID */
     session_id = s->session->session_id;
-    if (s->new_session || s->session->ssl_version == TLS1_3_VERSION || s->session->ssl_version == DTLS1_3_VERSION) {
-        if ((s->version == TLS1_3_VERSION || s->version == DTLS1_3_VERSION)
+    if (s->new_session
+        || s->session->ssl_version == TLS1_3_VERSION
+        || s->session->ssl_version == DTLS1_3_VERSION) {
+        if (s->version == TLS1_3_VERSION
             && (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0) {
             sess_id_len = sizeof(s->tmp_session_id);
             s->tmp_session_id_len = sess_id_len;
