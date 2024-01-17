@@ -2578,9 +2578,11 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
     int version;
     unsigned char *session_id;
     int usetls13 = SSL_CONNECTION_IS_TLS13(s)
-        || s->hello_retry_request == SSL_HRR_PENDING;
+        || (!SSL_CONNECTION_IS_DTLS(s)
+            && s->hello_retry_request == SSL_HRR_PENDING);
     int usedtls13 = SSL_CONNECTION_IS_DTLS13(s)
-        || s->hello_retry_request == SSL_HRR_PENDING;
+        || (SSL_CONNECTION_IS_DTLS(s)
+            && s->hello_retry_request == SSL_HRR_PENDING);
 
     version = usetls13 ? TLS1_2_VERSION : (usedtls13 ? DTLS1_2_VERSION : s->version);
     if (!WPACKET_put_bytes_u16(pkt, version)
@@ -2611,6 +2613,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
      *   we send back a 0-length session ID.
      * - In TLSv1.3 we echo back the session id sent to us by the client
      *   regardless
+     * - In DTLSv1.3 we must not echo the session id sent by the client
      * s->hit is non-zero in either case of session reuse,
      * so the following won't overwrite an ID that we're supposed
      * to send back.
@@ -2619,9 +2622,12 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
         && !s->hit)
         s->session->session_id_length = 0;
 
-    if (usetls13 || usedtls13) {
+    if (usetls13) {
         sl = s->tmp_session_id_len;
         session_id = s->tmp_session_id;
+    } else if (usedtls13) {
+        sl = 0;
+        session_id = NULL;
     } else {
         sl = s->session->session_id_length;
         session_id = s->session->session_id;
