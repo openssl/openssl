@@ -138,8 +138,8 @@ Native builds using Embarcadero C++Builder
 =========================================
 
 This toolchain (a descendant of Turbo/Borland C++) is an alternative to MSVC.
-OpenSSL currently includes an experimental 32-bit configuration targeting the
-Clang-based compiler (`bcc32c.exe`) in v10.3.3 Community Edition.
+OpenSSL currently includes an experimental 32-bit and 64-bit configuration targeting the
+Clang-based compiler (`bcc32c.exe` and `bcc64.exe`) in v10.3.3 Community Edition.
 <https://www.embarcadero.com/products/cbuilder/starter>
 
  1. Install Perl.
@@ -147,7 +147,9 @@ Clang-based compiler (`bcc32c.exe`) in v10.3.3 Community Edition.
  2. Open the RAD Studio Command Prompt.
 
  3. Go to the root of the OpenSSL source directory and run:
-    `perl Configure BC-32 --prefix=%CD%`
+    `perl Configure BCC-32 --prefix=%CD%`
+    for Win64 build use:
+    `perl Configure BCC-64 --prefix=%CD%`
 
  4. `make -N`
 
