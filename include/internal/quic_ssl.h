@@ -15,6 +15,7 @@
 # include "internal/quic_record_rx.h" /* OSSL_QRX */
 # include "internal/quic_ackm.h"      /* OSSL_ACKM */
 # include "internal/quic_channel.h"   /* QUIC_CHANNEL */
+# include "internal/quic_predef.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -44,10 +45,6 @@ __owur const SSL_CIPHER *ossl_quic_get_cipher_by_char(const unsigned char *p);
 __owur int ossl_quic_num_ciphers(void);
 __owur const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u);
 int ossl_quic_renegotiate_check(SSL *ssl, int initok);
-
-typedef struct quic_conn_st QUIC_CONNECTION;
-typedef struct quic_xso_st QUIC_XSO;
-typedef struct quic_listener_st QUIC_LISTENER;
 
 int ossl_quic_do_handshake(SSL *s);
 void ossl_quic_set_connect_state(SSL *s);
