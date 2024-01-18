@@ -30,6 +30,7 @@
 #include <openssl/crypto.h>
 #include <crypto/cryptlib.h>
 #include "internal/common.h"
+#include "internal/thread_arch.h"
 #include "internal/rcu.h"
 #include "rcu_internal.h"
 
@@ -98,10 +99,10 @@ struct rcu_lock_st {
     uint32_t current_alloc_idx;
     uint32_t writers_alloced;
     CRITICAL_SECTION write_lock;
-    CRITICAL_SECTION alloc_lock;
-    CONDITION_VARIABLE alloc_signal;
-    CRITICAL_SECTION prior_lock;
-    CONDITION_VARIABLE prior_signal;
+    CRYPTO_MUTEX *alloc_lock;
+    CRYPTO_CONDVAR *alloc_signal;
+    CRYPTO_MUTEX *prior_lock;
+    CRYPTO_CONDVAR *prior_signal;
 };
 
 
@@ -152,12 +153,21 @@ CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
         return NULL;
 
     InitializeCriticalSection(&new->write_lock);
-    InitializeConditionVariable(&new->alloc_signal);
-    InitializeConditionVariable(&new->prior_signal);
-    InitializeCriticalSection(&new->alloc_lock);
-    InitializeCriticalSection(&new->prior_lock);
+    new->alloc_signal = ossl_crypto_condvar_new();
+    new->prior_signal = ossl_crypto_condvar_new();
+    new->alloc_lock = ossl_crypto_mutex_new();
+    new->prior_lock = ossl_crypto_mutex_new();
     new->qp_group = allocate_new_qp_group(new, num_writers + 1);
-    if (new->qp_group == NULL) {
+    if (new->qp_group == NULL
+        || new->alloc_signal == NULL
+        || new->prior_signal == NULL
+        || new->alloc_lock == NULL
+        || new->prior_lock == NULL) {
+        OPENSSL_free(new->qp_group);
+        ossl_crypto_condvar_free(new->alloc_signal);
+        ossl_crypto_condvar_free(new->prior_signal);
+        ossl_crypto_mutex_free(new->alloc_lock);
+        ossl_crypto_mutex_free(new->prior_lock);
         OPENSSL_free(new);
         new = NULL;
     }
@@ -168,6 +178,10 @@ CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
 void ossl_rcu_lock_free(CRYPTO_RCU_LOCK lock)
 {
     OPENSSL_free(lock->qp_group);
+    ossl_crypto_condvar_free(lock->alloc_signal);
+    ossl_crypto_condvar_free(lock->prior_signal);
+    ossl_crypto_mutex_free(lock->alloc_lock);
+    ossl_crypto_mutex_free(lock->prior_lock);
     OPENSSL_free(lock);
 }
 
@@ -256,14 +270,14 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK lock)
     uint32_t current_idx;
     uint32_t tmp;
 
-    EnterCriticalSection(&lock->alloc_lock);
+    ossl_crypto_mutex_lock(lock->alloc_lock);
     /*
      * we need at least one qp to be available with one
      * left over, so that readers can start working on
      * one that isn't yet being waited on
      */
     while (lock->group_count - lock->writers_alloced < 2)
-        SleepConditionVariableCS(&lock->alloc_signal, &lock->alloc_lock, INFINITE);
+        ossl_crypto_condvar_wait(lock->alloc_signal, lock->alloc_lock);
 
     current_idx = lock->current_alloc_idx;
     /* Allocate the qp */
@@ -286,18 +300,18 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK lock)
     InterlockedExchange(&lock->reader_idx, tmp);
 
     /* wake up any waiters */
-    WakeAllConditionVariable(&lock->alloc_signal);
-    LeaveCriticalSection(&lock->alloc_lock);
-    return (struct rcu_qp *)&lock->qp_group[current_idx];
+    ossl_crypto_condvar_broadcast(lock->alloc_signal);
+    ossl_crypto_mutex_unlock(lock->alloc_lock);
+    return &lock->qp_group[current_idx];
 }
 
 static void retire_qp(CRYPTO_RCU_LOCK lock,
                       struct rcu_qp *qp)
 {
-    EnterCriticalSection(&lock->alloc_lock);
+    ossl_crypto_mutex_lock(lock->alloc_lock);
     lock->writers_alloced--;
-    WakeAllConditionVariable(&lock->alloc_signal);
-    LeaveCriticalSection(&lock->alloc_lock);
+    ossl_crypto_condvar_broadcast(lock->alloc_signal);
+    ossl_crypto_mutex_unlock(lock->alloc_lock);
 }
 
 
@@ -318,13 +332,13 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK lock)
     } while (READER_COUNT(count) != 0);
 
     /* retire in order */
-    EnterCriticalSection(&lock->prior_lock);
+    ossl_crypto_mutex_lock(lock->prior_lock);
     while (lock->next_to_retire != ID_VAL(count))
-        SleepConditionVariableCS(&lock->prior_signal, &lock->prior_lock, INFINITE);
+        ossl_crypto_condvar_wait(lock->prior_signal, lock->prior_lock);
 
     lock->next_to_retire++;
-    WakeAllConditionVariable(&lock->prior_signal);
-    LeaveCriticalSection(&lock->prior_lock);
+    ossl_crypto_condvar_broadcast(lock->prior_signal);
+    ossl_crypto_mutex_unlock(lock->prior_lock);
 
     retire_qp(lock, qp);
 
@@ -343,29 +357,29 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK lock)
 
 int ossl_rcu_call(CRYPTO_RCU_LOCK lock, rcu_cb_fn cb, void *data)
 {
-	struct rcu_cb_item *new;
-	struct rcu_cb_item *prev;
+    struct rcu_cb_item *new;
+    struct rcu_cb_item *prev;
 
     new = OPENSSL_zalloc(sizeof(struct rcu_cb_item));
     if (new != NULL)
-        return 0; 
+        return 0;
     prev = new;
-	new->data = data;
-	new->fn = cb;
+    new->data = data;
+    new->fn = cb;
 
-	InterlockedExchangePointer((void * volatile *)&lock->cb_items, prev);
-	new->next = prev;
+    InterlockedExchangePointer((void * volatile *)&lock->cb_items, prev);
+    new->next = prev;
     return 1;
 }
 
 void *ossl_rcu_uptr_deref(void **p)
 {
-	return (void *)*p;
+    return (void *)*p;
 }
 
 void ossl_rcu_assign_uptr(void **p, void **v)
 {
-	InterlockedExchangePointer((void * volatile *)p, (void *)*v);
+    InterlockedExchangePointer((void * volatile *)p, (void *)*v);
 }
 
 
