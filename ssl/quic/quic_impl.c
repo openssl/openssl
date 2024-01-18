@@ -3067,7 +3067,8 @@ SSL *ossl_quic_get0_listener(SSL *s)
     if (!expect_quic(s, &ctx))
         return NULL;
 
-    return NULL; // XXX TODO
+    /* TODO(QUIC SERVER): Implement SSL_get0_listener */
+    return NULL;
 }
 
 /*
