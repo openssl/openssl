@@ -102,8 +102,6 @@ void ossl_qlog_override_time(QLOG *qlog, OSSL_TIME event_time);
         ossl_qlog_array_end(qlog_instance);                                 \
     }
 
-#  define QLOG_ABORT()    ossl_qlog_event_abort(qlog_instance)
-
 /* Field Functions */
 void ossl_qlog_str(QLOG *qlog, const char *name, const char *value);
 void ossl_qlog_str_len(QLOG *qlog, const char *name,
