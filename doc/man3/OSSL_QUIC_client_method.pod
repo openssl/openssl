@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OSSL_QUIC_client_method, OSSL_QUIC_client_thread_method
+OSSL_QUIC_client_method, OSSL_QUIC_client_thread_method, OSSL_QUIC_server_method
 - Provide SSL_METHOD objects for QUIC enabled functions
 
 =head1 SYNOPSIS
@@ -11,6 +11,7 @@ OSSL_QUIC_client_method, OSSL_QUIC_client_thread_method
 
  const SSL_METHOD *OSSL_QUIC_client_method(void);
  const SSL_METHOD *OSSL_QUIC_client_thread_method(void);
+ const SSL_METHOD *OSSL_QUIC_server_method(void);
 
 =head1 DESCRIPTION
 
@@ -25,22 +26,28 @@ The OSSL_QUIC_client_method() does not use threads and depends on
 nonblocking mode of operation and the application periodically calling SSL
 functions.
 
+The OSSL_QUIC_server_method() provides server-side QUIC protocol support and
+must be used using the L<SSL_new_listener(3)> API. Attempting to use
+OSSL_QUIC_server_method() with L<SSL_new(3)> will result in an error.
+
 =head1 RETURN VALUES
 
 These functions return pointers to the constant method objects.
 
 =head1 SEE ALSO
 
-L<SSL_CTX_new_ex(3)>
+L<SSL_CTX_new_ex(3)>, L<SSL_new_listener(3)>
 
 =head1 HISTORY
 
 OSSL_QUIC_client_method() and OSSL_QUIC_client_thread_method() were added in
 OpenSSL 3.2.
 
+OSSL_QUIC_server_method() was added in OpenSSL @VERSION_QUIC_SERVER@.
+
 =head1 COPYRIGHT
 
-Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
