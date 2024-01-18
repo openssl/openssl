@@ -11,6 +11,7 @@
 #include "ssl_local.h"
 #include "internal/e_os.h"
 #include "internal/refcount.h"
+#include "internal/ssl_unwrap.h"
 
 size_t ossl_calculate_comp_expansion(int alg, size_t length)
 {
