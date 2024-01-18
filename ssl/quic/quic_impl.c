@@ -544,6 +544,8 @@ void ossl_quic_free(SSL *s)
     }
 #endif
 
+    SSL_free(ctx.qc->tls);
+
     ossl_quic_channel_free(ctx.qc->ch);
     ossl_quic_port_free(ctx.qc->port);
     ossl_quic_engine_free(ctx.qc->engine);
@@ -551,13 +553,15 @@ void ossl_quic_free(SSL *s)
     BIO_free_all(ctx.qc->net_rbio);
     BIO_free_all(ctx.qc->net_wbio);
 
-    /* Note: SSL_free calls OPENSSL_free(qc) for us */
-
-    SSL_free(ctx.qc->tls);
     quic_unlock(ctx.qc); /* tsan doesn't like freeing locked mutexes */
 #if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_free(&ctx.qc->mutex);
 #endif
+
+    /*
+     * Note: SSL_free (that called this function) calls OPENSSL_free(ctx.qc) for
+     * us
+     */
 }
 
 /* SSL method init */
