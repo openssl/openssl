@@ -7910,6 +7910,18 @@ SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags)
 #endif
 }
 
+SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(ssl))
+        return NULL;
+
+    return ossl_quic_new_from_listener(ssl, flags);
+#else
+    return NULL;
+#endif
+}
+
 SSL *SSL_accept_connection(SSL *ssl, uint64_t flags)
 {
 #ifndef OPENSSL_NO_QUIC
