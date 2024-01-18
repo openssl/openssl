@@ -2715,6 +2715,10 @@ DEPEND[html/man3/SSL_new.html]=man3/SSL_new.pod
 GENERATE[html/man3/SSL_new.html]=man3/SSL_new.pod
 DEPEND[man/man3/SSL_new.3]=man3/SSL_new.pod
 GENERATE[man/man3/SSL_new.3]=man3/SSL_new.pod
+DEPEND[html/man3/SSL_new_listener.html]=man3/SSL_new_listener.pod
+GENERATE[html/man3/SSL_new_listener.html]=man3/SSL_new_listener.pod
+DEPEND[man/man3/SSL_new_listener.3]=man3/SSL_new_listener.pod
+GENERATE[man/man3/SSL_new_listener.3]=man3/SSL_new_listener.pod
 DEPEND[html/man3/SSL_new_stream.html]=man3/SSL_new_stream.pod
 GENERATE[html/man3/SSL_new_stream.html]=man3/SSL_new_stream.pod
 DEPEND[man/man3/SSL_new_stream.3]=man3/SSL_new_stream.pod
@@ -3694,6 +3698,7 @@ html/man3/SSL_key_update.html \
 html/man3/SSL_library_init.html \
 html/man3/SSL_load_client_CA_file.html \
 html/man3/SSL_new.html \
+html/man3/SSL_new_listener.html \
 html/man3/SSL_new_stream.html \
 html/man3/SSL_pending.html \
 html/man3/SSL_poll.html \
@@ -4360,6 +4365,7 @@ man/man3/SSL_key_update.3 \
 man/man3/SSL_library_init.3 \
 man/man3/SSL_load_client_CA_file.3 \
 man/man3/SSL_new.3 \
+man/man3/SSL_new_listener.3 \
 man/man3/SSL_new_stream.3 \
 man/man3/SSL_pending.3 \
 man/man3/SSL_poll.3 \
