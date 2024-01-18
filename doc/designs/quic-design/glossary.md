@@ -179,6 +179,21 @@ listener (QLSO) in the APL.
 QLSO. This is the QUIC core object corresponding to the APL's `QUIC_LISTENER`
 object (a QLSO). Owns zero more `QUIC_CHANNEL` instances.
 
+**QL:** See `QUIC_LISTENER`.
+
+**QLSO:** QUIC Listener SSL Object. An object created to represent a socket
+which can accept one or more incoming QUIC connections and/or make multiple
+outgoing QUIC connections. Parent of zero or more QCSOs.
+
+**QUIC_LISTENER:** QUIC listener. This is the APL object representing a QUIC
+listener (QLSO) in the APL.
+
+**QP:** See `QUIC_PORT`.
+
+**QUIC_PORT:** Internal object owning the network socket BIO which services a
+QLSO. This is the QUIC core object corresponding to the APL's `QUIC_LISTENER`
+object (a QLSO). Owns zero more `QUIC_CHANNEL` instances.
+
 **QRL:** QUIC record layer. Refers collectively to the QRX and QTX.
 
 **QRX:** QUIC Record Layer RX. Receives incoming datagrams and decrypts the
