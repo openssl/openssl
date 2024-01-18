@@ -11,6 +11,7 @@
 # OpenSSL external testing using the TLSFuzzer test suite
 #
 set -e
+set -x
 
 PWD="$(pwd)"
 
@@ -31,11 +32,12 @@ export PATH="$O_EXE:$PATH"
 export LD_LIBRARY_PATH="$O_LIB:$LD_LIBRARY_PATH"
 export OPENSSL_ROOT_DIR="$O_LIB"
 
-# Check/Set openssl version
-OPENSSL_VERSION=$(${O_EXE}/openssl version | cut -f 2 -d ' ')
 
 CLI="${O_EXE}/openssl"
 SERV="${O_EXE}/openssl"
+
+# Check/Set openssl version
+OPENSSL_VERSION=$($CLI version | cut -f 2 -d ' ')
 
 TMPFILE="${PWD}/tls-fuzzer.$$.tmp"
 PSKFILE="${PWD}/tls-fuzzer.psk.$$.tmp"
@@ -51,6 +53,7 @@ echo "   BLDTOP:             $BLDTOP"
 echo "   OPENSSL_ROOT_DIR:   $OPENSSL_ROOT_DIR"
 echo "   Python:             $PYTHON"
 echo "   TESTDATADIR:        $TESTDATADIR"
+echo "   OPENSSL_VERSION:    $OPENSSL_VERSION"
 echo "------------------------------------------------------------------"
 
 cd "${SRCTOP}/tlsfuzzer"
