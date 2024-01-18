@@ -1431,6 +1431,7 @@ SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC:281:\
 SSL_R_DH_KEY_TOO_SMALL:394:dh key too small
 SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG:148:dh public value length is wrong
 SSL_R_DIGEST_CHECK_FAILED:149:digest check failed
+SSL_R_DOMAIN_USE_ONLY:422:domain use only
 SSL_R_DTLS_MESSAGE_TOO_BIG:334:dtls message too big
 SSL_R_DUPLICATE_COMPRESSION_ID:309:duplicate compression id
 SSL_R_ECC_CERT_NOT_FOR_SIGNING:318:ecc cert not for signing
@@ -1490,7 +1491,7 @@ SSL_R_LENGTH_TOO_LONG:404:length too long
 SSL_R_LENGTH_TOO_SHORT:160:length too short
 SSL_R_LIBRARY_BUG:274:library bug
 SSL_R_LIBRARY_HAS_NO_CIPHERS:161:library has no ciphers
-SSL_R_LISTENER_USE_ONLY:412:listener use only
+SSL_R_LISTENER_USE_ONLY:421:listener use only
 SSL_R_MAXIMUM_ENCRYPTED_PKTS_REACHED:395:maximum encrypted pkts reached
 SSL_R_MISSING_DSA_SIGNING_CERT:165:missing dsa signing cert
 SSL_R_MISSING_ECDSA_SIGNING_CERT:381:missing ecdsa signing cert

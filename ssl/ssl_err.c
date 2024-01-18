@@ -147,6 +147,7 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
      "dh public value length is wrong"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_DIGEST_CHECK_FAILED),
      "digest check failed"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_DOMAIN_USE_ONLY), "domain use only"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_DTLS_MESSAGE_TOO_BIG),
      "dtls message too big"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_DUPLICATE_COMPRESSION_ID),
