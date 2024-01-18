@@ -7003,8 +7003,8 @@ static int test_key_update_local_in_read(int tst)
 /*
  * Test clearing a connection via SSL_clear(), or resetting it via
  * SSL_set_connect_state()/SSL_set_accept_state()
- * Test 0: SSL_set_conect_state, TLSv1.3
- * Test 1: SSL_set_conect_state, TLSv1.2
+ * Test 0: SSL_set_connect_state, TLSv1.3
+ * Test 1: SSL_set_connect_state, TLSv1.2
  * Test 2: SSL_set_accept_state, TLSv1.3
  * Test 3: SSL_set_accept_state, TLSv1.2
  * Test 4: SSL_clear (client), TLSv1.3
