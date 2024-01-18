@@ -583,3 +583,10 @@ SSL_set_value_uint                      ?	3_3_0	EXIST::FUNCTION:
 SSL_poll                                ?	3_3_0	EXIST::FUNCTION:
 SSL_SESSION_get_time_ex                 ?	3_3_0	EXIST::FUNCTION:
 SSL_SESSION_set_time_ex                 ?	3_3_0	EXIST::FUNCTION:
+OSSL_QUIC_server_method                 ?	3_3_0	EXIST::FUNCTION:QUIC
+SSL_is_listener                         ?	3_3_0	EXIST::FUNCTION:
+SSL_get0_listener                       ?	3_3_0	EXIST::FUNCTION:
+SSL_new_listener                        ?	3_3_0	EXIST::FUNCTION:
+SSL_accept_connection                   ?	3_3_0	EXIST::FUNCTION:
+SSL_get_accept_connection_queue_len     ?	3_3_0	EXIST::FUNCTION:
+SSL_listen                              ?	3_3_0	EXIST::FUNCTION:
