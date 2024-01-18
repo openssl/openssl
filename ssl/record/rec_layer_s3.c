@@ -25,8 +25,17 @@ void RECORD_LAYER_init(RECORD_LAYER *rl, SSL_CONNECTION *s)
     rl->s = s;
 }
 
-void RECORD_LAYER_clear(RECORD_LAYER *rl)
+int RECORD_LAYER_clear(RECORD_LAYER *rl)
 {
+    int ret = 1;
+
+    /* Clear any buffered records we no longer need */
+    while (rl->curr_rec < rl->num_recs)
+        ret &= ssl_release_record(rl->s,
+                                  &(rl->tlsrecs[rl->curr_rec++]),
+                                  0);
+
+
     rl->wnum = 0;
     memset(rl->handshake_fragment, 0, sizeof(rl->handshake_fragment));
     rl->handshake_fragment_len = 0;
@@ -34,6 +43,12 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     rl->wpend_type = 0;
     rl->wpend_ret = 0;
     rl->wpend_buf = NULL;
+    rl->alert_count = 0;
+    rl->num_recs = 0;
+    rl->curr_rec = 0;
+
+    BIO_free(rl->rrlnext);
+    rl->rrlnext = NULL;
 
     if (rl->rrlmethod != NULL)
         rl->rrlmethod->free(rl->rrl); /* Ignore return value */
@@ -48,6 +63,35 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
 
     if (rl->d)
         DTLS_RECORD_LAYER_clear(rl);
+
+    return ret;
+}
+
+int RECORD_LAYER_reset(RECORD_LAYER *rl)
+{
+    int ret;
+
+    ret = RECORD_LAYER_clear(rl);
+
+    /* We try and reset both record layers even if one fails */
+    ret &= ssl_set_new_record_layer(rl->s,
+                                    SSL_CONNECTION_IS_DTLS(rl->s)
+                                        ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
+                                    OSSL_RECORD_DIRECTION_READ,
+                                    OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
+                                    NULL, 0, NULL, 0, NULL,  0, NULL, 0,
+                                    NID_undef, NULL, NULL, NULL);
+
+    ret &= ssl_set_new_record_layer(rl->s,
+                                    SSL_CONNECTION_IS_DTLS(rl->s)
+                                        ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
+                                    OSSL_RECORD_DIRECTION_WRITE,
+                                    OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
+                                    NULL, 0, NULL, 0, NULL,  0, NULL, 0,
+                                    NID_undef, NULL, NULL, NULL);
+
+    /* SSLfatal already called in the event of failure */
+    return ret;
 }
 
 /* Checks if we have unprocessed read ahead data pending */
