@@ -527,8 +527,18 @@ static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock)
     ossl_quic_channel_free(qc->ch);
     qc->ch = NULL;
 
-    ossl_quic_port_free(qc->port);
-    qc->port = NULL;
+    if (qc->port != NULL) {
+        BIO *b;
+
+        b = ossl_quic_port_get_net_rbio(qc->port);
+        BIO_free_all(b);
+
+        b = ossl_quic_port_get_net_wbio(qc->port);
+        BIO_free_all(b);
+
+        ossl_quic_port_free(qc->port);
+        qc->port = NULL;
+    }
 
     ossl_quic_engine_free(qc->engine);
     qc->engine = NULL;
