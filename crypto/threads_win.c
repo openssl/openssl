@@ -105,7 +105,6 @@ struct rcu_lock_st {
     CRYPTO_CONDVAR *prior_signal;
 };
 
-
 /*
  * Called on thread exit to free the pthread key
  * associated with this thread, if any
@@ -200,7 +199,6 @@ static inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK lock)
 
     return &lock->qp_group[qp_idx];
 }
-
 
 void ossl_rcu_read_lock(CRYPTO_RCU_LOCK lock)
 {
@@ -361,7 +359,7 @@ int ossl_rcu_call(CRYPTO_RCU_LOCK lock, rcu_cb_fn cb, void *data)
     struct rcu_cb_item *prev;
 
     new = OPENSSL_zalloc(sizeof(struct rcu_cb_item));
-    if (new != NULL)
+    if (new == NULL)
         return 0;
     prev = new;
     new->data = data;

@@ -86,8 +86,8 @@ static inline void* fallback_atomic_store_n(void **p, void *v)
 static inline void fallback_atomic_store(void **p, void **v)
 {
     void *ret;
-    pthread_mutex_lock(&atomic_sim_lock);
 
+    pthread_mutex_lock(&atomic_sim_lock);
     ret = *p;
     *p = *v;
     v = ret;
@@ -151,6 +151,7 @@ static inline uint64_t fallback_atomic_sub_fetch(uint64_t *p, uint64_t v)
 static inline uint64_t fallback_atomic_and_fetch(uint64_t *p, uint64_t m)
 {
     uint64_t ret;
+
     pthread_mutex_lock(&atomic_sim_lock);
     *p &= m;
     ret = *p;
@@ -194,8 +195,8 @@ static CRYPTO_THREAD_LOCAL rcu_thr_key;
 # define VAL_ID(x)       ((uint64_t)x << ID_SHIFT)
 
 /*
- * This is the core of an rcu lock it tracks the readers and writers for the
- * current quiescence point for a given lock users is the 64 bit value that
+ * This is the core of an rcu lock. It tracks the readers and writers for the
+ * current quiescence point for a given lock. Users is the 64 bit value that
  * stores the READERS/ID as defined above
  *
  */
@@ -335,8 +336,7 @@ static struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK lock)
 void ossl_rcu_read_lock(CRYPTO_RCU_LOCK lock)
 {
     struct rcu_thr_data *data;
-    int i;
-    int available_qp = -1;
+    int i, available_qp = -1;
 
     /*
      * we're going to access current_qp here so ask the
@@ -612,7 +612,7 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
     pthread_mutexattr_t attr;
     CRYPTO_RWLOCK *lock;
 
-    if ((lock = OPENSSL_zalloc(sizeof(pthread_mutex_t),)) == NULL)
+    if ((lock = OPENSSL_zalloc(sizeof(pthread_mutex_t))) == NULL)
         /* Don't set error, to avoid recursion blowup. */
         return NULL;
 
