@@ -1981,12 +1981,13 @@ int ssl_version_supported(const SSL_CONNECTION *s, int version,
          ++vent) {
         if (vent->cmeth != NULL
                 && ssl_version_cmp(s, version, vent->version) == 0
-                && ssl_method_error(s, vent->cmeth()) == 0
+                && ssl_method_error(s, s->server ? vent->smeth()
+                                                 : vent->cmeth()) == 0
                 && (!s->server
                     || version != TLS1_3_VERSION
                     || is_tls13_capable(s))) {
             if (meth != NULL)
-                *meth = vent->cmeth();
+                *meth = s->server ? vent->smeth() : vent->cmeth();
             return 1;
         }
     }
