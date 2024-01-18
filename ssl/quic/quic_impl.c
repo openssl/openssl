@@ -4004,6 +4004,10 @@ int ossl_quic_get_key_update_type(const SSL *s)
  * =================================
  */
 
+/*
+ * SSL_new_listener
+ * ----------------
+ */
 SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
 {
     QUIC_LISTENER *ql = NULL;
@@ -4038,6 +4042,8 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
         goto err;
     }
 
+    /* TODO(QUIC SERVER): Implement SSL_LISTENER_FLAG_NO_ACCEPT */
+
     ossl_quic_port_set_allow_incoming(ql->port, 1);
 
     /* Initialise the QUIC_LISTENER'S object header. */
@@ -4052,6 +4058,16 @@ err:
         ossl_quic_engine_free(ql->engine);
 
     OPENSSL_free(ql);
+    return NULL;
+}
+
+/*
+ * SSL_new_from_listener
+ * ---------------------
+ */
+SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
+{
+    /* TODO(QUIC SERVER): Implement SSL_new_from_listener */
     return NULL;
 }
 
@@ -4105,7 +4121,8 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     if (!ql_listen(ctx.ql))
         goto out;
 
-    /* TODO autotick/block */
+    /* TODO(QUIC SERVER): Autotick */
+    /* TODO(QUIC SERVER): Implement blocking and SSL_ACCEPT_CONNECTION_NO_BLOCK */
 
     new_ch = ossl_quic_port_pop_incoming(ctx.ql->port);
     if (new_ch == NULL) {
