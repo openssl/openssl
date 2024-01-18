@@ -1240,7 +1240,7 @@ ENDIF
 
   SOURCE[cert_comp_test]=cert_comp_test.c helpers/ssltestlib.c
   INCLUDE[cert_comp_test]=../include ../apps/include ..
-  DEPEND[cert_comp_test]=../libcrypto ../libssl libtestutil.a
+  DEPEND[cert_comp_test]=../libcrypto.a ../libssl.a libtestutil.a
 
   SOURCE[x509_acert_test]=x509_acert_test.c
   INCLUDE[x509_acert_test]=../include ../apps/include
