@@ -134,8 +134,9 @@ sub match_opensslerr_reason {
     my @strings = @_;
 
     my $errcode_hex = sprintf "%x", $errcode;
-    my $reason =
-        ( run(app([ qw(openssl errstr), $errcode_hex ]), capture => 1) )[0];
+    my @res = run(app([ qw(openssl errstr), $errcode_hex ]), capture => 1);
+    return 0 unless $#res >= 0;
+    my $reason = $res[0];
     $reason =~ s|\R$||;
     $reason = ( split_error($reason) )[3];
 
