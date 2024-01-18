@@ -158,11 +158,11 @@ void ossl_quic_tserver_free(QUIC_TSERVER *srv)
     if (srv == NULL)
         return;
 
+    SSL_free(srv->tls);
     ossl_quic_channel_free(srv->ch);
     BIO_free_all(srv->args.net_rbio);
     BIO_free_all(srv->args.net_wbio);
     OPENSSL_free(srv->ssl);
-    SSL_free(srv->tls);
     SSL_CTX_free(srv->ctx);
 #if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_free(&srv->mutex);
