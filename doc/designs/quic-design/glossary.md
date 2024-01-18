@@ -56,6 +56,11 @@ dispatches calls to libssl public APIs to the APL.
 
 **Engine:** See `QUIC_ENGINE`.
 
+**Event Leader:** The QSO which is is the top-level QSO in a hierarchy of QSOs,
+and which is responsible for event processing for all QSOs in that hierarchy.
+This may be a QLSO or QCSO. See [the server API
+design](server/quic-server-api.md).
+
 **FC:** Flow control. Comprises TXFC and RXFC.
 
 **FIFD:** Frame-in-flight dispatcher. Ties together the CFQ and TXPIM to handle
@@ -143,16 +148,34 @@ Initial packets. It is only used temporarily.
 
 **Port:** See `QUIC_PORT`.
 
+**Port Leader:** The QSO which is responsible for servicing a given UDP socket.
+This may be a QCSO or a QLSO. See [the server API design](server/quic-server-api.md).
+
 **PTO:** Probe timeout. See RFC 9000.
 
 **QC:** See `QUIC_CONNECTION`.
 
 **QCSO:** QUIC Connection SSL Object. This is an SSL object created using
-`SSL_new` using a QUIC method.
+`SSL_new` using a QUIC method, or by a QLSO.
 
 **QCTX**: QUIC Context. This is a utility object defined within the QUIC APL
 which helps to unwrap an SSL object pointer (a QCSO or QSSO) into the relevant
 structure pointers such as `QUIC_CONNECTION` or `QUIC_XSO`.
+
+**QL:** See `QUIC_LISTENER`.
+
+**QLSO:** QUIC Listener SSL Object. An object created to represent a socket
+which can accept one or more incoming QUIC connections and/or make multiple
+outgoing QUIC connections. Parent of zero or more QCSOs.
+
+**QUIC_LISTENER:** QUIC listener. This is the APL object representing a QUIC
+listener (QLSO) in the APL.
+
+**QP:** See `QUIC_PORT`.
+
+**QUIC_PORT:** Internal object owning the network socket BIO which services a
+QLSO. This is the QUIC core object corresponding to the APL's `QUIC_LISTENER`
+object (a QLSO). Owns zero more `QUIC_CHANNEL` instances.
 
 **QRL:** QUIC record layer. Refers collectively to the QRX and QTX.
 
@@ -165,7 +188,7 @@ processing by upper layers.
 **QSM:** QUIC Streams Mapper. Manages internal `QUIC_STREAM` objects and maps
 IDs to those objects. Allows iteration of active streams.
 
-**QSO:** QUIC SSL Object. May be a QCSO or a QSSO.
+**QSO:** QUIC SSL Object. May be a QLSO, QCSO or QSSO.
 
 **QSSO:** QUIC Stream SSL Object. This is an SSL object which is subsidiary to a
 given QCSO, obtained using (for example) `SSL_new_stream` or
