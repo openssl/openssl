@@ -140,7 +140,8 @@ typedef struct record_layer_st {
 #define DTLS_RECORD_LAYER_get_w_epoch(rl)       ((rl)->d->w_epoch)
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL_CONNECTION *s);
-void RECORD_LAYER_clear(RECORD_LAYER *rl);
+int RECORD_LAYER_clear(RECORD_LAYER *rl);
+int RECORD_LAYER_reset(RECORD_LAYER *rl);
 int RECORD_LAYER_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl);

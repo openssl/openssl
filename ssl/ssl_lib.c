@@ -558,50 +558,6 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
 void OPENSSL_VPROC_FUNC(void) {}
 #endif
 
-static int clear_record_layer(SSL_CONNECTION *s)
-{
-    int ret = 1;
-
-    /* Clear any buffered records we no longer need */
-    while (s->rlayer.curr_rec < s->rlayer.num_recs)
-        ret &= ssl_release_record(s,
-                                  &(s->rlayer.tlsrecs[s->rlayer.curr_rec ++]),
-                                  0);
-
-    BIO_free(s->rlayer.rrlnext);
-    s->rlayer.rrlnext = NULL;
-
-    /* Reset various fields */
-    s->rlayer.wnum = 0;
-    s->rlayer.handshake_fragment_len = 0;
-    s->rlayer.wpend_tot = 0;
-    s->rlayer.wpend_type = 0;
-    s->rlayer.wpend_buf = NULL;
-    s->rlayer.alert_count = 0;
-    s->rlayer.num_recs = 0;
-    s->rlayer.curr_rec = 0;
-
-    /* We try and reset both record layers even if one fails */
-    ret &= ssl_set_new_record_layer(s,
-                                    SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION
-                                                              : TLS_ANY_VERSION,
-                                    OSSL_RECORD_DIRECTION_READ,
-                                    OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
-                                    NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                    NID_undef, NULL, NULL, NULL);
-
-    ret &= ssl_set_new_record_layer(s,
-                                    SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION
-                                                              : TLS_ANY_VERSION,
-                                    OSSL_RECORD_DIRECTION_WRITE,
-                                    OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
-                                    NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                    NID_undef, NULL, NULL, NULL);
-
-    /* SSLfatal already called in the event of failure */
-    return ret;
-}
-
 int SSL_clear(SSL *s)
 {
     if (s->method == NULL) {
@@ -687,11 +643,7 @@ int ossl_ssl_connection_reset(SSL *s)
             return 0;
     }
 
-    RECORD_LAYER_clear(&sc->rlayer);
-    BIO_free(sc->rlayer.rrlnext);
-    sc->rlayer.rrlnext = NULL;
-
-    if (!clear_record_layer(sc))
+    if (!RECORD_LAYER_reset(&sc->rlayer))
         return 0;
 
     return 1;
@@ -1455,6 +1407,7 @@ void ossl_ssl_connection_free(SSL *ssl)
     /* Ignore return value */
     ssl_free_wbio_buffer(s);
 
+    /* Ignore return value */
     RECORD_LAYER_clear(&s->rlayer);
 
     BUF_MEM_free(s->init_buf);
@@ -4783,7 +4736,7 @@ void SSL_set_accept_state(SSL *s)
     ossl_statem_clear(sc);
     sc->handshake_func = s->method->ssl_accept;
     /* Ignore return value. Its a void public API function */
-    clear_record_layer(sc);
+    RECORD_LAYER_reset(&sc->rlayer);
 }
 
 void SSL_set_connect_state(SSL *s)
@@ -4802,7 +4755,7 @@ void SSL_set_connect_state(SSL *s)
     ossl_statem_clear(sc);
     sc->handshake_func = s->method->ssl_connect;
     /* Ignore return value. Its a void public API function */
-    clear_record_layer(sc);
+    RECORD_LAYER_reset(&sc->rlayer);
 }
 
 int ssl_undefined_function(SSL *s)
