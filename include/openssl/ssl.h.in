@@ -1944,6 +1944,12 @@ long SSL_callback_ctrl(SSL *, int, void (*)(void));
 long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg);
 long SSL_CTX_callback_ctrl(SSL_CTX *, int, void (*)(void));
 
+# define SSL_WRITE_FLAG_CONCLUDE    (1U << 0)
+
+__owur int SSL_write_ex2(SSL *s, const void *buf, size_t num,
+                         uint64_t flags,
+                         size_t *written);
+
 # define SSL_EARLY_DATA_NOT_SENT    0
 # define SSL_EARLY_DATA_REJECTED    1
 # define SSL_EARLY_DATA_ACCEPTED    2
