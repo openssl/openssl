@@ -239,6 +239,11 @@ L<EVP_PKEY_verify_init(3)>,
 L<EVP_DigestSignInit(3)>,
 L<EVP_DigestVerifyInit(3)>,
 
+=head1 HISTORY
+
+EdDSA support was added to EVP_PKEY_sign() and EVP_PKEY_verify() in
+OpenSSL 3.3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
