@@ -28,6 +28,8 @@ __owur int ossl_quic_accept(SSL *s);
 __owur int ossl_quic_connect(SSL *s);
 __owur int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *readbytes);
 __owur int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *readbytes);
+__owur int ossl_quic_write_flags(SSL *s, const void *buf, size_t len,
+                                 uint64_t flags, size_t *written);
 __owur int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written);
 __owur long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur long ossl_quic_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg);

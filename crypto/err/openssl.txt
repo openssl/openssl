@@ -1,4 +1,4 @@
-# Copyright 1999-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -1638,6 +1638,7 @@ SSL_R_UNSUPPORTED_ELLIPTIC_CURVE:315:unsupported elliptic curve
 SSL_R_UNSUPPORTED_PROTOCOL:258:unsupported protocol
 SSL_R_UNSUPPORTED_SSL_VERSION:259:unsupported ssl version
 SSL_R_UNSUPPORTED_STATUS_TYPE:329:unsupported status type
+SSL_R_UNSUPPORTED_WRITE_FLAG:412:unsupported write flag
 SSL_R_USE_SRTP_NOT_NEGOTIATED:369:use srtp not negotiated
 SSL_R_VERSION_TOO_HIGH:166:version too high
 SSL_R_VERSION_TOO_LOW:396:version too low

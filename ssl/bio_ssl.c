@@ -174,7 +174,7 @@ static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
 
     BIO_clear_retry_flags(b);
 
-    ret = ssl_write_internal(ssl, buf, size, written);
+    ret = ssl_write_internal(ssl, buf, size, 0, written);
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
