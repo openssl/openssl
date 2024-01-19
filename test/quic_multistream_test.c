@@ -183,6 +183,7 @@ struct script_op {
 #define OPK_S_SET_INJECT_DATAGRAM                   49
 #define OPK_S_SHUTDOWN                              50
 #define OPK_POP_ERR                                 51
+#define OPK_C_WRITE_EX2                             52
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -323,6 +324,8 @@ struct script_op {
     {OPK_S_SHUTDOWN, NULL, (error_code)},
 #define OP_POP_ERR() \
     {OPK_POP_ERR},
+#define OP_C_WRITE_EX2(stream_name, buf, buf_len, flags) \
+    {OPK_C_WRITE_EX2, (buf), (buf_len), NULL, #stream_name, (flags)},
 
 static OSSL_TIME get_time(void *arg)
 {
@@ -1105,6 +1108,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 case OPK_C_READ_EXPECT:
                 case OPK_C_EXPECT_FIN:
                 case OPK_C_WRITE:
+                case OPK_C_WRITE_EX2:
                 case OPK_C_CONCLUDE:
                 case OPK_C_FREE_STREAM:
                 case OPK_BEGIN_REPEAT:
@@ -1261,6 +1265,23 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                     goto out;
 
                 r = SSL_write_ex(c_tgt, op->arg0, op->arg1, &bytes_written);
+                if (!TEST_true(r)
+                    || !check_consistent_want(c_tgt, r)
+                    || !TEST_size_t_eq(bytes_written, op->arg1))
+                    goto out;
+            }
+            break;
+
+        case OPK_C_WRITE_EX2:
+            {
+                size_t bytes_written = 0;
+                int r;
+
+                if (!TEST_ptr(c_tgt))
+                    goto out;
+
+                r = SSL_write_ex2(c_tgt, op->arg0, op->arg1, op->arg2,
+                                  &bytes_written);
                 if (!TEST_true(r)
                     || !check_consistent_want(c_tgt, r)
                     || !TEST_size_t_eq(bytes_written, op->arg1))
@@ -5067,6 +5088,21 @@ static const struct script_op script_78[] = {
     OP_END
 };
 
+/* 79. Optimised FIN test */
+static const struct script_op script_79[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+    OP_C_WRITE_EX2          (DEFAULT, "apple", 5, SSL_WRITE_FLAG_CONCLUDE)
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+    OP_S_EXPECT_FIN         (a)
+    OP_S_WRITE              (a, "orange", 6)
+    OP_S_CONCLUDE           (a)
+    OP_C_READ_EXPECT        (DEFAULT, "orange", 6)
+    OP_C_EXPECT_FIN         (DEFAULT)
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -5145,7 +5181,8 @@ static const struct script_op *const scripts[] = {
     script_75,
     script_76,
     script_77,
-    script_78
+    script_78,
+    script_79
 };
 
 static int test_script(int idx)
