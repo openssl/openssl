@@ -376,7 +376,7 @@ const BIO_METHOD *bio_f_noisy_dgram_filter(void)
 {
     if (method_noisy_dgram == NULL) {
         method_noisy_dgram = BIO_meth_new(BIO_TYPE_NOISY_DGRAM_FILTER,
-                                          "Nosiy datagram filter");
+                                          "Noisy datagram filter");
         if (method_noisy_dgram == NULL
             || !BIO_meth_set_ctrl(method_noisy_dgram, noisy_dgram_ctrl)
             || !BIO_meth_set_sendmmsg(method_noisy_dgram, noisy_dgram_sendmmsg)
