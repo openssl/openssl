@@ -76,6 +76,11 @@ OpenSSL 3.3
 
    *Markus Minichmayr, Tapkey GmbH*
 
+ * New API `SSL_write_ex2`, which can be used to send an end-of-stream (FIN)
+   condition in an optimised way when using QUIC.
+
+   *Hugo Landau*
+
 OpenSSL 3.2
 -----------
 
