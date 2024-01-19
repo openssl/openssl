@@ -121,8 +121,8 @@ static void free_rcu_thr_data(void *ptr)
 
 static void ossl_rcu_init(void)
 {
-   CRYPTO_THREAD_init_local(&rcu_thr_key, NULL);
-   ossl_init_thread_start(NULL, NULL, free_rcu_thr_data);
+    CRYPTO_THREAD_init_local(&rcu_thr_key, NULL);
+    ossl_init_thread_start(NULL, NULL, free_rcu_thr_data);
 }
 
 static struct rcu_qp *allocate_new_qp_group(CRYPTO_RCU_LOCK lock,
@@ -163,10 +163,10 @@ CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
         || new->alloc_lock == NULL
         || new->prior_lock == NULL) {
         OPENSSL_free(new->qp_group);
-        ossl_crypto_condvar_free(new->alloc_signal);
-        ossl_crypto_condvar_free(new->prior_signal);
-        ossl_crypto_mutex_free(new->alloc_lock);
-        ossl_crypto_mutex_free(new->prior_lock);
+        ossl_crypto_condvar_free(&new->alloc_signal);
+        ossl_crypto_condvar_free(&new->prior_signal);
+        ossl_crypto_mutex_free(&new->alloc_lock);
+        ossl_crypto_mutex_free(&new->prior_lock);
         OPENSSL_free(new);
         new = NULL;
     }
@@ -177,10 +177,10 @@ CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
 void ossl_rcu_lock_free(CRYPTO_RCU_LOCK lock)
 {
     OPENSSL_free(lock->qp_group);
-    ossl_crypto_condvar_free(lock->alloc_signal);
-    ossl_crypto_condvar_free(lock->prior_signal);
-    ossl_crypto_mutex_free(lock->alloc_lock);
-    ossl_crypto_mutex_free(lock->prior_lock);
+    ossl_crypto_condvar_free(&lock->alloc_signal);
+    ossl_crypto_condvar_free(&lock->prior_signal);
+    ossl_crypto_mutex_free(&lock->alloc_lock);
+    ossl_crypto_mutex_free(&lock->prior_lock);
     OPENSSL_free(lock);
 }
 
