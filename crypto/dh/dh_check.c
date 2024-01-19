@@ -351,7 +351,7 @@ int ossl_dh_check_pairwise(const DH *dh)
     /* recalculate the public key = (g ^ priv) mod p */
     if (!ossl_dh_generate_public_key(ctx, dh, dh->priv_key, pub_key))
         goto err;
-    /* check it matches the existing pubic_key */
+    /* check it matches the existing public_key */
     ret = BN_cmp(pub_key, dh->pub_key) == 0;
 err:
     BN_free(pub_key);
