@@ -42,7 +42,7 @@ OPENSSL_VERSION=$($CLI version | cut -f 2 -d ' ')
 TMPFILE="${PWD}/tls-fuzzer.$$.tmp"
 PSKFILE="${PWD}/tls-fuzzer.psk.$$.tmp"
 
-PYTHON=`which python`
+PYTHON=`which python3`
 PORT=4433
 
 echo "------------------------------------------------------------------"
