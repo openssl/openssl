@@ -577,3 +577,4 @@ SSL_handle_events                       577	3_2_0	EXIST::FUNCTION:
 SSL_get_event_timeout                   578	3_2_0	EXIST::FUNCTION:
 SSL_get0_group_name                     579	3_2_0	EXIST::FUNCTION:
 SSL_is_stream_local                     580	3_2_0	EXIST::FUNCTION:
+SSL_write_ex2                           ?	3_3_0	EXIST::FUNCTION:
