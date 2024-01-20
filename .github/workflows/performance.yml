@@ -7,15 +7,18 @@
 
 name: Performance Testing
 
-#Run manually
+# Run manually
 on: [pull_request]
 
 permissions:
   contents: read
 
 jobs:
-  performance:
+  run-performance-tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        unittest: [pemread, newrawkey, rsasign, providerdoall, sslnew]
     steps:
     - name: setup environment
       run: |
@@ -23,11 +26,14 @@ jobs:
         echo "TARGET_OSSL_INCLUDE_PATH=${GITHUB_WORKSPACE}/include" >> $GITHUB_ENV
         echo "TARGET_OSSL_LIBRARY_PATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
         echo "THREAD_COUNT=16" >> $GITHUB_ENV
+        touch /tmp/perf.lock
     - name: Checkout openssl
       uses: actions/checkout@v4
     - name: tools install
       run: |
         sudo apt-get install -y curl linux-tools-common linux-tools-generic linux-tools-$UNAME_VAR
+        sudo mkdir -p /usr/share/doc/perf-tip
+        touch /usr/share/doc/perf-tip/tips.txt
     - name: clone performance suite
       run: git clone https://github.com/openssl/tools.git perf
     - name: config
@@ -38,47 +44,14 @@ jobs:
       run: |
         cd perf/perf
         CFLAGS="-Wl,-rpath,${GITHUB_WORKSPACE} -fno-omit-frame-pointer" make
-    - name: run performance tests 
+    - name: Run performance suite
       run: |
         cd perf/perf
-        sudo perf record -a -g -o ./perf.data.pemread -- ./pemread $THREAD_COUNT | awk '{print $7}' | sed -e"s/us//" > ./pemread.throughput
-        echo "PEMREAD_THROUGHPUT=$(cat ./pemread.throughput)" >> $GITHUB_ENV
-        sudo perf record -a -g -o ./perf.data.newrawkey -- ./newrawkey $THREAD_COUNT | awk '{print $7}' | sed -e"s/us//" > ./newrawkey.throughput
-        echo "NEWRAWKEY_THROUGHPUT=$(cat ./newrawkey.throughput)" >> $GITHUB_ENV
-        sudo perf record -a -g -o ./perf.data.providerdoall -- ./providerdoall $THREAD_COUNT | awk '{print $7}' | sed -e"s/us//" > ./providerdoall.throughput
-        echo "PROVIDERDOALL_THROUGHPUT=$(cat ./providerdoall.throughput)" >> $GITHUB_ENV
-        sudo perf record -a -g -o ./perf.data.rsasign -- ./rsasign $THREAD_COUNT | awk '{print $8}' | sed -e"s/us//" > ./rsasign.throughput
-        echo "RSASIGN_THROUGHPUT=$(cat ./rsasign.throughput)" >> $GITHUB_ENV
-        sudo perf record -a -g -o ./perf.data.sslnew -- ./sslnew $THREAD_COUNT | awk '{print $8}' | sed -e"s/us//" > ./sslnew.throughput
-        echo "SSLNEW_THROUGHPUT=$(cat ./sslnew.throughput)" >> $GITHUB_ENV
-        sudo perf record -a -g -o ./perf.data.handshake -- ./handshake ${GITHUB_WORKSPACE}/test/certs $THREAD_COUNT | awk '/Average/ {print $5}' | sed -e"s/us//" > ./handshake.throughput
-        echo "HANDSHAKE_THROUGHPUT=$(cat ./handshake.throughput)" >> $GITHUB_ENV
-    - name: report pemread performance
-      run: |
-        echo "PEMREAD COMPLETES 100 iterations in $PEMREAD_THROUGHPUT usecs"
-        sudo perf report --call-graph=flat,2 -i ./perf.data.pemread
-    - name: report newrawkey performance
-      run: |
-        cd perf/perf
-        echo "NEWRAWKEY COMPLETES 100 iterations in $NEWRAWKEY_THROUGHPUT usecs"
-        sudo perf report --call-graph=flat,2 -i ./perf.data.newrawkey
-    - name: report providerdoall performance
-      run: |
-        cd perf/perf
-        echo "PROVIDERDOALL COMPLETES 100 iterations in $PROVIDERDOALL_THROUGHPUT usecs"
-        sudo perf report --call-graph=flat,2 -i ./perf.data.providerdoall
-    - name: report rsasign performance
-      run: |
-        cd perf/perf
-        echo "RSASIGN COMPLETES 100 iterations in $RSASIGN_THROUGHPUT usecs"
-        sudo perf report --call-graph=flat,2 -i ./perf.data.rsasign
-    - name: report sslnew performance
-      run: |
-        cd perf/perf
-        echo "SSLNEW COMPLETES 100 iterations in $SSLNEW_THROUGHPUT usecs"
-        sudo perf report --call-graph=flat,2 -i ./perf.data.sslnew
-    - name: report handshake performance
-      run: |
-        cd perf/perf
-        echo "HANDSHAKE COMPLETES 100 iterations in $HANDSHAKE_THROUGHPUT usecs"
-        sudo perf report --call-graph=flat,2 -i ./perf.data.handshake
+        echo "::group::${{ matrix.unittest }}"
+        exec {fd}>/tmp/perf.lock
+        flock -x -w 1000 $fd
+        sudo perf record -o ./perf.data -a -g -- ./${{ matrix.unittest }} $THREAD_COUNT
+        echo "::group::${{ matrix.unittest }} results"
+        sudo perf report --call-graph=flat,2 -i ./perf.data --stdio
+        sudo rm -f ./perf.data
+        exec {fd}>&-
