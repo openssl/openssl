@@ -38,39 +38,23 @@ jobs:
       run: |
         cd perf/perf
         CFLAGS="-Wl,-rpath,${GITHUB_WORKSPACE} -fno-omit-frame-pointer" make
-    - name: run pemread test
+    - name: run performance tests 
       run: |
         cd perf/perf
         sudo perf record -a -g -o ./perf.data.pemread -- ./pemread $THREAD_COUNT | awk '{print $7}' | sed -e"s/us//" > ./pemread.throughput
         echo "PEMREAD_THROUGHPUT=$(cat ./pemread.throughput)" >> $GITHUB_ENV
-    - name: run newrawkey test
-      run: |
-        cd perf/perf
         sudo perf record -a -g -o ./perf.data.newrawkey -- ./newrawkey $THREAD_COUNT | awk '{print $7}' | sed -e"s/us//" > ./newrawkey.throughput
         echo "NEWRAWKEY_THROUGHPUT=$(cat ./newrawkey.throughput)" >> $GITHUB_ENV
-    - name: run providerdoall test
-      run: |
-        cd perf/perf
         sudo perf record -a -g -o ./perf.data.providerdoall -- ./providerdoall $THREAD_COUNT | awk '{print $7}' | sed -e"s/us//" > ./providerdoall.throughput
         echo "PROVIDERDOALL_THROUGHPUT=$(cat ./providerdoall.throughput)" >> $GITHUB_ENV
-    - name: run rsasign test
-      run: |
-        cd perf/perf
         sudo perf record -a -g -o ./perf.data.rsasign -- ./rsasign $THREAD_COUNT | awk '{print $8}' | sed -e"s/us//" > ./rsasign.throughput
         echo "RSASIGN_THROUGHPUT=$(cat ./rsasign.throughput)" >> $GITHUB_ENV
-    - name: run sslnew test
-      run: |
-        cd perf/perf
         sudo perf record -a -g -o ./perf.data.sslnew -- ./sslnew $THREAD_COUNT | awk '{print $8}' | sed -e"s/us//" > ./sslnew.throughput
         echo "SSLNEW_THROUGHPUT=$(cat ./sslnew.throughput)" >> $GITHUB_ENV
-    - name: run handshake test
-      run: |
-        cd perf/perf
         sudo perf record -a -g -o ./perf.data.handshake -- ./handshake ${GITHUB_WORKSPACE}/test/certs $THREAD_COUNT | awk '/Average/ {print $5}' | sed -e"s/us//" > ./handshake.throughput
         echo "HANDSHAKE_THROUGHPUT=$(cat ./handshake.throughput)" >> $GITHUB_ENV
     - name: report pemread performance
       run: |
-        cd perf/perf
         echo "PEMREAD COMPLETES 100 iterations in $PEMREAD_THROUGHPUT usecs"
         sudo perf report --call-graph=flat,2 -i ./perf.data.pemread
     - name: report newrawkey performance
