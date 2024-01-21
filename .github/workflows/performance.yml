@@ -50,8 +50,11 @@ jobs:
         echo "::group::${{ matrix.unittest }}"
         exec {fd}>/tmp/perf.lock
         flock -x -w 1000 $fd
-        sudo perf record -o ./perf.data -a -g -- ./${{ matrix.unittest }} $THREAD_COUNT
+        sudo perf record -o ./perf.data -a -g -- ./${{ matrix.unittest }} $THREAD_COUNT > ${{ matrix.unittest }}.results
         echo "::group::${{ matrix.unittest }} results"
+        echo -n "${{ matrix.unittest }} perf result is "
+        cat ${{ matrix.unittest }}.results | awk '{print $7}'
+        echo " usecs"
         sudo perf report --call-graph=flat,2 -i ./perf.data --stdio
         sudo rm -f ./perf.data
         exec {fd}>&-
