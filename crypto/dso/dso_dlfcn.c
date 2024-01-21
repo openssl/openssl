@@ -251,7 +251,7 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
 
     len = strlen(filename);
     rsize = len + 1;
-    transform = (strstr(filename, "/") == NULL);
+    transform = (strchr(filename, '/') == NULL);
     if (transform) {
         /* We will convert this to "%s.so" or "lib%s.so" etc */
         rsize += strlen(DSO_EXTENSION);    /* The length of ".so" */
