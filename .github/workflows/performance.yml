@@ -20,12 +20,26 @@ jobs:
       matrix:
         unittest: [pemread, newrawkey, rsasign, providerdoall, sslnew]
     steps:
+    - name: Get perf data artifacts
+      id: cache-restore
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/perfdata_csvs
+        key: perf-data-csvs
+    - name: Create cache files
+      if: steps.cache-restore.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p ~/perfdata_csvs
+        echo "DATE,BRANCH,CI_URL,USECS" > ~/perfdata_csvs/${{ matrix.unittest }}.csv
     - name: setup environment
       run: |
         echo "UNAME_VAR=$(uname -r)" >> $GITHUB_ENV
         echo "TARGET_OSSL_INCLUDE_PATH=${GITHUB_WORKSPACE}/include" >> $GITHUB_ENV
         echo "TARGET_OSSL_LIBRARY_PATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
         echo "THREAD_COUNT=16" >> $GITHUB_ENV
+        echo "RUN_URL=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
+        echo "RUN_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
         touch /tmp/perf.lock
     - name: Checkout openssl
       uses: actions/checkout@v4
@@ -52,9 +66,18 @@ jobs:
         flock -x -w 1000 $fd
         sudo perf record -o ./perf.data -a -g -- ./${{ matrix.unittest }} $THREAD_COUNT > ${{ matrix.unittest }}.results
         echo "::group::${{ matrix.unittest }} results"
-        echo -n "${{ matrix.unittest }} perf result is "
-        cat ${{ matrix.unittest }}.results | awk '{print $7}'
-        echo " usecs"
+        echo "output file raw:"
+        cat ${{ matrix.unittest }}.results
+        echo "PERF_TIME=$(awk '{print $7}' ${{ matrix.unittest }}.results | sed -e's/us//')" >> $GITHUB_ENV
         sudo perf report --call-graph=flat,2 -i ./perf.data --stdio
         sudo rm -f ./perf.data
         exec {fd}>&-
+    - name: Update performance data
+      run: |
+        echo "${{ matrix.unittest }} performance metrix is $PERF_TIME"
+        echo "$RUN_DATE, master, $RUN_URL, $PERF_TIME" >> ~/perfdata_csvs/${{ matrix.unittest }}.csv
+    - name: Archive performance data artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-data-csvs-${{ matrix.unittest }}
+        path: ~/perfdata_csvs/${{ matrix.unittest }}.csv
