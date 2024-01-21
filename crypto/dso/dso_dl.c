@@ -217,7 +217,7 @@ static char *dl_name_converter(DSO *dso, const char *filename)
 
     len = strlen(filename);
     rsize = len + 1;
-    transform = (strstr(filename, "/") == NULL);
+    transform = (strchr(filename, '/') == NULL);
     if (transform) {
         /* We will convert this to "%s.s?" or "lib%s.s?" */
         rsize += strlen(DSO_EXTENSION); /* The length of ".s?" */

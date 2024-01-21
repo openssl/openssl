@@ -241,7 +241,7 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
         return 1;
 
     /* ECDHParameters accepts a single group name */
-    if (strstr(value, ":") != NULL)
+    if (strchr(value, ':') != NULL)
         return 0;
 
     if (cctx->ctx)
