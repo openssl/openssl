@@ -105,6 +105,12 @@ OpenSSL 3.3
 
    *Hugo Landau*
 
+ * Added APIs to allow configuring the negotiated idle timeout for QUIC
+   connections, and to allow determining the number of additional streams
+   that can currently be created for a QUIC connection.
+
+   *Hugo Landau*
+
 OpenSSL 3.2
 -----------
 
