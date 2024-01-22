@@ -5399,16 +5399,22 @@ static const struct script_op script_82[] = {
     OP_CHECK2               (check_avail_streams, 2, 99)
     OP_CHECK2               (check_avail_streams, 3, 100)
 
-    OP_S_NEW_STREAM_BIDI    (a, S_BIDI_ID(0))
-    OP_S_WRITE              (a, "x", 1)
+    OP_S_NEW_STREAM_BIDI    (c, S_BIDI_ID(0))
+    OP_S_WRITE              (c, "x", 1)
+
+    OP_C_ACCEPT_STREAM_WAIT (c)
+    OP_C_READ_EXPECT        (c, "x", 1)
 
     OP_CHECK2               (check_avail_streams, 0, 99)
     OP_CHECK2               (check_avail_streams, 1, 99)
     OP_CHECK2               (check_avail_streams, 2, 99)
     OP_CHECK2               (check_avail_streams, 3, 100)
 
-    OP_S_NEW_STREAM_UNI     (b, S_UNI_ID(0))
-    OP_S_WRITE              (b, "x", 1)
+    OP_S_NEW_STREAM_UNI     (d, S_UNI_ID(0))
+    OP_S_WRITE              (d, "x", 1)
+
+    OP_C_ACCEPT_STREAM_WAIT (d)
+    OP_C_READ_EXPECT        (d, "x", 1)
 
     OP_CHECK2               (check_avail_streams, 0, 99)
     OP_CHECK2               (check_avail_streams, 1, 99)
