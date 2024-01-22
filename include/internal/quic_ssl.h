@@ -85,6 +85,10 @@ __owur int ossl_quic_set_incoming_stream_policy(SSL *s, int policy,
                                                 uint64_t aec);
 __owur SSL *ossl_quic_accept_stream(SSL *s, uint64_t flags);
 __owur size_t ossl_quic_get_accept_stream_queue_len(SSL *s);
+__owur int ossl_quic_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
+                                    uint64_t *value);
+__owur int ossl_quic_set_value_uint(SSL *s, uint32_t class_, uint32_t id,
+                                    uint64_t value);
 
 __owur int ossl_quic_stream_reset(SSL *ssl,
                                   const SSL_STREAM_RESET_ARGS *args,
