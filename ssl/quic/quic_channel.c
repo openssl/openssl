@@ -1135,6 +1135,16 @@ static void do_update(QUIC_STREAM *s, void *arg)
     ossl_quic_stream_map_update_state(&ch->qsm, s);
 }
 
+static uint64_t min_u64_ignore_0(uint64_t a, uint64_t b)
+{
+    if (a == 0)
+        return b;
+    if (b == 0)
+        return a;
+
+    return a < b ? a : b;
+}
+
 static int ch_on_transport_params(const unsigned char *params,
                                   size_t params_len,
                                   void *arg)
@@ -1426,8 +1436,9 @@ static int ch_on_transport_params(const unsigned char *params,
 
             ch->max_idle_timeout_remote_req = v;
 
-            if (v > 0 && v < ch->max_idle_timeout)
-                ch->max_idle_timeout = v;
+            ch->max_idle_timeout = min_u64_ignore_0(ch->max_idle_timeout_local_req,
+                                                    ch->max_idle_timeout_remote_req);
+
 
             ch_update_idle(ch);
             got_max_idle_timeout = 1;
