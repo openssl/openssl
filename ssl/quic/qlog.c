@@ -98,7 +98,7 @@ QLOG *ossl_qlog_new_from_env(const QLOG_TRACE_INFO *info)
 {
     QLOG *qlog = NULL;
     const char *qlogdir = ossl_safe_getenv("QLOGDIR");
-    const char *qfilter = ossl_safe_getenv("QFILTER");
+    const char *qfilter = ossl_safe_getenv("OSSL_QFILTER");
     char qlogdir_sep, *filename = NULL;
     size_t i, l, strl;
 
@@ -134,7 +134,10 @@ QLOG *ossl_qlog_new_from_env(const QLOG_TRACE_INFO *info)
     if (!ossl_qlog_set_sink_filename(qlog, filename))
         goto err;
 
-    if (qfilter != NULL && !ossl_qlog_set_filter(qlog, qfilter))
+    if (qfilter == NULL)
+        qfilter = "*";
+
+    if (!ossl_qlog_set_filter(qlog, qfilter))
         goto err;
 
     OPENSSL_free(filename);

@@ -49,8 +49,8 @@ To enable QLOG you must:
 - set the environment variable `QLOGDIR` to a directory where QLOG log files
   are to be written;
 
-- set the environment variable `QFILTER` to a filter specifying the events
-  you want to be written (set `QFILTER='*'` for all events).
+- set the environment variable `OSSL_QFILTER` to a filter specifying the events
+  you want to be written (set `OSSL_QFILTER='*'` for all events).
 
 Any process using the libssl QUIC implementation will then automatically write
 QLOG files in the JSON-SEQ format to the specified directory. The files have the
