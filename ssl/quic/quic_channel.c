@@ -342,14 +342,6 @@ static int ch_init(QUIC_CHANNEL *ch)
     ossl_ackm_set_tx_max_ack_delay(ch->ackm, ossl_ms2time(ch->tx_max_ack_delay));
     ossl_ackm_set_rx_max_ack_delay(ch->ackm, ossl_ms2time(ch->rx_max_ack_delay));
 
-    /*
-     * Determine the QUIC Transport Parameters and serialize the transport
-     * parameters block. (For servers, we do this later as we must defer
-     * generation until we have received the client's transport parameters.)
-     */
-    if (!ch->is_server && !ch_generate_transport_params(ch))
-        goto err;
-
     ch_update_idle(ch);
     ossl_list_ch_insert_tail(&ch->port->channel_list, ch);
     ch->on_port_list = 1;
@@ -2582,6 +2574,15 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
                                           &ch->init_dcid,
                                           ch->is_server,
                                           ch->qrx, ch->qtx))
+        return 0;
+
+    /*
+     * Determine the QUIC Transport Parameters and serialize the transport
+     * parameters block. (For servers, we do this later as we must defer
+     * generation until we have received the client's transport parameters.)
+     */
+    if (!ch->is_server && !ch->got_local_transport_params
+        && !ch_generate_transport_params(ch))
         return 0;
 
     /* Change state. */
