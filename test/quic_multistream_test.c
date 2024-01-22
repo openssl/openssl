@@ -5342,6 +5342,83 @@ static const struct script_op script_83[] = {
     OP_END
 };
 
+/* 82. Test query of available streams */
+static int check_avail_streams(struct helper *h, struct helper_local *hl)
+{
+    uint64_t v = 0;
+
+    switch (hl->check_op->arg1) {
+    case 0:
+        if (!TEST_true(SSL_get_quic_stream_bidi_local_avail(h->c_conn, &v)))
+            return 0;
+        break;
+    case 1:
+        if (!TEST_true(SSL_get_quic_stream_bidi_remote_avail(h->c_conn, &v)))
+            return 0;
+        break;
+    case 2:
+        if (!TEST_true(SSL_get_quic_stream_uni_local_avail(h->c_conn, &v)))
+            return 0;
+        break;
+    case 3:
+        if (!TEST_true(SSL_get_quic_stream_uni_remote_avail(h->c_conn, &v)))
+            return 0;
+        break;
+    default:
+        return 0;
+    }
+
+    if (!TEST_uint64_t_eq(v, hl->check_op->arg2))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_82[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_CHECK2               (check_avail_streams, 0, 100)
+    OP_CHECK2               (check_avail_streams, 1, 100)
+    OP_CHECK2               (check_avail_streams, 2, 100)
+    OP_CHECK2               (check_avail_streams, 3, 100)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+
+    OP_CHECK2               (check_avail_streams, 0, 99)
+    OP_CHECK2               (check_avail_streams, 1, 100)
+    OP_CHECK2               (check_avail_streams, 2, 100)
+    OP_CHECK2               (check_avail_streams, 3, 100)
+
+    OP_C_NEW_STREAM_UNI     (b, C_UNI_ID(0))
+
+    OP_CHECK2               (check_avail_streams, 0, 99)
+    OP_CHECK2               (check_avail_streams, 1, 100)
+    OP_CHECK2               (check_avail_streams, 2, 99)
+    OP_CHECK2               (check_avail_streams, 3, 100)
+
+    OP_S_NEW_STREAM_BIDI    (a, S_BIDI_ID(0))
+    OP_S_WRITE              (a, "x", 1)
+
+    OP_CHECK2               (check_avail_streams, 0, 99)
+    OP_CHECK2               (check_avail_streams, 1, 99)
+    OP_CHECK2               (check_avail_streams, 2, 99)
+    OP_CHECK2               (check_avail_streams, 3, 100)
+
+    OP_S_NEW_STREAM_UNI     (b, S_UNI_ID(0))
+    OP_S_WRITE              (b, "x", 1)
+
+    OP_CHECK2               (check_avail_streams, 0, 99)
+    OP_CHECK2               (check_avail_streams, 1, 99)
+    OP_CHECK2               (check_avail_streams, 2, 99)
+    OP_CHECK2               (check_avail_streams, 3, 99)
+
+    OP_END
+};
+
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
