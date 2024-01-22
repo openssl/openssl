@@ -98,10 +98,10 @@ wildcard            = "*"
 name                = 1*(ALPHA / DIGIT / "_" / "-")
 ```
 
-Here is an example filter:
+Here is a (somewhat nonsensical) example filter:
 
 ```text
--quic:version_information quic:packet_sent -* +*
++* -quic:version_information -* quic:packet_sent
 ```
 
 The syntax works as follows:
@@ -118,3 +118,16 @@ The syntax works as follows:
 - `-quic:version_information` disables a specific event type.
 
 - Partial wildcard matches are not supported at this time.
+
+Each term is applied in sequence, therefore later items in the filter override
+earlier items. In the example above, for example, all events are enabled, then
+the `quic:version_information` event is disabled, then all events are disabled,
+then the `quic:packet_sent` event is reenabled.
+
+Some examples of more normal filters include:
+
+- `*` (or `+*`): enable all events
+
+- `quic:version_information quic:packet_sent`: enable some events explicitly
+
+- `* -quic:version_information`: enable all events except certain events
