@@ -2615,6 +2615,10 @@ DEPEND[html/man3/SSL_get_stream_read_state.html]=man3/SSL_get_stream_read_state.
 GENERATE[html/man3/SSL_get_stream_read_state.html]=man3/SSL_get_stream_read_state.pod
 DEPEND[man/man3/SSL_get_stream_read_state.3]=man3/SSL_get_stream_read_state.pod
 GENERATE[man/man3/SSL_get_stream_read_state.3]=man3/SSL_get_stream_read_state.pod
+DEPEND[html/man3/SSL_get_value_uint.html]=man3/SSL_get_value_uint.pod
+GENERATE[html/man3/SSL_get_value_uint.html]=man3/SSL_get_value_uint.pod
+DEPEND[man/man3/SSL_get_value_uint.3]=man3/SSL_get_value_uint.pod
+GENERATE[man/man3/SSL_get_value_uint.3]=man3/SSL_get_value_uint.pod
 DEPEND[html/man3/SSL_get_verify_result.html]=man3/SSL_get_verify_result.pod
 GENERATE[html/man3/SSL_get_verify_result.html]=man3/SSL_get_verify_result.pod
 DEPEND[man/man3/SSL_get_verify_result.3]=man3/SSL_get_verify_result.pod
@@ -3577,6 +3581,7 @@ html/man3/SSL_get_session.html \
 html/man3/SSL_get_shared_sigalgs.html \
 html/man3/SSL_get_stream_id.html \
 html/man3/SSL_get_stream_read_state.html \
+html/man3/SSL_get_value_uint.html \
 html/man3/SSL_get_verify_result.html \
 html/man3/SSL_get_version.html \
 html/man3/SSL_group_to_name.html \
@@ -4220,6 +4225,7 @@ man/man3/SSL_get_session.3 \
 man/man3/SSL_get_shared_sigalgs.3 \
 man/man3/SSL_get_stream_id.3 \
 man/man3/SSL_get_stream_read_state.3 \
+man/man3/SSL_get_value_uint.3 \
 man/man3/SSL_get_verify_result.3 \
 man/man3/SSL_get_version.3 \
 man/man3/SSL_group_to_name.3 \
