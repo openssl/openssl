@@ -5241,7 +5241,7 @@ static int modify_idle_timeout(struct helper *h, struct helper_local *hl)
     /* Test bad value is rejected. */
     if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
                                                  SSL_VALUE_QUIC_IDLE_TIMEOUT,
-                                                 (1UL << 62))))
+                                                 (1ULL << 62))))
         return 0;
 
     /* Set value. */

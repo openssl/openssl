@@ -3207,7 +3207,7 @@ static int qc_getset_idle_timeout(QCTX *ctx, uint32_t class_,
                                   uint64_t *p_value_out, uint64_t *p_value_in)
 {
     int ret = 0;
-    uint64_t value_out, value_in;
+    uint64_t value_out = 0, value_in;
 
     quic_lock(ctx->qc);
 
