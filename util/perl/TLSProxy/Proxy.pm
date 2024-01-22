@@ -326,6 +326,8 @@ sub clientstart
 
     if ($self->execute) {
         my $pid;
+        my $cin;
+
         my $execcmd = $self->execute
              ." s_client -engine ossltest"
              ." -connect $self->{proxy_addr}:$self->{proxy_port}";
@@ -359,11 +361,7 @@ sub clientstart
             print STDERR "Client command: $execcmd\n";
         }
 
-        open(my $savedout, ">&STDOUT");
-        # If we open pipe with new descriptor, attempt to close it,
-        # explicitly or implicitly, would incur waitpid and effectively
-        # dead-lock...
-        if (!($pid = open(STDOUT, "| $execcmd"))) {
+        if (!($pid = IPC::Open2::open2(my $cout, $cin, $execcmd))) {
             my $err = $!;
             kill(3, $self->{serverpid});
             die "Failed to $execcmd: $err\n";
@@ -371,11 +369,7 @@ sub clientstart
         $self->{clientpid} = $pid;
 
         # queue [magic] input
-        print $self->reneg ? "R" : "test";
-
-        # this closes client's stdin without waiting for its pid
-        open(STDOUT, ">&", $savedout);
-        close($savedout);
+        print $cin $self->reneg ? "R" : "test";
     }
 
     # Wait for incoming connection from client
