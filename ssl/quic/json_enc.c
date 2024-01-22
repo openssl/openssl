@@ -37,7 +37,7 @@ static void wbuf_cleanup(struct json_write_buf *wbuf)
     wbuf->alloc = 0;
 }
 
-static void wbuf_set_bio(struct json_write_buf *wbuf, BIO *bio)
+static void wbuf_set0_bio(struct json_write_buf *wbuf, BIO *bio)
 {
     wbuf->bio = bio;
 }
@@ -238,7 +238,7 @@ int ossl_json_init(OSSL_JSON_ENC *json, BIO *bio, uint32_t flags)
         return 0;
 
     json->state = STATE_PRE_COMMA;
-    return ossl_json_reset(json);
+    return 1;
 }
 
 void ossl_json_cleanup(OSSL_JSON_ENC *json)
@@ -273,9 +273,9 @@ int ossl_json_flush(OSSL_JSON_ENC *json)
     return wbuf_flush(&json->wbuf);
 }
 
-int ossl_json_set_sink(OSSL_JSON_ENC *json, BIO *bio)
+int ossl_json_set0_sink(OSSL_JSON_ENC *json, BIO *bio)
 {
-    wbuf_set_bio(&json->wbuf, bio);
+    wbuf_set0_bio(&json->wbuf, bio);
     return 1;
 }
 

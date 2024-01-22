@@ -174,7 +174,7 @@ int ossl_qlog_set_sink_bio(QLOG *qlog, BIO *bio)
     ossl_qlog_flush(qlog); /* best effort */
     BIO_free_all(qlog->bio);
     qlog->bio = bio;
-    ossl_json_set_sink(&qlog->json, bio);
+    ossl_json_set0_sink(&qlog->json, bio);
     return 1;
 }
 
