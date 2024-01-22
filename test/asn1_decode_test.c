@@ -220,6 +220,38 @@ err:
     return ret;
 }
 
+static int test_empty_sequence(void)
+{
+    static unsigned char empty_set[] = { 0x30, 0x84, 0x0, 0x0, 0x0, 0x0 };
+    int ret = 0;
+    unsigned char const *p = empty_set;
+
+    ASN1_SEQUENCE_ANY *obj = d2i_ASN1_SEQUENCE_ANY(NULL, &p, sizeof(empty_set));
+    /* Create an object out of the empty sequence */
+    if (!TEST_ptr(obj))
+        goto err;
+    ret = 1;
+err:
+    sk_ASN1_TYPE_free(obj);
+    return ret;
+}
+
+static int test_empty_set(void)
+{
+    static unsigned char empty_set[] = { 0x31, 0x84, 0x0, 0x0, 0x0, 0x0 };
+    int ret = 0;
+    unsigned char const *p = empty_set;
+
+    ASN1_SEQUENCE_ANY *obj = d2i_ASN1_SET_ANY(NULL, &p, sizeof(empty_set));
+    /* Create an object out of the empty set */
+    if (!TEST_ptr(obj))
+        goto err;
+    ret = 1;
+err:
+    sk_ASN1_TYPE_free(obj);
+    return ret;
+}
+
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -231,5 +263,7 @@ int setup_tests(void)
     ADD_TEST(test_uint64);
     ADD_TEST(test_invalid_template);
     ADD_TEST(test_reuse_asn1_object);
+    ADD_TEST(test_empty_sequence);
+    ADD_TEST(test_empty_set);
     return 1;
 }
