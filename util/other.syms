@@ -650,6 +650,16 @@ SSL_want_read                           define
 SSL_want_retry_verify                   define
 SSL_want_write                          define
 SSL_want_x509_lookup                    define
+SSL_get_feature_request_uint            define
+SSL_set_feature_request_uint            define
+SSL_get_feature_peer_request_uint       define
+SSL_get_feature_negotiated_uint         define
+SSL_get_generic_value_uint              define
+SSL_set_generic_value_uint              define
+SSL_get_quic_stream_bidi_local_avail    define
+SSL_get_quic_stream_bidi_remote_avail   define
+SSL_get_quic_stream_uni_local_avail     define
+SSL_get_quic_stream_uni_remote_avail    define
 SSL_CONN_CLOSE_FLAG_LOCAL               define
 SSL_CONN_CLOSE_FLAG_TRANSPORT           define
 SSLv23_client_method                    define
@@ -677,6 +687,15 @@ SSL_INCOMING_STREAM_POLICY_ACCEPT       define
 SSL_INCOMING_STREAM_POLICY_AUTO         define
 SSL_INCOMING_STREAM_POLICY_REJECT       define
 SSL_WRITE_FLAG_CONCLUDE                 define
+SSL_VALUE_CLASS_GENERIC                 define
+SSL_VALUE_CLASS_FEATURE_REQUEST         define
+SSL_VALUE_CLASS_FEATURE_PEER_REQUEST    define
+SSL_VALUE_CLASS_FEATURE_NEGOTIATED      define
+SSL_VALUE_QUIC_IDLE_TIMEOUT             define
+SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL  define
+SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_AVAIL define
+SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL   define
+SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL  define
 TLS_DEFAULT_CIPHERSUITES                define deprecated 3.0.0
 X509_CRL_http_nbio                      define deprecated 3.0.0
 X509_http_nbio                          define deprecated 3.0.0

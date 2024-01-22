@@ -1,0 +1,222 @@
+=pod
+
+=head1 NAME
+
+SSL_get_value_uint, SSL_set_value_uint, SSL_get_generic_value_uint,
+SSL_set_generic_value_uint, SSL_get_feature_request_uint,
+SSL_set_feature_request_uint, SSL_get_feature_peer_request_uint,
+SSL_get_feature_negotiated_uint, SSL_get_quic_stream_bidi_local_avail,
+SSL_get_quic_stream_bidi_remote_avail, SSL_get_quic_stream_uni_local_avail,
+SSL_get_quic_stream_uni_remote_avail, SSL_VALUE_CLASS_GENERIC,
+SSL_VALUE_CLASS_FEATURE_REQUEST, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST,
+SSL_VALUE_CLASS_FEATURE_NEGOTIATED, SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL,
+SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_AVAIL, SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL,
+SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL, SSL_VALUE_QUIC_IDLE_TIMEOUT - manage
+negotiable features and configuration values for a SSL object
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_get_value_uint(SSL *ssl, uint32_t class_, uint32_t id,
+                        uint64_t *value);
+ int SSL_set_value_uint(SSL *ssl, uint32_t class_, uint32_t id,
+                        uint64_t value);
+
+ #define SSL_VALUE_CLASS_GENERIC
+ #define SSL_VALUE_CLASS_FEATURE_REQUEST
+ #define SSL_VALUE_CLASS_FEATURE_PEER_REQUEST
+ #define SSL_VALUE_CLASS_FEATURE_NEGOTIATED
+
+ #define SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL
+ #define SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_AVAIL
+ #define SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL
+ #define SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL
+ #define SSL_VALUE_QUIC_IDLE_TIMEOUT
+
+The following convenience macros can also be used:
+
+ int SSL_get_generic_value_uint(SSL *ssl, uint32_t id, uint64_t *value);
+ int SSL_set_generic_value_uint(SSL *ssl, uint32_t id, uint64_t value);
+
+ int SSL_get_feature_request_uint(SSL *ssl, uint32_t id, uint64_t *value);
+ int SSL_set_feature_request_uint(SSL *ssl, uint32_t id, uint64_t value);
+
+ int SSL_get_feature_peer_request_uint(SSL *ssl, uint32_t id, uint64_t *value);
+ int SSL_get_feature_negotiated_uint(SSL *ssl, uint32_t id, uint64_t *value);
+
+ int SSL_get_quic_stream_bidi_local_avail(SSL *ssl, uint64_t *value);
+ int SSL_get_quic_stream_bidi_remote_avail(SSL *ssl, uint64_t *value);
+ int SSL_get_quic_stream_uni_local_avail(SSL *ssl, uint64_t *value);
+ int SSL_get_quic_stream_uni_remote_avail(SSL *ssl, uint64_t *value);
+
+=head1 DESCRIPTION
+
+SSL_get_value_uint() and SSL_set_value_uint() provide access to configurable
+parameters for a given SSL object. Amongst other things, they are used to
+provide control over the feature negotiation process during establishment of a
+connection, and access to statistics about that connection.
+
+SSL_get_value_uint() and SSL_set_value_uint() get and set configurable values
+within a given value class. The value classes are enumerated by
+B<SSL_VALUE_CLASS> and are as follows:
+
+=over 4
+
+=item B<SSL_VALUE_CLASS_GENERIC>
+
+Values in this class do not participate in the feature negotiation process. They
+may represent connection parameters which do not participate in explicit
+negotiation or provide connection statistics. Values in this class might be
+read-write or read-only.
+
+You can access values in this class using the convenience macros
+SSL_get_generic_value_uint() and SSL_set_generic_value_uint() for brevity.
+
+=item B<SSL_VALUE_CLASS_FEATURE_REQUEST>
+
+Values in this class are read-write, and represent what the local party is
+requesting during feature negotiation. Such a request will not necessarily be
+honoured; see B<SSL_VALUE_CLASS_FEATURE_NEOGTIATED>.
+
+A value in this class may become read-only in certain circumstances; for
+example, after a connection has been established, for a value which cannot be
+renegotiated after connection establishment. Setting a value in this class after
+connection establishment represents a request for online renegotiation of the
+specified feature.
+
+You can access values in this class using the convenience macros
+SSL_get_feature_request_uint() and SSL_set_feature_request_uint() for brevity.
+
+=item B<SSL_VALUE_CLASS_FEATURE_PEER_REQUEST>
+
+Values in this value class are read-only, and represent what was requested by a
+peer during feature negotiation. Such a request has not necessarily been
+honoured; see B<SSL_VALUE_CLASS_FEATURE_NEGOTIATED>.
+
+You can access values in this class using the convenience macro
+SSL_get_feature_peer_request_uint() for brevity.
+
+=item B<SSL_VALUE_CLASS_FEATURE_NEGOTIATED>
+
+Values in this value class are read-only, and represent the value which was
+actually negotated based on both local and peer input during feature
+negotiation. This is the effective value in actual use.
+
+Attempting to read a value in this class will generally fail if the feature
+negotiation process has not yet completed and the value is therefore currently
+unknown, unless the nature of the feature in question causes a provisional value
+to be used prior to completion of feature negotiation, in which case that value
+may be returned. If an online (post-handshake) renegotiation of a feature is
+in progress, retrieving the negotiated value will continue to retrieve the
+previous negotiated value until that process is completed. See the documentation
+of specific values for full details of its behaviour.
+
+You can access values in this class using the convenience macro
+SSL_get_feature_neogtiated_uint() for brevity.
+
+=back
+
+=head1 CONFIGURABLE VALUES FOR QUIC CONNECTIONS
+
+The following configurable values are supported for QUIC connection SSL objects:
+
+=over 4
+
+=item B<SSL_VALUE_QUIC_IDLE_TIMEOUT>
+
+Negotiated feature value. This configures the desired QUIC idle timeout in
+milliseconds, where 0 represents a lack of an idle timeout. This feature can
+only be configured prior to connection establishment and cannot be subsequently
+changed.
+
+=item B<SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL>
+
+Generic read-only statistical value. The number of bidirectional,
+locally-initiated streams available to be created (but not yet created). For
+example, a value of 100 would mean that L<SSL_new_stream(3)> could be called 100
+times to create 100 bidirectional streams before L<SSL_new_stream(3)> would
+block or fail due to backpressure.
+
+Can be queried using the convenience macro
+SSL_get_quic_stream_bidi_local_avail().
+
+=item B<SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL>
+
+As above, but provides the number of unidirectional, locally-initiated streams
+available to be created (but not yet created).
+
+Can be queried using the convenience macro
+SSL_get_quic_stream_uni_local_avail().
+
+=item B<SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_AVAIL>
+
+As above, but provides the number of bidirectional, remotely-initiated streams
+available to be created (but not yet created) by the peer. This represents the
+number of streams the local endpoint has authorised the peer to create in terms
+of QUIC stream creation flow control.
+
+Can be queried using the convenience macro
+SSL_get_quic_stream_bidi_remote_avail().
+
+=item B<SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL>
+
+As above, but provides the number of unidirectional, remotely-initiated streams
+available to be created (but not yet created).
+
+Can be queried using the convenience macro
+SSL_get_quic_stream_uni_remote_avail().
+
+=back
+
+No configurable values are currently defined for QUIC stream SSL objects or for
+other kinds of SSL object.
+
+=head1 RETURN VALUES
+
+Returns 1 on success or 0 on failure. This function can fail for a number of
+reasons:
+
+=over 4
+
+=item
+
+An argument is invalid (e.g. NULL pointer or invalid class).
+
+=item
+
+The given value is not supported by the SSL object on which it was called.
+
+=item
+
+The given operation (get or set) is not supported by the specified
+configurable value.
+
+=item
+
+You are trying to modify the given value and the value is not modifiable at this
+time.
+
+=back
+
+=head1 SEE ALSO
+
+L<SSL_ctrl(3)>, L<SSL_get_accept_stream_queue_len(3)>,
+L<SSL_get_stream_read_state(3)>, L<SSL_get_stream_write_state(3)>,
+L<SSL_get_stream_read_error_code(3)>, L<SSL_get_stream_write_error_code(3)>,
+L<SSL_set_default_stream_mode(3)>, L<SSL_set_incoming_stream_policy(3)>
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 3.3.
+
+=head1 COPYRIGHT
+
+Copyright 2002-2024 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
