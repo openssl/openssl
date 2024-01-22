@@ -359,19 +359,24 @@ int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc,
     return 1;
 }
 
-uint64_t ossl_quic_rxfc_get_cwm(QUIC_RXFC *rxfc)
+uint64_t ossl_quic_rxfc_get_cwm(const QUIC_RXFC *rxfc)
 {
     return rxfc->cwm;
 }
 
-uint64_t ossl_quic_rxfc_get_swm(QUIC_RXFC *rxfc)
+uint64_t ossl_quic_rxfc_get_swm(const QUIC_RXFC *rxfc)
 {
     return rxfc->swm;
 }
 
-uint64_t ossl_quic_rxfc_get_rwm(QUIC_RXFC *rxfc)
+uint64_t ossl_quic_rxfc_get_rwm(const QUIC_RXFC *rxfc)
 {
     return rxfc->rwm;
+}
+
+uint64_t ossl_quic_rxfc_get_credit(const QUIC_RXFC *rxfc)
+{
+    return ossl_quic_rxfc_get_cwm(rxfc) - ossl_quic_rxfc_get_swm(rxfc);
 }
 
 int ossl_quic_rxfc_has_cwm_changed(QUIC_RXFC *rxfc, int clear)
