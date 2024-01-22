@@ -331,10 +331,13 @@ static int ch_init(QUIC_CHANNEL *ch)
     ch->rx_max_ack_delay        = QUIC_DEFAULT_MAX_ACK_DELAY;
     ch->rx_ack_delay_exp        = QUIC_DEFAULT_ACK_DELAY_EXP;
     ch->rx_active_conn_id_limit = QUIC_MIN_ACTIVE_CONN_ID_LIMIT;
-    ch->max_idle_timeout        = QUIC_DEFAULT_IDLE_TIMEOUT;
     ch->tx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
     ch->rx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
     ch->txku_threshold_override = UINT64_MAX;
+
+    ch->max_idle_timeout_local_req  = QUIC_DEFAULT_IDLE_TIMEOUT;
+    ch->max_idle_timeout_remote_req = 0;
+    ch->max_idle_timeout            = ch->max_idle_timeout_local_req;
 
     ossl_ackm_set_tx_max_ack_delay(ch->ackm, ossl_ms2time(ch->tx_max_ack_delay));
     ossl_ackm_set_rx_max_ack_delay(ch->ackm, ossl_ms2time(ch->rx_max_ack_delay));
@@ -1429,6 +1432,8 @@ static int ch_on_transport_params(const unsigned char *params,
                 goto malformed;
             }
 
+            ch->max_idle_timeout_remote_req = v;
+
             if (v > 0 && v < ch->max_idle_timeout)
                 ch->max_idle_timeout = v;
 
@@ -1691,7 +1696,7 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
     int wpkt_valid = 0;
     size_t buf_len = 0;
 
-    if (ch->local_transport_params != NULL)
+    if (ch->local_transport_params != NULL || ch->got_local_transport_params)
         goto err;
 
     if ((buf_mem = BUF_MEM_new()) == NULL)
@@ -1722,7 +1727,7 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
     }
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_MAX_IDLE_TIMEOUT,
-                                                   ch->max_idle_timeout))
+                                                   ch->max_idle_timeout_local_req))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_MAX_UDP_PAYLOAD_SIZE,
@@ -1806,6 +1811,8 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
                  ossl_quic_rxfc_get_cwm(&ch->max_streams_uni_rxfc));
     QLOG_EVENT_END()
 #endif
+
+    ch->got_local_transport_params = 1;
 
     ok = 1;
 err:
@@ -3430,21 +3437,54 @@ static uint64_t *ch_get_local_stream_next_ordinal_ptr(QUIC_CHANNEL *ch,
                   : &ch->next_local_stream_ordinal_bidi;
 }
 
+static const uint64_t *ch_get_local_stream_max_ptr(const QUIC_CHANNEL *ch,
+                                                   int is_uni)
+{
+    return is_uni ? &ch->max_local_streams_uni
+                  : &ch->max_local_streams_bidi;
+}
+
+static const QUIC_RXFC *ch_get_remote_stream_count_rxfc(const QUIC_CHANNEL *ch,
+                                                        int is_uni)
+{
+    return is_uni ? &ch->max_streams_uni_rxfc
+                  : &ch->max_streams_bidi_rxfc;
+}
+
 int ossl_quic_channel_is_new_local_stream_admissible(QUIC_CHANNEL *ch,
                                                      int is_uni)
 {
-    uint64_t *p_next_ordinal = ch_get_local_stream_next_ordinal_ptr(ch, is_uni);
+    const uint64_t *p_next_ordinal = ch_get_local_stream_next_ordinal_ptr(ch, is_uni);
 
     return ossl_quic_stream_map_is_local_allowed_by_stream_limit(&ch->qsm,
                                                                  *p_next_ordinal,
                                                                  is_uni);
 }
 
+uint64_t ossl_quic_channel_get_local_stream_count_avail(const QUIC_CHANNEL *ch,
+                                                        int is_uni)
+{
+    const uint64_t *p_next_ordinal, *p_max;
+
+    p_next_ordinal  = ch_get_local_stream_next_ordinal_ptr((QUIC_CHANNEL *)ch,
+                                                           is_uni);
+    p_max           = ch_get_local_stream_max_ptr(ch, is_uni);
+
+    return *p_max - *p_next_ordinal;
+}
+
+uint64_t ossl_quic_channel_get_remote_stream_count_avail(const QUIC_CHANNEL *ch,
+                                                         int is_uni)
+{
+    return ossl_quic_rxfc_get_credit(ch_get_remote_stream_count_rxfc(ch, is_uni));
+}
+
 QUIC_STREAM *ossl_quic_channel_new_stream_local(QUIC_CHANNEL *ch, int is_uni)
 {
     QUIC_STREAM *qs;
     int type;
-    uint64_t stream_id, *p_next_ordinal;
+    uint64_t stream_id;
+    uint64_t *p_next_ordinal;
 
     type = ch->is_server ? QUIC_STREAM_INITIATOR_SERVER
                          : QUIC_STREAM_INITIATOR_CLIENT;
@@ -3615,4 +3655,28 @@ uint16_t ossl_quic_channel_get_diag_num_rx_ack(QUIC_CHANNEL *ch)
 void ossl_quic_channel_get_diag_local_cid(QUIC_CHANNEL *ch, QUIC_CONN_ID *cid)
 {
     *cid = ch->cur_local_cid;
+}
+
+int ossl_quic_channel_have_generated_transport_params(const QUIC_CHANNEL *ch)
+{
+    return ch->got_local_transport_params;
+}
+
+void ossl_quic_channel_set_max_idle_timeout_request(QUIC_CHANNEL *ch, uint64_t ms)
+{
+    ch->max_idle_timeout_local_req = ms;
+}
+uint64_t ossl_quic_channel_get_max_idle_timeout_request(const QUIC_CHANNEL *ch)
+{
+    return ch->max_idle_timeout_local_req;
+}
+
+uint64_t ossl_quic_channel_get_max_idle_timeout_peer_request(const QUIC_CHANNEL *ch)
+{
+    return ch->max_idle_timeout_remote_req;
+}
+
+uint64_t ossl_quic_channel_get_max_idle_timeout_actual(const QUIC_CHANNEL *ch)
+{
+    return ch->max_idle_timeout;
 }

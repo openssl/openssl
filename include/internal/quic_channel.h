@@ -422,6 +422,29 @@ void ossl_quic_channel_get_diag_local_cid(QUIC_CHANNEL *ch, QUIC_CONN_ID *cid);
  */
 int ossl_quic_channel_is_new_local_stream_admissible(QUIC_CHANNEL *ch, int is_uni);
 
+/*
+ * Returns the number of additional streams that can currently be created based
+ * on flow control.
+ */
+uint64_t ossl_quic_channel_get_local_stream_count_avail(const QUIC_CHANNEL *ch,
+                                                        int is_uni);
+uint64_t ossl_quic_channel_get_remote_stream_count_avail(const QUIC_CHANNEL *ch,
+                                                         int is_uni);
+
+/*
+ * Returns 1 if we have generated our local transport parameters yet.
+ */
+int ossl_quic_channel_have_generated_transport_params(const QUIC_CHANNEL *ch);
+
+/* Configures the idle timeout to request from peer (milliseconds, 0=no timeout). */
+void ossl_quic_channel_set_max_idle_timeout_request(QUIC_CHANNEL *ch, uint64_t ms);
+/* Get the configured idle timeout to request from peer. */
+uint64_t ossl_quic_channel_get_max_idle_timeout_request(const QUIC_CHANNEL *ch);
+/* Get the idle timeout requested by the peer. */
+uint64_t ossl_quic_channel_get_max_idle_timeout_peer_request(const QUIC_CHANNEL *ch);
+/* Get the idle timeout actually negotiated. */
+uint64_t ossl_quic_channel_get_max_idle_timeout_actual(const QUIC_CHANNEL *ch);
+
 # endif
 
 #endif
