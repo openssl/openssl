@@ -117,12 +117,12 @@ int ossl_json_flush(OSSL_JSON_ENC *json);
 int ossl_json_flush_cleanup(OSSL_JSON_ENC *json);
 
 /*
- * ossl_json_set_sink
- * ------------------
+ * ossl_json_set0_sink
+ * -------------------
  *
  * Changes the sink used by the JSON encoder.
  */
-int ossl_json_set_sink(OSSL_JSON_ENC *json, BIO *bio);
+int ossl_json_set0_sink(OSSL_JSON_ENC *json, BIO *bio);
 
 /*
  * ossl_json_in_error
