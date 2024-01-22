@@ -155,6 +155,10 @@ struct quic_channel_st {
     uint64_t                        max_local_streams_bidi;
     uint64_t                        max_local_streams_uni;
 
+    /* The idle timeout values we and our peer requested. */
+    uint64_t                        max_idle_timeout_local_req;
+    uint64_t                        max_idle_timeout_remote_req;
+
     /* The negotiated maximum idle timeout in milliseconds. */
     uint64_t                        max_idle_timeout;
 
@@ -288,6 +292,8 @@ struct quic_channel_st {
 
     /* We have received transport parameters from the peer. */
     unsigned int                    got_remote_transport_params    : 1;
+    /* We have generated our local transport parameters. */
+    unsigned int                    got_local_transport_params     : 1;
 
     /*
      * This monotonically transitions to 1 once the TLS state machine is
