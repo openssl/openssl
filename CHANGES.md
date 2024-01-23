@@ -95,11 +95,13 @@ OpenSSL 3.3
    *Randall S. Becker*
 
  * Support for QLOG for tracing QUIC connections has been added.
-   The QLOG format used is a pre-standard draft version and may change
-   incompatibly in future OpenSSL releases, therefore this functionality must
-   currently be enabled with a build-time option `enable-unstable-qlog`. See
-   [doc/designs/quic-design/debugging.md](./doc/designs/quic-design/debugging.md)
-   for information on how to use QLOG.
+
+   The QLOG output from OpenSSL currently uses a pre-standard draft version of
+   QLOG. The output from OpenSSL will change in incompatible ways in future
+   releases, and is not subject to any format stability or compatibility
+   guarantees at this time; therefore this functionality must currently be
+   enabled with the build-time option `enable-unstable-qlog`. See the
+   openssl-qlog(7) manpage for details.
 
    *Hugo Landau*
 
