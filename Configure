@@ -2974,6 +2974,21 @@ or position independent code, please let us know (but please first make sure
 you have tried with a current version of OpenSSL).
 EOF
 
+print <<"EOF" if (!$disabled{qlog});
+
+============================== WARNING ===============================
+
+WARNING: You have enabled QLOG. This functionality is unstable and
+    implements a draft version of the QLOG specification. The QLOG
+    output from OpenSSL *will* change in incompatible ways in future,
+    and is not subject to any format stability or compatibility
+    guarantees at this time. See the manpage openssl-qlog(7) for
+    details.
+
+============================== WARNING ===============================
+
+EOF
+
 print $banner;
 
 exit(0);
