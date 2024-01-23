@@ -1084,6 +1084,14 @@ when needed.
 
 This is only supported on systems where loading of shared libraries is supported.
 
+### enable-unstable-qlog
+
+Enables QLOG output support for the QUIC protocol. This functionality is
+unstable and implements a draft version of the QLOG specification. The QLOG
+output from OpenSSL will change in incompatible ways in future, and is not
+subject to any format stability or compatibility guarantees at this time. See
+the manpage openssl-qlog(7) for details.
+
 ### 386
 
 In 32-bit x86 builds, use the 80386 instruction set only in assembly modules
