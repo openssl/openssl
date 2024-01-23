@@ -36,6 +36,7 @@ my %record_type = (
 );
 
 use constant {
+    VERS_DTLS_1_3 => 0xfefc,
     VERS_DTLS_1_2 => 0xfefd,
     VERS_DTLS_1 => 0xfeff,
     VERS_TLS_1_4 => 0x0305,
@@ -48,6 +49,7 @@ use constant {
 };
 
 our %tls_version = (
+    VERS_DTLS_1_3, "DTLS1.3",
     VERS_DTLS_1_2, "DTLS1.2",
     VERS_DTLS_1, "DTLS1",
     VERS_TLS_1_3, "TLS1.3",
@@ -391,21 +393,17 @@ sub reconstruct_record
     if ($self->sslv2) {
         $data = pack('n', $self->len | 0x8000);
     } else {
+        my $content_type = (TLSProxy::Proxy->is_tls13() && $self->encrypted)
+                           ? $self->outer_content_type : $self->content_type;
         if($self->{isdtls}) {
             my $seqhi = ($self->seq >> 32) & 0xffff;
             my $seqmi = ($self->seq >> 16) & 0xffff;
             my $seqlo = ($self->seq >> 0) & 0xffff;
-            $data = pack('Cnnnnnn', $self->content_type, $self->version,
+            $data = pack('Cnnnnnn', $content_type, $self->version,
                          $self->epoch, $seqhi, $seqmi, $seqlo, $self->len);
         } else {
-            if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
-                $data = pack('Cnn', $self->outer_content_type, $self->version,
-                             $self->len);
-            }
-            else {
-                $data = pack('Cnn', $self->content_type, $self->version,
-                             $self->len);
-            }
+            $data = pack('Cnn', $content_type, $self->version,
+                         $self->len);
         }
 
     }
