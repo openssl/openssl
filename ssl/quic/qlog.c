@@ -134,7 +134,7 @@ QLOG *ossl_qlog_new_from_env(const QLOG_TRACE_INFO *info)
     if (!ossl_qlog_set_sink_filename(qlog, filename))
         goto err;
 
-    if (qfilter == NULL)
+    if (qfilter == NULL || qfilter[0] == '\0')
         qfilter = "*";
 
     if (!ossl_qlog_set_filter(qlog, qfilter))
