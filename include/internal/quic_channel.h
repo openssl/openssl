@@ -120,10 +120,10 @@ typedef struct quic_channel_args_st {
     int             is_server;
     SSL             *tls;
 
-    /* Whether to use QLOG. */
+    /* Whether to use qlog. */
     int             use_qlog;
 
-    /* Title to use for the QLOG session, or NULL. */
+    /* Title to use for the qlog session, or NULL. */
     const char      *qlog_title;
 } QUIC_CHANNEL_ARGS;
 

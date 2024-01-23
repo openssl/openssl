@@ -428,7 +428,7 @@ struct quic_channel_st {
     /* Are we on the QUIC_PORT linked list of channels? */
     unsigned int                    on_port_list                        : 1;
 
-    /* Has QLOG been requested? */
+    /* Has qlog been requested? */
     unsigned int                    use_qlog                            : 1;
 
     /* Saved error stack in case permanent error was encountered */
@@ -438,7 +438,7 @@ struct quic_channel_st {
     OSSL_QUIC_ACK_RANGE             *ack_range_scratch;
     size_t                          num_ack_range_scratch;
 
-    /* Title for QLOG purposes. We own this copy. */
+    /* Title for qlog purposes. We own this copy. */
     char                            *qlog_title;
 };
 

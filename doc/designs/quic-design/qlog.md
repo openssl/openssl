@@ -1,15 +1,15 @@
-QLOG Support
+qlog Support
 ============
 
-QLOG support is formed of two components:
+qlog support is formed of two components:
 
-- A QLOG API and implementation.
-- A JSON encoder API and implementation, which is used by the QLOG
+- A qlog API and implementation.
+- A JSON encoder API and implementation, which is used by the qlog
   implementation.
 
 The API for the JSON encoder is detailed in [a separate document](json-encoder.md).
 
-QLOG support will involve instrumenting various functions with QLOG logging
+qlog support will involve instrumenting various functions with qlog logging
 code. An example call site will look something like this:
 
 ```c
@@ -29,7 +29,7 @@ code. An example call site will look something like this:
 Output Format
 -------------
 
-The output format will always be the JSON-SEQ QLOG variant. This has the
+The output format will always be the JSON-SEQ qlog variant. This has the
 advantage that each event simply involves concatenating another record to an
 output log file and does not require nesting of syntactic constructs between
 events.
@@ -47,7 +47,7 @@ Basic usage is in the form of
 
   This (category name, event name) tuple is known as the event type.
 
-- zero or more macros which log fields inside a QLOG event.
+- zero or more macros which log fields inside a qlog event.
 
 - a `QLOG_EVENT_END` macro.
 
@@ -61,11 +61,11 @@ API details can be found in `internal/qlog.h`.
 Configuration
 -------------
 
-QLOG must currently be enabled at build time using `enable-unstable-qlog`. If
+qlog must currently be enabled at build time using `enable-unstable-qlog`. If
 not enabled, `OPENSSL_NO_QLOG` is defined.
 
-When built with QLOG support, QLOG can be turned on using the recommended
-environment variable `QLOGDIR`. A filter can be defined using `QLOGFILTER`. When
+When built with qlog support, qlog can be turned on using the recommended
+environment variable `QLOGDIR`. A filter can be defined using `OSSL_QFILTER`. When
 enabled, each connection causes a file `{ODCID}_{ROLE}.sqlog` to be created in
 the specified directory, where `{ODCID}` is the original initial DCID used for
 the connection and `{ROLE}` is `client` or `server`.
@@ -131,3 +131,8 @@ Some examples of more normal filters include:
 - `quic:version_information quic:packet_sent`: enable some events explicitly
 
 - `* -quic:version_information`: enable all events except certain events
+
+See also
+--------
+
+See the manpage openssl-qlog(7) for additional usage guidance.
