@@ -64,20 +64,5 @@ jobs:
         echo "::group::${{ matrix.unittest }}"
         exec {fd}>/tmp/perf.lock
         flock -x -w 1000 $fd
-        sudo perf record -o ./perf.data -a -g -- ./${{ matrix.unittest }} $THREAD_COUNT > ${{ matrix.unittest }}.results
-        echo "::group::${{ matrix.unittest }} results"
-        echo "output file raw:"
-        cat ${{ matrix.unittest }}.results
-        echo "PERF_TIME=$(awk '{print $7}' ${{ matrix.unittest }}.results | sed -e's/us//')" >> $GITHUB_ENV
-        sudo perf report --call-graph=flat,2 -i ./perf.data --stdio
-        sudo rm -f ./perf.data
+        ./${{ matrix.unittest }} $THREAD_COUNT
         exec {fd}>&-
-    - name: Update performance data
-      run: |
-        echo "${{ matrix.unittest }} performance metrix is $PERF_TIME"
-        echo "$RUN_DATE, master, $RUN_URL, $PERF_TIME" >> ~/perfdata_csvs/${{ matrix.unittest }}.csv
-    - name: Archive performance data artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: performance-data-csvs-${{ matrix.unittest }}
-        path: ~/perfdata_csvs/${{ matrix.unittest }}.csv
