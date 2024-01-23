@@ -10,6 +10,7 @@
 #include <openssl/quic.h>
 #include <openssl/bio.h>
 #include <openssl/lhash.h>
+#include <openssl/rand.h>
 #include "internal/quic_tserver.h"
 #include "internal/quic_ssl.h"
 #include "internal/quic_error.h"
@@ -356,6 +357,7 @@ static QUIC_TSERVER *s_lock(struct helper *h, struct helper_local *hl);
 static void s_unlock(struct helper *h, struct helper_local *hl);
 
 #define ACQUIRE_S() s_lock(h, hl)
+#define ACQUIRE_S_NOHL() s_lock(h, NULL)
 
 static int check_rejected(struct helper *h, struct helper_local *hl)
 {
@@ -523,7 +525,7 @@ static int *s_checked_out_p(struct helper *h, int thread_idx)
 
 static QUIC_TSERVER *s_lock(struct helper *h, struct helper_local *hl)
 {
-    int *p_checked_out = s_checked_out_p(h, hl->thread_idx);
+    int *p_checked_out = s_checked_out_p(h, hl == NULL ? -1 : hl->thread_idx);
 
     if (h->server_thread.m == NULL || *p_checked_out)
         return h->s;
@@ -5103,6 +5105,119 @@ static const struct script_op script_79[] = {
     OP_END
 };
 
+static QUIC_STATELESS_RESET_TOKEN test_reset_token = {
+    { 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef,
+     0xde, 0xad, 0xbe, 0xef }};
+/*
+ * 80. stateless reset
+ * Generate a packet in the following format:
+ * https://www.rfc-editor.org/rfc/rfc9000.html#name-stateless-reset
+ * Stateless Reset {
+ *  Fixed Bits (2): 1
+ *  Unpredictable bits (38..)
+ *  Stateless reset token (128)
+ *  }
+ */
+static int script_80_send_stateless_reset(struct helper *h, QUIC_PKT_HDR *hdr,
+                                          unsigned char *buf, size_t len)
+{
+    unsigned char databuf[64];
+
+    if (h->inject_word1 == 0)
+        return 1;
+
+    h->inject_word1 = 0;
+
+    fprintf(stderr, "Sending stateless reset\n");
+
+    RAND_bytes(databuf, 64);
+    databuf[0] = 0x40;
+    memcpy(&databuf[48], test_reset_token.token,
+           sizeof(test_reset_token.token));
+
+    if (!TEST_int_eq(SSL_inject_net_dgram(h->c_conn, databuf, sizeof(databuf),
+                                          NULL, h->s_net_bio_addr), 1))
+        return 0;
+
+    return 1;
+}
+
+static int script_80_gen_new_conn_id(struct helper *h, QUIC_PKT_HDR *hdr,
+                                     unsigned char *buf, size_t len)
+{
+    int rc = 0;
+    size_t l;
+    unsigned char frame_buf[64];
+    WPACKET wpkt;
+    QUIC_CONN_ID new_cid = {0};
+    OSSL_QUIC_FRAME_NEW_CONN_ID ncid = {0};
+    QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(ACQUIRE_S_NOHL());
+
+    if (h->inject_word0 == 0)
+        return 1;
+
+    h->inject_word0 = 0;
+
+    fprintf(stderr, "sending new conn id\n");
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+                                           sizeof(frame_buf), 0)))
+        return 0;
+
+    ossl_quic_channel_get_diag_local_cid(ch, &new_cid);
+
+    ncid.seq_num = 2;
+    ncid.retire_prior_to = 2;
+    ncid.conn_id = new_cid;
+    memcpy(ncid.stateless_reset.token, test_reset_token.token,
+           sizeof(test_reset_token.token));
+
+    if (!TEST_true(ossl_quic_wire_encode_frame_new_conn_id(&wpkt, &ncid)))
+        goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &l)))
+        goto err;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, l))
+        goto err;
+
+    rc = 1;
+err:
+    if (rc)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+
+    return rc;
+}
+
+static int script_80_inject_pkt(struct helper *h, QUIC_PKT_HDR *hdr,
+                                unsigned char *buf, size_t len)
+{
+    if (h->inject_word1 == 1)
+        return script_80_send_stateless_reset(h, hdr, buf, len);
+    else if (h->inject_word0 == 1)
+        return script_80_gen_new_conn_id(h, hdr, buf, len);
+
+    return 1;
+}
+
+static const struct script_op script_80[] = {
+    OP_S_SET_INJECT_PLAIN       (script_80_inject_pkt)
+    OP_C_SET_ALPN               ("ossltest")
+    OP_C_CONNECT_WAIT           ()
+    OP_C_WRITE                  (DEFAULT, "apple", 5)
+    OP_C_CONCLUDE               (DEFAULT)
+    OP_S_BIND_STREAM_ID         (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT            (a, "apple", 5)
+    OP_SET_INJECT_WORD          (1, 0)
+    OP_S_WRITE                  (a, "apple", 5)
+    OP_C_READ_EXPECT            (DEFAULT, "apple", 5)
+    OP_SET_INJECT_WORD          (0, 1)
+    OP_S_WRITE                  (a, "apple", 5)
+    OP_C_EXPECT_CONN_CLOSE_INFO (0, 0, 1)
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -5182,7 +5297,8 @@ static const struct script_op *const scripts[] = {
     script_76,
     script_77,
     script_78,
-    script_79
+    script_79,
+    script_80
 };
 
 static int test_script(int idx)
