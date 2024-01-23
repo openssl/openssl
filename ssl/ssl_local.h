@@ -1191,7 +1191,7 @@ struct ssl_ctx_st {
     size_t server_cert_type_len;
 
 # ifndef OPENSSL_NO_QLOG
-    char *qlog_title; /* Session title for QLOG */
+    char *qlog_title; /* Session title for qlog */
 # endif
 };
 

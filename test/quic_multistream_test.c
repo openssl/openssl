@@ -777,7 +777,7 @@ static int helper_init(struct helper *h, const char *script_name,
     if (!TEST_ptr(h->c_ctx = SSL_CTX_new(OSSL_QUIC_client_method())))
         goto err;
 
-    /* Set title for QLOG purposes. */
+    /* Set title for qlog purposes. */
     snprintf(title, sizeof(title), "quic_multistream_test: %s", script_name);
     if (!TEST_true(ossl_quic_set_diag_title(h->c_ctx, title)))
         goto err;

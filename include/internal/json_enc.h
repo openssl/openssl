@@ -16,7 +16,7 @@
  * JSON Encoder
  * ============
  *
- * This JSON encoder is used for QLOG. It supports ordinary JSON (RFC 7159),
+ * This JSON encoder is used for qlog. It supports ordinary JSON (RFC 7159),
  * JSON-SEQ (RFC 7464) and I-JSON (RFC 7493). It supports only basic ASCII.
  */
 

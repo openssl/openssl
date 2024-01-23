@@ -4,7 +4,7 @@ JSON Encoder
 Approach
 --------
 
-The JSON encoder exists to support QLOG implementation. There is no intention to
+The JSON encoder exists to support qlog implementation. There is no intention to
 implement a decoder at this time. The encoder is intended to support automation
 using immediate calls without the use of an intermediate syntax tree
 representation and is expected to be zero-allocation in most cases. This enables
@@ -66,7 +66,7 @@ JSON-SEQ
 --------
 
 The encoder supports JSON-SEQ (RFC 7464), as this is an optimal format for
-outputting QLOG for our purposes.
+outputting qlog for our purposes.
 
 Number Handling
 ---------------

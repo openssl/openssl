@@ -4,13 +4,13 @@ QUIC: Debugging and Tracing
 When debugging the QUIC stack it is extremely useful to have protocol traces
 available. There are two approaches you can use to obtain this data:
 
-- QLOG
+- qlog
 - Packet capture
 
 Neither of these approaches is strictly superior to the other and both have pros
 and cons:
 
-- In general, QLOG is aimed at storing only information relevant to the
+- In general, qlog is aimed at storing only information relevant to the
   QUIC protocol itself without storing bulk data. This includes both transmitted
   and received packets but also information about the internal state of a QUIC
   implementation which is not directly observable from the network.
@@ -28,7 +28,7 @@ the logged data.
 
 To summarise:
 
-- QLOG:
+- qlog:
   - Pro: Smaller files
   - Con: May leave out data assumed to be irrelevant
   - Pro: Information on internal states and decisions made by a QUIC
@@ -39,43 +39,43 @@ To summarise:
   - Con: No direct information on internal states of a QUIC implementation
   - Con: Need to obtain a keylog
 
-Using QLOG
+Using qlog
 ----------
 
-To enable QLOG you must:
+To enable qlog you must:
 
 - build using the `enable-unstable-qlog` build-time configuration option;
 
-- set the environment variable `QLOGDIR` to a directory where QLOG log files
+- set the environment variable `QLOGDIR` to a directory where qlog log files
   are to be written;
 
 - set the environment variable `OSSL_QFILTER` to a filter specifying the events
   you want to be written (set `OSSL_QFILTER='*'` for all events).
 
 Any process using the libssl QUIC implementation will then automatically write
-QLOG files in the JSON-SEQ format to the specified directory. The files have the
+qlog files in the JSON-SEQ format to the specified directory. The files have the
 naming convention recommended by the specification: `{ODCID}_{ROLE}.sqlog`,
 where `{ODCID}` is the initial (original) DCID of a connection and `{ROLE}` is
 `client` or `server`.
 
 The log files can be loaded into [qvis](https://qvis.quictools.info/). The [qvis
-website](https://qvis.quictools.info/) also has some sample QLOG files which you
+website](https://qvis.quictools.info/) also has some sample qlog files which you
 can load at the click of a button, which enables you to see what kind of
 information qvis can offer you.
 
-Note that since the QLOG specification is not finalised and still evolving,
+Note that since the qlog specification is not finalised and still evolving,
 the format of the output may change, as may the method of configuring this
 logging support.
 
-Currently this implementation tracks qvis's QLOG support, as that is the
+Currently this implementation tracks qvis's qlog support, as that is the
 main target use case at this time.
 
-Note that since QLOG emphasises logging only data which is relevant to a QUIC
+Note that since qlog emphasises logging only data which is relevant to a QUIC
 protocol implementation, for the purposes of reducing the volume of logging
 data, application data is generally not logged. (However, this is not a
 guarantee and must not be relied upon from a privacy perspective.)
 
-[See here for more details on the design of the QLOG facility.](qlog.md)
+[See here for more details on the design of the qlog facility.](qlog.md)
 
 Using PCAP
 ----------

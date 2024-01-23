@@ -89,11 +89,11 @@ See L<OSSL_HTTP_parse_url(3)>.
 
 =item B<QLOGDIR>
 
-Specifies a QUIC QLOG output directory. See L<openssl-qlog(7)>.
+Specifies a QUIC qlog output directory. See L<openssl-qlog(7)>.
 
 =item B<OSSL_QFILTER>
 
-Used to set a QUIC QLOG filter specification. See L<openssl-qlog(7)>.
+Used to set a QUIC qlog filter specification. See L<openssl-qlog(7)>.
 
 =back
 
