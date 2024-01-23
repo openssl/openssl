@@ -451,7 +451,7 @@ void ossl_json_object_begin(OSSL_JSON_ENC *json)
     json->state = STATE_PRE_KEY;
 }
 
-/* End a JSON obejct. Must be matched with a call to ossl_json_object_begin(). */
+/* End a JSON object. Must be matched with a call to ossl_json_object_begin(). */
 void ossl_json_object_end(OSSL_JSON_ENC *json)
 {
     composite_end(json, 0, '}');
@@ -464,7 +464,7 @@ void ossl_json_array_begin(OSSL_JSON_ENC *json)
     json->state = STATE_PRE_ITEM;
 }
 
-/* End a JSON array. Must be matched with a call to ossl_json_array_end(). */
+/* End a JSON array. Must be matched with a call to ossl_json_array_begin(). */
 void ossl_json_array_end(OSSL_JSON_ENC *json)
 {
     composite_end(json, 1, ']');

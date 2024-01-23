@@ -29,13 +29,11 @@ code. An example call site will look something like this:
 Output Format
 -------------
 
-The output format will always be the JSON-SEQ qlog variant. This has the
-advantage that each event simply involves concatenating another record to an
-output log file and does not require nesting of syntactic constructs between
-events.
+The output format is always the JSON-SEQ qlog variant. This has the advantage
+that each event simply involves concatenating another record to an output log
+file and does not require nesting of syntactic constructs between events.
 
-Writing to files or to multi-file directories, or to arbitrary BIO sinks, will
-be supported.
+Output is written to a directory containing multiple qlog files.
 
 Basic Usage
 -----------
