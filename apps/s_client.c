@@ -830,7 +830,7 @@ static int new_session_cb(SSL *s, SSL_SESSION *sess)
      * Session data gets dumped on connection for TLSv1.2 and below, and on
      * arrival of the NewSessionTicket for TLSv1.3.
      */
-    if (SSL_version(s) == TLS1_3_VERSION) {
+    if (SSL_version(s) == TLS1_3_VERSION || SSL_version(s) == DTLS1_3_VERSION) {
         BIO_printf(bio_c_out,
                    "---\nPost-Handshake New Session Ticket arrived:\n");
         SSL_SESSION_print(bio_c_out, sess);
