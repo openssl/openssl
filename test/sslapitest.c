@@ -7125,7 +7125,6 @@ static int test_ssl_clear(int idx)
     return testresult;
 }
 
-
 /* Parse CH and retrieve any MFL extension value if present */
 static int get_MFL_from_client_hello(BIO *bio, int *mfl_codemfl_code)
 {
