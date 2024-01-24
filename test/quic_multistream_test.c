@@ -5122,7 +5122,6 @@ static int script_80_send_stateless_reset(struct helper *h, QUIC_PKT_HDR *hdr,
 {
     unsigned char databuf[64];
 
-
     if (h->inject_word1 == 0)
         return 1;
 
@@ -5132,7 +5131,6 @@ static int script_80_send_stateless_reset(struct helper *h, QUIC_PKT_HDR *hdr,
     databuf[0] = 0x40;
     memcpy(&databuf[48], test_reset_token.token,
            sizeof(test_reset_token.token));
-
 
     if (!TEST_int_eq(SSL_inject_net_dgram(h->c_conn, databuf, sizeof(databuf),
                                           NULL, h->s_net_bio_addr), 1))
@@ -5169,18 +5167,14 @@ static int script_80_gen_new_conn_id(struct helper *h, QUIC_PKT_HDR *hdr,
     memcpy(ncid.stateless_reset.token, test_reset_token.token,
            sizeof(test_reset_token.token));
 
-    if (!TEST_true(ossl_quic_wire_encode_frame_new_conn_id(&wpkt, &ncid))) {
-        fprintf(stderr, "FAILED TO ENCODE FRAME\n");
+    if (!TEST_true(ossl_quic_wire_encode_frame_new_conn_id(&wpkt, &ncid)))
         goto err;
-    }
 
     if (!TEST_true(WPACKET_get_total_written(&wpkt, &l)))
         goto err;
 
-    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, l)) {
-        fprintf(stderr, "FAILED TO INJECT FRAME\n");
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, l))
         goto err;
-    }
 
     rc = 1;
 err:
@@ -5193,18 +5187,20 @@ err:
 }
 
 static const struct script_op script_80[] = {
-    OP_SET_INJECT_WORD          (0, 0)
-    OP_C_SET_INCOMING_STREAM_POLICY(SSL_INCOMING_STREAM_POLICY_ACCEPT)
     OP_C_SET_ALPN               ("ossltest")
     OP_C_CONNECT_WAIT           ()
-    OP_SET_INJECT_WORD          (1, 0)
-    OP_S_SET_INJECT_PLAIN       (script_80_gen_new_conn_id)
-    OP_C_WRITE                  (DEFAULT,  "apple", 5)
+    OP_C_WRITE                  (DEFAULT, "apple", 5)
+    OP_C_CONCLUDE               (DEFAULT) 
     OP_S_BIND_STREAM_ID         (a, C_BIDI_ID(0))
     OP_S_READ_EXPECT            (a, "apple", 5)
-    OP_C_WRITE                  (DEFAULT, "apple", 5)
+    OP_S_WRITE                  (a, "apple", 5)
+    OP_SET_INJECT_WORD          (1, 0)
+    OP_S_SET_INJECT_PLAIN       (script_80_gen_new_conn_id)
+    OP_C_READ_EXPECT            (DEFAULT, "apple", 5)
+    OP_S_WRITE                  (a, "apple", 5)
     OP_SET_INJECT_WORD          (1, 1)
     OP_S_SET_INJECT_PLAIN       (script_80_send_stateless_reset)
+    OP_C_READ_EXPECT            (DEFAULT, "apple", 5)
     OP_S_EXPECT_CONN_CLOSE_INFO (-1, 0, 0)
     OP_END
 };
