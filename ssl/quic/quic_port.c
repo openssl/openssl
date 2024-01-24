@@ -499,6 +499,9 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     if (!ossl_quic_port_is_running(port))
         goto undesirable;
 
+    if (port_try_handle_stateless_reset(port, e))
+        goto undesirable;
+
     if (dcid != NULL
         && ossl_quic_lcidm_lookup(port->lcidm, dcid, NULL,
                                   (void **)&ch)) {
@@ -506,9 +509,6 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         ossl_quic_channel_inject(ch, e);
         return;
     }
-
-    if (port_try_handle_stateless_reset(port, e))
-        goto undesirable;
 
     /*
      * If we have an incoming packet which doesn't match any existing connection
