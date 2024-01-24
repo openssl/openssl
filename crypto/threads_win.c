@@ -43,7 +43,7 @@ typedef struct {
 } CRYPTO_win_rwlock;
 # endif
 
-CRYPTO_THREAD_LOCAL rcu_thr_key;
+static CRYPTO_THREAD_LOCAL rcu_thr_key;
 
 # define READER_SHIFT 0
 # define ID_SHIFT 32 
@@ -98,7 +98,7 @@ struct rcu_lock_st {
     volatile long int reader_idx;
     uint32_t current_alloc_idx;
     uint32_t writers_alloced;
-    CRITICAL_SECTION write_lock;
+    CRYPTO_MUTEX write_lock;
     CRYPTO_MUTEX *alloc_lock;
     CRYPTO_CONDVAR *alloc_signal;
     CRYPTO_MUTEX *prior_lock;
@@ -151,15 +151,17 @@ CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
     if (new == NULL)
         return NULL;
 
-    InitializeCriticalSection(&new->write_lock);
+    new->write_lock = ossl_crypto_mutex_new();
     new->alloc_signal = ossl_crypto_condvar_new();
     new->prior_signal = ossl_crypto_condvar_new();
     new->alloc_lock = ossl_crypto_mutex_new();
     new->prior_lock = ossl_crypto_mutex_new();
+    new->write_lock = ossl_crypto_mutex_new();
     new->qp_group = allocate_new_qp_group(new, num_writers + 1);
     if (new->qp_group == NULL
         || new->alloc_signal == NULL
         || new->prior_signal == NULL
+        || new->write_lock == NULL
         || new->alloc_lock == NULL
         || new->prior_lock == NULL) {
         OPENSSL_free(new->qp_group);
@@ -167,6 +169,7 @@ CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
         ossl_crypto_condvar_free(&new->prior_signal);
         ossl_crypto_mutex_free(&new->alloc_lock);
         ossl_crypto_mutex_free(&new->prior_lock);
+        ossl_crypto_mutex_free(&new->write_lock);
         OPENSSL_free(new);
         new = NULL;
     }
@@ -181,6 +184,7 @@ void ossl_rcu_lock_free(CRYPTO_RCU_LOCK lock)
     ossl_crypto_condvar_free(&lock->prior_signal);
     ossl_crypto_mutex_free(&lock->alloc_lock);
     ossl_crypto_mutex_free(&lock->prior_lock);
+    ossl_crypto_mutex_free(&lock->write_lock);
     OPENSSL_free(lock);
 }
 
@@ -237,12 +241,12 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK lock)
 
 void ossl_rcu_write_lock(CRYPTO_RCU_LOCK lock)
 {
-    EnterCriticalSection(&lock->write_lock);
+    ossl_crypto_mutex_lock(lock->write_lock);
 }
 
 void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK lock)
 {
-    LeaveCriticalSection(&lock->write_lock);
+    ossl_crypto_mutex_unlock(lock->write_lock);
 }
 
 void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK lock)
