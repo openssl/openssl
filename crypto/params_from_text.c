@@ -117,7 +117,7 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
         if (*ishex) {
             size_t hexdigits = strlen(value);
             if ((hexdigits % 2) != 0) {
-                /* We don't accept an off number of hex digits */
+                /* We don't accept an odd number of hex digits */
                 ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_ODD_NUMBER_OF_DIGITS);
                 return 0;
             }
