@@ -134,7 +134,7 @@ void ossl_qlog_event_connectivity_connection_closed(QLOG *qlog,
                          (unsigned long long)tcause->error_code);
                 m = ce;
             }
-            /* TODO(QLOG): Consider adding ERR information in the output. */
+            /* TODO(QLOG FUTURE): Consider adding ERR information in the output. */
 
             if (m != NULL)
                 QLOG_STR("connection_code", m);
@@ -497,7 +497,7 @@ unknown:
 
         /*
          * Can't continue scanning for frames in this case as the frame length
-         * is unknown. We log the entire body the rest of the packet payload
+         * is unknown. We log the entire body of the rest of the packet payload
          * as the raw data of the frame.
          */
         QLOG_BEGIN("raw");
@@ -591,7 +591,7 @@ static void log_packet(QLOG *qlog_instance,
                 QLOG_END()
             QLOG_END()
         }
-        /* TODO(QLOG): flags, length */
+        /* TODO(QLOG FUTURE): flags, length */
     QLOG_END()
     QLOG_U64("datagram_id", datagram_id);
 

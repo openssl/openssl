@@ -11,9 +11,10 @@
 #include "internal/json_enc.h"
 #include "internal/common.h"
 #include "internal/cryptlib.h"
+#include "crypto/ctype.h"
 
-# define BITS_PER_WORD (sizeof(size_t) * 8)
-# define NUM_ENABLED_W ((QLOG_EVENT_TYPE_NUM + BITS_PER_WORD - 1) / BITS_PER_WORD)
+#define BITS_PER_WORD (sizeof(size_t) * 8)
+#define NUM_ENABLED_W ((QLOG_EVENT_TYPE_NUM + BITS_PER_WORD - 1) / BITS_PER_WORD)
 
 static ossl_unused ossl_inline int bit_get(const size_t *p, uint32_t bit_no)
 {
@@ -111,9 +112,9 @@ QLOG *ossl_qlog_new_from_env(const QLOG_TRACE_INFO *info)
 
     qlogdir_sep = ossl_determine_dirsep(qlogdir);
 
-    /* strlen("client" / "server"); strlen(".sqlog"); _; separator; _; NUL */
-    strl = l + info->odcid.id_len * 2 + 6 + 7 + 2;
-    filename = OPENSSL_malloc(strl + 1);
+    /* dir; [sep]; ODCID; _; strlen("client" / "server"); strlen(".sqlog"); NUL */
+    strl = l + 1 + info->odcid.id_len * 2 + 1 + 6 + 6 + 1;
+    filename = OPENSSL_malloc(strl);
     if (filename == NULL)
         return NULL;
 
@@ -303,8 +304,10 @@ static void qlog_event_seq_header(QLOG *qlog)
                 ossl_json_key(&qlog->json, "system_info");
                 ossl_json_object_begin(&qlog->json);
                 {
+#if defined(OPENSSL_SYS_UNIX) || defined(OPENSSL_SYS_WINDOWS)
                     ossl_json_key(&qlog->json, "process_id");
                     ossl_json_u64(&qlog->json, (uint64_t)getpid());
+#endif
                 } /* system_info */
                 ossl_json_object_end(&qlog->json);
             } /* common_fields */
@@ -315,7 +318,7 @@ static void qlog_event_seq_header(QLOG *qlog)
             {
                 ossl_json_key(&qlog->json, "type");
                 ossl_json_str(&qlog->json, qlog->info.is_server
-                                    ? "server" : "client");
+                                  ? "server" : "client");
             } /* vantage_point */
             ossl_json_object_end(&qlog->json);
         } /* trace */
@@ -491,9 +494,7 @@ static ossl_inline int is_term_sep_ws(char c)
 
 static ossl_inline int is_name_char(char c)
 {
-    return (c >= 'a' && c <= 'z')
-        || (c >= 'A' && c <= 'Z')
-        || c == '_' || c == '-';
+    return ossl_isalpha(c) || ossl_isdigit(c) || c == '_' || c == '-';
 }
 
 static int lex_init(struct lexer *lex, const char *in, size_t in_len)
@@ -618,7 +619,8 @@ static void filter_apply(size_t *enabled, int add,
 static int lex_fail(struct lexer *lex, const char *msg)
 {
     /*
-     * TODO(QLOG): Determine how to print log messages about bad filter strings
+     * TODO(QLOG FUTURE): Determine how to print log messages about bad filter
+     * strings
      */
     lex->p = lex->term_end = lex->end;
     return 0;

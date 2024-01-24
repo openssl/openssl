@@ -20,5 +20,5 @@ SOURCE[$LIBSSL]=quic_types.c
 SOURCE[$LIBSSL]=qlog_event_helpers.c
 IF[{- !$disabled{qlog} -}]
   SOURCE[$LIBSSL]=json_enc.c qlog.c
-  SHARED_SOURCE[$LIBSSL]=../../crypto/getenv.c
+  SHARED_SOURCE[$LIBSSL]=../../crypto/getenv.c ../../crypto/ctype.c
 ENDIF
