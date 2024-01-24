@@ -98,7 +98,7 @@ struct rcu_lock_st {
     volatile long int reader_idx;
     uint32_t current_alloc_idx;
     uint32_t writers_alloced;
-    CRYPTO_MUTEX write_lock;
+    CRYPTO_MUTEX *write_lock;
     CRYPTO_MUTEX *alloc_lock;
     CRYPTO_CONDVAR *alloc_signal;
     CRYPTO_MUTEX *prior_lock;
