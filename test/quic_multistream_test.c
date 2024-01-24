@@ -5200,8 +5200,8 @@ static const struct script_op script_80[] = {
     OP_S_WRITE                  (a, "apple", 5)
     OP_SET_INJECT_WORD          (1, 1)
     OP_S_SET_INJECT_PLAIN       (script_80_send_stateless_reset)
-    OP_C_READ_EXPECT            (DEFAULT, "apple", 5)
     OP_S_EXPECT_CONN_CLOSE_INFO (-1, 0, 0)
+    OP_C_EXPECT_CONN_CLOSE_INFO (0, 0, 1)
     OP_END
 };
 
