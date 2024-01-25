@@ -81,6 +81,13 @@ OpenSSL 3.3
 
    *Hugo Landau*
 
+ * New atexit configuration switch, which controls whether the OPENSSL_cleanup
+   is registered when libcrypto is unloaded. This is turned off on NonStop
+   configurations because of loader differences on that platform compared to
+   Linux.
+
+   *Randall S. Becker*
+
 OpenSSL 3.2
 -----------
 

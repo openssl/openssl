@@ -57,7 +57,13 @@ relating to `atexit()` processing when a shared library is unloaded and when
 the program terminates. This limitation applies to all OpenSSL shared library
 components.
 
-A resolution to this situation is under investigation.
+A control has been added as of 3.3.x to disable calls to `atexit()` within the
+`libcrypto` builds (specifically in `crypto/init.c`). This switch can be
+controlled using `disable-atexit` or `enable-atexit`, and is disabled by default
+for NonStop builds. If you need to have `atexit()` functionality, set
+`enabled-atexit` when configuring OpenSSL to enable the `atexit()` call to
+register `OPENSSL_cleanup()` automatically. Preferably, you can explicitly call
+`OPENSSL_cleanup()` from your application.
 
 About Prefix and OpenSSLDir
 ---------------------------
