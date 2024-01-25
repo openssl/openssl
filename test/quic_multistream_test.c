@@ -5127,8 +5127,6 @@ static int script_80_send_stateless_reset(struct helper *h, QUIC_PKT_HDR *hdr,
 
     h->inject_word1 = 0;
 
-    fprintf(stderr, "Sending stateless reset\n");
-
     RAND_bytes(databuf, 64);
     databuf[0] = 0x40;
     memcpy(&databuf[48], test_reset_token.token,
@@ -5157,7 +5155,6 @@ static int script_80_gen_new_conn_id(struct helper *h, QUIC_PKT_HDR *hdr,
 
     h->inject_word0 = 0;
 
-    fprintf(stderr, "sending new conn id\n");
     if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
                                            sizeof(frame_buf), 0)))
         return 0;
@@ -5205,7 +5202,7 @@ static const struct script_op script_80[] = {
     OP_C_SET_ALPN               ("ossltest")
     OP_C_CONNECT_WAIT           ()
     OP_C_WRITE                  (DEFAULT, "apple", 5)
-    OP_C_CONCLUDE               (DEFAULT) 
+    OP_C_CONCLUDE               (DEFAULT)
     OP_S_BIND_STREAM_ID         (a, C_BIDI_ID(0))
     OP_S_READ_EXPECT            (a, "apple", 5)
     OP_SET_INJECT_WORD          (1, 0)
