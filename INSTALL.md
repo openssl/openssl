@@ -546,6 +546,13 @@ be used even with this option.
 
 Do not build support for async operations.
 
+### no-atexit
+
+Do not use `atexit()` in libcrypto builds.
+
+`atexit()` has varied semantics between platforms and can cause SIGSEGV in some
+circumstances. This options disables the atexit registration of OPENSSL_cleanup.
+
 ### no-autoalginit
 
 Don't automatically load all supported ciphers and digests.

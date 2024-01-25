@@ -30,7 +30,11 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.13 and 3.0.14 [xx XXX xxxx]
 
- * none yet
+ * New atexit configuration switch, which controls whether the OPENSSL_cleanup
+   is registered when libcrypto is unloaded. This can be used on platforms
+   where using atexit() from shared libraries causes crashes on exit.
+
+   *Randall S. Becker*
 
 ### Changes between 3.0.12 and 3.0.13 [30 Jan 2024]
 

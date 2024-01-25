@@ -17,6 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         opt: [
+          no-atexit,
           no-cmp,
           no-cms,
           no-ct,
