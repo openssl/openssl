@@ -714,6 +714,7 @@ int ssl_load_sigalgs(SSL_CTX *ctx)
 
     /* now populate ctx->ssl_cert_info */
     if (ctx->sigalg_list_len > 0) {
+        OPENSSL_free(ctx->ssl_cert_info);
         ctx->ssl_cert_info = OPENSSL_zalloc(sizeof(lu) * ctx->sigalg_list_len);
         if (ctx->ssl_cert_info == NULL)
             return 0;
