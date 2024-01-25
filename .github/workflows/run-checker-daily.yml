@@ -27,6 +27,7 @@ jobs:
           no-asan,
           no-asm,
           no-async,
+          no-atexit,
           no-autoalginit,
           no-autoerrinit,
           no-autoload-config,
