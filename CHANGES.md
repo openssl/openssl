@@ -27,6 +27,12 @@ OpenSSL 3.2
 
 ### Changes between 3.2.1 and 3.2.2 [xx XXX xxxx]
 
+ * New atexit configuration switch, which controls whether the OPENSSL_cleanup
+   is registered when libcrypto is unloaded. This can be used on platforms
+   where using atexit() from shared libraries causes crashes on exit.
+
+   *Randall S. Becker*
+
  * Fixed bug where SSL_export_keying_material() could not be used with QUIC
    connections. (#23560)
 
