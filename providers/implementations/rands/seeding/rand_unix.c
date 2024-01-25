@@ -354,7 +354,12 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      * internally. So we need to check errno for ENOSYS
      */
 #  if !defined(__DragonFly__) && !defined(__NetBSD__)
-#    if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
+
+     /// Disable the usage of "getentropy" function from libc (on static link time) to avoid dependency on too new libc version.
+     /// Otherwise, if we build ClickHouse on a system with new libc and run the built binary on a system with old libc, it will fail.
+     ///
+     /// Note that there is a fallback below to (1) runtime symbol lookup and (2) direct syscall, that are equivalent.
+#    if 0 && defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
     extern int getentropy(void *buffer, size_t length) __attribute__((weak));
 
     if (getentropy != NULL) {
