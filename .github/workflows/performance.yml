@@ -65,4 +65,10 @@ jobs:
         exec {fd}>/tmp/perf.lock
         flock -x -w 1000 $fd
         ./${{ matrix.unittest }} $THREAD_COUNT
+        echo "::endgroup::"
+        echo "::group::${{ matrix.unittest }}: perf analysis"
+        sudo perf record -o ./perf.data -a -g -- ./${{ matrix.unittest }} $THREAD_COUNT
+        sudo perf report --call-graph=flat,2 -i ./perf.data --stdio
+        rm -f ./perf.data
+        echo "::endgroup::"
         exec {fd}>&-
