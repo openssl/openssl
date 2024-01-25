@@ -24,7 +24,11 @@ OpenSSL 3.1
 
 ### Changes between 3.1.5 and 3.1.6 [xx XXX xxxx]
 
- * none yet
+ * New atexit configuration switch, which controls whether the OPENSSL_cleanup
+   is registered when libcrypto is unloaded. This can be used on platforms
+   where using atexit() from shared libraries causes crashes on exit.
+
+   *Randall S. Becker*
 
 ### Changes between 3.1.4 and 3.1.5 [30 Jan 2024]
 
