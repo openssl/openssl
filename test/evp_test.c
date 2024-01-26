@@ -2859,7 +2859,9 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
     if (!TEST_ptr(name = OPENSSL_strdup(value)))
         return 0;
     p = strchr(name, ':');
-    if (p != NULL)
+    if (p == NULL)
+        return 0;
+    else
         *p++ = '\0';
 
     if (strcmp(name, "r") == 0
