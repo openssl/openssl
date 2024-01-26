@@ -16,6 +16,7 @@ int ossl_cipher_capable_aes_cbc_hmac_sha1(void);
 int ossl_cipher_capable_aes_cbc_hmac_sha256(void);
 int ossl_cipher_capable_aes_cbc_hmac_sha1_etm(void);
 int ossl_cipher_capable_aes_cbc_hmac_sha256_etm(void);
+int ossl_cipher_capable_aes_cbc_hmac_sha512_etm(void);
 
 OSSL_FUNC_provider_get_capabilities_fn ossl_prov_get_capabilities;
 
