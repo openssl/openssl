@@ -15,6 +15,7 @@ SOURCE[../../libcrypto]=$COMMON\
         evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c pbe_scrypt.c \
         e_aes_cbc_hmac_sha1.c e_aes_cbc_hmac_sha256.c e_rc4_hmac_md5.c \
         e_aes_cbc_hmac_sha1_etm.c e_aes_cbc_hmac_sha256_etm.c \
+        e_aes_cbc_hmac_sha512_etm.c \
         e_chacha20_poly1305.c \
         legacy_sha.c ctrl_params_translate.c \
         cmeth_lib.c
@@ -68,6 +69,7 @@ INCLUDE[e_aes_cbc_hmac_sha1.o]=../modes
 INCLUDE[e_aes_cbc_hmac_sha256.o]=../modes
 INCLUDE[e_aes_cbc_hmac_sha1_etm.o]=.. ../modes
 INCLUDE[e_aes_cbc_hmac_sha256_etm.o]=.. ../modes
+INCLUDE[e_aes_cbc_hmac_sha512_etm.o]=.. ../modes
 INCLUDE[e_aria.o]=.. ../modes
 INCLUDE[e_sm4.o]=.. ../modes
 INCLUDE[e_des.o]=..

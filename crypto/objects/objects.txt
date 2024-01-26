@@ -1692,6 +1692,9 @@ sm-scheme 104 10        : SM4-XTS             : sm4-xts
 			: AES-128-CBC-HMAC-SHA256-ETM	: aes-128-cbc-hmac-sha256-etm
 			: AES-192-CBC-HMAC-SHA256-ETM	: aes-192-cbc-hmac-sha256-etm
 			: AES-256-CBC-HMAC-SHA256-ETM	: aes-256-cbc-hmac-sha256-etm
+			: AES-128-CBC-HMAC-SHA512-ETM	: aes-128-cbc-hmac-sha512-etm
+			: AES-192-CBC-HMAC-SHA512-ETM	: aes-192-cbc-hmac-sha512-etm
+			: AES-256-CBC-HMAC-SHA512-ETM	: aes-256-cbc-hmac-sha512-etm
 
 ISO-US 10046 2 1	: dhpublicnumber		: X9.42 DH
 

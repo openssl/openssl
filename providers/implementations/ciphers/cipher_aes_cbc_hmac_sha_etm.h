@@ -13,6 +13,7 @@
 
 int ossl_cipher_capable_aes_cbc_hmac_sha1_etm(void);
 int ossl_cipher_capable_aes_cbc_hmac_sha256_etm(void);
+int ossl_cipher_capable_aes_cbc_hmac_sha512_etm(void);
 
 typedef struct prov_cipher_hw_aes_hmac_sha_ctx_etm_st {
     PROV_CIPHER_HW base; /* must be first */
@@ -21,12 +22,13 @@ typedef struct prov_cipher_hw_aes_hmac_sha_ctx_etm_st {
 
 const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha1_etm(void);
 const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha256_etm(void);
+const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha512_etm(void);
 
 #ifdef AES_CBC_HMAC_SHA_ETM_CAPABLE
 # include <openssl/aes.h>
 # include <openssl/sha.h>
 
-# define AES_CBC_MAX_HMAC_SIZE 32
+# define AES_CBC_MAX_HMAC_SIZE 64
 
 typedef struct prov_aes_hmac_sha_etm_ctx_st {
     PROV_CIPHER_CTX base;
@@ -46,6 +48,11 @@ typedef struct prov_aes_hmac_sha256_etm_ctx_st {
     PROV_AES_HMAC_SHA_ETM_CTX base_ctx;
     SHA256_CTX head, tail;
 } PROV_AES_HMAC_SHA256_ETM_CTX;
+
+typedef struct prov_aes_hmac_sha512_etm_ctx_st {
+    PROV_AES_HMAC_SHA_ETM_CTX base_ctx;
+    SHA512_CTX head, tail, md;
+} PROV_AES_HMAC_SHA512_ETM_CTX;
 
 typedef struct {
     struct {
