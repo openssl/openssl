@@ -94,7 +94,7 @@ void gcm_ghash_p8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
 
 #  if (defined(__arm__) || defined(__arm) || defined(__aarch64__) || defined(_M_ARM64))
 #   include "crypto/arm_arch.h"
-#   if __ARM_MAX_ARCH__>=7
+#   if __ARM_MAX_ARCH__ >= 7
 #    if defined(BSAES_ASM)
 #     define BSAES_CAPABLE (OPENSSL_armcap_P & ARMV7_NEON)
 #    endif
@@ -116,6 +116,8 @@ void gcm_ghash_p8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
                                               (OPENSSL_armcap_P & ARMV8_SHA1))
 #     define HWAES_CBC_HMAC_SHA256_ETM_CAPABLE (HWAES_CAPABLE && \
                                                 (OPENSSL_armcap_P & ARMV8_SHA256))
+#     define HWAES_CBC_HMAC_SHA512_ETM_CAPABLE (HWAES_CAPABLE && \
+                                                (OPENSSL_armcap_P & ARMV8_SHA512))
 #     ifndef __AARCH64EB__
 #      define AES_CBC_HMAC_SHA_ETM_CAPABLE 1
 #     endif
