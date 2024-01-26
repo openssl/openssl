@@ -5332,6 +5332,18 @@
 #define LN_aes_256_cbc_hmac_sha256_etm          "aes-256-cbc-hmac-sha256-etm"
 #define NID_aes_256_cbc_hmac_sha256_etm         1459
 
+#define SN_aes_128_cbc_hmac_sha512_etm          "AES-128-CBC-HMAC-SHA512-ETM"
+#define LN_aes_128_cbc_hmac_sha512_etm          "aes-128-cbc-hmac-sha512-etm"
+#define NID_aes_128_cbc_hmac_sha512_etm         1460
+
+#define SN_aes_192_cbc_hmac_sha512_etm          "AES-192-CBC-HMAC-SHA512-ETM"
+#define LN_aes_192_cbc_hmac_sha512_etm          "aes-192-cbc-hmac-sha512-etm"
+#define NID_aes_192_cbc_hmac_sha512_etm         1461
+
+#define SN_aes_256_cbc_hmac_sha512_etm          "AES-256-CBC-HMAC-SHA512-ETM"
+#define LN_aes_256_cbc_hmac_sha512_etm          "aes-256-cbc-hmac-sha512-etm"
+#define NID_aes_256_cbc_hmac_sha512_etm         1462
+
 #define SN_dhpublicnumber               "dhpublicnumber"
 #define LN_dhpublicnumber               "X9.42 DH"
 #define NID_dhpublicnumber              920
