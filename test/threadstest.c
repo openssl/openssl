@@ -91,9 +91,9 @@ static int test_lock(void)
     int res;
 
     res = TEST_true(CRYPTO_THREAD_read_lock(lock))
-        && TEST_true(CRYPTO_THREAD_unlock(lock))
-        && TEST_true(CRYPTO_THREAD_write_lock(lock))
-        && TEST_true(CRYPTO_THREAD_unlock(lock));
+          && TEST_true(CRYPTO_THREAD_unlock(lock))
+          && TEST_true(CRYPTO_THREAD_write_lock(lock))
+          && TEST_true(CRYPTO_THREAD_unlock(lock));
 
     CRYPTO_THREAD_lock_free(lock);
 
@@ -271,20 +271,12 @@ out:
 static int torture_rw_low(void)
 {
     contention = 0;
-#if !defined(OPENSSL_THREADS)
-    TEST_skip("No threads build");
-    return 1;
-#endif
     return _torture_rw();
 }
 
 static int torture_rw_high(void)
 {
     contention = 1;
-#if !defined(OPENSSL_THREADS)
-    TEST_skip("No threads build");
-    return 1;
-#endif
     return _torture_rw();
 }
 
@@ -459,20 +451,12 @@ static int _torture_rcu(void)
 static int torture_rcu_low(void)
 {
     contention = 0;
-#if !defined(OPENSSL_THREADS)
-    TEST_skip("No threads build");
-    return 1;
-#endif
     return _torture_rcu();
 }
 
 static int torture_rcu_high(void)
 {
     contention = 1;
-#if !defined(OPENSSL_THREADS)
-    TEST_skip("No threads build");
-    return 1;
-#endif
     return _torture_rcu();
 }
 #endif

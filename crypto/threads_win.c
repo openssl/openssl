@@ -69,6 +69,7 @@ struct rcu_qp {
 
 struct thread_qp {
     struct rcu_qp *qp;
+    unsigned int depth;
     CRYPTO_RCU_LOCK lock;
 };
 
@@ -139,14 +140,15 @@ static CRYPTO_ONCE rcu_init_once = CRYPTO_ONCE_STATIC_INIT;
 
 CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
 {
-    struct rcu_lock_st *new =
-        OPENSSL_zalloc(sizeof(*new));
+    struct rcu_lock_st *new;
 
     if (!CRYPTO_THREAD_run_once(&rcu_init_once, ossl_rcu_init))
         return NULL;
 
     if (num_writers < 1)
         num_writers = 1;
+
+    new = OPENSSL_zalloc(sizeof(*new));
 
     if (new == NULL)
         return NULL;
@@ -236,6 +238,7 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK lock)
     assert(available_qp != -1);
 
     data->thread_qps[available_qp].qp = get_hold_current_qp(lock);
+    data->thread_qps[available_qp].depth = 1;
     data->thread_qps[available_qp].lock = lock;
 }
 
@@ -258,9 +261,12 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK lock)
 
     for (i = 0; i < MAX_QPS; i++) {
         if (data->thread_qps[i].lock == lock) {
-            InterlockedAdd64(&data->thread_qps[i].qp->users, -VAL_READER);
-            data->thread_qps[i].qp = NULL;
-            data->thread_qps[i].lock = NULL;
+            data->thread_qps[i].depth--;
+            if (data->thread_qps[i].depth == 0) {
+                InterlockedAdd64(&data->thread_qps[i].qp->users, -VAL_READER);
+                data->thread_qps[i].qp = NULL;
+                data->thread_qps[i].lock = NULL;
+            }
             return;
         }
     }

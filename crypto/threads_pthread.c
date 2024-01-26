@@ -58,7 +58,7 @@
 #else
 static pthread_mutex_t atomic_sim_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static inline void* fallback_atomic_load_n(void **p)
+static inline void *fallback_atomic_load_n(void **p)
 {
     void *ret;
 
@@ -70,7 +70,7 @@ static inline void* fallback_atomic_load_n(void **p)
 
 # define ATOMIC_LOAD_N(p, o) fallback_atomic_load_n((void **)p)
 
-static inline void* fallback_atomic_store_n(void **p, void *v)
+static inline void *fallback_atomic_store_n(void **p, void *v)
 {
     void *ret;
 
@@ -96,7 +96,7 @@ static inline void fallback_atomic_store(void **p, void **v)
 
 # define ATOMIC_STORE(p, v, o) fallback_atomic_store((void **)p, (void **)v)
 
-static inline void* fallback_atomic_exchange_n(void **p, void *v)
+static inline void *fallback_atomic_exchange_n(void **p, void *v)
 {
     void *ret;
 
@@ -187,8 +187,8 @@ static CRYPTO_THREAD_LOCAL rcu_thr_key;
 # define READER_SIZE 16
 # define ID_SIZE 32
 
-# define READER_MASK     (((uint64_t)1 << READER_SIZE)-1)
-# define ID_MASK         (((uint64_t)1 << ID_SIZE)-1)
+# define READER_MASK     (((uint64_t)1 << READER_SIZE) - 1)
+# define ID_MASK         (((uint64_t)1 << ID_SIZE) - 1)
 # define READER_COUNT(x) (((uint64_t)(x) >> READER_SHIFT) & READER_MASK)
 # define ID_VAL(x)       (((uint64_t)(x) >> ID_SHIFT) & ID_MASK)
 # define VAL_READER      ((uint64_t)1 << READER_SHIFT)
@@ -206,6 +206,7 @@ struct rcu_qp {
 
 struct thread_qp {
     struct rcu_qp *qp;
+    unsigned int depth;
     CRYPTO_RCU_LOCK lock;
 };
 
@@ -231,7 +232,7 @@ struct rcu_lock_st {
     struct rcu_cb_item *cb_items;
 
     /* rcu generation counter for in-order retirement */
-    uint64_t id_ctr;
+    uint32_t id_ctr;
 
     /* Array of quiescent points for synchronization */
     struct rcu_qp *qp_group;
@@ -355,8 +356,10 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK lock)
         if (data->thread_qps[i].qp == NULL && available_qp == -1)
             available_qp = i;
         /* If we have a hold on this lock already, we're good */
-        if (data->thread_qps[i].lock == lock)
+        if (data->thread_qps[i].lock == lock) {
+            data->thread_qps[i].depth++;
             return;
+        }
     }
 
     /*
@@ -365,6 +368,7 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK lock)
     assert(available_qp != -1);
 
     data->thread_qps[available_qp].qp = get_hold_current_qp(lock);
+    data->thread_qps[available_qp].depth = 1;
     data->thread_qps[available_qp].lock = lock;
 }
 
@@ -382,13 +386,21 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK lock)
              * to ensure that the decrement is published immediately 
              * to any write side waiters
              */
-            ATOMIC_SUB_FETCH(&data->thread_qps[i].qp->users, VAL_READER,
-                             __ATOMIC_RELEASE);
-            data->thread_qps[i].qp = NULL;
-            data->thread_qps[i].lock = NULL;
+            data->thread_qps[i].depth--;
+            if (data->thread_qps[i].depth == 0) {
+                ATOMIC_SUB_FETCH(&data->thread_qps[i].qp->users, VAL_READER,
+                                 __ATOMIC_RELEASE);
+                data->thread_qps[i].qp = NULL;
+                data->thread_qps[i].lock = NULL;
+            }
             return;
         }
     }
+    /*
+     * if we get here, we're trying to unlock a lock that we never acquired
+     * thats fatal
+     */
+    assert(0);
 }
 
 /*
@@ -556,8 +568,7 @@ static CRYPTO_ONCE rcu_init_once = CRYPTO_ONCE_STATIC_INIT;
 
 CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
 {
-    struct rcu_lock_st *new =
-        OPENSSL_zalloc(sizeof(*new));
+    struct rcu_lock_st *new;
 
     if (!CRYPTO_THREAD_run_once(&rcu_init_once, ossl_rcu_init))
         return NULL;
@@ -565,6 +576,7 @@ CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
     if (num_writers < 1)
         num_writers = 1;
 
+    new = OPENSSL_zalloc(sizeof(*new));
     if (new == NULL)
         return NULL;
 
