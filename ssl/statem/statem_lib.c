@@ -1979,16 +1979,17 @@ int ssl_version_supported(const SSL_CONNECTION *s, int version,
     for (vent = table;
          vent->version != 0 && ssl_version_cmp(s, version, vent->version) <= 0;
          ++vent) {
-        const SSL_METHOD *thismeth = s->server ? vent->smeth() : vent->cmeth();
+        const SSL_METHOD *(*thismeth)(void) = s->server ? vent->smeth
+                                                        : vent->cmeth;
 
         if (thismeth != NULL
                 && ssl_version_cmp(s, version, vent->version) == 0
-                && ssl_method_error(s, thismeth) == 0
+                && ssl_method_error(s, thismeth()) == 0
                 && (!s->server
                     || version != TLS1_3_VERSION
                     || is_tls13_capable(s))) {
             if (meth != NULL)
-                *meth = thismeth;
+                *meth = thismeth();
             return 1;
         }
     }
