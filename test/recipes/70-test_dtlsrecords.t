@@ -18,7 +18,7 @@ my $test_name = "test_dtlsrecords";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
-    if $^O =~ /^(VMS)$/;
+    if $^O =~ /^(VMS|MSWin32)$/;
 
 plan skip_all => "$test_name needs the dynamic engine feature enabled"
     if disabled("engine") || disabled("dynamic-engine");
