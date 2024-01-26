@@ -241,6 +241,12 @@ static const OSSL_ALGORITHM_CAPABLE deflt_ciphers[] = {
         ossl_cipher_capable_aes_cbc_hmac_sha256_etm),
     ALGC(PROV_NAMES_AES_256_CBC_HMAC_SHA256_ETM, ossl_aes256cbc_hmac_sha256_etm_functions,
          ossl_cipher_capable_aes_cbc_hmac_sha256_etm),
+    ALGC(PROV_NAMES_AES_128_CBC_HMAC_SHA512_ETM, ossl_aes128cbc_hmac_sha512_etm_functions,
+        ossl_cipher_capable_aes_cbc_hmac_sha512_etm),
+    ALGC(PROV_NAMES_AES_192_CBC_HMAC_SHA512_ETM, ossl_aes192cbc_hmac_sha512_etm_functions,
+        ossl_cipher_capable_aes_cbc_hmac_sha512_etm),
+    ALGC(PROV_NAMES_AES_256_CBC_HMAC_SHA512_ETM, ossl_aes256cbc_hmac_sha512_etm_functions,
+        ossl_cipher_capable_aes_cbc_hmac_sha512_etm),
 #ifndef OPENSSL_NO_ARIA
     ALG(PROV_NAMES_ARIA_256_GCM, ossl_aria256gcm_functions),
     ALG(PROV_NAMES_ARIA_192_GCM, ossl_aria192gcm_functions),

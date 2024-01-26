@@ -259,6 +259,43 @@ static void *aes_cbc_hmac_sha256_etm_dupctx(void *provctx)
     return OPENSSL_memdup(ctx, sizeof(*ctx));
 }
 
+static void *aes_cbc_hmac_sha512_etm_newctx(void *provctx, size_t kbits,
+                                            size_t blkbits, size_t ivbits,
+                                            uint64_t flags)
+{
+    PROV_AES_HMAC_SHA512_ETM_CTX *ctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    if (ctx != NULL)
+        base_ctx_init(provctx, &ctx->base_ctx,
+                      ossl_prov_cipher_hw_aes_cbc_hmac_sha512_etm(), kbits, blkbits,
+                      ivbits, flags);
+    return ctx;
+}
+
+static void aes_cbc_hmac_sha512_etm_freectx(void *vctx)
+{
+    PROV_AES_HMAC_SHA512_ETM_CTX *ctx = (PROV_AES_HMAC_SHA512_ETM_CTX *)vctx;
+
+    if (ctx != NULL) {
+        ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
+        OPENSSL_clear_free(ctx, sizeof(*ctx));
+    }
+}
+
+static void *aes_cbc_hmac_sha512_etm_dupctx(void *provctx)
+{
+    PROV_AES_HMAC_SHA512_ETM_CTX *ctx = provctx;
+
+    if (ctx == NULL)
+        return NULL;
+
+    return OPENSSL_memdup(ctx, sizeof(*ctx));
+}
+
 # define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)              \
 static OSSL_FUNC_cipher_newctx_fn nm##_##kbits##_##sub##_newctx;               \
 static void *nm##_##kbits##_##sub##_newctx(void *provctx)                      \
@@ -308,3 +345,9 @@ IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 128, 128, 128, EVP_CIPH_FLAG_ENC_THEN
 IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 192, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes256cbc_hmac_sha256_etm_functions */
 IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 256, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+/* ossl_aes128cbc_hmac_sha512_etm_functions */
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 128, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+/* ossl_aes192cbc_hmac_sha512_etm_functions */
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 192, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+/* ossl_aes256cbc_hmac_sha512_etm_functions */
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 256, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
