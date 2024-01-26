@@ -10,6 +10,11 @@
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+#  include <sanitizer/msan_interface.h>
+# endif
+#endif
 /*
  * Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
  * This is an array  r[]  of values that are either zero or odd with an
@@ -188,6 +193,11 @@ int bn_set_words(BIGNUM *a, const BN_ULONG *words, int num_words)
         return 0;
     }
 
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+    __msan_unpoison(words, sizeof(BN_ULONG) * num_words);
+# endif
+#endif
     memcpy(a->d, words, sizeof(BN_ULONG) * num_words);
     a->top = num_words;
     bn_correct_top(a);

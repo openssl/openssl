@@ -21,6 +21,12 @@
 #include "prov/provider_ctx.h"
 #include "drbg_local.h"
 
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+#  include <sanitizer/msan_interface.h>
+# endif
+#endif
+
 static OSSL_FUNC_rand_newctx_fn drbg_ctr_new_wrapper;
 static OSSL_FUNC_rand_freectx_fn drbg_ctr_free;
 static OSSL_FUNC_rand_instantiate_fn drbg_ctr_instantiate_wrapper;
@@ -68,6 +74,12 @@ static void inc_128(PROV_DRBG_CTR *ctr)
         p[n] = (u8)c;
         c >>= 8;
     } while (n);
+
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+    __msan_unpoison(p, 16);
+# endif
+#endif
 }
 
 static void ctr_XOR(PROV_DRBG_CTR *ctr, const unsigned char *in, size_t inlen)
@@ -612,7 +624,7 @@ err:
     EVP_CIPHER_CTX_free(ctr->ctx_ecb);
     EVP_CIPHER_CTX_free(ctr->ctx_ctr);
     ctr->ctx_ecb = ctr->ctx_ctr = NULL;
-    return 0;    
+    return 0;
 }
 
 static int drbg_ctr_new(PROV_DRBG *drbg)

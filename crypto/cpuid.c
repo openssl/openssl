@@ -102,7 +102,16 @@ void OPENSSL_cpuid_setup(void)
     if (trigger)
         return;
 
+    /// This function is called from .init section before memory sanitizer mmaps shadow memory.
+    /// Program will crash with segmentation fault when trying access `trigger`,
+    /// because its address was replaced with some not mapped address.
+    /// Also see https://github.com/ClickHouse/openssl/pull/5
+    /// Unfortunately, __msan_init() is no longer part of msan's public header and there seems to be no replacement.
+#if defined(__has_feature)
+# if !__has_feature(memory_sanitizer)
     trigger = 1;
+# endif
+#endif
     if ((env = ossl_getenv("OPENSSL_ia32cap")) != NULL) {
         int off = (env[0] == '~') ? 1 : 0;
 
