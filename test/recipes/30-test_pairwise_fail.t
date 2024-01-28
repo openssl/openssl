@@ -22,7 +22,7 @@ use lib bldtop_dir('.');
 plan skip_all => "These tests are unsupported in a non fips build"
     if disabled("fips");
 
-plan tests => 5;
+plan tests => 6;
 my $provconf = srctop_file("test", "fips-and-base.cnf");
 
 run(test(["fips_version_test", "-config", $provconf, ">=3.1.0"]),
@@ -62,4 +62,18 @@ SKIP: {
     ok(run(test(["pairwise_fail_test", "-config", $provconf,
                  "-pairwise", "dsakat", "-dsaparam", data_file("dsaparam.pem")])),
        "fips provider dsa keygen kat failure test");
+}
+
+SKIP: {
+    skip "Skip EDDSA test because of no ecx in this build", 1
+        if disabled("ecx");
+
+    run(test(["fips_version_test", "-config", $provconf, ">=3.3.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version is too old", 1
+        if !$exit;
+
+    ok(run(test(["pairwise_fail_test", "-config", $provconf,
+                 "-pairwise", "eddsa"])),
+       "fips provider eddsa keygen pairwise failure test");
 }

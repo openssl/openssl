@@ -337,6 +337,8 @@ The FIPS module passes the following descriptions(s) to OSSL_SELF_TEST_onbegin()
 
 =item "ECDSA" (B<OSSL_SELF_TEST_DESC_PCT_ECDSA>)
 
+=item "EDDSA" (B<OSSL_SELF_TEST_DESC_PCT_EDDSA>)
+
 =item "DSA" (B<OSSL_SELF_TEST_DESC_PCT_DSA>)
 
 Key generation tests used with the "Pairwise_Consistency_Test" type.
