@@ -3,9 +3,9 @@
 =head1 NAME
 
 OPENSSL_malloc_init,
-OPENSSL_malloc, OPENSSL_zalloc, OPENSSL_realloc, OPENSSL_free,
-OPENSSL_clear_realloc, OPENSSL_clear_free, OPENSSL_cleanse,
-CRYPTO_malloc, CRYPTO_zalloc, CRYPTO_realloc, CRYPTO_free,
+OPENSSL_malloc, OPENSSL_aligned_alloc, OPENSSL_zalloc, OPENSSL_realloc,
+OPENSSL_free, OPENSSL_clear_realloc, OPENSSL_clear_free, OPENSSL_cleanse,
+CRYPTO_malloc, CRYPTO_aligned_alloc, CRYPTO_zalloc, CRYPTO_realloc, CRYPTO_free,
 OPENSSL_strdup, OPENSSL_strndup,
 OPENSSL_memdup, OPENSSL_strlcpy, OPENSSL_strlcat,
 CRYPTO_strdup, CRYPTO_strndup,
@@ -28,6 +28,7 @@ OPENSSL_MALLOC_FD
  int OPENSSL_malloc_init(void);
 
  void *OPENSSL_malloc(size_t num);
+ void *OPENSSL_aligned_alloc(size_t num, size_t alignment, void **freeptr);
  void *OPENSSL_zalloc(size_t num);
  void *OPENSSL_realloc(void *addr, size_t num);
  void OPENSSL_free(void *addr);
@@ -41,6 +42,8 @@ OPENSSL_MALLOC_FD
  void OPENSSL_cleanse(void *ptr, size_t len);
 
  void *CRYPTO_malloc(size_t num, const char *file, int line);
+ void *CRYPTO_aligned_alloc(size_t num, size_t align, void **freeptr, 
+                            const char *file, int line);
  void *CRYPTO_zalloc(size_t num, const char *file, int line);
  void *CRYPTO_realloc(void *p, size_t num, const char *file, int line);
  void CRYPTO_free(void *str, const char *, int);
@@ -95,6 +98,20 @@ included for compatibility with older versions of OpenSSL.
 OPENSSL_malloc(), OPENSSL_realloc(), and OPENSSL_free() are like the
 C malloc(), realloc(), and free() functions.
 OPENSSL_zalloc() calls memset() to zero the memory before returning.
+
+OPENSSL_aligned_alloc() operates just as OPENSSL_malloc does, but it
+allows for the caller to specify an alignment value, for instances in
+which the default alignment of malloc is insufficient for the callers
+needs.  Note, the alignment value must be a power of 2, and the size
+specified must be a multiple of the alignment.
+NOTE: The call to OPENSSL_aligned_alloc() accepts a 3rd argument, I<freeptr>
+which must point to a void pointer.  On some platforms, there is no available
+library call to obtain memory allocations greater than what malloc provides.  In
+this case, OPENSSL_aligned_alloc implements its own alignment routine,
+allocating additional memory and offsetting the returned pointer to be on the
+requested alignment boundary.  In order to safely free allocations made by this
+method, the caller must return the value in the I<freeptr> variable, rather than
+the returned pointer.
 
 OPENSSL_clear_realloc() and OPENSSL_clear_free() should be used
 when the buffer at B<addr> holds sensitive information.
@@ -168,7 +185,7 @@ OPENSSL_malloc_init(), OPENSSL_free(), OPENSSL_clear_free()
 CRYPTO_free(), CRYPTO_clear_free() and CRYPTO_get_mem_functions()
 return no value.
 
-OPENSSL_malloc(), OPENSSL_zalloc(), OPENSSL_realloc(),
+OPENSSL_malloc(), OPENSSL_aligned_alloc(), OPENSSL_zalloc(), OPENSSL_realloc(),
 OPENSSL_clear_realloc(),
 CRYPTO_malloc(), CRYPTO_zalloc(), CRYPTO_realloc(),
 CRYPTO_clear_realloc(),
@@ -194,7 +211,7 @@ CRYPTO_mem_leaks_cb(), CRYPTO_set_mem_debug(), CRYPTO_mem_ctrl()
 were deprecated in OpenSSL 3.0.
 The memory-leak checking has been deprecated in OpenSSL 3.0 in favor of
 clang's memory and leak sanitizer.
-
+OPENSSL_aligned_alloc(), CRYPTO_aligned_alloc() were added in OpenSSL 3.4.0
 
 =head1 COPYRIGHT
 
