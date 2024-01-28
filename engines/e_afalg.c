@@ -834,8 +834,10 @@ static int bind_helper(ENGINE *e, const char *id)
     if (!afalg_chk_platform())
         return 0;
 
-    if (!bind_afalg(e))
+    if (!bind_afalg(e)) {
+        afalg_destroy(e);
         return 0;
+    }
     return 1;
 }
 
