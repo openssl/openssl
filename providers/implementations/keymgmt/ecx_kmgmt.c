@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,9 +16,13 @@
 #include <openssl/proverr.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <openssl/self_test.h>
+#include "internal/provider.h"
 #include "internal/param_build_set.h"
 #include <openssl/param_build.h>
 #include "crypto/ecx.h"
+#include "crypto/evp.h"
+#include "crypto/evp/evp_local.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -588,6 +592,73 @@ static const OSSL_PARAM *ecx_gen_settable_params(ossl_unused void *genctx,
     return settable;
 }
 
+static int ecd_keygen_pairwise_test(ECX_KEY *ecx) {
+    int ret = 0;
+    OSSL_SELF_TEST *st = NULL;
+    OSSL_CALLBACK *cb = NULL;
+    void *cbarg = NULL;
+
+    unsigned char msg[16] = {0};
+    size_t msg_len = sizeof(msg);
+    unsigned char sig[ED448_SIGSIZE] = {0};
+    size_t sig_len = sizeof(sig);
+
+    EVP_SIGNATURE *alg = NULL;
+    void *provctx = NULL;
+    void *algctx = NULL;
+    const char *instance = (ecx->type == ECX_KEY_TYPE_ED25519) ?
+                           "Ed25519" : "Ed448";
+    const OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_INSTANCE, instance,
+                               strlen(instance)),
+        OSSL_PARAM_END
+    };
+
+    OSSL_SELF_TEST_get_callback(ecx->libctx, &cb, &cbarg);
+
+    st = OSSL_SELF_TEST_new(cb, cbarg);
+    if (st == NULL)
+        return 0;
+
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
+                           OSSL_SELF_TEST_DESC_PCT_EDDSA);
+
+    alg = EVP_SIGNATURE_fetch(ecx->libctx, instance, NULL);
+    if (!alg)
+        goto err;
+    provctx = ossl_provider_ctx(EVP_SIGNATURE_get0_provider(alg));
+    if (!provctx)
+        goto err;
+
+    algctx = alg->newctx(provctx, NULL);
+    if (!algctx)
+        goto err;
+    if (alg->digest_sign_init(algctx, NULL, ecx, params) != 1)
+        goto err;
+    if (alg->digest_sign(algctx, sig, &sig_len, sig_len, msg, msg_len) != 1)
+        goto err;
+    alg->freectx(algctx);
+
+    OSSL_SELF_TEST_oncorrupt_byte(st, sig);
+
+    algctx = alg->newctx(provctx, NULL);
+    if (!algctx)
+        goto err;
+    if (alg->digest_verify_init(algctx, NULL, ecx, params) != 1)
+        goto err;
+    if (alg->digest_verify(algctx, sig, sig_len, msg, msg_len) != 1)
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_SELF_TEST_onend(st, ret);
+    OSSL_SELF_TEST_free(st);
+    if (algctx)
+        alg->freectx(algctx);
+    EVP_SIGNATURE_free(alg);
+    return ret;
+}
+
 static void *ecx_gen(struct ecx_gen_ctx *gctx)
 {
     ECX_KEY *key;
@@ -684,6 +755,7 @@ static void *x448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
 static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
+    ECX_KEY *key = NULL;
     struct ecx_gen_ctx *gctx = genctx;
 
     if (!ossl_prov_is_running())
@@ -693,14 +765,32 @@ static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_ED25519)
         && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_ED25519)
         && OPENSSL_s390xcap_P.kdsa[0]
-            & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED25519))
-        return s390x_ecd_keygen25519(gctx);
+            & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED25519)) {
+        key = s390x_ecd_keygen25519(gctx);
+    } else
 #endif
-    return ecx_gen(gctx);
+    {
+        key = ecx_gen(gctx);
+    }
+
+#ifdef FIPS_MODULE
+    if (!key || ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0))
+        return key;
+    if (ecd_keygen_pairwise_test(key) != 1) {
+        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+        goto err;
+    }
+#endif
+
+    return key;
+err:
+    ossl_ecx_key_free(key);
+    return NULL;
 }
 
 static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
+    ECX_KEY *key = NULL;
     struct ecx_gen_ctx *gctx = genctx;
 
     if (!ossl_prov_is_running())
@@ -709,10 +799,27 @@ static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 #ifdef S390X_EC_ASM
     if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_ED448)
         && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_ED448)
-        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED448))
-        return s390x_ecd_keygen448(gctx);
+        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED448)) {
+        ret = s390x_ecd_keygen448(gctx);
+    } else
 #endif
-    return ecx_gen(gctx);
+    {
+        key = ecx_gen(gctx);
+    }
+
+#ifdef FIPS_MODULE
+    if (!key || ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0))
+        return key;
+    if (ecd_keygen_pairwise_test(key) != 1) {
+        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+        goto err;
+    }
+#endif
+
+    return key;
+err:
+    ossl_ecx_key_free(key);
+    return NULL;
 }
 
 static void ecx_gen_cleanup(void *genctx)
