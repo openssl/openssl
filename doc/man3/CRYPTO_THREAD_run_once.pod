@@ -238,6 +238,10 @@ repeatedly load/unload shared libraries that allocate locks.
 
 L<crypto(7)>, L<openssl-threads(7)>.
 
+=head1 HISTORY
+
+CRYPTO_atomic_store() was added in OpenSSL 3.4.0
+
 =head1 COPYRIGHT
 
 Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.

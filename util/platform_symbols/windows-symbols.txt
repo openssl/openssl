@@ -144,6 +144,7 @@ calloc
 free
 terminate
 signal
+_aligned_malloc
 _initialize_narrow_environment
 _beginthreadex
 _endthreadex

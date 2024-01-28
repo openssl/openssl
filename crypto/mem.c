@@ -226,6 +226,65 @@ void *CRYPTO_zalloc(size_t num, const char *file, int line)
     return ret;
 }
 
+void *CRYPTO_aligned_alloc(size_t num, size_t alignment, void **freeptr,
+                           const char *file, int line)
+{
+    void *ret;
+
+    *freeptr = NULL;
+
+#if defined(OPENSSL_SMALL_FOOTPRINT)
+    ret = freeptr = NULL;
+    return ret;
+#endif
+
+#if defined (_BSD_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+    if (posix_memalign(&ret, alignment, num))
+        return NULL;
+    *freeptr = ret;
+    return ret;
+#elif defined(_ISOC11_SOURCE)
+    ret = *freeptr =  aligned_alloc(alignment, num);
+    return ret;
+#else
+    /* we have to do this the hard way */
+
+    /*
+     * Note: Windows supports an _aligned_malloc call, but we choose
+     * not to use it here, because allocations from that function
+     * require that they be freed via _aligned_free.  Given that
+     * we can't differentiate plain malloc blocks from blocks obtained
+     * via _aligned_malloc, just avoid its use entirely
+     */
+
+    /*
+     * Step 1: Allocate an amount of memory that is <alignment>
+     * bytes bigger than requested
+     */
+    *freeptr = malloc(num + alignment);
+    if (*freeptr == NULL)
+        return NULL;
+
+    /*
+     * Step 2: Add <alignment - 1> bytes to the pointer
+     * This will cross the alignment boundary that is
+     * requested
+     */
+    ret = (void *)((char *)*freeptr + (alignment - 1));
+
+    /*
+     * Step 3: Use the alignment as a mask to translate the
+     * least significant bits of the allocation at the alignment
+     * boundary to 0.  ret now holds a pointer to the memory
+     * buffer at the requested alignment
+     * NOTE: It is a documented requirement that alignment be a
+     * power of 2, which is what allows this to work
+     */
+    ret = (void *)((uintptr_t)ret & (uintptr_t)(~(alignment - 1)));
+    return ret;
+#endif
+}
+
 void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
 {
     INCREMENT(realloc_count);
