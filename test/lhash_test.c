@@ -15,6 +15,7 @@
 #include <openssl/lhash.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
+#include <internal/hashtable.h>
 
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -31,7 +32,7 @@ DEFINE_LHASH_OF_EX(int);
 
 static int int_tests[] = { 65537, 13, 1, 3, -5, 6, 7, 4, -10, -12, -14, 22, 9,
                            -17, 16, 17, -23, 35, 37, 173, 11 };
-static const unsigned int n_int_tests = OSSL_NELEM(int_tests);
+static const size_t n_int_tests = OSSL_NELEM(int_tests);
 static short int_found[OSSL_NELEM(int_tests)];
 static short int_not_found;
 
@@ -106,7 +107,7 @@ static int test_int_lhash(void)
         }
 
     /* num_items */
-    if (!TEST_int_eq(lh_int_num_items(h), n_int_tests))
+    if (!TEST_int_eq((size_t)lh_int_num_items(h), n_int_tests))
         goto end;
 
     /* retrieve */
@@ -180,10 +181,158 @@ end:
     return testresult;
 }
 
+
+static int int_filter_all(HT_VALUE *v, void *arg)
+{
+    return 1;
+}
+
+HT_START_KEY_DEFN(intkey)
+HT_DEF_KEY_FIELD(mykey, int)
+HT_END_KEY_DEFN(INTKEY)
+
+IMPLEMENT_HT_VALUE_TYPE_FNS(int, test, static)
+
+static int int_foreach(HT_VALUE *v, void *arg)
+{
+    int *vd = ossl_ht_test_int_from_value(v);
+    const int n = int_find(*vd);
+
+    if (n < 0)
+        int_not_found++;
+    else
+        int_found[n]++;
+    return 1;
+}
+
+static uint64_t hashtable_hash(uint8_t *key, size_t keylen)
+{
+    return (uint64_t)(*(uint32_t *)key);
+}
+
+static int test_int_hashtable(void)
+{
+    static struct {
+        int data;
+        int should_del;
+    } dels[] = {
+        { 65537 , 1},
+        { 173 , 1},
+        { 999 , 0 },
+        { 37 , 1 },
+        { 1 , 1 },
+        { 34 , 0 }
+    };
+    const size_t n_dels = OSSL_NELEM(dels);
+    HT_CONFIG hash_conf = {
+        NULL,
+        NULL,
+        NULL,
+        0,
+    };
+    INTKEY key;
+    int rc = 0;
+    size_t i;
+    HT *ht = NULL;
+    int todel;
+    HT_VALUE_LIST *list = NULL;
+
+    ht = ossl_ht_new(&hash_conf);
+
+    if (ht == NULL)
+        return 0;
+
+    /* insert */
+    HT_INIT_KEY(&key);
+    for (i = 0; i < n_int_tests; i++) {
+        HT_SET_KEY_FIELD(&key, mykey, int_tests[i]);
+        if (!TEST_int_eq(ossl_ht_test_int_insert(ht, TO_HT_KEY(&key),
+                         &int_tests[i], NULL), 1)) {
+            TEST_info("int insert %zu", i);
+            goto end;
+        }
+    }
+
+    /* num_items */
+    if (!TEST_int_eq((size_t)ossl_ht_count(ht), n_int_tests))
+        goto end;
+
+    /* foreach, no arg */
+    memset(int_found, 0, sizeof(int_found));
+    int_not_found = 0;
+    ossl_ht_foreach_until(ht, int_foreach, NULL);
+    if (!TEST_int_eq(int_not_found, 0)) {
+        TEST_info("hashtable int foreach encountered a not found condition");
+        goto end;
+    }
+
+    for (i = 0; i < n_int_tests; i++)
+        if (!TEST_int_eq(int_found[i], 1)) {
+            TEST_info("hashtable int foreach %zu", i);
+            goto end;
+    }
+
+    /* filter */
+    list = ossl_ht_filter(ht, 64, int_filter_all, NULL);
+    if (!TEST_int_eq((size_t)list->list_len, n_int_tests))
+        goto end;
+    ossl_ht_value_list_free(list);
+
+    /* delete */
+    for (i = 0; i < n_dels; i++) {
+        HT_SET_KEY_FIELD(&key, mykey, dels[i].data);
+        todel = ossl_ht_delete(ht, TO_HT_KEY(&key));
+        if (dels[i].should_del) {
+            if (!TEST_int_eq(todel, 1)) {
+                TEST_info("hashtable couldn't find entry to delete\n");
+                goto end;
+            }
+        } else {
+            if (!TEST_int_eq(todel, 0)) {
+                TEST_info("%d found an entry that shouldn't be there\n", dels[i].data);
+                goto end;
+            }
+       }
+    }
+
+    rc = 1;
+end:
+    ossl_ht_free(ht);
+    return rc;
+}
+
 static unsigned long int stress_hash(const int *p)
 {
     return *p;
 }
+
+#ifdef MEASURE_HASH_PERFORMANCE
+static int
+timeval_subtract (struct timeval *result, struct timeval *x, struct timeval *y)
+{
+    /* Perform the carry for the later subtraction by updating y. */
+    if (x->tv_usec < y->tv_usec) {
+        int nsec = (y->tv_usec - x->tv_usec) / 1000000 + 1;
+        y->tv_usec -= 1000000 * nsec;
+        y->tv_sec += nsec;
+    }
+    if (x->tv_usec - y->tv_usec > 1000000) {
+        int nsec = (x->tv_usec - y->tv_usec) / 1000000;
+        y->tv_usec += 1000000 * nsec;
+        y->tv_sec -= nsec;
+    }
+
+    /*
+     * Compute the time remaining to wait.
+     * tv_usec is certainly positive.
+     */
+    result->tv_sec = x->tv_sec - y->tv_sec;
+    result->tv_usec = x->tv_usec - y->tv_usec;
+
+    /* Return 1 if result is negative. */
+    return x->tv_sec < y->tv_sec;
+}
+#endif
 
 static int test_stress(void)
 {
@@ -191,10 +340,15 @@ static int test_stress(void)
     const unsigned int n = 2500000;
     unsigned int i;
     int testresult = 0, *p;
+#ifdef MEASURE_HASH_PERFORMANCE
+    struct timeval start, end, delta;
+#endif
 
     if (!TEST_ptr(h))
         goto end;
-
+#ifdef MEASURE_HASH_PERFORMANCE
+    gettimeofday(&start, NULL);
+#endif
     /* insert */
     for (i = 0; i < n; i++) {
         p = OPENSSL_malloc(sizeof(i));
@@ -227,7 +381,86 @@ static int test_stress(void)
 
     testresult = 1;
 end:
+#ifdef MEASURE_HASH_PERFORMANCE
+    gettimeofday(&end, NULL);
+    timeval_subtract(&delta, &end, &start);
+    TEST_info("lhash stress runs in %ld.%ld seconds", delta.tv_sec, delta.tv_usec);
+#endif
     lh_int_free(h);
+    return testresult;
+}
+
+static void hashtable_intfree(HT_VALUE *v)
+{
+    OPENSSL_free(v->value);
+}
+
+static int test_hashtable_stress(void)
+{
+    const unsigned int n = 2500000;
+    unsigned int i;
+    int testresult = 0, *p;
+    HT_CONFIG hash_conf = {
+        NULL,              /* use default context */
+        hashtable_intfree, /* our free function */
+        hashtable_hash,    /* our hash function */
+        625000,            /* preset hash size */
+    };
+    HT *h;
+    INTKEY key;
+#ifdef MEASURE_HASH_PERFORMANCE
+    struct timeval start, end, delta;
+#endif
+
+    h = ossl_ht_new(&hash_conf);
+
+
+    if (!TEST_ptr(h))
+        goto end;
+#ifdef MEASURE_HASH_PERFORMANCE
+    gettimeofday(&start, NULL);
+#endif
+
+    HT_INIT_KEY(&key);
+
+    /* insert */
+    for (i = 0; i < n; i++) {
+        p = OPENSSL_malloc(sizeof(i));
+        if (!TEST_ptr(p)) {
+            TEST_info("hashtable stress out of memory %d", i);
+            goto end;
+        }
+        *p = 3 * i + 1;
+        HT_SET_KEY_FIELD(&key, mykey, *p);
+        if (!TEST_int_eq(ossl_ht_test_int_insert(h, TO_HT_KEY(&key),
+                         p, NULL), 1)) {
+            TEST_info("hashtable unable to insert element %d\n", *p);
+            goto end;
+        }
+    }
+
+    /* make sure we stored everything */
+    if (!TEST_int_eq((size_t)ossl_ht_count(h), n))
+            goto end;
+
+    /* delete in a different order */
+    for (i = 0; i < n; i++) {
+        const int j = (7 * i + 4) % n * 3 + 1;
+        HT_SET_KEY_FIELD(&key, mykey, j);
+        if (!TEST_int_eq((ossl_ht_delete(h, TO_HT_KEY(&key))), 1)) {
+            TEST_info("hashtable didn't delete key %d\n", j);
+            goto end;
+        }
+    }
+
+    testresult = 1;
+end:
+#ifdef MEASURE_HASH_PERFORMANCE
+    gettimeofday(&end, NULL);
+    timeval_subtract(&delta, &end, &start);
+    TEST_info("hashtable stress runs in %ld.%ld seconds", delta.tv_sec, delta.tv_usec);
+#endif
+    ossl_ht_free(h);
     return testresult;
 }
 
@@ -235,5 +468,7 @@ int setup_tests(void)
 {
     ADD_TEST(test_int_lhash);
     ADD_TEST(test_stress);
+    ADD_TEST(test_int_hashtable);
+    ADD_TEST(test_hashtable_stress);
     return 1;
 }

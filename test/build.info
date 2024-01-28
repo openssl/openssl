@@ -418,7 +418,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[lhash_test]=lhash_test.c
   INCLUDE[lhash_test]=../include ../apps/include
-  DEPEND[lhash_test]=../libcrypto libtestutil.a
+  DEPEND[lhash_test]=../libcrypto.a libtestutil.a
 
   SOURCE[dtlsv1listentest]=dtlsv1listentest.c
   INCLUDE[dtlsv1listentest]=../include ../apps/include
