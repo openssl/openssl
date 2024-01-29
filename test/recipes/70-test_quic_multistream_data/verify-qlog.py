@@ -6,7 +6,9 @@
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
-import sys, os, os.path, glob, json
+import sys, os, os.path, glob, json, re
+
+re_version = re.compile(r'''^OpenSSL/[0-9]+\.[0-9]\.[0-9](-[^ ]+)? ([^)]+)''')
 
 class Unexpected(Exception):
     def __init__(self, filename, msg):
@@ -45,6 +47,13 @@ def check_header(filename, hdr):
 
     if hdr_trace["vantage_point"].get('type') not in ('client', 'server'):
         raise Unexpected(filename, "unexpected vantage_point")
+
+    vp_name = hdr_trace["vantage_point"].get('name')
+    if type(vp_name) != str:
+        raise Unexpected(filename, "expected vantage_point name")
+
+    if not re_version.match(vp_name):
+        raise Unexpected(filename, "expected correct vantage_point format")
 
     hdr_common_fields = hdr_trace["common_fields"]
     if hdr_common_fields.get("time_format") != "delta":
