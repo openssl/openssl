@@ -281,7 +281,7 @@ static int torture_rw_high(void)
 }
 
 
-static CRYPTO_RCU_LOCK rcu_lock = NULL;
+static CRYPTO_RCU_LOCK *rcu_lock = NULL;
 
 static int writer1_done = 0;
 static int writer2_done = 0;
