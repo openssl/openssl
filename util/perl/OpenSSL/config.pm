@@ -859,6 +859,7 @@ EOF
                                     cflags => [ '-march=armv7-a' ],
                                     cxxflags => [ '-march=armv7-a' ] } ],
       [ 'arm.*-.*-android',       { target => "android-armeabi" } ],
+      [ 'riscv64-.*-android',     { target => "android-riscv64" } ],
       [ '.*-hpux1.*',
         sub {
             my $KERNEL_BITS = $ENV{KERNEL_BITS};
