@@ -603,7 +603,7 @@ void ossl_json_f64(OSSL_JSON_ENC *json, double value)
         return;
     }
 
-    snprintf(buf, sizeof(buf), "%1.17g", value);
+    BIO_snprintf(buf, sizeof(buf), "%1.17g", value);
     json_write_str(json, buf);
     json_post_item(json);
 }

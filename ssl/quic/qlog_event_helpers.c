@@ -130,8 +130,8 @@ void ossl_qlog_event_connectivity_connection_closed(QLOG *qlog,
 
             if (tcause->error_code >= QUIC_ERR_CRYPTO_ERR_BEGIN
                 && tcause->error_code <= QUIC_ERR_CRYPTO_ERR_END) {
-                snprintf(ce, sizeof(ce), "crypto_error_0x%03llx",
-                         (unsigned long long)tcause->error_code);
+                BIO_snprintf(ce, sizeof(ce), "crypto_error_0x%03llx",
+                             (unsigned long long)tcause->error_code);
                 m = ce;
             }
             /* TODO(QLOG FUTURE): Consider adding ERR information in the output. */
