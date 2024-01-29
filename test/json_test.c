@@ -43,7 +43,7 @@ static void helper_cleanup(struct helper *h)
     BIO_free_all(h->mem_bio);
     h->mem_bio = NULL;
 
-    if (!h->init) {
+    if (h->init) {
         ossl_json_cleanup(&h->j);
         h->init = 0;
     }
