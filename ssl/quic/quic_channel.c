@@ -3330,6 +3330,10 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     if (!ossl_quic_tx_packetiser_set_cur_scid(ch->txp, &ch->cur_local_cid))
         return 0;
 
+    /* Setup QLOG, which did not happen earlier due to lacking an Initial ODCID. */
+    ossl_qtx_set_qlog(ch->qtx, ch_get_qlog(ch));
+    ossl_quic_tx_packetiser_set_qlog(ch->txp, ch_get_qlog(ch));
+
     /* Plug in secrets for the Initial EL. */
     if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
                                           ch->port->engine->propq,
