@@ -23,45 +23,46 @@ struct rcu_lock_st {
     struct rcu_cb_item *cb_items;
 };
 
-CRYPTO_RCU_LOCK ossl_rcu_lock_new(int num_writers)
+CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers)
 {
-    CRYPTO_RCU_LOCK lock;
+    struct rcu_lock_st *lock;
 
     lock = OPENSSL_zalloc(sizeof(*lock));
-    return lock;
+    return (CRYPTO_RCU_LOCK *)lock;
 }
 
-void ossl_rcu_lock_free(CRYPTO_RCU_LOCK lock)
+void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
 {
     OPENSSL_free(lock);
 }
 
-void ossl_rcu_read_lock(CRYPTO_RCU_LOCK lock)
+void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
 {
     return;
 }
 
-void ossl_rcu_write_lock(CRYPTO_RCU_LOCK lock)
+void ossl_rcu_write_lock(CRYPTO_RCU_LOCK *lock)
 {
     return;
 }
 
-void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK lock)
+void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK *lock)
 {
     return;
 }
 
-void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK lock)
+void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
 {
     return;
 }
 
-void ossl_synchronize_rcu(CRYPTO_RCU_LOCK lock)
+void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 {
-    struct rcu_cb_item *items = lock->cb_items;
+    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
+    struct rcu_cb_item *items = rlock->cb_items;
     struct rcu_cb_item *tmp;
 
-    lock->cb_items = NULL;
+    rlock->cb_items = NULL;
 
     while (items != NULL) {
         tmp = items->next;
@@ -71,17 +72,18 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK lock)
     }
 }
 
-int ossl_rcu_call(CRYPTO_RCU_LOCK lock, rcu_cb_fn cb, void *data)
+int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 {
     struct rcu_cb_item *new = OPENSSL_zalloc(sizeof(*new));
+    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
 
     if (new == NULL)
         return 0;
 
     new->fn = cb;
     new->data = data;
-    new->next = lock->cb_items;
-    lock->cb_items = new;
+    new->next = rlock->cb_items;
+    rlock->cb_items = new;
     return 1;
 }
 
