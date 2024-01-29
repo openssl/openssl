@@ -357,6 +357,7 @@ static QUIC_TSERVER *s_lock(struct helper *h, struct helper_local *hl);
 static void s_unlock(struct helper *h, struct helper_local *hl);
 
 #define ACQUIRE_S() s_lock(h, hl)
+#define ACQUIRE_S_NOHL() s_lock(h, NULL)
 
 static int check_rejected(struct helper *h, struct helper_local *hl)
 {
@@ -524,7 +525,7 @@ static int *s_checked_out_p(struct helper *h, int thread_idx)
 
 static QUIC_TSERVER *s_lock(struct helper *h, struct helper_local *hl)
 {
-    int *p_checked_out = s_checked_out_p(h, hl->thread_idx);
+    int *p_checked_out = s_checked_out_p(h, hl == NULL ? -1 : hl->thread_idx);
 
     if (h->server_thread.m == NULL || *p_checked_out)
         return h->s;
@@ -5148,7 +5149,7 @@ static int script_80_gen_new_conn_id(struct helper *h, QUIC_PKT_HDR *hdr,
     WPACKET wpkt;
     QUIC_CONN_ID new_cid = {0};
     OSSL_QUIC_FRAME_NEW_CONN_ID ncid = {0};
-    QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(h->s_priv);
+    QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(ACQUIRE_S_NOHL());
 
     if (h->inject_word0 == 0)
         return 1;
