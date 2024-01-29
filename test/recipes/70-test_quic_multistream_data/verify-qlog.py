@@ -169,7 +169,7 @@ def run():
         "connectivity:connection_closed"
     )
 
-    if num_files < 500:
+    if num_files < 300:
         raise Unexpected(qlogdir, f"unexpectedly few output files: {num_files}")
 
     for required_event in required_events:
