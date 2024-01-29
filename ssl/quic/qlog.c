@@ -59,10 +59,11 @@ QLOG *ossl_qlog_new(const QLOG_TRACE_INFO *info)
     if (qlog == NULL)
         return NULL;
 
-    qlog->info.odcid        = info->odcid;
-    qlog->info.is_server    = info->is_server;
-    qlog->info.now_cb       = info->now_cb;
-    qlog->info.now_cb_arg   = info->now_cb_arg;
+    qlog->info.odcid                = info->odcid;
+    qlog->info.is_server            = info->is_server;
+    qlog->info.now_cb               = info->now_cb;
+    qlog->info.now_cb_arg           = info->now_cb_arg;
+    qlog->info.override_process_id  = info->override_process_id;
 
     if (info->title != NULL
         && (qlog->info.title = OPENSSL_strdup(info->title)) == NULL)
@@ -249,7 +250,7 @@ int ossl_qlog_enabled(QLOG *qlog, uint32_t event_type)
     if (qlog == NULL)
         return 0;
 
-    return bit_get(qlog->enabled, event_type);
+    return bit_get(qlog->enabled, event_type) != 0;
 }
 
 /*
@@ -305,10 +306,15 @@ static void qlog_event_seq_header(QLOG *qlog)
                 ossl_json_key(&qlog->json, "system_info");
                 ossl_json_object_begin(&qlog->json);
                 {
+                    if (qlog->info.override_process_id != 0) {
+                        ossl_json_key(&qlog->json, "process_id");
+                        ossl_json_u64(&qlog->json, qlog->info.override_process_id);
+                    } else {
 #if defined(OPENSSL_SYS_UNIX) || defined(OPENSSL_SYS_WINDOWS)
-                    ossl_json_key(&qlog->json, "process_id");
-                    ossl_json_u64(&qlog->json, (uint64_t)getpid());
+                        ossl_json_key(&qlog->json, "process_id");
+                        ossl_json_u64(&qlog->json, (uint64_t)getpid());
 #endif
+                    }
                 } /* system_info */
                 ossl_json_object_end(&qlog->json);
             } /* common_fields */
