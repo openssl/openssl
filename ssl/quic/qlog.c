@@ -155,6 +155,7 @@ void ossl_qlog_free(QLOG *qlog)
     if (qlog == NULL)
         return;
 
+    ossl_json_flush(&qlog->json);
     ossl_json_cleanup(&qlog->json);
     BIO_free_all(qlog->bio);
     OPENSSL_free((char *)qlog->info.title);
@@ -573,7 +574,7 @@ static int lex_extract_to(struct lexer *lex, char c,
         return 0;
 
     *str    = p;
-    *str_l  = term_end - s;
+    *str_l  = s - p;
     lex->p  = ++s;
     return 1;
 }
