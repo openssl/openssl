@@ -30,6 +30,26 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.12 and 3.0.13 [xx XXX xxxx]
 
+ * A file in PKCS12 format can contain certificates and keys and may come from
+   an untrusted source. The PKCS12 specification allows certain fields to be
+   NULL, but OpenSSL did not correctly check for this case. A fix has been
+   applied to prevent a NULL pointer dereference that results in OpenSSL
+   crashing. If an application processes PKCS12 files from an untrusted source
+   using the OpenSSL APIs then that application will be vulnerable to this
+   issue prior to this fix.
+
+   OpenSSL APIs that were vulnerable to this are: PKCS12_parse(),
+   PKCS12_unpack_p7data(), PKCS12_unpack_p7encdata(), PKCS12_unpack_authsafes()
+   and PKCS12_newpass().
+
+   We have also fixed a similar issue in SMIME_write_PKCS7(). However since this
+   function is related to writing data we do not consider it security
+   significant.
+
+   ([CVE-2024-0727])
+
+   *Matt Caswell*
+
  * When function EVP_PKEY_public_check() is called on RSA public keys,
    a computation is done to confirm that the RSA modulus, n, is composite.
    For valid RSA keys, n is a product of two or more large primes and this
@@ -19804,6 +19824,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2024-0727]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-0727
 [CVE-2023-6237]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6237
 [CVE-2023-6129]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6129
 [CVE-2023-5678]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5678
