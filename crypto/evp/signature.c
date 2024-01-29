@@ -400,7 +400,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
+        return -1;
     }
 
     evp_pkey_ctx_free_old_ops(ctx);
@@ -631,7 +631,7 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
+        return -1;
     }
 
     if (ctx->operation != EVP_PKEY_OP_SIGN) {
@@ -680,7 +680,7 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
+        return -1;
     }
 
     if (ctx->operation != EVP_PKEY_OP_VERIFY) {
@@ -728,7 +728,7 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
+        return -1;
     }
 
     if (ctx->operation != EVP_PKEY_OP_VERIFYRECOVER) {
