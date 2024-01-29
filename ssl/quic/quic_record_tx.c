@@ -167,6 +167,11 @@ void ossl_qtx_set_mutator(OSSL_QTX *qtx, ossl_mutate_packet_cb mutatecb,
     qtx->mutatearg      = mutatearg;
 }
 
+void ossl_qtx_set_qlog(OSSL_QTX *qtx, QLOG *qlog)
+{
+    qtx->qlog = qlog;
+}
+
 int ossl_qtx_provide_secret(OSSL_QTX              *qtx,
                             uint32_t               enc_level,
                             uint32_t               suite_id,
