@@ -233,7 +233,7 @@ int ossl_json_init(OSSL_JSON_ENC *json, BIO *bio, uint32_t flags)
 {
     memset(json, 0, sizeof(*json));
     json->flags     = flags;
-    json->error     = 1;
+    json->error     = 0;
     if (!wbuf_init(&json->wbuf, bio, 4096))
         return 0;
 
