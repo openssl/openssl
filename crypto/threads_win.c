@@ -181,7 +181,7 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers)
 
 void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
 {
-    struct rcu_lock_st *rlock = (strcut rcu_lock_st *)lock;
+    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
 
     OPENSSL_free(rlock->qp_group);
     ossl_crypto_condvar_free(&rlock->alloc_signal);
@@ -254,7 +254,9 @@ void ossl_rcu_write_lock(CRYPTO_RCU_LOCK *lock)
 
 void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK *lock)
 {
-    ossl_crypto_mutex_unlock(lock->write_lock);
+    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
+
+    ossl_crypto_mutex_unlock(rlock->write_lock);
 }
 
 void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
