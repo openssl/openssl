@@ -67,15 +67,20 @@ QLOG *ossl_qlog_new(const QLOG_TRACE_INFO *info)
 
     if (info->title != NULL
         && (qlog->info.title = OPENSSL_strdup(info->title)) == NULL)
-            goto err;
+        goto err;
 
     if (info->description != NULL
         && (qlog->info.description = OPENSSL_strdup(info->description)) == NULL)
-            goto err;
+        goto err;
 
     if (info->group_id != NULL
         && (qlog->info.group_id = OPENSSL_strdup(info->group_id)) == NULL)
-            goto err;
+        goto err;
+
+    if (info->override_impl_name != NULL
+        && (qlog->info.override_impl_name
+                = OPENSSL_strdup(info->override_impl_name)) == NULL)
+        goto err;
 
     if (!ossl_json_init(&qlog->json, NULL,
                         OSSL_JSON_FLAG_IJSON | OSSL_JSON_FLAG_SEQ))
@@ -91,6 +96,7 @@ err:
         OPENSSL_free((char *)qlog->info.title);
         OPENSSL_free((char *)qlog->info.description);
         OPENSSL_free((char *)qlog->info.group_id);
+        OPENSSL_free((char *)qlog->info.override_impl_name);
         OPENSSL_free(qlog);
     }
     return NULL;
@@ -162,6 +168,7 @@ void ossl_qlog_free(QLOG *qlog)
     OPENSSL_free((char *)qlog->info.title);
     OPENSSL_free((char *)qlog->info.description);
     OPENSSL_free((char *)qlog->info.group_id);
+    OPENSSL_free((char *)qlog->info.override_impl_name);
     OPENSSL_free(qlog);
 }
 
@@ -323,9 +330,23 @@ static void qlog_event_seq_header(QLOG *qlog)
             ossl_json_key(&qlog->json, "vantage_point");
             ossl_json_object_begin(&qlog->json);
             {
+                char buf[128];
+                const char *p = buf;
+
+                if (qlog->info.override_impl_name != NULL) {
+                    p = qlog->info.override_impl_name;
+                } else {
+                    snprintf(buf, sizeof(buf), "OpenSSL/%s (%s)",
+                             OpenSSL_version(OPENSSL_FULL_VERSION_STRING),
+                             OpenSSL_version(OPENSSL_PLATFORM) + 10);
+                }
+
                 ossl_json_key(&qlog->json, "type");
                 ossl_json_str(&qlog->json, qlog->info.is_server
                                   ? "server" : "client");
+
+                ossl_json_key(&qlog->json, "name");
+                ossl_json_str(&qlog->json, p);
             } /* vantage_point */
             ossl_json_object_end(&qlog->json);
         } /* trace */

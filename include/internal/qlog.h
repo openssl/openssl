@@ -35,6 +35,7 @@ typedef struct qlog_trace_info_st {
     OSSL_TIME       (*now_cb)(void *arg);
     void            *now_cb_arg;
     uint64_t        override_process_id;
+    const char      *override_impl_name;
 } QLOG_TRACE_INFO;
 
 QLOG *ossl_qlog_new(const QLOG_TRACE_INFO *info);

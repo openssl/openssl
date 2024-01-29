@@ -15,7 +15,8 @@ static const char expected[] =
     "\"test title\",\"description\":\"test description\",\"trace\":{"
     "\"common_fields\":{\"time_format\":\"delta\",\"protocol_type\":"
     "[\"QUIC\"],\"group_id\":\"test group ID\",\"system_info\":{"
-    "\"process_id\":123}},\"vantage_point\":{\"type\":\"client\"}}}\n"
+    "\"process_id\":123}},\"vantage_point\":{\"type\":\"client\","
+    "\"name\":\"OpenSSL/x.y.z\"}}}\n"
 
     "\x1e{\"name\":\"transport:packet_sent\",\"data\":{\"field1\":\"foo\","
     "\"field2\":\"bar\",\"field3\":42,\"field4\":\"1152921504606846976\","
@@ -59,6 +60,7 @@ static int test_qlog(void)
     qti.group_id            = "test group ID";
     qti.override_process_id = 123;
     qti.now_cb              = now;
+    qti.override_impl_name  = "OpenSSL/x.y.z";
 
     if (!TEST_ptr(qlog = ossl_qlog_new(&qti)))
         goto err;
