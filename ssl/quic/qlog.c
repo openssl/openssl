@@ -162,8 +162,7 @@ void ossl_qlog_free(QLOG *qlog)
     if (qlog == NULL)
         return;
 
-    ossl_json_flush(&qlog->json);
-    ossl_json_cleanup(&qlog->json);
+    ossl_json_flush_cleanup(&qlog->json);
     BIO_free_all(qlog->bio);
     OPENSSL_free((char *)qlog->info.title);
     OPENSSL_free((char *)qlog->info.description);
