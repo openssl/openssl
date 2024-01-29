@@ -28,6 +28,12 @@ OpenSSL 3.3
 
 ### Changes between 3.2 and 3.3 [xx XXX xxxx]
 
+ * The EVP_PKEY_fromdata function has been augmented to allow for the derivation
+   of CRT (Chinese Remainder Theorem) parameters when requested.  See the
+   OSSL_PKEY_PARAM_DERIVE_FROM_PQ param in the EVP_PKEY-RSA documentation.
+
+   *Neil Horman*
+
  * The activate and soft_load configuration settings for providers in
    openssl.cnf have been updated to require a value of [1|yes|true|on]
    (in lower or UPPER case) to enable the setting. Conversely a value
@@ -86,6 +92,26 @@ OpenSSL 3.2
 
 ### Changes between 3.2.0 and 3.2.1 [xx XXX xxxx]
 
+ * A file in PKCS12 format can contain certificates and keys and may come from
+   an untrusted source. The PKCS12 specification allows certain fields to be
+   NULL, but OpenSSL did not correctly check for this case. A fix has been
+   applied to prevent a NULL pointer dereference that results in OpenSSL
+   crashing. If an application processes PKCS12 files from an untrusted source
+   using the OpenSSL APIs then that application will be vulnerable to this
+   issue prior to this fix.
+
+   OpenSSL APIs that were vulnerable to this are: PKCS12_parse(),
+   PKCS12_unpack_p7data(), PKCS12_unpack_p7encdata(), PKCS12_unpack_authsafes()
+   and PKCS12_newpass().
+
+   We have also fixed a similar issue in SMIME_write_PKCS7(). However since this
+   function is related to writing data we do not consider it security
+   significant.
+
+   ([CVE-2024-0727])
+
+   *Matt Caswell*
+
  * When function EVP_PKEY_public_check() is called on RSA public keys,
    a computation is done to confirm that the RSA modulus, n, is composite.
    For valid RSA keys, n is a product of two or more large primes and this
@@ -134,18 +160,26 @@ OpenSSL 3.2
 
    *Rohan McLure*
 
+ * Fix excessive time spent in DH check / generation with large Q parameter
+   value.
+
+   Applications that use the functions DH_generate_key() to generate an
+   X9.42 DH key may experience long delays. Likewise, applications that use
+   DH_check_pub_key(), DH_check_pub_key_ex() or EVP_PKEY_public_check()
+   to check an X9.42 DH key or X9.42 DH parameters may experience long delays.
+   Where the key or parameters that are being checked have been obtained from
+   an untrusted source this may lead to a Denial of Service.
+
+   ([CVE-2023-5678])
+
+   *Richard Levitte*
+
  * Disable building QUIC server utility when OpenSSL is configured with
    `no-apps`.
 
    *Vitalii Koshura*
 
-### Changes between 3.1 and 3.2 [xx XXX xxxx]
-
- * The EVP_PKEY_fromdata function has been augmented to allow for the derivation
-   of CRT (Chinese Remainder Theorem) parameters when requested.  See the
-   OSSL_PKEY_PARAM_DERIVE_FROM_PQ param in the EVP_PKEY-RSA documentation.
-
-   *Neil Horman*
+### Changes between 3.1 and 3.2.0 [23 Nov 2023]
 
  * The BLAKE2b hash algorithm supports a configurable output length
    by setting the "size" parameter.
@@ -596,22 +630,6 @@ OpenSSL 3.2
 
 OpenSSL 3.1
 -----------
-
-### Changes between 3.1.4 and 3.1.5 [xx XXX xxxx]
-
- * Fix excessive time spent in DH check / generation with large Q parameter
-   value.
-
-   Applications that use the functions DH_generate_key() to generate an
-   X9.42 DH key may experience long delays. Likewise, applications that use
-   DH_check_pub_key(), DH_check_pub_key_ex() or EVP_PKEY_public_check()
-   to check an X9.42 DH key or X9.42 DH parameters may experience long delays.
-   Where the key or parameters that are being checked have been obtained from
-   an untrusted source this may lead to a Denial of Service.
-
-   ([CVE-2023-5678])
-
-   *Richard Levitte*
 
 ### Changes between 3.1.3 and 3.1.4 [24 Oct 2023]
 
@@ -20439,6 +20457,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2024-0727]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-0727
 [CVE-2023-6237]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6237
 [CVE-2023-6129]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6129
 [CVE-2023-5678]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5678
