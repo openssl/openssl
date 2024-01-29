@@ -592,7 +592,8 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
  * process.
  */
 static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
-                     uint32_t enc_level)
+                     uint32_t enc_level, QUIC_PKT_HDR *hdr,
+                     const OSSL_QTX_IOVEC *iovec, size_t num_iovec)
 {
     int ret, needs_encrypt;
     size_t hdr_len, pred_hdr_len, payload_len, pkt_len, space_left;
@@ -601,15 +602,12 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
     QUIC_PKT_HDR_PTRS ptrs;
     unsigned char *hdr_start;
     OSSL_QRL_ENC_LEVEL *el = NULL;
-    QUIC_PKT_HDR *hdr;
-    const OSSL_QTX_IOVEC *iovec;
-    size_t num_iovec;
 
     /*
      * Determine if the packet needs encryption and the minimum conceivable
      * serialization length.
      */
-    if (!ossl_quic_pkt_type_is_encrypted(pkt->hdr->type)) {
+    if (!ossl_quic_pkt_type_is_encrypted(hdr->type)) {
         needs_encrypt = 0;
         min_len = QUIC_MIN_VALID_PKT_LEN;
     } else {
@@ -629,21 +627,8 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
     }
 
     /* Set some fields in the header we are responsible for. */
-    if (pkt->hdr->type == QUIC_PKT_TYPE_1RTT)
-        pkt->hdr->key_phase = (unsigned char)(el->key_epoch & 1);
-
-    /* If we are running tests then mutate_packet may be non NULL */
-    if (qtx->mutatecb != NULL) {
-        if (!qtx->mutatecb(pkt->hdr, pkt->iovec, pkt->num_iovec, &hdr,
-                           &iovec, &num_iovec, qtx->mutatearg)) {
-            ret = QTX_FAIL_GENERIC;
-            goto err;
-        }
-    } else {
-        hdr = pkt->hdr;
-        iovec = pkt->iovec;
-        num_iovec = pkt->num_iovec;
-    }
+    if (hdr->type == QUIC_PKT_TYPE_1RTT)
+        hdr->key_phase = (unsigned char)(el->key_epoch & 1);
 
     /* Walk the iovecs to determine actual input payload length. */
     iovec_cur_init(&cur, iovec, num_iovec);
@@ -724,8 +709,6 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
         assert(txe->data_len - orig_data_len == pkt_len);
     }
 
-    if (qtx->finishmutatecb != NULL)
-        qtx->finishmutatecb(qtx->mutatearg);
     return 1;
 
 err:
@@ -734,8 +717,6 @@ err:
      * TXE.
      */
     txe->data_len = orig_data_len;
-    if (qtx->finishmutatecb != NULL)
-        qtx->finishmutatecb(qtx->mutatearg);
     return ret;
 }
 
@@ -755,6 +736,38 @@ static TXE *qtx_ensure_cons(OSSL_QTX *qtx)
     qtx->cons_count = 0;
     txe->data_len = 0;
     return txe;
+}
+
+static int qtx_mutate_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
+                            uint32_t enc_level)
+{
+    int ret;
+    QUIC_PKT_HDR *hdr;
+    const OSSL_QTX_IOVEC *iovec;
+    size_t num_iovec;
+
+    /* If we are running tests then mutate_packet may be non NULL */
+    if (qtx->mutatecb != NULL) {
+        if (!qtx->mutatecb(pkt->hdr, pkt->iovec, pkt->num_iovec, &hdr,
+                           &iovec, &num_iovec, qtx->mutatearg))
+            return QTX_FAIL_GENERIC;
+    } else {
+        hdr         = pkt->hdr;
+        iovec       = pkt->iovec;
+        num_iovec   = pkt->num_iovec;
+    }
+
+    ret = qtx_write(qtx, pkt, txe, enc_level,
+                    hdr, iovec, num_iovec);
+    if (ret == 1)
+        ossl_qlog_event_transport_packet_sent(qtx->qlog, hdr, pkt->pn,
+                                              iovec, num_iovec,
+                                              qtx->datagram_count);
+
+    if (qtx->finishmutatecb != NULL)
+        qtx->finishmutatecb(qtx->mutatearg);
+
+    return ret;
 }
 
 static int addr_eq(const BIO_ADDR *a, const BIO_ADDR *b)
@@ -827,11 +840,8 @@ int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt)
                 BIO_ADDR_clear(&txe->local);
         }
 
-        ret = qtx_write(qtx, pkt, txe, enc_level);
+        ret = qtx_mutate_write(qtx, pkt, txe, enc_level);
         if (ret == 1) {
-            ossl_qlog_event_transport_packet_sent(qtx->qlog, pkt->hdr, pkt->pn,
-                                                  pkt->iovec, pkt->num_iovec,
-                                                  qtx->datagram_count);
             break;
         } else if (ret == QTX_FAIL_INSUFFICIENT_LEN) {
             if (was_coalescing) {
