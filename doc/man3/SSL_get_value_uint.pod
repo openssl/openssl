@@ -113,7 +113,7 @@ previous negotiated value until that process is completed. See the documentation
 of specific values for full details of its behaviour.
 
 You can access values in this class using the convenience macro
-SSL_get_feature_neogtiated_uint() for brevity.
+SSL_get_feature_negotiated_uint() for brevity.
 
 =back
 
