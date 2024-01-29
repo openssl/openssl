@@ -68,6 +68,9 @@ void ossl_qtx_set_msg_callback(OSSL_QTX *qtx, ossl_msg_cb msg_callback,
                                SSL *msg_callback_ssl);
 void ossl_qtx_set_msg_callback_arg(OSSL_QTX *qtx, void *msg_callback_arg);
 
+/* Change QLOG instance in use after instantiation. */
+void ossl_qtx_set_qlog(OSSL_QTX *qtx, QLOG *qlog);
+
 /*
  * Secret Management
  * -----------------
