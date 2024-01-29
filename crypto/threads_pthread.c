@@ -376,6 +376,7 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK lock)
 {
     int i;
     struct rcu_thr_data *data = CRYPTO_THREAD_get_local(&rcu_thr_key);
+    uint64_t ret;
 
     assert(data != NULL);
 
@@ -388,8 +389,9 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK lock)
              */
             data->thread_qps[i].depth--;
             if (data->thread_qps[i].depth == 0) {
-                ATOMIC_SUB_FETCH(&data->thread_qps[i].qp->users, VAL_READER,
-                                 __ATOMIC_RELEASE);
+                ret = ATOMIC_SUB_FETCH(&data->thread_qps[i].qp->users, VAL_READER,
+                                       __ATOMIC_RELEASE);
+                OPENSSL_assert(ret != UINT64_MAX);
                 data->thread_qps[i].qp = NULL;
                 data->thread_qps[i].lock = NULL;
             }
