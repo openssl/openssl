@@ -78,6 +78,8 @@ void ossl_quic_fifd_cleanup(QUIC_FIFD *fifd); /* (no-op) */
 
 int ossl_quic_fifd_pkt_commit(QUIC_FIFD *fifd, QUIC_TXPIM_PKT *pkt);
 
+void ossl_quic_fifd_set_qlog(QUIC_FIFD *fifd, QLOG *qlog);
+
 # endif
 
 #endif

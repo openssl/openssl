@@ -293,3 +293,8 @@ int ossl_quic_fifd_pkt_commit(QUIC_FIFD *fifd, QUIC_TXPIM_PKT *pkt)
     /* Inform the ACKM. */
     return ossl_ackm_on_tx_packet(fifd->ackm, &pkt->ackm_pkt);
 }
+
+void ossl_quic_fifd_set_qlog(QUIC_FIFD *fifd, QLOG *qlog)
+{
+    fifd->qlog = qlog;
+}
