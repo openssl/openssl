@@ -64,7 +64,7 @@ struct conf_imodule_st {
 };
 
 static CRYPTO_ONCE init_module_list_lock = CRYPTO_ONCE_STATIC_INIT;
-static CRYPTO_RCU_LOCK module_list_lock = NULL;
+static CRYPTO_RCU_LOCK *module_list_lock = NULL;
 static STACK_OF(CONF_MODULE) *supported_modules = NULL; /* protected by lock */
 static STACK_OF(CONF_IMODULE) *initialized_modules = NULL; /* protected by lock */
 
