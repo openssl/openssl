@@ -5342,7 +5342,7 @@ static const struct script_op script_83[] = {
     OP_END
 };
 
-/* 82. Test query of available streams */
+/* 83. Test query of available streams */
 static int check_avail_streams(struct helper *h, struct helper_local *hl)
 {
     uint64_t v = 0;
@@ -5374,7 +5374,7 @@ static int check_avail_streams(struct helper *h, struct helper_local *hl)
     return 1;
 }
 
-static const struct script_op script_82[] = {
+static const struct script_op script_83[] = {
     OP_C_SET_ALPN           ("ossltest")
     OP_C_CONNECT_WAIT       ()
 
@@ -5423,7 +5423,6 @@ static const struct script_op script_82[] = {
 
     OP_END
 };
-
 
 static const struct script_op *const scripts[] = {
     script_1,
