@@ -18,6 +18,10 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
+### Major changes between OpenSSL 3.0.13 and OpenSSL 3.0.14 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.0.12 and OpenSSL 3.0.13 [30 Jan 2024]
 
   * Fixed PKCS12 Decoding crashes
