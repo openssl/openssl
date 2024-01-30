@@ -338,8 +338,6 @@ sub create_message
     my ($server, $mt, $msgseq, $msgfrag, $msgfragoffs, $data, $startoffset, $isdtls) = @_;
     my $message;
 
-    #We only support ClientHello in this version...needs to be extended for
-    #others
     if ($mt == MT_CLIENT_HELLO) {
         $message = TLSProxy::ClientHello->new(
             $isdtls,
