@@ -22,7 +22,7 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
-### Changes between 3.1.4 and 3.1.5 [xx XXX xxxx]
+### Changes between 3.1.4 and 3.1.5 [30 Jan 2024]
 
  * A file in PKCS12 format can contain certificates and keys and may come from
    an untrusted source. The PKCS12 specification allows certain fields to be
