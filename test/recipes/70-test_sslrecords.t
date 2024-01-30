@@ -41,6 +41,12 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
+# Avoid failures with tls1_3 disabled builds
+# TLSProxy defaults to use tls1_3 and tls1_2 is required by the tests so
+# set it here and check that a simple proxy works before running the tests
+$proxy->serverflags("-tls1_2");
+$proxy->clientflags("-no_tls1_3");
+
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 42;
 
@@ -79,6 +85,7 @@ sub run_tests
     SKIP: {
         skip "Record tests not intended for dtls", 1 if $run_test_as_dtls == 1;
         #Test 1: Injecting out of context empty records should fail
+        $proxy->clear();
         $content_type = TLSProxy::Record::RT_APPLICATION_DATA;
         $inject_recs_num = 1;
         $fatal_alert = 0;
