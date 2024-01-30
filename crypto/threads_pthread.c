@@ -337,7 +337,6 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
 void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
 {
     struct rcu_thr_data *data;
-    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
     int i, available_qp = -1;
 
     /*
@@ -368,7 +367,7 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
      */
     assert(available_qp != -1);
 
-    data->thread_qps[available_qp].qp = get_hold_current_qp(rlock);
+    data->thread_qps[available_qp].qp = get_hold_current_qp(lock);
     data->thread_qps[available_qp].depth = 1;
     data->thread_qps[available_qp].lock = lock;
 }
@@ -385,7 +384,7 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
         if (data->thread_qps[i].lock == lock) {
             /*
              * As with read side acquisition, we use __ATOMIC_RELEASE here
-             * to ensure that the decrement is published immediately 
+             * to ensure that the decrement is published immediately
              * to any write side waiters
              */
             data->thread_qps[i].depth--;
@@ -410,7 +409,7 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
  * Write side allocation routine to get the current qp
  * and replace it with a new one
  */
-static struct rcu_qp *update_qp(struct rcu_lock_st *lock)
+static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock)
 {
     uint64_t new_id;
     uint64_t current_idx;
@@ -466,7 +465,7 @@ static struct rcu_qp *update_qp(struct rcu_lock_st *lock)
     return &lock->qp_group[current_idx];
 }
 
-static void retire_qp(struct rcu_lock_st *lock, struct rcu_qp *qp)
+static void retire_qp(CRYPTO_RCU_LOCK *lock, struct rcu_qp *qp)
 {
     pthread_mutex_lock(&lock->alloc_lock);
     lock->writers_alloced--;
@@ -474,7 +473,7 @@ static void retire_qp(struct rcu_lock_st *lock, struct rcu_qp *qp)
     pthread_mutex_unlock(&lock->alloc_lock);
 }
 
-static struct rcu_qp *allocate_new_qp_group(struct rcu_lock_st *lock,
+static struct rcu_qp *allocate_new_qp_group(CRYPTO_RCU_LOCK *lock,
                                             int count)
 {
     struct rcu_qp *new =
@@ -486,22 +485,17 @@ static struct rcu_qp *allocate_new_qp_group(struct rcu_lock_st *lock,
 
 void ossl_rcu_write_lock(CRYPTO_RCU_LOCK *lock)
 {
-    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
-
-    pthread_mutex_lock(&rlock->write_lock);
+    pthread_mutex_lock(&lock->write_lock);
 }
 
 void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK *lock)
 {
-    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
-
-    pthread_mutex_unlock(&rlock->write_lock);
+    pthread_mutex_unlock(&lock->write_lock);
 }
 
 void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 {
     struct rcu_qp *qp;
-    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
     uint64_t count;
     struct rcu_cb_item *cb_items, *tmpcb;
 
@@ -509,9 +503,9 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
      * __ATOMIC_ACQ_REL is used here to ensure that we get any prior published
      * writes before we read, and publish our write immediately
      */
-    cb_items = ATOMIC_EXCHANGE_N(&rlock->cb_items, NULL, __ATOMIC_ACQ_REL);
+    cb_items = ATOMIC_EXCHANGE_N(&lock->cb_items, NULL, __ATOMIC_ACQ_REL);
 
-    qp = update_qp(rlock);
+    qp = update_qp(lock);
 
     /*
      * wait for the reader count to reach zero
@@ -524,14 +518,14 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     } while (READER_COUNT(count) != 0);
 
     /* retire in order */
-    pthread_mutex_lock(&rlock->prior_lock);
-    while (rlock->next_to_retire != ID_VAL(count))
-        pthread_cond_wait(&rlock->prior_signal, &rlock->prior_lock);
-    rlock->next_to_retire++;
-    pthread_cond_broadcast(&rlock->prior_signal);
-    pthread_mutex_unlock(&rlock->prior_lock);
+    pthread_mutex_lock(&lock->prior_lock);
+    while (lock->next_to_retire != ID_VAL(count))
+        pthread_cond_wait(&lock->prior_signal, &lock->prior_lock);
+    lock->next_to_retire++;
+    pthread_cond_broadcast(&lock->prior_signal);
+    pthread_mutex_unlock(&lock->prior_lock);
 
-    retire_qp(rlock, qp);
+    retire_qp(lock, qp);
 
     /* handle any callbacks that we have */
     while (cb_items != NULL) {
@@ -544,7 +538,6 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 
 int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 {
-    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
     struct rcu_cb_item *new =
         OPENSSL_zalloc(sizeof(*new));
 
@@ -558,7 +551,7 @@ int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
      * list are visible to us prior to reading, and publish the new value
      * immediately
      */
-    new->next = ATOMIC_EXCHANGE_N(&rlock->cb_items, new, __ATOMIC_ACQ_REL);
+    new->next = ATOMIC_EXCHANGE_N(&lock->cb_items, new, __ATOMIC_ACQ_REL);
 
     return 1;
 }

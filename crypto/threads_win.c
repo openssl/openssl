@@ -175,24 +175,22 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers)
         OPENSSL_free(new);
         new = NULL;
     }
-    return (CRYPTO_RCU_LOCK *)new;
+    return new;
 
 }
 
 void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
 {
-    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
-
-    OPENSSL_free(rlock->qp_group);
-    ossl_crypto_condvar_free(&rlock->alloc_signal);
-    ossl_crypto_condvar_free(&rlock->prior_signal);
-    ossl_crypto_mutex_free(&rlock->alloc_lock);
-    ossl_crypto_mutex_free(&rlock->prior_lock);
-    ossl_crypto_mutex_free(&rlock->write_lock);
+    OPENSSL_free(lock->qp_group);
+    ossl_crypto_condvar_free(&lock->alloc_signal);
+    ossl_crypto_condvar_free(&lock->prior_signal);
+    ossl_crypto_mutex_free(&lock->alloc_lock);
+    ossl_crypto_mutex_free(&lock->prior_lock);
+    ossl_crypto_mutex_free(&lock->write_lock);
     OPENSSL_free(lock);
 }
 
-static inline struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
+static inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK *lock)
 {
     uint32_t qp_idx;
 
@@ -211,7 +209,6 @@ static inline struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
 void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
 {
     struct rcu_thr_data *data;
-    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
     int i;
     int available_qp = -1;
 
@@ -240,23 +237,19 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
      */
     assert(available_qp != -1);
 
-    data->thread_qps[available_qp].qp = get_hold_current_qp(rlock);
+    data->thread_qps[available_qp].qp = get_hold_current_qp(lock);
     data->thread_qps[available_qp].depth = 1;
     data->thread_qps[available_qp].lock = lock;
 }
 
 void ossl_rcu_write_lock(CRYPTO_RCU_LOCK *lock)
 {
-    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
-
-    ossl_crypto_mutex_lock(rlock->write_lock);
+    ossl_crypto_mutex_lock(lock->write_lock);
 }
 
 void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK *lock)
 {
-    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
-
-    ossl_crypto_mutex_unlock(rlock->write_lock);
+    ossl_crypto_mutex_unlock(lock->write_lock);
 }
 
 void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
@@ -281,7 +274,7 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
     }
 }
 
-static struct rcu_qp *update_qp(struct rcu_lock_st *lock)
+static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock)
 {
     uint64_t new_id;
     uint32_t current_idx;
@@ -322,7 +315,7 @@ static struct rcu_qp *update_qp(struct rcu_lock_st *lock)
     return &lock->qp_group[current_idx];
 }
 
-static void retire_qp(struct rcu_lock_st *lock,
+static void retire_qp(CRYPTO_RCU_LOCK *lock,
                       struct rcu_qp *qp)
 {
     ossl_crypto_mutex_lock(lock->alloc_lock);
@@ -334,15 +327,14 @@ static void retire_qp(struct rcu_lock_st *lock,
 
 void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 {
-    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
     struct rcu_qp *qp;
     uint64_t count;
     struct rcu_cb_item *cb_items, *tmpcb;
 
     /* before we do anything else, lets grab the cb list */
-    cb_items = InterlockedExchangePointer((void * volatile *)&rlock->cb_items, NULL);
+    cb_items = InterlockedExchangePointer((void * volatile *)&lock->cb_items, NULL);
 
-    qp = update_qp(rlock);
+    qp = update_qp(lock);
 
     /* wait for the reader count to reach zero */
     do {
@@ -350,15 +342,15 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     } while (READER_COUNT(count) != 0);
 
     /* retire in order */
-    ossl_crypto_mutex_lock(rlock->prior_lock);
-    while (rlock->next_to_retire != ID_VAL(count))
-        ossl_crypto_condvar_wait(rlock->prior_signal, rlock->prior_lock);
+    ossl_crypto_mutex_lock(lock->prior_lock);
+    while (lock->next_to_retire != ID_VAL(count))
+        ossl_crypto_condvar_wait(lock->prior_signal, lock->prior_lock);
 
-    rlock->next_to_retire++;
-    ossl_crypto_condvar_broadcast(rlock->prior_signal);
-    ossl_crypto_mutex_unlock(rlock->prior_lock);
+    lock->next_to_retire++;
+    ossl_crypto_condvar_broadcast(lock->prior_signal);
+    ossl_crypto_mutex_unlock(lock->prior_lock);
 
-    retire_qp(rlock, qp);
+    retire_qp(lock, qp);
 
     /* handle any callbacks that we have */
     while (cb_items != NULL) {
@@ -375,7 +367,6 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 
 int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 {
-    struct rcu_lock_st *rlock = (struct rcu_lock_st *)lock;
     struct rcu_cb_item *new;
     struct rcu_cb_item *prev;
 
@@ -386,7 +377,7 @@ int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
     new->data = data;
     new->fn = cb;
 
-    InterlockedExchangePointer((void * volatile *)&rlock->cb_items, prev);
+    InterlockedExchangePointer((void * volatile *)&lock->cb_items, prev);
     new->next = prev;
     return 1;
 }

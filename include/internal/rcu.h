@@ -13,7 +13,7 @@
 
 typedef void (*rcu_cb_fn)(void *data);
 
-typedef void CRYPTO_RCU_LOCK;
+typedef struct rcu_lock_st CRYPTO_RCU_LOCK;
 
 CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers);
 void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock);
