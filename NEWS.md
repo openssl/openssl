@@ -43,9 +43,6 @@ This release incorporates the following bug fixes and mitigations:
   * Fixed POLY1305 MAC implementation corrupting vector registers on PowerPC
     CPUs which support PowerISA 2.07
     ([CVE-2023-6129])
-  * Fixed excessive time spent in DH check / generation with large Q parameter
-    value
-    [(CVE-2023-5678)]
 
 ### Major changes between OpenSSL 3.1 and OpenSSL 3.2.0 [23 Nov 2023]
 
@@ -120,6 +117,12 @@ This release incorporates the following documentation enhancements:
     on writing various clients (using TLS and QUIC protocols) with libssl
 
     See [OpenSSL Guide].
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed excessive time spent in DH check / generation with large Q parameter
+    value
+    ([CVE-2023-5678])
 
 A more detailed list of changes in this release can be found in the
 [CHANGES.md] file.

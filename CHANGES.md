@@ -160,6 +160,13 @@ OpenSSL 3.2
 
    *Rohan McLure*
 
+ * Disable building QUIC server utility when OpenSSL is configured with
+   `no-apps`.
+
+   *Vitalii Koshura*
+
+### Changes between 3.1 and 3.2.0 [23 Nov 2023]
+
  * Fix excessive time spent in DH check / generation with large Q parameter
    value.
 
@@ -173,13 +180,6 @@ OpenSSL 3.2
    ([CVE-2023-5678])
 
    *Richard Levitte*
-
- * Disable building QUIC server utility when OpenSSL is configured with
-   `no-apps`.
-
-   *Vitalii Koshura*
-
-### Changes between 3.1 and 3.2.0 [23 Nov 2023]
 
  * The BLAKE2b hash algorithm supports a configurable output length
    by setting the "size" parameter.
