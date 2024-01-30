@@ -247,7 +247,7 @@ static int buf2hexstr_sep(char *str, size_t str_n, size_t *strlength,
     *q = CH_ZERO;
 
 #ifdef CHARSET_EBCDIC
-    ebcdic2ascii(str, str, q - str - 1);
+    ebcdic2ascii(str, str, q - str);
 #endif
     return 1;
 }
