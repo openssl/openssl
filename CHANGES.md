@@ -28,7 +28,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
-### Changes between 3.0.12 and 3.0.13 [xx XXX xxxx]
+### Changes between 3.0.12 and 3.0.13 [30 Jan 2024]
 
  * A file in PKCS12 format can contain certificates and keys and may come from
    an untrusted source. The PKCS12 specification allows certain fields to be
