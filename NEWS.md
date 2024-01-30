@@ -31,6 +31,11 @@ OpenSSL 3.2
 
 ### Major changes between OpenSSL 3.2.0 and OpenSSL 3.2.1 [under development]
 
+OpenSSL 3.2.1 is a security patch release. The most severe CVE fixed in this
+release is Low.
+
+This release incorporates the following bug fixes and mitigations:
+
   * Fixed PKCS12 Decoding crashes
     ([CVE-2024-0727])
   * Fixed excessive time spent checking invalid RSA public keys
