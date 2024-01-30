@@ -26,9 +26,6 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
-plan skip_all => "$test_name needs TLSv1.2 enabled"
-    if disabled("tls1_2");
-
 my $testplanisset = 0;
 my $inject_recs_num = undef;
 my $content_type = undef;
@@ -37,15 +34,31 @@ my $fatal_alert = undef; # set by filters at expected fatal alerts
 my $sslv2testtype = undef;
 my $proxy_start_success = 0;
 
-# Run tests with TLS
-run_tests(0);
-# Run tests with DTLS
-run_tests(1);
+my $proxy = TLSProxy::Proxy->new(
+    undef,
+    cmdstr(app([ "openssl" ]), display => 1),
+    srctop_file("apps", "server.pem"),
+    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+);
+
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 42;
+
+SKIP: {
+    skip "TLS 1.2 is disabled", 21 if disabled("tls1_2");
+    # Run tests with TLS
+    run_tests(0);
+}
+
+SKIP: {
+    skip "DTLS 1.2 is disabled", 21 if disabled("dtls1_2");
+    # Run tests with DTLS
+    run_tests(1);
+}
 
 sub run_tests
 {
     my $run_test_as_dtls = shift;
-    my $proxy;
     if ($run_test_as_dtls == 1) {
         $proxy = TLSProxy::Proxy->new_dtls(
             \&add_empty_recs_filter,
@@ -71,11 +84,7 @@ sub run_tests
         $fatal_alert = 0;
         $proxy->serverflags("-tls1_2");
         $proxy->clientflags("-no_tls1_3");
-        $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-        if ($testplanisset == 0) {
-            plan tests => 42;
-            $testplanisset = 1;
-        }
+        $proxy->start();
         ok($fatal_alert, "Out of context empty records test");
     }
 
