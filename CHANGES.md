@@ -25,6 +25,10 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
+### Changes between 3.2.1 and 3.2.2 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.2.0 and 3.2.1 [30 Jan 2024]
 
  * A file in PKCS12 format can contain certificates and keys and may come from
