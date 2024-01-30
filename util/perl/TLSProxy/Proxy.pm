@@ -750,4 +750,10 @@ sub ciphersuite
     return $ciphersuite;
 }
 
+sub isdtls
+{
+    my $self = shift;
+    return $self->{isdtls}; #read-only
+}
+
 1;
