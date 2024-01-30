@@ -33,9 +33,11 @@ my $boundary_test_type = undef;
 my $fatal_alert = undef; # set by filters at expected fatal alerts
 my $sslv2testtype = undef;
 my $proxy_start_success = 0;
+my $dtlsproxy = undef;
+my $tlsproxy = undef;
 
-my $proxy = TLSProxy::Proxy->new(
-    undef,
+my $dummyproxy = TLSProxy::Proxy->new(
+    \&add_empty_recs_filter,
     cmdstr(app([ "openssl" ]), display => 1),
     srctop_file("apps", "server.pem"),
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
@@ -44,41 +46,45 @@ my $proxy = TLSProxy::Proxy->new(
 # Avoid failures with tls1_3 disabled builds
 # TLSProxy defaults to use tls1_3 and tls1_2 is required by the tests so
 # set it here and check that a simple proxy works before running the tests
-$proxy->serverflags("-tls1_2");
-$proxy->clientflags("-no_tls1_3");
+$dummyproxy->serverflags("-tls1_2");
+$dummyproxy->clientflags("-no_tls1_3");
 
-$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+$dummyproxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 42;
 
 SKIP: {
     skip "TLS 1.2 is disabled", 21 if disabled("tls1_2");
     # Run tests with TLS
+    $tlsproxy = TLSProxy::Proxy->new(
+        \&add_empty_recs_filter,
+        cmdstr(app([ "openssl" ]), display => 1),
+        srctop_file("apps", "server.pem"),
+        (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+    );
     run_tests(0);
 }
 
 SKIP: {
     skip "DTLS 1.2 is disabled", 21 if disabled("dtls1_2");
     # Run tests with DTLS
+    $dtlsproxy = TLSProxy::Proxy->new_dtls(
+        \&add_empty_recs_filter,
+        cmdstr(app([ "openssl" ]), display => 1),
+        srctop_file("apps", "server.pem"),
+        (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+    );
     run_tests(1);
 }
 
 sub run_tests
 {
     my $run_test_as_dtls = shift;
+
+    my $proxy;
     if ($run_test_as_dtls == 1) {
-        $proxy = TLSProxy::Proxy->new_dtls(
-            \&add_empty_recs_filter,
-            cmdstr(app([ "openssl" ]), display => 1),
-            srctop_file("apps", "server.pem"),
-            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
-        );
+        $proxy = $dtlsproxy;
     } else {
-        $proxy = TLSProxy::Proxy->new(
-            \&add_empty_recs_filter,
-            cmdstr(app([ "openssl" ]), display => 1),
-            srctop_file("apps", "server.pem"),
-            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
-        );
+        $proxy = $tlsproxy;
     }
 
     $fatal_alert = 0; # set by filters at expected fatal alerts
