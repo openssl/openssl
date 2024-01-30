@@ -1101,7 +1101,6 @@ static void translate_msg(BIO *b, struct msghdr *mh, struct iovec *iov,
     mh->msg_controllen  = msg->local != NULL ? BIO_CMSG_ALLOC_LEN : 0;
     mh->msg_flags       = 0;
 }
-
 # endif
 
 # if M_METHOD == M_METHOD_RECVMMSG || M_METHOD == M_METHOD_RECVMSG || M_METHOD == M_METHOD_WSARECVMSG
