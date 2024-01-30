@@ -66,6 +66,14 @@ The operation failed, check out the error stack for the reason.
 
 Pointer to the subject names of the successfully read certificates.
 
+=item 0
+
+The operation failed.
+
+=item 1
+
+The operation succeeded.
+
 =back
 
 =head1 EXAMPLES
