@@ -1401,7 +1401,7 @@ SSL_R_EXTRA_DATA_IN_MESSAGE:153:extra data in message
 SSL_R_EXT_LENGTH_MISMATCH:163:ext length mismatch
 SSL_R_FAILED_TO_GET_PARAMETER:316:failed to get parameter
 SSL_R_FAILED_TO_INIT_ASYNC:405:failed to init async
-SSL_R_FEATURE_NEGOTIATION_NOT_COMPLETE:412:feature negotiation not complete
+SSL_R_FEATURE_NEGOTIATION_NOT_COMPLETE:417:feature negotiation not complete
 SSL_R_FEATURE_NOT_RENEGOTIABLE:413:feature not renegotiable
 SSL_R_FRAGMENTED_CLIENT_HELLO:401:fragmented client hello
 SSL_R_GOT_A_FIN_BEFORE_A_CCS:154:got a fin before a ccs
