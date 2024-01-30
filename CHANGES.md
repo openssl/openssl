@@ -29,12 +29,13 @@ OpenSSL 3.2
 
  * A file in PKCS12 format can contain certificates and keys and may come from
    an untrusted source. The PKCS12 specification allows certain fields to be
-   NULL, but OpenSSL does not correctly check for this case. This can lead to a
-   NULL pointer dereference that results in OpenSSL crashing. If an application
-   processes PKCS12 files from an untrusted source using the OpenSSL APIs then
-   that application will be vulnerable to this issue.
+   NULL, but OpenSSL did not correctly check for this case. A fix has been
+   applied to prevent a NULL pointer dereference that results in OpenSSL
+   crashing. If an application processes PKCS12 files from an untrusted source
+   using the OpenSSL APIs then that application will be vulnerable to this
+   issue prior to this fix.
 
-   OpenSSL APIs that are vulnerable to this are: PKCS12_parse(),
+   OpenSSL APIs that were vulnerable to this are: PKCS12_parse(),
    PKCS12_unpack_p7data(), PKCS12_unpack_p7encdata(), PKCS12_unpack_authsafes()
    and PKCS12_newpass().
 
