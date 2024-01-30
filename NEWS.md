@@ -19,6 +19,10 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
+### Major changes between OpenSSL 3.1.5 and OpenSSL 3.1.6 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.1.4 and OpenSSL 3.1.5 [30 Jan 2024]
 
   * Fixed PKCS12 Decoding crashes
