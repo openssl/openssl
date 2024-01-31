@@ -26,10 +26,6 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
-plan skip_all => "$test_name needs TLS1.2 or TLS1.3 for running dummyproxy check"
-    if disabled("tls1_3") && disabled("tls1_2");
-
-my $testplanisset = 0;
 my $inject_recs_num = undef;
 my $content_type = undef;
 my $boundary_test_type = undef;
