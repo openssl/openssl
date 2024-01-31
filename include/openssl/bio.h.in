@@ -384,6 +384,7 @@ typedef struct bio_mmsg_cb_args_st {
 
 #define BIO_POLL_DESCRIPTOR_TYPE_NONE       0
 #define BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD    1
+#define BIO_POLL_DESCRIPTOR_TYPE_SSL        2
 #define BIO_POLL_DESCRIPTOR_CUSTOM_START    8192
 
 typedef struct bio_poll_descriptor_st {
@@ -392,6 +393,7 @@ typedef struct bio_poll_descriptor_st {
         int         fd;
         void        *custom;
         uintptr_t   custom_ui;
+        SSL         *ssl;
     } value;
 } BIO_POLL_DESCRIPTOR;
 
