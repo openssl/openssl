@@ -66,6 +66,7 @@ SKIP: {
 
 SKIP: {
     skip "DTLS 1.2 is disabled", 21 if disabled("dtls1_2");
+    skip "DTLSProxy does not work on Windows", 21 if $^O =~ /^(MSWin32)$/;
     # Run tests with DTLS
     $dtlsproxy = TLSProxy::Proxy->new_dtls(
         \&add_empty_recs_filter,
