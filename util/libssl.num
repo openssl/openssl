@@ -580,3 +580,4 @@ SSL_is_stream_local                     580	3_2_0	EXIST::FUNCTION:
 SSL_write_ex2                           ?	3_3_0	EXIST::FUNCTION:
 SSL_get_value_uint                      ?	3_3_0	EXIST::FUNCTION:
 SSL_set_value_uint                      ?	3_3_0	EXIST::FUNCTION:
+SSL_poll                                ?	3_3_0	EXIST::FUNCTION:

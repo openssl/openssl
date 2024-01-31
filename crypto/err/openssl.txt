@@ -1507,6 +1507,7 @@ SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE:199:peer did not return a certificate
 SSL_R_PEM_NAME_BAD_PREFIX:391:pem name bad prefix
 SSL_R_PEM_NAME_TOO_SHORT:392:pem name too short
 SSL_R_PIPELINE_FAILURE:406:pipeline failure
+SSL_R_POLL_REQUEST_NOT_SUPPORTED:413:poll request not supported
 SSL_R_POST_HANDSHAKE_AUTH_ENCODING_ERR:278:post handshake auth encoding err
 SSL_R_PRIVATE_KEY_MISMATCH:288:private key mismatch
 SSL_R_PROTOCOL_IS_SHUTDOWN:207:protocol is shutdown
