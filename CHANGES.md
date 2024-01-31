@@ -30,7 +30,7 @@ OpenSSL 3.3
 
  * The EVP_PKEY_fromdata function has been augmented to allow for the derivation
    of CRT (Chinese Remainder Theorem) parameters when requested.  See the
-   OSSL_PKEY_PARAM_DERIVE_FROM_PQ param in the EVP_PKEY-RSA documentation.
+   OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ param in the EVP_PKEY-RSA documentation.
 
    *Neil Horman*
 
