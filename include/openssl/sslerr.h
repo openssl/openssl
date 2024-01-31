@@ -227,6 +227,7 @@
 # define SSL_R_PEM_NAME_BAD_PREFIX                        391
 # define SSL_R_PEM_NAME_TOO_SHORT                         392
 # define SSL_R_PIPELINE_FAILURE                           406
+# define SSL_R_POLL_REQUEST_NOT_SUPPORTED                 413
 # define SSL_R_POST_HANDSHAKE_AUTH_ENCODING_ERR           278
 # define SSL_R_PRIVATE_KEY_MISMATCH                       288
 # define SSL_R_PROTOCOL_IS_SHUTDOWN                       207

@@ -351,6 +351,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "pem name bad prefix"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_PEM_NAME_TOO_SHORT), "pem name too short"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_PIPELINE_FAILURE), "pipeline failure"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_POLL_REQUEST_NOT_SUPPORTED),
+    "poll request not supported"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_POST_HANDSHAKE_AUTH_ENCODING_ERR),
     "post handshake auth encoding err"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_PRIVATE_KEY_MISMATCH),

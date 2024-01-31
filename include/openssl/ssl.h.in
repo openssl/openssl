@@ -2407,6 +2407,58 @@ int SSL_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t v);
     SSL_get_generic_value_uint((ssl), SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL, \
                                (value))
 
+# define SSL_POLL_EVENT_NONE        0
+
+# define SSL_POLL_EVENT_F           (1U <<  0) /* F   (Failure) */
+# define SSL_POLL_EVENT_EL          (1U <<  1) /* EL  (Exception on Listener) */
+# define SSL_POLL_EVENT_EC          (1U <<  2) /* EC  (Exception on Conn) */
+# define SSL_POLL_EVENT_ECD         (1U <<  3) /* ECD (Exception on Conn Drained) */
+# define SSL_POLL_EVENT_ER          (1U <<  4) /* ER  (Exception on Read) */
+# define SSL_POLL_EVENT_EW          (1U <<  5) /* EW  (Exception on Write) */
+# define SSL_POLL_EVENT_R           (1U <<  6) /* R   (Readable) */
+# define SSL_POLL_EVENT_W           (1U <<  7) /* W   (Writable) */
+# define SSL_POLL_EVENT_IC          (1U <<  8) /* IC  (Incoming Connection) */
+# define SSL_POLL_EVENT_ISB         (1U <<  9) /* ISB (Incoming Stream: Bidi) */
+# define SSL_POLL_EVENT_ISU         (1U << 10) /* ISU (Incoming Stream: Uni) */
+# define SSL_POLL_EVENT_OSB         (1U << 11) /* OSB (Outgoing Stream: Bidi) */
+# define SSL_POLL_EVENT_OSU         (1U << 12) /* OSU (Outgoing Stream: Uni) */
+
+# define SSL_POLL_EVENT_RW          (SSL_POLL_EVENT_R | SSL_POLL_EVENT_W)
+# define SSL_POLL_EVENT_RE          (SSL_POLL_EVENT_R | SSL_POLL_EVENT_ER)
+# define SSL_POLL_EVENT_WE          (SSL_POLL_EVENT_W | SSL_POLL_EVENT_EW)
+# define SSL_POLL_EVENT_RWE         (SSL_POLL_EVENT_RE | SSL_POLL_EVENT_WE)
+# define SSL_POLL_EVENT_E           (SSL_POLL_EVENT_EL | SSL_POLL_EVENT_EC \
+                                     | SSL_POLL_EVENT_ER | SSL_POLL_EVENT_EW)
+# define SSL_POLL_EVENT_IS          (SSL_POLL_EVENT_ISB | SSL_POLL_EVENT_ISU)
+# define SSL_POLL_EVENT_ISE         (SSL_POLL_EVENT_IS | SSL_POLL_EVENT_EC)
+# define SSL_POLL_EVENT_I           (SSL_POLL_EVENT_IS | SSL_POLL_EVENT_IC)
+# define SSL_POLL_EVENT_OS          (SSL_POLL_EVENT_OSB | SSL_POLL_EVENT_OSU)
+# define SSL_POLL_EVENT_OSE         (SSL_POLL_EVENT_OS | SSL_POLL_EVENT_EC)
+
+typedef struct ssl_poll_item_st {
+    BIO_POLL_DESCRIPTOR desc;
+    uint64_t            events, revents;
+} SSL_POLL_ITEM;
+
+# define SSL_POLL_FLAG_NO_HANDLE_EVENTS  (1U << 0)
+
+__owur int SSL_poll(SSL_POLL_ITEM *items,
+                    size_t num_items,
+                    size_t stride,
+                    const struct timeval *timeout,
+                    uint64_t flags,
+                    size_t *result_count);
+
+static ossl_inline ossl_unused BIO_POLL_DESCRIPTOR
+SSL_as_poll_descriptor(SSL *s)
+{
+    BIO_POLL_DESCRIPTOR d;
+
+    d.type      = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    d.value.ssl = s;
+    return d;
+}
+
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_cache_hit(s) SSL_session_reused(s)
 # endif
