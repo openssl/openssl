@@ -26,6 +26,9 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
+plan skip_all => "$test_name needs TLS1.2 or TLS1.3 for running dummyproxy check"
+    if disabled("tls1_3") && disabled("tls1_2");
+
 my $testplanisset = 0;
 my $inject_recs_num = undef;
 my $content_type = undef;
@@ -46,9 +49,10 @@ my $dummyproxy = TLSProxy::Proxy->new(
 # Avoid failures with tls1_3 disabled builds
 # TLSProxy defaults to use tls1_3 and tls1_2 is required by the tests so
 # set it here and check that a simple proxy works before running the tests
-$dummyproxy->serverflags("-tls1_2");
-$dummyproxy->clientflags("-no_tls1_3");
-
+if (disabled("tls1_3")) {
+    $dummyproxy->serverflags("-tls1_2");
+    $dummyproxy->clientflags("-no_tls1_3");
+}
 $dummyproxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 42;
 
