@@ -122,7 +122,7 @@ This release incorporates the following bug fixes and mitigations:
 
   * Fixed excessive time spent in DH check / generation with large Q parameter
     value
-    [(CVE-2023-5678)]
+    ([CVE-2023-5678])
 
 A more detailed list of changes in this release can be found in the
 [CHANGES.md] file.
