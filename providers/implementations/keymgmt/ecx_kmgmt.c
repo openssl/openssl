@@ -17,12 +17,9 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/self_test.h>
-#include "internal/provider.h"
 #include "internal/param_build_set.h"
 #include <openssl/param_build.h>
 #include "crypto/ecx.h"
-#include "crypto/evp.h"
-#include "crypto/evp/evp_local.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -592,6 +589,11 @@ static const OSSL_PARAM *ecx_gen_settable_params(ossl_unused void *genctx,
     return settable;
 }
 
+#ifdef FIPS_MODULE
+/*
+ * Refer: FIPS 140-3 IG 10.3.A Additional Comment 1
+ * Perform a PCT for EDDSA by signing and verifying signature.
+ */
 static int ecd_keygen_pairwise_test(ECX_KEY *ecx) {
     int ret = 0;
     OSSL_SELF_TEST *st = NULL;
@@ -601,18 +603,9 @@ static int ecd_keygen_pairwise_test(ECX_KEY *ecx) {
     unsigned char msg[16] = {0};
     size_t msg_len = sizeof(msg);
     unsigned char sig[ED448_SIGSIZE] = {0};
-    size_t sig_len = sizeof(sig);
 
-    EVP_SIGNATURE *alg = NULL;
-    void *provctx = NULL;
-    void *algctx = NULL;
-    const char *instance = (ecx->type == ECX_KEY_TYPE_ED25519) ?
-                           "Ed25519" : "Ed448";
-    const OSSL_PARAM params[] = {
-        OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_INSTANCE, instance,
-                               strlen(instance)),
-        OSSL_PARAM_END
-    };
+    int is_ed25519 = (ecx->type == ECX_KEY_TYPE_ED25519) ? 1 : 0;
+    int operation_result = 0;
 
     OSSL_SELF_TEST_get_callback(ecx->libctx, &cb, &cbarg);
 
@@ -623,41 +616,38 @@ static int ecd_keygen_pairwise_test(ECX_KEY *ecx) {
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
                            OSSL_SELF_TEST_DESC_PCT_EDDSA);
 
-    alg = EVP_SIGNATURE_fetch(ecx->libctx, instance, NULL);
-    if (!alg)
+    if (is_ed25519) {
+        operation_result = ossl_ed25519_sign(sig, msg, msg_len, ecx->pubkey,
+                                             ecx->privkey, 0, 0, 0, NULL, 0,
+                                             ecx->libctx, ecx->propq);
+    } else {
+        operation_result = ossl_ed448_sign(ecx->libctx, sig, msg, msg_len,
+                                           ecx->pubkey, ecx->privkey, NULL, 0,
+                                           0, ecx->propq);
+    }
+    if (operation_result != 1)
         goto err;
-    provctx = ossl_provider_ctx(EVP_SIGNATURE_get0_provider(alg));
-    if (!provctx)
-        goto err;
-
-    algctx = alg->newctx(provctx, NULL);
-    if (!algctx)
-        goto err;
-    if (alg->digest_sign_init(algctx, NULL, ecx, params) != 1)
-        goto err;
-    if (alg->digest_sign(algctx, sig, &sig_len, sig_len, msg, msg_len) != 1)
-        goto err;
-    alg->freectx(algctx);
 
     OSSL_SELF_TEST_oncorrupt_byte(st, sig);
 
-    algctx = alg->newctx(provctx, NULL);
-    if (!algctx)
-        goto err;
-    if (alg->digest_verify_init(algctx, NULL, ecx, params) != 1)
-        goto err;
-    if (alg->digest_verify(algctx, sig, sig_len, msg, msg_len) != 1)
+    if (is_ed25519) {
+        operation_result = ossl_ed25519_verify(msg, msg_len, sig, ecx->pubkey,
+                                               0, 0, 0, NULL, 0, ecx->libctx,
+                                               ecx->propq);
+    } else {
+        operation_result = ossl_ed448_verify(ecx->libctx, msg, msg_len, sig,
+                                             ecx->pubkey, NULL, 0, 0, ecx->propq);
+    }
+    if (operation_result != 1)
         goto err;
 
     ret = 1;
 err:
     OSSL_SELF_TEST_onend(st, ret);
     OSSL_SELF_TEST_free(st);
-    if (algctx)
-        alg->freectx(algctx);
-    EVP_SIGNATURE_free(alg);
     return ret;
 }
+#endif
 
 static void *ecx_gen(struct ecx_gen_ctx *gctx)
 {
@@ -780,12 +770,14 @@ static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
         goto err;
     }
-#endif
 
     return key;
 err:
     ossl_ecx_key_free(key);
     return NULL;
+#else
+    return key;
+#endif
 }
 
 static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
@@ -814,12 +806,14 @@ static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
         goto err;
     }
-#endif
 
     return key;
 err:
     ossl_ecx_key_free(key);
     return NULL;
+#else
+    return key;
+#endif
 }
 
 static void ecx_gen_cleanup(void *genctx)
