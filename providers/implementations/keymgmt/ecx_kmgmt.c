@@ -592,9 +592,13 @@ static const OSSL_PARAM *ecx_gen_settable_params(ossl_unused void *genctx,
 #ifdef FIPS_MODULE
 /*
  * Refer: FIPS 140-3 IG 10.3.A Additional Comment 1
- * Perform a PCT for EDDSA by signing and verifying signature.
+ * Perform a pairwise test for EDDSA by signing and verifying signature.
+ *
+ * The parameter `self_test` is used to indicate whether to create OSSL_SELF_TEST
+ * instance.
  */
-static int ecd_keygen_pairwise_test(ECX_KEY *ecx) {
+static int ecd_fips140_pairwise_test(const ECX_KEY *ecx, int type, int self_test)
+{
     int ret = 0;
     OSSL_SELF_TEST *st = NULL;
     OSSL_CALLBACK *cb = NULL;
@@ -604,14 +608,20 @@ static int ecd_keygen_pairwise_test(ECX_KEY *ecx) {
     size_t msg_len = sizeof(msg);
     unsigned char sig[ED448_SIGSIZE] = {0};
 
-    int is_ed25519 = (ecx->type == ECX_KEY_TYPE_ED25519) ? 1 : 0;
+    int is_ed25519 = (type == ECX_KEY_TYPE_ED25519) ? 1 : 0;
     int operation_result = 0;
 
-    OSSL_SELF_TEST_get_callback(ecx->libctx, &cb, &cbarg);
+    /*
+     * The functions `OSSL_SELF_TEST_*` will return directly if parameter `st`
+     * is NULL.
+     */
+    if (self_test)  {
+        OSSL_SELF_TEST_get_callback(ecx->libctx, &cb, &cbarg);
 
-    st = OSSL_SELF_TEST_new(cb, cbarg);
-    if (st == NULL)
-        return 0;
+        st = OSSL_SELF_TEST_new(cb, cbarg);
+        if (st == NULL)
+            return 0;
+    }
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
                            OSSL_SELF_TEST_DESC_PCT_EDDSA);
@@ -766,7 +776,7 @@ static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 #ifdef FIPS_MODULE
     if (!key || ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0))
         return key;
-    if (ecd_keygen_pairwise_test(key) != 1) {
+    if (ecd_fips140_pairwise_test(key, ECX_KEY_TYPE_ED25519, 1) != 1) {
         ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
         goto err;
     }
@@ -792,7 +802,7 @@ static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_ED448)
         && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_ED448)
         && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED448)) {
-        ret = s390x_ecd_keygen448(gctx);
+        key = s390x_ecd_keygen448(gctx);
     } else
 #endif
     {
@@ -802,7 +812,7 @@ static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 #ifdef FIPS_MODULE
     if (!key || ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0))
         return key;
-    if (ecd_keygen_pairwise_test(key) != 1) {
+    if (ecd_fips140_pairwise_test(key, ECX_KEY_TYPE_ED448, 1) != 1) {
         ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
         goto err;
     }
@@ -857,6 +867,23 @@ static int ecx_key_pairwise_check(const ECX_KEY *ecx, int type)
     case ECX_KEY_TYPE_X448:
         ossl_x448_public_from_private(pub, ecx->privkey);
         break;
+    default:
+        return 0;
+    }
+    return CRYPTO_memcmp(ecx->pubkey, pub, ecx->keylen) == 0;
+}
+
+#ifdef FIPS_MODULE
+static int ecd_key_pairwise_check(const ECX_KEY *ecx, int type)
+{
+    return ecd_fips140_pairwise_test(ecx, type, 0);
+}
+#else
+static int ecd_key_pairwise_check(const ECX_KEY *ecx, int type)
+{
+    uint8_t pub[64];
+
+    switch (type) {
     case ECX_KEY_TYPE_ED25519:
         if (!ossl_ed25519_public_from_private(ecx->libctx, pub, ecx->privkey,
                                               ecx->propq))
@@ -872,6 +899,7 @@ static int ecx_key_pairwise_check(const ECX_KEY *ecx, int type)
     }
     return CRYPTO_memcmp(ecx->pubkey, pub, ecx->keylen) == 0;
 }
+#endif
 
 static int ecx_validate(const void *keydata, int selection, int type, size_t keylen)
 {
@@ -895,7 +923,12 @@ static int ecx_validate(const void *keydata, int selection, int type, size_t key
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ok && ecx->privkey != NULL;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == OSSL_KEYMGMT_SELECT_KEYPAIR)
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != OSSL_KEYMGMT_SELECT_KEYPAIR)
+        return ok;
+
+    if (type == ECX_KEY_TYPE_ED25519 || type == ECX_KEY_TYPE_ED448)
+        ok = ok && ecd_key_pairwise_check(ecx, type);
+    else
         ok = ok && ecx_key_pairwise_check(ecx, type);
 
     return ok;
