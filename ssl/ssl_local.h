@@ -2233,7 +2233,7 @@ typedef enum downgrade_en {
 extern const unsigned char tls11downgrade[8];
 extern const unsigned char tls12downgrade[8];
 
-extern SSL3_ENC_METHOD ssl3_undef_enc_method;
+extern const SSL3_ENC_METHOD ssl3_undef_enc_method;
 
 __owur const SSL_METHOD *sslv3_method(void);
 __owur const SSL_METHOD *sslv3_server_method(void);

@@ -62,7 +62,7 @@ static int ssl_undefined_function_8(SSL_CONNECTION *sc)
     return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
 }
 
-SSL3_ENC_METHOD ssl3_undef_enc_method = {
+const SSL3_ENC_METHOD ssl3_undef_enc_method = {
     ssl_undefined_function_8,
     ssl_undefined_function_3,
     ssl_undefined_function_4,

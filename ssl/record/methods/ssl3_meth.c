@@ -311,7 +311,7 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
     return 1;
 }
 
-struct record_functions_st ssl_3_0_funcs = {
+const struct record_functions_st ssl_3_0_funcs = {
     ssl3_set_crypto_state,
     ssl3_cipher,
     ssl3_mac,

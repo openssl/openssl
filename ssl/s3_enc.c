@@ -375,7 +375,7 @@ int ssl3_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
                                 unsigned char *p,
                                 size_t len, size_t *secret_size)
 {
-    static const unsigned char *salt[3] = {
+    static const unsigned char *const salt[3] = {
 #ifndef CHARSET_EBCDIC
         (const unsigned char *)"A",
         (const unsigned char *)"BB",

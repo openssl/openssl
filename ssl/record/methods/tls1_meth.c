@@ -651,7 +651,7 @@ int tls1_initialise_write_packets(OSSL_RECORD_LAYER *rl,
 }
 
 /* TLSv1.0, TLSv1.1 and TLSv1.2 all use the same funcs */
-struct record_functions_st tls_1_funcs = {
+const struct record_functions_st tls_1_funcs = {
     tls1_set_crypto_state,
     tls1_cipher,
     tls1_mac,
@@ -672,7 +672,7 @@ struct record_functions_st tls_1_funcs = {
     NULL
 };
 
-struct record_functions_st dtls_1_funcs = {
+const struct record_functions_st dtls_1_funcs = {
     tls1_set_crypto_state,
     tls1_cipher,
     tls1_mac,

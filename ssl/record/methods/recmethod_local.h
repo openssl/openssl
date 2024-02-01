@@ -367,7 +367,7 @@ struct ossl_record_layer_st
     size_t max_pipelines;
 
     /* Function pointers for version specific functions */
-    struct record_functions_st *funcs;
+    const struct record_functions_st *funcs;
 };
 
 typedef struct dtls_rlayer_record_data_st {
@@ -377,12 +377,12 @@ typedef struct dtls_rlayer_record_data_st {
     TLS_RL_RECORD rrec;
 } DTLS_RLAYER_RECORD_DATA;
 
-extern struct record_functions_st ssl_3_0_funcs;
-extern struct record_functions_st tls_1_funcs;
-extern struct record_functions_st tls_1_3_funcs;
-extern struct record_functions_st tls_any_funcs;
-extern struct record_functions_st dtls_1_funcs;
-extern struct record_functions_st dtls_any_funcs;
+extern const struct record_functions_st ssl_3_0_funcs;
+extern const struct record_functions_st tls_1_funcs;
+extern const struct record_functions_st tls_1_3_funcs;
+extern const struct record_functions_st tls_any_funcs;
+extern const struct record_functions_st dtls_1_funcs;
+extern const struct record_functions_st dtls_any_funcs;
 
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
                        const char *fmt, ...);
