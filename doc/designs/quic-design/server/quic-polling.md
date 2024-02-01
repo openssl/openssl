@@ -228,40 +228,535 @@ typedef struct bio_poll_descriptor_st {
 Event Types and Representation
 ------------------------------
 
-Regardless of the API design chosen, event types can first be defined:
+Regardless of the API design chosen, event types can first be defined.
+
+We define the following event types:
+
+- **R (Readable):** There is application data available to be read.
+
+- **W (Writable):** It is currently possible to write more application data.
+
+- **ER (Exception on Read):** The receive part of a stream has been remotely
+  reset via a `RESET_STREAM` frame.
+
+- **EW (Exception on Write):** The send part of a stream has been remotely
+  reset via a `STOP_SENDING` frame.
+
+- **EC (Exception on Connection):** A connection has started terminating
+  (Terminating or Terminated states).
+
+- **EL (Exception on Listener):** A QUIC listener SSL object has failed,
+  for example due to a permanent error on an underlying network BIO.
+
+- **ECD (Exception on Connection Drained):** A connection has *finished*
+  terminating (Terminated state).
+
+- **IC (Incoming Connection):** There is at least one incoming connection
+  incoming and available to be popped using `SSL_accept_connection()`.
+
+- **ISB (Incoming Stream — Bidirectional):** There is at least one
+  bidirectional stream incoming and available to be popped using
+  `SSL_accept_stream()`.
+
+- **ISU (Incoming Stream — Unidirectional):** There is at least one
+  unidirectional stream incoming and available to be popped using
+  `SSL_accept_stream()`.
+
+- **OSB (Outgoing Stream — Bidirectional):** It is currently possible
+  to create at least one additional bidirectional stream.
+
+- **OSU (Outgoing Stream — Unidirectional):** It is currently possible
+  to create at least one additional unidirectional stream.
+
+- **F (Failure):** Identifies failure of the `SSL_poll()` mechanism itself.
+
+While this is a fairly large number of event types, there are valid use cases
+for all of these and reasons why they need to be separate from one another. The
+following dialogue explores the various design considerations.
+
+### Discussion
+
+#### `EL`: Exception on Listener
+
+**Q. When is this event type raised?**
+
+A. This event type is raised only on listener (port) failure, which occurs when
+an underlying network BIO encounters a permanent error.
+
+**Q. Does `EL` imply `EC` and `ECD` on all child connections?**
+
+A. Yes. A permanent network BIO failure causes immediate failure of all
+connections dependent on it without first going through `TERMINATING` (except
+possibly in the future with multipath for connections which aren't exclusively
+reliant on that port).
+
+**Q. What SSL object types can raise this event type?**
+
+A. The event type is raised on a QLSO only. This may be revisited in future
+(e.g. having it also be raised on child QCSOs.)
+
+**Q. Why does this event type need to be distinct from `EC`?**
+
+A. An application which is not immediately concerned by the failure of an
+indiivdual connection likely still needs to be notified if an entire port fails.
+
+#### `EC`, `ECD`: Exception on Connection (/Drained)
+
+**Q. Should this event be reported when a connection begins shutdown, begins
+terminating, or finishes terminating?**
+
+A.
+
+- There is a use case to learn when we finish terminating because that is when
+  we can throw away our port safely (raised on `TERMINATED`);
+
+- there is a use case for learning as soon as we start terminating (raised on
+  `TERMINATING` or `TERMINATED`);
+
+- shutdown (i.e., waiting for streams to be done transmitting and then
+  terminating, as per `SSL_shutdown_ex()`) is always initiated by the local
+  application, thus there is no valid need for an application to poll on it.
+
+As such, separate event types must be available both for the start of the
+termination process and the conclusion of the termination process. `EC`
+corresponds to `TERMINATING` or `TERMINATED` and `ECD` corresponds to
+`TERMINATED` only.
+
+**Q. What happens in the event of idle timeout?**
+
+A. Idle timeout is an immediate transition to `TERMINATED` as per the channel
+code.
+
+**Q. Does `ECD` imply `EC`?**
+
+A. Yes, as `EC` is raised in both the `TERMINATING` and `TERMINATED` states.
+
+**Q. Can `ECD` occur without `EC` also occurring?**
+
+A. No, this is not possible.
+
+**Q. Does it makes sense for an application to be able to mask this?**
+
+A. TBD
+
+**Q. Does it make sense for an application to be able to listen for this but not
+`EL`?**
+
+A. Yes, since `EL` implies `EC`, it is valid for an application to handle
+port/listener failure purely in terms of the emergent consequence of all
+connections failing.
+
+#### `R`: Readable
+
+Application data or FIN is available for popping via `SSL_read`. Never raised
+after a stream FIN has been retired.
+
+**Q. Is this raised on `RESET_STREAM`?**
+
+A. No. Applications which wish to know of receive stream part failure should
+listen for `ER`.
+
+**Q. Should this be reported if the connection fails?**
+
+A. If there is still application data that can be read, yes. Otherwise, no.
+
+**Q. Should this be reported if shutdown has commenced?**
+
+A. Potentially — if there is still data to be read or more data arrives at the
+last minute.
+
+**Q. What happens if this event is enabled on a send-only stream?**
+
+A. The event is never raised.
+
+**Q. Can this event be received before a connection has been (fully)
+established?**
+
+A. Potentially on the server side in the future due to incoming 0-RTT data.
+
+#### `ER`: Error on Read
+
+Raised only when the receive part of a stream has been reset by the remote peer
+using a `RESET_STREAM` frame.
+
+**Q. Should this be reported if a stream has already been concluded normally and
+that FIN has been retired by the application by calling `SSL_read()`?**
+
+A. No. We consider FIN retirement a success condition for our purposes here, so
+normal stream conclusion and the retirement of that event does not cause ER.
+
+**Q. Should this be reported if the connection fails?**
+
+A. No, because that can be separately determined via the `EC` event and this
+provides greater clarity as to what event is occurring and why. Also, it is
+possible that a connection could fail and some application data is still
+buffered to be read by the application, so `EC` does not imply `!R`.
+
+**Q. Should this be reported if shutdown has been commenced?**
+
+A. No — so long as the connection is alive more data could still be received at
+the last minute.
+
+**Q. What happens if this event is enabled on a send-only stream?**
+
+A. The event is never raised.
+
+**Q. What happens if this event is enabled on a QCSO?**
+
+A. The event is applicable if the QCSO has a default stream attached. Otherwise,
+it is never raised.
+
+**Q. Why is this event separate from `R`?**
+
+A. If an application receives an `R` event, this means more application data is
+available to be read but this may be a business-as-usual circumstance which the
+application does not feel obliged to handle urgently; therefore, it might mask
+`R` in some circumstances.
+
+If a stream reset is triggered by a peer, this needs to be notifiable to an
+application immediately even if the application would not care about more
+ordinary application data arriving on a stream for now.
+
+Therefore, `ER` *must* be separate from `R`, otherwise such applications would
+be unable to prevent spurious wakeups due to normal application data when they
+only care about the possibility of a stream reset.
+
+**Q. Should applications be able to listen on `R` but not `ER`?**
+
+A. This would enable an application to listen for more application data but not
+care about stream resets. This can be permitted for now even if it raises osme
+questions about the robustness of such applications.
+
+**Q. How will the future reliable stream resets extension be handled?**
+
+A. `R` will be raised until all data up to the reliable reset point has been
+retired by the application, then `ER` is raised and `R` is never again raised.
+
+**Q. What happens if a stream is reset after the FIN has been retired by the
+application?**
+
+A. The reset is ignored; as per RFC 9000 s. 3.2, the Data Read state is terminal
+and has no `RESET_STREAM` transition. Moreover, after an application is done
+with a stream it can free the QSSO, which means a post-FIN-retirement reset
+cannot be reliably received anyway.
+
+Note that this does not preclude handling of `RESET_STREAM` in the normal way
+for a stream which was concluded normally but where the application has *not*
+yet read all data, which is potentially useful.
+
+#### `W`: Writable
+
+Raised when send buffer space is available, so that it is possible to write
+application data via `SSL_write`.
+
+**Q. Is this raised on `STOP_SENDING`?**
+
+A. No. Applications which wish to know of remotely-triggered send stream part
+reset should listen for `EW`.
+
+**Q. Should this be reported if the connection fails?**
+
+A. No.
+
+**Q. Should this be reported if shutdown has commenced?**
+
+A. No.
+
+**Q. What happens if this event is enabled on a concluded send part?**
+
+A. The event is never raised after the stream is concluded.
+
+**Q. What happens if this event is enabled on a receive-only stream?**
+
+A. The event is never raised.
+
+**Q. What happens if this event is enabled on a QCSO?**
+
+A. The event is applicable if the QCSO has a default stream attached. Otherwise,
+it is never raised.
+
+**Q. Can this event be raised before a connection has been established?**
+
+A. Potentially in the future, if 0-RTT is in use and we have a cached 0-RTT
+session including flow control budgets which establish we have room to write
+more data for 0-RTT.
+
+#### `ER`: Error on Write
+
+Raised only when the send part of a stream has been reset by the remote peer via
+`STOP_SENDING`.
+
+**Q. Should this be raised if a stream's send part has been concluded
+normally?**
+
+A. No. We consider that a success condition for our purposes here.
+
+**Q. Should this be reported if the connection fails?**
+
+A. No, because that can be separately determined via the `EC` event and this
+provides greater clarity as to what event is occurring and why.
+
+**Q. What happens if this event is enabled on a receive-only stream?**
+
+A. The event is never raised.
+
+**Q. Should this be reported if the send part was reset locally via
+`SSL_reset_stream()`?**
+
+A. There is no need for this since the application knows what it did, though
+there is no particular harm in doing so. Current decision: do not report it.
+
+**Q. What if the send part was reset locally and then we then also received a
+`STOP_SENDING` frame for it?**
+
+A. If the local application reset a stream locally, it knows about this fact
+therefore there is no need to raise `EW`. The local reset takes precedence.
+
+**Q. Should this be reported if shutdown has commenced?**
+
+A. Probably not, since shutdown is under local application control and so if an
+application does this it already knows about it. Therefore there is no reason to
+poll for it.
+
+**Q. Why is this event separate from `W`?**
+
+A. It is useful for an application to be able to determine if something odd has
+happened on a stream (like it being reset remotely via `STOP_SENDING`) even if
+it does not currently want to write anything (and therefore is not listening for
+`W`). Since stream resets can occur asynchronously and have application
+protocol-defined semantics, it is important an application can be notified of
+them immediately.
+
+**Q. Should applications be able to listen on `W` but not `EW`?**
+
+A. This would enable an application to listen for the opportunity to write but
+not care about `STOP_SENDING` events. This is probably valid even if it raises
+some questions about the robustness of such applications. It can be allowed,
+even if not recommended (see the General Principles section below).
+
+**Q. How will the future reliable stream resets extension be handled?**
+
+A. The extension does not offer a `STOP_SENDING` equivalent so this is not a
+relevant concern.
+
+#### `ISB`, `ISU`: Incoming Stream Availability
+
+Indicates one or more incoming bidrectional or unidirectional streams which have
+yet to be popped via `SSL_accept_stream()`.
+
+**Q. Is this raised on `RESET_STREAM`?**
+
+A. It is raised on anything that would cause `SSL_accept_stream()` to return a
+stream. This could include a stream which was created by being reset.
+
+**Q. What happens if this event is raised on a QSSO or QLSO?**
+
+A. The event is never raised.
+
+**Q. If a stream is in the accept queue and then the connection fails, should it
+still be reported?**
+
+A. Yes. The application may be able to accept the stream and pop any application
+data which was already received in future. It is the application's choice to
+listen for EC and have it take priority if it wishes.
+
+**Q. Can this event be raised before a connection has been established?**
+
+A. Client — no. Server — no initially, except possibly during 0-RTT when a
+connection is not considered fully established yet.
+
+#### `OSB`, `OSU`: Outgoing Stream Readiness
+
+Indicates we have the ability, based on current stream count flow control state,
+to initiate an outgoing bidirectional or unidirectional stream.
+
+**Q. Should this be reported if the connection fails?**
+
+A. No.
+
+**Q. Should this be reported if shutdown has commenced?**
+
+A. No.
+
+**Q. What happens if this event is enabled on a QLSO or QSSO?**
+
+A. The event is never raised.
+
+**Q. Can this event be raised before a connection has been established?**
+
+A. Potentially in future, on the client side only, if 0-RTT Is in use and we
+have a cached 0-RTT session including flow control budgets which establish we
+have room to write more data for 0-RTT.
+
+#### `IC`: Incoming Connection
+
+Indicates at least one incoming connection is available to be popped using
+`SSL_accept_connection()`.
+
+**Q. Should this be reported if the port fails?**
+
+A. Potentially. A connection could have already been able to receive application
+data prior to it being popped from the accept queue by the application calling
+`SSL_accept_connection()`. Whether or not application data was received on any
+stream, a successfully established connection should be reported so that the
+application knows it happened.
+
+**Q. Can this event be raised before a connection has been established?**
+
+A. Potentially in future, if 0-RTT is in use; we could receive connection data
+before the connection process is complete (handshake confirmation).
+
+**Q. What happens if this event is enabled on a QCSO or QSSO?**
+
+A. The event is never raised.
+
+#### `F`: Failure
+
+Indicates that the `SSL_poll` mechanism itself has failed. This may be due to
+specifying an unsupported `BIO_POLL_DESCRIPTOR` type, or an unsupported `SSL`
+object, or so on. This indicates a caller usage error. It is wholly distinct
+from an exception condition on a successfully polled resource (e.g. `ER`, `EW`,
+`EC`, `EP`).
+
+**Q. Can this event type be masked?**
+
+A. No — this event type may always be raised even if not requested. Requesting
+it is a no-op (similar to `poll(2)` `POLLERR`). This is the only non-maskable
+event type.
+
+**Q. What happens if an `F` event is raised?**
+
+The `F` event is reported in one or more elements of the items array. The
+`result_count` output value reflects the number of items in the items array with
+non-zero `revents` fields, as always. This includes any `F` events (there may be
+multiple), and any non-`F` events which were output for earlier entries in the
+items array (where a `F` event occurs for a subsequent entry in the items
+array).
+
+`SSL_poll()` then returns 0. The ERR stack *always* has at least one entry
+placed on it, which reflects the first `F` event which was output. Any
+subsequent `F` events do not have error information available.
+
+### General Principles
+
+From our discussion above we derive some general principles:
+
+- It is important to provide an adequate granularity of event types so as to
+  ensure an application can avoid wakeups it doesn't want.
+
+- Event types which are not given by a particular object are simply ignored
+  if requested by the application and never raised, similar to `poll(2)`.
+
+- While not all event masks may make sense (e.g. `R` but not `ER`), we do not
+  seek to prescribe combinations at this time. This is dissimilar to `poll(2)`
+  which makes some event types “mandatory”. We may evolve this in future.
+
+- Exception events on some successfully polled resource are not the same as the
+  failure of the `SSL_poll()` mechanism itself (`SSL_poll()` returning 0).
+
+### Definitions
+
+- **R (Readable):** There is application data available to be read.
+
+- **W (Writable):** It is currently possible to write more application data.
+
+- **ER (Exception on Read):** The receive part of a stream has been remotely
+  reset via a `RESET_STREAM` frame.
+
+- **EW (Exception on Write):** The send part of a stream has been remotely
+  reset via a `STOP_SENDING` frame.
+
+- **EC (Exception on Connection):** A connection has started terminating
+  (Terminating or Terminated states).
+
+- **EL (Exception on Listener):** A QUIC listener SSL object has failed,
+  for example due to a permanent error on an underlying network BIO.
+
+- **ECD (Exception on Connection Drained):** A connection has *finished*
+  terminating (Terminated state).
+
+- **IC (Incoming Connection):** There is at least one incoming connection
+  incoming and available to be popped using `SSL_accept_connection()`.
+
+- **ISB (Incoming Stream — Bidirectional):** There is at least one
+  bidirectional stream incoming and available to be popped using
+  `SSL_accept_stream()`.
+
+- **ISU (Incoming Stream — Unidirectional):** There is at least one
+  unidirectional stream incoming and available to be popped using
+  `SSL_accept_stream()`.
+
+- **OSB (Outgoing Stream — Bidirectional):** It is currently possible
+  to create at least one additional bidirectional stream.
+
+- **OSU (Outgoing Stream — Unidirectional):** It is currently possible
+  to create at least one additional unidirectional stream.
+
+- **F (Failure):** Identifies failure of the `SSL_poll()` mechanism itself.
+
 
 ```c
-#define OSSL_POLL_EVENT_NONE       0
+#define OSSL_POLL_EVENT_NONE        0
 
-/* stream/default stream readable or reset */
-#define OSSL_POLL_EVENT_R          (1U << 0)
+/*
+ * Fundamental Definitions
+ * -----------------------
+ */
 
-/* stream/default stream writable or stopped */
-#define OSSL_POLL_EVENT_W          (1U << 1)
+/* F (Failure) */
+#define OSSL_POLL_EVENT_F           (1U << 0)
 
-/* error (i.e. connection terminating) */
-#define OSSL_POLL_EVENT_E          (1U << 2)
+/* EL (Exception on Listener) */
+#define OSSL_POLL_EVENT_EL          (1U << 1)
 
-/* incoming bidi stream */
-#define OSSL_POLL_EVENT_ISB        (1U << 3)
+/* EC (Exception on Connection) */
+#define OSSL_POLL_EVENT_EC          (1U << 2)
 
-/* incoming uni stream */
-#define OSSL_POLL_EVENT_ISU        (1U << 4)
+/* ECD (Exception on Connection Drained) */
+#define OSSL_POLL_EVENT_ECD         (1U << 3)
 
-/* incoming connection */
-#define OSSL_POLL_EVENT_IC         (1U << 5)
+/* R (Readable) */
+#define OSSL_POLL_EVENT_R           (1U << 4)
 
-/* can create new outgoing bidi stream */
-#define OSSL_POLL_EVENT_OSB        (1U << 6)
+/* W (Writable) */
+#define OSSL_POLL_EVENT_W           (1U << 5)
 
-/* can create new outgoing uni stream */
-#define OSSL_POLL_EVENT_OSU        (1U << 7)
+/* IC (Incoming Connection) */
+#define OSSL_POLL_EVENT_IC          (1U << 6)
 
-#define OSSL_POLL_EVENT_RW         (OSSL_POLL_EVENT_R | OSSL_POLL_EVENT_W)
-#define OSSL_POLL_EVENT_RWE        (OSSL_POLL_EVENT_RW | OSSL_POLL_EVENT_E)
-#define OSSL_POLL_EVENT_IS         (OSSL_POLL_EVENT_ISB | OSSL_POLL_EVENT_ISU)
-#define OSSL_POLL_EVENT_I          (OSSL_POLL_EVENT_IS | OSSL_POLL_EVENT_IC)
-#define OSSL_POLL_EVENT_OS         (OSSL_POLL_EVENT_OSB | OSSL_POLL_EVENT_OSU)
+/* ISB (Incoming Stream: Bidirectional) */
+#define OSSL_POLL_EVENT_ISB         (1U << 7)
+
+/* ISU (Incoming Stream: Unidirectional) */
+#define OSSL_POLL_EVENT_ISU         (1U << 8)
+
+/* OSB (Outgoing Stream: Bidirectional) */
+#define OSSL_POLL_EVENT_OSB         (1U << 9)
+
+/* OSU (Outgoing Stream: Unidirectional) */
+#define OSSL_POLL_EVENT_OSU         (1U << 10)
+
+/*
+ * Composite Definitions
+ * ---------------------
+ */
+
+/* Read/write. */
+#define OSSL_POLL_EVENT_RW          (OSSL_POLL_EVENT_R | OSSL_POLL_EVENT_W)
+
+/* Read/write and associated exception event types. */
+#define OSSL_POLL_EVENT_RE          (OSSL_POLL_EVENT_R | OSSL_POLL_EVENT_ER)
+#define OSSL_POLL_EVENT_WE          (OSSL_POLL_EVENT_R | OSSL_POLL_EVENT_ER)
+#define OSSL_POLL_EVENT_RWE         (OSSL_POLL_EVENT_RE | OSSL_POLL_EVENT_WE)
+
+/* All exception event types. */
+#define OSSL_POLL_EVENT_E           (OSSL_POLL_EVENT_EL | OSSL_POLL_EVENT_EC \
+                                     | OSSL_POLL_EVENT_ER | OSSL_POLL_EVENT_EW)
+
+/* Streams and connections. */
+#define OSSL_POLL_EVENT_IS          (OSSL_POLL_EVENT_ISB | OSSL_POLL_EVENT_ISU)
+#define OSSL_POLL_EVENT_I           (OSSL_POLL_EVENT_IS | OSSL_POLL_EVENT_IC)
+#define OSSL_POLL_EVENT_OS          (OSSL_POLL_EVENT_OSB | OSSL_POLL_EVENT_OSU)
 ```
 
 Designs
@@ -371,6 +866,17 @@ Polling implementations are only permitted to modify the `revents` field in a
  * when masked with the corresponding events field, is nonzero at the time the
  * function returns. Note that these entries in the items array may not be
  * consecutive or at the start of the array.
+ *
+ * There is a distinction between exception conditions on a resource which is
+ * polled (such as a connection being terminated) and an failure in the polling
+ * code itself. A mere exception condition is not considered a failure of
+ * the polling mechanism itself and does not call SSL_poll to return 0. If
+ * the polling mechanism itself fails (for example, because an unsupported
+ * BIO_POLL_DESCRIPTOR type or SSL object type is passed), the F event type
+ * is raised on at least one poll item and the function returns 0. At least
+ * one ERR stack entry will be raised describing the cause of the first F event
+ * for the input items. Any additional F events do not have their error
+ * information reported.
  *
  * Returns 1 on success or timeout, and 0 on failure. Timeout conditions can
  * be distinguished by the *result_count field being written as 0.
