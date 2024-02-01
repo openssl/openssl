@@ -25,7 +25,7 @@ DEFINE[../../providers/libdefault.a]=$SM4DEF
 # already gets everything that the static libcrypto.a has, and doesn't need it
 # added again.
 IF[{- !$disabled{module} && !$disabled{shared} -}]
-  DEFINE[../providers/liblegacy.a]=$SM4DEF
+  DEFINE[../../providers/liblegacy.a]=$SM4DEF
 ENDIF
 
 GENERATE[sm4-armv8.S]=asm/sm4-armv8.pl
