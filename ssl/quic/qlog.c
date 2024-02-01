@@ -341,8 +341,8 @@ static void qlog_event_seq_header(QLOG *qlog)
                 }
 
                 ossl_json_key(&qlog->json, "type");
-                ossl_json_str(&qlog->json, qlog->info.is_server
-                                  ? "server" : "client");
+                ossl_json_str(&qlog->json,
+                              qlog->info.is_server ? "server" : "client");
 
                 ossl_json_key(&qlog->json, "name");
                 ossl_json_str(&qlog->json, p);
