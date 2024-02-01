@@ -145,7 +145,7 @@ static int tls_any_prepare_for_encryption(OSSL_RECORD_LAYER *rl,
     return 1;
 }
 
-struct record_functions_st tls_any_funcs = {
+const struct record_functions_st tls_any_funcs = {
     tls_any_set_crypto_state,
     tls_any_cipher,
     NULL,
@@ -175,7 +175,7 @@ static int dtls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
     return 1;
 }
 
-struct record_functions_st dtls_any_funcs = {
+const struct record_functions_st dtls_any_funcs = {
     tls_any_set_crypto_state,
     tls_any_cipher,
     NULL,

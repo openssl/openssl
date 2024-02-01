@@ -20,7 +20,7 @@
 
 #ifndef OPENSSL_NO_SRTP
 
-static SRTP_PROTECTION_PROFILE srtp_known_profiles[] = {
+static const SRTP_PROTECTION_PROFILE srtp_known_profiles[] = {
     {
      "SRTP_AES128_CM_SHA1_80",
      SRTP_AES128_CM_SHA1_80,
@@ -73,9 +73,9 @@ static SRTP_PROTECTION_PROFILE srtp_known_profiles[] = {
 };
 
 static int find_profile_by_name(char *profile_name,
-                                SRTP_PROTECTION_PROFILE **pptr, size_t len)
+                                const SRTP_PROTECTION_PROFILE **pptr, size_t len)
 {
-    SRTP_PROTECTION_PROFILE *p;
+    const SRTP_PROTECTION_PROFILE *p;
 
     p = srtp_known_profiles;
     while (p->name) {
@@ -98,7 +98,7 @@ static int ssl_ctx_make_profiles(const char *profiles_string,
 
     char *col;
     char *ptr = (char *)profiles_string;
-    SRTP_PROTECTION_PROFILE *p;
+    const SRTP_PROTECTION_PROFILE *p;
 
     if ((profiles = sk_SRTP_PROTECTION_PROFILE_new_null()) == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES);
@@ -110,12 +110,14 @@ static int ssl_ctx_make_profiles(const char *profiles_string,
 
         if (!find_profile_by_name(ptr, &p, col ? (size_t)(col - ptr)
                                                : strlen(ptr))) {
-            if (sk_SRTP_PROTECTION_PROFILE_find(profiles, p) >= 0) {
+            if (sk_SRTP_PROTECTION_PROFILE_find(profiles,
+                                                (SRTP_PROTECTION_PROFILE *)p) >= 0) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
                 goto err;
             }
 
-            if (!sk_SRTP_PROTECTION_PROFILE_push(profiles, p)) {
+            if (!sk_SRTP_PROTECTION_PROFILE_push(profiles,
+                                                 (SRTP_PROTECTION_PROFILE *)p)) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES);
                 goto err;
             }
