@@ -161,9 +161,9 @@ Partial wildcard matches are not supported at this time.
 =head2 Default Configuration
 
 If the B<OSSL_QFILTER> environment variable is not set or set to the empty
-string, this is equivalent to enabling all events (i.e., it is equivalent to a
-filter of C<*>). Note that the B<QLOGDIR> environment variable must also be set
-to enable qlog.
+string, this is equivalent to enabling all event types (i.e., it is equivalent
+to a filter of C<*>). Note that the B<QLOGDIR> environment variable must also be
+set to enable qlog.
 
 =head1 FORMAT STABILITY
 
