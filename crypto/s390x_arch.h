@@ -192,5 +192,8 @@ extern int OPENSSL_s390xcex;
 # define S390X_KMA_HS           0x400
 # define S390X_KDSA_D           0x80
 # define S390X_KLMD_PS          0x100
+# define S390X_KMAC_IKP         0x8000
+# define S390X_KMAC_IIMP        0x4000
+# define S390X_KMAC_CCUP        0x2000
 
 #endif
