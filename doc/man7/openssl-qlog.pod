@@ -22,11 +22,11 @@ for details.
 
 =head1 USAGE
 
-The qlog functionality must be explicitly enabled at build time using the
-I<enable-unstable-qlog> configure flag.
+The qlog functionality must be explicitly enabled at OpenSSL build time using
+the I<enable-unstable-qlog> configure flag.
 
-When built with qlog support, qlog is enabled at run time by setting the
-standard B<QLOGDIR> environment variable to point to a directory where qlog
+When OpenSSL is built with qlog support, qlog is enabled at run time by setting
+the standard B<QLOGDIR> environment variable to point to a directory where qlog
 files should be written. Once set, any QUIC connection established by OpenSSL
 will have a qlog file written automatically to the specified directory.
 
