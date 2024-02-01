@@ -84,7 +84,7 @@ void ossl_json_cleanup(OSSL_JSON_ENC *json);
  * Resets a JSON encoder, as though it has just been initialised, allowing it
  * to be used again for new output syntactically unrelated to any previous
  * output. This is similar to calling ossl_json_cleanup followed by
- * ossl_json_init but may allow internal buffers, etc. to be reused.
+ * ossl_json_init but may allow internal buffers to be reused.
  *
  * If the JSON encoder has entered an error state, this function MAY allow
  * recovery from this error state, in which case it will return 1. If this

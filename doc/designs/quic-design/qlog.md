@@ -118,17 +118,17 @@ The syntax works as follows:
 - Partial wildcard matches are not supported at this time.
 
 Each term is applied in sequence, therefore later items in the filter override
-earlier items. In the example above, for example, all events are enabled, then
-the `quic:version_information` event is disabled, then all events are disabled,
-then the `quic:packet_sent` event is reenabled.
+earlier items. In the example above, for example, all event types are enabled,
+then the `quic:version_information` event is disabled, then all event types are
+disabled, then the `quic:packet_sent` event is reenabled.
 
 Some examples of more normal filters include:
 
-- `*` (or `+*`): enable all events
+- `*` (or `+*`): enable all event types
 
-- `quic:version_information quic:packet_sent`: enable some events explicitly
+- `quic:version_information quic:packet_sent`: enable some event types explicitly
 
-- `* -quic:version_information`: enable all events except certain events
+- `* -quic:version_information`: enable all event types except certain ones
 
 See also
 --------
