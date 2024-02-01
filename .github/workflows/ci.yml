@@ -22,7 +22,7 @@ permissions:
   contents: read
 
 env:
-  RUN_CI_TESTS: 1
+  OSSL_RUN_CI_TESTS: 1
 
 jobs:
   check_update:

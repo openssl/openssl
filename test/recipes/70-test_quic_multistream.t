@@ -18,7 +18,7 @@ plan skip_all => "QUIC protocol is not supported by this OpenSSL build"
 
 plan tests => 2;
 
-if (!disabled('qlog') && $ENV{RUN_CI_TESTS} == "1") {
+if (!disabled('qlog') && $ENV{OSSL_RUN_CI_TESTS} == "1") {
     my $qlog_output = result_dir("qlog-output");
     print "# Writing qlog output to $qlog_output\n";
     rmtree($qlog_output, { safe => 1 });
@@ -34,7 +34,7 @@ ok(run(test(["quic_multistream_test",
 
 SKIP: {
     skip "no qlog", 1 if disabled('qlog');
-    skip "not running CI tests", 1 if $ENV{RUN_CI_TESTS} != "1";
+    skip "not running CI tests", 1 if $ENV{OSSL_RUN_CI_TESTS} != "1";
 
     subtest "check qlog output" => sub {
         plan tests => 1;
