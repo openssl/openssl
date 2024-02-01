@@ -217,7 +217,7 @@ specifying a SSL object pointer:
 #define BIO_POLL_DESCRIPTOR_SSL 2   /* (SSL *) */
 
 typedef struct bio_poll_descriptor_st {
-    int type;
+    uint32_t type;
     union {
         ...
         SSL     *ssl;
@@ -696,8 +696,8 @@ SSL_as_poll_descriptor(SSL *s)
 {
     BIO_POLL_DESCRIPTOR d;
 
-    d.type    = BIO_POLL_DESCRIPTOR_TYPE_SSL;
-    d.ssl     = s;
+    d.type      = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    d.value.ssl = s;
 
     return d;
 }
