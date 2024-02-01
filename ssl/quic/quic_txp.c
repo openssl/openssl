@@ -626,10 +626,10 @@ void ossl_quic_tx_packetiser_set_ack_tx_cb(OSSL_QUIC_TX_PACKETISER *txp,
     txp->ack_tx_cb_arg  = cb_arg;
 }
 
-void ossl_quic_tx_packetiser_set_qlog(OSSL_QUIC_TX_PACKETISER *txp,
-                                      QLOG *qlog)
+void ossl_quic_tx_packetiser_set0_qlog(OSSL_QUIC_TX_PACKETISER *txp,
+                                       QLOG *qlog)
 {
-    ossl_quic_fifd_set_qlog(&txp->fifd, qlog);
+    ossl_quic_fifd_set0_qlog(&txp->fifd, qlog);
 }
 
 int ossl_quic_tx_packetiser_discard_enc_level(OSSL_QUIC_TX_PACKETISER *txp,
