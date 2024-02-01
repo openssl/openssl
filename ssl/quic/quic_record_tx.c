@@ -167,7 +167,7 @@ void ossl_qtx_set_mutator(OSSL_QTX *qtx, ossl_mutate_packet_cb mutatecb,
     qtx->mutatearg      = mutatearg;
 }
 
-void ossl_qtx_set_qlog(OSSL_QTX *qtx, QLOG *qlog)
+void ossl_qtx_set0_qlog(OSSL_QTX *qtx, QLOG *qlog)
 {
     qtx->qlog = qlog;
 }
