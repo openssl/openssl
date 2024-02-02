@@ -354,7 +354,10 @@ extern const OSSL_DISPATCH ossl_rsa_sha3_512_signature_functions[];
 extern const OSSL_DISPATCH ossl_rsa_sm3_signature_functions[];
 #endif
 extern const OSSL_DISPATCH ossl_ed25519_signature_functions[];
+extern const OSSL_DISPATCH ossl_ed25519ph_signature_functions[];
+extern const OSSL_DISPATCH ossl_ed25519ctx_signature_functions[];
 extern const OSSL_DISPATCH ossl_ed448_signature_functions[];
+extern const OSSL_DISPATCH ossl_ed448ph_signature_functions[];
 extern const OSSL_DISPATCH ossl_ecdsa_signature_functions[];
 extern const OSSL_DISPATCH ossl_mac_legacy_hmac_signature_functions[];
 extern const OSSL_DISPATCH ossl_mac_legacy_siphash_signature_functions[];

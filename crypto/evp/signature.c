@@ -48,8 +48,6 @@ static void *evp_signature_from_algorithm(int name_id,
     int ctxfncnt = 0;
     /* Counts all init functions  */
     int initfncnt = 0;
-    /* Counts all performance functions (oneshot / update / final) */
-    int fncnt = 0;
     /* Counts all parameter functions */
     int gparamfncnt = 0, sparamfncnt = 0, gmdparamfncnt = 0, smdparamfncnt = 0;
     int valid = 0;
@@ -82,7 +80,6 @@ static void *evp_signature_from_algorithm(int name_id,
             if (signature->sign != NULL)
                 break;
             signature->sign = OSSL_FUNC_signature_sign(fns);
-            fncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_INIT:
             if (signature->sign_message_init != NULL)
@@ -96,14 +93,12 @@ static void *evp_signature_from_algorithm(int name_id,
                 break;
             signature->sign_message_update
                 = OSSL_FUNC_signature_sign_message_update(fns);
-            fncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_FINAL:
             if (signature->sign_message_final != NULL)
                 break;
             signature->sign_message_final
                 = OSSL_FUNC_signature_sign_message_final(fns);
-            fncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_VERIFY_INIT:
             if (signature->verify_init != NULL)
@@ -115,7 +110,6 @@ static void *evp_signature_from_algorithm(int name_id,
             if (signature->verify != NULL)
                 break;
             signature->verify = OSSL_FUNC_signature_verify(fns);
-            fncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT:
             if (signature->verify_message_init != NULL)
@@ -129,14 +123,12 @@ static void *evp_signature_from_algorithm(int name_id,
                 break;
             signature->verify_message_update
                 = OSSL_FUNC_signature_verify_message_update(fns);
-            fncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_FINAL:
             if (signature->verify_message_final != NULL)
                 break;
             signature->verify_message_final
                 = OSSL_FUNC_signature_verify_message_final(fns);
-            fncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_VERIFY_RECOVER_INIT:
             if (signature->verify_recover_init != NULL)
@@ -150,7 +142,6 @@ static void *evp_signature_from_algorithm(int name_id,
                 break;
             signature->verify_recover
                 = OSSL_FUNC_signature_verify_recover(fns);
-            fncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT:
             if (signature->digest_sign_init != NULL)
@@ -164,21 +155,18 @@ static void *evp_signature_from_algorithm(int name_id,
                 break;
             signature->digest_sign_update
                 = OSSL_FUNC_signature_digest_sign_update(fns);
-            fncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_SIGN_FINAL:
             if (signature->digest_sign_final != NULL)
                 break;
             signature->digest_sign_final
                 = OSSL_FUNC_signature_digest_sign_final(fns);
-            fncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_SIGN:
             if (signature->digest_sign != NULL)
                 break;
             signature->digest_sign
                 = OSSL_FUNC_signature_digest_sign(fns);
-            fncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT:
             if (signature->digest_verify_init != NULL)
@@ -192,21 +180,18 @@ static void *evp_signature_from_algorithm(int name_id,
                 break;
             signature->digest_verify_update
                 = OSSL_FUNC_signature_digest_verify_update(fns);
-            fncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL:
             if (signature->digest_verify_final != NULL)
                 break;
             signature->digest_verify_final
                 = OSSL_FUNC_signature_digest_verify_final(fns);
-            fncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY:
             if (signature->digest_verify != NULL)
                 break;
             signature->digest_verify
                 = OSSL_FUNC_signature_digest_verify(fns);
-            fncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_FREECTX:
             if (signature->freectx != NULL)
@@ -308,10 +293,8 @@ static void *evp_signature_from_algorithm(int name_id,
          * associated gettable, etc
          */
         valid = 0;
-    if (valid && (initfncnt == 0 || fncnt < initfncnt))
-        /*
-         * No init functions, or fewer execution functions than init functions
-         */
+    if (valid && initfncnt == 0)
+        /* No init functions */
         valid = 0;
 
     /* Now we check for function combinations */
