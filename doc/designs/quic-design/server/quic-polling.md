@@ -230,6 +230,8 @@ Event Types and Representation
 
 Regardless of the API design chosen, event types can first be defined.
 
+### Summary of Event Types
+
 We define the following event types:
 
 - **R (Readable):** There is application data available to be read.
@@ -273,6 +275,95 @@ We define the following event types:
 While this is a fairly large number of event types, there are valid use cases
 for all of these and reasons why they need to be separate from one another. The
 following dialogue explores the various design considerations.
+
+### General Principles
+
+From our discussion below we derive some general principles:
+
+- It is important to provide an adequate granularity of event types so as to
+  ensure an application can avoid wakeups it doesn't want.
+
+- Event types which are not given by a particular object are simply ignored
+  if requested by the application and never raised, similar to `poll(2)`.
+
+- While not all event masks may make sense (e.g. `R` but not `ER`), we do not
+  seek to prescribe combinations at this time. This is dissimilar to `poll(2)`
+  which makes some event types “mandatory”. We may evolve this in future.
+
+- Exception events on some successfully polled resource are not the same as the
+  failure of the `SSL_poll()` mechanism itself (`SSL_poll()` returning 0).
+
+### Header File Definitions
+
+```c
+#define OSSL_POLL_EVENT_NONE        0
+
+/*
+ * Fundamental Definitions
+ * -----------------------
+ */
+
+/* F (Failure) */
+#define OSSL_POLL_EVENT_F           (1U << 0)
+
+/* EL (Exception on Listener) */
+#define OSSL_POLL_EVENT_EL          (1U << 1)
+
+/* EC (Exception on Connection) */
+#define OSSL_POLL_EVENT_EC          (1U << 2)
+
+/* ECD (Exception on Connection Drained) */
+#define OSSL_POLL_EVENT_ECD         (1U << 3)
+
+/* ER (Exception on Read) */
+#define OSSL_POLL_EVENT_ER          (1U << 4)
+
+/* EW (Exception on Write) */
+#define OSSL_POLL_EVENT_EW          (1U << 5)
+
+/* R (Readable) */
+#define OSSL_POLL_EVENT_R           (1U << 6)
+
+/* W (Writable) */
+#define OSSL_POLL_EVENT_W           (1U << 7)
+
+/* IC (Incoming Connection) */
+#define OSSL_POLL_EVENT_IC          (1U << 8)
+
+/* ISB (Incoming Stream: Bidirectional) */
+#define OSSL_POLL_EVENT_ISB         (1U << 9)
+
+/* ISU (Incoming Stream: Unidirectional) */
+#define OSSL_POLL_EVENT_ISU         (1U << 10)
+
+/* OSB (Outgoing Stream: Bidirectional) */
+#define OSSL_POLL_EVENT_OSB         (1U << 11)
+
+/* OSU (Outgoing Stream: Unidirectional) */
+#define OSSL_POLL_EVENT_OSU         (1U << 12)
+
+/*
+ * Composite Definitions
+ * ---------------------
+ */
+
+/* Read/write. */
+#define OSSL_POLL_EVENT_RW          (OSSL_POLL_EVENT_R | OSSL_POLL_EVENT_W)
+
+/* Read/write and associated exception event types. */
+#define OSSL_POLL_EVENT_RE          (OSSL_POLL_EVENT_R | OSSL_POLL_EVENT_ER)
+#define OSSL_POLL_EVENT_WE          (OSSL_POLL_EVENT_R | OSSL_POLL_EVENT_ER)
+#define OSSL_POLL_EVENT_RWE         (OSSL_POLL_EVENT_RE | OSSL_POLL_EVENT_WE)
+
+/* All exception event types. */
+#define OSSL_POLL_EVENT_E           (OSSL_POLL_EVENT_EL | OSSL_POLL_EVENT_EC \
+                                     | OSSL_POLL_EVENT_ER | OSSL_POLL_EVENT_EW)
+
+/* Streams and connections. */
+#define OSSL_POLL_EVENT_IS          (OSSL_POLL_EVENT_ISB | OSSL_POLL_EVENT_ISU)
+#define OSSL_POLL_EVENT_I           (OSSL_POLL_EVENT_IS | OSSL_POLL_EVENT_IC)
+#define OSSL_POLL_EVENT_OS          (OSSL_POLL_EVENT_OSB | OSSL_POLL_EVENT_OSU)
+```
 
 ### Discussion
 
@@ -335,9 +426,10 @@ A. Yes, as `EC` is raised in both the `TERMINATING` and `TERMINATED` states.
 
 A. No, this is not possible.
 
-**Q. Does it makes sense for an application to be able to mask this?**
+**Q. Does it make sense for an application to be able to mask this?**
 
-A. TBD
+A. Possibly not, though there is nothing particularly requiring us to prevent
+this at this time.
 
 **Q. Does it make sense for an application to be able to listen for this but not
 `EL`?**
@@ -506,7 +598,7 @@ A. The event is never raised.
 A. There is no need for this since the application knows what it did, though
 there is no particular harm in doing so. Current decision: do not report it.
 
-**Q. What if the send part was reset locally and then we then also received a
+**Q. What if the send part was reset locally and then we also received a
 `STOP_SENDING` frame for it?**
 
 A. If the local application reset a stream locally, it knows about this fact
@@ -636,128 +728,6 @@ array).
 `SSL_poll()` then returns 0. The ERR stack *always* has at least one entry
 placed on it, which reflects the first `F` event which was output. Any
 subsequent `F` events do not have error information available.
-
-### General Principles
-
-From our discussion above we derive some general principles:
-
-- It is important to provide an adequate granularity of event types so as to
-  ensure an application can avoid wakeups it doesn't want.
-
-- Event types which are not given by a particular object are simply ignored
-  if requested by the application and never raised, similar to `poll(2)`.
-
-- While not all event masks may make sense (e.g. `R` but not `ER`), we do not
-  seek to prescribe combinations at this time. This is dissimilar to `poll(2)`
-  which makes some event types “mandatory”. We may evolve this in future.
-
-- Exception events on some successfully polled resource are not the same as the
-  failure of the `SSL_poll()` mechanism itself (`SSL_poll()` returning 0).
-
-### Definitions
-
-- **R (Readable):** There is application data available to be read.
-
-- **W (Writable):** It is currently possible to write more application data.
-
-- **ER (Exception on Read):** The receive part of a stream has been remotely
-  reset via a `RESET_STREAM` frame.
-
-- **EW (Exception on Write):** The send part of a stream has been remotely
-  reset via a `STOP_SENDING` frame.
-
-- **EC (Exception on Connection):** A connection has started terminating
-  (Terminating or Terminated states).
-
-- **EL (Exception on Listener):** A QUIC listener SSL object has failed,
-  for example due to a permanent error on an underlying network BIO.
-
-- **ECD (Exception on Connection Drained):** A connection has *finished*
-  terminating (Terminated state).
-
-- **IC (Incoming Connection):** There is at least one incoming connection
-  incoming and available to be popped using `SSL_accept_connection()`.
-
-- **ISB (Incoming Stream — Bidirectional):** There is at least one
-  bidirectional stream incoming and available to be popped using
-  `SSL_accept_stream()`.
-
-- **ISU (Incoming Stream — Unidirectional):** There is at least one
-  unidirectional stream incoming and available to be popped using
-  `SSL_accept_stream()`.
-
-- **OSB (Outgoing Stream — Bidirectional):** It is currently possible
-  to create at least one additional bidirectional stream.
-
-- **OSU (Outgoing Stream — Unidirectional):** It is currently possible
-  to create at least one additional unidirectional stream.
-
-- **F (Failure):** Identifies failure of the `SSL_poll()` mechanism itself.
-
-
-```c
-#define OSSL_POLL_EVENT_NONE        0
-
-/*
- * Fundamental Definitions
- * -----------------------
- */
-
-/* F (Failure) */
-#define OSSL_POLL_EVENT_F           (1U << 0)
-
-/* EL (Exception on Listener) */
-#define OSSL_POLL_EVENT_EL          (1U << 1)
-
-/* EC (Exception on Connection) */
-#define OSSL_POLL_EVENT_EC          (1U << 2)
-
-/* ECD (Exception on Connection Drained) */
-#define OSSL_POLL_EVENT_ECD         (1U << 3)
-
-/* R (Readable) */
-#define OSSL_POLL_EVENT_R           (1U << 4)
-
-/* W (Writable) */
-#define OSSL_POLL_EVENT_W           (1U << 5)
-
-/* IC (Incoming Connection) */
-#define OSSL_POLL_EVENT_IC          (1U << 6)
-
-/* ISB (Incoming Stream: Bidirectional) */
-#define OSSL_POLL_EVENT_ISB         (1U << 7)
-
-/* ISU (Incoming Stream: Unidirectional) */
-#define OSSL_POLL_EVENT_ISU         (1U << 8)
-
-/* OSB (Outgoing Stream: Bidirectional) */
-#define OSSL_POLL_EVENT_OSB         (1U << 9)
-
-/* OSU (Outgoing Stream: Unidirectional) */
-#define OSSL_POLL_EVENT_OSU         (1U << 10)
-
-/*
- * Composite Definitions
- * ---------------------
- */
-
-/* Read/write. */
-#define OSSL_POLL_EVENT_RW          (OSSL_POLL_EVENT_R | OSSL_POLL_EVENT_W)
-
-/* Read/write and associated exception event types. */
-#define OSSL_POLL_EVENT_RE          (OSSL_POLL_EVENT_R | OSSL_POLL_EVENT_ER)
-#define OSSL_POLL_EVENT_WE          (OSSL_POLL_EVENT_R | OSSL_POLL_EVENT_ER)
-#define OSSL_POLL_EVENT_RWE         (OSSL_POLL_EVENT_RE | OSSL_POLL_EVENT_WE)
-
-/* All exception event types. */
-#define OSSL_POLL_EVENT_E           (OSSL_POLL_EVENT_EL | OSSL_POLL_EVENT_EC \
-                                     | OSSL_POLL_EVENT_ER | OSSL_POLL_EVENT_EW)
-
-/* Streams and connections. */
-#define OSSL_POLL_EVENT_IS          (OSSL_POLL_EVENT_ISB | OSSL_POLL_EVENT_ISU)
-#define OSSL_POLL_EVENT_I           (OSSL_POLL_EVENT_IS | OSSL_POLL_EVENT_IC)
-#define OSSL_POLL_EVENT_OS          (OSSL_POLL_EVENT_OSB | OSSL_POLL_EVENT_OSU)
-```
 
 Designs
 -------
