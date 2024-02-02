@@ -103,7 +103,8 @@ int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
     qsm->rr_counter  = 0;
     qsm->rr_cur      = NULL;
 
-    qsm->num_accept         = 0;
+    qsm->num_accept_bidi    = 0;
+    qsm->num_accept_uni     = 0;
     qsm->num_shutdown_flush = 0;
 
     qsm->get_stream_limit_cb        = get_stream_limit_cb;
@@ -737,7 +738,10 @@ void ossl_quic_stream_map_push_accept_queue(QUIC_STREAM_MAP *qsm,
                                             QUIC_STREAM *s)
 {
     list_insert_tail(&qsm->accept_list, &s->accept_node);
-    ++qsm->num_accept;
+    if (ossl_quic_stream_is_bidi(s))
+        ++qsm->num_accept_bidi;
+    else
+        ++qsm->num_accept_uni;
 }
 
 static QUIC_RXFC *qsm_get_max_streams_rxfc(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
@@ -754,15 +758,24 @@ void ossl_quic_stream_map_remove_from_accept_queue(QUIC_STREAM_MAP *qsm,
     QUIC_RXFC *max_streams_rxfc;
 
     list_remove(&qsm->accept_list, &s->accept_node);
-    --qsm->num_accept;
+    if (ossl_quic_stream_is_bidi(s))
+        --qsm->num_accept_bidi;
+    else
+        --qsm->num_accept_uni;
 
     if ((max_streams_rxfc = qsm_get_max_streams_rxfc(qsm, s)) != NULL)
         ossl_quic_rxfc_on_retire(max_streams_rxfc, 1, rtt);
 }
 
-size_t ossl_quic_stream_map_get_accept_queue_len(QUIC_STREAM_MAP *qsm)
+size_t ossl_quic_stream_map_get_accept_queue_len(QUIC_STREAM_MAP *qsm, int is_uni)
 {
-    return qsm->num_accept;
+    return is_uni ? qsm->num_accept_uni : qsm->num_accept_bidi;
+}
+
+size_t ossl_quic_stream_map_get_total_accept_queue_len(QUIC_STREAM_MAP *qsm)
+{
+    return ossl_quic_stream_map_get_accept_queue_len(qsm, /*is_uni=*/0)
+        + ossl_quic_stream_map_get_accept_queue_len(qsm, /*is_uni=*/1);
 }
 
 void ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm)
