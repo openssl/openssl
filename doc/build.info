@@ -2667,6 +2667,10 @@ DEPEND[html/man3/SSL_pending.html]=man3/SSL_pending.pod
 GENERATE[html/man3/SSL_pending.html]=man3/SSL_pending.pod
 DEPEND[man/man3/SSL_pending.3]=man3/SSL_pending.pod
 GENERATE[man/man3/SSL_pending.3]=man3/SSL_pending.pod
+DEPEND[html/man3/SSL_poll.html]=man3/SSL_poll.pod
+GENERATE[html/man3/SSL_poll.html]=man3/SSL_poll.pod
+DEPEND[man/man3/SSL_poll.3]=man3/SSL_poll.pod
+GENERATE[man/man3/SSL_poll.3]=man3/SSL_poll.pod
 DEPEND[html/man3/SSL_read.html]=man3/SSL_read.pod
 GENERATE[html/man3/SSL_read.html]=man3/SSL_read.pod
 DEPEND[man/man3/SSL_read.3]=man3/SSL_read.pod
@@ -3594,6 +3598,7 @@ html/man3/SSL_load_client_CA_file.html \
 html/man3/SSL_new.html \
 html/man3/SSL_new_stream.html \
 html/man3/SSL_pending.html \
+html/man3/SSL_poll.html \
 html/man3/SSL_read.html \
 html/man3/SSL_read_early_data.html \
 html/man3/SSL_rstate_string.html \
@@ -4238,6 +4243,7 @@ man/man3/SSL_load_client_CA_file.3 \
 man/man3/SSL_new.3 \
 man/man3/SSL_new_stream.3 \
 man/man3/SSL_pending.3 \
+man/man3/SSL_poll.3 \
 man/man3/SSL_read.3 \
 man/man3/SSL_read_early_data.3 \
 man/man3/SSL_rstate_string.3 \
