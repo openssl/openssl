@@ -2880,7 +2880,7 @@ static void get_sigorhash(int *psig, int *phash, const char *str)
 static int sig_cb(const char *elem, int len, void *arg)
 {
     sig_cb_st *sarg = arg;
-    size_t i;
+    size_t i = 0;
     const SIGALG_LOOKUP *s;
     char etmp[TLS_MAX_SIGSTRING_LEN], *p;
     int sig_alg = NID_undef, hash_alg = NID_undef;
