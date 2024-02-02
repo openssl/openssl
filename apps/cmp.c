@@ -825,7 +825,7 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
                      opt_reqout_only);
         else
             reqout_only_done = 1;
-        return 0; /* in any case, stop at this point, not contacting server */
+        return NULL; /* stop at this point, not contacting any server */
     }
     if (opt_reqout != NULL && !write_PKIMESSAGE(req, &opt_reqout))
         goto err;
