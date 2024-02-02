@@ -77,6 +77,7 @@ push @files, qw(
 push @files, qw(evppkey_dsa.txt) unless $no_dsa;
 push @files, qw(
                 evppkey_ecx.txt
+                evppkey_ecx_sigalg.txt
                 evppkey_mismatch_ecx.txt
                ) unless $no_ecx;
 push @files, qw(
