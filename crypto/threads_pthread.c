@@ -15,6 +15,7 @@
 #include "internal/cryptlib.h"
 #include "internal/rcu.h"
 #include "rcu_internal.h"
+#include "internal/thread_once.h"
 
 #if defined(__sun)
 # include <atomic.h>
@@ -281,9 +282,13 @@ static void free_rcu_thr_data(void *ptr)
     CRYPTO_THREAD_set_local(&rcu_thr_key, NULL);
 }
 
-static void ossl_rcu_init(void)
+DEFINE_RUN_ONCE_STATIC(ossl_rcu_init)
 {
-    CRYPTO_THREAD_init_local(&rcu_thr_key, NULL);
+    if (!CRYPTO_THREAD_init_local(&rcu_thr_key, NULL)
+        || !ossl_init_thread_start(NULL, NULL, free_rcu_thr_data))
+        return 0;
+
+    return 1;
 }
 
 /* Read side acquisition of the current qp */
@@ -572,7 +577,7 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers)
 {
     struct rcu_lock_st *new;
 
-    if (!CRYPTO_THREAD_run_once(&rcu_init_once, ossl_rcu_init))
+    if (!RUN_ONCE(&rcu_init_once, ossl_rcu_init))
         return NULL;
 
     if (num_writers < 1)

@@ -33,6 +33,7 @@
 #include "internal/thread_arch.h"
 #include "internal/rcu.h"
 #include "rcu_internal.h"
+#include "internal/thread_once.h"
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && defined(OPENSSL_SYS_WINDOWS)
 
@@ -119,11 +120,13 @@ static void free_rcu_thr_data(void *ptr)
     CRYPTO_THREAD_set_local(&rcu_thr_key, NULL);
 }
 
-
-static void ossl_rcu_init(void)
+DEFINE_RUN_ONCE_STATIC(ossl_rcu_init)
 {
-    CRYPTO_THREAD_init_local(&rcu_thr_key, NULL);
-    ossl_init_thread_start(NULL, NULL, free_rcu_thr_data);
+    if (!CRYPTO_THREAD_init_local(&rcu_thr_key, NULL)
+        || !ossl_init_thread_start(NULL, NULL, free_rcu_thr_data))
+        return 0;
+
+    return 1;
 }
 
 static struct rcu_qp *allocate_new_qp_group(struct rcu_lock_st *lock,
@@ -142,7 +145,7 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers)
 {
     struct rcu_lock_st *new;
 
-    if (!CRYPTO_THREAD_run_once(&rcu_init_once, ossl_rcu_init))
+    if (!RUN_ONCE(&rcu_init_once, ossl_rcu_init))
         return NULL;
 
     if (num_writers < 1)
