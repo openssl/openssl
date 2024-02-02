@@ -441,7 +441,14 @@ static const OSSL_ALGORITHM fips_signature[] = {
 # ifndef OPENSSL_NO_ECX
     { PROV_NAMES_ED25519, FIPS_DEFAULT_PROPERTIES,
       ossl_ed25519_signature_functions },
-    { PROV_NAMES_ED448, FIPS_DEFAULT_PROPERTIES, ossl_ed448_signature_functions },
+    { PROV_NAMES_ED25519ph, FIPS_DEFAULT_PROPERTIES,
+      ossl_ed25519ph_signature_functions },
+    { PROV_NAMES_ED25519ctx, FIPS_DEFAULT_PROPERTIES,
+      ossl_ed25519ctx_signature_functions },
+    { PROV_NAMES_ED448, FIPS_DEFAULT_PROPERTIES,
+      ossl_ed448_signature_functions },
+    { PROV_NAMES_ED448ph, FIPS_DEFAULT_PROPERTIES,
+      ossl_ed448ph_signature_functions },
 # endif
     { PROV_NAMES_ECDSA, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_signature_functions },
 #endif

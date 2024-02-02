@@ -419,7 +419,10 @@ static const OSSL_ALGORITHM deflt_signature[] = {
 #ifndef OPENSSL_NO_EC
 # ifndef OPENSSL_NO_ECX
     { PROV_NAMES_ED25519, "provider=default", ossl_ed25519_signature_functions },
+    { PROV_NAMES_ED25519ph, "provider=default", ossl_ed25519ph_signature_functions },
+    { PROV_NAMES_ED25519ctx, "provider=default", ossl_ed25519ctx_signature_functions },
     { PROV_NAMES_ED448, "provider=default", ossl_ed448_signature_functions },
+    { PROV_NAMES_ED448ph, "provider=default", ossl_ed448ph_signature_functions },
 # endif
     { PROV_NAMES_ECDSA, "provider=default", ossl_ecdsa_signature_functions },
 # ifndef OPENSSL_NO_SM2
