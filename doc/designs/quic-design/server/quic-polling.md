@@ -296,7 +296,7 @@ From our discussion below we derive some general principles:
 ### Header File Definitions
 
 ```c
-#define OSSL_POLL_EVENT_NONE        0
+#define SSL_POLL_EVENT_NONE         0
 
 /*
  * Fundamental Definitions
@@ -304,43 +304,43 @@ From our discussion below we derive some general principles:
  */
 
 /* F (Failure) */
-#define OSSL_POLL_EVENT_F           (1U << 0)
+#define SSL_POLL_EVENT_F            (1U << 0)
 
 /* EL (Exception on Listener) */
-#define OSSL_POLL_EVENT_EL          (1U << 1)
+#define SSL_POLL_EVENT_EL           (1U << 1)
 
 /* EC (Exception on Connection) */
-#define OSSL_POLL_EVENT_EC          (1U << 2)
+#define SSL_POLL_EVENT_EC           (1U << 2)
 
 /* ECD (Exception on Connection Drained) */
-#define OSSL_POLL_EVENT_ECD         (1U << 3)
+#define SSL_POLL_EVENT_ECD          (1U << 3)
 
 /* ER (Exception on Read) */
-#define OSSL_POLL_EVENT_ER          (1U << 4)
+#define SSL_POLL_EVENT_ER           (1U << 4)
 
 /* EW (Exception on Write) */
-#define OSSL_POLL_EVENT_EW          (1U << 5)
+#define SSL_POLL_EVENT_EW           (1U << 5)
 
 /* R (Readable) */
-#define OSSL_POLL_EVENT_R           (1U << 6)
+#define SSL_POLL_EVENT_R            (1U << 6)
 
 /* W (Writable) */
-#define OSSL_POLL_EVENT_W           (1U << 7)
+#define SSL_POLL_EVENT_W            (1U << 7)
 
 /* IC (Incoming Connection) */
-#define OSSL_POLL_EVENT_IC          (1U << 8)
+#define SSL_POLL_EVENT_IC           (1U << 8)
 
 /* ISB (Incoming Stream: Bidirectional) */
-#define OSSL_POLL_EVENT_ISB         (1U << 9)
+#define SSL_POLL_EVENT_ISB          (1U << 9)
 
 /* ISU (Incoming Stream: Unidirectional) */
-#define OSSL_POLL_EVENT_ISU         (1U << 10)
+#define SSL_POLL_EVENT_ISU          (1U << 10)
 
 /* OSB (Outgoing Stream: Bidirectional) */
-#define OSSL_POLL_EVENT_OSB         (1U << 11)
+#define SSL_POLL_EVENT_OSB          (1U << 11)
 
 /* OSU (Outgoing Stream: Unidirectional) */
-#define OSSL_POLL_EVENT_OSU         (1U << 12)
+#define SSL_POLL_EVENT_OSU          (1U << 12)
 
 /*
  * Composite Definitions
@@ -348,21 +348,21 @@ From our discussion below we derive some general principles:
  */
 
 /* Read/write. */
-#define OSSL_POLL_EVENT_RW          (OSSL_POLL_EVENT_R | OSSL_POLL_EVENT_W)
+#define SSL_POLL_EVENT_RW           (SSL_POLL_EVENT_R  | SSL_POLL_EVENT_W)
 
 /* Read/write and associated exception event types. */
-#define OSSL_POLL_EVENT_RE          (OSSL_POLL_EVENT_R | OSSL_POLL_EVENT_ER)
-#define OSSL_POLL_EVENT_WE          (OSSL_POLL_EVENT_R | OSSL_POLL_EVENT_ER)
-#define OSSL_POLL_EVENT_RWE         (OSSL_POLL_EVENT_RE | OSSL_POLL_EVENT_WE)
+#define SSL_POLL_EVENT_RE           (SSL_POLL_EVENT_R  | SSL_POLL_EVENT_ER)
+#define SSL_POLL_EVENT_WE           (SSL_POLL_EVENT_R  | SSL_POLL_EVENT_ER)
+#define SSL_POLL_EVENT_RWE          (SSL_POLL_EVENT_RE | SSL_POLL_EVENT_WE)
 
 /* All exception event types. */
-#define OSSL_POLL_EVENT_E           (OSSL_POLL_EVENT_EL | OSSL_POLL_EVENT_EC \
-                                     | OSSL_POLL_EVENT_ER | OSSL_POLL_EVENT_EW)
+#define SSL_POLL_EVENT_E            (SSL_POLL_EVENT_EL | SSL_POLL_EVENT_EC \
+                                     | SSL_POLL_EVENT_ER | SSL_POLL_EVENT_EW)
 
 /* Streams and connections. */
-#define OSSL_POLL_EVENT_IS          (OSSL_POLL_EVENT_ISB | OSSL_POLL_EVENT_ISU)
-#define OSSL_POLL_EVENT_I           (OSSL_POLL_EVENT_IS | OSSL_POLL_EVENT_IC)
-#define OSSL_POLL_EVENT_OS          (OSSL_POLL_EVENT_OSB | OSSL_POLL_EVENT_OSU)
+#define SSL_POLL_EVENT_IS           (SSL_POLL_EVENT_ISB | SSL_POLL_EVENT_ISU)
+#define SSL_POLL_EVENT_I            (SSL_POLL_EVENT_IS  | SSL_POLL_EVENT_IC)
+#define SSL_POLL_EVENT_OS           (SSL_POLL_EVENT_OSB | SSL_POLL_EVENT_OSU)
 ```
 
 ### Discussion
@@ -748,31 +748,31 @@ desired.
 We define a common structure for representing polled events:
 
 ```c
-typedef struct ossl_poll_item_st {
+typedef struct ssl_poll_item_st {
     BIO_POLL_DESCRIPTOR desc;
     uint64_t            events, revents;
-} OSSL_POLL_ITEM;
+} SSL_POLL_ITEM;
 ```
 
 This structure works similarly to the `struct pollfd` structure used by poll(2).
 `desc` describes the object to be polled, `events` is a bitmask of
-`OSSL_POLL_EVENT` values describing what events to listen for, and `revents` is
+`SSL_POLL_EVENT` values describing what events to listen for, and `revents` is
 a bitmask of zero or more events which are actually raised.
 
 Polling implementations are only permitted to modify the `revents` field in a
-`OSSL_POLL_ITEM` structure passed by the caller.
+`SSL_POLL_ITEM` structure passed by the caller.
 
 ```c
 /*
  * SSL_poll
  * --------
  *
- * SSL_poll evaluates each of the items in the given array of OSSL_POLL_ITEMs
+ * SSL_poll evaluates each of the items in the given array of SSL_POLL_ITEMs
  * and determines which poll items have relevant readiness events raised. It is
  * similar to POSIX poll(2).
  *
  * The events field of each item specifies the events the caller is interested
- * in and is the sum of zero or more OSSL_POLL_EVENT_* values. When using
+ * in and is the sum of zero or more SSL_POLL_EVENT_* values. When using
  * SSL_poll in a blocking fashion, only the occurrence of one or more events
  * specified in the events field, or a timeout or failure of the polling
  * mechanism, will cause SSL_poll to return.
@@ -800,9 +800,9 @@ Polling implementations are only permitted to modify the `revents` field in a
  *
  * num_items is the number of items in the passed array.
  *
- * stride must be set to sizeof(OSSL_POLL_ITEM).
+ * stride must be set to sizeof(SSL_POLL_ITEM).
  *
- * timeout specifies how long to wait for at least one passed OSSL_POLL_ITEM to
+ * timeout specifies how long to wait for at least one passed SSL_POLL_ITEM to
  * have at least one event to report. If it is set to NULL, this function does
  * not time out and waits forever. Otherwise, it is a timeout value expressing a
  * timeout duration in microseconds. The value expresses a duration, not a
@@ -860,7 +860,7 @@ Polling implementations are only permitted to modify the `revents` field in a
  */
 #define SSL_POLL_FLAG_NO_HANDLE_EVENTS      (1U << 0)
 
-int SSL_poll(OSSL_POLL_ITEM *item,
+int SSL_poll(SSL_POLL_ITEM *item,
              size_t num_items, size_t stride,
              const struct timeval *timeout,
              uint64_t flags,
@@ -900,7 +900,7 @@ Attention is called to certain design features:
   distribution of the readiness event to one thread currently calling the poll
   function.
 
-- The fundamental call, `OSSL_POLL_GROUP_change_poll`, combines the operations
+- The fundamental call, `SSL_POLL_GROUP_change_poll`, combines the operations
   of adding/removing/changing registered events and actually polling. This is
   important as due to the herd-avoidance design above, events can be and are
   automatically disarmed and need rearming as frequently as the poll function is
@@ -912,45 +912,45 @@ Attention is called to certain design features:
   want (unlike e.g. epoll).
 
 ```c
-typedef struct ossl_poll_group_st OSSL_POLL_GROUP;
+typedef struct ssl_poll_group_st SSL_POLL_GROUP;
 
 /*
- * The means of obtaining an OSSL_POLL_GROUP instance is discussed
+ * The means of obtaining an SSL_POLL_GROUP instance is discussed
  * subsequently. For now, you can imagine the following strawman function:
  *
- *     OSSL_POLL_GROUP *OSSL_POLL_GROUP_new(void);
+ *     SSL_POLL_GROUP *SSL_POLL_GROUP_new(void);
  *
  */
 
-void OSSL_POLL_GROUP_free(OSSL_POLL_GROUP *pg);
+void SSL_POLL_GROUP_free(SSL_POLL_GROUP *pg);
 
-#define OSSL_POLL_EVENT_FLAG_NONE       0
+#define SSL_POLL_EVENT_FLAG_NONE            0
 
 /*
  * Registered event is deleted (not disabled) after one event fires.
  */
-#define OSSL_POLL_EVENT_FLAG_ONESHOT        (1U << 0)
+#define SSL_POLL_EVENT_FLAG_ONESHOT         (1U << 0)
 
 /*
  * Work queue dispatch (anti-thundering herd) - dispatch to one concurrent call
  * and set DISABLED.
  */
-#define OSSL_POLL_EVENT_FLAG_DISPATCH       (1U << 1)
+#define SSL_POLL_EVENT_FLAG_DISPATCH        (1U << 1)
 
 /* Registered event is disabled and will not return events. */
-#define OSSL_POLL_EVENT_FLAG_DISABLED       (1U << 2)
+#define SSL_POLL_EVENT_FLAG_DISABLED        (1U << 2)
 
 /* Delete a registered event. */
-#define OSSL_POLL_EVENT_FLAG_DELETE         (1U << 3)
+#define SSL_POLL_EVENT_FLAG_DELETE          (1U << 3)
 
 /* Change previous cookie value. Cookie is normally only set on initial add. */
-#define OSSL_POLL_EVENT_FLAG_UPDATE_COOKIE  (1U << 4)
+#define SSL_POLL_EVENT_FLAG_UPDATE_COOKIE   (1U << 4)
 
 /*
  * A structure to request registration, deregistration or modification of a
  * registered event.
  */
-typedef struct ossl_poll_change_st {
+typedef struct ssl_poll_change_st {
     /* The pollable object to be polled. */
     BIO_POLL_DESCRIPTOR desc;
     size_t              instance;
@@ -971,21 +971,21 @@ typedef struct ossl_poll_change_st {
     /*
      * Enables and disables registered event flags in the same vein as
      * disable_events and enable_events manages registered event types.
-     * This is used to disable and enable OSSL_POLL_EVENT_FLAG bits.
+     * This is used to disable and enable SSL_POLL_EVENT_FLAG bits.
      */
     uint64_t            disable_flags, enable_flags;
-} OSSL_POLL_CHANGE;
+} SSL_POLL_CHANGE;
 
-typedef struct ossl_poll_event_st {
+typedef struct ssl_poll_event_st {
     BIO_POLL_DESCRIPTOR desc;
     size_t              instance;
     void                *cookie;
     uint64_t            revents;
-} OSSL_POLL_EVENT;
+} SSL_POLL_EVENT;
 
 /*
- * OSSL_POLL_GROUP_change_poll
- * ---------------------------
+ * SSL_POLL_GROUP_change_poll
+ * --------------------------
  *
  * This function performs the following actions:
  *
@@ -1001,10 +1001,10 @@ typedef struct ossl_poll_event_st {
  * time. Changes to event registrations are applied before events are returned.
  *
  * If num_changes is non-zero, change_stride must be set to
- * sizeof(OSSL_POLL_CHANGE).
+ * sizeof(SSL_POLL_CHANGE).
  *
  * If num_events is non-zero, event_stride must be set to
- * sizeof(OSSL_POLL_EVENT).
+ * sizeof(SSL_POLL_EVENT).
  *
  * If timeout is NULL, this function blocks forever until an applicable event
  * occurs. If it points to a zero value, this function never blocks and will
@@ -1012,9 +1012,9 @@ typedef struct ossl_poll_event_st {
  * immediately. Note that any requested changes are always applied regardless of
  * timeout outcome.
  *
- * flags must be zero or more SSL_POLL_FLAGS. If OSSL_POLL_FLAG_NO_HANDLE_EVENTS
+ * flags must be zero or more SSL_POLL_FLAGS. If SSL_POLL_FLAG_NO_HANDLE_EVENTS
  * is set, polled objects do not automatically have I/O performed which might
- * enable them to raise applicable events. If OSSL_POLL_FLAG_NO_POLL is set,
+ * enable them to raise applicable events. If SSL_POLL_FLAG_NO_POLL is set,
  * changes are processed but no polling is performed. This is useful if it is
  * desired to provide an event array to allow errors when processing changes
  * to be received. Passing SSL_POLL_FLAG_NO_POLL forces a timeout of 0
@@ -1042,10 +1042,10 @@ typedef struct ossl_poll_event_st {
  * passed in when registering the event, and revents is set to any applicable
  * events, which might be a superset of the events which were actually asked
  * for. (However, only events actually asked for at registration time will
- * cause a blocking call to OSSL_POLL_GROUP_change_poll to return.)
+ * cause a blocking call to SSL_POLL_GROUP_change_poll to return.)
  *
  * An event structure which represents a change processing error will have the
- * psuedo-event OSSL_POLL_EVENT_POLL_ERROR set, with copies of the desc and
+ * psuedo-event SSL_POLL_EVENT_POLL_ERROR set, with copies of the desc and
  * cookie provided. This is not a real event and cannot be requested in a
  * change.
  *
@@ -1069,49 +1069,49 @@ typedef struct ossl_poll_event_st {
  * Other poll descriptor types may implement automatic deregistration from poll
  * groups which they are registered into when they are freed. This varies by
  * poll descriptor type. However, even if a poll descriptor type does implement
- * this, applications must still ensure no events in an OSSL_POLL_EVENT
+ * this, applications must still ensure no events in an SSL_POLL_EVENT
  * structure recorded from a previous call to this function are left over, which
  * may still reference that poll descriptor. Therefore, applications must still
  * excercise caution when freeing resources which are registered, or which were
  * previously registered in a poll group.
  */
-#define OSSL_POLL_FLAG_NO_HANDLE_EVENTS      (1U << 0)
-#define OSSL_POLL_FLAG_NO_POLL               (1U << 1)
+#define SSL_POLL_FLAG_NO_HANDLE_EVENTS       (1U << 0)
+#define SSL_POLL_FLAG_NO_POLL                (1U << 1)
 
-#define OSSL_POLL_EVENT_POLL_ERROR           (((uint64_t)1) << 63)
+#define SSL_POLL_EVENT_POLL_ERROR            (((uint64_t)1) << 63)
 
-int OSSL_POLL_GROUP_change_poll(OSSL_POLL_GROUP *pg,
+int SSL_POLL_GROUP_change_poll(SSL_POLL_GROUP *pg,
 
-                                const OSSL_POLL_CHANGE *changes,
-                                size_t num_changes,
-                                size_t change_stride,
+                               const SSL_POLL_CHANGE *changes,
+                               size_t num_changes,
+                               size_t change_stride,
 
-                                OSSL_POLL_EVENT *events,
-                                size_t num_events,
-                                size_t event_stride,
+                               SSL_POLL_EVENT *events,
+                               size_t num_events,
+                               size_t event_stride,
 
-                                const struct timeval *timeout,
-                                uint64_t flags,
-                                size_t *num_events_out);
+                               const struct timeval *timeout,
+                               uint64_t flags,
+                               size_t *num_events_out);
 
 /* These macros may be used if only one function is desired. */
-#define OSSL_POLL_GROUP_change(pg, changes, num_changes, flags)     \
-    OSSL_POLL_GROUP_change_poll((pg), (changes), (num_changes),     \
-                                sizeof(OSSL_POLL_CHANGE),           \
-                                NULL, 0, 0, NULL, (flags), NULL)
+#define SSL_POLL_GROUP_change(pg, changes, num_changes, flags)      \
+    SSL_POLL_GROUP_change_poll((pg), (changes), (num_changes),      \
+                               sizeof(SSL_POLL_CHANGE),             \
+                               NULL, 0, 0, NULL, (flags), NULL)
 
-#define OSSL_POLL_GROUP_poll(pg, items, num_items, timeout, flags, result_c) \
-    OSSL_POLL_GROUP_change_poll((pg), NULL, 0, 0, \
-                                (items), (num_items), sizeof(OSSL_POLL_ITEM), \
-                                (timeout), (flags), (result_c))
+#define SSL_POLL_GROUP_poll(pg, items, num_items, timeout, flags, result_c) \
+    SSL_POLL_GROUP_change_poll((pg), NULL, 0, 0,                            \
+                               (items), (num_items), sizeof(SSL_POLL_ITEM), \
+                               (timeout), (flags), (result_c))
 
 /* Convenience inlines. */
-static ossl_inline ossl_unused void OSSL_POLL_CHANGE_set(OSSL_POLL_CHANGE *chg,
-                                                         BIO_POLL_DESCRIPTOR desc,
-                                                         size_t instance,
-                                                         void *cookie,
-                                                         uint64_t events,
-                                                         uint64_t flags)
+static ossl_inline ossl_unused void SSL_POLL_CHANGE_set(SSL_POLL_CHANGE *chg,
+                                                        BIO_POLL_DESCRIPTOR desc,
+                                                        size_t instance,
+                                                        void *cookie,
+                                                        uint64_t events,
+                                                        uint64_t flags)
 {
     chg->desc           = desc;
     chg->instance       = instance;
@@ -1122,9 +1122,9 @@ static ossl_inline ossl_unused void OSSL_POLL_CHANGE_set(OSSL_POLL_CHANGE *chg,
     chg->enable_flags   = flags;
 }
 
-static ossl_inline ossl_unused void OSSL_POLL_CHANGE_delete(OSSL_POLL_CHANGE *chg,
-                                                            BIO_POLL_DESCRIPTOR desc,
-                                                            size_t instance)
+static ossl_inline ossl_unused void SSL_POLL_CHANGE_delete(SSL_POLL_CHANGE *chg,
+                                                           BIO_POLL_DESCRIPTOR desc,
+                                                           size_t instance)
 {
     chg->desc           = desc;
     chg->instance       = instance;
@@ -1132,15 +1132,15 @@ static ossl_inline ossl_unused void OSSL_POLL_CHANGE_delete(OSSL_POLL_CHANGE *ch
     chg->disable_events = 0;
     chg->enable_events  = 0;
     chg->disable_flags  = 0;
-    chg->enable_flags   = OSSL_POLL_EVENT_FLAG_DELETE;
+    chg->enable_flags   = SSL_POLL_EVENT_FLAG_DELETE;
 }
 
 static ossl_inline ossl_unused void
-OSSL_POLL_CHANGE_chevent(OSSL_POLL_CHANGE *chg,
-                         BIO_POLL_DESCRIPTOR desc,
-                         size_t instance,
-                         uint64_t disable_events,
-                         uint64_t enable_events)
+SSL_POLL_CHANGE_chevent(SSL_POLL_CHANGE *chg,
+                        BIO_POLL_DESCRIPTOR desc,
+                        size_t instance,
+                        uint64_t disable_events,
+                        uint64_t enable_events)
 {
     chg->desc           = desc;
     chg->instance       = instance;
@@ -1152,11 +1152,11 @@ OSSL_POLL_CHANGE_chevent(OSSL_POLL_CHANGE *chg,
 }
 
 static ossl_inline ossl_unused void
-OSSL_POLL_CHANGE_chflag(OSSL_POLL_CHANGE *chg,
-                        BIO_POLL_DESCRIPTOR desc,
-                        size_t instance,
-                        uint64_t disable_flags,
-                        uint64_t enable_flags)
+SSL_POLL_CHANGE_chflag(SSL_POLL_CHANGE *chg,
+                       BIO_POLL_DESCRIPTOR desc,
+                       size_t instance,
+                       uint64_t disable_flags,
+                       uint64_t enable_flags)
 {
     chg->desc           = desc;
     chg->instance       = instance;
@@ -1195,46 +1195,46 @@ SSL_as_poll_descriptor(SSL *s)
     SSL *qlisten1 = get_some_quic_listener();
     int socket = get_some_socket_handle();
 
-    OSSL_POLL_GROUP *pg = OSSL_POLL_GROUP_new();
-    OSSL_POLL_CHANGE changes[32], *chg = changes;
-    OSSL_POLL_EVENT events[32];
+    SSL_POLL_GROUP *pg = SSL_POLL_GROUP_new();
+    SSL_POLL_CHANGE changes[32], *chg = changes;
+    SSL_POLL_EVENT events[32];
     void *cookie = some_app_ptr;
     size_t i, nchanges = 0, nevents = 0;
 
     /* Wait for an incoming stream or conn error on conn 1 and 2. */
-    OSSL_POLL_CHANGE_set(chg++, SSL_as_poll_descriptor(qconn1), 0, cookie,
-                         OSSL_POLL_EVENT_IS | OSSL_POLL_EVENT_E, 0);
+    SSL_POLL_CHANGE_set(chg++, SSL_as_poll_descriptor(qconn1), 0, cookie,
+                        SSL_POLL_EVENT_IS | SSL_POLL_EVENT_E, 0);
     ++nchanges;
 
-    OSSL_POLL_CHANGE_set(chg++, SSL_as_poll_descriptor(qconn2), 0, cookie,
-                         OSSL_POLL_EVENT_IS | OSSL_POLL_EVENT_E, 0);
+    SSL_POLL_CHANGE_set(chg++, SSL_as_poll_descriptor(qconn2), 0, cookie,
+                        SSL_POLL_EVENT_IS | SSL_POLL_EVENT_E, 0);
     ++nchanges;
 
     /* Wait for incoming data (or reset) on stream 1. */
-    OSSL_POLL_CHANGE_set(chg++, SSL_as_poll_descriptor(qstream1), 0, cookie,
-                         OSSL_POLL_EVENT_R, 0);
+    SSL_POLL_CHANGE_set(chg++, SSL_as_poll_descriptor(qstream1), 0, cookie,
+                        SSL_POLL_EVENT_R, 0);
     ++nchanges;
 
     /* Wait for an incoming connection. */
-    OSSL_POLL_CHANGE_set(chg++, SSL_as_poll_descriptor(qlisten1), 0, cookie,
-                         OSSL_POLL_EVENT_IC, 0);
+    SSL_POLL_CHANGE_set(chg++, SSL_as_poll_descriptor(qlisten1), 0, cookie,
+                        SSL_POLL_EVENT_IC, 0);
     ++nchanges;
 
     /* Also poll on an ordinary OS socket. */
-    OSSL_POLL_CHANGE_set(chg++, OSSL_socket_as_poll_descriptor(socket), 0, cookie,
-                         OSSL_POLL_EVENT_RW, 0);
+    SSL_POLL_CHANGE_set(chg++, OS_socket_as_poll_descriptor(socket), 0, cookie,
+                        SSL_POLL_EVENT_RW, 0);
     ++nchanges;
 
     /* Immediately register all of these events and wait for an event. */
-    rc = OSSL_POLL_GROUP_change_poll(pg,
-                                     changes, nchanges, sizeof(changes[0]),
-                                     events, OSSL_NELEM(events), sizeof(events[0]),
-                                     NULL, 0, &nevents);
+    rc = SSL_POLL_GROUP_change_poll(pg,
+                                    changes, nchanges, sizeof(changes[0]),
+                                    events, OSSL_NELEM(events), sizeof(events[0]),
+                                    NULL, 0, &nevents);
     if (!rc)
         return 0;
 
     for (i = 0; i < nevents; ++i) {
-        if ((events[i].revents & OSSL_POLL_EVENT_POLL_ERROR) != 0)
+        if ((events[i].revents & SSL_POLL_EVENT_POLL_ERROR) != 0)
             return 0;
 
         process_event(&events[i]);
@@ -1243,7 +1243,7 @@ SSL_as_poll_descriptor(SSL *s)
     return 1;
 }
 
-void process_event(const OSSL_POLL_EVENT *event)
+void process_event(const SSL_POLL_EVENT *event)
 {
     APP_INFO *app = event->cookie.ptr;
 
@@ -1257,7 +1257,7 @@ void process_event(const OSSL_POLL_EVENT *event)
 {
    int rc;
 
-   OSSL_POLL_EVENT events[32],
+   SSL_POLL_EVENT events[32],
    size_t i, nevents = 0;
    struct timeval timeout = { 0 };
 
@@ -1265,9 +1265,9 @@ void process_event(const OSSL_POLL_EVENT *event)
     * Find out what is ready without blocking.
     * Assume application already did I/O event handling and do not tick again.
     */
-   rc = OSSL_POLL_GROUP_poll(pg, events, OSSL_NELEM(events),
-                             &timeout, OSSL_POLL_FLAG_NO_HANDLE_EVENTS,
-                             &nevents);
+   rc = SSL_POLL_GROUP_poll(pg, events, OSSL_NELEM(events),
+                            &timeout, SSL_POLL_FLAG_NO_HANDLE_EVENTS,
+                            &nevents);
    if (!rc)
        return 0;
 
@@ -1280,13 +1280,13 @@ void process_event(const OSSL_POLL_EVENT *event)
  */
 {
     int rc;
-    OSSL_POLL_CHANGE changes[1], *chg = changes;
+    SSL_POLL_CHANGE changes[1], *chg = changes;
     size_t nchanges = 0;
 
-    OSSL_POLL_CHANGE_delete(chg++, SSL_as_poll_descriptor(qstream1), 0);
+    SSL_POLL_CHANGE_delete(chg++, SSL_as_poll_descriptor(qstream1), 0);
     ++nchanges;
 
-    if (!OSSL_POLL_GROUP_change(pg, changes, nchanges, 0))
+    if (!SSL_POLL_GROUP_change(pg, changes, nchanges, 0))
         return 0;
 
     return 1;
@@ -1296,15 +1296,15 @@ void process_event(const OSSL_POLL_EVENT *event)
  * Scenario 4: Efficient (non-thundering-herd) multi-thread dispatch with
  * efficient rearm.
  *
- * Assume all registered events have OSSL_POLL_EVENT_FLAG_DISPATCH set on them.
+ * Assume all registered events have SSL_POLL_EVENT_FLAG_DISPATCH set on them.
  *
  * Assume this function is being called concurrently from a large number of
  * threads.
  */
 {
     int rc;
-    OSSL_POLL_CHANGE changes[32], *chg;
-    OSSL_POLL_EVENT events[32];
+    SSL_POLL_CHANGE changes[32], *chg;
+    SSL_POLL_EVENT events[32];
     size_t i, nchanges, nevents = 0;
 
     /*
@@ -1312,8 +1312,8 @@ void process_event(const OSSL_POLL_EVENT *event)
      * *one* thread, and the event will be disabled. Other threads will keep
      * waiting.
      */
-    if (!OSSL_POLL_GROUP_poll(pg, events, OSSL_NELEM(events),
-                              NULL, 0, &nevents))
+    if (!SSL_POLL_GROUP_poll(pg, events, OSSL_NELEM(events),
+                             NULL, 0, &nevents))
         return 0;
 
     /* Application event loop */
@@ -1325,15 +1325,15 @@ void process_event(const OSSL_POLL_EVENT *event)
             process_event(&events[i]); /* do something in application */
 
             /* We have processed the event so now reenable it. */
-            OSSL_POLL_CHANGE_chflag(chg++, events[i].desc, events[i].instance,
-                                    OSSL_POLL_EVENT_FLAG_DISABLE, 0);
+            SSL_POLL_CHANGE_chflag(chg++, events[i].desc, events[i].instance,
+                                   SSL_POLL_EVENT_FLAG_DISABLE, 0);
             ++nchanges;
         }
 
         /* Reenable any event we processed and go to sleep again. */
-        if (!OSSL_POLL_GROUP_change_poll(pg, changes, nchanges, sizeof(changes[0]),
-                                         events, OSSL_NELEM(events), sizeof(events[0]),
-                                         NULL, 0, &nevents))
+        if (!SSL_POLL_GROUP_change_poll(pg, changes, nchanges, sizeof(changes[0]),
+                                        events, OSSL_NELEM(events), sizeof(events[0]),
+                                        NULL, 0, &nevents))
             return 0;
     }
 
@@ -1416,81 +1416,81 @@ There are two kinds of polling that occur:
 
 - External polling support: This is where an application calls a polling API.
 
-Firstly, the `OSSL_POLL_METHOD` object is defined abstractly as follows:
+Firstly, the `SSL_POLL_METHOD` object is defined abstractly as follows:
 
 ```c
 /* API (Psuedocode) */
-#define OSSL_POLL_METHOD_CAP_IMMEDIATE  (1U << 0) /* supports immediate mode */
-#define OSSL_POLL_METHOD_CAP_RETAINED   (1U << 1) /* supports retained mode */
+#define SSL_POLL_METHOD_CAP_IMMEDIATE  (1U << 0) /* supports immediate mode */
+#define SSL_POLL_METHOD_CAP_RETAINED   (1U << 1) /* supports retained mode */
 
-interface OSSL_POLL_METHOD {
+interface SSL_POLL_METHOD {
     int free(void);
     int up_ref(void);
 
     uint64_t get_caps(void);
     int supports_poll_descriptor(const BIO_POLL_DESCRIPTOR *desc);
     int poll(/* as shown for SSL_poll */);
-    OSSL_POLL_GROUP *create_poll_group(const OSSL_PARAM *params);
+    SSL_POLL_GROUP *create_poll_group(const OSSL_PARAM *params);
 }
 
-interface OSSL_POLL_GROUP {
+interface SSL_POLL_GROUP {
     int free(void);
     int up_ref(void);
 
-    int change_poll(/* as shown for OSSL_POLL_GROUP_change_poll */);
+    int change_poll(/* as shown for SSL_POLL_GROUP_change_poll */);
 }
 ```
 
 This interface is realised as follows:
 
 ```c
-typedef struct ossl_poll_method_st OSSL_POLL_METHOD;
-typedef struct ossl_poll_group_st OSSL_POLL_GROUP;
+typedef struct ssl_poll_method_st SSL_POLL_METHOD;
+typedef struct ssl_poll_group_st SSL_POLL_GROUP;
 
-typedef struct ossl_poll_method_funcs_st {
-    int (*free)(OSSL_POLL_METHOD *self);
-    int (*up_ref)(OSSL_POLL_METHOD *self);
+typedef struct ssl_poll_method_funcs_st {
+    int (*free)(SSL_POLL_METHOD *self);
+    int (*up_ref)(SSL_POLL_METHOD *self);
 
-    uint64_t (*get_caps)(const OSSL_POLL_GROUP *self);
-    int (*poll)(OSSL_POLL_METHOD *self, /* as shown for SSL_poll */);
-    OSSL_POLL_GROUP *(*create_poll_group)(OSSL_POLL_METHOD *self,
-                                          const OSSL_PARAM *params);
-} OSSL_POLL_METHOD_FUNCS;
+    uint64_t (*get_caps)(const SSL_POLL_GROUP *self);
+    int (*poll)(SSL_POLL_METHOD *self, /* as shown for SSL_poll */);
+    SSL_POLL_GROUP *(*create_poll_group)(SSL_POLL_METHOD *self,
+                                         const OSSL_PARAM *params);
+} SSL_POLL_METHOD_FUNCS;
 
-OSSL_POLL_METHOD *OSSL_POLL_METHOD_new(const OSSL_POLL_METHOD_FUNCS *funcs,
-                                       size_t funcs_len, size_t data_len);
-
-void *OSSL_POLL_METHOD_get0_data(const OSSL_POLL_METHOD *self);
-
-int OSSL_POLL_METHOD_free(OSSL_POLL_METHOD *self);
-void OSSL_POLL_METHOD_do_free(OSSL_POLL_METHOD *self);
-int OSSL_POLL_METHOD_up_ref(OSSL_POLL_METHOD *self);
-
-uint64_t OSSL_POLL_METHOD_get_caps(const OSSL_POLL_METHOD *self);
-int OSSL_POLL_METHOD_supports_poll_descriptor(OSSL_POLL_METHOD *self,
-                                              const BIO_POLL_DESCRIPTOR *desc);
-int OSSL_POLL_METHOD_poll(OSSL_POLL_METHOD *self, ...);
-OSSL_POLL_GROUP *OSSL_POLL_METHOD_create_poll_group(OSSL_POLL_METHOD *self,
-                                                   const OSSL_PARAM *params);
-
-typedef struct ossl_poll_group_funcs_st {
-    int (*free)(OSSL_POLL_GROUP *self);
-    int (*up_ref)(OSSL_POLL_GROUP *self);
-
-    int (*change_poll)(OSSL_POLL_GROUP *self, /* as shown for change_poll */);
-} OSSL_POLL_GROUP_FUNCS;
-
-OSSL_POLL_GROUP *OSSL_POLL_GROUP_new(const OSSL_POLL_GROUP_FUNCS *funcs,
+SSL_POLL_METHOD *SSL_POLL_METHOD_new(const SSL_POLL_METHOD_FUNCS *funcs,
                                      size_t funcs_len, size_t data_len);
-void *OSSL_POLL_GROUP_get0_data(const OSSL_POLL_GROUP *self);
 
-int OSSL_POLL_GROUP_free(OSSL_POLL_GROUP *self);
-int OSSL_POLL_GROUP_up_ref(OSSL_POLL_GROUP *self);
-int OSSL_POLL_GROUP_change_poll(OSSL_POLL_GROUP *self,
-                                /* as shown for change_poll */);
+void *SSL_POLL_METHOD_get0_data(const SSL_POLL_METHOD *self);
+
+int SSL_POLL_METHOD_free(SSL_POLL_METHOD *self);
+void SSL_POLL_METHOD_do_free(SSL_POLL_METHOD *self);
+int SSL_POLL_METHOD_up_ref(SSL_POLL_METHOD *self);
+
+uint64_t SSL_POLL_METHOD_get_caps(const SSL_POLL_METHOD *self);
+int SSL_POLL_METHOD_supports_poll_descriptor(SSL_POLL_METHOD *self,
+                                             const BIO_POLL_DESCRIPTOR *desc);
+int SSL_POLL_METHOD_poll(SSL_POLL_METHOD *self, ...);
+SSL_POLL_GROUP *SSL_POLL_METHOD_create_poll_group(SSL_POLL_METHOD *self,
+                                                  const OSSL_PARAM *params);
+
+typedef struct ssl_poll_group_funcs_st {
+    int (*free)(SSL_POLL_GROUP *self);
+    int (*up_ref)(SSL_POLL_GROUP *self);
+
+    int (*change_poll)(SSL_POLL_GROUP *self, /* as shown for change_poll */);
+} SSL_POLL_GROUP_FUNCS;
+
+SSL_POLL_GROUP *SSL_POLL_GROUP_new(const SSL_POLL_GROUP_FUNCS *funcs,
+                                     size_t funcs_len, size_t data_len);
+void *SSL_POLL_GROUP_get0_data(const SSL_POLL_GROUP *self);
+
+int SSL_POLL_GROUP_free(SSL_POLL_GROUP *self);
+int SSL_POLL_GROUP_up_ref(SSL_POLL_GROUP *self);
+int SSL_POLL_GROUP_change_poll(SSL_POLL_GROUP *self,
+                               /* as shown for change_poll */);
 ```
 
-Here is how an application might define and create a `OSSL_POLL_METHOD` instance
+Here is how an application might define and create a `SSL_POLL_METHOD` instance
 of its own:
 
 ```c
@@ -1498,31 +1498,31 @@ struct app_poll_method_st {
     uint32_t refcount;
 } APP_POLL_METHOD;
 
-static int app_poll_method_free(OSSL_POLL_METHOD *self)
+static int app_poll_method_free(SSL_POLL_METHOD *self)
 {
-    APP_POLL_METHOD *data = OSSL_POLL_METHOD_get0_data(self);
+    APP_POLL_METHOD *data = SSL_POLL_METHOD_get0_data(self);
 
     if (!--data->refcount)
-        OSSL_POLL_METHOD_do_free(self);
+        SSL_POLL_METHOD_do_free(self);
 
     return 1;
 }
 
-static int app_poll_method_up_ref(OSSL_POLL_METHOD *self)
+static int app_poll_method_up_ref(SSL_POLL_METHOD *self)
 {
-    APP_POLL_METHOD *data = OSSL_POLL_METHOD_get0_data(self);
+    APP_POLL_METHOD *data = SSL_POLL_METHOD_get0_data(self);
 
     ++data->refcount;
 
     return 1;
 }
 
-static uint64_t app_poll_method_get_caps(const OSSL_POLL_METHOD *self)
+static uint64_t app_poll_method_get_caps(const SSL_POLL_METHOD *self)
 {
-    return OSSL_POLL_METHOD_CAP_IMMEDIATE;
+    return SSL_POLL_METHOD_CAP_IMMEDIATE;
 }
 
-static int app_poll_method_supports_poll_descriptor(OSSL_POLL_METHOD *self,
+static int app_poll_method_supports_poll_descriptor(SSL_POLL_METHOD *self,
                                                     const BIO_POLL_DESCRIPTOR *d)
 {
     return d->type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD;
@@ -1530,12 +1530,12 @@ static int app_poll_method_supports_poll_descriptor(OSSL_POLL_METHOD *self,
 
 /* etc. */
 
-OSSL_POLL_METHOD *app_create_custom_poll_method(void)
+SSL_POLL_METHOD *app_create_custom_poll_method(void)
 {
-    OSSL_POLL_METHOD *self;
+    SSL_POLL_METHOD *self;
     APP_POLL_METHOD *data;
 
-    static const OSSL_POLL_METHOD_FUNCS funcs = {
+    static const SSL_POLL_METHOD_FUNCS funcs = {
         app_poll_method_free,
         app_poll_method_up_ref,
         app_poll_method_get_caps,
@@ -1544,11 +1544,11 @@ OSSL_POLL_METHOD *app_create_custom_poll_method(void)
         NULL /* not supported by app */
     };
 
-    self = OSSL_POLL_METHOD_new(&funcs, sizeof(funcs), sizeof(APP_POLL_METHOD));
+    self = SSL_POLL_METHOD_new(&funcs, sizeof(funcs), sizeof(APP_POLL_METHOD));
     if (self == NULL)
         return NULL;
 
-    data = OSSL_POLL_METHOD_get0_data(self);
+    data = SSL_POLL_METHOD_get0_data(self);
     data->refcount = 1;
     return data;
 }
@@ -1557,13 +1557,13 @@ OSSL_POLL_METHOD *app_create_custom_poll_method(void)
 We also provide a “default” method:
 
 ```c
-BIO_POLL_METHOD *OSSL_get0_default_poll_method(const OSSL_PARAM *params);
+BIO_POLL_METHOD *SSL_get0_default_poll_method(const OSSL_PARAM *params);
 ```
 
 No params are currently defined; this is reserved for future use.
 
 `SSL_poll` is a shorthand for using the method provided by
-`OSSL_get0_default_poll_method(NULL)`.
+`SSL_get0_default_poll_method(NULL)`.
 
 ### Internal Polling: Usage within SSL Objects
 
@@ -1573,16 +1573,16 @@ only be configured on an event leader, but the getter function will return the
 custom poller configured on an event leader when called on any QUIC SSL object
 in the hierarchy, or NULL if none is configured.
 
-An `OSSL_POLL_METHOD` can be associated with an SSL object. It can also be set
+An `SSL_POLL_METHOD` can be associated with an SSL object. It can also be set
 on a `SSL_CTX` object, in which case it is inherited by SSL objects created from
 it:
 
 ```c
-int SSL_CTX_set1_poll_method(SSL_CTX *ctx, OSSL_POLL_METHOD *method);
-OSSL_POLL_METHOD *SSL_CTX_get0_poll_method(const SSL_CTX *ctx);
+int SSL_CTX_set1_poll_method(SSL_CTX *ctx, SSL_POLL_METHOD *method);
+SSL_POLL_METHOD *SSL_CTX_get0_poll_method(const SSL_CTX *ctx);
 
-int SSL_set1_poll_method(SSL *ssl, OSSL_POLL_METHOD *method);
-OSSL_POLL_METHOD *SSL_get0_poll_method(const SSL *ssl);
+int SSL_set1_poll_method(SSL *ssl, SSL_POLL_METHOD *method);
+SSL_POLL_METHOD *SSL_get0_poll_method(const SSL *ssl);
 ```
 
 An SSL object created from a `SSL_CTX` which has never had
@@ -1602,7 +1602,7 @@ later changes the configured poll method by calling `SSL_set1_poll_method`
 again.
 
 If the poll method is set to NULL, we use the default poll method, which is the
-same as the method provided by `OSSL_get_default_poll_method`.
+same as the method provided by `SSL_get0_default_poll_method`.
 
 Because the poll method provided is used to handle blocking on network I/O, a
 poll method provided in this context only needs to handle OS socket handles,
@@ -1610,9 +1610,9 @@ similar to our own reactor polling in QUIC MVP.
 
 ### External Polling: Usage over SSL Objects
 
-An application can also use an `OSSL_POLL_METHOD` itself, whether via the
+An application can also use an `SSL_POLL_METHOD` itself, whether via the
 immediate or retained mode. In the latter case it creates one or more
-`OSSL_POLL_GROUP` instances.
+`SSL_POLL_GROUP` instances.
 
 Custom pollers are responsible for their own translation arrangements.
 Retained-mode usage can be more efficient because it can allow recursive staging
