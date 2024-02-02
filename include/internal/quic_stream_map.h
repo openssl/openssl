@@ -520,7 +520,7 @@ struct quic_stream_map_st {
     QUIC_STREAM_LIST_NODE   accept_list;
     QUIC_STREAM_LIST_NODE   ready_for_gc_list;
     size_t                  rr_stepping, rr_counter;
-    size_t                  num_accept, num_shutdown_flush;
+    size_t                  num_accept_bidi, num_accept_uni, num_shutdown_flush;
     QUIC_STREAM             *rr_cur;
     uint64_t                (*get_stream_limit_cb)(int uni, void *arg);
     void                    *get_stream_limit_cb_arg;
@@ -806,8 +806,11 @@ void ossl_quic_stream_map_remove_from_accept_queue(QUIC_STREAM_MAP *qsm,
                                                    QUIC_STREAM *s,
                                                    OSSL_TIME rtt);
 
-/* Returns the length of the accept queue. */
-size_t ossl_quic_stream_map_get_accept_queue_len(QUIC_STREAM_MAP *qsm);
+/* Returns the length of the accept queue for the given stream type. */
+size_t ossl_quic_stream_map_get_accept_queue_len(QUIC_STREAM_MAP *qsm, int is_uni);
+
+/* Returns the total length of the accept queues for all stream types. */
+size_t ossl_quic_stream_map_get_total_accept_queue_len(QUIC_STREAM_MAP *qsm);
 
 /*
  * Shutdown Flush and GC
