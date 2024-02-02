@@ -257,6 +257,11 @@ static int _torture_rw(void)
     TEST_info("performed %d reads and %d writes over 2 read and 2 write threads in %e seconds",
               rwreader1_iterations + rwreader2_iterations,
               rwwriter1_iterations + rwwriter2_iterations, tottime);
+    if ((rwreader1_iterations + rwreader2_iterations == 0)
+        || (rwwriter1_iterations + rwwriter2_iterations == 0)) {
+        TEST_info("Threads did not iterate\n");
+        goto out;
+    }
     avr = tottime / (rwreader1_iterations + rwreader2_iterations);
     avw = (tottime / (rwwriter1_iterations + rwwriter2_iterations));
     TEST_info("Average read time %e/read", avr);
@@ -405,6 +410,7 @@ static int _torture_rcu(void)
     struct timeval dtime;
     double tottime;
     double avr, avw;
+    int rc = 0;
 
     atomiclock = CRYPTO_THREAD_lock_new();
     memset(&writer1, 0, sizeof(thread_t));
@@ -432,7 +438,7 @@ static int _torture_rcu(void)
         || !TEST_true(wait_for_thread(writer2))
         || !TEST_true(wait_for_thread(reader1))
         || !TEST_true(wait_for_thread(reader2)))
-        return 0;
+        goto out;
 
     t2 = ossl_time_now();
     dtime = ossl_time_to_timeval(ossl_time_subtract(t2, t1));
@@ -441,17 +447,27 @@ static int _torture_rcu(void)
     TEST_info("performed %d reads and %d writes over 2 read and 2 write threads in %e seconds",
               reader1_iterations + reader2_iterations,
               writer1_iterations + writer2_iterations, tottime);
+    if ((reader1_iterations + reader2_iterations == 0)
+        || (writer1_iterations + writer2_iterations == 0)) {
+        TEST_info("Threads did not iterate\n");
+        goto out;
+    }
     avr = tottime / (reader1_iterations + reader2_iterations);
     avw = tottime / (writer1_iterations + writer2_iterations);
     TEST_info("Average read time %e/read", avr);
     TEST_info("Average write time %e/write", avw);
 
+    if (!TEST_int_eq(rcu_torture_result, 1))
+        goto out;
+
+    rc = 1;
+out:
     ossl_rcu_lock_free(rcu_lock);
     CRYPTO_THREAD_lock_free(atomiclock);
     if (!TEST_int_eq(rcu_torture_result, 1))
         return 0;
 
-    return 1;
+    return rc;
 }
 
 static int torture_rcu_low(void)
