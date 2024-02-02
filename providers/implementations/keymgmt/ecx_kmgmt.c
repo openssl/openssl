@@ -626,28 +626,26 @@ static int ecd_fips140_pairwise_test(const ECX_KEY *ecx, int type, int self_test
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
                            OSSL_SELF_TEST_DESC_PCT_EDDSA);
 
-    if (is_ed25519) {
+    if (is_ed25519)
         operation_result = ossl_ed25519_sign(sig, msg, msg_len, ecx->pubkey,
                                              ecx->privkey, 0, 0, 0, NULL, 0,
                                              ecx->libctx, ecx->propq);
-    } else {
+    else
         operation_result = ossl_ed448_sign(ecx->libctx, sig, msg, msg_len,
                                            ecx->pubkey, ecx->privkey, NULL, 0,
                                            0, ecx->propq);
-    }
     if (operation_result != 1)
         goto err;
 
     OSSL_SELF_TEST_oncorrupt_byte(st, sig);
 
-    if (is_ed25519) {
+    if (is_ed25519)
         operation_result = ossl_ed25519_verify(msg, msg_len, sig, ecx->pubkey,
                                                0, 0, 0, NULL, 0, ecx->libctx,
                                                ecx->propq);
-    } else {
+    else
         operation_result = ossl_ed448_verify(ecx->libctx, msg, msg_len, sig,
                                              ecx->pubkey, NULL, 0, 0, ecx->propq);
-    }
     if (operation_result != 1)
         goto err;
 
@@ -774,6 +772,7 @@ static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     }
 
 #ifdef FIPS_MODULE
+    /* Exit if keygen failed OR we are doing parameter generation (blank key) */
     if (!key || ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0))
         return key;
     if (ecd_fips140_pairwise_test(key, ECX_KEY_TYPE_ED25519, 1) != 1) {
@@ -810,6 +809,7 @@ static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     }
 
 #ifdef FIPS_MODULE
+    /* Exit if keygen failed OR we are doing parameter generation (blank key) */
     if (!key || ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0))
         return key;
     if (ecd_fips140_pairwise_test(key, ECX_KEY_TYPE_ED448, 1) != 1) {
