@@ -3921,7 +3921,8 @@ static int test_poll_event_os(QUIC_CONNECTION *qc, int is_uni)
 }
 
 QUIC_TAKES_LOCK
-int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, uint64_t *p_revents)
+int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, int do_tick,
+                               uint64_t *p_revents)
 {
     QCTX ctx;
     uint64_t revents = 0;
@@ -3930,6 +3931,9 @@ int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, uint64_t *p_revents)
         return 0;
 
     quic_lock(ctx.qc);
+
+    if (do_tick)
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
 
     if (ctx.xso != NULL) {
         /* SSL object has a stream component. */

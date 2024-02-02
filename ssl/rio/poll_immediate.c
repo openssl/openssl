@@ -61,13 +61,6 @@ int SSL_poll(SSL_POLL_ITEM *items,
         FAIL_FROM(0);
     }
 
-    if (do_tick) {
-        ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
-                       "SSL_poll does not currently support implicit I/O "
-                       "processing");
-        FAIL_FROM(0);
-    }
-
     /* Trivial case. */
     if (num_items == 0)
         goto out;
@@ -88,7 +81,7 @@ int SSL_poll(SSL_POLL_ITEM *items,
             switch (ssl->type) {
             case SSL_TYPE_QUIC_CONNECTION:
             case SSL_TYPE_QUIC_XSO:
-                if (!ossl_quic_conn_poll_events(ssl, events, &revents))
+                if (!ossl_quic_conn_poll_events(ssl, events, do_tick, &revents))
                     /* above call raises ERR */
                     FAIL_ITEM(i);
 
@@ -121,7 +114,6 @@ int SSL_poll(SSL_POLL_ITEM *items,
 
     /* TODO(QUIC POLLING): Blocking mode */
     /* TODO(QUIC POLLING): Support for polling FDs */
-    /* TODO(QUIC POLLING): Support for autotick */
 
 out:
     if (p_result_count != NULL)
