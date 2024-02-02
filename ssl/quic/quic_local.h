@@ -54,6 +54,15 @@ struct quic_xso_st {
      */
     unsigned int                    desires_blocking_set    : 1;
 
+    /* The application has retired a FIN (i.e. SSL_ERROR_ZERO_RETURN). */
+    unsigned int                    retired_fin             : 1;
+
+    /*
+     * The application has requested a reset. Not set for reflexive
+     * STREAM_RESETs caused by peer STOP_SENDING.
+     */
+    unsigned int                    requested_reset         : 1;
+
     /*
      * This state tracks SSL_write all-or-nothing (AON) write semantics
      * emulation.
