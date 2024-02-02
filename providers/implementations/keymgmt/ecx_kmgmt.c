@@ -777,16 +777,12 @@ static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return key;
     if (ecd_fips140_pairwise_test(key, ECX_KEY_TYPE_ED25519, 1) != 1) {
         ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
-        goto err;
+        ossl_ecx_key_free(key);
+        return NULL;
     }
+#endif
 
     return key;
-err:
-    ossl_ecx_key_free(key);
-    return NULL;
-#else
-    return key;
-#endif
 }
 
 static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
@@ -814,16 +810,12 @@ static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return key;
     if (ecd_fips140_pairwise_test(key, ECX_KEY_TYPE_ED448, 1) != 1) {
         ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
-        goto err;
+        ossl_ecx_key_free(key);
+        return NULL;
     }
+#endif
 
     return key;
-err:
-    ossl_ecx_key_free(key);
-    return NULL;
-#else
-    return key;
-#endif
 }
 
 static void ecx_gen_cleanup(void *genctx)
