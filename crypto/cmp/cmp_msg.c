@@ -119,7 +119,7 @@ X509_PUBKEY *OSSL_CMP_MSG_get0_certreq_publickey(const OSSL_CMP_MSG *msg)
         if ((tmpl = OSSL_CRMF_MSG_get0_tmpl(crm)) == NULL
             || (pubkey = OSSL_CRMF_CERTTEMPLATE_get0_publicKey(tmpl)) == NULL) {
             ERR_raise(ERR_LIB_CMP, CRMF_R_POPO_MISSING_PUBLIC_KEY);
-            return 0;
+            return NULL;
         }
         return pubkey;
     default:
