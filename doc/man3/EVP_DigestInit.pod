@@ -806,7 +806,7 @@ EVP_MD_CTX_update_fn() and EVP_MD_CTX_set_update_fn() were deprecated
 in OpenSSL 3.0.
 
 The functions EVP_MD_CTX_dup() and EVP_DigestSqueeze() were added in
-OpenSSL 3.2.
+OpenSSL 3.3.0.
 
 =head1 COPYRIGHT
 
