@@ -67,17 +67,18 @@ The operation failed, check out the error stack for the reason.
 
 Pointer to the subject names of the successfully read certificates.
 
+=back
 
 The following return values can occur for SSL_add_file_cert_subjects_to_stack(),
 SSL_add_dir_cert_subjects_to_stack(), and SSL_add_store_cert_subjects_to_stack():
 
 =over 4
 
-=item 0
+=item 0 (Failure)
 
 The operation failed.
 
-=item 1
+=item 1 (Success)
 
 The operation succeeded.
 
