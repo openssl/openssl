@@ -23,7 +23,7 @@ open OUT,"| \"$^X\" $xlate $flavour \"$output\""
 my ($s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7)=map("x$_",(7..14));
 my ($a8,$a10,$a12,$a14,$a9,$a11,$a13,$a15)=map("x$_",(7..14));
 my ($t0,$t1,$t2,$t3)=map("x$_",(3..6));
-my ($t4,$t5,$t6,$t7,$t8)=map("x$_",(15..19));
+my ($t4,$t5,$t6,$t7,$t8)=map("x$_",(15..17,19,20));
 
 sub bn_mod_add() {
 	my $mod = shift;
@@ -537,7 +537,7 @@ ecp_sm2p256_mul:
 	stp x29,x30,[sp,#-80]!
 	add x29,sp,#0
 	stp x16,x17,[sp,#16]
-	stp x18,x19,[sp,#64]
+	stp x19,x20,[sp,#64]
 
 	// Load inputs
 	ldp $s0,$s1,[x1]
@@ -678,7 +678,7 @@ ecp_sm2p256_mul:
 
 	// Restore scalar registers
 	ldp x16,x17,[sp,#16]
-	ldp x18,x19,[sp,#64]
+	ldp x19,x20,[sp,#64]
 	ldp x29,x30,[sp],#80
 
 	AARCH64_VALIDATE_LINK_REGISTER
@@ -696,7 +696,7 @@ ecp_sm2p256_sqr:
 	stp x29,x30,[sp,#-80]!
 	add x29,sp,#0
 	stp x16,x17,[sp,#16]
-	stp x18,x19,[sp,#64]
+	stp x19,x20,[sp,#64]
 
 	// Load inputs
 	ldp $s4,$s5,[x1]
@@ -806,7 +806,7 @@ ecp_sm2p256_sqr:
 
 	// Restore scalar registers
 	ldp x16,x17,[sp,#16]
-	ldp x18,x19,[sp,#64]
+	ldp x19,x20,[sp,#64]
 	ldp x29,x30,[sp],#80
 
 	AARCH64_VALIDATE_LINK_REGISTER
