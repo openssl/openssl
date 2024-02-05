@@ -3087,11 +3087,10 @@ SSL *ossl_quic_get0_listener(SSL *s)
 {
     QCTX ctx;
 
-    if (!expect_quic(s, &ctx))
+    if (!expect_quic_any(s, &ctx))
         return NULL;
 
-    /* TODO(QUIC SERVER): Implement SSL_get0_listener */
-    return NULL;
+    return ctx.ql != NULL ? &ctx.ql->obj.ssl : NULL;
 }
 
 /*
