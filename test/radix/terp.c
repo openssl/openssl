@@ -111,6 +111,7 @@ static ossl_inline int TERP_stk_pop(TERP *terp,
 
 #define TERP_STK_POP(terp, v)                                   \
     do {                                                        \
+        memset(&(v), 0, sizeof(v)); /* quiet warnings */        \
         if (!TEST_true(TERP_stk_pop((terp), &(v), sizeof(v))))  \
             goto err;                                           \
     } while (0)
@@ -361,6 +362,7 @@ static ossl_inline void SRDR_restore(SRDR *srdr)
 
 #define GET_OPERAND(srdr, v)                                        \
     do {                                                            \
+        memset(&(v), 0, sizeof(v)); /* quiet uninitialized warn */  \
         if (!TEST_true(SRDR_get_operand(srdr, &(v), sizeof(v))))    \
             goto err;                                               \
     } while (0)
@@ -411,7 +413,7 @@ static int SRDR_print_one(SRDR *srdr, BIO *bio, size_t i, int *was_end)
             void *v;
 
             GET_OPERAND(srdr, v);
-            PRINT_OPC(PUSH_P);
+            PRINT_OPC(PUSH_PZ);
             if (v != NULL && strlen((const char *)v) == 1)
                 BIO_printf(bio, "%20p (%s)", v, (const char *)v);
             else
@@ -441,7 +443,7 @@ static int SRDR_print_one(SRDR *srdr, BIO *bio, size_t i, int *was_end)
     case OPK_FUNC:
         {
             helper_func_t v;
-            void *f_name, *x;
+            void *f_name = NULL, *x = NULL;
 
             GET_OPERAND(srdr, v);
             GET_OPERAND(srdr, f_name);
