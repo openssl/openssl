@@ -522,6 +522,18 @@ err:
 }
 
 QUIC_NEEDS_LOCK
+static void quic_unref_port_bios(QUIC_PORT *port)
+{
+    BIO *b;
+
+    b = ossl_quic_port_get_net_rbio(port);
+    BIO_free_all(b);
+
+    b = ossl_quic_port_get_net_wbio(port);
+    BIO_free_all(b);
+}
+
+QUIC_NEEDS_LOCK
 static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock)
 {
     SSL_free(qc->tls);
@@ -530,15 +542,8 @@ static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock)
     ossl_quic_channel_free(qc->ch);
     qc->ch = NULL;
 
-    if (qc->port != NULL) {
-        BIO *b;
-
-        b = ossl_quic_port_get_net_rbio(qc->port);
-        BIO_free_all(b);
-
-        b = ossl_quic_port_get_net_wbio(qc->port);
-        BIO_free_all(b);
-
+    if (qc->port != NULL && qc->listener == NULL) { /* TODO */
+        quic_unref_port_bios(qc->port);
         ossl_quic_port_free(qc->port);
         qc->port = NULL;
     }
@@ -559,6 +564,7 @@ static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock)
 QUIC_TAKES_LOCK
 static void quic_free_listener(QCTX *ctx)
 {
+    quic_unref_port_bios(ctx->ql->port);
     ossl_quic_port_free(ctx->ql->port);
     ossl_quic_engine_free(ctx->ql->engine);
     ossl_crypto_mutex_free(&ctx->ql->mutex);
@@ -1183,12 +1189,12 @@ int ossl_quic_handle_events(SSL *s)
 {
     QCTX ctx;
 
-    if (!expect_quic(s, &ctx))
+    if (!expect_quic_any(s, &ctx))
         return 0;
 
     qctx_lock(&ctx);
     if (ctx.qc->started)
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+        ossl_quic_reactor_tick(ossl_quic_obj_get0_reactor(ctx.obj), 0);
     qctx_unlock(&ctx);
     return 1;
 }
@@ -4122,6 +4128,7 @@ static int ql_listen(QUIC_LISTENER *ql)
     if (ql->listening)
         return 1;
 
+    ossl_quic_port_set_allow_incoming(ql->port, 1);
     ql->listening = 1;
     return 1;
 }
