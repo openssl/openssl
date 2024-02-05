@@ -557,14 +557,27 @@ static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock)
 
 /* SSL_free */
 QUIC_TAKES_LOCK
+static void quic_free_listener(QCTX *ctx)
+{
+    ossl_quic_port_free(ctx->ql->port);
+    ossl_quic_engine_free(ctx->ql->engine);
+    ossl_crypto_mutex_free(&ctx->ql->mutex);
+}
+
+QUIC_TAKES_LOCK
 void ossl_quic_free(SSL *s)
 {
     QCTX ctx;
     int is_default;
 
     /* We should never be called on anything but a QSO. */
-    if (!expect_quic(s, &ctx))
+    if (!expect_quic_any(s, &ctx))
         return;
+
+    if (ctx.is_listener) {
+        quic_free_listener(&ctx);
+        return;
+    }
 
     qctx_lock(&ctx);
 
