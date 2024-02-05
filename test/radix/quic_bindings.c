@@ -142,8 +142,10 @@ static int RADIX_OBJ_cmp(const RADIX_OBJ *a, const RADIX_OBJ *b)
 
 static int RADIX_PROCESS_init(RADIX_PROCESS *rp, size_t node_idx, size_t process_idx)
 {
+#if defined(OPENSSL_THREADS)
     if (!TEST_ptr(rp->gm = ossl_crypto_mutex_new()))
         goto err;
+#endif
 
     if (!TEST_ptr(rp->objs = lh_RADIX_OBJ_new(RADIX_OBJ_hash, RADIX_OBJ_cmp)))
         goto err;
@@ -299,8 +301,8 @@ static void RADIX_PROCESS_report_state(RADIX_PROCESS *rp, BIO *bio,
 
     BIO_printf(bio, "  Threads (incl. main):        %zu\n",
                rp->next_thread_idx);
-    BIO_printf(bio, "  Time slip:                   %zu ms\n",
-               ossl_time2ms(rp->time_slip));
+    BIO_printf(bio, "  Time slip:                   %llu ms\n",
+               (unsigned long long)ossl_time2ms(rp->time_slip));
 
     BIO_printf(bio, "  Objects:\n");
     lh_RADIX_OBJ_doall_arg(rp->objs, report_obj, bio);
@@ -482,10 +484,12 @@ static RADIX_THREAD *RADIX_THREAD_new(RADIX_PROCESS *rp)
 
     rt->rp          = rp;
 
+#if defined(OPENSSL_THREADS)
     if (!TEST_ptr(rt->m = ossl_crypto_mutex_new())) {
         OPENSSL_free(rt);
         return 0;
     }
+#endif
 
     if (!TEST_true(sk_RADIX_THREAD_push(rp->threads, rt))) {
         OPENSSL_free(rt);
@@ -672,6 +676,8 @@ static int expect_slot_ssl(FUNC_CTX *fctx, size_t idx, SSL **p_ssl)
 #define S_UNI_ID(ordinal) \
     (((ordinal) << 2) | QUIC_STREAM_INITIATOR_SERVER | QUIC_STREAM_DIR_UNI)
 
+#if defined(OPENSSL_THREADS)
+
 static int RADIX_THREAD_worker_run(RADIX_THREAD *rt)
 {
     int ok = 0;
@@ -711,6 +717,8 @@ static unsigned int RADIX_THREAD_worker_main(void *p)
     radix_thread_cleanup();
     return 1;
 }
+
+#endif
 
 static void radix_activate_obj(RADIX_OBJ *obj)
 {
