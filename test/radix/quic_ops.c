@@ -1,4 +1,4 @@
-#include <netinet/in.h>
+#include "internal/sockets.h"
 
 static const unsigned char alpn_ossltest[] = {
     /* "\x08ossltest" (hex for EBCDIC resilience) */
@@ -56,7 +56,9 @@ static int ssl_create_bound_socket(uint16_t listen_port,
     int fd = -1;
     BIO_ADDR *addr = NULL;
     union BIO_sock_info_u info;
-    struct in_addr ina = { htonl(INADDR_LOOPBACK) };
+    struct in_addr ina;
+
+    ina.s_addr = htonl(INADDR_LOOPBACK);
 
     fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
     if (!TEST_int_ge(fd, 0))
@@ -321,7 +323,7 @@ DEF_FUNC(hf_set_default_stream_mode)
     F_POP(mode);
     REQUIRE_SSL(ssl);
 
-    if (!TEST_true(SSL_set_default_stream_mode(ssl, mode)))
+    if (!TEST_true(SSL_set_default_stream_mode(ssl, (uint32_t)mode)))
         goto err;
 
     ok = 1;
@@ -339,7 +341,7 @@ DEF_FUNC(hf_set_incoming_stream_policy)
     F_POP(policy);
     REQUIRE_SSL(ssl);
 
-    if (!TEST_true(SSL_set_incoming_stream_policy(ssl, policy, error_code)))
+    if (!TEST_true(SSL_set_incoming_stream_policy(ssl, (int)policy, error_code)))
         goto err;
 
     ok = 1;
@@ -488,7 +490,7 @@ DEF_FUNC(hf_read_expect)
     int ok = 0, r;
     SSL *ssl;
     const void *buf;
-    uint64_t buf_len, bytes_read = 0;
+    size_t buf_len, bytes_read = 0;
 
     F_POP2(buf, buf_len);
     REQUIRE_SSL(ssl);
@@ -560,10 +562,6 @@ DEF_FUNC(hf_connect_wait)
     if (RT()->scratch0 == 0) {
         if (!TEST_true(SSL_set_blocking_mode(ssl, 0)))
             return 0;
-
-        SSL_CONN_CLOSE_INFO cc_info = {0};
-        if (!TEST_false(SSL_get_conn_close_info(ssl, &cc_info, sizeof(cc_info))))
-            goto err;
 
         /* 0 is the success case for SSL_set_alpn_protos(). */
         if (!TEST_false(SSL_set_alpn_protos(ssl, alpn_ossltest,
@@ -685,9 +683,9 @@ DEF_FUNC(hf_expect_conn_close_info)
     if (!SSL_get_conn_close_info(ssl, &cc_info, sizeof(cc_info)))
         F_SPIN_AGAIN();
 
-    if (!TEST_int_eq(expect_app,
+    if (!TEST_int_eq((int)expect_app,
                      (cc_info.flags & SSL_CONN_CLOSE_FLAG_TRANSPORT) == 0)
-        || !TEST_int_eq(expect_remote,
+        || !TEST_int_eq((int)expect_remote,
                         (cc_info.flags & SSL_CONN_CLOSE_FLAG_LOCAL) == 0)
         || !TEST_uint64_t_eq(error_code, cc_info.error_code)) {
         TEST_info("connection close reason: %s", cc_info.reason);
@@ -723,8 +721,10 @@ DEF_FUNC(hf_expect_err)
     uint64_t lib, reason;
 
     F_POP2(lib, reason);
-    if (!TEST_size_t_eq((size_t)ERR_GET_LIB(ERR_peek_last_error()), lib)
-        || !TEST_size_t_eq((size_t)ERR_GET_REASON(ERR_peek_last_error()), reason))
+    if (!TEST_size_t_eq((size_t)ERR_GET_LIB(ERR_peek_last_error()),
+                        (size_t)lib)
+        || !TEST_size_t_eq((size_t)ERR_GET_REASON(ERR_peek_last_error()),
+                           (size_t)reason))
         goto err;
 
     ok = 1;
@@ -741,7 +741,7 @@ DEF_FUNC(hf_expect_ssl_err)
     F_POP(expected);
     REQUIRE_SSL(ssl);
 
-    if (!TEST_size_t_eq((size_t)SSL_get_error(ssl, 0), expected)
+    if (!TEST_size_t_eq((size_t)SSL_get_error(ssl, 0), (size_t)expected)
         || !TEST_int_eq(SSL_want(ssl), SSL_NOTHING))
         goto err;
 
