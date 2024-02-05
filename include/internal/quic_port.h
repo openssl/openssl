@@ -83,6 +83,11 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls);
 QUIC_CHANNEL *ossl_quic_port_pop_incoming(QUIC_PORT *port);
 
 /*
+ * Delete any channels which are pending acceptance.
+ */
+void ossl_quic_port_drop_incoming(QUIC_PORT *port);
+
+/*
  * Queries and Accessors
  * =====================
  */
