@@ -524,6 +524,9 @@ err:
 QUIC_NEEDS_LOCK
 static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock)
 {
+    SSL_free(qc->tls);
+    qc->tls = NULL;
+
     ossl_quic_channel_free(qc->ch);
     qc->ch = NULL;
 
@@ -542,9 +545,6 @@ static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock)
 
     ossl_quic_engine_free(qc->engine);
     qc->engine = NULL;
-
-    SSL_free(qc->tls);
-    qc->tls = NULL;
 
     if (have_lock)
         /* tsan doesn't like freeing locked mutexes */
