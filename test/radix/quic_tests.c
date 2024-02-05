@@ -24,10 +24,25 @@ DEF_SCRIPT(simple_conn, "simple connection to server")
     OP_READ_EXPECT_B(C, "orange");
 }
 
+DEF_SCRIPT(simple_thread_child,
+           "test that RADIX multithreading is working (child)")
+{
+}
+
+DEF_SCRIPT(simple_thread,
+           "test that RADIX multithreading is working")
+{
+    size_t i;
+
+    for (i = 0; i < 2; ++i)
+        OP_SPAWN_THREAD(simple_thread_child);
+}
+
 /*
  * List of Test Scripts
  * ============================================================================
  */
 static SCRIPT_INFO *const scripts[] = {
     USE(simple_conn)
+    USE(simple_thread)
 };
