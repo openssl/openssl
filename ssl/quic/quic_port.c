@@ -440,6 +440,22 @@ QUIC_CHANNEL *ossl_quic_port_pop_incoming(QUIC_PORT *port)
     return ch;
 }
 
+void ossl_quic_port_drop_incoming(QUIC_PORT *port)
+{
+    QUIC_CHANNEL *ch;
+    SSL *tls;
+
+    for (;;) {
+        ch = ossl_quic_port_pop_incoming(port);
+        if (ch == NULL)
+            break;
+
+        tls = ossl_quic_channel_get0_tls(ch);
+        ossl_quic_channel_free(ch);
+        SSL_free(tls);
+    }
+}
+
 void ossl_quic_port_set_allow_incoming(QUIC_PORT *port, int allow_incoming)
 {
     port->allow_incoming = allow_incoming;
