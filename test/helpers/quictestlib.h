@@ -247,7 +247,16 @@ int qtest_fault_resize_datagram(QTEST_FAULT *fault, size_t newlen);
 /* Copy a BIO_MSG */
 int bio_msg_copy(BIO_MSG *dst, BIO_MSG *src);
 
-#define BIO_CTRL_NOISE_BACK_OFF 1001
+#define BIO_CTRL_NOISE_BACK_OFF       1001
+#define BIO_CTRL_NOISE_RATE           1002
+#define BIO_CTRL_NOISE_RECV_BANDWIDTH 1003
+#define BIO_CTRL_NOISE_SEND_BANDWIDTH 1004
+#define BIO_CTRL_NOISE_SET_NOW_CB     1005
+
+struct bio_noise_now_cb_st {
+    OSSL_TIME (*now_cb)(void *);
+    void *now_cb_arg;
+};
 
 /* BIO filter for simulating a noisy UDP socket */
 const BIO_METHOD *bio_f_noisy_dgram_filter(void);
