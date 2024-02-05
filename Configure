@@ -2465,12 +2465,11 @@ EOF
                 my $i; my $i2; my $m; my $d; my $d2;
                 if ($unified_info{generate}->{$ddest}
                     && $f =~ m/^(.*?)\|(.*)$/) {
-                    $i = $1;
                     $m = $2;
-                    $i = cleanfile($sourced, $i, $blddir);
-                    $i2 = cleanfile($buildd, $i, $blddir);
-                    $d = cleanfile($sourced, "$i/$m", $blddir);
-                    $d2 = cleanfile($buildd, "$i/$m", $blddir);
+                    $i = cleanfile($sourced, $1, $blddir);
+                    $i2 = cleanfile($buildd, $1, $blddir);
+                    $d = cleanfile($sourced, "$1/$m", $blddir);
+                    $d2 = cleanfile($buildd, "$1/$m", $blddir);
                 } else {
                     $d = cleanfile($sourced, $f, $blddir);
                     $d2 = cleanfile($buildd, $f, $blddir);
