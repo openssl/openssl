@@ -426,7 +426,7 @@ static int SRDR_print_one(SRDR *srdr, BIO *bio, size_t i, int *was_end)
 
             GET_OPERAND(srdr, v);
             PRINT_OPC(PUSH_U64);
-            BIO_printf(bio, "%#20llx (%lld)",
+            BIO_printf(bio, "%#20llx (%llu)",
                        (unsigned long long)v, (unsigned long long)v);
         }
         break;
@@ -436,7 +436,7 @@ static int SRDR_print_one(SRDR *srdr, BIO *bio, size_t i, int *was_end)
 
             GET_OPERAND(srdr, v);
             PRINT_OPC(PUSH_SIZE);
-            BIO_printf(bio, "%#20llx (%lld)",
+            BIO_printf(bio, "%#20llx (%llu)",
                        (unsigned long long)v, (unsigned long long)v);
         }
         break;
@@ -626,10 +626,8 @@ static ossl_inline int TERP_stk_push(TERP *terp,
 static ossl_inline int TERP_stk_pop(TERP *terp,
                                     void *buf, size_t buf_len)
 {
-    if (!TEST_size_t_ge(terp->stk_end - terp->stk_cur, buf_len)) {
-        asm("int3");
+    if (!TEST_size_t_ge(terp->stk_end - terp->stk_cur, buf_len))
         return 0;
-    }
 
     memcpy(buf, terp->stk_cur, buf_len);
     terp->stk_cur += buf_len;
@@ -743,7 +741,7 @@ spin_again:
             break;
         case OPK_PUSH_SIZE:
             {
-                uint64_t v;
+                size_t v;
 
                 TERP_GET_OPERAND(v);
                 TERP_STK_PUSH(terp, v);
