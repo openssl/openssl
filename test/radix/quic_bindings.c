@@ -657,6 +657,7 @@ static int expect_slot_ssl(FUNC_CTX *fctx, size_t idx, SSL **p_ssl)
 
 #define REQUIRE_SSL_N(idx, ssl)                                 \
     do {                                                        \
+        (ssl) = NULL; /* quiet uninitialized warnings */        \
         if (!TEST_true(expect_slot_ssl(fctx, (idx), &(ssl))))   \
             goto err;                                           \
     } while (0)
