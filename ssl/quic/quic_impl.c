@@ -291,7 +291,7 @@ static int ossl_unused expect_quic_with_stream_lock(const SSL *s, int remote_ini
             /* ossl_quic_do_handshake raised error here */
             goto err;
 
-        if (remote_init == 0) {
+        if (remote_init == ctx->qc->as_server) {
             if (!qc_try_create_default_xso_for_write(ctx))
                 goto err;
         } else {
