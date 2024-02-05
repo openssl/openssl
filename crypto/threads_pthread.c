@@ -286,6 +286,7 @@ static void free_rcu_thr_data(void *ptr)
 static void ossl_rcu_init(void)
 {
     int ossl_unused rc;
+
     rc = CRYPTO_THREAD_init_local(&rcu_thr_key, NULL);
     assert(rc == 1);
     rc = ossl_init_thread_start(NULL, NULL, free_rcu_thr_data);
