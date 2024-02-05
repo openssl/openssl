@@ -565,6 +565,7 @@ QUIC_TAKES_LOCK
 static void quic_free_listener(QCTX *ctx)
 {
     quic_unref_port_bios(ctx->ql->port);
+    ossl_quic_port_drop_incoming(ctx->ql->port);
     ossl_quic_port_free(ctx->ql->port);
     ossl_quic_engine_free(ctx->ql->engine);
     ossl_crypto_mutex_free(&ctx->ql->mutex);
