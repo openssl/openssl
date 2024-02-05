@@ -389,6 +389,11 @@ IF[{- !$disabled{tests} -}]
       SOURCE[quic_multistream_test]=quic_multistream_test.c helpers/ssltestlib.c $QUICTESTHELPERS
       INCLUDE[quic_multistream_test]=../include ../apps/include
       DEPEND[quic_multistream_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+      SOURCE[quic_radix_test]=radix/quic_radix.c
+      SOURCE[quic_radix_test]=helpers/ssltestlib.c $QUICTESTHELPERS
+      INCLUDE[quic_radix_test]=../include ../apps/include
+      DEPEND[quic_radix_test]=../libcrypto.a ../libssl.a libtestutil.a
   ENDIF
 
   IF[{- !$disabled{'qlog'} -}]
@@ -1230,6 +1235,7 @@ ENDIF
     PROGRAMS{noinst}=quic_srtm_test quic_lcidm_test quic_rcidm_test
     PROGRAMS{noinst}=quic_fifd_test quic_txp_test quic_tserver_test
     PROGRAMS{noinst}=quic_client_test quic_cc_test quic_multistream_test
+    PROGRAMS{noinst}=quic_radix_test
 
     SOURCE[quic_ackm_test]=quic_ackm_test.c cc_dummy.c
     INCLUDE[quic_ackm_test]=../include ../apps/include
