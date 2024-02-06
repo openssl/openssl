@@ -5468,14 +5468,16 @@ ossl_unused static int script_85_poll(struct helper *h, struct helper_local *hl)
     ++item;
 
     /* Non-zero timeout is not supported. */
-    result_count = UINT64_MAX;
+    result_count = SIZE_MAX;
+    ERR_set_mark();
     if (!TEST_false(SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
                              &nz_timeout, 0,
                              &result_count))
         || !TEST_size_t_eq(result_count, 0))
         return 0;
 
-    result_count = UINT64_MAX;
+    ERR_pop_to_mark();
+    result_count = SIZE_MAX;
     ret = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
                    &timeout, 0,
                    &result_count);
@@ -5553,6 +5555,7 @@ static const struct script_op script_85[] = {
     OP_SET_INJECT_WORD      (C_BIDI_ID(1) + 1, OSSL_QUIC_FRAME_TYPE_RESET_STREAM)
 
     /* Ensure sync. */
+    OP_S_READ_EXPECT        (d, "sync", 4)
     OP_S_WRITE              (d, "x", 1)
     OP_C_READ_EXPECT        (d, "x", 1)
 
