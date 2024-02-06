@@ -64,9 +64,10 @@ typedef struct radix_process_st {
     STACK_OF(RADIX_THREAD)  *threads;
 
     /* Process-global state. */
-    CRYPTO_MUTEX            *gm;        /* global mutex */
-    LHASH_OF(RADIX_OBJ)     *objs;      /* protected by gm */
-    OSSL_TIME               time_slip;  /* protected by gm */
+    CRYPTO_MUTEX            *gm;            /* global mutex */
+    LHASH_OF(RADIX_OBJ)     *objs;          /* protected by gm */
+    OSSL_TIME               time_slip;      /* protected by gm */
+    BIO                     *keylog_out;    /* protected by gm */
 
     int                     done_join_all_threads;
 
@@ -142,6 +143,8 @@ static int RADIX_OBJ_cmp(const RADIX_OBJ *a, const RADIX_OBJ *b)
 
 static int RADIX_PROCESS_init(RADIX_PROCESS *rp, size_t node_idx, size_t process_idx)
 {
+    const char *keylog_path;
+
 #if defined(OPENSSL_THREADS)
     if (!TEST_ptr(rp->gm = ossl_crypto_mutex_new()))
         goto err;
@@ -151,6 +154,12 @@ static int RADIX_PROCESS_init(RADIX_PROCESS *rp, size_t node_idx, size_t process
         goto err;
 
     if (!TEST_ptr(rp->threads = sk_RADIX_THREAD_new(NULL)))
+        goto err;
+
+    rp->keylog_out = NULL;
+    keylog_path = ossl_safe_getenv("SSLKEYLOGFILE");
+    if (keylog_path != NULL && *keylog_path != '\0'
+        && !TEST_ptr(rp->keylog_out = BIO_new_file(keylog_path, "a")))
         goto err;
 
     rp->node_idx                = node_idx;
@@ -412,6 +421,8 @@ static void RADIX_PROCESS_cleanup(RADIX_PROCESS *rp)
     lh_RADIX_OBJ_free(rp->objs);
     rp->objs = NULL;
 
+    BIO_free_all(rp->keylog_out);
+    rp->keylog_out = NULL;
     ossl_crypto_mutex_free(&rp->gm);
 }
 
