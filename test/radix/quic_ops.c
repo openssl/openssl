@@ -31,6 +31,14 @@ static int ssl_ctx_select_alpn(SSL *ssl,
     return SSL_TLSEXT_ERR_OK;
 }
 
+static void keylog_cb(const SSL *ssl, const char *line)
+{
+    ossl_crypto_mutex_lock(RP()->gm);
+    BIO_printf(RP()->keylog_out, "%s", line);
+    (void)BIO_flush(RP()->keylog_out);
+    ossl_crypto_mutex_unlock(RP()->gm);
+}
+
 static int ssl_ctx_configure(SSL_CTX *ctx, int is_server)
 {
     if (!TEST_true(ossl_quic_set_diag_title(ctx, "quic_radix_test")))
@@ -38,6 +46,9 @@ static int ssl_ctx_configure(SSL_CTX *ctx, int is_server)
 
     if (!is_server)
         return 1;
+
+    if (RP()->keylog_out != NULL)
+        SSL_CTX_set_keylog_callback(ctx, keylog_cb);
 
     if (!TEST_int_eq(SSL_CTX_use_certificate_file(ctx, cert_file,
                                                   SSL_FILETYPE_PEM), 1)
