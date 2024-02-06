@@ -98,5 +98,5 @@ guidelines:
     with a specific release without having to sift through the higher
     noise ratio in git-log.
 
- 8. Guidelines how to integrate error output of new crypto library modules
+ 8. Guidelines on how to integrate error output of new crypto library modules
     can be found in [crypto/err/README.md](crypto/err/README.md).
