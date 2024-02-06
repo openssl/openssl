@@ -44,11 +44,12 @@ int SSL_poll(SSL_POLL_ITEM *items,
     size_t i, result_count = 0;
     SSL_POLL_ITEM *item;
     SSL *ssl;
-    uint64_t events, revents;
+    uint64_t revents;
+    ossl_unused uint64_t events;
+    ossl_unused int do_tick = ((flags & SSL_POLL_FLAG_NO_HANDLE_EVENTS) == 0);
     int is_immediate
         = (timeout != NULL
            && timeout->tv_sec == 0 && timeout->tv_usec == 0);
-    int do_tick = ((flags & SSL_POLL_FLAG_NO_HANDLE_EVENTS) == 0);
 
     /*
      * Prevent calls which use SSL_poll functionality which is not currently
@@ -79,6 +80,7 @@ int SSL_poll(SSL_POLL_ITEM *items,
                 break;
 
             switch (ssl->type) {
+#ifndef OPENSSL_NO_QUIC
             case SSL_TYPE_QUIC_CONNECTION:
             case SSL_TYPE_QUIC_XSO:
                 if (!ossl_quic_conn_poll_events(ssl, events, do_tick, &revents))
@@ -89,6 +91,7 @@ int SSL_poll(SSL_POLL_ITEM *items,
                     ++result_count;
 
                 break;
+#endif
 
             default:
                 ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
