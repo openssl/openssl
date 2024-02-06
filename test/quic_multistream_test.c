@@ -5424,6 +5424,155 @@ static const struct script_op script_84[] = {
     OP_END
 };
 
+/* 85. Test SSL_poll (lite, non-blocking) */
+ossl_unused static int script_85_poll(struct helper *h, struct helper_local *hl)
+{
+    int ok = 1, ret, expected_ret = 1;
+    static const struct timeval timeout = {0};
+    static const struct timeval nz_timeout = {0, 1};
+    size_t result_count, expected_result_count = 0;
+    SSL_POLL_ITEM items[5] = {0}, *item = items;
+    SSL *c_a, *c_b, *c_c, *c_d;
+    size_t i;
+    uint64_t mode, expected_revents[5] = {0};
+
+    if (!TEST_ptr(c_a = helper_local_get_c_stream(hl, "a"))
+        || !TEST_ptr(c_b = helper_local_get_c_stream(hl, "b"))
+        || !TEST_ptr(c_c = helper_local_get_c_stream(hl, "c"))
+        || !TEST_ptr(c_d = helper_local_get_c_stream(hl, "d")))
+        return 0;
+
+    item->desc    = SSL_as_poll_descriptor(c_a);
+    item->events  = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc    = SSL_as_poll_descriptor(c_b);
+    item->events  = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc    = SSL_as_poll_descriptor(c_c);
+    item->events  = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc    = SSL_as_poll_descriptor(c_d);
+    item->events  = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc    = SSL_as_poll_descriptor(h->c_conn);
+    item->events  = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    /* Non-zero timeout is not supported. */
+    result_count = UINT64_MAX;
+    if (!TEST_false(SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
+                             &nz_timeout, 0,
+                             &result_count))
+        || !TEST_size_t_eq(result_count, 0))
+        return 0;
+
+    result_count = UINT64_MAX;
+    ret = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
+                   &timeout, 0,
+                   &result_count);
+
+    mode = hl->check_op->arg2;
+    switch (mode) {
+    case 0:
+        /* No incoming data yet */
+        expected_revents[0]     = SSL_POLL_EVENT_W;
+        expected_revents[1]     = SSL_POLL_EVENT_W;
+        expected_revents[2]     = SSL_POLL_EVENT_W;
+        expected_revents[3]     = SSL_POLL_EVENT_W;
+        expected_revents[4]     = SSL_POLL_EVENT_OS;
+        expected_result_count   = 5;
+        break;
+    case 1:
+        /* Expect more events */
+        expected_revents[0]     = SSL_POLL_EVENT_W | SSL_POLL_EVENT_R;
+        expected_revents[1]     = SSL_POLL_EVENT_W | SSL_POLL_EVENT_ER;
+        expected_revents[2]     = SSL_POLL_EVENT_EW;
+        expected_revents[3]     = SSL_POLL_EVENT_W;
+        expected_revents[4]     = SSL_POLL_EVENT_OS | SSL_POLL_EVENT_ISB;
+        expected_result_count   = 5;
+        break;
+    default:
+        return 0;
+    }
+
+    if (!TEST_int_eq(ret, expected_ret)
+        || !TEST_size_t_eq(result_count, expected_result_count))
+        ok = 0;
+
+    for (i = 0; i < OSSL_NELEM(items); ++i)
+        if (!TEST_uint64_t_eq(items[i].revents, expected_revents[i])) {
+            TEST_error("mismatch at index %zu in poll results, mode %d",
+                       i, (int)mode);
+            ok = 0;
+        }
+
+    return ok;
+}
+
+static const struct script_op script_85[] = {
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "flamingo", 8)
+
+    OP_C_NEW_STREAM_BIDI    (b, C_BIDI_ID(1))
+    OP_C_WRITE              (b, "orange", 6)
+
+    OP_C_NEW_STREAM_BIDI    (c, C_BIDI_ID(2))
+    OP_C_WRITE              (c, "Strawberry", 10)
+
+    OP_C_NEW_STREAM_BIDI    (d, C_BIDI_ID(3))
+    OP_C_WRITE              (d, "sync", 4)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_BIND_STREAM_ID     (b, C_BIDI_ID(1))
+    OP_S_BIND_STREAM_ID     (c, C_BIDI_ID(2))
+    OP_S_BIND_STREAM_ID     (d, C_BIDI_ID(3))
+
+    /* Check nothing readable yet. */
+    OP_CHECK                (script_85_poll, 0)
+
+    /* Send something that will make client sockets readable. */
+    OP_S_READ_EXPECT        (a, "flamingo", 8)
+    OP_S_WRITE              (a, "herringbone", 11)
+
+    /* Send something that will make 'b' reset. */
+    OP_S_SET_INJECT_PLAIN   (script_28_inject_plain)
+    OP_SET_INJECT_WORD      (C_BIDI_ID(1) + 1, OSSL_QUIC_FRAME_TYPE_RESET_STREAM)
+
+    /* Ensure sync. */
+    OP_S_WRITE              (d, "x", 1)
+    OP_C_READ_EXPECT        (d, "x", 1)
+
+    /* Send something that will make 'c' reset. */
+    OP_S_SET_INJECT_PLAIN   (script_28_inject_plain)
+    OP_SET_INJECT_WORD      (C_BIDI_ID(2) + 1, OSSL_QUIC_FRAME_TYPE_STOP_SENDING)
+
+    OP_S_NEW_STREAM_BIDI    (z, S_BIDI_ID(0))
+    OP_S_WRITE              (z, "z", 1)
+
+    /* Ensure sync. */
+    OP_S_WRITE              (d, "x", 1)
+    OP_C_READ_EXPECT        (d, "x", 1)
+
+    /* Check a is now readable. */
+    OP_CHECK                (script_85_poll, 1)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -5508,7 +5657,8 @@ static const struct script_op *const scripts[] = {
     script_81,
     script_82,
     script_83,
-    script_84
+    script_84,
+    script_85
 };
 
 static int test_script(int idx)
