@@ -34,7 +34,7 @@ ok(run(test(["quic_multistream_test",
 
 SKIP: {
     skip "no qlog", 1 if disabled('qlog');
-    skip "not running CI tests", 1 if $ENV{OSSL_RUN_CI_TESTS} != "1";
+    skip "not running CI tests", 1 if ($ENV{OSSL_RUN_CI_TESTS} // "") ne "1";
 
     subtest "check qlog output" => sub {
         plan tests => 1;
