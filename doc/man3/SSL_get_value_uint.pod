@@ -77,7 +77,7 @@ SSL_get_generic_value_uint() and SSL_set_generic_value_uint() for brevity.
 
 Values in this class are read-write, and represent what the local party is
 requesting during feature negotiation. Such a request will not necessarily be
-honoured; see B<SSL_VALUE_CLASS_FEATURE_NEOGTIATED>.
+honoured; see B<SSL_VALUE_CLASS_FEATURE_NEGOTIATED>.
 
 A value in this class may become read-only in certain circumstances; for
 example, after a connection has been established, for a value which cannot be
@@ -100,7 +100,7 @@ SSL_get_feature_peer_request_uint() for brevity.
 =item B<SSL_VALUE_CLASS_FEATURE_NEGOTIATED>
 
 Values in this value class are read-only, and represent the value which was
-actually negotated based on both local and peer input during feature
+actually negotiated based on both local and peer input during feature
 negotiation. This is the effective value in actual use.
 
 Attempting to read a value in this class will generally fail if the feature
