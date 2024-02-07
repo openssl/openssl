@@ -2376,7 +2376,7 @@ __owur int SSL_get_conn_close_info(SSL *ssl,
 # define SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_AVAIL    2
 # define SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL      3
 # define SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL     4
-# define SSL_VALUE_QUIC_IDLE_TIMEOUT                0x8000
+# define SSL_VALUE_QUIC_IDLE_TIMEOUT                5
 
 int SSL_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *v);
 int SSL_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t v);

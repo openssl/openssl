@@ -130,6 +130,9 @@ milliseconds, where 0 represents a lack of an idle timeout. This feature can
 only be configured prior to connection establishment and cannot be subsequently
 changed.
 
+This release of OpenSSL uses a default value of 30 seconds. This default value
+may change between releases of OpenSSL.
+
 =item B<SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL>
 
 Generic read-only statistical value. The number of bidirectional,
