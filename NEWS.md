@@ -57,7 +57,7 @@ changes:
   * The `x509`, `ca`, and `req` apps now always produce X.509v3 certificates.
 
   * Subject or issuer names in X.509 objects are now displayed as UTF-8 strings
-    by default.
+    by default. Also spaces surrounding `=` in DN output are removed.
 
 This release adds the following new features:
 
