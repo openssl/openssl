@@ -3414,6 +3414,7 @@ void ssl3_free(SSL *s)
     sc->s3.tmp.pkey = NULL;
 
     ssl_evp_cipher_free(sc->s3.tmp.new_sym_enc);
+    ssl_evp_cipher_free(sc->s3.tmp.new_sym_enc_sn);
     ssl_evp_md_free(sc->s3.tmp.new_hash);
 
     OPENSSL_free(sc->s3.tmp.ctype);
