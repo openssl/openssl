@@ -765,6 +765,7 @@ int ossl_drbg_enable_locking(void *vctx)
 PROV_DRBG *ossl_rand_drbg_new
     (void *provctx, void *parent, const OSSL_DISPATCH *p_dispatch,
      int (*dnew)(PROV_DRBG *ctx),
+     void (*dfree)(void *vctx),
      int (*instantiate)(PROV_DRBG *drbg,
                         const unsigned char *entropy, size_t entropylen,
                         const unsigned char *nonce, size_t noncelen,
@@ -844,7 +845,7 @@ PROV_DRBG *ossl_rand_drbg_new
     return drbg;
 
  err:
-    ossl_rand_drbg_free(drbg);
+    dfree(drbg);
     return NULL;
 }
 
