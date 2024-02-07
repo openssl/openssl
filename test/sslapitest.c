@@ -9519,7 +9519,17 @@ static int test_unknown_sigalgs_groups(void)
                                               0))
         goto end;
 
+    if (!TEST_int_le(SSL_CTX_set1_groups_list(ctx,
+                                              "?nonexistent1:?nonexistent2:?nonexistent3"),
+                                              0))
+        goto end;
+
 #ifndef OPENSSL_NO_EC
+    if (!TEST_int_le(SSL_CTX_set1_groups_list(ctx,
+                                              "P-256:nonexistent"),
+                                              0))
+        goto end;
+
     if (!TEST_int_gt(SSL_CTX_set1_groups_list(ctx,
                                               "P-384:?nonexistent:?P-521"),
                                               0))
