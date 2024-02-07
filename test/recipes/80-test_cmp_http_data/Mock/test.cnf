@@ -1,6 +1,6 @@
 [default]
 batch = 1 # do not use stdin
-total_timeout = 8 # prevent, e.g., infinite polling due to error
+total_timeout = 20  # = 2 * msg_timeout (see below) - used to prevent, e.g., infinite polling due to error
 trusted = trusted.crt
 newkey = new.key
 newkeypass =
@@ -44,7 +44,7 @@ sleep = 0
 ############################# aspects
 
 [connection]
-msg_timeout = 5
+msg_timeout = 10  # should be enough to hopefully cover delays caused be the underlying system but not too high as this slows down some test cases
 total_timeout =
 # reset any TLS options to default:
 tls_used =
