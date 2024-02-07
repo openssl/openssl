@@ -1044,9 +1044,15 @@ static int gid_cb(const char *elem, int len, void *arg)
     size_t i;
     uint16_t gid = 0;
     char etmp[GROUP_NAME_BUFFER_LENGTH];
+    int ignore_unknown = 0;
 
     if (elem == NULL)
         return 0;
+    if (elem[0] == '?') {
+        ignore_unknown = 1;
+        ++elem;
+        --len;
+    }
     if (garg->gidcnt == garg->gidmax) {
         uint16_t *tmp =
             OPENSSL_realloc(garg->gid_arr, garg->gidmax + GROUPLIST_INCREMENT);
@@ -1062,8 +1068,8 @@ static int gid_cb(const char *elem, int len, void *arg)
 
     gid = tls1_group_name2id(garg->ctx, etmp);
     if (gid == 0) {
-        /* Unknown group - ignore */
-        return 1;
+        /* Unknown group - ignore, if ignore_unknown */
+        return ignore_unknown;
     }
     for (i = 0; i < garg->gidcnt; i++)
         if (garg->gid_arr[i] == gid) {
@@ -2875,8 +2881,15 @@ static int sig_cb(const char *elem, int len, void *arg)
     const SIGALG_LOOKUP *s;
     char etmp[TLS_MAX_SIGSTRING_LEN], *p;
     int sig_alg = NID_undef, hash_alg = NID_undef;
+    int ignore_unknown;
+
     if (elem == NULL)
         return 0;
+    if (elem[0] == '?') {
+        ignore_unknown = 1;
+        ++elem;
+        --len;
+    }
     if (sarg->sigalgcnt == TLS_MAX_SIGALGCNT)
         return 0;
     if (len > (int)(sizeof(etmp) - 1))
@@ -2902,8 +2915,8 @@ static int sig_cb(const char *elem, int len, void *arg)
             }
         }
         if (i == OSSL_NELEM(sigalg_lookup_tbl)) {
-            /* Ignore unknown algorithms */
-            return 1;
+            /* Ignore unknown algorithms if ignore_unknown */
+            return ignore_unknown;
         }
     } else {
         *p = 0;
@@ -2913,8 +2926,8 @@ static int sig_cb(const char *elem, int len, void *arg)
         get_sigorhash(&sig_alg, &hash_alg, etmp);
         get_sigorhash(&sig_alg, &hash_alg, p);
         if (sig_alg == NID_undef || hash_alg == NID_undef) {
-            /* Ignore unknown algorithms */
-            return 1;
+            /* Ignore unknown algorithms if ignore_unknown */
+            return ignore_unknown;
         }
         for (i = 0, s = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
              i++, s++) {
@@ -2924,8 +2937,8 @@ static int sig_cb(const char *elem, int len, void *arg)
             }
         }
         if (i == OSSL_NELEM(sigalg_lookup_tbl)) {
-            /* Ignore unknown algorithms */
-            return 1;
+            /* Ignore unknown algorithms if ignore_unknown */
+            return ignore_unknown;
         }
     }
 
