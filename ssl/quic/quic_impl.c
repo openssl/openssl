@@ -3300,6 +3300,10 @@ int ossl_quic_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
     if (!expect_quic_conn_only(s, &ctx))
         return 0;
 
+    if (value == NULL)
+        return QUIC_RAISE_NON_NORMAL_ERROR(&ctx,
+                                           ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+
     switch (id) {
     case SSL_VALUE_QUIC_IDLE_TIMEOUT:
         return qc_getset_idle_timeout(&ctx, class_, value, NULL);
