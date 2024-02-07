@@ -34,10 +34,11 @@ extern "C" {
 /* Special value for method supporting multiple versions */
 # define DTLS_ANY_VERSION                0x1FFFF
 
-/* lengths of messages */
+/* DTLS records and messages lengths and offsets */
 
 # define DTLS1_COOKIE_LENGTH                     255
 
+# define DTLS1_RT_HEADER_SEQ_OFFS                5
 # define DTLS1_RT_HEADER_LENGTH                  13
 
 # define DTLS1_HM_HEADER_LENGTH                  12
