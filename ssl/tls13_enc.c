@@ -184,6 +184,21 @@ int tls13_derive_finishedkey(SSL_CONNECTION *s, const EVP_MD *md,
 }
 
 /*
+ * Given a |secret| generate a |snkey| of length |snkeylen| bytes. Returns 1 on
+ * success  0 on failure. (rfc9147 section 4.2.3)
+ */
+static int dtls13_derive_snkey(SSL_CONNECTION *s, const EVP_MD *md,
+    const unsigned char *secret,
+    unsigned char *snkey, size_t keylen)
+{
+    /* ASCII: "sn", in hex for EBCDIC compatibility */
+    static const unsigned char sn_str[] = "\x73\x6E";
+
+    return tls13_hkdf_expand(s, md, secret, sn_str, sizeof(sn_str) - 1,
+        NULL, 0, snkey, keylen, 1);
+}
+
+/*
  * Given the previous secret |prevsecret| and a new input secret |insecret| of
  * length |insecretlen|, generate a new secret and store it in the location
  * pointed to by |outsecret|. Returns 1 on success  0 on failure.
@@ -357,13 +372,15 @@ err:
 int tls13_setup_key_block(SSL_CONNECTION *s)
 {
     const EVP_CIPHER *c;
+    const EVP_CIPHER *snc = NULL, **p_snc = SSL_CONNECTION_IS_DTLS(s) ? &snc : NULL;
+    size_t snoffs;
     const EVP_MD *hash;
     int mac_type = NID_undef;
     size_t mac_secret_size = 0;
 
     s->session->cipher = s->s3.tmp.new_cipher;
-    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, &c, &hash,
-            &mac_type, &mac_secret_size, NULL, 0)) {
+    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, p_snc, &snoffs, &c,
+            &hash, &mac_type, &mac_secret_size, NULL, 0)) {
         /* Error is already recorded */
         SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
         return 0;
@@ -371,6 +388,9 @@ int tls13_setup_key_block(SSL_CONNECTION *s)
 
     ssl_evp_cipher_free(s->s3.tmp.new_sym_enc);
     s->s3.tmp.new_sym_enc = c;
+    ssl_evp_cipher_free(s->s3.tmp.new_sym_enc_sn);
+    s->s3.tmp.new_sym_enc_sn = snc;
+    s->s3.tmp.new_sym_enc_sn_offs = snoffs;
     ssl_evp_md_free(s->s3.tmp.new_hash);
     s->s3.tmp.new_hash = hash;
     s->s3.tmp.new_mac_pkey_type = mac_type;
@@ -387,6 +407,7 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
     const unsigned char *hash,
     const unsigned char *label,
     size_t labellen, unsigned char *secret,
+    unsigned char *snkey,
     unsigned char *key, size_t *keylen,
     unsigned char **iv, size_t *ivlen,
     size_t *taglen)
@@ -472,7 +493,9 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
     }
 
     if (!tls13_derive_key(s, md, secret, key, *keylen)
-        || !tls13_derive_iv(s, md, secret, *iv, *ivlen)) {
+        || !tls13_derive_iv(s, md, secret, *iv, *ivlen)
+        || (SSL_CONNECTION_IS_DTLS(s)
+            && !dtls13_derive_snkey(s, md, secret, snkey, *keylen))) {
         /* SSLfatal() already called */
         return 0;
     }
@@ -526,6 +549,8 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     unsigned char iv_intern[EVP_MAX_IV_LENGTH];
     unsigned char *iv = iv_intern;
     unsigned char key[EVP_MAX_KEY_LENGTH];
+    unsigned char snkey[EVP_MAX_KEY_LENGTH];
+    size_t sn_input_offs = 0;
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char hashval[EVP_MAX_MD_SIZE];
     unsigned char *hash = hashval;
@@ -537,7 +562,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     size_t labellen, hashlen = 0;
     int ret = 0;
     const EVP_MD *md = NULL, *mac_md = NULL;
-    const EVP_CIPHER *cipher = NULL;
+    const EVP_CIPHER *cipher = NULL, *sncipher = NULL;
     int mac_pkey_type = NID_undef;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     size_t keylen, ivlen = EVP_MAX_IV_LENGTH, taglen;
@@ -589,7 +614,10 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
              * This ups the ref count on cipher so we better make sure we free
              * it again
              */
-            if (!ssl_cipher_get_evp_cipher(sctx, sslcipher, &cipher)) {
+            if (!ssl_cipher_get_evp_cipher(sctx, sslcipher, &cipher)
+                || (SSL_CONNECTION_IS_DTLS(s)
+                    && !ssl_cipher_get_evp_cipher_sn(sctx, sslcipher, &sncipher,
+                        &sn_input_offs))) {
                 /* Error is already recorded */
                 SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
                 goto err;
@@ -698,6 +726,8 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     if ((which & SSL3_CC_EARLY) == 0) {
         md = ssl_handshake_md(s);
         cipher = s->s3.tmp.new_sym_enc;
+        sncipher = s->s3.tmp.new_sym_enc_sn;
+        sn_input_offs = s->s3.tmp.new_sym_enc_sn_offs;
         mac_md = s->s3.tmp.new_hash;
         mac_pkey_type = s->s3.tmp.new_mac_pkey_type;
         if (!ssl3_digest_cached_records(s, 1)
@@ -727,8 +757,8 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
 
     if (!derive_secret_key_and_iv(s, md, cipher, mac_pkey_type, mac_md,
-            insecret, hash, label, labellen, secret, key,
-            &keylen, &iv, &ivlen, &taglen)) {
+            insecret, hash, label, labellen, secret,
+            snkey, key, &keylen, &iv, &ivlen, &taglen)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -797,10 +827,9 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         }
     }
 
-    if (!ssl_set_new_record_layer(s, s->version,
-            direction,
-            level, secret, hashlen, key, keylen, iv,
-            ivlen, NULL, 0, cipher, taglen,
+    if (!ssl_set_new_record_layer(s, s->version, direction, level, secret,
+            hashlen, snkey, key, keylen, iv, ivlen,
+            NULL, 0, sncipher, sn_input_offs, cipher, taglen,
             mac_pkey_type, mac_md, NULL, md)) {
         /* SSLfatal already called */
         goto err;
@@ -813,8 +842,10 @@ err:
         if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0)
             ssl_evp_md_free(mac_md);
         ssl_evp_cipher_free(cipher);
+        ssl_evp_cipher_free(sncipher);
     }
     OPENSSL_cleanse(key, sizeof(key));
+    OPENSSL_cleanse(snkey, sizeof(snkey));
     OPENSSL_cleanse(secret, sizeof(secret));
     if (iv != iv_intern)
         OPENSSL_free(iv);
@@ -828,6 +859,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     const EVP_MD *md = ssl_handshake_md(s);
     size_t hashlen;
     unsigned char key[EVP_MAX_KEY_LENGTH];
+    unsigned char snkey[EVP_MAX_KEY_LENGTH];
     unsigned char *insecret;
     unsigned char secret[EVP_MAX_MD_SIZE];
     char *log_label;
@@ -855,8 +887,8 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
             s->s3.tmp.new_mac_pkey_type, s->s3.tmp.new_hash,
             insecret, NULL,
             application_traffic,
-            sizeof(application_traffic) - 1, secret, key,
-            &keylen, &iv, &ivlen, &taglen)) {
+            sizeof(application_traffic) - 1, secret, snkey,
+            key, &keylen, &iv, &ivlen, &taglen)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -866,12 +898,13 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     if (SSL_CONNECTION_IS_DTLS(s))
         dtls1_increment_epoch(s, which);
 
-    if (!ssl_set_new_record_layer(s, s->version,
-            direction,
+    if (!ssl_set_new_record_layer(s, s->version, direction,
             OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-            insecret, hashlen, key, keylen, iv, ivlen, NULL, 0,
-            s->s3.tmp.new_sym_enc, taglen, NID_undef, NULL,
-            NULL, md)) {
+            insecret, hashlen, snkey, key, keylen,
+            iv, ivlen, NULL, 0,
+            s->s3.tmp.new_sym_enc_sn, s->s3.tmp.new_sym_enc_sn_offs,
+            s->s3.tmp.new_sym_enc,
+            taglen, NID_undef, NULL, NULL, md)) {
         /* SSLfatal already called */
         goto err;
     }
@@ -885,6 +918,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     ret = 1;
 err:
     OPENSSL_cleanse(key, sizeof(key));
+    OPENSSL_cleanse(snkey, sizeof(snkey));
     OPENSSL_cleanse(secret, sizeof(secret));
     if (iv != iv_intern)
         OPENSSL_free(iv);

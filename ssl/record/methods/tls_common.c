@@ -1393,8 +1393,10 @@ static int
 tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     int role, int direction, int level, uint16_t epoch,
     unsigned char *secret, size_t secretlen,
-    unsigned char *key, size_t keylen, unsigned char *iv,
-    size_t ivlen, unsigned char *mackey, size_t mackeylen,
+    unsigned char *snkey, unsigned char *key, size_t keylen,
+    unsigned char *iv, size_t ivlen,
+    unsigned char *mackey, size_t mackeylen,
+    const EVP_CIPHER *snciph, size_t snoffs,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype,
     const EVP_MD *md, COMP_METHOD *comp,
@@ -1436,9 +1438,10 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         goto err;
     }
 
-    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, key, keylen, iv,
-        ivlen, mackey, mackeylen, ciph,
-        taglen, mactype, md, comp);
+    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key, keylen,
+        iv, ivlen, mackey, mackeylen,
+        snciph, snoffs, ciph, taglen, mactype, md,
+        comp);
 
 err:
     if (ret != OSSL_RECORD_RETURN_SUCCESS) {
@@ -1458,6 +1461,7 @@ static void tls_int_free(OSSL_RECORD_LAYER *rl)
     tls_release_write_buffer(rl);
 
     EVP_CIPHER_CTX_free(rl->enc_ctx);
+    EVP_CIPHER_CTX_free(rl->sn_enc_ctx);
     EVP_MAC_CTX_free(rl->mac_ctx);
     EVP_MD_CTX_free(rl->md_ctx);
 #ifndef OPENSSL_NO_COMP
@@ -1725,6 +1729,19 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
         || !WPACKET_close(thispkt)) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
+
+    if (rl->sn_enc_ctx != NULL) {
+        unsigned char *recordstart;
+
+        recordstart = WPACKET_get_curr(thispkt) - len - headerlen;
+
+        if (!dtls_crypt_sequence_number(rl->sn_enc_ctx, recordstart + DTLS1_RT_HEADER_SEQ_OFFS,
+                recordstart + DTLS1_RT_HEADER_LENGTH,
+                rl->sn_enc_offs)) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
 
     if (rl->msg_callback != NULL) {

@@ -284,9 +284,11 @@ static int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CI
 #endif /* OPENSSL_SYS_LINUX */
 
 static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
+    unsigned char *snkey,
     unsigned char *key, size_t keylen,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
+    const EVP_CIPHER *snciph, size_t snoffs,
     const EVP_CIPHER *ciph,
     size_t taglen,
     int mactype,
@@ -399,8 +401,10 @@ static int
 ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     int role, int direction, int level, uint16_t epoch,
     unsigned char *secret, size_t secretlen,
-    unsigned char *key, size_t keylen, unsigned char *iv,
-    size_t ivlen, unsigned char *mackey, size_t mackeylen,
+    unsigned char *snkey, unsigned char *key, size_t keylen,
+    unsigned char *iv, size_t ivlen,
+    unsigned char *mackey, size_t mackeylen,
+    const EVP_CIPHER *snciph, size_t snoffs,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype,
     const EVP_MD *md, COMP_METHOD *comp,
@@ -422,9 +426,10 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     (*retrl)->funcs = &ossl_ktls_funcs;
 
-    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, key, keylen, iv,
-        ivlen, mackey, mackeylen, ciph,
-        taglen, mactype, md, comp);
+    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key, keylen,
+        iv, ivlen, mackey, mackeylen,
+        snciph, snoffs, ciph, taglen, mactype, md,
+        comp);
 
     if (ret != OSSL_RECORD_RETURN_SUCCESS) {
         tls_free(*retrl);
