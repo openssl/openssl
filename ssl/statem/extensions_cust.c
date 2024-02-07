@@ -349,7 +349,7 @@ void custom_exts_free(custom_ext_methods *exts)
 /* Return true if a client custom extension exists, false otherwise */
 int SSL_CTX_has_client_custom_ext(const SSL_CTX *ctx, unsigned int ext_type)
 {
-    return custom_ext_find(&ctx->cert->custext, ENDPOINT_CLIENT, ext_type,
+    return custom_ext_find(&ctx->cnf->cert->custext, ENDPOINT_CLIENT, ext_type,
                            NULL) != NULL;
 }
 
@@ -372,7 +372,7 @@ int ossl_tls_add_custom_ext_intern(SSL_CTX *ctx, custom_ext_methods *exts,
         return 0;
 
     if (exts == NULL)
-        exts = &ctx->cert->custext;
+        exts = &ctx->cnf->cert->custext;
 
 #ifndef OPENSSL_NO_CT
     /*

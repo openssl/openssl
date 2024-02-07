@@ -1423,11 +1423,11 @@ static int update_cipher_list(SSL_CTX *ctx,
 
 int SSL_CTX_set_ciphersuites(SSL_CTX *ctx, const char *str)
 {
-    int ret = set_ciphersuites(&(ctx->tls13_ciphersuites), str);
+    int ret = set_ciphersuites(&(ctx->cnf->tls13_ciphersuites), str);
 
-    if (ret && ctx->cipher_list != NULL)
-        return update_cipher_list(ctx, &ctx->cipher_list, &ctx->cipher_list_by_id,
-                                  ctx->tls13_ciphersuites);
+    if (ret && ctx->cnf->cipher_list != NULL)
+        return update_cipher_list(ctx, &ctx->cnf->cipher_list, &ctx->cnf->cipher_list_by_id,
+                                  ctx->cnf->tls13_ciphersuites);
 
     return ret;
 }
