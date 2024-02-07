@@ -157,6 +157,11 @@ const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s)
     return EVP_sha256();
 }
 
+int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
+                                 const EVP_CIPHER **enc, size_t *inputoffs) {
+    return 0;
+}
+
 int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                                      const EVP_CIPHER **enc)
 {
@@ -171,7 +176,9 @@ int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
 }
 
 int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
-                       const EVP_CIPHER **enc, const EVP_MD **md,
+                       const EVP_CIPHER **snenc, size_t *snencoffs,
+                       const EVP_CIPHER **enc,
+                       const EVP_MD **md,
                        int *mac_pkey_type, size_t *mac_secret_size,
                        SSL_COMP **comp, int use_etm)
 
@@ -226,9 +233,11 @@ void ssl_evp_md_free(const EVP_MD *md)
 
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version, int direction,
                              int level, unsigned char *secret, size_t secretlen,
+                             unsigned char *snkey,
                              unsigned char *key, size_t keylen,
                              unsigned char *iv,  size_t ivlen,
                              unsigned char *mackey, size_t mackeylen,
+                             const EVP_CIPHER *snciph, size_t snoffs,
                              const EVP_CIPHER *ciph, size_t taglen,
                              int mactype, const EVP_MD *md,
                              const SSL_COMP *comp, const EVP_MD *kdfdigest)
