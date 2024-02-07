@@ -468,6 +468,24 @@ again:
     /* set state for later operations */
     rl->rstate = SSL_ST_READ_HEADER;
 
+    /*
+     * rfc9147:
+     * This procedure requires the ciphertext length to be at least 16 bytes.
+     * Receivers MUST reject shorter records as if they had failed deprotection
+     * TODO(DTLSv1.3): This check will need to be modified when support for variable
+     * length headers is added.
+     */
+    if (rl->sn_enc_ctx != NULL
+        && (rl->packet_length < DTLS1_RT_HEADER_LENGTH + 16
+            || !dtls_crypt_sequence_number(rl->sn_enc_ctx, &(rl->sequence[2]),
+                rl->packet + DTLS1_RT_HEADER_LENGTH,
+                rl->sn_enc_offs))) {
+        /* sequence number encryption failed dump record */
+        rr->length = 0;
+        rl->packet_length = 0;
+        goto again;
+    }
+
     /* match epochs.  NULL means the packet is dropped on the floor */
     bitmap = dtls_get_bitmap(rl, rr, &is_next_epoch);
     if (bitmap == NULL) {
@@ -577,8 +595,10 @@ static int
 dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     int role, int direction, int level, uint16_t epoch,
     unsigned char *secret, size_t secretlen,
-    unsigned char *key, size_t keylen, unsigned char *iv,
-    size_t ivlen, unsigned char *mackey, size_t mackeylen,
+    unsigned char *snkey, unsigned char *key, size_t keylen,
+    unsigned char *iv, size_t ivlen,
+    unsigned char *mackey, size_t mackeylen,
+    const EVP_CIPHER *snciph, size_t snoffs,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype,
     const EVP_MD *md, COMP_METHOD *comp,
@@ -630,9 +650,10 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         goto err;
     }
 
-    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, key, keylen, iv,
-        ivlen, mackey, mackeylen, ciph,
-        taglen, mactype, md, comp);
+    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key, keylen,
+        iv, ivlen, mackey, mackeylen,
+        snciph, snoffs, ciph, taglen, mactype, md,
+        comp);
 
 err:
     if (ret != OSSL_RECORD_RETURN_SUCCESS) {
