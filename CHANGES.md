@@ -30,11 +30,12 @@ OpenSSL 3.3
 
  * Unknown entries in TLS SignatureAlgorithms, ClientSignatureAlgorithms
    config options and the respective calls to SSL[_CTX]_set1_sigalgs() and
-   SSL[_CTX]_set1_client_sigalgs() are ignored and the configuration will
-   still be used.
-   Similarly unknown entries in TLS Groups config option and the
-   SSL[_CTX]_set1_groups_list() are ignored and the configuration will
-   still be used.
+   SSL[_CTX]_set1_client_sigalgs() that are marked with `?` character are
+   ignored and the configuration will still be used.
+   Similarly unknown entries that are marked with `?` character in a TLS
+   Groups config option or set with SSL[_CTX]_set1_groups_list() are ignored
+   and the configuration will still be used.
+
    In all of these cases if the resulting list is empty, an error is returned.
 
    *Tomáš Mráz*
