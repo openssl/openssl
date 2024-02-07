@@ -3148,7 +3148,7 @@ static const sigalgs_list testsigalgs[] = {
     {validlist3, OSSL_NELEM(validlist3), NULL, 1, 0},
 # endif
     {NULL, 0, "RSA+SHA256", 1, 1},
-    {NULL, 0, "RSA+SHA256:Invalid", 1, 1},
+    {NULL, 0, "RSA+SHA256:?Invalid", 1, 1},
 # ifndef OPENSSL_NO_EC
     {NULL, 0, "RSA+SHA256:ECDSA+SHA512", 1, 1},
     {NULL, 0, "ECDSA+SHA512", 1, 0},
@@ -3159,6 +3159,7 @@ static const sigalgs_list testsigalgs[] = {
     {invalidlist4, OSSL_NELEM(invalidlist4), NULL, 0, 0},
     {NULL, 0, "RSA", 0, 0},
     {NULL, 0, "SHA256", 0, 0},
+    {NULL, 0, "RSA+SHA256:SHA256", 0, 0},
     {NULL, 0, "Invalid", 0, 0}
 };
 
@@ -9496,7 +9497,7 @@ static int test_unknown_sigalgs_groups(void)
         goto end;
 
     if (!TEST_int_gt(SSL_CTX_set1_sigalgs_list(ctx,
-                                               "RSA+SHA256:nonexistent:RSA+SHA512"),
+                                               "RSA+SHA256:?nonexistent:?RSA+SHA512"),
                                                0))
         goto end;
     if (!TEST_size_t_eq(ctx->cert->conf_sigalgslen, 2)
@@ -9505,7 +9506,7 @@ static int test_unknown_sigalgs_groups(void)
         goto end;
 
     if (!TEST_int_gt(SSL_CTX_set1_client_sigalgs_list(ctx,
-                                                      "RSA+SHA256:nonexistent:RSA+SHA512"),
+                                                      "RSA+SHA256:?nonexistent:?RSA+SHA512"),
                                                       0))
         goto end;
     if (!TEST_size_t_eq(ctx->cert->client_sigalgslen, 2)
@@ -9520,7 +9521,7 @@ static int test_unknown_sigalgs_groups(void)
 
 #ifndef OPENSSL_NO_EC
     if (!TEST_int_gt(SSL_CTX_set1_groups_list(ctx,
-                                              "P-384:nonexistent:P-521"),
+                                              "P-384:?nonexistent:?P-521"),
                                               0))
         goto end;
     if (!TEST_size_t_eq(ctx->ext.supportedgroups_len, 2)
