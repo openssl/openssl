@@ -2881,7 +2881,7 @@ static int sig_cb(const char *elem, int len, void *arg)
     const SIGALG_LOOKUP *s;
     char etmp[TLS_MAX_SIGSTRING_LEN], *p;
     int sig_alg = NID_undef, hash_alg = NID_undef;
-    int ignore_unknown;
+    int ignore_unknown = 0;
 
     if (elem == NULL)
         return 0;
