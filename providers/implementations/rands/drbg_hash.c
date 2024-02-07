@@ -439,7 +439,8 @@ static int drbg_hash_new(PROV_DRBG *ctx)
 static void *drbg_hash_new_wrapper(void *provctx, void *parent,
                                    const OSSL_DISPATCH *parent_dispatch)
 {
-    return ossl_rand_drbg_new(provctx, parent, parent_dispatch, &drbg_hash_new,
+    return ossl_rand_drbg_new(provctx, parent, parent_dispatch,
+                              &drbg_hash_new, &drbg_hash_free,
                               &drbg_hash_instantiate, &drbg_hash_uninstantiate,
                               &drbg_hash_reseed, &drbg_hash_generate);
 }
