@@ -334,7 +334,7 @@ constitute a failure of the SSL_poll() mechanism itself are not considered
 errors by SSL_poll() and are instead represented using their own event type; see
 L</EVENT TYPES> for details.
 
-The caller can esablish the meaning of the SSL_poll() return and output values
+The caller can establish the meaning of the SSL_poll() return and output values
 as follows:
 
 =over 4
