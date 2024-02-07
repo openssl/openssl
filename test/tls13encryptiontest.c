@@ -336,7 +336,8 @@ static int test_tls13_encryption(void)
                           NULL, NULL, TLS1_3_VERSION, OSSL_RECORD_ROLE_SERVER,
                           OSSL_RECORD_DIRECTION_WRITE,
                           OSSL_RECORD_PROTECTION_LEVEL_APPLICATION, 0, NULL, 0,
-                          key, 16, iv, ivlen, NULL, 0, EVP_aes_128_gcm(),
+                          NULL, key, 16, iv, ivlen, NULL, 0, NULL,
+                          EVP_aes_128_gcm(),
                           EVP_GCM_TLS_TAG_LEN, 0, NULL, NULL, NULL, NULL, NULL,
                           NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                           &wrl)))
@@ -359,7 +360,8 @@ static int test_tls13_encryption(void)
                           NULL, NULL, TLS1_3_VERSION, OSSL_RECORD_ROLE_SERVER,
                           OSSL_RECORD_DIRECTION_READ,
                           OSSL_RECORD_PROTECTION_LEVEL_APPLICATION, 0, NULL, 0,
-                          key, 16, iv, ivlen, NULL, 0, EVP_aes_128_gcm(),
+                          NULL, key, 16, iv, ivlen, NULL, 0, NULL,
+                          EVP_aes_128_gcm(),
                           EVP_GCM_TLS_TAG_LEN, 0, NULL, NULL, NULL, NULL, NULL,
                           NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                           &rrl)))

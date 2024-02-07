@@ -15,9 +15,11 @@
 #define MIN_SSL2_RECORD_LEN     9
 
 static int tls_any_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
+                                    unsigned char *snkey,
                                     unsigned char *key, size_t keylen,
                                     unsigned char *iv, size_t ivlen,
                                     unsigned char *mackey, size_t mackeylen,
+                                    const EVP_CIPHER *snciph,
                                     const EVP_CIPHER *ciph,
                                     size_t taglen,
                                     int mactype,

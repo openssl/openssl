@@ -144,11 +144,11 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
-    if (!ssl_set_new_record_layer(s, SSL3_VERSION,
-                                  direction,
+    if (!ssl_set_new_record_layer(s, SSL3_VERSION, direction,
                                   OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                  NULL, 0, key, key_len, iv, iv_len, mac_secret,
-                                  md_len, ciph, 0, NID_undef, md, comp, NULL)) {
+                                  NULL, 0, NULL, key, key_len, iv, iv_len,
+                                  mac_secret, md_len, NULL, ciph, 0, NID_undef,
+                                  md, comp, NULL)) {
         /* SSLfatal already called */
         goto err;
     }
@@ -170,8 +170,8 @@ int ssl3_setup_key_block(SSL_CONNECTION *s)
     if (s->s3.tmp.key_block_length != 0)
         return 1;
 
-    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, &c, &hash,
-                            NULL, NULL, &comp, 0)) {
+    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, NULL, &c,
+                            &hash, NULL, NULL, &comp, 0)) {
         /* Error is already recorded */
         SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
         return 0;

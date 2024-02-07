@@ -232,10 +232,10 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         dtls1_increment_epoch(s, which);
 
     if (!ssl_set_new_record_layer(s, s->version, direction,
-                                    OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                    NULL, 0, key, cl, iv, (size_t)k, mac_secret,
-                                    mac_secret_size, c, taglen, mac_type,
-                                    m, comp, NULL)) {
+                                  OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
+                                  NULL, 0, NULL, key, cl, iv, (size_t)k,
+                                  mac_secret, mac_secret_size, NULL, c, taglen,
+                                  mac_type, m, comp, NULL)) {
         /* SSLfatal already called */
         goto err;
     }
@@ -266,8 +266,8 @@ int tls1_setup_key_block(SSL_CONNECTION *s)
     if (s->s3.tmp.key_block_length != 0)
         return 1;
 
-    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, &c, &hash,
-                            &mac_type, &mac_secret_size, &comp,
+    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, NULL, &c,
+                            &hash, &mac_type, &mac_secret_size, &comp,
                             s->ext.use_etm)) {
         /* Error is already recorded */
         SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);

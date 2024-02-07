@@ -844,12 +844,11 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
      * Reset the record layer - but this time we can use the record we just
      * buffered in s->rlayer.rrlnext
      */
-    if (!ssl_set_new_record_layer(s,
-                                  DTLS_ANY_VERSION,
+    if (!ssl_set_new_record_layer(s, DTLS_ANY_VERSION,
                                   OSSL_RECORD_DIRECTION_READ,
                                   OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
-                                  NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                  NID_undef, NULL, NULL, NULL)) {
+                                  NULL, NULL, 0, NULL, 0, NULL,  0, NULL, NULL,
+                                  0, NID_undef, NULL, NULL, NULL)) {
         /* SSLfatal already called */
         ret = -1;
         goto end;
