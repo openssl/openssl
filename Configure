@@ -2487,10 +2487,11 @@ EOF
                     && $f =~ m/^(.*?)\|(.*)$/) {
                     $i = $1;
                     $m = $2;
-                    $i = cleanfile($sourced, $i, $blddir, 1);
-                    $i2 = cleanfile($buildd, $i, $blddir);
+                    # We must be very careful to modify $i last
                     $d = cleanfile($sourced, "$i/$m", $blddir, 1);
                     $d2 = cleanfile($buildd, "$i/$m", $blddir);
+                    $i2 = cleandir($buildd, $i, $blddir);
+                    $i = cleandir($sourced, $i, $blddir, 1);
                 } else {
                     $d = cleanfile($sourced, $f, $blddir, 1);
                     $d2 = cleanfile($buildd, $f, $blddir);
