@@ -102,6 +102,11 @@ int ossl_ecdsa_deterministic_sign(const unsigned char *dgst, int dlen,
     BIGNUM *kinv = NULL, *r = NULL;
     int ret = 0;
 
+    if (sig == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     *siglen = 0;
     if (!ecdsa_sign_setup(eckey, NULL, &kinv, &r, dgst, dlen,
                           nonce_type, digestname, libctx, propq))
@@ -111,7 +116,7 @@ int ossl_ecdsa_deterministic_sign(const unsigned char *dgst, int dlen,
     if (s == NULL)
         goto end;
 
-    *siglen = i2d_ECDSA_SIG(s, sig != NULL ? &sig : NULL);
+    *siglen = i2d_ECDSA_SIG(s, &sig);
     ECDSA_SIG_free(s);
     ret = 1;
 end:
