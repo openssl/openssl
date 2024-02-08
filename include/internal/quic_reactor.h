@@ -11,6 +11,7 @@
 
 # include "internal/time.h"
 # include "internal/sockets.h"
+# include "internal/thread_arch.h"
 # include <openssl/bio.h>
 
 # ifndef OPENSSL_NO_QUIC
@@ -181,7 +182,7 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags);
 int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                        int (*pred)(void *arg), void *pred_arg,
                                        uint32_t flags,
-                                       CRYPTO_RWLOCK *mutex);
+                                       CRYPTO_MUTEX *mutex);
 
 # endif
 
