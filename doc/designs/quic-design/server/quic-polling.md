@@ -254,7 +254,7 @@ We define the following event types:
   terminating (Terminated state).
 
 - **IC (Incoming Connection):** There is at least one incoming connection
-  incoming and available to be popped using `SSL_accept_connection()`.
+  available to be popped using `SSL_accept_connection()`.
 
 - **ISB (Incoming Stream — Bidirectional):** There is at least one
   bidirectional stream incoming and available to be popped using
@@ -352,7 +352,7 @@ From our discussion below we derive some general principles:
 
 /* Read/write and associated exception event types. */
 #define SSL_POLL_EVENT_RE           (SSL_POLL_EVENT_R  | SSL_POLL_EVENT_ER)
-#define SSL_POLL_EVENT_WE           (SSL_POLL_EVENT_R  | SSL_POLL_EVENT_ER)
+#define SSL_POLL_EVENT_WE           (SSL_POLL_EVENT_W  | SSL_POLL_EVENT_EW)
 #define SSL_POLL_EVENT_RWE          (SSL_POLL_EVENT_RE | SSL_POLL_EVENT_WE)
 
 /* All exception event types. */
@@ -389,7 +389,7 @@ A. The event type is raised on a QLSO only. This may be revisited in future
 **Q. Why does this event type need to be distinct from `EC`?**
 
 A. An application which is not immediately concerned by the failure of an
-indiivdual connection likely still needs to be notified if an entire port fails.
+individual connection likely still needs to be notified if an entire port fails.
 
 #### `EC`, `ECD`: Exception on Connection (/Drained)
 
@@ -516,7 +516,7 @@ only care about the possibility of a stream reset.
 **Q. Should applications be able to listen on `R` but not `ER`?**
 
 A. This would enable an application to listen for more application data but not
-care about stream resets. This can be permitted for now even if it raises osme
+care about stream resets. This can be permitted for now even if it raises some
 questions about the robustness of such applications.
 
 **Q. How will the future reliable stream resets extension be handled?**
@@ -601,7 +601,7 @@ there is no particular harm in doing so. Current decision: do not report it.
 **Q. What if the send part was reset locally and then we also received a
 `STOP_SENDING` frame for it?**
 
-A. If the local application reset a stream locally, it knows about this fact
+A. If the local application has reset a stream locally, it knows about this fact
 therefore there is no need to raise `EW`. The local reset takes precedence.
 
 **Q. Should this be reported if shutdown has commenced?**
@@ -641,7 +641,7 @@ yet to be popped via `SSL_accept_stream()`.
 A. It is raised on anything that would cause `SSL_accept_stream()` to return a
 stream. This could include a stream which was created by being reset.
 
-**Q. What happens if this event is raised on a QSSO or QLSO?**
+**Q. What happens if this event is enabled on a QSSO or QLSO?**
 
 A. The event is never raised.
 
@@ -676,7 +676,7 @@ A. The event is never raised.
 
 **Q. Can this event be raised before a connection has been established?**
 
-A. Potentially in future, on the client side only, if 0-RTT Is in use and we
+A. Potentially in future, on the client side only, if 0-RTT is in use and we
 have a cached 0-RTT session including flow control budgets which establish we
 have room to write more data for 0-RTT.
 
