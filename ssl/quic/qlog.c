@@ -316,9 +316,12 @@ static void qlog_event_seq_header(QLOG *qlog)
                         ossl_json_key(&qlog->json, "process_id");
                         ossl_json_u64(&qlog->json, qlog->info.override_process_id);
                     } else {
-#if defined(OPENSSL_SYS_UNIX) || defined(OPENSSL_SYS_WINDOWS)
+#if defined(OPENSSL_SYS_UNIX)
                         ossl_json_key(&qlog->json, "process_id");
                         ossl_json_u64(&qlog->json, (uint64_t)getpid());
+#elif defined(OPENSSL_SYS_WINDOWS)
+                        ossl_json_key(&qlog->json, "process_id");
+                        ossl_json_u64(&qlog->json, (uint64_t)GetCurrentProcessId());
 #endif
                     }
                 } /* system_info */
