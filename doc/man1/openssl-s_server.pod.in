@@ -232,6 +232,8 @@ See L<openssl-format-options(1)> for details.
 
 A file or URI of untrusted certificates to use when attempting to build the
 certificate chain related to the certificate specified via the B<-cert> option.
+These untrusted certificates are sent to clients and used for generating
+certificate status (aka OCSP stapling) requests.
 The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-build_chain>
@@ -513,6 +515,8 @@ Enables certificate status request support (aka OCSP stapling).
 
 Enables certificate status request support (aka OCSP stapling) and gives
 a verbose printout of the OCSP response.
+Use the B<-cert_chain> option to specify the certificate of the server's
+certificate signer that is required for certificate status requests.
 
 =item B<-status_timeout> I<int>
 
