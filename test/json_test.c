@@ -128,8 +128,8 @@ typedef void (*fp_pz_type)(OSSL_JSON_ENC *, const void *, size_t);
 #define BEGIN_SCRIPT(name, title, flags)                                       \
     static const struct script_info *get_script_##name(void)                   \
     {                                                                          \
-        const char *const script_name = #name;                                 \
-        const char *const script_title = #title;                               \
+        static const char script_name[] = #name;                               \
+        static const char script_title[] = #title;                             \
                                                                                \
         static const struct script_word script_words[] = {                     \
             OP_INIT_FLAGS(flags)
