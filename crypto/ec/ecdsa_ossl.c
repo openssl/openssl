@@ -70,6 +70,11 @@ int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
 {
     ECDSA_SIG *s;
 
+    if (sig == NULL && (kinv == NULL || r == NULL)) {
+        *siglen = ECDSA_size(eckey);
+        return 1;
+    }
+
     s = ECDSA_do_sign_ex(dgst, dlen, kinv, r, eckey);
     if (s == NULL) {
         *siglen = 0;
