@@ -204,7 +204,7 @@ static void ignore_res(int x) {}
  * data on what frames it contained.
  */
 static int log_frame_actual(QLOG *qlog_instance, PACKET *pkt,
-                            uint64_t *need_skip)
+                            size_t *need_skip)
 {
     uint64_t frame_type;
     OSSL_QUIC_FRAME_ACK ack;
@@ -295,7 +295,7 @@ static int log_frame_actual(QLOG *qlog_instance, PACKET *pkt,
             QLOG_STR("frame_type", "crypto");
             QLOG_U64("offset", f.offset);
             QLOG_U64("payload_length", f.len);
-            *need_skip += f.len;
+            *need_skip += (size_t)f.len;
         }
         break;
     case OSSL_QUIC_FRAME_TYPE_STREAM:
@@ -319,7 +319,8 @@ static int log_frame_actual(QLOG *qlog_instance, PACKET *pkt,
             QLOG_BOOL("explicit_length", f.has_explicit_len);
             if (f.is_fin)
                 QLOG_BOOL("fin", 1);
-            *need_skip = f.has_explicit_len ? *need_skip + f.len : UINT64_MAX;
+            *need_skip = f.has_explicit_len
+                ? *need_skip + (size_t)f.len : SIZE_MAX;
         }
         break;
     case OSSL_QUIC_FRAME_TYPE_MAX_DATA:
@@ -512,7 +513,7 @@ unknown:
 }
 
 static void log_frame(QLOG *qlog_instance, PACKET *pkt,
-                      uint64_t *need_skip)
+                      size_t *need_skip)
 {
     size_t rem_before, rem_after;
 
@@ -531,7 +532,7 @@ static int log_frames(QLOG *qlog_instance,
 {
     size_t i;
     PACKET pkt;
-    uint64_t need_skip = 0;
+    size_t need_skip = 0;
 
     for (i = 0; i < num_iovec; ++i) {
         if (!PACKET_buf_init(&pkt, iovec[i].buf, iovec[i].buf_len))
