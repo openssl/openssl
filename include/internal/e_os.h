@@ -258,6 +258,7 @@ FILE *__iob_func(void);
 #   endif
 #   define unlink _unlink
 #   define fileno _fileno
+#   define isatty _isatty
 #  endif
 # else
 #  include <strings.h>
