@@ -442,6 +442,11 @@ int ossl_sm2_internal_sign(const unsigned char *dgst, int dgstlen,
     int sigleni;
     int ret = -1;
 
+    if (sig == NULL) {
+        ERR_raise(ERR_LIB_SM2, ERR_R_PASSED_NULL_PARAMETER);
+        goto done;
+    }
+
     e = BN_bin2bn(dgst, dgstlen, NULL);
     if (e == NULL) {
        ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
@@ -454,7 +459,7 @@ int ossl_sm2_internal_sign(const unsigned char *dgst, int dgstlen,
         goto done;
     }
 
-    sigleni = i2d_ECDSA_SIG(s, sig != NULL ? &sig : NULL);
+    sigleni = i2d_ECDSA_SIG(s, &sig);
     if (sigleni < 0) {
        ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
        goto done;

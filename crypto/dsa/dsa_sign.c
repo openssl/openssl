@@ -156,6 +156,11 @@ int ossl_dsa_sign_int(int type, const unsigned char *dgst, int dlen,
 {
     DSA_SIG *s;
 
+    if (sig == NULL) {
+        *siglen = DSA_size(dsa);
+        return 1;
+    }
+
     /* legacy case uses the method table */
     if (dsa->libctx == NULL || dsa->meth != DSA_get_default_method())
         s = DSA_do_sign(dgst, dlen, dsa);
@@ -165,7 +170,7 @@ int ossl_dsa_sign_int(int type, const unsigned char *dgst, int dlen,
         *siglen = 0;
         return 0;
     }
-    *siglen = i2d_DSA_SIG(s, sig != NULL ? &sig : NULL);
+    *siglen = i2d_DSA_SIG(s, &sig);
     DSA_SIG_free(s);
     return 1;
 }
