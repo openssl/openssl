@@ -453,7 +453,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
 err:
     if (ssl_base == NULL) {
 #if defined(OPENSSL_THREADS)
-        ossl_crypto_mutex_free(qc->mutex);
+        ossl_crypto_mutex_free(&qc->mutex);
 #endif
         OPENSSL_free(qc);
     } else {

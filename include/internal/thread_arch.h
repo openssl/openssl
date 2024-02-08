@@ -37,8 +37,8 @@
 
 # include <openssl/crypto.h>
 
-typedef void CRYPTO_MUTEX;
-typedef void CRYPTO_CONDVAR;
+typedef struct crypto_mutex_st CRYPTO_MUTEX;
+typedef struct crypto_condvar_st CRYPTO_CONDVAR;
 
 CRYPTO_MUTEX *ossl_crypto_mutex_new(void);
 void ossl_crypto_mutex_lock(CRYPTO_MUTEX *mutex);
