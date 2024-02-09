@@ -664,6 +664,8 @@ SSL_get_quic_stream_bidi_local_avail    define
 SSL_get_quic_stream_bidi_remote_avail   define
 SSL_get_quic_stream_uni_local_avail     define
 SSL_get_quic_stream_uni_remote_avail    define
+SSL_get_event_handling_mode             define
+SSL_set_event_handling_mode             define
 SSL_CONN_CLOSE_FLAG_LOCAL               define
 SSL_CONN_CLOSE_FLAG_TRANSPORT           define
 SSLv23_client_method                    define
@@ -725,6 +727,10 @@ SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL  define
 SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_AVAIL define
 SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL   define
 SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL  define
+SSL_VALUE_EVENT_HANDLING_MODE           define
+SSL_VALUE_EVENT_HANDLING_MODE_INHERIT   define
+SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT  define
+SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT  define
 TLS_DEFAULT_CIPHERSUITES                define deprecated 3.0.0
 X509_CRL_http_nbio                      define deprecated 3.0.0
 X509_http_nbio                          define deprecated 3.0.0
