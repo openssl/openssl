@@ -40,6 +40,8 @@ static int quic_validate_for_write(QUIC_XSO *xso, int *err);
 static int quic_mutation_allowed(QUIC_CONNECTION *qc, int req_active);
 static int qc_blocking_mode(const QUIC_CONNECTION *qc);
 static int xso_blocking_mode(const QUIC_XSO *xso);
+static void qctx_maybe_autotick(QCTX *ctx);
+static int qctx_should_autotick(QCTX *ctx);
 
 /*
  * QUIC Front-End I/O API: Common Utilities
@@ -1270,7 +1272,7 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
                     goto err;
                 }
             } else {
-                ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+                qctx_maybe_autotick(&ctx);
             }
         }
 
@@ -1289,7 +1291,7 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
                 goto err;
             }
         } else {
-            ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+            qctx_maybe_autotick(&ctx);
         }
 
         if (!ossl_quic_channel_is_term_any(ctx.qc->ch)) {
@@ -1330,7 +1332,7 @@ int ossl_quic_conn_shutdown(SSL *s, uint64_t flags,
             goto err;
         }
     } else {
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+        qctx_maybe_autotick(&ctx);
     }
 
     ret = ossl_quic_channel_is_terminated(ctx.qc->ch);
@@ -1678,7 +1680,7 @@ static int quic_do_handshake(QCTX *ctx)
 
     if (!qc_blocking_mode(qc)) {
         /* Try to advance the reactor. */
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
+        qctx_maybe_autotick(ctx);
 
         if (ossl_quic_channel_is_handshake_complete(qc->ch))
             /* The handshake is now done. */
@@ -1884,7 +1886,7 @@ static int qc_wait_for_default_xso_for_read(QCTX *ctx)
                                             expect_id | QUIC_STREAM_DIR_UNI);
 
     if (qs == NULL) {
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
+        qctx_maybe_autotick(ctx);
 
         qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(qc->ch),
                                             expect_id);
@@ -2404,7 +2406,7 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const void *buf,
     }
 
     quic_post_write(xso, actual_written > 0, actual_written == actual_len,
-                    flags, 1);
+                    flags, qctx_should_autotick(ctx));
 
     if (actual_written == actual_len) {
         /* We have sent everything. */
@@ -2465,7 +2467,8 @@ static int quic_write_nonblocking_epw(QCTX *ctx, const void *buf, size_t len,
         return QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_INTERNAL_ERROR, NULL);
     }
 
-    quic_post_write(xso, *written > 0, *written == len, flags, 1);
+    quic_post_write(xso, *written > 0, *written == len, flags,
+                    qctx_should_autotick(ctx));
     return 1;
 }
 
@@ -2553,7 +2556,8 @@ int ossl_quic_write_flags(SSL *s, const void *buf, size_t len,
 
     if (len == 0) {
         if ((flags & SSL_WRITE_FLAG_CONCLUDE) != 0)
-            quic_post_write(ctx.xso, 0, 1, flags, 1);
+            quic_post_write(ctx.xso, 0, 1, flags,
+                            qctx_should_autotick(&ctx));
 
         ret = 1;
         goto out;
@@ -2767,7 +2771,7 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
          * Even though we succeeded, tick the reactor here to ensure we are
          * handling other aspects of the QUIC connection.
          */
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+        qctx_maybe_autotick(&ctx);
         ret = 1;
     } else if (xso_blocking_mode(ctx.xso)) {
         /*
@@ -2797,7 +2801,7 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
          * We did not get any bytes and are not in blocking mode.
          * Tick to see if this delivers any more.
          */
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
+        qctx_maybe_autotick(&ctx);
 
         /* Try the read again. */
         if (!quic_read_actual(&ctx, ctx.xso->stream, buf, len, bytes_read, peek)) {
@@ -2909,7 +2913,7 @@ int ossl_quic_conn_stream_conclude(SSL *s)
     }
 
     ossl_quic_sstream_fin(qs->sstream);
-    quic_post_write(ctx.xso, 1, 0, 0, 1);
+    quic_post_write(ctx.xso, 1, 0, 0, qctx_should_autotick(&ctx));
     quic_unlock(ctx.qc);
     return 1;
 }
@@ -3295,13 +3299,99 @@ static int qc_get_stream_avail(QCTX *ctx, uint32_t class_,
     return ret;
 }
 
+QUIC_NEEDS_LOCK
+static int qctx_should_autotick(QCTX *ctx)
+{
+    int event_handling_mode;
+
+    if (ctx->is_stream) {
+        event_handling_mode = ctx->xso->event_handling_mode;
+        if (event_handling_mode != SSL_VALUE_EVENT_HANDLING_MODE_INHERIT)
+            return event_handling_mode == SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT;
+    }
+
+    event_handling_mode = ctx->qc->event_handling_mode;
+    if (event_handling_mode == SSL_VALUE_EVENT_HANDLING_MODE_INHERIT)
+        event_handling_mode = SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT;
+
+    return event_handling_mode == SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT;
+}
+
+QUIC_NEEDS_LOCK
+static void qctx_maybe_autotick(QCTX *ctx)
+{
+    if (!qctx_should_autotick(ctx))
+        return;
+
+    ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx->qc->ch), 0);
+}
+
+QUIC_TAKES_LOCK
+static int qc_getset_event_handling(QCTX *ctx, uint32_t class_,
+                                    uint64_t *p_value_out,
+                                    uint64_t *p_value_in)
+{
+    int ret = 0;
+    uint64_t value_out = 0;
+
+    quic_lock(ctx->qc);
+
+    if (class_ != SSL_VALUE_CLASS_GENERIC) {
+        QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS,
+                                    NULL);
+        goto err;
+    }
+
+    if (p_value_in != NULL) {
+        switch (*p_value_in) {
+        case SSL_VALUE_EVENT_HANDLING_MODE_INHERIT:
+        case SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT:
+        case SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT:
+            break;
+        default:
+            QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_PASSED_INVALID_ARGUMENT,
+                                        NULL);
+            goto err;
+        }
+
+        value_out = *p_value_in;
+        if (ctx->is_stream)
+            ctx->xso->event_handling_mode = value_out;
+        else
+            ctx->qc->event_handling_mode = value_out;
+    } else {
+        value_out = ctx->is_stream
+            ? ctx->xso->event_handling_mode
+            : ctx->qc->event_handling_mode;
+    }
+
+    ret = 1;
+err:
+    quic_unlock(ctx->qc);
+    if (ret && p_value_out != NULL)
+        *p_value_out = value_out;
+
+    return ret;
+}
+
+QUIC_NEEDS_LOCK
+static int expect_quic_for_value(SSL *s, QCTX *ctx, uint32_t id)
+{
+    switch (id) {
+    case SSL_VALUE_EVENT_HANDLING_MODE:
+        return expect_quic(s, ctx);
+    default:
+        return expect_quic_conn_only(s, ctx);
+    }
+}
+
 QUIC_TAKES_LOCK
 int ossl_quic_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
                              uint64_t *value)
 {
     QCTX ctx;
 
-    if (!expect_quic_conn_only(s, &ctx))
+    if (!expect_quic_for_value(s, &ctx, id))
         return 0;
 
     if (value == NULL)
@@ -3321,6 +3411,9 @@ int ossl_quic_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
     case SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL:
         return qc_get_stream_avail(&ctx, class_, /*uni=*/1, /*remote=*/1, value);
 
+    case SSL_VALUE_EVENT_HANDLING_MODE:
+        return qc_getset_event_handling(&ctx, class_, value, NULL);
+
     default:
         return QUIC_RAISE_NON_NORMAL_ERROR(&ctx,
                                            SSL_R_UNSUPPORTED_CONFIG_VALUE, NULL);
@@ -3335,12 +3428,15 @@ int ossl_quic_set_value_uint(SSL *s, uint32_t class_, uint32_t id,
 {
     QCTX ctx;
 
-    if (!expect_quic_conn_only(s, &ctx))
+    if (!expect_quic_for_value(s, &ctx, id))
         return 0;
 
     switch (id) {
     case SSL_VALUE_QUIC_IDLE_TIMEOUT:
         return qc_getset_idle_timeout(&ctx, class_, NULL, &value);
+
+    case SSL_VALUE_EVENT_HANDLING_MODE:
+        return qc_getset_event_handling(&ctx, class_, NULL, &value);
 
     default:
         return QUIC_RAISE_NON_NORMAL_ERROR(&ctx,
