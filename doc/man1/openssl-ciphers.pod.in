@@ -417,10 +417,13 @@ B<SSL_IDEA>, B<SSL_AES128>, B<SSL_AES256>, B<SSL_CAMELLIA128>, B<SSL_CAMELLIA256
 
 =head1 CIPHER SUITE NAMES
 
-The following lists give the SSL or TLS cipher suites names from the
-relevant specification and their OpenSSL equivalents. It should be noted,
-that several cipher suite names do not include the authentication used,
-e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
+The following lists give the standard SSL or TLS cipher suites names from the
+relevant specification and their OpenSSL equivalents. You can use either
+standard names or OpenSSL names in cipher lists, or a mix of both.
+
+It should be noted, that several cipher suite names do not include the
+authentication used, e.g. DES-CBC3-SHA. In these cases, RSA authentication
+is used.
 
 =head2 SSL v3.0 cipher suites
 
@@ -795,6 +798,9 @@ The B<-stdname> is only available if OpenSSL is built with tracing enabled
 (B<enable-ssl-trace> argument to Configure) before OpenSSL 1.1.1.
 
 The B<-convert> option was added in OpenSSL 1.1.1.
+
+Support for standard IANA names in cipher lists was added in
+OpenSSL 3.2.0.
 
 =head1 COPYRIGHT
 
