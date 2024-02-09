@@ -111,6 +111,12 @@ OpenSSL 3.3
 
    *Hugo Landau*
 
+ * Added APIs to allow disabling implicit QUIC event processing for
+   QUIC SSL objects, allowing applications to control when event handling
+   occurs. Refer to the SSL_get_value_uint(3) manpage for details.
+
+   *Hugo Landau*
+
 OpenSSL 3.2
 -----------
 
