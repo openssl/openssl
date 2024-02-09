@@ -115,6 +115,7 @@ struct helper_local {
     LHASH_OF(STREAM_INFO)   *c_streams;
     int                     thread_idx;
     const struct script_op  *check_op;
+    int                     explicit_event_handling;
 };
 
 struct script_op {
@@ -185,6 +186,7 @@ struct script_op {
 #define OPK_S_SHUTDOWN                              50
 #define OPK_POP_ERR                                 51
 #define OPK_C_WRITE_EX2                             52
+#define OPK_SKIP_IF_BLOCKING                        53
 
 #define EXPECT_CONN_CLOSE_APP       (1U << 0)
 #define EXPECT_CONN_CLOSE_REMOTE    (1U << 1)
@@ -279,8 +281,8 @@ struct script_op {
     {OPK_S_WRITE_FAIL, NULL, 0, NULL, #stream_name},
 #define OP_C_READ_FAIL(stream_name)  \
     {OPK_C_READ_FAIL, NULL, 0, NULL, #stream_name},
-#define OP_S_READ_FAIL(stream_name)  \
-    {OPK_S_READ_FAIL, NULL, 0, NULL, #stream_name},
+#define OP_S_READ_FAIL(stream_name, allow_zero_len)  \
+    {OPK_S_READ_FAIL, NULL, (allow_zero_len), NULL, #stream_name},
 #define OP_C_STREAM_RESET(stream_name, aec)  \
     {OPK_C_STREAM_RESET, NULL, 0, NULL, #stream_name, (aec)},
 #define OP_S_ACCEPT_STREAM_WAIT(stream_name)  \
@@ -329,6 +331,8 @@ struct script_op {
     {OPK_C_WRITE_EX2, (buf), (buf_len), NULL, #stream_name, (flags)},
 #define OP_CHECK2(func, arg1, arg2) \
     {OPK_CHECK, NULL, (arg1), (func), NULL, (arg2)},
+#define OP_SKIP_IF_BLOCKING(n) \
+    {OPK_SKIP_IF_BLOCKING, NULL, (n), NULL, 0},
 
 static OSSL_TIME get_time(void *arg)
 {
@@ -840,9 +844,10 @@ err:
 static int helper_local_init(struct helper_local *hl, struct helper *h,
                              int thread_idx)
 {
-    hl->h           = h;
-    hl->c_streams   = NULL;
-    hl->thread_idx  = thread_idx;
+    hl->h                       = h;
+    hl->c_streams               = NULL;
+    hl->thread_idx              = thread_idx;
+    hl->explicit_event_handling = 0;
 
     if (!TEST_ptr(h))
         return 0;
@@ -1106,7 +1111,8 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
 #endif
         }
 
-        if (thread_idx >= 0 || connect_started)
+        if (!hl->explicit_event_handling
+            && (thread_idx >= 0 || connect_started))
             SSL_handle_events(h->c_conn);
 
         if (thread_idx >= 0) {
@@ -1188,6 +1194,13 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
 
         case OPK_C_SKIP_IF_UNBOUND:
             if (c_tgt != NULL)
+                break;
+
+            op_idx += op->arg1;
+            break;
+
+        case OPK_SKIP_IF_BLOCKING:
+            if (!h->blocking)
                 break;
 
             op_idx += op->arg1;
@@ -1801,15 +1814,17 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
 
         case OPK_S_READ_FAIL:
             {
+                int ret;
                 size_t bytes_read = 0;
                 unsigned char buf[1];
 
                 if (!TEST_uint64_t_ne(s_stream_id, UINT64_MAX))
                     goto out;
 
-                if (!TEST_false(ossl_quic_tserver_read(ACQUIRE_S(), s_stream_id,
-                                                      buf, sizeof(buf),
-                                                      &bytes_read)))
+                ret = ossl_quic_tserver_read(ACQUIRE_S(), s_stream_id,
+                                             buf, sizeof(buf),
+                                             &bytes_read);
+                if (!TEST_true(ret == 0 || (op->arg1 && bytes_read == 0)))
                     goto out;
             }
             break;
@@ -2273,7 +2288,7 @@ static const struct script_op script_5[] = {
     OP_S_BIND_STREAM_ID     (b, C_BIDI_ID(1))
     OP_S_READ_EXPECT        (b, "strawberry", 10)
     /* Reset disrupts read of already sent data */
-    OP_S_READ_FAIL          (a)
+    OP_S_READ_FAIL          (a, 0)
     OP_CHECK                (check_stream_reset, C_BIDI_ID(0))
 
     OP_END
@@ -5576,6 +5591,91 @@ static const struct script_op script_85[] = {
     OP_END
 };
 
+/* 86. Event Handling Mode Configuration */
+static int set_event_handling_mode_conn(struct helper *h, struct helper_local *hl)
+{
+    hl->explicit_event_handling = 1;
+    return SSL_set_event_handling_mode(h->c_conn, hl->check_op->arg2);
+}
+
+static int reenable_test_event_handling(struct helper *h, struct helper_local *hl)
+{
+    hl->explicit_event_handling = 0;
+    return 1;
+}
+
+static ossl_unused int set_event_handling_mode_stream(struct helper *h, struct helper_local *hl)
+{
+    SSL *ssl = helper_local_get_c_stream(hl, "a");
+
+    if (!TEST_ptr(ssl))
+        return 0;
+
+    return SSL_set_event_handling_mode(ssl, hl->check_op->arg2);
+}
+
+static const struct script_op script_86[] = {
+    OP_SKIP_IF_BLOCKING     (23)
+
+    OP_C_SET_ALPN           ("ossltest")
+    OP_C_CONNECT_WAIT       ()
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+
+    /* Turn on explicit handling mode. */
+    OP_CHECK                (set_event_handling_mode_conn,
+                             SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT)
+
+    /*
+     * Create a new stream and write data. This won't get sent
+     * to the network net because we are in explicit mode
+     * and we haven't called SSL_handle_events().
+     */
+    OP_C_NEW_STREAM_BIDI    (a, C_BIDI_ID(0))
+    OP_C_WRITE              (a, "apple", 5)
+
+    /* Put connection back into implicit handling mode. */
+    OP_CHECK                (set_event_handling_mode_conn,
+                             SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT)
+
+    /* Override at stream level. */
+    OP_CHECK                (set_event_handling_mode_stream,
+                             SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT)
+    OP_C_WRITE              (a, "orange", 6)
+    OP_C_CONCLUDE           (a)
+
+    /*
+     * Confirm the data isn't going to arrive. OP_SLEEP is always undesirable
+     * but we have no reasonable way to synchronise on something not arriving
+     * given all network traffic is essentially stopped and there are no other
+     * signals arriving from the peer which could be used for synchronisation.
+     * Slow OSes will pass this anyway (fail-open).
+     */
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+
+    OP_BEGIN_REPEAT         (20)
+    OP_S_READ_FAIL          (a, 1)
+    OP_SLEEP                (10)
+    OP_END_REPEAT           ()
+
+    /* Now let the data arrive and confirm it arrives. */
+    OP_CHECK                (reenable_test_event_handling, 0)
+    OP_S_READ_EXPECT        (a, "appleorange", 11)
+    OP_S_EXPECT_FIN         (a)
+
+    /* Back into explicit mode. */
+    OP_CHECK                (set_event_handling_mode_conn,
+                             SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT)
+    OP_S_WRITE              (a, "ok", 2)
+    OP_C_READ_FAIL          (a)
+
+    /* Works once event handling is done. */
+    OP_CHECK                (reenable_test_event_handling, 0)
+    OP_C_READ_EXPECT        (a, "ok", 2)
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -5661,7 +5761,8 @@ static const struct script_op *const scripts[] = {
     script_82,
     script_83,
     script_84,
-    script_85
+    script_85,
+    script_86
 };
 
 static int test_script(int idx)
