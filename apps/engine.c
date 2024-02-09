@@ -405,6 +405,9 @@ int engine_main(int argc, char **argv)
                 if (ENGINE_get_RSA(e) != NULL
                     && !append_buf(&cap_buf, &cap_size, "RSA"))
                     goto end;
+                if (ENGINE_get_EC(e) != NULL
+                    && !append_buf(&cap_buf, &cap_size, "EC"))
+                    goto end;
                 if (ENGINE_get_DSA(e) != NULL
                     && !append_buf(&cap_buf, &cap_size, "DSA"))
                     goto end;
