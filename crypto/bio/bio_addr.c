@@ -32,7 +32,7 @@
 #include <openssl/buffer.h>
 #include "internal/thread_once.h"
 
-CRYPTO_RWLOCK *bio_lookup_lock;
+CRYPTO_RWLOCK *bio_lookup_lock = NULL;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
 /*
