@@ -155,7 +155,7 @@ on multiple lines; each entry should use B<OPT_MORE_STR>, like this:
         {OPT_MORE_STR, 0, 0,
          "This flag is not really needed on Unix systems"},
         {OPT_MORE_STR, 0, 0,
-         "(Unix and descendents for ths win!)"}
+         "(Unix and descendents for the win!)"}
 
 Each subsequent line will be indented the correct amount.
 
