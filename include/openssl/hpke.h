@@ -68,7 +68,7 @@
 
 /*
  * Roles for use in creating an OSSL_HPKE_CTX, most
- * important use of this is to control nonce re-use.
+ * important use of this is to control nonce reuse.
  */
 # define OSSL_HPKE_ROLE_SENDER 0
 # define OSSL_HPKE_ROLE_RECEIVER 1

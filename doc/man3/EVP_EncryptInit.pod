@@ -489,7 +489,7 @@ EVP_CIPHER_free().
 Return the NID of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
 structure.  The actual NID value is an internal value which may not have a
 corresponding OBJECT IDENTIFIER.  NID_undef is returned in the event that the
-nid is unknown or if the cipher has not been properly initalized via a call to
+nid is unknown or if the cipher has not been properly initialized via a call to
 B<EVP_CipherInit>.
 
 =item EVP_CIPHER_CTX_set_flags(), EVP_CIPHER_CTX_clear_flags() and EVP_CIPHER_CTX_test_flags()
@@ -528,7 +528,7 @@ length to any value other than the fixed value is an error.
 
 Return the IV length of a cipher when passed an B<EVP_CIPHER> or
 B<EVP_CIPHER_CTX>. It will return zero if the cipher does not use an IV, if
-the cipher has not yet been initalized within the B<EVP_CIPHER_CTX>, or if the
+the cipher has not yet been initialized within the B<EVP_CIPHER_CTX>, or if the
 passed cipher is NULL.  The constant B<EVP_MAX_IV_LENGTH> is the maximum IV
 length for all ciphers.
 
@@ -543,7 +543,7 @@ the tag length has not been set.
 Return the block size of a cipher when passed an B<EVP_CIPHER> or
 B<EVP_CIPHER_CTX> structure. The constant B<EVP_MAX_BLOCK_LENGTH> is also the
 maximum block length for all ciphers. A value of 0 is returned if the cipher
-has not been properly initalized with a call to B<EVP_CipherInit>.
+has not been properly initialized with a call to B<EVP_CipherInit>.
 
 =item EVP_CIPHER_get_type() and EVP_CIPHER_CTX_get_type()
 
@@ -1256,7 +1256,7 @@ EVP_CipherFinal_ex() returns 0 for a decryption failure or 1 for success.
 
 EVP_Cipher() returns 1 on success and <= 0 on failure, if the flag
 B<EVP_CIPH_FLAG_CUSTOM_CIPHER> is not set for the cipher, or if the cipher has
-not been initalized via a call to B<EVP_CipherInit_ex2>.
+not been initialized via a call to B<EVP_CipherInit_ex2>.
 EVP_Cipher() returns the number of bytes written to I<out> for encryption / decryption, or
 the number of bytes authenticated in a call specifying AAD for an AEAD cipher, if the flag
 B<EVP_CIPH_FLAG_CUSTOM_CIPHER> is set for the cipher.

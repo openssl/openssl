@@ -120,7 +120,7 @@ The syntax works as follows:
 Each term is applied in sequence, therefore later items in the filter override
 earlier items. In the example above, for example, all event types are enabled,
 then the `quic:version_information` event is disabled, then all event types are
-disabled, then the `quic:packet_sent` event is reenabled.
+disabled, then the `quic:packet_sent` event is re-enabled.
 
 Some examples of more normal filters include:
 

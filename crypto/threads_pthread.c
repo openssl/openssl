@@ -400,7 +400,7 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
     }
     /*
      * if we get here, we're trying to unlock a lock that we never acquired
-     * thats fatal
+     * that's fatal
      */
     assert(0);
 }
@@ -453,7 +453,7 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock)
     /*
      * update the reader index to be the prior qp
      * Note the use of __ATOMIC_RELEASE here is based on the corresponding use
-     * of __ATOMIC_ACQUIRE in get_hold_current_qp, as we wan't any publication
+     * of __ATOMIC_ACQUIRE in get_hold_current_qp, as we want any publication
      * of this value to be seen on the read side immediately after it happens
      */
     ATOMIC_STORE_N(&lock->reader_idx, lock->current_alloc_idx,
