@@ -323,7 +323,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
              * will create a method against all names, but the lookup will fail
              * as ossl_namemap_name2num treats the name string as a single name
              * rather than introducing new features where in the EVP_<obj>_fetch
-             * parses the string and querys for each, return an error.
+             * parses the string and queries for each, return an error.
              */
             if (name_id == 0)
                 name_id = ossl_namemap_name2num(namemap, name);

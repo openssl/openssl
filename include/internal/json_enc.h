@@ -175,7 +175,7 @@ int ossl_json_in_error(OSSL_JSON_ENC *json);
 /* Begin a new JSON object. */
 void ossl_json_object_begin(OSSL_JSON_ENC *json);
 
-/* End a JSON obejct. Must be matched with a call to ossl_json_object_begin(). */
+/* End a JSON object. Must be matched with a call to ossl_json_object_begin(). */
 void ossl_json_object_end(OSSL_JSON_ENC *json);
 
 /* Begin a new JSON array. */

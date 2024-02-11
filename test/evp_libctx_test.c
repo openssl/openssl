@@ -83,14 +83,14 @@ static int test_evp_cipher_api_safety(void)
 
     /*
      * Ensure that EVP_CIPHER_get_block_size returns 0
-     * if we haven't initalized the cipher in this context
+     * if we haven't initialized the cipher in this context
      */
     if (!TEST_int_eq(EVP_CIPHER_CTX_get_block_size(ctx), 0))
         goto err_free;
 
     /*
      * Ensure that EVP_CIPHER_get_iv_length returns 0
-     * if we haven't initalized the cipher in this context
+     * if we haven't initialized the cipher in this context
      */
     if (!TEST_int_eq(EVP_CIPHER_CTX_get_iv_length(ctx), 0))
         goto err_free;
