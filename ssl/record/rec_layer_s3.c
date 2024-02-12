@@ -1358,7 +1358,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         int rlret;
         BIO *prev = NULL;
         BIO *next = NULL;
-        unsigned int epoch = 0;
+        uint64_t epoch = 0;
         OSSL_DISPATCH rlayer_dispatch_tmp[OSSL_NELEM(rlayer_dispatch)];
         size_t i, j;
 
@@ -1366,7 +1366,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
             prev = s->rlayer.rrlnext;
             if (SSL_CONNECTION_IS_DTLS(s)
                     && level != OSSL_RECORD_PROTECTION_LEVEL_NONE)
-                epoch = dtls1_get_epoch(s, SSL3_CC_READ); /* new epoch */
+                epoch = dtls1_get_connection_epoch(s, SSL3_CC_READ); /* new epoch */
 
 #ifndef OPENSSL_NO_DGRAM
             if (SSL_CONNECTION_IS_DTLS(s))
@@ -1383,7 +1383,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         } else {
             if (SSL_CONNECTION_IS_DTLS(s)
                     && level != OSSL_RECORD_PROTECTION_LEVEL_NONE)
-                epoch = dtls1_get_epoch(s, SSL3_CC_WRITE); /* new epoch */
+                epoch = dtls1_get_connection_epoch(s, SSL3_CC_WRITE); /* new epoch */
         }
 
         /*

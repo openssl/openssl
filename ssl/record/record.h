@@ -34,7 +34,7 @@ typedef struct tls_record_st {
     size_t length;
     /* Offset into the data buffer where to start reading */
     size_t off;
-    /* epoch number. DTLS only */
+    /* Serialized DTLS epoch */
     uint16_t epoch;
     /* sequence number. DTLS only */
     unsigned char seq_num[SEQ_NUM_SIZE];
@@ -45,12 +45,12 @@ typedef struct tls_record_st {
 
 typedef struct dtls_record_layer_st {
     /*
-     * The current data and handshake epoch.  This is initially
+     * The current data and handshake epoch. This is initially
      * undefined, and starts at zero once the initial handshake is
      * completed
      */
-    uint16_t r_epoch;
-    uint16_t w_epoch;
+    uint64_t r_conn_epoch;
+    uint64_t w_conn_epoch;
 
     /*
      * Buffered application records. Only for records between CCS and
@@ -157,8 +157,9 @@ __owur int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const void *buf,
                              size_t len, size_t *written);
 int do_dtls1_write(SSL_CONNECTION *s, uint8_t type, const unsigned char *buf,
                    size_t len, size_t *written);
-void dtls1_increment_epoch(SSL_CONNECTION *s, int rw);
-uint16_t dtls1_get_epoch(SSL_CONNECTION *s, int rw);
+int dtls1_increment_epoch(SSL_CONNECTION *s, int rw);
+uint64_t dtls1_get_connection_epoch(SSL_CONNECTION *s, int rw);
+uint16_t dtls1_get_serialized_epoch(SSL_CONNECTION *s, int rw);
 int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length);
 
 # define HANDLE_RLAYER_READ_RETURN(s, ret) \

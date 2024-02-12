@@ -483,7 +483,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
          * This may just be a stale retransmit. Also sanity check that we have
          * at least enough record bytes for a message header
          */
-        if (rr->epoch != sc->rlayer.d->r_epoch
+        if (rr->epoch != dtls1_get_serialized_epoch(sc, SSL3_CC_READ)
                 || rr->length < DTLS1_HM_HEADER_LENGTH) {
             if (!ssl_release_record(sc, rr, 0))
                 return -1;
@@ -668,25 +668,46 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
 void dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
 {
     if (rw & SSL3_CC_READ) {
-        s->rlayer.d->r_epoch++;
+        s->rlayer.d->r_conn_epoch++;
 
         /*
          * We must not use any buffered messages received from the previous
          * epoch
          */
         dtls1_clear_received_buffer(s);
+
+        if (s->rlayer.d->r_conn_epoch == 0) {
+            return 0;
+        }
     } else {
-        s->rlayer.d->w_epoch++;
+        s->rlayer.d->w_conn_epoch++;
+
+        if (s->rlayer.d->w_conn_epoch == 0) {
+            return 0;
+        }
     }
+
+    return 1;
 }
 
-uint16_t dtls1_get_epoch(SSL_CONNECTION *s, int rw) {
-    uint16_t epoch;
+uint64_t dtls1_get_connection_epoch(SSL_CONNECTION *s, int rw) {
+    uint64_t epoch;
 
     if (rw & SSL3_CC_READ)
-        epoch = s->rlayer.d->r_epoch;
+        epoch = s->rlayer.d->r_conn_epoch;
     else
-        epoch = s->rlayer.d->w_epoch;
+        epoch = s->rlayer.d->w_conn_epoch;
 
     return epoch;
+}
+
+uint16_t dtls1_get_serialized_epoch(SSL_CONNECTION *s, int rw) {
+    uint64_t epoch;
+
+    if (rw & SSL3_CC_READ)
+        epoch = s->rlayer.d->r_conn_epoch;
+    else
+        epoch = s->rlayer.d->w_conn_epoch;
+
+    return epoch & 0xffff;
 }
