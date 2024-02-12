@@ -482,7 +482,8 @@ OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETIS
                              on_regen_notify, txp,
                              on_confirm_notify, txp,
                              on_sstream_updated, txp,
-                             args->qlog)) {
+                             args->get_qlog_cb,
+                             args->get_qlog_cb_arg)) {
         OPENSSL_free(txp);
         return NULL;
     }
@@ -626,10 +627,12 @@ void ossl_quic_tx_packetiser_set_ack_tx_cb(OSSL_QUIC_TX_PACKETISER *txp,
     txp->ack_tx_cb_arg  = cb_arg;
 }
 
-void ossl_quic_tx_packetiser_set0_qlog(OSSL_QUIC_TX_PACKETISER *txp,
-                                       QLOG *qlog)
+void ossl_quic_tx_packetiser_set_qlog_cb(OSSL_QUIC_TX_PACKETISER *txp,
+                                         QLOG *(*get_qlog_cb)(void *arg),
+                                         void *get_qlog_cb_arg)
 {
-    ossl_quic_fifd_set0_qlog(&txp->fifd, qlog);
+    ossl_quic_fifd_set_qlog_cb(&txp->fifd, get_qlog_cb, get_qlog_cb_arg);
+
 }
 
 int ossl_quic_tx_packetiser_discard_enc_level(OSSL_QUIC_TX_PACKETISER *txp,
