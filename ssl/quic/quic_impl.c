@@ -3356,9 +3356,9 @@ static int qc_getset_event_handling(QCTX *ctx, uint32_t class_,
 
         value_out = *p_value_in;
         if (ctx->is_stream)
-            ctx->xso->event_handling_mode = value_out;
+            ctx->xso->event_handling_mode = (int)value_out;
         else
-            ctx->qc->event_handling_mode = value_out;
+            ctx->qc->event_handling_mode = (int)value_out;
     } else {
         value_out = ctx->is_stream
             ? ctx->xso->event_handling_mode
