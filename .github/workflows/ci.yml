@@ -141,7 +141,7 @@ jobs:
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: "ci@self-hosted"
+        name: "ci@self-hosted-${{ matrix.os }}"
         path: artifacts/
 
   minimal:

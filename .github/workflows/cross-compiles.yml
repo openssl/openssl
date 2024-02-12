@@ -221,3 +221,4 @@ jobs:
       with:
         name: "cross-compiles@${{ matrix.platform.arch }}"
         path: artifacts/
+        if-no-files-found: ignore
