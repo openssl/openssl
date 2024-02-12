@@ -36,7 +36,8 @@ int ossl_quic_fifd_init(QUIC_FIFD *fifd,
                         void (*sstream_updated)(uint64_t stream_id,
                                                 void *arg),
                         void *sstream_updated_arg,
-                        QLOG *qlog)
+                        QLOG *(*get_qlog_cb)(void *arg),
+                        void *get_qlog_cb_arg)
 {
     if (cfq == NULL || ackm == NULL || txpim == NULL
         || get_sstream_by_id == NULL || regen_frame == NULL)
@@ -53,7 +54,8 @@ int ossl_quic_fifd_init(QUIC_FIFD *fifd,
     fifd->confirm_frame_arg     = confirm_frame_arg;
     fifd->sstream_updated       = sstream_updated;
     fifd->sstream_updated_arg   = sstream_updated_arg;
-    fifd->qlog                  = qlog;
+    fifd->get_qlog_cb           = get_qlog_cb;
+    fifd->get_qlog_cb_arg       = get_qlog_cb_arg;
     return 1;
 }
 
@@ -110,6 +112,14 @@ static void on_acked(void *arg)
     ossl_quic_txpim_pkt_release(fifd->txpim, pkt);
 }
 
+static QLOG *fifd_get_qlog(QUIC_FIFD *fifd)
+{
+    if (fifd->get_qlog_cb == NULL)
+        return NULL;
+
+    return fifd->get_qlog_cb(fifd->get_qlog_cb_arg);
+}
+
 static void on_lost(void *arg)
 {
     QUIC_TXPIM_PKT *pkt = arg;
@@ -120,7 +130,7 @@ static void on_lost(void *arg)
     QUIC_CFQ_ITEM *cfq_item, *cfq_item_next;
     int sstream_updated;
 
-    ossl_qlog_event_recovery_packet_lost(fifd->qlog, pkt);
+    ossl_qlog_event_recovery_packet_lost(fifd_get_qlog(fifd), pkt);
 
     /* STREAM and CRYPTO stream chunks, FIN and stream FC frames */
     for (i = 0; i < num_chunks; ++i) {
@@ -294,7 +304,9 @@ int ossl_quic_fifd_pkt_commit(QUIC_FIFD *fifd, QUIC_TXPIM_PKT *pkt)
     return ossl_ackm_on_tx_packet(fifd->ackm, &pkt->ackm_pkt);
 }
 
-void ossl_quic_fifd_set0_qlog(QUIC_FIFD *fifd, QLOG *qlog)
+void ossl_quic_fifd_set_qlog_cb(QUIC_FIFD *fifd, QLOG *(*get_qlog_cb)(void *arg),
+                                void *get_qlog_cb_arg)
 {
-    fifd->qlog = qlog;
+    fifd->get_qlog_cb       = get_qlog_cb;
+    fifd->get_qlog_cb_arg   = get_qlog_cb_arg;
 }
