@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+cleanup() {
+    # Remove if nothing was generated.
+    find artifacts -type d -empty -delete
+}
+trap cleanup EXIT
+
+OSSL_CI_ARTIFACTS_PATH="artifacts/"
+if [ -n "${GITHUB_RUN_NUMBER}" ]; then
+    OSSL_CI_ARTIFACTS_PATH="artifacts/github-${GITHUB_JOB}-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ID}/"
+fi
+mkdir -p "$OSSL_CI_ARTIFACTS_PATH"
+export OSSL_CI_ARTIFACTS_PATH="$(cd "$OSSL_CI_ARTIFACTS_PATH"; pwd)"
+echo Artifacts path is "$OSSL_CI_ARTIFACTS_PATH"
+
+make test HARNESS_JOBS=${HARNESS_JOBS:-4} "$@"

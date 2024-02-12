@@ -91,7 +91,12 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: .github/workflows/make-test
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@basic-gcc"
+        path: artifacts/
 
   basic_clang:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -108,7 +113,12 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: .github/workflows/make-test
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@basic-clang"
+        path: artifacts/
 
   self-hosted:
     if: github.repository == 'openssl/openssl'
@@ -128,7 +138,12 @@ jobs:
     - name: get cpu info
       run: ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: .github/workflows/make-test
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@self-hosted"
+        path: artifacts/
 
   minimal:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -145,7 +160,13 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: .github/workflows/make-test
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@minimal"
+        path: artifacts/
+        if-no-files-found: ignore
 
   no-deprecated:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -162,7 +183,12 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: .github/workflows/make-test
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@no-deprecated"
+        path: artifacts/
 
   no-shared-ubuntu:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -179,7 +205,12 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: .github/workflows/make-test
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@no-shared-ubuntu"
+        path: artifacts/
 
   no-shared-macos:
     runs-on: macos-latest
@@ -197,7 +228,12 @@ jobs:
         sysctl machdep.cpu
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: .github/workflows/make-test
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@no-shared-macos"
+        path: artifacts/
 
   non-caching:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -218,7 +254,12 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
+      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@non-caching"
+        path: artifacts/
 
   address_ub_sanitizer:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -239,7 +280,12 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
+      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@address_ub_sanitizer"
+        path: artifacts/
 
   fuzz_tests:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -260,7 +306,13 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
+      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@fuzz_tests"
+        path: artifacts/
+        if-no-files-found: ignore
 
   memory_sanitizer:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -282,7 +334,12 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
+      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@memory_sanitizer"
+        path: artifacts/
 
   threads_sanitizer:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -303,7 +360,12 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make V=1 TESTS="test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp test_quic*" test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: .github/workflows/make-test V=1 TESTS="test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp test_quic*"
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@threads_sanitizer"
+        path: artifacts/
 
   enable_non-default_options:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -322,7 +384,12 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: .github/workflows/make-test
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@enable_non-default_options"
+        path: artifacts/
 
   full_featured:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -347,7 +414,12 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: .github/workflows/make-test
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@full_featured"
+        path: artifacts/
 
   no-legacy:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -364,7 +436,12 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: .github/workflows/make-test
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@no-legacy"
+        path: artifacts/
 
   legacy:
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -381,7 +458,12 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: .github/workflows/make-test
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@legacy"
+        path: artifacts/
 
   # out-of-source-and-install checks multiple things at the same time:
   # - That building, testing and installing works from an out-of-source
@@ -417,8 +499,13 @@ jobs:
         ./util/opensslwrap.sh version -c
       working-directory: ./build
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: ../source/.github/workflows/make-test
       working-directory: ./build
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@out-of-readonly-source-and-install-ubuntu"
+        path: build/artifacts/
     - name: make install
       run: make install
       working-directory: ./build
@@ -453,8 +540,13 @@ jobs:
         ./util/opensslwrap.sh version -c
       working-directory: ./build
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: ../source/.github/workflows/make-test
       working-directory: ./build
+    - name: save artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "ci@out-of-readonly-source-and-install-macos"
+        path: build/artifacts/
     - name: make install
       run: make install
       working-directory: ./build
