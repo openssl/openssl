@@ -220,7 +220,7 @@ struct ossl_record_layer_st
     int level;
     const EVP_MD *md;
     /* DTLS only */
-    uint16_t epoch;
+    uint64_t epoch;
 
     /*
      * A BIO containing any data read in the previous epoch that was destined
