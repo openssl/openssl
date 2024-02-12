@@ -138,6 +138,14 @@ static QLOG *ch_get_qlog(QUIC_CHANNEL *ch)
 #endif
 }
 
+QUIC_NEEDS_LOCK
+static QLOG *ch_get_qlog_cb(void *arg)
+{
+    QUIC_CHANNEL *ch = arg;
+
+    return ch_get_qlog(ch);
+}
+
 /*
  * QUIC Channel Initialization and Teardown
  * ========================================
@@ -173,9 +181,10 @@ static int ch_init(QUIC_CHANNEL *ch)
         goto err;
 
     /* We plug in a network write BIO to the QTX later when we get one. */
-    qtx_args.libctx = ch->port->engine->libctx;
-    qtx_args.qlog = ch_get_qlog(ch);
-    qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
+    qtx_args.libctx             = ch->port->engine->libctx;
+    qtx_args.get_qlog_cb        = ch_get_qlog_cb;
+    qtx_args.get_qlog_cb_arg    = ch;
+    qtx_args.mdpl               = QUIC_MIN_INITIAL_DGRAM_LEN;
     ch->rx_max_udp_payload_size = qtx_args.mdpl;
 
     ch->ping_deadline = ossl_time_infinite();
@@ -266,7 +275,8 @@ static int ch_init(QUIC_CHANNEL *ch)
     txp_args.cc_data                = ch->cc_data;
     txp_args.now                    = get_time;
     txp_args.now_arg                = ch;
-    txp_args.qlog                   = ch_get_qlog(ch);
+    txp_args.get_qlog_cb            = ch_get_qlog_cb;
+    txp_args.get_qlog_cb_arg        = ch;
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
         ch->crypto_send[pn_space] = ossl_quic_sstream_new(INIT_CRYPTO_SEND_BUF_LEN);
@@ -3350,8 +3360,8 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
         return 0;
 
     /* Setup QLOG, which did not happen earlier due to lacking an Initial ODCID. */
-    ossl_qtx_set0_qlog(ch->qtx, ch_get_qlog(ch));
-    ossl_quic_tx_packetiser_set0_qlog(ch->txp, ch_get_qlog(ch));
+    ossl_qtx_set_qlog_cb(ch->qtx, ch_get_qlog_cb, ch);
+    ossl_quic_tx_packetiser_set_qlog_cb(ch->txp, ch_get_qlog_cb, ch);
 
     /* Plug in secrets for the Initial EL. */
     if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
