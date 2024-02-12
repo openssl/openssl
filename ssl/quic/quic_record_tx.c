@@ -61,8 +61,9 @@ struct ossl_qtx_st {
     /* TX BIO. */
     BIO                        *bio;
 
-    /* QLOG instance if in use, or NULL. */
-    QLOG                       *qlog;
+    /* QLOG instance retrieval callback if in use, or NULL. */
+    QLOG                     *(*get_qlog_cb)(void *arg);
+    void                       *get_qlog_cb_arg;
 
     /* TX maximum datagram payload length. */
     size_t                      mdpl;
@@ -124,7 +125,9 @@ OSSL_QTX *ossl_qtx_new(const OSSL_QTX_ARGS *args)
     qtx->propq              = args->propq;
     qtx->bio                = args->bio;
     qtx->mdpl               = args->mdpl;
-    qtx->qlog               = args->qlog;
+    qtx->get_qlog_cb        = args->get_qlog_cb;
+    qtx->get_qlog_cb_arg    = args->get_qlog_cb_arg;
+
     return qtx;
 }
 
@@ -167,9 +170,11 @@ void ossl_qtx_set_mutator(OSSL_QTX *qtx, ossl_mutate_packet_cb mutatecb,
     qtx->mutatearg      = mutatearg;
 }
 
-void ossl_qtx_set0_qlog(OSSL_QTX *qtx, QLOG *qlog)
+void ossl_qtx_set_qlog_cb(OSSL_QTX *qtx, QLOG *(*get_qlog_cb)(void *arg),
+                          void *get_qlog_cb_arg)
 {
-    qtx->qlog = qlog;
+    qtx->get_qlog_cb        = get_qlog_cb;
+    qtx->get_qlog_cb_arg    = get_qlog_cb_arg;
 }
 
 int ossl_qtx_provide_secret(OSSL_QTX              *qtx,
@@ -738,6 +743,14 @@ static TXE *qtx_ensure_cons(OSSL_QTX *qtx)
     return txe;
 }
 
+static QLOG *qtx_get_qlog(OSSL_QTX *qtx)
+{
+    if (qtx->get_qlog_cb == NULL)
+        return NULL;
+
+    return qtx->get_qlog_cb(qtx->get_qlog_cb_arg);
+}
+
 static int qtx_mutate_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
                             uint32_t enc_level)
 {
@@ -760,7 +773,7 @@ static int qtx_mutate_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
     ret = qtx_write(qtx, pkt, txe, enc_level,
                     hdr, iovec, num_iovec);
     if (ret == 1)
-        ossl_qlog_event_transport_packet_sent(qtx->qlog, hdr, pkt->pn,
+        ossl_qlog_event_transport_packet_sent(qtx_get_qlog(qtx), hdr, pkt->pn,
                                               iovec, num_iovec,
                                               qtx->datagram_count);
 

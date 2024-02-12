@@ -49,8 +49,9 @@ typedef struct ossl_qtx_args_st {
     /* Maximum datagram payload length (MDPL) for TX purposes. */
     size_t          mdpl;
 
-    /* QLOG instance to use, or NULL. */
-    QLOG           *qlog;
+    /* Callback returning QLOG instance to use, or NULL. */
+    QLOG           *(*get_qlog_cb)(void *arg);
+    void           *get_qlog_cb_arg;
 } OSSL_QTX_ARGS;
 
 /* Instantiates a new QTX. */
@@ -68,8 +69,9 @@ void ossl_qtx_set_msg_callback(OSSL_QTX *qtx, ossl_msg_cb msg_callback,
                                SSL *msg_callback_ssl);
 void ossl_qtx_set_msg_callback_arg(OSSL_QTX *qtx, void *msg_callback_arg);
 
-/* Change QLOG instance in use after instantiation. */
-void ossl_qtx_set0_qlog(OSSL_QTX *qtx, QLOG *qlog);
+/* Change QLOG instance retrieval callback in use after instantiation. */
+void ossl_qtx_set_qlog_cb(OSSL_QTX *qtx, QLOG *(*get_qlog_cb)(void *arg),
+                          void *get_qlog_cb_arg);
 
 /*
  * Secret Management
