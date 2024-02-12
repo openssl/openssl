@@ -18,8 +18,8 @@
 static const char msg1[] = "GET LICENSE.txt\r\n";
 static char msg2[16000];
 
-#define DST_PORT	4433
-#define DST_ADDR	0x7f000001UL
+#define DST_PORT        4433
+#define DST_ADDR        0x7f000001UL
 
 static int is_want(SSL *s, int ret)
 {
@@ -45,23 +45,23 @@ static int test_quic_client_ex(int fd_arg)
 
 
     if (fd_arg == INVALID_SOCKET) {
-	/* Setup test client. */
-	c_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
-	if (!TEST_int_ne(c_fd, INVALID_SOCKET))
-	    goto err;
+        /* Setup test client. */
+        c_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+        if (!TEST_int_ne(c_fd, INVALID_SOCKET))
+            goto err;
 
-	if (!TEST_true(BIO_socket_nbio(c_fd, 1)))
-	    goto err;
+        if (!TEST_true(BIO_socket_nbio(c_fd, 1)))
+            goto err;
 
-	if (!TEST_ptr(s_addr_ = BIO_ADDR_new()))
-	    goto err;
+        if (!TEST_ptr(s_addr_ = BIO_ADDR_new()))
+            goto err;
 
-	ina.s_addr = htonl(DST_ADDR);
-	if (!TEST_true(BIO_ADDR_rawmake(s_addr_, AF_INET, &ina, sizeof(ina),
-					htons(port))))
-	    goto err;
+        ina.s_addr = htonl(DST_ADDR);
+        if (!TEST_true(BIO_ADDR_rawmake(s_addr_, AF_INET, &ina, sizeof(ina),
+                                        htons(port))))
+            goto err;
     } else {
-	c_fd = fd_arg;
+        c_fd = fd_arg;
     }
 
     if (!TEST_ptr(c_net_bio = c_net_bio_own = BIO_new_dgram(c_fd, 0)))
@@ -193,10 +193,10 @@ static int test_quic_client_connect_first(void)
         goto err;
 
     if (!TEST_int_eq(connect(c_fd, (const struct sockaddr *)&sin, sizeof(sin)), 0))
-	goto err;
+        goto err;
 
     if (!TEST_true(BIO_socket_nbio(c_fd, 1)))
-	goto err;
+        goto err;
 
     rv = test_quic_client_ex(c_fd);
 
@@ -206,7 +206,7 @@ static int test_quic_client_connect_first(void)
 
 err:
     if (c_fd != INVALID_SOCKET)
-	close(c_fd);
+        close(c_fd);
     return (0);
 }
 
