@@ -16,7 +16,7 @@
  * wbuf
  * ====
  */
-static int wbuf_flush(struct json_write_buf *wbuf);
+static int wbuf_flush(struct json_write_buf *wbuf, int full);
 
 static int wbuf_init(struct json_write_buf *wbuf, BIO *bio, size_t alloc)
 {
@@ -58,7 +58,7 @@ static ossl_inline size_t wbuf_avail(struct json_write_buf *wbuf)
 static ossl_inline int wbuf_write_char(struct json_write_buf *wbuf, char c)
 {
     if (wbuf_avail(wbuf) == 0) {
-        if (!wbuf_flush(wbuf))
+        if (!wbuf_flush(wbuf, /*full=*/0))
             return 0;
     }
 
@@ -81,7 +81,7 @@ static int wbuf_write_str(struct json_write_buf *wbuf, const char *s)
 }
 
 /* Flush write buffer, returning 0 on I/O failure. */
-static int wbuf_flush(struct json_write_buf *wbuf)
+static int wbuf_flush(struct json_write_buf *wbuf, int full)
 {
     size_t written = 0, total_written = 0;
 
@@ -101,6 +101,10 @@ static int wbuf_flush(struct json_write_buf *wbuf)
     }
 
     wbuf->cur = 0;
+
+    if (full)
+        (void)BIO_flush(wbuf->bio); /* best effort */
+
     return 1;
 }
 
@@ -270,7 +274,7 @@ int ossl_json_reset(OSSL_JSON_ENC *json)
 
 int ossl_json_flush(OSSL_JSON_ENC *json)
 {
-    return wbuf_flush(&json->wbuf);
+    return wbuf_flush(&json->wbuf, /*full=*/1);
 }
 
 int ossl_json_set0_sink(OSSL_JSON_ENC *json, BIO *bio)
