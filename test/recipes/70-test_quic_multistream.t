@@ -9,17 +9,18 @@
 use OpenSSL::Test qw/:DEFAULT srctop_file result_dir data_file/;
 use OpenSSL::Test::Utils;
 use File::Temp qw(tempfile);
-use File::Path 2.00 qw(rmtree);
+use File::Path 2.00 qw(rmtree mkpath);
 
 setup("test_quic_multistream");
 
 plan skip_all => "QUIC protocol is not supported by this OpenSSL build"
     if disabled('quic');
 
-plan tests => 2;
+plan tests => 3;
 
+my $qlog_output;
 if (!disabled('qlog') && $ENV{OSSL_RUN_CI_TESTS} == "1") {
-    my $qlog_output = result_dir("qlog-output");
+    $qlog_output = result_dir("qlog-output");
     print "# Writing qlog output to $qlog_output\n";
     rmtree($qlog_output, { safe => 1 });
     mkdir($qlog_output);
@@ -41,5 +42,20 @@ SKIP: {
 
         ok(run(cmd(["python3", data_file("verify-qlog.py")])),
                "running qlog verification script");
+    };
+}
+
+SKIP: {
+    skip "no qlog", 1 if disabled('qlog');
+    skip "not running CI tests", 1 unless $ENV{OSSL_RUN_CI_TESTS};
+    skip "not running artifacts upload", 1 unless $ENV{OSSL_CI_ARTIFACTS_PATH};
+
+    subtest "copy qlog artifacts to upload directory" => sub {
+        plan tests => 1;
+
+        my $artifacts_path = $ENV{OSSL_CI_ARTIFACTS_PATH};
+        mkpath("${artifacts_path}/quic_multistream_test");
+        ok(run(cmd(["mv", "--", $qlog_output,
+                    "${artifacts_path}/quic_multistream_test/"])));
     };
 }
