@@ -50,7 +50,8 @@ typedef struct ossl_quic_tx_packetiser_args_st {
     OSSL_CC_DATA    *cc_data;   /* QUIC Congestion Controller Instance */
     OSSL_TIME       (*now)(void *arg);  /* Callback to get current time. */
     void            *now_arg;
-    QLOG            *qlog;      /* Optional QLOG instance */
+    QLOG            *(*get_qlog_cb)(void *arg); /* Optional QLOG retrieval func */
+    void            *get_qlog_cb_arg;
 
     /*
      * Injected dependencies - crypto streams.
@@ -139,10 +140,11 @@ int ossl_quic_tx_packetiser_set_peer(OSSL_QUIC_TX_PACKETISER *txp,
                                      const BIO_ADDR *peer);
 
 /*
- * Change the QLOG instance in use after instantiation.
+ * Change the QLOG instance retrieval function in use after instantiation.
  */
-void ossl_quic_tx_packetiser_set0_qlog(OSSL_QUIC_TX_PACKETISER *txp,
-                                       QLOG *qlog);
+void ossl_quic_tx_packetiser_set_qlog_cb(OSSL_QUIC_TX_PACKETISER *txp,
+                                         QLOG *(*get_qlog_cb)(void *arg),
+                                         void *get_qlog_cb_arg);
 
 /*
  * Inform the TX packetiser that an EL has been discarded. Idempotent.
