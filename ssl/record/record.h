@@ -43,11 +43,6 @@ typedef struct tls_record_st {
 #endif
 } TLS_RECORD;
 
-typedef struct record_pqueue_st {
-    uint16_t epoch;
-    struct pqueue_st *q;
-} record_pqueue;
-
 typedef struct dtls_record_layer_st {
     /*
      * The current data and handshake epoch.  This is initially
@@ -62,7 +57,7 @@ typedef struct dtls_record_layer_st {
      * Finished to prevent either protocol violation or unnecessary message
      * loss.
      */
-    record_pqueue buffered_app_data;
+    struct pqueue_st *buffered_app_data;
 } DTLS_RECORD_LAYER;
 
 /*****************************************************************************

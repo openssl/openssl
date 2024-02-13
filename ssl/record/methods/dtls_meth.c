@@ -90,11 +90,9 @@ static DTLS_BITMAP *dtls_get_bitmap(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rr,
         return &rl->bitmap;
 
     /*
-     * We can only handle messages from the next epoch if we have already
-     * processed all of the unprocessed records from the previous epoch
+     * Check if the message is from the next epoch
      */
-    else if (rr->epoch == (unsigned long)(rl->epoch + 1)
-             && rl->unprocessed_rcds.epoch != rl->epoch) {
+    else if (rr->epoch == rl->epoch + 1) {
         *is_next_epoch = 1;
         return &rl->next_bitmap;
     }
@@ -280,14 +278,14 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     return ret;
 }
 
-static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, record_pqueue *queue,
+static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *queue,
                                      unsigned char *priority)
 {
     DTLS_RLAYER_RECORD_DATA *rdata;
     pitem *item;
 
     /* Limit the size of the queue to prevent DOS attacks */
-    if (pqueue_size(queue->q) >= 100)
+    if (pqueue_size(queue) >= 100)
         return 0;
 
     rdata = OPENSSL_malloc(sizeof(*rdata));
@@ -319,7 +317,7 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, record_pqueue *queue
         return -1;
     }
 
-    if (pqueue_insert(queue->q, item) == NULL) {
+    if (pqueue_insert(queue, item) == NULL) {
         /* Must be a duplicate so ignore it */
         OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(rdata);
@@ -350,11 +348,11 @@ static int dtls_copy_rlayer_record(OSSL_RECORD_LAYER *rl, pitem *item)
 }
 
 static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
-                                                record_pqueue *queue)
+                                                struct pqueue_st *queue)
 {
     pitem *item;
 
-    item = pqueue_pop(queue->q);
+    item = pqueue_pop(queue);
     if (item) {
         dtls_copy_rlayer_record(rl, item);
 
@@ -401,7 +399,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 
  again:
     /* if we're renegotiating, then there may be buffered records */
-    if (dtls_retrieve_rlayer_buffered_record(rl, &rl->processed_rcds)) {
+    if (dtls_retrieve_rlayer_buffered_record(rl, rl->processed_rcds)) {
         rl->num_recs = 1;
         return OSSL_RECORD_RETURN_SUCCESS;
     }
@@ -547,7 +545,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
      */
     if (is_next_epoch) {
         if (rl->in_init) {
-            if (dtls_rlayer_buffer_record(rl, &(rl->unprocessed_rcds),
+            if (dtls_rlayer_buffer_record(rl, rl->unprocessed_rcds,
                                           rr->seq_num) < 0) {
                 /* RLAYERfatal() already called */
                 return OSSL_RECORD_RETURN_FATAL;
@@ -597,8 +595,8 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
         rbuf->left = 0;
     }
 
-    if (rl->unprocessed_rcds.q != NULL) {
-        while ((item = pqueue_pop(rl->unprocessed_rcds.q)) != NULL) {
+    if (rl->unprocessed_rcds != NULL) {
+        while ((item = pqueue_pop(rl->unprocessed_rcds)) != NULL) {
             rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
             /* Push to the next record layer */
             ret &= BIO_write_ex(rl->next, rdata->packet, rdata->packet_length,
@@ -607,17 +605,17 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
             OPENSSL_free(item->data);
             pitem_free(item);
         }
-        pqueue_free(rl->unprocessed_rcds.q);
+        pqueue_free(rl->unprocessed_rcds);
     }
 
-    if (rl->processed_rcds.q != NULL) {
-        while ((item = pqueue_pop(rl->processed_rcds.q)) != NULL) {
+    if (rl->processed_rcds!= NULL) {
+        while ((item = pqueue_pop(rl->processed_rcds)) != NULL) {
             rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
             OPENSSL_free(rdata->rbuf.buf);
             OPENSSL_free(item->data);
             pitem_free(item);
         }
-        pqueue_free(rl->processed_rcds.q);
+        pqueue_free(rl->processed_rcds);
     }
 
     return tls_free(rl) && ret;
@@ -648,18 +646,16 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     if (ret != OSSL_RECORD_RETURN_SUCCESS)
         return ret;
 
-    (*retrl)->unprocessed_rcds.q = pqueue_new();
-    (*retrl)->processed_rcds.q = pqueue_new();
-    if ((*retrl)->unprocessed_rcds.q == NULL
-            || (*retrl)->processed_rcds.q == NULL) {
+    (*retrl)->unprocessed_rcds = pqueue_new();
+    (*retrl)->processed_rcds = pqueue_new();
+
+    if ((*retrl)->unprocessed_rcds == NULL
+            || (*retrl)->processed_rcds == NULL) {
         dtls_free(*retrl);
         *retrl = NULL;
         ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
         return OSSL_RECORD_RETURN_FATAL;
     }
-
-    (*retrl)->unprocessed_rcds.epoch = epoch + 1;
-    (*retrl)->processed_rcds.epoch = epoch;
 
     (*retrl)->isdtls = 1;
     (*retrl)->epoch = epoch;
