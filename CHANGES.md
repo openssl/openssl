@@ -114,7 +114,14 @@ OpenSSL 3.3
 OpenSSL 3.2
 -----------
 
-### Changes between 3.2.0 and 3.2.1 [xx XXX xxxx]
+### Changes between 3.2.1 and 3.2.2 [xx XXX xxxx]
+
+ * Fixed bug where SSL_export_keying_material() could not be used with QUIC
+   connections. (#23560)
+
+   *Hugo Landau*
+
+### Changes between 3.2.0 and 3.2.1 [30 Jan 2024]
 
  * A file in PKCS12 format can contain certificates and keys and may come from
    an untrusted source. The PKCS12 specification allows certain fields to be
