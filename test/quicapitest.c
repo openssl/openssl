@@ -53,7 +53,7 @@ static int test_quic_write_read(int idx)
     SSL *clientquic = NULL;
     QUIC_TSERVER *qtserv = NULL;
     int j, k, ret = 0;
-    unsigned char buf[20];
+    unsigned char buf[20], scratch[64];
     static char *msg = "A test message";
     size_t msglen = strlen(msg);
     size_t numbytes = 0;
@@ -152,6 +152,12 @@ static int test_quic_write_read(int idx)
                     || !TEST_mem_eq(buf, numbytes + 1, msg, msglen))
                 goto end;
         }
+
+        /* Test that exporters work. */
+        if (!TEST_true(SSL_export_keying_material(clientquic, scratch,
+                        sizeof(scratch), "test", 4, (unsigned char *)"ctx", 3,
+                        1)))
+            goto end;
 
         if (sess == NULL) {
             /* We didn't supply a session so we're not expecting resumption */
