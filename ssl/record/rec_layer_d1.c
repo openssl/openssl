@@ -25,9 +25,9 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 
     rl->d = d;
 
-    d->buffered_app_data.q = pqueue_new();
+    d->buffered_app_data = pqueue_new();
 
-    if (d->buffered_app_data.q == NULL) {
+    if (d->buffered_app_data == NULL) {
         OPENSSL_free(d);
         rl->d = NULL;
         return 0;
@@ -42,7 +42,7 @@ void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl)
         return;
 
     DTLS_RECORD_LAYER_clear(rl);
-    pqueue_free(rl->d->buffered_app_data.q);
+    pqueue_free(rl->d->buffered_app_data);
     OPENSSL_free(rl->d);
     rl->d = NULL;
 }
@@ -56,7 +56,7 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
 
     d = rl->d;
 
-    while ((item = pqueue_pop(d->buffered_app_data.q)) != NULL) {
+    while ((item = pqueue_pop(d->buffered_app_data)) != NULL) {
         rec = (TLS_RECORD *)item->data;
 
         if (rl->s->options & SSL_OP_CLEANSE_PLAINTEXT)
@@ -66,19 +66,19 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
         pitem_free(item);
     }
 
-    buffered_app_data = d->buffered_app_data.q;
+    buffered_app_data = d->buffered_app_data;
     memset(d, 0, sizeof(*d));
-    d->buffered_app_data.q = buffered_app_data;
+    d->buffered_app_data = buffered_app_data;
 }
 
 static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
 {
     TLS_RECORD *rdata;
     pitem *item;
-    record_pqueue *queue = &(s->rlayer.d->buffered_app_data);
+    struct pqueue_st *queue = s->rlayer.d->buffered_app_data;
 
     /* Limit the size of the queue to prevent DOS attacks */
-    if (pqueue_size(queue->q) >= 100)
+    if (pqueue_size(queue) >= 100)
         return 0;
 
     /* We don't buffer partially read records */
@@ -125,7 +125,7 @@ static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
     }
 #endif
 
-    if (pqueue_insert(queue->q, item) == NULL) {
+    if (pqueue_insert(queue, item) == NULL) {
         /* Must be a duplicate so ignore it */
         OPENSSL_free(rdata->allocdata);
         OPENSSL_free(rdata);
@@ -145,7 +145,7 @@ static void dtls_unbuffer_record(SSL_CONNECTION *s)
     if (s->rlayer.curr_rec < s->rlayer.num_recs)
         return;
 
-    item = pqueue_pop(s->rlayer.d->buffered_app_data.q);
+    item = pqueue_pop(s->rlayer.d->buffered_app_data);
     if (item != NULL) {
         rdata = (TLS_RECORD *)item->data;
 
