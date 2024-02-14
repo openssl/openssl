@@ -204,17 +204,17 @@ defaults to this setting.
 
 =item B<SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT> (Implicit event handling)
 
-If set to this value (the default), the implicit event handling model is used.
-Under this model, QUIC objects will automatically perform background event
-processing (equivalent to a call to L<SSL_handle_events(3)>) when calls to I/O
-functions such as L<SSL_read_ex(3)> or L<SSL_write_ex(3)> are made on a QUIC SSL
-object. This helps to maintain the health of the QUIC connection and ensures
-that incoming datagrams and timeout events are processed.
+If set to this value, the implicit event handling model is used. Under this
+model, QUIC objects will automatically perform background event processing
+(equivalent to a call to L<SSL_handle_events(3)>) when calls to I/O functions
+such as L<SSL_read_ex(3)> or L<SSL_write_ex(3)> are made on a QUIC SSL object.
+This helps to maintain the health of the QUIC connection and ensures that
+incoming datagrams and timeout events are processed.
 
 =item B<SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT> (Explicit event handling)
 
-If set to 0, the explicit event handling model is used. Under this model,
-B<nonblocking> calls to I/O functions such as L<SSL_read_ex(3)> or
+If set to this value, the explicit event handling model is used. Under this
+model, B<nonblocking> calls to I/O functions such as L<SSL_read_ex(3)> or
 L<SSL_write_ex(3)> do not result in the automatic processing of QUIC events. Any
 new incoming network traffic is not handled; no new outgoing network traffic is
 generated, and pending timeout events are not processed. This allows an
