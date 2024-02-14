@@ -5389,6 +5389,31 @@ static int check_avail_streams(struct helper *h, struct helper_local *hl)
     return 1;
 }
 
+static int set_event_handling_mode_conn(struct helper *h, struct helper_local *hl);
+static int reenable_test_event_handling(struct helper *h, struct helper_local *hl);
+
+static int check_write_buf_stat(struct helper *h, struct helper_local *hl)
+{
+    SSL *c_a;
+    uint64_t size, used, avail;
+
+    if (!TEST_ptr(c_a = helper_local_get_c_stream(hl, "a")))
+        return 0;
+
+    if (!TEST_true(SSL_get_stream_write_buf_size(c_a, &size))
+        || !TEST_true(SSL_get_stream_write_buf_used(c_a, &used))
+        || !TEST_true(SSL_get_stream_write_buf_avail(c_a, &avail))
+        || !TEST_uint64_t_ge(size, avail)
+        || !TEST_uint64_t_ge(size, used)
+        || !TEST_uint64_t_eq(avail + used, size))
+        return 0;
+
+    if (!TEST_uint64_t_eq(used, hl->check_op->arg1))
+        return 0;
+
+    return 1;
+}
+
 static const struct script_op script_84[] = {
     OP_C_SET_ALPN           ("ossltest")
     OP_C_CONNECT_WAIT       ()
@@ -5435,6 +5460,20 @@ static const struct script_op script_84[] = {
     OP_CHECK2               (check_avail_streams, 1, 99)
     OP_CHECK2               (check_avail_streams, 2, 99)
     OP_CHECK2               (check_avail_streams, 3, 99)
+
+    OP_CHECK2               (check_write_buf_stat, 0, 0)
+    OP_CHECK                (set_event_handling_mode_conn,
+                             SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT)
+    OP_C_WRITE              (a, "apple", 5)
+    OP_CHECK2               (check_write_buf_stat, 5, 0)
+
+    OP_CHECK                (reenable_test_event_handling, 0)
+
+    OP_S_BIND_STREAM_ID     (a, C_BIDI_ID(0))
+    OP_S_READ_EXPECT        (a, "apple", 5)
+    OP_S_WRITE              (a, "orange", 6)
+    OP_C_READ_EXPECT        (a, "orange", 6)
+    OP_CHECK2               (check_write_buf_stat, 0, 0)
 
     OP_END
 };
