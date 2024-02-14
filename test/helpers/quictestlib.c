@@ -80,6 +80,7 @@ static void qtest_reset_time(void);
 static int using_fake_time = 0;
 static OSSL_TIME fake_now;
 static CRYPTO_RWLOCK *fake_now_lock = NULL;
+static OSSL_TIME start_time;
 
 static OSSL_TIME fake_now_cb(void *arg)
 {
@@ -220,6 +221,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
 
     if ((flags & QTEST_FLAG_NOISE) != 0) {
         BIO *noisebio;
+        struct bio_noise_now_cb_st now_cb = { fake_now_cb, NULL };
 
         /*
          * It is an error to not have a QTEST_FAULT object when introducing noise
@@ -232,12 +234,22 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         if (!TEST_ptr(noisebio))
             goto err;
         cbio = BIO_push(noisebio, cbio);
+        if ((flags & QTEST_FLAG_FAKE_TIME) != 0) {
+            if (!TEST_int_eq(BIO_ctrl(cbio, BIO_CTRL_NOISE_SET_NOW_CB,
+                                      0, &now_cb), 1))
+                goto err;
+        }
 
         noisebio = BIO_new(bio_f_noisy_dgram_filter());
 
         if (!TEST_ptr(noisebio))
             goto err;
         sbio = BIO_push(noisebio, sbio);
+        if ((flags & QTEST_FLAG_FAKE_TIME) != 0) {
+            if (!TEST_int_eq(BIO_ctrl(sbio, BIO_CTRL_NOISE_SET_NOW_CB,
+                                      0, &now_cb), 1))
+                goto err;
+        }
         /*
          * TODO(QUIC SERVER):
          *    Currently the simplistic handler of the quic tserver cannot cope
@@ -362,6 +374,16 @@ static void qtest_reset_time(void)
     CRYPTO_THREAD_unlock(fake_now_lock);
     /* zero time can have a special meaning, bump it */
     qtest_add_time(1);
+}
+
+void qtest_start_stopwatch(void)
+{
+    start_time = qtest_get_time();
+}
+
+uint64_t qtest_get_stopwatch_time(void)
+{
+    return ossl_time2ms(ossl_time_subtract(qtest_get_time(), start_time));
 }
 
 QTEST_FAULT *qtest_create_injector(QUIC_TSERVER *ts)
@@ -1206,6 +1228,30 @@ int qtest_fault_resize_datagram(QTEST_FAULT *fault, size_t newlen)
 
     return 1;
 }
+
+int qtest_fault_set_bw_limit(QTEST_FAULT *fault,
+                             size_t ctos_bw, size_t stoc_bw,
+                             int noise_rate)
+{
+    BIO *sbio = fault->noiseargs.sbio;
+    BIO *cbio = fault->noiseargs.cbio;
+
+    if (!TEST_ptr(sbio) || !TEST_ptr(cbio))
+        return 0;
+    if (!TEST_int_eq(BIO_ctrl(sbio, BIO_CTRL_NOISE_RATE, noise_rate, NULL), 1))
+        return 0;
+    if (!TEST_int_eq(BIO_ctrl(cbio, BIO_CTRL_NOISE_RATE, noise_rate, NULL), 1))
+        return 0;
+    /* We set the bandwidth limit on the sending side */
+    if (!TEST_int_eq(BIO_ctrl(cbio, BIO_CTRL_NOISE_SEND_BANDWIDTH,
+                              (long)ctos_bw, NULL), 1))
+        return 0;
+    if (!TEST_int_eq(BIO_ctrl(sbio, BIO_CTRL_NOISE_SEND_BANDWIDTH,
+                              (long)stoc_bw, NULL), 1))
+        return 0;
+    return 1;
+}
+
 
 int bio_msg_copy(BIO_MSG *dst, BIO_MSG *src)
 {
