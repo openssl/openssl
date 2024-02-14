@@ -3371,11 +3371,50 @@ err:
     return ret;
 }
 
+QUIC_TAKES_LOCK
+static int qc_get_stream_write_buf_stat(QCTX *ctx, uint32_t class_,
+                                        uint64_t *p_value_out,
+                                        size_t (*getter)(QUIC_SSTREAM *sstream))
+{
+    int ret = 0;
+    size_t value = 0;
+
+    quic_lock(ctx->qc);
+
+    if (class_ != SSL_VALUE_CLASS_GENERIC) {
+        QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS,
+                                    NULL);
+        goto err;
+    }
+
+    if (ctx->xso == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_NO_STREAM, NULL);
+        goto err;
+    }
+
+    if (!ossl_quic_stream_has_send(ctx->xso->stream)) {
+        QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_STREAM_RECV_ONLY, NULL);
+        goto err;
+    }
+
+    if (ossl_quic_stream_has_send_buffer(ctx->xso->stream))
+        value = getter(ctx->xso->stream->sstream);
+
+    ret = 1;
+err:
+    quic_unlock(ctx->qc);
+    *p_value_out = (uint64_t)value;
+    return ret;
+}
+
 QUIC_NEEDS_LOCK
 static int expect_quic_for_value(SSL *s, QCTX *ctx, uint32_t id)
 {
     switch (id) {
     case SSL_VALUE_EVENT_HANDLING_MODE:
+    case SSL_VALUE_STREAM_WRITE_BUF_SIZE:
+    case SSL_VALUE_STREAM_WRITE_BUF_USED:
+    case SSL_VALUE_STREAM_WRITE_BUF_AVAIL:
         return expect_quic(s, ctx);
     default:
         return expect_quic_conn_only(s, ctx);
@@ -3410,6 +3449,16 @@ int ossl_quic_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
 
     case SSL_VALUE_EVENT_HANDLING_MODE:
         return qc_getset_event_handling(&ctx, class_, value, NULL);
+
+    case SSL_VALUE_STREAM_WRITE_BUF_SIZE:
+        return qc_get_stream_write_buf_stat(&ctx, class_, value,
+                                            ossl_quic_sstream_get_buffer_size);
+    case SSL_VALUE_STREAM_WRITE_BUF_USED:
+        return qc_get_stream_write_buf_stat(&ctx, class_, value,
+                                            ossl_quic_sstream_get_buffer_used);
+    case SSL_VALUE_STREAM_WRITE_BUF_AVAIL:
+        return qc_get_stream_write_buf_stat(&ctx, class_, value,
+                                            ossl_quic_sstream_get_buffer_avail);
 
     default:
         return QUIC_RAISE_NON_NORMAL_ERROR(&ctx,
