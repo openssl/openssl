@@ -33,6 +33,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
     PROGRAMS{noinst}=quic-client quic-srtm quic-lcidm quic-rcidm
   ENDIF
 
+  IF[{- !$disabled{"dtls"} -}]
+    PROGRAMS{noinst}=dtlsclient dtlsserver
+  ENDIF
+
   SOURCE[asn1]=asn1.c driver.c fuzz_rand.c
   INCLUDE[asn1]=../include {- $ex_inc -}
   DEPEND[asn1]=../libcrypto ../libssl {- $ex_lib -}
@@ -72,6 +76,14 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   SOURCE[ct]=ct.c driver.c
   INCLUDE[ct]=../include {- $ex_inc -}
   DEPEND[ct]=../libcrypto {- $ex_lib -}
+
+  SOURCE[dtlsclient]=dtlsclient.c driver.c fuzz_rand.c
+  INCLUDE[dtlsclient]=../include {- $ex_inc -}
+  DEPEND[dtlsclient]=../libcrypto ../libssl {- $ex_lib -}
+
+  SOURCE[dtlsserver]=dtlsserver.c driver.c fuzz_rand.c
+  INCLUDE[dtlsserver]=../include {- $ex_inc -}
+  DEPEND[dtlsserver]=../libcrypto ../libssl {- $ex_lib -}
 
   SOURCE[pem]=pem.c driver.c
   INCLUDE[pem]=../include {- $ex_inc -}
