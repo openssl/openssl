@@ -3307,14 +3307,11 @@ static int qctx_should_autotick(QCTX *ctx)
     if (ctx->is_stream) {
         event_handling_mode = ctx->xso->event_handling_mode;
         if (event_handling_mode != SSL_VALUE_EVENT_HANDLING_MODE_INHERIT)
-            return event_handling_mode == SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT;
+            return event_handling_mode != SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT;
     }
 
     event_handling_mode = ctx->qc->event_handling_mode;
-    if (event_handling_mode == SSL_VALUE_EVENT_HANDLING_MODE_INHERIT)
-        event_handling_mode = SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT;
-
-    return event_handling_mode == SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT;
+    return event_handling_mode != SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT;
 }
 
 QUIC_NEEDS_LOCK
