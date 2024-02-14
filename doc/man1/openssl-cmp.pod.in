@@ -1044,7 +1044,7 @@ If the transaction contains more requests, the remaining ones are not saved.
 =item B<-reqout_only> I<filename>
 
 Save the first CMP requests created by the client to the given file and exit.
-Any options related to CMP servers and their reponses are ignored.
+Any options related to CMP servers and their responses are ignored.
 
 This option is useful for supporting offline scenarios where the certificate
 request (or any other CMP request) is produced beforehand and sent out later.
