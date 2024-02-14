@@ -904,6 +904,9 @@ static int test_bio_ssl(void)
         if (i == 1)
             break;
 
+        if (!TEST_true(SSL_set_mode(clientquic, 0)))
+            goto err;
+
         /*
          * Now create a new stream and repeat. The bottom two bits of the stream
          * id represents whether the stream is bidi and whether it is client
@@ -913,6 +916,9 @@ static int test_bio_ssl(void)
         sid = 4;
         stream = SSL_new_stream(clientquic, 0);
         if (!TEST_ptr(stream))
+            goto err;
+
+        if (!TEST_true(SSL_set_mode(stream, 0)))
             goto err;
 
         thisbio = strbio = BIO_new(BIO_f_ssl());
