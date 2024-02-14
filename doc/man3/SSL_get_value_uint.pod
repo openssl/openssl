@@ -17,7 +17,13 @@ SSL_VALUE_EVENT_HANDLING_MODE_INHERIT,
 SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT,
 SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT,
 SSL_get_event_handling_mode,
-SSL_set_event_handling_mode -
+SSL_set_event_handling_mode,
+SSL_VALUE_STREAM_WRITE_BUF_SIZE,
+SSL_get_stream_write_buf_size,
+SSL_VALUE_STREAM_WRITE_BUF_USED,
+SSL_get_stream_write_buf_used,
+SSL_VALUE_STREAM_WRITE_BUF_AVAIL,
+SSL_get_stream_write_buf_avail -
 manage negotiable features and configuration values for a SSL object
 
 =head1 SYNOPSIS
@@ -45,6 +51,10 @@ manage negotiable features and configuration values for a SSL object
  #define SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT
  #define SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT
 
+ #define SSL_VALUE_STREAM_WRITE_BUF_SIZE
+ #define SSL_VALUE_STREAM_WRITE_BUF_USED
+ #define SSL_VALUE_STREAM_WRITE_BUF_AVAIL
+
 The following convenience macros can also be used:
 
  int SSL_get_generic_value_uint(SSL *ssl, uint32_t id, uint64_t *value);
@@ -63,6 +73,10 @@ The following convenience macros can also be used:
 
  int SSL_get_event_handling_mode(SSL *ssl, uint64_t *value);
  int SSL_set_event_handling_mode(SSL *ssl, uint64_t value);
+
+ int SSL_get_stream_write_buf_size(SSL *ssl, uint64_t *value);
+ int SSL_get_stream_write_buf_avail(SSL *ssl, uint64_t *value);
+ int SSL_get_stream_write_buf_used(SSL *ssl, uint64_t *value);
 
 =head1 DESCRIPTION
 
@@ -131,11 +145,16 @@ SSL_get_feature_negotiated_uint() for brevity.
 
 =back
 
-=head1 CONFIGURABLE VALUES FOR QUIC CONNECTIONS
+=head1 CONFIGURABLE VALUES FOR QUIC OBJECTS
 
 The following configurable values are supported for QUIC SSL objects. Whether a
 value is supported for a QUIC connection SSL object or a QUIC stream SSL object
-is indicated in the heading for each value:
+is indicated in the heading for each value. Values supported for QUIC stream SSL
+objects are also supported on QUIC connection SSL objects if they have a default
+stream attached.
+
+SSL_get_value() does not cause internal event processing to occur unless the
+documentation for a specific value specifies otherwise.
 
 =over 4
 
@@ -250,6 +269,35 @@ on "B" may result in state changes to "A". In other words, if event handling
 does happen as a result of an API call to an object related to a connection,
 processing of background events (for example, received QUIC network traffic) may
 also affect the state of any other object related to a connection.
+
+=item B<SSL_VALUE_STREAM_WRITE_BUF_SIZE> (stream object)
+
+Generic read-only statistical value. The size of the write buffer allocated to
+hold data written to a stream with L<SSL_write_ex(3)> until it is transmitted
+and subsequently acknowledged by the peer. This value may change at any time, as
+buffer sizes are optimised in response to network conditions to optimise
+throughput.
+
+Can be queried using the convenience macro SSL_get_stream_write_buf_size().
+
+=item B<SSL_VALUE_STREAM_WRITE_BUF_USED> (stream object)
+
+Generic read-only statistical value. The number of bytes currently consumed
+in the write buffer which have yet to be acknowledged by the peer. Successful
+calls to L<SSL_write_ex(3)> which accept data cause this number to increase.
+This number will then decrease as data is acknowledged by the peer.
+
+Can be queried using the convenience macro SSL_get_stream_write_buf_used().
+
+=item B<SSL_VALUE_STREAM_WRITE_BUF_AVAIL> (stream object)
+
+Generic read-only statistical value. The number of bytes available in the write
+buffer which have yet to be consumed by calls to L<SSL_write_ex(3)>. Successful
+calls to L<SSL_write_ex(3)> which accept data cause this number to decrease.
+This number will increase as data is acknowledged by the peer. It may also
+change if the buffer is resized automatically to optimise throughput.
+
+Can be queried using the convenience macro SSL_get_stream_write_buf_avail().
 
 =back
 
