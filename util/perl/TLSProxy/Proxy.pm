@@ -323,7 +323,7 @@ sub clientstart
 {
     my ($self) = shift;
 
-    my $succes = 1;
+    my $success = 1;
 
     if ($self->execute) {
         my $pid;
@@ -450,7 +450,7 @@ sub clientstart
     if ($ctr >= 10) {
         kill(3, $self->{serverpid});
         print "No progress made\n";
-        $succes = 0;
+        $success = 0;
     }
 
     END:
@@ -482,7 +482,7 @@ sub clientstart
     print "Waiting for s_client process to close: $pid...\n";
     waitpid($pid, 0);
 
-    return $succes;
+    return $success;
 }
 
 sub process_packet
