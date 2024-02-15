@@ -637,7 +637,7 @@ static void ch_trigger_txku(QUIC_CHANNEL *ch)
 
     if (!ossl_quic_pn_valid(next_pn)
         || !ossl_qtx_trigger_key_update(ch->qtx)) {
-        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
+        ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_INTERNAL_ERROR, 0,
                                                "key update");
         return;
     }
@@ -785,7 +785,7 @@ static void rxku_detected(QUIC_PN pn, void *arg)
         decision = DECISION_SOLICITED_TXKU;
 
     if (decision == DECISION_PROTOCOL_VIOLATION) {
-        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_KEY_UPDATE_ERROR,
+        ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_KEY_UPDATE_ERROR,
                                                0, "RX key update again too soon");
         return;
     }
@@ -833,7 +833,7 @@ static void ch_rxku_tick(QUIC_CHANNEL *ch)
     ch->rxku_in_progress            = 0;
 
     if (!ossl_qrx_key_update_timeout(ch->qrx, /*normal=*/1))
-        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
+        ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_INTERNAL_ERROR, 0,
                                                "RXKU cooldown internal error");
 }
 
@@ -913,7 +913,7 @@ static int ch_on_crypto_recv_record(const unsigned char **buf,
         if (i != QUIC_ENC_LEVEL_0RTT &&
             !crypto_ensure_empty(ch->crypto_recv[ossl_quic_enc_level_to_pn_space(i)])) {
             /* Protocol violation (RFC 9001 s. 4.1.3) */
-            ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
+            ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_PROTOCOL_VIOLATION,
                                                    OSSL_QUIC_FRAME_TYPE_CRYPTO,
                                                    "crypto stream data in wrong EL");
             return 0;
@@ -991,7 +991,7 @@ static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
         for (i = QUIC_ENC_LEVEL_INITIAL; i < enc_level; ++i)
             if (!crypto_ensure_empty(ch->crypto_recv[ossl_quic_enc_level_to_pn_space(i)])) {
                 /* Protocol violation (RFC 9001 s. 4.1.3) */
-                ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
+                ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_PROTOCOL_VIOLATION,
                                                     OSSL_QUIC_FRAME_TYPE_CRYPTO,
                                                     "crypto stream data in wrong EL");
                 return 0;
@@ -1024,7 +1024,7 @@ static int ch_on_handshake_complete(void *arg)
          * Was not a valid QUIC handshake if we did not get valid transport
          * params.
          */
-        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_CRYPTO_MISSING_EXT,
+        ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_CRYPTO_MISSING_EXT,
                                                OSSL_QUIC_FRAME_TYPE_CRYPTO,
                                                "no transport parameters received");
         return 0;
@@ -1068,7 +1068,7 @@ static int ch_on_handshake_alert(void *arg, unsigned char alert_code)
             && ch->handshake_complete
             && ossl_quic_tls_is_cert_request(ch->qtls))
         ossl_quic_channel_raise_protocol_error(ch,
-                                               QUIC_ERR_PROTOCOL_VIOLATION,
+                                               OSSL_QUIC_ERR_PROTOCOL_VIOLATION,
                                                0,
                                                "Post-handshake TLS "
                                                "CertificateRequest received");
@@ -1083,12 +1083,12 @@ static int ch_on_handshake_alert(void *arg, unsigned char alert_code)
              && ch->handshake_complete
              && ossl_quic_tls_has_bad_max_early_data(ch->qtls))
         ossl_quic_channel_raise_protocol_error(ch,
-                                               QUIC_ERR_PROTOCOL_VIOLATION,
+                                               OSSL_QUIC_ERR_PROTOCOL_VIOLATION,
                                                0,
                                                "Bad max_early_data received");
     else
         ossl_quic_channel_raise_protocol_error(ch,
-                                               QUIC_ERR_CRYPTO_ERR_BEGIN
+                                               OSSL_QUIC_ERR_CRYPTO_ERR_BEGIN
                                                + alert_code,
                                                0, "handshake alert");
 
@@ -1193,7 +1193,7 @@ static int ch_on_transport_params(const unsigned char *params,
     }
 
     if (!PACKET_buf_init(&pkt, params, params_len)) {
-        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
+        ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_INTERNAL_ERROR, 0,
                                                "internal error (packet buf init)");
         return 0;
     }
@@ -1683,7 +1683,7 @@ static int ch_on_transport_params(const unsigned char *params,
 
     /* If we are a server, we now generate our own transport parameters. */
     if (ch->is_server && !ch_generate_transport_params(ch)) {
-        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
+        ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_INTERNAL_ERROR, 0,
                                                "internal error");
         return 0;
     }
@@ -1691,7 +1691,7 @@ static int ch_on_transport_params(const unsigned char *params,
     return 1;
 
 malformed:
-    ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_TRANSPORT_PARAMETER_ERROR,
+    ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_TRANSPORT_PARAMETER_ERROR,
                                            0, reason);
     return 0;
 }
@@ -2030,7 +2030,7 @@ static void ch_rx_check_forged_pkt_limit(QUIC_CHANNEL *ch)
     if (ossl_qrx_get_cur_forged_pkt_count(ch->qrx) < limit)
         return;
 
-    ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_AEAD_LIMIT_REACHED, 0,
+    ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_AEAD_LIMIT_REACHED, 0,
                                            "forgery limit");
 }
 
@@ -2201,7 +2201,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
      */
     if (ossl_quic_pkt_type_is_encrypted(ch->qrx_pkt->hdr->type)
         && ch->qrx_pkt->hdr->reserved != 0) {
-        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
+        ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_PROTOCOL_VIOLATION,
                                                0, "packet header reserved bits");
         return;
     }
@@ -2253,7 +2253,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
         if (!ch_retry(ch, ch->qrx_pkt->hdr->data,
                       ch->qrx_pkt->hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN,
                       &ch->qrx_pkt->hdr->src_conn_id))
-            ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR,
+            ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_INTERNAL_ERROR,
                                                    0, "handling retry packet");
         break;
 
@@ -2291,7 +2291,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
              * were used for packets with lower packet numbers MUST treat this
              * as a connection error of type KEY_UPDATE_ERROR.
              */
-            ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_KEY_UPDATE_ERROR,
+            ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_KEY_UPDATE_ERROR,
                                                    0, "new packet with old keys");
             break;
         }
@@ -2316,7 +2316,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
              *      packets that lack authentication.
              * I.e. should we drop this packet instead of closing the connection?
              */
-            ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
+            ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_PROTOCOL_VIOLATION,
                                                    0, "client received initial token");
             break;
         }
@@ -2375,7 +2375,7 @@ static void ch_raise_version_neg_failure(QUIC_CHANNEL *ch)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
 
-    tcause.error_code = QUIC_ERR_CONNECTION_REFUSED;
+    tcause.error_code = OSSL_QUIC_ERR_CONNECTION_REFUSED;
     tcause.reason     = "version negotiation failure";
     tcause.reason_len = strlen(tcause.reason);
 
@@ -2475,7 +2475,7 @@ static int ch_tx(QUIC_CHANNEL *ch)
             * to schedule a CONNECTION_CLOSE frame will not actually cause a
             * packet to be transmitted for this reason.
             */
-            ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR,
+            ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_INTERNAL_ERROR,
                                                    0,
                                                    "internal error (txp generate)");
             break;
@@ -2675,7 +2675,7 @@ static int ch_retry(QUIC_CHANNEL *ch,
          * This may fail if the token we receive is too big for us to ever be
          * able to transmit in an outgoing Initial packet.
          */
-        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INVALID_TOKEN, 0,
+        ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_INVALID_TOKEN, 0,
                                                "received oversize token");
         OPENSSL_free(buf);
         return 0;
@@ -2761,7 +2761,7 @@ int ossl_quic_channel_on_handshake_confirmed(QUIC_CHANNEL *ch)
          * Does not make sense for handshake to be confirmed before it is
          * completed.
          */
-        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
+        ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_PROTOCOL_VIOLATION,
                                                OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE,
                                                "handshake cannot be confirmed "
                                                "before it is completed");
@@ -2997,7 +2997,7 @@ static int ch_enqueue_retire_conn_id(QUIC_CHANNEL *ch, uint64_t seq_num)
 
 err:
     ossl_quic_channel_raise_protocol_error(ch,
-                                           QUIC_ERR_INTERNAL_ERROR,
+                                           OSSL_QUIC_ERR_INTERNAL_ERROR,
                                            OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
                                            "internal error enqueueing retire conn id");
     BUF_MEM_free(buf_mem);
@@ -3017,7 +3017,7 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
     if (ch->cur_remote_dcid.id_len == 0) {
         /* Changing from 0 length connection id is disallowed */
         ossl_quic_channel_raise_protocol_error(ch,
-                                               QUIC_ERR_PROTOCOL_VIOLATION,
+                                               OSSL_QUIC_ERR_PROTOCOL_VIOLATION,
                                                OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
                                                "zero length connection id in use");
 
@@ -3041,7 +3041,7 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
      */
     if (new_remote_seq_num - new_retire_prior_to > 1) {
         ossl_quic_channel_raise_protocol_error(ch,
-                                               QUIC_ERR_CONNECTION_ID_LIMIT_ERROR,
+                                               OSSL_QUIC_ERR_CONNECTION_ID_LIMIT_ERROR,
                                                OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
                                                "active_connection_id limit violated");
         return;
@@ -3064,7 +3064,7 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
      */
     if (new_retire_prior_to - ch->cur_retire_prior_to > 10) {
         ossl_quic_channel_raise_protocol_error(ch,
-                                               QUIC_ERR_CONNECTION_ID_LIMIT_ERROR,
+                                               OSSL_QUIC_ERR_CONNECTION_ID_LIMIT_ERROR,
                                                OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
                                                "retiring connection id limit violated");
 
@@ -3076,7 +3076,7 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
         if (!ossl_quic_srtm_add(ch->srtm, ch, new_remote_seq_num,
                                 &f->stateless_reset)) {
             ossl_quic_channel_raise_protocol_error(
-                    ch, QUIC_ERR_CONNECTION_ID_LIMIT_ERROR,
+                    ch, OSSL_QUIC_ERR_CONNECTION_ID_LIMIT_ERROR,
                     OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
                     "unable to store stateless reset token");
 
@@ -3134,7 +3134,7 @@ void ossl_quic_channel_on_stateless_reset(QUIC_CHANNEL *ch)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
 
-    tcause.error_code   = QUIC_ERR_NO_ERROR;
+    tcause.error_code   = OSSL_QUIC_ERR_NO_ERROR;
     tcause.remote       = 1;
     ch_start_terminating(ch, &tcause, 0);
 }
@@ -3148,7 +3148,7 @@ void ossl_quic_channel_raise_net_error(QUIC_CHANNEL *ch)
 
     ch->net_error = 1;
 
-    tcause.error_code = QUIC_ERR_INTERNAL_ERROR;
+    tcause.error_code = OSSL_QUIC_ERR_INTERNAL_ERROR;
     tcause.reason     = "network BIO I/O error";
     tcause.reason_len = strlen(tcause.reason);
 
@@ -3185,7 +3185,7 @@ void ossl_quic_channel_raise_protocol_error_loc(QUIC_CHANNEL *ch,
                                                 const char *src_func)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
-    int err_reason = error_code == QUIC_ERR_INTERNAL_ERROR
+    int err_reason = error_code == OSSL_QUIC_ERR_INTERNAL_ERROR
                      ? ERR_R_INTERNAL_ERROR : SSL_R_QUIC_PROTOCOL_ERROR;
     const char *err_str = ossl_quic_err_to_string(error_code);
     const char *err_str_pfx = " (", *err_str_sfx = ")";

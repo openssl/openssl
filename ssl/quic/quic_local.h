@@ -250,8 +250,9 @@ int ossl_quic_conn_on_handshake_confirmed(QUIC_CONNECTION *qc);
 
 /*
  * To be called when a protocol violation occurs. The connection is torn down
- * with the given error code, which should be a QUIC_ERR_* value. Reason string
- * is optional and copied if provided. frame_type should be 0 if not applicable.
+ * with the given error code, which should be a OSSL_QUIC_ERR_* value. Reason
+ * string is optional and copied if provided. frame_type should be 0 if not
+ * applicable.
  */
 void ossl_quic_conn_raise_protocol_error(QUIC_CONNECTION *qc,
                                          uint64_t error_code,

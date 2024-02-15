@@ -1882,7 +1882,7 @@ static int txp_generate_pre_token(OSSL_QUIC_TX_PACKETISER *txp,
             pf = &f;
             pf->is_app      = 0;
             pf->frame_type  = 0;
-            pf->error_code  = QUIC_ERR_APPLICATION_ERROR;
+            pf->error_code  = OSSL_QUIC_ERR_APPLICATION_ERROR;
             pf->reason      = NULL;
             pf->reason_len  = 0;
         }

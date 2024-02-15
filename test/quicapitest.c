@@ -2047,7 +2047,7 @@ static int test_tparam(int idx)
             goto err;
 
         if (!TEST_true((info.flags & SSL_CONN_CLOSE_FLAG_TRANSPORT) != 0)
-            || !TEST_uint64_t_eq(info.error_code, QUIC_ERR_TRANSPORT_PARAMETER_ERROR)
+            || !TEST_uint64_t_eq(info.error_code, OSSL_QUIC_ERR_TRANSPORT_PARAMETER_ERROR)
             || !TEST_ptr(strstr(info.reason, ctx.t->expect_fail))) {
             TEST_error("expected connection closure information mismatch"
                        " during TPARAM test: flags=%llu ec=%llu reason='%s'",
