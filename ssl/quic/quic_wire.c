@@ -1053,7 +1053,7 @@ ossl_quic_frame_type_to_string(uint64_t frame_type)
 const char *ossl_quic_err_to_string(uint64_t error_code)
 {
     switch (error_code) {
-#define X(name) case QUIC_ERR_##name: return #name;
+#define X(name) case OSSL_QUIC_ERR_##name: return #name;
     X(NO_ERROR)
     X(INTERNAL_ERROR)
     X(CONNECTION_REFUSED)

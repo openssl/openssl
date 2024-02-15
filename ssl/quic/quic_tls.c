@@ -696,7 +696,7 @@ static int raise_error(QUIC_TLS *qtls, uint64_t error_code,
                 OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC)
 
 #define RAISE_INTERNAL_ERROR(qtls) \
-    RAISE_ERROR((qtls), QUIC_ERR_INTERNAL_ERROR, "internal error")
+    RAISE_ERROR((qtls), OSSL_QUIC_ERR_INTERNAL_ERROR, "internal error")
 
 int ossl_quic_tls_tick(QUIC_TLS *qtls)
 {
@@ -746,7 +746,7 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
                 return RAISE_INTERNAL_ERROR(qtls);
         } else {
             if (sc->ext.alpn == NULL || sc->ext.alpn_len == 0)
-                return RAISE_ERROR(qtls, QUIC_ERR_CRYPTO_NO_APP_PROTO,
+                return RAISE_ERROR(qtls, OSSL_QUIC_ERR_CRYPTO_NO_APP_PROTO,
                                    "ALPN must be configured when using QUIC");
         }
         if (!SSL_set_min_proto_version(qtls->args.s, TLS1_3_VERSION))
@@ -816,7 +816,7 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
         /* Validate that we have ALPN */
         SSL_get0_alpn_selected(qtls->args.s, &alpn, &alpnlen);
         if (alpn == NULL || alpnlen == 0)
-            return RAISE_ERROR(qtls, QUIC_ERR_CRYPTO_NO_APP_PROTO,
+            return RAISE_ERROR(qtls, OSSL_QUIC_ERR_CRYPTO_NO_APP_PROTO,
                                "no application protocol negotiated");
 
         qtls->complete = 1;

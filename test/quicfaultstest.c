@@ -192,10 +192,10 @@ static int test_drop_extensions(int idx)
 
     if (idx == 0) {
         ext = TLSEXT_TYPE_quic_transport_parameters;
-        err = QUIC_ERR_CRYPTO_MISSING_EXT;
+        err = OSSL_QUIC_ERR_CRYPTO_MISSING_EXT;
     } else {
         ext = TLSEXT_TYPE_application_layer_protocol_negotiation;
-        err = QUIC_ERR_CRYPTO_NO_APP_PROTO;
+        err = OSSL_QUIC_ERR_CRYPTO_NO_APP_PROTO;
     }
 
     if (!TEST_true(qtest_fault_set_hand_enc_ext_listener(fault,
