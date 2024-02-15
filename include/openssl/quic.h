@@ -24,10 +24,39 @@ extern "C" {
  * Method used for non-thread-assisted QUIC client operation.
  */
 __owur const SSL_METHOD *OSSL_QUIC_client_method(void);
+
 /*
  * Method used for thread-assisted QUIC client operation.
  */
 __owur const SSL_METHOD *OSSL_QUIC_client_thread_method(void);
+
+/*
+ * QUIC transport error codes (RFC 9000 s. 20.1)
+ */
+#  define OSSL_QUIC_ERR_NO_ERROR                  0x00
+#  define OSSL_QUIC_ERR_INTERNAL_ERROR            0x01
+#  define OSSL_QUIC_ERR_CONNECTION_REFUSED        0x02
+#  define OSSL_QUIC_ERR_FLOW_CONTROL_ERROR        0x03
+#  define OSSL_QUIC_ERR_STREAM_LIMIT_ERROR        0x04
+#  define OSSL_QUIC_ERR_STREAM_STATE_ERROR        0x05
+#  define OSSL_QUIC_ERR_FINAL_SIZE_ERROR          0x06
+#  define OSSL_QUIC_ERR_FRAME_ENCODING_ERROR      0x07
+#  define OSSL_QUIC_ERR_TRANSPORT_PARAMETER_ERROR 0x08
+#  define OSSL_QUIC_ERR_CONNECTION_ID_LIMIT_ERROR 0x09
+#  define OSSL_QUIC_ERR_PROTOCOL_VIOLATION        0x0A
+#  define OSSL_QUIC_ERR_INVALID_TOKEN             0x0B
+#  define OSSL_QUIC_ERR_APPLICATION_ERROR         0x0C
+#  define OSSL_QUIC_ERR_CRYPTO_BUFFER_EXCEEDED    0x0D
+#  define OSSL_QUIC_ERR_KEY_UPDATE_ERROR          0x0E
+#  define OSSL_QUIC_ERR_AEAD_LIMIT_REACHED        0x0F
+#  define OSSL_QUIC_ERR_NO_VIABLE_PATH            0x10
+
+/* Inclusive range for handshake-specific errors. */
+#  define OSSL_QUIC_ERR_CRYPTO_ERR_BEGIN          0x0100
+#  define OSSL_QUIC_ERR_CRYPTO_ERR_END            0x01FF
+
+#  define OSSL_QUIC_ERR_CRYPTO_ERR(X) \
+    (OSSL_QUIC_ERR_CRYPTO_ERR_BEGIN + (X))
 
 #  ifdef __cplusplus
 }
