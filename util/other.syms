@@ -510,6 +510,7 @@ OSSL_QUIC_ERR_NO_VIABLE_PATH            define
 OSSL_QUIC_ERR_CRYPTO_ERR_BEGIN          define
 OSSL_QUIC_ERR_CRYPTO_ERR_END            define
 OSSL_QUIC_ERR_CRYPTO_ERR                define
+OSSL_QUIC_LOCAL_ERR_IDLE_TIMEOUT        define
 PEM_FLAG_EAY_COMPATIBLE                 define
 PEM_FLAG_ONLY_B64                       define
 PEM_FLAG_SECURE                         define

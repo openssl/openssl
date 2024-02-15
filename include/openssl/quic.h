@@ -58,6 +58,10 @@ __owur const SSL_METHOD *OSSL_QUIC_client_thread_method(void);
 #  define OSSL_QUIC_ERR_CRYPTO_ERR(X) \
     (OSSL_QUIC_ERR_CRYPTO_ERR_BEGIN + (X))
 
+/* Local errors. */
+#  define OSSL_QUIC_LOCAL_ERR_IDLE_TIMEOUT        \
+    ((uint64_t)0xFFFFFFFFFFFFFFFFULL)
+
 #  ifdef __cplusplus
 }
 #  endif

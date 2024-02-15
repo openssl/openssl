@@ -23,7 +23,8 @@ OSSL_QUIC_ERR_AEAD_LIMIT_REACHED,
 OSSL_QUIC_ERR_NO_VIABLE_PATH,
 OSSL_QUIC_ERR_CRYPTO_ERR_BEGIN,
 OSSL_QUIC_ERR_CRYPTO_ERR_END,
-OSSL_QUIC_ERR_CRYPTO_ERR
+OSSL_QUIC_ERR_CRYPTO_ERR,
+OSSL_QUIC_LOCAL_ERR_IDLE_TIMEOUT
 - get information about why a QUIC connection was closed
 
 =head1 SYNOPSIS
@@ -66,6 +67,8 @@ OSSL_QUIC_ERR_CRYPTO_ERR
  #define OSSL_QUIC_ERR_CRYPTO_ERR_END            0x01FF
 
  #define OSSL_QUIC_ERR_CRYPTO_ERR(X)
+
+ #define OSSL_QUIC_LOCAL_ERR_IDLE_TIMEOUT
 
 =head1 DESCRIPTION
 
@@ -121,6 +124,29 @@ If unset, connection closure was remotely triggered.
 If I<flags> has B<SSL_CONN_CLOSE_FLAG_TRANSPORT> set, connection closure was
 triggered for QUIC protocol reasons. Otherwise, connection closure was triggered
 by the local or remote application.
+
+=back
+
+The B<OSSL_QUIC_ERR> macro definitions provide the QUIC transport error codes as
+defined by RFC 9000. The OSSL_QUIC_ERR_CRYPTO_ERR() macro can be used to convert
+a TLS alert code into a QUIC transport error code by mapping it into the range
+reserved for such codes by RFC 9000. This range begins at
+B<OSSL_QUIC_ERR_CRYPTO_ERR_BEGIN> and ends at B<OSSL_QUIC_ERR_CRYPTO_ERR_END>
+inclusive.
+
+=head1 NON-STANDARD TRANSPORT ERROR CODES
+
+Some conditions which can cause QUIC connection termination are not signalled on
+the wire and therefore do not have standard error codes. OpenSSL indicates these
+errors via SSL_get_conn_close_info() by setting B<SSL_CONN_CLOSE_FLAG_TRANSPORT>
+and using one of the following error values. These codes are specific to
+OpenSSL, and cannot be sent over the wire, as they are above 2**62.
+
+=over 4
+
+=item B<OSSL_QUIC_LOCAL_ERR_IDLE_TIMEOUT>
+
+The connection was terminated immediately due to the idle timeout expiring.
 
 =back
 
