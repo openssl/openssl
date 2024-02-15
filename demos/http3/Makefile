@@ -4,8 +4,8 @@
 #
 #    LD_LIBRARY_PATH=../.. ./ossl-nghttp3-demo www.example.com:443
 
-CFLAGS  = -I../../include -g -Wall -Wsign-compare
-LDFLAGS = -L../..
+CFLAGS  += -I../../include -g -Wall -Wsign-compare
+LDFLAGS += -L../..
 LDLIBS  = -lcrypto -lssl -lnghttp3
 
 all: ossl-nghttp3-demo
