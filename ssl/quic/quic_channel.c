@@ -3325,7 +3325,7 @@ static void ch_on_idle_timeout(QUIC_CHANNEL *ch)
      * TERMINATED anyway.
      */
     ch->terminate_cause.app         = 0;
-    ch->terminate_cause.error_code  = UINT64_MAX;
+    ch->terminate_cause.error_code  = OSSL_QUIC_LOCAL_ERR_IDLE_TIMEOUT;
     ch->terminate_cause.frame_type  = 0;
 
     ch_record_state_transition(ch, QUIC_CHANNEL_STATE_TERMINATED);
