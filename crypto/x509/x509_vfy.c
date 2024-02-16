@@ -1092,7 +1092,7 @@ static int check_cert_ocsp(X509_STORE_CTX *ctx)
     }
 
     if (OCSP_response_status(resp) != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
-        ret = X509_V_ERR_OCSP_INVALID;
+        ret = X509_V_ERR_OCSP_RESP_INVALID;
         goto end;
     }
 
@@ -1108,7 +1108,7 @@ static int check_cert_ocsp(X509_STORE_CTX *ctx)
 
     if (OCSP_resp_find_status(bs, cert_id, &cert_status, &crl_reason, &rev,
                               &thisupd, &nextupd) <= 0) {
-        ret = X509_V_ERR_OCSP_INVALID;
+        ret = X509_V_ERR_OCSP_RESP_INVALID;
         goto end;
     }
 

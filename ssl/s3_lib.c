@@ -3592,10 +3592,10 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         resp = sk_OCSP_RESPONSE_value(sc->ext.ocsp.resp_ex, 0);
 
         if (resp != NULL) {
-            sc->ext.ocsp.resp_len = i2d_OCSP_RESPONSE(resp, NULL);
+            int resp_len = i2d_OCSP_RESPONSE(resp, NULL);
 
-            if (sc->ext.ocsp.resp_len > 0 && sc->ext.ocsp.resp_len <= LONG_MAX) {
-                sc->ext.ocsp.resp = OPENSSL_malloc(sc->ext.ocsp.resp_len);
+            if (resp_len > 0 && resp_len <= LONG_MAX) {
+                sc->ext.ocsp.resp = OPENSSL_malloc(resp_len);
 
                 if (sc->ext.ocsp.resp != NULL) {
                     *(unsigned char **)parg = sc->ext.ocsp.resp;

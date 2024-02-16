@@ -25,7 +25,7 @@
 #include "file_store_local.h"
 
 #ifdef __CYGWIN__
-#include <Windows.h>
+# include <windows.h>
 #endif
 
 #include <wincrypt.h>
