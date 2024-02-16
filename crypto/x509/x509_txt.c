@@ -174,7 +174,7 @@ const char *X509_verify_cert_error_string(long n)
         return "OCSP verification failed";
     case X509_V_ERR_OCSP_CERT_UNKNOWN:
         return "OCSP unknown cert";
-    case X509_V_ERR_OCSP_INVALID:
+    case X509_V_ERR_OCSP_RESP_INVALID:
         return "OCSP response(s) invalid";
     case X509_V_ERR_OCSP_SIGNATURE_FAILURE:
         return "OCSP signature failure";
