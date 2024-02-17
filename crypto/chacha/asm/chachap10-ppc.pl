@@ -170,7 +170,9 @@ $code.=<<___;
 .align	5
 .ChaCha20_ctr32_vsx_p10:
 	${UCMP}i $len,255
-	bgt 	ChaCha20_ctr32_vsx_8x
+	ble	.Not_greater_than_8x
+	b	ChaCha20_ctr32_vsx_8x
+.Not_greater_than_8x:
 	$STU	$sp,-$FRAME($sp)
 	mflr	r0
 	li	r10,`15+$LOCALS+64`
