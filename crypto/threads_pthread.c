@@ -657,6 +657,8 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 
 __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 {
+    if (lock == NULL)
+        return 0;
 # ifdef USE_RWLOCK
     if (pthread_rwlock_rdlock(lock) != 0)
         return 0;
@@ -672,6 +674,8 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 
 __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
+    if (lock == NULL)
+        return 0;
 # ifdef USE_RWLOCK
     if (pthread_rwlock_wrlock(lock) != 0)
         return 0;
@@ -687,6 +691,8 @@ __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 
 int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock)
 {
+    if (lock == NULL)
+        return 0;
 # ifdef USE_RWLOCK
     if (pthread_rwlock_unlock(lock) != 0)
         return 0;
