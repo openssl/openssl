@@ -410,6 +410,8 @@ static int tls_prov_get_capabilities(void *provctx, const char *capability,
             }
             dummygroup[0].data = dummy_group_names[i];
             dummygroup[0].data_size = strlen(dummy_group_names[i]) + 1;
+            /* assign unique group IDs also to dummy groups for registration */
+            *((int *)(dummygroup[3].data)) = 65279 - NUM_DUMMY_GROUPS + i;
             ret &= cb(dummygroup, arg);
         }
     }
@@ -3185,9 +3187,10 @@ unsigned int randomize_tls_alg_id(OSSL_LIB_CTX *libctx)
         return 0;
     /*
      * Ensure id is within the IANA Reserved for private use range
-     * (65024-65279)
+     * (65024-65279).
+     * Carve out NUM_DUMMY_GROUPS ids for properly registering those.
      */
-    id %= 65279 - 65024;
+    id %= 65279 - NUM_DUMMY_GROUPS - 65024;
     id += 65024;
 
     /* Ensure we did not already issue this id */
