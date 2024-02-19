@@ -855,7 +855,11 @@ int dump_certs_keys_p12(BIO *out, const PKCS12 *p12, const char *pass,
         } else if (bagnid == NID_pkcs7_encrypted) {
             if (options & INFO) {
                 BIO_printf(bio_err, "PKCS7 Encrypted data: ");
-                alg_print(p7->d.encrypted->enc_data->algorithm);
+                if (p7->d.encrypted == NULL) {
+                    BIO_printf(bio_err, "<no data>\n");
+                } else {
+                    alg_print(p7->d.encrypted->enc_data->algorithm);
+                }
             }
             bags = PKCS12_unpack_p7encdata(p7, pass, passlen);
         } else {
