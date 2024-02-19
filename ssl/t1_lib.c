@@ -1049,7 +1049,8 @@ static int gid_cb(const char *elem, int len, void *arg)
         return 0;
     if (garg->gidcnt == garg->gidmax) {
         uint16_t *tmp =
-            OPENSSL_realloc(garg->gid_arr, garg->gidmax + GROUPLIST_INCREMENT);
+            OPENSSL_realloc(garg->gid_arr,
+                            (garg->gidmax + GROUPLIST_INCREMENT) * sizeof(*garg->gid_arr));
         if (tmp == NULL)
             return 0;
         garg->gidmax += GROUPLIST_INCREMENT;
