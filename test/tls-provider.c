@@ -411,7 +411,7 @@ static int tls_prov_get_capabilities(void *provctx, const char *capability,
             dummygroup[0].data = dummy_group_names[i];
             dummygroup[0].data_size = strlen(dummy_group_names[i]) + 1;
             /* assign unique group IDs also to dummy groups for registration */
-            *((int *)(dummygroup[3].data)) = 65279-NUM_DUMMY_GROUPS+i;
+            *((int *)(dummygroup[3].data)) = 65279 - NUM_DUMMY_GROUPS + i;
             ret &= cb(dummygroup, arg);
         }
     }
