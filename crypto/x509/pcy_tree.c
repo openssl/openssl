@@ -423,6 +423,10 @@ static int tree_prune(X509_POLICY_TREE *tree, X509_POLICY_LEVEL *curr)
         nodes = curr->nodes;
         for (i = sk_X509_POLICY_NODE_num(nodes) - 1; i >= 0; i--) {
             node = sk_X509_POLICY_NODE_value(nodes, i);
+
+			if (node == NULL)
+				return X509_PCY_TREE_INTERNAL;
+
             if (node->nchild == 0) {
                 node->parent->nchild--;
                 OPENSSL_free(node);
