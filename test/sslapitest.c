@@ -9651,20 +9651,10 @@ static int test_pluggable_group(int idx)
     int testresult = 0;
     OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
     /* Check that we are not impacted by a provider without any groups */
-    OSSL_PROVIDER *legacyprov = OSSL_PROVIDER_load(libctx, "legacy");
     const char *group_name = idx == 0 ? "xorkemgroup" : "xorgroup";
 
     if (!TEST_ptr(tlsprov))
         goto end;
-
-    if (legacyprov == NULL) {
-        /*
-         * In this case we assume we've been built with "no-legacy" and skip
-         * this test (there is no OPENSSL_NO_LEGACY)
-         */
-        testresult = 1;
-        goto end;
-    }
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
@@ -9700,7 +9690,6 @@ static int test_pluggable_group(int idx)
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     OSSL_PROVIDER_unload(tlsprov);
-    OSSL_PROVIDER_unload(legacyprov);
 
     return testresult;
 }
