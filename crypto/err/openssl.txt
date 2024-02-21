@@ -32,6 +32,7 @@ ASN1_R_EXPLICIT_LENGTH_MISMATCH:119:explicit length mismatch
 ASN1_R_EXPLICIT_TAG_NOT_CONSTRUCTED:120:explicit tag not constructed
 ASN1_R_FIELD_MISSING:121:field missing
 ASN1_R_FIRST_NUM_TOO_LARGE:122:first num too large
+ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT:232:generalizedtime is too short
 ASN1_R_HEADER_TOO_LONG:123:header too long
 ASN1_R_ILLEGAL_BITSTRING_FORMAT:175:illegal bitstring format
 ASN1_R_ILLEGAL_BOOLEAN:176:illegal boolean
@@ -119,6 +120,7 @@ ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE:164:unsupported any defined by type
 ASN1_R_UNSUPPORTED_CIPHER:228:unsupported cipher
 ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE:167:unsupported public key type
 ASN1_R_UNSUPPORTED_TYPE:196:unsupported type
+ASN1_R_UTCTIME_IS_TOO_SHORT:233:utctime is too short
 ASN1_R_WRONG_INTEGER_TYPE:225:wrong integer type
 ASN1_R_WRONG_PUBLIC_KEY_TYPE:200:wrong public key type
 ASN1_R_WRONG_TAG:168:wrong tag

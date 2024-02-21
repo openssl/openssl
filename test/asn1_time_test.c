@@ -101,6 +101,10 @@ static struct testdata tbl_testdata_pos[] = {
     { "1970010100000AZ",   V_ASN1_GENERALIZEDTIME, V_ASN1_GENERALIZEDTIME, 0,           0,  0, 0, },
     { "700101000000X",     V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         0,           0,  0, 0, },
     { "19700101000000X",   V_ASN1_GENERALIZEDTIME, V_ASN1_GENERALIZEDTIME, 0,           0,  0, 0, },
+    { "209912312359Z",     V_ASN1_GENERALIZEDTIME, V_ASN1_GENERALIZEDTIME, 0,           0,  0, 0, },
+    { "199912310000Z",     V_ASN1_GENERALIZEDTIME, V_ASN1_GENERALIZEDTIME, 0,           0,  0, 0, },
+    { "9912312359Z",       V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         0,           0,  0, 0, },
+    { "9912310000Z",       V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         0,           0,  0, 0, },
     { "19700101000000Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_UTCTIME,         1,           0, -1, 1, }, /* Epoch begins */
     { "700101000000Z",     V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         1,           0, -1, 1, }, /* ditto */
     { "20380119031407Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_UTCTIME,         1,  0x7FFFFFFF,  1, 1, }, /* Max 32bit time_t */
@@ -111,9 +115,7 @@ static struct testdata tbl_testdata_pos[] = {
     { "19701006121456Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_UTCTIME,         1,    24063296, -1, 1, },
     { "701006121456Z",     V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         1,    24063296, -1, 1, },
     { "19991231000000Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_UTCTIME,         1,   946598400,  0, 1, }, /* Match baseline */
-    { "199912310000Z",     V_ASN1_GENERALIZEDTIME, V_ASN1_UTCTIME,         1,   946598400,  0, 1, }, /* In various flavors */
     { "991231000000Z",     V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         1,   946598400,  0, 1, },
-    { "9912310000Z",       V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         1,   946598400,  0, 1, },
     { "9912310000+0000",   V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         1,   946598400,  0, 1, },
     { "199912310000+0000", V_ASN1_GENERALIZEDTIME, V_ASN1_UTCTIME,         1,   946598400,  0, 1, },
     { "9912310000-0000",   V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         1,   946598400,  0, 1, },

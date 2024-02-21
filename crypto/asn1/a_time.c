@@ -79,7 +79,7 @@ int ossl_asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
     static const int max[9] = { 99, 99, 12, 31, 23, 59, 59, 12, 59 };
     static const int mdays[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
     char *a;
-    int n, i, i2, l, o, min_l = 11, strict = 0, end = 6, btz = 5, md;
+    int n, i, i2, l, o, min_l, strict = 0, end = 6, btz = 5, md;
     struct tm tmp;
 #if defined(CHARSET_EBCDIC)
     const char upper_z = 0x5A, num_zero = 0x30, period = 0x2E, minus = 0x2D, plus = 0x2B;
@@ -95,18 +95,16 @@ int ossl_asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
      * 3. "+|-" is not allowed to indicate a timezone
      */
     if (d->type == V_ASN1_UTCTIME) {
+        min_l = 13;
         if (d->flags & ASN1_STRING_FLAG_X509_TIME) {
-            min_l = 13;
             strict = 1;
         }
     } else if (d->type == V_ASN1_GENERALIZEDTIME) {
         end = 7;
         btz = 6;
+        min_l = 15;
         if (d->flags & ASN1_STRING_FLAG_X509_TIME) {
-            min_l = 15;
             strict = 1;
-        } else {
-            min_l = 13;
         }
     } else {
         return 0;

@@ -921,6 +921,14 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
             ERR_raise(ERR_LIB_ASN1, ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH);
             goto err;
         }
+        if (utype == V_ASN1_GENERALIZEDTIME && (len < 15)) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT);
+            goto err;
+        }
+        if (utype == V_ASN1_UTCTIME && (len < 13)) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_UTCTIME_IS_TOO_SHORT);
+            goto err;
+        }
         /* All based on ASN1_STRING and handled the same */
         if (*pval == NULL) {
             stmp = ASN1_STRING_type_new(utype);
