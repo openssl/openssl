@@ -117,6 +117,8 @@ struct ossl_statem_st {
     OSSL_HANDSHAKE_STATE hand_state;
     /* The handshake state requested by an API call (e.g. HelloRequest) */
     OSSL_HANDSHAKE_STATE request_state;
+    /* The handshake state waiting for acknowledge */
+    OSSL_HANDSHAKE_STATE deferred_ack_state;
     ERROR_STATE error_state;
     int in_init;
     int read_state_first_init;
