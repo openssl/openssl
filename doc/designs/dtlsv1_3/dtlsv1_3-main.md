@@ -75,6 +75,56 @@ for DTLSv1.3 connections.
 The DTLSv1.3 implementation does not include the message sequence number,
 fragment offset and fragment length as is the case with previous versions of DTLS.
 
+#### DTLS ACK records (RFC9147 Section 7)
+
+ACKs are sent for KeyUpdates, NewSessionTicket, Certificate (client),
+CompressedCertificate (Client), CertificateVerify (client) and Finish (client).
+
+Notes on RFC9147 Section 7.1:
+
+* The implementation does not offer any logic to determine that there is disruption
+  when receiving messages which means it will not send ACKs for the example given
+  in RFC9147 Figure 12.
+* ACKs are always sent immediately after receiving a full message to be ACKed.
+* If the implementation does not receive an ACK for all fragments of a flight,
+  then the full flight will be retransmitted.
+* Empty ACKs are never sent.
+* The implementation does not explicitly prohibit receiving unencrypted ACKs. The
+  implementation will only ACK records of epoch > 0 so all ACKs sent by the
+  implementation will be encrypted.
+* The implementation only accepts ACKs after DTLSv1.3 has been negotiated. ACKs
+  that are received when DTLSv1.3 has not been negotiated is handled with a fatal
+  alert as any other unexpected message. ACKs that are received before version
+  negotiation are dropped.
+* The implementation ignores ACKs received for messages other than KeyUpdates,
+  NewSessionTicket, Certificate (client), CertificateVerify (client) and Finish (client).
+
+Missing functionality:
+
+There's need for a lot more corner case testing:
+
+* Correct handling of ACKs during KeyUpdate and SessionTicket updates.
+* Currently only retransmission after a missing ACK of client Finish message is
+  tested.
+* TLSProxy does not support testing post handshake message ACK testing. Such
+  testing probably needs to be performed by another framework.
+* This comment also forms a great test case:
+  <https://github.com/openssl/openssl/pull/25119#discussion_r1871643459>
+
+### Known issues
+
+#### Dropped records handling
+
+The implementation is only partially able to handle dropped records. For example
+`test_dtls13ack` has a disabled test case that fails when compressed certificates
+are sent. It seems like the implementation is not able to properly handle the
+case were the last flight of the client is dropped if it contains a client cert.
+In that case it should retransmit the CompressedCertificate and CertificateVerify
+messages in epoch 2, but it chooses to do it in epoch 3.
+
+There's a need to setup a test that checks dropped records in several scenarios
+and configurations in order to properly fix and verify.
+
 Implementation progress
 -----------------------
 
@@ -88,12 +138,10 @@ A summary of larger work items that needs to be addressed.
 Notice that some of the requirements mentioned in [List of DTLSv1.3 requirements](#list-of-dtls-13-requirements)
 is not covered by these workitems and must be implemented separately.
 
-| Summary                                             | #PR    |
-|-----------------------------------------------------|--------|
-| ACK messages                                        | #25119 |
-| Use HelloRetryRequest instead of HelloVerifyRequest | #22985 |
-| EndOfEarlyData message                              | -      |
-| DTLSv1.3 Fuzzer                                     | -      |
+| Summary                | #PR    |
+|------------------------|--------|
+| EndOfEarlyData message | -      |
+| DTLSv1.3 Fuzzer        | -      |
 
 ### Changes from DTLS 1.2 and/or TLS 1.3
 
@@ -138,10 +186,6 @@ random value:
 
 > the EndOfEarlyData message is omitted both from the wire and the handshake
 > transcript
-
-#### ACK messages
-
-See section 7 and 8 of RFC 9147.
 
 ### List of DTLSv1.3 requirements
 
