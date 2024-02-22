@@ -220,6 +220,7 @@ extern "C" {
 # define SSL3_RT_ALERT                   21
 # define SSL3_RT_HANDSHAKE               22
 # define SSL3_RT_APPLICATION_DATA        23
+# define SSL3_RT_ACK                     26 /*RFC 9147*/
 
 /* Pseudo content types to indicate additional parameters */
 # define TLS1_RT_CRYPTO                  0x1000
@@ -332,6 +333,9 @@ extern "C" {
 # endif
 # define SSL3_MT_MESSAGE_HASH                    254
 # define DTLS1_MT_HELLO_VERIFY_REQUEST           3
+
+/* Dummy message type for handling ACK like a normal handshake message */
+# define DTLS13_MT_ACK                           0x0126
 
 /* Dummy message type for handling CCS like a normal handshake message */
 # define SSL3_MT_CHANGE_CIPHER_SPEC              0x0101
