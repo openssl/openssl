@@ -227,7 +227,9 @@ sub hrr_filter
         my $dup_hrr;
 
         if ($proxy->isdtls()) {
-            $dup_hrr = TLSProxy::Record->new_dtls(3,
+            $dup_hrr = TLSProxy::Record->new_dtls(
+                1,
+                3,
                 $hrr_record->content_type(),
                 $hrr_record->version(),
                 $hrr_record->epoch(),
@@ -239,7 +241,9 @@ sub hrr_filter
                 $hrr_record->data(),
                 $hrr_record->decrypt_data());
         } else {
-            $dup_hrr = TLSProxy::Record->new(3,
+            $dup_hrr = TLSProxy::Record->new(
+                1,
+                3,
                 $hrr_record->content_type(),
                 $hrr_record->version(),
                 $hrr_record->len(),
