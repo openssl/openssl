@@ -87,7 +87,7 @@ static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
         return -1;
 
     rdata = OPENSSL_malloc(sizeof(*rdata));
-    item = pitem_new(rec->seq_num, rdata);
+    item = pitem_new_u64(rec->seq_num, rdata);
     if (rdata == NULL || item == NULL) {
         OPENSSL_free(rdata);
         pitem_free(item);
@@ -254,7 +254,7 @@ start:
                     &rr->rechandle,
                     &rr->version, &rr->type,
                     &rr->data, &rr->length,
-                    &rr->epoch, rr->seq_num));
+                    &rr->epoch, &rr->seq_num));
             if (ret <= 0) {
                 ret = dtls1_read_failed(sc, ret);
                 /*
@@ -310,14 +310,20 @@ start:
         return 0;
     }
 
+    if (rr->type == SSL3_RT_HANDSHAKE && SSL_CONNECTION_IS_DTLS13(sc)) {
+        sc->s3.tmp.record_epoch = rr->epoch;
+        sc->s3.tmp.record_seq_num = rr->seq_num;
+    }
+
     if (type == rr->type
-        || (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC
-            && type == SSL3_RT_HANDSHAKE && recvd_type != NULL
-            && !is_dtls13)) {
+        || (type == SSL3_RT_HANDSHAKE
+            && ((!is_dtls13 && recvd_type != NULL && rr->type == SSL3_RT_CHANGE_CIPHER_SPEC)
+                || (is_dtls13 && rr->type == SSL3_RT_ACK)))) {
         /*
          * SSL3_RT_APPLICATION_DATA or
          * SSL3_RT_HANDSHAKE or
-         * SSL3_RT_CHANGE_CIPHER_SPEC
+         * SSL3_RT_CHANGE_CIPHER_SPEC or
+         * SSL3_RT_ACK
          */
         /*
          * make sure that we are not getting application data when we are
@@ -370,6 +376,7 @@ start:
         }
 #endif
         *readbytes = n;
+
         return 1;
     }
 
@@ -495,7 +502,7 @@ start:
     /*
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
-    if (rr->type == SSL3_RT_HANDSHAKE && !ossl_statem_get_in_handshake(sc)) {
+    if (!ossl_statem_get_in_handshake(sc) && rr->type == SSL3_RT_HANDSHAKE) {
         unsigned char msg_type;
 
         /*
@@ -542,7 +549,10 @@ start:
             }
             goto start;
         }
+    }
 
+    if (!ossl_statem_get_in_handshake(sc)
+        && (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ACK)) {
         /*
          * To get here we must be trying to read app data but found handshake
          * data. But if we're trying to read app data, and we're not in init
@@ -598,6 +608,34 @@ start:
          */
         SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, ERR_R_INTERNAL_ERROR);
         return -1;
+
+    case SSL3_RT_ACK:
+        switch (sc->negotiated_version) {
+        case DTLS1_3_VERSION:
+            /* ACK should have been handled if DTLSv1.3 has been negotiated. */
+            SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, ERR_R_INTERNAL_ERROR);
+            return -1;
+
+        case DTLS_ANY_VERSION:
+            /*
+             * This must be an ACK from a DTLSv1.3 server for a partial
+             * ClientHello. We always send the full message again if the
+             * ClientHello is not responded to with a ServerHello before the
+             * timer runs out. Drop the record.
+             */
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
+            goto start;
+
+        default:
+            /*
+             * If we receive an ACK record when we have negotiated a lower version
+             * than DTLSv1.3 then we respond with an unexpected record fatal alert.
+             */
+            SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);
+            return -1;
+        }
+
     case SSL3_RT_APPLICATION_DATA:
         /*
          * At this point, we were expecting handshake data, but have
@@ -680,6 +718,33 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
 
     if (ret > 0)
         *written = len;
+
+    /*
+     * Add record number to the buffered sent message
+     */
+    if (type == SSL3_RT_HANDSHAKE && ret > 0 && SSL_CONNECTION_IS_DTLS13(sc)) {
+        pitem *item;
+        unsigned char prio[8];
+
+        dtls1_get_queue_priority(prio, sc->d1->w_msg.msg_seq, 0);
+        item = pqueue_find(&sc->d1->sent_messages, prio);
+
+        if (item == NULL)
+            return ret;
+
+        if (dtls_msg_needs_ack(sc->server, sc->d1->w_msg.msg_type)) {
+            dtls_sent_msg *sent_msg;
+            DTLS1_RECORD_NUMBER *rec_num;
+
+            sent_msg = (dtls_sent_msg *)item->data;
+            rec_num = dtls1_record_number_new(tmpl.epoch, tmpl.sequence_number);
+
+            if (rec_num == NULL)
+                return -1;
+
+            ossl_list_record_number_insert_tail(&sent_msg->rec_nums, rec_num);
+        }
+    }
 
     return ret;
 }
