@@ -299,6 +299,9 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                  COMP_METHOD *comp)
 {
     ktls_crypto_info_t crypto_info;
+    unsigned char recseq[SEQ_NUM_SIZE], *p_recseq = recseq;
+
+    l2n8(rl->sequence, p_recseq);
 
     /*
      * Check if we are suitable for KTLS. If not suitable we return
@@ -327,7 +330,7 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             return OSSL_RECORD_RETURN_NON_FATAL_ERR;
     }
 
-    if (!ktls_configure_crypto(rl->libctx, rl->version, ciph, md, rl->sequence,
+    if (!ktls_configure_crypto(rl->libctx, rl->version, ciph, md, recseq,
                                &crypto_info,
                                rl->direction == OSSL_RECORD_DIRECTION_WRITE,
                                iv, ivlen, key, keylen, mackey, mackeylen))

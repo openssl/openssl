@@ -220,9 +220,8 @@ static const unsigned char ssl3_pad_2[48] = {
 static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md,
                     int sending)
 {
-    unsigned char *mac_sec, *seq = rl->sequence;
+    unsigned char *mac_sec;
     const EVP_MD_CTX *hash;
-    unsigned char *p, rec_char;
     size_t md_size;
     size_t npad;
     int t;
@@ -257,16 +256,15 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
          * total size.
          */
         unsigned char header[75];
-        size_t j = 0;
-        memcpy(header + j, mac_sec, md_size);
-        j += md_size;
-        memcpy(header + j, ssl3_pad_1, npad);
-        j += npad;
-        memcpy(header + j, seq, 8);
-        j += 8;
-        header[j++] = rec->type;
-        header[j++] = (unsigned char)(rec->length >> 8);
-        header[j++] = (unsigned char)(rec->length & 0xff);
+        WPACKET hdr;
+
+        if (!WPACKET_init_static_len(&hdr, header, 75, 0)
+                || !WPACKET_memcpy(&hdr, rl->mac_secret, md_size)
+                || !WPACKET_memcpy(&hdr, ssl3_pad_1, npad)
+                || !WPACKET_put_bytes_u64(&hdr, rl->sequence)
+                || !WPACKET_put_bytes_u16(&hdr, rec->length)
+                || !WPACKET_finish(&hdr))
+            return 0;
 
         /* Final param == is SSLv3 */
         if (ssl3_cbc_digest_record(EVP_MD_CTX_get0_md(hash),
@@ -278,6 +276,8 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
 #endif
     } else {
         unsigned int md_size_u;
+        unsigned char rec_char, seq[SEQ_NUM_SIZE];
+        unsigned char *p_seq = seq, *p_md = md;
         /* Chop the digest off the end :-) */
         EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
 
@@ -285,8 +285,9 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
             return 0;
 
         rec_char = rec->type;
-        p = md;
-        s2n(rec->length, p);
+        s2n(rec->length, p_md);
+        l2n8(rl->sequence, p_seq);
+
         if (EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
             || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
             || EVP_DigestUpdate(md_ctx, ssl3_pad_1, npad) <= 0

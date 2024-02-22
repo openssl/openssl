@@ -123,6 +123,14 @@ const char *SSL_state_string_long(const SSL *s)
         return "TLSv1.3 write end of early data";
     case TLS_ST_SR_END_OF_EARLY_DATA:
         return "TLSv1.3 read end of early data";
+    case TLS_ST_CR_ACK:
+        return "DTLSv1.3 read server ack";
+    case TLS_ST_CW_ACK:
+        return "DTLSv1.3 write client ack";
+    case TLS_ST_SR_ACK:
+        return "DTLSv1.3 read client ack";
+    case TLS_ST_SW_ACK:
+        return "DTLSv1.3 write server ack";
     default:
         return "unknown state";
     }
@@ -240,6 +248,14 @@ const char *SSL_state_string(const SSL *s)
         return "TWEOED";
     case TLS_ST_SR_END_OF_EARLY_DATA:
         return "TWEOED";
+    case TLS_ST_CR_ACK:
+        return "TRCACK";
+    case TLS_ST_CW_ACK:
+        return "TWCACK";
+    case TLS_ST_SR_ACK:
+        return "TRSACK";
+    case TLS_ST_SW_ACK:
+        return "TWSACK";
     default:
         return "UNKWN";
     }

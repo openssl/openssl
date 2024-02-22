@@ -1366,6 +1366,8 @@ struct ssl_connection_st {
             size_t peer_finish_md_len;
             size_t message_size;
             int message_type;
+            uint64_t record_epoch;
+            uint64_t record_seq_num;
             /* used to hold the new cipher we are going to use */
             const SSL_CIPHER *new_cipher;
             EVP_PKEY *pkey;         /* holds short lived key exchange key */
@@ -1967,6 +1969,7 @@ struct pitem_st {
 typedef struct pitem_st *piterator;
 
 pitem *pitem_new(unsigned char *prio64be, void *data);
+pitem *pitem_new_ex(uint64_t prio64be, void *data);
 void pitem_free(pitem *item);
 pqueue *pqueue_new(void);
 void pqueue_free(pqueue *pq);
@@ -1974,22 +1977,40 @@ pitem *pqueue_insert(pqueue *pq, pitem *item);
 pitem *pqueue_peek(pqueue *pq);
 pitem *pqueue_pop(pqueue *pq);
 pitem *pqueue_find(pqueue *pq, unsigned char *prio64be);
+pitem *pqueue_find_ex(pqueue *pq, uint64_t prio64be);
 pitem *pqueue_iterator(pqueue *pq);
 pitem *pqueue_next(piterator *iter);
 size_t pqueue_size(pqueue *pq);
 
+/* rfc9147, section 4 */
+typedef struct dtls1_record_number_st {
+    uint64_t epoch;
+    uint64_t seqnum;
+    int acknowledged;
+} DTLS1_RECORD_NUMBER;
+
 typedef struct dtls_msg_info_st {
+    unsigned char record_type;
     unsigned char msg_type;
     size_t msg_body_len;
     unsigned short msg_seq;
 } dtls_msg_info;
 
+#define DTLS_MSG_REC_NUM_LEN 256
+
 typedef struct dtls_sent_msg_st {
     dtls_msg_info msg_info;
-    int record_type;
+    DTLS1_RECORD_NUMBER rec_nums[DTLS_MSG_REC_NUM_LEN];
+    size_t rec_nums_idx;
     unsigned char *msg_buf;
     struct dtls1_retransmit_state saved_retransmit_state;
 } dtls_sent_msg;
+
+#define SSL_MSG_IS_IMPLICITLY_ACKED(sentbyserver, msgtype)                      \
+    ((msgtype) != SSL3_MT_NEWSESSION_TICKET && (msgtype) != SSL3_MT_KEY_UPDATE  \
+     && ((msgtype) != SSL3_MT_FINISHED || (sentbyserver)))
+
+#define DTLS_ACK_REC_NUM_LEN 256
 
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
@@ -2023,6 +2044,10 @@ typedef struct dtls1_state_st {
 # ifndef OPENSSL_NO_SCTP
     int shutdown_received;
 # endif
+
+    /* Sequence numbers that are to be acknowledged */
+    DTLS1_RECORD_NUMBER ack_rec_num[DTLS_ACK_REC_NUM_LEN];
+    size_t ack_rec_num_idx;
 
     DTLS_timer_cb timer_cb;
 
@@ -2726,9 +2751,9 @@ int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
 
 __owur int dtls1_read_failed(SSL_CONNECTION *s, int code);
 __owur int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type);
-__owur int dtls1_retransmit_message(SSL_CONNECTION *s, unsigned short seq,
-                                    int *found);
-__owur int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
+__owur int dtls1_retransmit_message(SSL_CONNECTION *s, dtls_sent_msg *sent_msg);
+void dtls1_get_queue_priority(unsigned char *prio64be, unsigned short seq,
+                              int record_type);
 int dtls1_retransmit_sent_messages(SSL_CONNECTION *s);
 void dtls1_clear_received_buffer(SSL_CONNECTION *s);
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s);
