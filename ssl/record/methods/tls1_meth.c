@@ -155,6 +155,30 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     return OSSL_RECORD_RETURN_SUCCESS;
 }
 
+static int setup_record_header(const OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec,
+                               unsigned char *buf, size_t buflen)
+{
+    WPACKET hdr;
+    size_t hdrsize;
+
+    if (buflen < EVP_AEAD_TLS1_AAD_LEN
+            || !WPACKET_init_static_len(&hdr, buf, EVP_AEAD_TLS1_AAD_LEN, 0)
+            || (rl->isdtls && !WPACKET_put_bytes_u16(&hdr, rl->epoch))
+            || (rl->isdtls ? !WPACKET_put_bytes_u48(&hdr, rl->sequence)
+                           : !WPACKET_put_bytes_u64(&hdr, rl->sequence))
+            || !WPACKET_put_bytes_u8(&hdr, rec->type)
+            || !WPACKET_put_bytes_u16(&hdr, rl->version)
+            || !WPACKET_put_bytes_u16(&hdr, rec->length)
+            || !WPACKET_finish(&hdr)
+            || !WPACKET_get_total_written(&hdr, &hdrsize)
+            || hdrsize != EVP_AEAD_TLS1_AAD_LEN) {
+        WPACKET_cleanup(&hdr);
+        return 0;
+    }
+
+    return 1;
+}
+
 #define MAX_PADDING 256
 /*-
  * tls1_cipher encrypts/decrypts |n_recs| in |recs|. Calls RLAYERfatal on
@@ -252,29 +276,16 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
 
         if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ds))
                  & EVP_CIPH_FLAG_AEAD_CIPHER) != 0) {
-            unsigned char *seq;
-
-            seq = rl->sequence;
-
-            if (rl->isdtls) {
-                unsigned char dtlsseq[8], *p = dtlsseq;
-
-                s2n(rl->epoch, p);
-                memcpy(p, &seq[2], 6);
-                memcpy(buf[ctr], dtlsseq, 8);
-            } else {
-                memcpy(buf[ctr], seq, 8);
-                if (!tls_increment_sequence_ctr(rl)) {
-                    /* RLAYERfatal already called */
-                    return 0;
-                }
+            if (!setup_record_header(rl, &recs[ctr], buf[ctr], sizeof(buf[ctr]))) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
             }
 
-            buf[ctr][8] = recs[ctr].type;
-            buf[ctr][9] = (unsigned char)(rl->version >> 8);
-            buf[ctr][10] = (unsigned char)(rl->version);
-            buf[ctr][11] = (unsigned char)(recs[ctr].length >> 8);
-            buf[ctr][12] = (unsigned char)(recs[ctr].length & 0xff);
+            if (!rl->isdtls && !tls_increment_sequence_ctr(rl)) {
+                /* RLAYERfatal already called */
+                return 0;
+            }
+
             pad = EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_AEAD_TLS1_AAD,
                                       EVP_AEAD_TLS1_AAD_LEN, buf[ctr]);
             if (pad <= 0) {
@@ -339,6 +350,9 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
 
     if (!rl->isdtls && rl->tlstree) {
         int decrement_seq = 0;
+        unsigned char recseq[SEQ_NUM_SIZE], *p_recseq = recseq;
+
+        l2n8(rl->sequence, p_recseq);
 
         /*
          * When sending, seq is incremented after MAC calculation.
@@ -348,9 +362,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         if (sending && !rl->use_etm)
             decrement_seq = 1;
 
-        if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_TLSTREE, decrement_seq,
-                                rl->sequence) <= 0) {
-
+        if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_TLSTREE, decrement_seq, recseq) <= 0) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -366,7 +378,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         }
 
         if (!EVP_CipherUpdate(ds, recs[0].data, &outlen, recs[0].input,
-                              (unsigned int)reclen[0]))
+                              (int)reclen[0]))
             return 0;
         recs[0].length = outlen;
 
@@ -466,7 +478,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
 static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md,
                     int sending)
 {
-    unsigned char *seq = rl->sequence;
+    unsigned char seq[SEQ_NUM_SIZE], *p_seq = seq;
     EVP_MD_CTX *hash;
     size_t md_size;
     EVP_MD_CTX *hmac = NULL, *mac_ctx;
@@ -475,6 +487,7 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
     int ret = 0;
 
     hash = rl->md_ctx;
+    l2n8(rl->sequence, p_seq);
 
     t = EVP_MD_CTX_get_size(hash);
     if (!ossl_assert(t >= 0))
@@ -496,22 +509,8 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
             && EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_TLSTREE, 0, seq) <= 0)
         goto end;
 
-    if (rl->isdtls) {
-        unsigned char dtlsseq[8], *p = dtlsseq;
-
-        s2n(rl->epoch, p);
-        memcpy(p, &seq[2], 6);
-
-        memcpy(header, dtlsseq, 8);
-    } else {
-        memcpy(header, seq, 8);
-    }
-
-    header[8] = rec->type;
-    header[9] = (unsigned char)(rl->version >> 8);
-    header[10] = (unsigned char)(rl->version);
-    header[11] = (unsigned char)(rec->length >> 8);
-    header[12] = (unsigned char)(rec->length & 0xff);
+    if (!setup_record_header(rl, rec, header, sizeof(header)))
+        goto end;
 
     if (!sending && !rl->use_etm
         && EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE
