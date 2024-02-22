@@ -245,16 +245,21 @@ static int ossltest_ciphers(ENGINE *, const EVP_CIPHER **,
                             const int **, int);
 
 static int ossltest_cipher_nids[] = {
-    NID_aes_128_cbc, NID_aes_128_gcm,
+    NID_aes_128_cbc, NID_aes_128_ecb, NID_aes_128_gcm,
     NID_aes_128_cbc_hmac_sha1, 0
 };
 
 /* AES128 */
 
-static int ossltest_aes128_init_key(EVP_CIPHER_CTX *ctx,
-                                    const unsigned char *key,
-                                    const unsigned char *iv, int enc);
+static int ossltest_aes128_cbc_init_key(EVP_CIPHER_CTX *ctx,
+                                        const unsigned char *key,
+                                        const unsigned char *iv, int enc);
 static int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                                      const unsigned char *in, size_t inl);
+static int ossltest_aes128_ecb_init_key(EVP_CIPHER_CTX *ctx,
+                                        const unsigned char *key,
+                                        const unsigned char *iv, int enc);
+static int ossltest_aes128_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                       const unsigned char *in, size_t inl);
 static int ossltest_aes128_gcm_init_key(EVP_CIPHER_CTX *ctx,
                                         const unsigned char *key,
@@ -291,7 +296,7 @@ static const EVP_CIPHER *ossltest_aes_128_cbc(void)
                                           EVP_CIPH_FLAG_DEFAULT_ASN1
                                           | EVP_CIPH_CBC_MODE)
             || !EVP_CIPHER_meth_set_init(_hidden_aes_128_cbc,
-                                         ossltest_aes128_init_key)
+                                         ossltest_aes128_cbc_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(_hidden_aes_128_cbc,
                                               ossltest_aes128_cbc_cipher)
             || !EVP_CIPHER_meth_set_impl_ctx_size(_hidden_aes_128_cbc,
@@ -300,6 +305,26 @@ static const EVP_CIPHER *ossltest_aes_128_cbc(void)
         _hidden_aes_128_cbc = NULL;
     }
     return _hidden_aes_128_cbc;
+}
+
+static EVP_CIPHER *_hidden_aes_128_ecb = NULL;
+static const EVP_CIPHER *ossltest_aes_128_ecb(void)
+{
+    if (_hidden_aes_128_ecb == NULL
+        && ((_hidden_aes_128_ecb = EVP_CIPHER_meth_new(NID_aes_128_ecb,
+                                                       16 /* block size */,
+                                                       16 /* key len */)) == NULL
+            || !EVP_CIPHER_meth_set_iv_length(_hidden_aes_128_ecb, 0)
+            || !EVP_CIPHER_meth_set_flags(_hidden_aes_128_ecb,
+                                          EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE)
+            || !EVP_CIPHER_meth_set_init(_hidden_aes_128_ecb, ossltest_aes128_ecb_init_key)
+            || !EVP_CIPHER_meth_set_do_cipher(_hidden_aes_128_ecb, ossltest_aes128_ecb_cipher)
+            || !EVP_CIPHER_meth_set_impl_ctx_size(_hidden_aes_128_ecb,
+                                                  EVP_CIPHER_impl_ctx_size(EVP_aes_128_ecb())))) {
+        EVP_CIPHER_meth_free(_hidden_aes_128_ecb);
+        _hidden_aes_128_ecb = NULL;
+    }
+    return _hidden_aes_128_ecb;
 }
 
 static EVP_CIPHER *_hidden_aes_128_gcm = NULL;
@@ -366,9 +391,11 @@ static const EVP_CIPHER *ossltest_aes_128_cbc_hmac_sha1(void)
 static void destroy_ciphers(void)
 {
     EVP_CIPHER_meth_free(_hidden_aes_128_cbc);
+    EVP_CIPHER_meth_free(_hidden_aes_128_ecb);
     EVP_CIPHER_meth_free(_hidden_aes_128_gcm);
     EVP_CIPHER_meth_free(_hidden_aes_128_cbc_hmac_sha1);
     _hidden_aes_128_cbc = NULL;
+    _hidden_aes_128_ecb = NULL;
     _hidden_aes_128_gcm = NULL;
     _hidden_aes_128_cbc_hmac_sha1 = NULL;
 }
@@ -537,6 +564,9 @@ static int ossltest_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
     case NID_aes_128_cbc:
         *cipher = ossltest_aes_128_cbc();
         break;
+    case NID_aes_128_ecb:
+        *cipher = ossltest_aes_128_ecb();
+        break;
     case NID_aes_128_gcm:
         *cipher = ossltest_aes_128_gcm();
         break;
@@ -686,16 +716,8 @@ static int digest_sha512_final(EVP_MD_CTX *ctx, unsigned char *md)
 /*
  * AES128 Implementation
  */
-
-static int ossltest_aes128_init_key(EVP_CIPHER_CTX *ctx,
-                                    const unsigned char *key,
-                                    const unsigned char *iv, int enc)
-{
-    return EVP_CIPHER_meth_get_init(EVP_aes_128_cbc()) (ctx, key, iv, enc);
-}
-
-static int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                                      const unsigned char *in, size_t inl)
+static int ossltest_cipher(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+                           unsigned char *out, const unsigned char *in, size_t inl)
 {
     unsigned char *tmpbuf;
     int ret;
@@ -711,14 +733,41 @@ static int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         memcpy(tmpbuf, in, inl);
 
     /* Go through the motions of encrypting it */
-    ret = EVP_CIPHER_meth_get_do_cipher(EVP_aes_128_cbc())(ctx, out, in, inl);
+    ret = EVP_CIPHER_meth_get_do_cipher(cipher)(ctx, out, in, inl);
 
     /* Throw it all away and just use the plaintext as the output */
     if (tmpbuf != NULL)
         memcpy(out, tmpbuf, inl);
+
     OPENSSL_free(tmpbuf);
 
     return ret;
+}
+
+static int ossltest_aes128_cbc_init_key(EVP_CIPHER_CTX *ctx,
+                                        const unsigned char *key,
+                                        const unsigned char *iv, int enc)
+{
+    return EVP_CIPHER_meth_get_init(EVP_aes_128_cbc()) (ctx, key, iv, enc);
+}
+
+static int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                                      const unsigned char *in, size_t inl)
+{
+    return ossltest_cipher(ctx, EVP_aes_128_cbc(), out, in, inl);
+}
+
+static int ossltest_aes128_ecb_init_key(EVP_CIPHER_CTX *ctx,
+                                        const unsigned char *key,
+                                        const unsigned char *iv, int enc)
+{
+    return EVP_CIPHER_meth_get_init(EVP_aes_128_ecb()) (ctx, key, iv, enc);
+}
+
+static int ossltest_aes128_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                                      const unsigned char *in, size_t inl)
+{
+    return ossltest_cipher(ctx, EVP_aes_128_ecb(), out, in, inl);
 }
 
 static int ossltest_aes128_gcm_init_key(EVP_CIPHER_CTX *ctx,
