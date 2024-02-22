@@ -116,7 +116,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     int isdtls, sbit = 0, addlen;
     unsigned char *staticiv;
     unsigned char *nonce;
-    unsigned char *seq = rl->sequence;
+    unsigned char seq[SEQ_NUM_SIZE], *p_seq = seq;
     int lenu, lenf;
     TLS_RL_RECORD *rec = &recs[0];
     WPACKET wpkt;
@@ -134,6 +134,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     staticiv = rl->iv;
     nonce = rl->nonce;
     isdtls = rl->isdtls;
+    l2n8(rl->sequence, p_seq);
 
     if (enc_ctx == NULL && rl->mac_ctx == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -470,6 +471,7 @@ const struct record_functions_st tls_1_3_funcs = {
     tls13_cipher,
     NULL,
     tls_default_set_protocol_version,
+    tls_default_get_protocol_version,
     tls_default_read_n,
     tls_get_more_records,
     tls13_validate_record_header,
@@ -491,6 +493,7 @@ const struct record_functions_st dtls_1_3_funcs = {
     tls13_cipher,
     NULL,
     tls_default_set_protocol_version,
+    tls_default_get_protocol_version,
     tls_default_read_n,
     dtls_get_more_records,
     NULL,

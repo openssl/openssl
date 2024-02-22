@@ -792,12 +792,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                : OSSL_RECORD_PROTECTION_LEVEL_APPLICATION);
 
     if (SSL_CONNECTION_IS_DTLS(s)) {
-        /* We have moved to the next flight lets clear out old messages */
-        if (direction == OSSL_RECORD_DIRECTION_READ)
-            dtls1_clear_received_buffer(s);
-        else
-            dtls1_clear_sent_buffer(s);
-
         dtls1_increment_epoch(s, which);
 
         if (level == OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE
@@ -808,6 +802,14 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
              */
             dtls1_increment_epoch(s, which);
         }
+
+        /* We have moved to the next flight lets clear out old messages */
+        if (direction == OSSL_RECORD_DIRECTION_READ) {
+            dtls1_clear_received_buffer(s);
+            dtls1_acknowledge_sent_buffer(s, dtls1_get_epoch(s, which));
+        }
+
+        dtls1_clear_sent_buffer(s, 1);
     }
 
     if (!ssl_set_new_record_layer(s, s->version, direction, level, secret,

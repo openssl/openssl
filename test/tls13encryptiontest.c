@@ -240,9 +240,9 @@ static unsigned char *multihexstr2buf(const char *str[3], size_t *len)
 
 static int load_record(TLS_RL_RECORD *rec, RECORD_DATA *recd,
                        unsigned char **key, unsigned char *iv, size_t ivlen,
-                       unsigned char *seq)
+                       uint64_t *seq)
 {
-    unsigned char *pt = NULL, *sq = NULL, *ivtmp = NULL;
+    unsigned char *pt = NULL, *sq = NULL, *p_sq, *ivtmp = NULL;
     size_t ptlen;
 
     *key = OPENSSL_hexstr2buf(recd->key, NULL);
@@ -261,7 +261,8 @@ static int load_record(TLS_RL_RECORD *rec, RECORD_DATA *recd,
     rec->length = ptlen;
     memcpy(rec->data, pt, ptlen);
     OPENSSL_free(pt);
-    memcpy(seq, sq, SEQ_NUM_SIZE);
+    p_sq = sq;
+    n2l8(p_sq, *seq);
     OPENSSL_free(sq);
     memcpy(iv, ivtmp, ivlen);
     OPENSSL_free(ivtmp);
@@ -311,7 +312,7 @@ static int test_tls13_encryption(void)
     const EVP_CIPHER *ciph = EVP_aes_128_gcm();
     int ret = 0;
     size_t ivlen, ctr;
-    unsigned char seqbuf[SEQ_NUM_SIZE];
+    uint64_t recseq;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     OSSL_RECORD_LAYER *rrl = NULL, *wrl = NULL;
 
@@ -326,7 +327,7 @@ static int test_tls13_encryption(void)
     for (ctr = 0; ctr < OSSL_NELEM(refdata); ctr++) {
         /* Load the record */
         ivlen = EVP_CIPHER_get_iv_length(ciph);
-        if (!load_record(&rec, &refdata[ctr], &key, iv, ivlen, seqbuf)) {
+        if (!load_record(&rec, &refdata[ctr], &key, iv, ivlen, &recseq)) {
             TEST_error("Failed loading key into EVP_CIPHER_CTX");
             goto err;
         }
@@ -342,7 +343,8 @@ static int test_tls13_encryption(void)
                           NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                           &wrl)))
             goto err;
-        memcpy(wrl->sequence, seqbuf, sizeof(seqbuf));
+
+        wrl->sequence = recseq;
 
         /* Encrypt it */
         if (!TEST_size_t_eq(wrl->funcs->cipher(wrl, &rec, 1, 1, NULL, 0), 1)) {
@@ -366,7 +368,8 @@ static int test_tls13_encryption(void)
                           NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                           &rrl)))
             goto err;
-        memcpy(rrl->sequence, seqbuf, sizeof(seqbuf));
+
+        rrl->sequence = recseq;
 
         /* Decrypt it */
         if (!TEST_int_eq(rrl->funcs->cipher(rrl, &rec, 1, 0, NULL, 0), 1)) {

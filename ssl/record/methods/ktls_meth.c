@@ -299,6 +299,9 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                  COMP_METHOD *comp)
 {
     ktls_crypto_info_t crypto_info;
+    unsigned char recseq[SEQ_NUM_SIZE], *p_recseq = recseq;
+
+    l2n8(rl->sequence, p_recseq);
 
     /*
      * Check if we are suitable for KTLS. If not suitable we return
@@ -327,7 +330,7 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             return OSSL_RECORD_RETURN_NON_FATAL_ERR;
     }
 
-    if (!ktls_configure_crypto(rl->libctx, rl->version, ciph, md, rl->sequence,
+    if (!ktls_configure_crypto(rl->libctx, rl->version, ciph, md, recseq,
                                &crypto_info,
                                rl->direction == OSSL_RECORD_DIRECTION_WRITE,
                                iv, ivlen, key, keylen, mackey, mackeylen))
@@ -570,6 +573,7 @@ static struct record_functions_st ossl_ktls_funcs = {
     ktls_cipher,
     NULL,
     tls_default_set_protocol_version,
+    tls_default_get_protocol_version,
     ktls_read_n,
     tls_get_more_records,
     ktls_validate_record_header,
@@ -600,6 +604,7 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_get_alert_code,
     tls_set1_bio,
     tls_set_protocol_version,
+    tls_get_protocol_version,
     tls_set_plain_alerts,
     tls_set_first_handshake,
     tls_set_max_pipelines,

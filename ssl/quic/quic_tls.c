@@ -362,7 +362,7 @@ static int quic_retry_write_records(OSSL_RECORD_LAYER *rl)
 static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
                             int *rversion, uint8_t *type, const unsigned char **data,
                             size_t *datalen, uint16_t *epoch,
-                            unsigned char *seq_num)
+                            uint64_t *seq_num)
 {
     if (rl->recread != 0 || rl->recunreleased != 0)
         return OSSL_RECORD_RETURN_FATAL;
@@ -583,6 +583,7 @@ static const OSSL_RECORD_METHOD quic_tls_record_method = {
     quic_get_alert_code,
     quic_set1_bio,
     quic_set_protocol_version,
+    NULL,
     quic_set_plain_alerts,
     quic_set_first_handshake,
     quic_set_max_pipelines,

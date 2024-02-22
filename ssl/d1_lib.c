@@ -110,10 +110,11 @@ int dtls1_new(SSL *ssl)
     return 1;
 }
 
-static void dtls1_clear_queues(SSL_CONNECTION *s)
+static void dtls1_clear_queues(SSL_CONNECTION *s, int keep_unacked_msgs)
 {
     dtls1_clear_received_buffer(s);
-    dtls1_clear_sent_buffer(s);
+    dtls1_clear_sent_buffer(s, keep_unacked_msgs);
+    ossl_list_record_number_elem_free(&s->d1->ack_rec_num);
 }
 
 void dtls1_clear_received_buffer(SSL_CONNECTION *s)
@@ -129,15 +130,72 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
     }
 }
 
-void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
+void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list)
+{
+    DTLS1_RECORD_NUMBER *p_elem;
+    DTLS1_RECORD_NUMBER *p_elem_next = ossl_list_record_number_head(p_list);
+
+    while ((p_elem = p_elem_next) != NULL) {
+        p_elem_next = ossl_list_record_number_next(p_elem_next);
+        ossl_list_record_number_remove(p_list, p_elem);
+        OPENSSL_free(p_elem);
+    }
+}
+
+DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum)
+{
+    DTLS1_RECORD_NUMBER *recnum = OPENSSL_zalloc(sizeof(*recnum));
+
+    if (recnum != NULL) {
+        recnum->epoch = epoch;
+        recnum->seqnum = seqnum;
+    }
+
+    return recnum;
+}
+
+void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch)
 {
     pitem *item = NULL;
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
+
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
+        DTLS1_RECORD_NUMBER *recnum;
+        DTLS1_RECORD_NUMBER *recnum_next = ossl_list_record_number_head(&sent_msg->rec_nums);
+
+        while ((recnum = recnum_next) != NULL) {
+            recnum_next = ossl_list_record_number_next(recnum_next);
+
+            if (recnum->epoch < before_epoch) {
+                ossl_list_record_number_remove(&sent_msg->rec_nums, recnum);
+                OPENSSL_free(recnum);
+            }
+        }
+    }
+}
+
+void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
+{
+    pitem *item = NULL;
+    pqueue *remaining_sent_messages = pqueue_new();
     pqueue *sent_messages = &s->d1->sent_messages;
 
     while ((item = pqueue_pop(sent_messages)) != NULL) {
-        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *) item->data;
+        unsigned char msg_type = sent_msg->msg_info.msg_type;
+        unsigned char record_type = sent_msg->msg_info.record_type;
 
-        if (sent_msg->record_type == SSL3_RT_CHANGE_CIPHER_SPEC
+        if (SSL_CONNECTION_IS_DTLS13(s)
+            && !ossl_list_record_number_is_empty(&sent_msg->rec_nums)
+            && keep_unacked_msgs) {
+            pqueue_insert(remaining_sent_messages, item);
+            continue;
+        }
+
+        if (((!SSL_CONNECTION_IS_DTLS13(s) && record_type == SSL3_RT_CHANGE_CIPHER_SPEC)
+             || (SSL_CONNECTION_IS_DTLS13(s)
+                 && (msg_type == SSL3_MT_FINISHED || msg_type == SSL3_MT_KEY_UPDATE)))
             && sent_msg->saved_retransmit_state.wrlmethod != NULL
             && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl) {
             /*
@@ -150,8 +208,28 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
         dtls1_sent_msg_free(sent_msg);
         pitem_free(item);
     }
+
+    if (SSL_CONNECTION_IS_DTLS13(s))
+        while ((item = pqueue_pop(remaining_sent_messages)) != NULL)
+            pqueue_insert(&s->d1->sent_messages, item);
+
+    pqueue_free(remaining_sent_messages);
 }
 
+int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s)
+{
+    pitem *item;
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
+
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (!ossl_list_record_number_is_empty(&msg->rec_nums))
+            return 1;
+    }
+
+    return 0;
+}
 
 void dtls1_free(SSL *ssl)
 {
@@ -161,7 +239,7 @@ void dtls1_free(SSL *ssl)
         return;
 
     if (s->d1 != NULL)
-        dtls1_clear_queues(s);
+        dtls1_clear_queues(s, 0);
 
     DTLS_RECORD_LAYER_free(&s->rlayer);
     ssl3_free(ssl);
@@ -187,7 +265,7 @@ int dtls1_clear(SSL *ssl)
         mtu = s->d1->mtu;
         link_mtu = s->d1->link_mtu;
 
-        dtls1_clear_queues(s);
+        dtls1_clear_queues(s, 1);
 
         memset(s->d1, 0, sizeof(*s->d1));
 
@@ -353,7 +431,7 @@ void dtls1_stop_timer(SSL_CONNECTION *s)
     s->d1->timeout_duration_us = 1000000;
     dtls1_bio_set_next_timeout(s->rbio, s->d1);
     /* Clear retransmission buffer */
-    dtls1_clear_sent_buffer(s);
+    dtls1_clear_sent_buffer(s, 0);
 }
 
 int dtls1_check_timeout_num(SSL_CONNECTION *s)

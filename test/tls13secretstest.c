@@ -249,7 +249,11 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
 {
 }
 
-void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
+void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
+{
+}
+
+void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch)
 {
 }
 

@@ -104,6 +104,8 @@ struct ossl_statem_st {
     OSSL_HANDSHAKE_STATE hand_state;
     /* The handshake state requested by an API call (e.g. HelloRequest) */
     OSSL_HANDSHAKE_STATE request_state;
+    /* The handshake state waiting for acknowledge */
+    OSSL_HANDSHAKE_STATE deferred_ack_state;
     int in_init;
     int read_state_first_init;
     /* true when we are actually in SSL_accept() or SSL_connect() */
@@ -115,7 +117,6 @@ struct ossl_statem_st {
     int cleanuphand;
     /* Should we skip the CertificateVerify message? */
     unsigned int no_cert_verify;
-    int use_timer;
 
     /* Test harness message mutator callbacks */
     ossl_statem_mutate_handshake_cb mutate_handshake_cb;

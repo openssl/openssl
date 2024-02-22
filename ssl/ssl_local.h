@@ -34,6 +34,7 @@
 # include "internal/tsan_assist.h"
 # include "internal/bio.h"
 # include "internal/ktls.h"
+# include "internal/list.h"
 # include "internal/time.h"
 # include "internal/ssl.h"
 # include "internal/cryptlib.h"
@@ -1377,6 +1378,8 @@ struct ssl_connection_st {
             size_t peer_finish_md_len;
             size_t message_size;
             int message_type;
+            uint64_t record_epoch;
+            uint64_t record_seq_num;
             /* used to hold the new cipher we are going to use */
             const SSL_CIPHER *new_cipher;
             EVP_PKEY *pkey;         /* holds short lived key exchange key */
@@ -1984,6 +1987,7 @@ struct pitem_st {
 typedef struct pitem_st *piterator;
 
 pitem *pitem_new(unsigned char *prio64be, void *data);
+pitem *pitem_new_u64(uint64_t prio, void *data);
 void pitem_free(pitem *item);
 pqueue *pqueue_new(void);
 void pqueue_free(pqueue *pq);
@@ -1991,22 +1995,60 @@ pitem *pqueue_insert(pqueue *pq, pitem *item);
 pitem *pqueue_peek(pqueue *pq);
 pitem *pqueue_pop(pqueue *pq);
 pitem *pqueue_find(pqueue *pq, unsigned char *prio64be);
+pitem *pqueue_find_u64(pqueue *pq, uint64_t prio);
 pitem *pqueue_iterator(pqueue *pq);
 pitem *pqueue_next(piterator *iter);
 size_t pqueue_size(pqueue *pq);
 
 typedef struct dtls_msg_info_st {
+    unsigned char record_type;
     unsigned char msg_type;
     size_t msg_body_len;
     unsigned short msg_seq;
 } dtls_msg_info;
 
+/* rfc9147, section 4 */
+typedef struct dtls1_record_number_st DTLS1_RECORD_NUMBER;
+
+struct dtls1_record_number_st {
+    uint64_t epoch;
+    uint64_t seqnum;
+    OSSL_LIST_MEMBER(record_number, DTLS1_RECORD_NUMBER);
+};
+
+DEFINE_LIST_OF(record_number, DTLS1_RECORD_NUMBER);
+
+DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum);
+
+void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list);
+
 typedef struct dtls_sent_msg_st {
     dtls_msg_info msg_info;
-    int record_type;
+    OSSL_LIST(record_number) rec_nums;
     unsigned char *msg_buf;
     struct dtls1_retransmit_state saved_retransmit_state;
 } dtls_sent_msg;
+
+int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s);
+
+static ossl_inline int dtls_msg_needs_ack(int sentbyserver, unsigned char msgtype)
+{
+    switch (msgtype) {
+    case SSL3_MT_NEWSESSION_TICKET:
+    case SSL3_MT_KEY_UPDATE:
+        return 1;
+
+    case SSL3_MT_CERTIFICATE:
+    case SSL3_MT_COMPRESSED_CERTIFICATE:
+    case SSL3_MT_CERTIFICATE_VERIFY:
+    case SSL3_MT_FINISHED:
+        if (!sentbyserver)
+            return 1;
+        /* fall-through */
+    default:
+        return 0;
+    }
+}
 
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
@@ -2040,6 +2082,9 @@ typedef struct dtls1_state_st {
 # ifndef OPENSSL_NO_SCTP
     int shutdown_received;
 # endif
+
+    /* Sequence numbers that are to be acknowledged */
+    OSSL_LIST(record_number) ack_rec_num;
 
     DTLS_timer_cb timer_cb;
 
@@ -2772,12 +2817,13 @@ int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
 
 __owur int dtls1_read_failed(SSL_CONNECTION *s, int code);
 __owur int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type);
-__owur int dtls1_retransmit_message(SSL_CONNECTION *s, unsigned short seq,
-                                    int *found);
-__owur int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
+__owur int dtls1_retransmit_message(SSL_CONNECTION *s, dtls_sent_msg *sent_msg);
+void dtls1_get_queue_priority(unsigned char *prio64be, unsigned short seq,
+                              int record_type);
 int dtls1_retransmit_sent_messages(SSL_CONNECTION *s);
 void dtls1_clear_received_buffer(SSL_CONNECTION *s);
-void dtls1_clear_sent_buffer(SSL_CONNECTION *s);
+void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs);
+void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch);
 __owur OSSL_TIME dtls1_default_timeout(void);
 __owur int dtls1_get_timeout(const SSL_CONNECTION *s, OSSL_TIME *timeleft);
 __owur int dtls1_check_timeout_num(SSL_CONNECTION *s);

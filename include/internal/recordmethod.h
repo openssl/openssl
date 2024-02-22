@@ -65,6 +65,8 @@ typedef struct ossl_record_layer_st OSSL_RECORD_LAYER;
 struct ossl_record_template_st {
     unsigned char type;
     unsigned int version;
+    uint64_t sequence_number;
+    uint64_t epoch;
     const unsigned char *buf;
     size_t buflen;
 };
@@ -235,8 +237,8 @@ struct ossl_record_method_st {
      * multiple records in one go and buffer them.
      */
     int (*read_record)(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
-                      uint8_t *type, const unsigned char **data, size_t *datalen,
-                      uint16_t *epoch, unsigned char *seq_num);
+                       uint8_t *type, const unsigned char **data, size_t *datalen,
+                       uint16_t *epoch, uint64_t *seq_num);
     /*
      * Release length bytes from a buffer associated with a record previously
      * read with read_record. Once all the bytes from a record are released, the
@@ -260,6 +262,12 @@ struct ossl_record_method_st {
 
     /* Called when protocol negotiation selects a protocol version to use */
     int (*set_protocol_version)(OSSL_RECORD_LAYER *rl, int version);
+
+    /*
+     * Returns the protocol version if TLS_ANY_VERSION or DTLS_ANY_VERSION is
+     * returned it means that the protocol version has not been set.
+     */
+    int (*get_protocol_version)(OSSL_RECORD_LAYER *rl);
 
     /*
      * Whether we are allowed to receive unencrypted alerts, even if we might
