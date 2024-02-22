@@ -48,12 +48,20 @@ IMPLEMENT_HT_VALUE_TYPE_FNS(NUMNAME_ENTRY, nne, static)
  * ==================
  */
 
+typedef void (*unlock_fn)(OSSL_NAMEMAP *);
+typedef unlock_fn (*lock_fn)(OSSL_NAMEMAP *);
+static unlock_fn do_setup_lock_real(OSSL_NAMEMAP *nm);
+
 struct ossl_namemap_st {
     /* Flags */
     unsigned int stored:1; /* If 1, it's stored in a library context */
 
     HT *namenum;  /* Name->number mapping */
 
+    CRYPTO_RWLOCK *setup_lock;
+    CRYPTO_THREAD_ID setup_thread;
+    lock_fn do_lock[2];
+    int lock_idx;
     TSAN_QUALIFIER int max_number;     /* Current max number */
 };
 
@@ -479,15 +487,92 @@ static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,
  * ==========================
  */
 
+/*
+ * This deserves some explination
+ * with the new hashtable implementation, there was a desire
+ * to operate locklessly, which is good.  However, ossl_namemap_stored
+ * is potentially called from many threads at once, and the first caller
+ * through this is meant to initalize the namemap table with all the cipher, md,
+ * and pkey method names.  When this is run in parallel, now that the namemap
+ * lock is gone, we occasionally get races, and so threads might do a lookup
+ * while the table is getting populated, leading to negative lookups, etc, which
+ * in turn results in various bad behavior (bad/early exits, erroneous errors,
+ * etc).
+ *
+ * To combat that, what we need is for one and only one thread to do that
+ * population, and for other threads to wait while it completes.  But adding a
+ * lock here basically just re-introduces the lock we removed, which is...bad.
+ *
+ * So we have this scheme instead.
+ *
+ * What happens here is a stateful locking mechanism:
+ * A call to ossl_namemap_stored, now calls namemap->lock_fn, which initailly
+ * points to do_setup_lock_real, which takes the namemap write lock, and sets
+ * the identity of the setup thread, if the setup_thread id is an inital value
+ * of 0. This function returns an unlock function to the caller, which is called
+ * on exit from ossl_namemap_stored.  do_setup_lock_real return
+ * do_setup_unlock_real, which in turn updates the namemap lock_fn pointer to
+ * point to do_setup_lock_nop, then unlocks the lock and returns
+ *
+ * Subsequent calls to the lock_fn pointer (after being updated to point to
+ * do_setup_lock_nop return do_setup_unlock_nop, which just does a return
+ *
+ * In this way, any threads which attempt to call ossl_namemap_stored, will
+ * block until the initial population is done on the context, but once the
+ * context is populated, operation can continue locklessly
+ *
+ */
+
+static void do_setup_unlock_nop(OSSL_NAMEMAP *nm)
+{
+    return;
+}
+
+static unlock_fn do_setup_lock_nop(OSSL_NAMEMAP *nm)
+{
+    return do_setup_unlock_nop;
+}
+
+static void do_setup_unlock_real(OSSL_NAMEMAP *nm)
+{
+    int toggle = 0;
+    if (CRYPTO_THREAD_compare_id(nm->setup_thread,
+                                 CRYPTO_THREAD_get_current_id())) {
+        toggle = 1;
+    }
+    CRYPTO_THREAD_unlock(nm->setup_lock);
+
+    if (toggle)
+        CRYPTO_atomic_add(&nm->lock_idx, 1, &toggle, nm->setup_lock);
+}
+
+static unlock_fn do_setup_lock_real(OSSL_NAMEMAP *nm)
+{
+    if (!CRYPTO_THREAD_write_lock(nm->setup_lock))
+        return NULL;
+    if (CRYPTO_THREAD_compare_id(nm->setup_thread, (CRYPTO_THREAD_ID)0))
+        nm->setup_thread = CRYPTO_THREAD_get_current_id();
+    return do_setup_unlock_real;
+}
+
 OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
 {
 #ifndef FIPS_MODULE
     int nms;
 #endif
+    void (*do_unlock)(OSSL_NAMEMAP *);
+    int lock_idx;
+
     OSSL_NAMEMAP *namemap =
         ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_NAMEMAP_INDEX);
 
     if (namemap == NULL)
+        return NULL;
+
+    CRYPTO_atomic_load_int(&namemap->lock_idx, &lock_idx, &namemap->setup_lock);
+
+    do_unlock = namemap->do_lock[lock_idx](namemap);
+    if (do_unlock == NULL)
         return NULL;
 
 #ifndef FIPS_MODULE
@@ -497,6 +582,7 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
          * Could not get lock to make the count, so maybe internal objects
          * weren't added. This seems safest.
          */
+        do_unlock(namemap);
         return NULL;
     }
     if (nms == 1) {
@@ -517,6 +603,7 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
     }
 #endif
 
+    do_unlock(namemap);
     return namemap;
 }
 
@@ -560,12 +647,23 @@ OSSL_NAMEMAP *ossl_namemap_new(void)
     if ((namemap = OPENSSL_zalloc(sizeof(*namemap))) == NULL)
         return NULL;
 
+    namemap->setup_lock = CRYPTO_THREAD_lock_new();
+    if (namemap->setup_lock == NULL) {
+        OPENSSL_free(namemap);
+        namemap = NULL;
+        goto out;
+    }
+
     namemap->namenum = ossl_ht_new(&ht_conf);
     if (namemap->namenum == NULL) {
         ossl_namemap_free(namemap);
         namemap = NULL;
     }
 
+    namemap->do_lock[0] = do_setup_lock_real;
+    namemap->do_lock[1] = do_setup_lock_nop;
+    namemap->lock_idx = 0;
+out:
     return namemap;
 }
 
@@ -575,6 +673,8 @@ void ossl_namemap_free(OSSL_NAMEMAP *namemap)
         return;
 
     ossl_ht_free(namemap->namenum);
+
+    CRYPTO_THREAD_lock_free(namemap->setup_lock);
 
     OPENSSL_free(namemap);
 }
