@@ -9,6 +9,7 @@ use strict;
 
 package TLSProxy::Message;
 
+use TLSProxy::RecordNumber;
 use TLSProxy::Alert;
 
 use constant DTLS_MESSAGE_HEADER_LENGTH => 12;
@@ -21,6 +22,7 @@ use constant {
     MT_SERVER_HELLO => 2,
     MT_HELLO_VERIFY_REQUEST => 3,
     MT_NEW_SESSION_TICKET => 4,
+    MT_END_OF_EARLY_DATA => 5,
     MT_ENCRYPTED_EXTENSIONS => 8,
     MT_CERTIFICATE => 11,
     MT_SERVER_KEY_EXCHANGE => 12,
@@ -29,7 +31,10 @@ use constant {
     MT_CERTIFICATE_VERIFY => 15,
     MT_CLIENT_KEY_EXCHANGE => 16,
     MT_FINISHED => 20,
+    MT_CERTIFICATE_URL => 21,
     MT_CERTIFICATE_STATUS => 22,
+    MT_SUPPLEMENTAL_DATA => 23,
+    MT_KEY_UPDATE => 24,
     MT_COMPRESSED_CERTIFICATE => 25,
     MT_NEXT_PROTO => 67
 };

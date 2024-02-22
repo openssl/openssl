@@ -139,6 +139,15 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
     }
 }
 
+void dtls1_remove_sent_buffer_item(struct pqueue_st *pq, unsigned char *prio64be) {
+    pitem *item = NULL;
+
+    while ((item = pqueue_pop_item(pq, prio64be)) != NULL) {
+        dtls1_sent_msg_free((dtls_sent_msg *)item->data);
+        pitem_free(item);
+    }
+}
+
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
 {
     pitem *item = NULL;

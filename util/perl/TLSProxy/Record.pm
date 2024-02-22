@@ -24,6 +24,7 @@ use constant {
     RT_HANDSHAKE => 22,
     RT_ALERT => 21,
     RT_CCS => 20,
+    RT_ACK => 26,
     RT_UNKNOWN => 100
 };
 
@@ -32,6 +33,7 @@ my %record_type = (
     RT_HANDSHAKE, "HANDSHAKE",
     RT_ALERT, "ALERT",
     RT_CCS, "CCS",
+    RT_ACK, "ACK",
     RT_UNKNOWN, "UNKNOWN"
 );
 
@@ -117,6 +119,7 @@ sub get_records
         my $record;
         if ($isdtls) {
             $record = TLSProxy::Record->new_dtls(
+                $server,
                 $flight,
                 $content_type,
                 $version,
@@ -131,6 +134,7 @@ sub get_records
             );
         } else {
             $record = TLSProxy::Record->new(
+                $server,
                 $flight,
                 $content_type,
                 $version,
@@ -158,6 +162,7 @@ sub get_records
                 if (TLSProxy::Proxy->is_tls13()) {
                     print "  Inner content type: "
                           .$record_type{$record->content_type()}."\n";
+                    print " Data: ".unpack("n",$record->decrypt_data)."\n";
                 }
             }
         }
@@ -211,7 +216,8 @@ sub etm
 sub new_dtls
 {
     my $class = shift;
-    my ($flight,
+    my ($isserver,
+        $flight,
         $content_type,
         $version,
         $epoch,
@@ -222,7 +228,8 @@ sub new_dtls
         $decrypt_len,
         $data,
         $decrypt_data) = @_;
-    return $class->init(1,
+    return $class->init($isserver,
+        1,
         $flight,
         $content_type,
         $version,
@@ -239,7 +246,8 @@ sub new_dtls
 sub new
 {
     my $class = shift;
-    my ($flight,
+    my ($isserver,
+        $flight,
         $content_type,
         $version,
         $len,
@@ -249,6 +257,7 @@ sub new
         $data,
         $decrypt_data) = @_;
     return $class->init(
+        $isserver,
         0,
         $flight,
         $content_type,
@@ -266,7 +275,8 @@ sub new
 sub init
 {
     my $class = shift;
-    my ($isdtls,
+    my ($isserver,
+        $isdtls,
         $flight,
         $content_type,
         $version,
@@ -280,6 +290,7 @@ sub init
         $decrypt_data) = @_;
 
     my $self = {
+        isserver => $isserver,
         isdtls => $isdtls,
         flight => $flight,
         content_type => $content_type,
@@ -414,6 +425,16 @@ sub reconstruct_record
 }
 
 #Read only accessors
+sub isserver
+{
+    my $self = shift;
+    return $self->{isserver};
+}
+sub isdtls
+{
+    my $self = shift;
+    return $self->{isdtls};
+}
 sub flight
 {
     my $self = shift;

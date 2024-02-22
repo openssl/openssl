@@ -670,6 +670,10 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             /* type 23 */
             str_content_type = ", ApplicationData";
             break;
+        case SSL3_RT_ACK:
+            /* type 26 */
+            str_content_type = ", ACK";
+            break;
         case SSL3_RT_HEADER:
             /* type 256 */
             str_content_type = ", RecordHeader";

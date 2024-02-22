@@ -744,17 +744,22 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
  */
 static int statem_do_write(SSL_CONNECTION *s)
 {
+    int record_type;
     OSSL_STATEM *st = &s->statem;
 
     if (st->hand_state == TLS_ST_CW_CHANGE
-        || st->hand_state == TLS_ST_SW_CHANGE) {
-        if (SSL_CONNECTION_IS_DTLS(s))
-            return dtls1_do_write(s, SSL3_RT_CHANGE_CIPHER_SPEC);
-        else
-            return ssl3_do_write(s, SSL3_RT_CHANGE_CIPHER_SPEC);
-    } else {
+            || st->hand_state == TLS_ST_SW_CHANGE)
+        record_type = SSL3_RT_CHANGE_CIPHER_SPEC;
+    else if (st->hand_state == TLS_ST_CW_ACK
+                || st->hand_state == TLS_ST_SW_ACK)
+        record_type = SSL3_RT_ACK;
+    else
         return ssl_do_write(s);
-    }
+
+    if (SSL_CONNECTION_IS_DTLS(s))
+        return dtls1_do_write(s, record_type);
+    else
+        return ssl3_do_write(s, record_type);
 }
 
 /*
@@ -917,7 +922,9 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
             /* Fall through */
 
         case WRITE_STATE_SEND:
-            if (SSL_CONNECTION_IS_DTLS(s) && st->use_timer) {
+            if (SSL_CONNECTION_IS_DTLS(s) && st->use_timer
+                    && st->hand_state != TLS_ST_CW_ACK
+                    && st->hand_state != TLS_ST_SW_ACK) {
                 dtls1_start_timer(s);
             }
             ret = statem_do_write(s);

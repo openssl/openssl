@@ -488,10 +488,6 @@ sub clientstart
 sub process_packet
 {
     my ($self, $server, $packet) = @_;
-    my $len_real;
-    my $decrypt_len;
-    my $data;
-    my $recnum;
 
     if ($server) {
         print "Received server packet\n";

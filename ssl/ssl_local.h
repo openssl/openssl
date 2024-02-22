@@ -1967,12 +1967,14 @@ void pqueue_free(pqueue *pq);
 pitem *pqueue_insert(pqueue *pq, pitem *item);
 pitem *pqueue_peek(pqueue *pq);
 pitem *pqueue_pop(pqueue *pq);
+pitem *pqueue_pop_item(pqueue *pq, unsigned char *prio64be);
 pitem *pqueue_find(pqueue *pq, unsigned char *prio64be);
 pitem *pqueue_iterator(pqueue *pq);
 pitem *pqueue_next(piterator *iter);
 size_t pqueue_size(pqueue *pq);
 
 typedef struct dtls_msg_info_st {
+    unsigned char record_type;
     unsigned char msg_type;
     size_t msg_body_len;
     unsigned short msg_seq;
@@ -1984,6 +1986,14 @@ typedef struct dtls_sent_msg_st {
     unsigned char *msg_buf;
     struct dtls1_retransmit_state saved_retransmit_state;
 } dtls_sent_msg;
+
+#define DTLS_ACK_REC_NUM_LEN 32
+
+/* rfc9147, section 4 */
+typedef struct dtls1_record_number_st {
+    uint64_t epoch;
+    uint64_t sequence_number;
+} DTLS1_RECORD_NUMBER;
 
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
@@ -2016,6 +2026,10 @@ typedef struct dtls1_state_st {
 # ifndef OPENSSL_NO_SCTP
     int shutdown_received;
 # endif
+
+    /* Sequence numbers that are to be acknowledged */
+    DTLS1_RECORD_NUMBER ack_rec_num[DTLS_ACK_REC_NUM_LEN];
+    size_t ack_rec_num_count;
 
     DTLS_timer_cb timer_cb;
 
@@ -2721,11 +2735,14 @@ int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
 __owur int dtls1_read_failed(SSL_CONNECTION *s, int code);
 __owur int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type);
 __owur int dtls1_retransmit_message(SSL_CONNECTION *s, unsigned short seq,
-                                    int *found);
-__owur int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
+                                    int record_type, int *found);
+void dtls1_get_queue_priority(unsigned char *prio64be, unsigned short seq,
+                              int record_type);
 int dtls1_retransmit_sent_messages(SSL_CONNECTION *s);
 void dtls1_clear_received_buffer(SSL_CONNECTION *s);
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s);
+void dtls1_remove_sent_buffer_item(struct pqueue_st *pq,
+                                   unsigned char *prio64be);
 __owur OSSL_TIME dtls1_default_timeout(void);
 __owur int dtls1_get_timeout(const SSL_CONNECTION *s, OSSL_TIME *timeleft);
 __owur int dtls1_check_timeout_num(SSL_CONNECTION *s);

@@ -314,13 +314,14 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
     }
 
     if (type == rr->type
-        || (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC
-            && type == SSL3_RT_HANDSHAKE && recvd_type != NULL
-            && !is_dtls13)) {
+            || (type == SSL3_RT_HANDSHAKE
+                && ((!is_dtls13 && recvd_type != NULL && rr->type == SSL3_RT_CHANGE_CIPHER_SPEC)
+                    || (is_dtls13 && rr->type == SSL3_RT_ACK)))) {
         /*
          * SSL3_RT_APPLICATION_DATA or
          * SSL3_RT_HANDSHAKE or
-         * SSL3_RT_CHANGE_CIPHER_SPEC
+         * SSL3_RT_CHANGE_CIPHER_SPEC or
+         * SSL3_RT_ACK
          */
         /*
          * make sure that we are not getting application data when we are
@@ -489,15 +490,17 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
     /*
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
-    if (rr->type == SSL3_RT_HANDSHAKE && !ossl_statem_get_in_handshake(sc)) {
+    if (!ossl_statem_get_in_handshake(sc)
+            && (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ACK)) {
         unsigned char msg_type;
 
         /*
          * This may just be a stale retransmit. Also sanity check that we have
          * at least enough record bytes for a message header
          */
-        if (rr->epoch != sc->rlayer.d->r_epoch
-                || rr->length < DTLS1_HM_HEADER_LENGTH) {
+        if (rr->type == SSL3_RT_HANDSHAKE
+                && (rr->epoch != sc->rlayer.d->r_epoch
+                    || rr->length < DTLS1_HM_HEADER_LENGTH)) {
             if (!ssl_release_record(sc, rr, 0))
                 return -1;
             goto start;
@@ -509,7 +512,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
          * If we are server, we may have a repeated FINISHED of the client
          * here, then retransmit our CCS and FINISHED.
          */
-        if (msg_type == SSL3_MT_FINISHED) {
+        if (rr->type == SSL3_RT_HANDSHAKE && msg_type == SSL3_MT_FINISHED) {
             if (dtls1_check_timeout_num(sc) < 0) {
                 /* SSLfatal) already called */
                 return -1;
@@ -585,6 +588,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
     case SSL3_RT_CHANGE_CIPHER_SPEC:
     case SSL3_RT_ALERT:
     case SSL3_RT_HANDSHAKE:
+    case SSL3_RT_ACK:
         /*
          * we already handled all of these, with the possible exception of
          * SSL3_RT_HANDSHAKE when ossl_statem_get_in_handshake(s) is true, but

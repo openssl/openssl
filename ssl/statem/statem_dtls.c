@@ -165,22 +165,11 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
     size_t written;
     size_t curr_mtu;
     int retry = 1;
-    size_t len, overhead, used_len, msg_len = 0;
+    size_t len, overhead, used_len;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
-    unsigned char *data = (unsigned char *)s->init_buf->data;
-    unsigned short msg_seq = s->d1->w_msg.msg_seq;
-    unsigned char msg_type = 0;
-
-    if (recordtype == SSL3_RT_HANDSHAKE) {
-        msg_type = *data++;
-        l3n2(data, msg_len);
-    } else if (ossl_assert(recordtype == SSL3_RT_CHANGE_CIPHER_SPEC)) {
-        msg_type = SSL3_MT_CCS;
-        msg_len = 0; /* SSL3_RT_CHANGE_CIPHER_SPEC */
-    } else {
-        /* Other record types are not supported */
-        return -1;
-    }
+    size_t msg_len = s->d1->w_msg.msg_body_len; /* Only used for recordtype == SSL3_RT_HANDSHAKE */
+    unsigned short msg_seq = s->d1->w_msg.msg_seq; /* Only used for recordtype == SSL3_RT_HANDSHAKE */
+    unsigned char msg_type = s->d1->w_msg.msg_type; /* Only used for recordtype == SSL3_RT_HANDSHAKE */
 
     if (!dtls1_query_mtu(s))
         return -1;
@@ -369,6 +358,7 @@ int dtls_get_message(SSL_CONNECTION *s, int *mt)
     unsigned char *rec_data;
     size_t tmplen;
     int errtype;
+    int record_type;
 
     s->d1->r_msg_seq = 0;
 
@@ -386,9 +376,17 @@ int dtls_get_message(SSL_CONNECTION *s, int *mt)
 
     rec_data = (unsigned char *)s->init_buf->data;
 
-    if (*mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+    /* Convert from possible dummy message type */
+    if (*mt == SSL3_MT_CHANGE_CIPHER_SPEC)
+        record_type = SSL3_RT_CHANGE_CIPHER_SPEC;
+    else if (*mt == DTLS13_MT_ACK)
+        record_type = SSL3_RT_ACK;
+    else
+        record_type = SSL3_RT_HANDSHAKE;
+
+    if (record_type != SSL3_RT_HANDSHAKE) {
         if (s->msg_callback) {
-            s->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC,
+            s->msg_callback(0, s->version, record_type,
                             rec_data, 1, SSL_CONNECTION_GET_SSL(s),
                             s->msg_callback_arg);
         }
@@ -421,7 +419,11 @@ int dtls_get_message_body(SSL_CONNECTION *s, size_t *len)
     unsigned char *msg = (unsigned char *)s->init_buf->data;
     size_t msg_len = s->init_num + DTLS1_HM_HEADER_LENGTH;
 
-    if (s->s3.tmp.message_type == SSL3_MT_CHANGE_CIPHER_SPEC) {
+    switch (s->s3.tmp.message_type) {
+    default:
+        break;
+    case DTLS13_MT_ACK:
+    case SSL3_MT_CHANGE_CIPHER_SPEC:
         /* Nothing to be done */
         goto end;
     }
@@ -698,6 +700,7 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     }
 
     if (item == NULL) {
+        const size_t rec_num_idx = s->d1->ack_rec_num_count;
         item = pitem_new(seq64be, frag);
         if (item == NULL)
             goto err;
@@ -711,6 +714,11 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
          */
         if (!ossl_assert(item != NULL))
             goto err;
+
+        s->d1->ack_rec_num[rec_num_idx].epoch = dtls1_get_epoch(s, SSL3_CC_READ);
+        s->d1->ack_rec_num[rec_num_idx].sequence_number = frag->msg_header.seq;
+
+        s->d1->ack_rec_num_count++;
     }
 
     return DTLS1_HM_FRAGMENT_RETRY;
@@ -895,6 +903,33 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
         *len = readbytes - 1;
         return 1;
     }
+    if (recvd_type == SSL3_RT_ACK) {
+        if (readbytes == DTLS1_HM_HEADER_LENGTH) {
+            const size_t first_readbytes = readbytes;
+
+            p += DTLS1_HM_HEADER_LENGTH;
+
+            i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL, p,
+                                            s->init_num - DTLS1_HM_HEADER_LENGTH,
+                                            0, &readbytes);
+            readbytes += first_readbytes;
+            /*
+             * This shouldn't ever fail due to NBIO because we already checked
+             * that we have enough data in the record
+             */
+            if (i <= 0) {
+                s->rwstate = SSL_READING;
+                *len = 0;
+                return 0;
+            }
+        }
+        s->init_num = readbytes;
+        s->init_msg = s->init_buf->data;
+        s->s3.tmp.message_type = DTLS13_MT_ACK;
+        s->s3.tmp.message_size = readbytes;
+        *len = readbytes;
+        return 1;
+    }
 
     /* Handshake fails if message header is incomplete */
     if (readbytes != DTLS1_HM_HEADER_LENGTH) {
@@ -1048,6 +1083,92 @@ CON_FUNC_RETURN dtls_construct_change_cipher_spec(SSL_CONNECTION *s,
     return CON_FUNC_SUCCESS;
 }
 
+CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt) {
+    if (!WPACKET_start_sub_packet_u16(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return CON_FUNC_ERROR;
+    }
+
+    for (size_t i = 0; i < s->d1->ack_rec_num_count; i++) {
+        /*
+         * rfc9147: section 4.
+         *
+         * Record numbers are encoded as
+         *      struct {
+         *           uint64 epoch;
+         *           uint64 sequence_number;
+         *      } RecordNumber;
+         */
+        const uint64_t epoch = s->d1->ack_rec_num[i].epoch;
+        const uint64_t sequence_number = s->d1->ack_rec_num[i].sequence_number;
+
+        /*
+         * rfc9147:
+         * During the handshake, ACK records MUST be sent with an epoch which
+         * is equal to or higher than the record which is being acknowledged
+         */
+        if (epoch >= dtls1_get_epoch(s, SSL3_CC_WRITE))
+            if(!WPACKET_put_bytes_u64(pkt, epoch)
+                    || !WPACKET_put_bytes_u64(pkt, sequence_number)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return CON_FUNC_ERROR;
+            }
+    }
+
+    if (!WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return CON_FUNC_ERROR;
+    }
+
+    /* Avoid acknowledging the same record numbers again */
+    s->d1->ack_rec_num_count = 0;
+
+    return CON_FUNC_SUCCESS;
+}
+
+MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
+{
+    PACKET record_numbers;
+
+    if (PACKET_remaining(pkt) == 0)
+        return MSG_PROCESS_FINISHED_READING;
+
+    if (!PACKET_get_length_prefixed_2(pkt, &record_numbers)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_LENGTH_TOO_LONG);
+        return MSG_PROCESS_ERROR;
+    }
+
+    while (PACKET_remaining(&record_numbers) > 0) {
+        /*
+         * rfc9147: section 4.
+         *
+         * Record numbers are encoded as
+         *      struct {
+         *           uint64 epoch;
+         *           uint64 sequence_number;
+         *      } RecordNumber;
+         */
+
+        unsigned char prio64be[8];
+        uint64_t epoch;
+        uint64_t sequence_number;
+
+        if (!PACKET_get_net_8(&record_numbers, &epoch)
+                || !PACKET_get_net_8(&record_numbers, &sequence_number)) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_LENGTH_TOO_LONG);
+            return MSG_PROCESS_ERROR;
+        }
+
+        if (dtls1_get_epoch(s, SSL3_CC_WRITE) == epoch) {
+            dtls1_get_queue_priority(prio64be, sequence_number, 0);
+            dtls1_remove_sent_buffer_item(s->d1->sent_messages, prio64be);
+        }
+    }
+
+    return MSG_PROCESS_FINISHED_READING;
+}
+
+
 #ifndef OPENSSL_NO_SCTP
 /*
  * Wait for a dry event. Should only be called at a point in the handshake
@@ -1115,7 +1236,8 @@ int dtls1_read_failed(SSL_CONNECTION *s, int code)
     return dtls1_handle_timeout(s);
 }
 
-int dtls1_get_queue_priority(unsigned short seq, int record_type)
+void dtls1_get_queue_priority(unsigned char *prio64be, unsigned short seq,
+                              int record_type)
 {
     /*
      * The index of the retransmission queue actually is the message sequence
@@ -1128,7 +1250,10 @@ int dtls1_get_queue_priority(unsigned short seq, int record_type)
      * priority queues) and fits in the unsigned short variable.
      */
     int lsb = (record_type == SSL3_RT_CHANGE_CIPHER_SPEC ? 1 : 0);
-    return seq * 2 - lsb;
+    const uint16_t prio = seq * 2 - lsb;
+    memset(prio64be, 0, 8);
+    prio64be[6] = (unsigned char)(prio >> 8);
+    prio64be[7] = (unsigned char)(prio);
 }
 
 int dtls1_retransmit_sent_messages(SSL_CONNECTION *s)
@@ -1138,12 +1263,10 @@ int dtls1_retransmit_sent_messages(SSL_CONNECTION *s)
     int found = 0;
 
     for (item = pqueue_next(&iter); item != NULL; item = pqueue_next(&iter)) {
-        int prio;
         dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
 
-        prio = dtls1_get_queue_priority(sent_msg->msg_info.msg_seq, sent_msg->record_type);
-
-        if (dtls1_retransmit_message(s, (unsigned short)prio, &found) <= 0)
+        if (dtls1_retransmit_message(s, sent_msg->msg_info.msg_seq,
+                                     sent_msg->record_type, &found) <= 0)
             return -1;
     }
 
@@ -1156,7 +1279,6 @@ int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type)
     dtls_sent_msg *sent_msg;
     unsigned char seq64be[8];
     size_t headerlen;
-    int prio;
 
     /*
      * this function is called immediately after a message has been
@@ -1182,19 +1304,14 @@ int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type)
         return 0;
     }
 
-    sent_msg->msg_info.msg_body_len = s->d1->w_msg.msg_body_len;
-    sent_msg->msg_info.msg_seq = s->d1->w_msg.msg_seq;
-    sent_msg->msg_info.msg_type = s->d1->w_msg.msg_type;
+    memcpy(&sent_msg->msg_info, &s->d1->w_msg, sizeof(s->d1->w_msg));
     sent_msg->record_type = record_type;
 
     /* save current state */
     sent_msg->saved_retransmit_state.wrlmethod = s->rlayer.wrlmethod;
     sent_msg->saved_retransmit_state.wrl = s->rlayer.wrl;
 
-    prio = dtls1_get_queue_priority(sent_msg->msg_info.msg_seq, sent_msg->record_type);
-    memset(seq64be, 0, sizeof(seq64be));
-    seq64be[6] = (unsigned char)(prio >> 8);
-    seq64be[7] = (unsigned char)prio;
+    dtls1_get_queue_priority(seq64be, sent_msg->msg_info.msg_seq, sent_msg->record_type);
 
     item = pitem_new(seq64be, sent_msg);
     if (item == NULL) {
@@ -1206,7 +1323,8 @@ int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type)
     return 1;
 }
 
-int dtls1_retransmit_message(SSL_CONNECTION *s, unsigned short seq, int *found)
+int dtls1_retransmit_message(SSL_CONNECTION *s, unsigned short seq,
+                             int record_type, int *found)
 {
     int ret;
     /* XDTLS: for now assuming that read/writes are blocking */
@@ -1217,9 +1335,7 @@ int dtls1_retransmit_message(SSL_CONNECTION *s, unsigned short seq, int *found)
     struct dtls1_retransmit_state saved_state;
 
     /* XDTLS:  the requested message ought to be found, otherwise error */
-    memset(seq64be, 0, sizeof(seq64be));
-    seq64be[6] = (unsigned char)(seq >> 8);
-    seq64be[7] = (unsigned char)seq;
+    dtls1_get_queue_priority(seq64be, seq, record_type);
 
     item = pqueue_find(s->d1->sent_messages, seq64be);
     if (item == NULL) {
@@ -1240,9 +1356,7 @@ int dtls1_retransmit_message(SSL_CONNECTION *s, unsigned short seq, int *found)
            sent_msg->msg_info.msg_body_len + header_length);
     s->init_num = sent_msg->msg_info.msg_body_len + header_length;
 
-    s->d1->w_msg.msg_type = sent_msg->msg_info.msg_type;
-    s->d1->w_msg.msg_body_len = sent_msg->msg_info.msg_body_len;
-    s->d1->w_msg.msg_seq = sent_msg->msg_info.msg_seq;
+    memcpy(&s->d1->w_msg, &sent_msg->msg_info, sizeof(sent_msg->msg_info));
 
     /* save current state */
     saved_state.wrlmethod = s->rlayer.wrlmethod;
@@ -1274,24 +1388,25 @@ int dtls1_retransmit_message(SSL_CONNECTION *s, unsigned short seq, int *found)
 
 int dtls1_set_handshake_header(SSL_CONNECTION *s, WPACKET *pkt, int htype)
 {
-    if (htype == SSL3_MT_CHANGE_CIPHER_SPEC) {
-        s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
+    s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
+    s->d1->w_msg.msg_seq = s->d1->handshake_write_seq;
+    s->d1->w_msg.msg_body_len = 0;
 
+    if (htype == SSL3_MT_CHANGE_CIPHER_SPEC) {
+        s->d1->w_msg.record_type = SSL3_RT_CHANGE_CIPHER_SPEC;
         s->d1->w_msg.msg_type = SSL3_MT_CCS;
-        s->d1->w_msg.msg_body_len = 0;
-        s->d1->w_msg.msg_seq = s->d1->handshake_write_seq;
 
         if (!WPACKET_put_bytes_u8(pkt, SSL3_MT_CCS))
             return 0;
+    } else if (htype == DTLS13_MT_ACK) {
+        s->d1->w_msg.record_type = SSL3_RT_ACK;
+        s->d1->w_msg.msg_type = 0;
     } else {
         size_t subpacket_offset = DTLS1_HM_HEADER_LENGTH - SSL3_HM_HEADER_LENGTH;
 
-        s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
         s->d1->next_handshake_write_seq++;
-
+        s->d1->w_msg.record_type = SSL3_RT_HANDSHAKE;
         s->d1->w_msg.msg_type = htype;
-        s->d1->w_msg.msg_body_len = 0;
-        s->d1->w_msg.msg_seq = s->d1->handshake_write_seq;
 
         /* Set the content type and 3 bytes for the message len */
         if (!WPACKET_put_bytes_u8(pkt, htype)
@@ -1309,26 +1424,22 @@ int dtls1_set_handshake_header(SSL_CONNECTION *s, WPACKET *pkt, int htype)
 int dtls1_close_construct_packet(SSL_CONNECTION *s, WPACKET *pkt, int htype)
 {
     size_t msglen;
-    int record_type;
 
-    /* Convert from possible dummy message type */
-    record_type = (htype == SSL3_MT_CHANGE_CIPHER_SPEC) ? SSL3_RT_CHANGE_CIPHER_SPEC
-                                                        : SSL3_RT_HANDSHAKE;
-
-    if ((htype != SSL3_MT_CHANGE_CIPHER_SPEC && !WPACKET_close(pkt))
+    if ((s->d1->w_msg.record_type == SSL3_RT_HANDSHAKE && !WPACKET_close(pkt))
             || !WPACKET_get_length(pkt, &msglen)
             || msglen > INT_MAX)
         return 0;
 
-    if (htype != SSL3_MT_CHANGE_CIPHER_SPEC)
+    if (s->d1->w_msg.record_type == SSL3_RT_HANDSHAKE)
         s->d1->w_msg.msg_body_len = msglen - DTLS1_HM_HEADER_LENGTH;
 
     s->init_num = msglen;
     s->init_off = 0;
 
-    if (htype != DTLS1_MT_HELLO_VERIFY_REQUEST) {
+    if (htype != DTLS1_MT_HELLO_VERIFY_REQUEST
+            && s->d1->w_msg.record_type != SSL3_RT_ACK) {
         /* Buffer the message to handle re-xmits */
-        if (!dtls1_buffer_sent_message(s, record_type))
+        if (!dtls1_buffer_sent_message(s, s->d1->w_msg.record_type))
             return 0;
     }
 

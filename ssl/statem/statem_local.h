@@ -123,6 +123,7 @@ __owur CON_FUNC_RETURN  tls_construct_change_cipher_spec(SSL_CONNECTION *s,
                                                          WPACKET *pkt);
 __owur CON_FUNC_RETURN dtls_construct_change_cipher_spec(SSL_CONNECTION *s,
                                                          WPACKET *pkt);
+__owur CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt);
 
 __owur CON_FUNC_RETURN tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_key_update(SSL_CONNECTION *s, WPACKET *pkt);
@@ -194,6 +195,7 @@ __owur CON_FUNC_RETURN tls_construct_next_proto(SSL_CONNECTION *s, WPACKET *pkt)
 #endif
 __owur MSG_PROCESS_RETURN tls_process_hello_req(SSL_CONNECTION *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN dtls_process_hello_verify(SSL_CONNECTION *s, PACKET *pkt);
+__owur MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_end_of_early_data(SSL_CONNECTION *s,
                                                        WPACKET *pkt);
 

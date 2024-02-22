@@ -96,29 +96,44 @@ pitem *pqueue_pop(pqueue *pq)
     return item;
 }
 
-pitem *pqueue_find(pqueue *pq, unsigned char *prio64be)
+static pitem *pqueue_find_and_pop(pqueue *pq, unsigned char *prio64be, int pop)
 {
-    pitem *next;
+    pitem *curr;
+    pitem *prev = NULL;
     pitem *found = NULL;
 
     if (pq->items == NULL)
         return NULL;
 
-    for (next = pq->items; next->next != NULL; next = next->next) {
-        if (memcmp(next->priority, prio64be, 8) == 0) {
-            found = next;
+    for (curr = pq->items; curr->next != NULL; curr = curr->next) {
+        if (memcmp(curr->priority, prio64be, 8) == 0) {
+            found = curr;
             break;
         }
+        prev = curr;
     }
 
     /* check the one last node */
-    if (memcmp(next->priority, prio64be, 8) == 0)
-        found = next;
+    if (found == NULL && memcmp(curr->priority, prio64be, 8) == 0)
+        found = curr;
 
-    if (!found)
-        return NULL;
+    if (found != NULL && pop) {
+        if (prev == NULL)
+            pq->items = found->next;
+        else
+            prev->next = found->next;
+    }
 
     return found;
+}
+
+pitem *pqueue_find(pqueue *pq, unsigned char *prio64be) {
+    return pqueue_find_and_pop(pq, prio64be, 0);
+}
+
+pitem *pqueue_pop_item(pqueue *pq, unsigned char *prio64be)
+{
+    return pqueue_find_and_pop(pq, prio64be, 1);
 }
 
 pitem *pqueue_iterator(pqueue *pq)
