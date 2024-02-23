@@ -65,7 +65,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "Skip EDDSA test because of no ecx in this build", 2
+    skip "Skip EDDSA test because of no ecx in this build", 1
         if disabled("ecx");
 
     run(test(["fips_version_test", "-config", $provconf, ">=3.3.0"]),
