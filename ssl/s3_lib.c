@@ -3690,12 +3690,12 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP_EX:
-        *(unsigned char **)parg = NULL;
-        ret = -1;
-
 #ifndef OPENSSL_NO_OCSP
         *(STACK_OF(OCSP_RESPONSE) **)parg = sc->ext.ocsp.resp_ex;
         ret = sk_OCSP_RESPONSE_num(sc->ext.ocsp.resp_ex);
+#else
+        *(unsigned char **)parg = NULL;
+        ret = -1;
 #endif
         break;
 
