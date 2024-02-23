@@ -22,6 +22,7 @@
 #include "encoder_local.h"
 #include "internal/namemap.h"
 #include "internal/sizes.h"
+#include "internal/hashtable.h"
 
 int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,
                                     const unsigned char *kstr,
@@ -586,115 +587,49 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
 }
 
 typedef struct {
-    char *input_type;
-    char *input_structure;
-    char *keytype;
-    int selection;
     char *propquery;
     OSSL_DECODER_CTX *template;
 } DECODER_CACHE_ENTRY;
 
-DEFINE_LHASH_OF_EX(DECODER_CACHE_ENTRY);
+HT_START_KEY_DEFN(decoder_key)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(propquery, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(input_structure, 32)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(input_type, 32)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(keytype, 32)
+HT_DEF_KEY_FIELD(selection, int)
+HT_END_KEY_DEFN(DECODER_KEY)
+
+IMPLEMENT_HT_VALUE_TYPE_FNS(DECODER_CACHE_ENTRY, dce, static)
 
 typedef struct {
-    CRYPTO_RWLOCK *lock;
-    LHASH_OF(DECODER_CACHE_ENTRY) *hashtable;
+    HT *decoder_table;
 } DECODER_CACHE;
 
 static void decoder_cache_entry_free(DECODER_CACHE_ENTRY *entry)
 {
     if (entry == NULL)
         return;
-    OPENSSL_free(entry->input_type);
-    OPENSSL_free(entry->input_structure);
-    OPENSSL_free(entry->keytype);
-    OPENSSL_free(entry->propquery);
     OSSL_DECODER_CTX_free(entry->template);
     OPENSSL_free(entry);
 }
 
-static unsigned long decoder_cache_entry_hash(const DECODER_CACHE_ENTRY *cache)
+static void decoder_table_free(HT_VALUE *v)
 {
-    unsigned long hash = 17;
+    DECODER_CACHE_ENTRY *d = ossl_ht_dce_DECODER_CACHE_ENTRY_from_value(v);
 
-    hash = (hash * 23)
-           + (cache->propquery == NULL
-              ? 0 : ossl_lh_strcasehash(cache->propquery));
-    hash = (hash * 23)
-           + (cache->input_structure == NULL
-              ? 0  : ossl_lh_strcasehash(cache->input_structure));
-    hash = (hash * 23)
-           + (cache->input_type == NULL
-              ? 0  : ossl_lh_strcasehash(cache->input_type));
-    hash = (hash * 23)
-           + (cache->keytype == NULL
-              ? 0  : ossl_lh_strcasehash(cache->keytype));
-
-    hash ^= cache->selection;
-
-    return hash;
-}
-
-static ossl_inline int nullstrcmp(const char *a, const char *b, int casecmp)
-{
-    if (a == NULL || b == NULL) {
-        if (a == NULL) {
-            if (b == NULL)
-                return 0;
-            else
-                return 1;
-        } else {
-            return -1;
-        }
-    } else {
-        if (casecmp)
-            return OPENSSL_strcasecmp(a, b);
-        else
-            return strcmp(a, b);
-    }
-}
-
-static int decoder_cache_entry_cmp(const DECODER_CACHE_ENTRY *a,
-                                   const DECODER_CACHE_ENTRY *b)
-{
-    int cmp;
-
-    if (a->selection != b->selection)
-        return (a->selection < b->selection) ? -1 : 1;
-
-    cmp = nullstrcmp(a->keytype, b->keytype, 1);
-    if (cmp != 0)
-        return cmp;
-
-    cmp = nullstrcmp(a->input_type, b->input_type, 1);
-    if (cmp != 0)
-        return cmp;
-
-    cmp = nullstrcmp(a->input_structure, b->input_structure, 1);
-    if (cmp != 0)
-        return cmp;
-
-    cmp = nullstrcmp(a->propquery, b->propquery, 0);
-
-    return cmp;
+    decoder_cache_entry_free(d);
 }
 
 void *ossl_decoder_cache_new(OSSL_LIB_CTX *ctx)
 {
+    HT_CONFIG decoder_table_config = {decoder_table_free, NULL, 0};
     DECODER_CACHE *cache = OPENSSL_malloc(sizeof(*cache));
 
     if (cache == NULL)
         return NULL;
 
-    cache->lock = CRYPTO_THREAD_lock_new();
-    if (cache->lock == NULL) {
-        OPENSSL_free(cache);
-        return NULL;
-    }
-    cache->hashtable = lh_DECODER_CACHE_ENTRY_new(decoder_cache_entry_hash,
-                                                  decoder_cache_entry_cmp);
-    if (cache->hashtable == NULL) {
-        CRYPTO_THREAD_lock_free(cache->lock);
+    cache->decoder_table = ossl_ht_new(&decoder_table_config);
+    if (cache->decoder_table == NULL) {
         OPENSSL_free(cache);
         return NULL;
     }
@@ -706,9 +641,7 @@ void ossl_decoder_cache_free(void *vcache)
 {
     DECODER_CACHE *cache = (DECODER_CACHE *)vcache;
 
-    lh_DECODER_CACHE_ENTRY_doall(cache->hashtable, decoder_cache_entry_free);
-    lh_DECODER_CACHE_ENTRY_free(cache->hashtable);
-    CRYPTO_THREAD_lock_free(cache->lock);
+    ossl_ht_free(cache->decoder_table);
     OPENSSL_free(cache);
 }
 
@@ -724,16 +657,10 @@ int ossl_decoder_cache_flush(OSSL_LIB_CTX *libctx)
     if (cache == NULL)
         return 0;
 
+    ossl_ht_write_lock(cache->decoder_table);
+    ossl_ht_flush(cache->decoder_table);
+    ossl_ht_write_unlock(cache->decoder_table);
 
-    if (!CRYPTO_THREAD_write_lock(cache->lock)) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
-        return 0;
-    }
-
-    lh_DECODER_CACHE_ENTRY_doall(cache->hashtable, decoder_cache_entry_free);
-    lh_DECODER_CACHE_ENTRY_flush(cache->hashtable);
-
-    CRYPTO_THREAD_unlock(cache->lock);
     return 1;
 }
 
@@ -744,6 +671,8 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
                               const char *keytype, int selection,
                               OSSL_LIB_CTX *libctx, const char *propquery)
 {
+    DECODER_KEY key;
+    HT_VALUE *v = NULL;
     OSSL_DECODER_CTX *ctx = NULL;
     OSSL_PARAM decoder_params[] = {
         OSSL_PARAM_END,
@@ -751,7 +680,7 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
     };
     DECODER_CACHE *cache
         = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DECODER_CACHE_INDEX);
-    DECODER_CACHE_ENTRY cacheent, *res, *newcache = NULL;
+    DECODER_CACHE_ENTRY *res, *newcache = NULL;
 
     if (cache == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
@@ -761,119 +690,84 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
         decoder_params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DECODER_PARAM_PROPERTIES,
                                                              (char *)propquery, 0);
 
-    /* It is safe to cast away the const here */
-    cacheent.input_type = (char *)input_type;
-    cacheent.input_structure = (char *)input_structure;
-    cacheent.keytype = (char *)keytype;
-    cacheent.selection = selection;
-    cacheent.propquery = (char *)propquery;
+    /* First see if we have a template OSSL_DECODER_CTX */
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING_CASE(&key, input_type, input_type);
+    HT_SET_KEY_STRING_CASE(&key, input_structure, input_structure);
+    HT_SET_KEY_STRING_CASE(&key, keytype, keytype);
+    HT_SET_KEY_STRING_CASE(&key, propquery, propquery);
+    HT_SET_KEY_FIELD(&key, selection, selection);
 
-    if (!CRYPTO_THREAD_read_lock(cache->lock)) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
+    ossl_ht_read_lock(cache->decoder_table);
+    res = ossl_ht_dce_DECODER_CACHE_ENTRY_get(cache->decoder_table, TO_HT_KEY(&key), &v);
+    if (res != NULL)
+        ctx = ossl_decoder_ctx_for_pkey_dup(res->template, pkey,
+                                            input_type,
+                                            input_structure);
+    ossl_ht_read_unlock(cache->decoder_table);
+    /*
+     * If we got a hit in the hash table, return whatever ctx is
+     * set to now, if its NULL, it means the dup operation
+     * failed, so we're done
+     */
+    if (res != NULL)
+        return ctx;
+
+    /*
+     * There is no template so we will have to construct one.
+     */
+
+    if ((ctx = OSSL_DECODER_CTX_new()) == NULL) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
         return NULL;
     }
 
-    /* First see if we have a template OSSL_DECODER_CTX */
-    res = lh_DECODER_CACHE_ENTRY_retrieve(cache->hashtable, &cacheent);
+    OSSL_TRACE_BEGIN(DECODER) {
+        BIO_printf(trc_out,
+                "(ctx %p) Looking for %s decoders with selection %d\n",
+                (void *)ctx, keytype, selection);
+        BIO_printf(trc_out, "    input type: %s, input structure: %s\n",
+                input_type, input_structure);
+    } OSSL_TRACE_END(DECODER);
 
-    if (res == NULL) {
-        /*
-         * There is no template so we will have to construct one. This will be
-         * time consuming so release the lock and we will later upgrade it to a
-         * write lock.
-         */
-        CRYPTO_THREAD_unlock(cache->lock);
-
-        if ((ctx = OSSL_DECODER_CTX_new()) == NULL) {
-            ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
-            return NULL;
-        }
-
+    if (OSSL_DECODER_CTX_set_input_type(ctx, input_type)
+        && OSSL_DECODER_CTX_set_input_structure(ctx, input_structure)
+        && OSSL_DECODER_CTX_set_selection(ctx, selection)
+        && ossl_decoder_ctx_setup_for_pkey(ctx, keytype, libctx, propquery)
+        && OSSL_DECODER_CTX_add_extra(ctx, libctx, propquery)
+        && (propquery == NULL
+            || OSSL_DECODER_CTX_set_params(ctx, decoder_params))) {
         OSSL_TRACE_BEGIN(DECODER) {
-            BIO_printf(trc_out,
-                    "(ctx %p) Looking for %s decoders with selection %d\n",
-                    (void *)ctx, keytype, selection);
-            BIO_printf(trc_out, "    input type: %s, input structure: %s\n",
-                    input_type, input_structure);
+            BIO_printf(trc_out, "(ctx %p) Got %d decoders\n",
+                    (void *)ctx, OSSL_DECODER_CTX_get_num_decoders(ctx));
         } OSSL_TRACE_END(DECODER);
-
-        if (OSSL_DECODER_CTX_set_input_type(ctx, input_type)
-            && OSSL_DECODER_CTX_set_input_structure(ctx, input_structure)
-            && OSSL_DECODER_CTX_set_selection(ctx, selection)
-            && ossl_decoder_ctx_setup_for_pkey(ctx, keytype, libctx, propquery)
-            && OSSL_DECODER_CTX_add_extra(ctx, libctx, propquery)
-            && (propquery == NULL
-                || OSSL_DECODER_CTX_set_params(ctx, decoder_params))) {
-            OSSL_TRACE_BEGIN(DECODER) {
-                BIO_printf(trc_out, "(ctx %p) Got %d decoders\n",
-                        (void *)ctx, OSSL_DECODER_CTX_get_num_decoders(ctx));
-            } OSSL_TRACE_END(DECODER);
-        } else {
-            ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
-            OSSL_DECODER_CTX_free(ctx);
-            return NULL;
-        }
-
-        newcache = OPENSSL_zalloc(sizeof(*newcache));
-        if (newcache == NULL) {
-            OSSL_DECODER_CTX_free(ctx);
-            return NULL;
-        }
-
-        if (input_type != NULL) {
-            newcache->input_type = OPENSSL_strdup(input_type);
-            if (newcache->input_type == NULL)
-                goto err;
-        }
-        if (input_structure != NULL) {
-            newcache->input_structure = OPENSSL_strdup(input_structure);
-            if (newcache->input_structure == NULL)
-                goto err;
-        }
-        if (keytype != NULL) {
-            newcache->keytype = OPENSSL_strdup(keytype);
-            if (newcache->keytype == NULL)
-                goto err;
-        }
-        if (propquery != NULL) {
-            newcache->propquery = OPENSSL_strdup(propquery);
-            if (newcache->propquery == NULL)
-                goto err;
-        }
-        newcache->selection = selection;
-        newcache->template = ctx;
-
-        if (!CRYPTO_THREAD_write_lock(cache->lock)) {
-            ctx = NULL;
-            ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
-            goto err;
-        }
-        res = lh_DECODER_CACHE_ENTRY_retrieve(cache->hashtable, &cacheent);
-        if (res == NULL) {
-            (void)lh_DECODER_CACHE_ENTRY_insert(cache->hashtable, newcache);
-            if (lh_DECODER_CACHE_ENTRY_error(cache->hashtable)) {
-                ctx = NULL;
-                ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
-                goto err;
-            }
-        } else {
-            /*
-             * We raced with another thread to construct this and lost. Free
-             * what we just created and use the entry from the hashtable instead
-             */
-            decoder_cache_entry_free(newcache);
-            ctx = res->template;
-        }
     } else {
-        ctx = res->template;
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
+        OSSL_DECODER_CTX_free(ctx);
+        return NULL;
     }
 
+    newcache = OPENSSL_zalloc(sizeof(*newcache));
+    if (newcache == NULL) {
+        OSSL_DECODER_CTX_free(ctx);
+        return NULL;
+    }
+    newcache->template = ctx;
+
+    ossl_ht_write_lock(cache->decoder_table);
+    if (!ossl_ht_dce_DECODER_CACHE_ENTRY_insert(cache->decoder_table,
+                                                TO_HT_KEY(&key), newcache,
+                                                NULL)) {
+        res = ossl_ht_dce_DECODER_CACHE_ENTRY_get(cache->decoder_table,
+                                                  TO_HT_KEY(&key), &v);
+        ctx = res->template;
+        decoder_cache_entry_free(newcache);
+    } else {
+        ctx = newcache->template;
+    }
+    ossl_ht_write_unlock(cache->decoder_table);
+
     ctx = ossl_decoder_ctx_for_pkey_dup(ctx, pkey, input_type, input_structure);
-    CRYPTO_THREAD_unlock(cache->lock);
 
     return ctx;
- err:
-    decoder_cache_entry_free(newcache);
-    OSSL_DECODER_CTX_free(ctx);
-    return NULL;
 }
