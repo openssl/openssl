@@ -116,6 +116,7 @@ jobs:
         os: [freebsd-13.2, ubuntu-arm64-22.04]
     runs-on: ${{ matrix.os }}-self-hosted
     continue-on-error: true
+    if: github.server_url != 'https://github.com'
     steps:
     - uses: actions/checkout@v4
     - name: config
