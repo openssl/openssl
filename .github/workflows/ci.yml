@@ -111,6 +111,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   self-hosted:
+    if: github.repository == 'openssl/openssl'
     strategy:
       matrix:
         os: [freebsd-13.2, ubuntu-arm64-22.04]
