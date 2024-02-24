@@ -2278,6 +2278,7 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CRYPTO_SECURE_ALLOCATED,
         (void (*)(void))CRYPTO_secure_allocated },
     { OSSL_FUNC_OPENSSL_CLEANSE, (void (*)(void))OPENSSL_cleanse },
+    { OSSL_FUNC_OPENSSL_ALIGNED_ALLOC, (void (*)(void))CRYPTO_aligned_alloc },
 #ifndef FIPS_MODULE
     { OSSL_FUNC_PROVIDER_REGISTER_CHILD_CB,
         (void (*)(void))ossl_provider_register_child_cb },
