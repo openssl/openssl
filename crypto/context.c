@@ -9,11 +9,13 @@
 
 #include "crypto/cryptlib.h"
 #include <openssl/conf.h>
+#include <openssl/kdf.h>
 #include "internal/thread_once.h"
 #include "internal/property.h"
 #include "internal/core.h"
 #include "internal/bio.h"
 #include "internal/provider.h"
+#include "internal/hashtable.h"
 #include "crypto/decoder.h"
 #include "crypto/context.h"
 
@@ -29,6 +31,7 @@ struct ossl_lib_ctx_st {
     void *global_properties;
     void *drbg;
     void *drbg_nonce;
+    HT *ctx_alg_cache;
 #ifndef FIPS_MODULE
     void *provider_conf;
     void *bio_core;
@@ -50,6 +53,9 @@ struct ossl_lib_ctx_st {
 
     unsigned int ischild:1;
 };
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_KDF, kdf)
+IMPLEMENT_HT_VALUE_TYPE_FNS(EVP_KDF, kdf, )
 
 int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx)
 {
@@ -77,9 +83,15 @@ int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx)
 
 static void context_deinit_objs(OSSL_LIB_CTX *ctx);
 
+static void algcache_free(HT_VALUE *v)
+{
+    return;
+}
+
 static int context_init(OSSL_LIB_CTX *ctx)
 {
     int exdata_done = 0;
+    HT_CONFIG algcache_conf = {algcache_free, NULL, 0};
 
     ctx->lock = CRYPTO_THREAD_lock_new();
     if (ctx->lock == NULL)
@@ -97,6 +109,10 @@ static int context_init(OSSL_LIB_CTX *ctx)
     /* P2. We want evp_method_store to be cleaned up before the provider store */
     ctx->evp_method_store = ossl_method_store_new(ctx);
     if (ctx->evp_method_store == NULL)
+        goto err;
+
+    ctx->ctx_alg_cache = ossl_ht_new(&algcache_conf);
+    if (ctx->ctx_alg_cache == NULL)
         goto err;
 
 #ifndef FIPS_MODULE
@@ -226,6 +242,9 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
         ossl_rand_ctx_free(ctx->drbg);
         ctx->drbg = NULL;
     }
+
+    ossl_ht_free(ctx->ctx_alg_cache);
+    ctx->ctx_alg_cache = NULL;
 
 #ifndef FIPS_MODULE
     /* P2. */
@@ -539,6 +558,12 @@ int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx)
         return 1;
 #endif
     return 0;
+}
+
+
+HT *ossl_lib_ctx_get_algcache(OSSL_LIB_CTX *ctx)
+{
+    return ossl_lib_ctx_get_concrete(ctx)->ctx_alg_cache;
 }
 
 void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)

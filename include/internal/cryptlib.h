@@ -19,7 +19,7 @@
 # endif
 
 # include "internal/common.h"
-
+# include "internal/hashtable.h"
 # include <openssl/crypto.h>
 # include <openssl/buffer.h>
 # include <openssl/bio.h>
@@ -122,6 +122,8 @@ typedef struct ossl_ex_data_global_st {
 OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx);
+
+HT *ossl_lib_ctx_get_algcache(OSSL_LIB_CTX *ctx);
 
 /* Functions to retrieve pointers to data by index */
 void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *, int /* index */);
