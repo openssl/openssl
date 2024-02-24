@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/core.h>
@@ -18,8 +19,17 @@
 #include "internal/numbers.h"
 #include "internal/provider.h"
 #include "internal/core.h"
+#include "internal/hashtable.h"
+#include "internal/property.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_RAND, algcache)
+
+HT_START_KEY_DEFN(randkey)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(propq, 128)
+HT_END_KEY_DEFN(RANDKEY)
 
 struct evp_rand_st {
     OSSL_PROVIDER *prov;
@@ -285,9 +295,45 @@ static void *evp_rand_from_algorithm(int name_id,
 EVP_RAND *EVP_RAND_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
                          const char *properties)
 {
-    return evp_generic_fetch(libctx, OSSL_OP_RAND, algorithm, properties,
-                             evp_rand_from_algorithm, evp_rand_up_ref,
-                             evp_rand_free);
+    EVP_RAND *r;
+#ifndef FIPS_MODULE
+    HT_VALUE *v = NULL;
+    RANDKEY key;
+    HT *algcache;
+    char *mpropq = ossl_get_merged_property_string(libctx, properties);
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING(&key, name, algorithm);
+    HT_SET_KEY_STRING(&key, propq, mpropq);
+
+    OPENSSL_free(mpropq);
+
+    algcache = ossl_lib_ctx_get_algcache(libctx);
+
+    ossl_ht_read_lock(algcache);
+    r = ossl_ht_algcache_EVP_RAND_get(algcache, TO_HT_KEY(&key), &v);
+    if (r != NULL)
+        EVP_RAND_up_ref(r);
+    ossl_ht_read_unlock(algcache);
+
+    if (r != NULL)
+        return r;
+#endif
+
+    r = evp_generic_fetch(libctx, OSSL_OP_RAND, algorithm, properties,
+                          evp_rand_from_algorithm, evp_rand_up_ref,
+                          evp_rand_free);
+#ifndef FIPS_MODULE
+    if (r != NULL) {
+        ossl_ht_write_lock(algcache);
+        if (ossl_ht_algcache_EVP_RAND_insert(algcache, TO_HT_KEY(&key), r,
+                                             NULL))
+            EVP_RAND_up_ref(r);
+        ossl_ht_write_unlock(algcache);
+    }
+#endif
+
+    return r;
 }
 
 int EVP_RAND_up_ref(EVP_RAND *rand)

@@ -7,15 +7,28 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/provider.h>
 #include "internal/provider.h"
 #include "internal/refcount.h"
 #include "internal/core.h"
+#include "internal/hashtable.h"
+#include "internal/cryptlib.h"
+#include "internal/property.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_KEYMGMT, algcache)
+
+HT_START_KEY_DEFN(keymgmtkey)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(propq, 128)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(prov, 64)
+HT_END_KEY_DEFN(KEYMGMTKEY)
 
 static void *keymgmt_new(void)
 {
@@ -249,20 +262,92 @@ EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
                                          const char *name,
                                          const char *properties)
 {
-    return evp_generic_fetch_from_prov(prov, OSSL_OP_KEYMGMT,
-                                       name, properties,
-                                       keymgmt_from_algorithm,
-                                       (int (*)(void *))EVP_KEYMGMT_up_ref,
-                                       (void (*)(void *))EVP_KEYMGMT_free);
+    EVP_KEYMGMT *km = NULL;
+#ifndef FIPS_MODULE
+    HT_VALUE *v = NULL;
+    KEYMGMTKEY key;
+    HT *algcache;
+    char *mpropq = ossl_get_merged_property_string(ossl_provider_libctx(prov),
+                                                   properties);
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING(&key, name, name);
+    HT_SET_KEY_STRING(&key, propq, mpropq);
+    HT_SET_KEY_STRING(&key, prov, OSSL_PROVIDER_get0_name(prov));
+
+    OPENSSL_free(mpropq);
+
+    algcache = ossl_lib_ctx_get_algcache(ossl_provider_libctx(prov));
+
+    ossl_ht_read_lock(algcache);
+    km = ossl_ht_algcache_EVP_KEYMGMT_get(algcache, TO_HT_KEY(&key), &v);
+    if (km != NULL)
+        EVP_KEYMGMT_up_ref(km);
+    ossl_ht_read_unlock(algcache);
+    if (km != NULL)
+        return km;
+#endif
+
+    km = evp_generic_fetch_from_prov(prov, OSSL_OP_KEYMGMT,
+                                     name, properties,
+                                     keymgmt_from_algorithm,
+                                     (int (*)(void *))EVP_KEYMGMT_up_ref,
+                                     (void (*)(void *))EVP_KEYMGMT_free);
+
+#ifndef FIPS_MODULE
+    if (km != NULL) {
+        ossl_ht_write_lock(algcache);
+        if (ossl_ht_algcache_EVP_KEYMGMT_insert(algcache, TO_HT_KEY(&key), km,
+                                                NULL))
+            EVP_KEYMGMT_up_ref(km);
+        ossl_ht_write_unlock(algcache);
+    }
+#endif
+    return km;
 }
 
 EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
-                             keymgmt_from_algorithm,
-                             (int (*)(void *))EVP_KEYMGMT_up_ref,
-                             (void (*)(void *))EVP_KEYMGMT_free);
+    EVP_KEYMGMT *km = NULL;
+#ifndef FIPS_MODULE
+    HT_VALUE *v = NULL;
+    KEYMGMTKEY key;
+    HT *algcache;
+    char *mpropq = ossl_get_merged_property_string(ctx, properties);
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING(&key, name, algorithm);
+    HT_SET_KEY_STRING(&key, propq, mpropq);
+
+    OPENSSL_free(mpropq);
+
+    algcache = ossl_lib_ctx_get_algcache(ctx);
+
+    ossl_ht_read_lock(algcache);
+    km = ossl_ht_algcache_EVP_KEYMGMT_get(algcache, TO_HT_KEY(&key), &v);
+    if (km != NULL)
+        EVP_KEYMGMT_up_ref(km);
+    ossl_ht_read_unlock(algcache);
+    if (km != NULL)
+        return km;
+#endif
+
+    km = evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
+                           keymgmt_from_algorithm,
+                           (int (*)(void *))EVP_KEYMGMT_up_ref,
+                           (void (*)(void *))EVP_KEYMGMT_free);
+
+#ifndef FIPS_MODULE
+    if (km != NULL) {
+        ossl_ht_write_lock(algcache);
+        if (ossl_ht_algcache_EVP_KEYMGMT_insert(algcache, TO_HT_KEY(&key), km,
+                                                NULL))
+            EVP_KEYMGMT_up_ref(km);
+        ossl_ht_write_unlock(algcache);
+    }
+#endif
+    return km;
 }
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)

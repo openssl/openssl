@@ -143,6 +143,10 @@ OSSL_CORE_MAKE_FUNC(int,
 #define OSSL_FUNC_OPENSSL_CLEANSE             31
 OSSL_CORE_MAKE_FUNC(void,
         OPENSSL_cleanse, (void *ptr, size_t len))
+#define OSSL_FUNC_OPENSSL_ALIGNED_ALLOC       32
+OSSL_CORE_MAKE_FUNC(void *,
+        CRYPTO_aligned_alloc, (size_t num, size_t align, void **freeptr,
+                               const char *file, int line))
 
 /* Bio functions provided by the core */
 #define OSSL_FUNC_BIO_NEW_FILE                40

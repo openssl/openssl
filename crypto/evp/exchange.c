@@ -15,8 +15,17 @@
 #include "internal/provider.h"
 #include "internal/core.h"
 #include "internal/numbers.h"   /* includes SIZE_MAX */
+#include "internal/hashtable.h"
+#include "internal/property.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_KEYEXCH, algcache)
+
+HT_START_KEY_DEFN(kexkey)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(propq, 128)
+HT_END_KEY_DEFN(KEXKEY)
 
 static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
 {
@@ -170,10 +179,45 @@ OSSL_PROVIDER *EVP_KEYEXCH_get0_provider(const EVP_KEYEXCH *exchange)
 EVP_KEYEXCH *EVP_KEYEXCH_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
-                             evp_keyexch_from_algorithm,
-                             (int (*)(void *))EVP_KEYEXCH_up_ref,
-                             (void (*)(void *))EVP_KEYEXCH_free);
+    EVP_KEYEXCH *k;
+#ifndef FIPS_MODULE
+    HT_VALUE *v = NULL;
+    KEXKEY key;
+    HT *algcache;
+    char *mpropq = ossl_get_merged_property_string(ctx, properties);
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING(&key, name, algorithm);
+    HT_SET_KEY_STRING(&key, propq, mpropq);
+
+    OPENSSL_free(mpropq);
+
+    algcache = ossl_lib_ctx_get_algcache(ctx);
+
+    ossl_ht_read_lock(algcache);
+    k = ossl_ht_algcache_EVP_KEYEXCH_get(algcache, TO_HT_KEY(&key), &v);
+    if (k != NULL)
+        EVP_KEYEXCH_up_ref(k);
+    ossl_ht_read_unlock(algcache);
+
+    if (k != NULL)
+        return k;
+#endif
+
+    k = evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
+                          evp_keyexch_from_algorithm,
+                          (int (*)(void *))EVP_KEYEXCH_up_ref,
+                          (void (*)(void *))EVP_KEYEXCH_free);
+#ifndef FIPS_MODULE
+    if (k != NULL) {
+        ossl_ht_write_lock(algcache);
+        if (ossl_ht_algcache_EVP_KEYEXCH_insert(algcache, TO_HT_KEY(&key), k,
+                                                NULL))
+            EVP_KEYEXCH_up_ref(k);
+        ossl_ht_write_unlock(algcache);
+    }
+#endif
+    return k;
 }
 
 EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,

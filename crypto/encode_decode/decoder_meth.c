@@ -15,6 +15,8 @@
 #include "internal/namemap.h"
 #include "internal/property.h"
 #include "internal/provider.h"
+#include "internal/hashtable.h"
+#include "internal/property.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
 #include "crypto/context.h"
@@ -23,6 +25,13 @@
  * Decoder can have multiple names, separated with colons in a name string
  */
 #define NAME_SEPARATOR ':'
+
+DECLARE_HT_VALUE_TYPE_FNS(OSSL_DECODER, algcache)
+
+HT_START_KEY_DEFN(decoderkey)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(propq, 128)
+HT_END_KEY_DEFN(DECODERKEY)
 
 /* Simple method structure constructor and destructor */
 static OSSL_DECODER *ossl_decoder_new(void)
@@ -420,12 +429,47 @@ OSSL_DECODER *OSSL_DECODER_fetch(OSSL_LIB_CTX *libctx, const char *name,
 {
     struct decoder_data_st methdata;
     void *method;
+    OSSL_DECODER *d;
+#ifndef FIPS_MODULE
+    HT_VALUE *v = NULL;
+    DECODERKEY key;
+    HT *algcache;
+    char *mpropq = ossl_get_merged_property_string(libctx, properties);
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING(&key, name, name);
+    HT_SET_KEY_STRING(&key, propq, mpropq);
+
+    OPENSSL_free(mpropq);
+
+    algcache = ossl_lib_ctx_get_algcache(libctx);
+
+    ossl_ht_read_lock(algcache);
+    d = ossl_ht_algcache_OSSL_DECODER_get(algcache, TO_HT_KEY(&key), &v);
+    if (d != NULL)
+        OSSL_DECODER_up_ref(d);
+    ossl_ht_read_unlock(algcache);
+
+    if (d != NULL)
+        return d;
+#endif
 
     methdata.libctx = libctx;
     methdata.tmp_store = NULL;
     method = inner_ossl_decoder_fetch(&methdata, name, properties);
     dealloc_tmp_decoder_store(methdata.tmp_store);
-    return method;
+
+    d = method;
+#ifndef FIPS_MODULE
+    if (d != NULL) {
+        ossl_ht_write_lock(algcache);
+        if (ossl_ht_algcache_OSSL_DECODER_insert(algcache, TO_HT_KEY(&key), d,
+                                                 NULL))
+            OSSL_DECODER_up_ref(d);
+        ossl_ht_write_unlock(algcache);
+    }
+#endif
+    return d;
 }
 
 int ossl_decoder_store_cache_flush(OSSL_LIB_CTX *libctx)

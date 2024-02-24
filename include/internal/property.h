@@ -93,6 +93,8 @@ size_t ossl_property_list_to_string(OSSL_LIB_CTX *ctx,
                                     const OSSL_PROPERTY_LIST *list, char *buf,
                                     size_t bufsize);
 
+char *ossl_get_merged_property_string(OSSL_LIB_CTX *ctx, const char *propq);
+
 int ossl_global_properties_no_mirrored(OSSL_LIB_CTX *libctx);
 void ossl_global_properties_stop_mirroring(OSSL_LIB_CTX *libctx);
 

@@ -761,3 +761,37 @@ size_t ossl_property_list_to_string(OSSL_LIB_CTX *ctx,
     put_char('\0', &buf, &bufsize, &needed);
     return needed;
 }
+
+char *ossl_get_merged_property_string(OSSL_LIB_CTX *ctx, const char *propq)
+{
+    OSSL_PROPERTY_LIST *p1 = NULL;
+    OSSL_PROPERTY_LIST **p2 = NULL;
+    OSSL_PROPERTY_LIST *p3 = NULL;
+    size_t sz;
+    char *mpropq = NULL;
+
+    p1 = ossl_parse_query(ctx, propq, 1);
+    p2 = ossl_ctx_global_properties(ctx, 0);
+    if (p1 != NULL && *p2 != NULL) {
+        p3 = ossl_property_merge(p1, *p2);
+    } else if (*p2 != NULL) {
+        p3 = *p2;
+    } else {
+        mpropq = OPENSSL_strdup(propq);
+        goto done;
+    }
+
+    if (p3 != NULL) {
+        sz = ossl_property_list_to_string(ctx, p3, NULL, 0);
+        mpropq = OPENSSL_zalloc(sz);
+        ossl_property_list_to_string(ctx, p3, mpropq, sz);
+    }
+
+done:
+    ossl_property_free(p1);
+    if (p3 != *p2)
+        ossl_property_free(p3);
+
+    return mpropq;
+}
+

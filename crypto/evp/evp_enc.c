@@ -11,6 +11,7 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
+#include <string.h>
 #include <limits.h>
 #include <assert.h>
 #include <openssl/evp.h>
@@ -25,8 +26,17 @@
 #include "internal/provider.h"
 #include "internal/core.h"
 #include "internal/safe_math.h"
+#include "internal/hashtable.h"
+#include "internal/property.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_CIPHER, algcache)
+
+HT_START_KEY_DEFN(cipherkey)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(propq, 128)
+HT_END_KEY_DEFN(CIPHERKEY)
 
 OSSL_SAFE_MATH_SIGNED(int, int)
 
@@ -1713,12 +1723,44 @@ static void evp_cipher_free(void *cipher)
 EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                              const char *properties)
 {
-    EVP_CIPHER *cipher =
-        evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
+    EVP_CIPHER *c;
+#ifndef FIPS_MODULE
+    HT_VALUE *v = NULL;
+    CIPHERKEY key;
+    HT *algcache;
+    char *mpropq = ossl_get_merged_property_string(ctx, properties);
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING(&key, name, algorithm);
+    HT_SET_KEY_STRING(&key, propq, mpropq);
+
+    OPENSSL_free(mpropq);
+
+    algcache = ossl_lib_ctx_get_algcache(ctx);
+
+    ossl_ht_read_lock(algcache);
+    c = ossl_ht_algcache_EVP_CIPHER_get(algcache, TO_HT_KEY(&key), &v);
+    if (c != NULL)
+        EVP_CIPHER_up_ref(c);
+    ossl_ht_read_unlock(algcache);
+
+    if (c != NULL)
+        return c;
+#endif
+
+    c = evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
                           evp_cipher_from_algorithm, evp_cipher_up_ref,
                           evp_cipher_free);
-
-    return cipher;
+#ifndef FIPS_MODULE
+    if (c != NULL) {
+        ossl_ht_write_lock(algcache);
+        if (ossl_ht_algcache_EVP_CIPHER_insert(algcache, TO_HT_KEY(&key), c,
+                                               NULL))
+            EVP_CIPHER_up_ref(c);
+        ossl_ht_write_unlock(algcache);
+    }
+#endif
+    return c;
 }
 
 int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)

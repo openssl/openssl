@@ -15,8 +15,16 @@
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/core.h"
+#include "internal/property.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_SIGNATURE, algcache)
+
+HT_START_KEY_DEFN(sigkey)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(propq, 128)
+HT_END_KEY_DEFN(SIGKEY)
 
 static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
 {
@@ -304,10 +312,46 @@ OSSL_PROVIDER *EVP_SIGNATURE_get0_provider(const EVP_SIGNATURE *signature)
 EVP_SIGNATURE *EVP_SIGNATURE_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                    const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
-                             evp_signature_from_algorithm,
-                             (int (*)(void *))EVP_SIGNATURE_up_ref,
-                             (void (*)(void *))EVP_SIGNATURE_free);
+    EVP_SIGNATURE *s;
+#ifndef FIPS_MODULE
+    HT_VALUE *v = NULL;
+    SIGKEY key;
+    HT *algcache;
+    char *mpropq = ossl_get_merged_property_string(ctx, properties);
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING(&key, name, algorithm);
+    HT_SET_KEY_STRING(&key, propq, mpropq);
+
+    OPENSSL_free(mpropq);
+
+    algcache = ossl_lib_ctx_get_algcache(ctx);
+
+    ossl_ht_read_lock(algcache);
+    s = ossl_ht_algcache_EVP_SIGNATURE_get(algcache, TO_HT_KEY(&key), &v);
+    if (s != NULL)
+        EVP_SIGNATURE_up_ref(s);
+    ossl_ht_read_unlock(algcache);
+
+    if (s != NULL)
+        return s;
+#endif
+
+    s = evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
+                          evp_signature_from_algorithm,
+                          (int (*)(void *))EVP_SIGNATURE_up_ref,
+                          (void (*)(void *))EVP_SIGNATURE_free);
+#ifndef FIPS_MODULE
+    if (s != NULL) {
+        ossl_ht_write_lock(algcache);
+        if (ossl_ht_algcache_EVP_SIGNATURE_insert(algcache, TO_HT_KEY(&key), s,
+                                                  NULL))
+            EVP_SIGNATURE_up_ref(s);
+        ossl_ht_write_unlock(algcache);
+    }
+#endif
+
+    return s;
 }
 
 EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,
