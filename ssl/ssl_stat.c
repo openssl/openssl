@@ -343,7 +343,7 @@ const char *SSL_alert_desc_string_long(int value)
     case SSL3_AD_CLOSE_NOTIFY:
         return "close notify";
     case SSL3_AD_UNEXPECTED_MESSAGE:
-        return "unexpected_message";
+        return "unexpected message";
     case SSL3_AD_BAD_RECORD_MAC:
         return "bad record mac";
     case SSL3_AD_DECOMPRESSION_FAILURE:
