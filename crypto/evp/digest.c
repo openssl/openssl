@@ -11,6 +11,7 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
+#include <string.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/ec.h>
@@ -22,8 +23,17 @@
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/core.h"
+#include "internal/hashtable.h"
+#include "internal/property.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_MD, algcache)
+
+HT_START_KEY_DEFN(mdkey)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(propq, 128)
+HT_END_KEY_DEFN(MDKEY)
 
 static void cleanup_old_md_data(EVP_MD_CTX *ctx, int force)
 {
@@ -1146,10 +1156,42 @@ static void evp_md_free(void *md)
 EVP_MD *EVP_MD_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                      const char *properties)
 {
-    EVP_MD *md =
-        evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
-                          evp_md_from_algorithm, evp_md_up_ref, evp_md_free);
+    EVP_MD *md;
+#ifndef FIPS_MODULE
+    HT_VALUE *v = NULL;
+    MDKEY key;
+    HT *algcache;
+    char *mpropq = ossl_get_merged_property_string(ctx, properties);
 
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING(&key, name, algorithm);
+    HT_SET_KEY_STRING(&key, propq, mpropq);
+
+    OPENSSL_free(mpropq);
+
+    algcache = ossl_lib_ctx_get_algcache(ctx);
+
+    ossl_ht_read_lock(algcache);
+    md = ossl_ht_algcache_EVP_MD_get(algcache, TO_HT_KEY(&key), &v);
+    if (md != NULL)
+        EVP_MD_up_ref(md);
+    ossl_ht_read_unlock(algcache);
+
+    if (md != NULL)
+        return md;
+
+#endif
+
+    md = evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
+                           evp_md_from_algorithm, evp_md_up_ref, evp_md_free);
+#ifndef FIPS_MODULE
+    if (md != NULL) {
+        ossl_ht_write_lock(algcache);
+        if (ossl_ht_algcache_EVP_MD_insert(algcache, TO_HT_KEY(&key), md, NULL))
+            EVP_MD_up_ref(md);
+        ossl_ht_write_unlock(algcache);
+    }
+#endif
     return md;
 }
 

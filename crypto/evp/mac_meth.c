@@ -7,14 +7,25 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include "internal/provider.h"
 #include "internal/core.h"
+#include "internal/hashtable.h"
+#include "internal/cryptlib.h"
+#include "internal/property.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_MAC, algcache)
+
+HT_START_KEY_DEFN(mackey)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(propq, 128)
+HT_END_KEY_DEFN(MACKEY)
 
 static int evp_mac_up_ref(void *vmac)
 {
@@ -166,9 +177,44 @@ static void *evp_mac_from_algorithm(int name_id,
 EVP_MAC *EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
                        const char *properties)
 {
-    return evp_generic_fetch(libctx, OSSL_OP_MAC, algorithm, properties,
-                             evp_mac_from_algorithm, evp_mac_up_ref,
-                             evp_mac_free);
+    EVP_MAC *m;
+#ifndef FIPS_MODULE
+    HT_VALUE *v = NULL;
+    MACKEY key;
+    HT *algcache;
+    char *mpropq = ossl_get_merged_property_string(libctx, properties);
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING(&key, name, algorithm);
+    HT_SET_KEY_STRING(&key, propq, mpropq);
+
+    OPENSSL_free(mpropq);
+
+    algcache = ossl_lib_ctx_get_algcache(libctx);
+
+    ossl_ht_read_lock(algcache);
+    m = ossl_ht_algcache_EVP_MAC_get(algcache, TO_HT_KEY(&key), &v);
+    if (m != NULL)
+        EVP_MAC_up_ref(m);
+    ossl_ht_read_unlock(algcache);
+
+    if (m != NULL)
+        return m;
+#endif
+
+    m = evp_generic_fetch(libctx, OSSL_OP_MAC, algorithm, properties,
+                          evp_mac_from_algorithm, evp_mac_up_ref,
+                          evp_mac_free);
+#ifndef FIPS_MODULE
+    if (m != NULL) {
+        ossl_ht_write_lock(algcache);
+        if (ossl_ht_algcache_EVP_MAC_insert(algcache, TO_HT_KEY(&key), m,
+                                            NULL))
+            EVP_MAC_up_ref(m);
+        ossl_ht_write_unlock(algcache);
+    }
+#endif
+    return m;
 }
 
 int EVP_MAC_up_ref(EVP_MAC *mac)

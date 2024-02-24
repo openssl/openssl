@@ -1079,6 +1079,7 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
 #ifndef FIPS_MODULE
     int freeparent = 0;
 #endif
+    HT *algcache;
     int lock = 1;
 
     if (!ossl_assert(prov != NULL))
@@ -1146,6 +1147,13 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
     if (freeparent)
         ossl_provider_free_parent(prov, 1);
 #endif
+
+    algcache = ossl_lib_ctx_get_algcache(prov->libctx);
+    if (algcache != NULL) {
+        ossl_ht_write_lock(algcache);
+        ossl_ht_flush(algcache);
+        ossl_ht_write_unlock(algcache);
+    }
 
     /* We don't deinit here, that's done in ossl_provider_free() */
     return count;
@@ -1288,6 +1296,7 @@ static int provider_remove_store_methods(OSSL_PROVIDER *prov)
         return acc == 1;
 #endif
     }
+
     return 1;
 }
 
@@ -2276,6 +2285,7 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CRYPTO_SECURE_ALLOCATED,
         (void (*)(void))CRYPTO_secure_allocated },
     { OSSL_FUNC_OPENSSL_CLEANSE, (void (*)(void))OPENSSL_cleanse },
+    { OSSL_FUNC_OPENSSL_ALIGNED_ALLOC, (void (*)(void))CRYPTO_aligned_alloc },
 #ifndef FIPS_MODULE
     { OSSL_FUNC_PROVIDER_REGISTER_CHILD_CB,
         (void (*)(void))ossl_provider_register_child_cb },

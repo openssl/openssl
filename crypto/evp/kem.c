@@ -14,8 +14,17 @@
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/core.h"
+#include "internal/hashtable.h"
+#include "internal/property.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_KEM, algcache)
+
+HT_START_KEY_DEFN(kemkey)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(propq, 128)
+HT_END_KEY_DEFN(KEMKEY)
 
 static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
                         const OSSL_PARAM params[], EVP_PKEY *authkey)
@@ -450,10 +459,45 @@ OSSL_PROVIDER *EVP_KEM_get0_provider(const EVP_KEM *kem)
 EVP_KEM *EVP_KEM_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                        const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_KEM, algorithm, properties,
-                             evp_kem_from_algorithm,
-                             (int (*)(void *))EVP_KEM_up_ref,
-                             (void (*)(void *))EVP_KEM_free);
+    EVP_KEM *k;
+#ifndef FIPS_MODULE
+    HT_VALUE *v = NULL;
+    KEMKEY key;
+    HT *algcache;
+    char *mpropq = ossl_get_merged_property_string(ctx, properties);
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING(&key, name, algorithm);
+    HT_SET_KEY_STRING(&key, propq, mpropq);
+
+    OPENSSL_free(mpropq);
+
+    algcache = ossl_lib_ctx_get_algcache(ctx);
+
+    ossl_ht_read_lock(algcache);
+    k = ossl_ht_algcache_EVP_KEM_get(algcache, TO_HT_KEY(&key), &v);
+    if (k != NULL)
+        EVP_KEM_up_ref(k);
+    ossl_ht_read_unlock(algcache);
+
+    if (k != NULL)
+        return k;
+#endif
+
+    k = evp_generic_fetch(ctx, OSSL_OP_KEM, algorithm, properties,
+                          evp_kem_from_algorithm,
+                          (int (*)(void *))EVP_KEM_up_ref,
+                          (void (*)(void *))EVP_KEM_free);
+#ifndef FIPS_MODULE
+    if (k != NULL) {
+        ossl_ht_write_lock(algcache);
+        if (ossl_ht_algcache_EVP_KEM_insert(algcache, TO_HT_KEY(&key), k,
+                                            NULL))
+            EVP_KEM_up_ref(k);
+        ossl_ht_write_unlock(algcache);
+    }
+#endif
+    return k;
 }
 
 EVP_KEM *evp_kem_fetch_from_prov(OSSL_PROVIDER *prov, const char *algorithm,
