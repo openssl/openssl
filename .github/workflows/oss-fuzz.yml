@@ -17,6 +17,11 @@ jobs:
   Fuzzing:
     runs-on: ubuntu-latest
     steps:
+    - name: Clear unnecessary files
+      run: |
+        df
+        sudo rm -rf /usr/share/dotnet /usr/share/swift /usr/local/.ghcup /usr/local/share/powershell /usr/local/share/chromium /usr/local/lib/android /usr/local/lib/node_modules
+        df
     - name: Build Fuzzers
       uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
       with:
