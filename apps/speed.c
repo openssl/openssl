@@ -846,8 +846,12 @@ static int EVP_Update_loop(void *args)
     unsigned char *buf = tempargs->buf;
     EVP_CIPHER_CTX *ctx = tempargs->ctx;
     int outl, count, rc;
+    unsigned char faketag[16] = { 0xcc };
 
     if (decrypt) {
+        if (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ctx)) & EVP_CIPH_FLAG_AEAD_CIPHER) {
+            (void)EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(faketag), faketag);
+        }
         for (count = 0; COND(c[D_EVP][testnum]); count++) {
             rc = EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
             if (rc != 1) {
@@ -937,7 +941,7 @@ static int EVP_Update_loop_aead(void *args)
                                     sizeof(faketag), faketag) > 0
                 && EVP_DecryptUpdate(ctx, NULL, &outl, aad, sizeof(aad)) > 0
                 && EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]) > 0
-                && EVP_DecryptFinal_ex(ctx, buf + outl, &outl) >0)
+                && EVP_DecryptFinal_ex(ctx, buf + outl, &outl) > 0)
                 realcount++;
         }
     } else {
