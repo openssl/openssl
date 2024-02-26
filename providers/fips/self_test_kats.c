@@ -467,6 +467,10 @@ static int self_test_sign(const ST_KAT_SIGN *t,
 
     OSSL_SELF_TEST_onbegin(st, typ, t->desc);
 
+    if (!set_kat_drbg(libctx, t->entropy, t->entropy_len,
+                      t->nonce, t->nonce_len, t->persstr, t->persstr_len))
+        goto err;
+
     bnctx = BN_CTX_new_ex(libctx);
     if (bnctx == NULL)
         goto err;
@@ -524,6 +528,8 @@ err:
     OSSL_PARAM_free(params);
     OSSL_PARAM_free(params_sig);
     OSSL_PARAM_BLD_free(bld);
+    if (!reset_main_drbg(libctx))
+        ret = 0;
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
@@ -780,10 +786,6 @@ static int self_test_signatures(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 
     for (i = 0; ret && i < (int)OSSL_NELEM(st_kat_sign_tests); ++i) {
         t = st_kat_sign_tests + i;
-        if (!set_kat_drbg(libctx, t->entropy, t->entropy_len,
-                          t->nonce, t->nonce_len, t->persstr, t->persstr_len))
-            return 0;
-
 #ifndef OPENSSL_NO_ECX
         if (t->oneshot) {
             if (!self_test_digest_sign(t, st, libctx))
@@ -794,8 +796,6 @@ static int self_test_signatures(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
             if (!self_test_sign(t, st, libctx))
                 ret = 0;
         }
-        if (!reset_main_drbg(libctx))
-            ret = 0;
     }
     return ret;
 }
