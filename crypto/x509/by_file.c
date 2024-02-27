@@ -198,6 +198,8 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
                 goto err;
             }
             count++;
+            X509_CRL_free(x);
+            x = NULL;
         }
     } else if (type == X509_FILETYPE_ASN1) {
         x = d2i_X509_CRL_bio(in, NULL);

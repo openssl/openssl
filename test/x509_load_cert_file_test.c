@@ -12,6 +12,7 @@
 #include "testutil.h"
 
 static const char *chain;
+static const char *crl;
 
 static int test_load_cert_file(void)
 {
@@ -36,6 +37,9 @@ static int test_load_cert_file(void)
             goto err;
     }
 
+    if (crl != NULL && !TEST_true(X509_load_crl_file(lookup, crl, X509_FILETYPE_PEM)))
+        goto err;
+
     ret = 1;
 
 err:
@@ -45,7 +49,7 @@ err:
     return ret;
 }
 
-OPT_TEST_DECLARE_USAGE("cert.pem...\n")
+OPT_TEST_DECLARE_USAGE("cert.pem [crl.pem]\n")
 
 int setup_tests(void)
 {
@@ -57,6 +61,8 @@ int setup_tests(void)
     chain = test_get_argument(0);
     if (chain == NULL)
         return 0;
+
+    crl = test_get_argument(1);
 
     ADD_TEST(test_load_cert_file);
     return 1;
