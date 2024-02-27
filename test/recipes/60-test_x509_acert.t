@@ -17,6 +17,8 @@ plan skip_all => "test_x509_acert uses ec which is not supported by this build"
 plan tests => 1;
 
 ok(run(test(["x509_acert_test", srctop_file("test", "certs", "acert.pem"),
-            srctop_file("test", "certs", "acert_ietf.pem")])),
+            srctop_file("test", "certs", "acert_ietf.pem"),
+            srctop_file("test", "certs", "acert_bc1.pem"),
+            srctop_file("test", "certs", "acert_bc2.pem")])),
        "running x509_acert_test");
 
