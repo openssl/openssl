@@ -563,7 +563,7 @@ sub generate_trie {
     my $nodes = 0;
     my $chars = 0;
 
-    foreach my $name (keys %params) {
+    foreach my $name (sort keys %params) {
         my $val = $params{$name};
         if (substr($val, 0, 1) ne '*') {
             my $cursor = \%trie;
