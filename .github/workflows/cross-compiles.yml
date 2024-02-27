@@ -47,52 +47,62 @@ jobs:
             target: no-threads 386 DJGPP,
             tests: none,
             ppa: jwt27/djgpp-toolchain
+            cflags:
           }, {
             arch: aarch64-linux-gnu,
             libs: libc6-dev-arm64-cross,
             target: linux-aarch64
+            cflags:
           }, {
             arch: alpha-linux-gnu,
             libs: libc6.1-dev-alpha-cross,
             target: linux-alpha-gcc
+            cflags:
           }, {
             arch: arm-linux-gnueabi,
             libs: libc6-dev-armel-cross,
             target: linux-armv4,
             tests: -test_includes -test_store -test_x509_store
+            cflags:
           }, {
             arch: arm-linux-gnueabihf,
             libs: libc6-dev-armhf-cross,
             target: linux-armv4,
             tests: -test_includes -test_store -test_x509_store
+            cflags:
           }, {
             arch: hppa-linux-gnu,
             libs: libc6-dev-hppa-cross,
             target: -static linux-generic32,
             fips: no,
             tests: -test_includes -test_store -test_x509_store
+            cflags:
           }, {
             arch: m68k-linux-gnu,
             libs: libc6-dev-m68k-cross,
             target: -static -m68040 linux-latomic -Wno-stringop-overflow,
             fips: no,
             tests: -test_includes -test_store -test_x509_store
+            cflags: -mno-xgot
           }, {
             arch: mips-linux-gnu,
             libs: libc6-dev-mips-cross,
             target: -static linux-mips32,
             fips: no,
             tests: -test_includes -test_store -test_x509_store
+            cflags:
           }, {
             arch: mips64-linux-gnuabi64,
             libs: libc6-dev-mips64-cross,
             target: -static linux64-mips64,
             fips: no
+            cflags:
           }, {
             arch: mipsel-linux-gnu,
             libs: libc6-dev-mipsel-cross,
             target: linux-mips32,
             tests: -test_includes -test_store -test_x509_store
+            cflags:
           }, {
             arch: powerpc64le-linux-gnu,
             libs: libc6-dev-ppc64el-cross,
@@ -100,19 +110,23 @@ jobs:
             # buggy and causes test failures. Dropping the optimisation level
             # resolves it.
             target: -O2 linux-ppc64le
+            cflags:
           }, {
             arch: riscv64-linux-gnu,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64
+            cflags:
           }, {
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
             target: linux64-s390x -Wno-stringop-overflow
+            cflags:
           }, {
             arch: sh4-linux-gnu,
             libs: libc6-dev-sh4-cross,
             target: no-async linux-latomic,
             tests: -test_includes -test_store -test_x509_store
+            cflags:
           },
 
           # These build with shared libraries but they crash when run
@@ -123,21 +137,25 @@ jobs:
             libs: libc6-dev-hppa-cross,
             target: linux-generic32,
             tests: none
+            cflags:
           }, {
             arch: m68k-linux-gnu,
             libs: libc6-dev-m68k-cross,
             target: -mcfv4e linux-latomic -Wno-stringop-overflow no-quic,
             tests: none
+            cflags:
           }, {
             arch: mips-linux-gnu,
             libs: libc6-dev-mips-cross,
             target: linux-mips32,
             tests: none
+            cflags:
           }, {
             arch: mips64-linux-gnuabi64,
             libs: libc6-dev-mips64-cross,
             target: linux64-mips64,
             tests: none
+            cflags:
           },
 
           # This build doesn't execute either with or without shared libraries.
@@ -146,6 +164,7 @@ jobs:
             libs: libc6-dev-sparc64-cross,
             target: linux64-sparcv9,
             tests: none
+            cflags:
           }
         ]
     runs-on: ${{ github.server_url == 'https://github.com' && 'ubuntu-latest' || 'ubuntu-22.04-self-hosted' }}
@@ -169,13 +188,13 @@ jobs:
       run: |
         ./config --banner=Configured --strict-warnings enable-fips \
                  --cross-compile-prefix=${{ matrix.platform.arch }}- \
-                 ${{ matrix.platform.target }}
+                 ${{ matrix.platform.target }} ${{ matrix.platform.cflags }}
     - name: config without FIPS
       if: matrix.platform.fips == 'no'
       run: |
         ./config --banner=Configured --strict-warnings \
                  --cross-compile-prefix=${{ matrix.platform.arch }}- \
-                 ${{ matrix.platform.target }}
+                 ${{ matrix.platform.target }} ${{ matrix.platform.cflags }}
     - name: config dump
       run: ./configdata.pm --dump
 
