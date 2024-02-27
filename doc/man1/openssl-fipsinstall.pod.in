@@ -367,14 +367,17 @@ used for cross compiling, since the self tests need to run at least once on each
 target machine. Once the self tests have run on the target machine the user
 could possibly then add the 2 fields into the configuration using some other
 mechanism.
-
-This is the default.
+This option defaults to 0 for any OpenSSL FIPS 140-2 provider (OpenSSL 3.0.X).
+and is not relevant for an OpenSSL FIPS 140-3 provider, since this is no
+longer allowed.
 
 =item B<-self_test_oninstall>
 
 The converse of B<-self_test_oninstall>.  The two fields related to the
 "test status indicator" and "MAC status indicator" are written to the
 output configuration file.
+This field is not relevant for an OpenSSL FIPS 140-3 provider, since this is no
+longer allowed.
 
 =item B<-quiet>
 
