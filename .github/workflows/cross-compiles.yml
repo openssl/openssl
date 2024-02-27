@@ -74,7 +74,7 @@ jobs:
           }, {
             arch: m68k-linux-gnu,
             libs: libc6-dev-m68k-cross,
-            target: -static -m68040 linux-latomic -Wno-stringop-overflow,
+            target: -static -m68040 linux-latomic -Wno-stringop-overflow -mno-xgot,
             fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
