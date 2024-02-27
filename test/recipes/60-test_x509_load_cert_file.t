@@ -12,4 +12,5 @@ setup("test_load_cert_file");
 
 plan tests => 1;
 
-ok(run(test(["x509_load_cert_file_test", srctop_file("test", "certs", "leaf-chain.pem")])));
+ok(run(test(["x509_load_cert_file_test", srctop_file("test", "certs", "leaf-chain.pem"),
+             srctop_file("test", "certs", "cyrillic_crl.pem")])));
