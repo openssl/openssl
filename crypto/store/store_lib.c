@@ -149,8 +149,8 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
                                               ossl_pw_passphrase_callback_dec,
                                               &pwdata);
             } else {
-                loader_ctx = fetched_loader->p_open(provctx, uri);
-                if (loader_ctx != NULL &&
+                if (fetched_loader->p_open != NULL &&
+                    (loader_ctx = fetched_loader->p_open(provctx, uri)) != NULL &&
                     !loader_set_params(fetched_loader, loader_ctx,
                                        params, propq)) {
                     (void)fetched_loader->p_close(loader_ctx);
@@ -1044,6 +1044,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
         OSSL_CORE_BIO *cbio = ossl_core_bio_new_from_bio(bp);
 
         if (cbio == NULL
+            || fetched_loader->p_attach == NULL
             || (loader_ctx = fetched_loader->p_attach(provctx, cbio)) == NULL) {
             OSSL_STORE_LOADER_free(fetched_loader);
             fetched_loader = NULL;
