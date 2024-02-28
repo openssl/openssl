@@ -112,8 +112,7 @@ struct rcu_lock_st {
  */
 static void free_rcu_thr_data(void *ptr)
 {
-    struct rcu_thr_data *data =
-                        (struct rcu_thr_data *)CRYPTO_THREAD_get_local(&rcu_thr_key);
+    struct rcu_thr_data *data = (struct rcu_thr_data *)ptr;
 
     OPENSSL_free(data);
     CRYPTO_THREAD_set_local(&rcu_thr_key, NULL);
@@ -123,7 +122,6 @@ static void free_rcu_thr_data(void *ptr)
 static void ossl_rcu_init(void)
 {
     CRYPTO_THREAD_init_local(&rcu_thr_key, NULL);
-    ossl_init_thread_start(NULL, NULL, free_rcu_thr_data);
 }
 
 static struct rcu_qp *allocate_new_qp_group(struct rcu_lock_st *lock,
@@ -221,6 +219,7 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
         data = OPENSSL_zalloc(sizeof(*data));
         OPENSSL_assert(data != NULL);
         CRYPTO_THREAD_set_local(&rcu_thr_key, data);
+        ossl_init_thread_start(NULL, data, free_rcu_thr_data);
     }
 
     for (i = 0; i < MAX_QPS; i++) {
