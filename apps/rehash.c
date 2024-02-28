@@ -125,7 +125,7 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
     static HENTRY nilhentry;
     BUCKET *bp;
     HENTRY *ep, *found = NULL;
-    unsigned int ndx = (type + hash) % OSSL_NELEM(hash_table);
+    unsigned int ndx = (type + (unsigned long)(hash)) % OSSL_NELEM(hash_table);
 
     for (bp = hash_table[ndx]; bp; bp = bp->next)
         if (bp->type == type && bp->hash == hash)
