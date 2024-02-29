@@ -413,6 +413,11 @@ BN_ULONG BN_get_word(const BIGNUM *a)
     return 0;
 }
 
+BN_ULONG BN_get_word_ex(const BIGNUM *a)
+{
+    return a->top ? a->d[0] : 0;
+}
+
 int BN_set_word(BIGNUM *a, BN_ULONG w)
 {
     bn_check_top(a);
