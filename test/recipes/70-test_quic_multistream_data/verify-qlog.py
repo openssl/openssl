@@ -14,6 +14,10 @@ class Unexpected(Exception):
     def __init__(self, filename, msg):
         Exception.__init__(self, f"file {repr(filename)}: {msg}")
 
+class Malformed(Exception):
+    def __init__(self, line, msg):
+        Exception.__init__(self, f"{line}: {msg}")
+
 event_type_counts = {}
 frame_type_counts = {}
 
@@ -25,7 +29,13 @@ def load_file(filename):
                 raise Unexpected(filename, "expected JSON-SEQ leader")
 
             line = line[1:]
-            objs.append(json.loads(line))
+            try:
+                objs.append(json.loads(line))
+            except:
+                fi.seek(0)
+                fdata = fi.read()
+                print(fdata)
+                raise Malformed(line, "Malformed json input")
     return objs
 
 def check_header(filename, hdr):
