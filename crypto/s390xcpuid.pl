@@ -308,7 +308,7 @@ s390x_kimd:
 	llgfr	%r0,$fc
 	lgr	%r1,$param
 
-	.long	0xb93e0002	# kimd %r0,%r2
+	.long	0xb93e8002	# kimd %r0,%r2[,M3]
 	brc	1,.-4		# pay attention to "partial completion"
 
 	br	$ra
@@ -329,7 +329,7 @@ s390x_klmd:
 	llgfr	%r0,$fc
 	l${g}	%r1,$stdframe($sp)
 
-	.long	0xb93f0042	# klmd %r4,%r2
+	.long	0xb93f8042	# klmd %r4,%r2[,M3]
 	brc	1,.-4		# pay attention to "partial completion"
 
 	br	$ra
