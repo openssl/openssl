@@ -8,13 +8,19 @@
  */
 
 #include <string.h>
+#if defined(__s390x__) && defined(OPENSSL_CPUID_OBJ)
+# include "crypto/s390x_arch.h"
+#endif
 #include "internal/sha3.h"
 
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r, int next);
 
 void ossl_sha3_reset(KECCAK1600_CTX *ctx)
 {
-    memset(ctx->A, 0, sizeof(ctx->A));
+#if defined(__s390x__) && defined(OPENSSL_CPUID_OBJ)
+    if (!(OPENSSL_s390xcap_P.stfle[1] & S390X_CAPBIT(S390X_MSA12)))
+#endif
+        memset(ctx->A, 0, sizeof(ctx->A));
     ctx->bufsz = 0;
     ctx->xof_state = XOF_STATE_INIT;
 }

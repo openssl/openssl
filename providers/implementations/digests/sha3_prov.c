@@ -193,26 +193,32 @@ static size_t s390x_sha3_absorb(void *vctx, const void *inp, size_t len)
 {
     KECCAK1600_CTX *ctx = vctx;
     size_t rem = len % ctx->block_size;
+    unsigned int fc;
 
     if (!(ctx->xof_state == XOF_STATE_INIT ||
           ctx->xof_state == XOF_STATE_ABSORB))
         return 0;
+    fc = ctx->pad;
+    fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KIMD_NIP : 0;
     ctx->xof_state = XOF_STATE_ABSORB;
-    s390x_kimd(inp, len - rem, ctx->pad, ctx->A);
+    s390x_kimd(inp, len - rem, fc, ctx->A);
     return rem;
 }
 
 static int s390x_sha3_final(void *vctx, unsigned char *out, size_t outlen)
 {
     KECCAK1600_CTX *ctx = vctx;
+    unsigned int fc;
 
     if (!ossl_prov_is_running())
         return 0;
     if (!(ctx->xof_state == XOF_STATE_INIT ||
           ctx->xof_state == XOF_STATE_ABSORB))
         return 0;
+    fc = ctx->pad | S390X_KLMD_DUFOP;
+    fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KLMD_NIP : 0;
     ctx->xof_state = XOF_STATE_FINAL;
-    s390x_klmd(ctx->buf, ctx->bufsz, NULL, 0, ctx->pad, ctx->A);
+    s390x_klmd(ctx->buf, ctx->bufsz, NULL, 0, fc, ctx->A);
     memcpy(out, ctx->A, outlen);
     return 1;
 }
@@ -220,14 +226,17 @@ static int s390x_sha3_final(void *vctx, unsigned char *out, size_t outlen)
 static int s390x_shake_final(void *vctx, unsigned char *out, size_t outlen)
 {
     KECCAK1600_CTX *ctx = vctx;
+    unsigned int fc;
 
     if (!ossl_prov_is_running())
         return 0;
     if (!(ctx->xof_state == XOF_STATE_INIT ||
           ctx->xof_state == XOF_STATE_ABSORB))
         return 0;
+    fc = ctx->pad | S390X_KLMD_DUFOP;
+    fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KLMD_NIP : 0;
     ctx->xof_state = XOF_STATE_FINAL;
-    s390x_klmd(ctx->buf, ctx->bufsz, out, outlen, ctx->pad, ctx->A);
+    s390x_klmd(ctx->buf, ctx->bufsz, out, outlen, fc, ctx->A);
     return 1;
 }
 
@@ -277,24 +286,28 @@ static int s390x_keccakc_final(void *vctx, unsigned char *out, size_t outlen,
     size_t bsz = ctx->block_size;
     size_t num = ctx->bufsz;
     size_t needed = outlen;
+    unsigned int fc;
 
     if (!ossl_prov_is_running())
         return 0;
     if (!(ctx->xof_state == XOF_STATE_INIT ||
           ctx->xof_state == XOF_STATE_ABSORB))
         return 0;
+    fc = ctx->pad;
+    fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KIMD_NIP : 0;
     ctx->xof_state = XOF_STATE_FINAL;
     if (outlen == 0)
         return 1;
     memset(ctx->buf + num, 0, bsz - num);
     ctx->buf[num] = padding;
     ctx->buf[bsz - 1] |= 0x80;
-    s390x_kimd(ctx->buf, bsz, ctx->pad, ctx->A);
+    s390x_kimd(ctx->buf, bsz, fc, ctx->A);
     num = needed > bsz ? bsz : needed;
     memcpy(out, ctx->A, num);
     needed -= num;
     if (needed > 0)
-        s390x_klmd(NULL, 0, out + bsz, needed, ctx->pad | S390X_KLMD_PS, ctx->A);
+        s390x_klmd(NULL, 0, out + bsz, needed,
+                   ctx->pad | S390X_KLMD_PS | S390X_KLMD_DUFOP, ctx->A);
 
     return 1;
 }
@@ -314,6 +327,7 @@ static int s390x_keccakc_squeeze(void *vctx, unsigned char *out, size_t outlen,
 {
     KECCAK1600_CTX *ctx = vctx;
     size_t len;
+    unsigned int fc;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -329,7 +343,9 @@ static int s390x_keccakc_squeeze(void *vctx, unsigned char *out, size_t outlen,
         memset(ctx->buf + ctx->bufsz, 0, len);
         ctx->buf[ctx->bufsz] = padding;
         ctx->buf[ctx->block_size - 1] |= 0x80;
-        s390x_kimd(ctx->buf, ctx->block_size, ctx->pad, ctx->A);
+        fc = ctx->pad;
+        fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KIMD_NIP : 0;
+        s390x_kimd(ctx->buf, ctx->block_size, fc, ctx->A);
         ctx->bufsz = 0;
         /* reuse ctx->bufsz to count bytes squeezed from current sponge */
     }
