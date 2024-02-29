@@ -300,6 +300,7 @@ int BN_add_word(BIGNUM *a, BN_ULONG w);
 int BN_sub_word(BIGNUM *a, BN_ULONG w);
 int BN_set_word(BIGNUM *a, BN_ULONG w);
 BN_ULONG BN_get_word(const BIGNUM *a);
+BN_ULONG BN_get_word_ex(const BIGNUM *a);
 
 int BN_cmp(const BIGNUM *a, const BIGNUM *b);
 void BN_free(BIGNUM *a);
