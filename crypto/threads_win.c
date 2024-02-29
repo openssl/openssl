@@ -366,17 +366,14 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 {
     struct rcu_cb_item *new;
-    struct rcu_cb_item *prev;
 
     new = OPENSSL_zalloc(sizeof(struct rcu_cb_item));
     if (new == NULL)
         return 0;
-    prev = new;
     new->data = data;
     new->fn = cb;
 
-    InterlockedExchangePointer((void * volatile *)&lock->cb_items, prev);
-    new->next = prev;
+    new->next = InterlockedExchangePointer((void * volatile *)&lock->cb_items, new);
     return 1;
 }
 

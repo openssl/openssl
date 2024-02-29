@@ -544,10 +544,6 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     uint64_t count;
     struct rcu_cb_item *cb_items, *tmpcb;
 
-    /*
-     * __ATOMIC_ACQ_REL is used here to ensure that we get any prior published
-     * writes before we read, and publish our write immediately
-     */
     pthread_mutex_lock(&lock->write_lock);
     cb_items = lock->cb_items;
     lock->cb_items = NULL;
