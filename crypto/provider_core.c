@@ -1412,7 +1412,7 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
                                             void *cbdata),
                                   void *cbdata)
 {
-    int ret = 0, curr, max, ref = 0;
+    int ret = 1, curr, max, ref = 0, skip_rest = 0;
     struct provider_store_st *store = get_provider_store(ctx);
     STACK_OF(OSSL_PROVIDER) *provs = NULL;
 
@@ -1441,25 +1441,33 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
         CRYPTO_THREAD_unlock(store->lock);
         return 0;
     }
+    CRYPTO_THREAD_unlock(store->lock);
+
     max = sk_OSSL_PROVIDER_num(provs);
     /*
      * We work backwards through the stack so that we can safely delete items
      * as we go.
      */
-    for (curr = max - 1; curr >= 0; curr--) {
+    for (curr = 0; curr < max; curr++) {
         OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(provs, curr);
+        int activated;
 
-        if (!CRYPTO_THREAD_read_lock(prov->flag_lock))
-            goto err_unlock;
-        if (prov->flag_activated) {
+        if (!CRYPTO_THREAD_read_lock(prov->flag_lock)) {
+            ret = 0;
+            break;
+        }
+        activated = prov->flag_activated;
+        CRYPTO_THREAD_unlock(prov->flag_lock);
+
+        if (activated) {
             /*
              * We call CRYPTO_UP_REF directly rather than ossl_provider_up_ref
              * to avoid upping the ref count on the parent provider, which we
              * must not do while holding locks.
              */
             if (CRYPTO_UP_REF(&prov->refcnt, &ref) <= 0) {
-                CRYPTO_THREAD_unlock(prov->flag_lock);
-                goto err_unlock;
+                ret = 0;
+                break;
             }
             /*
              * It's already activated, but we up the activated count to ensure
@@ -1470,76 +1478,49 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
             if (!CRYPTO_atomic_add(&prov->activatecnt, 1, &ref,
                                    prov->activatecnt_lock)) {
                 CRYPTO_DOWN_REF(&prov->refcnt, &ref);
-                CRYPTO_THREAD_unlock(prov->flag_lock);
-                goto err_unlock;
-            }
-        } else {
-            sk_OSSL_PROVIDER_delete(provs, curr);
-            max--;
-        }
-        CRYPTO_THREAD_unlock(prov->flag_lock);
-    }
-    CRYPTO_THREAD_unlock(store->lock);
-
-    /*
-     * Now, we sweep through all providers not under lock
-     */
-    for (curr = 0; curr < max; curr++) {
-        OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(provs, curr);
-
-        if (!cb(prov, cbdata)) {
-            curr = -1;
-            goto finish;
-        }
-    }
-    curr = -1;
-
-    ret = 1;
-    goto finish;
-
- err_unlock:
-    CRYPTO_THREAD_unlock(store->lock);
- finish:
-    /*
-     * The pop_free call doesn't do what we want on an error condition. We
-     * either start from the first item in the stack, or part way through if
-     * we only processed some of the items.
-     */
-    for (curr++; curr < max; curr++) {
-        OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(provs, curr);
-
-        if (!CRYPTO_atomic_add(&prov->activatecnt, -1, &ref,
-                               prov->activatecnt_lock)) {
-            ret = 0;
-            continue;
-        }
-        if (ref < 1) {
-            /*
-             * Looks like we need to deactivate properly. We could just have
-             * done this originally, but it involves taking a write lock so
-             * we avoid it. We up the count again and do a full deactivation
-             */
-            if (CRYPTO_atomic_add(&prov->activatecnt, 1, &ref,
-                                  prov->activatecnt_lock))
-                provider_deactivate(prov, 0, 1);
-            else
                 ret = 0;
+                break;
+            }
+
+            if (!cb(prov, cbdata)) {
+                ret = 0;
+                skip_rest = 1;
+            }
+
+            if (!CRYPTO_atomic_add(&prov->activatecnt, -1, &ref,
+                                   prov->activatecnt_lock)) {
+                ret = 0;
+                skip_rest = 1;
+            } else if (ref < 1) {
+                /*
+                 * Looks like we need to deactivate properly. We could just have
+                 * done this originally, but it involves taking a write lock so
+                 * we avoid it. We up the count again and do a full deactivation
+                 */
+                if (CRYPTO_atomic_add(&prov->activatecnt, 1, &ref,
+                                      prov->activatecnt_lock))
+                    provider_deactivate(prov, 0, 1);
+                else {
+                    ret = 0;
+                    skip_rest = 1;
+               }
+            }
+
+            /*
+             * As above where we did the up-ref, we don't call ossl_provider_free
+             * to avoid making upcalls. There should always be at least one ref
+             * to the provider in the store, so this should never drop to 0.
+             */
+            if (!CRYPTO_DOWN_REF(&prov->refcnt, &ref)) {
+                skip_rest = 1;
+                ret = 0;
+            }
         }
-        /*
-         * As above where we did the up-ref, we don't call ossl_provider_free
-         * to avoid making upcalls. There should always be at least one ref
-         * to the provider in the store, so this should never drop to 0.
-         */
-        if (!CRYPTO_DOWN_REF(&prov->refcnt, &ref)) {
-            ret = 0;
-            continue;
-        }
-        /*
-         * Not much we can do if this assert ever fails. So we don't use
-         * ossl_assert here.
-         */
-        assert(ref > 0);
+
+        if (skip_rest == 1)
+            break;
     }
+
     sk_OSSL_PROVIDER_free(provs);
     return ret;
 }
