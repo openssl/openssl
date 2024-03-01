@@ -31,11 +31,11 @@ jobs:
       - name: install interop tests
         run: |
           cd ${GITHUB_WORKSPACE}
-          git clone --branch=openssl --depth=1 https://gitlab.com/redhat-crypto/tests/interop.git
+          git clone --branch=openssl-v0.1 --depth=1 https://gitlab.com/redhat-crypto/tests/interop.git
       - name: build openssl as an rpm
         run: |
           mkdir -p /build/SPECS && cd /build && echo -e "%_topdir /build\n%_lto_cflags %{nil}" >~/.rpmmacros && rpmdev-setuptree
-          cd /build && cp ${GITHUB_WORKSPACE}/interop/openssl.spec SPECS/ && \
+          cd /build && cp ${GITHUB_WORKSPACE}/interop/openssl/openssl.spec SPECS/ && \
           cd SPECS/ && source ${GITHUB_WORKSPACE}/VERSION.dat && \
           sed -i "s/^Version: .*\$/Version: $MAJOR.$MINOR.$PATCH/" openssl.spec && \
           sed -i 's/^Release: .*$/Release: dev/' openssl.spec
@@ -44,6 +44,7 @@ jobs:
           tar --transform "s/^__w\/openssl\/openssl/openssl-$MAJOR.$MINOR.$PATCH/" -czf /build/SOURCES/openssl-$MAJOR.$MINOR.$PATCH.tar.gz /__w/openssl/openssl/
           rpmbuild -bb /build/SPECS/openssl.spec
           dnf install -y /build/RPMS/x86_64/openssl-*
+          cp ${GITHUB_WORKSPACE}/interop/openssl/openssl.cnf /etc/pki/tls/openssl.cnf
       - name: Run interop tests
         run: |
           cd interop
