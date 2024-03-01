@@ -53,19 +53,19 @@ IMPLEMENT_HT_VALUE_TYPE_FNS
 
 This API provides a library-internal implementation of a hashtable that provides
 reference counted object retrieval under the protection of an rcu lock.  API
-type safety is offered via conversion macros to and from the generic HT_VALUE
+type safety is offered via conversion macros to and from the generic B<HT_VALUE>
 type.
 
 =over 2
 
 =item *
 
-ossl_ht_new() returns a new HT (hashtable object) used to store data
+ossl_ht_new() returns a new B<HT> (hashtable object) used to store data
 elements based on a defined key.  The call accepts an HT_CONFIG pointer which
 contains configurations options for hashtable.  Current config options consist
 of:
-    I<ht_free_fn> The function to call to free a value, may be B<NULL>.
-    I<ht_hash_fn> The function to generate a hash value for a key, may be B<NULL>.
+    I<ht_free_fn> The function to call to free a value, may be NULL.
+    I<ht_hash_fn> The function to generate a hash value for a key, may be NULL.
     I<init_neighborhood_len> The initial number of neighborhoods in the hash table.
 
 Note that init_bucket_len may be set to zero, which will use the default initial
@@ -109,13 +109,13 @@ called to release the element data.
 
 =item *
 
-ossl_ht_insert() inserts an HT_VALUE element into the hash table, to be
-hashed using the corresponding HT_KEY value.
+ossl_ht_insert() inserts an B<HT_VALUE> element into the hash table, to be
+hashed using the corresponding B<HT_KEY> value.
 
 =item *
 
 ossl_ht_delete() deletes an entry from the hashtable indexed by the passed
-HT_KEY value.
+B<HT_KEY> value.
 
 =item *
 
@@ -138,20 +138,20 @@ properly synchronize such modifications with other threads.
 
 ossl_ht_filter() iterates over all elements of the hash table, calling
 the filter callback for each element.  If the callback returns 1, the
-corresponding HT_VALUE is placed on a list, and its reference count incremented.
-The completed list is returned to the caller as an HT_VALUE_LIST object
+corresponding B<HT_VALUE> is placed on a list, and its reference count incremented.
+The completed list is returned to the caller as an B<HT_VALUE_LIST> object
 
 =item *
 
-ossl_ht_value_list_free() frees an HT_VALUE_LIST.  For each element on
+ossl_ht_value_list_free() frees an B<HT_VALUE_LIST>.  For each element on
 the list, its reference count is decremented, and after traversing the list, the
 list object is freed.  Note, NULL elements are allowed on the list, but for any
 element which is taken from the list by a caller, they must call
-ossl_ht_put on the HT_VALUE to prevent memory leaks.
+ossl_ht_put() on the B<HT_VALUE> to prevent memory leaks.
 
 =item *
 
-ossl_ht_get() preforms a lookup of an HT_KEY in the hashtable, returning
+ossl_ht_get() preforms a lookup of an B<HT_KEY> in the hashtable, returning
 its corresponding value.
 
 =item *
@@ -240,23 +240,23 @@ pointer
 
 <TYPE> ossl_ht_NAME_TYPE_get(HT *h, HT_KEY *key, HT_VALUE **v)
 Looks up an item in the hash table based on key, and returns the data it found,
-if any.  v holds a pointer to the HT_VALUE associated with the data.
+if any.  v holds a pointer to the B<HT_VALUE> associated with the data.
 
 =item *
 
 <TYPE> *ossl_ht_NAME_TYPE_from_value(HT_VALUE *v)
-Validates that the HT_VALUE provided matches the TYPE specified, and returns the
+Validates that the B<HT_VALUE> provided matches the TYPE specified, and returns the
 value data.  If there is a type mismatch, NULL is returned
 
 =item *
 
 HT_VALUE *ossl_ht_NAME_TYPE_to_value(<TYPE> *data)
-Converts the data pointer provided to an HT_VALUE object
+Converts the data pointer provided to an B<HT_VALUE> object
 
 =item *
 
 int ossl_ht_NAME_TYPE_type(HT_VALUE *v)
-Returns true if the HT_VALUE object passed in is of type <TYPE>
+Returns true if the B<HT_VALUE> object passed in is of type <TYPE>
 
 =back
 
@@ -264,7 +264,7 @@ Returns true if the HT_VALUE object passed in is of type <TYPE>
 
 =head1 RETURN VALUES
 
-ossl_ht_new() returns an HT* struct on success and NULL on error
+ossl_ht_new() returns an B<HT*> struct on success and NULL on error
 
 void ossl_ht_free(HT *htable);
 
@@ -275,10 +275,10 @@ key was not found.
 
 ossl_ht_count() returns the number of elements in the hash table
 
-ossl_ht_filter() returns an HT_VALUE_LIST of all elements matching the
+ossl_ht_filter() returns an B<HT_VALUE_LIST> of all elements matching the
 provided filter
 
-ossl_ht_get() returns an HT_VALUE pointer, or NULL if the element was not
+ossl_ht_get() returns an B<HT_VALUE> pointer, or NULL if the element was not
 found.
 
 =head1 EXAMPLES
