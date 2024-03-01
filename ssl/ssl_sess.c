@@ -287,6 +287,7 @@ const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)
         *len = (unsigned int)s->session_id_length;
     return s->session_id;
 }
+
 const unsigned char *SSL_SESSION_get0_id_context(const SSL_SESSION *s,
                                                 unsigned int *len)
 {
