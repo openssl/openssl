@@ -301,7 +301,11 @@ static void free_rcu_thr_data(void *ptr)
 
 static void ossl_rcu_init(void)
 {
+#ifndef FIPS_MODULE
     CRYPTO_THREAD_init_local(&rcu_thr_key, NULL);
+#else
+    pthread_key_create(&rcu_thr_key, free_rcu_thr_data);
+#endif
 }
 
 /* Read side acquisition of the current qp */
@@ -367,7 +371,9 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
         data = OPENSSL_zalloc(sizeof(*data));
         OPENSSL_assert(data != NULL);
         CRYPTO_THREAD_set_local(&rcu_thr_key, data);
+#ifndef FIPS_MODULE
         ossl_init_thread_start(NULL, data, free_rcu_thr_data);
+#endif
     }
 
     for (i = 0; i < MAX_QPS; i++) {
