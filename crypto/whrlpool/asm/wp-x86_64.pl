@@ -236,6 +236,7 @@ $code.=<<___;
 .cfi_endproc
 .size	$func,.-$func
 
+.section .rodata align=64
 .align	64
 .type	$table,\@object
 $table:
