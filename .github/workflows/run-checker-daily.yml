@@ -313,7 +313,7 @@ jobs:
   enable_tfo:
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-13, macos-14 ]
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v4
