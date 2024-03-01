@@ -37,7 +37,7 @@ static int test_load_cert_file(void)
             goto err;
     }
 
-    if (crl && !TEST_true(X509_load_crl_file(lookup, crl, X509_FILETYPE_PEM)))
+    if (crl != NULL && !TEST_true(X509_load_crl_file(lookup, crl, X509_FILETYPE_PEM)))
         goto err;
 
     ret = 1;
