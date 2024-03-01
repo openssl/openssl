@@ -14,10 +14,12 @@
 #include <openssl/opensslconf.h>
 #include <openssl/lhash.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #include <openssl/crypto.h>
 #include <internal/hashtable.h>
 
 #include "internal/nelem.h"
+#include "threadstest.h"
 #include "testutil.h"
 
 /*
@@ -283,7 +285,8 @@ static int test_int_hashtable(void)
         todel = ossl_ht_delete(ht, TO_HT_KEY(&key));
         if (dels[i].should_del) {
             if (!TEST_int_eq(todel, 1)) {
-                TEST_info("hashtable couldn't find entry to delete\n");
+                TEST_info("hashtable couldn't find entry %d to delete\n",
+                          dels[i].data);
                 goto end;
             }
         } else {
@@ -462,11 +465,234 @@ end:
     return testresult;
 }
 
+typedef struct test_mt_entry {
+    int in_table;
+    int pending_delete;
+} TEST_MT_ENTRY;
+
+static HT *m_ht = NULL;
+#define TEST_MT_POOL_SZ 256
+#define TEST_THREAD_ITERATIONS 10000
+
+static struct test_mt_entry test_mt_entries[TEST_MT_POOL_SZ];
+static char *worker_exits[4];
+
+HT_START_KEY_DEFN(mtkey)
+HT_DEF_KEY_FIELD(index, unsigned int)
+HT_END_KEY_DEFN(MTKEY)
+
+IMPLEMENT_HT_VALUE_TYPE_FNS(TEST_MT_ENTRY, mt, static)
+
+static int worker_num = 0;
+static CRYPTO_RWLOCK *worker_lock;
+static int free_failure = 0;
+static int shutting_down = 0;
+static int global_iteration = 0;
+
+static void hashtable_mt_free(HT_VALUE *v)
+{
+    TEST_MT_ENTRY *m = ossl_ht_mt_TEST_MT_ENTRY_from_value(v);
+    int pending_delete;
+    int ret;
+
+    CRYPTO_atomic_load_int(&m->pending_delete, &pending_delete, worker_lock);
+
+    if (shutting_down == 1)
+        return;
+
+    if (pending_delete == 0) {
+        TEST_info("Freeing element which was not scheduled for free");
+        free_failure = 1;
+    } else {
+        CRYPTO_atomic_add(&m->pending_delete, -1,
+                          &ret, worker_lock);
+    }
+}
+
+#define BEHAVIOR_MASK 0x3
+#define DO_LOOKUP 0
+#define DO_INSERT 1
+#define DO_REPLACE 2
+#define DO_DELETE 3
+
+static void do_mt_hash_work(void)
+{
+    MTKEY key;
+    unsigned int index;
+    int num;
+    TEST_MT_ENTRY *m;
+    TEST_MT_ENTRY *expected_m = NULL;
+    HT_VALUE *v = NULL;
+    TEST_MT_ENTRY **r = NULL;
+    int expected_rc;
+    int ret;
+    char behavior;
+    size_t iter = 0;
+    int giter;
+
+    CRYPTO_atomic_add(&worker_num, 1, &num, worker_lock);
+    num--; /* atomic_add is an add/fetch operation */
+
+    HT_INIT_KEY(&key);
+
+    for (iter = 0; iter < TEST_THREAD_ITERATIONS; iter++) {
+        if (!RAND_bytes((unsigned char *)&index, sizeof(unsigned int))) {
+            worker_exits[num] = "Failed to get random index";
+            return;
+        }
+        index %= TEST_MT_POOL_SZ;
+        if (!RAND_bytes((unsigned char *)&behavior, sizeof(char))) {
+            worker_exits[num] = "Failed to get random behavior";
+            return;
+        }
+        behavior &= BEHAVIOR_MASK;
+
+        expected_m = &test_mt_entries[index];
+        HT_KEY_RESET(&key);
+        HT_SET_KEY_FIELD(&key, index, index);
+
+        if (!CRYPTO_atomic_add(&global_iteration, 1, &giter, worker_lock)) {
+            worker_exits[num] = "Unable to increment global iterator";
+            return;
+        }
+        switch(behavior) {
+        case DO_LOOKUP:
+            ossl_ht_read_lock(m_ht);
+            m = ossl_ht_mt_TEST_MT_ENTRY_get(m_ht, TO_HT_KEY(&key), &v);
+            if (m != NULL && m != expected_m) {
+                worker_exits[num] = "Read unexpected value from hashtable";
+                TEST_info("Iteration %d Read unexpected value %p when %p expected",
+                          giter, (void *)m, (void *)expected_m);
+            }
+            ossl_ht_read_unlock(m_ht);
+            if (worker_exits[num] != NULL)
+                return;
+            break;
+        case DO_INSERT:
+        case DO_REPLACE:
+            ossl_ht_write_lock(m_ht);
+            if (behavior == DO_REPLACE) {
+                expected_rc = 1;
+                r = &m;
+            } else {
+                expected_rc = !expected_m->in_table;
+                r = NULL;
+            }
+
+            if (expected_rc != ossl_ht_mt_TEST_MT_ENTRY_insert(m_ht,
+                                                               TO_HT_KEY(&key),
+                                                               expected_m, r)) {
+                TEST_info("Iteration %d Expected rc %d on %s of element %d which is %s\n",
+                          giter, expected_rc, behavior == DO_REPLACE ? "replace" : "insert",
+                          index, expected_m->in_table ? "in table" : "not in table");
+                worker_exits[num] = "Failure on insert";
+            }
+            if (expected_rc == 1)
+                expected_m->in_table = 1;
+            ossl_ht_write_unlock(m_ht);
+            if (worker_exits[num] != NULL)
+                return;
+            break;
+        case DO_DELETE:
+            ossl_ht_write_lock(m_ht);
+            expected_rc = expected_m->in_table;
+            if (expected_rc != ossl_ht_delete(m_ht, TO_HT_KEY(&key))) {
+                TEST_info("Iteration %d Expected rc %d on delete of element %d which is %s\n",
+                          giter, expected_rc, index,
+                          expected_m->in_table ? "in table" : "not in table");
+                worker_exits[num] = "Failure on delete";
+            }
+            if (expected_rc == 1) {
+                expected_m->in_table = 0;
+                CRYPTO_atomic_add(&expected_m->pending_delete, 1, &ret, worker_lock); 
+            }
+            ossl_ht_write_unlock(m_ht);
+            if (worker_exits[num] != NULL)
+                return;
+            break;
+        default:
+            worker_exits[num] = "Undefined behavior specified";
+            return;
+        }
+    }
+}
+
+static int test_hashtable_multithread(void)
+{
+    HT_CONFIG hash_conf = {
+        hashtable_mt_free, /* our free function */
+        NULL,              /* default hash function */
+        0,                 /* default hash size */
+    };
+    int ret = 0;
+    thread_t workers[4];
+    int i;
+#ifdef MEASURE_HASH_PERFORMANCE
+    struct timeval start, end, delta;
+#endif
+
+    memset(worker_exits, 0, sizeof(char *) * 4);
+    memset(test_mt_entries, 0, sizeof(TEST_MT_ENTRY) * TEST_MT_POOL_SZ);
+    memset(workers, 0, sizeof(thread_t) * 4);
+
+    m_ht = ossl_ht_new(&hash_conf);
+
+    if (!TEST_ptr(m_ht))
+        goto end;
+
+    worker_lock = CRYPTO_THREAD_lock_new();
+    if (worker_lock == NULL)
+        goto end_free;
+#ifdef MEASURE_HASH_PERFORMANCE
+    gettimeofday(&start, NULL);
+#endif
+
+    for (i = 0; i < 4; i++) {
+        if (!run_thread(&workers[i], do_mt_hash_work))
+            goto shutdown;
+    }
+
+shutdown:
+    for (--i; i >= 0; i--) {
+        wait_for_thread(workers[i]);
+    }
+
+
+    /*
+     * Now that the workers are done, check for any error
+     * conditions
+     */
+    ret = 1;
+    for (i = 0; i < 4; i++) {
+        if (worker_exits[i] != NULL) {
+            TEST_info("Worker %d failed: %s\n", i, worker_exits[i]);
+            ret = 0;
+        }
+    }
+    if (free_failure == 1) {
+        TEST_info("Encountered a free failure");
+        ret = 0;
+    }
+
+#ifdef MEASURE_HASH_PERFORMANCE
+    gettimeofday(&end, NULL);
+    timeval_subtract(&delta, &end, &start);
+    TEST_info("multithread stress runs 40000 ops in %ld.%ld seconds", delta.tv_sec, delta.tv_usec);
+#endif
+
+end_free:
+    shutting_down = 1;
+    ossl_ht_free(m_ht);
+end:
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_int_lhash);
     ADD_TEST(test_stress);
     ADD_TEST(test_int_hashtable);
     ADD_TEST(test_hashtable_stress);
+    ADD_TEST(test_hashtable_multithread);
     return 1;
 }
