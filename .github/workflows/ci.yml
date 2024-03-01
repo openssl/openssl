@@ -182,8 +182,12 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   no-shared-macos:
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-13, macos-14]
     if: github.server_url == 'https://github.com'
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - name: checkout fuzz/corpora submodule
@@ -404,7 +408,11 @@ jobs:
       working-directory: ./build
 
   out-of-readonly-source-and-install-macos:
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-13, macos-14]
+    runs-on: ${{ matrix.os }}
     if: github.server_url == 'https://github.com'
     steps:
     - uses: actions/checkout@v4
