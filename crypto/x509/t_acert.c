@@ -13,21 +13,14 @@
 #include <openssl/bn.h>
 #include <openssl/objects.h>
 #include <openssl/x509_acert.h>
+#include <openssl/x509.h>
 
-static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
+static int print_attribute(BIO *bp, X509_ATTRIBUTE *a, int indent)
 {
     ASN1_TYPE *at;
-    ASN1_BIT_STRING *bs = NULL;
     ASN1_OBJECT *aobj;
-    int i, j, type = 0, count = 0;
+    int nid, i, j, count = 0;
     int ret = 0;
-
-    aobj = X509_ATTRIBUTE_get0_object(a);
-    if (BIO_printf(bp, "%12s", "") <= 0)
-        goto err;
-
-    if ((j = i2a_ASN1_OBJECT(bp, aobj)) <= 0)
-        goto err;
 
     count = X509_ATTRIBUTE_count(a);
     if (count == 0) {
@@ -35,41 +28,26 @@ static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
         goto err;
     }
 
-    if (BIO_printf(bp, "%*s", 25 - j, " ") <= 0)
+    aobj = X509_ATTRIBUTE_get0_object(a);
+    nid = OBJ_obj2nid(aobj);
+
+    if (BIO_printf(bp, "%*s", indent, "") <= 0)
         goto err;
 
-    if (BIO_puts(bp, ":") <= 0)
+    if ((j = i2a_ASN1_OBJECT(bp, aobj)) <= 0)
+        goto err;
+
+    if (BIO_puts(bp, ":\n") <= 0)
         goto err;
 
     for (i = 0; i < count; i++) {
         at = X509_ATTRIBUTE_get0_type(a, i);
-        type = at->type;
-        bs = at->value.asn1_string;
-
-        switch (type) {
-        case V_ASN1_PRINTABLESTRING:
-        case V_ASN1_T61STRING:
-        case V_ASN1_NUMERICSTRING:
-        case V_ASN1_UTF8STRING:
-        case V_ASN1_IA5STRING:
-            bs = at->value.asn1_string;
-            if (BIO_write(bp, (char *)bs->data, bs->length) != bs->length)
-                goto err;
-            if (BIO_puts(bp, "\n") <= 0)
-                goto err;
-            break;
-        case V_ASN1_SEQUENCE:
-            if (BIO_puts(bp, "\n") <= 0)
-                goto err;
-            ASN1_parse_dump(bp, at->value.sequence->data,
-                            at->value.sequence->length, i, 1);
-            break;
-        default:
-            if (BIO_puts(bp, "unable to print attribute\n") <= 0)
-                goto err;
-            break;
-        }
+        print_attribute_value(bp, nid, at, indent + 4);
     }
+
+    if (BIO_puts(bp, "\n") <= 0)
+        goto err;
+
     ret = 1;
 err:
     return ret;
@@ -228,7 +206,7 @@ int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
                 goto err;
         } else {
             for (i = 0; i < X509_ACERT_get_attr_count(x); i++) {
-                if (print_attribute(bp, X509_ACERT_get_attr(x, i)) == 0)
+                if (print_attribute(bp, X509_ACERT_get_attr(x, i), 12) == 0)
                     goto err;
             }
         }
