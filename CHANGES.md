@@ -26,7 +26,9 @@ OpenSSL 3.3
 
 ### Changes between 3.2 and 3.3 [xx XXX xxxx]
 
- * none yet
+ * Support Building With Position Independend Execution (PIE)
+
+   *Craig Lorentzen*
 
 OpenSSL 3.2
 -----------
