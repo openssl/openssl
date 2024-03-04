@@ -22,9 +22,9 @@ jobs:
           - windows-2022
         platform:
           - arch: win64
-            config: enable-fips enable-unstable-qlog
+            config: enable-fips
           - arch: win32
-            config: --strict-warnings no-fips enable-unstable-qlog
+            config: --strict-warnings no-fips
     runs-on: ${{ github.server_url == 'https://github.com' && matrix.os || format('{0}-self-hosted', matrix.os) }}
     steps:
     - uses: actions/checkout@v4
@@ -155,7 +155,7 @@ jobs:
 #          - windows-2022
         platform:
           - arch: win64
-            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips enable-unstable-qlog
+            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips
 # are we really learning sth new from win32? So let's save some CO2 for now disabling this
 #          - arch: win32
 #            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips

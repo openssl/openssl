@@ -22,9 +22,6 @@ for details.
 
 =head1 USAGE
 
-The qlog functionality must be explicitly enabled at OpenSSL build time using
-the I<enable-unstable-qlog> configure flag.
-
 When OpenSSL is built with qlog support, qlog is enabled at run time by setting
 the standard B<QLOGDIR> environment variable to point to a directory where qlog
 files should be written. Once set, any QUIC connection established by OpenSSL
@@ -42,6 +39,9 @@ connection's Original Destination Connection ID, which is the Destination
 Connection ID used in the header of the first Initial packet sent as part of the
 connection process, and B<{vantage_point_type}> is either C<client> or
 C<server>, reflecting the perspective of the endpoint producing the qlog output.
+
+The qlog functionality can be disabled at OpenSSL build time using the
+I<no-unstable-qlog> configure flag.
 
 =head1 SUPPORTED EVENT TYPES
 
@@ -178,12 +178,9 @@ breaking ways in the future, including in non-major releases of OpenSSL. The
 qlog output of OpenSSL is considered unstable and not subject to any format
 stability or compatibility guarantees at this time.
 
-As such, the qlog functionality is currently guarded behind the build-time
-configuration flag B<enable-unstable-qlog>, which is not enabled by default, to
-ensure that users are aware of this instability. Users of the OpenSSL qlog
-functionality must be aware that the output may change arbitrarily between
-releases and that the preservation of compatibility with any given tool between
-releases is not guaranteed.
+Users of the OpenSSL qlog functionality must be aware that the output may change
+arbitrarily between releases and that the preservation of compatibility with any
+given tool between releases is not guaranteed.
 
 =head2 Aims
 

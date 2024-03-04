@@ -124,8 +124,8 @@ OpenSSL 3.3
    The qlog output from OpenSSL currently uses a pre-standard draft version of
    qlog. The output from OpenSSL will change in incompatible ways in future
    releases, and is not subject to any format stability or compatibility
-   guarantees at this time; therefore this functionality must currently be
-   enabled with the build-time option `enable-unstable-qlog`. See the
+   guarantees at this time. This functionality can be
+   disabled with the build-time option `no-unstable-qlog`. See the
    openssl-qlog(7) manpage for details.
 
    *Hugo Landau*
