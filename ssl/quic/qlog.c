@@ -130,7 +130,7 @@ QLOG *ossl_qlog_new_from_env(const QLOG_TRACE_INFO *info)
         filename[l++] = qlogdir_sep;
 
     for (i = 0; i < info->odcid.id_len; ++i)
-        l += sprintf(filename + l, "%02x", info->odcid.id[i]);
+        l += BIO_snprintf(filename + l, strl - l, "%02x", info->odcid.id[i]);
 
     l += BIO_snprintf(filename + l, strl - l, "_%s.sqlog",
                       info->is_server ? "server" : "client");
