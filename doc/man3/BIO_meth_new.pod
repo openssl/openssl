@@ -82,9 +82,13 @@ The B<BIO_METHOD> type is a structure used for the implementation of new BIO
 types. It provides a set of functions used by OpenSSL for the implementation
 of the various BIO capabilities. See the L<bio(7)> page for more information.
 
-BIO_meth_new() creates a new B<BIO_METHOD> structure. It should be given a
-unique integer B<type> and a string that represents its B<name>.
-Use BIO_get_new_index() to get the value for B<type>.
+BIO_meth_new() creates a new B<BIO_METHOD> structure that contains a type
+identifier I<type> and a string that represents its B<name>.
+B<type> can be set to either B<BIO_TYPE_NONE> or via BIO_get_new_index() if
+a unique type is required for searching (See L<BIO_find_type(3)>)
+
+Note that BIO_get_new_index() can only be used 127 times before it returns an
+error.
 
 The set of
 standard OpenSSL provided BIO types is provided in F<< <openssl/bio.h> >>.

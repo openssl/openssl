@@ -29,6 +29,8 @@ int BIO_get_new_index(void)
     }
     if (!CRYPTO_UP_REF(&bio_type_count, &newval))
         return -1;
+    if (newval > BIO_TYPE_MASK)
+        return -1;
     return newval;
 }
 
