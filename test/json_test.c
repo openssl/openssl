@@ -89,7 +89,7 @@ enum {
     OPK_CALL_D,         /* (OSSL_JSON_ENC *, double) */
     OPK_CALL_PZ,        /* (OSSL_JSON_ENC *, const void *, size_t) */
     OPK_ASSERT_ERROR,   /* (OSSL_JSON_ENC *, int expect_error) */
-    OPK_INIT_FLAGS,     /* (uint32_t flags) */
+    OPK_INIT_FLAGS      /* (uint32_t flags) */
 };
 
 typedef void (*fp_type)(OSSL_JSON_ENC *);
