@@ -290,9 +290,8 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
             if (!(flags & PKCS7_NOCRL))
                 X509_STORE_CTX_set0_crls(cert_ctx, p7->d.sign->crl);
             i = X509_verify_cert(cert_ctx);
-            if (i <= 0)
-                j = X509_STORE_CTX_get_error(cert_ctx);
             if (i <= 0) {
+                j = X509_STORE_CTX_get_error(cert_ctx);
                 ERR_raise_data(ERR_LIB_PKCS7, PKCS7_R_CERTIFICATE_VERIFY_ERROR,
                                "Verify error: %s",
                                X509_verify_cert_error_string(j));
