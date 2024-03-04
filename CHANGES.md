@@ -28,6 +28,14 @@ OpenSSL 3.3
 
 ### Changes between 3.2 and 3.3 [xx XXX xxxx]
 
+ * The BIO_get_new_index() function can only be called 127 times before it
+   reaches its upper bound of BIO_TYPE_MASK. It will now correctly return an
+   error of -1 once it is exhausted. Users may need to reserve using this
+   function for cases where BIO_find_type() is required. Either BIO_TYPE_NONE
+   or BIO_get_new_index() can be used to supply a type to BIO_meth_new().
+
+   *Shane Lontis*
+
  * Added API functions SSL_SESSION_get_time_ex(), SSL_SESSION_set_time_ex()
    using time_t which is Y2038 safe on 32 bit systems when 64 bit time
    is enabled (e.g via setting glibc macro _TIME_BITS=64).
