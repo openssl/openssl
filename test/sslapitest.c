@@ -11514,6 +11514,97 @@ end:
     return testresult;
 }
 
+/*
+ * Test multiple resumptions and cache size handling
+ * Test 0: TLSv1.3 (max_early_data set)
+ * Test 1: TLSv1.3 (SSL_OP_NO_TICKET set)
+ * Test 2: TLSv1.3 (max_early_data and SSL_OP_NO_TICKET set)
+ * Test 3: TLSv1.2
+ */
+static int test_multi_resume(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    SSL_SESSION *sess = NULL;
+    int max_version = TLS1_3_VERSION;
+    int i, testresult = 0;
+
+    if (idx == 3)
+        max_version = TLS1_2_VERSION;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), TLS1_VERSION,
+                                       max_version, &sctx, &cctx, cert,
+                                       privkey)))
+        goto end;
+
+    /*
+     * TLSv1.3 only uses a session cache if either max_early_data > 0 (used for
+     * replay protection), or if SSL_OP_NO_TICKET is in use
+     */
+    if (idx == 0 || idx == 2)  {
+        if (!TEST_true(SSL_CTX_set_max_early_data(sctx, 1024)))
+            goto end;
+    }
+    if (idx == 1 || idx == 2)
+        SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET);
+
+    SSL_CTX_sess_set_cache_size(sctx, 5);
+
+    for (i = 0; i < 30; i++) {
+        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                                NULL, NULL))
+                || !TEST_true(SSL_set_session(clientssl, sess)))
+            goto end;
+
+        /*
+         * Recreate a bug where dynamically changing the max_early_data value
+         * can cause sessions in the session cache which cannot be deleted.
+         */
+        if ((idx == 0 || idx == 2) && (i % 3) == 2)
+            SSL_set_max_early_data(serverssl, 0);
+
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+            goto end;
+
+        if (sess == NULL || (idx == 0 && (i % 3) == 2)) {
+            if (!TEST_false(SSL_session_reused(clientssl)))
+                goto end;
+        } else {
+            if (!TEST_true(SSL_session_reused(clientssl)))
+                goto end;
+        }
+        SSL_SESSION_free(sess);
+
+        /* Do a full handshake, followed by two resumptions */
+        if ((i % 3) == 2) {
+            sess = NULL;
+        } else {
+            if (!TEST_ptr((sess = SSL_get1_session(clientssl))))
+                goto end;
+        }
+
+        SSL_shutdown(clientssl);
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+        SSL_free(clientssl);
+        serverssl = clientssl = NULL;
+    }
+
+    /* We should never exceed the session cache size limit */
+    if (!TEST_long_le(SSL_CTX_sess_number(sctx), 5))
+        goto end;
+
+    testresult = 1;
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    SSL_SESSION_free(sess);
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -11825,6 +11916,7 @@ int setup_tests(void)
     ADD_TEST(test_rstate_string);
     ADD_ALL_TESTS(test_handshake_retry, 16);
     ADD_TEST(test_data_retry);
+    ADD_ALL_TESTS(test_multi_resume, 4);
     return 1;
 
  err:
