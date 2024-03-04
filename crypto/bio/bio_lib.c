@@ -817,7 +817,7 @@ BIO *BIO_find_type(BIO *bio, int type)
         ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    mask = type & 0xff;
+    mask = type & BIO_TYPE_MASK;
     do {
         if (bio->method != NULL) {
             mt = bio->method->type;
