@@ -22,9 +22,16 @@ OpenSSL 3.2
 
 ### Major changes between OpenSSL 3.2.1 and OpenSSL 3.2.2 [under development]
 
-  * none
+OpenSSL 3.2.2 is a security patch release. The most severe CVE fixed in this
+release is Low.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed unbounded memory growth with session handling in TLSv1.3
+    ([CVE-2024-2511])
 
 ### Major changes between OpenSSL 3.2.0 and OpenSSL 3.2.1 [30 Jan 2024]
+
 
 OpenSSL 3.2.1 is a security patch release. The most severe CVE fixed in this
 release is Low.
@@ -1587,6 +1594,7 @@ OpenSSL 0.9.x
 
 <!-- Links -->
 
+[CVE-2024-2511]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-2511
 [CVE-2024-0727]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-0727
 [CVE-2023-6237]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6237
 [CVE-2023-6129]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6129
