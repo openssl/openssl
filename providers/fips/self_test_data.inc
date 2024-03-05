@@ -497,6 +497,33 @@ static const ST_KAT_PARAM kbkdf_params[] = {
     ST_KAT_PARAM_END()
 };
 
+static const char kbkdf_kmac_mac[] = "KMAC128";
+static unsigned char kbkdf_kmac_label[] = {
+    0xB5, 0xB5, 0xF3, 0x71, 0x9F, 0xBE, 0x5B, 0x3D,
+    0x7B, 0x8D, 0x05, 0xA1, 0xD3, 0x25, 0x19, 0x50,
+};
+static unsigned char kbkdf_kmac_context[] = {
+    0x36, 0x60, 0x0E, 0xF3, 0xC3, 0x70, 0xB5, 0xEF,
+    0x58, 0xBE, 0xF1, 0xBA, 0x1C, 0xF2, 0x74, 0xCB,
+};
+static unsigned char kbkdf_kmac_key[] = {
+    0xB2, 0x51, 0x4C, 0xC1, 0xD5, 0xCD, 0x7B, 0x6B,
+    0xA3, 0x3C, 0x90, 0x05, 0xBD, 0xAC, 0x32, 0x2A,
+};
+static unsigned char kbkdf_kmac_expected[] = {
+    0xB1, 0x58, 0xEE, 0xB1, 0x34, 0xA4, 0xDD, 0x9D,
+    0xAC, 0x52, 0xBD, 0x9E, 0x30, 0xE8, 0x0D, 0x76,
+    0x42, 0x57, 0x01, 0x89, 0x5F, 0x82, 0x74, 0xB9,
+    0xEB, 0x3E, 0x84, 0xD8, 0xA5, 0xDE, 0x6E, 0x54,
+};
+static const ST_KAT_PARAM kbkdf_kmac_params[] = {
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_MAC, kbkdf_kmac_mac),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_KEY, kbkdf_kmac_key),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SALT, kbkdf_kmac_label),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_INFO, kbkdf_kmac_context),
+    ST_KAT_PARAM_END()
+};
+
 static const char tls13_kdf_digest[] = "SHA256";
 static int tls13_kdf_extract_mode = EVP_KDF_HKDF_MODE_EXTRACT_ONLY;
 static int tls13_kdf_expand_mode = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
@@ -586,6 +613,12 @@ static const ST_KAT_KDF st_kat_kdf_tests[] =
         OSSL_KDF_NAME_KBKDF,
         kbkdf_params,
         ITM(kbkdf_expected)
+    },
+    {
+        OSSL_SELF_TEST_DESC_KDF_KBKDF_KMAC,
+        OSSL_KDF_NAME_KBKDF,
+        kbkdf_kmac_params,
+        ITM(kbkdf_kmac_expected)
     },
     {
         OSSL_SELF_TEST_DESC_KDF_HKDF,
