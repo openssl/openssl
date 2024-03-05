@@ -2338,9 +2338,8 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
      * so the following won't overwrite an ID that we're supposed
      * to send back.
      */
-    if (s->session->not_resumable ||
-        (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_SERVER)
-         && !s->hit))
+    if (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_SERVER)
+            && !s->hit)
         s->session->session_id_length = 0;
 
     if (usetls13) {
