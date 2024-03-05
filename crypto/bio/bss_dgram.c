@@ -66,6 +66,10 @@
    #undef NO_RECVMSG
    #define NO_RECVMSG
 # endif
+# if defined(__ANDROID_API__) && __ANDROID_API__ < 21
+#  undef NO_RECVMMSG
+#  define NO_RECVMMSG
+# endif
 # if !defined(M_METHOD)
 #  if defined(OPENSSL_SYS_WINDOWS) && defined(BIO_HAVE_WSAMSG) && !defined(NO_WSARECVMSG)
 #   define M_METHOD  M_METHOD_WSARECVMSG
