@@ -11514,12 +11514,62 @@ end:
     return testresult;
 }
 
+struct resume_servername_cb_data {
+    int i;
+    SSL_CTX *cctx;
+    SSL_CTX *sctx;
+    SSL_SESSION *sess;
+    int recurse;
+};
+
+/*
+ * Servername callback. We use it here to run another complete handshake using
+ * the same session - and mark the session as not_resuamble at the end
+ */
+static int resume_servername_cb(SSL *s, int *ad, void *arg)
+{
+    struct resume_servername_cb_data *cbdata = arg;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+
+    if (cbdata->recurse)
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+
+    if ((cbdata->i % 3) != 1)
+        return SSL_TLSEXT_ERR_OK;
+
+    cbdata->recurse = 1;
+
+    if (!TEST_true(create_ssl_objects(cbdata->sctx, cbdata->cctx, &serverssl,
+                                      &clientssl, NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl, cbdata->sess)))
+        goto end;
+
+    ERR_set_mark();
+    /*
+     * We expect this to fail - because the servername cb will fail. This will
+     * mark the session as not_resumable.
+     */
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))) {
+        ERR_clear_last_mark();
+        goto end;
+    }
+    ERR_pop_to_mark();
+
+    ret = SSL_TLSEXT_ERR_OK;
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    cbdata->recurse = 0;
+    return ret;
+}
 /*
  * Test multiple resumptions and cache size handling
  * Test 0: TLSv1.3 (max_early_data set)
  * Test 1: TLSv1.3 (SSL_OP_NO_TICKET set)
  * Test 2: TLSv1.3 (max_early_data and SSL_OP_NO_TICKET set)
- * Test 3: TLSv1.2
+ * Test 3: TLSv1.3 (SSL_OP_NO_TICKET, simultaneous resumes)
+ * Test 4: TLSv1.2
  */
 static int test_multi_resume(int idx)
 {
@@ -11528,8 +11578,9 @@ static int test_multi_resume(int idx)
     SSL_SESSION *sess = NULL;
     int max_version = TLS1_3_VERSION;
     int i, testresult = 0;
+    struct resume_servername_cb_data cbdata;
 
-    if (idx == 3)
+    if (idx == 4)
         max_version = TLS1_2_VERSION;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
@@ -11546,16 +11597,36 @@ static int test_multi_resume(int idx)
         if (!TEST_true(SSL_CTX_set_max_early_data(sctx, 1024)))
             goto end;
     }
-    if (idx == 1 || idx == 2)
+    if (idx == 1 || idx == 2 || idx == 3)
         SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET);
 
     SSL_CTX_sess_set_cache_size(sctx, 5);
+
+    if (idx == 3) {
+        SSL_CTX_set_tlsext_servername_callback(sctx, resume_servername_cb);
+        SSL_CTX_set_tlsext_servername_arg(sctx, &cbdata);
+        cbdata.cctx = cctx;
+        cbdata.sctx = sctx;
+        cbdata.recurse = 0;
+    }
 
     for (i = 0; i < 30; i++) {
         if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                                 NULL, NULL))
                 || !TEST_true(SSL_set_session(clientssl, sess)))
             goto end;
+
+        /*
+         * Check simultaneous resumes. We pause the connection part way through
+         * the handshake by (mis)using the servername_cb. The pause occurs after
+         * session resumption has already occurred, but before any session
+         * tickets have been issued. While paused we run another complete
+         * handshake resuming the same session.
+         */
+        if (idx == 3) {
+            cbdata.i = i;
+            cbdata.sess = sess;
+        }
 
         /*
          * Recreate a bug where dynamically changing the max_early_data value
@@ -11916,7 +11987,7 @@ int setup_tests(void)
     ADD_TEST(test_rstate_string);
     ADD_ALL_TESTS(test_handshake_retry, 16);
     ADD_TEST(test_data_retry);
-    ADD_ALL_TESTS(test_multi_resume, 4);
+    ADD_ALL_TESTS(test_multi_resume, 5);
     return 1;
 
  err:
