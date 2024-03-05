@@ -1174,7 +1174,7 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
         cmsg->cmsg_type  = IP_PKTINFO;
 
         info = (struct in_pktinfo *)BIO_CMSG_DATA(cmsg);
-#   if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_CYGWIN)
+#   if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_CYGWIN) && !defined(__FreeBSD__)
         info->ipi_spec_dst      = local->s_in.sin_addr;
 #   endif
         info->ipi_addr.s_addr   = 0;
