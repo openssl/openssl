@@ -24,6 +24,24 @@ OpenSSL 3.1
 
 ### Changes between 3.1.5 and 3.1.6 [xx XXX xxxx]
 
+ * Fixed an issue where some non-default TLS server configurations can cause
+   unbounded memory growth when processing TLSv1.3 sessions. An attacker may
+   exploit certain server configurations to trigger unbounded memory growth that
+   would lead to a Denial of Service
+
+   This problem can occur in TLSv1.3 if the non-default SSL_OP_NO_TICKET option
+   is being used (but not if early_data is also configured and the default
+   anti-replay protection is in use). In this case, under certain conditions,
+   the session cache can get into an incorrect state and it will fail to flush
+   properly as it fills. The session cache will continue to grow in an unbounded
+   manner. A malicious client could deliberately create the scenario for this
+   failure to force a Denial of Service. It may also happen by accident in
+   normal operation.
+
+   ([CVE-2024-2511])
+
+   *Matt Caswell*
+
  * New atexit configuration switch, which controls whether the OPENSSL_cleanup
    is registered when libcrypto is unloaded. This can be used on platforms
    where using atexit() from shared libraries causes crashes on exit.
@@ -19956,6 +19974,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2024-2511]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-2511
 [CVE-2024-0727]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-0727
 [CVE-2023-6237]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6237
 [CVE-2023-6129]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6129
