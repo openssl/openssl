@@ -142,9 +142,9 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_##mode(size_t keybits)           \
 # include "cipher_aes_hw_t4.inc"
 #elif defined(S390X_aes_128_CAPABLE)
 # include "cipher_aes_hw_s390x.inc"
-#elif defined(__riscv) && __riscv_xlen == 64
+#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 # include "cipher_aes_hw_rv64i.inc"
-#elif defined(__riscv) && __riscv_xlen == 32
+#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
 # include "cipher_aes_hw_rv32i.inc"
 #elif defined (ARMv8_HWAES_CAPABLE)
 # include "cipher_aes_hw_armv8.inc"
