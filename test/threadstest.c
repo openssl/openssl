@@ -289,8 +289,8 @@ static int reader1_iterations = 0;
 static int reader2_iterations = 0;
 static int writer1_iterations = 0;
 static int writer2_iterations = 0;
-static unsigned int *writer_ptr = NULL;
-static unsigned int global_ctr = 0;
+static uint64_t *writer_ptr = NULL;
+static uint64_t global_ctr = 0;
 static int rcu_torture_result = 1;
 
 static void free_old_rcu_data(void *data)
@@ -302,12 +302,12 @@ static void writer_fn(int id, int *iterations)
 {
     int count;
     OSSL_TIME t1, t2;
-    unsigned int *old, *new;
+    uint64_t *old, *new;
 
     t1 = ossl_time_now();
 
     for (count = 0; ; count++) {
-        new = CRYPTO_zalloc(sizeof(int), NULL, 0);
+        new = CRYPTO_zalloc(sizeof(uint64_t), NULL, 0);
         if (contention == 0)
             OSSL_sleep(1000);
         ossl_rcu_write_lock(rcu_lock);
@@ -351,9 +351,9 @@ static void writer2_fn(void)
 static void reader_fn(int *iterations)
 {
     unsigned int count = 0;
-    unsigned int *valp;
-    unsigned int val;
-    unsigned int oldval = 0;
+    uint64_t *valp;
+    uint64_t val;
+    uint64_t oldval = 0;
     int lw1 = 0;
     int lw2 = 0;
 
@@ -365,7 +365,7 @@ static void reader_fn(int *iterations)
         valp = ossl_rcu_deref(&writer_ptr);
         val = (valp == NULL) ? 0 : *valp;
         if (oldval > val) {
-            TEST_info("rcu torture value went backwards! (%p) %x : %x\n", (void *)valp, oldval, val);
+            TEST_info("rcu torture value went backwards!");
             rcu_torture_result = 0;
         }
         oldval = val; /* just try to deref the pointer */
