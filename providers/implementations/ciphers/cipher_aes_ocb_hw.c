@@ -104,7 +104,7 @@ static const PROV_CIPHER_HW aes_t4_ocb = {                                     \
     if (SPARC_AES_CAPABLE)                                                     \
         return &aes_t4_ocb;
 
-#elif defined(__riscv) && __riscv_xlen == 64
+#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 
 static int cipher_hw_aes_ocb_rv64i_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
                                                      const unsigned char *key,
@@ -152,7 +152,7 @@ static const PROV_CIPHER_HW aes_rv64i_zvkned_ocb = {                           \
     else if (RISCV_HAS_ZKND_AND_ZKNE())                                        \
         return &aes_rv64i_zknd_zkne_ocb;
 
-#elif defined(__riscv) && __riscv_xlen == 32
+#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
 
 static int cipher_hw_aes_ocb_rv32i_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
                                                      const unsigned char *key,
