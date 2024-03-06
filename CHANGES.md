@@ -143,7 +143,7 @@ OpenSSL 3.3
    *Hugo Landau*
 
  * Added support to build Position Independent Executables (PIE). Compile time
-   option `enable-pie` integrates configuring the cflag `-fPIE` and ldflag '-pie'
+   option `enable-pie` integrates configuring the cflag '-fPIE' and ldflag '-pie'
    to support Address Space Layout Randomization (ASLR) in the openssl executable,
    instead of relying on external toolchains.
 
