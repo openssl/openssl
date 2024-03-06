@@ -1034,6 +1034,10 @@ The IEEE Std. 1619-2007 variant of SM4-XTS algorithm.
 
 The default value is "GB".
 
+=item "tls13_ciphersuite" (B<OSSL_CIPHER_PARAM_TLS1_3_CIPHER_SUITE>) <uint32_t>
+
+Sets the cipersuite identifier used by TLSv1.3 with Russian GOST algorithms.
+
 =back
 
 =head1 CONTROLS

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -449,6 +449,10 @@ static const ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0xC100, "GOST2012-KUZNYECHIK-KUZNYECHIKOMAC"},
     {0xC101, "GOST2012-MAGMA-MAGMAOMAC"},
     {0xC102, "GOST2012-GOST8912-IANA"},
+    {0xC103, "TLS_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L"},
+    {0xC104, "TLS_GOSTR341112_256_WITH_MAGMA_MGM_L"},
+    {0xC105, "TLS_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S"},
+    {0xC106, "TLS_GOSTR341112_256_WITH_MAGMA_MGM_S"},
 };
 
 /* Compression methods */
@@ -589,6 +593,13 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_dsa_sha512, "dsa_sha512"},
     {TLSEXT_SIGALG_dsa_sha224, "dsa_sha224"},
     {TLSEXT_SIGALG_dsa_sha1, "dsa_sha1"},
+    {TLSEXT_SIGALG_gostr34102012_256a, "gostr34102012_256a"},
+    {TLSEXT_SIGALG_gostr34102012_256b, "gostr34102012_256b"},
+    {TLSEXT_SIGALG_gostr34102012_256c, "gostr34102012_256c"},
+    {TLSEXT_SIGALG_gostr34102012_256d, "gostr34102012_256d"},
+    {TLSEXT_SIGALG_gostr34102012_512a, "gostr34102012_512a"},
+    {TLSEXT_SIGALG_gostr34102012_512b, "gostr34102012_512b"},
+    {TLSEXT_SIGALG_gostr34102012_512c, "gostr34102012_512c"},
     {TLSEXT_SIGALG_gostr34102012_256_intrinsic, "gost2012_256"},
     {TLSEXT_SIGALG_gostr34102012_512_intrinsic, "gost2012_512"},
     {TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, "gost2012_256"},

@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -199,9 +199,20 @@ extern "C" {
  * DEPRECATED IN 3.0.0, in favor of OSSL_default_ciphersuites()
  * Update both macro and function simultaneously
  */
-#  define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
-                                   "TLS_CHACHA20_POLY1305_SHA256:" \
-                                   "TLS_AES_128_GCM_SHA256"
+#  ifdef OPENSSL_NO_GOST
+#   define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
+                                    "TLS_CHACHA20_POLY1305_SHA256:" \
+                                    "TLS_AES_128_GCM_SHA256"
+#  else
+#   define TLS_DEFAULT_CIPHERSUITES \
+                                "TLS_AES_256_GCM_SHA384:" \
+                                "TLS_CHACHA20_POLY1305_SHA256:" \
+                                "TLS_AES_128_GCM_SHA256:" \
+                                "TLS_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L:" \
+                                "TLS_GOSTR341112_256_WITH_MAGMA_MGM_L:" \
+                                "TLS_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S:" \
+                                "TLS_GOSTR341112_256_WITH_MAGMA_MGM_S"
+#  endif
 # endif
 /*
  * As of OpenSSL 1.0.0, ssl_create_cipher_list() in ssl/ssl_ciph.c always

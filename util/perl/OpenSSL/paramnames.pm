@@ -112,6 +112,8 @@ my %params = (
     'CIPHER_PARAM_TLS1_MULTIBLOCK_ENC' =>                "tls1multi_enc",       # octet_string
     'CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN' =>             "tls1multi_encin",     # octet_string
     'CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN' =>            "tls1multi_enclen",    # size_t
+# For TLSv1.3 with Russian GOST algorithms
+    'CIPHER_PARAM_TLS1_3_CIPHER_SUITE' =>                "tls13_ciphersuite",   # uint32_t
 
 # digest parameters
     'DIGEST_PARAM_XOFLEN' =>       "xoflen",       # size_t

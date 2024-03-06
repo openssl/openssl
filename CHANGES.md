@@ -28,6 +28,16 @@ OpenSSL 3.3
 
 ### Changes between 3.2 and 3.3 [xx XXX xxxx]
 
+ * Added support for Russian GOST cipher suites
+   TLS_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L,
+   TLS_GOSTR341112_256_WITH_MAGMA_MGM_L,
+   TLS_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S,
+   TLS_GOSTR341112_256_WITH_MAGMA_MGM_S
+   in TLSv1.3. It requires implementation of underlying algorithms
+   (Magma MGM, Kuznyechik MGM, etc) in custom OpenSSL provider.
+
+   *Vladimir Zhdanov*
+
  * Added API functions SSL_SESSION_get_time_ex(), SSL_SESSION_set_time_ex()
    using time_t which is Y2038 safe on 32 bit systems when 64 bit time
    is enabled (e.g via setting glibc macro _TIME_BITS=64).

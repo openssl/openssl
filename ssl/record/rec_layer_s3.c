@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1253,6 +1253,9 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     int use_early_data = 0;
     uint32_t max_early_data;
     COMP_METHOD *compm = (comp == NULL) ? NULL : comp->method;
+#ifndef OPENSSL_NO_GOST
+    const SSL_CIPHER *ciphersuite = SSL_get_current_cipher(SSL_CONNECTION_GET_SSL(s));
+#endif
 
     meth = ssl_select_next_record_layer(s, direction, level);
 
@@ -1458,6 +1461,23 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
             return 0;
         }
     }
+
+#ifndef OPENSSL_NO_GOST
+    if (ciphersuite) {
+        uint32_t id = SSL_CIPHER_get_id(ciphersuite);
+        if (TLS1_3_CK_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L == id
+            || TLS1_3_CK_GOSTR341112_256_WITH_MAGMA_MGM_L == id
+            || TLS1_3_CK_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S == id
+            || TLS1_3_CK_GOSTR341112_256_WITH_MAGMA_MGM_S == id) {
+            if (EVP_CIPHER_CTX_ctrl(OSSL_RECORD_LAYER_get0_cipher(newrl),
+                                    EVP_CTRL_TLS1_3_CIPHER_SUITE,
+                                    sizeof(id), &id) <= 0) {
+              SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+              return 0;
+            }
+        }
+    }
+#endif
 
     *thisrl = newrl;
     *thismethod = meth;

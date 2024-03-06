@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -621,6 +621,10 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb
 # define TLS1_3_CK_CHACHA20_POLY1305_SHA256               0x03001303
 # define TLS1_3_CK_AES_128_CCM_SHA256                     0x03001304
 # define TLS1_3_CK_AES_128_CCM_8_SHA256                   0x03001305
+# define TLS1_3_CK_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L  0x0300C103
+# define TLS1_3_CK_GOSTR341112_256_WITH_MAGMA_MGM_L       0x0300C104
+# define TLS1_3_CK_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S  0x0300C105
+# define TLS1_3_CK_GOSTR341112_256_WITH_MAGMA_MGM_S       0x0300C106
 
 /* Aria ciphersuites from RFC6209 */
 # define TLS1_CK_RSA_WITH_ARIA_128_GCM_SHA256             0x0300C050
@@ -840,7 +844,10 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb
 # define TLS1_RFC_DHE_PSK_WITH_ARIA_256_GCM_SHA384       "TLS_DHE_PSK_WITH_ARIA_256_GCM_SHA384"
 # define TLS1_RFC_RSA_PSK_WITH_ARIA_128_GCM_SHA256       "TLS_RSA_PSK_WITH_ARIA_128_GCM_SHA256"
 # define TLS1_RFC_RSA_PSK_WITH_ARIA_256_GCM_SHA384       "TLS_RSA_PSK_WITH_ARIA_256_GCM_SHA384"
-
+# define TLS1_3_TC26_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L  "TLS_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L"
+# define TLS1_3_TC26_GOSTR341112_256_WITH_MAGMA_MGM_L       "TLS_GOSTR341112_256_WITH_MAGMA_MGM_L"
+# define TLS1_3_TC26_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S  "TLS_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S"
+# define TLS1_3_TC26_GOSTR341112_256_WITH_MAGMA_MGM_S       "TLS_GOSTR341112_256_WITH_MAGMA_MGM_S"
 
 /*
  * XXX Backward compatibility alert: Older versions of OpenSSL gave some DHE

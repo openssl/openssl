@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -55,6 +55,8 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_ARIA256GCM, NID_aria_256_gcm}, /* SSL_ENC_ARIA256GCM_IDX 21 */
     {SSL_MAGMA, NID_magma_ctr_acpkm}, /* SSL_ENC_MAGMA_IDX */
     {SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm}, /* SSL_ENC_KUZNYECHIK_IDX */
+    {SSL_MAGMA_MGM, NID_magma_mgm}, /* SSL_ENC_MAGMA_MGM_IDX */
+    {SSL_KUZNYECHIK_MGM, NID_kuznyechik_mgm}, /* SSL_ENC_KUZNYECHIK_MGM_IDX */
 };
 
 #define SSL_COMP_NULL_IDX       0
@@ -2265,7 +2267,17 @@ const char *OSSL_default_cipher_list(void)
  */
 const char *OSSL_default_ciphersuites(void)
 {
+#ifdef OPENSSL_NO_GOST
     return "TLS_AES_256_GCM_SHA384:"
            "TLS_CHACHA20_POLY1305_SHA256:"
            "TLS_AES_128_GCM_SHA256";
+#else
+    return "TLS_AES_256_GCM_SHA384:"
+           "TLS_CHACHA20_POLY1305_SHA256:"
+           "TLS_AES_128_GCM_SHA256:"
+           "TLS_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L:"
+           "TLS_GOSTR341112_256_WITH_MAGMA_MGM_L:"
+           "TLS_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S:"
+           "TLS_GOSTR341112_256_WITH_MAGMA_MGM_S";
+#endif
 }

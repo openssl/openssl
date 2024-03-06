@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -113,6 +113,72 @@ static SSL_CIPHER tls13_ciphers[] = {
         64, /* CCM8 uses a short tag, so we have a low security strength */
         128,
     }
+#ifndef OPENSSL_NO_GOST
+    , {
+        1,
+        TLS1_3_TC26_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L,
+        TLS1_3_TC26_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L,
+        TLS1_3_CK_GOSTR341112_256_WITH_KUZNYECHIK_MGM_L,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_KUZNYECHIK_MGM,
+        SSL_AEAD,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        0, 0,
+        SSL_HIGH,
+        SSL_HANDSHAKE_MAC_GOST12_256,
+        256,
+        256,
+    }
+    , {
+        1,
+        TLS1_3_TC26_GOSTR341112_256_WITH_MAGMA_MGM_L,
+        TLS1_3_TC26_GOSTR341112_256_WITH_MAGMA_MGM_L,
+        TLS1_3_CK_GOSTR341112_256_WITH_MAGMA_MGM_L,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_MAGMA_MGM,
+        SSL_AEAD,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        0, 0,
+        SSL_HIGH,
+        SSL_HANDSHAKE_MAC_GOST12_256,
+        256,
+        256,
+    }
+    , {
+        1,
+        TLS1_3_TC26_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S,
+        TLS1_3_TC26_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S,
+        TLS1_3_CK_GOSTR341112_256_WITH_KUZNYECHIK_MGM_S,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_KUZNYECHIK_MGM,
+        SSL_AEAD,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        0, 0,
+        SSL_HIGH,
+        SSL_HANDSHAKE_MAC_GOST12_256,
+        256,
+        256,
+    }
+    , {
+        1,
+        TLS1_3_TC26_GOSTR341112_256_WITH_MAGMA_MGM_S,
+        TLS1_3_TC26_GOSTR341112_256_WITH_MAGMA_MGM_S,
+        TLS1_3_CK_GOSTR341112_256_WITH_MAGMA_MGM_S,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_MAGMA_MGM,
+        SSL_AEAD,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        0, 0,
+        SSL_HIGH,
+        SSL_HANDSHAKE_MAC_GOST12_256,
+        256,
+        256,
+    }
+#endif
 };
 
 /*
