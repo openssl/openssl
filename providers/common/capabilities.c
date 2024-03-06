@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -211,7 +211,8 @@ static const OSSL_PARAM param_group_list[][10] = {
 
 static int tls_group_capability(OSSL_CALLBACK *cb, void *arg)
 {
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+#if defined(OPENSSL_NO_GOST) && \
+    (!defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH))
     size_t i;
 
     for (i = 0; i < OSSL_NELEM(param_group_list); i++)

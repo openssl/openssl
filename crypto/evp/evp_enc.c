@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1294,6 +1294,14 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         params[0] = OSSL_PARAM_construct_octet_string(
                 OSSL_CIPHER_PARAM_AEAD_MAC_KEY, ptr, sz);
         break;
+#ifndef OPENSSL_NO_GOST
+    case EVP_CTRL_TLS1_3_CIPHER_SUITE:
+        if (sizeof(uint32_t) != sz)
+            return 0;
+        params[0] = OSSL_PARAM_construct_uint32(
+                        OSSL_CIPHER_PARAM_TLS1_3_CIPHER_SUITE, (uint32_t*)ptr);
+        break;
+#endif /* OPENSSL_NO_GOST */
     }
 
     if (set_params)

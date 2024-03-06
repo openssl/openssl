@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -347,6 +347,7 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
     int hashleni = EVP_MD_get_size(md);
     size_t hashlen;
     int mode;
+    uint32_t algenc;
 
     /* Ensure cast to size_t is safe */
     if (!ossl_assert(hashleni >= 0)) {
@@ -363,32 +364,41 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
 
     *keylen = EVP_CIPHER_get_key_length(ciph);
 
+    if (s->s3.tmp.new_cipher != NULL) {
+        algenc = s->s3.tmp.new_cipher->algorithm_enc;
+    } else if (s->session->cipher != NULL) {
+        /* We've not selected a cipher yet - we must be doing early data */
+        algenc = s->session->cipher->algorithm_enc;
+    } else if (s->psksession != NULL && s->psksession->cipher != NULL) {
+        /* We must be doing early data with out-of-band PSK */
+        algenc = s->psksession->cipher->algorithm_enc;
+    } else {
+        /* error in case of CCM mode */
+        algenc = 0;
+    }
+
     mode = EVP_CIPHER_get_mode(ciph);
     if (mode == EVP_CIPH_CCM_MODE) {
-        uint32_t algenc;
-
         *ivlen = EVP_CCM_TLS_IV_LEN;
-        if (s->s3.tmp.new_cipher != NULL) {
-            algenc = s->s3.tmp.new_cipher->algorithm_enc;
-        } else if (s->session->cipher != NULL) {
-            /* We've not selected a cipher yet - we must be doing early data */
-            algenc = s->session->cipher->algorithm_enc;
-        } else if (s->psksession != NULL && s->psksession->cipher != NULL) {
-            /* We must be doing early data with out-of-band PSK */
-            algenc = s->psksession->cipher->algorithm_enc;
-        } else {
+        if (algenc == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
             return 0;
         }
         if (algenc & (SSL_AES128CCM8 | SSL_AES256CCM8))
             *taglen = EVP_CCM8_TLS_TAG_LEN;
-         else
+        else
             *taglen = EVP_CCM_TLS_TAG_LEN;
     } else {
         int iivlen;
 
         if (mode == EVP_CIPH_GCM_MODE) {
             *taglen = EVP_GCM_TLS_TAG_LEN;
+#ifndef OPENSSL_NO_GOST
+        } else if (algenc & SSL_MAGMA_MGM) {
+            *taglen = EVP_MAGMA_TLS_TAG_LEN;
+        } else if (algenc & SSL_KUZNYECHIK_MGM) {
+            *taglen = EVP_KUZNECHIK_TLS_TAG_LEN;
+#endif
         } else {
             /* CHACHA20P-POLY1305 */
             *taglen = EVP_CHACHAPOLY_TLS_TAG_LEN;

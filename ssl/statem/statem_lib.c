@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -1924,8 +1924,10 @@ static int is_tls13_capable(const SSL_CONNECTION *s)
         switch (i) {
         case SSL_PKEY_DSA_SIGN:
         case SSL_PKEY_GOST01:
+#ifdef OPENSSL_NO_GOST
         case SSL_PKEY_GOST12_256:
         case SSL_PKEY_GOST12_512:
+#endif
             continue;
         default:
             break;

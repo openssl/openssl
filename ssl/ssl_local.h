@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -152,6 +152,8 @@
 # define SSL_ARIA256GCM          0x00200000U
 # define SSL_MAGMA               0x00400000U
 # define SSL_KUZNYECHIK          0x00800000U
+# define SSL_MAGMA_MGM           0x01000000U
+# define SSL_KUZNYECHIK_MGM      0x02000000U
 
 # define SSL_AESGCM              (SSL_AES128GCM | SSL_AES256GCM)
 # define SSL_AESCCM              (SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8)
@@ -361,7 +363,9 @@
 # define SSL_ENC_ARIA256GCM_IDX  21
 # define SSL_ENC_MAGMA_IDX       22
 # define SSL_ENC_KUZNYECHIK_IDX  23
-# define SSL_ENC_NUM_IDX         24
+# define SSL_ENC_MAGMA_MGM_IDX   24
+# define SSL_ENC_KUZNYECHIK_MGM_IDX 25
+# define SSL_ENC_NUM_IDX         26
 
 /*-
  * SSL_kRSA <- RSA_ENC
@@ -2209,6 +2213,13 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256       0xeeee
 #define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512       0xefef
 #define TLSEXT_SIGALG_gostr34102001_gostr3411                   0xeded
+#define TLSEXT_SIGALG_gostr34102012_256a                        0x0709
+#define TLSEXT_SIGALG_gostr34102012_256b                        0x070a
+#define TLSEXT_SIGALG_gostr34102012_256c                        0x070b
+#define TLSEXT_SIGALG_gostr34102012_256d                        0x070c
+#define TLSEXT_SIGALG_gostr34102012_512a                        0x070d
+#define TLSEXT_SIGALG_gostr34102012_512b                        0x070e
+#define TLSEXT_SIGALG_gostr34102012_512c                        0x070f
 
 #define TLSEXT_SIGALG_ed25519                                   0x0807
 #define TLSEXT_SIGALG_ed448                                     0x0808

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -436,16 +436,18 @@ OSSL_DEPRECATEDIN_3_0 int
 /* Get the unprotectedAttrs from cipher ctx */
 # define         EVP_CTRL_PROCESS_UNPROTECTED            0x28
 /* Get the supplementary wrap cipher */
-#define          EVP_CTRL_GET_WRAP_CIPHER                0x29
+# define          EVP_CTRL_GET_WRAP_CIPHER               0x29
 /* TLSTREE key diversification */
-#define          EVP_CTRL_TLSTREE                        0x2A
+# define          EVP_CTRL_TLSTREE                       0x2A
+/* TLSv1.3 cipher suite */
+# define          EVP_CTRL_TLS1_3_CIPHER_SUITE           0x2B
 
 /* Padding modes */
-#define EVP_PADDING_PKCS7       1
-#define EVP_PADDING_ISO7816_4   2
-#define EVP_PADDING_ANSI923     3
-#define EVP_PADDING_ISO10126    4
-#define EVP_PADDING_ZERO        5
+# define EVP_PADDING_PKCS7       1
+# define EVP_PADDING_ISO7816_4   2
+# define EVP_PADDING_ANSI923     3
+# define EVP_PADDING_ISO10126    4
+# define EVP_PADDING_ZERO        5
 
 /* RFC 5246 defines additional data to be 13 bytes in length */
 # define         EVP_AEAD_TLS1_AAD_LEN           13
@@ -479,6 +481,11 @@ typedef struct {
 
 /* Length of tag for TLS */
 # define EVP_CHACHAPOLY_TLS_TAG_LEN                      16
+
+/* Length of MAGMA tag for TLS */
+# define EVP_MAGMA_TLS_TAG_LEN                           8
+/* Length of KUZNECHIK tag for TLS */
+# define EVP_KUZNECHIK_TLS_TAG_LEN                       16
 
 typedef struct evp_cipher_info_st {
     const EVP_CIPHER *cipher;

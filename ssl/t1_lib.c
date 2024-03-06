@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1365,6 +1365,13 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_dsa_sha512,
 
 #ifndef OPENSSL_NO_GOST
+    TLSEXT_SIGALG_gostr34102012_256a,
+    TLSEXT_SIGALG_gostr34102012_256b,
+    TLSEXT_SIGALG_gostr34102012_256c,
+    TLSEXT_SIGALG_gostr34102012_256d,
+    TLSEXT_SIGALG_gostr34102012_512a,
+    TLSEXT_SIGALG_gostr34102012_512b,
+    TLSEXT_SIGALG_gostr34102012_512c,
     TLSEXT_SIGALG_gostr34102012_256_intrinsic,
     TLSEXT_SIGALG_gostr34102012_512_intrinsic,
     TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256,
@@ -1459,6 +1466,34 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_DSA, SSL_PKEY_DSA_SIGN,
      NID_dsaWithSHA1, NID_undef, 1},
 #ifndef OPENSSL_NO_GOST
+    {"gostr34102012_256a", TLSEXT_SIGALG_gostr34102012_256a,
+     NID_id_GostR3411_2012_256, SSL_MD_GOST12_256_IDX,
+     NID_id_GostR3410_2012_256, SSL_PKEY_GOST12_256,
+     NID_undef, NID_id_tc26_gost_3410_2012_256_paramSetA, 1},
+    {"gostr34102012_256b", TLSEXT_SIGALG_gostr34102012_256b,
+     NID_id_GostR3411_2012_256, SSL_MD_GOST12_256_IDX,
+     NID_id_GostR3410_2012_256, SSL_PKEY_GOST12_256,
+     NID_undef, NID_id_tc26_gost_3410_2012_256_paramSetB, 1},
+    {"gostr34102012_256c", TLSEXT_SIGALG_gostr34102012_256c,
+     NID_id_GostR3411_2012_256, SSL_MD_GOST12_256_IDX,
+     NID_id_GostR3410_2012_256, SSL_PKEY_GOST12_256,
+     NID_undef, NID_id_tc26_gost_3410_2012_256_paramSetC, 1},
+    {"gostr34102012_256d", TLSEXT_SIGALG_gostr34102012_256d,
+     NID_id_GostR3411_2012_256, SSL_MD_GOST12_256_IDX,
+     NID_id_GostR3410_2012_256, SSL_PKEY_GOST12_256,
+     NID_undef, NID_id_tc26_gost_3410_2012_256_paramSetD, 1},
+    {"gostr34102012_512a", TLSEXT_SIGALG_gostr34102012_512a,
+     NID_id_GostR3411_2012_512, SSL_MD_GOST12_512_IDX,
+     NID_id_GostR3410_2012_512, SSL_PKEY_GOST12_512,
+     NID_undef, NID_id_tc26_gost_3410_2012_512_paramSetA, 1},
+    {"gostr34102012_512b", TLSEXT_SIGALG_gostr34102012_512b,
+     NID_id_GostR3411_2012_512, SSL_MD_GOST12_512_IDX,
+     NID_id_GostR3410_2012_512, SSL_PKEY_GOST12_512,
+     NID_undef, NID_id_tc26_gost_3410_2012_512_paramSetB, 1},
+    {"gostr34102012_512c", TLSEXT_SIGALG_gostr34102012_512c,
+     NID_id_GostR3411_2012_512, SSL_MD_GOST12_512_IDX,
+     NID_id_GostR3410_2012_512, SSL_PKEY_GOST12_512,
+     NID_undef, NID_id_tc26_gost_3410_2012_512_paramSetC, 1},
     {NULL, TLSEXT_SIGALG_gostr34102012_256_intrinsic,
      NID_id_GostR3411_2012_256, SSL_MD_GOST12_256_IDX,
      NID_id_GostR3410_2012_256, SSL_PKEY_GOST12_256,
@@ -2523,9 +2558,11 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
     if (lu->sig == NID_id_GostR3410_2012_256
             || lu->sig == NID_id_GostR3410_2012_512
             || lu->sig == NID_id_GostR3410_2001) {
+#ifdef OPENSSL_NO_GOST
         /* We never allow GOST sig algs on the server with TLSv1.3 */
         if (s->server && SSL_CONNECTION_IS_TLS13(s))
             return 0;
+#endif
         if (!s->server
                 && SSL_CONNECTION_GET_SSL(s)->method->version == TLS_ANY_VERSION
                 && s->s3.tmp.max_ver >= TLS1_3_VERSION) {
@@ -3597,6 +3634,29 @@ static int check_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig,
                                                     sctx->propq);
     if (supported <= 0)
         return 0;
+
+    if (NID_id_GostR3410_2012_256 == sig->sig
+        || NID_id_GostR3410_2012_512 == sig->sig) {
+        char gname[32];
+        size_t gname_sz = sizeof(gname);
+        if (EVP_PKEY_get_group_name(pkey, gname, gname_sz, NULL)) {
+            if ((NID_id_tc26_gost_3410_2012_256_paramSetA == sig->curve &&
+                 0 != OPENSSL_strncasecmp(gname, "GC256A", gname_sz)) ||
+                (NID_id_tc26_gost_3410_2012_256_paramSetB == sig->curve &&
+                 0 != OPENSSL_strncasecmp(gname, "GC256B", gname_sz)) ||
+                (NID_id_tc26_gost_3410_2012_256_paramSetC == sig->curve &&
+                 0 != OPENSSL_strncasecmp(gname, "GC256C", gname_sz)) ||
+                (NID_id_tc26_gost_3410_2012_256_paramSetD == sig->curve &&
+                 0 != OPENSSL_strncasecmp(gname, "GC256D", gname_sz)) ||
+                (NID_id_tc26_gost_3410_2012_512_paramSetA == sig->curve &&
+                 0 != OPENSSL_strncasecmp(gname, "GC512A", gname_sz)) ||
+                (NID_id_tc26_gost_3410_2012_512_paramSetB == sig->curve &&
+                 0 != OPENSSL_strncasecmp(gname, "GC512B", gname_sz)) ||
+                (NID_id_tc26_gost_3410_2012_512_paramSetC == sig->curve &&
+                 0 != OPENSSL_strncasecmp(gname, "GC512C", gname_sz)))
+                return 0;
+        }
+    }
 
     /*
      * The TLS 1.3 signature_algorithms_cert extension places restrictions

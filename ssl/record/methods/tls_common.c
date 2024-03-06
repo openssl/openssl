@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,11 @@
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"
+
+EVP_CIPHER_CTX *OSSL_RECORD_LAYER_get0_cipher(OSSL_RECORD_LAYER *rl)
+{
+    return rl->enc_ctx;
+}
 
 static void tls_int_free(OSSL_RECORD_LAYER *rl);
 

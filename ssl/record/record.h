@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -193,3 +193,5 @@ OSSL_CORE_MAKE_FUNC(int, rlayer_security, (void *cbarg, int op, int bits,
                                            int nid, void *other))
 # define OSSL_FUNC_RLAYER_PADDING                4
 OSSL_CORE_MAKE_FUNC(size_t, rlayer_padding, (void *cbarg, int type, size_t len))
+
+EVP_CIPHER_CTX *OSSL_RECORD_LAYER_get0_cipher(OSSL_RECORD_LAYER *rl);
