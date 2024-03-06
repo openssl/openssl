@@ -641,6 +641,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     bio_buf = BIO_new(BIO_s_mem());
     OPENSSL_assert((size_t)BIO_write(bio_buf, RSACertificatePEM, sizeof(RSACertificatePEM)) == sizeof(RSACertificatePEM));
     cert = PEM_read_bio_X509(bio_buf, NULL, NULL, NULL);
+    BIO_free(bio_buf);
     OPENSSL_assert(cert != NULL);
     ret = SSL_CTX_use_certificate(ctx, cert);
     OPENSSL_assert(ret == 1);
