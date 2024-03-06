@@ -2691,6 +2691,10 @@ static int xor_sig_setup_md(PROV_XORSIG_CTX *ctx,
     OPENSSL_free(ctx->aid);
     ctx->aid = NULL;
     ctx->aid_len = xor_get_aid(&(ctx->aid), ctx->sig->tls_name);
+    if (ctx->aid_len <= 0) {
+        EVP_MD_free(md);
+        return 0;
+    }
 
     ctx->mdctx = NULL;
     ctx->md = md;
