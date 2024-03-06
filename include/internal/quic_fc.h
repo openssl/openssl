@@ -61,16 +61,18 @@ int ossl_quic_txfc_bump_cwm(QUIC_TXFC *txfc, uint64_t cwm);
  *
  * If called on a stream-level TXFC, ossl_quic_txfc_get_credit is called on
  * the connection-level TXFC as well, and the lesser of the two values is
- * returned.
+ * returned. The consumed value is the amount already consumed on the connection
+ * level TXFC.
  */
-uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc);
+uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc, uint64_t consumed);
 
 /*
  * Like ossl_quic_txfc_get_credit(), but when called on a stream-level TXFC,
  * retrieves only the stream-level credit value and does not clamp it based on
- * connection-level flow control.
+ * connection-level flow control. Any credit value is reduced by the consumed
+ * amount.
  */
-uint64_t ossl_quic_txfc_get_credit_local(QUIC_TXFC *txfc);
+uint64_t ossl_quic_txfc_get_credit_local(QUIC_TXFC *txfc, uint64_t consumed);
 
 /*
  * Consume num_bytes of credit. This is the 'On TX' operation. This should be
@@ -227,20 +229,26 @@ int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc,
  *
  * This value increases monotonically.
  */
-uint64_t ossl_quic_rxfc_get_cwm(QUIC_RXFC *rxfc);
+uint64_t ossl_quic_rxfc_get_cwm(const QUIC_RXFC *rxfc);
 
 /*
  * Returns the current SWM. This is the total number of bytes the peer has
  * transmitted to us. This is intended for diagnostic use only; you should
  * not need it.
  */
-uint64_t ossl_quic_rxfc_get_swm(QUIC_RXFC *rxfc);
+uint64_t ossl_quic_rxfc_get_swm(const QUIC_RXFC *rxfc);
 
 /*
  * Returns the current RWM. This is the total number of bytes that has been
  * retired. This is intended for diagnostic use only; you should not need it.
  */
-uint64_t ossl_quic_rxfc_get_rwm(QUIC_RXFC *rxfc);
+uint64_t ossl_quic_rxfc_get_rwm(const QUIC_RXFC *rxfc);
+
+/*
+ * Returns the current credit. This is the CWM minus the SWM. This is intended
+ * for diagnostic use only; you should not need it.
+ */
+uint64_t ossl_quic_rxfc_get_credit(const QUIC_RXFC *rxfc);
 
 /*
  * Returns the CWM changed flag. If clear is 1, the flag is cleared and the old

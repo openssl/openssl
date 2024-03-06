@@ -83,7 +83,7 @@ static EVP_PKEY *generate_rsa_key_long(OSSL_LIB_CTX *libctx, unsigned int bits)
      * you can set a progress callback using EVP_PKEY_set_cb; see the example in
      * EVP_PKEY_generate(3).
      */
-    fprintf(stderr, "Generating RSA key, this may take some time...\n");
+    fprintf(stdout, "Generating RSA key, this may take some time...\n");
     if (EVP_PKEY_generate(genctx, &pkey) <= 0) {
         fprintf(stderr, "EVP_PKEY_generate() failed\n");
         goto cleanup;
@@ -109,7 +109,7 @@ static EVP_PKEY *generate_rsa_key_short(OSSL_LIB_CTX *libctx, unsigned int bits)
 {
     EVP_PKEY *pkey = NULL;
 
-    fprintf(stderr, "Generating RSA key, this may take some time...\n");
+    fprintf(stdout, "Generating RSA key, this may take some time...\n");
     pkey = EVP_PKEY_Q_keygen(libctx, propq, "RSA", (size_t)bits);
 
     if (pkey == NULL)
@@ -189,7 +189,7 @@ static int dump_key(const EVP_PKEY *pkey)
 
     /* Output hexadecimal representations of the BIGNUM objects. */
     fprintf(stdout, "\nNumber of bits: %d\n\n", bits);
-    fprintf(stderr, "Public values:\n");
+    fprintf(stdout, "Public values:\n");
     fprintf(stdout, "  n = 0x");
     BN_print_fp(stdout, n);
     fprintf(stdout, "\n");

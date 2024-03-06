@@ -1319,8 +1319,8 @@ static int test_hpke_oddcalls(void)
     OSSL_HPKE_CTX *rctx = NULL;
     unsigned char plain[] = "quick brown fox";
     size_t plainlen = sizeof(plain);
-    unsigned char enc[OSSL_HPKE_TSTSIZE];
-    size_t enclen = sizeof(enc);
+    unsigned char enc[OSSL_HPKE_TSTSIZE], smallenc[10];
+    size_t enclen = sizeof(enc), smallenclen = sizeof(smallenc);
     unsigned char cipher[OSSL_HPKE_TSTSIZE];
     size_t cipherlen = sizeof(cipher);
     unsigned char clear[OSSL_HPKE_TSTSIZE];
@@ -1470,6 +1470,15 @@ static int test_hpke_oddcalls(void)
         goto end;
     /* encap with too big info */
     if (!TEST_false(OSSL_HPKE_encap(ctx, enc, &enclen, pub, 1, info, -1)))
+        goto end;
+    /* encap with NULL info & non-zero infolen */
+    if (!TEST_false(OSSL_HPKE_encap(ctx, enc, &enclen, pub, 1, NULL, 1)))
+        goto end;
+    /* encap with non-NULL info & zero infolen */
+    if (!TEST_false(OSSL_HPKE_encap(ctx, enc, &enclen, pub, 1, info, 0)))
+        goto end;
+    /* encap with too small enc */
+    if (!TEST_false(OSSL_HPKE_encap(ctx, smallenc, &smallenclen, pub, 1, NULL, 0)))
         goto end;
     /* good encap */
     if (!TEST_true(OSSL_HPKE_encap(ctx, enc, &enclen, pub, publen, NULL, 0)))

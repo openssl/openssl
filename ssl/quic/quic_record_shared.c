@@ -185,7 +185,7 @@ static int el_setup_keyslot(OSSL_QRL_ENC_LEVEL_SET *els,
     EVP_CIPHER_free(cipher);
     return 1;
 
-err:
+ err:
     EVP_CIPHER_CTX_free(cctx);
     EVP_CIPHER_free(cipher);
     OPENSSL_cleanse(el->iv[keyslot], sizeof(el->iv[keyslot]));
@@ -327,16 +327,16 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
     el->state = QRL_EL_STATE_PROV_NORMAL;
     return 1;
 
-err:
+ err:
     el->suite_id = 0;
     el->md = NULL;
     OPENSSL_cleanse(hpr_key, sizeof(hpr_key));
     OPENSSL_cleanse(ku_key, sizeof(ku_key));
     OPENSSL_cleanse(el->ku, sizeof(el->ku));
     if (have_ks0)
-        el_teardown_keyslot(els, enc_level, 0);
+        el_teardown_keyslot(els, enc_level, init_keyslot);
     if (have_ks1)
-        el_teardown_keyslot(els, enc_level, 1);
+        el_teardown_keyslot(els, enc_level, !init_keyslot);
     if (own_md)
         EVP_MD_free(md);
     return 0;

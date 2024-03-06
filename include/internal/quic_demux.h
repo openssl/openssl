@@ -12,6 +12,7 @@
 
 # include <openssl/ssl.h>
 # include "internal/quic_types.h"
+# include "internal/quic_predef.h"
 # include "internal/bio_addr.h"
 # include "internal/time.h"
 # include "internal/list.h"
@@ -23,20 +24,19 @@
  * ============
  *
  * The QUIC connection demuxer is the entity responsible for receiving datagrams
- * from the network via a datagram BIO. It parses packet headers to determine
- * each packet's destination connection ID (DCID) and hands off processing of
- * the packet to the correct QUIC Record Layer (QRL)'s RX side (known as the
- * QRX).
+ * from the network via a datagram BIO. It parses the headers of the first
+ * packet in the datagram to determine that packet's DCID and hands off
+ * processing of the entire datagram to a single callback function which can
+ * decide how to handle and route the datagram, for example by looking up
+ * a QRX instance and injecting the URXE into that QRX.
  *
- * A QRX is instantiated per QUIC connection and contains the cryptographic
- * resources needed to decrypt QUIC packets for that connection. Received
- * datagrams are passed from the demuxer to the QRX via a callback registered
- * for a specific DCID by the QRX; thus the demuxer has no specific knowledge of
- * the QRX and is not coupled to it.
- *
- * A connection may have multiple connection IDs associated with it; a QRX
- * handles this simply by registering multiple connection IDs with the demuxer
- * via multiple register calls.
+ * A QRX will typically be instantiated per QUIC connection and contains the
+ * cryptographic resources needed to decrypt QUIC packets for that connection.
+ * However, it is up to the callback function to handle routing, for example by
+ * consulting a LCIDM instance. Thus the demuxer has no specific knowledge of
+ * any QRX and is not coupled to it. All CID knowledge is also externalised into
+ * a LCIDM or other CID state tracking object, without the DEMUX being coupled
+ * to any particular DCID resolution mechanism.
  *
  * URX Queue
  * ---------
@@ -83,8 +83,6 @@
  * same allocation.
  */
 
-typedef struct quic_urxe_st QUIC_URXE;
-
 /* Maximum number of packets we allow to exist in one datagram. */
 #define QUIC_MAX_PKT_PER_URXE       (sizeof(uint64_t) * 8)
 
@@ -107,6 +105,12 @@ struct quic_urxe_st {
      * has already been removed. Used by QRX only; not used by the demuxer.
      */
     uint64_t        processed, hpr_removed;
+
+    /*
+     * This monotonically increases with each datagram received. It is used for
+     * diagnostic purposes only.
+     */
+    uint64_t        datagram_id;
 
     /*
      * Address of peer we received the datagram from, and the local interface
@@ -159,15 +163,15 @@ void ossl_quic_urxe_remove(QUIC_URXE_LIST *l, QUIC_URXE *e);
 void ossl_quic_urxe_insert_head(QUIC_URXE_LIST *l, QUIC_URXE *e);
 void ossl_quic_urxe_insert_tail(QUIC_URXE_LIST *l, QUIC_URXE *e);
 
-/* Opaque type representing a demuxer. */
-typedef struct quic_demux_st QUIC_DEMUX;
-
 /*
  * Called when a datagram is received for a given connection ID.
  *
  * e is a URXE containing the datagram payload. It is permissible for the callee
  * to mutate this buffer; once the demuxer calls this callback, it will never
  * read the buffer again.
+ *
+ * If a DCID was identified for the datagram, dcid is non-NULL; otherwise
+ * it is NULL.
  *
  * The callee must arrange for ossl_quic_demux_release_urxe or
  * ossl_quic_demux_reinject_urxe to be called on the URXE at some point in the
@@ -176,15 +180,8 @@ typedef struct quic_demux_st QUIC_DEMUX;
  * At the time the callback is made, the URXE will not be in any queue,
  * therefore the callee can use the prev and next fields as it wishes.
  */
-typedef void (ossl_quic_demux_cb_fn)(QUIC_URXE *e, void *arg);
-
-/*
- * Called when a datagram is received.
- * Returns 1 if the datagram ends with a stateless reset token and
- * 0 if not.
- */
-typedef int (ossl_quic_stateless_reset_cb_fn)(const unsigned char *data,
-                                              size_t data_len, void *arg);
+typedef void (ossl_quic_demux_cb_fn)(QUIC_URXE *e, void *arg,
+                                     const QUIC_CONN_ID *dcid);
 
 /*
  * Creates a new demuxer. The given BIO is used to receive datagrams from the
@@ -221,50 +218,6 @@ void ossl_quic_demux_set_bio(QUIC_DEMUX *demux, BIO *net_bio);
 int ossl_quic_demux_set_mtu(QUIC_DEMUX *demux, unsigned int mtu);
 
 /*
- * Register a datagram handler callback for a connection ID.
- *
- * ossl_quic_demux_pump will call the specified function if it receives a datagram
- * the first packet of which has the specified destination connection ID.
- *
- * It is assumed all packets in a datagram have the same destination connection
- * ID (as QUIC mandates this), but it is the user's responsibility to check for
- * this and reject subsequent packets in a datagram that violate this rule.
- *
- * dst_conn_id is a destination connection ID; it is copied and need not remain
- * valid after this function returns.
- *
- * cb_arg is passed to cb when it is called. For information on the callback,
- * see its typedef above.
- *
- * Only one handler can be set for a given connection ID. If a handler is
- * already set for the given connection ID, returns 0.
- *
- * Returns 1 on success or 0 on failure.
- */
-int ossl_quic_demux_register(QUIC_DEMUX *demux,
-                             const QUIC_CONN_ID *dst_conn_id,
-                             ossl_quic_demux_cb_fn *cb,
-                             void *cb_arg);
-
-/*
- * Unregisters any datagram handler callback set for the given connection ID.
- * Fails if no handler is registered for the given connection ID.
- *
- * Returns 1 on success or 0 on failure.
- */
-int ossl_quic_demux_unregister(QUIC_DEMUX *demux,
-                               const QUIC_CONN_ID *dst_conn_id);
-
-/*
- * Unregisters any datagram handler callback from all connection IDs it is used
- * for. cb and cb_arg must both match the values passed to
- * ossl_quic_demux_register.
- */
-void ossl_quic_demux_unregister_by_cb(QUIC_DEMUX *demux,
-                                      ossl_quic_demux_cb_fn *cb,
-                                      void *cb_arg);
-
-/*
  * Set the default packet handler. This is used for incoming packets which don't
  * match a registered DCID. This is only needed for servers. If a default packet
  * handler is not set, a packet which doesn't match a registered DCID is
@@ -277,18 +230,6 @@ void ossl_quic_demux_unregister_by_cb(QUIC_DEMUX *demux,
 void ossl_quic_demux_set_default_handler(QUIC_DEMUX *demux,
                                          ossl_quic_demux_cb_fn *cb,
                                          void *cb_arg);
-
-/*
- * Sets a callback for stateless reset processing.
- *
- * If set, this callback is called for datagrams for which we cannot identify
- * a CID.  This function should return 1 if there is a stateless reset token
- * present and 0 if not.  If there is a token present, the connection should
- * also be reset.
- */
-void ossl_quic_demux_set_stateless_reset_handler(
-        QUIC_DEMUX *demux,
-        ossl_quic_stateless_reset_cb_fn *cb, void *cb_arg);
 
 /*
  * Releases a URXE back to the demuxer. No reference must be made to the URXE or
@@ -335,7 +276,6 @@ void ossl_quic_demux_reinject_urxe(QUIC_DEMUX *demux,
 #define QUIC_DEMUX_PUMP_RES_OK              1
 #define QUIC_DEMUX_PUMP_RES_TRANSIENT_FAIL  (-1)
 #define QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL  (-2)
-#define QUIC_DEMUX_PUMP_RES_STATELESS_RESET (-3)
 
 int ossl_quic_demux_pump(QUIC_DEMUX *demux);
 

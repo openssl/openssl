@@ -249,6 +249,18 @@ int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
  */
 int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
 {
+    /* Don't do any checks at all with an excessively large modulus */
+    if (BN_num_bits(dh->params.p) > OPENSSL_DH_CHECK_MAX_MODULUS_BITS) {
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
+        *ret = DH_MODULUS_TOO_LARGE | DH_CHECK_PUBKEY_INVALID;
+        return 0;
+    }
+
+    if (dh->params.q != NULL && BN_ucmp(dh->params.p, dh->params.q) < 0) {
+        *ret |= DH_CHECK_INVALID_Q_VALUE | DH_CHECK_PUBKEY_INVALID;
+        return 1;
+    }
+
     return ossl_ffc_validate_public_key(&dh->params, pub_key, ret);
 }
 
@@ -339,7 +351,7 @@ int ossl_dh_check_pairwise(const DH *dh)
     /* recalculate the public key = (g ^ priv) mod p */
     if (!ossl_dh_generate_public_key(ctx, dh, dh->priv_key, pub_key))
         goto err;
-    /* check it matches the existing pubic_key */
+    /* check it matches the existing public_key */
     ret = BN_cmp(pub_key, dh->pub_key) == 0;
 err:
     BN_free(pub_key);

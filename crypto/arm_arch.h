@@ -88,6 +88,7 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 # define ARMV8_SVE       (1<<13)
 # define ARMV8_SVE2      (1<<14)
 # define ARMV8_HAVE_SHA3_AND_WORTH_USING     (1<<15)
+# define ARMV8_UNROLL12_EOR3     (1<<16)
 
 /*
  * MIDR_EL1 system register
@@ -102,6 +103,7 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 # define ARM_CPU_IMP_ARM           0x41
 # define HISI_CPU_IMP              0x48
 # define ARM_CPU_IMP_APPLE         0x61
+# define ARM_CPU_IMP_MICROSOFT     0x6D
 
 # define ARM_CPU_PART_CORTEX_A72   0xD08
 # define ARM_CPU_PART_N1           0xD0C
@@ -122,6 +124,8 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 # define APPLE_CPU_PART_M2_AVALANCHE_PRO    0x035
 # define APPLE_CPU_PART_M2_BLIZZARD_MAX     0x038
 # define APPLE_CPU_PART_M2_AVALANCHE_MAX    0x039
+
+# define MICROSOFT_CPU_PART_COBALT_100      0xD49
 
 # define MIDR_PARTNUM_SHIFT       4
 # define MIDR_PARTNUM_MASK        (0xfffU << MIDR_PARTNUM_SHIFT)

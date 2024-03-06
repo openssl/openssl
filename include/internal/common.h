@@ -19,11 +19,11 @@
 # include "internal/nelem.h"
 
 # if defined(__GNUC__) || defined(__clang__)
-#  define likely(x)     __builtin_expect(!!(x), 1)
-#  define unlikely(x)   __builtin_expect(!!(x), 0)
+#  define ossl_likely(x)     __builtin_expect(!!(x), 1)
+#  define ossl_unlikely(x)   __builtin_expect(!!(x), 0)
 # else
-#  define likely(x)     x
-#  define unlikely(x)   x
+#  define ossl_likely(x)     x
+#  define ossl_unlikely(x)   x
 # endif
 
 # if defined(__GNUC__) || defined(__clang__)
@@ -38,7 +38,7 @@
 # endif
 
 # ifdef NDEBUG
-#  define ossl_assert(x) ((x) != 0)
+#  define ossl_assert(x) ossl_likely((x) != 0)
 # else
 __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
                                               const char *file, int line)
@@ -196,6 +196,20 @@ static ossl_inline int ossl_ends_with_dirsep(const char *path)
         return 1;
 # endif
     return *path == '/';
+}
+
+static ossl_inline char ossl_determine_dirsep(const char *path)
+{
+    if (ossl_ends_with_dirsep(path))
+        return '\0';
+
+# if defined(_WIN32)
+    return '\\';
+# elif defined(__VMS)
+    return ':';
+# else
+    return '/';
+# endif
 }
 
 static ossl_inline int ossl_is_absolute_path(const char *path)

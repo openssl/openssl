@@ -68,6 +68,12 @@ struct rxe_st {
     uint64_t            key_epoch;
 
     /*
+     * Monotonically increases with each datagram received.
+     * For diagnostic use only.
+     */
+    uint64_t            datagram_id;
+
+    /*
      * alloc_len allocated bytes (of which data_len bytes are valid) follow this
      * structure.
      */
@@ -167,19 +173,17 @@ struct ossl_qrx_st {
     SSL *msg_callback_ssl;
 };
 
-static void qrx_on_rx(QUIC_URXE *urxe, void *arg);
-
 OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
 {
     OSSL_QRX *qrx;
     size_t i;
 
     if (args->demux == NULL || args->max_deferred == 0)
-        return 0;
+        return NULL;
 
     qrx = OPENSSL_zalloc(sizeof(OSSL_QRX));
     if (qrx == NULL)
-        return 0;
+        return NULL;
 
     for (i = 0; i < OSSL_NELEM(qrx->largest_pn); ++i)
         qrx->largest_pn[i] = args->init_largest_pn[i];
@@ -222,9 +226,6 @@ void ossl_qrx_free(OSSL_QRX *qrx)
     if (qrx == NULL)
         return;
 
-    /* Unregister from the RX DEMUX. */
-    ossl_quic_demux_unregister_by_cb(qrx->demux, qrx_on_rx, qrx);
-
     /* Free RXE queue data. */
     qrx_cleanup_rxl(&qrx->rx_free);
     qrx_cleanup_rxl(&qrx->rx_pending);
@@ -250,28 +251,6 @@ void ossl_qrx_inject_urxe(OSSL_QRX *qrx, QUIC_URXE *urxe)
         qrx->msg_callback(0, OSSL_QUIC1_VERSION, SSL3_RT_QUIC_DATAGRAM, urxe + 1,
                           urxe->data_len, qrx->msg_callback_ssl,
                           qrx->msg_callback_arg);
-}
-
-static void qrx_on_rx(QUIC_URXE *urxe, void *arg)
-{
-    OSSL_QRX *qrx = arg;
-
-    ossl_qrx_inject_urxe(qrx, urxe);
-}
-
-int ossl_qrx_add_dst_conn_id(OSSL_QRX *qrx,
-                             const QUIC_CONN_ID *dst_conn_id)
-{
-    return ossl_quic_demux_register(qrx->demux,
-                                    dst_conn_id,
-                                    qrx_on_rx,
-                                    qrx);
-}
-
-int ossl_qrx_remove_dst_conn_id(OSSL_QRX *qrx,
-                                const QUIC_CONN_ID *dst_conn_id)
-{
-    return ossl_quic_demux_unregister(qrx->demux, dst_conn_id);
 }
 
 static void qrx_requeue_deferred(OSSL_QRX *qrx)
@@ -892,6 +871,7 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
         rxe->peer           = urxe->peer;
         rxe->local          = urxe->local;
         rxe->time           = urxe->time;
+        rxe->datagram_id    = urxe->datagram_id;
 
         /* Move RXE to pending. */
         ossl_list_rxe_remove(&qrx->rx_free, rxe);
@@ -1073,9 +1053,10 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
         qrx->largest_pn[pn_space] = rxe->pn;
 
     /* Copy across network addresses and RX time from URXE to RXE. */
-    rxe->peer   = urxe->peer;
-    rxe->local  = urxe->local;
-    rxe->time   = urxe->time;
+    rxe->peer           = urxe->peer;
+    rxe->local          = urxe->local;
+    rxe->time           = urxe->time;
+    rxe->datagram_id    = urxe->datagram_id;
 
     /* Move RXE to pending. */
     ossl_list_rxe_remove(&qrx->rx_free, rxe);
@@ -1254,6 +1235,7 @@ int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT **ppkt)
     rxe->pkt.local
         = BIO_ADDR_family(&rxe->local) != AF_UNSPEC ? &rxe->local : NULL;
     rxe->pkt.key_epoch      = rxe->key_epoch;
+    rxe->pkt.datagram_id    = rxe->datagram_id;
     rxe->pkt.qrx            = qrx;
     *ppkt = &rxe->pkt;
 

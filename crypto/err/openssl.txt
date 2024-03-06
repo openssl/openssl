@@ -1,4 +1,4 @@
-# Copyright 1999-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -32,6 +32,7 @@ ASN1_R_EXPLICIT_LENGTH_MISMATCH:119:explicit length mismatch
 ASN1_R_EXPLICIT_TAG_NOT_CONSTRUCTED:120:explicit tag not constructed
 ASN1_R_FIELD_MISSING:121:field missing
 ASN1_R_FIRST_NUM_TOO_LARGE:122:first num too large
+ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT:232:generalizedtime is too short
 ASN1_R_HEADER_TOO_LONG:123:header too long
 ASN1_R_ILLEGAL_BITSTRING_FORMAT:175:illegal bitstring format
 ASN1_R_ILLEGAL_BOOLEAN:176:illegal boolean
@@ -119,6 +120,7 @@ ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE:164:unsupported any defined by type
 ASN1_R_UNSUPPORTED_CIPHER:228:unsupported cipher
 ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE:167:unsupported public key type
 ASN1_R_UNSUPPORTED_TYPE:196:unsupported type
+ASN1_R_UTCTIME_IS_TOO_SHORT:233:utctime is too short
 ASN1_R_WRONG_INTEGER_TYPE:225:wrong integer type
 ASN1_R_WRONG_PUBLIC_KEY_TYPE:200:wrong public key type
 ASN1_R_WRONG_TAG:168:wrong tag
@@ -227,6 +229,7 @@ CMP_R_ERROR_SETTING_CERTHASH:128:error setting certhash
 CMP_R_ERROR_UNEXPECTED_CERTCONF:160:error unexpected certconf
 CMP_R_ERROR_VALIDATING_PROTECTION:140:error validating protection
 CMP_R_ERROR_VALIDATING_SIGNATURE:171:error validating signature
+CMP_R_EXPECTED_POLLREQ:104:expected pollreq
 CMP_R_FAILED_BUILDING_OWN_CHAIN:164:failed building own chain
 CMP_R_FAILED_EXTRACTING_PUBKEY:141:failed extracting pubkey
 CMP_R_FAILURE_OBTAINING_RANDOM:110:failure obtaining random
@@ -272,14 +275,18 @@ CMP_R_TOTAL_TIMEOUT:184:total timeout
 CMP_R_TRANSACTIONID_UNMATCHED:152:transactionid unmatched
 CMP_R_TRANSFER_ERROR:159:transfer error
 CMP_R_UNCLEAN_CTX:191:unclean ctx
+CMP_R_UNEXPECTED_CERTPROFILE:196:unexpected certprofile
 CMP_R_UNEXPECTED_PKIBODY:133:unexpected pkibody
 CMP_R_UNEXPECTED_PKISTATUS:185:unexpected pkistatus
+CMP_R_UNEXPECTED_POLLREQ:105:unexpected pollreq
 CMP_R_UNEXPECTED_PVNO:153:unexpected pvno
+CMP_R_UNEXPECTED_SENDER:106:unexpected sender
 CMP_R_UNKNOWN_ALGORITHM_ID:134:unknown algorithm id
 CMP_R_UNKNOWN_CERT_TYPE:135:unknown cert type
 CMP_R_UNKNOWN_PKISTATUS:186:unknown pkistatus
 CMP_R_UNSUPPORTED_ALGORITHM:136:unsupported algorithm
 CMP_R_UNSUPPORTED_KEY_TYPE:137:unsupported key type
+CMP_R_UNSUPPORTED_PKIBODY:101:unsupported pkibody
 CMP_R_UNSUPPORTED_PROTECTION_ALG_DHBASEDMAC:154:\
 	unsupported protection alg dhbasedmac
 CMP_R_VALUE_TOO_LARGE:175:value too large
@@ -424,6 +431,7 @@ CONF_R_NUMBER_TOO_LARGE:121:number too large
 CONF_R_OPENSSL_CONF_REFERENCES_MISSING_SECTION:124:\
 	openssl conf references missing section
 CONF_R_RECURSIVE_DIRECTORY_INCLUDE:111:recursive directory include
+CONF_R_RECURSIVE_SECTION_REFERENCE:126:recursive section reference
 CONF_R_RELATIVE_PATH:125:relative path
 CONF_R_SSL_COMMAND_SECTION_EMPTY:117:ssl command section empty
 CONF_R_SSL_COMMAND_SECTION_NOT_FOUND:118:ssl command section not found
@@ -535,6 +543,7 @@ DH_R_NO_PARAMETERS_SET:107:no parameters set
 DH_R_NO_PRIVATE_VALUE:100:no private value
 DH_R_PARAMETER_ENCODING_ERROR:105:parameter encoding error
 DH_R_PEER_KEY_ERROR:111:peer key error
+DH_R_Q_TOO_LARGE:130:q too large
 DH_R_SHARED_INFO_ERROR:113:shared info error
 DH_R_UNABLE_TO_CHECK_GENERATOR:121:unable to check generator
 DSA_R_BAD_FFC_PARAMETERS:114:bad ffc parameters
@@ -1394,6 +1403,8 @@ SSL_R_EXTRA_DATA_IN_MESSAGE:153:extra data in message
 SSL_R_EXT_LENGTH_MISMATCH:163:ext length mismatch
 SSL_R_FAILED_TO_GET_PARAMETER:316:failed to get parameter
 SSL_R_FAILED_TO_INIT_ASYNC:405:failed to init async
+SSL_R_FEATURE_NEGOTIATION_NOT_COMPLETE:417:feature negotiation not complete
+SSL_R_FEATURE_NOT_RENEGOTIABLE:413:feature not renegotiable
 SSL_R_FRAGMENTED_CLIENT_HELLO:401:fragmented client hello
 SSL_R_GOT_A_FIN_BEFORE_A_CCS:154:got a fin before a ccs
 SSL_R_HTTPS_PROXY_REQUEST:155:https proxy request
@@ -1498,6 +1509,7 @@ SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE:199:peer did not return a certificate
 SSL_R_PEM_NAME_BAD_PREFIX:391:pem name bad prefix
 SSL_R_PEM_NAME_TOO_SHORT:392:pem name too short
 SSL_R_PIPELINE_FAILURE:406:pipeline failure
+SSL_R_POLL_REQUEST_NOT_SUPPORTED:418:poll request not supported
 SSL_R_POST_HANDSHAKE_AUTH_ENCODING_ERR:278:post handshake auth encoding err
 SSL_R_PRIVATE_KEY_MISMATCH:288:private key mismatch
 SSL_R_PROTOCOL_IS_SHUTDOWN:207:protocol is shutdown
@@ -1627,10 +1639,14 @@ SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED:338:\
 	unsafe legacy renegotiation disabled
 SSL_R_UNSOLICITED_EXTENSION:217:unsolicited extension
 SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM:257:unsupported compression algorithm
+SSL_R_UNSUPPORTED_CONFIG_VALUE:414:unsupported config value
+SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS:415:unsupported config value class
+SSL_R_UNSUPPORTED_CONFIG_VALUE_OP:416:unsupported config value op
 SSL_R_UNSUPPORTED_ELLIPTIC_CURVE:315:unsupported elliptic curve
 SSL_R_UNSUPPORTED_PROTOCOL:258:unsupported protocol
 SSL_R_UNSUPPORTED_SSL_VERSION:259:unsupported ssl version
 SSL_R_UNSUPPORTED_STATUS_TYPE:329:unsupported status type
+SSL_R_UNSUPPORTED_WRITE_FLAG:412:unsupported write flag
 SSL_R_USE_SRTP_NOT_NEGOTIATED:369:use srtp not negotiated
 SSL_R_VERSION_TOO_HIGH:166:version too high
 SSL_R_VERSION_TOO_LOW:396:version too low

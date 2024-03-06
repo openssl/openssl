@@ -465,7 +465,8 @@ DEFINE_RUN_ONCE_STATIC(do_load_builtin_compressions)
             comp->method = method;
             comp->id = SSL_COMP_ZLIB_IDX;
             comp->name = COMP_get_name(method);
-            sk_SSL_COMP_push(ssl_comp_methods, comp);
+            if (!sk_SSL_COMP_push(ssl_comp_methods, comp))
+                OPENSSL_free(comp);
             sk_SSL_COMP_sort(ssl_comp_methods);
         }
     }
@@ -1707,7 +1708,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     const char *ver;
     const char *kx, *au, *enc, *mac;
     uint32_t alg_mkey, alg_auth, alg_enc, alg_mac;
-    static const char *format = "%-30s %-7s Kx=%-8s Au=%-5s Enc=%-22s Mac=%-4s\n";
+    static const char *const format = "%-30s %-7s Kx=%-8s Au=%-5s Enc=%-22s Mac=%-4s\n";
 
     if (buf == NULL) {
         len = 128;
@@ -2220,6 +2221,8 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
             in = 1; /* padding length byte */
             out = EVP_CIPHER_get_iv_length(e_ciph);
             blk = EVP_CIPHER_get_block_size(e_ciph);
+            if (blk == 0)
+                return 0;
         }
     }
 
@@ -2233,7 +2236,7 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
 
 int ssl_cert_is_disabled(SSL_CTX *ctx, size_t idx)
 {
-    SSL_CERT_LOOKUP *cl;
+    const SSL_CERT_LOOKUP *cl;
 
     /* A provider-loaded key type is always enabled */
     if (idx >= SSL_PKEY_NUM)

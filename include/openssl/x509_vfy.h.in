@@ -400,6 +400,7 @@ int X509_STORE_lock(X509_STORE *xs);
 int X509_STORE_unlock(X509_STORE *xs);
 int X509_STORE_up_ref(X509_STORE *xs);
 STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs);
+STACK_OF(X509_OBJECT) *X509_STORE_get1_objects(X509_STORE *xs);
 STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *xs);
 STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *xs,
                                           const X509_NAME *nm);

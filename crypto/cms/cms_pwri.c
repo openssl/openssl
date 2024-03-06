@@ -204,6 +204,10 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
     size_t blocklen = EVP_CIPHER_CTX_get_block_size(ctx);
     unsigned char *tmp;
     int outl, rv = 0;
+
+    if (blocklen == 0)
+        return 0;
+
     if (inlen < 2 * blocklen) {
         /* too small */
         return 0;
@@ -257,6 +261,10 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
     size_t blocklen = EVP_CIPHER_CTX_get_block_size(ctx);
     size_t olen;
     int dummy;
+
+    if (blocklen == 0)
+        return 0;
+
     /*
      * First decide length of output buffer: need header and round up to
      * multiple of block length.

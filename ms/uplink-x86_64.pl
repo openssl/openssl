@@ -8,9 +8,10 @@
 
 # $output is the last argument if it looks like a file (it has an extension)
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
-open OUT,"| \"$^X\" \"${dir}../crypto/perlasm/x86_64-xlate.pl\" \"$output\""
+open OUT,"| \"$^X\" \"${dir}../crypto/perlasm/x86_64-xlate.pl\" $flavour \"$output\""
     or die "can't call ${dir}../crypto/perlasm/x86_64-xlate.pl: $!";
 *STDOUT=*OUT;
 push(@INC,"${dir}.");

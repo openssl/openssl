@@ -56,6 +56,7 @@
 #endif
 #include <openssl/provider.h>
 #include "testutil.h"
+#include "testutil/output.h"
 
 /*
  * Or gethostname won't be declared properly
@@ -945,7 +946,8 @@ int main(int argc, char *argv[])
     verbose = 0;
     debug = 0;
 
-    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
+    test_open_streams();
+
     bio_stdout = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
     s_cctx = SSL_CONF_CTX_new();
@@ -990,7 +992,8 @@ int main(int argc, char *argv[])
         if (strcmp(*argv, "-F") == 0) {
             fprintf(stderr,
                     "not compiled with FIPS support, so exiting without running.\n");
-            EXIT(0);
+            ret = EXIT_SUCCESS;
+            goto end;
         } else if (strcmp(*argv, "-server_auth") == 0)
             server_auth = 1;
         else if (strcmp(*argv, "-client_auth") == 0)
@@ -1257,7 +1260,7 @@ int main(int argc, char *argv[])
     if (ssl3 + tls1 + tls1_1 + tls1_2 + dtls + dtls1 + dtls12 > 1) {
         fprintf(stderr, "At most one of -ssl3, -tls1, -tls1_1, -tls1_2, -dtls, -dtls1 or -dtls12 should "
                 "be requested.\n");
-        EXIT(1);
+        goto end;
     }
 
 #ifdef OPENSSL_NO_SSL3
@@ -1310,7 +1313,7 @@ int main(int argc, char *argv[])
                 "the test anyway (and\n-d to see what happens), "
                 "or add one of -ssl3, -tls1, -tls1_1, -tls1_2, -dtls, -dtls1, -dtls12, -reuse\n"
                 "to avoid protocol mismatch.\n");
-        EXIT(1);
+        goto end;
     }
 
     if (print_time) {
@@ -1922,7 +1925,8 @@ int main(int argc, char *argv[])
     OSSL_PROVIDER_unload(thisprov);
     OSSL_LIB_CTX_free(libctx);
 
-    BIO_free(bio_err);
+    test_close_streams();
+
     EXIT(ret);
 }
 

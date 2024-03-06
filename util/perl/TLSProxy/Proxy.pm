@@ -7,6 +7,7 @@
 
 use strict;
 use POSIX ":sys_wait_h";
+use IPC::Open2;
 
 package TLSProxy::Proxy;
 
@@ -17,6 +18,7 @@ use TLSProxy::Record;
 use TLSProxy::Message;
 use TLSProxy::ClientHello;
 use TLSProxy::ServerHello;
+use TLSProxy::HelloVerifyRequest;
 use TLSProxy::EncryptedExtensions;
 use TLSProxy::Certificate;
 use TLSProxy::CertificateRequest;
@@ -71,17 +73,37 @@ BEGIN
 my $is_tls13 = 0;
 my $ciphersuite = undef;
 
-sub new
-{
+sub new {
     my $class = shift;
     my ($filter,
         $execute,
         $cert,
         $debug) = @_;
+    return init($class, $filter, $execute, $cert, $debug, 0);
+}
+
+sub new_dtls {
+    my $class = shift;
+    my ($filter,
+        $execute,
+        $cert,
+        $debug) = @_;
+    return init($class, $filter, $execute, $cert, $debug, 1);
+}
+
+sub init
+{
+    my $class = shift;
+    my ($filter,
+        $execute,
+        $cert,
+        $debug,
+        $isdtls) = @_;
 
     my $self = {
         #Public read/write
         proxy_addr => $have_IPv6 ? "[::1]" : "127.0.0.1",
+        client_addr => $have_IPv6 ? "[::1]" : "127.0.0.1",
         filter => $filter,
         serverflags => "",
         clientflags => "",
@@ -90,7 +112,9 @@ sub new
         sessionfile => undef,
 
         #Public read
+        isdtls => $isdtls,
         proxy_port => 0,
+        client_port => 49152 + int(rand(65535 - 49152)),
         server_port => 0,
         serverpid => 0,
         clientpid => 0,
@@ -107,29 +131,6 @@ sub new
         record_list => [],
         message_list => [],
     };
-
-    # Create the Proxy socket
-    my $proxaddr = $self->{proxy_addr};
-    $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
-    my @proxyargs = (
-        LocalHost   => $proxaddr,
-        LocalPort   => 0,
-        Proto       => "tcp",
-        Listen      => SOMAXCONN,
-       );
-
-    if (my $sock = $IP_factory->(@proxyargs)) {
-        $self->{proxy_sock} = $sock;
-        $self->{proxy_port} = $sock->sockport();
-        $self->{proxy_addr} = $sock->sockhost();
-        $self->{proxy_addr} =~ s/(.*:.*)/[$1]/;
-        print "Proxy started on port ",
-              "$self->{proxy_addr}:$self->{proxy_port}\n";
-        # use same address for s_server
-        $self->{server_addr} = $self->{proxy_addr};
-    } else {
-        warn "Failed creating proxy socket (".$proxaddr.",0): $!\n";
-    }
 
     return bless $self, $class;
 }
@@ -200,10 +201,10 @@ sub connect_to_server
 
     my $sock = $IP_factory->(PeerAddr => $servaddr,
                              PeerPort => $self->{server_port},
-                             Proto => 'tcp');
+                             Proto => $self->{isdtls} ? 'udp' : 'tcp');
     if (!defined($sock)) {
         my $err = $!;
-        kill(3, $self->{real_serverpid});
+        kill(3, $self->{serverpid});
         die "unable to connect: $err\n";
     }
 
@@ -215,12 +216,50 @@ sub start
     my ($self) = shift;
     my $pid;
 
+    # Create the Proxy socket
+    my $proxaddr = $self->{proxy_addr};
+    $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
+    my $clientaddr = $self->{client_addr};
+    $clientaddr =~ s/[\[\]]//g; # Remove [ and ]
+
+    my @proxyargs;
+
+    if ($self->{isdtls}) {
+        @proxyargs = (
+            LocalHost   => $proxaddr,
+            LocalPort   => 0,
+            PeerHost   => $clientaddr,
+            PeerPort   => $self->{client_port},
+            Proto       => "udp",
+        );
+    } else {
+        @proxyargs = (
+            LocalHost   => $proxaddr,
+            LocalPort   => 0,
+            Proto       => "tcp",
+            Listen      => SOMAXCONN,
+        );
+    }
+
+    if (my $sock = $IP_factory->(@proxyargs)) {
+        $self->{proxy_sock} = $sock;
+        $self->{proxy_port} = $sock->sockport();
+        $self->{proxy_addr} = $sock->sockhost();
+        $self->{proxy_addr} =~ s/(.*:.*)/[$1]/;
+        print "Proxy started on port ",
+            "$self->{proxy_addr}:$self->{proxy_port}\n";
+        # use same address for s_server
+        $self->{server_addr} = $self->{proxy_addr};
+    } else {
+        warn "Failed creating proxy socket (".$proxaddr.",0): $!\n";
+    }
+
     if ($self->{proxy_sock} == 0) {
         return 0;
     }
 
     my $execcmd = $self->execute
-        ." s_server -max_protocol TLSv1.3 -no_comp -rev -engine ossltest"
+        ." s_server -no_comp -engine ossltest -state"
         #In TLSv1.3 we issue two session tickets. The default session id
         #callback gets confused because the ossltest engine causes the same
         #session id to be created twice due to the changed random number
@@ -230,6 +269,14 @@ sub start
         ." -accept $self->{server_addr}:0"
         ." -cert ".$self->cert." -cert2 ".$self->cert
         ." -naccept ".$self->serverconnects;
+    if ($self->{isdtls}) {
+        $execcmd .= " -dtls -max_protocol DTLSv1.2"
+                    # TLSProxy does not support message fragmentation. So
+                    # set a high mtu and fingers crossed.
+                    ." -mtu 1500";
+    } else {
+        $execcmd .= " -rev -max_protocol TLSv1.3";
+    }
     if ($self->ciphers ne "") {
         $execcmd .= " -cipher ".$self->ciphers;
     }
@@ -243,17 +290,14 @@ sub start
         print STDERR "Server command: $execcmd\n";
     }
 
-    open(my $savedin, "<&STDIN");
-
-    # Temporarily replace STDIN so that sink process can inherit it...
-    $pid = open(STDIN, "$execcmd 2>&1 |") or die "Failed to $execcmd: $!\n";
-    $self->{real_serverpid} = $pid;
+    $pid = IPC::Open2::open2(my $sout, my $sin, $execcmd) or die "Failed to $execcmd: $!\n";
+    $self->{serverpid} = $pid;
 
     # Process the output from s_server until we find the ACCEPT line, which
     # tells us what the accepting address and port are.
-    while (<>) {
+    while (<$sout>) {
         print;
-        s/\R$//;                # Better chomp
+        s/\R$//; # chomp does not work on windows.
         next unless (/^ACCEPT\s.*:(\d+)$/);
         $self->{server_port} = $1;
         last;
@@ -265,38 +309,6 @@ sub start
         waitpid($pid, 0);
         die "no ACCEPT detected in '$execcmd' output: $?\n";
     }
-
-    # Just make sure everything else is simply printed [as separate lines].
-    # The sub process simply inherits our STD* and will keep consuming
-    # server's output and printing it as long as there is anything there,
-    # out of our way.
-    my $error;
-    $pid = undef;
-    if (eval { require Win32::Process; 1; }) {
-        if (Win32::Process::Create(my $h, $^X, "perl -ne print", 0, 0, ".")) {
-            $pid = $h->GetProcessID();
-            $self->{proc_handle} = $h;  # hold handle till next round [or exit]
-        } else {
-            $error = Win32::FormatMessage(Win32::GetLastError());
-        }
-    } else {
-        if (defined($pid = fork)) {
-            $pid or exec("$^X -ne print") or exit($!);
-        } else {
-            $error = $!;
-        }
-    }
-
-    # Change back to original stdin
-    open(STDIN, "<&", $savedin);
-    close($savedin);
-
-    if (!defined($pid)) {
-        kill(3, $self->{real_serverpid});
-        die "Failed to capture s_server's output: $error\n";
-    }
-
-    $self->{serverpid} = $pid;
 
     print STDERR "Server responds on ",
                  "$self->{server_addr}:$self->{server_port}\n";
@@ -311,11 +323,24 @@ sub clientstart
 {
     my ($self) = shift;
 
+    my $succes = 1;
+
     if ($self->execute) {
         my $pid;
         my $execcmd = $self->execute
-             ." s_client -max_protocol TLSv1.3 -engine ossltest"
+             ." s_client -engine ossltest"
              ." -connect $self->{proxy_addr}:$self->{proxy_port}";
+        if ($self->{isdtls}) {
+            $execcmd .= " -dtls -max_protocol DTLSv1.2"
+                        # TLSProxy does not support message fragmentation. So
+                        # set a high mtu and fingers crossed.
+                        ." -mtu 1500"
+                        # UDP has no "accept" for sockets which means we need to
+                        # know were to send data back to.
+                        ." -bind $self->{client_addr}:$self->{client_port}";
+        } else {
+            $execcmd .= " -max_protocol TLSv1.3";
+        }
         if ($self->cipherc ne "") {
             $execcmd .= " -cipher ".$self->cipherc;
         }
@@ -341,7 +366,7 @@ sub clientstart
         # dead-lock...
         if (!($pid = open(STDOUT, "| $execcmd"))) {
             my $err = $!;
-            kill(3, $self->{real_serverpid});
+            kill(3, $self->{serverpid});
             die "Failed to $execcmd: $err\n";
         }
         $self->{clientpid} = $pid;
@@ -357,12 +382,14 @@ sub clientstart
     # Wait for incoming connection from client
     my $fdset = IO::Select->new($self->{proxy_sock});
     if (!$fdset->can_read(60)) {
-        kill(3, $self->{real_serverpid});
+        kill(3, $self->{serverpid});
         die "s_client didn't try to connect\n";
     }
 
     my $client_sock;
-    if(!($client_sock = $self->{proxy_sock}->accept())) {
+    if($self->{isdtls}) {
+        $client_sock = $self->{proxy_sock}
+    } elsif (!($client_sock = $self->{proxy_sock}->accept())) {
         warn "Failed accepting incoming connection: $!\n";
         return 0;
     }
@@ -386,6 +413,9 @@ sub clientstart
                     && $self->{saw_session_ticket};
         }
         if (!(@ready = $fdset->can_read(1))) {
+            last if TLSProxy::Message->success()
+                && $self->{saw_session_ticket};
+
             $ctr++;
             next;
         }
@@ -411,15 +441,16 @@ sub clientstart
                     $server_sock->shutdown(SHUT_WR);
                 }
             } else {
-                kill(3, $self->{real_serverpid});
+                kill(3, $self->{serverpid});
                 die "Unexpected handle";
             }
         }
     }
 
     if ($ctr >= 10) {
-        kill(3, $self->{real_serverpid});
-        die "No progress made";
+        kill(3, $self->{serverpid});
+        print "No progress made\n";
+        $succes = 0;
     }
 
     END:
@@ -436,15 +467,6 @@ sub clientstart
     my $pid;
     if (--$self->{serverconnects} == 0) {
         $pid = $self->{serverpid};
-        print "Waiting for 'perl -ne print' process to close: $pid...\n";
-        $pid = waitpid($pid, 0);
-        if ($pid > 0) {
-            die "exit code $? from 'perl -ne print' process\n" if $? != 0;
-        } elsif ($pid == 0) {
-            kill(3, $self->{real_serverpid});
-            die "lost control over $self->{serverpid}?";
-        }
-        $pid = $self->{real_serverpid};
         print "Waiting for s_server process to close: $pid...\n";
         # it's done already, just collect the exit code [and reap]...
         waitpid($pid, 0);
@@ -460,7 +482,7 @@ sub clientstart
     print "Waiting for s_client process to close: $pid...\n";
     waitpid($pid, 0);
 
-    return 1;
+    return $succes;
 }
 
 sub process_packet
@@ -488,7 +510,9 @@ sub process_packet
     #Return contains the list of record found in the packet followed by the
     #list of messages in those records and any partial message
     my @ret = TLSProxy::Record->get_records($server, $self->flight,
-                                            $self->{partial}[$server].$packet);
+                                            $self->{partial}[$server].$packet,
+                                            $self->{isdtls});
+
     $self->{partial}[$server] = $ret[2];
     push @{$self->{record_list}}, @{$ret[0]};
     push @{$self->{message_list}}, @{$ret[1]};
@@ -724,6 +748,12 @@ sub ciphersuite
         $ciphersuite = shift;
     }
     return $ciphersuite;
+}
+
+sub isdtls
+{
+    my $self = shift;
+    return $self->{isdtls}; #read-only
 }
 
 1;

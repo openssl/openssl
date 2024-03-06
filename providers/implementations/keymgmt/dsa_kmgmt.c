@@ -462,6 +462,7 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
     struct dsa_gen_ctx *gctx = genctx;
     const OSSL_PARAM *p;
+    int gen_type = -1;
 
     if (gctx == NULL)
         return 0;
@@ -472,10 +473,18 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_TYPE);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING
-            || ((gctx->gen_type = dsa_gen_type_name2id(p->data)) == -1)) {
+            || ((gen_type = dsa_gen_type_name2id(p->data)) == -1)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
+
+        /*
+         * Only assign context gen_type if it was set by dsa_gen_type_name2id
+         * must be in range:
+         * DSA_PARAMGEN_TYPE_FIPS_186_4 <= gen_type <= DSA_PARAMGEN_TYPE_FIPS_DEFAULT
+         */
+        if (gen_type != -1)
+            gctx->gen_type = gen_type;
     }
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_GINDEX);
     if (p != NULL
@@ -567,6 +576,19 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (gctx->gen_type == DSA_PARAMGEN_TYPE_FIPS_DEFAULT)
         gctx->gen_type = (gctx->pbits >= 2048 ? DSA_PARAMGEN_TYPE_FIPS_186_4 :
                                                 DSA_PARAMGEN_TYPE_FIPS_186_2);
+
+    /*
+     * Do a bounds check on context gen_type. Must be in range:
+     * DSA_PARAMGEN_TYPE_FIPS_186_4 <= gen_type <= DSA_PARAMGEN_TYPE_FIPS_DEFAULT
+     * Noted here as this needs to be adjusted if a new type is
+     * added.
+     */
+    if (!ossl_assert((gctx->gen_type >= DSA_PARAMGEN_TYPE_FIPS_186_4)
+                    && (gctx->gen_type <= DSA_PARAMGEN_TYPE_FIPS_DEFAULT))) {
+        ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
+                       "gen_type set to unsupported value %d", gctx->gen_type);
+        return NULL;
+    }
 
     gctx->cb = osslcb;
     gctx->cbarg = cbarg;

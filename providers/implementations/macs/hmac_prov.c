@@ -274,23 +274,6 @@ static const OSSL_PARAM *hmac_settable_ctx_params(ossl_unused void *ctx,
     return known_settable_ctx_params;
 }
 
-static int set_flag(const OSSL_PARAM params[], const char *key, int mask,
-                    int *flags)
-{
-    const OSSL_PARAM *p = OSSL_PARAM_locate_const(params, key);
-    int flag = 0;
-
-    if (p != NULL) {
-        if (!OSSL_PARAM_get_int(p, &flag))
-            return 0;
-        if (flag == 0)
-            *flags &= ~mask;
-        else
-            *flags |= mask;
-    }
-    return 1;
-}
-
 /*
  * ALL parameters should be set before init().
  */
@@ -299,22 +282,12 @@ static int hmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     struct hmac_data_st *macctx = vmacctx;
     OSSL_LIB_CTX *ctx = PROV_LIBCTX_OF(macctx->provctx);
     const OSSL_PARAM *p;
-    int flags = 0;
 
     if (params == NULL)
         return 1;
 
     if (!ossl_prov_digest_load_from_params(&macctx->digest, params, ctx))
         return 0;
-
-    if (!set_flag(params, OSSL_MAC_PARAM_DIGEST_NOINIT, EVP_MD_CTX_FLAG_NO_INIT,
-                  &flags))
-        return 0;
-    if (!set_flag(params, OSSL_MAC_PARAM_DIGEST_ONESHOT, EVP_MD_CTX_FLAG_ONESHOT,
-                  &flags))
-        return 0;
-    if (flags)
-        HMAC_CTX_set_flags(macctx->ctx, flags);
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)

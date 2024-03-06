@@ -117,6 +117,7 @@ my %OS_data = (
     aix         => { writer     => \&writer_aix,
                      sort       => sorter_unix(),
                      platforms  => { UNIX                       => 1 } },
+    "aix-solib" => 'aix',       # alias
     VMS         => { writer     => \&writer_VMS,
                      sort       => OpenSSL::Ordinals::by_number(),
                      platforms  => { VMS                        => 1 } },

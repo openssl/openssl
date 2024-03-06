@@ -1,7 +1,7 @@
 /*
  * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -26,6 +26,7 @@
  * Appendix A.6.1 with a 66 octet IKM so we'll allow that.
  */
 # define OSSL_HPKE_MAX_PARMLEN        66
+# define OSSL_HPKE_MIN_PSKLEN         32
 # define OSSL_HPKE_MAX_INFOLEN        1024
 
 /*
@@ -67,7 +68,7 @@
 
 /*
  * Roles for use in creating an OSSL_HPKE_CTX, most
- * important use of this is to control nonce re-use.
+ * important use of this is to control nonce reuse.
  */
 # define OSSL_HPKE_ROLE_SENDER 0
 # define OSSL_HPKE_ROLE_RECEIVER 1

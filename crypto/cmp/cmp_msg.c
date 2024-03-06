@@ -100,6 +100,34 @@ int OSSL_CMP_MSG_get_bodytype(const OSSL_CMP_MSG *msg)
     return msg->body->type;
 }
 
+X509_PUBKEY *OSSL_CMP_MSG_get0_certreq_publickey(const OSSL_CMP_MSG *msg)
+{
+    const OSSL_CRMF_MSGS *reqs;
+    const OSSL_CRMF_MSG *crm;
+    const OSSL_CRMF_CERTTEMPLATE *tmpl;
+    X509_PUBKEY *pubkey;
+
+    switch (OSSL_CMP_MSG_get_bodytype(msg)) {
+    case OSSL_CMP_PKIBODY_IR:
+    case OSSL_CMP_PKIBODY_CR:
+    case OSSL_CMP_PKIBODY_KUR:
+        reqs = msg->body->value.ir; /* value.ir is same for cr and kur */
+        if ((crm = sk_OSSL_CRMF_MSG_value(reqs, 0)) == NULL) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_CERTREQMSG_NOT_FOUND);
+            return NULL;
+        }
+        if ((tmpl = OSSL_CRMF_MSG_get0_tmpl(crm)) == NULL
+            || (pubkey = OSSL_CRMF_CERTTEMPLATE_get0_publicKey(tmpl)) == NULL) {
+            ERR_raise(ERR_LIB_CMP, CRMF_R_POPO_MISSING_PUBLIC_KEY);
+            return NULL;
+        }
+        return pubkey;
+    default:
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        return NULL;
+    }
+}
+
 /* Add an extension to the referenced extension stack, which may be NULL */
 static int add1_extension(X509_EXTENSIONS **pexts, int nid, int crit, void *ex)
 {
@@ -542,8 +570,7 @@ OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx)
     } else if (ctx->p10CSR != NULL) {
         pubkey = X509_REQ_get0_pubkey(ctx->p10CSR);
         subject = X509_REQ_get_subject_name(ctx->p10CSR);
-    }
-    else {
+    } else {
         goto err;
     }
 
@@ -984,8 +1011,7 @@ static int suitable_rid(const ASN1_INTEGER *certReqId, int rid)
         return 1;
 
     trid = ossl_cmp_asn1_get_int(certReqId);
-
-    if (trid == OSSL_CMP_CERTREQID_NONE) {
+    if (trid <= OSSL_CMP_CERTREQID_INVALID) {
         ERR_raise(ERR_LIB_CMP, CMP_R_BAD_REQUEST_ID);
         return 0;
     }
@@ -1199,4 +1225,14 @@ OSSL_CMP_MSG *d2i_OSSL_CMP_MSG_bio(BIO *bio, OSSL_CMP_MSG **msg)
 int i2d_OSSL_CMP_MSG_bio(BIO *bio, const OSSL_CMP_MSG *msg)
 {
     return ASN1_i2d_bio_of(OSSL_CMP_MSG, i2d_OSSL_CMP_MSG, bio, msg);
+}
+
+int ossl_cmp_is_error_with_waiting(const OSSL_CMP_MSG *msg)
+{
+    if (!ossl_assert(msg != NULL))
+        return 0;
+
+    return (OSSL_CMP_MSG_get_bodytype(msg) == OSSL_CMP_PKIBODY_ERROR
+            && ossl_cmp_pkisi_get_status(msg->body->value.error->pKIStatusInfo)
+            == OSSL_CMP_PKISTATUS_waiting);
 }

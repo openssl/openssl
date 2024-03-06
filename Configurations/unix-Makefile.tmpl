@@ -11,8 +11,13 @@
      sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw)/ }
 
      # Shared AIX support is special. We put libcrypto[64].so.ver into
-     # libcrypto.a and use libcrypto_a.a as static one.
-     sub sharedaix  { !$disabled{shared} && $config{target} =~ /^aix/ }
+     # libcrypto.a and use libcrypto_a.a as static one, unless using
+     # shared_target style aix-solib.  In that mode, create
+     # libcrypto.so as a link-import library that inserts runtime
+     # dependencies on libcrypto.so.ver, and the static library is
+     # named libcrypto.a.
+     sub sharedaix  { !$disabled{shared} && $target{shared_target} =~ /^aix(?!-solib$)/ }
+     sub sharedaix_solib  { !$disabled{shared} && $target{shared_target} =~ /^aix-solib$/ }
 
      our $sover_dirname = platform->shlib_version_as_filename();
 
@@ -22,7 +27,7 @@
          my $target = shift;
          my $help = shift;
 
-         return "$target: build_generated ## $help\n\t\$(MAKE) depend && \$(MAKE) _$target\n_$target";
+         return "$target: build_generated ## $help\n\t\"\$(MAKE)\" depend && \"\$(MAKE)\" _$target\n_$target";
      }
 
      our $COLUMNS = $ENV{COLUMNS};
@@ -199,6 +204,18 @@ INSTALL_PROGRAMS={-
                         grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
                         @{$unified_info{programs}}))
 -}
+INSTALL_EXPORTERS_PKGCONFIG={-
+        join(" \\\n" . ' ' x 28,
+             fill_lines(" ", $COLUMNS - 28,
+                        grep { $unified_info{attributes}->{generate}->{$_}->{exporter} eq 'pkg-config'}
+                        sort keys %{$unified_info{generate}}))
+-}
+INSTALL_EXPORTERS_CMAKE={-
+        join(" \\\n" . ' ' x 24,
+             fill_lines(" ", $COLUMNS - 24,
+                        grep { $unified_info{attributes}->{generate}->{$_}->{exporter} eq 'cmake'}
+                        sort keys %{$unified_info{generate}}))
+-}
 BIN_SCRIPTS={-
         join(" \\\n" . ' ' x 12,
              fill_lines(" ", $COLUMNS - 12,
@@ -319,6 +336,9 @@ BINDIR={- our $bindir = $config{bindir};
           file_name_is_absolute($bindir) ? "" : $bindir -}
 bindir={- file_name_is_absolute($bindir)
           ? $bindir : '$(INSTALLTOP)/$(BINDIR)' -}
+
+PKGCONFIGDIR=$(libdir)/pkgconfig
+CMAKECONFIGDIR=$(libdir)/cmake/OpenSSL
 
 MANDIR=$(INSTALLTOP)/share/man
 DOCDIR=$(INSTALLTOP)/share/doc/$(BASENAME)
@@ -521,7 +541,7 @@ build_man_docs: $(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7) ## Create manpag
 build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7) ## Create HTML documentation
 
 build_generated: $(GENERATED_MANDATORY)
-build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
+build_libs_nodep: $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // platform->sharedlib_import($_) // platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
 build_modules_nodep: $(MODULES)
 build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
 
@@ -544,8 +564,9 @@ help: ## Show this help screen
 
 ##@ Testing
 test: tests ## Run tests (alias of "tests")
-{- dependmagic('tests', 'Run tests'); -}: build_programs_nodep build_modules_nodep link-utils run_tests
-run_tests:
+{- dependmagic('tests', 'Run tests'); -}: build_programs_nodep build_modules_nodep link-utils
+	"$(MAKE)" run_tests
+run_tests: FORCE
 	@ : {- output_off() if $disabled{tests}; "" -}
 	( SRCTOP=$(SRCDIR) \
 	  BLDTOP=$(BLDDIR) \
@@ -559,7 +580,7 @@ run_tests:
 
 list-tests: ## List available tests that can be invoked via "make test TESTS=<name>"
 	@ : {- output_off() if $disabled{tests}; "" -}
-	$(MAKE) run_tests TESTS=list
+	"$(MAKE)" run_tests TESTS=list
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@echo "Tests are not supported with your chosen Configure options"
 	@ : {- output_on() if !$disabled{tests}; "" -}
@@ -606,7 +627,6 @@ clean: libclean ## Clean the workspace, keep the configuration
 	$(RM) tags TAGS doc-nits md-nits
 	$(RM) -r test/test-runs
 	$(RM) providers/fips*.new
-	$(RM) openssl.pc libcrypto.pc libssl.pc
 	-find . -type l \! -name '.*' -exec $(RM) {} \;
 
 distclean: clean ## Clean and remove the configuration
@@ -745,12 +765,12 @@ install_dev: install_runtime_libs
 		fn1=`basename "$$s1"`; \
 		fn2=`basename "$$s2"`; \
 		fn3=`basename "$$s3"`; \
-		: {- output_off(); output_on() unless windowsdll() or sharedaix(); "" -}; \
+		: {- output_off(); output_on() unless windowsdll() or sharedaix() or sharedaix_solib(); "" -}; \
 		if [ "$$fn2" != "" ]; then \
 			$(ECHO) "link $(DESTDIR)$(libdir)/$$fn2 -> $(DESTDIR)$(libdir)/$$fn1"; \
 			ln -sf $$fn1 "$(DESTDIR)$(libdir)/$$fn2"; \
 		fi; \
-		: {- output_off() unless windowsdll() or sharedaix(); output_on() if windowsdll(); "" -}; \
+		: {- output_off() unless windowsdll() or sharedaix() or sharedaix_solib(); output_on() if windowsdll() or sharedaix_solib(); "" -}; \
 		if [ "$$fn3" != "" ]; then \
 			$(ECHO) "install $$s3 -> $(DESTDIR)$(libdir)/$$fn3"; \
 			cp $$s3 "$(DESTDIR)$(libdir)/$$fn3.new"; \
@@ -758,7 +778,7 @@ install_dev: install_runtime_libs
 			mv -f "$(DESTDIR)$(libdir)/$$fn3.new" \
 			      "$(DESTDIR)$(libdir)/$$fn3"; \
 		fi; \
-		: {- output_off() if windowsdll(); output_on() if sharedaix(); "" -}; \
+		: {- output_off() if windowsdll() or sharedaix_solib(); output_on() if sharedaix(); "" -}; \
 		a="$(DESTDIR)$(libdir)/$$fn2"; \
 		$(ECHO) "install $$s1 -> $$a"; \
 		if [ -f $$a ]; then ( trap "rm -rf /tmp/ar.$$$$" INT 0; \
@@ -776,16 +796,20 @@ install_dev: install_runtime_libs
 		: {- output_off() if sharedaix(); output_on(); "" -}; \
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(libdir)/pkgconfig"
-	@$(ECHO) "install libcrypto.pc -> $(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc"
-	@cp libcrypto.pc "$(DESTDIR)$(libdir)/pkgconfig"
-	@chmod 644 "$(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc"
-	@$(ECHO) "install libssl.pc -> $(DESTDIR)$(libdir)/pkgconfig/libssl.pc"
-	@cp libssl.pc "$(DESTDIR)$(libdir)/pkgconfig"
-	@chmod 644 "$(DESTDIR)$(libdir)/pkgconfig/libssl.pc"
-	@$(ECHO) "install openssl.pc -> $(DESTDIR)$(libdir)/pkgconfig/openssl.pc"
-	@cp openssl.pc "$(DESTDIR)$(libdir)/pkgconfig"
-	@chmod 644 "$(DESTDIR)$(libdir)/pkgconfig/openssl.pc"
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(PKGCONFIGDIR)"
+	@for e in $(INSTALL_EXPORTERS_PKGCONFIG); do \
+		fn=`basename $$e`; \
+		$(ECHO) "install $$e -> $(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
+		cp $$e "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
+		chmod 644 "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
+	done
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(CMAKECONFIGDIR)
+	@for e in $(INSTALL_EXPORTERS_CMAKE); do \
+		fn=`basename $$e`; \
+		$(ECHO) "install $$e -> $(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
+		cp $$e $(DESTDIR)$(CMAKECONFIGDIR)/$$fn; \
+		chmod 644 $(DESTDIR)$(CMAKECONFIGDIR)/$$fn; \
+	done
 
 uninstall_dev: uninstall_runtime_libs
 	@$(ECHO) "*** Uninstalling development files"
@@ -829,10 +853,16 @@ uninstall_dev: uninstall_runtime_libs
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
-	$(RM) "$(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc"
-	$(RM) "$(DESTDIR)$(libdir)/pkgconfig/libssl.pc"
-	$(RM) "$(DESTDIR)$(libdir)/pkgconfig/openssl.pc"
-	-$(RMDIR) "$(DESTDIR)$(libdir)/pkgconfig"
+	@for e in $(INSTALL_EXPORTERS_PKGCONFIG); do \
+		fn=`basename "$$e"`; \
+		$(RM) "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
+	done
+	@for e in $(INSTALL_EXPORTERS_CMAKE); do \
+		fn=`basename "$$e"`; \
+		$(RM) "$(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
+	done
+	-$(RMDIR) "$(DESTDIR)$(PKGCONFIGDIR)"
+	-$(RMDIR) "$(DESTDIR)$(CMAKECONFIGDIR)"
 	-$(RMDIR) "$(DESTDIR)$(libdir)"
 
 _install_modules_deps: install_runtime_libs build_modules
@@ -1225,12 +1255,12 @@ providers/fips.module.sources.new: configdata.pm
 	  cd sources-tmp \
 	  && $$srcdir/Configure --banner=Configured enable-fips -O0 \
 	  && ./configdata.pm --query 'get_sources("providers/fips")' > sources1 \
-	  && $(MAKE) -sj 4 build_generated providers/fips.so \
+	  && "$(MAKE)" -sj 4 build_generated providers/fips.so \
 	  && find . -name '*.d' | xargs cat > dep1 \
-          && $(MAKE) distclean \
+          && "$(MAKE)" distclean \
 	  && $$srcdir/Configure --banner=Configured enable-fips no-asm -O0 \
 	  && ./configdata.pm --query 'get_sources("providers/fips")' > sources2 \
-	  && $(MAKE) -sj 4 build_generated providers/fips.so \
+	  && "$(MAKE)" -sj 4 build_generated providers/fips.so \
 	  && find . -name '*.d' | xargs cat > dep2 \
 	  && cat sources1 sources2 \
 	     | grep -v ' : \\$$' | grep -v util/providers.num \
@@ -1363,21 +1393,19 @@ renumber: build_generated
                 --renumber \
                 $(SSLHEADERS)
 
-$(SRCDIR)/util/libcrypto.num: $(CRYPTOHEADERS) $(SRCDIR)/include/openssl/symhacks.h
+.PHONY: ordinals
+ordinals: build_generated
 	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
                 --ordinals $(SRCDIR)/util/libcrypto.num \
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 $(CRYPTOHEADERS)
-$(SRCDIR)/util/libssl.num: $(SSLHEADERS) $(SRCDIR)/include/openssl/symhacks.h
 	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
                 --ordinals $(SRCDIR)/util/libssl.num \
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 $(SSLHEADERS)
-.PHONY: ordinals
-ordinals: build_generated $(SRCDIR)/util/libcrypto.num $(SRCDIR)/util/libssl.num
 
 test_ordinals:
-	$(MAKE) run_tests TESTS=test_ordinals
+	"$(MAKE)" run_tests TESTS=test_ordinals
 
 tags TAGS: FORCE
 	rm -f TAGS tags
@@ -1434,59 +1462,6 @@ $(BLDDIR)/apps/openssl.cnf: Makefile
 FORCE:
 
 # Building targets ###################################################
-
-libcrypto.pc libssl.pc openssl.pc: Makefile $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // platform->sharedlib_import($_) // platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
-
-libcrypto.pc:
-	@ ( echo 'prefix=$(INSTALLTOP)'; \
-	    echo 'exec_prefix=$${prefix}'; \
-	    if [ -n "$(LIBDIR)" ]; then \
-	        echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
-	    else \
-	        echo 'libdir=$(libdir)'; \
-	    fi; \
-	    echo 'includedir=$${prefix}/include'; \
-	    echo 'enginesdir=$${libdir}/engines-{- $sover_dirname -}'; \
-	    echo 'modulesdir=$${libdir}/ossl-modules'; \
-	    echo ''; \
-	    echo 'Name: OpenSSL-libcrypto'; \
-	    echo 'Description: OpenSSL cryptography library'; \
-	    echo 'Version: '$(VERSION); \
-	    echo 'Libs: -L$${libdir} -lcrypto'; \
-	    echo 'Libs.private: $(LIB_EX_LIBS)'; \
-	    echo 'Cflags: -I$${includedir}' ) > libcrypto.pc
-
-libssl.pc:
-	@ ( echo 'prefix=$(INSTALLTOP)'; \
-	    echo 'exec_prefix=$${prefix}'; \
-	    if [ -n "$(LIBDIR)" ]; then \
-	        echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
-	    else \
-	        echo 'libdir=$(libdir)'; \
-	    fi; \
-	    echo 'includedir=$${prefix}/include'; \
-	    echo ''; \
-	    echo 'Name: OpenSSL-libssl'; \
-	    echo 'Description: Secure Sockets Layer and cryptography libraries'; \
-	    echo 'Version: '$(VERSION); \
-	    echo 'Requires.private: libcrypto'; \
-	    echo 'Libs: -L$${libdir} -lssl'; \
-	    echo 'Cflags: -I$${includedir}' ) > libssl.pc
-
-openssl.pc:
-	@ ( echo 'prefix=$(INSTALLTOP)'; \
-	    echo 'exec_prefix=$${prefix}'; \
-	    if [ -n "$(LIBDIR)" ]; then \
-	        echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
-	    else \
-	        echo 'libdir=$(libdir)'; \
-	    fi; \
-	    echo 'includedir=$${prefix}/include'; \
-	    echo ''; \
-	    echo 'Name: OpenSSL'; \
-	    echo 'Description: Secure Sockets Layer and cryptography libraries and tools'; \
-	    echo 'Version: '$(VERSION); \
-	    echo 'Requires: libssl libcrypto' ) > openssl.pc
 
 Makefile: configdata.pm \
           {- join(" \\\n" . ' ' x 10,
@@ -1820,6 +1795,8 @@ EOF
       # libraries for DLLs are a thing.  On platforms that have this mechanism,
       # $import has the name of this import library.  On platforms that don't
       # have this mechanism, $import will be |undef|.
+      # It's also used on AIX in solib mode, which creates import libraries
+      # for the shared libraries.
       my $import = platform->sharedlib_import($args{lib});
       # $simple is for platforms where full shared library names include the
       # shared library version, and there's a simpler name that doesn't include
@@ -1880,9 +1857,18 @@ EOF
           }
       }
       if (defined $import) {
+          if (sharedaix_solib()) {
+              $recipe .= <<"EOF";
+$import: $full $defs[0]
+	rm -f $import && \\
+	echo \\#!$full > $import && \\
+        cat $defs[0] >>$import
+EOF
+          } else {
       $recipe .= <<"EOF";
 $import: $full
 EOF
+          }
       }
       $recipe .= <<"EOF";
 $full: $fulldeps

@@ -17,7 +17,8 @@ Generic message options:
 
 [B<-cmd> I<ir|cr|kur|p10cr|rr|genm>]
 [B<-infotype> I<name>]
-[B<-geninfo> I<OID:int:N>]
+[B<-profile> I<name>]
+[B<-geninfo> I<values>]
 
 Certificate enrollment options:
 
@@ -65,6 +66,7 @@ Server authentication options:
 [B<-expect_sender> I<name>]
 [B<-ignore_keyusage>]
 [B<-unprotected_errors>]
+[B<-no_cache_extracerts>]
 [B<-srvcertout> I<filename>]
 [B<-extracertsout> I<filename>]
 [B<-cacertsout> I<filename>]
@@ -114,6 +116,7 @@ Client-side debugging options:
 [B<-reqin> I<filenames>]
 [B<-reqin_new_tid>]
 [B<-reqout> I<filenames>]
+[B<-reqout_only> I<filename>]
 [B<-rspin> I<filenames>]
 [B<-rspout> I<filenames>]
 [B<-use_mock_srv>]
@@ -246,10 +249,18 @@ Set InfoType name to use for requesting specific info in B<genm>,
 e.g., C<signKeyPairTypes>.
 So far, there is specific support for C<caCerts> and C<rootCaCert>.
 
-=item B<-geninfo> I<OID:int:N>
+=item B<-profile> I<name>
 
-generalInfo integer values to place in request PKIHeader with given OID,
-e.g., C<1.2.3.4:int:56789>.
+Name of a certificate profile to place in
+the PKIHeader generalInfo field of request messages.
+
+=item B<-geninfo> I<values>
+
+A comma-separated list of InfoTypeAndValue to place in
+the generalInfo field of the PKIHeader of requests messages.
+Each InfoTypeAndValue gives an OID and an integer or string value
+of the form I<OID>:int:I<number> or I<OID>:str:I<text>,
+e.g., C<'1.2.3.4:int:56789, id-kp:str:name'>.
 
 =back
 
@@ -623,6 +634,7 @@ For details see the description of the B<-subject> option.
 Ignore key usage restrictions in CMP signer certificates when validating
 signature-based protection of incoming CMP messages.
 By default, C<digitalSignature> must be allowed by CMP signer certificates.
+This option applies to both CMP clients and the mock server.
 
 =item B<-unprotected_errors>
 
@@ -659,6 +671,12 @@ with a signature key."
 =item * appendix D.4 shows PKIConf message having protection
 
 =back
+
+=item B<-no_cache_extracerts>
+
+Do not cache certificates in the extraCerts field of CMP messages received.
+By default, they are kept as they may be helful for validating further messages.
+This option applies to both CMP clients and the mock server.
 
 =item B<-srvcertout> I<filename>
 
@@ -951,7 +969,7 @@ If not given it defaults to the B<-server> address.
 
 =back
 
-=head2 Client-side debugging options
+=head2 Client-side options for debugging and offline scenarios
 
 =over 4
 
@@ -970,8 +988,28 @@ Default is one invocation.
 Take the sequence of CMP requests to send to the server from the given file(s)
 rather than from the sequence of requests produced internally.
 
+This option is useful for supporting offline scenarios where the certificate
+request (or any other CMP request) is produced beforehand and sent out later.
+
 This option is ignored if the B<-rspin> option is given
 because in the latter case no requests are actually sent.
+
+Note that in any case the client produces internally its sequence
+of CMP request messages. Thus, all options required for doing this
+(such as B<-cmd> and all options providing the required parameters)
+need to be given also when the B<-reqin> option is present.
+
+If the B<-reqin> option is given for a certificate request
+and no B<-newkey>, B<-key>, B<-oldcert>, or B<-csr> option is given,
+a fallback public key is taken from the request message file
+(if it is included in the certificate template).
+
+Hint: In case the B<-reqin> option is given for a certificate request, there are
+situations where the client has access to the public key to be certified but
+not to the private key that by default will be needed for proof of possession.
+In this case the POPO is not actually needed (because the internally produced
+certificate request message will not be sent), and its generation
+can be disabled using the options B<-popo> I<-1> or B<-popo> I<0>.
 
 Multiple filenames may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
@@ -1002,6 +1040,14 @@ Multiple filenames may be given, separated by commas and/or whitespace.
 Files are written as far as needed to save the transaction
 and filenames have been provided.
 If the transaction contains more requests, the remaining ones are not saved.
+
+=item B<-reqout_only> I<filename>
+
+Save the first CMP requests created by the client to the given file and exit.
+Any options related to CMP servers and their reponses are ignored.
+
+This option is useful for supporting offline scenarios where the certificate
+request (or any other CMP request) is produced beforehand and sent out later.
 
 =item B<-rspin> I<filenames>
 
@@ -1272,7 +1318,7 @@ In order to update the enrolled certificate one may call
 
   openssl cmp -section insta,kur
 
-using with MAC-based protection with PBM or
+using MAC-based protection with PBM or
 
   openssl cmp -section insta,kur,signature
 
@@ -1390,7 +1436,9 @@ L<openssl-req(1)>, L<openssl-x509(1)>, L<x509v3_config(5)>
 
 The B<cmp> application was added in OpenSSL 3.0.
 
-The B<-engine option> was deprecated in OpenSSL 3.0.
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
+The B<-profile> option was added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 

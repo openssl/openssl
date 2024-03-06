@@ -197,6 +197,10 @@ static int unsigned_from_unsigned(void *dest, size_t dest_len,
 /* General purpose get integer parameter call that handles odd sizes */
 static int general_get_int(const OSSL_PARAM *p, void *val, size_t val_size)
 {
+    if (p->data == NULL) {
+        err_null_argument;
+        return 0;
+    }
     if (p->data_type == OSSL_PARAM_INTEGER)
         return signed_from_signed(val, val_size, p->data, p->data_size);
     if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER)
@@ -226,6 +230,11 @@ static int general_set_int(OSSL_PARAM *p, void *val, size_t val_size)
 /* General purpose get unsigned integer parameter call that handles odd sizes */
 static int general_get_uint(const OSSL_PARAM *p, void *val, size_t val_size)
 {
+
+    if (p->data == NULL) {
+        err_null_argument;
+        return 0;
+    }
     if (p->data_type == OSSL_PARAM_INTEGER)
         return unsigned_from_signed(val, val_size, p->data, p->data_size);
     if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER)
@@ -385,6 +394,11 @@ int OSSL_PARAM_get_int32(const OSSL_PARAM *p, int32_t *val)
         return 0;
     }
 
+    if (p->data == NULL) {
+        err_null_argument;
+        return 0;
+    }
+
     if (p->data_type == OSSL_PARAM_INTEGER) {
 #ifndef OPENSSL_SMALL_FOOTPRINT
         int64_t i64;
@@ -530,6 +544,11 @@ OSSL_PARAM OSSL_PARAM_construct_int32(const char *key, int32_t *buf)
 int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val)
 {
     if (val == NULL || p == NULL) {
+        err_null_argument;
+        return 0;
+    }
+
+    if (p->data == NULL) {
         err_null_argument;
         return 0;
     }
@@ -685,6 +704,11 @@ int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
         return 0;
     }
 
+    if (p->data == NULL) {
+        err_null_argument;
+        return 0;
+    }
+
     if (p->data_type == OSSL_PARAM_INTEGER) {
 #ifndef OPENSSL_SMALL_FOOTPRINT
         switch (p->data_size) {
@@ -825,6 +849,11 @@ OSSL_PARAM OSSL_PARAM_construct_int64(const char *key, int64_t *buf)
 int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
 {
     if (val == NULL || p == NULL) {
+        err_null_argument;
+        return 0;
+    }
+
+    if (p->data == NULL) {
         err_null_argument;
         return 0;
     }
@@ -1040,7 +1069,7 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, BIGNUM **val)
 {
     BIGNUM *b = NULL;
 
-    if (val == NULL || p == NULL) {
+    if (val == NULL || p == NULL || p->data == NULL) {
         err_null_argument;
         return 0;
     }
@@ -1132,7 +1161,7 @@ int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
     int64_t i64;
     uint64_t u64;
 
-    if (val == NULL || p == NULL) {
+    if (val == NULL || p == NULL || p->data == NULL) {
         err_null_argument;
         return 0;
     }

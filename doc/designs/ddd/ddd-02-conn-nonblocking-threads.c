@@ -119,6 +119,7 @@ APP_CONN *new_conn(SSL_CTX *ctx, const char *hostname)
     if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn))) {
         /* Note: SSL_set_alpn_protos returns 1 for failure. */
         BIO_free_all(out);
+        free(conn);
         return NULL;
     }
 #endif

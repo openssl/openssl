@@ -30,7 +30,8 @@ int main(int argc, char **argv)
 
     scert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
 
-    BIO_reset(tbio);
+    if (BIO_reset(tbio) < 0)
+        goto err;
 
     skey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
 
@@ -43,7 +44,8 @@ int main(int argc, char **argv)
 
     scert2 = PEM_read_bio_X509(tbio, NULL, 0, NULL);
 
-    BIO_reset(tbio);
+    if (BIO_reset(tbio) < 0)
+        goto err;
 
     skey2 = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
 
@@ -76,6 +78,8 @@ int main(int argc, char **argv)
 
     if (!SMIME_write_CMS(out, cms, in, CMS_STREAM))
         goto err;
+
+    printf("Signing Successful\n");
 
     ret = EXIT_SUCCESS;
  err:

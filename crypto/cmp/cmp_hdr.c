@@ -72,6 +72,16 @@ ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr)
     return hdr->recipNonce;
 }
 
+STACK_OF(OSSL_CMP_ITAV)
+    *OSSL_CMP_HDR_get0_geninfo_ITAVs(const OSSL_CMP_PKIHEADER *hdr)
+{
+    if (hdr == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return NULL;
+    }
+    return hdr->generalInfo;
+}
+
 /* a NULL-DN as an empty sequence of RDNs */
 int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name)
 {

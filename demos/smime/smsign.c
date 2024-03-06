@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     int ret = EXIT_FAILURE;
 
     /*
-     * For simple S/MIME signing use PKCS7_DETACHED. On OpenSSL 0.9.9 only:
+     * For simple S/MIME signing use PKCS7_DETACHED.
      * for streaming detached set PKCS7_DETACHED|PKCS7_STREAM for streaming
      * non-detached set PKCS7_STREAM
      */
@@ -38,7 +38,8 @@ int main(int argc, char **argv)
 
     scert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
 
-    BIO_reset(tbio);
+    if (BIO_reset(tbio) < 0)
+        goto err;
 
     skey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
 
@@ -62,15 +63,18 @@ int main(int argc, char **argv)
     if (!out)
         goto err;
 
-    if (!(flags & PKCS7_STREAM))
-        BIO_reset(in);
+    if (!(flags & PKCS7_STREAM)) {
+        if (BIO_reset(in) < 0)
+            goto err;
+    }
 
     /* Write out S/MIME message */
     if (!SMIME_write_PKCS7(out, p7, in, flags))
         goto err;
 
-    ret = EXIT_SUCCESS;
+    printf("Success\n");
 
+    ret = EXIT_SUCCESS;
  err:
     if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Signing Data\n");
@@ -84,5 +88,4 @@ int main(int argc, char **argv)
     BIO_free(tbio);
 
     return ret;
-
 }

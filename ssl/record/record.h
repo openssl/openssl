@@ -43,11 +43,6 @@ typedef struct tls_record_st {
 #endif
 } TLS_RECORD;
 
-typedef struct record_pqueue_st {
-    uint16_t epoch;
-    struct pqueue_st *q;
-} record_pqueue;
-
 typedef struct dtls_record_layer_st {
     /*
      * The current data and handshake epoch.  This is initially
@@ -62,7 +57,7 @@ typedef struct dtls_record_layer_st {
      * Finished to prevent either protocol violation or unnecessary message
      * loss.
      */
-    record_pqueue buffered_app_data;
+    struct pqueue_st *buffered_app_data;
 } DTLS_RECORD_LAYER;
 
 /*****************************************************************************
@@ -108,8 +103,6 @@ typedef struct record_layer_st {
     /* number bytes written */
     size_t wpend_tot;
     uint8_t wpend_type;
-    /* number of bytes submitted */
-    size_t wpend_ret;
     const unsigned char *wpend_buf;
 
     /* Count of the number of consecutive warning alerts received */
@@ -139,10 +132,10 @@ typedef struct record_layer_st {
 
 #define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
 #define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
-#define DTLS_RECORD_LAYER_get_w_epoch(rl)       ((rl)->d->w_epoch)
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL_CONNECTION *s);
-void RECORD_LAYER_clear(RECORD_LAYER *rl);
+int RECORD_LAYER_clear(RECORD_LAYER *rl);
+int RECORD_LAYER_reset(RECORD_LAYER *rl);
 int RECORD_LAYER_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl);
@@ -165,6 +158,7 @@ __owur int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const void *buf,
 int do_dtls1_write(SSL_CONNECTION *s, uint8_t type, const unsigned char *buf,
                    size_t len, size_t *written);
 void dtls1_increment_epoch(SSL_CONNECTION *s, int rw);
+uint16_t dtls1_get_epoch(SSL_CONNECTION *s, int rw);
 int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length);
 
 # define HANDLE_RLAYER_READ_RETURN(s, ret) \

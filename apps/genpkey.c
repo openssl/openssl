@@ -24,7 +24,7 @@ typedef enum OPTION_choice {
     OPT_ENGINE, OPT_OUTFORM, OPT_OUT, OPT_PASS, OPT_PARAMFILE,
     OPT_ALGORITHM, OPT_PKEYOPT, OPT_GENPARAM, OPT_TEXT, OPT_CIPHER,
     OPT_VERBOSE, OPT_QUIET, OPT_CONFIG, OPT_OUTPUBKEY,
-    OPT_PROV_ENUM
+    OPT_PROV_ENUM, OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS genpkey_options[] = {
@@ -51,6 +51,7 @@ const OPTIONS genpkey_options[] = {
     {"", OPT_CIPHER, '-', "Cipher to use to encrypt the key"},
 
     OPT_PROV_OPTIONS,
+    OPT_R_OPTIONS,
 
     /* This is deliberately last. */
     {OPT_HELP_STR, 1, 1,
@@ -188,12 +189,19 @@ int genpkey_main(int argc, char **argv)
             if (!opt_provider(o))
                 goto end;
             break;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
+            break;
         }
     }
 
     /* No extra arguments. */
     if (!opt_check_rest_arg(NULL))
         goto opthelp;
+
+    if (!app_RAND_load())
+        goto end;
 
     /* Fetch cipher, etc. */
     if (paramfile != NULL) {

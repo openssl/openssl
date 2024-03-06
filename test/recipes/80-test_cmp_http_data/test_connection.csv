@@ -47,4 +47,5 @@ TBD,server IP address with TLS port, -section,, -server,_SERVER_IP:_SERVER_TLS,,
 1,keep_alive 0, -section,,,,,,,,BLANK,,,,BLANK,,BLANK,, -keep_alive,0
 1,keep_alive 1, -section,,,,,,,,BLANK,,,,BLANK,,BLANK,, -keep_alive,1
 1,keep_alive 2, -section,,,,,,,,BLANK,,,,BLANK,,BLANK,, -keep_alive,2
-0,keep_alive 3, -section,,,,,,,,BLANK,,,,BLANK,,BLANK,, -keep_alive,3
+0,keep_alive too large, -section,,,,,,,,BLANK,,,,BLANK,,BLANK,, -keep_alive,3
+0,keep_alive extremely large, -section,,,,,,,,BLANK,,,,BLANK,,BLANK,, -keep_alive,999999999999999999999999999

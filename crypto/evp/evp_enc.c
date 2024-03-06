@@ -253,7 +253,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
             memcpy(q++, p, sizeof(*q));
 
         /*
-         * Note that OSSL_CIPHER_PARAM_AEAD_IVLEN is a synomym for
+         * Note that OSSL_CIPHER_PARAM_AEAD_IVLEN is a synonym for
          * OSSL_CIPHER_PARAM_IVLEN so both are covered here.
          */
         p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_IVLEN);
@@ -662,7 +662,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     size_t soutl, inl_ = (size_t)inl;
     int blocksize;
 
-    if (likely(outl != NULL)) {
+    if (ossl_likely(outl != NULL)) {
         *outl = 0;
     } else {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
@@ -670,22 +670,22 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     }
 
     /* Prevent accidental use of decryption context when encrypting */
-    if (unlikely(!ctx->encrypt)) {
+    if (ossl_unlikely(!ctx->encrypt)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
         return 0;
     }
 
-    if (unlikely(ctx->cipher == NULL)) {
+    if (ossl_unlikely(ctx->cipher == NULL)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
         return 0;
     }
 
-    if (unlikely(ctx->cipher->prov == NULL))
+    if (ossl_unlikely(ctx->cipher->prov == NULL))
         goto legacy;
 
     blocksize = ctx->cipher->block_size;
 
-    if (unlikely(ctx->cipher->cupdate == NULL || blocksize < 1)) {
+    if (ossl_unlikely(ctx->cipher->cupdate == NULL || blocksize < 1)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
         return 0;
     }
@@ -694,7 +694,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
                                inl_ + (size_t)(blocksize == 1 ? 0 : blocksize),
                                in, inl_);
 
-    if (likely(ret)) {
+    if (ossl_likely(ret)) {
         if (soutl > INT_MAX) {
             ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
             return 0;
@@ -811,7 +811,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     size_t soutl, inl_ = (size_t)inl;
     int blocksize;
 
-    if (likely(outl != NULL)) {
+    if (ossl_likely(outl != NULL)) {
         *outl = 0;
     } else {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
@@ -819,21 +819,21 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     }
 
     /* Prevent accidental use of encryption context when decrypting */
-    if (unlikely(ctx->encrypt)) {
+    if (ossl_unlikely(ctx->encrypt)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
         return 0;
     }
 
-    if (unlikely(ctx->cipher == NULL)) {
+    if (ossl_unlikely(ctx->cipher == NULL)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
         return 0;
     }
-    if (unlikely(ctx->cipher->prov == NULL))
+    if (ossl_unlikely(ctx->cipher->prov == NULL))
         goto legacy;
 
     blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
 
-    if (unlikely(ctx->cipher->cupdate == NULL || blocksize < 1)) {
+    if (ossl_unlikely(ctx->cipher->cupdate == NULL || blocksize < 1)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
         return 0;
     }
@@ -841,7 +841,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
                                inl_ + (size_t)(blocksize == 1 ? 0 : blocksize),
                                in, inl_);
 
-    if (likely(ret)) {
+    if (ossl_likely(ret)) {
         if (soutl > INT_MAX) {
             ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
             return 0;

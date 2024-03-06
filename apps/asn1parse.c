@@ -178,7 +178,7 @@ int asn1parse_main(int argc, char **argv)
 
     if ((buf = BUF_MEM_new()) == NULL)
         goto end;
-    if (informat == FORMAT_PEM) {
+    if (genconf == NULL && genstr == NULL && informat == FORMAT_PEM) {
         if (PEM_read_bio(in, &name, &header, &str, &num) != 1) {
             BIO_printf(bio_err, "Error reading PEM file\n");
             ERR_print_errors(bio_err);

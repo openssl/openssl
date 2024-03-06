@@ -101,7 +101,7 @@ static __inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
     return 1;
 }
 
-static __inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *val, int *refcnt)
+static __inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
     *ret = _InterlockedExchangeAdd((void *)&refcnt->val, -1) - 1;
     return 1;

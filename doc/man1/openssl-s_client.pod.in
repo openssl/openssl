@@ -93,6 +93,7 @@ B<openssl> B<s_client>
 [B<-legacy_server_connect>]
 [B<-no_legacy_server_connect>]
 [B<-allow_no_dhe_kex>]
+[B<-prefer_no_dhe_kex>]
 [B<-sigalgs> I<sigalglist>]
 [B<-curves> I<curvelist>]
 [B<-cipher> I<cipherlist>]
@@ -629,7 +630,11 @@ Disables support for receiving TLSv1.3 compressed certificate.
 Enables support for SSL/TLS compression.
 This option was introduced in OpenSSL 1.1.0.
 TLS compression is not recommended and is off by default as of
-OpenSSL 1.1.0.
+OpenSSL 1.1.0. TLS compression can only be used in security level 1 or
+lower. From OpenSSL 3.2.0 and above the default security level is 2, so this
+option will have no effect without also changing the security level. Use the
+B<-cipher> option to change the security level. See L<openssl-ciphers(1)> for
+more information.
 
 =item B<-no_comp>
 

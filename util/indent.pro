@@ -600,7 +600,6 @@
 -T clock_t
 -T custom_ext_methods
 -T hm_fragment
--T record_pqueue
 -T ssl_ctx_st
 -T ssl_flag_tbl
 -T ssl_st

@@ -289,6 +289,11 @@ int ossl_rsa_sp800_56b_check_public(const RSA *rsa)
         return 0;
 
     nbits = BN_num_bits(rsa->n);
+    if (nbits > OPENSSL_RSA_MAX_MODULUS_BITS) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_MODULUS_TOO_LARGE);
+        return 0;
+    }
+
 #ifdef FIPS_MODULE
     /*
      * (Step a): modulus must be 2048 or 3072 (caveat from SP800-56Br1)
@@ -324,7 +329,8 @@ int ossl_rsa_sp800_56b_check_public(const RSA *rsa)
         goto err;
     }
 
-    ret = ossl_bn_miller_rabin_is_prime(rsa->n, 0, ctx, NULL, 1, &status);
+    /* Highest number of MR rounds from FIPS 186-5 Section B.3 Table B.1 */
+    ret = ossl_bn_miller_rabin_is_prime(rsa->n, 5, ctx, NULL, 1, &status);
 #ifdef FIPS_MODULE
     if (ret != 1 || status != BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME) {
 #else

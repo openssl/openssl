@@ -8,6 +8,7 @@ ENDIF
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SUBDIRS=engines
 ENDIF
+SUBDIRS=exporters
 
 LIBS=libcrypto libssl
 INCLUDE[libcrypto]=. include
@@ -99,3 +100,27 @@ IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
   SHARED_SOURCE[libcrypto]=libcrypto.rc
   SHARED_SOURCE[libssl]=libssl.rc
 ENDIF
+
+# This file sets the build directory up for CMake inclusion
+GENERATE[OpenSSLConfig.cmake]=exporters/cmake/OpenSSLConfig.cmake.in
+DEPEND[OpenSSLConfig.cmake]=builddata.pm
+GENERATE[OpenSSLConfigVersion.cmake]=exporters/cmake/OpenSSLConfigVersion.cmake.in
+DEPEND[OpenSSLConfigVersion.cmake]=builddata.pm
+DEPEND[OpenSSLConfigVersion.cmake]=OpenSSLConfig.cmake
+DEPEND[""]=OpenSSLConfigVersion.cmake
+
+# This file sets the build directory up for pkg-config
+GENERATE[libcrypto.pc]=exporters/pkg-config/libcrypto.pc.in
+DEPEND[libcrypto.pc]=builddata.pm
+GENERATE[libssl.pc]=exporters/pkg-config/libssl.pc.in
+DEPEND[libssl.pc]=builddata.pm
+GENERATE[openssl.pc]=exporters/pkg-config/openssl.pc.in
+DEPEND[openssl.pc]=builddata.pm
+DEPEND[openssl.pc]=libcrypto.pc libssl.pc
+
+GENERATE[builddata.pm]=util/mkinstallvars.pl \
+    PREFIX=. BINDIR=apps LIBDIR= INCLUDEDIR=include APPLINKDIR=ms \
+    ENGINESDIR=engines MODULESDIR=providers \
+    "VERSION=$(VERSION)" "LDLIBS=$(LIB_EX_LIBS)"
+
+DEPEND[""]=openssl.pc

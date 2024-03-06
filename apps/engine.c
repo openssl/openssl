@@ -251,7 +251,7 @@ static void util_do_cmds(ENGINE *e, STACK_OF(OPENSSL_STRING) *cmds,
         cmd = sk_OPENSSL_STRING_value(cmds, loop);
         res = 1;                /* assume success */
         /* Check if this command has no ":arg" */
-        if ((arg = strstr(cmd, ":")) == NULL) {
+        if ((arg = strchr(cmd, ':')) == NULL) {
             if (!ENGINE_ctrl_cmd_string(e, cmd, NULL, 0))
                 res = 0;
         } else {
@@ -404,6 +404,9 @@ int engine_main(int argc, char **argv)
 
                 if (ENGINE_get_RSA(e) != NULL
                     && !append_buf(&cap_buf, &cap_size, "RSA"))
+                    goto end;
+                if (ENGINE_get_EC(e) != NULL
+                    && !append_buf(&cap_buf, &cap_size, "EC"))
                     goto end;
                 if (ENGINE_get_DSA(e) != NULL
                     && !append_buf(&cap_buf, &cap_size, "DSA"))

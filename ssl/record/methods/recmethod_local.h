@@ -344,8 +344,8 @@ struct ossl_record_layer_st
     size_t taglen;
 
     /* DTLS received handshake records (processed and unprocessed) */
-    record_pqueue unprocessed_rcds;
-    record_pqueue processed_rcds;
+    struct pqueue_st *unprocessed_rcds;
+    struct pqueue_st *processed_rcds;
 
     /* records being received in the current epoch */
     DTLS_BITMAP bitmap;
@@ -367,7 +367,7 @@ struct ossl_record_layer_st
     size_t max_pipelines;
 
     /* Function pointers for version specific functions */
-    struct record_functions_st *funcs;
+    const struct record_functions_st *funcs;
 };
 
 typedef struct dtls_rlayer_record_data_st {
@@ -377,12 +377,12 @@ typedef struct dtls_rlayer_record_data_st {
     TLS_RL_RECORD rrec;
 } DTLS_RLAYER_RECORD_DATA;
 
-extern struct record_functions_st ssl_3_0_funcs;
-extern struct record_functions_st tls_1_funcs;
-extern struct record_functions_st tls_1_3_funcs;
-extern struct record_functions_st tls_any_funcs;
-extern struct record_functions_st dtls_1_funcs;
-extern struct record_functions_st dtls_any_funcs;
+extern const struct record_functions_st ssl_3_0_funcs;
+extern const struct record_functions_st tls_1_funcs;
+extern const struct record_functions_st tls_1_3_funcs;
+extern const struct record_functions_st tls_any_funcs;
+extern const struct record_functions_st dtls_1_funcs;
+extern const struct record_functions_st dtls_any_funcs;
 
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
                        const char *fmt, ...);
@@ -395,7 +395,9 @@ void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
 
 #define RLAYER_USE_EXPLICIT_IV(rl) ((rl)->version == TLS1_1_VERSION \
                                     || (rl)->version == TLS1_2_VERSION \
-                                    || (rl)->isdtls)
+                                    || (rl)->version == DTLS1_BAD_VER \
+                                    || (rl)->version == DTLS1_VERSION \
+                                    || (rl)->version == DTLS1_2_VERSION)
 
 void ossl_tls_rl_record_set_seq_num(TLS_RL_RECORD *r,
                                     const unsigned char *seq_num);
@@ -434,14 +436,10 @@ int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec);
 
 int
 tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
-                         int role, int direction, int level, unsigned char *key,
-                         size_t keylen, unsigned char *iv, size_t ivlen,
-                         unsigned char *mackey, size_t mackeylen,
+                         int role, int direction, int level,
                          const EVP_CIPHER *ciph, size_t taglen,
-                         int mactype,
                          const EVP_MD *md, COMP_METHOD *comp, BIO *prev,
                          BIO *transport, BIO *next,
-                         BIO_ADDR *local, BIO_ADDR *peer,
                          const OSSL_PARAM *settings, const OSSL_PARAM *options,
                          const OSSL_DISPATCH *fns, void *cbarg,
                          OSSL_RECORD_LAYER **retrl);

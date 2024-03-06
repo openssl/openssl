@@ -14,7 +14,6 @@
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/conf.h>
 #include <openssl/asn1.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
@@ -535,7 +534,6 @@ int pkcs12_main(int argc, char **argv)
         EVP_MD *macmd = NULL;
         unsigned char *catmp = NULL;
         int i;
-        CONF *conf = NULL;
         ASN1_OBJECT *obj = NULL;
 
         if ((options & (NOCERTS | NOKEYS)) == (NOCERTS | NOKEYS)) {
@@ -681,12 +679,6 @@ int pkcs12_main(int argc, char **argv)
         if (!twopass)
             OPENSSL_strlcpy(macpass, pass, sizeof(macpass));
 
-        /* Load the config file */
-        if ((conf = app_load_config(default_config_file)) == NULL)
-            goto export_end;
-        if (!app_load_modules(conf))
-            goto export_end;
-
         if (jdktrust != NULL) {
             obj = OBJ_txt2obj(jdktrust, 0);
         }
@@ -731,7 +723,6 @@ int pkcs12_main(int argc, char **argv)
         OSSL_STACK_OF_X509_free(certs);
         OSSL_STACK_OF_X509_free(untrusted_certs);
         X509_free(ee_cert);
-        NCONF_free(conf);
         ASN1_OBJECT_free(obj);
         ERR_print_errors(bio_err);
         goto end;

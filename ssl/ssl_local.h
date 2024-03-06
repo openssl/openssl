@@ -1189,6 +1189,10 @@ struct ssl_ctx_st {
     size_t client_cert_type_len;
     unsigned char *server_cert_type;
     size_t server_cert_type_len;
+
+# ifndef OPENSSL_NO_QLOG
+    char *qlog_title; /* Session title for qlog */
+# endif
 };
 
 typedef struct cert_pkey_st CERT_PKEY;
@@ -2233,9 +2237,8 @@ typedef enum downgrade_en {
 extern const unsigned char tls11downgrade[8];
 extern const unsigned char tls12downgrade[8];
 
-extern SSL3_ENC_METHOD ssl3_undef_enc_method;
+extern const SSL3_ENC_METHOD ssl3_undef_enc_method;
 
-__owur const SSL_METHOD *ssl_bad_method(int ver);
 __owur const SSL_METHOD *sslv3_method(void);
 __owur const SSL_METHOD *sslv3_server_method(void);
 __owur const SSL_METHOD *sslv3_client_method(void);
@@ -2464,7 +2467,8 @@ void ossl_ssl_connection_free(SSL *ssl);
 __owur int ossl_ssl_connection_reset(SSL *ssl);
 
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
-__owur int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written);
+__owur int ssl_write_internal(SSL *s, const void *buf, size_t num,
+                              uint64_t flags, size_t *written);
 int ssl_clear_bad_session(SSL_CONNECTION *s);
 __owur CERT *ssl_cert_new(size_t ssl_pkey_num);
 __owur CERT *ssl_cert_dup(CERT *cert);
@@ -2531,10 +2535,10 @@ __owur int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid,
 int ssl_get_security_level_bits(const SSL *s, const SSL_CTX *ctx, int *levelp);
 
 __owur int ssl_cert_lookup_by_nid(int nid, size_t *pidx, SSL_CTX *ctx);
-__owur SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,
-                                                size_t *pidx,
-                                                SSL_CTX *ctx);
-__owur SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx, SSL_CTX *ctx);
+__owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,
+                                                      size_t *pidx,
+                                                      SSL_CTX *ctx);
+__owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx, SSL_CTX *ctx);
 
 int ssl_undefined_function(SSL *s);
 __owur int ssl_undefined_void_function(void);
@@ -2629,6 +2633,7 @@ __owur int ssl3_handshake_write(SSL_CONNECTION *s);
 
 __owur int ssl_allow_compression(SSL_CONNECTION *s);
 
+__owur int ssl_version_cmp(const SSL_CONNECTION *s, int versiona, int versionb);
 __owur int ssl_version_supported(const SSL_CONNECTION *s, int version,
                                  const SSL_METHOD **meth);
 
@@ -2926,10 +2931,6 @@ const EVP_MD *ssl_evp_md_fetch(OSSL_LIB_CTX *libctx,
                                const char *properties);
 int ssl_evp_md_up_ref(const EVP_MD *md);
 void ssl_evp_md_free(const EVP_MD *md);
-
-int tls_provider_set_tls_params(SSL_CONNECTION *s, EVP_CIPHER_CTX *ctx,
-                                const EVP_CIPHER *ciph,
-                                const EVP_MD *md);
 
 void tls_engine_finish(ENGINE *e);
 const EVP_CIPHER *tls_get_cipher_from_engine(int nid);

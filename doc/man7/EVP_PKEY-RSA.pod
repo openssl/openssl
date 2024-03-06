@@ -80,7 +80,7 @@ Up to eight additional "r_i" prime factors are supported.
 =item "rsa-exponent10" (B<OSSL_PKEY_PARAM_RSA_EXPONENT10>) <unsigned integer>
 
 RSA CRT (Chinese Remainder Theorem) exponents. The exponents are known
-as "dP", "dQ" and "d_i in RFC8017".
+as "dP", "dQ" and "d_i" in RFC8017.
 Up to eight additional "d_i" exponents are supported.
 
 =item "rsa-coefficient1" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT1>) <unsigned integer>
@@ -131,6 +131,15 @@ Some providers may only support a value of 2.
 The RSA "e" value. The value may be any odd number greater than or equal to
 65537. The default value is 65537.
 For legacy reasons a value of 3 is currently accepted but is deprecated.
+
+=item "rsa-derive-from-pq"  (B<OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ>) <unsigned integer>
+
+Indicate that missing parameters not passed in the parameter list should be
+derived if not provided.  Setting a nonzero value will cause all
+needed exponents and coefficients to be derived if not available.  Setting this
+option requires at least OSSL_PARAM_RSA_FACTOR1, OSSL_PARAM_RSA_FACTOR2,
+and OSSL_PARAM_RSA_N to be provided.  This option is ignored if
+OSSL_KEYMGMT_SELECT_PRIVATE_KEY is not set in the selection parameter.
 
 =back
 

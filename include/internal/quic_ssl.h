@@ -28,6 +28,8 @@ __owur int ossl_quic_accept(SSL *s);
 __owur int ossl_quic_connect(SSL *s);
 __owur int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *readbytes);
 __owur int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *readbytes);
+__owur int ossl_quic_write_flags(SSL *s, const void *buf, size_t len,
+                                 uint64_t flags, size_t *written);
 __owur int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written);
 __owur long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur long ossl_quic_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg);
@@ -83,6 +85,10 @@ __owur int ossl_quic_set_incoming_stream_policy(SSL *s, int policy,
                                                 uint64_t aec);
 __owur SSL *ossl_quic_accept_stream(SSL *s, uint64_t flags);
 __owur size_t ossl_quic_get_accept_stream_queue_len(SSL *s);
+__owur int ossl_quic_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
+                                    uint64_t *value);
+__owur int ossl_quic_set_value_uint(SSL *s, uint32_t class_, uint32_t id,
+                                    uint64_t value);
 
 __owur int ossl_quic_stream_reset(SSL *ssl,
                                   const SSL_STREAM_RESET_ARGS *args,
@@ -126,6 +132,19 @@ QUIC_CHANNEL *ossl_quic_conn_get_channel(SSL *s);
 
 int ossl_quic_has_pending(const SSL *s);
 int ossl_quic_get_shutdown(const SSL *s);
+
+/*
+ * Set qlog diagnostic title. String is copied internally on success and need
+ * not remain allocated. Only has any effect if logging has not already begun.
+ * For use by tests only. Setting this on a context affects any QCSO created
+ * after this is called but does not affect QCSOs already created from a
+ * context.
+ */
+int ossl_quic_set_diag_title(SSL_CTX *ctx, const char *title);
+
+/* APIs used by the polling infrastructure */
+int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, int do_tick,
+                               uint64_t *revents);
 
 # endif
 

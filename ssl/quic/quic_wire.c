@@ -950,6 +950,9 @@ int ossl_quic_wire_decode_transport_param_int(PACKET *pkt,
     if (!PACKET_get_quic_vlint(&sub, value))
         return 0;
 
+    if (PACKET_remaining(&sub) > 0)
+        return 0;
+
    return 1;
 }
 

@@ -28,7 +28,7 @@
 
 /* Helper function to create a BIO connected to the server */
 static BIO *create_socket_bio(const char *hostname, const char *port,
-                              BIO_ADDR **peer_addr)
+                              int family, BIO_ADDR **peer_addr)
 {
     int sock = -1;
     BIO_ADDRINFO *res;
@@ -38,7 +38,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
     /*
      * Lookup IP address info for the server.
      */
-    if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, 0, SOCK_DGRAM, 0,
+    if (!BIO_lookup_ex(hostname, port, BIO_LOOKUP_CLIENT, family, SOCK_DGRAM, 0,
                        &res))
         return NULL;
 
@@ -215,22 +215,13 @@ static int handle_io_failure(SSL *ssl, int res)
         return -1;
     }
 }
-
-/* Server hostname and port details. Must be in quotes */
-#ifndef HOSTNAME
-# define HOSTNAME "www.example.com"
-#endif
-#ifndef PORT
-# define PORT     "443"
-#endif
-
 /*
  * Simple application to send a basic HTTP/1.0 request to a server and
  * print the response on the screen. Note that HTTP/1.0 over QUIC is
  * non-standard and will not typically be supported by real world servers. This
  * is for demonstration purposes only.
  */
-int main(void)
+int main(int argc, char *argv[])
 {
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
@@ -238,12 +229,31 @@ int main(void)
     int res = EXIT_FAILURE;
     int ret;
     unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '1', '.', '0' };
-    const char *request =
-        "GET / HTTP/1.0\r\nConnection: close\r\nHost: "HOSTNAME"\r\n\r\n";
+    const char *request_start = "GET / HTTP/1.0\r\nConnection: close\r\nHost: ";
+    const char *request_end = "\r\n\r\n";
     size_t written, readbytes;
     char buf[160];
     BIO_ADDR *peer_addr = NULL;
     int eof = 0;
+    char *hostname, *port;
+    int ipv6 = 0;
+    int argnext = 1;
+
+    if (argc < 3) {
+        printf("Usage: quic-client-non-block [-6] hostname port\n");
+        goto end;
+    }
+
+    if (!strcmp(argv[argnext], "-6")) {
+        if (argc < 4) {
+            printf("Usage: quic-client-non-block [-6] hostname port\n");
+            goto end;
+        }
+        ipv6 = 1;
+        argnext++;
+    }
+    hostname = argv[argnext++];
+    port = argv[argnext];
 
     /*
      * Create an SSL_CTX which we can use to create SSL objects from. We
@@ -280,7 +290,8 @@ int main(void)
      * Create the underlying transport socket/BIO and associate it with the
      * connection.
      */
-    bio = create_socket_bio(HOSTNAME, PORT, &peer_addr);
+    bio = create_socket_bio(hostname, port, ipv6 ? AF_INET6 : AF_INET,
+                            &peer_addr);
     if (bio == NULL) {
         printf("Failed to crete the BIO\n");
         goto end;
@@ -291,7 +302,7 @@ int main(void)
      * Tell the server during the handshake which hostname we are attempting
      * to connect to in case the server supports multiple hosts.
      */
-    if (!SSL_set_tlsext_host_name(ssl, HOSTNAME)) {
+    if (!SSL_set_tlsext_host_name(ssl, hostname)) {
         printf("Failed to set the SNI hostname\n");
         goto end;
     }
@@ -302,7 +313,7 @@ int main(void)
      * Virtually all clients should do this unless you really know what you
      * are doing.
      */
-    if (!SSL_set1_host(ssl, HOSTNAME)) {
+    if (!SSL_set1_host(ssl, hostname)) {
         printf("Failed to set the certificate verification hostname");
         goto end;
     }
@@ -338,10 +349,22 @@ int main(void)
     }
 
     /* Write an HTTP GET request to the peer */
-    while (!SSL_write_ex(ssl, request, strlen(request), &written)) {
+    while (!SSL_write_ex(ssl, request_start, strlen(request_start), &written)) {
         if (handle_io_failure(ssl, 0) == 1)
             continue; /* Retry */
-        printf("Failed to write HTTP request\n");
+        printf("Failed to write start of HTTP request\n");
+        goto end; /* Cannot retry: error */
+    }
+    while (!SSL_write_ex(ssl, hostname, strlen(hostname), &written)) {
+        if (handle_io_failure(ssl, 0) == 1)
+            continue; /* Retry */
+        printf("Failed to write hostname in HTTP request\n");
+        goto end; /* Cannot retry: error */
+    }
+    while (!SSL_write_ex(ssl, request_end, strlen(request_end), &written)) {
+        if (handle_io_failure(ssl, 0) == 1)
+            continue; /* Retry */
+        printf("Failed to write end of HTTP request\n");
         goto end; /* Cannot retry: error */
     }
 

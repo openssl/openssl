@@ -13,12 +13,11 @@
 # include "internal/quic_cc.h"
 # include "internal/quic_types.h"
 # include "internal/quic_wire.h"
+# include "internal/quic_predef.h"
 # include "internal/time.h"
 # include "internal/list.h"
 
 # ifndef OPENSSL_NO_QUIC
-
-typedef struct ossl_ackm_st OSSL_ACKM;
 
 OSSL_ACKM *ossl_ackm_new(OSSL_TIME (*now)(void *arg),
                          void *now_arg,

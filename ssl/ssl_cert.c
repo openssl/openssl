@@ -1240,13 +1240,13 @@ int ssl_cert_lookup_by_nid(int nid, size_t *pidx, SSL_CTX *ctx)
     return 0;
 }
 
-SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx, SSL_CTX *ctx)
+const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx, SSL_CTX *ctx)
 {
     size_t i;
 
     /* check classic pk types */
     for (i = 0; i < OSSL_NELEM(ssl_cert_info); i++) {
-        SSL_CERT_LOOKUP *tmp_lu = &ssl_cert_info[i];
+        const SSL_CERT_LOOKUP *tmp_lu = &ssl_cert_info[i];
 
         if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->nid))
             || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->nid))) {
@@ -1270,7 +1270,7 @@ SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx, SSL_C
     return NULL;
 }
 
-SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx, SSL_CTX *ctx)
+const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx, SSL_CTX *ctx)
 {
     if (idx >= (OSSL_NELEM(ssl_cert_info) + ctx->sigalg_list_len))
         return NULL;

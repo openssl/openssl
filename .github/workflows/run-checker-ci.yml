@@ -11,6 +11,9 @@ on: [pull_request, push]
 permissions:
   contents: read
 
+env:
+  OSSL_RUN_CI_TESTS: 1
+
 jobs:
   run-checker:
     strategy:
@@ -23,12 +26,12 @@ jobs:
           no-dh,
           no-dtls,
           no-ec,
-          no-ec2m,
           no-ecx,
           no-http,
-          no-legacy,
+          no-legacy enable-unstable-qlog,
           no-sock,
           enable-ssl-trace,
+          no-stdio,
           no-threads,
           no-thread-pool,
           no-default-thread-pool,
@@ -53,7 +56,7 @@ jobs:
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
-        ./util/opensslwrap.sh version -c
+        if [ -x apps/openssl ] ; then ./util/opensslwrap.sh version -c ; fi
     - name: Check platform symbol usage
       run: ./util/checkplatformsyms.pl ./util/platform_symbols/unix-symbols.txt ./libcrypto.so ./libssl.so
     - name: make test

@@ -12,6 +12,7 @@
 
 # include <openssl/ssl.h>
 # include "internal/quic_types.h"
+# include "internal/quic_predef.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -63,7 +64,6 @@ int ossl_quic_cfq_item_is_unreliable(const QUIC_CFQ_ITEM *item);
  * QUIC Control Frame Queue
  * ========================
  */
-typedef struct quic_cfq_st QUIC_CFQ;
 
 QUIC_CFQ *ossl_quic_cfq_new(void);
 void ossl_quic_cfq_free(QUIC_CFQ *cfq);

@@ -143,7 +143,6 @@ OSSL_DEPRECATEDIN_3_0 int ERR_load_SSL_strings(void);
 #  define SSL_F_SSL_ADD_SERVERHELLO_RENEGOTIATE_EXT        0
 #  define SSL_F_SSL_ADD_SERVERHELLO_TLSEXT                 0
 #  define SSL_F_SSL_ADD_SERVERHELLO_USE_SRTP_EXT           0
-#  define SSL_F_SSL_BAD_METHOD                             0
 #  define SSL_F_SSL_BUILD_CERT_CHAIN                       0
 #  define SSL_F_SSL_BYTES_TO_CIPHER_LIST                   0
 #  define SSL_F_SSL_CACHE_CIPHERLIST                       0

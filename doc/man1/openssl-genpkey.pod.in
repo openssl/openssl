@@ -25,7 +25,9 @@ B<openssl> B<genpkey>
 [B<-pkeyopt> I<opt>:I<value>]
 [B<-genparam>]
 [B<-text>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_config_synopsis -}
 
 =head1 DESCRIPTION
@@ -118,6 +120,8 @@ are mutually exclusive.
 
 Print an (unencrypted) text representation of private and public keys and
 parameters along with the PEM or DER structure.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
 

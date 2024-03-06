@@ -12,6 +12,7 @@
 
 # include <openssl/ssl.h>
 # include "internal/quic_types.h"
+# include "internal/quic_predef.h"
 # include "internal/quic_record_tx.h"
 # include "internal/quic_cfq.h"
 # include "internal/quic_txpim.h"
@@ -20,6 +21,7 @@
 # include "internal/quic_fc.h"
 # include "internal/bio_addr.h"
 # include "internal/time.h"
+# include "internal/qlog.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -48,6 +50,8 @@ typedef struct ossl_quic_tx_packetiser_args_st {
     OSSL_CC_DATA    *cc_data;   /* QUIC Congestion Controller Instance */
     OSSL_TIME       (*now)(void *arg);  /* Callback to get current time. */
     void            *now_arg;
+    QLOG            *(*get_qlog_cb)(void *arg); /* Optional QLOG retrieval func */
+    void            *get_qlog_cb_arg;
 
     /*
      * Injected dependencies - crypto streams.
@@ -58,8 +62,6 @@ typedef struct ossl_quic_tx_packetiser_args_st {
     QUIC_SSTREAM    *crypto[QUIC_PN_SPACE_NUM];
 
  } OSSL_QUIC_TX_PACKETISER_ARGS;
-
-typedef struct ossl_quic_tx_packetiser_st OSSL_QUIC_TX_PACKETISER;
 
 OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETISER_ARGS *args);
 
@@ -136,6 +138,13 @@ int ossl_quic_tx_packetiser_set_cur_scid(OSSL_QUIC_TX_PACKETISER *txp,
  */
 int ossl_quic_tx_packetiser_set_peer(OSSL_QUIC_TX_PACKETISER *txp,
                                      const BIO_ADDR *peer);
+
+/*
+ * Change the QLOG instance retrieval function in use after instantiation.
+ */
+void ossl_quic_tx_packetiser_set_qlog_cb(OSSL_QUIC_TX_PACKETISER *txp,
+                                         QLOG *(*get_qlog_cb)(void *arg),
+                                         void *get_qlog_cb_arg);
 
 /*
  * Inform the TX packetiser that an EL has been discarded. Idempotent.

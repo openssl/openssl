@@ -116,7 +116,8 @@ OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx);
 
 extern const BIGNUM ossl_bn_inv_sqrt_2;
 
-#if defined(OPENSSL_SYS_LINUX) && !defined(FIPS_MODULE) && defined (__s390x__)
+#if defined(OPENSSL_SYS_LINUX) && !defined(FIPS_MODULE) && defined (__s390x__) \
+    && !defined (OPENSSL_NO_ASM)
 # define S390X_MOD_EXP
 #endif
 

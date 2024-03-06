@@ -140,7 +140,7 @@ int tls1_clear(SSL *s)
 }
 
 /* Legacy NID to group_id mapping. Only works for groups we know about */
-static struct {
+static const struct {
     int nid;
     uint16_t group_id;
 } nid_to_group[] = {
@@ -849,6 +849,7 @@ int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
     const TLS_GROUP_INFO *ginfo = tls1_group_id_lookup(SSL_CONNECTION_GET_CTX(s),
                                                        group_id);
     int ret;
+    int group_minversion, group_maxversion;
 
     if (okfortls13 != NULL)
         *okfortls13 = 0;
@@ -856,27 +857,22 @@ int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
     if (ginfo == NULL)
         return 0;
 
-    if (SSL_CONNECTION_IS_DTLS(s)) {
-        if (ginfo->mindtls < 0 || ginfo->maxdtls < 0)
-            return 0;
-        if (ginfo->maxdtls == 0)
-            ret = 1;
-        else
-            ret = DTLS_VERSION_LE(minversion, ginfo->maxdtls);
-        if (ginfo->mindtls > 0)
-            ret &= DTLS_VERSION_GE(maxversion, ginfo->mindtls);
-    } else {
-        if (ginfo->mintls < 0 || ginfo->maxtls < 0)
-            return 0;
-        if (ginfo->maxtls == 0)
-            ret = 1;
-        else
-            ret = (minversion <= ginfo->maxtls);
-        if (ginfo->mintls > 0)
-            ret &= (maxversion >= ginfo->mintls);
+    group_minversion = SSL_CONNECTION_IS_DTLS(s) ? ginfo->mindtls : ginfo->mintls;
+    group_maxversion = SSL_CONNECTION_IS_DTLS(s) ? ginfo->maxdtls : ginfo->maxtls;
+
+    if (group_minversion < 0 || group_maxversion < 0)
+        return 0;
+    if (group_maxversion == 0)
+        ret = 1;
+    else
+        ret = (ssl_version_cmp(s, minversion, group_maxversion) <= 0);
+    if (group_minversion > 0)
+        ret &= (ssl_version_cmp(s, maxversion, group_minversion) >= 0);
+
+    if (!SSL_CONNECTION_IS_DTLS(s)) {
         if (ret && okfortls13 != NULL && maxversion == TLS1_3_VERSION)
-            *okfortls13 = (ginfo->maxtls == 0)
-                          || (ginfo->maxtls >= TLS1_3_VERSION);
+            *okfortls13 = (group_maxversion == 0)
+                          || (group_maxversion >= TLS1_3_VERSION);
     }
     ret &= !isec
            || strcmp(ginfo->algorithm, "EC") == 0
@@ -962,6 +958,7 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
         const TLS_GROUP_INFO *inf;
+        int minversion, maxversion;
 
         if (!tls1_in_list(id, supp, num_supp)
                 || !tls_group_allowed(s, id, SSL_SECOP_CURVE_SHARED))
@@ -969,20 +966,17 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
         inf = tls1_group_id_lookup(ctx, id);
         if (!ossl_assert(inf != NULL))
             return 0;
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            if (inf->maxdtls == -1)
-                continue;
-            if ((inf->mindtls != 0 && DTLS_VERSION_LT(s->version, inf->mindtls))
-                    || (inf->maxdtls != 0
-                        && DTLS_VERSION_GT(s->version, inf->maxdtls)))
-                continue;
-        } else {
-            if (inf->maxtls == -1)
-                continue;
-            if ((inf->mintls != 0 && s->version < inf->mintls)
-                    || (inf->maxtls != 0 && s->version > inf->maxtls))
-                continue;
-        }
+
+        minversion = SSL_CONNECTION_IS_DTLS(s)
+                         ? inf->mindtls : inf->mintls;
+        maxversion = SSL_CONNECTION_IS_DTLS(s)
+                         ? inf->maxdtls : inf->maxtls;
+        if (maxversion == -1)
+            continue;
+        if ((minversion != 0 && ssl_version_cmp(s, s->version, minversion) < 0)
+            || (maxversion != 0
+                && ssl_version_cmp(s, s->version, maxversion) > 0))
+            continue;
 
         if (nmatch == k)
             return id;
@@ -1050,12 +1044,19 @@ static int gid_cb(const char *elem, int len, void *arg)
     size_t i;
     uint16_t gid = 0;
     char etmp[GROUP_NAME_BUFFER_LENGTH];
+    int ignore_unknown = 0;
 
     if (elem == NULL)
         return 0;
+    if (elem[0] == '?') {
+        ignore_unknown = 1;
+        ++elem;
+        --len;
+    }
     if (garg->gidcnt == garg->gidmax) {
         uint16_t *tmp =
-            OPENSSL_realloc(garg->gid_arr, garg->gidmax + GROUPLIST_INCREMENT);
+            OPENSSL_realloc(garg->gid_arr,
+                            (garg->gidmax + GROUPLIST_INCREMENT) * sizeof(*garg->gid_arr));
         if (tmp == NULL)
             return 0;
         garg->gidmax += GROUPLIST_INCREMENT;
@@ -1068,13 +1069,14 @@ static int gid_cb(const char *elem, int len, void *arg)
 
     gid = tls1_group_name2id(garg->ctx, etmp);
     if (gid == 0) {
-        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
-                       "group '%s' cannot be set", etmp);
-        return 0;
+        /* Unknown group - ignore, if ignore_unknown */
+        return ignore_unknown;
     }
     for (i = 0; i < garg->gidcnt; i++)
-        if (garg->gid_arr[i] == gid)
-            return 0;
+        if (garg->gid_arr[i] == gid) {
+            /* Duplicate group - ignore */
+            return 1;
+        }
     garg->gid_arr[garg->gidcnt++] = gid;
     return 1;
 }
@@ -1095,6 +1097,11 @@ int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
     gcb.ctx = ctx;
     if (!CONF_parse_list(str, ':', 1, gid_cb, &gcb))
         goto end;
+    if (gcb.gidcnt == 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "No valid groups in '%s'", str);
+        goto end;
+    }
     if (pext == NULL) {
         ret = 1;
         goto end;
@@ -2060,6 +2067,9 @@ int ssl_set_client_disabled(SSL_CONNECTION *s)
 int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
                         int op, int ecdhe)
 {
+    int minversion = SSL_CONNECTION_IS_DTLS(s) ? c->min_dtls : c->min_tls;
+    int maxversion = SSL_CONNECTION_IS_DTLS(s) ? c->max_dtls : c->max_tls;
+
     if (c->algorithm_mkey & s->s3.tmp.mask_k
         || c->algorithm_auth & s->s3.tmp.mask_a)
         return 1;
@@ -2077,23 +2087,17 @@ int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
             return 1;
         }
 
-    if (!SSL_CONNECTION_IS_DTLS(s)) {
-        int min_tls = c->min_tls;
+    /*
+     * For historical reasons we will allow ECHDE to be selected by a server
+     * in SSLv3 if we are a client
+     */
+    if (minversion == TLS1_VERSION
+            && ecdhe
+            && (c->algorithm_mkey & (SSL_kECDHE | SSL_kECDHEPSK)) != 0)
+        minversion = SSL3_VERSION;
 
-        /*
-         * For historical reasons we will allow ECHDE to be selected by a server
-         * in SSLv3 if we are a client
-         */
-        if (min_tls == TLS1_VERSION && ecdhe
-                && (c->algorithm_mkey & (SSL_kECDHE | SSL_kECDHEPSK)) != 0)
-            min_tls = SSL3_VERSION;
-
-        if ((min_tls > s->s3.tmp.max_ver) || (c->max_tls < s->s3.tmp.min_ver))
-            return 1;
-    }
-    if (SSL_CONNECTION_IS_DTLS(s)
-            && (DTLS_VERSION_GT(c->min_dtls, s->s3.tmp.max_ver)
-                || DTLS_VERSION_LT(c->max_dtls, s->s3.tmp.min_ver)))
+    if (ssl_version_cmp(s, minversion, s->s3.tmp.max_ver) > 0
+        || ssl_version_cmp(s, maxversion, s->s3.tmp.min_ver) < 0)
         return 1;
 
     return !ssl_security(s, op, c->strength_bits, 0, (void *)c);
@@ -2878,8 +2882,15 @@ static int sig_cb(const char *elem, int len, void *arg)
     const SIGALG_LOOKUP *s;
     char etmp[TLS_MAX_SIGSTRING_LEN], *p;
     int sig_alg = NID_undef, hash_alg = NID_undef;
+    int ignore_unknown = 0;
+
     if (elem == NULL)
         return 0;
+    if (elem[0] == '?') {
+        ignore_unknown = 1;
+        ++elem;
+        --len;
+    }
     if (sarg->sigalgcnt == TLS_MAX_SIGALGCNT)
         return 0;
     if (len > (int)(sizeof(etmp) - 1))
@@ -2904,8 +2915,10 @@ static int sig_cb(const char *elem, int len, void *arg)
                 break;
             }
         }
-        if (i == OSSL_NELEM(sigalg_lookup_tbl))
-            return 0;
+        if (i == OSSL_NELEM(sigalg_lookup_tbl)) {
+            /* Ignore unknown algorithms if ignore_unknown */
+            return ignore_unknown;
+        }
     } else {
         *p = 0;
         p++;
@@ -2913,8 +2926,10 @@ static int sig_cb(const char *elem, int len, void *arg)
             return 0;
         get_sigorhash(&sig_alg, &hash_alg, etmp);
         get_sigorhash(&sig_alg, &hash_alg, p);
-        if (sig_alg == NID_undef || hash_alg == NID_undef)
-            return 0;
+        if (sig_alg == NID_undef || hash_alg == NID_undef) {
+            /* Ignore unknown algorithms if ignore_unknown */
+            return ignore_unknown;
+        }
         for (i = 0, s = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
              i++, s++) {
             if (s->hash == hash_alg && s->sig == sig_alg) {
@@ -2922,15 +2937,17 @@ static int sig_cb(const char *elem, int len, void *arg)
                 break;
             }
         }
-        if (i == OSSL_NELEM(sigalg_lookup_tbl))
-            return 0;
+        if (i == OSSL_NELEM(sigalg_lookup_tbl)) {
+            /* Ignore unknown algorithms if ignore_unknown */
+            return ignore_unknown;
+        }
     }
 
-    /* Reject duplicates */
+    /* Ignore duplicates */
     for (i = 0; i < sarg->sigalgcnt - 1; i++) {
         if (sarg->sigalgs[i] == sarg->sigalgs[sarg->sigalgcnt - 1]) {
             sarg->sigalgcnt--;
-            return 0;
+            return 1;
         }
     }
     return 1;
@@ -2946,6 +2963,11 @@ int tls1_set_sigalgs_list(CERT *c, const char *str, int client)
     sig.sigalgcnt = 0;
     if (!CONF_parse_list(str, ':', 1, sig_cb, &sig))
         return 0;
+    if (sig.sigalgcnt == 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "No valid signature algorithms in '%s'", str);
+        return 0;
+    }
     if (c == NULL)
         return 1;
     return tls1_set_raw_sigalgs(c, sig.sigalgs, sig.sigalgcnt, client);

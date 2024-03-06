@@ -30,7 +30,6 @@
  *     test Object used for CAVS testing only.that contains..
  *       p1, p2 The returned auxiliary primes for p.
  *              If NULL they are not returned.
- *       Xpout An optionally returned random number used during generation of p.
  *       Xp An optional passed in value (that is random number used during
  *          generation of p).
  *       Xp1, Xp2 Optionally passed in randomly generated numbers from which
@@ -38,7 +37,6 @@
  *                are generated internally.
  *       q1, q2 The returned auxiliary primes for q.
  *              If NULL they are not returned.
- *       Xqout An optionally returned random number used during generation of q.
  *       Xq An optional passed in value (that is random number used during
  *          generation of q).
  *       Xq1, Xq2 Optionally passed in randomly generated numbers from which
@@ -50,7 +48,7 @@
  *     cb An optional BIGNUM callback.
  * Returns: 1 if successful, or  0 otherwise.
  * Notes:
- *     p1, p2, q1, q2, Xpout, Xqout are returned if they are not NULL.
+ *     p1, p2, q1, q2 are returned if they are not NULL.
  *     Xp, Xp1, Xp2, Xq, Xq1, Xq2 are optionally passed in.
  *     (Required for CAVS testing).
  */
@@ -65,7 +63,6 @@ int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
     BIGNUM *p1 = NULL, *p2 = NULL;
     BIGNUM *q1 = NULL, *q2 = NULL;
     /* Intermediate BIGNUMS that can be input for testing */
-    BIGNUM *Xpout = NULL, *Xqout = NULL;
     BIGNUM *Xp = NULL, *Xp1 = NULL, *Xp2 = NULL;
     BIGNUM *Xq = NULL, *Xq1 = NULL, *Xq2 = NULL;
 
@@ -105,8 +102,8 @@ int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
 
     BN_CTX_start(ctx);
     tmp = BN_CTX_get(ctx);
-    Xpo = (Xpout != NULL) ? Xpout : BN_CTX_get(ctx);
-    Xqo = (Xqout != NULL) ? Xqout : BN_CTX_get(ctx);
+    Xpo = BN_CTX_get(ctx);
+    Xqo = BN_CTX_get(ctx);
     if (tmp == NULL || Xpo == NULL || Xqo == NULL)
         goto err;
     BN_set_flags(Xpo, BN_FLG_CONSTTIME);
@@ -150,9 +147,9 @@ int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
     ret = 1;
 err:
     /* Zeroize any internally generated values that are not returned */
-    if (Xpo != Xpout)
+    if (Xpo != NULL)
         BN_clear(Xpo);
-    if (Xqo != Xqout)
+    if (Xqo != NULL)
         BN_clear(Xqo);
     BN_clear(tmp);
 
@@ -228,13 +225,16 @@ static int rsa_validate_rng_strength(EVP_RAND_CTX *rng, int nbits)
  * Returns: -1 = error,
  *           0 = d is too small,
  *           1 = success.
+ *
+ * SP800-56b key generation always passes a non NULL value for e.
+ * For other purposes, if e is NULL then it is assumed that e, n and d are
+ * already set in the RSA key and do not need to be recalculated.
  */
 int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
                                              const BIGNUM *e, BN_CTX *ctx)
 {
     int ret = -1;
     BIGNUM *p1, *q1, *lcm, *p1q1, *gcd;
-
     BN_CTX_start(ctx);
     p1 = BN_CTX_get(ctx);
     q1 = BN_CTX_get(ctx);
@@ -254,32 +254,37 @@ int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     if (ossl_rsa_get_lcm(ctx, rsa->p, rsa->q, lcm, gcd, p1, q1, p1q1) != 1)
         goto err;
 
-    /* copy e */
-    BN_free(rsa->e);
-    rsa->e = BN_dup(e);
-    if (rsa->e == NULL)
-        goto err;
+    /*
+     * if e is provided as a parameter, don't recompute e, d or n
+     */
+    if (e != NULL) {
+        /* copy e */
+        BN_free(rsa->e);
+        rsa->e = BN_dup(e);
+        if (rsa->e == NULL)
+            goto err;
 
-    BN_clear_free(rsa->d);
-    /* (Step 3) d = (e^-1) mod (LCM(p-1, q-1)) */
-    rsa->d = BN_secure_new();
-    if (rsa->d == NULL)
-        goto err;
-    BN_set_flags(rsa->d, BN_FLG_CONSTTIME);
-    if (BN_mod_inverse(rsa->d, e, lcm, ctx) == NULL)
-        goto err;
+        BN_clear_free(rsa->d);
+        /* (Step 3) d = (e^-1) mod (LCM(p-1, q-1)) */
+        rsa->d = BN_secure_new();
+        if (rsa->d == NULL)
+            goto err;
+        BN_set_flags(rsa->d, BN_FLG_CONSTTIME);
+        if (BN_mod_inverse(rsa->d, e, lcm, ctx) == NULL)
+            goto err;
 
-    /* (Step 3) return an error if d is too small */
-    if (BN_num_bits(rsa->d) <= (nbits >> 1)) {
-        ret = 0;
-        goto err;
+        /* (Step 3) return an error if d is too small */
+        if (BN_num_bits(rsa->d) <= (nbits >> 1)) {
+            ret = 0;
+            goto err;
+        }
+
+        /* (Step 4) n = pq */
+        if (rsa->n == NULL)
+            rsa->n = BN_new();
+        if (rsa->n == NULL || !BN_mul(rsa->n, rsa->p, rsa->q, ctx))
+            goto err;
     }
-
-    /* (Step 4) n = pq */
-    if (rsa->n == NULL)
-        rsa->n = BN_new();
-    if (rsa->n == NULL || !BN_mul(rsa->n, rsa->p, rsa->q, ctx))
-        goto err;
 
     /* (Step 5a) dP = d mod (p-1) */
     if (rsa->dmp1 == NULL)

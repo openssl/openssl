@@ -44,7 +44,6 @@ typedef struct prov_aes_ctx_st {
                 /* KMO-AES/KMF-AES parameter block - end */
             } param;
             unsigned int fc;
-            int res;
         } s390x;
 #endif /* defined(OPENSSL_CPUID_OBJ) && defined(__s390__) */
     } plat;

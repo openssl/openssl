@@ -303,7 +303,7 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
     return 1;
 }
 
-struct record_functions_st tls_1_3_funcs = {
+const struct record_functions_st tls_1_3_funcs = {
     tls13_set_crypto_state,
     tls13_cipher,
     NULL,

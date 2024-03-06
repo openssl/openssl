@@ -120,6 +120,7 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
     md_len = (size_t)mdi;
     key_len = EVP_CIPHER_get_key_length(ciph);
     iv_len = EVP_CIPHER_get_iv_length(ciph);
+
     if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
         (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
         mac_secret = &(p[0]);
@@ -374,7 +375,7 @@ int ssl3_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
                                 unsigned char *p,
                                 size_t len, size_t *secret_size)
 {
-    static const unsigned char *salt[3] = {
+    static const unsigned char *const salt[3] = {
 #ifndef CHARSET_EBCDIC
         (const unsigned char *)"A",
         (const unsigned char *)"BB",

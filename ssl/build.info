@@ -1,4 +1,4 @@
-SUBDIRS=record
+SUBDIRS=record rio
 
 LIBS=../libssl
 

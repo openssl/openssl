@@ -1,0 +1,3 @@
+$LIBSSL=../../libssl
+
+SOURCE[$LIBSSL]=poll_immediate.c

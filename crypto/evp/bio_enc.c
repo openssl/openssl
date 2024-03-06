@@ -132,6 +132,10 @@ static int enc_read(BIO *b, char *out, int outl)
     }
 
     blocksize = EVP_CIPHER_CTX_get_block_size(ctx->cipher);
+
+    if (blocksize == 0)
+        return 0;
+
     if (blocksize == 1)
         blocksize = 0;
 

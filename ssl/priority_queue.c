@@ -265,8 +265,14 @@ void *ossl_pqueue_remove(OSSL_PQUEUE *pq, size_t elem)
 
     ASSERT_USED(pq, n);
 
-    if (n == pq->htop - 1)
+    if (n == pq->htop - 1) {
+        pq->elements[elem].posn = pq->freelist;
+        pq->freelist = elem;
+#ifndef NDEBUG
+        pq->elements[elem].used = 0;
+#endif
         return pq->heap[--pq->htop].data;
+    }
     if (n > 0)
         pqueue_force_bottom(pq, n);
     return ossl_pqueue_pop(pq);

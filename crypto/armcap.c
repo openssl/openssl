@@ -298,7 +298,8 @@ void OPENSSL_cpuid_setup(void)
             size_t len = sizeof(uarch);
             if ((sysctlbyname("machdep.cpu.brand_string", uarch, &len, NULL, 0) == 0) &&
                ((strncmp(uarch, "Apple M1", 8) == 0) ||
-                (strncmp(uarch, "Apple M2", 8) == 0))) {
+                (strncmp(uarch, "Apple M2", 8) == 0) ||
+                (strncmp(uarch, "Apple M3", 8) == 0))) {
                 OPENSSL_armcap_P |= ARMV8_UNROLL8_EOR3;
                 OPENSSL_armcap_P |= ARMV8_HAVE_SHA3_AND_WORTH_USING;
             }
@@ -417,9 +418,14 @@ void OPENSSL_cpuid_setup(void)
     }
     if ((MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V1) ||
          MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N2) ||
+         MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_MICROSOFT, MICROSOFT_CPU_PART_COBALT_100) ||
          MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V2)) &&
         (OPENSSL_armcap_P & ARMV8_SHA3))
         OPENSSL_armcap_P |= ARMV8_UNROLL8_EOR3;
+    if ((MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V1) ||
+         MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V2)) &&
+        (OPENSSL_armcap_P & ARMV8_SHA3))
+        OPENSSL_armcap_P |= ARMV8_UNROLL12_EOR3;
     if ((MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_APPLE, APPLE_CPU_PART_M1_FIRESTORM)     ||
          MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_APPLE, APPLE_CPU_PART_M1_ICESTORM)      ||
          MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_APPLE, APPLE_CPU_PART_M1_FIRESTORM_PRO) ||

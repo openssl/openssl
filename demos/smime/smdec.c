@@ -31,7 +31,8 @@ int main(int argc, char **argv)
 
     rcert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
 
-    BIO_reset(tbio);
+    if (BIO_reset(tbio) < 0)
+        goto err;
 
     rkey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
 
@@ -59,8 +60,9 @@ int main(int argc, char **argv)
     if (!PKCS7_decrypt(p7, rkey, rcert, out, 0))
         goto err;
 
-    ret = EXIT_SUCCESS;
+    printf("Success\n");
 
+    ret = EXIT_SUCCESS;
  err:
     if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Signing Data\n");
@@ -74,5 +76,4 @@ int main(int argc, char **argv)
     BIO_free(tbio);
 
     return ret;
-
 }

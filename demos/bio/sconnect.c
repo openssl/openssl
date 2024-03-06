@@ -30,7 +30,6 @@ int main(int argc, char *argv[])
     const char *hostport = HOSTPORT;
     const char *CAfile = CAFILE;
     const char *hostname;
-    char *cp;
     BIO *out = NULL;
     char buf[1024 * 10], *p;
     SSL_CTX *ssl_ctx = NULL;

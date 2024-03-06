@@ -127,6 +127,6 @@ sub add_maximal_padding_filter
     } elsif ($sent_corrupted_payload) {
         # Check for bad_record_mac from client
         my $last_record = @{$proxy->record_list}[-1];
-        $fatal_alert = 1 if $last_record->is_fatal_alert(0) == 20;
+        $fatal_alert = 1 if $last_record->is_fatal_alert(0) == TLSProxy::Message::AL_DESC_BAD_RECORD_MAC;
     }
 }

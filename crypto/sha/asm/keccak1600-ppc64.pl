@@ -668,6 +668,8 @@ SHA3_squeeze:
 	subi	$out,r4,1		; prepare for stbu
 	mr	$len,r5
 	mr	$bsz,r6
+	cmplwi	r7,0                    ; r7 = 'next' argument
+	bne	.Lnext_block
 	b	.Loop_squeeze
 
 .align	4
@@ -698,6 +700,7 @@ SHA3_squeeze:
 	subic.	r6,r6,8
 	bgt	.Loop_squeeze
 
+.Lnext_block:
 	mr	r3,$A_flat
 	bl	KeccakF1600
 	subi	r3,$A_flat,8		; prepare for ldu

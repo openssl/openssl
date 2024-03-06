@@ -39,6 +39,7 @@ OSSL_CMP_CTX_set1_secretValue,
 OSSL_CMP_CTX_set1_recipient,
 OSSL_CMP_CTX_push0_geninfo_ITAV,
 OSSL_CMP_CTX_reset_geninfo_ITAVs,
+OSSL_CMP_CTX_get0_geninfo_ITAVs,
 OSSL_CMP_CTX_set1_extraCertsOut,
 OSSL_CMP_CTX_set0_newPkey,
 OSSL_CMP_CTX_get0_newPkey,
@@ -127,6 +128,8 @@ OSSL_CMP_CTX_set1_senderNonce
  int OSSL_CMP_CTX_set1_recipient(OSSL_CMP_CTX *ctx, const X509_NAME *name);
  int OSSL_CMP_CTX_push0_geninfo_ITAV(OSSL_CMP_CTX *ctx, OSSL_CMP_ITAV *itav);
  int OSSL_CMP_CTX_reset_geninfo_ITAVs(OSSL_CMP_CTX *ctx);
+ STACK_OF(OSSL_CMP_ITAV)
+     *OSSL_CMP_CTX_get0_geninfo_ITAVs(const OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_set1_extraCertsOut(OSSL_CMP_CTX *ctx,
                                      STACK_OF(X509) *extraCertsOut);
 
@@ -341,6 +344,11 @@ RFC 4210.
         Allow retrieving a trust anchor from extraCerts and using that
         to validate the certificate chain of an IP message.
 
+=item B<OSSL_CMP_OPT_NO_CACHE_EXTRACERTS>
+
+        Do not cache certificates received in the extraCerts CMP message field.
+        Otherwise they are stored to potentially help validate further messages.
+
 =back
 
 OSSL_CMP_CTX_get_option() reads the current value of the given option
@@ -469,6 +477,8 @@ of intermediate CAs that may be useful for path construction for the own CMP
 signer certificate, for the own TLS certificate (if any), when verifying peer
 CMP protection certificates, and when verifying newly enrolled certificates.
 The reference counts of those certificates handled successfully are increased.
+This list of untrusted certificates in I<ctx> will get augmented by extraCerts
+in received CMP messages unless B<OSSL_CMP_OPT_NO_CACHE_EXTRACERTS> is set.
 
 OSSL_CMP_CTX_get0_untrusted() returns a pointer to the
 list of untrusted certs in I<ctx>, which may be empty if unset.
@@ -540,11 +550,15 @@ the issuer of the CMP signer certificate,
 as far as any of those is present, else the NULL-DN as last resort.
 
 OSSL_CMP_CTX_push0_geninfo_ITAV() adds I<itav> to the stack in the I<ctx> to be
-added to the GeneralInfo field of the CMP PKIMessage header of a request
+added to the generalInfo field of the CMP PKIMessage header of a request
 message sent with this context.
 
 OSSL_CMP_CTX_reset_geninfo_ITAVs()
 clears any ITAVs that were added by OSSL_CMP_CTX_push0_geninfo_ITAV().
+
+OSSL_CMP_CTX_get0_geninfo_ITAVs() returns the list of ITAVs set in I<ctx>
+for inclusion in the generalInfo field of the CMP PKIMessage header of requests
+or NULL if not set.
 
 OSSL_CMP_CTX_set1_extraCertsOut() sets the stack of extraCerts that will be
 sent to remote.
@@ -737,6 +751,7 @@ OSSL_CMP_CTX_get_http_cb_arg(),
 OSSL_CMP_CTX_get_transfer_cb_arg(),
 OSSL_CMP_CTX_get0_trusted(),
 OSSL_CMP_CTX_get0_untrusted(),
+OSSL_CMP_CTX_get0_geninfo_ITAVs(),
 OSSL_CMP_CTX_get0_newPkey(),
 OSSL_CMP_CTX_get_certConf_cb_arg(),
 OSSL_CMP_CTX_get0_statusString(),
@@ -841,10 +856,11 @@ in OpenSSL 3.2.
 
 OSSL_CMP_CTX_reset_geninfo_ITAVs() was added in OpenSSL 3.0.8.
 
+OSSL_CMP_CTX_set1_serialNumber(),
 OSSL_CMP_CTX_get0_libctx(), OSSL_CMP_CTX_get0_propq(), and
 OSSL_CMP_CTX_get0_validatedSrvCert() were added in OpenSSL 3.2.
 
-OSSL_CMP_CTX_set1_serialNumber() was added in OpenSSL 3.2.
+OSSL_CMP_CTX_get0_geninfo_ITAVs() was added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 

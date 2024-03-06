@@ -16,6 +16,7 @@
 # include "internal/quic_ackm.h"
 # include "internal/quic_txpim.h"
 # include "internal/quic_stream.h"
+# include "internal/qlog.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -45,6 +46,8 @@ struct quic_fifd_st {
     void          (*sstream_updated)(uint64_t stream_id,
                                    void *arg);
     void           *sstream_updated_arg;
+    QLOG         *(*get_qlog_cb)(void *arg);
+    void           *get_qlog_cb_arg;
 };
 
 int ossl_quic_fifd_init(QUIC_FIFD *fifd,
@@ -69,11 +72,16 @@ int ossl_quic_fifd_init(QUIC_FIFD *fifd,
                         void *confirm_frame_arg,
                         void (*sstream_updated)(uint64_t stream_id,
                                                 void *arg),
-                        void *sstream_updated_arg);
+                        void *sstream_updated_arg,
+                        QLOG *(*get_qlog_cb)(void *arg),
+                        void *get_qlog_cb_arg);
 
 void ossl_quic_fifd_cleanup(QUIC_FIFD *fifd); /* (no-op) */
 
 int ossl_quic_fifd_pkt_commit(QUIC_FIFD *fifd, QUIC_TXPIM_PKT *pkt);
+
+void ossl_quic_fifd_set_qlog_cb(QUIC_FIFD *fifd, QLOG *(*get_qlog_cb)(void *arg),
+                                void *arg);
 
 # endif
 

@@ -176,6 +176,7 @@ struct prov_drbg_st {
 PROV_DRBG *ossl_rand_drbg_new
     (void *provctx, void *parent, const OSSL_DISPATCH *parent_dispatch,
      int (*dnew)(PROV_DRBG *ctx),
+     void (*dfree)(void *vctx),
      int (*instantiate)(PROV_DRBG *drbg,
                         const unsigned char *entropy, size_t entropylen,
                         const unsigned char *nonce, size_t noncelen,

@@ -61,6 +61,11 @@
 #   define NO_RECVMMSG
 #  endif
 # endif
+# if defined(__GNU__)
+   /* GNU/Hurd does not have IP_PKTINFO yet */
+   #undef NO_RECVMSG
+   #define NO_RECVMSG
+# endif
 # if !defined(M_METHOD)
 #  if defined(OPENSSL_SYS_WINDOWS) && defined(BIO_HAVE_WSAMSG) && !defined(NO_WSARECVMSG)
 #   define M_METHOD  M_METHOD_WSARECVMSG
@@ -98,7 +103,7 @@
     || M_METHOD == M_METHOD_WSARECVMSG
 #  if defined(__APPLE__)
     /*
-     * CMSG_SPACE is not a constant expresson on OSX even though POSIX
+     * CMSG_SPACE is not a constant expression on OSX even though POSIX
      * says it's supposed to be. This should be adequate.
      */
 #   define BIO_CMSG_ALLOC_LEN   64

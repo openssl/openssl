@@ -59,6 +59,11 @@ int OSSL_ENCODER_to_bio(OSSL_ENCODER_CTX *ctx, BIO *out)
         return 0;
     }
 
+    if (ctx->cleanup == NULL || ctx->construct == NULL) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_INIT_FAIL);
+        return 0;
+    }
+
     return encoder_process(&data) > 0;
 }
 

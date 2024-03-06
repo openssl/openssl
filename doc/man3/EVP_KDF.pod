@@ -20,7 +20,7 @@ EVP_KDF_CTX_gettable_params, EVP_KDF_CTX_settable_params - EVP KDF routines
  typedef struct evp_kdf_st EVP_KDF;
  typedef struct evp_kdf_ctx_st EVP_KDF_CTX;
 
- EVP_KDF_CTX *EVP_KDF_CTX_new(const EVP_KDF *kdf);
+ EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf);
  const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx);
  void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx);
  EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src);

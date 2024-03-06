@@ -9,6 +9,8 @@ use strict;
 
 package TLSProxy::ServerHello;
 
+use TLSProxy::Record;
+
 use vars '@ISA';
 push @ISA, 'TLSProxy::Message';
 
@@ -20,15 +22,23 @@ my $hrrrandom = pack("C*", 0xCF, 0x21, 0xAD, 0x74, 0xE5, 0x9A, 0x61, 0x11, 0xBE,
 sub new
 {
     my $class = shift;
-    my ($server,
+    my ($isdtls,
+        $server,
+        $msgseq,
+        $msgfrag,
+        $msgfragoffs,
         $data,
         $records,
         $startoffset,
         $message_frag_lens) = @_;
 
     my $self = $class->SUPER::new(
+        $isdtls,
         $server,
         TLSProxy::Message::MT_SERVER_HELLO,
+        $msgseq,
+        $msgfrag,
+        $msgfragoffs,
         $data,
         $records,
         $startoffset,
@@ -120,7 +130,7 @@ sub parse
     $self->process_data();
 
 
-    print "    Server Version:".$server_version."\n";
+    print "    Server Version:".$TLSProxy::Record::tls_version{$server_version}."\n";
     print "    Session ID Len:".$session_id_len."\n";
     print "    Ciphersuite:".$ciphersuite."\n";
     print "    Compression Method:".$comp_meth."\n";

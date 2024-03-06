@@ -10,6 +10,8 @@
 #include "internal/quic_tserver.h"
 #include "internal/quic_channel.h"
 #include "internal/quic_statm.h"
+#include "internal/quic_port.h"
+#include "internal/quic_engine.h"
 #include "internal/common.h"
 #include "internal/time.h"
 #include "quic_local.h"
@@ -25,8 +27,11 @@ struct quic_tserver_st {
     SSL *ssl;
 
     /*
-     * The QUIC channel providing the core QUIC connection implementation.
+     * The QUIC engine, port and channel providing the core QUIC connection
+     * implementation.
      */
+    QUIC_ENGINE     *engine;
+    QUIC_PORT       *port;
     QUIC_CHANNEL    *ch;
 
     /* The mutex we give to the QUIC channel. */
@@ -53,7 +58,7 @@ static int alpn_select_cb(SSL *ssl, const unsigned char **out,
     static const unsigned char alpndeflt[] = {
         8, 'o', 's', 's', 'l', 't', 'e', 's', 't'
     };
-    static const unsigned char *alpn;
+    const unsigned char *alpn;
     size_t alpnlen;
 
     if (srv->args.alpn == NULL) {
@@ -75,7 +80,8 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
                                     const char *certfile, const char *keyfile)
 {
     QUIC_TSERVER *srv = NULL;
-    QUIC_CHANNEL_ARGS ch_args = {0};
+    QUIC_ENGINE_ARGS engine_args = {0};
+    QUIC_PORT_ARGS port_args = {0};
     QUIC_CONNECTION *qc = NULL;
 
     if (args->net_rbio == NULL || args->net_wbio == NULL)
@@ -113,19 +119,26 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     if (srv->tls == NULL)
         goto err;
 
-    ch_args.libctx      = srv->args.libctx;
-    ch_args.propq       = srv->args.propq;
-    ch_args.tls         = srv->tls;
-    ch_args.mutex       = srv->mutex;
-    ch_args.is_server   = 1;
-    ch_args.now_cb      = srv->args.now_cb;
-    ch_args.now_cb_arg  = srv->args.now_cb_arg;
+    engine_args.libctx          = srv->args.libctx;
+    engine_args.propq           = srv->args.propq;
+    engine_args.mutex           = srv->mutex;
+    engine_args.now_cb          = srv->args.now_cb;
+    engine_args.now_cb_arg      = srv->args.now_cb_arg;
 
-    if ((srv->ch = ossl_quic_channel_new(&ch_args)) == NULL)
+    if ((srv->engine = ossl_quic_engine_new(&engine_args)) == NULL)
         goto err;
 
-    if (!ossl_quic_channel_set_net_rbio(srv->ch, srv->args.net_rbio)
-        || !ossl_quic_channel_set_net_wbio(srv->ch, srv->args.net_wbio))
+    port_args.channel_ctx       = srv->ctx;
+    port_args.is_multi_conn     = 1;
+
+    if ((srv->port = ossl_quic_engine_create_port(srv->engine, &port_args)) == NULL)
+        goto err;
+
+    if ((srv->ch = ossl_quic_port_create_incoming(srv->port, srv->tls)) == NULL)
+        goto err;
+
+    if (!ossl_quic_port_set_net_rbio(srv->port, srv->args.net_rbio)
+        || !ossl_quic_port_set_net_wbio(srv->port, srv->args.net_wbio))
         goto err;
 
     qc = OPENSSL_zalloc(sizeof(*qc));
@@ -143,6 +156,8 @@ err:
             SSL_CTX_free(srv->ctx);
         SSL_free(srv->tls);
         ossl_quic_channel_free(srv->ch);
+        ossl_quic_port_free(srv->port);
+        ossl_quic_engine_free(srv->engine);
 #if defined(OPENSSL_THREADS)
         ossl_crypto_mutex_free(&srv->mutex);
 #endif
@@ -158,11 +173,13 @@ void ossl_quic_tserver_free(QUIC_TSERVER *srv)
     if (srv == NULL)
         return;
 
+    SSL_free(srv->tls);
     ossl_quic_channel_free(srv->ch);
+    ossl_quic_port_free(srv->port);
+    ossl_quic_engine_free(srv->engine);
     BIO_free_all(srv->args.net_rbio);
     BIO_free_all(srv->args.net_wbio);
     OPENSSL_free(srv->ssl);
-    SSL_free(srv->tls);
     SSL_CTX_free(srv->ctx);
 #if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_free(&srv->mutex);

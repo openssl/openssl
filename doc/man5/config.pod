@@ -265,8 +265,19 @@ Specifies the pathname of the module (typically a shared library) to load.
 
 =item B<activate>
 
-If present, the module is activated. The value assigned to this name is not
-significant.
+If present and set to one of the values yes, on, true or 1, then the associated
+provider will be activated. Conversely, setting this value to no, off, false, or
+0 will prevent the provider from being activated. Settings can be given in lower
+or uppercase. Setting activate to any other setting, or omitting a setting
+value will result in an error.
+
+= item B<soft_load>
+
+If enabled, informs the library to clear the error stack on failure to activate
+requested provider.  A value of 1, yes, true or on (in lower or uppercase) will
+activate this setting, while a value of 0, no, false, of off (again in lower or
+uppercase) will disable this setting.  Any other value will produce an error.
+Note this setting defaults to off if not provided
 
 =back
 

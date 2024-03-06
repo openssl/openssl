@@ -91,7 +91,7 @@ int ossl_quic_thread_assist_init_start(QUIC_THREAD_ASSIST *qta,
     qta->t = ossl_crypto_thread_native_start(assist_thread_main,
                                              qta, /*joinable=*/1);
     if (qta->t == NULL) {
-        ossl_crypto_condvar_free(qta->cv);
+        ossl_crypto_condvar_free(&qta->cv);
         return 0;
     }
 

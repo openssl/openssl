@@ -198,8 +198,7 @@ This digest method can only handle one block of input.
 
 =item B<EVP_MD_FLAG_XOF>
 
-This digest method is an extensible-output function (XOF) and supports
-setting the B<OSSL_DIGEST_PARAM_XOFLEN> parameter.
+This digest method is an extensible-output function (XOF).
 
 =item B<EVP_MD_FLAG_DIGALGID_NULL>
 

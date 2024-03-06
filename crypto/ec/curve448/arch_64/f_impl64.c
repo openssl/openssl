@@ -45,9 +45,9 @@ void ossl_gf_mul(gf_s * RESTRICT cs, const gf as, const gf bs)
             accum0 += widemul(a[j + 4], b[i - j + 4]);
         }
         for (; j < 4; j++) {
-            accum2 += widemul(a[j], b[i - j + 8]);
-            accum1 += widemul(aa[j], bbb[i - j + 4]);
-            accum0 += widemul(a[j + 4], bb[i - j + 4]);
+            accum2 += widemul(a[j], b[i + 8 - j]);
+            accum1 += widemul(aa[j], bbb[i + 4 - j]);
+            accum0 += widemul(a[j + 4], bb[i + 4 - j]);
         }
 
         accum1 -= accum2;

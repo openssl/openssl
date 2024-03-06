@@ -21,7 +21,6 @@ int main(int argc, char **argv)
     int ret = EXIT_FAILURE;
 
     /*
-     * On OpenSSL 0.9.9 only:
      * for streaming set PKCS7_STREAM
      */
     int flags = PKCS7_STREAM;
@@ -73,8 +72,9 @@ int main(int argc, char **argv)
     if (!SMIME_write_PKCS7(out, p7, in, flags))
         goto err;
 
-    ret = EXIT_SUCCESS;
+    printf("Success\n");
 
+    ret = EXIT_SUCCESS;
  err:
     if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Encrypting Data\n");
@@ -87,5 +87,4 @@ int main(int argc, char **argv)
     BIO_free(out);
     BIO_free(tbio);
     return ret;
-
 }

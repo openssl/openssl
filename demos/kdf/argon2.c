@@ -145,6 +145,8 @@ int main(int argc, char **argv)
         goto end;
     }
 
+    printf("Success\n");
+
     rv = EXIT_SUCCESS;
 end:
     EVP_KDF_CTX_free(kctx);

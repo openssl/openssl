@@ -30,6 +30,9 @@ gen smrsa2.pem "/CN=Test SMIME EE RSA #2" usr_rsa_cert >>smrsa2.pem
 cp ../certs/ee-key-4096.pem smrsa3.pem
 gen smrsa3.pem "/CN=Test SMIME EE RSA #3" usr_rsa_cert >>smrsa3.pem
 
+$OPENSSL x509 -in smrsa3.pem > smrsa3-cert.pem
+$OPENSSL pkey -in smrsa3.pem > smrsa3-key.pem
+
 # Create DSA certificates with respective extensions
 
 cp ../certs/server-dsa-key.pem smdsa1.pem

@@ -8,6 +8,7 @@ srv_secret = pass:test
 # not needed: accept_unprotected = 1
 no_check_time = 1
 srv_trusted = signer_root.crt
+no_cache_extracerts = 1
 
 ref_cert = signer_only.crt
 rsp_cert = signer_only.crt

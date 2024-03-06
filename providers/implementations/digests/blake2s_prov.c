@@ -314,8 +314,10 @@ int ossl_blake2s_final(unsigned char *md, BLAKE2S_CTX *c)
     for (i = 0; i < iter; ++i)
         store32(target + sizeof(c->h[i]) * i, c->h[i]);
 
-    if (target != md)
+    if (target != md) {
         memcpy(md, target, c->outlen);
+        OPENSSL_cleanse(target, sizeof(outbuffer));
+    }
 
     OPENSSL_cleanse(c, sizeof(BLAKE2S_CTX));
     return 1;

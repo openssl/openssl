@@ -573,6 +573,21 @@ int tls_parse_ctos_psk_kex_modes(SSL_CONNECTION *s, PACKET *pkt,
                 && (s->options & SSL_OP_ALLOW_NO_DHE_KEX) != 0)
             s->ext.psk_kex_mode |= TLSEXT_KEX_MODE_FLAG_KE;
     }
+
+    if (((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) != 0)
+            && (s->options & SSL_OP_PREFER_NO_DHE_KEX) != 0) {
+
+        /*
+         * If NO_DHE is supported and preferred, then we only remember this
+         * mode. DHE PSK will not be used for sure, because in any case where
+         * it would be supported (i.e. if a key share is present), NO_DHE would
+         * be supported as well. As the latter is preferred it would be
+         * chosen. By removing DHE PSK here, we don't have to deal with the
+         * SSL_OP_PREFER_NO_DHE_KEX option in any other place.
+         */
+        s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_KE;
+    }
+
 #endif
 
     return 1;
@@ -1645,10 +1660,13 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         }
         return EXT_RETURN_NOT_SENT;
     }
+
     if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0) {
         /*
-         * PSK ('hit') and explicitly not doing DHE (if the client sent the
-         * DHE option we always take it); don't send key share.
+         * PSK ('hit') and explicitly not doing DHE. If the client sent the
+         * DHE option, we take it by default, except if non-DHE would be
+         * preferred by config, but this case would have been handled in
+         * tls_parse_ctos_psk_kex_modes().
          */
         return EXT_RETURN_NOT_SENT;
     }

@@ -241,7 +241,7 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
         return 1;
 
     /* ECDHParameters accepts a single group name */
-    if (strstr(value, ":") != NULL)
+    if (strchr(value, ':') != NULL)
         return 0;
 
     if (cctx->ctx)
@@ -391,6 +391,7 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL_INV("EncryptThenMac", SSL_OP_NO_ENCRYPT_THEN_MAC),
         SSL_FLAG_TBL("NoRenegotiation", SSL_OP_NO_RENEGOTIATION),
         SSL_FLAG_TBL("AllowNoDHEKEX", SSL_OP_ALLOW_NO_DHE_KEX),
+        SSL_FLAG_TBL("PreferNoDHEKEX", SSL_OP_PREFER_NO_DHE_KEX),
         SSL_FLAG_TBL("PrioritizeChaCha", SSL_OP_PRIORITIZE_CHACHA),
         SSL_FLAG_TBL("MiddleboxCompat", SSL_OP_ENABLE_MIDDLEBOX_COMPAT),
         SSL_FLAG_TBL_INV("AntiReplay", SSL_OP_NO_ANTI_REPLAY),
@@ -725,6 +726,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_SWITCH("no_resumption_on_reneg", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("no_legacy_server_connect", SSL_CONF_FLAG_CLIENT),
     SSL_CONF_CMD_SWITCH("allow_no_dhe_kex", 0),
+    SSL_CONF_CMD_SWITCH("prefer_no_dhe_kex", 0),
     SSL_CONF_CMD_SWITCH("prioritize_chacha", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("strict", 0),
     SSL_CONF_CMD_SWITCH("no_middlebox", 0),
@@ -816,6 +818,8 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
     {SSL_OP_LEGACY_SERVER_CONNECT, SSL_TFLAG_INV},
     /* allow_no_dhe_kex */
     {SSL_OP_ALLOW_NO_DHE_KEX, 0},
+    /* prefer_no_dhe_kex */
+    {SSL_OP_PREFER_NO_DHE_KEX, 0},
     /* chacha reprioritization */
     {SSL_OP_PRIORITIZE_CHACHA, 0},
     {SSL_CERT_FLAG_TLS_STRICT, SSL_TFLAG_CERT}, /* strict */
@@ -898,9 +902,12 @@ static int ctrl_switch_option(SSL_CONF_CTX *cctx, const ssl_conf_cmd_tbl *cmd)
     /* Find index of command in table */
     size_t idx = cmd - ssl_conf_cmds;
     const ssl_switch_tbl *scmd;
+
     /* Sanity check index */
-    if (idx >= OSSL_NELEM(ssl_cmd_switches))
+    if (idx >= OSSL_NELEM(ssl_cmd_switches)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
     /* Obtain switches entry with same index */
     scmd = ssl_cmd_switches + idx;
     ssl_set_option(cctx, scmd->name_flags, scmd->option_value, 1);
@@ -916,28 +923,33 @@ int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value)
     }
 
     if (!ssl_conf_cmd_skip_prefix(cctx, &cmd))
-        return -2;
+        goto unknown_cmd;
 
     runcmd = ssl_conf_cmd_lookup(cctx, cmd);
 
     if (runcmd) {
-        int rv;
+        int rv = -3;
+
         if (runcmd->value_type == SSL_CONF_TYPE_NONE) {
             return ctrl_switch_option(cctx, runcmd);
         }
         if (value == NULL)
-            return -3;
+            goto bad_value;
         rv = runcmd->cmd(cctx, value);
         if (rv > 0)
             return 2;
-        if (rv == -2)
-            return -2;
+        if (rv != -2)
+            rv = 0;
+
+ bad_value:
         if (cctx->flags & SSL_CONF_FLAG_SHOW_ERRORS)
             ERR_raise_data(ERR_LIB_SSL, SSL_R_BAD_VALUE,
-                           "cmd=%s, value=%s", cmd, value);
-        return 0;
+                           "cmd=%s, value=%s", cmd,
+                           value != NULL ? value : "<EMPTY>");
+        return rv;
     }
 
+ unknown_cmd:
     if (cctx->flags & SSL_CONF_FLAG_SHOW_ERRORS)
         ERR_raise_data(ERR_LIB_SSL, SSL_R_UNKNOWN_CMD_NAME, "cmd=%s", cmd);
 

@@ -151,7 +151,7 @@ cleanup:
     return ret;
 }
 
-static int do_decrypt(OSSL_LIB_CTX *libctx, const char *in, size_t in_len,
+static int do_decrypt(OSSL_LIB_CTX *libctx, const unsigned char *in, size_t in_len,
                       unsigned char **out, size_t *out_len)
 {
     int ret = 0, public = 0;

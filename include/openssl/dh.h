@@ -25,7 +25,11 @@ extern "C" {
 
 #include <stdlib.h>
 
-/* DH parameter generation types used by EVP_PKEY_CTX_set_dh_paramgen_type() */
+/*
+ * DH parameter generation types used by EVP_PKEY_CTX_set_dh_paramgen_type()
+ * Note that additions/changes to this set of values requires corresponding
+ * adjustments to range checks in dh_gen()
+ */
 # define DH_PARAMGEN_TYPE_GENERATOR     0   /* Use a safe prime generator */
 # define DH_PARAMGEN_TYPE_FIPS_186_2    1   /* Use FIPS186-2 standard */
 # define DH_PARAMGEN_TYPE_FIPS_186_4    2   /* Use FIPS186-4 standard */
@@ -144,7 +148,7 @@ DECLARE_ASN1_ITEM(DHparams)
 #   define DH_GENERATOR_3          3
 #   define DH_GENERATOR_5          5
 
-/* DH_check error codes */
+/* DH_check error codes, some of them shared with DH_check_pub_key */
 /*
  * NB: These values must align with the equivalently named macros in
  * internal/ffc.h.
@@ -154,10 +158,10 @@ DECLARE_ASN1_ITEM(DHparams)
 #   define DH_UNABLE_TO_CHECK_GENERATOR    0x04
 #   define DH_NOT_SUITABLE_GENERATOR       0x08
 #   define DH_CHECK_Q_NOT_PRIME            0x10
-#   define DH_CHECK_INVALID_Q_VALUE        0x20
+#   define DH_CHECK_INVALID_Q_VALUE        0x20 /* +DH_check_pub_key */
 #   define DH_CHECK_INVALID_J_VALUE        0x40
 #   define DH_MODULUS_TOO_SMALL            0x80
-#   define DH_MODULUS_TOO_LARGE            0x100
+#   define DH_MODULUS_TOO_LARGE            0x100 /* +DH_check_pub_key */
 
 /* DH_check_pub_key error codes */
 #   define DH_CHECK_PUBKEY_TOO_SMALL       0x01

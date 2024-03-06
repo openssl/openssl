@@ -17,9 +17,11 @@
 #include <openssl/sha.h>
 #include <openssl/rand.h>
 #include "crypto/ecx.h"
+#include "crypto/rand.h"
 #include "internal/hpke_util.h"
 #include "internal/packet.h"
 #include "internal/nelem.h"
+#include "internal/common.h"
 
 /*
  * Delimiter used in OSSL_HPKE_str2suite
@@ -189,12 +191,12 @@ const OSSL_HPKE_KEM_INFO *ossl_HPKE_KEM_INFO_find_id(uint16_t kemid)
 
 const OSSL_HPKE_KEM_INFO *ossl_HPKE_KEM_INFO_find_random(OSSL_LIB_CTX *ctx)
 {
-    unsigned char rval = 0;
-    int sz = OSSL_NELEM(hpke_kem_tab);
+    uint32_t rval = 0;
+    int err = 0;
+    size_t sz = OSSL_NELEM(hpke_kem_tab);
 
-    if (RAND_bytes_ex(ctx, &rval, sizeof(rval), 0) <= 0)
-        return NULL;
-    return &hpke_kem_tab[rval % sz];
+    rval = ossl_rand_uniform_uint32(ctx, sz, &err);
+    return (err == 1 ? NULL : &hpke_kem_tab[rval]);
 }
 
 const OSSL_HPKE_KDF_INFO *ossl_HPKE_KDF_INFO_find_id(uint16_t kdfid)
@@ -211,12 +213,12 @@ const OSSL_HPKE_KDF_INFO *ossl_HPKE_KDF_INFO_find_id(uint16_t kdfid)
 
 const OSSL_HPKE_KDF_INFO *ossl_HPKE_KDF_INFO_find_random(OSSL_LIB_CTX *ctx)
 {
-    unsigned char rval = 0;
-    int sz = OSSL_NELEM(hpke_kdf_tab);
+    uint32_t rval = 0;
+    int err = 0;
+    size_t sz = OSSL_NELEM(hpke_kdf_tab);
 
-    if (RAND_bytes_ex(ctx, &rval, sizeof(rval), 0) <= 0)
-        return NULL;
-    return &hpke_kdf_tab[rval % sz];
+    rval = ossl_rand_uniform_uint32(ctx, sz, &err);
+    return (err == 1 ? NULL : &hpke_kdf_tab[rval]);
 }
 
 const OSSL_HPKE_AEAD_INFO *ossl_HPKE_AEAD_INFO_find_id(uint16_t aeadid)
@@ -233,13 +235,13 @@ const OSSL_HPKE_AEAD_INFO *ossl_HPKE_AEAD_INFO_find_id(uint16_t aeadid)
 
 const OSSL_HPKE_AEAD_INFO *ossl_HPKE_AEAD_INFO_find_random(OSSL_LIB_CTX *ctx)
 {
-    unsigned char rval = 0;
+    uint32_t rval = 0;
+    int err = 0;
     /* the minus 1 below is so we don't pick the EXPORTONLY codepoint */
-    int sz = OSSL_NELEM(hpke_aead_tab) - 1;
+    size_t sz = OSSL_NELEM(hpke_aead_tab) - 1;
 
-    if (RAND_bytes_ex(ctx, &rval, sizeof(rval), 0) <= 0)
-        return NULL;
-    return &hpke_aead_tab[rval % sz];
+    rval = ossl_rand_uniform_uint32(ctx, sz, &err);
+    return (err == 1 ? NULL : &hpke_aead_tab[rval]);
 }
 
 static int kdf_derive(EVP_KDF_CTX *kctx,

@@ -331,7 +331,8 @@ static int drbg_hmac_new(PROV_DRBG *drbg)
 static void *drbg_hmac_new_wrapper(void *provctx, void *parent,
                                    const OSSL_DISPATCH *parent_dispatch)
 {
-    return ossl_rand_drbg_new(provctx, parent, parent_dispatch, &drbg_hmac_new,
+    return ossl_rand_drbg_new(provctx, parent, parent_dispatch,
+                              &drbg_hmac_new, &drbg_hmac_free,
                               &drbg_hmac_instantiate, &drbg_hmac_uninstantiate,
                               &drbg_hmac_reseed, &drbg_hmac_generate);
 }

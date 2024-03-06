@@ -300,12 +300,16 @@ OSSL_CORE_MAKE_FUNC(int, provider_self_test, (void *provctx))
 # define OSSL_FUNC_DIGEST_GETTABLE_PARAMS           11
 # define OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS       12
 # define OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS       13
+# define OSSL_FUNC_DIGEST_SQUEEZE                   14
 
 OSSL_CORE_MAKE_FUNC(void *, digest_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, digest_init, (void *dctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, digest_update,
                     (void *dctx, const unsigned char *in, size_t inl))
 OSSL_CORE_MAKE_FUNC(int, digest_final,
+                    (void *dctx,
+                     unsigned char *out, size_t *outl, size_t outsz))
+OSSL_CORE_MAKE_FUNC(int, digest_squeeze,
                     (void *dctx,
                      unsigned char *out, size_t *outl, size_t outsz))
 OSSL_CORE_MAKE_FUNC(int, digest_digest,

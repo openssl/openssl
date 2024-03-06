@@ -30,6 +30,26 @@ static void *keymgmt_new(void)
     return keymgmt;
 }
 
+#ifndef FIPS_MODULE
+static void help_get_legacy_alg_type_from_keymgmt(const char *keytype,
+                                                  void *arg)
+{
+    int *type = arg;
+
+    if (*type == NID_undef)
+        *type = evp_pkey_name2type(keytype);
+}
+
+static int get_legacy_alg_type_from_keymgmt(const EVP_KEYMGMT *keymgmt)
+{
+    int type = NID_undef;
+
+    EVP_KEYMGMT_names_do_all(keymgmt, help_get_legacy_alg_type_from_keymgmt,
+                             &type);
+    return type;
+}
+#endif
+
 static void *keymgmt_from_algorithm(int name_id,
                                     const OSSL_ALGORITHM *algodef,
                                     OSSL_PROVIDER *prov)
@@ -218,6 +238,10 @@ static void *keymgmt_from_algorithm(int name_id,
     if (prov != NULL)
         ossl_provider_up_ref(prov);
 
+#ifndef FIPS_MODULE
+    keymgmt->legacy_alg = get_legacy_alg_type_from_keymgmt(keymgmt);
+#endif
+
     return keymgmt;
 }
 
@@ -273,6 +297,11 @@ const OSSL_PROVIDER *EVP_KEYMGMT_get0_provider(const EVP_KEYMGMT *keymgmt)
 int evp_keymgmt_get_number(const EVP_KEYMGMT *keymgmt)
 {
     return keymgmt->name_id;
+}
+
+int evp_keymgmt_get_legacy_alg(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->legacy_alg;
 }
 
 const char *EVP_KEYMGMT_get0_description(const EVP_KEYMGMT *keymgmt)

@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-ERR_set_mark, ERR_clear_last_mark, ERR_pop_to_mark, ERR_count_to_mark - set
-mark, clear mark and pop errors until mark
+ERR_set_mark, ERR_clear_last_mark, ERR_pop_to_mark, ERR_count_to_mark, ERR_pop -
+set mark, clear mark, pop errors until mark and pop last error
 
 =head1 SYNOPSIS
 
@@ -13,6 +13,7 @@ mark, clear mark and pop errors until mark
  int ERR_pop_to_mark(void);
  int ERR_clear_last_mark(void);
  int ERR_count_to_mark(void);
+ int ERR_pop(void);
 
 =head1 DESCRIPTION
 
@@ -28,6 +29,9 @@ ERR_count_to_mark() returns the number of entries on the error stack above the
 most recently marked entry, not including that entry. If there is no mark in the
 error stack, the number of entries in the error stack is returned.
 
+ERR_pop() unconditionally pops a single error entry from the top of the error
+stack (which is the entry obtainable via L<ERR_peek_last_error(3)>).
+
 =head1 RETURN VALUES
 
 ERR_set_mark() returns 0 if the error stack is empty, otherwise 1.
@@ -37,6 +41,12 @@ error stack, which implies that the stack became empty, otherwise 1.
 
 ERR_count_to_mark() returns the number of error stack entries found above the
 most recent mark, if any, or the total number of error stack entries.
+
+ERR_pop() returns 1 if an error was popped or 0 if the error stack was empty.
+
+=head1 HISTORY
+
+ERR_pop() was added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 

@@ -2007,7 +2007,7 @@ sub INITIAL_BLOCKS_PARTIAL_GHASH {
   my $ZT8             = $_[20];    # [clobbered] ZMM temporary
   my $PBLOCK_LEN      = $_[21];    # [in] partial block length
   my $GH              = $_[22];    # [in] ZMM with hi product part
-  my $GM              = $_[23];    # [in] ZMM with mid prodcut part
+  my $GM              = $_[23];    # [in] ZMM with mid product part
   my $GL              = $_[24];    # [in] ZMM with lo product part
 
   my $label_suffix = $label_count++;

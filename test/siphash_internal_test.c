@@ -257,7 +257,7 @@ static int test_siphash(int idx)
 static int test_siphash_basic(void)
 {
     SIPHASH siphash = { 0, };
-    unsigned char key[SIPHASH_KEY_SIZE];
+    static const unsigned char key[SIPHASH_KEY_SIZE] = {0};
     unsigned char output[SIPHASH_MAX_DIGEST_SIZE];
 
     /* Use invalid hash size */

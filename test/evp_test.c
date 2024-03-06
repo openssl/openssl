@@ -1131,7 +1131,7 @@ static int cipher_test_run(EVP_TEST *t)
         t->err = "NO_KEY";
         return 0;
     }
-    if (!cdat->iv && EVP_CIPHER_get_iv_length(cdat->cipher)) {
+    if (!cdat->iv && EVP_CIPHER_get_iv_length(cdat->cipher) > 0) {
         /* IV is optional and usually omitted in wrap mode */
         if (EVP_CIPHER_get_mode(cdat->cipher) != EVP_CIPH_WRAP_MODE) {
             t->err = "NO_IV";
@@ -1514,6 +1514,7 @@ static int mac_test_run_mac(EVP_TEST *t)
     EVP_MAC_CTX *ctx = NULL;
     unsigned char *got = NULL;
     size_t got_len = 0, size = 0;
+    size_t size_before_init = 0, size_after_init, size_val = 0;
     int i, block_size = -1, output_size = -1;
     OSSL_PARAM params[21], sizes[3], *psizes = sizes;
     size_t params_n = 0;
@@ -1610,6 +1611,9 @@ static int mac_test_run_mac(EVP_TEST *t)
         }
         params_n++;
 
+        if (strcmp(tmpkey, "size") == 0)
+            size_val = (size_t)strtoul(tmpval, NULL, 0);
+
         OPENSSL_free(tmpkey);
     }
     params[params_n] = OSSL_PARAM_construct_end();
@@ -1618,10 +1622,28 @@ static int mac_test_run_mac(EVP_TEST *t)
         t->err = "MAC_CREATE_ERROR";
         goto err;
     }
-
+    if (fips_provider_version_gt(libctx, 3, 2, 0))
+        size_before_init = EVP_MAC_CTX_get_mac_size(ctx);
     if (!EVP_MAC_init(ctx, expected->key, expected->key_len, params)) {
         t->err = "MAC_INIT_ERROR";
         goto err;
+    }
+    size_after_init = EVP_MAC_CTX_get_mac_size(ctx);
+    if (!TEST_false(size_before_init == 0 && size_after_init == 0)) {
+        t->err = "MAC SIZE not set";
+        goto err;
+    }
+    if (size_before_init != 0) {
+        /* mac-size not modified by init params */
+        if (size_val == 0 && !TEST_size_t_eq(size_before_init, size_after_init)) {
+            t->err = "MAC SIZE check failed";
+            goto err;
+        }
+        /* mac-size modified by init params */
+        if (size_val != 0 && !TEST_size_t_eq(size_val, size_after_init)) {
+            t->err = "MAC SIZE check failed";
+            goto err;
+        }
     }
     if (expected->output_size >= 0)
         *psizes++ = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_SIZE,
@@ -2837,7 +2859,9 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
     if (!TEST_ptr(name = OPENSSL_strdup(value)))
         return 0;
     p = strchr(name, ':');
-    if (p != NULL)
+    if (p == NULL)
+        p = "";
+    else
         *p++ = '\0';
 
     if (strcmp(name, "r") == 0
@@ -2890,30 +2914,29 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
     }
 
     rv = OSSL_PARAM_allocate_from_text(kdata->p, defs, name, p,
-                                       p != NULL ? strlen(p) : 0, NULL);
+                                       strlen(p), NULL);
     *++kdata->p = OSSL_PARAM_construct_end();
     if (!rv) {
         t->err = "KDF_PARAM_ERROR";
         OPENSSL_free(name);
         return 0;
     }
-    if (p != NULL && strcmp(name, "digest") == 0) {
+    if (strcmp(name, "digest") == 0) {
         if (is_digest_disabled(p)) {
             TEST_info("skipping, '%s' is disabled", p);
             t->skip = 1;
         }
         goto end;
     }
-    if (p != NULL
-        && (strcmp(name, "cipher") == 0
-            || strcmp(name, "cekalg") == 0)
+
+    if ((strcmp(name, "cipher") == 0
+        || strcmp(name, "cekalg") == 0)
         && is_cipher_disabled(p)) {
         TEST_info("skipping, '%s' is disabled", p);
         t->skip = 1;
         goto end;
     }
-    if (p != NULL
-        && (strcmp(name, "mac") == 0)
+    if ((strcmp(name, "mac") == 0)
         && is_mac_disabled(p)) {
         TEST_info("skipping, '%s' is disabled", p);
         t->skip = 1;

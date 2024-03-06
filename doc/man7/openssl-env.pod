@@ -87,6 +87,14 @@ See L<OPENSSL_ia32cap(3)>, L<OPENSSL_s390xcap(3)>.
 Specify a proxy hostname.
 See L<OSSL_HTTP_parse_url(3)>.
 
+=item B<QLOGDIR>
+
+Specifies a QUIC qlog output directory. See L<openssl-qlog(7)>.
+
+=item B<OSSL_QFILTER>
+
+Used to set a QUIC qlog filter specification. See L<openssl-qlog(7)>.
+
 =back
 
 =head1 COPYRIGHT
