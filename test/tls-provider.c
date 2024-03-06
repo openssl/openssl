@@ -396,6 +396,7 @@ static int tls_prov_get_capabilities(void *provctx, const char *capability,
 
         for (i = 0; i < NUM_DUMMY_GROUPS; i++) {
             OSSL_PARAM dummygroup[OSSL_NELEM(xor_group_params)];
+            unsigned int grpid;
 
             memcpy(dummygroup, xor_group_params, sizeof(xor_group_params));
 
@@ -411,7 +412,8 @@ static int tls_prov_get_capabilities(void *provctx, const char *capability,
             dummygroup[0].data = dummy_group_names[i];
             dummygroup[0].data_size = strlen(dummy_group_names[i]) + 1;
             /* assign unique group IDs also to dummy groups for registration */
-            *((int *)(dummygroup[3].data)) = 65279 - NUM_DUMMY_GROUPS + i;
+            grpid = 65279 - NUM_DUMMY_GROUPS + i;
+            dummygroup[3].data = &grpid;
             ret &= cb(dummygroup, arg);
         }
     }
