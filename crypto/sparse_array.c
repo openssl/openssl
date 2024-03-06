@@ -19,7 +19,7 @@
  * depth of the tree but potentially wastes more memory.  That is, this is a
  * direct space versus time tradeoff.
  *
- * The default is to use four bits which means that the are 16
+ * The default is to use four bits which means that there are 16
  * pointers in each tree node.
  *
  * The library builder is also permitted to define other sizes in the closed
