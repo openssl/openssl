@@ -413,8 +413,8 @@ static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
                             const X509_CRL *crl)
 {
     OSSL_CMP_CRLSTATUS *crlstatus;
-    DIST_POINT_NAME *dpn;
-    GENERAL_NAMES *issuer;
+    DIST_POINT_NAME *dpn = NULL;
+    GENERAL_NAMES *issuer = NULL;
     ASN1_TIME *thisupd = NULL;
 
     if (sk_OSSL_CMP_CRLSTATUS_num(crlStatusList) != 1) {
@@ -477,7 +477,7 @@ static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
         break;
     case NID_id_it_crlStatusList:
         {
-            STACK_OF(OSSL_CMP_CRLSTATUS) *crlstatuslist;
+            STACK_OF(OSSL_CMP_CRLSTATUS) *crlstatuslist = NULL;
             int res = 0;
 
             if (!OSSL_CMP_ITAV_get0_crlStatusList(req, &crlstatuslist))

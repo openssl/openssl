@@ -62,7 +62,7 @@ int GENERAL_NAME_set1_X509_NAME(GENERAL_NAME **tgt, const X509_NAME *src)
 {
     GENERAL_NAME *name;
 
-    if (tgt == NULL){
+    if (tgt == NULL) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_ARGUMENT);
         return 0;
     }

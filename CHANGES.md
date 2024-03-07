@@ -47,6 +47,12 @@ OpenSSL 3.4
 
    *Tim Perry*
 
+ * Added support for requesting CRL in CMP.
+
+   This work was sponsored by Siemens AG.
+
+    *Rajeev Ranjan*
+
  * Added Attribute Certificate (RFC 5755) support. Attribute
    Certificates can be created, parsed, modified and printed via the
    public API. There is no command-line tool support at this time.
@@ -109,10 +115,6 @@ OpenSSL 3.3
    omission of a value for these settings will result in an error.
 
     *Neil Horman*
-
- * Added support for requesting CRL in CMP.
-
-    *Rajeev Ranjan, Siemens AG*
 
  * Added `-set_issuer` and `-set_subject` options to `openssl x509` to
    override the Issuer and Subject when creating a certificate. The `-subj`
