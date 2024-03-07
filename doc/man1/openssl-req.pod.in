@@ -148,7 +148,9 @@ Prints out the value of the modulus of the public key contained in the request.
 
 =item B<-verify>
 
-Verifies the self-signature on the request.
+Verifies the self-signature on the request. If the verification fails,
+the program will immediately exit, i.e. further option processing
+(e.g. B<-text>) is skipped.
 
 =item B<-new>
 

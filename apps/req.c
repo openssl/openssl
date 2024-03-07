@@ -918,9 +918,10 @@ int req_main(int argc, char **argv)
 
         if (i < 0)
             goto end;
-        if (i == 0)
+        if (i == 0) {
             BIO_printf(bio_err, "Certificate request self-signature verify failure\n");
-        else /* i > 0 */
+	    goto end;
+        } else /* i > 0 */
             BIO_printf(bio_out, "Certificate request self-signature verify OK\n");
     }
 
