@@ -1955,20 +1955,20 @@ static int add_certProfile(OSSL_CMP_CTX *ctx, const char *name)
 
     if ((sk = sk_ASN1_UTF8STRING_new_reserve(NULL, 1)) == NULL)
         return 0;
-   if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
-       goto err;
-   if (!ASN1_STRING_set(utf8string, name, (int)strlen(name))) {
-       ASN1_STRING_free(utf8string);
-       goto err;
-   }
-   /* Due to sk_ASN1_UTF8STRING_new_reserve(NULL, 1), this surely succeeds: */
-   (void)sk_ASN1_UTF8STRING_push(sk, utf8string);
-   if ((itav = OSSL_CMP_ITAV_new0_certProfile(sk)) == NULL)
-       goto err;
-   if (OSSL_CMP_CTX_push0_geninfo_ITAV(ctx, itav))
-       return 1;
-   OSSL_CMP_ITAV_free(itav);
-   return 0;
+    if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
+        goto err;
+    if (!ASN1_STRING_set(utf8string, name, (int)strlen(name))) {
+        ASN1_STRING_free(utf8string);
+        goto err;
+    }
+    /* Due to sk_ASN1_UTF8STRING_new_reserve(NULL, 1), this surely succeeds: */
+    (void)sk_ASN1_UTF8STRING_push(sk, utf8string);
+    if ((itav = OSSL_CMP_ITAV_new0_certProfile(sk)) == NULL)
+        goto err;
+    if (OSSL_CMP_CTX_push0_geninfo_ITAV(ctx, itav))
+        return 1;
+    OSSL_CMP_ITAV_free(itav);
+    return 0;
 
  err:
     sk_ASN1_UTF8STRING_pop_free(sk, ASN1_UTF8STRING_free);
@@ -2013,7 +2013,7 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
             if (*ptr != '\0') {
                 if (*ptr != ',') {
                     CMP_err1("Missing ',' or end of -geninfo arg after int at %.40s",
-                        ptr);
+                             ptr);
                     goto err;
                 }
                 ptr++;
@@ -3513,10 +3513,10 @@ int cmp_main(int argc, char **argv)
     if (opt_reqout_only != NULL) {
         const char *msg = "option is ignored since -reqout_only option is given";
 
-#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
+# if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
         if (opt_server != NULL)
             CMP_warn1("-server %s", msg);
-#endif
+# endif
         if (opt_use_mock_srv)
             CMP_warn1("-use_mock_srv %s", msg);
         if (opt_reqout != NULL)
