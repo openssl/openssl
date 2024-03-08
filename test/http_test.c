@@ -416,6 +416,66 @@ static int test_http_keep_alive_1_require_no(void)
     return test_http_keep_alive('1', 2, 0);
 }
 
+static int test_http_resp_hdr_limit(size_t limit)
+{
+    BIO *wbio = BIO_new(BIO_s_mem());
+    BIO *rbio = BIO_new(BIO_s_mem());
+    BIO *mem = NULL;
+    server_args mock_args = { NULL, NULL, NULL, '0', 0 };
+    int res = 0;
+    OSSL_HTTP_REQ_CTX *rctx = NULL;
+
+    if (TEST_ptr(wbio) == 0 || TEST_ptr(rbio) == 0)
+        goto err;
+
+    mock_args.txt = text1;
+    mock_args.content_type = "text/plain";
+    mock_args.version = '1';
+    mock_args.out = rbio;
+    mock_args.content_type = "text/plain";
+
+    BIO_set_callback_ex(wbio, http_bio_cb_ex);
+    BIO_set_callback_arg(wbio, (char *)&mock_args);
+
+    rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, 8192);
+    if (TEST_ptr(rctx) == 0)
+        goto err;
+
+    if (!TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
+                                                      NULL, NULL, RPATH)))
+        goto err;
+
+    OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(rctx, limit);
+    mem = OSSL_HTTP_REQ_CTX_exchange(rctx);
+
+    if (limit == 1)
+        res = TEST_ptr_null(mem);
+    else
+        res = TEST_ptr(mem);
+
+ err:
+    BIO_free(wbio);
+    BIO_free(rbio);
+    OSSL_HTTP_REQ_CTX_free(rctx);
+
+    return res;
+}
+
+static int test_hdr_resp_hdr_limit_none(void)
+{
+    return test_http_resp_hdr_limit(0);
+}
+
+static int test_hdr_resp_hdr_limit_short(void)
+{
+    return (test_http_resp_hdr_limit(1));
+}
+
+static int test_hdr_resp_hdr_limit_256(void)
+{
+    return test_http_resp_hdr_limit(256);
+}
+
 void cleanup_tests(void)
 {
     X509_free(x509);
@@ -452,5 +512,8 @@ int setup_tests(void)
     ADD_TEST(test_http_keep_alive_1_require_yes);
     ADD_TEST(test_http_keep_alive_0_require_no);
     ADD_TEST(test_http_keep_alive_1_require_no);
+    ADD_TEST(test_hdr_resp_hdr_limit_none);
+    ADD_TEST(test_hdr_resp_hdr_limit_short);
+    ADD_TEST(test_hdr_resp_hdr_limit_256);
     return 1;
 }
