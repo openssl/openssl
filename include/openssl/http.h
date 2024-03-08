@@ -37,6 +37,8 @@ extern "C" {
 
 #define OSSL_HTTP_DEFAULT_MAX_LINE_LEN (4 * 1024)
 #define OSSL_HTTP_DEFAULT_MAX_RESP_LEN (100 * 1024)
+#define OSSL_HTTP_DEFAULT_MAX_RESP_HDR_LINES 256
+
 
 /* Low-level HTTP API */
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int buf_size);
@@ -105,6 +107,8 @@ int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
 const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
                                   const char *server, int use_ssl);
 
+void OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(OSSL_HTTP_REQ_CTX *rctx,
+                                                  size_t count);
 
 # endif /* !defined(OPENSSL_NO_HTTP) */
 # ifdef  __cplusplus
