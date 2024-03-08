@@ -8,7 +8,7 @@ SSL_group_to_name - get name of group
 
  #include <openssl/ssl.h>
 
- const char *SSL_group_to_name(const SSL *ssl, int id);
+ const char *SSL_group_to_name(SSL *ssl, int id);
 
 =head1 DESCRIPTION
 
