@@ -919,6 +919,29 @@ int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
+int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
+{
+# if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS)
+    if (__atomic_is_lock_free(sizeof(*dst), dst)) {
+        __atomic_store(dst, &val, __ATOMIC_RELEASE);
+        return 1;
+    }
+# elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
+    /* This will work for all future Solaris versions. */
+    if (ret != NULL) {
+        atomic_swap_64(dst, val);
+        return 1;
+    }
+# endif
+    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
+        return 0;
+    *dst  = val;
+    if (!CRYPTO_THREAD_unlock(lock))
+        return 0;
+
+    return 1;
+}
+
 int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 {
 # if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS)
