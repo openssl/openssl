@@ -870,6 +870,10 @@ As synonym for `no-padlockeng`.  Deprecated and should not be used.
 
 Don't build with support for Position Independent Code.
 
+### enable-pie
+
+Build with support for Position Independent Execution.
+
 ### no-pinshared
 
 Don't pin the shared libraries.
