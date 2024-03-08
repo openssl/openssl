@@ -70,6 +70,7 @@ OSSL_ENCODER_CLEANUP                    datatype
 OSSL_ENCODER_INSTANCE                   datatype
 OSSL_HTTP_bio_cb_t                      datatype
 OSSL_HTTP_REQ_CTX                       datatype
+OSSL_IETF_ATTR_SYNTAX                   datatype
 OSSL_ITEM                               datatype
 OSSL_LIB_CTX                            datatype
 OSSL_PARAM                              datatype

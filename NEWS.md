@@ -26,6 +26,8 @@ OpenSSL 3.3
   * Added exporter for CMake on Unix and Windows, alongside the pkg-config
     exporter.
 
+  * Added initial Attribute Certificate (RFC 5755) support.
+
 OpenSSL 3.2
 -----------
 
