@@ -38,6 +38,7 @@
 # - RV64I
 # - RISC-V Vector ('V') with VLEN >= 128
 # - RISC-V Vector Cryptography Bit-manipulation extension ('Zvkb')
+# - RISC-V Basic Bit-manipulation extension ('Zbb')
 # - RISC-V Zicclsm(Main memory supports misaligned loads/stores)
 
 use strict;
@@ -59,19 +60,30 @@ my $code = <<___;
 .text
 ___
 
-# void ChaCha20_ctr32_zvkb(unsigned char *out, const unsigned char *inp,
-#                          size_t len, const unsigned int key[8],
-#                          const unsigned int counter[4]);
+# void ChaCha20_ctr32_zbb_zvkb(unsigned char *out, const unsigned char *inp,
+#                              size_t len, const unsigned int key[8],
+#                              const unsigned int counter[4]);
 ################################################################################
 my ( $OUTPUT, $INPUT, $LEN, $KEY, $COUNTER ) = ( "a0", "a1", "a2", "a3", "a4" );
-my ( $T0 ) = ( "t0" );
-my ( $CONST_DATA0, $CONST_DATA1, $CONST_DATA2, $CONST_DATA3 ) =
-  ( "a5", "a6", "a7", "t1" );
-my ( $KEY0, $KEY1, $KEY2,$KEY3, $KEY4, $KEY5, $KEY6, $KEY7,
-     $COUNTER0, $COUNTER1, $NONCE0, $NONCE1
-) = ( "s0", "s1", "s2", "s3", "s4", "s5", "s6",
-    "s7", "s8", "s9", "s10", "s11" );
-my ( $VL, $STRIDE, $CHACHA_LOOP_COUNT ) = ( "t2", "t3", "t4" );
+my ( $CONST_DATA0, $CONST_DATA1, $CONST_DATA2, $CONST_DATA3 ) = ( "a5", "a6",
+  "a7", "s0" );
+my ( $KEY0, $KEY1, $KEY2, $KEY3, $KEY4, $KEY5, $KEY6, $KEY7, $COUNTER0,
+     $COUNTER1, $NONCE0, $NONCE1) = ( "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+  "s8", "s9", "s10", "s11", "t0" );
+my ( $STATE0, $STATE1, $STATE2, $STATE3,
+     $STATE4, $STATE5, $STATE6, $STATE7,
+     $STATE8, $STATE9, $STATE10, $STATE11,
+     $STATE12, $STATE13, $STATE14, $STATE15) = (
+     $CONST_DATA0, $CONST_DATA1, $CONST_DATA2, $CONST_DATA3,
+     $KEY0, $KEY1, $KEY2, $KEY3,
+     $KEY4, $KEY5, $KEY6, $KEY7,
+     $COUNTER0, $COUNTER1, $NONCE0, $NONCE1 );
+my ( $VL ) = ( "t1" );
+my ( $CURRENT_COUNTER ) = ( "t2" );
+my ( $T0 ) = ( "t3" );
+my ( $T1 ) = ( "t4" );
+my ( $T2 ) = ( "t5" );
+my ( $T3 ) = ( "t6" );
 my (
     $V0,  $V1,  $V2,  $V3,  $V4,  $V5,  $V6,  $V7,  $V8,  $V9,  $V10,
     $V11, $V12, $V13, $V14, $V15, $V16, $V17, $V18, $V19, $V20, $V21,
@@ -80,63 +92,118 @@ my (
 
 sub chacha_quad_round_group {
     my (
-        $A0, $B0, $C0, $D0, $A1, $B1, $C1, $D1,
-        $A2, $B2, $C2, $D2, $A3, $B3, $C3, $D3
+        $A0, $B0, $C0, $D0,
+        $A1, $B1, $C1, $D1,
+        $A2, $B2, $C2, $D2,
+        $A3, $B3, $C3, $D3,
+
+        $S_A0, $S_B0, $S_C0, $S_D0,
+        $S_A1, $S_B1, $S_C1, $S_D1,
+        $S_A2, $S_B2, $S_C2, $S_D2,
+        $S_A3, $S_B3, $S_C3, $S_D3,
     ) = @_;
 
     my $code = <<___;
     # a += b; d ^= a; d <<<= 16;
     @{[vadd_vv $A0, $A0, $B0]}
+    add $S_A0, $S_A0, $S_B0
     @{[vadd_vv $A1, $A1, $B1]}
+    add $S_A1, $S_A1, $S_B1
     @{[vadd_vv $A2, $A2, $B2]}
+    add $S_A2, $S_A2, $S_B2
     @{[vadd_vv $A3, $A3, $B3]}
+    add $S_A3, $S_A3, $S_B3
     @{[vxor_vv $D0, $D0, $A0]}
+    xor $S_D0, $S_D0, $S_A0
     @{[vxor_vv $D1, $D1, $A1]}
+    xor $S_D1, $S_D1, $S_A1
     @{[vxor_vv $D2, $D2, $A2]}
+    xor $S_D2, $S_D2, $S_A2
     @{[vxor_vv $D3, $D3, $A3]}
+    xor $S_D3, $S_D3, $S_A3
     @{[vror_vi $D0, $D0, 32 - 16]}
+    @{[roriw $S_D0, $S_D0, 32 - 16]}
     @{[vror_vi $D1, $D1, 32 - 16]}
+    @{[roriw $S_D1, $S_D1, 32 - 16]}
     @{[vror_vi $D2, $D2, 32 - 16]}
+    @{[roriw $S_D2, $S_D2, 32 - 16]}
     @{[vror_vi $D3, $D3, 32 - 16]}
+    @{[roriw $S_D3, $S_D3, 32 - 16]}
     # c += d; b ^= c; b <<<= 12;
     @{[vadd_vv $C0, $C0, $D0]}
+    add $S_C0, $S_C0, $S_D0
     @{[vadd_vv $C1, $C1, $D1]}
+    add $S_C1, $S_C1, $S_D1
     @{[vadd_vv $C2, $C2, $D2]}
+    add $S_C2, $S_C2, $S_D2
     @{[vadd_vv $C3, $C3, $D3]}
+    add $S_C3, $S_C3, $S_D3
     @{[vxor_vv $B0, $B0, $C0]}
+    xor $S_B0, $S_B0, $S_C0
     @{[vxor_vv $B1, $B1, $C1]}
+    xor $S_B1, $S_B1, $S_C1
     @{[vxor_vv $B2, $B2, $C2]}
+    xor $S_B2, $S_B2, $S_C2
     @{[vxor_vv $B3, $B3, $C3]}
+    xor $S_B3, $S_B3, $S_C3
     @{[vror_vi $B0, $B0, 32 - 12]}
+    @{[roriw $S_B0, $S_B0, 32 - 12]}
     @{[vror_vi $B1, $B1, 32 - 12]}
+    @{[roriw $S_B1, $S_B1, 32 - 12]}
     @{[vror_vi $B2, $B2, 32 - 12]}
+    @{[roriw $S_B2, $S_B2, 32 - 12]}
     @{[vror_vi $B3, $B3, 32 - 12]}
+    @{[roriw $S_B3, $S_B3, 32 - 12]}
     # a += b; d ^= a; d <<<= 8;
     @{[vadd_vv $A0, $A0, $B0]}
+    add $S_A0, $S_A0, $S_B0
     @{[vadd_vv $A1, $A1, $B1]}
+    add $S_A1, $S_A1, $S_B1
     @{[vadd_vv $A2, $A2, $B2]}
+    add $S_A2, $S_A2, $S_B2
     @{[vadd_vv $A3, $A3, $B3]}
+    add $S_A3, $S_A3, $S_B3
     @{[vxor_vv $D0, $D0, $A0]}
+    xor $S_D0, $S_D0, $S_A0
     @{[vxor_vv $D1, $D1, $A1]}
+    xor $S_D1, $S_D1, $S_A1
     @{[vxor_vv $D2, $D2, $A2]}
+    xor $S_D2, $S_D2, $S_A2
     @{[vxor_vv $D3, $D3, $A3]}
+    xor $S_D3, $S_D3, $S_A3
     @{[vror_vi $D0, $D0, 32 - 8]}
+    @{[roriw $S_D0, $S_D0, 32 - 8]}
     @{[vror_vi $D1, $D1, 32 - 8]}
+    @{[roriw $S_D1, $S_D1, 32 - 8]}
     @{[vror_vi $D2, $D2, 32 - 8]}
+    @{[roriw $S_D2, $S_D2, 32 - 8]}
     @{[vror_vi $D3, $D3, 32 - 8]}
+    @{[roriw $S_D3, $S_D3, 32 - 8]}
     # c += d; b ^= c; b <<<= 7;
     @{[vadd_vv $C0, $C0, $D0]}
+    add $S_C0, $S_C0, $S_D0
     @{[vadd_vv $C1, $C1, $D1]}
+    add $S_C1, $S_C1, $S_D1
     @{[vadd_vv $C2, $C2, $D2]}
+    add $S_C2, $S_C2, $S_D2
     @{[vadd_vv $C3, $C3, $D3]}
+    add $S_C3, $S_C3, $S_D3
     @{[vxor_vv $B0, $B0, $C0]}
+    xor $S_B0, $S_B0, $S_C0
     @{[vxor_vv $B1, $B1, $C1]}
+    xor $S_B1, $S_B1, $S_C1
     @{[vxor_vv $B2, $B2, $C2]}
+    xor $S_B2, $S_B2, $S_C2
     @{[vxor_vv $B3, $B3, $C3]}
+    xor $S_B3, $S_B3, $S_C3
     @{[vror_vi $B0, $B0, 32 - 7]}
+    @{[roriw $S_B0, $S_B0, 32 - 7]}
     @{[vror_vi $B1, $B1, 32 - 7]}
+    @{[roriw $S_B1, $S_B1, 32 - 7]}
     @{[vror_vi $B2, $B2, 32 - 7]}
+    @{[roriw $S_B2, $S_B2, 32 - 7]}
     @{[vror_vi $B3, $B3, 32 - 7]}
+    @{[roriw $S_B3, $S_B3, 32 - 7]}
 ___
 
     return $code;
@@ -144,12 +211,9 @@ ___
 
 $code .= <<___;
 .p2align 3
-.globl ChaCha20_ctr32_zvkb
-.type ChaCha20_ctr32_zvkb,\@function
-ChaCha20_ctr32_zvkb:
-    srli $LEN, $LEN, 6
-    beqz $LEN, .Lend
-
+.globl ChaCha20_ctr32_zbb_zvkb
+.type ChaCha20_ctr32_zbb_zvkb,\@function
+ChaCha20_ctr32_zbb_zvkb:
     addi sp, sp, -96
     sd s0, 0(sp)
     sd s1, 8(sp)
@@ -163,139 +227,232 @@ ChaCha20_ctr32_zvkb:
     sd s9, 72(sp)
     sd s10, 80(sp)
     sd s11, 88(sp)
+    addi sp, sp, -64
 
-    li $STRIDE, 64
-
-    #### chacha block data
-    # "expa" little endian
-    li $CONST_DATA0, 0x61707865
-    # "nd 3" little endian
-    li $CONST_DATA1, 0x3320646e
-    # "2-by" little endian
-    li $CONST_DATA2, 0x79622d32
-    # "te k" little endian
-    li $CONST_DATA3, 0x6b206574
-
-    lw $KEY0, 0($KEY)
-    lw $KEY1, 4($KEY)
-    lw $KEY2, 8($KEY)
-    lw $KEY3, 12($KEY)
-    lw $KEY4, 16($KEY)
-    lw $KEY5, 20($KEY)
-    lw $KEY6, 24($KEY)
-    lw $KEY7, 28($KEY)
-
-    lw $COUNTER0, 0($COUNTER)
-    lw $COUNTER1, 4($COUNTER)
-    lw $NONCE0, 8($COUNTER)
-    lw $NONCE1, 12($COUNTER)
+    lw $CURRENT_COUNTER, 0($COUNTER)
 
 .Lblock_loop:
-    @{[vsetvli $VL, $LEN, "e32", "m1", "ta", "ma"]}
+    # We will use the scalar ALU for 1 chacha block.
+    srli $T0, $LEN, 6
+    @{[vsetvli $VL, $T0, "e32", "m1", "ta", "ma"]}
+    slli $T1, $VL, 6
+    bltu $T1, $LEN, 1f
+    # Since there is no more chacha block existed, we need to split 1 block
+    # from vector ALU.
+    addi $T1, $VL, -1
+    @{[vsetvli $VL, $T1, "e32", "m1", "ta", "ma"]}
+1:
 
+    #### chacha block data
     # init chacha const states
+    # "expa" little endian
+    li $CONST_DATA0, 0x61707865
     @{[vmv_v_x $V0, $CONST_DATA0]}
+    # "nd 3" little endian
+    li $CONST_DATA1, 0x3320646e
     @{[vmv_v_x $V1, $CONST_DATA1]}
+    # "2-by" little endian
+    li $CONST_DATA2, 0x79622d32
     @{[vmv_v_x $V2, $CONST_DATA2]}
+    # "te k" little endian
+    li $CONST_DATA3, 0x6b206574
+    lw $KEY0, 0($KEY)
     @{[vmv_v_x $V3, $CONST_DATA3]}
 
     # init chacha key states
+    lw $KEY1, 4($KEY)
     @{[vmv_v_x $V4, $KEY0]}
+    lw $KEY2, 8($KEY)
     @{[vmv_v_x $V5, $KEY1]}
+    lw $KEY3, 12($KEY)
     @{[vmv_v_x $V6, $KEY2]}
+    lw $KEY4, 16($KEY)
     @{[vmv_v_x $V7, $KEY3]}
+    lw $KEY5, 20($KEY)
     @{[vmv_v_x $V8, $KEY4]}
+    lw $KEY6, 24($KEY)
     @{[vmv_v_x $V9, $KEY5]}
+    lw $KEY7, 28($KEY)
     @{[vmv_v_x $V10, $KEY6]}
     @{[vmv_v_x $V11, $KEY7]}
 
     # init chacha key states
+    lw $COUNTER1, 4($COUNTER)
     @{[vid_v $V12]}
-    @{[vadd_vx $V12, $V12, $COUNTER0]}
+    lw $NONCE0, 8($COUNTER)
+    @{[vadd_vx $V12, $V12, $CURRENT_COUNTER]}
+    lw $NONCE1, 12($COUNTER)
     @{[vmv_v_x $V13, $COUNTER1]}
+    add $COUNTER0, $CURRENT_COUNTER, $VL
 
     # init chacha nonce states
     @{[vmv_v_x $V14, $NONCE0]}
     @{[vmv_v_x $V15, $NONCE1]}
 
+    li $T0, 64
     # load the top-half of input data
-    @{[vlsseg_nf_e32_v 8, $V16, $INPUT, $STRIDE]}
+    @{[vlsseg_nf_e32_v 8, $V16, $INPUT, $T0]}
 
-    li $CHACHA_LOOP_COUNT, 10
+    # 20 round groups
+    li $T0, 10
 .Lround_loop:
-    addi $CHACHA_LOOP_COUNT, $CHACHA_LOOP_COUNT, -1
+    addi $T0, $T0, -1
     @{[chacha_quad_round_group
       $V0, $V4, $V8, $V12,
       $V1, $V5, $V9, $V13,
       $V2, $V6, $V10, $V14,
-      $V3, $V7, $V11, $V15]}
+      $V3, $V7, $V11, $V15,
+      $STATE0, $STATE4, $STATE8, $STATE12,
+      $STATE1, $STATE5, $STATE9, $STATE13,
+      $STATE2, $STATE6, $STATE10, $STATE14,
+      $STATE3, $STATE7, $STATE11, $STATE15]}
     @{[chacha_quad_round_group
+      $V3, $V4, $V9, $V14,
       $V0, $V5, $V10, $V15,
       $V1, $V6, $V11, $V12,
       $V2, $V7, $V8, $V13,
-      $V3, $V4, $V9, $V14]}
-    bnez $CHACHA_LOOP_COUNT, .Lround_loop
+      $STATE3, $STATE4, $STATE9, $STATE14,
+      $STATE0, $STATE5, $STATE10, $STATE15,
+      $STATE1, $STATE6, $STATE11, $STATE12,
+      $STATE2, $STATE7, $STATE8, $STATE13]}
+    bnez $T0, .Lround_loop
 
+    li $T0, 64
     # load the bottom-half of input data
-    addi $T0, $INPUT, 32
-    @{[vlsseg_nf_e32_v 8, $V24, $T0, $STRIDE]}
+    addi $T1, $INPUT, 32
+    @{[vlsseg_nf_e32_v 8, $V24, $T1, $T0]}
 
     # add chacha top-half initial block states
-    @{[vadd_vx $V0, $V0, $CONST_DATA0]}
-    @{[vadd_vx $V1, $V1, $CONST_DATA1]}
-    @{[vadd_vx $V2, $V2, $CONST_DATA2]}
-    @{[vadd_vx $V3, $V3, $CONST_DATA3]}
-    @{[vadd_vx $V4, $V4, $KEY0]}
-    @{[vadd_vx $V5, $V5, $KEY1]}
-    @{[vadd_vx $V6, $V6, $KEY2]}
-    @{[vadd_vx $V7, $V7, $KEY3]}
+    # "expa" little endian
+    li $T0, 0x61707865
+    @{[vadd_vx $V0, $V0, $T0]}
+    add $STATE0, $STATE0, $T0
+    # "nd 3" little endian
+    li $T1, 0x3320646e
+    @{[vadd_vx $V1, $V1, $T1]}
+    add $STATE1, $STATE1, $T1
+    lw $T0, 0($KEY)
+    # "2-by" little endian
+    li $T2, 0x79622d32
+    @{[vadd_vx $V2, $V2, $T2]}
+    add $STATE2, $STATE2, $T2
+    lw $T1, 4($KEY)
+    # "te k" little endian
+    li $T3, 0x6b206574
+    @{[vadd_vx $V3, $V3, $T3]}
+    add $STATE3, $STATE3, $T3
+    lw $T2, 8($KEY)
+    @{[vadd_vx $V4, $V4, $T0]}
+    add $STATE4, $STATE4, $T0
+    lw $T3, 12($KEY)
+    @{[vadd_vx $V5, $V5, $T1]}
+    add $STATE5, $STATE5, $T1
+    @{[vadd_vx $V6, $V6, $T2]}
+    add $STATE6, $STATE6, $T2
+    @{[vadd_vx $V7, $V7, $T3]}
+    add $STATE7, $STATE7, $T3
+
     # xor with the top-half input
     @{[vxor_vv $V16, $V16, $V0]}
+    sw $STATE0, 0(sp)
+    sw $STATE1, 4(sp)
     @{[vxor_vv $V17, $V17, $V1]}
+    sw $STATE2, 8(sp)
+    sw $STATE3, 12(sp)
     @{[vxor_vv $V18, $V18, $V2]}
+    sw $STATE4, 16(sp)
+    sw $STATE5, 20(sp)
     @{[vxor_vv $V19, $V19, $V3]}
+    sw $STATE6, 24(sp)
+    sw $STATE7, 28(sp)
     @{[vxor_vv $V20, $V20, $V4]}
+    lw $T0, 16($KEY)
     @{[vxor_vv $V21, $V21, $V5]}
+    lw $T1, 20($KEY)
     @{[vxor_vv $V22, $V22, $V6]}
+    lw $T2, 24($KEY)
     @{[vxor_vv $V23, $V23, $V7]}
 
     # save the top-half of output
-    @{[vssseg_nf_e32_v 8, $V16, $OUTPUT, $STRIDE]}
+    li $T3, 64
+    @{[vssseg_nf_e32_v 8, $V16, $OUTPUT, $T3]}
 
     # add chacha bottom-half initial block states
-    @{[vadd_vx $V8, $V8, $KEY4]}
-    @{[vadd_vx $V9, $V9, $KEY5]}
-    @{[vadd_vx $V10, $V10, $KEY6]}
-    @{[vadd_vx $V11, $V11, $KEY7]}
+    @{[vadd_vx $V8, $V8, $T0]}
+    add $STATE8, $STATE8, $T0
+    lw $T3, 28($KEY)
+    @{[vadd_vx $V9, $V9, $T1]}
+    add $STATE9, $STATE9, $T1
+    lw $T0, 4($COUNTER)
+    @{[vadd_vx $V10, $V10, $T2]}
+    add $STATE10, $STATE10, $T2
+    lw $T1, 8($COUNTER)
+    @{[vadd_vx $V11, $V11, $T3]}
+    add $STATE11, $STATE11, $T3
+    lw $T2, 12($COUNTER)
     @{[vid_v $V0]}
-    @{[vadd_vx $V12, $V12, $COUNTER0]}
-    @{[vadd_vx $V13, $V13, $COUNTER1]}
-    @{[vadd_vx $V14, $V14, $NONCE0]}
-    @{[vadd_vx $V15, $V15, $NONCE1]}
+    add $STATE12, $STATE12, $CURRENT_COUNTER
+    @{[vadd_vx $V12, $V12, $CURRENT_COUNTER]}
+    add $STATE12, $STATE12, $VL
+    @{[vadd_vx $V13, $V13, $T0]}
+    add $STATE13, $STATE13, $T0
+    @{[vadd_vx $V14, $V14, $T1]}
+    add $STATE14, $STATE14, $T1
+    @{[vadd_vx $V15, $V15, $T2]}
+    add $STATE15, $STATE15, $T2
     @{[vadd_vv $V12, $V12, $V0]}
     # xor with the bottom-half input
     @{[vxor_vv $V24, $V24, $V8]}
+    sw $STATE8, 32(sp)
     @{[vxor_vv $V25, $V25, $V9]}
+    sw $STATE9, 36(sp)
     @{[vxor_vv $V26, $V26, $V10]}
+    sw $STATE10, 40(sp)
     @{[vxor_vv $V27, $V27, $V11]}
+    sw $STATE11, 44(sp)
     @{[vxor_vv $V29, $V29, $V13]}
+    sw $STATE12, 48(sp)
     @{[vxor_vv $V28, $V28, $V12]}
+    sw $STATE13, 52(sp)
     @{[vxor_vv $V30, $V30, $V14]}
+    sw $STATE14, 56(sp)
     @{[vxor_vv $V31, $V31, $V15]}
+    sw $STATE15, 60(sp)
 
     # save the bottom-half of output
-    addi $T0, $OUTPUT, 32
-    @{[vssseg_nf_e32_v 8, $V24, $T0, $STRIDE]}
+    li $T0, 64
+    addi $T1, $OUTPUT, 32
+    @{[vssseg_nf_e32_v 8, $V24, $T1, $T0]}
 
-    # update counter
-    add $COUNTER0, $COUNTER0, $VL
-    sub $LEN, $LEN, $VL
-    # increase offset for `4 * 16 * VL = 64 * VL`
+    # the computed vector parts: `64 * VL`
     slli $T0, $VL, 6
+
     add $INPUT, $INPUT, $T0
     add $OUTPUT, $OUTPUT, $T0
+    sub $LEN, $LEN, $T0
+    add $CURRENT_COUNTER, $CURRENT_COUNTER, $VL
+
+    # process the scalar data block
+    addi $CURRENT_COUNTER, $CURRENT_COUNTER, 1
+    li $T0, 64
+    @{[minu $T1, $LEN, $T0]}
+    sub $LEN, $LEN, $T1
+    mv $T2, sp
+.Lscalar_data_loop:
+    @{[vsetvli $VL, $T1, "e8", "m8", "ta", "ma"]}
+    @{[vle8_v $V8, $INPUT]}
+    @{[vle8_v $V16, $T2]}
+    @{[vxor_vv $V8, $V8, $V16]}
+    @{[vse8_v $V8, $OUTPUT]}
+    add $INPUT, $INPUT, $VL
+    add $OUTPUT, $OUTPUT, $VL
+    add $T2, $T2, $VL
+    sub $T1, $T1, $VL
+    bnez $T1, .Lscalar_data_loop
+
     bnez $LEN, .Lblock_loop
 
+    addi sp, sp, 64
     ld s0, 0(sp)
     ld s1, 8(sp)
     ld s2, 16(sp)
@@ -310,9 +467,8 @@ ChaCha20_ctr32_zvkb:
     ld s11, 88(sp)
     addi sp, sp, 96
 
-.Lend:
     ret
-.size ChaCha20_ctr32_zvkb,.-ChaCha20_ctr32_zvkb
+.size ChaCha20_ctr32_zbb_zvkb,.-ChaCha20_ctr32_zbb_zvkb
 ___
 
 print $code;
