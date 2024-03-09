@@ -88,6 +88,13 @@ The RADIX test features the following improvements relative to the
   protocol-specific bindings and support code, test operation definitions, and
   script definitions.
 
+- It is no longer needed to explicitly set the ALPN using an opcode when
+  establishing a connection using QUIC. Since ALPN is required for QUIC, the
+  first opcode of every test was used to set the ALPN to the same string, which
+  was redundant. This is now done automatically.
+
+- An explicit `OP_END` is no longer needed.
+
 Architecture
 ------------
 
