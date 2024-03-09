@@ -8,6 +8,7 @@
  */
 
 #include "internal/common.h"
+#include "internal/quic_ssl.h"
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include "../ssl_local.h"
