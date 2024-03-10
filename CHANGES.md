@@ -28,6 +28,11 @@ OpenSSL 3.3
 
 ### Changes between 3.2 and 3.3 [xx XXX xxxx]
 
+ * Added support for EdDSA to the EVP_PKEY_sign() and EVP_PKEY_verify() API
+   functions.
+
+   *Joachim Vandersmissen*
+
  * Added API functions SSL_SESSION_get_time_ex(), SSL_SESSION_set_time_ex()
    using time_t which is Y2038 safe on 32 bit systems when 64 bit time
    is enabled (e.g via setting glibc macro _TIME_BITS=64).

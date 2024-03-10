@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -62,6 +62,11 @@ enum ID_EdDSA_INSTANCE {
 #define EDDSA_PREHASH_OUTPUT_LEN 64
 
 static OSSL_FUNC_signature_newctx_fn eddsa_newctx;
+static OSSL_FUNC_signature_sign_init_fn eddsa_signverify_init;
+static OSSL_FUNC_signature_sign_fn ed25519_sign;
+static OSSL_FUNC_signature_sign_fn ed448_sign;
+static OSSL_FUNC_signature_verify_fn ed25519_verify;
+static OSSL_FUNC_signature_verify_fn ed448_verify;
 static OSSL_FUNC_signature_digest_sign_init_fn eddsa_digest_signverify_init;
 static OSSL_FUNC_signature_digest_sign_fn ed25519_digest_sign;
 static OSSL_FUNC_signature_digest_sign_fn ed448_digest_sign;
@@ -158,6 +163,38 @@ static void *eddsa_newctx(void *provctx, const char *propq_unused)
     peddsactx->libctx = PROV_LIBCTX_OF(provctx);
 
     return peddsactx;
+}
+
+static int eddsa_signverify_init(void *vpeddsactx, void *vedkey,
+                                 const OSSL_PARAM params[])
+{
+    return eddsa_digest_signverify_init(vpeddsactx, NULL, vedkey, params);
+}
+
+static int ed25519_sign(void *vpeddsactx, unsigned char *sigret, size_t *siglen,
+                        size_t sigsize, const unsigned char *tbs, size_t tbslen)
+{
+    return ed25519_digest_sign(vpeddsactx, sigret, siglen, sigsize, tbs,
+                               tbslen);
+}
+
+static int ed448_sign(void *vpeddsactx, unsigned char *sigret, size_t *siglen,
+                      size_t sigsize, const unsigned char *tbs, size_t tbslen)
+{
+    return ed448_digest_sign(vpeddsactx, sigret, siglen, sigsize, tbs, tbslen);
+}
+
+static int ed25519_verify(void *vpeddsactx, const unsigned char *sig,
+                          size_t siglen, const unsigned char *tbs,
+                          size_t tbslen)
+{
+    return ed25519_digest_verify(vpeddsactx, sig, siglen, tbs, tbslen);
+}
+
+static int ed448_verify(void *vpeddsactx, const unsigned char *sig,
+                        size_t siglen, const unsigned char *tbs, size_t tbslen)
+{
+    return ed448_digest_verify(vpeddsactx, sig, siglen, tbs, tbslen);
 }
 
 static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
@@ -591,6 +628,10 @@ static const OSSL_PARAM *eddsa_settable_ctx_params(ossl_unused void *vpeddsactx,
 
 const OSSL_DISPATCH ossl_ed25519_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))eddsa_newctx },
+    { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))eddsa_signverify_init },
+    { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))ed25519_sign },
+    { OSSL_FUNC_SIGNATURE_VERIFY_INIT, (void (*)(void))eddsa_signverify_init },
+    { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))ed25519_verify },
     { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
       (void (*)(void))eddsa_digest_signverify_init },
     { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,
@@ -612,6 +653,10 @@ const OSSL_DISPATCH ossl_ed25519_signature_functions[] = {
 
 const OSSL_DISPATCH ossl_ed448_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))eddsa_newctx },
+    { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))eddsa_signverify_init },
+    { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))ed448_sign },
+    { OSSL_FUNC_SIGNATURE_VERIFY_INIT, (void (*)(void))eddsa_signverify_init },
+    { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))ed448_verify },
     { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
       (void (*)(void))eddsa_digest_signverify_init },
     { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,

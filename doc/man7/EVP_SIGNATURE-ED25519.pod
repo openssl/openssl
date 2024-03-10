@@ -11,7 +11,7 @@ Ed448
 =head1 DESCRIPTION
 
 The B<Ed25519> and B<Ed448> EVP_PKEY implementation supports key
-generation, one-shot digest-sign and digest-verify using the EdDSA
+generation, one-shot signature generation and verification using the EdDSA
 signature scheme described in RFC 8032. It has associated private and
 public key formats compatible with RFC 8410.
 
@@ -88,16 +88,20 @@ The parameters are described in L<provider-signature(7)>.
 
 =head1 NOTES
 
+EdDSA can be accessed using both the EVP_PKEY_sign()/EVP_PKEY_verify()
+and EVP_DigestSign()/EVP_DigestVerify() sets of API functions. Both
+APIs function identically. However, when calling EVP_DigestSignInit()
+or EVP_DigestVerifyInit(), the digest I<type> parameter B<MUST> be
+set to NULL.
+
 The PureEdDSA instances do not support the streaming mechanism of
-other signature algorithms using, for example, EVP_DigestUpdate().
+other signature algorithms using, for example, EVP_DigestSignUpdate().
 The message to sign or verify must be passed using the one-shot
-EVP_DigestSign() and EVP_DigestVerify() functions.
+EVP_PKEY_sign(), EVP_PKEY_verify(), EVP_DigestSign(), or EVP_DigestVerify()
+functions.
 
 The HashEdDSA instances do not yet support the streaming mechanisms
 (so the one-shot functions must be used with HashEdDSA as well).
-
-When calling EVP_DigestSignInit() or EVP_DigestVerifyInit(), the
-digest I<type> parameter B<MUST> be set to NULL.
 
 Applications wishing to sign certificates (or other structures such as
 CRLs or certificate requests) using Ed25519 or Ed448 can either use X509_sign()
@@ -120,7 +124,60 @@ specified, then both Ed25519 and Ed448 are benchmarked.
 
 =head1 EXAMPLES
 
-To sign a message using an ED25519 EVP_PKEY structure:
+To sign a message using an ED25519 EVP_PKEY structure and the EVP_PKEY_sign API:
+
+    void do_sign(EVP_PKEY *ed_key, unsigned char *msg, size_t msg_len)
+    {
+        size_t sig_len;
+        unsigned char *sig = NULL;
+        EVP_PKEY_CTX *pkey_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, ed_key, NULL);
+
+        const OSSL_PARAM params[] = {
+            OSSL_PARAM_utf8_string ("instance", "Ed25519ctx", 10),
+            OSSL_PARAM_octet_string("context-string", (unsigned char *)"A protocol defined context string", 33),
+            OSSL_PARAM_END
+        };
+
+        /* The input "params" is not needed if default options are acceptable.
+           Use EVP_PKEY_sign_init in that case. */
+        EVP_PKEY_sign_init_ex(pkey_ctx, params);
+        /* Calculate the required size for the signature by passing a NULL buffer. */
+        EVP_PKEY_sign(pkey_ctx, NULL, &sig_len, msg, msg_len);
+        sig = OPENSSL_zalloc(sig_len);
+
+        EVP_PKEY_sign(pkey_ctx, sig, &sig_len, msg, msg_len);
+        ...
+        OPENSSL_free(sig);
+        EVP_PKEY_CTX_free(pkey_ctx);
+    }
+
+To verify a message using an ED448 EVP_PKEY structure and the EVP_PKEY_verify API:
+
+    void do_verify(EVP_PKEY *ed_key, unsigned char *msg, size_t msg_len,
+                   unsigned char *sig, size_t sig_len)
+    {
+        EVP_PKEY_CTX *pkey_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, ed_key, NULL);
+
+        const OSSL_PARAM params[] = {
+            OSSL_PARAM_utf8_string ("instance", "Ed448", 5),
+            OSSL_PARAM_octet_string("context-string", (unsigned char *)"A protocol defined context string", 33),
+            OSSL_PARAM_END
+        };
+
+        /* The input "params" is not needed if default options are acceptable.
+           Use EVP_PKEY_verify_init in that case. */
+        EVP_PKEY_verify_init_ex(pkey_ctx, params);
+
+        int ret = EVP_PKEY_verify(pkey_ctx, sig, sig_len, msg, msg_len);
+        /*
+         * ret == 1 indicates success, 0 verify failure and < 0 for some
+         * other error.
+         */
+        ...
+        EVP_PKEY_CTX_free(pkey_ctx);
+    }
+
+To sign a message using an ED25519 EVP_PKEY structure and the EVP_DigestSign API:
 
     void do_sign(EVP_PKEY *ed_key, unsigned char *msg, size_t msg_len)
     {
@@ -147,16 +204,49 @@ To sign a message using an ED25519 EVP_PKEY structure:
         EVP_MD_CTX_free(md_ctx);
     }
 
+To verify a message using an ED448 EVP_PKEY structure and the EVP_DigestVerify API:
+
+    void do_verify(EVP_PKEY *ed_key, unsigned char *msg, size_t msg_len,
+                   unsigned char *sig, size_t sig_len)
+    {
+        EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
+
+        const OSSL_PARAM params[] = {
+            OSSL_PARAM_utf8_string ("instance", "Ed448", 5),
+            OSSL_PARAM_octet_string("context-string", (unsigned char *)"A protocol defined context string", 33),
+            OSSL_PARAM_END
+        };
+
+        /* The input "params" is not needed if default options are acceptable.
+           Use NULL in place of "params" in that case. */
+        EVP_DigestVerifyInit_ex(md_ctx, NULL, NULL, NULL, NULL, ed_key, params);
+
+        int ret = EVP_DigestVerify(md_ctx, sig, sig_len, msg, msg_len);
+        /*
+         * ret == 1 indicates success, 0 verify failure and < 0 for some
+         * other error.
+         */
+        ...
+        EVP_MD_CTX_free(md_ctx);
+    }
+
 =head1 SEE ALSO
 
 L<EVP_PKEY-X25519(7)>
 L<provider-signature(7)>,
+L<EVP_PKEY_sign_init(3)>,
+L<EVP_PKEY_verify_init(3)>,
 L<EVP_DigestSignInit(3)>,
 L<EVP_DigestVerifyInit(3)>,
 
+=head1 HISTORY
+
+EdDSA support was added to EVP_PKEY_sign() and EVP_PKEY_verify() in
+OpenSSL 3.3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2017-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
