@@ -551,11 +551,11 @@ static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock)
         qc->engine = NULL;
     }
 
+#if defined(OPENSSL_THREADS)
     if (have_lock)
         /* tsan doesn't like freeing locked mutexes */
         ossl_crypto_mutex_unlock(qc->mutex);
 
-#if defined(OPENSSL_THREADS)
     if (qc->listener == NULL)
         ossl_crypto_mutex_free(&qc->mutex);
 #endif
@@ -569,7 +569,9 @@ static void quic_free_listener(QCTX *ctx)
     ossl_quic_port_drop_incoming(ctx->ql->port);
     ossl_quic_port_free(ctx->ql->port);
     ossl_quic_engine_free(ctx->ql->engine);
+#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_free(&ctx->ql->mutex);
+#endif
 }
 
 QUIC_TAKES_LOCK
@@ -1644,7 +1646,9 @@ static int create_channel(QUIC_CONNECTION *qc, SSL_CTX *ctx)
 
     engine_args.libctx        = ctx->libctx;
     engine_args.propq         = ctx->propq;
+#if defined(OPENSSL_THREADS)
     engine_args.mutex         = qc->mutex;
+#endif
     engine_args.now_cb        = get_time_cb;
     engine_args.now_cb_arg    = qc;
     qc->engine = ossl_quic_engine_new(&engine_args);
@@ -4081,7 +4085,9 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
 
     engine_args.libctx  = ctx->libctx;
     engine_args.propq   = ctx->propq;
+#if defined(OPENSSL_THREADS)
     engine_args.mutex   = ql->mutex;
+#endif
     if ((ql->engine = ossl_quic_engine_new(&engine_args)) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         goto err;
@@ -4110,6 +4116,9 @@ err:
     if (ql != NULL)
         ossl_quic_engine_free(ql->engine);
 
+#if defined(OPENSSL_THREADS)
+    ossl_crypto_mutex_free(&ql->mutex);
+#endif
     OPENSSL_free(ql);
     return NULL;
 }
@@ -4227,7 +4236,9 @@ static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHA
     qc->engine                  = ql->engine;
     qc->port                    = ql->port;
     qc->ch                      = ch;
+#if defined(OPENSSL_THREADS)
     qc->mutex                   = ql->mutex;
+#endif
     qc->tls                     = ossl_quic_channel_get0_tls(ch);
     qc->last_net_bio_epoch      = UINT64_MAX;
     qc->started                 = 1;
