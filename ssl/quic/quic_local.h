@@ -162,7 +162,9 @@ struct quic_conn_st {
      * The mutex used to synchronise access to the QUIC_CHANNEL. We own this but
      * provide it to the channel.
      */
+#if defined(OPENSSL_THREADS)
     CRYPTO_MUTEX                    *mutex;
+#endif
 
     /*
      * If we have a default stream attached, this is the internal XSO
@@ -269,11 +271,13 @@ struct quic_listener_st {
     /* The QUIC port representing the QUIC listener and socket. */
     QUIC_PORT                       *port;
 
+#if defined(OPENSSL_THREADS)
     /*
      * The mutex used to synchronise access to the QUIC_ENGINE. We own this but
      * provide it to the engine.
      */
     CRYPTO_MUTEX                    *mutex;
+#endif
 
     /* Have we started listening yet? */
     unsigned int                    listening               : 1;
