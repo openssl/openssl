@@ -75,12 +75,12 @@ struct quic_obj_st {
      * Pointer to a parent APL object in a QUIC APL object hierarchy, or NULL if
      * this is the root object.
      */
-    SSL                     *parent_obj;
+    QUIC_OBJ                *parent_obj;
 
     /* invariant: != NULL */
-    SSL                     *cached_event_leader;
+    QUIC_OBJ                *cached_event_leader;
     /* invariant: != NULL iff this is a port leader or subsidiary object */
-    SSL                     *cached_port_leader;
+    QUIC_OBJ                *cached_port_leader;
 
     /*
      * Points to the QUIC_ENGINE instance. Always equals
@@ -257,7 +257,9 @@ static ossl_inline ossl_unused SSL *
 ossl_quic_obj_get0_event_leader(const QUIC_OBJ *obj)
 {
     assert(obj->init_done);
-    return obj->cached_event_leader;
+    return obj->cached_event_leader != NULL
+        ? &obj->cached_event_leader->ssl
+        : NULL;
 }
 
 /*
@@ -268,7 +270,9 @@ static ossl_inline ossl_unused SSL *
 ossl_quic_obj_get0_port_leader(const QUIC_OBJ *obj)
 {
     assert(obj->init_done);
-    return obj->cached_port_leader;
+    return obj->cached_port_leader != NULL
+        ? &obj->cached_port_leader->ssl
+        : NULL;
 }
 
 # endif
