@@ -34,7 +34,7 @@ int ossl_quic_obj_init(QUIC_OBJ *obj,
     if (!ossl_ssl_init(&obj->ssl, ctx, ctx->method, type))
         goto err;
 
-    obj->parent_obj         = parent_obj;
+    obj->parent_obj         = (QUIC_OBJ *)parent_obj;
     obj->is_event_leader    = is_event_leader;
     obj->is_port_leader     = is_port_leader;
     obj->engine             = engine;
@@ -51,22 +51,12 @@ err:
     return 0;
 }
 
-static ossl_inline QUIC_OBJ *
-ssl_to_obj(SSL *ssl)
-{
-    if (ssl == NULL)
-        return NULL;
-
-    assert(IS_QUIC(ssl));
-    return (QUIC_OBJ *)ssl;
-}
-
 static int obj_update_cache(QUIC_OBJ *obj)
 {
     QUIC_OBJ *p;
 
     for (p = obj; p != NULL && !p->is_event_leader;
-         p = ssl_to_obj(p->parent_obj))
+         p = p->parent_obj)
         if (!ossl_assert(p == obj || p->init_done))
             return 0;
 
@@ -77,13 +67,13 @@ static int obj_update_cache(QUIC_OBJ *obj)
      * Offset of ->ssl is guaranteed to be 0 but the NULL check makes ubsan
      * happy.
      */
-    obj->cached_event_leader    = (p != NULL) ? &p->ssl : NULL;
+    obj->cached_event_leader    = p;
     obj->engine                 = p->engine;
 
     for (p = obj; p != NULL && !p->is_port_leader;
-         p = ssl_to_obj(p->parent_obj));
+         p = p->parent_obj);
 
-    obj->cached_port_leader     = (p != NULL) ? &p->ssl : NULL;
+    obj->cached_port_leader     = p;
     obj->port                   = (p != NULL) ? p->port : NULL;
     return 1;
 }
