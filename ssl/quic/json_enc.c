@@ -626,6 +626,7 @@ json_write_qstring_inner(OSSL_JSON_ENC *json, const char *str, size_t str_len,
                          int nul_term)
 {
     char c, *o, obuf[7];
+    unsigned char *u_str;
     int i;
     size_t j;
 
@@ -634,9 +635,9 @@ json_write_qstring_inner(OSSL_JSON_ENC *json, const char *str, size_t str_len,
 
     json_write_char(json, '"');
 
-    for (j = 0; (nul_term && *str != '\0')
-                || (!nul_term && j < str_len); ++str, ++j) {
+    for (j = nul_term ? strlen(str) : str_len; j > 0; str++, j--) {
         c = *str;
+        u_str = (unsigned char*)str;
         switch (c) {
         case '\n': o = "\\n"; break;
         case '\r': o = "\\r"; break;
@@ -646,15 +647,45 @@ json_write_qstring_inner(OSSL_JSON_ENC *json, const char *str, size_t str_len,
         case '"': o = "\\\""; break;
         case '\\': o = "\\\\"; break;
         default:
-            if ((unsigned char)c >= 0x80) {
-                json_raise_error(json);
-                return;
+            /* valid UTF-8 sequences according to RFC-3629 */
+            if (u_str[0] >= 0xc2 && u_str[0] <= 0xdf && j >= 2
+                    && u_str[1] >= 0x80 && u_str[1] <= 0xbf) {
+                memcpy(obuf, str, 2);
+                obuf[2] = '\0';
+                str++, j--;
+                o = obuf;
+                break;
             }
-            if ((unsigned char)c < 0x20 || (unsigned char)c >= 0x7f) {
+            if (u_str[0] >= 0xe0 && u_str[0] <= 0xef && j >= 3
+                    && u_str[1] >= 0x80 && u_str[1] <= 0xbf
+                    && u_str[2] >= 0x80 && u_str[2] <= 0xbf
+                    && !(u_str[0] == 0xe0 && u_str[1] <= 0x9f)
+                    && !(u_str[0] == 0xed && u_str[1] >= 0xa0)) {
+                memcpy(obuf, str, 3);
+                obuf[3] = '\0';
+                str += 2;
+                j -= 2;
+                o = obuf;
+                break;
+            }
+            if (u_str[0] >= 0xf0 && u_str[0] <= 0xf4 && j >= 4
+                    && u_str[1] >= 0x80 && u_str[1] <= 0xbf
+                    && u_str[2] >= 0x80 && u_str[2] <= 0xbf
+                    && u_str[3] >= 0x80 && u_str[3] <= 0xbf
+                    && !(u_str[0] == 0xf0 && u_str[1] <= 0x8f)
+                    && !(u_str[0] == 0xf4 && u_str[1] >= 0x90)) {
+                memcpy(obuf, str, 4);
+                obuf[4] = '\0';
+                str += 3;
+                j -= 3;
+                o = obuf;
+                break;
+            }
+            if (u_str[0] < 0x20 || u_str[0] >= 0x7f) {
                 obuf[0] = '\\';
                 obuf[1] = 'u';
                 for (i = 0; i < 4; ++i)
-                    obuf[2 + i] = hex_digit((c >> ((3 - i) * 4)) & 0x0F);
+                    obuf[2 + i] = hex_digit((u_str[0] >> ((3 - i) * 4)) & 0x0F);
                 obuf[6] = '\0';
                 o = obuf;
             } else {
