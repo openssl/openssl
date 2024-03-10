@@ -427,8 +427,8 @@ END_SCRIPT_EXPECTING_S("{\"x\":")
 
 BEGIN_SCRIPT(err_utf8, "error test: only basic ASCII supported", 0)
     OPJ_STR("\x80")
-    OP_ASSERT_ERROR(1)
-END_SCRIPT_EXPECTING_S("\"")
+    OP_ASSERT_ERROR(0)
+END_SCRIPT_EXPECTING_S("\"\\u0080\"")
 
 BEGIN_SCRIPT(ijson_int, "I-JSON: large integer", OSSL_JSON_FLAG_IJSON)
     OPJ_BEGIN_A()

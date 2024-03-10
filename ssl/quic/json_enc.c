@@ -646,15 +646,12 @@ json_write_qstring_inner(OSSL_JSON_ENC *json, const char *str, size_t str_len,
         case '"': o = "\\\""; break;
         case '\\': o = "\\\\"; break;
         default:
-            if ((unsigned char)c >= 0x80) {
-                json_raise_error(json);
-                return;
-            }
             if ((unsigned char)c < 0x20 || (unsigned char)c >= 0x7f) {
                 obuf[0] = '\\';
                 obuf[1] = 'u';
                 for (i = 0; i < 4; ++i)
-                    obuf[2 + i] = hex_digit((c >> ((3 - i) * 4)) & 0x0F);
+                    obuf[2 + i] = hex_digit(((unsigned char)c >> ((3 - i) * 4))
+                                            & 0x0F);
                 obuf[6] = '\0';
                 o = obuf;
             } else {
