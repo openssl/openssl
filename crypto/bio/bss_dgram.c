@@ -51,7 +51,9 @@
 # define M_METHOD_WSARECVMSG 4
 
 # if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
-#  if !(__GLIBC_PREREQ(2, 14))
+/// ClickHouse-specific patch: Pretend to use a stone age glibc because we use a stone age glibc.
+/// Otherwise, system calls sendmmsg and recvmmsg are used which work only with too-new glibc 2.14.
+/// #  if !(__GLIBC_PREREQ(2, 14))
 #   undef NO_RECVMMSG
     /*
      * Some old glibc versions may have recvmmsg and MSG_WAITFORONE flag, but
@@ -59,7 +61,7 @@
      * versions
      */
 #   define NO_RECVMMSG
-#  endif
+/// #  endif
 # endif
 # if defined(__GNU__)
    /* GNU/Hurd does not have IP_PKTINFO yet */
