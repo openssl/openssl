@@ -343,6 +343,11 @@ RFC 4210.
 
         Allow retrieving a trust anchor from extraCerts and using that
         to validate the certificate chain of an IP message.
+        This is a quirk option added to support 3GPP TS 33.310.
+
+        Note that using this option is dangerous as the certificate obtained
+        this way has not been authenticated (at least not at CMP level).
+        Taking it over as a trust anchor implements trust-on-first-use (TOFU).
 
 =item B<OSSL_CMP_OPT_NO_CACHE_EXTRACERTS>
 
