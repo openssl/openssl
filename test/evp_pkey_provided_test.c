@@ -1471,8 +1471,6 @@ static int test_fromdata_ecx(int tst)
         size = ED448_SIGSIZE;
         alg = "ED448";
         break;
-    default:
-        goto err;
     }
 
     ctx = EVP_PKEY_CTX_new_from_name(NULL, alg, NULL);
