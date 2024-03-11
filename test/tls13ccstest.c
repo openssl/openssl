@@ -471,10 +471,6 @@ static int test_tls13ccs(int tst)
                 || !TEST_size_t_gt(chsessidlen, 0))
             goto err;
         break;
-
-    default:
-        TEST_error("Invalid test value");
-        goto err;
     }
 
     ret = 1;
