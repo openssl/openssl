@@ -79,9 +79,8 @@ static X509 *load_cert_asn1(const unsigned char *bytes, int len)
     X509 *cert = NULL;
 
     cert = d2i_X509(NULL, &bytes, len);
-    if (!TEST_ptr(cert))
-        goto err;
-err:
+    TEST_ptr(cert);
+
     return cert;
 }
 
@@ -90,9 +89,8 @@ static EVP_PKEY *load_pkey_asn1(const unsigned char *bytes, int len)
     EVP_PKEY *pkey = NULL;
 
     pkey = d2i_AutoPrivateKey(NULL, &bytes, len);
-    if (!TEST_ptr(pkey))
-        goto err;
-err:
+    TEST_ptr(pkey);
+
     return pkey;
 }
 
