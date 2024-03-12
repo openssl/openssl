@@ -381,12 +381,24 @@ static int test_unknown_critical_crl(int n)
 static int test_reuse_crl(int idx)
 {
     X509_CRL *result, *reused_crl = CRL_from_strings(kBasicCRL);
-    char *p;
-    BIO *b = glue2bio(idx == 2 ? kRevokedCRL : kInvalidCRL + idx, &p);
+    X509_CRL *addref_crl = NULL;
+    char *p = NULL;
+    BIO *b = NULL;
     int r = 0;
 
-    if (!TEST_ptr(reused_crl)
-            || !TEST_ptr(b))
+    if (!TEST_ptr(reused_crl))
+        goto err;
+
+    if (idx & 1) {
+        if (!TEST_true(X509_CRL_up_ref(reused_crl)))
+            goto err;
+	addref_crl = reused_crl;
+    }
+
+    idx >>= 1;
+    b = glue2bio(idx == 2 ? kRevokedCRL : kInvalidCRL + idx, &p);
+
+    if (!TEST_ptr(b))
         goto err;
 
     result = PEM_read_bio_X509_CRL(b, &reused_crl, NULL, NULL);
@@ -416,6 +428,7 @@ static int test_reuse_crl(int idx)
     OPENSSL_free(p);
     BIO_free(b);
     X509_CRL_free(reused_crl);
+    X509_CRL_free(addref_crl);
     return r;
 }
 
@@ -430,7 +443,7 @@ int setup_tests(void)
     ADD_TEST(test_bad_issuer_crl);
     ADD_TEST(test_known_critical_crl);
     ADD_ALL_TESTS(test_unknown_critical_crl, OSSL_NELEM(unknown_critical_crls));
-    ADD_ALL_TESTS(test_reuse_crl, 3);
+    ADD_ALL_TESTS(test_reuse_crl, 6);
     return 1;
 }
 
