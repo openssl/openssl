@@ -981,7 +981,7 @@ static int dasync_rsa_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out,
                              size_t inlen);
 
     if (pdecrypt == NULL)
-        EVP_PKEY_meth_get_encrypt(dasync_rsa_orig, NULL, &pdecrypt);
+        EVP_PKEY_meth_get_decrypt(dasync_rsa_orig, NULL, &pdecrypt);
     return pdecrypt(ctx, out, outlen, in, inlen);
 }
 
