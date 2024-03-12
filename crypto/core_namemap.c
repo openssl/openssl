@@ -10,6 +10,7 @@
 #include "internal/namemap.h"
 #include <openssl/lhash.h>
 #include "crypto/lhash.h"      /* ossl_lh_strcasehash */
+#include "internal/hashtable.h"
 #include "internal/tsan_assist.h"
 #include "internal/sizes.h"
 #include "crypto/context.h"
@@ -23,34 +24,46 @@ typedef struct {
     int number;
 } NAMENUM_ENTRY;
 
-DEFINE_LHASH_OF_EX(NAMENUM_ENTRY);
+typedef struct numname_entry_st {
+    NAMENUM_ENTRY *entry;
+    struct numname_entry_st *next;
+} NUMNAME_ENTRY;
+
+/*
+ * Defines our NAMENUM_ENTRY hashtable key
+ */
+HT_START_KEY_DEFN(namenum_key)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_END_KEY_DEFN(NAMENUM_KEY)
+
+HT_START_KEY_DEFN(numname_key)
+HT_DEF_KEY_FIELD(number, int)
+HT_END_KEY_DEFN(NUMNAME_KEY)
+
+IMPLEMENT_HT_VALUE_TYPE_FNS(NAMENUM_ENTRY, nne, static)
+IMPLEMENT_HT_VALUE_TYPE_FNS(NUMNAME_ENTRY, nne, static)
 
 /*-
  * The namemap itself
  * ==================
  */
 
+typedef void (*unlock_fn)(OSSL_NAMEMAP *);
+typedef unlock_fn (*lock_fn)(OSSL_NAMEMAP *);
+static unlock_fn do_setup_lock_real(OSSL_NAMEMAP *nm);
+
 struct ossl_namemap_st {
     /* Flags */
     unsigned int stored:1; /* If 1, it's stored in a library context */
 
-    CRYPTO_RWLOCK *lock;
-    LHASH_OF(NAMENUM_ENTRY) *namenum;  /* Name->number mapping */
+    HT *namenum;  /* Name->number mapping */
 
+    CRYPTO_RWLOCK *setup_lock;
+    CRYPTO_THREAD_ID setup_thread;
+    lock_fn do_lock[2];
+    int lock_idx;
     TSAN_QUALIFIER int max_number;     /* Current max number */
 };
-
-/* LHASH callbacks */
-
-static unsigned long namenum_hash(const NAMENUM_ENTRY *n)
-{
-    return ossl_lh_strcasehash(n->name);
-}
-
-static int namenum_cmp(const NAMENUM_ENTRY *a, const NAMENUM_ENTRY *b)
-{
-    return OPENSSL_strcasecmp(a->name, b->name);
-}
 
 static void namenum_free(NAMENUM_ENTRY *n)
 {
@@ -96,30 +109,13 @@ int ossl_namemap_empty(OSSL_NAMEMAP *namemap)
     if (namemap == NULL)
         return 1;
 
-    if (!CRYPTO_THREAD_read_lock(namemap->lock))
-        return -1;
     rv = namemap->max_number == 0;
-    CRYPTO_THREAD_unlock(namemap->lock);
     return rv;
 #else
     /* Have TSAN support */
     return namemap == NULL || tsan_load(&namemap->max_number) == 0;
 #endif
 }
-
-typedef struct doall_names_data_st {
-    int number;
-    const char **names;
-    int found;
-} DOALL_NAMES_DATA;
-
-static void do_name(const NAMENUM_ENTRY *namenum, DOALL_NAMES_DATA *data)
-{
-    if (namenum->number == data->number)
-        data->names[data->found++] = namenum->name;
-}
-
-IMPLEMENT_LHASH_DOALL_ARG_CONST(NAMENUM_ENTRY, DOALL_NAMES_DATA);
 
 /*
  * Call the callback for all names in the namemap with the given number.
@@ -130,56 +126,50 @@ int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
                              void (*fn)(const char *name, void *data),
                              void *data)
 {
-    DOALL_NAMES_DATA cbdata;
-    size_t num_names;
-    int i;
-
-    cbdata.number = number;
-    cbdata.found = 0;
+    NUMNAME_ENTRY *e = NULL;
+    HT_VALUE *v = NULL;
+    NUMNAME_KEY key;
 
     if (namemap == NULL)
         return 0;
 
-    /*
-     * We collect all the names first under a read lock. Subsequently we call
-     * the user function, so that we're not holding the read lock when in user
-     * code. This could lead to deadlocks.
-     */
-    if (!CRYPTO_THREAD_read_lock(namemap->lock))
-        return 0;
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_FIELD(&key, number, number);
 
-    num_names = lh_NAMENUM_ENTRY_num_items(namemap->namenum);
-    if (num_names == 0) {
-        CRYPTO_THREAD_unlock(namemap->lock);
-        return 0;
+    ossl_ht_read_lock(namemap->namenum);
+    e = ossl_ht_nne_NUMNAME_ENTRY_get(namemap->namenum,
+                                      TO_HT_KEY(&key), &v);
+    ossl_ht_read_unlock(namemap->namenum);
+
+    while (e != NULL) {
+        fn(e->entry->name, data);
+        e = e->next;
     }
-    cbdata.names = OPENSSL_malloc(sizeof(*cbdata.names) * num_names);
-    if (cbdata.names == NULL) {
-        CRYPTO_THREAD_unlock(namemap->lock);
-        return 0;
-    }
-    lh_NAMENUM_ENTRY_doall_DOALL_NAMES_DATA(namemap->namenum, do_name,
-                                            &cbdata);
-    CRYPTO_THREAD_unlock(namemap->lock);
 
-    for (i = 0; i < cbdata.found; i++)
-        fn(cbdata.names[i], data);
-
-    OPENSSL_free(cbdata.names);
     return 1;
 }
 
-/* This function is not thread safe, the namemap must be locked */
 static int namemap_name2num(const OSSL_NAMEMAP *namemap,
                             const char *name)
 {
-    NAMENUM_ENTRY *namenum_entry, namenum_tmpl;
+    NAMENUM_ENTRY *namenum_entry;
+    HT_VALUE *v;
+    NAMENUM_KEY key;
+    int num;
 
-    namenum_tmpl.name = (char *)name;
-    namenum_tmpl.number = 0;
-    namenum_entry =
-        lh_NAMENUM_ENTRY_retrieve(namemap->namenum, &namenum_tmpl);
-    return namenum_entry != NULL ? namenum_entry->number : 0;
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING_CASE(&key, name, name);
+
+    ossl_ht_read_lock(namemap->namenum);
+    v = ossl_ht_get(namemap->namenum, TO_HT_KEY(&key));
+    if (v == NULL) {
+        num = 0;
+    } else {
+        namenum_entry = ossl_ht_nne_NAMENUM_ENTRY_from_value(v);
+        num = namenum_entry->number;
+    }
+    ossl_ht_read_unlock(namemap->namenum);
+    return num;
 }
 
 int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
@@ -194,10 +184,7 @@ int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
     if (namemap == NULL)
         return 0;
 
-    if (!CRYPTO_THREAD_read_lock(namemap->lock))
-        return 0;
     number = namemap_name2num(namemap, name);
-    CRYPTO_THREAD_unlock(namemap->lock);
 
     return number;
 }
@@ -216,39 +203,39 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
     return ret;
 }
 
-struct num2name_data_st {
-    size_t idx;                  /* Countdown */
-    const char *name;            /* Result */
-};
-
-static void do_num2name(const char *name, void *vdata)
-{
-    struct num2name_data_st *data = vdata;
-
-    if (data->idx > 0)
-        data->idx--;
-    else if (data->name == NULL)
-        data->name = name;
-}
-
 const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
                                   size_t idx)
 {
-    struct num2name_data_st data;
+    NUMNAME_ENTRY *e;
+    NUMNAME_KEY key;
+    HT_VALUE *v = NULL;
 
-    data.idx = idx;
-    data.name = NULL;
-    if (!ossl_namemap_doall_names(namemap, number, do_num2name, &data))
-        return NULL;
-    return data.name;
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_FIELD(&key, number, number);
+
+    ossl_ht_read_lock(namemap->namenum);
+    e = ossl_ht_nne_NUMNAME_ENTRY_get(namemap->namenum, TO_HT_KEY(&key), &v);
+    ossl_ht_read_unlock(namemap->namenum);
+
+    return e != NULL ? e->entry->name : NULL;
 }
 
-/* This function is not thread safe, the namemap must be locked */
 static int namemap_add_name(OSSL_NAMEMAP *namemap, int number,
                             const char *name)
 {
     NAMENUM_ENTRY *namenum = NULL;
+    NUMNAME_ENTRY *numname = NULL;
+    NUMNAME_ENTRY *newnumname = NULL;
+    HT_VALUE *v = NULL;
+    int rc;
     int tmp_number;
+    NAMENUM_KEY key;
+    NUMNAME_KEY rkey;
+    int retry_count = 0;
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING_CASE(&key, name, name);
+    HT_INIT_KEY(&rkey);
 
     /* If it already exists, we don't add it */
     if ((tmp_number = namemap_name2num(namemap, name)) != 0)
@@ -257,20 +244,61 @@ static int namemap_add_name(OSSL_NAMEMAP *namemap, int number,
     if ((namenum = OPENSSL_zalloc(sizeof(*namenum))) == NULL)
         return 0;
 
+    if ((newnumname = OPENSSL_zalloc(sizeof(*newnumname))) == NULL)
+        goto err;
+
     if ((namenum->name = OPENSSL_strdup(name)) == NULL)
         goto err;
 
-    /* The tsan_counter use here is safe since we're under lock */
+    /* The tsan_counter use here is safe since it uses atomics */
     namenum->number =
         number != 0 ? number : 1 + tsan_counter(&namemap->max_number);
-    (void)lh_NAMENUM_ENTRY_insert(namemap->namenum, namenum);
 
-    if (lh_NAMENUM_ENTRY_error(namemap->namenum))
+    ossl_ht_write_lock(namemap->namenum);
+    rc = ossl_ht_nne_NAMENUM_ENTRY_insert(namemap->namenum,
+                                          TO_HT_KEY(&key), namenum, NULL);
+    ossl_ht_write_unlock(namemap->namenum);
+    if (rc == 0)
         goto err;
+
+    HT_SET_KEY_FIELD(&rkey, number, namenum->number);
+
+try_again:
+    newnumname->entry = namenum;
+    ossl_ht_read_lock(namemap->namenum);
+    numname = ossl_ht_nne_NUMNAME_ENTRY_get(namemap->namenum, TO_HT_KEY(&rkey),
+                                            &v);
+    ossl_ht_read_unlock(namemap->namenum);
+    if (numname == NULL) {
+        if (retry_count > 0)
+            goto err;
+        ossl_ht_write_lock(namemap->namenum);
+        rc = ossl_ht_nne_NUMNAME_ENTRY_insert(namemap->namenum, TO_HT_KEY(&rkey),
+                                              newnumname, NULL);
+        ossl_ht_write_unlock(namemap->namenum);
+        if (rc == 0) {
+            /*
+             * Since we're not doing a replacement, it means another thread
+             * raced in and added our entry for us, go back and try again
+             * but only once, as not finding it on retry is an error
+             */
+            retry_count++;
+            goto try_again;
+        }
+    } else {
+        while (numname != NULL) {
+            if (numname->next == NULL) {
+                numname->next = newnumname;
+                break;
+            }
+            numname = numname->next;
+        }
+    }
     return namenum->number;
 
  err:
     namenum_free(namenum);
+    OPENSSL_free(newnumname);
     return 0;
 }
 
@@ -287,10 +315,7 @@ int ossl_namemap_add_name(OSSL_NAMEMAP *namemap, int number,
     if (name == NULL || *name == 0 || namemap == NULL)
         return 0;
 
-    if (!CRYPTO_THREAD_write_lock(namemap->lock))
-        return 0;
     tmp_number = namemap_add_name(namemap, number, name);
-    CRYPTO_THREAD_unlock(namemap->lock);
     return tmp_number;
 }
 
@@ -308,10 +333,6 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
     if ((tmp = OPENSSL_strdup(names)) == NULL)
         return 0;
 
-    if (!CRYPTO_THREAD_write_lock(namemap->lock)) {
-        OPENSSL_free(tmp);
-        return 0;
-    }
     /*
      * Check that no name is an empty string, and that all names have at
      * most one numeric identity together.
@@ -367,7 +388,6 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
     }
 
  end:
-    CRYPTO_THREAD_unlock(namemap->lock);
     OPENSSL_free(tmp);
     return number;
 }
@@ -467,15 +487,92 @@ static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,
  * ==========================
  */
 
+/*
+ * This deserves some explination
+ * with the new hashtable implementation, there was a desire
+ * to operate locklessly, which is good.  However, ossl_namemap_stored
+ * is potentially called from many threads at once, and the first caller
+ * through this is meant to initalize the namemap table with all the cipher, md,
+ * and pkey method names.  When this is run in parallel, now that the namemap
+ * lock is gone, we occasionally get races, and so threads might do a lookup
+ * while the table is getting populated, leading to negative lookups, etc, which
+ * in turn results in various bad behavior (bad/early exits, erroneous errors,
+ * etc).
+ *
+ * To combat that, what we need is for one and only one thread to do that
+ * population, and for other threads to wait while it completes.  But adding a
+ * lock here basically just re-introduces the lock we removed, which is...bad.
+ *
+ * So we have this scheme instead.
+ *
+ * What happens here is a stateful locking mechanism:
+ * A call to ossl_namemap_stored, now calls namemap->lock_fn, which initailly
+ * points to do_setup_lock_real, which takes the namemap write lock, and sets
+ * the identity of the setup thread, if the setup_thread id is an inital value
+ * of 0. This function returns an unlock function to the caller, which is called
+ * on exit from ossl_namemap_stored.  do_setup_lock_real return
+ * do_setup_unlock_real, which in turn updates the namemap lock_fn pointer to
+ * point to do_setup_lock_nop, then unlocks the lock and returns
+ *
+ * Subsequent calls to the lock_fn pointer (after being updated to point to
+ * do_setup_lock_nop return do_setup_unlock_nop, which just does a return
+ *
+ * In this way, any threads which attempt to call ossl_namemap_stored, will
+ * block until the initial population is done on the context, but once the
+ * context is populated, operation can continue locklessly
+ *
+ */
+
+static void do_setup_unlock_nop(OSSL_NAMEMAP *nm)
+{
+    return;
+}
+
+static unlock_fn do_setup_lock_nop(OSSL_NAMEMAP *nm)
+{
+    return do_setup_unlock_nop;
+}
+
+static void do_setup_unlock_real(OSSL_NAMEMAP *nm)
+{
+    int toggle = 0;
+    if (CRYPTO_THREAD_compare_id(nm->setup_thread,
+                                 CRYPTO_THREAD_get_current_id())) {
+        toggle = 1;
+    }
+    CRYPTO_THREAD_unlock(nm->setup_lock);
+
+    if (toggle)
+        CRYPTO_atomic_add(&nm->lock_idx, 1, &toggle, nm->setup_lock);
+}
+
+static unlock_fn do_setup_lock_real(OSSL_NAMEMAP *nm)
+{
+    if (!CRYPTO_THREAD_write_lock(nm->setup_lock))
+        return NULL;
+    if (CRYPTO_THREAD_compare_id(nm->setup_thread, (CRYPTO_THREAD_ID)0))
+        nm->setup_thread = CRYPTO_THREAD_get_current_id();
+    return do_setup_unlock_real;
+}
+
 OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
 {
 #ifndef FIPS_MODULE
     int nms;
 #endif
+    void (*do_unlock)(OSSL_NAMEMAP *);
+    int lock_idx;
+
     OSSL_NAMEMAP *namemap =
         ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_NAMEMAP_INDEX);
 
     if (namemap == NULL)
+        return NULL;
+
+    CRYPTO_atomic_load_int(&namemap->lock_idx, &lock_idx, &namemap->setup_lock);
+
+    do_unlock = namemap->do_lock[lock_idx](namemap);
+    if (do_unlock == NULL)
         return NULL;
 
 #ifndef FIPS_MODULE
@@ -485,6 +582,7 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
          * Could not get lock to make the count, so maybe internal objects
          * weren't added. This seems safest.
          */
+        do_unlock(namemap);
         return NULL;
     }
     if (nms == 1) {
@@ -505,21 +603,68 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
     }
 #endif
 
+    do_unlock(namemap);
     return namemap;
+}
+
+static void namenum_ht_free(HT_VALUE *v)
+{
+    NAMENUM_ENTRY *e = NULL;
+    NUMNAME_ENTRY *d = NULL;
+    NUMNAME_ENTRY *dn = NULL;
+
+    e = ossl_ht_nne_NAMENUM_ENTRY_from_value(v);
+    if (e != NULL) {
+        namenum_free(e);
+    } else {
+        d = ossl_ht_nne_NUMNAME_ENTRY_from_value(v);
+        while (d != NULL) {
+            dn = d->next;
+            OPENSSL_free(d);
+            d = dn;
+        }
+    }
+    return;
 }
 
 OSSL_NAMEMAP *ossl_namemap_new(void)
 {
     OSSL_NAMEMAP *namemap;
 
-    if ((namemap = OPENSSL_zalloc(sizeof(*namemap))) != NULL
-        && (namemap->lock = CRYPTO_THREAD_lock_new()) != NULL
-        && (namemap->namenum =
-            lh_NAMENUM_ENTRY_new(namenum_hash, namenum_cmp)) != NULL)
-        return namemap;
+    /*
+     * Hash table config
+     * namenum_ht_free is our free fn
+     * use the internal fnv1a hash
+     * 1024 initial buckets
+     * do lockless reads
+     */
+    HT_CONFIG ht_conf = {
+        namenum_ht_free,
+        NULL,
+        1024,
+    };
 
-    ossl_namemap_free(namemap);
-    return NULL;
+    if ((namemap = OPENSSL_zalloc(sizeof(*namemap))) == NULL)
+        return NULL;
+
+    namemap->setup_lock = CRYPTO_THREAD_lock_new();
+    if (namemap->setup_lock == NULL) {
+        OPENSSL_free(namemap);
+        namemap = NULL;
+        goto out;
+    }
+
+    namemap->namenum = ossl_ht_new(&ht_conf);
+    if (namemap->namenum == NULL) {
+        ossl_namemap_free(namemap);
+        namemap = NULL;
+    }
+
+    namemap->do_lock[0] = do_setup_lock_real;
+    namemap->do_lock[1] = do_setup_lock_nop;
+    namemap->lock_idx = 0;
+out:
+    return namemap;
 }
 
 void ossl_namemap_free(OSSL_NAMEMAP *namemap)
@@ -527,9 +672,9 @@ void ossl_namemap_free(OSSL_NAMEMAP *namemap)
     if (namemap == NULL || namemap->stored)
         return;
 
-    lh_NAMENUM_ENTRY_doall(namemap->namenum, namenum_free);
-    lh_NAMENUM_ENTRY_free(namemap->namenum);
+    ossl_ht_free(namemap->namenum);
 
-    CRYPTO_THREAD_lock_free(namemap->lock);
+    CRYPTO_THREAD_lock_free(namemap->setup_lock);
+
     OPENSSL_free(namemap);
 }

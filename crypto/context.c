@@ -9,11 +9,14 @@
 
 #include "crypto/cryptlib.h"
 #include <openssl/conf.h>
+#include <openssl/kdf.h>
+#include <openssl/evp.h>
 #include "internal/thread_once.h"
 #include "internal/property.h"
 #include "internal/core.h"
 #include "internal/bio.h"
 #include "internal/provider.h"
+#include "internal/hashtable.h"
 #include "crypto/decoder.h"
 #include "crypto/context.h"
 
@@ -30,6 +33,7 @@ struct ossl_lib_ctx_st {
     void *drbg;
     void *drbg_nonce;
 #ifndef FIPS_MODULE
+    HT *ctx_alg_cache;
     void *provider_conf;
     void *bio_core;
     void *child_provider;
@@ -50,6 +54,45 @@ struct ossl_lib_ctx_st {
 
     unsigned int ischild:1;
 };
+
+#ifndef FIPS_MODULE
+/*
+ * This is an ansi C workaround.  ANSI C does not allow
+ * empty macro arguments, but it will consider the a macro
+ * as a valid preprocessing token, even if it is defined to
+ * be empty, so since we want these functions to be global
+ * just define GLOBAL as empty here and use it to fill in the
+ * 3rd argument where we might otherwise place the static
+ * keyword
+ */
+#define GLOBAL
+DECLARE_HT_VALUE_TYPE_FNS(EVP_SIGNATURE, algcache)
+IMPLEMENT_HT_VALUE_TYPE_FNS(EVP_SIGNATURE, algcache, GLOBAL)
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_KEM, algcache)
+IMPLEMENT_HT_VALUE_TYPE_FNS(EVP_KEM, algcache, GLOBAL)
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_KEYEXCH, algcache)
+IMPLEMENT_HT_VALUE_TYPE_FNS(EVP_KEYEXCH, algcache, GLOBAL)
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_RAND, algcache)
+IMPLEMENT_HT_VALUE_TYPE_FNS(EVP_RAND, algcache, GLOBAL)
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_ASYM_CIPHER, algcache)
+IMPLEMENT_HT_VALUE_TYPE_FNS(EVP_ASYM_CIPHER, algcache, GLOBAL)
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_MAC, algcache)
+IMPLEMENT_HT_VALUE_TYPE_FNS(EVP_MAC, algcache, GLOBAL)
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_CIPHER, algcache)
+IMPLEMENT_HT_VALUE_TYPE_FNS(EVP_CIPHER, algcache, GLOBAL)
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_KDF, algcache)
+IMPLEMENT_HT_VALUE_TYPE_FNS(EVP_KDF, algcache, GLOBAL)
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_MD, algcache)
+IMPLEMENT_HT_VALUE_TYPE_FNS(EVP_MD, algcache, GLOBAL)
+#endif
 
 int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx)
 {
@@ -77,9 +120,39 @@ int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx)
 
 static void context_deinit_objs(OSSL_LIB_CTX *ctx);
 
+#ifndef FIPS_MODULE
+static void algcache_free(HT_VALUE *v)
+{
+    EVP_KDF *k = ossl_ht_algcache_EVP_KDF_from_value(v);
+    EVP_MD *m = ossl_ht_algcache_EVP_MD_from_value(v);
+    EVP_CIPHER *c = ossl_ht_algcache_EVP_CIPHER_from_value(v);
+    EVP_MAC *mac = ossl_ht_algcache_EVP_MAC_from_value(v);
+    EVP_ASYM_CIPHER *ac = ossl_ht_algcache_EVP_ASYM_CIPHER_from_value(v);
+    EVP_RAND *r = ossl_ht_algcache_EVP_RAND_from_value(v);
+    EVP_KEYEXCH *x = ossl_ht_algcache_EVP_KEYEXCH_from_value(v);
+    EVP_KEM *kem = ossl_ht_algcache_EVP_KEM_from_value(v);
+    EVP_SIGNATURE *sig = ossl_ht_algcache_EVP_SIGNATURE_from_value(v);
+
+    /* only one of the above conversions will return non-null */
+    EVP_KDF_free(k);
+    EVP_MD_free(m);
+    EVP_CIPHER_free(c);
+    EVP_MAC_free(mac);
+    EVP_ASYM_CIPHER_free(ac);
+    EVP_RAND_free(r);
+    EVP_KEYEXCH_free(x);
+    EVP_KEM_free(kem);
+    EVP_SIGNATURE_free(sig);
+    return;
+}
+#endif
+
 static int context_init(OSSL_LIB_CTX *ctx)
 {
     int exdata_done = 0;
+#ifndef FIPS_MODULE
+    HT_CONFIG algcache_conf = {algcache_free, NULL, 0};
+#endif
 
     ctx->lock = CRYPTO_THREAD_lock_new();
     if (ctx->lock == NULL)
@@ -100,6 +173,10 @@ static int context_init(OSSL_LIB_CTX *ctx)
         goto err;
 
 #ifndef FIPS_MODULE
+    ctx->ctx_alg_cache = ossl_ht_new(&algcache_conf);
+    if (ctx->ctx_alg_cache == NULL)
+        goto err;
+
     /* P2. Must be freed before the provider store is freed */
     ctx->provider_conf = ossl_prov_conf_ctx_new(ctx);
     if (ctx->provider_conf == NULL)
@@ -228,6 +305,9 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
     }
 
 #ifndef FIPS_MODULE
+    ossl_ht_free(ctx->ctx_alg_cache);
+    ctx->ctx_alg_cache = NULL;
+
     /* P2. */
     if (ctx->provider_conf != NULL) {
         ossl_prov_conf_ctx_free(ctx->provider_conf);
@@ -539,6 +619,16 @@ int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx)
         return 1;
 #endif
     return 0;
+}
+
+
+HT *ossl_lib_ctx_get_algcache(OSSL_LIB_CTX *ctx)
+{
+#ifndef FIPS_MODULE
+    return ossl_lib_ctx_get_concrete(ctx)->ctx_alg_cache;
+#else
+    return NULL;
+#endif
 }
 
 void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)

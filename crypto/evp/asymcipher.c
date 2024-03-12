@@ -9,13 +9,22 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/core.h"
+#include "internal/hashtable.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+DECLARE_HT_VALUE_TYPE_FNS(EVP_ASYM_CIPHER, algcache)
+
+HT_START_KEY_DEFN(acipherkey)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(propq, 128)
+HT_END_KEY_DEFN(ACIPHERKEY)
 
 static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
                                      const OSSL_PARAM params[])
@@ -482,10 +491,43 @@ OSSL_PROVIDER *EVP_ASYM_CIPHER_get0_provider(const EVP_ASYM_CIPHER *cipher)
 EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                        const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_ASYM_CIPHER, algorithm, properties,
-                             evp_asym_cipher_from_algorithm,
-                             (int (*)(void *))EVP_ASYM_CIPHER_up_ref,
-                             (void (*)(void *))EVP_ASYM_CIPHER_free);
+    EVP_ASYM_CIPHER *c;
+#ifndef FIPS_MODULE
+    HT *algcache;
+    HT_VALUE *v = NULL;
+    ACIPHERKEY key;
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING(&key, name, algorithm);
+    HT_SET_KEY_STRING(&key, propq, properties);
+
+    algcache = ossl_lib_ctx_get_algcache(ctx);
+
+    ossl_ht_read_lock(algcache);
+    c = ossl_ht_algcache_EVP_ASYM_CIPHER_get(algcache, TO_HT_KEY(&key), &v);
+    if (c != NULL)
+        EVP_ASYM_CIPHER_up_ref(c);
+    ossl_ht_read_unlock(algcache);
+
+    if (c != NULL)
+        return c;
+#endif
+
+    c = evp_generic_fetch(ctx, OSSL_OP_ASYM_CIPHER, algorithm, properties,
+                          evp_asym_cipher_from_algorithm,
+                          (int (*)(void *))EVP_ASYM_CIPHER_up_ref,
+                          (void (*)(void *))EVP_ASYM_CIPHER_free);
+#ifndef FIPS_MODULE
+    if (c != NULL) {
+        ossl_ht_write_lock(algcache);
+        if (ossl_ht_algcache_EVP_ASYM_CIPHER_insert(algcache, TO_HT_KEY(&key),
+                                                    c, NULL))
+            EVP_ASYM_CIPHER_up_ref(c);
+        ossl_ht_write_unlock(algcache);
+    }
+#endif
+
+    return c;
 }
 
 EVP_ASYM_CIPHER *evp_asym_cipher_fetch_from_prov(OSSL_PROVIDER *prov,

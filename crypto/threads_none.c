@@ -226,6 +226,13 @@ int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
+int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
+{
+    *dst = val;
+
+    return 1;
+}
+
 int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 {
     *ret = *val;
