@@ -469,14 +469,14 @@ static tlsextstatusctx tlscstatp = { -1 };
  * the OCSP certificate IDs and minimise the number of OCSP responses by caching
  * them until they were considered "expired".
  */
-static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
-                                        OCSP_RESPONSE **resp)
+static int get_ocsp_resp_from_responder_single(SSL *s, X509 *x, 
+                                               tlsextstatusctx *srctx,
+                                               OCSP_RESPONSE **resp)
 {
     char *host = NULL, *port = NULL, *path = NULL;
     char *proxy = NULL, *no_proxy = NULL;
     int use_ssl;
     STACK_OF(OPENSSL_STRING) *aia = NULL;
-    X509 *x = NULL;
     X509_STORE_CTX *inctx = NULL;
     X509_OBJECT *obj;
     OCSP_REQUEST *req = NULL;
@@ -486,7 +486,6 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     int i;
 
     /* Build up OCSP query from server certificate */
-    x = SSL_get_certificate(s);
     aia = X509_get1_ocsp(x);
     if (aia != NULL) {
         if (!OSSL_HTTP_parse_url(sk_OPENSSL_STRING_value(aia, 0), &use_ssl,
@@ -538,6 +537,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     SSL_get_tlsext_status_exts(s, &exts);
     for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
         X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
+
         if (!OCSP_REQUEST_add_ext(req, ext, -1))
             goto err;
     }
@@ -570,6 +570,53 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     return ret;
 }
 
+static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
+                                        STACK_OF(OCSP_RESPONSE) **sk_resp)
+{
+    X509 *x = NULL;
+    int ret = SSL_TLSEXT_ERR_NOACK;
+    int i;
+    int num = 1;
+    STACK_OF(X509) *server_certs = NULL;
+    OCSP_RESPONSE *resp = NULL;
+
+    if (*sk_resp != NULL) {
+        sk_OCSP_RESPONSE_pop_free(*sk_resp, OCSP_RESPONSE_free);
+    }
+    *sk_resp = sk_OCSP_RESPONSE_new_null();
+
+    SSL_get0_chain_certs(s, &server_certs);
+    if (server_certs != NULL)
+        /* certificate chain is available */
+        num = sk_X509_num(server_certs);
+    else
+        /* 
+         * certificate chain is not available, 
+         * set num to 1 for server certificate 
+         * */
+        num = 1; 
+    for (i = -1; i < (num - 1); i++) {
+        if (i == -1) {
+            /* get OCSP response for server certificate first */
+            x = SSL_get_certificate(s);
+        } else {
+            /*
+             * for each certificate in chain (except root) get
+             * the OCSP response
+             */
+            x = sk_X509_value(server_certs, i);
+        }
+
+        resp = NULL;
+        ret = get_ocsp_resp_from_responder_single(s, x, srctx, &resp);
+        if (ret == SSL_TLSEXT_ERR_OK && resp != NULL) {
+            sk_OCSP_RESPONSE_insert(*sk_resp, resp, -1);
+        }
+    }
+
+    return SSL_TLSEXT_ERR_OK;
+}
+
 /*
  * Certificate Status callback. This is called when a client includes a
  * certificate status request extension. The response is either obtained from a
@@ -579,15 +626,16 @@ static int cert_status_cb(SSL *s, void *arg)
 {
     tlsextstatusctx *srctx = arg;
     OCSP_RESPONSE *resp = NULL;
-    unsigned char *rspder = NULL;
-    int rspderlen;
+    STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+    int i;
 
     if (srctx->verbose)
         BIO_puts(bio_err, "cert_status: callback called\n");
 
     if (srctx->respin != NULL) {
         BIO *derbio = bio_open_default(srctx->respin, 'r', FORMAT_ASN1);
+
         if (derbio == NULL) {
             BIO_puts(bio_err, "cert_status: Cannot open OCSP response file\n");
             goto err;
@@ -598,20 +646,25 @@ static int cert_status_cb(SSL *s, void *arg)
             BIO_puts(bio_err, "cert_status: Error reading OCSP response\n");
             goto err;
         }
+
+        sk_resp = sk_OCSP_RESPONSE_new_null();
+
+        sk_OCSP_RESPONSE_insert(sk_resp, resp, -1);
     } else {
-        ret = get_ocsp_resp_from_responder(s, srctx, &resp);
+        ret = get_ocsp_resp_from_responder(s, srctx, &sk_resp);
         if (ret != SSL_TLSEXT_ERR_OK)
             goto err;
     }
 
-    rspderlen = i2d_OCSP_RESPONSE(resp, &rspder);
-    if (rspderlen <= 0)
-        goto err;
-
-    SSL_set_tlsext_status_ocsp_resp(s, rspder, rspderlen);
+    SSL_set_tlsext_status_ocsp_resp_ex(s, sk_resp);
     if (srctx->verbose) {
         BIO_puts(bio_err, "cert_status: ocsp response sent:\n");
-        OCSP_RESPONSE_print(bio_err, resp, 2);
+        for (i = 0; i < sk_OCSP_RESPONSE_num(sk_resp); i++) {
+            resp = sk_OCSP_RESPONSE_value(sk_resp, i);
+            if (resp != NULL) {
+                OCSP_RESPONSE_print(bio_err, resp, 2);
+            }
+        }
     }
 
     ret = SSL_TLSEXT_ERR_OK;
@@ -619,8 +672,6 @@ static int cert_status_cb(SSL *s, void *arg)
  err:
     if (ret != SSL_TLSEXT_ERR_OK)
         ERR_print_errors(bio_err);
-
-    OCSP_RESPONSE_free(resp);
 
     return ret;
 }
@@ -659,6 +710,7 @@ static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
     if (!s_quiet) {
         /* We can assume that |in| is syntactically valid. */
         unsigned int i;
+
         BIO_printf(bio_s_out, "ALPN protocols advertised by the client: ");
         for (i = 0; i < inlen;) {
             if (i)
