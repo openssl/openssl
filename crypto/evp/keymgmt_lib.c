@@ -239,10 +239,15 @@ OP_CACHE_ELEM *evp_keymgmt_util_find_operation_cache(EVP_PKEY *pk,
     /*
      * A comparison and sk_P_CACHE_ELEM_find() are avoided to not cause
      * problems when we've only a read lock.
+     * A keymgmt is a match if the |keymgmt| pointers are identical or if the
+     * provider and the name ID match
      */
     for (i = 0; i < end; i++) {
         p = sk_OP_CACHE_ELEM_value(pk->operation_cache, i);
-        if (keymgmt == p->keymgmt && (p->selection & selection) == selection)
+        if ((p->selection & selection) == selection
+                && (keymgmt == p->keymgmt
+                    || (keymgmt->name_id == p->keymgmt->name_id
+                        && keymgmt->prov == p->keymgmt->prov)))
             return p;
     }
     return NULL;
