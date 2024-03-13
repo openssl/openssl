@@ -1916,8 +1916,11 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
             } else {
                 if (BIO_should_retry(rl->bio))
                     ret = OSSL_RECORD_RETURN_RETRY;
-                else
+                else {
+                    ERR_raise_data(ERR_LIB_SSL, get_last_sys_error(),
+                                   "tls_retry_write_records failure");
                     ret = OSSL_RECORD_RETURN_FATAL;
+                }
             }
         } else {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_BIO_NOT_SET);
