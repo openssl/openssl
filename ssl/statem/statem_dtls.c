@@ -800,7 +800,6 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
 static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
                                         size_t *len)
 {
-    unsigned char wire[DTLS1_HM_HEADER_LENGTH];
     size_t mlen, frag_off, frag_len;
     int i, ret;
     uint8_t recvd_type;
@@ -808,8 +807,11 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
     size_t readbytes;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     int chretran = 0;
+    unsigned char *p;
 
     *errtype = 0;
+
+    p = (unsigned char *)s->init_buf->data;
 
  redo:
     /* see if we have the required fragment already */
@@ -825,7 +827,7 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
     }
 
     /* read handshake message header */
-    i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, &recvd_type, wire,
+    i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, &recvd_type, p,
                                     DTLS1_HM_HEADER_LENGTH, 0, &readbytes);
     if (i <= 0) {               /* nbio, or an error */
         s->rwstate = SSL_READING;
@@ -833,13 +835,12 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
         return 0;
     }
     if (recvd_type == SSL3_RT_CHANGE_CIPHER_SPEC) {
-        if (wire[0] != SSL3_MT_CCS) {
+        if (p[0] != SSL3_MT_CCS) {
             SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
                      SSL_R_BAD_CHANGE_CIPHER_SPEC);
             goto f_err;
         }
 
-        memcpy(s->init_buf->data, wire, readbytes);
         s->init_num = readbytes - 1;
         s->init_msg = s->init_buf->data + 1;
         s->s3.tmp.message_type = SSL3_MT_CHANGE_CIPHER_SPEC;
@@ -855,7 +856,7 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
     }
 
     /* parse the message fragment header */
-    dtls1_get_message_header(wire, &msg_hdr);
+    dtls1_get_message_header(p, &msg_hdr);
 
     mlen = msg_hdr.msg_len;
     frag_off = msg_hdr.frag_off;
@@ -880,7 +881,7 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
         if (!s->server
                 || msg_hdr.seq != 0
                 || s->d1->handshake_read_seq != 1
-                || wire[0] != SSL3_MT_CLIENT_HELLO
+                || p[0] != SSL3_MT_CLIENT_HELLO
                 || s->statem.hand_state != DTLS_ST_SW_HELLO_VERIFY_REQUEST) {
             *errtype = dtls1_process_out_of_seq_message(s, &msg_hdr);
             return 0;
@@ -901,16 +902,16 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
     if (!s->server
             && s->d1->r_msg_hdr.frag_off == 0
             && s->statem.hand_state != TLS_ST_OK
-            && wire[0] == SSL3_MT_HELLO_REQUEST) {
+            && p[0] == SSL3_MT_HELLO_REQUEST) {
         /*
          * The server may always send 'Hello Request' messages -- we are
          * doing a handshake anyway now, so ignore them if their format is
          * correct. Does not count for 'Finished' MAC.
          */
-        if (wire[1] == 0 && wire[2] == 0 && wire[3] == 0) {
+        if (p[1] == 0 && p[2] == 0 && p[3] == 0) {
             if (s->msg_callback)
                 s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-                                wire, DTLS1_HM_HEADER_LENGTH, ssl,
+                                p, DTLS1_HM_HEADER_LENGTH, ssl,
                                 s->msg_callback_arg);
 
             s->init_num = 0;
@@ -928,8 +929,7 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
     }
 
     if (frag_len > 0) {
-        unsigned char *p =
-            (unsigned char *)s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
+        p += DTLS1_HM_HEADER_LENGTH;
 
         i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL,
                                         &p[frag_off], frag_len, 0, &readbytes);
