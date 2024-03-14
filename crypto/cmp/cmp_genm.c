@@ -354,7 +354,7 @@ int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509 *crlcert,
     OSSL_CMP_CRLSTATUS *status = NULL;
     STACK_OF(OSSL_CMP_CRLSTATUS) *list = NULL;
     OSSL_CMP_ITAV *req = NULL, *itav = NULL;
-    STACK_OF(X509_CRL) *crls;
+    STACK_OF(X509_CRL) *crls = NULL;
     int res = 0;
 
     if (crl == NULL) {
