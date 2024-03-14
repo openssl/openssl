@@ -372,6 +372,7 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
         OPENSSL_free(tmod->name);
         OPENSSL_free(tmod);
     }
+    sk_CONF_MODULE_free(new_modules);
     return NULL;
 }
 
