@@ -128,13 +128,12 @@ I<siglen> parameter should contain the length of the I<sig> buffer. If the
 call is successful the signature is written to I<sig> and the amount of data
 written to I<siglen>.
 
-EVP_DigestSign() signs I<tbslen> bytes of data at I<tbs> and places the
-signature in I<sig> and its length in I<siglen> in a similar way to
-EVP_DigestSignFinal(). In the event of a failure EVP_DigestSign() cannot be
-called again without reinitialising the EVP_MD_CTX. If I<sig> is NULL before the
-call then I<siglen> will be populated with the required size for the I<sig>
-buffer. If I<sig> is non-NULL before the call then I<siglen> should contain the
-length of the I<sig> buffer.
+EVP_DigestSign() is similar to a single call to EVP_DigestSignUpdate() and
+EVP_DigestSignFinal().
+Unless I<sig> is NULL, EVP_DigestSign() signs the data I<tbs> of length I<tbslen>
+bytes and places the signature in a buffer I<sig> of size I<siglen>.
+If I<sig> is NULL, the maximum necessary size of the signature buffer is written
+to the I<siglen> parameter.
 
 =head1 RETURN VALUES
 
@@ -178,6 +177,10 @@ EVP_DigestSignInit() and EVP_DigestSignInit_ex() functions can be called
 multiple times on a context and the parameters set by previous calls should be
 preserved if the I<pkey> parameter is NULL. The call then just resets the state
 of the I<ctx>.
+
+EVP_DigestSign() can not be called again, once a signature is generated (by
+passing I<sig> as non NULL), unless the B<EVP_MD_CTX> is reinitialised by
+calling EVP_DigestSignInit_ex().
 
 Ignoring failure returns of EVP_DigestSignInit() and EVP_DigestSignInit_ex()
 functions can lead to subsequent undefined behavior when calling
