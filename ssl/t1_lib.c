@@ -2881,7 +2881,6 @@ static int sig_cb(const char *elem, int len, void *arg)
 {
     sig_cb_st *sarg = arg;
     size_t i = 0;
-    int load_success = 0;
     const SIGALG_LOOKUP *s;
     char etmp[TLS_MAX_SIGSTRING_LEN], *p;
     int sig_alg = NID_undef, hash_alg = NID_undef;
@@ -2912,23 +2911,20 @@ static int sig_cb(const char *elem, int len, void *arg)
      */
     if (p == NULL) {
         /* Load provider sigalgs */
-        if (sarg->ctx) {
-            load_success = ssl_load_sigalgs(sarg->ctx);
-        }
-        if (load_success) {
+        if (sarg->ctx != NULL) {
             /* Check if a provider supports the sigalg */
             for (i = 0; i < sarg->ctx->sigalg_list_len; i++) {
                 if (sarg->ctx->sigalg_list[i].sigalg_name != NULL
                     && strcmp(etmp,
                               sarg->ctx->sigalg_list[i].sigalg_name) == 0) {
                     sarg->sigalgs[sarg->sigalgcnt++] =
-                            sarg->ctx->sigalg_list[i].code_point;
+                        sarg->ctx->sigalg_list[i].code_point;
                     break;
                 }
             }
         }
         /* Check the built-in sigalgs */
-        if (!sarg->ctx || !load_success || i == sarg->ctx->sigalg_list_len) {
+        if (sarg->ctx == NULL || i == sarg->ctx->sigalg_list_len) {
             for (i = 0, s = sigalg_lookup_tbl;
                  i < OSSL_NELEM(sigalg_lookup_tbl); i++, s++) {
                 if (s->name != NULL && strcmp(etmp, s->name) == 0) {
@@ -2983,7 +2979,10 @@ int tls1_set_sigalgs_list(SSL_CTX *ctx, CERT *c, const char *str, int client)
 {
     sig_cb_st sig;
     sig.sigalgcnt = 0;
-    sig.ctx = ctx;
+
+    if (ctx != NULL && ssl_load_sigalgs(ctx)) {
+        sig.ctx = ctx;
+    }
     if (!CONF_parse_list(str, ':', 1, sig_cb, &sig))
         return 0;
     if (sig.sigalgcnt == 0) {
