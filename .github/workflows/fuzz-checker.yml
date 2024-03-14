@@ -48,6 +48,10 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -yq --force-yes install ${{ matrix.fuzzy.install }}
+    - name: Adjust ASLR for sanitizer
+      run: |
+        sudo cat /proc/sys/vm/mmap_rnd_bits
+        sudo sysctl -w vm.mmap_rnd_bits=28
     - uses: actions/checkout@v4
 
     - name: config
