@@ -23,7 +23,9 @@
 #include <time.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
+#include <openssl/obj_mac.h>
 #include <openssl/self_test.h>
+#include "crypto/sha.h"
 #include "prov/providercommon.h"
 #include "rsa_local.h"
 
@@ -658,13 +660,9 @@ static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,
 static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg)
 {
     int ret = 0;
-    unsigned int ciphertxt_len;
-    unsigned char *ciphertxt = NULL;
-    const unsigned char plaintxt[16] = {0};
-    unsigned char *decoded = NULL;
-    unsigned int decoded_len;
-    unsigned int plaintxt_len = (unsigned int)sizeof(plaintxt_len);
-    int padding = RSA_PKCS1_PADDING;
+    unsigned int sig_len;
+    unsigned char *sig = NULL;
+    const unsigned char md[SHA256_DIGEST_LENGTH] = {0};
     OSSL_SELF_TEST *st = NULL;
 
     st = OSSL_SELF_TEST_new(cb, cbarg);
@@ -673,37 +671,25 @@ static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg)
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
                            OSSL_SELF_TEST_DESC_PCT_RSA_PKCS1);
 
-    ciphertxt_len = RSA_size(rsa);
-    /*
-     * RSA_private_encrypt() and RSA_private_decrypt() requires the 'to'
-     * parameter to be a maximum of RSA_size() - allocate space for both.
-     */
-    ciphertxt = OPENSSL_zalloc(ciphertxt_len * 2);
-    if (ciphertxt == NULL)
-        goto err;
-    decoded = ciphertxt + ciphertxt_len;
-
-    ciphertxt_len = RSA_public_encrypt(plaintxt_len, plaintxt, ciphertxt, rsa,
-                                       padding);
-    if (ciphertxt_len <= 0)
-        goto err;
-    if (ciphertxt_len == plaintxt_len
-        && memcmp(ciphertxt, plaintxt, plaintxt_len) == 0)
+    sig_len = RSA_size(rsa);
+    sig = OPENSSL_zalloc(sig_len);
+    if (sig == NULL)
         goto err;
 
-    OSSL_SELF_TEST_oncorrupt_byte(st, ciphertxt);
+    if (RSA_sign(NID_sha256, md, SHA256_DIGEST_LENGTH, sig, &sig_len, rsa) == 0)
+        goto err;
 
-    decoded_len = RSA_private_decrypt(ciphertxt_len, ciphertxt, decoded, rsa,
-                                      padding);
-    if (decoded_len != plaintxt_len
-        || memcmp(decoded, plaintxt,  decoded_len) != 0)
+    OSSL_SELF_TEST_oncorrupt_byte(st, sig);
+
+    if (RSA_verify(NID_sha256, md, SHA256_DIGEST_LENGTH, sig, sig_len,
+                   rsa) == 0)
         goto err;
 
     ret = 1;
 err:
     OSSL_SELF_TEST_onend(st, ret);
     OSSL_SELF_TEST_free(st);
-    OPENSSL_free(ciphertxt);
+    OPENSSL_free(sig);
 
     return ret;
 }
