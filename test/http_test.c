@@ -432,7 +432,6 @@ static int test_http_resp_hdr_limit(size_t limit)
     mock_args.content_type = "text/plain";
     mock_args.version = '1';
     mock_args.out = rbio;
-    mock_args.content_type = "text/plain";
 
     BIO_set_callback_ex(wbio, http_bio_cb_ex);
     BIO_set_callback_arg(wbio, (char *)&mock_args);
@@ -448,6 +447,10 @@ static int test_http_resp_hdr_limit(size_t limit)
     OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(rctx, limit);
     mem = OSSL_HTTP_REQ_CTX_exchange(rctx);
 
+    /*
+     * Note the server sends 4 http response headers, thus we expect to
+     * see failure here when we set header limit in http response to 1.
+     */
     if (limit == 1)
         res = TEST_ptr_null(mem);
     else

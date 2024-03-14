@@ -198,7 +198,8 @@ I/O error when trying to send the next request via I<rctx>.
 The OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines() function changes the limit
 for the number of HTTP headers which can be received in a response. The default
 value is 256.  If the number of HTTP headers in a response exceeds the limit,
-then the HTTP_R_RESPONSE_TOO_MANY_HDRLINES error is indicated.
+then the HTTP_R_RESPONSE_TOO_MANY_HDRLINES error is indicated. Setting the
+limit to 0 disables the check.
 
 =head1 WARNINGS
 
