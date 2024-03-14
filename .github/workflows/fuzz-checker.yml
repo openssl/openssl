@@ -73,7 +73,7 @@ jobs:
         ./util/opensslwrap.sh version -c
     - name: make test restricted
       if: matrix.fuzzy.tests != ''
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} TESTS="${{ matrix.fuzzy.tests }}"
+      run: AFL_MAP_SIZE=120985 make test HARNESS_JOBS=${HARNESS_JOBS:-4} TESTS="${{ matrix.fuzzy.tests }}"
     - name: make test all
       if: matrix.fuzzy.tests == ''
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: AFL_MAP_SIZE=120985 make test HARNESS_JOBS=${HARNESS_JOBS:-4}
