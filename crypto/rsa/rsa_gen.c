@@ -23,9 +23,7 @@
 #include <time.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/obj_mac.h>
 #include <openssl/self_test.h>
-#include "crypto/sha.h"
 #include "prov/providercommon.h"
 #include "rsa_local.h"
 
@@ -651,45 +649,83 @@ static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,
 }
 
 /*
- * For RSA key generation it is not known whether the key pair will be used
- * for key transport or signatures. FIPS 140-2 IG 9.9 states that in this case
- * either a signature verification OR an encryption operation may be used to
- * perform the pairwise consistency check. The simpler encrypt/decrypt operation
- * has been chosen for this case.
+ * AS10.35 (and its VEs/TEs) of the FIPS 140-3 standard requires a PCT for every
+ * generated key pair. There are 3 options:
+ * 1) If the key pair is to be used for key transport (asymmetric cipher), the
+ *    PCT consists of encrypting a plaintext, verifying that the result
+ *    (ciphertext) is not equal to the plaintext, decrypting the ciphertext, and
+ *    verifying that the result is equal to the plaintext.
+ * 2) If the key pair is to be used for digital signatures, the PCT consists of
+ *    computing and verifying a signature.
+ * 3) If the key pair is to be used for key agreement, the exact PCT is defined
+ *    in the applicable standards. For RSA-based schemes, this is defined in
+ *    SP 800-56Br2 (Section 6.4.1.1) as:
+ *    "The owner shall perform a pair-wise consistency test by verifying that m
+ *    = (m^e)^d mod n for some integer m satisfying 1 < m < (n − 1)."
+ *
+ * OpenSSL implements all three use cases: RSA-OAEP for key transport,
+ * RSA signatures with PKCS#1 v1.5 or PSS padding, and KAS-IFC-SSC (KAS1/KAS2)
+ * using RSASVE.
+ *
+ * According to FIPS 140-3 IG 10.3.A, if at the time when the PCT is performed
+ * the keys' intended usage is not known, then any of the three PCTs described
+ * in AS10.35 shall be performed on this key pair.
+ *
+ * Because of this allowance from the IG,  the simplest option is 3, i.e.
+ * RSA_public_encrypt() and RSA_private_decrypt() with RSA_NO_PADDING.
  */
 static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg)
 {
     int ret = 0;
-    unsigned int sig_len;
-    unsigned char *sig = NULL;
-    const unsigned char md[SHA256_DIGEST_LENGTH] = {0};
+    unsigned int plaintxt_len;
+    unsigned char *plaintxt = NULL;
+    unsigned int ciphertxt_len;
+    unsigned char *ciphertxt = NULL;
+    unsigned char *decoded = NULL;
+    unsigned int decoded_len;
+    int padding = RSA_NO_PADDING;
     OSSL_SELF_TEST *st = NULL;
 
     st = OSSL_SELF_TEST_new(cb, cbarg);
     if (st == NULL)
         goto err;
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
-                           OSSL_SELF_TEST_DESC_PCT_RSA_PKCS1);
+                           OSSL_SELF_TEST_DESC_PCT_RSA);
 
-    sig_len = RSA_size(rsa);
-    sig = OPENSSL_zalloc(sig_len);
-    if (sig == NULL)
+    /*
+     * For RSA_NO_PADDING, RSA_public_encrypt() and RSA_private_decrypt()
+     * require the 'to' and 'from' parameters to have equal length and a
+     * maximum of RSA_size() - allocate space for plaintxt, ciphertxt, and
+     * decoded.
+     */
+    plaintxt_len = RSA_size(rsa);
+    plaintxt = OPENSSL_zalloc(plaintxt_len * 3);
+    if (plaintxt == NULL)
+        goto err;
+    ciphertxt = plaintxt + plaintxt_len;
+    decoded = ciphertxt + plaintxt_len;
+
+    /* SP 800-56Br2 Section 6.4.1.1 requires that plaintext is greater than 1 */
+    plaintxt[plaintxt_len - 1] = 2;
+
+    ciphertxt_len = RSA_public_encrypt(plaintxt_len, plaintxt, ciphertxt, rsa,
+                                       padding);
+    if (ciphertxt_len <= 0)
         goto err;
 
-    if (RSA_sign(NID_sha256, md, SHA256_DIGEST_LENGTH, sig, &sig_len, rsa) == 0)
-        goto err;
+    OSSL_SELF_TEST_oncorrupt_byte(st, ciphertxt);
 
-    OSSL_SELF_TEST_oncorrupt_byte(st, sig);
-
-    if (RSA_verify(NID_sha256, md, SHA256_DIGEST_LENGTH, sig, sig_len,
-                   rsa) == 0)
+    decoded_len = RSA_private_decrypt(ciphertxt_len, ciphertxt, decoded, rsa,
+                                      padding);
+    if (decoded_len != plaintxt_len
+        || memcmp(decoded, plaintxt,  decoded_len) != 0)
         goto err;
 
     ret = 1;
 err:
     OSSL_SELF_TEST_onend(st, ret);
     OSSL_SELF_TEST_free(st);
-    OPENSSL_free(sig);
+    OPENSSL_free(plaintxt);
 
     return ret;
 }
