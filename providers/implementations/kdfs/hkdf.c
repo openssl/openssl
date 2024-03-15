@@ -64,6 +64,7 @@ static int HKDF_Expand(const EVP_MD *evp_md,
 
 /* Settable context parameters that are common across HKDF and the TLS KDF */
 #define HKDF_COMMON_SETTABLES                                           \
+        OSSL_PARAM_int(OSSL_KDF_PARAM_PEDANTIC, NULL),                  \
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MODE, NULL, 0),           \
         OSSL_PARAM_int(OSSL_KDF_PARAM_MODE, NULL),                      \
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),     \
@@ -87,6 +88,7 @@ typedef struct {
     size_t data_len;
     unsigned char *info;
     size_t info_len;
+    int pedantic;
 } KDF_HKDF;
 
 static void *kdf_hkdf_new(void *provctx)
@@ -98,6 +100,12 @@ static void *kdf_hkdf_new(void *provctx)
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL)
         ctx->provctx = provctx;
+#ifdef FIPS_MODULE
+    ctx->pedantic = 1;
+#else
+    ctx->pedantic = 0;
+#endif
+
     return ctx;
 }
 
@@ -149,6 +157,7 @@ static void *kdf_hkdf_dup(void *vctx)
                 || !ossl_prov_digest_copy(&dest->digest, &src->digest))
             goto err;
         dest->mode = src->mode;
+        dest->pedantic = src->pedantic;
     }
     return dest;
 
@@ -228,6 +237,11 @@ static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, const OSSL_PARAM params[])
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
         return 0;
 
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PEDANTIC)) != NULL) {
+        if (!OSSL_PARAM_get_int(p, &ctx->pedantic))
+            return 0;
+    }
+
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_MODE)) != NULL) {
         if (p->data_type == OSSL_PARAM_UTF8_STRING) {
             if (OPENSSL_strcasecmp(p->data, "EXTRACT_AND_EXPAND") == 0) {
@@ -255,6 +269,13 @@ static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, const OSSL_PARAM params[])
     }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL) {
+#ifdef FIPS_MODULE
+        if (ctx->pedantic && ((p->data_size * 8) < EVP_KDF_MIN_KEY_LEN_BITS)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SIZE_TOO_SMALL);
+            return 0;
+        }
+#endif
+
         OPENSSL_clear_free(ctx->key, ctx->key_len);
         ctx->key = NULL;
         if (!OSSL_PARAM_get_octet_string(p, (void **)&ctx->key, 0,

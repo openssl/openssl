@@ -49,6 +49,7 @@ typedef struct {
     char type; /* X */
     unsigned char *session_id;
     size_t session_id_len;
+    int pedantic;
 } KDF_SSHKDF;
 
 static void *kdf_sshkdf_new(void *provctx)
@@ -60,6 +61,11 @@ static void *kdf_sshkdf_new(void *provctx)
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL)
         ctx->provctx = provctx;
+#ifdef FIPS_MODULE
+    ctx->pedantic = 1;
+#else
+    ctx->pedantic = 0;
+#endif
     return ctx;
 }
 
@@ -102,6 +108,7 @@ static void *kdf_sshkdf_dup(void *vctx)
                 || !ossl_prov_digest_copy(&dest->digest, &src->digest))
             goto err;
         dest->type = src->type;
+        dest->pedantic = src->pedantic;
     }
     return dest;
 
@@ -167,9 +174,22 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
         return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL)
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PEDANTIC)) != NULL) {
+        if (!OSSL_PARAM_get_int(p, &ctx->pedantic))
+            return 0;
+    }
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL) {
+#ifdef FIPS_MODULE
+        if (ctx->pedantic && ((p->data_size * 8) < EVP_KDF_MIN_KEY_LEN_BITS)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SIZE_TOO_SMALL);
+            return 0;
+        }
+#endif
+
         if (!sshkdf_set_membuf(&ctx->key, &ctx->key_len, p))
             return 0;
+    }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SSHKDF_XCGHASH))
         != NULL)
@@ -203,6 +223,7 @@ static const OSSL_PARAM *kdf_sshkdf_settable_ctx_params(ossl_unused void *ctx,
                                                         ossl_unused void *p_ctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
+        OSSL_PARAM_int(OSSL_KDF_PARAM_PEDANTIC, NULL),
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),
