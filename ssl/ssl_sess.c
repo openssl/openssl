@@ -519,6 +519,12 @@ SSL_SESSION *lookup_sess_in_cache(SSL_CONNECTION *s,
                                              sess_id, sess_id_len, &copy);
 
         if (ret != NULL) {
+            if (ret->not_resumable) {
+                /* If its not resumable then ignore this session */
+                if (!copy)
+                    SSL_SESSION_free(ret);
+                return NULL;
+            }
             ssl_tsan_counter(s->session_ctx,
                              &s->session_ctx->stats.sess_cb_hit);
 
