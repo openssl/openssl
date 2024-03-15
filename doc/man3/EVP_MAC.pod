@@ -250,6 +250,14 @@ The standard parameter names are:
 
 =over 4
 
+=item "pedantic" (B<OSSL_MAC_PARAM_PEDANTIC>) <integer>
+
+Some MAC implementations can set the status for strict compliance. The value 0
+or 1 is expected. If set to 0, the operation is not approved unless related
+standard defines it can be used for legacy use.
+
+Currently, this option is used by HMAC.
+
 =item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
 Its value is the MAC key as an array of bytes.

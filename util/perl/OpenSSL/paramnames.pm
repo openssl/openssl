@@ -67,6 +67,7 @@ my %params = (
     'ALG_PARAM_ENGINE' =>       "engine",       # utf8_string
     'ALG_PARAM_MAC' =>          "mac",          # utf8_string
     'ALG_PARAM_PROPERTIES' =>   "properties",   # utf8_string
+    'ALG_PARAM_PEDANTIC' =>     "pedantic",     # int
 
 # cipher parameters
     'CIPHER_PARAM_PADDING' =>              "padding",     # uint
@@ -140,6 +141,7 @@ my %params = (
     'MAC_PARAM_CIPHER' =>           '*ALG_PARAM_CIPHER',        # utf8 string
     'MAC_PARAM_DIGEST' =>           '*ALG_PARAM_DIGEST',        # utf8 string
     'MAC_PARAM_PROPERTIES' =>       '*ALG_PARAM_PROPERTIES',    # utf8 string
+    'MAC_PARAM_PEDANTIC' =>         '*ALG_PARAM_PEDANTIC',      # int
     'MAC_PARAM_SIZE' =>             "size",                     # size_t
     'MAC_PARAM_BLOCK_SIZE' =>       "block-size",               # size_t
     'MAC_PARAM_TLS_DATA_SIZE' =>    "tls-data-size",            # size_t
