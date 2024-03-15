@@ -1,0 +1,25 @@
+# Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Wrangler process automation
+
+on:
+  issues:
+    types: [opened]
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ISSUE_URL: $${{ github.event.issue.html_url }}
+
+jobs:
+  assign_wrangler:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Apply initial labels and ownership
+      run: |
+        echo "CURRENT_WRANGLER=$(gh api repos/openssl/project/issues/402 --jq '.assignees[0].login')" >> $GITHUB_ENV
+        echo "Current wrangler is $CURRENT_WRANGLER"
