@@ -85,9 +85,11 @@ sub run_test {
 
     print("ocsp server ready, listening on port $ocsp_port\n");
 
-    # openssl s_server -accept 0 -cert server.pem -cert_chain intermediate-cert.pem \
+    # openssl s_server -accept 0 -naccept 1 \
+    #                  -cert server.pem -cert_chain intermediate-cert.pem \
     #                  -status_verbose -status_url http://localhost:19254/ocsp
-    my @s_server_cmd = ("s_server", "-accept", "0", "-cert", $server_pem, "-cert_chain", $intermediate_cert_pem,
+    my @s_server_cmd = ("s_server", "-accept", "0", "-naccept", "1",
+                        "-cert", $server_pem, "-cert_chain", $intermediate_cert_pem,
                         "-status_verbose", "-status_url", "http://localhost:${ocsp_port}/ocsp");
     my $s_server_pid = open3(my $s_server_i, my $s_server_o, my $s_server_e = gensym, $shlib_wrap, $apps_openssl, @s_server_cmd);
 
