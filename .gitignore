@@ -6,13 +6,20 @@
 /Makefile
 /MINFO
 /TABLE
-/*.pc
 /rehash.time
 /inc.*
 /makefile.*
 /out.*
 /tmp.*
 /configdata.pm
+/builddata.pm
+/installdata.pm
+
+# Exporters
+/*.pc
+/OpenSSLConfig*.cmake
+/exporters/*.pc
+/exporters/OpenSSLConfig*.cmake
 
 # Links under apps
 /apps/CA.pl
@@ -48,6 +55,11 @@
 /include/openssl/x509.h
 /include/openssl/x509v3.h
 /include/openssl/x509_vfy.h
+/include/openssl/core_names.h
+/include/internal/param_names.h
+
+# Auto generated parameter name files
+/crypto/params_idx.c
 
 # Auto generated doc files
 doc/man1/openssl-*.pod
@@ -127,6 +139,7 @@ providers/common/include/prov/der_sm2.h
 /tools/c_rehash.pl
 /util/shlib_wrap.sh
 /util/wrap.pl
+/util/quicserver
 /tags
 /TAGS
 *.map
@@ -231,6 +244,7 @@ Makefile.save
 *.bak
 cscope.*
 *.d
+!.ctags.d
 *.d.tmp
 pod2htmd.tmp
 MAKE0[0-9][0-9][0-9].@@@
@@ -238,3 +252,7 @@ MAKE0[0-9][0-9][0-9].@@@
 # Windows manifest files
 *.manifest
 doc-nits
+
+# LSP (Language Server Protocol) support
+.cache/
+compile_commands.json
