@@ -545,9 +545,10 @@ static int create_digest(BIO *input, const char *digest, const EVP_MD *md,
     }
     rv = md_value_len;
  err:
-    if (!rv) {
+    if (rv <= 0) {
         OPENSSL_free(*md_value);
         *md_value = NULL;
+        rv = 0;
     }
     EVP_MD_CTX_free(md_ctx);
     return rv;
