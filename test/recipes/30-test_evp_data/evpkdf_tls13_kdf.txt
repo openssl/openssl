@@ -4935,3 +4935,9 @@ Ctrl.mode = mode:EXTRACT_AND_EXPAND
 Ctrl.digest = digest:SHA256
 Result = KDF_CTRL_ERROR
 
+Title = TLS13-KDF bad digest test
+
+Availablein = fips
+KDF = TLS13-KDF
+Ctrl.digest = digest:SHA3-256
+Result = KDF_CTRL_ERROR

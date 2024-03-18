@@ -228,6 +228,27 @@ static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, const OSSL_PARAM params[])
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
         return 0;
 
+#ifdef FIPS_MODULE
+    /*
+     * Perform digest check
+     *
+     * HKDF is a TwoStep KDF defined in SP 800-56Cr2. According to section 7,
+     * the valid hash functions are specified in FIPS 180 and FIPS 202.
+     * However, it only lists SHA-1, SHA-2 and SHA-3 in the table in section
+     * 5.2. ACVP also only lists the same set of hash functions.
+     */
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST)) != NULL) {
+        const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+
+        if ((md != NULL)
+                && ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0)) {
+            ossl_prov_digest_reset(&ctx->digest);
+            ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
+            return 0;
+        }
+    }
+#endif
+
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_MODE)) != NULL) {
         if (p->data_type == OSSL_PARAM_UTF8_STRING) {
             if (OPENSSL_strcasecmp(p->data, "EXTRACT_AND_EXPAND") == 0) {
@@ -701,6 +722,27 @@ static int kdf_tls1_3_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (!hkdf_common_set_ctx_params(ctx, params))
         return 0;
+
+#ifdef FIPS_MODULE
+    /*
+     * Perform digest check
+     *
+     * According to RFC 8446 appendix B.4, the valid hash functions are
+     * specified in FIPS 180-4. However, it only lists SHA2-256 and SHA2-384 in
+     * the table. ACVP also only lists the same set of hash functions.
+     */
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST)) != NULL) {
+        const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+
+        if ((md != NULL)
+                && !EVP_MD_is_a(md, SN_sha256)
+                && !EVP_MD_is_a(md, SN_sha384)) {
+            ossl_prov_digest_reset(&ctx->digest);
+            ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
+            return 0;
+        }
+    }
+#endif
 
     if (ctx->mode == EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);

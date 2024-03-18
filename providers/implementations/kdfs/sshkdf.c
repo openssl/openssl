@@ -167,6 +167,30 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
         return 0;
 
+#ifdef FIPS_MODULE
+    /*
+     * Perform digest check
+     *
+     * According to NIST SP 800-135r1 section 5.2, the valid hash functions are
+     * specified in FIPS 180-3. ACVP also only lists the same set of hash
+     * functions.
+     */
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST)) != NULL) {
+        const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+
+        if ((md != NULL)
+                && !EVP_MD_is_a(md, SN_sha1)
+                && !EVP_MD_is_a(md, SN_sha224)
+                && !EVP_MD_is_a(md, SN_sha256)
+                && !EVP_MD_is_a(md, SN_sha384)
+                && !EVP_MD_is_a(md, SN_sha512)) {
+            ossl_prov_digest_reset(&ctx->digest);
+            ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
+            return 0;
+        }
+    }
+#endif
+
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL)
         if (!sshkdf_set_membuf(&ctx->key, &ctx->key_len, p))
             return 0;
