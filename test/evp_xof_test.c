@@ -211,7 +211,7 @@ static int shake_kat_digestfinal_test(void)
     if (!TEST_true(EVP_DigestUpdate(ctx, shake256_input,
                    sizeof(shake256_input)))
         || !TEST_true(EVP_DigestFinal(ctx, out, &digest_length))
-        || !TEST_uint_eq(digest_length, 32)
+        || !TEST_uint_eq(digest_length, 64)
         || !TEST_mem_eq(out, digest_length,
                         shake256_output, digest_length)
         || !TEST_false(EVP_DigestFinalXOF(ctx, out, sizeof(out))))

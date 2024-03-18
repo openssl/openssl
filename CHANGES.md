@@ -23,6 +23,19 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
+OpenSSL 3.4
+-----------
+
+### Changes between 3.3 and 3.4 [xx XXX xxxx]
+
+ * When using EVP_DigestFinal() with either SHAKE-128 or SHAKE-256 the default
+   output length was incorrectly set to only half the required security strength.
+   The default security strength for these algorithms has been changed to 128 bits
+   and 256 bits respectively. Users may either set the xoflen OR use
+   EVP_DigestFinalXOF() to override the default.
+
+   *Shane Lontis*
+
 OpenSSL 3.3
 -----------
 

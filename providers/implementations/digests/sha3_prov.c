@@ -483,7 +483,7 @@ static void *name##_newctx(void *provctx)                                      \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
-    ossl_sha3_init(ctx, pad, bitlen);                                          \
+    ossl_keccak_init(ctx, pad, bitlen);                                        \
     SHAKE_SET_MD(uname, typ)                                                   \
     return ctx;                                                                \
 }
@@ -497,7 +497,7 @@ static void *uname##_newctx(void *provctx)                                     \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
-    ossl_keccak_kmac_init(ctx, pad, bitlen);                                   \
+    ossl_keccak_init(ctx, pad, bitlen);                                        \
     KMAC_SET_MD(bitlen)                                                        \
     return ctx;                                                                \
 }
