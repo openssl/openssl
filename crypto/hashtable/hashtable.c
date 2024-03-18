@@ -58,12 +58,12 @@
  */
 #if defined(__clang__) && defined(__has_feature)
 # if __has_feature(thread_sanitizer)
-#  define __SANITIZE_THREAD__
+#  define __SANITIZE_THREADS__
 # endif
 #endif
 
 #ifdef __SANITIZE_THREADS__
-#include <sanitizer/tsan_interface.h>
+# include <sanitizer/tsan_interface.h>
 #endif
 
 #include "internal/numbers.h"
@@ -158,6 +158,7 @@ static struct ht_neighborhood_st *alloc_new_neighborhood_list(size_t len,
                                                               void **freeptr)
 {
     struct ht_neighborhood_st *ret;
+
     ret = OPENSSL_aligned_alloc(sizeof(struct ht_neighborhood_st) * len,
                                 CACHE_LINE_BYTES, freeptr);
 
@@ -283,7 +284,7 @@ static void free_oldmd(void *arg)
     OPENSSL_free(oldmd);
 }
 
-static int ossl_ht_flush_internal(HT *h, int replace)
+static int ossl_ht_flush_internal(HT *h)
 {
     struct ht_mutable_data_st *newmd = NULL;
     struct ht_mutable_data_st *oldmd = NULL;
@@ -292,19 +293,17 @@ static int ossl_ht_flush_internal(HT *h, int replace)
     if (newmd == NULL)
         return 0;
 
-    if (replace == 1) {
-        newmd->neighborhoods = alloc_new_neighborhood_list(DEFAULT_NEIGH_LEN,
-                                                           &newmd->neighborhood_ptr_to_free);
-        if (newmd->neighborhoods == NULL) {
-            OPENSSL_free(newmd);
-            return 0;
-        }
+    newmd->neighborhoods = alloc_new_neighborhood_list(DEFAULT_NEIGH_LEN,
+                                                       &newmd->neighborhood_ptr_to_free);
+    if (newmd->neighborhoods == NULL) {
+        OPENSSL_free(newmd);
+        return 0;
     }
 
     newmd->neighborhood_mask = DEFAULT_NEIGH_LEN - 1;
 
     /* Swap the old and new mutable data sets */
-    oldmd = h->md;
+    oldmd = ossl_rcu_deref(&h->md);
     ossl_rcu_assign_ptr(&h->md, &newmd);
 
     /* Set the number of entries to 0 */
@@ -318,7 +317,7 @@ static int ossl_ht_flush_internal(HT *h, int replace)
 
 int ossl_ht_flush(HT *h)
 {
-    return ossl_ht_flush_internal(h, 1);
+    return ossl_ht_flush_internal(h);
 }
 
 void ossl_ht_free(HT *h)
@@ -327,7 +326,7 @@ void ossl_ht_free(HT *h)
         return;
 
     ossl_ht_write_lock(h);
-    ossl_ht_flush_internal(h, 1);
+    ossl_ht_flush_internal(h);
     ossl_ht_write_unlock(h);
     /* Freeing the lock does a final sync for us */
     CRYPTO_THREAD_lock_free(h->atomic_lock);
@@ -426,7 +425,7 @@ static void free_old_neigh_table(void *arg)
 static int grow_hashtable(HT *h, size_t oldsize)
 {
     struct ht_mutable_data_st *newmd = OPENSSL_zalloc(sizeof(*newmd));
-    struct ht_mutable_data_st *oldmd = h->md;
+    struct ht_mutable_data_st *oldmd = ossl_rcu_deref(&h->md);
     int rc = 0;
     uint64_t oldi, oldj, newi, newj;
     uint64_t oldhash;
