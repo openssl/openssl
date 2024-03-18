@@ -179,7 +179,7 @@ preserved if the I<pkey> parameter is NULL. The call then just resets the state
 of the I<ctx>.
 
 EVP_DigestSign() can not be called again, once a signature is generated (by
-passing I<sig> as non NULL), unless the B<EVP_MD_CTX> is reinitialising by
+passing I<sig> as non NULL), unless the B<EVP_MD_CTX> is reinitialised by
 calling EVP_DigestSignInit_ex().
 
 Ignoring failure returns of EVP_DigestSignInit() and EVP_DigestSignInit_ex()
