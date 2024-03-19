@@ -248,9 +248,10 @@ int crl_main(int argc, char **argv)
         EVP_PKEY_free(pkey);
         if (i < 0)
             goto end;
-        if (i == 0)
+        if (i == 0) {
             BIO_printf(bio_err, "verify failure\n");
-        else
+	    goto end;
+        } else
             BIO_printf(bio_err, "verify OK\n");
     }
 
