@@ -93,7 +93,9 @@ Print out the CRL in text form.
 
 =item B<-verify>
 
-Verify the signature in the CRL.
+Verify the signature in the CRL. If the verification fails,
+the program will immediately exit, i.e. further option processing
+(e.g. B<-gendelta>) is skipped.
 
 =item B<-noout>
 
