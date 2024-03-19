@@ -43,6 +43,11 @@ The gettable parameters are described in L<provider-signature(7)>.
 
 =back
 
+=head1 NOTES
+
+DSA signing is no longer allowed by the FIPS provider, but verification is still
+allowed for legacy use cases.
+
 =head1 SEE ALSO
 
 L<EVP_PKEY_CTX_set_params(3)>,
@@ -52,7 +57,7 @@ L<provider-signature(7)>,
 
 =head1 COPYRIGHT
 
-Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

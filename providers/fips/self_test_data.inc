@@ -1614,12 +1614,16 @@ static const unsigned char dsa_expected_sig[] = {
     0x7d, 0x98, 0x96, 0xc9, 0x77, 0x00
 };
 
+/* FIPS 140-3 only allows DSA verification for legacy purposes */
+#define ST_PARAM_VERIFY_ONLY "verify_only"
+static int verify_only = 1;
 static const ST_KAT_PARAM dsa_key[] = {
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_FFC_P, dsa_p),
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_FFC_Q, dsa_q),
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_FFC_G, dsa_g),
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_PUB_KEY, dsa_pub),
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_PRIV_KEY, dsa_priv),
+    ST_KAT_PARAM_INT(ST_PARAM_VERIFY_ONLY, verify_only),
     ST_KAT_PARAM_END()
 };
 #endif /* OPENSSL_NO_DSA */

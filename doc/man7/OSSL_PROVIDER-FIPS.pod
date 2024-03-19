@@ -154,6 +154,8 @@ This is an unapproved algorithm.
 
 =item DSA, see L<EVP_SIGNATURE-DSA(7)>
 
+Only signature verification is supported in FIPS 140-3
+
 =item ED25519, see L<EVP_SIGNATURE-ED25519(7)>
 
 This is an unapproved algorithm.
@@ -339,8 +341,6 @@ The FIPS module passes the following descriptions(s) to OSSL_SELF_TEST_onbegin()
 
 =item "EDDSA" (B<OSSL_SELF_TEST_DESC_PCT_EDDSA>)
 
-=item "DSA" (B<OSSL_SELF_TEST_DESC_PCT_DSA>)
-
 Key generation tests used with the "Pairwise_Consistency_Test" type.
 
 =item "RSA_Encrypt" (B<OSSL_SELF_TEST_DESC_ASYM_RSA_ENC>)
@@ -366,6 +366,8 @@ Symmetric cipher tests used with the "KAT_Cipher" type.
 Digest tests used with the "KAT_Digest" type.
 
 =item "DSA" (B<OSSL_SELF_TEST_DESC_SIGN_DSA>)
+
+This is just a Verify Test in FIPS 140-3
 
 =item "RSA" (B<OSSL_SELF_TEST_DESC_SIGN_RSA>)
 

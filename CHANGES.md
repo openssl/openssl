@@ -23,6 +23,17 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
+OpenSSL 3.4
+-----------
+
+### Changes between 3.3 and 3.4 [xx XXX xxxx]
+
+ * Due to FIPS 140-3 requirements, DSA signing is no longer allowed by the
+   FIPS provider. DSA keygen and signing have been removed, but DSA verification
+   is still allowed for legacy purposes.
+
+   *Shane Lontis*
+
 OpenSSL 3.3
 -----------
 

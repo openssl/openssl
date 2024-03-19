@@ -19,16 +19,18 @@
 #include "crypto/asn1_dsa.h"
 #include "crypto/dsa.h"
 
+#ifndef FIPS_MODULE
 DSA_SIG *DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 {
     return dsa->meth->dsa_do_sign(dgst, dlen, dsa);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 {
     return dsa->meth->dsa_sign_setup(dsa, ctx_in, kinvp, rp);
 }
+# endif
 #endif
 
 DSA_SIG *DSA_SIG_new(void)
@@ -150,6 +152,7 @@ int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     return 1;
 }
 
+#ifndef FIPS_MODULE
 int ossl_dsa_sign_int(int type, const unsigned char *dgst, int dlen,
                       unsigned char *sig, unsigned int *siglen, DSA *dsa,
                       unsigned int nonce_type, const char *digestname,
@@ -178,6 +181,7 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen,
     return ossl_dsa_sign_int(type, dgst, dlen, sig, siglen, dsa,
                              0, NULL, NULL, NULL);
 }
+#endif
 
 /* data has already been hashed (probably with SHA or SHA-1). */
 /*-

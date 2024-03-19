@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -220,7 +220,11 @@ static int dsa_signverify_init(void *vpdsactx, void *vdsa,
 
 static int dsa_sign_init(void *vpdsactx, void *vdsa, const OSSL_PARAM params[])
 {
+#ifdef FIPS_MODULE
+    return 0;
+#else
     return dsa_signverify_init(vpdsactx, vdsa, params, EVP_PKEY_OP_SIGN);
+#endif
 }
 
 static int dsa_verify_init(void *vpdsactx, void *vdsa,
@@ -232,6 +236,9 @@ static int dsa_verify_init(void *vpdsactx, void *vdsa,
 static int dsa_sign(void *vpdsactx, unsigned char *sig, size_t *siglen,
                     size_t sigsize, const unsigned char *tbs, size_t tbslen)
 {
+#ifdef FIPS_MODULE
+    return 0;
+#else
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
     int ret;
     unsigned int sltmp;
@@ -260,6 +267,7 @@ static int dsa_sign(void *vpdsactx, unsigned char *sig, size_t *siglen,
 
     *siglen = sltmp;
     return 1;
+#endif
 }
 
 static int dsa_verify(void *vpdsactx, const unsigned char *sig, size_t siglen,
@@ -311,8 +319,12 @@ static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
 static int dsa_digest_sign_init(void *vpdsactx, const char *mdname,
                                 void *vdsa, const OSSL_PARAM params[])
 {
+#ifdef FIPS_MODULE
+    return 0;
+#else
     return dsa_digest_signverify_init(vpdsactx, mdname, vdsa, params,
                                       EVP_PKEY_OP_SIGN);
+#endif
 }
 
 static int dsa_digest_verify_init(void *vpdsactx, const char *mdname,
@@ -336,6 +348,9 @@ int dsa_digest_signverify_update(void *vpdsactx, const unsigned char *data,
 int dsa_digest_sign_final(void *vpdsactx, unsigned char *sig, size_t *siglen,
                           size_t sigsize)
 {
+#ifdef FIPS_MODULE
+    return 0;
+#else
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
     unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int dlen = 0;
@@ -360,8 +375,8 @@ int dsa_digest_sign_final(void *vpdsactx, unsigned char *sig, size_t *siglen,
     pdsactx->flag_allow_md = 1;
 
     return dsa_sign(vpdsactx, sig, siglen, sigsize, digest, (size_t)dlen);
+#endif
 }
-
 
 int dsa_digest_verify_final(void *vpdsactx, const unsigned char *sig,
                             size_t siglen)
