@@ -28,6 +28,11 @@ OpenSSL 3.3
 
 ### Changes between 3.2 and 3.3 [xx XXX xxxx]
 
+ * The `-verify` option to the `openssl crl` and `openssl req` will make
+   the program exit with 1 on failure.
+
+   *Vladimír Kotal*
+
  * The BIO_get_new_index() function can only be called 127 times before it
    reaches its upper bound of BIO_TYPE_MASK. It will now correctly return an
    error of -1 once it is exhausted. Users may need to reserve using this
