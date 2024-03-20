@@ -307,6 +307,7 @@ static int test_addr_fam_len(void)
     testresult = 1;
   end:
     sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    IPAddressFamily_free(f1);
     ASN1_OCTET_STRING_free(ip1);
     ASN1_OCTET_STRING_free(ip2);
     return testresult;
