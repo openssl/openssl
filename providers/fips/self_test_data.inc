@@ -44,6 +44,9 @@ typedef struct st_kat_st {
 #define CIPHER_MODE_DECRYPT 2
 #define CIPHER_MODE_ALL     (CIPHER_MODE_ENCRYPT | CIPHER_MODE_DECRYPT)
 
+/* FIPS 140-3 only allows DSA verification for legacy purposes */
+#define ST_PARAM_VERIFY_ONLY "verify_only"
+
 typedef ST_KAT ST_KAT_DIGEST;
 typedef struct st_kat_cipher_st {
     ST_KAT base;
@@ -1614,8 +1617,6 @@ static const unsigned char dsa_expected_sig[] = {
     0x7d, 0x98, 0x96, 0xc9, 0x77, 0x00
 };
 
-/* FIPS 140-3 only allows DSA verification for legacy purposes */
-#define ST_PARAM_VERIFY_ONLY "verify_only"
 static int verify_only = 1;
 static const ST_KAT_PARAM dsa_key[] = {
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_FFC_P, dsa_p),

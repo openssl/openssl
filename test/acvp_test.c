@@ -344,7 +344,8 @@ static EVP_PKEY *dsa_paramgen(int L, int N)
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(paramgen_ctx, L))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_q_bits(paramgen_ctx, N))
         || !TEST_true(EVP_PKEY_paramgen(paramgen_ctx, &param_key)))
-        return NULL;
+        goto end;
+end:
     EVP_PKEY_CTX_free(paramgen_ctx);
     return param_key;
 }
