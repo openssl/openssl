@@ -26,7 +26,7 @@ OpenSSL Releases
 OpenSSL 3.3
 -----------
 
-### Changes between 3.2 and 3.3 [xx XXX xxxx]
+### Changes between 3.2 and 3.3 alpha 1 [20 Mar 2024]
 
  * The BIO_get_new_index() function can only be called 127 times before it
    reaches its upper bound of BIO_TYPE_MASK. It will now correctly return an
