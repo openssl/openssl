@@ -83,7 +83,7 @@ int demonstrate_digest(void)
     const char *option_properties = NULL;
     EVP_MD *message_digest = NULL;
     EVP_MD_CTX *digest_context = NULL;
-    unsigned int digest_length;
+    int digest_length;
     unsigned char *digest_value = NULL;
     int j;
 

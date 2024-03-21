@@ -38,7 +38,7 @@ int demonstrate_digest(BIO *input)
     const char *option_properties = NULL;
     EVP_MD *message_digest = NULL;
     EVP_MD_CTX *digest_context = NULL;
-    unsigned int digest_length;
+    int digest_length;
     unsigned char *digest_value = NULL;
     unsigned char buffer[512];
     int ii;
