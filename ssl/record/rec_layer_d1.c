@@ -665,7 +665,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
     return ret;
 }
 
-void dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
+int dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
 {
     if (rw & SSL3_CC_READ) {
         s->rlayer.d->r_conn_epoch++;
@@ -676,15 +676,13 @@ void dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
          */
         dtls1_clear_received_buffer(s);
 
-        if (s->rlayer.d->r_conn_epoch == 0) {
+        if (s->rlayer.d->r_conn_epoch == 0)
             return 0;
-        }
     } else {
         s->rlayer.d->w_conn_epoch++;
 
-        if (s->rlayer.d->w_conn_epoch == 0) {
+        if (s->rlayer.d->w_conn_epoch == 0)
             return 0;
-        }
     }
 
     return 1;
