@@ -112,6 +112,33 @@ static int *rwwriter_ptr = NULL;
 static int rw_torture_result = 1;
 static CRYPTO_RWLOCK *rwtorturelock = NULL;
 
+/*
+ *  Nonstop needs some consideration here
+ *  A 1 second usleep is an error on Nonstop,
+ *  So use 999 msec instead
+ *
+ *  In the Nonstop cooperative thread model, a read lock
+ *  isn't considered a yield point, so we need to use write
+ *  locks on the reader function as well as the writer to allow for
+ *  rescheduling of writer threads
+ *
+ *  In the RCU case we need to periodically yield the cpu as the read
+ *  side is designed to never block
+ */
+# if defined(__TANDEM)
+# define WRITER_SLEEP 999
+# define TAKE_READ_SIDE_LOCK(x) CRYPTO_THREAD_write_lock(x)
+# define TAKE_WRITE_SIDE_LOCK(x) CRYPTO_THREAD_write_lock(x)
+# define DROP_LOCK(x) CRYPTO_THREAD_unlock(x)
+# define NONSTOP_YIELD() sched_yield()
+#else
+# define WRITER_SLEEP 1000
+# define TAKE_READ_SIDE_LOCK(x) CRYPTO_THREAD_read_lock(x)
+# define TAKE_WRITE_SIDE_LOCK(x) CRYPTO_THREAD_write_lock(x)
+# define DROP_LOCK(x) CRYPTO_THREAD_unlock(x)
+# define NONSTOP_YIELD()
+#endif
+
 static void rwwriter_fn(int id, int *iterations)
 {
     int count;
@@ -122,8 +149,8 @@ static void rwwriter_fn(int id, int *iterations)
     for (count = 0; ; count++) {
         new = CRYPTO_zalloc(sizeof (int), NULL, 0);
         if (contention == 0)
-            OSSL_sleep(1000);
-        if (!CRYPTO_THREAD_write_lock(rwtorturelock))
+            OSSL_sleep(WRITER_SLEEP);
+        if (!TAKE_WRITE_SIDE_LOCK(rwtorturelock))
             abort();
         if (rwwriter_ptr != NULL) {
             *new = *rwwriter_ptr + 1;
@@ -132,7 +159,7 @@ static void rwwriter_fn(int id, int *iterations)
         }
         old = rwwriter_ptr;
         rwwriter_ptr = new;
-        if (!CRYPTO_THREAD_unlock(rwtorturelock))
+        if (!DROP_LOCK(rwtorturelock))
             abort();
         if (old != NULL)
             CRYPTO_free(old, __FILE__, __LINE__);
@@ -170,7 +197,7 @@ static void rwreader_fn(int *iterations)
     int lw1 = 0;
     int lw2 = 0;
 
-    if (CRYPTO_THREAD_read_lock(rwtorturelock) == 0)
+    if (TAKE_READ_SIDE_LOCK(rwtorturelock) == 0)
             abort();
 
     while (lw1 != 1 || lw2 != 1) {
@@ -182,18 +209,18 @@ static void rwreader_fn(int *iterations)
             TEST_info("rwwriter pointer went backwards\n");
             rw_torture_result = 0;
         }
-        if (CRYPTO_THREAD_unlock(rwtorturelock) == 0)
+        if (DROP_LOCK(rwtorturelock) == 0)
             abort();
         *iterations = count;
         if (rw_torture_result == 0) {
             *iterations = count;
             return;
         }
-        if (CRYPTO_THREAD_read_lock(rwtorturelock) == 0)
+        if (TAKE_READ_SIDE_LOCK(rwtorturelock) == 0)
             abort();
     }
     *iterations = count;
-    if (CRYPTO_THREAD_unlock(rwtorturelock) == 0)
+    if (DROP_LOCK(rwtorturelock) == 0)
             abort();
 }
 
@@ -309,7 +336,7 @@ static void writer_fn(int id, int *iterations)
     for (count = 0; ; count++) {
         new = CRYPTO_zalloc(sizeof(int), NULL, 0);
         if (contention == 0)
-            OSSL_sleep(1000);
+            OSSL_sleep(WRITER_SLEEP);
         ossl_rcu_write_lock(rcu_lock);
         old = ossl_rcu_deref(&writer_ptr);
         TSAN_ACQUIRE(&writer_ptr);
@@ -374,6 +401,7 @@ static void reader_fn(int *iterations)
             *iterations = count;
             return;
         }
+        NONSTOP_YIELD();
     }
     *iterations = count;
 }
