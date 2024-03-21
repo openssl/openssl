@@ -107,8 +107,9 @@ int tls13_hkdf_expand_ex(OSSL_LIB_CTX *libctx, const char *propq,
                          const unsigned char *data, size_t datalen,
                          unsigned char *out, size_t outlen, int raise_error)
 {
-    // TODO: Should we support DTLS labels from here? This interface is only used by QUIC.
-    return hkdf_expand(libctx, propq, md, secret, label_prefix_tls13, sizeof(label_prefix_tls13) - 1,
+    /* This function only supports TLSv1.3 and not DTLSv1.3 */
+    return hkdf_expand(libctx, propq, md, secret, label_prefix_tls13,
+                       sizeof(label_prefix_tls13) - 1,
                        label, labellen, data, datalen, out, outlen,
                        raise_error);
 }
@@ -121,13 +122,11 @@ int tls13_hkdf_expand(SSL_CONNECTION *s, const EVP_MD *md,
 {
     int ret;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-
-    const char *label_prefix = SSL_CONNECTION_IS_DTLS(s) ? label_prefix_dtls13
-                                : label_prefix_tls13;
-
-    size_t label_prefix_len = SSL_CONNECTION_IS_DTLS(s)
-                                ? sizeof(label_prefix_dtls13) - 1
-                                : sizeof(label_prefix_tls13) - 1;
+    const int isdtls = SSL_CONNECTION_IS_DTLS(s);
+    const unsigned char *label_prefix = isdtls ? label_prefix_dtls13
+                                               : label_prefix_tls13;
+    const size_t label_prefix_len = isdtls ? sizeof(label_prefix_dtls13) - 1
+                                           : sizeof(label_prefix_tls13) - 1;
 
     ret = hkdf_expand(sctx->libctx, sctx->propq, md, secret, label_prefix,
                       label_prefix_len, label, labellen, data,
