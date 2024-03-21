@@ -190,6 +190,8 @@ Some KDF implementations can set the status for strict compliance. The value 0
 or 1 is expected. If set to 0, the operation is not approved unless related
 standard defines it can be used for legacy use.
 
+Currently, only FIPS provider supports this parameter.
+
 =item "pass" (B<OSSL_KDF_PARAM_PASSWORD>) <octet string>
 
 Some KDF implementations require a password.

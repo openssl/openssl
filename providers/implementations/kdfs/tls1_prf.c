@@ -106,7 +106,9 @@ typedef struct {
     /* Concatenated seed data */
     unsigned char *seed;
     size_t seedlen;
+#ifdef FIPS_MODULE
     int pedantic;
+#endif
 } TLS1_PRF;
 
 static void *kdf_tls1_prf_new(void *provctx)
@@ -120,8 +122,6 @@ static void *kdf_tls1_prf_new(void *provctx)
         ctx->provctx = provctx;
 #ifdef FIPS_MODULE
     ctx->pedantic = 1;
-#else
-    ctx->pedantic = 0;
 #endif
     return ctx;
 }
@@ -167,7 +167,9 @@ static void *kdf_tls1_prf_dup(void *vctx)
         if (!ossl_prov_memdup(src->seed, src->seedlen, &dest->seed,
                               &dest->seedlen))
             goto err;
+#ifdef FIPS_MODULE
         dest->pedantic = src->pedantic;
+#endif
     }
     return dest;
 
@@ -232,10 +234,12 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
+#ifdef FIPS_MODULE
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PEDANTIC)) != NULL) {
         if (!OSSL_PARAM_get_int(p, &ctx->pedantic))
             return 0;
     }
+#endif
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
         if (OPENSSL_strcasecmp(p->data, SN_md5_sha1) == 0) {

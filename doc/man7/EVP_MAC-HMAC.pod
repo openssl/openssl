@@ -37,6 +37,8 @@ Set the status for strict compliance. The value 0 or 1 is expected.
 If set to 0, the operation is not approved unless related standard defines it
 can be used for legacy use.
 
+Currently, only FIPS provider supports this parameter.
+
 =item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
 Sets the MAC key.

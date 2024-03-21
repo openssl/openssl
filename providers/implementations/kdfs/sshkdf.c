@@ -49,7 +49,9 @@ typedef struct {
     char type; /* X */
     unsigned char *session_id;
     size_t session_id_len;
+#ifdef FIPS_MODULE
     int pedantic;
+#endif
 } KDF_SSHKDF;
 
 static void *kdf_sshkdf_new(void *provctx)
@@ -63,8 +65,6 @@ static void *kdf_sshkdf_new(void *provctx)
         ctx->provctx = provctx;
 #ifdef FIPS_MODULE
     ctx->pedantic = 1;
-#else
-    ctx->pedantic = 0;
 #endif
     return ctx;
 }
@@ -108,7 +108,9 @@ static void *kdf_sshkdf_dup(void *vctx)
                 || !ossl_prov_digest_copy(&dest->digest, &src->digest))
             goto err;
         dest->type = src->type;
+#ifdef FIPS_MODULE
         dest->pedantic = src->pedantic;
+#endif
     }
     return dest;
 
@@ -174,10 +176,12 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
         return 0;
 
+#ifdef FIPS_MODULE
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PEDANTIC)) != NULL) {
         if (!OSSL_PARAM_get_int(p, &ctx->pedantic))
             return 0;
     }
+#endif
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL) {
 #ifdef FIPS_MODULE

@@ -88,7 +88,9 @@ typedef struct {
     size_t data_len;
     unsigned char *info;
     size_t info_len;
+#ifdef FIPS_MODULE
     int pedantic;
+#endif
 } KDF_HKDF;
 
 static void *kdf_hkdf_new(void *provctx)
@@ -102,8 +104,6 @@ static void *kdf_hkdf_new(void *provctx)
         ctx->provctx = provctx;
 #ifdef FIPS_MODULE
     ctx->pedantic = 1;
-#else
-    ctx->pedantic = 0;
 #endif
 
     return ctx;
@@ -157,7 +157,9 @@ static void *kdf_hkdf_dup(void *vctx)
                 || !ossl_prov_digest_copy(&dest->digest, &src->digest))
             goto err;
         dest->mode = src->mode;
+#ifdef FIPS_MODULE
         dest->pedantic = src->pedantic;
+#endif
     }
     return dest;
 
@@ -237,10 +239,12 @@ static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, const OSSL_PARAM params[])
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
         return 0;
 
+#ifdef FIPS_MODULE
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PEDANTIC)) != NULL) {
         if (!OSSL_PARAM_get_int(p, &ctx->pedantic))
             return 0;
     }
+#endif
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_MODE)) != NULL) {
         if (p->data_type == OSSL_PARAM_UTF8_STRING) {

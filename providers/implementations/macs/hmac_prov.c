@@ -67,7 +67,9 @@ struct hmac_data_st {
     int tls_header_set;
     unsigned char tls_mac_out[EVP_MAX_MD_SIZE];
     size_t tls_mac_out_size;
+#ifdef FIPS_MODULE
     int pedantic;
+#endif
 };
 
 static void *hmac_new(void *provctx)
@@ -85,8 +87,6 @@ static void *hmac_new(void *provctx)
     macctx->provctx = provctx;
 #ifdef FIPS_MODULE
     macctx->pedantic = 1;
-#else
-    macctx->pedantic = 0;
 #endif
 
     return macctx;
@@ -120,7 +120,9 @@ static void *hmac_dup(void *vsrc)
     *dst = *src;
     dst->ctx = ctx;
     dst->key = NULL;
+#ifdef FIPS_MODULE
     dst->pedantic = src->pedantic;
+#endif
     memset(&dst->digest, 0, sizeof(dst->digest));
 
     if (!HMAC_CTX_copy(dst->ctx, src->ctx)
@@ -312,10 +314,12 @@ static int hmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     if (!ossl_prov_digest_load_from_params(&macctx->digest, params, ctx))
         return 0;
 
+#ifdef FIPS_MODULE
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_PEDANTIC)) != NULL) {
         if (!OSSL_PARAM_get_int(p, &macctx->pedantic))
             return 0;
     }
+#endif
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)
