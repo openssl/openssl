@@ -1,6 +1,6 @@
 # Generated with generate_ssl_tests.pl
 
-num_tests = 678
+num_tests = 680
 
 test-0 = 0-version-negotiation
 test-1 = 1-version-negotiation
@@ -678,8 +678,10 @@ test-672 = 672-version-negotiation
 test-673 = 673-version-negotiation
 test-674 = 674-version-negotiation
 test-675 = 675-version-negotiation
-test-676 = 676-ciphersuite-sanity-check-client
-test-677 = 677-ciphersuite-sanity-check-server
+test-676 = 676-ciphersuite-sanity-check-tls-client
+test-677 = 677-ciphersuite-sanity-check-tls-server
+test-678 = 678-ciphersuite-sanity-check-dtls-client
+test-679 = 679-ciphersuite-sanity-check-dtls-server
 # ===========================================================
 
 [0-version-negotiation]
@@ -702,7 +704,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-0]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -727,7 +730,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-1]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -752,7 +756,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-2]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -777,7 +782,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-3]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -802,7 +808,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-4]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -826,7 +833,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-5]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -852,7 +860,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-6]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -878,7 +887,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-7]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -904,7 +914,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-8]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -930,7 +941,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-9]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -956,7 +968,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-10]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -981,7 +994,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-11]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -1007,7 +1021,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-12]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1033,7 +1047,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-13]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1059,7 +1073,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-14]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1085,7 +1099,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-15]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1110,7 +1124,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-16]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1136,7 +1150,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-17]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1162,7 +1176,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-18]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1188,7 +1202,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-19]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1213,7 +1227,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-20]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1239,7 +1253,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-21]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1265,7 +1279,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-22]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1290,7 +1304,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-23]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1316,7 +1330,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-24]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1341,7 +1355,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-25]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -1366,7 +1380,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-26]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -1521,7 +1536,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-32]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -2045,7 +2061,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-52]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -2200,7 +2217,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-58]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -2728,7 +2746,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-78]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -2883,7 +2902,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-84]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -3414,7 +3434,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-104]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -3569,7 +3590,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-110]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -4101,7 +4123,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-130]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -4250,7 +4273,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-136]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -4765,7 +4789,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-156]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -4791,7 +4816,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-157]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -4817,7 +4843,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-158]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -4843,7 +4870,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-159]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -4869,7 +4897,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-160]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -4894,7 +4923,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-161]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -4921,7 +4951,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-162]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -4948,7 +4979,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-163]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -4975,7 +5007,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-164]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -5002,7 +5035,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-165]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -5029,7 +5063,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-166]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -5055,7 +5090,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-167]
-ExpectedResult = ClientFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -5082,7 +5118,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-168]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5109,7 +5145,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-169]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5136,7 +5172,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-170]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5163,7 +5199,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-171]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5189,7 +5225,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-172]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5216,7 +5252,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-173]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5243,7 +5279,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-174]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5270,7 +5306,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-175]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5296,7 +5332,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-176]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5323,7 +5359,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-177]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5350,7 +5386,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-178]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5376,7 +5412,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-179]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5403,7 +5439,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-180]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5429,7 +5465,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-181]
-ExpectedResult = ClientFail
+ExpectedResult = ServerFail
 
 
 # ===========================================================
@@ -5455,7 +5491,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-182]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -5616,7 +5653,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-188]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -6160,7 +6198,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-208]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -6321,7 +6360,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-214]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -6869,7 +6909,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-234]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -7030,7 +7071,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-240]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -7581,7 +7623,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-260]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -7742,7 +7785,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-266]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -8294,7 +8338,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-286]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -8449,7 +8494,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-292]
-ExpectedResult = ServerFail
+ExpectedProtocol = SSLv3
+ExpectedResult = Success
 
 
 # ===========================================================
@@ -8983,7 +9029,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-312]
-ExpectedResult = ServerFail
+ExpectedResult = ClientFail
 
 
 # ===========================================================
@@ -9144,7 +9190,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-318]
-ExpectedResult = ServerFail
+ExpectedResult = ClientFail
 
 
 # ===========================================================
@@ -9688,7 +9734,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-338]
-ExpectedResult = ServerFail
+ExpectedResult = ClientFail
 
 
 # ===========================================================
@@ -9849,7 +9895,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-344]
-ExpectedResult = ServerFail
+ExpectedResult = ClientFail
 
 
 # ===========================================================
@@ -10397,7 +10443,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-364]
-ExpectedResult = ServerFail
+ExpectedResult = ClientFail
 
 
 # ===========================================================
@@ -10558,7 +10604,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-370]
-ExpectedResult = ServerFail
+ExpectedResult = ClientFail
 
 
 # ===========================================================
@@ -12511,7 +12557,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-442]
-ExpectedResult = ServerFail
+ExpectedResult = ClientFail
 
 
 # ===========================================================
@@ -12671,7 +12717,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-448]
-ExpectedResult = ServerFail
+ExpectedResult = ClientFail
 
 
 # ===========================================================
@@ -13217,7 +13263,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-468]
-ExpectedResult = ServerFail
+ExpectedResult = ClientFail
 
 
 # ===========================================================
@@ -13377,7 +13423,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-474]
-ExpectedResult = ServerFail
+ExpectedResult = ClientFail
 
 
 # ===========================================================
@@ -15322,7 +15368,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-546]
-ExpectedResult = ServerFail
+ExpectedResult = ClientFail
 
 
 # ===========================================================
@@ -15481,7 +15527,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-552]
-ExpectedResult = ServerFail
+ExpectedResult = ClientFail
 
 
 # ===========================================================
@@ -18772,20 +18818,20 @@ ExpectedResult = Success
 
 # ===========================================================
 
-[676-ciphersuite-sanity-check-client]
-ssl_conf = 676-ciphersuite-sanity-check-client-ssl
+[676-ciphersuite-sanity-check-tls-client]
+ssl_conf = 676-ciphersuite-sanity-check-tls-client-ssl
 
-[676-ciphersuite-sanity-check-client-ssl]
-server = 676-ciphersuite-sanity-check-client-server
-client = 676-ciphersuite-sanity-check-client-client
+[676-ciphersuite-sanity-check-tls-client-ssl]
+server = 676-ciphersuite-sanity-check-tls-client-server
+client = 676-ciphersuite-sanity-check-tls-client-client
 
-[676-ciphersuite-sanity-check-client-server]
+[676-ciphersuite-sanity-check-tls-client-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 MaxProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[676-ciphersuite-sanity-check-client-client]
+[676-ciphersuite-sanity-check-tls-client-client]
 CipherString = AES128-SHA
 Ciphersuites = 
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -18793,24 +18839,25 @@ VerifyMode = Peer
 
 [test-676]
 ExpectedResult = ClientFail
+Method = TLS
 
 
 # ===========================================================
 
-[677-ciphersuite-sanity-check-server]
-ssl_conf = 677-ciphersuite-sanity-check-server-ssl
+[677-ciphersuite-sanity-check-tls-server]
+ssl_conf = 677-ciphersuite-sanity-check-tls-server-ssl
 
-[677-ciphersuite-sanity-check-server-ssl]
-server = 677-ciphersuite-sanity-check-server-server
-client = 677-ciphersuite-sanity-check-server-client
+[677-ciphersuite-sanity-check-tls-server-ssl]
+server = 677-ciphersuite-sanity-check-tls-server-server
+client = 677-ciphersuite-sanity-check-tls-server-client
 
-[677-ciphersuite-sanity-check-server-server]
+[677-ciphersuite-sanity-check-tls-server-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = AES128-SHA
 Ciphersuites = 
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[677-ciphersuite-sanity-check-server-client]
+[677-ciphersuite-sanity-check-tls-server-client]
 CipherString = AES128-SHA
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -18818,5 +18865,58 @@ VerifyMode = Peer
 
 [test-677]
 ExpectedResult = ServerFail
+Method = TLS
+
+
+# ===========================================================
+
+[678-ciphersuite-sanity-check-dtls-client]
+ssl_conf = 678-ciphersuite-sanity-check-dtls-client-ssl
+
+[678-ciphersuite-sanity-check-dtls-client-ssl]
+server = 678-ciphersuite-sanity-check-dtls-client-server
+client = 678-ciphersuite-sanity-check-dtls-client-client
+
+[678-ciphersuite-sanity-check-dtls-client-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+MaxProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[678-ciphersuite-sanity-check-dtls-client-client]
+CipherString = AES128-SHA
+Ciphersuites = 
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-678]
+ExpectedResult = ClientFail
+Method = DTLS
+
+
+# ===========================================================
+
+[679-ciphersuite-sanity-check-dtls-server]
+ssl_conf = 679-ciphersuite-sanity-check-dtls-server-ssl
+
+[679-ciphersuite-sanity-check-dtls-server-ssl]
+server = 679-ciphersuite-sanity-check-dtls-server-server
+client = 679-ciphersuite-sanity-check-dtls-server-client
+
+[679-ciphersuite-sanity-check-dtls-server-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = AES128-SHA
+Ciphersuites = 
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[679-ciphersuite-sanity-check-dtls-server-client]
+CipherString = AES128-SHA
+MaxProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-679]
+ExpectedResult = ServerFail
+Method = DTLS
 
 
