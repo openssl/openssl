@@ -104,6 +104,7 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 # define HISI_CPU_IMP              0x48
 # define ARM_CPU_IMP_APPLE         0x61
 # define ARM_CPU_IMP_MICROSOFT     0x6D
+# define ARM_CPU_IMP_AMPERE        0xC0
 
 # define ARM_CPU_PART_CORTEX_A72   0xD08
 # define ARM_CPU_PART_N1           0xD0C
