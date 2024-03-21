@@ -192,10 +192,7 @@ L<SSL_set_blocking_mode(3)>
 
 =head1 HISTORY
 
-OSSL_QUIC_client_method() and OSSL_QUIC_client_thread_method() were added in
-OpenSSL 3.2.
-
-OSSL_QUIC_server_method() was added in OpenSSL @VERSION_QUIC_SERVER@.
+These functions were added in OpenSSL @VERSION_QUIC_SERVER@.
 
 =head1 COPYRIGHT
 
