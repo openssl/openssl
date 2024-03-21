@@ -14,9 +14,11 @@
 #include "recmethod_local.h"
 
 static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
+                                  unsigned char *snkey,
                                   unsigned char *key, size_t keylen,
                                   unsigned char *iv, size_t ivlen,
                                   unsigned char *mackey, size_t mackeylen,
+                                  const EVP_CIPHER *snciph,
                                   const EVP_CIPHER *ciph,
                                   size_t taglen,
                                   int mactype,
@@ -50,6 +52,23 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         || EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, enc) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
+    }
+
+    if (rl->isdtls) {
+        EVP_CIPHER_CTX *sn_ciph_ctx;
+
+        sn_ciph_ctx = rl->sn_enc_ctx = EVP_CIPHER_CTX_new();
+
+        if (sn_ciph_ctx == NULL || snciph == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
+        }
+
+        if (EVP_CipherInit_ex(sn_ciph_ctx, snciph, NULL,
+                              snkey, NULL, 1) <= 0) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
+        }
     }
 
     return OSSL_RECORD_RETURN_SUCCESS;

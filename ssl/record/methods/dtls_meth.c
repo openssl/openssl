@@ -365,6 +365,44 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
     return 0;
 }
 
+/* rfc9147 section 4.2.3 */
+int dtls_crypt_sequence_number(unsigned char *seq, size_t seq_len,
+                               EVP_CIPHER_CTX *ctx, char *rec_data)
+{
+    static const size_t mask_size = 16;
+    unsigned char mask[mask_size];
+    int outlen, inlen;
+    unsigned char *iv;
+    unsigned char *in;
+    const char *name = EVP_CIPHER_get0_name(EVP_CIPHER_CTX_get0_cipher(ctx));
+
+    memset(mask, 0, mask_size);
+
+    if (strncmp(name, "AES", 3) == 0) {
+        iv = NULL;
+        in = rec_data;
+        inlen = 16;
+    } else if (strncmp(name, "Cha", 3) == 0) {
+        iv = rec_data;
+        in = rec_data + 4;
+        inlen = 12;
+    } else {
+        return 0;
+    }
+
+    if (inlen > mask_size
+            || seq_len > mask_size
+            || EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, 1) <= 0
+            || EVP_CipherUpdate(ctx, mask, &outlen, in, inlen) <= 0) {
+        return 0;
+    }
+
+    for (size_t i = 0; i < seq_len; i++)
+        seq[i] ^= mask[i];
+
+    return 1;
+}
+
 /*-
  * Call this to get a new input record.
  * It will return <= 0 if more data is needed, normally due to an error
@@ -444,6 +482,15 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         if (rl->msg_callback != NULL)
             rl->msg_callback(0, rr->rec_version, SSL3_RT_HEADER, rl->packet, DTLS1_RT_HEADER_LENGTH,
                              rl->cbarg);
+
+        if (rl->sn_enc_ctx != NULL
+                && !dtls_crypt_sequence_number(&(rl->sequence[2]), 6,
+                                               rl->sn_enc_ctx, rl->packet + 13)) {
+            /* unexpected version, silently discard */
+            rr->length = 0;
+            rl->packet_length = 0;
+            goto again;
+        }
 
         /*
          * Lets check the version. We tolerate alerts that don't have the exact
@@ -625,8 +672,10 @@ static int
 dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       int role, int direction, int level, uint16_t epoch,
                       unsigned char *secret, size_t secretlen,
-                      unsigned char *key, size_t keylen, unsigned char *iv,
-                      size_t ivlen, unsigned char *mackey, size_t mackeylen,
+                      unsigned char *snkey, unsigned char *key, size_t keylen,
+                      unsigned char *iv, size_t ivlen,
+                      unsigned char *mackey, size_t mackeylen,
+                      const EVP_CIPHER *snciph,
                       const EVP_CIPHER *ciph, size_t taglen,
                       int mactype,
                       const EVP_MD *md, COMP_METHOD *comp,
@@ -677,9 +726,10 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         goto err;
     }
 
-    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, key, keylen, iv,
-                                            ivlen, mackey, mackeylen, ciph,
-                                            taglen, mactype, md, comp);
+    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key, keylen,
+                                            iv, ivlen, mackey, mackeylen,
+                                            snciph, ciph, taglen, mactype, md,
+                                            comp);
 
  err:
     if (ret != OSSL_RECORD_RETURN_SUCCESS) {

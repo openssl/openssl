@@ -508,8 +508,43 @@ int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     return 1;
 }
 
+int ssl_cipher_get_evp_cipher_ecb(SSL_CTX *ctx, const SSL_CIPHER *sslc,
+                                  const EVP_CIPHER **enc)
+{
+    int i = ssl_cipher_info_lookup(ssl_cipher_table_cipher, sslc->algorithm_enc);
+
+    if (i == -1) {
+        *enc = NULL;
+    } else {
+        if (i == SSL_ENC_NULL_IDX) {
+            /*
+             * We assume we don't care about this coming from an ENGINE so
+             * just do a normal EVP_CIPHER_fetch instead of
+             * ssl_evp_cipher_fetch()
+             */
+            *enc = EVP_CIPHER_fetch(ctx->libctx, "NULL", ctx->propq);
+            if (*enc == NULL)
+                return 0;
+        } else {
+            char *ecb_name;
+
+            if ((sslc->algorithm_enc & SSL_AES128_ANY) != 0) {
+                ecb_name = "AES-128-ECB";
+            } else if ((sslc->algorithm_enc & SSL_AES256_ANY) != 0) {
+                ecb_name = "AES-256-ECB";
+            } else if (ossl_assert((sslc->algorithm_enc & SSL_CHACHA20) != 0)) {
+                ecb_name = "ChaCha20";
+            }
+
+            *enc = EVP_CIPHER_fetch(ctx->libctx, ecb_name, ctx->propq);
+        }
+    }
+    return 1;
+}
+
 int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
-                       const EVP_CIPHER **enc, const EVP_MD **md,
+                       const EVP_CIPHER **snenc, const EVP_CIPHER **enc,
+                       const EVP_MD **md,
                        int *mac_pkey_type, size_t *mac_secret_size,
                        SSL_COMP **comp, int use_etm)
 {
@@ -544,7 +579,9 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     if ((enc == NULL) || (md == NULL))
         return 0;
 
-    if (!ssl_cipher_get_evp_cipher(ctx, c, enc))
+    if (!ssl_cipher_get_evp_cipher(ctx, c, enc)
+            || (snenc != NULL
+                && !ssl_cipher_get_evp_cipher_ecb(ctx, c, snenc)))
         return 0;
 
     i = ssl_cipher_info_lookup(ssl_cipher_table_mac, c->algorithm_mac);

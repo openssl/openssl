@@ -78,16 +78,16 @@ int RECORD_LAYER_reset(RECORD_LAYER *rl)
                                         ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
                                     OSSL_RECORD_DIRECTION_READ,
                                     OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
-                                    NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                    NID_undef, NULL, NULL, NULL);
+                                    NULL, NULL, 0, NULL, 0, NULL, 0, NULL, NULL,
+                                    0, NID_undef, NULL, NULL, NULL);
 
     ret &= ssl_set_new_record_layer(rl->s,
                                     SSL_CONNECTION_IS_DTLS(rl->s)
                                         ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
                                     OSSL_RECORD_DIRECTION_WRITE,
                                     OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
-                                    NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                    NID_undef, NULL, NULL, NULL);
+                                    NULL, NULL, 0, NULL, 0, NULL, 0, NULL, NULL,
+                                    0, NID_undef, NULL, NULL, NULL);
 
     /* SSLfatal already called in the event of failure */
     return ret;
@@ -1232,9 +1232,11 @@ static int ssl_post_record_layer_select(SSL_CONNECTION *s, int direction)
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                              int direction, int level,
                              unsigned char *secret, size_t secretlen,
+                             unsigned char *snkey,
                              unsigned char *key, size_t keylen,
                              unsigned char *iv,  size_t ivlen,
                              unsigned char *mackey, size_t mackeylen,
+                             const EVP_CIPHER *snciph,
                              const EVP_CIPHER *ciph, size_t taglen,
                              int mactype, const EVP_MD *md,
                              const SSL_COMP *comp, const EVP_MD *kdfdigest)
@@ -1408,9 +1410,11 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 
         rlret = meth->new_record_layer(sctx->libctx, sctx->propq, version,
                                        s->server, direction, level, epoch,
-                                       secret, secretlen, key, keylen, iv,
-                                       ivlen, mackey, mackeylen, ciph, taglen,
-                                       mactype, md, compm, kdfdigest, prev,
+                                       secret, secretlen, snkey, key, keylen,
+                                       iv,
+                                       ivlen, mackey, mackeylen, snciph, ciph,
+                                       taglen, mactype, md, compm, kdfdigest,
+                                       prev,
                                        thisbio, next, NULL, NULL, settings,
                                        options, rlayer_dispatch_tmp, s,
                                        s->rlayer.rlarg, &newrl);

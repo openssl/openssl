@@ -156,6 +156,21 @@ int tls13_derive_finishedkey(SSL_CONNECTION *s, const EVP_MD *md,
 }
 
 /*
+ * Given a |secret| generate a |snkey| of length |snkeylen| bytes. Returns 1 on
+ * success  0 on failure. (rfc9147 section 4.2.3)
+ */
+static int dtls13_derive_snkey(SSL_CONNECTION *s, const EVP_MD *md,
+                        const unsigned char *secret,
+                        unsigned char *snkey, size_t keylen)
+{
+    /* ASCII: "sn", in hex for EBCDIC compatibility */
+    static const unsigned char sn_str[] = "\x73\x6E";
+
+    return tls13_hkdf_expand(s, md, secret, sn_str, sizeof(sn_str) - 1,
+                             NULL, 0, snkey, keylen, 1);
+}
+
+/*
  * Given the previous secret |prevsecret| and a new input secret |insecret| of
  * length |insecretlen|, generate a new secret and store it in the location
  * pointed to by |outsecret|. Returns 1 on success  0 on failure.
@@ -316,11 +331,12 @@ size_t tls13_final_finish_mac(SSL_CONNECTION *s, const char *str, size_t slen,
 int tls13_setup_key_block(SSL_CONNECTION *s)
 {
     const EVP_CIPHER *c;
+    const EVP_CIPHER *snc;
     const EVP_MD *hash;
 
     s->session->cipher = s->s3.tmp.new_cipher;
-    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, &c, &hash,
-                            NULL, NULL, NULL, 0)) {
+    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, &snc, &c,
+                            &hash, NULL, NULL, NULL, 0)) {
         /* Error is already recorded */
         SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
         return 0;
@@ -328,6 +344,8 @@ int tls13_setup_key_block(SSL_CONNECTION *s)
 
     ssl_evp_cipher_free(s->s3.tmp.new_sym_enc);
     s->s3.tmp.new_sym_enc = c;
+    ssl_evp_cipher_free(s->s3.tmp.new_sym_enc_sn);
+    s->s3.tmp.new_sym_enc_sn = snc;
     ssl_evp_md_free(s->s3.tmp.new_hash);
     s->s3.tmp.new_hash = hash;
 
@@ -340,6 +358,7 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
                                     const unsigned char *hash,
                                     const unsigned char *label,
                                     size_t labellen, unsigned char *secret,
+                                    unsigned char *snkey,
                                     unsigned char *key, size_t *keylen,
                                     unsigned char *iv, size_t *ivlen,
                                     size_t *taglen)
@@ -402,7 +421,9 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
     }
 
     if (!tls13_derive_key(s, md, secret, key, *keylen)
-            || !tls13_derive_iv(s, md, secret, iv, *ivlen)) {
+            || !tls13_derive_iv(s, md, secret, iv, *ivlen)
+            || (SSL_CONNECTION_IS_DTLS(s)
+                && !dtls13_derive_snkey(s, md, secret, snkey, *keylen))) {
         /* SSLfatal() already called */
         return 0;
     }
@@ -430,6 +451,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     static const unsigned char early_exporter_master_secret[] = "\x65\x20\x65\x78\x70\x20\x6D\x61\x73\x74\x65\x72";
     unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char key[EVP_MAX_KEY_LENGTH];
+    unsigned char snkey[EVP_MAX_KEY_LENGTH]; // has same len as key
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char hashval[EVP_MAX_MD_SIZE];
     unsigned char *hash = hashval;
@@ -441,7 +463,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     size_t labellen, hashlen = 0;
     int ret = 0;
     const EVP_MD *md = NULL;
-    const EVP_CIPHER *cipher = NULL;
+    const EVP_CIPHER *cipher = NULL, *sncipher = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     size_t keylen, ivlen, taglen;
     int level;
@@ -504,7 +526,11 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
              * This ups the ref count on cipher so we better make sure we free
              * it again
              */
-            if (!ssl_cipher_get_evp_cipher(sctx, sslcipher, &cipher)) {
+            if (!ssl_cipher_get_evp_cipher(sctx, sslcipher, &cipher)
+                    || (SSL_CONNECTION_IS_DTLS(s)
+                        && !ssl_cipher_get_evp_cipher_ecb(sctx, sslcipher,
+                                                          &sncipher))
+                                                          ) {
                 /* Error is already recorded */
                 SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
                 EVP_MD_CTX_free(mdctx);
@@ -587,6 +613,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     if (!(which & SSL3_CC_EARLY)) {
         md = ssl_handshake_md(s);
         cipher = s->s3.tmp.new_sym_enc;
+        sncipher = s->s3.tmp.new_sym_enc_sn;
         if (!ssl3_digest_cached_records(s, 1)
                 || !ssl_handshake_hash(s, hashval, sizeof(hashval), &hashlen)) {
             /* SSLfatal() already called */;
@@ -623,9 +650,9 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     if (!ossl_assert(cipher != NULL))
         goto err;
 
-    if (!derive_secret_key_and_iv(s, md, cipher,
-                                  insecret, hash, label, labellen, secret, key,
-                                  &keylen, iv, &ivlen, &taglen)) {
+    if (!derive_secret_key_and_iv(s, md, cipher, insecret, hash,
+                                  label, labellen, secret, snkey, key, &keylen,
+                                  iv, &ivlen, &taglen)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -675,10 +702,10 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                ? OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE
                : OSSL_RECORD_PROTECTION_LEVEL_APPLICATION);
 
-    if (!ssl_set_new_record_layer(s, s->version,
-                                  direction,
-                                  level, secret, hashlen, key, keylen, iv,
-                                  ivlen, NULL, 0, cipher, taglen, NID_undef,
+
+    if (!ssl_set_new_record_layer(s, s->version, direction, level, secret,
+                                  hashlen, snkey, key, keylen, iv, ivlen,
+                                  NULL, 0, sncipher, cipher, taglen, NID_undef,
                                   NULL, NULL, md)) {
         /* SSLfatal already called */
         goto err;
@@ -691,6 +718,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         ssl_evp_cipher_free(cipher);
     }
     OPENSSL_cleanse(key, sizeof(key));
+    OPENSSL_cleanse(snkey, sizeof(snkey));
     OPENSSL_cleanse(secret, sizeof(secret));
     return ret;
 }
@@ -702,6 +730,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     const EVP_MD *md = ssl_handshake_md(s);
     size_t hashlen;
     unsigned char key[EVP_MAX_KEY_LENGTH];
+    unsigned char snkey[EVP_MAX_KEY_LENGTH];
     unsigned char *insecret;
     unsigned char secret[EVP_MAX_MD_SIZE];
     char *log_label;
@@ -725,20 +754,20 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     if (!derive_secret_key_and_iv(s, md,
                                   s->s3.tmp.new_sym_enc, insecret, NULL,
                                   application_traffic,
-                                  sizeof(application_traffic) - 1, secret, key,
-                                  &keylen, iv, &ivlen, &taglen)) {
+                                  sizeof(application_traffic) - 1, secret, snkey,
+                                  key, &keylen, iv, &ivlen, &taglen)) {
         /* SSLfatal() already called */
         goto err;
     }
 
     memcpy(insecret, secret, hashlen);
 
-    if (!ssl_set_new_record_layer(s, s->version,
-                            direction,
-                            OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                            insecret, hashlen, key, keylen, iv, ivlen, NULL, 0,
-                            s->s3.tmp.new_sym_enc, taglen, NID_undef, NULL,
-                            NULL, md)) {
+    if (!ssl_set_new_record_layer(s, s->version, direction,
+                                  OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
+                                  insecret, hashlen, snkey, key, keylen,
+                                  iv, ivlen, NULL, 0,
+                                  s->s3.tmp.new_sym_enc_sn, s->s3.tmp.new_sym_enc,
+                                  taglen, NID_undef, NULL, NULL, md)) {
         /* SSLfatal already called */
         goto err;
     }
@@ -752,6 +781,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     ret = 1;
  err:
     OPENSSL_cleanse(key, sizeof(key));
+    OPENSSL_cleanse(snkey, sizeof(snkey));
     OPENSSL_cleanse(secret, sizeof(secret));
     return ret;
 }

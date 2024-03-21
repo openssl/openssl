@@ -156,6 +156,10 @@
 # define SSL_AESGCM              (SSL_AES128GCM | SSL_AES256GCM)
 # define SSL_AESCCM              (SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8)
 # define SSL_AES                 (SSL_AES128|SSL_AES256|SSL_AESGCM|SSL_AESCCM)
+# define SSL_AES128_ANY          (SSL_AES128 | SSL_AES128CCM | SSL_AES128CCM8 \
+                                  | SSL_AES128GCM)
+# define SSL_AES256_ANY          (SSL_AES256 | SSL_AES256CCM | SSL_AES256CCM8 \
+                                  | SSL_AES256GCM)
 # define SSL_CAMELLIA            (SSL_CAMELLIA128|SSL_CAMELLIA256)
 # define SSL_CHACHA20            (SSL_CHACHA20POLY1305)
 # define SSL_ARIAGCM             (SSL_ARIA128GCM | SSL_ARIA256GCM)
@@ -1332,6 +1336,7 @@ struct ssl_connection_st {
             size_t key_block_length;
             unsigned char *key_block;
             const EVP_CIPHER *new_sym_enc;
+            const EVP_CIPHER *new_sym_enc_sn;
             const EVP_MD *new_hash;
             int new_mac_pkey_type;
             size_t new_mac_secret_size;
@@ -2509,8 +2514,11 @@ __owur int ossl_bytes_to_cipher_list(SSL_CONNECTION *s, PACKET *cipher_suites,
 void ssl_update_cache(SSL_CONNECTION *s, int mode);
 __owur int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                                      const EVP_CIPHER **enc);
+__owur int ssl_cipher_get_evp_cipher_ecb(SSL_CTX *ctx, const SSL_CIPHER *sslc,
+                                         const EVP_CIPHER **enc);
 __owur int ssl_cipher_get_evp(SSL_CTX *ctxc, const SSL_SESSION *s,
-                              const EVP_CIPHER **enc, const EVP_MD **md,
+                              const EVP_CIPHER **snenc, const EVP_CIPHER **enc,
+                              const EVP_MD **md,
                               int *mac_pkey_type, size_t *mac_secret_size,
                               SSL_COMP **comp, int use_etm);
 __owur int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
