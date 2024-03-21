@@ -86,7 +86,7 @@ static int tls_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
                     return 0;
                 }
             }
-        } else if (rl->version == TLS1_3_VERSION) {
+        } else if (rl->version == TLS1_3_VERSION || rl->version == DTLS1_3_VERSION) {
             /*
              * In this case we know we are going to negotiate TLSv1.3, but we've
              * had an HRR, so we haven't actually done so yet. In TLSv1.3 we
