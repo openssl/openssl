@@ -18,7 +18,7 @@ test vignettes for network protocol testing applications. While it is currently
 used for QUIC, it has been designed to be agnostic so that it can be adapted to
 other protocols in future if desired.
 
-In particular, unilke the older multistream test framework, it does not assume a
+In particular, unlike the older multistream test framework, it does not assume a
 single client and a single server. Examples of vignettes designed to be
 supported by the RADIX test framework in future include:
 
