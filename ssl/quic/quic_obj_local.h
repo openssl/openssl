@@ -148,13 +148,14 @@ SSL_CONNECTION *ossl_quic_obj_get0_handshake_layer(QUIC_OBJ *obj);
 static ossl_inline ossl_unused SSL *
 ossl_quic_obj_get0_ssl(QUIC_OBJ *obj)
 {
-    assert(obj->init_done);
-
     /*
      * ->ssl is guaranteed to have an offset of 0 but the NULL check here makes
      *  ubsan happy.
      */
-    return obj != NULL ? &obj->ssl : NULL;
+    if (!ossl_assert(obj != NULL))
+        return NULL;
+
+    return &obj->ssl;
 }
 
 /*
