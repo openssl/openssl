@@ -109,7 +109,7 @@ cipher B<c>.
 
 SSL_CIPHER_description() returns a textual description of the cipher used
 into the buffer B<buf> of length B<len> provided.  If B<buf> is provided, it
-must be at least 128 bytes, otherwise a buffer will be allocated using
+must be at least 128 bytes. If B<buf> is NULL it will be allocated using
 OPENSSL_malloc().  If the provided buffer is too small, or the allocation fails,
 B<NULL> is returned.
 
