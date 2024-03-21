@@ -1543,6 +1543,10 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             /* SSLfatal() already called */
             goto err;
         }
+
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            SSL_clear_options(ssl, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+        }
     }
 
     if (SSL_CONNECTION_IS_TLS13(s) || hrr) {
