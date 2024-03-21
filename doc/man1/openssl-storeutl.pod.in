@@ -78,6 +78,9 @@ returned.
 
 Note that all options must be given before the I<uri> argument.
 
+Note I<-keys> selects exclusively private keys, there is no selector for public
+keys only.
+
 =item B<-subject> I<arg>
 
 Search for an object having the subject name I<arg>.
