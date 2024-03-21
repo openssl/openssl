@@ -138,7 +138,7 @@ void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *r,
 /* Returns the number of queued incoming channels. */
 size_t ossl_quic_port_get_num_incoming_channels(const QUIC_PORT *port);
 
-/* Returns 1 if incoming connections should currently be allowed. */
+/* Sets if incoming connections should currently be allowed. */
 void ossl_quic_port_set_allow_incoming(QUIC_PORT *port, int allow_incoming);
 
 /* Returns 1 if we are using addressed mode on the read side. */

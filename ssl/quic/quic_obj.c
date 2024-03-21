@@ -23,7 +23,7 @@ int ossl_quic_obj_init(QUIC_OBJ *obj,
     int is_event_leader = (engine != NULL);
     int is_port_leader  = (port != NULL);
 
-    if (!ossl_assert(!obj->init_done && obj != NULL && SSL_TYPE_IS_QUIC(type)
+    if (!ossl_assert(obj != NULL && !obj->init_done && SSL_TYPE_IS_QUIC(type)
                      && (parent_obj == NULL || IS_QUIC(parent_obj))))
         return 0;
 
