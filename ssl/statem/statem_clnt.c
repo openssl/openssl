@@ -1167,6 +1167,8 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
     int i, protverr;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
+    int comp_version_limit = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
+                                                       : TLS1_3_VERSION;
 #endif
     SSL_SESSION *sess = s->session;
     unsigned char *session_id;
@@ -1321,10 +1323,9 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
         return CON_FUNC_ERROR;
     }
 #ifndef OPENSSL_NO_COMP
-    int maxversion = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
     if (ssl_allow_compression(s)
             && sctx->comp_methods
-            && ssl_version_cmp(s, s->s3.tmp.max_ver, maxversion) < 0) {
+            && ssl_version_cmp(s, s->s3.tmp.max_ver, comp_version_limit) < 0) {
         int compnum = sk_SSL_COMP_num(sctx->comp_methods);
         for (i = 0; i < compnum; i++) {
             comp = sk_SSL_COMP_value(sctx->comp_methods, i);
