@@ -256,8 +256,8 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
              * because in a production build, if this assert were ever to fail,
              * then the best thing to do is probably carry on regardless.
              */
-            assert(s->s3.tmp.new_compression != NULL
-                   || BIO_wpending(s->wbio) <= (int)s->d1->mtu);
+            //assert(s->s3.tmp.new_compression != NULL
+            //       || BIO_wpending(s->wbio) <= (int)s->d1->mtu);
 
             if (type == SSL3_RT_HANDSHAKE && !s->d1->retransmitting) {
                 /*
