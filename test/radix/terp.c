@@ -637,7 +637,7 @@ static ossl_inline int TERP_stk_pop(TERP *terp,
 static void TERP_print_stack(TERP *terp, BIO *bio, const char *header)
 {
     test_output_memory(header, terp->stk_cur, terp->stk_end - terp->stk_cur);
-    BIO_printf(bio, "  (%zu bytes)\n", terp->stk_end - terp->stk_cur);
+    BIO_printf(bio, "  (%zu bytes)\n", (size_t)(terp->stk_end - terp->stk_cur));
     BIO_printf(bio, "\n");
 }
 
@@ -859,7 +859,7 @@ static int TERP_run(SCRIPT_INFO *script_info, TERP_CONFIG *cfg)
 
     if (terp.stk_end - terp.stk_cur != 0) {
         TEST_error("stack not empty: %zu bytes left",
-                   terp.stk_end - terp.stk_cur);
+                   (size_t)(terp.stk_end - terp.stk_cur));
         goto err;
     }
 
