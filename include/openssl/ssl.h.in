@@ -404,7 +404,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 # define SSL_OP_NO_TLSv1_2                               SSL_OP_BIT(27)
 # define SSL_OP_NO_TLSv1_1                               SSL_OP_BIT(28)
 # define SSL_OP_NO_TLSv1_3                               SSL_OP_BIT(29)
-# define SSL_OP_NO_DTLSv1                                SSL_OP_BIT(26)
+# define SSL_OP_NO_DTLSv1                                SSL_OP_BIT(28)
 # define SSL_OP_NO_DTLSv1_2                              SSL_OP_BIT(27)
 # define SSL_OP_NO_DTLSv1_3                              SSL_OP_BIT(29)
     /* Disallow all renegotiation */
@@ -436,7 +436,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
         ( SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 \
           | SSL_OP_NO_TLSv1_2 | SSL_OP_NO_TLSv1_3 )
 # define SSL_OP_NO_DTLS_MASK \
-        ( SSL_OP_NO_DTLSv1 | SSL_OP_NO_DTLSv1_2 )
+        ( SSL_OP_NO_DTLSv1 | SSL_OP_NO_DTLSv1_2 | SSL_OP_NO_DTLSv1_3 )
 
 /* Various bug workarounds that should be rather harmless. */
 # define SSL_OP_ALL \
