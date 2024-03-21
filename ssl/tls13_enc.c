@@ -675,6 +675,18 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                ? OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE
                : OSSL_RECORD_PROTECTION_LEVEL_APPLICATION);
 
+    if (SSL_CONNECTION_IS_DTLS(s)) {
+        dtls1_increment_epoch(s, which);
+        if (level == OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE
+                && dtls1_get_epoch(s, which) == 1) {
+            /*
+             * We must manually increment epoch because
+             * client early traffic was not sent/recv
+             */
+            dtls1_increment_epoch(s, which);
+        }
+    }
+
     if (!ssl_set_new_record_layer(s, s->version,
                                   direction,
                                   level, secret, hashlen, key, keylen, iv,
@@ -709,6 +721,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     int ret = 0, l;
     int direction = sending ? OSSL_RECORD_DIRECTION_WRITE
                             : OSSL_RECORD_DIRECTION_READ;
+    int which = sending ? SSL3_CC_WRITE : SSL3_CC_READ;
     unsigned char iv[EVP_MAX_IV_LENGTH];
 
     if ((l = EVP_MD_get_size(md)) <= 0) {
@@ -732,6 +745,9 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     }
 
     memcpy(insecret, secret, hashlen);
+
+    if (SSL_CONNECTION_IS_DTLS(s))
+        dtls1_increment_epoch(s, which);
 
     if (!ssl_set_new_record_layer(s, s->version,
                             direction,
