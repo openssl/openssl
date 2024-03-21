@@ -126,13 +126,11 @@ static CRYPTO_RWLOCK *rwtorturelock = NULL;
  *  side is designed to never block
  */
 # if defined(__TANDEM)
-# define WRITER_SLEEP 999
 # define TAKE_READ_SIDE_LOCK(x) CRYPTO_THREAD_write_lock(x)
 # define TAKE_WRITE_SIDE_LOCK(x) CRYPTO_THREAD_write_lock(x)
 # define DROP_LOCK(x) CRYPTO_THREAD_unlock(x)
 # define NONSTOP_YIELD() sched_yield()
 #else
-# define WRITER_SLEEP 1000
 # define TAKE_READ_SIDE_LOCK(x) CRYPTO_THREAD_read_lock(x)
 # define TAKE_WRITE_SIDE_LOCK(x) CRYPTO_THREAD_write_lock(x)
 # define DROP_LOCK(x) CRYPTO_THREAD_unlock(x)
@@ -149,7 +147,7 @@ static void rwwriter_fn(int id, int *iterations)
     for (count = 0; ; count++) {
         new = CRYPTO_zalloc(sizeof (int), NULL, 0);
         if (contention == 0)
-            OSSL_sleep(WRITER_SLEEP);
+            OSSL_sleep(1000);
         if (!TAKE_WRITE_SIDE_LOCK(rwtorturelock))
             abort();
         if (rwwriter_ptr != NULL) {
@@ -336,7 +334,7 @@ static void writer_fn(int id, int *iterations)
     for (count = 0; ; count++) {
         new = CRYPTO_zalloc(sizeof(int), NULL, 0);
         if (contention == 0)
-            OSSL_sleep(WRITER_SLEEP);
+            OSSL_sleep(1000);
         ossl_rcu_write_lock(rcu_lock);
         old = ossl_rcu_deref(&writer_ptr);
         TSAN_ACQUIRE(&writer_ptr);
