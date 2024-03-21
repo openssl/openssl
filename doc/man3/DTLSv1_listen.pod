@@ -42,11 +42,11 @@ address. In this case a TLSv1.3 application would be susceptible to this attack.
 As a countermeasure to this issue TLSv1.3 and DTLS include a stateless cookie
 mechanism. The idea is that when a client attempts to connect to a server it
 sends a ClientHello message. The server responds with a HelloRetryRequest (in
-TLSv1.3) or a HelloVerifyRequest (in DTLS) which contains a unique cookie. The
-client then resends the ClientHello, but this time includes the cookie in the
-message thus proving that the client is capable of receiving messages sent to
-that address. All of this can be done by the server without allocating any
-state, and thus without consuming expensive resources.
+(D)TLSv1.3) or a HelloVerifyRequest (in DTLSv1.0-1.2) which contains a unique
+cookie. The client then resends the ClientHello, but this time includes the
+cookie in the message thus proving that the client is capable of receiving
+messages sent to that address. All of this can be done by the server without
+allocating any state, and thus without consuming expensive resources.
 
 OpenSSL implements this capability via the SSL_stateless() and DTLSv1_listen()
 functions. The B<ssl> parameter should be a newly allocated SSL object with its
