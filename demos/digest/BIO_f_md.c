@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     BIO *bio_digest = NULL, *reading = NULL;
     EVP_MD *md = NULL;
     unsigned char buffer[512];
-    size_t digest_size;
+    int digest_size;
     char *digest_value = NULL;
     int j;
 
@@ -68,6 +68,11 @@ int main(int argc, char *argv[])
         goto cleanup;
     }
     digest_size = EVP_MD_get_size(md);
+    if (digest_size <= 0) {
+        fprintf(stderr, "EVP_MD_get_size returned invalid size.\n");
+        goto cleanup;
+    }
+
     digest_value = OPENSSL_malloc(digest_size);
     if (digest_value == NULL) {
         fprintf(stderr, "Can't allocate %lu bytes for the digest value.\n", (unsigned long)digest_size);
