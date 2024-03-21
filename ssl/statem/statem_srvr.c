@@ -785,7 +785,15 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
         return WORK_FINISHED_CONTINUE;
 
     case TLS_ST_SW_SESSION_TICKET:
-        if (SSL_CONNECTION_IS_TLS13(s) && s->sent_tickets == 0
+        if (SSL_CONNECTION_IS_DTLS(s)) {
+            /*
+             * We're into the last flight. We don't retransmit the last flight
+             * unless we need to, so we don't use the timer
+             */
+            st->use_timer = 0;
+        }
+        if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))
+                && s->sent_tickets == 0
                 && s->ext.extra_tickets_expected == 0) {
             /*
              * Actually this is the end of the handshake, but we're going
@@ -795,13 +803,6 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
              * Calls SSLfatal as required.
              */
             return tls_finish_handshake(s, wst, 0, 0);
-        }
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            /*
-             * We're into the last flight. We don't retransmit the last flight
-             * unless we need to, so we don't use the timer
-             */
-            st->use_timer = 0;
         }
         break;
 
