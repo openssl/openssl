@@ -247,14 +247,14 @@ int tls13_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
                                  size_t *secret_size)
 {
     const EVP_MD *md = ssl_handshake_md(s);
-    int tmpsize;
+    int md_size;
 
-    tmpsize = EVP_MD_get_size(md);
-    if (tmpsize <= 0) {
+    md_size = EVP_MD_get_size(md);
+    if (md_size <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    *secret_size = (size_t)tmpsize;
+    *secret_size = (size_t)md_size;
     /* Calls SSLfatal() if required */
     return tls13_generate_secret(s, md, prev, NULL, 0, out);
 }
