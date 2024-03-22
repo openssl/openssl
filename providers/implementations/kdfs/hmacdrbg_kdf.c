@@ -183,6 +183,7 @@ static int hmac_drbg_kdf_set_ctx_params(void *vctx,
     const OSSL_PARAM *p;
     void *ptr = NULL;
     size_t size = 0;
+    int md_size;
 
     if (params == NULL)
         return 1;
@@ -220,7 +221,10 @@ static int hmac_drbg_kdf_set_ctx_params(void *vctx,
                 ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
                 return 0;
             }
-            drbg->blocklen = EVP_MD_get_size(md);
+            md_size = EVP_MD_get_size(md);
+            if (md_size <= 0)
+                return 0;
+            drbg->blocklen = (size_t)md_size;
         }
         return ossl_prov_macctx_load_from_params(&drbg->ctx, params,
                                                  "HMAC", NULL, NULL, libctx);
