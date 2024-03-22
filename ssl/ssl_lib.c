@@ -297,7 +297,7 @@ static int dane_tlsa_add(SSL_DANE *dane,
 
     if (md != NULL) {
         mdsize = EVP_MD_get_size(md);
-        if (mdsize < 0 || dlen != (size_t)mdsize) {
+        if (mdsize <= 0 || dlen != (size_t)mdsize) {
             ERR_raise(ERR_LIB_SSL, SSL_R_DANE_TLSA_BAD_DIGEST_LENGTH);
             return 0;
         }
