@@ -1649,6 +1649,8 @@ static int rsa_pss_check_min_key_size(SSL_CTX *ctx, const EVP_PKEY *pkey,
         return 0;
     if (!tls1_lookup_md(ctx, lu, &md) || md == NULL)
         return 0;
+    if (EVP_MD_get_size(md) <= 0)
+        return 0;
     if (EVP_PKEY_get_size(pkey) < RSA_PSS_MINIMUM_KEY_SIZE(md))
         return 0;
     return 1;
@@ -1831,6 +1833,8 @@ static int sigalg_security_bits(SSL_CTX *ctx, const SIGALG_LOOKUP *lu)
 
         /* Security bits: half digest bits */
         secbits = EVP_MD_get_size(md) * 4;
+        if (secbits <= 0)
+            return 0;
         /*
          * SHA1 and MD5 are known to be broken. Reduce security bits so that
          * they're no longer accepted at security level 1. The real values don't
