@@ -120,6 +120,9 @@ sub run_test {
     my @s_client_cmd = ("s_client", "-connect", "localhost:$server_port", "-status", "-verify_return_error");
     my $s_client_pid = open3(my $s_client_i, my $s_client_o, my $s_client_e = gensym, $shlib_wrap, $apps_openssl, @s_client_cmd);
 
+    waitpid($s_client_pid, 0);
+    kill 'HUP', $s_server_pid, $ocsp_pid;
+
     ### the output from s_server that we want to check is written to its stderr
     ###    cert_status: ocsp response sent:
 
@@ -133,9 +136,6 @@ sub run_test {
         }
     }
     ok($resp == 1, "check s_server sent ocsp response");
-
-    waitpid($s_client_pid, 0);
-    kill 'HUP', $s_server_pid, $ocsp_pid;
 }
 
 run_test();
