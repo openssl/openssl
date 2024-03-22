@@ -236,7 +236,7 @@ jobs:
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: "ci@no-shared-macos"
+        name: "ci@no-shared-${{ matrix.os }}"
         path: artifacts/
 
   non-caching:
@@ -553,7 +553,7 @@ jobs:
     - name: save artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: "ci@out-of-readonly-source-and-install-macos"
+        name: "ci@out-of-readonly-source-and-install-${{ matrix.os }}"
         path: build/artifacts/
     - name: make install
       run: make install
