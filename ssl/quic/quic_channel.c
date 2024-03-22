@@ -1820,7 +1820,6 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
     ch->local_transport_params = (unsigned char *)buf_mem->data;
     buf_mem->data = NULL;
 
-
     if (!ossl_quic_tls_set_transport_params(ch->qtls, ch->local_transport_params,
                                             buf_len))
         goto err;
@@ -1889,6 +1888,10 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
      *   - generate any packets which need to be sent;
      *   - determine the time at which we should next be ticked.
      */
+
+    /* Nothing to do yet if connection has not been started. */
+    if (ch->state == QUIC_CHANNEL_STATE_IDLE)
+        return;
 
     /* If we are in the TERMINATED state, there is nothing to do. */
     if (ossl_quic_channel_is_terminated(ch)) {
