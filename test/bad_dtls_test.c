@@ -370,6 +370,7 @@ static int send_finished(SSL *s, BIO *rbio)
         /* Finished MAC (12 bytes) */
     };
     unsigned char handshake_hash[EVP_MAX_MD_SIZE];
+    int md_size;
 
     /* Derive key material */
     do_PRF(TLS_MD_KEY_EXPANSION_CONST, TLS_MD_KEY_EXPANSION_CONST_SIZE,
@@ -381,8 +382,11 @@ static int send_finished(SSL *s, BIO *rbio)
     if (!EVP_DigestFinal_ex(handshake_md, handshake_hash, NULL))
         return 0;
 
+    md_size = EVP_MD_CTX_get_size(handshake_md);
+    if (md_size <= 0)
+        return 0;
     do_PRF(TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
-           handshake_hash, EVP_MD_CTX_get_size(handshake_md),
+           handshake_hash, md_size,
            NULL, 0,
            finished_msg + DTLS1_HM_HEADER_LENGTH, TLS1_FINISH_MAC_LENGTH);
 
