@@ -227,7 +227,7 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx, const char *mdname,
 {
     EVP_MD *md = NULL;
     size_t mdname_len;
-    int md_nid, sha1_allowed;
+    int md_nid, sha1_allowed, md_size;
     WPACKET pkt;
 
     if (mdname == NULL)
@@ -245,6 +245,13 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx, const char *mdname,
     if (md == NULL) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
                        "%s could not be fetched", mdname);
+        return 0;
+    }
+    md_size = EVP_MD_get_size(md);
+    if (md_size <= 0) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                       "%s has invalid md size %d", mdname, md_size);
+        EVP_MD_free(md);
         return 0;
     }
     sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
@@ -282,7 +289,7 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx, const char *mdname,
     WPACKET_cleanup(&pkt);
     ctx->mdctx = NULL;
     ctx->md = md;
-    ctx->mdsize = EVP_MD_get_size(ctx->md);
+    ctx->mdsize = (size_t)md_size;
     OPENSSL_strlcpy(ctx->mdname, mdname, sizeof(ctx->mdname));
 
     return 1;
