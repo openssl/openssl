@@ -173,7 +173,7 @@ were added in OpenSSL 3.2.
 OSSL_CMP_CRLSTATUS_new1(), OSSL_CMP_CRLSTATUS_create(),
 OSSL_CMP_CRLSTATUS_get0(), OSSL_CMP_ITAV_new0_crlStatusList(),
 OSSL_CMP_ITAV_get0_crlStatusList(), OSSL_CMP_ITAV_new_crls()
-and OSSL_CMP_ITAV_get0_crls() were added in OpenSSL 3.3.
+and OSSL_CMP_ITAV_get0_crls() were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
