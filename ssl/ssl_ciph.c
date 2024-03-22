@@ -2208,7 +2208,7 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
             return 0;
 
         mac = EVP_MD_get_size(e_md);
-        if (mac < 0) {
+        if (mac <= 0) {
             return 0;
         }
         if (c->algorithm_enc != SSL_eNULL) {
@@ -2232,10 +2232,10 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
         }
     }
 
-    *mac_overhead = mac;
-    *int_overhead = in;
-    *blocksize = blk;
-    *ext_overhead = out;
+    *mac_overhead = (size_t)mac;
+    *int_overhead = (size_t)in;
+    *blocksize = (size_t)blk;
+    *ext_overhead = (size_t)out;
 
     return 1;
 }
