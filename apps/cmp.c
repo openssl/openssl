@@ -146,6 +146,10 @@ static int opt_revreason = CRL_REASON_NONE;
 /* credentials format */
 static char *opt_certform_s = "PEM";
 static int opt_certform = FORMAT_PEM;
+/* 
+ * DER format is the preferred choice for saving a CRL because it allows for
+ * more efficient storage, especially when dealing with large CRLs.
+ */
 static char *opt_crlform_s = "DER";
 static int opt_crlform = FORMAT_ASN1;
 static char *opt_keyform_s = NULL;

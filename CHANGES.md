@@ -23,6 +23,17 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
+ OpenSSL 3.4
+-----------
+
+### Changes between 3.3 and 3.4 [xx XXX xxxx]
+
+ * Added support for requesting CRL in CMP.
+
+   This work was sponsored by Siemens AG.
+
+    *Rajeev Ranjan*
+
 OpenSSL 3.3
 -----------
 
@@ -74,12 +85,6 @@ OpenSSL 3.3
    omission of a value for these settings will result in an error.
 
     *Neil Horman*
-
- * Added support for requesting CRL in CMP.
-
-   This work was sponsored by Siemens AG.
-
-    *Rajeev Ranjan*
 
  * Added `-set_issuer` and `-set_subject` options to `openssl x509` to
    override the Issuer and Subject when creating a certificate. The `-subj`
