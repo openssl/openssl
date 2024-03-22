@@ -979,8 +979,12 @@ EXT_RETURN tls_construct_ctos_padding(SSL_CONNECTION *s, WPACKET *pkt,
              * Add the fixed PSK overhead, the identity length and the binder
              * length.
              */
+            int md_size = EVP_MD_get_size(md);
+
+            if (md_size <= 0)
+                return EXT_RETURN_FAIL;
             hlen +=  PSK_PRE_BINDER_OVERHEAD + s->session->ext.ticklen
-                     + EVP_MD_get_size(md);
+                     + md_size;
         }
     }
 
@@ -1019,7 +1023,8 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
 {
 #ifndef OPENSSL_NO_TLS1_3
     uint32_t agesec, agems = 0;
-    size_t reshashsize = 0, pskhashsize = 0, binderoffset, msglen;
+    size_t binderoffset, msglen;
+    int reshashsize = 0, pskhashsize = 0;
     unsigned char *resbinder = NULL, *pskbinder = NULL, *msgstart = NULL;
     const EVP_MD *handmd = NULL, *mdres = NULL, *mdpsk = NULL;
     int dores = 0;
@@ -1115,6 +1120,8 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
         agems += s->session->ext.tick_age_add;
 
         reshashsize = EVP_MD_get_size(mdres);
+        if (reshashsize <= 0)
+            goto dopsksess;
         s->ext.tick_identity++;
         dores = 1;
     }
@@ -1144,6 +1151,10 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
         }
 
         pskhashsize = EVP_MD_get_size(mdpsk);
+        if (pskhashsize <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_PSK);
+            return EXT_RETURN_FAIL;
+        }
     }
 
     /* Create the extension, but skip over the binder for now */
