@@ -449,8 +449,10 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
          * Lets check the version. We tolerate alerts that don't have the exact
          * version number (e.g. because of protocol version errors)
          */
-        const int dtls13_match = rr->rec_version == DTLS1_2_VERSION && rl->version == DTLS1_3_VERSION;
-        if (!rl->is_first_record && rr->type != SSL3_RT_ALERT && !dtls13_match) {
+        if (!rl->is_first_record && rr->type != SSL3_RT_ALERT
+                /* DTLSv1.3 records sets the legacy version field to DTLSv1.2 */
+                && !(rr->rec_version == DTLS1_2_VERSION
+                     && rl->version == DTLS1_3_VERSION)) {
             if (rr->rec_version != rl->version) {
                 /* unexpected version, silently discard */
                 rr->length = 0;
