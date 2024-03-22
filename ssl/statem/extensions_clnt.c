@@ -1093,7 +1093,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
         agems += s->session->ext.tick_age_add;
 
         reshashsize = EVP_MD_get_size(mdres);
-        if (reshashsize < 0)
+        if (reshashsize <= 0)
             goto dopsksess;
         s->ext.tick_identity++;
         dores = 1;
@@ -1124,7 +1124,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
         }
 
         pskhashsize = EVP_MD_get_size(mdpsk);
-        if (pskhashsize < 0) {
+        if (pskhashsize <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_PSK);
             return EXT_RETURN_FAIL;
         }
