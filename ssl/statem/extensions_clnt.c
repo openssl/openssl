@@ -952,12 +952,12 @@ EXT_RETURN tls_construct_ctos_padding(SSL_CONNECTION *s, WPACKET *pkt,
              * Add the fixed PSK overhead, the identity length and the binder
              * length.
              */
-            int tmpsize = EVP_MD_get_size(md);
+            int md_size = EVP_MD_get_size(md);
 
-            if (tmpsize <= 0)
+            if (md_size <= 0)
                 return EXT_RETURN_FAIL;
             hlen +=  PSK_PRE_BINDER_OVERHEAD + s->session->ext.ticklen
-                     + tmpsize;
+                     + md_size;
         }
     }
 
