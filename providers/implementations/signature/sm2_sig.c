@@ -313,6 +313,7 @@ int sm2sig_digest_verify_final(void *vpsm2ctx, const unsigned char *sig,
 
     if (psm2ctx == NULL
         || psm2ctx->mdctx == NULL
+        || EVP_MD_get_size(psm2ctx->md) <= 0
         || EVP_MD_get_size(psm2ctx->md) > (int)sizeof(digest))
         return 0;
 
