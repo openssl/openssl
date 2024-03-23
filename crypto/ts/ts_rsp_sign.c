@@ -445,7 +445,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
     char md_alg_name[OSSL_MAX_NAME_SIZE];
     const ASN1_OCTET_STRING *digest;
     const EVP_MD *md = NULL;
-    int i;
+    int i, md_size;
 
     if (TS_REQ_get_version(request) != 1) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
@@ -470,6 +470,10 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
         return 0;
     }
 
+    md_size = EVP_MD_get_size(md);
+    if (md_size <= 0)
+        return 0;
+
     if (md_alg->parameter && ASN1_TYPE_get(md_alg->parameter) != V_ASN1_NULL) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Superfluous message digest "
@@ -478,7 +482,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
         return 0;
     }
     digest = msg_imprint->hashed_msg;
-    if (digest->length != EVP_MD_get_size(md)) {
+    if (digest->length != md_size) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Bad message digest.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_BAD_DATA_FORMAT);
