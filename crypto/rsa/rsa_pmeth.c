@@ -148,8 +148,10 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
 
     if (rctx->md) {
         md_size = EVP_MD_get_size(rctx->md);
-        if (md_size <= 0)
+        if (md_size <= 0) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST_LENGTH);
             return -1;
+        }
 
         if (tbslen != (size_t)md_size) {
             ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST_LENGTH);
@@ -278,8 +280,10 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
             return RSA_verify(EVP_MD_get_type(rctx->md), tbs, tbslen,
                               sig, siglen, rsa);
         md_size = EVP_MD_get_size(rctx->md);
-        if (md_size <= 0)
+        if (md_size <= 0) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST_LENGTH);
             return -1;
+        }
         if (tbslen != (size_t)md_size) {
             ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST_LENGTH);
             return -1;
@@ -496,8 +500,10 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                     return -2;
                 }
                 md_size = EVP_MD_get_size(rctx->md);
-                if (md_size <= 0)
+                if (md_size <= 0) {
+                    ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST_LENGTH);
                     return -2;
+                }
                 if ((p1 == RSA_PSS_SALTLEN_DIGEST
                      && rctx->min_saltlen > md_size)
                     || (p1 >= 0 && p1 < rctx->min_saltlen)) {
@@ -878,8 +884,10 @@ static int pkey_pss_init(EVP_PKEY_CTX *ctx)
 
     /* See if minimum salt length exceeds maximum possible */
     md_size = EVP_MD_get_size(md);
-    if (md_size <= 0)
+    if (md_size <= 0) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST_LENGTH);
         return 0;
+    }
     max_saltlen = RSA_size(rsa) - md_size;
     if ((RSA_bits(rsa) & 0x7) == 1)
         max_saltlen--;
