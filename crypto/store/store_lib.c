@@ -939,8 +939,10 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_key_fingerprint(const EVP_MD *digest,
         return NULL;
 
     md_size = EVP_MD_get_size(digest);
-    if (md_size <= 0)
+    if (md_size <= 0) {
+        OPENSSL_free(search);
         return NULL;
+    }
 
     if (digest != NULL && len != (size_t)md_size) {
         ERR_raise_data(ERR_LIB_OSSL_STORE,
