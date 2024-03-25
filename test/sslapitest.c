@@ -3375,6 +3375,16 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
 
 static int artificial_ticket_time = 0;
 
+static int sub_session_time(SSL_SESSION *sess)
+{
+    OSSL_TIME tick_time;
+
+    tick_time = ossl_time_from_time_t(SSL_SESSION_get_time_ex(sess));
+    tick_time = ossl_time_subtract(tick_time, ossl_seconds2time(10));
+
+    return SSL_SESSION_set_time_ex(sess, ossl_time_to_time_t(tick_time)) != 0;
+}
+
 static int ed_gen_cb(SSL *s, void *arg)
 {
     SSL_SESSION *sess = SSL_get0_session(s);
@@ -3390,10 +3400,7 @@ static int ed_gen_cb(SSL *s, void *arg)
         return 1;
     artificial_ticket_time--;
 
-    if (SSL_SESSION_set_time_ex(sess, SSL_SESSION_get_time_ex(sess) - 10) == 0)
-        return 0;
-
-    return 1;
+    return sub_session_time(sess);
 }
 
 /*
@@ -3493,8 +3500,7 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
      * gave it on the server side
      */
     if (artificial
-            && !TEST_time_t_gt(SSL_SESSION_set_time_ex(*sess,
-                                     SSL_SESSION_get_time_ex(*sess) - 10), 0))
+            && !TEST_true(sub_session_time(*sess)))
         return 0;
 
     if (!TEST_true(create_ssl_objects(*sctx, *cctx, serverssl,
