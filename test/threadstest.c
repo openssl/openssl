@@ -369,7 +369,7 @@ static void reader_fn(int *iterations)
         valp = ossl_rcu_deref(&writer_ptr);
         val = (valp == NULL) ? 0 : *valp;
         if (oldval > val) {
-            TEST_info("rcu torture value went backwards!");
+            TEST_info("rcu torture value went backwards! %llu : %llu", (unsigned long long)oldval, (unsigned long long)val);
             TEST_info("val ptr is %p\n", (void*)valp);
             for (i=0; i<256; i++) {
                 TEST_info("Old Addrs for write %d\n is %p\n", i, old_addrs[i]);
