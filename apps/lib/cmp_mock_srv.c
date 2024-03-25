@@ -401,9 +401,22 @@ static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
         rsp = OSSL_CMP_ITAV_new_caCerts(ctx->caPubsOut);
         break;
     case NID_id_it_rootCaCert:
-        rsp = OSSL_CMP_ITAV_new_rootCaKeyUpdate(ctx->newWithNew,
-                                                ctx->newWithOld,
-                                                ctx->oldWithNew);
+        {
+            X509 *rootcacert = NULL;
+
+            if (!OSSL_CMP_ITAV_get0_rootCaCert(req, &rootcacert))
+                return NULL;
+
+            if (rootcacert != NULL
+                && X509_NAME_cmp(X509_get_subject_name(rootcacert),
+                                 X509_get_subject_name(ctx->newWithNew)) != 0)
+                /* The subjects do not match */
+                rsp = OSSL_CMP_ITAV_new_rootCaKeyUpdate(NULL, NULL, NULL);
+            else
+                rsp = OSSL_CMP_ITAV_new_rootCaKeyUpdate(ctx->newWithNew,
+                                                        ctx->newWithOld,
+                                                        ctx->oldWithNew);
+        }
         break;
     default:
         rsp = OSSL_CMP_ITAV_dup(req);
