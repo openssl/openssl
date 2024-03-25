@@ -257,6 +257,9 @@ static int hmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 }
 
 static const OSSL_PARAM known_gettable_ctx_params[] = {
+#ifdef FIPS_MODULE
+    OSSL_PARAM_int(OSSL_MAC_PARAM_PEDANTIC, NULL),
+#endif
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_BLOCK_SIZE, NULL),
     OSSL_PARAM_END
@@ -279,6 +282,11 @@ static int hmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_BLOCK_SIZE)) != NULL
             && !OSSL_PARAM_set_int(p, hmac_block_size(macctx)))
         return 0;
+
+#ifdef FIPS_MODULE
+    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_PEDANTIC)) != NULL)
+        return macctx->pedantic;
+#endif
 
     return 1;
 }

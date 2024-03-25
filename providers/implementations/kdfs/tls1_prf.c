@@ -320,10 +320,19 @@ static const OSSL_PARAM *kdf_tls1_prf_settable_ctx_params(
 
 static int kdf_tls1_prf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
+#ifdef FIPS_MODULE
+    TLS1_PRF *ctx = vctx;
+#endif
     OSSL_PARAM *p;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL)
         return OSSL_PARAM_set_size_t(p, SIZE_MAX);
+
+#ifdef FIPS_MODULE
+    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_PEDANTIC)) != NULL)
+        return ctx->pedantic;
+#endif
+
     return -2;
 }
 
@@ -331,6 +340,9 @@ static const OSSL_PARAM *kdf_tls1_prf_gettable_ctx_params(
         ossl_unused void *ctx, ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
+#ifdef FIPS_MODULE
+        OSSL_PARAM_int(OSSL_KDF_PARAM_PEDANTIC, NULL),
+#endif
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
         OSSL_PARAM_END
     };

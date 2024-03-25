@@ -4866,6 +4866,7 @@ Ctrl.type = type:A
 Output = FF
 Result = KDF_MISMATCH
 
+Availablein = fips
 FIPSversion = >=3.3.0
 KDF = SSHKDF
 Ctrl.digest = digest:SHA256

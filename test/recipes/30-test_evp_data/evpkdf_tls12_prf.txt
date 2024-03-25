@@ -52,6 +52,7 @@ Result = KDF_DERIVE_ERROR
 Title = TLS12 bad key size test
 
 # Bad key size
+Availablein = fips
 FIPSversion = >=3.3.0
 KDF = TLS1-PRF
 Ctrl.Secret = hexsecret:00010203040506070809
