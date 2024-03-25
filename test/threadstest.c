@@ -281,6 +281,7 @@ static int torture_rw_high(void)
 }
 
 
+# ifndef OPENSSL_SYS_MACOSX 
 static CRYPTO_RCU_LOCK *rcu_lock = NULL;
 
 static int writer1_done = 0;
@@ -292,7 +293,6 @@ static int writer2_iterations = 0;
 static uint64_t *writer_ptr = NULL;
 static uint64_t global_ctr = 0;
 static int rcu_torture_result = 1;
-
 static void free_old_rcu_data(void *data)
 {
     CRYPTO_free(data, NULL, 0);
@@ -364,8 +364,9 @@ static void reader_fn(int *iterations)
         ossl_rcu_read_lock(rcu_lock);
         valp = ossl_rcu_deref(&writer_ptr);
         val = (valp == NULL) ? 0 : *valp;
+
         if (oldval > val) {
-            TEST_info("rcu torture value went backwards!");
+            TEST_info("rcu torture value went backwards! %llu : %llu", (unsigned long long)oldval, (unsigned long long)val);
             rcu_torture_result = 0;
         }
         oldval = val; /* just try to deref the pointer */
@@ -459,6 +460,7 @@ static int torture_rcu_high(void)
     contention = 1;
     return _torture_rcu();
 }
+# endif
 #endif
 
 static CRYPTO_ONCE once_run = CRYPTO_ONCE_STATIC_INIT;
@@ -1223,8 +1225,10 @@ int setup_tests(void)
 #if defined(OPENSSL_THREADS)
     ADD_TEST(torture_rw_low);
     ADD_TEST(torture_rw_high);
+# ifndef OPENSSL_SYS_MACOSX
     ADD_TEST(torture_rcu_low);
     ADD_TEST(torture_rcu_high);
+# endif
 #endif
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
