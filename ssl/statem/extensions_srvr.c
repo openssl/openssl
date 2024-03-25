@@ -1781,7 +1781,7 @@ EXT_RETURN tls_construct_stoc_status_request(SSL_CONNECTION *s, WPACKET *pkt,
      * send back an empty extension, with the certificate status appearing as a
      * separate message
      */
-    if ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))
+    if (SSL_CONNECTION_IS_VERSION13(s)
         && !tls_construct_cert_status_body(s, resp, pkt)) {
         /* SSLfatal() already called */
         return EXT_RETURN_FAIL;

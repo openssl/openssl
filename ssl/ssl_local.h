@@ -271,8 +271,12 @@
     && SSL_CONNECTION_GET_SSL(s)->method->version >= TLS1_3_VERSION \
     && SSL_CONNECTION_GET_SSL(s)->method->version != TLS_ANY_VERSION)
 
+/* Check if we are using (D)TLSv1.3 */
+#define SSL_CONNECTION_IS_VERSION13(s) \
+    (SSL_CONNECTION_IS_DTLS13(s) || SSL_CONNECTION_IS_TLS13(s))
+
 #define SSL_CONNECTION_TREAT_AS_TLS13(s)                         \
-    ((SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)) \
+    (SSL_CONNECTION_IS_VERSION13(s)                              \
         || (s)->early_data_state == SSL_EARLY_DATA_CONNECTING    \
         || (s)->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY \
         || (s)->early_data_state == SSL_EARLY_DATA_WRITING       \
