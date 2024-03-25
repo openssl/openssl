@@ -647,7 +647,9 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     while (PACKET_remaining(&key_share_list) > 0) {
-        int version;
+        const int version13 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
+                                                        : TLS1_3_VERSION;
+
         if (!PACKET_get_net_2(&key_share_list, &group_id)
                 || !PACKET_get_length_prefixed_2(&key_share_list, &encoded_pt)
                 || PACKET_remaining(&encoded_pt) == 0) {
@@ -679,8 +681,6 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
             return 0;
         }
 
-        version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
-
         /* Check if this share is for a group we can use */
         if (!check_in_list(s, group_id, srvrgroups, srvr_num_groups, 1)
                 || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
@@ -688,7 +688,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
                     * We tolerate but ignore a group id that we don't think is
                     * suitable for (D)TLSv1.3
                     */
-                || !tls_valid_group(s, group_id, version, version,
+                || !tls_valid_group(s, group_id, version13, version13,
                                     0, NULL)) {
             /* Share not suitable */
             continue;
