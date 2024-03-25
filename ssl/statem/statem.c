@@ -401,7 +401,7 @@ static int state_machine(SSL_CONNECTION *s, int server)
 
         s->server = server;
         if (cb != NULL) {
-            if (SSL_IS_FIRST_HANDSHAKE(s) || !(SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s)))
+            if (SSL_IS_FIRST_HANDSHAKE(s) || !SSL_CONNECTION_IS_VERSION13(s))
                 cb(ussl, SSL_CB_HANDSHAKE_START, 1);
         }
 
