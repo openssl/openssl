@@ -292,7 +292,8 @@ static int writer2_iterations = 0;
 static uint64_t *writer_ptr = NULL;
 static uint64_t global_ctr = 0;
 static int rcu_torture_result = 1;
-
+static void* old_addrs[256];
+static size_t old_addr_idx = 0;
 static void free_old_rcu_data(void *data)
 {
     CRYPTO_free(data, NULL, 0);
@@ -315,6 +316,8 @@ static void writer_fn(int id, int *iterations)
         TSAN_ACQUIRE(&writer_ptr);
         *new = global_ctr++;
         ossl_rcu_assign_ptr(&writer_ptr, &new);
+        old_addrs[old_addr_idx] = old;
+        old_addr_idx = (old_addr_idx+1) % 256;
         if (contention == 0)
             ossl_rcu_call(rcu_lock, free_old_rcu_data, old);
         ossl_rcu_write_unlock(rcu_lock);
@@ -356,6 +359,7 @@ static void reader_fn(int *iterations)
     uint64_t oldval = 0;
     int lw1 = 0;
     int lw2 = 0;
+    size_t i;
 
     while (lw1 != 1 || lw2 != 1) {
         CRYPTO_atomic_add(&writer1_done, 0, &lw1, NULL);
@@ -366,6 +370,10 @@ static void reader_fn(int *iterations)
         val = (valp == NULL) ? 0 : *valp;
         if (oldval > val) {
             TEST_info("rcu torture value went backwards!");
+            TEST_info("val ptr is %p\n", (void*)valp);
+            for (i=0; i<256; i++) {
+                TEST_info("Old Addrs for write %d\n is %p\n", i, old_addrs[i]);
+            }
             rcu_torture_result = 0;
         }
         oldval = val; /* just try to deref the pointer */
