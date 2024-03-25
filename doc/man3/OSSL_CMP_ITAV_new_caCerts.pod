@@ -49,6 +49,8 @@ the internal pointer to the certificate contained in the infoValue field.
 OSSL_CMP_ITAV_new_rootCaKeyUpdate() creates a new B<OSSL_CMP_ITAV> structure
 of type B<rootCaKeyUpdate> that includes an RootCaKeyUpdateContent structure
 with the optional I<newWithNew>, I<newWithOld>, and I<oldWithNew> certificates.
+An RootCaKeyUpdateContent structure is included only if I<newWithNew>
+is not NULL.
 
 OSSL_CMP_ITAV_get0_rootCaKeyUpdate() requires that I<itav> has infoType
 B<rootCaKeyUpdate>.
@@ -59,7 +61,8 @@ If I<newWithOld> is not NULL, it assigns to I<*newWithOld> the internal pointer
 to the certificate contained in the newWithOld infoValue sub-field of I<itav>.
 If I<oldWithNew> is not NULL, it assigns to I<*oldWithNew> the internal pointer
 to the certificate contained in the oldWithNew infoValue sub-field of I<itav>.
-Each of these pointers will be NULL if the respective sub-field is not set.
+Each of these pointers will be set to NULL if no root CA certificate update 
+is present or the respective sub-field is not included.
 
 =head1 NOTES
 

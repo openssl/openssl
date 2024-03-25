@@ -68,7 +68,7 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 0,genm rootCaCert oldwithold empty file  , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, empty.txt     , -newwithnew, _RESULT_DIR/test.newwithnew.pem
 0,genm rootCaCert oldwithold random file , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, random.bin    , -newwithnew, _RESULT_DIR/test.newwithnew.pem
 0,genm rootCaCert oldwithold nonexistent , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, idontexist    , -newwithnew, _RESULT_DIR/test.newwithnew.pem
-0,genm rootCaCert oldwithold wrong       , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, signer.crt    , -newwithnew, _RESULT_DIR/test.newwithnew.pem
+1,genm rootCaCert oldwithold different   , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, signer.crt    , -newwithnew, _RESULT_DIR/test.newwithnew.pem
 0,genm rootCaCert missing newwithnew     , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, BLANK      ,,
 0,genm rootCaCert newwithnew missing arg , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew,,
 1,genm rootCaCert with oldwithnew        , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew1.pem, -oldwithnew, _RESULT_DIR/test.oldwithnew1.pem

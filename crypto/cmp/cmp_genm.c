@@ -307,9 +307,11 @@ int OSSL_CMP_get1_rootCaKeyUpdate(OSSL_CMP_CTX *ctx,
     if (!OSSL_CMP_ITAV_get0_rootCaKeyUpdate(itav, newWithNew,
                                             &my_newWithOld, &my_oldWithNew))
         goto end;
-
-    if (*newWithNew == NULL) /* no root CA cert update available */
+    /* no root CA cert update available */
+    if (*newWithNew == NULL) {
+        res = 1;
         goto end;
+    }
     if ((oldWithOld_copy = X509_dup(oldWithOld)) == NULL && oldWithOld != NULL)
         goto end;
     if (!verify_ss_cert_trans(ctx, oldWithOld_copy, my_newWithOld,
