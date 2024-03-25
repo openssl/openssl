@@ -148,9 +148,9 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
 
     if (rctx->md) {
         md_size = EVP_MD_get_size(rctx->md);
-        if (md_size <= 0) {
+        if (md_size <= 0)
             return -1;
-        }
+
         if (tbslen != (size_t)md_size) {
             ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST_LENGTH);
             return -1;
