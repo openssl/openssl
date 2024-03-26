@@ -5435,7 +5435,9 @@ X509_PUBKEY_set0_public_key             5562	3_2_0	EXIST::FUNCTION:
 OSSL_STACK_OF_X509_free                 5563	3_2_0	EXIST::FUNCTION:
 OSSL_trace_string                       5564	3_2_0	EXIST::FUNCTION:
 EVP_MD_CTX_dup                          5565	3_2_0	EXIST::FUNCTION:
+EVP_MD_CTX_dup                          ?      3_1_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_dup                      5566	3_2_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_dup                      ?      3_1_0	EXIST::FUNCTION:
 BN_signed_bin2bn                        5567	3_2_0	EXIST::FUNCTION:
 BN_signed_bn2bin                        5568	3_2_0	EXIST::FUNCTION:
 BN_signed_lebin2bn                      5569	3_2_0	EXIST::FUNCTION:
