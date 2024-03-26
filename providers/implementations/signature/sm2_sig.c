@@ -310,10 +310,13 @@ int sm2sig_digest_verify_final(void *vpsm2ctx, const unsigned char *sig,
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
     unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int dlen = 0;
+    int md_size;
 
-    if (psm2ctx == NULL
-        || psm2ctx->mdctx == NULL
-        || EVP_MD_get_size(psm2ctx->md) > (int)sizeof(digest))
+    if (psm2ctx == NULL || psm2ctx->mdctx == NULL)
+        return 0;
+
+    md_size = EVP_MD_get_size(psm2ctx->md);
+    if (md_size <= 0 || md_size > (int)sizeof(digest))
         return 0;
 
     if (!(sm2sig_compute_z_digest(psm2ctx)
