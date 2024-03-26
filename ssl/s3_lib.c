@@ -3685,13 +3685,13 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         return tls1_set_sigalgs(sc->cert, parg, larg, 0);
 
     case SSL_CTRL_SET_SIGALGS_LIST:
-        return tls1_set_sigalgs_list(sc->cert, parg, 0);
+        return tls1_set_sigalgs_list(s->ctx, sc->cert, parg, 0);
 
     case SSL_CTRL_SET_CLIENT_SIGALGS:
         return tls1_set_sigalgs(sc->cert, parg, larg, 1);
 
     case SSL_CTRL_SET_CLIENT_SIGALGS_LIST:
-        return tls1_set_sigalgs_list(sc->cert, parg, 1);
+        return tls1_set_sigalgs_list(s->ctx, sc->cert, parg, 1);
 
     case SSL_CTRL_GET_CLIENT_CERT_TYPES:
         {
@@ -3968,13 +3968,13 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return tls1_set_sigalgs(ctx->cert, parg, larg, 0);
 
     case SSL_CTRL_SET_SIGALGS_LIST:
-        return tls1_set_sigalgs_list(ctx->cert, parg, 0);
+        return tls1_set_sigalgs_list(ctx, ctx->cert, parg, 0);
 
     case SSL_CTRL_SET_CLIENT_SIGALGS:
         return tls1_set_sigalgs(ctx->cert, parg, larg, 1);
 
     case SSL_CTRL_SET_CLIENT_SIGALGS_LIST:
-        return tls1_set_sigalgs_list(ctx->cert, parg, 1);
+        return tls1_set_sigalgs_list(ctx, ctx->cert, parg, 1);
 
     case SSL_CTRL_SET_CLIENT_CERT_TYPES:
         return ssl3_set_req_cert_type(ctx->cert, parg, larg);
