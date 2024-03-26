@@ -511,10 +511,6 @@ int ossl_ec_GF2m_simple_field_div(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                                  const BIGNUM *b, BN_CTX *);
 
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
-# ifdef B_ENDIAN
-#  error "Can not enable ec_nistp_64_gcc_128 on big-endian systems"
-# endif
-
 /* method functions in ecp_nistp224.c */
 int ossl_ec_GFp_nistp224_group_init(EC_GROUP *group);
 int ossl_ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p,
@@ -800,3 +796,47 @@ static ossl_inline int ec_point_ladder_post(const EC_GROUP *group,
 
     return 1;
 }
+
+/*
+ * A general, bi-endian solution to (de)serialisation to/from a little-endian
+ * byte array.
+ */
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+static ossl_inline void ec_nistp_pre_comp_serialize(unsigned char out[],
+                                                    const uint64_t in[],
+                                                    const unsigned int limb_width,
+                                                    const unsigned int num_bytes)
+{
+    unsigned int i, b;
+    uint64_t limb, mask;
+
+    for (i = 0; i < num_bytes; i++) {
+        b = 8*(i % limb_width);
+        limb = in[i / limb_width];
+        mask = ((uint64_t) 0xff) << b;
+        out[i] = (limb & mask) >> b;
+    }
+}
+
+#define CEIL_DIV(a, b) ((a) + (b) - 1) / (b)
+#define MASK(n) ((((uint64_t) 1) << (n)) - 1)
+static ossl_inline void ec_nistp_pre_comp_deserialize(uint64_t out[],
+                                                      const unsigned char in[],
+                                                      const unsigned int limb_width,
+                                                      const unsigned int num_bytes,
+                                                      const unsigned int input_bits)
+{
+    unsigned int i, b, nlimbs = CEIL_DIV(num_bytes, limb_width);
+    unsigned char byte;
+
+    memset(out, 0, sizeof(uint64_t) * nlimbs);
+    for (i = 0; i < num_bytes; i++) {
+        b = 8*(i % limb_width);
+        byte = in[i] & (i+1 == num_bytes ? MASK(input_bits - 8*(num_bytes-1))
+                                         : 0xff);
+        out[i / limb_width] |= ((uint64_t) byte) << b;
+    }
+}
+#undef MASK
+#undef CEIL_DIV
+#endif
