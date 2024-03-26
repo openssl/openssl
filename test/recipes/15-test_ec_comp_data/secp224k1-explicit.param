@@ -1,0 +1,22 @@
+Field Type: prime-field
+Prime:
+    00:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+    ff:ff:ff:ff:ff:ff:ff:ff:ff:fe:ff:ff:e5:6d
+A:    0
+B:    5 (0x5)
+Generator (uncompressed):
+    04:a1:45:5b:33:4d:f0:99:df:30:fc:28:a1:69:a4:
+    67:e9:e4:70:75:a9:0f:7e:65:0e:b6:b7:a4:5c:7e:
+    08:9f:ed:7f:ba:34:42:82:ca:fb:d6:f7:e3:19:f7:
+    c0:b0:bd:59:e2:ca:4b:db:55:6d:61:a5
+Order: 
+    01:00:00:00:00:00:00:00:00:00:00:00:00:00:01:
+    dc:e8:d2:ec:61:84:ca:f0:a9:71:76:9f:b1:f7
+Cofactor:  1 (0x1)
+-----BEGIN EC PARAMETERS-----
+MIHIAgEBMCgGByqGSM49AQECHQD///////////////////////////////7//+Vt
+MDwEHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEHAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAUEOQShRVszTfCZ3zD8KKFppGfp5HB1qQ9+ZQ62t6Rcfgif
+7X+6NEKCyvvW9+MZ98CwvVniykvbVW1hpQIdAQAAAAAAAAAAAAAAAAAB3OjS7GGE
+yvCpcXafsfcCAQE=
+-----END EC PARAMETERS-----
