@@ -627,7 +627,7 @@ __owur static ossl_inline int PACKET_get_length_prefixed_3(PACKET *pkt,
     return 1;
 }
 
-/* Writeable packets */
+/* Writable packets */
 
 typedef struct wpacket_sub WPACKET_SUB;
 struct wpacket_sub {
