@@ -178,6 +178,8 @@ typedef struct ACCESS_DESCRIPTION_st {
     GENERAL_NAME *location;
 } ACCESS_DESCRIPTION;
 
+int GENERAL_NAME_set1_X509_NAME(GENERAL_NAME **tgt, const X509_NAME *src);
+
 {-
     generate_stack_macros("ACCESS_DESCRIPTION")
     .generate_stack_macros("GENERAL_NAME");
@@ -201,6 +203,7 @@ typedef struct DIST_POINT_NAME_st {
 /* If relativename then this contains the full distribution point name */
     X509_NAME *dpname;
 } DIST_POINT_NAME;
+DECLARE_ASN1_DUP_FUNCTION(DIST_POINT_NAME)
 /* All existing reasons */
 # define CRLDP_ALL_REASONS       0x807f
 

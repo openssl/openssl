@@ -23,6 +23,17 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
+ OpenSSL 3.4
+-----------
+
+### Changes between 3.3 and 3.4 [xx XXX xxxx]
+
+ * Added support for requesting CRL in CMP.
+
+   This work was sponsored by Siemens AG.
+
+    *Rajeev Ranjan*
+
 OpenSSL 3.3
 -----------
 

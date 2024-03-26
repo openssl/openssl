@@ -15,7 +15,8 @@ OSSL_CMP_try_certreq,
 OSSL_CMP_exec_RR_ses,
 OSSL_CMP_exec_GENM_ses,
 OSSL_CMP_get1_caCerts,
-OSSL_CMP_get1_rootCaKeyUpdate
+OSSL_CMP_get1_rootCaKeyUpdate,
+OSSL_CMP_get1_crlUpdate
 - functions implementing CMP client transactions
 
 =head1 SYNOPSIS
@@ -41,6 +42,9 @@ OSSL_CMP_get1_rootCaKeyUpdate
  int OSSL_CMP_get1_rootCaKeyUpdate(OSSL_CMP_CTX *ctx,
                                    const X509 *oldWithOld, X509 **newWithNew,
                                    X509 **newWithOld, X509 **oldWithNew);
+ int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509 *crlcert,
+                             const X509_CRL *last_crl,
+                             X509_CRL **crl);
 
 =head1 DESCRIPTION
 
@@ -157,6 +161,14 @@ The trust placed in it cannot be stronger than the trust placed in
 the I<oldwithold> certificate if present, otherwise it cannot be stronger than
 the weakest trust in any of the certificates in the trust store of I<ctx>.
 
+OSSL_CMP_get1_crlUpdate() uses a genm request message with infoType crlStatusList
+to obtain CRL from the CMP server referenced by I<ctx> in a genp response message
+with infoType crls. It uses I<last_crl> and I<crlcert> to create  
+a request with a status field as described for L<OSSL_CMP_CRLSTATUS_create(3)>. 
+On success it assigns to I<*crl> the CRL received.
+NULL means that no CRL was provided by the server.
+The CRL obtained this way must be freed by the caller.
+
 =head1 NOTES
 
 CMP is defined in RFC 4210 (and CRMF in RFC 4211).
@@ -193,7 +205,7 @@ and the output parameter I<checkAfter> has been used to
 assign the received value unless I<checkAfter> is NULL.
 
 OSSL_CMP_exec_RR_ses(), OSSL_CMP_get1_caCerts(),
-and OSSL_CMP_get1_rootCaKeyUpdate()
+OSSL_CMP_get1_rootCaKeyUpdate() and OSSL_CMP_get1_crlUpdate()
 return 1 on success, 0 on error.
 
 OSSL_CMP_exec_GENM_ses() returns NULL on error,
@@ -211,7 +223,7 @@ L<OSSL_CMP_CTX_new(3)>, L<OSSL_CMP_CTX_free(3)>,
 L<OSSL_CMP_CTX_set1_subjectName(3)>, L<OSSL_CMP_CTX_set0_newPkey(3)>,
 L<OSSL_CMP_CTX_set1_p10CSR(3)>, L<OSSL_CMP_CTX_set1_oldCert(3)>,
 L<OSSL_CMP_CTX_get0_newCert(3)>, L<OSSL_CMP_CTX_push0_genm_ITAV(3)>,
-L<OSSL_CMP_MSG_http_perform(3)>
+L<OSSL_CMP_MSG_http_perform(3)>, L<OSSL_CMP_CRLSTATUS_create(3)>
 
 =head1 HISTORY
 
@@ -222,6 +234,8 @@ were added in OpenSSL 3.2.
 
 Support for delayed delivery of all types of response messages
 was added in OpenSSL 3.3.
+
+OSSL_CMP_get1_crlUpdate() was added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

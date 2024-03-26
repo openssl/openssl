@@ -86,6 +86,16 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 0,genm rootCaCert newwithold missig arg  , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew.pem, -oldwithnew, _RESULT_DIR/test.oldwithnew.pem, -newwithold,,
 1,genm rootCaCert newwithnew newwithold  , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew3.pem, -newwithold, _RESULT_DIR/test.newwithold2.pem
 ,,,,,,,,,,,,,,,,,,,,,,
+1,genm crlStatusList with crlcert        , -section,, -cmd,genm,, BLANK,,, -infotype,crlStatusList,, -crlcert, signer_only.crt,,,,, -crlout, _RESULT_DIR/test.crlout1.pem
+1,genm crlStatusList with old crl        , -section,, -cmd,genm,, BLANK,,, -infotype,crlStatusList,, -oldcrl, oldcrl.pem,,,,, -crlout, _RESULT_DIR/test.crlout2.pem
+1,genm crlStatusList with crlcert and old crl , -section,, -cmd,genm,, BLANK,,, -infotype,crlStatusList,, -crlcert, signer_only.crt, -oldcrl, oldcrl.pem,,, -crlout, _RESULT_DIR/test.crlout3.pem
+1,genm crlStatusList with latest crl     , -section,, -cmd,genm,, BLANK,,, -infotype,crlStatusList,, -oldcrl, _RESULT_DIR/test.crlout3.pem,,,,, -crlout, _RESULT_DIR/test.crlout4.pem
+0,genm crlStatusList with -oldcrl referring to nonexisting file due to empty CRL response message in previous test case, -section,, -cmd,genm,, BLANK,,, -infotype,crlStatusList,, -oldcrl, _RESULT_DIR/test.crlout4.pem,,,,, -crlout, _RESULT_DIR/test.crlout5.pem
+0,genm crlStatusList with -crlcert nonexistent, -section,, -cmd,genm,, BLANK,,, -infotype,crlStatusList,, -crlcert, idontexist,,,,, -crlout, _RESULT_DIR/test.crlout.pem
+0,genm crlStatusList with wrong issuer, -section,, -cmd,genm,, BLANK,,, -infotype,crlStatusList,, -crlcert, server.crt,,,,, -crlout, _RESULT_DIR/test.crlout.pem
+0,genm crlStatusList missing -crlcert & -oldcrl, -section,, -cmd,genm,, BLANK,,, -infotype,crlStatusList,,,,,,,, -crlout, _RESULT_DIR/test.crlout.pem
+0,genm crlStatusList with wrong cert and correct crl, -section,, -cmd,genm,, BLANK,,, -infotype,crlStatusList,, -crlcert, server.crt, -oldcrl, oldcrl.pem,,, -crlout, _RESULT_DIR/test.crlout.pem
+,,,,,,,,,,,,,,,,,,,,,,
 1,profile, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -profile,profile1,BLANK,,BLANK,
 0,profile wrong value, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -profile,profile2,BLANK,,BLANK,
 0,profile missing argument, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -profile,,,,,

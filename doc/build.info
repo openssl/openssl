@@ -1471,6 +1471,10 @@ DEPEND[html/man3/EVP_whirlpool.html]=man3/EVP_whirlpool.pod
 GENERATE[html/man3/EVP_whirlpool.html]=man3/EVP_whirlpool.pod
 DEPEND[man/man3/EVP_whirlpool.3]=man3/EVP_whirlpool.pod
 GENERATE[man/man3/EVP_whirlpool.3]=man3/EVP_whirlpool.pod
+DEPEND[html/man3/GENERAL_NAME.html]=man3/GENERAL_NAME.pod
+GENERATE[html/man3/GENERAL_NAME.html]=man3/GENERAL_NAME.pod
+DEPEND[man/man3/GENERAL_NAME.3]=man3/GENERAL_NAME.pod
+GENERATE[man/man3/GENERAL_NAME.3]=man3/GENERAL_NAME.pod
 DEPEND[html/man3/HMAC.html]=man3/HMAC.pod
 GENERATE[html/man3/HMAC.html]=man3/HMAC.pod
 DEPEND[man/man3/HMAC.3]=man3/HMAC.pod
@@ -3299,6 +3303,7 @@ html/man3/EVP_sha3_224.html \
 html/man3/EVP_sm3.html \
 html/man3/EVP_sm4_cbc.html \
 html/man3/EVP_whirlpool.html \
+html/man3/GENERAL_NAME.html \
 html/man3/HMAC.html \
 html/man3/MD5.html \
 html/man3/MDC2_Init.html \
@@ -3944,6 +3949,7 @@ man/man3/EVP_sha3_224.3 \
 man/man3/EVP_sm3.3 \
 man/man3/EVP_sm4_cbc.3 \
 man/man3/EVP_whirlpool.3 \
+man/man3/GENERAL_NAME.3 \
 man/man3/HMAC.3 \
 man/man3/MD5.3 \
 man/man3/MDC2_Init.3 \
