@@ -34,13 +34,6 @@
 #include "testutil.h"
 #include "threadstest.h"
 
-#ifdef __SANITIZE_THREAD__
-#include <sanitizer/tsan_interface.h>
-#define TSAN_ACQUIRE(s) __tsan_acquire(s)
-#else
-#define TSAN_ACQUIRE(s)
-#endif
-
 /* Limit the maximum number of threads */
 #define MAXIMUM_THREADS     10
 
@@ -312,7 +305,6 @@ static void writer_fn(int id, int *iterations)
             OSSL_sleep(1000);
         ossl_rcu_write_lock(rcu_lock);
         old = ossl_rcu_deref(&writer_ptr);
-        TSAN_ACQUIRE(&writer_ptr);
         *new = global_ctr++;
         ossl_rcu_assign_ptr(&writer_ptr, &new);
         if (contention == 0)
