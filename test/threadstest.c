@@ -281,7 +281,7 @@ static int torture_rw_high(void)
 }
 
 
-#ifndef OPENSSL_SYS_MACOSX 
+# ifndef OPENSSL_SYS_MACOSX 
 static CRYPTO_RCU_LOCK *rcu_lock = NULL;
 
 static int writer1_done = 0;
@@ -460,7 +460,7 @@ static int torture_rcu_high(void)
     contention = 1;
     return _torture_rcu();
 }
-#endif
+# endif
 #endif
 
 static CRYPTO_ONCE once_run = CRYPTO_ONCE_STATIC_INIT;
@@ -1225,10 +1225,10 @@ int setup_tests(void)
 #if defined(OPENSSL_THREADS)
     ADD_TEST(torture_rw_low);
     ADD_TEST(torture_rw_high);
-#ifndef OPENSSL_SYS_MACOSX
+# ifndef OPENSSL_SYS_MACOSX
     ADD_TEST(torture_rcu_low);
     ADD_TEST(torture_rcu_high);
-#endif
+# endif
 #endif
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
