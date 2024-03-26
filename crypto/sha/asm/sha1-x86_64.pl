@@ -480,12 +480,12 @@ my $Xi=4;
 my @X=map("%xmm$_",(4..7,0..3));
 my @Tx=map("%xmm$_",(8..10));
 my $Kx="%xmm11";
-my @V=($A,$B,$C,$D,$E)=("%eax","%ebx","%ecx","%edx","%ebp");	# size optimization
+my @V=($A,$B,$C,$D,$E)=("%eax","%ebx","%ecx","%edx","%r11d");	# size optimization
 my @T=("%esi","%edi");
 my $j=0;
 my $rx=0;
 my $K_XX_XX="%r14";
-my $fp="%r11";
+my $fp="%rbp";
 
 my $_rol=sub { &rol(@_) };
 my $_ror=sub { &ror(@_) };
@@ -507,19 +507,19 @@ $code.=<<___;
 sha1_block_data_order_ssse3:
 _ssse3_shortcut:
 .cfi_startproc
+	push	%rbp
+.cfi_push	%rbp
 	mov	%rsp,$fp	# frame pointer
 .cfi_def_cfa_register	$fp
 	push	%rbx
 .cfi_push	%rbx
-	push	%rbp
-.cfi_push	%rbp
 	push	%r12
 .cfi_push	%r12
 	push	%r13		# redundant, done to share Win64 SE handler
 .cfi_push	%r13
 	push	%r14
 .cfi_push	%r14
-	lea	`-64-($win64?6*16:0)`(%rsp),%rsp
+	sub	`64+($win64?6*16:0)`,%rsp
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,-40-6*16($fp)
@@ -945,17 +945,17 @@ $code.=<<___ if ($win64);
 	movaps	-40-1*16($fp),%xmm11
 ___
 $code.=<<___;
-	mov	-40($fp),%r14
+	add	`64+($win64?6*16:0)`,%rsp
+	pop     %r14
 .cfi_restore	%r14
-	mov	-32($fp),%r13
+	pop     %r13
 .cfi_restore	%r13
-	mov	-24($fp),%r12
+	pop     %r12
 .cfi_restore	%r12
-	mov	-16($fp),%rbp
-.cfi_restore	%rbp
-	mov	-8($fp),%rbx
+	pop     %rbx
 .cfi_restore	%rbx
-	lea	($fp),%rsp
+	pop     %rbp
+.cfi_restore	%rbp
 .cfi_def_cfa_register	%rsp
 .Lepilogue_ssse3:
 	ret
@@ -981,12 +981,12 @@ $code.=<<___;
 sha1_block_data_order_avx:
 _avx_shortcut:
 .cfi_startproc
-	mov	%rsp,$fp
+	push	%rbp
+.cfi_push	%rbp
+	mov	%rsp,$fp	# frame pointer
 .cfi_def_cfa_register	$fp
 	push	%rbx
 .cfi_push	%rbx
-	push	%rbp
-.cfi_push	%rbp
 	push	%r12
 .cfi_push	%r12
 	push	%r13		# redundant, done to share Win64 SE handler
@@ -1321,17 +1321,17 @@ $code.=<<___ if ($win64);
 	movaps	-40-1*16($fp),%xmm11
 ___
 $code.=<<___;
-	mov	-40($fp),%r14
+	add	`64+($win64?6*16:0)`,%rsp
+	pop     %r14
 .cfi_restore	%r14
-	mov	-32($fp),%r13
+	pop     %r13
 .cfi_restore	%r13
-	mov	-24($fp),%r12
+	pop     %r12
 .cfi_restore	%r12
-	mov	-16($fp),%rbp
-.cfi_restore	%rbp
-	mov	-8($fp),%rbx
+	pop     %rbx
 .cfi_restore	%rbx
-	lea	($fp),%rsp
+	pop     %rbp
+.cfi_restore	%rbp
 .cfi_def_cfa_register	%rsp
 .Lepilogue_avx:
 	ret
@@ -1812,17 +1812,17 @@ $code.=<<___ if ($win64);
 	movaps	-40-1*16($fp),%xmm11
 ___
 $code.=<<___;
-	mov	-40($fp),%r14
+	add	`64+($win64?6*16:0)`,%rsp
+	pop     %r14
 .cfi_restore	%r14
-	mov	-32($fp),%r13
+	pop     %r13
 .cfi_restore	%r13
-	mov	-24($fp),%r12
+	pop     %r12
 .cfi_restore	%r12
-	mov	-16($fp),%rbp
-.cfi_restore	%rbp
-	mov	-8($fp),%rbx
+	pop     %rbx
 .cfi_restore	%rbx
-	lea	($fp),%rsp
+	pop     %rbp
+.cfi_restore	%rbp
 .cfi_def_cfa_register	%rsp
 .Lepilogue_avx2:
 	ret
@@ -1891,8 +1891,8 @@ se_handler:
 
 	mov	`16*4`(%rax),%rax	# pull saved stack pointer
 
-	mov	-8(%rax),%rbx
-	mov	-16(%rax),%rbp
+	mov	-8(%rax),%rbp
+	mov	-16(%rax),%rbx
 	mov	-24(%rax),%r12
 	mov	-32(%rax),%r13
 	mov	-40(%rax),%r14
@@ -1979,8 +1979,8 @@ ssse3_handler:
 	mov	\$12,%ecx
 	.long	0xa548f3fc		# cld; rep movsq
 
-	mov	-8(%rax),%rbx
-	mov	-16(%rax),%rbp
+	mov	-8(%rax),%rbp
+	mov	-16(%rax),%rbx
 	mov	-24(%rax),%r12
 	mov	-32(%rax),%r13
 	mov	-40(%rax),%r14
