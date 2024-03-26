@@ -293,6 +293,7 @@ atomic_add_spinlock:
 #endif
 
 .extern	OPENSSL_armcap_P
+.hidden	OPENSSL_armcap_P
 ___
 
 print $code;
