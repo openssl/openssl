@@ -265,6 +265,7 @@ static int dane_tlsa_add(SSL_DANE *dane,
     int ilen = (int)dlen;
     int i;
     int num;
+    int mdsize;
 
     if (dane->trecs == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_DANE_NOT_ENABLED);
@@ -294,9 +295,12 @@ static int dane_tlsa_add(SSL_DANE *dane,
         }
     }
 
-    if (md != NULL && dlen != (size_t)EVP_MD_get_size(md)) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_DANE_TLSA_BAD_DIGEST_LENGTH);
-        return 0;
+    if (md != NULL) {
+        mdsize = EVP_MD_get_size(md);
+        if (mdsize <= 0 || dlen != (size_t)mdsize) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_DANE_TLSA_BAD_DIGEST_LENGTH);
+            return 0;
+        }
     }
     if (!data) {
         ERR_raise(ERR_LIB_SSL, SSL_R_DANE_TLSA_NULL_DATA);
