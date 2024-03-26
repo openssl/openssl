@@ -247,8 +247,14 @@ int tls13_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
                                  size_t *secret_size)
 {
     const EVP_MD *md = ssl_handshake_md(s);
+    int md_size;
 
-    *secret_size = EVP_MD_get_size(md);
+    md_size = EVP_MD_get_size(md);
+    if (md_size <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    *secret_size = (size_t)md_size;
     /* Calls SSLfatal() if required */
     return tls13_generate_secret(s, md, prev, NULL, 0, out);
 }
@@ -436,7 +442,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     unsigned char *insecret;
     unsigned char *finsecret = NULL;
     const char *log_label = NULL;
-    size_t finsecretlen = 0;
+    int finsecretlen = 0;
     const unsigned char *label;
     size_t labellen, hashlen = 0;
     int ret = 0;
@@ -541,6 +547,10 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             insecret = s->handshake_secret;
             finsecret = s->client_finished_secret;
             finsecretlen = EVP_MD_get_size(ssl_handshake_md(s));
+            if (finsecretlen <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
             label = client_handshake_traffic;
             labellen = sizeof(client_handshake_traffic) - 1;
             log_label = CLIENT_HANDSHAKE_LABEL;
@@ -573,6 +583,10 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             insecret = s->handshake_secret;
             finsecret = s->server_finished_secret;
             finsecretlen = EVP_MD_get_size(ssl_handshake_md(s));
+            if (finsecretlen <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
             label = server_handshake_traffic;
             labellen = sizeof(server_handshake_traffic) - 1;
             log_label = SERVER_HANDSHAKE_LABEL;
@@ -657,7 +671,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
 
     if (finsecret != NULL
             && !tls13_derive_finishedkey(s, ssl_handshake_md(s), secret,
-                                         finsecret, finsecretlen)) {
+                                         finsecret, (size_t)finsecretlen)) {
         /* SSLfatal() already called */
         goto err;
     }
