@@ -933,15 +933,22 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_key_fingerprint(const EVP_MD *digest,
                                                         *bytes, size_t len)
 {
     OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
+    int md_size;
 
     if (search == NULL)
         return NULL;
 
-    if (digest != NULL && len != (size_t)EVP_MD_get_size(digest)) {
+    md_size = EVP_MD_get_size(digest);
+    if (md_size <= 0) {
+        OPENSSL_free(search);
+        return NULL;
+    }
+
+    if (digest != NULL && len != (size_t)md_size) {
         ERR_raise_data(ERR_LIB_OSSL_STORE,
                        OSSL_STORE_R_FINGERPRINT_SIZE_DOES_NOT_MATCH_DIGEST,
                        "%s size is %d, fingerprint size is %zu",
-                       EVP_MD_get0_name(digest), EVP_MD_get_size(digest), len);
+                       EVP_MD_get0_name(digest), md_size, len);
         OPENSSL_free(search);
         return NULL;
     }
