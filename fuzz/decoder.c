@@ -45,12 +45,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     EVP_PKEY_CTX *ctx = NULL;
     BIO *bio;
 
-    bio = BIO_new(BIO_s_null());
     dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, NULL, NULL, NULL, 0, NULL,
                                                 NULL);
-    if (dctx == NULL) {
+    if (dctx == NULL)
         return 0;
-    }
+
+    bio = BIO_new(BIO_s_null());
     if (OSSL_DECODER_from_data(dctx, &buf, &len)) {
         EVP_PKEY *pkey2;
 
@@ -59,16 +59,22 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         EVP_PKEY_print_params(bio, pkey, 1, pctx);
 
         pkey2 = EVP_PKEY_dup(pkey);
+#ifndef ERROR_INJECT
         OPENSSL_assert(pkey2 != NULL);
+#endif
         EVP_PKEY_eq(pkey, pkey2);
         EVP_PKEY_free(pkey2);
 
         ctx = EVP_PKEY_CTX_new(pkey, NULL);
-        EVP_PKEY_param_check(ctx);
-        EVP_PKEY_public_check(ctx);
-        EVP_PKEY_private_check(ctx);
-        EVP_PKEY_pairwise_check(ctx);
+#ifndef ERROR_INJECT
         OPENSSL_assert(ctx != NULL);
+#endif
+        if (ctx != NULL) {
+            EVP_PKEY_param_check(ctx);
+            EVP_PKEY_public_check(ctx);
+            EVP_PKEY_private_check(ctx);
+            EVP_PKEY_pairwise_check(ctx);
+        }
         EVP_PKEY_CTX_free(ctx);
         EVP_PKEY_free(pkey);
     }
