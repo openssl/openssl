@@ -46,7 +46,32 @@
 # endif
 
 # if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS)
-# define ATOMIC_LOAD_N(p,o) __atomic_load_n(p, o)
+#  if defined(__APPLE__) && defined(__clang__) && defined(__aarch64__) 
+/*
+ * Apple M1 virtualized cpu seems to have some problem using the ldapr instruction
+ * (see https://github.com/openssl/openssl/pull/23974)
+ * When using the native apple clang compiler, this instruction is emitted for
+ * atomic loads, which is bad.  So, if
+ * 1) We are building on a target that defines __APPLE__ AND
+ * 2) We are building on a target using clang (__clang__) AND
+ * 3) We are building for an M1 processor (__aarch64__)
+ * Then we shold not use __atomic_load_n and instead implement our own
+ * function to issue the ldar instruction instead, which procuces the proper
+ * sequencing guarantees
+ */
+static inline void *apple_atomic_load_n(void **p)
+{
+    void *ret;
+
+    __asm volatile("ldar %0, [%1]" : "=r" (ret): "r" (p):);
+
+    return ret;
+}
+
+#   define ATOMIC_LOAD_N(p, o) apple_atomic_load_n((void **)p)
+#  else
+#   define ATOMIC_LOAD_N(p,o) __atomic_load_n(p, o)
+#  endif
 # define ATOMIC_STORE_N(p, v, o) __atomic_store_n(p, v, o)
 # define ATOMIC_STORE(p, v, o) __atomic_store(p, v, o)
 # define ATOMIC_EXCHANGE_N(p, v, o) __atomic_exchange_n(p, v, o)
