@@ -576,11 +576,7 @@ static void to_words52(BN_ULONG *out, int out_len,
         out_len--;
     }
 
-    while (out_len > 0) {
-        *out = 0;
-        out_len--;
-        out++;
-    }
+    memset(out, 0, out_len * sizeof(BN_ULONG));
 }
 
 static ossl_inline void put_digit(uint8_t *out, int out_len, uint64_t digit)
