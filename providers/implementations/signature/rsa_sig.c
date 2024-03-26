@@ -114,8 +114,14 @@ typedef struct {
 
 static size_t rsa_get_md_size(const PROV_RSA_CTX *prsactx)
 {
-    if (prsactx->md != NULL)
-        return EVP_MD_get_size(prsactx->md);
+    int md_size;
+
+    if (prsactx->md != NULL) {
+        md_size = EVP_MD_get_size(prsactx->md);
+        if (md_size <= 0)
+            return 0;
+        return md_size;
+    }
     return 0;
 }
 
