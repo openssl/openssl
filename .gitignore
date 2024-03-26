@@ -6,13 +6,20 @@
 /Makefile
 /MINFO
 /TABLE
-/*.pc
 /rehash.time
 /inc.*
 /makefile.*
 /out.*
 /tmp.*
 /configdata.pm
+/builddata.pm
+/installdata.pm
+
+# Exporters
+/*.pc
+/OpenSSLConfig*.cmake
+/exporters/*.pc
+/exporters/OpenSSLConfig*.cmake
 
 # Links under apps
 /apps/CA.pl
