@@ -147,7 +147,6 @@ EVP_PKEY *ossl_d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a,
                                      OSSL_LIB_CTX *libctx, const char *propq);
 X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval);
 
-time_t ossl_asn1_string_to_time_t(const char *asn1_string);
 void ossl_asn1_string_set_bits_left(ASN1_STRING *str, unsigned int num);
 
 #endif /* ndef OSSL_CRYPTO_ASN1_H */
