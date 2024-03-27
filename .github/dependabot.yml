@@ -4,13 +4,13 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-      commit-message:
-        prefix: "Dependabot update\n\nCLA: trivial\n\n"
-        include: "scope"
-      labels:
-        - "dependencies"
-        - "cla: trivial"
-        - "approval: review pending"
-        - "approval: otc review pending"
-      reviewers:
-        - "openssl/committers"
+    commit-message:
+      prefix: "Dependabot update\n\nCLA: trivial\n\n"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "cla: trivial"
+      - "approval: review pending"
+      - "approval: otc review pending"
+    reviewers:
+      - "openssl/committers"
