@@ -17,6 +17,8 @@
 #define TLS13_CHACHA20_POLY1305_SHA256_BYTES ((const unsigned char *)"\x13\x03")
 #define TLS13_AES_128_CCM_SHA256_BYTES ((const unsigned char *)"\x13\x04")
 #define TLS13_AES_128_CCM_8_SHA256_BYTES ((const unsigned char *)"\x13\05")
+#define TLS13_SHA256_SHA256_BYTES ((const unsigned char *)"\xC0\xB4")
+#define TLS13_SHA384_SHA384_BYTES ((const unsigned char *)"\xC0\xB5")
 
 int create_ssl_ctx_pair(OSSL_LIB_CTX *libctx, const SSL_METHOD *sm,
                         const SSL_METHOD *cm, int min_proto_version,

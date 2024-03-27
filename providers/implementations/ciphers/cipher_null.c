@@ -82,7 +82,7 @@ static int null_cipher(void *vctx, unsigned char *out, size_t *outl,
     }
     if (outsize < inl)
         return 0;
-    if (in != out)
+    if (out != NULL && in != out)
         memcpy(out, in, inl);
     *outl = inl;
     return 1;
