@@ -10,13 +10,15 @@
 use strict;
 use warnings;
 
+use POSIX;
 use File::Spec;
 use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use Time::Piece;
 
 setup("test_x509");
 
-plan tests => 46;
+plan tests => 51;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -187,18 +189,44 @@ ok(!run(app(["openssl", "x509", "-noout", "-dates", "-dateopt", "invalid_format"
 	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
    "Run with invalid -dateopt format");
 
-# extracts issuer from a -text formatted-output
-sub get_issuer {
-    my $f = shift(@_);
-    my $issuer = "";
+# extracts string value of certificate field from a -text formatted-output
+sub get_field {
+    my ($f, $field) = @_;
+    my $string = "";
     open my $fh, $f or die;
     while (my $line = <$fh>) {
-        if ($line =~ /Issuer:/) {
-            $issuer = $line;
+        if ($line =~ /$field:\s+(.*)/) {
+            $string = $1;
         }
     }
     close $fh;
-    return $issuer;
+    return $string;
+}
+
+sub get_issuer {
+    return get_field(@_, "Issuer");
+}
+
+sub get_not_before {
+    return get_field(@_, "Not Before");
+}
+
+# Date as yyyy-mm-dd
+sub get_not_before_date {
+    return Time::Piece->strptime(
+	get_not_before(@_),
+	"%b %d %T %Y %Z")->date;
+}
+
+sub get_not_after {
+    return get_field(@_, "Not After ");
+}
+
+# Date as yyyy-mm-dd
+sub get_not_after_date {
+    return Time::Piece->strptime(
+	get_not_after(@_),
+	"%b %d %T %Y %Z")->date;
 }
 
 # Tests for signing certs (broken in 1.1.1o)
@@ -224,7 +252,7 @@ ok(run(app(["openssl", "x509", "-in", $a_cert, "-CA", $ca_cert,
             "-CAkey", $ca_key, "-set_serial", "1234567890",
             "-preserve_dates", "-sha256", "-text", "-out", $a2_cert])));
 # verify issuer is CA
-ok (get_issuer($a2_cert) =~ /CN=ca.example.com/);
+ok(get_issuer($a2_cert) =~ /CN=ca.example.com/);
 
 my $in_csr = srctop_file('test', 'certs', 'x509-check.csr');
 my $in_key = srctop_file('test', 'certs', 'x509-check-key.pem');
@@ -267,6 +295,51 @@ ok(run(app(["openssl", "x509", "-req", "-text", "-CAcreateserial",
             "-CA", $ca_cert_dot_in_dir, "-CAkey", $ca_key,
             "-in", $b_csr])));
 ok(-e $ca_serial_dot_in_dir);
+
+# Tests for explict start and end dates of certificates
+my $today;
+my $enddate;
+$today = strftime("%Y-%m-%d", localtime);
+ok(run(app(["openssl", "x509", "-req", "-text",
+	    "-key", $b_key,
+	    "-not_before", "20231031000000Z",
+	    "-not_after", "today",
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before($b_cert) =~ /Oct 31 00:00:00 2023 GMT/
+&& get_not_after_date($b_cert) eq $today);
+# explicit start and end dates
+ok(run(app(["openssl", "x509", "-req", "-text",
+	    "-key", $b_key,
+	    "-not_before", "20231031000000Z",
+	    "-not_after", "20231231000000Z",
+	    "-days", "99",
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before($b_cert) =~ /Oct 31 00:00:00 2023 GMT/
+&& get_not_after($b_cert) =~ /Dec 31 00:00:00 2023 GMT/);
+# start date today and days
+$today = strftime("%Y-%m-%d", localtime);
+$enddate = strftime("%Y-%m-%d", localtime(time + 99 * 24 * 60 * 60));
+ok(run(app(["openssl", "x509", "-req", "-text",
+	    "-key", $b_key,
+	    "-not_before", "today",
+	    "-days", "99",
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before_date($b_cert) eq $today
+&& get_not_after_date($b_cert) eq $enddate);
+# end date before start date
+ok(!run(app(["openssl", "x509", "-req", "-text",
+	      "-key", $b_key,
+	      "-not_before", "today",
+	      "-not_after", "20231031000000Z",
+              "-in", $b_csr, "-out", $b_cert])));
+# default days option
+$today = strftime("%Y-%m-%d", localtime);
+$enddate = strftime("%Y-%m-%d", localtime(time + 30 * 24 * 60 * 60));
+ok(run(app(["openssl", "x509", "-req", "-text",
+	    "-key", $b_key,
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before_date($b_cert) eq $today
+&& get_not_after_date($b_cert) eq $enddate);
 
 SKIP: {
     skip "EC is not supported by this OpenSSL build", 1

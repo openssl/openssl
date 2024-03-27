@@ -36,6 +36,8 @@ B<openssl> B<req>
 [B<-x509v1>]
 [B<-CA> I<filename>|I<uri>]
 [B<-CAkey> I<filename>|I<uri>]
+[B<-not_before> I<date>]
+[B<-not_after> I<date>]
 [B<-days> I<n>]
 [B<-set_serial> I<n>]
 [B<-newhdr>]
@@ -327,11 +329,36 @@ Sets the "CA" private key to sign a certificate with.
 The private key must match the public key of the certificate given with B<-CA>.
 If this option is not provided then the key must be present in the B<-CA> input.
 
+=item B<-not_before> I<date>
+
+When B<-x509> is in use this allows the start date to be explicitly set,
+otherwise it is ignored. The format of I<date> is YYMMDDHHMMSSZ (the
+same as an ASN1 UTCTime structure), or YYYYMMDDHHMMSSZ (the same as an
+ASN1 GeneralizedTime structure). In both formats, seconds SS and
+timezone Z must be present.
+Alternatively, you can also use "today".
+
+=item B<-not_after> I<date>
+
+When B<-x509> is in use this allows the expiry date to be explicitly
+set, otherwise it is ignored. The format of I<date> is YYMMDDHHMMSSZ
+(the same as an ASN1 UTCTime structure), or YYYYMMDDHHMMSSZ (the same as
+an ASN1 GeneralizedTime structure). In both formats, seconds SS and
+timezone Z must be present.
+Alternatively, you can also use "today".
+
+This overrides the B<-days> option.
+
 =item B<-days> I<n>
 
-When B<-x509> is in use this specifies the number of
-days to certify the certificate for, otherwise it is ignored. I<n> should
+When B<-x509> is in use this specifies the number of days from today to
+certify the certificate for, otherwise it is ignored. I<n> should
 be a positive integer. The default is 30 days.
+
+Regardless of the option B<-not_before>, the days are always counted from
+today.
+When used together with the option B<-not_after>, the explicit expiry
+date takes precedence.
 
 =item B<-set_serial> I<n>
 
