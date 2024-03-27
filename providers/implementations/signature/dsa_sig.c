@@ -93,8 +93,14 @@ typedef struct {
 
 static size_t dsa_get_md_size(const PROV_DSA_CTX *pdsactx)
 {
-    if (pdsactx->md != NULL)
-        return EVP_MD_get_size(pdsactx->md);
+    int md_size;
+
+    if (pdsactx->md != NULL) {
+        md_size = EVP_MD_get_size(pdsactx->md);
+        if (md_size <= 0)
+            return 0;
+        return (size_t)md_size;
+    }
     return 0;
 }
 
