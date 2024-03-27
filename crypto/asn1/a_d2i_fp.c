@@ -148,6 +148,9 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                     goto err;
                 }
                 len += i;
+                if ((size_t)i < want)
+                    continue;
+
             }
         }
         /* else data already loaded */
