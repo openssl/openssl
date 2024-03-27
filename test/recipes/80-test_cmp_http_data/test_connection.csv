@@ -2,7 +2,7 @@ expected,description, -section,val, -server,val, -proxy,val, -no_proxy,val, -tls
 ,Message transfer options:,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,
 1,default config, -section,,,,,,,,BLANK,,,,BLANK,,BLANK,,BLANK,
-1,server domain name, -section,, -server,localhost:_SERVER_PORT,,,,,,,,,,,,,,
+disabled as not supported by some host IP configurations,server domain name, -section,, -server,localhost:_SERVER_PORT,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,
 0,wrong server, -section,, -server,xn--rksmrgs-5wao1o.example.com:_SERVER_PORT,,,,,BLANK,,,, -msg_timeout,1,BLANK,,BLANK,
 0,wrong server port, -section,, -server,_SERVER_HOST:99,,,,,BLANK,,,, -msg_timeout,1,BLANK,,BLANK,
