@@ -102,6 +102,15 @@ A string with a short human-readable description of the algorithm.
 
 =head2 On the subject of algorithm names
 
+All the names necessary for using an algorithm should be provided by the
+OSSL_ALGORITHM structure. Symbolic names, ahort and long, are necessary for
+looking up by name. OID is necessary for usage in ASN.1 structures etc. In
+case when the names are well-known (e.g. present in OID database of OpenSSL),
+the developers aren't obliged to provide anythings besides short name.
+
+If the names provided by various providers are in contradiction (e.g. a shared
+sinonym for two or more different algorithms), the behavior is not defined.
+
 Providers may find the need to register ASN.1 OIDs for algorithms using
 L<OBJ_create(3)> (via the B<core_obj_create> upcall described in
 L<provider-base(7)>, because some application or library -- possibly still
