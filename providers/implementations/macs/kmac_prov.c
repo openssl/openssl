@@ -178,6 +178,7 @@ static struct kmac_data_st *kmac_new(void *provctx)
 static void *kmac_fetch_new(void *provctx, const OSSL_PARAM *params)
 {
     struct kmac_data_st *kctx = kmac_new(provctx);
+    int md_size;
 
     if (kctx == NULL)
         return 0;
@@ -187,7 +188,12 @@ static void *kmac_fetch_new(void *provctx, const OSSL_PARAM *params)
         return 0;
     }
 
-    kctx->out_len = EVP_MD_get_size(ossl_prov_digest_md(&kctx->digest));
+    md_size = EVP_MD_get_size(ossl_prov_digest_md(&kctx->digest));
+    if (md_size <= 0) {
+        kmac_free(kctx);
+        return 0;
+    }
+    kctx->out_len = (size_t)md_size;
     return kctx;
 }
 
