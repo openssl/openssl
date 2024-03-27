@@ -1301,7 +1301,7 @@ the same.
 #### OpenVMS
 
     $ perl Configure [options...]
-
+    
 #### Windows
 
     $ perl Configure [options...]
@@ -1328,6 +1328,18 @@ run:
 
     $ ./Configure linux-elf [options...]
 
+ On OpenVMS explicit versions for 32/64-bit pointers can be build. To do so you 
+ should use one of the following options:
+    on AXP:
+         vms-alpha  (default option)
+         vms-alpha-p32
+         vms-alpha-p64
+    on IA64:
+         vms-ia64 (default option)
+         vms-ia64-p32
+         vms-ia64-p64
+    on X86: not yet implemented)
+    
 ### Creating your own Configuration
 
 If your system isn't listed, you will have to create a configuration
