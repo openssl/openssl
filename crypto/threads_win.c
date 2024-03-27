@@ -112,8 +112,7 @@ struct rcu_lock_st {
  */
 static void free_rcu_thr_data(void *ptr)
 {
-    struct rcu_thr_data *data =
-                        (struct rcu_thr_data *)CRYPTO_THREAD_get_local(&rcu_thr_key);
+    struct rcu_thr_data *data = (struct rcu_thr_data *)ptr;
 
     OPENSSL_free(data);
     CRYPTO_THREAD_set_local(&rcu_thr_key, NULL);
@@ -122,8 +121,11 @@ static void free_rcu_thr_data(void *ptr)
 
 static void ossl_rcu_init(void)
 {
+#ifndef FIPS_MODULE
     CRYPTO_THREAD_init_local(&rcu_thr_key, NULL);
-    ossl_init_thread_start(NULL, NULL, free_rcu_thr_data);
+#else
+    CRYPTO_THREAD_init_local(&rcu_thr_key, free_rcu_thr_data);
+#endif
 }
 
 static struct rcu_qp *allocate_new_qp_group(struct rcu_lock_st *lock,
@@ -158,7 +160,6 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers)
     new->prior_signal = ossl_crypto_condvar_new();
     new->alloc_lock = ossl_crypto_mutex_new();
     new->prior_lock = ossl_crypto_mutex_new();
-    new->write_lock = ossl_crypto_mutex_new();
     new->qp_group = allocate_new_qp_group(new, num_writers + 1);
     if (new->qp_group == NULL
         || new->alloc_signal == NULL
@@ -222,6 +223,9 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
         data = OPENSSL_zalloc(sizeof(*data));
         OPENSSL_assert(data != NULL);
         CRYPTO_THREAD_set_local(&rcu_thr_key, data);
+#ifndef FIPS_MODULE
+        ossl_init_thread_start(NULL, data, free_rcu_thr_data);
+#endif
     }
 
     for (i = 0; i < MAX_QPS; i++) {
@@ -368,17 +372,14 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
 int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 {
     struct rcu_cb_item *new;
-    struct rcu_cb_item *prev;
 
     new = OPENSSL_zalloc(sizeof(struct rcu_cb_item));
     if (new == NULL)
         return 0;
-    prev = new;
     new->data = data;
     new->fn = cb;
 
-    InterlockedExchangePointer((void * volatile *)&lock->cb_items, prev);
-    new->next = prev;
+    new->next = InterlockedExchangePointer((void * volatile *)&lock->cb_items, new);
     return 1;
 }
 
@@ -603,6 +604,22 @@ int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
     return 1;
 #else
     *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, 0);
+    return 1;
+#endif
+}
+
+int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
+{
+#if (defined(NO_INTERLOCKEDOR64))
+    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
+        return 0;
+    *dst = val;
+    if (!CRYPTO_THREAD_unlock(lock))
+        return 0;
+
+    return 1;
+#else
+    InterlockedExchange64(dst, val);
     return 1;
 #endif
 }

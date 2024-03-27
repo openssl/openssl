@@ -1,5 +1,6 @@
 abort
 accept
+aligned_alloc
 bcmp
 bind
 calloc
@@ -78,6 +79,7 @@ munmap
 opendir
 openlog
 poll
+posix_memalign
 pthread_attr_destroy
 pthread_attr_init
 pthread_attr_setdetachstate

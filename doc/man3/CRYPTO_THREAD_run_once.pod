@@ -5,7 +5,7 @@
 CRYPTO_THREAD_run_once,
 CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock,
 CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free,
-CRYPTO_atomic_add, CRYPTO_atomic_or, CRYPTO_atomic_load,
+CRYPTO_atomic_add, CRYPTO_atomic_or, CRYPTO_atomic_load, CRYPTO_atomic_store,
 CRYPTO_atomic_load_int,
 OSSL_set_max_threads, OSSL_get_max_threads,
 OSSL_get_thread_support_flags, OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL,
@@ -28,6 +28,7 @@ OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN - OpenSSL thread support
  int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
                       CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock);
+ int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock);
 
  int OSSL_set_max_threads(OSSL_LIB_CTX *ctx, uint64_t max_threads);
@@ -109,6 +110,12 @@ platform. Because of this, if a variable is modified by CRYPTO_atomic_or() or
 read by CRYPTO_atomic_load() then CRYPTO_atomic_load() must be the only way that
 the variable is read. If atomic operations are not supported and I<lock> is
 NULL, then the function will fail.
+
+=item *
+
+CRYPTO_atomic_store() atomically stores the contents of I<val> into I<*dst>.
+I<lock> will be locked, unless atomic operations are supported on the specific
+plaform.
 
 =item *
 
@@ -230,6 +237,10 @@ repeatedly load/unload shared libraries that allocate locks.
 =head1 SEE ALSO
 
 L<crypto(7)>, L<openssl-threads(7)>.
+
+=head1 HISTORY
+
+CRYPTO_atomic_store() was added in OpenSSL 3.4.0
 
 =head1 COPYRIGHT
 
