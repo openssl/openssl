@@ -4,6 +4,12 @@ DEPEND[html/man1/CA.pl.html]=man1/CA.pl.pod
 GENERATE[html/man1/CA.pl.html]=man1/CA.pl.pod
 DEPEND[man/man1/CA.pl.1]=man1/CA.pl.pod
 GENERATE[man/man1/CA.pl.1]=man1/CA.pl.pod
+IF[{- !$disabled{'install-evp-test'} -}]
+    DEPEND[html/man1/evp_test.html]=man1/evp_test.pod
+    GENERATE[html/man1/evp_test.html]=man1/evp_test.pod
+    DEPEND[man/man1/evp_test.1]=man1/evp_test.pod
+    GENERATE[man/man1/evp_test.1]=man1/evp_test.pod
+ENDIF
 DEPEND[html/man1/openssl-asn1parse.html]=man1/openssl-asn1parse.pod
 GENERATE[html/man1/openssl-asn1parse.html]=man1/openssl-asn1parse.pod
 DEPEND[man/man1/openssl-asn1parse.1]=man1/openssl-asn1parse.pod
@@ -407,6 +413,9 @@ html/man1/openssl-version.html \
 html/man1/openssl-x509.html \
 html/man1/openssl.html \
 html/man1/tsget.html
+IF[{- !$disabled{'install-evp-test'} -}]
+    HTMLDOCS[man1]=html/man1/evp_test.1
+ENDIF
 MANDOCS[man1]=man/man1/CA.pl.1 \
 man/man1/openssl-asn1parse.1 \
 man/man1/openssl-ca.1 \
@@ -467,6 +476,9 @@ man/man1/openssl-version.1 \
 man/man1/openssl-x509.1 \
 man/man1/openssl.1 \
 man/man1/tsget.1
+IF[{- !$disabled{'install-evp-test'} -}]
+    MANDOCS[man1]=man/man1/evp_test.1
+ENDIF
 DEPEND[html/man3/ADMISSIONS.html]=man3/ADMISSIONS.pod
 GENERATE[html/man3/ADMISSIONS.html]=man3/ADMISSIONS.pod
 DEPEND[man/man3/ADMISSIONS.3]=man3/ADMISSIONS.pod
