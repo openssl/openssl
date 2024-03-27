@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <openssl/e_os2.h>
 #include "internal/nelem.h"
+#include "internal/sockets.h" /* for openssl_fdset() */
 
 #ifndef OPENSSL_NO_SOCK
 

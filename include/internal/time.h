@@ -12,7 +12,8 @@
 # pragma once
 
 # include <openssl/e_os2.h>     /* uint64_t */
-# include "internal/e_os.h"     /* for struct timeval */
+# include "internal/e_os.h"
+# include "internal/e_winsock.h" /* for struct timeval */
 # include "internal/safe_math.h"
 
 /*

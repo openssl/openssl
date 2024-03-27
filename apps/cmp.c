@@ -10,6 +10,7 @@
  */
 
 /* This app is disabled when OPENSSL_NO_CMP is defined. */
+#include "internal/e_os.h"
 
 #include <string.h>
 #include <ctype.h>

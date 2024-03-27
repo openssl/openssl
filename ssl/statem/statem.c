@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/e_os.h"
+
 #if defined(__TANDEM) && defined(_SPT_MODEL_)
 # include <spthread.h>
 # include <spt_extensions.h> /* timeval */
