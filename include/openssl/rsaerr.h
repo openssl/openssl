@@ -103,5 +103,5 @@
 # define RSA_R_UNSUPPORTED_SIGNATURE_TYPE                 155
 # define RSA_R_VALUE_MISSING                              147
 # define RSA_R_WRONG_SIGNATURE_LENGTH                     119
-
+# define RSA_R_BAD_TLS_CLIENT_VERSION                     182
 #endif

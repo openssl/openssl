@@ -151,6 +151,8 @@ static const ERR_STRING_DATA RSA_str_reasons[] = {
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_VALUE_MISSING), "value missing"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_WRONG_SIGNATURE_LENGTH),
     "wrong signature length"},
+    {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_BAD_TLS_CLIENT_VERSION),
+    "bad tls client version"},
     {0, NULL}
 };
 
