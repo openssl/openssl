@@ -94,7 +94,7 @@
 # define SSL_kRSAPSK             0x00000040U
 # define SSL_kECDHEPSK           0x00000080U
 # define SSL_kDHEPSK             0x00000100U
-/* GOST KDF key exchange, draft-smyshlyaev-tls12-gost-suites */
+/* GOST KDF key exchange, rfc9189 */
 # define SSL_kGOST18             0x00000200U
 
 /* all PSK */
@@ -231,7 +231,7 @@
  */
 # define TLS1_STREAM_MAC 0x10000
 /*
- * TLSTREE cipher/mac key derivation from draft-smyshlyaev-tls12-gost-suites
+ * TLSTREE cipher/mac key derivation from rfc9189
  * (currently this also  goes into algorithm2)
  */
 # define TLS1_TLSTREE 0x20000
