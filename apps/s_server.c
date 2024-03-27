@@ -2760,6 +2760,10 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                 if (buf[0] == 'S') {
                     print_stats(bio_s_out, SSL_get_SSL_CTX(con));
                 }
+            } else if (i <= 0) {
+                (void)BIO_flush(bio_s_out);
+                ret = 1;
+                goto err;
             }
 #ifdef CHARSET_EBCDIC
             ebcdic2ascii(buf, buf, i);
