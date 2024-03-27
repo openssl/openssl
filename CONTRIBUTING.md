@@ -67,7 +67,8 @@ guidelines:
     often. We do not accept merge commits, you will have to remove them
     (usually by rebasing) before it will be acceptable.
 
- 4. Code provided should follow our [coding style] and compile without warnings.
+ 4. Code provided should follow our [coding style] and [documentation policy]
+    and compile without warnings.
     There is a [Perl tool](util/check-format.pl) that helps
     finding code formatting mistakes and other coding style nits.
     Where `gcc` or `clang` is available, you should use the
@@ -77,6 +78,7 @@ guidelines:
     whenever a PR is created or updated by committers.
 
     [coding style]: https://www.openssl.org/policies/technical/coding-style.html
+    [documentation policy]: https://openssl.org/policies/technical/documentation-policy.html
 
  5. When at all possible, code contributions should include tests. These can
     either be added to an existing test, or completely new.  Please see
