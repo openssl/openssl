@@ -107,11 +107,17 @@ my ($zero,$rcon,$mask,$in0,$in1,$tmp,$key)=
 
 
 $code.=<<___;
+#ifdef __aarch64__
+.pushsection ".rodata", "a"
+#endif
 .align	5
 .Lrcon:
 .long	0x01,0x01,0x01,0x01
 .long	0x0c0f0e0d,0x0c0f0e0d,0x0c0f0e0d,0x0c0f0e0d	// rotate-n-splat
 .long	0x1b,0x1b,0x1b,0x1b
+#ifdef __aarch64__
+.popsection
+#endif
 
 .globl	${prefix}_set_encrypt_key
 .type	${prefix}_set_encrypt_key,%function
@@ -139,7 +145,12 @@ $code.=<<___;
 	tst	$bits,#0x3f
 	b.ne	.Lenc_key_abort
 
+#ifdef __aarch64__
+	adrp    $ptr,.Lrcon
+	add     $ptr,$ptr,#:lo12:.Lrcon
+#else
 	adr	$ptr,.Lrcon
+#endif
 	cmp	$bits,#192
 
 	veor	$zero,$zero,$zero

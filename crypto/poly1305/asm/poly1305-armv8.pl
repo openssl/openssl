@@ -442,7 +442,8 @@ poly1305_blocks_neon:
 	ldr	x30,[sp,#8]
 
 	add	$in2,$inp,#32
-	adr	$zeros,.Lzeros
+	adrp	$zeros,.Lzeros
+	add	$zeros,$zeros,#:lo12:.Lzeros
 	subs	$len,$len,#64
 	csel	$in2,$zeros,$in2,lo
 
@@ -454,7 +455,8 @@ poly1305_blocks_neon:
 .align	4
 .Leven_neon:
 	add	$in2,$inp,#32
-	adr	$zeros,.Lzeros
+	adrp	$zeros,.Lzeros
+	add	$zeros,$zeros,#:lo12:.Lzeros
 	subs	$len,$len,#64
 	csel	$in2,$zeros,$in2,lo
 
@@ -937,10 +939,12 @@ poly1305_emit_neon:
 	ret
 .size	poly1305_emit_neon,.-poly1305_emit_neon
 
+.pushsection ".rodata", "a"
 .align	5
 .Lzeros:
 .long	0,0,0,0,0,0,0,0
 .asciz	"Poly1305 for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.popsection
 .align	2
 ___
 

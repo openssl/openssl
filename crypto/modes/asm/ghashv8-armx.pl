@@ -810,7 +810,9 @@ ___
 }
 
 $code.=<<___;
+.pushsection ".rodata", "a"
 .asciz  "GHASH for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.popsection
 .align  2
 #endif
 ___

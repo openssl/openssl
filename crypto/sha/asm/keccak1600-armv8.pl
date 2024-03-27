@@ -84,6 +84,7 @@ $code.=<<___;
 
 .text
 
+.pushsection ".rodata", "a"
 .align 8	// strategic alignment and padding that allows to use
 		// address value as loop termination condition...
 	.quad	0,0,0,0,0,0,0,0
@@ -114,6 +115,7 @@ iotas:
 	.quad	0x0000000080000001
 	.quad	0x8000000080008008
 .size	iotas,.-iotas
+.popsection
 ___
 								{{{
 my @A = map([ "x$_", "x".($_+1), "x".($_+2), "x".($_+3), "x".($_+4) ],
@@ -127,7 +129,8 @@ $code.=<<___;
 .align	5
 KeccakF1600_int:
 	AARCH64_SIGN_LINK_REGISTER
-	adr	$C[2],iotas
+	adrp	$C[2],iotas
+	add	$C[2],$C[2],#:lo12:iotas
 	stp	$C[2],x30,[sp,#16]		// 32 bytes on top are mine
 	b	.Loop
 .align	4
@@ -556,7 +559,8 @@ $code.=<<___;
 .align	5
 KeccakF1600_ce:
 	mov	x9,#24
-	adr	x10,iotas
+	adrp	x10,iotas
+	add	x10,x10,#:lo12:iotas
 	b	.Loop_ce
 .align	4
 .Loop_ce:
@@ -849,7 +853,9 @@ SHA3_squeeze_cext:
 ___
 }								}}}
 $code.=<<___;
+.pushsection ".rodata", "a"
 .asciz	"Keccak-1600 absorb and squeeze for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.popsection
 ___
 
 {   my  %opcode = (
