@@ -9,6 +9,7 @@
      our $makedepcmd = platform->makedepcmd();
 
      sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw)/ }
+     sub run_on_windows { $^O =~ /^(?:cygwin|msys|MSWin32)/ }
 
      # Shared AIX support is special. We put libcrypto[64].so.ver into
      # libcrypto.a and use libcrypto_a.a as static one, unless using
@@ -1870,13 +1871,27 @@ $import: $full
 EOF
           }
       }
-      $recipe .= <<"EOF";
+      if (!run_on_windows()) {
+          $recipe .= <<"EOF";
 $full: $fulldeps
 	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
 		-o $full$shared_def \\
 		$fullobjs \\
 		$linklibs \$(LIB_EX_LIBS)
 EOF
+      } else {
+          $recipe .= <<"EOF";
+$full: $fulldeps
+	\$(file >\$@.lst, \\
+		$fullobjs \\
+	)
+	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
+		-o $full$shared_def \\
+		@\$@.lst \\
+		$linklibs \$(LIB_EX_LIBS)
+	rm -f \$@.lst
+EOF
+      }
       if (windowsdll()) {
           $recipe .= <<"EOF";
 	rm -f apps/$full
