@@ -9,6 +9,7 @@ EVP_SIGNATURE-RSA
 
 Support for computing RSA signatures.
 See L<EVP_PKEY-RSA(7)> for information related to RSA keys.
+See also L<RSA-PSS(7)>.
 
 =head2 Signature Parameters
 
@@ -100,10 +101,17 @@ These parameters are as described above.
 
 =head1 SEE ALSO
 
+L<RSA-PSS(7)>,
+L<EVP_PKEY-RSA(7)>,
 L<EVP_PKEY_CTX_set_params(3)>,
 L<EVP_PKEY_sign(3)>,
 L<EVP_PKEY_verify(3)>,
 L<provider-signature(7)>,
+
+=head1 HISTORY
+
+Digest support for the fixed output variants of SHAKE-256/512 and SHAKE-128/256
+was added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 
