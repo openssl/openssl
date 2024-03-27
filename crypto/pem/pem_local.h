@@ -52,6 +52,10 @@
     }
 # define IMPLEMENT_PEM_provided_write_body_pass()                       \
     ret = 1;                                                            \
+    if (enc == NULL && (kstr != NULL || u != NULL)) {                   \
+        OSSL_ENCODER_CTX_free(ctx);                                     \
+        return 0;                                                       \
+    }                                                                   \
     if (kstr == NULL && cb == NULL) {                                   \
         if (u != NULL) {                                                \
             kstr = u;                                                   \
