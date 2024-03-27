@@ -23,6 +23,8 @@ The EVP_PKEY_CTX_get_params() and EVP_PKEY_CTX_set_params() functions allow
 transfer of arbitrary key parameters to and from providers.
 Not all parameters may be supported by all providers.
 See L<OSSL_PROVIDER(3)> for more information on providers.
+The I<params> field is a pointer to a list of B<OSSL_PARAM> structures,
+terminated with a L<OSSL_PARAM_END(3)> struct.
 See L<OSSL_PARAM(3)> for more information on parameters.
 These functions must only be called after the EVP_PKEY_CTX has been initialised
 for use in an operation.
