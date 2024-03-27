@@ -2022,6 +2022,11 @@
 #define NID_id_on_permanentIdentifier           858
 #define OBJ_id_on_permanentIdentifier           OBJ_id_on,3L
 
+#define SN_id_on_hardwareModuleName             "id-on-hardwareModuleName"
+#define LN_id_on_hardwareModuleName             "Hardware Module Name"
+#define NID_id_on_hardwareModuleName            1321
+#define OBJ_id_on_hardwareModuleName            OBJ_id_on,4L
+
 #define SN_XmppAddr             "id-on-xmppAddr"
 #define LN_XmppAddr             "XmppAddr"
 #define NID_XmppAddr            1209
@@ -3018,6 +3023,11 @@
 #define LN_dcObject             "dcObject"
 #define NID_dcObject            390
 #define OBJ_dcObject            OBJ_Enterprises,1466L,344L
+
+#define SN_id_kp_wisun_fan_device               "id-kp-wisun-fan-device"
+#define LN_id_kp_wisun_fan_device               "Wi-SUN Alliance Field Area Network (FAN)"
+#define NID_id_kp_wisun_fan_device              1322
+#define OBJ_id_kp_wisun_fan_device              OBJ_Enterprises,45605L,1L
 
 #define SN_mime_mhs             "mime-mhs"
 #define LN_mime_mhs             "MIME MHS"
