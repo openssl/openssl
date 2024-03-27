@@ -45,6 +45,7 @@ scrypt.c               Demonstration of SCRYPT password based key derivation
 
 keyexch:
 x25519.c               Demonstration of X25519 based key exchange
+ecdh.c                 Demonstration of ECDH key exchange
 
 mac:
 gmac.c                 Demonstration of GMAC message authentication

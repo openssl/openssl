@@ -4,7 +4,7 @@
 #
 #    LD_LIBRARY_PATH=../.. ./x25519
 
-TESTS = x25519
+TESTS = x25519 ecdh
 
 CFLAGS  = -I../../include -g -Wall
 LDFLAGS = -L../..
@@ -13,7 +13,10 @@ LDLIBS  = -lcrypto
 all: $(TESTS)
 
 x25519: x25519.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+ecdh: ecdh.o
+
+$(TESTS):
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
 
 clean:
 	$(RM) *.o $(TESTS)
