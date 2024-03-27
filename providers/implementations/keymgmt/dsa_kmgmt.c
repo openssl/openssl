@@ -49,6 +49,7 @@ static OSSL_FUNC_keymgmt_dup_fn dsa_dup;
 #define DSA_POSSIBLE_SELECTIONS                                                \
     (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)
 
+#ifndef FIPS_MODULE
 struct dsa_gen_ctx {
     OSSL_LIB_CTX *libctx;
 
@@ -68,6 +69,7 @@ struct dsa_gen_ctx {
     OSSL_CALLBACK *cb;
     void *cbarg;
 };
+
 typedef struct dh_name2id_st{
     const char *name;
     int id;
@@ -75,11 +77,7 @@ typedef struct dh_name2id_st{
 
 static const DSA_GENTYPE_NAME2ID dsatype2id[]=
 {
-#ifdef FIPS_MODULE
-    { "default", DSA_PARAMGEN_TYPE_FIPS_186_4 },
-#else
     { "default", DSA_PARAMGEN_TYPE_FIPS_DEFAULT },
-#endif
     { "fips186_4", DSA_PARAMGEN_TYPE_FIPS_186_4 },
     { "fips186_2", DSA_PARAMGEN_TYPE_FIPS_186_2 },
 };
@@ -94,6 +92,7 @@ static int dsa_gen_type_name2id(const char *name)
     }
     return -1;
 }
+#endif
 
 static int dsa_key_todata(DSA *dsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[],
                           int include_private)
@@ -405,6 +404,10 @@ static int dsa_validate(const void *keydata, int selection, int checktype)
 static void *dsa_gen_init(void *provctx, int selection,
                           const OSSL_PARAM params[])
 {
+    /* DSA keygen is no longer allowed in FIPS 140-3 */
+#ifdef FIPS_MODULE
+    return NULL;
+#else
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct dsa_gen_ctx *gctx = NULL;
 
@@ -416,11 +419,7 @@ static void *dsa_gen_init(void *provctx, int selection,
         gctx->libctx = libctx;
         gctx->pbits = 2048;
         gctx->qbits = 224;
-#ifdef FIPS_MODULE
-        gctx->gen_type = DSA_PARAMGEN_TYPE_FIPS_186_4;
-#else
         gctx->gen_type = DSA_PARAMGEN_TYPE_FIPS_DEFAULT;
-#endif
         gctx->gindex = -1;
         gctx->pcounter = -1;
         gctx->hindex = 0;
@@ -430,10 +429,15 @@ static void *dsa_gen_init(void *provctx, int selection,
         gctx = NULL;
     }
     return gctx;
+#endif
 }
 
 static int dsa_gen_set_template(void *genctx, void *templ)
 {
+    /* DSA keygen is no longer allowed in FIPS 140-3 */
+#ifdef FIPS_MODULE
+    return 0;
+#else
     struct dsa_gen_ctx *gctx = genctx;
     DSA *dsa = templ;
 
@@ -441,8 +445,10 @@ static int dsa_gen_set_template(void *genctx, void *templ)
         return 0;
     gctx->ffc_params = ossl_dsa_get0_params(dsa);
     return 1;
+#endif
 }
 
+#ifndef FIPS_MODULE
 static int dsa_set_gen_seed(struct dsa_gen_ctx *gctx, unsigned char *seed,
                             size_t seedlen)
 {
@@ -457,9 +463,14 @@ static int dsa_set_gen_seed(struct dsa_gen_ctx *gctx, unsigned char *seed,
     }
     return 1;
 }
+#endif
 
 static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
+/* DSA keygen is no longer allowed in FIPS 140-3 */
+#ifdef FIPS_MODULE
+    return 0;
+#else
     struct dsa_gen_ctx *gctx = genctx;
     const OSSL_PARAM *p;
     int gen_type = -1;
@@ -528,12 +539,15 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
             return 0;
     }
     return 1;
+#endif
 }
 
 static const OSSL_PARAM *dsa_gen_settable_params(ossl_unused void *genctx,
                                                  ossl_unused void *provctx)
 {
     static OSSL_PARAM settable[] = {
+/* DSA keygen is no longer allowed in FIPS 140-3 */
+#ifndef FIPS_MODULE
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_FFC_TYPE, NULL, 0),
         OSSL_PARAM_size_t(OSSL_PKEY_PARAM_FFC_PBITS, NULL),
         OSSL_PARAM_size_t(OSSL_PKEY_PARAM_FFC_QBITS, NULL),
@@ -543,11 +557,13 @@ static const OSSL_PARAM *dsa_gen_settable_params(ossl_unused void *genctx,
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_FFC_SEED, NULL, 0),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_PCOUNTER, NULL),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_H, NULL),
+#endif
         OSSL_PARAM_END
     };
     return settable;
 }
 
+#ifndef FIPS_MODULE
 static int dsa_gencb(int p, int n, BN_GENCB *cb)
 {
     struct dsa_gen_ctx *gctx = BN_GENCB_get_arg(cb);
@@ -558,9 +574,14 @@ static int dsa_gencb(int p, int n, BN_GENCB *cb)
 
     return gctx->cb(params, gctx->cbarg);
 }
+#endif
 
 static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
+/* DSA keygen is no longer allowed in FIPS 140-3 */
+#ifdef FIPS_MODULE
+    return NULL;
+#else
     struct dsa_gen_ctx *gctx = genctx;
     DSA *dsa = NULL;
     BN_GENCB *gencb = NULL;
@@ -640,10 +661,15 @@ end:
     }
     BN_GENCB_free(gencb);
     return dsa;
+#endif
 }
 
 static void dsa_gen_cleanup(void *genctx)
 {
+/* DSA keygen is no longer allowed in FIPS 140-3 */
+#ifdef FIPS_MODULE
+    return;
+#else
     struct dsa_gen_ctx *gctx = genctx;
 
     if (gctx == NULL)
@@ -653,6 +679,7 @@ static void dsa_gen_cleanup(void *genctx)
     OPENSSL_free(gctx->mdprops);
     OPENSSL_clear_free(gctx->seed, gctx->seedlen);
     OPENSSL_free(gctx);
+#endif
 }
 
 static void *dsa_load(const void *reference, size_t reference_sz)
