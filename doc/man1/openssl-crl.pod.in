@@ -162,6 +162,10 @@ L<openssl-ca(1)>,
 L<openssl-x509(1)>,
 L<ossl_store-file(7)>
 
+=head1 HISTORY
+
+Since OpenSSL 3.3, the B<-verify> option will exit with 1 on failure.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.

@@ -794,6 +794,8 @@ Since OpenSSL 3.2,
 generated certificates bear X.509 version 3 unless B<-x509v1> is given,
 and key identifier extensions are included by default.
 
+Since OpenSSL 3.3, the B<-verify> option will exit with 1 on failure.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
