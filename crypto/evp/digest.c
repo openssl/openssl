@@ -765,6 +765,7 @@ const OSSL_PARAM *EVP_MD_gettable_params(const EVP_MD *digest)
     if (digest != NULL && digest->gettable_params != NULL)
         return digest->gettable_params(
                            ossl_provider_ctx(EVP_MD_get0_provider(digest)));
+    ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GETTABLE_PARAMS);
     return NULL;
 }
 
@@ -795,6 +796,7 @@ const OSSL_PARAM *EVP_MD_settable_ctx_params(const EVP_MD *md)
         provctx = ossl_provider_ctx(EVP_MD_get0_provider(md));
         return md->settable_ctx_params(NULL, provctx);
     }
+    ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_SETTABLE_CTX_PARAMS);
     return NULL;
 }
 
@@ -821,6 +823,7 @@ const OSSL_PARAM *EVP_MD_CTX_settable_params(EVP_MD_CTX *ctx)
         return ctx->digest->settable_ctx_params(ctx->algctx, alg);
     }
 
+    ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_SETTABLE_CTX_PARAMS);
     return NULL;
 }
 
@@ -851,6 +854,7 @@ const OSSL_PARAM *EVP_MD_gettable_ctx_params(const EVP_MD *md)
         provctx = ossl_provider_ctx(EVP_MD_get0_provider(md));
         return md->gettable_ctx_params(NULL, provctx);
     }
+    ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GETTABLE_CTX_PARAMS);
     return NULL;
 }
 
@@ -876,6 +880,7 @@ const OSSL_PARAM *EVP_MD_CTX_gettable_params(EVP_MD_CTX *ctx)
         provctx = ossl_provider_ctx(EVP_MD_get0_provider(ctx->digest));
         return ctx->digest->gettable_ctx_params(ctx->algctx, provctx);
     }
+    ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GETTABLE_CTX_PARAMS);
     return NULL;
 }
 

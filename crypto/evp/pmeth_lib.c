@@ -701,6 +701,7 @@ int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, const OSSL_PARAM *params)
         return evp_pkey_ctx_set_params_to_ctrl(ctx, params);
 #endif
     }
+    ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_SET_CTX_PARAMS);
     return 0;
 }
 
@@ -739,6 +740,7 @@ int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
         return evp_pkey_ctx_get_params_to_ctrl(ctx, params);
 #endif
     }
+    ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GET_CTX_PARAMS);
     return 0;
 }
 

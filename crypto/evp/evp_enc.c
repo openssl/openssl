@@ -1353,7 +1353,8 @@ int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
 
 int EVP_CIPHER_CTX_get_params(EVP_CIPHER_CTX *ctx, OSSL_PARAM params[])
 {
-    if (ctx->cipher != NULL && ctx->cipher->get_ctx_params != NULL)
+    if (ctx != NULL && ctx->cipher != NULL
+            && ctx->cipher->get_ctx_params != NULL)
         return ctx->cipher->get_ctx_params(ctx->algctx, params);
     return 0;
 }
@@ -1363,6 +1364,7 @@ const OSSL_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher)
     if (cipher != NULL && cipher->gettable_params != NULL)
         return cipher->gettable_params(
                    ossl_provider_ctx(EVP_CIPHER_get0_provider(cipher)));
+    ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GETTABLE_PARAMS);
     return NULL;
 }
 
@@ -1374,6 +1376,7 @@ const OSSL_PARAM *EVP_CIPHER_settable_ctx_params(const EVP_CIPHER *cipher)
         provctx = ossl_provider_ctx(EVP_CIPHER_get0_provider(cipher));
         return cipher->settable_ctx_params(NULL, provctx);
     }
+    ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_SETTABLE_CTX_PARAMS);
     return NULL;
 }
 
@@ -1385,6 +1388,7 @@ const OSSL_PARAM *EVP_CIPHER_gettable_ctx_params(const EVP_CIPHER *cipher)
         provctx = ossl_provider_ctx(EVP_CIPHER_get0_provider(cipher));
         return cipher->gettable_ctx_params(NULL, provctx);
     }
+    ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GETTABLE_CTX_PARAMS);
     return NULL;
 }
 
@@ -1392,10 +1396,12 @@ const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(EVP_CIPHER_CTX *cctx)
 {
     void *alg;
 
-    if (cctx != NULL && cctx->cipher->settable_ctx_params != NULL) {
+    if (cctx != NULL && cctx->cipher != NULL
+            && cctx->cipher->settable_ctx_params != NULL) {
         alg = ossl_provider_ctx(EVP_CIPHER_get0_provider(cctx->cipher));
         return cctx->cipher->settable_ctx_params(cctx->algctx, alg);
     }
+    ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_SETTABLE_CTX_PARAMS);
     return NULL;
 }
 
@@ -1403,10 +1409,12 @@ const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(EVP_CIPHER_CTX *cctx)
 {
     void *provctx;
 
-    if (cctx != NULL && cctx->cipher->gettable_ctx_params != NULL) {
+    if (cctx != NULL && cctx->cipher != NULL
+            && cctx->cipher->gettable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(EVP_CIPHER_get0_provider(cctx->cipher));
         return cctx->cipher->gettable_ctx_params(cctx->algctx, provctx);
     }
+    ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GETTABLE_CTX_PARAMS);
     return NULL;
 }
 

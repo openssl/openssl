@@ -445,8 +445,10 @@ int EVP_RAND_CTX_set_params(EVP_RAND_CTX *ctx, const OSSL_PARAM params[])
 
 const OSSL_PARAM *EVP_RAND_gettable_params(const EVP_RAND *rand)
 {
-    if (rand->gettable_params == NULL)
+    if (rand->gettable_params == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GETTABLE_PARAMS);
         return NULL;
+    }
     return rand->gettable_params(ossl_provider_ctx(EVP_RAND_get0_provider(rand)));
 }
 
@@ -454,8 +456,10 @@ const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand)
 {
     void *provctx;
 
-    if (rand->gettable_ctx_params == NULL)
+    if (rand->gettable_ctx_params == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GETTABLE_CTX_PARAMS);
         return NULL;
+    }
     provctx = ossl_provider_ctx(EVP_RAND_get0_provider(rand));
     return rand->gettable_ctx_params(NULL, provctx);
 }
@@ -464,8 +468,10 @@ const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand)
 {
     void *provctx;
 
-    if (rand->settable_ctx_params == NULL)
+    if (rand->settable_ctx_params == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_SETTABLE_CTX_PARAMS);
         return NULL;
+    }
     provctx = ossl_provider_ctx(EVP_RAND_get0_provider(rand));
     return rand->settable_ctx_params(NULL, provctx);
 }
@@ -474,8 +480,10 @@ const OSSL_PARAM *EVP_RAND_CTX_gettable_params(EVP_RAND_CTX *ctx)
 {
     void *provctx;
 
-    if (ctx->meth->gettable_ctx_params == NULL)
+    if (ctx->meth->gettable_ctx_params == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GETTABLE_CTX_PARAMS);
         return NULL;
+    }
     provctx = ossl_provider_ctx(EVP_RAND_get0_provider(ctx->meth));
     return ctx->meth->gettable_ctx_params(ctx->algctx, provctx);
 }
@@ -484,8 +492,10 @@ const OSSL_PARAM *EVP_RAND_CTX_settable_params(EVP_RAND_CTX *ctx)
 {
     void *provctx;
 
-    if (ctx->meth->settable_ctx_params == NULL)
+    if (ctx->meth->settable_ctx_params == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_SETTABLE_CTX_PARAMS);
         return NULL;
+    }
     provctx = ossl_provider_ctx(EVP_RAND_get0_provider(ctx->meth));
     return ctx->meth->settable_ctx_params(ctx->algctx, provctx);
 }

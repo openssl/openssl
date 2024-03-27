@@ -86,7 +86,7 @@ I<libctx>, and for each of the implementations, calls I<fn> with the
 implementation method and I<arg> as arguments.
 
 OSSL_DECODER_gettable_params() returns an L<OSSL_PARAM(3)>
-array of parameter descriptors.
+array of parameter descriptors, NULL on error..
 
 OSSL_DECODER_get_params() attempts to get parameters specified
 with an L<OSSL_PARAM(3)> array I<params>.  Parameters that the
