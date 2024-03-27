@@ -269,17 +269,32 @@ static int test_addr_fam_len(void)
         goto end;
     if (!ASN1_OCTET_STRING_set(f1->addressFamily, key, keylen))
         goto end;
-    if (!sk_IPAddressFamily_push(addr, f1))
-        goto end;
+
+    /* Push and transfer memory ownership to stack */
+#define PUSH_FAMILY(sk, f) do { \
+        if (!sk_IPAddressFamily_push((sk), (f))) \
+            goto end; \
+        (f) = NULL; \
+    } while (0)
+
+    /* Pop and free stack element */
+#define POP_FAMILY(sk) IPAddressFamily_free(sk_IPAddressFamily_pop(sk))
+
+    /* Free stack and any memory owned by detached element */
+#define FREE_FAMILY(sk, f) do { \
+        IPAddressFamily_free((f)); \
+        sk_IPAddressFamily_pop_free((sk), IPAddressFamily_free); \
+    } while (0)
+
+    PUSH_FAMILY(addr, f1);
 
     /* Shouldn't be able to canonize this as the len is > 3*/
     if (!TEST_false(X509v3_addr_canonize(addr)))
         goto end;
 
-    /* Create a well formed IPAddressFamily */
-    f1 = sk_IPAddressFamily_pop(addr);
-    IPAddressFamily_free(f1);
+    POP_FAMILY(addr);
 
+    /* Create a well formed IPAddressFamily */
     key[0] = (afi >> 8) & 0xFF;
     key[1] = afi & 0xFF;
     key[2] = 0x1;
@@ -297,8 +312,8 @@ static int test_addr_fam_len(void)
 
     /* Mark this as inheritance so we skip some of the is_canonize checks */
     f1->ipAddressChoice->type = IPAddressChoice_inherit;
-    if (!sk_IPAddressFamily_push(addr, f1))
-        goto end;
+
+    PUSH_FAMILY(addr, f1);
 
     /* Should be able to canonize now */
     if (!TEST_true(X509v3_addr_canonize(addr)))
@@ -306,7 +321,7 @@ static int test_addr_fam_len(void)
 
     testresult = 1;
   end:
-    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    FREE_FAMILY(addr, f1);
     ASN1_OCTET_STRING_free(ip1);
     ASN1_OCTET_STRING_free(ip2);
     return testresult;
