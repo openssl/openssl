@@ -12,6 +12,7 @@
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include "internal/sslconf.h"
+#include "internal/thread_once.h"
 #include "conf_local.h"
 
 /*
@@ -35,12 +36,25 @@ struct ssl_conf_cmd_st {
     char *arg;
 };
 
+static CRYPTO_ONCE init_ssl_names_lock = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_RWLOCK *ssl_names_lock;
 static struct ssl_conf_name_st *ssl_names;
 static size_t ssl_names_count;
 
-static void ssl_module_free(CONF_IMODULE *md)
+DEFINE_RUN_ONCE_STATIC(do_init_ssl_names_lock)
+{
+    ssl_names_lock = CRYPTO_THREAD_lock_new();
+    if (ssl_names_lock == NULL) {
+        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    return 1;
+}
+
+static void ssl_module_free_unlocked(CONF_IMODULE *md)
 {
     size_t i, j;
+
     if (ssl_names == NULL)
         return;
     for (i = 0; i < ssl_names_count; i++) {
@@ -58,12 +72,26 @@ static void ssl_module_free(CONF_IMODULE *md)
     ssl_names_count = 0;
 }
 
+static void ssl_module_free(CONF_IMODULE *md)
+{
+    if (!CRYPTO_THREAD_write_lock(ssl_names_lock))
+        return;
+    ssl_module_free_unlocked(md);
+    CRYPTO_THREAD_unlock(ssl_names_lock);
+}
+
 static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
 {
     size_t i, j, cnt;
     int rv = 0;
     const char *ssl_conf_section;
     STACK_OF(CONF_VALUE) *cmd_lists;
+
+    if (!RUN_ONCE(&init_ssl_names_lock, do_init_ssl_names_lock))
+        return 0;
+
+    if (!CRYPTO_THREAD_write_lock(ssl_names_lock))
+        return 0;
 
     ssl_conf_section = CONF_imodule_get_value(md);
     cmd_lists = NCONF_get_section(cnf, ssl_conf_section);
@@ -77,7 +105,7 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
         goto err;
     }
     cnt = sk_CONF_VALUE_num(cmd_lists);
-    ssl_module_free(md);
+    ssl_module_free_unlocked(md);
     ssl_names = OPENSSL_zalloc(sizeof(*ssl_names) * cnt);
     if (ssl_names == NULL)
         goto err;
@@ -126,7 +154,8 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
     rv = 1;
  err:
     if (rv == 0)
-        ssl_module_free(md);
+        ssl_module_free_unlocked(md);
+    CRYPTO_THREAD_unlock(ssl_names_lock);
     return rv;
 }
 
@@ -137,9 +166,30 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
  */
 const SSL_CONF_CMD *conf_ssl_get(size_t idx, const char **name, size_t *cnt)
 {
+    const SSL_CONF_CMD *cmds;
+
+    if (!RUN_ONCE(&init_ssl_names_lock, do_init_ssl_names_lock))
+        goto err;
+
+    if (!CRYPTO_THREAD_read_lock(ssl_names_lock))
+        goto err;
+
+    if (idx >= ssl_names_count) {
+        CRYPTO_THREAD_unlock(ssl_names_lock);
+        goto err;
+    }
+
     *name = ssl_names[idx].name;
     *cnt = ssl_names[idx].cmd_count;
-    return ssl_names[idx].cmds;
+    cmds = ssl_names[idx].cmds;
+    CRYPTO_THREAD_unlock(ssl_names_lock);
+
+    return cmds;
+
+err:
+    *name = NULL;
+    *cnt = 0;
+    return NULL;
 }
 
 /*
@@ -154,12 +204,19 @@ int conf_ssl_name_find(const char *name, size_t *idx)
 
     if (name == NULL)
         return 0;
+    if (!RUN_ONCE(&init_ssl_names_lock, do_init_ssl_names_lock))
+        return 0;
+    if (!CRYPTO_THREAD_read_lock(ssl_names_lock))
+        return 0;
+
     for (i = 0, nm = ssl_names; i < ssl_names_count; i++, nm++) {
         if (strcmp(nm->name, name) == 0) {
             *idx = i;
+            CRYPTO_THREAD_unlock(ssl_names_lock);
             return 1;
         }
     }
+    CRYPTO_THREAD_unlock(ssl_names_lock);
     return 0;
 }
 
