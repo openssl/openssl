@@ -112,7 +112,7 @@ static int npn_client = 0;
 static int npn_server = 0;
 static int npn_server_reject = 0;
 
-static int cb_client_npn(SSL *s, unsigned char **out, unsigned char *outlen,
+static int cb_client_npn(SSL *s, const unsigned char **out, unsigned char *outlen,
                          const unsigned char *in, unsigned int inlen,
                          void *arg)
 {
@@ -121,7 +121,7 @@ static int cb_client_npn(SSL *s, unsigned char **out, unsigned char *outlen,
      * prefixed set. We assume that NEXT_PROTO_STRING is a one element list
      * and remove the first byte to chop off the length prefix.
      */
-    *out = (unsigned char *)NEXT_PROTO_STRING + 1;
+    *out = (const unsigned char *)NEXT_PROTO_STRING + 1;
     *outlen = sizeof(NEXT_PROTO_STRING) - 2;
     return SSL_TLSEXT_ERR_OK;
 }
@@ -300,7 +300,7 @@ static int cb_server_alpn(SSL *s, const unsigned char **out,
     }
 
     if (SSL_select_next_proto
-        ((unsigned char **)out, outlen, protos, protos_len, in,
+        (out, outlen, protos, protos_len, in,
          inlen) != OPENSSL_NPN_NEGOTIATED) {
         OPENSSL_free(protos);
         return SSL_TLSEXT_ERR_NOACK;

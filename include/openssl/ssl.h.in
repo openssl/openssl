@@ -787,7 +787,7 @@ void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *s,
 #  define SSL_CTX_set_npn_advertised_cb SSL_CTX_set_next_protos_advertised_cb
 
 typedef int (*SSL_CTX_npn_select_cb_func)(SSL *s,
-                                          unsigned char **out,
+                                          const unsigned char **out,
                                           unsigned char *outlen,
                                           const unsigned char *in,
                                           unsigned int inlen,
@@ -802,7 +802,7 @@ void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
 #  define SSL_get0_npn_negotiated SSL_get0_next_proto_negotiated
 # endif
 
-__owur int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
+__owur int SSL_select_next_proto(const unsigned char **out, unsigned char *outlen,
                                  const unsigned char *in, unsigned int inlen,
                                  const unsigned char *client,
                                  unsigned int client_len);
