@@ -377,6 +377,7 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
  * ==============
  */
 
+#if 0
 #ifndef FIPS_MODULE
 #include <openssl/evp.h>
 
@@ -461,6 +462,7 @@ static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,
     }
 }
 #endif
+#endif
 
 /*-
  * Constructors / destructors
@@ -488,12 +490,15 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
         return NULL;
     }
     if (nms == 1) {
+#if 0
         int i, end;
+#endif
 
         /* Before pilfering, we make sure the legacy database is populated */
         OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
                             | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
 
+#if 0
         OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH,
                         get_legacy_cipher_names, namemap);
         OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH,
@@ -502,6 +507,7 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
         /* We also pilfer data from the legacy EVP_PKEY_ASN1_METHODs */
         for (i = 0, end = EVP_PKEY_asn1_get_count(); i < end; i++)
             get_legacy_pkey_meth_names(EVP_PKEY_asn1_get0(i), namemap);
+#endif
     }
 #endif
 
