@@ -196,6 +196,7 @@ struct ec_method_st {
     int (*ladder_post)(const EC_GROUP *group,
                        EC_POINT *r, EC_POINT *s,
                        EC_POINT *p, BN_CTX *ctx);
+    int (*group_full_init)(EC_GROUP *group, const unsigned char *data);
 };
 
 /*
