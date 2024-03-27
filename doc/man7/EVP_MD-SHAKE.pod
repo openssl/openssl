@@ -43,6 +43,26 @@ Known names are "SHAKE-128" and "SHAKE128".
 
 Known names are "SHAKE-256" and "SHAKE256".
 
+=item SHAKE-128-256
+
+Known names are "SHAKE-128-256", "SHAKE-128/256" and "SHAKE128-256".
+The output is a fixed size of 32 bytes.
+
+=item SHAKE-256-512
+
+Known names are "SHAKE-256-512", "SHAKE-256/512" and "SHAKE256-512".
+The output is a fixed size of 64 bytes.
+
+=item SHAKE-256-256
+
+Known names are "SHAKE-256-256", "SHAKE-256/256" and "SHAKE256-256".
+The output is a fixed size of 32 bytes.
+
+=item SHAKE-256-192
+
+Known names are "SHAKE-256-192", "SHAKE-256/192" and "SHAKE256-192".
+The output is a fixed size of 24 bytes.
+
 =back
 
 =head2 Gettable Parameters

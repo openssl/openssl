@@ -50,7 +50,8 @@ struct keccak_st {
 };
 
 void ossl_sha3_reset(KECCAK1600_CTX *ctx);
-int ossl_sha3_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen);
+int ossl_sha3_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen,
+                   size_t outbitlen);
 int ossl_keccak_kmac_init(KECCAK1600_CTX *ctx, unsigned char pad,
                           size_t bitlen);
 int ossl_sha3_update(KECCAK1600_CTX *ctx, const void *_inp, size_t len);

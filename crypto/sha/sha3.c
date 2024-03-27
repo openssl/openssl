@@ -19,14 +19,15 @@ void ossl_sha3_reset(KECCAK1600_CTX *ctx)
     ctx->xof_state = XOF_STATE_INIT;
 }
 
-int ossl_sha3_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen)
+int ossl_sha3_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen,
+                   size_t outbitlen)
 {
     size_t bsz = SHA3_BLOCKSIZE(bitlen);
 
     if (bsz <= sizeof(ctx->buf)) {
         ossl_sha3_reset(ctx);
         ctx->block_size = bsz;
-        ctx->md_size = bitlen / 8;
+        ctx->md_size = outbitlen / 8;
         ctx->pad = pad;
         return 1;
     }
@@ -36,11 +37,7 @@ int ossl_sha3_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen)
 
 int ossl_keccak_kmac_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen)
 {
-    int ret = ossl_sha3_init(ctx, pad, bitlen);
-
-    if (ret)
-        ctx->md_size *= 2;
-    return ret;
+    return ossl_sha3_init(ctx, pad, bitlen, 2*bitlen);
 }
 
 int ossl_sha3_update(KECCAK1600_CTX *ctx, const void *_inp, size_t len)

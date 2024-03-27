@@ -20,6 +20,7 @@
 
 #define SHA3_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 #define SHAKE_FLAGS PROV_DIGEST_FLAG_XOF
+#define SHAKE_FIXED_FLAGS 0
 #define KMAC_FLAGS PROV_DIGEST_FLAG_XOF
 
 /*
@@ -29,12 +30,14 @@
  */
 static OSSL_FUNC_digest_init_fn keccak_init;
 static OSSL_FUNC_digest_init_fn keccak_init_params;
+static OSSL_FUNC_digest_init_fn keccak_fixed_init_params;
 static OSSL_FUNC_digest_update_fn keccak_update;
 static OSSL_FUNC_digest_final_fn keccak_final;
 static OSSL_FUNC_digest_freectx_fn keccak_freectx;
 static OSSL_FUNC_digest_dupctx_fn keccak_dupctx;
 static OSSL_FUNC_digest_squeeze_fn shake_squeeze;
 static OSSL_FUNC_digest_set_ctx_params_fn shake_set_ctx_params;
+static OSSL_FUNC_digest_set_ctx_params_fn shake_fixed_set_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn shake_settable_ctx_params;
 static sha3_absorb_fn generic_sha3_absorb;
 static sha3_final_fn generic_sha3_final;
@@ -65,6 +68,12 @@ static int keccak_init_params(void *vctx, const OSSL_PARAM params[])
 {
     return keccak_init(vctx, NULL)
             && shake_set_ctx_params(vctx, params);
+}
+
+static int keccak_fixed_init_params(void *vctx, const OSSL_PARAM params[])
+{
+    return keccak_init(vctx, NULL)
+            && shake_fixed_set_ctx_params(vctx, params);
 }
 
 static int keccak_update(void *vctx, const unsigned char *inp, size_t len)
@@ -460,7 +469,7 @@ static PROV_SHA3_METHOD shake_ARMSHA3_md =
 # define SHAKE_SET_MD(uname, typ) ctx->meth = shake_generic_md;
 #endif /* S390_SHA3 */
 
-#define SHA3_newctx(typ, uname, name, bitlen, pad)                             \
+#define SHA3_newctx(typ, uname, name, bitlen, outbitlen, pad)                  \
 static OSSL_FUNC_digest_newctx_fn name##_newctx;                               \
 static void *name##_newctx(void *provctx)                                      \
 {                                                                              \
@@ -469,12 +478,12 @@ static void *name##_newctx(void *provctx)                                      \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
-    ossl_sha3_init(ctx, pad, bitlen);                                          \
+    ossl_sha3_init(ctx, pad, bitlen, outbitlen);                               \
     SHA3_SET_MD(uname, typ)                                                    \
     return ctx;                                                                \
 }
 
-#define SHAKE_newctx(typ, uname, name, bitlen, pad)                            \
+#define SHAKE_newctx(typ, uname, name, bitlen, outbitlen, pad)                 \
 static OSSL_FUNC_digest_newctx_fn name##_newctx;                               \
 static void *name##_newctx(void *provctx)                                      \
 {                                                                              \
@@ -483,7 +492,7 @@ static void *name##_newctx(void *provctx)                                      \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
-    ossl_sha3_init(ctx, pad, bitlen);                                          \
+    ossl_sha3_init(ctx, pad, bitlen, outbitlen);                               \
     SHAKE_SET_MD(uname, typ)                                                   \
     return ctx;                                                                \
 }
@@ -522,6 +531,15 @@ const OSSL_DISPATCH ossl_##name##_functions[] = {                              \
     { OSSL_FUNC_DIGEST_SQUEEZE, (void (*)(void))shake_squeeze },               \
     { OSSL_FUNC_DIGEST_INIT, (void (*)(void))keccak_init_params },             \
     { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))shake_set_ctx_params }, \
+    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
+     (void (*)(void))shake_settable_ctx_params },                              \
+    PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
+
+#define PROV_FUNC_SHAKE_FIXED_DIGEST(name, bitlen, blksize, dgstsize, flags)   \
+    PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),      \
+    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))keccak_fixed_init_params },       \
+    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS,                                         \
+      (void (*)(void))shake_fixed_set_ctx_params },                            \
     { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))shake_settable_ctx_params },                              \
     PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
@@ -572,23 +590,55 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
+static int shake_fixed_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    size_t outlen;
+    const OSSL_PARAM *p;
+    KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
+
+    if (ctx == NULL)
+        return 0;
+    if (params == NULL)
+        return 1;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_size_t(p, &outlen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+        if (outlen != ctx->md_size) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_NOT_XOF_OR_INVALID_LENGTH);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
 #define IMPLEMENT_SHA3_functions(bitlen)                                       \
-    SHA3_newctx(sha3, SHA3_##bitlen, sha3_##bitlen, bitlen, '\x06')            \
+    SHA3_newctx(sha3, SHA3_##bitlen, sha3_##bitlen, bitlen, bitlen, '\x06')    \
     PROV_FUNC_SHA3_DIGEST(sha3_##bitlen, bitlen,                               \
                           SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),         \
                           SHA3_FLAGS)
 
 #define IMPLEMENT_KECCAK_functions(bitlen)                                     \
-    SHA3_newctx(keccak, KECCAK_##bitlen, keccak_##bitlen, bitlen, '\x01')      \
+    SHA3_newctx(keccak, KECCAK_##bitlen, keccak_##bitlen, bitlen, bitlen, '\x01') \
     PROV_FUNC_SHA3_DIGEST(keccak_##bitlen, bitlen,                             \
                           SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),         \
                           SHA3_FLAGS)
 
 #define IMPLEMENT_SHAKE_functions(bitlen)                                      \
-    SHAKE_newctx(shake, SHAKE_##bitlen, shake_##bitlen, bitlen, '\x1f')        \
+    SHAKE_newctx(shake, SHAKE_##bitlen, shake_##bitlen, bitlen, bitlen, '\x1f')\
     PROV_FUNC_SHAKE_DIGEST(shake_##bitlen, bitlen,                             \
                           SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),         \
                           SHAKE_FLAGS)
+#define IMPLEMENT_SHAKE_FIXED_functions(bitlen, outbitlen)                     \
+    SHA3_newctx(shake, SHAKE_##bitlen, shake_##bitlen##_##outbitlen,           \
+                bitlen, outbitlen, '\x1f')                                     \
+    PROV_FUNC_SHAKE_FIXED_DIGEST(shake_##bitlen##_##outbitlen, bitlen,         \
+                          SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(outbitlen),      \
+                          SHAKE_FIXED_FLAGS)
 #define IMPLEMENT_KMAC_functions(bitlen)                                       \
     KMAC_newctx(keccak_kmac_##bitlen, bitlen, '\x04')                          \
     PROV_FUNC_SHAKE_DIGEST(keccak_kmac_##bitlen, bitlen,                       \
@@ -615,6 +665,15 @@ IMPLEMENT_KECCAK_functions(512)
 IMPLEMENT_SHAKE_functions(128)
 /* ossl_shake_256_functions */
 IMPLEMENT_SHAKE_functions(256)
+/* ossl_shake_256_192_functions */
+IMPLEMENT_SHAKE_FIXED_functions(256, 192)
+/* ossl_shake_256_256_functions */
+IMPLEMENT_SHAKE_FIXED_functions(256, 256)
+/* ossl_shake_256_512_functions */
+IMPLEMENT_SHAKE_FIXED_functions(256, 512)
+/* ossl_shake_128_256_functions */
+IMPLEMENT_SHAKE_FIXED_functions(128, 256)
+
 /* ossl_keccak_kmac_128_functions */
 IMPLEMENT_KMAC_functions(128)
 /* ossl_keccak_kmac_256_functions */

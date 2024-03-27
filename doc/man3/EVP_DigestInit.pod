@@ -488,8 +488,11 @@ EVP_MD_CTX_set_params() can be used with the following OSSL_PARAM keys:
 
 Sets the digest length for extendable output functions.
 The value should not exceed what can be given using a B<size_t>.
-It may be used by BLAKE2B-512, SHAKE-128 and SHAKE-256 to set the
+It may be used by B<BLAKE2B-512>, B<SHAKE-128> and B<SHAKE-256> to set the
 output length used by EVP_DigestFinal_ex() and EVP_DigestFinal().
+"xoflen" should not be used for the fixed output shake algorithms which
+includes B<SHAKE-128/256>, B<SHAKE-256/512>, B<SHAKE-256/192> and
+B<SHAKE-256/256>.
 
 =item "pad-type" (B<OSSL_DIGEST_PARAM_PAD_TYPE>) <unsigned integer>
 
