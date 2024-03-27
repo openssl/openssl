@@ -26,6 +26,44 @@ static OSSL_LIB_CTX *libctx = NULL;
 /* Currently the section names are of the form test-<number>, e.g. test-15. */
 #define MAX_TESTCASE_NAME_LENGTH 100
 
+static void print_handshake_history(const HANDSHAKE_HISTORY *history)
+{
+    size_t first_idx;
+    size_t i;
+    size_t cur_idx;
+    const HANDSHAKE_HISTORY_ENTRY *cur_entry;
+    const char header_template[] = "|%14s|%16s|%16s|%16s|%17s|%14s|";
+    const char body_template[]   = "|%14s|%16s|%16s|%16s|%17d|%14s|";
+
+    TEST_info("The following is the server/client state "
+              "in the most recent %d handshake loops.",
+              MAX_HANDSHAKE_HISTORY_ENTRY);
+
+    TEST_note("=================================================="
+              "==================================================");
+    TEST_note(header_template,
+              "phase", "handshake status", "server status",
+              "client status", "client turn count", "is client turn");
+    TEST_note("+--------------+----------------+----------------"
+              "+----------------+-----------------+--------------+");
+
+    first_idx = (history->last_idx - history->entry_count + 1) &
+                MAX_HANDSHAKE_HISTORY_ENTRY_IDX_MASK;
+    for (i = 0; i < history->entry_count; ++i) {
+        cur_idx = (first_idx + i) & MAX_HANDSHAKE_HISTORY_ENTRY_IDX_MASK;
+        cur_entry = &(history->entries)[cur_idx];
+        TEST_note(body_template,
+                  handshake_connect_phase_name(cur_entry->phase),
+                  handshake_status_name(cur_entry->handshake_status),
+                  handshake_peer_status_name(cur_entry->server_status),
+                  handshake_peer_status_name(cur_entry->client_status),
+                  cur_entry->client_turn_count,
+                  cur_entry->is_client_turn ? "true" : "false");
+    }
+    TEST_note("=================================================="
+              "==================================================");
+}
+
 static const char *print_alert(int alert)
 {
     return alert ? SSL_alert_desc_string_long(alert) : "no alert";
@@ -388,6 +426,12 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         ret &= check_client_sign_type(result, test_ctx);
         ret &= check_client_ca_names(result, test_ctx);
     }
+
+    /* Print handshake loop history if any check fails. */
+    if (!ret) {
+        print_handshake_history(&(result->history));
+    }
+
     return ret;
 }
 

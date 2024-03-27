@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,11 @@
 
 #include "ssl_test_ctx.h"
 
+#define MAX_HANDSHAKE_HISTORY_ENTRY_BIT 4
+#define MAX_HANDSHAKE_HISTORY_ENTRY (1 << MAX_HANDSHAKE_HISTORY_ENTRY_BIT)
+#define MAX_HANDSHAKE_HISTORY_ENTRY_IDX_MASK \
+    ((1 << MAX_HANDSHAKE_HISTORY_ENTRY_BIT) - 1)
+
 typedef struct ctx_data_st {
     unsigned char *npn_protocols;
     size_t npn_protocols_len;
@@ -21,6 +26,63 @@ typedef struct ctx_data_st {
     char *srp_password;
     char *session_ticket_app_data;
 } CTX_DATA;
+
+typedef enum {
+    HANDSHAKE,
+    RENEG_APPLICATION_DATA,
+    RENEG_SETUP,
+    RENEG_HANDSHAKE,
+    APPLICATION_DATA,
+    SHUTDOWN,
+    CONNECTION_DONE
+} connect_phase_t;
+
+/* The status for each connection phase. */
+typedef enum {
+    PEER_SUCCESS,
+    PEER_RETRY,
+    PEER_ERROR,
+    PEER_WAITING,
+    PEER_TEST_FAILURE
+} peer_status_t;
+
+typedef enum {
+    /* Both parties succeeded. */
+    HANDSHAKE_SUCCESS,
+    /* Client errored. */
+    CLIENT_ERROR,
+    /* Server errored. */
+    SERVER_ERROR,
+    /* Peers are in inconsistent state. */
+    INTERNAL_ERROR,
+    /* One or both peers not done. */
+    HANDSHAKE_RETRY
+} handshake_status_t;
+
+/* Stores the various status information in a handshake loop. */
+typedef struct handshake_history_entry_st {
+    connect_phase_t phase;
+    handshake_status_t handshake_status;
+    peer_status_t server_status;
+    peer_status_t client_status;
+    int client_turn_count;
+    int is_client_turn;
+} HANDSHAKE_HISTORY_ENTRY;
+
+typedef struct handshake_history_st {
+    /* Implemented using ring buffer. */
+    /*
+     * The valid entries are |entries[last_idx]|, |entries[last_idx-1]|,
+     * ..., etc., going up to |entry_count| number of entries. Note that when
+     * the index into the array |entries| becomes < 0, we wrap around to
+     * the end of |entries|.
+     */
+    HANDSHAKE_HISTORY_ENTRY entries[MAX_HANDSHAKE_HISTORY_ENTRY];
+    /* The number of valid entries in |entries| array. */
+    size_t entry_count;
+    /* The index of the last valid entry in the |entries| array. */
+    size_t last_idx;
+} HANDSHAKE_HISTORY;
 
 typedef struct handshake_result {
     ssl_test_result_t result;
@@ -77,6 +139,8 @@ typedef struct handshake_result {
     char *cipher;
     /* session ticket application data */
     char *result_session_ticket_app_data;
+    /* handshake loop history */
+    HANDSHAKE_HISTORY history;
 } HANDSHAKE_RESULT;
 
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void);
@@ -94,5 +158,9 @@ int configure_handshake_ctx_for_srp(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                     CTX_DATA *server_ctx_data,
                                     CTX_DATA *server2_ctx_data,
                                     CTX_DATA *client_ctx_data);
+
+const char *handshake_connect_phase_name(connect_phase_t phase);
+const char *handshake_status_name(handshake_status_t handshake_status);
+const char *handshake_peer_status_name(peer_status_t peer_status);
 
 #endif  /* OSSL_TEST_HANDSHAKE_HELPER_H */
