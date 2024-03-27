@@ -55,6 +55,39 @@ ASN1_OCTET_STRING *PKCS7_get_octet_string(PKCS7 *p7)
     return NULL;
 }
 
+static ASN1_OCTET_STRING *pkcs7_get1_data(PKCS7 *p7)
+{
+    ASN1_OCTET_STRING *os = PKCS7_get_octet_string(p7);
+
+    if (os != NULL) {
+        if (os->flags & ASN1_STRING_FLAG_NDEF)
+            return os;
+        else
+            return ASN1_OCTET_STRING_dup(os);
+    }
+
+    if (PKCS7_type_is_other(p7) && (p7->d.other != NULL)
+            && (p7->d.other->type == V_ASN1_SEQUENCE)
+            && (p7->d.other->value.sequence != NULL)
+            && (p7->d.other->value.sequence->length > 0)) {
+        os = ASN1_OCTET_STRING_new();
+        if (os != NULL) {
+            const unsigned char *data = p7->d.other->value.sequence->data;
+            long len;
+            int inf, tag, class;
+
+            inf = ASN1_get_object(&data, &len, &tag, &class,
+                                  p7->d.other->value.sequence->length);
+            if (inf != V_ASN1_CONSTRUCTED || tag != V_ASN1_SEQUENCE
+                    || !ASN1_OCTET_STRING_set(os, data, len)) {
+                ASN1_OCTET_STRING_free(os);
+                os = NULL;
+            }
+        }
+    }
+    return os;
+}
+
 static int pkcs7_bio_add_digest(BIO **pbio, X509_ALGOR *alg,
                                 const PKCS7_CTX *ctx)
 {
@@ -240,7 +273,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
     switch (i) {
     case NID_pkcs7_signed:
         md_sk = p7->d.sign->md_algs;
-        os = PKCS7_get_octet_string(p7->d.sign->contents);
+        os = pkcs7_get1_data(p7->d.sign->contents);
         break;
     case NID_pkcs7_signedAndEnveloped:
         rsk = p7->d.signed_and_enveloped->recipientinfo;
@@ -263,7 +296,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
         break;
     case NID_pkcs7_digest:
         xa = p7->d.digest->md;
-        os = PKCS7_get_octet_string(p7->d.digest->contents);
+        os = pkcs7_get1_data(p7->d.digest->contents);
         break;
     case NID_pkcs7_data:
         break;
@@ -346,8 +379,14 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
     if (bio == NULL) {
         if (PKCS7_is_detached(p7)) {
             bio = BIO_new(BIO_s_null());
-        } else if (os && os->length > 0) {
-            bio = BIO_new_mem_buf(os->data, os->length);
+        } else if (os != NULL && os->length > 0) {
+            bio = BIO_new(BIO_s_mem());
+            if (bio == NULL)
+                goto err;
+            if (BIO_write(bio, os->data, os->length) != os->length) {
+                BIO_free_all(bio);
+                goto err;
+            }
         } else {
             bio = BIO_new(BIO_s_mem());
             if (bio == NULL)
@@ -361,9 +400,14 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
         BIO_push(out, bio);
     else
         out = bio;
+
+    if (os != NULL && !(os->flags & ASN1_STRING_FLAG_NDEF))
+        ASN1_OCTET_STRING_free(os);
     return out;
 
  err:
+    if (os != NULL && !(os->flags & ASN1_STRING_FLAG_NDEF))
+        ASN1_OCTET_STRING_free(os);
     EVP_CIPHER_free(fetched_cipher);
     BIO_free_all(out);
     BIO_free_all(btmp);
