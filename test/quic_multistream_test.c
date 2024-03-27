@@ -715,7 +715,8 @@ static int helper_init(struct helper *h, const char *script_name,
                                     &ina, sizeof(ina), 0)))
         goto err;
 
-    if (!TEST_true(BIO_bind(h->s_fd, h->s_net_bio_orig_addr, 0)))
+    if (!TEST_true(BIO_bind(h->s_fd, h->s_net_bio_orig_addr,
+                            BIO_SOCK_REUSEADDR)))
         goto err;
 
     info.addr = h->s_net_bio_addr;
