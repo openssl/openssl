@@ -40,7 +40,8 @@ typedef enum OPTION_choice {
     OPT_NO_SECURITY_CHECKS,
     OPT_TLS_PRF_EMS_CHECK,
     OPT_DISALLOW_DRGB_TRUNC_DIGEST,
-    OPT_SELF_TEST_ONLOAD, OPT_SELF_TEST_ONINSTALL
+    OPT_SELF_TEST_ONLOAD, OPT_SELF_TEST_ONINSTALL,
+    OPT_30_COMPAT
 } OPTION_CHOICE;
 
 const OPTIONS fipsinstall_options[] = {
@@ -66,6 +67,7 @@ const OPTIONS fipsinstall_options[] = {
      "Enable the run-time FIPS check for EMS during TLS1_PRF"},
     {"no_drbg_truncated_digests", OPT_DISALLOW_DRGB_TRUNC_DIGEST, '-',
      "Disallow truncated digests with Hash and HMAC DRBGs"},
+    {"compat_30", OPT_30_COMPAT, '-', "Emulate behavior of 3.0 fipsinstall"},
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input config file, used when verifying"},
 
@@ -88,6 +90,7 @@ typedef struct {
     unsigned int security_checks : 1;
     unsigned int tls_prf_ems_check : 1;
     unsigned int drgb_no_trunc_dgst : 1;
+    unsigned int compat_30 : 1;
 } FIPS_OPTS;
 
 /* Pedantic FIPS compliance */
@@ -97,6 +100,7 @@ static const FIPS_OPTS pedantic_opts = {
     1,      /* security_checks */
     1,      /* tls_prf_ems_check */
     1,      /* drgb_no_trunc_dgst */
+    0,      /* compat_30 */
 };
 
 /* Default FIPS settings for backward compatibility */
@@ -106,6 +110,7 @@ static FIPS_OPTS fips_opts = {
     1,      /* security_checks */
     0,      /* tls_prf_ems_check */
     0,      /* drgb_no_trunc_dgst */
+    0,      /* compat_30 */
 };
 
 static int check_non_pedantic_fips(int pedantic, const char *name)
@@ -224,13 +229,18 @@ static int write_config_fips_section(BIO *out, const char *section,
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS,
                       opts->conditional_errors ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS,
-                      opts->security_checks ? "1" : "0") <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK,
-                      opts->tls_prf_ems_check ? "1" : "0") <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST,
-                      opts->drgb_no_trunc_dgst ? "1" : "0") <= 0
-        || !print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
-                      module_mac_len))
+                      opts->security_checks ? "1" : "0") <= 0)
+        goto end;
+
+    if (!opts->compat_30)
+        if (BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK,
+                       opts->tls_prf_ems_check ? "1" : "0") <= 0
+            || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST,
+                          opts->drgb_no_trunc_dgst ? "1" : "0") <= 0)
+            goto end;
+        
+    if(!print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
+                  module_mac_len))
         goto end;
 
     if (install_mac != NULL && install_mac_len > 0) {
@@ -459,6 +469,10 @@ opthelp:
         case OPT_SELF_TEST_ONINSTALL:
             if (!check_non_pedantic_fips(pedantic, "self_test_oninstall"))
                 goto end;
+            fips_opts.self_test_onload = 0;
+            break;
+        case OPT_30_COMPAT:
+            fips_opts.compat_30 = 1;
             fips_opts.self_test_onload = 0;
             break;
         }
