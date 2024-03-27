@@ -1037,6 +1037,53 @@ subtest "CMS signed digest, S/MIME format" => sub {
        "Verify CMS signed digest, S/MIME format");
 };
 
+sub path_tests {
+    our $app = shift;
+    our @path = qw(test certs);
+    our $key = srctop_file(@path, "ee-key.pem");
+    our $ee = srctop_file(@path, "ee-cert.pem");
+    our $ca = srctop_file(@path, "ca-cert.pem");
+    our $root = srctop_file(@path, "root-cert.pem");
+    our $sig_file = "signature.p7s";
+
+    sub sign {
+        my $inter = shift;
+        my @inter = $inter ? ("-certfile", $inter) : ();
+        my $msg = shift;
+        ok(run(app(["openssl", $app, @prov, "-sign", "-in", $smcont,
+                    "-inkey", $key, "-signer", $ee, @inter,
+                    "-out", $sig_file],
+                   "accept $app sign with EE $msg".
+                   " intermediate CA certificates")));
+    }
+    sub verify {
+        my $inter = shift;
+        my @inter = $inter ? ("-certfile", $inter) : ();
+        my $msg = shift;
+        my $res = shift;
+        ok($res == run(app(["openssl", $app, @prov, "-verify", "-in", $sig_file,
+                            "-purpose", "sslserver", "-CAfile", $root, @inter,
+                            "-content", $smcont],
+                           "accept $app verify with EE ".
+                           "$msg intermediate CA certificates")));
+    }
+    sign($ca, "and");
+    verify(0, "with included", 1);
+    sign(0, "without");
+    verify(0, "without", 0);
+    verify($ca, "with added", 1);
+};
+subtest "CMS sign+verify cert path tests" => sub {
+    plan tests => 5;
+
+    path_tests("cms");
+};
+subtest "PKCS7 sign+verify cert path tests" => sub {
+    plan tests => 5;
+
+    path_tests("smime");
+};
+
 subtest "CMS code signing test" => sub {
     plan tests => 7;
     my $sig_file = "signature.p7s";

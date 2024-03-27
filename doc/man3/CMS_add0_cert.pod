@@ -57,8 +57,9 @@ For enveloped data they are added to B<OriginatorInfo>.
 CMS_add0_cert(), CMS_add1_cert() and CMS_add0_crl() and CMS_add1_crl() return
 1 for success and 0 for failure.
 
-CMS_get1_certs() and CMS_get1_crls() return the STACK of certificates or CRLs
-or NULL if there are none or an error occurs. The only error which will occur
+CMS_get1_certs() and CMS_get1_crls() return the STACK of certificates or CRLs,
+which is empty if there are none. They return NULL on error.
+Besides out-of-memory, the only error which will occur
 in practice is if the I<cms> type is invalid.
 
 =head1 SEE ALSO
