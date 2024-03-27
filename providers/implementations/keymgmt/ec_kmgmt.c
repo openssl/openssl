@@ -92,6 +92,8 @@ static
 const char *sm2_query_operation_name(int operation_id)
 {
     switch (operation_id) {
+    case OSSL_OP_KEYEXCH:
+        return "ECDH";
     case OSSL_OP_SIGNATURE:
         return "SM2";
     }
