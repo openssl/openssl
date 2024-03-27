@@ -265,6 +265,14 @@ static int rsasve_generate(PROV_RSA_CTX *prsactx,
             *secretlen = nlen;
         return 1;
     }
+
+#ifdef FIPS_MODULE
+    if (nlen < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS/8) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SIZE_TOO_SMALL);
+        return 0;
+    }
+#endif
+
     /*
      * Step (2): Generate a random byte string z of nlen bytes where
      *            1 < z < n - 1
@@ -307,6 +315,13 @@ static int rsasve_recover(PROV_RSA_CTX *prsactx,
         *outlen = nlen;
         return 1;
     }
+
+#ifdef FIPS_MODULE
+    if (nlen < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS/8) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SIZE_TOO_SMALL);
+        return 0;
+    }
+#endif
 
     /* Step (2): check the input ciphertext 'inlen' matches the nlen */
     if (inlen != nlen) {

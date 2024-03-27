@@ -73,8 +73,22 @@ int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
         return 0;
 #endif
     }
+
+#ifdef FIPS_MODULE
+    if (EVP_MD_is_a(md, "SHAKE-128") || EVP_MD_is_a(md, "SHAKE-256")) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_DIGEST_NOT_ALLOWED);
+        return 0;
+    }
+#endif
     if (mgf1md == NULL)
         mgf1md = md;
+
+#ifdef FIPS_MODULE
+    if (EVP_MD_is_a(mgf1md, "SHAKE-128") || EVP_MD_is_a(mgf1md, "SHAKE-256")) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_DIGEST_NOT_ALLOWED);
+        return 0;
+    }
+#endif
 
     mdlen = EVP_MD_get_size(md);
     if (mdlen <= 0) {
@@ -179,8 +193,22 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
 #endif
     }
 
+#ifdef FIPS_MODULE
+    if (EVP_MD_is_a(md, "SHAKE-128") || EVP_MD_is_a(md, "SHAKE-256")) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_DIGEST_NOT_ALLOWED);
+        return -1;
+    }
+#endif
+
     if (mgf1md == NULL)
         mgf1md = md;
+
+#ifdef FIPS_MODULE
+    if (EVP_MD_is_a(mgf1md, "SHAKE-128") || EVP_MD_is_a(mgf1md, "SHAKE-256")) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_DIGEST_NOT_ALLOWED);
+        return -1;
+    }
+#endif
 
     mdlen = EVP_MD_get_size(md);
 

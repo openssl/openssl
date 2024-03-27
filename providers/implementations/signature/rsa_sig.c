@@ -686,6 +686,19 @@ static int rsa_verify_recover(void *vprsactx,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     int ret;
+# ifdef FIPS_MODULE
+    size_t rsabits = RSA_bits(prsactx->rsa);
+
+    if (rsabits < 2048) {
+        if (rsabits != 1024
+            && rsabits != 1280
+            && rsabits != 1536
+            && rsabits != 1792) {
+            ERR_raise(ERR_LIB_FIPS, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+# endif
 
     if (!ossl_prov_is_running())
         return 0;
@@ -774,6 +787,19 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     size_t rslen;
+# ifdef FIPS_MODULE
+    size_t rsabits = RSA_bits(prsactx->rsa);
+
+    if (rsabits < 2048) {
+        if (rsabits != 1024
+            && rsabits != 1280
+            && rsabits != 1536
+            && rsabits != 1792) {
+            ERR_raise(ERR_LIB_FIPS, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+# endif
 
     if (!ossl_prov_is_running())
         return 0;
@@ -1246,7 +1272,13 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
             err_extra_text = "No padding not allowed with RSA-PSS";
             goto cont;
         case RSA_X931_PADDING:
+#ifndef FIPS_MODULE
             err_extra_text = "X.931 padding not allowed with RSA-PSS";
+#else /* !defined(FIPS_MODULE) */
+            err_extra_text = "X.931 padding no longer allowed in FIPS mode,"
+                             " since it was removed from FIPS 186-5";
+            goto bad_pad;
+#endif /* !defined(FIPS_MODULE) */
         cont:
             if (RSA_test_flags(prsactx->rsa,
                                RSA_FLAG_TYPE_MASK) == RSA_FLAG_TYPE_RSA)

@@ -135,6 +135,17 @@ static int rsa_decrypt_init(void *vprsactx, void *vrsa,
     return rsa_init(vprsactx, vrsa, params, EVP_PKEY_OP_DECRYPT);
 }
 
+# ifdef FIPS_MODULE
+static int fips_padding_allowed(const PROV_RSA_CTX *prsactx)
+{
+    if (prsactx->pad_mode == RSA_PKCS1_PADDING || prsactx->pad_mode == RSA_NO_PADDING
+        || prsactx->pad_mode == RSA_PKCS1_WITH_TLS_PADDING)
+        return 0;
+
+    return 1;
+}
+# endif
+
 static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
                        size_t outsize, const unsigned char *in, size_t inlen)
 {
@@ -143,6 +154,18 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
 
     if (!ossl_prov_is_running())
         return 0;
+
+# ifdef FIPS_MODULE
+    if (fips_padding_allowed(prsactx) == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
+        return 0;
+    }
+
+    if (RSA_bits(prsactx->rsa) < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
+# endif
 
     if (out == NULL) {
         size_t len = RSA_size(prsactx->rsa);
@@ -205,6 +228,18 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
 
     if (!ossl_prov_is_running())
         return 0;
+
+# ifdef FIPS_MODULE
+    if (fips_padding_allowed(prsactx) == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
+        return 0;
+    }
+
+    if (RSA_bits(prsactx->rsa) < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
+# endif
 
     if (prsactx->pad_mode == RSA_PKCS1_WITH_TLS_PADDING) {
         if (out == NULL) {

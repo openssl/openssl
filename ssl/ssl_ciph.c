@@ -356,6 +356,9 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     ctx->disabled_mkey_mask = 0;
     ctx->disabled_auth_mask = 0;
 
+    if (EVP_default_properties_is_fips_enabled(ctx->libctx))
+        ctx->disabled_mkey_mask |= SSL_kRSA | SSL_kRSAPSK;
+
     /*
      * We ignore any errors from the fetches below. They are expected to fail
      * if these algorithms are not available.
