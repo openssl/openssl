@@ -75,6 +75,7 @@ typedef enum OPTION_choice {
     OPT_IN_PLACE,
     OPT_PROVIDER_NAME,
     OPT_PROV_PROPQUERY,
+    OPT_DATA_CHUNK,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -88,6 +89,8 @@ static KEY_LIST *public_keys;
 
 static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst);
 static int parse_bin(const char *value, unsigned char **buf, size_t *buflen);
+static int parse_bin_chunk(const char *value, size_t offset, size_t max,
+                        unsigned char **buf, size_t *buflen, size_t *out_offset);
 static int is_digest_disabled(const char *name);
 static int is_pkey_disabled(const char *name);
 static int is_mac_disabled(const char *name);
@@ -118,6 +121,7 @@ static int memory_err_compare(EVP_TEST *t, const char *err,
 /* Option specific for evp test */
 static int process_mode_in_place;
 static const char *propquery = NULL;
+static int data_chunk_size;
 
 static int evp_test_process_mode(char *mode)
 {
@@ -148,23 +152,42 @@ static void evp_test_buffer_free(EVP_TEST_BUFFER *db)
 }
 
 /* append buffer to a list */
-static int evp_test_buffer_append(const char *value,
+static int evp_test_buffer_append(const char *value, size_t max_len,
                                   STACK_OF(EVP_TEST_BUFFER) **sk)
 {
     EVP_TEST_BUFFER *db = NULL;
-
-    if (!TEST_ptr(db = OPENSSL_malloc(sizeof(*db))))
-        goto err;
-
-    if (!parse_bin(value, &db->buf, &db->buflen))
-        goto err;
-    db->count = 1;
-    db->count_set = 0;
+    int rv = 0;
+    size_t offset = 0;
 
     if (*sk == NULL && !TEST_ptr(*sk = sk_EVP_TEST_BUFFER_new_null()))
         goto err;
-    if (!sk_EVP_TEST_BUFFER_push(*sk, db))
-        goto err;
+
+    do {
+        if (!TEST_ptr(db = OPENSSL_zalloc(sizeof(*db))))
+            goto err;
+        if (max_len == 0) {
+            /* parse all in one shot */
+            if ((rv = parse_bin(value, &db->buf, &db->buflen)) != 1)
+                goto err;
+        } else {
+            /* parse in chunks */
+            size_t new_offset = 0;
+
+            if ((rv = parse_bin_chunk(value, offset, max_len, &db->buf,
+                                 &db->buflen, &new_offset)) == -1)
+                goto err;
+            offset = new_offset;
+        }
+
+        db->count = 1;
+        db->count_set = 0;
+
+        if (db->buf == NULL)
+            evp_test_buffer_free(db);
+        else if (db->buf != NULL && !sk_EVP_TEST_BUFFER_push(*sk, db))
+            goto err;
+        /* if processing by chunks, continue until the whole value is parsed */
+    } while (rv == 1 && max_len != 0);
 
     return 1;
 
@@ -338,6 +361,66 @@ static int parse_bin(const char *value, unsigned char **buf, size_t *buflen)
     return 1;
 }
 
+/*
+ * Convert at maximum "max" bytes to a binary allocated buffer.
+ * Return 1 on success, -1 on failure or 0 for end of value string.
+ */
+static int parse_bin_chunk(const char *value, size_t offset, size_t max,
+                     unsigned char **buf, size_t *buflen, size_t *out_offset)
+{
+    size_t vlen;
+    size_t chunk_len;
+    const char *value_str = value[0] == '"' ? value + offset + 1 : value + offset;
+
+    if (max < 1)
+        return -1;
+
+    if (*value == '\0' || strcmp(value, "\"\"") == 0) {
+        *buf = OPENSSL_malloc(1);
+        if (*buf == NULL)
+            return 0;
+        **buf = 0;
+        *buflen = 0;
+        return 0;
+    }
+
+    if (*value_str == '\0')
+        return 0;
+
+    vlen = strlen(value_str);
+    if (value[0] == '"') {
+        /* Parse string literal */
+        if (vlen == 1 && value_str[0] != '"')
+            /* Missing ending quotation mark */
+            return -1;
+        if (vlen == 1 && value_str[0] == '"')
+            /* End of value */
+            return 0;
+        vlen--;
+        chunk_len = max > vlen ? vlen : max;
+        if ((*buf = unescape(value_str, chunk_len, buflen)) == NULL)
+            return -1;
+    } else {
+        /* Parse hex string chunk */
+        long len;
+        char *chunk = NULL;
+
+        chunk_len = 2 * max > vlen ? vlen : 2 * max;
+        chunk = OPENSSL_strndup(value_str, chunk_len);
+        if (chunk == NULL)
+            return -1;
+        if (!TEST_ptr(*buf = OPENSSL_hexstr2buf(chunk, &len))) {
+            OPENSSL_free(chunk);
+            TEST_info("Can't convert chunk %s", chunk);
+            TEST_openssl_errors();
+            return -1;
+        }
+        *buflen = len;
+    }
+    *out_offset = value[0] == '"' ? offset + (*buflen) : offset + 2 * (*buflen);
+    return 1;
+}
+
 /**
  **  MESSAGE DIGEST TESTS
  **/
@@ -401,7 +484,7 @@ static int digest_test_parse(EVP_TEST *t,
     DIGEST_DATA *mdata = t->data;
 
     if (strcmp(keyword, "Input") == 0)
-        return evp_test_buffer_append(value, &mdata->input);
+        return evp_test_buffer_append(value, data_chunk_size, &mdata->input);
     if (strcmp(keyword, "Output") == 0)
         return parse_bin(value, &mdata->output, &mdata->output_len);
     if (strcmp(keyword, "Count") == 0)
@@ -599,6 +682,24 @@ typedef struct cipher_data_st {
     const char *xts_standard;
 } CIPHER_DATA;
 
+
+/*
+ * XTS, SIV, CCM, stitched ciphers and Wrap modes have special
+ * requirements about input lengths so we don't fragment for those
+ */
+static int cipher_test_valid_fragmentation(CIPHER_DATA *cdat)
+{
+    return (cdat->aead == EVP_CIPH_CCM_MODE
+            || cdat->aead == EVP_CIPH_CBC_MODE
+            || (cdat->aead == -1
+                && EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_STREAM_CIPHER)
+            || ((EVP_CIPHER_get_flags(cdat->cipher) & EVP_CIPH_FLAG_CTS) != 0)
+            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
+            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_GCM_SIV_MODE
+            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
+            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE) ? 0 : 1;
+}
+
 static int cipher_test_init(EVP_TEST *t, const char *alg)
 {
     const EVP_CIPHER *cipher;
@@ -638,6 +739,13 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
         cdat->aead = m != 0 ? m : -1;
     else
         cdat->aead = 0;
+
+    if (data_chunk_size != 0 && !cipher_test_valid_fragmentation(cdat)) {
+        ERR_pop_to_mark();
+        t->skip = 1;
+        TEST_info("skipping, '%s' does not support fragmentation", alg);
+        return 1;
+    }
 
     t->data = cdat;
     if (fetched_cipher != NULL)
@@ -946,15 +1054,26 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     if (expected->aad[0] != NULL && !expected->tls_aad) {
         t->err = "AAD_SET_ERROR";
         if (!frag) {
+            /* Supply the data all in one go or according to data_chunk_size */
             for (i = 0; expected->aad[i] != NULL; i++) {
-                if (!EVP_CipherUpdate(ctx, NULL, &chunklen, expected->aad[i],
-                                      expected->aad_len[i]))
-                    goto err;
+                size_t aad_len = expected->aad_len[i];
+                donelen = 0;
+
+                do {
+                    size_t current_aad_len = (size_t) data_chunk_size;
+
+                    if (data_chunk_size == 0 || (size_t) data_chunk_size > aad_len)
+                        current_aad_len = aad_len;
+                    if (!EVP_CipherUpdate(ctx, NULL, &chunklen,
+                                          expected->aad[i] + donelen,
+                                          current_aad_len))
+                        goto err;
+                    donelen += current_aad_len;
+                    aad_len -= current_aad_len;
+                } while (aad_len > 0);
             }
         } else {
-            /*
-             * Supply the AAD in chunks less than the block size where possible
-             */
+            /* Supply the AAD in chunks less than the block size where possible */
             for (i = 0; expected->aad[i] != NULL; i++) {
                 if (expected->aad_len[i] > 0) {
                     if (!EVP_CipherUpdate(ctx, NULL, &chunklen, expected->aad[i], 1))
@@ -1018,9 +1137,19 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     t->err = "CIPHERUPDATE_ERROR";
     tmplen = 0;
     if (!frag) {
-        /* We supply the data all in one go */
-        if (!EVP_CipherUpdate(ctx, tmp + out_misalign, &tmplen, in, in_len))
-            goto err;
+        do {
+            /* Supply the data all in one go or according to data_chunk_size */
+            size_t current_in_len = (size_t) data_chunk_size;
+
+            if (data_chunk_size == 0 || (size_t) data_chunk_size > in_len)
+                current_in_len = in_len;
+            if (!EVP_CipherUpdate(ctx, tmp + out_misalign + tmplen, &chunklen,
+                                  in, current_in_len))
+                goto err;
+            tmplen += chunklen;
+            in += current_in_len;
+            in_len -= current_in_len;
+        } while (in_len > 0);
     } else {
         /* Supply the data in chunks less than the block size where possible */
         if (in_len > 0) {
@@ -1103,23 +1232,6 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     return ok;
 }
 
-/*
- * XTS, SIV, CCM, stitched ciphers and Wrap modes have special
- * requirements about input lengths so we don't fragment for those
- */
-static int cipher_test_valid_fragmentation(CIPHER_DATA *cdat)
-{
-    return (cdat->aead == EVP_CIPH_CCM_MODE
-            || cdat->aead == EVP_CIPH_CBC_MODE
-            || (cdat->aead == -1
-                && EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_STREAM_CIPHER)
-            || ((EVP_CIPHER_get_flags(cdat->cipher) & EVP_CIPH_FLAG_CTS) != 0)
-            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
-            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_GCM_SIV_MODE
-            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
-            || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE) ? 0 : 1;
-}
-
 static int cipher_test_run(EVP_TEST *t)
 {
     CIPHER_DATA *cdat = t->data;
@@ -1153,6 +1265,8 @@ static int cipher_test_run(EVP_TEST *t)
             break;
 
         for (frag = 0; frag <= fragmax; frag++) {
+            if (frag == 1 && data_chunk_size != 0)
+                break;
             for (out_misalign = 0; out_misalign <= 1; out_misalign++) {
                 for (inp_misalign = 0; inp_misalign <= 1; inp_misalign++) {
                     /* Skip input misalign tests for in-place processing */
@@ -1410,6 +1524,7 @@ static int mac_test_run_pkey(EVP_TEST *t)
     unsigned char *got = NULL;
     size_t got_len;
     int i;
+    size_t input_len, donelen;
 
     /* We don't do XOF mode via PKEY */
     if (expected->xof)
@@ -1479,10 +1594,21 @@ static int mac_test_run_pkey(EVP_TEST *t)
             t->err = "EVPPKEYCTXCTRL_ERROR";
             goto err;
         }
-    if (!EVP_DigestSignUpdate(mctx, expected->input, expected->input_len)) {
-        t->err = "DIGESTSIGNUPDATE_ERROR";
-        goto err;
-    }
+    input_len = expected->input_len;
+    donelen = 0;
+    do {
+        size_t current_len = (size_t) data_chunk_size;
+
+        if (data_chunk_size == 0 || (size_t) data_chunk_size > input_len)
+            current_len = input_len;
+        if (!EVP_DigestSignUpdate(mctx, expected->input + donelen, current_len)) {
+            t->err = "DIGESTSIGNUPDATE_ERROR";
+            goto err;
+        }
+        donelen += current_len;
+        input_len -= current_len;
+    } while (input_len > 0);
+
     if (!EVP_DigestSignFinal(mctx, NULL, &got_len)) {
         t->err = "DIGESTSIGNFINAL_LENGTH_ERROR";
         goto err;
@@ -1523,6 +1649,7 @@ static int mac_test_run_mac(EVP_TEST *t)
         EVP_MAC_settable_ctx_params(expected->mac);
     int xof;
     int reinit = 1;
+    size_t input_len, donelen ;
 
     if (expected->alg == NULL)
         TEST_info("Trying the EVP_MAC %s test", expected->mac_name);
@@ -1669,10 +1796,21 @@ static int mac_test_run_mac(EVP_TEST *t)
         }
     }
  retry:
-    if (!EVP_MAC_update(ctx, expected->input, expected->input_len)) {
-        t->err = "MAC_UPDATE_ERROR";
-        goto err;
-    }
+    input_len = expected->input_len;
+    donelen = 0;
+    do {
+        size_t current_len = (size_t) data_chunk_size;
+
+        if (data_chunk_size == 0 || (size_t) data_chunk_size > input_len)
+            current_len = input_len;
+        if (!EVP_MAC_update(ctx, expected->input + donelen, current_len)) {
+            t->err = "MAC_UPDATE_ERROR";
+            goto err;
+        }
+        donelen += current_len;
+        input_len -= current_len;
+    } while (input_len > 0);
+
     xof = expected->xof;
     if (xof) {
         if (!TEST_ptr(got = OPENSSL_malloc(expected->output_len))) {
@@ -2438,6 +2576,7 @@ static int encode_test_run(EVP_TEST *t)
     unsigned char *encode_out = NULL, *decode_out = NULL;
     int output_len, chunk_len;
     EVP_ENCODE_CTX *decode_ctx = NULL, *encode_ctx = NULL;
+    size_t input_len, donelen;
 
     if (!TEST_ptr(decode_ctx = EVP_ENCODE_CTX_new())) {
         t->err = "INTERNAL_ERROR";
@@ -2452,13 +2591,25 @@ static int encode_test_run(EVP_TEST *t)
             goto err;
 
         EVP_EncodeInit(encode_ctx);
-        if (!TEST_true(EVP_EncodeUpdate(encode_ctx, encode_out, &chunk_len,
-                                        expected->input, expected->input_len)))
-            goto err;
 
-        output_len = chunk_len;
+        input_len = expected->input_len;
+        donelen = 0;
+        output_len = 0;
+        do {
+            size_t current_len = (size_t) data_chunk_size;
 
-        EVP_EncodeFinal(encode_ctx, encode_out + chunk_len, &chunk_len);
+            if (data_chunk_size == 0 || (size_t) data_chunk_size > input_len)
+                current_len = input_len;
+            if (!TEST_true(EVP_EncodeUpdate(encode_ctx, encode_out, &chunk_len,
+                                            expected->input + donelen,
+                                            current_len)))
+                goto err;
+            donelen += current_len;
+            input_len -= current_len;
+            output_len += chunk_len;
+        } while (input_len > 0);
+
+        EVP_EncodeFinal(encode_ctx, encode_out + output_len, &chunk_len);
         output_len += chunk_len;
 
         if (!memory_err_compare(t, "BAD_ENCODING",
@@ -2471,15 +2622,27 @@ static int encode_test_run(EVP_TEST *t)
                 OPENSSL_malloc(EVP_DECODE_LENGTH(expected->output_len))))
         goto err;
 
+    output_len = 0;
     EVP_DecodeInit(decode_ctx);
-    if (EVP_DecodeUpdate(decode_ctx, decode_out, &chunk_len, expected->output,
-                         expected->output_len) < 0) {
-        t->err = "DECODE_ERROR";
-        goto err;
-    }
-    output_len = chunk_len;
 
-    if (EVP_DecodeFinal(decode_ctx, decode_out + chunk_len, &chunk_len) != 1) {
+    input_len = expected->output_len;
+    donelen = 0;
+    do {
+        size_t current_len = (size_t) data_chunk_size;
+
+        if (data_chunk_size == 0 || (size_t) data_chunk_size > input_len)
+            current_len = input_len;
+        if (EVP_DecodeUpdate(decode_ctx, decode_out + output_len, &chunk_len,
+                                expected->output + donelen, current_len) < 0) {
+            t->err = "DECODE_ERROR";
+            goto err;
+        }
+        donelen += current_len;
+        input_len -= current_len;
+        output_len += chunk_len;
+    } while (input_len > 0);
+
+    if (EVP_DecodeFinal(decode_ctx, decode_out + output_len, &chunk_len) != 1) {
         t->err = "DECODE_ERROR";
         goto err;
     }
@@ -3449,12 +3612,12 @@ static int digestsigver_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "Input") == 0) {
         if (mdata->is_oneshot)
             return parse_bin(value, &mdata->osin, &mdata->osin_len);
-        return evp_test_buffer_append(value, &mdata->input);
+        return evp_test_buffer_append(value, data_chunk_size, &mdata->input);
     }
     if (strcmp(keyword, "Output") == 0)
         return parse_bin(value, &mdata->output, &mdata->output_len);
 
-    if (!mdata->is_oneshot) {
+    if (!mdata->is_oneshot && data_chunk_size == 0) {
         if (strcmp(keyword, "Count") == 0)
             return evp_test_buffer_set_count(value, mdata->input);
         if (strcmp(keyword, "Ncopy") == 0)
@@ -4161,6 +4324,7 @@ const OPTIONS *test_get_options(void)
           "The provider to load (when no configuration file, the default value is 'default')" },
         { "propquery", OPT_PROV_PROPQUERY, 's',
           "Property query used when fetching algorithms" },
+        { "chunk", OPT_DATA_CHUNK, 'N', "Size of data chunks to be processed, 0 for default size"},
         { OPT_HELP_STR, 1, '-', "file\tFile to run tests on.\n" },
         { NULL }
     };
@@ -4182,6 +4346,8 @@ int setup_tests(void)
             break;
         case OPT_IN_PLACE:
             if ((process_mode_in_place = evp_test_process_mode(opt_arg())) == -1)
+        case OPT_DATA_CHUNK:
+            if (!opt_int(opt_arg(), &data_chunk_size))
                 return 0;
             break;
         case OPT_PROVIDER_NAME:
