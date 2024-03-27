@@ -18,6 +18,9 @@
 static const char msg1[] = "GET LICENSE.txt\r\n";
 static char msg2[16000];
 
+#define DST_PORT        4433
+#define DST_ADDR        0x7f000001UL
+
 static int is_want(SSL *s, int ret)
 {
     int ec = SSL_get_error(s, ret);
@@ -25,42 +28,47 @@ static int is_want(SSL *s, int ret)
     return ec == SSL_ERROR_WANT_READ || ec == SSL_ERROR_WANT_WRITE;
 }
 
-static int test_quic_client(void)
+static int test_quic_client_ex(int fd_arg)
 {
     int testresult = 0, ret;
-    int c_fd = INVALID_SOCKET;
+    int c_fd;
     BIO *c_net_bio = NULL, *c_net_bio_own = NULL;
     BIO_ADDR *s_addr_ = NULL;
     struct in_addr ina = {0};
     SSL_CTX *c_ctx = NULL;
     SSL *c_ssl = NULL;
-    short port = 4433;
+    short port = DST_PORT;
     int c_connected = 0, c_write_done = 0, c_shutdown = 0;
     size_t l = 0, c_total_read = 0;
     OSSL_TIME start_time;
     unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '0', '.', '9' };
 
-    ina.s_addr = htonl(0x7f000001UL);
 
-    /* Setup test client. */
-    c_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
-    if (!TEST_int_ne(c_fd, INVALID_SOCKET))
-        goto err;
+    if (fd_arg == INVALID_SOCKET) {
+        /* Setup test client. */
+        c_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+        if (!TEST_int_ne(c_fd, INVALID_SOCKET))
+            goto err;
 
-    if (!TEST_true(BIO_socket_nbio(c_fd, 1)))
-        goto err;
+        if (!TEST_true(BIO_socket_nbio(c_fd, 1)))
+            goto err;
 
-    if (!TEST_ptr(s_addr_ = BIO_ADDR_new()))
-        goto err;
+        if (!TEST_ptr(s_addr_ = BIO_ADDR_new()))
+            goto err;
 
-    if (!TEST_true(BIO_ADDR_rawmake(s_addr_, AF_INET, &ina, sizeof(ina),
-                                    htons(port))))
-        goto err;
+        ina.s_addr = htonl(DST_ADDR);
+        if (!TEST_true(BIO_ADDR_rawmake(s_addr_, AF_INET, &ina, sizeof(ina),
+                                        htons(port))))
+            goto err;
+    } else {
+        c_fd = fd_arg;
+    }
 
     if (!TEST_ptr(c_net_bio = c_net_bio_own = BIO_new_dgram(c_fd, 0)))
         goto err;
 
-    if (!BIO_dgram_set_peer(c_net_bio, s_addr_))
+    /* connected socket does not need to set peer */
+    if (s_addr_ != NULL && !BIO_dgram_set_peer(c_net_bio, s_addr_))
         goto err;
 
     if (!TEST_ptr(c_ctx = SSL_CTX_new(OSSL_QUIC_client_method())))
@@ -157,9 +165,49 @@ err:
     SSL_CTX_free(c_ctx);
     BIO_ADDR_free(s_addr_);
     BIO_free(c_net_bio_own);
-    if (c_fd != INVALID_SOCKET)
+    if (fd_arg == INVALID_SOCKET && c_fd != INVALID_SOCKET)
         BIO_closesocket(c_fd);
     return testresult;
+}
+
+static int test_quic_client(void)
+{
+    return (test_quic_client_ex(INVALID_SOCKET));
+}
+
+static int test_quic_client_connect_first(void)
+{
+    struct sockaddr_in sin = {0};
+    int c_fd;
+    int rv;
+
+#ifdef SA_LEN
+    sin.sin_len = sizeof(struct sockaddr_in);
+#endif
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons(DST_PORT);
+    sin.sin_addr.s_addr = htonl(DST_ADDR);
+
+    c_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (!TEST_int_ne(c_fd, INVALID_SOCKET))
+        goto err;
+
+    if (!TEST_int_eq(connect(c_fd, (const struct sockaddr *)&sin, sizeof(sin)), 0))
+        goto err;
+
+    if (!TEST_true(BIO_socket_nbio(c_fd, 1)))
+        goto err;
+
+    rv = test_quic_client_ex(c_fd);
+
+    close(c_fd);
+
+    return (rv);
+
+err:
+    if (c_fd != INVALID_SOCKET)
+        close(c_fd);
+    return (0);
 }
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -172,5 +220,7 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_quic_client);
+    ADD_TEST(test_quic_client_connect_first);
+
     return 1;
 }
