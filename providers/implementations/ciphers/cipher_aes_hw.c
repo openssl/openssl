@@ -44,8 +44,8 @@ static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
 #endif
 #ifdef BSAES_CAPABLE
         if (BSAES_CAPABLE && dat->mode == EVP_CIPH_CBC_MODE) {
-            ret = AES_set_decrypt_key(key, keylen * 8, ks);
-            dat->block = (block128_f)AES_decrypt;
+            ret = ossl_bsaes_set_decrypt_key(key, keylen * 8, ks);
+            dat->block = (block128_f)ossl_bsaes_decrypt;
             dat->stream.cbc = (cbc128_f)ossl_bsaes_cbc_encrypt;
         } else
 #endif
@@ -89,8 +89,8 @@ static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
 #endif
 #ifdef BSAES_CAPABLE
     if (BSAES_CAPABLE && dat->mode == EVP_CIPH_CTR_MODE) {
-        ret = AES_set_encrypt_key(key, keylen * 8, ks);
-        dat->block = (block128_f)AES_encrypt;
+        ret = ossl_bsaes_set_encrypt_key(key, keylen * 8, ks);
+        dat->block = (block128_f)ossl_bsaes_encrypt;
         dat->stream.ctr = (ctr128_f)ossl_bsaes_ctr32_encrypt_blocks;
     } else
 #endif
