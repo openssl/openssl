@@ -17,8 +17,8 @@ PKCS7_verify, PKCS7_get0_signers - verify a PKCS#7 signedData structure
 
 PKCS7_verify() is very similar to L<CMS_verify(3)>.
 It verifies a PKCS#7 signedData structure given in I<p7>.
-The optional I<certs> parameter refers to a set of certificates
-in which to search for signer's certificates.
+The optional I<certs> parameter can provide a list of certificates,
+which is searched first for signer certificates.
 I<p7> may contain extra untrusted CA certificates that may be used for
 chain building as well as CRLs that may be used for certificate validation.
 I<store> may be NULL or point to
@@ -28,9 +28,13 @@ Otherwise I<indata> should be NULL, and then the signed data must be in I<p7>.
 The content is written to the BIO I<out> unless it is NULL.
 I<flags> is an optional set of flags, which can be used to modify the operation.
 
-PKCS7_get0_signers() retrieves the signer's certificates from I<p7>, it does
+PKCS7_get0_signers() retrieves the signer certificates from I<p7>
+by matching the pairs of certificate issuer and serial number contained in
+the SignerInfos with available candidate signer certifcates. It does
 B<not> check their validity or whether any signatures are valid. The I<certs>
 and I<flags> parameters have the same meanings as in PKCS7_verify().
+If the result is not NULL, the caller must free the structure returned using
+sk_X509_free(), but must not free the certificates included there.
 
 =head1 VERIFY PROCESS
 
@@ -45,13 +49,14 @@ B<PKCS7_NO_DUAL_CONTENT>.
 The default behavior allows this, for compatibility with older
 versions of OpenSSL.
 
-An attempt is made to locate all the signer's certificates, first looking in
+An attempt is made to locate all the signer certificates, first looking in
 the I<certs> parameter (if it is not NULL). Then they are looked up in any
 certificates contained in the I<p7> structure unless B<PKCS7_NOINTERN> is set.
-If any signer's certificates cannot be located the operation fails.
+If any signer certificates cannot be located the operation fails.
 
-Each signer's certificate is chain verified using the B<smimesign> purpose and
-using the trusted certificate store I<store> if supplied.
+Each signer certificate is chain verified using by default the C<smime_sign>
+purpose and using the trusted certificate store I<store> if supplied.
+The default purpose may be overridden using L<X509_STORE_set_purpose(3)>.
 Any internal certificates in the message, which may have been added using
 L<PKCS7_add_certificate(3)>, are used as untrusted CAs unless B<PKCS7_NOCHAIN>
 is set.
@@ -70,8 +75,8 @@ parameter to change the default verify behaviour.
 Only the flag B<PKCS7_NOINTERN> is meaningful to PKCS7_get0_signers().
 
 If B<PKCS7_NOINTERN> is set the certificates in the message itself are not
-searched when locating the signer's certificates.
-This means that all the signer's certificates must be in the I<certs> parameter.
+searched when locating the signer certificates.
+This means that all the signer certificates must be in the I<certs> parameter.
 
 If B<PKCS7_NOCRL> is set and CRL checking is enabled in I<store> then any
 CRLs in the message itself are ignored.
@@ -80,11 +85,10 @@ If the B<PKCS7_TEXT> flag is set MIME headers for type C<text/plain> are deleted
 from the content. If the content is not of type C<text/plain> then an error is
 returned.
 
-If B<PKCS7_NOVERIFY> is set the signer's certificates are not chain verified.
+If B<PKCS7_NOVERIFY> is set the signer certificates are not chain verified.
 
 If B<PKCS7_NOCHAIN> is set then the certificates contained in the message are
-not used as untrusted CAs. This means that the whole verify chain (apart from
-the signer's certificates) must be contained in the trusted store.
+not used as untrusted CA certificates for chain building.
 
 If B<PKCS7_NOSIGS> is set then the signatures on the data are not checked.
 
@@ -92,7 +96,7 @@ If B<PKCS7_NOSIGS> is set then the signatures on the data are not checked.
 
 One application of B<PKCS7_NOINTERN> is to only accept messages signed by
 a small number of certificates. The acceptable certificates would be passed
-in the I<certs> parameter. In this case if the signer's certificate is not one
+in the I<certs> parameter. In this case, if the signer's certificate is not one
 of the certificates supplied in I<certs> then the verify will fail because the
 signer cannot be found.
 
@@ -117,7 +121,7 @@ The error can be obtained from L<ERR_get_error(3)>.
 
 =head1 BUGS
 
-The trusted certificate store is not searched for the signer's certificates.
+The trusted certificate store is not searched for the signer certificates.
 This is primarily due to the inadequacies of the current B<X509_STORE>
 functionality.
 
@@ -127,6 +131,7 @@ be held in memory if it is not detached.
 =head1 SEE ALSO
 
 L<CMS_verify(3)>, L<PKCS7_add_certificate(3)>, L<PKCS7_add_crl(3)>,
+L<X509_STORE_set_purpose(3)>,
 L<ERR_get_error(3)>, L<PKCS7_sign(3)>
 
 =head1 COPYRIGHT

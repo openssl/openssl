@@ -175,7 +175,10 @@ const OPTIONS cms_options[] = {
     OPT_SECTION("Signing"),
     {"md", OPT_MD, 's', "Digest algorithm to use"},
     {"signer", OPT_SIGNER, 's', "Signer certificate input file"},
-    {"certfile", OPT_CERTFILE, '<', "Other certificates file"},
+    {"certfile", OPT_CERTFILE, '<',
+     "Extra signer and intermediate CA certificates to include when signing"},
+    {OPT_MORE_STR, 0, 0,
+     "or to use as preferred signer certificates when verifying"},
     {"cades", OPT_CADES, '-',
      "Include signingCertificate attribute (CAdES-BES)"},
     {"nodetach", OPT_NODETACH, '-', "Use opaque signing"},
@@ -845,7 +848,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (certfile != NULL) {
-        if (!load_certs(certfile, 0, &other, NULL, "certificate file")) {
+        if (!load_certs(certfile, 0, &other, NULL, "extra certificates")) {
             ERR_print_errors(bio_err);
             goto end;
         }

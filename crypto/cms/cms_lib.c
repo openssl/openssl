@@ -667,12 +667,12 @@ STACK_OF(X509_CRL) *CMS_get1_crls(CMS_ContentInfo *cms)
     for (i = 0; i < sk_CMS_RevocationInfoChoice_num(*pcrls); i++) {
         rch = sk_CMS_RevocationInfoChoice_value(*pcrls, i);
         if (rch->type == 0) {
-            if (crls == NULL) {
-                if ((crls = sk_X509_CRL_new_null()) == NULL)
-                    return NULL;
-            }
-            if (!sk_X509_CRL_push(crls, rch->d.crl)
-                    || !X509_CRL_up_ref(rch->d.crl)) {
+            int to_free = 0;
+
+            if (!X509_CRL_up_ref(rch->d.crl)
+                    || (to_free = !sk_X509_CRL_push(crls, rch->d.crl))) {
+                if (to_free)
+                    X509_CRL_free(rch->d.crl);
                 sk_X509_CRL_pop_free(crls, X509_CRL_free);
                 return NULL;
             }
