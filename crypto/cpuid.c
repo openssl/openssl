@@ -156,7 +156,7 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_ia32cap_P[1] = (unsigned int)(vec >> 32);
 }
 # else
-unsigned int OPENSSL_ia32cap_P[4];
+unsigned int OPENSSL_ia32cap_P[4] = { NULL };
 # endif
 #endif
 
