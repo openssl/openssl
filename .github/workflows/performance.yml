@@ -1,0 +1,74 @@
+# Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Performance Testing
+
+# Run manually
+on: [pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  run-performance-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        unittest: [pemread, newrawkey, rsasign, providerdoall, sslnew]
+    steps:
+    - name: Get perf data artifacts
+      id: cache-restore
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/perfdata_csvs
+        key: perf-data-csvs
+    - name: Create cache files
+      if: steps.cache-restore.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p ~/perfdata_csvs
+        echo "DATE,BRANCH,CI_URL,USECS" > ~/perfdata_csvs/${{ matrix.unittest }}.csv
+    - name: setup environment
+      run: |
+        echo "UNAME_VAR=$(uname -r)" >> $GITHUB_ENV
+        echo "TARGET_OSSL_INCLUDE_PATH=${GITHUB_WORKSPACE}/include" >> $GITHUB_ENV
+        echo "TARGET_OSSL_LIBRARY_PATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+        echo "THREAD_COUNT=16" >> $GITHUB_ENV
+        echo "RUN_URL=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
+        echo "RUN_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+        touch /tmp/perf.lock
+    - name: Checkout openssl
+      uses: actions/checkout@v4
+    - name: tools install
+      run: |
+        sudo apt-get install -y curl linux-tools-common linux-tools-generic linux-tools-$UNAME_VAR
+        sudo mkdir -p /usr/share/doc/perf-tip
+        touch /usr/share/doc/perf-tip/tips.txt
+    - name: clone performance suite
+      run: git clone https://github.com/openssl/tools.git perf
+    - name: config
+      run: ./config --banner=Configured --debug -fno-omit-frame-pointer && ./configdata.pm --dump
+    - name: build openssl
+      run: make -s -j4
+    - name: build performance suite
+      run: |
+        cd perf/perf
+        CFLAGS="-Wl,-rpath,${GITHUB_WORKSPACE} -fno-omit-frame-pointer" make
+    - name: Run performance suite
+      run: |
+        cd perf/perf
+        echo "::group::${{ matrix.unittest }}"
+        exec {fd}>/tmp/perf.lock
+        flock -x -w 1000 $fd
+        ./${{ matrix.unittest }} $THREAD_COUNT
+        echo "::endgroup::"
+        echo "::group::${{ matrix.unittest }}: perf analysis"
+        sudo perf record -o ./perf.data -a -g -- ./${{ matrix.unittest }} $THREAD_COUNT
+        sudo perf report --call-graph=flat,2 -i ./perf.data --stdio
+        rm -f ./perf.data
+        echo "::endgroup::"
+        exec {fd}>&-
