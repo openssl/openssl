@@ -241,6 +241,45 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                                                    NULL, NULL, libctx))
                 return 0;
         }
+
+#ifdef FIPS_MODULE
+        /*
+         * Perform digest check
+         *
+         * According to NIST SP 800-135r1 section 4.2.2, the valid hash
+         * functions are specified in FIPS 180-3. However, it only lists
+         * SHA2-256, SHA2-384 and SHA2-512. ACVP also only lists the same set
+         * of hash functions.
+         */
+        {
+            PROV_DIGEST digest = {0};
+            const EVP_MD *md = NULL;
+
+            if (!ossl_prov_digest_load_from_params(&digest, params, libctx)) {
+                EVP_MAC_CTX_free(ctx->P_sha1);
+                EVP_MAC_CTX_free(ctx->P_hash);
+                ctx->P_sha1 = NULL;
+                ctx->P_hash = NULL;
+                return 0;
+            }
+
+            md = ossl_prov_digest_md(&digest);
+            if ((md != NULL)
+                    && !EVP_MD_is_a(md, SN_sha256)
+                    && !EVP_MD_is_a(md, SN_sha384)
+                    && !EVP_MD_is_a(md, SN_sha512)) {
+                EVP_MAC_CTX_free(ctx->P_sha1);
+                EVP_MAC_CTX_free(ctx->P_hash);
+                ctx->P_sha1 = NULL;
+                ctx->P_hash = NULL;
+                ossl_prov_digest_reset(&digest);
+                ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
+                return 0;
+            } else {
+                ossl_prov_digest_reset(&digest);
+            }
+        }
+#endif
     }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SECRET)) != NULL) {
