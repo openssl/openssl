@@ -504,6 +504,40 @@ static ossl_inline ossl_unused int ossl_quic_stream_recv_get_final_size(const QU
 }
 
 /*
+ * Determines the number of bytes available still to be read, and whether a FIN
+ * has yet to be read.
+ */
+static ossl_inline ossl_unused int ossl_quic_stream_recv_pending(const QUIC_STREAM *s)
+{
+    size_t avail;
+    int fin = 0;
+
+    switch (s->recv_state) {
+    default:
+    case QUIC_RSTREAM_STATE_NONE:
+        return 0;
+
+    case QUIC_RSTREAM_STATE_RECV:
+    case QUIC_RSTREAM_STATE_SIZE_KNOWN:
+    case QUIC_RSTREAM_STATE_DATA_RECVD:
+        if (!ossl_quic_rstream_available(s->rstream, &avail, &fin))
+            avail = 0;
+
+        if (avail == 0 && fin)
+            avail = 1;
+
+        return avail;
+
+    case QUIC_RSTREAM_STATE_RESET_RECVD:
+        return 1;
+
+    case QUIC_RSTREAM_STATE_DATA_READ:
+    case QUIC_RSTREAM_STATE_RESET_READ:
+        return 0;
+    }
+}
+
+/*
  * QUIC Stream Map
  * ===============
  *
