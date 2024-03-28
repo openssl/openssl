@@ -567,6 +567,7 @@ SHA3_squeeze:
 ___
 }
 $code.=<<___;
+.rodata
 .align	256
 	.quad	0,0,0,0,0,0,0,0
 .type	iotas,\@object
