@@ -114,7 +114,11 @@ static RADIX_OBJ *RADIX_OBJ_new(const char *name, SSL *ssl)
     if (!TEST_ptr(obj = OPENSSL_zalloc(sizeof(*obj))))
        return NULL;
 
-    obj->name = OPENSSL_strdup(name);
+    if (!TEST_ptr(obj->name = OPENSSL_strdup(name))) {
+        OPENSSL_free(obj);
+        return NULL;
+    }
+
     obj->ssl  = ssl;
     return obj;
 }
