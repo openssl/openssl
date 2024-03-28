@@ -9,10 +9,13 @@
 
 #include "internal/deprecated.h"
 
+#include "ciphercommon_local.h"
 #include "cipher_aes_cbc_hmac_sha_etm.h"
-#include "prov/providercommon.h"
+#include "openssl/aes.h"
+#include "prov/ciphercommon.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 #ifndef AES_CBC_HMAC_SHA_ETM_CAPABLE
 #define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags) \
@@ -28,9 +31,203 @@ static OSSL_FUNC_cipher_decrypt_init_fn aes_dinit;
 static OSSL_FUNC_cipher_gettable_ctx_params_fn aes_gettable_ctx_params;
 static OSSL_FUNC_cipher_settable_ctx_params_fn aes_settable_ctx_params;
 #define aes_gettable_params ossl_cipher_generic_gettable_params
-#define aes_update ossl_cipher_generic_stream_update
-#define aes_final ossl_cipher_generic_stream_final
 #define aes_cipher ossl_cipher_generic_cipher
+
+/*
+ * Interleaved ciphers (like AES-CBC-HMAC) use a block size that differs from
+ * the standard AES block size. As a result, the internal buffer (sized to the
+ * cipher block size) cannot be padded using ossl_cipher_padblock(), which
+ * assumes the AES block size. Therefore, a custom padding function is used to
+ * pad the data correctly according to the AES block size.
+ */
+static int ossl_interleaved_cipher_padblock(unsigned char *buf, size_t *buflen,
+    size_t blocksize)
+{
+    size_t i;
+    int remainder = *buflen % AES_BLOCK_SIZE;
+    unsigned char pad = (unsigned char)(AES_BLOCK_SIZE - remainder);
+
+    if (blocksize < *buflen + pad) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    for (i = 0; i < pad; i++) {
+        buf[*buflen + i] = pad;
+    }
+
+    *buflen += pad;
+    return 1;
+}
+
+/*
+ * Interleaved ciphers (like AES-CBC-HMAC) use a block size that differs from
+ * the standard AES block size. As a result, the internal buffer (sized to the
+ * cipher block size) cannot be unpadded using ossl_cipher_unpadblock(), which
+ * assumes the AES block size. Therefore, a custom unpadding function is used to
+ * unpad the data correctly according to the AES block size.
+ */
+static int ossl_interleaved_cipher_unpadblock(unsigned char *buf, size_t *buflen,
+    size_t blocksize)
+{
+    size_t pad, i;
+    size_t len = *buflen;
+
+    if (len % blocksize != 0 || len == 0) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /*
+     * The following assumes that the ciphertext has been authenticated.
+     * Otherwise it provides a padding oracle.
+     */
+    pad = buf[len - 1];
+    if (pad == 0 || pad > blocksize) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
+        return 0;
+    }
+
+    for (i = 0; i < pad; i++) {
+        if (buf[--len] != pad) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
+            return 0;
+        }
+    }
+    *buflen = len;
+    return 1;
+}
+
+static int aes_cbc_hmac_sha1_etm_update(void *vctx, unsigned char *out,
+    size_t *outl, size_t outsize,
+    const unsigned char *in, size_t inl)
+{
+    PROV_AES_HMAC_SHA1_ETM_CTX *ctx = (PROV_AES_HMAC_SHA1_ETM_CTX *)vctx;
+
+    return ossl_cipher_generic_block_update_common(vctx, out, outl, outsize, in,
+        inl, ctx->buf);
+}
+
+static int aes_cbc_hmac_sha256_etm_update(void *vctx, unsigned char *out,
+    size_t *outl, size_t outsize,
+    const unsigned char *in, size_t inl)
+{
+    PROV_AES_HMAC_SHA256_ETM_CTX *ctx = (PROV_AES_HMAC_SHA256_ETM_CTX *)vctx;
+
+    return ossl_cipher_generic_block_update_common(vctx, out, outl, outsize, in,
+        inl, ctx->buf);
+}
+
+static int aes_cbc_hmac_sha512_etm_update(void *vctx, unsigned char *out,
+    size_t *outl, size_t outsize,
+    const unsigned char *in, size_t inl)
+{
+    PROV_AES_HMAC_SHA512_ETM_CTX *ctx = (PROV_AES_HMAC_SHA512_ETM_CTX *)vctx;
+
+    return ossl_cipher_generic_block_update_common(vctx, out, outl, outsize, in,
+        inl, ctx->buf);
+}
+
+static int aes_final(void *vctx, unsigned char *out, size_t *outl,
+    size_t outsize, unsigned char *buf)
+{
+    PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+    size_t blksz = AES_BLOCK_SIZE;
+
+    if (!ossl_prov_is_running())
+        return 0;
+
+    if (!ctx->key_set) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+        return 0;
+    }
+
+    if (ctx->tlsversion > 0) {
+        /* We never finalize TLS, so this is an error */
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+        return 0;
+    }
+
+    if (ctx->enc) {
+        if (ctx->pad && !ossl_interleaved_cipher_padblock(buf, &ctx->bufsz, ctx->blocksize)) {
+            /* ERR_raise already called */
+            return 0;
+        }
+
+        if (ctx->bufsz % blksz != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_WRONG_FINAL_BLOCK_LENGTH);
+            return 0;
+        }
+
+        if (outsize < ctx->bufsz) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+            return 0;
+        }
+        if (!ctx->hw->cipher(ctx, out, buf, ctx->bufsz)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+            return 0;
+        }
+        *outl = ctx->bufsz;
+        ctx->bufsz = 0;
+        return 1;
+    }
+
+    /* Decrypting */
+    PROV_AES_HMAC_SHA_ETM_CTX *sctx = (PROV_AES_HMAC_SHA_ETM_CTX *)vctx;
+
+    if ((ctx->bufsz % blksz != 0) || (ctx->bufsz == 0 && ctx->pad)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_WRONG_FINAL_BLOCK_LENGTH);
+        return 0;
+    }
+
+    if (!ctx->hw->cipher(ctx, buf, buf, ctx->bufsz)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+        return 0;
+    }
+
+    if (CRYPTO_memcmp(sctx->exp_tag, sctx->tag, sctx->taglen) != 0)
+        return 0;
+
+    if (ctx->pad && !ossl_interleaved_cipher_unpadblock(buf, &ctx->bufsz, blksz)) {
+        /* ERR_raise already called */
+        return 0;
+    }
+
+    if (outsize < ctx->bufsz) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        return 0;
+    }
+
+    memcpy(out, buf, ctx->bufsz);
+    *outl = ctx->bufsz;
+    ctx->bufsz = 0;
+
+    return 1;
+}
+
+static int aes_cbc_hmac_sha1_etm_final(void *vctx, unsigned char *out,
+    size_t *outl, size_t outsize)
+{
+    PROV_AES_HMAC_SHA1_ETM_CTX *ctx = (PROV_AES_HMAC_SHA1_ETM_CTX *)vctx;
+
+    return aes_final(vctx, out, outl, outsize, ctx->buf);
+}
+
+static int aes_cbc_hmac_sha256_etm_final(void *vctx, unsigned char *out,
+    size_t *outl, size_t outsize)
+{
+    PROV_AES_HMAC_SHA256_ETM_CTX *ctx = (PROV_AES_HMAC_SHA256_ETM_CTX *)vctx;
+
+    return aes_final(vctx, out, outl, outsize, ctx->buf);
+}
+
+static int aes_cbc_hmac_sha512_etm_final(void *vctx, unsigned char *out,
+    size_t *outl, size_t outsize)
+{
+    PROV_AES_HMAC_SHA512_ETM_CTX *ctx = (PROV_AES_HMAC_SHA512_ETM_CTX *)vctx;
+
+    return aes_final(vctx, out, outl, outsize, ctx->buf);
+}
 
 static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
@@ -79,25 +276,48 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         ctx->taglen = sz;
     }
 
+    if (p.pad != NULL) {
+        unsigned int pad;
+        if (!OSSL_PARAM_get_uint(p.pad, &pad)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+        ctx->base.pad = pad ? 1 : 0;
+    }
+
     return 1;
 }
 
-static int aes_einit(void *ctx, const unsigned char *key, size_t keylen,
+static int aes_einit(void *vctx, const unsigned char *key, size_t keylen,
     const unsigned char *iv, size_t ivlen,
     const OSSL_PARAM params[])
 {
+    PROV_AES_HMAC_SHA_ETM_CTX *ctx = (PROV_AES_HMAC_SHA_ETM_CTX *)vctx;
+    PROV_CIPHER_HW_AES_HMAC_SHA_ETM *hw = (PROV_CIPHER_HW_AES_HMAC_SHA_ETM *)ctx->hw;
+    PROV_CIPHER_CTX *pctx = (PROV_CIPHER_CTX *)vctx;
+
     if (!ossl_cipher_generic_einit(ctx, key, keylen, iv, ivlen, NULL))
         return 0;
-    return aes_set_ctx_params(ctx, params);
+    int ret = aes_set_ctx_params(ctx, params);
+    hw->reset_sha_state(vctx);
+    ctx->in_len = 0;
+    pctx->bufsz = 0;
+    return ret;
 }
 
-static int aes_dinit(void *ctx, const unsigned char *key, size_t keylen,
+static int aes_dinit(void *vctx, const unsigned char *key, size_t keylen,
     const unsigned char *iv, size_t ivlen,
     const OSSL_PARAM params[])
 {
+    PROV_AES_HMAC_SHA_ETM_CTX *ctx = (PROV_AES_HMAC_SHA_ETM_CTX *)vctx;
+    PROV_CIPHER_HW_AES_HMAC_SHA_ETM *hw = (PROV_CIPHER_HW_AES_HMAC_SHA_ETM *)ctx->hw;
+
     if (!ossl_cipher_generic_dinit(ctx, key, keylen, iv, ivlen, NULL))
         return 0;
-    return aes_set_ctx_params(ctx, params);
+    int ret = aes_set_ctx_params(ctx, params);
+    hw->reset_sha_state(vctx);
+    ctx->in_len = 0;
+    return ret;
 }
 
 static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
@@ -147,6 +367,12 @@ static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
     }
+
+    if (p.pad != NULL && !OSSL_PARAM_set_uint(p.pad, ctx->base.pad)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
+
     return 1;
 }
 
@@ -302,8 +528,8 @@ static void *aes_cbc_hmac_sha512_etm_dupctx(void *provctx)
         { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))nm##_##sub##_dupctx },           \
         { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))nm##_einit },              \
         { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))nm##_dinit },              \
-        { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))nm##_update },                   \
-        { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))nm##_final },                     \
+        { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))nm##_##sub##_update },           \
+        { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))nm##_##sub##_final },             \
         { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))nm##_cipher },                   \
         { OSSL_FUNC_CIPHER_GET_PARAMS,                                              \
             (void (*)(void))nm##_##kbits##_##sub##_get_params },                    \
@@ -322,20 +548,20 @@ static void *aes_cbc_hmac_sha512_etm_dupctx(void *provctx)
 #endif /* AES_CBC_HMAC_SHA_ETM_CAPABLE */
 
 /* ossl_aes128cbc_hmac_sha1_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha1_etm, 128, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha1_etm, 128, 512, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes192cbc_hmac_sha1_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha1_etm, 192, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha1_etm, 192, 512, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes256cbc_hmac_sha1_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha1_etm, 256, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha1_etm, 256, 512, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes128cbc_hmac_sha256_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 128, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 128, 512, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes192cbc_hmac_sha256_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 192, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 192, 512, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes256cbc_hmac_sha256_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 256, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha256_etm, 256, 512, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes128cbc_hmac_sha512_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 128, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 128, 1024, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes192cbc_hmac_sha512_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 192, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 192, 1024, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
 /* ossl_aes256cbc_hmac_sha512_etm_functions */
-IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 256, 128, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)
+IMPLEMENT_CIPHER(aes, cbc_hmac_sha512_etm, 256, 1024, 128, EVP_CIPH_FLAG_ENC_THEN_MAC)

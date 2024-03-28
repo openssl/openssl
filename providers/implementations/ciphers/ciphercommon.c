@@ -233,10 +233,27 @@ int ossl_cipher_generic_block_update(void *vctx, unsigned char *out,
     size_t *outl, size_t outsize,
     const unsigned char *in, size_t inl)
 {
+    PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+    unsigned char *buf = ctx->buf;
+
+    return ossl_cipher_generic_block_update_common(vctx, out, outl, outsize, in,
+        inl, buf);
+}
+
+int ossl_cipher_generic_block_update_common(void *vctx, unsigned char *out,
+    size_t *outl, size_t outsize,
+    const unsigned char *in, size_t inl,
+    unsigned char *buf)
+{
     size_t outlint = 0;
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t blksz = ctx->blocksize;
     size_t nextblocks;
+
+    if (buf == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
 
     if (!ctx->key_set) {
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
@@ -319,7 +336,7 @@ int ossl_cipher_generic_block_update(void *vctx, unsigned char *out,
     }
 
     if (ctx->bufsz != 0)
-        nextblocks = ossl_cipher_fillblock(ctx->buf, &ctx->bufsz, blksz,
+        nextblocks = ossl_cipher_fillblock(buf, &ctx->bufsz, blksz,
             &in, &inl);
     else
         nextblocks = inl & ~(blksz - 1);
@@ -334,7 +351,7 @@ int ossl_cipher_generic_block_update(void *vctx, unsigned char *out,
             ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
             return 0;
         }
-        if (!ctx->hw->cipher(ctx, out, ctx->buf, blksz)) {
+        if (!ctx->hw->cipher(ctx, out, buf, blksz)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
             return 0;
         }
@@ -365,7 +382,7 @@ int ossl_cipher_generic_block_update(void *vctx, unsigned char *out,
         inl -= nextblocks;
     }
     if (inl != 0
-        && !ossl_cipher_trailingdata(ctx->buf, &ctx->bufsz, blksz, &in, &inl)) {
+        && !ossl_cipher_trailingdata(buf, &ctx->bufsz, blksz, &in, &inl)) {
         /* ERR_raise already called */
         return 0;
     }

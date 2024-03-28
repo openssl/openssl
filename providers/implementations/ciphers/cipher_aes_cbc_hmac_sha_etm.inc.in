@@ -15,6 +15,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          (['OSSL_CIPHER_PARAM_AEAD_MAC_KEY', 'key',    'octet_string'],
                           ['OSSL_CIPHER_PARAM_KEYLEN',       'keylen', 'size_t'],
                           ['OSSL_CIPHER_HMAC_PARAM_MAC',     'mac',    'octet_string'],
+                          ['OSSL_CIPHER_PARAM_PADDING',      'pad',    'uint'],
                          )); -}
 
 {- produce_param_decoder('aes_cbc_hmac_sha_etm_get_ctx_params',
@@ -23,4 +24,5 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                           ['OSSL_CIPHER_PARAM_IV',         'iv',     'octet_string'],
                           ['OSSL_CIPHER_PARAM_UPDATED_IV', 'upd_iv', 'octet_string'],
                           ['OSSL_CIPHER_HMAC_PARAM_MAC',   'mac',    'octet_string'],
+                          ['OSSL_CIPHER_PARAM_PADDING',    'pad',    'uint'],
                          )); -}
