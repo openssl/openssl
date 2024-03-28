@@ -18,6 +18,7 @@ int ossl_cipher_capable_aes_cbc_hmac_sha512_etm(void);
 typedef struct prov_cipher_hw_aes_hmac_sha_ctx_etm_st {
     PROV_CIPHER_HW base; /* must be first */
     void (*init_mac_key)(void *ctx, const unsigned char *inkey, size_t inlen);
+    void (*reset_sha_state)(void *ctx);
 } PROV_CIPHER_HW_AES_HMAC_SHA_ETM;
 
 const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha1_etm(void);
@@ -37,21 +38,28 @@ typedef struct prov_aes_hmac_sha_etm_ctx_st {
     unsigned char tag[AES_CBC_MAX_HMAC_SIZE];
     unsigned char exp_tag[AES_CBC_MAX_HMAC_SIZE];
     size_t taglen;
+    size_t in_len;
 } PROV_AES_HMAC_SHA_ETM_CTX;
 
 typedef struct prov_aes_hmac_sha1_etm_ctx_st {
     PROV_AES_HMAC_SHA_ETM_CTX base_ctx;
     SHA_CTX head, tail;
+    SHA_CTX head_init, tail_init;
+    unsigned char buf[SHA_CBLOCK];
 } PROV_AES_HMAC_SHA1_ETM_CTX;
 
 typedef struct prov_aes_hmac_sha256_etm_ctx_st {
     PROV_AES_HMAC_SHA_ETM_CTX base_ctx;
     SHA256_CTX head, tail;
+    SHA256_CTX head_init, tail_init;
+    unsigned char buf[SHA256_CBLOCK];
 } PROV_AES_HMAC_SHA256_ETM_CTX;
 
 typedef struct prov_aes_hmac_sha512_etm_ctx_st {
     PROV_AES_HMAC_SHA_ETM_CTX base_ctx;
-    SHA512_CTX head, tail, md;
+    SHA512_CTX head, tail;
+    SHA512_CTX head_init, tail_init;
+    unsigned char buf[SHA512_CBLOCK];
 } PROV_AES_HMAC_SHA512_ETM_CTX;
 
 typedef struct {
@@ -64,6 +72,7 @@ typedef struct {
         struct {
             uint8_t *i_key_pad;
             uint8_t *o_key_pad;
+            size_t in_len;
         } hmac;
     } digest;
 } CIPH_DIGEST;

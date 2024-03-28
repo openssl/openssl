@@ -970,8 +970,7 @@ static int cipher_test_valid_fragmentation(CIPHER_DATA *cdat)
                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_GCM_SIV_MODE
                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
-               || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE
-               || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_CBC_MODE)
+               || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE)
         ? 0
         : 1;
 }

@@ -38,6 +38,7 @@ $code=<<___;
 #define CIPHER_IV	16
 #define HMAC_IKEYPAD	24
 #define HMAC_OKEYPAD	32
+#define HMAC_INLEN	40
 
 .text
 .arch armv8-a+crypto
@@ -179,6 +180,7 @@ $code.=<<___;
  *		arg->cipher.iv			(initialization vector)
  *		arg->digest.hmac.i_key_pad	(partially hashed i_key_pad)
  *		arg->digest.hmac.o_key_pad	(partially hashed o_key_pad)
+ *		arg->digest.in_len		(length of hash input processed so far)
  *	)
  *
  * Routine register definitions:
@@ -249,8 +251,6 @@ asm_aescbc_sha256_hmac:
 	ldr		x7, [x6, #HMAC_IKEYPAD]
 	/* init ABCD, EFGH. */
 	ldp		q24,q25,[x7]
-	/* save pointer to o_key_pad partial hash */
-	ldr		x7, [x6, #HMAC_OKEYPAD]
 
 	stp		d10,d11,[sp,#16]
 
@@ -265,7 +265,9 @@ asm_aescbc_sha256_hmac:
 
 	ldr		x9, [x6, #CIPHER_KEY]
 	ldr		x16, [x6, #CIPHER_KEY_ROUNDS]
-	ldr		x6, [x6, #CIPHER_IV]
+	ldr		x7, [x6, #CIPHER_IV]
+	ld1		{v3.16b}, [x7]		/* get 1st ivec */
+
 	add		x17, x9, #160		/* point to the last 5 rounds keys */
 
 	/*
@@ -277,7 +279,6 @@ asm_aescbc_sha256_hmac:
 	b.lt		.Lenc_short_cases	/* branch if < 12 */
 
 	/* proceed */
-	ld1		{v3.16b},[x6]		/* get 1st ivec */
 	/* read first aes block, bump aes_ptr_in */
 	ld1		{v0.16b},[x0],16
 	mov		x11,x2			/* len -> x11 needed at end */
@@ -1315,6 +1316,14 @@ $code.=<<___;
 	mov		v26.b[3],w15
 
 .Lpost_long_loop:
+	/* Save inner hash state so far */
+	ldr		x7, [x6, #HMAC_IKEYPAD]
+	stp		q24, q25, [x7]
+
+	/* Fetch number of blocks already processed and add to x11 */
+	ldr		x7, [x6, #HMAC_INLEN]
+	add		x11, x11, x7
+
 	/* Add outstanding bytes of digest source */
 	add		x11,x11,x12
 	/* Add one SHA-256 block since hash is calculated including i_key_pad */
@@ -1472,6 +1481,7 @@ $code.=<<___;
 	adrp		x8,.Lrcon
 	add		x8,x8,:lo12:.Lrcon
 	/* load o_key_pad partial hash */
+	ldr		x7, [x6, #HMAC_OKEYPAD]
 	ldp		q24,q25,[x7]
 
 	/* Set padding 1 to the first reg */
@@ -1630,7 +1640,6 @@ $code.=<<___;
  * x10 = aes_blocks
  */
 .Lenc_short_cases:
-	ld1		{v3.16b},[x6]			/* get ivec */
 	ldp		q8,q9,[x9],32			/* rk[0-1] */
 	eor		v26.16b,v26.16b,v26.16b		/* zero sha src 0 */
 	ldp		q10,q11,[x9],32			/* rk[2-3] */
@@ -2177,6 +2186,14 @@ $code.=<<___;
  * there are between 0 and 3 aes blocks in the final sha256 blocks
  */
 .Lpost_short_loop:
+	/* Save inner hash state so far */
+	ldr		x7, [x6, #HMAC_IKEYPAD]
+	stp		q24, q25, [x7]
+
+	/* Fetch number of blocks already processed and add to x11 */
+	ldr		x7, [x6, #HMAC_INLEN]
+	add		x11, x11, x7
+
 	/* Add outstanding bytes of digest source */
 	add		x11,x11,x12
 	/* Add one SHA-256 block since hash is calculated including i_key_pad */
@@ -2333,6 +2350,7 @@ $code.=<<___;
 	adrp		x8,.Lrcon
 	add		x8,x8,:lo12:.Lrcon
 	/* load o_key_pad partial hash */
+	ldr		x7, [x6, #HMAC_OKEYPAD]
 	ldp		q24,q25,[x7]
 
 	/* Set padding 1 to the first reg */
@@ -2519,6 +2537,7 @@ $code.=<<___;
  *		arg->cipher.iv			(initialization vector)
  *		arg->digest.hmac.i_key_pad	(partially hashed i_key_pad)
  *		arg->digest.hmac.o_key_pad	(partially hashed o_key_pad)
+ *		arg->digest.in_len		(length of hash input processed so far)
  *	)
  *
  * Routine register definitions:
@@ -2565,8 +2584,6 @@ asm_sha256_hmac_aescbc_dec:
 	ldr		x7, [x6, #HMAC_IKEYPAD]
 	/* init ABCD, EFGH */
 	ldp		q24,q25,[x7]
-	/* save pointer to o_key_pad partial hash */
-	ldr		x7, [x6, #HMAC_OKEYPAD]
 
 	stp		d10,d11,[sp,#16]
 
@@ -2582,7 +2599,9 @@ asm_sha256_hmac_aescbc_dec:
 
 	ldr		x9, [x6, #CIPHER_KEY]
 	ldr		x16, [x6, #CIPHER_KEY_ROUNDS]
-	ldr		x6, [x6, #CIPHER_IV]
+	ldr		x7, [x6, #CIPHER_IV]
+	ld1		{v30.16b}, [x7]		/* get 1st ivec */
+
 	add		x17, x9, #160		/* point to the last 5 rounds keys */
 	/*
 	 * Init sha state, prefetch, check for small cases.
@@ -2595,7 +2614,6 @@ asm_sha256_hmac_aescbc_dec:
 	sub		x20,x5,x2
 
 	mov		x11,x2			/* len -> x11 needed at end */
-	ld1		{v30.16b},[x6]		/* get 1st ivec */
 	lsr		x12,x11,6		/* total_blocks (sha) */
 
 	ldp		q26,q27,[x3],32
@@ -3646,6 +3664,14 @@ $code.=<<___;
 	mov		v26.b[0],w15
 
 .Lpost_loop:
+	/* Save inner hash state so far */
+	ldr		x7, [x6, #HMAC_IKEYPAD]
+	stp		q24, q25, [x7]
+
+	/* Fetch number of blocks already processed and add to x11 */
+	ldr		x7, [x6, #HMAC_INLEN]
+	add		x11, x11, x7
+
 	/* Add outstanding bytes of digest source */
 	add		x11,x11,x20
 	/* Add one SHA-2 block since hash is calculated including i_key_pad */
@@ -4014,6 +4040,7 @@ $code.=<<___;
 	adrp		x8,.Lrcon
 	add		x8,x8,:lo12:.Lrcon
 	/* load o_key_pad partial hash */
+	ldr		x7, [x6, #HMAC_OKEYPAD]
 	ld1		{v24.16b},[x7],16
 	ld1		{v25.16b},[x7]
 
@@ -4192,7 +4219,6 @@ $code.=<<___;
 
 	ldp		q12,q13,[x9],32
 	ldp		q14,q15,[x9],32
-	ld1		{v30.16b},[x6]		/* get ivec */
 	ldp		q16,q17,[x9],32
 	ld1		{v18.16b},[x9]
 

@@ -55,8 +55,8 @@ static int hwaes_cbc_hmac_sha512_init_key(PROV_CIPHER_CTX *vctx,
     else
         ret = aes_v8_set_decrypt_key(key, ctx->base.keylen * 8, &ctx->ks);
 
-    SHA512_Init(&sctx->head); /* handy when benchmarking */
-    sctx->tail = sctx->head;
+    SHA512_Init(&sctx->head_init); /* handy when benchmarking */
+    sctx->tail_init = sctx->head_init;
 
     return ret < 0 ? 0 : 1;
 }
@@ -104,6 +104,7 @@ static void ciph_digest_arg_init(CIPH_DIGEST *arg, PROV_CIPHER_CTX *vctx)
     arg->cipher.iv = (uint8_t *)&(ctx->base.iv);
     arg->digest.hmac.i_key_pad = (uint8_t *)&(sctx->head);
     arg->digest.hmac.o_key_pad = (uint8_t *)&(sctx->tail);
+    arg->digest.hmac.in_len = ctx->in_len;
 }
 
 static int hwaes_cbc_hmac_sha512_etm(PROV_CIPHER_CTX *vctx,
@@ -120,21 +121,25 @@ static int hwaes_cbc_hmac_sha512_etm(PROV_CIPHER_CTX *vctx,
         return 0;
     }
 
-    if (ctx->base.enc) {
+    if (vctx->enc) {
         HWAES_ENC_CBC_SHA512_ETM(in, out, len, out, ctx->tag, len, &arg);
-        return 1;
+        memcpy(vctx->iv, out + len - AES_BLOCK_SIZE, AES_BLOCK_SIZE);
     } else {
         if (ctx->taglen == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
+        uint8_t next_iv[AES_BLOCK_SIZE];
+        memcpy(next_iv, in + len - AES_BLOCK_SIZE, AES_BLOCK_SIZE);
+
         HWAES_DEC_CBC_SHA512_ETM(in, out, len, out, ctx->tag, len, &arg);
-        if (CRYPTO_memcmp(ctx->exp_tag, ctx->tag, ctx->taglen)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
-            return 0;
-        }
-        return 1;
+
+        memcpy(vctx->iv, next_iv, AES_BLOCK_SIZE);
     }
+
+    ctx->in_len += len;
+
+    return 1;
 }
 
 static int hwaes_cbc_hmac_sha512_cipher(PROV_CIPHER_CTX *vctx,
@@ -142,6 +147,14 @@ static int hwaes_cbc_hmac_sha512_cipher(PROV_CIPHER_CTX *vctx,
     const unsigned char *in, size_t len)
 {
     return hwaes_cbc_hmac_sha512_etm(vctx, out, in, len);
+}
+
+static void aes_cbc_hmac_sha512_reset_sha_state(void *vctx)
+{
+    PROV_AES_HMAC_SHA512_ETM_CTX *ctx = (PROV_AES_HMAC_SHA512_ETM_CTX *)vctx;
+
+    memcpy(&ctx->head, &ctx->head_init, sizeof(SHA512_CTX));
+    memcpy(&ctx->tail, &ctx->tail_init, sizeof(SHA512_CTX));
 }
 
 static void hwaes_cbc_hmac_sha512_set_mac_key(void *vctx,
@@ -155,30 +168,33 @@ static void hwaes_cbc_hmac_sha512_set_mac_key(void *vctx,
     memset(hmac_key, 0, sizeof(hmac_key));
 
     if (len > sizeof(hmac_key)) {
-        SHA512_Init(&ctx->head);
-        sha512_update(&ctx->head, mackey, len);
-        SHA512_Final(hmac_key, &ctx->head);
+        SHA512_Init(&ctx->head_init);
+        sha512_update(&ctx->head_init, mackey, len);
+        SHA512_Final(hmac_key, &ctx->head_init);
     } else {
         memcpy(hmac_key, mackey, len);
     }
 
     for (i = 0; i < sizeof(hmac_key); i++)
         hmac_key[i] ^= 0x36; /* ipad */
-    SHA512_Init(&ctx->head);
-    sha512_update(&ctx->head, hmac_key, sizeof(hmac_key));
+    SHA512_Init(&ctx->head_init);
+    sha512_update(&ctx->head_init, hmac_key, sizeof(hmac_key));
 
     for (i = 0; i < sizeof(hmac_key); i++)
         hmac_key[i] ^= 0x36 ^ 0x5c; /* opad */
-    SHA512_Init(&ctx->tail);
-    sha512_update(&ctx->tail, hmac_key, sizeof(hmac_key));
+    SHA512_Init(&ctx->tail_init);
+    sha512_update(&ctx->tail_init, hmac_key, sizeof(hmac_key));
 
     OPENSSL_cleanse(hmac_key, sizeof(hmac_key));
+
+    aes_cbc_hmac_sha512_reset_sha_state(vctx);
 }
 
 static const PROV_CIPHER_HW_AES_HMAC_SHA_ETM cipher_hw_aes_hmac_sha512_etm = {
     { hwaes_cbc_hmac_sha512_init_key,
         hwaes_cbc_hmac_sha512_cipher },
-    hwaes_cbc_hmac_sha512_set_mac_key
+    hwaes_cbc_hmac_sha512_set_mac_key,
+    aes_cbc_hmac_sha512_reset_sha_state
 };
 
 const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha512_etm(void)
