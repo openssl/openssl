@@ -16,6 +16,23 @@
 #include "internal/rcu.h"
 #include "rcu_internal.h"
 
+#ifndef __has_feature
+# define __has_feature(x) 0
+#endif
+
+#if __has_feature(thread_sanitizer)
+# define __SANITIZE_THREAD__
+#endif
+
+#ifdef __SANITIZE_THREAD__
+# include <sanitizer/tsan_interface.h>
+# define TSAN_ACQUIRE(s) __tsan_acquire(s)
+# define TSAN_RELEASE(s) __tsan_release(s)
+#else
+# define TSAN_ACQUIRE(s)
+# define TSAN_RELEASE(s)
+#endif
+
 #if defined(__sun)
 # include <atomic.h>
 #endif
@@ -558,12 +575,17 @@ int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 
 void *ossl_rcu_uptr_deref(void **p)
 {
-    return (void *)ATOMIC_LOAD_N(p, __ATOMIC_ACQUIRE);
+    void *ret = (void *)ATOMIC_LOAD_N(p, __ATOMIC_RELAXED);
+    __atomic_thread_fence(__ATOMIC_ACQUIRE);
+    TSAN_ACQUIRE(p);
+    return ret;
 }
 
 void ossl_rcu_assign_uptr(void **p, void **v)
 {
-    ATOMIC_STORE(p, v, __ATOMIC_RELEASE);
+    __atomic_thread_fence(__ATOMIC_RELEASE);
+    TSAN_RELEASE(p);
+    ATOMIC_STORE(p, v, __ATOMIC_RELAXED);
 }
 
 static CRYPTO_ONCE rcu_init_once = CRYPTO_ONCE_STATIC_INIT;
