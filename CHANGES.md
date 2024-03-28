@@ -33,6 +33,12 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Add partial update support for AES-CBC-HMAC-SHA-ETM cipher, enabling
+   processing of fragmented inputs. Also, add optimizations to the partial update
+   paths to efficiently handle larger buffers.
+
+   *Gowtham Suresh Kumar*
+
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*

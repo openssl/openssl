@@ -30,6 +30,7 @@ $code=<<___;
 #define CIPHER_IV	16
 #define HMAC_IKEYPAD	24
 #define HMAC_OKEYPAD	32
+#define HMAC_INLEN	40
 
 .text
 .arch armv8-a+crypto
@@ -304,6 +305,7 @@ $code.=<<___;
  *		arg->cipher.iv			(initialization vector)
  *		arg->digest.hmac.i_key_pad	(partially hashed i_key_pad)
  *		arg->digest.hmac.o_key_pad	(partially hashed o_key_pad)
+ *		arg->digest.in_len		(length of hash input processed so far)
  *	)
  */
 
@@ -1983,6 +1985,14 @@ $code.=<<___;
 	eor		v6.16b, v6.16b, v6.16b
 	eor		v7.16b, v7.16b, v7.16b
 .Lenc_short_post_sha:
+	/* Save inner hash state so far */
+	ldr		x7, [x6, #HMAC_IKEYPAD]
+	st1		{v24.2d, v25.2d, v26.2d, v27.2d}, [x7]
+
+	/* Fetch number of blocks already processed and add to x2 */
+	ldr		x7, [x6, #HMAC_INLEN]
+	add		x2, x2, x7
+
 	/* we have last padded sha512 block now */
 	eor		x13, x13, x13			/* length_lo */
 	eor		x14, x14, x14			/* length_hi */
@@ -2066,6 +2076,7 @@ $code.=<<___;
  *		arg->cipher.iv			(initialization vector)
  *		arg->digest.hmac.i_key_pad	(partially hashed i_key_pad)
  *		arg->digest.hmac.o_key_pad	(partially hashed o_key_pad)
+ *		arg->digest.in_len		(length of hash input processed so far)
  *	)
  */
 
@@ -2881,6 +2892,14 @@ $code.=<<___;
 	mov		v3.b[0], w12
 	b		.Ldec_short_post_sha
 .Ldec_short_post_sha:
+	/* Save inner hash state so far */
+	ldr		x7, [x6, #HMAC_IKEYPAD]
+	st1		{v24.2d, v25.2d, v26.2d, v27.2d}, [x7]
+
+	/* Fetch number of blocks already processed and add to x2 */
+	ldr		x7, [x6, #HMAC_INLEN]
+	add		x2, x2, x7
+
 	/* we have last padded sha512 block now */
 	eor		x13, x13, x13		/* length_lo */
 	eor		x14, x14, x14		/* length_hi */
