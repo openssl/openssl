@@ -33,6 +33,12 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Add partial update support for AES-CBC-HMAC-SHA-ETM cipher, enabling
+   processing of fragmented inputs. Also, add optimizations to the partial update
+   paths to efficiently handle larger buffers.
+
+   *Gowtham Suresh Kumar*
+
  * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
    only when it can actually be used. A resumption ticket or external PSK is
    offered only if some offered ciphersuite shares its handshake digest, and
