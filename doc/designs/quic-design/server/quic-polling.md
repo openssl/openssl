@@ -408,7 +408,7 @@ issues with this design:
   This limitation is intrinsic to the design of `poll(2)` and poll-esque APIs.
   It is not necessarily a reason not to offer this rather simple API, as use of
   poll(2) and poll(2)-like APIs is widespread and users are likely to appreciate
-  an API which does not provide significant impedence discontinuities to
+  an API which does not provide significant impedance discontinuities to
   applications which use select/poll, even if those applications suffer impaired
   performance as a result.
 
@@ -1424,7 +1424,7 @@ socket handle and then closes it. What happens?**
 
 Since OSes in general do not provide a way to get notified of these closures it
 is not really possible to handle this automatically. It is essential that an
-application deregister the handle from the poll group first.
+application deregisters the handle from the poll group first.
 
 **Q. How does code using a poll method determine what poll descriptors that
 method supports?**
