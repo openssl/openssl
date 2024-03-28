@@ -2660,7 +2660,7 @@ int ossl_quic_write_flags(SSL *s, const void *buf, size_t len,
         if (!expect_quic(s, &ctx))
             return 0;
 
-        quic_lock_for_io(&ctx);
+        qctx_lock_for_io(&ctx);
     } else {
         if (!expect_quic_with_stream_lock(s, /*remote_init=*/0, /*io=*/1, &ctx))
             return 0;
