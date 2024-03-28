@@ -26,6 +26,8 @@ The supported parameters are:
 
 =over 4
 
+=item "pedantic" (B<OSSL_KDF_PARAM_PEDANTIC>) <integer>
+
 =item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
 =item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
