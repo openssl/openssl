@@ -30,7 +30,7 @@
  *
  * The QUIC_OBJ is a base type for QUIC APL objects which provides functionality
  * common to all QUIC objects and which supports having different APL objects
- * dynamically assume leader roles. It can therefore be seen as an extention of
+ * dynamically assume leader roles. It can therefore be seen as an extension of
  * the SSL base class and extends the SSL object for QUIC APL objects. This
  * avoids duplication of functionality for different types of QUIC object and
  * allows access to common responsibilities of different types of APL object
@@ -64,8 +64,8 @@
  *
  * This structure must come at the start of a QUIC object structure definition.
  *
- * ssl->type still determines the actual object type. An SSL object pointer s
- * can be safely cast to (QUIC_OBJ *) iff IS_QUIC(s) is true.
+ * ssl->type still determines the actual object type. An SSL object
+ * pointer s can be safely cast to (QUIC_OBJ *) iff IS_QUIC(s) is true.
  */
 struct quic_obj_st {
     /* SSL object common header. */
@@ -104,6 +104,11 @@ struct quic_obj_st {
     unsigned int            is_event_leader : 1;
     unsigned int            is_port_leader  : 1;
 };
+
+/*
+ * Core Functions and Inlines
+ * ==========================
+ */
 
 /*
  * Initialises a QUIC_OBJ structure with zero or more roles active. Returns 1
@@ -217,6 +222,8 @@ ossl_quic_obj_get0_port_local(const QUIC_OBJ *obj)
 /*
  * Convenience Inlines
  * ===================
+ *
+ * These inlines are expressed in terms of the core functions and inlines above.
  */
 
 /* Get a pointer to the QUIC domain mutex. Always returns non-NULL. */

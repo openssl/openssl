@@ -562,6 +562,10 @@ void test_perror(const char *s);
 extern BIO *bio_out;
 extern BIO *bio_err;
 
+/* Thread local BIO overrides. */
+int set_override_bio_out(BIO *bio);
+int set_override_bio_err(BIO *bio);
+
 /*
  * Formatted output for strings, memory and bignums.
  */
