@@ -587,7 +587,7 @@ DEF_FUNC(hf_connect_wait)
         goto err;
 
     if (ret != 1) {
-        if (1 /* TODO */ && is_want(ssl, ret))
+        if (is_want(ssl, ret))
             F_SPIN_AGAIN();
 
         if (!TEST_int_eq(ret, 1))

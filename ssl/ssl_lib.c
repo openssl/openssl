@@ -7702,11 +7702,11 @@ SSL *SSL_get0_listener(SSL *s)
 {
 #ifndef OPENSSL_NO_QUIC
     if (!IS_QUIC(s))
-        return s;
+        return NULL;
 
     return ossl_quic_get0_listener(s);
 #else
-    return s;
+    return NULL;
 #endif
 }
 
