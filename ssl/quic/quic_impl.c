@@ -2595,8 +2595,8 @@ static int quic_write_nonblocking_epw(QCTX *ctx, const void *buf, size_t len,
                     qctx_should_autotick(ctx));
 
     if (*written == 0)
-        /* SSL_write_ex returns 0 if it didn't read anything. */
-        return QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_WANT_READ);
+        /* SSL_write_ex returns 0 if it didn't write anything. */
+        return QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_WANT_WRITE);
 
     return 1;
 }
