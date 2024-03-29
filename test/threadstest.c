@@ -111,6 +111,7 @@ static int rwwriter2_iterations = 0;
 static int *rwwriter_ptr = NULL;
 static int rw_torture_result = 1;
 static CRYPTO_RWLOCK *rwtorturelock = NULL;
+static CRYPTO_RWLOCK *atomiclock = NULL;
 
 static void rwwriter_fn(int id, int *iterations)
 {
@@ -150,7 +151,7 @@ static void rwwriter1_fn(void)
 
     TEST_info("Starting writer1");
     rwwriter_fn(1, &rwwriter1_iterations);
-    CRYPTO_atomic_add(&rwwriter1_done, 1, &local, NULL);
+    CRYPTO_atomic_add(&rwwriter1_done, 1, &local, atomiclock);
 }
 
 static void rwwriter2_fn(void)
@@ -159,7 +160,7 @@ static void rwwriter2_fn(void)
 
     TEST_info("Starting writer 2");
     rwwriter_fn(2, &rwwriter2_iterations);
-    CRYPTO_atomic_add(&rwwriter2_done, 1, &local, NULL);
+    CRYPTO_atomic_add(&rwwriter2_done, 1, &local, atomiclock);
 }
 
 static void rwreader_fn(int *iterations)
@@ -174,8 +175,8 @@ static void rwreader_fn(int *iterations)
             abort();
 
     while (lw1 != 1 || lw2 != 1) {
-        CRYPTO_atomic_add(&rwwriter1_done, 0, &lw1, NULL);
-        CRYPTO_atomic_add(&rwwriter2_done, 0, &lw2, NULL);
+        CRYPTO_atomic_add(&rwwriter1_done, 0, &lw1, atomiclock);
+        CRYPTO_atomic_add(&rwwriter2_done, 0, &lw2, atomiclock);
 
         count++;
         if (rwwriter_ptr != NULL && old > *rwwriter_ptr) {
@@ -223,6 +224,7 @@ static int _torture_rw(void)
     struct timeval dtime;
 
     rwtorturelock = CRYPTO_THREAD_lock_new();
+    atomiclock = CRYPTO_THREAD_lock_new();
     rwwriter1_iterations = 0;
     rwwriter2_iterations = 0;
     rwreader1_iterations = 0;
@@ -264,6 +266,7 @@ static int _torture_rw(void)
         ret = 1;
 out:
     CRYPTO_THREAD_lock_free(rwtorturelock);
+    CRYPTO_THREAD_lock_free(atomiclock);
     rwtorturelock = NULL;
     return ret;
 }
@@ -336,7 +339,7 @@ static void writer1_fn(void)
 
     TEST_info("Starting writer1");
     writer_fn(1, &writer1_iterations);
-    CRYPTO_atomic_add(&writer1_done, 1, &local, NULL);
+    CRYPTO_atomic_add(&writer1_done, 1, &local, atomiclock);
 }
 
 static void writer2_fn(void)
@@ -345,7 +348,7 @@ static void writer2_fn(void)
 
     TEST_info("Starting writer2");
     writer_fn(2, &writer2_iterations);
-    CRYPTO_atomic_add(&writer2_done, 1, &local, NULL);
+    CRYPTO_atomic_add(&writer2_done, 1, &local, atomiclock);
 }
 
 static void reader_fn(int *iterations)
@@ -358,8 +361,8 @@ static void reader_fn(int *iterations)
     int lw2 = 0;
 
     while (lw1 != 1 || lw2 != 1) {
-        CRYPTO_atomic_add(&writer1_done, 0, &lw1, NULL);
-        CRYPTO_atomic_add(&writer2_done, 0, &lw2, NULL);
+        CRYPTO_atomic_add(&writer1_done, 0, &lw1, atomiclock);
+        CRYPTO_atomic_add(&writer2_done, 0, &lw2, atomiclock);
         count++;
         ossl_rcu_read_lock(rcu_lock);
         valp = ossl_rcu_deref(&writer_ptr);
@@ -403,6 +406,7 @@ static int _torture_rcu(void)
     double tottime;
     double avr, avw;
 
+    atomiclock = CRYPTO_THREAD_lock_new();
     memset(&writer1, 0, sizeof(thread_t));
     memset(&writer2, 0, sizeof(thread_t));
     memset(&reader1, 0, sizeof(thread_t));
@@ -443,6 +447,7 @@ static int _torture_rcu(void)
     TEST_info("Average write time %e/write", avw);
 
     ossl_rcu_lock_free(rcu_lock);
+    CRYPTO_THREAD_lock_free(atomiclock);
     if (!TEST_int_eq(rcu_torture_result, 1))
         return 0;
 
