@@ -43,6 +43,9 @@ This release adds the following new features:
   * New API `SSL_write_ex2`, which can be used to send an end-of-stream (FIN)
     condition in an optimised way when using QUIC.
 
+  * Limited support for polling of QUIC connection and stream objects in a
+    non-blocking manner.
+
   * Added a new EVP_DigestSqueeze() API. This allows SHAKE to squeeze multiple
     times with different output sizes.
 

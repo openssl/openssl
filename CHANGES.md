@@ -155,6 +155,11 @@ OpenSSL 3.3
 
    *Hugo Landau*
 
+ * Limited support for polling of QUIC connection and stream objects in a
+   non-blocking manner. Refer to the SSL_poll(3) manpage for details.
+
+   *Hugo Landau*
+
  * Added APIs to allow querying the size and utilisation of a QUIC stream's
    write buffer. Refer to the SSL_get_value_uint(3) manpage for details.
 
