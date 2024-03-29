@@ -2823,11 +2823,13 @@ static size_t ossl_quic_pending_int(const SSL *s, int check_channel)
     }
 
     if (check_channel)
-        avail = ossl_quic_stream_recv_pending(ctx.xso->stream)
+        avail = ossl_quic_stream_recv_pending(ctx.xso->stream,
+                                              /*include_fin=*/1)
              || ossl_quic_channel_has_pending(ctx.qc->ch)
              || ossl_quic_channel_is_term_any(ctx.qc->ch);
     else
-        avail = ossl_quic_stream_recv_pending(ctx.xso->stream);
+        avail = ossl_quic_stream_recv_pending(ctx.xso->stream,
+                                              /*include_fin=*/0);
 
 out:
     quic_unlock(ctx.qc);
