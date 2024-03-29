@@ -110,18 +110,18 @@ static int test_kdf_hkdf(int index)
     if (index == 0) {
         if (EVP_PKEY_CTX_add1_hkdf_info(pctx, (const unsigned char *)"label", 5)
             <= 0) {
-            TEST_error("EVP_PKEY_CTX_set1_hkdf_info");
+            TEST_error("EVP_PKEY_CTX_add1_hkdf_info");
             goto err;
         }
     } else {
         if (EVP_PKEY_CTX_add1_hkdf_info(pctx, (const unsigned char *)"lab", 3)
             <= 0) {
-            TEST_error("EVP_PKEY_CTX_set1_hkdf_info");
+            TEST_error("EVP_PKEY_CTX_add1_hkdf_info");
             goto err;
         }
         if (EVP_PKEY_CTX_add1_hkdf_info(pctx, (const unsigned char *)"el", 2)
             <= 0) {
-            TEST_error("EVP_PKEY_CTX_set1_hkdf_info");
+            TEST_error("EVP_PKEY_CTX_add1_hkdf_info");
             goto err;
         }
     }
@@ -221,8 +221,13 @@ err:
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(test_kdf_tls1_prf, 2);
-    ADD_ALL_TESTS(test_kdf_hkdf, 2);
+    int tests = 1;
+
+    if (fips_provider_version_ge(NULL, 3, 3, 0))
+        tests = 2;
+
+    ADD_ALL_TESTS(test_kdf_tls1_prf, tests);
+    ADD_ALL_TESTS(test_kdf_hkdf, tests);
 #ifndef OPENSSL_NO_SCRYPT
     ADD_TEST(test_kdf_scrypt);
 #endif

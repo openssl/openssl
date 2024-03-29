@@ -1036,13 +1036,17 @@ static int evp_pkey_ctx_add1_octet_string(EVP_PKEY_CTX *ctx, int fallback,
     if (!EVP_PKEY_CTX_get_params(ctx, os_params))
         return 0;
 
+    /* Older provider that doesn't support getting this parameter */
+    if (os_params[0].return_size == OSSL_PARAM_UNMODIFIED)
+        return evp_pkey_ctx_set1_octet_string(ctx, fallback, param, op, ctrl, data, datalen);
+
     info_alloc = os_params[0].return_size + datalen;
     if (info_alloc == 0)
         return 0;
-    info_len = os_params[0].return_size;
     info = OPENSSL_zalloc(info_alloc);
     if (info == NULL)
         return 0;
+    info_len = os_params[0].return_size;
 
     os_params[0] = OSSL_PARAM_construct_octet_string(param, info, info_alloc);
 
