@@ -26,7 +26,7 @@ OpenSSL Releases
 OpenSSL 3.3
 -----------
 
-### Changes between 3.2 and 3.3 [xx XXX xxxx]
+### Changes between 3.2 and 3.3 beta 1 [29 Mar 2024]
 
  * The `-verify` option to the `openssl crl` and `openssl req` will make
    the program exit with 1 on failure.
