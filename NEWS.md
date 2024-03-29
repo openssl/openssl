@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.3
 -----------
 
-### Major changes between OpenSSL 3.2 and OpenSSL 3.3 beta 1 [in pre-release]
+### Major changes between OpenSSL 3.2 and OpenSSL 3.3 [under development]
 
 OpenSSL 3.3.0 is a feature release adding significant new functionality to
 OpenSSL.
