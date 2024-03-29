@@ -1822,6 +1822,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
 {
     RAW_EXTENSION *extensions = NULL;
     const int isdtls = SSL_CONNECTION_IS_DTLS(s);
+
     /*
      * If we were sending early_data then any alerts should not be sent using
      * the old wrlmethod.
