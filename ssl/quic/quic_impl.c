@@ -2472,6 +2472,11 @@ static int quic_write_nonblocking_epw(QCTX *ctx, const void *buf, size_t len,
 
     quic_post_write(xso, *written > 0, *written == len, flags,
                     qctx_should_autotick(ctx));
+
+    if (*written == 0)
+        /* SSL_write_ex returns 0 if it didn't read anything. */
+        return QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_WANT_READ);
+
     return 1;
 }
 
@@ -2874,11 +2879,13 @@ static size_t ossl_quic_pending_int(const SSL *s, int check_channel)
     }
 
     if (check_channel)
-        avail = ossl_quic_stream_recv_pending(ctx.xso->stream)
+        avail = ossl_quic_stream_recv_pending(ctx.xso->stream,
+                                              /*include_fin=*/1)
              || ossl_quic_channel_has_pending(ctx.qc->ch)
              || ossl_quic_channel_is_term_any(ctx.qc->ch);
     else
-        avail = ossl_quic_stream_recv_pending(ctx.xso->stream);
+        avail = ossl_quic_stream_recv_pending(ctx.xso->stream,
+                                              /*include_fin=*/0);
 
 out:
     quic_unlock(ctx.qc);
