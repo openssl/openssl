@@ -9,6 +9,7 @@
 
 #include "internal/json_enc.h"
 #include "internal/nelem.h"
+#include "internal/numbers.h"
 #include <string.h>
 #include <math.h>
 
@@ -602,10 +603,19 @@ void ossl_json_f64(OSSL_JSON_ENC *json, double value)
     if (!json_pre_item(json))
         return;
 
-    if (isnan(value) || isinf(value)) {
-        json_raise_error(json);
-        return;
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+    {
+        int checks = isnan(value);
+# if !defined(OPENSSL_SYS_VMS)
+        checks |= isinf(value);
+# endif
+
+        if (checks) {
+            json_raise_error(json);
+            return;
+        }
     }
+#endif
 
     BIO_snprintf(buf, sizeof(buf), "%1.17g", value);
     json_write_str(json, buf);
