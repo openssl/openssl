@@ -31,7 +31,8 @@ void OSSL_sleep(uint64_t millis)
     unsigned int s = (unsigned int)(millis / 1000);
     unsigned int us = (unsigned int)((millis % 1000) * 1000);
 
-    sleep(s);
+    if (s > 0)
+        sleep(s);
     usleep(us);
 # endif
 }
