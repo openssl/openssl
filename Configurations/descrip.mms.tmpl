@@ -239,7 +239,7 @@
       # from these directories.
       push @{$unified_info{includes_extra}->{$obj}}, qw(./quic);
   }
-  foreach (grep /\[\.ssl\.(?:quic|record|statem)\].*?\.o$/, keys %{$unified_info{sources}}) {
+  foreach (grep /\[\.ssl\.(?:quic|record|statem|rio)\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
       # Most of the files in [.ssl.record] and [.ssl.statem] include
       # "../ssl_local.h", which includes things like "record/record.h".

@@ -144,6 +144,15 @@ typedef void (*fp_pz_type)(OSSL_JSON_ENC *, const void *, size_t);
         return &script_info;                                                   \
     }
 
+#ifdef OPENSSL_SYS_VMS
+/*
+ * The VMS C compiler recognises \u in strings, and emits a warning, which
+ * stops the build.  Because we think we know what we're doing, we change that
+ * particular message to be merely informational.
+ */
+# pragma message informational UCNNOMAP
+#endif
+
 #define END_SCRIPT_EXPECTING_S(s)   END_SCRIPT_EXPECTING(s, SIZE_MAX)
 #define END_SCRIPT_EXPECTING_Q(s)   END_SCRIPT_EXPECTING(#s, sizeof(#s) - 1)
 
