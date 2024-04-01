@@ -187,7 +187,7 @@ static const char *stream_state_to_str(int state)
     case SSL_STREAM_STATE_OK:
         return "OK";
     case SSL_STREAM_STATE_WRONG_DIR:
-        return "wrong dir";
+        return "wrong-dir";
     case SSL_STREAM_STATE_FINISHED:
         return "finished";
     case SSL_STREAM_STATE_RESET_LOCAL:
