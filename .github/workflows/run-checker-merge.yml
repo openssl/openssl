@@ -35,6 +35,7 @@ jobs:
           no-ts,
           enable-weak-ssl-ciphers,
           enable-zlib,
+          enable-pie,
         ]
     runs-on: ubuntu-latest
     steps:
