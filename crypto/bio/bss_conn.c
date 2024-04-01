@@ -110,7 +110,7 @@ err:
 
 static int conn_state(BIO *b, BIO_CONNECT *c)
 {
-    int ret = -1, i;
+    int ret = -1, i, opts;
     BIO_info_cb *cb = NULL;
 
     if (c->info_callback != NULL)
@@ -188,8 +188,12 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
         case BIO_CONN_S_CONNECT:
             BIO_clear_retry_flags(b);
             ERR_set_mark();
-            ret = BIO_connect(b->num, BIO_ADDRINFO_address(c->addr_iter),
-                              BIO_SOCK_KEEPALIVE | c->connect_mode);
+
+            opts = c->connect_mode;
+            if (BIO_ADDRINFO_socktype(c->addr_iter) == SOCK_STREAM)
+                opts |= BIO_SOCK_KEEPALIVE;
+
+            ret = BIO_connect(b->num, BIO_ADDRINFO_address(c->addr_iter), opts);
             b->retry_reason = 0;
             if (ret == 0) {
                 if (BIO_sock_should_retry(ret)) {
