@@ -492,6 +492,7 @@ my @disablables = (
     "ocsp",
     "padlockeng",
     "pic",
+    "pie",
     "pinshared",
     "poly1305",
     "posix-io",
@@ -584,6 +585,7 @@ our %disabled = ( # "what"         => "comment"
                   "external-tests"      => "default",
                   "fuzz-afl"            => "default",
                   "fuzz-libfuzzer"      => "default",
+                  "pie"                 => "default",
                   "ktls"                => "default",
                   "md2"                 => "default",
                   "msan"                => "default",
@@ -942,6 +944,10 @@ while (@argvcopy)
                 elsif ($1 eq "brotli-dynamic")
                         {
                         delete $disabled{"brotli"};
+                        }
+                elsif ($1 eq "pie")
+                        {
+                        delete $disabled{"pie"};
                         }
                 elsif ($1 eq "zstd-dynamic")
                         {
