@@ -41,8 +41,8 @@ OPENSSL_sk_unshift, OPENSSL_sk_value, OPENSSL_sk_zero
  STACK_OF(TYPE) *sk_TYPE_new(sk_TYPE_compfunc compare);
  STACK_OF(TYPE) *sk_TYPE_new_null(void);
  int sk_TYPE_reserve(STACK_OF(TYPE) *sk, int n);
- void sk_TYPE_free(const STACK_OF(TYPE) *sk);
- void sk_TYPE_zero(const STACK_OF(TYPE) *sk);
+ void sk_TYPE_free(STACK_OF(TYPE) *sk);
+ void sk_TYPE_zero(STACK_OF(TYPE) *sk);
  TYPE *sk_TYPE_delete(STACK_OF(TYPE) *sk, int i);
  TYPE *sk_TYPE_delete_ptr(STACK_OF(TYPE) *sk, TYPE *ptr);
  int sk_TYPE_push(STACK_OF(TYPE) *sk, const TYPE *ptr);
