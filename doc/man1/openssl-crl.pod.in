@@ -95,6 +95,9 @@ Print out the CRL in text form.
 
 Verify the signature in the CRL.
 
+This option is implicitly enabled if any of B<-CApath>, B<-CAfile>
+or B<-CAstore> is specified.
+
 =item B<-noout>
 
 Don't output the encoded version of the CRL.
