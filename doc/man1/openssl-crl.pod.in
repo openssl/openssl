@@ -97,6 +97,9 @@ Verify the signature in the CRL. If the verification fails,
 the program will immediately exit, i.e. further option processing
 (e.g. B<-gendelta>) is skipped.
 
+This option is implicitly enabled if any of B<-CApath>, B<-CAfile>
+or B<-CAstore> is specified.
+
 =item B<-noout>
 
 Don't output the encoded version of the CRL.
