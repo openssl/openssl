@@ -573,6 +573,10 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
 
     /* provider_new() generates an error, so no need here */
     prov = provider_new(name, template.init, template.parameters);
+    if (!ossl_provider_set_module_path(prov, template.path)) {
+        ossl_provider_free(prov);
+        return NULL;
+    }
 
     if (params != NULL) /* We copied the parameters, let's free them */
         sk_INFOPAIR_pop_free(template.parameters, infopair_free);
