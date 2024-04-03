@@ -1061,7 +1061,7 @@ static int evp_pkey_ctx_add1_octet_string(EVP_PKEY_CTX *ctx, int fallback,
     ret = EVP_PKEY_CTX_set_params(ctx, os_params);
 
  error:
-    OPENSSL_secure_clear_free(info, info_alloc);
+    OPENSSL_clear_free(info, info_alloc);
     return ret;
 }
 
