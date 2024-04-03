@@ -72,12 +72,6 @@ jobs:
             fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
-            arch: m68k-linux-gnu,
-            libs: libc6-dev-m68k-cross,
-            target: -static -m68040 linux-latomic -Wno-stringop-overflow,
-            fips: no,
-            tests: -test_includes -test_store -test_x509_store
-          }, {
             arch: mips-linux-gnu,
             libs: libc6-dev-mips-cross,
             target: -static linux-mips32,
@@ -122,11 +116,6 @@ jobs:
             arch: hppa-linux-gnu,
             libs: libc6-dev-hppa-cross,
             target: linux-generic32,
-            tests: none
-          }, {
-            arch: m68k-linux-gnu,
-            libs: libc6-dev-m68k-cross,
-            target: -mcfv4e linux-latomic -Wno-stringop-overflow no-quic,
             tests: none
           }, {
             arch: mips-linux-gnu,
