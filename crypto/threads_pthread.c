@@ -558,7 +558,13 @@ int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
 
 void *ossl_rcu_uptr_deref(void **p)
 {
+#ifdef __arm64__
+    void *ret;
+    __asm volatile("ldar %0, [%1]" : "=r" (ret): "r" (p):);
+    return ret;
+#else
     return (void *)ATOMIC_LOAD_N(p, __ATOMIC_ACQUIRE);
+#endif
 }
 
 void ossl_rcu_assign_uptr(void **p, void **v)
