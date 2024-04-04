@@ -656,16 +656,15 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
     }
 
     tmpl.type = type;
-    if (sc->version == DTLS1_3_VERSION) {
+    if (sc->version == DTLS1_3_VERSION)
         tmpl.version = DTLS1_2_VERSION;
-    }
     /*
      * Special case: for hello verify request, client version 1.0 and we
      * haven't decided which version to use yet send back using version 1.0
      * header: otherwise some clients will ignore it.
      */
     else if (s->method->version == DTLS_ANY_VERSION
-            && sc->max_proto_version != DTLS1_BAD_VER)
+             && sc->max_proto_version != DTLS1_BAD_VER)
         tmpl.version = DTLS1_VERSION;
     else
         tmpl.version = sc->version;
