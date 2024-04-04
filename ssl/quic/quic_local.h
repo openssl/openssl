@@ -72,9 +72,6 @@ struct quic_xso_st {
     /* Is an AON write in progress? */
     unsigned int                    aon_write_in_progress   : 1;
 
-    /* Event handling mode. One of SSL_QUIC_VALUE_EVENT_HANDLING. */
-    unsigned int                    event_handling_mode     : 2;
-
     /*
      * The base buffer pointer the caller passed us for the initial AON write
      * call. We use this for validation purposes unless
@@ -208,9 +205,6 @@ struct quic_conn_st {
     /* Are we using addressed mode (BIO_sendmmsg with non-NULL peer)? */
     unsigned int                    addressed_mode_w        : 1;
     unsigned int                    addressed_mode_r        : 1;
-
-    /* Event handling mode. One of SSL_QUIC_VALUE_EVENT_HANDLING. */
-    unsigned int                    event_handling_mode     : 2;
 
     /* Default stream type. Defaults to SSL_DEFAULT_STREAM_MODE_AUTO_BIDI. */
     uint32_t                        default_stream_mode;
