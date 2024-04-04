@@ -965,8 +965,12 @@ static int bio_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
         return 1;
 
 #ifndef OPENSSL_NO_SOCK
-    if (BIO_get_fd(bio, &fd) > 0 && fd < FD_SETSIZE)
-        return BIO_socket_wait(fd, BIO_should_read(bio), max_time);
+    if (BIO_get_fd(bio, &fd) > 0) {
+        int ret = BIO_socket_wait(fd, BIO_should_read(bio), max_time);
+
+        if (ret != -1)
+            return ret;
+    }
 #endif
     /* fall back to polling since no sockets are available */
 
