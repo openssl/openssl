@@ -3520,14 +3520,13 @@ QUIC_NEEDS_LOCK
 static int qctx_should_autotick(QCTX *ctx)
 {
     int event_handling_mode;
+    QUIC_OBJ *obj = ctx->obj;
 
-    if (ctx->is_stream) {
-        event_handling_mode = ctx->xso->event_handling_mode;
-        if (event_handling_mode != SSL_VALUE_EVENT_HANDLING_MODE_INHERIT)
-            return event_handling_mode != SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT;
-    }
+    for (; (event_handling_mode = obj->event_handling_mode)
+            == SSL_VALUE_EVENT_HANDLING_MODE_INHERIT
+            && obj->parent_obj != NULL;
+         obj = obj->parent_obj);
 
-    event_handling_mode = ctx->qc->event_handling_mode;
     return event_handling_mode != SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT;
 }
 
@@ -3537,7 +3536,7 @@ static void qctx_maybe_autotick(QCTX *ctx)
     if (!qctx_should_autotick(ctx))
         return;
 
-    ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx->qc->ch), 0);
+    ossl_quic_reactor_tick(ossl_quic_obj_get0_reactor(ctx->obj), 0);
 }
 
 QUIC_TAKES_LOCK
@@ -3569,14 +3568,9 @@ static int qc_getset_event_handling(QCTX *ctx, uint32_t class_,
         }
 
         value_out = *p_value_in;
-        if (ctx->is_stream)
-            ctx->xso->event_handling_mode = (int)value_out;
-        else
-            ctx->qc->event_handling_mode = (int)value_out;
+        ctx->obj->event_handling_mode = (int)value_out;
     } else {
-        value_out = ctx->is_stream
-            ? ctx->xso->event_handling_mode
-            : ctx->qc->event_handling_mode;
+        value_out = ctx->obj->event_handling_mode;
     }
 
     ret = 1;
