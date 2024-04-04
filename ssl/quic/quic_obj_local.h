@@ -109,6 +109,9 @@ struct quic_obj_st {
      * by default inherits from the parent SSL object.
      */
     unsigned int            req_blocking_mode       : 2; /* QUIC_BLOCKING_MODE */
+
+    /* Event handling mode. One of SSL_QUIC_VALUE_EVENT_HANDLING. */
+    unsigned int            event_handling_mode     : 2;
 };
 
 enum {
