@@ -2052,9 +2052,12 @@ static int qc_wait_for_default_xso_for_read(QCTX *ctx, int peek)
         if (peek)
             return 0;
 
-        if (!qctx_blocking(ctx))
+        if (ossl_quic_channel_is_term_any(qc->ch)) {
+            return QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+        } else if (!qctx_blocking(ctx)) {
             /* Non-blocking mode, so just bail immediately. */
             return QUIC_RAISE_NORMAL_ERROR(ctx, SSL_ERROR_WANT_READ);
+        }
 
         /* Block until we have a stream. */
         wargs.qc        = qc;
