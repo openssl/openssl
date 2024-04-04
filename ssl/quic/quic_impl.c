@@ -2922,11 +2922,6 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
 
     qctx_lock_for_io(&ctx);
 
-    if (!quic_mutation_allowed(ctx.qc, /*req_active=*/0)) {
-        ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
-        goto out;
-    }
-
     /* If we haven't finished the handshake, try to advance it. */
     if (quic_do_handshake(&ctx) < 1) {
         ret = 0; /* ossl_quic_do_handshake raised error here */
@@ -2958,8 +2953,13 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
          * Even though we succeeded, tick the reactor here to ensure we are
          * handling other aspects of the QUIC connection.
          */
-        qctx_maybe_autotick(&ctx);
+        if (quic_mutation_allowed(ctx.qc, /*req_active=*/0))
+            qctx_maybe_autotick(&ctx);
+
         ret = 1;
+    } else if (!quic_mutation_allowed(ctx.qc, /*req_active=*/0)) {
+        ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+        goto out;
     } else if (qctx_blocking(&ctx)) {
         /*
          * We were not able to read anything immediately, so our stream
