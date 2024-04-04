@@ -42,19 +42,6 @@ struct quic_xso_st {
     /* The stream object. Always non-NULL for as long as the XSO exists. */
     QUIC_STREAM                     *stream;
 
-    /*
-     * Has this stream been logically configured into blocking mode? Only
-     * meaningful if desires_blocking_set is 1. Ignored if blocking is not
-     * currently possible given QUIC_CONNECTION configuration.
-     */
-    unsigned int                    desires_blocking        : 1;
-
-    /*
-     * Has SSL_set_blocking_mode been called on this stream? If not set, we
-     * inherit from the QUIC_CONNECTION blocking state.
-     */
-    unsigned int                    desires_blocking_set    : 1;
-
     /* The application has retired a FIN (i.e. SSL_ERROR_ZERO_RETURN). */
     unsigned int                    retired_fin             : 1;
 
@@ -205,12 +192,6 @@ struct quic_conn_st {
     /* Are we using thread assisted mode? Never changes after init. */
     unsigned int                    is_thread_assisted      : 1;
 
-    /* Do connection-level operations (e.g. handshakes) run in blocking mode? */
-    unsigned int                    blocking                : 1;
-
-    /* Does the application want blocking mode? */
-    unsigned int                    desires_blocking        : 1;
-
     /* Have we created a default XSO yet? */
     unsigned int                    default_xso_created     : 1;
 
@@ -243,11 +224,6 @@ struct quic_conn_st {
     /* SSL_set_incoming_stream_policy. */
     int                             incoming_stream_policy;
     uint64_t                        incoming_stream_aec;
-
-    /*
-     * Last network BIO epoch at which blocking mode compatibility was checked.
-     */
-    uint64_t                        last_net_bio_epoch;
 
     /*
      * Last 'normal' error during an app-level I/O operation, used by
