@@ -4218,12 +4218,27 @@ int ossl_quic_listen(SSL *ssl)
  * SSL_accept_connection
  * ---------------------
  */
+static int quic_accept_connection_wait(void *arg)
+{
+    QUIC_PORT *port = arg;
+
+    if (!ossl_quic_port_is_running(port))
+        return -1;
+
+    if (ossl_quic_port_have_incoming(port))
+        return 1;
+
+    return 0;
+}
+
 QUIC_TAKES_LOCK
 SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
 {
+    int ret;
     QCTX ctx;
     QUIC_CONNECTION *qc = NULL;
     QUIC_CHANNEL *new_ch = NULL;
+    int no_block = ((flags & SSL_ACCEPT_CONNECTION_NO_BLOCK) != 0);
 
     if (!expect_quic_listener(ssl, &ctx))
         return NULL;
@@ -4233,11 +4248,25 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     if (!ql_listen(ctx.ql))
         goto out;
 
-    /* TODO(QUIC SERVER): Autotick */
-    /* TODO(QUIC SERVER): Implement blocking and SSL_ACCEPT_CONNECTION_NO_BLOCK */
-
+    /* Wait for an incoming connection if needed. */
     new_ch = ossl_quic_port_pop_incoming(ctx.ql->port);
-    if (new_ch == NULL) {
+    if (new_ch == NULL && ossl_quic_port_is_running(ctx.ql->port)) {
+        if (!no_block && qctx_blocking(&ctx)) {
+            ret = block_until_pred(&ctx, quic_accept_connection_wait,
+                                   ctx.ql->port, 0);
+            if (ret < 1)
+                goto out;
+        } else {
+            qctx_maybe_autotick(&ctx);
+        }
+
+        if (!ossl_quic_port_is_running(ctx.ql->port))
+            goto out;
+
+        new_ch = ossl_quic_port_pop_incoming(ctx.ql->port);
+    }
+
+    if (new_ch == NULL && ossl_quic_port_is_running(ctx.ql->port)) {
         /* No connections already queued. */
         ossl_quic_reactor_tick(ossl_quic_engine_get0_reactor(ctx.ql->engine), 0);
 
