@@ -54,7 +54,7 @@ SSL3_ENC_METHOD const TLSv1_1_enc_data = {
     TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
     tls1_alert_code,
     tls1_export_keying_material,
-    SSL_ENC_FLAG_EXPLICIT_IV,
+    0,
     ssl3_set_handshake_header,
     tls_close_construct_packet,
     ssl3_handshake_write
@@ -69,7 +69,7 @@ SSL3_ENC_METHOD const TLSv1_2_enc_data = {
     TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
     tls1_alert_code,
     tls1_export_keying_material,
-    SSL_ENC_FLAG_EXPLICIT_IV | SSL_ENC_FLAG_SIGALGS | SSL_ENC_FLAG_SHA256_PRF
+    SSL_ENC_FLAG_SIGALGS | SSL_ENC_FLAG_SHA256_PRF
         | SSL_ENC_FLAG_TLS1_2_CIPHERS,
     ssl3_set_handshake_header,
     tls_close_construct_packet,
