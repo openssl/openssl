@@ -95,6 +95,7 @@ static int port_init(QUIC_PORT *port)
 
     ossl_list_port_insert_tail(&port->engine->port_list, port);
     port->on_engine_list    = 1;
+    port->bio_changed       = 1;
     return 1;
 
 err:
@@ -238,9 +239,12 @@ static int port_update_poll_desc(QUIC_PORT *port, BIO *net_bio, int for_write)
     return 1;
 }
 
-int ossl_quic_port_update_poll_descriptors(QUIC_PORT *port)
+int ossl_quic_port_update_poll_descriptors(QUIC_PORT *port, int force)
 {
     int ok = 1;
+
+    if (!force && !port->bio_changed)
+        return 0;
 
     if (!port_update_poll_desc(port, port->net_rbio, /*for_write=*/0))
         ok = 0;
@@ -248,6 +252,7 @@ int ossl_quic_port_update_poll_descriptors(QUIC_PORT *port)
     if (!port_update_poll_desc(port, port->net_wbio, /*for_write=*/1))
         ok = 0;
 
+    port->bio_changed = 0;
     return ok;
 }
 
@@ -292,7 +297,7 @@ static void port_update_addressing_mode(QUIC_PORT *port)
 
     port->addressed_mode_r = ((rcaps & BIO_DGRAM_CAP_PROVIDES_SRC_ADDR) != 0);
     port->addressed_mode_w = ((wcaps & BIO_DGRAM_CAP_HANDLES_DST_ADDR) != 0);
-    ++port->net_bio_epoch;
+    port->bio_changed = 1;
 }
 
 int ossl_quic_port_is_addressed_r(const QUIC_PORT *port)
@@ -346,11 +351,6 @@ int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio)
     port->net_wbio = net_wbio;
     port_update_addressing_mode(port);
     return 1;
-}
-
-uint64_t ossl_quic_port_get_net_bio_epoch(const QUIC_PORT *port)
-{
-    return port->net_bio_epoch;
 }
 
 /*
