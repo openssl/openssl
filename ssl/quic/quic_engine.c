@@ -97,6 +97,24 @@ const char *ossl_quic_engine_get0_propq(QUIC_ENGINE *qeng)
     return qeng->propq;
 }
 
+void ossl_quic_engine_update_poll_descriptors(QUIC_ENGINE *qeng, int force)
+{
+    QUIC_PORT *port;
+
+    /*
+     * TODO(QUIC MULTIPORT): The implementation of
+     * ossl_quic_port_update_poll_descriptors assumes an engine only ever has a
+     * single port for now due to reactor limitations. This limitation will be
+     * removed in future.
+     *
+     * TODO(QUIC MULTIPORT): Consider only iterating the port list when dirty at
+     * the engine level in future when we can have multiple ports. This is not
+     * important currently as the port list has a single entry.
+     */
+    OSSL_LIST_FOREACH(port, port, &qeng->port_list)
+        ossl_quic_port_update_poll_descriptors(port, force);
+}
+
 /*
  * QUIC Engine: Child Object Lifecycle Management
  * ==============================================
