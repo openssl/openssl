@@ -545,6 +545,9 @@ jobs:
     - name: get cpu info
       run: |
         sysctl machdep.cpu
+        sysctl hw.cachesize
+        sysctl hw.l2cachesize
+        sysctl hw.physicalcpu
         ./util/opensslwrap.sh version -c
       working-directory: ./build
     - name: make test
