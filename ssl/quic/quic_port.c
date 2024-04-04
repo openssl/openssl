@@ -480,7 +480,7 @@ void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *res,
 {
     QUIC_CHANNEL *ch;
 
-    res->net_read_desired   = 0;
+    res->net_read_desired   = ossl_quic_port_is_running(port);
     res->net_write_desired  = 0;
     res->tick_deadline      = ossl_time_infinite();
 
