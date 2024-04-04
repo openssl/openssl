@@ -266,7 +266,7 @@ DEF_FUNC(hf_accept_conn_none)
 
     REQUIRE_SSL(listener);
 
-    conn = SSL_accept_connection(listener, 0);
+    conn = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
     if (!TEST_ptr_null(conn)) {
         SSL_free(conn);
         goto err;
