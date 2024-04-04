@@ -82,6 +82,14 @@ QUIC_REACTOR *ossl_quic_engine_get0_reactor(QUIC_ENGINE *qeng);
 OSSL_LIB_CTX *ossl_quic_engine_get0_libctx(QUIC_ENGINE *qeng);
 const char *ossl_quic_engine_get0_propq(QUIC_ENGINE *qeng);
 
+/*
+ * Look through all the engine's ports and determine if any of them have had a
+ * BIO changed. If so, update the blocking support detection data in the
+ * QUIC_REACTOR. If force is 1, always do the update even if nothing seems
+ * to have changed.
+ */
+void ossl_quic_engine_update_poll_descriptors(QUIC_ENGINE *qeng, int force);
+
 # endif
 
 #endif

@@ -81,9 +81,6 @@ struct quic_port_st {
     /* Port-level permanent errors (causing failure state) are stored here. */
     ERR_STATE                       *err_state;
 
-    /* Network BIO epoch. Increments whenever network BIO config changes. */
-    uint64_t                        net_bio_epoch;
-
     /* DCID length used for incoming short header packets. */
     unsigned char                   rx_short_dcid_len;
     /* For clients, CID length used for outgoing Initial packets. */
@@ -107,6 +104,9 @@ struct quic_port_st {
     /* Are we using addressed mode (BIO_sendmmsg with non-NULL peer)? */
     unsigned int                    addressed_mode_w                : 1;
     unsigned int                    addressed_mode_r                : 1;
+
+    /* Has the BIO been changed since we last updated reactor pollability? */
+    unsigned int                    bio_changed                     : 1;
 };
 
 # endif
