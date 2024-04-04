@@ -169,20 +169,98 @@ static int quic_raise_non_normal_error(QCTX *ctx,
                                 (reason),                       \
                                 (msg))
 
+#define QCTX_C              (1U << 0)
+#define QCTX_S              (1U << 1)
+#define QCTX_L              (1U << 2)
+#define QCTX_AUTO_S         (1U << 3)
+#define QCTX_REMOTE_INIT    (1U << 4)
+#define QCTX_LOCK           (1U << 5)
+#define QCTX_IO             (1U << 6)
+
+/*
+ * Called when expect_quic failed. Used to diagnose why such a call failed and
+ * raise a reasonable error code based on the configured preconditions in flags.
+ */
+static int wrong_type(const SSL *s, uint32_t flags)
+{
+    const uint32_t mask = QCTX_C | QCTX_S | QCTX_L;
+    int code = ERR_R_UNSUPPORTED;
+
+    if ((flags & mask) == QCTX_L)
+        code = SSL_R_LISTENER_USE_ONLY;
+    else if ((flags & mask) == QCTX_C)
+        code = SSL_R_CONN_USE_ONLY;
+    else if ((flags & mask) == QCTX_S
+             || (flags & mask) == (QCTX_C | QCTX_S))
+        code = SSL_R_NO_STREAM;
+
+    return QUIC_RAISE_NON_NORMAL_ERROR(NULL, code, NULL);
+}
+
 /*
  * Given a QCSO, QSSO or QLSO, initialises a QCTX, determining the contextually
- * applicable QUIC_LISTENER, QUIC_CONNECTION, QUIC_XSO and QUIC_CONNECTION
- * pointers.
+ * applicable QUIC_LISTENER, QUIC_CONNECTION and QUIC_XSO pointers.
  *
  * After this returns 1, all fields of the passed QCTX are initialised.
  * Returns 0 on failure. This function is intended to be used to provide API
  * semantics and as such, it invokes QUIC_RAISE_NON_NORMAL_ERROR() on failure.
+ *
+ * The flags argument controls the preconditions and postconditions of this
+ * function:
+ *
+ *   QCTX_C
+ *      The input SSL object may be a QCSO.
+ *
+ *   QCTX_S
+ *      The input SSL object may be a QSSO or a QCSO with a default stream
+ *      attached.
+ *
+ *      (Note this means there is no current way to require an SSL object with a
+ *      QUIC stream which is not a QCSO; a QCSO with a default stream attached
+ *      is always considered to satisfy QCTX_S.)
+ *
+ *   QCTX_AUTO_S
+ *      The input SSL object may be a QSSO or a QCSO with a default stream
+ *      attached. If no default stream is currently attached to a QCSO,
+ *      one may be auto-created if possible.
+ *
+ *      If QCTX_REMOTE_INIT is set, an auto-created default XSO is
+ *      initiated by the remote party (i.e., local party reads first).
+ *
+ *      If it is not set, an auto-created default XSO is
+ *      initiated by the local party (i.e., local party writes first).
+ *
+ *   QCTX_L
+ *      The input SSL object may be a QLSO.
+ *
+ *   QCTX_LOCK
+ *      If and only if the function returns successfully, the ctx
+ *      is guaranteed to be locked.
+ *
+ *   QCTX_IO
+ *      Begin an I/O context. If not set, begins a non-I/O context.
+ *
+ * The fields of a QCTX are initialised as follows depending on the identity of
+ * the SSL object, and assuming the preconditions demanded by the flags field as
+ * described above are met:
+ *
+ *                  QLSO        QCSO        QSSO
+ *   ql             non-NULL    maybe       maybe
+ *   qc             NULL        non-NULL    non-NULL
+ *   xso            NULL        maybe       non-NULL
+ *   is_stream      0           0           1
+ *   is_listener    1           0           0
+ *
  */
-static int expect_quic_any(const SSL *s, QCTX *ctx)
+static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
 {
-    QUIC_LISTENER *ql;
+    int ok = 0, locked = 0, lock_requested = ((flags & QCTX_LOCK) != 0);
     QUIC_CONNECTION *qc;
+    QUIC_LISTENER *ql;
     QUIC_XSO *xso;
+
+    if ((flags & QCTX_AUTO_S) != 0)
+        flags |= QCTX_S;
 
     ctx->obj            = NULL;
     ctx->ql             = NULL;
@@ -190,72 +268,118 @@ static int expect_quic_any(const SSL *s, QCTX *ctx)
     ctx->xso            = NULL;
     ctx->is_stream      = 0;
     ctx->is_listener    = 0;
+    ctx->in_io          = ((flags & QCTX_IO) != 0);
 
-    if (s == NULL)
-        return QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_PASSED_NULL_PARAMETER, NULL);
+    if (s == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_PASSED_NULL_PARAMETER, NULL);
+        goto err;
+    }
 
     switch (s->type) {
-    case SSL_TYPE_QUIC_CONNECTION:
-        qc              = (QUIC_CONNECTION *)s;
-        ctx->obj        = &qc->obj;
-        ctx->ql         = qc->listener;
-        ctx->qc         = qc;
-        ctx->xso        = qc->default_xso;
-        ctx->is_stream  = 0;
-        ctx->in_io      = 0;
-        return 1;
-
-    case SSL_TYPE_QUIC_XSO:
-        xso             = (QUIC_XSO *)s;
-        ctx->obj        = &xso->obj;
-        ctx->ql         = xso->conn->listener;
-        ctx->qc         = xso->conn;
-        ctx->xso        = xso;
-        ctx->is_stream  = 1;
-        ctx->in_io      = 0;
-        return 1;
-
     case SSL_TYPE_QUIC_LISTENER:
+        if ((flags & QCTX_L) == 0) {
+            wrong_type(s, flags);
+            goto err;
+        }
+
         ql                  = (QUIC_LISTENER *)s;
         ctx->obj            = &ql->obj;
         ctx->ql             = ql;
         ctx->is_listener    = 1;
-        ctx->in_io          = 0;
-        return 1;
+        break;
+
+    case SSL_TYPE_QUIC_CONNECTION:
+        qc                  = (QUIC_CONNECTION *)s;
+        ctx->obj            = &qc->obj;
+        ctx->ql             = qc->listener; /* never changes, so can be read without lock */
+        ctx->qc             = qc;
+
+        if ((flags & QCTX_AUTO_S) != 0) {
+            if ((flags & QCTX_IO) != 0)
+                qctx_lock_for_io(ctx);
+            else
+                qctx_lock(ctx);
+
+            locked = 1;
+        }
+
+        if ((flags & QCTX_AUTO_S) != 0 && qc->default_xso == NULL) {
+            if (!quic_mutation_allowed(qc, /*req_active=*/0)) {
+                QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+                goto err;
+            }
+
+            /* If we haven't finished the handshake, try to advance it. */
+            if (quic_do_handshake(ctx) < 1)
+                /* ossl_quic_do_handshake raised error here */
+                goto err;
+
+            if ((flags & QCTX_REMOTE_INIT) != 0) {
+                if (!qc_wait_for_default_xso_for_read(ctx))
+                    goto err;
+            } else {
+                if (!qc_try_create_default_xso_for_write(ctx))
+                    goto err;
+            }
+        }
+
+        if ((flags & QCTX_C) == 0
+            && (qc->default_xso == NULL || (flags & QCTX_S) == 0))
+            return wrong_type(s, flags);
+
+        ctx->xso            = qc->default_xso;
+        break;
+
+    case SSL_TYPE_QUIC_XSO:
+        if ((flags & QCTX_S) == 0) {
+            wrong_type(s, flags);
+            goto err;
+        }
+
+        xso                 = (QUIC_XSO *)s;
+        ctx->obj            = &xso->obj;
+        ctx->ql             = xso->conn->listener;
+        ctx->qc             = xso->conn;
+        ctx->xso            = xso;
+        ctx->is_stream      = 1;
+        break;
 
     default:
-        return QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        goto err;
     }
+
+    if (lock_requested && !locked) {
+        if ((flags & QCTX_IO) != 0)
+            qctx_lock_for_io(ctx);
+        else
+            qctx_lock(ctx);
+
+        locked = 1;
+    }
+
+    ok = 1;
+err:
+    if (locked && (!ok || !lock_requested))
+        qctx_unlock(ctx);
+
+    return ok;
 }
 
-/*
- * Given a QCSO or QSSO, initialises a QCTX, determining the contextually
- * applicable QUIC_CONNECTION pointer and, if applicable, QUIC_XSO pointer.
- *
- * After this returns 1, all fields of the passed QCTX are initialised.
- * Returns 0 on failure. This function is intended to be used to provide API
- * semantics and as such, it invokes QUIC_RAISE_NON_NORMAL_ERROR() on failure.
- */
+
 static int expect_quic(const SSL *s, QCTX *ctx)
 {
-    if (!expect_quic_any(s, ctx))
-        return 0;
+    return expect_quic_as(s, ctx, QCTX_C | QCTX_S);
+}
 
-    if (ctx->obj->ssl.type == SSL_TYPE_QUIC_LISTENER)
-        return QUIC_RAISE_NON_NORMAL_ERROR(NULL, SSL_R_CONN_USE_ONLY, NULL);
-
-    return 1;
+static int expect_quic_any(const SSL *s, QCTX *ctx)
+{
+    return expect_quic_as(s, ctx, QCTX_C | QCTX_S | QCTX_L);
 }
 
 static int expect_quic_listener(const SSL *s, QCTX *ctx)
 {
-    if (!expect_quic_any(s, ctx))
-        return 0;
-
-    if (ctx->obj->ssl.type != SSL_TYPE_QUIC_LISTENER)
-        return QUIC_RAISE_NON_NORMAL_ERROR(NULL, SSL_R_LISTENER_USE_ONLY, NULL);
-
-    return 1;
+    return expect_quic_as(s, ctx, QCTX_L);
 }
 
 /*
@@ -272,46 +396,18 @@ QUIC_ACQUIRES_LOCK
 static int ossl_unused expect_quic_with_stream_lock(const SSL *s, int remote_init,
                                                     int in_io, QCTX *ctx)
 {
-    if (!expect_quic(s, ctx))
-        return 0;
+    uint32_t flags = QCTX_S | QCTX_LOCK;
+
+    if (remote_init >= 0)
+        flags |= QCTX_AUTO_S;
+
+    if (remote_init > 0)
+        flags |= QCTX_REMOTE_INIT;
 
     if (in_io)
-        qctx_lock_for_io(ctx);
-    else
-        qctx_lock(ctx);
+        flags |= QCTX_IO;
 
-    if (ctx->xso == NULL && remote_init >= 0) {
-        if (!quic_mutation_allowed(ctx->qc, /*req_active=*/0)) {
-            QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
-            goto err;
-        }
-
-        /* If we haven't finished the handshake, try to advance it. */
-        if (quic_do_handshake(ctx) < 1)
-            /* ossl_quic_do_handshake raised error here */
-            goto err;
-
-        if (remote_init == 0) {
-            if (!qc_try_create_default_xso_for_write(ctx))
-                goto err;
-        } else {
-            if (!qc_wait_for_default_xso_for_read(ctx, /*peek=*/0))
-                goto err;
-        }
-
-        ctx->xso = ctx->qc->default_xso;
-    }
-
-    if (ctx->xso == NULL) {
-        QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_NO_STREAM, NULL);
-        goto err;
-    }
-
-    return 1; /* coverity[missing_unlock]: lock held */
-
-err:
-    qctx_unlock(ctx);
-    return 0;
+    return expect_quic_as(s, ctx, flags);
 }
 
 /*
@@ -320,13 +416,7 @@ err:
  */
 static int ossl_unused expect_quic_conn_only(const SSL *s, QCTX *ctx)
 {
-    if (!expect_quic(s, ctx))
-        return 0;
-
-    if (ctx->is_stream)
-        return QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_CONN_USE_ONLY, NULL);
-
-    return 1;
+    return expect_quic_as(s, ctx, QCTX_C);
 }
 
 /*
