@@ -103,6 +103,18 @@ struct quic_obj_st {
     unsigned int            init_done       : 1;
     unsigned int            is_event_leader : 1;
     unsigned int            is_port_leader  : 1;
+
+    /*
+     * Blocking mode configuration is handled generically through QUIC_OBJ as it
+     * by default inherits from the parent SSL object.
+     */
+    unsigned int            req_blocking_mode       : 2; /* QUIC_BLOCKING_MODE */
+};
+
+enum {
+    QUIC_BLOCKING_MODE_INHERIT,
+    QUIC_BLOCKING_MODE_NONBLOCKING,
+    QUIC_BLOCKING_MODE_BLOCKING
 };
 
 /*
@@ -218,6 +230,32 @@ ossl_quic_obj_get0_port_local(const QUIC_OBJ *obj)
     return ossl_quic_obj_is_port_leader(obj)
         ? ossl_quic_obj_get0_port(obj) : NULL;
 }
+
+/*
+ * Return 1 if we are currently capable of supporting blocking mode (regardless
+ * of whether it is actually turned on).
+ */
+int ossl_quic_obj_can_support_blocking(const QUIC_OBJ *obj);
+
+/*
+ * Returns 1 if we *desire* to do blocking I/O, regardless of whether it will
+ * actually be used (e.g. because it cannot currently be supported).
+ */
+int ossl_quic_obj_desires_blocking(const QUIC_OBJ *obj);
+
+/*
+ * Return 1 if an API call directly to the given object should use blocking mode
+ * and 0 otherwise.
+ */
+int ossl_quic_obj_blocking(const QUIC_OBJ *obj);
+
+/*
+ * Set the (requested) blocking mode, which might or might not be honoured
+ * depending on whether the BIO configuration can support it. Argument is a
+ * QUIC_BLOCKING_MODE value. If the top-level object in a QSO hierarchy is set
+ * to QUIC_BLOCKING_MODE_INHERIT, defaults to blocking mode.
+ */
+void ossl_quic_obj_set_blocking_mode(QUIC_OBJ *obj, unsigned int mode);
 
 /*
  * Convenience Inlines

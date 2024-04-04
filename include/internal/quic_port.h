@@ -99,10 +99,11 @@ int ossl_quic_port_set_net_rbio(QUIC_PORT *port, BIO *net_rbio);
 int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio);
 
 /*
- * Re-poll the network BIOs already set to determine if their support
- * for polling has changed.
+ * Re-poll the network BIOs already set to determine if their support for
+ * polling has changed. If force is 0, only check again if the BIOs have been
+ * changed.
  */
-int ossl_quic_port_update_poll_descriptors(QUIC_PORT *port);
+int ossl_quic_port_update_poll_descriptors(QUIC_PORT *port, int force);
 
 /* Gets the engine which this port is a child of. */
 QUIC_ENGINE *ossl_quic_port_get0_engine(QUIC_PORT *port);
