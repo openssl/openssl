@@ -274,9 +274,6 @@
 # define SSL_IS_FIRST_HANDSHAKE(s) ((s)->s3.tmp.finish_md_len == 0 \
                                     || (s)->s3.tmp.peer_finish_md_len == 0)
 
-/* See if we need explicit IV */
-# define SSL_USE_EXPLICIT_IV(s)  \
-    (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_EXPLICIT_IV)
 /*
  * See if we use signature algorithms extension and signature algorithm
  * before signatures.
@@ -2156,8 +2153,6 @@ typedef struct ssl3_enc_method {
 
 /* Values for enc_flags */
 
-/* Uses explicit IV for CBC mode */
-# define SSL_ENC_FLAG_EXPLICIT_IV        0x1
 /* Uses signature algorithms extension */
 # define SSL_ENC_FLAG_SIGALGS            0x2
 /* Uses SHA256 default PRF */
