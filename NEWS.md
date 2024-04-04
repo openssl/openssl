@@ -18,13 +18,134 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
+OpenSSL 3.4
+-----------
+
+### Major changes between OpenSSL 3.3 and OpenSSL 3.4 [under development]
+
+OpenSSL 3.4.0 is a feature release adding significant new functionality to
+OpenSSL.
+
+This release is in development.
+
 OpenSSL 3.3
 -----------
 
 ### Major changes between OpenSSL 3.2 and OpenSSL 3.3 [under development]
 
+OpenSSL 3.3.0 is a feature release adding significant new functionality to
+OpenSSL.
+
+This release adds the following new features:
+
+  * Support for qlog for tracing QUIC connections has been added
+
+  * Added APIs to allow configuring the negotiated idle timeout for QUIC
+    connections, and to allow determining the number of additional streams
+    that can currently be created for a QUIC connection.
+
+  * Added APIs to allow disabling implicit QUIC event processing for QUIC SSL
+    objects
+
+  * Added APIs to allow querying the size and utilisation of a QUIC stream's
+    write buffer
+
+  * New API `SSL_write_ex2`, which can be used to send an end-of-stream (FIN)
+    condition in an optimised way when using QUIC.
+
+  * Limited support for polling of QUIC connection and stream objects in a
+    non-blocking manner.
+
+  * Added a new EVP_DigestSqueeze() API. This allows SHAKE to squeeze multiple
+    times with different output sizes.
+
   * Added exporter for CMake on Unix and Windows, alongside the pkg-config
     exporter.
+
+  * The BLAKE2s hash algorithm matches BLAKE2b's support for configurable
+    output length.
+
+  * The EVP_PKEY_fromdata function has been augmented to allow for the
+    derivation of CRT (Chinese Remainder Theorem) parameters when requested
+
+  * Added API functions SSL_SESSION_get_time_ex(), SSL_SESSION_set_time_ex()
+    using time_t which is Y2038 safe on 32 bit systems when 64 bit time
+    is enabled
+
+  * Unknown entries in TLS SignatureAlgorithms, ClientSignatureAlgorithms
+    config options and the respective calls to SSL[_CTX]_set1_sigalgs() and
+    SSL[_CTX]_set1_client_sigalgs() that start with `?` character are
+    ignored and the configuration will still be used.
+
+  * Added `-set_issuer` and `-set_subject` options to `openssl x509` to
+    override the Issuer and Subject when creating a certificate. The `-subj`
+    option now is an alias for `-set_subject`.
+
+  * Added several new features of CMPv3 defined in RFC 9480 and RFC 9483
+
+  * New option `SSL_OP_PREFER_NO_DHE_KEX`, which allows configuring a TLS1.3
+    server to prefer session resumption using PSK-only key exchange over PSK
+    with DHE, if both are available.
+
+  * New atexit configuration switch, which controls whether the OPENSSL_cleanup
+    is registered when libcrypto is unloaded.
+
+  * Added X509_STORE_get1_objects to avoid issues with the existing
+    X509_STORE_get0_objects API in multi-threaded applications.
+
+This release incorporates the following potentially significant or incompatible
+changes:
+
+  * Applied AES-GCM unroll8 optimisation to Microsoft Azure Cobalt 100
+
+  * Optimized AES-CTR for ARM Neoverse V1 and V2
+
+  * Enable AES and SHA3 optimisations on Applie Silicon M3-based MacOS systems
+    similar to M1/M2.
+
+  * Various optimizations for cryptographic routines using RISC-V vector crypto
+    extensions
+
+  * Added assembly implementation for md5 on loongarch64
+
+  * Accept longer context for TLS 1.2 exporters
+
+  * The activate and soft_load configuration settings for providers in
+    openssl.cnf have been updated to require a value of [1|yes|true|on]
+    (in lower or UPPER case) to enable the setting. Conversely a value
+    of [0|no|false|off] will disable the setting.
+
+  * In `openssl speed`, changed the default hash function used with `hmac` from
+    `md5` to `sha256`.
+
+  * The `-verify` option to the `openssl crl` and `openssl req` will make the
+    program exit with 1 on failure.
+
+  * The d2i_ASN1_GENERALIZEDTIME(), d2i_ASN1_UTCTIME(), ASN1_TIME_check(), and
+    related functions have been augmented to check for a minimum length of
+    the input string, in accordance with ITU-T X.690 section 11.7 and 11.8.
+
+  * OPENSSL_sk_push() and sk_<TYPE>_push() functions now return 0 instead of -1
+    if called with a NULL stack argument.
+
+  * New limit on HTTP response headers is introduced to HTTP client. The
+    default limit is set to 256 header lines.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * The BIO_get_new_index() function can only be called 127 times before it
+    reaches its upper bound of BIO_TYPE_MASK and will now return -1 once its
+    exhausted.
+
+A more detailed list of changes in this release can be found in the
+[CHANGES.md] file.
+
+Users interested in using the new QUIC functionality are encouraged to read the
+[README file for QUIC][README-QUIC.md], which provides links to relevant
+documentation and example code.
+
+As always, bug reports and issues relating to OpenSSL can be [filed on our issue
+tracker][issue tracker].
 
 OpenSSL 3.2
 -----------
