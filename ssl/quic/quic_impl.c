@@ -364,7 +364,6 @@ err:
     return ok;
 }
 
-
 static int expect_quic_cs(const SSL *s, QCTX *ctx)
 {
     return expect_quic_as(s, ctx, QCTX_C | QCTX_S);
