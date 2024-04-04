@@ -348,7 +348,8 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                        uint32_t flags,
                                        CRYPTO_MUTEX *mutex)
 {
-    int res;
+    int res, net_read_desired, net_write_desired;
+    OSSL_TIME tick_deadline;
 
     for (;;) {
         if ((flags & SKIP_FIRST_TICK) != 0)
@@ -360,11 +361,19 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
         if ((res = pred(pred_arg)) != 0)
             return res;
 
+        net_read_desired  = ossl_quic_reactor_net_read_desired(rtor);
+        net_write_desired = ossl_quic_reactor_net_write_desired(rtor);
+        tick_deadline     = ossl_quic_reactor_get_tick_deadline(rtor);
+        if (!net_read_desired && !net_write_desired
+            && ossl_time_is_infinite(tick_deadline))
+            /* Can't wait if there is nothing to wait for. */
+            return 0;
+
         if (!poll_two_descriptors(ossl_quic_reactor_get_poll_r(rtor),
-                                  ossl_quic_reactor_net_read_desired(rtor),
+                                  net_read_desired,
                                   ossl_quic_reactor_get_poll_w(rtor),
-                                  ossl_quic_reactor_net_write_desired(rtor),
-                                  ossl_quic_reactor_get_tick_deadline(rtor),
+                                  net_write_desired,
+                                  tick_deadline,
                                   mutex))
             /*
              * We don't actually care why the call succeeded (timeout, FD
