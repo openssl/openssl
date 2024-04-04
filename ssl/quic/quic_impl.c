@@ -313,7 +313,7 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
                 goto err;
 
             if ((flags & QCTX_REMOTE_INIT) != 0) {
-                if (!qc_wait_for_default_xso_for_read(ctx))
+                if (!qc_wait_for_default_xso_for_read(ctx, /*peek=*/0))
                     goto err;
             } else {
                 if (!qc_try_create_default_xso_for_write(ctx))
@@ -2704,7 +2704,7 @@ int ossl_quic_write_flags(SSL *s, const void *buf, size_t len,
 
     if (len == 0) {
         /* Do not autocreate default XSO for zero-length writes. */
-        if (!expect_quic(s, &ctx))
+        if (!expect_quic_cs(s, &ctx))
             return 0;
 
         qctx_lock_for_io(&ctx);
