@@ -39,6 +39,7 @@ int ossl_quic_obj_init(QUIC_OBJ *obj,
     obj->is_port_leader     = is_port_leader;
     obj->engine             = engine;
     obj->port               = port;
+    obj->req_blocking_mode  = QUIC_BLOCKING_MODE_INHERIT;
     if (!obj_update_cache(obj))
         goto err;
 
@@ -86,4 +87,39 @@ SSL_CONNECTION *ossl_quic_obj_get0_handshake_layer(QUIC_OBJ *obj)
         return NULL;
 
     return SSL_CONNECTION_FROM_SSL_ONLY(((QUIC_CONNECTION *)obj)->tls);
+}
+
+/* (Returns a cached result.) */
+int ossl_quic_obj_can_support_blocking(const QUIC_OBJ *obj)
+{
+    QUIC_REACTOR *rtor = ossl_quic_obj_get0_reactor(obj);
+
+    return ossl_quic_reactor_can_poll_r(rtor)
+        || ossl_quic_reactor_can_poll_w(rtor);
+}
+
+int ossl_quic_obj_desires_blocking(const QUIC_OBJ *obj)
+{
+    unsigned int req_blocking_mode;
+
+    for (; (req_blocking_mode = obj->req_blocking_mode)
+            == QUIC_BLOCKING_MODE_INHERIT && obj->parent_obj != NULL;
+         obj = obj->parent_obj);
+
+    return req_blocking_mode != QUIC_BLOCKING_MODE_NONBLOCKING;
+}
+
+int ossl_quic_obj_blocking(const QUIC_OBJ *obj)
+{
+    if (!ossl_quic_obj_desires_blocking(obj))
+        return 0;
+
+    ossl_quic_engine_update_poll_descriptors(ossl_quic_obj_get0_engine(obj),
+                                             /*force=*/0);
+    return ossl_quic_obj_can_support_blocking(obj);
+}
+
+void ossl_quic_obj_set_blocking_mode(QUIC_OBJ *obj, unsigned int mode)
+{
+    obj->req_blocking_mode = mode;
 }
