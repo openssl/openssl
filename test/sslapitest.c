@@ -9423,6 +9423,8 @@ static int test_session_cache_overflow(int idx)
 
     SSL_shutdown(serverssl);
     SSL_shutdown(clientssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
     serverssl = clientssl = NULL;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
