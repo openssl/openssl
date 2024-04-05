@@ -10815,8 +10815,17 @@ static int test_multi_resume(int idx)
     int i, testresult = 0;
     struct resume_servername_cb_data cbdata;
 
+#if defined(OPENSSL_NO_TLS1_2)
+    if (idx == 4)
+        return TEST_skip("TLSv1.2 is disabled in this build");
+#else
     if (idx == 4)
         max_version = TLS1_2_VERSION;
+#endif
+#if defined(OSSL_NO_USABLE_TLS1_3)
+    if (idx != 4)
+        return TEST_skip("No usable TLSv1.3 in this build");
+#endif
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(), TLS1_VERSION,
