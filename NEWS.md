@@ -41,7 +41,6 @@ This release incorporates the following bug fixes and mitigations:
 
 ### Major changes between OpenSSL 3.2.0 and OpenSSL 3.2.1 [30 Jan 2024]
 
-
 OpenSSL 3.2.1 is a security patch release. The most severe CVE fixed in this
 release is Low.
 
