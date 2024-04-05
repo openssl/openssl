@@ -510,6 +510,23 @@ This source is ignored by the FIPS provider.
 Use the `RDSEED` or `RDRAND` command on x86 or `RNDRRS` command on aarch64
 if provided by the CPU.
 
+### jitter
+
+Use
+[jitterentropy-library](https://github.com/smuellerDD/jitterentropy-library) statically linked only.
+
+Additional configuration flags available:
+
+    --with-jitter-include=DIR
+
+The directory for the location of the jitterentropy.h include file, if
+it is outside the system include path.
+
+    --with-jitter-lib=DIR
+
+This is the directory containing the static libjitterentropy.a
+library, if it is outside the system library path.
+
 ### none
 
 Disable automatic seeding.  This is the default on some operating systems where

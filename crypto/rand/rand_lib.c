@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,6 +19,10 @@
 #include "crypto/cryptlib.h"
 #include "rand_local.h"
 #include "crypto/context.h"
+
+#ifdef OPENSSL_RAND_SEED_JITTER
+#include <jitterentropy.h>
+#endif
 
 #ifndef FIPS_MODULE
 # include <stdio.h>
@@ -61,6 +65,11 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
 
     if (!ossl_rand_pool_init())
         goto err;
+
+# ifdef OPENSSL_RAND_SEED_JITTER
+    if (jent_entropy_init_ex(0, JENT_FORCE_FIPS))
+        goto err;
+# endif
 
     rand_inited = 1;
     return 1;

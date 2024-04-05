@@ -477,6 +477,7 @@ my @disablables = (
     "gost",
     "http",
     "idea",
+    "jitter",
     "ktls",
     "legacy",
     "loadereng",
@@ -587,6 +588,7 @@ our %disabled = ( # "what"         => "comment"
                   "fuzz-afl"            => "default",
                   "fuzz-libfuzzer"      => "default",
                   "pie"                 => "default",
+                  "jitter"              => "default",
                   "ktls"                => "default",
                   "md2"                 => "default",
                   "msan"                => "default",
@@ -816,7 +818,7 @@ my %cmdvars = ();               # Stores FOO='blah' type arguments
 my %unsupported_options = ();
 my %deprecated_options = ();
 # If you change this, update apps/version.c
-my @known_seed_sources = qw(getrandom devrandom os egd none rdcpu);
+my @known_seed_sources = qw(getrandom devrandom os egd none rdcpu jitter);
 my @seed_sources = ();
 while (@argvcopy)
         {
@@ -1019,6 +1021,14 @@ while (@argvcopy)
                 elsif (/^--openssldir=(.*)$/)
                         {
                         $config{openssldir}=$1;
+                        }
+                elsif (/^--with-jitter-include=(.*)$/)
+                        {
+                        $withargs{jitter_include}=$1;
+                        }
+                elsif (/^--with-jitter-lib=(.*)$/)
+                        {
+                        $withargs{jitter_lib}=$1;
                         }
                 elsif (/^--with-zlib-lib=(.*)$/)
                         {
@@ -1305,6 +1315,9 @@ if (scalar(@seed_sources) == 0) {
 }
 if (scalar(grep { $_ eq 'egd' } @seed_sources) > 0) {
     delete $disabled{'egd'};
+}
+if (scalar(grep { $_ eq 'jitter' } @seed_sources) > 0) {
+    delete $disabled{'jitter'};
 }
 if (scalar(grep { $_ eq 'none' } @seed_sources) > 0) {
     die "Cannot seed with none and anything else" if scalar(@seed_sources) > 1;
