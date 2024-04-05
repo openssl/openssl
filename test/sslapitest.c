@@ -9348,7 +9348,7 @@ static int test_session_cache_overflow(int idx)
     int testresult = 0;
     SSL_SESSION *sess = NULL;
 
-#ifdef OPENSSL_NO_TLS1_3
+#ifdef OSSL_NO_USABLE_TLS1_3
     /* If no TLSv1.3 available then do nothing in this case */
     if (idx % 2 == 0)
         return TEST_skip("No TLSv1.3 available");
