@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,11 @@
 #include "internal/cryptlib.h"
 #include "internal/e_os.h"
 #include "buildinf.h"
+
+#ifdef OPENSSL_RAND_SEED_JITTER
+# include <stdio.h>
+# include <jitterentropy.h>
+#endif
 
 #if defined(__arm__) || defined(__arm) || defined(__aarch64__)
 # include "arm_arch.h"
@@ -140,6 +145,11 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
 # else
         add_seeds_string("rdrand ( rdseed rdrand )");
 # endif
+#endif
+#ifdef OPENSSL_RAND_SEED_JITTER
+        char jent_version_string[32];
+        sprintf(jent_version_string, "jitterentropy (%d)", jent_version());
+        add_seeds_string(jent_version_string);
 #endif
 #ifdef OPENSSL_RAND_SEED_LIBRANDOM
         add_seeds_string("C-library-random");

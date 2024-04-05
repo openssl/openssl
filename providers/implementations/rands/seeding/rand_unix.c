@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -95,6 +95,7 @@ static uint64_t get_time_stamp(void);
 /* none means none. this simplifies the following logic */
 # undef OPENSSL_RAND_SEED_OS
 # undef OPENSSL_RAND_SEED_GETRANDOM
+# undef OPENSSL_RAND_SEED_JITTER
 # undef OPENSSL_RAND_SEED_LIBRANDOM
 # undef OPENSSL_RAND_SEED_DEVRANDOM
 # undef OPENSSL_RAND_SEED_RDTSC
@@ -713,6 +714,12 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
 
 #   if defined(OPENSSL_RAND_SEED_RDCPU)
     entropy_available = ossl_prov_acquire_entropy_from_cpu(pool);
+    if (entropy_available > 0)
+        return entropy_available;
+#   endif
+
+#   if defined(OPENSSL_RAND_SEED_JITTER)
+    entropy_available = ossl_prov_acquire_entropy_from_jitter(pool);
     if (entropy_available > 0)
         return entropy_available;
 #   endif

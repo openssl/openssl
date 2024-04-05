@@ -13,6 +13,7 @@
 /* Hardware-based seeding functions. */
 size_t ossl_prov_acquire_entropy_from_tsc(RAND_POOL *pool);
 size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL *pool);
+size_t ossl_prov_acquire_entropy_from_jitter(RAND_POOL *pool);
 
 /*
  * External seeding functions from the core dispatch table.

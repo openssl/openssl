@@ -1,4 +1,4 @@
-$COMMON=rand_unix.c rand_win.c rand_tsc.c
+$COMMON=rand_unix.c rand_win.c rand_tsc.c rand_jitter.c
 IF[{- $config{target} =~ /vxworks/i -}]
   $COMMON=$COMMON rand_vxworks.c
 ENDIF

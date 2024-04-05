@@ -191,6 +191,32 @@ jobs:
       if: steps.sctp_auth.outcome == 'success' && steps.sctp_auth.conclusion == 'success'
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
+  rand_seed_jitter:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout openssl
+      uses: actions/checkout@v4
+    - name: checkout jitter
+      uses: actions/checkout@v4
+      with:
+        repository: smuellerDD/jitterentropy-library
+        ref: v3.4.1
+        path: jitter
+    - name: build jitter
+      run: make -C jitter/
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: config
+      run: ./config --with-rand-seed=jitter --with-jitter-include=jitter/ --with-jitter-lib=jitter/ && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
   enable_brotli_dynamic:
     runs-on: ubuntu-latest
     steps:
