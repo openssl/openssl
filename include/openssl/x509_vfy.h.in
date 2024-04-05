@@ -376,9 +376,9 @@ X509_LOOKUP_ctrl_ex((x), X509_L_ADD_STORE, (name), 0, NULL,           \
 # define X509_V_FLAG_NO_CHECK_TIME               0x200000
 
 /* Verify OCSP stapling response for server certificate */
-# define X509_V_FLAG_OCSP_CHECK                   0x400000
+# define X509_V_FLAG_OCSP_RESP_CHECK             0x400000
 /* Verify OCSP stapling responses for whole chain */
-# define X509_V_FLAG_OCSP_CHECK_ALL               0x800000
+# define X509_V_FLAG_OCSP_RESP_CHECK_ALL         0x800000
 
 # define X509_VP_FLAG_DEFAULT                    0x1
 # define X509_VP_FLAG_OVERWRITE                  0x2
