@@ -9015,8 +9015,11 @@ static int test_session_cache_overflow(int idx)
          * Cause this session to have a longer timeout than the next session to
          * be added.
          */
-        if (!TEST_true(SSL_SESSION_set_timeout(sess, LONG_MAX)))
+        if (!TEST_true(SSL_SESSION_set_timeout(sess, LONG_MAX))) {
+            sess = NULL;
             goto end;
+        }
+        sess = NULL;
     }
 
     SSL_shutdown(serverssl);
@@ -9060,11 +9063,9 @@ static int test_session_cache_overflow(int idx)
 
     if (!TEST_true(SSL_set_session(clientssl, sess)))
         goto end;
-    sess = NULL;
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
-
 
     testresult = 1;
 
