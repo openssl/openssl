@@ -1,0 +1,22 @@
+SUBDIRS=bio cipher digest keyexch mac kdf pkey signature \
+        encrypt encode sslecho
+
+IF[{- !$disabled{"quic"} -}]
+    SUBDIRS=http3
+ENDIF
+
+IF[{- !$disabled{"cms"} -}]
+ IF[{- !$disabled{"deprecated"} -}]
+    SUBDIRS=cms
+ ENDIF
+ENDIF
+
+IF[{- !$disabled{"dgram"} -}]
+    SUBDIRS=guide
+ENDIF
+
+IF[{- !$disabled{"des"} -}]
+ IF[{- !$disabled{"deprecated"} -}]
+    SUBDIRS=smime
+ ENDIF
+ENDIF
