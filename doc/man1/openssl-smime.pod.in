@@ -245,14 +245,6 @@ used multiple times if more than one signer is required. If a message is being
 verified then the signers certificates will be written to this file if the
 verification was successful.
 
-=item B<-nocerts>
-
-Don't include signers certificate when signing.
-
-=item B<-noattr>
-
-Don't include any signed attributes when signing.
-
 =item B<-recip> I<file>
 
 The recipients certificate when decrypting a message. This certificate
