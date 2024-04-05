@@ -2208,9 +2208,8 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
             return 0;
 
         mac = EVP_MD_get_size(e_md);
-        if (mac <= 0) {
+        if (mac <= 0)
             return 0;
-        }
         if (c->algorithm_enc != SSL_eNULL) {
             int cipher_nid = SSL_CIPHER_get_cipher_nid(c);
             const EVP_CIPHER *e_ciph = EVP_get_cipherbynid(cipher_nid);
@@ -2223,9 +2222,8 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
 
             in = 1; /* padding length byte */
             out = EVP_CIPHER_get_iv_length(e_ciph);
-            if (out < 0) {
+            if (out < 0)
                 return 0;
-            }
             blk = EVP_CIPHER_get_block_size(e_ciph);
             if (blk <= 0)
                 return 0;
