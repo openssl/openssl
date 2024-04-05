@@ -72,14 +72,27 @@ static int test_recursive_config(void)
     return testresult;
 }
 
+#define P_TEST_PATH "/../test/p_test.so"
 static int test_path_config(void)
 {
     OSSL_LIB_CTX *ctx = NULL;
     OSSL_PROVIDER *prov;
     int testresult = 0;
     struct stat sbuf;
+    char *module_path = getenv("OPENSSL_MODULES");
+    char *full_path = NULL;
+    int rc;
 
-    if (stat("../test/p_test.so", &sbuf) == -1)
+    full_path = OPENSSL_zalloc(strlen(module_path)+strlen(P_TEST_PATH)+1);
+    if (!TEST_ptr(full_path))
+        return 0;
+
+    strcpy(full_path, module_path);
+    full_path = strcat(full_path, P_TEST_PATH);
+    TEST_info("full path is %s", full_path);
+    rc = stat(full_path, &sbuf);
+    OPENSSL_free(full_path);
+    if (rc == -1)
         return TEST_skip("Skipping modulepath test as provider not present");
 
     if (!TEST_ptr(pathedconfig))
