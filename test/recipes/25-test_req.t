@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 108;
+plan tests => 109;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
