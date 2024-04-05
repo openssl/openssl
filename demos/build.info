@@ -1,0 +1,2 @@
+SUBDIRS=bio cipher cms digest keyexch smime mac kdf pkey signature guide \
+        encrypt encode sslecho

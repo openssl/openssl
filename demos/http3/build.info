@@ -1,0 +1,11 @@
+#
+# To run the demo when linked with a shared library (default) ensure that
+# libcrypto and libssl are on the library path. For example:
+#
+#    LD_LIBRARY_PATH=../.. ./ossl-nghttp3-demo www.example.com:443
+
+PROGRAMS = ossl-nghttp3-demo
+
+INCLUDE[ossl-nghttp3-demo]=../../include
+SOURCE[ossl-nghttp3-demo]=ossl-nghttp3.c ossl-nghttp3-demo.c
+DEPEND[ossl-nghttp3-demo]=../../libcrypto ../../libssl
