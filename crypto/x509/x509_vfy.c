@@ -59,7 +59,7 @@ static int check_id(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx, int num_untrusted);
 static int check_revocation(X509_STORE_CTX *ctx);
 #ifndef OPENSSL_NO_OCSP
-static int check_cert_ocsp(X509_STORE_CTX *ctx);
+static int check_cert_ocsp_resp(X509_STORE_CTX *ctx);
 #endif
 static int check_cert_crl(X509_STORE_CTX *ctx);
 static int check_policy(X509_STORE_CTX *ctx);
@@ -993,10 +993,10 @@ static int check_revocation(X509_STORE_CTX *ctx)
 {
     int i = 0, last = 0, ok = 0;
     int crl_ocsp_check =
-        ctx->param->flags & (X509_V_FLAG_CRL_CHECK | X509_V_FLAG_OCSP_CHECK);
+        ctx->param->flags & (X509_V_FLAG_CRL_CHECK | X509_V_FLAG_OCSP_RESP_CHECK);
     int crl_ocsp_check_all =
         ctx->param->flags
-        & (X509_V_FLAG_CRL_CHECK_ALL | X509_V_FLAG_OCSP_CHECK_ALL);
+        & (X509_V_FLAG_CRL_CHECK_ALL | X509_V_FLAG_OCSP_RESP_CHECK_ALL);
 
     if (crl_ocsp_check == 0)
         return 1;
@@ -1012,8 +1012,8 @@ static int check_revocation(X509_STORE_CTX *ctx)
     for (i = 0; i <= last; i++) {
         ctx->error_depth = i;
 #ifndef OPENSSL_NO_OCSP
-        if (ctx->param->flags & X509_V_FLAG_OCSP_CHECK) {
-            ok = check_cert_ocsp(ctx);
+        if (ctx->param->flags & X509_V_FLAG_OCSP_RESP_CHECK) {
+            ok = check_cert_ocsp_resp(ctx);
 
             /*
              * If the client receives a "ocsp_response_list" that does not
@@ -1034,8 +1034,14 @@ static int check_revocation(X509_STORE_CTX *ctx)
             if (ok == V_OCSP_CERTSTATUS_GOOD)
                 continue;
 
+            /*
+             * Check the validity of the server certificate through other means,
+             * e.g., by directly querying the certificate issuer.
+             */
             if (!(ctx->param->flags & X509_V_FLAG_CRL_CHECK)) {
-                return verify_cb_ocsp(ctx, 0);
+                ok = verify_cb_ocsp(ctx, 0);
+                if (!ok)
+                    return ok;
             }
         }
 #endif
@@ -1050,7 +1056,7 @@ static int check_revocation(X509_STORE_CTX *ctx)
 }
 
 #ifndef OPENSSL_NO_OCSP
-static int check_cert_ocsp(X509_STORE_CTX *ctx)
+static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
 {
     int cert_status, crl_reason;
     int cnum = ctx->error_depth;
@@ -1112,8 +1118,7 @@ static int check_cert_ocsp(X509_STORE_CTX *ctx)
         goto end;
     }
 
-    switch (cert_status) {
-    case V_OCSP_CERTSTATUS_GOOD:
+    if (cert_status == V_OCSP_CERTSTATUS_GOOD) {
         /*
          * Note:
          * A OCSP stapling result will be accepted up to 5 minutes
@@ -1124,19 +1129,8 @@ static int check_cert_ocsp(X509_STORE_CTX *ctx)
         } else {
             ret = V_OCSP_CERTSTATUS_GOOD;
         }
-        goto end;
-
-    case V_OCSP_CERTSTATUS_REVOKED:
-        ret = V_OCSP_CERTSTATUS_REVOKED;
-        goto end;
-
-    case V_OCSP_CERTSTATUS_UNKNOWN:
-        ret = V_OCSP_CERTSTATUS_UNKNOWN;
-        goto end;
-
-    default:
-        ret = V_OCSP_CERTSTATUS_UNKNOWN;
-        goto end;
+    } else {
+        ret = cert_status;
     }
 
 end:

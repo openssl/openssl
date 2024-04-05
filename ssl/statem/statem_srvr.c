@@ -4308,7 +4308,7 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
     int i = 0;
     X509 *x = NULL;
     X509 *issuer = NULL;
-    STACK_OF(X509) *server_certs = NULL;
+    STACK_OF(X509) *chain_certs = NULL;
     int found = 0;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     OCSP_RESPONSE *resp = NULL;
@@ -4330,10 +4330,9 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
      */
     x = SSL_get_certificate(ssl);
 
-    SSL_get0_chain_certs(ssl, &server_certs);
-    issuer = X509_find_by_subject(server_certs, X509_get_issuer_name(x));
+    SSL_get0_chain_certs(ssl, &chain_certs);
 
-    if (server_certs != NULL) {
+    if (chain_certs != NULL) {
         /*
          * if the certificate chain was built, get the status message for the
          * requested certificate specified by chainidx  SSL_get0_chain_certs
@@ -4342,10 +4341,11 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
          * if chainidx = 0 the server certificate is request
          * if chainidx > 0 an intermediate certificate is request
          */
-        if ((int)chainidx < sk_X509_num(server_certs)+1 && chainidx > 0) {
-            x = sk_X509_value(server_certs, chainidx - 1);
-            issuer = X509_find_by_subject(server_certs, X509_get_issuer_name(x));
+        if ((int)chainidx < sk_X509_num(chain_certs)+1 && chainidx > 0) {
+            x = sk_X509_value(chain_certs, chainidx - 1);
         }
+
+        issuer = X509_find_by_subject(chain_certs, X509_get_issuer_name(x));
 
         /* search the stack for the requested OCSP response */
         cert_id = OCSP_cert_to_id(NULL, x, issuer);
@@ -4393,8 +4393,7 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
         return 0;
     }
 
-    if (respder != NULL)
-        OPENSSL_free(respder);
+    OPENSSL_free(respder);
 
     return 1;
 }

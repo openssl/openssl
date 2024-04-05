@@ -480,7 +480,7 @@ typedef enum OPTION_choice {
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BRIEF, OPT_PREXIT, OPT_NO_INTERACTIVE, OPT_CRLF, OPT_QUIET, OPT_NBIO,
     OPT_SSL_CLIENT_ENGINE, OPT_IGN_EOF, OPT_NO_IGN_EOF,
-    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_OCSP_CHECK,
+    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_OCSP_CHECK_LEAF,
     OPT_STATUS_OCSP_CHECK_ALL, OPT_WDEBUG,
     OPT_MSG, OPT_MSGFILE, OPT_ENGINE, OPT_TRACE, OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE, OPT_SHOWCERTS, OPT_NBIO_TEST, OPT_STATE,
@@ -659,7 +659,7 @@ const OPTIONS s_client_options[] = {
      "Do not treat lack of close_notify from a peer as an error"},
 #ifndef OPENSSL_NO_OCSP
     {"status", OPT_STATUS, '-', "Request certificate status from server"},
-    {"ocsp_check", OPT_STATUS_OCSP_CHECK, '-',
+    {"ocsp_check_leaf", OPT_STATUS_OCSP_CHECK_LEAF, '-',
      "Require leaf certificate status checking, trying OCSP stapling"},
     {"ocsp_check_all", OPT_STATUS_OCSP_CHECK_ALL, '-',
      "Require certificate status checking on each cert in chain, trying OCSP stapling"},
@@ -1202,10 +1202,10 @@ int s_client_main(int argc, char **argv)
             c_status_req = 1;
 #endif
             break;
-        case OPT_STATUS_OCSP_CHECK:
+        case OPT_STATUS_OCSP_CHECK_LEAF:
 #ifndef OPENSSL_NO_OCSP
             c_status_req = 1;
-            X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_OCSP_CHECK);
+            X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_OCSP_RESP_CHECK);
             vpmtouched++;
 #endif
             break;
@@ -1213,8 +1213,8 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_OCSP
             c_status_req = 1;
             X509_VERIFY_PARAM_set_flags(vpm,
-                                        X509_V_FLAG_OCSP_CHECK |
-                                        X509_V_FLAG_OCSP_CHECK_ALL);
+                                        X509_V_FLAG_OCSP_RESP_CHECK |
+                                        X509_V_FLAG_OCSP_RESP_CHECK_ALL);
             vpmtouched++;
 #endif
             break;
