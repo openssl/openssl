@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
     unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '1', '.', '0' };
     const char *request_start = "GET / HTTP/1.0\r\nConnection: close\r\nHost: ";
     const char *request_end = "\r\n\r\n";
-    size_t written, readbytes;
+    size_t written, readbytes = 0;
     char buf[160];
     BIO_ADDR *peer_addr = NULL;
     int eof = 0;

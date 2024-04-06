@@ -47,8 +47,8 @@ static const char hexseed[] =
     "cba30ccd905aa7675a0b81769704bf3c"
     "ccf2ca1892b2eaf6b9e2b38d9bf6affc"
     "42ada55986d8a1772b442770954d0b65";
-const int gindex = 42;
-const int pcounter = 363;
+static const int gindex = 42;
+static const int pcounter = 363;
 static const char digest[] = "SHA384";
 
 /*

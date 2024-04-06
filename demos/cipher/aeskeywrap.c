@@ -50,8 +50,8 @@ static const unsigned char wrap_ct[] = {
  * algorithm implementations. If they are NULL then the default library
  * context and properties are used.
  */
-OSSL_LIB_CTX *libctx = NULL;
-const char *propq = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
+static const char *propq = NULL;
 
 static int aes_wrap_encrypt(void)
 {
