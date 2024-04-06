@@ -76,16 +76,16 @@ const unsigned char known_answer[] = {
     0x81, 0xca, 0x8f, 0x78, 0x29, 0x19, 0x9a, 0xfe,
 };
 
-int demonstrate_digest(void)
+static int demonstrate_digest(void)
 {
     OSSL_LIB_CTX *library_context;
     int ret = 0;
     const char *option_properties = NULL;
     EVP_MD *message_digest = NULL;
     EVP_MD_CTX *digest_context = NULL;
-    int digest_length;
+    unsigned int digest_length;
     unsigned char *digest_value = NULL;
-    int j;
+    unsigned int j;
 
     library_context = OSSL_LIB_CTX_new();
     if (library_context == NULL) {

@@ -68,7 +68,7 @@ OSSL_LIB_CTX *libctx = NULL;
 const char *propq = NULL;
 
 
-int aes_ccm_encrypt(void)
+static int aes_ccm_encrypt(void)
 {
     int ret = 0;
     EVP_CIPHER_CTX *ctx;
@@ -155,7 +155,7 @@ err:
     return ret;
 }
 
-int aes_ccm_decrypt(void)
+static int aes_ccm_decrypt(void)
 {
     int ret = 0;
     EVP_CIPHER_CTX *ctx;

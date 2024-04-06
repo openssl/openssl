@@ -108,8 +108,8 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
     return bio;
 }
 
-int write_a_request(SSL *stream, const char *request_start,
-                    const char *hostname)
+static int write_a_request(SSL *stream, const char *request_start,
+                           const char *hostname)
 {
     const char *request_end = "\r\n\r\n";
     size_t written;

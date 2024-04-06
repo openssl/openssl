@@ -21,7 +21,7 @@
  * See the EVP_PKEY_DSA_paramgen demo if you need to
  * use non default parameters.
  */
-EVP_PKEY *dsa_genparams(OSSL_LIB_CTX *libctx, const char *propq)
+static EVP_PKEY *dsa_genparams(OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY *dsaparamkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
