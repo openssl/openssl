@@ -8,14 +8,19 @@
  */
 
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
+#include <signal.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <signal.h>
+#if !defined(OPENSSL_SYS_WINDOWS)
+#include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#else
+#include <winsock.h>
+#endif
 
 static const int server_port = 4433;
 
@@ -153,8 +158,10 @@ int main(int argc, char **argv)
     struct sockaddr_in addr;
     unsigned int addr_len = sizeof(addr);
 
+#if !defined (OPENSSL_SYS_WINDOWS)
     /* ignore SIGPIPE so that server can continue running when client pipe closes abruptly */
     signal(SIGPIPE, SIG_IGN);
+#endif
 
     /* Splash */
     printf("\nsslecho : Simple Echo Client/Server : %s : %s\n\n", __DATE__,
