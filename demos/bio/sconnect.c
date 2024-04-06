@@ -16,11 +16,16 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#if !defined(OPENSSL_SYS_WINDOWS)
+#include <unistd.h>
+#else
+#include <windows.h>
+# define sleep(x) Sleep(x*1000)
+#endif
 
 #define HOSTPORT "localhost:4433"
 #define CAFILE "root.pem"
