@@ -2,7 +2,9 @@ SUBDIRS=bio cipher digest keyexch mac kdf pkey signature \
         encrypt encode sslecho
 
 IF[{- !$disabled{"cms"} -}]
+ IF[{- !$disabled{"deprecated"} -}]
     SUBDIRS=cms
+ ENDIF
 ENDIF
 
 IF[{- !$disabled{"dgram"} -}]
@@ -10,5 +12,7 @@ IF[{- !$disabled{"dgram"} -}]
 ENDIF
 
 IF[{- !$disabled{"des"} -}]
+ IF[{- !$disabled{"deprecated"} -}]
     SUBDIRS=smime
+ ENDIF
 ENDIF
