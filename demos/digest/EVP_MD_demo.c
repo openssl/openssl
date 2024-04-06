@@ -24,7 +24,7 @@
  * more than once.
  */
 
-const char *hamlet_1 =
+static const char *hamlet_1 =
     "To be, or not to be, that is the question,\n"
     "Whether tis nobler in the minde to suffer\n"
     "The ſlings and arrowes of outragious fortune,\n"
@@ -43,7 +43,7 @@ const char *hamlet_1 =
     "The oppressor's wrong, the proud man's Contumely,\n"
     "The pangs of dispised love, the Law's delay,\n"
 ;
-const char *hamlet_2 =
+static const char *hamlet_2 =
     "The insolence of Office, and the spurns\n"
     "That patient merit of the'unworthy takes,\n"
     "When he himself might his Quietas make\n"
@@ -65,7 +65,7 @@ const char *hamlet_2 =
 ;
 
 /* The known value of the SHA3-512 digest of the above soliloqy */
-const unsigned char known_answer[] = {
+static const unsigned char known_answer[] = {
     0xbb, 0x69, 0xf8, 0x09, 0x9c, 0x2e, 0x00, 0x3d,
     0xa4, 0x29, 0x5f, 0x59, 0x4b, 0x89, 0xe4, 0xd9,
     0xdb, 0xa2, 0xe5, 0xaf, 0xa5, 0x87, 0x73, 0x9d,

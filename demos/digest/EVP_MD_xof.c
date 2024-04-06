@@ -27,7 +27,7 @@
  */
 
 /* Our input to the XOF hash function. */
-const char message[] = "This is a test message.";
+static const char message[] = "This is a test message.";
 
 /* Expected output when an output length of 20 bytes is used. */
 static const unsigned char known_answer[] = {
