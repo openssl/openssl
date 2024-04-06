@@ -29,7 +29,7 @@ typedef unsigned char   bool;
  */
 static volatile bool    server_running = true;
 
-int create_socket(bool isServer)
+static int create_socket(bool isServer)
 {
     int s;
     int optval = 1;
@@ -67,7 +67,7 @@ int create_socket(bool isServer)
     return s;
 }
 
-SSL_CTX* create_context(bool isServer)
+static SSL_CTX* create_context(bool isServer)
 {
     const SSL_METHOD *method;
     SSL_CTX *ctx;
@@ -87,7 +87,7 @@ SSL_CTX* create_context(bool isServer)
     return ctx;
 }
 
-void configure_server_context(SSL_CTX *ctx)
+static void configure_server_context(SSL_CTX *ctx)
 {
     /* Set the key and cert */
     if (SSL_CTX_use_certificate_chain_file(ctx, "cert.pem") <= 0) {
@@ -101,7 +101,7 @@ void configure_server_context(SSL_CTX *ctx)
     }
 }
 
-void configure_client_context(SSL_CTX *ctx)
+static void configure_client_context(SSL_CTX *ctx)
 {
     /*
      * Configure the client to abort the handshake if certificate verification
@@ -119,7 +119,7 @@ void configure_client_context(SSL_CTX *ctx)
     }
 }
 
-void usage(void)
+static void usage(void)
 {
     printf("Usage: sslecho s\n");
     printf("       --or--\n");
@@ -207,7 +207,10 @@ int main(int argc, char **argv)
 
             /* Create server SSL structure using newly accepted client socket */
             ssl = SSL_new(ssl_ctx);
-            SSL_set_fd(ssl, client_skt);
+            if (!SSL_set_fd(ssl, client_skt)) {
+                ERR_print_errors_fp(stderr);
+                exit(EXIT_FAILURE);
+            }
 
             /* Wait for SSL connection from the client */
             if (SSL_accept(ssl) <= 0) {
@@ -279,11 +282,17 @@ int main(int argc, char **argv)
 
         /* Create client SSL structure using dedicated client socket */
         ssl = SSL_new(ssl_ctx);
-        SSL_set_fd(ssl, client_skt);
+        if (!SSL_set_fd(ssl, client_skt)) {
+            ERR_print_errors_fp(stderr);
+            goto exit;
+        }
         /* Set hostname for SNI */
         SSL_set_tlsext_host_name(ssl, rem_server_ip);
         /* Configure server hostname check */
-        SSL_set1_host(ssl, rem_server_ip);
+        if (!SSL_set1_host(ssl, rem_server_ip)) {
+            ERR_print_errors_fp(stderr);
+            goto exit;
+        }
 
         /* Now do SSL connect with server */
         if (SSL_connect(ssl) == 1) {

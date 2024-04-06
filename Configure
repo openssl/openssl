@@ -77,6 +77,8 @@ EOF
 #               Generic OpenSSL-style methods relating to this support
 #               are always compiled but return NULL if the hardware
 #               support isn't compiled.
+#
+# enable-demos  Enable the building of the example code in the demos directory
 # no-hw         do not compile support for any crypto hardware.
 # [no-]threads  [don't] try to create a library that is suitable for
 #               multithreaded applications (default is "threads" if we
@@ -443,6 +445,7 @@ my @disablables = (
     "crypto-mdebug",
     "ct",
     "default-thread-pool",
+    "demos",
     "deprecated",
     "des",
     "devcryptoeng",
@@ -570,6 +573,7 @@ our %disabled = ( # "what"         => "comment"
                   "buildtest-c++"       => "default",
                   "crypto-mdebug"       => "default",
                   "crypto-mdebug-backtrace" => "default",
+                  "demos"               => "default",
                   "devcryptoeng"        => "default",
                   "ec_nistp_64_gcc_128" => "default",
                   "egd"                 => "default",

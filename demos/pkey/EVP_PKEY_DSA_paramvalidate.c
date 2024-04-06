@@ -55,8 +55,8 @@ static const char digest[] = "SHA384";
  * Create a new dsa param key that is the combination of an existing param key
  * plus extra parameters.
  */
-EVP_PKEY_CTX *create_merged_key(EVP_PKEY *dsaparams, const OSSL_PARAM *newparams,
-                                OSSL_LIB_CTX *libctx, const char *propq)
+static EVP_PKEY_CTX *create_merged_key(EVP_PKEY *dsaparams, const OSSL_PARAM *newparams,
+                                       OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY_CTX *out = NULL;
     EVP_PKEY_CTX *ctx = NULL;
