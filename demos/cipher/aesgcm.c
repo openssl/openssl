@@ -67,7 +67,7 @@ static const unsigned char gcm_tag[] = {
 OSSL_LIB_CTX *libctx = NULL;
 const char *propq = NULL;
 
-int aes_gcm_encrypt(void)
+static int aes_gcm_encrypt(void)
 {
     int ret = 0;
     EVP_CIPHER_CTX *ctx;
@@ -144,7 +144,7 @@ err:
     return ret;
 }
 
-int aes_gcm_decrypt(void)
+static int aes_gcm_decrypt(void)
 {
     int ret = 0;
     EVP_CIPHER_CTX *ctx;

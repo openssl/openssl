@@ -27,12 +27,12 @@
 
 static volatile int done = 0;
 
-void interrupt(int sig)
+static void interrupt(int sig)
 {
     done = 1;
 }
 
-void sigsetup(void)
+static void sigsetup(void)
 {
     struct sigaction sa;
 

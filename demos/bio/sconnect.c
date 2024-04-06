@@ -51,7 +51,8 @@ int main(int argc, char *argv[])
 
     /* Enable trust chain verification */
     SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
-    SSL_CTX_load_verify_locations(ssl_ctx, CAfile, NULL);
+    if (!SSL_CTX_load_verify_locations(ssl_ctx, CAfile, NULL))
+        goto err;
 
     /* Lets make a SSL structure */
     ssl = SSL_new(ssl_ctx);

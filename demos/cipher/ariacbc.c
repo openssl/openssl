@@ -52,7 +52,7 @@ static const unsigned char cbc_ct[] = {
 OSSL_LIB_CTX *libctx = NULL;
 const char *propq = NULL;
 
-int aria_cbc_encrypt(void)
+static int aria_cbc_encrypt(void)
 {
     int ret = 0;
     EVP_CIPHER_CTX *ctx;
@@ -108,7 +108,7 @@ err:
     return ret;
 }
 
-int aria_cbc_decrypt(void)
+static int aria_cbc_decrypt(void)
 {
     int ret = 0;
     EVP_CIPHER_CTX *ctx;
