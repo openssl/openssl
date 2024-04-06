@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
     int ret;
     const char *request_start = "GET / HTTP/1.0\r\nConnection: close\r\nHost: ";
     const char *request_end = "\r\n\r\n";
-    size_t written, readbytes;
+    size_t written, readbytes = 0;
     char buf[160];
     int eof = 0;
     char *hostname, *port;
