@@ -1,6 +1,10 @@
-SUBDIRS=bio cipher digest keyexch smime mac kdf pkey signature guide \
+SUBDIRS=bio cipher digest keyexch smime mac kdf pkey signature \
         encrypt encode sslecho
 
 IF[{- !$disabled{"cms"} -}]
     SUBDIRS=cms
+ENDIF
+
+IF[{- !$disabled{"dgram"} -}]
+    SUBDIRS=guide
 ENDIF
