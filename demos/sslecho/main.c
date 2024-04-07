@@ -156,7 +156,11 @@ int main(int argc, char **argv)
     char *rem_server_ip = NULL;
 
     struct sockaddr_in addr;
+#if defined(OPENSSL_SYS_CYGWIN) || defined(OPENSSL_SYS_WINDOWS)
+    int addr_len = sizeof(addr);
+#else
     unsigned int addr_len = sizeof(addr);
+#endif
 
 #if !defined (OPENSSL_SYS_WINDOWS)
     /* ignore SIGPIPE so that server can continue running when client pipe closes abruptly */
