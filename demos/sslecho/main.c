@@ -133,6 +133,7 @@ static void usage(void)
     exit(EXIT_FAILURE);
 }
 
+#define BUFFERSIZE 1024
 int main(int argc, char **argv)
 {
     bool isServer;
@@ -144,10 +145,9 @@ int main(int argc, char **argv)
     int server_skt = -1;
     int client_skt = -1;
 
-    /* used by getline relying on realloc, can't be statically allocated */
-    char *txbuf = NULL;
-    size_t txcap = 0;
-    int txlen;
+    /* used by fgets */
+    char buffer[BUFFERSIZE];
+    char *txbuf;
 
     char rxbuf[128];
     size_t rxcap = sizeof(rxbuf);
@@ -309,9 +309,11 @@ int main(int argc, char **argv)
             /* Loop to send input from keyboard */
             while (true) {
                 /* Get a line of input */
-                txlen = getline(&txbuf, &txcap, stdin);
+                memset(buffer, 0, BUFFERSIZE);
+                txbuf = fgets(buffer, BUFFERSIZE, stdin);
+
                 /* Exit loop on error */
-                if (txlen < 0 || txbuf == NULL) {
+                if (txbuf == NULL) {
                     break;
                 }
                 /* Exit loop if just a carriage return */
@@ -319,7 +321,7 @@ int main(int argc, char **argv)
                     break;
                 }
                 /* Send it to the server */
-                if ((result = SSL_write(ssl, txbuf, txlen)) <= 0) {
+                if ((result = SSL_write(ssl, txbuf, strlen(txbuf))) <= 0) {
                     printf("Server closed connection\n");
                     ERR_print_errors_fp(stderr);
                     break;
@@ -357,9 +359,6 @@ exit:
         close(client_skt);
     if (server_skt != -1)
         close(server_skt);
-
-    if (txbuf != NULL && txcap > 0)
-        free(txbuf);
 
     printf("sslecho exiting\n");
 
