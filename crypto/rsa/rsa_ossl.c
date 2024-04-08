@@ -155,10 +155,35 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
     if (BN_bin2bn(buf, num, f) == NULL)
         goto err;
 
-    if (BN_ucmp(f, rsa->n) >= 0) {
-        /* usually the padding functions would catch this */
-        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
-        goto err;
+#ifdef FIPS_MODULE
+    /*
+     * See SP800-56Br2, section 7.1.1.1
+     * RSAEP: 1 < f < (n – 1).
+     * (where f is the plaintext).
+     */
+    if (padding == RSA_NO_PADDING) {
+        BIGNUM *nminus1 = BN_CTX_get(ctx);
+
+        if (BN_ucmp(f, BN_value_one()) <= 0) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_SMALL);
+            goto err;
+        }
+        if (nminus1 == NULL
+                || BN_copy(nminus1, rsa->n) == NULL
+                || !BN_sub_word(nminus1, 1))
+            goto err;
+        if (BN_ucmp(f, nminus1) >= 0) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+            goto err;
+        }
+    } else
+#endif
+    {
+        if (BN_ucmp(f, rsa->n) >= 0) {
+            /* usually the padding functions would catch this */
+            ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+            goto err;
+        }
     }
 
     if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
@@ -546,11 +571,35 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
     if (BN_bin2bn(from, (int)flen, f) == NULL)
         goto err;
 
-    if (BN_ucmp(f, rsa->n) >= 0) {
-        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
-        goto err;
-    }
+#ifdef FIPS_MODULE
+    /*
+     * See SP800-56Br2, section 7.1.2.1
+     * RSADP: 1 < f < (n – 1)
+     * (where f is the ciphertext).
+     */
+    if (padding == RSA_NO_PADDING) {
+        BIGNUM *nminus1 = BN_CTX_get(ctx);
 
+        if (BN_ucmp(f, BN_value_one()) <= 0) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_SMALL);
+            goto err;
+        }
+        if (nminus1 == NULL
+                || BN_copy(nminus1, rsa->n) == NULL
+                || !BN_sub_word(nminus1, 1))
+            goto err;
+        if (BN_ucmp(f, nminus1) >= 0) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+            goto err;
+        }
+    } else
+#endif
+    {
+        if (BN_ucmp(f, rsa->n) >= 0) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+            goto err;
+        }
+    }
     if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
         if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_n, rsa->lock,
                                     rsa->n, ctx))
