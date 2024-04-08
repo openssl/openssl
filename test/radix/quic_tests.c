@@ -20,6 +20,7 @@ DEF_SCRIPT(simple_conn, "simple connection to server")
     OP_ACCEPT_CONN_WAIT(L, La, 0);
     OP_ACCEPT_CONN_NONE(L);
 
+    OP_READ_EXPECT_B(La, "apple");
     OP_WRITE_B(La, "orange");
     OP_READ_EXPECT_B(C, "orange");
 }
