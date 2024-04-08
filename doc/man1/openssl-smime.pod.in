@@ -197,14 +197,14 @@ Don't try to verify the signatures on the message.
 
 =item B<-nocerts>
 
-When signing a message the signer's certificate is normally included
-with this option it is excluded. This will reduce the size of the
-signed message but the verifier must have a copy of the signers certificate
+When signing a message, the signer's certificate is normally included.
+With this option it is excluded. This will reduce the size of the
+signed message, but the verifier must have a copy of the signers certificate
 available locally (passed using the B<-certfile> option for example).
 
 =item B<-noattr>
 
-Normally when a message is signed a set of attributes are included which
+Normally, when a message is signed, a set of attributes are included which
 include the signing time and supported symmetric algorithms. With this
 option they are not included.
 
