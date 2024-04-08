@@ -295,7 +295,7 @@ struct ossl_record_layer_st
     /* cryptographic state */
     EVP_CIPHER_CTX *enc_ctx;
 
-    /* TLSv1.3 MAC ctx, ony used with NULL cipher*/
+    /* TLSv1.3 MAC ctx, only used with Integrity-Only cipher*/
     EVP_MAC_CTX *mac_ctx;
 
     /* Explicit IV length */
@@ -337,7 +337,6 @@ struct ossl_record_layer_st
 
     /* TLSv1.3 fields */
     /* static IV */
-    unsigned char iv_intern[EVP_MAX_IV_LENGTH];
     unsigned char *iv;
     unsigned char *nonce;
     int allow_plain_alerts;

@@ -31,24 +31,20 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     int enc = (rl->direction == OSSL_RECORD_DIRECTION_WRITE) ? 1 : 0;
 
     rl->iv = OPENSSL_zalloc(ivlen);
-    if (rl->iv == NULL)
-    {
+    if (rl->iv == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return OSSL_RECORD_RETURN_FATAL;
     }
 
     rl->nonce = OPENSSL_zalloc(ivlen);
-    if (rl->nonce == NULL)
-    {
+    if (rl->nonce == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return OSSL_RECORD_RETURN_FATAL;
     }
     memcpy(rl->iv, iv, ivlen);
 
     /* Integrity only */
-    if (EVP_CIPHER_is_a(ciph, "NULL")
-        && mactype == NID_hmac
-        && md != NULL) {
+    if (EVP_CIPHER_is_a(ciph, "NULL") && mactype == NID_hmac && md != NULL) {
         mac = EVP_MAC_fetch(rl->libctx, "HMAC", rl->propq);
         if (mac == NULL
             || (mac_ctx = rl->mac_ctx = EVP_MAC_CTX_new(mac)) == NULL) {
@@ -105,7 +101,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     WPACKET wpkt;
     const EVP_CIPHER *cipher;
     EVP_MAC_CTX *mac_ctx = NULL;
-    int mode, ret = 0;
+    int mode;
 
     if (n_recs != 1) {
         /* Should not happen */
@@ -134,6 +130,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         return 1;
     }
 
+    /* For Integrity Only, ivlen is same as MAC size */
     if (rl->mac_ctx != NULL)
         ivlen = EVP_MAC_CTX_get_mac_size(rl->mac_ctx);
     else
@@ -179,23 +176,28 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     }
 
     if (rl->mac_ctx != NULL) {
+        int ret = 0;
+
         if ((mac_ctx = EVP_MAC_CTX_dup(rl->mac_ctx)) == NULL
             || !EVP_MAC_update(mac_ctx, nonce, ivlen)
             || !EVP_MAC_update(mac_ctx, recheader, sizeof(recheader))
             || !EVP_MAC_update(mac_ctx, rec->input, rec->length)
             || !EVP_MAC_final(mac_ctx, tag, &taglen, rl->taglen)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto end;
+            goto end_mac;
         }
 
         if (sending) {
             memcpy(rec->data + rec->length, tag, rl->taglen);
             rec->length += rl->taglen;
-        } else if (CRYPTO_memcmp(tag, rec->data + rec->length, rl->taglen) != 0) {
-            goto end;
+        } else if (CRYPTO_memcmp(tag, rec->data + rec->length,
+                                 rl->taglen) != 0) {
+            goto end_mac;
         }
         ret = 1;
-        goto end;
+    end_mac:
+        EVP_MAC_CTX_free(mac_ctx);
+        return ret;
     }
 
     cipher = EVP_CIPHER_CTX_get0_cipher(ctx);
@@ -206,9 +208,9 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     mode = EVP_CIPHER_get_mode(cipher);
 
     if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, nonce, sending) <= 0
-            || (!sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                                rl->taglen,
-                                                rec->data + rec->length) <= 0)) {
+        || (!sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                            rl->taglen,
+                                            rec->data + rec->length) <= 0)) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -236,11 +238,9 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
             return 0;
         }
         rec->length += rl->taglen;
-    }    
-    ret = 1;
- end:
-    EVP_MAC_CTX_free(mac_ctx);
-    return ret;
+    }
+
+    return 1;
 }
 
 static int tls13_validate_record_header(OSSL_RECORD_LAYER *rl,

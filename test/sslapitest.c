@@ -3942,7 +3942,7 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
     unsigned char buf[20];
     size_t readbytes, written;
 
-    if (is_fips && (cipher == 4 || cipher == 5 || cipher == 6))
+    if (is_fips && cipher >= 4 )
         return 1;
 
     if (ciphersuites[cipher] == NULL)

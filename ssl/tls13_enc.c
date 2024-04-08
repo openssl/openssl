@@ -383,7 +383,8 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
-        *keylen = *ivlen = *taglen = (size_t)mac_mdleni;
+        *ivlen = *taglen = (size_t)mac_mdleni;
+        *keylen = s->s3.tmp.new_mac_secret_size;
     } else {
 
         *keylen = EVP_CIPHER_get_key_length(ciph);
@@ -479,7 +480,8 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     const EVP_CIPHER *cipher = NULL;
     int mac_pkey_type = NID_undef;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-    size_t keylen, ivlen = EVP_MAX_IV_LENGTH, taglen, mac_secret_size;
+    size_t keylen, ivlen = EVP_MAX_IV_LENGTH, taglen;
+    EVP_MD_CTX *mdctx = NULL;
     int level;
     int direction = (which & SSL3_CC_READ) != 0 ? OSSL_RECORD_DIRECTION_READ
                                                 : OSSL_RECORD_DIRECTION_WRITE;
@@ -487,7 +489,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     if (((which & SSL3_CC_CLIENT) && (which & SSL3_CC_WRITE))
             || ((which & SSL3_CC_SERVER) && (which & SSL3_CC_READ))) {
         if (which & SSL3_CC_EARLY) {
-            EVP_MD_CTX *mdctx = NULL;
             long handlen;
             void *hdata;
             unsigned int hashlenui;
@@ -543,18 +544,14 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             if (!ssl_cipher_get_evp_cipher(sctx, sslcipher, &cipher)) {
                 /* Error is already recorded */
                 SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
-                EVP_MD_CTX_free(mdctx);
                 goto err;
             }
 
-            if (!(EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
-                /* Cipher is not AEAD */
-                if (!ssl_cipher_get_evp_md_mac(sctx, sslcipher, &mac_md,
-                                                &mac_pkey_type,
-                                                &mac_secret_size)){
-                    EVP_MD_CTX_free(mdctx);
-                    goto err;
-                }
+            if (((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0)
+                && (!ssl_cipher_get_evp_md_mac(sctx, sslcipher, &mac_md,
+                                               &mac_pkey_type, NULL))) {
+                SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
+                goto err;
             }
 
             md = ssl_md(sctx, sslcipher->algorithm2);
@@ -562,11 +559,9 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                     || !EVP_DigestUpdate(mdctx, hdata, handlen)
                     || !EVP_DigestFinal_ex(mdctx, hashval, &hashlenui)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                EVP_MD_CTX_free(mdctx);
                 goto err;
             }
             hashlen = hashlenui;
-            EVP_MD_CTX_free(mdctx);
 
             if (!tls13_hkdf_expand(s, md, insecret,
                                    early_exporter_master_secret,
@@ -744,10 +739,10 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
  err:
     if ((which & SSL3_CC_EARLY) != 0) {
         /* We up-refed this so now we need to down ref */
-        if (!(EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER))
+        if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0)
             ssl_evp_md_free(mac_md);
+        EVP_MD_CTX_free(mdctx);
         ssl_evp_cipher_free(cipher);
-
     }
     OPENSSL_cleanse(key, sizeof(key));
     OPENSSL_cleanse(secret, sizeof(secret));
