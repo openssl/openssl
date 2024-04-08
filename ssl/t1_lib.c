@@ -2248,8 +2248,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
         ret = SSL_TICKET_EMPTY;
         goto end;
     }
-    if (!(SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))
-            && s->ext.session_secret_cb) {
+    if (!SSL_CONNECTION_IS_VERSION13(s) && s->ext.session_secret_cb) {
         /*
          * Indicate that the ticket couldn't be decrypted rather than
          * generating the session from ticket now, trigger
@@ -2333,7 +2332,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
             goto end;
         }
         EVP_CIPHER_free(aes256cbc);
-        if (SSL_CONNECTION_IS_TLS13(s) || SSL_CONNECTION_IS_DTLS13(s))
+        if (SSL_CONNECTION_IS_VERSION13(s))
             renew_ticket = 1;
     }
     /*
@@ -2479,8 +2478,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
         }
     }
 
-    if (s->ext.session_secret_cb == NULL || SSL_CONNECTION_IS_TLS13(s)
-            || SSL_CONNECTION_IS_DTLS13(s)) {
+    if (s->ext.session_secret_cb == NULL || SSL_CONNECTION_IS_VERSION13(s)) {
         switch (ret) {
         case SSL_TICKET_NO_DECRYPT:
         case SSL_TICKET_SUCCESS_RENEW:
