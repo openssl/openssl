@@ -198,11 +198,11 @@ subtest "HMAC generation with `dgst` CLI, key via option" => sub {
 
     my $testdata = srctop_file('test', 'data.bin');
     #HMAC the data twice to check consistency
-    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-hmac',
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-mac', 'HMAC',
                             '-macopt', 'hexkey:FFFF',
                             $testdata, $testdata]), capture => 1);
     chomp(@hmacdata);
-    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= b6727b7bb251dfa65846e0a8223bdd57d244aa6d7e312cb906d8e21f2dee3a57/;
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 7c02d4a17d2560a5bb6763edbf33f3a34f415398f8f2e07f04b83ffd7c087dae/;
     ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
     ok($hmacdata[1] =~ $expected,
        "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
