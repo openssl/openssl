@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -446,13 +446,11 @@ static OSSL_PROVIDER *provider_new(const char *name,
         OPENSSL_free(prov);
         return NULL;
     }
-#ifndef HAVE_ATOMICS
     if ((prov->activatecnt_lock = CRYPTO_THREAD_lock_new()) == NULL) {
         ossl_provider_free(prov);
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
-#endif
 
     if ((prov->opbits_lock = CRYPTO_THREAD_lock_new()) == NULL
         || (prov->flag_lock = CRYPTO_THREAD_lock_new()) == NULL
@@ -742,9 +740,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
             sk_INFOPAIR_pop_free(prov->parameters, infopair_free);
             CRYPTO_THREAD_lock_free(prov->opbits_lock);
             CRYPTO_THREAD_lock_free(prov->flag_lock);
-#ifndef HAVE_ATOMICS
             CRYPTO_THREAD_lock_free(prov->activatecnt_lock);
-#endif
             CRYPTO_FREE_REF(&prov->refcnt);
             OPENSSL_free(prov);
         }
