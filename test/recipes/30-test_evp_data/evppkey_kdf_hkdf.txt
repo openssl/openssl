@@ -1,5 +1,5 @@
 #
-# Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -11,21 +11,23 @@
 #       PrivPubKeyPair Sign Verify VerifyRecover
 # and continue until a blank line. Lines starting with a pound sign are ignored.
 
+# Adjusted vectors with longer salt to satisfy min 128 bits
+
 Title = HKDF tests (from RFC5869 test vectors) using PKEYKDF
 
 PKEYKDF = HKDF
 Ctrl.md = md:SHA256
 Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
-Ctrl.salt = hexsalt:000102030405060708090a0b0c
+Ctrl.salt = hexsalt:000102030405060708090a0b0c0d0e0f
 Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
-Output = 3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865
+Output = db32198736ee021e658ccca7d621c5e79e81da48c6a36c8b412bcebe5e86f1c1837bf5a4f594e33733b8
 
 PKEYKDF = HKDF
 Ctrl.mode = mode:EXTRACT_ONLY
 Ctrl.md = md:SHA256
 Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
-Ctrl.salt = hexsalt:000102030405060708090a0b0c
-Output = 077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5
+Ctrl.salt = hexsalt:000102030405060708090a0b0c0d0e0f
+Output = 779e317a0447ae120679a6786d666d9575140e73bca2ccdeb0c1e550dcd76231
 
 PKEYKDF = HKDF
 Ctrl.mode = mode:EXPAND_ONLY
@@ -58,17 +60,17 @@ Output = b11e398dc80327a1c8e7f78c596a49344f012eda2d4efad8a050cc4c19afa97c59045a9
 PKEYKDF = HKDF
 Ctrl.md = md:SHA256
 Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
-Ctrl.salt = salt:
+Ctrl.salt = hexsalt:000102030405060708090a0b0c0d0e0f
 Ctrl.info = info:
-Output = 8da4e775a563c18f715f802a063c5a31b8a11f5c5ee1879ec3454e5f3c738d2d9d201395faa4b61a96c8
+Output = 76b1056b0b96701bd89fd104e27c4046d9f2b92629769522430c66dda5fa1c0c4078c4a540bba8c153b2
 
 PKEYKDF = HKDF
 Ctrl.mode = mode:EXTRACT_ONLY
 Ctrl.md = md:SHA256
 Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
-Ctrl.salt = salt:
+Ctrl.salt = hexsalt:000102030405060708090a0b0c0d0e0f
 Ctrl.info = info:
-Output = 19ef24a32c717b167f33a91d6f648bdf96596776afdb6377ac434c1c293ccb04
+Output = 779e317a0447ae120679a6786d666d9575140e73bca2ccdeb0c1e550dcd76231
 
 PKEYKDF = HKDF
 Ctrl.mode = mode:EXPAND_ONLY
@@ -80,16 +82,16 @@ Output = 8da4e775a563c18f715f802a063c5a31b8a11f5c5ee1879ec3454e5f3c738d2d9d20139
 PKEYKDF = HKDF
 Ctrl.md = md:SHA1
 Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b
-Ctrl.salt = hexsalt:000102030405060708090a0b0c
+Ctrl.salt = hexsalt:000102030405060708090a0b0c0d0e0f
 Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
-Output = 085a01ea1b10f36933068b56efa5ad81a4f14b822f5b091568a9cdd4f155fda2c22e422478d305f3f896
+Output = 0ebd1973d8807fd52024bd70eac82afc0b92b79817e2afd28c4cdfd941aa8013f8a69618dd9f9bd8eb67
 
 PKEYKDF = HKDF
 Ctrl.mode = mode:EXTRACT_ONLY
 Ctrl.md = md:SHA1
 Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b
-Ctrl.salt = hexsalt:000102030405060708090a0b0c
-Output = 9b6c18c432a7bf8f0e71c8eb88f4b30baa2ba243
+Ctrl.salt = hexsalt:000102030405060708090a0b0c0d0e0f
+Output = 9090b5275525c087ecf7c905e3d2df749380e76f
 
 PKEYKDF = HKDF
 Ctrl.mode = mode:EXPAND_ONLY
@@ -122,16 +124,16 @@ Output = 0bd770a74d1160f7c9f12cd5912a06ebff6adcae899d92191fe4305673ba2ffe8fa3f1a
 PKEYKDF = HKDF
 Ctrl.md = md:SHA1
 Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
-Ctrl.salt = salt:
+Ctrl.salt = hexsalt:000102030405060708090a0b0c0d0e0f
 Ctrl.info = info:
-Output = 0ac1af7002b3d761d1e55298da9d0506b9ae52057220a306e07b6b87e8df21d0ea00033de03984d34918
+Output = 17b1658d7933be68d99aed9d40aa13c1389e1e74a0d6a49d2d4e5e99e8213fab4a3678bcc2edc3161c73
 
 PKEYKDF = HKDF
 Ctrl.mode = mode:EXTRACT_ONLY
 Ctrl.md = md:SHA1
 Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
-Ctrl.salt = salt:
-Output = da8c8a73c7fa77288ec6f5e7c297786aa0d32d01
+Ctrl.salt = hexsalt:000102030405060708090a0b0c0d0e0f
+Output = 7a7bad2e7457869ae98aa622813cbd5ac4d9e11b
 
 PKEYKDF = HKDF
 Ctrl.mode = mode:EXPAND_ONLY
@@ -143,16 +145,16 @@ Output = 0ac1af7002b3d761d1e55298da9d0506b9ae52057220a306e07b6b87e8df21d0ea00033
 PKEYKDF = HKDF
 Ctrl.md = md:SHA1
 Ctrl.IKM = hexkey:0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
-Ctrl.salt = salt:
+Ctrl.salt = hexsalt:000102030405060708090a0b0c0d0e0f
 Ctrl.info = info:
-Output = 2c91117204d745f3500d636a62f64f0ab3bae548aa53d423b0d1f27ebba6f5e5673a081d70cce7acfc48
+Output = 3d753ac033be0fbcd519b898d6496c4b33b91a3e4e4adc619d7a6b566ce89b034738c6fbc19d58b3f890
 
 PKEYKDF = HKDF
 Ctrl.mode = mode:EXTRACT_ONLY
 Ctrl.md = md:SHA1
 Ctrl.IKM = hexkey:0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
-Ctrl.salt = salt:
-Output = 2adccada18779e7c2077ad2eb19d3f3e731385dd
+Ctrl.salt = hexsalt:000102030405060708090a0b0c0d0e0f
+Output = 6e182d7fffbd7e848181e5fc381675107b0b40e8
 
 PKEYKDF = HKDF
 Ctrl.mode = mode:EXPAND_ONLY
@@ -178,18 +180,19 @@ Result = KDF_DERIVE_ERROR
 PKEYKDF = HKDF
 Ctrl.md = md:SHA1
 Ctrl.IKM = hexkey:0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
+Ctrl.salt = hexsalt:000102030405060708090a0b0c0d0e0f
 Ctrl.info = info:
-Output = 2c91117204d745f3500d636a62f64f0ab3bae548aa53d423b0d1f27ebba6f5e5673a081d70cce7acfc48
+Output = 3d753ac033be0fbcd519b898d6496c4b33b91a3e4e4adc619d7a6b566ce89b034738c6fbc19d58b3f890
 
 PKEYKDF = HKDF
 Ctrl.md = md:SHA1
 Ctrl.IKM = hexkey:0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
-Ctrl.salt = salt:
-Output = 2c91117204d745f3500d636a62f64f0ab3bae548aa53d423b0d1f27ebba6f5e5673a081d70cce7acfc48
+Ctrl.salt = hexsalt:000102030405060708090a0b0c0d0e0f
+Output = 3d753ac033be0fbcd519b898d6496c4b33b91a3e4e4adc619d7a6b566ce89b034738c6fbc19d58b3f890
 
 PKEYKDF = HKDF
 Ctrl.mode = mode:EXTRACT_AND_EXPAND
 Ctrl.md = md:SHA1
 Ctrl.IKM = hexkey:0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
-Ctrl.salt = salt:
-Output = 2c91117204d745f3500d636a62f64f0ab3bae548aa53d423b0d1f27ebba6f5e5673a081d70cce7acfc48
+Ctrl.salt = hexsalt:000102030405060708090a0b0c0d0e0f
+Output = 3d753ac033be0fbcd519b898d6496c4b33b91a3e4e4adc619d7a6b566ce89b034738c6fbc19d58b3f890

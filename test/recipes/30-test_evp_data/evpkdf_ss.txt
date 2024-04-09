@@ -913,17 +913,17 @@ KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
 Ctrl.hexsecret = hexsecret:0031558fddb96e3db2e0496026302055
-Ctrl.hexsalt = hexsalt:1ae1
+Ctrl.hexsalt = hexsalt:1ae11ae11ae11ae11ae11ae11ae11ae1
 Ctrl.hexinfo = hexinfo:97ed3540c7466ab27395fe79
-Output = ddf7eedcd997eca3943d4519aaf414f4
+Output = 692ef4b637814af14fa76bba1a502134
 
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
 Ctrl.hexsecret = hexsecret:0031558fddb96e3db2e0496026302055
-Ctrl.hexsalt = hexsalt:3bda13b6
+Ctrl.hexsalt = hexsalt:3bda13b63bda13b63bda13b63bda13b6
 Ctrl.hexinfo = hexinfo:97ed3540c7466ab27395fe79
-Output = ec783ca20501df3cacac5ab4adbc6427
+Output = a226661a3ea186320a9cdcf122ad2550
 
 KDF = SSKDF
 Ctrl.mac = mac:HMAC

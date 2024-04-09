@@ -1,5 +1,5 @@
 #
-# Copyright 2022-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -34,5 +34,5 @@ Output = c0ba18c68b90c88bc07de794bfc7d2c8d19ec31ed8773bc2b390c9604e0be11e
 MAC = HMAC
 Algorithm = SM3
 Input = "what do ya want for nothing?"
-Key = "Jefe"
-Output = 2e87f1d16862e6d964b50a5200bf2b10b764faa9680a296a2405f24bec39f882
+Key = "Jefe Jeferson Jr"
+Output = ce791a34c59adef472997a249600f3f244d59e875be04055ba2ae12fc845e78c
