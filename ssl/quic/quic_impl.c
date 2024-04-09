@@ -166,7 +166,44 @@ static int quic_raise_non_normal_error(QCTX *ctx,
                                 OPENSSL_FUNC,                   \
                                 (reason),                       \
                                 (msg))
-
+/*
+ * Flags for expect_quic_as:
+ *
+ *   QCTX_C
+ *      The input SSL object may be a QCSO.
+ *
+ *   QCTX_S
+ *      The input SSL object may be a QSSO or a QCSO with a default stream
+ *      attached.
+ *
+ *      (Note this means there is no current way to require an SSL object with a
+ *      QUIC stream which is not a QCSO; a QCSO with a default stream attached
+ *      is always considered to satisfy QCTX_S.)
+ *
+ *   QCTX_AUTO_S
+ *      The input SSL object may be a QSSO or a QCSO with a default stream
+ *      attached. If no default stream is currently attached to a QCSO,
+ *      one may be auto-created if possible.
+ *
+ *      If QCTX_REMOTE_INIT is set, an auto-created default XSO is
+ *      initiated by the remote party (i.e., local party reads first).
+ *
+ *      If it is not set, an auto-created default XSO is
+ *      initiated by the local party (i.e., local party writes first).
+ *
+ *   QCTX_L
+ *      The input SSL object may be a QLSO.
+ *
+ *   QCTX_LOCK
+ *      If and only if the function returns successfully, the ctx
+ *      is guaranteed to be locked.
+ *
+ *   QCTX_IO
+ *      Begin an I/O context. If not set, begins a non-I/O context.
+ *      This determines whether SSL_get_error() is updated; the value it returns
+ *      is modified only by an I/O call.
+ *
+ */
 #define QCTX_C              (1U << 0)
 #define QCTX_S              (1U << 1)
 #define QCTX_L              (1U << 2)
@@ -204,39 +241,7 @@ static int wrong_type(const SSL *s, uint32_t flags)
  * semantics and as such, it invokes QUIC_RAISE_NON_NORMAL_ERROR() on failure.
  *
  * The flags argument controls the preconditions and postconditions of this
- * function:
- *
- *   QCTX_C
- *      The input SSL object may be a QCSO.
- *
- *   QCTX_S
- *      The input SSL object may be a QSSO or a QCSO with a default stream
- *      attached.
- *
- *      (Note this means there is no current way to require an SSL object with a
- *      QUIC stream which is not a QCSO; a QCSO with a default stream attached
- *      is always considered to satisfy QCTX_S.)
- *
- *   QCTX_AUTO_S
- *      The input SSL object may be a QSSO or a QCSO with a default stream
- *      attached. If no default stream is currently attached to a QCSO,
- *      one may be auto-created if possible.
- *
- *      If QCTX_REMOTE_INIT is set, an auto-created default XSO is
- *      initiated by the remote party (i.e., local party reads first).
- *
- *      If it is not set, an auto-created default XSO is
- *      initiated by the local party (i.e., local party writes first).
- *
- *   QCTX_L
- *      The input SSL object may be a QLSO.
- *
- *   QCTX_LOCK
- *      If and only if the function returns successfully, the ctx
- *      is guaranteed to be locked.
- *
- *   QCTX_IO
- *      Begin an I/O context. If not set, begins a non-I/O context.
+ * function. See above for the different flags.
  *
  * The fields of a QCTX are initialised as follows depending on the identity of
  * the SSL object, and assuming the preconditions demanded by the flags field as
