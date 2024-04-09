@@ -1,5 +1,4 @@
 #!/usr/bin/env perl
-#
 
 use File::Copy;
 use File::Path;
