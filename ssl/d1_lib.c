@@ -809,7 +809,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
          */
         if (clientvers == DTLS1_2_VERSION
                 && PACKET_remaining(&cookiepkt) == 0) {
-            int i;
+            size_t i;
             PACKET extensions;
             size_t pre_proc_exts_len;
             RAW_EXTENSION *pre_proc_exts, *suppversions;
