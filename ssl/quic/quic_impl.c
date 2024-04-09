@@ -4197,7 +4197,7 @@ int ossl_quic_listen(SSL *ssl)
     if (!expect_quic_listener(ssl, &ctx))
         return 0;
 
-    qctx_lock(&ctx);
+    qctx_lock_for_io(&ctx);
 
     ret = ql_listen(ctx.ql);
 
@@ -4234,7 +4234,7 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     if (!expect_quic_listener(ssl, &ctx))
         return NULL;
 
-    qctx_lock(&ctx);
+    qctx_lock_for_io(&ctx);
 
     if (!ql_listen(ctx.ql))
         goto out;
