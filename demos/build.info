@@ -1,4 +1,4 @@
-SUBDIRS=bio cipher digest keyexch mac kdf pkey signature \
+SUBDIRS=http3 bio cipher digest keyexch mac kdf pkey signature \
         encrypt encode sslecho
 
 IF[{- !$disabled{"cms"} -}]

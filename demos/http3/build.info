@@ -4,8 +4,13 @@
 #
 #    LD_LIBRARY_PATH=../.. ./ossl-nghttp3-demo www.example.com:443
 
+
 PROGRAMS = ossl-nghttp3-demo
 
-INCLUDE[ossl-nghttp3-demo]=../../include
+GENERATE[libnghttp3.so]=gen_nghttp3.pl
+DEPEND[ossl-nghttp3-demo.o]=libnghttp3.so
+DEPEND[ossl-nghttp3.o]=libnghttp3.so
+INCLUDE[ossl-nghttp3-demo]=../../include nghttp3/lib/includes nghttp3/build/lib/includes
+INCLUDE[ossl-nghttp3]=../../include nghttp3/lib/includes nghttp3/build/lib/includes
 SOURCE[ossl-nghttp3-demo]=ossl-nghttp3.c ossl-nghttp3-demo.c
-DEPEND[ossl-nghttp3-demo]=../../libcrypto ../../libssl
+DEPEND[ossl-nghttp3-demo]=../../libcrypto ../../libssl ./libnghttp3
