@@ -1,17 +1,20 @@
-# DTLS 1.3 Design
+DTLS 1.3 Design
+===============
 
 This page presents an overview of the design rationale for the DTLSv1.3
 (RFC 9147) implementation in OpenSSL.
 
-## Objectives
+Objectives
+----------
 
 * A user should be able to establish a DTLSv1.3 connection through the same
   apis as previous versions of DTLS.
 * MUSTs, SHALLs and REQUIREDs of RFC 9147 are implemented.
-* Implementation details of OPTIONALs, SHOULDs and MAYs are documented in 
+* Implementation details of OPTIONALs, SHOULDs and MAYs are documented in
   this document.
 
-## Implementation details
+Implementation details
+----------------------
 
 This section describes the implementation of optional requirements of DTLSv1.3
 (RFC 9147).
@@ -25,7 +28,7 @@ support it for now.
 
 A new feature for DTLSv1.3 is the unified header (unified_hdr) (RFC 9147
 section 4) of the DTLSCiphertext. OpenSSL supports receiving a DTLSCiphertext
-of any format but always formats the header of outgoing DTLSCiphertext's the 
+of any format but always formats the header of outgoing DTLSCiphertext's the
 same way:
 
 * The C-bit is set to 0. Refer to [DTLSv1.3 connection id](#dtlsv1.3-connection-id)
@@ -45,7 +48,8 @@ will not offer the "connection_id" extension even though RFC 9147 states:
 > profile to the contrary. This permits a server which wants to receive a CID
 > to negotiate one.
 
-## Implementation progress
+Implementation progress
+-----------------------
 
 This section contains a summary of the work required to implement DTLSv1.3 for Openssl.
 It is basically a condensed version of the RFC.
@@ -92,12 +96,12 @@ The message transcript is computed differently from DTLS 1.2 and TLS 1.3:
 DTLSCipherText differs from DTLS 1.2 and TLS 1.3:
 
 > The DTLSCiphertext structure omits the superfluous version number and type fields
-
+> ...
 > The DTLSCiphertext structure has a variable-length header
-
+> ...
 > The entire header value shown in Figure 4 (but prior to record number encryption;
 > see Section 4.2.3) is used as the additional data value for the AEAD function
-
+> ...
 > In DTLS 1.3 the 64-bit sequence_number is used as the sequence number for the
 > AEAD computation; unlike DTLS 1.2, the epoch is not included.
 
@@ -105,6 +109,8 @@ Because of the encrypted sequence number and record number the implementation mu
 handle them as described in:
 
 > 4.2.2. Reconstructing the Sequence Number and Epoch
+
+And
 
 > 4.2.3. Record Number Encryption
 
@@ -120,7 +126,7 @@ The epoch is maintained differently from DTLS 1.2
 DTLS adds legacy_cookie which has a forced value. And there are changes to the
 random value:
 
-> random: Same as for TLS 1.3, except that the downgrade sentinels ... apply to 
+> random: Same as for TLS 1.3, except that the downgrade sentinels ... apply to
 > DTLS 1.2 and DTLS 1.0, respectively.
 
 #### legacy_version
@@ -142,7 +148,7 @@ See section 7 and 8 of RFC 9147.
 
 #### Disable TLS 1.3 "compatibility mode"
 
-The middlebox compatibility mode 
+The middlebox compatibility mode
 
 > DTLS implementations do not use the TLS 1.3 "compatibility mode"
 
@@ -151,6 +157,7 @@ ChangeCipherSpec messages are no longer used.
 > endpoints MUST NOT send ChangeCipherSpec messages
 
 ### List of DTLS 1.3 requirements
+
 Here's a list of requirements from RFC 9147 together with their implementation status
 and associated PR with the relevant implementation.
 
@@ -253,4 +260,3 @@ have been implemented.
 | The cookie MUST depend on the client's address.                                                                                                                                         | Yes          |
 | It MUST NOT be possible for anyone other than the issuing entity to generate cookies that are accepted as valid by that entity.                                                         | TBD          |
 | DTLS implementations MUST NOT update the address they send to in response to packets from a different address                                                                           | TBD          |
-
