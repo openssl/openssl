@@ -59,6 +59,8 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+#include "prov/securitycheck.h"
+
 #include "internal/cryptlib.h" /* ossl_assert */
 
 /*
@@ -245,7 +247,7 @@ static int kmac_setkey(struct kmac_data_st *kctx, const unsigned char *key,
     const EVP_MD *digest = ossl_prov_digest_md(&kctx->digest);
     int w = EVP_MD_get_block_size(digest);
 
-    if (keylen < KMAC_MIN_KEY || keylen > KMAC_MAX_KEY) {
+    if (!ossl_mac_check_key(KMAC_MIN_KEY * 8, keylen * 8) || keylen > KMAC_MAX_KEY) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
