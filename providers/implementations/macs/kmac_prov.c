@@ -98,7 +98,12 @@ static OSSL_FUNC_mac_final_fn kmac_final;
 
 /* Maximum key size in bytes = 512 (4096 bits) */
 #define KMAC_MAX_KEY 512
-#define KMAC_MIN_KEY 4
+/* Use the new define, but set floor to current 32 */
+#if OPENSSL_MAC_MIN_KEY_BITS >= 32
+# define KMAC_MIN_KEY (OPENSSL_MAC_MIN_KEY_LEN_BITS / 8)
+#else
+# define KMAC_MIN_KEY 4
+#endif
 
 /*
  * Maximum Encoded Key size will be padded to a multiple of the blocksize

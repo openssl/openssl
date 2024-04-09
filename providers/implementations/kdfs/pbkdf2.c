@@ -31,7 +31,12 @@
 #include "pbkdf2.h"
 
 /* Constants specified in SP800-132 */
-#define KDF_PBKDF2_MIN_KEY_LEN_BITS  112
+/* Use the new define, but set floor to current 112 */
+#if OPENSSL_MAC_MIN_KEY_LEN_BITS >= 112
+# define KDF_PBKDF2_MIN_KEY_LEN_BITS OPENSSL_MAC_MIN_KEY_LEN_BITS
+#else
+# define KDF_PBKDF2_MIN_KEY_LEN_BITS 112
+#endif
 #define KDF_PBKDF2_MAX_KEY_LEN_DIGEST_RATIO 0xFFFFFFFF
 #define KDF_PBKDF2_MIN_ITERATIONS 1000
 #define KDF_PBKDF2_MIN_SALT_LEN   (128 / 8)

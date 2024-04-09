@@ -289,6 +289,10 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
             ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
             return 0;
         }
+        if ((ctx->ki_len * 8) < OPENSSL_MAC_MIN_KEY_LEN_BITS) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SIZE_TOO_SMALL);
+            return 0;
+        }
         /* Could either be missing MAC or missing message digest or missing
          * cipher - arbitrarily, I pick this one. */
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MAC);

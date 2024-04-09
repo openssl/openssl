@@ -10,6 +10,15 @@
 #include <openssl/provider.h>
 #include <openssl/core_dispatch.h>
 
+/*
+ * Minimum length of keys for HMAC, KMAC, PBKDF, KBKDF.
+ * Set at current standards requirement of 112
+ * Note, for y2030+ compliance set to 128
+ */
+#ifndef OPENSSL_MAC_MIN_KEY_LEN_BITS
+#define OPENSSL_MAC_MIN_KEY_LEN_BITS 112
+#endif
+
 const OSSL_CORE_HANDLE *FIPS_get_core_handle(OSSL_LIB_CTX *ctx);
 
 int ossl_cipher_capable_aes_cbc_hmac_sha1(void);

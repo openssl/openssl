@@ -40,8 +40,8 @@ static struct test_st {
     const char *digest;
 } test[8] = {
     {
-        "", 0, "More text test vectors to stuff up EBCDIC machines :-)", 54,
-        "e9139d1e6ee064ef8cf514fc7dc83e86",
+        "16charlongsecret", 16, "More text test vectors to stuff up EBCDIC machines :-)", 54,
+        "54014546a0a9e10c01123bf422bdb2de",
     },
     {
         "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b",
@@ -49,8 +49,8 @@ static struct test_st {
         "9294727a3638bb1c13f48ef8158bfc9d",
     },
     {
-        "Jefe", 4, "what do ya want for nothing?", 28,
-        "750c783e6ab0b503eaa86e310a5db738",
+        "Jefe Jeferson Jr", 16, "what do ya want for nothing?", 28,
+        "187cb640bb61c568608cbd0f9030e29f",
     },
     {
         "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa",
@@ -201,6 +201,7 @@ err:
 }
 
 
+#if OPENSSL_MAC_MIN_KEY_LEN_BITS == 0
 static int test_hmac_single_shot(void)
 {
     char *p;
@@ -213,6 +214,7 @@ static int test_hmac_single_shot(void)
 
     return 1;
 }
+#endif
 
 
 static int test_hmac_copy(void)
@@ -292,7 +294,9 @@ static char *pt(unsigned char *md, unsigned int len)
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_hmac_md5, 4);
+#if OPENSSL_MAC_MIN_KEY_LEN_BITS == 0
     ADD_TEST(test_hmac_single_shot);
+#endif
     ADD_TEST(test_hmac_bad);
     ADD_TEST(test_hmac_run);
     ADD_TEST(test_hmac_copy);

@@ -170,10 +170,10 @@ subtest "HMAC generation with `dgst` CLI" => sub {
 
     my $testdata = srctop_file('test', 'data.bin');
     #HMAC the data twice to check consistency
-    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-hmac', '123456',
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-hmac', '0123456789abcdef',
                             $testdata, $testdata]), capture => 1);
     chomp(@hmacdata);
-    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= b12579a2728fdc05722f94b704f45d94e434b0ad7c9634da3397e8dc27801035/;
     ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
     ok($hmacdata[1] =~ $expected,
        "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
@@ -184,10 +184,10 @@ subtest "HMAC generation with `dgst` CLI, default digest" => sub {
 
     my $testdata = srctop_file('test', 'data.bin');
     #HMAC the data twice to check consistency
-    my @hmacdata = run(app(['openssl', 'dgst', '-hmac', '123456',
+    my @hmacdata = run(app(['openssl', 'dgst', '-hmac', '0123456789abcdef',
                             $testdata, $testdata]), capture => 1);
     chomp(@hmacdata);
-    my $expected = qr/HMAC-SHA256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    my $expected = qr/HMAC-SHA256\(\Q$testdata\E\)= b12579a2728fdc05722f94b704f45d94e434b0ad7c9634da3397e8dc27801035/;
     ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
     ok($hmacdata[1] =~ $expected,
        "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
@@ -199,10 +199,10 @@ subtest "HMAC generation with `dgst` CLI, key via option" => sub {
     my $testdata = srctop_file('test', 'data.bin');
     #HMAC the data twice to check consistency
     my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-mac', 'HMAC',
-                            '-macopt', 'hexkey:FFFF',
+                            '-macopt', 'hexkey:30313233343536373839616263646566',
                             $testdata, $testdata]), capture => 1);
     chomp(@hmacdata);
-    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 7c02d4a17d2560a5bb6763edbf33f3a34f415398f8f2e07f04b83ffd7c087dae/;
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= b12579a2728fdc05722f94b704f45d94e434b0ad7c9634da3397e8dc27801035/;
     ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
     ok($hmacdata[1] =~ $expected,
        "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
