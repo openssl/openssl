@@ -58,6 +58,11 @@ L<SSL_net_write_desired(3)>;
 
 =item
 
+Certain configurable parameters described in L<SSL_get_value(3)> (see
+L<SSL_get_value(3)> for details);
+
+=item
+
 Accepting network connections using the functions documented in this manual
 page, such as SSL_accept_connection().
 
@@ -127,8 +132,10 @@ to SSL_accept_connection(). Note that since this may change between subsequent
 API calls to the listener SSL object, it should be used for informational
 purposes only.
 
-Currently, listener SSL objects are only supported for QUIC usage via
-L<OSSL_QUIC_server_method(3)>. It is expected that the listener interface, which
+Currently, listener SSL objects are only supported for QUIC server usage via
+L<OSSL_QUIC_server_method(3)>, or QUIC client-only usage via
+L<OSSL_QUIC_client_method(3)> or L<OSSL_QUIC_client_thread_method(3)> (see
+L</CLIENT-ONLY USAGE>). It is expected that the listener interface, which
 provides an abstracted API for connection acceptance, will be expanded to
 support other protocols, such as TLS over TCP, plain TCP or DTLS in future.
 
