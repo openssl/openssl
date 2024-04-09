@@ -58,8 +58,8 @@ L<SSL_net_write_desired(3)>;
 
 =item
 
-Certain configurable parameters described in L<SSL_get_value(3)> (see
-L<SSL_get_value(3)> for details);
+Certain configurable parameters described in L<SSL_get_value_uint(3)> (see
+L<SSL_get_value_uint(3)> for details);
 
 =item
 
