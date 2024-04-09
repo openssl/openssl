@@ -228,8 +228,10 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         direction = OSSL_RECORD_DIRECTION_WRITE;
     }
 
-    if (SSL_CONNECTION_IS_DTLS(s))
-        dtls1_increment_epoch(s, which);
+    if (SSL_CONNECTION_IS_DTLS(s) && !dtls1_increment_epoch(s, which)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     if (!ssl_set_new_record_layer(s, s->version, direction,
                                     OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
