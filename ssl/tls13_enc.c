@@ -744,6 +744,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     int ret = 0, l;
     int direction = sending ? OSSL_RECORD_DIRECTION_WRITE
                             : OSSL_RECORD_DIRECTION_READ;
+    const int which = sending ? SSL3_CC_WRITE : SSL3_CC_READ;
     unsigned char iv[EVP_MAX_IV_LENGTH];
 
     if ((l = EVP_MD_get_size(md)) <= 0) {
