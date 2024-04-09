@@ -3129,18 +3129,20 @@ int SSL_inject_net_dgram(SSL *s, const unsigned char *buf,
     int ret = 0;
     QCTX ctx;
     QUIC_DEMUX *demux;
+    QUIC_PORT *port;
 
-    if (!expect_quic_cs(s, &ctx))
+    if (!expect_quic_csl(s, &ctx))
         return 0;
 
     qctx_lock(&ctx);
 
-    if (ctx.obj->port == NULL) {
+    port = ossl_quic_obj_get0_port(ctx.obj);
+    if (port == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_UNSUPPORTED, NULL);
         goto err;
     }
 
-    demux = ossl_quic_port_get0_demux(ctx.obj->port);
+    demux = ossl_quic_port_get0_demux(port);
     ret = ossl_quic_demux_inject(demux, buf, buf_len, peer, local);
 
     ret = 1;
