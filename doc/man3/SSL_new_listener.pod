@@ -139,6 +139,9 @@ L</CLIENT-ONLY USAGE>). It is expected that the listener interface, which
 provides an abstracted API for connection acceptance, will be expanded to
 support other protocols, such as TLS over TCP, plain TCP or DTLS in future.
 
+SSL_listen() and SSL_accept_connection() are "I/O" functions, meaning that they
+update the value returned by L<SSL_get_error(3)> if they fail.
+
 =head1 CLIENT-ONLY USAGE
 
 It is also possible to use the listener interface without accepting any
