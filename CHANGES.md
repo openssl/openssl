@@ -26,6 +26,10 @@ OpenSSL Releases
 OpenSSL 3.3
 -----------
 
+### Changes between 3.3.0 and 3.3.1 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.2 and 3.3.0 [9 Apr 2024]
 
  * The `-verify` option to the `openssl crl` and `openssl req` will make
