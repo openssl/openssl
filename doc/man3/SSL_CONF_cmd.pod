@@ -161,9 +161,11 @@ where applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
 (e.g. B<prime256v1>). Group names are case sensitive. The list should be
 in order of preference with the most preferred group first.
 
-Currently supported groups for B<TLSv1.3> and B<DTLSv1.3> are B<P-256>,
-B<P-384>, B<P-521>, B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>,
-B<ffdhe4096>, B<ffdhe6144>, B<ffdhe8192>.
+Currently supported groups for B<TLSv1.3> and B<DTLSv1.3> are
+B<P-256>, B<P-384>, B<P-521>,
+B<X25519>, B<X448>,
+B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144>, B<ffdhe8192>,
+B<brainpoolP256r1tls13>, B<brainpoolP384r1tls13>, B<brainpoolP512r1tls13>.
 
 =item B<-curves> I<groups>
 
@@ -208,7 +210,7 @@ structure is associated with B<ctx>.
 
 Sets the available ciphersuites for (D)TLSv1.3 to value. This is a
 colon-separated list of (D)TLSv1.3 ciphersuite names in order of preference.
-This list will be combined any configured (D)TLSv1.2 and below ciphersuites.
+This list will be combined with any configured (D)TLSv1.2 and below ciphersuites.
 See L<openssl-ciphers(1)> for more information.
 
 =item B<-min_protocol> I<minprot>, B<-max_protocol> I<maxprot>
@@ -314,7 +316,7 @@ structure is associated with B<ctx>.
 
 Sets the available ciphersuites for (D)TLSv1.3 to B<value>. This is a
 colon-separated list of (D)TLSv1.3 ciphersuite names in order of preference.
-This list will be combined any configured (D)TLSv1.2 and below ciphersuites.
+This list will be combined with any configured (D)TLSv1.2 and below ciphersuites.
 See L<openssl-ciphers(1)> for more information.
 
 =item B<Certificate>
@@ -418,9 +420,11 @@ applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
 (e.g. B<prime256v1>). Group names are case sensitive. The list should be in
 order of preference with the most preferred group first.
 
-Currently supported groups for B<TLSv1.3> and B<DTLSv1.3> are B<P-256>,
-B<P-384>, B<P-521>, B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>,
-B<ffdhe4096>, B<ffdhe6144>, B<ffdhe8192>.
+Currently supported groups for B<TLSv1.3> and B<DTLSv1.3> are
+B<P-256>, B<P-384>, B<P-521>,
+B<X25519>, B<X448>,
+B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144>, B<ffdhe8192>,
+B<brainpoolP256r1tls13>, B<brainpoolP384r1tls13>, B<brainpoolP512r1tls13>.
 
 =item B<Curves>
 
