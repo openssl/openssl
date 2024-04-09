@@ -76,15 +76,15 @@ err:
 static int create_socket(uint16_t port)
 {
     int fd = -1;
-    struct sockaddr_in6 sa = {0};
+    struct sockaddr_in sa = {0};
 
-    if ((fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+    if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         fprintf(stderr, "cannot create socket");
         goto err;
     }
 
-    sa.sin6_family  = AF_INET6;
-    sa.sin6_port    = htons(port);
+    sa.sin_family  = AF_INET;
+    sa.sin_port    = htons(port);
 
     if (bind(fd, (const struct sockaddr *)&sa, sizeof(sa)) < 0) {
         fprintf(stderr, "cannot bind to %u\n", port);
