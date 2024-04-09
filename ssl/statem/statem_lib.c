@@ -2162,6 +2162,8 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
     RAW_EXTENSION *suppversions;
     const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
                                                      : TLS1_3_VERSION;
+    const int version1_2 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_2_VERSION
+                                                     : TLS1_2_VERSION;
 
     if (client_version <= 0)
         return SSL_R_WRONG_SSL_VERSION;
@@ -2249,7 +2251,7 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
                  * This is after a HelloRetryRequest so we better check that we
                  * negotiated (D)TLSv1.3
                  */
-                if (best_vers != TLS1_3_VERSION && best_vers != DTLS1_3_VERSION)
+                if (best_vers != version1_3)
                     return SSL_R_UNSUPPORTED_PROTOCOL;
                 return 0;
             }
@@ -2269,8 +2271,7 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
      * version we can negotiate is (D)TLSv1.2
      */
     if (ssl_version_cmp(s, client_version, version1_3) >= 0)
-        client_version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_2_VERSION
-                                                   : TLS1_2_VERSION;
+        client_version = version1_2;
 
     /*
      * No supported versions extension, so we just use the version supplied in
@@ -2315,6 +2316,8 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
     const version_info *table;
     int ret, ver_min, ver_max, real_max, origv;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
+                                                     : TLS1_3_VERSION;
 
     origv = s->version;
     s->version = version;
@@ -2328,8 +2331,7 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
         return 0;
     }
 
-    if (s->hello_retry_request != SSL_HRR_NONE
-            && (s->version != TLS1_3_VERSION && s->version != DTLS1_3_VERSION)) {
+    if (s->hello_retry_request != SSL_HRR_NONE && s->version != version1_3) {
         s->version = origv;
         SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_WRONG_SSL_VERSION);
         return 0;
