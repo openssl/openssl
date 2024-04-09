@@ -487,6 +487,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_recv_get_final_size(const QU
 {
     switch (s->recv_state) {
     default:
+        assert(0);
     case QUIC_RSTREAM_STATE_NONE:
     case QUIC_RSTREAM_STATE_RECV:
         return 0;
@@ -515,6 +516,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_recv_pending(const QUIC_STRE
 
     switch (s->recv_state) {
     default:
+        assert(0);
     case QUIC_RSTREAM_STATE_NONE:
         return 0;
 
