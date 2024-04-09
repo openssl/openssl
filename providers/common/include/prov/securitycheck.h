@@ -14,6 +14,7 @@ int ossl_rsa_check_key(OSSL_LIB_CTX *ctx, const RSA *rsa, int operation);
 int ossl_ec_check_key(OSSL_LIB_CTX *ctx, const EC_KEY *ec, int protect);
 int ossl_dsa_check_key(OSSL_LIB_CTX *ctx, const DSA *dsa, int sign);
 int ossl_dh_check_key(OSSL_LIB_CTX *ctx, const DH *dh);
+int ossl_mac_check_key(size_t min, size_t requested);
 
 int ossl_digest_is_allowed(OSSL_LIB_CTX *ctx, const EVP_MD *md);
 /* With security check enabled it can return -1 to indicate disallowed md */

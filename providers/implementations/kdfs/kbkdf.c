@@ -43,6 +43,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+#include "prov/securitycheck.h"
 
 #include "internal/e_os.h"
 #include "internal/params.h"
@@ -287,6 +288,10 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
     if (ctx->ctx_init == NULL) {
         if (ctx->ki_len == 0 || ctx->ki == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+            return 0;
+        }
+        if (!ossl_mac_check_key(0, ctx->ki_len * 8)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SIZE_TOO_SMALL);
             return 0;
         }
         /* Could either be missing MAC or missing message digest or missing
