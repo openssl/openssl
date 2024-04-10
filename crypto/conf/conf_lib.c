@@ -7,8 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define _XOPEN_SOURCE_EXTENDED   /* To get a definition of strdup() */
-
 #include "internal/e_os.h"
 #include <stdio.h>
 #include <string.h>
