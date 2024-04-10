@@ -14,8 +14,6 @@
  *      generalTime    GeneralizedTime }
  */
 
-#define _XOPEN_SOURCE            /* To get a definition of timezone */
-
 #include <stdio.h>
 #include <time.h>
 #include "crypto/asn1.h"
