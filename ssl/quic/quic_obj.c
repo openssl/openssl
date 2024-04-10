@@ -81,9 +81,9 @@ static int obj_update_cache(QUIC_OBJ *obj)
 
 SSL_CONNECTION *ossl_quic_obj_get0_handshake_layer(QUIC_OBJ *obj)
 {
-    assert(obj->init_done);
+    assert(obj != NULL && obj->init_done);
 
-    if (obj == NULL || obj->ssl.type != SSL_TYPE_QUIC_CONNECTION)
+    if (obj->ssl.type != SSL_TYPE_QUIC_CONNECTION)
         return NULL;
 
     return SSL_CONNECTION_FROM_SSL_ONLY(((QUIC_CONNECTION *)obj)->tls);
@@ -92,7 +92,10 @@ SSL_CONNECTION *ossl_quic_obj_get0_handshake_layer(QUIC_OBJ *obj)
 /* (Returns a cached result.) */
 int ossl_quic_obj_can_support_blocking(const QUIC_OBJ *obj)
 {
-    QUIC_REACTOR *rtor = ossl_quic_obj_get0_reactor(obj);
+    QUIC_REACTOR *rtor;
+
+    assert(obj != NULL);
+    rtor = ossl_quic_obj_get0_reactor(obj);
 
     return ossl_quic_reactor_can_poll_r(rtor)
         || ossl_quic_reactor_can_poll_w(rtor);
@@ -102,6 +105,7 @@ int ossl_quic_obj_desires_blocking(const QUIC_OBJ *obj)
 {
     unsigned int req_blocking_mode;
 
+    assert(obj != NULL);
     for (; (req_blocking_mode = obj->req_blocking_mode)
             == QUIC_BLOCKING_MODE_INHERIT && obj->parent_obj != NULL;
          obj = obj->parent_obj);
@@ -111,6 +115,8 @@ int ossl_quic_obj_desires_blocking(const QUIC_OBJ *obj)
 
 int ossl_quic_obj_blocking(const QUIC_OBJ *obj)
 {
+    assert(obj != NULL);
+
     if (!ossl_quic_obj_desires_blocking(obj))
         return 0;
 
@@ -121,5 +127,7 @@ int ossl_quic_obj_blocking(const QUIC_OBJ *obj)
 
 void ossl_quic_obj_set_blocking_mode(QUIC_OBJ *obj, unsigned int mode)
 {
+    assert(obj != NULL);
+
     obj->req_blocking_mode = mode;
 }
