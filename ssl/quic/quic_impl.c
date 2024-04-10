@@ -327,8 +327,10 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
         }
 
         if ((flags & QCTX_C) == 0
-            && (qc->default_xso == NULL || (flags & QCTX_S) == 0))
-            return wrong_type(s, flags);
+            && (qc->default_xso == NULL || (flags & QCTX_S) == 0)) {
+            wrong_type(s, flags);
+            goto err;
+        }
 
         ctx->xso            = qc->default_xso;
         break;
