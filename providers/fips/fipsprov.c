@@ -27,6 +27,12 @@
 #include "crypto/context.h"
 #include "internal/core.h"
 
+#ifndef OPENSSL_NO_FIPS_PEDANTICONLY
+# define FIPS_PEDANTIC_DEFAULT 1
+#else
+# define FIPS_PEDANTIC_DEFAULT 0
+#endif
+
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
 
@@ -104,8 +110,8 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     if (fgbl == NULL)
         return NULL;
     init_fips_option(&fgbl->fips_security_checks, 1);
-    init_fips_option(&fgbl->fips_tls1_prf_ems_check, 0); /* Disabled by default */
-    init_fips_option(&fgbl->fips_restricted_drgb_digests, 0);
+    init_fips_option(&fgbl->fips_tls1_prf_ems_check, FIPS_PEDANTIC_DEFAULT);
+    init_fips_option(&fgbl->fips_restricted_drgb_digests, FIPS_PEDANTIC_DEFAULT);
     return fgbl;
 }
 
@@ -183,6 +189,17 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
         return 0;
     }
+
+#ifndef OPENSSL_NO_FIPS_PEDANTICONLY
+    if (fgbl->selftest_params.indicator_checksum_data ||
+        fgbl->selftest_params.indicator_data ||
+        (fgbl->fips_security_checks.option && strcmp(fgbl->fips_security_checks.option, "1")) ||
+        (fgbl->fips_tls1_prf_ems_check.option && strcmp(fgbl->fips_tls1_prf_ems_check.option, "1")) ||
+        (fgbl->fips_restricted_drgb_digests.option && strcmp(fgbl->fips_restricted_drgb_digests.option, "1"))) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+        return 0;
+    }
+#endif
 
     return 1;
 }

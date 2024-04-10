@@ -32,7 +32,7 @@ my @pedantic_okay =
 my @pedantic_fail =
     ( 'no_conditional_errors', 'no_security_checks', 'self_test_oninstall' );
 
-plan tests => 35 + (scalar @pedantic_okay) + (scalar @pedantic_fail);
+plan tests => 37 + (scalar @pedantic_okay) + (scalar @pedantic_fail);
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 my $fipskey = $ENV{FIPSKEY} // config('FIPSKEY') // '00';
@@ -119,9 +119,39 @@ ok(!run(app(['openssl', 'fipsinstall', '-in', 'dummy.tmp', '-module', $infile,
    "fipsinstall verify fail");
 
 
+if (disabled("fips-pedanticonly")) {
+    # output a fips.cnf file containing mac data (without pedantic)
+    ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
+		'-provider_name', 'fips', '-mac_name', 'HMAC',
+		'-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+		'-section_name', 'fips_sect'])),
+       "fipsinstall");
+
+    # verify the fips.cnf file (without pedantic)
+    ok(run(app(['openssl', 'fipsinstall', '-in', 'fips.cnf', '-module', $infile,
+		'-provider_name', 'fips', '-mac_name', 'HMAC',
+		'-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+		'-section_name', 'fips_sect', '-verify'])),
+       "fipsinstall verify");
+} else {
+    # output a fips.cnf file containing mac data (without pedantic)
+    ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
+		'-provider_name', 'fips', '-mac_name', 'HMAC',
+		'-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+		'-section_name', 'fips_sect'])),
+       "fipsinstall");
+
+    # verify the fips.cnf file (without pedantic)
+    ok(!run(app(['openssl', 'fipsinstall', '-in', 'fips.cnf', '-module', $infile,
+		'-provider_name', 'fips', '-mac_name', 'HMAC',
+		'-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+		'-section_name', 'fips_sect', '-verify'])),
+       "fipsinstall verify");
+}
+
 # output a fips.cnf file containing mac data
 ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
-            '-provider_name', 'fips', '-mac_name', 'HMAC',
+            '-provider_name', 'fips', '-mac_name', 'HMAC', '-pedantic',
             '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
             '-section_name', 'fips_sect'])),
    "fipsinstall");
@@ -376,18 +406,21 @@ SKIP: {
        "fipsinstall fails when attempting to run self tests on install");
 }
 
-ok(find_line_file('drbg-no-trunc-md = 0', 'fips.cnf') == 1,
-   'fipsinstall defaults to not banning truncated digests with DRBGs');
+SKIP: {
+    skip "pendanticonly configuration", 3 unless disabled("fips-pedanticonly");
 
-ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
-           '-provider_name', 'fips', '-mac_name', 'HMAC',
-           '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
-           '-section_name', 'fips_sect', '-no_drbg_truncated_digests'])),
-   "fipsinstall knows about allowing truncated digests in DRBGs");
+    ok(find_line_file('drbg-no-trunc-md = 0', 'fips.cnf') == 1,
+       'fipsinstall defaults to not banning truncated digests with DRBGs');
 
-ok(find_line_file('drbg-no-trunc-md = 1', 'fips.cnf') == 1,
-   'fipsinstall will allow option for truncated digests with DRBGs');
+    ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
+               '-provider_name', 'fips', '-mac_name', 'HMAC',
+               '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+               '-section_name', 'fips_sect', '-no_drbg_truncated_digests'])),
+       "fipsinstall knows about allowing truncated digests in DRBGs");
 
+    ok(find_line_file('drbg-no-trunc-md = 1', 'fips.cnf') == 1,
+       'fipsinstall will allow option for truncated digests with DRBGs');
+}
 
 ok(run(app(['openssl', 'fipsinstall', '-out', 'fips-pedantic.cnf',
             '-module', $infile, '-pedantic'])),
