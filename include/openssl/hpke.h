@@ -87,7 +87,7 @@ typedef struct {
  * Suite constants, use this like:
  *          OSSL_HPKE_SUITE myvar = OSSL_HPKE_SUITE_DEFAULT;
  */
-# ifndef OPENSSL_NO_ECX
+# ifndef OPENSSL_NO_ECXX
 #  define OSSL_HPKE_SUITE_DEFAULT \
     {\
         OSSL_HPKE_KEM_ID_X25519, \

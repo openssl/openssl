@@ -322,7 +322,7 @@ static int test_print_key_using_encoder(const char *alg, const EVP_PKEY *pk)
     return ret;
 }
 
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
 static int test_print_key_using_encoder_public(const char *alg,
                                                const EVP_PKEY *pk)
 {
@@ -1292,7 +1292,7 @@ err:
 
 
 #ifndef OPENSSL_NO_EC
-# ifndef OPENSSL_NO_ECX
+# ifndef OPENSSL_NO_ECXX
 /* Array indexes used in test_fromdata_ecx */
 # define PRIV_KEY        0
 # define PUB_KEY         1
@@ -1570,7 +1570,7 @@ err:
 
     return ret;
 }
-# endif /* OPENSSL_NO_ECX */
+# endif /* OPENSSL_NO_ECXX */
 
 static int test_fromdata_ec(void)
 {
@@ -2204,7 +2204,7 @@ int setup_tests(void)
     ADD_TEST(test_fromdata_dsa_fips186_4);
 #endif
 #ifndef OPENSSL_NO_EC
-# ifndef OPENSSL_NO_ECX
+# ifndef OPENSSL_NO_ECXX
     ADD_ALL_TESTS(test_fromdata_ecx, 4 * 3);
 # endif
     ADD_TEST(test_fromdata_ec);

@@ -81,5 +81,5 @@ our @tests_tls1_2 = (
     },
 );
 
-push @tests, @tests_ec unless disabled("ecx");
-push @tests, @tests_tls1_2 unless disabled("tls1_2") || disabled("ecx");
+push @tests, @tests_ec unless disabled("ecxx");
+push @tests, @tests_tls1_2 unless disabled("tls1_2") || disabled("ecxx");

@@ -259,7 +259,7 @@ static const unsigned char ksinfo[] = {
     0x20, 0x47, 0x72, 0x65, 0x63, 0x69, 0x61, 0x6e,
     0x20, 0x55, 0x72, 0x6e
 };
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
 /*
  * static const char *pskid = "Ennyn Durin aran Moria";
  */
@@ -683,7 +683,7 @@ static int P256kdfsha256_hkdfsha256_aes128gcm_base_test(void)
                        exportdata, OSSL_NELEM(exportdata));
 }
 
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
 static const unsigned char fourth_ikme[] = {
     0x55, 0xbc, 0x24, 0x5e, 0xe4, 0xef, 0xda, 0x25,
     0xd3, 0x8f, 0x2d, 0x54, 0xd5, 0xbb, 0x66, 0x65,
@@ -792,7 +792,7 @@ static uint16_t hpke_kem_list[] = {
     OSSL_HPKE_KEM_ID_P256,
     OSSL_HPKE_KEM_ID_P384,
     OSSL_HPKE_KEM_ID_P521,
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
     OSSL_HPKE_KEM_ID_X25519,
     OSSL_HPKE_KEM_ID_X448
 #endif
@@ -823,7 +823,7 @@ static const char *mode_str_list[] = {
     "base", "psk", "auth", "pskauth"
 };
 static const char *kem_str_list[] = {
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
     "P-256", "P-384", "P-521", "x25519", "x448",
     "0x10", "0x11", "0x12", "0x20", "0x21",
     "16", "17", "18", "32", "33"
@@ -1553,7 +1553,7 @@ end:
     return erv;
 }
 
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
 /* from RFC 9180 Appendix A.1.1 */
 static const unsigned char ikm25519[] = {
     0x72, 0x68, 0x60, 0x0d, 0x40, 0x3f, 0xce, 0x43,
@@ -1759,7 +1759,7 @@ static int test_hpke_ikms(void)
 {
     int res = 1;
 
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
     res = test_hpke_one_ikm_gen(OSSL_HPKE_KEM_ID_X25519,
                                 ikm25519, sizeof(ikm25519),
                                 pub25519, sizeof(pub25519));
@@ -1982,7 +1982,7 @@ int setup_tests(void)
 
     if (!test_get_libctx(&testctx, &nullprov, NULL, &deflprov, "default"))
         return 0;
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
     ADD_TEST(export_only_test);
     ADD_TEST(x25519kdfsha256_hkdfsha256_aes128gcm_base_test);
     ADD_TEST(x25519kdfsha256_hkdfsha256_aes128gcm_psk_test);

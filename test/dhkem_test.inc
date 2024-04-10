@@ -47,7 +47,7 @@ static const char *dhkem_supported_curves[] = {
     "P-256",
     "P-384",
     "P-521",
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
     "X25519",
     "X448",
 #endif
@@ -56,7 +56,7 @@ static const char *dhkem_supported_curves[] = {
 /* TEST vectors extracted from RFC 9180 */
 
 /* Base test values */
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
 static const unsigned char x25519_ikme[] = {
     0x72, 0x68, 0x60, 0x0d, 0x40, 0x3f, 0xce, 0x43,
     0x15, 0x61, 0xae, 0xf5, 0x83, 0xee, 0x16, 0x13,
@@ -455,7 +455,7 @@ static const TEST_ENCAPDATA ec_encapdata[] = {
         p256_expected_enc, sizeof(p256_expected_enc),
         p256_expected_secret, sizeof(p256_expected_secret),
     },
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
     {
         "X25519",
         x25519_ikme, sizeof(x25519_ikme),
@@ -483,7 +483,7 @@ static const TEST_ENCAPDATA ec_encapdata[] = {
         p521_auth_ikms_pub, sizeof(p521_auth_ikms_pub),
         p521_auth_ikms_priv, sizeof(p521_auth_ikms_priv)
     },
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
     {
         "X25519",
         x25519_auth_ikme, sizeof(x25519_auth_ikme),
@@ -498,7 +498,7 @@ static const TEST_ENCAPDATA ec_encapdata[] = {
 };
 
 /* Test vector from https://github.com/cfrg/draft-irtf-cfrg-hpke */
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
 static const unsigned char x448_ikmr[] = {
     0xd4, 0x5d, 0x16, 0x52, 0xdf, 0x74, 0x92, 0x0a,
     0xbf, 0x94, 0xa2, 0x88, 0x3c, 0x83, 0x05, 0x0f,

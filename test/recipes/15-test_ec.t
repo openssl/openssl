@@ -61,7 +61,7 @@ subtest 'PKEY conversions -- public key' => sub {
 
 SKIP: {
     skip "ECX is not supported by this OpenSSL build", 6
-        if disabled("ecx");
+        if disabled("ecxx");
     subtest 'Ed25519 conversions -- private key' => sub {
         tconversion( -type => "pkey", -prefix => "ed25519-pkey-priv",
                      -in => srctop_file("test", "tested25519.pem") );

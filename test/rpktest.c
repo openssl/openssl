@@ -156,7 +156,7 @@ static int test_rpk(int idx)
             privkey_file = privkey2;
             other_cert_file = cert;
             break;
-# ifndef OPENSSL_NO_ECX
+# ifndef OPENSSL_NO_ECXX
         case 2:
             /* use Ed448 */
             cert_file = cert448;

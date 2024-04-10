@@ -202,13 +202,13 @@ if (disabled("ec")) {
 
 #Test 14: Multiple acceptable key_shares - we choose the first one (part 2)
 $proxy->clear();
-if (disabled("ecx")) {
+if (disabled("ecxx")) {
     $proxy->clientflags("-curves ffdhe2048:ffdhe3072");
 } else {
     $proxy->clientflags("-curves X25519:P-256");
 }
 $proxy->start();
-if (disabled("ecx")) {
+if (disabled("ecxx")) {
     ok(TLSProxy::Message->success() && ($selectedgroupid == FFDHE2048),
        "Multiple acceptable key_shares (part 2)");
 } else {
@@ -219,7 +219,7 @@ if (disabled("ecx")) {
 #Test 15: Server sends key_share that wasn't offered should fail
 $proxy->clear();
 $testtype = SELECT_X25519;
-if (disabled("ecx")) {
+if (disabled("ecxx")) {
     $proxy->clientflags("-groups ffdhe3072");
 } else {
     $proxy->clientflags("-groups P-256");
@@ -281,7 +281,7 @@ SKIP: {
 $proxy->clear();
 $direction = SERVER_TO_CLIENT;
 $testtype = NO_KEY_SHARES_IN_HRR;
-if (disabled("ecx")) {
+if (disabled("ecxx")) {
     $proxy->serverflags("-groups ffdhe2048");
 } else {
     $proxy->serverflags("-groups X25519");
@@ -294,7 +294,7 @@ SKIP: {
     #Test 23: Trailing data on key_share in ServerHello should fail
     $proxy->clear();
     $direction = CLIENT_TO_SERVER;
-    if (disabled("ecx")) {
+    if (disabled("ecxx")) {
         $proxy->clientflags("-groups secp192r1:P-256:P-384");
     } else {
         $proxy->clientflags("-groups secp192r1:P-256:X25519");
@@ -328,7 +328,7 @@ sub modify_key_shares_filter
 
             if ($testtype != NON_TLS1_3_KEY_SHARE) {
                 #Setup supported groups to include some unrecognised groups
-                if (disabled("ecx")) {
+                if (disabled("ecxx")) {
                     $suppgroups = pack "C8",
                         0x00, 0x06, #List Length
                         0xff, 0xfe, #Non existing group 1
@@ -342,7 +342,7 @@ sub modify_key_shares_filter
                         0x00, 0x1d; #X25519
                 }
             } else {
-                if (disabled("ecx")) {
+                if (disabled("ecxx")) {
                     $suppgroups = pack "C6",
                         0x00, 0x04, #List Length
                         0x00, 0x13,
@@ -366,7 +366,7 @@ sub modify_key_shares_filter
                     0xff, 0xff, #Non existing group 2
                     0x00, 0x01, 0xff; #key_exchange data
             } elsif ($testtype == ACCEPTABLE_AT_END) {
-                if (disabled("ecx")) {
+                if (disabled("ecxx")) {
                     $ext = pack "C11H130",
                         0x00, 0x4A, #List Length
                         0xff, 0xfe, #Non existing group 1

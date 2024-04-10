@@ -14,6 +14,6 @@ use OpenSSL::Test::Utils;
 setup("test_internal_curve448");
 
 plan skip_all => "This test is unsupported in a no-ecx build"
-    if disabled("ecx");
+    if disabled("ecxx");
 
 simple_test("test_internal_curve448", "curve448_internal_test");

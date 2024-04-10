@@ -27,7 +27,7 @@ plan skip_all => "These tests are not supported in a fuzz build"
 plan skip_all => "These tests are not supported in a no-cmp build"
     if disabled("cmp");
 plan skip_all => "These tests are not supported in a no-ecx build"
-    if disabled("ecx"); # EC and EDDSA test certs, e.g., in Mock/newWithNew.pem
+    if disabled("ecxx"); # EC and EDDSA test certs, e.g., in Mock/newWithNew.pem
 plan skip_all => "These tests are not supported in a no-sock build"
     if disabled("sock");
 plan skip_all => "These tests are not supported in a no-http build"

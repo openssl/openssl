@@ -66,7 +66,7 @@ static CMP_PROTECT_TEST_FIXTURE *set_up(const char *const test_case_name)
 }
 
 static EVP_PKEY *prot_RSA_key = NULL;
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
 static EVP_PKEY *prot_Ed_key = NULL;
 static OSSL_CMP_MSG *genm_protected_Ed;
 #endif
@@ -158,7 +158,7 @@ static int test_cmp_calc_protection_pkey(void)
     return result;
 }
 
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
 static int test_cmp_calc_protection_pkey_Ed(void)
 {
     SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
@@ -525,7 +525,7 @@ static int test_X509_STORE_only_self_issued(void)
 void cleanup_tests(void)
 {
     EVP_PKEY_free(prot_RSA_key);
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
     EVP_PKEY_free(prot_Ed_key);
     OSSL_CMP_MSG_free(genm_protected_Ed);
 #endif
@@ -590,12 +590,12 @@ int setup_tests(void)
 
     if (!TEST_ptr(prot_RSA_key = load_pkey_pem(prot_RSA_f, libctx)))
         return 0;
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
     if (!TEST_ptr(prot_Ed_key = load_pkey_pem(prot_Ed_f, libctx)))
         return 0;
 #endif
     if (!TEST_ptr(ir_protected = load_pkimsg(ir_protected_f, libctx))
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
         || !TEST_ptr(genm_protected_Ed = load_pkimsg(genm_prot_Ed_f, libctx))
 #endif
         || !TEST_ptr(ir_unprotected = load_pkimsg(ir_unprotected_f, libctx)))
@@ -611,7 +611,7 @@ int setup_tests(void)
     /* Message protection tests */
     ADD_TEST(test_cmp_calc_protection_no_key_no_secret);
     ADD_TEST(test_cmp_calc_protection_pkey);
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
     ADD_TEST(test_cmp_calc_protection_pkey_Ed);
 #endif
     ADD_TEST(test_cmp_calc_protection_pbmac);

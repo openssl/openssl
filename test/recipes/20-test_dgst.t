@@ -129,7 +129,7 @@ SKIP: {
 
 SKIP: {
     skip "EdDSA is not supported by this OpenSSL build", 2
-        if disabled("ecx");
+        if disabled("ecxx");
 
     skip "EdDSA is not supported with `dgst` CLI", 2;
 

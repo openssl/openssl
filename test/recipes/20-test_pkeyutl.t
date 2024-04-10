@@ -55,7 +55,7 @@ SKIP: {
 
 SKIP: {
     skip "Skipping tests that require ECX", 4
-        if disabled("ecx");
+        if disabled("ecxx");
 
     # Ed25519
     ok(run(app(([ 'openssl', 'pkeyutl', '-sign', '-in',
@@ -184,7 +184,7 @@ SKIP: {
 
 SKIP: {
     skip "EdDSA is not supported by this OpenSSL build", 2
-        if disabled("ecx");
+        if disabled("ecxx");
 
     subtest "Ed2559 CLI signature generation and verification" => sub {
         tsignverify("Ed25519",

@@ -440,7 +440,7 @@ static const OPT_PAIR ecdsa_choices[ECDSA_NUM] = {
     {"ecdsabrp512t1", R_EC_BRP512T1}
 };
 enum {
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
     R_EC_X25519 = ECDSA_NUM, R_EC_X448, EC_NUM
 #else
     EC_NUM = ECDSA_NUM
@@ -472,7 +472,7 @@ static const OPT_PAIR ecdh_choices[EC_NUM] = {
     {"ecdhbrp384t1", R_EC_BRP384T1},
     {"ecdhbrp512r1", R_EC_BRP512R1},
     {"ecdhbrp512t1", R_EC_BRP512T1},
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
     {"ecdhx25519", R_EC_X25519},
     {"ecdhx448", R_EC_X448}
 #endif
@@ -1850,7 +1850,7 @@ int speed_main(int argc, char **argv)
         {"brainpoolP384t1", NID_brainpoolP384t1, 384},
         {"brainpoolP512r1", NID_brainpoolP512r1, 512},
         {"brainpoolP512t1", NID_brainpoolP512t1, 512},
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECXX
         /* Other and ECDH only ones */
         {"X25519", NID_X25519, 253},
         {"X448", NID_X448, 448}
@@ -1887,8 +1887,10 @@ int speed_main(int argc, char **argv)
     OPENSSL_assert(ed_curves[EdDSA_NUM - 1].nid == NID_ED448);
     OPENSSL_assert(strcmp(eddsa_choices[EdDSA_NUM - 1].name, "ed448") == 0);
 
+#ifndef OPENSSL_NO_ECXX
     OPENSSL_assert(ec_curves[EC_NUM - 1].nid == NID_X448);
     OPENSSL_assert(strcmp(ecdh_choices[EC_NUM - 1].name, "ecdhx448") == 0);
+#endif
 
     OPENSSL_assert(ec_curves[ECDSA_NUM - 1].nid == NID_brainpoolP512t1);
     OPENSSL_assert(strcmp(ecdsa_choices[ECDSA_NUM - 1].name, "ecdsabrp512t1") == 0);
