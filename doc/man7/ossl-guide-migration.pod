@@ -1104,7 +1104,7 @@ L<EVP_DecryptInit_ex(3)>, L<EVP_DecryptUpdate(3)> and L<EVP_DecryptFinal_ex(3)>.
 
 Use of low-level digest functions such as L<SHA1_Init(3)> have been
 informally discouraged from use for a long time.  Applications should instead
-use the the high level EVP APIs L<EVP_DigestInit_ex(3)>, L<EVP_DigestUpdate(3)>
+use the high level EVP APIs L<EVP_DigestInit_ex(3)>, L<EVP_DigestUpdate(3)>
 and L<EVP_DigestFinal_ex(3)>, or the quick one-shot L<EVP_Q_digest(3)>.
 
 Note that the functions L<SHA1(3)>, L<SHA224(3)>, L<SHA256(3)>, L<SHA384(3)>

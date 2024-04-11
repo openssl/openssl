@@ -1480,7 +1480,7 @@ network BIO.)
 There are only really two ways to handle this:
 
 - **RFC conformant mode.** `SSL_shutdown` only indicates that shutdown is
-  complete once the the entire connection closure process is complete.
+  complete once the entire connection closure process is complete.
 
   This process consists of the Closing and Draining states. In some cases the
   Closing state may last only briefly, namely if the peer chooses to respond to

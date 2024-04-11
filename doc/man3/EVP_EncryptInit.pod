@@ -1438,7 +1438,7 @@ indicates if the operation was successful. If it does not indicate success
 the authentication operation has failed and any output data B<MUST NOT>
 be used as it is corrupted.
 
-The API does not store the the SIV (Synthetic Initialization Vector) in
+The API does not store the SIV (Synthetic Initialization Vector) in
 the cipher text. Instead, it is stored as the tag within the EVP_CIPHER_CTX.
 The SIV must be retrieved from the context after encryption, and set into
 the context before decryption.
