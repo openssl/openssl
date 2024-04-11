@@ -434,12 +434,13 @@ int dtls1_handle_timeout(SSL_CONNECTION *s)
  * Construct a HelloVerifyRequest record and message headers
  * returns size of written record on success and 0 on failure
  */
-static size_t construct_hello_verify_request(SSL *ssl, WPACKET *wpkt,
+static size_t construct_hello_verify_request(SSL *ssl,
                                           unsigned char *wbuf,
                                           unsigned char *seq,
                                           unsigned char *cookie,
                                           size_t cookielen)
 {
+    WPACKET wpkt;
     size_t wreclen = 0;
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
@@ -451,56 +452,56 @@ static size_t construct_hello_verify_request(SSL *ssl, WPACKET *wpkt,
     int version = (ssl->method->version == DTLS_ANY_VERSION) ? DTLS1_VERSION
                                                          : s->version;
 
-    if (!WPACKET_init_static_len(wpkt,
+    if (!WPACKET_init_static_len(&wpkt,
                                  wbuf,
                                  ssl_get_max_send_fragment(s)
                                  + DTLS1_RT_HEADER_LENGTH,
                                  0)
-        || !WPACKET_put_bytes_u8(wpkt, SSL3_RT_HANDSHAKE)
-        || !WPACKET_put_bytes_u16(wpkt, version)
+        || !WPACKET_put_bytes_u8(&wpkt, SSL3_RT_HANDSHAKE)
+        || !WPACKET_put_bytes_u16(&wpkt, version)
         /*
          * Record sequence number is always the same as in the
          * received ClientHello
          */
-        || !WPACKET_memcpy(wpkt, seq, SEQ_NUM_SIZE)
+        || !WPACKET_memcpy(&wpkt, seq, SEQ_NUM_SIZE)
         /* End of record, start sub packet for message */
-        || !WPACKET_start_sub_packet_u16(wpkt)
+        || !WPACKET_start_sub_packet_u16(&wpkt)
         /* Message type */
-        || !WPACKET_put_bytes_u8(wpkt, DTLS1_MT_HELLO_VERIFY_REQUEST)
+        || !WPACKET_put_bytes_u8(&wpkt, DTLS1_MT_HELLO_VERIFY_REQUEST)
         /*
          * Message length - doesn't follow normal TLS convention:
          * the length isn't the last thing in the message header.
          * We'll need to fill this in later when we know the
          * length. Set it to zero for now
          */
-        || !WPACKET_put_bytes_u24(wpkt, 0)
+        || !WPACKET_put_bytes_u24(&wpkt, 0)
         /*
          * Message sequence number is always 0 for a
          * HelloVerifyRequest
          */
-        || !WPACKET_put_bytes_u16(wpkt, 0)
+        || !WPACKET_put_bytes_u16(&wpkt, 0)
         /*
          * We never fragment a HelloVerifyRequest, so fragment
          * offset is 0
          */
-        || !WPACKET_put_bytes_u24(wpkt, 0)
+        || !WPACKET_put_bytes_u24(&wpkt, 0)
         /*
          * Fragment length is the same as message length, but
          * this *is* the last thing in the message header so we
          * can just start a sub-packet. No need to come back
          * later for this one.
          */
-        || !WPACKET_start_sub_packet_u24(wpkt)
+        || !WPACKET_start_sub_packet_u24(&wpkt)
         /* Create the actual HelloVerifyRequest body */
-        || !dtls_raw_hello_verify_request(wpkt, cookie, cookielen)
+        || !dtls_raw_hello_verify_request(&wpkt, cookie, cookielen)
         /* Close message body */
-        || !WPACKET_close(wpkt)
+        || !WPACKET_close(&wpkt)
         /* Close record body */
-        || !WPACKET_close(wpkt)
-        || !WPACKET_get_total_written(wpkt, &wreclen)
-        || !WPACKET_finish(wpkt)) {
+        || !WPACKET_close(&wpkt)
+        || !WPACKET_get_total_written(&wpkt, &wreclen)
+        || !WPACKET_finish(&wpkt)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        WPACKET_cleanup(wpkt);
+        WPACKET_cleanup(&wpkt);
         /* This is fatal */
         return 0;
     }
@@ -522,56 +523,57 @@ static size_t construct_hello_verify_request(SSL *ssl, WPACKET *wpkt,
  * Construct a HelloRetryRequest record and message headers
  * returns size of written record on success and 0 on failure
  */
-static size_t construct_hello_retry_request(SSL *ssl, WPACKET *wpkt,
+static size_t construct_hello_retry_request(SSL *ssl,
                                             unsigned char *wbuf,
                                             unsigned char *seq,
                                             unsigned char *cookie,
                                             size_t cookielen)
 {
+    WPACKET wpkt;
     size_t wreclen = 0;
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
     int version = DTLS1_2_VERSION;
 
-    if (!WPACKET_init_static_len(wpkt,
+    if (!WPACKET_init_static_len(&wpkt,
                                  wbuf,
                                  ssl_get_max_send_fragment(s)
                                  + DTLS1_RT_HEADER_LENGTH,
                                  0)
             /* DTLSPlaintext */
             /* type */
-            || !WPACKET_put_bytes_u8(wpkt, SSL3_RT_HANDSHAKE)
+            || !WPACKET_put_bytes_u8(&wpkt, SSL3_RT_HANDSHAKE)
             /* legacy_record_version */
-            || !WPACKET_put_bytes_u16(wpkt, version)
+            || !WPACKET_put_bytes_u16(&wpkt, version)
             /* sequence_number */
-            || !WPACKET_memcpy(wpkt, seq, SEQ_NUM_SIZE)
+            || !WPACKET_memcpy(&wpkt, seq, SEQ_NUM_SIZE)
             /* length */
-            || !WPACKET_start_sub_packet_u16(wpkt)
+            || !WPACKET_start_sub_packet_u16(&wpkt)
             /* DTLSHandshake */
             /* msg_type */
-            || !WPACKET_put_bytes_u8(wpkt, SSL3_MT_SERVER_HELLO)
+            || !WPACKET_put_bytes_u8(&wpkt, SSL3_MT_SERVER_HELLO)
             /*
              * length - doesn't follow normal TLS convention:
              * the length isn't the last thing in the message header.
              * We'll need to fill this in later when we know the
              * length. Set it to zero for now
              */
-            || !WPACKET_put_bytes_u24(wpkt, 0)
+            || !WPACKET_put_bytes_u24(&wpkt, 0)
             /* message_seq is always 0 for a ServerHello */
-            || !WPACKET_put_bytes_u16(wpkt, 0)
+            || !WPACKET_put_bytes_u16(&wpkt, 0)
             /* fragment_offset is always 0 for a ServerHello */
-            || !WPACKET_put_bytes_u24(wpkt, 0)
+            || !WPACKET_put_bytes_u24(&wpkt, 0)
             /* fragment_length */
-            || !WPACKET_start_sub_packet_u24(wpkt)
+            || !WPACKET_start_sub_packet_u24(&wpkt)
             /* ServerHello */
-            || tls_construct_server_hello(s, wpkt) != CON_FUNC_SUCCESS
+            || tls_construct_server_hello(s, &wpkt) != CON_FUNC_SUCCESS
             /* Close ServerHello body */
-            || !WPACKET_close(wpkt)
+            || !WPACKET_close(&wpkt)
             /* Close DTLSHandshake body */
-            || !WPACKET_close(wpkt)
-            || !WPACKET_get_total_written(wpkt, &wreclen)
-            || !WPACKET_finish(wpkt)) {
+            || !WPACKET_close(&wpkt)
+            || !WPACKET_get_total_written(&wpkt, &wreclen)
+            || !WPACKET_finish(&wpkt)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        WPACKET_cleanup(wpkt);
+        WPACKET_cleanup(&wpkt);
         /* This is fatal */
         return 0;
     }
@@ -925,7 +927,6 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
         }
 
         if (next == LISTEN_SEND_COOKIE_REQUEST) {
-            WPACKET wpkt;
             size_t wreclen;
 
             /*
@@ -950,14 +951,14 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
                  * Record sequence number is always the same as in the
                  * received ClientHello
                  */
-                wreclen = construct_hello_retry_request(ssl, &wpkt, wbuf, seq,
+                wreclen = construct_hello_retry_request(ssl, wbuf, seq,
                                                         cookie, cookielen);
             } else {
                 /*
                  * Record sequence number is always the same as in the
                  * received ClientHello
                  */
-                wreclen = construct_hello_verify_request(ssl, &wpkt, wbuf, seq,
+                wreclen = construct_hello_verify_request(ssl, wbuf, seq,
                                                          cookie, cookielen);
             }
             if (wreclen == 0) {
