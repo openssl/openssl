@@ -260,20 +260,22 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     unsigned char random_bytes[64];
     unsigned char digest[SHA512_DIGEST_LENGTH];
     unsigned done, todo;
-    /* We generate |range|+8 bytes of random output. */
-    const unsigned num_k_bytes = BN_num_bytes(range) + 8;
+    /* We generate |range|+1 bytes of random output. */
+    const unsigned num_k_bytes = BN_num_bytes(range) + 1;
     unsigned char private_bytes[96];
     unsigned char *k_bytes = NULL;
+    const int max_n = 64;           /* Pr(failure to generate) < 2^max_n */
+    int n;
     int ret = 0;
     EVP_MD *md = NULL;
     OSSL_LIB_CTX *libctx = ossl_bn_get_libctx(ctx);
 
     if (mdctx == NULL)
-        goto err;
+        goto end;
 
     k_bytes = OPENSSL_malloc(num_k_bytes);
     if (k_bytes == NULL)
-        goto err;
+        goto end;
 
     /* We copy |priv| into a local buffer to avoid exposing its length. */
     if (BN_bn2binpad(priv, private_bytes, sizeof(private_bytes)) < 0) {
@@ -283,41 +285,55 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
          * length of the private key.
          */
         ERR_raise(ERR_LIB_BN, BN_R_PRIVATE_KEY_TOO_LARGE);
-        goto err;
+        goto end;
     }
 
     md = EVP_MD_fetch(libctx, "SHA512", NULL);
     if (md == NULL) {
         ERR_raise(ERR_LIB_BN, BN_R_NO_SUITABLE_DIGEST);
-        goto err;
+        goto end;
     }
-    for (done = 0; done < num_k_bytes;) {
-        if (RAND_priv_bytes_ex(libctx, random_bytes, sizeof(random_bytes), 0) <= 0)
-            goto err;
+    for (n = 0; n < max_n; n++) {
+        for (done = 0; done < num_k_bytes;) {
+            if (RAND_priv_bytes_ex(libctx, random_bytes, sizeof(random_bytes),
+                                   0) <= 0)
+                goto end;
 
-        if (!EVP_DigestInit_ex(mdctx, md, NULL)
-                || !EVP_DigestUpdate(mdctx, &done, sizeof(done))
-                || !EVP_DigestUpdate(mdctx, private_bytes,
-                                     sizeof(private_bytes))
-                || !EVP_DigestUpdate(mdctx, message, message_len)
-                || !EVP_DigestUpdate(mdctx, random_bytes, sizeof(random_bytes))
-                || !EVP_DigestFinal_ex(mdctx, digest, NULL))
-            goto err;
+            if (!EVP_DigestInit_ex(mdctx, md, NULL)
+                    || !EVP_DigestUpdate(mdctx, &done, sizeof(done))
+                    || !EVP_DigestUpdate(mdctx, private_bytes,
+                                         sizeof(private_bytes))
+                    || !EVP_DigestUpdate(mdctx, message, message_len)
+                    || !EVP_DigestUpdate(mdctx, random_bytes,
+                                         sizeof(random_bytes))
+                    || !EVP_DigestFinal_ex(mdctx, digest, NULL))
+                goto end;
 
-        todo = num_k_bytes - done;
-        if (todo > SHA512_DIGEST_LENGTH)
-            todo = SHA512_DIGEST_LENGTH;
-        memcpy(k_bytes + done, digest, todo);
-        done += todo;
+            todo = num_k_bytes - done;
+            if (todo > SHA512_DIGEST_LENGTH)
+                todo = SHA512_DIGEST_LENGTH;
+            memcpy(k_bytes + done, digest, todo);
+            done += todo;
+        }
+
+        /* Ensure top byte is set to avoid non-constant time in bin2bn */
+        k_bytes[0] = 0x80;
+        if (!BN_bin2bn(k_bytes, num_k_bytes, out))
+            goto end;
+
+        /* Clear out the top bits and rejection filter into range */
+        BN_set_flags(out, BN_FLG_CONSTTIME | BN_FLG_FIXED_TOP);
+        ossl_bn_mask_bits_fixed_top(out, BN_num_bits(range));
+
+        if (BN_ucmp(out, range) < 0) {
+            ret = 1;
+            goto end;
+        }
     }
+    /* Failed to generate anything */
+    ERR_raise(ERR_LIB_BN, ERR_R_INTERNAL_ERROR);
 
-    if (!BN_bin2bn(k_bytes, num_k_bytes, out))
-        goto err;
-    if (BN_mod(out, out, range, ctx) != 1)
-        goto err;
-    ret = 1;
-
- err:
+ end:
     EVP_MD_CTX_free(mdctx);
     EVP_MD_free(md);
     OPENSSL_clear_free(k_bytes, num_k_bytes);
