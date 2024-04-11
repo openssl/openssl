@@ -676,5 +676,6 @@ static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
 
 int ossl_bn_check_prime(const BIGNUM *w, int checks, BN_CTX *ctx,
                         int do_trial_division, BN_GENCB *cb);
+int ossl_bn_mask_bits_fixed_top(BIGNUM *a, int n);
 
 #endif
