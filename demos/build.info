@@ -1,8 +1,10 @@
 SUBDIRS=bio cipher digest keyexch mac kdf pkey signature \
         encrypt encode sslecho
 
-IF[{- !$disabled{"quic"} -}]
-    SUBDIRS=http3
+IF[{- !$disabled{"h3demo"} -}]
+ IF[{- !$disabled{"quic"} -}]
+     SUBDIRS=http3
+ ENDIF
 ENDIF
 
 IF[{- !$disabled{"cms"} -}]

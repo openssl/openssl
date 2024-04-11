@@ -79,6 +79,8 @@ EOF
 #               support isn't compiled.
 #
 # enable-demos  Enable the building of the example code in the demos directory
+# enable-h3demo Enable the http3 demo, which currently only links to the
+#               external nghttp3 library on unix platforms
 # no-hw         do not compile support for any crypto hardware.
 # [no-]threads  [don't] try to create a library that is suitable for
 #               multithreaded applications (default is "threads" if we
@@ -446,6 +448,7 @@ my @disablables = (
     "ct",
     "default-thread-pool",
     "demos",
+    "h3demo",
     "deprecated",
     "des",
     "devcryptoeng",
@@ -574,6 +577,7 @@ our %disabled = ( # "what"         => "comment"
                   "crypto-mdebug"       => "default",
                   "crypto-mdebug-backtrace" => "default",
                   "demos"               => "default",
+                  "h3demo"              => "default",
                   "devcryptoeng"        => "default",
                   "ec_nistp_64_gcc_128" => "default",
                   "egd"                 => "default",
