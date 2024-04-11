@@ -618,14 +618,29 @@ int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
     int i;
     BN_ULONG t1, t2, *ap, *bp;
 
+    ap = a->d;
+    bp = b->d;
+
+    if (BN_get_flags(a, BN_FLG_CONSTTIME)
+            && a->top == b->top) {
+        int res = 0;
+
+        for (i = 0; i < b->top; i++) {
+            res = constant_time_select_int(constant_time_lt_bn(ap[i], bp[i]),
+                                           -1, res);
+            res = constant_time_select_int(constant_time_lt_bn(bp[i], ap[i]),
+                                           1, res);
+        }
+        return res;
+    }
+
     bn_check_top(a);
     bn_check_top(b);
 
     i = a->top - b->top;
     if (i != 0)
         return i;
-    ap = a->d;
-    bp = b->d;
+
     for (i = a->top - 1; i >= 0; i--) {
         t1 = ap[i];
         t2 = bp[i];
@@ -737,11 +752,10 @@ int BN_is_bit_set(const BIGNUM *a, int n)
     return (int)(((a->d[i]) >> j) & ((BN_ULONG)1));
 }
 
-int BN_mask_bits(BIGNUM *a, int n)
+int ossl_bn_mask_bits_fixed_top(BIGNUM *a, int n)
 {
     int b, w;
 
-    bn_check_top(a);
     if (n < 0)
         return 0;
 
@@ -755,8 +769,18 @@ int BN_mask_bits(BIGNUM *a, int n)
         a->top = w + 1;
         a->d[w] &= ~(BN_MASK2 << b);
     }
-    bn_correct_top(a);
     return 1;
+}
+
+int BN_mask_bits(BIGNUM *a, int n)
+{
+    int ret;
+
+    bn_check_top(a);
+    ret = ossl_bn_mask_bits_fixed_top(a, n);
+    if (ret)
+        bn_correct_top(a);
+    return ret;
 }
 
 void BN_set_negative(BIGNUM *a, int b)
