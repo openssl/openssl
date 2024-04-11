@@ -564,8 +564,10 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
             if (params[i].data_type != OSSL_PARAM_UTF8_STRING)
                 continue;
             if (ossl_provider_info_add_parameter(&template, params[i].key,
-                                                 (char *)params[i].data) <= 0)
+                                                 (char *)params[i].data) <= 0) {
+                sk_INFOPAIR_pop_free(template.parameters, infopair_free);
                 return NULL;
+            }
         }
     }
 
