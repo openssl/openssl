@@ -14,6 +14,7 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#include "internal/numbers.h"
 #include "internal/sha3.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
@@ -112,6 +113,10 @@ static int keccak_final(void *vctx, unsigned char *out, size_t *outl,
 
     if (!ossl_prov_is_running())
         return 0;
+    if (ctx->md_size == SIZE_MAX) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
+        return 0;
+    }
     if (outlen > 0)
         ret = ctx->meth.final(ctx, out, ctx->md_size);
 
@@ -474,7 +479,7 @@ static void *name##_newctx(void *provctx)                                      \
     return ctx;                                                                \
 }
 
-#define SHAKE_newctx(typ, uname, name, bitlen, pad)                            \
+#define SHAKE_newctx(typ, uname, name, bitlen, mdlen, pad)                     \
 static OSSL_FUNC_digest_newctx_fn name##_newctx;                               \
 static void *name##_newctx(void *provctx)                                      \
 {                                                                              \
@@ -483,7 +488,9 @@ static void *name##_newctx(void *provctx)                                      \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
-    ossl_sha3_init(ctx, pad, bitlen);                                          \
+    ossl_keccak_init(ctx, pad, bitlen, mdlen);                                 \
+    if (mdlen == 0)                                                            \
+        ctx->md_size = SIZE_MAX;                                               \
     SHAKE_SET_MD(uname, typ)                                                   \
     return ctx;                                                                \
 }
@@ -497,7 +504,7 @@ static void *uname##_newctx(void *provctx)                                     \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
-    ossl_keccak_kmac_init(ctx, pad, bitlen);                                   \
+    ossl_keccak_init(ctx, pad, bitlen, 2 * bitlen);                            \
     KMAC_SET_MD(bitlen)                                                        \
     return ctx;                                                                \
 }
@@ -585,10 +592,12 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                           SHA3_FLAGS)
 
 #define IMPLEMENT_SHAKE_functions(bitlen)                                      \
-    SHAKE_newctx(shake, SHAKE_##bitlen, shake_##bitlen, bitlen, '\x1f')        \
+    SHAKE_newctx(shake, SHAKE_##bitlen, shake_##bitlen, bitlen,                \
+                 0 /* no default md length */, '\x1f')                         \
     PROV_FUNC_SHAKE_DIGEST(shake_##bitlen, bitlen,                             \
-                          SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),         \
+                          SHA3_BLOCKSIZE(bitlen), 0,                           \
                           SHAKE_FLAGS)
+
 #define IMPLEMENT_KMAC_functions(bitlen)                                       \
     KMAC_newctx(keccak_kmac_##bitlen, bitlen, '\x04')                          \
     PROV_FUNC_SHAKE_DIGEST(keccak_kmac_##bitlen, bitlen,                       \

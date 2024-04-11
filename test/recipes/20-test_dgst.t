@@ -223,13 +223,11 @@ subtest "Custom length XOF digest generation with `dgst` CLI" => sub {
 };
 
 subtest "SHAKE digest generation with no xoflen set `dgst` CLI" => sub {
-    plan tests => 1;
+    plan tests => 2;
 
     my $testdata = srctop_file('test', 'data.bin');
-    my @xofdata = run(app(['openssl', 'dgst', '-shake128', $testdata], stderr => "outerr.txt"), capture => 1);
-    chomp(@xofdata);
-    my $expected = qr/SHAKE-128\(\Q$testdata\E\)= bb565dac72640109e1c926ef441d3fa6/;
-    ok($xofdata[0] =~ $expected, "Check short digest is output");
+    ok(!run(app(['openssl', 'dgst', '-shake128', $testdata])), "SHAKE128 must fail without xoflen");
+    ok(!run(app(['openssl', 'dgst', '-shake256', $testdata])), "SHAKE256 must fail without xoflen");
 };
 
 SKIP: {
