@@ -29,7 +29,7 @@
  *
  * See: https://github.com/llvm/llvm-project/commit/a4c2602b714e6c6edb98164550a5ae829b2de760
  */
-#define BROKEN_CLANG_ATOMICS
+# define BROKEN_CLANG_ATOMICS
 #endif
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && !defined(OPENSSL_SYS_WINDOWS)
@@ -37,7 +37,7 @@
 # if defined(OPENSSL_SYS_UNIX)
 #  include <sys/types.h>
 #  include <unistd.h>
-#endif
+# endif
 
 # include <assert.h>
 
@@ -46,7 +46,7 @@
 # endif
 
 # if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS)
-#  if defined(__APPLE__) && defined(__clang__) && defined(__aarch64__) 
+#  if defined(__APPLE__) && defined(__clang__) && defined(__aarch64__)
 /*
  * Apple M1 virtualized cpu seems to have some problem using the ldapr instruction
  * (see https://github.com/openssl/openssl/pull/23974)
@@ -72,15 +72,15 @@ static inline void *apple_atomic_load_n(void **p)
 #  else
 #   define ATOMIC_LOAD_N(p,o) __atomic_load_n(p, o)
 #  endif
-# define ATOMIC_STORE_N(p, v, o) __atomic_store_n(p, v, o)
-# define ATOMIC_STORE(p, v, o) __atomic_store(p, v, o)
-# define ATOMIC_EXCHANGE_N(p, v, o) __atomic_exchange_n(p, v, o)
-# define ATOMIC_ADD_FETCH(p, v, o) __atomic_add_fetch(p, v, o)
-# define ATOMIC_FETCH_ADD(p, v, o) __atomic_fetch_add(p, v, o)
-# define ATOMIC_SUB_FETCH(p, v, o) __atomic_sub_fetch(p, v, o)
-# define ATOMIC_AND_FETCH(p, m, o) __atomic_and_fetch(p, m, o)
-# define ATOMIC_OR_FETCH(p, m, o) __atomic_or_fetch(p, m, o)
-#else
+#  define ATOMIC_STORE_N(p, v, o) __atomic_store_n(p, v, o)
+#  define ATOMIC_STORE(p, v, o) __atomic_store(p, v, o)
+#  define ATOMIC_EXCHANGE_N(p, v, o) __atomic_exchange_n(p, v, o)
+#  define ATOMIC_ADD_FETCH(p, v, o) __atomic_add_fetch(p, v, o)
+#  define ATOMIC_FETCH_ADD(p, v, o) __atomic_fetch_add(p, v, o)
+#  define ATOMIC_SUB_FETCH(p, v, o) __atomic_sub_fetch(p, v, o)
+#  define ATOMIC_AND_FETCH(p, m, o) __atomic_and_fetch(p, m, o)
+#  define ATOMIC_OR_FETCH(p, m, o) __atomic_or_fetch(p, m, o)
+# else
 static pthread_mutex_t atomic_sim_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static inline void *fallback_atomic_load_n(void **p)
@@ -93,7 +93,7 @@ static inline void *fallback_atomic_load_n(void **p)
     return ret;
 }
 
-# define ATOMIC_LOAD_N(p, o) fallback_atomic_load_n((void **)p)
+#  define ATOMIC_LOAD_N(p, o) fallback_atomic_load_n((void **)p)
 
 static inline void *fallback_atomic_store_n(void **p, void *v)
 {
@@ -106,7 +106,7 @@ static inline void *fallback_atomic_store_n(void **p, void *v)
     return ret;
 }
 
-# define ATOMIC_STORE_N(p, v, o) fallback_atomic_store_n((void **)p, (void *)v)
+#  define ATOMIC_STORE_N(p, v, o) fallback_atomic_store_n((void **)p, (void *)v)
 
 static inline void fallback_atomic_store(void **p, void **v)
 {
@@ -119,7 +119,7 @@ static inline void fallback_atomic_store(void **p, void **v)
     pthread_mutex_unlock(&atomic_sim_lock);
 }
 
-# define ATOMIC_STORE(p, v, o) fallback_atomic_store((void **)p, (void **)v)
+#  define ATOMIC_STORE(p, v, o) fallback_atomic_store((void **)p, (void **)v)
 
 static inline void *fallback_atomic_exchange_n(void **p, void *v)
 {
@@ -132,7 +132,7 @@ static inline void *fallback_atomic_exchange_n(void **p, void *v)
     return ret;
 }
 
-#define ATOMIC_EXCHANGE_N(p, v, o) fallback_atomic_exchange_n((void **)p, (void *)v)
+#  define ATOMIC_EXCHANGE_N(p, v, o) fallback_atomic_exchange_n((void **)p, (void *)v)
 
 static inline uint64_t fallback_atomic_add_fetch(uint64_t *p, uint64_t v)
 {
@@ -145,7 +145,7 @@ static inline uint64_t fallback_atomic_add_fetch(uint64_t *p, uint64_t v)
     return ret;
 }
 
-# define ATOMIC_ADD_FETCH(p, v, o) fallback_atomic_add_fetch(p, v)
+#  define ATOMIC_ADD_FETCH(p, v, o) fallback_atomic_add_fetch(p, v)
 
 static inline uint64_t fallback_atomic_fetch_add(uint64_t *p, uint64_t v)
 {
@@ -158,7 +158,7 @@ static inline uint64_t fallback_atomic_fetch_add(uint64_t *p, uint64_t v)
     return ret;
 }
 
-# define ATOMIC_FETCH_ADD(p, v, o) fallback_atomic_fetch_add(p, v)
+#  define ATOMIC_FETCH_ADD(p, v, o) fallback_atomic_fetch_add(p, v)
 
 static inline uint64_t fallback_atomic_sub_fetch(uint64_t *p, uint64_t v)
 {
@@ -171,7 +171,7 @@ static inline uint64_t fallback_atomic_sub_fetch(uint64_t *p, uint64_t v)
     return ret;
 }
 
-# define ATOMIC_SUB_FETCH(p, v, o) fallback_atomic_sub_fetch(p, v)
+#  define ATOMIC_SUB_FETCH(p, v, o) fallback_atomic_sub_fetch(p, v)
 
 static inline uint64_t fallback_atomic_and_fetch(uint64_t *p, uint64_t m)
 {
@@ -184,7 +184,7 @@ static inline uint64_t fallback_atomic_and_fetch(uint64_t *p, uint64_t m)
     return ret;
 }
 
-# define ATOMIC_AND_FETCH(p, v, o) fallback_atomic_and_fetch(p, v)
+#  define ATOMIC_AND_FETCH(p, v, o) fallback_atomic_and_fetch(p, v)
 
 static inline uint64_t fallback_atomic_or_fetch(uint64_t *p, uint64_t m)
 {
@@ -197,8 +197,8 @@ static inline uint64_t fallback_atomic_or_fetch(uint64_t *p, uint64_t m)
     return ret;
 }
 
-# define ATOMIC_OR_FETCH(p, v, o) fallback_atomic_or_fetch(p, v)
-#endif
+#  define ATOMIC_OR_FETCH(p, v, o) fallback_atomic_or_fetch(p, v)
+# endif
 
 static CRYPTO_THREAD_LOCAL rcu_thr_key;
 
@@ -235,7 +235,7 @@ struct thread_qp {
     CRYPTO_RCU_LOCK *lock;
 };
 
-#define MAX_QPS 10
+# define MAX_QPS 10
 /*
  * This is the per thread tracking data
  * that is assigned to each thread participating
