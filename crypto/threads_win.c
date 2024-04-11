@@ -27,6 +27,80 @@
 # define NO_INTERLOCKEDOR64
 #endif
 
+#if defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER < 1929
+static __declspec(naked) __int64 __fastcall InterlockedAdd64(__int64* volatile _Ptr, __int64 _Val)
+{
+    __asm {
+      push    ebx
+      push    esi
+      mov     esi, ecx          ; _Ptr
+      mov     eax, [esi]
+      mov     edx, [esi+4]
+ lbl: mov     ebx, eax
+      mov     ecx, edx
+      add     ebx, [esp+8+4]    ; _Val.Low
+      adc     ecx, [esp+8+8]    ; _Val.Hi
+      lock cmpxchg8b qword ptr [esi]
+      jne short lbl
+      mov     edx, ecx
+      pop     esi
+      mov     eax, ebx
+      pop     ebx
+      retn    2*4
+    }
+}
+
+static __declspec(naked) __int64 __fastcall InterlockedOr64(__int64* volatile _Ptr, __int64 _Val)
+{
+    __asm {
+      push    ebx
+      push    esi
+      mov     esi, ecx          ; _Ptr
+      mov     eax, [esi]
+      mov     edx, [esi+4]
+ lbl: mov     ebx, eax
+      mov     ecx, edx
+      or      ebx, [esp+8+4]    ; _Val.Low
+      or      ecx, [esp+8+8]    ; _Val.Hi
+      lock cmpxchg8b qword ptr [esi]
+      jne short lbl
+      pop     esi
+      pop     ebx
+      retn    2*4
+    }
+}
+#undef NO_INTERLOCKEDOR64
+
+static __declspec(naked) __int64 __fastcall InterlockedAnd64(__int64* volatile _Ptr, __int64 _Val)
+{
+    __asm {
+      push    ebx
+      push    esi
+      mov     esi, ecx          ; _Ptr
+      mov     eax, [esi]
+      mov     edx, [esi+4]
+ lbl: mov     ebx, eax
+      mov     ecx, edx
+      and     ebx, [esp+8+4]    ; _Val.Low
+      and     ecx, [esp+8+8]    ; _Val.Hi
+      lock cmpxchg8b qword ptr [esi]
+      jne short lbl
+      pop     esi
+      pop     ebx
+      retn    2*4
+    }
+}
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER < 1929
+#define inline __inline
+#endif
+
+#ifdef _MSC_VER
+#define InterlockedOr _InterlockedOr
+#endif
+
+
 #include <openssl/crypto.h>
 #include <crypto/cryptlib.h>
 #include "internal/common.h"
