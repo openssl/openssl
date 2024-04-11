@@ -36,6 +36,11 @@ OpenSSL 3.4
 
    *Stephan Wurm*
 
+ * The X25519 and X448 key exchange implementation in the FIPS provider
+   is unapproved and has `fips=no` property.
+
+   * Tomas Mraz*
+
 OpenSSL 3.3
 -----------
 
