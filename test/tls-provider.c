@@ -3223,7 +3223,7 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
     PROV_XOR_CTX *prov_ctx = xor_newprovctx(libctx);
 
     if (libctx == NULL || prov_ctx == NULL)
-        return 0;
+        goto err;
 
     *provctx = prov_ctx;
 
@@ -3258,23 +3258,29 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
      */
     if (!c_obj_create(handle, XORSIGALG_OID, XORSIGALG_NAME, XORSIGALG_NAME)) {
         ERR_raise(ERR_LIB_USER, XORPROV_R_OBJ_CREATE_ERR);
-        return 0;
+        goto err;
     }
 
     if (!c_obj_add_sigid(handle, XORSIGALG_OID, "", XORSIGALG_OID)) {
         ERR_raise(ERR_LIB_USER, XORPROV_R_OBJ_CREATE_ERR);
-        return 0;
+        goto err;
     }
     if (!c_obj_create(handle, XORSIGALG_HASH_OID, XORSIGALG_HASH_NAME, NULL)) {
         ERR_raise(ERR_LIB_USER, XORPROV_R_OBJ_CREATE_ERR);
-        return 0;
+        goto err;
     }
 
     if (!c_obj_add_sigid(handle, XORSIGALG_HASH_OID, XORSIGALG_HASH, XORSIGALG_HASH_OID)) {
         ERR_raise(ERR_LIB_USER, XORPROV_R_OBJ_CREATE_ERR);
-        return 0;
+        goto err;
     }
 
     *out = tls_prov_dispatch_table;
     return 1;
+
+err:
+    OPENSSL_free(prov_ctx);
+    *provctx = NULL;
+    OSSL_LIB_CTX_free(libctx);
+    return 0;
 }
