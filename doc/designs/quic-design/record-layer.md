@@ -503,7 +503,7 @@ struct ossl_record_method_st {
      * which is used in a subsequent call to |release_record|. The buffer must
      * remain available until release_record is called.
      *
-     * Internally the the OSSL_RECORD_METHOD the implementation may read/process
+     * Internally the OSSL_RECORD_METHOD the implementation may read/process
      * multiple records in one go and buffer them.
      */
     int (*read_record)(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,

@@ -68,7 +68,7 @@ To set the type of DRBG that will be instantiated, use the
 L<RAND_set_DRBG_type(3)> call before accessing the random number generation
 infrastructure.
 
-The two set functions, operate on the the current thread.  If you want to
+The two set functions, operate on the current thread.  If you want to
 use the same random number generator across all threads, each thread
 must individually call the set functions.
 

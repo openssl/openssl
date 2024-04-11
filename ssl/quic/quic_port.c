@@ -220,7 +220,7 @@ static int port_update_poll_desc(QUIC_PORT *port, BIO *net_bio, int for_write)
      * single pollable currently. In the future, once complete polling
      * infrastructure has been implemented, this limitation can be removed.
      *
-     * For now, just update the descriptor on the the engine's reactor as we are
+     * For now, just update the descriptor on the engine's reactor as we are
      * guaranteed to be the only port under it.
      */
     if (for_write)

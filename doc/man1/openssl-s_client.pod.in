@@ -944,7 +944,7 @@ Reconnect to the peer and attempt a resumption handshake
 
 Send a Key Update message. TLSv1.3 only. This command takes an optional
 argument. If the argument "req" is supplied then the peer is also requested to
-update its keys. Otherwise if "noreq" is supplied the the peer is not requested
+update its keys. Otherwise if "noreq" is supplied the peer is not requested
 to update its keys. The default is "req".
 
 =item B<reneg>

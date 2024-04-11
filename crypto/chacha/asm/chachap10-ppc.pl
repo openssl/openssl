@@ -787,7 +787,7 @@ $code.=<<___;
 
 	vxxlor	        $xv6  ,$xb6,$xb6                # save vr23, so we get 8 regs
 	vxxlor	        $xv7  ,$xb7,$xb7                # save vr23, so we get 8 regs
-	be?vxxlorc      $beperm,$xv26,$xv26             # copy back the the beperm.
+	be?vxxlorc      $beperm,$xv26,$xv26             # copy back the beperm.
 
 	vxxlorc	   @K[0],$xv0,$xv0                #27
 	vxxlorc	   @K[1],$xv1,$xv1 		  #24
