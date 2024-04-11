@@ -140,6 +140,18 @@ static ossl_inline uint64_t constant_time_lt_64(uint64_t a, uint64_t b)
     return constant_time_msb_64(a ^ ((a ^ b) | ((a - b) ^ b)));
 }
 
+#ifdef BN_ULONG
+static ossl_inline BN_ULONG constant_time_msb_bn(BN_ULONG a)
+{
+    return 0 - (a >> (sizeof(a) * 8 - 1));
+}
+
+static ossl_inline BN_ULONG constant_time_lt_bn(BN_ULONG a, BN_ULONG b)
+{
+    return constant_time_msb_bn(a ^ ((a ^ b) | ((a - b) ^ b)));
+}
+#endif
+
 static ossl_inline unsigned int constant_time_ge(unsigned int a,
                                                  unsigned int b)
 {
