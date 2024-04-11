@@ -1230,6 +1230,7 @@ static void list_provider_info(void)
     }
 
     if (OSSL_PROVIDER_do_all(NULL, &collect_providers, providers) != 1) {
+        sk_OSSL_PROVIDER_free(providers);
         BIO_printf(bio_err, "ERROR: Memory allocation\n");
         return;
     }
