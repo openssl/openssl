@@ -454,6 +454,8 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
     if (ctx->digest->prov == NULL)
         goto legacy;
 
+    if (sz == 0) /* Assuming a xoflen must have been set. */
+        mdsize = SIZE_MAX;
     if (ctx->digest->gettable_ctx_params != NULL) {
         OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
 

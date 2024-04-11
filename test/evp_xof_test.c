@@ -206,14 +206,29 @@ static int shake_kat_digestfinal_test(void)
     EVP_MD_CTX *ctx = NULL;
     unsigned char out[sizeof(shake256_output)];
 
+    /* Test that EVP_DigestFinal without setting XOFLEN fails */
     if (!TEST_ptr(ctx = shake_setup("SHAKE256")))
         return 0;
     if (!TEST_true(EVP_DigestUpdate(ctx, shake256_input,
-                   sizeof(shake256_input)))
-        || !TEST_true(EVP_DigestFinal(ctx, out, &digest_length))
-        || !TEST_uint_eq(digest_length, 32)
-        || !TEST_mem_eq(out, digest_length,
-                        shake256_output, digest_length)
+                   sizeof(shake256_input))))
+        return 0;
+    ERR_set_mark();
+    if (!TEST_false(EVP_DigestFinal(ctx, out, &digest_length))) {
+        ERR_clear_last_mark();
+        return 0;
+    }
+    ERR_pop_to_mark();
+    EVP_MD_CTX_free(ctx);
+
+    /* However EVP_DigestFinalXOF must work */
+    if (!TEST_ptr(ctx = shake_setup("SHAKE256")))
+        return 0;
+    if (!TEST_true(EVP_DigestUpdate(ctx, shake256_input,
+                   sizeof(shake256_input))))
+        return 0;
+    if (!TEST_true(EVP_DigestFinalXOF(ctx, out, sizeof(out)))
+        || !TEST_mem_eq(out, sizeof(out),
+                        shake256_output, sizeof(shake256_output))
         || !TEST_false(EVP_DigestFinalXOF(ctx, out, sizeof(out))))
         goto err;
     ret = 1;

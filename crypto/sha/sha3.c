@@ -34,12 +34,12 @@ int ossl_sha3_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen)
     return 0;
 }
 
-int ossl_keccak_kmac_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen)
+int ossl_keccak_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen, size_t mdlen)
 {
     int ret = ossl_sha3_init(ctx, pad, bitlen);
 
     if (ret)
-        ctx->md_size *= 2;
+        ctx->md_size = mdlen / 8;
     return ret;
 }
 
