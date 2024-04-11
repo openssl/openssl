@@ -429,6 +429,7 @@ int dtls1_handle_timeout(SSL_CONNECTION *s)
 #define LISTEN_SUCCESS              2
 #define LISTEN_SEND_COOKIE_REQUEST  1
 
+#ifndef OPENSSL_NO_SOCK
 /*
  * Construct a HelloVerifyRequest record and message headers
  * returns size of written record on success and 0 on failure
@@ -588,7 +589,6 @@ static size_t construct_hello_retry_request(SSL *ssl, WPACKET *wpkt,
     return wreclen;
 }
 
-#ifndef OPENSSL_NO_SOCK
 int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
 {
     int next, n, ret = 0;
