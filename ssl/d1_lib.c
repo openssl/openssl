@@ -592,7 +592,7 @@ static size_t construct_hello_retry_request(SSL *ssl, WPACKET *wpkt,
 int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
 {
     int next, n, ret = 0;
-    unsigned char *cookie;
+    unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned char seq[SEQ_NUM_SIZE];
     const unsigned char *data;
     unsigned char *buf = NULL, *wbuf;
@@ -643,12 +643,6 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     wbuf = OPENSSL_malloc(DTLS1_RT_HEADER_LENGTH + SSL3_RT_MAX_PLAIN_LENGTH);
     if (wbuf == NULL) {
         OPENSSL_free(buf);
-        return -1;
-    }
-    cookie = OPENSSL_malloc(65535); // Todo: magic number, haven't found a definition in the source code yet.
-    if (cookie == NULL) {
-        OPENSSL_free(buf);
-        OPENSSL_free(wbuf);
         return -1;
     }
 
@@ -943,7 +937,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             /* Generate the cookie */
             if (ssl->ctx->app_gen_cookie_cb == NULL
                     || ssl->ctx->app_gen_cookie_cb(ssl, cookie, &cookielen) == 0
-                    || cookielen > 255) {
+                    || cookielen > DTLS1_COOKIE_LENGTH) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
                 /* This is fatal */
                 ret = -1;
