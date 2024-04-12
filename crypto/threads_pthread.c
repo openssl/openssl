@@ -45,11 +45,37 @@
 #  define USE_RWLOCK
 # endif
 
-# if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS)
+/*
+ * For all GNU/clang atomic builtins, we also need fallbacks, to cover all
+ * other compilers.
+
+ * Unfortunately, we can't do that with some "generic type", because there's no
+ * guarantee that the chosen generic type is large enough to cover all cases.
+ * Therefore, we implement fallbacks for each applicable type, with composed
+ * names that include the type they handle.
+ *
+ * (an anecdote: we previously tried to use |void *| as the generic type, with
+ * the thought that the pointer itself is the largest type.  However, this is
+ * not true on 32-bit pointer platforms, as a |uint64_t| is twice as large)
+ *
+ * All applicable ATOMIC_ macros take the intended type as first parameter, so
+ * they can map to the correct fallback function.  In the GNU/clang case, that
+ * parameter is simply ignored.
+ */
+
+/*
+ * Internal types used with the ATOMIC_ macros, to make it possible to compose
+ * fallback function names.
+ */
+typedef void *pvoid;
+typedef struct rcu_cb_item *prcu_cb_item;
+
+# if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS) \
+    && !defined(USE_ATOMIC_FALLBACKS)
 #  if defined(__APPLE__) && defined(__clang__) && defined(__aarch64__)
 /*
- * Apple M1 virtualized cpu seems to have some problem using the ldapr instruction
- * (see https://github.com/openssl/openssl/pull/23974)
+ * For pointers, Apple M1 virtualized cpu seems to have some problem using the
+ * ldapr instruction (see https://github.com/openssl/openssl/pull/23974)
  * When using the native apple clang compiler, this instruction is emitted for
  * atomic loads, which is bad.  So, if
  * 1) We are building on a target that defines __APPLE__ AND
@@ -59,7 +85,8 @@
  * function to issue the ldar instruction instead, which procuces the proper
  * sequencing guarantees
  */
-static inline void *apple_atomic_load_n(void **p)
+static inline void *apple_atomic_load_n_pvoid(void **p,
+                                              ossl_unused int memorder)
 {
     void *ret;
 
@@ -68,13 +95,16 @@ static inline void *apple_atomic_load_n(void **p)
     return ret;
 }
 
-#   define ATOMIC_LOAD_N(p, o) apple_atomic_load_n((void **)p)
+/* For uint64_t, we should be fine, though */
+#   define apple_atomic_load_n_uint64_t(p, o) __atomic_load_n(p, o)
+
+#   define ATOMIC_LOAD_N(t, p, o) apple_atomic_load_n_##t(p, o)
 #  else
-#   define ATOMIC_LOAD_N(p,o) __atomic_load_n(p, o)
+#   define ATOMIC_LOAD_N(t, p, o) __atomic_load_n(p, o)
 #  endif
-#  define ATOMIC_STORE_N(p, v, o) __atomic_store_n(p, v, o)
-#  define ATOMIC_STORE(p, v, o) __atomic_store(p, v, o)
-#  define ATOMIC_EXCHANGE_N(p, v, o) __atomic_exchange_n(p, v, o)
+#  define ATOMIC_STORE_N(t, p, v, o) __atomic_store_n(p, v, o)
+#  define ATOMIC_STORE(t, p, v, o) __atomic_store(p, v, o)
+#  define ATOMIC_EXCHANGE_N(t, p, v, o) __atomic_exchange_n(p, v, o)
 #  define ATOMIC_ADD_FETCH(p, v, o) __atomic_add_fetch(p, v, o)
 #  define ATOMIC_FETCH_ADD(p, v, o) __atomic_fetch_add(p, v, o)
 #  define ATOMIC_SUB_FETCH(p, v, o) __atomic_sub_fetch(p, v, o)
@@ -83,56 +113,70 @@ static inline void *apple_atomic_load_n(void **p)
 # else
 static pthread_mutex_t atomic_sim_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static inline void *fallback_atomic_load_n(void **p)
-{
-    void *ret;
+#  define IMPL_fallback_atomic_load_n(t)                        \
+    static inline t fallback_atomic_load_n_##t(t *p)            \
+    {                                                           \
+        t ret;                                                  \
+                                                                \
+        pthread_mutex_lock(&atomic_sim_lock);                   \
+        ret = *p;                                               \
+        pthread_mutex_unlock(&atomic_sim_lock);                 \
+        return ret;                                             \
+    }
+IMPL_fallback_atomic_load_n(uint64_t)
+IMPL_fallback_atomic_load_n(pvoid)
 
-    pthread_mutex_lock(&atomic_sim_lock);
-    ret = *(void **)p;
-    pthread_mutex_unlock(&atomic_sim_lock);
-    return ret;
-}
+#  define ATOMIC_LOAD_N(t, p, o) fallback_atomic_load_n_##t(p)
 
-#  define ATOMIC_LOAD_N(p, o) fallback_atomic_load_n((void **)p)
+#  define IMPL_fallback_atomic_store_n(t)                       \
+    static inline t fallback_atomic_store_n_##t(t *p, t v)      \
+    {                                                           \
+        t ret;                                                  \
+                                                                \
+        pthread_mutex_lock(&atomic_sim_lock);                   \
+        ret = *p;                                               \
+        *p = v;                                                 \
+        pthread_mutex_unlock(&atomic_sim_lock);                 \
+        return ret;                                             \
+    }
+IMPL_fallback_atomic_store_n(uint64_t)
 
-static inline void *fallback_atomic_store_n(void **p, void *v)
-{
-    void *ret;
+#  define ATOMIC_STORE_N(t, p, v, o) fallback_atomic_store_n_##t(p, v)
 
-    pthread_mutex_lock(&atomic_sim_lock);
-    ret = *p;
-    *p = v;
-    pthread_mutex_unlock(&atomic_sim_lock);
-    return ret;
-}
+#  define IMPL_fallback_atomic_store(t)                         \
+    static inline void fallback_atomic_store_##t(t *p, t *v)    \
+    {                                                           \
+        pthread_mutex_lock(&atomic_sim_lock);                   \
+        *p = *v;                                                \
+        pthread_mutex_unlock(&atomic_sim_lock);                 \
+    }
+IMPL_fallback_atomic_store(uint64_t)
+IMPL_fallback_atomic_store(pvoid)
 
-#  define ATOMIC_STORE_N(p, v, o) fallback_atomic_store_n((void **)p, (void *)v)
+#  define ATOMIC_STORE(t, p, v, o) fallback_atomic_store_##t(p, v)
 
-static inline void fallback_atomic_store(void **p, void **v)
-{
-    void *ret;
+#  define IMPL_fallback_atomic_exchange_n(t)                            \
+    static inline t fallback_atomic_exchange_n_##t(t *p, t v)           \
+    {                                                                   \
+        t ret;                                                          \
+                                                                        \
+        pthread_mutex_lock(&atomic_sim_lock);                           \
+        ret = *p;                                                       \
+        *p = v;                                                         \
+        pthread_mutex_unlock(&atomic_sim_lock);                         \
+        return ret;                                                     \
+    }
+IMPL_fallback_atomic_exchange_n(uint64_t)
+IMPL_fallback_atomic_exchange_n(prcu_cb_item)
 
-    pthread_mutex_lock(&atomic_sim_lock);
-    ret = *p;
-    *p = *v;
-    v = ret;
-    pthread_mutex_unlock(&atomic_sim_lock);
-}
+#  define ATOMIC_EXCHANGE_N(t, p, v, o) fallback_atomic_exchange_n_##t(p, v)
 
-#  define ATOMIC_STORE(p, v, o) fallback_atomic_store((void **)p, (void **)v)
-
-static inline void *fallback_atomic_exchange_n(void **p, void *v)
-{
-    void *ret;
-
-    pthread_mutex_lock(&atomic_sim_lock);
-    ret = *p;
-    *p = v;
-    pthread_mutex_unlock(&atomic_sim_lock);
-    return ret;
-}
-
-#  define ATOMIC_EXCHANGE_N(p, v, o) fallback_atomic_exchange_n((void **)p, (void *)v)
+/*
+ * The fallbacks that follow don't need any per type implementation, as
+ * they are designed for uint64_t only.  If there comes a time when multiple
+ * types need to be covered, it's relatively easy to refactor them the same
+ * way as the fallbacks above.
+ */
 
 static inline uint64_t fallback_atomic_add_fetch(uint64_t *p, uint64_t v)
 {
@@ -330,7 +374,7 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
          * systems like x86, but is relevant on other arches
          * Note: This applies to the reload below as well
          */
-        qp_idx = (uint64_t)ATOMIC_LOAD_N(&lock->reader_idx, __ATOMIC_ACQUIRE);
+        qp_idx = ATOMIC_LOAD_N(uint64_t, &lock->reader_idx, __ATOMIC_ACQUIRE);
 
         /*
          * Notes of use of __ATOMIC_RELEASE
@@ -343,7 +387,7 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
                          __ATOMIC_RELEASE);
 
         /* if the idx hasn't changed, we're good, else try again */
-        if (qp_idx == (uint64_t)ATOMIC_LOAD_N(&lock->reader_idx, __ATOMIC_ACQUIRE))
+        if (qp_idx == ATOMIC_LOAD_N(uint64_t, &lock->reader_idx, __ATOMIC_ACQUIRE))
             break;
 
         /*
@@ -481,7 +525,7 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock)
      * of __ATOMIC_ACQUIRE in get_hold_current_qp, as we want any publication
      * of this value to be seen on the read side immediately after it happens
      */
-    ATOMIC_STORE_N(&lock->reader_idx, lock->current_alloc_idx,
+    ATOMIC_STORE_N(uint64_t, &lock->reader_idx, lock->current_alloc_idx,
                    __ATOMIC_RELEASE);
 
     /* wake up any waiters */
@@ -528,7 +572,8 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
      * __ATOMIC_ACQ_REL is used here to ensure that we get any prior published
      * writes before we read, and publish our write immediately
      */
-    cb_items = ATOMIC_EXCHANGE_N(&lock->cb_items, NULL, __ATOMIC_ACQ_REL);
+    cb_items = ATOMIC_EXCHANGE_N(prcu_cb_item, &lock->cb_items, NULL,
+                                 __ATOMIC_ACQ_REL);
 
     qp = update_qp(lock);
 
@@ -539,7 +584,7 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
      * is visible prior to our read
      */
     do {
-        count = (uint64_t)ATOMIC_LOAD_N(&qp->users, __ATOMIC_ACQUIRE);
+        count = ATOMIC_LOAD_N(uint64_t, &qp->users, __ATOMIC_ACQUIRE);
     } while (READER_COUNT(count) != 0);
 
     /* retire in order */
@@ -576,19 +621,20 @@ int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
      * list are visible to us prior to reading, and publish the new value
      * immediately
      */
-    new->next = ATOMIC_EXCHANGE_N(&lock->cb_items, new, __ATOMIC_ACQ_REL);
+    new->next = ATOMIC_EXCHANGE_N(prcu_cb_item, &lock->cb_items, new,
+                                  __ATOMIC_ACQ_REL);
 
     return 1;
 }
 
 void *ossl_rcu_uptr_deref(void **p)
 {
-    return (void *)ATOMIC_LOAD_N(p, __ATOMIC_ACQUIRE);
+    return ATOMIC_LOAD_N(pvoid, p, __ATOMIC_ACQUIRE);
 }
 
 void ossl_rcu_assign_uptr(void **p, void **v)
 {
-    ATOMIC_STORE(p, v, __ATOMIC_RELEASE);
+    ATOMIC_STORE(pvoid, p, v, __ATOMIC_RELEASE);
 }
 
 static CRYPTO_ONCE rcu_init_once = CRYPTO_ONCE_STATIC_INIT;
