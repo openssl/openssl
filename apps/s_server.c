@@ -450,7 +450,7 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
 typedef struct tlsextstatusctx_st {
     int timeout;
     /* File to load OCSP Response from (or NULL if no file) */
-    char *respin;
+    STACK_OF(OPENSSL_STRING) *skrespin;
     /* Default responder to use */
     char *host, *path, *port;
     char *proxy, *no_proxy;
@@ -458,7 +458,7 @@ typedef struct tlsextstatusctx_st {
     int verbose;
 } tlsextstatusctx;
 
-static tlsextstatusctx tlscstatp = { -1 };
+static tlsextstatusctx tlscstatp = { -1, NULL };
 
 #ifndef OPENSSL_NO_OCSP
 
@@ -641,29 +641,36 @@ static int cert_status_cb(SSL *s, void *arg)
     tlsextstatusctx *srctx = arg;
     OCSP_RESPONSE *resp = NULL;
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
+    char* respfile = NULL;
     int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
     int i;
 
     if (srctx->verbose)
         BIO_puts(bio_err, "cert_status: callback called\n");
 
-    if (srctx->respin != NULL) {
-        BIO *derbio = bio_open_default(srctx->respin, 'r', FORMAT_ASN1);
+    if (srctx->skrespin != NULL) {
+        for (i = 0; i < sk_OPENSSL_STRING_num(srctx->skrespin); i++) {
+            respfile = sk_OPENSSL_STRING_value(srctx->skrespin, i);
 
-        if (derbio == NULL) {
-            BIO_puts(bio_err, "cert_status: Cannot open OCSP response file\n");
-            goto err;
+            BIO *derbio = bio_open_default(respfile, 'r', FORMAT_ASN1);
+            BIO_printf(bio_err, "********************** read response from file : %s\n", respfile);
+
+            if (derbio == NULL) {
+                BIO_puts(bio_err, "cert_status: Cannot open OCSP response file\n");
+                goto err;
+            }
+            resp = d2i_OCSP_RESPONSE_bio(derbio, NULL);
+            BIO_free(derbio);
+            if (resp == NULL) {
+                BIO_puts(bio_err, "cert_status: Error reading OCSP response\n");
+                goto err;
+            }
+
+            if (sk_resp == NULL)
+                sk_resp = sk_OCSP_RESPONSE_new_null();
+
+            sk_OCSP_RESPONSE_insert(sk_resp, resp, -1);
         }
-        resp = d2i_OCSP_RESPONSE_bio(derbio, NULL);
-        BIO_free(derbio);
-        if (resp == NULL) {
-            BIO_puts(bio_err, "cert_status: Error reading OCSP response\n");
-            goto err;
-        }
-
-        sk_resp = sk_OCSP_RESPONSE_new_null();
-
-        sk_OCSP_RESPONSE_insert(sk_resp, resp, -1);
     } else {
         ret = get_ocsp_resp_from_responder(s, srctx, &sk_resp);
         if (ret != SSL_TLSEXT_ERR_OK)
@@ -1474,7 +1481,10 @@ int s_server_main(int argc, char *argv[])
         case OPT_STATUS_FILE:
 #ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = 1;
-            tlscstatp.respin = opt_arg();
+            if (tlscstatp.skrespin == NULL
+                && (tlscstatp.skrespin = sk_OPENSSL_STRING_new_null()) == NULL)
+                goto end;
+            sk_OPENSSL_STRING_push(tlscstatp.skrespin, opt_arg());
 #endif
             break;
         case OPT_MSG:
@@ -2403,6 +2413,7 @@ int s_server_main(int argc, char *argv[])
     OPENSSL_free(port);
     X509_VERIFY_PARAM_free(vpm);
     free_sessions();
+    sk_OPENSSL_STRING_free(tlscstatp.skrespin);
     OPENSSL_free(tlscstatp.host);
     OPENSSL_free(tlscstatp.port);
     OPENSSL_free(tlscstatp.path);

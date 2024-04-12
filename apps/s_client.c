@@ -623,6 +623,17 @@ const OPTIONS s_client_options[] = {
     {"no-interactive", OPT_NO_INTERACTIVE, '-',
      "Don't run the client in the interactive mode"},
 
+#ifndef OPENSSL_NO_OCSP
+    OPT_SECTION("OCSP stapling"),
+    {"status", OPT_STATUS, '-',
+    "Sends a certificate status request to the server (OCSP stapling)." \
+    "The server response (if any) is only printed out."},
+    {"ocsp_check_leaf", OPT_STATUS_OCSP_CHECK_LEAF, '-',
+     "Leaf certificate status checking with response from OCSP stapling"},
+    {"ocsp_check_all", OPT_STATUS_OCSP_CHECK_ALL, '-',
+     "Full chain status checking with responses from OCSP stapling"},
+#endif
+
     OPT_SECTION("Debug"),
     {"showcerts", OPT_SHOWCERTS, '-',
      "Show all certificates sent by the server"},
@@ -657,13 +668,6 @@ const OPTIONS s_client_options[] = {
      "Hex dump of all TLS extensions received"},
     {"ignore_unexpected_eof", OPT_IGNORE_UNEXPECTED_EOF, '-',
      "Do not treat lack of close_notify from a peer as an error"},
-#ifndef OPENSSL_NO_OCSP
-    {"status", OPT_STATUS, '-', "Request certificate status from server"},
-    {"ocsp_check_leaf", OPT_STATUS_OCSP_CHECK_LEAF, '-',
-     "Require leaf certificate status checking, trying OCSP stapling"},
-    {"ocsp_check_all", OPT_STATUS_OCSP_CHECK_ALL, '-',
-     "Require certificate status checking on each cert in chain, trying OCSP stapling"},
-#endif
     {"serverinfo", OPT_SERVERINFO, 's',
      "types  Send empty ClientHello extensions (comma-separated numbers)"},
     {"alpn", OPT_ALPN, 's',
@@ -3654,9 +3658,9 @@ static int ocsp_resp_cb(SSL *s, void *arg)
             BIO_puts(arg, "response parse error\n");
             return 0;
         }
-        BIO_puts(arg, "\n======================================\n");
+        BIO_puts(arg, "\n-----BEGIN OCSP RESPONSE-----\n");
         OCSP_RESPONSE_print(arg, rsp, 0);
-        BIO_puts(arg, "======================================\n");
+        BIO_puts(arg, "-----END  OCSP RESPONSE-----\n");
     }
     return 1;
 }
