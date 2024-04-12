@@ -3533,10 +3533,8 @@ static int qctx_should_autotick(QCTX *ctx)
     int event_handling_mode;
     QUIC_OBJ *obj = ctx->obj;
 
-    for (; (event_handling_mode = obj->event_handling_mode)
-            == SSL_VALUE_EVENT_HANDLING_MODE_INHERIT
-            && obj->parent_obj != NULL;
-         obj = obj->parent_obj);
+    for (; (event_handling_mode = obj->event_handling_mode) == SSL_VALUE_EVENT_HANDLING_MODE_INHERIT
+           && obj->parent_obj != NULL; obj = obj->parent_obj);
 
     return event_handling_mode != SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT;
 }
