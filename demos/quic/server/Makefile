@@ -6,6 +6,8 @@
 #    	../../test/certs/servercert.pem \
 #    	../../test/certs/serverkey.pem
 #
+# TODO(QUIC SERVER): Add build.info.
+#
 CFLAGS  += -I../../../include -g -Wall -Wsign-compare
 LDFLAGS += -L../../..
 LDLIBS  = -lcrypto -lssl
