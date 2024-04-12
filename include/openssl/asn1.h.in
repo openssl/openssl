@@ -472,6 +472,10 @@ typedef const ASN1_ITEM *ASN1_ITEM_EXP (void);
                                 ASN1_STRFLGS_DUMP_UNKNOWN | \
                                 ASN1_STRFLGS_DUMP_DER)
 
+/* rpcndr.h which has a boolean typedef includes this define */
+# ifdef small
+#  define boolean asn1_boolean
+# endif
 
 struct asn1_type_st {
     int type;
@@ -503,6 +507,10 @@ struct asn1_type_st {
         ASN1_VALUE *asn1_value;
     } value;
 };
+
+# ifdef small
+#  undef boolean
+# endif
 
 {-
     generate_stack_macros("ASN1_TYPE");
