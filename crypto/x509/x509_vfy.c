@@ -193,9 +193,12 @@ static int verify_cb_crl(X509_STORE_CTX *ctx, int err)
 
 #ifndef OPENSSL_NO_OCSP
 /*
- * Inform the verify callback of an error, OCSP-specific variant.  Here, the
- * error depth and certificate are already set, we just specify the error
- * number.
+ * Inform the verify callback of an error, OCSP-specific variant.
+ * It is called also on OSCP response errors, if the
+ * X509_V_FLAG_OCSP_RESP_CHECK or X509_V_FLAG_OCSP_RESP_CHECK_ALL flag
+ * is set.
+ * Here, the error depth and certificate are already set, we just specify
+ * the error number.
  *
  * Returns 0 to abort verification with an error, non-zero to continue.
  */
@@ -992,16 +995,19 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
 static int check_revocation(X509_STORE_CTX *ctx)
 {
     int i = 0, last = 0, ok = 0;
-    int crl_ocsp_check =
-        ctx->param->flags & (X509_V_FLAG_CRL_CHECK | X509_V_FLAG_OCSP_RESP_CHECK);
+    int crl_check_enabled =
+        (ctx->param->flags & X509_V_FLAG_CRL_CHECK) != 0;
+    int ocsp_check =
+        (ctx->param->flags &
+        (X509_V_FLAG_OCSP_RESP_CHECK | X509_V_FLAG_OCSP_RESP_CHECK_ALL)) != 0;
     int crl_ocsp_check_all =
-        ctx->param->flags
-        & (X509_V_FLAG_CRL_CHECK_ALL | X509_V_FLAG_OCSP_RESP_CHECK_ALL);
+        (ctx->param->flags
+        & (X509_V_FLAG_CRL_CHECK_ALL | X509_V_FLAG_OCSP_RESP_CHECK_ALL)) != 0;
 
-    if (crl_ocsp_check == 0)
+    if (crl_check_enabled == 0 && ocsp_check == 0)
         return 1;
 
-    if (crl_ocsp_check_all != 0) {
+    if (crl_ocsp_check_all) {
         last = sk_X509_num(ctx->chain) - 1;
     } else {
         /* If checking CRL paths this isn't the EE certificate */
@@ -1011,43 +1017,68 @@ static int check_revocation(X509_STORE_CTX *ctx)
     }
     for (i = 0; i <= last; i++) {
         ctx->error_depth = i;
+        ctx->current_cert = sk_X509_value(ctx->chain, i);
+
+        if (ctx->current_cert->ex_flags & EXFLAG_SS)
+            continue;
+
 #ifndef OPENSSL_NO_OCSP
-        if (ctx->param->flags & X509_V_FLAG_OCSP_RESP_CHECK) {
+        if (ocsp_check) {
             ok = check_cert_ocsp_resp(ctx);
 
             /*
-             * If the client receives a "ocsp_response_list" that does not
-             * contain a response for one or more of the certificates in the
-             * completed certificate chain, the client SHOULD attempt to
-             * validate the certificate using an alternative retrieval method,
-             * such as downloading the relevant CRL;
+             * In the case the certificate statsus is REVOKED, the verification
+             * can stop here.
+             */
+            if (ok == V_OCSP_CERTSTATUS_REVOKED) {
+                return verify_cb_ocsp(
+                    ctx, ctx->error != 0 ? ctx->error : X509_V_ERR_OCSP_VERIFY_FAILED);
+            }
+
+            /*
+             * In the case the certificate status is GOOD, continue with the next
+             * certificate.
+             */
+            if (ok == V_OCSP_CERTSTATUS_GOOD)
+                continue;
+
+            /*
              * If the OCSP response received from the server does not result
              * in a definite "good" or "revoked" status, it is inconclusive.
              * A TLS client in such a case MAY check the validity of the server
              * certificate through other means, e.g., by directly querying the
              * certificate issuer.
              */
-            if (ok == V_OCSP_CERTSTATUS_REVOKED) {
-                return verify_cb_ocsp(ctx, X509_V_ERR_CERT_REVOKED);
-            }
-
-            if (ok == V_OCSP_CERTSTATUS_GOOD)
-                continue;
-
-            /*
-             * Check the validity of the server certificate through other means,
-             * e.g., by directly querying the certificate issuer.
-             */
-            if (!(ctx->param->flags & X509_V_FLAG_CRL_CHECK)) {
-                ok = verify_cb_ocsp(ctx, 0);
+            if (!crl_check_enabled) {
+                ok = verify_cb_ocsp(ctx, X509_V_ERR_OCSP_VERIFY_FAILED);
                 if (!ok)
                     return ok;
             }
         }
 #endif
 
-        if (ctx->param->flags & X509_V_FLAG_CRL_CHECK) {
+        /*
+         * If OCSP is not enabled or the client receives a "ocsp_response_list"
+         * that does not contain a response for one or more of the certificates
+         * in the completed certificate chain, the client SHOULD attempt to
+         * validate the certificate using an alternative retrieval method,
+         * such as downloading the relevant CRL;
+         */
+        if (crl_check_enabled) {
             ok = check_cert_crl(ctx);
+
+            /*
+             * IF CRL verification failed, check the validity of the server
+             * certificate through other means, e.g., by directly querying the
+             * certificate issuer.
+             * Unless CRL-based cert status checking is enabled, which should
+             * be tried first before doing an OCSP query,
+             */
+            if (!ok) {
+                ok = verify_cb_crl(ctx, ctx->error !=0 ?
+                         ctx->error : X509_V_ERR_CRL_VERIFY_FAILED);
+            }
+
             if (!ok)
                 return ok;
         }
@@ -1059,18 +1090,16 @@ static int check_revocation(X509_STORE_CTX *ctx)
 static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
 {
     int cert_status, crl_reason;
-    int cnum = ctx->error_depth;
     int i, found = -1, ret;
     OCSP_BASICRESP *bs = NULL;
     OCSP_RESPONSE *resp = NULL;
     OCSP_CERTID *cert_id = NULL;
     ASN1_GENERALIZEDTIME *rev, *thisupd, *nextupd;
-    X509 *x = sk_X509_value(ctx->chain, cnum);
 
     ret = V_OCSP_CERTSTATUS_UNKNOWN;
-    ctx->current_cert = x;
+
     ctx->current_issuer = X509_find_by_subject(ctx->chain,
-                                               X509_get_issuer_name(x));
+                                               X509_get_issuer_name(ctx->current_cert));
 
     if (sk_OCSP_RESPONSE_num(ctx->ocsp_resp) <= 0) {
         return X509_V_ERR_OCSP_NO_RESPONSE;
