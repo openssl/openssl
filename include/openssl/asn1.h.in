@@ -472,8 +472,13 @@ typedef const ASN1_ITEM *ASN1_ITEM_EXP (void);
                                 ASN1_STRFLGS_DUMP_UNKNOWN | \
                                 ASN1_STRFLGS_DUMP_DER)
 
-/* rpcndr.h which has a boolean typedef includes this define */
-# ifdef small
+/*
+ * On Windows, rpcndr.h has a boolean typedef which conflicts with the use of
+ * boolean as a member name below. Use 'NDR_CHAR_REP_MASK' to detect that
+ * rpcndr.h was included. If found, rename the member, which should not be
+ * usually accessed directly by user code.
+ */
+# if defined(_WIN32) && defined(NDR_CHAR_REP_MASK)
 #  define boolean asn1_boolean
 # endif
 
@@ -508,7 +513,7 @@ struct asn1_type_st {
     } value;
 };
 
-# ifdef small
+# if defined(_WIN32) && defined(NDR_CHAR_REP_MASK)
 #  undef boolean
 # endif
 
