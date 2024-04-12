@@ -1547,7 +1547,7 @@ static int ecp_nistz256group_full_init(EC_GROUP *group,
         goto err;
     if (!ossl_bn_mont_ctx_set(ordmont, order, 256, params + 7 * param_len,
                               param_len, lo_order_n, hi_order_n))
-      goto err;
+        goto err;
 
     group->mont_data = ordmont;
     ordmont = NULL;

@@ -446,11 +446,11 @@ static int check_bn_mont_ctx(BN_MONT_CTX *mont, BIGNUM *mod, BN_CTX *ctx)
         goto err;
     
     if (!TEST_true(BN_MONT_CTX_set(regenerated, mod, ctx)))
-         goto err;
-
-    if (!TEST_true(ossl_bn_mont_ctx_eq(regenerated, mont))) {
         goto err;
-    }
+
+    if (!TEST_true(ossl_bn_mont_ctx_eq(regenerated, mont)))
+        goto err;
+
     ret = 1;
 
  err:
