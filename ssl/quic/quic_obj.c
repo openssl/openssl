@@ -106,9 +106,8 @@ int ossl_quic_obj_desires_blocking(const QUIC_OBJ *obj)
     unsigned int req_blocking_mode;
 
     assert(obj != NULL);
-    for (; (req_blocking_mode = obj->req_blocking_mode)
-            == QUIC_BLOCKING_MODE_INHERIT && obj->parent_obj != NULL;
-         obj = obj->parent_obj);
+    for (; (req_blocking_mode = obj->req_blocking_mode) == QUIC_BLOCKING_MODE_INHERIT
+           && obj->parent_obj != NULL; obj = obj->parent_obj);
 
     return req_blocking_mode != QUIC_BLOCKING_MODE_NONBLOCKING;
 }
