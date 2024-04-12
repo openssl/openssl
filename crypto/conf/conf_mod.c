@@ -523,7 +523,7 @@ void CONF_modules_unload(int all)
     }
 
     to_delete = sk_CONF_MODULE_new_null();
-    
+
     /* unload modules in reverse order */
     for (i = sk_CONF_MODULE_num(new_modules) - 1; i >= 0; i--) {
         md = sk_CONF_MODULE_value(new_modules, i);
