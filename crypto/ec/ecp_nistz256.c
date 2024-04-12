@@ -1452,10 +1452,10 @@ static int ecp_nistz256group_full_init(EC_GROUP *group,
     const int param_len = 32;
     const int seed_len = 20;
     int ok = 0;
-    uint32_t hi_order_n =0xccd1c8aa;
+    uint32_t hi_order_n = 0xccd1c8aa;
     uint32_t lo_order_n = 0xee00bc4f;
     BIGNUM *p = NULL, *a = NULL, *b = NULL, *x = NULL, *y = NULL, *one = NULL,
-      *order = NULL;
+        *order = NULL;
     EC_POINT *P = NULL;
 
     if ((ctx = BN_CTX_new_ex(group->libctx)) == NULL) {
@@ -1486,10 +1486,10 @@ static int ecp_nistz256group_full_init(EC_GROUP *group,
 
     if (!ossl_bn_mont_ctx_set(mont, p, 256, params + 6 * param_len, param_len,
                               1, 0))
-      goto err;
+        goto err;
 
     one = BN_new();
-    if (one == NULL){
+    if (one == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
@@ -1532,8 +1532,8 @@ static int ecp_nistz256group_full_init(EC_GROUP *group,
      */
     group->generator = EC_POINT_new(group);
     if (group->generator == NULL){
-         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
-         goto err;
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+        goto err;
     }
     if (!EC_POINT_copy(group->generator, P))
         goto err;

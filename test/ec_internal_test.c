@@ -482,18 +482,18 @@ static int montgomery_correctness_test(EC_GROUP *group)
 
 static int named_group_creation_test(void)
 {
-  int ret = 0;
-  EC_GROUP *group = NULL;
+    int ret = 0;
+    EC_GROUP *group = NULL;
 
-  if (!TEST_ptr( group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1))
-      || !TEST_true(montgomery_correctness_test(group)))
-    goto err;
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1))
+        || !TEST_true(montgomery_correctness_test(group)))
+      goto err;
 
-  ret = 1;
+    ret = 1;
 
  err:
-  EC_GROUP_free(group);
-  return ret;
+    EC_GROUP_free(group);
+    return ret;
 }
 
 int setup_tests(void)
