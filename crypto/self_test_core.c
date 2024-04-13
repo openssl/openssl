@@ -54,11 +54,23 @@ static SELF_TEST_CB *get_self_test_callback(OSSL_LIB_CTX *libctx)
 void OSSL_SELF_TEST_set_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK *cb,
                                  void *cbarg)
 {
+    HT *algcache;
     SELF_TEST_CB *stcb = get_self_test_callback(libctx);
 
     if (stcb != NULL) {
         stcb->cb = cb;
         stcb->cbarg = cbarg;
+    }
+    /*
+     * The algcache avoids calling into the provider
+     * so if we change the callback, we should flush
+     * the cache to force a future callback
+     */
+    algcache = ossl_lib_ctx_get_algcache(libctx);
+    if (algcache) {
+        ossl_ht_write_lock(algcache);
+        ossl_ht_flush(algcache);
+        ossl_ht_write_unlock(algcache);
     }
 }
 
