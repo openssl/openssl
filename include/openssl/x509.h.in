@@ -67,16 +67,24 @@ extern "C" {
 # define X509_FILETYPE_ASN1      2
 # define X509_FILETYPE_DEFAULT   3
 
-# define X509v3_KU_DIGITAL_SIGNATURE     0x0080
-# define X509v3_KU_NON_REPUDIATION       0x0040
-# define X509v3_KU_KEY_ENCIPHERMENT      0x0020
-# define X509v3_KU_DATA_ENCIPHERMENT     0x0010
-# define X509v3_KU_KEY_AGREEMENT         0x0008
-# define X509v3_KU_KEY_CERT_SIGN         0x0004
-# define X509v3_KU_CRL_SIGN              0x0002
-# define X509v3_KU_ENCIPHER_ONLY         0x0001
-# define X509v3_KU_DECIPHER_ONLY         0x8000
-# define X509v3_KU_UNDEF                 0xffff
+/*-
+ * <https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3>:
+ * The KeyUsage BITSTRING is treated as a little-endian integer, hence bit `0`
+ * is 0x80, while bit `7` is 0x01 (the LSB of the integer value), bit `8` is
+ * then the MSB of the second octet, or 0x8000.
+ */
+# define X509v3_KU_DIGITAL_SIGNATURE     0x0080     /* (0) */
+# define X509v3_KU_NON_REPUDIATION       0x0040     /* (1) */
+# define X509v3_KU_KEY_ENCIPHERMENT      0x0020     /* (2) */
+# define X509v3_KU_DATA_ENCIPHERMENT     0x0010     /* (3) */
+# define X509v3_KU_KEY_AGREEMENT         0x0008     /* (4) */
+# define X509v3_KU_KEY_CERT_SIGN         0x0004     /* (5) */
+# define X509v3_KU_CRL_SIGN              0x0002     /* (6) */
+# define X509v3_KU_ENCIPHER_ONLY         0x0001     /* (7) */
+# define X509v3_KU_DECIPHER_ONLY         0x8000     /* (8) */
+# ifndef OPENSSL_NO_DEPRECATED_3_4
+#  define X509v3_KU_UNDEF                0xffff     /* vestigial, not used */
+# endif
 
 struct X509_algor_st {
     ASN1_OBJECT *algorithm;
