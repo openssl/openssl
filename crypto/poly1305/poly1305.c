@@ -168,7 +168,7 @@ poly1305_blocks(void *ctx, const unsigned char *inp, size_t len, u32 padbit)
         h1 = (u64)(d1 = (u128)h1 + (d0 >> 64) + U8TOU64(inp + 8));
         /*
          * padbit can be zero only when original len was
-         * POLY1306_BLOCK_SIZE, but we don't check
+         * POLY1305_BLOCK_SIZE, but we don't check
          */
         h2 += (u64)(d1 >> 64) + padbit;
 
