@@ -82,7 +82,7 @@ my @rhotates = ([  0,  1, 62, 28, 27 ],
 $code.=<<___;
 #include "arm_arch.h"
 
-.text
+.rodata
 
 .align 8	// strategic alignment and padding that allows to use
 		// address value as loop termination condition...
@@ -123,11 +123,14 @@ my @A = map([ "x$_", "x".($_+1), "x".($_+2), "x".($_+3), "x".($_+4) ],
 my @C = map("x$_", (26,27,28,30));
 
 $code.=<<___;
+.text
+
 .type	KeccakF1600_int,%function
 .align	5
 KeccakF1600_int:
 	AARCH64_SIGN_LINK_REGISTER
-	adr	$C[2],iotas
+	adrp	$C[2],iotas
+	add	$C[2],$C[2],:lo12:iotas
 	stp	$C[2],x30,[sp,#16]		// 32 bytes on top are mine
 	b	.Loop
 .align	4
@@ -556,7 +559,8 @@ $code.=<<___;
 .align	5
 KeccakF1600_ce:
 	mov	x9,#24
-	adr	x10,iotas
+	adrp	x10,iotas
+	add	x10,x10,:lo12:iotas
 	b	.Loop_ce
 .align	4
 .Loop_ce:

@@ -259,7 +259,8 @@ sha1_block_armv8:
 	stp	x29,x30,[sp,#-16]!
 	add	x29,sp,#0
 
-	adr	x4,.Lconst
+	adrp	x4,.Lconst
+	add	x4,x4,:lo12:.Lconst
 	eor	$E,$E,$E
 	ld1.32	{$ABCD},[$ctx],#16
 	ld1.32	{$E}[0],[$ctx]
@@ -319,6 +320,9 @@ $code.=<<___;
 	ldr	x29,[sp],#16
 	ret
 .size	sha1_block_armv8,.-sha1_block_armv8
+
+.rodata
+
 .align	6
 .Lconst:
 .long	0x5a827999,0x5a827999,0x5a827999,0x5a827999	//K_00_19

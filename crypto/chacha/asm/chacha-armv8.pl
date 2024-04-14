@@ -140,7 +140,7 @@ $code.=<<___;
 .extern ChaCha20_ctr32_sve
 #endif
 
-.text
+.rodata
 
 .align	5
 .Lsigma:
@@ -150,6 +150,8 @@ $code.=<<___;
 .Lrot24:
 .long	0x02010003,0x06050407,0x0a09080b,0x0e0d0c0f
 .asciz	"ChaCha20 for ARMv8, CRYPTOGAMS by \@dot-asm"
+
+.text
 
 .globl	ChaCha20_ctr32_dflt
 .type	ChaCha20_ctr32_dflt,%function
@@ -170,7 +172,8 @@ ChaCha20_ctr32_dflt:
 	stp	x29,x30,[sp,#-96]!
 	add	x29,sp,#0
 
-	adr	@x[0],.Lsigma
+	adrp	@x[0],.Lsigma
+	add	@x[0],@x[0],:lo12:.Lsigma
 	stp	x19,x20,[sp,#16]
 	stp	x21,x22,[sp,#32]
 	stp	x23,x24,[sp,#48]
@@ -473,7 +476,8 @@ ChaCha20_neon:
 	stp	x29,x30,[sp,#-96]!
 	add	x29,sp,#0
 
-	adr	@x[0],.Lsigma
+	adrp	@x[0],.Lsigma
+	add	@x[0],@x[0],:lo12:.Lsigma
 	stp	x19,x20,[sp,#16]
 	stp	x21,x22,[sp,#32]
 	stp	x23,x24,[sp,#48]
@@ -884,7 +888,8 @@ ChaCha20_512_neon:
 	stp	x29,x30,[sp,#-96]!
 	add	x29,sp,#0
 
-	adr	@x[0],.Lsigma
+	adrp	@x[0],.Lsigma
+	add	@x[0],@x[0],:lo12:.Lsigma
 	stp	x19,x20,[sp,#16]
 	stp	x21,x22,[sp,#32]
 	stp	x23,x24,[sp,#48]
