@@ -31,7 +31,7 @@ jobs:
           # Formally released versions should be added here.
           #     `dir' it the directory inside the tarball.
           #     `tgz' is the name of the tarball.
-          #     `utl' is the download URL.
+          #     `url' is the download URL.
           {
             dir: openssl-3.0.0,
             tgz: openssl-3.0.0.tar.gz,
