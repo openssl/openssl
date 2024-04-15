@@ -13,7 +13,7 @@ ossl_rcu_assign_uptr
 
 =head1 SYNOPSIS
 
- CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers);
+ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx);
  void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock);
  void ossl_rcu_write_lock(CRYPTO_RCU_LOCK *lock);
  void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK *lock);
@@ -65,7 +65,8 @@ ossl_rcu_lock_new() allocates a new RCU lock.  The I<num_writers> param
 indicates the number of write side threads which may execute
 ossl_synchronize_rcu() in parallel.  The value must be at least 1, but may be
 larger to obtain increased write side throughput at the cost of additional
-internal memory usage.  A value of 1 is generally recommended.
+internal memory usage.  A value of 1 is generally recommended. The I<ctx>
+parameter references the library context in which the lock is allocated.
 
 =item *
 

@@ -420,7 +420,7 @@ static int _torture_rcu(void)
     writer2_done = 0;
     rcu_torture_result = 1;
 
-    rcu_lock = ossl_rcu_lock_new(1);
+    rcu_lock = ossl_rcu_lock_new(1, NULL);
 
     TEST_info("Staring rcu torture");
     t1 = ossl_time_now();

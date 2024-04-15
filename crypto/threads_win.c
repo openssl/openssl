@@ -43,8 +43,6 @@ typedef struct {
 } CRYPTO_win_rwlock;
 # endif
 
-static CRYPTO_THREAD_LOCAL rcu_thr_key;
-
 # define READER_SHIFT 0
 # define ID_SHIFT 32 
 # define READER_SIZE 32 
@@ -92,6 +90,7 @@ struct rcu_thr_data {
  */
 struct rcu_lock_st {
     struct rcu_cb_item *cb_items;
+    OSSL_LIB_CTX *ctx;
     uint32_t id_ctr;
     struct rcu_qp *qp_group;
     size_t group_count;
@@ -106,26 +105,6 @@ struct rcu_lock_st {
     CRYPTO_CONDVAR *prior_signal;
 };
 
-/*
- * Called on thread exit to free the pthread key
- * associated with this thread, if any
- */
-static void free_rcu_thr_data(void *ptr)
-{
-    struct rcu_thr_data *data =
-                        (struct rcu_thr_data *)CRYPTO_THREAD_get_local(&rcu_thr_key);
-
-    OPENSSL_free(data);
-    CRYPTO_THREAD_set_local(&rcu_thr_key, NULL);
-}
-
-
-static void ossl_rcu_init(void)
-{
-    CRYPTO_THREAD_init_local(&rcu_thr_key, NULL);
-    ossl_init_thread_start(NULL, NULL, free_rcu_thr_data);
-}
-
 static struct rcu_qp *allocate_new_qp_group(struct rcu_lock_st *lock,
                                             int count)
 {
@@ -136,23 +115,23 @@ static struct rcu_qp *allocate_new_qp_group(struct rcu_lock_st *lock,
     return new;
 }
 
-static CRYPTO_ONCE rcu_init_once = CRYPTO_ONCE_STATIC_INIT;
-
-CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers)
+CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
 {
     struct rcu_lock_st *new;
 
-    if (!CRYPTO_THREAD_run_once(&rcu_init_once, ossl_rcu_init))
-        return NULL;
-
     if (num_writers < 1)
         num_writers = 1;
+
+    ctx = ossl_lib_ctx_get_concrete(ctx);
+    if (ctx == NULL)
+        return 0;
 
     new = OPENSSL_zalloc(sizeof(*new));
 
     if (new == NULL)
         return NULL;
 
+    new->ctx = ctx;
     new->write_lock = ossl_crypto_mutex_new();
     new->alloc_signal = ossl_crypto_condvar_new();
     new->prior_signal = ossl_crypto_condvar_new();
@@ -205,22 +184,32 @@ static inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK *lock)
     return &lock->qp_group[qp_idx];
 }
 
+static void ossl_rcu_free_local_data(void *arg)
+{
+    OSSL_LIB_CTX *ctx = arg;
+    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(ctx);
+    struct rcu_thr_data *data = CRYPTO_THREAD_get_local(lkey);
+    OPENSSL_free(data);
+}
+
 void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
 {
     struct rcu_thr_data *data;
     int i;
     int available_qp = -1;
+    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(lock->ctx);
 
     /*
      * we're going to access current_qp here so ask the
      * processor to fetch it
      */
-    data = CRYPTO_THREAD_get_local(&rcu_thr_key);
+    data = CRYPTO_THREAD_get_local(lkey);
 
     if (data == NULL) {
         data = OPENSSL_zalloc(sizeof(*data));
         OPENSSL_assert(data != NULL);
-        CRYPTO_THREAD_set_local(&rcu_thr_key, data);
+        CRYPTO_THREAD_set_local(lkey, data);
+        ossl_init_thread_start(NULL, lock->ctx, ossl_rcu_free_local_data);
     }
 
     for (i = 0; i < MAX_QPS; i++) {
@@ -253,7 +242,8 @@ void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK *lock)
 
 void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
 {
-    struct rcu_thr_data *data = CRYPTO_THREAD_get_local(&rcu_thr_key);
+    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(lock->ctx);
+    struct rcu_thr_data *data = CRYPTO_THREAD_get_local(lkey);
     int i;
     LONG64 ret;
 
