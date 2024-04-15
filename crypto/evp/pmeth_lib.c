@@ -1027,6 +1027,8 @@ static int evp_pkey_ctx_add1_octet_string(EVP_PKEY_CTX *ctx, int fallback,
     if (datalen < 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_LENGTH);
         return 0;
+    } else if (datalen == 0) {
+        return 1;
     }
 
     /* Get the original value length */
