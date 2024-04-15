@@ -5542,6 +5542,12 @@ OSSL_CMP_ITAV_new0_certProfile          5669	3_3_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_get0_certProfile          5670	3_3_0	EXIST::FUNCTION:CMP
 OSSL_CMP_MSG_get0_certreq_publickey     5671	3_3_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_CTX_init_trans             5672	3_3_0	EXIST::FUNCTION:CMP
+EVP_DigestSqueeze                       5673	3_3_0	EXIST::FUNCTION:
+ERR_pop                                 5674	3_3_0	EXIST::FUNCTION:
+X509_STORE_get1_objects                 5675	3_3_0	EXIST::FUNCTION:
+OPENSSL_LH_set_thunks                   5676	3_3_0	EXIST::FUNCTION:
+OPENSSL_LH_doall_arg_thunk              5677	3_3_0	EXIST::FUNCTION:
+OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines 5678	3_3_0	EXIST::FUNCTION:HTTP
 DIST_POINT_NAME_dup                     ?	3_4_0	EXIST::FUNCTION:
 GENERAL_NAME_set1_X509_NAME             ?	3_4_0	EXIST::FUNCTION:
 OSSL_CMP_CRLSTATUS_create               ?	3_4_0	EXIST::FUNCTION:CMP
@@ -5553,12 +5559,6 @@ OSSL_CMP_ITAV_get0_crls                 ?	3_4_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_new0_crlStatusList        ?	3_4_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_new_crls                  ?	3_4_0	EXIST::FUNCTION:CMP
 OSSL_CMP_get1_crlUpdate                 ?	3_4_0	EXIST::FUNCTION:CMP
-EVP_DigestSqueeze                       5673	3_3_0	EXIST::FUNCTION:
-ERR_pop                                 5674	3_3_0	EXIST::FUNCTION:
-X509_STORE_get1_objects                 5675	3_3_0	EXIST::FUNCTION:
-OPENSSL_LH_set_thunks                   5676	3_3_0	EXIST::FUNCTION:
-OPENSSL_LH_doall_arg_thunk              5677	3_3_0	EXIST::FUNCTION:
-OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines 5678	3_3_0	EXIST::FUNCTION:HTTP
 CRYPTO_atomic_store                     ?	3_4_0	EXIST::FUNCTION:
 CRYPTO_aligned_alloc                    ?	3_4_0	EXIST::FUNCTION:
 d2i_X509_ACERT                          ?	3_4_0	EXIST::FUNCTION:
