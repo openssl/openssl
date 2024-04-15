@@ -164,7 +164,7 @@ static int test_lib(void)
     }
 
     myOPENSSL_atexit = (OPENSSL_atexit_t)symbols[4].func;
-    if (!myOPENSSL_atexit(atexit_handler)) {
+    if (test_type != NO_ATEXIT && !myOPENSSL_atexit(atexit_handler)) {
         fprintf(stderr, "Failed to register atexit handler\n");
         goto end;
     }

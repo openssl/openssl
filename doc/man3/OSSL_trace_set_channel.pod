@@ -128,12 +128,11 @@ trace hook is set.
 
 Traces OpenSSL library initialization and cleanup.
 
-This needs special care, as OpenSSL will do automatic cleanup after
-exit from C<main()>, and any tracing output done during this cleanup
-will be lost if the tracing channel or callback were cleaned away
-prematurely.
-A suggestion is to make such cleanup part of a function that's
-registered very early with L<atexit(3)>.
+Keep in mind that the OpenSSL cleanup function (OPENSSL_cleanup()) is
+invoked by a library destructor. This is typically arranged by the linker.
+So if your function is tracing the OSSL_TRACE_CATEGORY_INIT category,
+then file descriptors to log files (log facilities) must be left
+open after C<main()> exits.
 
 =item B<OSSL_TRACE_CATEGORY_TLS>
 

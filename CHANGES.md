@@ -95,6 +95,15 @@ OpenSSL 3.4
 
    *Alexander Kanavin*
 
+ * OpenSSL libraries no longer use atexit(3) to perform cleanup by
+   OPENSSL_cleanup().  The cleanup now runs automatically via a library
+   destructor, unless no-atexit build time option is used. libcrypto
+   built with no-atexit option will not call OPENSSL_cleanup() from
+   library destructor including at-exit handlers set by application
+   by call to OPENSSL_atexit().
+
+   *Alexandr Nedvedicky*
+
 OpenSSL 3.3
 -----------
 

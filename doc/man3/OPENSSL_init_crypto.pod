@@ -175,10 +175,10 @@ See OPENSSL_fork_prepare(3) for details.
 
 =item OPENSSL_INIT_NO_ATEXIT
 
-By default OpenSSL will attempt to clean itself up when the process exits via an
-"atexit" handler. Using this option suppresses that behaviour. This means that
-the application will have to clean up OpenSSL explicitly using
-OPENSSL_cleanup().
+Disables automatic execution of OPENSSL_cleanup() via a library destructor.
+Starting from version 3.4 OpenSSL no longer uses an atexit(3) handler to call
+OPENSSL_cleanup() automatically.  Instead of using atexit(3) OpenSSL relies on
+the run time linker to call OPENSSL_cleanup() via a library destructor.
 
 =back
 
@@ -190,15 +190,19 @@ OPENSSL_init_crypto(). For example:
 
 The OPENSSL_cleanup() function deinitialises OpenSSL (both libcrypto
 and libssl). All resources allocated by OpenSSL are freed. Typically there
-should be no need to call this function directly as it is initiated
-automatically on application exit. This is done via the standard C library
-atexit() function. In the event that the application will close in a manner
-that will not call the registered atexit() handlers then the application should
-call OPENSSL_cleanup() directly. Developers of libraries using OpenSSL
-are discouraged from calling this function and should instead, typically, rely
-on auto-deinitialisation. This is to avoid error conditions where both an
-application and a library it depends on both use OpenSSL, and the library
-deinitialises it before the application has finished using it.
+should be no need to call this function directly as it is done
+automatically on application exit. This is arranged by the linker which ensures
+a library destructor gets invoked on library unload (or process exit).  On some
+platforms there is no support for library destructors. On these platforms the
+OS will still automatically dispose of all resources on process exit. However
+memory leak detection tools such as valgrind or asan may report spurious memory
+leaks. The application may call OPENSSL_cleanup() explicitly to dispose of all
+resources allocated by libcrypto/libssl to avoid this.  Developers of libraries
+using OpenSSL are discouraged from calling the OPENSSL_cleanup() function and
+should instead, rely on the linker to invoke OPENSSL_cleanup() via the library
+destructor.  Explicit calls to OPENSSL_cleanup() from 3rd party libraries may
+disable libcrypto/libssl for the application prematurely as calls to those
+libraries typically fail after OPENSSL_cleanup() is done.
 
 Once OPENSSL_cleanup() has been called the library cannot be reinitialised.
 Attempts to call OPENSSL_init_crypto() will fail and an ERR_R_INIT_FAIL error

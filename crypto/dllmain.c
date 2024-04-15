@@ -25,6 +25,8 @@
  * detaches
  */
 
+extern int ossl_no_cleanup;
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -38,6 +40,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         OPENSSL_thread_stop();
         break;
     case DLL_PROCESS_DETACH:
+        if (ossl_no_cleanup == 0)
+            OPENSSL_cleanup();
         break;
     }
     return TRUE;
