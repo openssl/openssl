@@ -1,10 +1,12 @@
-#! /usr/bin/env perl
-# Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
-#
-# Licensed under the Apache License 2.0 (the "License").  You may not use
-# this file except in compliance with the License.  You can obtain a copy
-# in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+/*
+ *! /usr/bin/env perl
+ * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
 
 
 use Fcntl;
@@ -12,8 +14,8 @@ use Fcntl;
 
 # copy.pl
 
-# Perl script 'copy' comment. On Windows the built in "copy" command also
-# copies timestamps: this messes up Makefile dependencies.
+/* Perl script 'copy' comment. On Windows the built in "copy" command also
+ * copies timestamps: this messes up Makefile dependencies. */
 
 my $stripcr = 0;
 

@@ -1,17 +1,19 @@
-#! /usr/bin/env perl
-# Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
-#
-# Licensed under the Apache License 2.0 (the "License").  You may not use
-# this file except in compliance with the License.  You can obtain a copy
-# in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+/*
+ *! /usr/bin/env perl
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
 
-# This is just a quick script to scan for cases where the 'error'
-# function name in a XXXerr() macro is wrong.
-#
-# Run in the top level by going
-# perl util/ck_errf.pl */*.c */*/*.c
-#
+/* This is just a quick script to scan for cases where the 'error'
+ * function name in a XXXerr() macro is wrong.
+ *
+ * Run in the top level by going
+ * perl util/ck_errf.pl */*.c */*/*.c
+ */
 
 use strict;
 use warnings;
@@ -80,11 +82,11 @@ if ( $internal ) {
     @source = @ARGV;
 }
 
-# To detect if there is any error generation for a libcrypto/libssl libs
-# we don't know, we need to find out what libs we do know.  That list is
-# readily available in crypto/err/openssl.ec, in form of lines starting
-# with "L ".  Note that we always rely on the modules SYS and ERR to be
-# generally available.
+/* To detect if there is any error generation for a libcrypto/libssl libs
+ * we don't know, we need to find out what libs we do know.  That list is
+ * readily available in crypto/err/openssl.ec, in form of lines starting
+ * with "L ".  Note that we always rely on the modules SYS and ERR to be
+ * generally available. */
 my %libs       = ( SYS => 1, ERR => 1 );
 open my $cfh, $config or die "Trying to read $config: $!\n";
 while (<$cfh>) {

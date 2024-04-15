@@ -121,46 +121,48 @@ my %collected_tags = ();
 # We cache results based on tags
 my %collected_results = ();
 
-# files OPTIONS
-#
-# Example:
-#
-#       files(TAGS => 'manual');
-#       files(TAGS => [ 'manual', 'man1' ]);
-#
-# This function returns an array of files corresponding to a set of tags
-# given with the options "TAGS".  The value of this option can be a single
-# word, or an array of several words, which work as inclusive or exclusive
-# selectors.  Inclusive selectors are used to add one more set of files to
-# the returned array, while exclusive selectors limit the set of files added
-# to the array.  The recognised tag values are:
-#
-# 'public_manual'       - inclusive selector, adds public manuals to the
-#                         returned array of files.
-# 'internal_manual'     - inclusive selector, adds internal manuals to the
-#                         returned array of files.
-# 'manual'              - inclusive selector, adds any manual to the returned
-#                         array of files.  This is really a shorthand for
-#                         'public_manual' and 'internal_manual' combined.
-# 'public_header'       - inclusive selector, adds public headers to the
-#                         returned array of files.
-# 'header'              - inclusive selector, adds any header file to the
-#                         returned array of files.  Since we currently only
-#                         care about public headers, this is exactly
-#                         equivalent to 'public_header', but is present for
-#                         consistency.
-#
-# 'man1', 'man3', 'man5', 'man7'
-#                       - exclusive selectors, only applicable together with
-#                         any of the manual selectors.  If any of these are
-#                         present, only the manuals from the given sections
-#                         will be included.  If none of these are present,
-#                         the manuals from all sections will be returned.
-#
-# All returned manual files come from configdata.pm.
-# All returned header files come from looking inside
-# "$config{sourcedir}/include/openssl"
-#
+/*-
+ * files OPTIONS
+ *
+ * Example:
+ *
+ *       files(TAGS => 'manual');
+ *       files(TAGS => [ 'manual', 'man1' ]);
+ *
+ * This function returns an array of files corresponding to a set of tags
+ * given with the options "TAGS".  The value of this option can be a single
+ * word, or an array of several words, which work as inclusive or exclusive
+ * selectors.  Inclusive selectors are used to add one more set of files to
+ * the returned array, while exclusive selectors limit the set of files added
+ * to the array.  The recognised tag values are:
+ *
+ * 'public_manual'       - inclusive selector, adds public manuals to the
+ *                         returned array of files.
+ * 'internal_manual'     - inclusive selector, adds internal manuals to the
+ *                         returned array of files.
+ * 'manual'              - inclusive selector, adds any manual to the returned
+ *                         array of files.  This is really a shorthand for
+ *                         'public_manual' and 'internal_manual' combined.
+ * 'public_header'       - inclusive selector, adds public headers to the
+ *                         returned array of files.
+ * 'header'              - inclusive selector, adds any header file to the
+ *                         returned array of files.  Since we currently only
+ *                         care about public headers, this is exactly
+ *                         equivalent to 'public_header', but is present for
+ *                         consistency.
+ *
+ * 'man1', 'man3', 'man5', 'man7'
+ *                       - exclusive selectors, only applicable together with
+ *                         any of the manual selectors.  If any of these are
+ *                         present, only the manuals from the given sections
+ *                         will be included.  If none of these are present,
+ *                         the manuals from all sections will be returned.
+ *
+ * All returned manual files come from configdata.pm.
+ * All returned header files come from looking inside
+ * "$config{sourcedir}/include/openssl"
+ *
+ */
 sub files {
     my %opts = ( @_ );          # Make a copy of the arguments
 
@@ -194,11 +196,11 @@ sub files {
         print STDERR "DEBUG[files]: collecting public manuals\n"
             if $debug;
 
-        # The structure in configdata.pm is that $unified_info{mandocs}
-        # contains lists of man files, and in turn, $unified_info{depends}
-        # contains hash tables showing which POD file each of those man
-        # files depend on.  We use that information to find the POD files,
-        # and to attach the man section they belong to as tags
+        /* The structure in configdata.pm is that $unified_info{mandocs}
+         * contains lists of man files, and in turn, $unified_info{depends}
+         * contains hash tables showing which POD file each of those man
+         * files depend on. We use that information to find the POD files,
+         * and to attach the man section they belong to as tags */
         foreach my $mansect ( @sections ) {
             foreach ( map { @{$unified_info{depends}->{$_}} }
                       @{$unified_info{mandocs}->{$mansect}} ) {
@@ -212,8 +214,8 @@ sub files {
         print STDERR "DEBUG[files]: collecting internal manuals\n"
             if $debug;
 
-        # We don't have the internal docs in configdata.pm.  However, they
-        # are all in the source tree, so they're easy to find.
+        /* We don't have the internal docs in configdata.pm.  However, they
+         * are all in the source tree, so they're easy to find. */
         foreach my $mansect ( @sections ) {
             foreach ( glob(catfile($config{sourcedir},
                                    'doc', 'internal', $mansect, '*.pod')) ) {
@@ -240,8 +242,8 @@ sub files {
         foreach my $type ( ( 'public_manual', 'internal_manual' ) ) {
             next unless $tags{$type};
 
-            # If caller asked for specific sections, we care about sections.
-            # Otherwise, we give back all of them.
+            /* If caller asked for specific sections, we care about sections.
+             * Otherwise, we give back all of them. */
             my @selected_sections =
                 grep { $tags{$_} } @sections;
             @selected_sections = @sections unless @selected_sections;
@@ -276,7 +278,7 @@ sub err {
     $status = 1
 }
 
-# Cross-check functions in the NAME and SYNOPSIS section.
+# Cross-check functions in the NAME and SYNOPSIS sections.
 sub name_synopsis {
     my $id = shift;
     my $filename = shift;
@@ -328,10 +330,10 @@ sub name_synopsis {
     # Remove all comments
     $syn =~ s/\/\*.*?\*\///msg;
     while ( $syn ) {
-        # "env" lines end at a newline.
-        # Preprocessor lines start with a # and end at a newline.
-        # Other lines end with a semicolon, and may cover more than
-        # one physical line.
+        /* "env" lines end at a newline.
+         * Preprocessor lines start with a # and end at a newline.
+         * Other lines end with a semicolon, and may cover more than
+         * one physical line. */
         if ( $syn !~ /^ \s*(env .*?|#.*?|.*?;)\s*$/ms ) {
             err($id, "Can't parse rest of synopsis:\n$syn\n(declarations not ending with a semicolon (;)?)");
             last;
@@ -464,13 +466,13 @@ sub check_head_style {
     }
 }
 
-# Because we have options and symbols with extra markup, we need
-# to take that into account, so we need a regexp that extracts
-# markup chunks, including recursive markup.
+/* Because we have options and symbols with extra markup, we need
+ * to take that into account, so we need a regexp that extracts
+ * markup chunks, including recursive markup. */
 # please read up on /(?R)/ in perlre(1)
-# (note: order is important, (?R) needs to come before .)
-# (note: non-greedy is important, or something like 'B<foo> and B<bar>'
-# will be captured as one item)
+/* (note: order is important, (?R) needs to come before .)
+ * (note: non-greedy is important, or something like 'B<foo> and B<bar>'
+ * will be captured as one item) */
 my $markup_re =
     qr/(                        # Capture group
            [BIL]<               # The start of what we recurse on
@@ -481,10 +483,10 @@ my $markup_re =
            >                    # The end of what we recurse on
        )/x;                     # (the x allows this sort of split up regexp)
 
-# Options must start with a dash, followed by a letter, possibly
-# followed by letters, digits, dashes and underscores, and the last
-# character must be a letter or a digit.
-# We do also accept the single -? or -n, where n is a digit
+/* Options must start with a dash, followed by a letter, possibly
+ * followed by letters, digits, dashes and underscores, and the last
+ * character must be a letter or a digit.
+ * We do also accept the single -? or -n, where n is a digit */
 my $option_re =
     qr/(?:
             \?                  # Single question mark
@@ -496,11 +498,11 @@ my $option_re =
             [[:alpha:]](?:[-_[:alnum:]]*?[[:alnum:]])?
        )/x;
 
-# Helper function to check if a given $thing is properly marked up
-# option.  It returns one of these values:
-#     undef         if it's not an option
-#     ""            if it's a malformed option
-#     $unwrapped    the option with the outermost B<> wrapping removed.
+/* Helper function to check if a given $thing is properly marked up
+ * option.  It returns one of these values:
+ *     undef         if it's not an option
+ *     ""            if it's a malformed option
+ *     $unwrapped    the option with the outermost B<> wrapping removed. */
 sub normalise_option {
     my $id = shift;
     my $filename = shift;
@@ -525,9 +527,9 @@ sub normalise_option {
     return undef;               # Something else
 }
 
-# Checks of command option (man1) formatting.  The man1 checks are
-# restricted to the SYNOPSIS and OPTIONS sections, the rest is too
-# free form, we simply cannot be too strict there.
+/* Checks of command option (man1) formatting.  The man1 checks are
+ * restricted to the SYNOPSIS and OPTIONS sections, the rest is too
+ * free form, we simply cannot be too strict there. */
 
 sub option_check {
     my $id = shift;
@@ -594,9 +596,9 @@ sub option_check {
 # Normal symbol form
 my $symbol_re = qr/[[:alpha:]_][_[:alnum:]]*?/;
 
-# Checks of function name (man3) formatting.  The man3 checks are
-# easier than the man1 checks, we only check the names followed by (),
-# and only the names that have POD markup.
+/* Checks of function name (man3) formatting.  The man3 checks are
+ * easier than the man1 checks, we only check the names followed by (),
+ * and only the names that have POD markup. */
 sub functionname_check {
     my $id = shift;
     my $filename = shift;
@@ -614,10 +616,10 @@ sub functionname_check {
             unless $symbol =~ /^B<.*?>$/ && $unmarked =~ /^${symbol_re}$/
     }
 
-    # We can't do the kind of collecting coolness that option_check()
-    # does, because there are too many things that can't be found in
-    # name repositories like the NAME sections, such as symbol names
-    # with a variable part (typically marked up as B<foo_I<TYPE>_bar>
+    /* We can't do the kind of collecting coolness that option_check()
+     * does, because there are too many things that can't be found in
+     * name repositories like the NAME sections, such as symbol names
+     * with a variable part (typically marked up as B<foo_I<TYPE>_bar> */
 }
 
 # This is from http://man7.org/linux/man-pages/man7/man-pages.7.html
@@ -719,9 +721,9 @@ sub check {
     while ( $contents =~ /$markup_re/msg ) {
         my $target = $1;
         next unless $target =~ /^L<(.*)>$/;     # Skip if not L<...>
-        $target = $1;                           # Peal away L< and >
-        $target =~ s/\/[^\/]*$//;               # Peal away possible anchor
-        $target =~ s/.*\|//g;                   # Peal away possible link text
+        $target = $1;                           # Peel away L< and >
+        $target =~ s/\/[^\/]*$//;               # Peel away possible anchor
+        $target =~ s/.*\|//g;                   # Peel away possible link text
         next if $target eq '';                  # Skip if links within page, or
         next if $target =~ /::/;                #   links to a Perl module, or
         next if $target =~ /^https?:/;          #   is a URL link, or
@@ -826,27 +828,27 @@ sub check {
 
 # Map of links in each POD file; filename => [ "foo(1)", "bar(3)", ... ]
 my %link_map = ();
-# Map of names in each POD file or from "missing" files; possible values are:
-# If found in a POD files, "name(s)" => filename
-# If found in a "missing" file or external, "name(s)" => ''
+/* Map of names in each POD file or from "missing" files; possible values are:
+ * If found in a POD files, "name(s)" => filename
+ * If found in a "missing" file or external, "name(s)" => '' */
 my %name_map = ();
 
-# State of man-page names.
-# %state is affected by loading util/*.num and util/*.syms
-# Values may be one of:
-# 'crypto' : belongs in libcrypto (loaded from libcrypto.num)
-# 'ssl' : belongs in libssl (loaded from libssl.num)
-# 'other' : belongs in libcrypto or libssl (loaded from other.syms)
-# 'internal' : Internal
-# 'public' : Public (generic name or external documentation)
-# Any of these values except 'public' may be prefixed with 'missing_'
-# to indicate that they are known to be missing.
+/* State of man-page names.
+ * %state is affected by loading util/*.num and util/*.syms
+ * Values may be one of:
+ * 'crypto' : belongs in libcrypto (loaded from libcrypto.num)
+ * 'ssl' : belongs in libssl (loaded from libssl.num)
+ * 'other' : belongs in libcrypto or libssl (loaded from other.syms)
+ * 'internal' : Internal
+ * 'public' : Public (generic name or external documentation)
+ * Any of these values except 'public' may be prefixed with 'missing_'
+ * to indicate that they are known to be missing. */
 my %state;
-# %missing is affected by loading util/missing*.txt.  Values may be one of:
-# 'crypto' : belongs in libcrypto (loaded from libcrypto.num)
-# 'ssl' : belongs in libssl (loaded from libssl.num)
-# 'other' : belongs in libcrypto or libssl (loaded from other.syms)
-# 'internal' : Internal
+/* %missing is affected by loading util/missing*.txt.  Values may be one of:
+ * 'crypto' : belongs in libcrypto (loaded from libcrypto.num)
+ * 'ssl' : belongs in libssl (loaded from libssl.num)
+ * 'other' : belongs in libcrypto or libssl (loaded from other.syms)
+ * 'internal' : Internal */
 my %missing;
 
 # Parse libcrypto.num, etc., and return sorted list of what's there.
@@ -894,13 +896,13 @@ sub checkstate () {
     foreach ( grep { $_ =~ /\(3\)$/ } sort keys %names ) {
         next if ( $name_map{$_} // '') eq '' || $_ =~ /$ignored/;
 
-        # If a man-page isn't recorded public or if it's recorded missing
-        # and internal, it's declared to be internal.
+        /* If a man-page isn't recorded public or if it's recorded missing
+         * and internal, it's declared to be internal. */
         my $declared_internal =
             ($state{$_} // 'internal') eq 'internal'
             || ($missing{$_} // '') eq 'internal';
-        # If a man-page isn't recorded internal or if it's recorded missing
-        # and not internal, it's declared to be public
+        /* If a man-page isn't recorded internally or if it's recorded missing
+         * and not internal, it's declared to be public */
         my $declared_public =
             ($state{$_} // 'internal') ne 'internal'
             || ($missing{$_} // 'internal') ne 'internal';
@@ -912,8 +914,8 @@ sub checkstate () {
     }
 }
 
-# Check for undocumented macros; ignore those in the "missing" file
-# and do simple check for #define in our header files.
+/* Check for undocumented macros; ignore those in the "missing" file
+ * and do simple check for #define in our header files. */
 sub checkmacros {
     my $count = 0;
     my %seen;
@@ -945,8 +947,8 @@ sub checkmacros {
         if $count > 0;
 }
 
-# Find out what is undocumented (filtering out the known missing ones)
-# and display them.
+/* Find out what is undocumented (filtering out the known missing ones)
+ * and display them. */
 sub printem ($) {
     my $type = shift;
     my $count = 0;
@@ -1004,10 +1006,10 @@ sub collectnames {
     }
 
     my @links = ();
-    # Don't use this regexp directly on $podinfo{contents}, as it causes
-    # a regexp recursion, which fails on really big PODs.  Instead, use
-    # $markup_re to pick up general markup, and use this regexp to check
-    # that the markup that was found is indeed a link.
+    /* Don't use this regexp directly on $podinfo{contents}, as it causes
+     * a regexp recursion, which fails on really big PODs.  Instead, use
+     * $markup_re to pick up general markup, and use this regexp to check
+     * that the markup that was found is indeed a link. */
     my $linkre = qr/L<
                     # if the link is of the form L<something|name(s)>,
                     # then remove 'something'.  Note that 'something'
@@ -1131,12 +1133,12 @@ sub checkflags {
     }
 }
 
-##
-##  MAIN()
-##  Do the work requested by the various getopt flags.
-##  The flags are parsed in alphabetical order, just because we have
-##  to have *some way* of listing them.
-##
+/*
+ *  MAIN()
+ *  Do the work requested by the various getopt flags.
+ *  The flags are parsed in alphabetical order, just because we have
+ *  to have *some way* of listing them.
+ */
 
 if ( $opt_c ) {
     my @commands = ();

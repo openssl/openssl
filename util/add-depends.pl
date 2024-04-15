@@ -29,10 +29,10 @@ my $depext = $target{dep_extension} || ".d";
 my @depfiles =
     sort
     grep {
-        # This grep has side effects.  Not only does if check the existence
-        # of the dependency file given in $_, but it also checks if it's
-        # newer than the build file or older than configdata.pm, and if it
-        # is, sets $rebuild.
+        /* This grep has side effects.  Not only does it check the existence
+         * of the dependency file given in $_, but it also checks if it's
+         * newer than the build file or older than configdata.pm, and if it
+         * is, sets $rebuild. */
         my @st = stat($_);
         $rebuild = 1
             if @st && ($st[9] > $build_mtime || $st[9] < $configdata_mtime);
@@ -56,17 +56,19 @@ my $blddir = $config{builddir};
 my $abs_srcdir = rel2abs($srcdir);
 my $abs_blddir = rel2abs($blddir);
 
-# Convenient cache of absolute to relative map.  We start with filling it
-# with mappings for the known generated header files.  They are relative to
-# the current working directory, so that's an easy task.
-# NOTE: there's more than C header files that are generated.  They will also
-# generate entries in this map.  We could of course deal with C header files
-# only, but in case we decide to handle more than just C files in the future,
-# we already have the mechanism in place here.
-# NOTE2: we lower case the index to make it searchable without regard for
-# character case.  That could seem dangerous, but as long as we don't have
-# files we depend on in the same directory that only differ by character case,
-# we're fine.
+/*
+ * Convenient cache of absolute to relative map.  We start with filling it
+ * with mappings for the known generated header files.  They are relative to
+ * the current working directory, so that's an easy task.
+ * NOTE: there's more than C header files that are generated.  They will also
+ * generate entries in this map.  We could of course deal with C header files
+ * only, but in case we decide to handle more than just C files in the future,
+ * we already have the mechanism in place here.
+ * NOTE 2: we lower case the index to make it searchable without regard for
+ * character case.  That could seem dangerous, but as long as we don't have
+ * files we depend on in the same directory that only differ by character case,
+ * we're fine.
+ */
 my %depconv_cache =
     map { catfile($abs_blddir, $_) => $_ }
     keys %{$unified_info{generate}};
@@ -109,12 +111,12 @@ my %procedures = (
     },
     'makedepend' =>
         sub {
-            # makedepend, in its infinite wisdom, wants to have the object file
-            # in the same directory as the source file.  This doesn't work too
-            # well with out-of-source-tree builds, so we must resort to tricks
-            # to get things right.  Fortunately, the .d files are always placed
-            # parallel with the object files, so all we need to do is construct
-            # the object file name from the dep file name.
+            /* makedepend, in its infinite wisdom, wants to have the object file
+             * in the same directory as the source file.  This doesn't work too
+             * well with out-of-source-tree builds, so we must resort to tricks
+             * to get things right.  Fortunately, the .d files are always placed
+             * parallel with the object files, so all we need to do is construct
+             * the object file name from the dep file name. */
             (my $objfile = shift) =~ s|\.d$|.o|i;
             my $line = shift;
 
@@ -145,46 +147,46 @@ my %procedures = (
             }
 
             # current versions of DEC / Compaq / HP / VSI C strips away all
-            # directory information from the object file, so we must insert it
-            # back.  To make life simpler, we simply replace it with the
-            # corresponding .D file that's had its extension changed.  Since
-            # .D files are always written parallel to the object files, we
-            # thereby get the directory information for free.
+            /* directory information from the object file, so we must insert it
+             * back.  To make life simpler, we simply replace it with the
+             * corresponding .D file that's had its extension changed.  Since
+             * .D files are always written parallel to the object files, we
+             * thereby get the directory information for free. */
             (my $objfile = shift) =~ s|\.D$|.OBJ|i;
             my $line = shift;
 
-            # Shave off the target.
-            #
-            # The pattern for target and dependencies will always take this
-            # form:
-            #
-            #   target SPACE : SPACE deps
-            #
-            # This is so a volume delimiter (a : without any spaces around it)
-            # won't get mixed up with the target / deps delimiter.  We use this
-            # to easily identify what needs to be removed.
+            /*- Shave off the target.
+             *
+             * The pattern for target and dependencies will always take this
+             * form:
+             *
+             *   target SPACE : SPACE deps
+             *
+             * This is so a volume delimiter (a : without any spaces around it)
+             * won't get mixed up with the target or deps delimiter.  We use this
+             * to easily identify what needs to be removed. */
             m|\s:\s|; $line = $';
 
-            # We know that VMS has system header files in text libraries,
-            # extension .TLB.  We also know that our header files aren't stored
-            # in text libraries.  Finally, we know that VMS C produces exactly
-            # one dependency per line, so we simply discard any line ending with
-            # .TLB.
+            /* We know that VMS has system header files in text libraries,
+             * extension .TLB.  We also know that our header files aren't stored
+             * in text libraries.  Finally, we know that VMS C produces exactly
+             * one dependency per line, so we simply discard any line ending with
+             * .TLB. */
             return undef if /\.TLB\s*$/;
 
             # All we got now is a dependency, just shave off surrounding spaces
             $line =~ s/^\s+//;
             $line =~ s/\s+$//;
 
-            # VMS C gives us absolute paths, always.  Let's see if we can
-            # make them relative instead.
+            /* VMS C gives us absolute paths, always.  Let's see if we can
+             * make them relative instead. */
             $line = canonpath($line);
 
             unless (defined $depconv_cache{$line}) {
                 my $dep = $line;
-                # Since we have already pre-populated the cache with
-                # mappings for generated headers, we only need to deal
-                # with the source tree.
+                /* Since we have already pre-populated the cache with
+                 * mappings for generated headers, we only need to deal
+                 * with the source tree. */
                 if ($dep =~ s|^\Q$abs_srcdir_shaved\E([\.>\]])?|$srcdir_shaved$1|i) {
                     # Also check that the header actually exists
                     if (-f $line) {
@@ -201,45 +203,45 @@ my %procedures = (
         },
     'VC' =>
         sub {
-            # With Microsoft Visual C the flags /Zs /showIncludes give us the
-            # necessary output to be able to create dependencies that nmake
-            # (or any 'make' implementation) should be able to read, with a
-            # bit of help.  The output we're interested in looks something
-            # like this (it always starts the same)
-            #
-            #   Note: including file: {whatever header file}
-            #
-            # This output is localized, so for example, the German pack gives
-            # us this:
-            #
-            #   Hinweis: Einlesen der Datei:   {whatever header file}
-            #
-            # To accommodate, we need to use a very general regular expression
-            # to parse those lines.
-            #
-            # Since there's no object file name at all in that information,
-            # we must construct it ourselves.
+            /* With Microsoft Visual C the flags /Zs /showIncludes give us the
+             * necessary output to be able to create dependencies that nmake
+             * (or any 'make' implementation) should be able to read, with a
+             * bit of help.  The output we're interested in looks something
+             * like this (it always starts the same)
+             *
+             *   Note: including file: {whatever header file}
+             *
+             * This output is localized, so for example, the German pack gives
+             * us this:
+             *
+             *   Hinweis: Einlesen der Datei:   {whatever header file}
+             *
+             * To accommodate, we need to use a very general regular expression
+             * to parse those lines.
+             *
+             * Since there's no object file name at all in that information,
+             * we must construct it ourselves. */
 
             (my $objfile = shift) =~ s|\.d$|.obj|i;
             my $line = shift;
 
-            # There are also other lines mixed in, for example compiler
-            # warnings, so we simply discard anything that doesn't start with
-            # the Note:
+            /* There are also other lines mixed in, for example compiler
+             * warnings, so we simply discard anything that doesn't start with
+             * the Note: */
 
             if (/^[^:]*: [^:]*: */) {
                 (my $tail = $') =~ s/\s*\R$//;
 
-                # VC gives us absolute paths for all include files, so to
-                # remove system header dependencies, we need to check that
-                # they don't match $abs_srcdir or $abs_blddir.
+                /* VC gives us absolute paths for all include files, so to
+                 * remove system header dependencies, we need to check that
+                 * they don't match $abs_srcdir or $abs_blddir. */
                 $tail = canonpath($tail);
 
                 unless (defined $depconv_cache{$tail}) {
                     my $dep = $tail;
-                    # Since we have already pre-populated the cache with
-                    # mappings for generated headers, we only need to deal
-                    # with the source tree.
+                    /* Since we have already pre-populated the cache with
+                     * mappings for generated headers, we only need to deal
+                     * with the source tree. */
                     if ($dep =~ s|^\Q$abs_srcdir\E\\|\$(SRCDIR)\\|i) {
                         # Also check that the header actually exists
                         if (-f $line) {
@@ -257,38 +259,38 @@ my %procedures = (
         },
     'embarcadero' =>
         sub {
-            # With Embarcadero C++Builder's preprocessor (cpp32.exe) the -Sx -Hp
-            # flags give us the list of #include files read, like the following:
-            #
-            #   Including ->->{whatever header file}
-            #
-            # where each "->" indicates the nesting level of the #include.  The
-            # logic here is otherwise the same as the 'VC' scheme.
-            #
-            # Since there's no object file name at all in that information,
-            # we must construct it ourselves.
+            /* With Embarcadero C++Builder's preprocessor (cpp32.exe) the -Sx -Hp
+             * flags give us the list of #include files read, like the following:
+             *
+             *   Including ->->{whatever header file}
+             *
+             * where each "->" indicates the nesting level of the #include. The
+             * logic here is otherwise the same as the 'VC' scheme.
+             *
+             * Since there's no object file name at all in that information,
+             * we must construct it ourselves. */
 
             (my $objfile = shift) =~ s|\.d$|.obj|i;
             my $line = shift;
 
-            # There are also other lines mixed in, for example compiler
-            # warnings, so we simply discard anything that doesn't start with
-            # the Note:
+            /* There are also other lines mixed in, for example compiler
+             * warnings, so we simply discard anything that doesn't start with
+             * the Note: */
 
             if (/^Including (->)*/) {
                 (my $tail = $') =~ s/\s*\R$//;
 
-                # C++Builder gives us relative paths when possible, so to
-                # remove system header dependencies, we convert them to
-                # absolute paths and check that they don't match $abs_srcdir
-                # or $abs_blddir, just as the 'VC' scheme.
+                /* C++Builder gives us relative paths when possible, so to
+                 * remove system header dependencies, we convert them to
+                 * absolute paths and check that they don't match $abs_srcdir
+                 * or $abs_blddir, just as the 'VC' scheme. */
                 $tail = rel2abs($tail);
 
                 unless (defined $depconv_cache{$tail}) {
                     my $dep = $tail;
-                    # Since we have already pre-populated the cache with
-                    # mappings for generated headers, we only need to deal
-                    # with the source tree.
+                    /* Since we have already pre-populated the cache with
+                    * mappings for generated headers, we only need to deal
+                    * with the source tree. */
                     if ($dep =~ s|^\Q$abs_srcdir\E\\|\$(SRCDIR)\\|i) {
                         # Also check that the header actually exists
                         if (-f $line) {

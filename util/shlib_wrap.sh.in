@@ -5,10 +5,12 @@
     use lib catdir($config{sourcedir}, 'Configurations');
     use platform;
 -}
+
 # To test this OpenSSL version's applications against another version's
 # shared libraries, simply set
 #
 #     OPENSSL_REGRESSION=/path/to/other/OpenSSL/build/tree
+
 if [ -n "$OPENSSL_REGRESSION" ]; then
     shlibwrap="$OPENSSL_REGRESSION/util/shlib_wrap.sh"
     if [ -x "$shlibwrap" ]; then
@@ -56,9 +58,9 @@ SunOS|IRIX*)
 		;;
 	# Why are newly built .so's preloaded anyway? Because run-time
 	# .so lookup path embedded into application takes precedence
-	# over LD_LIBRARY_PATH and as result application ends up linking
-	# to previously installed .so's. On IRIX instead of preloading
-	# newly built .so's we trick run-time linker to fail to find
+	# over LD_LIBRARY_PATH and as a result, the application ends up
+	# linking to previously installed .so's. On IRIX instead of preloading
+	# newly built .so's we trick run-time linker into failing to find
 	# the installed .so by setting _RLD_ROOT variable.
 	*ELF\ 32*MIPS*)
 		#_RLD_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"; export _RLD_LIST
@@ -85,11 +87,13 @@ SunOS|IRIX*)
 	unset rld_var
 	;;
 NONSTOP_KERNEL)
+	
 	# HPE NonStop has a proprietary mechanism for specifying
 	# the location of DLLs. It does not use PATH or variables
 	# commonly used on other platforms. The platform has a limited
-	# environment space keeping extraneous variables to a minimum
+	# environment space. Keeping extraneous variables to a minimum
 	# is recommended.
+
 	_RLD_LIB_PATH="${THERE}:$LD_LIBRARY_PATH"
 	export _RLD_LIB_PATH
 	;;
@@ -98,8 +102,8 @@ NONSTOP_KERNEL)
 	SHLIB_PATH="${THERE}:$SHLIB_PATH"		# legacy HP-UX
 	LIBPATH="${THERE}:$LIBPATH"			# AIX, OS/2
 	export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH
-	# Even though $PATH is adjusted [for Windows sake], it doesn't
-	# necessarily does the trick. Trouble is that with introduction
+	# Even though $PATH is adjusted [for Windows's sake], it doesn't
+	# necessarily do the trick. Trouble is that with the introduction
 	# of SafeDllSearchMode in XP/2003 it's more appropriate to copy
 	# .DLLs in vicinity of executable, which is done elsewhere...
 	if [ "$OSTYPE" != msdosdjgpp ]; then

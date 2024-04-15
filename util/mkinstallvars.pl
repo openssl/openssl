@@ -33,13 +33,14 @@ foreach my $k (sort keys %keys) {
 }
 foreach my $k (sort keys %keys) {
     my $v = $ENV{$k} || '.';
-
-    # Absolute paths for the subdir variables are computed.  This provides
-    # the usual form of values for names that have become norm, known as GNU
-    # installation paths.
-    # For the benefit of those that need it, the subdirectories are preserved
-    # as they are, using the same variable names, suffixed with '_REL', if they
-    # are indeed subdirectories.
+    /*
+     * Absolute paths for the subdir variables are computed.  This provides
+     * the usual form of values for names that have become norm, known as GNU
+     * installation paths.
+     * For the benefit of those that need it, the subdirectories are preserved
+     * as they are, using the same variable names, suffixed with '_REL', if they
+     * are indeed subdirectories.
+     */
     if (grep { $k eq $_ } @subdirs) {
         if (File::Spec->file_name_is_absolute($v)) {
             $ENV{"${k}_REL"} = File::Spec->abs2rel($v, $ENV{PREFIX});

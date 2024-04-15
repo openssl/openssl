@@ -1,86 +1,90 @@
-#! /usr/bin/env perl
-#
-# Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
-# Copyright Siemens AG 2019-2022
-#
-# Licensed under the Apache License 2.0 (the "License").
-# You may not use this file except in compliance with the License.
-# You can obtain a copy in the file LICENSE in the source distribution
-# or at https://www.openssl.org/source/license.html
-#
-# check-format.pl
-# - check formatting of C source according to OpenSSL coding style
-#
-# usage:
-#   check-format.pl [-l|--sloppy-len] [-l|--sloppy-bodylen]
-#                   [-s|--sloppy-space] [-c|--sloppy-comment]
-#                   [-m|--sloppy-macro] [-h|--sloppy-hang]
-#                   [-e|--eol-comment] [-1|--1-stmt]
-#                   <files>
-#
-# run self-tests:
-#   util/check-format.pl util/check-format-test-positives.c
-#   util/check-format.pl util/check-format-test-negatives.c
-#
-# checks adherence to the formatting rules of the OpenSSL coding guidelines
-# assuming that the input files contain syntactically correct C code.
-# This pragmatic tool is incomplete and yields some false positives.
-# Still it should be useful for detecting most typical glitches.
-#
-# options:
-#  -l | --sloppy-len     increase accepted max line length from 80 to 84
-#  -l | --sloppy-bodylen do not report function body length > 200
-#  -s | --sloppy-space   do not report whitespace nits
-#  -c | --sloppy-comment do not report indentation of comments
-#                        Otherwise for each multi-line comment the indentation of
-#                        its lines is checked for consistency. For each comment
-#                        that does not begin to the right of normal code its
-#                        indentation must be as for normal code, while in case it
-#                        also has no normal code to its right it is considered to
-#                        refer to the following line and may be indented equally.
-#  -m | --sloppy-macro   allow missing extra indentation of macro bodies
-#  -h | --sloppy-hang    when checking hanging indentation, do not report
-#                        * same indentation as on line before
-#                        * same indentation as non-hanging indent level
-#                        * indentation moved left (not beyond non-hanging indent)
-#                          just to fit contents within the line length limit
-#  -e | --eol-comment    report needless intermediate multiple consecutive spaces also before end-of-line comments
-#  -1 | --1-stmt         do more aggressive checks for { 1 stmt } - see below
-#
-# There are non-trivial false positives and negatives such as the following.
-#
-# * When a line contains several issues of the same kind only one is reported.
-#
-# * When a line contains more than one statement this is (correctly) reported
-#   but in some situations the indentation checks for subsequent lines go wrong.
-#
-# * There is the special OpenSSL rule not to unnecessarily use braces around
-#   single statements:
-#   {
-#       stmt;
-#   }
-#   except within if ... else constructs where some branch contains more than one
-#   statement. Since the exception is hard to recognize when such branches occur
-#   after the current position (such that false positives would be reported)
-#   the tool by checks for this rule by default only for do/while/for bodies.
-#   Yet with the --1-stmt option false positives are preferred over negatives.
-#   False negatives occur if the braces are more than two non-blank lines apart.
-#
-# * The presence of multiple consecutive spaces is regarded a coding style nit
-#   except when this is before end-of-line comments (unless the --eol-comment is given) and
-#   except when done in order to align certain columns over multiple lines, e.g.:
-#   # define AB  1
-#   # define CDE 22
-#   # define F   3333
-#   This pattern is recognized - and consequently extra space not reported -
-#   for a given line if in the non-blank line before or after (if existing)
-#   for each occurrence of "  \S" (where \S means non-space) in the given line
-#   there is " \S" in the other line in the respective column position.
-#   This may lead to both false negatives (in case of coincidental " \S")
-#   and false positives (in case of more complex multi-column alignment).
-#
-# * When just part of control structures depend on #if(n)(def), which can be
-#   considered bad programming style, indentation false positives occur, e.g.:
+/*-
+ *! /usr/bin/env perl
+ *
+ * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright Siemens AG 2019-2022
+ *
+ * Licensed under the Apache License 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * You can obtain a copy in the file LICENSE in the source distribution
+ * or at https://www.openssl.org/source/license.html
+ */
+/*-
+ * check-format.pl
+ * - check formatting of C source according to OpenSSL coding style
+ *
+ * usage:
+ *   check-format.pl [-l|--sloppy-len] [-l|--sloppy-bodylen]
+ *                   [-s|--sloppy-space] [-c|--sloppy-comment]
+ *                   [-m|--sloppy-macro] [-h|--sloppy-hang]
+ *                   [-e|--eol-comment] [-1|--1-stmt]
+ *                   <files>
+ *
+ * run self-tests:
+ *   util/check-format.pl util/check-format-test-positives.c
+ *   util/check-format.pl util/check-format-test-negatives.c
+ *
+ * checks adherence to the formatting rules of the OpenSSL coding guidelines
+ * assuming that the input files contain syntactically correct C code.
+ * This pragmatic tool is incomplete and yields some false positives.
+ * Still it should be useful for detecting most typical glitches.
+ *
+ * options:
+ *  -l | --sloppy-len     increase accepted max line length from 80 to 84
+ *  -l | --sloppy-bodylen do not report function body length > 200
+ *  -s | --sloppy-space   do not report whitespace nits
+ *  -c | --sloppy-comment do not report indentation of comments
+ *                        Otherwise for each multi-line comment the indentation of
+ *                        its lines is checked for consistency. For each comment
+ *                        that does not begin to the right of normal code its
+ *                        indentation must be as for normal code, while in case it
+ *                        also has no normal code to its right it is considered to
+ *                        refer to the following line and may be indented equally.
+ *  -m | --sloppy-macro   allow missing extra indentation of macro bodies
+ *  -h | --sloppy-hang    when checking hanging indentation, do not report
+ *                        * same indentation as on line before
+ *                        * same indentation as non-hanging indent level
+ *                        * indentation moved left (not beyond non-hanging indent)
+ *                          just to fit contents within the line length limit
+ *  -e | --eol-comment    report needless intermediate multiple consecutive spaces also before end-of-line comments
+ *  -1 | --1-stmt         do more aggressive checks for { 1 stmt } - see below
+ *
+ * There are non-trivial false positives and negatives such as the following.
+ *
+ * * When a line contains several issues of the same kind and only one is reported.
+ *
+ * * When a line contains more than one statement this is (correctly) reported
+ *   but in some situations the indentation checks for subsequent lines go wrong.
+ *
+ * * There is the special OpenSSL rule not to unnecessarily use braces around
+ *   single statements:
+ *   {
+ *       stmt;
+ *   }
+ *   except within if ... else constructs where some branch contains more than one
+ *   statement. Since the exception is hard to recognize when such branches occur
+ *   after the current position (such that false positives would be reported)
+ *   the tool by checks for this rule by default only for do/while/for bodies.
+ *   Yet with the --1-stmt option false positives are preferred over negatives.
+ *   False negatives occur if the braces are more than two non-blank lines apart.
+ *
+ * * The presence of multiple consecutive spaces is regarded a coding style nit
+ *   except when this is before end-of-line comments (unless the --eol-comment is given) and
+ *   except when done in order to align certain columns over multiple lines, e.g.:
+ *   # define AB  1
+ *   # define CDE 22
+ *   # define F   3333
+ *   This pattern is recognized - and consequently extra space not reported -
+ *   for a given line if in the non-blank line before or after (if existing)
+ *   for each occurrence of "  \S" (where \S means non-space) in the given line
+ *   there is " \S" in the other line in the respective column position.
+ *   This may lead to both false negatives (in case of coincidental " \S")
+ *   and false positives (in case of more complex multi-column alignment).
+ *
+ * * When just part of control structures depend on #if(n)(def), which can be
+ *
+ *   considered bad programming style, indentation false positives occur, e.g.:
+ */
 #   #if X
 #       if (1) /* bad style */
 #   #else

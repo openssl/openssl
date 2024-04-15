@@ -53,56 +53,58 @@ die "Please supply arguments\n"
 die "--type argument must be equal to 'lib' or 'dso'"
     if $type ne 'lib' && $type ne 'dso';
 
-# When building a "variant" shared library, with a custom SONAME, also customize
-# all the symbol versions.  This produces a shared object that can coexist
-# without conflict in the same address space as a default build, or an object
-# with a different variant tag.
-#
-# For example, with a target definition that includes:
-#
-#         shlib_variant => "-opt",
-#
-# we build the following objects:
-#
-# $ perl -le '
-#     for (@ARGV) {
-#         if ($l = readlink) {
-#             printf "%s -> %s\n", $_, $l
-#         } else {
-#             print
-#         }
-#     }' *.so*
-# libcrypto-opt.so.1.1
-# libcrypto.so -> libcrypto-opt.so.1.1
-# libssl-opt.so.1.1
-# libssl.so -> libssl-opt.so.1.1
-#
-# whose SONAMEs and dependencies are:
-#
-# $ for l in *.so; do
-#     echo $l
-#     readelf -d $l | egrep 'SONAME|NEEDED.*(ssl|crypto)'
-#   done
-# libcrypto.so
-#  0x000000000000000e (SONAME)             Library soname: [libcrypto-opt.so.1.1]
-# libssl.so
-#  0x0000000000000001 (NEEDED)             Shared library: [libcrypto-opt.so.1.1]
-#  0x000000000000000e (SONAME)             Library soname: [libssl-opt.so.1.1]
-#
-# We case-fold the variant tag to uppercase and replace all non-alnum
-# characters with "_".  This yields the following symbol versions:
-#
-# $ nm libcrypto.so | grep -w A
-# 0000000000000000 A OPENSSL_OPT_1_1_0
-# 0000000000000000 A OPENSSL_OPT_1_1_0a
-# 0000000000000000 A OPENSSL_OPT_1_1_0c
-# 0000000000000000 A OPENSSL_OPT_1_1_0d
-# 0000000000000000 A OPENSSL_OPT_1_1_0f
-# 0000000000000000 A OPENSSL_OPT_1_1_0g
-# $ nm libssl.so | grep -w A
-# 0000000000000000 A OPENSSL_OPT_1_1_0
-# 0000000000000000 A OPENSSL_OPT_1_1_0d
-#
+/*-
+ * When building a "variant" shared library, with a custom SONAME, also customize
+ * all the symbol versions.  This produces a shared object that can coexist
+ * without conflict in the same address space as a default build, or an object
+ * with a different variant tag.
+ *
+ * For example, with a target definition that includes:
+ *
+ *         shlib_variant => "-opt",
+ *
+ * we build the following objects:
+ *
+ * $ perl -le '
+ *     for (@ARGV) {
+ *         if ($l = readlink) {
+ *             printf "%s -> %s\n", $_, $l
+ *         } else {
+ *             print
+ *         }
+ *     }' *.so*
+ * libcrypto-opt.so.1.1
+ * libcrypto.so -> libcrypto-opt.so.1.1
+ * libssl-opt.so.1.1
+ * libssl.so -> libssl-opt.so.1.1
+ *
+ * whose SONAMEs and dependencies are:
+ *
+ * $ for l in *.so; do
+ *     echo $l
+ *     readelf -d $l | egrep 'SONAME|NEEDED.*(ssl|crypto)'
+ *   done
+ * libcrypto.so
+ *  0x000000000000000e (SONAME)             Library soname: [libcrypto-opt.so.1.1]
+ * libssl.so
+ *  0x0000000000000001 (NEEDED)             Shared library: [libcrypto-opt.so.1.1]
+ *  0x000000000000000e (SONAME)             Library soname: [libssl-opt.so.1.1]
+ *
+ * We case-fold the variant tag to uppercase and replace all non-alnum
+ * characters with "_".  This yields the following symbol versions:
+ *
+ * $ nm libcrypto.so | grep -w A
+ * 0000000000000000 A OPENSSL_OPT_1_1_0
+ * 0000000000000000 A OPENSSL_OPT_1_1_0a
+ * 0000000000000000 A OPENSSL_OPT_1_1_0c
+ * 0000000000000000 A OPENSSL_OPT_1_1_0d
+ * 0000000000000000 A OPENSSL_OPT_1_1_0f
+ * 0000000000000000 A OPENSSL_OPT_1_1_0g
+ * $ nm libssl.so | grep -w A
+ * 0000000000000000 A OPENSSL_OPT_1_1_0
+ * 0000000000000000 A OPENSSL_OPT_1_1_0d
+ */
+
 (my $SO_VARIANT = uc($target{"shlib_variant"} // '')) =~ s/\W/_/g;
 
 my $libname = $type eq 'lib' ? platform->sharedname($name) : platform->dsoname($name);
@@ -172,9 +174,11 @@ sub platform_filter {
     # True if no platforms are defined
     return 1 if scalar keys %platforms == 0;
 
-    # For any item platform tag, return the equivalence with the
-    # current platform settings if it exists there, return 0 otherwise
-    # if the item platform tag is true
+    /*
+     * For any item platform tag, return the equivalence with the
+     * current platform settings if it exists there, return 0 otherwise
+     * if the item platform tag is true]
+     */
     for (keys %platforms) {
         if (exists $OS->{platforms}->{$_}) {
             return $platforms{$_} == $OS->{platforms}->{$_};
@@ -363,11 +367,13 @@ _____
     print <<"_____";
 SYMBOL_VECTOR=(-
 _____
-    # It's uncertain how long aggregated lines the linker can handle,
-    # but it has been observed that at least 1024 characters is ok.
-    # Either way, this means that we need to keep track of the total
-    # line length of each "SYMBOL_VECTOR" statement.  Fortunately, we
-    # can have more than one of those...
+    /*
+     * It's uncertain how long aggregated lines the linker can handle,
+     * but it has been observed that at least 1024 characters is ok.
+     * Either way, this means that we need to keep track of the total
+     * line length of each "SYMBOL_VECTOR" statement.  Fortunately, we
+     * can have more than one of those...
+     */
     my $symvtextcount = 16;     # The length of "SYMBOL_VECTOR=("
     while (@slot_collection) {
         my $set = shift @slot_collection;
@@ -420,7 +426,7 @@ sub writer_ctest {
     print <<'_____';
 /*
  * Test file to check all DEF file symbols are present by trying
- * to link to all of them. This is *not* intended to be run!
+ * to link to all of them. This is *not* intended to be ran!
  */
 
 int main()

@@ -246,15 +246,18 @@ if ( ! $reindex && $statefile ) {
     }
 }
 
-# Scan each C source file and look for reason codes.  This is done by
-# looking for strings that "look like" reason codes: basically anything
-# consisting of all uppercase and numerics which _R_ in it and which has
-# the name of an error library at the start.  Should there be anything else,
-# such as a type name, we add exceptions here.
-# If a code doesn't exist in list compiled from headers then mark it
-# with the value "X" as a place holder to give it a value later.
-# Store all reason codes found in and %usedreasons so all those unreferenced
-# can be printed out.
+/* 
+ * Scan each C source file and look for reason codes.  This is done by
+ * looking for strings that "look like" reason codes: basically anything
+ * consisting of all uppercase and numerics with _R_ in it and which has
+ * the name of an error library at the start.  Should there be anything else,
+ * such as a type name, we add exceptions here.
+ * If a code doesn't exist in list compiled from headers then mark it
+ * with the value "X" as a placeholder to give it a value later.
+ * Store all reason codes found in and %usedreasons so all those unreferenced
+ * can be printed out.
+ */
+
 &phase("Scanning source");
 my %usedreasons;
 foreach my $file ( @source ) {
@@ -296,8 +299,10 @@ foreach my $lib ( keys %errorfile ) {
     print STDERR "$lib: $rnew{$lib} new reasons\n" if $rnew{$lib};
     $newstate = 1;
 
-    # If we get here then we have some new error codes so we
-    # need to rebuild the header file and C file.
+    /*
+     * If we get here then we have some new error codes so we
+     * need to rebuild the header file and C file.
+     */
 
     # Make a sorted list of error and reason codes for later use.
     my @reasons  = sort grep( /^${lib}_/, keys %rcodes );
@@ -305,10 +310,12 @@ foreach my $lib ( keys %errorfile ) {
     # indent level for innermost preprocessor lines
     my $indent = " ";
 
-    # Flag if the sub-library is disablable
-    # There are a few exceptions, where disabling the sub-library
-    # doesn't actually remove the whole sub-library, but rather implements
-    # it with a NULL backend.
+    /*
+     * Flag if the sub-library is disablable
+     * There are a few exceptions, where disabling the sub-library
+     * doesn't actually remove the whole sub-library, but rather implements
+     * it with a NULL backend.
+     */
     my $disablable =
         ($lib ne "SSL" && $lib ne "ASYNC" && $lib ne "DSO"
          && (grep { $lib eq uc $_ } @disablables, @disablables_int));

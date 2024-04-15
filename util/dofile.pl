@@ -21,7 +21,7 @@ use Getopt::Std;
 use OpenSSL::Template;
 
 # We expect to get a lot of information from configdata, so check that
-# it was part of our commandline.
+# it was part of our command line.
 die "You must run this script with -Mconfigdata\n"
     if !exists($config{target});
 
@@ -90,9 +90,9 @@ foreach (@template_settings) {
                                  autowarntext => \@autowarntext },
                        BROKEN => \&errorcallback,
                        PREPEND => $prepend,
-                       # To ensure that global variables and functions
-                       # defined in one template stick around for the
-                       # next, making them combinable
+                       /* To ensure that global variables and functions
+                        * defined in one template stick around for the
+                        * next, making them combinable */
                        PACKAGE => 'OpenSSL::safe');
     exit 1 if $failed;
 
