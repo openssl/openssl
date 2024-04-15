@@ -609,7 +609,7 @@ ok(run(app(["openssl", "x509", "-in", "testreq-cert.pem",
             "-noout", "-text"])), "cert verification");
 
 # Generate cert with explicit start and end dates
-my $today = strftime("%Y-%m-%d", localtime);
+my %today = (strftime("%Y-%m-%d", gmtime) => 1);
 my $cert = "self-signed_explicit_date.pem";
 ok(run(app(["openssl", "req", "-x509", "-new", "-text",
             "-config", srctop_file('test', 'test.cnf'),
@@ -617,5 +617,6 @@ ok(run(app(["openssl", "req", "-x509", "-new", "-text",
             "-not_before", "today",
             "-not_after", "today",
             "-out", $cert]))
-&& get_not_before_date($cert) eq $today
-&& get_not_after_date($cert) eq $today, "explicit start and end dates");
+&& ++$today{strftime("%Y-%m-%d", gmtime)}
+&& (grep { defined $today{$_} } get_not_before_date($cert))
+&& (grep { defined $today{$_} } get_not_after_date($cert)), "explicit start and end dates");
