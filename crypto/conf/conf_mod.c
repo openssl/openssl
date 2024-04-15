@@ -99,7 +99,7 @@ static void module_lists_free(void)
 
 DEFINE_RUN_ONCE_STATIC(do_init_module_list_lock)
 {
-    module_list_lock = ossl_rcu_lock_new(1);
+    module_list_lock = ossl_rcu_lock_new(1, NULL);
     if (module_list_lock == NULL) {
         ERR_raise(ERR_LIB_CONF, ERR_R_CRYPTO_LIB);
         return 0;
