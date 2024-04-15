@@ -11,9 +11,9 @@
 # Usage: ./util/ctags.sh [...arguments for ctags...]
 #
 # This script runs ctags twice. In the first pass, ctags extract macro
-# definitions. readtags that is part of Universal Ctags converts them
+# definitions. readtags that are part of Universal Ctags converts them
 # to ctags options. In the second pass, ctags reads the options and
-# extracts language objects with expanding the macros.
+# extracts language objects while expanding the macros.
 #
 # Universal Ctags 6.0.0 or higher is assumed.
 #
