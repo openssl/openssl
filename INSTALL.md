@@ -182,15 +182,15 @@ The following commands will install OpenSSL to a default system location.
 **Danger Zone:** even if you are impatient, please read the following two
 paragraphs carefully before you install OpenSSL.
 
-For security reasons the default system location is by default not writable
+For security reasons, the default system location is by default not writable
 for unprivileged users.  So for the final installation step administrative
 privileges are required.  The default system location and the procedure to
 obtain administrative privileges depends on the operating system.
 It is recommended to compile and test OpenSSL with normal user privileges
 and use administrative privileges only for the final installation step.
 
-On some platforms OpenSSL is preinstalled as part of the Operating System.
-In this case it is highly recommended not to overwrite the system versions,
+On some platforms, OpenSSL is preinstalled as part of the Operating System.
+In this case, it is highly recommended not to overwrite the system versions,
 because other applications or libraries might depend on it.
 To avoid breaking other applications, install your copy of OpenSSL to a
 [different location](#installing-to-a-different-location) which is not in
@@ -268,7 +268,7 @@ On OpenVMS:
 
 Note: if you do add options to the configuration command, please make sure
 you've read more than just this Quick Start, such as relevant `NOTES-*` files,
-the options outline below, as configuration options may change the outcome
+the options outlined below, as configuration options may change the outcome
 in otherwise unexpected ways.
 
 Configuration Options
@@ -310,7 +310,7 @@ together one-size-fits-all instructions.  You might have to pass more flags or
 set up environment variables to actually make it work.  Android and iOS cases
 are discussed in corresponding `Configurations/15-*.conf` files.  But there are
 cases when this option alone is sufficient.  For example to build the mingw64
-target on Linux `--cross-compile-prefix=x86_64-w64-mingw32-` works.  Naturally
+target on Linux `--cross-compile-prefix=x86_64-w64-mingw32-` works.  Naturally,
 provided that mingw packages are installed.  Today Debian and Ubuntu users
 have option to install a number of prepackaged cross-compilers along with
 corresponding run-time and development packages for "alien" hardware.  To give
@@ -346,7 +346,7 @@ be stored in this location. Shared libraries (`*.dll`) will always be
 installed to the `bin` directory.
 
 Some build targets have a multilib postfix set in the build configuration.
-For these targets the default libdir is `lib<multilib-postfix>`. Please use
+For these targets, the default libdir is `lib<multilib-postfix>`. Please use
 `--libdir=lib` to override the libdir if adding the postfix is undesirable.
 
 ### openssldir
@@ -515,7 +515,7 @@ This source is ignored by the FIPS provider.
 ### none
 
 Disable automatic seeding.  This is the default on some operating systems where
-no suitable entropy source exists, or no support for it is implemented yet.
+no suitable entropy source exists, or no support for it has been implemented yet.
 This option is ignored by the FIPS provider.
 
 For more information, see the section [Notes on random number generation][rng]
@@ -594,7 +594,7 @@ This option also disables tests.
 Do not use assembler code.
 
 This should be viewed as debugging/troubleshooting option rather than for
-production use.  On some platforms a small amount of assembler code may still
+production use.  On some platforms, a small amount of assembler code may still
 be used even with this option.
 
 ### no-async
@@ -614,7 +614,7 @@ By default, NonStop configurations use `no-atexit`.
 Don't automatically load all supported ciphers and digests.
 
 Typically OpenSSL will make available all of its supported ciphers and digests.
-For a statically linked application this may be undesirable if small executable
+For a statically linked application this may be undesirable if a small executable
 size is an objective.  This only affects libcrypto.  Ciphers and digests will
 have to be loaded manually using `EVP_add_cipher()` and `EVP_add_digest()`
 if this option is used.  This option will force a non-shared build.
@@ -624,7 +624,7 @@ if this option is used.  This option will force a non-shared build.
 Don't automatically load all libcrypto/libssl error strings.
 
 Typically OpenSSL will automatically load human readable error strings.  For a
-statically linked application this may be undesirable if small executable size
+statically linked application this may be undesirable if a small executable size
 is an objective.
 
 ### enable-brotli
@@ -669,7 +669,7 @@ configuration. Using this flag skips the wait.
 
 ### no-bulk
 
-Build only some minimal set of features.
+Build only a minimal set of features.
 This is a developer option used internally for CI build tests of the project.
 
 ### no-cached-fetch
@@ -864,7 +864,7 @@ Don't build the padlock engine.
 
 ### no-hw-padlock
 
-As synonym for `no-padlockeng`.  Deprecated and should not be used.
+A synonym for `no-padlockeng`.  Deprecated and should not be used.
 
 ### no-pic
 
@@ -874,7 +874,7 @@ Don't build with support for Position Independent Code.
 
 Don't pin the shared libraries.
 
-By default OpenSSL will attempt to stay in memory until the process exits.
+By default, OpenSSL will attempt to stay in memory until the process exits.
 This is so that libcrypto and libssl can be properly cleaned up automatically
 via an `atexit()` handler.  The handler is registered by libcrypto and cleans
 up both libraries.  On some platforms the `atexit()` handler will run on unload of
@@ -946,7 +946,7 @@ Exclude SSE2 code paths from 32-bit x86 assembly modules.
 
 Normally SSE2 extension is detected at run-time, but the decision whether or not
 the machine code will be executed is taken solely on CPU capability vector.  This
-means that if you happen to run OS kernel which does not support SSE2 extension
+means that if you happen to run an OS kernel which does not support SSE2 extension
 on Intel P4 processor, then your application might be exposed to "illegal
 instruction" exception.  There might be a way to enable support in kernel, e.g.
 FreeBSD kernel can be compiled with `CPU_ENABLE_SSE`, and there is a way to
@@ -1008,7 +1008,7 @@ Don't build with support for thread pool functionality.
 
 Build with thread pool functionality. If enabled, OpenSSL algorithms may
 use the thread pool to perform parallel computation. This option in itself
-does not enable OpenSSL to spawn new threads. Currently the only supported
+does not enable OpenSSL to spawn new threads. Currently, the only supported
 thread pool mechanism is the default thread pool.
 
 ### no-default-thread-pool
@@ -1088,7 +1088,7 @@ This is only supported on systems where loading of shared libraries is supported
 
 Enables qlog output support for the QUIC protocol. This functionality is
 unstable and implements a draft version of the qlog specification. The qlog
-output from OpenSSL will change in incompatible ways in future, and is not
+output from OpenSSL will change in incompatible ways in the future and is not
 subject to any format stability or compatibility guarantees at this time. See
 the manpage openssl-qlog(7) for details.
 
@@ -1149,7 +1149,7 @@ The `ripemd` algorithm is deprecated and if used is synonymous with `rmd160`.
 These system specific options will be recognised and passed through to the
 compiler to allow you to define preprocessor symbols, specify additional
 libraries, library directories or other compiler options.  It might be worth
-noting that some compilers generate code specifically for processor the
+noting that some compilers generate code specifically for the processor that the
 compiler currently executes on.  This is not necessarily what you might have
 in mind, since it might be unsuitable for execution on other, typically older,
 processor.  Consult your compiler documentation.
@@ -1247,7 +1247,7 @@ However, the following will see both set variables:
     $ CC=gcc CROSS_COMPILE=x86_64-w64-mingw32- ./Configure -DCOOKIE
 
 If `CC` is set, it is advisable to also set `CXX` to ensure both the C and C++
-compiler are in the same "family".  This becomes relevant with
+compilers are in the same "family".  This becomes relevant with
 `enable-external-tests` and `enable-buildtest-c++`.
 
 ### Reconfigure
@@ -1290,7 +1290,7 @@ Configure OpenSSL
 
 ### Automatic Configuration
 
-In previous version, the `config` script determined the platform type and
+In previous versions, the `config` script determined the platform type and
 compiler and then called `Configure`. Starting with this release, they are
 the same.
 
@@ -1413,7 +1413,7 @@ be tested.  Run:
 **Warning:** you MUST run the tests from an unprivileged account (or disable
 your privileges temporarily if your platform allows it).
 
-See [test/README.md](test/README.md) for further details how run tests.
+See [test/README.md](test/README.md) for further details on how to run tests.
 
 See [test/README-dev.md](test/README-dev.md) for guidelines on adding tests.
 
@@ -1480,7 +1480,7 @@ its default):
 
 Additionally, install will add the following directories under
 OPENSSLDIR (the directory given with `--openssldir` or its default)
-for you convenience:
+for your convenience:
 
     certs          Initially empty, this is the default location
                    for certificate files.
@@ -1492,7 +1492,7 @@ The installation directory should be appropriately protected to ensure
 unprivileged users cannot make changes to OpenSSL binaries or files, or
 install engines.  If you already have a pre-installed version of OpenSSL as
 part of your Operating System it is recommended that you do not overwrite
-the system version and instead install to somewhere else.
+the system version and instead install it somewhere else.
 
 Package builders who want to configure the library for standard locations,
 but have the package installed somewhere else so that it can easily be
@@ -1609,7 +1609,7 @@ over the build process.  Typically these should be defined prior to running
                    The name of the rc executable to use. The default will be as
                    defined for the target platform in the ".conf" file. If not
                    defined then "windres" will be used. The WINDRES environment
-                   variable is synonymous to this. If both are defined then RC
+                   variable is synonymous with this. If both are defined then RC
                    takes precedence.
 
     WINDRES
@@ -1698,7 +1698,7 @@ Configuration Problems
 ### Selecting the correct target
 
 The `./Configure` script tries hard to guess your operating system, but in some
-cases it does not succeed. You will see a message like the following:
+cases, it does not succeed. You will see a message like the following:
 
     $ ./Configure
     Operating system: x86-whatever-minix
@@ -1728,8 +1728,8 @@ a Perl list `my %targets = ( ... )`.
     )
 
 If you call `./Configure` without arguments, it will give you a list of all
-known targets. Using `grep`, you can lookup the target definition in the
-`Configurations/` directory. For example the `android-x86_64` can be found in
+known targets. Using `grep`, you can look up the target definition in the
+`Configurations/` directory. For example, the `android-x86_64` can be found in
 [Configurations/15-android.conf](Configurations/15-android.conf).
 
 The directory contains two README files, which explain the general syntax and
@@ -1773,9 +1773,9 @@ the error message. It might be that the compiler is already telling you
 exactly what you need to do to fix your problem.
 
 There may be reasons for the failure that aren't problems in OpenSSL itself,
-for example if the compiler reports missing standard or third party headers.
+for example, if the compiler reports missing standard or third party headers.
 
-If the build succeeded previously, but fails after a source or configuration
+If the build succeeded previously but fails after a source or configuration
 change, it might be helpful to clean the build tree before attempting another
 build.  Use this command:
 
@@ -1801,7 +1801,7 @@ Test Failures
 If some tests fail, look at the output.  There may be reasons for the failure
 that isn't a problem in OpenSSL itself (like an OS malfunction or a Perl issue).
 
-You may want increased verbosity, that can be accomplished as described in
+You may want increased verbosity, which can be accomplished as described in
 section [Test Failures of test/README.md](test/README.md#test-failures).
 
 You may also want to selectively specify which test(s) to perform. This can be
@@ -1849,7 +1849,7 @@ ifdef test cannot be used.)
 Notes on shared libraries
 -------------------------
 
-For most systems the OpenSSL `Configure` script knows what is needed to
+For most systems, the OpenSSL `Configure` script knows what is needed to
 build shared libraries for libcrypto and libssl.  On these systems
 the shared libraries will be created by default.  This can be suppressed and
 only static libraries created by using the `no-shared` option.  On systems
