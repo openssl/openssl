@@ -111,14 +111,7 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
 {
     switch (cmd) {
     case X509_L_ADD_STORE:
-        /* If no URI is given, use the default cert dir as default URI */
-        if (argp == NULL)
-            argp = ossl_safe_getenv(X509_get_default_cert_dir_env());
-
-        if (argp == NULL)
-            argp = X509_get_default_cert_dir();
-
-        {
+        if (argp != NULL) {
             STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
             char *data = OPENSSL_strdup(argp);
 
@@ -131,12 +124,15 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
             }
             return sk_OPENSSL_STRING_push(uris, data) > 0;
         }
+        /* NOP if no URI is given. */
+        return 1;
     case X509_L_LOAD_STORE:
         /* This is a shortcut for quick loading of specific containers */
         return cache_objects(ctx, argp, NULL, 0, libctx, propq);
+    default:
+        /* Unsupported command */
+        return 0;
     }
-
-    return 0;
 }
 
 static int by_store_ctrl(X509_LOOKUP *ctx, int cmd,
