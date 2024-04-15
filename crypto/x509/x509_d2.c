@@ -30,6 +30,11 @@ int X509_STORE_set_default_paths_ex(X509_STORE *ctx, OSSL_LIB_CTX *libctx,
     lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_store());
     if (lookup == NULL)
         return 0;
+    /*
+     * The NULL URI argument will activate any default URIs (presently none),
+     * DO NOT pass the default CApath or CAfile, they're already handled above,
+     * likely much more efficiently.
+     */
     X509_LOOKUP_add_store_ex(lookup, NULL, libctx, propq);
 
     /* clear any errors */
