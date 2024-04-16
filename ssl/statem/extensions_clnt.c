@@ -16,10 +16,26 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
                                           unsigned int context, X509 *x,
                                           size_t chainidx)
 {
-    /* Add RI if renegotiating */
-    if (!s->renegotiate)
-        return EXT_RETURN_NOT_SENT;
+    if (!s->renegotiate) {
+        /* If not renegotiating, send an empty RI extension to indicate support */
 
+        if (s->min_proto_version <= TLS1_VERSION) {
+            /* For TLS <= 1.0 SCSV is used instead */
+            return EXT_RETURN_NOT_SENT;
+        }
+
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u8(pkt, 0)
+            || !WPACKET_close(pkt)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+
+        return EXT_RETURN_SENT;
+    }
+
+    /* Add a complete RI extension if renegotiating */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_sub_memcpy_u8(pkt, s->s3.previous_client_finished,

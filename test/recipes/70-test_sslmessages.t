@@ -169,12 +169,13 @@ my $proxy = TLSProxy::Proxy->new(
     [0,0,0,0]
 );
 
+plan tests => 22;
+
 #Test 1: Check we get all the right messages for a default handshake
 (undef, my $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-no_tls1_3 -sess_out ".$session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 21;
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
                "Default handshake test");
@@ -425,4 +426,18 @@ SKIP: {
                    checkhandshake::DEFAULT_EXTENSIONS
                    | checkhandshake::EC_POINT_FORMAT_SRV_EXTENSION,
                    "EC handshake test");
+}
+
+#Test 22: TLS1.2 handshake
+SKIP: {
+    skip "TLSv1.2 disabled", 1
+        if disabled("tls1_2");
+
+    $proxy->clear();
+    $proxy->clientflags("-tls1_2");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+                checkhandshake::DEFAULT_EXTENSIONS
+                | checkhandshake::RENEGOTIATE_CLI_EXTENSION,
+                "TLS 1.2 handshake test");
 }

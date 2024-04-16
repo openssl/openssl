@@ -2,8 +2,8 @@ Sent TLS Record
 Header:
   Version = TLS 1.0 (0x301)
   Content Type = Handshake (22)
-  Length = 256
-    ClientHello, Length=252
+  Length = 261
+    ClientHello, Length=257
       client_version=0x303 (TLS 1.2)
       Random:
         gmt_unix_time=0x????????
@@ -13,12 +13,14 @@ Header:
         {0x13, 0x01} TLS_AES_128_GCM_SHA256
       compression_methods (len=1)
         No Compression (0x00)
-      extensions, length = 209
+      extensions, length = 214
         extension_type=UNKNOWN(57), length=49
           0000 - 0c 00 0f 00 01 04 80 00-75 30 03 02 44 b0 0e   ........u0..D..
           000f - 01 02 04 04 80 0c 00 00-05 04 80 08 00 00 06   ...............
           001e - 04 80 08 00 00 07 04 80-08 00 00 08 02 40 64   .............@d
           002d - 09 02 40 64                                    ..@d
+        extension_type=renegotiate(65281), length=1
+            <EMPTY>
         extension_type=ec_point_formats(11), length=4
           uncompressed (0)
           ansiX962_compressed_prime (1)
@@ -67,7 +69,7 @@ Header:
 
 Sent Frame: Crypto
     Offset: 0
-    Len: 256
+    Len: 261
 Sent Frame: Padding
 Sent Packet
   Packet Type: Initial

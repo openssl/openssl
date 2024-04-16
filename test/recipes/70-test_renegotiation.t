@@ -26,7 +26,7 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLS <= 1.2 enabled"
     if alldisabled(("ssl3", "tls1", "tls1_1", "tls1_2"));
 
-plan tests => 5;
+plan tests => 6;
 
 my $proxy = TLSProxy::Proxy->new(
     undef,
@@ -44,7 +44,7 @@ ok(TLSProxy::Message->success(), "Basic renegotiation");
 
 #Test 2: Client does not send the Reneg SCSV. Reneg should fail
 $proxy->clear();
-$proxy->filter(\&reneg_filter);
+$proxy->filter(\&reneg_scsv_filter);
 $proxy->clientflags("-no_tls1_3");
 $proxy->serverflags("-client_renegotiation");
 $proxy->reneg(1);
@@ -52,9 +52,24 @@ $proxy->start();
 ok(TLSProxy::Message->fail(), "No client SCSV");
 
 SKIP: {
+    skip "TLSv1.2 disabled", 1
+        if disabled("tls1_2");
+
+    #Test 3: TLS 1.2 client does not send the Reneg extension. Reneg should fail
+
+    $proxy->clear();
+    $proxy->filter(\&reneg_ext_filter);
+    $proxy->clientflags("-tls1_2");
+    $proxy->serverflags("-client_renegotiation");
+    $proxy->reneg(1);
+    $proxy->start();
+    ok(TLSProxy::Message->fail(), "No client extension");
+}
+
+SKIP: {
     skip "TLSv1.2 or TLSv1.1 disabled", 1
         if disabled("tls1_2") || disabled("tls1_1");
-    #Test 3: Check that the ClientHello version remains the same in the reneg
+    #Test 4: Check that the ClientHello version remains the same in the reneg
     #        handshake
     $proxy->clear();
     $proxy->filter(undef);
@@ -84,7 +99,7 @@ SKIP: {
     skip "TLSv1.2 disabled", 1
         if disabled("tls1_2");
 
-    #Test 4: Test for CVE-2021-3449. client_sig_algs instead of sig_algs in
+    #Test 5: Test for CVE-2021-3449. client_sig_algs instead of sig_algs in
     #        resumption ClientHello
     $proxy->clear();
     $proxy->filter(\&sigalgs_filter);
@@ -98,7 +113,7 @@ SKIP: {
 SKIP: {
     skip "TLSv1.2 and TLSv1.1 disabled", 1
         if disabled("tls1_2") && disabled("tls1_1");
-    #Test 5: Client fails to do renegotiation
+    #Test 6: Client fails to do renegotiation
     $proxy->clear();
     $proxy->filter(undef);
     $proxy->serverflags("-no_tls1_3");
@@ -109,7 +124,7 @@ SKIP: {
         "Check client renegotiation failed");
 }
 
-sub reneg_filter
+sub reneg_scsv_filter
 {
     my $proxy = shift;
 
@@ -124,6 +139,23 @@ sub reneg_filter
             my @ciphersuite = (0x002f);
             $message->ciphersuites(\@ciphersuite);
             $message->ciphersuite_len(2);
+            $message->repack();
+        }
+    }
+}
+
+sub reneg_ext_filter
+{
+    my $proxy = shift;
+
+    # We're only interested in the initial ClientHello message
+    if ($proxy->flight != 0) {
+        return;
+    }
+
+    foreach my $message (@{$proxy->message_list}) {
+        if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
+            $message->delete_extension(TLSProxy::Message::EXT_RENEGOTIATE);
             $message->repack();
         }
     }
