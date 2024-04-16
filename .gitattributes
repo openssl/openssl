@@ -6,7 +6,10 @@
 # For git archive
 fuzz/corpora/**                         export-ignore
 Configurations/*.norelease.conf         export-ignore
+# We generally avoid anything with a name starting with a period.
+# However, .ctags.d is precious, so we don't ignore that.
 .*                                      export-ignore
+.ctags.d                                !export-ignore
 util/mktar.sh                           export-ignore
 krb5                                    export-ignore
 pyca-cryptography                       export-ignore
