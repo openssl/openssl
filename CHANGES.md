@@ -15769,8 +15769,8 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
  * Fix BN_rand_range bug pointed out by Dominikus Scherkl
    <Dominikus.Scherkl@biodata.com>.  (The previous implementation
-   worked incorrectly for those cases where range = `10..._2`  and
-   `3*range`  is two bits longer than  range.)
+   worked incorrectly for those cases where range = `10..._2` and
+   `3*range` is two bits longer than range.)
 
    *Bodo Moeller*
 
@@ -15880,7 +15880,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
  * Bugfix in ssl3_accept (ssl/s3_srvr.c): Case SSL3_ST_SW_HELLO_REQ_C
    should end in 'break', not 'goto end' which circumvents various
-   cleanups done in state SSL_ST_OK.   But session related stuff
+   cleanups done in state SSL_ST_OK. But session related stuff
    must be disabled for SSL_ST_OK in the case that we just sent a
    HelloRequest.
 
@@ -16283,11 +16283,11 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
    2. Fix logical glitch in is_MemCheck_on() aka CRYPTO_is_mem_check_on().
 
    3. Count how many times MemCheck_off() has been called so that
-      nested use can be treated correctly.  This also avoids
+      nested use can be treated correctly. This also avoids
       inband-signalling in the previous code (which relied on the
       assumption that thread ID 0 is impossible).
 
-   *Bodo Moeller*
+   *Bodo Moeller* 
 
  * Add "-rand" option also to s_client and s_server.
 

@@ -1464,7 +1464,7 @@ OpenSSL 0.9.x
   * New elliptic curve library section.
   * New AES (Rijndael) library section.
   * Support for new platforms: Windows CE, Tandem OSS, A/UX, AIX 64-bit,
-    Linux x86_64, Linux 64-bit on Sparc v9
+    Linux x86_64, and Linux 64-bit on Sparc v9
   * Extended support for some platforms: VxWorks
   * Enhanced support for shared libraries.
   * Now only builds PIC code when shared library support is requested.
