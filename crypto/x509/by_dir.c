@@ -263,7 +263,11 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     if (l == 0) {
         hash[0] = 0;
     }
+#ifndef OPENSSL_NO_MD5    
     hash[1] = X509_NAME_hash_old(name); /* MD5 name hash */
+#else
+    hash[1] = 0;
+#endif
 
     for (l = 0; l < 2; ++l) {
         h = hash[l];
