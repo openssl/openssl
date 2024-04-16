@@ -588,8 +588,6 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
         return ctx->store_loader_store;
     case OSSL_LIB_CTX_SELF_TEST_CB_INDEX:
         return ctx->self_test_cb;
-    case OSSL_LIB_CTX_RCU_LOCAL_KEY_INDEX:
-        return &ctx->rcu_local_key;
 #endif
 #ifndef OPENSSL_NO_THREAD_POOL
     case OSSL_LIB_CTX_THREAD_INDEX:
@@ -658,4 +656,12 @@ const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx)
         return "Thread-local default library context";
     return "Non-default library context";
 #endif
+}
+
+CRYPTO_THREAD_LOCAL *ossl_lib_ctx_get_rcukey(OSSL_LIB_CTX *libctx)
+{
+    libctx = ossl_lib_ctx_get_concrete(libctx);
+    if (libctx == NULL)
+        return NULL;
+    return &libctx->rcu_local_key;
 }

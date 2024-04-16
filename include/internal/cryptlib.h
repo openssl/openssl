@@ -117,8 +117,7 @@ typedef struct ossl_ex_data_global_st {
 # define OSSL_LIB_CTX_CHILD_PROVIDER_INDEX          18
 # define OSSL_LIB_CTX_THREAD_INDEX                  19
 # define OSSL_LIB_CTX_DECODER_CACHE_INDEX           20
-# define OSSL_LIB_CTX_RCU_LOCAL_KEY_INDEX           21
-# define OSSL_LIB_CTX_MAX_INDEXES                   21
+# define OSSL_LIB_CTX_MAX_INDEXES                   20
 
 OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx);
@@ -131,6 +130,7 @@ void ossl_lib_ctx_default_deinit(void);
 OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx);
 
 const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx);
+CRYPTO_THREAD_LOCAL *ossl_lib_ctx_get_rcukey(OSSL_LIB_CTX *libctx);
 
 OSSL_LIB_CTX *ossl_crypto_ex_data_get_ossl_lib_ctx(const CRYPTO_EX_DATA *ad);
 int ossl_crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,

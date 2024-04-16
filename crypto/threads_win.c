@@ -187,7 +187,7 @@ static inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK *lock)
 static void ossl_rcu_free_local_data(void *arg)
 {
     OSSL_LIB_CTX *ctx = arg;
-    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_RCU_LOCAL_KEY_INDEX);
+    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(ctx);
     struct rcu_thr_data *data = CRYPTO_THREAD_get_local(lkey);
     OPENSSL_free(data);
 }
@@ -197,7 +197,7 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
     struct rcu_thr_data *data;
     int i;
     int available_qp = -1;
-    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_data(lock->ctx, OSSL_LIB_CTX_RCU_LOCAL_KEY_INDEX);;
+    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(lock->ctx);
 
     /*
      * we're going to access current_qp here so ask the
@@ -242,7 +242,7 @@ void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK *lock)
 
 void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
 {
-    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_data(lock->ctx, OSSL_LIB_CTX_RCU_LOCAL_KEY_INDEX);
+    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(lock->ctx);
     struct rcu_thr_data *data = CRYPTO_THREAD_get_local(lkey);
     int i;
     LONG64 ret;
