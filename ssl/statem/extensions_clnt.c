@@ -19,10 +19,16 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
     if (!s->renegotiate) {
         /* If not renegotiating, send an empty RI extension to indicate support */
 
-        if (!SSL_CONNECTION_IS_DTLS(s) && s->min_proto_version <= TLS1_VERSION) {
-            /* For TLS <= 1.0 SCSV is used instead */
+        if (!SSL_CONNECTION_IS_DTLS(s)
+            && (s->min_proto_version <= TLS1_VERSION
+                || s->min_proto_version >= TLS1_3_VERSION)) {
+            /*
+             * For TLS <= 1.0 SCSV is used instead, and for TLS 1.3 this
+             * extension isn't used at all.
+             */
             return EXT_RETURN_NOT_SENT;
         }
+
 
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
             || !WPACKET_start_sub_packet_u16(pkt)
