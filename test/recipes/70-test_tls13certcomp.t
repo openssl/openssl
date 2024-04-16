@@ -109,6 +109,9 @@ plan skip_all => "$test_name needs compression and algorithms enabled"
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_COMPRESS_CERTIFICATE,
         TLSProxy::Message::CLIENT,
         checkhandshake::CERT_COMP_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
 
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
         TLSProxy::Message::SERVER,

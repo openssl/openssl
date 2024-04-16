@@ -41,6 +41,12 @@ OpenSSL 3.4
 
    * Tomas Mraz*
 
+ * Use an empty renegotiate extension in TLS client hellos instead of
+   the empty renegotiation SCSV, for all connections with a minimum TLS
+   version > 1.0.
+
+   *Tim Perry*
+
 OpenSSL 3.3
 -----------
 

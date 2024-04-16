@@ -128,7 +128,7 @@ my $proxy = TLSProxy::Proxy->new(
         checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
         TLSProxy::Message::CLIENT,
-        checkhandshake::RENEGOTIATE_CLI_EXTENSION],
+        checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_NPN,
         TLSProxy::Message::CLIENT,
         checkhandshake::NPN_CLI_EXTENSION],
