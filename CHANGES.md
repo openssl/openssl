@@ -16520,7 +16520,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
    with an initial SSL 3.0/TLS record that is too small to contain the
    first two bytes of the ClientHello message, i.e. client_version.
    (Note that this is a pathologic case that probably has never happened
-   in real life.)  The previous approach was to use the version number
+   in real life.) The previous approach was to use the version number
    from the record header as a substitute; but our protocol choice
    should not depend on that one because it is not authenticated
    by the Finished messages.
@@ -16554,15 +16554,15 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
    *Steve Henson*
 
  * On VMS, stdout may very well lead to a file that is written to
-   in a record-oriented fashion.  That means that every write() will
+   in a record-oriented fashion. That means that every write() will
    write a separate record, which will be read separately by the
-   programs trying to read from it.  This can be very confusing.
+   programs trying to read from it. This can be very confusing.
 
    The solution is to put a BIO filter in the way that will buffer
    text until a linefeed is reached, and then write everything a
    line at a time, so every record written will be an actual line,
    not chunks of lines and not (usually doesn't happen, but I've
-   seen it once) several lines in one record.  BIO_f_linebuffer() is
+   seen it once) several lines in one record. BIO_f_linebuffer() is
    the answer.
 
    Currently, it's a VMS-only method, because that's where it has
@@ -16598,10 +16598,10 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
    *Ulf Möller*
 
  * Add RPM specification openssl.spec and modify it to build three
-   packages.  The default package contains applications, application
-   documentation and run-time libraries.  The devel package contains
-   include files, static libraries and function documentation.  The
-   doc package contains the contents of the doc directory.  The original
+   packages. The default package contains applications, application
+   documentation and run-time libraries. The devel package contains
+   include files, static libraries and function documentation. The
+   doc package contains the contents of the doc directory. The original
    openssl.spec was provided by Damien Miller <djm@mindrot.org>.
 
    *Richard Levitte*
