@@ -289,24 +289,23 @@ OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaKeyUpdate(const X509 *newWithNew,
     OSSL_CMP_ITAV *itav;
     OSSL_CMP_ROOTCAKEYUPDATE *upd = NULL;
 
-    if (newWithNew == NULL)
-        goto null_value;
+    if (newWithNew != NULL) {
+        upd = OSSL_CMP_ROOTCAKEYUPDATE_new();
+        if (upd == NULL)
+            return NULL;
 
-    upd = OSSL_CMP_ROOTCAKEYUPDATE_new();
-    if (upd == NULL)
-        return NULL;
+        if ((upd->newWithNew = X509_dup(newWithNew)) == NULL)
+            goto err;
+        if (newWithOld != NULL
+            && (upd->newWithOld = X509_dup(newWithOld)) == NULL)
+            goto err;
+        if (oldWithNew != NULL
+            && (upd->oldWithNew = X509_dup(oldWithNew)) == NULL)
+            goto err;
+    }
 
-    if ((upd->newWithNew = X509_dup(newWithNew)) == NULL)
-        goto err;
-    if (newWithOld != NULL && (upd->newWithOld = X509_dup(newWithOld)) == NULL)
-        goto err;
-    if (oldWithNew != NULL && (upd->oldWithNew = X509_dup(oldWithNew)) == NULL)
-        goto err;
-
- null_value:
     if ((itav = OSSL_CMP_ITAV_new()) == NULL)
         goto err;
-
     itav->infoType = OBJ_nid2obj(NID_id_it_rootCaKeyUpdate);
     itav->infoValue.rootCaKeyUpdate = upd;
     return itav;
