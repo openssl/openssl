@@ -76,6 +76,7 @@ mlock
 mmap
 mprotect
 munmap
+nanosleep
 opendir
 openlog
 poll
