@@ -200,6 +200,7 @@ extern "C" {
 # endif
 
 # ifndef ossl_ssize_t
+#  include <sys/types.h>
 #  define ossl_ssize_t ssize_t
 #  if defined(SSIZE_MAX)
 #   define OSSL_SSIZE_MAX SSIZE_MAX
