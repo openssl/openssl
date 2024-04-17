@@ -18,4 +18,3 @@ unless the following macros are defined:
 
 This is, for example, the case when building with gcc or clang and using the
 flag `-ansi`.
-
