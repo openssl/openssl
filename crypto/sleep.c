@@ -12,30 +12,37 @@
 
 /* system-specific variants defining OSSL_sleep() */
 #if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
-#include <unistd.h>
+# if defined(__TANDEM) && !defined(_REENTRANT)
 
+#  include <cextdecs.h(PROCESS_DELAY_)>
 void OSSL_sleep(uint64_t millis)
 {
-# ifdef OPENSSL_SYS_VXWORKS
-    struct timespec ts;
-
-    ts.tv_sec = (long int) (millis / 1000);
-    ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
-    nanosleep(&ts, NULL);
-# elif defined(__TANDEM) && !defined(_REENTRANT)
-#   include <cextdecs.h(PROCESS_DELAY_)>
-
     /* HPNS does not support usleep for non threaded apps */
     PROCESS_DELAY_(millis * 1000);
-# else
+}
+# elif defined(__DJGPP__)
+#  include <unistd.h>
+void OSSL_sleep(uint64_t millis)
+{
     unsigned int s = (unsigned int)(millis / 1000);
     unsigned int us = (unsigned int)((millis % 1000) * 1000);
 
     if (s > 0)
         sleep(s);
     usleep(us);
-# endif
 }
+# else
+/* nanosleep is defined by POSIX.1-2001 */
+#  include <time.h>
+void OSSL_sleep(uint64_t millis)
+{
+    struct timespec ts;
+
+    ts.tv_sec = (long int) (millis / 1000);
+    ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
+    nanosleep(&ts, NULL);
+}
+# endif
 #elif defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
 # include <windows.h>
 
