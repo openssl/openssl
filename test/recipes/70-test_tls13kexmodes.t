@@ -102,6 +102,9 @@ plan skip_all => "$test_name needs EC enabled"
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
         TLSProxy::Message::CLIENT,
         checkhandshake::PSK_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
 
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
         TLSProxy::Message::SERVER,
@@ -152,6 +155,9 @@ plan skip_all => "$test_name needs EC enabled"
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
         TLSProxy::Message::CLIENT,
         checkhandshake::PSK_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
 
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
         TLSProxy::Message::SERVER,

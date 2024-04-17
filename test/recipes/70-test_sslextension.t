@@ -206,6 +206,7 @@ SKIP: {
     #Test 3: Sending a zero length extension block should pass
     $proxy->clear();
     $proxy->filter(\&extension_filter);
+    $proxy->cipherc("DEFAULT:\@SECLEVEL=0");
     $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
     $proxy->clientflags("-no_tls1_3");
     $proxy->start();

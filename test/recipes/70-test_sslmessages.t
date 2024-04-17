@@ -128,7 +128,7 @@ my $proxy = TLSProxy::Proxy->new(
         checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
         TLSProxy::Message::CLIENT,
-        checkhandshake::RENEGOTIATE_CLI_EXTENSION],
+        checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_NPN,
         TLSProxy::Message::CLIENT,
         checkhandshake::NPN_CLI_EXTENSION],
@@ -169,7 +169,7 @@ my $proxy = TLSProxy::Proxy->new(
     [0,0,0,0]
 );
 
-plan tests => 22;
+plan tests => 21;
 
 #Test 1: Check we get all the right messages for a default handshake
 (undef, my $session) = tempfile();
@@ -426,18 +426,4 @@ SKIP: {
                    checkhandshake::DEFAULT_EXTENSIONS
                    | checkhandshake::EC_POINT_FORMAT_SRV_EXTENSION,
                    "EC handshake test");
-}
-
-#Test 22: TLS1.2 handshake
-SKIP: {
-    skip "TLSv1.2 disabled", 1
-        if disabled("tls1_2");
-
-    $proxy->clear();
-    $proxy->clientflags("-tls1_2");
-    $proxy->start();
-    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-                checkhandshake::DEFAULT_EXTENSIONS
-                | checkhandshake::RENEGOTIATE_CLI_EXTENSION,
-                "TLS 1.2 handshake test");
 }

@@ -713,14 +713,14 @@ static int full_client_hello_callback(SSL *s, int *al, void *arg)
     int *ctr = arg;
     const unsigned char *p;
     int *exts;
-    /* We only configure two ciphers, but the SCSV is added automatically. */
 #ifdef OPENSSL_NO_EC
-    const unsigned char expected_ciphers[] = {0x00, 0x9d, 0x00, 0xff};
+    const unsigned char expected_ciphers[] = {0x00, 0x9d};
 #else
     const unsigned char expected_ciphers[] = {0x00, 0x9d, 0xc0,
-                                              0x2c, 0x00, 0xff};
+                                              0x2c};
 #endif
     const int expected_extensions[] = {
+                                       65281,
 #ifndef OPENSSL_NO_EC
                                        11, 10,
 #endif

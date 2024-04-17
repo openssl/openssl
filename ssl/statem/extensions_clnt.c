@@ -20,8 +20,9 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
         /* If not renegotiating, send an empty RI extension to indicate support */
 
         if (!SSL_CONNECTION_IS_DTLS(s)
-            && (s->min_proto_version <= TLS1_VERSION
-                || s->min_proto_version >= TLS1_3_VERSION)) {
+            && (s->min_proto_version >= TLS1_3_VERSION
+                || (ssl_security(s, SSL_SECOP_VERSION, 0, TLS1_VERSION, NULL)
+                    && s->min_proto_version <= TLS1_VERSION))) {
             /*
              * For TLS <= 1.0 SCSV is used instead, and for TLS 1.3 this
              * extension isn't used at all.
