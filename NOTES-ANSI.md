@@ -6,7 +6,7 @@ the following configuration settings:
 
 -   `no-asm`
 
-    There are cases if `asm()` calls in our C source, which isn't supported
+    There are cases of `asm()` calls in our C source, which isn't supported
     in pure ANSI C.
 
 -   `no-secure-memory`
@@ -29,5 +29,5 @@ the following configuration settings:
     -   `strdup()`
 
 It's arguable that with gcc and clang, all of these issues are removed when
-defining the macro `_DEFAULT_SOURCE`.  However. that effectively sets the C
+defining the macro `_DEFAULT_SOURCE`.  However, that effectively sets the C
 language level to C99, which isn't ANSI C.
