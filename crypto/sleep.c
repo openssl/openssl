@@ -20,7 +20,7 @@ void OSSL_sleep(uint64_t millis)
     /* HPNS does not support usleep for non threaded apps */
     PROCESS_DELAY_(millis * 1000);
 }
-# elif defined(__DJGPP__)
+# elif defined(__DJGPP__) || defined(__TANDEM)
 #  include <unistd.h>
 void OSSL_sleep(uint64_t millis)
 {
