@@ -29,6 +29,36 @@ available certificates in the store.
 
 =back
 
+=head2 Windows certificate store features
+
+Apart from diverse constraints present in the certificates themselves, the
+Windows certificate store also has the ability to associate additional
+constraining properties alongside a certificate in the store. This includes
+both documented and undocumented capabilities:
+
+=over 4
+
+=item *
+
+The documented capability to override EKU
+
+=item *
+
+The undocumented capability to add name constraints
+
+=item *
+
+The undocumented capability to override the certificate expiry date
+
+=back
+
+I<Such constraints are not checked by this OSSL_STORE implementation, and
+thereby not honoured>.
+
+However, once extracted with L<OSSL_STORE_load(3)>, certificates that have
+constraints in their X.509 extensions will go through the usual constraint
+checks when used by OpenSSL, and are thereby honoured.
+
 =head1 SEE ALSO
 
 L<ossl_store(7)>, L<OSSL_STORE_open_ex(3)>, L<OSSL_STORE_SEARCH(3)>
