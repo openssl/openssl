@@ -189,10 +189,8 @@ static const OSSL_PARAM param_group_list[][10] = {
     TLS_GROUP_ENTRY("brainpoolP256r1", "brainpoolP256r1", "EC", 25),
     TLS_GROUP_ENTRY("brainpoolP384r1", "brainpoolP384r1", "EC", 26),
     TLS_GROUP_ENTRY("brainpoolP512r1", "brainpoolP512r1", "EC", 27),
-#  endif
     TLS_GROUP_ENTRY("x25519", "X25519", "X25519", 28),
     TLS_GROUP_ENTRY("x448", "X448", "X448", 29),
-#  ifndef FIPS_MODULE
     TLS_GROUP_ENTRY("brainpoolP256r1tls13", "brainpoolP256r1", "EC", 30),
     TLS_GROUP_ENTRY("brainpoolP384r1tls13", "brainpoolP384r1", "EC", 31),
     TLS_GROUP_ENTRY("brainpoolP512r1tls13", "brainpoolP512r1", "EC", 32),
