@@ -13,19 +13,28 @@
 # include <ctype.h>
 # include <stdint.h>
 
-# define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) +1
+# if defined(OPENSSL_SYS_LINUX) && !defined(FIPS_MODULE)
+#  if __has_include(<asm/hwprobe.h>)
+#   define OSSL_RISCV_HWPROBE
+#  endif
+# endif
+
+# define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX, \
+                          HWPROBE_KEY, HWPROBE_VALUE) +1
 extern uint32_t OPENSSL_riscvcap_P[ ((
 # include "riscv_arch.def"
 ) + sizeof(uint32_t) - 1) / sizeof(uint32_t) ];
 
 # ifdef OPENSSL_RISCVCAP_IMPL
-#  define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) +1
+#  define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX, \
+                           HWPROBE_KEY, HWPROBE_VALUE) +1
 uint32_t OPENSSL_riscvcap_P[ ((
 #  include "riscv_arch.def"
 ) + sizeof(uint32_t) - 1) / sizeof(uint32_t) ];
 # endif
 
-# define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX)                   \
+# define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX,                   \
+                          HWPROBE_KEY, HWPROBE_VALUE)               \
     static inline int RISCV_HAS_##NAME(void)                        \
     {                                                               \
         return (OPENSSL_riscvcap_P[INDEX] & (1 << BIT_INDEX)) != 0; \
@@ -36,25 +45,49 @@ struct RISCV_capability_s {
     const char *name;
     size_t index;
     size_t bit_offset;
+# ifdef OSSL_RISCV_HWPROBE
+    int32_t hwprobe_key;
+    uint64_t hwprobe_value;
+# endif
 };
 
-# define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) +1
+# define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX, \
+                          OSSL_RISCV_HWPROBE_KEY, OSSL_RISCV_HWPROBE_VALUE) +1
 extern const struct RISCV_capability_s RISCV_capabilities[
 # include "riscv_arch.def"
 ];
 
 # ifdef OPENSSL_RISCVCAP_IMPL
-#  define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) \
+#  ifdef OSSL_RISCV_HWPROBE
+#  define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX,     \
+                           HWPROBE_KEY, HWPROBE_VALUE) \
+    { #NAME, INDEX, BIT_INDEX, HWPROBE_KEY, HWPROBE_VALUE },
+#  else
+#  define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX,     \
+                           HWPROBE_KEY, HWPROBE_VALUE) \
     { #NAME, INDEX, BIT_INDEX },
+#  endif
 const struct RISCV_capability_s RISCV_capabilities[] = {
 #  include "riscv_arch.def"
 };
 # endif
 
-# define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX) +1
+# define RISCV_DEFINE_CAP(NAME, INDEX, BIT_INDEX, \
+                          HWPROBE_KEY, HWPROBE_VALUE) +1
 static const size_t kRISCVNumCaps =
 # include "riscv_arch.def"
 ;
+
+# ifdef OSSL_RISCV_HWPROBE
+/*
+ * Content is an array of { hwprobe_key, 0 } where
+ * hwprobe_key is copied from asm/hwprobe.h.
+ * It should be updated along with riscv_arch.def.
+ */
+#  define OSSL_RISCV_HWPROBE_PAIR_COUNT 1
+#  define OSSL_RISCV_HWPROBE_PAIR_CONTENT \
+   { 4, 0 },
+# endif
 
 /* Extension combination tests. */
 #define RISCV_HAS_ZBB_AND_ZBC() (RISCV_HAS_ZBB() && RISCV_HAS_ZBC())
