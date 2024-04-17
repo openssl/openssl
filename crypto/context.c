@@ -87,7 +87,7 @@ static int context_init(OSSL_LIB_CTX *ctx)
 
     ctx->lock = CRYPTO_THREAD_lock_new();
     if (ctx->lock == NULL)
-        return 0;
+        goto err;
 
     ctx->rand_crngt_lock = CRYPTO_THREAD_lock_new();
     if (ctx->rand_crngt_lock == NULL)
@@ -213,6 +213,7 @@ static int context_init(OSSL_LIB_CTX *ctx)
 
     CRYPTO_THREAD_lock_free(ctx->rand_crngt_lock);
     CRYPTO_THREAD_lock_free(ctx->lock);
+    CRYPTO_THREAD_cleanup_local(&ctx->rcu_local_key);
     memset(ctx, '\0', sizeof(*ctx));
     return 0;
 }
