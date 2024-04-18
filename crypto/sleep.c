@@ -12,15 +12,19 @@
 
 /* system-specific variants defining OSSL_sleep() */
 #if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
-# if defined(__TANDEM) && !defined(_REENTRANT)
 
-#  include <cextdecs.h(PROCESS_DELAY_)>
-void OSSL_sleep(uint64_t millis)
-{
-    /* HPNS does not support usleep for non threaded apps */
-    PROCESS_DELAY_(millis * 1000);
-}
-# elif defined(__DJGPP__) || defined(__TANDEM)
+# if defined(OPENSSL_USE_USLEEP)                        \
+    || defined(__DJGPP__)                               \
+    || (defined(__TANDEM) && defined(_REENTRANT)
+
+/*
+ * usleep() was made obsolete by POSIX.1-2008, and nanosleep()
+ * should be used instead.  However, nanosleep() isn't implemented
+ * on the platforms given above, so we still use it for those.
+ * Also, OPENSSL_USE_USLEEP can be defined to enable the use of
+ * usleep, if it turns out that nanosleep() is unavailable.
+ */
+
 #  include <unistd.h>
 void OSSL_sleep(uint64_t millis)
 {
@@ -31,7 +35,18 @@ void OSSL_sleep(uint64_t millis)
         sleep(s);
     usleep(us);
 }
+
+# elif defined(__TANDEM) && !defined(_REENTRANT)
+
+#  include <cextdecs.h(PROCESS_DELAY_)>
+void OSSL_sleep(uint64_t millis)
+{
+    /* HPNS does not support usleep for non threaded apps */
+    PROCESS_DELAY_(millis * 1000);
+}
+
 # else
+
 /* nanosleep is defined by POSIX.1-2001 */
 #  include <time.h>
 void OSSL_sleep(uint64_t millis)
@@ -42,6 +57,7 @@ void OSSL_sleep(uint64_t millis)
     ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
     nanosleep(&ts, NULL);
 }
+
 # endif
 #elif defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
 # include <windows.h>
