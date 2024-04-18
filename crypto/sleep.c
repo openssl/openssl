@@ -15,7 +15,7 @@
 
 # if defined(OPENSSL_USE_USLEEP)                        \
     || defined(__DJGPP__)                               \
-    || (defined(__TANDEM) && defined(_REENTRANT)
+    || (defined(__TANDEM) && defined(_REENTRANT))
 
 /*
  * usleep() was made obsolete by POSIX.1-2008, and nanosleep()
