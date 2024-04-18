@@ -76,6 +76,9 @@ static int list_builtin_curves(BIO *out)
         goto end;
 
     for (n = 0; n < crv_len; n++) {
+        if (!EC_GROUP_new_by_curve_name(curves[n].nid)) {
+           continue;
+        }
         const char *comment = curves[n].comment;
         const char *sname = OBJ_nid2sn(curves[n].nid);
 

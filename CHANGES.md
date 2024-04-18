@@ -29,6 +29,9 @@ OpenSSL 3.4
 
 ### Changes between 3.3 and 3.4 [xx XXX xxxx]
 
+ * The `openssl ecparam -list_curves` now only shows curves that are
+   available for use with the default library context.
+
  * Added options `-not_before` and `-not_after` for explicit setting
    start and end dates of certificates created with the `req` and `x509`
    apps. Added the same options also to `ca` app as alias for
