@@ -29,6 +29,7 @@ typedef struct {
     unsigned int cofactor;      /* promoted to BN_ULONG */
 } EC_CURVE_DATA;
 
+#ifndef FIPS_MODULE
 /* the nist prime curves */
 static const struct {
     EC_CURVE_DATA h;
@@ -61,6 +62,7 @@ static const struct {
         0x99, 0xDE, 0xF8, 0x36, 0x14, 0x6B, 0xC9, 0xB1, 0xB4, 0xD2, 0x28, 0x31
     }
 };
+#endif /* FIPS_MODULE */
 
 static const struct {
     EC_CURVE_DATA h;
@@ -2856,8 +2858,6 @@ static const ec_list_element curve_list[] = {
      "NIST/SECG curve over a 521 bit prime field"},
 
     /* X9.62 curves */
-    {NID_X9_62_prime192v1, &_EC_NIST_PRIME_192.h, 0,
-     "NIST/X9.62/SECG curve over a 192 bit prime field"},
     {NID_X9_62_prime256v1, &_EC_X9_62_PRIME_256V1.h,
 # if defined(ECP_NISTZ256_ASM)
      EC_GFp_nistz256_method,
