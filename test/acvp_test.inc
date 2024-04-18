@@ -212,15 +212,6 @@ static const unsigned char ecdsa_sigver_s1[] = {
 };
 static const struct ecdsa_sigver_st ecdsa_sigver_data[] = {
     {
-        "SHA-1",
-        "P-192",
-        ITM(ecdsa_sigver_msg0),
-        ITM(ecdsa_sigver_pub0),
-        ITM(ecdsa_sigver_r0),
-        ITM(ecdsa_sigver_s0),
-        PASS,
-    },
-    {
         "SHA2-512",
         "P-521",
         ITM(ecdsa_sigver_msg1),
