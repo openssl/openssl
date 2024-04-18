@@ -70,9 +70,9 @@ The winstore (C<org.openssl.winstore>) implementation was added in OpenSSL
 
 =head1 NOTES
 
-This implementation uses L<OSSL_DECODER(3)> implementations under the hood.
-To influence what implementations are used, it's advisable to use
-L<OSSL_STORE_open_ex(3)> and set the I<propq> argument.
+OpenSSL's uses L<OSSL_DECODER(3)> implementations under the hood.
+To influence what L<OSSL_DECODER(3)> implementations are used, it's advisable
+to use L<OSSL_STORE_open_ex(3)> and set the I<propq> argument.
 
 =head1 COPYRIGHT
 
