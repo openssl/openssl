@@ -41,12 +41,6 @@ typedef unsigned int u_int;
 # include "s_apps.h"
 # include "internal/sockets.h"
 
-# if defined(__TANDEM)
-#  if defined(OPENSSL_TANDEM_FLOSS)
-#   include <floss.h(floss_read)>
-#  endif
-# endif
-
 # include <openssl/bio.h>
 # include <openssl/err.h>
 
