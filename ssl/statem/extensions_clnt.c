@@ -19,6 +19,10 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
     if (!s->renegotiate) {
         /* If not renegotiating, send an empty RI extension to indicate support */
 
+#if DTLS_MAX_VERSION_INTERNAL != DTLS1_2_VERSION
+# error Internal DTLS version error
+#endif
+
         if (!SSL_CONNECTION_IS_DTLS(s)
             && (s->min_proto_version >= TLS1_3_VERSION
                 || (ssl_security(s, SSL_SECOP_VERSION, 0, TLS1_VERSION, NULL)
