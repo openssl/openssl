@@ -284,7 +284,7 @@ ChaCha20_ctr32@{[$isaext]}:
 1:
 
     #### chacha block data
-    # init chacha const states
+    # init chacha const states into $V0~$V3
     # "expa" little endian
     li $CONST_DATA0, 0x61707865
     @{[vmv_v_x $V0, $CONST_DATA0]}
@@ -299,7 +299,7 @@ ChaCha20_ctr32@{[$isaext]}:
     lw $KEY0, 0($KEY)
     @{[vmv_v_x $V3, $CONST_DATA3]}
 
-    # init chacha key states
+    # init chacha key states into $V4~$V11
     lw $KEY1, 4($KEY)
     @{[vmv_v_x $V4, $KEY0]}
     lw $KEY2, 8($KEY)
@@ -316,7 +316,7 @@ ChaCha20_ctr32@{[$isaext]}:
     @{[vmv_v_x $V10, $KEY6]}
     @{[vmv_v_x $V11, $KEY7]}
 
-    # init chacha key states
+    # init chacha key states into $V12~$V13
     lw $COUNTER1, 4($COUNTER)
     @{[vid_v $V12]}
     lw $NONCE0, 8($COUNTER)
@@ -325,17 +325,23 @@ ChaCha20_ctr32@{[$isaext]}:
     @{[vmv_v_x $V13, $COUNTER1]}
     add $COUNTER0, $CURRENT_COUNTER, $VL
 
-    # init chacha nonce states
+    # init chacha nonce states into $V14~$V15
     @{[vmv_v_x $V14, $NONCE0]}
     @{[vmv_v_x $V15, $NONCE1]}
 
     li $T0, 64
-    # load the top-half of input data
+    # load the top-half of input data into $V16~$V23
     @{[vlsseg_nf_e32_v 8, $V16, $INPUT, $T0]}
+
+    # till now in block_loop, we used:
+    # - $V0~$V15 for chacha states.
+    # - $V16~$V23 for top-half of input data.
+    # - $V24~$V31 haven't been used yet.
 
     # 20 round groups
     li $T0, 10
 .Lround_loop:
+    # we can use $V24~$V31 as temporary registers in round_loop.
     addi $T0, $T0, -1
     @{[chacha_quad_round_group
       $V0, $V4, $V8, $V12,
@@ -360,9 +366,11 @@ ChaCha20_ctr32@{[$isaext]}:
     bnez $T0, .Lround_loop
 
     li $T0, 64
-    # load the bottom-half of input data
+    # load the bottom-half of input data into $V24~$V31
     addi $T1, $INPUT, 32
     @{[vlsseg_nf_e32_v 8, $V24, $T1, $T0]}
+
+    # now, there are no free vector registers until the round_loop exits.
 
     # add chacha top-half initial block states
     # "expa" little endian
@@ -415,7 +423,7 @@ ChaCha20_ctr32@{[$isaext]}:
     lw $T2, 24($KEY)
     @{[vxor_vv $V23, $V23, $V7]}
 
-    # save the top-half of output
+    # save the top-half of output from $V16~$V23
     li $T3, 64
     @{[vssseg_nf_e32_v 8, $V16, $OUTPUT, $T3]}
 
@@ -461,7 +469,7 @@ ChaCha20_ctr32@{[$isaext]}:
     @{[vxor_vv $V31, $V31, $V15]}
     sw $STATE15, 60(sp)
 
-    # save the bottom-half of output
+    # save the bottom-half of output from $V24~$V31
     li $T0, 64
     addi $T1, $OUTPUT, 32
     @{[vssseg_nf_e32_v 8, $V24, $T1, $T0]}
@@ -482,6 +490,7 @@ ChaCha20_ctr32@{[$isaext]}:
     mv $T2, sp
 .Lscalar_data_loop:
     @{[vsetvli $VL, $T1, "e8", "m8", "ta", "ma"]}
+    # from this on, vector registers are grouped with lmul = 8
     @{[vle8_v $V8, $INPUT]}
     @{[vle8_v $V16, $T2]}
     @{[vxor_vv $V8, $V8, $V16]}
