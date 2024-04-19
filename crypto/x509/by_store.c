@@ -116,7 +116,11 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
             argp = ossl_safe_getenv(X509_get_default_cert_dir_env());
 
         if (argp == NULL)
+#ifndef _WIN32
             argp = X509_get_default_cert_dir();
+#else
+            argp = "org.openssl.winstore://";
+#endif
 
         {
             STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
