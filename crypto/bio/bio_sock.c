@@ -26,9 +26,6 @@ static int wsa_init_done = 0;
 # if defined __TANDEM
 #  include <unistd.h>
 #  include <sys/time.h> /* select */
-#  if defined(OPENSSL_TANDEM_FLOSS)
-#   include <floss.h(floss_select)>
-#  endif
 # elif defined _WIN32
 #  include <winsock.h> /* for type fd_set */
 # else

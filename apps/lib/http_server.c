@@ -26,12 +26,6 @@
 #include "s_apps.h"
 #include "log.h"
 
-#if defined(__TANDEM)
-# if defined(OPENSSL_TANDEM_FLOSS)
-#  include <floss.h(floss_fork)>
-# endif
-#endif
-
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
 #define HTTP_PREFIX_VERSION HTTP_PREFIX""HTTP_VERSION_PATT

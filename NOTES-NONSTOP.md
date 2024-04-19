@@ -19,9 +19,7 @@ About c99 compiler
 
 The c99 compiler is required for building OpenSSL from source. While c11
 may work, it has not been broadly tested. c99 is the only compiler
-prerequisite needed to build OpenSSL 3.0 on this platform. You should also
-have the FLOSS package installed on your system. The ITUGLIB FLOSS package
-is the only FLOSS variant that has been broadly tested.
+prerequisite needed to build OpenSSL 3.0 on this platform.
 
 Threading Models
 ----------------

@@ -28,12 +28,6 @@
 # include <windows.h>
 #endif
 
-#if defined(__TANDEM)
-# if defined(OPENSSL_TANDEM_FLOSS)
-#  include <floss.h(floss_fork)>
-# endif
-#endif
-
 #if defined(OPENSSL_SYS_UNIX)
 # include <sys/types.h>
 # include <sys/wait.h>

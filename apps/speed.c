@@ -47,12 +47,6 @@
 # include <unistd.h>
 #endif
 
-#if defined(__TANDEM)
-# if defined(OPENSSL_TANDEM_FLOSS)
-#  include <floss.h(floss_fork)>
-# endif
-#endif
-
 #if defined(_WIN32)
 # include <windows.h>
 /*
