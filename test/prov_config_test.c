@@ -83,6 +83,9 @@ static int test_path_config(void)
     char *full_path = NULL;
     int rc;
 
+    if (!TEST_ptr(module_path))
+        return 0;
+
     full_path = OPENSSL_zalloc(strlen(module_path) + strlen(P_TEST_PATH) + 1);
     if (!TEST_ptr(full_path))
         return 0;
