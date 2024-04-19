@@ -22,7 +22,7 @@ IF[{- !$disabled{asm} -}]
 
   $CHACHAASM_c64xplus=chacha-c64xplus.s
 
-  $CHACHAASM_riscv64=chacha_riscv.c chacha_enc.c chacha-riscv64-zbb-zvkb.s
+  $CHACHAASM_riscv64=chacha_riscv.c chacha_enc.c chacha-riscv64-v-zbb.s chacha-riscv64-v-zbb-zvkb.s
   $CHACHADEF_riscv64=INCLUDE_C_CHACHA20
 
   # Now that we have defined all the arch specific variables, use the
@@ -53,4 +53,5 @@ GENERATE[chacha-s390x.S]=asm/chacha-s390x.pl
 GENERATE[chacha-ia64.S]=asm/chacha-ia64.pl
 GENERATE[chacha-ia64.s]=chacha-ia64.S
 GENERATE[chacha-loongarch64.S]=asm/chacha-loongarch64.pl
-GENERATE[chacha-riscv64-zbb-zvkb.s]=asm/chacha-riscv64-zbb-zvkb.pl
+GENERATE[chacha-riscv64-v-zbb.s]=asm/chacha-riscv64-v-zbb.pl
+GENERATE[chacha-riscv64-v-zbb-zvkb.s]=asm/chacha-riscv64-v-zbb.pl zvkb
