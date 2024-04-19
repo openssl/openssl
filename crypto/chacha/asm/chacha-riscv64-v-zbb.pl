@@ -37,9 +37,10 @@
 
 # - RV64I
 # - RISC-V Vector ('V') with VLEN >= 128
-# - RISC-V Vector Cryptography Bit-manipulation extension ('Zvkb')
 # - RISC-V Basic Bit-manipulation extension ('Zbb')
 # - RISC-V Zicclsm(Main memory supports misaligned loads/stores)
+# Optional:
+# - RISC-V Vector Cryptography Bit-manipulation extension ('Zvkb')
 
 use strict;
 use warnings;
@@ -54,15 +55,18 @@ use riscv;
 my $output  = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop   : undef;
 my $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.|          ? shift : undef;
 
+my $use_zvkb = $flavour && $flavour =~ /zvkb/i ? 1 : 0;
+my $isaext = "_v_zbb" . ( $use_zvkb ? "_zvkb" : "" );
+
 $output and open STDOUT, ">$output";
 
 my $code = <<___;
 .text
 ___
 
-# void ChaCha20_ctr32_zbb_zvkb(unsigned char *out, const unsigned char *inp,
-#                              size_t len, const unsigned int key[8],
-#                              const unsigned int counter[4]);
+# void ChaCha20_ctr32@{[$isaext]}(unsigned char *out, const unsigned char *inp,
+#                                 size_t len, const unsigned int key[8],
+#                                 const unsigned int counter[4]);
 ################################################################################
 my ( $OUTPUT, $INPUT, $LEN, $KEY, $COUNTER ) = ( "a0", "a1", "a2", "a3", "a4" );
 my ( $CONST_DATA0, $CONST_DATA1, $CONST_DATA2, $CONST_DATA3 ) = ( "a5", "a6",
@@ -90,6 +94,92 @@ my (
     $V22, $V23, $V24, $V25, $V26, $V27, $V28, $V29, $V30, $V31,
 ) = map( "v$_", ( 0 .. 31 ) );
 
+sub chacha_sub_round {
+    my (
+        $A0, $B0, $C0,
+        $A1, $B1, $C1,
+        $A2, $B2, $C2,
+        $A3, $B3, $C3,
+
+        $S_A0, $S_B0, $S_C0,
+        $S_A1, $S_B1, $S_C1,
+        $S_A2, $S_B2, $S_C2,
+        $S_A3, $S_B3, $S_C3,
+
+        $ROL_SHIFT,
+
+        $V_T0, $V_T1, $V_T2, $V_T3,
+    ) = @_;
+
+    # a += b; c ^= a; c <<<= $ROL_SHIFT;
+
+    if ($use_zvkb) {
+        my $code = <<___;
+        @{[vadd_vv $A0, $A0, $B0]}
+        add $S_A0, $S_A0, $S_B0
+        @{[vadd_vv $A1, $A1, $B1]}
+        add $S_A1, $S_A1, $S_B1
+        @{[vadd_vv $A2, $A2, $B2]}
+        add $S_A2, $S_A2, $S_B2
+        @{[vadd_vv $A3, $A3, $B3]}
+        add $S_A3, $S_A3, $S_B3
+        @{[vxor_vv $C0, $C0, $A0]}
+        xor $S_C0, $S_C0, $S_A0
+        @{[vxor_vv $C1, $C1, $A1]}
+        xor $S_C1, $S_C1, $S_A1
+        @{[vxor_vv $C2, $C2, $A2]}
+        xor $S_C2, $S_C2, $S_A2
+        @{[vxor_vv $C3, $C3, $A3]}
+        xor $S_C3, $S_C3, $S_A3
+        @{[vror_vi $C0, $C0, 32 - $ROL_SHIFT]}
+        @{[roriw $S_C0, $S_C0, 32 - $ROL_SHIFT]}
+        @{[vror_vi $C1, $C1, 32 - $ROL_SHIFT]}
+        @{[roriw $S_C1, $S_C1, 32 - $ROL_SHIFT]}
+        @{[vror_vi $C2, $C2, 32 - $ROL_SHIFT]}
+        @{[roriw $S_C2, $S_C2, 32 - $ROL_SHIFT]}
+        @{[vror_vi $C3, $C3, 32 - $ROL_SHIFT]}
+        @{[roriw $S_C3, $S_C3, 32 - $ROL_SHIFT]}
+___
+        return $code;
+    } else {
+        my $code = <<___;
+        @{[vadd_vv $A0, $A0, $B0]}
+        add $S_A0, $S_A0, $S_B0
+        @{[vadd_vv $A1, $A1, $B1]}
+        add $S_A1, $S_A1, $S_B1
+        @{[vadd_vv $A2, $A2, $B2]}
+        add $S_A2, $S_A2, $S_B2
+        @{[vadd_vv $A3, $A3, $B3]}
+        add $S_A3, $S_A3, $S_B3
+        @{[vxor_vv $C0, $C0, $A0]}
+        xor $S_C0, $S_C0, $S_A0
+        @{[vxor_vv $C1, $C1, $A1]}
+        xor $S_C1, $S_C1, $S_A1
+        @{[vxor_vv $C2, $C2, $A2]}
+        xor $S_C2, $S_C2, $S_A2
+        @{[vxor_vv $C3, $C3, $A3]}
+        xor $S_C3, $S_C3, $S_A3
+        @{[vsll_vi $V_T0, $C0, $ROL_SHIFT]}
+        @{[vsll_vi $V_T1, $C1, $ROL_SHIFT]}
+        @{[vsll_vi $V_T2, $C2, $ROL_SHIFT]}
+        @{[vsll_vi $V_T3, $C3, $ROL_SHIFT]}
+        @{[vsrl_vi $C0, $C0, 32 - $ROL_SHIFT]}
+        @{[vsrl_vi $C1, $C1, 32 - $ROL_SHIFT]}
+        @{[vsrl_vi $C2, $C2, 32 - $ROL_SHIFT]}
+        @{[vsrl_vi $C3, $C3, 32 - $ROL_SHIFT]}
+        @{[vor_vv $C0, $C0, $V_T0]}
+        @{[roriw $S_C0, $S_C0, 32 - $ROL_SHIFT]}
+        @{[vor_vv $C1, $C1, $V_T1]}
+        @{[roriw $S_C1, $S_C1, 32 - $ROL_SHIFT]}
+        @{[vor_vv $C2, $C2, $V_T2]}
+        @{[roriw $S_C2, $S_C2, 32 - $ROL_SHIFT]}
+        @{[vor_vv $C3, $C3, $V_T3]}
+        @{[roriw $S_C3, $S_C3, 32 - $ROL_SHIFT]}
+___
+        return $code;
+    }
+}
+
 sub chacha_quad_round_group {
     my (
         $A0, $B0, $C0, $D0,
@@ -101,109 +191,59 @@ sub chacha_quad_round_group {
         $S_A1, $S_B1, $S_C1, $S_D1,
         $S_A2, $S_B2, $S_C2, $S_D2,
         $S_A3, $S_B3, $S_C3, $S_D3,
+
+        $V_T0, $V_T1, $V_T2, $V_T3,
     ) = @_;
 
     my $code = <<___;
     # a += b; d ^= a; d <<<= 16;
-    @{[vadd_vv $A0, $A0, $B0]}
-    add $S_A0, $S_A0, $S_B0
-    @{[vadd_vv $A1, $A1, $B1]}
-    add $S_A1, $S_A1, $S_B1
-    @{[vadd_vv $A2, $A2, $B2]}
-    add $S_A2, $S_A2, $S_B2
-    @{[vadd_vv $A3, $A3, $B3]}
-    add $S_A3, $S_A3, $S_B3
-    @{[vxor_vv $D0, $D0, $A0]}
-    xor $S_D0, $S_D0, $S_A0
-    @{[vxor_vv $D1, $D1, $A1]}
-    xor $S_D1, $S_D1, $S_A1
-    @{[vxor_vv $D2, $D2, $A2]}
-    xor $S_D2, $S_D2, $S_A2
-    @{[vxor_vv $D3, $D3, $A3]}
-    xor $S_D3, $S_D3, $S_A3
-    @{[vror_vi $D0, $D0, 32 - 16]}
-    @{[roriw $S_D0, $S_D0, 32 - 16]}
-    @{[vror_vi $D1, $D1, 32 - 16]}
-    @{[roriw $S_D1, $S_D1, 32 - 16]}
-    @{[vror_vi $D2, $D2, 32 - 16]}
-    @{[roriw $S_D2, $S_D2, 32 - 16]}
-    @{[vror_vi $D3, $D3, 32 - 16]}
-    @{[roriw $S_D3, $S_D3, 32 - 16]}
+    @{[chacha_sub_round
+      $A0, $B0, $D0,
+      $A1, $B1, $D1,
+      $A2, $B2, $D2,
+      $A3, $B3, $D3,
+      $S_A0, $S_B0, $S_D0,
+      $S_A1, $S_B1, $S_D1,
+      $S_A2, $S_B2, $S_D2,
+      $S_A3, $S_B3, $S_D3,
+      16,
+      $V_T0, $V_T1, $V_T2, $V_T3]}
     # c += d; b ^= c; b <<<= 12;
-    @{[vadd_vv $C0, $C0, $D0]}
-    add $S_C0, $S_C0, $S_D0
-    @{[vadd_vv $C1, $C1, $D1]}
-    add $S_C1, $S_C1, $S_D1
-    @{[vadd_vv $C2, $C2, $D2]}
-    add $S_C2, $S_C2, $S_D2
-    @{[vadd_vv $C3, $C3, $D3]}
-    add $S_C3, $S_C3, $S_D3
-    @{[vxor_vv $B0, $B0, $C0]}
-    xor $S_B0, $S_B0, $S_C0
-    @{[vxor_vv $B1, $B1, $C1]}
-    xor $S_B1, $S_B1, $S_C1
-    @{[vxor_vv $B2, $B2, $C2]}
-    xor $S_B2, $S_B2, $S_C2
-    @{[vxor_vv $B3, $B3, $C3]}
-    xor $S_B3, $S_B3, $S_C3
-    @{[vror_vi $B0, $B0, 32 - 12]}
-    @{[roriw $S_B0, $S_B0, 32 - 12]}
-    @{[vror_vi $B1, $B1, 32 - 12]}
-    @{[roriw $S_B1, $S_B1, 32 - 12]}
-    @{[vror_vi $B2, $B2, 32 - 12]}
-    @{[roriw $S_B2, $S_B2, 32 - 12]}
-    @{[vror_vi $B3, $B3, 32 - 12]}
-    @{[roriw $S_B3, $S_B3, 32 - 12]}
+    @{[chacha_sub_round
+      $C0, $D0, $B0,
+      $C1, $D1, $B1,
+      $C2, $D2, $B2,
+      $C3, $D3, $B3,
+      $S_C0, $S_D0, $S_B0,
+      $S_C1, $S_D1, $S_B1,
+      $S_C2, $S_D2, $S_B2,
+      $S_C3, $S_D3, $S_B3,
+      12,
+      $V_T0, $V_T1, $V_T2, $V_T3]}
     # a += b; d ^= a; d <<<= 8;
-    @{[vadd_vv $A0, $A0, $B0]}
-    add $S_A0, $S_A0, $S_B0
-    @{[vadd_vv $A1, $A1, $B1]}
-    add $S_A1, $S_A1, $S_B1
-    @{[vadd_vv $A2, $A2, $B2]}
-    add $S_A2, $S_A2, $S_B2
-    @{[vadd_vv $A3, $A3, $B3]}
-    add $S_A3, $S_A3, $S_B3
-    @{[vxor_vv $D0, $D0, $A0]}
-    xor $S_D0, $S_D0, $S_A0
-    @{[vxor_vv $D1, $D1, $A1]}
-    xor $S_D1, $S_D1, $S_A1
-    @{[vxor_vv $D2, $D2, $A2]}
-    xor $S_D2, $S_D2, $S_A2
-    @{[vxor_vv $D3, $D3, $A3]}
-    xor $S_D3, $S_D3, $S_A3
-    @{[vror_vi $D0, $D0, 32 - 8]}
-    @{[roriw $S_D0, $S_D0, 32 - 8]}
-    @{[vror_vi $D1, $D1, 32 - 8]}
-    @{[roriw $S_D1, $S_D1, 32 - 8]}
-    @{[vror_vi $D2, $D2, 32 - 8]}
-    @{[roriw $S_D2, $S_D2, 32 - 8]}
-    @{[vror_vi $D3, $D3, 32 - 8]}
-    @{[roriw $S_D3, $S_D3, 32 - 8]}
+    @{[chacha_sub_round
+      $A0, $B0, $D0,
+      $A1, $B1, $D1,
+      $A2, $B2, $D2,
+      $A3, $B3, $D3,
+      $S_A0, $S_B0, $S_D0,
+      $S_A1, $S_B1, $S_D1,
+      $S_A2, $S_B2, $S_D2,
+      $S_A3, $S_B3, $S_D3,
+      8,
+      $V_T0, $V_T1, $V_T2, $V_T3]}
     # c += d; b ^= c; b <<<= 7;
-    @{[vadd_vv $C0, $C0, $D0]}
-    add $S_C0, $S_C0, $S_D0
-    @{[vadd_vv $C1, $C1, $D1]}
-    add $S_C1, $S_C1, $S_D1
-    @{[vadd_vv $C2, $C2, $D2]}
-    add $S_C2, $S_C2, $S_D2
-    @{[vadd_vv $C3, $C3, $D3]}
-    add $S_C3, $S_C3, $S_D3
-    @{[vxor_vv $B0, $B0, $C0]}
-    xor $S_B0, $S_B0, $S_C0
-    @{[vxor_vv $B1, $B1, $C1]}
-    xor $S_B1, $S_B1, $S_C1
-    @{[vxor_vv $B2, $B2, $C2]}
-    xor $S_B2, $S_B2, $S_C2
-    @{[vxor_vv $B3, $B3, $C3]}
-    xor $S_B3, $S_B3, $S_C3
-    @{[vror_vi $B0, $B0, 32 - 7]}
-    @{[roriw $S_B0, $S_B0, 32 - 7]}
-    @{[vror_vi $B1, $B1, 32 - 7]}
-    @{[roriw $S_B1, $S_B1, 32 - 7]}
-    @{[vror_vi $B2, $B2, 32 - 7]}
-    @{[roriw $S_B2, $S_B2, 32 - 7]}
-    @{[vror_vi $B3, $B3, 32 - 7]}
-    @{[roriw $S_B3, $S_B3, 32 - 7]}
+    @{[chacha_sub_round
+      $C0, $D0, $B0,
+      $C1, $D1, $B1,
+      $C2, $D2, $B2,
+      $C3, $D3, $B3,
+      $S_C0, $S_D0, $S_B0,
+      $S_C1, $S_D1, $S_B1,
+      $S_C2, $S_D2, $S_B2,
+      $S_C3, $S_D3, $S_B3,
+      7,
+      $V_T0, $V_T1, $V_T2, $V_T3]}
 ___
 
     return $code;
@@ -211,9 +251,9 @@ ___
 
 $code .= <<___;
 .p2align 3
-.globl ChaCha20_ctr32_zbb_zvkb
-.type ChaCha20_ctr32_zbb_zvkb,\@function
-ChaCha20_ctr32_zbb_zvkb:
+.globl ChaCha20_ctr32@{[$isaext]}
+.type ChaCha20_ctr32@{[$isaext]},\@function
+ChaCha20_ctr32@{[$isaext]}:
     addi sp, sp, -96
     sd s0, 0(sp)
     sd s1, 8(sp)
@@ -305,7 +345,8 @@ ChaCha20_ctr32_zbb_zvkb:
       $STATE0, $STATE4, $STATE8, $STATE12,
       $STATE1, $STATE5, $STATE9, $STATE13,
       $STATE2, $STATE6, $STATE10, $STATE14,
-      $STATE3, $STATE7, $STATE11, $STATE15]}
+      $STATE3, $STATE7, $STATE11, $STATE15,
+      $V24, $V25, $V26, $V27]}
     @{[chacha_quad_round_group
       $V3, $V4, $V9, $V14,
       $V0, $V5, $V10, $V15,
@@ -314,7 +355,8 @@ ChaCha20_ctr32_zbb_zvkb:
       $STATE3, $STATE4, $STATE9, $STATE14,
       $STATE0, $STATE5, $STATE10, $STATE15,
       $STATE1, $STATE6, $STATE11, $STATE12,
-      $STATE2, $STATE7, $STATE8, $STATE13]}
+      $STATE2, $STATE7, $STATE8, $STATE13,
+      $V24, $V25, $V26, $V27]}
     bnez $T0, .Lround_loop
 
     li $T0, 64
@@ -468,7 +510,7 @@ ChaCha20_ctr32_zbb_zvkb:
     addi sp, sp, 96
 
     ret
-.size ChaCha20_ctr32_zbb_zvkb,.-ChaCha20_ctr32_zbb_zvkb
+.size ChaCha20_ctr32@{[$isaext]},.-ChaCha20_ctr32@{[$isaext]}
 ___
 
 print $code;
