@@ -478,7 +478,7 @@ opthelp:
             ret = OSSL_PROVIDER_available(NULL, prov_name) ? 0 : 1;
             if (!quiet) {
                 BIO_printf(bio_err, "FIPS provider is %s\n",
-                           ret == 0 ? "available" : " not available");
+                           ret == 0 ? "available" : "not available");
             }
         }
         goto end;

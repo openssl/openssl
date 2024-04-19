@@ -4701,6 +4701,10 @@ DEPEND[html/man7/OSSL_PROVIDER-null.html]=man7/OSSL_PROVIDER-null.pod
 GENERATE[html/man7/OSSL_PROVIDER-null.html]=man7/OSSL_PROVIDER-null.pod
 DEPEND[man/man7/OSSL_PROVIDER-null.7]=man7/OSSL_PROVIDER-null.pod
 GENERATE[man/man7/OSSL_PROVIDER-null.7]=man7/OSSL_PROVIDER-null.pod
+DEPEND[html/man7/OSSL_STORE-winstore.html]=man7/OSSL_STORE-winstore.pod
+GENERATE[html/man7/OSSL_STORE-winstore.html]=man7/OSSL_STORE-winstore.pod
+DEPEND[man/man7/OSSL_STORE-winstore.7]=man7/OSSL_STORE-winstore.pod
+GENERATE[man/man7/OSSL_STORE-winstore.7]=man7/OSSL_STORE-winstore.pod
 DEPEND[html/man7/RAND.html]=man7/RAND.pod
 GENERATE[html/man7/RAND.html]=man7/RAND.pod
 DEPEND[man/man7/RAND.7]=man7/RAND.pod
@@ -5023,6 +5027,7 @@ html/man7/OSSL_PROVIDER-base.html \
 html/man7/OSSL_PROVIDER-default.html \
 html/man7/OSSL_PROVIDER-legacy.html \
 html/man7/OSSL_PROVIDER-null.html \
+html/man7/OSSL_STORE-winstore.html \
 html/man7/RAND.html \
 html/man7/RSA-PSS.html \
 html/man7/X25519.html \
@@ -5166,6 +5171,7 @@ man/man7/OSSL_PROVIDER-base.7 \
 man/man7/OSSL_PROVIDER-default.7 \
 man/man7/OSSL_PROVIDER-legacy.7 \
 man/man7/OSSL_PROVIDER-null.7 \
+man/man7/OSSL_STORE-winstore.7 \
 man/man7/RAND.7 \
 man/man7/RSA-PSS.7 \
 man/man7/X25519.7 \

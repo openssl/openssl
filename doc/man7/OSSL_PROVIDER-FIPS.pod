@@ -204,7 +204,11 @@ This is an unapproved algorithm.
 
 =item X25519, see L<EVP_KEYMGMT-X25519(7)>
 
+This is an unapproved algorithm.
+
 =item X448, see L<EVP_KEYMGMT-X448(7)>
+
+This is an unapproved algorithm.
 
 =item ED25519, see L<EVP_KEYMGMT-ED25519(7)>
 

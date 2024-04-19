@@ -1600,10 +1600,21 @@ static void on_regen_notify(uint64_t frame_type, uint64_t stream_id,
     }
 }
 
+static int txp_need_ping(OSSL_QUIC_TX_PACKETISER *txp,
+                         uint32_t pn_space,
+                         const struct archetype_data *adata)
+{
+    return adata->allow_ping
+        && (adata->require_ack_eliciting
+            || (txp->force_ack_eliciting & (1UL << pn_space)) != 0);
+}
+
 static int txp_pkt_init(struct txp_pkt *pkt, OSSL_QUIC_TX_PACKETISER *txp,
                         uint32_t enc_level, uint32_t archetype,
                         size_t running_total)
 {
+    uint32_t pn_space = ossl_quic_enc_level_to_pn_space(enc_level);
+
     if (!txp_determine_geometry(txp, archetype, enc_level,
                                 running_total, &pkt->phdr, &pkt->geom))
         return 0;
@@ -1614,7 +1625,7 @@ static int txp_pkt_init(struct txp_pkt *pkt, OSSL_QUIC_TX_PACKETISER *txp,
      */
     if (!tx_helper_init(&pkt->h, txp, enc_level,
                         pkt->geom.cmppl,
-                        pkt->geom.adata.require_ack_eliciting ? 1 : 0))
+                        txp_need_ping(txp, pn_space, &pkt->geom.adata) ? 1 : 0))
         return 0;
 
     pkt->h_valid            = 1;
@@ -2782,11 +2793,10 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp,
     /* PING */
     tx_helper_unrestrict(h);
 
-    if ((a.require_ack_eliciting
-         || (txp->force_ack_eliciting & (1UL << pn_space)) != 0)
-        && !have_ack_eliciting && a.allow_ping) {
+    if (!have_ack_eliciting && txp_need_ping(txp, pn_space, &a)) {
         WPACKET *wpkt;
 
+        assert(h->reserve > 0);
         wpkt = tx_helper_begin(h);
         if (wpkt == NULL)
             goto fatal_err;

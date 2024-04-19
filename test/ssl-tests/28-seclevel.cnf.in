@@ -56,7 +56,10 @@ our @tests_ec = (
         client => { "CipherString" => "DEFAULT:\@SECLEVEL=5",
                     "VerifyCAFile" => test_pem("root-ed448-cert.pem") },
         test   => { "ExpectedResult" => "ServerFail" },
-    },
+    }
+);
+
+our @tests_ec_non_fips = (
     {
         name => "SECLEVEL 3 with P-384 key, X25519 ECDHE",
         server => { "CipherString" => "DEFAULT:\@SECLEVEL=3",
@@ -81,5 +84,6 @@ our @tests_tls1_2 = (
     },
 );
 
+push @tests_ec, @tests_ec_non_fips unless $fips_mode;
 push @tests, @tests_ec unless disabled("ecx");
 push @tests, @tests_tls1_2 unless disabled("tls1_2") || disabled("ecx");

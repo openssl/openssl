@@ -410,8 +410,8 @@ static const OSSL_ALGORITHM fips_keyexch[] = {
 #ifndef OPENSSL_NO_EC
     { PROV_NAMES_ECDH, FIPS_DEFAULT_PROPERTIES, ossl_ecdh_keyexch_functions },
 # ifndef OPENSSL_NO_ECX
-    { PROV_NAMES_X25519, FIPS_DEFAULT_PROPERTIES, ossl_x25519_keyexch_functions },
-    { PROV_NAMES_X448, FIPS_DEFAULT_PROPERTIES, ossl_x448_keyexch_functions },
+    { PROV_NAMES_X25519, FIPS_UNAPPROVED_PROPERTIES, ossl_x25519_keyexch_functions },
+    { PROV_NAMES_X448, FIPS_UNAPPROVED_PROPERTIES, ossl_x448_keyexch_functions },
 # endif
 #endif
     { PROV_NAMES_TLS1_PRF, FIPS_DEFAULT_PROPERTIES,
@@ -471,9 +471,9 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { PROV_NAMES_EC, FIPS_DEFAULT_PROPERTIES, ossl_ec_keymgmt_functions,
       PROV_DESCS_EC },
 # ifndef OPENSSL_NO_ECX
-    { PROV_NAMES_X25519, FIPS_DEFAULT_PROPERTIES, ossl_x25519_keymgmt_functions,
+    { PROV_NAMES_X25519, FIPS_UNAPPROVED_PROPERTIES, ossl_x25519_keymgmt_functions,
       PROV_DESCS_X25519 },
-    { PROV_NAMES_X448, FIPS_DEFAULT_PROPERTIES, ossl_x448_keymgmt_functions,
+    { PROV_NAMES_X448, FIPS_UNAPPROVED_PROPERTIES, ossl_x448_keymgmt_functions,
       PROV_DESCS_X448 },
     { PROV_NAMES_ED25519, FIPS_UNAPPROVED_PROPERTIES, ossl_ed25519_keymgmt_functions,
       PROV_DESCS_ED25519 },

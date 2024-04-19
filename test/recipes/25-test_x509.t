@@ -255,16 +255,16 @@ ok(run(app(["openssl", "x509", "-req", "-text", "-CAcreateserial",
 ok(-e $ca_serial_dot_in_dir);
 
 # Tests for explict start and end dates of certificates
-my $today;
+my %today = (strftime("%Y-%m-%d", gmtime) => 1);
 my $enddate;
-$today = strftime("%Y-%m-%d", localtime);
 ok(run(app(["openssl", "x509", "-req", "-text",
 	    "-key", $b_key,
 	    "-not_before", "20231031000000Z",
 	    "-not_after", "today",
             "-in", $b_csr, "-out", $b_cert]))
 && get_not_before($b_cert) =~ /Oct 31 00:00:00 2023 GMT/
-&& get_not_after_date($b_cert) eq $today);
+&& ++$today{strftime("%Y-%m-%d", gmtime)}
+&& (grep { defined $today{$_} } get_not_after_date($b_cert)));
 # explicit start and end dates
 ok(run(app(["openssl", "x509", "-req", "-text",
 	    "-key", $b_key,
@@ -275,14 +275,15 @@ ok(run(app(["openssl", "x509", "-req", "-text",
 && get_not_before($b_cert) =~ /Oct 31 00:00:00 2023 GMT/
 && get_not_after($b_cert) =~ /Dec 31 00:00:00 2023 GMT/);
 # start date today and days
-$today = strftime("%Y-%m-%d", localtime);
-$enddate = strftime("%Y-%m-%d", localtime(time + 99 * 24 * 60 * 60));
+%today = (strftime("%Y-%m-%d", gmtime) => 1);
+$enddate = strftime("%Y-%m-%d", gmtime(time + 99 * 24 * 60 * 60));
 ok(run(app(["openssl", "x509", "-req", "-text",
 	    "-key", $b_key,
 	    "-not_before", "today",
 	    "-days", "99",
             "-in", $b_csr, "-out", $b_cert]))
-&& get_not_before_date($b_cert) eq $today
+&& ++$today{strftime("%Y-%m-%d", gmtime)}
+&& (grep { defined $today{$_} } get_not_before_date($b_cert))
 && get_not_after_date($b_cert) eq $enddate);
 # end date before start date
 ok(!run(app(["openssl", "x509", "-req", "-text",
@@ -291,12 +292,13 @@ ok(!run(app(["openssl", "x509", "-req", "-text",
 	      "-not_after", "20231031000000Z",
               "-in", $b_csr, "-out", $b_cert])));
 # default days option
-$today = strftime("%Y-%m-%d", localtime);
-$enddate = strftime("%Y-%m-%d", localtime(time + 30 * 24 * 60 * 60));
+%today = (strftime("%Y-%m-%d", gmtime) => 1);
+$enddate = strftime("%Y-%m-%d", gmtime(time + 30 * 24 * 60 * 60));
 ok(run(app(["openssl", "x509", "-req", "-text",
 	    "-key", $b_key,
             "-in", $b_csr, "-out", $b_cert]))
-&& get_not_before_date($b_cert) eq $today
+&& ++$today{strftime("%Y-%m-%d", gmtime)}
+&& (grep { defined $today{$_} } get_not_before_date($b_cert))
 && get_not_after_date($b_cert) eq $enddate);
 
 SKIP: {

@@ -244,8 +244,6 @@ static inline uint64_t fallback_atomic_or_fetch(uint64_t *p, uint64_t m)
 #  define ATOMIC_OR_FETCH(p, v, o) fallback_atomic_or_fetch(p, v)
 # endif
 
-static CRYPTO_THREAD_LOCAL rcu_thr_key;
-
 /*
  * users is broken up into 2 parts
  * bits 0-15 current readers
@@ -300,6 +298,9 @@ struct rcu_lock_st {
     /* Callbacks to call for next ossl_synchronize_rcu */
     struct rcu_cb_item *cb_items;
 
+    /* The context we are being created against */
+    OSSL_LIB_CTX *ctx;
+
     /* rcu generation counter for in-order retirement */
     uint32_t id_ctr;
 
@@ -336,24 +337,6 @@ struct rcu_lock_st {
     /* signal to wake threads waiting on prior_lock */
     pthread_cond_t prior_signal;
 };
-
-/*
- * Called on thread exit to free the pthread key
- * associated with this thread, if any
- */
-static void free_rcu_thr_data(void *ptr)
-{
-    struct rcu_thr_data *data =
-                        (struct rcu_thr_data *)CRYPTO_THREAD_get_local(&rcu_thr_key);
-
-    OPENSSL_free(data);
-    CRYPTO_THREAD_set_local(&rcu_thr_key, NULL);
-}
-
-static void ossl_rcu_init(void)
-{
-    CRYPTO_THREAD_init_local(&rcu_thr_key, NULL);
-}
 
 /* Read side acquisition of the current qp */
 static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
@@ -403,22 +386,31 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
     return &lock->qp_group[qp_idx];
 }
 
+static void ossl_rcu_free_local_data(void *arg)
+{
+    OSSL_LIB_CTX *ctx = arg;
+    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(ctx);
+    struct rcu_thr_data *data = CRYPTO_THREAD_get_local(lkey);
+    OPENSSL_free(data);
+}
+
 void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
 {
     struct rcu_thr_data *data;
     int i, available_qp = -1;
+    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(lock->ctx);
 
     /*
      * we're going to access current_qp here so ask the
      * processor to fetch it
      */
-    data = CRYPTO_THREAD_get_local(&rcu_thr_key);
+    data = CRYPTO_THREAD_get_local(lkey);
 
     if (data == NULL) {
         data = OPENSSL_zalloc(sizeof(*data));
         OPENSSL_assert(data != NULL);
-        CRYPTO_THREAD_set_local(&rcu_thr_key, data);
-        ossl_init_thread_start(NULL, NULL, free_rcu_thr_data);
+        CRYPTO_THREAD_set_local(lkey, data);
+        ossl_init_thread_start(NULL, lock->ctx, ossl_rcu_free_local_data);
     }
 
     for (i = 0; i < MAX_QPS; i++) {
@@ -444,7 +436,8 @@ void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
 void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
 {
     int i;
-    struct rcu_thr_data *data = CRYPTO_THREAD_get_local(&rcu_thr_key);
+    CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(lock->ctx);
+    struct rcu_thr_data *data = CRYPTO_THREAD_get_local(lkey);
     uint64_t ret;
 
     assert(data != NULL);
@@ -637,22 +630,22 @@ void ossl_rcu_assign_uptr(void **p, void **v)
     ATOMIC_STORE(pvoid, p, v, __ATOMIC_RELEASE);
 }
 
-static CRYPTO_ONCE rcu_init_once = CRYPTO_ONCE_STATIC_INIT;
-
-CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers)
+CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
 {
     struct rcu_lock_st *new;
 
-    if (!CRYPTO_THREAD_run_once(&rcu_init_once, ossl_rcu_init))
-        return NULL;
-
     if (num_writers < 1)
         num_writers = 1;
+
+    ctx = ossl_lib_ctx_get_concrete(ctx);
+    if (ctx == NULL)
+        return 0;
 
     new = OPENSSL_zalloc(sizeof(*new));
     if (new == NULL)
         return NULL;
 
+    new->ctx = ctx;
     pthread_mutex_init(&new->write_lock, NULL);
     pthread_mutex_init(&new->prior_lock, NULL);
     pthread_mutex_init(&new->alloc_lock, NULL);
