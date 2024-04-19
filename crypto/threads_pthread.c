@@ -81,8 +81,8 @@ typedef struct rcu_cb_item *prcu_cb_item;
  * 1) We are building on a target that defines __APPLE__ AND
  * 2) We are building on a target using clang (__clang__) AND
  * 3) We are building for an M1 processor (__aarch64__)
- * Then we shold not use __atomic_load_n and instead implement our own
- * function to issue the ldar instruction instead, which procuces the proper
+ * Then we should not use __atomic_load_n and instead implement our own
+ * function to issue the ldar instruction instead, which produces the proper
  * sequencing guarantees
  */
 static inline void *apple_atomic_load_n_pvoid(void **p,
