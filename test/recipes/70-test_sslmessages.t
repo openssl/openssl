@@ -169,13 +169,12 @@ my $proxy = TLSProxy::Proxy->new(
     [0,0,0,0]
 );
 
-plan tests => 21;
-
 #Test 1: Check we get all the right messages for a default handshake
 (undef, my $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-no_tls1_3 -sess_out ".$session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 21;
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
                "Default handshake test");
