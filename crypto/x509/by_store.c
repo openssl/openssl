@@ -111,6 +111,10 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
 {
     switch (cmd) {
     case X509_L_ADD_STORE:
+#ifdef _WIN32
+        if (argp == NULL)
+            argp = "org.openssl.winstore://";
+#endif
         if (argp != NULL) {
             STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
             char *data = OPENSSL_strdup(argp);
