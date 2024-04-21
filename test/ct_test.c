@@ -450,13 +450,18 @@ static int test_encode_tls_sct(void)
 
     fixture->sct_list = sk_SCT_new_null();
     if (fixture->sct_list == NULL)
-	    return 0;
+    {
+        tear_down(fixture);
+        return 0;
+    }
 
     if (!TEST_ptr(sct = SCT_new_from_base64(SCT_VERSION_V1, log_id,
                                             CT_LOG_ENTRY_TYPE_X509, timestamp,
                                             extensions, signature)))
-
+    {
+        tear_down(fixture);
         return 0;
+    }
 
     sk_SCT_push(fixture->sct_list, sct);
     fixture->sct_dir = ct_dir;
