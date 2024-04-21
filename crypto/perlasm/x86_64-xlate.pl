@@ -909,21 +909,38 @@ my %globals;
 		    # to deal with nasm/masm assembly.
 		    #
 		    $self->{value} =~ s/(.+)\s+align\s*=.*$/$1/;
+                    $current_segment = pop(@segment_stack);
+                    if (not $current_segment) {
+                        # if no previous section is defined, then assume .text
+                        # so code does not land in .data section by accident.
+                        # this deals with inconsistency of perl-assembly files.
+                        push(@segment_stack, ".text");
+                    }
 		    #
 		    # $$line may still contains align= option. We do care
 		    # about section type here.
 		    #
 		    $current_segment = $$line;
 		    $current_segment =~ s/([^\s]+).*$/$1/;
+                    push(@segment_stack, $current_segment);
 		    if (!$elf && $current_segment eq ".rodata") {
 			if	($flavour eq "macosx") { $self->{value} = ".section\t__DATA,__const"; }
+			elsif	($flavour eq "mingw64")	{ $self->{value} = ".section\t.rodata"; }
 		    }
 		    if (!$elf && $current_segment eq ".init") {
 			if	($flavour eq "macosx")	{ $self->{value} = ".mod_init_func"; }
 			elsif	($flavour eq "mingw64")	{ $self->{value} = ".section\t.ctors"; }
 		    }
 		} elsif ($dir =~ /\.(text|data)/) {
+                    $current_segment = pop(@segment_stack);
+                    if (not $current_segment) {
+                        # if no previous section is defined, then assume .text
+                        # so code does not land in .data section by accident.
+                        # this deals with inconsistency of perl-assembly files.
+                        push(@segment_stack, ".text");
+                    }
 		    $current_segment=".$1";
+		    push(@segment_stack, $current_segment);
 		} elsif ($dir =~ /\.hidden/) {
 		    if    ($flavour eq "macosx")  { $self->{value} = ".private_extern\t$prefix$$line"; }
 		    elsif ($flavour eq "mingw64") { $self->{value} = ""; }
@@ -931,7 +948,16 @@ my %globals;
 		    $self->{value} = "$dir\t$prefix$$line";
 		    $self->{value} =~ s|,([0-9]+),([0-9]+)$|",$1,".log($2)/log(2)|e if ($flavour eq "macosx");
 		} elsif ($dir =~ /\.previous/) {
-		    $self->{value} = "" if ($flavour eq "mingw64");
+                    pop(@segment_stack); #pop ourselves
+                    # just peek at the top of the stack here
+                    $current_segment = @segment_stack[0];
+                    if (not $current_segment) {
+                        # if no previous segment was defined assume .text so
+                        # the code does not accidentally land in .data section.
+                        $current_segment = ".text";
+                        push(@segment_stack, $current_segment);
+                    }
+		    $self->{value} = $current_segment if ($flavour eq "mingw64");
 		}
 		$$line = "";
 		return $self;
