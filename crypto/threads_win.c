@@ -27,6 +27,88 @@
 # define NO_INTERLOCKEDOR64
 #endif
 
+/* Check for older versions of MSVC compiler before version 1929 on x86 architecture. */
+#if defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER < 1929
+
+/* Inline assembly for InterlockedAdd64 to add 64-bit integers atomically */
+static __declspec(naked) __int64 __fastcall InterlockedAdd64(__int64* volatile _Ptr, __int64 _Val)
+{
+    __asm {
+        push    ebx
+        push    esi
+        mov     esi, ecx          ; Pointer to the value
+        mov     eax, [esi]        ; Load low part of the value
+        mov     edx, [esi+4]      ; Load high part of the value
+    lbl: mov     ebx, eax
+        mov     ecx, edx
+        add     ebx, [esp+8+4]    ; Add low part of _Val
+        adc     ecx, [esp+8+8]    ; Add high part of _Val with carry
+        lock cmpxchg8b qword ptr [esi] ; Compare and exchange if unchanged
+        jne short lbl            ; If not equal, jump to lbl and try again
+        mov     edx, ecx
+        pop     esi
+        mov     eax, ebx
+        pop     ebx
+        retn    2*4              ; Return and clean up the stack
+    }
+}
+
+/* Inline assembly for InterlockedOr64 to OR 64-bit integers atomically */
+static __declspec(naked) __int64 __fastcall InterlockedOr64(__int64* volatile _Ptr, __int64 _Val)
+{
+    __asm {
+        push    ebx
+        push    esi
+        mov     esi, ecx          ; Pointer to the value
+        mov     eax, [esi]        ; Load low part of the value
+        mov     edx, [esi+4]      ; Load high part of the value
+    lbl: mov     ebx, eax
+        mov     ecx, edx
+        or      ebx, [esp+8+4]    ; OR low part of _Val
+        or      ecx, [esp+8+8]    ; OR high part of _Val
+        lock cmpxchg8b qword ptr [esi] ; Compare and exchange if unchanged
+        jne short lbl            ; If not equal, jump to lbl and try again
+        pop     esi
+        pop     ebx
+        retn    2*4              ; Return and clean up the stack
+    }
+}
+
+/* Inline assembly for InterlockedAnd64 to AND 64-bit integers atomically */
+static __declspec(naked) __int64 __fastcall InterlockedAnd64(__int64* volatile _Ptr, __int64 _Val)
+{
+    __asm {
+        push    ebx
+        push    esi
+        mov     esi, ecx          ; Pointer to the value
+        mov     eax, [esi]        ; Load low part of the value
+        mov     edx, [esi+4]      ; Load high part of the value
+    lbl: mov     ebx, eax
+        mov     ecx, edx
+        and     ebx, [esp+8+4]    ; AND low part of _Val
+        and     ecx, [esp+8+8]    ; AND high part of _Val
+        lock cmpxchg8b qword ptr [esi] ; Compare and exchange if unchanged
+        jne short lbl            ; If not equal, jump to lbl and try again
+        pop     esi
+        pop     ebx
+        retn    2*4              ; Return and clean up the stack
+    }
+}
+/* Re-enable InterlockedOr64, now that we have an implementation */
+#undef NO_INTERLOCKEDOR64
+#endif
+
+/* Ensure 'inline' keyword is defined for older versions of MSVC */
+#if defined(_MSC_VER) && _MSC_VER < 1929
+#define inline __inline
+#endif
+
+/* Define InterlockedOr for MSVC to ensure correct function naming */
+#ifdef _MSC_VER
+#define InterlockedOr _InterlockedOr
+#endif
+
+
 #include <openssl/crypto.h>
 #include <crypto/cryptlib.h>
 #include "internal/common.h"
