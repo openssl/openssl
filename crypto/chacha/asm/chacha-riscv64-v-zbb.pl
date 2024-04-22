@@ -111,26 +111,29 @@ sub chacha_sub_round {
         $V_T0, $V_T1, $V_T2, $V_T3,
     ) = @_;
 
-    # a += b; c ^= a; c <<<= $ROL_SHIFT;
+    # a += b; c ^= a;
+    my $code = <<___;
+    @{[vadd_vv $A0, $A0, $B0]}
+    add $S_A0, $S_A0, $S_B0
+    @{[vadd_vv $A1, $A1, $B1]}
+    add $S_A1, $S_A1, $S_B1
+    @{[vadd_vv $A2, $A2, $B2]}
+    add $S_A2, $S_A2, $S_B2
+    @{[vadd_vv $A3, $A3, $B3]}
+    add $S_A3, $S_A3, $S_B3
+    @{[vxor_vv $C0, $C0, $A0]}
+    xor $S_C0, $S_C0, $S_A0
+    @{[vxor_vv $C1, $C1, $A1]}
+    xor $S_C1, $S_C1, $S_A1
+    @{[vxor_vv $C2, $C2, $A2]}
+    xor $S_C2, $S_C2, $S_A2
+    @{[vxor_vv $C3, $C3, $A3]}
+    xor $S_C3, $S_C3, $S_A3
+___
 
+    # c <<<= $ROL_SHIFT;
     if ($use_zvkb) {
-        my $code = <<___;
-        @{[vadd_vv $A0, $A0, $B0]}
-        add $S_A0, $S_A0, $S_B0
-        @{[vadd_vv $A1, $A1, $B1]}
-        add $S_A1, $S_A1, $S_B1
-        @{[vadd_vv $A2, $A2, $B2]}
-        add $S_A2, $S_A2, $S_B2
-        @{[vadd_vv $A3, $A3, $B3]}
-        add $S_A3, $S_A3, $S_B3
-        @{[vxor_vv $C0, $C0, $A0]}
-        xor $S_C0, $S_C0, $S_A0
-        @{[vxor_vv $C1, $C1, $A1]}
-        xor $S_C1, $S_C1, $S_A1
-        @{[vxor_vv $C2, $C2, $A2]}
-        xor $S_C2, $S_C2, $S_A2
-        @{[vxor_vv $C3, $C3, $A3]}
-        xor $S_C3, $S_C3, $S_A3
+        my $ror_part = <<___;
         @{[vror_vi $C0, $C0, 32 - $ROL_SHIFT]}
         @{[roriw $S_C0, $S_C0, 32 - $ROL_SHIFT]}
         @{[vror_vi $C1, $C1, 32 - $ROL_SHIFT]}
@@ -140,25 +143,10 @@ sub chacha_sub_round {
         @{[vror_vi $C3, $C3, 32 - $ROL_SHIFT]}
         @{[roriw $S_C3, $S_C3, 32 - $ROL_SHIFT]}
 ___
-        return $code;
+
+        $code .= $ror_part;
     } else {
-        my $code = <<___;
-        @{[vadd_vv $A0, $A0, $B0]}
-        add $S_A0, $S_A0, $S_B0
-        @{[vadd_vv $A1, $A1, $B1]}
-        add $S_A1, $S_A1, $S_B1
-        @{[vadd_vv $A2, $A2, $B2]}
-        add $S_A2, $S_A2, $S_B2
-        @{[vadd_vv $A3, $A3, $B3]}
-        add $S_A3, $S_A3, $S_B3
-        @{[vxor_vv $C0, $C0, $A0]}
-        xor $S_C0, $S_C0, $S_A0
-        @{[vxor_vv $C1, $C1, $A1]}
-        xor $S_C1, $S_C1, $S_A1
-        @{[vxor_vv $C2, $C2, $A2]}
-        xor $S_C2, $S_C2, $S_A2
-        @{[vxor_vv $C3, $C3, $A3]}
-        xor $S_C3, $S_C3, $S_A3
+        my $ror_part = <<___;
         @{[vsll_vi $V_T0, $C0, $ROL_SHIFT]}
         @{[vsll_vi $V_T1, $C1, $ROL_SHIFT]}
         @{[vsll_vi $V_T2, $C2, $ROL_SHIFT]}
@@ -176,8 +164,11 @@ ___
         @{[vor_vv $C3, $C3, $V_T3]}
         @{[roriw $S_C3, $S_C3, 32 - $ROL_SHIFT]}
 ___
-        return $code;
+
+        $code .= $ror_part;
     }
+
+    return $code;
 }
 
 sub chacha_quad_round_group {
