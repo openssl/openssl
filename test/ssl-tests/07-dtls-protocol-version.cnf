@@ -1,6 +1,6 @@
 # Generated with generate_ssl_tests.pl
 
-num_tests = 64
+num_tests = 169
 
 test-0 = 0-version-negotiation
 test-1 = 1-version-negotiation
@@ -66,6 +66,111 @@ test-60 = 60-version-negotiation
 test-61 = 61-version-negotiation
 test-62 = 62-version-negotiation
 test-63 = 63-version-negotiation
+test-64 = 64-version-negotiation
+test-65 = 65-version-negotiation
+test-66 = 66-version-negotiation
+test-67 = 67-version-negotiation
+test-68 = 68-version-negotiation
+test-69 = 69-version-negotiation
+test-70 = 70-version-negotiation
+test-71 = 71-version-negotiation
+test-72 = 72-version-negotiation
+test-73 = 73-version-negotiation
+test-74 = 74-version-negotiation
+test-75 = 75-version-negotiation
+test-76 = 76-version-negotiation
+test-77 = 77-version-negotiation
+test-78 = 78-version-negotiation
+test-79 = 79-version-negotiation
+test-80 = 80-version-negotiation
+test-81 = 81-version-negotiation
+test-82 = 82-version-negotiation
+test-83 = 83-version-negotiation
+test-84 = 84-version-negotiation
+test-85 = 85-version-negotiation
+test-86 = 86-version-negotiation
+test-87 = 87-version-negotiation
+test-88 = 88-version-negotiation
+test-89 = 89-version-negotiation
+test-90 = 90-version-negotiation
+test-91 = 91-version-negotiation
+test-92 = 92-version-negotiation
+test-93 = 93-version-negotiation
+test-94 = 94-version-negotiation
+test-95 = 95-version-negotiation
+test-96 = 96-version-negotiation
+test-97 = 97-version-negotiation
+test-98 = 98-version-negotiation
+test-99 = 99-version-negotiation
+test-100 = 100-version-negotiation
+test-101 = 101-version-negotiation
+test-102 = 102-version-negotiation
+test-103 = 103-version-negotiation
+test-104 = 104-version-negotiation
+test-105 = 105-version-negotiation
+test-106 = 106-version-negotiation
+test-107 = 107-version-negotiation
+test-108 = 108-version-negotiation
+test-109 = 109-version-negotiation
+test-110 = 110-version-negotiation
+test-111 = 111-version-negotiation
+test-112 = 112-version-negotiation
+test-113 = 113-version-negotiation
+test-114 = 114-version-negotiation
+test-115 = 115-version-negotiation
+test-116 = 116-version-negotiation
+test-117 = 117-version-negotiation
+test-118 = 118-version-negotiation
+test-119 = 119-version-negotiation
+test-120 = 120-version-negotiation
+test-121 = 121-version-negotiation
+test-122 = 122-version-negotiation
+test-123 = 123-version-negotiation
+test-124 = 124-version-negotiation
+test-125 = 125-version-negotiation
+test-126 = 126-version-negotiation
+test-127 = 127-version-negotiation
+test-128 = 128-version-negotiation
+test-129 = 129-version-negotiation
+test-130 = 130-version-negotiation
+test-131 = 131-version-negotiation
+test-132 = 132-version-negotiation
+test-133 = 133-version-negotiation
+test-134 = 134-version-negotiation
+test-135 = 135-version-negotiation
+test-136 = 136-version-negotiation
+test-137 = 137-version-negotiation
+test-138 = 138-version-negotiation
+test-139 = 139-version-negotiation
+test-140 = 140-version-negotiation
+test-141 = 141-version-negotiation
+test-142 = 142-version-negotiation
+test-143 = 143-version-negotiation
+test-144 = 144-version-negotiation
+test-145 = 145-version-negotiation
+test-146 = 146-version-negotiation
+test-147 = 147-version-negotiation
+test-148 = 148-version-negotiation
+test-149 = 149-version-negotiation
+test-150 = 150-version-negotiation
+test-151 = 151-version-negotiation
+test-152 = 152-version-negotiation
+test-153 = 153-version-negotiation
+test-154 = 154-version-negotiation
+test-155 = 155-version-negotiation
+test-156 = 156-version-negotiation
+test-157 = 157-version-negotiation
+test-158 = 158-version-negotiation
+test-159 = 159-version-negotiation
+test-160 = 160-version-negotiation
+test-161 = 161-version-negotiation
+test-162 = 162-version-negotiation
+test-163 = 163-version-negotiation
+test-164 = 164-version-negotiation
+test-165 = 165-version-negotiation
+test-166 = 166-version-negotiation
+test-167 = 167-version-negotiation
+test-168 = 168-version-negotiation
 # ===========================================================
 
 [0-version-negotiation]
@@ -132,6 +237,7 @@ client = 2-version-negotiation-client
 [2-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [2-version-negotiation-client]
@@ -158,8 +264,6 @@ client = 3-version-negotiation-client
 [3-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
-MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [3-version-negotiation-client]
@@ -186,7 +290,7 @@ client = 4-version-negotiation-client
 [4-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
@@ -214,6 +318,7 @@ client = 5-version-negotiation-client
 [5-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
@@ -241,8 +346,8 @@ client = 6-version-negotiation-client
 [6-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [6-version-negotiation-client]
@@ -252,7 +357,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-6]
-ExpectedResult = ServerFail
+ExpectedProtocol = DTLSv1
+ExpectedResult = Success
 Method = DTLS
 
 
@@ -268,7 +374,7 @@ client = 7-version-negotiation-client
 [7-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1.2
+MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [7-version-negotiation-client]
@@ -278,7 +384,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-7]
-ExpectedResult = ServerFail
+ExpectedProtocol = DTLSv1
+ExpectedResult = Success
 Method = DTLS
 
 
@@ -294,18 +401,18 @@ client = 8-version-negotiation-client
 [8-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [8-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-8]
-ExpectedProtocol = DTLSv1
-ExpectedResult = Success
+ExpectedResult = ServerFail
 Method = DTLS
 
 
@@ -321,18 +428,18 @@ client = 9-version-negotiation-client
 [9-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [9-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-9]
-ExpectedProtocol = DTLSv1.2
-ExpectedResult = Success
+ExpectedResult = ServerFail
 Method = DTLS
 
 
@@ -348,17 +455,17 @@ client = 10-version-negotiation-client
 [10-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [10-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-10]
-ExpectedProtocol = DTLSv1.2
-ExpectedResult = Success
+ExpectedResult = ServerFail
 Method = DTLS
 
 
@@ -374,19 +481,18 @@ client = 11-version-negotiation-client
 [11-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [11-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-11]
-ExpectedProtocol = DTLSv1
-ExpectedResult = Success
+ExpectedResult = ServerFail
 Method = DTLS
 
 
@@ -402,19 +508,17 @@ client = 12-version-negotiation-client
 [12-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1
+MinProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [12-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-12]
-ExpectedProtocol = DTLSv1.2
-ExpectedResult = Success
+ExpectedResult = ServerFail
 Method = DTLS
 
 
@@ -430,7 +534,7 @@ client = 13-version-negotiation-client
 [13-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [13-version-negotiation-client]
@@ -440,7 +544,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-13]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1
 ExpectedResult = Success
 Method = DTLS
 
@@ -458,7 +562,6 @@ client = 14-version-negotiation-client
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [14-version-negotiation-client]
@@ -485,7 +588,7 @@ client = 15-version-negotiation-client
 [15-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [15-version-negotiation-client]
@@ -512,16 +615,16 @@ client = 16-version-negotiation-client
 [16-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [16-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-16]
-ExpectedProtocol = DTLSv1
+ExpectedProtocol = DTLSv1.2
 ExpectedResult = Success
 Method = DTLS
 
@@ -538,16 +641,18 @@ client = 17-version-negotiation-client
 [17-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [17-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-17]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1
 ExpectedResult = Success
 Method = DTLS
 
@@ -564,10 +669,13 @@ client = 18-version-negotiation-client
 [18-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [18-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -589,17 +697,18 @@ client = 19-version-negotiation-client
 [19-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [19-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-19]
-ExpectedProtocol = DTLSv1
+ExpectedProtocol = DTLSv1.2
 ExpectedResult = Success
 Method = DTLS
 
@@ -616,12 +725,12 @@ client = 20-version-negotiation-client
 [20-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [20-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -643,11 +752,13 @@ client = 21-version-negotiation-client
 [21-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [21-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -669,12 +780,13 @@ client = 22-version-negotiation-client
 [22-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
+MaxProtocol = DTLSv1.3
 MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [22-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -701,6 +813,7 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [23-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -722,19 +835,18 @@ client = 24-version-negotiation-client
 [24-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [24-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-24]
-ExpectedProtocol = DTLSv1
-ExpectedResult = Success
+ExpectedResult = ServerFail
 Method = DTLS
 
 
@@ -750,19 +862,17 @@ client = 25-version-negotiation-client
 [25-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [25-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-25]
-ExpectedProtocol = DTLSv1
-ExpectedResult = Success
+ExpectedResult = ServerFail
 Method = DTLS
 
 
@@ -778,12 +888,12 @@ client = 26-version-negotiation-client
 [26-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [26-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -805,19 +915,17 @@ client = 27-version-negotiation-client
 [27-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [27-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-27]
-ExpectedProtocol = DTLSv1
+ExpectedProtocol = DTLSv1.2
 ExpectedResult = Success
 Method = DTLS
 
@@ -834,19 +942,17 @@ client = 28-version-negotiation-client
 [28-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [28-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-28]
-ExpectedProtocol = DTLSv1
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -863,18 +969,16 @@ client = 29-version-negotiation-client
 [29-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [29-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-29]
-ExpectedProtocol = DTLSv1
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -891,19 +995,19 @@ client = 30-version-negotiation-client
 [30-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [30-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-30]
-ExpectedResult = ServerFail
+ExpectedProtocol = DTLSv1
+ExpectedResult = Success
 Method = DTLS
 
 
@@ -919,18 +1023,19 @@ client = 31-version-negotiation-client
 [31-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [31-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-31]
-ExpectedResult = ServerFail
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
 Method = DTLS
 
 
@@ -946,18 +1051,18 @@ client = 32-version-negotiation-client
 [32-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [32-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-32]
-ExpectedProtocol = DTLSv1
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -974,18 +1079,17 @@ client = 33-version-negotiation-client
 [33-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [33-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-33]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -1002,12 +1106,13 @@ client = 34-version-negotiation-client
 [34-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [34-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -1029,19 +1134,18 @@ client = 35-version-negotiation-client
 [35-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [35-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-35]
-ExpectedProtocol = DTLSv1
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -1058,19 +1162,17 @@ client = 36-version-negotiation-client
 [36-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1
+MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [36-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-36]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -1087,18 +1189,18 @@ client = 37-version-negotiation-client
 [37-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [37-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-37]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -1115,19 +1217,17 @@ client = 38-version-negotiation-client
 [38-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
+MinProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [38-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-38]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -1144,18 +1244,16 @@ client = 39-version-negotiation-client
 [39-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [39-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-39]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1
 ExpectedResult = Success
 Method = DTLS
 
@@ -1172,17 +1270,16 @@ client = 40-version-negotiation-client
 [40-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
+MaxProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [40-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-40]
-ExpectedProtocol = DTLSv1
+ExpectedProtocol = DTLSv1.2
 ExpectedResult = Success
 Method = DTLS
 
@@ -1199,17 +1296,16 @@ client = 41-version-negotiation-client
 [41-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
+MaxProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [41-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-41]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -1230,12 +1326,11 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [42-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-42]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -1258,7 +1353,6 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [43-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -1286,7 +1380,6 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [44-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -1308,17 +1401,17 @@ client = 45-version-negotiation-client
 [45-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [45-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-45]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -1335,18 +1428,16 @@ client = 46-version-negotiation-client
 [46-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
+MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [46-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-46]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -1363,12 +1454,12 @@ client = 47-version-negotiation-client
 [47-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [47-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -1390,18 +1481,18 @@ client = 48-version-negotiation-client
 [48-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [48-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-48]
-ExpectedResult = ClientFail
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
 Method = DTLS
 
 
@@ -1417,18 +1508,16 @@ client = 49-version-negotiation-client
 [49-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [49-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-49]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -1445,17 +1534,17 @@ client = 50-version-negotiation-client
 [50-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [50-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-50]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
@@ -1472,19 +1561,17 @@ client = 51-version-negotiation-client
 [51-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
-MinProtocol = DTLSv1
+MinProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [51-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-51]
-ExpectedResult = ClientFail
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
 Method = DTLS
 
 
@@ -1500,19 +1587,18 @@ client = 52-version-negotiation-client
 [52-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [52-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-52]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1
 ExpectedResult = Success
 Method = DTLS
 
@@ -1529,18 +1615,18 @@ client = 53-version-negotiation-client
 [53-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [53-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-53]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1
 ExpectedResult = Success
 Method = DTLS
 
@@ -1557,19 +1643,18 @@ client = 54-version-negotiation-client
 [54-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [54-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-54]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1
 ExpectedResult = Success
 Method = DTLS
 
@@ -1586,18 +1671,17 @@ client = 55-version-negotiation-client
 [55-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [55-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-55]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1
 ExpectedResult = Success
 Method = DTLS
 
@@ -1615,16 +1699,19 @@ client = 56-version-negotiation-client
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [56-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-56]
-ExpectedResult = ClientFail
+ExpectedProtocol = DTLSv1
+ExpectedResult = Success
 Method = DTLS
 
 
@@ -1641,16 +1728,18 @@ client = 57-version-negotiation-client
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [57-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-57]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1
 ExpectedResult = Success
 Method = DTLS
 
@@ -1667,16 +1756,19 @@ client = 58-version-negotiation-client
 [58-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [58-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-58]
-ExpectedProtocol = DTLSv1.2
+ExpectedProtocol = DTLSv1
 ExpectedResult = Success
 Method = DTLS
 
@@ -1693,18 +1785,19 @@ client = 59-version-negotiation-client
 [59-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [59-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-59]
-ExpectedResult = ClientFail
+ExpectedProtocol = DTLSv1
+ExpectedResult = Success
 Method = DTLS
 
 
@@ -1721,18 +1814,18 @@ client = 60-version-negotiation-client
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
-MinProtocol = DTLSv1
+MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [60-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-60]
-ExpectedProtocol = DTLSv1.2
-ExpectedResult = Success
+ExpectedResult = ServerFail
 Method = DTLS
 
 
@@ -1748,18 +1841,19 @@ client = 61-version-negotiation-client
 [61-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [61-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-61]
-ExpectedProtocol = DTLSv1.2
-ExpectedResult = Success
+ExpectedResult = ServerFail
 Method = DTLS
 
 
@@ -1775,19 +1869,18 @@ client = 62-version-negotiation-client
 [62-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [62-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-62]
-ExpectedProtocol = DTLSv1.2
-ExpectedResult = Success
+ExpectedResult = ServerFail
 Method = DTLS
 
 
@@ -1803,17 +1896,2938 @@ client = 63-version-negotiation-client
 [63-version-negotiation-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT:@SECLEVEL=0
-MinProtocol = DTLSv1.2
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [63-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-63]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[64-version-negotiation]
+ssl_conf = 64-version-negotiation-ssl
+
+[64-version-negotiation-ssl]
+server = 64-version-negotiation-server
+client = 64-version-negotiation-client
+
+[64-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[64-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-64]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[65-version-negotiation]
+ssl_conf = 65-version-negotiation-ssl
+
+[65-version-negotiation-ssl]
+server = 65-version-negotiation-server
+client = 65-version-negotiation-client
+
+[65-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[65-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-65]
+ExpectedProtocol = DTLSv1
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[66-version-negotiation]
+ssl_conf = 66-version-negotiation-ssl
+
+[66-version-negotiation-ssl]
+server = 66-version-negotiation-server
+client = 66-version-negotiation-client
+
+[66-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[66-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-66]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[67-version-negotiation]
+ssl_conf = 67-version-negotiation-ssl
+
+[67-version-negotiation-ssl]
+server = 67-version-negotiation-server
+client = 67-version-negotiation-client
+
+[67-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[67-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-67]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[68-version-negotiation]
+ssl_conf = 68-version-negotiation-ssl
+
+[68-version-negotiation-ssl]
+server = 68-version-negotiation-server
+client = 68-version-negotiation-client
+
+[68-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[68-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-68]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[69-version-negotiation]
+ssl_conf = 69-version-negotiation-ssl
+
+[69-version-negotiation-ssl]
+server = 69-version-negotiation-server
+client = 69-version-negotiation-client
+
+[69-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[69-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-69]
+ExpectedProtocol = DTLSv1
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[70-version-negotiation]
+ssl_conf = 70-version-negotiation-ssl
+
+[70-version-negotiation-ssl]
+server = 70-version-negotiation-server
+client = 70-version-negotiation-client
+
+[70-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[70-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-70]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[71-version-negotiation]
+ssl_conf = 71-version-negotiation-ssl
+
+[71-version-negotiation-ssl]
+server = 71-version-negotiation-server
+client = 71-version-negotiation-client
+
+[71-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[71-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-71]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[72-version-negotiation]
+ssl_conf = 72-version-negotiation-ssl
+
+[72-version-negotiation-ssl]
+server = 72-version-negotiation-server
+client = 72-version-negotiation-client
+
+[72-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[72-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-72]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[73-version-negotiation]
+ssl_conf = 73-version-negotiation-ssl
+
+[73-version-negotiation-ssl]
+server = 73-version-negotiation-server
+client = 73-version-negotiation-client
+
+[73-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[73-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-73]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[74-version-negotiation]
+ssl_conf = 74-version-negotiation-ssl
+
+[74-version-negotiation-ssl]
+server = 74-version-negotiation-server
+client = 74-version-negotiation-client
+
+[74-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[74-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-74]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[75-version-negotiation]
+ssl_conf = 75-version-negotiation-ssl
+
+[75-version-negotiation-ssl]
+server = 75-version-negotiation-server
+client = 75-version-negotiation-client
+
+[75-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[75-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-75]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[76-version-negotiation]
+ssl_conf = 76-version-negotiation-ssl
+
+[76-version-negotiation-ssl]
+server = 76-version-negotiation-server
+client = 76-version-negotiation-client
+
+[76-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[76-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-76]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[77-version-negotiation]
+ssl_conf = 77-version-negotiation-ssl
+
+[77-version-negotiation-ssl]
+server = 77-version-negotiation-server
+client = 77-version-negotiation-client
+
+[77-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[77-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-77]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[78-version-negotiation]
+ssl_conf = 78-version-negotiation-ssl
+
+[78-version-negotiation-ssl]
+server = 78-version-negotiation-server
+client = 78-version-negotiation-client
+
+[78-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[78-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-78]
+ExpectedProtocol = DTLSv1
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[79-version-negotiation]
+ssl_conf = 79-version-negotiation-ssl
+
+[79-version-negotiation-ssl]
+server = 79-version-negotiation-server
+client = 79-version-negotiation-client
+
+[79-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[79-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-79]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[80-version-negotiation]
+ssl_conf = 80-version-negotiation-ssl
+
+[80-version-negotiation-ssl]
+server = 80-version-negotiation-server
+client = 80-version-negotiation-client
+
+[80-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[80-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-80]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[81-version-negotiation]
+ssl_conf = 81-version-negotiation-ssl
+
+[81-version-negotiation-ssl]
+server = 81-version-negotiation-server
+client = 81-version-negotiation-client
+
+[81-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[81-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-81]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[82-version-negotiation]
+ssl_conf = 82-version-negotiation-ssl
+
+[82-version-negotiation-ssl]
+server = 82-version-negotiation-server
+client = 82-version-negotiation-client
+
+[82-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[82-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-82]
+ExpectedProtocol = DTLSv1
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[83-version-negotiation]
+ssl_conf = 83-version-negotiation-ssl
+
+[83-version-negotiation-ssl]
+server = 83-version-negotiation-server
+client = 83-version-negotiation-client
+
+[83-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[83-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-83]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[84-version-negotiation]
+ssl_conf = 84-version-negotiation-ssl
+
+[84-version-negotiation-ssl]
+server = 84-version-negotiation-server
+client = 84-version-negotiation-client
+
+[84-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[84-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-84]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[85-version-negotiation]
+ssl_conf = 85-version-negotiation-ssl
+
+[85-version-negotiation-ssl]
+server = 85-version-negotiation-server
+client = 85-version-negotiation-client
+
+[85-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[85-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-85]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[86-version-negotiation]
+ssl_conf = 86-version-negotiation-ssl
+
+[86-version-negotiation-ssl]
+server = 86-version-negotiation-server
+client = 86-version-negotiation-client
+
+[86-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[86-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-86]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[87-version-negotiation]
+ssl_conf = 87-version-negotiation-ssl
+
+[87-version-negotiation-ssl]
+server = 87-version-negotiation-server
+client = 87-version-negotiation-client
+
+[87-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[87-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-87]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[88-version-negotiation]
+ssl_conf = 88-version-negotiation-ssl
+
+[88-version-negotiation-ssl]
+server = 88-version-negotiation-server
+client = 88-version-negotiation-client
+
+[88-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[88-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-88]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[89-version-negotiation]
+ssl_conf = 89-version-negotiation-ssl
+
+[89-version-negotiation-ssl]
+server = 89-version-negotiation-server
+client = 89-version-negotiation-client
+
+[89-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[89-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-89]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[90-version-negotiation]
+ssl_conf = 90-version-negotiation-ssl
+
+[90-version-negotiation-ssl]
+server = 90-version-negotiation-server
+client = 90-version-negotiation-client
+
+[90-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[90-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-90]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[91-version-negotiation]
+ssl_conf = 91-version-negotiation-ssl
+
+[91-version-negotiation-ssl]
+server = 91-version-negotiation-server
+client = 91-version-negotiation-client
+
+[91-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[91-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-91]
+ExpectedProtocol = DTLSv1
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[92-version-negotiation]
+ssl_conf = 92-version-negotiation-ssl
+
+[92-version-negotiation-ssl]
+server = 92-version-negotiation-server
+client = 92-version-negotiation-client
+
+[92-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[92-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-92]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[93-version-negotiation]
+ssl_conf = 93-version-negotiation-ssl
+
+[93-version-negotiation-ssl]
+server = 93-version-negotiation-server
+client = 93-version-negotiation-client
+
+[93-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[93-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-93]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[94-version-negotiation]
+ssl_conf = 94-version-negotiation-ssl
+
+[94-version-negotiation-ssl]
+server = 94-version-negotiation-server
+client = 94-version-negotiation-client
+
+[94-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[94-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-94]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[95-version-negotiation]
+ssl_conf = 95-version-negotiation-ssl
+
+[95-version-negotiation-ssl]
+server = 95-version-negotiation-server
+client = 95-version-negotiation-client
+
+[95-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[95-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-95]
+ExpectedProtocol = DTLSv1
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[96-version-negotiation]
+ssl_conf = 96-version-negotiation-ssl
+
+[96-version-negotiation-ssl]
+server = 96-version-negotiation-server
+client = 96-version-negotiation-client
+
+[96-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[96-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-96]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[97-version-negotiation]
+ssl_conf = 97-version-negotiation-ssl
+
+[97-version-negotiation-ssl]
+server = 97-version-negotiation-server
+client = 97-version-negotiation-client
+
+[97-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[97-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-97]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[98-version-negotiation]
+ssl_conf = 98-version-negotiation-ssl
+
+[98-version-negotiation-ssl]
+server = 98-version-negotiation-server
+client = 98-version-negotiation-client
+
+[98-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[98-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-98]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[99-version-negotiation]
+ssl_conf = 99-version-negotiation-ssl
+
+[99-version-negotiation-ssl]
+server = 99-version-negotiation-server
+client = 99-version-negotiation-client
+
+[99-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[99-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-99]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[100-version-negotiation]
+ssl_conf = 100-version-negotiation-ssl
+
+[100-version-negotiation-ssl]
+server = 100-version-negotiation-server
+client = 100-version-negotiation-client
+
+[100-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[100-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-100]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[101-version-negotiation]
+ssl_conf = 101-version-negotiation-ssl
+
+[101-version-negotiation-ssl]
+server = 101-version-negotiation-server
+client = 101-version-negotiation-client
+
+[101-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[101-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-101]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[102-version-negotiation]
+ssl_conf = 102-version-negotiation-ssl
+
+[102-version-negotiation-ssl]
+server = 102-version-negotiation-server
+client = 102-version-negotiation-client
+
+[102-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[102-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-102]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[103-version-negotiation]
+ssl_conf = 103-version-negotiation-ssl
+
+[103-version-negotiation-ssl]
+server = 103-version-negotiation-server
+client = 103-version-negotiation-client
+
+[103-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[103-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-103]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[104-version-negotiation]
+ssl_conf = 104-version-negotiation-ssl
+
+[104-version-negotiation-ssl]
+server = 104-version-negotiation-server
+client = 104-version-negotiation-client
+
+[104-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[104-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-104]
+ExpectedResult = ClientFail
+Method = DTLS
+
+
+# ===========================================================
+
+[105-version-negotiation]
+ssl_conf = 105-version-negotiation-ssl
+
+[105-version-negotiation-ssl]
+server = 105-version-negotiation-server
+client = 105-version-negotiation-client
+
+[105-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[105-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-105]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[106-version-negotiation]
+ssl_conf = 106-version-negotiation-ssl
+
+[106-version-negotiation-ssl]
+server = 106-version-negotiation-server
+client = 106-version-negotiation-client
+
+[106-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[106-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-106]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[107-version-negotiation]
+ssl_conf = 107-version-negotiation-ssl
+
+[107-version-negotiation-ssl]
+server = 107-version-negotiation-server
+client = 107-version-negotiation-client
+
+[107-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[107-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-107]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[108-version-negotiation]
+ssl_conf = 108-version-negotiation-ssl
+
+[108-version-negotiation-ssl]
+server = 108-version-negotiation-server
+client = 108-version-negotiation-client
+
+[108-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[108-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-108]
+ExpectedResult = ClientFail
+Method = DTLS
+
+
+# ===========================================================
+
+[109-version-negotiation]
+ssl_conf = 109-version-negotiation-ssl
+
+[109-version-negotiation-ssl]
+server = 109-version-negotiation-server
+client = 109-version-negotiation-client
+
+[109-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[109-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-109]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[110-version-negotiation]
+ssl_conf = 110-version-negotiation-ssl
+
+[110-version-negotiation-ssl]
+server = 110-version-negotiation-server
+client = 110-version-negotiation-client
+
+[110-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[110-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-110]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[111-version-negotiation]
+ssl_conf = 111-version-negotiation-ssl
+
+[111-version-negotiation-ssl]
+server = 111-version-negotiation-server
+client = 111-version-negotiation-client
+
+[111-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[111-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-111]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[112-version-negotiation]
+ssl_conf = 112-version-negotiation-ssl
+
+[112-version-negotiation-ssl]
+server = 112-version-negotiation-server
+client = 112-version-negotiation-client
+
+[112-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[112-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-112]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[113-version-negotiation]
+ssl_conf = 113-version-negotiation-ssl
+
+[113-version-negotiation-ssl]
+server = 113-version-negotiation-server
+client = 113-version-negotiation-client
+
+[113-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[113-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-113]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[114-version-negotiation]
+ssl_conf = 114-version-negotiation-ssl
+
+[114-version-negotiation-ssl]
+server = 114-version-negotiation-server
+client = 114-version-negotiation-client
+
+[114-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[114-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-114]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[115-version-negotiation]
+ssl_conf = 115-version-negotiation-ssl
+
+[115-version-negotiation-ssl]
+server = 115-version-negotiation-server
+client = 115-version-negotiation-client
+
+[115-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[115-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-115]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[116-version-negotiation]
+ssl_conf = 116-version-negotiation-ssl
+
+[116-version-negotiation-ssl]
+server = 116-version-negotiation-server
+client = 116-version-negotiation-client
+
+[116-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[116-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-116]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[117-version-negotiation]
+ssl_conf = 117-version-negotiation-ssl
+
+[117-version-negotiation-ssl]
+server = 117-version-negotiation-server
+client = 117-version-negotiation-client
+
+[117-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[117-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-117]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[118-version-negotiation]
+ssl_conf = 118-version-negotiation-ssl
+
+[118-version-negotiation-ssl]
+server = 118-version-negotiation-server
+client = 118-version-negotiation-client
+
+[118-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[118-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-118]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[119-version-negotiation]
+ssl_conf = 119-version-negotiation-ssl
+
+[119-version-negotiation-ssl]
+server = 119-version-negotiation-server
+client = 119-version-negotiation-client
+
+[119-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[119-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-119]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[120-version-negotiation]
+ssl_conf = 120-version-negotiation-ssl
+
+[120-version-negotiation-ssl]
+server = 120-version-negotiation-server
+client = 120-version-negotiation-client
+
+[120-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[120-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-120]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[121-version-negotiation]
+ssl_conf = 121-version-negotiation-ssl
+
+[121-version-negotiation-ssl]
+server = 121-version-negotiation-server
+client = 121-version-negotiation-client
+
+[121-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[121-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-121]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[122-version-negotiation]
+ssl_conf = 122-version-negotiation-ssl
+
+[122-version-negotiation-ssl]
+server = 122-version-negotiation-server
+client = 122-version-negotiation-client
+
+[122-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[122-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-122]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[123-version-negotiation]
+ssl_conf = 123-version-negotiation-ssl
+
+[123-version-negotiation-ssl]
+server = 123-version-negotiation-server
+client = 123-version-negotiation-client
+
+[123-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[123-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-123]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[124-version-negotiation]
+ssl_conf = 124-version-negotiation-ssl
+
+[124-version-negotiation-ssl]
+server = 124-version-negotiation-server
+client = 124-version-negotiation-client
+
+[124-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[124-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-124]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[125-version-negotiation]
+ssl_conf = 125-version-negotiation-ssl
+
+[125-version-negotiation-ssl]
+server = 125-version-negotiation-server
+client = 125-version-negotiation-client
+
+[125-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[125-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-125]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[126-version-negotiation]
+ssl_conf = 126-version-negotiation-ssl
+
+[126-version-negotiation-ssl]
+server = 126-version-negotiation-server
+client = 126-version-negotiation-client
+
+[126-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[126-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-126]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[127-version-negotiation]
+ssl_conf = 127-version-negotiation-ssl
+
+[127-version-negotiation-ssl]
+server = 127-version-negotiation-server
+client = 127-version-negotiation-client
+
+[127-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[127-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-127]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[128-version-negotiation]
+ssl_conf = 128-version-negotiation-ssl
+
+[128-version-negotiation-ssl]
+server = 128-version-negotiation-server
+client = 128-version-negotiation-client
+
+[128-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[128-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-128]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[129-version-negotiation]
+ssl_conf = 129-version-negotiation-ssl
+
+[129-version-negotiation-ssl]
+server = 129-version-negotiation-server
+client = 129-version-negotiation-client
+
+[129-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[129-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-129]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[130-version-negotiation]
+ssl_conf = 130-version-negotiation-ssl
+
+[130-version-negotiation-ssl]
+server = 130-version-negotiation-server
+client = 130-version-negotiation-client
+
+[130-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[130-version-negotiation-client]
 CipherString = DEFAULT:@SECLEVEL=0
 MinProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-63]
+[test-130]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[131-version-negotiation]
+ssl_conf = 131-version-negotiation-ssl
+
+[131-version-negotiation-ssl]
+server = 131-version-negotiation-server
+client = 131-version-negotiation-client
+
+[131-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[131-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-131]
 ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[132-version-negotiation]
+ssl_conf = 132-version-negotiation-ssl
+
+[132-version-negotiation-ssl]
+server = 132-version-negotiation-server
+client = 132-version-negotiation-client
+
+[132-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[132-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-132]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[133-version-negotiation]
+ssl_conf = 133-version-negotiation-ssl
+
+[133-version-negotiation-ssl]
+server = 133-version-negotiation-server
+client = 133-version-negotiation-client
+
+[133-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[133-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-133]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[134-version-negotiation]
+ssl_conf = 134-version-negotiation-ssl
+
+[134-version-negotiation-ssl]
+server = 134-version-negotiation-server
+client = 134-version-negotiation-client
+
+[134-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[134-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-134]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[135-version-negotiation]
+ssl_conf = 135-version-negotiation-ssl
+
+[135-version-negotiation-ssl]
+server = 135-version-negotiation-server
+client = 135-version-negotiation-client
+
+[135-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[135-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-135]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[136-version-negotiation]
+ssl_conf = 136-version-negotiation-ssl
+
+[136-version-negotiation-ssl]
+server = 136-version-negotiation-server
+client = 136-version-negotiation-client
+
+[136-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[136-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-136]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[137-version-negotiation]
+ssl_conf = 137-version-negotiation-ssl
+
+[137-version-negotiation-ssl]
+server = 137-version-negotiation-server
+client = 137-version-negotiation-client
+
+[137-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[137-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-137]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[138-version-negotiation]
+ssl_conf = 138-version-negotiation-ssl
+
+[138-version-negotiation-ssl]
+server = 138-version-negotiation-server
+client = 138-version-negotiation-client
+
+[138-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[138-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-138]
+ExpectedProtocol = DTLSv1.2
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[139-version-negotiation]
+ssl_conf = 139-version-negotiation-ssl
+
+[139-version-negotiation-ssl]
+server = 139-version-negotiation-server
+client = 139-version-negotiation-client
+
+[139-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[139-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-139]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[140-version-negotiation]
+ssl_conf = 140-version-negotiation-ssl
+
+[140-version-negotiation-ssl]
+server = 140-version-negotiation-server
+client = 140-version-negotiation-client
+
+[140-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[140-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-140]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[141-version-negotiation]
+ssl_conf = 141-version-negotiation-ssl
+
+[141-version-negotiation-ssl]
+server = 141-version-negotiation-server
+client = 141-version-negotiation-client
+
+[141-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[141-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-141]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[142-version-negotiation]
+ssl_conf = 142-version-negotiation-ssl
+
+[142-version-negotiation-ssl]
+server = 142-version-negotiation-server
+client = 142-version-negotiation-client
+
+[142-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[142-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-142]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[143-version-negotiation]
+ssl_conf = 143-version-negotiation-ssl
+
+[143-version-negotiation-ssl]
+server = 143-version-negotiation-server
+client = 143-version-negotiation-client
+
+[143-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[143-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-143]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[144-version-negotiation]
+ssl_conf = 144-version-negotiation-ssl
+
+[144-version-negotiation-ssl]
+server = 144-version-negotiation-server
+client = 144-version-negotiation-client
+
+[144-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[144-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-144]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[145-version-negotiation]
+ssl_conf = 145-version-negotiation-ssl
+
+[145-version-negotiation-ssl]
+server = 145-version-negotiation-server
+client = 145-version-negotiation-client
+
+[145-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[145-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-145]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[146-version-negotiation]
+ssl_conf = 146-version-negotiation-ssl
+
+[146-version-negotiation-ssl]
+server = 146-version-negotiation-server
+client = 146-version-negotiation-client
+
+[146-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[146-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-146]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[147-version-negotiation]
+ssl_conf = 147-version-negotiation-ssl
+
+[147-version-negotiation-ssl]
+server = 147-version-negotiation-server
+client = 147-version-negotiation-client
+
+[147-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[147-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-147]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[148-version-negotiation]
+ssl_conf = 148-version-negotiation-ssl
+
+[148-version-negotiation-ssl]
+server = 148-version-negotiation-server
+client = 148-version-negotiation-client
+
+[148-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[148-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-148]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[149-version-negotiation]
+ssl_conf = 149-version-negotiation-ssl
+
+[149-version-negotiation-ssl]
+server = 149-version-negotiation-server
+client = 149-version-negotiation-client
+
+[149-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[149-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-149]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[150-version-negotiation]
+ssl_conf = 150-version-negotiation-ssl
+
+[150-version-negotiation-ssl]
+server = 150-version-negotiation-server
+client = 150-version-negotiation-client
+
+[150-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[150-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-150]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[151-version-negotiation]
+ssl_conf = 151-version-negotiation-ssl
+
+[151-version-negotiation-ssl]
+server = 151-version-negotiation-server
+client = 151-version-negotiation-client
+
+[151-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[151-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-151]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[152-version-negotiation]
+ssl_conf = 152-version-negotiation-ssl
+
+[152-version-negotiation-ssl]
+server = 152-version-negotiation-server
+client = 152-version-negotiation-client
+
+[152-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[152-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-152]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[153-version-negotiation]
+ssl_conf = 153-version-negotiation-ssl
+
+[153-version-negotiation-ssl]
+server = 153-version-negotiation-server
+client = 153-version-negotiation-client
+
+[153-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[153-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-153]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[154-version-negotiation]
+ssl_conf = 154-version-negotiation-ssl
+
+[154-version-negotiation-ssl]
+server = 154-version-negotiation-server
+client = 154-version-negotiation-client
+
+[154-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[154-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-154]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[155-version-negotiation]
+ssl_conf = 155-version-negotiation-ssl
+
+[155-version-negotiation-ssl]
+server = 155-version-negotiation-server
+client = 155-version-negotiation-client
+
+[155-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[155-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-155]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[156-version-negotiation]
+ssl_conf = 156-version-negotiation-ssl
+
+[156-version-negotiation-ssl]
+server = 156-version-negotiation-server
+client = 156-version-negotiation-client
+
+[156-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[156-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-156]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[157-version-negotiation]
+ssl_conf = 157-version-negotiation-ssl
+
+[157-version-negotiation-ssl]
+server = 157-version-negotiation-server
+client = 157-version-negotiation-client
+
+[157-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[157-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-157]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[158-version-negotiation]
+ssl_conf = 158-version-negotiation-ssl
+
+[158-version-negotiation-ssl]
+server = 158-version-negotiation-server
+client = 158-version-negotiation-client
+
+[158-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[158-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-158]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[159-version-negotiation]
+ssl_conf = 159-version-negotiation-ssl
+
+[159-version-negotiation-ssl]
+server = 159-version-negotiation-server
+client = 159-version-negotiation-client
+
+[159-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[159-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-159]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[160-version-negotiation]
+ssl_conf = 160-version-negotiation-ssl
+
+[160-version-negotiation-ssl]
+server = 160-version-negotiation-server
+client = 160-version-negotiation-client
+
+[160-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[160-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-160]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[161-version-negotiation]
+ssl_conf = 161-version-negotiation-ssl
+
+[161-version-negotiation-ssl]
+server = 161-version-negotiation-server
+client = 161-version-negotiation-client
+
+[161-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[161-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-161]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[162-version-negotiation]
+ssl_conf = 162-version-negotiation-ssl
+
+[162-version-negotiation-ssl]
+server = 162-version-negotiation-server
+client = 162-version-negotiation-client
+
+[162-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[162-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-162]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[163-version-negotiation]
+ssl_conf = 163-version-negotiation-ssl
+
+[163-version-negotiation-ssl]
+server = 163-version-negotiation-server
+client = 163-version-negotiation-client
+
+[163-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[163-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-163]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[164-version-negotiation]
+ssl_conf = 164-version-negotiation-ssl
+
+[164-version-negotiation-ssl]
+server = 164-version-negotiation-server
+client = 164-version-negotiation-client
+
+[164-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.2
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[164-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-164]
+ExpectedResult = ServerFail
+Method = DTLS
+
+
+# ===========================================================
+
+[165-version-negotiation]
+ssl_conf = 165-version-negotiation-ssl
+
+[165-version-negotiation-ssl]
+server = 165-version-negotiation-server
+client = 165-version-negotiation-client
+
+[165-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[165-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-165]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[166-version-negotiation]
+ssl_conf = 166-version-negotiation-ssl
+
+[166-version-negotiation-ssl]
+server = 166-version-negotiation-server
+client = 166-version-negotiation-client
+
+[166-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[166-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-166]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[167-version-negotiation]
+ssl_conf = 167-version-negotiation-ssl
+
+[167-version-negotiation-ssl]
+server = 167-version-negotiation-server
+client = 167-version-negotiation-client
+
+[167-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MaxProtocol = DTLSv1.3
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[167-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-167]
+ExpectedProtocol = DTLSv1.3
+ExpectedResult = Success
+Method = DTLS
+
+
+# ===========================================================
+
+[168-version-negotiation]
+ssl_conf = 168-version-negotiation-ssl
+
+[168-version-negotiation-ssl]
+server = 168-version-negotiation-server
+client = 168-version-negotiation-client
+
+[168-version-negotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[168-version-negotiation-client]
+CipherString = DEFAULT:@SECLEVEL=0
+MinProtocol = DTLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-168]
+ExpectedProtocol = DTLSv1.3
 ExpectedResult = Success
 Method = DTLS
 
