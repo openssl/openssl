@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -28,6 +28,7 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $dsaallow = '1';
 
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
 
@@ -47,6 +48,12 @@ if (defined $ENV{SSL_TESTS}) {
 map { s/;.*// } @conf_srcs if $^O eq "VMS";
 my @conf_files = map { basename($_, ".in") } @conf_srcs;
 map { s/\^// } @conf_files if $^O eq "VMS";
+
+unless ($no_fips) {
+    my $provconf = srctop_file("test", "fips-and-base.cnf");
+    run(test(["fips_version_test", "-config", $provconf, "<3.4.0"]),
+              capture => 1, statusvar => \$dsaallow);
+}
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
@@ -177,6 +184,7 @@ sub test_conf {
       # Test 3. Run the test.
       skip "No tests available; skipping tests", 1 if $skip;
       skip "Stale sources; skipping tests", 1 if !$run_test;
+      skip "Dsa not allowed in FIPS 140-3 provider", 1 if ($provider eq "fips") && ($dsaallow eq '0');
 
       my $msg = "running CTLOG_FILE=test/ct/log_list.cnf". # $ENV{CTLOG_FILE}.
           " TEST_CERTS_DIR=test/certs". # $ENV{TEST_CERTS_DIR}.

@@ -23,6 +23,7 @@
 #include <openssl/core_names.h>
 #include <openssl/fips_names.h>
 #include <openssl/thread.h>
+#include <openssl/indicator.h>
 #include "internal/numbers.h"
 #include "internal/nelem.h"
 #include "crypto/evp.h"
@@ -45,6 +46,8 @@ typedef struct evp_test_st {
     char *expected_err;           /* Expected error value of test */
     char *reason;                 /* Expected error reason string */
     void *data;                   /* test specific data */
+    int indicator_error;
+    int strict;
 } EVP_TEST;
 
 /* Test method structure */
@@ -86,6 +89,7 @@ static OSSL_LIB_CTX *libctx = NULL;
 /* List of public and private keys */
 static KEY_LIST *private_keys;
 static KEY_LIST *public_keys;
+static int unapproved_count;
 
 static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst);
 static int parse_bin(const char *value, unsigned char **buf, size_t *buflen);
@@ -3649,6 +3653,7 @@ static int digestsigver_test_parse(EVP_TEST *t,
         EVP_PKEY *pkey = NULL;
         int rv = 0;
         const char *name = mdata->md == NULL ? NULL : EVP_MD_get0_name(mdata->md);
+        OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
         if (mdata->is_verify)
             rv = find_key(&pkey, value, public_keys);
@@ -3664,8 +3669,10 @@ static int digestsigver_test_parse(EVP_TEST *t,
                 t->err = "DIGESTVERIFYINIT_ERROR";
             return 1;
         }
+
+        params[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_STRICT_CHECKS, &t->strict);
         if (!EVP_DigestSignInit_ex(mdata->ctx, &mdata->pctx, name, libctx, NULL,
-                                   pkey, NULL))
+                                   pkey, params))
             t->err = "DIGESTSIGNINIT_ERROR";
         return 1;
     }
@@ -3723,6 +3730,18 @@ static int digestsign_test_run(EVP_TEST *t)
     DIGESTSIGN_DATA *expected = t->data;
     unsigned char *got = NULL;
     size_t got_len;
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    int indicator;
+    EVP_PKEY_CTX *pkeyctx = EVP_MD_CTX_get_pkey_ctx(expected->ctx);
+
+    if (pkeyctx != NULL) {
+        params[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_STRICT_CHECKS,
+                                             &t->strict);
+        if (!EVP_PKEY_CTX_set_params(pkeyctx, params)) {
+            t->err = "EVP_PKEY_CTX_SET_PARAMS_ERROR";
+            goto err;
+        }
+    }
 
     if (!evp_test_buffer_do(expected->input, digestsign_update_fn,
                             expected->ctx)) {
@@ -3741,6 +3760,19 @@ static int digestsign_test_run(EVP_TEST *t)
     got_len *= 2;
     if (!EVP_DigestSignFinal(expected->ctx, got, &got_len)) {
         t->err = "DIGESTSIGNFINAL_ERROR";
+        goto err;
+    }
+
+    if (pkeyctx != NULL) {
+        params[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_APPROVED_INDICATOR,
+                                             &indicator);
+        if (!EVP_PKEY_CTX_get_params(pkeyctx, params)) {
+            t->err = "EVP_PKEY_CTX_GET_PARAMS_ERROR";
+            goto err;
+        }
+    }
+    if (unapproved_count > 0 && indicator != 0) {
+        t->err = "FIPS_INDICATOR_MISMATCH";
         goto err;
     }
     if (!memory_err_compare(t, "SIGNATURE_MISMATCH",
@@ -3922,6 +3954,8 @@ static void clear_test(EVP_TEST *t)
     t->err = NULL;
     t->skip = 0;
     t->meth = NULL;
+    t->indicator_error = 1;
+    t->strict = 1;
 
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
     OSSL_set_max_threads(libctx, 0);
@@ -4144,6 +4178,7 @@ static int parse(EVP_TEST *t)
     PAIR *pp;
     int i, j, skipped = 0;
 
+    unapproved_count = 0;
 top:
     do {
         if (BIO_eof(t->s.fp))
@@ -4326,6 +4361,10 @@ start:
                           pp->value, t->s.test_file, t->s.start);
                 t->skip = 1;
             }
+        } else if (strcmp(pp->key, "IndicatorError") == 0) {
+            t->indicator_error = atoi(pp->value);
+        } else if (strcmp(pp->key, "Strict") == 0) {
+            t->strict = atoi(pp->value);
         } else {
             /* Must be test specific line: try to parse it */
             int rv = t->meth->parse(t, pp->key, pp->value);
@@ -4360,6 +4399,7 @@ static int run_file_tests(int i)
         return 0;
     }
 
+    OSSL_INDICATOR_set_callback(libctx, indicator_cb, t);
     while (!BIO_eof(t->s.fp)) {
         c = parse(t);
         if (t->skip) {

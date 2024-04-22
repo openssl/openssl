@@ -28,6 +28,10 @@ my $provconf = srctop_file("test", "fips-and-base.cnf");
 run(test(["fips_version_test", "-config", $provconf, ">=3.1.0"]),
     capture => 1, statusvar => \my $fips_exit);
 
+# DSA keygen/signing is not allowed in FIPS 140-3
+run(test(["fips_version_test", "-config", $provconf, "<3.4.0"]),
+    capture => 1, statusvar => \my $dsasign_allowed);
+
 SKIP: {
     skip "Skip RSA test because of no rsa in this build", 1
         if disabled("rsa");
@@ -52,7 +56,7 @@ SKIP: {
 
 SKIP: {
     skip "Skip DSA tests because of no dsa in this build", 2
-        if disabled("dsa");
+        if disabled("dsa") || $dsasign_allowed == '0';
     ok(run(test(["pairwise_fail_test", "-config", $provconf,
                  "-pairwise", "dsa", "-dsaparam", data_file("dsaparam.pem")])),
        "fips provider dsa keygen pairwise failure test");

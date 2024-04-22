@@ -276,7 +276,9 @@ Input = "Hello"
 Output = 00
 Result = DIGESTSIGNINIT_ERROR
 
+# NOTE: FIPS 140-3 does not allow DSA signing
 # Test sign with a 2048 bit key with N == 224 is allowed in fips mode
+FIPSversion = <3.4.0
 DigestSign = SHA256
 Key = DSA-2048-224
 Input = "Hello"
@@ -284,22 +286,33 @@ Output = 00
 Result = SIGNATURE_MISMATCH
 
 # Test sign with a 2048 bit key with N == 256 is allowed in fips mode
+FIPSversion = <3.4.0
 DigestSign = SHA256
 Key = DSA-2048-256
 Input = "Hello"
 Result = SIGNATURE_MISMATCH
 
 # Test sign with a 3072 bit key with N == 256 is allowed in fips mode
+FIPSversion = <3.4.0
 DigestSign = SHA256
 Key = DSA-3072-256
 Input = "Hello"
 Result = SIGNATURE_MISMATCH
 
 # Test sign with a 2048 bit SHA3 is allowed in fips mode
+FIPSversion = <3.4.0
 DigestSign = SHA3-224
 Key = DSA-2048-256
 Input = "Hello"
 Result = SIGNATURE_MISMATCH
+
+# Test DSA sign is not allowed in FIPS 140-3
+Availablein = fips
+FIPSversion = >=3.4.0
+DigestSign = SHA3-224
+Key = DSA-2048-256
+Input = "Hello"
+Result = DIGESTSIGNINIT_ERROR
 
 # Test verify with a 1024 bit key is allowed in fips mode
 DigestVerify = SHA256
