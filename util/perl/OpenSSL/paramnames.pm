@@ -39,6 +39,10 @@ my %params = (
     'PROV_PARAM_SELF_TEST_TYPE' =>   "st-type", # utf8_string
     'PROV_PARAM_SELF_TEST_DESC' =>   "st-desc", # utf8_string
 
+# Indicator callback parameters */
+    'PROV_PARAM_INDICATOR_TYPE' => "ind-type",  # utf8_string
+    'PROV_PARAM_INDICATOR_DESC' => "ind-desc",  # utf8_string
+
 # Provider-native object abstractions
 #
 # These are used when a provider wants to pass object data or an object
