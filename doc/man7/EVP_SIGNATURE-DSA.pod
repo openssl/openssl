@@ -24,6 +24,8 @@ and before calling EVP_PKEY_sign() or EVP_PKEY_verify().
 
 =item "nonce-type" (B<OSSL_SIGNATURE_PARAM_NONCE_TYPE>) <unsigned integer>
 
+=item "strict" (B<OSSL_SIGNATURE_PARAM_STRICT_CHECKS>) <integer>
+
 The settable parameters are described in L<provider-signature(7)>.
 
 =back
@@ -38,6 +40,8 @@ EVP_PKEY_CTX_get_params().
 =item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <UTF8 string>
 
 =item "nonce-type" (B<OSSL_SIGNATURE_PARAM_NONCE_TYPE>) <unsigned integer>
+
+=item "indicator" (B<OSSL_SIGNATURE_PARAM_APPROVED_INDICATOR>) <integer>
 
 The gettable parameters are described in L<provider-signature(7)>.
 

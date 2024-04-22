@@ -388,6 +388,21 @@ was successful.
 Known answer tests can be performed if the random generator is overridden to
 supply known values that either pass or fail.
 
+=item "indicator" (B<OSSL_SIGNATURE_PARAM_APPROVED_INDICATOR>) <integer>
+
+Gets the FIPS approved mode indicator. A value of 1 indicates the operation is
+FIPS approved, and a value of 0 indicates the operation is not approved. A value
+of -1 indicates that there is no indicator for this operation.
+This should be queried only after the result of the sign or verify operation
+has completed.
+
+=item "strict" (B<OSSL_SIGNATURE_PARAM_STRICT_CHECKS>) <integer>
+
+Set this to 0 to manually disable strict FIPS approved checks for this operation.
+This potentially breaks FIPS compliance and may result in the "indicator"
+returning 0. If required this should be set using the I<param> parameter passed
+to EVP_DigestSignInit_ex() or EVP_DigestVerifyInit_ex().
+
 =back
 
 OSSL_FUNC_signature_gettable_ctx_params() and OSSL_FUNC_signature_settable_ctx_params() get a

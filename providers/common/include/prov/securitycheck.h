@@ -9,6 +9,10 @@
 
 #include "crypto/types.h"
 
+#ifdef FIPS_MODULE
+# include "fipscommon.h"
+#endif
+
 /* Functions that are common */
 int ossl_rsa_check_key(OSSL_LIB_CTX *ctx, const RSA *rsa, int operation);
 int ossl_ec_check_key(OSSL_LIB_CTX *ctx, const EC_KEY *ec, int protect);

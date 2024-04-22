@@ -391,6 +391,8 @@ my %params = (
     'SIGNATURE_PARAM_NONCE_TYPE' =>         "nonce-type",
     'SIGNATURE_PARAM_INSTANCE' =>           "instance",
     'SIGNATURE_PARAM_CONTEXT_STRING' =>     "context-string",
+    'SIGNATURE_PARAM_APPROVED_INDICATOR' => '*ALG_PARAM_APPROVED_INDICATOR',
+    'SIGNATURE_PARAM_STRICT_CHECKS' =>      '*ALG_PARAM_STRICT_CHECKS',
 
 # Asym cipher parameters
     'ASYM_CIPHER_PARAM_DIGEST' =>                   '*PKEY_PARAM_DIGEST',
