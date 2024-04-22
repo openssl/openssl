@@ -700,7 +700,7 @@ For information about the use of environment variables in configuration,
 see L<config(5)/ENVIRONMENT>.
 
 For information about querying or specifying CPU architecture flags, see
-L<OPENSSL_ia32cap(3)>, and L<OPENSSL_s390xcap(3)>.
+L<OPENSSL_ia32cap(3)>, L<OPENSSL_s390xcap(3)> and L<OPENSSL_riscvcap(3)>.
 
 For information about all environment variables used by the OpenSSL libraries,
 see L<openssl-env(7)>.
