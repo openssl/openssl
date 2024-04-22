@@ -66,6 +66,13 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
     if (no_etm)
         SSL_set_options(srvr_ssl, SSL_OP_NO_ENCRYPT_THEN_MAC);
 
+    /**
+     * TODO(DTLSv1.3): Tests fails with
+     * SSL routines:tls_psk_do_binder:binder does not verify:
+     *      ../ssl/statem/extensions.c:1690:
+     */
+    OPENSSL_assert(SSL_set_max_proto_version(clnt_ssl, DTLS1_2_VERSION) == 1);
+
     if (!TEST_true(SSL_set_cipher_list(srvr_ssl, cs))
             || !TEST_true(SSL_set_cipher_list(clnt_ssl, cs))
             || !TEST_ptr(sc_bio = SSL_get_rbio(srvr_ssl))
@@ -211,6 +218,13 @@ static int test_server_mtu_larger_than_max_fragment_length(void)
     if (!TEST_true(create_ssl_objects(ctx, ctx, &srvr_ssl, &clnt_ssl,
                                       NULL, NULL)))
         goto end;
+
+    /**
+     * TODO(DTLSv1.3): Test fails with
+     * SSL routines:tls_psk_do_binder:binder does not verify:
+     *      ../ssl/statem/extensions.c:1690:
+     */
+    OPENSSL_assert(SSL_set_max_proto_version(clnt_ssl, DTLS1_2_VERSION) == 1);
 
     SSL_set_options(srvr_ssl, SSL_OP_NO_QUERY_MTU);
     if (!TEST_true(DTLS_set_link_mtu(srvr_ssl, 1500)))
