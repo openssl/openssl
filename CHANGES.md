@@ -2280,7 +2280,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Billy Bob Brumley*
 
- * Added OSSL_PARAM_BLD to the public interface.  This allows OSSL_PARAM
+ * Added OSSL_PARAM_BLD to the public interface. This allows OSSL_PARAM
    arrays to be more easily constructed via a series of utility functions.
    Create a parameter builder using OSSL_PARAM_BLD_new(), add parameters using
    the various push functions and finally convert to a passable OSSL_PARAM
