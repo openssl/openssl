@@ -159,7 +159,7 @@ jobs:
       run: |
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
-    - name: make test
+    - name: make test - DEBUG
       run: .github/workflows/make-test
     - name: save artifacts
       uses: actions/upload-artifact@v3
