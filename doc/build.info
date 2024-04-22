@@ -1575,6 +1575,10 @@ DEPEND[html/man3/OPENSSL_malloc.html]=man3/OPENSSL_malloc.pod
 GENERATE[html/man3/OPENSSL_malloc.html]=man3/OPENSSL_malloc.pod
 DEPEND[man/man3/OPENSSL_malloc.3]=man3/OPENSSL_malloc.pod
 GENERATE[man/man3/OPENSSL_malloc.3]=man3/OPENSSL_malloc.pod
+DEPEND[html/man3/OPENSSL_riscvcap.html]=man3/OPENSSL_riscvcap.pod
+GENERATE[html/man3/OPENSSL_riscvcap.html]=man3/OPENSSL_riscvcap.pod
+DEPEND[man/man3/OPENSSL_riscvcap.3]=man3/OPENSSL_riscvcap.pod
+GENERATE[man/man3/OPENSSL_riscvcap.3]=man3/OPENSSL_riscvcap.pod
 DEPEND[html/man3/OPENSSL_s390xcap.html]=man3/OPENSSL_s390xcap.pod
 GENERATE[html/man3/OPENSSL_s390xcap.html]=man3/OPENSSL_s390xcap.pod
 DEPEND[man/man3/OPENSSL_s390xcap.3]=man3/OPENSSL_s390xcap.pod
@@ -3361,6 +3365,7 @@ html/man3/OPENSSL_init_ssl.html \
 html/man3/OPENSSL_instrument_bus.html \
 html/man3/OPENSSL_load_builtin_modules.html \
 html/man3/OPENSSL_malloc.html \
+html/man3/OPENSSL_riscvcap.html \
 html/man3/OPENSSL_s390xcap.html \
 html/man3/OPENSSL_secure_malloc.html \
 html/man3/OPENSSL_strcasecmp.html \
@@ -4015,6 +4020,7 @@ man/man3/OPENSSL_init_ssl.3 \
 man/man3/OPENSSL_instrument_bus.3 \
 man/man3/OPENSSL_load_builtin_modules.3 \
 man/man3/OPENSSL_malloc.3 \
+man/man3/OPENSSL_riscvcap.3 \
 man/man3/OPENSSL_s390xcap.3 \
 man/man3/OPENSSL_secure_malloc.3 \
 man/man3/OPENSSL_strcasecmp.3 \
