@@ -3,7 +3,8 @@
 =head1 NAME
 
 EVP_PKEY_Q_keygen,
-EVP_PKEY_keygen_init, EVP_PKEY_paramgen_init, EVP_PKEY_generate,
+EVP_PKEY_keygen_init_ex, EVP_PKEY_keygen_init,
+EVP_PKEY_paramgen_init_ex, EVP_PKEY_paramgen_init, EVP_PKEY_generate,
 EVP_PKEY_CTX_set_cb, EVP_PKEY_CTX_get_cb,
 EVP_PKEY_CTX_get_keygen_info, EVP_PKEY_CTX_set_app_data,
 EVP_PKEY_CTX_get_app_data,
@@ -18,7 +19,9 @@ EVP_PKEY_paramgen, EVP_PKEY_keygen
  EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
                              const char *type, ...);
 
+ int EVP_PKEY_keygen_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[]);
  int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_paramgen_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[]);
  int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
  int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);

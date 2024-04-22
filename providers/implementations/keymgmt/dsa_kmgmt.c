@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,9 +17,12 @@
 #include <openssl/core_names.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
+#include <openssl/indicator.h>
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
+#include "prov/fipscommon.h"
+#include "prov/fipsindicator.h"
 #include "crypto/dsa.h"
 #include "internal/sizes.h"
 #include "internal/nelem.h"
@@ -49,7 +52,7 @@ static OSSL_FUNC_keymgmt_dup_fn dsa_dup;
 #define DSA_POSSIBLE_SELECTIONS                                                \
     (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)
 
-struct dsa_gen_ctx {
+typedef struct dsa_gen_ctx_st {
     OSSL_LIB_CTX *libctx;
 
     FFC_PARAMS *ffc_params;
@@ -67,7 +70,9 @@ struct dsa_gen_ctx {
     char *mdprops;
     OSSL_CALLBACK *cb;
     void *cbarg;
-};
+    OSSL_FIPS_INDICATOR_DECLARE()
+} DSA_GEN_CTX;
+
 typedef struct dh_name2id_st{
     const char *name;
     int id;
@@ -402,11 +407,13 @@ static int dsa_validate(const void *keydata, int selection, int checktype)
     return ok;
 }
 
+OSSL_FIPS_INDICATOR_DEFINE_NOT_APPROVED(DSA_GEN_CTX)
+
 static void *dsa_gen_init(void *provctx, int selection,
                           const OSSL_PARAM params[])
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
-    struct dsa_gen_ctx *gctx = NULL;
+    DSA_GEN_CTX *gctx = NULL;
 
     if (!ossl_prov_is_running() || (selection & DSA_POSSIBLE_SELECTIONS) == 0)
         return NULL;
@@ -424,17 +431,29 @@ static void *dsa_gen_init(void *provctx, int selection,
         gctx->gindex = -1;
         gctx->pcounter = -1;
         gctx->hindex = 0;
+        OSSL_FIPS_INDICATOR_INIT(gctx)
     }
     if (!dsa_gen_set_params(gctx, params)) {
         OPENSSL_free(gctx);
         gctx = NULL;
     }
+#ifdef FIPS_MODULE
+    /*
+     * DSA signature generation is no longer approved in FIPS 140-3
+     * So we either need to return with an error here, or call the
+     * indicator callback
+     */
+    if (!OSSL_FIPS_INDICATOR_SET_NOT_APPROVED(gctx,
+                                              "DSA", "Key Generation Init",
+                                              FIPS_dsa_check))
+        return 0;
+#endif
     return gctx;
 }
 
 static int dsa_gen_set_template(void *genctx, void *templ)
 {
-    struct dsa_gen_ctx *gctx = genctx;
+    DSA_GEN_CTX *gctx = genctx;
     DSA *dsa = templ;
 
     if (!ossl_prov_is_running() || gctx == NULL || dsa == NULL)
@@ -443,7 +462,7 @@ static int dsa_gen_set_template(void *genctx, void *templ)
     return 1;
 }
 
-static int dsa_set_gen_seed(struct dsa_gen_ctx *gctx, unsigned char *seed,
+static int dsa_set_gen_seed(DSA_GEN_CTX *gctx, unsigned char *seed,
                             size_t seedlen)
 {
     OPENSSL_clear_free(gctx->seed, gctx->seedlen);
@@ -460,7 +479,7 @@ static int dsa_set_gen_seed(struct dsa_gen_ctx *gctx, unsigned char *seed,
 
 static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
-    struct dsa_gen_ctx *gctx = genctx;
+    DSA_GEN_CTX *gctx = genctx;
     const OSSL_PARAM *p;
     int gen_type = -1;
 
@@ -468,7 +487,6 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
         return 0;
     if (params == NULL)
         return 1;
-
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_TYPE);
     if (p != NULL) {
@@ -527,6 +545,7 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
         if (gctx->mdprops == NULL)
             return 0;
     }
+    OSSL_FIPS_INDICATOR_SET_CTX_PARAM(gctx)
     return 1;
 }
 
@@ -543,14 +562,38 @@ static const OSSL_PARAM *dsa_gen_settable_params(ossl_unused void *genctx,
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_FFC_SEED, NULL, 0),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_PCOUNTER, NULL),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_H, NULL),
+        OSSL_FIPS_INDICATOR_SETTABLE_CTX_PARAM()
         OSSL_PARAM_END
     };
     return settable;
 }
 
+static int dsa_gen_get_params(void *genctx, OSSL_PARAM *params)
+{
+    DSA_GEN_CTX *gctx = genctx;
+
+    if (gctx == NULL)
+        return 0;
+    if (params == NULL)
+        return 1;
+    OSSL_FIPS_INDICATOR_GET_CTX_PARAM(gctx)
+    return 1;
+}
+
+static const OSSL_PARAM *dsa_gen_gettable_params(ossl_unused void *ctx,
+                                                 ossl_unused void *provctx)
+{
+    static const OSSL_PARAM dsa_gen_gettable_params_table[] = {
+        OSSL_FIPS_INDICATOR_GETTABLE_CTX_PARAM()
+        OSSL_PARAM_END
+    };
+
+    return dsa_gen_gettable_params_table;
+}
+
 static int dsa_gencb(int p, int n, BN_GENCB *cb)
 {
-    struct dsa_gen_ctx *gctx = BN_GENCB_get_arg(cb);
+    DSA_GEN_CTX *gctx = BN_GENCB_get_arg(cb);
     OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_int(OSSL_GEN_PARAM_POTENTIAL, &p);
@@ -561,7 +604,7 @@ static int dsa_gencb(int p, int n, BN_GENCB *cb)
 
 static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
-    struct dsa_gen_ctx *gctx = genctx;
+    DSA_GEN_CTX *gctx = genctx;
     DSA *dsa = NULL;
     BN_GENCB *gencb = NULL;
     int ret = 0;
@@ -644,7 +687,7 @@ end:
 
 static void dsa_gen_cleanup(void *genctx)
 {
-    struct dsa_gen_ctx *gctx = genctx;
+    DSA_GEN_CTX *gctx = genctx;
 
     if (gctx == NULL)
         return;
@@ -683,6 +726,9 @@ const OSSL_DISPATCH ossl_dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))dsa_gen_set_params },
     { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
       (void (*)(void))dsa_gen_settable_params },
+    { OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS, (void (*)(void))dsa_gen_get_params },
+    { OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS,
+      (void (*)(void))dsa_gen_gettable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))dsa_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))dsa_gen_cleanup },
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))dsa_load },

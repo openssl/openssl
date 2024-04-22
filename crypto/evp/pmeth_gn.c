@@ -22,7 +22,7 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-static int gen_init(EVP_PKEY_CTX *ctx, int operation)
+static int gen_init(EVP_PKEY_CTX *ctx, int operation, const OSSL_PARAM params[])
 {
     int ret = 0;
 
@@ -39,12 +39,12 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
     case EVP_PKEY_OP_PARAMGEN:
         ctx->op.keymgmt.genctx =
             evp_keymgmt_gen_init(ctx->keymgmt,
-                                 OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, NULL);
+                                 OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, params);
         break;
     case EVP_PKEY_OP_KEYGEN:
         ctx->op.keymgmt.genctx =
             evp_keymgmt_gen_init(ctx->keymgmt, OSSL_KEYMGMT_SELECT_KEYPAIR,
-                                 NULL);
+                                 params);
         break;
     }
 
@@ -93,12 +93,22 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
 
 int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx)
 {
-    return gen_init(ctx, EVP_PKEY_OP_PARAMGEN);
+    return gen_init(ctx, EVP_PKEY_OP_PARAMGEN, NULL);
 }
 
 int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx)
 {
-    return gen_init(ctx, EVP_PKEY_OP_KEYGEN);
+    return gen_init(ctx, EVP_PKEY_OP_KEYGEN, NULL);
+}
+
+int EVP_PKEY_paramgen_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
+{
+    return gen_init(ctx, EVP_PKEY_OP_PARAMGEN, params);
+}
+
+int EVP_PKEY_keygen_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
+{
+    return gen_init(ctx, EVP_PKEY_OP_KEYGEN, params);
 }
 
 static int ossl_callback_to_pkey_gencb(const OSSL_PARAM params[], void *arg)

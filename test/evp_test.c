@@ -97,6 +97,27 @@ static int is_mac_disabled(const char *name);
 static int is_cipher_disabled(const char *name);
 static int is_kdf_disabled(const char *name);
 
+static int indicator_cb(const OSSL_PARAM params[], void *arg)
+{
+    EVP_TEST *t = arg;
+    const OSSL_PARAM *p = NULL;
+    const char *type = NULL, *desc = NULL;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_INDICATOR_TYPE);
+    if (p == NULL || !OSSL_PARAM_get_utf8_string_ptr(p, &type))
+        goto err;
+    p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_INDICATOR_DESC);
+    if (p == NULL || !OSSL_PARAM_get_utf8_string_ptr(p, &desc))
+        goto err;
+    unapproved_count++;
+    TEST_note("%s %s is not approved", type, desc);
+    if (t == NULL)
+        return 1;
+    return (t->indicator_error == 0);
+err:
+    return 0;
+}
+
 /*
  * Compare two memory regions for equality, returning zero if they differ.
  * However, if there is expected to be an error and the actual error
@@ -3407,51 +3428,39 @@ static const EVP_TEST_METHOD keypair_test_method = {
 typedef struct keygen_test_data_st {
     EVP_PKEY_CTX *genctx; /* Keygen context to use */
     char *keyname; /* Key name to store key or NULL */
+    char *paramname;
+    char *alg;
+    int ctrl_sz;
+    char *ctrl[8];
 } KEYGEN_TEST_DATA;
 
 static int keygen_test_init(EVP_TEST *t, const char *alg)
 {
     KEYGEN_TEST_DATA *data;
-    EVP_PKEY_CTX *genctx;
-    int nid = OBJ_sn2nid(alg);
-
-    if (nid == NID_undef) {
-        nid = OBJ_ln2nid(alg);
-        if (nid == NID_undef)
-            return 0;
-    }
 
     if (is_pkey_disabled(alg)) {
         t->skip = 1;
         return 1;
     }
-    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, alg, propquery)))
-        goto err;
-
-    if (EVP_PKEY_keygen_init(genctx) <= 0) {
-        t->err = "KEYGEN_INIT_ERROR";
-        goto err;
-    }
-
-    if (!TEST_ptr(data = OPENSSL_malloc(sizeof(*data))))
-        goto err;
-    data->genctx = genctx;
-    data->keyname = NULL;
+    if (!TEST_ptr(data = OPENSSL_zalloc(sizeof(*data))))
+        return 0;
+    data->alg = OPENSSL_strdup(alg);
     t->data = data;
     t->err = NULL;
     return 1;
-
-err:
-    EVP_PKEY_CTX_free(genctx);
-    return 0;
 }
 
 static void keygen_test_cleanup(EVP_TEST *t)
 {
+    int i;
     KEYGEN_TEST_DATA *keygen = t->data;
 
     EVP_PKEY_CTX_free(keygen->genctx);
+    OPENSSL_free(keygen->alg);
     OPENSSL_free(keygen->keyname);
+    OPENSSL_free(keygen->paramname);
+    for (i = 0; i < keygen->ctrl_sz; ++i)
+        OPENSSL_free(keygen->ctrl[i]);
     OPENSSL_free(t->data);
     t->data = NULL;
 }
@@ -3461,22 +3470,72 @@ static int keygen_test_parse(EVP_TEST *t,
 {
     KEYGEN_TEST_DATA *keygen = t->data;
 
+    if (strcmp(keyword, "KeyParam") == 0)
+        return TEST_ptr(keygen->paramname = OPENSSL_strdup(value));
     if (strcmp(keyword, "KeyName") == 0)
         return TEST_ptr(keygen->keyname = OPENSSL_strdup(value));
-    if (strcmp(keyword, "Ctrl") == 0)
-        return pkey_test_ctrl(t, keygen->genctx, value);
+    if (strcmp(keyword, "Ctrl") == 0) {
+        char *name = OPENSSL_strdup(value);
+        if (!TEST_ptr(name)
+                || !TEST_int_lt(keygen->ctrl_sz, OSSL_NELEM(keygen->ctrl)))
+            return 0;
+        keygen->ctrl[keygen->ctrl_sz++] = name;
+        return 1;
+    }
     return 0;
 }
 
 static int keygen_test_run(EVP_TEST *t)
 {
     KEYGEN_TEST_DATA *keygen = t->data;
-    EVP_PKEY *pkey = NULL;
-    int rv = 1;
+    EVP_PKEY *pkey = NULL, *keyparams = NULL;
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    int rv = 1, i, indicator = 1;
+
+    if (keygen->paramname == NULL) {
+        if (!TEST_ptr(keygen->genctx =
+                EVP_PKEY_CTX_new_from_name(libctx, keygen->alg, propquery)))
+            goto err;
+    } else {
+        rv = find_key(&keyparams, keygen->paramname, public_keys);
+        if (rv == 0 || keyparams == NULL) {
+            TEST_info("skipping, key '%s' is disabled", keygen->paramname);
+            t->skip = 1;
+            return 1;
+        }
+        if (!TEST_ptr(keygen->genctx =
+                EVP_PKEY_CTX_new_from_pkey(libctx, keyparams, propquery)))
+            goto err;
+    }
+    params[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_STRICT_CHECKS,
+                                         &t->strict);
+    if (EVP_PKEY_keygen_init_ex(keygen->genctx, params) <= 0) {
+        t->err = "KEYGEN_INIT_ERROR";
+        goto err;
+    }
+
+    for (i = 0; i < keygen->ctrl_sz; ++i) {
+        if (!pkey_test_ctrl(t, keygen->genctx, keygen->ctrl[i])
+                || t->err != NULL)
+            goto err;
+    }
 
     if (EVP_PKEY_keygen(keygen->genctx, &pkey) <= 0) {
         t->err = "KEYGEN_GENERATE_ERROR";
         goto err;
+    }
+
+    if (unapproved_count > 0) {
+        params[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_APPROVED_INDICATOR,
+                                             &indicator);
+        if (!EVP_PKEY_CTX_get_params(keygen->genctx, params)) {
+                t->err = "EVP_PKEY_CTX_GET_PARAMS_ERROR";
+                goto err;
+        }
+        if (indicator != 0) {
+            t->err = "FIPS_INDICATOR_MISMATCH";
+            goto err;
+        }
     }
 
     if (!evp_pkey_is_provided(pkey)) {
@@ -4117,6 +4176,15 @@ start:
             return 0;
         }
         klist = &public_keys;
+    } else if (strcmp(pp->key, "ParamKey") == 0) {
+        pkey = PEM_read_bio_Parameters_ex(t->s.key, NULL, libctx, NULL);
+        if (pkey == NULL && !key_unsupported()) {
+            EVP_PKEY_free(pkey);
+            TEST_info("Can't read params key %s", pp->value);
+            TEST_openssl_errors();
+            return 0;
+        }
+        klist = &public_keys;
     } else if (strcmp(pp->key, "PrivateKeyRaw") == 0
                || strcmp(pp->key, "PublicKeyRaw") == 0) {
         char *strnid = NULL, *keydata = NULL;
@@ -4440,6 +4508,10 @@ static int is_pkey_disabled(const char *name)
 #endif
 #ifdef OPENSSL_NO_DSA
     if (HAS_CASE_PREFIX(name, "DSA"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_SM2
+    if (HAS_CASE_PREFIX(name, "SM2"))
         return 1;
 #endif
     return 0;

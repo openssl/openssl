@@ -33,7 +33,7 @@ my %params = (
     'PROV_PARAM_SECURITY_CHECKS' =>    "security-checks",    # uint
     'PROV_PARAM_TLS1_PRF_EMS_CHECK' => "tls1-prf-ems-check", # uint
     'PROV_PARAM_DRBG_TRUNC_DIGEST' =>  "drbg-no-trunc-md",   # uint
-
+    'PROV_PARAM_DSA_CHECK' =>  "dsa-check",                  # uint
 # Self test callback parameters
     'PROV_PARAM_SELF_TEST_PHASE' =>  "st-phase",# utf8_string
     'PROV_PARAM_SELF_TEST_TYPE' =>   "st-type", # utf8_string
@@ -71,6 +71,9 @@ my %params = (
     'ALG_PARAM_ENGINE' =>       "engine",       # utf8_string
     'ALG_PARAM_MAC' =>          "mac",          # utf8_string
     'ALG_PARAM_PROPERTIES' =>   "properties",   # utf8_string
+
+    'ALG_PARAM_APPROVED_INDICATOR' => 'indicator',        # int, -1, 0 or 1
+    'ALG_PARAM_STRICT_CHECKS' => 'strict',                # int, 0 or 1
 
 # cipher parameters
     'CIPHER_PARAM_PADDING' =>              "padding",     # uint
