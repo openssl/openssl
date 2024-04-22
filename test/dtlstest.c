@@ -77,9 +77,15 @@ static int test_dtls_unprocessed(int testidx)
 
     timer_cb_count = 0;
 
+    /**
+     * TODO(DTLSv1.3): Tests fails with
+     *  # No progress made
+     *  # ERROR: (bool) 'create_bare_ssl_connection(serverssl1, clientssl1,
+     *      SSL_ERROR_NONE, 0, 0) == true' failed @ ../test/dtlstest.c:128
+     */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
-                                       DTLS1_VERSION, 0,
+                                       DTLS1_VERSION, DTLS1_2_VERSION,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -199,9 +205,14 @@ static int test_dtls_drop_records(int idx)
     int cli_to_srv_cookie, cli_to_srv_epoch0, cli_to_srv_epoch1;
     int srv_to_cli_epoch0;
 
+    /**
+     * TODO(DTLSv1.3): Tests fails with
+     *  ssl/statem/extensions_clnt.c:624: OpenSSL internal error:
+     *      Assertion failed: s->hello_retry_request == SSL_HRR_PENDING
+     */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
-                                       DTLS1_VERSION, 0,
+                                       DTLS1_VERSION, DTLS1_2_VERSION,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -312,9 +323,14 @@ static int test_cookie(void)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+    /**
+     * TODO(DTLSv1.3): Tests fails with
+     *  ssl/statem/extensions_clnt.c:624: OpenSSL internal error:
+     *      Assertion failed: s->hello_retry_request == SSL_HRR_PENDING
+     */
+     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
-                                       DTLS1_VERSION, 0,
+                                       DTLS1_VERSION, DTLS1_2_VERSION,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -352,9 +368,13 @@ static int test_dtls_duplicate_records(void)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
+    /**
+     * TODO(DTLSv1.3): Tests fails with
+     *  dtls1_read_bytes:unexpected record:../ssl/record/rec_layer_d1.c:609:
+     */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
-                                       DTLS1_VERSION, 0,
+                                       DTLS1_VERSION, DTLS1_2_VERSION,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -484,9 +504,12 @@ static int test_swap_records(int idx)
     char msg[] = { 0x00, 0x01, 0x02, 0x03 };
     char buf[10];
 
+    /**
+     * TODO(DTLSv1.3): Tests fails
+     */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
-                                       DTLS1_VERSION, 0,
+                                       DTLS1_VERSION, DTLS1_2_VERSION,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -594,9 +617,14 @@ static int test_listen(void)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
+    /**
+     * TODO(DTLSv1.3): Tests fails with
+     *  ssl/statem/extensions_clnt.c:624: OpenSSL internal error:
+     *      Assertion failed: s->hello_retry_request == SSL_HRR_PENDING
+     */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
-                                       DTLS1_VERSION, 0,
+                                       DTLS1_VERSION, DTLS1_2_VERSION,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
