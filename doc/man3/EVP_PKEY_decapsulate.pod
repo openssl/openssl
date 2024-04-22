@@ -45,7 +45,7 @@ for the operation may be set or modified using L<EVP_PKEY_CTX_set_params(3)>.
 
 EVP_PKEY_decapsulate_init(), EVP_PKEY_auth_decapsulate_init() and
 EVP_PKEY_decapsulate() return 1 for success and 0 or a negative value for
-failure. In particular a return value of -2 indicates the operation is not
+failure. They may not return an explicit error code in some cases. A return value of -2 indicates the operation is not
 supported by the private key algorithm.
 
 =head1 EXAMPLES
