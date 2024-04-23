@@ -1,0 +1,78 @@
+# Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Build Windows Installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        type: string
+        description: The tag to build
+
+permissions:
+  contents: read
+
+jobs:
+  build_installer:
+    runs-on: windows-2022
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.tag }}
+    - name: Setup directories 
+      run: |
+        mkdir _installer
+        mkdir _build64
+        mkdir _build32
+    - name: download NSIS installer
+      uses: suisei-cn/actions-download-file@v1.6.0
+      with:
+        url: "https://downloads.sourceforge.net/project/nsis/NSIS%203/3.08/nsis-3.08-setup.exe"
+        target: _installer/
+    - name: Install NSIS 3.0.8
+      working-directory: _installer
+      run:  .\nsis-3.08-setup.exe /s
+    - uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: win64
+    - uses: ilammy/setup-nasm@v1
+      with:
+        platform: win64
+    - name: config x64
+      working-directory: _build64
+      run: |
+        perl ..\Configure --banner=Configured no-makedepend enable-fips VC-WIN64A
+        perl configdata.pm --dump
+    - name: build x64 binaries
+      working-directory: _build64
+      run: nmake /S
+    - uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: win32
+    - uses: ilammy/setup-nasm@v1
+      with:
+        platform: win32
+    - name: config x32
+      working-directory: _build32
+      run: |
+        perl ..\Configure --banner=Configured no-makedepend enable-fips VC-WIN32
+        perl configdata.pm --dump
+    - name: build x32 binaries
+      working-directory: _build32
+      run: nmake /S
+    - name: build installer
+      working-directory: windows-installer
+      run: makensis.exe /DVERSION=${{ github.event.inputs.tag }} /DBUILD32=_build32 /DBUILD64=_build64 .\openssl.nsi
+    - name: Upload installer as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: openssl-installer
+        path: windows-installer/openssl*.exe
+
+
+
