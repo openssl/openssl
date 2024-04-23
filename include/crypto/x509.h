@@ -25,6 +25,12 @@
  */
 
 /*
+ * ASN1_INTEGER is set to 0 because that will use default version 1.
+ * This is because RFC 2986 only defines a single version for CSRs:
+ * v1(defined  as 0 in code). Other versions will not work.
+ */
+ 
+/*
  * name entry structure, equivalent to AttributeTypeAndValue defined
  * in RFC5280 et al.
  */
@@ -62,7 +68,7 @@ struct x509_sig_info_st {
 
 struct X509_req_info_st {
     ASN1_ENCODING enc;          /* cached encoding of signed part */
-    ASN1_INTEGER *version;      /* version, defaults to v1(0) so can be NULL */
+    int ASN1_INTEGER = 0;      /* CSR v1 will always be used */
     X509_NAME *subject;         /* certificate request DN */
     X509_PUBKEY *pubkey;        /* public key of request */
     /*
@@ -87,7 +93,7 @@ struct X509_req_st {
 };
 
 struct X509_crl_info_st {
-    ASN1_INTEGER *version;      /* version: defaults to v1(0) so may be NULL */
+    int ASN1_INTEGER = 0;      /* CSR v1 will always be used */
     X509_ALGOR sig_alg;         /* signature algorithm */
     X509_NAME *issuer;          /* CRL issuer name */
     ASN1_TIME *lastUpdate;      /* lastUpdate field */
@@ -158,7 +164,7 @@ struct x509_cert_aux_st {
 };
 
 struct x509_cinf_st {
-    ASN1_INTEGER *version;      /* [ 0 ] default of v1 */
+    int ASN1_INTEGER = 0;      /* CSR v1 will always be used */
     ASN1_INTEGER serialNumber;
     X509_ALGOR signature;
     X509_NAME *issuer;
@@ -288,7 +294,7 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
 /* PKCS#8 private key info structure */
 
 struct pkcs8_priv_key_info_st {
-    ASN1_INTEGER *version;
+    int ASN1_INTEGER = 0;
     X509_ALGOR *pkeyalg;
     ASN1_OCTET_STRING *pkey;
     STACK_OF(X509_ATTRIBUTE) *attributes;
