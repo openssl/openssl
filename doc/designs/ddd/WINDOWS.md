@@ -2,11 +2,11 @@ Windows-related issues
 ======================
 
 Supporting Windows introduces some complications due to some "fun" peculiarities
-of Windows's socket API.
+of Windows socket API.
 
-In general, Windows does not provide a poll(2) call. WSAPoll(2) was introduced
-in Vista and supposed to bring this functionality, but it had a bug in it which
-Microsoft refused to fix, making it rather pointless. However Microsoft has now
+In general, Windows does not provide a poll(2) system call. WSAPoll(2) was introduced
+in Vista and was supposed to bring this functionality, but it had a bug in it which
+Microsoft refused to fix, making it rather pointless. However, Microsoft has now
 finally fixed this bug in a build of Windows 10. So WSAPoll(2) is a viable
 method, but only on fairly new versions of Windows.
 
@@ -23,7 +23,7 @@ Windows does not provide anything like epoll or kqueue. For high performance
 network I/O, you are expected to use a Windows API called I/O Completion Ports
 (IOCP).
 
-Supporting these is a pain for applications designed around polling. The reason
+Supporting these can be a pain for applications designed around polling. The reason
 is that IOCPs are a higher-level interface; it is easy to build an IOCP-like
 interface on top of polling, but it is not really possible to build a
 polling-like interface on top of IOCPs.
