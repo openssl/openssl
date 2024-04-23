@@ -28,54 +28,91 @@ specifies the hash "SHA256" to get the "RSA-SHA256" functionality.  For an
 `EVP_SIGNATURE` "RSA", the input is still expected to be a digest, or some
 other input that's limited to the modulus size of the RSA pkey.
 
+### Making things less confusing with distinct function names
+
+So far, `EVP_PKEY_sign()` and friends are only expected to act as
+"primitive" functions.  This design essentially proposes an extension to
+also allow streaming functionality through an *update* and a *final*
+function.  Discussions have revealed that it is potentially confusing to
+confound "primitive" functionality with "streaming" functionality into the
+same name, so this design also includes a naming proposal that distinguishes
+the two uses.
+
+### Making it possible to verify with an early signature
+
+There are newer verifying algorithms that need to receive the signature
+before processing the data.  This is particularly important for streaming
+functionality.  This design proposes a mechanism to accomodate this, which
+is different than the mechanism you get with `EVP_PKEY_verify()`.
+
+Public API - API Reference
+--------------------------
+
 ### For signing with `EVP_SIGNATURE`
 
-New initializers:
+#### Primitive / Limit size oneshot
 
 ``` C
-int EVP_PKEY_sign_init_ex2(EVP_PKEY_CTX *pctx,
-                           EVP_SIGNATURE *algo, const OSSL_PARAM params[]);
+int EVP_PKEY_sign_primitive_init(EVP_PKEY_CTX *pctx,
+                                 EVP_SIGNATURE *algo,
+                                 const OSSL_PARAM params[]);
+int EVP_PKEY_sign_primitive(EVP_PKEY_CTX *ctx,
+                            unsigned char *sig, size_t *siglen, size_t sigsize,
+                            const unsigned char *tbs, size_t tbslen);
 ```
 
-Added stream functionality:
+#### Streaming
 
 ``` C
-int EVP_PKEY_sign_update(EVP_PKEY_CTX *ctx, unsigned char *in, size_t *inlen);
-int EVP_PKEY_sign_final(EVP_PKEY_CTX *ctx,
-                        unsigned char *sig, size_t *siglen, size_t sigsize);
+int EVP_PKEY_sign_data_init(EVP_PKEY_CTX *pctx, EVP_SIGNATURE *algo,
+                            const OSSL_PARAM params[]);
+int EVP_PKEY_sign_data_update(EVP_PKEY_CTX *ctx,
+                              const unsigned char *in, size_t inlen);
+int EVP_PKEY_sign_data_final(EVP_PKEY_CTX *ctx,
+                             unsigned char *sig, size_t *siglen, size_t sigsize);
 ```
 
 ### For verifying with `EVP_SIGNATURE`
 
-With verifying, recent development has shown a need to set the signature to
-be verified against separately.  This proposal reflects that.
-
-New initializers:
+#### Primitive / Limit size oneshot
 
 ``` C
-int EVP_PKEY_verify_init_ex2(EVP_PKEY_CTX *pctx,
-                             EVP_SIGNATURE *algo, const OSSL_PARAM params[]);
-int EVP_PKEY_verify_recover_init_ex2(EVP_PKEY_CTX *pctx,
-                                     EVP_SIGNATURE *algo, const OSSL_PARAM params[]);
+/* Initializers */
+int EVP_PKEY_verify_primitive_init(EVP_PKEY_CTX *pctx,
+                                   EVP_SIGNATURE *algo,
+                                   const OSSL_PARAM params[]);
+int EVP_PKEY_verify_recover_primitive_init(EVP_PKEY_CTX *pctx,
+                                           EVP_SIGNATURE *algo,
+                                           const OSSL_PARAM params[]);
+/* Oneshot functions */
+int EVP_PKEY_verify_primitive(EVP_PKEY_CTX *pctx,
+                              const unsigned char *sig, size_t siglen,
+                              const unsigned char *tbs, size_t tbslen);
+int EVP_PKEY_verify_recover_primitive(EVP_PKEY_CTX *pctx,
+                                      unsigned char *rout, size_t *routlen,
+                                      size_t routsize,
+                                      cnnst unsigned char *sig, size_t siglen);
 ```
 
-New signature setter:
+#### Streaming
+
+Do note that there's no proposed streaming definition for verify recover
+functionality.
 
 ``` C
+/* Initializers */
+int EVP_PKEY_verify_data_init(EVP_PKEY_CTX *pctx, EVP_SIGNATURE *algo,
+                              const OSSL_PARAM params[]);
+/* Signature setter */
 int EVP_PKEY_CTX_set_signature(EVP_PKEY_CTX *pctx,
-                               unsigned char *sig, size_t *siglen, size_t sigsize);
+                               unsigned char *sig, size_t siglen,
+                               size_t sigsize);
+/* Update and final */
+int EVP_PKEY_verify_data_update(EVP_PKEY_CTX *ctx,
+                                const unsigned char *in, size_t inlen);
+int EVP_PKEY_verify_data_final(EVP_PKEY_CTX *ctx);
 ```
 
-Added stream functionality:
-
-``` C
-int EVP_PKEY_verify_update(EVP_PKEY_CTX *ctx, unsigned char *in, size_t *inlen);
-int EVP_PKEY_verify_final(EVP_PKEY_CTX *ctx);
-
-int EVP_PKEY_verify_recover_update(EVP_PKEY_CTX *ctx, unsigned char *in, size_t *inlen);
-int EVP_PKEY_verify_recover_final(EVP_PKEY_CTX *ctx,
-                                  unsigned char *rout, size_t *routlen);
-```
 
 Requirements on the providers
 -----------------------------
@@ -118,17 +155,6 @@ OSSL_CORE_MAKE_FUNC(int, signature_verify_update,
  * is specified via an OSSL_PARAM.
  */
 OSSL_CORE_MAKE_FUNC(int, signature_verify_final, (void *ctx))
-
-# define OSSL_FUNC_SIGNATURE_VERIFY_RECOVER_UPDATE  30
-# define OSSL_FUNC_SIGNATURE_VERIFY_RECOVER_FINAL   31
-OSSL_CORE_MAKE_FUNC(int, signature_verify_recover_update,
-                    (void *ctx, const unsigned char *in, size_t inlen))
-/*
- * signature_verify_recover_final requires that the signature to be verified
- * against is specified via an OSSL_PARAM.
- */
-OSSL_CORE_MAKE_FUNC(int, signature_verify_recover_final,
-                    (void *ctx, unsigned char *rout, size_t *routlen))
 ```
 
 Fallback strategies
