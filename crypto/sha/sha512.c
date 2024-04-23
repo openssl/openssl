@@ -22,7 +22,7 @@
  *
  * - permit SHA_LONG to be wider than 32-bit
  * - optimized versions implement two transform functions: one operating
- *   on [aligned] data in host byte order, and one - on data in input
+ *   on [aligned] data in host byte order, and one operating on data in input
  *   stream byte order;
  * - share common byte-order neutral collector and padding function
  *   implementations, crypto/md32_common.h;
