@@ -2124,7 +2124,10 @@ int tls_free_buffers(OSSL_RECORD_LAYER *rl)
     /* Read direction */
 
     /* If we have pending data to be read then fail */
-    if (rl->curr_rec < rl->num_recs || TLS_BUFFER_get_left(&rl->rbuf) != 0)
+    if (rl->curr_rec < rl->num_recs
+            || rl->curr_rec != rl->num_released
+            || TLS_BUFFER_get_left(&rl->rbuf) != 0
+            || rl->rstate == SSL_ST_READ_BODY)
         return 0;
 
     return tls_release_read_buffer(rl);
