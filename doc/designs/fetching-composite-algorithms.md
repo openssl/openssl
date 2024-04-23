@@ -43,7 +43,7 @@ int EVP_PKEY_derive_init_ex2(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange,
                              const OSSL_PARAM params[]);
 ```
 
-Detailed proposal for these APIs will are prepared in other design
+Detailed proposal for these APIs will be or are prepared in other design
 documents:
 
 - [Functions for explicitly fetched signature algorithms]
