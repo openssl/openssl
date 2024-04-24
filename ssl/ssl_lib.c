@@ -8030,9 +8030,15 @@ int SSL_CTX_set_domain_flags(SSL_CTX *ctx, uint64_t domain_flags)
             return 0;
         }
 
+        if ((domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0)
+            domain_flags |= SSL_DOMAIN_FLAG_MULTI_THREAD;
+
+        if ((domain_flags & (SSL_DOMAIN_FLAG_MULTI_THREAD
+                             | SSL_DOMAIN_FLAG_SINGLE_THREAD)) == 0)
+            domain_flags |= SSL_DOMAIN_FLAG_MULTI_THREAD;
+
         if ((domain_flags & SSL_DOMAIN_FLAG_SINGLE_THREAD) != 0
-            && (domain_flags & (SSL_DOMAIN_FLAG_MULTI_THREAD
-                                | SSL_DOMAIN_FLAG_THREAD_ASSISTED)) != 0) {
+            && (domain_flags & SSL_DOMAIN_FLAG_MULTI_THREAD) != 0) {
             ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
                            "mutually exclusive domain flags specified");
             return 0;

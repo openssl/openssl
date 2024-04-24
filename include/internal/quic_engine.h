@@ -55,6 +55,9 @@ typedef struct quic_engine_args_st {
 
     OSSL_TIME       (*now_cb)(void *arg);
     void            *now_cb_arg;
+
+    /* Flags to pass when initialising the reactor. */
+    uint64_t        reactor_flags;
 } QUIC_ENGINE_ARGS;
 
 QUIC_ENGINE *ossl_quic_engine_new(const QUIC_ENGINE_ARGS *args);
