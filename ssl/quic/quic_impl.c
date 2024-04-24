@@ -86,10 +86,11 @@ static OSSL_TIME get_time_cb(void *arg)
  */
 struct qctx_st {
     QUIC_OBJ        *obj;
+    QUIC_DOMAIN     *qd;
     QUIC_LISTENER   *ql;
     QUIC_CONNECTION *qc;
     QUIC_XSO        *xso;
-    int             is_stream, is_listener, in_io;
+    int             is_stream, is_listener, is_domain, in_io;
 };
 
 QUIC_NEEDS_LOCK
@@ -211,6 +212,7 @@ static int quic_raise_non_normal_error(QCTX *ctx,
 #define QCTX_REMOTE_INIT    (1U << 4)
 #define QCTX_LOCK           (1U << 5)
 #define QCTX_IO             (1U << 6)
+#define QCTX_D              (1U << 7)
 
 /*
  * Called when expect_quic failed. Used to diagnose why such a call failed and
@@ -218,10 +220,12 @@ static int quic_raise_non_normal_error(QCTX *ctx,
  */
 static int wrong_type(const SSL *s, uint32_t flags)
 {
-    const uint32_t mask = QCTX_C | QCTX_S | QCTX_L;
+    const uint32_t mask = QCTX_C | QCTX_S | QCTX_L | QCTX_D;
     int code = ERR_R_UNSUPPORTED;
 
-    if ((flags & mask) == QCTX_L)
+    if ((flags & mask) == QCTX_D)
+        code = SSL_R_DOMAIN_USE_ONLY;
+    else if ((flags & mask) == QCTX_L)
         code = SSL_R_LISTENER_USE_ONLY;
     else if ((flags & mask) == QCTX_C)
         code = SSL_R_CONN_USE_ONLY;
@@ -247,30 +251,35 @@ static int wrong_type(const SSL *s, uint32_t flags)
  * the SSL object, and assuming the preconditions demanded by the flags field as
  * described above are met:
  *
- *                  QLSO        QCSO        QSSO
- *   ql             non-NULL    maybe       maybe
- *   qc             NULL        non-NULL    non-NULL
- *   xso            NULL        maybe       non-NULL
- *   is_stream      0           0           1
- *   is_listener    1           0           0
+ *                  QDSO        QLSO        QCSO        QSSO
+ *   qd             non-NULL    maybe       maybe       maybe
+ *   ql             NULL        non-NULL    maybe       maybe
+ *   qc             NULL        NULL        non-NULL    non-NULL
+ *   xso            NULL        NULL        maybe       non-NULL
+ *   is_stream      0           0           0           1
+ *   is_listener    0           1           0           0
+ *   is_domain      1           0           0           0
  *
  */
 static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
 {
     int ok = 0, locked = 0, lock_requested = ((flags & QCTX_LOCK) != 0);
-    QUIC_CONNECTION *qc;
+    QUIC_DOMAIN *qd;
     QUIC_LISTENER *ql;
+    QUIC_CONNECTION *qc;
     QUIC_XSO *xso;
 
     if ((flags & QCTX_AUTO_S) != 0)
         flags |= QCTX_S;
 
     ctx->obj            = NULL;
+    ctx->qd             = NULL;
     ctx->ql             = NULL;
     ctx->qc             = NULL;
     ctx->xso            = NULL;
     ctx->is_stream      = 0;
     ctx->is_listener    = 0;
+    ctx->is_domain      = 0;
     ctx->in_io          = ((flags & QCTX_IO) != 0);
 
     if (s == NULL) {
@@ -279,6 +288,18 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
     }
 
     switch (s->type) {
+    case SSL_TYPE_QUIC_DOMAIN:
+        if ((flags & QCTX_D) == 0) {
+            wrong_type(s, flags);
+            goto err;
+        }
+
+        qd                  = (QUIC_DOMAIN *)s;
+        ctx->obj            = &qd->obj;
+        ctx->qd             = qd;
+        ctx->is_domain      = 1;
+        break;
+
     case SSL_TYPE_QUIC_LISTENER:
         if ((flags & QCTX_L) == 0) {
             wrong_type(s, flags);
@@ -381,11 +402,21 @@ static int expect_quic_csl(const SSL *s, QCTX *ctx)
     return expect_quic_as(s, ctx, QCTX_C | QCTX_S | QCTX_L);
 }
 
-#define expect_quic_any expect_quic_csl
+static int expect_quic_csld(const SSL *s, QCTX *ctx)
+{
+    return expect_quic_as(s, ctx, QCTX_C | QCTX_S | QCTX_L | QCTX_D);
+}
+
+#define expect_quic_any expect_quic_csld
 
 static int expect_quic_listener(const SSL *s, QCTX *ctx)
 {
     return expect_quic_as(s, ctx, QCTX_L);
+}
+
+static int expect_quic_domain(const SSL *s, QCTX *ctx)
+{
+    return expect_quic_as(s, ctx, QCTX_D);
 }
 
 /*
@@ -671,6 +702,22 @@ static void quic_free_listener(QCTX *ctx)
     quic_unref_port_bios(ctx->ql->port);
     ossl_quic_port_drop_incoming(ctx->ql->port);
     ossl_quic_port_free(ctx->ql->port);
+
+    if (ctx->ql->domain == NULL) {
+        ossl_quic_engine_free(ctx->ql->engine);
+#if defined(OPENSSL_THREADS)
+        ossl_crypto_mutex_free(&ctx->ql->mutex);
+#endif
+    }
+
+    if (ctx->ql->domain != NULL)
+        SSL_free(&ctx->ql->domain->obj.ssl);
+}
+
+/* SSL_free */
+QUIC_TAKES_LOCK
+static void quic_free_domain(QCTX *ctx)
+{
     ossl_quic_engine_free(ctx->ql->engine);
 #if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_free(&ctx->ql->mutex);
@@ -686,6 +733,11 @@ void ossl_quic_free(SSL *s)
     /* We should never be called on anything but a QSO. */
     if (!expect_quic_any(s, &ctx))
         return;
+
+    if (ctx.is_domain) {
+        quic_free_domain(&ctx);
+        return;
+    }
 
     if (ctx.is_listener) {
         quic_free_listener(&ctx);
@@ -772,6 +824,8 @@ void ossl_quic_free(SSL *s)
 
     if (ctx.qc->listener != NULL)
         SSL_free(&ctx.qc->listener->obj.ssl);
+    if (ctx.qc->domain != NULL)
+        SSL_free(&ctx.qc->domain->obj.ssl);
 }
 
 /* SSL method init */
@@ -3187,6 +3241,20 @@ SSL *ossl_quic_get0_listener(SSL *s)
 }
 
 /*
+ * SSL_get0_domain
+ * ---------------
+ */
+SSL *ossl_quic_get0_domain(SSL *s)
+{
+    QCTX ctx;
+
+    if (!expect_quic_csld(s, &ctx))
+        return NULL;
+
+    return ctx.qd != NULL ? &ctx.qd->obj.ssl : NULL;
+}
+
+/*
  * SSL_get_stream_type
  * -------------------
  */
@@ -4163,7 +4231,7 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
 
     ossl_quic_port_set_allow_incoming(ql->port, 1);
 
-    /* Initialise the QUIC_LISTENER'S object header. */
+    /* Initialise the QUIC_LISTENER's object header. */
     if (!ossl_quic_obj_init(&ql->obj, ctx, SSL_TYPE_QUIC_LISTENER, NULL,
                             ql->engine, ql->port))
         goto err;
@@ -4178,6 +4246,60 @@ err:
     ossl_crypto_mutex_free(&ql->mutex);
 #endif
     OPENSSL_free(ql);
+    return NULL;
+}
+
+/*
+ * SSL_new_listener_from
+ * ---------------------
+ */
+SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags)
+{
+    QCTX ctx;
+    QUIC_LISTENER *ql = NULL;
+    QUIC_PORT_ARGS port_args = {0};
+
+    if (!expect_quic_domain(ssl, &ctx))
+        return NULL;
+
+    qctx_lock(&ctx);
+
+    if ((ql = OPENSSL_zalloc(sizeof(*ql))) == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
+        goto err;
+    }
+
+    port_args.channel_ctx       = ssl->ctx;
+    port_args.is_multi_conn     = 1;
+    ql->port = ossl_quic_engine_create_port(ctx.qd->engine, &port_args);
+    if (ql->port == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        goto err;
+    }
+
+    ql->domain  = ctx.qd;
+    ql->engine  = ctx.qd->engine;
+    ql->mutex   = ctx.qd->mutex;
+
+    /* TODO(QUIC SERVER): Implement SSL_LISTENER_FLAG_NO_ACCEPT */
+
+    ossl_quic_port_set_allow_incoming(ql->port, 1);
+
+    /* Initialise the QUIC_LISTENER's object header. */
+    if (!ossl_quic_obj_init(&ql->obj, ssl->ctx, SSL_TYPE_QUIC_LISTENER,
+                            &ctx.qd->obj.ssl,
+                            ctx.qd->engine, ql->port))
+        goto err;
+
+    qctx_unlock(&ctx);
+    return &ql->obj.ssl;
+
+err:
+    if (ql != NULL)
+        ossl_quic_port_free(ql->port);
+
+    OPENSSL_free(ql);
+    qctx_unlock(&ctx);
     return NULL;
 }
 
@@ -4361,6 +4483,60 @@ size_t ossl_quic_get_accept_connection_queue_len(SSL *ssl)
 
     qctx_unlock(&ctx);
     return ret;
+}
+
+/*
+ * QUIC Front-End I/O API: Domains
+ * ===============================
+ */
+
+/*
+ * SSL_new_domain
+ * --------------
+ */
+SSL *ossl_quic_new_domain(SSL_CTX *ctx, uint64_t flags)
+{
+    QUIC_DOMAIN *qd = NULL;
+    QUIC_ENGINE_ARGS engine_args = {0};
+
+    if ((qd = OPENSSL_zalloc(sizeof(*qd))) == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
+        goto err;
+    }
+
+#if defined(OPENSSL_THREADS)
+    if ((qd->mutex = ossl_crypto_mutex_new()) == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
+        goto err;
+    }
+#endif
+
+    engine_args.libctx  = ctx->libctx;
+    engine_args.propq   = ctx->propq;
+#if defined(OPENSSL_THREADS)
+    engine_args.mutex   = qd->mutex;
+#endif
+    if ((qd->engine = ossl_quic_engine_new(&engine_args)) == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        goto err;
+    }
+
+    /* Initialise the QUIC_DOMAIN's object header. */
+    if (!ossl_quic_obj_init(&qd->obj, ctx, SSL_TYPE_QUIC_DOMAIN, NULL,
+                            qd->engine, NULL))
+        goto err;
+
+    return &qd->obj.ssl;
+
+err:
+    if (qd != NULL)
+        ossl_quic_engine_free(qd->engine);
+
+#if defined(OPENSSL_THREADS)
+    ossl_crypto_mutex_free(&qd->mutex);
+#endif
+    OPENSSL_free(qd);
+    return NULL;
 }
 
 /*

@@ -7710,9 +7710,26 @@ SSL *SSL_get0_listener(SSL *s)
 #endif
 }
 
+SSL *SSL_get0_domain(SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(s))
+        return NULL;
+
+    return ossl_quic_get0_domain(s);
+#else
+    return NULL;
+#endif
+}
+
 int SSL_is_listener(SSL *s)
 {
     return SSL_get0_listener(s) == s;
+}
+
+int SSL_is_domain(SSL *s)
+{
+    return SSL_get0_domain(s) == s;
 }
 
 int SSL_get_stream_type(SSL *s)
@@ -7910,6 +7927,18 @@ SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags)
 #endif
 }
 
+SSL *SSL_new_listener_from(SSL *ssl, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC(ssl))
+        return NULL;
+
+    return ossl_quic_new_listener_from(ssl, flags);
+#else
+    return NULL;
+#endif
+}
+
 SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags)
 {
 #ifndef OPENSSL_NO_QUIC
@@ -7955,6 +7984,18 @@ int SSL_listen(SSL *ssl)
     return ossl_quic_listen(ssl);
 #else
     return 0;
+#endif
+}
+
+SSL *SSL_new_domain(SSL_CTX *ctx, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (!IS_QUIC_CTX(ctx))
+        return NULL;
+
+    return ossl_quic_new_domain(ctx, flags);
+#else
+    return NULL;
 #endif
 }
 
