@@ -17,16 +17,15 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
                                           size_t chainidx)
 {
     if (!s->renegotiate) {
+        const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
+                                                         : TLS1_3_VERSION;
+
         /* If not renegotiating, send an empty RI extension to indicate support */
-
-#if DTLS_MAX_VERSION_INTERNAL != DTLS1_2_VERSION
-# error Internal DTLS version error
-#endif
-
-        if (!SSL_CONNECTION_IS_DTLS(s)
-            && (s->min_proto_version >= TLS1_3_VERSION
-                || (ssl_security(s, SSL_SECOP_VERSION, 0, TLS1_VERSION, NULL)
-                    && s->min_proto_version <= TLS1_VERSION))) {
+        if ((s->min_proto_version != 0
+                && ssl_version_cmp(s, s->min_proto_version, version1_3) >= 0)
+            || (!SSL_CONNECTION_IS_DTLS(s)
+                && ssl_security(s, SSL_SECOP_VERSION, 0, TLS1_VERSION, NULL)
+                && s->min_proto_version <= TLS1_VERSION)) {
             /*
              * For TLS <= 1.0 SCSV is used instead, and for TLS 1.3 this
              * extension isn't used at all.
