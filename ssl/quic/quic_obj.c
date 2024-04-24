@@ -98,6 +98,10 @@ int ossl_quic_obj_can_support_blocking(const QUIC_OBJ *obj)
     assert(obj != NULL);
     rtor = ossl_quic_obj_get0_reactor(obj);
 
+    if ((obj->domain_flags
+            & (SSL_DOMAIN_FLAG_LEGACY_BLOCKING | SSL_DOMAIN_FLAG_BLOCKING)) == 0)
+        return 0;
+
     return ossl_quic_reactor_can_poll_r(rtor)
         || ossl_quic_reactor_can_poll_w(rtor);
 }
