@@ -5493,6 +5493,9 @@ int SSL_free_buffers(SSL *ssl)
     if (RECORD_LAYER_read_pending(rl) || RECORD_LAYER_write_pending(rl))
         return 0;
 
+    if (RECORD_LAYER_data_present(rl))
+        return 0;
+
     RECORD_LAYER_release(rl);
     return 1;
 }
