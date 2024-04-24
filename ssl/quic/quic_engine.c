@@ -55,7 +55,7 @@ void ossl_quic_engine_free(QUIC_ENGINE *qeng)
 
 static int qeng_init(QUIC_ENGINE *qeng)
 {
-    ossl_quic_reactor_init(&qeng->rtor, qeng_tick, qeng, ossl_time_zero());
+    ossl_quic_reactor_init(&qeng->rtor, qeng_tick, qeng, ossl_time_zero(), 0);
     return 1;
 }
 
