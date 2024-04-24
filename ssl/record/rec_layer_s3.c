@@ -230,6 +230,12 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
         /* ... now we can act as if 'extend' was set */
     }
 
+    if (!ossl_assert(s->rlayer.packet != NULL)) {
+        /* does not happen */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
     len = s->rlayer.packet_length;
     pkt = rb->buf + align;
     /*
