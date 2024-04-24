@@ -100,8 +100,20 @@ struct quic_reactor_st {
     void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
     void *tick_cb_arg;
 
-    /* Used to notify other threads. */
+    /* Used to notify other threads. Valid only if have_notifier is set. */
     RIO_NOTIFIER notifier;
+
+    /*
+     * Condvar to assist synchronising use of the notifier. Valid only if
+     * have_notifier is set.
+     */
+    CRYPTO_CONDVAR *notifier_cv;
+
+    /*
+     * Count of the current number of blocking waiters. Like everything else,
+     * this is protected the caller's mutex (i.e., the engine mutex).
+     */
+    size_t cur_blocking_waiters;
 
     /*
      * These are true if we would like to know when we can read or write from
@@ -119,6 +131,9 @@ struct quic_reactor_st {
 
     /* 1 if notifier is present and initialised. */
     unsigned int have_notifier : 1;
+
+    /* 1 if a block_until_pred call has put the notifier in the signalled state. */
+    unsigned int signalled_notifier : 1;
 };
 
 /* Create an OS notifier? */
@@ -173,12 +188,17 @@ RIO_NOTIFIER *ossl_quic_reactor_get0_notifier(QUIC_REACTOR *rtor);
  *
  * The blocking I/O adaptation layer implements blocking I/O on top of our
  * asynchronous core.
+ */
+
+/*
+ * ossl_quic_reactor_block_until_pred
+ * ----------------------------------
  *
- * The core mechanism is block_until_pred(), which does not return until pred()
- * returns a value other than 0. The blocker uses OS I/O synchronisation
- * primitives (e.g. poll(2)) and ticks the reactor until the predicate is
- * satisfied. The blocker is not required to call pred() more than once between
- * tick calls.
+ * The core mechanism of the Blocking I/O Adaption Layer is block_until_pred(),
+ * which does not return until pred() returns a value other than 0. The blocker
+ * uses OS I/O synchronisation primitives (e.g. poll(2)) and ticks the reactor
+ * until the predicate is satisfied. The blocker is not required to call pred()
+ * more than once between tick calls.
  *
  * When pred returns a non-zero value, that value is returned by this function.
  * This can be used to allow pred() to indicate error conditions and short
@@ -208,6 +228,23 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                        int (*pred)(void *arg), void *pred_arg,
                                        uint32_t flags,
                                        CRYPTO_MUTEX *mutex);
+
+/*
+ * ossl_quic_reactor_notify_other_threads
+ * --------------------------------------
+ *
+ * Notify other threads currently blocking in
+ * ossl_quic_reactor_block_until_pred() calls that a predicate they are using
+ * might now be met due to state changes.
+ *
+ * This function must be called after state changes which might cause a
+ * predicate in another thread to now be met (i.e., ticking). It is a no-op if
+ * inter-thread notification is not being used.
+ *
+ * mutex is required and must be held.
+ */
+void ossl_quic_reactor_notify_other_threads(QUIC_REACTOR *rtor,
+                                            CRYPTO_MUTEX *mutex);
 
 # endif
 
