@@ -55,9 +55,9 @@
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 
 static void ch_save_err_state(QUIC_CHANNEL *ch);
-static int ch_rx(QUIC_CHANNEL *ch, int channel_only);
-static int ch_tx(QUIC_CHANNEL *ch);
-static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only);
+static int ch_rx(QUIC_CHANNEL *ch, int channel_only, int *notify_other_threads);
+static int ch_tx(QUIC_CHANNEL *ch, int *notify_other_threads);
+static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only, int *notify_other_threads);
 static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only);
 static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch);
 static int ch_retry(QUIC_CHANNEL *ch,
@@ -1857,6 +1857,7 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
 {
     OSSL_TIME now, deadline;
     int channel_only = (flags & QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY) != 0;
+    int notify_other_threads = 0;
 
     /*
      * When we tick the QUIC connection, we do everything we need to do
@@ -1875,9 +1876,10 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
 
     /* If we are in the TERMINATED state, there is nothing to do. */
     if (ossl_quic_channel_is_terminated(ch)) {
-        res->net_read_desired   = 0;
-        res->net_write_desired  = 0;
-        res->tick_deadline      = ossl_time_infinite();
+        res->net_read_desired       = 0;
+        res->net_write_desired      = 0;
+        res->notify_other_threads   = 0;
+        res->tick_deadline          = ossl_time_infinite();
         return;
     }
 
@@ -1890,9 +1892,10 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
 
         if (ossl_time_compare(now, ch->terminate_deadline) >= 0) {
             ch_on_terminating_timeout(ch);
-            res->net_read_desired   = 0;
-            res->net_write_desired  = 0;
-            res->tick_deadline      = ossl_time_infinite();
+            res->net_read_desired       = 0;
+            res->net_write_desired      = 0;
+            res->notify_other_threads   = 1;
+            res->tick_deadline          = ossl_time_infinite();
             return; /* abort normal processing, nothing to do */
         }
     }
@@ -1905,14 +1908,14 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
             /* Process queued incoming packets. */
             ch->did_tls_tick        = 0;
             ch->have_new_rx_secret  = 0;
-            ch_rx(ch, channel_only);
+            ch_rx(ch, channel_only, &notify_other_threads);
 
             /*
              * Allow the handshake layer to check for any new incoming data and
              * generate new outgoing data.
              */
             if (!ch->did_tls_tick)
-                ch_tick_tls(ch, channel_only);
+                ch_tick_tls(ch, channel_only, &notify_other_threads);
 
             /*
              * If the handshake layer gave us a new secret, we need to do RX
@@ -1940,9 +1943,10 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
         if (!ch->port->engine->inhibit_tick)
             ch_on_idle_timeout(ch);
 
-        res->net_read_desired   = 0;
-        res->net_write_desired  = 0;
-        res->tick_deadline      = ossl_time_infinite();
+        res->net_read_desired       = 0;
+        res->net_write_desired      = 0;
+        res->notify_other_threads   = 1;
+        res->tick_deadline          = ossl_time_infinite();
         return;
     }
 
@@ -1969,7 +1973,7 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
         }
 
         /* Queue any data to be sent for transmission. */
-        ch_tx(ch);
+        ch_tx(ch, &notify_other_threads);
 
         /* Do stream GC. */
         ossl_quic_stream_map_gc(&ch->qsm);
@@ -1989,9 +1993,11 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
     res->net_write_desired
         = (!ossl_quic_channel_is_terminated(ch)
            && ossl_qtx_get_queue_len_datagrams(ch->qtx) > 0);
+
+    res->notify_other_threads = notify_other_threads;
 }
 
-static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only)
+static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only, int *notify_other_threads)
 {
     uint64_t error_code;
     const char *error_msg;
@@ -2007,6 +2013,9 @@ static int ch_tick_tls(QUIC_CHANNEL *ch, int channel_only)
                                 &error_state)) {
         ossl_quic_channel_raise_protocol_error_state(ch, error_code, 0,
                                                      error_msg, error_state);
+        if (notify_other_threads != NULL)
+            *notify_other_threads = 1;
+
         return 0;
     }
 
@@ -2046,7 +2055,7 @@ static void ch_rx_check_forged_pkt_limit(QUIC_CHANNEL *ch)
 }
 
 /* Process queued incoming packets and handle frames, if any. */
-static int ch_rx(QUIC_CHANNEL *ch, int channel_only)
+static int ch_rx(QUIC_CHANNEL *ch, int channel_only, int *notify_other_threads)
 {
     int handled_any = 0;
     const int closing = ossl_quic_channel_is_closing(ch);
@@ -2089,6 +2098,9 @@ static int ch_rx(QUIC_CHANNEL *ch, int channel_only)
     }
 
     ch_rx_check_forged_pkt_limit(ch);
+
+    if (handled_any)
+        *notify_other_threads = 1;
 
     /*
      * When in TERMINATING - CLOSING, generate a CONN_CLOSE frame whenever we
@@ -2336,7 +2348,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
         ossl_quic_handle_frames(ch, ch->qrx_pkt); /* best effort */
 
         if (ch->did_crypto_frame)
-            ch_tick_tls(ch, channel_only);
+            ch_tick_tls(ch, channel_only, NULL);
 
         break;
 
@@ -2398,7 +2410,7 @@ static void ch_raise_version_neg_failure(QUIC_CHANNEL *ch)
 }
 
 /* Try to generate packets and if possible, flush them to the network. */
-static int ch_tx(QUIC_CHANNEL *ch)
+static int ch_tx(QUIC_CHANNEL *ch, int *notify_other_threads)
 {
     QUIC_TXP_STATUS status;
     int res;
@@ -2506,6 +2518,14 @@ static int ch_tx(QUIC_CHANNEL *ch)
         ossl_quic_port_raise_net_error(ch->port, ch);
         break;
     }
+
+    /*
+     * If we have datagrams we have yet to successfully transmit, we need to
+     * notify other threads so that they can switch to polling on POLLOUT as
+     * well as POLLIN.
+     */
+    if (ossl_qtx_get_queue_len_datagrams(ch->qtx) > 0)
+        *notify_other_threads = 1;
 
     return 1;
 }
@@ -2625,7 +2645,7 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
                                                     &ch->init_dcid);
 
     /* Handshake layer: start (e.g. send CH). */
-    if (!ch_tick_tls(ch, /*channel_only=*/0))
+    if (!ch_tick_tls(ch, /*channel_only=*/0, NULL))
         return 0;
 
     ossl_quic_reactor_tick(ossl_quic_port_get0_reactor(ch->port), 0); /* best effort */
