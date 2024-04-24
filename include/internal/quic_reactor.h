@@ -73,6 +73,7 @@
 struct quic_tick_result_st {
     char        net_read_desired;
     char        net_write_desired;
+    char        notify_other_threads;
     OSSL_TIME   tick_deadline;
 };
 
@@ -80,9 +81,10 @@ static ossl_inline ossl_unused void
 ossl_quic_tick_result_merge_into(QUIC_TICK_RESULT *r,
                                  const QUIC_TICK_RESULT *src)
 {
-    r->net_read_desired  = r->net_read_desired  || src->net_read_desired;
-    r->net_write_desired = r->net_write_desired || src->net_write_desired;
-    r->tick_deadline     = ossl_time_min(r->tick_deadline, src->tick_deadline);
+    r->net_read_desired     = r->net_read_desired  || src->net_read_desired;
+    r->net_write_desired    = r->net_write_desired || src->net_write_desired;
+    r->notify_other_threads = r->notify_other_threads || src->notify_other_threads;
+    r->tick_deadline        = ossl_time_min(r->tick_deadline, src->tick_deadline);
 }
 
 struct quic_reactor_st {
@@ -99,6 +101,9 @@ struct quic_reactor_st {
 
     void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
     void *tick_cb_arg;
+
+    /* The mutex used for ticking. Not owned by the reactor. */
+    CRYPTO_MUTEX *mutex;
 
     /* Used to notify other threads. Valid only if have_notifier is set. */
     RIO_NOTIFIER notifier;
@@ -143,6 +148,7 @@ int ossl_quic_reactor_init(QUIC_REACTOR *rtor,
                            void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
                                            uint32_t flags),
                            void *tick_cb_arg,
+                           CRYPTO_MUTEX *mutex,
                            OSSL_TIME initial_tick_deadline,
                            uint64_t flags);
 
@@ -218,34 +224,14 @@ RIO_NOTIFIER *ossl_quic_reactor_get0_notifier(QUIC_REACTOR *rtor);
  * mutex is non-NULL, it must be a lock currently held for write; it will be
  * unlocked during any sleep, and then relocked for write afterwards.
  *
- * Precondition:   mutex is NULL or is held for write (unchecked)
- * Postcondition:  mutex is NULL or is held for write (unless
- *                   CRYPTO_THREAD_write_lock fails)
+ * Precondition:   If a reactor mutex is being used, it must be held (unchecked)
+ * Postcondition:  If a reactor mutex is being used, it is held
  */
 #define SKIP_FIRST_TICK     (1U << 0)
 
 int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                        int (*pred)(void *arg), void *pred_arg,
-                                       uint32_t flags,
-                                       CRYPTO_MUTEX *mutex);
-
-/*
- * ossl_quic_reactor_notify_other_threads
- * --------------------------------------
- *
- * Notify other threads currently blocking in
- * ossl_quic_reactor_block_until_pred() calls that a predicate they are using
- * might now be met due to state changes.
- *
- * This function must be called after state changes which might cause a
- * predicate in another thread to now be met (i.e., ticking). It is a no-op if
- * inter-thread notification is not being used.
- *
- * mutex is required and must be held.
- */
-void ossl_quic_reactor_notify_other_threads(QUIC_REACTOR *rtor,
-                                            CRYPTO_MUTEX *mutex);
-
+                                       uint32_t flags);
 # endif
 
 #endif
