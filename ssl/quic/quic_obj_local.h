@@ -100,6 +100,9 @@ struct quic_obj_st {
      */
     QUIC_PORT               *port;
 
+    /* SSL_DOMAIN_FLAG values taken from SSL_CTX at construction time. */
+    uint64_t                domain_flags;
+
     unsigned int            init_done       : 1;
     unsigned int            is_event_leader : 1;
     unsigned int            is_port_leader  : 1;
