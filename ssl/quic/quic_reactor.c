@@ -15,10 +15,13 @@
  * Core I/O Reactor Framework
  * ==========================
  */
+static void rtor_notify_other_threads(QUIC_REACTOR *rtor);
+
 int ossl_quic_reactor_init(QUIC_REACTOR *rtor,
                            void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
                                            uint32_t flags),
                            void *tick_cb_arg,
+                           CRYPTO_MUTEX *mutex,
                            OSSL_TIME initial_tick_deadline,
                            uint64_t flags)
 {
@@ -32,6 +35,7 @@ int ossl_quic_reactor_init(QUIC_REACTOR *rtor,
 
     rtor->tick_cb           = tick_cb;
     rtor->tick_cb_arg       = tick_cb_arg;
+    rtor->mutex             = mutex;
 
     rtor->cur_blocking_waiters = 0;
 
@@ -144,6 +148,9 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags)
     rtor->net_read_desired  = res.net_read_desired;
     rtor->net_write_desired = res.net_write_desired;
     rtor->tick_deadline     = res.tick_deadline;
+    if (res.notify_other_threads)
+        rtor_notify_other_threads(rtor);
+
     return 1;
 }
 
@@ -387,8 +394,18 @@ static int poll_two_descriptors(const BIO_POLL_DESCRIPTOR *r, int r_want_read,
                         notify_rfd, deadline, mutex);
 }
 
-void ossl_quic_reactor_notify_other_threads(QUIC_REACTOR *rtor,
-                                            CRYPTO_MUTEX *mutex)
+/*
+ * Notify other threads currently blocking in
+ * ossl_quic_reactor_block_until_pred() calls that a predicate they are using
+ * might now be met due to state changes.
+ *
+ * This function must be called after state changes which might cause a
+ * predicate in another thread to now be met (i.e., ticking). It is a no-op if
+ * inter-thread notification is not being used.
+ *
+ * The reactor mutex must be held while calling this function.
+ */
+static void rtor_notify_other_threads(QUIC_REACTOR *rtor)
 {
     if (!rtor->have_notifier)
         return;
@@ -421,7 +438,7 @@ void ossl_quic_reactor_notify_other_threads(QUIC_REACTOR *rtor,
     * unsignalling the notifier.
     */
     while (rtor->signalled_notifier)
-        ossl_crypto_condvar_wait(rtor->notifier_cv, mutex);
+        ossl_crypto_condvar_wait(rtor->notifier_cv, rtor->mutex);
 }
 
 /*
@@ -437,8 +454,7 @@ void ossl_quic_reactor_notify_other_threads(QUIC_REACTOR *rtor,
  */
 int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                        int (*pred)(void *arg), void *pred_arg,
-                                       uint32_t flags,
-                                       CRYPTO_MUTEX *mutex)
+                                       uint32_t flags)
 {
     int res, net_read_desired, net_write_desired, notifier_fd;
     OSSL_TIME tick_deadline;
@@ -472,7 +488,7 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                    net_write_desired,
                                    notifier_fd,
                                    tick_deadline,
-                                   mutex);
+                                   rtor->mutex);
 
         assert(rtor->cur_blocking_waiters > 0);
         --rtor->cur_blocking_waiters;
@@ -530,7 +546,7 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
             } else {
                 /* We are not the last waiter out - so wait for that one. */
                 while (rtor->signalled_notifier)
-                    ossl_crypto_condvar_wait(rtor->notifier_cv, mutex);
+                    ossl_crypto_condvar_wait(rtor->notifier_cv, rtor->mutex);
             }
         }
 
