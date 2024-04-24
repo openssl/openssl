@@ -3248,10 +3248,27 @@ SSL *ossl_quic_get0_domain(SSL *s)
 {
     QCTX ctx;
 
-    if (!expect_quic_csld(s, &ctx))
+    if (!expect_quic_any(s, &ctx))
         return NULL;
 
     return ctx.qd != NULL ? &ctx.qd->obj.ssl : NULL;
+}
+
+/*
+ * SSL_get_domain_flags
+ * --------------------
+ */
+int ossl_quic_get_domain_flags(const SSL *ssl, uint64_t *domain_flags)
+{
+    QCTX ctx;
+
+    if (!expect_quic_any(ssl, &ctx))
+        return 0;
+
+    if (domain_flags != NULL)
+        *domain_flags = ctx.obj->domain_flags;
+
+    return 1;
 }
 
 /*
