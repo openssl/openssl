@@ -85,6 +85,11 @@ BIO *BIO_new_file(const char *filename, const char *mode)
     /* we did fopen -> we disengage UPLINK */
     BIO_clear_flags(ret, BIO_FLAGS_UPLINK_INTERNAL);
     BIO_set_fp(ret, file, fp_flags);
+#if defined(OPENSSL_SYS_WINDOWS)
+    /* see corresponding setvbuf call */
+    if ((fp_flags & BIO_FP_TEXT) != 0)
+        ret = BIO_push(BIO_new(BIO_f_buffer()), ret);
+#endif
     return ret;
 }
 
@@ -241,6 +246,8 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
              * https://developercommunity.visualstudio.com/content/problem/425878/fseek-ftell-fail-in-text-mode-for-unix-style-text.html
              * The suggested work-around from Microsoft engineering is to
              * turn off buffering until the bug is resolved.
+             * When this is removed, removing the corresponding BIO_f_buffer
+             * call in BIO_new_file.
              */
             if ((num & BIO_FP_TEXT) != 0)
                 setvbuf((FILE *)ptr, NULL, _IONBF, 0);
