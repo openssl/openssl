@@ -56,6 +56,7 @@ void ossl_quic_engine_free(QUIC_ENGINE *qeng)
 static int qeng_init(QUIC_ENGINE *qeng, uint64_t reactor_flags)
 {
     return ossl_quic_reactor_init(&qeng->rtor, qeng_tick, qeng,
+                                  qeng->mutex,
                                   ossl_time_zero(), reactor_flags);
 }
 
@@ -152,9 +153,10 @@ static void qeng_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
     QUIC_ENGINE *qeng = arg;
     QUIC_PORT *port;
 
-    res->net_read_desired   = 0;
-    res->net_write_desired  = 0;
-    res->tick_deadline      = ossl_time_infinite();
+    res->net_read_desired     = 0;
+    res->net_write_desired    = 0;
+    res->notify_other_threads = 0;
+    res->tick_deadline        = ossl_time_infinite();
 
     if (qeng->inhibit_tick)
         return;
@@ -166,6 +168,4 @@ static void qeng_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
         ossl_quic_port_subtick(port, &subr, flags);
         ossl_quic_tick_result_merge_into(res, &subr);
     }
-
-    ossl_quic_reactor_notify_other_threads(&qeng->rtor, qeng->mutex);
 }
