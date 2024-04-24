@@ -13,6 +13,7 @@
 # include "internal/sockets.h"
 # include "internal/quic_predef.h"
 # include "internal/thread_arch.h"
+# include "internal/rio_notifier.h"
 # include <openssl/bio.h>
 
 # ifndef OPENSSL_NO_QUIC
@@ -99,6 +100,9 @@ struct quic_reactor_st {
     void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
     void *tick_cb_arg;
 
+    /* Used to notify other threads. */
+    RIO_NOTIFIER notifier;
+
     /*
      * These are true if we would like to know when we can read or write from
      * the network respectively.
@@ -112,13 +116,22 @@ struct quic_reactor_st {
      */
     unsigned int can_poll_r : 1;
     unsigned int can_poll_w : 1;
+
+    /* 1 if notifier is present and initialised. */
+    unsigned int have_notifier : 1;
 };
 
-void ossl_quic_reactor_init(QUIC_REACTOR *rtor,
-                            void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
-                                            uint32_t flags),
-                            void *tick_cb_arg,
-                            OSSL_TIME initial_tick_deadline);
+/* Create an OS notifier? */
+#define QUIC_REACTOR_FLAG_USE_NOTIFIER      (1U << 0)
+
+int ossl_quic_reactor_init(QUIC_REACTOR *rtor,
+                           void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
+                                           uint32_t flags),
+                           void *tick_cb_arg,
+                           OSSL_TIME initial_tick_deadline,
+                           uint64_t flags);
+
+void ossl_quic_reactor_cleanup(QUIC_REACTOR *rtor);
 
 void ossl_quic_reactor_set_poll_r(QUIC_REACTOR *rtor,
                                   const BIO_POLL_DESCRIPTOR *r);
@@ -151,6 +164,8 @@ OSSL_TIME ossl_quic_reactor_get_tick_deadline(QUIC_REACTOR *rtor);
 #define QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY  (1U << 0)
 
 int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags);
+
+RIO_NOTIFIER *ossl_quic_reactor_get0_notifier(QUIC_REACTOR *rtor);
 
 /*
  * Blocking I/O Adaptation Layer
