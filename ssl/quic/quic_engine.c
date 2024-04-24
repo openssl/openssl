@@ -166,4 +166,6 @@ static void qeng_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
         ossl_quic_port_subtick(port, &subr, flags);
         ossl_quic_tick_result_merge_into(res, &subr);
     }
+
+    ossl_quic_reactor_notify_other_threads(&qeng->rtor, qeng->mutex);
 }
