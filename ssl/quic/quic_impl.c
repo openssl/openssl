@@ -1748,6 +1748,13 @@ static int configure_channel(QUIC_CONNECTION *qc)
     return 1;
 }
 
+static int need_notifier_for_domain_flags(uint64_t domain_flags)
+{
+    return (domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0
+        || ((domain_flags & SSL_DOMAIN_FLAG_MULTI_THREAD) != 0
+            && (domain_flags & SSL_DOMAIN_FLAG_BLOCKING) != 0);
+}
+
 QUIC_NEEDS_LOCK
 static int create_channel(QUIC_CONNECTION *qc, SSL_CTX *ctx)
 {
@@ -1761,6 +1768,9 @@ static int create_channel(QUIC_CONNECTION *qc, SSL_CTX *ctx)
 #endif
     engine_args.now_cb        = get_time_cb;
     engine_args.now_cb_arg    = qc;
+    if (need_notifier_for_domain_flags(ctx->domain_flags))
+        engine_args.reactor_flags |= QUIC_REACTOR_FLAG_USE_NOTIFIER;
+
     qc->engine = ossl_quic_engine_new(&engine_args);
     if (qc->engine == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
@@ -4231,6 +4241,9 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
 #if defined(OPENSSL_THREADS)
     engine_args.mutex   = ql->mutex;
 #endif
+    if (need_notifier_for_domain_flags(ctx->domain_flags))
+        engine_args.reactor_flags |= QUIC_REACTOR_FLAG_USE_NOTIFIER;
+
     if ((ql->engine = ossl_quic_engine_new(&engine_args)) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         goto err;
@@ -4533,6 +4546,9 @@ SSL *ossl_quic_new_domain(SSL_CTX *ctx, uint64_t flags)
 #if defined(OPENSSL_THREADS)
     engine_args.mutex   = qd->mutex;
 #endif
+    if (need_notifier_for_domain_flags(ctx->domain_flags))
+        engine_args.reactor_flags |= QUIC_REACTOR_FLAG_USE_NOTIFIER;
+
     if ((qd->engine = ossl_quic_engine_new(&engine_args)) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         goto err;

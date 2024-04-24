@@ -17,7 +17,7 @@
  * QUIC Engine
  * ===========
  */
-static int qeng_init(QUIC_ENGINE *qeng);
+static int qeng_init(QUIC_ENGINE *qeng, uint64_t reactor_flags);
 static void qeng_cleanup(QUIC_ENGINE *qeng);
 static void qeng_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
 
@@ -36,7 +36,7 @@ QUIC_ENGINE *ossl_quic_engine_new(const QUIC_ENGINE_ARGS *args)
     qeng->now_cb            = args->now_cb;
     qeng->now_cb_arg        = args->now_cb_arg;
 
-    if (!qeng_init(qeng)) {
+    if (!qeng_init(qeng, args->reactor_flags)) {
         OPENSSL_free(qeng);
         return NULL;
     }
@@ -53,15 +53,16 @@ void ossl_quic_engine_free(QUIC_ENGINE *qeng)
     OPENSSL_free(qeng);
 }
 
-static int qeng_init(QUIC_ENGINE *qeng)
+static int qeng_init(QUIC_ENGINE *qeng, uint64_t reactor_flags)
 {
-    ossl_quic_reactor_init(&qeng->rtor, qeng_tick, qeng, ossl_time_zero(), 0);
-    return 1;
+    return ossl_quic_reactor_init(&qeng->rtor, qeng_tick, qeng,
+                                  ossl_time_zero(), reactor_flags);
 }
 
 static void qeng_cleanup(QUIC_ENGINE *qeng)
 {
     assert(ossl_list_port_num(&qeng->port_list) == 0);
+    ossl_quic_reactor_cleanup(&qeng->rtor);
 }
 
 QUIC_REACTOR *ossl_quic_engine_get0_reactor(QUIC_ENGINE *qeng)
