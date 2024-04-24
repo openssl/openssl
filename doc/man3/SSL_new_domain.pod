@@ -4,41 +4,31 @@
 
 SSL_new_domain,
 SSL_is_domain,
-SSL_get0_domain,
-SSL_get_domain_flags,
-SSL_CTX_set_domain_flags,
-SSL_CTX_get_domain_flags,
-SSL_DOMAIN_FLAG_SINGLE_THREAD,
-SSL_DOMAIN_FLAG_MULTI_THREAD,
-SSL_DOMAIN_FLAG_THREAD_ASSISTED,
-SSL_DOMAIN_FLAG_BLOCKING,
-SSL_DOMAIN_FLAG_LEGACY_BLOCKING - SSL object interface for managing QUIC event domains
+SSL_get0_domain
+- SSL object interface for managing QUIC event domains
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
-
- int SSL_CTX_set_domain_flags(SSL_CTX *ctx, uint64_t domain_flags);
- int SSL_CTX_get_domain_flags(SSL_CTX *ctx, uint64_t *domain_flags);
 
  SSL *SSL_new_domain(SSL_CTX *ctx, uint64_t flags);
 
  int SSL_is_domain(SSL *ssl);
  SSL *SSL_get0_domain(SSL *ssl);
 
- int SSL_get_domain_flags(SSL *ssl, uint64_t *domain_flags);
-
- #define SSL_DOMAIN_FLAG_SINGLE_THREAD
- #define SSL_DOMAIN_FLAG_MULTI_THREAD
- #define SSL_DOMAIN_FLAG_THREAD_ASSISTED
- #define SSL_DOMAIN_FLAG_BLOCKING
- #define SSL_DOMAIN_FLAG_LEGACY_BLOCKING
-
 =head1 DESCRIPTION
 
 The SSL_new_domain() function creates a new QUIC event domain, represented as an
 SSL object. This is known as a QUIC domain SSL object (QDSO). The concept of a
 QUIC event domain is discussed in detail in L<openssl-quic-concurrency(7)>.
+
+The I<flags> argument to SSL_new_domain() accepts a set of domain flags. If the
+I<flags> argument to SSL_new_domain() does not specify one of the flags
+B<SSL_DOMAIN_FLAG_SINGLE_THREAD>, B<SSL_DOMAIN_FLAG_MULTI_THREAD> or
+B<SSL_DOMAIN_FLAG_THREAD_ASSISTED>, the domain flags configured on the
+B<SSL_CTX> are used as a default. Otherwise, the domain flags in I<domain_flags>
+are used. See L<SSL_CTX_set_domain_flags(3)> for details of the available domain
+flags and how they can be configured on a B<SSL_CTX>.
 
 A QUIC domain SSL object can be managed in the same way as any other SSL object,
 in that it can be refcounted and freed normally. A QUIC domain SSL object is the
@@ -51,36 +41,8 @@ SSL_is_domain() returns 1 if a SSL object is a QUIC domain SSL object.
 SSL_get0_domain() obtains a pointer to the QUIC domain SSL object in a SSL
 object hierarchy (if any).
 
-=head2 Domain Flags
-
-Domain flags are a set of flags which configure the concurrency model used by
-the OpenSSL QUIC implementation. For more information, including the meanings of
-the B<SSL_DOMAIN_FLAG> values, see L<openssl-quic-concurrency(7)>.
-
-SSL_CTX_set_domain_flags() and SSL_CTX_get_domain_flags() can be used to set and
-get the domain flags configured on a B<SSL_CTX> which is using a QUIC
-B<SSL_METHOD>.
-
-A default set of domain flags are configured on a B<SSL_CTX> when it is
-constructed, and these can be determined by calling SSL_CTX_get_domain_flags()
-immediately after constructing a B<SSL_CTX>.
-
-The flags configured on a B<SSL_CTX> are used when an SSL object (such as a QUIC
-domain SSL object) is created from an B<SSL_CTX>. Subsequent to the domain flags
-on a B<SSL_CTX> do not affect SSL objects which have already been created.
-
-When calling SSL_new_domain(), if the I<domain_flags> argument to
-SSL_new_domain() does not specify one of the flags
-B<SSL_DOMAIN_FLAG_SINGLE_THREAD>, B<SSL_DOMAIN_FLAG_MULTI_THREAD> or
-B<SSL_DOMAIN_FLAG_THREAD_ASSISTED>, the domain flags configured on the
-B<SSL_CTX> are used as a default. Otherwise, the domain flags in I<domain_flags>
-are used.
-
 All SSL objects in a QUIC event domain use the same domain flags, and the domain
 flags for a QUIC domain cannot be changed after construction.
-
-SSL_get_domain_flags() outputs the effective domain flags being used on any
-given QUIC SSL object.
 
 =head2 Supported Operations
 
@@ -137,8 +99,8 @@ on which it is called) or NULL.
 
 =head1 SEE ALSO
 
-L<SSL_new_listener_from(3)>, L<openssl-quic-concurrency(7)>,
-L<SSL_handle_events(3)>
+L<SSL_new_listener_from(3)> L<SSL_handle_events(3)>,
+L<SSL_CTX_set_domain_flags(3)>, L<openssl-quic-concurrency(7)>
 
 =head1 HISTORY
 
