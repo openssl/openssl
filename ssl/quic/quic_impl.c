@@ -607,7 +607,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     /* Determine mode of operation. */
 #if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
     qc->is_thread_assisted
-        = (ctx->method == OSSL_QUIC_client_thread_method());
+        = ((ctx->domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0);
 #endif
 
     qc->as_server       = 0; /* TODO(QUIC SERVER): add server support */
