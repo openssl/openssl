@@ -14,11 +14,12 @@
  * Core I/O Reactor Framework
  * ==========================
  */
-void ossl_quic_reactor_init(QUIC_REACTOR *rtor,
-                            void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
-                                            uint32_t flags),
-                            void *tick_cb_arg,
-                            OSSL_TIME initial_tick_deadline)
+int ossl_quic_reactor_init(QUIC_REACTOR *rtor,
+                           void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
+                                           uint32_t flags),
+                           void *tick_cb_arg,
+                           OSSL_TIME initial_tick_deadline,
+                           uint64_t flags)
 {
     rtor->poll_r.type       = BIO_POLL_DESCRIPTOR_TYPE_NONE;
     rtor->poll_w.type       = BIO_POLL_DESCRIPTOR_TYPE_NONE;
@@ -30,6 +31,28 @@ void ossl_quic_reactor_init(QUIC_REACTOR *rtor,
 
     rtor->tick_cb           = tick_cb;
     rtor->tick_cb_arg       = tick_cb_arg;
+
+    if ((flags & QUIC_REACTOR_FLAG_USE_NOTIFIER) != 0) {
+        if (!ossl_rio_notifier_init(&rtor->notifier))
+            return 0;
+
+        rtor->have_notifier = 1;
+    } else {
+        rtor->have_notifier = 0;
+    }
+
+    return 1;
+}
+
+void ossl_quic_reactor_cleanup(QUIC_REACTOR *rtor)
+{
+    if (rtor == NULL)
+        return;
+
+    if (rtor->have_notifier) {
+        ossl_rio_notifier_cleanup(&rtor->notifier);
+        rtor->have_notifier = 0;
+    }
 }
 
 void ossl_quic_reactor_set_poll_r(QUIC_REACTOR *rtor, const BIO_POLL_DESCRIPTOR *r)
@@ -112,6 +135,11 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags)
     rtor->net_write_desired = res.net_write_desired;
     rtor->tick_deadline     = res.tick_deadline;
     return 1;
+}
+
+RIO_NOTIFIER *ossl_quic_reactor_get0_notifier(QUIC_REACTOR *rtor)
+{
+    return rtor->have_notifier ? &rtor->notifier : NULL;
 }
 
 /*
