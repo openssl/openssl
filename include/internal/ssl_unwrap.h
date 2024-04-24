@@ -83,6 +83,13 @@ struct ssl_connection_st *ossl_quic_obj_get0_handshake_layer(QUIC_OBJ *obj);
         ? (c QUIC_LISTENER *)(ssl)                                      \
         : NULL))
 
+#  define QUIC_DOMAIN_FROM_SSL_int(ssl, c)                              \
+    ((ssl) == NULL                                                      \
+     ? NULL                                                             \
+     : ((ssl)->type == SSL_TYPE_QUIC_DOMAIN                             \
+        ? (c QUIC_DOMAIN *)(ssl)                                        \
+        : NULL))
+
 #  define IS_QUIC_CS(ssl) ((ssl) != NULL                                \
                            && ((ssl)->type == SSL_TYPE_QUIC_CONNECTION  \
                                || (ssl)->type == SSL_TYPE_QUIC_XSO))

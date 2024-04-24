@@ -40,6 +40,7 @@ typedef struct quic_obj_st QUIC_OBJ;
 typedef struct quic_conn_st QUIC_CONNECTION;
 typedef struct quic_xso_st QUIC_XSO;
 typedef struct quic_listener_st QUIC_LISTENER;
+typedef struct quic_domain_st QUIC_DOMAIN;
 
 # endif
 
