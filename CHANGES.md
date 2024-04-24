@@ -41,6 +41,16 @@ OpenSSL 3.4
 
    *Tomáš Mráz*
 
+ * SHAKE-128 and SHAKE-256 implementations have no default digest length
+   anymore. That means these algorithms cannot be used with
+   EVP_DigestFinal/_ex() unless the `xoflen` param is set before.
+
+   This change was necessary because the preexisting default lengths were
+   half the size necessary for full collision resistance supported by these
+   algorithms.
+
+   *Tomáš Mráz*
+
  * Setting `config_diagnostics=1` in the config file will cause errors to
    be returned from SSL_CTX_new() and SSL_CTX_new_ex() if there is an error
    in the ssl module configuration.
