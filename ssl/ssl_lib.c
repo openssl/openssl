@@ -8020,41 +8020,50 @@ SSL *SSL_new_domain(SSL_CTX *ctx, uint64_t flags)
 #endif
 }
 
+int ossl_adjust_domain_flags(uint64_t domain_flags, uint64_t *p_domain_flags)
+{
+    if ((domain_flags & ~OSSL_QUIC_SUPPORTED_DOMAIN_FLAGS) != 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_UNSUPPORTED,
+                       "unsupported domain flag requested");
+        return 0;
+    }
+
+    if ((domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0)
+        domain_flags |= SSL_DOMAIN_FLAG_MULTI_THREAD;
+
+    if ((domain_flags & (SSL_DOMAIN_FLAG_MULTI_THREAD
+                         | SSL_DOMAIN_FLAG_SINGLE_THREAD)) == 0)
+        domain_flags |= SSL_DOMAIN_FLAG_MULTI_THREAD;
+
+    if ((domain_flags & SSL_DOMAIN_FLAG_SINGLE_THREAD) != 0
+        && (domain_flags & SSL_DOMAIN_FLAG_MULTI_THREAD) != 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "mutually exclusive domain flags specified");
+        return 0;
+    }
+
+    /*
+     * Note: We treat MULTI_THREAD as a no-op in non-threaded builds, but
+     * not THREAD_ASSISTED.
+     */
+# ifndef OPENSSL_THREADS
+    if ((domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_UNSUPPORTED,
+                       "thread assisted mode not available in this build");
+        return 0;
+    }
+# endif
+
+    *p_domain_flags = domain_flags;
+    return 1;
+}
+
 int SSL_CTX_set_domain_flags(SSL_CTX *ctx, uint64_t domain_flags)
 {
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC_CTX(ctx)) {
-        if ((domain_flags & ~OSSL_QUIC_SUPPORTED_DOMAIN_FLAGS) != 0) {
-            ERR_raise_data(ERR_LIB_SSL, ERR_R_UNSUPPORTED,
-                           "unsupported domain flag requested");
+        if (!ossl_adjust_domain_flags(domain_flags, &domain_flags))
             return 0;
-        }
-
-        if ((domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0)
-            domain_flags |= SSL_DOMAIN_FLAG_MULTI_THREAD;
-
-        if ((domain_flags & (SSL_DOMAIN_FLAG_MULTI_THREAD
-                             | SSL_DOMAIN_FLAG_SINGLE_THREAD)) == 0)
-            domain_flags |= SSL_DOMAIN_FLAG_MULTI_THREAD;
-
-        if ((domain_flags & SSL_DOMAIN_FLAG_SINGLE_THREAD) != 0
-            && (domain_flags & SSL_DOMAIN_FLAG_MULTI_THREAD) != 0) {
-            ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
-                           "mutually exclusive domain flags specified");
-            return 0;
-        }
-
-        /*
-         * Note: We treat MULTI_THREAD as a no-op in non-threaded builds, but
-         * not THREAD_ASSISTED.
-         */
-# ifndef OPENSSL_THREADS
-        if ((domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0) {
-            ERR_raise_data(ERR_LIB_SSL, ERR_R_UNSUPPORTED,
-                           "thread assisted mode not available in this build");
-            return 0;
-        }
-# endif
 
         ctx->domain_flags = domain_flags;
         return 1;

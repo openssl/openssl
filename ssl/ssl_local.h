@@ -2908,6 +2908,9 @@ int ssl_get_md_idx(int md_nid);
 __owur const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s);
 __owur const EVP_MD *ssl_prf_md(SSL_CONNECTION *s);
 
+__owur int ossl_adjust_domain_flags(uint64_t domain_flags,
+                                    uint64_t *p_domain_flags);
+
 /*
  * ssl_log_rsa_client_key_exchange logs |premaster| to the SSL_CTX associated
  * with |ssl|, if logging is enabled. It returns one on success and zero on

@@ -4527,6 +4527,18 @@ SSL *ossl_quic_new_domain(SSL_CTX *ctx, uint64_t flags)
 {
     QUIC_DOMAIN *qd = NULL;
     QUIC_ENGINE_ARGS engine_args = {0};
+    uint64_t domain_flags;
+
+    domain_flags = ctx->domain_flags;
+    if ((flags & (SSL_DOMAIN_FLAG_SINGLE_THREAD
+                  | SSL_DOMAIN_FLAG_MULTI_THREAD
+                  | SSL_DOMAIN_FLAG_THREAD_ASSISTED)) != 0)
+        domain_flags = flags;
+    else
+        domain_flags = ctx->domain_flags | flags;
+
+    if (!ossl_adjust_domain_flags(domain_flags, &domain_flags))
+        return NULL;
 
     if ((qd = OPENSSL_zalloc(sizeof(*qd))) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
@@ -4545,7 +4557,7 @@ SSL *ossl_quic_new_domain(SSL_CTX *ctx, uint64_t flags)
 #if defined(OPENSSL_THREADS)
     engine_args.mutex   = qd->mutex;
 #endif
-    if (need_notifier_for_domain_flags(ctx->domain_flags))
+    if (need_notifier_for_domain_flags(domain_flags))
         engine_args.reactor_flags |= QUIC_REACTOR_FLAG_USE_NOTIFIER;
 
     if ((qd->engine = ossl_quic_engine_new(&engine_args)) == NULL) {
@@ -4558,6 +4570,7 @@ SSL *ossl_quic_new_domain(SSL_CTX *ctx, uint64_t flags)
                             qd->engine, NULL))
         goto err;
 
+    ossl_quic_obj_set_domain_flags(&qd->obj, domain_flags);
     return &qd->obj.ssl;
 
 err:
