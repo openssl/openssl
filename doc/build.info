@@ -2335,6 +2335,10 @@ DEPEND[html/man3/SSL_CTX_set_default_passwd_cb.html]=man3/SSL_CTX_set_default_pa
 GENERATE[html/man3/SSL_CTX_set_default_passwd_cb.html]=man3/SSL_CTX_set_default_passwd_cb.pod
 DEPEND[man/man3/SSL_CTX_set_default_passwd_cb.3]=man3/SSL_CTX_set_default_passwd_cb.pod
 GENERATE[man/man3/SSL_CTX_set_default_passwd_cb.3]=man3/SSL_CTX_set_default_passwd_cb.pod
+DEPEND[html/man3/SSL_CTX_set_domain_flags.html]=man3/SSL_CTX_set_domain_flags.pod
+GENERATE[html/man3/SSL_CTX_set_domain_flags.html]=man3/SSL_CTX_set_domain_flags.pod
+DEPEND[man/man3/SSL_CTX_set_domain_flags.3]=man3/SSL_CTX_set_domain_flags.pod
+GENERATE[man/man3/SSL_CTX_set_domain_flags.3]=man3/SSL_CTX_set_domain_flags.pod
 DEPEND[html/man3/SSL_CTX_set_generate_session_id.html]=man3/SSL_CTX_set_generate_session_id.pod
 GENERATE[html/man3/SSL_CTX_set_generate_session_id.html]=man3/SSL_CTX_set_generate_session_id.pod
 DEPEND[man/man3/SSL_CTX_set_generate_session_id.3]=man3/SSL_CTX_set_generate_session_id.pod
@@ -3603,6 +3607,7 @@ html/man3/SSL_CTX_set_client_hello_cb.html \
 html/man3/SSL_CTX_set_ct_validation_callback.html \
 html/man3/SSL_CTX_set_ctlog_list_file.html \
 html/man3/SSL_CTX_set_default_passwd_cb.html \
+html/man3/SSL_CTX_set_domain_flags.html \
 html/man3/SSL_CTX_set_generate_session_id.html \
 html/man3/SSL_CTX_set_info_callback.html \
 html/man3/SSL_CTX_set_keylog_callback.html \
@@ -4270,6 +4275,7 @@ man/man3/SSL_CTX_set_client_hello_cb.3 \
 man/man3/SSL_CTX_set_ct_validation_callback.3 \
 man/man3/SSL_CTX_set_ctlog_list_file.3 \
 man/man3/SSL_CTX_set_default_passwd_cb.3 \
+man/man3/SSL_CTX_set_domain_flags.3 \
 man/man3/SSL_CTX_set_generate_session_id.3 \
 man/man3/SSL_CTX_set_info_callback.3 \
 man/man3/SSL_CTX_set_keylog_callback.3 \
@@ -4941,6 +4947,10 @@ DEPEND[html/man7/openssl-qlog.html]=man7/openssl-qlog.pod
 GENERATE[html/man7/openssl-qlog.html]=man7/openssl-qlog.pod
 DEPEND[man/man7/openssl-qlog.7]=man7/openssl-qlog.pod
 GENERATE[man/man7/openssl-qlog.7]=man7/openssl-qlog.pod
+DEPEND[html/man7/openssl-quic-concurrency.html]=man7/openssl-quic-concurrency.pod
+GENERATE[html/man7/openssl-quic-concurrency.html]=man7/openssl-quic-concurrency.pod
+DEPEND[man/man7/openssl-quic-concurrency.7]=man7/openssl-quic-concurrency.pod
+GENERATE[man/man7/openssl-quic-concurrency.7]=man7/openssl-quic-concurrency.pod
 DEPEND[html/man7/openssl-quic.html]=man7/openssl-quic.pod
 GENERATE[html/man7/openssl-quic.html]=man7/openssl-quic.pod
 DEPEND[man/man7/openssl-quic.7]=man7/openssl-quic.pod
@@ -5214,6 +5224,7 @@ html/man7/openssl-core_names.h.html \
 html/man7/openssl-env.html \
 html/man7/openssl-glossary.html \
 html/man7/openssl-qlog.html \
+html/man7/openssl-quic-concurrency.html \
 html/man7/openssl-quic.html \
 html/man7/openssl-threads.html \
 html/man7/openssl_user_macros.html \
@@ -5365,6 +5376,7 @@ man/man7/openssl-core_names.h.7 \
 man/man7/openssl-env.7 \
 man/man7/openssl-glossary.7 \
 man/man7/openssl-qlog.7 \
+man/man7/openssl-quic-concurrency.7 \
 man/man7/openssl-quic.7 \
 man/man7/openssl-threads.7 \
 man/man7/openssl_user_macros.7 \
