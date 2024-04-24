@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_new_listener, SSL_is_listener, SSL_get0_listener, SSL_listen,
+SSL_new_listener, SSL_new_listener_from, SSL_is_listener, SSL_get0_listener,
+SSL_listen,
 SSL_accept_connection, SSL_get_accept_connection_queue_len,
 SSL_new_from_listener, SSL_LISTENER_FLAG_NO_ACCEPT,
 SSL_ACCEPT_CONNECTION_NO_BLOCK - SSL object interface for abstracted connection
@@ -14,6 +15,7 @@ acceptance
 
  #define SSL_LISTENER_FLAG_NO_ACCEPT
  SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags);
+ SSL *SSL_new_listener_from(SSL *ssl, uint64_t flags);
 
  int SSL_is_listener(SSL *ssl);
  SSL *SSL_get0_listener(SSL *ssl);
@@ -35,6 +37,10 @@ abstraction for the acceptance of network connections in a protocol-agnostic
 manner. It cannot be used, for example, for sending or receiving data using
 L<SSL_write_ex(3)> or L<SSL_read_ex(3)>. In general, only those functions
 expressly documented as being supported on a listener SSL object are available.
+
+The SSL_new_listener_from() function creates a listener SSL object which is
+subordinate to a QUIC domain SSL object I<ssl>. See L<SSL_new_domain(3)> and
+L<openssl-quic-concurrency(7)> for details on QUIC domain SSL objects.
 
 A listener SSL object supports the following operations:
 
@@ -175,7 +181,8 @@ way of using the listener functionality in client-only mode.
 
 =head1 RETURN VALUES
 
-SSL_new_listener() returns a new listener SSL object or NULL on failure.
+SSL_new_listener() and SSL_new_listener_from() return a new listener SSL object
+or NULL on failure.
 
 SSL_is_listener() returns 0 or 1 depending on the type of the SSL object on
 which it is called.
