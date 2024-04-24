@@ -327,5 +327,15 @@ ossl_quic_obj_get0_port_leader(const QUIC_OBJ *obj)
         : NULL;
 }
 
+/*
+ * Change the domain flags. Should only be called immediately after
+ * ossl_quic_obj_init().
+ */
+static ossl_inline ossl_unused void
+ossl_quic_obj_set_domain_flags(QUIC_OBJ *obj, uint64_t domain_flags)
+{
+    obj->domain_flags = domain_flags;
+}
+
 # endif
 #endif
