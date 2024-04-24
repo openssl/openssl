@@ -549,8 +549,7 @@ static int block_until_pred(QCTX *ctx,
     ossl_quic_engine_set_inhibit_tick(qeng, 0);
 
     rtor = ossl_quic_engine_get0_reactor(qeng);
-    return ossl_quic_reactor_block_until_pred(rtor, pred, pred_arg, flags,
-                                              ossl_quic_engine_get0_mutex(qeng));
+    return ossl_quic_reactor_block_until_pred(rtor, pred, pred_arg, flags);
 }
 
 /*
