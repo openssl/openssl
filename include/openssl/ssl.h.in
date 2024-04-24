@@ -2311,6 +2311,16 @@ __owur int SSL_is_domain(SSL *s);
 __owur SSL *SSL_get0_domain(SSL *s);
 __owur SSL *SSL_new_domain(SSL_CTX *ctx, uint64_t flags);
 
+#define SSL_DOMAIN_FLAG_SINGLE_THREAD       (1U << 0)
+#define SSL_DOMAIN_FLAG_MULTI_THREAD        (1U << 1)
+#define SSL_DOMAIN_FLAG_THREAD_ASSISTED     (1U << 2)
+#define SSL_DOMAIN_FLAG_BLOCKING            (1U << 3)
+#define SSL_DOMAIN_FLAG_LEGACY_BLOCKING     (1U << 4)
+
+__owur int SSL_CTX_set_domain_flags(SSL_CTX *ctx, uint64_t domain_flags);
+__owur int SSL_CTX_get_domain_flags(const SSL_CTX *ctx, uint64_t *domain_flags);
+__owur int SSL_get_domain_flags(const SSL *ssl, uint64_t *domain_flags);
+
 #define SSL_STREAM_TYPE_NONE        0
 #define SSL_STREAM_TYPE_READ        (1U << 0)
 #define SSL_STREAM_TYPE_WRITE       (1U << 1)

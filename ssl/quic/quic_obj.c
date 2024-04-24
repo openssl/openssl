@@ -34,6 +34,7 @@ int ossl_quic_obj_init(QUIC_OBJ *obj,
     if (!ossl_ssl_init(&obj->ssl, ctx, ctx->method, type))
         goto err;
 
+    obj->domain_flags       = ctx->domain_flags;
     obj->parent_obj         = (QUIC_OBJ *)parent_obj;
     obj->is_event_leader    = is_event_leader;
     obj->is_port_leader     = is_port_leader;
