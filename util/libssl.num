@@ -597,3 +597,10 @@ SSL_accept_connection                   ?	3_5_0	EXIST::FUNCTION:
 SSL_get_accept_connection_queue_len     ?	3_5_0	EXIST::FUNCTION:
 SSL_listen                              ?	3_5_0	EXIST::FUNCTION:
 SSL_new_from_listener                   ?	3_5_0	EXIST::FUNCTION:
+SSL_new_listener_from                   ?	3_5_0	EXIST::FUNCTION:
+SSL_is_domain                           ?	3_5_0	EXIST::FUNCTION:
+SSL_get0_domain                         ?	3_5_0	EXIST::FUNCTION:
+SSL_new_domain                          ?	3_5_0	EXIST::FUNCTION:
+SSL_CTX_set_domain_flags                ?	3_5_0	EXIST::FUNCTION:
+SSL_CTX_get_domain_flags                ?	3_5_0	EXIST::FUNCTION:
+SSL_get_domain_flags                    ?	3_5_0	EXIST::FUNCTION:
