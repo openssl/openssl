@@ -8038,6 +8038,18 @@ int SSL_CTX_set_domain_flags(SSL_CTX *ctx, uint64_t domain_flags)
             return 0;
         }
 
+        /*
+         * Note: We treat MULTI_THREAD as a no-op in non-threaded builds, but
+         * not THREAD_ASSISTED.
+         */
+# ifndef OPENSSL_THREADS
+        if ((domain_flags & SSL_DOMAIN_FLAG_THREAD_ASSISTED) != 0) {
+            ERR_raise_data(ERR_LIB_SSL, ERR_R_UNSUPPORTED,
+                           "thread assisted mode not available in this build");
+            return 0;
+        }
+# endif
+
         ctx->domain_flags = domain_flags;
         return 1;
     }
