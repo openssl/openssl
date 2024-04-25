@@ -230,7 +230,8 @@ HT *ossl_ht_new(HT_CONFIG *conf)
 err:
     CRYPTO_THREAD_lock_free(new->atomic_lock);
     ossl_rcu_lock_free(new->lock);
-    OPENSSL_free(new->md->neighborhood_ptr_to_free);
+    if (new->md != NULL)
+        OPENSSL_free(new->md->neighborhood_ptr_to_free);
     OPENSSL_free(new->md);
     OPENSSL_free(new);
     return NULL;
