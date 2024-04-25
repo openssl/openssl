@@ -414,6 +414,12 @@ The file where any newly enrolled certificate should be saved.
 =item B<-chainout> I<filename>
 
 The file where the chain of any newly enrolled certificate should be saved.
+This chain excludes the leaf certificate, i.e., the newly enrolled certificate.
+Also the trust anchor (the root certificate) is not included.
+
+If the B<-certout> option is given, too, with equal I<filename> argument,
+then the file produced contains both outputs concatenated:
+the newly enrolled certificate followed by its chain.
 
 =back
 

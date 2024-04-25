@@ -3435,13 +3435,28 @@ int cmp_main(int argc, char **argv)
                             opt_extracertsout, "extra") < 0)
             goto err;
         if (newcert != NULL && (opt_cmd == CMP_IR || opt_cmd == CMP_CR
-                                || opt_cmd == CMP_KUR || opt_cmd == CMP_P10CR))
-            if (!save_cert_or_delete(newcert, opt_certout, "newly enrolled")
-                || save_free_certs(OSSL_CMP_CTX_get1_newChain(cmp_ctx),
-                                   opt_chainout, "chain") < 0
-                || save_free_certs(OSSL_CMP_CTX_get1_caPubs(cmp_ctx),
-                                   opt_cacertsout, "CA") < 0)
+                                || opt_cmd == CMP_KUR || opt_cmd == CMP_P10CR)) {
+            STACK_OF(X509) *newchain = OSSL_CMP_CTX_get1_newChain(cmp_ctx);
+
+            if (newcert != NULL && newchain != NULL /* NULL is on error only */
+                && opt_certout != NULL && opt_chainout != NULL
+                && strcmp(opt_certout, opt_chainout) == 0) {
+                if (!X509_add_cert(newchain, newcert, X509_ADD_FLAG_PREPEND
+                                   | X509_ADD_FLAG_UP_REF)) {
+                    sk_X509_pop_free(newchain, X509_free);
+                    goto err;
+                }
+                if (!save_free_certs(newchain, opt_chainout, "newly enrolled cert and chain"))
+                    goto err;
+            } else {
+                if (save_free_certs(newchain, opt_chainout, "chain") < 0
+                    || !save_cert_or_delete(newcert, opt_certout, "newly enrolled"))
+                    goto err;
+            }
+            if (save_free_certs(OSSL_CMP_CTX_get1_caPubs(cmp_ctx),
+                                opt_cacertsout, "CA") < 0)
                 goto err;
+        }
         if (!OSSL_CMP_CTX_reinit(cmp_ctx))
             goto err;
     }

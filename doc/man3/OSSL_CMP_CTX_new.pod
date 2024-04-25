@@ -642,6 +642,8 @@ If the callback argument is NULL the function tries building an approximate
 chain as far as possible using the same untrusted certificates from the I<ctx>,
 and if this fails it takes the received extraCerts as fallback.
 The resulting cert chain can be retrieved using OSSL_CMP_CTX_get1_newChain().
+This chain excludes the leaf certificate, i.e., the newly enrolled certificate.
+Also the trust anchor (the root certificate) is not included.
 
 OSSL_CMP_CTX_set_certConf_cb() sets the callback used for evaluating the newly
 enrolled certificate before the library sends, depending on its result,
