@@ -202,13 +202,13 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
                                                 ctx);
                 }
             } else {
-                res = BN_priv_rand_range_ex(k, order, 0, ctx);
+                res = ossl_bn_priv_rand_range_fixed_top(k, order, 0, ctx);
             }
             if (!res) {
                 ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
                 goto err;
             }
-        } while (BN_is_zero(k));
+        } while (ossl_bn_is_word_fixed_top(k, 0));
 
         /* compute r the x-coordinate of generator * k */
         if (!EC_POINT_mul(group, tmp_point, k, NULL, NULL, ctx)) {
