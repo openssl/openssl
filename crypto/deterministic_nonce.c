@@ -7,11 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/kdf.h>
 #include "internal/deterministic_nonce.h"
+#include "crypto/bn.h"
 
 /*
  * Convert a Bit String to an Integer (See RFC 6979 Section 2.3.2)
@@ -35,6 +37,36 @@ static int bits2int(BIGNUM *out, int qlen_bits,
     shift = blen_bits - qlen_bits;
     if (shift > 0)
         return BN_rshift(out, out, shift);
+    return 1;
+}
+
+/*
+ * Convert as above a Bit String in const time to an Integer w fixed top
+ *
+ * Params:
+ *     out The returned Integer as a BIGNUM
+ *     qlen_bits The maximum size of the returned integer in bits. The returned
+ *        Integer is shifted right if inlen is larger than qlen_bits..
+ *     in, inlen The input Bit String (in bytes). It has sizeof(BN_ULONG) bytes
+ *               prefix with all bits set that needs to be cleared out after
+ *               the conversion.
+ * Returns: 1 if successful, or  0 otherwise.
+ */
+static int bits2int_consttime(BIGNUM *out, int qlen_bits,
+                              const unsigned char *in, size_t inlen)
+{
+    int blen_bits = (inlen - sizeof(BN_ULONG)) * 8;
+    int shift;
+
+    if (BN_bin2bn(in, (int)inlen, out) == NULL)
+        return 0;
+
+    BN_set_flags(out, BN_FLG_CONSTTIME);
+    ossl_bn_mask_bits_fixed_top(out, blen_bits);
+
+    shift = blen_bits - qlen_bits;
+    if (shift > 0)
+        return bn_rshift_fixed_top(out, out, shift);
     return 1;
 }
 
@@ -155,8 +187,9 @@ int ossl_gen_deterministic_nonce_rfc6979(BIGNUM *out, const BIGNUM *q,
 {
     EVP_KDF_CTX *kdfctx = NULL;
     int ret = 0, rlen = 0, qlen_bits = 0;
-    unsigned char *entropyx = NULL, *nonceh = NULL, *T = NULL;
+    unsigned char *entropyx = NULL, *nonceh = NULL, *rbits = NULL, *T = NULL;
     size_t allocsz = 0;
+    const size_t prefsz = sizeof(BN_ULONG);
 
     if (out == NULL)
         return 0;
@@ -167,14 +200,17 @@ int ossl_gen_deterministic_nonce_rfc6979(BIGNUM *out, const BIGNUM *q,
 
     /* Note rlen used here is in bytes since the input values are byte arrays */
     rlen = (qlen_bits + 7) / 8;
-    allocsz = 3 * rlen;
+    allocsz = prefsz + 3 * rlen;
 
     /* Use a single alloc for the buffers T, nonceh and entropyx */
     T = (unsigned char *)OPENSSL_zalloc(allocsz);
     if (T == NULL)
         return 0;
-    nonceh = T + rlen;
+    rbits = T + prefsz;
+    nonceh = rbits + rlen;
     entropyx = nonceh + rlen;
+
+    memset(T, 0xff, prefsz);
 
     if (!int2octets(entropyx, priv, rlen)
             || !bits2octets(nonceh, q, qlen_bits, rlen, hm, hmlen))
@@ -185,10 +221,12 @@ int ossl_gen_deterministic_nonce_rfc6979(BIGNUM *out, const BIGNUM *q,
         goto end;
 
     do {
-        if (!EVP_KDF_derive(kdfctx, T, rlen, NULL)
-                || !bits2int(out, qlen_bits, T, rlen))
+        if (!EVP_KDF_derive(kdfctx, rbits, rlen, NULL)
+                || !bits2int_consttime(out, qlen_bits, T, rlen + prefsz))
             goto end;
-    } while (BN_is_zero(out) || BN_is_one(out) || BN_cmp(out, q) >= 0);
+    } while (ossl_bn_is_word_fixed_top(out, 0)
+            || ossl_bn_is_word_fixed_top(out, 1)
+            || BN_ucmp(out, q) >= 0);
     ret = 1;
 
 end:

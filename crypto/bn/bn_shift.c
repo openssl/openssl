@@ -156,6 +156,9 @@ int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
         return 0;
     }
 
+    bn_check_top(r);
+    bn_check_top(a);
+
     ret = bn_rshift_fixed_top(r, a, n);
 
     bn_correct_top(r);
@@ -176,9 +179,6 @@ int bn_rshift_fixed_top(BIGNUM *r, const BIGNUM *a, int n)
     unsigned int lb, rb;
     BN_ULONG *t, *f;
     BN_ULONG l, m, mask;
-
-    bn_check_top(r);
-    bn_check_top(a);
 
     assert(n >= 0);
 
