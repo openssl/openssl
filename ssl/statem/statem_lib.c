@@ -2153,10 +2153,10 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
     const version_info *table;
     int disabled = 0;
     RAW_EXTENSION *suppversions;
-    const unsigned int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
-                                                              : TLS1_3_VERSION;
-    const unsigned int version1_2 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_2_VERSION
-                                                              : TLS1_2_VERSION;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
+                                                     : TLS1_3_VERSION;
+    const int version1_2 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_2_VERSION
+                                                     : TLS1_2_VERSION;
 
     if (client_version <= 0)
         return SSL_R_WRONG_SSL_VERSION;
