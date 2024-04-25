@@ -769,6 +769,7 @@ int ossl_bn_mask_bits_fixed_top(BIGNUM *a, int n)
         a->top = w + 1;
         a->d[w] &= ~(BN_MASK2 << b);
     }
+    a->flags |= BN_FLG_FIXED_TOP;
     return 1;
 }
 
@@ -957,6 +958,22 @@ int BN_is_one(const BIGNUM *a)
 int BN_is_word(const BIGNUM *a, const BN_ULONG w)
 {
     return BN_abs_is_word(a, w) && (!w || !a->neg);
+}
+
+int ossl_bn_is_word_fixed_top(const BIGNUM *a, BN_ULONG w)
+{
+    int res, i;
+    const BN_ULONG *ap = a->d;
+
+    if (a->neg || a->top == 0)
+        return 0;
+
+    res = constant_time_select_int(constant_time_eq_bn(ap[0], w), 1, 0);
+
+    for (i = 1; i < a->top; i++)
+        res = constant_time_select_int(constant_time_is_zero_bn(ap[i]),
+                                       res, 0);
+    return res;
 }
 
 int BN_is_odd(const BIGNUM *a)

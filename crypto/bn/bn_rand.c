@@ -322,7 +322,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
             goto end;
 
         /* Clear out the top bits and rejection filter into range */
-        BN_set_flags(out, BN_FLG_CONSTTIME | BN_FLG_FIXED_TOP);
+        BN_set_flags(out, BN_FLG_CONSTTIME);
         ossl_bn_mask_bits_fixed_top(out, BN_num_bits(range));
 
         if (BN_ucmp(out, range) < 0) {
