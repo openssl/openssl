@@ -87,6 +87,8 @@ int bn_lshift_fixed_top(BIGNUM *r, const BIGNUM *a, int n);
 int bn_rshift_fixed_top(BIGNUM *r, const BIGNUM *a, int n);
 int bn_div_fixed_top(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
                      const BIGNUM *d, BN_CTX *ctx);
+int ossl_bn_mask_bits_fixed_top(BIGNUM *a, int n);
+int ossl_bn_is_word_fixed_top(const BIGNUM *a, BN_ULONG w);
 
 #define BN_PRIMETEST_COMPOSITE                    0
 #define BN_PRIMETEST_COMPOSITE_WITH_FACTOR        1
