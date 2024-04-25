@@ -15,18 +15,6 @@
 #endif
 #include <assert.h>
 
-/*
- * VC++ 2008 or earlier x86 compilers do not have an inline implementation
- * of InterlockedOr64 for 32bit and will fail to run on Windows XP 32bit.
- * https://docs.microsoft.com/en-us/cpp/intrinsics/interlockedor-intrinsic-functions#requirements
- * To work around this problem, we implement a manual locking mechanism for
- * only VC++ 2008 or earlier x86 compilers.
- */
-
-#if (defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER <= 1600)
-# define NO_INTERLOCKEDOR64
-#endif
-
 #include <openssl/crypto.h>
 #include <crypto/cryptlib.h>
 #include "internal/common.h"
@@ -104,6 +92,84 @@ struct rcu_lock_st {
     CRYPTO_MUTEX *prior_lock;
     CRYPTO_CONDVAR *prior_signal;
 };
+
+/*
+ * VC++ 2008 or earlier x86 compilers do not have an inline implementation
+ * of InterlockedOr64/InterlockedAnd64/InterlockedAdd64 for 32bit.
+ * https://docs.microsoft.com/en-us/cpp/intrinsics/interlockedor-intrinsic-functions#requirements
+ * To work around this problem, we implement a manual locking mechanism for
+ * only VC++ 2008 or earlier x86 compilers.
+ */
+
+# if defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER < 1800
+static __declspec(naked) __int64 __fastcall InterlockedAdd64(__int64 volatile* _Ptr, __int64 _Val)
+{
+    __asm {
+      push    ebx
+      push    esi
+      mov     esi, ecx          ; _Ptr
+      mov     eax, [esi]
+      mov     edx, [esi+4]
+ lbl: mov     ebx, eax
+      mov     ecx, edx
+      add     ebx, [esp+8+4]    ; _Val.Low
+      adc     ecx, [esp+8+8]    ; _Val.Hi
+      lock cmpxchg8b qword ptr [esi]
+      jne short lbl
+      mov     edx, ecx
+      pop     esi
+      mov     eax, ebx
+      pop     ebx
+      retn    2*4
+    }
+}
+
+static __declspec(naked) __int64 __fastcall InterlockedOr64(__int64 volatile* _Ptr, __int64 _Val)
+{
+    __asm {
+      push    ebx
+      push    esi
+      mov     esi, ecx          ; _Ptr
+      mov     eax, [esi]
+      mov     edx, [esi+4]
+ lbl: mov     ebx, eax
+      mov     ecx, edx
+      or      ebx, [esp+8+4]    ; _Val.Low
+      or      ecx, [esp+8+8]    ; _Val.Hi
+      lock cmpxchg8b qword ptr [esi]
+      jne short lbl
+      pop     esi
+      pop     ebx
+      retn    2*4
+    }
+}
+
+static __declspec(naked) __int64 __fastcall InterlockedAnd64(__int64 volatile* _Ptr, __int64 _Val)
+{
+    __asm {
+      push    ebx
+      push    esi
+      mov     esi, ecx          ; _Ptr
+      mov     eax, [esi]
+      mov     edx, [esi+4]
+ lbl: mov     ebx, eax
+      mov     ecx, edx
+      and     ebx, [esp+8+4]    ; _Val.Low
+      and     ecx, [esp+8+8]    ; _Val.Hi
+      lock cmpxchg8b qword ptr [esi]
+      jne short lbl
+      pop     esi
+      pop     ebx
+      retn    2*4
+    }
+}
+
+#  define InterlockedOr     _InterlockedOr
+# endif
+
+# if defined(_MSC_VER) && _MSC_VER < 1900
+#  define inline __inline
+# endif
 
 static struct rcu_qp *allocate_new_qp_group(struct rcu_lock_st *lock,
                                             int count)
@@ -561,69 +627,27 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
                      CRYPTO_RWLOCK *lock)
 {
-#if (defined(NO_INTERLOCKEDOR64))
-    if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
-        return 0;
-    *val |= op;
-    *ret = *val;
-
-    if (!CRYPTO_THREAD_unlock(lock))
-        return 0;
-
-    return 1;
-#else
     *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, (LONG64)op) | op;
     return 1;
-#endif
 }
 
 int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 {
-#if (defined(NO_INTERLOCKEDOR64))
-    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
-        return 0;
-    *ret = *val;
-    if (!CRYPTO_THREAD_unlock(lock))
-        return 0;
-
-    return 1;
-#else
     *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, 0);
     return 1;
-#endif
 }
 
 int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
 {
-#if (defined(NO_INTERLOCKEDOR64))
-    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
-        return 0;
-    *dst = val;
-    if (!CRYPTO_THREAD_unlock(lock))
-        return 0;
-
-    return 1;
-#else
     InterlockedExchange64(dst, val);
     return 1;
-#endif
 }
 
 int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 {
-#if (defined(NO_INTERLOCKEDOR64))
-    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
-        return 0;
-    *ret = *val;
-    if (!CRYPTO_THREAD_unlock(lock))
-        return 0;
-
-    return 1;
-#else
     /* On Windows, LONG is always the same size as int. */
     *ret = (int)InterlockedOr((LONG volatile *)val, 0);
     return 1;
-#endif
 }
 
 int openssl_init_fork_handlers(void)
