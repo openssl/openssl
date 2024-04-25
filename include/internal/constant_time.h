@@ -150,6 +150,17 @@ static ossl_inline BN_ULONG constant_time_lt_bn(BN_ULONG a, BN_ULONG b)
 {
     return constant_time_msb_bn(a ^ ((a ^ b) | ((a - b) ^ b)));
 }
+
+static ossl_inline BN_ULONG constant_time_is_zero_bn(BN_ULONG a)
+{
+    return constant_time_msb_bn(~a & (a - 1));
+}
+
+static ossl_inline BN_ULONG constant_time_eq_bn(BN_ULONG a,
+                                                BN_ULONG b)
+{
+    return constant_time_is_zero_bn(a ^ b);
+}
 #endif
 
 static ossl_inline unsigned int constant_time_ge(unsigned int a,
