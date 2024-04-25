@@ -37,4 +37,7 @@ echo "Test suite exited with $RESULT, artifacts path is $OSSL_CI_ARTIFACTS_PATH"
 (cd "$OSSL_CI_ARTIFACTS_PATH"; find . -type f | sort)
 echo "::endgroup::"
 
+echo "Archive artifacts"
+tar -czvf artifacts.tar.gz $OSSL_CI_ARTIFACTS_PATH
+
 exit $RESULT

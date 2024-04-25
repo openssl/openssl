@@ -220,5 +220,5 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: "cross-compiles@${{ matrix.platform.arch }}"
-        path: artifacts/
+        path: artifacts.tar.gz
         if-no-files-found: ignore
