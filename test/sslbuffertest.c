@@ -150,6 +150,98 @@ static int test_func(int test)
     return result;
 }
 
+/*
+ * Test that attempting to free the buffers at points where they cannot be freed
+ * works as expected
+ * Test 0: Attempt to free buffers after a full record has been processed, but
+ *         the application has only performed a partial read
+ * Test 1: Attempt to free buffers after only a partial record header has been
+ *         received
+ * Test 2: Attempt to free buffers after a full record header but no record body
+ * Test 3: Attempt to free buffers after a full record hedaer and partial record
+ *         body
+ */
+static int test_free_buffers(int test)
+{
+    int result = 0;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    const char testdata[] = "Test data";
+    char buf[40];
+    size_t written, readbytes;
+
+    if (!TEST_true(create_ssl_objects(serverctx, clientctx, &serverssl,
+                                      &clientssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                         SSL_ERROR_NONE)))
+        goto end;
+
+
+    if (!TEST_true(SSL_write_ex(clientssl, testdata, sizeof(testdata),
+                                &written)))
+        goto end;
+
+    if (test == 0) {
+        /*
+        * Deliberately only read the first byte - so the remaining bytes are
+        * still buffered
+        */
+        if (!TEST_true(SSL_read_ex(serverssl, buf, 1, &readbytes)))
+            goto end;
+    } else {
+        BIO *tmp;
+        size_t partial_len;
+
+        /* Remove all the data that is pending for read by the server */
+        tmp = SSL_get_rbio(serverssl);
+        if (!TEST_true(BIO_read_ex(tmp, buf, sizeof(buf), &readbytes))
+                || !TEST_size_t_lt(readbytes, sizeof(buf))
+                || !TEST_size_t_gt(readbytes, SSL3_RT_HEADER_LENGTH))
+            goto end;
+
+        switch(test) {
+        case 1:
+            partial_len = SSL3_RT_HEADER_LENGTH - 1;
+            break;
+        case 2:
+            partial_len = SSL3_RT_HEADER_LENGTH;
+            break;
+        case 3:
+            partial_len = readbytes - 1;
+            break;
+        default:
+            TEST_error("Invalid test index");
+            goto end;
+        }
+
+        /* Put back just the partial record */
+        if (!TEST_true(BIO_write_ex(tmp, buf, partial_len, &written)))
+            goto end;
+
+        /*
+         * Attempt a read. This should fail because only a partial record is
+         * available.
+         */
+        if (!TEST_false(SSL_read_ex(serverssl, buf, 1, &readbytes)))
+            goto end;
+    }
+
+    /*
+     * Attempting to free the buffers at this point should fail because they are
+     * still in use
+     */
+    if (!TEST_false(SSL_free_buffers(serverssl)))
+        goto end;
+
+    result = 1;
+ end:
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+
+    return result;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -173,6 +265,7 @@ int setup_tests(void)
     }
 
     ADD_ALL_TESTS(test_func, 9);
+    ADD_ALL_TESTS(test_free_buffers, 4);
     return 1;
 }
 
