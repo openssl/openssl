@@ -265,9 +265,9 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
             if (!BN_generate_dsa_nonce(k, dsa->params.q, dsa->priv_key, dgst,
                                        dlen, ctx))
                 goto err;
-        } else if (!BN_priv_rand_range_ex(k, dsa->params.q, 0, ctx))
+        } else if (!ossl_bn_priv_rand_range_fixed_top(k, dsa->params.q, 0, ctx))
             goto err;
-    } while (BN_is_zero(k));
+    } while (ossl_bn_is_word_fixed_top(k, 0));
 
     BN_set_flags(k, BN_FLG_CONSTTIME);
     BN_set_flags(l, BN_FLG_CONSTTIME);
