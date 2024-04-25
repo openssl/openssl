@@ -186,8 +186,8 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
     } else {
         do {
             /* range = 11..._2  or  range = 101..._2 */
-            if (!bnrand(flag, r, n, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, 0,
-                        ctx))
+            if (!bnrand(flag, r, n, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY,
+                        strength, ctx))
                 return 0;
 
             if (!--count) {
@@ -239,6 +239,47 @@ int BN_pseudo_rand_range(BIGNUM *r, const BIGNUM *range)
 }
 # endif
 #endif
+
+int ossl_bn_priv_rand_range_fixed_top(BIGNUM *r, const BIGNUM *range,
+                                      unsigned int strength, BN_CTX *ctx)
+{
+    int n;
+    int count = 100;
+
+    if (r == NULL) {
+        ERR_raise(ERR_LIB_BN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (range->neg || BN_is_zero(range)) {
+        ERR_raise(ERR_LIB_BN, BN_R_INVALID_RANGE);
+        return 0;
+    }
+
+    n = BN_num_bits(range);     /* n > 0 */
+
+    /* BN_is_bit_set(range, n - 1) always holds */
+
+    if (n == 1) {
+        BN_zero(r);
+    } else {
+        BN_set_flags(r, BN_FLG_CONSTTIME);
+        do {
+            if (!bnrand(PRIVATE, r, n + 1, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY,
+                        strength, ctx))
+                return 0;
+
+            if (!--count) {
+                ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_ITERATIONS);
+                return 0;
+            }
+            ossl_bn_mask_bits_fixed_top(r, n);
+        }
+        while (BN_ucmp(r, range) >= 0);
+    }
+
+    return 1;
+}
 
 /*
  * BN_generate_dsa_nonce generates a random number 0 <= out < range. Unlike
