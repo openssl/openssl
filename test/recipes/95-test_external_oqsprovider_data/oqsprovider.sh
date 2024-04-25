@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -46,13 +46,13 @@ echo "   OpenSSL version:    $OPENSSL_VERSION"
 echo "------------------------------------------------------------------"
 
 if [ ! -d $SRCTOP/oqs-provider/.local ]; then
-# this version of oqsprovider dependent on v0.8.0 of liboqs, so set this;
+# this version of oqsprovider dependent on v0.10.0 of liboqs, so set this;
 # also be sure to use this openssl for liboqs-internal OpenSSL use;
 # see all libops config options listed at
 # https://github.com/open-quantum-safe/liboqs/wiki/Customizing-liboqs
 (
        cd $SRCTOP/oqs-provider \
-           && git clone --depth 1 --branch 0.8.0 https://github.com/open-quantum-safe/liboqs.git \
+           && git clone --depth 1 --branch 0.10.0 https://github.com/open-quantum-safe/liboqs.git \
            && cd liboqs \
            && mkdir build \
            && cd build \
