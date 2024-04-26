@@ -1400,6 +1400,7 @@ SSL_R_EMPTY_RAW_PUBLIC_KEY:349:empty raw public key
 SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST:354:empty srtp protection profile list
 SSL_R_ENCRYPTED_LENGTH_TOO_LONG:150:encrypted length too long
 SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST:151:error in received cipher list
+SSL_R_ERROR_IN_SYSTEM_DEFAULT_CONFIG:419:error in system default config
 SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN:204:error setting tlsa base domain
 SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE:194:exceeds max fragment size
 SSL_R_EXCESSIVE_MESSAGE_SIZE:152:excessive message size

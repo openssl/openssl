@@ -4096,7 +4096,10 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     /* By default we send two session tickets automatically in TLSv1.3 */
     ret->num_tickets = 2;
 
-    ssl_ctx_system_config(ret);
+    if (!ssl_ctx_system_config(ret)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_ERROR_IN_SYSTEM_DEFAULT_CONFIG);
+        goto err;
+    }
 
     return ret;
  err:

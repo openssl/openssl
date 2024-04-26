@@ -2919,7 +2919,7 @@ void custom_exts_free(custom_ext_methods *exts);
 void ssl_comp_free_compression_methods_int(void);
 
 /* ssl_mcnf.c */
-void ssl_ctx_system_config(SSL_CTX *ctx);
+int ssl_ctx_system_config(SSL_CTX *ctx);
 
 const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
                                        int nid,
