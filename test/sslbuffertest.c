@@ -8,10 +8,19 @@
  * or in the file LICENSE in the source distribution.
  */
 
+/*
+ * We need access to the deprecated low level Engine APIs for legacy purposes
+ * when the deprecated calls are not hidden
+ */
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# define OPENSSL_SUPPRESS_DEPRECATED
+#endif
+
 #include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/engine.h>
 
 #include "internal/packet.h"
 
@@ -160,34 +169,65 @@ static int test_func(int test)
  * Test 2: Attempt to free buffers after a full record header but no record body
  * Test 3: Attempt to free buffers after a full record hedaer and partial record
  *         body
+ * Test 4-7: We repeat tests 0-3 but including data from a second pipelined
+ *           record
  */
 static int test_free_buffers(int test)
 {
     int result = 0;
     SSL *serverssl = NULL, *clientssl = NULL;
     const char testdata[] = "Test data";
-    char buf[40];
+    char buf[120];
     size_t written, readbytes;
+    int i, pipeline = test > 3;
+    ENGINE *e = NULL;
+
+    if (pipeline) {
+        e = load_dasync();
+        if (e == NULL)
+            goto end;
+        test -= 4;
+    }
 
     if (!TEST_true(create_ssl_objects(serverctx, clientctx, &serverssl,
                                       &clientssl, NULL, NULL)))
         goto end;
 
+    if (pipeline) {
+        if (!TEST_true(SSL_set_cipher_list(serverssl, "AES128-SHA"))
+                || !TEST_true(SSL_set_max_proto_version(serverssl,
+                                                        TLS1_2_VERSION))
+                || !TEST_true(SSL_set_max_pipelines(serverssl, 2)))
+            goto end;
+    }
+
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
                                          SSL_ERROR_NONE)))
         goto end;
 
-
-    if (!TEST_true(SSL_write_ex(clientssl, testdata, sizeof(testdata),
-                                &written)))
-        goto end;
+    /*
+     * For the non-pipeline case we write one record. For pipelining we write
+     * two records.
+     */
+    for (i = 0; i <= pipeline; i++) {
+        if (!TEST_true(SSL_write_ex(clientssl, testdata, strlen(testdata),
+                                    &written)))
+            goto end;
+    }
 
     if (test == 0) {
+        size_t readlen = 1;
+
         /*
-        * Deliberately only read the first byte - so the remaining bytes are
-        * still buffered
-        */
-        if (!TEST_true(SSL_read_ex(serverssl, buf, 1, &readbytes)))
+         * Deliberately only read the first byte - so the remaining bytes are
+         * still buffered. In the pipelining case we read as far as the first
+         * byte from the second record.
+         */
+        if (pipeline)
+            readlen += strlen(testdata);
+
+        if (!TEST_true(SSL_read_ex(serverssl, buf, readlen, &readbytes))
+                || !TEST_size_t_eq(readlen, readbytes))
             goto end;
     } else {
         BIO *tmp;
@@ -215,16 +255,47 @@ static int test_free_buffers(int test)
             goto end;
         }
 
-        /* Put back just the partial record */
+        if (pipeline) {
+            /* We happen to know the first record is 57 bytes long */
+            const size_t first_rec_len = 57;
+
+            if (test != 3)
+                partial_len += first_rec_len;
+
+            /*
+             * Sanity check. If we got the record len right then this should
+             * never fail.
+             */
+            if (!TEST_int_eq(buf[first_rec_len], SSL3_RT_APPLICATION_DATA))
+                goto end;
+        }
+
+        /*
+         * Put back just the partial record (plus the whole initial record in
+         * the pipelining case)
+         */
         if (!TEST_true(BIO_write_ex(tmp, buf, partial_len, &written)))
             goto end;
 
-        /*
-         * Attempt a read. This should fail because only a partial record is
-         * available.
-         */
-        if (!TEST_false(SSL_read_ex(serverssl, buf, 1, &readbytes)))
-            goto end;
+        if (pipeline) {
+            /*
+             * Attempt a read. This should pass but only return data from the
+             * first record. Only a partial record is available for the second
+             * record.
+             */
+            if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf),
+                                        &readbytes))
+                    || !TEST_size_t_eq(readbytes, strlen(testdata)))
+                goto end;
+        } else {
+            /*
+            * Attempt a read. This should fail because only a partial record is
+            * available.
+            */
+            if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf),
+                                        &readbytes)))
+                goto end;
+        }
     }
 
     /*
@@ -238,7 +309,13 @@ static int test_free_buffers(int test)
  end:
     SSL_free(clientssl);
     SSL_free(serverssl);
-
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
+    if (e != NULL) {
+        ENGINE_unregister_ciphers(e);
+        ENGINE_finish(e);
+        ENGINE_free(e);
+    }
+#endif
     return result;
 }
 
@@ -265,7 +342,11 @@ int setup_tests(void)
     }
 
     ADD_ALL_TESTS(test_func, 9);
+#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
+    ADD_ALL_TESTS(test_free_buffers, 8);
+#else
     ADD_ALL_TESTS(test_free_buffers, 4);
+#endif
     return 1;
 }
 
