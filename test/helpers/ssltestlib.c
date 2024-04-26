@@ -7,8 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * We need access to the deprecated low level ENGINE APIs for legacy purposes
+ * when the deprecated calls are not hidden
+ */
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# define OPENSSL_SUPPRESS_DEPRECATED
+#endif
+
 #include <string.h>
 
+#include <openssl/engine.h>
 #include "internal/e_os.h"
 #include "internal/nelem.h"
 #include "ssltestlib.h"
@@ -1450,4 +1459,28 @@ int ssl_ctx_add_large_cert_chain(OSSL_LIB_CTX *libctx, SSL_CTX *sctx,
     BIO_free(certbio);
     X509_free(chaincert);
     return ret;
+}
+
+ENGINE *load_dasync(void)
+{
+#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
+    ENGINE *e;
+
+    if (!TEST_ptr(e = ENGINE_by_id("dasync")))
+        return NULL;
+
+    if (!TEST_true(ENGINE_init(e))) {
+        ENGINE_free(e);
+        return NULL;
+    }
+
+    if (!TEST_true(ENGINE_register_ciphers(e))) {
+        ENGINE_free(e);
+        return NULL;
+    }
+
+    return e;
+#else
+    return NULL;
+#endif
 }
