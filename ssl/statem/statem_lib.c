@@ -2222,10 +2222,10 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
         return SSL_R_UNSUPPORTED_PROTOCOL;
 
     if (suppversions->present) {
-        unsigned int candidate_vers = 0;
-        const unsigned int best_vers_init = SSL_CONNECTION_IS_DTLS(s) ? UINT_MAX
-                                                                      : 0;
-        unsigned int best_vers = best_vers_init;
+        int candidate_vers = 0;
+        const int best_vers_init = SSL_CONNECTION_IS_DTLS(s) ? INT_MAX
+                                                             : 0;
+        int best_vers = best_vers_init;
         const SSL_METHOD *best_method = NULL;
         PACKET versionslist;
 
@@ -2248,9 +2248,9 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
         if (client_version <= SSL3_VERSION)
             return SSL_R_BAD_LEGACY_VERSION;
 
-        while (PACKET_get_net_2(&versionslist, &candidate_vers)) {
+        while (PACKET_get_net_2(&versionslist, (unsigned int *)&candidate_vers)) {
             if (candidate_vers <= 0
-                || (best_vers != 0
+                || (best_vers != best_vers_init
                     && ssl_version_cmp(s, candidate_vers, best_vers) <= 0))
                 continue;
             if (ssl_version_supported(s, candidate_vers, &best_method))
