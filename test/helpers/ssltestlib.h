@@ -83,4 +83,6 @@ SSL_SESSION *create_a_psk(SSL *ssl, size_t mdsize);
 int ssl_ctx_add_large_cert_chain(OSSL_LIB_CTX *libctx, SSL_CTX *sctx,
                                  const char *cert_file);
 
+ENGINE *load_dasync(void);
+
 #endif /* OSSL_TEST_SSLTESTLIB_H */
