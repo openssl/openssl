@@ -2236,8 +2236,9 @@ int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
             && (c->algorithm_mkey & (SSL_kECDHE | SSL_kECDHEPSK)) != 0)
         minversion = SSL3_VERSION;
 
-    if (ssl_version_cmp(s, minversion, s->s3.tmp.max_ver) > 0
-        || ssl_version_cmp(s, maxversion, s->s3.tmp.min_ver) < 0)
+    if (minversion <= 0 || maxversion <= 0
+            || ssl_version_cmp(s, minversion, s->s3.tmp.max_ver) > 0
+            || ssl_version_cmp(s, maxversion, s->s3.tmp.min_ver) < 0)
         return 1;
 
     return !ssl_security(s, op, c->strength_bits, 0, (void *)c);
