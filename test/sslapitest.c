@@ -11193,27 +11193,6 @@ end:
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
-
-static ENGINE *load_dasync(void)
-{
-    ENGINE *e;
-
-    if (!TEST_ptr(e = ENGINE_by_id("dasync")))
-        return NULL;
-
-    if (!TEST_true(ENGINE_init(e))) {
-        ENGINE_free(e);
-        return NULL;
-    }
-
-    if (!TEST_true(ENGINE_register_ciphers(e))) {
-        ENGINE_free(e);
-        return NULL;
-    }
-
-    return e;
-}
-
 /*
  * Test TLSv1.2 with a pipeline capable cipher. TLSv1.3 and DTLS do not
  * support this yet. The only pipeline capable cipher that we have is in the
