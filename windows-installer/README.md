@@ -1,12 +1,15 @@
-# Windows installer script
+Windows installer script
+========================
 
-## Overview
+Overview
+--------
 
 The windows installer script found in this directory is capable of building a
 windows installer executable capable of installing both 32 and 64 bit openssl
 binaries, along with their corresponding development headers
 
-## Requirements
+Requirements
+------------
 
 * [NSIS](https://nsis.sourceforge.io/Main_Page) version 3.0.8 or later
 * Windows 2022 or later
@@ -15,7 +18,8 @@ binaries, along with their corresponding development headers
   - The Pvk2Pfx.exe utility (to demonstrate installer signing)
   - The SignTool.exe utility (to demonstrate installer signing)
 
-## Notes on Signing
+Notes on Signing
+----------------
 
 Installer signing is demonstrated here using self signed certificates. Do not
 use this signed code in a deployment as the generated certificate should not be
@@ -25,7 +29,8 @@ instructions
 [here](https://learn.microsoft.com/en-us/windows/win32/appxpkg/how-to-create-a-package-signing-certificate).
 at your own risk.
 
-## Installer Build Prerequisites
+Installer Build Prerequisites
+-----------------------------
 
 1) Build Openssl from the parent of this directory:
     a) cd /path/to/openssl/source/root
@@ -35,7 +40,8 @@ at your own risk.
     e) nmake
     f) repeat steps a-e substituting \_build32 for \_build64 to build VC-WIN32
 
-## Building the installer
+Building the installer
+----------------------
 
 From the windows-installer directory, the included makefile can build 2 targets
 1) openssl-installer
