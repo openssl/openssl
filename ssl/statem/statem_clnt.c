@@ -4203,7 +4203,8 @@ int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
             int minproto = SSL_CONNECTION_IS_DTLS(s) ? c->min_dtls : c->min_tls;
             int maxproto = SSL_CONNECTION_IS_DTLS(s) ? c->max_dtls : c->max_tls;
 
-            if (ssl_version_cmp(s, maxproto, s->s3.tmp.max_ver) >= 0
+            if (maxproto > 0 && minproto > 0
+                && ssl_version_cmp(s, maxproto, s->s3.tmp.max_ver) >= 0
                 && ssl_version_cmp(s, minproto, s->s3.tmp.max_ver) <= 0)
                 maxverok = 1;
         }

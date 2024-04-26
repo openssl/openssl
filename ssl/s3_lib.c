@@ -4898,7 +4898,8 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
         maxversion = SSL_CONNECTION_IS_DTLS(s) ? c->max_dtls : c->max_tls;
 
         /* Skip ciphers not supported by the protocol version */
-        if (ssl_version_cmp(s, s->version, minversion) < 0
+        if (minversion <= 0 || maxversion <= 0
+            || ssl_version_cmp(s, s->version, minversion) < 0
             || ssl_version_cmp(s, s->version, maxversion) > 0)
             continue;
 
