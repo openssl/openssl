@@ -3076,7 +3076,8 @@ int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
             return 1;
         }
 
-    if (ssl_version_cmp(s, minversion, s->s3.tmp.max_ver) > 0
+    if (minversion <= 0 || maxversion <= 0
+        || ssl_version_cmp(s, minversion, s->s3.tmp.max_ver) > 0
         || ssl_version_cmp(s, maxversion, s->s3.tmp.min_ver) < 0)
         return 1;
 
