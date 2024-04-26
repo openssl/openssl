@@ -142,7 +142,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
      * parse out our operation flags and key
      */
     op_flags = buf[0];
-    keyval = *((uint16_t *)&buf[1]);
+    memcpy(&keyval, &buf[1], sizeof(uint16_t));
 
     /*
      * Initialize our key
@@ -177,7 +177,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                 rc_prediction = 0;
         }
 
-        valptr->value = *(uint64_t *)&buf[3];
+        memcpy(&valptr->value, &buf[3], sizeof(uint64_t));
         /*
          * do the insert/replace
          */
