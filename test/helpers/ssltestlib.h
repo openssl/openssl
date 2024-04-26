@@ -59,4 +59,5 @@ typedef struct mempacket_st MEMPACKET;
 
 DEFINE_STACK_OF(MEMPACKET)
 
+ENGINE *load_dasync(void);
 #endif /* OSSL_TEST_SSLTESTLIB_H */
