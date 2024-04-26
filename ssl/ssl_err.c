@@ -164,6 +164,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "encrypted length too long"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST),
     "error in received cipher list"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_ERROR_IN_SYSTEM_DEFAULT_CONFIG),
+    "error in system default config"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN),
     "error setting tlsa base domain"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE),

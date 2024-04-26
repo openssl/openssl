@@ -16,16 +16,21 @@
 #include <openssl/tls1.h>
 #include "testutil.h"
 
-static SSL_CTX *ctx;
 
 static int test_func(void)
 {
+    int ret = 1;
+    SSL_CTX *ctx;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_method())))
+        return 0;
     if (!TEST_int_eq(SSL_CTX_get_min_proto_version(ctx), TLS1_2_VERSION)
         && !TEST_int_eq(SSL_CTX_get_max_proto_version(ctx), TLS1_2_VERSION)) {
         TEST_info("min/max version setting incorrect");
-        return 0;
+        ret = 0;
     }
-    return 1;
+    SSL_CTX_free(ctx);
+    return ret;
 }
 
 int global_init(void)
@@ -38,13 +43,6 @@ int global_init(void)
 
 int setup_tests(void)
 {
-    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_method())))
-        return 0;
     ADD_TEST(test_func);
     return 1;
-}
-
-void cleanup_tests(void)
-{
-    SSL_CTX_free(ctx);
 }

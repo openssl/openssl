@@ -214,6 +214,7 @@ int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
 
     ret = CONF_modules_load(conf, appname, flags);
     diagnostics = conf_diagnostics(conf);
+    OSSL_LIB_CTX_set_conf_diagnostics(libctx, diagnostics);
 
  err:
     if (filename == NULL)
