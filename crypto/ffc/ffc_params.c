@@ -27,11 +27,19 @@ void ossl_ffc_params_init(FFC_PARAMS *params)
 
 void ossl_ffc_params_cleanup(FFC_PARAMS *params)
 {
+#ifndef FIPS_MODULE
     BN_free(params->p);
     BN_free(params->q);
     BN_free(params->g);
     BN_free(params->j);
     OPENSSL_free(params->seed);
+#else
+    BN_clear_free(params->p);
+    BN_clear_free(params->q);
+    BN_clear_free(params->g);
+    BN_clear_free(params->j);
+    OPENSSL_clear_free(params->seed, params->seedlen);
+#endif
     ossl_ffc_params_init(params);
 }
 

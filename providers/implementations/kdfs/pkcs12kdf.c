@@ -151,7 +151,11 @@ static void *kdf_pkcs12_new(void *provctx)
 static void kdf_pkcs12_cleanup(KDF_PKCS12 *ctx)
 {
     ossl_prov_digest_reset(&ctx->digest);
+#ifndef FIPS_MODULE
     OPENSSL_free(ctx->salt);
+#else
+    OPENSSL_clear_free(ctx->salt, ctx->salt_len);
+#endif
     OPENSSL_clear_free(ctx->pass, ctx->pass_len);
     memset(ctx, 0, sizeof(*ctx));
 }
