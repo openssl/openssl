@@ -117,7 +117,11 @@ static void kdf_hkdf_reset(void *vctx)
     void *provctx = ctx->provctx;
 
     ossl_prov_digest_reset(&ctx->digest);
+#ifdef FIPS_MODULE
+    OPENSSL_clear_free(ctx->salt, ctx->salt_len);
+#else
     OPENSSL_free(ctx->salt);
+#endif
     OPENSSL_free(ctx->prefix);
     OPENSSL_free(ctx->label);
     OPENSSL_clear_free(ctx->data, ctx->data_len);
