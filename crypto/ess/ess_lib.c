@@ -346,7 +346,7 @@ int OSSL_ESS_check_signing_certs(const ESS_SIGNING_CERT *ss,
     int i, ret;
 
     if (require_signing_cert && ss == NULL && ssv2 == NULL) {
-        ERR_raise(ERR_LIB_CMS, ESS_R_MISSING_SIGNING_CERTIFICATE_ATTRIBUTE);
+        ERR_raise(ERR_LIB_ESS, ESS_R_MISSING_SIGNING_CERTIFICATE_ATTRIBUTE);
         return -1;
     }
     if (n_v1 == 0 || n_v2 == 0) {
