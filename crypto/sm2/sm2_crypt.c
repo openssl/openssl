@@ -249,8 +249,8 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     OPENSSL_free(C3);
     EVP_MD_CTX_free(hash);
     BN_CTX_free(ctx);
-    EC_POINT_free(kG);
-    EC_POINT_free(kP);
+    EC_POINT_clear_free(kG);
+    EC_POINT_clear_free(kP);
     return rc;
 }
 
@@ -382,7 +382,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     OPENSSL_free(msg_mask);
     OPENSSL_free(x2y2);
     OPENSSL_free(computed_C3);
-    EC_POINT_free(C1);
+    EC_POINT_clear_free(C1);
     BN_CTX_free(ctx);
     SM2_Ciphertext_free(sm2_ctext);
     EVP_MD_CTX_free(hash);

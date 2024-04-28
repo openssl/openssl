@@ -916,8 +916,8 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
 
     EC_nistz256_pre_comp_free(pre_comp);
     OPENSSL_free(precomp_storage);
-    EC_POINT_free(P);
-    EC_POINT_free(T);
+    EC_POINT_clear_free(P);
+    EC_POINT_clear_free(T);
     return ret;
 }
 
@@ -990,14 +990,14 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
             ecp_nistz256_gather_w7(&p.a, pre_comp->precomp[0], 1);
             if (!ecp_nistz256_set_from_affine(pre_comp_generator,
                                               group, &p.a, ctx)) {
-                EC_POINT_free(pre_comp_generator);
+                EC_POINT_clear_free(pre_comp_generator);
                 goto err;
             }
 
             if (0 == EC_POINT_cmp(group, generator, pre_comp_generator, ctx))
                 preComputedTable = (const PRECOMP256_ROW *)pre_comp->precomp;
 
-            EC_POINT_free(pre_comp_generator);
+            EC_POINT_clear_free(pre_comp_generator);
         }
 
         if (preComputedTable == NULL && ecp_nistz256_is_affine_G(generator)) {

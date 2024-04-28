@@ -836,7 +836,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
     BN_free(p);
     BN_free(a);
     BN_free(b);
-    EC_POINT_free(point);
+    EC_POINT_clear_free(point);
 
     BN_CTX_free(ctx);
 

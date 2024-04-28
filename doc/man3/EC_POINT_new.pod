@@ -105,11 +105,10 @@ An B<EC_POINT> structure represents a point on a curve. A new point is
 constructed by calling the function EC_POINT_new() and providing the
 B<group> object that the point relates to.
 
-EC_POINT_free() frees the memory associated with the B<EC_POINT>.
-if B<point> is NULL nothing is done.
-
-EC_POINT_clear_free() destroys any sensitive data held within the EC_POINT and
-then frees its memory. If B<point> is NULL nothing is done.
+EC_POINT_free() and EC_POINT_clear_free() destroys any sensitive data
+held within the EC_POINT and then frees its memory. If B<point> is
+NULL nothing is done. Prior to v3.4 EC_POINT_free() did not destroy
+sensitive data held within the EC_POINT.
 
 EC_POINT_copy() copies the point B<src> into B<dst>. Both B<src> and B<dst>
 must use the same B<EC_METHOD>.

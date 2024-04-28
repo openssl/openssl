@@ -319,7 +319,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     }
 
     BN_CTX_free(ctx);
-    EC_POINT_free(kG);
+    EC_POINT_clear_free(kG);
     return sig;
 }
 
@@ -398,7 +398,7 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
 
  done:
     BN_CTX_end(ctx);
-    EC_POINT_free(pt);
+    EC_POINT_clear_free(pt);
     BN_CTX_free(ctx);
     return ret;
 }

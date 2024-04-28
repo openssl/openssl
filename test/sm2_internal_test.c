@@ -120,7 +120,7 @@ done:
     BN_free(b);
     BN_free(g_x);
     BN_free(g_y);
-    EC_POINT_free(generator);
+    EC_POINT_clear_free(generator);
     BN_free(order);
     BN_free(cof);
     if (!ok) {
@@ -198,7 +198,7 @@ static int test_sm2_crypt(const EC_GROUP *group,
     rc = 1;
  done:
     BN_free(priv);
-    EC_POINT_free(pt);
+    EC_POINT_clear_free(pt);
     OPENSSL_free(ctext);
     OPENSSL_free(recovered);
     OPENSSL_free(expected);
@@ -361,7 +361,7 @@ static int test_sm2_sign(const EC_GROUP *group,
 
  done:
     ECDSA_SIG_free(sig);
-    EC_POINT_free(pt);
+    EC_POINT_clear_free(pt);
     EC_KEY_free(key);
     BN_free(priv);
     BN_free(r);

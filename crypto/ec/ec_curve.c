@@ -3275,7 +3275,7 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
         EC_GROUP_free(group);
         group = NULL;
     }
-    EC_POINT_free(P);
+    EC_POINT_clear_free(P);
     BN_CTX_free(ctx);
     BN_free(p);
     BN_free(a);

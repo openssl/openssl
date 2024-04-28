@@ -917,7 +917,7 @@ int ec_GF2m_simple_points_mul(const EC_GROUP *group, EC_POINT *r,
     ret = 1;
 
  err:
-    EC_POINT_free(t);
+    EC_POINT_clear_free(t);
     return ret;
 }
 

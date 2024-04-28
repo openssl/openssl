@@ -145,10 +145,10 @@ err:
     if (r == 0 && i != 0)
         TEST_info(i == 1 ? "allowing precomputation" :
                            "without precomputation");
-    EC_POINT_free(P);
-    EC_POINT_free(Q);
-    EC_POINT_free(R);
-    EC_POINT_free(S);
+    EC_POINT_clear_free(P);
+    EC_POINT_clear_free(Q);
+    EC_POINT_clear_free(R);
+    EC_POINT_clear_free(S);
     BN_free(n1);
     BN_free(n2);
     BN_free(order);
@@ -593,9 +593,9 @@ err:
     BN_free(a);
     BN_free(b);
     EC_GROUP_free(group);
-    EC_POINT_free(P);
-    EC_POINT_free(Q);
-    EC_POINT_free(R);
+    EC_POINT_clear_free(P);
+    EC_POINT_clear_free(Q);
+    EC_POINT_clear_free(R);
     BN_free(x);
     BN_free(y);
     BN_free(z);
@@ -924,9 +924,9 @@ err:
     BN_free(z);
     BN_free(yplusone);
     BN_free(cof);
-    EC_POINT_free(P);
-    EC_POINT_free(Q);
-    EC_POINT_free(R);
+    EC_POINT_clear_free(P);
+    EC_POINT_clear_free(Q);
+    EC_POINT_clear_free(R);
     EC_GROUP_free(group);
     return r;
 }
@@ -1073,9 +1073,9 @@ err:
     BN_free(a);
     BN_free(b);
     EC_GROUP_free(group);
-    EC_POINT_free(P);
-    EC_POINT_free(Q);
-    EC_POINT_free(R);
+    EC_POINT_clear_free(P);
+    EC_POINT_clear_free(Q);
+    EC_POINT_clear_free(R);
     BN_free(x);
     BN_free(y);
     BN_free(z);
@@ -1128,7 +1128,7 @@ err:
     BN_free(x);
     BN_free(y);
     EC_GROUP_free(group);
-    EC_POINT_free(point);
+    EC_POINT_clear_free(point);
     OPENSSL_free(buf);
     return r;
 }
@@ -1428,10 +1428,10 @@ static int nistp_single_test(int idx)
     r = 1;
 err:
     EC_GROUP_free(NISTP);
-    EC_POINT_free(G);
-    EC_POINT_free(P);
-    EC_POINT_free(Q);
-    EC_POINT_free(Q_CHECK);
+    EC_POINT_clear_free(G);
+    EC_POINT_clear_free(P);
+    EC_POINT_clear_free(Q);
+    EC_POINT_clear_free(Q_CHECK);
     BN_free(n);
     BN_free(m);
     BN_free(p);
@@ -1677,7 +1677,7 @@ err:
     BN_free(group_cofactor);
     BN_free(other_cofactor);
     BN_free(other_order);
-    EC_POINT_free(other_gen);
+    EC_POINT_clear_free(other_gen);
     EC_GROUP_free(gtest);
     EC_GROUP_free(group);
     BN_CTX_free(bn_ctx);
@@ -1868,7 +1868,7 @@ static int check_named_curve_from_ecparameters(int id)
         || !TEST_true(BN_add_word(other_cofactor, 1)))
         goto err;
 
-    EC_POINT_free(other_gen);
+    EC_POINT_clear_free(other_gen);
     other_gen = NULL;
 
     if (!TEST_ptr(other_gen = EC_POINT_new(tmpg))
@@ -2002,7 +2002,7 @@ err:
     for (p_next = &p_ary[0]; p_next < p_ary + OSSL_NELEM(g_ary); p_next++)
         ECPARAMETERS_free(*p_next);
     ECPARAMETERS_free(params);
-    EC_POINT_free(other_gen);
+    EC_POINT_clear_free(other_gen);
     EC_GROUP_free(tmpg);
     EC_GROUP_free(group);
     BN_CTX_end(bn_ctx);
@@ -2337,7 +2337,7 @@ static int cardinality_test(int n)
         goto err;
     ret = 1;
  err:
-    EC_POINT_free(g2_gen);
+    EC_POINT_clear_free(g2_gen);
     EC_GROUP_free(g1);
     EC_GROUP_free(g2);
     BN_CTX_end(ctx);
@@ -2441,9 +2441,9 @@ int ec_point_hex2point_test_helper(const EC_GROUP *group, const EC_POINT *P,
     ret = 1;
 
  err:
-    EC_POINT_free(Pinf);
+    EC_POINT_clear_free(Pinf);
     OPENSSL_free(hex);
-    EC_POINT_free(Q);
+    EC_POINT_clear_free(Q);
 
     return ret;
 }
@@ -2490,7 +2490,7 @@ static int ec_point_hex2point_test(int id)
     ret = 1;
 
  err:
-    EC_POINT_free(P);
+    EC_POINT_clear_free(P);
     EC_GROUP_free(group);
     BN_CTX_free(bnctx);
 
@@ -2789,9 +2789,9 @@ static int custom_generator_test(int id)
     ret = 1;
 
  err:
-    EC_POINT_free(Q1);
-    EC_POINT_free(Q2);
-    EC_POINT_free(G2);
+    EC_POINT_clear_free(Q1);
+    EC_POINT_clear_free(Q2);
+    EC_POINT_clear_free(G2);
     EC_GROUP_free(group);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
@@ -2890,7 +2890,7 @@ static int custom_params_test(int id)
 #endif
 
     /* set 2*G as the generator of altgroup */
-    EC_POINT_free(G2); /* discard G2 as it refers to the original group */
+    EC_POINT_clear_free(G2); /* discard G2 as it refers to the original group */
     if (!TEST_ptr(G2 = EC_POINT_new(altgroup))
             || !TEST_true(EC_POINT_oct2point(altgroup, G2, buf1, bsize, ctx))
             || !TEST_int_eq(EC_POINT_is_on_curve(altgroup, G2, ctx), 1)
@@ -3059,9 +3059,9 @@ static int custom_params_test(int id)
     OSSL_PARAM_BLD_free(param_bld);
     OSSL_PARAM_free(params1);
     OSSL_PARAM_free(params2);
-    EC_POINT_free(Q1);
-    EC_POINT_free(Q2);
-    EC_POINT_free(G2);
+    EC_POINT_clear_free(Q1);
+    EC_POINT_clear_free(Q2);
+    EC_POINT_clear_free(G2);
     EC_GROUP_free(group);
     EC_GROUP_free(altgroup);
     OPENSSL_free(buf1);

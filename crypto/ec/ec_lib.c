@@ -129,7 +129,7 @@ void EC_GROUP_free(EC_GROUP *group)
 
     EC_pre_comp_free(group);
     BN_MONT_CTX_free(group->mont_data);
-    EC_POINT_free(group->generator);
+    EC_POINT_clear_free(group->generator);
     BN_free(group->order);
     BN_free(group->cofactor);
     OPENSSL_free(group->seed);
@@ -743,12 +743,7 @@ EC_POINT *EC_POINT_new(const EC_GROUP *group)
 
 void EC_POINT_free(EC_POINT *point)
 {
-    if (point == NULL)
-        return;
-
-    if (point->meth->point_finish != 0)
-        point->meth->point_finish(point);
-    OPENSSL_free(point);
+    EC_POINT_clear_free(point);
 }
 
 void EC_POINT_clear_free(EC_POINT *point)
@@ -794,7 +789,7 @@ EC_POINT *EC_POINT_dup(const EC_POINT *a, const EC_GROUP *group)
         return NULL;
     r = EC_POINT_copy(t, a);
     if (!r) {
-        EC_POINT_free(t);
+        EC_POINT_clear_free(t);
         return NULL;
     }
     return t;
@@ -1750,7 +1745,7 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
         EC_GROUP_free(group);
         group = NULL;
     }
-    EC_POINT_free(point);
+    EC_POINT_clear_free(point);
     BN_CTX_end(bnctx);
     BN_CTX_free(bnctx);
 

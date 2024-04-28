@@ -96,7 +96,7 @@ void EC_KEY_free(EC_KEY *r)
 #endif
     CRYPTO_FREE_REF(&r->references);
     EC_GROUP_free(r->group);
-    EC_POINT_free(r->pub_key);
+    EC_POINT_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);
     OPENSSL_free(r->propq);
 
@@ -134,7 +134,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 
         /*  copy the public key */
         if (src->pub_key != NULL) {
-            EC_POINT_free(dest->pub_key);
+            EC_POINT_clear_free(dest->pub_key);
             dest->pub_key = EC_POINT_new(src->group);
             if (dest->pub_key == NULL)
                 return NULL;
@@ -283,7 +283,7 @@ static int ecdsa_keygen_knownanswer_test(EC_KEY *eckey, BN_CTX *ctx,
 err:
     OSSL_SELF_TEST_onend(st, ret);
     OSSL_SELF_TEST_free(st);
-    EC_POINT_free(pub_key2);
+    EC_POINT_clear_free(pub_key2);
     return ret;
 }
 
@@ -395,7 +395,7 @@ err:
             EC_POINT_set_to_infinity(group, eckey->pub_key);
     }
 
-    EC_POINT_free(pub_key);
+    EC_POINT_clear_free(pub_key);
     BN_clear_free(priv_key);
     BN_CTX_free(ctx);
     BN_free(order);
@@ -587,7 +587,7 @@ int ossl_ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx)
     }
     ret = 1;
 err:
-    EC_POINT_free(point);
+    EC_POINT_clear_free(point);
     return ret;
 }
 
@@ -643,7 +643,7 @@ int ossl_ec_key_pairwise_check(const EC_KEY *eckey, BN_CTX *ctx)
     }
     ret = 1;
 err:
-    EC_POINT_free(point);
+    EC_POINT_clear_free(point);
     return ret;
 }
 
@@ -737,7 +737,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
-    EC_POINT_free(point);
+    EC_POINT_clear_free(point);
     return ok;
 
 }
@@ -886,7 +886,7 @@ int EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub_key)
     if (key->meth->set_public != NULL
         && key->meth->set_public(key, pub_key) == 0)
         return 0;
-    EC_POINT_free(key->pub_key);
+    EC_POINT_clear_free(key->pub_key);
     key->pub_key = EC_POINT_dup(pub_key, key->group);
     key->dirty_cnt++;
     return (key->pub_key == NULL) ? 0 : 1;

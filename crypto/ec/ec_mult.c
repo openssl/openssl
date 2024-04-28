@@ -94,7 +94,7 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
         EC_POINT **pts;
 
         for (pts = pre->points; *pts != NULL; pts++)
-            EC_POINT_free(*pts);
+            EC_POINT_clear_free(*pts);
         OPENSSL_free(pre->points);
     }
     CRYPTO_FREE_REF(&pre->references);
@@ -371,7 +371,7 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     ret = 1;
 
  err:
-    EC_POINT_free(p);
+    EC_POINT_clear_free(p);
     EC_POINT_clear_free(s);
     BN_CTX_end(ctx);
 
@@ -775,7 +775,7 @@ int ossl_ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     ret = 1;
 
  err:
-    EC_POINT_free(tmp);
+    EC_POINT_clear_free(tmp);
     OPENSSL_free(wsize);
     OPENSSL_free(wNAF_len);
     if (wNAF != NULL) {
@@ -967,11 +967,11 @@ int ossl_ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
         EC_POINT **p;
 
         for (p = points; *p != NULL; p++)
-            EC_POINT_free(*p);
+            EC_POINT_clear_free(*p);
         OPENSSL_free(points);
     }
-    EC_POINT_free(tmp_point);
-    EC_POINT_free(base);
+    EC_POINT_clear_free(tmp_point);
+    EC_POINT_clear_free(base);
     return ret;
 }
 

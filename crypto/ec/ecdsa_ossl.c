@@ -247,7 +247,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     }
     if (ctx != ctx_in)
         BN_CTX_free(ctx);
-    EC_POINT_free(tmp_point);
+    EC_POINT_clear_free(tmp_point);
     BN_clear_free(X);
     return ret;
 }
@@ -535,6 +535,6 @@ int ossl_ecdsa_simple_verify_sig(const unsigned char *dgst, int dgst_len,
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
-    EC_POINT_free(point);
+    EC_POINT_clear_free(point);
     return ret;
 }

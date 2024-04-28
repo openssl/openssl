@@ -1591,7 +1591,7 @@ int ossl_ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
 
  err:
     BN_CTX_end(ctx);
-    EC_POINT_free(generator);
+    EC_POINT_clear_free(generator);
     OPENSSL_free(secrets);
     OPENSSL_free(pre_comp);
     OPENSSL_free(tmp_felems);
@@ -1726,7 +1726,7 @@ int ossl_ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     ret = 1;
  err:
     BN_CTX_end(ctx);
-    EC_POINT_free(generator);
+    EC_POINT_clear_free(generator);
 #ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif

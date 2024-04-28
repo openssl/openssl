@@ -493,7 +493,7 @@ int ossl_ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_priv
     BN_CTX_free(ctx);
     BN_clear_free(priv_key);
     OPENSSL_free(pub_key);
-    EC_POINT_free(pub_point);
+    EC_POINT_clear_free(pub_point);
     return ok;
 }
 

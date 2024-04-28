@@ -562,8 +562,8 @@ int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only,
  */
 EC_POINT *EC_POINT_new(const EC_GROUP *group);
 
-/** Frees a EC_POINT object
- *  \param  point  EC_POINT object to be freed
+/** Clears and frees a EC_POINT object
+ *  \param  point  EC_POINT object to be cleared and freed
  */
 void EC_POINT_free(EC_POINT *point);
 

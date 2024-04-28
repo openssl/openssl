@@ -112,7 +112,7 @@ int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
 
  err:
     BN_CTX_free(new_ctx);
-    EC_POINT_free(point);
+    EC_POINT_clear_free(point);
     return ret;
 #endif /* FIPS_MODULE */
 }
