@@ -100,12 +100,11 @@ static int test_thread_internal(void)
     uint32_t threads_supported;
     size_t i;
     void *t[3];
+    int retVal = 0;
     OSSL_LIB_CTX *cust_ctx = OSSL_LIB_CTX_new();
 
     threads_supported = OSSL_get_thread_support_flags();
     threads_supported &= OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN;
-
-    int retVal = 0;
 
     if (threads_supported == 0) {
         if (!TEST_uint64_t_eq(OSSL_get_max_threads(NULL), 0))
