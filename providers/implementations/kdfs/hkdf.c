@@ -631,7 +631,7 @@ static int prov_tls13_hkdf_generate_secret(OSSL_LIB_CTX *libctx,
     }
     if (prevsecret == NULL) {
         prevsecret = default_zeros;
-        prevsecretlen = 0;
+        prevsecretlen = mdlen;
     } else {
         EVP_MD_CTX *mctx = EVP_MD_CTX_new();
         unsigned char hash[EVP_MAX_MD_SIZE];

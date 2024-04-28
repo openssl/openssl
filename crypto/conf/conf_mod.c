@@ -368,7 +368,6 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
 
  err:
     ossl_rcu_write_unlock(module_list_lock);
-    sk_CONF_MODULE_free(new_modules);
     if (tmod != NULL) {
         OPENSSL_free(tmod->name);
         OPENSSL_free(tmod);
