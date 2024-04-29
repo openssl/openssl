@@ -308,6 +308,7 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
 
         ql                  = (QUIC_LISTENER *)s;
         ctx->obj            = &ql->obj;
+        ctx->qd             = ql->domain;
         ctx->ql             = ql;
         ctx->is_listener    = 1;
         break;
@@ -315,6 +316,7 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
     case SSL_TYPE_QUIC_CONNECTION:
         qc                  = (QUIC_CONNECTION *)s;
         ctx->obj            = &qc->obj;
+        ctx->qd             = qc->domain;
         ctx->ql             = qc->listener; /* never changes, so can be read without lock */
         ctx->qc             = qc;
 
@@ -364,6 +366,7 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
 
         xso                 = (QUIC_XSO *)s;
         ctx->obj            = &xso->obj;
+        ctx->qd             = xso->conn->domain;
         ctx->ql             = xso->conn->listener;
         ctx->qc             = xso->conn;
         ctx->xso            = xso;
@@ -717,9 +720,9 @@ static void quic_free_listener(QCTX *ctx)
 QUIC_TAKES_LOCK
 static void quic_free_domain(QCTX *ctx)
 {
-    ossl_quic_engine_free(ctx->ql->engine);
+    ossl_quic_engine_free(ctx->qd->engine);
 #if defined(OPENSSL_THREADS)
-    ossl_crypto_mutex_free(&ctx->ql->mutex);
+    ossl_crypto_mutex_free(&ctx->qd->mutex);
 #endif
 }
 
@@ -4287,10 +4290,15 @@ SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags)
     QCTX ctx;
     QUIC_LISTENER *ql = NULL;
     QUIC_PORT_ARGS port_args = {0};
+    int reffed = 0;
 
     if (!expect_quic_domain(ssl, &ctx))
         return NULL;
 
+    if (!SSL_up_ref(&ctx.qd->obj.ssl))
+        return NULL;
+
+    reffed = 1;
     qctx_lock(&ctx);
 
     if ((ql = OPENSSL_zalloc(sizeof(*ql))) == NULL) {
@@ -4318,8 +4326,7 @@ SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags)
 
     /* Initialise the QUIC_LISTENER's object header. */
     if (!ossl_quic_obj_init(&ql->obj, ssl->ctx, SSL_TYPE_QUIC_LISTENER,
-                            &ctx.qd->obj.ssl,
-                            ctx.qd->engine, ql->port))
+                            &ctx.qd->obj.ssl, NULL, ql->port))
         goto err;
 
     qctx_unlock(&ctx);
@@ -4331,6 +4338,9 @@ err:
 
     OPENSSL_free(ql);
     qctx_unlock(&ctx);
+    if (reffed)
+        SSL_free(&ctx.qd->obj.ssl);
+
     return NULL;
 }
 
