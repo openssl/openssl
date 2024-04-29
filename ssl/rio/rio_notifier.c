@@ -1,4 +1,5 @@
 #include "internal/rio_notifier.h"
+#include "internal/sockets.h"
 #include <openssl/bio.h>
 
 /*
@@ -220,7 +221,7 @@ int ossl_rio_notifier_signal(RIO_NOTIFIER *nfy)
          * Note: If wr returns 0 the buffer is already full so we don't need to
          * do anything.
          */
-        wr = send(nfy->wfd, &ch, sizeof(ch), 0);
+        wr = writesocket(nfy->wfd, &ch, sizeof(ch));
     while (wr < 0 && get_last_socket_error_is_eintr());
 
     return 1;
@@ -236,7 +237,7 @@ int ossl_rio_notifier_unsignal(RIO_NOTIFIER *nfy)
      * it's empty.
      */
     do
-        rd = recv(nfy->rfd, buf, sizeof(buf), 0);
+        rd = readsocket(nfy->rfd, buf, sizeof(buf));
     while (rd == sizeof(buf)
            || (rd < 0 && get_last_socket_error_is_eintr()));
 
