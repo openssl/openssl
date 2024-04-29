@@ -2257,6 +2257,48 @@ static int test_session_cb(void)
     return testresult;
 }
 
+static int test_domain_flags(void)
+{
+    int testresult = 0;
+    SSL_CTX *ctx = NULL;
+    SSL *domain = NULL, *listener = NULL, *other_conn = NULL;
+    uint64_t domain_flags = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method()))
+        || !TEST_true(SSL_CTX_get_domain_flags(ctx, &domain_flags))
+        || !TEST_uint64_t_ne(domain_flags, 0)
+        || !TEST_uint64_t_ne(domain_flags & (SSL_DOMAIN_FLAG_SINGLE_THREAD
+                                             | SSL_DOMAIN_FLAG_MULTI_THREAD), 0)
+        || !TEST_uint64_t_ne(domain_flags & SSL_DOMAIN_FLAG_LEGACY_BLOCKING, 0)
+        || !TEST_true(SSL_CTX_set_domain_flags(ctx, SSL_DOMAIN_FLAG_SINGLE_THREAD))
+        || !TEST_true(SSL_CTX_get_domain_flags(ctx, &domain_flags))
+        || !TEST_uint64_t_eq(domain_flags, SSL_DOMAIN_FLAG_SINGLE_THREAD)
+        || !TEST_ptr(domain = SSL_new_domain(ctx, 0))
+        || !TEST_true(SSL_get_domain_flags(domain, &domain_flags))
+        || !TEST_uint64_t_eq(domain_flags, SSL_DOMAIN_FLAG_SINGLE_THREAD)
+        || !TEST_true(other_conn = SSL_new(ctx))
+        || !TEST_true(SSL_get_domain_flags(other_conn, &domain_flags))
+        || !TEST_uint64_t_eq(domain_flags, SSL_DOMAIN_FLAG_SINGLE_THREAD)
+        || !TEST_true(SSL_is_domain(domain))
+        || !TEST_false(SSL_is_domain(other_conn))
+        || !TEST_ptr_eq(SSL_get0_domain(domain), domain)
+        || !TEST_ptr_null(SSL_get0_domain(other_conn))
+        || !TEST_ptr(listener = SSL_new_listener_from(domain, 0))
+        || !TEST_true(SSL_is_listener(listener))
+        || !TEST_false(SSL_is_domain(listener))
+        || !TEST_ptr_eq(SSL_get0_domain(listener), domain)
+        || !TEST_ptr_eq(SSL_get0_listener(listener), listener))
+        goto err;
+
+    testresult = 1;
+err:
+    SSL_free(domain);
+    SSL_free(listener);
+    SSL_free(other_conn);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
 /***********************************************************************************/
 
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
@@ -2350,6 +2392,7 @@ int setup_tests(void)
     ADD_TEST(test_get_shutdown);
     ADD_ALL_TESTS(test_tparam, OSSL_NELEM(tparam_tests));
     ADD_TEST(test_session_cb);
+    ADD_TEST(test_domain_flags);
 
     return 1;
  err:
