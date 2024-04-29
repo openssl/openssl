@@ -26,7 +26,8 @@ The I<flags> argument to SSL_new_domain() accepts a set of domain flags. If the
 I<flags> argument to SSL_new_domain() does not specify one of the flags
 B<SSL_DOMAIN_FLAG_SINGLE_THREAD>, B<SSL_DOMAIN_FLAG_MULTI_THREAD> or
 B<SSL_DOMAIN_FLAG_THREAD_ASSISTED>, the domain flags configured on the
-B<SSL_CTX> are used as a default. Otherwise, the domain flags in I<domain_flags>
+B<SSL_CTX> are inherited as a default and any other flags in I<flags> are added
+to the set of inherited flags. Otherwise, the domain flags in I<flags>
 are used. See L<SSL_CTX_set_domain_flags(3)> for details of the available domain
 flags and how they can be configured on a B<SSL_CTX>.
 
