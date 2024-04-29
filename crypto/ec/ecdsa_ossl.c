@@ -145,8 +145,8 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
         /* get random k */
         do {
             if (dgst != NULL) {
-                if (!BN_generate_dsa_nonce(k, order, priv_key,
-                                           dgst, dlen, ctx)) {
+                if (!ossl_bn_gen_dsa_nonce_fixed_top(k, order, priv_key,
+                                                     dgst, dlen, ctx)) {
                     ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
                     goto err;
                 }
