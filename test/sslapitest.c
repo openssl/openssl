@@ -10121,6 +10121,94 @@ static int test_ssl_dup(void)
     return testresult;
 }
 
+static int secret_cb(SSL *s, void *secretin, int *secret_len,
+                     STACK_OF(SSL_CIPHER) *peer_ciphers,
+                     const SSL_CIPHER **cipher, void *arg)
+{
+    int i;
+    unsigned char *secret = secretin;
+
+    /* Just use a fixed master secret */
+    for (i = 0; i < *secret_len; i++)
+        secret[i] = 0xff;
+
+    /* We don't set a preferred cipher */
+
+    return 1;
+}
+
+/*
+ * Test the session_secret_cb which is designed for use with EAP-FAST
+ */
+static int test_session_secret_cb(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_SESSION *secret_sess = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(),
+                                       0,
+                                       0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    /* Create an initial connection and save the session */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    /* session_secret_cb does not support TLSv1.3 */
+    if (!TEST_true(SSL_set_min_proto_version(clientssl, TLS1_2_VERSION))
+            || !TEST_true(SSL_set_max_proto_version(serverssl, TLS1_2_VERSION)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_ptr(secret_sess = SSL_get1_session(clientssl)))
+        goto end;
+
+    shutdown_ssl_connection(serverssl, clientssl);
+    serverssl = clientssl = NULL;
+
+    /* Resume the earlier session */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    /*
+     * No session ids for EAP-FAST - otherwise the state machine gets very
+     * confused.
+     */
+    if (!TEST_true(SSL_SESSION_set1_id(secret_sess, NULL, 0)))
+        goto end;
+
+    if (!TEST_true(SSL_set_min_proto_version(clientssl, TLS1_2_VERSION))
+            || !TEST_true(SSL_set_max_proto_version(serverssl, TLS1_2_VERSION))
+            || !TEST_true(SSL_set_session_secret_cb(serverssl, secret_cb,
+                                                    NULL))
+            || !TEST_true(SSL_set_session_secret_cb(clientssl, secret_cb,
+                                                    NULL))
+            || !TEST_true(SSL_set_session(clientssl, secret_sess)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_SESSION_free(secret_sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 # ifndef OPENSSL_NO_DH
 
 static EVP_PKEY *tmp_dh_params = NULL;
@@ -12144,6 +12232,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_ssl_dup);
+    ADD_TEST(test_session_secret_cb);
 # ifndef OPENSSL_NO_DH
     ADD_ALL_TESTS(test_set_tmp_dh, 11);
     ADD_ALL_TESTS(test_dh_auto, 7);
