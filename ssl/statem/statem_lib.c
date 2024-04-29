@@ -201,10 +201,9 @@ int tls_setup_handshake(SSL_CONNECTION *s)
             int cipher_maxprotover = SSL_CONNECTION_IS_DTLS(s)
                                      ? c->max_dtls : c->max_tls;
 
-            if ((cipher_minprotover == 0
-                 || ssl_version_cmp(s, ver_max, cipher_minprotover) >= 0)
-                && (cipher_maxprotover == 0
-                    || ssl_version_cmp(s, ver_max, cipher_maxprotover) <= 0)) {
+            if (cipher_minprotover > 0 && cipher_maxprotover > 0
+                    && ssl_version_cmp(s, ver_max, cipher_minprotover) >= 0
+                    && ssl_version_cmp(s, ver_max, cipher_maxprotover) <= 0) {
                 ok = 1;
                 break;
             }
