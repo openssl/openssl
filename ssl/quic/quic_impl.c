@@ -4295,7 +4295,9 @@ SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags)
 
     ql->domain  = ctx.qd;
     ql->engine  = ctx.qd->engine;
+#if defined(OPENSSL_THREADS)
     ql->mutex   = ctx.qd->mutex;
+#endif
 
     /* TODO(QUIC SERVER): Implement SSL_LISTENER_FLAG_NO_ACCEPT */
 
