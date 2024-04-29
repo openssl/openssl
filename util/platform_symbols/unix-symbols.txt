@@ -129,6 +129,7 @@ shutdown
 sigaction
 sleep
 socket
+socketpair
 sprintf
 stderr
 stdin
