@@ -30,13 +30,13 @@ static int create_socket(int domain, int socktype, int protocol)
      * non-inheritable, avoiding race conditions if another thread is about to
      * call CreateProcess.
      */
-    fd = WSASocketA(domain, socktype, protocol, NULL, 0,
-                    WSA_FLAG_NO_HANDLE_INHERIT);
+    fd = (int)WSASocketA(domain, socktype, protocol, NULL, 0,
+                         WSA_FLAG_NO_HANDLE_INHERIT);
     if (fd < 0)
         return -1;
 
     /* Prevent interference with the socket from other processes on Windows. */
-    if (setsockopt(lfd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, &on, sizeof(on)) < 0) {
+    if (setsockopt(fd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (void *)&on, sizeof(on)) < 0) {
         BIO_closesocket(fd);
         return -1;
     }
@@ -214,14 +214,14 @@ void ossl_rio_notifier_cleanup(RIO_NOTIFIER *nfy)
 int ossl_rio_notifier_signal(RIO_NOTIFIER *nfy)
 {
     static const unsigned char ch = 0;
-    ssize_t wr;
+    ossl_ssize_t wr;
 
     do
         /*
          * Note: If wr returns 0 the buffer is already full so we don't need to
          * do anything.
          */
-        wr = writesocket(nfy->wfd, &ch, sizeof(ch));
+        wr = writesocket(nfy->wfd, (void *)&ch, sizeof(ch));
     while (wr < 0 && get_last_socket_error_is_eintr());
 
     return 1;
@@ -230,14 +230,14 @@ int ossl_rio_notifier_signal(RIO_NOTIFIER *nfy)
 int ossl_rio_notifier_unsignal(RIO_NOTIFIER *nfy)
 {
     unsigned char buf[16];
-    ssize_t rd;
+    ossl_ssize_t rd;
 
     /*
      * signal() might have been called multiple times. Drain the buffer until
      * it's empty.
      */
     do
-        rd = readsocket(nfy->rfd, buf, sizeof(buf));
+        rd = readsocket(nfy->rfd, (void *)buf, sizeof(buf));
     while (rd == sizeof(buf)
            || (rd < 0 && get_last_socket_error_is_eintr()));
 
