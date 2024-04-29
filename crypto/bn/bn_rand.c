@@ -282,16 +282,17 @@ int ossl_bn_priv_rand_range_fixed_top(BIGNUM *r, const BIGNUM *range,
 }
 
 /*
- * BN_generate_dsa_nonce generates a random number 0 <= out < range. Unlike
- * BN_rand_range, it also includes the contents of |priv| and |message| in
- * the generation so that an RNG failure isn't fatal as long as |priv|
+ * ossl_bn_gen_dsa_nonce_fixed_top generates a random number 0 <= out < range.
+ * Unlike BN_rand_range, it also includes the contents of |priv| and |message|
+ * in the generation so that an RNG failure isn't fatal as long as |priv|
  * remains secret. This is intended for use in DSA and ECDSA where an RNG
  * weakness leads directly to private key exposure unless this function is
  * used.
  */
-int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
-                          const BIGNUM *priv, const unsigned char *message,
-                          size_t message_len, BN_CTX *ctx)
+int ossl_bn_gen_dsa_nonce_fixed_top(BIGNUM *out, const BIGNUM *range,
+                                    const BIGNUM *priv,
+                                    const unsigned char *message,
+                                    size_t message_len, BN_CTX *ctx)
 {
     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     /*
@@ -317,6 +318,8 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     k_bytes = OPENSSL_malloc(num_k_bytes);
     if (k_bytes == NULL)
         goto end;
+    /* Ensure top byte is set to avoid non-constant time in bin2bn */
+    k_bytes[0] = 0xff;
 
     /* We copy |priv| into a local buffer to avoid exposing its length. */
     if (BN_bn2binpad(priv, private_bytes, sizeof(private_bytes)) < 0) {
@@ -335,13 +338,15 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
         goto end;
     }
     for (n = 0; n < max_n; n++) {
-        for (done = 0; done < num_k_bytes;) {
+        unsigned char i = 0;
+
+        for (done = 1; done < num_k_bytes;) {
             if (RAND_priv_bytes_ex(libctx, random_bytes, sizeof(random_bytes),
                                    0) <= 0)
                 goto end;
 
             if (!EVP_DigestInit_ex(mdctx, md, NULL)
-                    || !EVP_DigestUpdate(mdctx, &done, sizeof(done))
+                    || !EVP_DigestUpdate(mdctx, &i, sizeof(i))
                     || !EVP_DigestUpdate(mdctx, private_bytes,
                                          sizeof(private_bytes))
                     || !EVP_DigestUpdate(mdctx, message, message_len)
@@ -355,10 +360,9 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
                 todo = SHA512_DIGEST_LENGTH;
             memcpy(k_bytes + done, digest, todo);
             done += todo;
+            ++i;
         }
 
-        /* Ensure top byte is set to avoid non-constant time in bin2bn */
-        k_bytes[0] = 0x80;
         if (!BN_bin2bn(k_bytes, num_k_bytes, out))
             goto end;
 
@@ -381,5 +385,22 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     OPENSSL_cleanse(digest, sizeof(digest));
     OPENSSL_cleanse(random_bytes, sizeof(random_bytes));
     OPENSSL_cleanse(private_bytes, sizeof(private_bytes));
+    return ret;
+}
+
+int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
+                          const BIGNUM *priv, const unsigned char *message,
+                          size_t message_len, BN_CTX *ctx)
+{
+    int ret;
+
+    ret = ossl_bn_gen_dsa_nonce_fixed_top(out, range, priv, message,
+                                          message_len, ctx);
+    /*
+     * This call makes the BN_generate_dsa_nonce non-const-time, thus we
+     * do not use it internally. But fixed_top BNs currently cannot be returned
+     * from public API calls.
+     */
+    bn_correct_top(out);
     return ret;
 }
