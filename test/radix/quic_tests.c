@@ -14,15 +14,25 @@
 
 DEF_SCRIPT(simple_conn, "simple connection to server")
 {
-    OP_SIMPLE_PAIR_CONN();
-    OP_WRITE_B(C, "apple");
+    size_t i;
 
-    OP_ACCEPT_CONN_WAIT(L, La, 0);
-    OP_ACCEPT_CONN_NONE(L);
+    for (i = 0; i < 2; ++i) {
+        if (i == 0) {
+            OP_SIMPLE_PAIR_CONN_D();
+        } else {
+            OP_CLEAR();
+            OP_SIMPLE_PAIR_CONN();
+        }
 
-    OP_READ_EXPECT_B(La, "apple");
-    OP_WRITE_B(La, "orange");
-    OP_READ_EXPECT_B(C, "orange");
+        OP_WRITE_B(C, "apple");
+
+        OP_ACCEPT_CONN_WAIT(L, La, 0);
+        OP_ACCEPT_CONN_NONE(L);
+
+        OP_READ_EXPECT_B(La, "apple");
+        OP_WRITE_B(La, "orange");
+        OP_READ_EXPECT_B(C, "orange");
+    }
 }
 
 DEF_SCRIPT(simple_thread_child,
