@@ -139,11 +139,13 @@ DEF_FUNC(hf_new_ssl)
     const SSL_METHOD *method;
     SSL *ssl;
     uint64_t flags;
-    int is_server;
+    int is_server, is_domain;
 
     F_POP2(name, flags);
 
-    is_server = (flags != 0);
+    is_domain   = ((flags & 2) != 0);
+    is_server   = ((flags & 1) != 0);
+
     method = is_server ? OSSL_QUIC_server_method() : OSSL_QUIC_client_method();
     if (!TEST_ptr(ctx = SSL_CTX_new(method)))
         goto err;
@@ -151,7 +153,11 @@ DEF_FUNC(hf_new_ssl)
     if (!TEST_true(ssl_ctx_configure(ctx, is_server)))
         goto err;
 
-    if (is_server) {
+    if (is_domain) {
+        if (!TEST_ptr(ssl = SSL_new_domain(ctx, 0)))
+            goto err;
+
+    } else if (is_server) {
         if (!TEST_ptr(ssl = SSL_new_listener(ctx, 0)))
             goto err;
     } else {
@@ -159,7 +165,7 @@ DEF_FUNC(hf_new_ssl)
             goto err;
     }
 
-    if (!TEST_true(ssl_attach_bio_dgram(ssl, 0, NULL)))
+    if (!is_domain && !TEST_true(ssl_attach_bio_dgram(ssl, 0, NULL)))
         goto err;
 
     if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), name, ssl))) {
@@ -174,6 +180,37 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_new_ssl_listener_from)
+{
+    int ok = 0;
+    SSL *domain, *listener;
+    const char *listener_name;
+    uint64_t flags;
+
+    REQUIRE_SSL(domain);
+    F_POP2(listener_name, flags);
+
+    if (!TEST_ptr_null(RADIX_PROCESS_get_obj(RP(), listener_name)))
+        goto err;
+
+    if (!TEST_ptr(listener = SSL_new_listener_from(domain, flags)))
+        goto err;
+
+    if (!TEST_true(ssl_attach_bio_dgram(listener, 0, NULL)))
+        goto err;
+
+    if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), listener_name, listener))) {
+        SSL_free(listener);
+        goto err;
+    }
+
+    radix_activate_slot(0);
+
+    ok = 1;
+err:
+    return ok;
+}
+
 DEF_FUNC(hf_listen)
 {
     int ok = 0, r;
@@ -185,7 +222,9 @@ DEF_FUNC(hf_listen)
     if (!TEST_true(r))
         goto err;
 
-    radix_activate_slot(0);
+    if (SSL_get0_domain(ssl) == NULL)
+        radix_activate_slot(0);
+
     ok = 1;
 err:
     return ok;
@@ -901,9 +940,24 @@ err:
      OP_PUSH_U64(1),                                            \
      OP_FUNC(hf_new_ssl))
 
+#define OP_NEW_SSL_D(name)                                      \
+    (OP_PUSH_PZ(#name),                                         \
+     OP_PUSH_U64(3),                                            \
+     OP_FUNC(hf_new_ssl))
+
 #define OP_NEW_SSL_L_LISTEN(name)                               \
     (OP_NEW_SSL_L(name),                                        \
      OP_LISTEN(name))
+
+#define OP_NEW_SSL_L_FROM(domain_name, listener_name, flags)    \
+    (OP_SELECT_SSL(0, domain_name),                             \
+     OP_PUSH_PZ(#listener_name),                                \
+     OP_PUSH_U64(flags),                                        \
+     OP_FUNC(hf_new_ssl_listener_from))
+
+#define OP_NEW_SSL_L_FROM_LISTEN(domain_name, listener_name, flags) \
+    (OP_NEW_SSL_L_FROM(domain_name, listener_name, flags),      \
+     OP_LISTEN(listener_name))
 
 #define OP_SET_PEER_ADDR_FROM(dst_name, src_name)               \
     (OP_SELECT_SSL(0, dst_name),                                \
@@ -912,6 +966,13 @@ err:
 
 #define OP_SIMPLE_PAIR_CONN()                                   \
     (OP_NEW_SSL_L_LISTEN(L),                                    \
+     OP_NEW_SSL_C(C),                                           \
+     OP_SET_PEER_ADDR_FROM(C, L),                               \
+     OP_CONNECT_WAIT(C))
+
+#define OP_SIMPLE_PAIR_CONN_D()                                 \
+    (OP_NEW_SSL_D(Ds),                                          \
+     OP_NEW_SSL_L_FROM_LISTEN(Ds, L, 0),                        \
      OP_NEW_SSL_C(C),                                           \
      OP_SET_PEER_ADDR_FROM(C, L),                               \
      OP_CONNECT_WAIT(C))
