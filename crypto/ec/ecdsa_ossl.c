@@ -198,8 +198,8 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
                                                                libctx, propq);
 #endif
                 } else {
-                    res = BN_generate_dsa_nonce(k, order, priv_key, dgst, dlen,
-                                                ctx);
+                    res = ossl_bn_gen_dsa_nonce_fixed_top(k, order, priv_key,
+                                                          dgst, dlen, ctx);
                 }
             } else {
                 res = ossl_bn_priv_rand_range_fixed_top(k, order, 0, ctx);
