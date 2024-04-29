@@ -420,11 +420,11 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     }
  finish:
     /* If we changed anything, resort the objects for faster lookup */
-    if (!sk_X509_OBJECT_is_sorted(xl->store_ctx->objs)) {
-        if (X509_STORE_lock(xl->store_ctx)) {
+    if (X509_STORE_lock(xl->store_ctx)) {
+        if (!sk_X509_OBJECT_is_sorted(xl->store_ctx->objs)) {
             sk_X509_OBJECT_sort(xl->store_ctx->objs);
-            X509_STORE_unlock(xl->store_ctx);
         }
+        X509_STORE_unlock(xl->store_ctx);
     }
 
     BUF_MEM_free(b);
