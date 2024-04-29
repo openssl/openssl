@@ -24,8 +24,9 @@ implicitly by calling L<SSL_new(3)> or L<SSL_new_listener(3)>:
 
 =item
 
-An explicit QUIC domain is created by and visible to the application and has
-other QUIC SSL objects created underneath it, such as listeners or connections.
+An explicit QUIC domain is created by and visible to the application as a QUIC
+domain SSL object and has other QUIC SSL objects created underneath it, such as
+listeners or connections.
 
 =item
 
@@ -128,19 +129,21 @@ calls, where application-level I/O calls (for example, to L<SSL_read_ex(3)> or
 L<SSL_write_ex(3)> on a QUIC stream SSL object) block until the request can be
 serviced. This includes the use of L<SSL_poll(3)> in a blocking fashion.
 
-Supporting blocking API calls reliably requires the creation of additional OS
-resources such as internal file descriptors to allow threads to be woken when
-necessary. This creation of internal OS resources is optional and may need to be
-explicitly requested by an application depending on the chosen concurrency
-model. If this functionality is disabled, depending on the chosen concurrency
-model, blocking API calls may not be available and calls to
-L<SSL_set_blocking_mode(3)> attempting to enable blocking mode will fail.
+Supporting blocking API calls reliably with multi-threaded usage requires the
+creation of additional OS resources such as internal file descriptors to allow
+threads to be woken when necessary. This creation of internal OS resources is
+optional and may need to be explicitly requested by an application depending on
+the chosen concurrency model. If this functionality is disabled, depending on
+the chosen concurrency model, blocking API calls may not be available and calls
+to L<SSL_set_blocking_mode(3)> attempting to enable blocking mode may fail,
+notwithstanding the following section.
 
 =head2 Legacy Blocking Support Compatibility
 
 OpenSSL 3.2 and 3.3 contained a buggy implementation of blocking QUIC I/O calls
 which is only reliable under single-threaded usage. This functionality is always
-available in the Single-Threaded Concurrency Model, where it works reliably.
+available in the Single-Threaded Concurrency Model (SCM), where it works
+reliably.
 
 For compatibility reasons, this functionality is also available under the
 default concurrency model if the application does not explicitly specify a
@@ -225,10 +228,13 @@ created.
 
 =head2 Default Behaviour
 
-If none of the above flags are provided to L<SSL_new_domain(3)> or another
-function which can accept the above flags, the default concurrency model set on
-the B<SSL_CTX> is used. This default can be set and get using
-L<SSL_CTX_set_domain_flags(3)> and L<SSL_CTX_get_domain_flags(3)>.
+If none of B<SSL_DOMAIN_FLAG_SINGLE_THREAD>, B<SSL_DOMAIN_FLAG_MULTI_THREAD> or
+B<SSL_DOMAIN_FLAG_THREAD_ASSISTED> are provided to L<SSL_new_domain(3)> or
+another constructor function which can accept the above flags, the default
+concurrency model set on the B<SSL_CTX> is used. This default can be set and get
+using L<SSL_CTX_set_domain_flags(3)> and L<SSL_CTX_get_domain_flags(3)>. Any
+additional flags provided (for example, B<SSL_DOMAIN_FLAG_BLOCCKING>) are added
+to the set of inherited flags.
 
 The default concurrency model set on a newly created B<SSL_CTX> is determined as
 follows:
@@ -250,7 +256,7 @@ flag.
 =item *
 
 Otherwise, if an B<SSL_METHOD> of L<OSSL_QUIC_client_method(3)> is used, the
-Contentive Concurrency Model (CCM) is used with th
+Contentive Concurrency Model (CCM) is used with the
 B<SSL_DOMAIN_FLAG_LEGACY_BLOCKING> flag.
 
 =item *
@@ -284,6 +290,14 @@ is spawned. This also implies B<SSL_DOMAIN_FLAG_BLOCKING> and the above.
 The internal consumption by OpenSSL of mutexes, condition variables, spin locks
 or other similar thread synchronisation primitives is unspecified under all
 concurrency models.
+
+The internal consumption by OpenSSL of threads is unspecified under the
+Thread-Assisted Concurrency Model.
+
+The internal consumption by OpenSSL of sockets, socket-like OS handles or file
+descriptors, or other resources as needed to support inter-thread notification,
+is unspecified under the Thread-Assisted Concurrency Model or when using
+B<SSL_DOMAIN_FLAG_BLOCKING>.
 
 =head1 BEHAVIOUR OF SSL OBJECTS
 

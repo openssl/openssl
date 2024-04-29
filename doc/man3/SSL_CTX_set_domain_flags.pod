@@ -45,10 +45,16 @@ Specifying this flag configures the Single-Threaded Concurrency Model (SCM).
 Speciyfing this flag configures the Contentive Concurrency Model (CCM) (unless
 B<SSL_DOMAIN_FLAG_THREAD_ASSISTED> is also specified).
 
+If OpenSSL was built without thread support, this is identical to
+B<SSL_DOMAIN_FLAG_SINGLE_THREAD>.
+
 =item B<SSL_DOMAIN_FLAG_THREAD_ASSISTED>
 
 Specifying this flag configures the Thread-Assisted Concurrency Modle (TACM).
-It implies B<SSL_DOMAIN_FLAG_MULTI_THREAD>.
+It implies B<SSL_DOMAIN_FLAG_MULTI_THREAD> and B<SSL_DOMAIN_FLAG_BLOCKING>.
+
+This concurrency model is not available if OpenSSL was built without thread
+support, in which case attempting to configure it will result in an error.
 
 =item B<SSL_DOMAIN_FLAG_BLOCKING>
 
