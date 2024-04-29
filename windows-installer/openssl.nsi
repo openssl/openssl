@@ -28,80 +28,80 @@ FunctionEnd
 
 # This section is run if installation of 32 bit binaries are selected
 !ifdef BUILD32
-Section "32 Bit Binaries"
-	SetOutPath $INSTDIR\x32
-	File ..\${BUILD32}\libcrypto-3.dll
-	File ..\${BUILD32}\libssl-3.dll
-	File ..\${BUILD32}\apps\openssl.exe
-	SetOutPath $INSTDIR\x32\providers
-	File ..\${BUILD32}\providers\fips.dll
-	File ..\${BUILD32}\providers\legacy.dll
-SectionEnd
+SectionGroup "32 Bit Installation"
+	Section "32 Bit Binaries"
+		SetOutPath $INSTDIR\x32
+		File /NONFATAL ..\${BUILD32}\libcrypto-3.dll
+		File /NONFATAL ..\${BUILD32}\libssl-3.dll
+		File ..\${BUILD32}\libcrypto.lib
+		File ..\${BUILD32}\libssl.lib
+		File ..\${BUILD32}\apps\openssl.exe
+		SetOutPath $INSTDIR\x32\providers
+		File /NONFATAL ..\${BUILD32}\providers\fips.dll
+		File ..\${BUILD32}\providers\legacy.dll
+	SectionEnd
+	Section "x32 Development Headers"
+		SetOutPath $INSTDIR\x32\include\openssl
+		!tempfile headerlist
+		!system 'FOR /R "..\${BUILD32}\include\openssl" %A IN (*.h) DO @( >> "${headerlist}" echo.File "%~A" )'
+		!include "${headerlist}"
+		!delfile "${headerlist}"
+		!undef headerlist
+
+		SetOutPath $INSTDIR\x32\include\crypto
+		!tempfile headerlist
+		!system 'FOR /R "..\${BUILD32}\include\crypto" %A IN (*.h) DO @( >> "${headerlist}" echo.File "%~A" )'
+		!include "${headerlist}"
+		!delfile "${headerlist}"
+		!undef headerlist
+
+		SetOutPath $INSTDIR\x32\include\internal
+		!tempfile headerlist
+		!system 'FOR /R "..\${BUILD32}\include\internal" %A IN (*.h) DO @( >> "${headerlist}" echo.File "%~A" )'
+		!include "${headerlist}"
+		!delfile "${headerlist}"
+		!undef headerlist
+	SectionEnd
+SectionGroupEnd
 !endif
 
 !ifdef BUILD64
 # This section is run if installation of the 64 bit binaries are selectd
-Section "64 Bit Binaries"
-	SetOutPath $INSTDIR\x64
-	File ..\${BUILD64}\libcrypto-3-x64.dll
-	File ..\${BUILD64}\libssl-3-x64.dll
-	File ..\${BUILD64}\apps\\openssl.exe
-	SetOutPath $INSTDIR\x64\providers
-	File ..\${BUILD64}\providers\fips.dll
-	File ..\${BUILD64}\providers\legacy.dll
-SectionEnd
-!endif
+SectionGroup "64 Bit Installation"
+	Section "64 Bit Binaries"
+		SetOutPath $INSTDIR\x64
+		File /NONFATAL ..\${BUILD64}\libcrypto-3-x64.dll
+		File /NONFATAL ..\${BUILD64}\libssl-3-x64.dll
+		File ..\${BUILD64}\libcrypto.lib
+		File ..\${BUILD64}\libssl.lib
+		File ..\${BUILD64}\apps\\openssl.exe
+		SetOutPath $INSTDIR\x64\providers
+		File /NONFATAL ..\${BUILD64}\providers\fips.dll
+		File ..\${BUILD64}\providers\legacy.dll
+	SectionEnd
+	Section "x64 Development Headers"
+		SetOutPath $INSTDIR\x64\include\openssl
+		!tempfile headerlist
+		!system 'FOR /R "..\${BUILD64}\include\openssl" %A IN (*.h) DO @( >> "${headerlist}" echo.File "%~A" )'
+		!include "${headerlist}"
+		!delfile "${headerlist}"
+		!undef headerlist
 
-# Optionally install x64 development headers
-!ifdef BUILD64
-Section "x64 Development Headers"
-	SetOutPath $INSTDIR\x64\include\openssl
-	!tempfile headerlist
-	!system 'FOR /R "..\${BUILD64}\include\openssl" %A IN (*.h) DO @( >> "${headerlist}" echo.File "%~A" )'
-	!include "${headerlist}"
-	!delfile "${headerlist}"
-	!undef headerlist
+		SetOutPath $INSTDIR\x64\include\crypto
+		!tempfile headerlist
+		!system 'FOR /R "..\${BUILD64}\include\crypto" %A IN (*.h) DO @( >> "${headerlist}" echo.File "%~A" )'
+		!include "${headerlist}"
+		!delfile "${headerlist}"
+		!undef headerlist
 
-	SetOutPath $INSTDIR\x64\include\crypto
-	!tempfile headerlist
-	!system 'FOR /R "..\${BUILD64}\include\crypto" %A IN (*.h) DO @( >> "${headerlist}" echo.File "%~A" )'
-	!include "${headerlist}"
-	!delfile "${headerlist}"
-	!undef headerlist
-
-	SetOutPath $INSTDIR\x64\include\internal
-	!tempfile headerlist
-	!system 'FOR /R "..\${BUILD64}\include\internal" %A IN (*.h) DO @( >> "${headerlist}" echo.File "%~A" )'
-	!include "${headerlist}"
-	!delfile "${headerlist}"
-	!undef headerlist
-SectionEnd
-!endif
-
-# Optionally install x64 development headers
-!ifdef BUILD32
-Section "x32 Development Headers"
-	SetOutPath $INSTDIR\x32\include\openssl
-	!tempfile headerlist
-	!system 'FOR /R "..\${BUILD32}\include\openssl" %A IN (*.h) DO @( >> "${headerlist}" echo.File "%~A" )'
-	!include "${headerlist}"
-	!delfile "${headerlist}"
-	!undef headerlist
-
-	SetOutPath $INSTDIR\x32\include\crypto
-	!tempfile headerlist
-	!system 'FOR /R "..\${BUILD32}\include\crypto" %A IN (*.h) DO @( >> "${headerlist}" echo.File "%~A" )'
-	!include "${headerlist}"
-	!delfile "${headerlist}"
-	!undef headerlist
-
-	SetOutPath $INSTDIR\x32\include\internal
-	!tempfile headerlist
-	!system 'FOR /R "..\${BUILD32}\include\internal" %A IN (*.h) DO @( >> "${headerlist}" echo.File "%~A" )'
-	!include "${headerlist}"
-	!delfile "${headerlist}"
-	!undef headerlist
-SectionEnd
+		SetOutPath $INSTDIR\x64\include\internal
+		!tempfile headerlist
+		!system 'FOR /R "..\${BUILD64}\include\internal" %A IN (*.h) DO @( >> "${headerlist}" echo.File "%~A" )'
+		!include "${headerlist}"
+		!delfile "${headerlist}"
+		!undef headerlist
+	SectionEnd
+SectionGroupEnd
 !endif
 
 # Always install the uninstaller
