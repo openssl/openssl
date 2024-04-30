@@ -941,10 +941,12 @@ long SSL_SESSION_get_timeout(const SSL_SESSION *s)
     return (long)ossl_time_to_time_t(s->timeout);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_4
 long SSL_SESSION_get_time(const SSL_SESSION *s)
 {
     return (long) SSL_SESSION_get_time_ex(s);
 }
+#endif
 
 time_t SSL_SESSION_get_time_ex(const SSL_SESSION *s)
 {
@@ -973,10 +975,12 @@ time_t SSL_SESSION_set_time_ex(SSL_SESSION *s, time_t t)
     return t;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_4
 long SSL_SESSION_set_time(SSL_SESSION *s, long t)
 {
     return (long) SSL_SESSION_set_time_ex(s, (time_t) t);
 }
+#endif
 
 int SSL_SESSION_get_protocol_version(const SSL_SESSION *s)
 {
