@@ -4325,8 +4325,8 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
     /*
      * In TLSv1.3 the caller gives the index of the certificate for which the
      * status message should be created.
-     * Prior to TLSv1.3 the chain index is 0 and the body should only the status
-     * of the server certificate itself.
+     * Prior to TLSv1.3 the chain index is 0 and the body should contain only
+     * the status of the server certificate itself.
      */
     x = SSL_get_certificate(ssl);
 
@@ -4338,8 +4338,8 @@ int tls_construct_cert_status_body(SSL_CONNECTION *s, size_t chainidx, WPACKET *
          * requested certificate specified by chainidx  SSL_get0_chain_certs
          * contains certificate chain except the server cert
          *
-         * if chainidx = 0 the server certificate is request
-         * if chainidx > 0 an intermediate certificate is request
+         * if chainidx = 0 the server certificate is requested
+         * if chainidx > 0 an intermediate certificate is requested
          */
         if ((int)chainidx < sk_X509_num(chain_certs)+1 && chainidx > 0) {
             x = sk_X509_value(chain_certs, chainidx - 1);

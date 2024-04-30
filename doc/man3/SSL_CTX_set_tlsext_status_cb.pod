@@ -90,7 +90,7 @@ SSL_get_tlsext_status_ocsp_resp_ex(). The value B<*resp> will be updated to poin
 to the OCSP response stack and the return value will be the number of responses
 on the stack.
 Typically a callback would obtain an OCSP_RESPONSE object from the stack via a
-call to sk_OCSP_RESPONSE_pop or sk_OCSP_RESPONSE_pop_free and convert it with 
+call to sk_OCSP_RESPONSE_pop or sk_OCSP_RESPONSE_pop_free and convert it with
 the d2i_OCSP_RESPONSE() function. If the server has not provided any
 response data then B<*resp> will be NULL and the return value from
 SSL_get_tlsext_status_ocsp_resp_ex() will be -1.
@@ -116,9 +116,9 @@ returned) or SSL_TLSEXT_ERR_ALERT_FATAL (meaning that a fatal error has
 occurred).
 
 SSL_CTX_set_tlsext_status_cb(), SSL_CTX_set_tlsext_status_arg(),
-SSL_CTX_set_tlsext_status_type(), SSL_set_tlsext_status_type() and
-SSL_set_tlsext_status_ocsp_resp() return 0 on error or 1 on success.
-SSL_set_tlsext_status_ocsp_resp_ex() return 0 on error or 1 on success.
+SSL_CTX_set_tlsext_status_type(), SSL_set_tlsext_status_type(),
+SSL_set_tlsext_status_ocsp_resp(), SSL_set_tlsext_status_ocsp_resp_ex() and
+return 0 on error or 1 on success.
 
 SSL_CTX_get_tlsext_status_type() returns the value previously set by
 SSL_CTX_set_tlsext_status_type(), or -1 if not set.

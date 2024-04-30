@@ -3639,18 +3639,14 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         ret = -1;
 
 #ifndef OPENSSL_NO_OCSP
-        if (sc->ext.ocsp.resp != NULL) {
-            OPENSSL_free(sc->ext.ocsp.resp);
-            sc->ext.ocsp.resp = NULL;
-            sc->ext.ocsp.resp_len = 0;
-        }
-
-        resp = sk_OCSP_RESPONSE_value(sc->ext.ocsp.resp_ex, 0);
+         resp = sk_OCSP_RESPONSE_value(sc->ext.ocsp.resp_ex, 0);
 
         if (resp != NULL) {
             int resp_len = i2d_OCSP_RESPONSE(resp, NULL);
 
             if (resp_len > 0 && resp_len <= LONG_MAX) {
+                OPENSSL_free(sc->ext.ocsp.resp);
+
                 sc->ext.ocsp.resp = OPENSSL_malloc(resp_len);
 
                 if (sc->ext.ocsp.resp != NULL) {
@@ -3683,7 +3679,8 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
             p = parg;
             resp = d2i_OCSP_RESPONSE(NULL, (const unsigned char **)&p, larg);
-            sk_OCSP_RESPONSE_push(sc->ext.ocsp.resp_ex, resp);
+            if (resp != NULL)
+                sk_OCSP_RESPONSE_push(sc->ext.ocsp.resp_ex, resp);
         }
 #endif
         ret = 1;

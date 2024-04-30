@@ -644,6 +644,7 @@ static int cert_status_cb(SSL *s, void *arg)
     char* respfile = NULL;
     int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
     int i;
+    BIO *derbio;
 
     if (srctx->verbose)
         BIO_puts(bio_err, "cert_status: callback called\n");
@@ -652,7 +653,7 @@ static int cert_status_cb(SSL *s, void *arg)
         for (i = 0; i < sk_OPENSSL_STRING_num(srctx->skrespin); i++) {
             respfile = sk_OPENSSL_STRING_value(srctx->skrespin, i);
 
-            BIO *derbio = bio_open_default(respfile, 'r', FORMAT_ASN1);
+            derbio = bio_open_default(respfile, 'r', FORMAT_ASN1);
             BIO_printf(bio_err, "********************** read response from file : %s\n", respfile);
 
             if (derbio == NULL) {
