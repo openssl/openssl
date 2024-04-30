@@ -2153,6 +2153,9 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
     int disabled = 0;
     RAW_EXTENSION *suppversions;
 
+    if (client_version <= 0)
+        return SSL_R_WRONG_SSL_VERSION;
+
     s->client_version = client_version;
 
     switch (server_version) {
