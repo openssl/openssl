@@ -227,6 +227,10 @@ int ossl_gen_deterministic_nonce_rfc6979(BIGNUM *out, const BIGNUM *q,
     } while (ossl_bn_is_word_fixed_top(out, 0)
             || ossl_bn_is_word_fixed_top(out, 1)
             || BN_ucmp(out, q) >= 0);
+#ifdef BN_DEBUG
+    /* With BN_DEBUG on a fixed top number cannot be returned */
+    bn_correct_top(out);
+#endif
     ret = 1;
 
 end:
