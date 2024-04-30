@@ -110,7 +110,7 @@ B<openssl> B<s_client>
 [B<-sess_in> I<filename>]
 [B<-serverinfo> I<types>]
 [B<-status>]
-[B<-ocsp_check>]
+[B<-ocsp_check_leaf>]
 [B<-ocsp_check_all>]
 [B<-alpn> I<protocols>]
 [B<-nextprotoneg> I<protocols>]
@@ -738,7 +738,7 @@ file.
 Sends a certificate status request to the server (OCSP stapling). The server
 response (if any) is printed out.
 
-=item B<-ocsp_check>
+=item B<-ocsp_check_leaf>
 
 Require performing server certificate status checking. Any OCSP response
 provided in the TLS handshake (by so-called "OCSP stapling") is tried first.
@@ -751,7 +751,7 @@ This implies B<-status>.
 As the option before, but require performing certificate status checking also
 for the chain of the server certificate (excluding the trust anchor).
 
-This implies the B<-status> and B<-ocsp_check>.
+This implies the B<-status> and B<-ocsp_check_leaf>.
 
 =item B<-alpn> I<protocols>, B<-nextprotoneg> I<protocols>
 

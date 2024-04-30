@@ -593,7 +593,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     X509 *x = NULL;
     int ret = SSL_TLSEXT_ERR_NOACK;
     int i;
-    int len = 1;
+    int num = 1;
     STACK_OF(X509) *server_certs = NULL;
     OCSP_RESPONSE *resp = NULL;
 
@@ -605,11 +605,11 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     SSL_get0_chain_certs(s, &server_certs);
     if (server_certs != NULL)
         /* certificate chain is available */
-        len = sk_X509_num(server_certs);
+        num = sk_X509_num(server_certs);
     else
-        /* certificate chain is not available, set len to 1 for server certificate */
-        len = 1;
-    for (i = -1; i < len-1; i++) {
+        /* certificate chain is not available, set num to 1 for server certificate */
+        num = 1;
+    for (i = -1; i < num - 1; i++) {
         if (i == -1) {
             /* get OCSP response for server certificate first */
             x = SSL_get_certificate(s);
