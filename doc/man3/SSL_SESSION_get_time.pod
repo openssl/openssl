@@ -11,26 +11,31 @@ SSL_get_time, SSL_set_time, SSL_get_timeout, SSL_set_timeout
 
  #include <openssl/ssl.h>
 
- long SSL_SESSION_get_time(const SSL_SESSION *s);
- long SSL_SESSION_set_time(SSL_SESSION *s, long tm);
  long SSL_SESSION_get_timeout(const SSL_SESSION *s);
  long SSL_SESSION_set_timeout(SSL_SESSION *s, long tm);
 
- long SSL_get_time(const SSL_SESSION *s);
- long SSL_set_time(SSL_SESSION *s, long tm);
  long SSL_get_timeout(const SSL_SESSION *s);
  long SSL_set_timeout(SSL_SESSION *s, long tm);
 
  time_t SSL_SESSION_get_time_ex(const SSL_SESSION *s);
  time_t SSL_SESSION_set_time_ex(SSL_SESSION *s, time_t tm);
 
+The following functions have been deprecated since OpenSSL 3.4, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
+ long SSL_SESSION_get_time(const SSL_SESSION *s);
+ long SSL_SESSION_set_time(SSL_SESSION *s, long tm);
+ long SSL_get_time(const SSL_SESSION *s);
+ long SSL_set_time(SSL_SESSION *s, long tm);
+
 =head1 DESCRIPTION
 
-SSL_SESSION_get_time() returns the time at which the session B<s> was
+SSL_SESSION_get_time_ex() returns the time at which the session B<s> was
 established. The time is given in seconds since the Epoch and therefore
 compatible to the time delivered by the time() call.
 
-SSL_SESSION_set_time() replaces the creation time of the session B<s> with
+SSL_SESSION_set_time_ex() replaces the creation time of the session B<s> with
 the chosen value B<tm>.
 
 SSL_SESSION_get_timeout() returns the timeout value set for session B<s>
@@ -39,9 +44,10 @@ in seconds.
 SSL_SESSION_set_timeout() sets the timeout value for session B<s> in seconds
 to B<tm>.
 
-SSL_SESSION_get_time_ex() and SSL_SESSION_set_time_ex() extended functions use
-the time_t datatype instead of long to fix the Y2038 problem on systems with
-64 bit time_t type.
+SSL_SESSION_get_time() and SSL_SESSION_set_time() functions use
+the long datatype instead of time_t and are therefore deprecated due to not
+being Y2038-safe on 32 bit systems. Note that such systems still need
+to be configured to use 64 bit time_t to be able to avoid overflow in system time.
 
 The SSL_get_time(), SSL_set_time(), SSL_get_timeout(), and SSL_set_timeout()
 functions are synonyms for the SSL_SESSION_*() counterparts.
@@ -57,10 +63,10 @@ of the session.
 
 =head1 RETURN VALUES
 
-SSL_SESSION_get_time() and SSL_SESSION_get_timeout() return the currently
+SSL_SESSION_get_time_ex() and SSL_SESSION_get_timeout() return the currently
 valid values.
 
-SSL_SESSION_set_time() and SSL_SESSION_set_timeout() return 1 on success.
+SSL_SESSION_set_time_ex() and SSL_SESSION_set_timeout() return 1 on success.
 
 If any of the function is passed the NULL pointer for the session B<s>,
 0 is returned.
