@@ -151,7 +151,7 @@ ossl_ht_put() on the B<HT_VALUE> to prevent memory leaks.
 
 =item *
 
-ossl_ht_get() preforms a lookup of an B<HT_KEY> in the hashtable, returning
+ossl_ht_get() performs a lookup of an B<HT_KEY> in the hashtable, returning
 its corresponding value.
 
 =item *
@@ -199,12 +199,12 @@ given value.
 
 =item *
 
-HT_SET_KEY_STRING() Preforms a strncpy() of a source string to the destination
+HT_SET_KEY_STRING() Performs a strncpy() of a source string to the destination
 key field.
 
 =item *
 
-HT_SET_KEY_BLOB() Preforms a memcpy() of a source uint8_t buffer to a
+HT_SET_KEY_BLOB() Performs a memcpy() of a source uint8_t buffer to a
 destination key field.
 
 =item *
