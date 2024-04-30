@@ -145,6 +145,7 @@ custom_ext_free_cb                      datatype
 custom_ext_parse_cb                     datatype
 pem_password_cb                         datatype
 ssl_ct_validation_cb                    datatype
+tls_session_secret_cb_fn                datatype
 ASYNC_stack_alloc_fn                    datatype
 ASYNC_stack_free_fn                     datatype
 PKCS12_create_cb                        datatype
