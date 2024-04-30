@@ -336,13 +336,15 @@ int ossl_bn_gen_dsa_nonce_fixed_top(BIGNUM *out, const BIGNUM *range,
         goto end;
     }
     for (n = 0; n < max_n; n++) {
+        unsigned char i = 0;
+
         for (done = 1; done < num_k_bytes;) {
             if (RAND_priv_bytes_ex(libctx, random_bytes, sizeof(random_bytes),
                                    0) <= 0)
                 goto end;
 
             if (!EVP_DigestInit_ex(mdctx, md, NULL)
-                    || !EVP_DigestUpdate(mdctx, &done, sizeof(done))
+                    || !EVP_DigestUpdate(mdctx, &i, sizeof(i))
                     || !EVP_DigestUpdate(mdctx, private_bytes,
                                          sizeof(private_bytes))
                     || !EVP_DigestUpdate(mdctx, message, message_len)
@@ -356,6 +358,7 @@ int ossl_bn_gen_dsa_nonce_fixed_top(BIGNUM *out, const BIGNUM *range,
                 todo = SHA512_DIGEST_LENGTH;
             memcpy(k_bytes + done, digest, todo);
             done += todo;
+            ++i;
         }
 
         if (!BN_bin2bn(k_bytes, num_k_bytes, out))
