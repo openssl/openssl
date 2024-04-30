@@ -316,7 +316,7 @@ The X509_STORE_CTX_get_num_untrusted() function was added in OpenSSL 1.1.0.
 The X509_STORE_CTX_new_ex() function was added in OpenSSL 3.0.
 The X509_STORE_CTX_init_rpk(), X509_STORE_CTX_get0_rpk(), and
 X509_STORE_CTX_set0_rpk() functions were added in OpenSSL 3.2.
-X509_STORE_CTX_set_ocsp_resp() functions were added in OpenSSL 3.4.
+X509_STORE_CTX_set_ocsp_resp() functions was added in OpenSSL 3.4.
 
 There is no need to call X509_STORE_CTX_cleanup() explicitly since OpenSSL 3.0.
 
