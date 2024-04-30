@@ -2155,6 +2155,9 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
     const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
                                                      : TLS1_3_VERSION;
 
+    if (client_version <= 0)
+        return SSL_R_WRONG_SSL_VERSION;
+
     s->client_version = client_version;
 
     switch (server_version) {
