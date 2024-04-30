@@ -169,6 +169,7 @@
  * 'no-deprecated'.
  */
 
+# undef OPENSSL_NO_DEPRECATED_3_4
 # undef OPENSSL_NO_DEPRECATED_3_1
 # undef OPENSSL_NO_DEPRECATED_3_0
 # undef OPENSSL_NO_DEPRECATED_1_1_1
@@ -178,6 +179,17 @@
 # undef OPENSSL_NO_DEPRECATED_1_0_0
 # undef OPENSSL_NO_DEPRECATED_0_9_8
 
+# if OPENSSL_API_LEVEL >= 30400
+#  ifndef OPENSSL_NO_DEPRECATED
+#   define OSSL_DEPRECATEDIN_3_4                OSSL_DEPRECATED(3.4)
+#   define OSSL_DEPRECATEDIN_3_4_FOR(msg)       OSSL_DEPRECATED_FOR(3.4, msg)
+#  else
+#   define OPENSSL_NO_DEPRECATED_3_4
+#  endif
+# else
+#  define OSSL_DEPRECATEDIN_3_4
+#  define OSSL_DEPRECATEDIN_3_4_FOR(msg)
+# endif
 # if OPENSSL_API_LEVEL >= 30100
 #  ifndef OPENSSL_NO_DEPRECATED
 #   define OSSL_DEPRECATEDIN_3_1                OSSL_DEPRECATED(3.1)
