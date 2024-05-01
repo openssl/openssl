@@ -907,8 +907,9 @@ int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
       return 0;
     }
     s->session_id_length = sid_len;
-    if (sid != s->session_id)
+    if (sid != s->session_id && sid_len > 0)
         memcpy(s->session_id, sid, sid_len);
+
     return 1;
 }
 
