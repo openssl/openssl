@@ -49,8 +49,8 @@ struct ossl_lib_ctx_st {
     void *fips_prov;
 #endif
 
-    unsigned int ischild:1;
-    unsigned int conf_diagnostics:1;
+    int ischild;
+    int conf_diagnostics;
 };
 
 int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx)
