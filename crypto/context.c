@@ -676,10 +676,10 @@ int OSSL_LIB_CTX_get_conf_diagnostics(OSSL_LIB_CTX *libctx)
     return libctx->conf_diagnostics;
 }
 
-void OSSL_LIB_CTX_set_conf_diagnostics(OSSL_LIB_CTX *libctx, unsigned int value)
+void OSSL_LIB_CTX_set_conf_diagnostics(OSSL_LIB_CTX *libctx, int value)
 {
     libctx = ossl_lib_ctx_get_concrete(libctx);
     if (libctx == NULL)
         return;
-    libctx->conf_diagnostics = value != 0;
+    libctx->conf_diagnostics = value;
 }
