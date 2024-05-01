@@ -65,6 +65,8 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
         libctx = ctx->libctx;
     }
     conf_diagnostics = OSSL_LIB_CTX_get_conf_diagnostics(libctx);
+    if (conf_diagnostics)
+        flags |= SSL_CONF_FLAG_SHOW_ERRORS;
     if (meth->ssl_accept != ssl_undefined_function)
         flags |= SSL_CONF_FLAG_SERVER;
     if (meth->ssl_connect != ssl_undefined_function)
