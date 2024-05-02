@@ -48,8 +48,36 @@ static int test_set0_default(void)
     return testresult;
 }
 
+static int test_set_get_conf_diagnostics(void)
+{
+    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
+    int res = 0;
+
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    if (!TEST_false(OSSL_LIB_CTX_get_conf_diagnostics(ctx)))
+        goto err;
+
+    OSSL_LIB_CTX_set_conf_diagnostics(ctx, 1);
+
+    if (!TEST_true(OSSL_LIB_CTX_get_conf_diagnostics(ctx)))
+        goto err;
+
+    OSSL_LIB_CTX_set_conf_diagnostics(ctx, 0);
+
+    if (!TEST_false(OSSL_LIB_CTX_get_conf_diagnostics(ctx)))
+        goto err;
+
+    res = 1;
+ err:
+    OSSL_LIB_CTX_free(ctx);
+    return res;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_set0_default);
+    ADD_TEST(test_set_get_conf_diagnostics);
     return 1;
 }
