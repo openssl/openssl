@@ -586,7 +586,7 @@ int tls_parse_ctos_psk_kex_modes(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     PACKET psk_kex_modes;
     unsigned int mode;
 
@@ -629,7 +629,7 @@ int tls_parse_ctos_psk_kex_modes(SSL_CONNECTION *s, PACKET *pkt,
  * received in the ClientHello and to select the group used of the key exchange
  */
 
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
 /*
  * Accept a key share group by setting the related variables in s->s3 and
  * by generating a pubkey for this group
@@ -830,7 +830,7 @@ static void check_overlap(SSL_CONNECTION *s,
 int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context, X509 *x, size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     PACKET key_share_list;
     const uint16_t *clntgroups, *srvrgroups;
     const size_t *srvrtuples;
@@ -1008,7 +1008,7 @@ err:
 int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     X509 *x, size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     unsigned int format, version, key_share, group_id;
     EVP_MD_CTX *hctx;
     EVP_PKEY *pkey;
@@ -1976,7 +1976,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     unsigned char *encoded_pubkey;
     size_t encoded_pubkey_len = 0;
     EVP_PKEY *ckey = s->s3.peer_tmp, *skey = NULL;
@@ -2106,6 +2106,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
     s->s3.did_kex = 1;
     return EXT_RETURN_SENT;
 #else
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
     return EXT_RETURN_FAIL;
 #endif
 }
@@ -2114,7 +2115,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     unsigned char *hashval1, *hashval2, *appcookie1, *appcookie2, *cookie;
     unsigned char *hmac, *hmac2;
     size_t startlen, ciphlen, totcookielen, hashlen, hmaclen, appcookielen;
@@ -2239,6 +2240,7 @@ err:
     EVP_PKEY_free(pkey);
     return ret;
 #else
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
     return EXT_RETURN_FAIL;
 #endif
 }
