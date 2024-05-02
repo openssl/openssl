@@ -15,7 +15,7 @@ OSSL_LIB_CTX_set_conf_diagnostics, OSSL_LIB_CTX_get_conf_diagnostics
 =head1 DESCRIPTION
 
 OSSL_LIB_CTX_set_conf_diagnostics() sets value of the configuration
-diagnostics flag. If I<value> is non-zero subsequent parsing and application
+diagnostics flag. If I<value> is nonzero subsequent parsing and application
 of configuration data can report errors that would otherwise be ignored. In
 particular any errors in the ssl configuration module will cause a failure
 of L<SSL_CTX_new(3)> and L<SSL_CTX_new_ex(3)> calls. The configuration
@@ -31,7 +31,7 @@ configuration diagnostics flag.
 =head1 RETURN VALUES
 
 OSSL_LIB_CTX_get_conf_diagnostcs() returns 0 if configuration diagnostics
-should not be performed, non-zero otherwise.
+should not be performed, nonzero otherwise.
 
 =head1 SEE ALSO
 
