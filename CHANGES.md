@@ -39,7 +39,13 @@ OpenSSL 3.4
  * The X25519 and X448 key exchange implementation in the FIPS provider
    is unapproved and has `fips=no` property.
 
-   * Tomas Mraz*
+   *Tomáš Mráz*
+
+ * Setting `config_diagnostics=1` in the config file will cause errors to
+   be returned from SSL_CTX_new() and SSL_CTX_new_ex() if there is an error
+   in the ssl module configuration.
+
+   *Tomáš Mráz*
 
  * Use an empty renegotiate extension in TLS client hellos instead of
    the empty renegotiation SCSV, for all connections with a minimum TLS
