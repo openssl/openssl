@@ -8,7 +8,7 @@
 
 
 use OpenSSL::Test::Utils;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT data_file/;
 
 my $test_name = "test_sysdefault";
 setup($test_name);
@@ -16,8 +16,16 @@ setup($test_name);
 plan skip_all => "$test_name is not supported in this build"
     if disabled("tls1_2") || disabled("rsa");
 
-plan tests => 1;
+plan tests => 3;
 
-$ENV{OPENSSL_CONF} = srctop_file("test", "sysdefault.cnf");
+$ENV{OPENSSL_CONF} = data_file("sysdefault.cnf");
+
+ok(run(test(["sysdefaulttest"])), "sysdefaulttest");
+
+$ENV{OPENSSL_CONF} = data_file("sysdefault-bad.cnf");
+
+ok(!run(test(["sysdefaulttest"])), "sysdefaulttest");
+
+$ENV{OPENSSL_CONF} = data_file("sysdefault-ignore.cnf");
 
 ok(run(test(["sysdefaulttest"])), "sysdefaulttest");
