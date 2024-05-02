@@ -68,7 +68,7 @@ jobs:
           }, {
             arch: hppa-linux-gnu,
             libs: libc6-dev-hppa-cross,
-            target: -static linux-generic32,
+            target: -static -O1 linux-generic32,
             fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
