@@ -66,9 +66,11 @@ jobs:
             target: linux-armv4,
             tests: -test_includes -test_store -test_x509_store
           }, {
+            # gcc hppa seems to have some potential compiler issues
+            # with -O2 on this platform, reduce optimization to -01
             arch: hppa-linux-gnu,
             libs: libc6-dev-hppa-cross,
-            target: -static linux-generic32,
+            target: -static -O1 linux-generic32,
             fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
