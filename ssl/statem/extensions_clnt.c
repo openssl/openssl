@@ -617,7 +617,7 @@ EXT_RETURN tls_construct_ctos_psk_kex_modes(SSL_CONNECTION *s, WPACKET *pkt,
                                             unsigned int context, X509 *x,
                                             size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     int nodhe = s->options & SSL_OP_ALLOW_NO_DHE_KEX;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk_kex_modes)
@@ -639,7 +639,7 @@ EXT_RETURN tls_construct_ctos_psk_kex_modes(SSL_CONNECTION *s, WPACKET *pkt,
     return EXT_RETURN_SENT;
 }
 
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
 static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
 {
     unsigned char *encoded_point = NULL;
@@ -700,7 +700,7 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
                                         unsigned int context, X509 *x,
                                         size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     size_t i, num_groups = 0;
     const uint16_t *pgroups = NULL;
     uint16_t curve_id = 0;
@@ -1044,7 +1044,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
                                   unsigned int context,
                                   X509 *x, size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     uint32_t agesec, agems = 0;
     size_t binderoffset, msglen;
     int reshashsize = 0, pskhashsize = 0;
@@ -1253,7 +1253,7 @@ EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pk
                                                   ossl_unused X509 *x,
                                                   ossl_unused size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     if (!s->pha_enabled)
         return EXT_RETURN_NOT_SENT;
 
@@ -1853,7 +1853,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
                              unsigned int context, X509 *x,
                              size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     unsigned int group_id;
     PACKET encoded_pt;
     EVP_PKEY *ckey = s->s3.tmp.pkey, *skey = NULL;
@@ -2066,7 +2066,7 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt,
                        unsigned int context, X509 *x,
                        size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     unsigned int identity;
 
     if (!PACKET_get_net_2(pkt, &identity) || PACKET_remaining(pkt) != 0) {

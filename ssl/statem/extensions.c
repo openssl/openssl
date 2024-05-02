@@ -1363,7 +1363,7 @@ static int final_supported_versions(SSL_CONNECTION *s, unsigned int context,
 
 static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
 {
-#if !defined(OPENSSL_NO_TLS1_3)
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     if (!SSL_CONNECTION_IS_VERSION13(s))
         return 1;
 
@@ -1528,7 +1528,7 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
             return 0;
         }
     }
-#endif /* !defined(OPENSSL_NO_TLS1_3) */
+#endif /* !defined(OPENSSL_NO_TLS1_3) && !defined(OPENSSL_NO_DTLS1_3) */
     return 1;
 }
 
