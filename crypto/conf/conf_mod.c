@@ -110,7 +110,17 @@ DEFINE_RUN_ONCE_STATIC(do_init_module_list_lock)
 
 static int conf_diagnostics(const CONF *cnf)
 {
-    return _CONF_get_number(cnf, NULL, "config_diagnostics") != 0;
+    int status;
+    long result = 0;
+
+    ERR_set_mark();
+    status = NCONF_get_number_e(cnf, NULL, "config_diagnostics", &result);
+    ERR_pop_to_mark();
+    if (status > 0) {
+        OSSL_LIB_CTX_set_conf_diagnostics(cnf->libctx, result > 0);
+        return result > 0;
+    }
+    return OSSL_LIB_CTX_get_conf_diagnostics(cnf->libctx);
 }
 
 /* Main function: load modules from a CONF structure */
@@ -183,7 +193,7 @@ int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
 {
     char *file = NULL;
     CONF *conf = NULL;
-    int ret = 0, diagnostics = 0;
+    int ret = 0, diagnostics = OSSL_LIB_CTX_get_conf_diagnostics(libctx);
 
     ERR_set_mark();
 
@@ -213,8 +223,8 @@ int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
     }
 
     ret = CONF_modules_load(conf, appname, flags);
-    diagnostics = conf_diagnostics(conf);
-    OSSL_LIB_CTX_set_conf_diagnostics(libctx, diagnostics);
+    /* CONF_modules_load() might change the diagnostics setting, reread it. */
+    diagnostics = OSSL_LIB_CTX_get_conf_diagnostics(libctx);
 
  err:
     if (filename == NULL)
