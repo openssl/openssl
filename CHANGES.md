@@ -41,8 +41,8 @@ OpenSSL 3.4
 
    *Tomáš Mráz*
 
- * Setting `config_diagnostics=1` in config file will cause returning
-   errors from SSL_CTX_new() and SSL_CTX_new_ex() if there is an error
+ * Setting `config_diagnostics=1` in the config file will cause errors to
+   be returned from SSL_CTX_new() and SSL_CTX_new_ex() if there is an error
    in the ssl module configuration.
 
    *Tomáš Mráz*
