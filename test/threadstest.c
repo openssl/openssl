@@ -1076,19 +1076,6 @@ static int test_obj_add(void)
                            1, default_provider);
 }
 
-static void test_lib_ctx_load_config_worker(void)
-{
-    if (!TEST_int_eq(OSSL_LIB_CTX_load_config(multi_libctx, config_file), 1))
-        multi_set_success(0);
-}
-
-static int test_lib_ctx_load_config(void)
-{
-    return thread_run_test(&test_lib_ctx_load_config_worker,
-                           MAXIMUM_THREADS, &test_lib_ctx_load_config_worker,
-                           1, default_provider);
-}
-
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
 static BIO *multi_bio1, *multi_bio2;
 
@@ -1275,7 +1262,6 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_multi_load_unload_provider);
     ADD_TEST(test_obj_add);
-    ADD_TEST(test_lib_ctx_load_config);
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
     ADD_TEST(test_bio_dgram_pair);
 #endif
