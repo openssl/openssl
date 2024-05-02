@@ -85,7 +85,8 @@ library context.
 
 OSSL_LIB_CTX_load_config() loads a configuration file using the given I<ctx>.
 This can be used to associate a library context with providers that are loaded
-from a configuration.
+from a configuration. This function must not be called concurrently from
+multiple threads on a single I<ctx>.
 
 OSSL_LIB_CTX_free() frees the given I<ctx>, unless it happens to be the
 default OpenSSL library context.
