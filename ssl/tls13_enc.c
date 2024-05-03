@@ -481,7 +481,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     int mac_pkey_type = NID_undef;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     size_t keylen, ivlen = EVP_MAX_IV_LENGTH, taglen;
-    EVP_MD_CTX *mdctx = NULL;
     int level;
     int direction = (which & SSL3_CC_READ) != 0 ? OSSL_RECORD_DIRECTION_READ
                                                 : OSSL_RECORD_DIRECTION_WRITE;
@@ -489,6 +488,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     if (((which & SSL3_CC_CLIENT) && (which & SSL3_CC_WRITE))
             || ((which & SSL3_CC_SERVER) && (which & SSL3_CC_READ))) {
         if (which & SSL3_CC_EARLY) {
+            EVP_MD_CTX *mdctx = NULL;
             long handlen;
             void *hdata;
             unsigned int hashlenui;
@@ -527,17 +527,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             }
 
             /*
-             * We need to calculate the handshake digest using the digest from
-             * the session. We haven't yet selected our ciphersuite so we can't
-             * use ssl_handshake_md().
-             */
-            mdctx = EVP_MD_CTX_new();
-            if (mdctx == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-                goto err;
-            }
-
-            /*
              * This ups the ref count on cipher so we better make sure we free
              * it again
              */
@@ -554,14 +543,27 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                 goto err;
             }
 
+            /*
+             * We need to calculate the handshake digest using the digest from
+             * the session. We haven't yet selected our ciphersuite so we can't
+             * use ssl_handshake_md().
+             */
+            mdctx = EVP_MD_CTX_new();
+            if (mdctx == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+                goto err;
+            }
+
             md = ssl_md(sctx, sslcipher->algorithm2);
             if (md == NULL || !EVP_DigestInit_ex(mdctx, md, NULL)
                     || !EVP_DigestUpdate(mdctx, hdata, handlen)
                     || !EVP_DigestFinal_ex(mdctx, hashval, &hashlenui)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                EVP_MD_CTX_free(mdctx);
                 goto err;
             }
             hashlen = hashlenui;
+            EVP_MD_CTX_free(mdctx);
 
             if (!tls13_hkdf_expand(s, md, insecret,
                                    early_exporter_master_secret,
@@ -741,12 +743,11 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         /* We up-refed this so now we need to down ref */
         if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0)
             ssl_evp_md_free(mac_md);
-        EVP_MD_CTX_free(mdctx);
         ssl_evp_cipher_free(cipher);
     }
     OPENSSL_cleanse(key, sizeof(key));
     OPENSSL_cleanse(secret, sizeof(secret));
-    if (ivlen > EVP_MAX_IV_LENGTH)
+    if (iv != iv_intern)
         OPENSSL_free(iv);
     return ret;
 }
@@ -812,7 +813,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
  err:
     OPENSSL_cleanse(key, sizeof(key));
     OPENSSL_cleanse(secret, sizeof(secret));
-    if (ivlen > EVP_MAX_IV_LENGTH)
+    if (iv != iv_intern)
         OPENSSL_free(iv);
     return ret;
 }

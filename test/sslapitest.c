@@ -3946,7 +3946,7 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
         return 1;
 
     if (ciphersuites[cipher] == NULL)
-        return 1;
+        return TEST_skip("Cipher not supported");
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                               TLS_client_method(),
@@ -3965,7 +3965,7 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
                                         &serverssl, &sess, idx,
-                                        cipher == 2 || cipher == 6
+                                        (cipher == 2 || cipher == 6)
                                             ? SHA384_DIGEST_LENGTH
                                             : SHA256_DIGEST_LENGTH)))
         goto end;

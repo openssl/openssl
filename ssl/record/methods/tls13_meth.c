@@ -30,7 +30,7 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     int mode;
     int enc = (rl->direction == OSSL_RECORD_DIRECTION_WRITE) ? 1 : 0;
 
-    rl->iv = OPENSSL_zalloc(ivlen);
+    rl->iv = OPENSSL_malloc(ivlen);
     if (rl->iv == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return OSSL_RECORD_RETURN_FATAL;
