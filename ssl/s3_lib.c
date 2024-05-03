@@ -3504,7 +3504,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     int ret = 0;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 #ifndef OPENSSL_NO_OCSP
-    unsigned char *p;
+    unsigned char *p =NULL;
     OCSP_RESPONSE *resp = NULL;
 #endif
 
@@ -3639,27 +3639,16 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         ret = -1;
 
 #ifndef OPENSSL_NO_OCSP
-         resp = sk_OCSP_RESPONSE_value(sc->ext.ocsp.resp_ex, 0);
+        resp = sk_OCSP_RESPONSE_value(sc->ext.ocsp.resp_ex, 0);
 
         if (resp != NULL) {
-            int resp_len = i2d_OCSP_RESPONSE(resp, NULL);
+            int resp_len = i2d_OCSP_RESPONSE(resp, &p);
 
-            if (resp_len > 0 && resp_len <= LONG_MAX) {
+            if (resp_len > 0) {
                 OPENSSL_free(sc->ext.ocsp.resp);
-
-                sc->ext.ocsp.resp = OPENSSL_malloc(resp_len);
-
-                if (sc->ext.ocsp.resp != NULL) {
-                    *(unsigned char **)parg = sc->ext.ocsp.resp;
-                    p = sc->ext.ocsp.resp;
-                    sc->ext.ocsp.resp_len = i2d_OCSP_RESPONSE(resp, &p);
-                    ret = sc->ext.ocsp.resp_len;
-                } else {
-                    ret = -1;
-                }
+                *(unsigned char **)parg = sc->ext.ocsp.resp = p;
+                ret = sc->ext.ocsp.resp_len = resp_len;
             }
-        } else {
-            ret = -1;
         }
 #endif
         break;
@@ -3668,8 +3657,8 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #ifndef OPENSSL_NO_OCSP
         if (sc->ext.ocsp.resp != NULL) {
             OPENSSL_free(sc->ext.ocsp.resp);
-            sc->ext.ocsp.resp = NULL;
-            sc->ext.ocsp.resp_len = 0;
+            sc->ext.ocsp.resp = parg;
+            sc->ext.ocsp.resp_len = larg;
         }
         sk_OCSP_RESPONSE_pop_free(sc->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
         sc->ext.ocsp.resp_ex = NULL;

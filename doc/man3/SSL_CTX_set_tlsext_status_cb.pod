@@ -117,7 +117,7 @@ occurred).
 
 SSL_CTX_set_tlsext_status_cb(), SSL_CTX_set_tlsext_status_arg(),
 SSL_CTX_set_tlsext_status_type(), SSL_set_tlsext_status_type(),
-SSL_set_tlsext_status_ocsp_resp(), SSL_set_tlsext_status_ocsp_resp_ex() and
+SSL_set_tlsext_status_ocsp_resp() and SSL_set_tlsext_status_ocsp_resp_ex()
 return 0 on error or 1 on success.
 
 SSL_CTX_get_tlsext_status_type() returns the value previously set by
