@@ -497,7 +497,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_SRVR_HELLO:
-        if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0
+        if (SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s)
                 && s->hello_retry_request != SSL_HRR_COMPLETE)
             st->hand_state = TLS_ST_SW_CHANGE;
         else if (s->hello_retry_request == SSL_HRR_PENDING)
@@ -907,7 +907,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
     case TLS_ST_SW_SRVR_HELLO:
         if (SSL_CONNECTION_IS_VERSION13(s)
             && s->hello_retry_request == SSL_HRR_PENDING) {
-            if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) == 0
+            if (!SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s)
                     && statem_flush(s) != 1)
                 return WORK_MORE_A;
             break;
@@ -943,7 +943,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
         }
 #endif
         if (!SSL_CONNECTION_IS_VERSION13(s)
-                || ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0
+                || (SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s)
                     && s->hello_retry_request != SSL_HRR_COMPLETE))
             break;
         /* Fall through */
