@@ -626,7 +626,7 @@ CON_FUNC_RETURN tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
     if (SSL_CONNECTION_IS_VERSION13(s)
             && !s->server
             && (s->early_data_state != SSL_EARLY_DATA_NONE
-                || (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+                || SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s))
             && s->s3.tmp.cert_req == 0
             && (!ssl->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {;

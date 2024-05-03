@@ -465,7 +465,7 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
         if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY
                 || s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING)
             st->hand_state = TLS_ST_PENDING_EARLY_DATA_END;
-        else if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0
+        else if (SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s)
                  && s->hello_retry_request == SSL_HRR_NONE)
             st->hand_state = TLS_ST_CW_CHANGE;
         else if (s->s3.tmp.cert_req == 0)
@@ -566,7 +566,7 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL_CONNECTION *s)
              * We are assuming this is a (D)TLSv1.3 connection, although we haven't
              * actually selected a version yet.
              */
-            if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+            if (SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s))
                 st->hand_state = TLS_ST_CW_CHANGE;
             else
                 st->hand_state = TLS_ST_EARLY_DATA;
@@ -585,7 +585,7 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL_CONNECTION *s)
          * CCS unless middlebox compat mode is off, or we already issued one
          * because we did early data.
          */
-        if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0
+        if (SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s)
                 && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING)
             st->hand_state = TLS_ST_CW_CHANGE;
         else
@@ -800,7 +800,7 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
              * cipher state function associated with the SSL_METHOD. Instead
              * we call tls13_change_cipher_state() directly.
              */
-            if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) == 0) {
+            if (!SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s)) {
                 if (!tls13_change_cipher_state(s,
                             SSL3_CC_EARLY | SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
                     /* SSLfatal() already called */
@@ -1252,7 +1252,7 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
             || s->session->ssl_version == TLS1_3_VERSION
             || s->session->ssl_version == DTLS1_3_VERSION) {
         if (s->version == TLS1_3_VERSION
-                && (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0) {
+                && SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s)) {
             sess_id_len = sizeof(s->tmp_session_id);
             s->tmp_session_id_len = sess_id_len;
             session_id = s->tmp_session_id;
@@ -1793,7 +1793,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
          * compat this doesn't cause a problem.
          */
         if (s->early_data_state == SSL_EARLY_DATA_NONE
-                && (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) == 0
+                && !SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s)
                 && !ssl->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
             /* SSLfatal() already called */
@@ -3792,7 +3792,7 @@ CON_FUNC_RETURN tls_construct_client_certificate(SSL_CONNECTION *s,
     if (SSL_CONNECTION_IS_VERSION13(s)
             && SSL_IS_FIRST_HANDSHAKE(s)
             && (s->early_data_state != SSL_EARLY_DATA_NONE
-                || (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+                || SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s))
             && (!ssl->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
         /*

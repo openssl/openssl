@@ -254,6 +254,11 @@
 # define SSL_CONNECTION_IS_DTLS(s) \
     (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
 
+/* Check if an SSL structure is using DTLS */
+# define SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s) \
+    ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0 \
+     && !SSL_CONNECTION_IS_DTLS(s))
+
 /* Check if we are using DTLSv1.3 */
 # define SSL_CONNECTION_IS_DTLS13(s) (SSL_CONNECTION_IS_DTLS(s) \
     && DTLS_VERSION_GE(SSL_CONNECTION_GET_SSL(s)->method->version, DTLS1_3_VERSION) \
