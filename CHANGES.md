@@ -66,7 +66,6 @@ OpenSSL 3.4
 
    *Craig Lorentzen*
 
-
 OpenSSL 3.3
 -----------
 
