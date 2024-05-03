@@ -168,7 +168,7 @@ void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
     OPENSSL_free(lock);
 }
 
-static inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK *lock)
+static ossl_inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK *lock)
 {
     uint32_t qp_idx;
 
