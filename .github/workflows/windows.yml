@@ -66,7 +66,7 @@ jobs:
       run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
     - name: install
       # Run on 64 bit only as 32 bit is slow enough already
-      if: $${{ matrix.platform.arch == 'win64' }}
+      if: ${{ matrix.platform.arch == 'win64' }}
       run: |
         mkdir _dest
         nmake install DESTDIR=_dest
