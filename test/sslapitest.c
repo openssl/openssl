@@ -1852,7 +1852,7 @@ static int ocsp_server_cb_single(SSL *s, void *arg)
     int *argi = (int *)arg;
     STACK_OF(OCSP_RESPID) *ids = NULL;
     OCSP_RESPID *id = NULL;
-    unsigned char *respder = NULL;
+    unsigned char *ocspresp = NULL;
     int resplen = 0;
 
     if (*argi == 2) {
@@ -1874,12 +1874,12 @@ static int ocsp_server_cb_single(SSL *s, void *arg)
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
 
-    resplen = i2d_OCSP_RESPONSE(dummy_ocsp_resp, &respder);
+    resplen = i2d_OCSP_RESPONSE(dummy_ocsp_resp, &ocspresp);
 
     OCSP_RESPONSE_free(dummy_ocsp_resp);
 
-    if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, respder, resplen))) {
-        OPENSSL_free(respder);
+    if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, ocspresp, resplen))) {
+        OPENSSL_free(ocspresp);
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
 
@@ -1907,7 +1907,6 @@ static int ocsp_client_cb_single(SSL *s, void *arg)
     i = OCSP_response_status(rsp);
 
     OCSP_RESPONSE_free(rsp);
-    SSL_set_tlsext_status_ocsp_resp(s, NULL, 0);
 
     if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
         return 0;
@@ -2067,6 +2066,7 @@ static int test_tlsext_status_type(int multi_stapling)
             || !TEST_true(ocsp_client_called)
             || !TEST_true(ocsp_server_called))
         goto end;
+    SSL_set_tlsext_status_ocsp_resp(serverssl, NULL, 0);
     SSL_free(serverssl);
     SSL_free(clientssl);
     serverssl = NULL;
