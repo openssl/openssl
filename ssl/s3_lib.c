@@ -3504,7 +3504,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     int ret = 0;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 #ifndef OPENSSL_NO_OCSP
-    unsigned char *p =NULL;
+    unsigned char *p = NULL;
     OCSP_RESPONSE *resp = NULL;
 #endif
 
