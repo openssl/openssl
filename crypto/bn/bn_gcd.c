@@ -9,6 +9,7 @@
 
 #include "internal/cryptlib.h"
 #include "bn_local.h"
+#include "internal/constant_time.h"
 
 /*
  * bn_mod_inverse_no_branch is a special version of BN_mod_inverse. It does
@@ -580,8 +581,8 @@ end:
 int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 {
     BIGNUM *g, *temp = NULL;
-    BN_ULONG mask = 0;
-    int i, j, top, rlen, glen, m, bit = 1, delta = 1, cond = 0, shifts = 0, ret = 0;
+    BN_ULONG pow2_numbits, pow2_numbits_temp, pow2_condition_mask, pow2_flag;
+    int i, j, top, rlen, glen, m, delta = 1, cond = 0, pow2_shifts, ret = 0;
 
     /* Note 2: zero input corner cases are not constant-time since they are
      * handled immediately. An attacker can run an attack under this
@@ -611,18 +612,29 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
         goto err;
 
     /* find shared powers of two, i.e. "shifts" >= 1 */
+    pow2_flag = 1;
+    pow2_shifts = 0;
+    pow2_numbits = 0;
     for (i = 0; i < r->dmax && i < g->dmax; i++) {
-        mask = ~(r->d[i] | g->d[i]);
-        for (j = 0; j < BN_BITS2; j++) {
-            bit &= mask;
-            shifts += bit;
-            mask >>= 1;
-        }
+        pow2_numbits_temp = r->d[i] | g->d[i];
+        pow2_condition_mask = constant_time_is_zero_bn(pow2_flag);
+        pow2_flag &= constant_time_is_zero_bn(pow2_numbits_temp);
+        pow2_shifts += pow2_flag;
+        pow2_numbits = constant_time_select_bn(pow2_condition_mask,
+                                               pow2_numbits, pow2_numbits_temp);
+    }
+    pow2_numbits = ~pow2_numbits;
+    pow2_shifts *= BN_BITS2;
+    pow2_flag = 1;
+    for (j = 0; j < BN_BITS2; j++) {
+        pow2_flag &= pow2_numbits;
+        pow2_shifts += pow2_flag;
+        pow2_numbits >>= 1;
     }
 
     /* subtract shared powers of two; shifts >= 1 */
-    if (!BN_rshift(r, r, shifts)
-        || !BN_rshift(g, g, shifts))
+    if (!BN_rshift(r, r, pow2_shifts)
+        || !BN_rshift(g, g, pow2_shifts))
         goto err;
 
     /* expand to biggest nword, with room for a possible extra word */
@@ -665,7 +677,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     /* remove possible negative sign */
     r->neg = 0;
     /* add powers of 2 removed, then correct the artificial shift */
-    if (!BN_lshift(r, r, shifts)
+    if (!BN_lshift(r, r, pow2_shifts)
         || !BN_rshift1(r, r))
         goto err;
 
