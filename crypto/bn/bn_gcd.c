@@ -580,8 +580,8 @@ end:
 int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 {
     BIGNUM *g, *temp = NULL;
-    BN_ULONG mask = 0;
-    int i, j, top, rlen, glen, m, delta = 1, cond = 0, shifts = 0, ret = 0, pow2_flag = ~0;
+    BN_ULONG pow2_mask, pow2_temp;
+    int i, j, top, rlen, glen, m, delta = 1, cond = 0, pow2_shifts, ret = 0, pow2_flag, pow2_chunk_index;
 
     /* Note 2: zero input corner cases are not constant-time since they are
      * handled immediately. An attacker can run an attack under this
@@ -609,27 +609,32 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
         || !BN_lshift1(g, in_b)
         || !BN_lshift1(r, in_a))
         goto err;
-
+  
     /* find shared powers of two, i.e. "shifts" >= 1 */
+    pow2_flag = 1;
+    pow2_chunk_index = 0;
+    pow2_shifts = 0;
     for (i = 0; i < r->dmax && i < g->dmax; i++) {
-        mask = r->d[i] | g->d[i];
-        if ((pow2_flag == 0) | (mask == 0)) {
-            shifts += BN_BITS2 & pow2_flag;
-            continue;
-        }  
-        mask = ~mask;
-        pow2_flag = 1;
-        for (j = 0; j < BN_BITS2; j++) {
-            pow2_flag &= mask; 
-            shifts += pow2_flag;
-            mask >>= 1;
-        }
-        pow2_flag = 0;
+        pow2_mask = r->d[i] | g->d[i];
+        pow2_temp = (pow2_flag != 0) & (pow2_mask != 0);
+        pow2_flag &= !pow2_temp;
+        pow2_temp = ((~pow2_temp & (pow2_temp - 1)) >> (BN_BITS2 - 1)) - 1; // https://github.com/openssl/openssl/blob/067fbc01b9e867b31c71091d62f0f9012dc9e41a/crypto/bn/bn_lib.c#L950C5-L950C74
+        pow2_shifts += 1 & pow2_temp;
+        pow2_temp = (i ^ pow2_chunk_index) & pow2_temp;
+        pow2_chunk_index ^= pow2_temp;
+    }
+    pow2_shifts *= BN_BITS2;
+    pow2_mask = r->d[pow2_chunk_index] | g->d[pow2_chunk_index];
+    pow2_flag = 1;
+    for (j = 0; j < BN_BITS2; j++) {
+        pow2_flag &= mask; 
+        pow2_shifts += pow2_flag;
+        pow2_mask >>= 1;
     }
 
     /* subtract shared powers of two; shifts >= 1 */
-    if (!BN_rshift(r, r, shifts)
-        || !BN_rshift(g, g, shifts))
+    if (!BN_rshift(r, r, pow2_shifts)
+        || !BN_rshift(g, g, pow2_shifts))
         goto err;
 
     /* expand to biggest nword, with room for a possible extra word */
@@ -672,7 +677,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     /* remove possible negative sign */
     r->neg = 0;
     /* add powers of 2 removed, then correct the artificial shift */
-    if (!BN_lshift(r, r, shifts)
+    if (!BN_lshift(r, r, pow2_shifts)
         || !BN_rshift1(r, r))
         goto err;
 
