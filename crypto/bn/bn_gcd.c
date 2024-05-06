@@ -581,7 +581,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 {
     BIGNUM *g, *temp = NULL;
     BN_ULONG mask = 0;
-    int i, j, top, rlen, glen, m, delta = 1, cond = 0, shifts = 0, ret = 0;
+    int i, j, top, rlen, glen, m, delta = 1, cond = 0, shifts = 0, ret = 0, pow2_flag = ~0;
 
     /* Note 2: zero input corner cases are not constant-time since they are
      * handled immediately. An attacker can run an attack under this
@@ -613,15 +613,18 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     /* find shared powers of two, i.e. "shifts" >= 1 */
     for (i = 0; i < r->dmax && i < g->dmax; i++) {
         mask = r->d[i] | g->d[i];
-        if (mask == 0) {
-            shifts += BN_BITS2;
+        if ((pow2_flag == 0) | (mask == 0)) {
+            shifts += BN_BITS2 & pow2_flag;
             continue;
         }  
-        while (mask & 1 == 0) {
-            shifts++;
+        mask = ~mask;
+        pow2_flag = 1;
+        for (j = 0; j < BN_BITS2; j++) {
+            pow2_flag &= mask; 
+            shifts += pow2_flag;
             mask >>= 1;
         }
-        break;
+        pow2_flag = 0;
     }
 
     /* subtract shared powers of two; shifts >= 1 */
