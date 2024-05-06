@@ -581,8 +581,8 @@ end:
 int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 {
     BIGNUM *g, *temp = NULL;
-    BN_ULONG pow2_mask, pow2_temp;
-    int i, j, top, rlen, glen, m, delta = 1, cond = 0, pow2_shifts, ret = 0, pow2_flag, pow2_chunk_index;
+    BN_ULONG pow2_numbits, pow2_numbits_temp, pow2_condition_mask;
+    int i, j, top, rlen, glen, m, delta = 1, cond = 0, pow2_shifts, ret = 0, pow2_flag;
 
     /* Note 2: zero input corner cases are not constant-time since they are
      * handled immediately. An attacker can run an attack under this
@@ -613,24 +613,23 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 
     /* find shared powers of two, i.e. "shifts" >= 1 */
     pow2_flag = 1;
-    pow2_chunk_index = 0;
     pow2_shifts = 0;
+    pow2_numbits = 0;
     for (i = 0; i < r->dmax && i < g->dmax; i++) {
-        pow2_mask = r->d[i] | g->d[i];
-        pow2_temp = !constant_time_is_zero(pow2_flag) & !constant_time_is_zero_64(pow2_mask);;
-        pow2_flag &= !pow2_temp;
-        pow2_temp = ((~pow2_temp & (pow2_temp - 1)) >> (BN_BITS2 - 1)) - 1; // https://github.com/openssl/openssl/blob/067fbc01b9e867b31c71091d62f0f9012dc9e41a/crypto/bn/bn_lib.c#L950C5-L950C74
-        pow2_shifts += 1 & pow2_temp;
-        pow2_temp = (i ^ pow2_chunk_index) & pow2_temp;
-        pow2_chunk_index ^= pow2_temp;
+        pow2_numbits_temp = r->d[i] | g->d[i];
+        pow2_condition_mask = ((BN_ULONG)!constant_time_is_zero(pow2_flag)) & ((BN_ULONG)!constant_time_is_zero_64(pow2_numbits_temp));
+        pow2_flag &= !pow2_condition_mask;
+        pow2_condition_mask = ((~pow2_condition_mask & (pow2_condition_mask - 1)) >> (BN_BITS2 - 1)) - 1; // https://github.com/openssl/openssl/blob/067fbc01b9e867b31c71091d62f0f9012dc9e41a/crypto/bn/bn_lib.c#L950C5-L950C74
+        pow2_shifts += 1 & pow2_condition_mask;
+        pow2_condition_mask = (pow2_numbits ^ pow2_numbits_temp) & pow2_condition_mask;
+        pow2_numbits ^= pow2_condition_mask;
     }
     pow2_shifts *= BN_BITS2;
-    pow2_mask = r->d[pow2_chunk_index] | g->d[pow2_chunk_index];
     pow2_flag = 1;
     for (j = 0; j < BN_BITS2; j++) {
-        pow2_flag &= pow2_mask; 
+        pow2_flag &= pow2_numbits; 
         pow2_shifts += pow2_flag;
-        pow2_mask >>= 1;
+        pow2_numbits >>= 1;
     }
 
     /* subtract shared powers of two; shifts >= 1 */
