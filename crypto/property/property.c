@@ -404,9 +404,10 @@ err:
     return 0;
 }
 
-struct alg_cleanup_by_provider_data_st {
+struct doall_alg_data_st {
     OSSL_METHOD_STORE *store;
     const OSSL_PROVIDER *prov;
+    SPARSE_ARRAY_OF(ALGORITHM) *algs;
     STACK_OF(ALGORITHM) *newalgs;
     STACK_OF(ALGORITHM) *oldalgs;
     STACK_OF(IMPLEMENTATION) *oldimpls;
@@ -416,7 +417,7 @@ struct alg_cleanup_by_provider_data_st {
 static void
 alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *algold, void *arg)
 {
-    struct alg_cleanup_by_provider_data_st *data = arg;
+    struct doall_alg_data_st *data = arg;
     int i;
     int numimpl = sk_IMPLEMENTATION_num(algold->impls);
     ALGORITHM *algnew = NULL;
@@ -474,6 +475,10 @@ alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *algold, void *arg)
      */
     if (sk_ALGORITHM_push(data->newalgs, algnew) == 0)
         goto err;
+    algnew = NULL;
+
+    if (ossl_sa_ALGORITHM_set(data->algs, idx, algnew) == 0)
+        goto err;
 
     /* TODO: CHECK THIS */
     data->store->cache_nelem -= lh_QUERY_num_items(algold->cache);
@@ -487,7 +492,7 @@ alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *algold, void *arg)
 int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
                                           const OSSL_PROVIDER *prov)
 {
-    struct alg_cleanup_by_provider_data_st data;
+    struct doall_alg_data_st data;
     SPARSE_ARRAY_OF(ALGORITHM) *algsold, *algsnew;
 
     data.newalgs = NULL;
@@ -501,6 +506,7 @@ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
         goto err;
     data.prov = prov;
     data.store = store;
+    data.algs = algsnew;
     data.newalgs = sk_ALGORITHM_new_null();
     data.oldalgs = sk_ALGORITHM_new_null();
     data.oldimpls = sk_IMPLEMENTATION_new_null();
@@ -651,13 +657,86 @@ fin:
     return ret;
 }
 
+static void do_cache_flush_all(ossl_uintmax_t idx, ALGORITHM *algold,
+                               void *arg)
+{
+    ALGORITHM *algnew = NULL;
+    struct doall_alg_data_st *data = arg;
+
+    if (data->err)
+        return;
+
+    if (lh_QUERY_num_items(algold->cache) == 0)
+        return;
+
+    algnew = OPENSSL_malloc(sizeof(*algnew));
+    if (algnew == NULL)
+        goto err;
+
+    *algnew = *algold;
+    algnew->cache = lh_QUERY_new(&query_hash, &query_cmp);
+    if (algnew->cache == NULL)
+        goto err;
+
+    if (sk_ALGORITHM_push(data->oldalgs, algold) == 0)
+        goto err;
+
+    if (sk_ALGORITHM_push(data->newalgs, algnew) == 0)
+        goto err;
+    algnew = NULL;
+
+    if (ossl_sa_ALGORITHM_set(data->algs, idx, algnew) == 0)
+        goto err;
+
+    return;
+
+ err:
+    alg_free(algnew);
+    data->err = 1;
+}
+
 int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 {
+    struct doall_alg_data_st data;
+    SPARSE_ARRAY_OF(ALGORITHM) *algsold, *algsnew;
+
+    data.newalgs = NULL;
+    data.oldalgs = NULL;
+
     ossl_rcu_write_lock(store->lock);
-    ossl_sa_ALGORITHM_doall(store->algs, &impl_cache_flush_alg);
+    algsold = ossl_rcu_deref(&store->algs);
+    algsnew = saalgs_shallow_dup(algsold);
+    if (algsnew == NULL)
+        goto err;
+    data.algs = algsnew;
+    data.newalgs = sk_ALGORITHM_new_null();
+    data.oldalgs = sk_ALGORITHM_new_null();
+    data.oldimpls = sk_IMPLEMENTATION_new_null();
+    data.err = 0;
+    if (data.newalgs == NULL || data.oldalgs == NULL || data.oldimpls == NULL)
+        goto err;
+
+    ossl_sa_ALGORITHM_doall_arg(store->algs, &do_cache_flush_all, algsnew);
+    if (data.err)
+        goto err;
+
+    /* TODO: FIXME */
     store->cache_nelem = 0;
+    ossl_rcu_assign_ptr(&store->algs, &algsnew);
     ossl_rcu_write_unlock(store->lock);
+    /* Free any old algorithms we are no longer using */
+    sk_ALGORITHM_free(data.newalgs);
+    sk_ALGORITHM_pop_free(data.oldalgs, alg_free);
+    ossl_sa_ALGORITHM_free(algsold);
     return 1;
+
+ err:
+    ossl_rcu_write_unlock(store->lock);
+    /* Rollback */
+    sk_ALGORITHM_pop_free(data.newalgs, alg_free);
+    sk_ALGORITHM_free(data.oldalgs);
+    ossl_sa_ALGORITHM_free(algsnew);
+    return 0;
 }
 
 IMPLEMENT_LHASH_DOALL_ARG(QUERY, IMPL_CACHE_FLUSH);
