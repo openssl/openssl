@@ -106,7 +106,6 @@ typedef struct ossl_global_properties_st {
 
 static void ossl_method_cache_flush_alg(OSSL_METHOD_STORE *store,
                                         ALGORITHM *alg);
-static void ossl_method_cache_flush(OSSL_METHOD_STORE *store, int nid);
 
 /* Global properties are stored per library context */
 void ossl_ctx_global_properties_free(void *vglobp)
@@ -345,7 +344,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     /* Insert the new implementation if required */
     ossl_rcu_write_lock(store->lock);
 
-    algsold = store->algs;
+    algsold = ossl_rcu_deref(&store->algs);
     algsnew = saalgs_shallow_dup(algsold);
     algold = ossl_method_store_retrieve(store, nid);
 
@@ -398,43 +397,6 @@ err:
     ossl_rcu_write_unlock(store->lock);
     alg_cleanup(0, algnew, NULL);
     impl_free(impl);
-    return 0;
-}
-
-int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
-                             const void *method)
-{
-    ALGORITHM *alg = NULL;
-    int i;
-
-    if (nid <= 0 || method == NULL || store == NULL)
-        return 0;
-
-    ossl_rcu_write_lock(store->lock);
-
-    ossl_method_cache_flush(store, nid);
-    alg = ossl_method_store_retrieve(store, nid);
-    if (alg == NULL) {
-        ossl_rcu_write_unlock(store->lock);
-        return 0;
-    }
-
-    /*
-     * A sorting find then a delete could be faster but these stacks should be
-     * relatively small, so we avoid the overhead.  Sorting could also surprise
-     * users when result orderings change (even though they are not guaranteed).
-     */
-    for (i = 0; i < sk_IMPLEMENTATION_num(alg->impls); i++) {
-        IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
-
-        if (impl->method.method == method) {
-            impl_free(impl);
-            (void)sk_IMPLEMENTATION_delete(alg->impls, i);
-            ossl_rcu_write_unlock(store->lock);
-            return 1;
-        }
-    }
-    ossl_rcu_write_unlock(store->lock);
     return 0;
 }
 
@@ -613,14 +575,6 @@ static void ossl_method_cache_flush_alg(OSSL_METHOD_STORE *store,
 {
     store->cache_nelem -= lh_QUERY_num_items(alg->cache);
     impl_cache_flush_alg(0, alg);
-}
-
-static void ossl_method_cache_flush(OSSL_METHOD_STORE *store, int nid)
-{
-    ALGORITHM *alg = ossl_method_store_retrieve(store, nid);
-
-    if (alg != NULL)
-        ossl_method_cache_flush_alg(store, alg);
 }
 
 int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)

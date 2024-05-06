@@ -60,8 +60,6 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
                           int nid, const char *properties, void *method,
                           int (*method_up_ref)(void *),
                           void (*method_destruct)(void *));
-int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
-                             const void *method);
 void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
                               void (*fn)(int id, void *method, void *fnarg),
                               void *fnarg);
