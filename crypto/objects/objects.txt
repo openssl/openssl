@@ -657,6 +657,7 @@ id-cmc 24		: id-cmc-confirmCertAcceptance
 # other names
 id-on 1			: id-on-personalData
 id-on 3			: id-on-permanentIdentifier : Permanent Identifier
+id-on 4			: id-on-hardwareModuleName : Hardware Module Name
 id-on 5			: id-on-xmppAddr : XmppAddr
 id-on 7			: id-on-dnsSRV : SRVName
 id-on 8			: id-on-NAIRealm : NAIRealm
