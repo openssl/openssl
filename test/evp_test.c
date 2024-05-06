@@ -411,10 +411,10 @@ static int parse_bin_chunk(const char *value, size_t offset, size_t max,
             return -1;
         if (!TEST_ptr(*buf = OPENSSL_hexstr2buf(chunk, &len))) {
             OPENSSL_free(chunk);
-            TEST_info("Can't convert chunk %s", chunk);
             TEST_openssl_errors();
             return -1;
         }
+        OPENSSL_free(chunk);
         *buflen = len;
     }
     *out_offset = value[0] == '"' ? offset + (*buflen) : offset + 2 * (*buflen);
@@ -742,6 +742,8 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
 
     if (data_chunk_size != 0 && !cipher_test_valid_fragmentation(cdat)) {
         ERR_pop_to_mark();
+        EVP_CIPHER_free(fetched_cipher);
+        OPENSSL_free(cdat);
         t->skip = 1;
         TEST_info("skipping, '%s' does not support fragmentation", alg);
         return 1;
