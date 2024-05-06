@@ -828,6 +828,10 @@ engine.
 
 Disable HTTP support.
 
+### enable-install-evp-test
+
+Install `evp_test` tests as separate tool.
+
 ### no-legacy
 
 Don't build the legacy provider.

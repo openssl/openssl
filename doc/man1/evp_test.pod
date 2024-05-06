@@ -1,0 +1,86 @@
+=pod
+
+=head1 NAME
+
+evp_test - OpenSSL EVP test command line program
+
+=head1 SYNOPSIS
+
+B<evp_test>
+[ I<options> ... ]
+[ I<testfile> ]
+
+B<evp_test> B<-help>
+
+=head1 DESCRIPTION
+
+Test tool for various implementations of crypto algorithms.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-help>
+
+Provides a terse summary of all options.
+
+=item B<-config> I<filename>
+
+The I<filename> specifies configuration file to use for the libctx.
+
+=item B<-list>
+
+Display the list of tests available.
+
+=item B<-test> I<name>
+
+Run a single test by id or name.
+
+=item B<-iter> I<int>
+
+Run a single iteration of a test.
+
+=item B<-indent> I<int>
+
+Number of tabs added to output.
+
+=item B<-seed> I<int>
+
+Seed value to randomize tests with.
+
+=item B<-process> I<in_place|both>
+
+Mode for data processing by cipher tests, both by default.
+
+=item B<-provider> I<name>
+
+Load and initialize the provider identified by I<name>.
+When no configuration file, the default value is 'default'.
+See L<provider(7)> for a more detailed description.
+
+=item B<-propquery> I<propq>
+
+Specifies the I<property query clause> to be used when fetching algorithms
+from the loaded providers.
+See L<property(7)> for a more detailed description.
+
+=item B<testfile>
+
+File to run tests on.
+
+=back
+
+=head1 SEE ALSO
+
+L<openssl(1)>
+
+=head1 COPYRIGHT
+
+Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

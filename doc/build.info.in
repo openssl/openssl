@@ -52,14 +52,21 @@ SUBDIRS = man1
              $podinfile =~ s|\\|/|g
                  if defined $podinfile;
          }
-         push @htmlfiles, $htmlfile;
-         push @manfiles, $manfile;
+         if ($podfile eq "evp_test.pod") {
+            $OUT .= "IF[{- !$disabled{'install-evp-test'} -}]\n";
+         } else {
+            push @htmlfiles, $htmlfile;
+            push @manfiles, $manfile;
+         }
          $OUT .= << "_____";
 DEPEND[$htmlfile]=$podfile
 GENERATE[$htmlfile]=$podfile
 DEPEND[$manfile]=$podfile
 GENERATE[$manfile]=$podfile
 _____
+         if ($podfile eq "evp_test.pod") {
+            $OUT .= "ENDIF\n";
+         }
          $OUT .= << "_____" if $podinfile;
 DEPEND[$podfile]{pod}=$podinfile
 GENERATE[$podfile]=$podinfile
