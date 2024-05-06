@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/constant_time.h"
 #include "bn_local.h"
 
 /*
@@ -609,14 +610,14 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
         || !BN_lshift1(g, in_b)
         || !BN_lshift1(r, in_a))
         goto err;
-  
+
     /* find shared powers of two, i.e. "shifts" >= 1 */
     pow2_flag = 1;
     pow2_chunk_index = 0;
     pow2_shifts = 0;
     for (i = 0; i < r->dmax && i < g->dmax; i++) {
         pow2_mask = r->d[i] | g->d[i];
-        pow2_temp = (pow2_flag != 0) & (pow2_mask != 0);
+        pow2_temp = !constant_time_is_zero(pow2_flag) & !constant_time_is_zero_64(pow2_mask);;
         pow2_flag &= !pow2_temp;
         pow2_temp = ((~pow2_temp & (pow2_temp - 1)) >> (BN_BITS2 - 1)) - 1; // https://github.com/openssl/openssl/blob/067fbc01b9e867b31c71091d62f0f9012dc9e41a/crypto/bn/bn_lib.c#L950C5-L950C74
         pow2_shifts += 1 & pow2_temp;
@@ -627,7 +628,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     pow2_mask = r->d[pow2_chunk_index] | g->d[pow2_chunk_index];
     pow2_flag = 1;
     for (j = 0; j < BN_BITS2; j++) {
-        pow2_flag &= mask; 
+        pow2_flag &= pow2_mask; 
         pow2_shifts += pow2_flag;
         pow2_mask >>= 1;
     }
