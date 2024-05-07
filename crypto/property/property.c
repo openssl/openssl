@@ -195,21 +195,6 @@ static void impl_free(IMPLEMENTATION *impl)
     }
 }
 
-/* Shallow dup of an ALGORITHM */
-static void alg_shallow_dup(uintmax_t idx, ALGORITHM *alg, void *arg)
-{
-    SPARSE_ARRAY_OF(ALGORITHM) **saalg = arg;
-
-    if (*saalg == NULL)
-        return;
-
-    if (!ossl_sa_ALGORITHM_set(*saalg, idx, alg)) {
-        ossl_sa_ALGORITHM_free(*saalg);
-        *saalg = NULL;
-    }
-    return;
-}
-
 static STORED_ALGORITHMS *stored_algs_new(void)
 {
     STORED_ALGORITHMS *ret;
@@ -227,22 +212,6 @@ static STORED_ALGORITHMS *stored_algs_new(void)
     return ret;
 }
 
-static STORED_ALGORITHMS *
-stored_algs_shallow_dup(STORED_ALGORITHMS *src)
-{
-    STORED_ALGORITHMS *dest;
-
-    dest = stored_algs_new();
-    if (dest == NULL)
-        return NULL;
-    dest->cache_need_flush = src->cache_need_flush;
-    dest->cache_nelem = src->cache_nelem;
-
-    ossl_sa_ALGORITHM_doall_arg(src->algs, alg_shallow_dup, &dest->algs);
-
-    return dest;
-}
-
 /* Does not free the actual ALGORITHM structures */
 static void stored_algs_free(STORED_ALGORITHMS *algs)
 {
@@ -251,6 +220,48 @@ static void stored_algs_free(STORED_ALGORITHMS *algs)
 
     ossl_sa_ALGORITHM_free(algs->algs);
     OPENSSL_free(algs);
+}
+
+struct data_shallow_dup {
+    int err;
+    SPARSE_ARRAY_OF(ALGORITHM) *saalg;
+};
+
+/* Shallow dup of an ALGORITHM */
+static void alg_shallow_dup(uintmax_t idx, ALGORITHM *alg, void *arg)
+{
+    struct data_shallow_dup *data = arg;
+
+    if (data->err)
+        return;
+
+    if (!ossl_sa_ALGORITHM_set(data->saalg, idx, alg))
+        data->err = 1;
+
+    return;
+}
+
+static STORED_ALGORITHMS *
+stored_algs_shallow_dup(STORED_ALGORITHMS *src)
+{
+    STORED_ALGORITHMS *dest;
+    struct data_shallow_dup data;
+
+    dest = stored_algs_new();
+    if (dest == NULL)
+        return NULL;
+    dest->cache_need_flush = src->cache_need_flush;
+    dest->cache_nelem = src->cache_nelem;
+
+    data.err = 0;
+    data.saalg = dest->algs;
+    ossl_sa_ALGORITHM_doall_arg(src->algs, alg_shallow_dup, &data);
+    if (data.err) {
+        stored_algs_free(dest);
+        return NULL;
+    }
+
+    return dest;
 }
 
 static void impl_cache_free(QUERY *elem)
