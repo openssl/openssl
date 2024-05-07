@@ -236,6 +236,14 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version, int direction,
     return 0;
 }
 
+void dtls1_clear_received_buffer(SSL_CONNECTION *s)
+{
+}
+
+void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
+{
+}
+
 /* End of mocked out code */
 
 static int test_secret(SSL_CONNECTION *s, unsigned char *prk,
