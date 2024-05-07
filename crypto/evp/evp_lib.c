@@ -670,6 +670,9 @@ int EVP_CIPHER_get_key_length(const EVP_CIPHER *cipher)
 
 int EVP_CIPHER_CTX_get_key_length(const EVP_CIPHER_CTX *ctx)
 {
+    if (ctx->cipher == NULL)
+        return 0;
+
     if (ctx->key_len <= 0 && ctx->cipher->prov != NULL) {
         int ok;
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
