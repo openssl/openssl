@@ -620,7 +620,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
         pow2_condition_mask = ((BN_ULONG)!constant_time_is_zero(pow2_flag)) & ((BN_ULONG)!constant_time_is_zero_64(pow2_numbits_temp));
         pow2_flag &= !pow2_condition_mask;
         pow2_shifts += 1 & pow2_flag;
-        pow2_condition_mask = ((~pow2_condition_mask & (pow2_condition_mask - 1)) >> (BN_BITS2 - 1)) - 1; // https://github.com/openssl/openssl/blob/067fbc01b9e867b31c71091d62f0f9012dc9e41a/crypto/bn/bn_lib.c#L950C5-L950C74
+        pow2_condition_mask = ((~pow2_condition_mask & (pow2_condition_mask - 1)) >> (BN_BITS2 - 1)) - 1; /* https://github.com/openssl/openssl/blob/067fbc01b9e867b31c71091d62f0f9012dc9e41a/crypto/bn/bn_lib.c#L950C5-L950C74 */
         pow2_condition_mask = (pow2_numbits ^ pow2_numbits_temp) & pow2_condition_mask;
         pow2_numbits ^= pow2_condition_mask;
     }
