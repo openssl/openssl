@@ -141,6 +141,17 @@ static ossl_inline uint64_t constant_time_lt_64(uint64_t a, uint64_t b)
 }
 
 #ifdef BN_ULONG
+static ossl_inline BN_ULONG value_barrier_bn(BN_ULONG a)
+{
+#if !defined(OPENSSL_NO_ASM) && defined(__GNUC__)
+    BN_ULONG r;
+    __asm__("" : "=r"(r) : "0"(a));
+#else
+    volatile BN_ULONG r = a;
+#endif
+    return r;
+}
+
 static ossl_inline BN_ULONG constant_time_msb_bn(BN_ULONG a)
 {
     return 0 - (a >> (sizeof(a) * 8 - 1));
@@ -160,6 +171,13 @@ static ossl_inline BN_ULONG constant_time_eq_bn(BN_ULONG a,
                                                 BN_ULONG b)
 {
     return constant_time_is_zero_bn(a ^ b);
+}
+
+static ossl_inline BN_ULONG constant_time_select_bn(BN_ULONG mask,
+                                                    BN_ULONG a,
+                                                    BN_ULONG b)
+{
+    return (value_barrier_bn(mask) & a) | (value_barrier_bn(~mask) & b);
 }
 #endif
 
