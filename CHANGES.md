@@ -27,6 +27,23 @@ OpenSSL 3.2
 
 ### Changes between 3.2.1 and 3.2.2 [xx XXX xxxx]
 
+ * Fixed an issue where checking excessively long DSA keys or parameters may
+   be very slow.
+
+   Applications that use the functions EVP_PKEY_param_check() or
+   EVP_PKEY_public_check() to check a DSA public key or DSA parameters may
+   experience long delays. Where the key or parameters that are being checked
+   have been obtained from an untrusted source this may lead to a Denial of
+   Service.
+
+   To resolve this issue DSA keys larger than OPENSSL_DSA_MAX_MODULUS_BITS
+   will now fail the check immediately with a DSA_R_MODULUS_TOO_LARGE error
+   reason.
+
+   ([CVE-2024-4603])
+
+   *Tomáš Mráz*
+
  * Fixed an issue where some non-default TLS server configurations can cause
    unbounded memory growth when processing TLSv1.3 sessions. An attacker may
    exploit certain server configurations to trigger unbounded memory growth that
