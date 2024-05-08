@@ -957,7 +957,7 @@ int BN_is_word(const BIGNUM *a, const BN_ULONG w)
     return BN_abs_is_word(a, w) && (!w || !a->neg);
 }
 
-int ossl_bn_is_word_fixed_top(const BIGNUM *a, const BN_ULONG w)
+int ossl_bn_is_word_fixed_top(const BIGNUM *a, BN_ULONG w)
 {
     int res, i;
     const BN_ULONG *ap = a->d;
