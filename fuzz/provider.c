@@ -680,9 +680,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         goto end;
     }
 
+end:
     free(operation);
     free(algorithm);
-
-end:
     return r;
 }
