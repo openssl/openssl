@@ -41,7 +41,7 @@
     } \
     static void cleanup_##name(void) \
     { \
-        sk_##evp##_free(name##_collection); \
+        sk_##evp##_pop_free(name##_collection); \
     }
 
 DEFINE_ALGORITHMS(digests, EVP_MD)
@@ -407,6 +407,8 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
         default:
             break;
         }
+
+        free(use_param);
     }
 
     return fuzzed_parameters;
@@ -619,14 +621,11 @@ end:
         OSSL_PARAM_free(fuzzed_params); \
     } while (0);
 
-static uint64_t DFLT_OP = 0;
-static int64_t DFLT_ALG = 0;
-
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
     int r = 1;
-    uint64_t *operation = &DFLT_OP;
-    int64_t *algorithm = &DFLT_ALG;
+    uint64_t *operation = NULL;
+    int64_t *algorithm = NULL;
 
     if (!read_uint(&buf, &len, &operation)) {
         r = 0;
@@ -680,6 +679,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         r = 0;
         goto end;
     }
+
+    free(operation);
+    free(algorithm);
 
 end:
     return r;
