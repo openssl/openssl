@@ -148,6 +148,7 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
     size_t currpipe;
     size_t defltlen = 0;
     size_t contenttypelen = 0;
+    const int version1_3 = rl->isdtls ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (firstlen == 0 || (numwpipes > 1 && nextlen == 0)) {
         if (rl->isdtls)
@@ -155,8 +156,8 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
         else
             headerlen = SSL3_RT_HEADER_LENGTH;
 
-        /* TLSv1.3 adds an extra content type byte after payload data */
-        if (rl->version == TLS1_3_VERSION)
+        /* (D)TLSv1.3 adds an extra content type byte after payload data */
+        if (rl->version == version1_3)
             contenttypelen = 1;
 
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
