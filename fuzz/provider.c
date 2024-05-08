@@ -41,7 +41,7 @@
     } \
     static void cleanup_##name(void) \
     { \
-        sk_##evp##_pop_free(name##_collection); \
+        sk_##evp##_pop_free(name##_collection, ##evp##_free); \
     }
 
 DEFINE_ALGORITHMS(digests, EVP_MD)
