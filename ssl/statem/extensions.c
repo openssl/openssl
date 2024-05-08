@@ -775,6 +775,8 @@ int tls_parse_all_extensions(SSL_CONNECTION *s, int context,
 int should_add_extension(SSL_CONNECTION *s, unsigned int extctx,
     unsigned int thisctx, int max_version)
 {
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
     /* Skip if not relevant for our context */
     if ((extctx & thisctx) == 0)
         return 0;
@@ -783,8 +785,7 @@ int should_add_extension(SSL_CONNECTION *s, unsigned int extctx,
     if (!extension_is_relevant(s, extctx, thisctx)
         || ((extctx & SSL_EXT_TLS1_3_ONLY) != 0
             && (thisctx & SSL_EXT_CLIENT_HELLO) != 0
-            && (SSL_CONNECTION_IS_DTLS(s) ? DTLS_VERSION_LT(max_version, DTLS1_3_VERSION)
-                                          : max_version < TLS1_3_VERSION)))
+            && ssl_version_cmp(s, max_version, version1_3) < 0))
         return 0;
 
     return 1;
