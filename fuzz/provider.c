@@ -110,7 +110,9 @@ static int read_uint(const uint8_t **buf, size_t *len, uint64_t **res)
         goto end;
     }
 
-    *res = (uint64_t *) *buf;
+    *res = malloc(sizeof(uint64_t));
+    **res = (uint64_t) **buf;
+
     *buf += sizeof(uint64_t);
     *len -= sizeof(uint64_t);
 end:
@@ -126,7 +128,10 @@ static int read_int(const uint8_t **buf, size_t *len, int64_t **res)
         goto end;
     }
 
-    *res = (int64_t *) *buf;
+
+    *res = malloc(sizeof(int64_t));
+    **res = (int64_t) **buf;
+
     *buf += sizeof(int64_t);
     *len -= sizeof(int64_t);
 end:
@@ -142,7 +147,9 @@ static int read_double(const uint8_t **buf, size_t *len, double **res)
         goto end;
     }
 
-    *res = (double *) *buf;
+    *res = malloc(sizeof(double));
+    **res = (double) **buf;
+
     *buf += sizeof(double);
     *len -= sizeof(double);
 end:
@@ -237,10 +244,6 @@ static int read_octet_ptr(const uint8_t **buf, size_t *len, char **res)
     return read_octet_string(buf, len, res);
 }
 
-static int64_t NO_PARAM = 0;
-static int64_t DFLT_INT = 0;
-static uint64_t DFLT_UINT = 0;
-static double DFLT_DOUBLE = 0;
 static char *DFLT_STR = "";
 static char *DFLT_UTF8_PTR = NULL;
 static char *DFLT_OCTET_STRING = NULL;
@@ -250,6 +253,22 @@ static int64_t ITERS = 1;
 static uint64_t UITERS = 1;
 static int64_t BLOCKSIZE = 8;
 static uint64_t UBLOCKSIZE = 8;
+
+
+static void free_params(OSSL_PARAM *param)
+{
+    for (; param != NULL && param->key != NULL; param++) {
+        switch (param->data_type) {
+            case OSSL_PARAM_INTEGER:
+            case OSSL_PARAM_UNSIGNED_INTEGER:
+            case OSSL_PARAM_REAL:
+                if (param->data != NULL) {
+                    free(param->data);
+                }
+                break;
+        }
+    }
+}
 
 static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *len)
 {
@@ -266,17 +285,19 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
 
     for (; param != NULL && param->key != NULL; param++) {
         int64_t *use_param = NULL;
-        int64_t *p_value_int = &DFLT_INT;
-        uint64_t *p_value_uint = &DFLT_UINT;
-        double *p_value_double = &DFLT_DOUBLE;
+        int64_t *p_value_int = NULL;
+        uint64_t *p_value_uint = NULL;
+        double *p_value_double = NULL;
         char *p_value_utf8_str = DFLT_STR;
         char *p_value_octet_str = DFLT_OCTET_STRING;
         char *p_value_utf8_ptr = DFLT_UTF8_PTR;
         char *p_value_octet_ptr = DFLT_OCTET_PTR;
+
         int data_len = 0;
 
         if (!read_int(buf, len, &use_param)) {
-            use_param = &NO_PARAM;
+            use_param = malloc(sizeof(uint64_t));
+            *use_param = 0;
         }
 
         switch (param->data_type) {
@@ -286,19 +307,23 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
             }
 
             if (strcmp(param->key, OSSL_KDF_PARAM_ITER) == 0) {
-                p_value_int = &ITERS;
+                p_value_int = malloc(sizeof(ITERS));
+                *p_value_int = ITERS;
             }
 
             if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_N) == 0) {
-                p_value_int = &ITERS;
+                p_value_int = malloc(sizeof(ITERS));
+                *p_value_int = ITERS;
             }
 
             if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_R) == 0) {
-                p_value_int = &BLOCKSIZE;
+                p_value_int = malloc(sizeof(BLOCKSIZE));
+                *p_value_int = BLOCKSIZE;
             }
 
             if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_P) == 0) {
-                p_value_int = &BLOCKSIZE;
+                p_value_int = malloc(sizeof(BLOCKSIZE));
+                *p_value_int = BLOCKSIZE;
             }
 
             *p = *param;
@@ -311,19 +336,24 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
             }
 
             if (strcmp(param->key, OSSL_KDF_PARAM_ITER) == 0) {
-                p_value_uint = &UITERS;
+                p_value_uint = malloc(sizeof(UITERS));
+                *p_value_uint = UITERS;
+                
             }
 
             if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_N) == 0) {
-                p_value_uint = &UITERS;
+                p_value_uint = malloc(sizeof(UITERS));
+                *p_value_uint = UITERS;
             }
 
             if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_R) == 0) {
-                p_value_uint = &UBLOCKSIZE;
+                p_value_uint = malloc(sizeof(UBLOCKSIZE));
+                *p_value_uint = UBLOCKSIZE;
             }
 
             if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_P) == 0) {
-                p_value_uint = &UBLOCKSIZE;
+                p_value_uint = malloc(sizeof(UBLOCKSIZE));
+                *p_value_uint = UBLOCKSIZE;
             }
 
             *p = *param;
@@ -585,6 +615,7 @@ end:
         if (fuzzed_params) { \
             f(alg, fuzzed_params); \
         } \
+        free_params(fuzzed_params); \
         OSSL_PARAM_free(fuzzed_params); \
     } while (0);
 
