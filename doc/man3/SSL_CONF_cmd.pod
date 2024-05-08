@@ -207,7 +207,7 @@ structure is associated with B<ctx>.
 
 Sets the available ciphersuites for (D)TLSv1.3 to value. This is a
 colon-separated list of (D)TLSv1.3 ciphersuite names in order of preference.
-This list will be combined any configured (D)TLSv1.2 and below ciphersuites.
+This list will be combined with any configured (D)TLSv1.2 and below ciphersuites.
 See L<openssl-ciphers(1)> for more information.
 
 =item B<-min_protocol> I<minprot>, B<-max_protocol> I<maxprot>
@@ -313,7 +313,7 @@ structure is associated with B<ctx>.
 
 Sets the available ciphersuites for (D)TLSv1.3 to B<value>. This is a
 colon-separated list of (D)TLSv1.3 ciphersuite names in order of preference.
-This list will be combined any configured (D)TLSv1.2 and below ciphersuites.
+This list will be combined with any configured (D)TLSv1.2 and below ciphersuites.
 See L<openssl-ciphers(1)> for more information.
 
 =item B<Certificate>
