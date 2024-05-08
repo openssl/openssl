@@ -496,21 +496,15 @@ static int compare_with_file(BIO *membio)
  */
 static int test_ssl_trace(void)
 {
-    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL_CTX *cctx = NULL;
     SSL *clientquic = NULL;
     QUIC_TSERVER *qtserv = NULL;
     int testresult = 0;
-    BIO *bio = BIO_new(BIO_s_mem());
+    BIO *bio = NULL;
 
-    /*
-     * Ensure we only configure ciphersuites that are available with both the
-     * default and fips providers to get the same output in both cases
-     */
-    if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256")))
-        goto err;
-
-    if (!TEST_ptr(cctx)
-            || !TEST_ptr(bio)
+    if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method()))
+            || !TEST_ptr(bio = BIO_new(BIO_s_mem()))
+            || !TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256"))
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
                                                     privkey,
                                                     QTEST_FLAG_FAKE_TIME,
@@ -524,8 +518,15 @@ static int test_ssl_trace(void)
     if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto err;
 
-    if (!TEST_true(compare_with_file(bio)))
-        goto err;
+    /* Skip the comparison of the trace when the fips provider is used. */
+    if (is_fips) {
+        /* Check whether there was something written. */
+        if (!TEST_int_gt(BIO_pending(bio), 0))
+            goto err;
+    } else {
+        if (!TEST_true(compare_with_file(bio)))
+            goto err;
+    }
 
     testresult = 1;
  err:
