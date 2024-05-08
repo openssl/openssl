@@ -1208,8 +1208,10 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
                                          int op, int bits, int nid, void *other,
                                          void *ex)
 {
-    int level, minbits, pfs_mask;
+    int level, minbits, pfs_mask, minversion;
     const SSL_CONNECTION *sc;
+    const int version1_3 = SSL_is_dtls(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+    const int version1_2 = SSL_is_dtls(s) ? DTLS1_2_VERSION : TLS1_2_VERSION;
 
     minbits = ssl_get_security_level_bits(s, ctx, &level);
 
@@ -1240,9 +1242,12 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
             /* SHA1 HMAC is 160 bits of security */
             if (minbits > 160 && c->algorithm_mac & SSL_SHA1)
                 return 0;
+
             /* Level 3: forward secure ciphersuites only */
             pfs_mask = SSL_kDHE | SSL_kECDHE | SSL_kDHEPSK | SSL_kECDHEPSK;
-            if (level >= 3 && c->min_tls != TLS1_3_VERSION &&
+            minversion = SSL_is_dtls(s) ? c->min_dtls : c->min_tls;
+
+            if (level >= 3 && minversion != version1_3 &&
                                !(c->algorithm_mkey & pfs_mask))
                 return 0;
             break;
@@ -1250,15 +1255,9 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
     case SSL_SECOP_VERSION:
         if ((sc = SSL_CONNECTION_FROM_CONST_SSL(s)) == NULL)
             return 0;
-        if (!SSL_CONNECTION_IS_DTLS(sc)) {
-            /* SSLv3, TLS v1.0 and TLS v1.1 only allowed at level 0 */
-            if (nid <= TLS1_1_VERSION && level > 0)
+        /* SSLv3, TLS v1.0 and TLS v1.1 and DTLS v1.0 only allowed at level 0 */
+        if (ssl_version_cmp(sc, nid, version1_2) < 0 && level > 0)
                 return 0;
-        } else {
-            /* DTLS v1.0 only allowed at level 0 */
-            if (DTLS_VERSION_LT(nid, DTLS1_2_VERSION) && level > 0)
-                return 0;
-        }
         break;
 
     case SSL_SECOP_COMPRESSION:

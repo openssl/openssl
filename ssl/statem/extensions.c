@@ -824,6 +824,8 @@ int tls_parse_all_extensions(SSL_CONNECTION *s, int context,
 int should_add_extension(SSL_CONNECTION *s, unsigned int extctx,
                          unsigned int thisctx, int max_version)
 {
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
     /* Skip if not relevant for our context */
     if ((extctx & thisctx) == 0)
         return 0;
@@ -832,8 +834,7 @@ int should_add_extension(SSL_CONNECTION *s, unsigned int extctx,
     if (!extension_is_relevant(s, extctx, thisctx)
             || ((extctx & SSL_EXT_TLS1_3_ONLY) != 0
                 && (thisctx & SSL_EXT_CLIENT_HELLO) != 0
-                && (SSL_CONNECTION_IS_DTLS(s) ? DTLS_VERSION_LT(max_version, DTLS1_3_VERSION)
-                    : max_version < TLS1_3_VERSION)))
+                && ssl_version_cmp(s, max_version, version1_3) < 0))
         return 0;
 
     return 1;
@@ -1464,18 +1465,17 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
                  * Find the first group we allow that is also in client's list
                  */
                 for (i = 0; i < num_groups; i++) {
-                    int version;
+                    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
+                                                                     : TLS1_3_VERSION;
 
                     group_id = pgroups[i];
-                    version = SSL_CONNECTION_IS_DTLS(s) ?
-                        DTLS1_3_VERSION : TLS1_3_VERSION;
 
                     if (check_in_list(s, group_id, clntgroups, clnt_num_groups,
                                       1)
                             && tls_group_allowed(s, group_id,
                                                  SSL_SECOP_CURVE_SUPPORTED)
-                            && tls_valid_group(s, group_id, version,
-                                               version, 0, NULL))
+                            && tls_valid_group(s, group_id, version1_3,
+                                               version1_3, 0, NULL))
                         break;
                 }
 

@@ -143,6 +143,7 @@ static int use_ecc(SSL_CONNECTION *s, int min_version, int max_version)
     const uint16_t *pgroups = NULL;
     size_t num_groups, j;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     /* See if we support any ECC ciphersuites */
     if (s->version == SSL3_VERSION)
@@ -152,12 +153,14 @@ static int use_ecc(SSL_CONNECTION *s, int min_version, int max_version)
     end = sk_SSL_CIPHER_num(cipher_stack);
     for (i = 0; i < end; i++) {
         const SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
+        const int cipher_minversion = SSL_CONNECTION_IS_DTLS(s) ? c->min_dtls
+                                                                : c->min_tls;
 
         alg_k = c->algorithm_mkey;
         alg_a = c->algorithm_auth;
         if ((alg_k & (SSL_kECDHE | SSL_kECDHEPSK))
                 || (alg_a & SSL_aECDSA)
-                || c->min_tls >= TLS1_3_VERSION) {
+                || ssl_version_cmp(s, cipher_minversion, version1_3) >= 0) {
             ret = 1;
             break;
         }
@@ -217,7 +220,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
     const uint16_t *pgroups = NULL;
     size_t num_groups = 0, i, tls13added = 0, added = 0;
     int min_version, max_version, reason;
-    const int isdtls = SSL_CONNECTION_IS_DTLS(s);
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
     if (reason != 0) {
@@ -230,8 +233,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
      * if we don't have EC support then we don't send this extension.
      */
     if (!use_ecc(s, min_version, max_version))
-        if ((!isdtls && max_version < TLS1_3_VERSION)
-                || (isdtls && DTLS_VERSION_LT(max_version, DTLS1_3_VERSION)))
+        if (ssl_version_cmp(s, max_version, version1_3) < 0)
             return EXT_RETURN_NOT_SENT;
 
     /*
@@ -258,8 +260,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return EXT_RETURN_FAIL;
             }
-            if ((okfortls13 && max_version == TLS1_3_VERSION)
-                    || (okfortls13 && max_version == DTLS1_3_VERSION))
+            if (okfortls13 && max_version == version1_3)
                 tls13added++;
             added++;
         }
@@ -273,8 +274,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    if (tls13added == 0 && (max_version == TLS1_3_VERSION
-                            || max_version == DTLS1_3_VERSION)) {
+    if (tls13added == 0 && max_version == version1_3) {
         SSLfatal_data(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_GROUPS,
                       "No groups enabled for max supported SSL/TLS version");
         return EXT_RETURN_FAIL;
@@ -288,14 +288,14 @@ EXT_RETURN tls_construct_ctos_session_ticket(SSL_CONNECTION *s, WPACKET *pkt,
                                              size_t chainidx)
 {
     size_t ticklen;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (!tls_use_ticket(s))
         return EXT_RETURN_NOT_SENT;
 
     if (!s->new_session && s->session != NULL
             && s->session->ext.tick != NULL
-            && s->session->ssl_version != TLS1_3_VERSION
-            && s->session->ssl_version != DTLS1_3_VERSION) {
+            && s->session->ssl_version != version1_3) {
         ticklen = s->session->ext.ticklen;
     } else if (s->session && s->ext.session_ticket != NULL
                && s->ext.session_ticket->data != NULL) {
@@ -565,7 +565,8 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
                                                  size_t chainidx)
 {
     int currv, min_version, max_version, reason;
-    int isdtls = SSL_CONNECTION_IS_DTLS(s);
+    const int isdtls = SSL_CONNECTION_IS_DTLS(s);
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
     if (reason != 0) {
@@ -576,8 +577,7 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
     /*
      * Don't include this if we can't negotiate (D)TLSv1.3.
      */
-    if ((!isdtls && max_version < TLS1_3_VERSION)
-        || (isdtls && DTLS_VERSION_LT(max_version, DTLS1_3_VERSION)))
+    if (ssl_version_cmp(s, max_version, version1_3) < 0)
         return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
@@ -587,19 +587,11 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
         return EXT_RETURN_FAIL;
     }
 
-    if (isdtls) {
-        for (currv = max_version; DTLS_VERSION_GE(currv, min_version); currv++) {
-            if (!WPACKET_put_bytes_u16(pkt, currv)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return EXT_RETURN_FAIL;
-            }
-        }
-    } else {
-        for (currv = max_version; currv >= min_version; currv--) {
-            if (!WPACKET_put_bytes_u16(pkt, currv)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return EXT_RETURN_FAIL;
-            }
+    for (currv = max_version; ssl_version_cmp(s, currv, min_version) >= 0;
+            isdtls ? currv++ : currv--) {
+        if (!WPACKET_put_bytes_u16(pkt, currv)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
         }
     }
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
@@ -725,14 +717,13 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         curve_id = s->s3.group_id;
     } else {
         for (i = 0; i < num_groups; i++) {
-            int version;
+            const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
+                                                             : TLS1_3_VERSION;
 
             if (!tls_group_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
                 continue;
 
-            version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
-
-            if (!tls_valid_group(s, pgroups[i], version, version,
+            if (!tls_valid_group(s, pgroups[i], version1_3, version1_3,
                                  0, NULL))
                 continue;
 
@@ -803,15 +794,14 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     SSL_SESSION *edsess = NULL;
     const EVP_MD *handmd = NULL;
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (s->hello_retry_request == SSL_HRR_PENDING)
         handmd = ssl_handshake_md(s);
 
     if (s->psk_use_session_cb != NULL
             && (!s->psk_use_session_cb(ussl, handmd, &id, &idlen, &psksess)
-                || (psksess != NULL
-                    && psksess->ssl_version != TLS1_3_VERSION
-                    && psksess->ssl_version != DTLS1_3_VERSION))) {
+                || (psksess != NULL && psksess->ssl_version != version1_3))) {
         SSL_SESSION_free(psksess);
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_PSK);
         return EXT_RETURN_FAIL;
@@ -833,7 +823,6 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
         } else if (psklen > 0) {
             const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
             const SSL_CIPHER *cipher;
-            int version;
 
             idlen = strlen(identity);
             if (idlen > PSK_MAX_IDENTITY_LEN) {
@@ -854,12 +843,11 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
             }
 
             psksess = SSL_SESSION_new();
-            version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
             if (psksess == NULL
                     || !SSL_SESSION_set1_master_key(psksess, psk, psklen)
                     || !SSL_SESSION_set_cipher(psksess, cipher)
-                    || !SSL_SESSION_set_protocol_version(psksess, version)) {
+                    || !SSL_SESSION_set_protocol_version(psksess, version1_3)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 OPENSSL_cleanse(psk, psklen);
                 return EXT_RETURN_FAIL;
@@ -972,6 +960,7 @@ EXT_RETURN tls_construct_ctos_padding(SSL_CONNECTION *s, WPACKET *pkt,
 {
     unsigned char *padbytes;
     size_t hlen;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if ((s->options & SSL_OP_TLSEXT_PADDING) == 0)
         return EXT_RETURN_NOT_SENT;
@@ -991,7 +980,7 @@ EXT_RETURN tls_construct_ctos_padding(SSL_CONNECTION *s, WPACKET *pkt,
      * If we're going to send a PSK then that will be written out after this
      * extension, so we need to calculate how long it is going to be.
      */
-    if ((s->session->ssl_version == TLS1_3_VERSION || s->session->ssl_version == DTLS1_3_VERSION)
+    if (s->session->ssl_version == version1_3
             && s->session->ext.ticklen != 0
             && s->session->cipher != NULL) {
         const EVP_MD *md = ssl_md(SSL_CONNECTION_GET_CTX(s),
@@ -1053,6 +1042,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
     int dores = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     OSSL_TIME t;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     s->ext.tick_identity = 0;
 
@@ -1066,7 +1056,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
      * If this is an incompatible or new session then we have nothing to resume
      * so don't add this extension.
      */
-    if ((s->session->ssl_version != TLS1_3_VERSION && s->session->ssl_version != DTLS1_3_VERSION)
+    if (s->session->ssl_version != version1_3
             || (s->session->ext.ticklen == 0 && s->psksession == NULL))
         return EXT_RETURN_NOT_SENT;
 
@@ -1818,6 +1808,7 @@ int tls_parse_stoc_supported_versions(SSL_CONNECTION *s, PACKET *pkt,
                                       X509 *x, size_t chainidx)
 {
     unsigned int version;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (!PACKET_get_net_2(pkt, &version)
             || PACKET_remaining(pkt) != 0) {
@@ -1829,7 +1820,7 @@ int tls_parse_stoc_supported_versions(SSL_CONNECTION *s, PACKET *pkt,
      * The only protocol version we support which is valid in this extension in
      * a ServerHello is (D)TLSv1.3 therefore we shouldn't be getting anything else.
      */
-    if (version != TLS1_3_VERSION && version != DTLS1_3_VERSION) {
+    if ((int)version != version1_3) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
         return 0;
@@ -1873,7 +1864,8 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
     if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
         const uint16_t *pgroups = NULL;
         size_t i, num_groups;
-        int version;
+        const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
+                                                         : TLS1_3_VERSION;
 
         if (PACKET_remaining(pkt) != 0) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
@@ -1896,11 +1888,9 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
                 break;
         }
 
-        version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
-
         if (i >= num_groups
                 || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
-                || !tls_valid_group(s, group_id, version, version, 0, NULL)) {
+                || !tls_valid_group(s, group_id, version1_3, version1_3, 0, NULL)) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
             return 0;
         }

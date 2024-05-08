@@ -134,17 +134,17 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
 {
     long key_len = 0;
     unsigned char *key;
+    const int version1_3 = SSL_is_dtls(ssl) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (s_debug)
         BIO_printf(bio_s_out, "psk_server_cb\n");
 
-    if ((SSL_is_dtls(ssl) && DTLS_VERSION_GE(SSL_version(ssl), DTLS1_3_VERSION))
-    || (!SSL_is_dtls(ssl) && SSL_version(ssl) >= TLS1_3_VERSION)) {
+    if (PROTOCOL_VERSION_CMP(SSL_is_dtls(ssl), SSL_version(ssl), version1_3) >= 0) {
         /*
          * This callback is designed for use in (D)TLSv1.2 (or below). It is
          * possible to use a single callback for all protocol versions - but it
-         * is preferred to use a dedicated callback for TLSv1.3. For TLSv1.3 we
-         * have psk_find_session_cb.
+         * is preferred to use a dedicated callback for (D)TLSv1.3. For
+         * (D)TLSv1.3 we have psk_find_session_cb.
          */
         return 0;
     }
@@ -1074,6 +1074,9 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_SRTP
     char *srtp_profiles = NULL;
 #endif
+#if !(defined(OPENSSL_NO_NEXTPROTONEG) && defined(OPENSSL_NO_PSK))
+    int version1_3;
+#endif
     int min_version = 0, max_version = 0, prot_opt = 0, no_prot_opt = 0;
     int s_server_verify = SSL_VERIFY_NONE;
     int s_server_session_id_context = 1; /* anything will do */
@@ -1724,6 +1727,10 @@ int s_server_main(int argc, char *argv[])
         }
     }
 
+#if !(defined(OPENSSL_NO_NEXTPROTONEG) && defined(OPENSSL_NO_PSK))
+    version1_3 = (socket_type == SOCK_DGRAM) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+#endif
+
     /* No extra arguments. */
     if (!opt_check_rest_arg(NULL))
         goto opthelp;
@@ -1732,7 +1739,7 @@ int s_server_main(int argc, char *argv[])
         goto end;
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-    if (min_version == TLS1_3_VERSION && next_proto_neg_in != NULL) {
+    if (min_version == version1_3 && next_proto_neg_in != NULL) {
         BIO_printf(bio_err, "Cannot supply -nextprotoneg with TLSv1.3\n");
         goto opthelp;
     }
@@ -2222,7 +2229,7 @@ int s_server_main(int argc, char *argv[])
     }
 
     if (psk_identity_hint != NULL) {
-        if (min_version == TLS1_3_VERSION) {
+        if (min_version == version1_3) {
             BIO_printf(bio_s_out, "PSK warning: there is NO identity hint in TLSv1.3\n");
         } else {
             if (!SSL_CTX_use_psk_identity_hint(ctx, psk_identity_hint)) {

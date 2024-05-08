@@ -473,6 +473,10 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
             min_version = DTLS1_VERSION;
         if (max_version == 0)
             max_version = DTLS1_3_VERSION;
+#ifdef OPENSSL_NO_DTLS1_3
+        if (max_version == DTLS1_3_VERSION)
+            max_version = DTLS1_2_VERSION;
+#endif
 #ifdef OPENSSL_NO_DTLS1_2
         if (max_version == DTLS1_2_VERSION)
             max_version = DTLS1_VERSION;
@@ -490,6 +494,10 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
 #ifdef OPENSSL_NO_DTLS1_2
             || (DTLS_VERSION_GE(min_version, DTLS1_2_VERSION)
                 && DTLS_VERSION_GE(DTLS1_2_VERSION, max_version))
+#endif
+#ifdef OPENSSL_NO_DTLS1_3
+            || (DTLS_VERSION_GE(min_version, DTLS1_3_VERSION)
+                && DTLS_VERSION_GE(DTLS1_3_VERSION, max_version))
 #endif
             )
             return 0;
@@ -942,6 +950,9 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
 int SSL_is_dtls(const SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (s == NULL)
+        return 0;
 
 #ifndef OPENSSL_NO_QUIC
     if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_XSO)
@@ -3315,16 +3326,21 @@ STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx)
  * Distinguish between ciphers controlled by set_ciphersuite() and
  * set_cipher_list() when counting.
  */
-static int cipher_list_tls12_num(STACK_OF(SSL_CIPHER) *sk)
+static int cipher_list_tls12_num(STACK_OF(SSL_CIPHER) *sk, int isdtls)
 {
     int i, num = 0;
     const SSL_CIPHER *c;
+    const int version1_3 = isdtls ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (sk == NULL)
         return 0;
     for (i = 0; i < sk_SSL_CIPHER_num(sk); ++i) {
+        int minversion;
+
         c = sk_SSL_CIPHER_value(sk, i);
-        if (c->min_tls >= TLS1_3_VERSION)
+        minversion = isdtls ? c->min_dtls : c->min_tls;
+
+        if (PROTOCOL_VERSION_CMP(isdtls, minversion, version1_3) >= 0)
             continue;
         num++;
     }
@@ -3348,7 +3364,8 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
      */
     if (sk == NULL)
         return 0;
-    if (ctx->method->num_ciphers() > 0 && cipher_list_tls12_num(sk) == 0) {
+    if (ctx->method->num_ciphers() > 0
+        && cipher_list_tls12_num(sk, SSL_CTX_IS_DTLS(ctx)) == 0) {
         ERR_raise(ERR_LIB_SSL, SSL_R_NO_CIPHER_MATCH);
         return 0;
     }
@@ -3372,7 +3389,8 @@ int SSL_set_cipher_list(SSL *s, const char *str)
     /* see comment in SSL_CTX_set_cipher_list */
     if (sk == NULL)
         return 0;
-    if (ctx->method->num_ciphers() > 0 && cipher_list_tls12_num(sk) == 0) {
+    if (ctx->method->num_ciphers() > 0
+        && cipher_list_tls12_num(sk, SSL_CONNECTION_IS_DTLS(sc)) == 0) {
         ERR_raise(ERR_LIB_SSL, SSL_R_NO_CIPHER_MATCH);
         return 0;
     }

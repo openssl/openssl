@@ -1155,10 +1155,9 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
     unsigned char *p;
     size_t sess_id_len;
     int i, protverr;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
-    int comp_version_limit = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
-                                                       : TLS1_3_VERSION;
 #endif
     SSL_SESSION *sess = s->session;
     unsigned char *session_id;
@@ -1189,6 +1188,7 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
      * required to use same upon reply to HelloVerify
      */
     if (SSL_CONNECTION_IS_DTLS(s)) {
+        /* TODO(DTLS-1.3): Check this bit for HRR */
         size_t idx;
         i = 1;
         for (idx = 0; idx < sizeof(s->s3.client_random); idx++) {
@@ -1248,9 +1248,7 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
 
     /* Session ID */
     session_id = s->session->session_id;
-    if (s->new_session
-            || s->session->ssl_version == TLS1_3_VERSION
-            || s->session->ssl_version == DTLS1_3_VERSION) {
+    if (s->new_session || s->session->ssl_version == version1_3) {
         if (s->version == TLS1_3_VERSION
                 && SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s)) {
             sess_id_len = sizeof(s->tmp_session_id);
@@ -1268,7 +1266,7 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
     } else {
         assert(s->session->session_id_length <= sizeof(s->session->session_id));
         sess_id_len = s->session->session_id_length;
-        if (s->version == TLS1_3_VERSION || s->version == DTLS1_3_VERSION) {
+        if (s->version == version1_3) {
             s->tmp_session_id_len = sess_id_len;
             memcpy(s->tmp_session_id, s->session->session_id, sess_id_len);
         }
@@ -1315,7 +1313,7 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
 #ifndef OPENSSL_NO_COMP
     if (ssl_allow_compression(s)
             && sctx->comp_methods
-            && ssl_version_cmp(s, s->s3.tmp.max_ver, comp_version_limit) < 0) {
+            && ssl_version_cmp(s, s->s3.tmp.max_ver, version1_3) < 0) {
         int compnum = sk_SSL_COMP_num(sctx->comp_methods);
         for (i = 0; i < compnum; i++) {
             comp = sk_SSL_COMP_value(sctx->comp_methods, i);
@@ -1455,6 +1453,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
     unsigned int sversion;
     unsigned int context;
     RAW_EXTENSION *extensions = NULL;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+    const unsigned int version1_2 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_2_VERSION
+                                                              : TLS1_2_VERSION;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 #ifndef OPENSSL_NO_COMP
@@ -1467,8 +1468,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
     }
 
     /* load the server random */
-    if (((s->version == TLS1_3_VERSION && sversion == TLS1_2_VERSION)
-         || (s->version == DTLS1_3_VERSION && sversion == DTLS1_2_VERSION))
+    if (s->version == version1_3 && sversion == version1_2
             && PACKET_remaining(pkt) >= SSL3_RANDOM_SIZE
             && memcmp(hrrrandom, PACKET_data(pkt), SSL3_RANDOM_SIZE) == 0) {
         if (s->hello_retry_request != SSL_HRR_NONE) {
@@ -1812,15 +1812,15 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
                                                              PACKET *extpkt)
 {
     RAW_EXTENSION *extensions = NULL;
-    const int isdtls = SSL_CONNECTION_IS_DTLS(s);
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+    const int versionany = SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION : TLS_ANY_VERSION;
 
     /*
      * If we were sending early_data then any alerts should not be sent using
      * the old wrlmethod.
      */
     if (s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING
-            && !ssl_set_new_record_layer(s,
-                                         isdtls ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
+            && !ssl_set_new_record_layer(s, versionany,
                                          OSSL_RECORD_DIRECTION_WRITE,
                                          OSSL_RECORD_PROTECTION_LEVEL_NONE,
                                          NULL, 0, NULL, 0, NULL, 0, NULL,  0,
@@ -1829,7 +1829,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
         goto err;
     }
     /* We are definitely going to be using TLSv1.3 */
-    s->rlayer.wrlmethod->set_protocol_version(s->rlayer.wrl, isdtls ? DTLS1_3_VERSION : TLS1_3_VERSION);
+    s->rlayer.wrlmethod->set_protocol_version(s->rlayer.wrl, version1_3);
 
     if (!tls_collect_extensions(s, extpkt, SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
                                 &extensions, NULL, 1)
