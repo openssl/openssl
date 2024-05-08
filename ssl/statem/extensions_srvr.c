@@ -1020,6 +1020,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     uint64_t tm, now;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     /* Ignore any cookie if we're not set up to verify it */
     if (sctx->verify_stateless_cookie_cb == NULL
@@ -1094,7 +1095,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
-    if (version != TLS1_3_VERSION && version != DTLS1_3_VERSION) {
+    if ((int)version != version1_3) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
             SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
         return 0;
@@ -1374,7 +1375,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             } else if (pskdatalen > 0) {
                 const SSL_CIPHER *cipher;
                 const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
-                int version;
+                const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
+                                                                 : TLS1_3_VERSION;
 
                 /*
                  * We found a PSK using an old style callback. We don't know
@@ -1389,14 +1391,12 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 }
 
                 sess = SSL_SESSION_new();
-                version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
                 if (sess == NULL
                     || !SSL_SESSION_set1_master_key(sess, pskdata,
                         pskdatalen)
                     || !SSL_SESSION_set_cipher(sess, cipher)
-                    || !SSL_SESSION_set_protocol_version(sess,
-                        version)) {
+                    || !SSL_SESSION_set_protocol_version(sess, version1_3)) {
                     OPENSSL_cleanse(pskdata, pskdatalen);
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;

@@ -12070,6 +12070,9 @@ static int check_version_string(SSL *s, int version)
         break;
     case DTLS1_2_VERSION:
         verstr = "DTLSv1.2";
+        break;
+    case DTLS1_3_VERSION:
+        verstr = "DTLSv1.3";
     }
 
     return TEST_str_eq(verstr, SSL_get_version(s));

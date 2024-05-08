@@ -569,7 +569,12 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
-    if ((sinf->maxtls != 0) && (sinf->maxtls != -1) && ((sinf->maxtls < sinf->mintls))) {
+    /*
+     * There are no discrepancies for signature algs between comparable
+     * versions of tls and dtls. Hence we check tls versions only.
+     */
+    if ((sinf->maxtls != 0) && (sinf->maxtls != -1)
+        && ((sinf->maxtls < sinf->mintls))) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
@@ -864,6 +869,7 @@ int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
         group_id);
     int ret;
     int group_minversion, group_maxversion;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (okfortls13 != NULL)
         *okfortls13 = 0;
@@ -883,7 +889,7 @@ int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
     if (group_minversion > 0)
         ret &= (ssl_version_cmp(s, maxversion, group_minversion) >= 0);
 
-    if (ret && okfortls13 != NULL && (maxversion == DTLS1_3_VERSION || maxversion == TLS1_3_VERSION))
+    if (ret && okfortls13 != NULL && maxversion == version1_3)
         *okfortls13 = (group_maxversion == 0)
             || (ssl_version_cmp(s, group_maxversion, maxversion) >= 0);
     ret &= !isec

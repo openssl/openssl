@@ -1821,14 +1821,7 @@ int ssl_version_cmp(const SSL_CONNECTION *s, int versiona, int versionb)
 {
     int dtls = SSL_CONNECTION_IS_DTLS(s);
 
-    if (!ossl_assert(versiona > 0) || !ossl_assert(versionb > 0))
-        return 0;
-
-    if (versiona == versionb)
-        return 0;
-    if (!dtls)
-        return versiona < versionb ? -1 : 1;
-    return DTLS_VERSION_LT(versiona, versionb) ? -1 : 1;
+    return PROTOCOL_VERSION_CMP(dtls, versiona, versionb);
 }
 
 typedef struct {

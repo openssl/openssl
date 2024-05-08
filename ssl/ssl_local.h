@@ -59,6 +59,46 @@
 #define DTLS_VERSION_GE(v1, v2) (dtls_ver_ordinal(v1) <= dtls_ver_ordinal(v2))
 #define DTLS_VERSION_LT(v1, v2) (dtls_ver_ordinal(v1) > dtls_ver_ordinal(v2))
 #define DTLS_VERSION_LE(v1, v2) (dtls_ver_ordinal(v1) >= dtls_ver_ordinal(v2))
+/*
+ * SSL/TLS version comparison
+ *
+ * Returns
+ *      0 if versiona is equal to versionb or if either are 0 or less
+ *      1 if versiona is greater than versionb
+ *     -1 if versiona is less than versionb
+ */
+#define TLS_VERSION_CMP(versiona, versionb)                        \
+    ((!ossl_assert((versiona) > 0) || !ossl_assert((versionb) > 0) \
+         || (versiona) == (versionb))                              \
+            ? 0                                                    \
+            : ((versiona) < (versionb) ? -1 : 1))
+/*
+ * DTLS version comparison
+ *
+ * Returns
+ *      0 if versiona is equal to versionb or if either are 0 or less
+ *      1 if versiona is greater than versionb
+ *     -1 if versiona is less than versionb
+ */
+#define DTLS_VERSION_CMP(versiona, versionb)                       \
+    ((!ossl_assert((versiona) > 0) || !ossl_assert((versionb) > 0) \
+         || (versiona) == (versionb))                              \
+            ? 0                                                    \
+            : (DTLS_VERSION_LT((versiona),                         \
+                   (versionb))                                     \
+                      ? -1                                         \
+                      : 1))
+/*
+ * SSL/TLS/DTLS version comparison
+ *
+ * Returns
+ *      0 if versiona is equal to versionb or if either are 0 or less
+ *      1 if versiona is greater than versionb
+ *     -1 if versiona is less than versionb
+ */
+#define PROTOCOL_VERSION_CMP(isdtls, versiona, versionb) \
+    ((isdtls) ? DTLS_VERSION_CMP(versiona, versionb)     \
+              : TLS_VERSION_CMP(versiona, versionb))
 
 #define SSL_AD_NO_ALERT -1
 
@@ -269,7 +309,7 @@
 
 /* Check if an SSL_CTX structure is using DTLS */
 #define SSL_CTX_IS_DTLS(ctx) \
-    (ctx->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
+    ((ctx->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS) != 0)
 
 /* Check if we are using TLSv1.3 */
 #define SSL_CONNECTION_IS_TLS13(s) (!SSL_CONNECTION_IS_DTLS(s)      \
