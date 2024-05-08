@@ -582,27 +582,33 @@ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
     return 0;
 }
 
-static void alg_do_one(ALGORITHM *alg, IMPLEMENTATION *impl,
-                       void (*fn)(int id, void *method, void *fnarg),
-                       void *fnarg)
-{
-    fn(alg->nid, impl->method.method, fnarg);
-}
+typedef struct method_data_st {
+    METHOD method;
+    int nid;
+} METHOD_DATA;
 
-struct alg_do_each_data_st {
-    void (*fn)(int id, void *method, void *fnarg);
-    void *fnarg;
-};
+DEFINE_STACK_OF(METHOD_DATA)
 
 static void alg_do_each(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
 {
-    struct alg_do_each_data_st *data = arg;
+    STACK_OF(METHOD_DATA) *data = arg;
     int i, end = sk_IMPLEMENTATION_num(alg->impls);
 
     for (i = 0; i < end; i++) {
         IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
+        METHOD_DATA *methdata = OPENSSL_malloc(sizeof(*methdata));
 
-        alg_do_one(alg, impl, data->fn, data->fnarg);
+        methdata->nid = alg->nid;
+        methdata->method = impl->method;
+
+        if (ossl_method_up_ref(&methdata->method)) {
+            if (sk_METHOD_DATA_push(data, methdata) == 0) {
+                ossl_method_free(&methdata->method);
+                OPENSSL_free(methdata);
+            }
+        } else {
+            OPENSSL_free(methdata);
+        }
     }
 }
 
@@ -610,12 +616,37 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
                               void (*fn)(int id, void *method, void *fnarg),
                               void *fnarg)
 {
-    struct alg_do_each_data_st data;
+    STACK_OF(METHOD_DATA) *data;
+    int i;
+    STORED_ALGORITHMS *algs;
 
-    data.fn = fn;
-    data.fnarg = fnarg;
-    if (store != NULL)
-        ossl_sa_ALGORITHM_doall_arg(store->algs->algs, alg_do_each, &data);
+    if (store == NULL)
+        return;
+
+    data = sk_METHOD_DATA_new_null();
+    if (data == NULL)
+        return;
+
+    /*
+     * We cannot call the user supplied function under a read lock in case that
+     * function itself attempts to obtain a recursive lock on the store. Instead
+     * we gather a list of all the methods under a read lock, and then
+     * subsequently call the user function not under lock. The methods are
+     * up-ref'd to ensure that they remain valid even while not under the lock.
+     */
+    ossl_rcu_read_lock(store->lock);
+    algs = ossl_rcu_deref(&store->algs);
+    ossl_sa_ALGORITHM_doall_arg(algs->algs, alg_do_each, data);
+    ossl_rcu_read_unlock(store->lock);
+
+    for (i = 0; i < sk_METHOD_DATA_num(data); i++) {
+        METHOD_DATA *methdata = sk_METHOD_DATA_value(data, i);
+
+        fn(methdata->nid, methdata->method.method, fnarg);
+        ossl_method_free(&methdata->method);
+        OPENSSL_free(methdata);
+    }
+    sk_METHOD_DATA_free(data);
 }
 
 int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
