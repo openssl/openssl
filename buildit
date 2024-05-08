@@ -1,0 +1,11 @@
+#!/bin/sh
+# Build script for OpenSSL targeting Windows 2000 (and older).
+
+# run the configure script.
+perl ./Configure mingw no-asm -DWINVER=0x0501 -D_WIN32_WINNT=0x0501 -DOPENSSL_THREADS -DOPENSSL_NO_ASYNC -DOPENSSL_USE_NODELETE
+
+# Make
+make -j$(nproc)
+
+# Patch libcrypto.dll
+./patchlibcrypto

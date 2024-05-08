@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Compile patchlibcrypto.c into a temporary file, run it, and then delete it.
+TEMPFILENAME=$(mktemp)
+echo Compiling patchlibcrypto.c to $TEMPFILENAME.exe
+gcc patchlibcrypto.c -o $TEMPFILENAME.exe
+$TEMPFILENAME.exe
+rm $TEMPFILENAME
