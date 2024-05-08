@@ -117,6 +117,14 @@ jobs:
             dir: branch-3.1,
             tgz: branch-3.1.tar.gz,
           }, {
+            name: openssl-3.2,
+            dir: branch-3.2,
+            tgz: branch-3.2.tar.gz,
+          }, {
+            name: openssl-3.3,
+            dir: branch-3.3,
+            tgz: branch-3.3.tar.gz,
+          }, {
             name: master,
             dir: branch-master,
             tgz: branch-master.tar.gz,
@@ -187,9 +195,10 @@ jobs:
         # Note that releases are not used as a test environment for
         # later providers.  Problems in these situations ought to be
         # caught by cross branch testing before the release.
-        tree_a: [ branch-master, branch-3.1, branch-3.0,
+        tree_a: [ branch-master, branch-3.3, branch-3.2, branch-3.1, branch-3.0,
                   openssl-3.0.0, openssl-3.0.8, openssl-3.0.9, openssl-3.1.2 ]
-        tree_b: [ branch-master, branch-3.1, branch-3.0  ]
+        tree_b: [ branch-master, branch-3.3, branch-3.2, branch-3.1,
+                  branch-3.0  ]
     steps:
       - name: early exit checks
         id: early_exit
