@@ -8,8 +8,8 @@
  */
 
 #include "internal/cryptlib.h"
-#include "internal/constant_time.h"
 #include "bn_local.h"
+#include "internal/constant_time.h"
 
 /*
  * bn_mod_inverse_no_branch is a special version of BN_mod_inverse. It does
@@ -617,12 +617,10 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     pow2_numbits = 0;
     for (i = 0; i < r->dmax && i < g->dmax; i++) {
         pow2_numbits_temp = r->d[i] | g->d[i];
-        pow2_condition_mask = ((BN_ULONG)!constant_time_is_zero(pow2_flag)) & ((BN_ULONG)!constant_time_is_zero_64(pow2_numbits_temp));
-        pow2_flag &= !pow2_condition_mask;
+        pow2_condition_mask = ~(constant_time_is_zero_bn(pow2_flag)) & ~(constant_time_is_zero_bn(pow2_numbits_temp));
+        pow2_flag &= ~pow2_condition_mask;
         pow2_shifts += 1 & pow2_flag;
-        pow2_condition_mask = ((~pow2_condition_mask & (pow2_condition_mask - 1)) >> (BN_BITS2 - 1)) - 1; /* https://github.com/openssl/openssl/blob/067fbc01b9e867b31c71091d62f0f9012dc9e41a/crypto/bn/bn_lib.c#L950C5-L950C74 */
-        pow2_condition_mask = (pow2_numbits ^ pow2_numbits_temp) & pow2_condition_mask;
-        pow2_numbits ^= pow2_condition_mask;
+        pow2_numbits = constant_time_select_64(pow2_condition_mask, pow2_numbits_temp, pow2_numbits);
     }
     pow2_numbits = ~pow2_numbits;
     pow2_shifts *= BN_BITS2;
