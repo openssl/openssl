@@ -1,0 +1,4 @@
+#ThreadSanitizer suppressions file
+
+#Tsan does not understand RCU locks. Suppress false positives
+race:crypto/property/property.c
