@@ -4980,10 +4980,14 @@ static int test_key_exchange(int idx)
             break;
 #  ifndef OPENSSL_NO_ECX
         case 4:
+            if (is_fips)
+                return TEST_skip("X25519 might not be supported by fips provider.");
             kexch_alg = NID_X25519;
             kexch_name0 = "x25519";
             break;
         case 5:
+            if (is_fips)
+                return TEST_skip("X448 might not be supported by fips provider.");
             kexch_alg = NID_X448;
             kexch_name0 = "x448";
             break;
@@ -5201,6 +5205,9 @@ static int test_negotiated_group(int idx)
         expectednid = NID_undef;
     else
         expectednid = kexch_alg;
+
+    if (is_fips && (kexch_alg == NID_X25519 || kexch_alg == NID_X448))
+        return TEST_skip("X25519 and X448 might not be available in fips provider.");
 
     if (!istls13)
         max_version = TLS1_2_VERSION;
