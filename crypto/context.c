@@ -374,6 +374,9 @@ static int default_context_inited = 0;
 
 DEFINE_RUN_ONCE_STATIC(default_context_do_init)
 {
+    if (!ossl_init_thread())
+        goto err;
+
     if (!CRYPTO_THREAD_init_local(&default_context_thread_local, NULL))
         goto err;
 
