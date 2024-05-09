@@ -239,5 +239,5 @@ jobs:
       - name: run cross validation tests of FIPS from A with tree from B
         if: steps.early_exit.outcome == 'success'
         run: |
-          make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+          make test HARNESS_JOBS=${HARNESS_JOBS:-4} V=1
         working-directory: ${{ matrix.tree_b }}
