@@ -21,8 +21,7 @@
 
 static int dsa_precheck_params(const DSA *dsa, int *ret)
 {
-    if (dsa->params.p == NULL || dsa->params.q == NULL
-        || dsa->params.g == NULL) {
+    if (dsa->params.p == NULL || dsa->params.q == NULL) {
         ERR_raise(ERR_LIB_DSA, DSA_R_BAD_FFC_PARAMETERS);
         *ret = FFC_CHECK_INVALID_PQ;
         return 0;
@@ -111,7 +110,8 @@ int ossl_dsa_check_pairwise(const DSA *dsa)
     if (!dsa_precheck_params(dsa, &ret))
         return 0;
 
-    if (dsa->priv_key == NULL
+    if (dsa->params.g == NULL
+        || dsa->priv_key == NULL
         || dsa->pub_key == NULL)
         return 0;
 
