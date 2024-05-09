@@ -302,28 +302,22 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
 
         switch (param->data_type) {
         case OSSL_PARAM_INTEGER:
-            if (*use_param && !read_int(buf, len, &p_value_int)) {
-                /* use default */
-            }
-
             if (strcmp(param->key, OSSL_KDF_PARAM_ITER) == 0) {
                 p_value_int = malloc(sizeof(ITERS));
                 *p_value_int = ITERS;
-            }
-
-            if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_N) == 0) {
+            } else if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_N) == 0) {
                 p_value_int = malloc(sizeof(ITERS));
                 *p_value_int = ITERS;
-            }
-
-            if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_R) == 0) {
+            } else if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_R) == 0) {
                 p_value_int = malloc(sizeof(BLOCKSIZE));
                 *p_value_int = BLOCKSIZE;
-            }
-
-            if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_P) == 0) {
+            } else if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_P) == 0) {
                 p_value_int = malloc(sizeof(BLOCKSIZE));
                 *p_value_int = BLOCKSIZE;
+            } else {
+                if (*use_param && !read_int(buf, len, &p_value_int)) {
+                    /* use default */
+                }
             }
 
             *p = *param;
@@ -331,29 +325,22 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
             p++;
             break;
         case OSSL_PARAM_UNSIGNED_INTEGER:
-            if (*use_param && !read_uint(buf, len, &p_value_uint)) {
-                /* use default */
-            }
-
             if (strcmp(param->key, OSSL_KDF_PARAM_ITER) == 0) {
                 p_value_uint = malloc(sizeof(UITERS));
                 *p_value_uint = UITERS;
-                
-            }
-
-            if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_N) == 0) {
+            } else if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_N) == 0) {
                 p_value_uint = malloc(sizeof(UITERS));
                 *p_value_uint = UITERS;
-            }
-
-            if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_R) == 0) {
+            } else if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_R) == 0) {
                 p_value_uint = malloc(sizeof(UBLOCKSIZE));
                 *p_value_uint = UBLOCKSIZE;
-            }
-
-            if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_P) == 0) {
+            } else if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_P) == 0) {
                 p_value_uint = malloc(sizeof(UBLOCKSIZE));
                 *p_value_uint = UBLOCKSIZE;
+            } else {
+                if (*use_param && !read_uint(buf, len, &p_value_uint)) {
+                    /* use default */
+                }
             }
 
             *p = *param;
