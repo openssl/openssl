@@ -12,6 +12,7 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/fips_names.h>
+#include <openssl/fipskey.h>
 #include <openssl/rand.h> /* RAND_get0_public() */
 #include <openssl/proverr.h>
 #include <openssl/indicator.h>
@@ -27,12 +28,6 @@
 #include "self_test.h"
 #include "crypto/context.h"
 #include "internal/core.h"
-
-#if defined(OPENSSL_NO_FIPS_POST)
-# define OSSL_FIPS_PROV_NAME "OpenSSL non-compliant FIPS Provider"
-#else
-# define OSSL_FIPS_PROV_NAME "OpenSSL FIPS Provider"
-#endif
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
@@ -321,7 +316,7 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
                                               OSSL_LIB_CTX_FIPS_PROV_INDEX);
 
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_NAME);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, OSSL_FIPS_PROV_NAME))
+    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, FIPS_VENDOR))
         return 0;
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_VERSION);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR))
