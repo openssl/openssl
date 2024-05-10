@@ -28,6 +28,11 @@ extern "C" {
  */
 #define FIPS_KEY_STRING "{- $config{FIPSKEY} -}"
 
+/*
+ * The FIPS provider vendor name, as a string.
+ */
+#define FIPS_VENDOR "{- $config{FIPS_VENDOR} -}"
+
 # ifdef  __cplusplus
 }
 # endif

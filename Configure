@@ -1342,6 +1342,11 @@ push @{$config{openssl_feature_defines}},
      map { (my $x = $_) =~ tr|[\-a-z]|[_A-Z]|; "OPENSSL_RAND_SEED_$x" }
         @seed_sources;
 
+my $provider_string = $disabled{"fips-post"} ? "non-compliant FIPS Provider" : "FIPS Provider";
+
+$config{FIPS_VENDOR} =
+    (defined $version{FIPS_VENDOR} ? "$version{FIPS_VENDOR} $provider_string for OpenSSL" : "OpenSSL $provider_string");
+
 # Backward compatibility?
 if ($target =~ m/^CygWin32(-.*)$/) {
     $target = "Cygwin".$1;
