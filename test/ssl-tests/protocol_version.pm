@@ -65,7 +65,7 @@ sub max_prot_enabled {
 
     foreach my $i (0..$#protocols) {
         if (!$is_disabled[$i]
-                && (($protocols[$i] ne "TLSv1.3" && $protocols[$i] ne "DTLSv1.3")
+                && (($protocols[$i] ne "TLSv1.3")
                     || !disabled("ec")
                     || !disabled("dh"))
                 && ($protocols[$i] ne "DTLSv1.3"
