@@ -746,12 +746,12 @@ void EC_POINT_free(EC_POINT *point)
     if (point == NULL)
         return;
 
-#ifndef FIPS_MODULE
+#ifdef FIPS_MODULE
+    EC_POINT_clear_free(point);
+#else
     if (point->meth->point_finish != 0)
         point->meth->point_finish(point);
     OPENSSL_free(point);
-#else
-    EC_POINT_clear_free(point);
 #endif
 }
 

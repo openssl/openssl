@@ -90,10 +90,10 @@ static void *kdf_pbkdf2_new(void *provctx)
 static void kdf_pbkdf2_cleanup(KDF_PBKDF2 *ctx)
 {
     ossl_prov_digest_reset(&ctx->digest);
-#ifndef FIPS_MODULE
-    OPENSSL_free(ctx->salt);
-#else
+#ifdef FIPS_MODULE
     OPENSSL_clear_free(ctx->salt, ctx->salt_len);
+#else
+    OPENSSL_free(ctx->salt);
 #endif
     OPENSSL_clear_free(ctx->pass, ctx->pass_len);
     memset(ctx, 0, sizeof(*ctx));
