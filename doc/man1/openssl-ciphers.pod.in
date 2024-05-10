@@ -743,7 +743,7 @@ Note: the CBC modes mentioned in this RFC are not supported.
  TLS_SHA256_SHA256          TLS_SHA256_SHA256
  TLS_SHA384_SHA384          TLS_SHA384_SHA384
 
-Note: these ciphers are HMAC based and do not provide any confidentiality
+Note: these ciphers are purely HMAC based and do not provide any confidentiality
 and thus are disabled by default.
 These ciphers are available at security level 0.
 

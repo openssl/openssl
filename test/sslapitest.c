@@ -3942,7 +3942,7 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
     unsigned char buf[20];
     size_t readbytes, written;
 
-    if (is_fips && cipher >= 4 )
+    if (is_fips && cipher >= 4)
         return 1;
 
     if (ciphersuites[cipher] == NULL)
@@ -4483,8 +4483,8 @@ static int test_early_data_psk_with_all_ciphers(int idx)
     if (cipher_str[idx] == NULL)
         return 1;
     /*
-     * Skip ChaCha20Poly1305 & TLS_SHA{256,384}_SHA{256,384} cipher as
-     * currently FIPS module does not support it.
+     * Skip ChaCha20Poly1305 and TLS_SHA{256,384}_SHA{256,384} ciphers
+     * as currently FIPS module does not support them.
      */
     if ((idx == 2 || idx == 5 || idx == 6) && is_fips == 1)
         return 1;

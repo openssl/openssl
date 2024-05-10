@@ -36,7 +36,7 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    rl->nonce = OPENSSL_zalloc(ivlen);
+    rl->nonce = OPENSSL_malloc(ivlen);
     if (rl->nonce == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return OSSL_RECORD_RETURN_FATAL;
@@ -89,10 +89,10 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
                         size_t n_recs, int sending, SSL_MAC_BUF *mac,
                         size_t macsize)
 {
-    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER_CTX *enc_ctx;
     unsigned char recheader[SSL3_RT_HEADER_LENGTH];
     unsigned char tag[EVP_MAX_MD_SIZE];
-    size_t ivlen, offset, loop, hdrlen, taglen;
+    size_t nonce_len, offset, loop, hdrlen, taglen;
     unsigned char *staticiv;
     unsigned char *nonce;
     unsigned char *seq = rl->sequence;
@@ -109,11 +109,11 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         return 0;
     }
 
-    ctx = rl->enc_ctx;
+    enc_ctx = rl->enc_ctx; /* enc_ctx is ignored when rl->mac_ctx != NULL */
     staticiv = rl->iv;
     nonce = rl->nonce;
 
-    if (ctx == NULL && rl->mac_ctx == NULL) {
+    if (enc_ctx == NULL && rl->mac_ctx == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -130,11 +130,11 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         return 1;
     }
 
-    /* For Integrity Only, ivlen is same as MAC size */
+    /* For integrity-only ciphers, nonce_len is same as MAC size */
     if (rl->mac_ctx != NULL)
-        ivlen = EVP_MAC_CTX_get_mac_size(rl->mac_ctx);
+        nonce_len = EVP_MAC_CTX_get_mac_size(rl->mac_ctx);
     else
-        ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
+        nonce_len = EVP_CIPHER_CTX_get_iv_length(enc_ctx);
 
     if (!sending) {
         /*
@@ -146,13 +146,13 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         rec->length -= rl->taglen;
     }
 
-    /* Set up IV */
-    if (ivlen < SEQ_NUM_SIZE) {
+    /* Set up nonce: part of static IV followed by sequence number */
+    if (nonce_len < SEQ_NUM_SIZE) {
         /* Should not happen */
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    offset = ivlen - SEQ_NUM_SIZE;
+    offset = nonce_len - SEQ_NUM_SIZE;
     memcpy(nonce, staticiv, offset);
     for (loop = 0; loop < SEQ_NUM_SIZE; loop++)
         nonce[offset + loop] = staticiv[offset + loop] ^ seq[loop];
@@ -179,7 +179,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         int ret = 0;
 
         if ((mac_ctx = EVP_MAC_CTX_dup(rl->mac_ctx)) == NULL
-            || !EVP_MAC_update(mac_ctx, nonce, ivlen)
+            || !EVP_MAC_update(mac_ctx, nonce, nonce_len)
             || !EVP_MAC_update(mac_ctx, recheader, sizeof(recheader))
             || !EVP_MAC_update(mac_ctx, rec->input, rec->length)
             || !EVP_MAC_final(mac_ctx, tag, &taglen, rl->taglen)) {
@@ -200,15 +200,15 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         return ret;
     }
 
-    cipher = EVP_CIPHER_CTX_get0_cipher(ctx);
+    cipher = EVP_CIPHER_CTX_get0_cipher(enc_ctx);
     if (cipher == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     mode = EVP_CIPHER_get_mode(cipher);
 
-    if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, nonce, sending) <= 0
-        || (!sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+    if (EVP_CipherInit_ex(enc_ctx, NULL, NULL, NULL, nonce, sending) <= 0
+        || (!sending && EVP_CIPHER_CTX_ctrl(enc_ctx, EVP_CTRL_AEAD_SET_TAG,
                                             rl->taglen,
                                             rec->data + rec->length) <= 0)) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -220,19 +220,19 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
      * any AAD.
      */
     if ((mode == EVP_CIPH_CCM_MODE
-                 && EVP_CipherUpdate(ctx, NULL, &lenu, NULL,
+                 && EVP_CipherUpdate(enc_ctx, NULL, &lenu, NULL,
                                      (unsigned int)rec->length) <= 0)
-            || EVP_CipherUpdate(ctx, NULL, &lenu, recheader,
+            || EVP_CipherUpdate(enc_ctx, NULL, &lenu, recheader,
                                 sizeof(recheader)) <= 0
-            || EVP_CipherUpdate(ctx, rec->data, &lenu, rec->input,
+            || EVP_CipherUpdate(enc_ctx, rec->data, &lenu, rec->input,
                                 (unsigned int)rec->length) <= 0
-            || EVP_CipherFinal_ex(ctx, rec->data + lenu, &lenf) <= 0
+            || EVP_CipherFinal_ex(enc_ctx, rec->data + lenu, &lenf) <= 0
             || (size_t)(lenu + lenf) != rec->length) {
         return 0;
     }
     if (sending) {
         /* Add the tag */
-        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, rl->taglen,
+        if (EVP_CIPHER_CTX_ctrl(enc_ctx, EVP_CTRL_AEAD_GET_TAG, rl->taglen,
                                 rec->data + rec->length) <= 0) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;

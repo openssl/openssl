@@ -487,7 +487,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
 
     if (((which & SSL3_CC_CLIENT) && (which & SSL3_CC_WRITE))
             || ((which & SSL3_CC_SERVER) && (which & SSL3_CC_READ))) {
-        if (which & SSL3_CC_EARLY) {
+        if ((which & SSL3_CC_EARLY) != 0) {
             EVP_MD_CTX *mdctx = NULL;
             long handlen;
             void *hdata;
@@ -635,7 +635,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         }
     }
 
-    if (!(which & SSL3_CC_EARLY)) {
+    if ((which & SSL3_CC_EARLY) == 0) {
         md = ssl_handshake_md(s);
         cipher = s->s3.tmp.new_sym_enc;
         mac_md = s->s3.tmp.new_hash;
