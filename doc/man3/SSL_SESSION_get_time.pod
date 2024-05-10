@@ -60,7 +60,9 @@ of the session.
 SSL_SESSION_get_time() and SSL_SESSION_get_timeout() return the currently
 valid values.
 
-SSL_SESSION_set_time() and SSL_SESSION_set_timeout() return 1 on success.
+SSL_SESSION_set_time() sets the time for the SSL session and returns the new time on success or 0 on error.
+
+SSL_SESSION_set_timeout() sets the timeout value for the SSL session and returns 1 on success or 0 on error.
 
 If any of the function is passed the NULL pointer for the session B<s>,
 0 is returned.
