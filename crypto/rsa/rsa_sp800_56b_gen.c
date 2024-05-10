@@ -147,11 +147,15 @@ int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
     ret = 1;
 err:
     /* Zeroize any internally generated values that are not returned */
-    if (Xpo != NULL)
-        BN_clear(Xpo);
-    if (Xqo != NULL)
-        BN_clear(Xqo);
+    BN_clear(Xpo);
+    BN_clear(Xqo);
     BN_clear(tmp);
+    if (ret != 1) {
+        BN_clear_free(rsa->p);
+        rsa->p = NULL;
+        BN_clear_free(rsa->q);
+        rsa->q = NULL;
+    }
 
     BN_CTX_end(ctx);
     return ret;
