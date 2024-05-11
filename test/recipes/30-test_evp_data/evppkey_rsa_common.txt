@@ -989,6 +989,43 @@ Verify = RSA-PSS-BAD2
 Result = KEYOP_INIT_ERROR
 Reason = invalid salt length
 
+# Test sign with MGF1 using shake fails
+Sign = RSA-PSS
+Ctrl = digest:sha256
+Ctrl = rsa_padding_mode:pss
+Ctrl = rsa_mgf1_md:shake256
+Input = ""
+Output = ""
+Result = PKEY_CTRL_ERROR
+
+# Test verify with MGF1 using shake fails
+Verify = RSA-PSS
+Ctrl = digest:sha256
+Ctrl = rsa_padding_mode:pss
+Ctrl = rsa_mgf1_md:shake256
+Input = ""
+Output = ""
+Result = PKEY_CTRL_ERROR
+
+# Test sign with digest using shake fails. Remove once FIPS 186-5 /
+# RFC-8702 / RFC-8692 SHAKE digest implemented
+Sign = RSA-PSS
+Ctrl = digest:shake256
+Ctrl = rsa_padding_mode:pss
+Ctrl = rsa_mgf1_md:sha256
+Input = ""
+Output = ""
+Result = PKEY_CTRL_ERROR
+
+# Test sign with digest using shake fails. Remove once FIPS 186-5 /
+# RFC-8702 / RFC-8692 SHAKE digest implemented
+Verify = RSA-PSS
+Ctrl = digest:shake256
+Ctrl = rsa_padding_mode:pss
+Ctrl = rsa_mgf1_md:sha256
+Input = ""
+Output = ""
+Result = PKEY_CTRL_ERROR
 
 # Additional RSA-PSS and RSA-OAEP tests converted from
 # ftp://ftp.rsasecurity.com/pub/pkcs/pkcs-1/pkcs-1v2-1-vec.zip
