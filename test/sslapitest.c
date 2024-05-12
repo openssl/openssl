@@ -3919,7 +3919,7 @@ static const char *ciphersuites[] = {
 #else
     NULL,
 #endif
-#if !defined(OPENSSL_NO_TLS1_3_INTEGRITY_ONLY_CIPHERS)
+#if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
     "TLS_SHA256_SHA256",
     "TLS_SHA384_SHA384"
 #endif
@@ -4453,7 +4453,7 @@ static int test_early_data_psk_with_all_ciphers(int idx)
 # endif
         TLS1_3_RFC_AES_128_CCM_SHA256,
         TLS1_3_RFC_AES_128_CCM_8_SHA256,
-# if !defined(OPENSSL_NO_TLS1_3_INTEGRITY_ONLY_CIPHERS)
+# if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
         TLS1_3_RFC_SHA256_SHA256,
         TLS1_3_RFC_SHA384_SHA384
 #else
@@ -4471,7 +4471,7 @@ static int test_early_data_psk_with_all_ciphers(int idx)
 # endif
         TLS13_AES_128_CCM_SHA256_BYTES,
         TLS13_AES_128_CCM_8_SHA256_BYTES,
-# if !defined(OPENSSL_NO_TLS1_3_INTEGRITY_ONLY_CIPHERS)
+# if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
         TLS13_SHA256_SHA256_BYTES,
         TLS13_SHA384_SHA384_BYTES
 #else
@@ -5351,7 +5351,7 @@ static int test_tls13_ciphersuite(int idx)
         /* CCM8 ciphers are considered low security due to their short tag */
         { TLS1_3_RFC_AES_128_CCM_8_SHA256
           ":" TLS1_3_RFC_AES_128_CCM_SHA256, 1, 1 },
-# if !defined(OPENSSL_NO_TLS1_3_INTEGRITY_ONLY_CIPHERS)
+# if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
         /* Integrity-only cipher do not provide any confidentiality */
         { TLS1_3_RFC_SHA256_SHA256, 0, 1 },
         { TLS1_3_RFC_SHA384_SHA384, 0, 1 }

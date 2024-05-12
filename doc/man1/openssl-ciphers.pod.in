@@ -745,7 +745,7 @@ Note: the CBC modes mentioned in this RFC are not supported.
 
 Note: these ciphers are purely HMAC based and do not provide any confidentiality
 and thus are disabled by default.
-These ciphers are available at security level 0.
+These ciphers are only available at security level 0.
 
 =head2 Older names used by OpenSSL
 
@@ -811,7 +811,7 @@ The B<-convert> option was added in OpenSSL 1.1.1.
 Support for standard IANA names in cipher lists was added in
 OpenSSL 3.2.0.
 
-The support for TLS v1.3 integrity-only cipher suites was added in OpenSSL 3.3.
+The support for TLS v1.3 integrity-only cipher suites was added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

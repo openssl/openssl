@@ -47,8 +47,8 @@ OpenSSL 3.4
 
    *Tim Perry*
 
- * Added to TLS v1.3 support for integrity-only cipher suites
-   TLS_SHA256_SHA256 and TLS_SHA384_SHA384, as defined in RFC 9150.
+ * Added support for integrity-only cipher suites TLS_SHA256_SHA256 and
+   TLS_SHA384_SHA384 in TLS 1.3, as defined in RFC 9150.
 
    This work was sponsored by Siemens AG.
 
