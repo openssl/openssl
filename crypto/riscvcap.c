@@ -85,7 +85,7 @@ static long riscv_hwprobe(struct riscv_hwprobe *pairs, size_t pair_count,
     return syscall(__NR_riscv_hwprobe, pairs, pair_count, cpu_count, cpus, flags);
 }
 
-static void hwprobe_to_cap()
+static void hwprobe_to_cap(void)
 {
     long ret;
     struct riscv_hwprobe pairs[OSSL_RISCV_HWPROBE_PAIR_COUNT] = {
