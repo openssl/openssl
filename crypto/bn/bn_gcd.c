@@ -581,8 +581,8 @@ end:
 int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 {
     BIGNUM *g, *temp = NULL;
-    BN_ULONG pow2_numbits, pow2_numbits_temp, pow2_condition_mask;
-    int i, j, top, rlen, glen, m, delta = 1, cond = 0, pow2_shifts, ret = 0, pow2_flag;
+    BN_ULONG pow2_numbits, pow2_numbits_temp, pow2_condition_mask, pow2_flag;
+    int i, j, top, rlen, glen, m, delta = 1, cond = 0, pow2_shifts, ret = 0;
 
     /* Note 2: zero input corner cases are not constant-time since they are
      * handled immediately. An attacker can run an attack under this
@@ -626,7 +626,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     pow2_shifts *= BN_BITS2;
     pow2_flag = 1;
     for (j = 0; j < BN_BITS2; j++) {
-        pow2_flag &= pow2_numbits; 
+        pow2_flag &= pow2_numbits;
         pow2_shifts += pow2_flag;
         pow2_numbits >>= 1;
     }
