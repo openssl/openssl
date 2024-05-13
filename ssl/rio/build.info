@@ -4,3 +4,4 @@ SOURCE[$LIBSSL]=poll_immediate.c
 IF[{- !$disabled{quic} -}]
   SOURCE[$LIBSSL]=rio_notifier.c
 ENDIF
+SOURCE[$LIBSSL]=poll_builder.c
