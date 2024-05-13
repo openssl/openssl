@@ -27,6 +27,7 @@ typedef struct quic_stream_st QUIC_STREAM;
 typedef struct quic_sstream_st QUIC_SSTREAM;
 typedef struct quic_rstream_st QUIC_RSTREAM;
 typedef struct quic_reactor_st QUIC_REACTOR;
+typedef struct quic_reactor_wait_ctx_st QUIC_REACTOR_WAIT_CTX;
 typedef struct ossl_statm_st OSSL_STATM;
 typedef struct quic_demux_st QUIC_DEMUX;
 typedef struct ossl_qrx_pkt_st OSSL_QRX_PKT;
