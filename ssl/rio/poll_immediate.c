@@ -124,6 +124,7 @@ static int poll_translate(SSL_POLL_ITEM *items,
 
             switch (ssl->type) {
 #ifndef OPENSSL_NO_QUIC
+            case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_CONNECTION:
             case SSL_TYPE_QUIC_XSO:
                 if (!poll_translate_ssl_quic(ssl, rpb))
@@ -221,6 +222,7 @@ static int poll_readout(SSL_POLL_ITEM *items,
 
             switch (ssl->type) {
 #ifndef OPENSSL_NO_QUIC
+            case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_CONNECTION:
             case SSL_TYPE_QUIC_XSO:
                 if (!ossl_quic_conn_poll_events(ssl, events, do_tick, &revents))
@@ -316,7 +318,6 @@ int SSL_poll(SSL_POLL_ITEM *items,
         }
     }
 
-    /* TODO(QUIC POLLING): Support for polling listeners */
     /* TODO(QUIC POLLING): Support for polling FDs */
 
 out:
