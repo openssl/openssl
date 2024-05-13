@@ -9,6 +9,7 @@
 
 #include "internal/common.h"
 #include "internal/quic_ssl.h"
+#include "internal/quic_reactor_wait_ctx.h"
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include "../ssl_local.h"
@@ -28,17 +29,22 @@
         goto out;                                                           \
     } while (0)
 
-#define FAIL_ITEM(i)                                                        \
+#define FAIL_ITEM(idx)                                                      \
     do {                                                                    \
-        ITEM_N(items, stride, i).revents = SSL_POLL_EVENT_F;                \
+        size_t idx_ = (idx);                                                \
+        ITEM_N(items, stride, idx_).revents = SSL_POLL_EVENT_F;             \
         ++result_count;                                                     \
-        FAIL_FROM(i + 1);                                                   \
+        FAIL_FROM(idx_ + 1);                                                \
     } while (0)
 
-static int poll_translate_ssl_quic(SSL *ssl, RIO_POLL_BUILDER *rpb)
+static int poll_translate_ssl_quic(SSL *ssl,
+                                   QUIC_REACTOR_WAIT_CTX *wctx,
+                                   RIO_POLL_BUILDER *rpb,
+                                   uint64_t events,
+                                   int *abort_blocking)
 {
     BIO_POLL_DESCRIPTOR rd, wd;
-    int fd1 = -1, fd2 = -1;
+    int fd1 = -1, fd2 = -1, fd_nfy = -1;
     int fd1_r = 0, fd1_w = 0, fd2_w = 0;
 
     if (SSL_net_read_desired(ssl)) {
@@ -91,17 +97,99 @@ static int poll_translate_ssl_quic(SSL *ssl, RIO_POLL_BUILDER *rpb)
             return 0;
 
     if (fd2 != -1 && fd2_w)
-        if (!ossl_rio_poll_builder_add_fd(rpb, fd2, /*r=*/0, fd2_w))
+        if (!ossl_rio_poll_builder_add_fd(rpb, fd2, /*r = */0, fd2_w))
             return 0;
 
+    /*
+     * Add the notifier FD for the QUIC domain this SSL object is a part of (if
+     * there is one). This ensures we get woken up if another thread calls into
+     * that QUIC domain and some readiness event relevant to the SSL_poll call
+     * on this thread arises without the underlying network socket ever becoming
+     * readable.
+     */
+    fd_nfy = ossl_quic_get_notifier_fd(ssl);
+    if (fd_nfy != -1) {
+        uint64_t revents = 0;
+
+        if (!ossl_rio_poll_builder_add_fd(rpb, fd_nfy, /*r = */1, /*w = */0))
+            return 0;
+
+        /* Tell QUIC domain we need to receive notifications. */
+        ossl_quic_enter_blocking_section(ssl, wctx);
+
+        /*
+         * Only after the above call returns is it guaranteed that any readiness
+         * events will cause the above notifier to become readable. Therefore,
+         * it is possible the object became ready after our initial
+         * poll_readout() call (before we determined that nothing was ready and
+         * we needed to block). We now need to do another readout, in which case
+         * blocking is to be aborted.
+         */
+        if (!ossl_quic_conn_poll_events(ssl, events, /*do_tick = */0, &revents)) {
+            ossl_quic_leave_blocking_section(ssl, wctx);
+            return 0;
+        }
+
+        if (revents != 0) {
+            ossl_quic_leave_blocking_section(ssl, wctx);
+            *abort_blocking = 1;
+            return 1;
+        }
+    }
+
     return 1;
+}
+
+static void postpoll_translation_cleanup_ssl_quic(SSL *ssl,
+                                                  QUIC_REACTOR_WAIT_CTX *wctx)
+{
+    if (ossl_quic_get_notifier_fd(ssl) != -1)
+        ossl_quic_leave_blocking_section(ssl, wctx);
+}
+
+static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
+                                         size_t num_items,
+                                         size_t stride,
+                                         QUIC_REACTOR_WAIT_CTX *wctx)
+{
+    SSL_POLL_ITEM *item;
+    SSL *ssl;
+    size_t i;
+
+    for (i = 0; i < num_items; ++i) {
+        item = &ITEM_N(items, stride, i);
+
+        switch (item->desc.type) {
+        case BIO_POLL_DESCRIPTOR_TYPE_SSL:
+            ssl = item->desc.value.ssl;
+            if (ssl == NULL)
+                break;
+
+            switch (ssl->type) {
+#ifndef OPENSSL_NO_QUIC
+            case SSL_TYPE_QUIC_LISTENER:
+            case SSL_TYPE_QUIC_CONNECTION:
+            case SSL_TYPE_QUIC_XSO:
+                postpoll_translation_cleanup_ssl_quic(ssl, wctx);
+                break;
+#endif
+            default:
+                break;
+            }
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 static int poll_translate(SSL_POLL_ITEM *items,
                           size_t num_items,
                           size_t stride,
+                          QUIC_REACTOR_WAIT_CTX *wctx,
                           RIO_POLL_BUILDER *rpb,
-                          OSSL_TIME *p_earliest_wakeup_deadline)
+                          OSSL_TIME *p_earliest_wakeup_deadline,
+                          int *abort_blocking)
 {
     int ok = 1;
     SSL_POLL_ITEM *item;
@@ -127,11 +215,15 @@ static int poll_translate(SSL_POLL_ITEM *items,
             case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_CONNECTION:
             case SSL_TYPE_QUIC_XSO:
-                if (!poll_translate_ssl_quic(ssl, rpb))
+                if (!poll_translate_ssl_quic(ssl, wctx, rpb, item->events,
+                                             abort_blocking))
                     FAIL_ITEM(i);
 
+                if (*abort_blocking)
+                    return 1;
+
                 if (!SSL_get_event_timeout(ssl, &timeout, &is_infinite))
-                    FAIL_ITEM(i);
+                    FAIL_ITEM(i++); /* need to clean up this item too */
 
                 if (!is_infinite)
                     earliest_wakeup_deadline
@@ -165,6 +257,9 @@ static int poll_translate(SSL_POLL_ITEM *items,
     }
 
 out:
+    if (!ok)
+        postpoll_translation_cleanup(items, i, stride, wctx);
+
     *p_earliest_wakeup_deadline = earliest_wakeup_deadline;
     return ok;
 }
@@ -174,25 +269,53 @@ static int poll_block(SSL_POLL_ITEM *items,
                       size_t stride,
                       OSSL_TIME user_deadline)
 {
-    int ok = 0;
+    int ok = 0, abort_blocking = 0;
     RIO_POLL_BUILDER rpb;
+    QUIC_REACTOR_WAIT_CTX wctx;
     OSSL_TIME earliest_wakeup_deadline;
 
+    /*
+     * Blocking is somewhat involved and involves the following steps:
+     *
+     * - Translation, in which the various logical items (SSL objects, etc.) to
+     *   be polled are translated into items an OS polling API understands.
+     *
+     * - Synchronisation bookkeeping. This ensures that we can be woken up
+     *   not just by readiness of any underlying file descriptor distilled from
+     *   the provided items but also by other threads, which might do work
+     *   on a relevant QUIC object to cause the object to be ready without the
+     *   underlying file descriptor ever becoming ready from our perspective.
+     *
+     * - The blocking call to the OS polling API.
+     *
+     * - Currently we do not do reverse translation but simply call
+     *   poll_readout() again to read out all readiness state for all
+     *   descriptors which the user passed.
+     *
+     *   TODO(QUIC POLLING): In the future we will do reverse translation here
+     *   also to facilitate a more efficient readout.
+     */
+    ossl_quic_reactor_wait_ctx_init(&wctx);
     ossl_rio_poll_builder_init(&rpb);
 
-    if (!poll_translate(items, num_items, stride, &rpb,
-                        &earliest_wakeup_deadline))
+    if (!poll_translate(items, num_items, stride, &wctx, &rpb,
+                        &earliest_wakeup_deadline,
+                        &abort_blocking))
+        goto out;
+
+    if (abort_blocking)
         goto out;
 
     earliest_wakeup_deadline = ossl_time_min(earliest_wakeup_deadline,
                                              user_deadline);
 
-    if (!ossl_rio_poll_builder_poll(&rpb, earliest_wakeup_deadline))
-        goto out;
+    ok = ossl_rio_poll_builder_poll(&rpb, earliest_wakeup_deadline);
 
-    ok = 1;
+    postpoll_translation_cleanup(items, num_items, stride, &wctx);
+
 out:
     ossl_rio_poll_builder_cleanup(&rpb);
+    ossl_quic_reactor_wait_ctx_cleanup(&wctx);
     return ok;
 }
 
