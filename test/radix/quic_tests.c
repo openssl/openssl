@@ -72,7 +72,7 @@ DEF_FUNC(ssl_poll_check)
 {
     int ok = 0;
     SSL *La, *Lax[4];
-    SSL_POLL_ITEM items[5] = {0}, expected_items[5] = {0};
+    SSL_POLL_ITEM items[6] = {0}, expected_items[6] = {0};
     size_t result_count = 0, i;
     const struct timeval z_timeout = {0}, *p_timeout = &z_timeout;
     struct timeval timeout = {0};
@@ -92,6 +92,8 @@ DEF_FUNC(ssl_poll_check)
         items[i + 1].events      = SSL_POLL_EVENT_R | SSL_POLL_EVENT_I;
         items[i + 1].revents     = 0;
     }
+
+    items[5].desc = SSL_as_poll_descriptor(SSL_get0_listener(La));
 
     switch (mode) {
     case 0: /* Nothing ready */
@@ -118,6 +120,11 @@ DEF_FUNC(ssl_poll_check)
         p_timeout = &timeout;
         timeout.tv_sec  = 10;
         timeout.tv_usec = 0;
+        break;
+    case 4: /* Listener test */
+        expected_result_count       = 1;
+        items[5].events            |= SSL_POLL_EVENT_IC;
+        expected_items[5].revents   = SSL_POLL_EVENT_IC;
         break;
     default:
         goto err;
@@ -184,11 +191,12 @@ DEF_SCRIPT(ssl_poll,
     OP_ACCEPT_STREAM_WAIT(La, La3, 0);
     OP_READ_EXPECT_B(La3, "sync");
 
-    for (i = 0; i <= 3; ++i) {
+    for (i = 0; i <= 4; ++i) {
         /* 0: Check nothing ready */
         /* 1: Check that various events are reported correctly */
         /* 2: Check nothing ready */
         /* 3: Blocking call unblocked from child thread */
+        /* 4: Listener test */
 
         if (i == 1) {
             OP_WRITE_B(C0, "orange");
@@ -198,6 +206,10 @@ DEF_SCRIPT(ssl_poll,
             OP_READ_EXPECT_B(La0, "orange");
         } else if (i == 3) {
             OP_SPAWN_THREAD(ssl_poll_child);
+        } else if (i == 4) {
+            OP_NEW_SSL_C(Cb);
+            OP_SET_PEER_ADDR_FROM(Cb, L);
+            OP_CONNECT_WAIT(Cb);
         }
 
         OP_SELECT_SSL(0, La);
@@ -210,6 +222,13 @@ DEF_SCRIPT(ssl_poll,
 
         if (i == 3)
             OP_READ_EXPECT_B(La0, "extra");
+
+        if (i == 4) {
+            OP_ACCEPT_CONN_WAIT1_ND(L, Lb, 0);
+            OP_NEW_STREAM(Lb, Lb0, 0);
+            OP_WRITE_B(Lb0, "foo");
+            OP_READ_EXPECT_B(Cb, "foo");
+        }
     }
 }
 
