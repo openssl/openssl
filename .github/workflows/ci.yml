@@ -95,6 +95,9 @@ jobs:
         ./util/opensslwrap.sh version -c
     - name: make test
       run: .github/workflows/make-test
+    - name: check fipsvendor
+      run: |
+        util/wrap.pl -fips apps/openssl list -providers | grep 'name: CI OpenSSL FIPS Provider$'
     - name: save artifacts
       uses: actions/upload-artifact@v3
       with:
