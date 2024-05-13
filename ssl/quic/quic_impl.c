@@ -18,6 +18,7 @@
 #include "internal/quic_error.h"
 #include "internal/quic_engine.h"
 #include "internal/quic_port.h"
+#include "internal/quic_reactor_wait_ctx.h"
 #include "internal/time.h"
 
 typedef struct qctx_st QCTX;
@@ -4829,6 +4830,47 @@ int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, int do_tick,
     qctx_unlock(&ctx);
     *p_revents = revents;
     return 1;
+}
+
+int ossl_quic_get_notifier_fd(SSL *ssl)
+{
+    QCTX ctx;
+    QUIC_REACTOR *rtor;
+    RIO_NOTIFIER *nfy;
+
+    if (!expect_quic_any(ssl, &ctx))
+        return -1;
+
+    rtor = ossl_quic_obj_get0_reactor(ctx.obj);
+    nfy = ossl_quic_reactor_get0_notifier(rtor);
+    if (nfy == NULL)
+        return -1;
+
+    return ossl_rio_notifier_as_fd(nfy);
+}
+
+void ossl_quic_enter_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx)
+{
+    QCTX ctx;
+    QUIC_REACTOR *rtor;
+
+    if (!expect_quic_any(ssl, &ctx))
+        return;
+
+    rtor = ossl_quic_obj_get0_reactor(ctx.obj);
+    ossl_quic_reactor_wait_ctx_enter(wctx, rtor);
+}
+
+void ossl_quic_leave_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx)
+{
+    QCTX ctx;
+    QUIC_REACTOR *rtor;
+
+    if (!expect_quic_any(ssl, &ctx))
+        return;
+
+    rtor = ossl_quic_obj_get0_reactor(ctx.obj);
+    ossl_quic_reactor_wait_ctx_leave(wctx, rtor);
 }
 
 /*

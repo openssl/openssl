@@ -153,6 +153,9 @@ int ossl_quic_set_diag_title(SSL_CTX *ctx, const char *title);
 /* APIs used by the polling infrastructure */
 int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, int do_tick,
                                uint64_t *revents);
+int ossl_quic_get_notifier_fd(SSL *ssl);
+void ossl_quic_enter_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx);
+void ossl_quic_leave_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx);
 
 # endif
 
