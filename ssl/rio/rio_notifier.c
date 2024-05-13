@@ -126,6 +126,10 @@ int ossl_rio_notifier_init(RIO_NOTIFIER *nfy)
     if (rfd < 0)
         goto err;
 
+    rc = getsockname(wfd, (struct sockaddr *)&sa, &sa_len);
+    if (rc < 0)
+        goto err;
+
     /* Close the listener, which we don't need anymore. */
     BIO_closesocket(lfd);
     lfd = -1;
