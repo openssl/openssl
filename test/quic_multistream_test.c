@@ -5492,7 +5492,6 @@ ossl_unused static int script_85_poll(struct helper *h, struct helper_local *hl)
 {
     int ok = 1, ret, expected_ret = 1;
     static const struct timeval timeout = {0};
-    static const struct timeval nz_timeout = {0, 1};
     size_t result_count, expected_result_count = 0;
     SSL_POLL_ITEM items[5] = {0}, *item = items;
     SSL *c_a, *c_b, *c_c, *c_d;
@@ -5530,16 +5529,6 @@ ossl_unused static int script_85_poll(struct helper *h, struct helper_local *hl)
     item->revents = UINT64_MAX;
     ++item;
 
-    /* Non-zero timeout is not supported. */
-    result_count = SIZE_MAX;
-    ERR_set_mark();
-    if (!TEST_false(SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
-                             &nz_timeout, 0,
-                             &result_count))
-        || !TEST_size_t_eq(result_count, 0))
-        return 0;
-
-    ERR_pop_to_mark();
     result_count = SIZE_MAX;
     ret = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
                    &timeout, 0,
