@@ -308,7 +308,7 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
                 p_value_int = OPENSSL_malloc(sizeof(ITERS));
                 *p_value_int = ITERS;
             } else if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_R) == 0) {
-                p_value_int = malOPENSSL_mallocloc(sizeof(BLOCKSIZE));
+                p_value_int = OPENSSL_malloc(sizeof(BLOCKSIZE));
                 *p_value_int = BLOCKSIZE;
             } else if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_P) == 0) {
                 p_value_int = OPENSSL_malloc(sizeof(BLOCKSIZE));
