@@ -233,17 +233,15 @@ err:
 DEF_FUNC(hf_new_stream)
 {
     int ok = 0;
-    const char *conn_name, *stream_name;
+    const char *stream_name;
     SSL *conn, *stream;
     uint64_t flags, do_accept;
 
     F_POP2(flags, do_accept);
-    F_POP2(conn_name, stream_name);
+    F_POP(stream_name);
+    REQUIRE_SSL(conn);
 
     if (!TEST_ptr_null(RADIX_PROCESS_get_obj(RP(), stream_name)))
-        goto err;
-
-    if (!TEST_ptr(conn = RADIX_PROCESS_get_ssl(RP(), conn_name)))
         goto err;
 
     if (do_accept) {
@@ -909,6 +907,20 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_sleep)
+{
+    int ok = 0;
+    uint64_t ms;
+
+    F_POP(ms);
+
+    OSSL_sleep(ms);
+
+    ok = 1;
+err:
+    return ok;
+}
+
 #define OP_UNBIND(name)                                         \
     (OP_PUSH_PZ(#name),                                         \
      OP_FUNC(hf_unbind))
@@ -977,6 +989,10 @@ err:
      OP_SET_PEER_ADDR_FROM(C, L),                               \
      OP_CONNECT_WAIT(C))
 
+#define OP_SIMPLE_PAIR_CONN_ND()                                \
+    (OP_SIMPLE_PAIR_CONN(),                                     \
+     OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE))
+
 #define OP_NEW_STREAM(conn_name, stream_name, flags)            \
     (OP_SELECT_SSL(0, conn_name),                               \
      OP_PUSH_PZ(#stream_name),                                  \
@@ -1001,9 +1017,21 @@ err:
      OP_PUSH_U64(flags),                                        \
      OP_FUNC(hf_accept_conn))
 
+#define OP_ACCEPT_CONN_WAIT_ND(listener_name, conn_name, flags) \
+    (OP_ACCEPT_CONN_WAIT(listener_name, conn_name, flags),      \
+     OP_SET_DEFAULT_STREAM_MODE(conn_name, SSL_DEFAULT_STREAM_MODE_NONE))
+
 #define OP_ACCEPT_CONN_NONE(listener_name)                      \
     (OP_SELECT_SSL(0, listener_name),                           \
      OP_FUNC(hf_accept_conn_none))
+
+#define OP_ACCEPT_CONN_WAIT1(listener_name, conn_name, flags)   \
+    (OP_ACCEPT_CONN_WAIT(listener_name, conn_name, flags),      \
+     OP_ACCEPT_CONN_NONE(listener_name))
+
+#define OP_ACCEPT_CONN_WAIT1_ND(listener_name, conn_name, flags) \
+    (OP_ACCEPT_CONN_WAIT_ND(listener_name, conn_name, flags),    \
+     OP_ACCEPT_CONN_NONE(listener_name))
 
 #define OP_WRITE(name, buf, buf_len)                            \
     (OP_SELECT_SSL(0, name),                                    \
@@ -1114,3 +1142,7 @@ err:
 #define OP_SKIP_TIME(ms)                                        \
     (OP_PUSH_U64(ms),                                           \
      OP_FUNC(hf_skip_time))
+
+#define OP_SLEEP(ms)                                            \
+    (OP_PUSH_U64(ms),                                           \
+     OP_FUNC(hf_sleep))
