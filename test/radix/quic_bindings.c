@@ -77,7 +77,7 @@ typedef struct radix_process_st {
     int                     thread_composite_testresult;
 } RADIX_PROCESS;
 
-#define NUM_SLOTS       4
+#define NUM_SLOTS       8
 
 /* Thread-level state within a process */
 typedef struct radix_thread_st {
@@ -681,6 +681,36 @@ static int expect_slot_ssl(FUNC_CTX *fctx, size_t idx, SSL **p_ssl)
             goto err;                                           \
     } while (0)
 #define REQUIRE_SSL(ssl)    REQUIRE_SSL_N(0, (ssl))
+
+#define REQUIRE_SSL_2(a, b)                                     \
+    do {                                                        \
+        REQUIRE_SSL_N(0, (a));                                  \
+        REQUIRE_SSL_N(1, (b));                                  \
+    } while (0)
+
+#define REQUIRE_SSL_3(a, b, c)                                  \
+    do {                                                        \
+        REQUIRE_SSL_N(0, (a));                                  \
+        REQUIRE_SSL_N(1, (b));                                  \
+        REQUIRE_SSL_N(2, (c));                                  \
+    } while (0)
+
+#define REQUIRE_SSL_4(a, b, c, d)                               \
+    do {                                                        \
+        REQUIRE_SSL_N(0, (a));                                  \
+        REQUIRE_SSL_N(1, (b));                                  \
+        REQUIRE_SSL_N(2, (c));                                  \
+        REQUIRE_SSL_N(3, (d));                                  \
+    } while (0)
+
+#define REQUIRE_SSL_5(a, b, c, d, e)                            \
+    do {                                                        \
+        REQUIRE_SSL_N(0, (a));                                  \
+        REQUIRE_SSL_N(1, (b));                                  \
+        REQUIRE_SSL_N(2, (c));                                  \
+        REQUIRE_SSL_N(3, (d));                                  \
+        REQUIRE_SSL_N(4, (e));                                  \
+    } while (0)
 
 #define C_BIDI_ID(ordinal) \
     (((ordinal) << 2) | QUIC_STREAM_INITIATOR_CLIENT | QUIC_STREAM_DIR_BIDI)
