@@ -24,7 +24,7 @@ ok(run(test(["sysdefaulttest"])), "sysdefaulttest");
 
 $ENV{OPENSSL_CONF} = data_file("sysdefault-bad.cnf");
 
-ok(!run(test(["sysdefaulttest"])), "sysdefaulttest");
+ok(run(test(["sysdefaulttest", "-f"])), "sysdefaulttest");
 
 $ENV{OPENSSL_CONF} = data_file("sysdefault-ignore.cnf");
 
