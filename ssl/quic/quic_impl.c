@@ -4757,6 +4757,20 @@ static int test_poll_event_os(QUIC_CONNECTION *qc, int is_uni)
         && ossl_quic_channel_get_local_stream_count_avail(qc->ch, is_uni) > 0;
 }
 
+/* Do we have the EL (exception: listener) condition? */
+QUIC_NEEDS_LOCK
+static int test_poll_event_el(QUIC_LISTENER *ql)
+{
+    return !ossl_quic_port_is_running(ql->port);
+}
+
+/* Do we have the IC (incoming: connection) condition? */
+QUIC_NEEDS_LOCK
+static int test_poll_event_ic(QUIC_LISTENER *ql)
+{
+    return ossl_quic_port_get_num_incoming_channels(ql->port) > 0;
+}
+
 QUIC_TAKES_LOCK
 int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, int do_tick,
                                uint64_t *p_revents)
@@ -4764,21 +4778,20 @@ int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, int do_tick,
     QCTX ctx;
     uint64_t revents = 0;
 
-    /* TODO(QUIC SERVER): Support listeners */
-    if (!expect_quic_cs(ssl, &ctx))
+    if (!expect_quic_csl(ssl, &ctx))
         return 0;
 
     qctx_lock(&ctx);
 
-    if (do_tick)
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(ctx.qc->ch), 0);
-
-    if (!ctx.qc->started) {
+    if (ctx.qc != NULL && !ctx.qc->started) {
         /* We can only try to write on non-started connection. */
         if ((events & SSL_POLL_EVENT_W) != 0)
             revents |= SSL_POLL_EVENT_W;
         goto end;
     }
+
+    if (do_tick)
+        ossl_quic_reactor_tick(ossl_quic_obj_get0_reactor(ctx.obj), 0);
 
     if (ctx.xso != NULL) {
         /* SSL object has a stream component. */
@@ -4800,7 +4813,7 @@ int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, int do_tick,
             revents |= SSL_POLL_EVENT_EW;
     }
 
-    if (!ctx.is_stream) {
+    if (ctx.qc != NULL && !ctx.is_stream) {
         if ((events & SSL_POLL_EVENT_EC) != 0
             && test_poll_event_ec(ctx.qc))
             revents |= SSL_POLL_EVENT_EC;
@@ -4824,6 +4837,16 @@ int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, int do_tick,
         if ((events & SSL_POLL_EVENT_OSU) != 0
             && test_poll_event_os(ctx.qc, /*uni=*/1))
             revents |= SSL_POLL_EVENT_OSU;
+    }
+
+    if (ctx.is_listener) {
+        if ((events & SSL_POLL_EVENT_EL) != 0
+            && test_poll_event_el(ctx.ql))
+            revents |= SSL_POLL_EVENT_EL;
+
+        if ((events & SSL_POLL_EVENT_IC) != 0
+            && test_poll_event_ic(ctx.ql))
+            revents |= SSL_POLL_EVENT_IC;
     }
 
  end:
