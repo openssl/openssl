@@ -287,8 +287,8 @@ remain in memory.
 =item EVP_CIPHER_CTX_dup()
 
 Can be used to duplicate the cipher state from I<in>.  This is useful
-to avoid multiple EVP_MD_fetch() calls or if large amounts of data are to be
-hashed which only differ in the last few bytes.
+to avoid multiple EVP_CIPHER_fetch() calls or if large amounts of data are to be
+fed which only differ in the last few bytes.
 
 =item EVP_CIPHER_CTX_copy()
 
@@ -1241,7 +1241,7 @@ EVP_CIPHER_up_ref() returns 1 for success or 0 otherwise.
 EVP_CIPHER_CTX_new() returns a pointer to a newly created
 B<EVP_CIPHER_CTX> for success and B<NULL> for failure.
 
-EVP_CIPHER_CTX_dup() returns a new EVP_MD_CTX if successful or NULL on failure.
+EVP_CIPHER_CTX_dup() returns a new EVP_CIPHER_CTX if successful or NULL on failure.
 
 EVP_CIPHER_CTX_copy() returns 1 if successful or 0 for failure.
 
