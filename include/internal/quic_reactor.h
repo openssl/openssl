@@ -224,14 +224,61 @@ RIO_NOTIFIER *ossl_quic_reactor_get0_notifier(QUIC_REACTOR *rtor);
  * mutex is non-NULL, it must be a lock currently held for write; it will be
  * unlocked during any sleep, and then relocked for write afterwards.
  *
+ * This function must not be called by a thread currently using
+ * ossl_quic_reactor_(enter/leave)_blocking_section() as this function also uses
+ * those functions (see below); it is assumed if a caller is using those
+ * functions it is implementing blocking semantics itself. There is no need to
+ * use those functions if using this function.
+ *
  * Precondition:   If a reactor mutex is being used, it must be held (unchecked)
  * Postcondition:  If a reactor mutex is being used, it is held
+ * Invariant:      The current thread does not have an outstanding
+ *                   ossl_quic_reactor_enter_blocking_section() call (unchecked)
  */
 #define SKIP_FIRST_TICK     (1U << 0)
 
 int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                        int (*pred)(void *arg), void *pred_arg,
                                        uint32_t flags);
+
+/*
+ * ossl_quic_reactor_(enter/leave)_blocking_section
+ * ------------------------------------------------
+ *
+ * This is used by blocking code outside of the reactor itself to inform the
+ * reactor of when a thread begins or ends a blocking call. This is used by the
+ * reactor so it knows if a tick means other threads might need to be woken up
+ * via the notifier. The reactor mutex must be held while calling these
+ * functions.
+ *
+ * The number of 'active' calls to these functions (i.e., the number of enter
+ * calls which have yet to be matched with a subsequent leave call) must *at all
+ * times* equal the number of threads blocking on the reactor. In other words, a
+ * single thread is not permitted to use these functions "recursively". Failing
+ * to adhere to this rule will result in deadlock.
+ *
+ * This means that if a caller has the concept of multiple concurrent blocking
+ * calls on the same thread on the same reactor (which may occur in some
+ * SSL_poll-related circumstances) it must do its own housekeeping to ensure it
+ * only calls enter() once. See quic_reactor_wait_ctx.h for a utility which can
+ * be used to accomplish this.
+ *
+ * ossl_quic_reactor_enter_blocking_section:
+ *   Precondition:   The current thread does not have an outstanding
+ *                     ossl_quic_reactor_enter_blocking_section() call (unchecked)
+ *   Postcondition:  The current thread has an outstanding
+ *                     ossl_quic_reactor_enter_blocking_section() call
+ *
+ * ossl_quic_reactor_leave_blocking_section:
+ *   Precondition:   The current thread has an outstanding
+ *                     ossl_quic_reactor_enter_blocking_section() call (unchecked)
+ *   Postcondition:  The current thread does not have an outstanding
+ *                     ossl_quic_reactor_enter_blocking_section() call
+ *
+ */
+void ossl_quic_reactor_enter_blocking_section(QUIC_REACTOR *rtor);
+void ossl_quic_reactor_leave_blocking_section(QUIC_REACTOR *rtor);
+
 # endif
 
 #endif

@@ -487,7 +487,7 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
             /* Can't wait if there is nothing to wait for. */
             return 0;
 
-        ++rtor->cur_blocking_waiters;
+        ossl_quic_reactor_enter_blocking_section(rtor);
 
         res = poll_two_descriptors(ossl_quic_reactor_get_poll_r(rtor),
                                    net_read_desired,
@@ -496,9 +496,6 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                    notifier_fd,
                                    tick_deadline,
                                    rtor->mutex);
-
-        assert(rtor->cur_blocking_waiters > 0);
-        --rtor->cur_blocking_waiters;
 
         /*
          * We have now exited the OS poller call. We may have
@@ -540,22 +537,7 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
          *   threads wait for this CV to be signalled.
          *
          */
-        if (rtor->have_notifier && rtor->signalled_notifier) {
-            if (rtor->cur_blocking_waiters == 0) {
-                ossl_rio_notifier_unsignal(&rtor->notifier);
-                rtor->signalled_notifier = 0;
-
-                /*
-                 * Release the other threads which have woken up (and possibly
-                 * rtor_notify_other_threads as well).
-                 */
-                ossl_crypto_condvar_broadcast(rtor->notifier_cv);
-            } else {
-                /* We are not the last waiter out - so wait for that one. */
-                while (rtor->signalled_notifier)
-                    ossl_crypto_condvar_wait(rtor->notifier_cv, rtor->mutex);
-            }
-        }
+        ossl_quic_reactor_leave_blocking_section(rtor);
 
         if (!res)
             /*
@@ -577,4 +559,32 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
     }
 
     return res;
+}
+
+void ossl_quic_reactor_enter_blocking_section(QUIC_REACTOR *rtor)
+{
+    ++rtor->cur_blocking_waiters;
+}
+
+void ossl_quic_reactor_leave_blocking_section(QUIC_REACTOR *rtor)
+{
+    assert(rtor->cur_blocking_waiters > 0);
+    --rtor->cur_blocking_waiters;
+
+    if (rtor->have_notifier && rtor->signalled_notifier) {
+        if (rtor->cur_blocking_waiters == 0) {
+            ossl_rio_notifier_unsignal(&rtor->notifier);
+            rtor->signalled_notifier = 0;
+
+            /*
+             * Release the other threads which have woken up (and possibly
+             * rtor_notify_other_threads as well).
+             */
+            ossl_crypto_condvar_broadcast(rtor->notifier_cv);
+        } else {
+            /* We are not the last waiter out - so wait for that one. */
+            while (rtor->signalled_notifier)
+                ossl_crypto_condvar_wait(rtor->notifier_cv, rtor->mutex);
+        }
+    }
 }
