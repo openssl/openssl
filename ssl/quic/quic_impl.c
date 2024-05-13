@@ -1318,7 +1318,7 @@ QUIC_TAKES_LOCK
 int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite)
 {
     QCTX ctx;
-    OSSL_TIME deadline = ossl_time_infinite();
+    OSSL_TIME now, deadline = ossl_time_infinite();
 
     if (!expect_quic_any(s, &ctx))
         return 0;
@@ -1326,7 +1326,7 @@ int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite)
     qctx_lock(&ctx);
 
     deadline
-        = ossl_quic_reactor_get_tick_deadline(ossl_quic_channel_get_reactor(ctx.qc->ch));
+        = ossl_quic_reactor_get_tick_deadline(ossl_quic_obj_get0_reactor(ctx.obj));
 
     if (ossl_time_is_infinite(deadline)) {
         *is_infinite = 1;
@@ -1342,7 +1342,8 @@ int ossl_quic_get_event_timeout(SSL *s, struct timeval *tv, int *is_infinite)
         return 1;
     }
 
-    *tv = ossl_time_to_timeval(ossl_time_subtract(deadline, get_time(ctx.qc)));
+    now = ossl_quic_engine_get_time(ossl_quic_obj_get0_engine(ctx.obj));
+    *tv = ossl_time_to_timeval(ossl_time_subtract(deadline, now));
     *is_infinite = 0;
     qctx_unlock(&ctx);
     return 1;
@@ -1397,7 +1398,7 @@ int ossl_quic_get_net_read_desired(SSL *s)
         return 0;
 
     qctx_lock(&ctx);
-    ret = ossl_quic_reactor_net_read_desired(ossl_quic_channel_get_reactor(ctx.qc->ch));
+    ret = ossl_quic_reactor_net_read_desired(ossl_quic_obj_get0_reactor(ctx.obj));
     qctx_unlock(&ctx);
     return ret;
 }
@@ -1413,7 +1414,7 @@ int ossl_quic_get_net_write_desired(SSL *s)
         return 0;
 
     qctx_lock(&ctx);
-    ret = ossl_quic_reactor_net_write_desired(ossl_quic_channel_get_reactor(ctx.qc->ch));
+    ret = ossl_quic_reactor_net_write_desired(ossl_quic_obj_get0_reactor(ctx.obj));
     qctx_unlock(&ctx);
     return ret;
 }
