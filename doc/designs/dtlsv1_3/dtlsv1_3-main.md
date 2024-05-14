@@ -1,4 +1,4 @@
-DTLS 1.3 Design
+DTLSv1.3 Design
 ===============
 
 This page presents an overview of the design rationale for the DTLSv1.3
@@ -16,7 +16,7 @@ Objectives
 Implementation details
 ----------------------
 
-This section describes the implementation of optional requirements of DTLSv1.3
+This section describes the implementation requirements of DTLSv1.3
 (RFC 9147).
 
 ### DTLSv1.0 support
@@ -48,6 +48,23 @@ will not offer the "connection_id" extension even though RFC 9147 states:
 > profile to the contrary. This permits a server which wants to receive a CID
 > to negotiate one.
 
+### Clearing retransmission queue
+
+When the session keys are updated the DTLSv1.3 implementation will clear the
+messages waiting for retransmission that belongs to the key that is being updated.
+
+#### TLS 1.3 "compatibility mode" is not enabled
+
+Opposed to the TLS 1.3 implementation, the DTLSv1.3 implementation does not offer
+the compatibility which is in consistency with RFC9147 section 5.
+
+This enforced by the macro `SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(sc)`.
+
+#### Cryptographic label prefix
+
+The DTLSv1.3 implementation uses the label "dtls1.3" as described by RFC9147 
+section 5.9.
+
 Implementation progress
 -----------------------
 
@@ -58,7 +75,7 @@ It is basically a condensed version of the RFC.
 
 A summary of larger work items that needs to be addressed.
 
-Notice that some of the requirements mentioned in [List of DTLS 1.3 requirements](#list-of-dtls-13-requirements)
+Notice that some of the requirements mentioned in [List of DTLSv1.3 requirements](#list-of-dtls-13-requirements)
 is not covered by these workitems and must be implemented separately.
 
 | Summary                                             | #PR            |
@@ -66,12 +83,10 @@ is not covered by these workitems and must be implemented separately.
 | ACK messages                                        | -              |
 | Use HelloRetryRequest instead of HelloVerifyRequest | #22985, #22400 |
 | Message transcript                                  | -              |
-| DTLSv1.3 epoch                                      | -              |
-| ClientHello                                         | -              |
-| legacy_version                                      | -              |
+| DTLSv1.3 epoch                                      | #23553         |
+| ClientHello                                         | #23320         |
 | EndOfEarlyData message                              | -              |
-| Cryptographic Label Prefix                          | #22416         |
-| Disable TLS 1.3 "compatibility mode"                | #22379         |
+| Variable length header                              | -              |
 | DTLSv1.3 Fuzzer                                     | -              |
 
 ### Changes from DTLS 1.2 and/or TLS 1.3
@@ -86,7 +101,7 @@ Here follows a collection of changes that need to be implemented.
 
 The message transcript is computed differently from DTLS 1.2 and TLS 1.3:
 
-> In DTLS 1.3, the message transcript is computed over the original TLS 1.3-style
+> In DTLSv1.3, the message transcript is computed over the original TLS 1.3-style
 > Handshake messages without the message_seq, fragment_offset, and fragment_length
 > values. Note that this is a change from DTLS 1.2 where those values were
 > included in the transcript.
@@ -102,7 +117,7 @@ DTLSCipherText differs from DTLS 1.2 and TLS 1.3:
 > The entire header value shown in Figure 4 (but prior to record number encryption;
 > see Section 4.2.3) is used as the additional data value for the AEAD function
 > ...
-> In DTLS 1.3 the 64-bit sequence_number is used as the sequence number for the
+> In DTLSv1.3 the 64-bit sequence_number is used as the sequence number for the
 > AEAD computation; unlike DTLS 1.2, the epoch is not included.
 
 Because of the encrypted sequence number and record number the implementation must
@@ -129,34 +144,16 @@ random value:
 > random: Same as for TLS 1.3, except that the downgrade sentinels ... apply to
 > DTLS 1.2 and DTLS 1.0, respectively.
 
-#### legacy_version
-
-The legacy_version field of messages and records is forced to DTLSv1.2 (254,253)
-
 #### EndOfEarlyData message
 
 > the EndOfEarlyData message is omitted both from the wire and the handshake
 > transcript
 
-#### Cryptographic Label Prefix
-
-> For DTLS 1.3, that label SHALL be "dtls13"
-
 #### ACK messages
 
 See section 7 and 8 of RFC 9147.
 
-#### Disable TLS 1.3 "compatibility mode"
-
-The middlebox compatibility mode
-
-> DTLS implementations do not use the TLS 1.3 "compatibility mode"
-
-ChangeCipherSpec messages are no longer used.
-
-> endpoints MUST NOT send ChangeCipherSpec messages
-
-### List of DTLS 1.3 requirements
+### List of DTLSv1.3 requirements
 
 Here's a list of requirements from RFC 9147 together with their implementation status
 and associated PR with the relevant implementation.
@@ -215,12 +212,12 @@ have been implemented.
 | If a server receives a ClientHello with an invalid cookie, it MUST terminate the handshake with an "illegal_parameter" alert                                                            | TBD          |
 | clients MUST abort the handshake with an "unexpected_message" alert in response to any second HelloRetryRequest which was sent in the same connection                                   | TLS 1.3      |
 | If the sequence number is less than next_receive_seq, the message MUST be discarded                                                                                                     | DTLS 1.2     |
-| DTLS 1.3-compliant implementations MUST NOT use the HelloVerifyRequest to execute a return-routability check.                                                                           | TBD          |
-| A dual-stack DTLS 1.2 / DTLS 1.3 client MUST, however, be prepared to interact with a DTLS 1.2 server                                                                                   | TBD          |
+| DTLSv1.3-compliant implementations MUST NOT use the HelloVerifyRequest to execute a return-routability check.                                                                           | TBD          |
+| A dual-stack DTLS 1.2 / DTLSv1.3 client MUST, however, be prepared to interact with a DTLS 1.2 server                                                                                   | TBD          |
 | the legacy_version field MUST be set to {254, 253}                                                                                                                                      | TBD          |
-| A client which has a cached session ID set by a pre-DTLS 1.3 server SHOULD set this field to that value. Otherwise, it MUST be set as a zero-length vector                              | TBD          |
-| A DTLS 1.3-only client MUST set the legacy_cookie field to zero length                                                                                                                  | TBD          |
-| If a DTLS 1.3 ClientHello is received with any other value in this field [ie. legacy_cookie], the server MUST abort the handshake with an "illegal_parameter" alert                     | TBD          |
+| A client which has a cached session ID set by a pre-DTLSv1.3 server SHOULD set this field to that value. Otherwise, it MUST be set as a zero-length vector                              | TBD          |
+| A DTLSv1.3-only client MUST set the legacy_cookie field to zero length                                                                                                                  | TBD          |
+| If a DTLSv1.3 ClientHello is received with any other value in this field [ie. legacy_cookie], the server MUST abort the handshake with an "illegal_parameter" alert                     | TBD          |
 | When transmitting the handshake message, the sender divides the message into a series of N contiguous data ranges. The ranges MUST NOT overlap                                          | DTLS 1.2?    |
 | Each handshake message fragment that is placed into a record MUST be delivered in a single UDP datagram                                                                                 | DTLS 1.2?    |
 | When a DTLS implementation receives a handshake message fragment corresponding to the next expected handshake message sequence number, it MUST process it                               | DTLS 1.2?    |
