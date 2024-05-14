@@ -170,7 +170,7 @@ static int test_free_buffers(int test)
     const char testdata[] = "Test data";
     char buf[120];
     size_t written, readbytes;
-    int pipeline = test > 3;
+    int i, pipeline = test > 3;
     ENGINE *e = NULL;
 
     if (pipeline) {
@@ -200,7 +200,7 @@ static int test_free_buffers(int test)
      * For the non-pipeline case we write one record. For pipelining we write
      * two records.
      */
-    for (int i = 0; i <= pipeline; i++) {
+    for (i = 0; i <= pipeline; i++) {
         if (!TEST_true(SSL_write_ex(clientssl, testdata, strlen(testdata),
                                     &written)))
             goto end;
