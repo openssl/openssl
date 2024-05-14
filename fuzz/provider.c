@@ -313,10 +313,9 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
             } else if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_P) == 0) {
                 p_value_int = OPENSSL_malloc(sizeof(BLOCKSIZE));
                 *p_value_int = BLOCKSIZE;
-            } else {
-                if (*use_param && !read_int(buf, len, &p_value_int)) {
-                    /* use default */
-                }
+            } else if (!*use_param || !read_int(buf, len, &p_value_int)) {
+                p_value_int = OPENSSL_malloc(sizeof(int64_t));
+                *p_value_int = 0;
             }
 
             *p = *param;
@@ -336,10 +335,9 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
             } else if (strcmp(param->key, OSSL_KDF_PARAM_SCRYPT_P) == 0) {
                 p_value_uint = OPENSSL_malloc(sizeof(UBLOCKSIZE));
                 *p_value_uint = UBLOCKSIZE;
-            } else {
-                if (*use_param && !read_uint(buf, len, &p_value_uint)) {
-                    /* use default */
-                }
+            } else if (!*use_param || !read_uint(buf, len, &p_value_uint)) {
+                p_value_uint = OPENSSL_malloc(sizeof(uint64_t));
+                *p_value_uint = 0;
             }
 
             *p = *param;
@@ -350,6 +348,7 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
             if (*use_param && !read_double(buf, len, &p_value_double)) {
                 /* use default */
             }
+
             *p = *param;
             p->data = p_value_double;
             p++;
