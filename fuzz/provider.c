@@ -275,9 +275,8 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
     OSSL_PARAM *fuzzed_parameters;
     int p_num = 0;
 
-    for (p = param; p != NULL && p->key != NULL; p++) {
+    for (p = param; p != NULL && p->key != NULL; p++)
         p_num++;
-    }
 
     fuzzed_parameters = OPENSSL_zalloc(sizeof(OSSL_PARAM) *(p_num + 1));
     p = fuzzed_parameters;
@@ -345,8 +344,9 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
             p++;
             break;
         case OSSL_PARAM_REAL:
-            if (*use_param && !read_double(buf, len, &p_value_double)) {
-                /* use default */
+            if (!*use_param || !read_double(buf, len, &p_value_double)) {
+                p_value_double = OPENSSL_malloc(sizeof(double));
+                *p_value_double = 0;
             }
 
             *p = *param;
@@ -354,36 +354,32 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
             p++;
             break;
         case OSSL_PARAM_UTF8_STRING:
-            if (*use_param && (data_len = read_utf8_string(buf, len, &p_value_utf8_str)) < 0) {
+            if (*use_param && (data_len = read_utf8_string(buf, len, &p_value_utf8_str)) < 0)
                 data_len = 0;
-            }
             *p = *param;
             p->data = p_value_utf8_str;
             p->data_size = data_len;
             p++;
             break;
         case OSSL_PARAM_OCTET_STRING:
-            if (*use_param && (data_len = read_octet_string(buf, len, &p_value_octet_str)) < 0) {
+            if (*use_param && (data_len = read_octet_string(buf, len, &p_value_octet_str)) < 0)
                 data_len = 0;
-            }
             *p = *param;
             p->data = p_value_octet_str;
             p->data_size = data_len;
             p++;
             break;
         case OSSL_PARAM_UTF8_PTR:
-            if (*use_param && (data_len = read_utf8_ptr(buf, len, &p_value_utf8_ptr)) < 0) {
+            if (*use_param && (data_len = read_utf8_ptr(buf, len, &p_value_utf8_ptr)) < 0)
                 data_len = 0;
-            }
             *p = *param;
             p->data = p_value_utf8_ptr;
             p->data_size = data_len;
             p++;
             break;
         case OSSL_PARAM_OCTET_PTR:
-            if (*use_param && (data_len = read_octet_ptr(buf, len, &p_value_octet_ptr)) < 0) {
+            if (*use_param && (data_len = read_octet_ptr(buf, len, &p_value_octet_ptr)) < 0)
                 data_len = 0;
-            }
             *p = *param;
             p->data = p_value_octet_ptr;
             p->data_size = data_len;
@@ -595,13 +591,11 @@ end:
         evp *alg = sk_##evp##_value(source, *algorithm % sk_##evp##_num(source)); \
         OSSL_PARAM *fuzzed_params; \
         \
-        if (alg == NULL) { \
+        if (alg == NULL) \
             break; \
-        } \
         fuzzed_params = fuzz_params((OSSL_PARAM*) evp##_settable_ctx_params(alg), &buf, &len); \
-        if (fuzzed_params != NULL) { \
+        if (fuzzed_params != NULL) \
             f(alg, fuzzed_params); \
-        } \
         free_params(fuzzed_params); \
         OSSL_PARAM_free(fuzzed_params); \
     } while (0);
