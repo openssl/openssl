@@ -81,7 +81,7 @@ OpenSSL 3.3
    Service.
 
    To resolve this issue DSA keys larger than OPENSSL_DSA_MAX_MODULUS_BITS
-   will now fail the check immediately with an DSA_R_MODULUS_TOO_LARGE error
+   will now fail the check immediately with a DSA_R_MODULUS_TOO_LARGE error
    reason.
 
    ([CVE-2024-4603])
