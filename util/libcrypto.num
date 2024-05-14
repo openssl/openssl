@@ -5646,3 +5646,8 @@ OSSL_IETF_ATTR_SYNTAX_print             ?	3_4_0	EXIST::FUNCTION:
 X509_ACERT_add_attr_nconf               ?	3_4_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_get_conf_diagnostics       ?	3_4_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_set_conf_diagnostics       ?	3_4_0	EXIST::FUNCTION:
+EVP_KEYMGMT_gen_gettable_params         ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_paramgen_init_ex               ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_keygen_init_ex                 ?	3_4_0	EXIST::FUNCTION:
+OSSL_INDICATOR_set_callback             ?	3_4_0	EXIST::FUNCTION:
+OSSL_INDICATOR_get_callback             ?	3_4_0	EXIST::FUNCTION:
