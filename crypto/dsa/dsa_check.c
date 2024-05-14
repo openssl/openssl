@@ -93,8 +93,7 @@ int ossl_dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret)
     if (!dsa_precheck_params(dsa, ret))
         return 0;
 
-    return (dsa->params.q != NULL
-            && ossl_ffc_validate_private_key(dsa->params.q, priv_key, ret));
+    return ossl_ffc_validate_private_key(dsa->params.q, priv_key, ret);
 }
 
 /*
