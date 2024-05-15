@@ -20,11 +20,20 @@
 typedef struct ht_internal_st HT;
 
 /*
+ * Represents a key to a hashtable
+ */
+typedef struct ht_key_header_st {
+    size_t keysize;
+    uint8_t *keybuf;
+} HT_KEY;
+
+/*
  * Represents a value in the hash table
  */
 typedef struct ht_value_st {
     void *value;
     uintptr_t *type_id;
+    HT_KEY key;
 } HT_VALUE;
 
 /*
@@ -42,16 +51,9 @@ typedef struct ht_config_st {
     OSSL_LIB_CTX *ctx;
     void (*ht_free_fn)(HT_VALUE *obj);
     uint64_t (*ht_hash_fn)(uint8_t *key, size_t keylen);
+    uint32_t collision_check;
     uint32_t init_neighborhoods;
 } HT_CONFIG;
-
-/*
- * Key value for a hash lookup
- */
-typedef struct ht_key_header_st {
-    size_t keysize;
-    uint8_t *keybuf;
-} HT_KEY;
 
 /*
  * Hashtable key rules

@@ -514,6 +514,18 @@ static void free_old_ht_value(void *arg)
     OPENSSL_free(h);
 }
 
+static ossl_inline int match_key(HT_KEY *a, HT_KEY *b)
+{
+    /*
+     * keys match if they are both present, the same size
+     * and compare equal in memory
+     */
+    if (a != NULL && b != NULL && a->keysize == b->keysize)
+        return !memcmp(a->keybuf, b->keybuf, a->keysize);
+
+    return 1;
+}
+
 static int ossl_ht_insert_locked(HT *h, uint64_t hash,
                                  struct ht_internal_value_st *newval,
                                  HT_VALUE **olddata)
@@ -537,9 +549,12 @@ static int ossl_ht_insert_locked(HT *h, uint64_t hash,
         if (ival == NULL)
             empty_idx = j;
         if (compare_hash(hash, ihash)) {
-            if (olddata == NULL) {
-                /* invalid */
-                return 0;
+            /* Its the same hash, lets make sure its not a collision */
+            if (match_key(&newval->value.key, &ival->key)) {
+                if (olddata == NULL) {
+                    /* invalid */
+                    return 0;
+                }
             }
             /* Do a replacement */
             if (!CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[j].hash,
@@ -570,18 +585,27 @@ static struct ht_internal_value_st *alloc_new_value(HT *h, HT_KEY *key,
                                                     void *data,
                                                     uintptr_t *type)
 {
-    struct ht_internal_value_st *new;
     struct ht_internal_value_st *tmp;
+    size_t nvsize = sizeof(*tmp);
 
-    new  = OPENSSL_malloc(sizeof(*new));
+    if (h->config.collision_check == 1)
+        nvsize += key->keysize;
 
-    if (new == NULL)
+    tmp  = OPENSSL_malloc(nvsize);
+
+    if (tmp == NULL)
         return NULL;
 
-    tmp = (struct ht_internal_value_st *)ossl_rcu_deref(&new);
     tmp->ht = h;
     tmp->value.value = data;
     tmp->value.type_id = type;
+    tmp->value.key.keybuf = NULL;
+    if (h->config.collision_check) {
+        tmp->value.key.keybuf = (uint8_t *)(tmp+1);
+        tmp->value.key.keysize = key->keysize;
+        memcpy(tmp->value.key.keybuf, key->keybuf, key->keysize);
+    }
+
 
     return tmp;
 }
@@ -643,9 +667,9 @@ HT_VALUE *ossl_ht_get(HT *h, HT_KEY *key)
     for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
         if (!CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
                                 &ehash, h->atomic_lock))
-            break;
-        if (compare_hash(hash, ehash)) {
-            vidx = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
+            return NULL;
+        vidx = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
+        if (compare_hash(hash, ehash) && match_key(&vidx->value.key, key)) {
             ret = (HT_VALUE *)vidx;
             break;
         }
@@ -674,16 +698,18 @@ int ossl_ht_delete(HT *h, HT_KEY *key)
 
     hash = h->config.ht_hash_fn(key->keybuf, key->keysize);
 
-    neigh_idx = hash & md->neighborhood_mask;
-    PREFETCH_NEIGHBORHOOD(md->neighborhoods[neigh_idx]);
+    neigh_idx = hash & h->md->neighborhood_mask;
+    PREFETCH_NEIGHBORHOOD(h->md->neighborhoods[neigh_idx]);
     for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
-        if (compare_hash(hash, md->neighborhoods[neigh_idx].entries[j].hash)) {
-            h->wpd.value_count--;
-            if (!CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[j].hash,
+        v = (struct ht_internal_value_st *)h->md->neighborhoods[neigh_idx].entries[j].value;
+        if (compare_hash(hash, h->md->neighborhoods[neigh_idx].entries[j].hash)) {
+            if (!match_key(key, &v->value.key))
+                continue;
+            if (!CRYPTO_atomic_store(&h->md->neighborhoods[neigh_idx].entries[j].hash,
                                      0, h->atomic_lock))
                 break;
-            v = (struct ht_internal_value_st *)md->neighborhoods[neigh_idx].entries[j].value;
-            ossl_rcu_assign_ptr(&md->neighborhoods[neigh_idx].entries[j].value,
+            h->wpd.value_count--;
+            ossl_rcu_assign_ptr(&h->md->neighborhoods[neigh_idx].entries[j].value,
                                 &nv);
             rc = 1;
             break;
