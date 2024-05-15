@@ -76,8 +76,10 @@
  */
 #if defined(__GNUC__) || defined(__CLANG__)
 #define PREFETCH_NEIGHBORHOOD(x) __builtin_prefetch(x.entries)
+#define PREFETCH(x) __builtin_prefetch(x)
 #else
 #define PREFETCH_NEIGHBORHOOD(x)
+#define PREFETCH(x)
 #endif
 
 static ossl_unused uint64_t fnv1a_hash(uint8_t *key, size_t len)
@@ -522,7 +524,9 @@ static inline int match_key(HT_KEY *a, HT_KEY *b)
      * keys match if they are both present, the same size
      * and compare equal in memory
      */
-    if (a != NULL && b != NULL && a->keysize == b->keysize)
+    PREFETCH(a->keybuf);
+    PREFETCH(b->keybuf);
+    if (a->keybuf != NULL && b->keybuf != NULL && a->keysize == b->keysize)
         return !memcmp(a->keybuf, b->keybuf, a->keysize);
 
     return 1;
@@ -547,13 +551,12 @@ static int ossl_ht_insert_locked(HT *h, uint64_t hash,
                            &ihash, h->atomic_lock);
         if (ival == NULL)
             empty_idx = j;
-        if (compare_hash(hash, ihash)) {
+        if (compare_hash(hash, ihash) && match_key(&newval->value.key,
+                                                   &ival->key)) {
             /* Its the same hash, lets make sure its not a collision */
-            if (match_key(&newval->value.key, &ival->key)) {
-                if (olddata == NULL) {
-                    /* invalid */
-                    return 0;
-                }
+            if (olddata == NULL) {
+                /* invalid */
+                return 0;
             }
             /* Do a replacement */
             CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[j].hash,
@@ -665,9 +668,7 @@ HT_VALUE *ossl_ht_get(HT *h, HT_KEY *key)
                            &ehash, h->atomic_lock);
         CRYPTO_atomic_load((uint64_t *)&md->neighborhoods[neigh_idx].entries[j].value,
                            (uint64_t *)&vidx, h->atomic_lock);
-        if (compare_hash(hash, ehash)) {
-            if (!match_key(&vidx->value.key, key))
-                continue;
+        if (compare_hash(hash, ehash) && match_key(&vidx->value.key, key)) {
             ret = (HT_VALUE *)vidx;
             break;
         }
@@ -699,9 +700,8 @@ int ossl_ht_delete(HT *h, HT_KEY *key)
     PREFETCH_NEIGHBORHOOD(h->md->neighborhoods[neigh_idx]);
     for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
         v = (struct ht_internal_value_st *)h->md->neighborhoods[neigh_idx].entries[j].value;
-        if (compare_hash(hash, h->md->neighborhoods[neigh_idx].entries[j].hash)) {
-            if (!match_key(key, &v->value.key))
-                continue;
+        if (compare_hash(hash, h->md->neighborhoods[neigh_idx].entries[j].hash)
+            && match_key(key, &v->value.key)) {
             h->wpd.value_count--;
             CRYPTO_atomic_store(&h->md->neighborhoods[neigh_idx].entries[j].hash,
                                 0, h->atomic_lock);
