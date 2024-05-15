@@ -158,30 +158,19 @@ end:
 static int read_utf8_string(const uint8_t **buf, size_t *len, char **res)
 {
     int r;
-    size_t i;
-    const uint8_t *ptr = *buf;
-    int found = 0;
 
-    for (i = 0; i < *len; ++i) {
-        if (*ptr == 0) {
-            ptr++;
-            found = 1;
-            break;
-        }
-        ptr++;
-    }
+    r = strnlen((const char *) *buf, *len);
 
-    if (!found) {
+    if (r == *len) {
         r = -1;
         goto end;
     }
 
+    r++;
+
     *res = (char *) *buf;
-
-    r = ptr - *buf;
     *len -= r;
-    *buf = ptr;
-
+    *buf = *buf + r + 1;
 end:
     return r;
 }
@@ -244,6 +233,9 @@ static int read_octet_ptr(const uint8_t **buf, size_t *len, char **res)
 }
 
 static char *DFLT_STR = "";
+//static char *DFLT_UTF8_PTR = "";
+//static char *DFLT_OCTET_STRING = "";
+//static char *DFLT_OCTET_PTR = "";
 static char *DFLT_UTF8_PTR = NULL;
 static char *DFLT_OCTET_STRING = NULL;
 static char *DFLT_OCTET_PTR = NULL;
