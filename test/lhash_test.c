@@ -8,6 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define MEASURE_HASH_PERFORMANCE
+
 #include <stdio.h>
 #include <string.h>
 
@@ -230,6 +232,7 @@ static int test_int_hashtable(void)
         NULL,
         NULL,
         NULL,
+        1,
         0,
     };
     INTKEY key;
@@ -407,6 +410,7 @@ static int test_hashtable_stress(void)
         NULL,              /* use default context */
         hashtable_intfree, /* our free function */
         hashtable_hash,    /* our hash function */
+        1,                 /* Check collisions */
         625000,            /* preset hash size */
     };
     HT *h;
@@ -625,6 +629,7 @@ static int test_hashtable_multithread(void)
         NULL,              /* use default context */
         hashtable_mt_free, /* our free function */
         NULL,              /* default hash function */
+        1,                 /* Check collisions */
         0,                 /* default hash size */
     };
     int ret = 0;
