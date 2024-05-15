@@ -157,20 +157,23 @@ end:
 
 static int read_utf8_string(const uint8_t **buf, size_t *len, char **res)
 {
+    size_t found_len;
     int r;
 
-    r = strnlen((const char *) *buf, *len);
+    found_len = strnlen((const char *) *buf, *len);
 
-    if (r == *len) {
+    if (found_len == *len) {
         r = -1;
         goto end;
     }
 
-    r++;
+    found_len++; // skip over the \0 byte
+
+    r = (int) found_len;
 
     *res = (char *) *buf;
-    *len -= r;
-    *buf = *buf + r + 1;
+    *len -= found_len;
+    *buf = *buf + found_len; // continue after the \0 byte
 end:
     return r;
 }
