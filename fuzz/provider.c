@@ -236,11 +236,8 @@ static int read_octet_ptr(const uint8_t **buf, size_t *len, char **res)
 }
 
 static char *DFLT_STR = "";
-//static char *DFLT_UTF8_PTR = "";
-//static char *DFLT_OCTET_STRING = "";
-//static char *DFLT_OCTET_PTR = "";
 static char *DFLT_UTF8_PTR = NULL;
-static char *DFLT_OCTET_STRING = NULL;
+static char *DFLT_OCTET_STRING = "";
 static char *DFLT_OCTET_PTR = NULL;
 
 static int64_t ITERS = 1;
