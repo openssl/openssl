@@ -34,8 +34,9 @@ So far, `EVP_PKEY_sign()` and friends are only expected to act as
 "primitive" functions.  This design essentially proposes an extension to
 also allow streaming functionality through an *update* and a *final*
 function.  Discussions have revealed that it is potentially confusing to
-confound "primitive" functionality with "streaming" functionality into the
-same name, so this design also includes a naming proposal that distinguishes
+confound pure "primitive" functionality with functionality that expects a
+digest as input, as well as with "streaming" functionality into the same
+name, so this design also includes a naming proposal that distinguishes
 the two uses.
 
 ### Making it possible to verify with an early signature
@@ -50,67 +51,61 @@ Public API - API Reference
 
 ### For signing with `EVP_SIGNATURE`
 
-#### Primitive / Limit size oneshot
+#### Signing a digest
 
 ``` C
-int EVP_PKEY_sign_primitive_init(EVP_PKEY_CTX *pctx,
-                                 EVP_SIGNATURE *algo,
-                                 const OSSL_PARAM params[]);
-int EVP_PKEY_sign_primitive(EVP_PKEY_CTX *ctx,
-                            unsigned char *sig, size_t *siglen, size_t sigsize,
-                            const unsigned char *tbs, size_t tbslen);
+int EVP_PKEY_sign_init_for_digest(EVP_PKEY_CTX *pctx,
+                                  EVP_SIGNATURE *algo,
+                                  const OSSL_PARAM params[]);
 ```
 
-#### Streaming
+(notably, a fetched "RSA" should probably not accept `RSA_NO_PADDING` when
+initialized with this call)
+
+#### Signing a stream
 
 ``` C
-int EVP_PKEY_sign_data_init(EVP_PKEY_CTX *pctx, EVP_SIGNATURE *algo,
-                            const OSSL_PARAM params[]);
-int EVP_PKEY_sign_data_update(EVP_PKEY_CTX *ctx,
-                              const unsigned char *in, size_t inlen);
-int EVP_PKEY_sign_data_final(EVP_PKEY_CTX *ctx,
-                             unsigned char *sig, size_t *siglen, size_t sigsize);
+int EVP_PKEY_sign_init_for_message(EVP_PKEY_CTX *pctx,
+                                   EVP_SIGNATURE *algo,
+                                   const OSSL_PARAM params[]);
+int EVP_PKEY_sign_update(EVP_PKEY_CTX *ctx,
+                         const unsigned char *in, size_t inlen);
+int EVP_PKEY_sign_final(EVP_PKEY_CTX *ctx,
+                        unsigned char *sig, size_t *siglen);
 ```
 
 ### For verifying with `EVP_SIGNATURE`
 
-#### Primitive / Limit size oneshot
+#### Verifying a digest
 
 ``` C
 /* Initializers */
-int EVP_PKEY_verify_primitive_init(EVP_PKEY_CTX *pctx,
-                                   EVP_SIGNATURE *algo,
-                                   const OSSL_PARAM params[]);
-int EVP_PKEY_verify_recover_primitive_init(EVP_PKEY_CTX *pctx,
-                                           EVP_SIGNATURE *algo,
-                                           const OSSL_PARAM params[]);
-/* Oneshot functions */
-int EVP_PKEY_verify_primitive(EVP_PKEY_CTX *pctx,
-                              const unsigned char *sig, size_t siglen,
-                              const unsigned char *tbs, size_t tbslen);
-int EVP_PKEY_verify_recover_primitive(EVP_PKEY_CTX *pctx,
-                                      unsigned char *rout, size_t *routlen,
-                                      size_t routsize,
-                                      cnnst unsigned char *sig, size_t siglen);
+int EVP_PKEY_verify_init_for_digest(EVP_PKEY_CTX *pctx,
+                                    EVP_SIGNATURE *algo,
+                                    const OSSL_PARAM params[]);
+int EVP_PKEY_verify_recover_init_for_digest(EVP_PKEY_CTX *pctx,
+                                            EVP_SIGNATURE *algo,
+                                            const OSSL_PARAM params[]);
 ```
 
-#### Streaming
+#### Verifying a stream
 
 Do note that there's no proposed streaming definition for verify recover
 functionality.
 
 ``` C
 /* Initializers */
-int EVP_PKEY_verify_data_init(EVP_PKEY_CTX *pctx, EVP_SIGNATURE *algo,
-                              const OSSL_PARAM params[]);
+int EVP_PKEY_verify_init_for_message(EVP_PKEY_CTX *pctx,
+                                     EVP_SIGNATURE *algo,
+                                     const OSSL_PARAM params[]);
 /* Signature setter */
 int EVP_PKEY_CTX_set_signature(EVP_PKEY_CTX *pctx,
                                unsigned char *sig, size_t siglen,
                                size_t sigsize);
 /* Update and final */
-int EVP_PKEY_verify_data_update(EVP_PKEY_CTX *ctx,
-                                const unsigned char *in, size_t inlen);
-int EVP_PKEY_verify_data_final(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_verify_update(EVP_PKEY_CTX *ctx,
+                           const unsigned char *in, size_t inlen);
+int EVP_PKEY_verify_final(EVP_PKEY_CTX *ctx);
 ```
 
 
@@ -135,19 +130,32 @@ terminated array of key type name instead:
 OSSL_CORE_MAKE_FUNC(const char **, signature_query_key_type, (void))
 ```
 
-Furthermore, the public API above requires added provider functionality:
+To reflect the `for_digest` and `for_message` init functions, the provider
+will need to implement the following functions:
 
 ``` C
-# define OSSL_FUNC_SIGNATURE_SIGN_UPDATE            26
-# define OSSL_FUNC_SIGNATURE_SIGN_FINAL             27
+#define OSSL_FUNC_SIGNATURE_SIGN_INIT_FOR_DIGEST    27
+#define OSSL_FUNC_SIGNATURE_SIGN_INIT_FOR_MESSAGE   28
+OSSL_CORE_MAKE_FUNC(int, signature_sign_init_for_digest,
+                    (void *ctx, void *provkey, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, signature_sign_init_for_message,
+                    (void *ctx, void *provkey, const OSSL_PARAM params[]))
+```
+
+Furthermore, the public API above requires added provider functionality,
+which we try to keep to a minimum:
+
+``` C
+# define OSSL_FUNC_SIGNATURE_SIGN_UPDATE            29
+# define OSSL_FUNC_SIGNATURE_SIGN_FINAL             30
 OSSL_CORE_MAKE_FUNC(int, signature_sign_update, (void *ctx,
                                                  const unsigned char *in,
                                                  size_t inlen))
 OSSL_CORE_MAKE_FUNC(int, signature_sign_final, (void *ctx,  unsigned char *sig,
                                                 size_t *siglen, size_t sigsize))
 
-# define OSSL_FUNC_SIGNATURE_VERIFY_UPDATE          28
-# define OSSL_FUNC_SIGNATURE_VERIFY_FINAL           29
+# define OSSL_FUNC_SIGNATURE_VERIFY_UPDATE          31
+# define OSSL_FUNC_SIGNATURE_VERIFY_FINAL           32
 OSSL_CORE_MAKE_FUNC(int, signature_verify_update,
                     (void *ctx, const unsigned char *in, size_t inlen))
 /*
