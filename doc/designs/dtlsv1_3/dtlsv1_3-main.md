@@ -62,7 +62,7 @@ This enforced by the macro `SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(sc)`.
 
 #### Cryptographic label prefix
 
-The DTLSv1.3 implementation uses the label "dtls1.3" as described by RFC9147 
+The DTLSv1.3 implementation uses the label "dtls1.3" as described by RFC9147
 section 5.9.
 
 Implementation progress
