@@ -14,7 +14,9 @@ OSSL_CMP_CRLSTATUS_get0,
 OSSL_CMP_ITAV_new0_crlStatusList,
 OSSL_CMP_ITAV_get0_crlStatusList,
 OSSL_CMP_ITAV_new_crls,
-OSSL_CMP_ITAV_get0_crls
+OSSL_CMP_ITAV_get0_crls,
+OSSL_CMP_ITAV_new0_certReqTemplate,
+OSSL_CMP_ITAV_get1_certReqTemplate
 - CMP utility functions for handling specific genm and genp messages
 
 =head1 SYNOPSIS
@@ -48,6 +50,12 @@ OSSL_CMP_ITAV_get0_crls
                                       STACK_OF(OSSL_CMP_CRLSTATUS) **out);
  OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_crls(const X509_CRL *crl);
  int OSSL_CMP_ITAV_get0_crls(const OSSL_CMP_ITAV *itav, STACK_OF(X509_CRL) **out);
+ OSSL_CMP_ITAV
+ *OSSL_CMP_ITAV_new0_certReqTemplate(OSSL_CRMF_CERTTEMPLATE *certTemplate,
+                                     OSSL_CMP_ATAVS *keySpec);
+ int OSSL_CMP_ITAV_get1_certReqTemplate(const OSSL_CMP_ITAV *itav,
+                                        OSSL_CRMF_CERTTEMPLATE **certTemplate,
+                                        OSSL_CMP_ATAVS **keySpec);
 
 =head1 DESCRIPTION
 
@@ -100,6 +108,27 @@ Data from I<cert>, if present, is preferred over data from I<crl>.
 If no distribution point names are available,
 candidate issuer names are taken from following sources, as far as present:
 
+OSSL_CMP_ITAV_new0_certReqTemplate() creates an B<OSSL_CMP_ITAV> structure
+of type B<certReqTemplate>.
+If I<certTemplate> is NULL then also I<keySpec> must be NULL,
+and the resulting ITAV can be used in a B<genm> message to obtain the
+requirements a PKI has on the certificate template used to request certificates,
+or in a B<genp> message stating that there are no such requirements.
+Otherwise the resulting ITAV includes a CertReqTemplateValue structure
+with I<certTemplate> of type B<OSSL_CRMF_CERTTEMPLATE> and an optional list
+of key specifications I<keySpec>, each being of type B<OSSL_CMP_ATAV>, and
+the resulting ATAV can be used in a B<genp> message to provide requirements.
+
+OSSL_CMP_ITAV_get1_certReqTemplate()
+requires that I<itav> has type B<certReqTemplate>.
+If assigns NULL to I<*certTemplate> if no B<OSSL_CRMF_CERTTEMPLATE> structure
+with a certificate template value is in I<itav>,
+otherwise a copy of the certTemplate field value.
+If I<keySpec> is not NULL, it is assigned NULL
+if the structure is not present in I<itav> or the keySpec field is absent.
+Otherwise, the function checks that all elements of keySpec field are of type
+B<algId> or B<rsaKeyLen> and assigns to I<*keySpec> a copy of the keySpec field.
+
 =over 4
 
 =item the list of distribution points in the first cRLDistributionPoints
@@ -150,13 +179,14 @@ CMP is defined in RFC 4210.
 
 OSSL_CMP_ITAV_new_caCerts(), OSSL_CMP_ITAV_new_rootCaCert(),
 OSSL_CMP_ITAV_new_rootCaKeyUpdate(), OSSL_CMP_CRLSTATUS_new1(),
-OSSL_CMP_CRLSTATUS_create(), OSSL_CMP_ITAV_new0_crlStatusList()
-and OSSL_CMP_ITAV_new_crls()
+OSSL_CMP_CRLSTATUS_create(), OSSL_CMP_ITAV_new0_crlStatusList(),
+OSSL_CMP_ITAV_new_crls() and OSSL_CMP_ITAV_new0_certReqTemplate()
 return a pointer to the new ITAV structure on success, or NULL on error.
 
 OSSL_CMP_ITAV_get0_caCerts(), OSSL_CMP_ITAV_get0_rootCaCert(),
 OSSL_CMP_ITAV_get0_rootCaKeyUpdate(), OSSL_CMP_CRLSTATUS_get0(),
-OSSL_CMP_ITAV_get0_crlStatusList() and OSSL_CMP_ITAV_get0_crls()
+OSSL_CMP_ITAV_get0_crlStatusList(), OSSL_CMP_ITAV_get0_crls()
+and OSSL_CMP_ITAV_get1_certReqTemplate()
 return 1 on success, 0 on error.
 
 =head1 SEE ALSO
@@ -172,8 +202,9 @@ were added in OpenSSL 3.2.
 
 OSSL_CMP_CRLSTATUS_new1(), OSSL_CMP_CRLSTATUS_create(),
 OSSL_CMP_CRLSTATUS_get0(), OSSL_CMP_ITAV_new0_crlStatusList(),
-OSSL_CMP_ITAV_get0_crlStatusList(), OSSL_CMP_ITAV_new_crls()
-and OSSL_CMP_ITAV_get0_crls() were added in OpenSSL 3.4.
+OSSL_CMP_ITAV_get0_crlStatusList(), OSSL_CMP_ITAV_new_crls(),
+OSSL_CMP_ITAV_get0_crls(), OSSL_CMP_ITAV_new0_certReqTemplate()
+and OSSL_CMP_ITAV_get1_certReqTemplate() were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
