@@ -167,13 +167,13 @@ static int read_utf8_string(const uint8_t **buf, size_t *len, char **res)
         goto end;
     }
 
-    found_len++; // skip over the \0 byte
+    found_len++; /* skip over the \0 byte */
 
     r = (int) found_len;
 
     *res = (char *) *buf;
     *len -= found_len;
-    *buf = *buf + found_len; // continue after the \0 byte
+    *buf = *buf + found_len; /* continue after the \0 byte */
 end:
     return r;
 }
