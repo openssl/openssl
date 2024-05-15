@@ -16,6 +16,7 @@
 
 # include <openssl/crmf.h>
 # include <openssl/err.h>
+# include "internal/crmf.h" /* for ossl_crmf_attributetypeandvalue_st */
 
 /* explicit #includes not strictly needed since implied by the above: */
 # include <openssl/types.h>
@@ -334,37 +335,6 @@ struct ossl_crmf_certrequest_st {
 } /* OSSL_CRMF_CERTREQUEST */;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_CERTREQUEST)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTREQUEST)
-
-struct ossl_crmf_attributetypeandvalue_st {
-    ASN1_OBJECT *type;
-    union {
-        /* NID_id_regCtrl_regToken */
-        ASN1_UTF8STRING *regToken;
-
-        /* NID_id_regCtrl_authenticator */
-        ASN1_UTF8STRING *authenticator;
-
-        /* NID_id_regCtrl_pkiPublicationInfo */
-        OSSL_CRMF_PKIPUBLICATIONINFO *pkiPublicationInfo;
-
-        /* NID_id_regCtrl_oldCertID */
-        OSSL_CRMF_CERTID *oldCertID;
-
-        /* NID_id_regCtrl_protocolEncrKey */
-        X509_PUBKEY *protocolEncrKey;
-
-        /* NID_id_regInfo_utf8Pairs */
-        ASN1_UTF8STRING *utf8Pairs;
-
-        /* NID_id_regInfo_certReq */
-        OSSL_CRMF_CERTREQUEST *certReq;
-
-        ASN1_TYPE *other;
-    } value;
-} /* OSSL_CRMF_ATTRIBUTETYPEANDVALUE */;
-DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
-DEFINE_STACK_OF(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
-DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
 
 /*-
  * CertReqMessages ::= SEQUENCE SIZE (1..MAX) OF CertReqMsg
