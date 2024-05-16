@@ -546,7 +546,7 @@ int OSSL_CMP_ATAV_get_rsaKeyLen(const OSSL_CMP_ATAV *atav)
     if (atav == NULL || OBJ_obj2nid(atav->type) != NID_id_regCtrl_rsaKeyLen
             || !ASN1_INTEGER_get_int64(&val, atav->value.rsaKeyLen))
         return -1;
-    if (val <= 0)
+    if (val <= 0 || val > INT_MAX)
         return -2;
     return (int)val;
 }

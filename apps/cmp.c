@@ -3276,7 +3276,7 @@ static void print_keyspec(OSSL_CMP_ATAVS *keySpec)
             }
             break;
         case NID_id_regCtrl_rsaKeyLen:
-            BIO_printf(mem, "Key algorithm: RSA %d \n",
+            BIO_printf(mem, "Key algorithm: RSA %d\n",
                        OSSL_CMP_ATAV_get_rsaKeyLen(atav));
             break;
         default:

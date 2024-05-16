@@ -495,6 +495,8 @@ static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
             OSSL_CRMF_CERTTEMPLATE *reqtemp;
             OSSL_CMP_ATAVS *keyspec = NULL;
             X509_ALGOR *keyalg = NULL;
+            OSSL_CMP_ATAV *rsakeylen, *eckeyalg;
+            int ok = 0;
 
             if ((reqtemp = OSSL_CRMF_CERTTEMPLATE_new()) == NULL)
                 return NULL;
@@ -504,18 +506,21 @@ static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
                                              NULL))
                 goto crt_err;
 
-            if ((keyspec = OSSL_CMP_ATAVS_new()) == NULL)
-                goto crt_err;
-
             if ((keyalg = X509_ALGOR_new()) == NULL)
                 goto crt_err;
 
             (void)X509_ALGOR_set0(keyalg, OBJ_nid2obj(NID_X9_62_id_ecPublicKey),
                                   V_ASN1_UNDEF, NULL); /* cannot fail */
 
-            if (!sk_OSSL_CMP_ATAV_push(keyspec, OSSL_CMP_ATAV_new_algId(keyalg))
-                || !sk_OSSL_CMP_ATAV_push(keyspec,
-                                          OSSL_CMP_ATAV_new_rsaKeyLen(4096)))
+            eckeyalg = OSSL_CMP_ATAV_new_algId(keyalg);
+            rsakeylen = OSSL_CMP_ATAV_new_rsaKeyLen(4096);
+            ok = (OSSL_CMP_ATAV_push1(&keyspec, eckeyalg)
+                  && OSSL_CMP_ATAV_push1(&keyspec, rsakeylen));
+            OSSL_CMP_ATAV_free(eckeyalg);
+            OSSL_CMP_ATAV_free(rsakeylen);
+            X509_ALGOR_free(keyalg);
+
+            if (!ok)
                 goto crt_err;
 
             rsp = OSSL_CMP_ITAV_new0_certReqTemplate(reqtemp, keyspec);
@@ -524,7 +529,6 @@ static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
         crt_err:
             OSSL_CRMF_CERTTEMPLATE_free(reqtemp);
             OSSL_CMP_ATAVS_free(keyspec);
-            X509_ALGOR_free(keyalg);
             return NULL;
         }
         break;
