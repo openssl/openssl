@@ -9,7 +9,7 @@ Development is done on GitHub in the [openssl/openssl] repository.
 
   [openssl/openssl]: <https://github.com/openssl/openssl>
 
-To request new a feature, ask a question, or report a bug,
+To request a new feature, ask a question, or report a bug,
 please open an [issue on GitHub](https://github.com/openssl/openssl/issues).
 
 To submit a patch or implement a new feature, please open a
