@@ -1030,6 +1030,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     const EVP_MD *md = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    unsigned char *msgstart = NULL;
 
     /*
      * If we have no PSK kex mode that we recognise then we can't resume so
@@ -1244,7 +1245,18 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
-    if (tls_psk_do_binder(s, md, (const unsigned char *)s->init_buf->data,
+
+    msgstart = (unsigned char *)s->init_buf->data;
+
+    /*
+     * difference in dtls1_set_handshake_header() vs ssl3_set_handshake_header()?
+     */
+    if (SSL_CONNECTION_IS_DTLS(s)) {
+        msgstart += DTLS1_HM_HEADER_LENGTH;
+        binderoffset -= DTLS1_HM_HEADER_LENGTH;
+    }
+
+    if (tls_psk_do_binder(s, md, msgstart,
                           binderoffset, PACKET_data(&binder), NULL, sess, 0,
                           ext) != 1) {
         /* SSLfatal() already called */
