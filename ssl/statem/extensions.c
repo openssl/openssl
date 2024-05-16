@@ -1553,8 +1553,8 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     static const unsigned char resumption_label[] = "\x72\x65\x73\x20\x62\x69\x6E\x64\x65\x72";
     /* ASCII: "ext binder", in hex for EBCDIC compatibility */
     static const unsigned char external_label[] = "\x65\x78\x74\x20\x62\x69\x6E\x64\x65\x72";
-    const unsigned char *label;
-    size_t bindersize, labelsize, hashsize;
+    const unsigned char *label, *msgbodystart;
+    size_t bindersize, labelsize, hashsize, msgbodylen;
     int hashsizei = EVP_MD_get_size(md);
     int ret = -1;
     int usepskfored = 0;
@@ -1672,7 +1672,23 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
         }
     }
 
-    if (EVP_DigestUpdate(mctx, msgstart, binderoffset) <= 0
+    if (SSL_CONNECTION_IS_DTLS(s)) {
+        msgbodystart = msgstart + DTLS1_HM_HEADER_LENGTH;
+        msgbodylen = binderoffset - DTLS1_HM_HEADER_LENGTH;
+    } else {
+        msgbodystart = msgstart + SSL3_HM_HEADER_LENGTH;
+        msgbodylen = binderoffset - SSL3_HM_HEADER_LENGTH;
+    }
+
+    /*
+     * RFC9147 (DTLSv1.3)
+     * The transcript consists of complete TLS Handshake messages
+     * (reassembled as necessary). Note that this requires removing the
+     * message_seq, fragment_offset, and fragment_length fields to create
+     * the Handshake structure.
+     */
+    if (EVP_DigestUpdate(mctx, msgstart, SSL3_HM_HEADER_LENGTH) <= 0
+            || EVP_DigestUpdate(mctx, msgbodystart, msgbodylen) <= 0
             || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;

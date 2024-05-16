@@ -46,10 +46,6 @@ static const unsigned char bitmask_end_values[] = {
     0xff, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f
 };
 
-static void dtls1_fix_message_header(SSL_CONNECTION *s, size_t frag_off,
-                                     size_t frag_len);
-static unsigned char *dtls1_write_message_header(SSL_CONNECTION *s,
-                                                 unsigned char *p);
 static void dtls1_set_message_header_int(SSL_CONNECTION *s, unsigned char mt,
                                          size_t len,
                                          unsigned short seq_num,
@@ -105,6 +101,17 @@ void dtls1_hm_fragment_free(hm_fragment *frag)
 /*
  * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
  * SSL3_RT_CHANGE_CIPHER_SPEC)
+ *
+ * When sending a fragmented handshake message this function will re-use
+ * s->init_buf->data but overwrite previously sent data to fill out the handshake
+ * message header for the next fragment.
+ *
+ * E.g.
+ * |-------------------------s->init_buf->data------------------------------|
+ * |-- header1 --||-- fragment1 --|
+ *                  |-- header2 --||-- fragment2 --|
+ *                                   |-- header3 --||-- fragment3 --|
+ *                                                                 .........
  */
 int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
 {
@@ -112,9 +119,23 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
     size_t written;
     size_t curr_mtu;
     int retry = 1;
-    size_t len, frag_off, overhead, used_len;
+    size_t len, overhead, used_len, msg_len;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+    unsigned char *data = (unsigned char *)s->init_buf->data;
+    unsigned short msg_seq = s->d1->w_msg_hdr.seq;
+    unsigned char msg_type;
+
+    if (type == SSL3_RT_HANDSHAKE) {
+        msg_type = *data++;
+        l3n2(data, msg_len);
+    } else if (ossl_assert(type == SSL3_RT_CHANGE_CIPHER_SPEC)) {
+        msg_type = SSL3_MT_CCS;
+        msg_len = 0; /* SSL3_RT_CHANGE_CIPHER_SPEC */
+    } else {
+        /* Other record types are not supported */
+        return -1;
+    }
 
     if (!dtls1_query_mtu(s))
         return -1;
@@ -124,50 +145,38 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
         return -1;
 
     if (s->init_off == 0 && type == SSL3_RT_HANDSHAKE) {
-        if (!ossl_assert(s->init_num ==
-                         s->d1->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH))
+        if (!ossl_assert(s->init_num == msg_len + DTLS1_HM_HEADER_LENGTH))
             return -1;
     }
 
     overhead = s->rlayer.wrlmethod->get_max_record_overhead(s->rlayer.wrl);
 
-    frag_off = 0;
     s->rwstate = SSL_NOTHING;
 
     /* s->init_num shouldn't ever be < 0...but just in case */
     while (s->init_num > 0) {
-        if (type == SSL3_RT_HANDSHAKE && s->init_off != 0) {
-            /* We must be writing a fragment other than the first one */
-
-            if (frag_off > 0) {
-                /* This is the first attempt at writing out this fragment */
-
-                if (s->init_off <= DTLS1_HM_HEADER_LENGTH) {
-                    /*
-                     * Each fragment that was already sent must at least have
-                     * contained the message header plus one other byte.
-                     * Therefore |init_off| must have progressed by at least
-                     * |DTLS1_HM_HEADER_LENGTH + 1| bytes. If not something went
-                     * wrong.
-                     */
-                    return -1;
-                }
-
+        if (type == SSL3_RT_HANDSHAKE && s->init_off > 0) {
+            /*
+             * We must be writing a fragment other than the first one
+             * and this is the first attempt at writing out this fragment
+             */
+            if (s->init_off <= DTLS1_HM_HEADER_LENGTH) {
                 /*
-                 * Adjust |init_off| and |init_num| to allow room for a new
-                 * message header for this fragment.
+                 * Each fragment that was already sent must at least have
+                 * contained the message header plus one other byte.
+                 * Therefore |init_off| must have progressed by at least
+                 * |DTLS1_HM_HEADER_LENGTH + 1| bytes. If not something went
+                 * wrong.
                  */
-                s->init_off -= DTLS1_HM_HEADER_LENGTH;
-                s->init_num += DTLS1_HM_HEADER_LENGTH;
-            } else {
-                /*
-                 * We must have been called again after a retry so use the
-                 * fragment offset from our last attempt. We do not need
-                 * to adjust |init_off| and |init_num| as above, because
-                 * that should already have been done before the retry.
-                 */
-                frag_off = s->d1->w_msg_hdr.frag_off;
+                return -1;
             }
+
+            /*
+             * Adjust |init_off| and |init_num| to allow room for a new
+             * message header for this fragment.
+             */
+            s->init_off -= DTLS1_HM_HEADER_LENGTH;
+            s->init_num += DTLS1_HM_HEADER_LENGTH;
         }
 
         used_len = BIO_wpending(s->wbio) + overhead;
@@ -193,10 +202,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
             }
         }
 
-        /*
-         * We just checked that s->init_num > 0 so this cast should be safe
-         */
-        if (((unsigned int)s->init_num) > curr_mtu)
+        if (s->init_num > curr_mtu)
             len = curr_mtu;
         else
             len = s->init_num;
@@ -208,6 +214,8 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
          * XDTLS: this function is too long.  split out the CCS part
          */
         if (type == SSL3_RT_HANDSHAKE) {
+            unsigned char *p = (unsigned char *)&s->init_buf->data[s->init_off];
+
             if (len < DTLS1_HM_HEADER_LENGTH) {
                 /*
                  * len is so small that we really can't do anything sensible
@@ -215,16 +223,16 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
                  */
                 return -1;
             }
-            dtls1_fix_message_header(s, frag_off, len - DTLS1_HM_HEADER_LENGTH);
 
-            dtls1_write_message_header(s,
-                                       (unsigned char *)&s->init_buf->
-                                       data[s->init_off]);
+            *p++ = msg_type;
+            l2n3(msg_len, p);
+            s2n(msg_seq, p);
+            l2n3(s->init_off, p);
+            l2n3(len - DTLS1_HM_HEADER_LENGTH, p);
         }
+        unsigned char *msgstart = (unsigned char *)&s->init_buf->data[s->init_off];
 
-        ret = dtls1_write_bytes(s, type, &s->init_buf->data[s->init_off], len,
-                                &written);
-        if (ret <= 0) {
+        if (dtls1_write_bytes(s, type, msgstart, len, &written) <= 0) {
             /*
              * might need to update MTU here, but we don't know which
              * previous packet caused the failure -- so can't really
@@ -232,17 +240,13 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
              * wait for an alert to handle the retransmit
              */
             if (retry && BIO_ctrl(SSL_get_wbio(ssl),
-                                  BIO_CTRL_DGRAM_MTU_EXCEEDED, 0, NULL) > 0) {
-                if (!(SSL_get_options(ssl) & SSL_OP_NO_QUERY_MTU)) {
-                    if (!dtls1_query_mtu(s))
-                        return -1;
-                    /* Have one more go */
-                    retry = 0;
-                } else
-                    return -1;
-            } else {
+                                  BIO_CTRL_DGRAM_MTU_EXCEEDED, 0, NULL) > 0
+                        && !(SSL_get_options(ssl) & SSL_OP_NO_QUERY_MTU)
+                        && dtls1_query_mtu(s))
+                /* Have one more go */
+                retry = 0;
+            else
                 return -1;
-            }
         } else {
 
             /*
@@ -267,25 +271,22 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
                  * should not be done for 'Hello Request's, but in that case
                  * we'll ignore the result anyway
                  */
-                unsigned char *p =
-                    (unsigned char *)&s->init_buf->data[s->init_off];
-                const struct hm_header_st *msg_hdr = &s->d1->w_msg_hdr;
                 size_t xlen;
 
-                if (frag_off == 0 && s->version != DTLS1_BAD_VER) {
+                if (s->init_off == 0 && s->version != DTLS1_BAD_VER) {
                     /*
                      * reconstruct message header is if it is being sent in
                      * single fragment
                      */
-                    *p++ = msg_hdr->type;
-                    l2n3(msg_hdr->msg_len, p);
-                    s2n(msg_hdr->seq, p);
-                    l2n3(0, p);
-                    l2n3(msg_hdr->msg_len, p);
-                    p -= DTLS1_HM_HEADER_LENGTH;
+                    *msgstart++ = msg_type;
+                    l2n3(msg_len, msgstart);
+                    s2n(msg_seq, msgstart);
+                    l2n3(0, msgstart);
+                    l2n3(msg_len, msgstart);
+                    msgstart -= DTLS1_HM_HEADER_LENGTH;
                     xlen = written;
                 } else {
-                    p += DTLS1_HM_HEADER_LENGTH;
+                    msgstart += DTLS1_HM_HEADER_LENGTH;
                     xlen = written - DTLS1_HM_HEADER_LENGTH;
                 }
                 /*
@@ -297,7 +298,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
                     || (s->statem.hand_state != TLS_ST_SW_SESSION_TICKET
                         && s->statem.hand_state != TLS_ST_CW_KEY_UPDATE
                         && s->statem.hand_state != TLS_ST_SW_KEY_UPDATE)) {
-                    if (!ssl3_finish_mac(s, p, xlen)) {
+                    if (!ssl3_finish_mac(s, msgstart, xlen)) {
                         return -1;
                     }
                 }
@@ -306,7 +307,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
             if (written == s->init_num) {
                 if (s->msg_callback)
                     s->msg_callback(1, s->version, type, s->init_buf->data,
-                                    (size_t)(s->init_off + s->init_num), ussl,
+                                    s->init_off + s->init_num, ussl,
                                     s->msg_callback_arg);
 
                 s->init_off = 0; /* done writing this message */
@@ -317,15 +318,6 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
             s->init_off += written;
             s->init_num -= written;
             written -= DTLS1_HM_HEADER_LENGTH;
-            frag_off += written;
-
-            /*
-             * We save the fragment offset for the next fragment so we have it
-             * available in case of an IO retry. We don't know the length of the
-             * next fragment yet so just set that to 0 for now. It will be
-             * updated again later.
-             */
-            dtls1_fix_message_header(s, frag_off, 0);
         }
     }
     return 0;
@@ -1284,30 +1276,6 @@ dtls1_set_message_header_int(SSL_CONNECTION *s, unsigned char mt,
     msg_hdr->frag_len = frag_len;
 }
 
-static void
-dtls1_fix_message_header(SSL_CONNECTION *s, size_t frag_off, size_t frag_len)
-{
-    struct hm_header_st *msg_hdr = &s->d1->w_msg_hdr;
-
-    msg_hdr->frag_off = frag_off;
-    msg_hdr->frag_len = frag_len;
-}
-
-static unsigned char *dtls1_write_message_header(SSL_CONNECTION *s,
-                                                 unsigned char *p)
-{
-    struct hm_header_st *msg_hdr = &s->d1->w_msg_hdr;
-
-    *p++ = msg_hdr->type;
-    l2n3(msg_hdr->msg_len, p);
-
-    s2n(msg_hdr->seq, p);
-    l2n3(msg_hdr->frag_off, p);
-    l2n3(msg_hdr->frag_len, p);
-
-    return p;
-}
-
 void dtls1_get_message_header(const unsigned char *data, struct
                               hm_header_st *msg_hdr)
 {
@@ -1322,8 +1290,6 @@ void dtls1_get_message_header(const unsigned char *data, struct
 
 int dtls1_set_handshake_header(SSL_CONNECTION *s, WPACKET *pkt, int htype)
 {
-    unsigned char *header;
-
     if (htype == SSL3_MT_CHANGE_CIPHER_SPEC) {
         s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
         dtls1_set_message_header_int(s, SSL3_MT_CCS, 0,
@@ -1331,13 +1297,17 @@ int dtls1_set_handshake_header(SSL_CONNECTION *s, WPACKET *pkt, int htype)
         if (!WPACKET_put_bytes_u8(pkt, SSL3_MT_CCS))
             return 0;
     } else {
+        size_t subpacket_offset = DTLS1_HM_HEADER_LENGTH - SSL3_HM_HEADER_LENGTH;
+
         dtls1_set_message_header(s, htype, 0, 0, 0);
-        /*
-         * We allocate space at the start for the message header. This gets
-         * filled in later
-         */
-        if (!WPACKET_allocate_bytes(pkt, DTLS1_HM_HEADER_LENGTH, &header)
-                || !WPACKET_start_sub_packet(pkt))
+
+        /* Set the content type and 3 bytes for the message len */
+        if (!WPACKET_put_bytes_u8(pkt, htype)
+                /*
+                 * We allocate space for DTLS specific fields.
+                 * These gets filled later.
+                 */
+                || !WPACKET_start_sub_packet_u24_at_offset(pkt, subpacket_offset))
             return 0;
     }
 
@@ -1357,7 +1327,7 @@ int dtls1_close_construct_packet(SSL_CONNECTION *s, WPACKET *pkt, int htype)
         s->d1->w_msg_hdr.msg_len = msglen - DTLS1_HM_HEADER_LENGTH;
         s->d1->w_msg_hdr.frag_len = msglen - DTLS1_HM_HEADER_LENGTH;
     }
-    s->init_num = (int)msglen;
+    s->init_num = msglen;
     s->init_off = 0;
 
     if (htype != DTLS1_MT_HELLO_VERIFY_REQUEST) {
