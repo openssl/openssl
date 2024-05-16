@@ -30,17 +30,17 @@ struct ossl_crmf_attributetypeandvalue_st {
         /* NID_id_regCtrl_protocolEncrKey */
         X509_PUBKEY *protocolEncrKey;
 
-        /* NID_id_regInfo_utf8Pairs */
-        ASN1_UTF8STRING *utf8Pairs;
-
-        /* NID_id_regInfo_certReq */
-        OSSL_CRMF_CERTREQUEST *certReq;
-
         /* NID_id_regCtrl_algId */
         X509_ALGOR *algId;
 
         /* NID_id_regCtrl_rsaKeyLen */
         ASN1_INTEGER *rsaKeyLen;
+
+        /* NID_id_regInfo_utf8Pairs */
+        ASN1_UTF8STRING *utf8Pairs;
+
+        /* NID_id_regInfo_certReq */
+        OSSL_CRMF_CERTREQUEST *certReq;
 
         ASN1_TYPE *other;
     } value;

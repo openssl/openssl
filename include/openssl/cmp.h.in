@@ -325,7 +325,7 @@ OSSL_CMP_ATAV *OSSL_CMP_ATAV_new_algId(const X509_ALGOR *alg);
 X509_ALGOR *OSSL_CMP_ATAV_get0_algId(const OSSL_CMP_ATAV *atav);
 OSSL_CMP_ATAV *OSSL_CMP_ATAV_new_rsaKeyLen(int len);
 int OSSL_CMP_ATAV_get_rsaKeyLen(const OSSL_CMP_ATAV *atav);
-int OSSL_CMP_ATAV_push1(OSSL_CMP_ATAVS **sk_p, const OSSL_CMP_ATAV *itav);
+int OSSL_CMP_ATAV_push1(OSSL_CMP_ATAVS **sk_p, const OSSL_CMP_ATAV *atav);
 
 void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
 

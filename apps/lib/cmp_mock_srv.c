@@ -520,6 +520,7 @@ static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
 
             rsp = OSSL_CMP_ITAV_new0_certReqTemplate(reqtemp, keyspec);
             return rsp;
+
         crt_err:
             OSSL_CRMF_CERTTEMPLATE_free(reqtemp);
             OSSL_CMP_ATAVS_free(keyspec);

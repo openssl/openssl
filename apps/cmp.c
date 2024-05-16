@@ -2191,6 +2191,9 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             CMP_warn1("-template %s", msg);
         if (opt_keyspec != NULL)
             CMP_warn1("-keyspec %s", msg);
+    } else {
+        if (opt_template == NULL)
+            CMP_err("missing -template option for genm with infotype certReqTemplate");
     }
 
     if (!setup_verification_ctx(ctx))
@@ -3235,8 +3238,10 @@ static void print_keyspec(OSSL_CMP_ATAVS *keySpec)
     const char *p;
     long len;
 
-    if (keySpec == NULL)
+    if (keySpec == NULL) {
+        CMP_info1("No %s", desc);
         return;
+    }
 
     mem = BIO_new(BIO_s_mem());
     if (mem == NULL) {
@@ -3271,7 +3276,7 @@ static void print_keyspec(OSSL_CMP_ATAVS *keySpec)
             }
             break;
         case NID_id_regCtrl_rsaKeyLen:
-            BIO_printf(mem, "Key algorithm: RSA %d bit\n",
+            BIO_printf(mem, "Key algorithm: RSA %d \n",
                        OSSL_CMP_ATAV_get_rsaKeyLen(atav));
             break;
         default:
@@ -3448,11 +3453,15 @@ static int do_genm(OSSL_CMP_CTX *ctx)
             CMP_warn("no certificate request template available");
             if (!delete_file(opt_template, "certTemplate from genp"))
                 return 0;
+            if (opt_keyspec != NULL
+                && !delete_file(opt_keyspec, "keySpec from genp"))
+                return 0;
             return 1;
         }
         if (!save_template(opt_template, certTemplate))
             goto tmpl_end;
 
+        print_keyspec(keySpec);
         if (opt_keyspec != NULL) {
             if (keySpec == NULL) {
                 CMP_warn("no key specifications available");
@@ -3462,7 +3471,7 @@ static int do_genm(OSSL_CMP_CTX *ctx)
                 goto tmpl_end;
             }
         }
-        print_keyspec(keySpec);
+
         res = 1;
     tmpl_end:
         OSSL_CRMF_CERTTEMPLATE_free(certTemplate);
