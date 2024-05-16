@@ -21,6 +21,7 @@
 #include "ssl_local.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
+#include "internal/comp.h"
 
 /* NB: make sure indices in these tables match values above */
 
@@ -56,16 +57,6 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_MAGMA, NID_magma_ctr_acpkm}, /* SSL_ENC_MAGMA_IDX */
     {SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm}, /* SSL_ENC_KUZNYECHIK_IDX */
 };
-
-#define SSL_COMP_NULL_IDX       0
-#define SSL_COMP_ZLIB_IDX       1
-#define SSL_COMP_NUM_IDX        2
-
-static STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
-
-#ifndef OPENSSL_NO_COMP
-static CRYPTO_ONCE ssl_load_builtin_comp_once = CRYPTO_ONCE_STATIC_INIT;
-#endif
 
 /* NB: make sure indices in this table matches values above */
 static const ssl_cipher_table ssl_cipher_table_mac[SSL_MD_NUM_IDX] = {
@@ -445,40 +436,6 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     return 1;
 }
 
-#ifndef OPENSSL_NO_COMP
-
-static int sk_comp_cmp(const SSL_COMP *const *a, const SSL_COMP *const *b)
-{
-    return ((*a)->id - (*b)->id);
-}
-
-DEFINE_RUN_ONCE_STATIC(do_load_builtin_compressions)
-{
-    SSL_COMP *comp = NULL;
-    COMP_METHOD *method = COMP_zlib();
-
-    ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
-
-    if (COMP_get_type(method) != NID_undef && ssl_comp_methods != NULL) {
-        comp = OPENSSL_malloc(sizeof(*comp));
-        if (comp != NULL) {
-            comp->method = method;
-            comp->id = SSL_COMP_ZLIB_IDX;
-            comp->name = COMP_get_name(method);
-            if (!sk_SSL_COMP_push(ssl_comp_methods, comp))
-                OPENSSL_free(comp);
-            sk_SSL_COMP_sort(ssl_comp_methods);
-        }
-    }
-    return 1;
-}
-
-static int load_builtin_compressions(void)
-{
-    return RUN_ONCE(&ssl_load_builtin_comp_once, do_load_builtin_compressions);
-}
-#endif
-
 int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                               const EVP_CIPHER **enc)
 {
@@ -549,20 +506,15 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
         return 0;
     if (comp != NULL) {
         SSL_COMP ctmp;
-#ifndef OPENSSL_NO_COMP
-        if (!load_builtin_compressions()) {
-            /*
-             * Currently don't care, since a failure only means that
-             * ssl_comp_methods is NULL, which is perfectly OK
-             */
-        }
-#endif
+        STACK_OF(SSL_COMP) *comp_methods;
+
         *comp = NULL;
         ctmp.id = s->compress_meth;
-        if (ssl_comp_methods != NULL) {
-            i = sk_SSL_COMP_find(ssl_comp_methods, &ctmp);
+        comp_methods = SSL_COMP_get_compression_methods();
+        if (comp_methods != NULL) {
+            i = sk_SSL_COMP_find(comp_methods, &ctmp);
             if (i >= 0)
-                *comp = sk_SSL_COMP_value(ssl_comp_methods, i);
+                *comp = sk_SSL_COMP_value(comp_methods, i);
         }
         /* If were only interested in comp then return success */
         if ((enc == NULL) && (md == NULL))
@@ -648,6 +600,7 @@ const EVP_MD *ssl_prf_md(SSL_CONNECTION *s)
     return ssl_md(SSL_CONNECTION_GET_CTX(s),
                   ssl_get_algorithm2(s) >> TLS1_PRF_DGST_SHIFT);
 }
+
 
 #define ITEM_SEP(a) \
         (((a) == ':') || ((a) == ' ') || ((a) == ';') || ((a) == ','))
@@ -1988,17 +1941,19 @@ uint16_t SSL_CIPHER_get_protocol_id(const SSL_CIPHER *c)
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 {
     SSL_COMP *ctmp;
-    int i, nn;
+    SSL_COMP srch_key;
+    int i;
 
     if ((n == 0) || (sk == NULL))
         return NULL;
-    nn = sk_SSL_COMP_num(sk);
-    for (i = 0; i < nn; i++) {
+    srch_key.id = n;
+    i = sk_SSL_COMP_find(sk, &srch_key);
+    if (i >= 0)
         ctmp = sk_SSL_COMP_value(sk, i);
-        if (ctmp->id == n)
-            return ctmp;
-    }
-    return NULL;
+    else
+        ctmp = NULL;
+
+    return ctmp;
 }
 
 #ifdef OPENSSL_NO_COMP
@@ -2021,33 +1976,43 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 #else
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 {
-    load_builtin_compressions();
-    return ssl_comp_methods;
+    STACK_OF(SSL_COMP) **rv;
+
+    rv = (STACK_OF(SSL_COMP) **)OSSL_LIB_CTX_get_data(NULL,
+                                     OSSL_LIB_CTX_COMP_METHODS);
+    if (rv != NULL)
+        return *rv;
+    else
+        return NULL;
 }
 
 STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
                                                       *meths)
 {
-    STACK_OF(SSL_COMP) *old_meths = ssl_comp_methods;
-    ssl_comp_methods = meths;
+    STACK_OF(SSL_COMP) **comp_methods;
+    STACK_OF(SSL_COMP) *old_meths;
+
+    comp_methods = (STACK_OF(SSL_COMP) **)OSSL_LIB_CTX_get_data(NULL,
+                                              OSSL_LIB_CTX_COMP_METHODS);
+    if (comp_methods == NULL) {
+        old_meths = meths;
+    } else {
+        old_meths = *comp_methods;
+        *comp_methods = meths;
+    }
+
     return old_meths;
-}
-
-static void cmeth_free(SSL_COMP *cm)
-{
-    OPENSSL_free(cm);
-}
-
-void ssl_comp_free_compression_methods_int(void)
-{
-    STACK_OF(SSL_COMP) *old_meths = ssl_comp_methods;
-    ssl_comp_methods = NULL;
-    sk_SSL_COMP_pop_free(old_meths, cmeth_free);
 }
 
 int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 {
+    STACK_OF(SSL_COMP) *comp_methods;
     SSL_COMP *comp;
+
+    comp_methods = SSL_COMP_get_compression_methods();
+
+    if (comp_methods == NULL)
+        return 1;
 
     if (cm == NULL || COMP_get_type(cm) == NID_undef)
         return 1;
@@ -2070,18 +2035,17 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
         return 1;
 
     comp->id = id;
-    comp->method = cm;
-    load_builtin_compressions();
-    if (ssl_comp_methods && sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
+    if (sk_SSL_COMP_find(comp_methods, comp) >= 0) {
         OPENSSL_free(comp);
         ERR_raise(ERR_LIB_SSL, SSL_R_DUPLICATE_COMPRESSION_ID);
         return 1;
     }
-    if (ssl_comp_methods == NULL || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
+    if (!sk_SSL_COMP_push(comp_methods, comp)) {
         OPENSSL_free(comp);
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 1;
     }
+
     return 0;
 }
 #endif
