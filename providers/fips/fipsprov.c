@@ -695,6 +695,8 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
         }
     }
 
+    OPENSSL_cpuid_setup();
+
     /*  Create a context. */
     if ((*provctx = ossl_prov_ctx_new()) == NULL
             || (libctx = OSSL_LIB_CTX_new()) == NULL)
