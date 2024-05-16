@@ -1346,7 +1346,7 @@ int main(int argc, char *argv[])
         int j;
         printf("Available compression methods:");
         for (j = 0; j < n; j++) {
-            SSL_COMP *c = sk_SSL_COMP_value(ssl_comp_methods, j);
+            const SSL_COMP *c = sk_SSL_COMP_value(ssl_comp_methods, j);
             printf("  %s:%d", SSL_COMP_get0_name(c), SSL_COMP_get_id(c));
         }
         printf("\n");

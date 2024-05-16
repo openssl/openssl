@@ -19,6 +19,7 @@
 #include <openssl/core_names.h>
 #include "record_local.h"
 #include "internal/packet.h"
+#include "internal/comp.h"
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL_CONNECTION *s)
 {
