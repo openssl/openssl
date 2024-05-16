@@ -985,7 +985,7 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
             privkey)))
         goto end;
 
-#ifdef OPENSSL_NO_DTLS1_2
+#if defined(OPENSSL_NO_DTLS1_2) && defined(OPENSSL_NO_DTLS1_3)
     if (smeth == DTLS_server_method()) {
         /*
          * Default sigalgs are SHA1 based in <DTLS1.2 which is in security
