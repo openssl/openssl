@@ -184,6 +184,10 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
                            (c)[1]=(unsigned char)(((l)>> 8)&0xff), \
                            (c)[2]=(unsigned char)(((l)    )&0xff)),(c)+=3)
 
+#define l3n2(c,l)       (l =((uint64_t)(*((c)++)))<<16, \
+                         l|=((uint64_t)(*((c)++)))<< 8, \
+                         l|=((uint64_t)(*((c)++))))
+
 static ossl_inline int ossl_ends_with_dirsep(const char *path)
 {
     if (*path != '\0')
