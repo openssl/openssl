@@ -8,10 +8,19 @@
  * or in the file LICENSE in the source distribution.
  */
 
+/*
+ * We need access to the deprecated low level Engine APIs for legacy purposes
+ * when the deprecated calls are not hidden
+ */
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# define OPENSSL_SUPPRESS_DEPRECATED
+#endif
+
 #include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/engine.h>
 
 /* We include internal headers so we can check if the buffers are allocated */
 #include "../ssl/ssl_local.h"
@@ -325,7 +334,13 @@ static int test_free_buffers(int test)
  end:
     SSL_free(clientssl);
     SSL_free(serverssl);
-
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
+    if (e != NULL) {
+        ENGINE_unregister_ciphers(e);
+        ENGINE_finish(e);
+        ENGINE_free(e);
+    }
+#endif
     return result;
 }
 
