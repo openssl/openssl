@@ -777,6 +777,18 @@ int WPACKET_fill_lengths(WPACKET *pkt);
 
 /*
  * Initialise a new sub-packet. Additionally |lenbytes| of data is preallocated
+ * at the current position in |pkt| to store the sub-packets length once we know
+ * it. The sub-packet start is set at |offset| from current position in |pkt|
+ * Don't call this directly. Use the convenience macros below instead.
+ */
+int WPACKET_start_sub_packet_at_offset_len__(WPACKET *pkt, size_t lenbytes,
+    size_t offset);
+
+#define WPACKET_start_sub_packet_u24_at_offset(pkt, offset) \
+    WPACKET_start_sub_packet_at_offset_len__((pkt), 3, (offset))
+
+/*
+ * Initialise a new sub-packet. Additionally |lenbytes| of data is preallocated
  * at the start of the sub-packet to store its length once we know it. Don't
  * call this directly. Use the convenience macros below instead.
  */
