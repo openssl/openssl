@@ -323,16 +323,11 @@ static int test_cookie(void)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
-    /**
-     * TODO(DTLSv1.3): Tests fails with
-     *  ssl/statem/extensions_clnt.c:624: OpenSSL internal error:
-     *      Assertion failed: s->hello_retry_request == SSL_HRR_PENDING
-     */
-     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
-                                       DTLS_client_method(),
-                                       DTLS1_VERSION, DTLS1_2_VERSION,
-                                       &sctx, &cctx, cert, privkey)))
-        return 0;
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+                                      DTLS_client_method(),
+                                      DTLS1_VERSION, 0,
+                                      &sctx, &cctx, cert, privkey)))
+       return 0;
 
     SSL_CTX_set_options(sctx, SSL_OP_COOKIE_EXCHANGE);
     SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
