@@ -58,7 +58,7 @@ messages waiting for retransmission that belongs to the key that is being update
 Opposed to the TLS 1.3 implementation, the DTLSv1.3 implementation does not offer
 the compatibility which is in consistency with RFC9147 section 5.
 
-This enforced by the macro `SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(sc)`.
+This is enforced by the macro `SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(sc)`.
 
 #### Cryptographic label prefix
 
