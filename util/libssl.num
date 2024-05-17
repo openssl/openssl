@@ -186,7 +186,7 @@ TLSv1_2_client_method                   186	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1
 SSL_add_client_CA                       187	3_0_0	EXIST::FUNCTION:
 SSL_CTX_get0_security_ex_data           188	3_0_0	EXIST::FUNCTION:
 SSL_get_ex_data                         189	3_0_0	EXIST::FUNCTION:
-SSL_CTX_flush_sessions                  190	3_0_0	EXIST::FUNCTION:
+SSL_CTX_flush_sessions                  190	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_4
 SSL_use_PrivateKey                      191	3_0_0	EXIST::FUNCTION:
 DTLSv1_client_method                    192	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,DTLS1_METHOD
 SSL_CTX_dane_mtype_set                  193	3_0_0	EXIST::FUNCTION:
@@ -583,3 +583,4 @@ SSL_set_value_uint                      583	3_3_0	EXIST::FUNCTION:
 SSL_poll                                584	3_3_0	EXIST::FUNCTION:
 SSL_SESSION_get_time_ex                 585	3_3_0	EXIST::FUNCTION:
 SSL_SESSION_set_time_ex                 586	3_3_0	EXIST::FUNCTION:
+SSL_CTX_flush_sessions_ex               587	3_4_0	EXIST::FUNCTION:
