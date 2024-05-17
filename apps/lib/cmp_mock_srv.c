@@ -514,8 +514,8 @@ static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
 
             eckeyalg = OSSL_CMP_ATAV_new_algId(keyalg);
             rsakeylen = OSSL_CMP_ATAV_new_rsaKeyLen(4096);
-            ok = (OSSL_CMP_ATAV_push1(&keyspec, eckeyalg)
-                  && OSSL_CMP_ATAV_push1(&keyspec, rsakeylen));
+            ok = OSSL_CMP_ATAV_push1(&keyspec, eckeyalg)
+                 && OSSL_CMP_ATAV_push1(&keyspec, rsakeylen);
             OSSL_CMP_ATAV_free(eckeyalg);
             OSSL_CMP_ATAV_free(rsakeylen);
             X509_ALGOR_free(keyalg);

@@ -413,6 +413,7 @@ int OSSL_CMP_ITAV_get1_certReqTemplate(const OSSL_CMP_ITAV *itav,
         return 0;
     }
 
+    *certTemplate = NULL;
     if (keySpec != NULL)
         *keySpec = NULL;
 
