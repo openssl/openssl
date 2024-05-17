@@ -34,6 +34,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/dh.h>
 #include <openssl/engine.h>
+#include <openssl/hpke.h>
 
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
@@ -53,6 +54,13 @@
  * with TLSv1.3
  */
 # define OSSL_NO_USABLE_TLS1_3
+#endif
+
+#undef OSSL_NO_USABLE_ECH
+#if defined(OSSL_NO_USABLE_TLS1_3) || \
+    defined(OPENSSL_NO_ECH) || \
+    defined(OPENSSL_NO_EC)
+# define OSSL_NO_USABLE_ECH
 #endif
 
 /* Defined in tls-provider.c */
@@ -134,6 +142,50 @@ struct sslapitest_log_counts {
     unsigned int exporter_secret_count;
 };
 
+#ifndef OSSL_NO_USABLE_ECH
+
+# define OSSL_ECH_MAX_LINELEN 1000 /* for a sanity check */
+
+static char *echconfiglist_from_PEM(const char *echkeyfile)
+{
+    BIO *in = NULL;
+    char *ecl_string = NULL;
+    char lnbuf[OSSL_ECH_MAX_LINELEN];
+    int readbytes = 0;
+
+    if (!TEST_ptr(in = BIO_new(BIO_s_file()))
+        || !TEST_int_ge(BIO_read_filename(in, echkeyfile), 0))
+        goto out;
+    /* read 4 lines before the one we want */
+    readbytes = BIO_get_line(in, lnbuf, OSSL_ECH_MAX_LINELEN);
+    if (readbytes <= 0 || readbytes >= OSSL_ECH_MAX_LINELEN)
+        goto out;
+    readbytes = BIO_get_line(in, lnbuf, OSSL_ECH_MAX_LINELEN);
+    if (readbytes <= 0 || readbytes >= OSSL_ECH_MAX_LINELEN)
+        goto out;
+    readbytes = BIO_get_line(in, lnbuf, OSSL_ECH_MAX_LINELEN);
+    if (readbytes <= 0 || readbytes >= OSSL_ECH_MAX_LINELEN)
+        goto out;
+    readbytes = BIO_get_line(in, lnbuf, OSSL_ECH_MAX_LINELEN);
+    if (readbytes <= 0 || readbytes >= OSSL_ECH_MAX_LINELEN)
+        goto out;
+    readbytes = BIO_get_line(in, lnbuf, OSSL_ECH_MAX_LINELEN);
+    if (readbytes <= 0 || readbytes >= OSSL_ECH_MAX_LINELEN)
+        goto out;
+    ecl_string = OPENSSL_malloc(readbytes + 1);
+    if (ecl_string == NULL)
+        goto out;
+    memcpy(ecl_string, lnbuf, readbytes);
+    /* zap the ending '\n' if present */
+    if (ecl_string[readbytes - 1] == '\n')
+        ecl_string[readbytes - 1] = '\0';
+    BIO_free_all(in);
+    return(ecl_string);
+out:
+    if (in) BIO_free_all(in);
+    return(NULL);
+}
+#endif
 
 static int hostname_cb(SSL *s, int *al, void *arg)
 {
@@ -2063,6 +2115,10 @@ static int execute_test_session(int maxprot, int use_int_cache,
 # endif
     SSL_SESSION *sess1 = NULL, *sess2 = NULL;
     int testresult = 0, numnewsesstick = 1;
+#ifndef OSSL_NO_USABLE_ECH
+    int have25519 = 0;
+    EVP_PKEY_CTX *xctx = NULL;
+#endif
 
     new_called = remove_called = 0;
 
@@ -2081,6 +2137,46 @@ static int execute_test_session(int maxprot, int use_int_cache,
      */
     SSL_CTX_set_min_proto_version(cctx, maxprot);
     SSL_CTX_set_max_proto_version(cctx, maxprot);
+
+#ifndef OSSL_NO_USABLE_ECH
+    /* 
+     * if TLSv1.3 and we can use 25519 turn on ECH for both sides 
+     * otherwise, skip ECH
+     */
+    xctx = EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, NULL);
+    if (xctx != NULL) {
+        have25519 = 1;
+        EVP_PKEY_CTX_free(xctx);
+    }
+    if (maxprot == TLS1_3_VERSION && have25519) {
+        char *echkeyfile = NULL;
+        unsigned char *echconfiglist = NULL;
+        size_t echconfig_len = 0;
+
+        test_printf_stdout("Running real ECH, fips=%d\n", is_fips);
+        /* read pre-cooked ECH private/ECHConfigList */
+        echkeyfile = test_mk_file_path(certsdir, "echconfig.pem");
+        echconfiglist = (unsigned char*)echconfiglist_from_PEM(echkeyfile);
+        if (echconfiglist == NULL) {
+            OPENSSL_free(echkeyfile);
+            return 0;
+        }
+        echconfig_len = strlen((char *)echconfiglist);
+        if (SSL_CTX_ech_server_enable_file(sctx, echkeyfile, 1) != 1) {
+            OPENSSL_free(echkeyfile);
+            OPENSSL_free(echconfiglist);
+            return 0;
+        }
+        if (SSL_CTX_ech_set1_echconfig(cctx, echconfiglist,
+                                       echconfig_len) != 1) {
+            OPENSSL_free(echkeyfile);
+            OPENSSL_free(echconfiglist);
+            return 0;
+        }
+        OPENSSL_free(echkeyfile);
+        OPENSSL_free(echconfiglist);
+    }
+#endif
 
     /* Set up session cache */
     if (use_ext_cache) {
@@ -12057,7 +12153,6 @@ int setup_tests(void)
             OSSL_PROVIDER_unload(prov);
         }
     }
-
     /*
      * We add, but don't load the test "tls-provider". We'll load it when we
      * need it.

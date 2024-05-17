@@ -1,0 +1,12 @@
+diff --git a/cmd/selfserv/selfserv.c b/cmd/selfserv/selfserv.c
+--- a/cmd/selfserv/selfserv.c
++++ b/cmd/selfserv/selfserv.c
+@@ -1937,7 +1937,7 @@ configureEchWithPublicName(PRFileDesc *m
+         goto loser;
+     }
+ 
+-    rv = SSL_EncodeEchConfigId(configId, echParamsStr, 100,
++    rv = SSL_EncodeEchConfigId(configId, public_name, 100,
+                                HpkeDhKemX25519Sha256, pubKey,
+                                &echCipherSuite, 1,
+                                configBuf, &len, sizeof(configBuf));

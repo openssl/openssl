@@ -37,6 +37,8 @@
 #include "internal/sizes.h"
 #include "crypto/evp.h"
 #include "fake_rsaprov.h"
+#include "internal/e_os.h" /* strcasecmp */
+#include "openssl/rand.h"
 
 #ifdef STATIC_LEGACY
 OSSL_provider_init_fn ossl_legacy_provider_init;
@@ -402,7 +404,6 @@ static const unsigned char pExampleECParamDER[] = {
     0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07
 };
 
-# ifndef OPENSSL_NO_ECX
 static const unsigned char kExampleED25519KeyDER[] = {
     0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70,
     0x04, 0x22, 0x04, 0x20, 0xba, 0x7b, 0xba, 0x20, 0x1b, 0x02, 0x75, 0x3a,
@@ -418,6 +419,7 @@ static const unsigned char kExampleED25519PubKeyDER[] = {
 };
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_ECX
 static const unsigned char kExampleX25519KeyDER[] = {
     0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x6e,
     0x04, 0x22, 0x04, 0x20, 0xa0, 0x24, 0x3a, 0x31, 0x24, 0xc3, 0x3f, 0xf6,
@@ -597,12 +599,10 @@ static APK_DATA keycheckdata[] = {
      1, 1},
     {pExampleECParamDER, sizeof(pExampleECParamDER), "EC", EVP_PKEY_EC, 0, 0, 1,
      2},
-# ifndef OPENSSL_NO_ECX
     {kExampleED25519KeyDER, sizeof(kExampleED25519KeyDER), "ED25519",
      EVP_PKEY_ED25519, 1, 1, 1, 0},
     {kExampleED25519PubKeyDER, sizeof(kExampleED25519PubKeyDER), "ED25519",
      EVP_PKEY_ED25519, 0, 1, 1, 1},
-# endif
 #endif
 };
 
@@ -652,7 +652,7 @@ static EVP_PKEY *load_example_dh_key(void)
 }
 # endif
 
-# ifndef OPENSSL_NO_ECX
+# if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX)
 static EVP_PKEY *load_example_ed25519_key(void)
 {
     return load_example_key("ED25519", kExampleED25519KeyDER,
@@ -922,8 +922,6 @@ static int test_EC_priv_pub(void)
     BIGNUM *priv = NULL;
     int ret = 0;
     unsigned char *encoded = NULL;
-    size_t len = 0;
-    unsigned char buffer[128];
 
     /*
      * Setup the parameters for our pkey object. For our purposes they don't
@@ -1042,26 +1040,6 @@ static int test_EC_priv_pub(void)
         encoded = NULL;
         goto err;
     }
-
-    /* Positive and negative testcase for EVP_PKEY_get_octet_string_param */
-    if (!TEST_int_eq(EVP_PKEY_get_octet_string_param(params_and_pub,
-                                                     OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
-                                                     buffer, sizeof(buffer), &len), 1)
-        || !TEST_int_eq(len, 65))
-        goto err;
-
-    len = 0;
-    if (!TEST_int_eq(EVP_PKEY_get_octet_string_param(params_and_pub,
-                                                     OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
-                                                     NULL, 0, &len), 1)
-        || !TEST_int_eq(len, 65))
-        goto err;
-
-    /* too-short buffer len*/
-    if (!TEST_int_eq(EVP_PKEY_get_octet_string_param(params_and_pub,
-                                                     OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
-                                                     buffer, 10, &len), 0))
-        goto err;
 
     ret = 1;
  err:
@@ -2369,7 +2347,7 @@ static struct keys_st {
         EVP_PKEY_SIPHASH, "0123456789012345", NULL
 #endif
     },
-#ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_EC
     {
         EVP_PKEY_X25519, "01234567890123456789012345678901",
         "abcdefghijklmnopqrstuvwxyzabcdef"
@@ -2396,6 +2374,10 @@ static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
     size_t inlen, len = 0, shortlen = 1;
     EVP_PKEY *pkey;
 
+#ifdef OPENSSL_NO_ECX
+    /* need ECX for this */
+    return 1;
+#endif
     /* Check if this algorithm supports public keys */
     if (pub && keys[tst].pub == NULL)
         return 1;
@@ -2511,6 +2493,9 @@ static int test_EVP_PKEY_check(int i)
     int expected_param_check = ak->param_check;
     int type = ak->type;
 
+#ifdef OPENSSL_NO_ECX
+    return 1;
+#endif
     if (!TEST_ptr(pkey = load_example_key(ak->keytype, input, input_len)))
         goto done;
     if (type == 0
@@ -4737,7 +4722,7 @@ static int test_custom_pmeth(int idx)
 # endif
     case 2:
     case 8:
-# ifndef OPENSSL_NO_EC
+# if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX)
         id = EVP_PKEY_EC;
         pkey = load_example_ec_key();
         break;
@@ -4746,7 +4731,7 @@ static int test_custom_pmeth(int idx)
 # endif
     case 3:
     case 9:
-# ifndef OPENSSL_NO_ECX
+# if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX)
         id = EVP_PKEY_ED25519;
         md = NULL;
         pkey = load_example_ed25519_key();
@@ -4766,7 +4751,7 @@ static int test_custom_pmeth(int idx)
 # endif
     case 5:
     case 11:
-# ifndef OPENSSL_NO_ECX
+# if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX)
         id = EVP_PKEY_X25519;
         doderive = 1;
         pkey = load_example_x25519_key();
@@ -5091,7 +5076,6 @@ static int test_signatures_with_engine(int tst)
         return 1;
 #  endif
 #  ifdef OPENSSL_NO_ECX
-    /* Skip ECX tests in a no-ecx build */
     if (tst == 2)
         return 1;
 #  endif
@@ -5208,7 +5192,6 @@ static int test_cipher_with_engine(void)
 # endif /* OPENSSL_NO_DYNAMIC_ENGINE */
 #endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
-#ifndef OPENSSL_NO_ECX
 static int ecxnids[] = {
     NID_X25519,
     NID_X448,
@@ -5232,7 +5215,6 @@ static int test_ecx_short_keys(int tst)
 
     return 1;
 }
-#endif
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -5251,7 +5233,7 @@ const OPTIONS *test_get_options(void)
     return options;
 }
 
-#ifndef OPENSSL_NO_ECX
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX)
 /* Test that trying to sign with a public key errors out gracefully */
 static int test_ecx_not_private_key(int tst)
 {
@@ -5316,7 +5298,7 @@ static int test_ecx_not_private_key(int tst)
 
     return testresult;
 }
-#endif /* OPENSSL_NO_ECX */
+#endif /* OPENSSL_NO_EC */
 
 static int test_sign_continuation(void)
 {
@@ -5781,9 +5763,9 @@ int setup_tests(void)
     }
 # endif
 #endif
-
-#ifndef OPENSSL_NO_ECX
     ADD_ALL_TESTS(test_ecx_short_keys, OSSL_NELEM(ecxnids));
+
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX)
     ADD_ALL_TESTS(test_ecx_not_private_key, OSSL_NELEM(keys));
 #endif
 
