@@ -154,6 +154,11 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [B<-enable_server_rpk>]
 [B<-enable_client_rpk>]
+[B<-ech_dir> I<dirname>]
+[B<-ech_key> I<filename>]
+[B<-ech_specificpad>]
+[B<-ech_trialdecrypt>]
+[B<-ech_greaseretries>]
 
 =head1 DESCRIPTION
 
@@ -898,6 +903,37 @@ certificates can still elect to send X.509 certificates as usual.
 
 Raw public keys are extracted from the configured certificate/private key.
 
+=item B<-ech_dir> I<dir>
+
+Load all new/modified Encrypted Client Hello (ECH) PEM files from the relevant
+directory.  A file is considered modified if its modification time is one
+second or more younger than the time a file of that same name was loaded.
+
+=item B<-ech_key> I<filename>
+
+Load one Encrypted Client Hello (ECH) key pair.
+
+=item B<-ech_specificpad>
+
+Turn on padding that is specific to Encrypted Client Hello (ECH).
+That padding will apply to the Certificate, CertificateVerify and
+EncryptedExtensions handshake messages emitted by the server and
+will ensure those are at least a minimum length, (currently 1808, 
+480 and 32 octet minima respectively). The value will also be
+padded to a multiple of 16 octets long if longer than the minimum.
+
+=item B<-ech_trialdecrypt>
+
+When an Encrypted Client Hello (ECH) extension is seen in a ClientHello, 
+attempt to decrypt with all known ECH private keys if necessary. Without
+this, the ECH "config_id" is used to match against the loaded ECH private
+keys and decryption is only attempted when there's a match.
+
+=item B<-ech_greaseretries>
+
+If set, servers will add GREASEy ECHConfig values to those sent
+in retry_configs.
+
 =back
 
 =head1 CONNECTED COMMANDS
@@ -1009,6 +1045,8 @@ B<-no_rx_cert_comp>,
 B<-no_tx_cert_comp>,
 and B<-tfo>
 options were added in OpenSSL 3.2.
+
+The B<ech> options were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

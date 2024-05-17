@@ -82,6 +82,12 @@ DEPEND[man/man1/openssl-ec.1]=man1/openssl-ec.pod
 GENERATE[man/man1/openssl-ec.1]=man1/openssl-ec.pod
 DEPEND[man1/openssl-ec.pod]{pod}=man1/openssl-ec.pod.in
 GENERATE[man1/openssl-ec.pod]=man1/openssl-ec.pod.in
+DEPEND[html/man1/openssl-ech.html]=man1/openssl-ech.pod
+GENERATE[html/man1/openssl-ech.html]=man1/openssl-ech.pod
+DEPEND[man/man1/openssl-ech.1]=man1/openssl-ech.pod
+GENERATE[man/man1/openssl-ech.1]=man1/openssl-ech.pod
+DEPEND[man1/openssl-ech.pod]{pod}=man1/openssl-ech.pod.in
+GENERATE[man1/openssl-ech.pod]=man1/openssl-ech.pod.in
 DEPEND[html/man1/openssl-ecparam.html]=man1/openssl-ecparam.pod
 GENERATE[html/man1/openssl-ecparam.html]=man1/openssl-ecparam.pod
 DEPEND[man/man1/openssl-ecparam.1]=man1/openssl-ecparam.pod
@@ -361,6 +367,7 @@ html/man1/openssl-dhparam.html \
 html/man1/openssl-dsa.html \
 html/man1/openssl-dsaparam.html \
 html/man1/openssl-ec.html \
+html/man1/openssl-ech.html \
 html/man1/openssl-ecparam.html \
 html/man1/openssl-enc.html \
 html/man1/openssl-engine.html \
@@ -421,6 +428,7 @@ man/man1/openssl-dhparam.1 \
 man/man1/openssl-dsa.1 \
 man/man1/openssl-dsaparam.1 \
 man/man1/openssl-ec.1 \
+man/man1/openssl-ech.1 \
 man/man1/openssl-ecparam.1 \
 man/man1/openssl-enc.1 \
 man/man1/openssl-engine.1 \
@@ -2511,6 +2519,10 @@ DEPEND[html/man3/SSL_do_handshake.html]=man3/SSL_do_handshake.pod
 GENERATE[html/man3/SSL_do_handshake.html]=man3/SSL_do_handshake.pod
 DEPEND[man/man3/SSL_do_handshake.3]=man3/SSL_do_handshake.pod
 GENERATE[man/man3/SSL_do_handshake.3]=man3/SSL_do_handshake.pod
+DEPEND[html/man3/SSL_ech_set1_echconfig.html]=man3/SSL_ech_set1_echconfig.pod
+GENERATE[html/man3/SSL_ech_set1_echconfig.html]=man3/SSL_ech_set1_echconfig.pod
+DEPEND[man/man3/SSL_ech_set1_echconfig.3]=man3/SSL_ech_set1_echconfig.pod
+GENERATE[man/man3/SSL_ech_set1_echconfig.3]=man3/SSL_ech_set1_echconfig.pod
 DEPEND[html/man3/SSL_export_keying_material.html]=man3/SSL_export_keying_material.pod
 GENERATE[html/man3/SSL_export_keying_material.html]=man3/SSL_export_keying_material.pod
 DEPEND[man/man3/SSL_export_keying_material.3]=man3/SSL_export_keying_material.pod
@@ -3603,6 +3615,7 @@ html/man3/SSL_check_chain.html \
 html/man3/SSL_clear.html \
 html/man3/SSL_connect.html \
 html/man3/SSL_do_handshake.html \
+html/man3/SSL_ech_set1_echconfig.html \
 html/man3/SSL_export_keying_material.html \
 html/man3/SSL_extension_supported.html \
 html/man3/SSL_free.html \
@@ -4259,6 +4272,7 @@ man/man3/SSL_check_chain.3 \
 man/man3/SSL_clear.3 \
 man/man3/SSL_connect.3 \
 man/man3/SSL_do_handshake.3 \
+man/man3/SSL_ech_set1_echconfig.3 \
 man/man3/SSL_export_keying_material.3 \
 man/man3/SSL_extension_supported.3 \
 man/man3/SSL_free.3 \
