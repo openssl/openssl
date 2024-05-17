@@ -34,6 +34,9 @@
 # include "internal/refcount.h"
 # include "internal/tsan_assist.h"
 # include "internal/bio.h"
+# ifndef OPENSSL_NO_ECH
+#  include "ech_local.h"
+# endif
 # include "internal/ktls.h"
 # include "internal/time.h"
 # include "internal/ssl.h"
@@ -547,6 +550,13 @@ struct ssl_session_st {
 
     struct {
         char *hostname;
+
+# ifndef OPENSSL_NO_EC
+        size_t ecpointformats_len;
+        unsigned char *ecpointformats; /* peer's list */
+# endif                         /* OPENSSL_NO_EC */
+        size_t supportedgroups_len;
+        uint16_t *supportedgroups; /* peer's list */
         /* RFC4507 info */
         unsigned char *tick; /* Session ticket */
         size_t ticklen;      /* Session ticket length */
@@ -704,6 +714,8 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_compress_certificate,
     TLSEXT_IDX_early_data,
     TLSEXT_IDX_certificate_authorities,
+    TLSEXT_IDX_ech,
+    TLSEXT_IDX_outer_extensions,
     TLSEXT_IDX_padding,
     TLSEXT_IDX_psk,
     /* Dummy index - must always be the last entry */
@@ -1077,7 +1089,14 @@ struct ssl_ctx_st {
         SSL_CTX_npn_select_cb_func npn_select_cb;
         void *npn_select_cb_arg;
 # endif
-
+#ifndef OPENSSL_NO_ECH
+        /* Encrypted ClientHello details for SSL_CTX */
+        SSL_ECH *ech; /* array of ECH configurations */
+        int nechs; /* number of elements of the above array */
+        SSL_ech_cb_func ech_cb; /* ECH call back */
+        unsigned char *alpn_outer; /* Outer ALPN (if any) */
+        size_t alpn_outer_len;
+#endif
         unsigned char cookie_hmac_key[SHA256_DIGEST_LENGTH];
     } ext;
 
@@ -1573,6 +1592,9 @@ struct ssl_connection_st {
                          const unsigned char *data, int len, void *arg);
         void *debug_arg;
         char *hostname;
+#ifndef OPENSSL_NO_ECH
+        SSL_CONNECTION_ECH ech;
+#endif
         /* certificate status request info */
         /* Status type or -1 if no status type */
         int status_type;
@@ -1625,6 +1647,7 @@ struct ssl_connection_st {
          */
         unsigned char *alpn;
         size_t alpn_len;
+
         /*
          * Next protocol negotiation. For the client, this is the protocol that
          * we sent in NextProtocol and is set when handling ServerHello

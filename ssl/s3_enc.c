@@ -15,6 +15,11 @@
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 
+#ifndef OPENSSL_NO_ECH
+# include <openssl/trace.h>
+# include "ech_local.h"
+#endif
+
 static int ssl3_generate_key_block(SSL_CONNECTION *s, unsigned char *km, int num)
 {
     const EVP_MD *md5 = NULL, *sha1 = NULL;
@@ -248,6 +253,15 @@ int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len)
 {
     int ret;
 
+#ifndef OPENSSL_NO_ECH
+# ifdef OSSL_ECH_SUPERVERBOSE
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "Updating transcript for s=%p\n", (void *)s);
+    } OSSL_TRACE_END(TLS);
+    ech_pbuf("Adding this to transcript", buf, len);
+# endif
+#endif
+
     if (s->s3.handshake_dgst == NULL) {
         /* Note: this writes to a memory BIO so a failure is a fatal error */
         if (len > INT_MAX) {
@@ -276,6 +290,7 @@ int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
     void *hdata;
 
     if (s->s3.handshake_dgst == NULL) {
+
         hdatalen = BIO_get_mem_data(s->s3.handshake_buffer, &hdata);
         if (hdatalen <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_HANDSHAKE_LENGTH);

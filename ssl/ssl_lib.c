@@ -912,6 +912,68 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
 #endif
 
     s->ssl_pkey_num = SSL_PKEY_NUM + ctx->sigalg_list_len;
+#ifndef OPENSSL_NO_ECH
+    s->ext.ech.attempted_type = TLSEXT_TYPE_ech;
+    s->ext.ech.ncfgs = ctx->ext.nechs;
+    if (s->ext.ech.ncfgs > 0) {
+        s->ext.ech.cfgs = SSL_ECH_dup(ctx->ext.ech, s->ext.ech.ncfgs,
+                                      OSSL_ECH_SELECT_ALL);
+        if (s->ext.ech.cfgs == NULL)
+            goto err;
+        if (ctx->ext.ech->outer_name != NULL) {
+            s->ext.ech.cfgs->outer_name =
+                OPENSSL_strdup(ctx->ext.ech->outer_name);
+            if (s->ext.ech.cfgs->outer_name == NULL)
+                goto err;
+        }
+        if (s->ext.ech.cfgs != NULL && s->ext.ech.cfgs->cfg != NULL
+            && s->ext.ech.cfgs->cfg->recs != NULL) {
+            if (s->ext.ech.cfgs->cfg->recs[0].version
+                    != OSSL_ECH_RFCXXXX_VERSION)
+                goto err;
+            s->ext.ech.attempted_type = TLSEXT_TYPE_ech;
+            s->ext.ech.attempted_cid = s->ext.ech.cfgs->cfg->recs[0].config_id;
+        } else {
+            s->ext.ech.attempted_type = TLSEXT_TYPE_ech;
+            s->ext.ech.attempted_cid = 0x00;
+        }
+    } else {
+        s->ext.ech.cfgs = NULL;
+    }
+    s->ext.ech.cb = ctx->ext.ech_cb;
+    s->ext.ech.done = 0;
+    s->ext.ech.attempted = 0;
+    s->ext.ech.backend = 0;
+    s->ext.ech.success = 0;
+    s->ext.ech.grease = 0;
+    s->ext.ech.grease_suite = NULL;
+    s->ext.ech.ch_depth = 0;
+    s->ext.ech.encoded_innerch_len = 0;
+    if (ctx->options & SSL_OP_ECH_GREASE) {
+        s->ext.ech.grease = OSSL_ECH_IS_GREASE;
+    } else {
+        s->ext.ech.grease = OSSL_ECH_NOT_GREASE;
+    }
+    if (s->ssl.ctx->ext.alpn_outer != NULL) {
+        s->ext.ech.alpn_outer = OPENSSL_malloc(s->ssl.ctx->ext.alpn_outer_len);
+        if (s->ext.ech.alpn_outer == NULL)
+            goto err;
+        memcpy(s->ext.ech.alpn_outer, s->ssl.ctx->ext.alpn_outer,
+               s->ssl.ctx->ext.alpn_outer_len);
+        s->ext.ech.alpn_outer_len = ctx->ext.alpn_outer_len;
+    }
+    s->ext.ech.returned = NULL;
+    s->ext.ech.returned_len = 0;
+    s->ext.ech.sent = NULL;
+    s->ext.ech.sent_len = 0;
+    s->ext.ech.pub = NULL;
+    s->ext.ech.pub_len = 0;
+    s->ext.ech.hpke_ctx = NULL;
+    s->ext.ech.innerch = NULL;
+    s->ext.ech.innerch1 = NULL;
+    s->ext.ech.encoded_innerch = NULL;
+    s->ext.ech.kepthrr = NULL;
+#endif
     return ssl;
  cerr:
     ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
@@ -1409,11 +1471,11 @@ void ossl_ssl_connection_free(SSL *ssl)
     dane_final(&s->dane);
 
     /* Ignore return value */
+
     ssl_free_wbio_buffer(s);
 
     /* Ignore return value */
     RECORD_LAYER_clear(&s->rlayer);
-
     BUF_MEM_free(s->init_buf);
 
     /* add extra stuff */
@@ -1422,7 +1484,6 @@ void ossl_ssl_connection_free(SSL *ssl)
     sk_SSL_CIPHER_free(s->tls13_ciphersuites);
     sk_SSL_CIPHER_free(s->peer_ciphers);
 
-    /* Make the next call work :-) */
     if (s->session != NULL) {
         ssl_clear_bad_session(s);
         SSL_SESSION_free(s->session);
@@ -1489,6 +1550,33 @@ void ossl_ssl_connection_free(SSL *ssl)
     BIO_free_all(s->rbio);
     s->rbio = NULL;
     OPENSSL_free(s->s3.tmp.valid_flags);
+#ifndef OPENSSL_NO_ECH
+    OPENSSL_free(s->ext.ech.alpn_outer);
+    OPENSSL_free(s->ext.ech.sent);
+    OPENSSL_free(s->ext.ech.pub);
+    OSSL_HPKE_CTX_free(s->ext.ech.hpke_ctx);
+    OPENSSL_free(s->ext.ech.returned);
+    OPENSSL_free(s->ext.ech.grease_suite);
+    OPENSSL_free(s->ext.ech.innerch);
+    OPENSSL_free(s->ext.ech.innerch1);
+    OPENSSL_free(s->ext.ech.kepthrr);
+    OPENSSL_free(s->ext.ech.encoded_innerch);
+    OPENSSL_free(s->ext.ech.outer_hostname);
+    OPENSSL_free(s->ext.ech.former_inner);
+    if (s->ext.ech.ncfgs > 0 && s->ext.ech.cfgs != NULL) {
+        SSL_ECH_free_arr(s->ext.ech.cfgs, s->ext.ech.ncfgs);
+        memset(s->ext.ech.cfgs, 0, s->ext.ech.ncfgs * sizeof(SSL_ECH));
+        OPENSSL_free(s->ext.ech.cfgs);
+        s->ext.ech.cfgs = NULL;
+        s->ext.ech.ncfgs = 0;
+    }
+    EVP_PKEY_free(s->ext.ech.tmp_pkey);
+    if (s->s3.handshake_buffer != NULL) {
+        (void)BIO_set_close(s->s3.handshake_buffer, BIO_CLOSE);
+        BIO_free(s->s3.handshake_buffer);
+        s->s3.handshake_buffer = NULL;
+    }
+#endif
 }
 
 void SSL_set0_rbio(SSL *s, BIO *rbio)
@@ -3715,7 +3803,6 @@ int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
     OPENSSL_free(sc->ext.alpn);
     sc->ext.alpn = alpn;
     sc->ext.alpn_len = protos_len;
-
     return 0;
 }
 
@@ -4101,6 +4188,13 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     }
 
+#ifndef OPENSSL_NO_ECH
+    ret->ext.nechs = 0;
+    ret->ext.ech = NULL;
+    ret->ext.ech_cb = NULL;
+    ret->ext.alpn_outer = NULL;
+    ret->ext.alpn_outer_len = 0;
+#endif
     return ret;
  err:
     SSL_CTX_free(ret);
@@ -4215,6 +4309,16 @@ void SSL_CTX_free(SSL_CTX *a)
 
     OPENSSL_free(a->client_cert_type);
     OPENSSL_free(a->server_cert_type);
+#ifndef OPENSSL_NO_ECH
+    if (a->ext.ech != NULL) {
+        SSL_ECH_free_arr(a->ext.ech, a->ext.nechs);
+        memset(a->ext.ech, 0, a->ext.nechs * sizeof(SSL_ECH));
+        OPENSSL_free(a->ext.ech);
+        a->ext.ech = NULL;
+        a->ext.nechs = 0;
+    }
+    OPENSSL_free(a->ext.alpn_outer);
+#endif
 
     CRYPTO_THREAD_lock_free(a->lock);
     CRYPTO_FREE_REF(&a->references);
@@ -4905,11 +5009,21 @@ SSL *SSL_dup(SSL *s)
     if (sc == NULL)
         return NULL;
 
+#ifndef OPENSSL_NO_ECH
+    if ((!SSL_in_init(s) || !SSL_in_before(s))) {
+        /* If we're not ECH and not quiescent, just up_ref! */
+        if (sc->ext.ech.cfgs == NULL) {
+            CRYPTO_UP_REF(&s->references, &i);
+            return s;
+        }
+    }
+#else
     /* If we're not quiescent, just up_ref! */
     if (!SSL_in_init(s) || !SSL_in_before(s)) {
         CRYPTO_UP_REF(&s->references, &i);
         return s;
     }
+#endif
 
     /*
      * Otherwise, copy configuration state, and session if set.
@@ -4926,6 +5040,7 @@ SSL *SSL_dup(SSL *s)
          */
         if (!SSL_copy_session_id(ret, s))
             goto err;
+
     } else {
         /*
          * No session has been established yet, so we have to expect that
@@ -4999,6 +5114,76 @@ SSL *SSL_dup(SSL *s)
             || !dup_ca_names(&retsc->client_ca_names, sc->client_ca_names))
         goto err;
 
+#ifndef OPENSSL_NO_ECH
+    /*
+     * The SSL_new() above will have copied s->ctx->ext.ech down to
+     * ret->ext.ech.cfgs, but the value we want is from s->ext.ech.cfgs instead so we'll
+     * free the copy of the SSL_ECH from the SSL_CTX and then copy the
+     * one from the SSL* original.
+     */
+    if (retsc->ext.ech.cfgs != NULL) {
+        SSL_ECH_free_arr(retsc->ext.ech.cfgs, retsc->ext.ech.ncfgs);
+        OPENSSL_free(retsc->ext.ech.cfgs);
+    }
+    retsc->ext.ech.ncfgs = sc->ext.ech.ncfgs;
+    retsc->ext.ech.cfgs = NULL;
+    if (sc->ext.ech.cfgs != NULL) {
+        retsc->ext.ech.cfgs = SSL_ECH_dup(sc->ext.ech.cfgs, retsc->ext.ech.ncfgs, OSSL_ECH_SELECT_ALL);
+        if (retsc->ext.ech.cfgs == NULL)
+            goto err;
+    }
+    retsc->ext.ech.cb = sc->ext.ech.cb;
+    if (sc->ext.ech.alpn_outer != NULL && sc->ext.ech.alpn_outer_len > 0) {
+        if (retsc->ext.ech.alpn_outer != NULL)
+            OPENSSL_free(retsc->ext.ech.alpn_outer);
+        retsc->ext.ech.alpn_outer = OPENSSL_malloc(sc->ext.ech.alpn_outer_len);
+        if (retsc->ext.ech.alpn_outer == NULL)
+            goto err;
+        retsc->ext.ech.alpn_outer_len = sc->ext.ech.alpn_outer_len;
+        memcpy(retsc->ext.ech.alpn_outer, sc->ext.ech.alpn_outer,
+               sc->ext.ech.alpn_outer_len);
+    } else {
+        retsc->ext.ech.alpn_outer = NULL;
+        retsc->ext.ech.alpn_outer_len = 0;
+    }
+    if (sc->ext.ech.grease_suite != NULL) {
+        if (retsc->ext.ech.grease_suite)
+            OPENSSL_free(retsc->ext.ech.grease_suite);
+        retsc->ext.ech.grease_suite = OPENSSL_strdup(sc->ext.ech.grease_suite);
+    }
+    retsc->ext.ech.done = sc->ext.ech.done;
+    retsc->ext.ech.attempted = sc->ext.ech.attempted;
+    retsc->ext.ech.attempted_type = sc->ext.ech.attempted_type;
+    retsc->ext.ech.attempted_cid = sc->ext.ech.attempted_cid;
+    retsc->ext.ech.backend = sc->ext.ech.backend;
+    retsc->ext.ech.success = sc->ext.ech.success;
+    retsc->ext.ech.grease = sc->ext.ech.grease;
+    retsc->ext.ech.ch_depth = sc->ext.ech.ch_depth;
+    if (sc->ext.ech.sent != NULL) {
+        retsc->ext.ech.sent = OPENSSL_malloc(sc->ext.ech.sent_len);
+        if (retsc->ext.ech.sent == NULL)
+            goto err;
+        memcpy(retsc->ext.ech.sent, sc->ext.ech.sent,
+               sc->ext.ech.sent_len);
+        retsc->ext.ech.sent_len = sc->ext.ech.sent_len;
+    }
+    if (sc->ext.ech.pub != NULL) {
+        retsc->ext.ech.pub = OPENSSL_malloc(sc->ext.ech.pub_len);
+        if (retsc->ext.ech.pub == NULL)
+            goto err;
+        memcpy(retsc->ext.ech.pub, sc->ext.ech.pub,
+               sc->ext.ech.pub_len);
+        retsc->ext.ech.pub_len = sc->ext.ech.pub_len;
+    }
+    if (sc->ext.ech.returned != NULL) {
+        retsc->ext.ech.returned = OPENSSL_malloc(sc->ext.ech.returned_len);
+        if (retsc->ext.ech.returned == NULL)
+            goto err;
+        memcpy(retsc->ext.ech.returned, sc->ext.ech.returned,
+               sc->ext.ech.returned_len);
+        retsc->ext.ech.returned_len = sc->ext.ech.returned_len;
+    }
+#endif
     return ret;
 
  err:

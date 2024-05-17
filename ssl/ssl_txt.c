@@ -81,6 +81,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         if (BIO_printf(bp, "%02X", x->master_key[i]) <= 0)
             goto err;
     }
+
 #ifndef OPENSSL_NO_PSK
     if (BIO_puts(bp, "\n    PSK identity: ") <= 0)
         goto err;

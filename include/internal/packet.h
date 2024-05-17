@@ -627,7 +627,24 @@ __owur static ossl_inline int PACKET_get_length_prefixed_3(PACKET *pkt,
     return 1;
 }
 
-/* Writable packets */
+# ifndef OPENSSL_NO_ECH
+/*
+ * New ECH API allowing replacement of outer client hello on server
+ * with inner. If newpkt is bigger, the caller has to fix that first
+ * (because pkt may be a subpacket so we don't here have a pointer to
+ * the allocated buffer)
+ */
+__owur static ossl_inline int PACKET_replace(PACKET *pkt, const PACKET *newpkt)
+{
+    if (pkt == NULL || newpkt == NULL)
+        return 0;
+    memcpy((unsigned char *)pkt->curr, newpkt->curr, newpkt->remaining);
+    pkt->remaining = newpkt->remaining;
+    return 1;
+}
+# endif
+
+/* Writeable packets */
 
 typedef struct wpacket_sub WPACKET_SUB;
 struct wpacket_sub {
