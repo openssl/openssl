@@ -43,17 +43,22 @@ proceed to publishing ECH as an RFC. That will likely include a change
 of version code-points which have been tracking Internet-Draft version
 numbers during the course of spec development.
 
-The current version used is 0xfe0d where the 0d reflects the current
-interop target (draft-13) with the following symbol defined for this
-version:
+The only current ECHConfig version supported is 0xfe0d which will be the
+value to be used in the eventual RFC when that issues. (We'll replace the
+XXXX with the relevant RFC number once that's known.)
 
 ```c
-#  define OSSL_ECH_DRAFT_13_VERSION 0xfe0d /* version from draft-13 */
+#  define OSSL_ECH_RFCXXXX_VERSION 0xfe0d /* version from RFC XXXX */
 ```
 
-It remains to be seen whether support for draft-13 will still be needed once
-the RFC is published. (Most implementations have ECH turned off except if the
-user has changed some flag or config option.)
+Note that 0xfe0d is also the value of the ECH extension codepoint:
+
+```c
+#  define TLSEXT_TYPE_ech                       0xfe0d
+```
+
+The uses of those should be correctly differentiated in the implementation, to
+more easily avoid problems if/when new versions are defined.
 
 "GREASEing" is defined in
 [RFC8701](https://datatracker.ietf.org/doc/html/rfc8701) and is a mechanism
@@ -109,7 +114,7 @@ information, mainly the ``public_name`` that will be used as the SNI value in
 outer CH messages.
 
 ```c
-int ossl_ech_make_echconfig(unsigned char *echconfig, size_t *echconfiglen,
+int OSSL_ech_make_echconfig(unsigned char *echconfig, size_t *echconfiglen,
                             unsigned char *priv, size_t *privlen,
                             uint16_t ekversion, uint16_t max_name_length,
                             const char *public_name, OSSL_HPKE_SUITE suite,
@@ -121,7 +126,7 @@ with the allocated size on input and the used-size on output. On output,
 the ``echconfig`` contains the base64 encoded ECHConfigList and the
 ``priv`` value contains the PEM encoded PKCS#8 private value.
 
-The ``ekversion`` should be 0xfe0d or 13 for the current version.
+The ``ekversion`` should be 0xfe0d for the current version.
 
 The ``max_name_length`` is an element of the ECHConfigList that is used
 by clients as part of a padding algorithm. (That design is part of the
@@ -203,13 +208,6 @@ decryption has succeeded or not, and if it has, returns the inner CH and SNI
 values (allowing routing to the correct back-end). Both the supplied (outer)
 CH and returned (inner) CH here include the record layer header.
 
-This has been tested in a PoC implementation with haproxy, which works for
-nominal operation but that can't handle the combination of split-mode in the
-face of HRR, as haproxy only supports examining the first (outer) CH seen,
-whereas ECH + split-mode + HRR requires processing both outer CHs. ECH
-split-mode with HRR has so far only been tested as part of the ``make test``
-target. (In other words, the utility of this API ought be considered unproven.)
-
 ```c
 int SSL_CTX_ech_raw_decrypt(SSL_CTX *ctx,
                             int *decrypted_ok,
@@ -274,18 +272,18 @@ ascii hex or binary) each of which may suit different applications.  ECHConfig
 values may also be provided embedded in the DNS wire encoding of HTTPS or SVCB
 resource records or in the equivalent zone file presentation format.
 
-``ossl_ech_find_echconfigs()`` attempts to find and return the (possibly empty)
+``OSSL_ech_find_echconfigs()`` attempts to find and return the (possibly empty)
 set of ECHConfig values from a buffer containing one of the encoded forms
 described above. Each successfully returned ECHConfigList will have
 exactly one ECHConfig, i.e., a single public value.
 
 ```c
-int ossl_ech_find_echconfigs(int *num_echs,
+int OSSL_ech_find_echconfigs(int *num_echs,
                              unsigned char ***echconfigs, size_t **echlens,
                              const unsigned char *val, size_t len);
 ```
 
-``ossl_ech_find_echconfigs()`` returns the number of ECHConfig values from the
+``OSSL_ech_find_echconfigs()`` returns the number of ECHConfig values from the
 input (``val``/``len``) successfully decoded  in the ``num_echs`` output.  If
 no ECHConfig values values are encountered (which can happen for good HTTPS RR
 values) then ``num_echs`` will be zero but the function returns 1. If the
@@ -294,7 +292,7 @@ those that contain locally supported options (e.g. AEAD ciphers) will be
 returned. If no ECHConfig found has supported options then none will be
 returned and the function will return 0.
 
-After a call to ``ossl_ech_find_echconfigs()``, the application can make a
+After a call to ``OSSL_ech_find_echconfigs()``, the application can make a
 sequence of calls to ``SSL_ech_set1_echconfig()`` for each of the ECHConfig
 values found.  (The various output buffers must be freed by the client
 afterwards, see the example code in
@@ -388,7 +386,8 @@ int SSL_ech_get_status(SSL *s, char **inner_sni, char **outer_sni);
 #  define SSL_ECH_STATUS_NOT_TRIED  -101 /* ECH wasn't attempted  */
 #  define SSL_ECH_STATUS_BAD_NAME   -102 /* ECH ok but server cert bad */
 #  define SSL_ECH_STATUS_NOT_CONFIGURED -103 /* ECH wasn't configured */
-#  define SSL_ECH_STATUS_FAILED_ECH -105 /* We tried, failed and got an ECH */
+#  define SSL_ECH_STATUS_FAILED_ECH -105 /* We tried, failed and got an ECH, from a good name */
+#  define SSL_ECH_STATUS_FAILED_ECH_BAD_NAME -106 /* We tried, failed and got an ECH, from a bad name */
 ```
 
 The ``inner_sni`` and ``outer_sni`` values should be freed by callers
@@ -426,6 +425,9 @@ The following options are defined for ECH and may be set via
 /* If set, clients will ignore the supplied ECH config_id and replace
  * that with a random value */
 #define SSL_OP_ECH_IGNORE_CID                           SSL_OP_BIT(36)
+/* If set, servers will add GREASEy ECHConfig values to those sent
+ * in retry_configs */
+#define SSL_OP_ECH_GREASE_RETRY_CONFIG                  SSL_OP_BIT(37)
 ```
 
 Build Options
@@ -504,7 +506,7 @@ OPENSSL_EXPORT int SSL_ECH_KEYS_marshal_retry_configs(const SSL_ECH_KEYS *keys,
 
 ```
 
-Collectively these are similar to ``ossl_ech_make_echconfig()``.
+Collectively these are similar to ``OSSL_ech_make_echconfig()``.
 
 ### Setting ECH keys on a server
 
