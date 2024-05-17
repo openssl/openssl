@@ -624,6 +624,7 @@ int ossl_ht_insert(HT *h, HT_KEY *key, HT_VALUE *data, HT_VALUE **olddata)
     struct ht_internal_value_st *newval = NULL;
     uint64_t hash;
     int rc = 0;
+    int i;
 
     if (data->value == NULL)
         goto out;
@@ -638,15 +639,16 @@ int ossl_ht_insert(HT *h, HT_KEY *key, HT_VALUE *data, HT_VALUE **olddata)
      */
     hash = h->config.ht_hash_fn(key->keybuf, key->keysize);
 
-try_again:
-    rc = ossl_ht_insert_locked(h, hash, newval, olddata);
+    for (i = 0;
+         (rc = ossl_ht_insert_locked(h, hash, newval, olddata)) == -1
+         && i < 2;
+         ++i)
+        if (!grow_hashtable(h, h->wpd.neighborhood_len)) {
+            rc = -1;
+            break;
+        }
 
-    if (rc == -1) {
-        grow_hashtable(h, h->wpd.neighborhood_len);
-        goto try_again;
-    }
-
-    if (rc == 0)
+    if (rc <= 0)
         free_value(newval);
 
 out:
