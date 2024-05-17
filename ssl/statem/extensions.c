@@ -72,6 +72,10 @@ static int tls_parse_compress_certificate(SSL_CONNECTION *sc, PACKET *pkt,
                                           unsigned int context,
                                           X509 *x, size_t chainidx);
 
+#ifndef OPENSSL_NO_ECH
+static int init_ech(SSL_CONNECTION *s, unsigned int context);
+#endif
+
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
     /* The defined type for the extension */
@@ -411,6 +415,29 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_certificate_authorities,
         tls_construct_certificate_authorities, NULL,
     },
+#ifndef OPENSSL_NO_ECH
+    { /* this is for draft-13 */
+        TLSEXT_TYPE_ech,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ONLY |
+        SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS |
+        SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
+        init_ech,
+        tls_parse_ctos_ech, tls_parse_stoc_ech,
+        tls_construct_stoc_ech13, tls_construct_ctos_ech13,
+        NULL
+    },
+    { /* this is for draft-13 */
+        TLSEXT_TYPE_outer_extensions,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ONLY,
+        NULL,
+        NULL, NULL,
+        NULL, NULL,
+        NULL
+    },
+#else /* OPENSSL_NO_ECH */
+    INVALID_EXTENSION,
+    INVALID_EXTENSION,
+#endif /* END_OPENSSL_NO_ECH */
     {
         /* Must be immediately before pre_shared_key */
         TLSEXT_TYPE_padding,
@@ -653,6 +680,14 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
             goto err;
         }
+#ifndef OPENSSL_NO_ECH
+        /*
+         * TODO: do a test to check this
+         * the subtraction below seems a bit smelly as thisex will be
+         * NULL for unsupported or custom extensions
+         * Not sure what to do about that.
+         */
+#endif
         idx = thisex - raw_extensions;
         /*-
          * Check that we requested this extension (if appropriate). Requests can
@@ -680,6 +715,15 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
                 && !((context & SSL_EXT_TLS1_2_SERVER_HELLO) != 0
                      && type == TLSEXT_TYPE_cryptopro_bug)
 #endif
+#ifndef OPENSSL_NO_ECH
+                /*
+                 * ECH is a bit special here - because of the outer
+                 * compression stuff, we don't directly set the
+                 * SSL_EXT_FLAG_SENT (except when GREASEing) so we
+                 * make a special check to see if we attempted ECH
+                 */
+                && (type == TLSEXT_TYPE_ech && s->ext.ech.attempted == 0)
+#endif
                                                                 ) {
             SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION,
                      SSL_R_UNSOLICITED_EXTENSION);
@@ -696,6 +740,17 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
                                 PACKET_remaining(&thisex->data),
                                 s->ext.debug_arg);
         }
+#ifndef OPENSSL_NO_ECH
+        else {
+            /* use callback anyway for custom ext or one we don't support */
+            if (s->ext.debug_cb)
+                s->ext.debug_cb(SSL_CONNECTION_GET_SSL(s), !s->server,
+                                type, PACKET_data(&extension),
+                                PACKET_remaining(&extension),
+                                s->ext.debug_arg);
+        }
+#endif
+
     }
 
     if (init) {
@@ -853,6 +908,9 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     int min_version, max_version = 0, reason;
     const EXTENSION_DEFINITION *thisexd;
     int for_comp = (context & SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION) != 0;
+#ifndef OPENSSL_NO_ECH
+    int pass;
+#endif
 
     if (!WPACKET_start_sub_packet_u16(pkt)
                /*
@@ -888,22 +946,36 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
         return 0;
     }
 
+#ifndef OPENSSL_NO_ECH
+    /*
+     * Two passes - we first construct the to-be-ECH-compressed
+     * extensions, and then go around again doing those that
+     * aren't to be compressed. We need to ensure this ordering
+     * so that all the ECH-compressed extensions are contiguous
+     * in the encoding. The actual compression happens later in
+     * ech_encode_inner().
+     */
+    for (pass = 0; pass <= 1; pass++)
+#endif
+
     for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
-        EXT_RETURN (*construct)(SSL_CONNECTION *s, WPACKET *pkt,
-                                unsigned int context,
+        EXT_RETURN (*construct)(SSL_CONNECTION *s, WPACKET *pkt, unsigned int context,
                                 X509 *x, size_t chainidx);
         EXT_RETURN ret;
-
+#ifndef OPENSSL_NO_ECH
+        /* do compressed in pass 0, non-compressed in pass 1 */
+        if (ech_2bcompressed(i) == pass)
+            continue;
+        /* stash index - needed for COMPRESS ECH handling */
+        s->ext.ech.ext_ind = i;
+#endif
         /* Skip if not relevant for our context */
         if (!should_add_extension(s, thisexd->context, context, max_version))
             continue;
-
         construct = s->server ? thisexd->construct_stoc
                               : thisexd->construct_ctos;
-
         if (construct == NULL)
             continue;
-
         ret = construct(s, pkt, context, x, chainidx);
         if (ret == EXT_RETURN_FAIL) {
             /* SSLfatal() already called */
@@ -916,11 +988,29 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
             s->ext.extflags[i] |= SSL_EXT_FLAG_SENT;
     }
 
+#ifndef OPENSSL_NO_ECH
+    /*
+     * don't close yet if client in the middle of doing ECH, we'll
+     * eventually close this in ech_aad_and_encrypt() after we add
+     * the real ECH extension value
+     */
+    if (s->server
+        || s->ext.ech.attempted == 0
+        || s->ext.ech.ch_depth == 1
+        || s->ext.ech.grease == OSSL_ECH_IS_GREASE) {
+        if (!WPACKET_close(pkt)) {
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+# else
     if (!WPACKET_close(pkt)) {
         if (!for_comp)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+#endif
 
     return 1;
 }
@@ -983,6 +1073,22 @@ static int init_server_name(SSL_CONNECTION *s, unsigned int context)
 
     return 1;
 }
+
+#ifndef OPENSSL_NO_ECH
+/*
+ * @brief Just note that ech is not yet done
+ * @param s is the SSL connection
+ * @param context determines when called
+ * @return 1 for good, 0 otherwise
+ */
+static int init_ech(SSL_CONNECTION *s, unsigned int context)
+{
+    if (context == SSL_EXT_CLIENT_HELLO) {
+        s->ext.ech.done = 0;
+    }
+    return 1;
+}
+#endif /* OPENSSL_NO_ECH */
 
 static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
 {
@@ -1537,6 +1643,13 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     int ret = -1;
     int usepskfored = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+#ifndef OPENSSL_NO_ECH
+    unsigned char hashval[EVP_MAX_MD_SIZE];
+    unsigned int hashlen = 0;
+    EVP_MD_CTX *ctx = NULL;
+    WPACKET tpkt;
+    BUF_MEM *tpkt_mem = NULL;
+#endif
 
     /* Ensure cast to size_t is safe */
     if (!ossl_assert(hashsizei >= 0)) {
@@ -1618,12 +1731,47 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
         long hdatalen_l;
         void *hdata;
 
+#ifndef OPENSSL_NO_ECH
+        /* handle the hashing as per ECH needs (on client) */
+        if (s->ext.ech.attempted == 1 && s->ext.ech.ch_depth == 1) {
+            if ((tpkt_mem = BUF_MEM_new()) == NULL
+                || !BUF_MEM_grow(tpkt_mem, SSL3_RT_MAX_PLAIN_LENGTH)
+                || !WPACKET_init(&tpkt, tpkt_mem)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            hashlen = EVP_MD_size(md);
+            if ((ctx = EVP_MD_CTX_new()) == NULL
+                || EVP_DigestInit_ex(ctx, md, NULL) <= 0
+                || EVP_DigestUpdate(ctx, s->ext.ech.innerch1,
+                                    s->ext.ech.innerch1_len) <= 0
+                || EVP_DigestFinal_ex(ctx, hashval, &hashlen) <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            EVP_MD_CTX_free(ctx);
+            ctx = NULL;
+            if (!WPACKET_put_bytes_u8(&tpkt, SSL3_MT_MESSAGE_HASH)
+                || !WPACKET_put_bytes_u24(&tpkt, hashlen)
+                || !WPACKET_memcpy(&tpkt, hashval, hashlen)
+                || !WPACKET_memcpy(&tpkt, s->ext.ech.kepthrr,
+                                    s->ext.ech.kepthrr_len)
+                || !WPACKET_get_length(&tpkt, &hdatalen)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            hdata = WPACKET_get_curr(&tpkt) - hdatalen;
+        } else {
+#endif
         hdatalen = hdatalen_l =
             BIO_get_mem_data(s->s3.handshake_buffer, &hdata);
         if (hdatalen_l <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_HANDSHAKE_LENGTH);
             goto err;
         }
+#ifndef OPENSSL_NO_ECH
+        }
+#endif
 
         /*
          * For servers the handshake buffer data will include the second
@@ -1691,6 +1839,12 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     OPENSSL_cleanse(finishedkey, sizeof(finishedkey));
     EVP_PKEY_free(mackey);
     EVP_MD_CTX_free(mctx);
+#ifndef OPENSSL_NO_ECH
+    EVP_MD_CTX_free(ctx);
+    if (tpkt_mem != NULL)
+        WPACKET_cleanup(&tpkt);
+    BUF_MEM_free(tpkt_mem);
+#endif
 
     return ret;
 }
@@ -1821,6 +1975,9 @@ static EXT_RETURN tls_construct_compress_certificate(SSL_CONNECTION *sc, WPACKET
 
     if (sc->cert_comp_prefs[0] == TLSEXT_comp_cert_none)
         return EXT_RETURN_NOT_SENT;
+# ifndef OPENSSL_NO_ECH
+    ECH_IOSAME(sc, pkt);
+# endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_compress_certificate)
             || !WPACKET_start_sub_packet_u16(pkt)
