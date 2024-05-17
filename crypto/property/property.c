@@ -455,6 +455,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     ossl_rcu_write_unlock(store->lock);
 
     if (ret) {
+        ossl_synchronize_rcu(store->lock);
         stored_algs_free(algsold);
         alg_free_all(algold);
     } else {
@@ -582,6 +583,7 @@ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
         goto err;
     ossl_rcu_assign_ptr(&store->algs, &algsnew);
     ossl_rcu_write_unlock(store->lock);
+    ossl_synchronize_rcu(store->lock);
 
     /* Free any old algorithms and implementations we are no longer using */
     sk_ALGORITHM_free(data.newalgs);
@@ -820,6 +822,8 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
     algsnew->cache_nelem = 0;
     ossl_rcu_assign_ptr(&store->algs, &algsnew);
     ossl_rcu_write_unlock(store->lock);
+    ossl_synchronize_rcu(store->lock);
+
     /* Free any old algorithms we are no longer using */
     sk_ALGORITHM_free(data.newalgs);
     sk_ALGORITHM_pop_free(data.oldalgs, alg_and_cache_free);
@@ -1056,6 +1060,7 @@ end:
     ossl_rcu_write_unlock(store->lock);
 
     if (res) {
+        ossl_synchronize_rcu(store->lock);
         stored_algs_free(algsold);
         alg_and_cache_free(algold);
     } else {
