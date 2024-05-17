@@ -1569,7 +1569,11 @@ void SSL_CTX_set1_cert_store(SSL_CTX *, X509_STORE *);
 __owur int SSL_want(const SSL *s);
 __owur int SSL_clear(SSL *s);
 
+#ifndef OPENSSL_NO_DEPRECATED_3_4
+OSSL_DEPRECATEDIN_3_4_FOR("not Y2038-safe, replace with SSL_CTX_flush_sessions_ex()")
 void SSL_CTX_flush_sessions(SSL_CTX *ctx, long tm);
+#endif
+void SSL_CTX_flush_sessions_ex(SSL_CTX *ctx, time_t tm);
 
 __owur const SSL_CIPHER *SSL_get_current_cipher(const SSL *s);
 __owur const SSL_CIPHER *SSL_get_pending_cipher(const SSL *s);
