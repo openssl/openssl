@@ -138,6 +138,7 @@ strcmp
 strcpy
 strcspn
 strdup
+strftime
 strlen
 strncmp
 strncpy

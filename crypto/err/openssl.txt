@@ -1395,6 +1395,7 @@ SSL_R_DTLS_MESSAGE_TOO_BIG:334:dtls message too big
 SSL_R_DUPLICATE_COMPRESSION_ID:309:duplicate compression id
 SSL_R_ECC_CERT_NOT_FOR_SIGNING:318:ecc cert not for signing
 SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE:374:ecdh required for suiteb mode
+SSL_R_ECH_REQUIRED:1355:ech required
 SSL_R_EE_KEY_TOO_SMALL:399:ee key too small
 SSL_R_EMPTY_RAW_PUBLIC_KEY:349:empty raw public key
 SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST:354:empty srtp protection profile list
@@ -1411,6 +1412,7 @@ SSL_R_FAILED_TO_GET_PARAMETER:316:failed to get parameter
 SSL_R_FAILED_TO_INIT_ASYNC:405:failed to init async
 SSL_R_FEATURE_NEGOTIATION_NOT_COMPLETE:417:feature negotiation not complete
 SSL_R_FEATURE_NOT_RENEGOTIABLE:413:feature not renegotiable
+SSL_R_FILE_OPEN_FAILED:420:file open failed
 SSL_R_FRAGMENTED_CLIENT_HELLO:401:fragmented client hello
 SSL_R_GOT_A_FIN_BEFORE_A_CCS:154:got a fin before a ccs
 SSL_R_HTTPS_PROXY_REQUEST:155:https proxy request
