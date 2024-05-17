@@ -266,7 +266,13 @@ my @opensslchandlers = (
     { regexp   => qr/OSSL_DEPRECATEDIN_\d+_\d+(?:_\d+)?\s+(.*)/,
       massager => sub { return $1; },
     },
+    { regexp   => qr/OSSL_DEPRECATEDIN_\d+_\d+(?:_\d+)?_FOR<<<.*>>>(.*)/,
+      massager => sub { return $1; },
+    },
     { regexp   => qr/(.*?)\s+OSSL_DEPRECATEDIN_\d+_\d+(?:_\d+)?\s+(.*)/,
+      massager => sub { return "$1 $2"; },
+    },
+    { regexp   => qr/(.*?)\s+OSSL_DEPRECATEDIN_\d+_\d+(?:_\d+)?_FOR<<<.*>>>(.*)/,
       massager => sub { return "$1 $2"; },
     },
 
