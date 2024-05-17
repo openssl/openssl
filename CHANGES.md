@@ -89,6 +89,12 @@ OpenSSL 3.4
 
    *Craig Lorentzen*
 
+ * SSL_SESSION_get_time()/SSL_SESSION_set_time()/SSL_CTX_flush_sessions() have
+   been deprecated in favour of their respective ..._ex() replacement functions
+   which are Y2038-safe.
+
+   *Alexander Kanavin*
+
 OpenSSL 3.3
 -----------
 
