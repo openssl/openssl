@@ -31,7 +31,7 @@
  * + 2 bytes for extension block length + 6 bytes for key_share extension
  * + 4 bytes for cookie extension header + the number of bytes in the cookie
  */
-#define MAX_HRR_SIZE    (SSL3_HM_HEADER_LENGTH + 2 + SSL3_RANDOM_SIZE + 1 \
+#define MAX_HRR_SIZE    (DTLS1_HM_HEADER_LENGTH + 2 + SSL3_RANDOM_SIZE + 1 \
                          + SSL_MAX_SSL_SESSION_ID_LENGTH + 2 + 1 + 2 + 6 + 4 \
                          + MAX_COOKIE_SIZE)
 
@@ -734,6 +734,8 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     uint64_t tm, now;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    const int version1_2 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_2_VERSION : TLS1_2_VERSION;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     /* Ignore any cookie if we're not set up to verify it */
     if (sctx->verify_stateless_cookie_cb == NULL
@@ -806,7 +808,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
-    if (version != TLS1_3_VERSION && version != DTLS1_3_VERSION) {
+    if (version != version1_3) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
         return 0;
@@ -866,9 +868,9 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    if (!WPACKET_put_bytes_u8(&hrrpkt, SSL3_MT_SERVER_HELLO)
-            || !WPACKET_start_sub_packet_u24(&hrrpkt)
-            || !WPACKET_put_bytes_u16(&hrrpkt, TLS1_2_VERSION)
+    if (!ssl_set_handshake_header(s, &hrrpkt, SSL3_MT_SERVER_HELLO)
+            /* ServerHello msg start*/
+            || !WPACKET_put_bytes_u16(&hrrpkt, version1_2)
             || !WPACKET_memcpy(&hrrpkt, hrrrandom, SSL3_RANDOM_SIZE)
             || !WPACKET_sub_memcpy_u8(&hrrpkt, s->tmp_session_id,
                                       s->tmp_session_id_len)

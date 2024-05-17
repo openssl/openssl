@@ -199,8 +199,10 @@ static int test_client_hello(int currtest)
 
     msglen = PACKET_remaining(&pkt);
 
-    /* Skip the handshake message header */
-    if (!TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
+    /* Test does not currently support dtls */
+    if (!TEST_false(SSL_is_dtls(con))
+            /* Skip the handshake message header */
+            || !TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
                /* Skip client version and random */
             || !TEST_true(PACKET_forward(&pkt, CLIENT_VERSION_LEN
                                                + SSL3_RANDOM_SIZE))

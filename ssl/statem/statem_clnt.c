@@ -1810,15 +1810,17 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
                                                              PACKET *extpkt)
 {
     RAW_EXTENSION *extensions = NULL;
-    const int isdtls = SSL_CONNECTION_IS_DTLS(s);
+    const int anyversion = SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION : TLS_ANY_VERSION;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+    const size_t headerlen = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_HM_HEADER_LENGTH
+                                                       : SSL3_HM_HEADER_LENGTH;
 
     /*
      * If we were sending early_data then any alerts should not be sent using
      * the old wrlmethod.
      */
     if (s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING
-            && !ssl_set_new_record_layer(s,
-                                         isdtls ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
+            && !ssl_set_new_record_layer(s, anyversion,
                                          OSSL_RECORD_DIRECTION_WRITE,
                                          OSSL_RECORD_PROTECTION_LEVEL_NONE,
                                          NULL, 0, NULL, 0, NULL, 0, NULL,  0,
@@ -1826,8 +1828,8 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
         /* SSLfatal already called */
         goto err;
     }
-    /* We are definitely going to be using TLSv1.3 */
-    s->rlayer.wrlmethod->set_protocol_version(s->rlayer.wrl, isdtls ? DTLS1_3_VERSION : TLS1_3_VERSION);
+    /* We are definitely going to be using (D)TLSv1.3 */
+    s->rlayer.wrlmethod->set_protocol_version(s->rlayer.wrl, version1_3);
 
     if (!tls_collect_extensions(s, extpkt, SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
                                 &extensions, NULL, 1)
@@ -1865,7 +1867,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
      * for HRR messages.
      */
     if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                                s->init_num + SSL3_HM_HEADER_LENGTH)) {
+                         s->init_num + headerlen)) {
         /* SSLfatal() already called */
         goto err;
     }

@@ -1534,6 +1534,15 @@ int tls_get_message_header(SSL_CONNECTION *s, int *mt)
 
     p = (unsigned char *)s->init_buf->data;
 
+    if (!ossl_assert(!SSL_CONNECTION_IS_DTLS(s))) {
+        /*
+         * This function is not compatible with DTLS since it uses
+         * SSL3_HM_HEADER_LENGTH
+         */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
     do {
         while (s->init_num < SSL3_HM_HEADER_LENGTH) {
             i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, &recvd_type,
@@ -1639,6 +1648,16 @@ int tls_get_message_body(SSL_CONNECTION *s, size_t *len)
     unsigned char *p;
     int i;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
+    if (!ossl_assert(!SSL_CONNECTION_IS_DTLS(s))) {
+        /*
+         * This function is not compatible with DTLS since it uses
+         * SSL3_HM_HEADER_LENGTH
+         */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        *len = 0;
+        return 0;
+    }
 
     if (s->s3.tmp.message_type == SSL3_MT_CHANGE_CIPHER_SPEC) {
         /* We've already read everything in */
@@ -2615,7 +2634,9 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
                                   size_t hrrlen)
 {
     unsigned char hashvaltmp[EVP_MAX_MD_SIZE];
-    unsigned char msghdr[SSL3_HM_HEADER_LENGTH];
+    const size_t msghdrlen = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_HM_HEADER_LENGTH
+                                                       : SSL3_HM_HEADER_LENGTH;
+    unsigned char msghdr[DTLS1_HM_HEADER_LENGTH];
 
     memset(msghdr, 0, sizeof(msghdr));
 
@@ -2639,8 +2660,8 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
 
     /* Inject the synthetic message_hash message */
     msghdr[0] = SSL3_MT_MESSAGE_HASH;
-    msghdr[SSL3_HM_HEADER_LENGTH - 1] = (unsigned char)hashlen;
-    if (!ssl3_finish_mac(s, msghdr, SSL3_HM_HEADER_LENGTH)
+    msghdr[msghdrlen - 1] = (unsigned char)hashlen;
+    if (!ssl3_finish_mac(s, msghdr, msghdrlen)
             || !ssl3_finish_mac(s, hashval, hashlen)) {
         /* SSLfatal() already called */
         return 0;
@@ -2654,8 +2675,7 @@ int create_synthetic_message_hash(SSL_CONNECTION *s,
     if (hrr != NULL
             && (!ssl3_finish_mac(s, hrr, hrrlen)
                 || !ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                                    s->s3.tmp.message_size
-                                    + SSL3_HM_HEADER_LENGTH))) {
+                                    s->s3.tmp.message_size + msghdrlen))) {
         /* SSLfatal() already called */
         return 0;
     }
