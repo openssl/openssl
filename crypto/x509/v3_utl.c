@@ -1151,23 +1151,60 @@ int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc)
     }
 }
 
+/*
+ * get_ipv4_component consumes one IPv4 component, terminated by either '.' or
+ * the end of the string, from *str. On success, it returns one, sets *out
+ * to the component, and advances *str to the first unconsumed character. On
+ * invalid input, it returns zero.
+ */
+static int get_ipv4_component(uint8_t *out_byte, const char **str) {
+    /* Store a slightly larger intermediary so the overflow check is easier. */
+    uint32_t out = 0;
+
+    for (;;) {
+        if (!ossl_isdigit(**str)) {
+            return 0;
+        }
+        out = (out * 10) + (**str - '0');
+        if (out > 255) {
+            /* Components must be 8-bit. */
+            return 0;
+        }
+        (*str)++;
+        if ((**str) == '.' || (**str) == '\0') {
+            *out_byte = (uint8_t)out;
+            return 1;
+        }
+        if (out == 0) {
+	    /* Reject extra leading zeros. Parsers sometimes treat them as
+             * octal, so accepting them would misinterpret input.
+             */
+            return 0;
+        }
+    }
+}
+
+/*
+ * get_ipv4_dot consumes a '.' from *str and advances it. It returns one on
+ * success and zero if *str does not point to a '.'.
+ */
+static int get_ipv4_dot(const char **str)
+{
+    if (**str != '.') {
+        return 0;
+    }
+    (*str)++;
+    return 1;
+}
+
 static int ipv4_from_asc(unsigned char *v4, const char *in)
 {
-    const char *p;
-    int a0, a1, a2, a3, n;
-
-    if (sscanf(in, "%d.%d.%d.%d%n", &a0, &a1, &a2, &a3, &n) != 4)
-        return 0;
-    if ((a0 < 0) || (a0 > 255) || (a1 < 0) || (a1 > 255)
-        || (a2 < 0) || (a2 > 255) || (a3 < 0) || (a3 > 255))
-        return 0;
-    p = in + n;
-    if (!(*p == '\0' || ossl_isspace(*p)))
-        return 0;
-    v4[0] = a0;
-    v4[1] = a1;
-    v4[2] = a2;
-    v4[3] = a3;
+    if (!get_ipv4_component(&v4[0], &in) || !get_ipv4_dot(&in)
+        || !get_ipv4_component(&v4[1], &in) || !get_ipv4_dot(&in)
+        || !get_ipv4_component(&v4[2], &in) || !get_ipv4_dot(&in)
+        || !get_ipv4_component(&v4[3], &in) || *in != '\0') {
+         return 0;
+    }
     return 1;
 }
 
