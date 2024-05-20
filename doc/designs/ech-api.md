@@ -50,7 +50,7 @@ XXXX with the relevant RFC number once that's known.)
 ```c
 /* version from RFC XXXX */
 #  define OSSL_ECH_RFCXXXX_VERSION 0xfe0d
-/* latetst version from an RFC */
+/* latest version from an RFC */
 #  define OSSL_ECH_CURRENT_VERSION OSSL_ECH_RFCXXXX_VERSION
 ```
 
