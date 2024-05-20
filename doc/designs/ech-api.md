@@ -48,7 +48,10 @@ value to be used in the eventual RFC when that issues. (We'll replace the
 XXXX with the relevant RFC number once that's known.)
 
 ```c
-#  define OSSL_ECH_RFCXXXX_VERSION 0xfe0d /* version from RFC XXXX */
+/* version from RFC XXXX */
+#  define OSSL_ECH_RFCXXXX_VERSION 0xfe0d
+/* latetst version from an RFC */
+#  define OSSL_ECH_CURRENT_VERSION OSSL_ECH_RFCXXXX_VERSION
 ```
 
 Note that 0xfe0d is also the value of the ECH extension codepoint:
@@ -126,7 +129,7 @@ with the allocated size on input and the used-size on output. On output,
 the ``echconfig`` contains the base64 encoded ECHConfigList and the
 ``priv`` value contains the PEM encoded PKCS#8 private value.
 
-The ``ekversion`` should be 0xfe0d for the current version.
+The ``ekversion`` should be ``OSSL_ECH_CURRENT_VERSION`` for the current version.
 
 The ``max_name_length`` is an element of the ECHConfigList that is used
 by clients as part of a padding algorithm. (That design is part of the
