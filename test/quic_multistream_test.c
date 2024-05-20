@@ -2376,6 +2376,7 @@ static const struct script_op script_10[] = {
 static const struct script_op script_11_child[] = {
     OP_C_ACCEPT_STREAM_WAIT (a)
     OP_C_READ_EXPECT        (a, "foo", 3)
+    OP_SLEEP                (10)
     OP_C_EXPECT_FIN         (a)
 
     OP_END
