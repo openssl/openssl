@@ -33,6 +33,12 @@ void OSSL_sleep(uint64_t millis)
 
     if (s > 0)
         sleep(s);
+    /*
+     * On NonStop with the PUT thread model, thread context switch is
+     * cooperative, with usleep() being a "natural" context switch point.
+     * We avoid checking us > 0 here, to allow that context switch to
+     * happen.
+     */
     usleep(us);
 }
 
