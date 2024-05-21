@@ -12,7 +12,6 @@
 #include <signal.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <signal.h>
 #if !defined(OPENSSL_SYS_WINDOWS)
 #include <unistd.h>
 #include <sys/socket.h>
