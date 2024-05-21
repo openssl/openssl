@@ -118,6 +118,9 @@ OSSL_DEPRECATEDIN_1_1_0 int RAND_event(UINT, WPARAM, LPARAM);
 #  endif
 # endif
 
+#define OSSL_PROV_RANDOM_PUBLIC     0
+#define OSSL_PROV_RANDOM_PRIVATE    1
+
 #ifdef  __cplusplus
 }
 #endif
