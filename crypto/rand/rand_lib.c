@@ -664,7 +664,17 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
         ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
         return NULL;
     }
+#if defined(OPENSSL_RAND_SEED_JITTER)
+    /*
+     * Explicitely use SEED_JITTER, directly, without chaining to
+     * allow reuse of pre-certified static jitterentropy.a without
+     * need for a separate ESV certificate. Potentially this should be
+     * default for all FIPS_MODULE builds, not just jitterentropy.
+     */
+    ctx = EVP_RAND_CTX_new(rand, NULL);
+#else
     ctx = EVP_RAND_CTX_new(rand, parent);
+#endif
     EVP_RAND_free(rand);
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_CREATE_DRBG);
