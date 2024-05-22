@@ -469,9 +469,6 @@ int OSSL_PARAM_get_int32(const OSSL_PARAM *p, int32_t *val)
 
 int OSSL_PARAM_set_int32(OSSL_PARAM *p, int32_t val)
 {
-    uint32_t u32;
-    unsigned int shift;
-
     if (p == NULL) {
         err_null_argument;
         return 0;
@@ -511,6 +508,9 @@ int OSSL_PARAM_set_int32(OSSL_PARAM *p, int32_t val)
         return general_set_int(p, &val, sizeof(val));
     } else if (p->data_type == OSSL_PARAM_REAL) {
 #ifndef OPENSSL_SYS_UEFI
+        uint32_t u32;
+        unsigned int shift;
+
         p->return_size = sizeof(double);
         if (p->data == NULL)
             return 1;
@@ -624,8 +624,6 @@ int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val)
 
 int OSSL_PARAM_set_uint32(OSSL_PARAM *p, uint32_t val)
 {
-    unsigned int shift;
-
     if (p == NULL) {
         err_null_argument;
         return 0;
@@ -670,6 +668,8 @@ int OSSL_PARAM_set_uint32(OSSL_PARAM *p, uint32_t val)
         return general_set_uint(p, &val, sizeof(val));
     } else if (p->data_type == OSSL_PARAM_REAL) {
 #ifndef OPENSSL_SYS_UEFI
+        unsigned int shift;
+
         p->return_size = sizeof(double);
         if (p->data == NULL)
             return 1;
