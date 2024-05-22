@@ -171,9 +171,6 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
         add_seeds_string("rdrand ( rdseed rdrand )");
 # endif
 #endif
-#ifdef OPENSSL_RAND_SEED_LIBRANDOM
-        add_seeds_string("C-library-random");
-#endif
 #ifdef OPENSSL_RAND_SEED_GETRANDOM
         add_seeds_string("getrandom-syscall");
 #endif

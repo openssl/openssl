@@ -95,7 +95,6 @@ static uint64_t get_time_stamp(void);
 /* none means none. this simplifies the following logic */
 # undef OPENSSL_RAND_SEED_OS
 # undef OPENSSL_RAND_SEED_GETRANDOM
-# undef OPENSSL_RAND_SEED_LIBRANDOM
 # undef OPENSSL_RAND_SEED_DEVRANDOM
 # undef OPENSSL_RAND_SEED_RDTSC
 # undef OPENSSL_RAND_SEED_RDCPU
@@ -205,10 +204,6 @@ void ossl_rand_pool_keep_random_devices_open(int keep)
 #   endif
 #   define OPENSSL_RAND_SEED_GETRANDOM
 #   define OPENSSL_RAND_SEED_DEVRANDOM
-#  endif
-
-#  if defined(OPENSSL_RAND_SEED_LIBRANDOM)
-#   error "librandom not (yet) supported"
 #  endif
 
 #  if (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
@@ -657,12 +652,6 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
     entropy_available = ossl_rand_pool_entropy_available(pool);
     if (entropy_available > 0)
         return entropy_available;
-#   endif
-
-#   if defined(OPENSSL_RAND_SEED_LIBRANDOM)
-    {
-        /* Not yet implemented. */
-    }
 #   endif
 
 #   if defined(OPENSSL_RAND_SEED_DEVRANDOM)

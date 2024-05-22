@@ -510,11 +510,6 @@ This source is ignored by the FIPS provider.
 Use the `RDSEED` or `RDRAND` command on x86 or `RNDRRS` command on aarch64
 if provided by the CPU.
 
-### librandom
-
-Use librandom (not implemented yet).
-This source is ignored by the FIPS provider.
-
 ### none
 
 Disable automatic seeding.  This is the default on some operating systems where
