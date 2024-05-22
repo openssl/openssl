@@ -118,6 +118,9 @@ OSSL_DEPRECATEDIN_1_1_0 int RAND_event(UINT, WPARAM, LPARAM);
 #  endif
 # endif
 
+int RAND_set1_random_provider(OSSL_LIB_CTX *ctx, OSSL_PROVIDER *p);
+
+/* Which parameter to provider_random call */
 #define OSSL_PROV_RANDOM_PUBLIC     0
 #define OSSL_PROV_RANDOM_PRIVATE    1
 
