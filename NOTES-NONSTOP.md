@@ -35,6 +35,9 @@ for each on the TNS/X (L-Series) platform:
 
 The SPT threading model is no longer supported as of OpenSSL 3.2.
 
+The PUT model is incompatible with the QUIC capability. This capability should
+be disabled when building with PUT.
+
 ### TNS/E Considerations
 
 The TNS/E platform is build using the same set of builds specifying `nse`
