@@ -3,7 +3,7 @@
 =head1 NAME
 
 RAND_bytes, RAND_priv_bytes, RAND_bytes_ex, RAND_priv_bytes_ex,
-RAND_pseudo_bytes - generate random data
+RAND_pseudo_bytes, RAND_set1_random_provider - generate random data
 
 =head1 SYNOPSIS
 
@@ -16,6 +16,8 @@ RAND_pseudo_bytes - generate random data
                    unsigned int strength);
  int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
                         unsigned int strength);
+
+ int RAND_set1_random_provider(OSSL_LIB_CTX *ctx, OSSL_PROVIDER *p);
 
 The following function has been deprecated since OpenSSL 1.1.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -46,6 +48,12 @@ If the default RAND_METHOD has been changed then for compatibility reasons the
 RAND_METHOD will be used in preference and the DRBG of the library context
 ignored.
 
+RAND_set1_random_provider() specifies a provider, I<prov>, which will be used
+by the library context I<ctx> for all of the generate calls above instead
+of the built-in in DRBGs and entropy source.  Pass NULL for the provider
+to disable the random provider functionality.  In this case, the built-in DRBGs
+and entropy source will be used.  This call should not be considered thread safe.
+
 =head1 NOTES
 
 By default, the OpenSSL CSPRNG supports a security level of 256 bits, provided it
@@ -72,6 +80,8 @@ return 1 on success, -1 if not supported by the current
 RAND method, or 0 on other failure. The error code can be
 obtained by L<ERR_get_error(3)>.
 
+RAND_set1_random_provider() returns 1 on success and 0 on failure.
+
 =head1 SEE ALSO
 
 L<RAND_add(3)>,
@@ -96,6 +106,10 @@ The RAND_priv_bytes() function was added in OpenSSL 1.1.1.
 =item *
 
 The RAND_bytes_ex() and RAND_priv_bytes_ex() functions were added in OpenSSL 3.0
+
+=item *
+
+The RAND_set1_random_provider() function was added in OpenSSL 3.5
 
 =back
 
