@@ -13,16 +13,91 @@
 #include <openssl/err.h>
 #include <openssl/opensslconf.h>
 #include <openssl/core_names.h>
+#include <openssl/provider.h>
 #include "internal/cryptlib.h"
+#include "internal/provider.h"
 #include "internal/thread_once.h"
 #include "crypto/rand.h"
 #include "crypto/cryptlib.h"
 #include "rand_local.h"
 #include "crypto/context.h"
 
+
 #ifndef OPENSSL_DEFAULT_SEED_SRC
 # define OPENSSL_DEFAULT_SEED_SRC SEED-SRC
 #endif
+
+typedef struct rand_global_st {
+    /*
+     * The three shared DRBG instances
+     *
+     * There are three shared DRBG instances: <primary>, <public>, and
+     * <private>.  The <public> and <private> DRBGs are secondary ones.
+     * These are used for non-secret (e.g. nonces) and secret
+     * (e.g. private keys) data respectively.
+     */
+    CRYPTO_RWLOCK *lock;
+
+    EVP_RAND_CTX *seed;
+
+    /*
+     * The <primary> DRBG
+     *
+     * Not used directly by the application, only for reseeding the two other
+     * DRBGs. It reseeds itself by pulling either randomness from os entropy
+     * sources or by consuming randomness which was added by RAND_add().
+     *
+     * The <primary> DRBG is a global instance which is accessed concurrently by
+     * all threads. The necessary locking is managed automatically by its child
+     * DRBG instances during reseeding.
+     */
+    EVP_RAND_CTX *primary;
+
+    /*
+     * The provider which we'll use to generate randomness.
+     */
+#ifndef FIPS_MODULE
+    OSSL_PROVIDER *random_provider;
+#endif      /* !FIPS_MODULE */
+
+    /*
+     * The <public> DRBG
+     *
+     * Used by default for generating random bytes using RAND_bytes().
+     *
+     * The <public> secondary DRBG is thread-local, i.e., there is one instance
+     * per thread.
+     */
+    CRYPTO_THREAD_LOCAL public;
+
+    /*
+     * The <private> DRBG
+     *
+     * Used by default for generating private keys using RAND_priv_bytes()
+     *
+     * The <private> secondary DRBG is thread-local, i.e., there is one
+     * instance per thread.
+     */
+    CRYPTO_THREAD_LOCAL private;
+
+    /* Which RNG is being used by default and it's configuration settings */
+    char *rng_name;
+    char *rng_cipher;
+    char *rng_digest;
+    char *rng_propq;
+
+    /* Allow the randomness source to be changed */
+    char *seed_name;
+    char *seed_propq;
+} RAND_GLOBAL;
+
+static EVP_RAND_CTX *rand_get0_public(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl);
+static EVP_RAND_CTX *rand_get0_private(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl);
+
+static RAND_GLOBAL *rand_get_global(OSSL_LIB_CTX *libctx)
+{
+    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DRBG_INDEX);
+}
 
 #ifndef FIPS_MODULE
 # include <stdio.h>
@@ -40,11 +115,11 @@
 /* non-NULL if default_RAND_meth is ENGINE-provided */
 static ENGINE *funct_ref;
 static CRYPTO_RWLOCK *rand_engine_lock;
-# endif
+# endif     /* !OPENSSL_NO_ENGINE */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 static CRYPTO_RWLOCK *rand_meth_lock;
 static const RAND_METHOD *default_RAND_meth;
-# endif
+# endif     /* !OPENSSL_NO_DEPRECATED_3_0 */
 static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
 
 static int rand_inited = 0;
@@ -55,13 +130,13 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     rand_engine_lock = CRYPTO_THREAD_lock_new();
     if (rand_engine_lock == NULL)
         return 0;
-# endif
+# endif     /* !OPENSSL_NO_ENGINE */
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
     rand_meth_lock = CRYPTO_THREAD_lock_new();
     if (rand_meth_lock == NULL)
         goto err;
-# endif
+# endif     /* !OPENSSL_NO_DEPRECATED_3_0 */
 
     if (!ossl_rand_pool_init())
         goto err;
@@ -73,11 +148,11 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
 # ifndef OPENSSL_NO_DEPRECATED_3_0
     CRYPTO_THREAD_lock_free(rand_meth_lock);
     rand_meth_lock = NULL;
-# endif
+# endif     /* !OPENSSL_NO_DEPRECATED_3_0 */
 # ifndef OPENSSL_NO_ENGINE
     CRYPTO_THREAD_lock_free(rand_engine_lock);
     rand_engine_lock = NULL;
-# endif
+# endif     /* !OPENSSL_NO_ENGINE */
     return 0;
 }
 
@@ -92,16 +167,16 @@ void ossl_rand_cleanup_int(void)
     if (meth != NULL && meth->cleanup != NULL)
         meth->cleanup();
     RAND_set_rand_method(NULL);
-# endif
+# endif     /* !OPENSSL_NO_DEPRECATED_3_0 */
     ossl_rand_pool_cleanup();
 # ifndef OPENSSL_NO_ENGINE
     CRYPTO_THREAD_lock_free(rand_engine_lock);
     rand_engine_lock = NULL;
-# endif
+# endif     /* !OPENSSL_NO_ENGINE */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
     CRYPTO_THREAD_lock_free(rand_meth_lock);
     rand_meth_lock = NULL;
-# endif
+# endif     /* !OPENSSL_NO_DEPRECATED_3_0 */
     ossl_release_default_drbg_ctx();
     rand_inited = 0;
 }
@@ -158,7 +233,7 @@ int RAND_poll(void)
         ossl_rand_pool_free(pool);
         return ret;
     }
-# endif
+# endif     /* !OPENSSL_NO_DEPRECATED_3_0 */
 
     RAND_seed(salt, sizeof(salt));
     return 1;
@@ -338,6 +413,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
 int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
                        unsigned int strength)
 {
+    RAND_GLOBAL *dgbl;
     EVP_RAND_CTX *rand;
 #if !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(FIPS_MODULE)
     const RAND_METHOD *meth = RAND_get_rand_method();
@@ -350,7 +426,16 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
     }
 #endif
 
-    rand = RAND_get0_private(ctx);
+    dgbl = rand_get_global(ctx);
+    if (dgbl == NULL)
+        return 0;
+#ifndef FIPS_MODULE
+    if (dgbl->random_provider != NULL)
+        return ossl_provider_random(dgbl->random_provider,
+                                    OSSL_PROV_RANDOM_PRIVATE,
+                                    buf, num, strength);
+#endif      /* !FIPS_MODULE */
+    rand = rand_get0_private(ctx, dgbl);
     if (rand != NULL)
         return EVP_RAND_generate(rand, buf, num, strength, 0, NULL, 0);
 
@@ -367,6 +452,7 @@ int RAND_priv_bytes(unsigned char *buf, int num)
 int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
                   unsigned int strength)
 {
+    RAND_GLOBAL *dgbl;
     EVP_RAND_CTX *rand;
 #if !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(FIPS_MODULE)
     const RAND_METHOD *meth = RAND_get_rand_method();
@@ -379,7 +465,17 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
     }
 #endif
 
-    rand = RAND_get0_public(ctx);
+    dgbl = rand_get_global(ctx);
+    if (dgbl == NULL)
+        return 0;
+#ifndef FIPS_MODULE
+    if (dgbl->random_provider != NULL)
+        return ossl_provider_random(dgbl->random_provider,
+                                    OSSL_PROV_RANDOM_PRIVATE,
+                                    buf, num, strength);
+#endif      /* !FIPS_MODULE */
+
+    rand = rand_get0_public(ctx, dgbl);
     if (rand != NULL)
         return EVP_RAND_generate(rand, buf, num, strength, 0, NULL, 0);
 
@@ -392,63 +488,6 @@ int RAND_bytes(unsigned char *buf, int num)
         return 0;
     return RAND_bytes_ex(NULL, buf, (size_t)num, 0);
 }
-
-typedef struct rand_global_st {
-    /*
-     * The three shared DRBG instances
-     *
-     * There are three shared DRBG instances: <primary>, <public>, and
-     * <private>.  The <public> and <private> DRBGs are secondary ones.
-     * These are used for non-secret (e.g. nonces) and secret
-     * (e.g. private keys) data respectively.
-     */
-    CRYPTO_RWLOCK *lock;
-
-    EVP_RAND_CTX *seed;
-
-    /*
-     * The <primary> DRBG
-     *
-     * Not used directly by the application, only for reseeding the two other
-     * DRBGs. It reseeds itself by pulling either randomness from os entropy
-     * sources or by consuming randomness which was added by RAND_add().
-     *
-     * The <primary> DRBG is a global instance which is accessed concurrently by
-     * all threads. The necessary locking is managed automatically by its child
-     * DRBG instances during reseeding.
-     */
-    EVP_RAND_CTX *primary;
-
-    /*
-     * The <public> DRBG
-     *
-     * Used by default for generating random bytes using RAND_bytes().
-     *
-     * The <public> secondary DRBG is thread-local, i.e., there is one instance
-     * per thread.
-     */
-    CRYPTO_THREAD_LOCAL public;
-
-    /*
-     * The <private> DRBG
-     *
-     * Used by default for generating private keys using RAND_priv_bytes()
-     *
-     * The <private> secondary DRBG is thread-local, i.e., there is one
-     * instance per thread.
-     */
-    CRYPTO_THREAD_LOCAL private;
-
-    /* Which RNG is being used by default and it's configuration settings */
-    char *rng_name;
-    char *rng_cipher;
-    char *rng_digest;
-    char *rng_propq;
-
-    /* Allow the randomness source to be changed */
-    char *seed_name;
-    char *seed_propq;
-} RAND_GLOBAL;
 
 /*
  * Initialize the OSSL_LIB_CTX global DRBGs on first use.
@@ -501,6 +540,9 @@ void ossl_rand_ctx_free(void *vdgbl)
     CRYPTO_THREAD_cleanup_local(&dgbl->public);
     EVP_RAND_CTX_free(dgbl->primary);
     EVP_RAND_CTX_free(dgbl->seed);
+#ifndef FIPS_MODULE
+    OSSL_PROVIDER_unload(dgbl->random_provider);
+#endif      /* !FIPS_MODULE */
     OPENSSL_free(dgbl->rng_name);
     OPENSSL_free(dgbl->rng_cipher);
     OPENSSL_free(dgbl->rng_digest);
@@ -509,11 +551,6 @@ void ossl_rand_ctx_free(void *vdgbl)
     OPENSSL_free(dgbl->seed_propq);
 
     OPENSSL_free(dgbl);
-}
-
-static RAND_GLOBAL *rand_get_global(OSSL_LIB_CTX *libctx)
-{
-    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DRBG_INDEX);
 }
 
 static void rand_delete_thread_state(void *arg)
@@ -799,13 +836,8 @@ EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
     return ret;
 }
 
-/*
- * Get the public random generator.
- * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
- */
-EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
+static EVP_RAND_CTX *rand_get0_public(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
 {
-    RAND_GLOBAL *dgbl = rand_get_global(ctx);
     EVP_RAND_CTX *rand, *primary;
 
     if (dgbl == NULL)
@@ -836,16 +868,19 @@ EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
 }
 
 /*
- * Get the private random generator.
+ * Get the public random generator.
  * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
  */
-EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
+EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
 {
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
-    EVP_RAND_CTX *rand, *primary;
 
-    if (dgbl == NULL)
-        return NULL;
+    return dgbl == NULL ? NULL : rand_get0_public(ctx, dgbl);
+}
+
+static EVP_RAND_CTX *rand_get0_private(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
+{
+    EVP_RAND_CTX *rand, *primary;
 
     rand = CRYPTO_THREAD_get_local(&dgbl->private);
     if (rand == NULL) {
@@ -869,6 +904,17 @@ EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
         CRYPTO_THREAD_set_local(&dgbl->private, rand);
     }
     return rand;
+}
+
+/*
+ * Get the private random generator.
+ * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
+ */
+EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    return dgbl == NULL ? NULL : rand_get0_private(ctx, dgbl);
 }
 
 #ifdef FIPS_MODULE
@@ -1023,4 +1069,16 @@ int RAND_set_seed_source_type(OSSL_LIB_CTX *ctx, const char *seed,
         && random_set_string(&dgbl->seed_propq, propq);
 }
 
-#endif
+int RAND_set0_random_provider(OSSL_LIB_CTX *ctx, OSSL_PROVIDER *p)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+    OSSL_PROVIDER *old;
+
+    if (dgbl == NULL)
+        return 0;
+    old = dgbl->random_provider;
+    dgbl->random_provider = p;
+    OSSL_PROVIDER_unload(old);
+    return 1;
+}
+#endif      /* !FIPS_MODULE */
