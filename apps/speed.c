@@ -613,17 +613,37 @@ static int EVP_Digest_loop(const char *mdname, ossl_unused int algindex, void *a
     unsigned char digest[EVP_MAX_MD_SIZE];
     int count;
     EVP_MD *md = NULL;
+    EVP_MD_CTX *ctx = NULL;
 
     if (!opt_md_silent(mdname, &md))
         return -1;
-    for (count = 0; COND(c[algindex][testnum]); count++) {
-        if (!EVP_Digest(buf, (size_t)lengths[testnum], digest, NULL, md,
-                        NULL)) {
+    if (EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) {
+        ctx = EVP_MD_CTX_new();
+        if (ctx == NULL) {
             count = -1;
-            break;
+            goto out;
+        }
+
+        for (count = 0; COND(c[algindex][testnum]); count++) {
+             if (!EVP_DigestInit_ex2(ctx, md, NULL)
+                 || !EVP_DigestUpdate(ctx, buf, (size_t)lengths[testnum])
+                 || !EVP_DigestFinalXOF(ctx, digest, sizeof(digest))) {
+                count = -1;
+                break;
+            }
+        }
+    } else {
+        for (count = 0; COND(c[algindex][testnum]); count++) {
+            if (!EVP_Digest(buf, (size_t)lengths[testnum], digest, NULL, md,
+                            NULL)) {
+                count = -1;
+                break;
+            }
         }
     }
+out:
     EVP_MD_free(md);
+    EVP_MD_CTX_free(ctx);
     return count;
 }
 
