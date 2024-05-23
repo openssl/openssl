@@ -175,7 +175,7 @@ struct ossl_provider_st {
     OSSL_FUNC_provider_get_params_fn *get_params;
     OSSL_FUNC_provider_get_capabilities_fn *get_capabilities;
     OSSL_FUNC_provider_self_test_fn *self_test;
-    OSSL_FUNC_provider_random_fn *random;
+    OSSL_FUNC_provider_random_bytes_fn *random_bytes;
     OSSL_FUNC_provider_query_operation_fn *query_operation;
     OSSL_FUNC_provider_unquery_operation_fn *unquery_operation;
 
@@ -1068,8 +1068,9 @@ static int provider_init(OSSL_PROVIDER *prov)
                 prov->self_test =
                     OSSL_FUNC_provider_self_test(provider_dispatch);
                 break;
-            case OSSL_FUNC_PROVIDER_RANDOM:
-                prov->random = OSSL_FUNC_provider_random(provider_dispatch);
+            case OSSL_FUNC_PROVIDER_RANDOM_BYTES:
+                prov->random_bytes =
+                    OSSL_FUNC_provider_random_bytes(provider_dispatch);
                 break;
             case OSSL_FUNC_PROVIDER_GET_CAPABILITIES:
                 prov->get_capabilities =
@@ -1168,6 +1169,12 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
     if (!ossl_assert(prov != NULL))
         return -1;
 
+#ifndef FIPS_MODULE
+    if (prov->random_bytes != NULL
+            && !ossl_rand_check_random_provider_on_unload(prov->libctx, prov))
+        return -1;
+#endif
+
     /*
      * No need to lock if we've got no store because we've not been shared with
      * other threads.
@@ -1264,6 +1271,10 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
     }
 
 #ifndef FIPS_MODULE
+    if (prov->random_bytes != NULL
+            && !ossl_rand_check_random_provider_on_load(prov->libctx, prov))
+        return -1;
+
     if (prov->ischild && upcalls && !ossl_provider_up_ref_parent(prov, 1))
         return -1;
 #endif
@@ -1864,11 +1875,12 @@ int ossl_provider_self_test(const OSSL_PROVIDER *prov)
  * If tracing is enabled, a message is printed indicating the requested
  * capabilities.
  */
-int ossl_provider_random(const OSSL_PROVIDER *prov, int which, void *buf, size_t n,
-                         unsigned int strength)
+int ossl_provider_random_bytes(const OSSL_PROVIDER *prov, int which,
+                               void *buf, size_t n, unsigned int strength)
 {
-    return prov->random == NULL ? 0 : prov->random(prov->provctx, which, buf, n,
-                                                   strength);
+    return prov->random_bytes == NULL ? 0
+                                      : prov->random_bytes(prov->provctx, which,
+                                                           buf, n, strength);
 }
 
 int ossl_provider_get_capabilities(const OSSL_PROVIDER *prov,

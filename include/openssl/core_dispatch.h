@@ -269,10 +269,10 @@ OSSL_CORE_MAKE_FUNC(int, provider_get_capabilities, (void *provctx,
                     const char *capability, OSSL_CALLBACK *cb, void *arg))
 # define OSSL_FUNC_PROVIDER_SELF_TEST          1031
 OSSL_CORE_MAKE_FUNC(int, provider_self_test, (void *provctx))
-# define OSSL_FUNC_PROVIDER_RANDOM             1032
-OSSL_CORE_MAKE_FUNC(int, provider_random, (void *provctx, int which,
-                                           void *buf, size_t n,
-                                           unsigned int strength))
+# define OSSL_FUNC_PROVIDER_RANDOM_BYTES       1032
+OSSL_CORE_MAKE_FUNC(int, provider_random_bytes, (void *provctx, int which,
+                                                 void *buf, size_t n,
+                                                 unsigned int strength))
 
 /* Operations */
 
