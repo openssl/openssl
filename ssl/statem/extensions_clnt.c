@@ -1206,17 +1206,8 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
 
     msgstart = WPACKET_get_curr(pkt) - msglen;
 
-    /*
-     * difference in dtls1_set_handshake_header() vs ssl3_set_handshake_header()?
-     */
-    if (SSL_CONNECTION_IS_DTLS(s)) {
-        msgstart += DTLS1_HM_HEADER_LENGTH;
-        binderoffset -= DTLS1_HM_HEADER_LENGTH;
-    }
-
-    if (dores
-            && tls_psk_do_binder(s, mdres, msgstart, binderoffset, NULL,
-                                 resbinder, s->session, 1, 0) != 1) {
+    if (dores && tls_psk_do_binder(s, mdres, msgstart, binderoffset, NULL,
+                                   resbinder, s->session, 1, 0) != 1) {
         /* SSLfatal() already called */
         return EXT_RETURN_FAIL;
     }

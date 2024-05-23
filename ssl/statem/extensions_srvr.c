@@ -1248,17 +1248,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
     msgstart = (unsigned char *)s->init_buf->data;
 
-    /*
-     * difference in dtls1_set_handshake_header() vs ssl3_set_handshake_header()?
-     */
-    if (SSL_CONNECTION_IS_DTLS(s)) {
-        msgstart += DTLS1_HM_HEADER_LENGTH;
-        binderoffset -= DTLS1_HM_HEADER_LENGTH;
-    }
-
-    if (tls_psk_do_binder(s, md, msgstart,
-                          binderoffset, PACKET_data(&binder), NULL, sess, 0,
-                          ext) != 1) {
+    if (tls_psk_do_binder(s, md, msgstart, binderoffset, PACKET_data(&binder),
+                          NULL, sess, 0, ext) != 1) {
         /* SSLfatal() already called */
         goto err;
     }
