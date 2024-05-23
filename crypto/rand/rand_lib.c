@@ -22,7 +22,6 @@
 #include "rand_local.h"
 #include "crypto/context.h"
 
-
 #ifndef OPENSSL_DEFAULT_SEED_SRC
 # define OPENSSL_DEFAULT_SEED_SRC SEED-SRC
 #endif
@@ -58,6 +57,7 @@ typedef struct rand_global_st {
      */
 #ifndef FIPS_MODULE
     OSSL_PROVIDER *random_provider;
+    char *random_provider_name;
 #endif      /* !FIPS_MODULE */
 
     /*
@@ -91,6 +91,7 @@ typedef struct rand_global_st {
     char *seed_propq;
 } RAND_GLOBAL;
 
+static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl);
 static EVP_RAND_CTX *rand_get0_public(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl);
 static EVP_RAND_CTX *rand_get0_private(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl);
 
@@ -110,6 +111,24 @@ static RAND_GLOBAL *rand_get_global(OSSL_LIB_CTX *libctx)
 # include "prov/seeding.h"
 # include "internal/e_os.h"
 # include "internal/property.h"
+
+/*
+ * The default name for the random provider.
+ * This ensures that the FIPS provider will supply libcrypto's random byte
+ * requirements.
+ */
+static const char random_provider_fips_name[] = "fips";
+
+static int set_random_provider_name(RAND_GLOBAL *dgbl, const char *name)
+{
+    if (dgbl->random_provider_name != NULL
+            && strcmp(dgbl->random_provider_name, name) == 0)
+        return 1;
+
+    OPENSSL_free(dgbl->random_provider_name);
+    dgbl->random_provider_name = strdup(name);
+    return dgbl->random_provider_name != NULL;
+}
 
 # ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
@@ -431,9 +450,9 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
         return 0;
 #ifndef FIPS_MODULE
     if (dgbl->random_provider != NULL)
-        return ossl_provider_random(dgbl->random_provider,
-                                    OSSL_PROV_RANDOM_PRIVATE,
-                                    buf, num, strength);
+        return ossl_provider_random_bytes(dgbl->random_provider,
+                                          OSSL_PROV_RANDOM_PRIVATE,
+                                          buf, num, strength);
 #endif      /* !FIPS_MODULE */
     rand = rand_get0_private(ctx, dgbl);
     if (rand != NULL)
@@ -470,9 +489,9 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
         return 0;
 #ifndef FIPS_MODULE
     if (dgbl->random_provider != NULL)
-        return ossl_provider_random(dgbl->random_provider,
-                                    OSSL_PROV_RANDOM_PRIVATE,
-                                    buf, num, strength);
+        return ossl_provider_random_bytes(dgbl->random_provider,
+                                          OSSL_PROV_RANDOM_PUBLIC,
+                                          buf, num, strength);
 #endif      /* !FIPS_MODULE */
 
     rand = rand_get0_public(ctx, dgbl);
@@ -505,7 +524,12 @@ void *ossl_rand_ctx_new(OSSL_LIB_CTX *libctx)
      * We need to ensure that base libcrypto thread handling has been
      * initialised.
      */
-     OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL);
+    OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL);
+
+    /* Prepopulate the random provider name */
+    dgbl->random_provider_name = strdup(random_provider_fips_name);
+    if (dgbl->random_provider_name == NULL)
+        goto err0;
 #endif
 
     dgbl->lock = CRYPTO_THREAD_lock_new();
@@ -524,6 +548,10 @@ void *ossl_rand_ctx_new(OSSL_LIB_CTX *libctx)
     CRYPTO_THREAD_cleanup_local(&dgbl->private);
  err1:
     CRYPTO_THREAD_lock_free(dgbl->lock);
+#ifndef FIPS_MODULE
+ err0:
+    OPENSSL_free(dgbl->random_provider_name);
+#endif
     OPENSSL_free(dgbl);
     return NULL;
 }
@@ -541,7 +569,7 @@ void ossl_rand_ctx_free(void *vdgbl)
     EVP_RAND_CTX_free(dgbl->primary);
     EVP_RAND_CTX_free(dgbl->seed);
 #ifndef FIPS_MODULE
-    OSSL_PROVIDER_unload(dgbl->random_provider);
+    OPENSSL_free(dgbl->random_provider_name);
 #endif      /* !FIPS_MODULE */
     OPENSSL_free(dgbl->rng_name);
     OPENSSL_free(dgbl->rng_cipher);
@@ -778,9 +806,8 @@ static EVP_RAND_CTX *rand_new_crngt(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent)
  * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
  *
  */
-EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
+static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
 {
-    RAND_GLOBAL *dgbl = rand_get_global(ctx);
     EVP_RAND_CTX *ret;
 
     if (dgbl == NULL)
@@ -836,6 +863,18 @@ EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
     return ret;
 }
 
+/*
+ * Get the primary random generator.
+ * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
+ *
+ */
+EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    return dgbl == NULL ? NULL : rand_get0_primary(ctx, dgbl);
+}
+
 static EVP_RAND_CTX *rand_get0_public(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
 {
     EVP_RAND_CTX *rand, *primary;
@@ -845,7 +884,7 @@ static EVP_RAND_CTX *rand_get0_public(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
 
     rand = CRYPTO_THREAD_get_local(&dgbl->public);
     if (rand == NULL) {
-        primary = RAND_get0_primary(ctx);
+        primary = rand_get0_primary(ctx, dgbl);
         if (primary == NULL)
             return NULL;
 
@@ -884,7 +923,7 @@ static EVP_RAND_CTX *rand_get0_private(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
 
     rand = CRYPTO_THREAD_get_local(&dgbl->private);
     if (rand == NULL) {
-        primary = RAND_get0_primary(ctx);
+        primary = rand_get0_primary(ctx, dgbl);
         if (primary == NULL)
             return NULL;
 
@@ -979,7 +1018,8 @@ static int random_conf_init(CONF_IMODULE *md, const CONF *cnf)
 {
     STACK_OF(CONF_VALUE) *elist;
     CONF_VALUE *cval;
-    RAND_GLOBAL *dgbl = rand_get_global(NCONF_get0_libctx((CONF *)cnf));
+    OSSL_LIB_CTX *libctx = NCONF_get0_libctx((CONF *)cnf);
+    RAND_GLOBAL *dgbl = rand_get_global(libctx);
     int i, r = 1;
 
     OSSL_TRACE1(CONF, "Loading random module: section %s\n",
@@ -1015,6 +1055,31 @@ static int random_conf_init(CONF_IMODULE *md, const CONF *cnf)
         } else if (OPENSSL_strcasecmp(cval->name, "seed_properties") == 0) {
             if (!random_set_string(&dgbl->seed_propq, cval->value))
                 return 0;
+        } else if (OPENSSL_strcasecmp(cval->name, "random_provider") == 0) {
+# ifndef FIPS_MODULE
+            OSSL_PROVIDER *prov = ossl_provider_find(libctx, cval->value, 0);
+
+            if (prov != NULL) {
+                if (!RAND_set1_random_provider(libctx, prov)) {
+                    ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+                    OSSL_PROVIDER_unload(prov);
+                    return 0;
+                }
+                /*
+                 * We need to release the reference from ossl_provider_find because
+                 * we don't want to keep a reference counted handle to the provider.
+                 *
+                 * The provider unload code checks for the random provider and,
+                 * if present, our reference will be NULLed when it is fully freed.
+                 * The provider load code, conversely, checks the provider name
+                 * and re-hooks our reference if required.  This means that a load,
+                 * hook random provider, use, unload, reload, reuse sequence will
+                 * work as expected.
+                 */
+                OSSL_PROVIDER_unload(prov);
+            } else if (!set_random_provider_name(dgbl, cval->value))
+                return 0;
+# endif
         } else {
             ERR_raise_data(ERR_LIB_CRYPTO,
                            CRYPTO_R_UNKNOWN_NAME_IN_RANDOM_SECTION,
@@ -1069,16 +1134,69 @@ int RAND_set_seed_source_type(OSSL_LIB_CTX *ctx, const char *seed,
         && random_set_string(&dgbl->seed_propq, propq);
 }
 
-int RAND_set0_random_provider(OSSL_LIB_CTX *ctx, OSSL_PROVIDER *p)
+int RAND_set1_random_provider(OSSL_LIB_CTX *ctx, OSSL_PROVIDER *prov)
 {
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
-    OSSL_PROVIDER *old;
 
     if (dgbl == NULL)
         return 0;
-    old = dgbl->random_provider;
-    dgbl->random_provider = p;
-    OSSL_PROVIDER_unload(old);
+
+    if (prov == NULL) {
+        OPENSSL_free(dgbl->random_provider_name);
+        dgbl->random_provider_name = NULL;
+        dgbl->random_provider = NULL;
+        return 1;
+    }
+
+    if (dgbl->random_provider == prov)
+        return 1;
+
+    if (!set_random_provider_name(dgbl, OSSL_PROVIDER_get0_name(prov)))
+        return 0;
+
+    dgbl->random_provider = prov;
     return 1;
 }
+
+/*
+ * When a new provider is loaded, we need to check to see if it is the
+ * designated randomness provider and register it if it is.
+ */
+int ossl_rand_check_random_provider_on_load(OSSL_LIB_CTX *ctx,
+                                            OSSL_PROVIDER *prov)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (dgbl == NULL)
+        return 0;
+
+    /* No random provider name specified, or one is installed already */
+    if (dgbl->random_provider_name == NULL || dgbl->random_provider != NULL)
+        return 1;
+
+    /* Does this provider match the name we're using? */
+    if (strcmp(dgbl->random_provider_name, OSSL_PROVIDER_get0_name(prov)) != 0)
+        return 1;
+
+    dgbl->random_provider = prov;
+    return 1;
+}
+
+/*
+ * When a provider is being unloaded, if it is the randomness provider,
+ * we need to deregister it.
+ */
+int ossl_rand_check_random_provider_on_unload(OSSL_LIB_CTX *ctx,
+                                              OSSL_PROVIDER *prov)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (dgbl == NULL)
+        return 0;
+
+    if (dgbl->random_provider == prov)
+        dgbl->random_provider = NULL;
+    return 1;
+}
+
 #endif      /* !FIPS_MODULE */
