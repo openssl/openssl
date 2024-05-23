@@ -722,8 +722,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                           X509 *x, size_t chainidx)
 {
 #if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
-    unsigned int format, key_share, group_id;
-    int version;
+    unsigned int format, version, key_share, group_id;
     EVP_MD_CTX *hctx;
     EVP_PKEY *pkey;
     PACKET cookie, raw, chhash, appcookie;
@@ -804,11 +803,11 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
      */
 
     /* Check the version number is sane */
-    if (!PACKET_get_net_2(&cookie, (unsigned int*)&version)) {
+    if (!PACKET_get_net_2(&cookie, &version)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
-    if (version != version1_3) {
+    if ((int)version != version1_3) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
         return 0;

@@ -1394,11 +1394,12 @@ static int update_cipher_list(SSL_CTX *ctx,
      */
 
     while (sk_SSL_CIPHER_num(tmp_cipher_list) > 0) {
-        const SSL_CIPHER * cipher = sk_SSL_CIPHER_value(tmp_cipher_list, 0);
+        const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(tmp_cipher_list, 0);
         const int version1_3 = SSL_CTX_IS_DTLS(ctx) ? DTLS1_3_VERSION
                                                     : TLS1_3_VERSION;
         const int minversion = SSL_CTX_IS_DTLS(ctx) ? cipher->min_dtls
                                                     : cipher->min_tls;
+
         if (minversion != version1_3)
             break;
         (void)sk_SSL_CIPHER_delete(tmp_cipher_list, 0);

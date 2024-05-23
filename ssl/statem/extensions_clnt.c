@@ -1771,10 +1771,10 @@ int tls_parse_stoc_supported_versions(SSL_CONNECTION *s, PACKET *pkt,
                                       unsigned int context,
                                       X509 *x, size_t chainidx)
 {
-    int version;
+    unsigned int version;
     const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
-    if (!PACKET_get_net_2(pkt, (unsigned int*)&version)
+    if (!PACKET_get_net_2(pkt, &version)
             || PACKET_remaining(pkt) != 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         return 0;
@@ -1784,7 +1784,7 @@ int tls_parse_stoc_supported_versions(SSL_CONNECTION *s, PACKET *pkt,
      * The only protocol version we support which is valid in this extension in
      * a ServerHello is (D)TLSv1.3 therefore we shouldn't be getting anything else.
      */
-    if (version != version1_3) {
+    if ((int)version != version1_3) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
         return 0;
