@@ -1392,14 +1392,16 @@ static int update_cipher_list(SSL_CTX *ctx,
      * Delete any existing (D)TLSv1.3 ciphersuites. These are always first in the
      * list.
      */
-    if (SSL_CTX_IS_DTLS(ctx)) {
-        while (sk_SSL_CIPHER_num(tmp_cipher_list) > 0
-               && sk_SSL_CIPHER_value(tmp_cipher_list, 0)->min_dtls == DTLS1_3_VERSION)
-            (void)sk_SSL_CIPHER_delete(tmp_cipher_list, 0);
-    } else {
-        while (sk_SSL_CIPHER_num(tmp_cipher_list) > 0
-               && sk_SSL_CIPHER_value(tmp_cipher_list, 0)->min_tls == TLS1_3_VERSION)
-            (void)sk_SSL_CIPHER_delete(tmp_cipher_list, 0);
+
+    while (sk_SSL_CIPHER_num(tmp_cipher_list) > 0) {
+        const SSL_CIPHER * cipher = sk_SSL_CIPHER_value(tmp_cipher_list, 0);
+        const int version1_3 = SSL_CTX_IS_DTLS(ctx) ? DTLS1_3_VERSION
+                                                    : TLS1_3_VERSION;
+        const int minversion = SSL_CTX_IS_DTLS(ctx) ? cipher->min_dtls
+                                                    : cipher->min_tls;
+        if (minversion != version1_3)
+            break;
+        (void)sk_SSL_CIPHER_delete(tmp_cipher_list, 0);
     }
 
     /* Insert the new (D)TLSv1.3 ciphersuites */
