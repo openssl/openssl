@@ -223,6 +223,8 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
          * XDTLS: this function is too long.  split out the CCS part
          */
         if (type == SSL3_RT_HANDSHAKE) {
+            unsigned char *p = (unsigned char *)&s->init_buf->data[s->init_off];
+
             if (len < DTLS1_HM_HEADER_LENGTH) {
                 /*
                  * len is so small that we really can't do anything sensible
@@ -230,7 +232,6 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
                  */
                 return -1;
             }
-            unsigned char *p = (unsigned char *)&s->init_buf->data[s->init_off];
 
             *p++ = msg_type;
             l2n3(msg_len, p);
