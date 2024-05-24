@@ -75,10 +75,17 @@ static int test_curve(void)
      * We currently hard-code P-256, though adaptation to other curves.
      * would be straightforward.
      */
-    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1))
-            || !TEST_ptr(point = EC_POINT_dup(EC_GROUP_get0_generator(group),
-                                              group))
-            || !TEST_ptr(result = walk_curve(group, point, num_repeats)))
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1)))
+        return 0;
+
+    if (!TEST_ptr(point = EC_POINT_dup(EC_GROUP_get0_generator(group),
+                                              group)))
+        {
+            EC_GROUP_free(group);
+            return 0;
+        }
+    
+    if (!TEST_ptr(result = walk_curve(group, point, num_repeats)))
         return 0;
 
     if (print_mode) {
