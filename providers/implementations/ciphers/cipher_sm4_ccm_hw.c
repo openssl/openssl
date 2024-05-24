@@ -59,7 +59,7 @@ static const PROV_CCM_HW ccm_sm4 = {
     ossl_ccm_generic_gettag
 };
 
-#if defined(__riscv) && __riscv_xlen == 64
+#if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 # include "cipher_sm4_ccm_hw_rv64i.inc"
 #else
 const PROV_CCM_HW *ossl_prov_sm4_hw_ccm(size_t keybits)
