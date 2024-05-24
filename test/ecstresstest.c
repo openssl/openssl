@@ -79,7 +79,7 @@ static int test_curve(void)
             || !TEST_ptr(point = EC_POINT_dup(EC_GROUP_get0_generator(group),
                                               group))
             || !TEST_ptr(result = walk_curve(group, point, num_repeats)))
-        return 0;
+        goto err;
 
     if (print_mode) {
         BN_print(bio_out, result);
