@@ -140,11 +140,11 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
     size_t written;
     size_t curr_mtu;
     int retry = 1;
-    size_t len, overhead, used_len, msg_len;
+    size_t len, overhead, used_len, msg_len = 0;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     unsigned char *data = (unsigned char *)s->init_buf->data;
     unsigned short msg_seq = s->d1->w_msg_hdr.seq;
-    unsigned char msg_type;
+    unsigned char msg_type = 0;
 
     if (type == SSL3_RT_HANDSHAKE) {
         msg_type = *data++;
