@@ -140,11 +140,11 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
     size_t written;
     size_t curr_mtu;
     int retry = 1;
-    size_t len, overhead, used_len, msg_len = 0;
+    size_t len, overhead, used_len, msg_len;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     unsigned char *data = (unsigned char *)s->init_buf->data;
     unsigned short msg_seq = s->d1->w_msg_hdr.seq;
-    unsigned char msg_type = 0;
+    unsigned char msg_type;
 
     if (type == SSL3_RT_HANDSHAKE) {
         msg_type = *data++;
@@ -152,7 +152,9 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
     } else if (ossl_assert(type == SSL3_RT_CHANGE_CIPHER_SPEC)) {
         msg_type = SSL3_MT_CCS;
         msg_len = 0; /* SSL3_RT_CHANGE_CIPHER_SPEC */
-    }
+    } else
+        /* Other record types are not supported */
+        return -1;
 
     if (!dtls1_query_mtu(s))
         return -1;
