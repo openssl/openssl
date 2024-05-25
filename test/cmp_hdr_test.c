@@ -137,8 +137,10 @@ static int execute_HDR_set1_recipient_test(CMP_HDR_TEST_FIXTURE *fixture)
         return 0;
 
     X509_NAME_ADD(x509name, "CN", "A common recipient name");
-    if (!TEST_int_eq(ossl_cmp_hdr_set1_recipient(fixture->hdr, x509name), 1))
+    if (!TEST_int_eq(ossl_cmp_hdr_set1_recipient(fixture->hdr, x509name), 1)) {
+        X509_NAME_free(x509name);
         return 0;
+    }
 
     if (!TEST_int_eq(fixture->hdr->recipient->type, GEN_DIRNAME))
         return 0;
