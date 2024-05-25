@@ -79,8 +79,11 @@ static int execute_HDR_get0_senderNonce_test(CMP_HDR_TEST_FIXTURE *fixture)
 
     X509_NAME_ADD(sender, "CN", "A common sender name");
     if (!TEST_int_eq(OSSL_CMP_CTX_set1_subjectName(fixture->cmp_ctx, sender),
-                     1))
+                     1))  {
+        X509_NAME_free(sender);
         return 0;
+    }
+
     if (!TEST_int_eq(ossl_cmp_hdr_init(fixture->cmp_ctx, fixture->hdr),
                      1))
         return 0;
