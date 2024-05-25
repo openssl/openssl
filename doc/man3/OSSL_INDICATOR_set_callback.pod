@@ -1,0 +1,97 @@
+=pod
+
+=head1 NAME
+
+OSSL_INDICATOR_set_callback,
+OSSL_INDICATOR_get_callback - specify a callback for FIPS indicators
+
+=head1 SYNOPSIS
+
+ #include <openssl/indicator.h>
+
+ void OSSL_INDICATOR_set_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK *cb,
+                                  void *cbarg);
+ void OSSL_INDICATOR_get_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK **cb,
+                                  void **cbarg);
+
+=head1 DESCRIPTION
+
+OSSL_INDICATOR_set_callback() sets a user callback I<cb> associated with a 
+I<libctx> that will be called when a non approved FIPS operation is detected.
+The argument <cbarg> will be passed to the user callback.
+The users callback may be triggered multiple times during an algorithm operation
+to indicate different approved mode checks that have failed.
+
+Non approved operations may only occur if the user has deliberately chosen to do
+so (either by setting a global FIPS configuration option or via an option in an
+algorithms operation context).
+
+The user callback will receive the following L<OSSL_PARAM(3)> objects.
+
+=over 4
+
+=item "ind-type" (B<OSSL_PROV_PARAM_SELF_TEST_TYPE>) <UTF8 string>
+
+Indicates the algorithm that is not approved.
+
+=item "ind-desc" (B<OSSL_PROV_PARAM_SELF_TEST_DESC>) <UTF8 string>
+
+Indicates the algorithm operation that is not approved.
+
+=back
+
+If the user callback returns 0, an error will occur in the caller. This can be
+used for testing purposes.
+
+=head1 RETURN VALUES
+
+OSSL_INDICATOR_get_callback() returns the callback and callback argument that
+has been set via OSSL_INDICATOR_set_callback() for the given library context
+I<libctx>, or NULL if OSSL_INDICATOR_set_callback() has not been called.
+
+=head1 EXAMPLES
+
+A simple indicator callback to log non approved FIPS operations
+
+ static int indicator_cb(const OSSL_PARAM params[], void *arg)
+ {
+     const OSSL_PARAM *p = NULL;
+     const char *type = NULL, *desc = NULL;
+
+     p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_INDICATOR_TYPE);
+     if (p == NULL || !OSSL_PARAM_get_utf8_string_ptr(p, &type))
+         goto end;
+     p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_INDICATOR_DESC);
+     if (p == NULL || !OSSL_PARAM_get_utf8_string_ptr(p, &desc))
+         goto end;
+
+     if (type != NULL && desc != NULL)
+         fprintf(stdout, "%s %s is not approved\n", type, desc);
+end:
+     /* For Testing purposes you could return 0 here to cause an error */
+     return 1;
+ }
+
+ OSSL_INDICATOR_set_callback(libctx, indicator_cb, NULL);
+
+
+=head1 SEE ALSO
+
+L<openssl-core.h(7)>,
+L<OSSL_PROVIDER-FIPS(7)>
+L<OSSL_LIB_CTX(3)>
+
+=head1 HISTORY
+
+The functions described here were added in OpenSSL 3.4.
+
+=head1 COPYRIGHT
+
+Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

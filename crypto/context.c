@@ -39,6 +39,7 @@ struct ossl_lib_ctx_st {
     OSSL_METHOD_STORE *encoder_store;
     OSSL_METHOD_STORE *store_loader_store;
     void *self_test_cb;
+    void *indicator_cb;
 #endif
 #if defined(OPENSSL_THREADS)
     void *threads;
@@ -175,6 +176,9 @@ static int context_init(OSSL_LIB_CTX *ctx)
     ctx->self_test_cb = ossl_self_test_set_callback_new(ctx);
     if (ctx->self_test_cb == NULL)
         goto err;
+    ctx->indicator_cb = ossl_indicator_set_callback_new(ctx);
+    if (ctx->indicator_cb == NULL)
+        goto err;
 #endif
 
 #ifdef FIPS_MODULE
@@ -307,6 +311,11 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
     }
 
 #ifndef FIPS_MODULE
+    if (ctx->indicator_cb != NULL) {
+        ossl_indicator_set_callback_free(ctx->indicator_cb);
+        ctx->indicator_cb = NULL;
+    }
+
     if (ctx->self_test_cb != NULL) {
         ossl_self_test_set_callback_free(ctx->self_test_cb);
         ctx->self_test_cb = NULL;
@@ -590,6 +599,8 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
         return ctx->store_loader_store;
     case OSSL_LIB_CTX_SELF_TEST_CB_INDEX:
         return ctx->self_test_cb;
+    case OSSL_LIB_CTX_INDICATOR_CB_INDEX:
+        return ctx->indicator_cb;
 #endif
 #ifndef OPENSSL_NO_THREAD_POOL
     case OSSL_LIB_CTX_THREAD_INDEX:

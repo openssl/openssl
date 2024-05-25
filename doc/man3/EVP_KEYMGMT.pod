@@ -41,6 +41,7 @@ EVP_KEYMGMT_gen_settable_params
  const OSSL_PARAM *EVP_KEYMGMT_gettable_params(const EVP_KEYMGMT *keymgmt);
  const OSSL_PARAM *EVP_KEYMGMT_settable_params(const EVP_KEYMGMT *keymgmt);
  const OSSL_PARAM *EVP_KEYMGMT_gen_settable_params(const EVP_KEYMGMT *keymgmt);
+ const OSSL_PARAM *EVP_KEYMGMT_gen_gettable_params(const EVP_KEYMGMT *keymgmt);
 
 =head1 DESCRIPTION
 
@@ -92,8 +93,10 @@ constant L<OSSL_PARAM(3)> array that describes the names and types of key
 parameters that can be retrieved or set.
 EVP_KEYMGMT_gettable_params() is used by L<EVP_PKEY_gettable_params(3)>.
 
-EVP_KEYMGMT_gen_settable_params() returns a constant L<OSSL_PARAM(3)> array that
-describes the names and types of key generation parameters that can be set via
+EVP_KEYMGMT_gen_gettable_params() and EVP_KEYMGMT_gen_settable_params() return a
+constant L<OSSL_PARAM(3)> array that describes the names and types of key
+generation parameters that can be retrived or set.
+via
 L<EVP_PKEY_CTX_set_params(3)>.
 
 =head1 NOTES

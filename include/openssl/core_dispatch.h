@@ -182,6 +182,9 @@ OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO *bio,
 #define OSSL_FUNC_GET_USER_ENTROPY            98
 #define OSSL_FUNC_GET_USER_NONCE              99
 
+#define OSSL_FUNC_INDICATOR_CB                95
+OSSL_CORE_MAKE_FUNC(void, indicator_cb, (OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb,
+                                         void **cbarg))
 #define OSSL_FUNC_SELF_TEST_CB               100
 OSSL_CORE_MAKE_FUNC(void, self_test_cb, (OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb,
                                          void **cbarg))
@@ -588,6 +591,9 @@ OSSL_CORE_MAKE_FUNC(void *, keymgmt_new, (void *provctx))
 # define OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS         5
 # define OSSL_FUNC_KEYMGMT_GEN                         6
 # define OSSL_FUNC_KEYMGMT_GEN_CLEANUP                 7
+# define OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS              15
+# define OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS         16
+
 OSSL_CORE_MAKE_FUNC(void *, keymgmt_gen_init,
                     (void *provctx, int selection, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, keymgmt_gen_set_template,
@@ -596,6 +602,10 @@ OSSL_CORE_MAKE_FUNC(int, keymgmt_gen_set_params,
                     (void *genctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
                     keymgmt_gen_settable_params,
+                    (void *genctx, void *provctx))
+OSSL_CORE_MAKE_FUNC(int, keymgmt_gen_get_params,
+                    (void *genctx, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_gen_gettable_params,
                     (void *genctx, void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, keymgmt_gen,
                     (void *genctx, OSSL_CALLBACK *cb, void *cbarg))

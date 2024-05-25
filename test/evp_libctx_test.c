@@ -773,7 +773,9 @@ int setup_tests(void)
     ADD_TEST(test_evp_cipher_api_safety);
 
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DH)
-    ADD_ALL_TESTS(test_dsa_param_keygen, 3 * 3 * 3);
+    if (strcmp(prov_name, "fips") != 0
+            || fips_provider_version_lt(libctx, 3, 4, 0))
+        ADD_ALL_TESTS(test_dsa_param_keygen, 3 * 3 * 3);
 #endif
 #ifndef OPENSSL_NO_DH
     ADD_ALL_TESTS(test_dh_safeprime_param_keygen, 3 * 3 * 3);

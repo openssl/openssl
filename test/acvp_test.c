@@ -46,6 +46,7 @@ static OSSL_PROVIDER *prov_null = NULL;
 static OSSL_LIB_CTX *libctx = NULL;
 static SELF_TEST_ARGS self_test_args = { 0 };
 static OSSL_CALLBACK self_test_events;
+static int dsasign_allowed = 1;
 
 const OPTIONS *test_get_options(void)
 {
@@ -344,7 +345,8 @@ static EVP_PKEY *dsa_paramgen(int L, int N)
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(paramgen_ctx, L))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_q_bits(paramgen_ctx, N))
         || !TEST_true(EVP_PKEY_paramgen(paramgen_ctx, &param_key)))
-        return NULL;
+        goto end;
+ end:
     EVP_PKEY_CTX_free(paramgen_ctx);
     return param_key;
 }
@@ -375,25 +377,27 @@ static int dsa_keygen_test(int id)
     size_t priv_len = 0, pub_len = 0;
     const struct dsa_paramgen_st *tst = &dsa_keygen_data[id];
 
-    if (!TEST_ptr(param_key = dsa_paramgen(tst->L, tst->N))
-        || !TEST_ptr(keygen_ctx = EVP_PKEY_CTX_new_from_pkey(libctx, param_key,
-                                                             NULL))
-        || !TEST_int_gt(EVP_PKEY_keygen_init(keygen_ctx), 0))
-        goto err;
-    for (i = 0; i < 2; ++i) {
-        if (!TEST_int_gt(EVP_PKEY_keygen(keygen_ctx, &key), 0)
-            || !TEST_true(pkey_get_bn_bytes(key, OSSL_PKEY_PARAM_PRIV_KEY,
-                                            &priv, &priv_len))
-            || !TEST_true(pkey_get_bn_bytes(key, OSSL_PKEY_PARAM_PUB_KEY,
-                                            &pub, &pub_len)))
+    if (dsasign_allowed) {
+        if (!TEST_ptr(param_key = dsa_paramgen(tst->L, tst->N))
+            || !TEST_ptr(keygen_ctx = EVP_PKEY_CTX_new_from_pkey(libctx, param_key,
+                                                                 NULL))
+            || !TEST_int_gt(EVP_PKEY_keygen_init(keygen_ctx), 0))
             goto err;
-        test_output_memory("y", pub, pub_len);
-        test_output_memory("x", priv, priv_len);
-        EVP_PKEY_free(key);
-        OPENSSL_clear_free(priv, priv_len);
-        OPENSSL_free(pub);
-        key = NULL;
-        pub = priv = NULL;
+        for (i = 0; i < 2; ++i) {
+            if (!TEST_int_gt(EVP_PKEY_keygen(keygen_ctx, &key), 0)
+                || !TEST_true(pkey_get_bn_bytes(key, OSSL_PKEY_PARAM_PRIV_KEY,
+                                                &priv, &priv_len))
+                || !TEST_true(pkey_get_bn_bytes(key, OSSL_PKEY_PARAM_PUB_KEY,
+                                                &pub, &pub_len)))
+                goto err;
+            test_output_memory("y", pub, pub_len);
+            test_output_memory("x", priv, priv_len);
+            EVP_PKEY_free(key);
+            OPENSSL_clear_free(priv, priv_len);
+            OPENSSL_free(pub);
+            key = NULL;
+            pub = priv = NULL;
+        }
     }
     ret = 1;
 err:
@@ -415,26 +419,32 @@ static int dsa_paramgen_test(int id)
     size_t plen = 0, qlen = 0, seedlen = 0;
     const struct dsa_paramgen_st *tst = &dsa_paramgen_data[id];
 
-    if (!TEST_ptr(paramgen_ctx = EVP_PKEY_CTX_new_from_name(libctx, "DSA", NULL))
-        || !TEST_int_gt(EVP_PKEY_paramgen_init(paramgen_ctx), 0)
-        || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(paramgen_ctx, tst->L))
-        || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_q_bits(paramgen_ctx, tst->N))
-        || !TEST_true(EVP_PKEY_paramgen(paramgen_ctx, &param_key))
-        || !TEST_true(pkey_get_bn_bytes(param_key, OSSL_PKEY_PARAM_FFC_P,
-                                        &p, &plen))
-        || !TEST_true(pkey_get_bn_bytes(param_key, OSSL_PKEY_PARAM_FFC_Q,
-                                        &q, &qlen))
-        || !TEST_true(pkey_get_octet_bytes(param_key, OSSL_PKEY_PARAM_FFC_SEED,
-                                           &seed, &seedlen))
-        || !TEST_true(EVP_PKEY_get_int_param(param_key,
-                                             OSSL_PKEY_PARAM_FFC_PCOUNTER,
-                                             &counter)))
-        goto err;
+    if (dsasign_allowed) {
+        if (!TEST_ptr(paramgen_ctx = EVP_PKEY_CTX_new_from_name(libctx, "DSA", NULL))
+            || !TEST_int_gt(EVP_PKEY_paramgen_init(paramgen_ctx), 0)
+            || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(paramgen_ctx, tst->L))
+            || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_q_bits(paramgen_ctx, tst->N))
+            || !TEST_true(EVP_PKEY_paramgen(paramgen_ctx, &param_key))
+            || !TEST_true(pkey_get_bn_bytes(param_key, OSSL_PKEY_PARAM_FFC_P,
+                                            &p, &plen))
+            || !TEST_true(pkey_get_bn_bytes(param_key, OSSL_PKEY_PARAM_FFC_Q,
+                                            &q, &qlen))
+            || !TEST_true(pkey_get_octet_bytes(param_key, OSSL_PKEY_PARAM_FFC_SEED,
+                                               &seed, &seedlen))
+            || !TEST_true(EVP_PKEY_get_int_param(param_key,
+                                                 OSSL_PKEY_PARAM_FFC_PCOUNTER,
+                                                 &counter)))
+            goto err;
 
-    test_output_memory("p", p, plen);
-    test_output_memory("q", q, qlen);
-    test_output_memory("domainSeed", seed, seedlen);
-    test_printf_stderr("%s: %d\n", "counter", counter);
+        test_output_memory("p", p, plen);
+        test_output_memory("q", q, qlen);
+        test_output_memory("domainSeed", seed, seedlen);
+        test_printf_stderr("%s: %d\n", "counter", counter);
+    } else {
+        if (!TEST_ptr(paramgen_ctx = EVP_PKEY_CTX_new_from_name(libctx, "DSA", NULL))
+                || !TEST_int_eq(EVP_PKEY_paramgen_init(paramgen_ctx), 0))
+            goto err;
+    }
     ret = 1;
 err:
     OPENSSL_free(p);
@@ -594,15 +604,21 @@ static int dsa_siggen_test(int id)
     size_t sig_len = 0, rlen = 0, slen = 0;
     const struct dsa_siggen_st *tst = &dsa_siggen_data[id];
 
-    if (!TEST_ptr(pkey = dsa_keygen(tst->L, tst->N)))
-        goto err;
+    if (dsasign_allowed) {
+        if (!TEST_ptr(pkey = dsa_keygen(tst->L, tst->N)))
+            goto err;
 
-    if (!TEST_true(sig_gen(pkey, NULL, tst->digest_alg, tst->msg, tst->msg_len,
-                           &sig, &sig_len))
-        || !TEST_true(get_dsa_sig_rs_bytes(sig, sig_len, &r, &s, &rlen, &slen)))
-        goto err;
-    test_output_memory("r", r, rlen);
-    test_output_memory("s", s, slen);
+        if (!TEST_true(sig_gen(pkey, NULL, tst->digest_alg, tst->msg, tst->msg_len,
+                               &sig, &sig_len))
+            || !TEST_true(get_dsa_sig_rs_bytes(sig, sig_len, &r, &s, &rlen, &slen)))
+            goto err;
+        test_output_memory("r", r, rlen);
+        test_output_memory("s", s, slen);
+    } else {
+        /* In FIPS 140-3 dsa keygen is not allowed */
+        if (!TEST_ptr_null(pkey = dsa_keygen(tst->L, tst->N)))
+            goto err;
+    }
     ret = 1;
 err:
     OPENSSL_free(r);
@@ -1459,6 +1475,9 @@ int setup_tests(void)
         return 0;
 
     OSSL_SELF_TEST_set_callback(libctx, self_test_events, &self_test_args);
+
+    /* In FIPS 140-3 DSA signing is not approved */
+    dsasign_allowed = fips_provider_version_lt(libctx, 3, 4, 0);
 
     ADD_TEST(aes_cfb1_bits_test);
     ADD_ALL_TESTS(cipher_enc_dec_test, OSSL_NELEM(cipher_enc_data));
