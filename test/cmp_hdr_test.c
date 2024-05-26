@@ -132,25 +132,27 @@ static int test_HDR_set1_sender(void)
 static int execute_HDR_set1_recipient_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
     X509_NAME *x509name = X509_NAME_new();
+    int res = 0;
 
     if (!TEST_ptr(x509name))
         return 0;
 
     X509_NAME_ADD(x509name, "CN", "A common recipient name");
-    if (!TEST_int_eq(ossl_cmp_hdr_set1_recipient(fixture->hdr, x509name), 1)) {
-        X509_NAME_free(x509name);
-        return 0;
-    }
+    if (!TEST_int_eq(ossl_cmp_hdr_set1_recipient(fixture->hdr, x509name), 1))
+        goto err;
 
     if (!TEST_int_eq(fixture->hdr->recipient->type, GEN_DIRNAME))
-        return 0;
+        goto err;
 
     if (!TEST_int_eq(X509_NAME_cmp(fixture->hdr->recipient->d.directoryName,
                                    x509name), 0))
-        return 0;
+        goto err;
 
+    res = 1;
+
+ err:
     X509_NAME_free(x509name);
-    return 1;
+    return res;
 }
 
 static int test_HDR_set1_recipient(void)
