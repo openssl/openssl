@@ -245,7 +245,7 @@ static int namemap_add_name(OSSL_NAMEMAP *namemap, int number,
                             const char *name)
 {
     int ret;
-    HT_VALUE *val = NULL;
+    HT_VALUE val = { 0 };
     NAMENUM_KEY key;
 
     /* If it already exists, we don't add it */
@@ -253,30 +253,23 @@ static int namemap_add_name(OSSL_NAMEMAP *namemap, int number,
         return ret;
 
     if ((number = numname_insert(namemap, number, name)) == 0)
-        goto err;
+        return 0;
 
     /* Using tsan_store alone here is safe since we're under lock */
     tsan_store(&namemap->max_number, number);
 
     HT_INIT_KEY(&key);
     HT_SET_KEY_STRING_CASE(&key, name, name);
-    val = OPENSSL_zalloc(sizeof(*val));
-    if (val == NULL)
-        goto err;
-    val->value = (void *)(intptr_t)number;
-    ret = ossl_ht_insert(namemap->namenum_ht, TO_HT_KEY(&key), val, NULL);
+    val.value = (void *)(intptr_t)number;
+    ret = ossl_ht_insert(namemap->namenum_ht, TO_HT_KEY(&key), &val, NULL);
     if (!ossl_assert(ret != 0)) /* cannot happen as we are under write lock */
-        goto err;
+        return 0;
     if (ret < 1) {
         /* unable to insert due to too many collisions */
         ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_TOO_MANY_NAMES);
-        goto err;
+        return 0;
     }
     return number;
-
- err:
-    OPENSSL_free(val);
-    return 0;
 }
 
 int ossl_namemap_add_name(OSSL_NAMEMAP *namemap, int number,
