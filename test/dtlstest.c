@@ -202,8 +202,9 @@ static int test_dtls_drop_records(int idx)
 
     /**
      * TODO(DTLSv1.3): Tests fails with
-     *  ssl/statem/extensions_clnt.c:624: OpenSSL internal error:
-     *      Assertion failed: s->hello_retry_request == SSL_HRR_PENDING
+     *  dtls1_read_bytes:ssl/tls alert unexpected message:
+     *      ssl/record/rec_layer_d1.c:454:SSL alert number 10
+     * And "no progress made"
      */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
@@ -706,14 +707,9 @@ static int test_listen(void)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
-    /**
-     * TODO(DTLSv1.3): Tests fails with
-     *  ssl/statem/extensions_clnt.c:624: OpenSSL internal error:
-     *      Assertion failed: s->hello_retry_request == SSL_HRR_PENDING
-     */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_VERSION, DTLS1_2_VERSION,
+            DTLS1_VERSION, 0,
             &sctx, &cctx, cert, privkey)))
         return 0;
 
