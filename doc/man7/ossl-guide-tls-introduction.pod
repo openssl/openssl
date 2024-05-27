@@ -230,7 +230,8 @@ circumstances where you want them to be different.
 
 It is up to the application programmer to create the B<BIO> objects that are
 needed and supply them to the B<SSL> object. See
-L<ossl-guide-tls-client-block(7)> for further information.
+L<ossl-guide-tls-client-block(7)> and L<ossl-guide-tls-server-block(7)> for
+usage examples.
 
 Finally, an endpoint can establish a "session" with its peer. The session holds
 various TLS parameters about the connection between the client and the server.
@@ -295,15 +296,18 @@ object.
 
 =head1 FURTHER READING
 
-See L<ossl-guide-tls-client-block(7)> to see an example of applying these
+See L<ossl-guide-tls-client-block(7)> for an example of how to apply these
 concepts in order to write a simple TLS client based on a blocking socket.
+See L<ossl-guide-tls-server-block(7)> for an example of how to apply these
+concepts in order to write a simple TLS server handling one client at a time
+over a blocking socket.
 See L<ossl-guide-quic-introduction(7)> for an introduction to QUIC in OpenSSL.
 
 =head1 SEE ALSO
 
 L<ossl-guide-introduction(7)>, L<ossl-guide-libraries-introduction(7)>,
 L<ossl-guide-libssl-introduction(7)>, L<ossl-guide-tls-client-block(7)>,
-L<ossl-guide-quic-introduction(7)>
+L<ossl-guide-tls-server-block(7)>, L<ossl-guide-quic-introduction(7)>
 
 =head1 COPYRIGHT
 

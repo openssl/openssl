@@ -79,6 +79,8 @@ The pages in the guide are as follows:
 
 =item L<ossl-guide-tls-client-non-block(7)>: Writing a simple nonblocking TLS client
 
+=item L<ossl-guide-tls-server-block(7)>: Writing a simple blocking TLS server
+
 =item L<ossl-guide-quic-introduction(7)>: An introduction to QUIC in OpenSSL
 
 =item L<ossl-guide-quic-client-block(7)>: Writing a simple blocking QUIC client
