@@ -232,8 +232,8 @@ static int test_int_hashtable(void)
         NULL,
         NULL,
         NULL,
-        1,
         0,
+        1,
     };
     INTKEY key;
     int rc = 0;
@@ -410,8 +410,8 @@ static int test_hashtable_stress(void)
         NULL,              /* use default context */
         hashtable_intfree, /* our free function */
         hashtable_hash,    /* our hash function */
-        1,                 /* Check collisions */
         625000,            /* preset hash size */
+        1,                 /* Check collisions */
     };
     HT *h;
     INTKEY key;
@@ -629,8 +629,8 @@ static int test_hashtable_multithread(void)
         NULL,              /* use default context */
         hashtable_mt_free, /* our free function */
         NULL,              /* default hash function */
-        1,                 /* Check collisions */
         0,                 /* default hash size */
+        1,                 /* Check collisions */
     };
     int ret = 0;
     thread_t workers[4];
