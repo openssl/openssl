@@ -13,7 +13,7 @@ typedef struct ossl_namemap_st OSSL_NAMEMAP;
 
 OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx);
 
-OSSL_NAMEMAP *ossl_namemap_new(void);
+OSSL_NAMEMAP *ossl_namemap_new(OSSL_LIB_CTX *libctx);
 void ossl_namemap_free(OSSL_NAMEMAP *namemap);
 int ossl_namemap_empty(OSSL_NAMEMAP *namemap);
 
