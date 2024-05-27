@@ -99,6 +99,8 @@ int dtls1_new(SSL *ssl)
     d1->buffered_messages = pqueue_new();
     d1->sent_messages = pqueue_new();
 
+    d1->hello_verify_request = SSL_HVR_NONE;
+
     if (d1->buffered_messages == NULL || d1->sent_messages == NULL) {
         pqueue_free(d1->buffered_messages);
         pqueue_free(d1->sent_messages);
