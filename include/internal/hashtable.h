@@ -51,8 +51,9 @@ typedef struct ht_config_st {
     OSSL_LIB_CTX *ctx;
     void (*ht_free_fn)(HT_VALUE *obj);
     uint64_t (*ht_hash_fn)(uint8_t *key, size_t keylen);
+    size_t init_neighborhoods;
     uint32_t collision_check;
-    uint32_t init_neighborhoods;
+    uint32_t lockless_reads;
 } HT_CONFIG;
 
 /*
@@ -249,7 +250,7 @@ static void ossl_unused ossl_ht_strcase(char *tgt, const char *src, int len)
 /*
  * Create a new hashtable
  */
-HT *ossl_ht_new(HT_CONFIG *conf);
+HT *ossl_ht_new(const HT_CONFIG *conf);
 
 /*
  * Frees a hash table, potentially freeing all elements

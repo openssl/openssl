@@ -179,7 +179,7 @@ static void internal_free_nop(HT_VALUE *v)
     return;
 }
 
-HT *ossl_ht_new(HT_CONFIG *conf)
+HT *ossl_ht_new(const HT_CONFIG *conf)
 {
     HT *new = OPENSSL_zalloc(sizeof(*new));
 
@@ -427,7 +427,7 @@ static void free_old_neigh_table(void *arg)
  */
 static int grow_hashtable(HT *h, size_t oldsize)
 {
-    struct ht_mutable_data_st *newmd = OPENSSL_zalloc(sizeof(*newmd));
+    struct ht_mutable_data_st *newmd;
     struct ht_mutable_data_st *oldmd = ossl_rcu_deref(&h->md);
     int rc = 0;
     uint64_t oldi, oldj, newi, newj;
@@ -436,7 +436,10 @@ static int grow_hashtable(HT *h, size_t oldsize)
     int rehashed;
     size_t newsize = oldsize * 2;
 
-    if (newmd == NULL)
+    if (h->config.lockless_reads)
+        goto out;
+
+    if ((newmd = OPENSSL_zalloc(sizeof(*newmd))) == NULL)
         goto out;
 
     /* bucket list is always a power of 2 */
@@ -700,6 +703,9 @@ int ossl_ht_delete(HT *h, HT_KEY *key)
     HT_VALUE *nv = NULL;
     int rc = 0;
 
+    if (h->config.lockless_reads)
+        return 0;
+
     hash = h->config.ht_hash_fn(key->keybuf, key->keysize);
 
     neigh_idx = hash & h->md->neighborhood_mask;
@@ -724,4 +730,3 @@ int ossl_ht_delete(HT *h, HT_KEY *key)
     }
     return rc;
 }
-

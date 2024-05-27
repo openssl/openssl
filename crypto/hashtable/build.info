@@ -1,4 +1,6 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]=\
-        hashtable.c
+$COMMON=hashtable.c
+
+SOURCE[../../libcrypto]=$COMMON
+SOURCE[../../providers/libfips.a]=$COMMON
 
