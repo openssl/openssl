@@ -78,12 +78,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         goto end;
     if (SSL_set_min_proto_version(client, 0) != 1)
         goto end;
-    /**
-     * TODO(DTLSv1.3): Fuzzing fails with
-     * ssl/statem/extensions_clnt.c:624: OpenSSL internal error:
-     *      Assertion failed: s->hello_retry_request == SSL_HRR_PENDING
-     */
-    if (SSL_set_max_proto_version(client, DTLS1_2_VERSION) != 1)
+    if (SSL_set_max_proto_version(client, 0) != 1)
         goto end;
     if (SSL_set_cipher_list(client, "ALL:eNULL:@SECLEVEL=0") != 1)
         goto end;
