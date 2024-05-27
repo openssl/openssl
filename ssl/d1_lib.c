@@ -104,6 +104,7 @@ int dtls1_new(SSL *ssl)
 
     d1->link_mtu = 0;
     d1->mtu = 0;
+    d1->hello_verify_request = SSL_HVR_NONE;
 
     if (d1->buffered_messages == NULL || d1->sent_messages == NULL) {
         pqueue_free(d1->buffered_messages);

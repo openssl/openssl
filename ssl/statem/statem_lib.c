@@ -2545,6 +2545,7 @@ int ssl_get_min_max_version(const SSL_CONNECTION *s, int *min_version,
 int ssl_set_client_hello_version(SSL_CONNECTION *s)
 {
     int ver_min, ver_max, ret;
+    const int version1_2 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_2_VERSION : TLS1_2_VERSION;
 
     /*
      * In a renegotiation we always send the same client_version that we sent
@@ -2560,21 +2561,19 @@ int ssl_set_client_hello_version(SSL_CONNECTION *s)
 
     s->version = ver_max;
 
-    if (SSL_CONNECTION_IS_DTLS(s)) {
-        if (ver_max == DTLS1_BAD_VER) {
-            /*
-             * Even though this is technically before version negotiation,
-             * because we have asked for DTLS1_BAD_VER we will never negotiate
-             * anything else, and this has impacts on the record layer for when
-             * we read the ServerHello. So we need to tell the record layer
-             * about this immediately.
-             */
-            if (!ssl_set_record_protocol_version(s, ver_max))
-                return 0;
-        }
-    } else if (ver_max > TLS1_2_VERSION) {
-        /* TLS1.3 always uses TLS1.2 in the legacy_version field */
-        ver_max = TLS1_2_VERSION;
+    if (SSL_CONNECTION_IS_DTLS(s) && ver_max == DTLS1_BAD_VER) {
+        /*
+         * Even though this is technically before version negotiation,
+         * because we have asked for DTLS1_BAD_VER we will never negotiate
+         * anything else, and this has impacts on the record layer for when
+         * we read the ServerHello. So we need to tell the record layer
+         * about this immediately.
+         */
+        if (!ssl_set_record_protocol_version(s, ver_max))
+            return 0;
+    } else if (ssl_version_cmp(s, ver_max, version1_2) > 0) {
+        /* (D)TLS1.3 always uses (D)TLS1.2 in the legacy_version field */
+        ver_max = version1_2;
     }
 
     s->client_version = ver_max;
