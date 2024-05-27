@@ -1353,6 +1353,8 @@ MSG_PROCESS_RETURN dtls_process_hello_verify(SSL_CONNECTION *s, PACKET *pkt)
 {
     size_t cookie_len;
     PACKET cookiepkt;
+    int min_version;
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     if (!PACKET_forward(pkt, 2)
         || !PACKET_get_length_prefixed_1(pkt, &cookiepkt)) {
@@ -1371,6 +1373,25 @@ MSG_PROCESS_RETURN dtls_process_hello_verify(SSL_CONNECTION *s, PACKET *pkt)
         return MSG_PROCESS_ERROR;
     }
     s->d1->cookie_len = cookie_len;
+
+    if (ssl == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return MSG_PROCESS_ERROR;
+    }
+
+    min_version = SSL_get_min_proto_version(ssl);
+
+    /*
+     * Server responds with a HelloVerify which means we cannot negotiate a
+     * higher version than DTLSv1.2.
+     */
+    if (min_version != 0
+        && ssl_version_cmp(s, min_version, DTLS1_2_VERSION) > 0) {
+        SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_UNSUPPORTED_PROTOCOL);
+        return MSG_PROCESS_ERROR;
+    }
+
+    s->d1->hello_verify_request = SSL_HVR_RECEIVED;
 
     return MSG_PROCESS_FINISHED_READING;
 }

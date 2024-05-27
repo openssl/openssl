@@ -650,13 +650,15 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int group_id,
     size_t encodedlen;
 
     if (loop_num < s->s3.tmp.num_ks_pkey) {
-        if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING)
+        if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING
+                || s->d1->hello_verify_request == SSL_HVR_RECEIVED)
             || !ossl_assert(s->s3.tmp.ks_pkey[loop_num] != NULL)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         /*
-         * Could happen if we got an HRR that wasn't requesting a new key_share
+         * Could happen if we got a HRR that wasn't requesting a new key_share
+         * or if we got a HelloVerifyRequest
          */
         key_share_key = s->s3.tmp.ks_pkey[loop_num];
     } else {

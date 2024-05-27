@@ -2010,6 +2010,9 @@ typedef struct dtls1_state_st {
     pqueue *buffered_messages;
     /* Buffered (sent) handshake records */
     pqueue *sent_messages;
+    /* Flag to indicate current HelloVerifyRequest status */
+    enum { SSL_HVR_NONE = 0,
+        SSL_HVR_RECEIVED } hello_verify_request;
     size_t link_mtu; /* max on-the-wire DTLS packet size */
     size_t mtu; /* max DTLS packet size */
     struct hm_header_st w_msg_hdr;
