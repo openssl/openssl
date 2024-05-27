@@ -132,7 +132,7 @@ static inline void *apple_atomic_load_n_pvoid(void **p,
 static pthread_mutex_t atomic_sim_lock = PTHREAD_MUTEX_INITIALIZER;
 
 #  define IMPL_fallback_atomic_load_n(t)                        \
-    static inline t fallback_atomic_load_n_##t(t *p)            \
+    static ossl_inline t fallback_atomic_load_n_##t(t *p)            \
     {                                                           \
         t ret;                                                  \
                                                                 \
@@ -147,7 +147,7 @@ IMPL_fallback_atomic_load_n(pvoid)
 #  define ATOMIC_LOAD_N(t, p, o) fallback_atomic_load_n_##t(p)
 
 #  define IMPL_fallback_atomic_store_n(t)                       \
-    static inline t fallback_atomic_store_n_##t(t *p, t v)      \
+    static ossl_inline t fallback_atomic_store_n_##t(t *p, t v)      \
     {                                                           \
         t ret;                                                  \
                                                                 \
@@ -162,7 +162,7 @@ IMPL_fallback_atomic_store_n(uint64_t)
 #  define ATOMIC_STORE_N(t, p, v, o) fallback_atomic_store_n_##t(p, v)
 
 #  define IMPL_fallback_atomic_store(t)                         \
-    static inline void fallback_atomic_store_##t(t *p, t *v)    \
+    static ossl_inline void fallback_atomic_store_##t(t *p, t *v)    \
     {                                                           \
         pthread_mutex_lock(&atomic_sim_lock);                   \
         *p = *v;                                                \
@@ -174,7 +174,7 @@ IMPL_fallback_atomic_store(pvoid)
 #  define ATOMIC_STORE(t, p, v, o) fallback_atomic_store_##t(p, v)
 
 #  define IMPL_fallback_atomic_exchange_n(t)                            \
-    static inline t fallback_atomic_exchange_n_##t(t *p, t v)           \
+    static ossl_inline t fallback_atomic_exchange_n_##t(t *p, t v)           \
     {                                                                   \
         t ret;                                                          \
                                                                         \
@@ -196,7 +196,7 @@ IMPL_fallback_atomic_exchange_n(prcu_cb_item)
  * way as the fallbacks above.
  */
 
-static inline uint64_t fallback_atomic_add_fetch(uint64_t *p, uint64_t v)
+static ossl_inline uint64_t fallback_atomic_add_fetch(uint64_t *p, uint64_t v)
 {
     uint64_t ret;
 
@@ -209,7 +209,7 @@ static inline uint64_t fallback_atomic_add_fetch(uint64_t *p, uint64_t v)
 
 #  define ATOMIC_ADD_FETCH(p, v, o) fallback_atomic_add_fetch(p, v)
 
-static inline uint64_t fallback_atomic_fetch_add(uint64_t *p, uint64_t v)
+static ossl_inline uint64_t fallback_atomic_fetch_add(uint64_t *p, uint64_t v)
 {
     uint64_t ret;
 
@@ -222,7 +222,7 @@ static inline uint64_t fallback_atomic_fetch_add(uint64_t *p, uint64_t v)
 
 #  define ATOMIC_FETCH_ADD(p, v, o) fallback_atomic_fetch_add(p, v)
 
-static inline uint64_t fallback_atomic_sub_fetch(uint64_t *p, uint64_t v)
+static ossl_inline uint64_t fallback_atomic_sub_fetch(uint64_t *p, uint64_t v)
 {
     uint64_t ret;
 
@@ -235,7 +235,7 @@ static inline uint64_t fallback_atomic_sub_fetch(uint64_t *p, uint64_t v)
 
 #  define ATOMIC_SUB_FETCH(p, v, o) fallback_atomic_sub_fetch(p, v)
 
-static inline uint64_t fallback_atomic_and_fetch(uint64_t *p, uint64_t m)
+static ossl_inline uint64_t fallback_atomic_and_fetch(uint64_t *p, uint64_t m)
 {
     uint64_t ret;
 
@@ -248,7 +248,7 @@ static inline uint64_t fallback_atomic_and_fetch(uint64_t *p, uint64_t m)
 
 #  define ATOMIC_AND_FETCH(p, v, o) fallback_atomic_and_fetch(p, v)
 
-static inline uint64_t fallback_atomic_or_fetch(uint64_t *p, uint64_t m)
+static ossl_inline uint64_t fallback_atomic_or_fetch(uint64_t *p, uint64_t m)
 {
     uint64_t ret;
 
