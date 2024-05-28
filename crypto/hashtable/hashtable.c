@@ -671,8 +671,13 @@ HT_VALUE *ossl_ht_get(HT *h, HT_KEY *key)
     for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
         CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
                            &ehash, h->atomic_lock);
-        CRYPTO_atomic_load((uint64_t *)&md->neighborhoods[neigh_idx].entries[j].value,
-                           (uint64_t *)&vidx, h->atomic_lock);
+        if (sizeof(vidx) == sizeof(uint64_t)) {
+            CRYPTO_atomic_load((uint64_t *)&md->neighborhoods[neigh_idx].entries[j].value,
+                               (uint64_t *)&vidx, h->atomic_lock);
+        } else {
+            CRYPTO_atomic_load_int((int *)&md->neighborhoods[neigh_idx].entries[j].value,
+                                   (int *)&vidx, h->atomic_lock);
+        }
         if (compare_hash(hash, ehash) && match_key(&vidx->value.key, key)) {
             ret = (HT_VALUE *)vidx;
             break;
