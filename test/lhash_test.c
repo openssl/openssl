@@ -8,8 +8,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define MEASURE_HASH_PERFORMANCE
-
 #include <stdio.h>
 #include <string.h>
 
