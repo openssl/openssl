@@ -192,21 +192,26 @@ int tls_parse_ctos_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     /*
-     * RFC 6066:  The negotiated length applies for the duration of the session
+     * When doing a full handshake or a renegotiation max_fragment_len_mode will
+     * be TLSEXT_max_fragment_length_UNSPECIFIED
+     *
+     * In case of a resumption max_fragment_len_mode will be one of
+     *      TLSEXT_max_fragment_length_DISABLED, TLSEXT_max_fragment_length_512,
+     *      TLSEXT_max_fragment_length_1024, TLSEXT_max_fragment_length_2048.
+     *      TLSEXT_max_fragment_length_4096
+     *
+     * RFC 6066: The negotiated length applies for the duration of the session
      * including session resumptions.
-     * We should receive the same code as in resumed session !
+     *
+     * So we only set the value in case it is unspecified.
      */
-    if (s->hit && s->session->ext.max_fragment_len_mode != value) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                 SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
-        return 0;
-    }
+    if (s->session->ext.max_fragment_len_mode == TLSEXT_max_fragment_length_UNSPECIFIED)
+        /*
+         * Store it in session, so it'll become binding for us
+         * and we'll include it in a next Server Hello.
+         */
+        s->session->ext.max_fragment_len_mode = value;
 
-    /*
-     * Store it in session, so it'll become binding for us
-     * and we'll include it in a next Server Hello.
-     */
-    s->session->ext.max_fragment_len_mode = value;
     return 1;
 }
 
