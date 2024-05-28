@@ -520,7 +520,7 @@ static void free_old_ht_value(void *arg)
     OPENSSL_free(h);
 }
 
-static inline int match_key(HT_KEY *a, HT_KEY *b)
+static ossl_inline int match_key(HT_KEY *a, HT_KEY *b)
 {
 
     /*
