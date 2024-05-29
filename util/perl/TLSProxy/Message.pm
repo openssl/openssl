@@ -632,7 +632,8 @@ sub repack
                     $data .= pack("C", $macval);
                 }
 
-                if ($rec->version() >= TLSProxy::Record::VERS_TLS_1_1) {
+                if ((!$self->{isdtls} && $rec->version() >= TLSProxy::Record::VERS_TLS_1_1)
+                    || ($self->{isdtls} && $rec->version() <= TLSProxy::Record::VERS_DTLS_1)) {
                     #Explicit IV
                     $data = ("\0"x16).$data;
                 }

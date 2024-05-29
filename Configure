@@ -408,7 +408,7 @@ my $default_ranlib;
 
 # Known TLS and DTLS protocols
 my @tls = qw(ssl3 tls1 tls1_1 tls1_2 tls1_3);
-my @dtls = qw(dtls1 dtls1_2);
+my @dtls = qw(dtls1 dtls1_2 dtls1_3);
 
 # Explicitly known options that are possible to disable.  They can
 # be regexps, and will be used like this: /^no-${option}$/
@@ -549,7 +549,7 @@ my @disablables = (
 foreach my $proto ((@tls, @dtls))
         {
         push(@disablables, $proto);
-        push(@disablables, "$proto-method") unless $proto eq "tls1_3";
+        push(@disablables, "$proto-method") unless $proto eq "tls1_3" || $proto eq "dtls1_3";
         }
 
 # Internal disablables, for aliasing purposes.  They serve no special
