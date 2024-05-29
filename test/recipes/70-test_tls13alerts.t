@@ -65,6 +65,7 @@ sub run_tests
 
     #Test 1: We test that a server can handle an unencrypted alert when normally the
     #        next message is encrypted
+    $proxy->clear();
     $proxy->filter(\&alert_filter);
     $proxy_start_success = $proxy->start();
     skip "TLSProxy did not start correctly", 1 if $proxy_start_success == 0;
