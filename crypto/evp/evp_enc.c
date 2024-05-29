@@ -1034,8 +1034,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
         for (i = 0; i < n; i++)
             out[i] = ctx->final[i];
         *outl = n;
-    } else
-        *outl = 0;
+    }
     return 1;
 }
 
