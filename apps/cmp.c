@@ -124,6 +124,8 @@ static char *opt_profile = NULL;
 /* certificate enrollment */
 static char *opt_newkey = NULL;
 static char *opt_newkeypass = NULL;
+static int opt_centralkeygen = 0;
+static char *opt_newkeyout = NULL;
 static char *opt_subject = NULL;
 static int opt_days = 0;
 static char *opt_reqexts = NULL;
@@ -230,7 +232,8 @@ typedef enum OPTION_choice {
     OPT_CMD, OPT_INFOTYPE, OPT_PROFILE, OPT_GENINFO,
     OPT_TEMPLATE, OPT_KEYSPEC,
 
-    OPT_NEWKEY, OPT_NEWKEYPASS, OPT_SUBJECT,
+    OPT_NEWKEY, OPT_NEWKEYPASS, OPT_CENTRALKEYGEN,
+    OPT_NEWKEYOUT, OPT_SUBJECT,
     OPT_DAYS, OPT_REQEXTS,
     OPT_SANS, OPT_SAN_NODEFAULT,
     OPT_POLICIES, OPT_POLICY_OIDS, OPT_POLICY_OIDS_CRITICAL,
@@ -326,6 +329,10 @@ const OPTIONS cmp_options[] = {
     {"newkey", OPT_NEWKEY, 's',
      "Private or public key for the requested cert. Default: CSR key or client key"},
     {"newkeypass", OPT_NEWKEYPASS, 's', "New private key pass phrase source"},
+    {"centralkeygen", OPT_CENTRALKEYGEN, '-',
+     "Request central (server-side) key generation. Default is local generation"},
+    {"newkeyout", OPT_NEWKEYOUT, 's',
+     "File to save new key generated in central key generation"},
     {"subject", OPT_SUBJECT, 's',
      "Distinguished Name (DN) of subject to use in the requested cert template"},
     {OPT_MORE_STR, 0, 0,
@@ -630,8 +637,8 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {&opt_cmd_s}, {&opt_infotype_s}, {&opt_profile}, {&opt_geninfo},
     {&opt_template}, {&opt_keyspec},
 
-    {&opt_newkey}, {&opt_newkeypass}, {&opt_subject},
-    {(char **)&opt_days}, {&opt_reqexts},
+    {&opt_newkey}, {&opt_newkeypass}, {(char **)&opt_centralkeygen},
+    {&opt_newkeyout}, {&opt_subject}, {(char **)&opt_days}, {&opt_reqexts},
     {&opt_sans}, {(char **)&opt_san_nodefault},
     {&opt_policies}, {&opt_policy_oids}, {(char **)&opt_policy_oids_critical},
     {(char **)&opt_popo}, {&opt_csr},
@@ -1672,10 +1679,26 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (!set_name(opt_issuer, OSSL_CMP_CTX_set1_issuer, ctx, "issuer"))
         return 0;
     if (opt_cmd == CMP_IR || opt_cmd == CMP_CR || opt_cmd == CMP_KUR) {
-        if (opt_reqin == NULL && opt_newkey == NULL
+        if (opt_reqin == NULL && opt_newkey == NULL && !opt_centralkeygen
             && opt_key == NULL && opt_csr == NULL && opt_oldcert == NULL) {
-            CMP_err("missing -newkey (or -key) to be certified and no -csr, -oldcert, -cert, or -reqin option given, which could provide fallback public key");
+            CMP_err("missing -newkey (or -key) to be certified and no -csr, -oldcert, -cert, or -reqin option given, which could provide fallback public key."
+                    "Neither central key generation is requested.");
             return 0;
+        }
+        if (opt_popo == OSSL_CRMF_POPO_NONE && !opt_centralkeygen) {
+            CMP_info("POPO is disabled, using -centralkeygen");
+            opt_centralkeygen = 1;
+        }
+        if (opt_centralkeygen) {
+            if (opt_popo > OSSL_CRMF_POPO_NONE) {
+                CMP_err1("-popo value %d is inconsistent with -centralkeygen", opt_popo);
+                return 0;
+            }
+            if (opt_newkeyout == NULL) {
+                CMP_err("-newkeyout not given, nowhere to save newly generated key");
+                return 0;
+            }
+            opt_popo = OSSL_CRMF_POPO_NONE;
         }
         if (opt_newkey == NULL
             && opt_popo != OSSL_CRMF_POPO_NONE
@@ -1724,6 +1747,10 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             CMP_warn1("-policies %s", msg);
         if (opt_policy_oids != NULL)
             CMP_warn1("-policy_oids %s", msg);
+        if (opt_centralkeygen)
+            CMP_warn1("-centralkeygen %s", msg);
+        if (opt_newkeyout != NULL)
+            CMP_warn1("-newkeyout %s", msg);
         if (opt_cmd != CMP_P10CR) {
             if (opt_implicit_confirm)
                 CMP_warn1("-implicit_confirm %s, and 'p10cr'", msg);
@@ -1834,7 +1861,8 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             return 0;
         }
     } else if (opt_reqin != NULL
-               && opt_key == NULL && opt_csr == NULL && opt_oldcert == NULL) {
+               && opt_key == NULL && opt_csr == NULL && opt_oldcert == NULL
+               && !opt_centralkeygen) {
         if (!set_fallback_pubkey(ctx))
             return 0;
     }
@@ -2922,12 +2950,17 @@ static int get_opts(int argc, char **argv)
         case OPT_KEYSPEC:
             opt_keyspec = opt_str();
             break;
-
         case OPT_NEWKEY:
             opt_newkey = opt_str();
             break;
         case OPT_NEWKEYPASS:
             opt_newkeypass = opt_str();
+            break;
+        case OPT_CENTRALKEYGEN:
+            opt_centralkeygen = 1;
+            break;
+        case OPT_NEWKEYOUT:
+            opt_newkeyout = opt_str();
             break;
         case OPT_SUBJECT:
             opt_subject = opt_str();
@@ -3793,6 +3826,19 @@ int cmp_main(int argc, char **argv)
             if (save_free_certs(OSSL_CMP_CTX_get1_caPubs(cmp_ctx),
                                 opt_cacertsout, "CA") < 0)
                 goto err;
+            if (opt_centralkeygen) {
+                EVP_PKEY *new_key = OSSL_CMP_CTX_get0_newPkey(cmp_ctx, 1 /* priv */);
+                BIO *out = bio_open_owner(opt_newkeyout, FORMAT_PEM, 1);
+
+                if (out == NULL)
+                    goto err;
+                CMP_info1("received central (server) generated key, saving to file '%s'",
+                          opt_newkeyout);
+                if (PEM_write_bio_PrivateKey(out, new_key, NULL, NULL, 0, NULL,
+                                             NULL) <= 0)
+                    goto err;
+                BIO_free(out);
+            }
         }
         if (!OSSL_CMP_CTX_reinit(cmp_ctx))
             goto err;

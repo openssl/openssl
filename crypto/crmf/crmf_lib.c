@@ -29,6 +29,7 @@
 #include <openssl/asn1t.h>
 
 #include "crmf_local.h"
+#include "internal/constant_time.h"
 #include "internal/sizes.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
@@ -612,7 +613,238 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
     return 1;
 }
 
-/*-
+#ifndef OPENSSL_NO_CMS
+DECLARE_ASN1_ITEM(CMS_SignedData) /* copied from cms_local.h */
+
+/* check for KGA authorization implied by CA flag or by explicit EKU cmKGA */
+static int check_cmKGA(ossl_unused const X509_PURPOSE *purpose,
+                       const X509 *x, int ca)
+{
+    STACK_OF(ASN1_OBJECT) *ekus;
+    int i, ret = 1;
+
+    if (ca)
+        return ret;
+    ekus = X509_get_ext_d2i(x, NID_ext_key_usage, NULL, NULL);
+    for (i = 0; i < sk_ASN1_OBJECT_num(ekus); i++) {
+# if OPENSSL_VERSION_NUMBER >= 0x30000000L
+        if (OBJ_obj2nid(sk_ASN1_OBJECT_value(ekus, i)) == NID_cmKGA)
+            goto end;
+# else
+        {
+            char txt[100];
+
+            if (OBJ_obj2txt(txt, sizeof(txt), sk_ASN1_OBJECT_value(ekus, i), 1)
+                    && strcmp(txt, "1.3.6.1.5.5.7.3.32") == 0) /* OID cmKGA */
+                goto end;
+        }
+# endif
+    }
+    ret = 0;
+
+ end:
+    sk_ASN1_OBJECT_pop_free(ekus, ASN1_OBJECT_free);
+    return ret;
+}
+#endif /* OPENSSL_NO_CMS */
+
+EVP_PKEY
+*OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(OSSL_CRMF_ENCRYPTEDKEY *encryptedKey,
+                                  X509_STORE *ts, STACK_OF(X509) *extra,
+                                  EVP_PKEY *pkey, X509 *cert,
+                                  ASN1_OCTET_STRING *secret,
+                                  OSSL_LIB_CTX *libctx, const char *propq)
+{
+#ifndef OPENSSL_NO_CMS
+    BIO *bio = NULL;
+    CMS_SignedData *sd = NULL;
+    BIO *pkey_bio = NULL;
+    int purpose_id = X509_PURPOSE_get_count() + 1;
+    X509_VERIFY_PARAM *ts_vpm, *bak_vpm = NULL;
+#endif
+    EVP_PKEY *ret = NULL;
+
+    if (encryptedKey == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
+        return NULL;
+    }
+    if (encryptedKey->type != OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA) {
+        unsigned char *p = NULL;
+        const unsigned char *p_copy;
+        int len;
+
+        p = OSSL_CRMF_ENCRYPTEDVALUE_decrypt(encryptedKey->value.encryptedValue,
+                                             pkey, &len, libctx, propq);
+        if ((p_copy = p) != NULL)
+            ret = d2i_AutoPrivateKey_ex(NULL, &p_copy, len, libctx, propq);
+        OPENSSL_free(p);
+        return ret;
+    }
+
+#ifndef OPENSSL_NO_CMS
+    if (ts == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
+        return NULL;
+    }
+    if ((bio = CMS_EnvelopedData_decrypt(encryptedKey->value.envelopedData,
+                                         NULL, pkey, cert, secret, 0,
+                                         libctx, propq)) == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECRYPTING_ENCRYPTEDKEY);
+        goto end;
+    }
+    sd = ASN1_item_d2i_bio(ASN1_ITEM_rptr(CMS_SignedData), bio, NULL);
+    if (sd == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_VERIFYING_ENCRYPTEDKEY);
+        goto end;
+    }
+
+    if ((ts_vpm = X509_STORE_get0_param(ts)) == NULL
+        || (bak_vpm = X509_VERIFY_PARAM_new()) == NULL /* copy of VPMs of ts */
+        || !X509_VERIFY_PARAM_inherit(bak_vpm, ts_vpm)
+        || !X509_PURPOSE_add(purpose_id, X509_TRUST_COMPAT, 0, check_cmKGA,
+                             "CMP Key Generation Authority", "cmKGA", NULL)
+        /* override X509_PURPOSE_SMIME_SIGN: */
+        || !X509_STORE_set_purpose(ts, purpose_id)) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_SETTING_PURPOSE);
+        goto end;
+    }
+
+    /* workaround for CMS_add0_cert() in cms_lib.c not allowing duplicate untrusted certs */
+    extra = NULL;
+    pkey_bio = CMS_SignedData_verify(sd, NULL, NULL /* scerts */, ts,
+                                     extra, NULL, 0, libctx, propq);
+
+    /* workaround for API limit getting and restoring original purpose in ts */
+    if (!X509_VERIFY_PARAM_set_inh_flags(bak_vpm, X509_VP_FLAG_OVERWRITE)
+            || !X509_STORE_set1_param(ts, bak_vpm)) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_SETTING_PURPOSE);
+        goto end;
+    }
+
+    if (pkey_bio == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_VERIFYING_ENCRYPTEDKEY);
+        goto end;
+    }
+
+    /* unpack AsymmetricKeyPackage */
+    if ((ret = d2i_PrivateKey_ex_bio(pkey_bio, NULL, libctx, propq)) == NULL)
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECODING_ENCRYPTEDKEY);
+
+ end:
+    X509_VERIFY_PARAM_free(bak_vpm);
+    CMS_SignedData_free(sd);
+    BIO_free(bio);
+    BIO_free(pkey_bio);
+    return ret;
+#else
+    /* prevent warning on unused parameters: */
+    ((void)ts, (void)extra, (void)cert, (void)secret);
+    ERR_raise(ERR_LIB_CRMF, CRMF_R_CMS_NOT_SUPPORTED);
+    return NULL;
+#endif /* OPENSSL_NO_CMS */
+}
+
+unsigned char
+*OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *enc,
+                                  EVP_PKEY *pkey, int *outlen,
+                                  OSSL_LIB_CTX *libctx, const char *propq)
+{
+    EVP_CIPHER_CTX *evp_ctx = NULL; /* context for symmetric encryption */
+    unsigned char *ek = NULL; /* decrypted symmetric encryption key */
+    size_t eksize = 0; /* size of decrypted symmetric encryption key */
+    const EVP_CIPHER *cipher = NULL; /* used cipher */
+    int cikeysize = 0; /* key size from cipher */
+    unsigned char *iv = NULL; /* initial vector for symmetric encryption */
+    unsigned char *out = NULL; /* decryption output buffer */
+    int symmAlg = 0; /* NIDs for symmetric algorithm */
+    int n, ret = 0;
+    EVP_PKEY_CTX *pkctx = NULL; /* private key context */
+
+    if (outlen == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
+        return NULL;
+    }
+    *outlen = 0;
+    if (enc == NULL || enc->symmAlg == NULL || enc->encSymmKey == NULL
+            || enc->encValue == NULL || pkey == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
+        return NULL;
+    }
+
+    if ((symmAlg = OBJ_obj2nid(enc->symmAlg->algorithm)) == 0) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
+        return NULL;
+    }
+
+    /* select symmetric cipher based on algorithm given in message */
+    if ((cipher = EVP_get_cipherbynid(symmAlg)) == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
+        goto end;
+    }
+
+    cikeysize = EVP_CIPHER_get_key_length(cipher);
+    /* first the symmetric key needs to be decrypted */
+    pkctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
+    if (pkctx != NULL && EVP_PKEY_decrypt_init(pkctx)) {
+        ASN1_BIT_STRING *encKey = enc->encSymmKey;
+        size_t failure;
+        int retval;
+
+        if (EVP_PKEY_decrypt(pkctx, NULL, &eksize,
+                             encKey->data, encKey->length) <= 0
+                || (ek = OPENSSL_malloc(eksize)) == NULL)
+            goto end;
+        retval = EVP_PKEY_decrypt(pkctx, ek, &eksize,
+                                  encKey->data, encKey->length);
+        ERR_clear_error(); /* error state may have sensitive information */
+        failure = ~constant_time_is_zero_s(constant_time_msb(retval)
+                                           | constant_time_is_zero(retval));
+        failure |= ~constant_time_eq_s(eksize, (size_t)cikeysize);
+        if (failure) {
+            ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY);
+            goto end;
+        }
+    } else {
+        goto end;
+    }
+    if ((iv = OPENSSL_malloc(EVP_CIPHER_get_iv_length(cipher))) == NULL)
+        goto end;
+    if (ASN1_TYPE_get_octetstring(enc->symmAlg->parameter, iv,
+                                  EVP_CIPHER_get_iv_length(cipher))
+        != EVP_CIPHER_get_iv_length(cipher)) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_MALFORMED_IV);
+        goto end;
+    }
+
+    if ((out = OPENSSL_malloc(enc->encValue->length +
+                              EVP_CIPHER_get_block_size(cipher))) == NULL
+            || (evp_ctx = EVP_CIPHER_CTX_new()) == NULL)
+        goto end;
+    EVP_CIPHER_CTX_set_padding(evp_ctx, 0);
+
+    if (!EVP_DecryptInit(evp_ctx, cipher, ek, iv)
+            || !EVP_DecryptUpdate(evp_ctx, out, outlen,
+                                  enc->encValue->data,
+                                  enc->encValue->length)
+            || !EVP_DecryptFinal(evp_ctx, out + *outlen, &n)) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECRYPTING_ENCRYPTEDVALUE);
+        goto end;
+    }
+    *outlen += n;
+    ret = 1;
+
+ end:
+    EVP_PKEY_CTX_free(pkctx);
+    EVP_CIPHER_CTX_free(evp_ctx);
+    OPENSSL_clear_free(ek, eksize);
+    OPENSSL_free(iv);
+    if (ret)
+        return out;
+    OPENSSL_free(out);
+    return NULL;
+}
+
+/*
  * Decrypts the certificate in the given encryptedValue using private key pkey.
  * This is needed for the indirect PoP method as in RFC 4210 section 5.2.8.2.
  *
@@ -624,90 +856,59 @@ X509
                                        OSSL_LIB_CTX *libctx, const char *propq,
                                        EVP_PKEY *pkey)
 {
-    X509 *cert = NULL; /* decrypted certificate */
-    EVP_CIPHER_CTX *evp_ctx = NULL; /* context for symmetric encryption */
-    unsigned char *ek = NULL; /* decrypted symmetric encryption key */
-    size_t eksize = 0; /* size of decrypted symmetric encryption key */
-    EVP_CIPHER *cipher = NULL; /* used cipher */
-    int cikeysize = 0; /* key size from cipher */
-    unsigned char *iv = NULL; /* initial vector for symmetric encryption */
-    unsigned char *outbuf = NULL; /* decryption output buffer */
-    const unsigned char *p = NULL; /* needed for decoding ASN1 */
-    int n, outlen = 0;
-    EVP_PKEY_CTX *pkctx = NULL; /* private key context */
-    char name[OSSL_MAX_NAME_SIZE];
+    unsigned char *buf = NULL;
+    const unsigned char *p;
+    int len;
+    X509 *cert = NULL;
 
-    if (ecert == NULL || ecert->symmAlg == NULL || ecert->encSymmKey == NULL
-            || ecert->encValue == NULL || pkey == NULL) {
-        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
-        return NULL;
-    }
-
-    /* select symmetric cipher based on algorithm given in message */
-    OBJ_obj2txt(name, sizeof(name), ecert->symmAlg->algorithm, 0);
-
-    (void)ERR_set_mark();
-    cipher = EVP_CIPHER_fetch(NULL, name, NULL);
-
-    if (cipher == NULL)
-        cipher = (EVP_CIPHER *)EVP_get_cipherbyname(name);
-
-    if (cipher == NULL) {
-        (void)ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
+    buf = OSSL_CRMF_ENCRYPTEDVALUE_decrypt(ecert, pkey, &len, libctx, propq);
+    if ((p = buf) == NULL
+            || (cert = X509_new_ex(libctx, propq)) == NULL)
         goto end;
-    }
-    (void)ERR_pop_to_mark();
-
-    cikeysize = EVP_CIPHER_get_key_length(cipher);
-    /* first the symmetric key needs to be decrypted */
-    pkctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
-    if (pkctx == NULL || EVP_PKEY_decrypt_init(pkctx) <= 0
-        || evp_pkey_decrypt_alloc(pkctx, &ek, &eksize, (size_t)cikeysize,
-                                  ecert->encSymmKey->data,
-                                  ecert->encSymmKey->length) <= 0)
-        goto end;
-
-    if ((iv = OPENSSL_malloc(EVP_CIPHER_get_iv_length(cipher))) == NULL)
-        goto end;
-    if (ASN1_TYPE_get_octetstring(ecert->symmAlg->parameter, iv,
-                                  EVP_CIPHER_get_iv_length(cipher))
-        != EVP_CIPHER_get_iv_length(cipher)) {
-        ERR_raise(ERR_LIB_CRMF, CRMF_R_MALFORMED_IV);
-        goto end;
-    }
-
-    /*
-     * d2i_X509 changes the given pointer, so use p for decoding the message and
-     * keep the original pointer in outbuf so the memory can be freed later
-     */
-    if ((p = outbuf = OPENSSL_malloc(ecert->encValue->length +
-                                     EVP_CIPHER_get_block_size(cipher))) == NULL
-            || (evp_ctx = EVP_CIPHER_CTX_new()) == NULL)
-        goto end;
-    EVP_CIPHER_CTX_set_padding(evp_ctx, 0);
-
-    if (!EVP_DecryptInit(evp_ctx, cipher, ek, iv)
-            || !EVP_DecryptUpdate(evp_ctx, outbuf, &outlen,
-                                  ecert->encValue->data,
-                                  ecert->encValue->length)
-            || !EVP_DecryptFinal(evp_ctx, outbuf + outlen, &n)) {
-        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECRYPTING_CERTIFICATE);
-        goto end;
-    }
-    outlen += n;
-
-    /* convert decrypted certificate from DER to internal ASN.1 structure */
-    if ((cert = X509_new_ex(libctx, propq)) == NULL)
-        goto end;
-    if (d2i_X509(&cert, &p, outlen) == NULL)
+    if (d2i_X509(&cert, &p, len) == NULL) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECODING_CERTIFICATE);
+        X509_free(cert);
+        cert = NULL;
+    }
+
  end:
-    EVP_PKEY_CTX_free(pkctx);
-    OPENSSL_free(outbuf);
-    EVP_CIPHER_CTX_free(evp_ctx);
-    EVP_CIPHER_free(cipher);
-    OPENSSL_clear_free(ek, eksize);
-    OPENSSL_free(iv);
+    OPENSSL_free(buf);
     return cert;
+}
+/*-
+ * Decrypts the certificate in the given encryptedKey using private key pkey.
+ * This is needed for the indirect PoP method as in RFC 4210 section 5.2.8.2.
+ *
+ * returns a pointer to the decrypted certificate
+ * returns NULL on error or if no certificate available
+ */
+X509
+*OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(const OSSL_CRMF_ENCRYPTEDKEY *ecert,
+                                     OSSL_LIB_CTX *libctx, const char *propq,
+                                     EVP_PKEY *pkey, unsigned int flags)
+{
+#ifndef OPENSSL_NO_CMS
+    BIO *bio;
+    X509 *cert = NULL;
+#endif
+
+    if (ecert->type != OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA)
+        return OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(ecert->value.encryptedValue,
+                                                     libctx, propq, pkey);
+#ifndef OPENSSL_NO_CMS
+    bio = CMS_EnvelopedData_decrypt(ecert->value.envelopedData, NULL,
+                                    pkey, NULL /* cert */, NULL, flags,
+                                    libctx, propq);
+    if (bio == NULL)
+        return NULL;
+    cert = d2i_X509_bio(bio, NULL);
+    if (cert == NULL)
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECODING_CERTIFICATE);
+    BIO_free(bio);
+    return cert;
+#else
+    (void)flags; /* prevent warning on unused parameter */
+    ERR_raise(ERR_LIB_CRMF, CRMF_R_CMS_NOT_SUPPORTED);
+    return NULL;
+#endif /* OPENSSL_NO_CMS */
 }

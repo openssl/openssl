@@ -231,6 +231,7 @@ CMP_R_ERROR_VALIDATING_PROTECTION:140:error validating protection
 CMP_R_ERROR_VALIDATING_SIGNATURE:171:error validating signature
 CMP_R_EXPECTED_POLLREQ:104:expected pollreq
 CMP_R_FAILED_BUILDING_OWN_CHAIN:164:failed building own chain
+CMP_R_FAILED_EXTRACTING_CENTRAL_GEN_KEY:203:failed extracting central gen key
 CMP_R_FAILED_EXTRACTING_PUBKEY:141:failed extracting pubkey
 CMP_R_FAILURE_OBTAINING_RANDOM:110:failure obtaining random
 CMP_R_FAIL_INFO_OUT_OF_RANGE:129:fail info out of range
@@ -243,6 +244,7 @@ CMP_R_INVALID_GENP:193:invalid genp
 CMP_R_INVALID_KEYSPEC:202:invalid keyspec
 CMP_R_INVALID_OPTION:174:invalid option
 CMP_R_INVALID_ROOTCAKEYUPDATE:195:invalid rootcakeyupdate
+CMP_R_MISSING_CENTRAL_GEN_KEY:204:missing central gen key
 CMP_R_MISSING_CERTID:165:missing certid
 CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION:130:\
 	missing key input for creating protection
@@ -279,6 +281,7 @@ CMP_R_TOTAL_TIMEOUT:184:total timeout
 CMP_R_TRANSACTIONID_UNMATCHED:152:transactionid unmatched
 CMP_R_TRANSFER_ERROR:159:transfer error
 CMP_R_UNCLEAN_CTX:191:unclean ctx
+CMP_R_UNEXPECTED_CENTRAL_GEN_KEY:205:unexpected central gen key
 CMP_R_UNEXPECTED_CERTPROFILE:196:unexpected certprofile
 CMP_R_UNEXPECTED_CRLSTATUSLIST:201:unexpected crlstatuslist
 CMP_R_UNEXPECTED_PKIBODY:133:unexpected pkibody
@@ -448,11 +451,17 @@ CONF_R_UNKNOWN_MODULE_NAME:113:unknown module name
 CONF_R_VARIABLE_EXPANSION_TOO_LONG:116:variable expansion too long
 CONF_R_VARIABLE_HAS_NO_VALUE:104:variable has no value
 CRMF_R_BAD_PBM_ITERATIONCOUNT:100:bad pbm iterationcount
+CRMF_R_CMS_NOT_SUPPORTED:122:cms not supported
 CRMF_R_CRMFERROR:102:crmferror
 CRMF_R_ERROR:103:error
 CRMF_R_ERROR_DECODING_CERTIFICATE:104:error decoding certificate
+CRMF_R_ERROR_DECODING_ENCRYPTEDKEY:123:error decoding encryptedkey
 CRMF_R_ERROR_DECRYPTING_CERTIFICATE:105:error decrypting certificate
+CRMF_R_ERROR_DECRYPTING_ENCRYPTEDKEY:124:error decrypting encryptedkey
+CRMF_R_ERROR_DECRYPTING_ENCRYPTEDVALUE:125:error decrypting encryptedvalue
 CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY:106:error decrypting symmetric key
+CRMF_R_ERROR_SETTING_PURPOSE:126:error setting purpose
+CRMF_R_ERROR_VERIFYING_ENCRYPTEDKEY:127:error verifying encryptedkey
 CRMF_R_FAILURE_OBTAINING_RANDOM:107:failure obtaining random
 CRMF_R_ITERATIONCOUNT_BELOW_100:108:iterationcount below 100
 CRMF_R_MALFORMED_IV:101:malformed iv

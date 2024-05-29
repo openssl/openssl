@@ -403,7 +403,7 @@ static int execute_certrep_create(CMP_MSG_TEST_FIXTURE *fixture)
         goto err;
     if (!TEST_ptr_null(ossl_cmp_certrepmessage_get0_certresponse(crepmsg, 88)))
         goto err;
-    certfromresp = ossl_cmp_certresponse_get1_cert(ctx, read_cresp);
+    certfromresp = ossl_cmp_certresponse_get1_cert_key(read_cresp, ctx, NULL);
     if (certfromresp == NULL || !TEST_int_eq(X509_cmp(cert, certfromresp), 0))
         goto err;
 
