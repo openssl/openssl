@@ -280,11 +280,9 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
              * because in a production build, if this assert were ever to fail,
              * then the best thing to do is probably carry on regardless.
              */
-#if 0
-            /* TODO(DTLS-1.3): Re-enable this assert. */
             assert(s->s3.tmp.new_compression != NULL
-                   || BIO_wpending(s->wbio) <= (int)s->d1->mtu);
-#endif
+                || BIO_wpending(s->wbio) <= (int)s->d1->mtu);
+
             if (type == SSL3_RT_HANDSHAKE && !s->d1->retransmitting) {
                 /*
                  * should not be done for 'Hello Request's, but in that case
