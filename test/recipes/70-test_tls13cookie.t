@@ -23,50 +23,83 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
-plan skip_all => "$test_name needs TLS1.3 enabled"
-    if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
+plan skip_all => "$test_name needs EC and DH enabled"
+    if disabled("ec") && disabled("dh");
+
+my $testcount = 2;
+
+plan tests => 2 * $testcount;
+
+SKIP: {
+    skip "TLS 1.3 is disabled", $testcount if disabled("tls1_3");
+    # Run tests with TLS
+    run_tests(0);
+}
+
+SKIP: {
+    skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
+    skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
+    run_tests(1);
+}
 
 use constant {
     COOKIE_ONLY => 0,
     COOKIE_AND_KEY_SHARE => 1
 };
 
-my $proxy = TLSProxy::Proxy->new(
-    undef,
-    cmdstr(app(["openssl"]), display => 1),
-    srctop_file("apps", "server.pem"),
-    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
-);
-
 my $cookieseen = 0;
 my $testtype;
 
-#Test 1: Inserting a cookie into an HRR should see it echoed in the ClientHello
-$testtype = COOKIE_ONLY;
-$proxy->filter(\&cookie_filter);
-$proxy->serverflags("-curves X25519") if !disabled("ecx");
-$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 2;
-SKIP: {
-    skip "ECX disabled", 1, if (disabled("ecx"));
+sub run_tests
+{
+    my $run_test_as_dtls = shift;
+    my $proxy_start_success = 0;
+    my $proxy;
+    if ($run_test_as_dtls == 1) {
+        $proxy = TLSProxy::Proxy->new_dtls(
+            undef,
+            cmdstr(app([ "openssl" ]), display => 1),
+            srctop_file("apps", "server.pem"),
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+        );
+    }
+    else {
+        $proxy = TLSProxy::Proxy->new(
+            undef,
+            cmdstr(app([ "openssl" ]), display => 1),
+            srctop_file("apps", "server.pem"),
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+        );
+    }
+
+    #Test 1: Inserting a cookie into an HRR should see it echoed in the ClientHello
+    $testtype = COOKIE_ONLY;
+    $proxy->clear();
+    $proxy->filter(\&cookie_filter);
+    $proxy->serverflags("-curves X25519") if !disabled("ecx");
+    $proxy_start_success = $proxy->start();
+    skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
+    SKIP: {
+        skip "ECX disabled", 1, if (disabled("ecx"));
+        ok(TLSProxy::Message->success() && $cookieseen == 1, "Cookie seen");
+    }
+
+
+    #Test 2: Same as test 1 but should also work where a new key_share is also
+    #        required
+    $testtype = COOKIE_AND_KEY_SHARE;
+    $proxy->clear();
+    if (disabled("ecx")) {
+        $proxy->clientflags("-curves ffdhe3072:ffdhe2048");
+        $proxy->serverflags("-curves ffdhe2048");
+    }
+    else {
+        $proxy->clientflags("-curves P-256:X25519");
+        $proxy->serverflags("-curves X25519");
+    }
+    $proxy->start();
     ok(TLSProxy::Message->success() && $cookieseen == 1, "Cookie seen");
 }
-
-
-
-#Test 2: Same as test 1 but should also work where a new key_share is also
-#        required
-$testtype = COOKIE_AND_KEY_SHARE;
-$proxy->clear();
-if (disabled("ecx")) {
-    $proxy->clientflags("-curves ffdhe3072:ffdhe2048");
-    $proxy->serverflags("-curves ffdhe2048");
-} else {
-    $proxy->clientflags("-curves P-256:X25519");
-    $proxy->serverflags("-curves X25519");
-}
-$proxy->start();
-ok(TLSProxy::Message->success() && $cookieseen == 1, "Cookie seen");
 
 sub cookie_filter
 {
