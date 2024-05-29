@@ -135,5 +135,17 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 1,reqout_only ir - no server, -section,, -cmd,ir,,-reqout_only,_RESULT_DIR/ir2.der,,BLANK,,BLANK, -server,""""
 0,reqout_only non-existing directory and file, -section,, -cmd,ir,,-reqout_only,idontexist/idontexist,,BLANK,,BLANK, -server,""""
 0,reqin ir - no newkey, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir2.der,,-newkey,"""",-newkey,"""",-key,"""",-cert,"""",-secret,_PBM_SECRET
-1,reqin ir and rspout - no newkey but -popo -1, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir2.der,,-rspout,_RESULT_DIR/ip2.der,-newkey,"""",--key,"""",-cert,"""",-secret,_PBM_SECRET,-popo,-1
-1,reqin ip and rspin  - no newkey but -popo -1, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir2.der,,-rspin,_RESULT_DIR/ip2.der,,-newkey,"""",-key,"""",-cert,"""",-secret,_PBM_SECRET,-popo,-1, -server,"""",-disable_confirm
+1,reqin ir and rspout - using no newkey and -popo 0 as workaround, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir2.der,,-rspout,_RESULT_DIR/ip2.der,-newkey,"""", -popo,0
+1,reqin ip and rspin  - using no newkey and -popo 0 as workaround, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir2.der,,-rspin,_RESULT_DIR/ip2.der,,-newkey,"""",-server,"""",-disable_confirm, -popo,0
+1,reqout_only ir - no server with -popo -1 (same as -centralkeygen), -section,, -cmd,ir,,-reqout_only,_RESULT_DIR/ir3.der,,BLANK,,BLANK, -server,"""", -popo,-1, -newkeyout,_RESULT_DIR/dummyout.pem
+1,reqin ir and rspout - using no newkey and -popo -1 (same as -centralkeygen), -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir3.der,,-rspout,_RESULT_DIR/ip3.der,-newkey,"""", -popo,-1, -newkeyout,_RESULT_DIR/newkeyout.pem
+1,reqin ip and rspin  - using no newkey and -popo -1 (same as -centralkeygen), -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir3.der,,-rspin,_RESULT_DIR/ip3.der,,-newkey,"""",-server,"""",-disable_confirm, -popo,-1, -newkeyout,_RESULT_DIR/newkeyout.pem
+,,,,,,,,,,,,,,,,,,,
+1,central key generation, -section,, -cmd,cr,, -centralkeygen, -newkeyout,_RESULT_DIR/newkeyout1.pem
+0,central key generation missing newkeyout, -section,, -cmd,cr,, -centralkeygen,,BLANK,,BLANK,,BLANK,,BLANK,
+0,using popo 1 with -centralkeygen, -section,, -cmd,cr,, -centralkeygen, -popo,1, -newkeyout,_RESULT_DIR/newkeyout.pem
+1, using popo -1 redundantly with -centralkeygen, -section,, -cmd,cr,, -centralkeygen, -popo,-1, -newkeyout,_RESULT_DIR/newkeyout2.pem
+1, using popo -1 alternatively to -centralkeygen, -section,, -cmd,cr,, -popo,-1, -newkeyout,_RESULT_DIR/newkeyout3.pem, -newkeypass,pass:12345, -certout,_RESULT_DIR/test.cert3.pem
+1, using centrally generated key (and cert) , -section,, -cmd,cr,,-cert,_RESULT_DIR/test.cert3.pem, -key,_RESULT_DIR/newkeyout3.pem, -keypass,pass:12345
+0, using centrally generated key with wrong password, -section,, -cmd,cr,,-cert,_RESULT_DIR/test.cert3.pem, -key,_RESULT_DIR/newkeyout3.pem, -keypass,pass:wrong
+0, using popo -1 (instead of -centralkeygen) without -newkeyout, -section,, -cmd,cr,, -popo,-1,,BLANK,,BLANK,,BLANK,,BLANK

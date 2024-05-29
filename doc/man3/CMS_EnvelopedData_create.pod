@@ -57,18 +57,23 @@ The wrappers L<CMS_encrypt(3)> and L<CMS_decrypt(3)> are often used instead.
 =head1 RETURN VALUES
 
 If the allocation fails, CMS_EnvelopedData_create_ex(),
-CMS_EnvelopedData_create(), CMS_AuthEnvelopedData_create_ex(), and
-CMS_AuthEnvelopedData_create() return NULL and set an error code that can be
-obtained by L<ERR_get_error(3)>. Otherwise they return a pointer to the newly
-allocated structure.
+CMS_EnvelopedData_create(), CMS_AuthEnvelopedData_create_ex(),
+CMS_AuthEnvelopedData_create(), CMS_AuthEnvelopedData_create(),
+and CMS_AuthEnvelopedData_create_ex() return NULL and set an
+error code that can be obtained by L<ERR_get_error(3)>.
+Otherwise, they return a pointer to the newly allocated structure.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)>, L<CMS_encrypt(3)>, L<CMS_decrypt(3)>, L<CMS_final(3)>
+L<ERR_get_error(3)>, L<CMS_encrypt(3)>, L<CMS_decrypt(3)>, L<CMS_final(3)>,
+L<CMS_sign_ex(3)>, L<CMS_encrypt_ex(3)>
 
 =head1 HISTORY
 
 The CMS_EnvelopedData_create_ex() method was added in OpenSSL 3.0.
+
+CMS_AuthEnvelopedData_create() and CMS_AuthEnvelopedData_create_ex()
+were added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 

@@ -15,6 +15,7 @@
 # define OSSL_CRYPTO_CRMF_LOCAL_H
 
 # include <openssl/crmf.h>
+# include <openssl/cms.h> /* for CMS_EnvelopedData and CMS_SignedData */
 # include <openssl/err.h>
 # include "internal/crmf.h" /* for ossl_crmf_attributetypeandvalue_st */
 
@@ -51,6 +52,25 @@ struct ossl_crmf_encryptedvalue_st {
     ASN1_OCTET_STRING *valueHint; /* 4 */
     ASN1_BIT_STRING *encValue;
 } /* OSSL_CRMF_ENCRYPTEDVALUE */;
+
+/*
+ *    EncryptedKey ::= CHOICE {
+ *       encryptedValue        EncryptedValue, -- Deprecated
+ *       envelopedData     [0] EnvelopedData }
+ *       -- The encrypted private key MUST be placed in the envelopedData
+ *       -- encryptedContentInfo encryptedContent OCTET STRING.
+ */
+# define OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA 1
+
+struct ossl_crmf_encryptedkey_st {
+    int type;
+    union {
+        OSSL_CRMF_ENCRYPTEDVALUE *encryptedValue; /* 0 */ /* Deprecated */
+# ifndef OPENSSL_NO_CMS
+        CMS_EnvelopedData *envelopedData; /* 1 */
+# endif
+    } value;
+} /* OSSL_CRMF_ENCRYPTEDKEY */;
 
 /*-
  *  Attributes ::= SET OF Attribute

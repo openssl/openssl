@@ -64,7 +64,8 @@ keyUsage, extendedKeyUsage, and basicConstraints.
 
 X509_PURPOSE_get_count() returns the number of currently defined purposes.
 
-X509_PURPOSE_get_unused_id() returns the smallest purpose id not yet used.
+X509_PURPOSE_get_unused_id() returns the smallest purpose id not yet used,
+which is guaranteed to be unique and larger than B<X509_PURPOSE_MAX>.
 The I<libctx> parameter should be used to provide the library context.
 It is currently ignored as the purpose mapping table is global.
 

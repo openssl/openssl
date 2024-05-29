@@ -243,6 +243,7 @@ ASN1_NDEF_SEQUENCE(CMS_EnvelopedData) = {
         ASN1_SIMPLE(CMS_EnvelopedData, encryptedContentInfo, CMS_EncryptedContentInfo),
         ASN1_IMP_SET_OF_OPT(CMS_EnvelopedData, unprotectedAttrs, X509_ATTRIBUTE, 1)
 } ASN1_NDEF_SEQUENCE_END(CMS_EnvelopedData)
+IMPLEMENT_ASN1_DUP_FUNCTION(CMS_EnvelopedData)
 
 ASN1_NDEF_SEQUENCE(CMS_DigestedData) = {
         ASN1_EMBED(CMS_DigestedData, version, INT32),

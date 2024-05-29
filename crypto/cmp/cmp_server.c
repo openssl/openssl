@@ -216,11 +216,12 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     OSSL_CMP_MSG *msg = NULL;
     OSSL_CMP_PKISI *si = NULL;
     X509 *certOut = NULL;
+    EVP_PKEY *keyOut = NULL;
     STACK_OF(X509) *chainOut = NULL, *caPubs = NULL;
     const OSSL_CRMF_MSG *crm = NULL;
     const X509_REQ *p10cr = NULL;
     int bodytype;
-    int certReqId;
+    int certReqId, central_keygen;
 
     if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL))
         return NULL;
@@ -263,7 +264,11 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     }
     srv_ctx->certReqId = certReqId;
 
-    if (!ossl_cmp_verify_popo(srv_ctx->ctx, req, srv_ctx->acceptRAVerified)) {
+    central_keygen = OSSL_CRMF_MSG_centralkeygen_requested(crm, p10cr);
+    if (central_keygen < 0)
+        return NULL;
+    if (central_keygen == 0
+        && !ossl_cmp_verify_popo(srv_ctx->ctx, req, srv_ctx->acceptRAVerified)) {
         /* Proof of possession could not be verified */
         si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_rejection,
                                      1 << OSSL_CMP_PKIFAILUREINFO_badPOP,
@@ -287,10 +292,13 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                          /* do not set if polling starts: */
                                          && certOut != NULL))
             goto err;
+        if (central_keygen == 1
+            && srv_ctx->ctx->newPkey_priv && srv_ctx->ctx->newPkey != NULL)
+            keyOut = srv_ctx->ctx->newPkey;
     }
 
     msg = ossl_cmp_certrep_new(srv_ctx->ctx, bodytype, certReqId, si,
-                               certOut, NULL /* enc */, chainOut, caPubs,
+                               certOut, keyOut, NULL /* enc */, chainOut, caPubs,
                                srv_ctx->sendUnprotectedErrors);
     /* When supporting OSSL_CRMF_POPO_KEYENC, "enc" will need to be set */
     if (msg == NULL)
@@ -299,6 +307,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
  err:
     OSSL_CMP_PKISI_free(si);
     X509_free(certOut);
+    OSSL_CMP_CTX_set0_newPkey(srv_ctx->ctx, 0, NULL);
     OSSL_STACK_OF_X509_free(chainOut);
     OSSL_STACK_OF_X509_free(caPubs);
     return msg;

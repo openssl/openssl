@@ -18,6 +18,7 @@
 #include "internal/cryptlib.h"
 #include "crypto/x509.h"
 #include "cms_local.h"
+#include "internal/cms.h"
 
 static STACK_OF(CMS_CertificateChoices)
 **cms_get0_certificate_choices(CMS_ContentInfo *cms);
@@ -768,4 +769,41 @@ int ossl_cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert)
     ASN1_OCTET_STRING_free(*pkeyid);
     *pkeyid = keyid;
     return 1;
+}
+
+CMS_EnvelopedData *ossl_cms_sign_encrypt(BIO *data, X509 *sign_cert, STACK_OF(X509) *certs,
+                                         EVP_PKEY *sign_key, unsigned int sign_flags,
+                                         STACK_OF(X509) *enc_recip, const EVP_CIPHER *cipher,
+                                         unsigned int enc_flags, OSSL_LIB_CTX *libctx,
+                                         const char *propq)
+{
+    CMS_EnvelopedData *evd = NULL;
+    BIO *privbio = NULL, *signbio = NULL;
+    CMS_ContentInfo *signcms = NULL, *evpcms = NULL;
+
+    if (data == NULL || sign_key == NULL || sign_cert == NULL || enc_recip == NULL) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    signcms = CMS_sign_ex(sign_cert, sign_key, certs, data, sign_flags, libctx, propq);
+    if (signcms == NULL)
+        goto err;
+
+    signbio = BIO_new(BIO_s_mem());
+    if (signbio == NULL
+        || ASN1_item_i2d_bio(ASN1_ITEM_rptr(CMS_SignedData), signbio, signcms->d.signedData) <= 0)
+        goto err;
+
+    evpcms = CMS_encrypt_ex(enc_recip, signbio, cipher, enc_flags, libctx, propq);
+    if (evpcms == NULL)
+        goto err;
+    evd = CMS_EnvelopedData_dup(evpcms->d.envelopedData);
+
+ err:
+    BIO_free(privbio);
+    BIO_free(signbio);
+    CMS_ContentInfo_free(signcms);
+    CMS_ContentInfo_free(evpcms);
+
+    return evd;
 }

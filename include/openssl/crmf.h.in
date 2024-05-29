@@ -27,6 +27,7 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #  include <openssl/safestack.h>
 #  include <openssl/crmferr.h>
 #  include <openssl/x509v3.h> /* for GENERAL_NAME etc. */
+#  include <openssl/cms.h>
 
 /* explicit #includes not strictly needed since implied by the above: */
 #  include <openssl/types.h>
@@ -45,8 +46,11 @@ extern "C" {
 #  define OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT       0
 #  define OSSL_CRMF_SUBSEQUENTMESSAGE_CHALLENGERESP  1
 typedef struct ossl_crmf_encryptedvalue_st OSSL_CRMF_ENCRYPTEDVALUE;
-
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ENCRYPTEDVALUE)
+
+typedef struct ossl_crmf_encryptedkey_st OSSL_CRMF_ENCRYPTEDKEY;
+DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ENCRYPTEDKEY)
+
 typedef struct ossl_crmf_msg_st OSSL_CRMF_MSG;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_MSG)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_MSG)
@@ -177,10 +181,24 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
                                 const X509_NAME *subject,
                                 const X509_NAME *issuer,
                                 const ASN1_INTEGER *serial);
-X509
-*OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
-                                       OSSL_LIB_CTX *libctx, const char *propq,
-                                       EVP_PKEY *pkey);
+X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
+                                            OSSL_LIB_CTX *libctx, const char *propq,
+                                            EVP_PKEY *pkey);
+X509 *OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(const OSSL_CRMF_ENCRYPTEDKEY *ecert,
+                                          OSSL_LIB_CTX *libctx, const char *propq,
+                                          EVP_PKEY *pkey, unsigned int flags);
+unsigned char
+*OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *enc,
+                                  OSSL_LIB_CTX *libctx, const char *propq,
+                                  EVP_PKEY *pkey, int *outlen);
+EVP_PKEY *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(const OSSL_CRMF_ENCRYPTEDKEY *encryptedKey,
+                                           X509_STORE *ts, STACK_OF(X509) *extra, EVP_PKEY *pkey,
+                                           X509 *cert, ASN1_OCTET_STRING *secret,
+                                           OSSL_LIB_CTX *libctx, const char *propq);
+int OSSL_CRMF_MSG_centralkeygen_requested(const OSSL_CRMF_MSG *crm, const X509_REQ *p10cr);
+#  ifndef OPENSSL_NO_CMS
+OSSL_CRMF_ENCRYPTEDKEY *OSSL_CRMF_ENCRYPTEDKEY_init_envdata(CMS_EnvelopedData *envdata);
+#  endif
 
 #  ifdef __cplusplus
 }
