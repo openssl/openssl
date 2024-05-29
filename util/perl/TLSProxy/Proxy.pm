@@ -348,7 +348,7 @@ sub start
     }
 
     if ($self->{isdtls}) {
-        $execcmd .= " -dtls -max_protocol DTLSv1.2"
+        $execcmd .= " -dtls -max_protocol DTLSv1.3"
                     # TLSProxy does not support message fragmentation. So
                     # set a high mtu and fingers crossed.
                     ." -mtu 1500";
@@ -445,7 +445,7 @@ sub clientstart
              ." s_client -provider=p_ossltest -provider=default -propquery ?provider=p_ossltest"
              ." -connect $self->{proxy_addr}:$self->{proxy_port}";
         if ($self->{isdtls}) {
-            $execcmd .= " -dtls -max_protocol DTLSv1.2"
+            $execcmd .= " -dtls -max_protocol DTLSv1.3"
                         # TLSProxy does not support message fragmentation. So
                         # set a high mtu and fingers crossed.
                         ." -mtu 1500"
