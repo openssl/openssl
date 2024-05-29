@@ -749,10 +749,14 @@ int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
 
 static size_t dtls_get_max_record_overhead(OSSL_RECORD_LAYER *rl)
 {
-    size_t blocksize = 0;
+    size_t blocksize = 0, contenttypelen = 0;
 
     if (rl->enc_ctx != NULL && (EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE))
         blocksize = EVP_CIPHER_CTX_get_block_size(rl->enc_ctx);
+
+    /* DTLSv1.3 adds an extra content type byte after payload data */
+    if (rl->version == DTLS1_3_VERSION)
+        contenttypelen = 1;
 
     /*
      * If we have a cipher in place then the tag is mandatory. If the cipher is
@@ -775,7 +779,8 @@ static size_t dtls_get_max_record_overhead(OSSL_RECORD_LAYER *rl)
      * MTU size - so isn't very helpful. We just ignore potential expansion
      * due to compression.
      */
-    return DTLS1_RT_HEADER_LENGTH + rl->eivlen + blocksize + rl->taglen;
+    return DTLS1_RT_HEADER_LENGTH + rl->eivlen + blocksize + rl->taglen
+        + contenttypelen;
 }
 
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {
