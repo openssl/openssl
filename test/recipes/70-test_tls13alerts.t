@@ -36,7 +36,9 @@ SKIP: {
 
 SKIP: {
     skip "DTLS 1.3 is disabled", 1 if disabled("dtls1_3");
-    skip "DTLSProxy does not work on Windows", 21 if $^O =~ /^(MSWin32)$/;
+    skip "DTLSProxy does not support partial messages that are sent when EC is disabled",
+        1 if disabled("ec");
+    skip "DTLSProxy does not work on Windows", 1 if $^O =~ /^(MSWin32)$/;
     run_tests(1);
 }
 
