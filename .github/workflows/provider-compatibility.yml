@@ -109,6 +109,10 @@ jobs:
           #     `tgz' is the name of the tarball use to keep the artifacts of
           #         the build.
           {
+            name: '',
+            dir: HEAD,
+            tgz: HEAD.tar.gz,
+          }, {
             name: openssl-3.0,
             dir: branch-3.0,
             tgz: branch-3.0.tar.gz,
@@ -197,8 +201,7 @@ jobs:
         # caught by cross branch testing before the release.
         tree_a: [ branch-master, branch-3.3, branch-3.2, branch-3.1, branch-3.0,
                   openssl-3.0.0, openssl-3.0.8, openssl-3.0.9, openssl-3.1.2 ]
-        tree_b: [ branch-master, branch-3.3, branch-3.2, branch-3.1,
-                  branch-3.0  ]
+        tree_b: [ HEAD ]
     steps:
       - name: early exit checks
         id: early_exit
