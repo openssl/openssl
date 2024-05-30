@@ -25,7 +25,7 @@ plan skip_all => "$test_name needs the module feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
-plan skip_all => "$test_name needs elliptic curves and diffie-hellman enabled"
+plan skip_all => "$test_name needs elliptic curves or diffie-hellman enabled"
     if disabled("ec") && disabled("dh");
 
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
