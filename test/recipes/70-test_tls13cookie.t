@@ -26,17 +26,19 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs EC and DH enabled"
     if disabled("ec") && disabled("dh");
 
-plan tests => 4;
+my $testcount = 2;
+
+plan tests => 2 * $testcount;
 
 SKIP: {
-    skip "TLS 1.3 is disabled", 2 if disabled("tls1_3");
+    skip "TLS 1.3 is disabled", $testcount if disabled("tls1_3");
     # Run tests with TLS
     run_tests(0);
 }
 
 SKIP: {
-    skip "DTLS 1.3 is disabled", 2 if disabled("dtls1_3");
-    skip "DTLSProxy does not work on Windows", 2 if $^O =~ /^(MSWin32)$/;
+    skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
+    skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
     run_tests(1);
 }
 
@@ -76,7 +78,7 @@ sub run_tests
     $proxy->filter(\&cookie_filter);
     $proxy->serverflags("-curves X25519") if !disabled("ecx");
     $proxy_start_success = $proxy->start();
-    skip "TLSProxy did not start correctly", 2 if $proxy_start_success == 0;
+    skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
     SKIP: {
         skip "ECX disabled", 1, if (disabled("ecx"));
         ok(TLSProxy::Message->success() && $cookieseen == 1, "Cookie seen");
