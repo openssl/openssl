@@ -26,19 +26,21 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs elliptic curves and diffie-hellman enabled"
     if disabled("ec") && disabled("dh");
 
-plan tests => 2;
+my $testcount = 1;
+
+plan tests => 2 * $testcount;
 
 SKIP: {
-    skip "TLS 1.3 is disabled", 1 if disabled("tls1_3");
+    skip "TLS 1.3 is disabled", $testcount if disabled("tls1_3");
     # Run tests with TLS
     run_tests(0);
 }
 
 SKIP: {
-    skip "DTLS 1.3 is disabled", 1 if disabled("dtls1_3");
+    skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
     skip "DTLSProxy does not support partial messages that are sent when EC is disabled",
-        1 if disabled("ec");
-    skip "DTLSProxy does not work on Windows", 1 if $^O =~ /^(MSWin32)$/;
+        $testcount if disabled("ec");
+    skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
     run_tests(1);
 }
 
@@ -70,7 +72,7 @@ sub run_tests
     $proxy->clear();
     $proxy->filter(\&alert_filter);
     $proxy_start_success = $proxy->start();
-    skip "TLSProxy did not start correctly", 1 if $proxy_start_success == 0;
+    skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
 
     my $alert = TLSProxy::Message->alert();
     ok(TLSProxy::Message->fail() && !$alert->server() && !$alert->encrypted(), "Client sends an unencrypted alert");
