@@ -209,93 +209,131 @@ plan skip_all => "$test_name needs compression and algorithms enabled"
     [0,0,0,0]
 );
 
-my $proxy = TLSProxy::Proxy->new(
-    undef,
-    cmdstr(app(["openssl"]), display => 1),
-    srctop_file("apps", "server.pem"),
-    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
-);
+my $testcount = 8;
 
+plan tests => 2 * $testcount;
 
-#Test 1: Client sends cert comp, but no client auth
-$proxy->serverconnects(2);
-$proxy->clear();
-$proxy->serverflags("-no_tx_cert_comp -no_rx_cert_comp");
-# One final skip check
-$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 8;
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::CERT_COMP_CLI_EXTENSION,
-               "Client supports certificate compression");
+SKIP: {
+    skip "TLS 1.3 is disabled", $testcount if disabled("tls1_3");
+    # Run tests with TLS
+    run_tests(0);
+}
 
-#Test 2: Server sends cert comp, no client auth
-$proxy->clear();
-$proxy->clientflags("-no_tx_cert_comp -no_rx_cert_comp");
-$proxy->serverflags("-cert_comp");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::CERT_COMP_SRV_EXTENSION,
-               "Server supports certificate compression, but no client auth");
+SKIP: {
+    skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
+    skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
+    run_tests(1);
+}
 
-#Test 3: Both send cert comp, no client auth
-$proxy->clear();
-$proxy->serverflags("-cert_comp");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::CERT_COMP_SRV_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::CERT_COMP_CLI_EXTENSION
-               | checkhandshake::CERT_COMP_SRV_EXTENSION,
-               "Both support certificate compression, but no client auth");
+sub run_tests
+{
+    my $run_test_as_dtls = shift;
+    my $proxy_start_success = 0;
 
-#Test 4: Both send cert comp, with client auth
-$proxy->clear();
-$proxy->clientflags("-cert ".srctop_file("apps", "server.pem"));
-$proxy->serverflags("-Verify 5 -cert_comp");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::CERT_COMP_BOTH_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::CERT_COMP_CLI_EXTENSION
-               | checkhandshake::CERT_COMP_SRV_EXTENSION,
-               "Both support certificate compression, with client auth");
+    my $proxy;
+    if ($run_test_as_dtls == 1) {
+        $proxy = TLSProxy::Proxy->new_dtls(
+            undef,
+            cmdstr(app([ "openssl" ]), display => 1),
+            srctop_file("apps", "server.pem"),
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+        );
+    }
+    else {
+        $proxy = TLSProxy::Proxy->new(
+            undef,
+            cmdstr(app([ "openssl" ]), display => 1),
+            srctop_file("apps", "server.pem"),
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+        );
+    }
 
-#Test 5: Client-to-server-only certificate compression, with client auth
-$proxy->clear();
-$proxy->clientflags("-no_rx_cert_comp -cert ".srctop_file("apps", "server.pem"));
-$proxy->serverflags("-no_tx_cert_comp -Verify 5 -cert_comp");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::CERT_COMP_CLI_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::CERT_COMP_SRV_EXTENSION,
-               "Client-to-server-only certificate compression, with client auth");
+    $proxy->clear();
 
-#Test 6: Server-to-client-only certificate compression
-$proxy->clear();
-$proxy->clientflags("-no_tx_cert_comp");
-$proxy->serverflags("-no_rx_cert_comp -cert_comp");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::CERT_COMP_SRV_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::CERT_COMP_CLI_EXTENSION,
-               "Server-to-client-only certificate compression");
+    #Test 1: Client sends cert comp, but no client auth
+    $proxy->serverconnects(2);
+    $proxy->clear();
+    $proxy->serverflags("-no_tx_cert_comp -no_rx_cert_comp");
+    # One final skip check
+    $proxy_start_success = $proxy->start();
+    skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_CLI_EXTENSION,
+        "Client supports certificate compression");
 
-#Test 7: Neither side wants to send a compressed cert, but will accept one
-$proxy->clear();
-$proxy->clientflags("-no_tx_cert_comp");
-$proxy->serverflags("-no_tx_cert_comp -cert_comp");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::CERT_COMP_CLI_EXTENSION
-               | checkhandshake::CERT_COMP_SRV_EXTENSION,
-               "Accept but not send compressed certificates");
+    #Test 2: Server sends cert comp, no client auth
+    $proxy->clear();
+    $proxy->clientflags("-no_tx_cert_comp -no_rx_cert_comp");
+    $proxy->serverflags("-cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_SRV_EXTENSION,
+        "Server supports certificate compression, but no client auth");
 
-#Test 8: Neither side wants to receive a compressed cert, but will send one
-$proxy->clear();
-$proxy->clientflags("-no_rx_cert_comp");
-$proxy->serverflags("-no_rx_cert_comp -cert_comp");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS,
-               "Send but not accept compressed certificates");
+    #Test 3: Both send cert comp, no client auth
+    $proxy->clear();
+    $proxy->serverflags("-cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::CERT_COMP_SRV_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_CLI_EXTENSION
+            | checkhandshake::CERT_COMP_SRV_EXTENSION,
+        "Both support certificate compression, but no client auth");
+
+    SKIP: {
+        skip "TLSProxy does not support partial messages for dtls", 2
+            if $run_test_as_dtls == 1;
+        #Test 4: Both send cert comp, with client auth
+        $proxy->clear();
+        $proxy->clientflags("-cert " . srctop_file("apps", "server.pem"));
+        $proxy->serverflags("-Verify 5 -cert_comp");
+        $proxy->start();
+        checkhandshake($proxy, checkhandshake::CERT_COMP_BOTH_HANDSHAKE,
+            checkhandshake::DEFAULT_EXTENSIONS
+                | checkhandshake::CERT_COMP_CLI_EXTENSION
+                | checkhandshake::CERT_COMP_SRV_EXTENSION,
+            "Both support certificate compression, with client auth");
+
+        #Test 5: Client-to-server-only certificate compression, with client auth
+        $proxy->clear();
+        $proxy->clientflags("-no_rx_cert_comp -cert " . srctop_file("apps", "server.pem"));
+        $proxy->serverflags("-no_tx_cert_comp -Verify 5 -cert_comp");
+        $proxy->start();
+        checkhandshake($proxy, checkhandshake::CERT_COMP_CLI_HANDSHAKE,
+            checkhandshake::DEFAULT_EXTENSIONS
+                | checkhandshake::CERT_COMP_SRV_EXTENSION,
+            "Client-to-server-only certificate compression, with client auth");
+    }
+
+    #Test 6: Server-to-client-only certificate compression
+    $proxy->clear();
+    $proxy->clientflags("-no_tx_cert_comp");
+    $proxy->serverflags("-no_rx_cert_comp -cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::CERT_COMP_SRV_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_CLI_EXTENSION,
+        "Server-to-client-only certificate compression");
+
+    #Test 7: Neither side wants to send a compressed cert, but will accept one
+    $proxy->clear();
+    $proxy->clientflags("-no_tx_cert_comp");
+    $proxy->serverflags("-no_tx_cert_comp -cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_CLI_EXTENSION
+            | checkhandshake::CERT_COMP_SRV_EXTENSION,
+        "Accept but not send compressed certificates");
+
+    #Test 8: Neither side wants to receive a compressed cert, but will send one
+    $proxy->clear();
+    $proxy->clientflags("-no_rx_cert_comp");
+    $proxy->serverflags("-no_rx_cert_comp -cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS,
+        "Send but not accept compressed certificates");
+}
