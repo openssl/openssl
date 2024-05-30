@@ -78,48 +78,56 @@ sub run_tests
         );
     }
 
-    #Test 1: A client should fail if the server changes the ciphersuite between the
-    #        HRR and the SH
-    $proxy->clear();
-    $proxy->filter(\&hrr_filter);
-    if (disabled("ec")) {
-        $proxy->serverflags("-curves ffdhe3072");
-    }
-    else {
-        $proxy->serverflags("-curves P-256");
-    }
-    $testtype = CHANGE_HRR_CIPHERSUITE;
-    $proxy_start_success = $proxy->start();
-    skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
-    ok(TLSProxy::Message->fail(), "Server ciphersuite changes");
 
-    #Test 2: It is an error if the client changes the offered ciphersuites so that
-    #        we end up selecting a different ciphersuite between HRR and the SH
-    $proxy->clear();
-    if (disabled("ec")) {
-        $proxy->serverflags("-curves ffdhe3072");
-    }
-    else {
-        $proxy->serverflags("-curves P-384");
-    }
-    $proxy->ciphersuitess("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
-    $testtype = CHANGE_CH1_CIPHERSUITE;
-    $proxy->start();
-    ok(TLSProxy::Message->fail(), "Client ciphersuite changes");
+    SKIP: {
+        skip "TODO: When ECX is disabled running this test with DTLS will hang"
+            ." waiting for s_server to close", 2 if $run_test_as_dtls == 1 && disabled("ecx");
+        #Test 1: A client should fail if the server changes the ciphersuite between the
+        #        HRR and the SH
+        $proxy->clear();
+        $proxy->filter(\&hrr_filter);
+        if (disabled("ec")) {
+            $proxy->serverflags("-curves ffdhe3072");
+        }
+        else {
+            $proxy->serverflags("-curves P-256");
+        }
+        $testtype = CHANGE_HRR_CIPHERSUITE;
+        $proxy_start_success = $proxy->start();
+        skip "TLSProxy did not start correctly", 2 if $proxy_start_success == 0;
+        ok(TLSProxy::Message->fail(), "Server ciphersuite changes");
 
-    #Test 3: A client should fail with unexpected_message alert if the server
-    #        sends more than 1 HRR
-    $fatal_alert = 0;
-    $proxy->clear();
-    if (disabled("ec")) {
-        $proxy->serverflags("-curves ffdhe3072");
+        #Test 2: It is an error if the client changes the offered ciphersuites so that
+        #        we end up selecting a different ciphersuite between HRR and the SH
+        $proxy->clear();
+        if (disabled("ec")) {
+            $proxy->serverflags("-curves ffdhe3072");
+        }
+        else {
+            $proxy->serverflags("-curves P-384");
+        }
+        $proxy->ciphersuitess("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
+        $testtype = CHANGE_CH1_CIPHERSUITE;
+        $proxy->start();
+        ok(TLSProxy::Message->fail(), "Client ciphersuite changes");
     }
-    else {
-        $proxy->serverflags("-curves P-384");
+    SKIP: {
+        skip "DTLSProxy does not support partial messages that are sent when ECX is disabled",
+            1 if $run_test_as_dtls == 1 && disabled("ecx");
+        #Test 3: A client should fail with unexpected_message alert if the server
+        #        sends more than 1 HRR
+        $fatal_alert = 0;
+        $proxy->clear();
+        if (disabled("ec")) {
+            $proxy->serverflags("-curves ffdhe3072");
+        }
+        else {
+            $proxy->serverflags("-curves P-384");
+        }
+        $testtype = DUPLICATE_HRR;
+        $proxy->start();
+        ok($fatal_alert, "Server duplicated HRR");
     }
-    $testtype = DUPLICATE_HRR;
-    $proxy->start();
-    ok($fatal_alert, "Server duplicated HRR");
 
     #Test 4: If the client sends a group that is in the supported_groups list but
     #        otherwise not valid (e.g. not suitable for TLSv1.3) we should reject it
