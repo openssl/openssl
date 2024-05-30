@@ -25,18 +25,14 @@ plan skip_all => "$test_name needs the module feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
-plan skip_all => "$test_name needs TLSv1.3 enabled"
-    if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
+plan skip_all => "$test_name needs elliptic curves and diffie-hellman enabled"
+    if disabled("ec") && disabled("dh");
 
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
 
-my $proxy = TLSProxy::Proxy->new(
-    undef,
-    cmdstr(app(["openssl"]), display => 1),
-    srctop_file("apps", "server.pem"),
-    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
-    have_IPv6()
-);
+my $testcount = 5;
+
+plan tests => 2 * $testcount;
 
 use constant {
     PSK_LAST_FIRST_CH => 0,
@@ -44,102 +40,147 @@ use constant {
     TOO_MANY_PSKS => 2
 };
 
-#Most PSK tests are done in test_ssl_new. This tests various failure scenarios
-#around PSK
-
-#Test 1: First get a session
-(undef, my $session) = tempfile();
-$proxy->clientflags("-sess_out ".$session);
-$proxy->serverflags("-servername localhost");
-$proxy->sessionfile($session);
-$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 7;
-ok(TLSProxy::Message->success(), "Initial connection");
-
-#Test 2: Attempt a resume with PSK not in last place. Should fail
-$proxy->clear();
-$proxy->clientflags("-sess_in ".$session);
-$proxy->filter(\&modify_psk_filter);
-my $testtype = PSK_LAST_FIRST_CH;
-$proxy->start();
-ok(TLSProxy::Message->fail(), "PSK not last");
-
-#Test 3: Attempt a resume after an HRR where PSK hash matches selected
-#        ciphersuite. Should see PSK on second ClientHello
-$proxy->clear();
-$proxy->clientflags("-sess_in ".$session);
-if (disabled("ec")) {
-    $proxy->serverflags("-curves ffdhe3072");
-} else {
-    $proxy->serverflags("-curves P-384");
+SKIP: {
+    skip "TLS 1.3 is disabled", $testcount if disabled("tls1_3");
+    # Run tests with TLS
+    run_tests(0);
 }
-$proxy->filter(undef);
-$proxy->start();
-#Check if the PSK is present in the second ClientHello
-my $ch2 = ${$proxy->message_list}[2];
-my $ch2seen = defined $ch2 && $ch2->mt() == TLSProxy::Message::MT_CLIENT_HELLO;
-my $pskseen = $ch2seen
-              && defined ${$ch2->{extension_data}}{TLSProxy::Message::EXT_PSK};
-ok($pskseen, "PSK hash matches");
 
-#Test 4: Attempt a resume after an HRR where PSK hash does not match selected
-#        ciphersuite. Should not see PSK on second ClientHello
-$proxy->clear();
-$proxy->clientflags("-sess_in ".$session);
-$proxy->filter(\&modify_psk_filter);
-if (disabled("ec")) {
-    $proxy->serverflags("-curves ffdhe3072");
-} else {
-    $proxy->serverflags("-curves P-384");
+SKIP: {
+    skip "TODO(DTLSv1.3): When enabling sessionfile and dtls TLSProxy hangs after"
+         ." the handshake.", $testcount;
+    skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
+    skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
+    run_tests(1);
 }
-$proxy->ciphersuitesc("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
-$proxy->ciphersuitess("TLS_AES_256_GCM_SHA384");
-#We force an early failure because TLS Proxy doesn't actually support
-#TLS_AES_256_GCM_SHA384. That doesn't matter for this test though.
-$testtype = ILLEGAL_EXT_SECOND_CH;
-$proxy->start();
-#Check if the PSK is present in the second ClientHello
-$ch2 = ${$proxy->message_list}[2];
-$ch2seen = defined $ch2 && $ch2->mt() == TLSProxy::Message::MT_CLIENT_HELLO;
-$pskseen = $ch2seen
-           && defined ${$ch2->extension_data}{TLSProxy::Message::EXT_PSK};
-ok($ch2seen && !$pskseen, "PSK hash does not match");
 
-#Test 5: Attempt a resume without a sig agls extension. Should succeed because
-#        sig algs is not needed in a resumption.
-$proxy->clear();
-$proxy->clientflags("-sess_in ".$session);
-$proxy->filter(\&remove_sig_algs_filter);
-$proxy->start();
-ok(TLSProxy::Message->success(), "Remove sig algs");
+my $testtype = -1;
 
-#Test 6: Attempt a resume with too many PSKs. Handshake should still succeed.
-#        It will just ignore the PSKs.
-$proxy->clear();
-$proxy->clientflags("-sess_in ".$session);
-$proxy->filter(\&modify_psk_filter);
-$testtype = TOO_MANY_PSKS;
-$proxy->start();
-ok(TLSProxy::Message->success(), "Too many PSKs");
+sub run_tests
+{
+    my $run_test_as_dtls = shift;
+    my $proxy_start_success = 0;
 
-my $proxy2 = TLSProxy::Proxy->new(
-    undef,
-    cmdstr(app(["openssl"]), display => 1),
-    undef, # Deliberately set to no_cert to force a PSK-only server
-    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
-    have_IPv6()
-);
+    my $proxy;
+    if ($run_test_as_dtls == 1) {
+        $proxy = TLSProxy::Proxy->new_dtls(
+            undef,
+            cmdstr(app([ "openssl" ]), display => 1),
+            srctop_file("apps", "server.pem"),
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
+            have_IPv6()
+        );
+    }
+    else {
+        $proxy = TLSProxy::Proxy->new(
+            undef,
+            cmdstr(app([ "openssl" ]), display => 1),
+            srctop_file("apps", "server.pem"),
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
+            have_IPv6()
+        );
+    }
 
-#Test 7: Attempt an invalid resume, with a server that can only do PSK.
-#        Should be treated the same as an invalid binder (decrypt_error)
-#        as per RFC8446 Appendix E.6
-$proxy2->clear();
-$proxy2->clientflags("-sess_in ".$session);
-$proxy2->serverflags("-psk ffeeddccbbaa99887766554433221100 -no_ticket");
-$proxy2->start() or die "Failed to start proxy2";
-ok(is_decode_error_server_alert(), "Bad PSK with no handshake fallback");
+    #Most PSK tests are done in test_ssl_new. This tests various failure scenarios
+    #around PSK
 
-unlink $session;
+    #Test 1: First get a session
+    $proxy->clear();
+    (undef, my $session) = tempfile();
+    $proxy->clientflags("-sess_out " . $session);
+    $proxy->serverflags("-servername localhost");
+    $proxy->sessionfile($session);
+    $proxy_start_success = $proxy->start();
+    skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
+    ok(TLSProxy::Message->success(), "Initial connection");
+
+    #Test 2: Attempt a resume with PSK not in last place. Should fail
+    $proxy->clear();
+    $proxy->clientflags("-sess_in " . $session);
+    $proxy->filter(\&modify_psk_filter);
+    $testtype = PSK_LAST_FIRST_CH;
+    $proxy->start();
+    ok(TLSProxy::Message->fail(), "PSK not last");
+
+    #Test 3: Attempt a resume after an HRR where PSK hash matches selected
+    #        ciphersuite. Should see PSK on second ClientHello
+    $proxy->clear();
+    $proxy->clientflags("-sess_in " . $session);
+    if (disabled("ec")) {
+        $proxy->serverflags("-curves ffdhe3072");
+    }
+    else {
+        $proxy->serverflags("-curves P-384");
+    }
+    $proxy->filter(undef);
+    $proxy->start();
+    #Check if the PSK is present in the second ClientHello
+    my $ch2 = ${$proxy->message_list}[2];
+    my $ch2seen = defined $ch2 && $ch2->mt() == TLSProxy::Message::MT_CLIENT_HELLO;
+    my $pskseen = $ch2seen
+        && defined ${$ch2->{extension_data}}{TLSProxy::Message::EXT_PSK};
+    ok($pskseen, "PSK hash matches");
+
+    #Test 4: Attempt a resume after an HRR where PSK hash does not match selected
+    #        ciphersuite. Should not see PSK on second ClientHello
+    $proxy->clear();
+    $proxy->clientflags("-sess_in " . $session);
+    $proxy->filter(\&modify_psk_filter);
+    if (disabled("ec")) {
+        $proxy->serverflags("-curves ffdhe3072");
+    }
+    else {
+        $proxy->serverflags("-curves P-384");
+    }
+    $proxy->ciphersuitesc("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
+    $proxy->ciphersuitess("TLS_AES_256_GCM_SHA384");
+    #We force an early failure because TLS Proxy doesn't actually support
+    #TLS_AES_256_GCM_SHA384. That doesn't matter for this test though.
+    $testtype = ILLEGAL_EXT_SECOND_CH;
+    $proxy->start();
+    #Check if the PSK is present in the second ClientHello
+    $ch2 = ${$proxy->message_list}[2];
+    $ch2seen = defined $ch2 && $ch2->mt() == TLSProxy::Message::MT_CLIENT_HELLO;
+    $pskseen = $ch2seen
+        && defined ${$ch2->extension_data}{TLSProxy::Message::EXT_PSK};
+    ok($ch2seen && !$pskseen, "PSK hash does not match");
+
+    #Test 5: Attempt a resume without a sig agls extension. Should succeed because
+    #        sig algs is not needed in a resumption.
+    $proxy->clear();
+    $proxy->clientflags("-sess_in " . $session);
+    $proxy->filter(\&remove_sig_algs_filter);
+    $proxy->start();
+    ok(TLSProxy::Message->success(), "Remove sig algs");
+
+    #Test 6: Attempt a resume with too many PSKs. Handshake should still succeed.
+    #        It will just ignore the PSKs.
+    $proxy->clear();
+    $proxy->clientflags("-sess_in ".$session);
+    $proxy->filter(\&modify_psk_filter);
+    $testtype = TOO_MANY_PSKS;
+    $proxy->start();
+    ok(TLSProxy::Message->success(), "Too many PSKs");
+
+    my $proxy2 = TLSProxy::Proxy->new(
+        undef,
+        cmdstr(app(["openssl"]), display => 1),
+        undef, # Deliberately set to no_cert to force a PSK-only server
+        (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
+        have_IPv6()
+    );
+
+    #Test 7: Attempt an invalid resume, with a server that can only do PSK.
+    #        Should be treated the same as an invalid binder (decrypt_error)
+    #        as per RFC8446 Appendix E.6
+    $proxy2->clear();
+    $proxy2->clientflags("-sess_in ".$session);
+    $proxy2->serverflags("-psk ffeeddccbbaa99887766554433221100 -no_ticket");
+    $proxy2->start() or die "Failed to start proxy2";
+    ok(is_decode_error_server_alert(), "Bad PSK with no handshake fallback");
+
+    unlink $session;
+}
 
 sub is_decode_error_server_alert
 {
