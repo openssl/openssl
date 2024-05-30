@@ -256,6 +256,3 @@ doc-nits
 # LSP (Language Server Protocol) support
 .cache/
 compile_commands.json
-**/.DS_Store
-.vscode/settings.json
-.vscode/tasks.json
