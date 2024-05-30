@@ -26,7 +26,7 @@ plan skip_all => "$test_name needs the module feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
-plan skip_all => "$test_name needs EC and DH enabled"
+plan skip_all => "$test_name needs EC or DH enabled"
     if disabled("ec") && disabled("dh");
 
 my $testcount = 2;
