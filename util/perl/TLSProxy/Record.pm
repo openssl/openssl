@@ -307,7 +307,7 @@ sub decryptETM
     my ($self) = shift;
 
     my $data = $self->data;
-$self->{isdtls};
+
     if((!$self->{isdtls} && $self->version >= VERS_TLS_1_1)
        || ($self->{isdtls} && $self->version <= VERS_DTLS_1)) {
         #TLS1.1+ has an explicit IV. Throw it away
