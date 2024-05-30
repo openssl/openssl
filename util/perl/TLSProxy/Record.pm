@@ -383,25 +383,17 @@ sub reconstruct_record
     }
     $self->{sent} = 1;
 
+    my $content_type = (TLSProxy::Proxy->is_tls13() && $self->encrypted)
+                       ? $self->outer_content_type : $self->content_type;
     if($self->{isdtls}) {
         my $seqhi = ($self->seq >> 32) & 0xffff;
         my $seqmi = ($self->seq >> 16) & 0xffff;
         my $seqlo = ($self->seq >> 0) & 0xffff;
-        $data = pack('Cnnnnnn', $self->content_type, $self->version,
+        $data = pack('Cnnnnnn', $content_type, $self->version,
                      $self->epoch, $seqhi, $seqmi, $seqlo, $self->len);
     } else {
-        my $content_type = (TLSProxy::Proxy->is_tls13() && $self->encrypted)
-                           ? $self->outer_content_type : $self->content_type;
-        if($self->{isdtls}) {
-            my $seqhi = ($self->seq >> 32) & 0xffff;
-            my $seqmi = ($self->seq >> 16) & 0xffff;
-            my $seqlo = ($self->seq >> 0) & 0xffff;
-            $data = pack('Cnnnnnn', $content_type, $self->version,
-                         $self->epoch, $seqhi, $seqmi, $seqlo, $self->len);
-        } else {
-            $data = pack('Cnn', $content_type, $self->version,
-                         $self->len);
-        }
+        $data = pack('Cnn', $content_type, $self->version,
+                     $self->len);
     }
 
     $data .= $self->data;
