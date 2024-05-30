@@ -311,7 +311,9 @@ outer CH with no SNI at all.
 int SSL_ech_set_server_names(SSL *s, const char *inner_name,
                              const char *outer_name, int no_outer);
 int SSL_ech_set_outer_server_name(SSL *s, const char *outer_name, int no_outer);
-int SSL_CTX_ech_set_outer_alpn_protos(SSL *s, const unsigned char *protos,
+int SSL_ech_set_outer_alpn_protos(SSL *s, const unsigned char *protos,
+                                  unsigned int protos_len);
+int SSL_CTX_ech_set_outer_alpn_protos(SSL_CTX *s, const unsigned char *protos,
                                       unsigned int protos_len);
 ```
 
