@@ -321,7 +321,11 @@ ctr32_encrypt_blocks_256:
     addi $KEYP, $KEYP, 16
     @{[vle32_v $V15, $KEYP]}
 
+    slli $T1, $LEN32, 2
     @{[init_aes_ctr_input]}
+    @{[vsetvli $VL, $T1, "e8", "m4", "ta", "mu"]}
+    sub $T1, $T1, $VL
+
 
     ##### AES body
     j 2f
@@ -329,9 +333,12 @@ ctr32_encrypt_blocks_256:
     @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "mu"]}
     # Increase ctr in v16.
     @{[vadd_vx $V16, $V16, $CTR, $MASK]}
+    @{[vsetvli $VL, $T1, "e8", "m4", "ta", "mu"]}
+    sub $T1, $T1, $VL
 2:
     # Load plaintext into v20
-    @{[vle32_v $V20, $INP]}
+    @{[vle8_v $V20, $INP]}
+    @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "mu"]}
     slli $T0, $VL, 2
     srli $CTR, $VL, 2
     sub $LEN32, $LEN32, $VL
