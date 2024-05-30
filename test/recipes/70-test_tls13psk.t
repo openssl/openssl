@@ -30,7 +30,7 @@ plan skip_all => "$test_name needs elliptic curves and diffie-hellman enabled"
 
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
 
-my $testcount = 5;
+my $testcount = 7;
 
 plan tests => 2 * $testcount;
 
