@@ -152,9 +152,10 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
     } else if (ossl_assert(type == SSL3_RT_CHANGE_CIPHER_SPEC)) {
         msg_type = SSL3_MT_CCS;
         msg_len = 0; /* SSL3_RT_CHANGE_CIPHER_SPEC */
-    } else
+    } else {
         /* Other record types are not supported */
         return -1;
+    }
 
     if (!dtls1_query_mtu(s))
         return -1;
