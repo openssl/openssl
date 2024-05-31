@@ -11741,6 +11741,142 @@ static int test_multi_resume(int idx)
     return testresult;
 }
 
+struct next_proto_st {
+    int serverlen;
+    unsigned char server[40];
+    int clientlen;
+    unsigned char client[40];
+    int expected_ret;
+    size_t selectedlen;
+    unsigned char selected[40];
+} next_proto_tests[] = {
+    {
+        4, { 3, 'a', 'b', 'c' },
+        4, { 3, 'a', 'b', 'c' },
+        OPENSSL_NPN_NEGOTIATED,
+        3, { 'a', 'b', 'c' }
+    },
+    {
+        7, { 3, 'a', 'b', 'c', 2, 'a', 'b' },
+        4, { 3, 'a', 'b', 'c' },
+        OPENSSL_NPN_NEGOTIATED,
+        3, { 'a', 'b', 'c' }
+    },
+    {
+        7, { 2, 'a', 'b', 3, 'a', 'b', 'c', },
+        4, { 3, 'a', 'b', 'c' },
+        OPENSSL_NPN_NEGOTIATED,
+        3, { 'a', 'b', 'c' }
+    },
+    {
+        4, { 3, 'a', 'b', 'c' },
+        7, { 3, 'a', 'b', 'c', 2, 'a', 'b', },
+        OPENSSL_NPN_NEGOTIATED,
+        3, { 'a', 'b', 'c' }
+    },
+    {
+        4, { 3, 'a', 'b', 'c' },
+        7, { 2, 'a', 'b', 3, 'a', 'b', 'c'},
+        OPENSSL_NPN_NEGOTIATED,
+        3, { 'a', 'b', 'c' }
+    },
+    {
+        7, { 2, 'b', 'c', 3, 'a', 'b', 'c' },
+        7, { 2, 'a', 'b', 3, 'a', 'b', 'c'},
+        OPENSSL_NPN_NEGOTIATED,
+        3, { 'a', 'b', 'c' }
+    },
+    {
+        10, { 2, 'b', 'c', 3, 'a', 'b', 'c', 2, 'a', 'b' },
+        7, { 2, 'a', 'b', 3, 'a', 'b', 'c'},
+        OPENSSL_NPN_NEGOTIATED,
+        3, { 'a', 'b', 'c' }
+    },
+    {
+        4, { 3, 'b', 'c', 'd' },
+        4, { 3, 'a', 'b', 'c' },
+        OPENSSL_NPN_NO_OVERLAP,
+        3, { 'a', 'b', 'c' }
+    },
+    {
+        0, { 0 },
+        4, { 3, 'a', 'b', 'c' },
+        OPENSSL_NPN_NO_OVERLAP,
+        3, { 'a', 'b', 'c' }
+    },
+    {
+        -1, { 0 },
+        4, { 3, 'a', 'b', 'c' },
+        OPENSSL_NPN_NO_OVERLAP,
+        3, { 'a', 'b', 'c' }
+    },
+    {
+        4, { 3, 'a', 'b', 'c' },
+        0, { 0 },
+        OPENSSL_NPN_NO_OVERLAP,
+        0, { 0 }
+    },
+    {
+        4, { 3, 'a', 'b', 'c' },
+        -1, { 0 },
+        OPENSSL_NPN_NO_OVERLAP,
+        0, { 0 }
+    },
+    {
+        3, { 3, 'a', 'b', 'c' },
+        4, { 3, 'a', 'b', 'c' },
+        OPENSSL_NPN_NO_OVERLAP,
+        3, { 'a', 'b', 'c' }
+    },
+    {
+        4, { 3, 'a', 'b', 'c' },
+        3, { 3, 'a', 'b', 'c' },
+        OPENSSL_NPN_NO_OVERLAP,
+        0, { 0 }
+    }
+};
+
+static int test_select_next_proto(int idx)
+{
+    struct next_proto_st *np = &next_proto_tests[idx];
+    int ret = 0;
+    unsigned char *out, *client, *server;
+    unsigned char outlen;
+    unsigned int clientlen, serverlen;
+
+    if (np->clientlen == -1) {
+        client = NULL;
+        clientlen = 0;
+    } else {
+        client = np->client;
+        clientlen = (unsigned int)np->clientlen;
+    }
+    if (np->serverlen == -1) {
+        server = NULL;
+        serverlen = 0;
+    } else {
+        server = np->server;
+        serverlen = (unsigned int)np->serverlen;
+    }
+
+    if (!TEST_int_eq(SSL_select_next_proto(&out, &outlen, server, serverlen,
+                                           client, clientlen),
+                     np->expected_ret))
+        goto err;
+
+    if (np->selectedlen == 0) {
+        if (!TEST_ptr_null(out) || !TEST_uchar_eq(outlen, 0))
+            goto err;
+    } else {
+        if (!TEST_mem_eq(out, outlen, np->selected, np->selectedlen))
+            goto err;
+    }
+
+    ret = 1;
+ err:
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -12053,6 +12189,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_handshake_retry, 16);
     ADD_TEST(test_data_retry);
     ADD_ALL_TESTS(test_multi_resume, 5);
+    ADD_ALL_TESTS(test_select_next_proto, OSSL_NELEM(next_proto_tests));
     return 1;
 
  err:
