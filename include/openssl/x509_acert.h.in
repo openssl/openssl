@@ -153,4 +153,40 @@ int OSSL_IETF_ATTR_SYNTAX_add1_value(OSSL_IETF_ATTR_SYNTAX *a, int type,
 		                             void *data);
 int OSSL_IETF_ATTR_SYNTAX_print(BIO *bp, OSSL_IETF_ATTR_SYNTAX *a, int indent);
 
+struct TARGET_CERT_st {
+    OSSL_ISSUER_SERIAL *targetCertificate;
+    GENERAL_NAME *targetName;
+    OSSL_OBJECT_DIGEST_INFO *certDigestInfo;
+};
+
+typedef struct TARGET_CERT_st OSSL_TARGET_CERT;
+
+# define OSSL_TGT_TARGET_NAME  0
+# define OSSL_TGT_TARGET_GROUP 1
+# define OSSL_TGT_TARGET_CERT  2
+
+typedef struct TARGET_st {
+    int type;
+    union {
+        GENERAL_NAME *targetName;
+        GENERAL_NAME *targetGroup;
+        OSSL_TARGET_CERT *targetCert;
+    } choice;
+} OSSL_TARGET;
+
+typedef STACK_OF(OSSL_TARGET) OSSL_TARGETS;
+typedef STACK_OF(OSSL_TARGETS) OSSL_TARGETING_INFORMATION;
+
+{-
+    generate_stack_macros("OSSL_TARGET");
+-}
+
+{-
+    generate_stack_macros("OSSL_TARGETS");
+-}
+
+DECLARE_ASN1_FUNCTIONS(OSSL_TARGET)
+DECLARE_ASN1_FUNCTIONS(OSSL_TARGETS)
+DECLARE_ASN1_FUNCTIONS(OSSL_TARGETING_INFORMATION)
+
 #endif

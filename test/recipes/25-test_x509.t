@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 51;
+plan tests => 60;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -142,6 +142,35 @@ cert_contains(srctop_file(@certs, "ext-singleUse.pem"),
 cert_contains(srctop_file(@certs, "ext-indirectIssuer.pem"),
               "Indirect Issuer",
               1, 'X.509 Indirect Issuer');
+
+my $tgt_info_cert = srctop_file(@certs, "ext-targetingInformation.pem");
+cert_contains($tgt_info_cert,
+              "AC Targeting",
+              1, 'X.509 Targeting Information Extension');
+cert_contains($tgt_info_cert,
+              "Targets:",
+              1, 'X.509 Targeting Information Targets');
+cert_contains($tgt_info_cert,
+              "Target:",
+              1, 'X.509 Targeting Information Target');
+cert_contains($tgt_info_cert,
+              "Target Name: DirName:CN = W",
+              1, 'X.509 Targeting Information Target Name');
+cert_contains($tgt_info_cert,
+              "Target Group: DNS:wildboarsoftware.com",
+              1, 'X.509 Targeting Information Target Name');
+cert_contains($tgt_info_cert,
+              "Issuer Names:",
+              1, 'X.509 Targeting Information Issuer Names');
+cert_contains($tgt_info_cert,
+              "Issuer Serial: 01020304",
+              1, 'X.509 Targeting Information Issuer Serial');
+cert_contains($tgt_info_cert,
+              "Issuer UID: B0",
+              1, 'X.509 Targeting Information Issuer UID');
+cert_contains($tgt_info_cert,
+              "Digest Type: Public Key",
+              1, 'X.509 Targeting Information Object Digest Type');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
