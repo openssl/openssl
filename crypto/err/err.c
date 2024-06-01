@@ -310,7 +310,7 @@ int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
 
-    if (!CRYPTO_THREAD_write_lock(err_string_lock))
+    if (err_string_lock == NULL || !CRYPTO_THREAD_write_lock(err_string_lock))
         return 0;
     /*
      * We don't need to ERR_PACK the lib, since that was done (to
