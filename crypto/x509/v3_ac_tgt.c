@@ -119,10 +119,9 @@ static int i2r_OBJECT_DIGEST_INFO(X509V3_EXT_METHOD *method,
     case (OSSL_ODI_TYPE_PUBLIC_KEY_CERT):
         BIO_printf(out, "%*sDigest Type: Public Key Certificate\n", indent, "");
         break;
-    case (OSSL_ODI_TYPE_OTHER): {
+    case (OSSL_ODI_TYPE_OTHER):
         BIO_printf(out, "%*sDigest Type: Other\n", indent, "");
         break;
-    }
     }
     if (odi->otherObjectTypeID != NULL) {
         BIO_printf(out, "%*sDigest Type Identifier: ", indent, "");
@@ -204,6 +203,7 @@ static int i2r_TARGETS(X509V3_EXT_METHOD *method,
 {
     int i;
     OSSL_TARGET *target;
+
     for (i = 0; i < sk_OSSL_TARGET_num(targets); i++) {
         BIO_printf(out, "%*sTarget:\n", indent, "");
         target = sk_OSSL_TARGET_value(targets, i);
@@ -218,6 +218,7 @@ static int i2r_TARGETING_INFORMATION(X509V3_EXT_METHOD *method,
 {
     int i;
     OSSL_TARGETS *targets;
+
     for (i = 0; i < sk_OSSL_TARGETS_num(tinfo); i++) {
         BIO_printf(out, "%*sTargets:\n", indent, "");
         targets = sk_OSSL_TARGETS_value(tinfo, i);
