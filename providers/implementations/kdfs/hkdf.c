@@ -194,6 +194,24 @@ static size_t kdf_hkdf_size(KDF_HKDF *ctx)
     return sz;
 }
 
+#ifdef FIPS_MODULE
+static int fips_hkdf_key_check_passed(KDF_HKDF *ctx)
+{
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    int key_approved = ossl_kdf_check_key_size(ctx->key_len);
+
+    if (!key_approved) {
+        if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
+                                         libctx, "HKDF", "Key size",
+                                         FIPS_hkdf_key_check)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+    return 1;
+}
+#endif
+
 static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen,
                            const OSSL_PARAM params[])
 {
@@ -217,6 +235,11 @@ static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
+
+#ifdef FIPS_MODULE
+    if (!fips_hkdf_key_check_passed(ctx))
+        return 0;
+#endif
 
     switch (ctx->mode) {
     case EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND:
@@ -310,6 +333,10 @@ static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, params,
+                                     OSSL_KDF_PARAM_FIPS_KEY_CHECK))
+        return 0;
+
     if (!hkdf_common_set_ctx_params(ctx, params))
         return 0;
 
@@ -327,6 +354,7 @@ static const OSSL_PARAM *kdf_hkdf_settable_ctx_params(ossl_unused void *ctx,
     static const OSSL_PARAM known_settable_ctx_params[] = {
         HKDF_COMMON_SETTABLES,
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0),
+        OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_KEY_CHECK)
         OSSL_PARAM_END
     };
     return known_settable_ctx_params;
@@ -368,6 +396,9 @@ static int kdf_hkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (!hkdf_common_get_ctx_params(ctx, params))
         return 0;
 
+    if (!OSSL_FIPS_IND_GET_CTX_PARAM(ctx, params))
+        return 0;
+
     return 1;
 }
 
@@ -376,6 +407,7 @@ static const OSSL_PARAM *kdf_hkdf_gettable_ctx_params(ossl_unused void *ctx,
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         HKDF_COMMON_GETTABLES,
+        OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
         OSSL_PARAM_END
     };
     return known_gettable_ctx_params;
@@ -730,6 +762,42 @@ static int fips_tls1_3_digest_check_passed(KDF_HKDF *ctx, const EVP_MD *md)
     }
     return 1;
 }
+
+/*
+ * Calculate the correct length of the secret key.
+ *
+ * RFC 8446:
+ *   If a given secret is not available, then the 0-value consisting of a
+ *   string of Hash.length bytes set to zeros is used.
+ */
+static size_t fips_tls1_3_key_size(KDF_HKDF *ctx)
+{
+    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+    size_t key_size = 0;
+
+    if (ctx->key != NULL)
+        key_size = ctx->key_len;
+    else if (md != NULL)
+        key_size = EVP_MD_size(md);
+
+    return key_size;
+}
+
+static int fips_tls1_3_key_check_passed(KDF_HKDF *ctx)
+{
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    int key_approved = ossl_kdf_check_key_size(fips_tls1_3_key_size(ctx));
+
+    if (!key_approved) {
+        if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE1,
+                                         libctx, "TLS13 KDF", "Key size",
+                                         FIPS_tls13_kdf_key_check)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+    return 1;
+}
 #endif
 
 static int kdf_tls1_3_derive(void *vctx, unsigned char *key, size_t keylen,
@@ -746,6 +814,11 @@ static int kdf_tls1_3_derive(void *vctx, unsigned char *key, size_t keylen,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
+
+#ifdef FIPS_MODULE
+    if (!fips_tls1_3_key_check_passed(ctx))
+        return 0;
+#endif
 
     switch (ctx->mode) {
     default:
@@ -779,6 +852,9 @@ static int kdf_tls1_3_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, params,
                                      OSSL_KDF_PARAM_FIPS_DIGEST_CHECK))
+        return 0;
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE1, params,
+                                     OSSL_KDF_PARAM_FIPS_KEY_CHECK))
         return 0;
 
     if (!hkdf_common_set_ctx_params(ctx, params))
@@ -833,6 +909,7 @@ static const OSSL_PARAM *kdf_tls1_3_settable_ctx_params(ossl_unused void *ctx,
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_LABEL, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_DATA, NULL, 0),
         OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_DIGEST_CHECK)
+        OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_KEY_CHECK)
         OSSL_PARAM_END
     };
     return known_settable_ctx_params;

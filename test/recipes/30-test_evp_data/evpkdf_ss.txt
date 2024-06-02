@@ -280,36 +280,42 @@ Ctrl.hexsecret = hexsecret:ebe28edbae5a410b87a479243db3f690
 Ctrl.hexinfo = hexinfo:e60dd8b28228ce5b9be74d3b
 Output = b4a23963e07f485382cb358a493daec1759ac7043dbeac37152c6ddf105031f0f239f270b7f30616166f10e5d2b4cb11ba8bf4ba3f2276885abfbc3e811a568d480d9192
 
+Availablein = default
 KDF = SSKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:d7e6
 Ctrl.hexinfo = hexinfo:0bbe1fa8722023d7c3da4fff
 Output = 31e798e9931b612a3ad1b9b1008faa8c
 
+Availablein = default
 KDF = SSKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:4646779d
 Ctrl.hexinfo = hexinfo:0bbe1fa8722023d7c3da4fff
 Output = 139f68bcca879b490e268e569087d04d
 
+Availablein = default
 KDF = SSKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:d9811c81d4c6
 Ctrl.hexinfo = hexinfo:0bbe1fa8722023d7c3da4fff
 Output = 914dc4f09cb633a76e6c389e04c64485
 
+Availablein = default
 KDF = SSKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:8838f9d99ec46f09
 Ctrl.hexinfo = hexinfo:0bbe1fa8722023d7c3da4fff
 Output = 4f07dfb6f7a5bf348689e08b2e29c948
 
+Availablein = default
 KDF = SSKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:3e0939b33f34e779f30e
 Ctrl.hexinfo = hexinfo:0bbe1fa8722023d7c3da4fff
 Output = b42c7a98c23be19d1187ff960e87557f
 
+Availablein = default
 KDF = SSKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:f36230cacca4d245d303058c
@@ -781,6 +787,7 @@ Ctrl.hexsalt = hexsalt:0ad52c9357c85e4781296a36ca72039c
 Ctrl.hexinfo = hexinfo:c67c389580128f18f6cf8592
 Output = be32e7d306d891028be088f213f9f947c50420d9b5a12ca69818dd9995dedd8e6137c7104d67f2ca90915dda0ab68af2f355b904f9eb0388b5b7fe193c9546d45849133d
 
+Availablein = default
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
@@ -789,6 +796,7 @@ Ctrl.hexsalt = hexsalt:3638271ccd68a25dc24ecddd39ef3f89
 Ctrl.hexinfo = hexinfo:348a37a27ef1282f5f020dcc
 Output = 3f661ec46fcc1e110b88f33ee7dbc308
 
+Availablein = default
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
@@ -797,6 +805,7 @@ Ctrl.hexsalt = hexsalt:3638271ccd68a25dc24ecddd39ef3f89
 Ctrl.hexinfo = hexinfo:348a37a27ef1282f5f020dcc
 Output = 73ccb357554ca44967d507518262e38d
 
+Availablein = default
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
@@ -805,6 +814,7 @@ Ctrl.hexsalt = hexsalt:3638271ccd68a25dc24ecddd39ef3f89
 Ctrl.hexinfo = hexinfo:348a37a27ef1282f5f020dcc
 Output = c4f1cf190980b6777bb35107654b25f9
 
+Availablein = default
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
@@ -813,6 +823,7 @@ Ctrl.hexsalt = hexsalt:3638271ccd68a25dc24ecddd39ef3f89
 Ctrl.hexinfo = hexinfo:348a37a27ef1282f5f020dcc
 Output = ddb2d7475d00cc65bff6904b4f0b54ba
 
+Availablein = default
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256
@@ -821,6 +832,7 @@ Ctrl.hexsalt = hexsalt:3638271ccd68a25dc24ecddd39ef3f89
 Ctrl.hexinfo = hexinfo:348a37a27ef1282f5f020dcc
 Output = 1100a6049ae9d8be01ab3829754cecc2
 
+Availablein = default
 KDF = SSKDF
 Ctrl.mac = mac:HMAC
 Ctrl.digest = digest:SHA256

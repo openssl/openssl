@@ -80,14 +80,14 @@ A single char of value 70 (ASCII char 'F').
 
 =back
 
-=item "fips-indicator" (B<OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR>) <int>
+=item "fips-indicator" (B<OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
 
 A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
 This may be used after calling EVP_KDF_derive. It returns 0 if any "***-check"
 related parameter is set to 0 and the check fails.
 This option is used by the OpenSSL FIPS provider.
 
-=item "digest-check" (B<OSSL_KDF_PARAM_FIPS_DIGEST_CHECK>) <int>
+=item "digest-check" (B<OSSL_KDF_PARAM_FIPS_DIGEST_CHECK>) <integer>
 
 The default value of 1 causes an error during EVP_KDF_derive() if
 used digest is not approved.
@@ -98,6 +98,15 @@ set to 0.
 
 According to SP 800-135r1, the following are approved digest algorithms: SHA-1,
 SHA2-224, SHA2-256, SHA2-384, SHA2-512.
+
+=item "key-check" (B<OSSL_KDF_PARAM_FIPS_KEY_CHECK>) <integer>
+
+The default value of 1 causes an error during EVP_KDF_derive() if the length of
+used key-derivation key (B<OSSL_KDF_PARAM_KEY>) is shorter than 112 bits.
+Setting this to zero will ignore the error and set the approved
+"fips-indicator" to 0.
+This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
+set to 0.
 
 =back
 

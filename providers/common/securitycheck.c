@@ -70,6 +70,15 @@ int ossl_rsa_check_key_size(const RSA *rsa, int protect)
     return 1;
 }
 
+/*
+ * FIPS requires a minimum security strength of 112 bits for key-derivation key.
+ * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf.
+ */
+int ossl_kdf_check_key_size(size_t keylen)
+{
+    return (keylen * 8) >= 112;
+}
+
 #ifndef OPENSSL_NO_EC
 
 int ossl_ec_check_curve_allowed(const EC_GROUP *group)

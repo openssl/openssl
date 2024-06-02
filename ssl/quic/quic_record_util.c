@@ -29,7 +29,8 @@ int ossl_quic_hkdf_extract(OSSL_LIB_CTX *libctx,
     int ret = 0;
     EVP_KDF *kdf = NULL;
     EVP_KDF_CTX *kctx = NULL;
-    OSSL_PARAM params[7], *p = params;
+    OSSL_PARAM params[8], *p = params;
+    int key_check = 0;
     int mode = EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY;
     const char *md_name;
 
@@ -38,6 +39,15 @@ int ossl_quic_hkdf_extract(OSSL_LIB_CTX *libctx,
         || (kctx = EVP_KDF_CTX_new(kdf)) == NULL)
         goto err;
 
+    /*
+     * According to RFC 9000, the length of destination connection ID must be
+     * at least 8 bytes. It means that the length of destination connection ID
+     * may be less than the minimum length for HKDF required by FIPS provider.
+     *
+     * Therefore, we need to set `key-check` to zero to allow using destionation
+     * connection ID as IKM.
+     */
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_FIPS_KEY_CHECK, &key_check);
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                             (char *)md_name, 0);
