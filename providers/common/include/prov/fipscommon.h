@@ -13,5 +13,11 @@
 int FIPS_security_check_enabled(OSSL_LIB_CTX *libctx);
 int FIPS_tls_prf_ems_check(OSSL_LIB_CTX *libctx);
 int FIPS_restricted_drbg_digests_enabled(OSSL_LIB_CTX *libctx);
+int FIPS_hkdf_digest_check(OSSL_LIB_CTX *libctx);
+int FIPS_tls13_kdf_digest_check(OSSL_LIB_CTX *libctx);
+int FIPS_tls1_prf_digest_check(OSSL_LIB_CTX *libctx);
+int FIPS_sshkdf_digest_check(OSSL_LIB_CTX *libctx);
+int FIPS_sskdf_digest_check(OSSL_LIB_CTX *libctx);
+int FIPS_x963kdf_digest_check(OSSL_LIB_CTX *libctx);
 
 #endif

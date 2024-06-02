@@ -24,6 +24,12 @@ B<openssl fipsinstall>
 [B<-no_security_checks>]
 [B<-ems_check>]
 [B<-no_drbg_truncated_digests>]
+[B<-hkdf_digest_check>]
+[B<-tls13_kdf_digest_check>]
+[B<-tls1_prf_digest_check>]
+[B<-sshkdf_digest_check>]
+[B<-sskdf_digest_check>]
+[B<-x963kdf_digest_check>]
 [B<-self_test_onload>]
 [B<-self_test_oninstall>]
 [B<-corrupt_desc> I<selftest_description>]
@@ -189,6 +195,42 @@ See RFC 7627 for information related to EMS.
 
 Configure the module to not allow truncated digests to be used with Hash and
 HMAC DRBGs.  See FIPS 140-3 IG D.R for details.
+
+=item B<-hkdf_digest_check>
+
+Configure the module to enable a run-time digest check when deriving a key by
+HKDF.
+See NIST SP 800-56Cr2 for details.
+
+=item B<-tls13_kdf_digest_check>
+
+Configure the module to enable a run-time digest check when deriving a key by
+TLS13 KDF.
+See RFC 8446 for details.
+
+=item B<-tls1_prf_digest_check>
+
+Configure the module to enable a run-time digest check when deriving a key by
+TLS_PRF.
+See NIST SP 800-135r1 for details.
+
+=item B<-sshkdf_digest_check>
+
+Configure the module to enable a run-time digest check when deriving a key by
+SSHKDF.
+See NIST SP 800-135r1 for details.
+
+=item B<-sskdf_digest_check>
+
+Configure the module to enable a run-time digest check when deriving a key by
+SSKDF.
+See NIST SP 800-56Cr2 for details.
+
+=item B<-x963kdf_digest_check>
+
+Configure the module to enable a run-time digest check when deriving a key by
+X963KDF.
+See NIST SP 800-131Ar2 for details.
 
 =item B<-self_test_onload>
 

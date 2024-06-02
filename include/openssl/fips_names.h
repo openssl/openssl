@@ -68,7 +68,55 @@ extern "C" {
  * This is disabled by default.
  * Type: OSSL_PARAM_UTF8_STRING
  */
-# define OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST  "drbg-no-trunc-md"
+# define OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST "drbg-no-trunc-md"
+
+/*
+ * A boolean that determines if the runtime FIPS digest check for HKDF is
+ * performed.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_HKDF_DIGEST_CHECK "hkdf-digest-check"
+
+/*
+ * A boolean that determines if the runtime FIPS digest check for TLS13 KDF is
+ * performed.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_TLS13_KDF_DIGEST_CHECK "tls13-kdf-digest-check"
+
+/*
+ * A boolean that determines if the runtime FIPS digest check for TLS1_PRF is
+ * performed.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_TLS1_PRF_DIGEST_CHECK "tls1-prf-digest-check"
+
+/*
+ * A boolean that determines if the runtime FIPS digest check for SSHKDF is
+ * performed.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_SSHKDF_DIGEST_CHECK "sshkdf-digest-check"
+
+/*
+ * A boolean that determines if the runtime FIPS digest check for SSKDF is
+ * performed.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_SSKDF_DIGEST_CHECK "sskdf-digest-check"
+
+/*
+ * A boolean that determines if the runtime FIPS digest check for X963KDF is
+ * performed.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_X963KDF_DIGEST_CHECK "x963kdf-digest-check"
 
 # ifdef __cplusplus
 }

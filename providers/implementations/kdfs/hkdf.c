@@ -29,6 +29,9 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
+#include "prov/securitycheck.h"
+#include "prov/fipscommon.h"
+#include "prov/fipsindicator.h"
 #include "internal/e_os.h"
 #include "internal/params.h"
 
@@ -87,6 +90,7 @@ typedef struct {
     size_t data_len;
     unsigned char *info;
     size_t info_len;
+    OSSL_FIPS_IND_DECLARE
 } KDF_HKDF;
 
 static void *kdf_hkdf_new(void *provctx)
@@ -96,8 +100,10 @@ static void *kdf_hkdf_new(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL)
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL) {
         ctx->provctx = provctx;
+        OSSL_FIPS_IND_INIT(ctx)
+    }
     return ctx;
 }
 
@@ -153,6 +159,7 @@ static void *kdf_hkdf_dup(void *vctx)
                 || !ossl_prov_digest_copy(&dest->digest, &src->digest))
             goto err;
         dest->mode = src->mode;
+        OSSL_FIPS_IND_COPY(dest, src)
     }
     return dest;
 
@@ -180,6 +187,33 @@ static size_t kdf_hkdf_size(KDF_HKDF *ctx)
     return sz;
 }
 
+#ifdef FIPS_MODULE
+static int fips_hkdf_digest_check_passed(KDF_HKDF *ctx)
+{
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+    /*
+     * Perform digest check
+     *
+     * HKDF is a TwoStep KDF defined in SP 800-56Cr2. According to section 7,
+     * the valid hash functions are specified in FIPS 180 and FIPS 202.
+     * However, it only lists SHA-1, SHA-2 and SHA-3 in the table in section
+     * 5.2. ACVP also only lists the same set of hash functions.
+     */
+    int digest_unapproved = ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0);
+
+    if (digest_unapproved) {
+        if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
+                                         libctx, "HKDF", "Digest",
+                                         FIPS_hkdf_digest_check)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
+            return 0;
+        }
+    }
+    return 1;
+}
+#endif
+
 static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen,
                            const OSSL_PARAM params[])
 {
@@ -203,6 +237,11 @@ static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
+
+#ifdef FIPS_MODULE
+    if (!fips_hkdf_digest_check_passed(ctx))
+        return 0;
+#endif
 
     switch (ctx->mode) {
     case EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND:
@@ -286,6 +325,10 @@ static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, params,
+                                     OSSL_KDF_PARAM_FIPS_DIGEST_CHECK))
+        return 0;
+
     if (!hkdf_common_set_ctx_params(ctx, params))
         return 0;
 
@@ -303,6 +346,7 @@ static const OSSL_PARAM *kdf_hkdf_settable_ctx_params(ossl_unused void *ctx,
     static const OSSL_PARAM known_settable_ctx_params[] = {
         HKDF_COMMON_SETTABLES,
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0),
+        OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_DIGEST_CHECK)
         OSSL_PARAM_END
     };
     return known_settable_ctx_params;
@@ -318,16 +362,18 @@ static int kdf_hkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
         if (sz == 0)
             return 0;
-        return OSSL_PARAM_set_size_t(p, sz);
+        if (!OSSL_PARAM_set_size_t(p, sz))
+            return 0;
     }
     if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_INFO)) != NULL) {
-        if (ctx->info == NULL || ctx->info_len == 0) {
+        if (ctx->info == NULL || ctx->info_len == 0)
             p->return_size = 0;
-            return 1;
-        }
-        return OSSL_PARAM_set_octet_string(p, ctx->info, ctx->info_len);
+        else if (!OSSL_PARAM_set_octet_string(p, ctx->info, ctx->info_len))
+            return 0;
     }
-    return -2;
+    if (!OSSL_FIPS_IND_GET_CTX_PARAM(ctx, params))
+        return 0;
+    return 1;
 }
 
 static const OSSL_PARAM *kdf_hkdf_gettable_ctx_params(ossl_unused void *ctx,
@@ -336,6 +382,7 @@ static const OSSL_PARAM *kdf_hkdf_gettable_ctx_params(ossl_unused void *ctx,
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0),
+        OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
         OSSL_PARAM_END
     };
     return known_gettable_ctx_params;
@@ -666,6 +713,33 @@ static int prov_tls13_hkdf_generate_secret(OSSL_LIB_CTX *libctx,
     return ret;
 }
 
+#ifdef FIPS_MODULE
+static int fips_tls1_3_digest_check_passed(KDF_HKDF *ctx)
+{
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+    /*
+     * Perform digest check
+     *
+     * According to RFC 8446 appendix B.4, the valid hash functions are
+     * specified in FIPS 180-4. However, it only lists SHA2-256 and SHA2-384 in
+     * the table. ACVP also only lists the same set of hash functions.
+     */
+    int digest_unapproved = !EVP_MD_is_a(md, SN_sha256)
+        && !EVP_MD_is_a(md, SN_sha384);
+
+    if (digest_unapproved) {
+        if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
+                                         libctx, "TLS13 KDF", "Digest",
+                                         FIPS_tls13_kdf_digest_check)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
+            return 0;
+        }
+    }
+    return 1;
+}
+#endif
+
 static int kdf_tls1_3_derive(void *vctx, unsigned char *key, size_t keylen,
                              const OSSL_PARAM params[])
 {
@@ -680,6 +754,11 @@ static int kdf_tls1_3_derive(void *vctx, unsigned char *key, size_t keylen,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
+
+#ifdef FIPS_MODULE
+    if (!fips_tls1_3_digest_check_passed(ctx))
+        return 0;
+#endif
 
     switch (ctx->mode) {
     default:
@@ -710,6 +789,10 @@ static int kdf_tls1_3_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (params == NULL)
         return 1;
+
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, params,
+                                     OSSL_KDF_PARAM_FIPS_DIGEST_CHECK))
+        return 0;
 
     if (!hkdf_common_set_ctx_params(ctx, params))
         return 0;
@@ -752,6 +835,7 @@ static const OSSL_PARAM *kdf_tls1_3_settable_ctx_params(ossl_unused void *ctx,
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_PREFIX, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_LABEL, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_DATA, NULL, 0),
+        OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_DIGEST_CHECK)
         OSSL_PARAM_END
     };
     return known_settable_ctx_params;

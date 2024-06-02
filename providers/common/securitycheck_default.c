@@ -22,12 +22,6 @@ int ossl_securitycheck_enabled(OSSL_LIB_CTX *libctx)
     return 0;
 }
 
-/* Disable the ems check in the default provider */
-int ossl_tls1_prf_ems_check_enabled(OSSL_LIB_CTX *libctx)
-{
-    return 0;
-}
-
 int ossl_digest_rsa_sign_get_md_nid(const EVP_MD *md)
 {
     int mdnid;

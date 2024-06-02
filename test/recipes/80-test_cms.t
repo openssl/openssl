@@ -607,17 +607,17 @@ my @smime_cms_param_tests = (
     ],
 
     [ "enveloped content test streaming S/MIME format, ECDH, AES-128-CBC, SHA256 KDF",
-      [ "{cmd1}", @prov, "-encrypt", "-in", $smcont,
+      [ "{cmd1}", @defaultprov, "-encrypt", "-in", $smcont,
         "-stream", "-out", "{output}.cms",
         "-recip", catfile($smdir, "smec1.pem"), "-aes128",
         "-keyopt", "ecdh_kdf_md:sha256" ],
-      [ "{cmd2}", @prov, "-decrypt", "-recip", catfile($smdir, "smec1.pem"),
+      [ "{cmd2}", @defaultprov, "-decrypt", "-recip", catfile($smdir, "smec1.pem"),
         "-in", "{output}.cms", "-out", "{output}.txt" ],
       \&final_compare
     ],
 
     [ "enveloped content test streaming S/MIME format, ECDH, AES-128-GCM cipher, SHA256 KDF",
-      [ "{cmd1}", @prov, "-encrypt", "-in", $smcont,
+      [ "{cmd1}", @defaultprov, "-encrypt", "-in", $smcont,
         "-stream", "-out", "{output}.cms",
         "-recip", catfile($smdir, "smec1.pem"), "-aes-128-gcm", "-keyopt", "ecdh_kdf_md:sha256" ],
       [ "{cmd2}", "-decrypt", "-recip", catfile($smdir, "smec1.pem"),
@@ -626,11 +626,11 @@ my @smime_cms_param_tests = (
     ],
 
     [ "enveloped content test streaming S/MIME format, ECDH, K-283, cofactor DH",
-      [ "{cmd1}", @prov, "-encrypt", "-in", $smcont,
+      [ "{cmd1}", @defaultprov, "-encrypt", "-in", $smcont,
         "-stream", "-out", "{output}.cms",
         "-recip", catfile($smdir, "smec2.pem"), "-aes128",
         "-keyopt", "ecdh_kdf_md:sha256", "-keyopt", "ecdh_cofactor_mode:1" ],
-      [ "{cmd2}", @prov, "-decrypt", "-recip", catfile($smdir, "smec2.pem"),
+      [ "{cmd2}", @defaultprov, "-decrypt", "-recip", catfile($smdir, "smec2.pem"),
         "-in", "{output}.cms", "-out", "{output}.txt" ],
       \&final_compare
     ],
