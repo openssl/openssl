@@ -228,6 +228,22 @@ static int fips_digest_check_passed(TLS1_PRF *ctx, const EVP_MD *md)
     }
     return 1;
 }
+
+static int fips_key_check_passed(TLS1_PRF *ctx)
+{
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    int key_approved = ossl_kdf_check_key_size(ctx->seclen);
+
+    if (!key_approved) {
+        if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE2,
+                                         libctx, "TLS_PRF", "Key size",
+                                         FIPS_tls1_prf_key_check)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+    return 1;
+}
 #endif
 
 static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
@@ -258,6 +274,8 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
 #ifdef FIPS_MODULE
     if (!fips_ems_check_passed(ctx))
         return 0;
+    if (!fips_key_check_passed(ctx))
+        return 0;
 #endif
 
     return tls1_prf_alg(ctx->P_hash, ctx->P_sha1,
@@ -280,6 +298,9 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE1, params,
                                      OSSL_KDF_PARAM_FIPS_DIGEST_CHECK))
+        return 0;
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE2, params,
+                                     OSSL_KDF_PARAM_FIPS_KEY_CHECK))
         return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
@@ -371,6 +392,7 @@ static const OSSL_PARAM *kdf_tls1_prf_settable_ctx_params(
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SEED, NULL, 0),
         OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_EMS_CHECK)
         OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_DIGEST_CHECK)
+        OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_KEY_CHECK)
         OSSL_PARAM_END
     };
     return known_settable_ctx_params;

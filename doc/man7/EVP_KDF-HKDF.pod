@@ -80,6 +80,22 @@ an error will occur.
 
 =back
 
+=item "fips-indicator" (B<OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
+This may be used after calling EVP_KDF_derive. It returns 0 if any "***-check"
+related parameter is set to 0 and the check fails.
+This option is used by the OpenSSL FIPS provider.
+
+=item "key-check" (B<OSSL_KDF_PARAM_FIPS_KEY_CHECK>) <integer>
+
+The default value of 1 causes an error during EVP_KDF_derive() if the length of
+used key-derivation key (B<OSSL_KDF_PARAM_KEY>) is shorter than 112 bits.
+Setting this to zero will ignore the error and set the approved
+"fips-indicator" to 0.
+This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
+set to 0.
+
 =back
 
 =head1 NOTES

@@ -153,6 +153,22 @@ static int fips_digest_check_passed(KDF_SSHKDF *ctx, const EVP_MD *md)
     }
     return 1;
 }
+
+static int fips_key_check_passed(KDF_SSHKDF *ctx)
+{
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    int key_approved = ossl_kdf_check_key_size(ctx->key_len);
+
+    if (!key_approved) {
+        if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE1,
+                                         libctx, "SSHKDF", "Key size",
+                                         FIPS_sshkdf_key_check)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+    return 1;
+}
 #endif
 
 static int kdf_sshkdf_derive(void *vctx, unsigned char *key, size_t keylen,
@@ -186,6 +202,11 @@ static int kdf_sshkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         return 0;
     }
 
+#ifdef FIPS_MODULE
+    if (!fips_key_check_passed(ctx))
+        return 0;
+#endif
+
     return SSHKDF(md, ctx->key, ctx->key_len,
                   ctx->xcghash, ctx->xcghash_len,
                   ctx->session_id, ctx->session_id_len,
@@ -203,6 +224,9 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, params,
                                      OSSL_KDF_PARAM_FIPS_DIGEST_CHECK))
+        return 0;
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE1, params,
+                                     OSSL_KDF_PARAM_FIPS_KEY_CHECK))
         return 0;
 
     if (OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST) != NULL) {
@@ -266,6 +290,7 @@ static const OSSL_PARAM *kdf_sshkdf_settable_ctx_params(ossl_unused void *ctx,
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SSHKDF_SESSION_ID, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_SSHKDF_TYPE, NULL, 0),
         OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_DIGEST_CHECK)
+        OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_KEY_CHECK)
         OSSL_PARAM_END
     };
     return known_settable_ctx_params;
