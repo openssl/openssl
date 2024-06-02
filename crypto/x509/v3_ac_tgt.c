@@ -113,13 +113,13 @@ static int i2r_OBJECT_DIGEST_INFO(X509V3_EXT_METHOD *method,
         return 0;
     }
     switch (dot) {
-    case (OSSL_ODI_TYPE_PUBLIC_KEY):
+    case OSSL_ODI_TYPE_PUBLIC_KEY:
         BIO_printf(out, "%*sDigest Type: Public Key\n", indent, "");
         break;
-    case (OSSL_ODI_TYPE_PUBLIC_KEY_CERT):
+    case OSSL_ODI_TYPE_PUBLIC_KEY_CERT:
         BIO_printf(out, "%*sDigest Type: Public Key Certificate\n", indent, "");
         break;
-    case (OSSL_ODI_TYPE_OTHER):
+    case OSSL_ODI_TYPE_OTHER:
         BIO_printf(out, "%*sDigest Type: Other\n", indent, "");
         break;
     }
@@ -179,17 +179,17 @@ static int i2r_TARGET(X509V3_EXT_METHOD *method,
                       BIO *out, int indent)
 {
     switch (target->type) {
-    case (OSSL_TGT_TARGET_NAME):
+    case OSSL_TGT_TARGET_NAME:
         BIO_printf(out, "%*sTarget Name: ", indent, "");
         GENERAL_NAME_print(out, target->choice.targetName);
         BIO_puts(out, "\n");
         break;
-    case (OSSL_TGT_TARGET_GROUP):
+    case OSSL_TGT_TARGET_GROUP:
         BIO_printf(out, "%*sTarget Group: ", indent, "");
         GENERAL_NAME_print(out, target->choice.targetGroup);
         BIO_puts(out, "\n");
         break;
-    case (OSSL_TGT_TARGET_CERT):
+    case OSSL_TGT_TARGET_CERT:
         BIO_printf(out, "%*sTarget Cert:\n", indent, "");
         i2r_TARGET_CERT(method, target->choice.targetCert, out, indent + 2);
         break;
