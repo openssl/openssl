@@ -30,11 +30,6 @@ int ossl_securitycheck_enabled(OSSL_LIB_CTX *libctx)
 #endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
 }
 
-int ossl_tls1_prf_ems_check_enabled(OSSL_LIB_CTX *libctx)
-{
-    return FIPS_tls_prf_ems_check(libctx);
-}
-
 int ossl_digest_rsa_sign_get_md_nid(const EVP_MD *md)
 {
     return ossl_digest_get_approved_nid(md);
