@@ -38,8 +38,8 @@ IF[{- !$disabled{tests} -}]
           ecstresstest gmdifftest pbelutest \
           destest mdc2test sha_test \
           exptest pbetest localetest evp_pkey_ctx_new_from_name \
-          evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
-          evp_fetch_prov_test evp_libctx_test ossl_store_test \
+          evp_pkey_provided_test evp_test evp_engine_test evp_extra_test \
+          evp_extra_test2 evp_fetch_prov_test evp_libctx_test ossl_store_test \
           v3nametest v3ext punycode_test \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
           conf_include_test params_api_test params_conversion_test \
@@ -192,6 +192,10 @@ IF[{- !$disabled{tests} -}]
   IF[{- $disabled{legacy} || !$target{dso_scheme} -}]
     DEFINE[evp_test]=NO_LEGACY_MODULE
   ENDIF
+
+  SOURCE[evp_engine_test]=evp_engine_test.c
+  INCLUDE[evp_engine_test]=../include ../apps/include
+  DEPEND[evp_engine_test]=../libcrypto libtestutil.a
 
   SOURCE[evp_extra_test]=evp_extra_test.c fake_rsaprov.c
   INCLUDE[evp_extra_test]=../include ../apps/include
