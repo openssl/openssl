@@ -310,11 +310,11 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                 c = ent->dir[strlen(ent->dir) - 1];
                 if (c != ':' && c != '>' && c != ']') {
                     /*
-                    * If no separator is present, we assume the directory
-                    * specifier is a logical name, and add a colon.  We really
-                    * should use better VMS routines for merging things like
-                    * this, but this will do for now... -- Richard Levitte
-                    */
+                     * If no separator is present, we assume the directory
+                     * specifier is a logical name, and add a colon.  We really
+                     * should use better VMS routines for merging things like
+                     * this, but this will do for now... -- Richard Levitte
+                     */
                     c = ':';
                 } else {
                     c = '\0';
@@ -322,9 +322,9 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
 
                 if (c == '\0') {
                     /*
-                    * This is special.  When c == '\0', no directory separator
-                    * should be added.
-                    */
+                     * This is special.  When c == '\0', no directory separator
+                     * should be added.
+                     */
                     BIO_snprintf(b->data, b->max,
                                 "%s%08lx.%s%d", ent->dir, h, postfix, k);
                 } else
@@ -339,6 +339,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     # endif
                 {
                     struct stat st;
+
                     if (stat(b->data, &st) < 0)
                         break;
                 }
@@ -357,11 +358,11 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
             }
 
             /*
-            * we have added it to the cache so now pull it out again
-            *
-            * Note: quadratic time find here since the objects won't generally be
-            *       sorted and sorting the would result in O(n^2 log n) complexity.
-            */
+             * we have added it to the cache so now pull it out again
+             *
+             * Note: quadratic time find here since the objects won't generally be
+             *       sorted and sorting the would result in O(n^2 log n) complexity.
+             */
             if (k > 0) {
                 if (!X509_STORE_lock(xl->store_ctx))
                     goto finish;
@@ -372,18 +373,18 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                 tmp = NULL;
             }
             /*
-            * If a CRL, update the last file suffix added for this.
-            * We don't need to add an entry if k is 0 as this is the initial value.
-            * This avoids the need for a write lock and sort operation in the
-            * simple case where no CRL is present for a hash.
-            */
+             * If a CRL, update the last file suffix added for this.
+             * We don't need to add an entry if k is 0 as this is the initial value.
+             * This avoids the need for a write lock and sort operation in the
+             * simple case where no CRL is present for a hash.
+             */
             if (type == X509_LU_CRL && k > 0) {
                 if (!CRYPTO_THREAD_write_lock(ctx->lock))
                     goto finish;
                 /*
-                * Look for entry again in case another thread added an entry
-                * first.
-                */
+                 * Look for entry again in case another thread added an entry
+                 * first.
+                 */
                 if (hent == NULL) {
                     htmp.hash = h;
                     idx = sk_BY_DIR_HASH_find(ent->hashes, &htmp);
@@ -407,9 +408,9 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                     }
 
                     /*
-                    * Ensure stack is sorted so that subsequent sk_BY_DIR_HASH_find
-                    * will not mutate the stack and therefore require a write lock.
-                    */
+                     * Ensure stack is sorted so that subsequent sk_BY_DIR_HASH_find
+                     * will not mutate the stack and therefore require a write lock.
+                     */
                     sk_BY_DIR_HASH_sort(ent->hashes);
                 } else if (hent->suffix < k) {
                     hent->suffix = k;
@@ -425,9 +426,9 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                 memcpy(&ret->data, &tmp->data, sizeof(ret->data));
 
                 /*
-                * Clear any errors that might have been raised processing empty
-                * or malformed files.
-                */
+                 * Clear any errors that might have been raised processing empty
+                 * or malformed files.
+                 */
                 ERR_clear_error();
 
                 goto finish;
