@@ -231,6 +231,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     int ok = 0;
     int i, j, k, l;
     unsigned long hash[2];
+    int valid_hash[2]; /* '0' for invalid value in `hash` array */
     unsigned long h;
     BUF_MEM *b = NULL;
     X509_OBJECT stmp, *tmp;
@@ -260,20 +261,18 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     ctx = (BY_DIR *)xl->method_data;
 
     hash[0] = X509_NAME_hash_ex(name, libctx, propq, &l); /* SHA1 name hash */
-    if (l == 0) {
-        hash[0] = 0;
-    }
+    valid_hash[0] = (l != 0);
 #ifndef OPENSSL_NO_MD5    
     hash[1] = X509_NAME_hash_old(name); /* MD5 name hash */
+    valid_hash[1] = 1;
 #else
-    hash[1] = 0;
+    valid_hash[1] = 0;
 #endif
 
     for (l = 0; l < 2; ++l) {
         h = hash[l];
-        if (h == 0) {
+        if (valid_hash[l] == 0)
             continue; /* skip invalid hash */
-        }
 
         for (i = 0; i < sk_BY_DIR_ENTRY_num(ctx->dirs); i++) {
             BY_DIR_ENTRY *ent;
