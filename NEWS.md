@@ -21,6 +21,13 @@ OpenSSL 3.1
 
 ### Major changes between OpenSSL 3.1.5 and OpenSSL 3.1.6 [under development]
 
+  * Fixed potential use after free after SSL_free_buffers() is called
+    ([CVE-2024-4741])
+
+  * Fixed an issue where checking excessively long DSA keys or parameters may
+    be very slow
+    ([CVE-2024-4603])
+
   * Fixed unbounded memory growth with session handling in TLSv1.3
     ([CVE-2024-2511])
 
@@ -1491,6 +1498,8 @@ OpenSSL 0.9.x
 
 <!-- Links -->
 
+[CVE-2024-4741]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-4741
+[CVE-2024-4603]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-4603
 [CVE-2024-2511]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-2511
 [CVE-2024-0727]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-0727
 [CVE-2023-6237]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6237
