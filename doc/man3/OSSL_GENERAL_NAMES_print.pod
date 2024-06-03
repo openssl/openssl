@@ -20,6 +20,10 @@ I<gens> to BIO I<out>. Each line is indented by I<indent> spaces.
 
 OSSL_GENERAL_NAMES_print() always returns 1.
 
+=head1 HISTORY
+
+The functions described here were all added in OpenSSL 3.4.
+
 =head1 COPYRIGHT
 
 Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
