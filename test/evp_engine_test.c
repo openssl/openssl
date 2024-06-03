@@ -171,13 +171,15 @@ static int test_cipher_with_engine(void)
 
 int setup_tests(void)
 {
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
     /* Tests only support the default libctx */
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_signatures_with_engine, 3);
-#else
+# else
     ADD_ALL_TESTS(test_signatures_with_engine, 2);
-#endif
+# endif
     ADD_TEST(test_cipher_with_engine);
+#endif
 
     return 1;
 }
