@@ -464,7 +464,7 @@ static int montgomery_correctness_test(EC_GROUP *group)
     BN_CTX *ctx = NULL;
 
     ctx = BN_CTX_new();
-    if (ctx == NULL)
+    if (!TEST_ptr(ctx))
         return ret;
     if (!TEST_true(check_bn_mont_ctx(group->mont_data, group->order, ctx))) {
         TEST_error("group order issue");
