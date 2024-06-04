@@ -1279,9 +1279,7 @@ CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
     }
 
     /* cookie stuff for DTLS */
-    if (SSL_CONNECTION_IS_DTLS(s)
-        && ossl_assert(!(s->d1->hello_verify_request == SSL_HVR_RECEIVED)
-                       || s->d1->cookie_len > 0)) {
+    if (SSL_CONNECTION_IS_DTLS(s)) {
         if (s->d1->cookie_len > sizeof(s->d1->cookie)
                 || !WPACKET_sub_memcpy_u8(pkt, s->d1->cookie,
                                           s->d1->cookie_len)) {
