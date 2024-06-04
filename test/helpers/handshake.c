@@ -348,6 +348,12 @@ static int parse_protos(const char *protos, unsigned char **out, size_t *outlen)
 
     len = strlen(protos);
 
+    if (len == 0) {
+        *out = NULL;
+        *outlen = 0;
+        return 1;
+    }
+
     /* Should never have reuse. */
     if (!TEST_ptr_null(*out)
             /* Test values are small, so we omit length limit checks. */
