@@ -18,7 +18,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Major changes between OpenSSL 3.0.13 and OpenSSL 3.0.14 [under development]
+### Major changes between OpenSSL 3.0.13 and OpenSSL 3.0.14 [4 Jun 2024]
 
   * Fixed potential use after free after SSL_free_buffers() is called
     ([CVE-2024-4741])
