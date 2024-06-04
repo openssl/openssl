@@ -19,6 +19,10 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
+### Major changes between OpenSSL 3.1.6 and OpenSSL 3.1.7 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.1.5 and OpenSSL 3.1.6 [4 Jun 2024]
 
   * Fixed potential use after free after SSL_free_buffers() is called
