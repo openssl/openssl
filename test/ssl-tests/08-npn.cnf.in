@@ -111,6 +111,41 @@ our @tests = (
         },
     },
     {
+        name => "npn-empty-client-list",
+        server => {
+            extra => {
+                "NPNProtocols" => "foo",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "",
+            },
+            "MaxProtocol" => "TLSv1.2"
+        },
+        test => {
+            "ExpectedResult" => "ClientFail",
+            "ExpectedClientAlert" => "HandshakeFailure"
+        },
+    },
+    {
+        name => "npn-empty-server-list",
+        server => {
+            extra => {
+                "NPNProtocols" => "",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo",
+            },
+            "MaxProtocol" => "TLSv1.2"
+        },
+        test => {
+            "ExpectedNPNProtocol" => "foo"
+        },
+    },
+    {
         name => "npn-with-sni-no-context-switch",
         server => {
             extra => {
