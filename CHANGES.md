@@ -25,6 +25,10 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
+### Changes between 3.2.2 and 3.2.3 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.2.1 and 3.2.2 [4 Jun 2024]
 
  * Fixed potential use after free after SSL_free_buffers() is called.
