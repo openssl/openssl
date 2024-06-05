@@ -79,20 +79,21 @@ static int frame_ack(BIO *bio, PACKET *pkt)
     OSSL_QUIC_ACK_RANGE *ack_ranges = NULL;
     uint64_t total_ranges = 0;
     uint64_t i;
+    int ret = 0;
 
     if (!ossl_quic_wire_peek_frame_ack_num_ranges(pkt, &total_ranges)
         /* In case sizeof(uint64_t) > sizeof(size_t) */
         || total_ranges > SIZE_MAX / sizeof(ack_ranges[0])
         || (ack_ranges = OPENSSL_zalloc(sizeof(ack_ranges[0])
                                         * (size_t)total_ranges)) == NULL)
-        return 0;
+        return ret;
 
     ack.ack_ranges = ack_ranges;
     ack.num_ack_ranges = (size_t)total_ranges;
 
     /* Ack delay exponent is 0, so we can get the raw delay time below */
     if (!ossl_quic_wire_decode_frame_ack(pkt, 0, &ack, NULL))
-        return 0;
+        goto end;
 
     BIO_printf(bio, "    Largest acked: %llu\n",
                (unsigned long long)ack.ack_ranges[0].end);
@@ -112,8 +113,10 @@ static int frame_ack(BIO *bio, PACKET *pkt)
                                         - ack.ack_ranges[i].start));
     }
 
+    ret = 1;
+end:
     OPENSSL_free(ack_ranges);
-    return 1;
+    return ret;
 }
 
 static int frame_reset_stream(BIO *bio, PACKET *pkt)
