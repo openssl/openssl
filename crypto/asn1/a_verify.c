@@ -202,10 +202,12 @@ int ASN1_item_verify_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
     inl = ASN1_item_i2d(data, &buf_in, it);
     if (inl <= 0) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_INTERNAL_ERROR);
+        ret = -1;
         goto err;
     }
     if (buf_in == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+        ret = -1;
         goto err;
     }
     inll = inl;
