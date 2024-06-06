@@ -5647,3 +5647,5 @@ X509_ACERT_add_attr_nconf               ?	3_4_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_get_conf_diagnostics       ?	3_4_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_set_conf_diagnostics       ?	3_4_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_get_data                   ?	3_4_0	EXIST::FUNCTION:
+EVP_MD_xof                              ?	3_4_0	EXIST::FUNCTION:
+EVP_MD_CTX_get_size_ex                  ?	3_4_0	EXIST::FUNCTION:
