@@ -8,28 +8,79 @@
  */
 
 #include <stdio.h>
+#include "internal/e_os.h"
 #include "internal/cryptlib.h"
+#include "internal/thread_once.h"
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 
+#if defined(_WIN32)
+
+static char x509_private_dir[MAX_PATH + 1]; 
+static char x509_cert_area[MAX_PATH + 1];
+static char x509_cert_dir[MAX_PATH + 1];
+static char x509_cert_file[MAX_PATH + 1];
+
+static void get_windows_default_path(char *pathname, const char *suffix)
+{
+    char *ossldir;
+
+    ossldir = ossl_get_openssldir();
+
+    OPENSSL_strlcpy(pathname, ossldir, MAX_PATH - 1);
+    if (MAX_PATH - strlen(pathname) > strlen(suffix))
+        strcat(pathname, suffix);
+}
+
+static CRYPTO_ONCE openssldir_setup_init = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(do_openssldir_setup)
+{
+    get_windows_default_path(x509_private_dir, "\\private");
+    get_windows_default_path(x509_cert_area, "\\");
+    get_windows_default_path(x509_cert_dir, "\\certs");
+    get_windows_default_path(x509_cert_file, "\\cert.pem");
+    return 1;
+}
+#endif
+
 const char *X509_get_default_private_dir(void)
 {
+#if defined (_WIN32)
+    RUN_ONCE(&openssldir_setup_init, do_openssldir_setup);
+    return x509_private_dir;
+#else
     return X509_PRIVATE_DIR;
+#endif
 }
 
 const char *X509_get_default_cert_area(void)
 {
+#if defined (_WIN32)
+    RUN_ONCE(&openssldir_setup_init, do_openssldir_setup);
+    return x509_cert_area;
+#else
     return X509_CERT_AREA;
+#endif
 }
 
 const char *X509_get_default_cert_dir(void)
 {
+#if defined (_WIN32)
+    RUN_ONCE(&openssldir_setup_init, do_openssldir_setup);
+    return x509_cert_dir;
+#else
     return X509_CERT_DIR;
+#endif
 }
 
 const char *X509_get_default_cert_file(void)
 {
+#if defined (_WIN32)
+    RUN_ONCE(&openssldir_setup_init, do_openssldir_setup);
+    return x509_cert_file;
+#else
     return X509_CERT_FILE;
+#endif
 }
 
 const char *X509_get_default_cert_dir_env(void)

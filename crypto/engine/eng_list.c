@@ -408,7 +408,7 @@ static void engine_cpy(ENGINE *dest, const ENGINE *src)
 ENGINE *ENGINE_by_id(const char *id)
 {
     ENGINE *iterator;
-    char *load_dir = NULL;
+    const char *load_dir = NULL;
     if (id == NULL) {
         ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
@@ -459,7 +459,7 @@ ENGINE *ENGINE_by_id(const char *id)
      */
     if (strcmp(id, "dynamic")) {
         if ((load_dir = ossl_safe_getenv("OPENSSL_ENGINES")) == NULL)
-            load_dir = ENGINESDIR;
+            load_dir = ossl_get_enginesdir();
         iterator = ENGINE_by_id("dynamic");
         if (!iterator || !ENGINE_ctrl_cmd_string(iterator, "ID", id, 0) ||
             !ENGINE_ctrl_cmd_string(iterator, "DIR_LOAD", "2", 0) ||
