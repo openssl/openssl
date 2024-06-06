@@ -322,6 +322,9 @@ static int generate_q_fips186_4(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
     unsigned char *pmd;
     OSSL_LIB_CTX *libctx = ossl_bn_get_libctx(ctx);
 
+    if (mdsize <= 0)
+        goto err;
+
     /* find q */
     for (;;) {
         if (!BN_GENCB_call(cb, 0, m++))

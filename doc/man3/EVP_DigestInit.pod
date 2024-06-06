@@ -17,14 +17,15 @@ EVP_MD_is_a, EVP_MD_get0_name, EVP_MD_get0_description,
 EVP_MD_names_do_all, EVP_MD_get0_provider, EVP_MD_get_type,
 EVP_MD_get_pkey_type, EVP_MD_get_size, EVP_MD_get_block_size, EVP_MD_get_flags,
 EVP_MD_CTX_get0_name, EVP_MD_CTX_md, EVP_MD_CTX_get0_md, EVP_MD_CTX_get1_md,
-EVP_MD_CTX_get_type, EVP_MD_CTX_get_size, EVP_MD_CTX_get_block_size,
+EVP_MD_CTX_get_type, EVP_MD_CTX_get_size_ex, EVP_MD_CTX_get_block_size,
 EVP_MD_CTX_get0_md_data, EVP_MD_CTX_update_fn, EVP_MD_CTX_set_update_fn,
 EVP_md_null,
 EVP_get_digestbyname, EVP_get_digestbynid, EVP_get_digestbyobj,
 EVP_MD_CTX_get_pkey_ctx, EVP_MD_CTX_set_pkey_ctx,
 EVP_MD_do_all_provided,
 EVP_MD_type, EVP_MD_nid, EVP_MD_name, EVP_MD_pkey_type, EVP_MD_size,
-EVP_MD_block_size, EVP_MD_flags, EVP_MD_CTX_size, EVP_MD_CTX_block_size,
+EVP_MD_block_size, EVP_MD_flags, EVP_MD_xof,
+EVP_MD_CTX_size, EVP_MD_CTX_get_size, EVP_MD_CTX_block_size,
 EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
 - EVP digest routines
 
@@ -85,11 +86,12 @@ EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
  int EVP_MD_get_size(const EVP_MD *md);
  int EVP_MD_get_block_size(const EVP_MD *md);
  unsigned long EVP_MD_get_flags(const EVP_MD *md);
+ int EVP_MD_xof(const EVP_MD *md);
 
  const EVP_MD *EVP_MD_CTX_get0_md(const EVP_MD_CTX *ctx);
  EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx);
  const char *EVP_MD_CTX_get0_name(const EVP_MD_CTX *ctx);
- int EVP_MD_CTX_get_size(const EVP_MD_CTX *ctx);
+ int EVP_MD_CTX_get_size_ex(const EVP_MD_CTX *ctx);
  int EVP_MD_CTX_get_block_size(const EVP_MD_CTX *ctx);
  int EVP_MD_CTX_get_type(const EVP_MD_CTX *ctx);
  void *EVP_MD_CTX_get0_md_data(const EVP_MD_CTX *ctx);
@@ -114,7 +116,8 @@ EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
  #define EVP_MD_size EVP_MD_get_size
  #define EVP_MD_block_size EVP_MD_get_block_size
  #define EVP_MD_flags EVP_MD_get_flags
- #define EVP_MD_CTX_size EVP_MD_CTX_get_size
+ #define EVP_MD_CTX_get_size EVP_MD_CTX_get_size_ex
+ #define EVP_MD_CTX_size EVP_MD_CTX_get_size_ex
  #define EVP_MD_CTX_block_size EVP_MD_CTX_get_block_size
  #define EVP_MD_CTX_type EVP_MD_CTX_get_type
  #define EVP_MD_CTX_pkey_ctx EVP_MD_CTX_get_pkey_ctx
@@ -135,10 +138,20 @@ see L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
-The EVP digest routines are a high-level interface to message digests,
-and should be used instead of the digest-specific functions.
+The EVP digest routines are a high-level interface to message digests, and
+Extendable Output Functions (XOF), which should be used instead of the
+digest-specific functions.
 
 The B<EVP_MD> type is a structure for digest method implementation.
+
+Each Message digest algorithm (such as SHA256) produces a fixed size output
+length which is returned when EVP_DigestFinal_ex() is called.
+Extendable Output Functions (XOF) such as SHAKE256 have a variable sized output
+length I<outlen> which can be used with either EVP_DigestFinalXOF() or
+EVP_DigestSqueeze(). EVP_DigestFinal_ex() may also be used for an XOF, but the
+"xoflen" must be set beforehand (See L</PARAMETERS>).
+Note that EVP_MD_get_size() and EVP_MD_CTX_get_size_ex() behave differently for
+an XOF.
 
 =over 4
 
@@ -344,6 +357,12 @@ EVP_sha256() rather than the result of an EVP_MD_fetch()), only cipher
 names registered with the default library context (see
 L<OSSL_LIB_CTX(3)>) will be considered.
 
+=item EVP_MD_xof()
+
+Returns 1 if I<md> is an Extendable-output Function (XOF) otherwise it returns
+0. SHAKE128 and SHAKE256 are XOF functions.
+It returns 0 for BLAKE2B algorithms.
+
 =item EVP_MD_get0_name(),
 EVP_MD_CTX_get0_name()
 
@@ -366,11 +385,16 @@ The description is at the discretion of the digest implementation.
 Returns an B<OSSL_PROVIDER> pointer to the provider that implements the given
 B<EVP_MD>.
 
-=item EVP_MD_get_size(),
-EVP_MD_CTX_get_size()
+=item EVP_MD_get_size()
 
 Return the size of the message digest when passed an B<EVP_MD> or an
 B<EVP_MD_CTX> structure, i.e. the size of the hash.
+For an XOF this returns 0.
+
+=item EVP_MD_CTX_get_size_ex(), EVP_MD_CTX_get_size()
+
+For a normal digest this is the same as EVP_MD_get_size().
+For an XOF this returns the "xoflen" if it has been set, otherwise it returns 0.
 
 =item EVP_MD_get_block_size(),
 EVP_MD_CTX_get_block_size()
@@ -482,16 +506,30 @@ I<arg> as argument.
 
 See L<OSSL_PARAM(3)> for information about passing parameters.
 
-EVP_MD_CTX_set_params() can be used with the following OSSL_PARAM keys:
+EVP_MD_CTX_set_params() and EVP_MD_CTX_get_params() can be used with the
+following OSSL_PARAM keys:
 
 =over 4
 
 =item "xoflen" (B<OSSL_DIGEST_PARAM_XOFLEN>) <unsigned integer>
 
-Sets the digest length for extendable output functions.
+Sets or gets the digest length for extendable output functions.
 The value should not exceed what can be given using a B<size_t>.
-It may be used by BLAKE2B-512, SHAKE-128 and SHAKE-256 to set the
+It may be used by SHAKE-128 and SHAKE-256 to set the
 output length used by EVP_DigestFinal_ex() and EVP_DigestFinal().
+
+=item "size" (B<OSSL_DIGEST_PARAM_SIZE>) <unsigned integer>
+
+Sets or gets a fixed digest length.
+The value should not exceed what can be given using a B<size_t>.
+It may be used by BLAKE2B-512 to set the output length used by
+EVP_DigestFinal_ex() and EVP_DigestFinal().
+
+=back
+
+EVP_MD_CTX_set_params() can be used with the following OSSL_PARAM keys:
+
+=over 4
 
 =item "pad-type" (B<OSSL_DIGEST_PARAM_PAD_TYPE>) <unsigned integer>
 
@@ -532,7 +570,7 @@ an L<OSSL_PARAM(3)> item with the key "micalg" (B<OSSL_DIGEST_PARAM_MICALG>).
 This control sets the digest length for extendable output functions to I<p1>.
 Sending this control directly should not be necessary, the use of
 EVP_DigestFinalXOF() is preferred.
-Currently used by SHAKE.
+Currently used by SHAKE algorithms.
 
 When used with a fetched B<EVP_MD>, EVP_MD_CTX_get_params() gets called with
 an L<OSSL_PARAM(3)> item with the key "xoflen" (B<OSSL_DIGEST_PARAM_XOFLEN>).
@@ -814,6 +852,8 @@ in OpenSSL 3.0.
 The EVP_MD_CTX_dup() function was added in OpenSSL 3.1.
 
 The EVP_DigestSqueeze() function was added in OpenSSL 3.3.
+
+The EVP_MD_CTX_get_size_ex() and EVP_xof() functions were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

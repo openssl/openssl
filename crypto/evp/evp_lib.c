@@ -844,6 +844,11 @@ int EVP_MD_get_size(const EVP_MD *md)
     return md->md_size;
 }
 
+int EVP_MD_xof(const EVP_MD *md)
+{
+    return md != NULL && ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0);
+}
+
 unsigned long EVP_MD_get_flags(const EVP_MD *md)
 {
     return md->flags;
@@ -1056,6 +1061,34 @@ EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx)
     if (md == NULL || !EVP_MD_up_ref(md))
         return NULL;
     return md;
+}
+
+int EVP_MD_CTX_get_size_ex(const EVP_MD_CTX *ctx)
+{
+    EVP_MD_CTX *c = (EVP_MD_CTX *)ctx;
+    const OSSL_PARAM *gettables;
+
+    gettables = EVP_MD_CTX_gettable_params(c);
+    if (gettables != NULL
+            && OSSL_PARAM_locate_const(gettables,
+                                       OSSL_DIGEST_PARAM_SIZE) != NULL) {
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        size_t sz = 0;
+
+        /*
+         * For XOF's EVP_MD_get_size() returns 0
+         * So try to get the xoflen instead. This will return -1 if the
+         * xof length has not been set.
+         */
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &sz);
+        if (EVP_MD_CTX_get_params(c, params) != 1
+                || sz == SIZE_MAX
+                || sz == 0)
+            return -1;
+        return sz;
+    }
+    /* Normal digests have a constant fixed size output */
+    return EVP_MD_get_size(EVP_MD_CTX_get0_md(ctx));
 }
 
 EVP_PKEY_CTX *EVP_MD_CTX_get_pkey_ctx(const EVP_MD_CTX *ctx)

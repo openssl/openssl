@@ -419,7 +419,7 @@ int dgst_main(int argc, char **argv)
         md_name = EVP_MD_get0_name(md);
 
     if (xoflen > 0) {
-        if (!(EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF)) {
+        if (!EVP_MD_xof(md)) {
             BIO_printf(bio_err, "Length can only be specified for XOF\n");
             goto end;
         }

@@ -788,7 +788,7 @@ static int digest_test_run(EVP_TEST *t)
         goto err;
     }
 
-    xof |= (EVP_MD_get_flags(expected->digest) & EVP_MD_FLAG_XOF) != 0;
+    xof |= EVP_MD_xof(expected->digest);
     if (xof) {
         EVP_MD_CTX *mctx_cpy;
 
