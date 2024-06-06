@@ -91,7 +91,7 @@ int ossl_sm2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest,
     const int md_size = EVP_MD_get_size(digest);
     size_t sz;
 
-    if (field_size == 0 || md_size < 0)
+    if (field_size == 0 || md_size <= 0)
         return 0;
 
     /* Integer and string are simple type; set constructed = 0, means primitive and definite length encoding. */

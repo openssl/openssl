@@ -160,7 +160,7 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
     OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
     const char *propq = ossl_ec_key_get0_propq(key);
 
-    if (md_size < 0) {
+    if (md_size <= 0) {
         ERR_raise(ERR_LIB_SM2, SM2_R_INVALID_DIGEST);
         goto done;
     }

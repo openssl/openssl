@@ -257,7 +257,10 @@ static int shake_kat_digestfinal_xoflen_test(void)
     params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &sz);
     params[1] = OSSL_PARAM_construct_end();
 
-    if (!TEST_int_eq(EVP_MD_CTX_set_params(ctx, params), 1)
+    if (!TEST_int_eq(EVP_MD_CTX_size(ctx), -1)
+        || !TEST_int_eq(EVP_MD_CTX_set_params(ctx, params), 1)
+        || !TEST_int_eq(EVP_MD_CTX_size(ctx), sz)
+        || !TEST_int_eq(EVP_MD_get_size(EVP_MD_CTX_get0_md(ctx)), 0)
         || !TEST_true(EVP_DigestUpdate(ctx, shake256_input,
                                        sizeof(shake256_input)))
         || !TEST_true(EVP_DigestFinal(ctx, out, &digest_length))

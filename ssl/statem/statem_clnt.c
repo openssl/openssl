@@ -2829,7 +2829,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
         static const unsigned char nonce_label[] = "resumption";
 
         /* Ensure cast to size_t is safe */
-        if (!ossl_assert(hashleni >= 0)) {
+        if (!ossl_assert(hashleni > 0)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
