@@ -125,6 +125,28 @@ Administrator" before running `nmake install`.  The other solution
 is, of course, to choose a different set of directories by using
 `--prefix` and `--openssldir` when configuring.
 
+Note that, on Windows platforms (both 32 and 64 bit), the above build time
+defaults can be overridden by registry keys.  This is done because it is common
+practice for windows based installers to allow users to place the installation
+tree at various locations not defined at build time.  The following keys:
+
+    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL\OPENSSLDIR`
+    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL\ENGINESDIR`
+    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL\MODULESDIR`
+
+Can be administratively set, and openssl will take the paths found there as the
+values for OPENSSLDIR, ENGINESDIR and MODULESDIR respectively.  If unset, the
+build time defaults will be used.
+
+To enable the reading of registry keys from windows builds, add
+`-DWININSTALLCONTEXT=<string>`to the Configure command line.  Without setting
+this, the library defaults back to reporing the build time defaults without
+checking the registry.  Note that if you wish to have a private set of registry
+keys for your application, you should set `OPENSSL_VERSION` to a unique value
+
+Note the installer available at <https://github.com/openssl/installer> will set
+these keys when the installer is run.
+
 Special notes for Universal Windows Platform builds, aka `VC-*-UWP`
 -------------------------------------------------------------------
 
