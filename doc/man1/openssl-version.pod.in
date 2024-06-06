@@ -20,6 +20,7 @@ B<openssl version>
 [B<-m>]
 [B<-r>]
 [B<-c>]
+[B<-w>]
 
 =head1 DESCRIPTION
 
@@ -76,6 +77,11 @@ The random number generator source settings.
 =item B<-c>
 
 The OpenSSL CPU settings info.
+
+=item B<-w>
+
+The OpenSSL WININSTALLCONTEXT build time variable, if set.
+Used for computing Windows registry key names
 
 =back
 

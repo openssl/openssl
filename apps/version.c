@@ -18,7 +18,7 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_B, OPT_D, OPT_E, OPT_M, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A, OPT_R, OPT_C
+    OPT_B, OPT_D, OPT_E, OPT_M, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A, OPT_R, OPT_C, OPT_W
 } OPTION_CHOICE;
 
 const OPTIONS version_options[] = {
@@ -37,6 +37,7 @@ const OPTIONS version_options[] = {
     {"r", OPT_R, '-', "Show random seeding options"},
     {"v", OPT_V, '-', "Show library version"},
     {"c", OPT_C, '-', "Show CPU settings info"},
+    {"w", OPT_W, '-', "Show Windows install context"},
     {NULL}
 };
 
@@ -44,7 +45,7 @@ int version_main(int argc, char **argv)
 {
     int ret = 1, dirty = 0, seed = 0;
     int cflags = 0, version = 0, date = 0, options = 0, platform = 0, dir = 0;
-    int engdir = 0, moddir = 0, cpuinfo = 0;
+    int engdir = 0, moddir = 0, cpuinfo = 0, windows = 0;
     char *prog;
     OPTION_CHOICE o;
 
@@ -90,6 +91,9 @@ opthelp:
         case OPT_C:
             dirty = cpuinfo = 1;
             break;
+	case OPT_W:
+	    dirty = windows = 1;
+	    break;
         case OPT_A:
             seed = options = cflags = version = date = platform
                 = dir = engdir = moddir = cpuinfo
@@ -120,17 +124,19 @@ opthelp:
     if (cflags)
         printf("%s\n", OpenSSL_version(OPENSSL_CFLAGS));
     if (dir)
-        printf("%s\n", OpenSSL_version(OPENSSL_DIR));
+        printf("OPENSSLDIR: %s\n", OpenSSL_version(OPENSSL_DIR));
     if (engdir)
-        printf("%s\n", OpenSSL_version(OPENSSL_ENGINES_DIR));
+        printf("ENGINESDIR: %s\n", OpenSSL_version(OPENSSL_ENGINES_DIR));
     if (moddir)
-        printf("%s\n", OpenSSL_version(OPENSSL_MODULES_DIR));
+        printf("MODULESDIR: %s\n", OpenSSL_version(OPENSSL_MODULES_DIR));
     if (seed) {
         const char *src = OPENSSL_info(OPENSSL_INFO_SEED_SOURCE);
         printf("Seeding source: %s\n", src ? src : "N/A");
     }
     if (cpuinfo)
         printf("%s\n", OpenSSL_version(OPENSSL_CPU_INFO));
+    if (windows)
+	printf("WININSTALLCONTEXT: %s\n", OpenSSL_version(OPENSSL_WININSTALLCONTEXT));
     ret = 0;
  end:
     return ret;
