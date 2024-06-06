@@ -1847,6 +1847,10 @@ DEPEND[html/man3/OpenSSL_version.html]=man3/OpenSSL_version.pod
 GENERATE[html/man3/OpenSSL_version.html]=man3/OpenSSL_version.pod
 DEPEND[man/man3/OpenSSL_version.3]=man3/OpenSSL_version.pod
 GENERATE[man/man3/OpenSSL_version.3]=man3/OpenSSL_version.pod
+DEPEND[html/man3/PBMAC1_get1_pbkdf2_param.html]=man3/PBMAC1_get1_pbkdf2_param.pod
+GENERATE[html/man3/PBMAC1_get1_pbkdf2_param.html]=man3/PBMAC1_get1_pbkdf2_param.pod
+DEPEND[man/man3/PBMAC1_get1_pbkdf2_param.3]=man3/PBMAC1_get1_pbkdf2_param.pod
+GENERATE[man/man3/PBMAC1_get1_pbkdf2_param.3]=man3/PBMAC1_get1_pbkdf2_param.pod
 DEPEND[html/man3/PEM_X509_INFO_read_bio_ex.html]=man3/PEM_X509_INFO_read_bio_ex.pod
 GENERATE[html/man3/PEM_X509_INFO_read_bio_ex.html]=man3/PEM_X509_INFO_read_bio_ex.pod
 DEPEND[man/man3/PEM_X509_INFO_read_bio_ex.3]=man3/PEM_X509_INFO_read_bio_ex.pod
@@ -3453,6 +3457,7 @@ html/man3/OSSL_trace_get_category_num.html \
 html/man3/OSSL_trace_set_channel.html \
 html/man3/OpenSSL_add_all_algorithms.html \
 html/man3/OpenSSL_version.html \
+html/man3/PBMAC1_get1_pbkdf2_param.html \
 html/man3/PEM_X509_INFO_read_bio_ex.html \
 html/man3/PEM_bytes_read_bio.html \
 html/man3/PEM_read.html \
@@ -4113,6 +4118,7 @@ man/man3/OSSL_trace_get_category_num.3 \
 man/man3/OSSL_trace_set_channel.3 \
 man/man3/OpenSSL_add_all_algorithms.3 \
 man/man3/OpenSSL_version.3 \
+man/man3/PBMAC1_get1_pbkdf2_param.3 \
 man/man3/PEM_X509_INFO_read_bio_ex.3 \
 man/man3/PEM_bytes_read_bio.3 \
 man/man3/PEM_read.3 \
