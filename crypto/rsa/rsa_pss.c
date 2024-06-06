@@ -54,7 +54,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         mgf1Hash = Hash;
 
     hLen = EVP_MD_get_size(Hash);
-    if (hLen < 0)
+    if (hLen <= 0)
         goto err;
     /*-
      * Negative sLen has special meanings:
@@ -167,7 +167,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
         mgf1Hash = Hash;
 
     hLen = EVP_MD_get_size(Hash);
-    if (hLen < 0)
+    if (hLen <= 0)
         goto err;
     /*-
      * Negative sLen has special meanings:

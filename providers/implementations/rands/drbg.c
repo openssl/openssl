@@ -1009,7 +1009,7 @@ int ossl_drbg_verify_digest(ossl_unused OSSL_LIB_CTX *libctx, const EVP_MD *md)
     }
 #endif
     /* Outside of FIPS, any digests that are not XOF are allowed */
-    if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0) {
+    if (EVP_MD_xof(md)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
         return 0;
     }

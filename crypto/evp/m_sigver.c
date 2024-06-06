@@ -569,7 +569,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
         } else {
             int s = EVP_MD_get_size(ctx->digest);
 
-            if (s < 0 || EVP_PKEY_sign(pctx, sigret, siglen, NULL, s) <= 0)
+            if (s <= 0 || EVP_PKEY_sign(pctx, sigret, siglen, NULL, s) <= 0)
                 return 0;
         }
     }

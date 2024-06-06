@@ -174,7 +174,7 @@ static size_t kdf_hkdf_size(KDF_HKDF *ctx)
         return 0;
     }
     sz = EVP_MD_get_size(md);
-    if (sz < 0)
+    if (sz <= 0)
         return 0;
 
     return sz;
@@ -392,7 +392,7 @@ static int HKDF(OSSL_LIB_CTX *libctx, const EVP_MD *evp_md,
     size_t prk_len;
 
     sz = EVP_MD_get_size(evp_md);
-    if (sz < 0)
+    if (sz <= 0)
         return 0;
     prk_len = (size_t)sz;
 
@@ -439,7 +439,7 @@ static int HKDF_Extract(OSSL_LIB_CTX *libctx, const EVP_MD *evp_md,
 {
     int sz = EVP_MD_get_size(evp_md);
 
-    if (sz < 0)
+    if (sz <= 0)
         return 0;
     if (prk_len != (size_t)sz) {
         ERR_raise(ERR_LIB_PROV, PROV_R_WRONG_OUTPUT_BUFFER_SIZE);

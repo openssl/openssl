@@ -151,7 +151,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 
         if (tmpmd != NULL) {
             imac_size = EVP_MD_get_size(tmpmd);
-            if (!ossl_assert(imac_size >= 0 && imac_size <= EVP_MAX_MD_SIZE)) {
+            if (!ossl_assert(imac_size > 0 && imac_size <= EVP_MAX_MD_SIZE)) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
                 return 0;
             }

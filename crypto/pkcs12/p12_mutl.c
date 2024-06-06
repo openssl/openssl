@@ -129,7 +129,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 
     md_size = EVP_MD_get_size(md);
     md_nid = EVP_MD_get_type(md);
-    if (md_size < 0)
+    if (md_size <= 0)
         goto err;
     if ((md_nid == NID_id_GostR3411_94
          || md_nid == NID_id_GostR3411_2012_256

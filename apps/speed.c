@@ -617,7 +617,7 @@ static int EVP_Digest_loop(const char *mdname, ossl_unused int algindex, void *a
 
     if (!opt_md_silent(mdname, &md))
         return -1;
-    if (EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) {
+    if (EVP_MD_xof(md)) {
         ctx = EVP_MD_CTX_new();
         if (ctx == NULL) {
             count = -1;
