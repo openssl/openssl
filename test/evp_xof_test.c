@@ -246,12 +246,14 @@ static int shake_kat_digestfinal_xoflen_test(void)
     int ret = 0;
     unsigned int digest_length = 0;
     EVP_MD_CTX *ctx = NULL;
+    const EVP_MD *md;
     unsigned char out[sizeof(shake256_output)];
     OSSL_PARAM params[2];
     size_t sz = 12;
 
     if (!TEST_ptr(ctx = shake_setup("SHAKE256")))
         return 0;
+    md = EVP_MD_CTX_get0_md(ctx);
 
     memset(out, 0, sizeof(out));
     params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &sz);
@@ -260,7 +262,8 @@ static int shake_kat_digestfinal_xoflen_test(void)
     if (!TEST_int_eq(EVP_MD_CTX_size(ctx), -1)
         || !TEST_int_eq(EVP_MD_CTX_set_params(ctx, params), 1)
         || !TEST_int_eq(EVP_MD_CTX_size(ctx), sz)
-        || !TEST_int_eq(EVP_MD_get_size(EVP_MD_CTX_get0_md(ctx)), 0)
+        || !TEST_int_eq(EVP_MD_get_size(md), 0)
+        || !TEST_true(EVP_MD_xof(md))
         || !TEST_true(EVP_DigestUpdate(ctx, shake256_input,
                                        sizeof(shake256_input)))
         || !TEST_true(EVP_DigestFinal(ctx, out, &digest_length))
@@ -497,6 +500,17 @@ err:
     return ret;
 }
 
+static int xof_fail_test(void)
+{
+    int ret;
+    EVP_MD *md = NULL;
+
+    ret = TEST_ptr(md = EVP_MD_fetch(NULL, "SHA256", NULL))
+          && TEST_false(EVP_MD_xof(md));
+    EVP_MD_free(md);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(shake_kat_test);
@@ -506,5 +520,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(shake_squeeze_kat_test, OSSL_NELEM(stride_tests));
     ADD_ALL_TESTS(shake_squeeze_large_test, OSSL_NELEM(stride_tests));
     ADD_ALL_TESTS(shake_squeeze_dup_test, OSSL_NELEM(dupoffset_tests));
+    ADD_TEST(xof_fail_test);
     return 1;
 }
