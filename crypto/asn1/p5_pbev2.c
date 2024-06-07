@@ -35,6 +35,13 @@ ASN1_SEQUENCE(PBKDF2PARAM) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(PBKDF2PARAM)
 
+ASN1_SEQUENCE(PBMAC1PARAM) = {
+    ASN1_SIMPLE(PBMAC1PARAM, keyDerivationFunc, X509_ALGOR),
+    ASN1_SIMPLE(PBMAC1PARAM, messageAuthScheme, X509_ALGOR)
+} ASN1_SEQUENCE_END(PBMAC1PARAM)
+
+IMPLEMENT_ASN1_FUNCTIONS(PBMAC1PARAM)
+
 /*
  * Return an algorithm identifier for a PKCS#5 v2.0 PBE algorithm: yes I know
  * this is horrible! Extended version to allow application supplied PRF NID

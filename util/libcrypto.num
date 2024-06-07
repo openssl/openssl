@@ -5664,6 +5664,13 @@ OSSL_IETF_ATTR_SYNTAX_get_value_num     ?	3_4_0	EXIST::FUNCTION:
 OSSL_IETF_ATTR_SYNTAX_get0_value        ?	3_4_0	EXIST::FUNCTION:
 OSSL_IETF_ATTR_SYNTAX_add1_value        ?	3_4_0	EXIST::FUNCTION:
 OSSL_IETF_ATTR_SYNTAX_print             ?	3_4_0	EXIST::FUNCTION:
+PKCS12_set_pbmac1_pbkdf2                ?	3_4_0	EXIST::FUNCTION:
+PBMAC1_get1_pbkdf2_param                ?	3_4_0	EXIST::FUNCTION:
+d2i_PBMAC1PARAM                         ?	3_4_0	EXIST::FUNCTION:
+i2d_PBMAC1PARAM                         ?	3_4_0	EXIST::FUNCTION:
+PBMAC1PARAM_free                        ?	3_4_0	EXIST::FUNCTION:
+PBMAC1PARAM_new                         ?	3_4_0	EXIST::FUNCTION:
+PBMAC1PARAM_it                          ?	3_4_0	EXIST::FUNCTION:
 X509_ACERT_add_attr_nconf               ?	3_4_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_get_conf_diagnostics       ?	3_4_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_set_conf_diagnostics       ?	3_4_0	EXIST::FUNCTION:
