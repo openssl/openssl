@@ -964,4 +964,7 @@ int evp_pkey_decrypt_alloc(EVP_PKEY_CTX *ctx, unsigned char **outp,
                            size_t *outlenp, size_t expected_outlen,
                            const unsigned char *in, size_t inlen);
 
+int ossl_md2hmacnid(int mdnid);
+int ossl_hmac2mdnid(int hmac_nid);
+
 #endif /* OSSL_CRYPTO_EVP_H */

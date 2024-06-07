@@ -20,6 +20,7 @@
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include "internal/provider.h"
 #include "internal/core.h"
 #include "crypto/evp.h"
@@ -1184,4 +1185,57 @@ void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,
     evp_generic_do_all(libctx, OSSL_OP_DIGEST,
                        (void (*)(void *, void *))fn, arg,
                        evp_md_from_algorithm, evp_md_up_ref, evp_md_free);
+}
+
+typedef struct {
+    int md_nid;
+    int hmac_nid;
+} ossl_hmacmd_pair;
+
+static const ossl_hmacmd_pair ossl_hmacmd_pairs[] = {
+    {NID_sha1, NID_hmacWithSHA1},
+    {NID_md5, NID_hmacWithMD5},
+    {NID_sha224, NID_hmacWithSHA224},
+    {NID_sha256, NID_hmacWithSHA256},
+    {NID_sha384, NID_hmacWithSHA384},
+    {NID_sha512, NID_hmacWithSHA512},
+    {NID_id_GostR3411_94, NID_id_HMACGostR3411_94},
+    {NID_id_GostR3411_2012_256, NID_id_tc26_hmac_gost_3411_2012_256},
+    {NID_id_GostR3411_2012_512, NID_id_tc26_hmac_gost_3411_2012_512},
+    {NID_sha3_224, NID_hmac_sha3_224},
+    {NID_sha3_256, NID_hmac_sha3_256},
+    {NID_sha3_384, NID_hmac_sha3_384},
+    {NID_sha3_512, NID_hmac_sha3_512},
+    {NID_sha512_224, NID_hmacWithSHA512_224},
+    {NID_sha512_256, NID_hmacWithSHA512_256}
+};
+
+int ossl_hmac2mdnid(int hmac_nid)
+{
+    int md_nid = NID_undef;
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(ossl_hmacmd_pairs); i++) {
+        if (ossl_hmacmd_pairs[i].hmac_nid == hmac_nid) {
+            md_nid = ossl_hmacmd_pairs[i].md_nid;
+            break;
+        }
+    }
+
+    return md_nid;
+}
+
+int ossl_md2hmacnid(int md_nid)
+{
+    int hmac_nid = NID_undef;
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(ossl_hmacmd_pairs); i++) {
+        if (ossl_hmacmd_pairs[i].md_nid == md_nid) {
+            hmac_nid = ossl_hmacmd_pairs[i].hmac_nid;
+            break;
+        }
+    }
+
+    return hmac_nid;
 }

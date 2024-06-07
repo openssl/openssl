@@ -279,7 +279,12 @@ typedef struct PBKDF2PARAM_st {
     X509_ALGOR *prf;
 } PBKDF2PARAM;
 
-#ifndef OPENSSL_NO_SCRYPT
+typedef struct {
+    X509_ALGOR *keyDerivationFunc;
+    X509_ALGOR *messageAuthScheme;
+} PBMAC1PARAM;
+
+# ifndef OPENSSL_NO_SCRYPT
 typedef struct SCRYPT_PARAMS_st {
     ASN1_OCTET_STRING *salt;
     ASN1_INTEGER *costParameter;
@@ -287,7 +292,7 @@ typedef struct SCRYPT_PARAMS_st {
     ASN1_INTEGER *parallelizationParameter;
     ASN1_INTEGER *keyLength;
 } SCRYPT_PARAMS;
-#endif
+# endif
 
 #ifdef  __cplusplus
 }
@@ -1023,9 +1028,10 @@ X509 *X509_find_by_subject(STACK_OF(X509) *sk, const X509_NAME *name);
 DECLARE_ASN1_FUNCTIONS(PBEPARAM)
 DECLARE_ASN1_FUNCTIONS(PBE2PARAM)
 DECLARE_ASN1_FUNCTIONS(PBKDF2PARAM)
-#ifndef OPENSSL_NO_SCRYPT
+DECLARE_ASN1_FUNCTIONS(PBMAC1PARAM)
+# ifndef OPENSSL_NO_SCRYPT
 DECLARE_ASN1_FUNCTIONS(SCRYPT_PARAMS)
-#endif
+# endif
 
 int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
                          const unsigned char *salt, int saltlen);
@@ -1062,6 +1068,7 @@ X509_ALGOR *PKCS5_pbkdf2_set_ex(int iter, unsigned char *salt, int saltlen,
                                 int prf_nid, int keylen,
                                 OSSL_LIB_CTX *libctx);
 
+PBKDF2PARAM *PBMAC1_get1_pbkdf2_param(const X509_ALGOR *macalg);
 /* PKCS#8 utilities */
 
 DECLARE_ASN1_FUNCTIONS(PKCS8_PRIV_KEY_INFO)
