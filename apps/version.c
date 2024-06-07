@@ -136,7 +136,7 @@ opthelp:
     if (cpuinfo)
         printf("%s\n", OpenSSL_version(OPENSSL_CPU_INFO));
     if (windows)
-	printf("WININSTALLCONTEXT: %s\n", OpenSSL_version(OPENSSL_WININSTALLCONTEXT));
+	printf("OSSL_WINCTX: %s\n", OpenSSL_version(OPENSSL_WINCTX));
     ret = 0;
  end:
     return ret;

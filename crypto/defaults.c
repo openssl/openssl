@@ -18,8 +18,8 @@
 # define TOSTR(x) #x
 # define MAKESTR(x) TOSTR(x)
 # define NOQUOTE(x) x
-#if defined(WININSTALLCONTEXT)
-# define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" ##"-"## NOQUOTE(OPENSSL_VERSION_STR) ##"-"## MAKESTR(WININSTALLCONTEXT)
+#if defined(OSSL_WINCTX)
+# define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" ##"-"## NOQUOTE(OPENSSL_VERSION_STR) ##"-"## MAKESTR(OSSL_WINCTX)
 #else
 # define REGISTRY_KEY "NONE"
 #endif
@@ -117,7 +117,7 @@ DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
 const char *ossl_get_openssldir(void)
 {
 #if defined(_WIN32)
-# if defined(WININSTALLCONTEXT)
+# if defined(OSSL_WINCTX)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
     return (const char *)openssldir;
@@ -141,7 +141,7 @@ const char *ossl_get_openssldir(void)
 const char *ossl_get_enginesdir(void)
 {
 #if defined(_WIN32)
-# if defined(WININSTALLCONTEXT)
+# if defined(OSSL_WINCTX)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
     return (const char *)enginesdir;
@@ -165,7 +165,7 @@ const char *ossl_get_enginesdir(void)
 const char *ossl_get_modulesdir(void)
 {
 #if defined(_WIN32)
-# if definied (WININSTALLCONTEXT)
+# if definied (OSSL_WINCTX)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
     return (const char *)modulesdir;
@@ -188,8 +188,8 @@ const char *ossl_get_modulesdir(void)
  */
 const char *ossl_get_wininstallcontext(void)
 {
-#if defined(_WIN32) && defined (WININSTALLCONTEXT)
-	return MAKESTR(WININSTALLCONTEXT);
+#if defined(_WIN32) && defined (OSSL_WINCTX)
+	return MAKESTR(OSSL_WINCTX);
 #else
 	return "";
 #endif

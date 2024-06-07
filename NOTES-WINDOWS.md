@@ -130,19 +130,22 @@ defaults can be overridden by registry keys.  This is done because it is common
 practice for windows based installers to allow users to place the installation
 tree at various locations not defined at build time.  The following keys:
 
-    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL\OPENSSLDIR`
-    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL\ENGINESDIR`
-    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL\MODULESDIR`
+    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\OPENSSLDIR`
+    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\ENGINESDIR`
+    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\MODULESDIR`
 
 Can be administratively set, and openssl will take the paths found there as the
-values for OPENSSLDIR, ENGINESDIR and MODULESDIR respectively.  If unset, the
-build time defaults will be used.
+values for OPENSSLDIR, ENGINESDIR and MODULESDIR respectively.
 
 To enable the reading of registry keys from windows builds, add
-`-DWININSTALLCONTEXT=<string>`to the Configure command line.  Without setting
-this, the library defaults back to reporing the build time defaults without
-checking the registry.  Note that if you wish to have a private set of registry
-keys for your application, you should set `OPENSSL_VERSION` to a unique value
+`-DOPENSSL_WINCTX=<string>`to the Configure command line.  This define is used
+at build time to construct library build specific registry key paths of the
+format:
+`\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432node\OpenSSL-<version>-<ctx>`
+Where `<version>` is the semantic major.minor.patch version of the library being
+built, and `<ctx>` is the value specified by `-DOPENSSL_WINCTX`.  This allows
+for multiple openssl builds to be created and installed on a single system, in
+which each library can use its own set of registry keys.
 
 Note the installer available at <https://github.com/openssl/installer> will set
 these keys when the installer is run.
