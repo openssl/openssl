@@ -226,10 +226,6 @@ DEPEND[man/man1/openssl-prime.1]=man1/openssl-prime.pod
 GENERATE[man/man1/openssl-prime.1]=man1/openssl-prime.pod
 DEPEND[man1/openssl-prime.pod]{pod}=man1/openssl-prime.pod.in
 GENERATE[man1/openssl-prime.pod]=man1/openssl-prime.pod.in
-DEPEND[html/man1/openssl-provider.html]=man1/openssl-provider.pod
-GENERATE[html/man1/openssl-provider.html]=man1/openssl-provider.pod
-DEPEND[man/man1/openssl-provider.1]=man1/openssl-provider.pod
-GENERATE[man/man1/openssl-provider.1]=man1/openssl-provider.pod
 DEPEND[html/man1/openssl-rand.html]=man1/openssl-rand.pod
 GENERATE[html/man1/openssl-rand.html]=man1/openssl-rand.pod
 DEPEND[man/man1/openssl-rand.1]=man1/openssl-rand.pod
@@ -390,7 +386,6 @@ html/man1/openssl-pkey.html \
 html/man1/openssl-pkeyparam.html \
 html/man1/openssl-pkeyutl.html \
 html/man1/openssl-prime.html \
-html/man1/openssl-provider.html \
 html/man1/openssl-rand.html \
 html/man1/openssl-rehash.html \
 html/man1/openssl-req.html \
@@ -451,7 +446,6 @@ man/man1/openssl-pkey.1 \
 man/man1/openssl-pkeyparam.1 \
 man/man1/openssl-pkeyutl.1 \
 man/man1/openssl-prime.1 \
-man/man1/openssl-provider.1 \
 man/man1/openssl-rand.1 \
 man/man1/openssl-rehash.1 \
 man/man1/openssl-req.1 \
