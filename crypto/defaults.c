@@ -165,7 +165,7 @@ const char *ossl_get_enginesdir(void)
 const char *ossl_get_modulesdir(void)
 {
 #if defined(_WIN32)
-# if definied (OSSL_WINCTX)
+# if defined (OSSL_WINCTX)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
     return (const char *)modulesdir;
