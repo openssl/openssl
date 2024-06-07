@@ -1067,24 +1067,27 @@ int EVP_MD_CTX_get_size_ex(const EVP_MD_CTX *ctx)
 {
     const EVP_MD *md = EVP_MD_CTX_get0_md(ctx);
 
-    if (!EVP_MD_xof(md)) {
-        /* Normal digests have a constant fixed size output */
-        return EVP_MD_get_size(md);
-    } else {
-        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-        size_t xoflen = 0;
+    if (EVP_MD_xof(md)) {
+        if (EVP_MD_is_a(md, "SHAKE128")
+                || EVP_MD_is_a(md, "SHAKE256")) {
+                OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+                size_t xoflen = 0;
 
-        /*
-         * For XOF's EVP_MD_get_size() returns 0
-         * So try to get the xoflen instead. This will return -1 if the
-         * xof length has not been set.
-         */
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &xoflen);
-        if (EVP_MD_CTX_get_params((EVP_MD_CTX *)ctx, params) != 1
-                || xoflen == SIZE_MAX)
-            return -1;
-        return xoflen;
+                /*
+                * For XOF's EVP_MD_get_size() returns 0
+                * So try to get the xoflen instead. This will return -1 if the
+                * xof length has not been set.
+                */
+                params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN,
+                                                        &xoflen);
+                if (EVP_MD_CTX_get_params((EVP_MD_CTX *)ctx, params) != 1
+                        || xoflen == SIZE_MAX)
+                    return -1;
+                return xoflen;
+        }
     }
+    /* Normal digests have a constant fixed size output */
+    return EVP_MD_get_size(md);
 }
 
 EVP_PKEY_CTX *EVP_MD_CTX_get_pkey_ctx(const EVP_MD_CTX *ctx)
