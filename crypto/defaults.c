@@ -102,23 +102,9 @@ static CRYPTO_ONCE defaults_setup_init = CRYPTO_ONCE_STATIC_INIT;
  */
 DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
 {
-    char *tmp;
-    tmp = get_windows_regdirs(openssldir, TEXT("OPENSSLDIR"));
-# ifdef OPENSSLDIR
-    if (tmp == NULL)
-        strncpy(openssldir, OPENSSLDIR, MAX_PATH);
-# endif
-    tmp = get_windows_regdirs(enginesdir, TEXT("ENGINESDIR"));
-# ifdef ENGINESDIR
-    if (tmp == NULL)
-        strncpy(enginesdir, ENGINESDIR, MAX_PATH);
-# endif
-    tmp = get_windows_regdirs(modulesdir, TEXT("MODULESDIR"));
-# ifdef MODULESDIR
-    if (tmp == NULL)
-        strncpy(modulesdir, MODULESDIR, MAX_PATH);
-# endif
-        
+    get_windows_regdirs(openssldir, TEXT("OPENSSLDIR"));
+    get_windows_regdirs(enginesdir, TEXT("ENGINESDIR"));
+    get_windows_regdirs(modulesdir, TEXT("MODULESDIR"));
     return 1;
 }
 #endif
@@ -130,10 +116,14 @@ DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
  */
 const char *ossl_get_openssldir(void)
 {
-#if defined(_WIN32) && defined(WININSTALLCONTEXT)
+#if defined(_WIN32)
+# if defined(WININSTALLCONTEXT)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
     return (const char *)openssldir;
+# else
+    return "UNDEFINED";
+# endif
 #else
 # ifdef OPENSSLDIR
     return OPENSSLDIR;
@@ -150,10 +140,14 @@ const char *ossl_get_openssldir(void)
  */
 const char *ossl_get_enginesdir(void)
 {
-#if defined(_WIN32) && defined(WININSTALLCONTEXT)
+#if defined(_WIN32)
+# if defined(WININSTALLCONTEXT)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
     return (const char *)enginesdir;
+# else
+    return "UNDEFINED";
+# endif
 #else
 # ifdef OPENSSLDIR
     return ENGINESDIR;
@@ -170,12 +164,16 @@ const char *ossl_get_enginesdir(void)
  */
 const char *ossl_get_modulesdir(void)
 {
-#if defined(_WIN32) && defined(WININSTALLCONTEXT)
+#if defined(_WIN32)
+# if definied (WININSTALLCONTEXT)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
     return (const char *)modulesdir;
+# else
+    return "UNDEFINED";
+# endif
 #else
-# ifdef OPENSSLDIR
+# ifdef MODULESDIR
     return MODULESDIR;
 # else
     return "";
