@@ -135,3 +135,9 @@ int s390x_crt(BIGNUM *r, const BIGNUM *i, const BIGNUM *p, const BIGNUM *q,
             const BIGNUM *dmp, const BIGNUM *dmq, const BIGNUM *iqmp);
 
 #endif
+
+int ossl_bn_mont_ctx_set(BN_MONT_CTX *ctx, const BIGNUM *modulus, int ri,
+                         const unsigned char *rr, size_t rrlen,
+                         uint32_t nlo, uint32_t nhi);
+
+int ossl_bn_mont_ctx_eq(const BN_MONT_CTX *m1, const BN_MONT_CTX *m2);

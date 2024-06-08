@@ -174,6 +174,7 @@ int OSSL_IETF_ATTR_SYNTAX_add1_value(OSSL_IETF_ATTR_SYNTAX *a, int type,
         val->u.string = data;
         break;
     default:
+        OSSL_IETF_ATTR_SYNTAX_VALUE_free(val);
         ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }

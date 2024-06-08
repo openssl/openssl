@@ -16,6 +16,7 @@
 #include "testutil.h"
 #include <openssl/ec.h>
 #include "ec_local.h"
+#include <crypto/bn.h>
 #include <openssl/objects.h>
 
 static size_t crv_len = 0;
@@ -433,6 +434,68 @@ end:
     return testresult;
 }
 
+
+static int check_bn_mont_ctx(BN_MONT_CTX *mont, BIGNUM *mod, BN_CTX *ctx)
+{
+    int ret = 0;
+    BN_MONT_CTX *regenerated = BN_MONT_CTX_new();
+
+    if (!TEST_ptr(regenerated))
+        return ret;
+    if (!TEST_ptr(mont))
+        goto err;
+
+    if (!TEST_true(BN_MONT_CTX_set(regenerated, mod, ctx)))
+        goto err;
+
+    if (!TEST_true(ossl_bn_mont_ctx_eq(regenerated, mont)))
+        goto err;
+
+    ret = 1;
+
+ err:
+    BN_MONT_CTX_free(regenerated);
+    return ret;
+}
+
+static int montgomery_correctness_test(EC_GROUP *group)
+{
+    int ret = 0;
+    BN_CTX *ctx = NULL;
+
+    ctx = BN_CTX_new();
+    if (!TEST_ptr(ctx))
+        return ret;
+    if (!TEST_true(check_bn_mont_ctx(group->mont_data, group->order, ctx))) {
+        TEST_error("group order issue");
+        goto err;
+    }
+    if (group->field_data1 != NULL) {
+        if (!TEST_true(check_bn_mont_ctx(group->field_data1, group->field, ctx)))
+            goto err;
+    }
+    ret = 1;
+ err:
+    BN_CTX_free(ctx);
+    return ret;
+}
+
+static int named_group_creation_test(void)
+{
+    int ret = 0;
+    EC_GROUP *group = NULL;
+
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1))
+        || !TEST_true(montgomery_correctness_test(group)))
+      goto err;
+
+    ret = 1;
+
+ err:
+    EC_GROUP_free(group);
+    return ret;
+}
+
 int setup_tests(void)
 {
     crv_len = EC_get_builtin_curves(NULL, 0);
@@ -452,6 +515,7 @@ int setup_tests(void)
     ADD_TEST(set_private_key);
     ADD_TEST(decoded_flag_test);
     ADD_ALL_TESTS(ecpkparams_i2d2i_test, crv_len);
+    ADD_TEST(named_group_creation_test);
 
     return 1;
 }

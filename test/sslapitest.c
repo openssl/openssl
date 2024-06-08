@@ -2330,9 +2330,9 @@ static int execute_test_session(int maxprot, int use_int_cache,
      */
 
     /* Make sess1 expire before sess2 */
-    if (!TEST_long_gt(SSL_SESSION_set_time(sess1, 1000), 0)
+    if (!TEST_time_t_gt(SSL_SESSION_set_time_ex(sess1, 1000), 0)
             || !TEST_long_gt(SSL_SESSION_set_timeout(sess1, 1000), 0)
-            || !TEST_long_gt(SSL_SESSION_set_time(sess2, 2000), 0)
+            || !TEST_time_t_gt(SSL_SESSION_set_time_ex(sess2, 2000), 0)
             || !TEST_long_gt(SSL_SESSION_set_timeout(sess2, 2000), 0))
         goto end;
 
@@ -3991,7 +3991,7 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
          * time. It could be any value as long as it is not within tolerance.
          * This should mean the ticket is rejected.
          */
-        if (!TEST_true(SSL_SESSION_set_time(sess, (long)(time(NULL) - 20))))
+        if (!TEST_true(SSL_SESSION_set_time_ex(sess, time(NULL) - 20)))
             goto end;
     }
 
@@ -9325,7 +9325,7 @@ static int test_session_timeout(int test)
     SSL_SESSION *late = NULL;
     SSL_CTX *ctx;
     int testresult = 0;
-    long now = (long)time(NULL);
+    time_t now = time(NULL);
 #define TIMEOUT 10
 
     if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_method()))
@@ -9353,9 +9353,9 @@ static int test_session_timeout(int test)
         || !TEST_ptr(late->prev))
         goto end;
 
-    if (!TEST_int_ne(SSL_SESSION_set_time(early, now - 10), 0)
-        || !TEST_int_ne(SSL_SESSION_set_time(middle, now), 0)
-        || !TEST_int_ne(SSL_SESSION_set_time(late, now + 10), 0))
+    if (!TEST_time_t_ne(SSL_SESSION_set_time_ex(early, now - 10), 0)
+        || !TEST_time_t_ne(SSL_SESSION_set_time_ex(middle, now), 0)
+        || !TEST_time_t_ne(SSL_SESSION_set_time_ex(late, now + 10), 0))
         goto end;
 
     if (!TEST_int_ne(SSL_SESSION_set_timeout(early, TIMEOUT), 0)
@@ -9377,21 +9377,21 @@ static int test_session_timeout(int test)
         goto end;
 
     /* This should remove "early" */
-    SSL_CTX_flush_sessions(ctx, now + TIMEOUT - 1);
+    SSL_CTX_flush_sessions_ex(ctx, now + TIMEOUT - 1);
     if (!TEST_ptr_null(early->prev)
         || !TEST_ptr(middle->prev)
         || !TEST_ptr(late->prev))
         goto end;
 
     /* This should remove "middle" */
-    SSL_CTX_flush_sessions(ctx, now + TIMEOUT + 1);
+    SSL_CTX_flush_sessions_ex(ctx, now + TIMEOUT + 1);
     if (!TEST_ptr_null(early->prev)
         || !TEST_ptr_null(middle->prev)
         || !TEST_ptr(late->prev))
         goto end;
 
     /* This should remove "late" */
-    SSL_CTX_flush_sessions(ctx, now + TIMEOUT + 11);
+    SSL_CTX_flush_sessions_ex(ctx, now + TIMEOUT + 11);
     if (!TEST_ptr_null(early->prev)
         || !TEST_ptr_null(middle->prev)
         || !TEST_ptr_null(late->prev))
@@ -9410,7 +9410,7 @@ static int test_session_timeout(int test)
         goto end;
 
     /* This should remove all of them */
-    SSL_CTX_flush_sessions(ctx, 0);
+    SSL_CTX_flush_sessions_ex(ctx, 0);
     if (!TEST_ptr_null(early->prev)
         || !TEST_ptr_null(middle->prev)
         || !TEST_ptr_null(late->prev))
@@ -9421,9 +9421,9 @@ static int test_session_timeout(int test)
 
     /* make sure |now| is NOT  equal to the current time */
     now -= 10;
-    if (!TEST_int_ne(SSL_SESSION_set_time(early, now), 0)
+    if (!TEST_time_t_ne(SSL_SESSION_set_time_ex(early, now), 0)
         || !TEST_int_eq(SSL_CTX_add_session(ctx, early), 1)
-        || !TEST_long_ne(SSL_SESSION_get_time(early), now))
+        || !TEST_time_t_ne(SSL_SESSION_get_time_ex(early), now))
         goto end;
 
     testresult = 1;
@@ -11193,27 +11193,6 @@ end:
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
-
-static ENGINE *load_dasync(void)
-{
-    ENGINE *e;
-
-    if (!TEST_ptr(e = ENGINE_by_id("dasync")))
-        return NULL;
-
-    if (!TEST_true(ENGINE_init(e))) {
-        ENGINE_free(e);
-        return NULL;
-    }
-
-    if (!TEST_true(ENGINE_register_ciphers(e))) {
-        ENGINE_free(e);
-        return NULL;
-    }
-
-    return e;
-}
-
 /*
  * Test TLSv1.2 with a pipeline capable cipher. TLSv1.3 and DTLS do not
  * support this yet. The only pipeline capable cipher that we have is in the

@@ -97,7 +97,7 @@ int ossl_rsa_multip_calc_product(RSA *rsa)
 
 int ossl_rsa_multip_cap(int bits)
 {
-    int cap = 5;
+    int cap = RSA_MAX_PRIME_NUM;
 
     if (bits < 1024)
         cap = 2;

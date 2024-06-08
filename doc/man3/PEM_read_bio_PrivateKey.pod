@@ -332,7 +332,9 @@ NULL but I<*x> is NULL then the structure returned will be written
 to I<*x>. If neither I<x> nor I<*x> is NULL then an attempt is made
 to reuse the structure at I<*x> (but see BUGS and EXAMPLES sections).
 Irrespective of the value of I<x> a pointer to the structure is always
-returned (or NULL if an error occurred).
+returned (or NULL if an error occurred). The caller retains ownership of the
+returned object and needs to free it when it is no longer needed, e.g.
+using X509_free() for X509 objects or EVP_PKEY_free() for EVP_PKEY objects.
 
 The PEM functions which write private keys take an I<enc> parameter
 which specifies the encryption algorithm to use, encryption is done

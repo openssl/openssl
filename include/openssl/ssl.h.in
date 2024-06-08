@@ -236,10 +236,8 @@ typedef struct ssl_cipher_st SSL_CIPHER;
 typedef struct ssl_session_st SSL_SESSION;
 typedef struct tls_sigalgs_st TLS_SIGALGS;
 typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
-typedef struct ssl_comp_st SSL_COMP;
 
 STACK_OF(SSL_CIPHER);
-STACK_OF(SSL_COMP);
 
 /* SRTP protection profiles for use with the use_srtp extension (RFC 5764)*/
 typedef struct srtp_protection_profile_st {
@@ -975,8 +973,7 @@ extern "C" {
  * in VisualStudio 2015
  */
 {-
-    generate_const_stack_macros("SSL_CIPHER")
-    .generate_stack_macros("SSL_COMP");
+    generate_const_stack_macros("SSL_CIPHER");
 -}
 
 /* compatibility */
@@ -1572,7 +1569,11 @@ void SSL_CTX_set1_cert_store(SSL_CTX *, X509_STORE *);
 __owur int SSL_want(const SSL *s);
 __owur int SSL_clear(SSL *s);
 
+#ifndef OPENSSL_NO_DEPRECATED_3_4
+OSSL_DEPRECATEDIN_3_4_FOR("not Y2038-safe, replace with SSL_CTX_flush_sessions_ex()")
 void SSL_CTX_flush_sessions(SSL_CTX *ctx, long tm);
+#endif
+void SSL_CTX_flush_sessions_ex(SSL_CTX *ctx, time_t tm);
 
 __owur const SSL_CIPHER *SSL_get_current_cipher(const SSL *s);
 __owur const SSL_CIPHER *SSL_get_pending_cipher(const SSL *s);
@@ -1684,8 +1685,13 @@ __owur const char *SSL_state_string(const SSL *s);
 __owur const char *SSL_rstate_string(const SSL *s);
 __owur const char *SSL_state_string_long(const SSL *s);
 __owur const char *SSL_rstate_string_long(const SSL *s);
+
+#ifndef OPENSSL_NO_DEPRECATED_3_4
+OSSL_DEPRECATEDIN_3_4_FOR("not Y2038-safe, replace with SSL_SESSION_get_time_ex()")
 __owur long SSL_SESSION_get_time(const SSL_SESSION *s);
+OSSL_DEPRECATEDIN_3_4_FOR("not Y2038-safe, replace with SSL_SESSION_set_time_ex()")
 __owur long SSL_SESSION_set_time(SSL_SESSION *s, long t);
+#endif
 __owur long SSL_SESSION_get_timeout(const SSL_SESSION *s);
 __owur long SSL_SESSION_set_timeout(SSL_SESSION *s, long t);
 __owur int SSL_SESSION_get_protocol_version(const SSL_SESSION *s);

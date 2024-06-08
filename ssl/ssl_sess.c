@@ -941,10 +941,12 @@ long SSL_SESSION_get_timeout(const SSL_SESSION *s)
     return (long)ossl_time_to_time_t(s->timeout);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_4
 long SSL_SESSION_get_time(const SSL_SESSION *s)
 {
     return (long) SSL_SESSION_get_time_ex(s);
 }
+#endif
 
 time_t SSL_SESSION_get_time_ex(const SSL_SESSION *s)
 {
@@ -973,10 +975,12 @@ time_t SSL_SESSION_set_time_ex(SSL_SESSION *s, time_t t)
     return t;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_4
 long SSL_SESSION_set_time(SSL_SESSION *s, long t)
 {
     return (long) SSL_SESSION_set_time_ex(s, (time_t) t);
 }
+#endif
 
 int SSL_SESSION_get_protocol_version(const SSL_SESSION *s)
 {
@@ -1183,7 +1187,14 @@ int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
     return 0;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_4
 void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
+{
+    SSL_CTX_flush_sessions_ex(s, (time_t) t);
+}
+#endif
+
+void SSL_CTX_flush_sessions_ex(SSL_CTX *s, time_t t)
 {
     STACK_OF(SSL_SESSION) *sk;
     SSL_SESSION *current;

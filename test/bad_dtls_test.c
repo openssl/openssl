@@ -508,7 +508,6 @@ static int test_bad_dtls(void)
     if (!TEST_ptr(con)
             || !TEST_true(SSL_set_session(con, sess)))
         goto end;
-    SSL_SESSION_free(sess);
 
     rbio = BIO_new(BIO_s_mem());
     wbio = BIO_new(BIO_s_mem());
@@ -596,6 +595,7 @@ static int test_bad_dtls(void)
     testresult = 1;
 
  end:
+    SSL_SESSION_free(sess);
     BIO_free(rbio);
     BIO_free(wbio);
     SSL_free(con);

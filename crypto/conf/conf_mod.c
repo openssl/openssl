@@ -528,12 +528,13 @@ void CONF_modules_unload(int all)
 
     old_modules = ossl_rcu_deref(&supported_modules);
     new_modules = sk_CONF_MODULE_dup(old_modules);
-    to_delete = sk_CONF_MODULE_new_null();
 
     if (new_modules == NULL) {
         ossl_rcu_write_unlock(module_list_lock);
         return;
     }
+
+    to_delete = sk_CONF_MODULE_new_null();
 
     /* unload modules in reverse order */
     for (i = sk_CONF_MODULE_num(new_modules) - 1; i >= 0; i--) {

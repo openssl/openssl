@@ -330,6 +330,7 @@ Output = "Hello World"
 
 # Decrypt OAEP SHAKE MGF1
 Availablein = fips
+FIPSversion = >=3.4.0
 Decrypt = RSA-2048
 Ctrl = rsa_padding_mode:oaep
 Ctrl = rsa_mgf1_md:shake128
@@ -338,6 +339,7 @@ Result = KEYOP_ERROR
 
 # Decrypt OAEP SHAKE MD
 Availablein = fips
+FIPSversion = >=3.4.0
 Decrypt = RSA-2048
 Ctrl = rsa_padding_mode:oaep
 Ctrl = rsa_oaep_md:shake128
