@@ -67,18 +67,6 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
     if (no_etm)
         SSL_set_options(srvr_ssl, SSL_OP_NO_ENCRYPT_THEN_MAC);
 
-#ifndef OPENSSL_NO_SCTP
-    /**
-     * TODO(DTLSv1.3): Fix SCTP support
-     * This test is failing on exporting the sctp auth key on server and client
-     * because ossl_statem_export_allowed() fails.
-     * ossl_statem_server_post_work:internal error:ssl/statem/statem_srvr.c:937:
-     * and
-     * tls_process_server_hello:internal error:ssl/statem/statem_clnt.c:1763:
-     */
-    OPENSSL_assert(SSL_set_max_proto_version(clnt_ssl, DTLS1_2_VERSION) == 1);
-#endif
-
     if (!TEST_true(SSL_set_cipher_list(srvr_ssl, cs))
         || !TEST_true(SSL_set_cipher_list(clnt_ssl, cs))
         || !TEST_ptr(sc_bio = SSL_get_rbio(srvr_ssl))
