@@ -295,13 +295,16 @@ static void BN_POOL_init(BN_POOL *p)
 
 static void BN_POOL_finish(BN_POOL *p)
 {
-    unsigned int loop;
+    int loop;
     BIGNUM *bn;
 
     while (p->head) {
-        for (loop = 0, bn = p->head->vals; loop++ < BN_CTX_POOL_SIZE; bn++)
+        for (loop = (BN_CTX_POOL_SIZE - 1); loop >= 0; loop--) {
+            bn = p->head->vals[loop];
             if (bn->d)
                 BN_clear_free(bn);
+        }
+
         p->current = p->head->next;
         OPENSSL_free(p->head);
         p->head = p->current;
