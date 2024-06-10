@@ -916,7 +916,12 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             break;
         }
 #ifndef OPENSSL_NO_SCTP
-        if (SSL_CONNECTION_IS_DTLS(s) && s->hit) {
+        /*
+        * Before exporting the SCTP auth key we check if DTLSv1.3 has been negotiated
+        * which is not supported.
+        * Refer to draft-tuexen-tsvwg-rfc6083-bis-04 for more info.
+        */
+        if (SSL_CONNECTION_IS_DTLS(s) && !SSL_CONNECTION_IS_DTLS13(s) && s->hit) {
             unsigned char sctpauthkey[64];
             char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
             size_t labellen;
@@ -3469,7 +3474,12 @@ WORK_STATE tls_post_process_client_key_exchange(SSL_CONNECTION *s,
 {
 #ifndef OPENSSL_NO_SCTP
     if (wst == WORK_MORE_A) {
-        if (SSL_CONNECTION_IS_DTLS(s)) {
+        /*
+         * Before exporting the SCTP auth key we check if DTLSv1.3 has been
+         * negotiated which is not supported.
+         * Refer to draft-tuexen-tsvwg-rfc6083-bis-04 for more info.
+         */
+        if (SSL_CONNECTION_IS_DTLS(s) && !SSL_CONNECTION_IS_DTLS13(s)) {
             unsigned char sctpauthkey[64];
             char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
             size_t labellen;
