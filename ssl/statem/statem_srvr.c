@@ -1681,6 +1681,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
                                                        &maxversion, NULL) == 0)
                 && ssl_version_cmp(s, maxversion, DTLS1_3_VERSION) < 0
                 && !clienthello->pre_proc_exts[TLSEXT_IDX_supported_versions].present) {
+            OPENSSL_free(clienthello->pre_proc_exts);
             OPENSSL_free(clienthello);
             return MSG_PROCESS_FINISHED_READING;
         }
