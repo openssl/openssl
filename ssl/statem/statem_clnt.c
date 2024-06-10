@@ -1773,7 +1773,12 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
     }
 
 #ifndef OPENSSL_NO_SCTP
-    if (SSL_CONNECTION_IS_DTLS(s) && s->hit) {
+    /*
+     * Before exporting the SCTP auth key we check if DTLSv1.3 has been negotiated
+     * which is not supported.
+     * Refer to draft-tuexen-tsvwg-rfc6083-bis-04 for more info.
+     */
+    if (SSL_CONNECTION_IS_DTLS(s) && !SSL_CONNECTION_IS_DTLS13(s) && s->hit) {
         unsigned char sctpauthkey[64];
         char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
         size_t labellen;
@@ -3706,7 +3711,12 @@ int tls_client_key_exchange_post_work(SSL_CONNECTION *s)
     pmslen = 0;
 
 #ifndef OPENSSL_NO_SCTP
-    if (SSL_CONNECTION_IS_DTLS(s)) {
+    /*
+     * Before exporting the SCTP auth key we check if DTLSv1.3 has been negotiated
+     * which is not supported.
+     * Refer to draft-tuexen-tsvwg-rfc6083-bis-04 for more info.
+     */
+    if (SSL_CONNECTION_IS_DTLS(s) && !SSL_CONNECTION_IS_DTLS13(s)) {
         unsigned char sctpauthkey[64];
         char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
         size_t labellen;
