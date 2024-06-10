@@ -81,7 +81,7 @@ sub run_tests
     }
 
     SKIP: {
-        skip "TODO: When ECX is disabled running this test with DTLS will hang"
+        skip "TODO(DTLSv1.3): When ECX is disabled running this test with DTLS will hang"
             ." waiting for s_server to close", 2 if $run_test_as_dtls == 1 && disabled("ecx");
         #Test 1: A client should fail if the server changes the ciphersuite between the
         #        HRR and the SH
