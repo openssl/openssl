@@ -1,8 +1,7 @@
 ---
 name: Investigation 
-labels: 'investigation'
-about: Discuss a broad topic or concern in OpenSSL
-
+labels: 'investigation needed'
+about: Raise a broad topic or concern in OpenSSL requiring investigation
 ---
 
 <!--
