@@ -490,7 +490,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
     if (rr->type == SSL3_RT_HANDSHAKE && !ossl_statem_get_in_handshake(sc)) {
-        struct hm_header_st msg_hdr;
+        unsigned char msg_type;
 
         /*
          * This may just be a stale retransmit. Also sanity check that we have
@@ -503,19 +503,19 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
             goto start;
         }
 
-        dtls1_get_message_header(rr->data, &msg_hdr);
+        msg_type = *rr->data;
 
         /*
          * If we are server, we may have a repeated FINISHED of the client
          * here, then retransmit our CCS and FINISHED.
          */
-        if (msg_hdr.type == SSL3_MT_FINISHED) {
+        if (msg_type == SSL3_MT_FINISHED) {
             if (dtls1_check_timeout_num(sc) < 0) {
                 /* SSLfatal) already called */
                 return -1;
             }
 
-            if (dtls1_retransmit_buffered_messages(sc) <= 0) {
+            if (dtls1_retransmit_sent_messages(sc) <= 0) {
                 /* Fail if we encountered a fatal error */
                 if (ossl_statem_in_error(sc))
                     return -1;
