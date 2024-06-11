@@ -26,6 +26,9 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
+plan skip_all => "DTLSProxy does not support partial messages"
+    if disabled("ec");
+
 plan skip_all => "$test_name needs DTLSv1.3 enabled"
     if disabled("dtls1_3");
 
