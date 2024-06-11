@@ -96,13 +96,13 @@ int dtls1_new(SSL *ssl)
         return 0;
     }
 
-    d1->buffered_messages = pqueue_new();
+    d1->rcvd_messages = pqueue_new();
     d1->sent_messages = pqueue_new();
 
     d1->hello_verify_request = SSL_HVR_NONE;
 
-    if (d1->buffered_messages == NULL || d1->sent_messages == NULL) {
-        pqueue_free(d1->buffered_messages);
+    if (d1->rcvd_messages == NULL || d1->sent_messages == NULL) {
+        pqueue_free(d1->rcvd_messages);
         pqueue_free(d1->sent_messages);
         OPENSSL_free(d1);
         ssl3_free(ssl);
@@ -128,7 +128,7 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
     pitem *item = NULL;
     hm_fragment *frag = NULL;
 
-    while ((item = pqueue_pop(s->d1->buffered_messages)) != NULL) {
+    while ((item = pqueue_pop(s->d1->rcvd_messages)) != NULL) {
         frag = (hm_fragment *)item->data;
         dtls1_hm_fragment_free(frag);
         pitem_free(item);
@@ -138,22 +138,21 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
 {
     pitem *item = NULL;
-    hm_fragment *frag = NULL;
 
     while ((item = pqueue_pop(s->d1->sent_messages)) != NULL) {
-        frag = (hm_fragment *)item->data;
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
 
-        if (frag->msg_header.is_ccs
-            && frag->msg_header.saved_retransmit_state.wrlmethod != NULL
-            && s->rlayer.wrl != frag->msg_header.saved_retransmit_state.wrl) {
+        if (sent_msg->record_type == SSL3_RT_CHANGE_CIPHER_SPEC
+            && sent_msg->saved_retransmit_state.wrlmethod != NULL
+            && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl) {
             /*
              * If we're freeing the CCS then we're done with the old wrl and it
              * can bee freed
              */
-            frag->msg_header.saved_retransmit_state.wrlmethod->free(frag->msg_header.saved_retransmit_state.wrl);
+            sent_msg->saved_retransmit_state.wrlmethod->free(sent_msg->saved_retransmit_state.wrl);
         }
 
-        dtls1_hm_fragment_free(frag);
+        dtls1_sent_msg_free(sent_msg);
         pitem_free(item);
     }
 }
@@ -167,7 +166,7 @@ void dtls1_free(SSL *ssl)
 
     if (s->d1 != NULL) {
         dtls1_clear_queues(s);
-        pqueue_free(s->d1->buffered_messages);
+        pqueue_free(s->d1->rcvd_messages);
         pqueue_free(s->d1->sent_messages);
     }
 
@@ -181,7 +180,7 @@ void dtls1_free(SSL *ssl)
 
 int dtls1_clear(SSL *ssl)
 {
-    pqueue *buffered_messages;
+    pqueue *rcvd_messages;
     pqueue *sent_messages;
     size_t mtu;
     size_t link_mtu;
@@ -196,7 +195,7 @@ int dtls1_clear(SSL *ssl)
     if (s->d1) {
         DTLS_timer_cb timer_cb = s->d1->timer_cb;
 
-        buffered_messages = s->d1->buffered_messages;
+        rcvd_messages = s->d1->rcvd_messages;
         sent_messages = s->d1->sent_messages;
         mtu = s->d1->mtu;
         link_mtu = s->d1->link_mtu;
@@ -213,7 +212,7 @@ int dtls1_clear(SSL *ssl)
             s->d1->link_mtu = link_mtu;
         }
 
-        s->d1->buffered_messages = buffered_messages;
+        s->d1->rcvd_messages = rcvd_messages;
         s->d1->sent_messages = sent_messages;
     }
 
@@ -413,7 +412,7 @@ int dtls1_handle_timeout(SSL_CONNECTION *s)
 
     dtls1_start_timer(s);
     /* Calls SSLfatal() if required */
-    return dtls1_retransmit_buffered_messages(s);
+    return dtls1_retransmit_sent_messages(s);
 }
 
 #define LISTEN_SUCCESS 2

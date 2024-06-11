@@ -1965,8 +1965,6 @@ struct hm_header_st {
     unsigned short seq;
     size_t frag_off;
     size_t frag_len;
-    unsigned int is_ccs;
-    struct dtls1_retransmit_state saved_retransmit_state;
 };
 
 typedef struct hm_fragment_st {
@@ -1998,6 +1996,19 @@ pitem *pqueue_iterator(pqueue *pq);
 pitem *pqueue_next(piterator *iter);
 size_t pqueue_size(pqueue *pq);
 
+typedef struct dtls_msg_info_st {
+    unsigned char msg_type;
+    size_t msg_body_len;
+    unsigned short msg_seq;
+} dtls_msg_info;
+
+typedef struct dtls_sent_msg_st {
+    dtls_msg_info msg_info;
+    int record_type;
+    unsigned char *msg_buf;
+    struct dtls1_retransmit_state saved_retransmit_state;
+} dtls_sent_msg;
+
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     size_t cookie_len;
@@ -2006,8 +2017,8 @@ typedef struct dtls1_state_st {
     unsigned short handshake_write_seq;
     unsigned short next_handshake_write_seq;
     unsigned short handshake_read_seq;
-    /* Buffered handshake messages */
-    pqueue *buffered_messages;
+    /* Buffered received handshake messages */
+    pqueue *rcvd_messages;
     /* Buffered (sent) handshake records */
     pqueue *sent_messages;
     /* Flag to indicate current HelloVerifyRequest status */
@@ -2015,8 +2026,8 @@ typedef struct dtls1_state_st {
         SSL_HVR_RECEIVED } hello_verify_request;
     size_t link_mtu; /* max on-the-wire DTLS packet size */
     size_t mtu; /* max DTLS packet size */
-    struct hm_header_st w_msg_hdr;
-    struct hm_header_st r_msg_hdr;
+    dtls_msg_info w_msg;
+    unsigned short r_msg_seq;
     /* Number of alerts received so far */
     unsigned int timeout_num_alerts;
     /*
@@ -2774,25 +2785,19 @@ __owur int ssl_get_min_max_version(const SSL_CONNECTION *s, int *min_version,
     int *max_version, int *real_max);
 
 __owur OSSL_TIME tls1_default_timeout(void);
-__owur int dtls1_do_write(SSL_CONNECTION *s, uint8_t type);
-void dtls1_set_message_header(SSL_CONNECTION *s,
-    unsigned char mt,
-    size_t len,
-    size_t frag_off, size_t frag_len);
+__owur int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype);
 
 int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
     size_t len, size_t *written);
 
 __owur int dtls1_read_failed(SSL_CONNECTION *s, int code);
-__owur int dtls1_buffer_message(SSL_CONNECTION *s, int ccs);
+__owur int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type);
 __owur int dtls1_retransmit_message(SSL_CONNECTION *s, unsigned short seq,
     int *found);
 __owur int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
-int dtls1_retransmit_buffered_messages(SSL_CONNECTION *s);
+int dtls1_retransmit_sent_messages(SSL_CONNECTION *s);
 void dtls1_clear_received_buffer(SSL_CONNECTION *s);
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s);
-void dtls1_get_message_header(const unsigned char *data,
-    struct hm_header_st *msg_hdr);
 __owur OSSL_TIME dtls1_default_timeout(void);
 __owur int dtls1_get_timeout(const SSL_CONNECTION *s, OSSL_TIME *timeleft);
 __owur int dtls1_check_timeout_num(SSL_CONNECTION *s);
@@ -2804,6 +2809,7 @@ __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
     size_t cookie_len);
 __owur size_t dtls1_min_mtu(SSL_CONNECTION *s);
 void dtls1_hm_fragment_free(hm_fragment *frag);
+void dtls1_sent_msg_free(dtls_sent_msg *msg);
 __owur int dtls1_query_mtu(SSL_CONNECTION *s);
 
 __owur int tls1_new(SSL *s);
