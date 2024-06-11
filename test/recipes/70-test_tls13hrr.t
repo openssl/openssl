@@ -193,7 +193,6 @@ sub hrr_filter
         my $dup_hrr;
 
         if ($proxy->isdtls()) {
-            printf("FWH:: askldj");
             $dup_hrr = TLSProxy::Record->new_dtls(3,
                 $hrr_record->content_type(),
                 $hrr_record->version(),
