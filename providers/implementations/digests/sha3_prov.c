@@ -558,6 +558,7 @@ static void *keccak_dupctx(void *ctx)
 
 static const OSSL_PARAM known_shake_settable_ctx_params[] = {
     {OSSL_DIGEST_PARAM_XOFLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
+    {OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
     OSSL_PARAM_END
 };
 
@@ -578,6 +579,8 @@ static int shake_get_ctx_params(void *vctx, OSSL_PARAM params[])
         return 1;
 
     p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_XOFLEN);
+    if (p == NULL)
+        p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_SIZE);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->md_size)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
         return 0;
