@@ -1673,7 +1673,7 @@ if (!$disabled{makedepend}) {
     disable('unavailable', 'makedepend') unless $config{makedep_scheme};
 }
 
-if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS') {
+if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS' && !$predefined_C{_AIX}) {
     # probe for -Wa,--noexecstack option...
     if ($predefined_C{__clang__}) {
         # clang has builtin assembler, which doesn't recognize --help,
