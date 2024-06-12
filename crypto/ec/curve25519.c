@@ -5715,3 +5715,38 @@ ossl_x25519_public_from_private(uint8_t out_public_value[32],
 
     OPENSSL_cleanse(e, sizeof(e));
 }
+
+void
+ossl_x25519_private_from_ed25519(uint8_t out_private_key[32],
+                                 const uint8_t private_key[32])
+{
+    uint8_t md[SHA512_DIGEST_LENGTH];
+
+    SHA512(private_key, 32, md);
+
+    md[0] &= 248;
+    md[31] &= 127;
+    md[31] |= 64;
+
+    memcpy(out_private_key, md, 32);
+
+    OPENSSL_cleanse(md, sizeof(md));
+}
+
+void
+ossl_x25519_public_from_ed25519(uint8_t out_public_value[32],
+                                const uint8_t public_value[32])
+{
+    fe Z, Y;
+    fe zplusy, zminusy, zminusy_inv;
+
+    fe_frombytes(Y, public_value);
+    fe_1(Z);
+
+    fe_add(zplusy, Z, Y);
+    fe_sub(zminusy, Z, Y);
+    fe_invert(zminusy_inv, zminusy);
+    fe_mul(zplusy, zplusy, zminusy_inv);
+
+    fe_tobytes(out_public_value, zplusy);
+}
