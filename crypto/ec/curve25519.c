@@ -5716,13 +5716,21 @@ ossl_x25519_public_from_private(uint8_t out_public_value[32],
     OPENSSL_cleanse(e, sizeof(e));
 }
 
-void
+int
 ossl_x25519_private_from_ed25519(uint8_t out_private_key[32],
                                  const uint8_t private_key[32])
 {
     uint8_t md[SHA512_DIGEST_LENGTH];
+    const EVP_MD *sha512 = EVP_sha512();
+    EVP_MD_CTX *hash_ctx = EVP_MD_CTX_new();
+    unsigned int sz;
+    int res = 0;
 
-    SHA512(private_key, 32, md);
+    if (!hash_ctx
+        || !EVP_DigestInit_ex(hash_ctx, sha512, NULL)
+        || !EVP_DigestUpdate(hash_ctx, private_key, 32)
+        || !EVP_DigestFinal_ex(hash_ctx, md, &sz))
+        goto err;
 
     md[0] &= 248;
     md[31] &= 127;
@@ -5730,10 +5738,16 @@ ossl_x25519_private_from_ed25519(uint8_t out_private_key[32],
 
     memcpy(out_private_key, md, 32);
 
+    res = 1;
+err:
+    if (hash_ctx)
+        EVP_MD_CTX_free(hash_ctx);
     OPENSSL_cleanse(md, sizeof(md));
+
+    return res;
 }
 
-void
+int
 ossl_x25519_public_from_ed25519(uint8_t out_public_value[32],
                                 const uint8_t public_value[32])
 {
@@ -5749,4 +5763,6 @@ ossl_x25519_public_from_ed25519(uint8_t out_public_value[32],
     fe_mul(zplusy, zplusy, zminusy_inv);
 
     fe_tobytes(out_public_value, zplusy);
+
+    return 1;
 }
