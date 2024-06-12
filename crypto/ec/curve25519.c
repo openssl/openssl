@@ -5721,12 +5721,12 @@ ossl_x25519_private_from_ed25519(uint8_t out_private_key[32],
                                  const uint8_t private_key[32])
 {
     uint8_t md[SHA512_DIGEST_LENGTH];
-    const EVP_MD *sha512 = EVP_sha512();
+    EVP_MD *sha512 = EVP_MD_fetch(NULL, SN_sha512, NULL);
     EVP_MD_CTX *hash_ctx = EVP_MD_CTX_new();
     unsigned int sz;
     int res = 0;
 
-    if (!hash_ctx
+    if (!sha512 || !hash_ctx
         || !EVP_DigestInit_ex(hash_ctx, sha512, NULL)
         || !EVP_DigestUpdate(hash_ctx, private_key, 32)
         || !EVP_DigestFinal_ex(hash_ctx, md, &sz))
@@ -5740,9 +5740,9 @@ ossl_x25519_private_from_ed25519(uint8_t out_private_key[32],
 
     res = 1;
 err:
-    if (hash_ctx)
-        EVP_MD_CTX_free(hash_ctx);
     OPENSSL_cleanse(md, sizeof(md));
+    EVP_MD_free(sha512);
+    EVP_MD_CTX_free(hash_ctx);
 
     return res;
 }
