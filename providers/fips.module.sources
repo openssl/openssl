@@ -201,6 +201,7 @@ crypto/ec/ecx_key.c
 crypto/evp/asymcipher.c
 crypto/evp/dh_support.c
 crypto/evp/digest.c
+crypto/evp/e_aes.c
 crypto/evp/ec_support.c
 crypto/evp/evp_enc.c
 crypto/evp/evp_fetch.c
