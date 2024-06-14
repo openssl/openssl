@@ -4814,11 +4814,6 @@ int ssl_undefined_void_function(void)
     return 0;
 }
 
-int ssl_undefined_const_function(const SSL *s)
-{
-    return 0;
-}
-
 const char *ssl_protocol_to_string(int version)
 {
     switch (version) {
