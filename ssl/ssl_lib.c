@@ -3189,15 +3189,6 @@ long SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
     }
 }
 
-int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b)
-{
-    if (a->id > b->id)
-        return 1;
-    if (a->id < b->id)
-        return -1;
-    return 0;
-}
-
 int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
                           const SSL_CIPHER *const *bp)
 {
@@ -4792,11 +4783,6 @@ int ssl_undefined_function(SSL *s)
 int ssl_undefined_void_function(void)
 {
     ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-    return 0;
-}
-
-int ssl_undefined_const_function(const SSL *s)
-{
     return 0;
 }
 
