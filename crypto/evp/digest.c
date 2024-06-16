@@ -447,23 +447,12 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
     if (ctx->digest == NULL)
         return 0;
 
-    sz = EVP_MD_get_size(ctx->digest);
+    sz = EVP_MD_CTX_get_size(ctx);
     if (sz < 0)
         return 0;
     mdsize = sz;
     if (ctx->digest->prov == NULL)
         goto legacy;
-
-    if (sz == 0) /* Assuming a xoflen must have been set. */
-        mdsize = SIZE_MAX;
-    if (ctx->digest->gettable_ctx_params != NULL) {
-        OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
-
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE,
-                                                &mdsize);
-        if (!EVP_MD_CTX_get_params(ctx, params))
-            return 0;
-    }
 
     if (ctx->digest->dfinal == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
@@ -545,7 +534,7 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
     return ret;
 
 legacy:
-    if (ctx->digest->flags & EVP_MD_FLAG_XOF
+    if (EVP_MD_xof(ctx->digest)
         && size <= INT_MAX
         && ctx->digest->md_ctrl(ctx, EVP_MD_CTRL_XOF_LEN, (int)size, NULL)) {
         ret = ctx->digest->final(ctx, md);
@@ -984,6 +973,11 @@ static int evp_md_cache_constants(EVP_MD *md)
     size_t mdsize = 0;
     OSSL_PARAM params[5];
 
+    /*
+     * Note that these parameters are 'constants' that are only set up
+     * during the EVP_MD_fetch(). For this reason the XOF functions set the
+     * md_size to 0, since the output size is unknown.
+     */
     params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_BLOCK_SIZE, &blksz);
     params[1] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &mdsize);
     params[2] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_XOF, &xof);

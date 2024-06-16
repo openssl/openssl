@@ -78,7 +78,7 @@ int PKCS5_PBE_keyivgen_ex(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
         passlen = strlen(pass);
 
     mdsize = EVP_MD_get_size(md);
-    if (mdsize < 0)
+    if (mdsize <= 0)
         goto err;
 
     kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_PBKDF1, propq);

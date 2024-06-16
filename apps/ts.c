@@ -513,7 +513,7 @@ static int create_digest(BIO *input, const char *digest, const EVP_MD *md,
     EVP_MD_CTX *md_ctx = NULL;
 
     md_value_len = EVP_MD_get_size(md);
-    if (md_value_len < 0)
+    if (md_value_len <= 0)
         return 0;
 
     if (input != NULL) {

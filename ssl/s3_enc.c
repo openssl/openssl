@@ -113,7 +113,7 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
 
     p = s->s3.tmp.key_block;
     mdi = EVP_MD_get_size(md);
-    if (mdi < 0) {
+    if (mdi <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -188,7 +188,7 @@ int ssl3_setup_key_block(SSL_CONNECTION *s)
 #endif
 
     num = EVP_MD_get_size(hash);
-    if (num < 0)
+    if (num <= 0)
         return 0;
 
     num = EVP_CIPHER_get_key_length(c) + num + EVP_CIPHER_get_iv_length(c);

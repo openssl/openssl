@@ -328,7 +328,7 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
         (void)ERR_pop_to_mark();
 
         mdlen = EVP_MD_get_size(dgst);
-        if (mdlen < 0) {
+        if (mdlen <= 0) {
             ERR_raise(ERR_LIB_OCSP, OCSP_R_DIGEST_SIZE_ERR);
             goto end;
         }

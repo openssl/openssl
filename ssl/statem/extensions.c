@@ -1539,7 +1539,7 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     /* Ensure cast to size_t is safe */
-    if (!ossl_assert(hashsizei >= 0)) {
+    if (!ossl_assert(hashsizei > 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }

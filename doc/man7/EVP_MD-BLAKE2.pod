@@ -28,11 +28,11 @@ Known names are "BLAKE2B-512" and "BLAKE2b512".
 =head2 Settable Parameters
 
 "BLAKE2B-512" supports the following EVP_MD_CTX_set_params() key
-described in  L<EVP_DigestInit(3)/PARAMETERS>.
+described in L<EVP_DigestInit(3)/PARAMETERS>.
 
 =over 4
 
-=item "xoflen" (B<OSSL_DIGEST_PARAM_XOFLEN>) <unsigned integer>
+=item "size" (B<OSSL_DIGEST_PARAM_SIZE>) <unsigned integer>
 
 =back
 
