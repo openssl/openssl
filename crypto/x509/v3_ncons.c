@@ -53,6 +53,26 @@ const X509V3_EXT_METHOD ossl_v3_name_constraints = {
     NULL
 };
 
+const X509V3_EXT_METHOD ossl_v3_holder_name_constraints = {
+    NID_holder_name_constraints, 0,
+    ASN1_ITEM_ref(NAME_CONSTRAINTS),
+    0, 0, 0, 0,
+    0, 0,
+    0, v2i_NAME_CONSTRAINTS,
+    i2r_NAME_CONSTRAINTS, 0,
+    NULL
+};
+
+const X509V3_EXT_METHOD ossl_v3_delegated_name_constraints = {
+    NID_delegated_name_constraints, 0,
+    ASN1_ITEM_ref(NAME_CONSTRAINTS),
+    0, 0, 0, 0,
+    0, 0,
+    0, v2i_NAME_CONSTRAINTS,
+    i2r_NAME_CONSTRAINTS, 0,
+    NULL
+};
+
 ASN1_SEQUENCE(GENERAL_SUBTREE) = {
         ASN1_SIMPLE(GENERAL_SUBTREE, base, GENERAL_NAME),
         ASN1_IMP_OPT(GENERAL_SUBTREE, minimum, ASN1_INTEGER, 0),
