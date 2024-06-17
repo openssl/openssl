@@ -304,5 +304,7 @@ ok(run(app(["openssl", "x509", "-req", "-text",
 SKIP: {
     skip "EC is not supported by this OpenSSL build", 1
         if disabled("ec");
-    ok(run(test(["x509_test"])), "running x509_test");
+    my $psscert = srctop_file(@certs, "ee-self-signed-pss.pem");
+
+    ok(run(test(["x509_test", $psscert])), "running x509_test");
 }

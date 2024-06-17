@@ -226,6 +226,10 @@ OPENSSL_KEYBITS=8192 \
 # self-signed end-entity cert with explicit keyUsage not including KeyCertSign
 openssl req -new -x509 -key ee-key.pem -subj /CN=ee-self-signed -out ee-self-signed.pem -addext keyUsage=digitalSignature -days 36525
 
+# self-signed end-entity cert signed with RSA-PSS
+openssl req -new -x509 -key ee-key.pem -subj /CN=ee-self-signed-pss -out ee-self-signed-pss.pem -days 36525 \
+    -sha256 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:digest
+
 # Proxy certificates, off of ee-client
 # Start with some good ones
 ./mkcert.sh req pc1-key "0.CN = server.example" "1.CN = proxy 1" | \
