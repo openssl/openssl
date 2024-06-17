@@ -23,7 +23,8 @@ struct rcu_lock_st {
     struct rcu_cb_item *cb_items;
 };
 
-CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
+CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers,
+                                   ossl_unused OSSL_LIB_CTX *ctx)
 {
     struct rcu_lock_st *lock;
 
