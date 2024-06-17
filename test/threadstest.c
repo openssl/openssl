@@ -436,6 +436,8 @@ static int _torture_rcu(void)
     rcu_torture_result = 1;
 
     rcu_lock = ossl_rcu_lock_new(1, NULL);
+    if (rcu_lock == NULL)
+        goto out;
 
     TEST_info("Staring rcu torture");
     t1 = ossl_time_now();
