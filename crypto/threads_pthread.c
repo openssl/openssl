@@ -409,7 +409,9 @@ static void ossl_rcu_free_local_data(void *arg)
     OSSL_LIB_CTX *ctx = arg;
     CRYPTO_THREAD_LOCAL *lkey = ossl_lib_ctx_get_rcukey(ctx);
     struct rcu_thr_data *data = CRYPTO_THREAD_get_local(lkey);
+
     OPENSSL_free(data);
+    CRYPTO_THREAD_set_local(lkey, NULL);
 }
 
 void ossl_rcu_read_lock(CRYPTO_RCU_LOCK *lock)
