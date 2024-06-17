@@ -72,6 +72,14 @@ OpenSSL 3.3
 
    *Tomáš Mráz*
 
+ * Improved EC/DSA nonce generation routines to avoid bias and timing
+   side channel leaks.
+
+   Thanks to Florian Sieck (Universität zu Lübeck) and Red Hat for reporting
+   the issues.
+
+   *Tomáš Mráz and Paul Dale*
+
 ### Changes between 3.2 and 3.3.0 [9 Apr 2024]
 
  * The `-verify` option to the `openssl crl` and `openssl req` will make
