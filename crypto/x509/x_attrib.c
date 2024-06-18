@@ -100,7 +100,7 @@ static int print_oid (BIO *out, ASN1_OBJECT *oid) {
         : BIO_printf(out, "%s", objbuf);
 }
 
-int print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int indent)
+int OSSL_print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int indent)
 {
     const char *ln;
     char objbuf[80];

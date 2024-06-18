@@ -57,7 +57,7 @@ static int i2r_ATTRIBUTES_SYNTAX(X509V3_EXT_METHOD *method,
             for (j = 0; j < X509_ATTRIBUTE_count(attr); j++)
             {
                 av = X509_ATTRIBUTE_get0_type(attr, j);
-                if (print_attribute_value(out, attr_nid, av, indent + 4) <= 0) {
+                if (OSSL_print_attribute_value(out, attr_nid, av, indent + 4) <= 0) {
                     return 0;
                 }
                 if (BIO_puts(out, "\n") <= 0) {
