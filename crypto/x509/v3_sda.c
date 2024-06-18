@@ -10,6 +10,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 #include <crypto/x509.h>
+#include "ext_dat.h"
 
 ASN1_ITEM_TEMPLATE(ATTRIBUTES_SYNTAX) =
         ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, Attributes, X509_ATTRIBUTE)
