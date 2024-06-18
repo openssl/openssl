@@ -1024,8 +1024,6 @@ int OSSL_GENERAL_NAMES_print(BIO *out, GENERAL_NAMES *gens, int indent);
 typedef STACK_OF(X509_ATTRIBUTE) ATTRIBUTES_SYNTAX;
 DECLARE_ASN1_FUNCTIONS(ATTRIBUTES_SYNTAX)
 
-int OSSL_print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int indent);
-
 # ifdef  __cplusplus
 }
 # endif
