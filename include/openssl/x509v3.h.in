@@ -1021,6 +1021,9 @@ void PROFESSION_INFO_set0_registrationNumber(
 
 int OSSL_GENERAL_NAMES_print(BIO *out, GENERAL_NAMES *gens, int indent);
 
+typedef STACK_OF(X509_ATTRIBUTE) ATTRIBUTES_SYNTAX;
+DECLARE_ASN1_FUNCTIONS(ATTRIBUTES_SYNTAX)
+
 # ifdef  __cplusplus
 }
 # endif

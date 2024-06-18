@@ -388,4 +388,10 @@ STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) 
                                                        int type,
                                                        const unsigned char *bytes,
                                                        int len);
+                                            
+int ossl_print_attribute_value(BIO *out,
+                               int obj_nid,
+                               const ASN1_TYPE *av,
+                               int indent);
+
 #endif  /* OSSL_CRYPTO_X509_H */

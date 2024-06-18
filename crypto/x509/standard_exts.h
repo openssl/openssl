@@ -62,6 +62,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &ossl_v3_name_constraints,
     &ossl_v3_policy_mappings,
     &ossl_v3_inhibit_anyp,
+    &ossl_v3_subj_dir_attrs,
     &ossl_v3_idp,
     &ossl_v3_alt[2],
     &ossl_v3_freshest_crl,
@@ -81,6 +82,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &ossl_v3_single_use,
     &ossl_v3_group_ac,
     &ossl_v3_holder_name_constraints,
+    &ossl_v3_associated_info,
 };
 
 /* Number of standard extensions */

@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 66;
+plan tests => 82;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -193,6 +193,57 @@ cert_contains($dnc_cert,
 cert_contains($dnc_cert,
               "DirName:CN = Wildboar",
               1, 'X.509 Delegated Name Constraint');
+my $sda_cert = srctop_file(@certs, "ext-subjectDirectoryAttributes.pem");
+cert_contains($sda_cert,
+              "Steve Brule",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "CN=Hi mom",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "<No Values>",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "Funkytown",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "commonName",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "owner",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "givenName",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "localityName",
+              1, 'X.509 Subject Directory Attributes');
+
+my $ass_info_cert = srctop_file(@certs, "ext-associatedInformation.pem");
+cert_contains($ass_info_cert,
+              "Steve Brule",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "CN=Hi mom",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "<No Values>",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "Funkytown",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "commonName",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "owner",
+              1, 'X509v3 Associated Information');
+cert_contains($sda_cert,
+              "givenName",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "localityName",
+              1, 'X509v3 Associated Information');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;

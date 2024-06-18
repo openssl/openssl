@@ -34,3 +34,5 @@ extern const X509V3_EXT_METHOD ossl_v3_indirect_issuer;
 extern const X509V3_EXT_METHOD ossl_v3_targeting_information;
 extern const X509V3_EXT_METHOD ossl_v3_holder_name_constraints;
 extern const X509V3_EXT_METHOD ossl_v3_delegated_name_constraints;
+extern const X509V3_EXT_METHOD ossl_v3_subj_dir_attrs;
+extern const X509V3_EXT_METHOD ossl_v3_associated_info;
