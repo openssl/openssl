@@ -152,7 +152,7 @@ int OSSL_print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int i
             return 0;
         }
         if (ASN1_INTEGER_get_int64(&int_val, av->value.integer) > 0) {
-            return BIO_printf(out, "%lld", int_val);
+            return BIO_printf(out, "%lld", (long long int)int_val);
         } else {
             str = av->value.integer;
             return ASN1_INTEGER_print_bio(out, str);
@@ -163,7 +163,7 @@ int OSSL_print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int i
             return 0;
         }
         if (ASN1_ENUMERATED_get_int64(&int_val, av->value.enumerated) > 0) {
-            return BIO_printf(out, "%lld", int_val);
+            return BIO_printf(out, "%lld", (long long int)int_val);
         } else {
             str = av->value.enumerated;
             return ASN1_INTEGER_print_bio(out, str);
