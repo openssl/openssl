@@ -140,13 +140,10 @@ static SSL_SESSION *ssl_session_dup_intern(const SSL_SESSION *src, int ticket)
         return NULL;
 
     /*
-     * Copy until prev ptr, because it's a part of sessons cache which can be modified
-     * concurrently. Other fields filled in the code bellow.
+     * src is logically read-only but the prev/next pointers are not, they are
+     * part of the session cache and can be modified concurrently.
      */
     memcpy(dest, src, offsetof(SSL_SESSION, prev));
-    dest->ext = src->ext;
-    dest->ticket_appdata_len = src->ticket_appdata_len;
-    dest->flags = src->flags;
 
     /*
      * Set the various pointers to NULL so that we can call SSL_SESSION_free in

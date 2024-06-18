@@ -540,11 +540,6 @@ struct ssl_session_st {
                                  * load the 'cipher' structure */
     unsigned int kex_group;      /* TLS group from key exchange */
     CRYPTO_EX_DATA ex_data;     /* application specific data */
-    /*
-     * These are used to make removal of session-ids more efficient and to
-     * implement a maximum cache size.
-     */
-    struct ssl_session_st *prev, *next;
 
     struct {
         char *hostname;
@@ -574,6 +569,12 @@ struct ssl_session_st {
     size_t ticket_appdata_len;
     uint32_t flags;
     SSL_CTX *owner;
+
+    /*
+     * These are used to make removal of session-ids more efficient and to
+     * implement a maximum cache size.
+     */
+    struct ssl_session_st *prev, *next;
 };
 
 /* Extended master secret support */
