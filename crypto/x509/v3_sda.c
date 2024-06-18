@@ -25,18 +25,18 @@ static int i2r_ATTRIBUTES_SYNTAX(X509V3_EXT_METHOD *method,
     X509_ATTRIBUTE *attr;
     ASN1_TYPE *av;
     int i, j, attr_nid;
+
     if (!attrlst) {
-        if (BIO_printf(out, "<No Attributes>\n") <= 0) {
+        if (BIO_printf(out, "<No Attributes>\n") <= 0)
             return 0;
-        }
         return 1;
     }
     if (!sk_X509_ATTRIBUTE_num(attrlst)) {
-        if (BIO_printf(out, "<Empty Attributes>\n") <= 0) {
+        if (BIO_printf(out, "<Empty Attributes>\n") <= 0)
             return 0;
-        }
         return 1;
     }
+
     for (i = 0; i < sk_X509_ATTRIBUTE_num(attrlst); i++) {
         ASN1_OBJECT *attr_obj;
         attr = sk_X509_ATTRIBUTE_value(attrlst, i);
@@ -45,12 +45,10 @@ static int i2r_ATTRIBUTES_SYNTAX(X509V3_EXT_METHOD *method,
         if (indent && BIO_printf(out, "%*s", indent, "") <= 0)
             return 0;
         if (attr_nid == NID_undef) {
-            if (i2a_ASN1_OBJECT(out, attr_obj) <= 0) {
+            if (i2a_ASN1_OBJECT(out, attr_obj) <= 0)
                 return 0;
-            }
-            if (BIO_puts(out, ":\n") <= 0) {
+            if (BIO_puts(out, ":\n") <= 0)
                 return 0;
-            }
         } else if (BIO_printf(out, "%s:\n", OBJ_nid2ln(attr_nid)) <= 0) {
             return 0;
         }
@@ -59,12 +57,10 @@ static int i2r_ATTRIBUTES_SYNTAX(X509V3_EXT_METHOD *method,
             for (j = 0; j < X509_ATTRIBUTE_count(attr); j++)
             {
                 av = X509_ATTRIBUTE_get0_type(attr, j);
-                if (OSSL_print_attribute_value(out, attr_nid, av, indent + 4) <= 0) {
+                if (OSSL_print_attribute_value(out, attr_nid, av, indent + 4) <= 0)
                     return 0;
-                }
-                if (BIO_puts(out, "\n") <= 0) {
+                if (BIO_puts(out, "\n") <= 0)
                     return 0;
-                }
             }
         } else if (BIO_printf(out, "%*s<No Values>\n", indent + 4, "") <= 0) {
             return 0;
