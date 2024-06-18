@@ -131,7 +131,7 @@ int OSSL_print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int i
         // d2i_ functions increment the ppin pointer. See doc/man3/d2i_X509.pod.
         // This resets the pointer. We don't want to corrupt this value.
         av->value.sequence->data = value;
-        if (X509_NAME_print_ex(out, xn, indent, 0) <= 0) {
+        if (X509_NAME_print_ex(out, xn, indent, XN_FLAG_SEP_CPLUS_SPC) <= 0) {
             return 0;
         }
         X509_NAME_free(xn);
