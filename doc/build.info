@@ -1815,6 +1815,10 @@ DEPEND[html/man3/OSSL_STORE_open.html]=man3/OSSL_STORE_open.pod
 GENERATE[html/man3/OSSL_STORE_open.html]=man3/OSSL_STORE_open.pod
 DEPEND[man/man3/OSSL_STORE_open.3]=man3/OSSL_STORE_open.pod
 GENERATE[man/man3/OSSL_STORE_open.3]=man3/OSSL_STORE_open.pod
+DEPEND[html/man3/OSSL_print_attribute_value.html]=man3/OSSL_print_attribute_value.pod
+GENERATE[html/man3/OSSL_print_attribute_value.html]=man3/OSSL_print_attribute_value.pod
+DEPEND[man/man3/OSSL_print_attribute_value.3]=man3/OSSL_print_attribute_value.pod
+GENERATE[man/man3/OSSL_print_attribute_value.3]=man3/OSSL_print_attribute_value.pod
 DEPEND[html/man3/OSSL_sleep.html]=man3/OSSL_sleep.pod
 GENERATE[html/man3/OSSL_sleep.html]=man3/OSSL_sleep.pod
 DEPEND[man/man3/OSSL_sleep.3]=man3/OSSL_sleep.pod
@@ -3437,6 +3441,7 @@ html/man3/OSSL_STORE_SEARCH.html \
 html/man3/OSSL_STORE_attach.html \
 html/man3/OSSL_STORE_expect.html \
 html/man3/OSSL_STORE_open.html \
+html/man3/OSSL_print_attribute_value.html \
 html/man3/OSSL_sleep.html \
 html/man3/OSSL_trace_enabled.html \
 html/man3/OSSL_trace_get_category_num.html \
@@ -4095,6 +4100,7 @@ man/man3/OSSL_STORE_SEARCH.3 \
 man/man3/OSSL_STORE_attach.3 \
 man/man3/OSSL_STORE_expect.3 \
 man/man3/OSSL_STORE_open.3 \
+man/man3/OSSL_print_attribute_value.3 \
 man/man3/OSSL_sleep.3 \
 man/man3/OSSL_trace_enabled.3 \
 man/man3/OSSL_trace_get_category_num.3 \
