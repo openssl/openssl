@@ -102,8 +102,6 @@ static int print_oid (BIO *out, ASN1_OBJECT *oid) {
 
 int OSSL_print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int indent)
 {
-    const char *ln;
-    char objbuf[80];
     ASN1_STRING *str;
     unsigned char *value;
     X509_NAME *xn = NULL;
@@ -204,8 +202,8 @@ int OSSL_print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int i
                           av->value.generalstring->length,
                           av->value.generalstring->data);
 
-    /* EXTERNAL */
-    /* EMBEDDED PDV */
+    /* EXTERNAL would go here. */
+    /* EMBEDDED PDV would go here. */
 
     case V_ASN1_UTF8STRING:
         return BIO_printf(out, "%*s%.*s", indent, "",
@@ -215,8 +213,8 @@ int OSSL_print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int i
     case V_ASN1_REAL:
         return BIO_printf(out, "%*sREAL", indent, "");
 
-    /* RELATIVE-OID */
-    /* TIME */
+    /* RELATIVE-OID would go here. */
+    /* TIME would go here. */
 
     case V_ASN1_SEQUENCE:
         return ASN1_parse_dump(out, av->value.sequence->data,
@@ -254,22 +252,15 @@ int OSSL_print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int i
                           av->value.ia5string->length,
                           av->value.ia5string->data);
 
-    /* UniversalString */
-    /* CHARACTER STRING */
-
-    case V_ASN1_BMPSTRING:
-        value = OPENSSL_uni2asc(av->value.bmpstring->data,
-                                av->value.bmpstring->length);
-        int ret = BIO_printf(out, "%*s%s", indent, "", value);
-        OPENSSL_free(value);
-        return ret;
-
-    /* DATE */
-    /* TIME-OF-DAY */
-    /* DATE-TIME */
-    /* DURATION */
-    /* OID-IRI */
-    /* RELATIVE-OID-IRI */
+    /* UniversalString would go here. */
+    /* CHARACTER STRING would go here. */
+    /* BMPString would go here. */
+    /* DATE would go here. */
+    /* TIME-OF-DAY would go here. */
+    /* DATE-TIME would go here. */
+    /* DURATION would go here. */
+    /* OID-IRI would go here. */
+    /* RELATIVE-OID-IRI would go here. */
 
     /* Would it be approriate to just hexdump? */
     default:
