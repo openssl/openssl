@@ -18,10 +18,14 @@
  * a time is accepted in a blocking loop.
  */
 
-/* ALPN string for TLS handshake */
+/* ALPN strings for TLS handshake */
 static const unsigned char alpn_ossltest[] = {
     /* "\x08ossltest" (hex for EBCDIC resilience) */
     0x08, 0x6f, 0x73, 0x73, 0x6c, 0x74, 0x65, 0x73, 0x74
+};
+static const unsigned char alpn_h3[] = {
+    /* "\x02h3" (hex for EBCDIC resilience) */
+    0x02, 0x68, 0x33
 };
 
 /* This callback validates and negotiates the desired ALPN on the server side. */
@@ -32,6 +36,9 @@ static int select_alpn(SSL *ssl,
 {
     if (SSL_select_next_proto((unsigned char **)out, out_len,
                               alpn_ossltest, sizeof(alpn_ossltest), in, in_len)
+            != OPENSSL_NPN_NEGOTIATED
+        && SSL_select_next_proto((unsigned char **)out, out_len,
+                                 alpn_h3, sizeof(alpn_h3), in, in_len)
             != OPENSSL_NPN_NEGOTIATED)
         return SSL_TLSEXT_ERR_ALERT_FATAL;
 
