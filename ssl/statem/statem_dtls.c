@@ -49,76 +49,57 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
 
 static dtls_sent_msg *dtls1_sent_msg_new(size_t msg_len)
 {
-    dtls_sent_msg *msg = NULL;
-    unsigned char *msg_buf = NULL;
+    dtls_sent_msg *msg = OPENSSL_malloc(sizeof(*msg) + msg_len);
 
-    if ((msg = OPENSSL_zalloc(sizeof(*msg))) == NULL)
+    if (msg == NULL)
         return NULL;
 
-    if (msg_len) {
-        if ((msg_buf = OPENSSL_malloc(msg_len)) == NULL) {
-            OPENSSL_free(msg);
-            return NULL;
-        }
-    }
+    memset(msg, 0, sizeof(*msg));
 
     /* zero length msg gets msg->msg_buf == NULL */
-    msg->msg_buf = msg_buf;
+    if (msg_len > 0)
+        msg->msg_buf = (unsigned char *)(msg + 1);
 
     return msg;
 }
 
 void dtls1_sent_msg_free(dtls_sent_msg *msg)
 {
-    if (msg == NULL)
-        return;
-
-    OPENSSL_free(msg->msg_buf);
-    OPENSSL_free(msg);
+    if (msg != NULL)
+        OPENSSL_free(msg);
 }
 
 static hm_fragment *dtls1_hm_fragment_new(size_t frag_len, int reassembly)
 {
-    hm_fragment *frag = NULL;
-    unsigned char *buf = NULL;
-    unsigned char *bitmask = NULL;
+    const size_t bitmask_len = (reassembly ? RSMBLY_BITMASK_SIZE(frag_len) : 0);
+    hm_fragment *frag = OPENSSL_malloc(sizeof(*frag) + frag_len + bitmask_len);
 
-    if ((frag = OPENSSL_zalloc(sizeof(*frag))) == NULL)
+    if (frag == NULL)
         return NULL;
 
-    if (frag_len) {
-        if ((buf = OPENSSL_malloc(frag_len)) == NULL) {
-            OPENSSL_free(frag);
-            return NULL;
-        }
-    }
+    memset(frag, 0, sizeof(*frag));
 
     /* zero length fragment gets zero frag->fragment */
-    frag->fragment = buf;
+    if (frag_len > 0)
+        frag->fragment = (unsigned char *)(frag + 1);
 
     /* Initialize reassembly bitmask if necessary */
-    if (reassembly) {
-        bitmask = OPENSSL_zalloc(RSMBLY_BITMASK_SIZE(frag_len));
-        if (bitmask == NULL) {
-            OPENSSL_free(buf);
-            OPENSSL_free(frag);
-            return NULL;
-        }
-    }
+    if (bitmask_len > 0) {
+        if(frag->fragment == NULL)
+            frag->reassembly = (unsigned char *)(frag + 1);
+        else
+            frag->reassembly = frag->fragment + frag_len;
 
-    frag->reassembly = bitmask;
+        memset(frag->reassembly, 0, bitmask_len);
+    }
 
     return frag;
 }
 
 void dtls1_hm_fragment_free(hm_fragment *frag)
 {
-    if (!frag)
-        return;
-
-    OPENSSL_free(frag->fragment);
-    OPENSSL_free(frag->reassembly);
-    OPENSSL_free(frag);
+    if (frag != NULL)
+        OPENSSL_free(frag);
 }
 
 static int dtls1_write_hm_header(unsigned char *msgheaderstart,
@@ -692,10 +673,8 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     RSMBLY_BITMASK_IS_COMPLETE(frag->reassembly, (long)msg_hdr->msg_len,
                                is_complete);
 
-    if (is_complete) {
-        OPENSSL_free(frag->reassembly);
+    if (is_complete)
         frag->reassembly = NULL;
-    }
 
     if (item == NULL) {
         item = pitem_new(seq64be, frag);
@@ -822,23 +801,23 @@ static int dtls1_read_hm_header(unsigned char *msgheaderstart,
                                 struct hm_header_st *msg_hdr)
 {
     unsigned long msg_len, frag_off, frag_len;
+    unsigned int msg_seq, msg_type;
     PACKET msgheader;
 
     if (!PACKET_buf_init(&msgheader, msgheaderstart, DTLS1_HM_HEADER_LENGTH)
-            || !PACKET_get_1(&msgheader, (unsigned int *)&msg_hdr->type)
+            || !PACKET_get_1(&msgheader, &msg_type)
             || !PACKET_get_net_3(&msgheader, &msg_len)
-            || !PACKET_get_net_2(&msgheader, (unsigned int *)&msg_hdr->seq)
+            || !PACKET_get_net_2(&msgheader, &msg_seq)
             || !PACKET_get_net_3(&msgheader, &frag_off)
             || !PACKET_get_net_3(&msgheader, &frag_len)
-            || PACKET_remaining(&msgheader) != 0
-            || msg_len > (unsigned long)SIZE_MAX
-            || frag_off > (unsigned long)SIZE_MAX
-            || frag_len > (unsigned long)SIZE_MAX) {
+            || PACKET_remaining(&msgheader) != 0) {
         return 0;
     }
 
     /* We just checked that values did not exceed max size so cast must be alright */
+    msg_hdr->type = (unsigned char)msg_type;
     msg_hdr->msg_len = (size_t)msg_len;
+    msg_hdr->seq = (unsigned short)msg_seq;
     msg_hdr->frag_off = (size_t)frag_off;
     msg_hdr->frag_len = (size_t)frag_len;
 
@@ -940,7 +919,7 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
         chretran = 1;
     }
 
-    if (msg_hdr.frag_len && msg_hdr.frag_len < msg_hdr.msg_len) {
+    if (msg_hdr.frag_len > 0 && msg_hdr.frag_len < msg_hdr.msg_len) {
         *errtype = dtls1_reassemble_fragment(s, &msg_hdr);
         return 0;
     }
@@ -1127,7 +1106,8 @@ int dtls1_get_queue_priority(unsigned short seq, int record_type)
      * Finished, it also maintains the order of the index (important for
      * priority queues) and fits in the unsigned short variable.
      */
-    int lsb = (record_type == SSL3_RT_CHANGE_CIPHER_SPEC ? 1 : 0);
+    int lsb = (record_type == SSL3_RT_CHANGE_CIPHER_SPEC);
+
     return seq * 2 - lsb;
 }
 
