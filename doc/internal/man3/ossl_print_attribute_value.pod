@@ -25,9 +25,10 @@ public key certificate. They also appear in the attributes of an X.509
 attribute certificate, as well as in the subjectDirectoryAttributes or
 associatedInformation X.509v3 extensions.
 
-This function takes a C<BIO> pointer for printing the output, the NID of the
-attribute type object identifier, the ASN.1 value itself, and the level of
-desired indentation in terms of the number of spaces.
+The I<out> argument is a B<BIO> pointer for printing the output. The I<obj_nid>
+argument is the NID of the attribute type object identifier. The ASN.1 value
+itself is passed in I<av> and the level of desired indentation in terms of the
+number of spaces is specified in I<indent>.
 
 This function generally prints values in such a way as to keep them on a single
 line, but this is not always the case. Unrecognized attribute types whose syntax
