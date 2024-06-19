@@ -6,6 +6,13 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-use OpenSSL::Test::Simple;
+use OpenSSL::Test::Utils;
+use OpenSSL::Test qw/:DEFAULT srctop_dir/;
 
-simple_test("test_x509_req_test", "x509_req_test", "x509_req");
+BEGIN {
+    setup("test_x509_req");
+}
+
+plan tests => 1;
+
+ok(run(test(["x509_req_test", srctop_dir("test", "certs")])), "running x509_req_test");
