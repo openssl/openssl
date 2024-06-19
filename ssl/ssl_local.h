@@ -532,7 +532,6 @@ struct ssl_session_st {
      * certificate is not ok, we must remember the error for session reuse:
      */
     long verify_result;         /* only for servers */
-    CRYPTO_REF_COUNT references;
     OSSL_TIME timeout;
     OSSL_TIME time;
     OSSL_TIME calc_timeout;
@@ -574,9 +573,10 @@ struct ssl_session_st {
 
     /*
      * These are used to make removal of session-ids more efficient and to
-     * implement a maximum cache size.
+     * implement a maximum cache size. Access requires protection of ctx->lock.
      */
     struct ssl_session_st *prev, *next;
+    CRYPTO_REF_COUNT references;
 };
 
 /* Extended master secret support */
