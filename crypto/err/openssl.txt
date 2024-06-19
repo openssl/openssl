@@ -1841,5 +1841,6 @@ X509_R_UNKNOWN_PURPOSE_ID:121:unknown purpose id
 X509_R_UNKNOWN_SIGID_ALGS:144:unknown sigid algs
 X509_R_UNKNOWN_TRUST_ID:120:unknown trust id
 X509_R_UNSUPPORTED_ALGORITHM:111:unsupported algorithm
+X509_R_UNSUPPORTED_VERSION:145:unsupported version
 X509_R_WRONG_LOOKUP_TYPE:112:wrong lookup type
 X509_R_WRONG_TYPE:122:wrong type
