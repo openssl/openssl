@@ -64,7 +64,7 @@ IF[{- !$disabled{tests} -}]
           ca_internals_test bio_tfo_test membio_test bio_dgram_test list_test \
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
-          x509_acert_test
+          x509_acert_test x509_req_test
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -1210,6 +1210,10 @@ ENDIF
   SOURCE[x509_acert_test]=x509_acert_test.c
   INCLUDE[x509_acert_test]=../include ../apps/include
   DEPEND[x509_acert_test]=../libcrypto libtestutil.a
+
+  SOURCE[x509_req_test]=x509_req_test.c
+  INCLUDE[x509_req_test]=../include ../apps/include
+  DEPEND[x509_req_test]=../libcrypto libtestutil.a
 
 {-
    use File::Spec::Functions;
