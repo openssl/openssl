@@ -757,7 +757,7 @@ void ossl_quic_stream_map_remove_from_accept_queue(QUIC_STREAM_MAP *qsm,
     --qsm->num_accept;
 
     if ((max_streams_rxfc = qsm_get_max_streams_rxfc(qsm, s)) != NULL)
-        if(!ossl_quic_rxfc_on_retire(max_streams_rxfc, 1, rtt);)
+        if(!ossl_quic_rxfc_on_retire(max_streams_rxfc, 1, rtt))
             return;
 }
 
