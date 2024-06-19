@@ -13,7 +13,7 @@ ossl_print_attribute_value
 
 =head1 DESCRIPTION
 
-C<ossl_print_attribute_value> prints an X.500 directory value, which is an
+ossl_print_attribute_value() prints an X.500 directory value, which is an
 ASN.1 value and an associated attribute type that informs its interpretation,
 syntax, display characteristics, comparison, sorting, and substring searching
 behaviors, among other things. This attribute type is identified by an ASN.1
@@ -39,10 +39,6 @@ printed values will look like in future versions.
 =head1 RETURN VALUES
 
 Returns 1 if it succeeds in printing, and 0 if it failed.
-
-=head1 HISTORY
-
-print_attribute_value() was added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
