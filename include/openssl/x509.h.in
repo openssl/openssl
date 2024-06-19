@@ -1094,8 +1094,6 @@ int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
                            X509_ALGOR **pa, const X509_PUBKEY *pub);
 int X509_PUBKEY_eq(const X509_PUBKEY *a, const X509_PUBKEY *b);
 
-int OSSL_print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int indent);
-
 # ifdef  __cplusplus
 }
 # endif
