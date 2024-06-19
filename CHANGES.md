@@ -75,8 +75,8 @@ OpenSSL 3.3
  * Improved EC/DSA nonce generation routines to avoid bias and timing
    side channel leaks.
 
-   Thanks to Florian Sieck (Universität zu Lübeck) and Red Hat for reporting
-   the issues.
+   Thanks to Florian Sieck from Universität zu Lübeck and George Pantelakis
+   and Hubert Kario from Red Hat for reporting the issues.
 
    *Tomáš Mráz and Paul Dale*
 
