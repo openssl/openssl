@@ -2,18 +2,18 @@
 
 =head1 NAME
 
-print_attribute_value
+ossl_print_attribute_value
 - Print an X.500 directory attribute value
 
 =head1 SYNOPSIS
 
  #include <crypto/x509.h>
 
- int print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int indent);
+ int ossl_print_attribute_value(BIO *out, int obj_nid, const ASN1_TYPE *av, int indent);
 
 =head1 DESCRIPTION
 
-C<OSSL_print_attribute_value> prints an X.500 directory value, which is an
+C<ossl_print_attribute_value> prints an X.500 directory value, which is an
 ASN.1 value and an associated attribute type that informs its interpretation,
 syntax, display characteristics, comparison, sorting, and substring searching
 behaviors, among other things. This attribute type is identified by an ASN.1
