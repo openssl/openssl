@@ -12,24 +12,8 @@
 
 #include "testutil.h"
 
-static const char bad_csr_version_6[] =
-    "-----BEGIN CERTIFICATE REQUEST-----\n"
-    "MIICoTCCAYkCAQUwXDELMAkGA1UEBhMCQ0gxDTALBgNVBAgMBEJlcm4xDTALBgNV\n"
-    "BAcMBEJlcm4xFDASBgNVBAoMC0VyYnNsYW5kREVWMRkwFwYDVQQDDBB0ZXN0Lm9w\n"
-    "ZW5zc2wub3JnMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgnKT31X7\n"
-    "GG1doZXQ0cHY32OjExJT5z/AhZNHt44AdZmrGDwcANBa68mK1pJ4zbLStsa0ABfC\n"
-    "clPnoq4jqPcoMqPu5SNGR29lBWSQr8AzzHFOalHfYmdsTwRxy2fM56WVfrmi/HY5\n"
-    "8pZ0LgAuF7Kb8hjUkqBbWzAo0GJaYqWitkrDdproLMLz65GJYYlxXcPd79yt+SHk\n"
-    "TdfRANcjinRK/EKgkWYVu5yE/lqWl9lwgxY9YAeDp6/WZ7K5wGueiMNYsKoud0MP\n"
-    "al00AgaBgicIBMfVPdN19p8ZC4u2BuJlM1oq2eZbaP35rAlB1InbPtFIGL0c0h0o\n"
-    "6prLD6FgYHd1PQIDAQABoAAwDQYJKoZIhvcNAQELBQADggEBADQIUWrf2wnUlKK4\n"
-    "Q2kuK6EtC2CYblmUqV8kUx/sWkfaG2zD7ekyTVJg80IhnsrVJ3VQwOUtbWltgskF\n"
-    "ZzrwXbIIVkHzeI51jrt/jUXzskCjyDkxjeRgCxSJ1bIlN+OkIeXf/jjDJ+ebyeJl\n"
-    "oRgg/KtbaJVb9niFjbxdyMNEI5qZAmocFpE2t5S9GlosTEIPNbowZAe8+AeUXGJB\n"
-    "7SPJZ3U+Rk7Yx6cW2Hc5litIDzJlIN8D86v26lgJ1VEoYGD81wPEhIjHTkRBWhp6\n"
-    "kGV0EojP8ntSjDFHIH184MQAJYyr6YlEM3DcCYPwydLN/rkEHQVAxKKuSCrpcUMH\n"
-    "hfcdPO4=\n"
-    "-----END CERTIFICATE REQUEST-----";
+static char *certsDir = NULL;
+static char *certFilePath = NULL;
 
 /*
  * Test for the missing X509 version check discussed in issue #5738 and
@@ -45,7 +29,10 @@ static int test_x509_req_detect_invalid_version(void)
     X509_REQ *req = NULL;
     int ret = 0;
 
-    if (!TEST_ptr(bio = BIO_new_mem_buf(bad_csr_version_6, sizeof(bad_csr_version_6) - 1)))
+    certFilePath = test_mk_file_path(certsDir, "x509-req-detect-invalid-version.pem");
+    if (certFilePath == NULL)
+        goto err;
+    if (!TEST_ptr(bio = BIO_new_file(certFilePath, "r")))
         goto err;
     req = PEM_read_bio_X509_REQ(bio, NULL, 0, NULL);
     if (req == NULL) {
@@ -65,8 +52,17 @@ err:
     return ret;
 }
 
+OPT_TEST_DECLARE_USAGE("certdir\n")
+
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+    if (!TEST_ptr(certsDir = test_get_argument(0)))
+        return 0;
+
     ADD_TEST(test_x509_req_detect_invalid_version);
     return 1;
 }
