@@ -419,7 +419,7 @@ struct ssl_cipher_st {
 struct ssl_method_st {
     int version;
     unsigned flags;
-    unsigned long mask;
+    uint64_t mask;
     SSL *(*ssl_new) (SSL_CTX *ctx);
     void (*ssl_free) (SSL *s);
     int (*ssl_reset) (SSL *s);
