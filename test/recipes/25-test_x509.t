@@ -305,7 +305,7 @@ ok(run(app(["openssl", "x509", "-req", "-text", "-CAcreateserial",
             "-in", $b_csr])));
 ok(-e $ca_serial_dot_in_dir);
 
-# Tests for explict start and end dates of certificates
+# Tests for explicit start and end dates of certificates
 my %today = (strftime("%Y-%m-%d", gmtime) => 1);
 my $enddate;
 ok(run(app(["openssl", "x509", "-req", "-text",

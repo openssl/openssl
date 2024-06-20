@@ -116,7 +116,7 @@ changes:
 
   * Optimized AES-CTR for ARM Neoverse V1 and V2
 
-  * Enable AES and SHA3 optimisations on Applie Silicon M3-based MacOS systems
+  * Enable AES and SHA3 optimisations on Apple Silicon M3-based MacOS systems
     similar to M1/M2.
 
   * Various optimizations for cryptographic routines using RISC-V vector crypto

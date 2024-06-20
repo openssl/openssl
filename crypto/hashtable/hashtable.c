@@ -68,7 +68,7 @@
 
 #include "internal/numbers.h"
 /*
- * When we do a lookup/insert/delete, there is a high likelyhood
+ * When we do a lookup/insert/delete, there is a high likelihood
  * that we will iterate over at least part of the neighborhood list
  * As such, because we design a neighborhood entry to fit into a single
  * cache line it is advantageous, when supported to fetch the entire
