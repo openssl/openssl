@@ -1771,7 +1771,7 @@ static int test_kdf_get_kdf(void)
         || !TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, LN_tls1_prf, NULL))
         || !test_kdfs_same(kdf1, kdf2))
         ok = 0;
-    /* kdf1 is re-used below, so don't free it here */
+    /* kdf1 is reused below, so don't free it here */
     EVP_KDF_free(kdf2);
     kdf2 = NULL;
 

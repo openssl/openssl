@@ -1115,7 +1115,7 @@ static const OSSL_DISPATCH xor_keymgmt_functions[] = {
     OSSL_DISPATCH_END
 };
 
-/* We're re-using most XOR keymgmt functions also for signature operations: */
+/* We're reusing most XOR keymgmt functions also for signature operations: */
 static void *xor_xorhmacsig_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     XORKEY *k = xor_gen(genctx, osslcb, cbarg);
