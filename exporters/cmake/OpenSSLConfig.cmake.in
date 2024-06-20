@@ -89,9 +89,10 @@ unset(_ossl_undefined_targets)
 # Set up the import path, so all other import paths are made relative this file
 get_filename_component(_ossl_prefix "${CMAKE_CURRENT_LIST_FILE}" PATH)
 {-
-  # For each component in $OpenSSL::safe::installdata::CMAKECONFIGDIR_REL, have CMake
-  # out the parent directory.
-  my $d = unixify($OpenSSL::safe::installdata::CMAKECONFIGDIR_REL);
+  # For each component in $OpenSSL::safe::installdata::CMAKECONFIGDIR relative to
+  # $OpenSSL::safe::installdata::PREFIX, have CMake figure out the parent directory.
+  my $d = join('/', unixify($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX),
+                    unixify($OpenSSL::safe::installdata::CMAKECONFIGDIR_REL_LIBDIR));
   $OUT = '';
   $OUT .= 'get_filename_component(_ossl_prefix "${_ossl_prefix}" PATH)' . "\n"
       foreach (split '/', $d);
