@@ -1,5 +1,9 @@
-libdir={- $OpenSSL::safe::installdata::LIBDIR -}
-includedir={- $OpenSSL::safe::installdata::INCLUDEDIR -}
+prefix={- $OpenSSL::safe::installdata::PREFIX -}
+exec_prefix=${prefix}
+libdir={- $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX
+          ? '${exec_prefix}/' . $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX
+          : $OpenSSL::safe::installdata::libdir -}
+includedir=${prefix}/{- $OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX -}
 
 Name: OpenSSL-libssl
 Description: Secure Sockets Layer and cryptography libraries
