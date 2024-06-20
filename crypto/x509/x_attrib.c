@@ -94,13 +94,17 @@ static int asn1_integer_print_bio(BIO *bio, const ASN1_INTEGER *num)
 static int print_oid (BIO *out, ASN1_OBJECT *oid) {
     const char *ln;
     char objbuf[80];
+    int rc;
 
     if (OBJ_obj2txt(objbuf, sizeof(objbuf), oid, 1) <= 0)
         return 0;
     ln = OBJ_nid2ln(OBJ_obj2nid(oid));
-    return (ln != NULL)
+    rc = (ln != NULL)
            ? BIO_printf(out, "%s (%s)", objbuf, ln)
            : BIO_printf(out, "%s", objbuf);
+    if (rc < 0)
+        return 0;
+    return 1;
 }
 
 int ossl_print_attribute_value(BIO *out,
