@@ -125,10 +125,10 @@ Administrator" before running `nmake install`.  The other solution
 is, of course, to choose a different set of directories by using
 `--prefix` and `--openssldir` when configuring.
 
-Note that, on Windows platforms (both 32 and 64 bit), the above build time
+Note that, on Windows platforms (both 32 and 64 bit), the above build-time
 defaults can be overridden by registry keys.  This is done because it is common
-practice for windows based installers to allow users to place the installation
-tree at various locations not defined at build time.  The following keys:
+practice for windows-based installers to allow users to place the installation
+tree at an arbitrary location not defined at build-time.  The following keys:
 
     `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\OPENSSLDIR`
     `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\ENGINESDIR`
@@ -139,7 +139,7 @@ values for OPENSSLDIR, ENGINESDIR and MODULESDIR respectively.
 
 To enable the reading of registry keys from windows builds, add
 `-DOPENSSL_WINCTX=<string>`to the Configure command line.  This define is used
-at build time to construct library build specific registry key paths of the
+at build-time to construct library build specific registry key paths of the
 format:
 `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432node\OpenSSL-<version>-<ctx>`
 Where `<version>` is the semantic major.minor.patch version of the library being
