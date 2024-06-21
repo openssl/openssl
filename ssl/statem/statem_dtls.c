@@ -1084,12 +1084,14 @@ CON_FUNC_RETURN dtls_construct_change_cipher_spec(SSL_CONNECTION *s,
 }
 
 CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt) {
+    size_t i;
+
     if (!WPACKET_start_sub_packet_u16(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return CON_FUNC_ERROR;
     }
 
-    for (size_t i = 0; i < s->d1->ack_rec_num_count; i++) {
+    for (i = 0; i < s->d1->ack_rec_num_count; i++) {
         /*
          * rfc9147: section 4.
          *

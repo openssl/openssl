@@ -139,6 +139,8 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
             st->hand_state = TLS_ST_SR_ACK;
             return 1;
         }
+        break;
+
     case TLS_ST_OK:
         /*
          * Its never ok to start processing handshake messages in the middle of
@@ -605,7 +607,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
             st->hand_state = TLS_ST_SW_ACK;
             return WRITE_TRAN_CONTINUE;
         }
-        /* Fall-through */
+        /* Fall through */
     case TLS_ST_SW_KEY_UPDATE:
         st->hand_state = TLS_ST_OK;
         return WRITE_TRAN_CONTINUE;
