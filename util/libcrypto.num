@@ -153,7 +153,7 @@ BN_is_prime_fasttest_ex                 155	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 ERR_load_PKCS12_strings                 156	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_sha384                              157	3_0_0	EXIST::FUNCTION:
 i2d_DHparams                            158	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
-TS_VERIFY_CTX_set_store                 159	3_0_0	EXIST::FUNCTION:TS
+TS_VERIFY_CTX_set_store                 159	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_4,TS
 PKCS12_verify_mac                       160	3_0_0	EXIST::FUNCTION:
 X509v3_addr_canonize                    161	3_0_0	EXIST::FUNCTION:RFC3779
 ASN1_item_ex_i2d                        162	3_0_0	EXIST::FUNCTION:
@@ -915,7 +915,7 @@ TS_TST_INFO_ext_free                    938	3_0_0	EXIST::FUNCTION:TS
 i2d_X509_CRL_fp                         939	3_0_0	EXIST::FUNCTION:STDIO
 PKCS7_get0_signers                      940	3_0_0	EXIST::FUNCTION:
 X509_STORE_CTX_set_ex_data              941	3_0_0	EXIST::FUNCTION:
-TS_VERIFY_CTX_set_certs                 942	3_0_0	EXIST::FUNCTION:TS
+TS_VERIFY_CTX_set_certs                 942	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_4,TS
 BN_MONT_CTX_copy                        943	3_0_0	EXIST::FUNCTION:
 OPENSSL_INIT_new                        945	3_0_0	EXIST::FUNCTION:
 TS_ACCURACY_dup                         946	3_0_0	EXIST::FUNCTION:TS
@@ -2421,7 +2421,7 @@ ASIdOrRange_free                        2472	3_0_0	EXIST::FUNCTION:RFC3779
 EC_POINT_get_Jprojective_coordinates_GFp 2473	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 EVP_aes_128_cbc_hmac_sha256             2474	3_0_0	EXIST::FUNCTION:
 i2d_PKCS7_SIGNED                        2475	3_0_0	EXIST::FUNCTION:
-TS_VERIFY_CTX_set_data                  2476	3_0_0	EXIST::FUNCTION:TS
+TS_VERIFY_CTX_set_data                  2476	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_4,TS
 BN_pseudo_rand_range                    2477	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509V3_EXT_add_nconf                    2478	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_ctrl                     2479	3_0_0	EXIST::FUNCTION:
@@ -2612,7 +2612,7 @@ RSA_public_encrypt                      2670	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 X509_CRL_get0_extensions                2671	3_0_0	EXIST::FUNCTION:
 CMS_digest_verify                       2672	3_0_0	EXIST::FUNCTION:CMS
 ASN1_GENERALIZEDTIME_set                2673	3_0_0	EXIST::FUNCTION:
-TS_VERIFY_CTX_set_imprint               2674	3_0_0	EXIST::FUNCTION:TS
+TS_VERIFY_CTX_set_imprint               2674	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_4,TS
 BN_RECP_CTX_set                         2675	3_0_0	EXIST::FUNCTION:
 CRYPTO_secure_zalloc                    2676	3_0_0	EXIST::FUNCTION:
 i2d_EXTENDED_KEY_USAGE                  2677	3_0_0	EXIST::FUNCTION:
@@ -5683,6 +5683,10 @@ OSSL_TARGETING_INFORMATION_free         ?	3_4_0	EXIST::FUNCTION:
 OSSL_TARGETING_INFORMATION_new          ?	3_4_0	EXIST::FUNCTION:
 OSSL_TARGETING_INFORMATION_it           ?	3_4_0	EXIST::FUNCTION:
 OSSL_GENERAL_NAMES_print                ?	3_4_0	EXIST::FUNCTION:
+TS_VERIFY_CTX_set0_data                 ?	3_4_0	EXIST::FUNCTION:TS
+TS_VERIFY_CTX_set0_imprint              ?	3_4_0	EXIST::FUNCTION:TS
+TS_VERIFY_CTX_set0_store                ?	3_4_0	EXIST::FUNCTION:TS
+TS_VERIFY_CTX_set0_certs                ?	3_4_0	EXIST::FUNCTION:TS
 CRYPTO_atomic_add64                     ?	3_4_0	EXIST::FUNCTION:
 CRYPTO_atomic_and                       ?	3_4_0	EXIST::FUNCTION:
 d2i_OSSL_ATTRIBUTES_SYNTAX              ?	3_4_0	EXIST::FUNCTION:

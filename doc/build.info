@@ -2803,10 +2803,10 @@ DEPEND[html/man3/TS_RESP_CTX_new.html]=man3/TS_RESP_CTX_new.pod
 GENERATE[html/man3/TS_RESP_CTX_new.html]=man3/TS_RESP_CTX_new.pod
 DEPEND[man/man3/TS_RESP_CTX_new.3]=man3/TS_RESP_CTX_new.pod
 GENERATE[man/man3/TS_RESP_CTX_new.3]=man3/TS_RESP_CTX_new.pod
-DEPEND[html/man3/TS_VERIFY_CTX_set_certs.html]=man3/TS_VERIFY_CTX_set_certs.pod
-GENERATE[html/man3/TS_VERIFY_CTX_set_certs.html]=man3/TS_VERIFY_CTX_set_certs.pod
-DEPEND[man/man3/TS_VERIFY_CTX_set_certs.3]=man3/TS_VERIFY_CTX_set_certs.pod
-GENERATE[man/man3/TS_VERIFY_CTX_set_certs.3]=man3/TS_VERIFY_CTX_set_certs.pod
+DEPEND[html/man3/TS_VERIFY_CTX.html]=man3/TS_VERIFY_CTX.pod
+GENERATE[html/man3/TS_VERIFY_CTX.html]=man3/TS_VERIFY_CTX.pod
+DEPEND[man/man3/TS_VERIFY_CTX.3]=man3/TS_VERIFY_CTX.pod
+GENERATE[man/man3/TS_VERIFY_CTX.3]=man3/TS_VERIFY_CTX.pod
 DEPEND[html/man3/UI_STRING.html]=man3/UI_STRING.pod
 GENERATE[html/man3/UI_STRING.html]=man3/UI_STRING.pod
 DEPEND[man/man3/UI_STRING.3]=man3/UI_STRING.pod
@@ -3684,7 +3684,7 @@ html/man3/SSL_stream_reset.html \
 html/man3/SSL_want.html \
 html/man3/SSL_write.html \
 html/man3/TS_RESP_CTX_new.html \
-html/man3/TS_VERIFY_CTX_set_certs.html \
+html/man3/TS_VERIFY_CTX.html \
 html/man3/UI_STRING.html \
 html/man3/UI_UTIL_read_pw.html \
 html/man3/UI_create_method.html \
@@ -4342,7 +4342,7 @@ man/man3/SSL_stream_reset.3 \
 man/man3/SSL_want.3 \
 man/man3/SSL_write.3 \
 man/man3/TS_RESP_CTX_new.3 \
-man/man3/TS_VERIFY_CTX_set_certs.3 \
+man/man3/TS_VERIFY_CTX.3 \
 man/man3/UI_STRING.3 \
 man/man3/UI_UTIL_read_pw.3 \
 man/man3/UI_create_method.3 \
