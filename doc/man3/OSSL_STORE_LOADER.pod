@@ -105,7 +105,6 @@ see L<openssl_user_macros(7)>:
  typedef int (*OSSL_STORE_close_fn)(OSSL_STORE_LOADER_CTX *ctx);
  int OSSL_STORE_LOADER_set_close(OSSL_STORE_LOADER *store_loader,
                                  OSSL_STORE_close_fn store_close_function);
- void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *store_loader);
 
  int OSSL_STORE_register_loader(OSSL_STORE_LOADER *loader);
  OSSL_STORE_LOADER *OSSL_STORE_unregister_loader(const char *scheme);
