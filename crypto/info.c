@@ -199,11 +199,11 @@ const char *OPENSSL_info(int t)
 
     switch (t) {
     case OPENSSL_INFO_CONFIG_DIR:
-	return ossl_get_openssldir();
+        return ossl_get_openssldir();
     case OPENSSL_INFO_ENGINES_DIR:
-	return ossl_get_enginesdir();
+        return ossl_get_enginesdir();
     case OPENSSL_INFO_MODULES_DIR:
-	return ossl_get_modulesdir();
+        return ossl_get_modulesdir();
     case OPENSSL_INFO_DSO_EXTENSION:
         return DSO_EXTENSION;
     case OPENSSL_INFO_DIR_FILENAME_SEPARATOR:
