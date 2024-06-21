@@ -65,8 +65,7 @@ static dtls_sent_msg *dtls1_sent_msg_new(size_t msg_len)
 
 void dtls1_sent_msg_free(dtls_sent_msg *msg)
 {
-    if (msg != NULL)
-        OPENSSL_free(msg);
+    OPENSSL_free(msg);
 }
 
 static hm_fragment *dtls1_hm_fragment_new(size_t frag_len, int reassembly)
@@ -85,7 +84,7 @@ static hm_fragment *dtls1_hm_fragment_new(size_t frag_len, int reassembly)
 
     /* Initialize reassembly bitmask if necessary */
     if (bitmask_len > 0) {
-        if(frag->fragment == NULL)
+        if (frag->fragment == NULL)
             frag->reassembly = (unsigned char *)(frag + 1);
         else
             frag->reassembly = frag->fragment + frag_len;
@@ -98,8 +97,7 @@ static hm_fragment *dtls1_hm_fragment_new(size_t frag_len, int reassembly)
 
 void dtls1_hm_fragment_free(hm_fragment *frag)
 {
-    if (frag != NULL)
-        OPENSSL_free(frag);
+    OPENSSL_free(frag);
 }
 
 static int dtls1_write_hm_header(unsigned char *msgheaderstart,
