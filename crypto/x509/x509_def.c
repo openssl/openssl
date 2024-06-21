@@ -16,10 +16,10 @@
 
 #if defined(_WIN32)
 
-static char x509_private_dir[MAX_PATH]; 
-static char x509_cert_area[MAX_PATH];
-static char x509_cert_dir[MAX_PATH];
-static char x509_cert_file[MAX_PATH];
+static char x509_private_dir[MAX_PATH + 1]; 
+static char x509_cert_area[MAX_PATH + 1];
+static char x509_cert_dir[MAX_PATH + 1];
+static char x509_cert_file[MAX_PATH + 1];
 
 static void get_windows_default_path(char *pathname, const char *suffix)
 {
@@ -27,7 +27,7 @@ static void get_windows_default_path(char *pathname, const char *suffix)
 
     ossldir = ossl_get_openssldir();
 
-    strncpy(pathname, ossldir, MAX_PATH - 1);
+    OPENSSL_strlcpy(pathname, ossldir, MAX_PATH - 1);
     if (MAX_PATH - strlen(pathname) > strlen(suffix))
         strcat(pathname, suffix);
 }
