@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -121,15 +121,9 @@ const char *ossl_get_openssldir(void)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
     return (const char *)openssldir;
-# else
-    return "UNDEFINED";
 # endif
-#else
-# ifdef OPENSSLDIR
+# else
     return OPENSSLDIR;
-# else
-    return "";
-# endif
 #endif
 }
 
@@ -149,11 +143,7 @@ const char *ossl_get_enginesdir(void)
     return "UNDEFINED";
 # endif
 #else
-# ifdef OPENSSLDIR
     return ENGINESDIR;
-# else
-    return "";
-# endif
 #endif
 }
 
@@ -173,11 +163,7 @@ const char *ossl_get_modulesdir(void)
     return "UNDEFINED";
 # endif
 #else
-# ifdef MODULESDIR
     return MODULESDIR;
-# else
-    return "";
-# endif
 #endif
 }
 
@@ -191,6 +177,6 @@ const char *ossl_get_wininstallcontext(void)
 #if defined(_WIN32) && defined (OSSL_WINCTX)
 	return MAKESTR(OSSL_WINCTX);
 #else
-	return "";
+	return "UNDEFINED";
 #endif
 }
