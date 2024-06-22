@@ -60,35 +60,25 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
 
 static int print_hex(BIO *out, unsigned char *buf, int len)
 {
-    int i;
+    int result = -1;
+    char *hexbuf;
+    int hexlen = len * 2 + 1;
 
-    for (i = 0; i < len; i++) {
-        if (BIO_printf(out, "%02X ", buf[i]) <= 0) {
-            return 0;
-        }
-    }
+    hexbuf = OPENSSL_malloc(hexlen);
+    if (hexbuf == NULL)
+        return 0;
+    result = OPENSSL_buf2hexstr_ex(&hexbuf, hexlen, hexlen, buf, len, ':');
+    if (result != 1)
+        goto err;
+    if ((result = BIO_puts(out, hexbuf)) <= 0)
+        goto err;
+
+    OPENSSL_free(hexbuf);
     return 1;
-}
 
-static int asn1_integer_print_bio(BIO *bio, const ASN1_INTEGER *num)
-{
-    BIGNUM *num_bn;
-    int result = 0;
-    char *hex;
-
-    num_bn = ASN1_INTEGER_to_BN(num, NULL);
-    if (num_bn == NULL)
-        return -1;
-    if ((hex = BN_bn2hex(num_bn)) != NULL) {
-        result = BIO_write(bio, "0x", 2) > 0;
-        result = result && BIO_write(bio, hex, strlen(hex)) > 0;
-        OPENSSL_free(hex);
-    } else {
-        return -1;
-    }
-    BN_free(num_bn);
-
-    return result;
+    err:
+        OPENSSL_free(hexbuf);
+        return 0;
 }
 
 static int print_oid(BIO *out, const ASN1_OBJECT *oid) {
@@ -168,24 +158,16 @@ int ossl_print_attribute_value(BIO *out,
         return 1;
 
     case V_ASN1_INTEGER:
-        if (BIO_printf(out, "%*s", indent, "") <= 0)
-            return 0;
-        if (ASN1_INTEGER_get_int64(&int_val, av->value.integer) > 0) {
-            return BIO_printf(out, "%lld", (long long int)int_val);
-        } else {
-            str = av->value.integer;
-            return asn1_integer_print_bio(out, str);
-        }
-
     case V_ASN1_ENUMERATED:
         if (BIO_printf(out, "%*s", indent, "") <= 0)
             return 0;
-        if (ASN1_ENUMERATED_get_int64(&int_val, av->value.enumerated) > 0) {
-            return BIO_printf(out, "%lld", (long long int)int_val);
-        } else {
-            str = av->value.enumerated;
-            return asn1_integer_print_bio(out, str);
+        if (ASN1_ENUMERATED_get_int64(&int_val, av->value.integer) > 0) {
+            if (BIO_printf(out, "%lld", (long long int)int_val) <= 0)
+                return 0;
+            return 1;
         }
+        str = av->value.integer;
+        return print_hex(out, str->data, str->length);
 
     case V_ASN1_BIT_STRING:
         if (BIO_printf(out, "%*s", indent, "") <= 0)
