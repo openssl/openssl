@@ -91,7 +91,7 @@ static int asn1_integer_print_bio(BIO *bio, const ASN1_INTEGER *num)
     return result;
 }
 
-static int print_oid (BIO *out, ASN1_OBJECT *oid) {
+static int print_oid (BIO *out, const ASN1_OBJECT *oid) {
     const char *ln;
     char objbuf[80];
     int rc;
