@@ -134,19 +134,18 @@ int ossl_print_attribute_value(BIO *out,
     case NID_associatedName:
     case NID_dITRedirect:
     case NID_owner:
+        /*
+         * d2i_ functions increment the ppin pointer. See doc/man3/d2i_X509.pod.
+         * This resets the pointer. We don't want to corrupt this value.
+         */
         value = av->value.sequence->data;
         xn = d2i_X509_NAME(NULL,
-                           (const unsigned char**)&(av->value.sequence->data),
+                           (const unsigned char**)&value,
                            av->value.sequence->length);
         if (xn == NULL) {
             BIO_puts(out, "(COULD NOT DECODE DISTINGUISHED NAME)\n");
             return 0;
         }
-        /*
-         * d2i_ functions increment the ppin pointer. See doc/man3/d2i_X509.pod.
-         * This resets the pointer. We don't want to corrupt this value.
-         */
-        av->value.sequence->data = value;
         if (X509_NAME_print_ex(out, xn, indent, XN_FLAG_SEP_CPLUS_SPC) <= 0)
             return 0;
         X509_NAME_free(xn);
