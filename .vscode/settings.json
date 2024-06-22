@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "*.in": "c",
+        "ext_dat.h": "c",
+        "x509_acert.h": "c",
+        "conf.h": "c",
+        "cryptlib.h": "c",
+        "x509v3.h": "c",
+        "asn1t.h": "c",
+        "x509.h": "c",
+        "string_view": "c"
+    }
+}
