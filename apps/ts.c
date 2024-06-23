@@ -920,7 +920,7 @@ static TS_VERIFY_CTX *create_verify_ctx(const char *data, const char *digest,
             f |= TS_VFY_DATA;
             if ((out = BIO_new_file(data, "rb")) == NULL)
                 goto err;
-            if (TS_VERIFY_CTX_set_data(ctx, out) == NULL) {
+            if (!TS_VERIFY_CTX_set0_data(ctx, out)) {
                 BIO_free_all(out);
                 goto err;
             }
@@ -928,7 +928,7 @@ static TS_VERIFY_CTX *create_verify_ctx(const char *data, const char *digest,
             long imprint_len;
             unsigned char *hexstr = OPENSSL_hexstr2buf(digest, &imprint_len);
             f |= TS_VFY_IMPRINT;
-            if (TS_VERIFY_CTX_set_imprint(ctx, hexstr, imprint_len) == NULL) {
+            if (!TS_VERIFY_CTX_set0_imprint(ctx, hexstr, imprint_len)) {
                 BIO_printf(bio_err, "invalid digest string\n");
                 goto err;
             }
@@ -949,16 +949,15 @@ static TS_VERIFY_CTX *create_verify_ctx(const char *data, const char *digest,
     TS_VERIFY_CTX_add_flags(ctx, f | TS_VFY_SIGNATURE);
 
     /* Initialising the X509_STORE object. */
-    if (TS_VERIFY_CTX_set_store(ctx,
-                                create_cert_store(CApath, CAfile, CAstore, vpm))
-            == NULL)
+    if (!TS_VERIFY_CTX_set0_store(ctx, create_cert_store(CApath, CAfile,
+                                                            CAstore, vpm)))
         goto err;
 
     /* Loading any extra untrusted certificates. */
     if (untrusted != NULL) {
         certs = load_certs_multifile(untrusted, NULL, "extra untrusted certs",
                                      vpm);
-        if (certs == NULL || TS_VERIFY_CTX_set_certs(ctx, certs) == NULL)
+        if (certs == NULL || !TS_VERIFY_CTX_set0_certs(ctx, certs))
             goto err;
     }
     ret = 1;
