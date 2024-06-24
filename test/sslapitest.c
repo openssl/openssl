@@ -11211,6 +11211,8 @@ static int test_npn(int idx)
  end:
     SSL_free(serverssl);
     SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
 
     return testresult;
 }
@@ -11312,6 +11314,8 @@ static int test_alpn(int idx)
  end:
     SSL_free(serverssl);
     SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
 
     return testresult;
 }
