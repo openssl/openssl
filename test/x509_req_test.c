@@ -13,7 +13,6 @@
 #include "testutil.h"
 
 static char *certsDir = NULL;
-static char *certFilePath = NULL;
 
 /*
  * Test for the missing X509 version check discussed in issue #5738 and
@@ -24,6 +23,7 @@ static char *certFilePath = NULL;
  */
 static int test_x509_req_detect_invalid_version(void)
 {
+    char *certFilePath;
     BIO *bio = NULL;
     EVP_PKEY *pkey = NULL;
     X509_REQ *req = NULL;
@@ -49,6 +49,7 @@ err:
     EVP_PKEY_free(pkey);
     X509_REQ_free(req);
     BIO_free(bio);
+    OPENSSL_free(certFilePath);
     return ret;
 }
 
