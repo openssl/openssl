@@ -91,7 +91,7 @@ static int asn1_integer_print_bio(BIO *bio, const ASN1_INTEGER *num)
     return result;
 }
 
-static int print_oid (BIO *out, const ASN1_OBJECT *oid) {
+static int print_oid(BIO *out, const ASN1_OBJECT *oid) {
     const char *ln;
     char objbuf[80];
     int rc;
@@ -136,7 +136,8 @@ int ossl_print_attribute_value(BIO *out,
     case NID_owner:
         /*
          * d2i_ functions increment the ppin pointer. See doc/man3/d2i_X509.pod.
-         * This resets the pointer. We don't want to corrupt this value.
+         * This preserves the original  pointer. We don't want to corrupt this
+         * value.
          */
         value = av->value.sequence->data;
         xn = d2i_X509_NAME(NULL,
@@ -301,11 +302,7 @@ int ossl_print_attribute_value(BIO *out,
 
     /* Would it be approriate to just hexdump? */
     default:
-        if (BIO_printf(out,
-                       "%*s<Unsupported tag %d>",
-                       indent,
-                       "",
-                       av->type) <= 0)
+        if (BIO_printf(out, "%*s<Unsupported tag %d>", indent, "", av->type) <= 0)
             return 0;
         return 1;
     }
