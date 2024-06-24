@@ -3533,7 +3533,7 @@ int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
      * a match.
      */
     *out = (unsigned char *)PACKET_data(&csubpkt);
-    *outlen = PACKET_remaining(&csubpkt);
+    *outlen = (unsigned char)PACKET_remaining(&csubpkt);
 
     /*
      * For each protocol in server preference order, see if we support it.
@@ -3548,7 +3548,7 @@ int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
                                      PACKET_remaining(&ssubpkt))) {
                         /* We found a match */
                         *out = (unsigned char *)PACKET_data(&ssubpkt);
-                        *outlen = PACKET_remaining(&ssubpkt);
+                        *outlen = (unsigned char)PACKET_remaining(&ssubpkt);
                         return OPENSSL_NPN_NEGOTIATED;
                     }
                 }
