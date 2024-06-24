@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 82;
+plan tests => 88;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -244,6 +244,30 @@ cert_contains($sda_cert,
 cert_contains($ass_info_cert,
               "localityName",
               1, 'X509v3 Associated Information');
+
+my $acc_cert_pol = srctop_file(@certs, "ext-acceptableCertPolicies.pem");
+cert_contains($acc_cert_pol,
+              "X509v3 Acceptable Certification Policies",
+              1, 'X509v3 Acceptable Certification Policies');
+# Yes, I know these OIDs make no sense in a policies extension. It's just a test.
+cert_contains($acc_cert_pol,
+              "organizationalUnitName",
+              1, 'X509v3 Acceptable Certification Policies');
+cert_contains($acc_cert_pol,
+              "description",
+              1, 'X509v3 Acceptable Certification Policies');
+
+my $acc_priv_pol = srctop_file(@certs, "ext-acceptablePrivilegePolicies.pem");
+cert_contains($acc_priv_pol,
+              "X509v3 Acceptable Privilege Policies",
+              1, 'X509v3 Acceptable Privilege Policies');
+# Yes, I know these OIDs make no sense in a policies extension. It's just a test.
+cert_contains($acc_priv_pol,
+              "commonName",
+              1, 'X509v3 Acceptable Certification Policies');
+cert_contains($acc_priv_pol,
+              "organizationName",
+              1, 'X509v3 Acceptable Certification Policies');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
