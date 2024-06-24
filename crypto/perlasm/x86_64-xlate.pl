@@ -1012,6 +1012,7 @@ my %globals;
 				    $align = $$line;
 				    $align =~ s/(.*)(align\s*=\s*\d+$)/$2/;
 				    $$line =~ s/(.*)(\s+align\s*=\s*\d+$)/$1/;
+				    $$line =~ s/,.*//;
 				    $$line = ".CRT\$XCU" if ($$line eq ".init");
 				    $$line = ".rdata" if ($$line eq ".rodata");
 				    if ($nasm) {
