@@ -11973,7 +11973,7 @@ static int test_multi_resume(int idx)
     return testresult;
 }
 
-struct next_proto_st {
+static struct next_proto_st {
     int serverlen;
     unsigned char server[40];
     int clientlen;
