@@ -1047,6 +1047,7 @@ my %globals;
 					    push(@segment_stack, ".text\$");
 				        }
 					$v="$current_segment\tENDS\n" if ($current_segment);
+					$$line =~ s/([^,]*).*/$1/;
 					$v.="$$line\tSEGMENT";
 					if ($$line=~/\.([prx])data/) {
 					    $v.=" READONLY";
