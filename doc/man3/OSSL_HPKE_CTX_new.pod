@@ -240,7 +240,8 @@ I<libctx> and I<propq> are used when fetching algorithms from providers and may
 be set to NULL.
 
 OSSL_HPKE_CTX_free() frees the I<ctx> B<OSSL_HPKE_CTX> that was created
-previously by a call to OSSL_HPKE_CTX_new().
+previously by a call to OSSL_HPKE_CTX_new().  If the argument to
+OSSL_HPKE_CTX_free() is NULL, nothing is done.
 
 =head2 Sender APIs
 

@@ -18,7 +18,7 @@ BIO_ADDR_path_string - BIO_ADDR routines
  BIO_ADDR *BIO_ADDR_new(void);
  int BIO_ADDR_copy(BIO_ADDR *dst, const BIO_ADDR *src);
  BIO_ADDR *BIO_ADDR_dup(const BIO_ADDR *ap);
- void BIO_ADDR_free(BIO_ADDR *);
+ void BIO_ADDR_free(BIO_ADDR *ap);
  void BIO_ADDR_clear(BIO_ADDR *ap);
  int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
                       const void *where, size_t wherelen, unsigned short port);
@@ -47,7 +47,7 @@ BIO_ADDR_dup() creates a new B<BIO_ADDR>, with a copy of the
 address data in B<ap>.
 
 BIO_ADDR_free() frees a B<BIO_ADDR> created with BIO_ADDR_new()
-or BIO_ADDR_dup();
+or BIO_ADDR_dup(). If the argument is NULL, nothing is done.
 
 BIO_ADDR_clear() clears any data held within the provided B<BIO_ADDR> and sets
 it back to an uninitialised state.

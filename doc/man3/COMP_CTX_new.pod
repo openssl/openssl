@@ -54,7 +54,9 @@ These functions provide compression support for OpenSSL. Compression is used wit
 the OpenSSL library to support TLS record and certificate compression.
 
 COMP_CTX_new() is used to create a new B<COMP_CTX> structure used to compress data.
+
 COMP_CTX_free() is used to free the returned B<COMP_CTX>.
+If the argument is NULL, nothing is done.
 
 COMP_CTX_get_method() returns the B<COMP_METHOD> of the given I<ctx>.
 
