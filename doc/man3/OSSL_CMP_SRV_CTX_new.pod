@@ -114,6 +114,7 @@ associated with the library context I<libctx> and property query string
 I<propq>, both of which may be NULL to select the defaults.
 
 OSSL_CMP_SRV_CTX_free() deletes the given I<srv_ctx>.
+If the argument is NULL, nothing is done.
 
 OSSL_CMP_SRV_CTX_init() sets in the given I<srv_ctx> a custom server context
 pointer as well as callback functions performing the specific processing of CMP

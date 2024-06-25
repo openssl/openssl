@@ -249,6 +249,7 @@ If the B<CONF_MFLAGS_IGNORE_RETURN_CODES> flag is not included, any errors in
 the configuration file will cause an error return from B<OPENSSL_init_crypto>
 or indirectly L<OPENSSL_init_ssl(3)>.
 The object can be released with OPENSSL_INIT_free() when done.
+If the argument to OPENSSL_INIT_free() is NULL, nothing is done.
 
 =head1 NOTES
 

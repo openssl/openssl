@@ -407,7 +407,7 @@ of an B<EVP_PKEY_METHOD> is always called by the EVP framework while doing a
 digest signing operation by calling L<EVP_DigestSignFinal(3)>.
 
 EVP_PKEY_meth_free() frees an existing B<EVP_PKEY_METHOD> pointed by
-B<pmeth>.
+B<pmeth>. If the argument is NULL, nothing is done.
 
 EVP_PKEY_meth_copy() copies an B<EVP_PKEY_METHOD> object from B<src>
 to B<dst>.

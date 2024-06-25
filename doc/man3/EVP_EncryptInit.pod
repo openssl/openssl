@@ -272,6 +272,7 @@ Increments the reference count for an B<EVP_CIPHER> structure.
 
 Decrements the reference count for the fetched B<EVP_CIPHER> structure.
 If the reference count drops to 0 then the structure is freed.
+If the argument is NULL, nothing is done.
 
 =item EVP_CIPHER_CTX_new()
 
@@ -280,9 +281,9 @@ Allocates and returns a cipher context.
 =item EVP_CIPHER_CTX_free()
 
 Clears all information from a cipher context and frees any allocated memory
-associated with it, including I<ctx> itself. This function should be called after
-all operations using a cipher are complete so sensitive information does not
-remain in memory.
+associated with it, including I<ctx> itself. This function should be called
+after all operations using a cipher are complete so sensitive information does
+not remain in memory. If the argument is NULL, nothing is done.
 
 =item EVP_CIPHER_CTX_dup()
 
