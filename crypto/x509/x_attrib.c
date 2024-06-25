@@ -76,9 +76,9 @@ static int print_hex(BIO *out, unsigned char *buf, int len)
     OPENSSL_free(hexbuf);
     return 1;
 
-    err:
-        OPENSSL_free(hexbuf);
-        return 0;
+ err:
+    OPENSSL_free(hexbuf);
+    return 0;
 }
 
 static int print_oid(BIO *out, const ASN1_OBJECT *oid) {
