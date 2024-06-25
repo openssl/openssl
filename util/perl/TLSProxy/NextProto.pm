@@ -42,12 +42,12 @@ sub new
 
 sub parse
 {
-    #We don't support parsing at the moment
+    # We don't support parsing at the moment
 }
 
-#This is supposed to reconstruct the on-the-wire message data following changes.
-#For now though since we don't support parsing we just create an empty NextProto
-#message - this capability is used in test_npn
+# This is supposed to reconstruct the on-the-wire message data following changes.
+# For now though since we don't support parsing we just create an empty NextProto
+# message - this capability is used in test_npn
 sub set_message_contents
 {
     my $self = shift;
