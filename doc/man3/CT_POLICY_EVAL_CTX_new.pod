@@ -105,7 +105,8 @@ The time should be in milliseconds since the Unix Epoch.
 Each setter has a matching getter for accessing the current value.
 
 When no longer required, the B<CT_POLICY_EVAL_CTX> should be passed to
-CT_POLICY_EVAL_CTX_free() to delete it.
+CT_POLICY_EVAL_CTX_free() to delete it. If the argument to
+CT_POLICY_EVAL_CTX_free() is NULL, nothing is done.
 
 =head1 NOTES
 

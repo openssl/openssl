@@ -46,6 +46,7 @@ OCSP_response_create() creates and returns an I<OCSP_RESPONSE> structure for
 I<status> and optionally including basic response I<bs>.
 
 OCSP_RESPONSE_free() frees up OCSP response I<resp>.
+If the argument is NULL, nothing is done.
 
 OCSP_RESPID_set_by_name() sets the name of the OCSP_RESPID to be the same as the
 subject name in the supplied X509 certificate I<cert> for the OCSP responder.

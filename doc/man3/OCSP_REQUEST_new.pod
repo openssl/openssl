@@ -29,6 +29,7 @@ OCSP_request_onereq_get0 - OCSP request functions
 OCSP_REQUEST_new() allocates and returns an empty B<OCSP_REQUEST> structure.
 
 OCSP_REQUEST_free() frees up the request structure B<req>.
+If the argument is NULL, nothing is done.
 
 OCSP_request_add0_id() adds certificate ID B<cid> to B<req>. It returns
 the B<OCSP_ONEREQ> structure added so an application can add additional
