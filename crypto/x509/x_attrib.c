@@ -67,7 +67,7 @@ static int print_hex(BIO *out, unsigned char *buf, int len)
     hexbuf = OPENSSL_malloc(hexlen);
     if (hexbuf == NULL)
         return 0;
-    result = OPENSSL_buf2hexstr_ex(&hexbuf, hexlen, hexlen, buf, len, ':');
+    result = OPENSSL_buf2hexstr_ex(&hexbuf, hexlen, NULL, buf, len, ':');
     if (result != 1)
         goto err;
     if ((result = BIO_puts(out, hexbuf)) <= 0)
