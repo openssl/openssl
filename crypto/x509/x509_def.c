@@ -46,19 +46,19 @@ static CRYPTO_ONCE openssldir_setup_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_openssldir_setup)
 {
     get_windows_default_path(x509_private_dir, "\\private");
-    if (strlen(x509_private_dir))
+    if (strlen(x509_private_dir) > 0)
         x509_private_dirptr = x509_private_dir;
 
     get_windows_default_path(x509_cert_area, "\\");
-    if (strlen(x509_cert_area))
+    if (strlen(x509_cert_area) > 0)
         x509_cert_areaptr = x509_cert_area;
 
     get_windows_default_path(x509_cert_dir, "\\certs");
-    if (strlen(x509_cert_dir))
+    if (strlen(x509_cert_dir) > 0)
         x509_cert_dirptr = x509_cert_dir;
 
     get_windows_default_path(x509_cert_file, "\\cert.pem");
-    if (strlen(x509_cert_file))
+    if (strlen(x509_cert_file) > 0)
         x509_cert_fileptr = x509_cert_file;
 
     return 1;

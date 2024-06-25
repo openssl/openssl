@@ -81,5 +81,3 @@ $expect =~ s/.*REG_EXPAND_SZ *//;
 $expect =~ s/ .*$//;
 $actual =~ s/MODULESSDIR: *//;
 ok(grep(/$expect/, $actual) == 1, "Confirming version output for modulesdir from registry");
-
-

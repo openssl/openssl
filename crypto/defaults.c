@@ -124,13 +124,13 @@ DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
     /*
      * Set our pointers only if the directories are fetched properly
      */
-    if (strlen(openssldir))
+    if (strlen(openssldir) > 0)
         openssldirptr = openssldir;
 
-    if (strlen(enginesdir))
+    if (strlen(enginesdir) > 0)
         enginesdirptr = enginesdir;
 
-    if (strlen(modulesdir))
+    if (strlen(modulesdir) > 0)
         modulesdirptr = modulesdir;
 
     return 1;
@@ -144,7 +144,7 @@ DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
  */
 const char *ossl_get_openssldir(void)
 {
-#if defined(_WIN32)
+#if defined(_WIN32) && defined (OSSL_WINCTX)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
     return (const char *)openssldirptr;
@@ -160,7 +160,7 @@ const char *ossl_get_openssldir(void)
  */
 const char *ossl_get_enginesdir(void)
 {
-#if defined(_WIN32)
+#if defined(_WIN32) && defined (OSSL_WINCTX)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
     return (const char *)enginesdirptr;
@@ -176,7 +176,7 @@ const char *ossl_get_enginesdir(void)
  */
 const char *ossl_get_modulesdir(void)
 {
-#if defined(_WIN32)
+#if defined(_WIN32) && defined(OSSL_WINCTX)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
     return (const char *)modulesdirptr;
