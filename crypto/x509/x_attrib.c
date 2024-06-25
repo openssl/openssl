@@ -159,10 +159,10 @@ int ossl_print_attribute_value(BIO *out,
     switch (av->type) {
     case V_ASN1_BOOLEAN:
         if (av->value.boolean) {
-            if (BIO_printf(out, "%*sTRUE", indent, "") < 0)
+            if (BIO_printf(out, "%*sTRUE", indent, "") <= 0)
                 return 0;
         } else {
-            if (BIO_printf(out, "%*sFALSE", indent, "") < 0)
+            if (BIO_printf(out, "%*sFALSE", indent, "") <= 0)
                 return 0;
         }
         return 1;
