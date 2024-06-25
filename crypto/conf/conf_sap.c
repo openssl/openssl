@@ -38,6 +38,8 @@ void OPENSSL_config(const char *appname)
         settings.appname = strdup(appname);
     settings.flags = DEFAULT_CONF_MFLAGS;
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, &settings);
+
+    free(settings.appname);
 }
 #endif
 
