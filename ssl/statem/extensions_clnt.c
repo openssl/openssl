@@ -1596,7 +1596,7 @@ int tls_parse_stoc_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         if (PACKET_remaining(&protpkt) != len)
             continue;
         if (memcmp(PACKET_data(pkt), PACKET_data(&protpkt), len) == 0) {
-            /* Valid protocol found*/
+            /* Valid protocol found */
             valid = 1;
             break;
         }
