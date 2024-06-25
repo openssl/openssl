@@ -74,6 +74,7 @@ EVP_MD_meth_dup() creates a copy of B<md>.
 
 EVP_MD_meth_free() decrements the reference count for the B<EVP_MD> structure.
 If the reference count drops to 0 then the structure is freed.
+If the argument is NULL, nothing is done.
 
 EVP_MD_meth_set_input_blocksize() sets the internal input block size
 for the method B<md> to B<blocksize> bytes.
