@@ -92,9 +92,7 @@ static int print_oid(BIO *out, const ASN1_OBJECT *oid) {
     rc = (ln != NULL)
            ? BIO_printf(out, "%s (%s)", objbuf, ln)
            : BIO_printf(out, "%s", objbuf);
-    if (rc < 0)
-        return 0;
-    return 1;
+    return (rc >= 0);
 }
 
 int ossl_print_attribute_value(BIO *out,
@@ -149,46 +147,39 @@ int ossl_print_attribute_value(BIO *out,
     switch (av->type) {
     case V_ASN1_BOOLEAN:
         if (av->value.boolean) {
-            if (BIO_printf(out, "%*sTRUE", indent, "") <= 0)
-                return 0;
+            return BIO_printf(out, "%*sTRUE", indent, "") >= 4;
         } else {
-            if (BIO_printf(out, "%*sFALSE", indent, "") <= 0)
-                return 0;
+            return BIO_printf(out, "%*sFALSE", indent, "") >= 5;
         }
-        return 1;
 
     case V_ASN1_INTEGER:
     case V_ASN1_ENUMERATED:
-        if (BIO_printf(out, "%*s", indent, "") <= 0)
+        if (BIO_printf(out, "%*s", indent, "") < 0)
             return 0;
         if (ASN1_ENUMERATED_get_int64(&int_val, av->value.integer) > 0) {
-            if (BIO_printf(out, "%lld", (long long int)int_val) <= 0)
-                return 0;
-            return 1;
+            return BIO_printf(out, "%lld", (long long int)int_val) > 0;
         }
         str = av->value.integer;
         return print_hex(out, str->data, str->length);
 
     case V_ASN1_BIT_STRING:
-        if (BIO_printf(out, "%*s", indent, "") <= 0)
+        if (BIO_printf(out, "%*s", indent, "") < 0)
             return 0;
         return print_hex(out, av->value.bit_string->data,
                          av->value.bit_string->length);
 
     case V_ASN1_OCTET_STRING:
     case V_ASN1_VIDEOTEXSTRING:
-        if (BIO_printf(out, "%*s", indent, "") <= 0)
+        if (BIO_printf(out, "%*s", indent, "") < 0)
             return 0;
         return print_hex(out, av->value.octet_string->data,
                          av->value.octet_string->length);
 
     case V_ASN1_NULL:
-        if (BIO_printf(out, "%*sNULL", indent, "") <= 0)
-            return 0;
-        return 1;
+        return BIO_printf(out, "%*sNULL", indent, "") >= 4;
 
     case V_ASN1_OBJECT:
-        if (BIO_printf(out, "%*s", indent, "") <= 0)
+        if (BIO_printf(out, "%*s", indent, "") < 0)
             return 0;
         return print_oid(out, av->value.object);
     
@@ -200,41 +191,31 @@ int ossl_print_attribute_value(BIO *out,
     case V_ASN1_GENERALSTRING:
     case V_ASN1_GRAPHICSTRING:
     case V_ASN1_OBJECT_DESCRIPTOR:
-        if (BIO_printf(out, "%*s%.*s", indent, "",
+        return BIO_printf(out, "%*s%.*s", indent, "",
                           av->value.generalstring->length,
-                          av->value.generalstring->data) < 0)
-            return 0;
-        return 1;
+                          av->value.generalstring->data) >= 0;
 
     /* EXTERNAL would go here. */
     /* EMBEDDED PDV would go here. */
 
     case V_ASN1_UTF8STRING:
-        if (BIO_printf(out, "%*s%.*s", indent, "",
+        return BIO_printf(out, "%*s%.*s", indent, "",
                           av->value.utf8string->length,
-                          av->value.utf8string->data) < 0)
-            return 0;
-        return 1;
+                          av->value.utf8string->data) >= 0;
 
     case V_ASN1_REAL:
-        if (BIO_printf(out, "%*sREAL", indent, "") < 0)
-            return 0;
-        return 1;
+        return BIO_printf(out, "%*sREAL", indent, "") >= 4;
 
     /* RELATIVE-OID would go here. */
     /* TIME would go here. */
 
     case V_ASN1_SEQUENCE:
-        if (ASN1_parse_dump(out, av->value.sequence->data,
-                            av->value.sequence->length, indent, 1) <= 0)
-            return 0;
-        return 1;
+        return ASN1_parse_dump(out, av->value.sequence->data,
+                               av->value.sequence->length, indent, 1) > 0;
 
     case V_ASN1_SET:
-        if (ASN1_parse_dump(out, av->value.set->data,
-                               av->value.set->length, indent, 1) <= 0)
-            return 0;
-        return 1;
+        return ASN1_parse_dump(out, av->value.set->data,
+                               av->value.set->length, indent, 1) > 0;
 
     /*
      * UTCTime ::= [UNIVERSAL 23] IMPLICIT VisibleString
@@ -245,32 +226,24 @@ int ossl_print_attribute_value(BIO *out,
     case V_ASN1_UTCTIME:
     case V_ASN1_GENERALIZEDTIME:
     case V_ASN1_NUMERICSTRING:
-        if (BIO_printf(out, "%*s%.*s", indent, "",
-                       av->value.visiblestring->length,
-                       av->value.visiblestring->data) <= 0)
-            return 0;
-        return 1;
+        return BIO_printf(out, "%*s%.*s", indent, "",
+                          av->value.visiblestring->length,
+                          av->value.visiblestring->data) >= 0;
 
     case V_ASN1_PRINTABLESTRING:
-        if (BIO_printf(out, "%*s%.*s", indent, "",
-                       av->value.printablestring->length,
-                       av->value.printablestring->data) <= 0)
-            return 0;
-        return 1;
+        return BIO_printf(out, "%*s%.*s", indent, "",
+                          av->value.printablestring->length,
+                          av->value.printablestring->data) >= 0;
 
     case V_ASN1_T61STRING:
-        if (BIO_printf(out, "%*s%.*s", indent, "",
-                       av->value.t61string->length,
-                       av->value.t61string->data) <= 0)
-            return 0;
-        return 1;
+        return BIO_printf(out, "%*s%.*s", indent, "",
+                          av->value.t61string->length,
+                          av->value.t61string->data) >= 0;
 
     case V_ASN1_IA5STRING:
-        if (BIO_printf(out, "%*s%.*s", indent, "",
-                       av->value.ia5string->length,
-                       av->value.ia5string->data) <= 0)
-            return 0;
-        return 1;
+        return BIO_printf(out, "%*s%.*s", indent, "",
+                          av->value.ia5string->length,
+                          av->value.ia5string->data) >= 0;
 
     /* UniversalString would go here. */
     /* CHARACTER STRING would go here. */
@@ -284,8 +257,10 @@ int ossl_print_attribute_value(BIO *out,
 
     /* Would it be approriate to just hexdump? */
     default:
-        if (BIO_printf(out, "%*s<Unsupported tag %d>", indent, "", av->type) <= 0)
-            return 0;
-        return 1;
+        return BIO_printf(out,
+                          "%*s<Unsupported tag %d>",
+                          indent,
+                          "",
+                          av->type) >= 0;
     }
 }
