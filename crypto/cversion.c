@@ -71,7 +71,7 @@ const char *OpenSSL_version(int t)
         else
             return "CPUINFO: N/A";
     case OPENSSL_WINCTX:
-	return ossl_get_wininstallcontext();
+        return ossl_get_wininstallcontext();
     }
     return "not available";
 }

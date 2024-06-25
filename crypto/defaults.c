@@ -30,15 +30,30 @@
 static char openssldir[MAX_PATH + 1];
 
 /**
+ * @brief The pointer to the opennsldir buffer
+ */
+static char *openssldirptr = NULL;
+
+/**
  * @brief The directory where OpenSSL engines are located.
  */
 
 static char enginesdir[MAX_PATH + 1];
 
 /**
+ * @brief The pointer to the enginesdir buffer
+ */
+static char *enginesdirptr = NULL;
+
+/**
  * @brief The directory where OpenSSL modules are located.
  */
 static char modulesdir[MAX_PATH + 1];
+
+/**
+ * @brief The pointer to the modulesdir buffer
+ */
+static char *modulesdirptr = NULL;
 
 /**
  * @brief Get the list of Windows registry directories.
@@ -105,6 +120,19 @@ DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
     get_windows_regdirs(openssldir, TEXT("OPENSSLDIR"));
     get_windows_regdirs(enginesdir, TEXT("ENGINESDIR"));
     get_windows_regdirs(modulesdir, TEXT("MODULESDIR"));
+
+    /*
+     * Set our pointers only if the directories are fetched properly
+     */
+    if (strlen(openssldir))
+        openssldirptr = openssldir;
+
+    if (strlen(enginesdir))
+        enginesdirptr = enginesdir;
+
+    if (strlen(modulesdir))
+        modulesdirptr = modulesdir;
+
     return 1;
 }
 #endif
@@ -117,11 +145,9 @@ DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
 const char *ossl_get_openssldir(void)
 {
 #if defined(_WIN32)
-# if defined(OSSL_WINCTX)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
-    return (const char *)openssldir;
-# endif
+    return (const char *)openssldirptr;
 # else
     return OPENSSLDIR;
 #endif
@@ -135,13 +161,9 @@ const char *ossl_get_openssldir(void)
 const char *ossl_get_enginesdir(void)
 {
 #if defined(_WIN32)
-# if defined(OSSL_WINCTX)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
-    return (const char *)enginesdir;
-# else
-    return "UNDEFINED";
-# endif
+    return (const char *)enginesdirptr;
 #else
     return ENGINESDIR;
 #endif
@@ -155,13 +177,9 @@ const char *ossl_get_enginesdir(void)
 const char *ossl_get_modulesdir(void)
 {
 #if defined(_WIN32)
-# if defined (OSSL_WINCTX)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
-    return (const char *)modulesdir;
-# else
-    return "UNDEFINED";
-# endif
+    return (const char *)modulesdirptr;
 #else
     return MODULESDIR;
 #endif
@@ -177,6 +195,6 @@ const char *ossl_get_wininstallcontext(void)
 #if defined(_WIN32) && defined (OSSL_WINCTX)
 	return MAKESTR(OSSL_WINCTX);
 #else
-	return "UNDEFINED";
+	return "Undefined";
 #endif
 }
