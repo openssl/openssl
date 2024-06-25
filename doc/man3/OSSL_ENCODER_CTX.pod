@@ -102,6 +102,7 @@ with an L<OSSL_PARAM(3)> array I<params>.  Parameters that the
 implementation doesn't recognise should be ignored.
 
 OSSL_ENCODER_CTX_free() frees the given context I<ctx>.
+If the argument is NULL, nothing is done.
 
 OSSL_ENCODER_CTX_add_encoder() populates the B<OSSL_ENCODER_CTX>
 I<ctx> with a encoder, to be used to encode an input object.

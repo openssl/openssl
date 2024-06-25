@@ -61,6 +61,7 @@ I<decoder>.
 
 OSSL_DECODER_free() decrements the reference count for the given
 I<decoder>, and when the count reaches zero, frees it.
+If the argument is NULL, nothing is done.
 
 OSSL_DECODER_get0_provider() returns the provider of the given
 I<decoder>.

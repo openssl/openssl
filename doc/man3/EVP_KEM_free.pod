@@ -41,6 +41,7 @@ The returned value must eventually be freed with EVP_KEM_free().
 EVP_KEM_free() decrements the reference count for the B<EVP_KEM> structure.
 Typically this structure will have been obtained from an earlier call to
 EVP_KEM_fetch(). If the reference count drops to 0 then the structure is freed.
+If the argument is NULL, nothing is done.
 
 EVP_KEM_up_ref() increments the reference count for an B<EVP_KEM> structure.
 
