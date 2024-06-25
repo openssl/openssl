@@ -52,7 +52,7 @@ The expected format of the file is:
 
 Once a CTLOG_STORE is no longer required, it should be passed to
 CTLOG_STORE_free(). This will delete all of the CTLOGs stored within, along
-with the CTLOG_STORE itself.
+with the CTLOG_STORE itself. If the argument is NULL, nothing is done.
 
 =head1 NOTES
 

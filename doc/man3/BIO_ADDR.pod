@@ -38,6 +38,7 @@ with routines that will fill it with information, such as
 BIO_accept_ex().
 
 BIO_ADDR_free() frees a B<BIO_ADDR> created with BIO_ADDR_new().
+If the argument is NULL, nothing is done.
 
 BIO_ADDR_clear() clears any data held within the provided B<BIO_ADDR> and sets
 it back to an uninitialised state.

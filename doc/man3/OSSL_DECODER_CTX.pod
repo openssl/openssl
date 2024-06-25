@@ -126,6 +126,7 @@ decoders that have been added to the I<ctx> so far.  Parameters that an
 implementation doesn't recognise should be ignored by it.
 
 OSSL_DECODER_CTX_free() frees the given context I<ctx>.
+If the argument is NULL, nothing is done.
 
 OSSL_DECODER_CTX_add_decoder() populates the B<OSSL_DECODER_CTX> I<ctx> with
 a decoder, to be used to attempt to decode some encoded input.

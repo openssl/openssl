@@ -147,7 +147,7 @@ passed as a parameter. This might be useful for creating a new
 B<RSA_METHOD> based on an existing one, but with some differences.
 
 RSA_meth_free() destroys an B<RSA_METHOD> structure and frees up any
-memory associated with it.
+memory associated with it. If the argument is NULL, nothing is done.
 
 RSA_meth_get0_name() will return a pointer to the name of this
 RSA_METHOD. This is a pointer to the internal name string and so

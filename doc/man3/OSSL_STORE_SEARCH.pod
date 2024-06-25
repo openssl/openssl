@@ -75,6 +75,7 @@ criterion, so they must have at least the same life time as the created
 B<OSSL_STORE_SEARCH>.
 
 OSSL_STORE_SEARCH_free() is used to free the B<OSSL_STORE_SEARCH>.
+If the argument is NULL, nothing is done.
 
 =head2 Loader Functions
 

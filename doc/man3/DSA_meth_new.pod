@@ -110,7 +110,7 @@ parameter. This might be useful for creating a new B<DSA_METHOD> based on an
 existing one, but with some differences.
 
 DSA_meth_free() destroys a B<DSA_METHOD> structure and frees up any memory
-associated with it.
+associated with it. If the argument is NULL, nothing is done.
 
 DSA_meth_get0_name() will return a pointer to the name of this DSA_METHOD. This
 is a pointer to the internal name string and so should not be freed by the

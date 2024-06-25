@@ -78,7 +78,7 @@ BIO_ADDRINFO_next() returns the next B<BIO_ADDRINFO> in the chain
 from the given one.
 
 BIO_ADDRINFO_free() frees the chain of B<BIO_ADDRINFO> starting
-with the given one.
+with the given one. If the argument is NULL, nothing is done.
 
 =head1 RETURN VALUES
 
