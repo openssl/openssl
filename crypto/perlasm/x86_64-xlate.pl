@@ -1012,6 +1012,7 @@ my %globals;
 				    $align = $$line;
 				    $align =~ s/(.*)(align\s*=\s*\d+$)/$2/;
 				    $$line =~ s/(.*)(\s+align\s*=\s*\d+$)/$1/;
+				    $$line =~ s/,.*//;
 				    $$line = ".CRT\$XCU" if ($$line eq ".init");
 				    $$line = ".rdata" if ($$line eq ".rodata");
 				    if ($nasm) {
@@ -1047,7 +1048,6 @@ my %globals;
 					    push(@segment_stack, ".text\$");
 				        }
 					$v="$current_segment\tENDS\n" if ($current_segment);
-					$$line =~ s/([^,]*).*/$1/;
 					$v.="$$line\tSEGMENT";
 					if ($$line=~/\.([prx])data/) {
 					    $v.=" READONLY";
