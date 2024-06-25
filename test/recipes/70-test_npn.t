@@ -42,10 +42,10 @@ plan tests => 1;
 
 my $npnseen = 0;
 
-#Test 1: Check sending an empty NextProto message from the client works. This is
-#        valid as per the spec, but OpenSSL does not allow you to send it.
-#        Therefore we must be prepared to receive such a message but we cannot
-#        generate it except via TLSProxy
+# Test 1: Check sending an empty NextProto message from the client works. This is
+#         valid as per the spec, but OpenSSL does not allow you to send it.
+#         Therefore we must be prepared to receive such a message but we cannot
+#         generate it except via TLSProxy
 $proxy->clear();
 $proxy->filter(\&npn_filter);
 $proxy->clientflags("-nextprotoneg foo -no_tls1_3");
@@ -63,9 +63,9 @@ sub npn_filter
 
     foreach my $message (@{$proxy->message_list}) {
         if ($message->mt == TLSProxy::Message::MT_NEXT_PROTO) {
-            #Our TLSproxy NextProto message support doesn't support parsing of
-            #the message. If we repack it just creates an empty NextProto
-            #message - which is exactly the scenario we want to test here.
+            # Our TLSproxy NextProto message support doesn't support parsing of
+            # the message. If we repack it just creates an empty NextProto
+            # message - which is exactly the scenario we want to test here.
             $message->repack();
             $npnseen = 1;
         }
