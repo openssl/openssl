@@ -29,6 +29,12 @@ OpenSSL 3.4
 
 ### Changes between 3.3 and 3.4 [xx XXX xxxx]
 
+ * Redesigned Windows use of OPENSSLDIR/ENGINESDIR/MODULESDIR such that
+   what were formerly build time locations can now be defined at run time
+   with registry keys. See NOTES-WINDOWS.md
+
+   *Neil Horman*
+
  * Added options `-not_before` and `-not_after` for explicit setting
    start and end dates of certificates created with the `req` and `x509`
    apps. Added the same options also to `ca` app as alias for
