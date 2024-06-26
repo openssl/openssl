@@ -20,8 +20,6 @@
 # define NOQUOTE(x) x
 #if defined(OSSL_WINCTX)
 # define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" ##"-"## NOQUOTE(OPENSSL_VERSION_STR) ##"-"## MAKESTR(OSSL_WINCTX)
-#else
-# define REGISTRY_KEY "NONE"
 #endif
 
 /**
@@ -64,14 +62,15 @@ static char *modulesdirptr = NULL;
  */
 static char *get_windows_regdirs(char *dst, LPCTSTR valuename)
 {
+    char *retval = NULL;
+#ifdef REGISTY_KEY
     DWORD keysize;
     DWORD ktype;
     HKEY hkey;
     LSTATUS ret;
     DWORD index = 0;
     LPCTCH tempstr = NULL;
-    char *retval = NULL;
-
+   
     ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
                        TEXT(REGISTRY_KEY), KEY_WOW64_32KEY,
                        KEY_QUERY_VALUE, &hkey);
@@ -105,6 +104,7 @@ static char *get_windows_regdirs(char *dst, LPCTSTR valuename)
 out:
     OPENSSL_free(tempstr);
     RegCloseKey(hkey);
+#endif
     return retval;
 }
 
@@ -193,8 +193,8 @@ const char *ossl_get_modulesdir(void)
 const char *ossl_get_wininstallcontext(void)
 {
 #if defined(_WIN32) && defined (OSSL_WINCTX)
-	return MAKESTR(OSSL_WINCTX);
+    return MAKESTR(OSSL_WINCTX);
 #else
-	return "Undefined";
+    return "Undefined";
 #endif
 }

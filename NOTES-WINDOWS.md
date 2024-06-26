@@ -99,36 +99,12 @@ check the INSTALL.md file.
 Installation directories
 ------------------------
 
-The default installation directories are derived from environment
-variables.
+On most Unix platform installation directories are determined at build time via
+constant defines.  On Windows platforms however, installation directories are
+determined via registry keys, as it is common practice to build OpenSSL and
+install it to a variety of locations.
 
-For VC-WIN32, the following defaults are use:
-
-    PREFIX:      %ProgramFiles(x86)%\OpenSSL
-    OPENSSLDIR:  %CommonProgramFiles(x86)%\SSL
-
-For VC-WIN64, the following defaults are use:
-
-    PREFIX:      %ProgramW6432%\OpenSSL
-    OPENSSLDIR:  %CommonProgramW6432%\SSL
-
-Should those environment variables not exist (on a pure Win32
-installation for examples), these fallbacks are used:
-
-    PREFIX:      %ProgramFiles%\OpenSSL
-    OPENSSLDIR:  %CommonProgramFiles%\SSL
-
-ALSO NOTE that those directories are usually write protected, even if
-your account is in the Administrators group.  To work around that,
-start the command prompt by right-clicking on it and choosing "Run as
-Administrator" before running `nmake install`.  The other solution
-is, of course, to choose a different set of directories by using
-`--prefix` and `--openssldir` when configuring.
-
-Note that, on Windows platforms (both 32 and 64 bit), the above build-time
-defaults can be overridden by registry keys.  This is done because it is common
-practice for windows-based installers to allow users to place the installation
-tree at an arbitrary location not defined at build-time.  The following keys:
+The following keys:
 
     `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\OPENSSLDIR`
     `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\ENGINESDIR`
@@ -142,6 +118,7 @@ To enable the reading of registry keys from windows builds, add
 at build-time to construct library build specific registry key paths of the
 format:
 `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432node\OpenSSL-<version>-<ctx>`
+
 Where `<version>` is the semantic major.minor.patch version of the library being
 built, and `<ctx>` is the value specified by `-DOPENSSL_WINCTX`.  This allows
 for multiple openssl builds to be created and installed on a single system, in
@@ -149,6 +126,10 @@ which each library can use its own set of registry keys.
 
 Note the installer available at <https://github.com/openssl/installer> will set
 these keys when the installer is run.
+
+If the registry keys above do not exist on a given system, or if the
+`OSSL_WINCTX` variable is not defined at build time, OpenSSL makes no attempt to
+load configuration, engines of modules from disk.
 
 Special notes for Universal Windows Platform builds, aka `VC-*-UWP`
 -------------------------------------------------------------------
