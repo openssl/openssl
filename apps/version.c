@@ -37,7 +37,9 @@ const OPTIONS version_options[] = {
     {"r", OPT_R, '-', "Show random seeding options"},
     {"v", OPT_V, '-', "Show library version"},
     {"c", OPT_C, '-', "Show CPU settings info"},
+#if defined(_WIN32)
     {"w", OPT_W, '-', "Show Windows install context"},
+#endif
     {NULL}
 };
 
@@ -45,7 +47,10 @@ int version_main(int argc, char **argv)
 {
     int ret = 1, dirty = 0, seed = 0;
     int cflags = 0, version = 0, date = 0, options = 0, platform = 0, dir = 0;
-    int engdir = 0, moddir = 0, cpuinfo = 0, windows = 0;
+    int engdir = 0, moddir = 0, cpuinfo = 0;
+#if defined(_WIN32)
+    int windows = 0;
+#endif
     char *prog;
     OPTION_CHOICE o;
     const char *tmp;
@@ -92,9 +97,11 @@ opthelp:
         case OPT_C:
             dirty = cpuinfo = 1;
             break;
-	case OPT_W:
-	    dirty = windows = 1;
-	    break;
+#if defined(_WIN32)
+        case OPT_W:
+            dirty = windows = 1;
+            break;
+#endif
         case OPT_A:
             seed = options = cflags = version = date = platform
                 = dir = engdir = moddir = cpuinfo
@@ -142,8 +149,10 @@ opthelp:
     }
     if (cpuinfo)
         printf("%s\n", OpenSSL_version(OPENSSL_CPU_INFO));
+#if defined(_WIN32)
     if (windows)
         printf("OSSL_WINCTX: %s\n", OpenSSL_version(OPENSSL_WINCTX));
+#endif
     ret = 0;
  end:
     return ret;
