@@ -18,7 +18,10 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_B, OPT_D, OPT_E, OPT_M, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A, OPT_R, OPT_C, OPT_W
+    OPT_B, OPT_D, OPT_E, OPT_M, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A, OPT_R, OPT_C,
+#if defined(_WIN32)
+    OPT_W
+#endif
 } OPTION_CHOICE;
 
 const OPTIONS version_options[] = {
