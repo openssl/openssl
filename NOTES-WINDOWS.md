@@ -132,10 +132,8 @@ A summary table of behavior on Windows platforms
 |`OSSL_WINCTX`|Registry key|OpenSSL Behavior                          |
 |-------------|------------|------------------------------------------|
 |Defined      | Defined    |OpenSSL Reads Paths from Registry         |
-|Defined      | Undefined  |OpenSSL returns errors on module/conf load| 
+|Defined      | Undefined  |OpenSSL returns errors on module/conf load|
 |Undefined    | N/A        |OpenSSL uses build time defaults          |
-
-
 
 Special notes for Universal Windows Platform builds, aka `VC-*-UWP`
 -------------------------------------------------------------------
