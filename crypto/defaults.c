@@ -13,14 +13,14 @@
 #include "internal/cryptlib.h"
 #include "internal/e_os.h"
 
-#if defined(_WIN32)
+#if defined(_WIN32) && defined(OSSL_WINCTX)
 
 # define TOSTR(x) #x
 # define MAKESTR(x) TOSTR(x)
 # define NOQUOTE(x) x
-#if defined(OSSL_WINCTX)
+# if defined(OSSL_WINCTX)
 # define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" ##"-"## NOQUOTE(OPENSSL_VERSION_STR) ##"-"## MAKESTR(OSSL_WINCTX)
-#endif
+# endif
 
 /**
  * @brief The directory where OpenSSL is installed.
@@ -63,7 +63,7 @@ static char *modulesdirptr = NULL;
 static char *get_windows_regdirs(char *dst, LPCTSTR valuename)
 {
     char *retval = NULL;
-#ifdef REGISTY_KEY
+# ifdef REGISTRY_KEY
     DWORD keysize;
     DWORD ktype;
     HKEY hkey;
@@ -104,7 +104,7 @@ static char *get_windows_regdirs(char *dst, LPCTSTR valuename)
 out:
     OPENSSL_free(tempstr);
     RegCloseKey(hkey);
-#endif
+# endif /* REGISTRY_KEY */
     return retval;
 }
 
@@ -135,7 +135,7 @@ DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
 
     return 1;
 }
-#endif
+#endif /* defined(_WIN32) && defined(OSSL_WINCTX) */
 
 /**
  * @brief Get the directory where OpenSSL is installed.
