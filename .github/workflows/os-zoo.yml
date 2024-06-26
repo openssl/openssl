@@ -37,7 +37,7 @@ jobs:
         ref: ${{ matrix.branch }}
     - name: config
       run: |
-        ./config --banner=Configured no-shared -Wall -Werror enable-fips --strict-warnings -DOPENSSL_USE_IPV6=0 \
+        ./config --banner=Configured no-shared -Wall -Werror enable-fips --strict-warnings \
                  ${EXTRA_CFLAGS}
     - name: config dump
       run: ./configdata.pm --dump
