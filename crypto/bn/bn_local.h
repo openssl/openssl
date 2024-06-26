@@ -263,6 +263,20 @@ struct bn_gencb_st {
     } cb;
 };
 
+struct bn_blinding_st {
+    BIGNUM *A;
+    BIGNUM *Ai;
+    BIGNUM *e;
+    BIGNUM *mod;                /* just a reference */
+    CRYPTO_THREAD_ID tid;
+    int counter;
+    unsigned long flags;
+    BN_MONT_CTX *m_ctx;
+    int (*bn_mod_exp) (BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+                       const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+    CRYPTO_RWLOCK *lock;
+};
+
 /*-
  * BN_window_bits_for_exponent_size -- macro for sliding window mod_exp functions
  *

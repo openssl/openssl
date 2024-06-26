@@ -136,7 +136,7 @@ typedef struct GENERAL_NAME_st {
         OTHERNAME *otherName;   /* otherName */
         ASN1_IA5STRING *rfc822Name;
         ASN1_IA5STRING *dNSName;
-        ASN1_TYPE *x400Address;
+        ASN1_STRING *x400Address;
         X509_NAME *directoryName;
         EDIPARTYNAME *ediPartyName;
         ASN1_IA5STRING *uniformResourceIdentifier;
