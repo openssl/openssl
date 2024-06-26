@@ -119,7 +119,7 @@ at build-time to construct library build specific registry key paths of the
 format:
 `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432node\OpenSSL-<version>-<ctx>`
 
-Where `<version>` is the semantic major.minor.patch version of the library being
+Where `<version>` is the major.minor.patch version of the library being
 built, and `<ctx>` is the value specified by `-DOPENSSL_WINCTX`.  This allows
 for multiple openssl builds to be created and installed on a single system, in
 which each library can use its own set of registry keys.
@@ -127,9 +127,15 @@ which each library can use its own set of registry keys.
 Note the installer available at <https://github.com/openssl/installer> will set
 these keys when the installer is run.
 
-If the registry keys above do not exist on a given system, or if the
-`OSSL_WINCTX` variable is not defined at build time, OpenSSL makes no attempt to
-load configuration, engines of modules from disk.
+A summary table of behavior on Windows platforms
+
+|`OSSL_WINCTX`|Registry key|OpenSSL Behavior                          |
+|-------------|------------|------------------------------------------|
+|Defined      | Defined    |OpenSSL Reads Paths from Registry         |
+|Defined      | Undefined  |OpenSSL returns errors on module/conf load| 
+|Undefined    | N/A        |OpenSSL uses build time defaults          |
+
+
 
 Special notes for Universal Windows Platform builds, aka `VC-*-UWP`
 -------------------------------------------------------------------
