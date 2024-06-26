@@ -231,6 +231,7 @@ void aesni_ctr32_encrypt_blocks(const unsigned char *in,
                                 size_t blocks,
                                 const void *key, const unsigned char *ivec);
 
+
 void aesni_xts_encrypt(const unsigned char *in,
                        unsigned char *out,
                        size_t length,
@@ -242,6 +243,26 @@ void aesni_xts_decrypt(const unsigned char *in,
                        size_t length,
                        const AES_KEY *key1, const AES_KEY *key2,
                        const unsigned char iv[16]);
+
+int aesni_xts_avx512_eligible(void);
+
+void aesni_xts_128_encrypt_avx512(const unsigned char *inp, unsigned char *out,
+                                  size_t len, const AES_KEY *key1,
+                                  const AES_KEY *key2,
+                                  const unsigned char iv[16]);
+void aesni_xts_128_decrypt_avx512(const unsigned char *inp, unsigned char *out,
+                                  size_t len, const AES_KEY *key1,
+                                  const AES_KEY *key2,
+                                  const unsigned char iv[16]);
+
+void aesni_xts_256_encrypt_avx512(const unsigned char *inp, unsigned char *out,
+                                  size_t len, const AES_KEY *key1,
+                                  const AES_KEY *key2,
+                                  const unsigned char iv[16]);
+void aesni_xts_256_decrypt_avx512(const unsigned char *inp, unsigned char *out,
+                                  size_t len, const AES_KEY *key1,
+                                  const AES_KEY *key2,
+                                  const unsigned char iv[16]);
 
 void aesni_ccm64_encrypt_blocks(const unsigned char *in,
                                 unsigned char *out,
