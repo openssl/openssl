@@ -30,7 +30,7 @@ OpenSSL 3.4
 ### Changes between 3.3 and 3.4 [xx XXX xxxx]
 
  * Redesigned Windows use of OPENSSLDIR/ENGINESDIR/MODULESDIR such that
-   What were formerly build time locations can now be defined at run time
+   what were formerly build time locations can now be defined at run time
    with registry keys, See NOTES-WINDOWS.md
 
    *Neil Horman*
