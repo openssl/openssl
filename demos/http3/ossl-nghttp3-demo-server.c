@@ -66,7 +66,7 @@ static void h3close(struct h3ssl *h3ssl, uint64_t id) {
   ssl_ids = h3ssl->ssl_ids;
   for (int i = 0; i < MAXSSL_IDS; i++) {
     if (ssl_ids[i].id == id) {
-      SSL_stream_conclude(ssl_ids[i].s, 0);
+      (void)SSL_stream_conclude(ssl_ids[i].s, 0);
       SSL_shutdown(ssl_ids[i].s);
     }
   }
@@ -465,7 +465,10 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
       fprintf(stderr, "error while accepting connection\n");
       goto err;
     }
-    SSL_set_incoming_stream_policy(conn, SSL_INCOMING_STREAM_POLICY_ACCEPT, 0);
+    if (!SSL_set_incoming_stream_policy(conn, SSL_INCOMING_STREAM_POLICY_ACCEPT, 0)) {
+      fprintf(stderr, "error while setting inccoming stream policy\n");
+      goto err;
+    }
     // SSL_set_blocking_mode(conn, 1); does nothing???
 
     /* try to use nghttp3 to send a response */
