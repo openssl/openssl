@@ -27,7 +27,7 @@ $context =~ s/^.*: //;
 @tempout = run(app(["openssl", "version", "-v"]), capture => 1);
 my $version = "@tempout";
 $version =~ s/^OpenSSL //;
-$version =~ s/-.*\n//;
+$version =~ s/\.[0-9]\+-.*\n//;
 
 my $regkey = "HKLM\\SOFTWARE\\OpenSSL-".$version."-".$context;
 $regkey =~ s/\n//g;
