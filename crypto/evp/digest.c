@@ -425,7 +425,7 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 
     /* Code below to be removed when legacy support is dropped. */
  legacy:
-    return ctx->update(ctx, data, count);
+    return ctx->update != NULL ? ctx->update(ctx, data, count) : 0;
 }
 
 /* The caller can assume that this removes any secret data from the context */
