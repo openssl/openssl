@@ -87,7 +87,7 @@ Used for computing Windows registry key names
 
 =head1 HISTORY
 
-Previously, on Windows platforms, OpenSSL had a limitation regarding the
+In OpenSSL versions prior to 3.4, OpenSSL had a limitation regarding the
 B<OPENSSLDIR>, B<MODULESDIR> and B<ENGINESDIR> build time macros.  These macros
 were defined at build time, and represented filesystem paths.  This is common
 practice on unix like systems, as there was an expectation that a given build
