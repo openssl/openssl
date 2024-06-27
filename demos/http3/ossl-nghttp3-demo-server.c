@@ -213,7 +213,6 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
     item++;
     if (item->revents & SSL_POLL_EVENT_R) {
       /* try to read */
-      int ret = 0;
       size_t l = sizeof(msg2) - 1;
       if (SSL_net_read_desired(ssl_ids[i].s)) {
         ret = SSL_read(ssl_ids[i].s, msg2, l);
@@ -446,7 +445,8 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
    * so the below call is not actually necessary. The configured behaviour is
    * inherited by child objects.
    */
-  SSL_set_blocking_mode(listener, 1);
+  if (!SSL_set_blocking_mode(listener, 1))
+    goto err;
   // SSL_set_event_handling_mode(listener,SSL_VALUE_EVENT_HANDLING_MODE);
 
   for (;;) {
