@@ -1574,7 +1574,7 @@ static int ssl_next_proto_validate(SSL_CONNECTION *s, PACKET *pkt)
 int tls_parse_stoc_npn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                        X509 *x, size_t chainidx)
 {
-    unsigned char *selected;
+    const unsigned char *selected;
     unsigned char selected_len;
     PACKET tmppkt;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);

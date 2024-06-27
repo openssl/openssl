@@ -390,7 +390,7 @@ err:
  * protocols, or the server doesn't advertise any, it SHOULD select the first
  * protocol that it supports.
  */
-static int client_npn_cb(SSL *s, unsigned char **out, unsigned char *outlen,
+static int client_npn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
                          const unsigned char *in, unsigned int inlen,
                          void *arg)
 {
@@ -428,19 +428,15 @@ static int server_alpn_cb(SSL *s, const unsigned char **out,
     CTX_DATA *ctx_data = (CTX_DATA*)(arg);
     int ret;
 
-    /* SSL_select_next_proto isn't const-correct... */
-    unsigned char *tmp_out;
-
     /*
      * The result points either to |in| or to |ctx_data->alpn_protocols|.
      * The callback is allowed to point to |in| or to a long-lived buffer,
      * so we can return directly without storing a copy.
      */
-    ret = SSL_select_next_proto(&tmp_out, outlen,
+    ret = SSL_select_next_proto(out, outlen,
                                 ctx_data->alpn_protocols,
                                 ctx_data->alpn_protocols_len, in, inlen);
 
-    *out = tmp_out;
     /* Unlike NPN, we don't tolerate a mismatch. */
     return ret == OPENSSL_NPN_NEGOTIATED ? SSL_TLSEXT_ERR_OK
         : SSL_TLSEXT_ERR_ALERT_FATAL;
