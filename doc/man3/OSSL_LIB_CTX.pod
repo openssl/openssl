@@ -91,7 +91,7 @@ from a configuration. This function must not be called concurrently from
 multiple threads on a single I<ctx>.
 
 OSSL_LIB_CTX_free() frees the given I<ctx>, unless it happens to be the
-default OpenSSL library context.
+default OpenSSL library context. If the argument is NULL, nothing is done.
 
 OSSL_LIB_CTX_get0_global_default() returns a concrete (non NULL) reference to
 the global default library context.

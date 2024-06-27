@@ -61,6 +61,7 @@ I<encoder>.
 
 OSSL_ENCODER_free() decrements the reference count for the given
 I<encoder>, and when the count reaches zero, frees it.
+If the argument is NULL, nothing is done.
 
 OSSL_ENCODER_get0_provider() returns the provider of the given
 I<encoder>.

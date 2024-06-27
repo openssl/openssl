@@ -38,6 +38,7 @@ issuer name B<issuerName>, issuer key hash B<issuerKey> and serial number
 B<serialNumber>.
 
 OCSP_CERTID_free() frees up B<id>.
+If the argument is NULL, nothing is done.
 
 OCSP_id_cmp() compares B<OCSP_CERTID> B<a> and B<b>.
 

@@ -166,6 +166,12 @@ SCT_set_source() can be used to record where the SCT was found
 (TLS extension, X.509 certificate extension or OCSP response). This is not
 required for verifying the SCT.
 
+SCT_free() frees the specified SCT.
+If the argument is NULL, nothing is done.
+
+SCT_LIST_free() frees the specified stack of SCTs.
+If the argument is NULL, nothing is done.
+
 =head1 NOTES
 
 Some of the setters return int, instead of void. These will all return 1 on
