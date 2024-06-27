@@ -204,7 +204,7 @@ static size_t get_entropy(PROV_DRBG *drbg, unsigned char **pout, int entropy,
 #else
         /*
          * In normal use (i.e. OpenSSL's own uses), this is never called.
-         * Outside of the FIPS provider, OpenSSL set's its DRBGs up so that
+         * Outside of the FIPS provider, OpenSSL sets its DRBGs up so that
          * they always have a parent.  This remains purely for legacy reasons.
          */
         return ossl_prov_get_entropy(drbg->provctx, pout, entropy, min_len,
