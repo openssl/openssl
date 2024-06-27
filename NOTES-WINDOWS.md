@@ -99,7 +99,7 @@ check the INSTALL.md file.
 Installation directories
 ------------------------
 
-On most Unix platform installation directories are determined at build time via
+On most Unix platforms installation directories are determined at build time via
 constant defines.  On Windows platforms however, installation directories are
 determined via registry keys, as it is common practice to build OpenSSL and
 install it to a variety of locations.
@@ -119,7 +119,7 @@ at build-time to construct library build specific registry key paths of the
 format:
 `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432node\OpenSSL-<version>-<ctx>`
 
-Where `<version>` is the major.minor.patch version of the library being
+Where `<version>` is the major.minor version of the library being
 built, and `<ctx>` is the value specified by `-DOPENSSL_WINCTX`.  This allows
 for multiple openssl builds to be created and installed on a single system, in
 which each library can use its own set of registry keys.
