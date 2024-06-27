@@ -5624,6 +5624,25 @@ static int test_aes_rc4_keylen_change_cve_2023_5363(void)
 }
 #endif
 
+static int test_invalid_ctx_for_digest(void)
+{
+    int ret;
+    EVP_MD_CTX *mdctx;
+
+    mdctx = EVP_MD_CTX_new();
+    if (!TEST_ptr(mdctx))
+        return 0;
+
+    if (!TEST_int_eq(EVP_DigestUpdate(mdctx, "test", sizeof("test") - 1), 0))
+        ret = 0;
+    else
+        ret = 1;
+
+    EVP_MD_CTX_free(mdctx);
+
+    return ret;
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -5794,6 +5813,8 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_RC4
     ADD_TEST(test_aes_rc4_keylen_change_cve_2023_5363);
 #endif
+
+    ADD_TEST(test_invalid_ctx_for_digest);
 
     return 1;
 }
