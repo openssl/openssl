@@ -8,6 +8,7 @@
  */
 
 #include <openssl/x509v3.h>
+#include "ext_dat.h"
 
 const X509V3_EXT_METHOD ossl_v3_audit_identity = {
     NID_ac_auditIdentity, 0, ASN1_ITEM_ref(ASN1_OCTET_STRING),
