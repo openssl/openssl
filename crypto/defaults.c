@@ -19,7 +19,7 @@
 # define MAKESTR(x) TOSTR(x)
 # define NOQUOTE(x) x
 # if defined(OSSL_WINCTX)
-# define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" ##"-"## NOQUOTE(OPENSSL_VERSION_STR) ##"-"## MAKESTR(OSSL_WINCTX)
+# define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" ##"-"## MAKESTR(OPENSSL_VERSION_MAJOR) ##"."## MAKESTR(OPENSSL_VERSION_MINOR) ##"-"## MAKESTR(OSSL_WINCTX)
 # endif
 
 /**
@@ -28,7 +28,7 @@
 static char openssldir[MAX_PATH + 1];
 
 /**
- * @brief The pointer to the opennsldir buffer
+ * @brief The pointer to the openssldir buffer
  */
 static char *openssldirptr = NULL;
 
