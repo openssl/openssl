@@ -176,6 +176,12 @@ int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid);
 int OBJ_add_sigid(int signid, int dig_id, int pkey_id);
 void OBJ_sigid_free(void);
 
+/* This is to correct for the auditIdentity OID having been assigned the wrong
+name. */
+#define SN_ac_auditIdentity             "ac-auditIdentity"
+#define LN_ac_auditIdentity             LN_ac_auditEntity
+#define NID_ac_auditIdentity            NID_ac_auditEntity
+#define OBJ_ac_auditIdentity            OBJ_ac_auditEntity
 
 # ifdef  __cplusplus
 }
