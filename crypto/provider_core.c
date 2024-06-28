@@ -1012,6 +1012,8 @@ static int provider_init(OSSL_PROVIDER *prov)
                 break;
 # endif
 #endif
+            default:
+                break;
             }
         }
     }

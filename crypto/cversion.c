@@ -81,6 +81,8 @@ const char *OpenSSL_version(int t)
             return ossl_cpu_info_str;
         else
             return "CPUINFO: N/A";
+    default:
+        break;
     }
     return "not available";
 }
