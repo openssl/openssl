@@ -127,6 +127,8 @@ static int ui_read(UI *ui, UI_STRING *uis)
     case UIT_INFO:
     case UIT_ERROR:
         break;
+    default:
+        break;
     }
     return 1;
 }

@@ -63,6 +63,8 @@ static void free_string(UI_STRING *uis)
         case UIT_ERROR:
         case UIT_INFO:
             break;
+        default:
+            break;
         }
     }
     OPENSSL_free(uis);
@@ -779,6 +781,8 @@ const char *UI_get0_action_string(UI_STRING *uis)
     case UIT_INFO:
     case UIT_ERROR:
         break;
+    default:
+        break;
     }
     return NULL;
 }
@@ -793,6 +797,8 @@ const char *UI_get0_result_string(UI_STRING *uis)
     case UIT_BOOLEAN:
     case UIT_INFO:
     case UIT_ERROR:
+        break;
+    default:
         break;
     }
     return NULL;
@@ -809,6 +815,8 @@ int UI_get_result_string_length(UI_STRING *uis)
     case UIT_INFO:
     case UIT_ERROR:
         break;
+    default:
+        break;
     }
     return -1;
 }
@@ -823,6 +831,8 @@ const char *UI_get0_test_string(UI_STRING *uis)
     case UIT_INFO:
     case UIT_ERROR:
     case UIT_PROMPT:
+        break;
+    default:
         break;
     }
     return NULL;
@@ -839,6 +849,8 @@ int UI_get_result_minsize(UI_STRING *uis)
     case UIT_ERROR:
     case UIT_BOOLEAN:
         break;
+    default:
+        break;
     }
     return -1;
 }
@@ -853,6 +865,8 @@ int UI_get_result_maxsize(UI_STRING *uis)
     case UIT_INFO:
     case UIT_ERROR:
     case UIT_BOOLEAN:
+        break;
+    default:
         break;
     }
     return -1;
@@ -921,6 +935,8 @@ int UI_set_result_ex(UI *ui, UI_STRING *uis, const char *result, int len)
     case UIT_NONE:
     case UIT_INFO:
     case UIT_ERROR:
+        break;
+    default:
         break;
     }
     return 0;

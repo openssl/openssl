@@ -213,6 +213,8 @@ static int write_string(UI *ui, UI_STRING *uis)
     case UIT_VERIFY:
     case UIT_BOOLEAN:
         break;
+    default:
+        break;
     }
     return 1;
 }
@@ -251,6 +253,8 @@ static int read_string(UI *ui, UI_STRING *uis)
     case UIT_NONE:
     case UIT_INFO:
     case UIT_ERROR:
+        break;
+    default:
         break;
     }
     return 1;
