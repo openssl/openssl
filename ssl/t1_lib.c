@@ -1767,6 +1767,8 @@ size_t tls12_get_psigalgs(SSL_CONNECTION *s, int sent, const uint16_t **psigs)
     case SSL_CERT_FLAG_SUITEB_192_LOS:
         *psigs = suiteb_sigalgs + 1;
         return 1;
+    default:
+        break;
     }
     /*
      *  We use client_sigalgs (if not NULL) if we're a server
@@ -2490,6 +2492,8 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
         case SSL_TICKET_SUCCESS_RENEW:
         case SSL_TICKET_EMPTY:
             s->ext.ticket_expected = 1;
+        default:
+            break;
         }
     }
 

@@ -625,6 +625,8 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
         case SSL_TICKET_SUCCESS:
         case SSL_TICKET_SUCCESS_RENEW:
             break;
+        default:
+            break;
         }
     }
 

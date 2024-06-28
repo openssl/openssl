@@ -354,6 +354,8 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
             case 3:
                 hdr->type = QUIC_PKT_TYPE_RETRY;
                 break;
+            default:
+                break;
             }
 
             hdr->pn_len     = 0;

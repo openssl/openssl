@@ -642,6 +642,8 @@ static size_t qrx_get_cipher_ctx_idx(OSSL_QRX *qrx, OSSL_QRL_ENC_LEVEL *el,
          */
         *rx_key_epoch = el->key_epoch;
         break;
+    default:
+        break;
     }
 
     return idx;

@@ -1199,6 +1199,8 @@ static int ssl_print_client_keyex(BIO *bio, int indent, const SSL_CONNECTION *sc
                       "GOST-wrapped PreMasterSecret", msg, msglen);
         msglen = 0;
         break;
+    default:
+        break;
     }
 
     return !msglen;
@@ -1265,6 +1267,8 @@ static int ssl_print_server_keyex(BIO *bio, int indent, const SSL_CONNECTION *sc
 
     case SSL_kPSK:
     case SSL_kRSAPSK:
+        break;
+    default:
         break;
     }
     if (!(id & SSL_PSK))
@@ -1785,6 +1789,8 @@ void SSL_trace(int write_p, int version, int content_type,
                        msg[0], SSL_alert_desc_string_long(msg[1]), msg[1]);
         }
 
+    default:
+        break;
     }
 
     BIO_puts(bio, "\n");
