@@ -120,6 +120,8 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
                         case 3: l1|=((unsigned long)(*(--(c))))<<16; \
                         case 2: l1|=((unsigned long)(*(--(c))))<< 8; \
                         case 1: l1|=((unsigned long)(*(--(c))));     \
+                        default: \
+                            break; \
                                 } \
                         }
 
@@ -168,6 +170,8 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
                         case 3: *(--(c))=(unsigned char)(((l1)>>16)&0xff); \
                         case 2: *(--(c))=(unsigned char)(((l1)>> 8)&0xff); \
                         case 1: *(--(c))=(unsigned char)(((l1)    )&0xff); \
+                        default: \
+                            break; \
                                 } \
                         }
 
