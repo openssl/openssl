@@ -171,7 +171,6 @@ my @gcc_devteam_warn = qw(
     -Wshadow
     -Wformat
     -Wno-type-limits
-    -Wno-tautological-constant-out-of-range-compare
     -Wundef
     -Werror
     -Wmissing-prototypes
@@ -188,11 +187,11 @@ my @gcc_devteam_warn = qw(
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
 my @clang_devteam_warn = qw(
     -Wno-unknown-warning-option
-    -Wswitch-default
     -Wno-parentheses-equality
     -Wno-language-extension-token
     -Wno-extended-offsetof
     -Wno-missing-braces
+    -Wno-tautological-constant-out-of-range-compare
     -Wconditional-uninitialized
     -Wincompatible-pointer-types-discards-qualifiers
     -Wmissing-variable-declarations
