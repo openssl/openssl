@@ -9,6 +9,7 @@
 
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
+#include "ext_dat.h"
 
 
 ASN1_ITEM_TEMPLATE(USER_NOTICE_SYNTAX) =
@@ -26,20 +27,17 @@ static int print_notice(BIO *out, USERNOTICE *notice, int indent)
         ref = notice->noticeref;
         if (BIO_printf(out, "%*sOrganization: %.*s\n", indent, "",
                    ref->organization->length,
-                   ref->organization->data) <= 0) {
+                   ref->organization->data) <= 0)
             return 0;
-        }
         if (BIO_printf(out, "%*sNumber%s: ", indent, "",
-                   sk_ASN1_INTEGER_num(ref->noticenos) > 1 ? "s" : "") <= 0) {
+                   sk_ASN1_INTEGER_num(ref->noticenos) > 1 ? "s" : "") <= 0)
             return 0;
-        }
         for (i = 0; i < sk_ASN1_INTEGER_num(ref->noticenos); i++) {
             ASN1_INTEGER *num;
             char *tmp;
             num = sk_ASN1_INTEGER_value(ref->noticenos, i);
-            if (i && BIO_puts(out, ", ") <= 0) {
+            if (i && BIO_puts(out, ", ") <= 0)
                 return 0;
-            }
             if (num == NULL && BIO_puts(out, "(null)") <= 0)
                 return 0;
             else {
@@ -52,15 +50,15 @@ static int print_notice(BIO *out, USERNOTICE *notice, int indent)
                 OPENSSL_free(tmp);
             }
         }
-        if (notice->exptext && BIO_puts(out, "\n") <= 0) {
+        if (notice->exptext && BIO_puts(out, "\n") <= 0)
             return 0;
-        }
     }
-    if (notice->exptext)
-        return BIO_printf(out, "%*sExplicit Text: %.*s", indent, "",
-                   notice->exptext->length,
-                   notice->exptext->data);
-    return 1;
+    if (notice->exptext == NULL)
+        return 1;
+
+    return BIO_printf(out, "%*sExplicit Text: %.*s", indent, "",
+                notice->exptext->length,
+                notice->exptext->data);
 }
 
 static int i2r_USER_NOTICE_SYNTAX(X509V3_EXT_METHOD *method,
@@ -75,12 +73,10 @@ static int i2r_USER_NOTICE_SYNTAX(X509V3_EXT_METHOD *method,
 
     for (i = 0; i < sk_USERNOTICE_num(uns); i++) {
         unotice = sk_USERNOTICE_value(uns, i);
-        if (print_notice(out, unotice, indent + 4) <= 0) {
+        if (print_notice(out, unotice, indent + 4) <= 0)
             return 0;
-        }
-        if (BIO_puts(out, "\n\n") <= 0) {
+        if (BIO_puts(out, "\n\n") <= 0)
             return 0;
-        }
     }
     return 1;
 }
