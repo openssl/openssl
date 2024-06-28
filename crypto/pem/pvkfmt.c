@@ -103,6 +103,8 @@ static EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type)
             pkey = NULL;
             break;
 #endif
+        default:
+            break;
         }
     } else {
         ERR_raise(ERR_LIB_PEM, ERR_R_EVP_LIB);
@@ -117,6 +119,8 @@ static EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type)
         DSA_free(key);
         break;
 #endif
+    default:
+        break;
     }
 
     return pkey;
