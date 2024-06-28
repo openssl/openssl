@@ -370,6 +370,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 ntmp = NULL;
                 q = p + 1;
             }
+            break;
 
         default:
             break;
