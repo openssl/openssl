@@ -66,7 +66,9 @@ static void h3close(struct h3ssl *h3ssl, uint64_t id) {
   ssl_ids = h3ssl->ssl_ids;
   for (int i = 0; i < MAXSSL_IDS; i++) {
     if (ssl_ids[i].id == id) {
-      (void)SSL_stream_conclude(ssl_ids[i].s, 0);
+      if (!SSL_stream_conclude(ssl_ids[i].s, 0))
+        goto err;
+      err:
       SSL_shutdown(ssl_ids[i].s);
     }
   }
