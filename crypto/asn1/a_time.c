@@ -182,6 +182,8 @@ int ossl_asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
         case 6:
             tmp.tm_sec = n;
             break;
+        default:
+            break;
         }
     }
 

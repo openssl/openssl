@@ -239,6 +239,8 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
             BIO_clear_retry_flags(b);
             return 0;
 
+        default:
+            break;
         }
 
     }

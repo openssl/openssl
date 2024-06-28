@@ -108,6 +108,8 @@ int ossl_asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
             CRYPTO_FREE_REF(refcnt);
         }
         break;
+    default:
+        break;
     }
 
     return ret;

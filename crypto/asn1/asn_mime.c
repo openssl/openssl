@@ -773,6 +773,8 @@ static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
                     state = MIME_VALUE;
                 }
                 break;
+            default:
+                break;
             }
         }
 

@@ -339,6 +339,8 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
         }
         break;
 
+    default:
+        break;
     }
 
     return 1;
