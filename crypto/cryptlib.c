@@ -180,6 +180,8 @@ void OPENSSL_showfatal(const char *fmta, ...)
                         case L'C':
                             fmtw[i + 1] = L'c';
                             break;
+                        default:
+                            break;
                         }
                     } while (keepgoing);
             }

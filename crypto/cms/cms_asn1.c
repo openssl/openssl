@@ -333,6 +333,8 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         OPENSSL_free(cms->ctx.propq);
         break;
 
+    default:
+        break;
     }
     return 1;
 }
