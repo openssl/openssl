@@ -392,6 +392,8 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
                                                 search->stringlength))
                 ret = 1;
             break;
+        default:
+            break;
         }
         if (ret) {
             params = OSSL_PARAM_BLD_to_param(bld);
@@ -843,6 +845,8 @@ void OSSL_STORE_INFO_free(OSSL_STORE_INFO *info)
         case OSSL_STORE_INFO_CRL:
             X509_CRL_free(info->_.crl);
             break;
+        default:
+            break;
         }
         OPENSSL_free(info);
     }
@@ -885,6 +889,8 @@ int OSSL_STORE_supports_search(OSSL_STORE_CTX *ctx, int search_type)
             break;
         case OSSL_STORE_SEARCH_BY_ALIAS:
             ret = (p_alias != NULL);
+            break;
+        default:
             break;
         }
     }

@@ -227,6 +227,8 @@ static void *loader_from_algorithm(int scheme_id, const OSSL_ALGORITHM *algodef,
             if (loader->p_open_ex == NULL)
                 loader->p_open_ex = OSSL_FUNC_store_open_ex(fns);
             break;
+        default:
+            break;
         }
     }
 
