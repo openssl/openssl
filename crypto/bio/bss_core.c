@@ -181,6 +181,8 @@ int ossl_bio_init_core(OSSL_LIB_CTX *libctx, const OSSL_DISPATCH *fns)
             if (bcgbl->c_bio_free == NULL)
                 bcgbl->c_bio_free = OSSL_FUNC_BIO_free(fns);
             break;
+        default:
+            break;
         }
     }
 

@@ -356,6 +356,8 @@ static void xsyslog(BIO *bp, int priority, const char *string)
     case LOG_DEBUG:
         priority_tag = "DEBUG";
         break;
+    default:
+        break;
     }
 
     buf_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
