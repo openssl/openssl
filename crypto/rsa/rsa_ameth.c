@@ -910,6 +910,8 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
     case RSA_FLAG_TYPE_RSASSAPSS:
         ok = EVP_PKEY_assign(pkey, EVP_PKEY_RSA_PSS, rsa);
         break;
+    default:
+        break;
     }
 
  err:

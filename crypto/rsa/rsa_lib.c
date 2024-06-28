@@ -345,6 +345,8 @@ uint16_t ossl_ifc_ffc_compute_security_bits(int n)
         return 200;
     case 15360:     /* FIPS 140-2 IG 7.5 */
         return 256;
+    default:
+        break;
     }
 
     /*
