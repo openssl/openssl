@@ -268,6 +268,8 @@ static void *encoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
                 encoder->free_object =
                     OSSL_FUNC_encoder_free_object(fns);
             break;
+        default:
+            break;
         }
     }
     /*

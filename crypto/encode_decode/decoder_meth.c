@@ -260,6 +260,8 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
             if (decoder->export_object == NULL)
                 decoder->export_object = OSSL_FUNC_decoder_export_object(fns);
             break;
+        default:
+            break;
         }
     }
     /*

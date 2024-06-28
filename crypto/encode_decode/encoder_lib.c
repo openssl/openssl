@@ -613,6 +613,8 @@ static int encoder_process(struct encoder_process_data_st *data)
                 current_abstract = abstract;
             }
             break;
+        default:
+            break;
         }
 
         /* Calling the encoder implementation */

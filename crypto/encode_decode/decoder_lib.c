@@ -470,6 +470,8 @@ static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
                 return;
             }
             break;
+        default:
+            break;
         }
 
         /*
