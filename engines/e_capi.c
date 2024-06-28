@@ -1609,6 +1609,8 @@ CAPI_KEY *capi_find_key(CAPI_CTX *ctx, const char *id)
                                    ctx->csptype, ctx->keytype);
         }
         break;
+    default:
+        break;
     }
 
     return key;
