@@ -34,6 +34,7 @@
                         case 2: l1|=((unsigned long)(*(--(c))))<< 8L; \
                         /* fall through */                               \
                         case 1: l1|=((unsigned long)(*(--(c))));      \
+                        /* fall through */                               \
                         default: \
                             break; \
                                 } \
@@ -65,6 +66,7 @@
                         case 2: *(--(c))=(unsigned char)(((l1)>> 8L)&0xff); \
                         /* fall through */                                     \
                         case 1: *(--(c))=(unsigned char)(((l1)     )&0xff); \
+                        /* fall through */                               \
                         default: \
                             break; \
                                 } \
