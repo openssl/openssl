@@ -21,6 +21,8 @@ IMPLEMENT_ASN1_FUNCTIONS(USER_NOTICE_SYNTAX)
 static int print_notice(BIO *out, USERNOTICE *notice, int indent)
 {
     int i;
+    ASN1_INTEGER *num;
+    char *tmp;
 
     if (notice->noticeref) {
         NOTICEREF *ref;
@@ -33,8 +35,6 @@ static int print_notice(BIO *out, USERNOTICE *notice, int indent)
                    sk_ASN1_INTEGER_num(ref->noticenos) > 1 ? "s" : "") <= 0)
             return 0;
         for (i = 0; i < sk_ASN1_INTEGER_num(ref->noticenos); i++) {
-            ASN1_INTEGER *num;
-            char *tmp;
             num = sk_ASN1_INTEGER_value(ref->noticenos, i);
             if (i && BIO_puts(out, ", ") <= 0)
                 return 0;
