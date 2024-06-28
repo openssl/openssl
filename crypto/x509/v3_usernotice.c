@@ -69,9 +69,10 @@ static int i2r_USER_NOTICE_SYNTAX(X509V3_EXT_METHOD *method,
 {
     int i;
     USERNOTICE *unotice;
-    if (BIO_printf(out, "%*sUser Notices:\n", indent, "") <= 0) {
+
+    if (BIO_printf(out, "%*sUser Notices:\n", indent, "") <= 0)
         return 0;
-    }
+
     for (i = 0; i < sk_USERNOTICE_num(uns); i++) {
         unotice = sk_USERNOTICE_value(uns, i);
         if (print_notice(out, unotice, indent + 4) <= 0) {
