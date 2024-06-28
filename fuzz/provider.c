@@ -250,13 +250,13 @@ static void free_params(OSSL_PARAM *param)
 {
     for (; param != NULL && param->key != NULL; param++) {
         switch (param->data_type) {
-            case OSSL_PARAM_INTEGER:
-            case OSSL_PARAM_UNSIGNED_INTEGER:
-            case OSSL_PARAM_REAL:
-                if (param->data != NULL) {
-                    OPENSSL_free(param->data);
-                }
-                break;
+        case OSSL_PARAM_INTEGER:
+        case OSSL_PARAM_UNSIGNED_INTEGER:
+        case OSSL_PARAM_REAL:
+            if (param->data != NULL) {
+                OPENSSL_free(param->data);
+            }
+            break;
         default:
             break;
         }
