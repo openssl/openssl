@@ -474,7 +474,7 @@ sub create_message
             $isdtls,
             $server,
             $msgseq,
-            $msgfrag,
+            $msgfraglen,
             $msgfragoffs,
             $data,
             [@message_rec_list],
