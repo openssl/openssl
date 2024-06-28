@@ -25,7 +25,7 @@
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 #define SSL3_NUM_SCSVS          OSSL_NELEM(ssl3_scsvs)
 
-/* TLSv1.3 downgrade protection sentinel values */
+/* TLSv1.3 downgrade protection sentinel values (rfc8446 4.1.3.) */
 const unsigned char tls11downgrade[] = {
     0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x00
 };

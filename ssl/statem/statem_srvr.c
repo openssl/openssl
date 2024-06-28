@@ -1400,6 +1400,8 @@ CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
         return CON_FUNC_ERROR;
     }
 
+    s->d1->hello_verify_request = SSL_HVR_SENT;
+
     return CON_FUNC_SUCCESS;
 }
 
@@ -1611,8 +1613,6 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
         }
 
         if (SSL_CONNECTION_IS_DTLS(s)) {
-            int minversion, maxversion;
-
             if (!PACKET_get_length_prefixed_1(pkt, &cookie)) {
                 SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
                 goto err;
@@ -1622,23 +1622,6 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
                                  &clienthello->dtls_cookie_len)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
-            }
-
-            /*
-             * If the connection supports DTLSv1.3:
-             *      We continue to process ClientHello's without cookies
-             *
-             * Otherwise, if we require cookies and this ClientHello doesn't
-             * contain one:
-             *      Return since we do not want to allocate any memory yet
-             */
-            if ((SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE)
-                    && clienthello->dtls_cookie_len == 0
-                    && ossl_assert(ssl_get_min_max_version(s, &minversion,
-                                                           &maxversion, NULL) == 0)
-                    && ssl_version_cmp(s, maxversion, DTLS1_3_VERSION) < 0) {
-                OPENSSL_free(clienthello);
-                return MSG_PROCESS_FINISHED_READING;
             }
         }
 
@@ -1678,6 +1661,30 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
                                 &clienthello->pre_proc_exts_len, 1)) {
         /* SSLfatal already been called */
         goto err;
+    }
+
+    if (SSL_CONNECTION_IS_DTLS(s)) {
+        int minversion, maxversion;
+
+        /*
+         * If the connection supports DTLSv1.3 or if the ClientHello was sent
+         * with the SupportedVersions extension:
+         *      We continue to process ClientHello's without cookies
+         *
+         * Otherwise, if we require cookies and this ClientHello doesn't
+         * contain one:
+         *      Return since we do not want to allocate any memory yet
+         */
+        if ((SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE)
+                && clienthello->dtls_cookie_len == 0
+                && ossl_assert(ssl_get_min_max_version(s, &minversion,
+                                                       &maxversion, NULL) == 0)
+                && ssl_version_cmp(s, maxversion, DTLS1_3_VERSION) < 0
+                && !clienthello->pre_proc_exts[TLSEXT_IDX_supported_versions].present) {
+            OPENSSL_free(clienthello->pre_proc_exts);
+            OPENSSL_free(clienthello);
+            return MSG_PROCESS_FINISHED_READING;
+        }
     }
 
     s->clienthello = clienthello;
