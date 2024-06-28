@@ -11,11 +11,11 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-ASN1_ITEM_TEMPLATE(USER_NOTICE_SYNTAX) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, USER_NOTICE_SYNTAX, USERNOTICE)
-ASN1_ITEM_TEMPLATE_END(USER_NOTICE_SYNTAX)
+ASN1_ITEM_TEMPLATE(OSSL_USER_NOTICE_SYNTAX) =
+    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, OSSL_USER_NOTICE_SYNTAX, USERNOTICE)
+ASN1_ITEM_TEMPLATE_END(OSSL_USER_NOTICE_SYNTAX)
 
-IMPLEMENT_ASN1_FUNCTIONS(USER_NOTICE_SYNTAX)
+IMPLEMENT_ASN1_FUNCTIONS(OSSL_USER_NOTICE_SYNTAX)
 
 static int print_notice(BIO *out, USERNOTICE *notice, int indent)
 {
@@ -62,7 +62,7 @@ static int print_notice(BIO *out, USERNOTICE *notice, int indent)
 }
 
 static int i2r_USER_NOTICE_SYNTAX(X509V3_EXT_METHOD *method,
-                                  USER_NOTICE_SYNTAX *uns,
+                                  OSSL_USER_NOTICE_SYNTAX *uns,
                                   BIO *out, int indent)
 {
     int i;
@@ -83,7 +83,7 @@ static int i2r_USER_NOTICE_SYNTAX(X509V3_EXT_METHOD *method,
 
 const X509V3_EXT_METHOD ossl_v3_user_notice = {
     NID_user_notice, 0,
-    ASN1_ITEM_ref(USER_NOTICE_SYNTAX),
+    ASN1_ITEM_ref(OSSL_USER_NOTICE_SYNTAX),
     0, 0, 0, 0,
     0,
     0,
