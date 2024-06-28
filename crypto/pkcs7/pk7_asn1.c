@@ -54,6 +54,8 @@ static int pk7_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             return 0;
         break;
 
+    default:
+        break;
     }
     return 1;
 }
