@@ -600,6 +600,8 @@
 -T clock_t
 -T custom_ext_methods
 -T hm_fragment
+-T dtls_msg_info
+-T dtls_sent_msg
 -T ssl_ctx_st
 -T ssl_flag_tbl
 -T ssl_st
