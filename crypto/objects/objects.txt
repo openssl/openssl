@@ -519,7 +519,7 @@ id-pkix-mod 100		: id-mod-cmp2021-02
 id-pe 1			: authorityInfoAccess	: Authority Information Access
 id-pe 2			: biometricInfo		: Biometric Info
 id-pe 3			: qcStatements
-id-pe 4			: ac-auditIdentity : X509v3 Audit Identity
+id-pe 4			: ac-auditEntity : X509v3 Audit Identity
 id-pe 5			: ac-targeting
 id-pe 6			: aaControls
 id-pe 7			: sbgp-ipAddrBlock
