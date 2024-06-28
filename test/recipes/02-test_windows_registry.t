@@ -27,7 +27,7 @@ $context =~ s/^.*: //;
 @tempout = run(app(["openssl", "version", "-v"]), capture => 1);
 my $version = "@tempout";
 $version =~ s/^OpenSSL //;
-$version =~ s/\.[0-9]\+-.*\n//;
+$version =~ s/(^[0-9]+\.[0-9]+)(.*$)/\1/;
 
 my $regkey = "HKLM\\SOFTWARE\\OpenSSL-".$version."-".$context;
 $regkey =~ s/\n//g;
@@ -46,11 +46,11 @@ my @expectengdir = run(cmd(["reg.exe", "query", $regkey, "/reg:32", "/t", "REG_E
 
 my @expectmoddir = run(cmd(["reg.exe", "query", $regkey, "/reg:32", "/t", "REG_EXPAND_SZ", "/v", "MODULESDIR"]), capture => 1);
 
-my @osslversion = run(app(["openssl", "version", "-d"]), capture => 1);
+my @ossldir = run(app(["openssl", "version", "-d"]), capture => 1);
 
-print "@osslversion";
+print "@ossldir";
 $expect = "@expectossldir";
-$actual = "@osslversion";
+$actual = "@ossldir";
 $expect =~ s/HKEY_LOCAL_MACHINE.*\n*//;
 $expect =~ s/\n//g;
 $expect =~ s/.*REG_EXPAND_SZ *//;
