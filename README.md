@@ -5,6 +5,8 @@ Welcome to the OpenSSL Project
 
 [![github actions ci badge]][github actions ci]
 ![Nightly OS Zoo ci badge](https://github.com/openssl/openssl/actions/workflows/os-zoo.yml/badge.svg)
+![Provider Compatibility]( https://github.com/openssl/openssl/actions/workflows/provider-compatibility.yml/badge.svg)
+![Daily checks](https://github.com/openssl/openssl/actions/workflows/run-checker-daily.yml/badge.svg)
 
 OpenSSL is a robust, commercial-grade, full-featured Open Source Toolkit
 for the TLS (formerly SSL), DTLS and QUIC (currently client side only)
