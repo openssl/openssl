@@ -63,6 +63,8 @@ const char *SCT_validation_status_string(const SCT *sct)
         return "invalid";
     case SCT_VALIDATION_STATUS_VALID:
         return "valid";
+    default:
+        break;
     }
     return "unknown status";
 }
