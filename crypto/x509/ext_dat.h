@@ -38,3 +38,4 @@ extern const X509V3_EXT_METHOD ossl_v3_subj_dir_attrs;
 extern const X509V3_EXT_METHOD ossl_v3_associated_info;
 extern const X509V3_EXT_METHOD ossl_v3_acc_cert_policies;
 extern const X509V3_EXT_METHOD ossl_v3_acc_priv_policies;
+extern const X509V3_EXT_METHOD ossl_v3_user_notice;
