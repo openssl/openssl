@@ -21,27 +21,27 @@ size_t armv8_aes_gcm_encrypt(const unsigned char *in, unsigned char *out, size_t
     AES_KEY *aes_key = (AES_KEY *)key;
 
     switch(aes_key->rounds) {
-        case 10:
-            if (IS_CPU_SUPPORT_UNROLL8_EOR3()) {
-                unroll8_eor3_aes_gcm_enc_128_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
-            } else {
-                aes_gcm_enc_128_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
-            }
-            break;
-        case 12:
-            if (IS_CPU_SUPPORT_UNROLL8_EOR3()) {
-                unroll8_eor3_aes_gcm_enc_192_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
-            } else {
-                aes_gcm_enc_192_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
-            }
-            break;
-        case 14:
-            if (IS_CPU_SUPPORT_UNROLL8_EOR3()) {
-                unroll8_eor3_aes_gcm_enc_256_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
-            } else {
-                aes_gcm_enc_256_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
-            }
-            break;
+    case 10:
+        if (IS_CPU_SUPPORT_UNROLL8_EOR3()) {
+            unroll8_eor3_aes_gcm_enc_128_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
+        } else {
+            aes_gcm_enc_128_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
+        }
+        break;
+    case 12:
+        if (IS_CPU_SUPPORT_UNROLL8_EOR3()) {
+            unroll8_eor3_aes_gcm_enc_192_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
+        } else {
+            aes_gcm_enc_192_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
+        }
+        break;
+    case 14:
+        if (IS_CPU_SUPPORT_UNROLL8_EOR3()) {
+            unroll8_eor3_aes_gcm_enc_256_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
+        } else {
+            aes_gcm_enc_256_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
+        }
+        break;
     default:
         break;
     }
@@ -57,27 +57,27 @@ size_t armv8_aes_gcm_decrypt(const unsigned char *in, unsigned char *out, size_t
     AES_KEY *aes_key = (AES_KEY *)key;
 
     switch(aes_key->rounds) {
-        case 10:
-            if (IS_CPU_SUPPORT_UNROLL8_EOR3()) {
-                unroll8_eor3_aes_gcm_dec_128_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
-            } else {
-                aes_gcm_dec_128_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
-            }
-            break;
-        case 12:
-            if (IS_CPU_SUPPORT_UNROLL8_EOR3()) {
-                unroll8_eor3_aes_gcm_dec_192_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
-            } else {
-                aes_gcm_dec_192_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
-            }
-            break;
-        case 14:
-            if (IS_CPU_SUPPORT_UNROLL8_EOR3()) {
-                unroll8_eor3_aes_gcm_dec_256_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
-            } else {
-                aes_gcm_dec_256_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
-            }
-            break;
+    case 10:
+        if (IS_CPU_SUPPORT_UNROLL8_EOR3()) {
+            unroll8_eor3_aes_gcm_dec_128_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
+        } else {
+            aes_gcm_dec_128_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
+        }
+        break;
+    case 12:
+        if (IS_CPU_SUPPORT_UNROLL8_EOR3()) {
+            unroll8_eor3_aes_gcm_dec_192_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
+        } else {
+            aes_gcm_dec_192_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
+        }
+        break;
+    case 14:
+        if (IS_CPU_SUPPORT_UNROLL8_EOR3()) {
+            unroll8_eor3_aes_gcm_dec_256_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
+        } else {
+            aes_gcm_dec_256_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
+        }
+        break;
     default:
         break;
     }

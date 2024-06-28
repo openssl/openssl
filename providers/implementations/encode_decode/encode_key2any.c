@@ -903,8 +903,8 @@ static int prepare_rsa_params(const void *rsa, int nid, int save,
             OPENSSL_free(str);
             return 0;
         }
-                default:
-                    break;
+    default:
+        break;
     }
 
     /* Currently unsupported RSA key type */
