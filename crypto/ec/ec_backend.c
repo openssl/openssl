@@ -122,6 +122,8 @@ static int ec_set_check_group_type_from_param(EC_KEY *ec, const OSSL_PARAM *p)
     case OSSL_PARAM_UTF8_PTR:
         status = OSSL_PARAM_get_utf8_ptr(p, &name);
         break;
+    default:
+        break;
     }
     if (status)
         return ossl_ec_set_check_group_type_from_name(ec, name);
@@ -696,6 +698,8 @@ int ossl_ec_encoding_param2id(const OSSL_PARAM *p, int *id)
     case OSSL_PARAM_UTF8_PTR:
         status = OSSL_PARAM_get_utf8_ptr(p, &name);
         break;
+    default:
+        break;
     }
     if (status) {
         int i = ossl_ec_encoding_name2id(name);
@@ -721,6 +725,8 @@ int ossl_ec_pt_format_param2id(const OSSL_PARAM *p, int *id)
         break;
     case OSSL_PARAM_UTF8_PTR:
         status = OSSL_PARAM_get_utf8_ptr(p, &name);
+        break;
+    default:
         break;
     }
     if (status) {

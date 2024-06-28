@@ -40,6 +40,8 @@ ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey
     case ECX_KEY_TYPE_ED448:
         ret->keylen = ED448_KEYLEN;
         break;
+    default:
+        break;
     }
     ret->type = type;
 

@@ -115,6 +115,8 @@ void EC_pre_comp_free(EC_GROUP *group)
     case PCT_ec:
         EC_ec_pre_comp_free(group->pre_comp.ec);
         break;
+    default:
+        break;
     }
     group->pre_comp.ec = NULL;
 }
@@ -207,6 +209,8 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 #endif
     case PCT_ec:
         dest->pre_comp.ec = EC_ec_pre_comp_dup(src->pre_comp.ec);
+        break;
+    default:
         break;
     }
 
@@ -1486,6 +1490,8 @@ static EC_GROUP *group_new_from_name(const OSSL_PARAM *p,
         break;
     case OSSL_PARAM_UTF8_PTR:
         ok = OSSL_PARAM_get_utf8_ptr(p, &curve_name);
+        break;
+    default:
         break;
     }
 

@@ -48,6 +48,8 @@ int ossl_ecx_public_from_private(ECX_KEY *key)
             return 0;
         }
         break;
+    default:
+        break;
     }
     return 1;
 }
