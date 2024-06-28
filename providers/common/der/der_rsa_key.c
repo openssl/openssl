@@ -377,6 +377,8 @@ int ossl_DER_w_algorithmIdentifier_RSA_PSS(WPACKET *pkt, int tag,
         RSA_CASE(rsaEncryption, rsa);
     case RSA_FLAG_TYPE_RSASSAPSS:
         RSA_CASE(rsassaPss, rsa);
+    default:
+        break;
     }
 
     if (rsa_oid == NULL)

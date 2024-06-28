@@ -590,6 +590,8 @@ static int ecx_to_text(BIO *out, const void *key, int selection)
     case ECX_KEY_TYPE_ED448:
         type_label = "ED448";
         break;
+    default:
+        break;
     }
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
@@ -767,6 +769,8 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
                                (trailerfield == 1 ? " (default)" : "")) <= 0)
                     goto err;
             }
+            break;
+        default:
             break;
         }
     }

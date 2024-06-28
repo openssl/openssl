@@ -42,6 +42,8 @@ size_t armv8_aes_gcm_encrypt(const unsigned char *in, unsigned char *out, size_t
                 aes_gcm_enc_256_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
             }
             break;
+    default:
+        break;
     }
     return align_bytes;
 }
@@ -76,6 +78,8 @@ size_t armv8_aes_gcm_decrypt(const unsigned char *in, unsigned char *out, size_t
                 aes_gcm_dec_256_kernel(in, align_bytes * 8, out, (uint64_t *)Xi, ivec, key);
             }
             break;
+    default:
+        break;
     }
     return align_bytes;
 }

@@ -715,6 +715,8 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
                                             gctx->propq))
             goto err;
         break;
+    default:
+        break;
     }
     key->haspubkey = 1;
     return key;

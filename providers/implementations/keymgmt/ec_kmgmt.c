@@ -82,6 +82,8 @@ const char *ec_query_operation_name(int operation_id)
         return "ECDH";
     case OSSL_OP_SIGNATURE:
         return "ECDSA";
+    default:
+        break;
     }
     return NULL;
 }
@@ -94,6 +96,8 @@ const char *sm2_query_operation_name(int operation_id)
     switch (operation_id) {
     case OSSL_OP_SIGNATURE:
         return "SM2";
+    default:
+        break;
     }
     return NULL;
 }

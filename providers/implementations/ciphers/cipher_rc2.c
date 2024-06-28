@@ -66,6 +66,8 @@ static int rc2_keybits_to_magic(int keybits)
         return RC2_64_MAGIC;
     case 40:
         return RC2_40_MAGIC;
+    default:
+        break;
     }
     ERR_raise(ERR_LIB_PROV, PROV_R_UNSUPPORTED_KEY_SIZE);
     return 0;
@@ -80,6 +82,8 @@ static int rc2_magic_to_keybits(int magic)
         return 64;
     case RC2_40_MAGIC:
         return 40;
+    default:
+        break;
     }
     ERR_raise(ERR_LIB_PROV, PROV_R_UNSUPPORTED_KEY_SIZE);
     return 0;

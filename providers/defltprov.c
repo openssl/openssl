@@ -547,6 +547,8 @@ static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
         return deflt_decoder;
     case OSSL_OP_STORE:
         return deflt_store;
+    default:
+        break;
     }
     return NULL;
 }

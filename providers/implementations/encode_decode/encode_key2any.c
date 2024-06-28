@@ -74,6 +74,8 @@ static void free_asn1_data(int type, void *data)
     case V_ASN1_SEQUENCE:
         ASN1_STRING_free(data);
         break;
+    default:
+        break;
     }
 }
 
@@ -898,6 +900,8 @@ static int prepare_rsa_params(const void *rsa, int nid, int save,
             OPENSSL_free(str);
             return 0;
         }
+                default:
+                    break;
     }
 
     /* Currently unsupported RSA key type */
@@ -922,6 +926,8 @@ static int rsa_check_key_type(const void *rsa, int expected_type)
         return expected_type == EVP_PKEY_RSA;
     case RSA_FLAG_TYPE_RSASSAPSS:
         return expected_type == EVP_PKEY_RSA_PSS;
+    default:
+        break;
     }
 
     /* Currently unsupported RSA key type */

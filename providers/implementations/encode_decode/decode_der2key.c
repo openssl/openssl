@@ -549,6 +549,8 @@ static int rsa_check(void *key, struct der2key_ctx_st *ctx)
         return ctx->desc->evp_type == EVP_PKEY_RSA;
     case RSA_FLAG_TYPE_RSASSAPSS:
         return ctx->desc->evp_type == EVP_PKEY_RSA_PSS;
+    default:
+        break;
     }
 
     /* Currently unsupported RSA key type */

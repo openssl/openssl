@@ -67,6 +67,8 @@ int ossl_prov_bio_from_dispatch(const OSSL_DISPATCH *fns)
             if (c_bio_vprintf == NULL)
                 c_bio_vprintf = OSSL_FUNC_BIO_vprintf(fns);
             break;
+        default:
+            break;
         }
     }
 

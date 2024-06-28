@@ -73,6 +73,8 @@ int ossl_prov_seeding_from_dispatch(const OSSL_DISPATCH *fns)
         case OSSL_FUNC_CLEANUP_USER_NONCE:
             set_func(c_cleanup_user_nonce, OSSL_FUNC_cleanup_user_nonce(fns));
             break;
+        default:
+            break;
         }
 #undef set_func
     }

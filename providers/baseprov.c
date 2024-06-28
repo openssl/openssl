@@ -109,6 +109,8 @@ static const OSSL_ALGORITHM *base_query(void *provctx, int operation_id,
         return base_store;
     case OSSL_OP_RAND:
         return base_rands;
+    default:
+        break;
     }
     return NULL;
 }

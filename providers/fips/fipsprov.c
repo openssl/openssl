@@ -523,6 +523,8 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
         return fips_asym_cipher;
     case OSSL_OP_KEM:
         return fips_asym_kem;
+    default:
+        break;
     }
     return NULL;
 }

@@ -727,6 +727,8 @@ static int file_eof(void *loaderctx)
          */
         return !BIO_pending(ctx->_.file.file)
             && BIO_eof(ctx->_.file.file);
+    default:
+        break;
     }
 
     /* ctx->type has an unexpected value */
@@ -764,6 +766,8 @@ static int file_close(void *loaderctx)
         return file_close_dir(ctx);
     case IS_FILE:
         return file_close_stream(ctx);
+    default:
+        break;
     }
 
     /* ctx->type has an unexpected value */

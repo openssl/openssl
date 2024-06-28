@@ -177,6 +177,8 @@ static const OSSL_ALGORITHM *legacy_query(void *provctx, int operation_id,
         return legacy_ciphers;
     case OSSL_OP_KDF:
         return legacy_kdfs;
+    default:
+        break;
     }
     return NULL;
 }
@@ -233,6 +235,8 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
             break;
         case OSSL_FUNC_CORE_POP_ERROR_TO_MARK:
             set_func(c_pop_error_to_mark, OSSL_FUNC_core_pop_error_to_mark(tmp));
+            break;
+        default:
             break;
         }
     }
