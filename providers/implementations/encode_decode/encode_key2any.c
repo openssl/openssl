@@ -870,6 +870,9 @@ static int prepare_rsa_params(const void *rsa, int nid, int save,
                         goto err;
                     }
                     break;
+
+                default:
+                    break;
                 }
                 if (!ossl_DER_w_RSASSA_PSS_params(&pkt, -1, pss)
                     || !WPACKET_finish(&pkt)

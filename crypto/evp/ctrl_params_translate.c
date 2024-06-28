@@ -508,6 +508,8 @@ static int default_fixup_args(enum state state,
                 OSSL_PARAM_construct_octet_ptr(translation->param_key,
                                                ctx->p2, (size_t)ctx->p1);
             break;
+        default:
+            break;
         }
         break;
     case POST_CTRL_TO_PARAMS:
@@ -523,6 +525,8 @@ static int default_fixup_args(enum state state,
             case OSSL_PARAM_OCTET_STRING:
             case OSSL_PARAM_OCTET_PTR:
                 ctx->p1 = (int)ctx->params[0].return_size;
+                break;
+            default:
                 break;
             }
         }

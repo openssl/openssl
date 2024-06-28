@@ -653,6 +653,8 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
                 case 2:
                     str_details1 = ", fatal";
                     break;
+                default:
+                    break;
                 }
                 str_details2 = lookup((int)bp[1], alert_types, " ???");
             }

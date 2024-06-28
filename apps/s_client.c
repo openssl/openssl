@@ -1571,6 +1571,8 @@ int s_client_main(int argc, char **argv)
         case OPT_ENABLE_CLIENT_RPK:
             enable_client_rpk = 1;
             break;
+        default:
+            break;
         }
     }
 

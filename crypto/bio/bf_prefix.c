@@ -183,6 +183,8 @@ static long prefix_ctrl(BIO *b, int cmd, long num, void *ptr)
         case BIO_CTRL_RESET:
             ctx->linestart = 1;
             break;
+        default:
+            break;
         }
         if (BIO_next(b) != NULL)
             ret = BIO_ctrl(BIO_next(b), cmd, num, ptr);

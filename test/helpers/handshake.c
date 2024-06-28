@@ -1228,6 +1228,9 @@ static handshake_status_t handshake_status(peer_status_t last_status,
              * already errored. This shouldn't happen.
              */
             return INTERNAL_ERROR;
+
+        default:
+            break;
         }
         break;
 
@@ -1250,6 +1253,8 @@ static handshake_status_t handshake_status(peer_status_t last_status,
         case PEER_ERROR:
             /* Both peers errored. Return the one that errored first. */
             return client_spoke_last ? SERVER_ERROR : CLIENT_ERROR;
+        default:
+            break;
         }
         default:
             break;
