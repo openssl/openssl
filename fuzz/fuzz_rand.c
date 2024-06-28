@@ -130,6 +130,8 @@ static const OSSL_ALGORITHM *fuzz_rand_query(void *provctx,
     switch (operation_id) {
     case OSSL_OP_RAND:
         return fuzz_rand_rand;
+    default:
+        break;
     }
     return NULL;
 }

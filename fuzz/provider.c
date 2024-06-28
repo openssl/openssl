@@ -257,6 +257,8 @@ static void free_params(OSSL_PARAM *param)
                     OPENSSL_free(param->data);
                 }
                 break;
+        default:
+            break;
         }
     }
 }

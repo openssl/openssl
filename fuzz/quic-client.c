@@ -211,6 +211,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                     thisstream = 0;
                 stream = allstreams[thisstream];
                 break;
+            default:
+                break;
             }
             assert(stream != NULL);
             assert(thisstream < numstreams);
