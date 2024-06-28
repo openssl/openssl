@@ -95,6 +95,8 @@ opthelp:
                 = dir = engdir = moddir = cpuinfo
                 = 1;
             break;
+        default:
+            break;
         }
     }
 

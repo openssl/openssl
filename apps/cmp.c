@@ -3142,6 +3142,8 @@ static int get_opts(int argc, char **argv)
         case OPT_ACCEPT_RAVERIFIED:
             opt_accept_raverified = 1;
             break;
+        default:
+            break;
         }
     }
 

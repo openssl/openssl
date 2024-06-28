@@ -385,6 +385,8 @@ int smime_main(int argc, char **argv)
                 goto opthelp;
             vpmtouched++;
             break;
+        default:
+            break;
         }
     }
 

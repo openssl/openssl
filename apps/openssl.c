@@ -143,6 +143,8 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
         BIO_set_prefix(trace_data->bio, NULL);
 
         break;
+    default:
+        break;
     }
 
     return ret < 0 ? 0 : ret;
@@ -355,6 +357,8 @@ int help_main(int argc, char **argv)
         case OPT_hHELP:
             opt_help(help_options);
             return 0;
+        default:
+            break;
         }
     }
 

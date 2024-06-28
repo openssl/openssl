@@ -117,6 +117,8 @@ int opt_rand(int opt)
         if (save_rand_file == NULL)
             return 0;
         break;
+    default:
+        break;
     }
     return 1;
 }

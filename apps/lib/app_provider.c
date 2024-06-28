@@ -80,6 +80,8 @@ int opt_provider(int opt)
         return opt_provider_path(opt_arg());
     case OPT_PROV_PROPQUERY:
         return app_set_propq(opt_arg());
+    default:
+        break;
     }
     /* Should never get here but if we do, undo what we did earlier */
     provider_option_given = given;

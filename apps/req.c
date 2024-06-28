@@ -493,6 +493,8 @@ int req_main(int argc, char **argv)
         case OPT_MD:
             digest = opt_unknown();
             break;
+        default:
+            break;
         }
     }
 

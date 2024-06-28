@@ -199,6 +199,8 @@ int pkcs8_main(int argc, char **argv)
             if (!opt_int(opt_arg(), &saltlen))
                 goto opthelp;
             break;
+        default:
+            break;
         }
     }
 

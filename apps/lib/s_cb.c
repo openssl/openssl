@@ -106,6 +106,8 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
         if (!verify_args.quiet)
             policies_print(ctx);
         break;
+    default:
+        break;
     }
     if (err == X509_V_OK && ok == 2 && !verify_args.quiet)
         policies_print(ctx);
@@ -1154,6 +1156,8 @@ int args_excert(int opt, SSL_EXCERT **pexc)
         if (!opt_format(opt_arg(), OPT_FMT_ANY, &exc->keyform))
             return 0;
         break;
+    default:
+        break;
     }
     return 1;
 
@@ -1479,6 +1483,8 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
     case SSL_SECOP_SIGALG_MASK:
         show_nm = 0;
         break;
+    default:
+        break;
     }
     if (show_nm)
         BIO_printf(sdb->out, "%s=", nm);
@@ -1550,6 +1556,8 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
             }
         }
 
+    default:
+        break;
     }
 
     if (show_bits)

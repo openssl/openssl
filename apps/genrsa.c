@@ -145,6 +145,8 @@ opthelp:
         case OPT_TRADITIONAL:
             traditional = 1;
             break;
+        default:
+            break;
         }
     }
 

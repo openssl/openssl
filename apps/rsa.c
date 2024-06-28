@@ -214,6 +214,8 @@ int rsa_main(int argc, char **argv)
         case OPT_TRADITIONAL:
             traditional = 1;
             break;
+        default:
+            break;
         }
     }
 

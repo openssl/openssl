@@ -249,6 +249,8 @@ int pkeyutl_main(int argc, char **argv)
         case OPT_DIGEST:
             digestname = opt_arg();
             break;
+        default:
+            break;
         }
     }
 
@@ -563,6 +565,8 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     case KEY_NONE:
         break;
 
+    default:
+        break;
     }
 
 #ifndef OPENSSL_NO_ENGINE
@@ -615,6 +619,8 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
             rv = EVP_DigestVerifyInit_ex(mctx, NULL, digestname, libctx, propq,
                                          pkey, NULL);
             break;
+        default:
+            break;
         }
 
     } else {
@@ -641,6 +647,8 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
 
         case EVP_PKEY_OP_DERIVE:
             rv = EVP_PKEY_derive_init(ctx);
+            break;
+        default:
             break;
         }
     }
@@ -703,6 +711,8 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
         rv = EVP_PKEY_derive(ctx, out, poutlen);
         break;
 
+    default:
+        break;
     }
     return rv;
 }
@@ -749,6 +759,8 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
                 rv = EVP_DigestSign(mctx, *out, poutlen, mbuf, buf_len);
             }
             break;
+        default:
+            break;
         }
         goto end;
     }
@@ -791,6 +803,8 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
             *out = app_malloc(*poutlen, "buffer output");
             rv = EVP_DigestSignFinal(mctx, *out, poutlen);
         }
+        break;
+    default:
         break;
     }
 

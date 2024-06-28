@@ -94,6 +94,8 @@ int sess_id_main(int argc, char **argv)
         case OPT_CONTEXT:
             context = opt_arg();
             break;
+        default:
+            break;
         }
     }
 

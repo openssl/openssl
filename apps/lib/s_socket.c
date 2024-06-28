@@ -479,6 +479,8 @@ void do_ssl_shutdown(SSL *ssl)
             case SSL_ERROR_WANT_ASYNC_JOB:
                 /* We just do busy waiting. Nothing clever */
                 continue;
+            default:
+                break;
             }
             ret = 0;
         }

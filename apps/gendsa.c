@@ -102,6 +102,8 @@ int gendsa_main(int argc, char **argv)
         case OPT_QUIET:
             verbose = 0;
             break;
+        default:
+            break;
         }
     }
 

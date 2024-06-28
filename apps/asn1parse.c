@@ -155,6 +155,8 @@ int asn1parse_main(int argc, char **argv)
                 goto end;
             }
             break;
+        default:
+            break;
         }
     }
 

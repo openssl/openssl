@@ -367,6 +367,8 @@ int pkcs12_main(int argc, char **argv)
             if (!opt_provider(o))
                 goto end;
             break;
+        default:
+            break;
         }
     }
 

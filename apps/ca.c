@@ -501,6 +501,8 @@ opthelp:
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
+        default:
+            break;
         }
     }
 
@@ -2393,6 +2395,8 @@ static char *make_revocation_str(REVINFO_TYPE rev_type, const char *rev_arg)
         else
             reason = "CAkeyTime";
 
+        break;
+    default:
         break;
     }
 

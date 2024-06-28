@@ -697,6 +697,8 @@ int cms_main(int argc, char **argv)
         case OPT_3DES_WRAP:
             wrapname = opt_flag() + 1;
             break;
+        default:
+            break;
         }
     }
     if (!app_RAND_load())

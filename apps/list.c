@@ -1672,6 +1672,8 @@ opthelp:
             if (!opt_provider(o))
                 return 1;
             break;
+        default:
+            break;
         }
         done = 1;
     }

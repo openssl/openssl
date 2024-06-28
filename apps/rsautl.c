@@ -165,6 +165,8 @@ int rsautl_main(int argc, char **argv)
             if (!opt_provider(o))
                 goto end;
             break;
+        default:
+            break;
         }
     }
 
@@ -200,6 +202,8 @@ int rsautl_main(int argc, char **argv)
             pkey = X509_get_pubkey(x);
             X509_free(x);
         }
+        break;
+    default:
         break;
     }
 
@@ -261,6 +265,8 @@ int rsautl_main(int argc, char **argv)
         rv = EVP_PKEY_decrypt_init(ctx) > 0
             && EVP_PKEY_CTX_set_rsa_padding(ctx, pad) > 0
             && EVP_PKEY_decrypt(ctx, rsa_out, &rsa_outlen, rsa_in, rsa_inlen) > 0;
+        break;
+    default:
         break;
     }
 

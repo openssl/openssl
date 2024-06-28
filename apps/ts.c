@@ -287,6 +287,8 @@ int ts_main(int argc, char **argv)
                 goto end;
             vpmtouched++;
             break;
+        default:
+            break;
         }
     }
 

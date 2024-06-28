@@ -254,6 +254,8 @@ int storeutl_main(int argc, char *argv[])
             if (!opt_provider(o))
                 goto end;
             break;
+        default:
+            break;
         }
     }
 
@@ -300,6 +302,8 @@ int storeutl_main(int argc, char *argv[])
                 ERR_print_errors(bio_err);
                 goto end;
             }
+            break;
+        default:
             break;
         }
     }

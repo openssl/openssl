@@ -193,6 +193,8 @@ int genpkey_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
+        default:
+            break;
         }
     }
 

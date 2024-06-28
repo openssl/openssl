@@ -895,6 +895,8 @@ static const char *format2string(int format)
         return "PEM";
     case FORMAT_ASN1:
         return "DER";
+    default:
+        break;
     }
     return NULL;
 }
@@ -1897,6 +1899,8 @@ int parse_yesno(const char *str, int def)
         case 'Y':              /* YES */
         case '1':              /* 1 */
             return 1;
+        default:
+            break;
         }
     }
     return def;
@@ -3059,6 +3063,8 @@ static const char *modestr(char mode, int format)
         return FMT_istext(format) ? "r" : "rb";
     case 'w':
         return FMT_istext(format) ? "w" : "wb";
+    default:
+        break;
     }
     /* The assert above should make sure we never reach this point */
     return NULL;
@@ -3073,6 +3079,8 @@ static const char *modeverb(char mode)
         return "reading";
     case 'w':
         return "writing";
+    default:
+        break;
     }
     return "(doing something)";
 }

@@ -461,6 +461,8 @@ opthelp:
                 goto end;
             fips_opts.self_test_onload = 0;
             break;
+        default:
+            break;
         }
     }
 

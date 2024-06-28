@@ -96,6 +96,8 @@ opthelp:
             if (!opt_provider(o))
                 goto end;
             break;
+        default:
+            break;
         }
     }
 

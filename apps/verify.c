@@ -191,6 +191,8 @@ int verify_main(int argc, char **argv)
             if (!opt_provider(o))
                 goto end;
             break;
+        default:
+            break;
         }
     }
 
@@ -381,6 +383,8 @@ static int cb(int ok, X509_STORE_CTX *ctx)
         case X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER:
         case X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3:
             ok = 1;
+        default:
+            break;
         }
         return ok;
 
