@@ -45,6 +45,7 @@ static int print_notice(BIO *out, USERNOTICE *notice, int indent)
                 if (tmp == NULL)
                     return 0;
                 if (BIO_puts(out, tmp) <= 0) {
+                    OPENSSL_free(tmp);
                     return 0;
                 }
                 OPENSSL_free(tmp);
