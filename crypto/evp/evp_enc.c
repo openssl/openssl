@@ -1671,6 +1671,8 @@ static void *evp_cipher_from_algorithm(const int name_id,
             cipher->settable_ctx_params =
                 OSSL_FUNC_cipher_settable_ctx_params(fns);
             break;
+        default:
+            break;
         }
     }
     if ((fnciphcnt != 0 && fnciphcnt != 3 && fnciphcnt != 4)

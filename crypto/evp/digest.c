@@ -1108,6 +1108,8 @@ static void *evp_md_from_algorithm(int name_id,
                 md->gettable_ctx_params =
                     OSSL_FUNC_digest_gettable_ctx_params(fns);
             break;
+        default:
+            break;
         }
     }
     if ((fncnt != 0 && fncnt != 5 && fncnt != 6)

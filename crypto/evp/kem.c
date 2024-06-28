@@ -106,6 +106,8 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
                 ret = -2;
                 goto err;
             }
+        default:
+            break;
         }
         if (kem == NULL)
             continue;
@@ -388,6 +390,8 @@ static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
             kem->settable_ctx_params
                 = OSSL_FUNC_kem_settable_ctx_params(fns);
             sparamfncnt++;
+            break;
+        default:
             break;
         }
     }

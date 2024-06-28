@@ -137,6 +137,8 @@ static void *evp_kdf_from_algorithm(int name_id,
                 break;
             kdf->set_ctx_params = OSSL_FUNC_kdf_set_ctx_params(fns);
             break;
+        default:
+            break;
         }
     }
     if (fnkdfcnt != 1 || fnctxcnt != 2) {

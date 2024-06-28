@@ -115,6 +115,8 @@ static void *evp_keyexch_from_algorithm(int name_id,
                 = OSSL_FUNC_keyexch_settable_ctx_params(fns);
             sparamfncnt++;
             break;
+        default:
+            break;
         }
     }
     if (fncnt != 4
@@ -293,6 +295,8 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
                                               supported_exch, ctx->propquery);
             if (exchange == NULL)
                 goto legacy;
+            break;
+        default:
             break;
         }
         if (exchange == NULL)

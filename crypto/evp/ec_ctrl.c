@@ -234,6 +234,8 @@ int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int le
     case 1:
         OPENSSL_free(ukm);
         break;
+    default:
+        break;
     }
 
     return ret;

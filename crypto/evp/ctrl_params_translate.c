@@ -1771,6 +1771,8 @@ static int get_dh_dsa_payload_q(enum state state,
         bn = DSA_get0_q(EVP_PKEY_get0_DSA(ctx->p2));
         break;
 #endif
+    default:
+        break;
     }
 
     return get_payload_bn(state, translation, ctx, bn);
@@ -1793,6 +1795,8 @@ static int get_dh_dsa_payload_g(enum state state,
         bn = DSA_get0_g(EVP_PKEY_get0_DSA(ctx->p2));
         break;
 #endif
+    default:
+        break;
     }
 
     return get_payload_bn(state, translation, ctx, bn);

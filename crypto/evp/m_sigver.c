@@ -158,6 +158,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
             if (signature == NULL)
                 goto legacy;
             break;
+        default:
+            break;
         }
         if (signature == NULL)
             continue;

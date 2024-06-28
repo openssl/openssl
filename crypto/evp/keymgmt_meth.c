@@ -207,6 +207,8 @@ static void *keymgmt_from_algorithm(int name_id,
                 keymgmt->export_types_ex = OSSL_FUNC_keymgmt_export_types_ex(fns);
             }
             break;
+        default:
+            break;
         }
     }
     /*

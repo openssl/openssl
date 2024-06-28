@@ -46,6 +46,8 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
             evp_keymgmt_gen_init(ctx->keymgmt, OSSL_KEYMGMT_SELECT_KEYPAIR,
                                  NULL);
         break;
+    default:
+        break;
     }
 
     if (ctx->op.keymgmt.genctx == NULL)
@@ -74,6 +76,8 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
     case EVP_PKEY_OP_KEYGEN:
         if (ctx->pmeth->keygen_init != NULL)
             ret = ctx->pmeth->keygen_init(ctx);
+        break;
+    default:
         break;
     }
 #endif

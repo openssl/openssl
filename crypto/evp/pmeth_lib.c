@@ -700,6 +700,8 @@ int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, const OSSL_PARAM *params)
     case EVP_PKEY_STATE_LEGACY:
         return evp_pkey_ctx_set_params_to_ctrl(ctx, params);
 #endif
+    default:
+        break;
     }
     return 0;
 }
@@ -738,6 +740,8 @@ int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
     case EVP_PKEY_STATE_LEGACY:
         return evp_pkey_ctx_get_params_to_ctrl(ctx, params);
 #endif
+    default:
+        break;
     }
     return 0;
 }
@@ -1314,6 +1318,8 @@ static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,
         if (ret == -2)
             ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         break;
+    default:
+        break;
     }
     return ret;
 }
@@ -1378,6 +1384,8 @@ static int evp_pkey_ctx_ctrl_str_int(EVP_PKEY_CTX *ctx,
                                   EVP_PKEY_CTRL_MD, value);
         else
             ret = ctx->pmeth->ctrl_str(ctx, name, value);
+        break;
+    default:
         break;
     }
 
@@ -1467,6 +1475,8 @@ static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
                 return -1;
             }
             break;
+        default:
+            break;
         }
     }
     if (optype != -1 && (ctx->operation & optype) == 0) {
@@ -1490,6 +1500,8 @@ static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
         ctx->cached_parameters.dist_id_set = 1;
         ctx->cached_parameters.dist_id_len = data_len;
         break;
+    default:
+        break;
     }
     return 1;
 }
@@ -1504,6 +1516,8 @@ static void evp_pkey_ctx_free_cached_data(EVP_PKEY_CTX *ctx,
         OPENSSL_free(ctx->cached_parameters.dist_id_name);
         ctx->cached_parameters.dist_id = NULL;
         ctx->cached_parameters.dist_id_name = NULL;
+        break;
+    default:
         break;
     }
 }

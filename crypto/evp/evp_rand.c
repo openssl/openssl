@@ -248,6 +248,8 @@ static void *evp_rand_from_algorithm(int name_id,
                 break;
             rand->clear_seed = OSSL_FUNC_rand_clear_seed(fns);
             break;
+        default:
+            break;
         }
     }
     /*

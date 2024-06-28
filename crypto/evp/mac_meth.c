@@ -143,6 +143,8 @@ static void *evp_mac_from_algorithm(int name_id,
                 break;
             mac->set_ctx_params = OSSL_FUNC_mac_set_ctx_params(fns);
             break;
+        default:
+            break;
         }
     }
     if (fnmaccnt != 3

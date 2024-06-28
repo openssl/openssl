@@ -108,6 +108,8 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
             if (cipher == NULL)
                 goto legacy;
             break;
+        default:
+            break;
         }
         if (cipher == NULL)
             continue;
@@ -423,6 +425,8 @@ static void *evp_asym_cipher_from_algorithm(int name_id,
             cipher->settable_ctx_params
                 = OSSL_FUNC_asym_cipher_settable_ctx_params(fns);
             sparamfncnt++;
+            break;
+        default:
             break;
         }
     }

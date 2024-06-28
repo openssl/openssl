@@ -221,6 +221,8 @@ static void *evp_signature_from_algorithm(int name_id,
                 = OSSL_FUNC_signature_settable_ctx_md_params(fns);
             smdparamfncnt++;
             break;
+        default:
+            break;
         }
     }
     if (ctxfncnt != 2
@@ -476,6 +478,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation,
                                               supported_sig, ctx->propquery);
             if (signature == NULL)
                 goto legacy;
+            break;
+        default:
             break;
         }
         if (signature == NULL)
