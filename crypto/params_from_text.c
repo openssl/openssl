@@ -126,6 +126,8 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
             *buf_n = value_n;
         }
         break;
+    default:
+        break;
     }
 
     return 1;
@@ -185,6 +187,8 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
             } else {
                 memcpy(buf, value, buf_n);
             }
+            break;
+        default:
             break;
         }
     }

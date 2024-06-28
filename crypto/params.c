@@ -269,6 +269,8 @@ int OSSL_PARAM_get_int(const OSSL_PARAM *p, int *val)
         return OSSL_PARAM_get_int32(p, (int32_t *)val);
     case sizeof(int64_t):
         return OSSL_PARAM_get_int64(p, (int64_t *)val);
+    default:
+        break;
     }
 #endif
     return general_get_int(p, val, sizeof(*val));
@@ -282,6 +284,8 @@ int OSSL_PARAM_set_int(OSSL_PARAM *p, int val)
         return OSSL_PARAM_set_int32(p, (int32_t)val);
     case sizeof(int64_t):
         return OSSL_PARAM_set_int64(p, (int64_t)val);
+    default:
+        break;
     }
 #endif
     return general_set_int(p, &val, sizeof(val));
@@ -300,6 +304,8 @@ int OSSL_PARAM_get_uint(const OSSL_PARAM *p, unsigned int *val)
         return OSSL_PARAM_get_uint32(p, (uint32_t *)val);
     case sizeof(uint64_t):
         return OSSL_PARAM_get_uint64(p, (uint64_t *)val);
+    default:
+        break;
     }
 #endif
     return general_get_uint(p, val, sizeof(*val));
@@ -313,6 +319,8 @@ int OSSL_PARAM_set_uint(OSSL_PARAM *p, unsigned int val)
         return OSSL_PARAM_set_uint32(p, (uint32_t)val);
     case sizeof(uint64_t):
         return OSSL_PARAM_set_uint64(p, (uint64_t)val);
+    default:
+        break;
     }
 #endif
     return general_set_uint(p, &val, sizeof(val));
@@ -332,6 +340,8 @@ int OSSL_PARAM_get_long(const OSSL_PARAM *p, long int *val)
         return OSSL_PARAM_get_int32(p, (int32_t *)val);
     case sizeof(int64_t):
         return OSSL_PARAM_get_int64(p, (int64_t *)val);
+    default:
+        break;
     }
 #endif
     return general_get_int(p, val, sizeof(*val));
@@ -345,6 +355,8 @@ int OSSL_PARAM_set_long(OSSL_PARAM *p, long int val)
         return OSSL_PARAM_set_int32(p, (int32_t)val);
     case sizeof(int64_t):
         return OSSL_PARAM_set_int64(p, (int64_t)val);
+    default:
+        break;
     }
 #endif
     return general_set_int(p, &val, sizeof(val));
@@ -363,6 +375,8 @@ int OSSL_PARAM_get_ulong(const OSSL_PARAM *p, unsigned long int *val)
         return OSSL_PARAM_get_uint32(p, (uint32_t *)val);
     case sizeof(uint64_t):
         return OSSL_PARAM_get_uint64(p, (uint64_t *)val);
+    default:
+        break;
     }
 #endif
     return general_get_uint(p, val, sizeof(*val));
@@ -376,6 +390,8 @@ int OSSL_PARAM_set_ulong(OSSL_PARAM *p, unsigned long int val)
         return OSSL_PARAM_set_uint32(p, (uint32_t)val);
     case sizeof(uint64_t):
         return OSSL_PARAM_set_uint64(p, (uint64_t)val);
+    default:
+        break;
     }
 #endif
     return general_set_uint(p, &val, sizeof(val));
@@ -415,6 +431,8 @@ int OSSL_PARAM_get_int32(const OSSL_PARAM *p, int32_t *val)
             }
             err_out_of_range;
             return 0;
+        default:
+            break;
         }
 #endif
         return general_get_int(p, val, sizeof(*val));
@@ -441,6 +459,8 @@ int OSSL_PARAM_get_int32(const OSSL_PARAM *p, int32_t *val)
             }
             err_out_of_range;
             return 0;
+        default:
+            break;
         }
 #endif
         return general_get_int(p, val, sizeof(*val));
@@ -458,6 +478,8 @@ int OSSL_PARAM_get_int32(const OSSL_PARAM *p, int32_t *val)
             }
             err_out_of_range;
             return 0;
+        default:
+            break;
         }
         err_unsupported_real;
         return 0;
@@ -487,6 +509,8 @@ int OSSL_PARAM_set_int32(OSSL_PARAM *p, int32_t val)
             p->return_size = sizeof(int64_t);
             *(int64_t *)p->data = (int64_t)val;
             return 1;
+        default:
+            break;
         }
 #endif
         return general_set_int(p, &val, sizeof(val));
@@ -503,6 +527,8 @@ int OSSL_PARAM_set_int32(OSSL_PARAM *p, int32_t val)
             p->return_size = sizeof(uint64_t);
             *(uint64_t *)p->data = (uint64_t)val;
             return 1;
+        default:
+            break;
         }
 #endif
         return general_set_int(p, &val, sizeof(val));
@@ -526,6 +552,8 @@ int OSSL_PARAM_set_int32(OSSL_PARAM *p, int32_t val)
             }
             *(double *)p->data = (double)val;
             return 1;
+        default:
+            break;
         }
         err_unsupported_real;
         return 0;
@@ -569,6 +597,8 @@ int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val)
             }
             err_out_of_range;
             return 0;
+        default:
+            break;
         }
 #endif
         return general_get_uint(p, val, sizeof(*val));
@@ -597,6 +627,8 @@ int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val)
             else
                 err_out_of_range;
             return 0;
+        default:
+            break;
         }
 #endif
         return general_get_uint(p, val, sizeof(*val));
@@ -613,6 +645,8 @@ int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val)
             }
             err_inexact;
             return 0;
+        default:
+            break;
         }
         err_unsupported_real;
         return 0;
@@ -643,6 +677,8 @@ int OSSL_PARAM_set_uint32(OSSL_PARAM *p, uint32_t val)
             p->return_size = sizeof(uint64_t);
             *(uint64_t *)p->data = val;
             return 1;
+        default:
+            break;
         }
 #endif
         return general_set_uint(p, &val, sizeof(val));
@@ -663,6 +699,8 @@ int OSSL_PARAM_set_uint32(OSSL_PARAM *p, uint32_t val)
             p->return_size = sizeof(int64_t);
             *(int64_t *)p->data = (int64_t)val;
             return 1;
+        default:
+            break;
         }
 #endif
         return general_set_uint(p, &val, sizeof(val));
@@ -682,6 +720,8 @@ int OSSL_PARAM_set_uint32(OSSL_PARAM *p, uint32_t val)
             }
             *(double *)p->data = (double)val;
             return 1;
+        default:
+            break;
         }
         err_unsupported_real;
         return 0;
@@ -718,6 +758,8 @@ int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
         case sizeof(int64_t):
             *val = *(const int64_t *)p->data;
             return 1;
+        default:
+            break;
         }
 #endif
         return general_get_int(p, val, sizeof(*val));
@@ -737,6 +779,8 @@ int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
             }
             err_out_of_range;
             return 0;
+        default:
+            break;
         }
 #endif
         return general_get_int(p, val, sizeof(*val));
@@ -760,6 +804,8 @@ int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
             }
             err_inexact;
             return 0;
+        default:
+            break;
         }
         err_unsupported_real;
         return 0;
@@ -793,6 +839,8 @@ int OSSL_PARAM_set_int64(OSSL_PARAM *p, int64_t val)
         case sizeof(int64_t):
             *(int64_t *)p->data = val;
             return 1;
+        default:
+            break;
         }
 #endif
         return general_set_int(p, &val, sizeof(val));
@@ -813,6 +861,8 @@ int OSSL_PARAM_set_int64(OSSL_PARAM *p, int64_t val)
         case sizeof(uint64_t):
             *(uint64_t *)p->data = (uint64_t)val;
             return 1;
+        default:
+            break;
         }
 #endif
         return general_set_int(p, &val, sizeof(val));
@@ -832,6 +882,8 @@ int OSSL_PARAM_set_int64(OSSL_PARAM *p, int64_t val)
             }
             err_inexact;
             return 0;
+        default:
+            break;
         }
         err_unsupported_real;
         return 0;
@@ -867,6 +919,8 @@ int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
         case sizeof(uint64_t):
             *val = *(const uint64_t *)p->data;
             return 1;
+        default:
+            break;
         }
 #endif
         return general_get_uint(p, val, sizeof(*val));
@@ -892,6 +946,8 @@ int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
             }
             err_unsigned_negative;
             return 0;
+        default:
+            break;
         }
 #endif
         return general_get_uint(p, val, sizeof(*val));
@@ -915,6 +971,8 @@ int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
             }
             err_inexact;
             return 0;
+        default:
+            break;
         }
         err_unsupported_real;
         return 0;
@@ -949,6 +1007,8 @@ int OSSL_PARAM_set_uint64(OSSL_PARAM *p, uint64_t val)
         case sizeof(uint64_t):
             *(uint64_t *)p->data = val;
             return 1;
+        default:
+            break;
         }
 #endif
         return general_set_uint(p, &val, sizeof(val));
@@ -973,6 +1033,8 @@ int OSSL_PARAM_set_uint64(OSSL_PARAM *p, uint64_t val)
             }
             err_out_of_range;
             return 0;
+        default:
+            break;
         }
 #endif
         return general_set_uint(p, &val, sizeof(val));
@@ -987,6 +1049,8 @@ int OSSL_PARAM_set_uint64(OSSL_PARAM *p, uint64_t val)
             }
             err_inexact;
             return 0;
+        default:
+            break;
         }
         err_unsupported_real;
         return 0;
@@ -1010,6 +1074,8 @@ int OSSL_PARAM_get_size_t(const OSSL_PARAM *p, size_t *val)
         return OSSL_PARAM_get_uint32(p, (uint32_t *)val);
     case sizeof(uint64_t):
         return OSSL_PARAM_get_uint64(p, (uint64_t *)val);
+    default:
+        break;
     }
 #endif
     return general_get_uint(p, val, sizeof(*val));
@@ -1023,6 +1089,8 @@ int OSSL_PARAM_set_size_t(OSSL_PARAM *p, size_t val)
         return OSSL_PARAM_set_uint32(p, (uint32_t)val);
     case sizeof(uint64_t):
         return OSSL_PARAM_set_uint64(p, (uint64_t)val);
+    default:
+        break;
     }
 #endif
     return general_set_uint(p, &val, sizeof(val));
@@ -1042,6 +1110,8 @@ int OSSL_PARAM_get_time_t(const OSSL_PARAM *p, time_t *val)
         return OSSL_PARAM_get_int32(p, (int32_t *)val);
     case sizeof(int64_t):
         return OSSL_PARAM_get_int64(p, (int64_t *)val);
+    default:
+        break;
     }
 #endif
     return general_get_int(p, val, sizeof(*val));
@@ -1055,6 +1125,8 @@ int OSSL_PARAM_set_time_t(OSSL_PARAM *p, time_t val)
         return OSSL_PARAM_set_int32(p, (int32_t)val);
     case sizeof(int64_t):
         return OSSL_PARAM_set_int64(p, (int64_t)val);
+    default:
+        break;
     }
 #endif
     return general_set_int(p, &val, sizeof(val));
@@ -1171,6 +1243,8 @@ int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
         case sizeof(double):
             *val = *(const double *)p->data;
             return 1;
+        default:
+            break;
         }
         err_unsupported_real;
         return 0;
@@ -1187,6 +1261,8 @@ int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
             }
             err_inexact;
             return 0;
+        default:
+            break;
         }
     } else if (p->data_type == OSSL_PARAM_INTEGER) {
         switch (p->data_size) {
@@ -1202,6 +1278,8 @@ int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
             }
             err_inexact;
             return 0;
+        default:
+            break;
         }
     }
     err_bad_type;
@@ -1224,6 +1302,8 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
         case sizeof(double):
             *(double *)p->data = val;
             return 1;
+        default:
+            break;
         }
         err_unsupported_real;
         return 0;
@@ -1258,6 +1338,8 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
             }
             err_out_of_range;
             return 0;
+        default:
+            break;
         }
     } else if (p->data_type == OSSL_PARAM_INTEGER) {
         p->return_size = sizeof(double);
@@ -1290,6 +1372,8 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
             }
             err_out_of_range;
             return 0;
+        default:
+            break;
         }
     }
     err_bad_type;
