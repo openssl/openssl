@@ -28,7 +28,7 @@
 static char openssldir[MAX_PATH + 1];
 
 /**
- * @brief The pointer to the opensldir buffer
+ * @brief The pointer to the openssldir buffer
  */
 static char *openssldirptr = NULL;
 
