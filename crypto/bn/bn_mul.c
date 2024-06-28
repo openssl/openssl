@@ -125,6 +125,7 @@ BN_ULONG bn_sub_part_words(BN_ULONG *r,
                     r[3] = a[3];
                     if (--dl <= 0)
                         break;
+                    break;
                 default:
                     break;
                 }
