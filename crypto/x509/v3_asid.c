@@ -255,6 +255,8 @@ static int extract_min_max(ASIdOrRange *aor,
         *min = aor->u.range->min;
         *max = aor->u.range->max;
         return 1;
+    default:
+        break;
     }
 
     return 0;
@@ -460,6 +462,8 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
                 ASN1_INTEGER_free(a->u.range->max);
                 a->u.range->max = b_max;
                 break;
+            default:
+                break;
             }
             switch (b->type) {
             case ASIdOrRange_id:
@@ -467,6 +471,8 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
                 break;
             case ASIdOrRange_range:
                 b->u.range->max = NULL;
+                break;
+            default:
                 break;
             }
             ASIdOrRange_free(b);
@@ -784,6 +790,8 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
         case ASIdentifierChoice_asIdsOrRanges:
             child_as = ext->asnum->u.asIdsOrRanges;
             break;
+        default:
+            break;
         }
     }
     if (ext->rdi != NULL) {
@@ -793,6 +801,8 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
             break;
         case ASIdentifierChoice_asIdsOrRanges:
             child_rdi = ext->rdi->u.asIdsOrRanges;
+            break;
+        default:
             break;
         }
     }

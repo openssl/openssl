@@ -59,6 +59,8 @@ static int crl_inf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     case ASN1_OP_D2I_POST:
         (void)sk_X509_REVOKED_set_cmp_func(a->revoked, X509_REVOKED_cmp);
         break;
+    default:
+        break;
     }
     return 1;
 }
@@ -279,6 +281,8 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             if (!ossl_x509_crl_set0_libctx(crl, old->libctx, old->propq))
                 return 0;
         }
+        break;
+    default:
         break;
     }
     return 1;

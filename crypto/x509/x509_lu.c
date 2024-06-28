@@ -175,6 +175,8 @@ static int x509_object_cmp(const X509_OBJECT *const *a,
     case X509_LU_NONE:
         /* abort(); */
         return 0;
+    default:
+        break;
     }
     return ret;
 }
@@ -454,6 +456,8 @@ int X509_OBJECT_up_ref_count(X509_OBJECT *a)
         return X509_up_ref(a->data.x509);
     case X509_LU_CRL:
         return X509_CRL_up_ref(a->data.crl);
+    default:
+        break;
     }
     return 1;
 }
@@ -499,6 +503,8 @@ static void x509_object_free_internal(X509_OBJECT *a)
         break;
     case X509_LU_CRL:
         X509_CRL_free(a->data.crl);
+        break;
+    default:
         break;
     }
 }

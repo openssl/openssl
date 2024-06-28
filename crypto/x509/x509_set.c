@@ -291,6 +291,8 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     case NID_sha384:
     case NID_sha512:
         siginf->flags |= X509_SIG_INFO_TLS;
+    default:
+        break;
     }
     siginf->flags |= X509_SIG_INFO_VALID;
     return 1;

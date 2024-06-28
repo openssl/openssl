@@ -74,6 +74,8 @@ static int by_file_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
                                              propq) != 0);
         }
         break;
+    default:
+        break;
     }
     return ok;
 }

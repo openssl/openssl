@@ -122,6 +122,8 @@ static int i2r_OBJECT_DIGEST_INFO(X509V3_EXT_METHOD *method,
     case OSSL_ODI_TYPE_OTHER:
         BIO_printf(out, "%*sDigest Type: Other\n", indent, "");
         break;
+    default:
+        break;
     }
     if (odi->otherObjectTypeID != NULL) {
         BIO_printf(out, "%*sDigest Type Identifier: ", indent, "");
@@ -192,6 +194,8 @@ static int i2r_TARGET(X509V3_EXT_METHOD *method,
     case OSSL_TGT_TARGET_CERT:
         BIO_printf(out, "%*sTarget Cert:\n", indent, "");
         i2r_TARGET_CERT(method, target->choice.targetCert, out, indent + 2);
+        break;
+    default:
         break;
     }
     return 1;

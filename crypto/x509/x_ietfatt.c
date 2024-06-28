@@ -135,6 +135,8 @@ void *OSSL_IETF_ATTR_SYNTAX_get0_value(const OSSL_IETF_ATTR_SYNTAX *a,
         return val->u.oid;
     case OSSL_IETFAS_STRING:
         return val->u.string;
+    default:
+        break;
     }
 
     return NULL;
@@ -228,6 +230,8 @@ int OSSL_IETF_ATTR_SYNTAX_print(BIO *bp, OSSL_IETF_ATTR_SYNTAX *a, int indent)
         case OSSL_IETFAS_OCTETS:
         case OSSL_IETFAS_STRING:
             ASN1_STRING_print(bp, attr_value);
+            break;
+        default:
             break;
         }
     }

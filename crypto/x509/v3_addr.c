@@ -194,6 +194,8 @@ static int i2r_IPAddressOrRanges(BIO *out,
                 return 0;
             BIO_puts(out, "\n");
             continue;
+        default:
+            break;
         }
     }
     return 1;
@@ -266,6 +268,8 @@ static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
                                        f->ipAddressChoice->
                                        u.addressesOrRanges, afi))
                 return 0;
+            break;
+        default:
             break;
         }
     }
@@ -594,6 +598,8 @@ static IPAddressOrRanges *make_prefix_or_range(IPAddrBlocks *addr,
     case IANA_AFI_IPV6:
         (void)sk_IPAddressOrRange_set_cmp_func(aors, v6IPAddressOrRange_cmp);
         break;
+    default:
+        break;
     }
     f->ipAddressChoice->type = IPAddressChoice_addressesOrRanges;
     f->ipAddressChoice->u.addressesOrRanges = aors;
@@ -657,6 +663,8 @@ static int extract_min_max(IPAddressOrRange *aor,
     case IPAddressOrRange_addressRange:
         return (addr_expand(min, aor->u.addressRange->min, length, 0x00) &&
                 addr_expand(max, aor->u.addressRange->max, length, 0xFF));
+    default:
+        break;
     }
     return 0;
 }
@@ -978,6 +986,8 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
             break;
         case IANA_AFI_IPV6:
             addr_chars = v6addr_chars;
+            break;
+        default:
             break;
         }
 

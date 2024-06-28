@@ -80,6 +80,8 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
                 ok = X509_STORE_add_crl(xstore,
                                         OSSL_STORE_INFO_get0_CRL(info));
                 break;
+            default:
+                break;
             }
         }
 
@@ -207,6 +209,8 @@ static int by_store_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                 X509_CRL_free(tmp->data.crl);
             break;
         case X509_LU_NONE:
+            break;
+        default:
             break;
         }
     }
