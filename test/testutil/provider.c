@@ -230,6 +230,8 @@ int fips_provider_version_match(OSSL_LIB_CTX *libctx, const char *versions)
         case MODE_GE:
             r = fips_provider_version_ge(libctx, major, minor, patch);
             break;
+        default:
+            break;
         }
         if (r < 0) {
             TEST_info("Error matching FIPS version: internal error\n");

@@ -94,6 +94,8 @@ static int test_set_min_max_version(int idx_tst)
         meth = OSSL_QUIC_client_method();
         break;
 #endif
+    default:
+        break;
     }
 
     if (meth == NULL)

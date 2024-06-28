@@ -3381,6 +3381,8 @@ static int test_keygen_with_empty_template(int n)
             || !TEST_ptr(ctx = EVP_PKEY_CTX_new(tkey, NULL)))
             goto err;
         break;
+    default:
+        break;
     }
 
     if (!TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
@@ -5269,6 +5271,8 @@ static int test_ecx_not_private_key(int tst)
     case NID_X25519:
     case NID_X448:
         return TEST_skip("signing not supported for X25519/X448");
+    default:
+        break;
     }
 
     /* Check if this algorithm supports public keys */

@@ -3450,6 +3450,8 @@ static int script_39_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
         seq_no          = 1;
         retire_prior_to = 1;
         break;
+    default:
+        break;
     }
 
     if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
@@ -3901,6 +3903,8 @@ static int script_46_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
         ect1            = 50;
         ecnce           = 200;
         break;
+    default:
+        break;
     }
 
     h->inject_word0 = 0;
@@ -4169,6 +4173,8 @@ static int script_53_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
          */
         offset      = 100000;
         data_len    = 1;
+        break;
+    default:
         break;
     }
 

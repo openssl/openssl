@@ -598,6 +598,8 @@ static int test_tx_ack_time_script(int tidx)
                 }
 
                 break;
+        default:
+            break;
         }
 
     testresult = 1;

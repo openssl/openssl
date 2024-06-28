@@ -104,6 +104,8 @@ static int test_param_type_null(OSSL_PARAM *param)
         /* these are allowed to be null */
         return 1;
         break;
+    default:
+        break;
     }
 
     /*

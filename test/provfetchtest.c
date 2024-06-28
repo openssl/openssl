@@ -188,6 +188,8 @@ static const OSSL_ALGORITHM *dummy_query(void *provctx, int operation_id,
         return dummy_store;
     case OSSL_OP_RAND:
         return dummy_rand;
+    default:
+        break;
     }
     return NULL;
 }

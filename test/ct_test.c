@@ -206,6 +206,8 @@ static int assert_validity(CT_TEST_FIXTURE *fixture, STACK_OF(SCT) *scts,
         case SCT_VALIDATION_STATUS_UNKNOWN_VERSION:
             /* Ignore other validation statuses. */
             break;
+        default:
+            break;
         }
     }
 

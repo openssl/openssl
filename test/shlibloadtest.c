@@ -102,6 +102,8 @@ static int test_lib(void)
             goto end;
         }
         break;
+    default:
+        break;
     }
 
     if (test_type == NO_ATEXIT) {

@@ -46,6 +46,8 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
 
         BIO_set_prefix(trace_data->bio, NULL);
         break;
+    default:
+        break;
     }
 
     return ret < 0 ? 0 : ret;

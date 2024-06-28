@@ -111,6 +111,8 @@ static int test_handshake_rtt(int tst)
         st->hand_state = TLS_ST_CR_SRVR_DONE;
         ossl_statem_client_write_transition(s);
         break;
+    default:
+        break;
     }
 
     if (!TEST_int_gt(SSL_get_handshake_rtt(SSL_CONNECTION_GET_SSL(s), &rtt), 0))

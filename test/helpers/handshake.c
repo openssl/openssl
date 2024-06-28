@@ -525,6 +525,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         break;
     case SSL_TEST_VERIFY_NONE:
         break;
+    default:
+        break;
     }
 
     switch (extra->client.max_fragment_len_mode) {
@@ -535,6 +537,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     case TLSEXT_max_fragment_length_DISABLED:
         SSL_CTX_set_tlsext_max_fragment_length(
               client_ctx, extra->client.max_fragment_len_mode);
+        break;
+    default:
         break;
     }
 
@@ -562,6 +566,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         break;
     case SSL_TEST_SERVERNAME_CLIENT_HELLO_NO_V12:
         SSL_CTX_set_client_hello_cb(server_ctx, client_hello_nov12_cb, server2_ctx);
+    default:
+        break;
     }
 
     if (extra->server.cert_status != SSL_TEST_CERT_STATUS_NONE) {
@@ -692,6 +698,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
             goto err;
         break;
     case SSL_TEST_CT_VALIDATION_NONE:
+        break;
+    default:
         break;
     }
 #endif
@@ -1136,6 +1144,8 @@ static connect_phase_t next_phase(const SSL_TEST_CTX *test_ctx,
     case CONNECTION_DONE:
         TEST_error("Trying to progress after connection done");
         break;
+    default:
+        break;
     }
     return -1;
 }
@@ -1164,6 +1174,8 @@ static void do_connect_step(const SSL_TEST_CTX *test_ctx, PEER *peer,
         break;
     case CONNECTION_DONE:
         TEST_error("Action after connection done");
+        break;
+    default:
         break;
     }
 }
@@ -1239,6 +1251,8 @@ static handshake_status_t handshake_status(peer_status_t last_status,
             /* Both peers errored. Return the one that errored first. */
             return client_spoke_last ? SERVER_ERROR : CLIENT_ERROR;
         }
+        default:
+            break;
     }
     /* Control should never reach here. */
     return INTERNAL_ERROR;
@@ -1634,6 +1648,8 @@ static HANDSHAKE_RESULT *do_handshake_internal(
                     client_turn ^= 1;
                 }
             }
+            break;
+        default:
             break;
         }
     }

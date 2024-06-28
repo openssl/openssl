@@ -544,6 +544,8 @@ __owur static int parse_expected_key_type(int *ptype, const char *value)
     case NID_brainpoolP512r1tls13:
         nid = NID_brainpoolP512r1;
         break;
+    default:
+        break;
     }
     if (nid == NID_undef)
         return 0;

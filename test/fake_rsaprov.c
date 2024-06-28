@@ -716,6 +716,8 @@ static const OSSL_ALGORITHM *fake_rsa_query(void *provctx,
 
     case OSSL_OP_STORE:
         return fake_rsa_store_algs;
+    default:
+        break;
     }
     return NULL;
 }

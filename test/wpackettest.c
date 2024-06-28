@@ -608,6 +608,8 @@ static int test_WPACKET_quic_vlint_random(void)
             case 3:
                 expected &= OSSL_QUIC_VLINT_8B_MAX;
                 break;
+        default:
+            break;
         }
 
         if (!TEST_true(WPACKET_init(&pkt, buf))

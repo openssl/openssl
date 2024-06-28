@@ -167,6 +167,8 @@ int main(int ac, char **av)
         case 'p':
             readpkey(contents, (int)sb.st_size);
             break;
+        default:
+            break;
         }
     }
 
@@ -185,6 +187,8 @@ int main(int ac, char **av)
             break;
         case 'p':
             readpkey(contents, (int)sb.st_size);
+            break;
+        default:
             break;
         }
     }

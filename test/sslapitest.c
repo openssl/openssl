@@ -2908,6 +2908,8 @@ static void setupbio(BIO **res, BIO *bio1, BIO *bio2, int type)
     case USE_BIO_2:
         *res = bio2;
         break;
+    default:
+        break;
     }
 }
 
@@ -5389,6 +5391,8 @@ static int test_tls13_ciphersuite(int idx)
             set_at_ssl = 1;
             t12_cipher = TLS1_TXT_RSA_WITH_AES_128_SHA256;
             break;
+    default:
+        break;
     }
 
     for (max_ver = TLS1_2_VERSION; max_ver <= TLS1_3_VERSION; max_ver++) {
@@ -6402,6 +6406,8 @@ static int test_serverinfo_custom(const int idx)
         extension_context = TLS13CONTEXT;
         si = serverinfo_custom_tls13;
         si_len = serverinfo_custom_tls13_len;
+        break;
+    default:
         break;
     }
 
@@ -11416,6 +11422,8 @@ static int check_version_string(SSL *s, int version)
         break;
     case DTLS1_2_VERSION:
         verstr = "DTLSv1.2";
+    default:
+        break;
     }
 
     return TEST_str_eq(verstr, SSL_get_version(s));

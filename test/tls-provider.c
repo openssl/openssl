@@ -1344,6 +1344,8 @@ static void free_asn1_data(int type, void *data)
     case V_ASN1_SEQUENCE:
         ASN1_STRING_free(data);
         break;
+    default:
+        break;
     }
 }
 
@@ -3152,6 +3154,8 @@ static const OSSL_ALGORITHM *tls_prov_query(void *provctx, int operation_id,
         return tls_prov_decoder;
     case OSSL_OP_SIGNATURE:
         return tls_prov_signature;
+    default:
+        break;
     }
     return NULL;
 }

@@ -248,6 +248,8 @@ static int test_explicit_EVP_MD_fetch_by_X509_ALGOR(int idx)
         if (!TEST_int_gt(OBJ_obj2txt(id, sizeof(id), obj, 1), 0))
             goto end;
         break;
+    default:
+        break;
     }
 
     ret = test_explicit_EVP_MD_fetch(id);
@@ -363,6 +365,8 @@ static int test_explicit_EVP_CIPHER_fetch_by_X509_ALGOR(int idx)
     case 1:
         if (!TEST_int_gt(OBJ_obj2txt(id, sizeof(id), obj, 1), 0))
             goto end;
+        break;
+    default:
         break;
     }
 

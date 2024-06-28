@@ -150,6 +150,8 @@ static const OSSL_ALGORITHM *fake_rand_query(void *provctx,
     switch (operation_id) {
     case OSSL_OP_RAND:
         return fake_rand_rand;
+    default:
+        break;
     }
     return NULL;
 }

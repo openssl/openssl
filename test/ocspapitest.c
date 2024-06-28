@@ -177,6 +177,8 @@ static int test_access_description(int testcase)
         if (!TEST_ptr(ad->location))
             goto err;
         break;
+    default:
+        break;
     }
     ACCESS_DESCRIPTION_free(ad);
     ret = 1;

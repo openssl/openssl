@@ -471,6 +471,8 @@ static int test_tls13ccs(int tst)
                 || !TEST_size_t_gt(chsessidlen, 0))
             goto err;
         break;
+    default:
+        break;
     }
 
     ret = 1;

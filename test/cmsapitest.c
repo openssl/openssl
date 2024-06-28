@@ -368,6 +368,8 @@ static int test_d2i_CMS_decode(const int idx)
         if (!TEST_ptr(cms = d2i_CMS_ContentInfo(NULL, &tmp, buf_len)))
             goto end;
         break;
+    default:
+        break;
     }
 
     if (!TEST_int_eq(ERR_peek_error(), 0))
