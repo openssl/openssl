@@ -2492,6 +2492,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
         case SSL_TICKET_SUCCESS_RENEW:
         case SSL_TICKET_EMPTY:
             s->ext.ticket_expected = 1;
+            break;
         default:
             break;
         }
