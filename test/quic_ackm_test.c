@@ -541,63 +541,63 @@ static int test_tx_ack_time_script(int tidx)
     /* Run script. */
     for (s = script; s->kind != TX_ACK_TIME_OP_END; ++s)
         switch (s->kind) {
-            case TX_ACK_TIME_OP_PKT:
-                for (i = 0; i < s->num_pn; ++i) {
-                    tx = h.pkts[pkt_idx + i].pkt;
+        case TX_ACK_TIME_OP_PKT:
+            for (i = 0; i < s->num_pn; ++i) {
+                tx = h.pkts[pkt_idx + i].pkt;
 
-                    tx->pkt_num             = s->pn + i;
-                    tx->pkt_space           = QUIC_PN_SPACE_INITIAL;
-                    tx->num_bytes           = 123;
-                    tx->largest_acked       = QUIC_PN_INVALID;
-                    tx->is_inflight         = 1;
-                    tx->is_ack_eliciting    = 1;
-                    tx->on_lost             = on_lost;
-                    tx->on_acked            = on_acked;
-                    tx->on_discarded        = on_discarded;
-                    tx->cb_arg              = &h.pkts[pkt_idx + i];
-
-                    fake_time = ossl_time_add(fake_time,
-                                              ossl_ticks2time(s->time_advance));
-                    tx->time   = fake_time;
-
-                    if (!TEST_int_eq(ossl_ackm_on_tx_packet(h.ackm, tx), 1))
-                        goto err;
-                }
-
-                pkt_idx += s->num_pn;
-                break;
-
-            case TX_ACK_TIME_OP_ACK:
-                ack.ack_ranges      = &ack_range;
-                ack.num_ack_ranges  = 1;
-
-                ack_range.start     = s->pn;
-                ack_range.end       = s->pn + s->num_pn;
+                tx->pkt_num             = s->pn + i;
+                tx->pkt_space           = QUIC_PN_SPACE_INITIAL;
+                tx->num_bytes           = 123;
+                tx->largest_acked       = QUIC_PN_INVALID;
+                tx->is_inflight         = 1;
+                tx->is_ack_eliciting    = 1;
+                tx->on_lost             = on_lost;
+                tx->on_acked            = on_acked;
+                tx->on_discarded        = on_discarded;
+                tx->cb_arg              = &h.pkts[pkt_idx + i];
 
                 fake_time = ossl_time_add(fake_time,
                                           ossl_ticks2time(s->time_advance));
+                tx->time   = fake_time;
 
-                if (!TEST_int_eq(ossl_ackm_on_rx_ack_frame(h.ackm, &ack,
-                                                           QUIC_PN_SPACE_INITIAL,
-                                                           fake_time), 1))
+                if (!TEST_int_eq(ossl_ackm_on_tx_packet(h.ackm, tx), 1))
                     goto err;
+            }
 
-                break;
+            pkt_idx += s->num_pn;
+            break;
 
-            case TX_ACK_TIME_OP_EXPECT:
-                for (i = 0; i < num_pkts; ++i) {
-                    if (!TEST_int_eq(h.pkts[i].acked,
-                                     (s->expect[i] & 1) != 0 ? 1 : 0))
-                        goto err;
-                    if (!TEST_int_eq(h.pkts[i].lost,
-                                     (s->expect[i] & 2) != 0 ? 1 : 0))
-                        goto err;
-                    if (!TEST_int_eq(h.pkts[i].discarded,
-                                     (s->expect[i] & 4) != 0 ? 1 : 0))
-                        goto err;
-                }
+        case TX_ACK_TIME_OP_ACK:
+            ack.ack_ranges      = &ack_range;
+            ack.num_ack_ranges  = 1;
 
-                break;
+            ack_range.start     = s->pn;
+            ack_range.end       = s->pn + s->num_pn;
+
+            fake_time = ossl_time_add(fake_time,
+                                      ossl_ticks2time(s->time_advance));
+
+            if (!TEST_int_eq(ossl_ackm_on_rx_ack_frame(h.ackm, &ack,
+                                                       QUIC_PN_SPACE_INITIAL,
+                                                       fake_time), 1))
+                goto err;
+
+            break;
+
+        case TX_ACK_TIME_OP_EXPECT:
+            for (i = 0; i < num_pkts; ++i) {
+                if (!TEST_int_eq(h.pkts[i].acked,
+                                 (s->expect[i] & 1) != 0 ? 1 : 0))
+                    goto err;
+                if (!TEST_int_eq(h.pkts[i].lost,
+                                 (s->expect[i] & 2) != 0 ? 1 : 0))
+                    goto err;
+                if (!TEST_int_eq(h.pkts[i].discarded,
+                                 (s->expect[i] & 4) != 0 ? 1 : 0))
+                    goto err;
+            }
+
+            break;
         default:
             break;
         }

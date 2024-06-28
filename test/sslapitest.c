@@ -5377,20 +5377,20 @@ static int test_tls13_ciphersuite(int idx)
     size_t i;
 
     switch (idx) {
-        case 0:
-            set_at_ctx = 1;
-            break;
-        case 1:
-            set_at_ssl = 1;
-            break;
-        case 2:
-            set_at_ctx = 1;
-            t12_cipher = TLS1_TXT_RSA_WITH_AES_128_SHA256;
-            break;
-        case 3:
-            set_at_ssl = 1;
-            t12_cipher = TLS1_TXT_RSA_WITH_AES_128_SHA256;
-            break;
+    case 0:
+        set_at_ctx = 1;
+        break;
+    case 1:
+        set_at_ssl = 1;
+        break;
+    case 2:
+        set_at_ctx = 1;
+        t12_cipher = TLS1_TXT_RSA_WITH_AES_128_SHA256;
+        break;
+    case 3:
+        set_at_ssl = 1;
+        t12_cipher = TLS1_TXT_RSA_WITH_AES_128_SHA256;
+        break;
     default:
         break;
     }

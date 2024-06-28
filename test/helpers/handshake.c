@@ -566,6 +566,7 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         break;
     case SSL_TEST_SERVERNAME_CLIENT_HELLO_NO_V12:
         SSL_CTX_set_client_hello_cb(server_ctx, client_hello_nov12_cb, server2_ctx);
+        break;
     default:
         break;
     }
@@ -1256,8 +1257,8 @@ static handshake_status_t handshake_status(peer_status_t last_status,
         default:
             break;
         }
-        default:
-            break;
+    default:
+        break;
     }
     /* Control should never reach here. */
     return INTERNAL_ERROR;
