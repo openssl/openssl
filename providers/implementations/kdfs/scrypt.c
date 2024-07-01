@@ -461,18 +461,6 @@ static int scrypt_alg(const char *pass, size_t passlen,
         return 0;
     }
 
-    /*
-     * Need to check N: if 2^(128 * r / 8) overflows limit this is
-     * automatically satisfied since N <= UINT64_MAX.
-     */
-
-    if (16 * r <= LOG2_UINT64_MAX) {
-        if (N >= (((uint64_t)1) << (16 * r))) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
-            return 0;
-        }
-    }
-
     /* Memory checks: check total allocated buffer size fits in uint64_t */
 
     /*
