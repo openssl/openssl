@@ -39,10 +39,6 @@ my %params = (
     'PROV_PARAM_SELF_TEST_TYPE' =>   "st-type", # utf8_string
     'PROV_PARAM_SELF_TEST_DESC' =>   "st-desc", # utf8_string
 
-# Indicator callback parameters */
-    'PROV_PARAM_INDICATOR_TYPE' => "ind-type",  # utf8_string
-    'PROV_PARAM_INDICATOR_DESC' => "ind-desc",  # utf8_string
-
 # Provider-native object abstractions
 #
 # These are used when a provider wants to pass object data or an object
@@ -71,7 +67,7 @@ my %params = (
     'ALG_PARAM_ENGINE' =>       "engine",       # utf8_string
     'ALG_PARAM_MAC' =>          "mac",          # utf8_string
     'ALG_PARAM_PROPERTIES' =>   "properties",   # utf8_string
-    'ALG_PARAM_FIPS_APPROVED_INDICATOR' => 'indicator',   # int, -1, 0 or 1
+    'ALG_PARAM_FIPS_APPROVED_INDICATOR' => 'fips-indicator',   # int, -1, 0 or 1
 
 # cipher parameters
     'CIPHER_PARAM_PADDING' =>              "padding",     # uint

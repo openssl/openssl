@@ -165,7 +165,7 @@ static void *kdf_tls1_prf_dup(void *vctx)
         if (!ossl_prov_memdup(src->seed, src->seedlen, &dest->seed,
                               &dest->seedlen))
             goto err;
-        OSS_FIPS_IND_DUP(src, dest)
+        OSSL_FIPS_IND_DUP(dest, src)
     }
     return dest;
 
