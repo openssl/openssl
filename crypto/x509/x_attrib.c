@@ -60,25 +60,19 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
 
 static int print_hex(BIO *out, unsigned char *buf, int len)
 {
-    int result = -1;
+    int result = 1;
     char *hexbuf;
-    int hexlen = len * 2 + 1;
 
-    hexbuf = OPENSSL_malloc(hexlen);
+    if (len == 0)
+        return 1;
+
+    hexbuf = OPENSSL_buf2hexstr(buf, len);
     if (hexbuf == NULL)
         return 0;
-    result = OPENSSL_buf2hexstr_ex(hexbuf, hexlen, NULL, buf, len, ':');
-    if (result != 1)
-        goto err;
-    if ((result = BIO_puts(out, hexbuf)) <= 0)
-        goto err;
+    result = BIO_puts(out, hexbuf) > 0;
 
     OPENSSL_free(hexbuf);
-    return 1;
-
- err:
-    OPENSSL_free(hexbuf);
-    return 0;
+    return result;
 }
 
 static int print_oid(BIO *out, const ASN1_OBJECT *oid) {
