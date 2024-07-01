@@ -185,7 +185,6 @@ Title = FIPS Negative tests (using different curves and digests)
 # Test that a explicit curve is not allowed in fips mode
 Availablein = fips
 DigestVerify = SHA256
-Securitycheck = 1
 Key = EC_EXPLICIT
 Input = "Hello World"
 Result = DIGESTVERIFYINIT_ERROR
@@ -228,3 +227,33 @@ DigestVerify = MD5
 Securitycheck = 1
 Key = P-256-PUBLIC
 Result = DIGESTVERIFYINIT_ERROR
+
+Title = FIPS Indicator tests
+# Check that the indicator callback is triggered
+# We check for signature mismatch since the signature is unique
+
+FIPSversion = >=3.4.0
+DigestSign = SHA3-512
+Securitycheck = 1
+FIPSDisableApproved = key-check
+Key = B-163
+Input = "Hello World"
+Result = SIGNATURE_MISMATCH
+
+# Test that SHA1 is not allowed in fips mode for signing
+FIPSversion = >=3.4.0
+DigestSign = SHA1
+FIPSDisableApproved = digest-check
+Securitycheck = 1
+Key = P-256
+Input = "Hello World"
+Result = SIGNATURE_MISMATCH
+
+# Test that SHA1 is not allowed in fips mode for signing
+FIPSversion = >=3.4.0
+Sign = P-256
+FIPSDisableApproved = digest-check
+Securitycheck = 1
+Ctrl = digest:SHA1
+Input = "0123456789ABCDEF1234"
+Result = KEYOP_MISMATCH
