@@ -84,6 +84,7 @@ static OSSL_PROVIDER *prov_null = NULL;
 static OSSL_PROVIDER *libprov = NULL;
 static OSSL_LIB_CTX *libctx = NULL;
 static int fips_indicator_callback_unapproved_count = 0;
+static int strict_check = 0;
 
 /* List of public and private keys */
 static KEY_LIST *private_keys;
@@ -2066,9 +2067,8 @@ static int encapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     OSSL_PARAM *p = NULL;
 
     if (t->fips_disable_settable_name != NULL) {
-        int strict = 0;
-
-        params[0] = OSSL_PARAM_construct_int(t->fips_disable_settable_name, &strict);
+        params[0] = OSSL_PARAM_construct_int(t->fips_disable_settable_name,
+                                             &strict_check);
         p = params;
     }
 
@@ -2121,8 +2121,8 @@ static int decapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
     OSSL_PARAM *p = NULL;
 
     if (t->fips_disable_settable_name != NULL) {
-        int strict = 0;
-        params[0] = OSSL_PARAM_construct_int(t->fips_disable_settable_name, &strict);
+        params[0] = OSSL_PARAM_construct_int(t->fips_disable_settable_name,
+                                             &strict_check);
         p = params;
     }
     if (EVP_PKEY_decapsulate_init(ctx, p) <= 0) {
@@ -2346,8 +2346,8 @@ static int pkey_test_run_init(EVP_TEST *t)
     OSSL_PARAM *p = NULL;
 
     if (t->fips_disable_settable_name != NULL) {
-        int strict = 0;
-        params[0] = OSSL_PARAM_construct_int(t->fips_disable_settable_name, &strict);
+        params[0] = OSSL_PARAM_construct_int(t->fips_disable_settable_name,
+                                             &strict_check);
         p = params;
     }
 
@@ -3151,9 +3151,8 @@ static int rand_test_run(EVP_TEST *t)
         return 0;
 
     if (t->fips_disable_settable_name != NULL) {
-        int strict = 0;
-
-        *p++ = OSSL_PARAM_construct_int(t->fips_disable_settable_name, &strict);
+        *p++ = OSSL_PARAM_construct_int(t->fips_disable_settable_name,
+                                        &strict_check);
     }
     *p++ = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_USE_DF, &expected->use_df);
     if (expected->cipher != NULL)
@@ -3444,10 +3443,10 @@ static int kdf_test_run(EVP_TEST *t)
     EVP_KDF_CTX *ctx;
 
     if (t->fips_disable_settable_name != NULL) {
-        int strict = 0;
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-        params[0] = OSSL_PARAM_construct_int(t->fips_disable_settable_name, &strict);
+        params[0] = OSSL_PARAM_construct_int(t->fips_disable_settable_name,
+                                             &strict_check);
         if (!EVP_KDF_CTX_set_params(expected->ctx, params))
             return 0;
     }
@@ -3985,10 +3984,11 @@ static int signverify_init(EVP_TEST *t, DIGESTSIGN_DATA *data)
     const char *name = data->md == NULL ? NULL : EVP_MD_get0_name(data->md);
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     OSSL_PARAM *p = NULL;
-    int strict = 0, i;
+    int i;
 
     if (t->fips_disable_settable_name != NULL) {
-        params[0] = OSSL_PARAM_construct_int(t->fips_disable_settable_name, &strict);
+        params[0] = OSSL_PARAM_construct_int(t->fips_disable_settable_name,
+                                             &strict_check);
         p = params;
     }
 

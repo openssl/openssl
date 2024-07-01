@@ -335,7 +335,7 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
                                                  OSSL_FIPS_IND_SETTABLE1,
                                                  ctx->libctx,
                                                  md_nid, sha1_allowed, desc))
-                return 0;
+                goto err;
         }
 #endif
 
