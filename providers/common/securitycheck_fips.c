@@ -57,6 +57,7 @@ int ossl_fips_ind_rsa_key_check(ossl_FIPS_IND *ind, int id,
     return 1;
 }
 
+# ifndef OPENSSL_NO_EC
 int ossl_fips_ind_ec_key_check(ossl_FIPS_IND *ind, int id,
                                OSSL_LIB_CTX *libctx,
                                const EC_GROUP *group, const char *desc,
@@ -82,6 +83,7 @@ int ossl_fips_ind_ec_key_check(ossl_FIPS_IND *ind, int id,
     }
     return 1;
 }
+#endif
 
 int ossl_fips_ind_digest_check(ossl_FIPS_IND *ind, int id,
                                OSSL_LIB_CTX *libctx,

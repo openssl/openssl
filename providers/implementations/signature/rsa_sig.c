@@ -311,9 +311,10 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
         mdprops = ctx->propq;
 
     if (mdname != NULL) {
-        md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
         int md_nid;
         size_t mdname_len = strlen(mdname);
+
+        md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
 
         if (md == NULL) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,

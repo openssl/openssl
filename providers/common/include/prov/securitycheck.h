@@ -14,8 +14,10 @@
 int ossl_rsa_key_op_get_protect(const RSA *rsa, int operation, int *outprotect);
 int ossl_rsa_check_key_size(const RSA *rsa, int protect);
 
+#ifndef OPENSSL_NO_EC
 int ossl_ec_check_curve_allowed(const EC_GROUP *group);
 int ossl_ec_check_security_strength(const EC_GROUP *group, int protect);
+#endif
 
 int ossl_dsa_check_key(const DSA *dsa, int sign);
 int ossl_dh_check_key(const DH *dh);

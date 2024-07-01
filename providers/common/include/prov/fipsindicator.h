@@ -102,9 +102,11 @@ void ossl_FIPS_IND_dup(ossl_FIPS_IND *dst, const ossl_FIPS_IND *src);
 
 int ossl_fips_ind_rsa_key_check(ossl_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
                                 const RSA *rsa, const char *desc, int protect);
+# ifndef OPENSSL_NO_EC
 int ossl_fips_ind_ec_key_check(ossl_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
                                const EC_GROUP *group, const char *desc,
                                int protect);
+# endif
 int ossl_fips_ind_digest_check(ossl_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
                                const EVP_MD *md, const char *desc);
 int ossl_fips_ind_digest_sign_check(ossl_FIPS_IND *ind, int id,
