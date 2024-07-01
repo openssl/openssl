@@ -54,7 +54,6 @@ jobs:
     - name: Gather openssl version info
       working-directory: _build
       run: |
-        $Env:OPENSSL_CONF="apps\openssl.cnf"
         apps/openssl.exe version -v
         apps/openssl.exe version -v | %{($_ -split '\s+')[1]} 
         apps/openssl.exe version -v | %{($_ -split '\s+')[1] -replace '([0-9]+\.[0-9]+)(\..*)','$1'} 
