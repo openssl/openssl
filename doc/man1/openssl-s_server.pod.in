@@ -671,7 +671,10 @@ Signature algorithms to support for client certificate authentication
 =item B<-named_curve> I<val>
 
 Specifies the elliptic curve to use. NOTE: this is single curve, not a list.
-For a list of all possible curves, use:
+
+The list of all supported curves includes EC with parameters as well as X25519
+and X448, which do not support EC parameters. For a list of EC that support
+parameters, use:
 
     $ openssl ecparam -list_curves
 

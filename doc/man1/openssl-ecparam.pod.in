@@ -88,7 +88,8 @@ to get a list of all currently implemented EC parameters.
 
 =item B<-list_curves>
 
-Print out a list of all currently implemented EC parameters names and exit.
+Print out a list of 'short names' of all currently implemented EC with
+parameters and exit.
 
 =item B<-conv_form> I<arg>
 
