@@ -1747,6 +1747,10 @@ DEPEND[html/man3/OSSL_IETF_ATTR_SYNTAX_print.html]=man3/OSSL_IETF_ATTR_SYNTAX_pr
 GENERATE[html/man3/OSSL_IETF_ATTR_SYNTAX_print.html]=man3/OSSL_IETF_ATTR_SYNTAX_print.pod
 DEPEND[man/man3/OSSL_IETF_ATTR_SYNTAX_print.3]=man3/OSSL_IETF_ATTR_SYNTAX_print.pod
 GENERATE[man/man3/OSSL_IETF_ATTR_SYNTAX_print.3]=man3/OSSL_IETF_ATTR_SYNTAX_print.pod
+DEPEND[html/man3/OSSL_INDICATOR_set_callback.html]=man3/OSSL_INDICATOR_set_callback.pod
+GENERATE[html/man3/OSSL_INDICATOR_set_callback.html]=man3/OSSL_INDICATOR_set_callback.pod
+DEPEND[man/man3/OSSL_INDICATOR_set_callback.3]=man3/OSSL_INDICATOR_set_callback.pod
+GENERATE[man/man3/OSSL_INDICATOR_set_callback.3]=man3/OSSL_INDICATOR_set_callback.pod
 DEPEND[html/man3/OSSL_ITEM.html]=man3/OSSL_ITEM.pod
 GENERATE[html/man3/OSSL_ITEM.html]=man3/OSSL_ITEM.pod
 DEPEND[man/man3/OSSL_ITEM.3]=man3/OSSL_ITEM.pod
@@ -3424,6 +3428,7 @@ html/man3/OSSL_HTTP_parse_url.html \
 html/man3/OSSL_HTTP_transfer.html \
 html/man3/OSSL_IETF_ATTR_SYNTAX.html \
 html/man3/OSSL_IETF_ATTR_SYNTAX_print.html \
+html/man3/OSSL_INDICATOR_set_callback.html \
 html/man3/OSSL_ITEM.html \
 html/man3/OSSL_LIB_CTX.html \
 html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html \
@@ -4083,6 +4088,7 @@ man/man3/OSSL_HTTP_parse_url.3 \
 man/man3/OSSL_HTTP_transfer.3 \
 man/man3/OSSL_IETF_ATTR_SYNTAX.3 \
 man/man3/OSSL_IETF_ATTR_SYNTAX_print.3 \
+man/man3/OSSL_INDICATOR_set_callback.3 \
 man/man3/OSSL_ITEM.3 \
 man/man3/OSSL_LIB_CTX.3 \
 man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3 \

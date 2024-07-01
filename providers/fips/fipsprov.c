@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,7 @@
 #include <openssl/fips_names.h>
 #include <openssl/rand.h> /* RAND_get0_public() */
 #include <openssl/proverr.h>
+#include <openssl/indicator.h>
 #include "internal/cryptlib.h"
 #include "prov/implementations.h"
 #include "prov/names.h"
@@ -76,6 +77,7 @@ static OSSL_FUNC_CRYPTO_secure_clear_free_fn *c_CRYPTO_secure_clear_free;
 static OSSL_FUNC_CRYPTO_secure_allocated_fn *c_CRYPTO_secure_allocated;
 static OSSL_FUNC_BIO_vsnprintf_fn *c_BIO_vsnprintf;
 static OSSL_FUNC_self_test_cb_fn *c_stcbfn = NULL;
+static OSSL_FUNC_indicator_cb_fn *c_indcbfn = NULL;
 static OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
 
 typedef struct {
@@ -689,6 +691,9 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
         case OSSL_FUNC_SELF_TEST_CB:
             set_func(c_stcbfn, OSSL_FUNC_self_test_cb(in));
             break;
+        case OSSL_FUNC_INDICATOR_CB:
+            set_func(c_indcbfn, OSSL_FUNC_indicator_cb(in));
+            break;
         default:
             /* Just ignore anything we don't understand */
             break;
@@ -954,6 +959,7 @@ FIPS_FEATURE_CHECK(FIPS_security_check_enabled, fips_security_checks)
 FIPS_FEATURE_CHECK(FIPS_tls_prf_ems_check, fips_tls1_prf_ems_check)
 FIPS_FEATURE_CHECK(FIPS_restricted_drbg_digests_enabled,
                    fips_restricted_drgb_digests)
+
 #undef FIPS_FEATURE_CHECK
 
 void OSSL_SELF_TEST_get_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK **cb,
@@ -969,5 +975,19 @@ void OSSL_SELF_TEST_get_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK **cb,
             *cb = NULL;
         if (cbarg != NULL)
             *cbarg = NULL;
+    }
+}
+
+void OSSL_INDICATOR_get_callback(OSSL_LIB_CTX *libctx,
+                                 OSSL_INDICATOR_CALLBACK **cb)
+{
+    assert(libctx != NULL);
+
+    if (c_indcbfn != NULL && c_get_libctx != NULL) {
+        /* Get the parent libctx */
+        c_indcbfn(c_get_libctx(FIPS_get_core_handle(libctx)), cb);
+    } else {
+        if (cb != NULL)
+            *cb = NULL;
     }
 }
