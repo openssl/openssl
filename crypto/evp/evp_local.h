@@ -10,6 +10,8 @@
 #include <openssl/core_dispatch.h>
 #include "internal/refcount.h"
 
+#include <openssl/rsa.h>
+
 #define EVP_CTRL_RET_UNSUPPORTED -1
 
 
@@ -341,9 +343,25 @@ int evp_do_md_ctx_setparams(const EVP_MD *md, void *provctx,
 
 OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
 
+/* copy from include/openssl/prov_ssl.h */
+#define SSL_MAX_MASTER_KEY_LENGTH 48
+
+#ifndef FIPS_MODULE
+# define PAD_MODE(ctx, pad_mode) \
+    (EVP_PKEY_CTX_get_rsa_padding(ctx, &pad_mode) > 0)
+#else
+# define PAD_MODE(ctx, pad_mode) (0)
+#endif
+
+#define SSL_MASTER_KEY(ctx, arglen, pad_mode)                     \
+    (PAD_MODE(ctx, pad_mode)                                      \
+        && pad_mode == RSA_PKCS1_WITH_TLS_PADDING                 \
+        && *arglen == SSL_MAX_MASTER_KEY_LENGTH)
+
 #define M_check_autoarg(ctx, arg, arglen, err) \
     if (ctx->pmeth->flags & EVP_PKEY_FLAG_AUTOARGLEN) {           \
-        size_t pksize = (size_t)EVP_PKEY_get_size(ctx->pkey);         \
+        size_t pksize = (size_t)EVP_PKEY_get_size(ctx->pkey);     \
+        int pad_mode = RSA_NO_PADDING;                            \
                                                                   \
         if (pksize == 0) {                                        \
             ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY); /*ckerr_ignore*/ \
@@ -353,7 +371,7 @@ OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
             *arglen = pksize;                                     \
             return 1;                                             \
         }                                                         \
-        if (*arglen < pksize) {                                   \
+        if (*arglen < pksize && !SSL_MASTER_KEY(ctx, arglen, pad_mode)) { \
             ERR_raise(ERR_LIB_EVP, EVP_R_BUFFER_TOO_SMALL); /*ckerr_ignore*/ \
             return 0;                                             \
         }                                                         \

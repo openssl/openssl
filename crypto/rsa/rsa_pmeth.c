@@ -27,7 +27,6 @@
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
 #include "rsa_local.h"
-
 /* RSA pkey context structure */
 
 typedef struct {
@@ -54,6 +53,9 @@ typedef struct {
     size_t oaep_labellen;
     /* if to use implicit rejection in PKCS#1 v1.5 decryption */
     int implicit_rejection;
+    /* TLS padding */
+    unsigned int client_version;
+    unsigned int alt_version;
 } RSA_PKEY_CTX;
 
 /* True if PSS parameters are restricted */
@@ -371,17 +373,31 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx,
      */
     RSA *rsa = (RSA *)EVP_PKEY_get0_RSA(ctx->pkey);
 
-    if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
+    if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING
+            || rctx->pad_mode == RSA_PKCS1_WITH_TLS_PADDING) {
         if (!setup_tbuf(rctx, ctx))
             return -1;
         ret = RSA_private_decrypt(inlen, in, rctx->tbuf, rsa, RSA_NO_PADDING);
         if (ret <= 0)
             return ret;
-        ret = RSA_padding_check_PKCS1_OAEP_mgf1(out, ret, rctx->tbuf,
-                                                ret, ret,
-                                                rctx->oaep_label,
-                                                rctx->oaep_labellen,
-                                                rctx->md, rctx->mgf1md);
+
+        if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
+            ret = RSA_padding_check_PKCS1_OAEP_mgf1(out, ret, rctx->tbuf,
+                                                    ret, ret,
+                                                    rctx->oaep_label,
+                                                    rctx->oaep_labellen,
+                                                    rctx->md, rctx->mgf1md);
+        } else {
+            /* RSA_PKCS1_WITH_TLS_PADDING */
+            if (rctx->client_version <= 0) {
+                ERR_raise(ERR_LIB_RSA, RSA_R_BAD_TLS_CLIENT_VERSION);
+                return 0;
+            }
+            ret = ossl_rsa_padding_check_PKCS1_type_2_TLS(NULL, out, *outlen,
+                                                          rctx->tbuf, ret,
+                                                          rctx->client_version,
+                                                          rctx->alt_version);
+        }
     } else {
         if (rctx->pad_mode == RSA_PKCS1_PADDING &&
               rctx->implicit_rejection == 0)
@@ -453,7 +469,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     switch (type) {
     case EVP_PKEY_CTRL_RSA_PADDING:
-        if ((p1 >= RSA_PKCS1_PADDING) && (p1 <= RSA_PKCS1_PSS_PADDING)) {
+        if ((p1 >= RSA_PKCS1_PADDING) && (p1 <= RSA_PKCS1_WITH_TLS_PADDING)) {
             if (!check_padding_md(rctx->md, p1))
                 return 0;
             if (p1 == RSA_PKCS1_PSS_PADDING) {
@@ -480,6 +496,22 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_GET_RSA_PADDING:
         *(int *)p2 = rctx->pad_mode;
+        return 1;
+
+    case EVP_PKEY_CTRL_GET_TLS_CLIENT_VERSION:
+        *(unsigned int *)p2 = rctx->client_version;
+        return 1;
+
+    case EVP_PKEY_CTRL_TLS_CLIENT_VERSION:
+        rctx->client_version = p1;
+        return 1;
+
+    case EVP_PKEY_CTRL_GET_TLS_NEGOTIATED_VERSION:
+        *(unsigned int *)p2 = rctx->alt_version;
+        return 1;
+
+    case EVP_PKEY_CTRL_TLS_NEGOTIATED_VERSION:
+        rctx->alt_version = p1;
         return 1;
 
     case EVP_PKEY_CTRL_RSA_PSS_SALTLEN:
