@@ -99,31 +99,41 @@ check the INSTALL.md file.
 Installation directories
 ------------------------
 
-The default installation directories are derived from environment
-variables.
+On most Unix platforms installation directories are determined at build time via
+constant defines.  On Windows platforms however, installation directories are
+determined via registry keys, as it is common practice to build OpenSSL and
+install it to a variety of locations.
 
-For VC-WIN32, the following defaults are use:
+The following keys:
 
-    PREFIX:      %ProgramFiles(x86)%\OpenSSL
-    OPENSSLDIR:  %CommonProgramFiles(x86)%\SSL
+    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\OPENSSLDIR`
+    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\ENGINESDIR`
+    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\MODULESDIR`
 
-For VC-WIN64, the following defaults are use:
+Can be administratively set, and openssl will take the paths found there as the
+values for OPENSSLDIR, ENGINESDIR and MODULESDIR respectively.
 
-    PREFIX:      %ProgramW6432%\OpenSSL
-    OPENSSLDIR:  %CommonProgramW6432%\SSL
+To enable the reading of registry keys from windows builds, add
+`-DOPENSSL_WINCTX=<string>`to the Configure command line.  This define is used
+at build-time to construct library build specific registry key paths of the
+format:
+`\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432node\OpenSSL-<version>-<ctx>`
 
-Should those environment variables not exist (on a pure Win32
-installation for examples), these fallbacks are used:
+Where `<version>` is the major.minor version of the library being
+built, and `<ctx>` is the value specified by `-DOPENSSL_WINCTX`.  This allows
+for multiple openssl builds to be created and installed on a single system, in
+which each library can use its own set of registry keys.
 
-    PREFIX:      %ProgramFiles%\OpenSSL
-    OPENSSLDIR:  %CommonProgramFiles%\SSL
+Note the installer available at <https://github.com/openssl/installer> will set
+these keys when the installer is run.
 
-ALSO NOTE that those directories are usually write protected, even if
-your account is in the Administrators group.  To work around that,
-start the command prompt by right-clicking on it and choosing "Run as
-Administrator" before running `nmake install`.  The other solution
-is, of course, to choose a different set of directories by using
-`--prefix` and `--openssldir` when configuring.
+A summary table of behavior on Windows platforms
+
+|`OSSL_WINCTX`|Registry key|OpenSSL Behavior                          |
+|-------------|------------|------------------------------------------|
+|Defined      | Defined    |OpenSSL Reads Paths from Registry         |
+|Defined      | Undefined  |OpenSSL returns errors on module/conf load|
+|Undefined    | N/A        |OpenSSL uses build time defaults          |
 
 Special notes for Universal Windows Platform builds, aka `VC-*-UWP`
 -------------------------------------------------------------------

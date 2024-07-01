@@ -40,6 +40,7 @@ int info_main(int argc, char **argv)
     int ret = 1, dirty = 0, type = 0;
     char *prog;
     OPTION_CHOICE o;
+    const char *typedata;
 
     prog = opt_init(argc, argv, info_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -97,7 +98,8 @@ opthelp:
         goto opthelp;
     }
 
-    BIO_printf(bio_out, "%s\n", OPENSSL_info(type));
+    typedata = OPENSSL_info(type);
+    BIO_printf(bio_out, "%s\n", typedata == NULL ? "Undefined" : typedata);
     ret = 0;
  end:
     return ret;
