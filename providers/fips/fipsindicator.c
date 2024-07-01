@@ -19,7 +19,7 @@ void ossl_FIPS_IND_init(ossl_FIPS_IND *ind)
     memset(ind->settable, OSSL_FIPS_IND_STATE_UNKNOWN, sizeof(ind->settable));
 }
 
-void ossl_FIPS_IND_dup(const ossl_FIPS_IND *src, ossl_FIPS_IND *dst)
+void ossl_FIPS_IND_dup(ossl_FIPS_IND *dst, const ossl_FIPS_IND *src)
 {
     *dst = *src;
 }

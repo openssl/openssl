@@ -66,13 +66,13 @@ int ossl_FIPS_IND_set_ctx_param(ossl_FIPS_IND *ind, int id,
                                 const OSSL_PARAM params[], const char *name);
 int ossl_FIPS_IND_get_ctx_param(const ossl_FIPS_IND *ind,
                                       OSSL_PARAM params[]);
-void ossl_FIPS_IND_dup(const ossl_FIPS_IND *src, ossl_FIPS_IND *dst);
+void ossl_FIPS_IND_dup(ossl_FIPS_IND *dst, const ossl_FIPS_IND *src);
 
 /* Place this in the algorithm ctx structure */
 # define OSSL_FIPS_IND_DECLARE ossl_FIPS_IND indicator;
 /* Call this to initialize the indicator */
 # define OSSL_FIPS_IND_INIT(ctx) ossl_FIPS_IND_init(&ctx->indicator);
-# define OSS_FIPS_IND_DUP(src, dst) ossl_FIPS_IND_dup(&src->indicator, &dst->indicator);
+# define OSSL_FIPS_IND_DUP(dst, src) ossl_FIPS_IND_dup(&dst->indicator, &src->indicator);
 
 /*
  * This should be called if a fips check fails, to indicate the operation is not approved
@@ -120,6 +120,6 @@ int ossl_fips_ind_digest_sign_check(ossl_FIPS_IND *ind, int id,
 # define OSSL_FIPS_IND_SET_CTX_PARAM(ctx, id, params, name) 1
 # define OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
 # define OSSL_FIPS_IND_GET_CTX_PARAM(ctx, params) 1
-# define OSS_FIPS_IND_DUP(src, dst)
+# define OSSL_FIPS_IND_DUP(dst, src)
 
 #endif
