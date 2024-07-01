@@ -104,7 +104,7 @@ static int on_end_headers(nghttp3_conn *conn, int64_t stream_id, int fin,
 static int on_recv_data(nghttp3_conn *conn, int64_t stream_id,
                         const uint8_t *data, size_t datalen,
                         void *conn_user_data, void *stream_user_data) {
-  fprintf(stderr, "on_recv_data! %ld\n", datalen);
+  fprintf(stderr, "on_recv_data! %ld\n", (unsigned long) datalen);
   fprintf(stderr, "on_recv_data! %.*s\n", (int)datalen, data);
   return 0;
 }
@@ -156,7 +156,7 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
       (item->revents & SSL_POLL_EVENT_ISU)) {
     SSL *stream = SSL_accept_stream(ssl_ids[0].s, 0);
     if (stream != NULL) {
-      printf("=> Received connection on %ld\n", SSL_get_stream_id(stream));
+      printf("=> Received connection on %lld\n", (unsigned long long) SSL_get_stream_id(stream));
       add_id(SSL_get_stream_id(stream), stream, h3ssl);
       return 1; /* loop until we have all the streams */
     }
@@ -176,7 +176,7 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
       printf("Create uni beacause !h3ssl->has_uni\n");
       SSL *rstream = SSL_new_stream(ssl_ids[0].s, SSL_STREAM_FLAG_UNI);
       if (rstream != NULL) {
-        fprintf(stderr, "=> Opened on %ld\n", SSL_get_stream_id(rstream));
+        fprintf(stderr, "=> Opened on %llu\n", (unsigned long long) SSL_get_stream_id(rstream));
         fflush(stderr);
       } else {
         fprintf(stderr, "=> Stream == NULL!\n");
@@ -185,7 +185,7 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
       }
       SSL *pstream = SSL_new_stream(ssl_ids[0].s, SSL_STREAM_FLAG_UNI);
       if (pstream != NULL) {
-        fprintf(stderr, "=> Opened on %ld\n", SSL_get_stream_id(pstream));
+        fprintf(stderr, "=> Opened on %llu\n", (unsigned long long) SSL_get_stream_id(pstream));
         fflush(stderr);
       } else {
         fprintf(stderr, "=> Stream == NULL!\n");
@@ -198,7 +198,7 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
         printf("nghttp3_conn_bind_qpack_streams failed!\n");
         return -1;
       }
-      printf("control: NONE enc %ld dec %ld\n", p_streamid, r_streamid);
+      printf("control: NONE enc %llu dec %llu\n", (unsigned long long) p_streamid, (unsigned long long) r_streamid);
       add_id(SSL_get_stream_id(rstream), rstream, h3ssl);
       add_id(SSL_get_stream_id(pstream), pstream, h3ssl);
       h3ssl->has_uni = 1;
@@ -222,19 +222,19 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
         continue;
       }
       if (ret <= 0) {
-        printf("SSL_read on %ld failed\n", ssl_ids[i].id);
+        printf("SSL_read on %llu failed\n", (unsigned long long) ssl_ids[i].id);
         continue; // TODO
       } else {
-        printf("reading something %d on %ld\n", ret, ssl_ids[i].id);
+        printf("reading something %d on %llu\n", ret, (unsigned long long) ssl_ids[i].id);
         int r = nghttp3_conn_read_stream(h3conn, ssl_ids[i].id, msg2, ret, 0);
-        printf("nghttp3_conn_read_stream used %d of %d on %ld\n", r, ret,
-               ssl_ids[i].id);
+        printf("nghttp3_conn_read_stream used %d of %d on %llu\n", r, ret,
+               (unsigned long long) ssl_ids[i].id);
         hassomething++;
       }
     } else {
       /* Figure out ??? */
-      printf("revent %ld (%d) on %ld\n", item->revents, SSL_POLL_EVENT_W,
-             ssl_ids[i].id);
+      printf("revent %llu (%d) on %llu\n", (unsigned long long) item->revents, SSL_POLL_EVENT_W,
+             (unsigned long long) ssl_ids[i].id);
     }
   }
   return hassomething;
@@ -278,8 +278,8 @@ static int nothing_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
       continue;
     } else {
       /* Figure out ??? */
-      printf("revent %ld (%d) on %ld\n", item->revents, SSL_POLL_EVENT_NONE,
-             ssl_ids[i].id);
+      printf("revent %llu (%d) on %llu\n", (unsigned long long) item->revents, SSL_POLL_EVENT_NONE,
+             (unsigned long long) ssl_ids[i].id);
     }
     hassomething++;
   }
@@ -317,12 +317,12 @@ static int quic_server_write(struct h3ssl *h3ssl, uint64_t streamid,
         ERR_print_errors_fp(stderr);
         return 0;
       } else {
-        printf("written %ld on %ld flags %ld\n", len, streamid, flags);
+        printf("written %ld on %lld flags %lld\n", (unsigned long) len, (unsigned long long) streamid, (unsigned long long) flags);
         return 1;
       }
     }
   }
-  printf("quic_server_write %ld on %ld (NOT FOUND!)\n", len, streamid);
+  printf("quic_server_write %ld on %lld (NOT FOUND!)\n", (unsigned long) len, (unsigned long long) streamid);
   return 0;
 }
 
@@ -542,13 +542,13 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
       sveccnt = nghttp3_conn_writev_stream(h3conn, &streamid, &fin, vec,
                                            nghttp3_arraylen(vec));
       if (sveccnt <= 0) {
-        printf("nghttp3_conn_writev_stream done: %ld\n", sveccnt);
+        printf("nghttp3_conn_writev_stream done: %ld\n", (long int) sveccnt);
         break;
       } else {
-        printf("nghttp3_conn_writev_stream: %ld\n", sveccnt);
+        printf("nghttp3_conn_writev_stream: %ld\n",  (long int) sveccnt);
       }
       for (int i = 0; i < sveccnt; i++) {
-        printf("quic_server_write on %ld for %ld\n", streamid, vec[i].len);
+        printf("quic_server_write on %llu for %ld\n", (unsigned long long) streamid, (unsigned long) vec[i].len);
         size_t numbytes = vec[i].len;
         if (!quic_server_write(&h3ssl, streamid, vec[i].base, vec[i].len, fin,
                                &numbytes)) {
