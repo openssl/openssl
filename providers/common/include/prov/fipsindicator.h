@@ -100,6 +100,18 @@ void ossl_FIPS_IND_dup(const ossl_FIPS_IND *src, ossl_FIPS_IND *dst);
 
 #define OSSL_FIPS_IND_GET(ctx) &((ctx)->indicator)
 
+int ossl_fips_ind_rsa_key_check(ossl_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
+                                const RSA *rsa, const char *desc, int protect);
+int ossl_fips_ind_ec_key_check(ossl_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
+                               const EC_GROUP *group, const char *desc,
+                               int protect);
+int ossl_fips_ind_digest_check(ossl_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
+                               const EVP_MD *md, const char *desc);
+int ossl_fips_ind_digest_sign_check(ossl_FIPS_IND *ind, int id,
+                                    OSSL_LIB_CTX *libctx,
+                                    int nid, int sha1_allowed,
+                                    const char *desc);
+
 #else
 # define OSSL_FIPS_IND_DECLARE
 # define OSSL_FIPS_IND_INIT(ctx)
