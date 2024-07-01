@@ -3031,7 +3031,7 @@ int speed_main(int argc, char **argv)
             ERR_print_errors(bio_err);
             op_count = 1;
         } else {
-            pkey_print_message("private", "rsa encrypt",
+            pkey_print_message("public", "rsa encrypt",
                                rsa_keys[testnum].bits, seconds.rsa);
             /* RSA_blinding_on(rsa_key[testnum],NULL); */
             Time_F(START);
