@@ -54,7 +54,7 @@ Availablein = fips
 Derive=KAS-ECC-CDH_P-192_C0
 Securitycheck = 1
 PeerKey=KAS-ECC-CDH_P-192_C0-Peer-PUBLIC
-Result = DERIVE_SET_PEER_ERROR
+Result = KEYOP_INIT_ERROR
 
 PrivateKey=KAS-ECC-CDH_P-192_C1
 -----BEGIN PRIVATE KEY-----
