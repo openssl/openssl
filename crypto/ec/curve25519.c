@@ -5715,3 +5715,54 @@ ossl_x25519_public_from_private(uint8_t out_public_value[32],
 
     OPENSSL_cleanse(e, sizeof(e));
 }
+
+int
+ossl_x25519_private_from_ed25519(uint8_t out_private_key[32],
+                                 const uint8_t private_key[32])
+{
+    uint8_t md[SHA512_DIGEST_LENGTH];
+    EVP_MD *sha512 = EVP_MD_fetch(NULL, SN_sha512, NULL);
+    EVP_MD_CTX *hash_ctx = EVP_MD_CTX_new();
+    unsigned int sz;
+    int res = 0;
+
+    if (!sha512 || !hash_ctx
+        || !EVP_DigestInit_ex(hash_ctx, sha512, NULL)
+        || !EVP_DigestUpdate(hash_ctx, private_key, 32)
+        || !EVP_DigestFinal_ex(hash_ctx, md, &sz))
+        goto err;
+
+    md[0] &= 248;
+    md[31] &= 127;
+    md[31] |= 64;
+
+    memcpy(out_private_key, md, 32);
+
+    res = 1;
+err:
+    OPENSSL_cleanse(md, sizeof(md));
+    EVP_MD_free(sha512);
+    EVP_MD_CTX_free(hash_ctx);
+
+    return res;
+}
+
+int
+ossl_x25519_public_from_ed25519(uint8_t out_public_value[32],
+                                const uint8_t public_value[32])
+{
+    fe Z, Y;
+    fe zplusy, zminusy, zminusy_inv;
+
+    fe_frombytes(Y, public_value);
+    fe_1(Z);
+
+    fe_add(zplusy, Z, Y);
+    fe_sub(zminusy, Z, Y);
+    fe_invert(zminusy_inv, zminusy);
+    fe_mul(zplusy, zplusy, zminusy_inv);
+
+    fe_tobytes(out_public_value, zplusy);
+
+    return 1;
+}

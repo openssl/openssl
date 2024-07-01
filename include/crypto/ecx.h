@@ -131,6 +131,13 @@ void
 ossl_x448_public_from_private(uint8_t out_public_value[56],
                               const uint8_t private_key[56]);
 
+int
+ossl_x25519_private_from_ed25519(uint8_t out_private_key[32],
+                                 const uint8_t private_key[32]);
+int
+ossl_x25519_public_from_ed25519(uint8_t out_public_value[32],
+                                const uint8_t public_value[32]);
+
 
 /* Backend support */
 typedef enum {
