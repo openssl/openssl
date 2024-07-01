@@ -18,6 +18,7 @@
 # include "internal/nelem.h"
 # include "internal/numbers.h"
 # include "prov/provider_ctx.h"
+# include "prov/fipsindicator.h"
 
 /* How many times to read the TSC as a randomness source. */
 # define TSC_READ_COUNT                 4
@@ -171,6 +172,8 @@ struct prov_drbg_st {
     OSSL_CALLBACK *cleanup_entropy_fn;
     OSSL_INOUT_CALLBACK *get_nonce_fn;
     OSSL_CALLBACK *cleanup_nonce_fn;
+
+    OSSL_FIPS_IND_DECLARE
 };
 
 PROV_DRBG *ossl_rand_drbg_new
@@ -255,6 +258,6 @@ void ossl_crngt_cleanup_entropy(PROV_DRBG *drbg,
                                 unsigned char *out, size_t outlen);
 
 /* Confirm digest is allowed to be used with a DRBG */
-int ossl_drbg_verify_digest(ossl_unused OSSL_LIB_CTX *libctx, const EVP_MD *md);
+int ossl_drbg_verify_digest(PROV_DRBG *drbg, OSSL_LIB_CTX *libctx, const EVP_MD *md);
 
 #endif
