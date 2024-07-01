@@ -935,7 +935,8 @@ int ossl_drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL);
     if (p != NULL && !OSSL_PARAM_set_time_t(p, drbg->reseed_time_interval))
         return 0;
-
+    if (!OSSL_FIPS_IND_GET_CTX_PARAM(drbg, params))
+        return 0;
     return 1;
 }
 
@@ -990,13 +991,13 @@ int ossl_drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL);
     if (p != NULL && !OSSL_PARAM_get_time_t(p, &drbg->reseed_time_interval))
         return 0;
+
     return 1;
 }
 
-/* Confirm digest is allowed to be used with a DRBG */
-int ossl_drbg_verify_digest(ossl_unused OSSL_LIB_CTX *libctx, const EVP_MD *md)
-{
 #ifdef FIPS_MODULE
+static int digest_allowed(const EVP_MD *md)
+{
     /* FIPS 140-3 IG D.R limited DRBG digests to a specific set */
     static const char *const allowed_digests[] = {
         "SHA1",                     /* SHA 1 allowed */
@@ -1005,12 +1006,28 @@ int ossl_drbg_verify_digest(ossl_unused OSSL_LIB_CTX *libctx, const EVP_MD *md)
     };
     size_t i;
 
-    if (FIPS_restricted_drbg_digests_enabled(libctx)) {
-        for (i = 0; i < OSSL_NELEM(allowed_digests); i++)
-            if (EVP_MD_is_a(md, allowed_digests[i]))
-                return 1;
-        ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
-        return 0;
+    for (i = 0; i < OSSL_NELEM(allowed_digests); i++) {
+        if (EVP_MD_is_a(md, allowed_digests[i]))
+            return 1;
+    }
+    return 0;
+}
+#endif
+
+/* Confirm digest is allowed to be used with a DRBG */
+int ossl_drbg_verify_digest(PROV_DRBG *drbg, OSSL_LIB_CTX *libctx,
+                            const EVP_MD *md)
+{
+#ifdef FIPS_MODULE
+    int approved = digest_allowed(md);
+
+    if (!approved) {
+        if (!OSSL_FIPS_IND_ON_UNAPPROVED(drbg, OSSL_FIPS_IND_SETTABLE0,
+                                         libctx, "DRBG", "Digest",
+                                         FIPS_restricted_drbg_digests_enabled)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
+            return 0;
+        }
     }
 #endif
     /* Outside of FIPS, any digests that are not XOF are allowed */

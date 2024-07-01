@@ -30,6 +30,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
+#include "prov/fipsindicator.h"
 
 #include <stdlib.h>
 
@@ -77,6 +78,7 @@ typedef struct {
     unsigned int alt_version;
     /* PKCS#1 v1.5 decryption mode */
     unsigned int implicit_rejection;
+    OSSL_FIPS_IND_DECLARE
 } PROV_RSA_CTX;
 
 static void *rsa_newctx(void *provctx)
@@ -89,21 +91,22 @@ static void *rsa_newctx(void *provctx)
     if (prsactx == NULL)
         return NULL;
     prsactx->libctx = PROV_LIBCTX_OF(provctx);
+    OSSL_FIPS_IND_INIT(prsactx)
 
     return prsactx;
 }
 
 static int rsa_init(void *vprsactx, void *vrsa, const OSSL_PARAM params[],
-                    int operation)
+                    int operation, const char *desc)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
+    int protect = 0;
 
     if (!ossl_prov_is_running() || prsactx == NULL || vrsa == NULL)
         return 0;
 
-    if (!ossl_rsa_check_key(prsactx->libctx, vrsa, operation))
+    if (!ossl_rsa_key_op_get_protect(vrsa, operation, &protect))
         return 0;
-
     if (!RSA_up_ref(vrsa))
         return 0;
     RSA_free(prsactx->rsa);
@@ -120,19 +123,31 @@ static int rsa_init(void *vprsactx, void *vrsa, const OSSL_PARAM params[],
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    return rsa_set_ctx_params(prsactx, params);
+
+    OSSL_FIPS_IND_SET_APPROVED(prsactx)
+    if (!rsa_set_ctx_params(prsactx, params))
+        return 0;
+#ifdef FIPS_MODULE
+    if (!ossl_fips_ind_rsa_key_check(OSSL_FIPS_IND_GET(prsactx),
+                                     OSSL_FIPS_IND_SETTABLE0, prsactx->libctx,
+                                     prsactx->rsa, desc, protect))
+        return 0;
+#endif
+    return 1;
 }
 
 static int rsa_encrypt_init(void *vprsactx, void *vrsa,
                             const OSSL_PARAM params[])
 {
-    return rsa_init(vprsactx, vrsa, params, EVP_PKEY_OP_ENCRYPT);
+    return rsa_init(vprsactx, vrsa, params, EVP_PKEY_OP_ENCRYPT,
+                    "RSA Encrypt Init");
 }
 
 static int rsa_decrypt_init(void *vprsactx, void *vrsa,
                             const OSSL_PARAM params[])
 {
-    return rsa_init(vprsactx, vrsa, params, EVP_PKEY_OP_DECRYPT);
+    return rsa_init(vprsactx, vrsa, params, EVP_PKEY_OP_DECRYPT,
+                    "RSA Decrypt Init");
 }
 
 static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
@@ -408,7 +423,8 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
     p = OSSL_PARAM_locate(params, OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION);
     if (p != NULL && !OSSL_PARAM_set_uint(p, prsactx->implicit_rejection))
         return 0;
-
+    if (!OSSL_FIPS_IND_GET_CTX_PARAM(prsactx, params))
+        return 0;
     return 1;
 }
 
@@ -421,6 +437,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION, NULL),
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION, NULL),
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION, NULL),
+    OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
     OSSL_PARAM_END
 };
 
@@ -442,6 +459,10 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         return 0;
     if (params == NULL)
         return 1;
+
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(prsactx, OSSL_FIPS_IND_SETTABLE0, params,
+                                     OSSL_ASYM_CIPHER_PARAM_FIPS_KEY_CHECK))
+        return  0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST);
     if (p != NULL) {
@@ -566,7 +587,6 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
             return 0;
         prsactx->implicit_rejection = implicit_rejection;
     }
-
     return 1;
 }
 
@@ -580,6 +600,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION, NULL),
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION, NULL),
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION, NULL),
+    OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_ASYM_CIPHER_PARAM_FIPS_KEY_CHECK)
     OSSL_PARAM_END
 };
 
