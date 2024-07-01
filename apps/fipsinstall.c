@@ -140,7 +140,8 @@ err:
     return ret;
 }
 
-static int load_fips_prov_and_run_self_test(const char *prov_name)
+static int load_fips_prov_and_run_self_test(const char *prov_name,
+                                            int *is30fipsprov)
 {
     int ret = 0;
     OSSL_PROVIDER *prov = NULL;
@@ -170,7 +171,16 @@ static int load_fips_prov_and_run_self_test(const char *prov_name)
             BIO_printf(bio_err, "\t%-10s\t%s\n", "version:", vers);
         if (OSSL_PARAM_modified(params + 2))
             BIO_printf(bio_err, "\t%-10s\t%s\n", "build:", build);
+    } else {
+        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_VERSION,
+                                             &vers, sizeof(vers));
+        *p = OSSL_PARAM_construct_end();
+        if (!OSSL_PROVIDER_get_params(prov, params)) {
+            BIO_printf(bio_err, "Failed to query FIPS module parameters\n");
+            goto end;
+        }
     }
+    *is30fipsprov = (strncmp("3.0.", vers, 4) == 0);
     ret = 1;
 end:
     OSSL_PROVIDER_unload(prov);
@@ -233,7 +243,9 @@ static int write_config_fips_section(BIO *out, const char *section,
                       module_mac_len))
         goto end;
 
-    if (install_mac != NULL && install_mac_len > 0) {
+    if (install_mac != NULL
+            && install_mac_len > 0
+            && opts->self_test_onload == 0) {
         if (!print_mac(out, OSSL_PROV_FIPS_PARAM_INSTALL_MAC, install_mac,
                        install_mac_len)
             || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
@@ -356,6 +368,7 @@ end:
 int fipsinstall_main(int argc, char **argv)
 {
     int ret = 1, verify = 0, gotkey = 0, gotdigest = 0, pedantic = 0;
+    int isfips30prov = 0, setoption = 0;
     const char *section_name = "fips_sect";
     const char *mac_name = "HMAC";
     const char *prov_name = "fips";
@@ -454,11 +467,13 @@ opthelp:
             verify = 1;
             break;
         case OPT_SELF_TEST_ONLOAD:
+            setoption = 1;
             fips_opts.self_test_onload = 1;
             break;
         case OPT_SELF_TEST_ONINSTALL:
             if (!check_non_pedantic_fips(pedantic, "self_test_oninstall"))
                 goto end;
+            setoption = 1;
             fips_opts.self_test_onload = 0;
             break;
         }
@@ -556,33 +571,41 @@ opthelp:
     if (!do_mac(ctx, read_buffer, module_bio, module_mac, &module_mac_len))
         goto end;
 
-    if (fips_opts.self_test_onload == 0) {
-        mem_bio = BIO_new_mem_buf((const void *)INSTALL_STATUS_VAL,
-                                  strlen(INSTALL_STATUS_VAL));
-        if (mem_bio == NULL) {
-            BIO_printf(bio_err, "Unable to create memory BIO\n");
-            goto end;
-        }
-        if (!do_mac(ctx2, read_buffer, mem_bio, install_mac, &install_mac_len))
-            goto end;
-    } else {
-        install_mac_len = 0;
+    /* Calculate the MAC for the indicator status - it may not be used */
+    mem_bio = BIO_new_mem_buf((const void *)INSTALL_STATUS_VAL,
+                              strlen(INSTALL_STATUS_VAL));
+    if (mem_bio == NULL) {
+        BIO_printf(bio_err, "Unable to create memory BIO\n");
+        goto end;
     }
+    if (!do_mac(ctx2, read_buffer, mem_bio, install_mac, &install_mac_len))
+        goto end;
 
     if (verify) {
+        if (fips_opts.self_test_onload == 1)
+            install_mac_len = 0;
         if (!verify_config(in_fname, section_name, module_mac, module_mac_len,
                            install_mac, install_mac_len))
             goto end;
         if (!quiet)
             BIO_printf(bio_err, "VERIFY PASSED\n");
     } else {
-
         conf = generate_config_and_load(prov_name, section_name, module_mac,
                                         module_mac_len, &fips_opts);
         if (conf == NULL)
             goto end;
-        if (!load_fips_prov_and_run_self_test(prov_name))
+        if (!load_fips_prov_and_run_self_test(prov_name, &isfips30prov))
             goto end;
+
+        /*
+         * In OpenSSL 3.1 the code was changed so that the status indicator is
+         * not written out by default.
+         * For backwards compatibility - if the detected FIPS provider is 3.0.X
+         * then the indicator status will be written to the config
+         * file unless 'self_test_onload' is set on the command line.
+         */
+        if (setoption == 0 && isfips30prov)
+            fips_opts.self_test_onload = 0;
 
         fout =
             out_fname == NULL ? dup_bio_out(FORMAT_TEXT)
@@ -591,6 +614,7 @@ opthelp:
             BIO_printf(bio_err, "Failed to open file\n");
             goto end;
         }
+
         if (!write_config_fips_section(fout, section_name,
                                        module_mac, module_mac_len, &fips_opts,
                                        install_mac, install_mac_len))
