@@ -120,9 +120,14 @@ static int test_hexstr_ex_to_from(int test_index)
 
     return TEST_true(OPENSSL_hexstr2buf_ex(buf, sizeof(buf), &len, test->in, ':'))
            && TEST_mem_eq(buf, len, test->expected, test->expected_len)
+           && TEST_false(OPENSSL_buf2hexstr_ex(out, 3 * len - 1, NULL, buf, len,
+                                               ':'))
            && TEST_true(OPENSSL_buf2hexstr_ex(out, sizeof(out), NULL, buf, len,
-                        ':'))
-           && TEST_str_eq(out, test->in);
+                                              ':'))
+           && TEST_str_eq(out, test->in)
+           && TEST_true(OPENSSL_buf2hexstr_ex(out, sizeof(out), NULL, buf, 0,
+                                              ':'))
+           && TEST_size_t_eq(strlen(out), 0);
 }
 
 int setup_tests(void)
