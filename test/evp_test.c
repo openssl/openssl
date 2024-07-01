@@ -2245,7 +2245,6 @@ static int pkey_test_init(EVP_TEST *t, const char *name,
         EVP_PKEY_free(pkey);
         return 0;
     }
-    kdata->controls = sk_OPENSSL_STRING_new_null();
     kdata->keyopinit = keyopinit;
     kdata->keyop = keyop;
     if (!TEST_ptr(kdata->ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propquery))) {
@@ -2254,6 +2253,7 @@ static int pkey_test_init(EVP_TEST *t, const char *name,
         return 0;
     }
     t->data = kdata;
+    kdata->controls = sk_OPENSSL_STRING_new_null();
     return 1;
 }
 
@@ -2465,7 +2465,7 @@ static const EVP_TEST_METHOD pdecrypt_test_method = {
 
 static int verify_test_init(EVP_TEST *t, const char *name)
 {
-    return pkey_test_init(t, name, 1, EVP_PKEY_verify_init_ex, 0);
+    return pkey_test_init(t, name, 1, EVP_PKEY_verify_init_ex, NULL);
 }
 
 static int verify_test_run(EVP_TEST *t)

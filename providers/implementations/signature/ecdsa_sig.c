@@ -277,7 +277,7 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx, const char *mdname,
         if (!ossl_fips_ind_digest_sign_check(OSSL_FIPS_IND_GET(ctx),
                                              OSSL_FIPS_IND_SETTABLE1, ctx->libctx,
                                              md_nid, sha1_allowed, desc))
-            return 0;
+            goto err;
     }
 #endif
 
