@@ -3037,7 +3037,6 @@ skip_hmac:
             loopargs[i].sigsize = loopargs[i].buflen;
             if (loopargs[i].dsa_sign_ctx[testnum] == NULL
                 || EVP_PKEY_sign_init(loopargs[i].dsa_sign_ctx[testnum]) <= 0
-
                 || EVP_PKEY_sign(loopargs[i].dsa_sign_ctx[testnum],
                                  loopargs[i].buf2,
                                  &loopargs[i].sigsize,
@@ -3114,7 +3113,6 @@ skip_hmac:
             loopargs[i].sigsize = loopargs[i].buflen;
             if (loopargs[i].ecdsa_sign_ctx[testnum] == NULL
                 || EVP_PKEY_sign_init(loopargs[i].ecdsa_sign_ctx[testnum]) <= 0
-
                 || EVP_PKEY_sign(loopargs[i].ecdsa_sign_ctx[testnum],
                                  loopargs[i].buf2,
                                  &loopargs[i].sigsize,
