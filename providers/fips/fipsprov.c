@@ -931,6 +931,12 @@ int CRYPTO_secure_allocated(const void *ptr)
     return c_CRYPTO_secure_allocated(ptr);
 }
 
+void *CRYPTO_aligned_alloc(size_t num, size_t align, void **freeptr,
+                           const char *file, int line)
+{
+    return NULL;
+}
+
 int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 {
     va_list args;

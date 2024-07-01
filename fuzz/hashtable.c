@@ -99,7 +99,7 @@ static void fuzz_free_cb(HT_VALUE *v)
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    HT_CONFIG fuzz_conf = {NULL, fuzz_free_cb, NULL, 0};
+    HT_CONFIG fuzz_conf = {NULL, fuzz_free_cb, NULL, 0, 1};
 
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();

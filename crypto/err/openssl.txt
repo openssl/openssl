@@ -500,6 +500,7 @@ CRYPTO_R_RANDOM_SECTION_ERROR:119:random section error
 CRYPTO_R_SECURE_MALLOC_FAILURE:111:secure malloc failure
 CRYPTO_R_STRING_TOO_LONG:112:string too long
 CRYPTO_R_TOO_MANY_BYTES:113:too many bytes
+CRYPTO_R_TOO_MANY_NAMES:132:too many names
 CRYPTO_R_TOO_MANY_RECORDS:114:too many records
 CRYPTO_R_TOO_SMALL_BUFFER:116:too small buffer
 CRYPTO_R_UNKNOWN_NAME_IN_RANDOM_SECTION:120:unknown name in random section
