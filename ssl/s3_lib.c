@@ -9,7 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
+#include "internal/e_os.h"
+
 #include <openssl/objects.h>
 #include "internal/nelem.h"
 #include "ssl_local.h"

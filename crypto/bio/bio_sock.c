@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "bio_local.h"
+
 #ifndef OPENSSL_NO_SOCK
 # define SOCKET_PROTOCOL IPPROTO_TCP
 # ifdef SO_MAXCONN
@@ -38,6 +39,7 @@ static int wsa_init_done = 0;
 #   include <sys/select.h>
 #  endif
 # endif
+# include "internal/sockets.h" /* for openssl_fdset() */
 
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 int BIO_get_host_ip(const char *str, unsigned char *ip)

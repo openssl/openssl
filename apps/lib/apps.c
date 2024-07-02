@@ -48,6 +48,9 @@
 #include "s_apps.h"
 #include "apps.h"
 
+#include "internal/sockets.h" /* for openssl_fdset() */
+#include "internal/e_os.h"
+
 #ifdef _WIN32
 static int WIN32_rename(const char *from, const char *to);
 # define rename(from, to) WIN32_rename((from), (to))

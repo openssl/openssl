@@ -8,6 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/e_os.h" /* LIST_SEPARATOR_CHAR */
 #include "apps.h"
 #include "progs.h"
 
