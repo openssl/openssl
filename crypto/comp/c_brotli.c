@@ -292,6 +292,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_comp_brotli_init)
 #   define LIBBROTLIDEC "brotlidec"
 #  endif
 
+    ERR_set_mark();
     brotli_encode_dso = DSO_load(NULL, LIBBROTLIENC, NULL, 0);
     if (brotli_encode_dso != NULL) {
         p_encode_init = (encode_init_ft)DSO_bind_func(brotli_encode_dso, "BrotliEncoderCreateInstance");
@@ -319,8 +320,10 @@ DEFINE_RUN_ONCE_STATIC(ossl_comp_brotli_init)
             || p_decode_error == NULL || p_decode_error_string == NULL || p_decode_is_finished == NULL
             || p_decode_oneshot == NULL) {
         ossl_comp_brotli_cleanup();
+        ERR_pop_to_mark();
         return 0;
     }
+    ERR_clear_last_mark();
 # endif
     return 1;
 }
