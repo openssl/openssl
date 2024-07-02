@@ -75,6 +75,12 @@ sub import {
         }
 
         print STDERR "DEBUG: $path\n" if DEBUG;
+        my $rel_prefix = "";
+        unless ($path =~ m|^/|) {
+            # workaround for relative path
+            $path = "../$path" unless -e $path;
+            $path = "../$path" unless -e $path;
+        }
 
         unless (-e $path
                 && ($path =~ m/(?:^|\/)MODULES.txt/ || -d $path)) {
@@ -106,7 +112,7 @@ sub import {
                 }
                 croak "All lines in $path must be a directory, not a file: $l"
                     unless -e $checked && -d $checked;
-                push @INC, $checked;
+                push @INC, "$rel_prefix$checked";
             }
         } else {                # It's a directory
             push @INC, $path;

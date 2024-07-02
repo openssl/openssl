@@ -8,6 +8,8 @@
  # and File::Spec::Unix does just that.
  use File::Spec::Unix;
  use File::Spec;
+ use File::Spec::Functions;
+ use File::Basename;
  use Cwd qw(abs_path);
  sub _fixup_path {
      my $path = shift;
@@ -38,7 +40,7 @@
  sub sourcefile {
      return _fixup_path(File::Spec->catfile($config{sourcedir}, @_))
  }
- use lib sourcedir('util', 'perl');
+ use lib catfile(dirname(abs_path(__FILE__)), 'util', 'perl');
  use OpenSSL::Util;
 -}
 package configdata;
@@ -77,12 +79,13 @@ unless (caller) {
     use Getopt::Long;
     use File::Spec::Functions;
     use File::Basename;
+    use Cwd qw(abs_path);
     use File::Compare qw(compare_text);
     use File::Copy;
     use Pod::Usage;
-
-    use lib '{- sourcedir('util', 'perl') -}';
-    use OpenSSL::fallback '{- sourcefile('external', 'perl', 'MODULES.txt') -}';
+ 
+    use lib catfile(dirname(abs_path(__FILE__)), 'util', 'perl');
+    use OpenSSL::fallback 'external/perl/MODULES.txt';
 
     my $here = dirname($0);
 
@@ -109,7 +112,7 @@ unless (caller) {
             );
 
         use lib '.';
-        use lib '{- sourcedir('Configurations') -}';
+        use lib catfile(dirname(abs_path(__FILE__)), 'Configurations');
         use gentemplate;
 
         open my $buildfile_template_fh, ">$buildfile_template"
@@ -126,8 +129,10 @@ unless (caller) {
 
         my $prepend = <<'_____';
 use File::Spec::Functions;
-use lib '{- sourcedir('util', 'perl') -}';
-use lib '{- sourcedir('Configurations') -}';
+use File::Basename;
+use Cwd qw(abs_path);
+use lib catfile(dirname(abs_path(__FILE__)), 'util', 'perl');
+use lib catfile(dirname(abs_path(__FILE__)), 'Configurations');
 use lib '{- $config{builddir} -}';
 use platform;
 _____
