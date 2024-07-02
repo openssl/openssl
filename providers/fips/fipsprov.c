@@ -38,6 +38,7 @@ static OSSL_FUNC_provider_teardown_fn fips_teardown;
 static OSSL_FUNC_provider_gettable_params_fn fips_gettable_params;
 static OSSL_FUNC_provider_get_params_fn fips_get_params;
 static OSSL_FUNC_provider_query_operation_fn fips_query;
+static OSSL_FUNC_provider_random_fn fips_random;
 
 #define ALGC(NAMES, FUNC, CHECK)                \
     { { NAMES, FIPS_DEFAULT_PROPERTIES, FUNC }, CHECK }
@@ -112,6 +113,20 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 void ossl_fips_prov_ossl_ctx_free(void *fgbl)
 {
     OPENSSL_free(fgbl);
+}
+
+static int fips_random(ossl_unused void *vprov, int which, void *buf, size_t n,
+                       unsigned int strength)
+{
+    OSSL_LIB_CTX *libctx;
+    PROV_CTX *prov = (PROV_CTX *)vprov;
+
+    if (prov == NULL)
+        return 0;
+    libctx = ossl_prov_ctx_get0_libctx(prov);
+    if (which == OSSL_PROV_RANDOM_PRIVATE)
+        return RAND_priv_bytes_ex(libctx, buf, n, strength);
+    return RAND_bytes_ex(libctx, buf, n, strength);
 }
 
 /* Parameters we provide to the core */
@@ -551,6 +566,7 @@ static const OSSL_DISPATCH fips_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_GET_CAPABILITIES,
       (void (*)(void))ossl_prov_get_capabilities },
     { OSSL_FUNC_PROVIDER_SELF_TEST, (void (*)(void))fips_self_test },
+    { OSSL_FUNC_PROVIDER_RANDOM, (void (*)(void))fips_random },
     OSSL_DISPATCH_END
 };
 
