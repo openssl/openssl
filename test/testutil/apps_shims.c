@@ -10,8 +10,20 @@
 #include <stdlib.h>
 #include "apps.h"
 #include "../testutil.h"
+#include <sys/mman.h>
 
 /* shim that avoids sucking in too much from apps/apps.c */
+
+void *app_mmap(size_t sz, const char *what) {
+	void* ptr = mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	       
+	if(!TEST_ptr(ptr == MAP_FAILED)){
+        	TEST_info("Could not allocate %zu bytes for %s\n", sz, what);
+        	abort();
+	}
+	return ptr;
+}
+
 
 void *app_malloc(size_t sz, const char *what)
 {
