@@ -251,6 +251,9 @@ L<provider(7)>
 
 The provider KEYEXCH interface was introduced in OpenSSL 3.0.
 
+The Key Exchange Parameters "fips-indicator", "key-check" and "digest-check"
+were added in OpenSSL 3.4.
+
 =head1 COPYRIGHT
 
 Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.

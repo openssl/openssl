@@ -258,7 +258,7 @@ considered valid.
 
 A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
 This may be used after calling OSSL_FUNC_rand_generate(). It may
-return 0 if either the "digest-check" is set to 0.
+return 0 if the "digest-check" is set to 0.
 This option is used by the OpenSSL FIPS provider.
 
 =item "digest-check" (B<OSSL_DRBG_PARAM_FIPS_DIGEST_CHECK>) <int>
@@ -305,6 +305,8 @@ L<EVP_RAND(3)>
 =head1 HISTORY
 
 The provider RAND interface was introduced in OpenSSL 3.0.
+The Rand Parameters "fips-indicator" and "digest-check" were added in
+OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

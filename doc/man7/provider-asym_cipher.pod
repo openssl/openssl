@@ -281,6 +281,8 @@ L<provider(7)>
 =head1 HISTORY
 
 The provider ASYM_CIPHER interface was introduced in OpenSSL 3.0.
+The Asymmetric Cipher Parameters "fips-indicator" and "key-check"
+were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

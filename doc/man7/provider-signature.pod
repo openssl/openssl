@@ -464,6 +464,8 @@ L<provider(7)>
 =head1 HISTORY
 
 The provider SIGNATURE interface was introduced in OpenSSL 3.0.
+The Signature Parameters "fips-indicator", "key-check" and "digest-check"
+were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
