@@ -122,6 +122,23 @@ static const u64 kPrime[4] =
     { 0xfffffffffffffffful, 0xffffffff, 0, 0xffffffff00000001ul };
 static const u64 bottom63bits = 0x7ffffffffffffffful;
 
+#ifdef B_ENDIAN
+static void bin32_to_felem(felem out, const u8 in[32])
+{
+    unsigned int i = 0;
+    smallfelem tmp;
+
+    ec_nistp_pre_comp_deserialize(tmp, in, 64/8, 32, 256);
+    for (i = 0; i < NLIMBS; i++) {
+        out[i] = tmp[i];
+    }
+}
+
+static void smallfelem_to_bin32(u8 out[32], const smallfelem in)
+{
+    ec_nistp_pre_comp_serialize(out, in, 64/8, 32);
+}
+#else
 /*
  * bin32_to_felem takes a little-endian byte array and converts it into felem
  * form. This assumes that the CPU is little-endian.
@@ -145,6 +162,7 @@ static void smallfelem_to_bin32(u8 out[32], const smallfelem in)
     *((u64 *)&out[16]) = in[2];
     *((u64 *)&out[24]) = in[3];
 }
+#endif /* B_ENDIAN */
 
 /* BN_to_felem converts an OpenSSL BIGNUM into an felem */
 static int BN_to_felem(felem out, const BIGNUM *bn)

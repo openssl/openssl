@@ -307,6 +307,17 @@ const EC_METHOD *EC_GFp_nistp224_method(void)
 /*
  * Helper functions to convert field elements to/from internal representation
  */
+#ifdef B_ENDIAN
+static void bin28_to_felem(felem out, const u8 in[28])
+{
+    ec_nistp_pre_comp_deserialize(out, in, 56/8, 28, 224);
+}
+
+static void felem_to_bin28(u8 out[28], const felem in)
+{
+    ec_nistp_pre_comp_serialize(out, in, 56/8, 28);
+}
+#else
 static void bin28_to_felem(felem out, const u8 in[28])
 {
     out[0] = *((const limb *)(in)) & 0x00ffffffffffffff;
@@ -325,6 +336,7 @@ static void felem_to_bin28(u8 out[28], const felem in)
         out[i + 21] = in[3] >> (8 * i);
     }
 }
+#endif /* B_ENDIAN */
 
 /* From OpenSSL BIGNUM to internal representation */
 static int BN_to_felem(felem out, const BIGNUM *bn)
