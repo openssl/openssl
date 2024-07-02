@@ -62,6 +62,8 @@ PKCS#12 output (export) options:
 [B<-certpbe> I<cipher>]
 [B<-descert>]
 [B<-macalg> I<digest>]
+[B<-pbmac1>]
+[B<-pbmac1_pbkdf2_kdf_md> I<digest>]
 [B<-iter> I<count>]
 [B<-noiter>]
 [B<-nomaciter>]
@@ -344,6 +346,15 @@ then both, the private key and the certificates are encrypted using triple DES.
 =item B<-macalg> I<digest>
 
 Specify the MAC digest algorithm. If not included SHA256 will be used.
+
+=item B<-pbmac1>
+
+Use PBMAC1 for MAC protection of the PKCS#12 file.
+
+=item B<-pbmac1_pbkdf2_kdf_md> I<digest>
+
+Specify the PBKDF2 KDF digest algorithm. If not included SHA256 will be used.
+Until C<-pbmac1> is specified, this parameter is ignored.
 
 =item B<-iter> I<count>
 

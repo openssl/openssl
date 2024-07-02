@@ -54,7 +54,7 @@ if (eval { require Win32::API; 1; }) {
 }
 $ENV{OPENSSL_WIN32_UTF8}=1;
 
-plan tests => 31;
+plan tests => 41;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -168,6 +168,59 @@ ok(grep(/Trusted key usage (Oracle)/, @pkcs12info) == 0,
     my @match = grep /:error:/, <DATA>;
     close DATA;
     ok(scalar @match > 0 ? 0 : 1, "test_export_pkcs12_outerr6_empty");
+}
+
+# Test export of PEM file with both cert and key, with password.
+# PBMAC1 protection, default algorithms
+{
+    my $pbmac1_id = "pbmac1_defaults";
+    ok(run(app(["openssl", "pkcs12", "-export", "-pbmac1",
+            "-inkey", srctop_file(@path, "cert-key-cert.pem"),
+            "-in", srctop_file(@path, "cert-key-cert.pem"),
+            "-passout", "pass:1234",
+            "-out", "$pbmac1_id.p12"], stderr => "${pbmac1_id}_err.txt")),
+    "test_export_pkcs12_${pbmac1_id}");
+    open DATA, "${pbmac1_id}_err.txt";
+    my @match = grep /:error:/, <DATA>;
+    close DATA;
+    ok(scalar @match > 0 ? 0 : 1, "test_export_pkcs12_${pbmac1_id}_err.empty");
+}
+
+# Test export of PEM file with both cert and key, with password.
+# PBMAC1 protection, non-default algorithms
+{
+    my $pbmac1_id = "pbmac1_nondefaults";
+    ok(run(app(["openssl", "pkcs12", "-export", "-pbmac1",
+            "-inkey", srctop_file(@path, "cert-key-cert.pem"),
+            "-in", srctop_file(@path, "cert-key-cert.pem"),
+            "-passout", "pass:1234",
+            "-pbmac1_pbkdf2_kdf_md", "sha512", "-macalg", "sha384",
+            "-out", "$pbmac1_id.p12"], stderr => "${pbmac1_id}_err.txt")),
+    "test_export_pkcs12_${pbmac1_id}");
+    open DATA, "${pbmac1_id}_err.txt";
+    my @match = grep /:error:/, <DATA>;
+    close DATA;
+    ok(scalar @match > 0 ? 0 : 1, "test_export_pkcs12_${pbmac1_id}_err.empty");
+}
+
+# Test pbmac1 pkcs12 good files, RFC 9579
+for my $file ("pbmac1_256_256.good.p12", "pbmac1_512_256.good.p12", "pbmac1_512_512.good.p12")
+{
+    my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+    ok(run(app(["openssl", "pkcs12", "-in", $path, "-password", "pass:1234", "-noenc"])),
+      "test pbmac1 pkcs12 file $file");
+}
+
+# Test pbmac1 pkcs12 bad files, RFC 9579
+for my $file ("pbmac1_256_256.bad-iter.p12", "pbmac1_256_256.bad-salt.p12", "pbmac1_256_256.no-len.p12")
+{
+    my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+    with({ exit_checker => sub { return shift == 1; } },
+        sub {
+            ok(run(app(["openssl", "pkcs12", "-in", $path, "-password", "pass:1234", "-noenc"])),
+            "test pbmac1 pkcs12 bad file $file");
+            }
+        );
 }
 
 # Test some bad pkcs12 files

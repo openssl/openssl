@@ -102,6 +102,7 @@ void PKCS12_get0_mac(const ASN1_OCTET_STRING **pmac,
                      const ASN1_OCTET_STRING **psalt,
                      const ASN1_INTEGER **piter,
                      const PKCS12 *p12);
+PBKDF2PARAM *PKCS12_get1_pbmac1_pbkdf_param(const X509_ALGOR *macalg);
 
 const ASN1_TYPE *PKCS12_SAFEBAG_get0_attr(const PKCS12_SAFEBAG *bag,
                                           int attr_nid);
@@ -269,6 +270,9 @@ int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen);
 int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
                    unsigned char *salt, int saltlen, int iter,
                    const EVP_MD *md_type);
+int PKCS12_set_pbmac1_with_pbkdf2(PKCS12 *p12, const char *pass, int passlen,
+                                  unsigned char *salt, int saltlen, int iter,
+                                  const EVP_MD *md_type, const char *prf_md_name);
 int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt,
                      int saltlen, const EVP_MD *md_type);
 unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
