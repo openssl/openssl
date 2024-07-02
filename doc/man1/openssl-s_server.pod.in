@@ -412,7 +412,6 @@ information about the ciphers used and various session parameters.
 The output is in HTML format so this option can be used with a web browser.
 The special URL C</renegcert> turns on client cert validation, and C</reneg>
 tells the server to request renegotiation.
-The B<-early_data> option cannot be used with this option.
 
 =item B<-WWW>, B<-HTTP>
 
@@ -428,7 +427,6 @@ Extensions of C<html>, C<htm>, and C<php> are C<text/html> and all others are
 C<text/plain>.
 In addition, the special URL C</stats> will return status
 information like the B<-www> option.
-Neither of these options can be used in conjunction with B<-early_data>.
 
 =item B<-http_server_binmode>
 
