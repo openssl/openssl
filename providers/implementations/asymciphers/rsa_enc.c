@@ -123,6 +123,8 @@ static int rsa_init(void *vprsactx, void *vrsa, const OSSL_PARAM params[],
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+
+    OSSL_FIPS_IND_SET_APPROVED(prsactx)
     if (!rsa_set_ctx_params(prsactx, params))
         return 0;
 #ifdef FIPS_MODULE

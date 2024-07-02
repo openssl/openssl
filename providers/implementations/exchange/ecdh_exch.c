@@ -116,6 +116,8 @@ int ecdh_init(void *vpecdhctx, void *vecdh, const OSSL_PARAM params[])
     pecdhctx->k = vecdh;
     pecdhctx->cofactor_mode = -1;
     pecdhctx->kdf_type = PROV_ECDH_KDF_NONE;
+
+    OSSL_FIPS_IND_SET_APPROVED(pecdhctx)
     if (!ecdh_set_ctx_params(pecdhctx, params))
         return 0;
 #ifdef FIPS_MODULE

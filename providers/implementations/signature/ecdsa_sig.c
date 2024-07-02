@@ -154,6 +154,7 @@ static int ecdsa_signverify_init(void *vctx, void *ec,
 
     ctx->operation = operation;
 
+    OSSL_FIPS_IND_SET_APPROVED(ctx)
     if (!ecdsa_set_ctx_params(ctx, params))
         return 0;
 #ifdef FIPS_MODULE

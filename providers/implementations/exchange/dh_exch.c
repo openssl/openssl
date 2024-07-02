@@ -132,6 +132,8 @@ static int dh_init(void *vpdhctx, void *vdh, const OSSL_PARAM params[])
     DH_free(pdhctx->dh);
     pdhctx->dh = vdh;
     pdhctx->kdf_type = PROV_DH_KDF_NONE;
+
+    OSSL_FIPS_IND_SET_APPROVED(pdhctx)
     if (!dh_set_ctx_params(pdhctx, params))
         return 0;
 #ifdef FIPS_MODULE

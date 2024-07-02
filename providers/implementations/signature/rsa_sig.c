@@ -513,6 +513,7 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa,
         return 0;
     }
 
+    OSSL_FIPS_IND_SET_APPROVED(prsactx)
     if (!rsa_set_ctx_params(prsactx, params))
         return 0;
 #ifdef FIPS_MODULE

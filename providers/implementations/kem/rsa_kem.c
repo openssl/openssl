@@ -138,6 +138,7 @@ static int rsakem_init(void *vprsactx, void *vrsa,
     RSA_free(prsactx->rsa);
     prsactx->rsa = vrsa;
 
+    OSSL_FIPS_IND_SET_APPROVED(prsactx)
     if (!rsakem_set_ctx_params(prsactx, params))
         return 0;
 #ifdef FIPS_MODULE

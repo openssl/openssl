@@ -249,6 +249,7 @@ static int dsa_signverify_init(void *vpdsactx, void *vdsa,
 
     pdsactx->operation = operation;
 
+    OSSL_FIPS_IND_SET_APPROVED(pdsactx)
     if (!dsa_set_ctx_params(pdsactx, params))
         return 0;
 #ifdef FIPS_MODULE
