@@ -51,7 +51,7 @@ OCSP_check_validity, OCSP_basic_verify
                          ASN1_GENERALIZEDTIME *nextupd,
                          long sec, long maxsec);
 
- int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
+ int OCSP_basic_verify(OCSP_BASICRESP *bs, const STACK_OF(X509) *certs,
                       X509_STORE *st, unsigned long flags);
 
 =head1 DESCRIPTION

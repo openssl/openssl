@@ -11,7 +11,7 @@ X509 certificate list addition functions
  #include <openssl/x509.h>
 
  int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags);
- int X509_add_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs, int flags);
+ int X509_add_certs(STACK_OF(X509) *sk, const STACK_OF(X509) *certs, int flags);
 
 =head1 DESCRIPTION
 

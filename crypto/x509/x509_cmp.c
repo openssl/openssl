@@ -224,7 +224,7 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
     return 1;
 }
 
-int X509_add_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs, int flags)
+int X509_add_certs(STACK_OF(X509) *sk, const STACK_OF(X509) *certs, int flags)
 /* compiler would allow 'const' for the certs, yet they may get up-ref'ed */
 {
     if (sk == NULL) {
@@ -234,7 +234,7 @@ int X509_add_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs, int flags)
     return ossl_x509_add_certs_new(&sk, certs, flags);
 }
 
-int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, STACK_OF(X509) *certs,
+int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, const STACK_OF(X509) *certs,
                             int flags)
 /* compiler would allow 'const' for the certs, yet they may get up-ref'ed */
 {
@@ -345,7 +345,7 @@ unsigned long X509_NAME_hash_old(const X509_NAME *x)
 #endif
 
 /* Search a stack of X509 for a match */
-X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, const X509_NAME *name,
+X509 *X509_find_by_issuer_and_serial(const STACK_OF(X509) *sk, const X509_NAME *name,
                                      const ASN1_INTEGER *serial)
 {
     int i;
@@ -365,7 +365,7 @@ X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, const X509_NAME *name,
     return NULL;
 }
 
-X509 *X509_find_by_subject(STACK_OF(X509) *sk, const X509_NAME *name)
+X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name)
 {
     X509 *x509;
     int i;

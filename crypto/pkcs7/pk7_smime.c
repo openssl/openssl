@@ -20,9 +20,9 @@
 
 static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
 
-PKCS7 *PKCS7_sign_ex(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
-                     BIO *data, int flags, OSSL_LIB_CTX *libctx,
-                     const char *propq)
+PKCS7 *PKCS7_sign_ex(X509 *signcert, EVP_PKEY *pkey,
+                     const STACK_OF(X509) *certs, BIO *data, int flags,
+                     OSSL_LIB_CTX *libctx, const char *propq)
 {
     PKCS7 *p7;
     int i;
@@ -64,7 +64,7 @@ PKCS7 *PKCS7_sign_ex(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
     return NULL;
 }
 
-PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
+PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, const STACK_OF(X509) *certs,
                   BIO *data, int flags)
 {
     return PKCS7_sign_ex(signcert, pkey, certs, data, flags, NULL, NULL);
@@ -211,7 +211,7 @@ static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
 }
 
 /* This strongly overlaps with CMS_verify(), partly with PKCS7_dataVerify() */
-int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
+int PKCS7_verify(PKCS7 *p7, const STACK_OF(X509) *certs, X509_STORE *store,
                  BIO *indata, BIO *out, int flags)
 {
     STACK_OF(X509) *signers;
@@ -356,7 +356,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
     return ret;
 }
 
-STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
+STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, const STACK_OF(X509) *certs,
                                    int flags)
 {
     STACK_OF(X509) *signers;
@@ -419,7 +419,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
 
 /* Build a complete PKCS#7 enveloped data */
 
-PKCS7 *PKCS7_encrypt_ex(STACK_OF(X509) *certs, BIO *in,
+PKCS7 *PKCS7_encrypt_ex(const STACK_OF(X509) *certs, BIO *in,
                         const EVP_CIPHER *cipher, int flags,
                         OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -462,8 +462,8 @@ PKCS7 *PKCS7_encrypt_ex(STACK_OF(X509) *certs, BIO *in,
 
 }
 
-PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher,
-                     int flags)
+PKCS7 *PKCS7_encrypt(const STACK_OF(X509) *certs, BIO *in,
+                     const EVP_CIPHER *cipher, int flags)
 {
     return PKCS7_encrypt_ex(certs, in, cipher, flags, NULL, NULL);
 }

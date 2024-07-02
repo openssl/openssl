@@ -801,7 +801,7 @@ unsigned long X509_subject_name_hash_old(X509 *x);
 # define X509_ADD_FLAG_NO_DUP   0x4
 # define X509_ADD_FLAG_NO_SS    0x8
 int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags);
-int X509_add_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs, int flags);
+int X509_add_certs(STACK_OF(X509) *sk, const STACK_OF(X509) *certs, int flags);
 
 int X509_cmp(const X509 *a, const X509 *b);
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b);
@@ -1013,9 +1013,10 @@ int EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key,
                               const unsigned char *bytes, int len);
 
 /* lookup a cert from a X509 STACK */
-X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, const X509_NAME *name,
+X509 *X509_find_by_issuer_and_serial(const STACK_OF(X509) *sk,
+                                     const X509_NAME *name,
                                      const ASN1_INTEGER *serial);
-X509 *X509_find_by_subject(STACK_OF(X509) *sk, const X509_NAME *name);
+X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name);
 
 DECLARE_ASN1_FUNCTIONS(PBEPARAM)
 DECLARE_ASN1_FUNCTIONS(PBE2PARAM)
