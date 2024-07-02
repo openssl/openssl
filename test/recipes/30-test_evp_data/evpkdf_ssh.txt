@@ -4865,3 +4865,13 @@ Ctrl.hexsession_id = hexsession_id:a4ebd45934f56792b5112dcd75a1075fdc889245
 Ctrl.type = type:A
 Output = FF
 Result = KDF_MISMATCH
+
+Availablein = fips
+FIPSversion = >=3.4.0
+KDF = SSHKDF
+Ctrl.digest = digest:SHA256
+Ctrl.hexkey = hexkey:00010203040506070809
+Ctrl.hexxcghash = hexxcghash:0000000000000000000000000000000000000000000000000000000000000000
+Ctrl.hexsession_id = hexsession_id:0000000000000000000000000000000000000000000000000000000000000000
+Ctrl.type = type:C
+Result = KDF_CTRL_ERROR

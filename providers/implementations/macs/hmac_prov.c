@@ -20,6 +20,10 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#ifdef FIPS_MODULE
+# include <openssl/err.h>
+# include <openssl/proverr.h>
+#endif
 
 #include "internal/ssl3_cbc.h"
 
@@ -27,6 +31,10 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+
+#ifdef FIPS_MODULE
+# define MAC_HMAC_MIN_KEY_LEN_BITS 112
+#endif
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -59,6 +67,9 @@ struct hmac_data_st {
     int tls_header_set;
     unsigned char tls_mac_out[EVP_MAX_MD_SIZE];
     size_t tls_mac_out_size;
+#ifdef FIPS_MODULE
+    int pedantic;
+#endif
 };
 
 static void *hmac_new(void *provctx)
@@ -74,6 +85,9 @@ static void *hmac_new(void *provctx)
         return NULL;
     }
     macctx->provctx = provctx;
+#ifdef FIPS_MODULE
+    macctx->pedantic = 1;
+#endif
 
     return macctx;
 }
@@ -106,6 +120,9 @@ static void *hmac_dup(void *vsrc)
     *dst = *src;
     dst->ctx = ctx;
     dst->key = NULL;
+#ifdef FIPS_MODULE
+    dst->pedantic = src->pedantic;
+#endif
     memset(&dst->digest, 0, sizeof(dst->digest));
 
     if (!HMAC_CTX_copy(dst->ctx, src->ctx)
@@ -143,6 +160,13 @@ static int hmac_setkey(struct hmac_data_st *macctx,
                        const unsigned char *key, size_t keylen)
 {
     const EVP_MD *digest;
+
+#ifdef FIPS_MODULE
+    if (macctx->pedantic && ((keylen * 8) < MAC_HMAC_MIN_KEY_LEN_BITS)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SIZE_TOO_SMALL);
+        return 0;
+    }
+#endif
 
     if (macctx->key != NULL)
         OPENSSL_secure_clear_free(macctx->key, macctx->keylen);
@@ -233,6 +257,9 @@ static int hmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 }
 
 static const OSSL_PARAM known_gettable_ctx_params[] = {
+#ifdef FIPS_MODULE
+    OSSL_PARAM_int(OSSL_MAC_PARAM_PEDANTIC, NULL),
+#endif
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_BLOCK_SIZE, NULL),
     OSSL_PARAM_END
@@ -256,10 +283,17 @@ static int hmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
             && !OSSL_PARAM_set_int(p, hmac_block_size(macctx)))
         return 0;
 
+#ifdef FIPS_MODULE
+    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_PEDANTIC)) != NULL
+            && !OSSL_PARAM_set_int(p, macctx->pedantic))
+        return 0;
+#endif
+
     return 1;
 }
 
 static const OSSL_PARAM known_settable_ctx_params[] = {
+    OSSL_PARAM_int(OSSL_MAC_PARAM_PEDANTIC, NULL),
     OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_DIGEST, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_PROPERTIES, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
@@ -288,6 +322,13 @@ static int hmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 
     if (!ossl_prov_digest_load_from_params(&macctx->digest, params, ctx))
         return 0;
+
+#ifdef FIPS_MODULE
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_PEDANTIC)) != NULL) {
+        if (!OSSL_PARAM_get_int(p, &macctx->pedantic))
+            return 0;
+    }
+#endif
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)

@@ -149,6 +149,13 @@ parameters are relevant to, or are understood by all KDFs:
 
 =over 4
 
+=item "pedantic" (B<OSSL_KDF_PARAM_PEDANTIC>) <integer>
+
+Get or set the status for strict compliance. If the value is 0, the operation
+is not approved unless related standard defines it can be used for legacy use.
+
+Currently, only FIPS provider supports this parameter.
+
 =item "size" (B<OSSL_KDF_PARAM_SIZE>) <unsigned integer>
 
 Gets the output size from the associated KDF ctx.

@@ -59,6 +59,10 @@ int EVP_KDF_names_do_all(const EVP_KDF *kdf,
                          void (*fn)(const char *name, void *data),
                          void *data);
 
+# ifdef FIPS_MODULE
+#  define EVP_KDF_MIN_KEY_LEN_BITS 112
+# endif
+
 # define EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND  0
 # define EVP_KDF_HKDF_MODE_EXTRACT_ONLY        1
 # define EVP_KDF_HKDF_MODE_EXPAND_ONLY         2

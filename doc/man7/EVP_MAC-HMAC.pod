@@ -31,6 +31,14 @@ The following parameter can be set with EVP_MAC_CTX_set_params():
 
 =over 4
 
+=item "pedantic" (B<OSSL_MAC_PARAM_PEDANTIC>) <integer>
+
+Set the status for strict compliance. The value 0 or 1 is expected.
+If set to 0, the operation is not approved unless related standard defines it
+can be used for legacy use.
+
+Currently, only FIPS provider supports this parameter.
+
 =item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
 Sets the MAC key.
@@ -68,6 +76,17 @@ It may be set but is currently ignored.
 =for comment The "flags" parameter is passed directly to HMAC_CTX_set_flags().
 
 The following parameter can be retrieved with EVP_MAC_CTX_get_params():
+
+=over 4
+
+=item "pedantic" (B<OSSL_MAC_PARAM_PEDANTIC>) <integer>
+
+Get the status for strict compliance. If the value is 0, the operation is not
+approved unless related standard defines it can be used for legacy use.
+
+Currently, only FIPS provider supports this parameter.
+
+=back
 
 =over 4
 

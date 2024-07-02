@@ -42,8 +42,18 @@ Ctrl.client_random = hexseed:62e1fd91f23f558a605f28478c58cf72637b89784d959df7e94
 Output = d06139889fffac1e3a71865f504aa5d0d2a2e89506c6f2279b670c3e1b74f531016a2530c51a3a0f7e1d6590d0f0566b2f387f8d11fd4f731cdd572d2eae927f6f2f81410b25e6960be68985add6c38445ad9f8c64bf8068bf9a6679485d966f1ad6f68b43495b10a683755ea2b858d70ccac7ec8b053c6bd41ca299d4e51928
 
 # Missing digest.
+Availablein = default
 KDF = TLS1-PRF
 Ctrl.Secret = hexsecret:01
 Ctrl.Seed = hexseed:02
 Output = 03
 Result = KDF_DERIVE_ERROR
+
+Title = TLS12 bad key size test
+
+# Bad key size
+Availablein = fips
+FIPSversion = >=3.4.0
+KDF = TLS1-PRF
+Ctrl.Secret = hexsecret:00010203040506070809
+Result = KDF_CTRL_ERROR

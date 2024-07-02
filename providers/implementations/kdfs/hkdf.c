@@ -64,6 +64,7 @@ static int HKDF_Expand(const EVP_MD *evp_md,
 
 /* Settable context parameters that are common across HKDF and the TLS KDF */
 #define HKDF_COMMON_SETTABLES                                           \
+        OSSL_PARAM_int(OSSL_KDF_PARAM_PEDANTIC, NULL),                  \
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MODE, NULL, 0),           \
         OSSL_PARAM_int(OSSL_KDF_PARAM_MODE, NULL),                      \
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),     \
@@ -87,6 +88,9 @@ typedef struct {
     size_t data_len;
     unsigned char *info;
     size_t info_len;
+#ifdef FIPS_MODULE
+    int pedantic;
+#endif
 } KDF_HKDF;
 
 static void *kdf_hkdf_new(void *provctx)
@@ -98,6 +102,10 @@ static void *kdf_hkdf_new(void *provctx)
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL)
         ctx->provctx = provctx;
+#ifdef FIPS_MODULE
+    ctx->pedantic = 1;
+#endif
+
     return ctx;
 }
 
@@ -153,6 +161,9 @@ static void *kdf_hkdf_dup(void *vctx)
                 || !ossl_prov_digest_copy(&dest->digest, &src->digest))
             goto err;
         dest->mode = src->mode;
+#ifdef FIPS_MODULE
+        dest->pedantic = src->pedantic;
+#endif
     }
     return dest;
 
@@ -232,6 +243,13 @@ static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, const OSSL_PARAM params[])
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
         return 0;
 
+#ifdef FIPS_MODULE
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PEDANTIC)) != NULL) {
+        if (!OSSL_PARAM_get_int(p, &ctx->pedantic))
+            return 0;
+    }
+#endif
+
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_MODE)) != NULL) {
         if (p->data_type == OSSL_PARAM_UTF8_STRING) {
             if (OPENSSL_strcasecmp(p->data, "EXTRACT_AND_EXPAND") == 0) {
@@ -259,6 +277,13 @@ static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, const OSSL_PARAM params[])
     }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL) {
+#ifdef FIPS_MODULE
+        if (ctx->pedantic && ((p->data_size * 8) < EVP_KDF_MIN_KEY_LEN_BITS)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SIZE_TOO_SMALL);
+            return 0;
+        }
+#endif
+
         OPENSSL_clear_free(ctx->key, ctx->key_len);
         ctx->key = NULL;
         if (!OSSL_PARAM_get_octet_string(p, (void **)&ctx->key, 0,
@@ -310,30 +335,48 @@ static const OSSL_PARAM *kdf_hkdf_settable_ctx_params(ossl_unused void *ctx,
 
 static int kdf_hkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
+    int ret = -2;
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
     OSSL_PARAM *p;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL) {
         size_t sz = kdf_hkdf_size(ctx);
 
+        ret = 1;
+
         if (sz == 0)
             return 0;
-        return OSSL_PARAM_set_size_t(p, sz);
+        if (!OSSL_PARAM_set_size_t(p, sz))
+            return 0;
     }
     if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_INFO)) != NULL) {
-        if (ctx->info == NULL || ctx->info_len == 0) {
+        ret = 1;
+
+        if (ctx->info == NULL || ctx->info_len == 0)
             p->return_size = 0;
-            return 1;
-        }
-        return OSSL_PARAM_set_octet_string(p, ctx->info, ctx->info_len);
+        else if (!OSSL_PARAM_set_octet_string(p, ctx->info, ctx->info_len))
+            return 0;
     }
-    return -2;
+
+#ifdef FIPS_MODULE
+    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_PEDANTIC)) != NULL) {
+        ret = 1;
+
+        if (!OSSL_PARAM_set_int(p, ctx->pedantic))
+            return 0;
+    }
+#endif
+
+    return ret;
 }
 
 static const OSSL_PARAM *kdf_hkdf_gettable_ctx_params(ossl_unused void *ctx,
                                                       ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
+#ifdef FIPS_MODULE
+        OSSL_PARAM_int(OSSL_KDF_PARAM_PEDANTIC, NULL),
+#endif
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0),
         OSSL_PARAM_END
@@ -438,6 +481,11 @@ static int HKDF_Extract(OSSL_LIB_CTX *libctx, const EVP_MD *evp_md,
                         unsigned char *prk, size_t prk_len)
 {
     int sz = EVP_MD_get_size(evp_md);
+    /*
+     * Set pedantic to zero to allow a salt with arbitrary length.
+     */
+    int pedantic = 0;
+    OSSL_PARAM mac_params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     if (sz < 0)
         return 0;
@@ -446,8 +494,9 @@ static int HKDF_Extract(OSSL_LIB_CTX *libctx, const EVP_MD *evp_md,
         return 0;
     }
     /* calc: PRK = HMAC-Hash(salt, IKM) */
+    mac_params[0] = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_PEDANTIC, &pedantic);
     return
-        EVP_Q_mac(libctx, "HMAC", NULL, EVP_MD_get0_name(evp_md), NULL, salt,
+        EVP_Q_mac(libctx, "HMAC", NULL, EVP_MD_get0_name(evp_md), mac_params, salt,
                   salt_len, ikm, ikm_len, prk, EVP_MD_get_size(evp_md), NULL)
         != NULL;
 }

@@ -262,6 +262,23 @@ Input = "Test that SHAKE128 fails"
 Key = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
 Result = MAC_INIT_ERROR
 
+Availablein = fips
+FIPSversion = >=3.4.0
+MAC = HMAC
+Algorithm = SHA256
+Input = "Test that short key fails"
+Key = 00010203040506070809
+Result = MAC_INIT_ERROR
+
+Availablein = fips
+FIPSversion = >=3.4.0
+MAC = HMAC
+Algorithm = SHA256
+Input = "Test that short key for legacy use"
+Ctrl = pedantic:0
+Key = 00010203040506070809
+Output = f8bee402379d89d0073d44bc4568fd1fea51d264160f5fced00fba56a29a0457
+
 Title = CMAC tests (from FIPS module)
 
 MAC = CMAC
