@@ -61,7 +61,7 @@ L<provider-keymgmt(7)>
 
 =head1 HISTORY
 
-All other functionality was added in OpenSSL 3.0.
+This functionality was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
