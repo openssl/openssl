@@ -215,9 +215,11 @@ ENGINE *ossl_engine_table_select(ENGINE_TABLE **table, int nid,
                    f, l, nid);
         return NULL;
     }
-    ERR_set_mark();
+
     if (!CRYPTO_THREAD_write_lock(global_engine_lock))
-        goto end;
+        return NULL;
+
+    ERR_set_mark();
     /*
      * Check again inside the lock otherwise we could race against cleanup
      * operations. But don't worry about a debug printout
