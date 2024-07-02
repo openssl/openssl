@@ -361,7 +361,7 @@ int EVP_PKEY_fromdata_init(EVP_PKEY_CTX *ctx)
 }
 
 int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection,
-                      OSSL_PARAM params[])
+                      const OSSL_PARAM params[])
 {
     void *keydata = NULL;
     EVP_PKEY *allocated_pkey = NULL;
