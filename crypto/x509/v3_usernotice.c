@@ -58,7 +58,7 @@ static int print_notice(BIO *out, USERNOTICE *notice, int indent)
 
     return BIO_printf(out, "%*sExplicit Text: %.*s", indent, "",
                 notice->exptext->length,
-                notice->exptext->data);
+                notice->exptext->data) >= 0;
 }
 
 static int i2r_USER_NOTICE_SYNTAX(X509V3_EXT_METHOD *method,
@@ -73,7 +73,7 @@ static int i2r_USER_NOTICE_SYNTAX(X509V3_EXT_METHOD *method,
 
     for (i = 0; i < sk_USERNOTICE_num(uns); i++) {
         unotice = sk_USERNOTICE_value(uns, i);
-        if (print_notice(out, unotice, indent + 4) <= 0)
+        if (!print_notice(out, unotice, indent + 4))
             return 0;
         if (BIO_puts(out, "\n\n") <= 0)
             return 0;
