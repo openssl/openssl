@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 88;
+plan tests => 93;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -268,6 +268,23 @@ cert_contains($acc_priv_pol,
 cert_contains($acc_priv_pol,
               "organizationName",
               1, 'X509v3 Acceptable Certification Policies');
+
+my $user_notice_cert = srctop_file(@certs, "ext-userNotice.pem");
+cert_contains($user_notice_cert,
+              "Organization: Wildboar Software",
+              1, 'X509v3 User Notice');
+cert_contains($user_notice_cert,
+              "Numbers: 123, 456",
+              1, 'X509v3 User Notice');
+cert_contains($user_notice_cert,
+              "Explicit Text: Hey there big boi",
+              1, 'X509v3 User Notice');
+cert_contains($user_notice_cert,
+              "Number: 50505",
+              1, 'X509v3 User Notice');
+cert_contains($user_notice_cert,
+              "Explicit Text: Ice ice baby",
+              1, 'X509v3 User Notice');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
