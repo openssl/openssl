@@ -19,7 +19,7 @@ typedef int (OSSL_INDICATOR_CALLBACK)(const char *type, const char *desc,
 
 =head1 DESCRIPTION
 
-OSSL_INDICATOR_set_callback() sets a user callback I<cb> associated with a 
+OSSL_INDICATOR_set_callback() sets a user callback I<cb> associated with a
 I<libctx> that will be called when a non approved FIPS operation is detected.
 
 The user's callback may be triggered multiple times during an algorithm operation
