@@ -425,6 +425,8 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 # define SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE         SSL_OP_BIT(34)
 
 #define SSL_OP_PREFER_NO_DHE_KEX                         SSL_OP_BIT(35)
+    /* Turn off DTLS replay detect as described in RFC 6374 section 4.1.2.6. */
+#define SSL_OP_NO_DTLS_RECORD_REPLAY_CHECK               SSL_OP_BIT(36)
 
 /*
  * Option "collections."
