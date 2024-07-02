@@ -24,6 +24,11 @@ for example, if the key can only be used with digest SHA256, MGF1 SHA256
 and minimum salt length 32 then the digest, MGF1 digest and salt length
 will be set to SHA256, SHA256 and 32 respectively.
 
+Using a digest of SHAKE128/256, requires the values of MGF1 digest and salt
+length to be set to SHAKE128/256 and 32 respectively.
+Using a digest of SHAKE256/512, requires the values of MGF1 digest and salt
+length to be set to SHAKE128/256 and 64 respectively.
+
 =head2 Key Generation
 
 By default no parameter restrictions are placed on the generated key.
@@ -51,7 +56,7 @@ L<EVP_PKEY_derive(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2023 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

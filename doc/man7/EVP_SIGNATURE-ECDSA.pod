@@ -49,6 +49,11 @@ L<EVP_PKEY_sign(3)>,
 L<EVP_PKEY_verify(3)>,
 L<provider-signature(7)>,
 
+=head1 HISTORY
+
+Digest support for the fixed output variants of SHAKE-256/512 and SHAKE-128/256
+was added in OpenSSL 3.3.
+
 =head1 COPYRIGHT
 
 Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.

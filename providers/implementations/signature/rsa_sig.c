@@ -402,6 +402,25 @@ static int rsa_setup_mgf1_md(PROV_RSA_CTX *ctx, const char *mdname,
     return 1;
 }
 
+/*
+ * When using RSA_PSS with the shake algorithm the mgf1 algorithm MUST match
+ * and the saltlen MUST be 32 for shake128 OR 64 for shake256.
+ */
+static int validate_pss_params(PROV_RSA_CTX *ctx)
+{
+    if (ctx->pad_mode != RSA_FLAG_TYPE_RSASSAPSS)
+        return 1;
+    if (ctx->mdnid == NID_shake128)
+        return ctx->mgf1_mdnid == NID_shake128
+               && (ctx->saltlen == 32
+                   || ctx->saltlen == RSA_PSS_SALTLEN_DIGEST);
+    if (ctx->mdnid == NID_shake256)
+        return ctx->mgf1_mdnid == NID_shake256
+               && (ctx->saltlen == 64
+                   || ctx->saltlen == RSA_PSS_SALTLEN_DIGEST);
+    return 1;
+}
+
 static int rsa_signverify_init(void *vprsactx, void *vrsa,
                                const OSSL_PARAM params[], int operation)
 {
@@ -610,6 +629,8 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
             break;
 
         case RSA_PKCS1_PSS_PADDING:
+            if (!validate_pss_params(prsactx))
+                return 0;
             /* Check PSS restrictions */
             if (rsa_pss_restricted(prsactx)) {
                 switch (prsactx->saltlen) {
@@ -824,6 +845,8 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
                     ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
                 }
+                if (!validate_pss_params(prsactx))
+                    return 0;
                 ret = RSA_verify_PKCS1_PSS_mgf1(prsactx->rsa, tbs,
                                                 prsactx->md, prsactx->mgf1_md,
                                                 prsactx->tbuf,

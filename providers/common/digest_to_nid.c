@@ -35,7 +35,8 @@ int ossl_digest_md_to_nid(const EVP_MD *md, const OSSL_ITEM *it, size_t it_len)
 
 /*
  * Retrieve one of the FIPS approved hash algorithms by nid.
- * See FIPS 180-4 "Secure Hash Standard" and FIPS 202 - SHA-3.
+ * See FIPS 180-4 "Secure Hash Standard" and FIPS 202.
+ * Support for SHAKE (with fixed output length) was added in FIPS 186-5.
  */
 int ossl_digest_get_approved_nid(const EVP_MD *md)
 {
@@ -52,6 +53,8 @@ int ossl_digest_get_approved_nid(const EVP_MD *md)
         { NID_sha3_256,  OSSL_DIGEST_NAME_SHA3_256  },
         { NID_sha3_384,  OSSL_DIGEST_NAME_SHA3_384  },
         { NID_sha3_512,  OSSL_DIGEST_NAME_SHA3_512  },
+        { NID_shake256,  OSSL_DIGEST_NAME_SHAKE_256_512 },
+        { NID_shake128,  OSSL_DIGEST_NAME_SHAKE_128_256 },
     };
 
     return ossl_digest_md_to_nid(md, name_to_nid, OSSL_NELEM(name_to_nid));
