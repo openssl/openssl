@@ -218,8 +218,7 @@ static int test_lib(void)
         ssllib = SD_INIT;
     }
 
-# if defined(OPENSSL_NO_PINSHARED) \
-    && defined(__GLIBC__) \
+# if defined(__GLIBC__) \
     && defined(__GLIBC_PREREQ) \
     && defined(OPENSSL_SYS_LINUX)
 #  if __GLIBC_PREREQ(2, 3)

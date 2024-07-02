@@ -131,8 +131,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
 {
     OSSL_TRACE(INIT, "ossl_init_load_crypto_nodelete()\n");
 
-#if !defined(OPENSSL_USE_NODELETE) \
-    && !defined(OPENSSL_NO_PINSHARED)
+#if !defined(OPENSSL_USE_NODELETE)
 # if defined(DSO_WIN32) && !defined(_WIN32_WCE)
     {
         HMODULE handle = NULL;
@@ -669,8 +668,7 @@ int OPENSSL_atexit(void (*handler)(void))
 {
     OPENSSL_INIT_STOP *newhand;
 
-#if !defined(OPENSSL_USE_NODELETE)\
-    && !defined(OPENSSL_NO_PINSHARED)
+#if !defined(OPENSSL_USE_NODELETE)
     {
 # if defined(DSO_WIN32) && !defined(_WIN32_WCE)
         HMODULE handle = NULL;
