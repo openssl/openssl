@@ -67,6 +67,7 @@ my %params = (
     'ALG_PARAM_ENGINE' =>       "engine",       # utf8_string
     'ALG_PARAM_MAC' =>          "mac",          # utf8_string
     'ALG_PARAM_PROPERTIES' =>   "properties",   # utf8_string
+    'ALG_PARAM_PEDANTIC' =>     "pedantic",     # int
 
 # cipher parameters
     'CIPHER_PARAM_PADDING' =>              "padding",     # uint
@@ -157,6 +158,7 @@ my %params = (
     'KDF_PARAM_MAC' =>          '*ALG_PARAM_MAC',           # utf8 string
     'KDF_PARAM_MAC_SIZE' =>     "maclen",                   # size_t
     'KDF_PARAM_PROPERTIES' =>   '*ALG_PARAM_PROPERTIES',    # utf8 string
+    'KDF_PARAM_PEDANTIC' =>     '*ALG_PARAM_PEDANTIC',      # int
     'KDF_PARAM_ITER' =>         "iter",                     # unsigned int
     'KDF_PARAM_MODE' =>         "mode",                     # utf8 string or int
     'KDF_PARAM_PKCS5' =>        "pkcs5",                    # int

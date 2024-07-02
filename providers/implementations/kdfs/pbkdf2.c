@@ -263,17 +263,38 @@ static const OSSL_PARAM *kdf_pbkdf2_settable_ctx_params(ossl_unused void *ctx,
 
 static int kdf_pbkdf2_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
+    int ret = -2;
+#ifdef FIPS_MODULE
+    KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
+#endif
     OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL)
-        return OSSL_PARAM_set_size_t(p, SIZE_MAX);
-    return -2;
+    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL) {
+        ret = 1;
+
+        if (!OSSL_PARAM_set_size_t(p, SIZE_MAX))
+            return 0;
+    }
+
+#ifdef FIPS_MODULE
+    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_PEDANTIC)) != NULL) {
+        ret = 1;
+
+        if (!OSSL_PARAM_set_int(p, ctx->lower_bound_checks))
+            return 0;
+    }
+#endif
+
+    return ret;
 }
 
 static const OSSL_PARAM *kdf_pbkdf2_gettable_ctx_params(ossl_unused void *ctx,
                                                         ossl_unused void *p_ctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
+#ifdef FIPS_MODULE
+        OSSL_PARAM_int(OSSL_KDF_PARAM_PEDANTIC, NULL),
+#endif
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
         OSSL_PARAM_END
     };
