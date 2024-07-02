@@ -81,7 +81,6 @@ typedef struct {
 
     /* The Algorithm Identifier of the combined signature algorithm */
     unsigned char aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
-    unsigned char *aid;
     size_t  aid_len;
 
     /* main digest */
@@ -137,6 +136,7 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
         int md_nid = ossl_digest_get_approved_nid_with_sha1(ctx->libctx, md,
                                                             sha1_allowed);
         size_t mdname_len = strlen(mdname);
+        unsigned char *aid = NULL;
 
         if (md == NULL || md_nid < 0) {
             if (md == NULL)
@@ -179,9 +179,11 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
                                                           md_nid)
             && WPACKET_finish(&pkt)) {
             WPACKET_get_total_written(&pkt, &ctx->aid_len);
-            ctx->aid = WPACKET_get_curr(&pkt);
+            aid = WPACKET_get_curr(&pkt);
         }
         WPACKET_cleanup(&pkt);
+        if (aid != NULL && ctx->aid_len != 0)
+            memmove(ctx->aid_buf, aid, ctx->aid_len);
 
         ctx->mdctx = NULL;
         ctx->md = md;
@@ -460,7 +462,9 @@ static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
 
     p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_ALGORITHM_ID);
     if (p != NULL
-        && !OSSL_PARAM_set_octet_string(p, pdsactx->aid, pdsactx->aid_len))
+        && !OSSL_PARAM_set_octet_string(p, pdsactx->aid_len == 0
+                                           ? NULL : pdsactx->aid_buf,
+                                        pdsactx->aid_len))
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_DIGEST);
