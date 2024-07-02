@@ -969,7 +969,6 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     return X509_TRUST_UNTRUSTED;
 }
 
-/* Sadly, returns 0 also on internal error. */
 static int check_revocation(X509_STORE_CTX *ctx)
 {
     int i = 0, last = 0, ok = 0;
@@ -987,13 +986,12 @@ static int check_revocation(X509_STORE_CTX *ctx)
     for (i = 0; i <= last; i++) {
         ctx->error_depth = i;
         ok = check_cert(ctx);
-        if (!ok)
+        if (ok <= 0)
             return ok;
     }
     return 1;
 }
 
-/* Sadly, returns 0 also on internal error. */
 static int check_cert(X509_STORE_CTX *ctx)
 {
     X509_CRL *crl = NULL, *dcrl = NULL;
@@ -1018,21 +1016,21 @@ static int check_cert(X509_STORE_CTX *ctx)
         else
             ok = get_crl_delta(ctx, &crl, &dcrl, x);
         /* If error looking up CRL, nothing we can do except notify callback */
-        if (!ok) {
+        if (ok <= 0) {
             ok = verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_GET_CRL);
             goto done;
         }
         ctx->current_crl = crl;
         ok = ctx->check_crl(ctx, crl);
-        if (!ok)
+        if (ok <= 0)
             goto done;
 
         if (dcrl != NULL) {
             ok = ctx->check_crl(ctx, dcrl);
-            if (!ok)
+            if (ok <= 0)
                 goto done;
             ok = ctx->cert_crl(ctx, dcrl, x);
-            if (!ok)
+            if (ok <= 0)
                 goto done;
         } else {
             ok = 1;
@@ -1041,7 +1039,7 @@ static int check_cert(X509_STORE_CTX *ctx)
         /* Don't look in full CRL if delta reason is removefromCRL */
         if (ok != 2) {
             ok = ctx->cert_crl(ctx, crl, x);
-            if (!ok)
+            if (ok <= 0)
                 goto done;
         }
 
@@ -1605,7 +1603,9 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
     } else if (cnum < chnum) {
         issuer = sk_X509_value(ctx->chain, cnum + 1);
     } else {
-        issuer = sk_X509_value(ctx->chain, chnum);
+        if ((issuer = sk_X509_value(ctx->chain, chnum)) == NULL)
+            return -1;
+
         /* If not self-issued, can't check signature */
         if (!ctx->check_issued(ctx, issuer, issuer) &&
             !verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER))
