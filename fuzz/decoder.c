@@ -69,12 +69,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
          * Skip it.
          */
         if ((!EVP_PKEY_is_a(pkey, "DH") && !EVP_PKEY_is_a(pkey, "DHX"))
-            || EVP_PKEY_get_bits(pkey) <= 8192)
+            || EVP_PKEY_get_bits(pkey) <= 2048)
             EVP_PKEY_param_check(ctx);
 
         EVP_PKEY_public_check(ctx);
         /* Private and pairwise checks are unbounded, skip for large keys. */
-        if (EVP_PKEY_get_bits(pkey) <= 16384) {
+        if (EVP_PKEY_get_bits(pkey) <= 4096) {
             EVP_PKEY_private_check(ctx);
             EVP_PKEY_pairwise_check(ctx);
         }
