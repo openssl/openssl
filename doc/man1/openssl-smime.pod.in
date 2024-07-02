@@ -234,8 +234,9 @@ option is present B<CRLF> is used instead.
 =item B<-certfile> I<file>
 
 Allows additional certificates to be specified. When signing these will
-be included with the message. When verifying these will be searched for
-the signers certificates.
+be included with the message. When verifying, these will be searched for
+signer certificates and will be used for chain building.
+
 The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-signer> I<file>

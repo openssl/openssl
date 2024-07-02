@@ -15,6 +15,7 @@
 #include <openssl/cms.h>
 #include "cms_local.h"
 #include "crypto/asn1.h"
+#include "crypto/x509.h"
 
 static BIO *cms_get_text_bio(BIO *out, unsigned int flags)
 {
@@ -308,7 +309,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
 {
     CMS_SignerInfo *si;
     STACK_OF(CMS_SignerInfo) *sinfos;
-    STACK_OF(X509) *cms_certs = NULL;
+    STACK_OF(X509) *untrusted = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
     STACK_OF(X509) **si_chains = NULL;
     X509 *signer;
@@ -360,13 +361,21 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             if (si_chains == NULL)
                 goto err;
         }
-        cms_certs = CMS_get1_certs(cms);
-        if (!(flags & CMS_NOCRL))
-            crls = CMS_get1_crls(cms);
+        if ((untrusted = CMS_get1_certs(cms)) == NULL)
+            goto err;
+        if (sk_X509_num(certs) > 0
+            && !ossl_x509_add_certs_new(&untrusted, certs,
+                                        X509_ADD_FLAG_UP_REF |
+                                        X509_ADD_FLAG_NO_DUP))
+            goto err;
+
+        if ((flags & CMS_NOCRL) == 0
+            && (crls = CMS_get1_crls(cms)) == NULL)
+            goto err;
         for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
 
-            if (!cms_signerinfo_verify_cert(si, store, cms_certs, crls,
+            if (!cms_signerinfo_verify_cert(si, store, untrusted, crls,
                                             si_chains ? &si_chains[i] : NULL,
                                             ctx))
                 goto err;
@@ -482,7 +491,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             OSSL_STACK_OF_X509_free(si_chains[i]);
         OPENSSL_free(si_chains);
     }
-    OSSL_STACK_OF_X509_free(cms_certs);
+    sk_X509_pop_free(untrusted, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
 
     return ret;

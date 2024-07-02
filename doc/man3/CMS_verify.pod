@@ -26,6 +26,8 @@ B<CMS SignedData> structure contained in a structure of type B<CMS_ContentInfo>.
 I<cms> points to the B<CMS_ContentInfo> structure to verify.
 The optional I<certs> parameter refers to a set of certificates
 in which to search for signing certificates.
+It is also used
+as a source of untrusted intermediate CA certificates for chain building.
 I<cms> may contain extra untrusted CA certificates that may be used for
 chain building as well as CRLs that may be used for certificate validation.
 I<store> may be NULL or point to
