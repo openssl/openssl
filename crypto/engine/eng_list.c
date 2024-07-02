@@ -243,6 +243,7 @@ ENGINE *ENGINE_get_first(void)
         int ref;
 
         if (!CRYPTO_UP_REF(&ret->struct_ref, &ref)) {
+            CRYPTO_THREAD_unlock(global_engine_lock);
             ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
             return NULL;
         }
@@ -269,6 +270,7 @@ ENGINE *ENGINE_get_last(void)
         int ref;
 
         if (!CRYPTO_UP_REF(&ret->struct_ref, &ref)) {
+            CRYPTO_THREAD_unlock(global_engine_lock);
             ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
             return NULL;
         }
@@ -294,6 +296,7 @@ ENGINE *ENGINE_get_next(ENGINE *e)
 
         /* Return a valid structural reference to the next ENGINE */
         if (!CRYPTO_UP_REF(&ret->struct_ref, &ref)) {
+            CRYPTO_THREAD_unlock(global_engine_lock);
             ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
             return NULL;
         }
@@ -320,6 +323,7 @@ ENGINE *ENGINE_get_prev(ENGINE *e)
 
         /* Return a valid structural reference to the next ENGINE */
         if (!CRYPTO_UP_REF(&ret->struct_ref, &ref)) {
+            CRYPTO_THREAD_unlock(global_engine_lock);
             ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
             return NULL;
         }
