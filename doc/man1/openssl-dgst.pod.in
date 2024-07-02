@@ -176,12 +176,14 @@ Following options are supported by both by B<HMAC> and B<gost-mac>:
 Specifies MAC key as alphanumeric string (use if key contain printable
 characters only). String length must conform to any restrictions of
 the MAC algorithm for example exactly 32 chars for gost-mac.
+FIPS provider minimum key length is 14 characters (112 bits).
 
 =item B<hexkey>:I<string>
 
 Specifies MAC key in hexadecimal form (two hex digits per byte).
 Key length must conform to any restrictions of the MAC algorithm
 for example exactly 32 chars for gost-mac.
+FIPS provider minimum key length is 28 hexadecimals (112 bits).
 
 =back
 

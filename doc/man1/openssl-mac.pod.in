@@ -72,12 +72,14 @@ Common parameter names used by EVP_MAC_CTX_get_params() are:
 Specifies the MAC key as an alphanumeric string (use if the key contains
 printable characters only).
 The string length must conform to any restrictions of the MAC algorithm.
+FIPS provider minimum key length is 14 characters (112 bits).
 A key must be specified for every MAC algorithm.
 
 =item B<hexkey:>I<string>
 
 Specifies the MAC key in hexadecimal form (two hex digits per byte).
 The key length must conform to any restrictions of the MAC algorithm.
+FIPS provider minimum key length is 28 hexadecimals (112 bits).
 A key must be specified for every MAC algorithm.
 
 =item B<iv:>I<string>

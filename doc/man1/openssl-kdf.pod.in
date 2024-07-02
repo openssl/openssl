@@ -149,12 +149,12 @@ SSHKDF, X942KDF-ASN1, X942KDF-CONCAT, X963KDF and SCRYPT.
 
 Use TLS1-PRF to create a hex-encoded derived key from a secret key and seed:
 
-    openssl kdf -keylen 16 -kdfopt digest:SHA2-256 -kdfopt key:secret \
+    openssl kdf -keylen 16 -kdfopt digest:SHA2-256 -kdfopt key:16charlongsecret \
                 -kdfopt seed:seed TLS1-PRF
 
 Use HKDF to create a hex-encoded derived key from a secret key, salt and info:
 
-    openssl kdf -keylen 10 -kdfopt digest:SHA2-256 -kdfopt key:secret \
+    openssl kdf -keylen 10 -kdfopt digest:SHA2-256 -kdfopt key:16charlongsecret \
                 -kdfopt salt:salt -kdfopt info:label HKDF
 
 Use SSKDF with KMAC to create a hex-encoded derived key from a secret key, salt and info:

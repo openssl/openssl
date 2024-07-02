@@ -232,6 +232,19 @@ int ossl_dh_check_key(OSSL_LIB_CTX *ctx, const DH *dh)
 }
 #endif /* OPENSSL_NO_DH */
 
+/*
+ * Check for valid MAC key size
+ *
+ */
+int ossl_mac_check_key(size_t min, size_t requested)
+{
+#ifndef FIPS_MODULE
+    return (requested >= min);
+#else
+    return (requested >= 112);
+# endif
+}
+
 int ossl_digest_get_approved_nid_with_sha1(OSSL_LIB_CTX *ctx, const EVP_MD *md,
                                            int sha1_allowed)
 {

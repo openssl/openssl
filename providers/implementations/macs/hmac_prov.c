@@ -20,6 +20,8 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/err.h>
+#include <openssl/proverr.h>
 
 #include "internal/ssl3_cbc.h"
 
@@ -27,6 +29,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+#include "prov/securitycheck.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -143,6 +146,11 @@ static int hmac_setkey(struct hmac_data_st *macctx,
                        const unsigned char *key, size_t keylen)
 {
     const EVP_MD *digest;
+
+    if (!ossl_mac_check_key(0, keylen * 8)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SIZE_TOO_SMALL);
+        return 0;
+    }
 
     if (macctx->key != NULL)
         OPENSSL_secure_clear_free(macctx->key, macctx->keylen);
