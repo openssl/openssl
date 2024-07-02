@@ -67,8 +67,7 @@ static void h3close(struct h3ssl *h3ssl, uint64_t id) {
   for (int i = 0; i < MAXSSL_IDS; i++) {
     if (ssl_ids[i].id == id) {
       if (!SSL_stream_conclude(ssl_ids[i].s, 0))
-        goto err;
-      err:
+        printf("h3close: SSL_stream_conclude failed\n");
       SSL_shutdown(ssl_ids[i].s);
     }
   }
@@ -158,9 +157,13 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
     if (stream != NULL) {
       printf("=> Received connection on %lld\n", (unsigned long long) SSL_get_stream_id(stream));
       add_id(SSL_get_stream_id(stream), stream, h3ssl);
-      return 1; /* loop until we have all the streams */
+      printf("read_from_ssl_ids %ld events\n", (unsigned long) result_count);
+      if (result_count == 1) {
+        return 1; /* loop until we have all the streams */
+      }
+    } else {
+      return -1; /* something is wrong */
     }
-    return -1; /* something is wrong */
   }
   /* Create new streams when allowed */
   if (item->revents & SSL_POLL_EVENT_OSB) {
@@ -202,7 +205,10 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
       add_id(SSL_get_stream_id(rstream), rstream, h3ssl);
       add_id(SSL_get_stream_id(pstream), pstream, h3ssl);
       h3ssl->has_uni = 1;
-      return 0;
+      if (result_count == 1) {
+        printf("read_from_ssl_ids 1 event only!\n");
+        return 0; /* one event only so we are done */
+      }
     }
   }
   /* Well trying... */
@@ -276,12 +282,15 @@ static int nothing_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
     item++;
     if (item->revents == SSL_POLL_EVENT_NONE) {
       continue;
+    } else if (item->revents == SSL_POLL_EVENT_W) {
+      printf("revent %llu (%d) on %llu\n", (unsigned long long) item->revents, SSL_POLL_EVENT_W,
+             (unsigned long long) ssl_ids[i].id);
     } else {
       /* Figure out ??? */
       printf("revent %llu (%d) on %llu\n", (unsigned long long) item->revents, SSL_POLL_EVENT_NONE,
              (unsigned long long) ssl_ids[i].id);
+      hassomething++;
     }
-    hassomething++;
   }
   return hassomething;
 }
@@ -333,10 +342,8 @@ static int quic_server_write(struct h3ssl *h3ssl, uint64_t streamid,
  * a time is accepted in a blocking loop.
  */
 
-/* ALPN string for TLS handshake */
+/* ALPN string for TLS handshake. We pretent h3-29 and h3 */
 static const unsigned char alpn_ossltest[] = {
-    /* "\x08ossltest" (hex for EBCDIC resilience) */
-    /* 0x08, 0x6f, 0x73, 0x73, 0x6c, 0x74, 0x65, 0x73, 0x74 */
     5, 'h', '3', '-', '2', '9', 2, 'h', '3'};
 
 /* This callback validates and negotiates the desired ALPN on the server side.
@@ -412,17 +419,28 @@ err:
   return -1;
 }
 
-static int waitsocket(int fd) {
+static int waitsocket(int fd, int sec) {
   fd_set read_fds;
+  int fdmax = fd;
+  int ret;
   FD_ZERO(&read_fds);
   FD_SET(fd, &read_fds);
-  int fdmax = fd;
-  if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
+  if (sec) {
+    struct timeval  tv;
+    tv.tv_sec = sec;
+    tv.tv_usec = 0;
+    printf("waitsocket for %d\n", sec);
+    ret = select(fdmax + 1, &read_fds, NULL, NULL, &tv);
+  } else
+    ret = select(fdmax + 1, &read_fds, NULL, NULL, NULL);
+  if (ret == -1) {
     printf("waitsocket failed\n");
     exit(1);
+  } else if (ret) {
+    printf("waitsocket %d\n", FD_ISSET(fd, &read_fds));
+    return 0;
   }
-  printf("waitsocket %d\n", FD_ISSET(fd, &read_fds));
-  return 0;
+  return -1; /* Timeout */
 }
 
 /* Main loop for server to accept QUIC connections. */
@@ -443,35 +461,41 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
     goto err;
 
   /*
-   * Listeners, and other QUIC objects, default to operating in blocking mode,
-   * so the below call is not actually necessary. The configured behaviour is
-   * inherited by child objects.
+   * Listeners, and other QUIC objects, default to operating in blocking mode.
+   * The configured behaviour is inherited by child objects.
+   * Make sure we won't block as we use select().
    */
-  if (!SSL_set_blocking_mode(listener, 1))
+  if (!SSL_set_blocking_mode(listener, 0))
     goto err;
-  // SSL_set_event_handling_mode(listener,SSL_VALUE_EVENT_HANDLING_MODE);
 
   for (;;) {
-    /* Blocking wait for an incoming connection, similar to accept(2). */
-
+    try:
     fprintf(stderr, "waiting on socket\n");
     fflush(stderr);
-    waitsocket(fd);
-
+    waitsocket(fd, 0);
     fprintf(stderr, "before SSL_accept_connection\n");
     fflush(stderr);
+   
+    /* SSL_accept_connection will retrun NULL if there is nothing to accept */ 
     conn = SSL_accept_connection(listener, 0);
     fprintf(stderr, "after SSL_accept_connection\n");
     fflush(stderr);
     if (conn == NULL) {
       fprintf(stderr, "error while accepting connection\n");
-      goto err;
+      goto try;
     }
+
+    /* set the incoming stream policy to accept */
     if (!SSL_set_incoming_stream_policy(conn, SSL_INCOMING_STREAM_POLICY_ACCEPT, 0)) {
       fprintf(stderr, "error while setting inccoming stream policy\n");
       goto err;
     }
-    // SSL_set_blocking_mode(conn, 1); does nothing???
+
+    /*
+     * Service the connection. In a real application this would be done
+     * concurrently. In this demonstration program a single connection is
+     * accepted and serviced at a time.
+     */
 
     /* try to use nghttp3 to send a response */
     nghttp3_conn *h3conn;
@@ -493,35 +517,35 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
       printf("nghttp3_conn_client_new failed!\n");
       exit(1);
     }
+
+    /* add accepted SSL conn to the ids we will poll */
     add_id(-1, conn, &h3ssl);
     printf("process_server starting...\n");
     fflush(stdout);
+    int hassomething = 0;
 
-    /*
-     * Optionally, we could disable blocking mode on the accepted connection
-     * here by calling SSL_set_blocking_mode().
-     */
-
-    /*
-     * Service the connection. In a real application this would be done
-     * concurrently. In this demonstration program a single connection is
-     * accepted and serviced at a time.
-     */
-
+    /* wait until we have received the headers */
     while (!h3ssl.end_headers_received) {
-      int hassomething = read_from_ssl_ids(h3conn, &h3ssl);
+      if (!hassomething)
+        if (waitsocket(fd, 5)) {
+          printf("read_from_ssl_ids timeout\n");
+          goto err;
+        }
+      hassomething = read_from_ssl_ids(h3conn, &h3ssl);
       if (hassomething == -1) {
-        printf("hassomething failed\n");
+        printf("read_from_ssl_ids hassomething failed\n");
         goto err;
-      }
-      if (hassomething == 0) {
-        printf("hassomething nothing...\n");
-        waitsocket(fd);
+      } else if (hassomething == 0) {
+        printf("read_from_ssl_ids hassomething nothing...\n");
+        break;
+      } else {
+        printf("read_from_ssl_ids hassomething %d...\n", hassomething);
+        continue;
       }
     }
     printf("end_headers_received!!!\n");
 
-    /* we have receive the request build response and send it */
+    /* we have receive the request build the response and send it */
     /*     MAKE_NV("connection", "close"), */
     nghttp3_nv resp[] = {
         MAKE_NV(":status", "200"),
@@ -570,16 +594,22 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
       // close stream zero
       h3close(&h3ssl, 0);
     }
+
+    /* wait until closed */
     for (;;) {
-      waitsocket(fd);
+      if (waitsocket(fd,5)) {
+        printf("hasnothing timeout\n");
+        goto err;
+      }
       int hasnothing = nothing_from_ssl_ids(h3conn, &h3ssl);
       if (hasnothing == -1) {
         printf("hasnothing failed\n");
         goto err;
-      }
-      if (hasnothing == 0) {
+      } else if (hasnothing == 0) {
         printf("hasnothing nothing...\n");
         break;
+      } else {
+        printf("hasnothing something...\n");
       }
     }
 
@@ -596,6 +626,10 @@ err:
   return ok;
 }
 
+/*
+ * demo server... just return a 20 bytes ascii string as response for any request
+ * single h3 connection and single threaded.
+ */
 int main(int argc, char **argv) {
   int rc = 1;
   SSL_CTX *ctx = NULL;
