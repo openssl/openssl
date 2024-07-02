@@ -222,10 +222,13 @@ static int readbuffer_gets(BIO *b, char *buf, int size)
     char *p;
     int i, j;
 
-    if (size == 0)
+    if (buf == NULL || size == 0)
         return 0;
     --size; /* the passed in size includes the terminator - so remove it here */
     ctx = (BIO_F_BUFFER_CTX *)b->ptr;
+
+    if (ctx == NULL || b->next_bio == NULL)
+        return 0;
     BIO_clear_retry_flags(b);
 
     /* If data is already buffered then use this first */
