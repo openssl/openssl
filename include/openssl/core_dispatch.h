@@ -155,7 +155,8 @@ OSSL_CORE_MAKE_FUNC(void,
 #define OSSL_FUNC_BIO_VSNPRINTF               47
 #define OSSL_FUNC_BIO_PUTS                    48
 #define OSSL_FUNC_BIO_GETS                    49
-#define OSSL_FUNC_BIO_CTRL                    50
+#define OSSL_FUNC_BIO_CTRL_BOGUS              50
+#define OSSL_FUNC_BIO_CTRL                    51
 
 
 OSSL_CORE_MAKE_FUNC(OSSL_CORE_BIO *, BIO_new_file, (const char *filename,
@@ -173,8 +174,9 @@ OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (OSSL_CORE_BIO *bio, const char *format,
                                        va_list args))
 OSSL_CORE_MAKE_FUNC(int, BIO_vsnprintf,
                    (char *buf, size_t n, const char *fmt, va_list args))
-OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO *bio,
-                                    int cmd, long num, void *ptr))
+/* OSSL_FUNC_BIO_CTRL_BOGUS doesn't have a corresponding declaration */
+OSSL_CORE_MAKE_FUNC(long, BIO_ctrl, (OSSL_CORE_BIO *bio,
+                                     int cmd, long num, void *ptr))
 
 /* New seeding functions prototypes with the 101-104 series */
 #define OSSL_FUNC_CLEANUP_USER_ENTROPY        96

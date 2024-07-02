@@ -1934,6 +1934,7 @@ OSSL_FUNC_BIO_up_ref_fn ossl_core_bio_up_ref;
 OSSL_FUNC_BIO_free_fn ossl_core_bio_free;
 OSSL_FUNC_BIO_vprintf_fn ossl_core_bio_vprintf;
 OSSL_FUNC_BIO_vsnprintf_fn BIO_vsnprintf;
+OSSL_FUNC_BIO_ctrl_fn ossl_core_bio_ctrl;
 static OSSL_FUNC_self_test_cb_fn core_self_test_get_callback;
 static OSSL_FUNC_get_entropy_fn rand_get_entropy;
 static OSSL_FUNC_get_user_entropy_fn rand_get_user_entropy;
@@ -2097,6 +2098,18 @@ static int core_pop_error_to_mark(const OSSL_CORE_HANDLE *handle)
     return ERR_pop_to_mark();
 }
 
+/*
+ * This function makes sure that a call of a previously incorrect definition
+ * of OSSL_FUNC_BIO_ctrl_fn (it was defined to return int when it should
+ * have returned long), to maintain ABI compatibility for providers that
+ * were compiled with the incorrect definition.
+ */
+static int core_bio_ctrl_bogus(OSSL_CORE_BIO *bio,
+                               int cmd, long num, void *ptr)
+{
+    return (int)ossl_core_bio_ctrl(bio, cmd, num, ptr);
+}
+
 static void core_self_test_get_callback(OPENSSL_CORE_CTX *libctx,
                                         OSSL_CALLBACK **cb, void **cbarg)
 {
@@ -2252,6 +2265,7 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_BIO_WRITE_EX, (void (*)(void))ossl_core_bio_write_ex },
     { OSSL_FUNC_BIO_GETS, (void (*)(void))ossl_core_bio_gets },
     { OSSL_FUNC_BIO_PUTS, (void (*)(void))ossl_core_bio_puts },
+    { OSSL_FUNC_BIO_CTRL_BOGUS, (void (*)(void))core_bio_ctrl_bogus },
     { OSSL_FUNC_BIO_CTRL, (void (*)(void))ossl_core_bio_ctrl },
     { OSSL_FUNC_BIO_UP_REF, (void (*)(void))ossl_core_bio_up_ref },
     { OSSL_FUNC_BIO_FREE, (void (*)(void))ossl_core_bio_free },
