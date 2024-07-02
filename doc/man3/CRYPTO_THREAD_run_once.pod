@@ -244,10 +244,13 @@ This example safely initializes and uses a lock.
  {
      int ret = 0;
 
-     if (mylock()) {
-         /* Your code here, do not return without releasing the lock! */
-         ret = ... ;
+     if (!mylock()) {
+        /* Do not unlock unless the lock was successfully acquired. */
+        return 0;
      }
+
+     /* Your code here, do not return without releasing the lock! */
+     ret = ... ;
      myunlock();
      return ret;
  }
