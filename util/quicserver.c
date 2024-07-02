@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
                 wait_for_activity(qtserv);
             ossl_quic_tserver_tick(qtserv);
             if (ossl_quic_tserver_is_terminated(qtserv)) {
-                /* Assume we finished everything the clients wants from us */
+                /* Assume we finished everything the clients want from us */
                 ret = EXIT_SUCCESS;
                 goto end;
             }
