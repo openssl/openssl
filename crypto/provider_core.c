@@ -935,8 +935,8 @@ static int provider_init(OSSL_PROVIDER *prov)
 
             if (merged_path == NULL
                 || (DSO_load(prov->module, merged_path, NULL, 0)) == NULL) {
-                DSO_free(prov->module);
-                prov->module = NULL;
+                if (!DSO_free(prov->module))
+                    prov->module = NULL;
             }
 
             OPENSSL_free(merged_path);
