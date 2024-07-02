@@ -95,6 +95,8 @@ typedef struct {
 
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
 
+DEFINE_STACK_OF(ALGORITHM)
+
 typedef struct ossl_global_properties_st {
     OSSL_PROPERTY_LIST *list;
 #ifndef FIPS_MODULE
@@ -469,33 +471,45 @@ static void alg_do_one(ALGORITHM *alg, IMPLEMENTATION *impl,
     fn(alg->nid, impl->method.method, fnarg);
 }
 
-struct alg_do_each_data_st {
-    void (*fn)(int id, void *method, void *fnarg);
-    void *fnarg;
-};
-
-static void alg_do_each(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
+static void alg_copy(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
 {
-    struct alg_do_each_data_st *data = arg;
-    int i, end = sk_IMPLEMENTATION_num(alg->impls);
+    STACK_OF(ALGORITHM) *newalg = arg;
 
-    for (i = 0; i < end; i++) {
-        IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
-
-        alg_do_one(alg, impl, data->fn, data->fnarg);
-    }
+    (void)sk_ALGORITHM_push(newalg, alg);
 }
 
 void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
                               void (*fn)(int id, void *method, void *fnarg),
                               void *fnarg)
 {
-    struct alg_do_each_data_st data;
+    int i, j;
+    int numalgs, numimps;
+    STACK_OF(ALGORITHM) *tmpalgs;
+    ALGORITHM *alg;
 
-    data.fn = fn;
-    data.fnarg = fnarg;
-    if (store != NULL)
-        ossl_sa_ALGORITHM_doall_arg(store->algs, alg_do_each, &data);
+    if (store != NULL) {
+
+        if (!ossl_property_read_lock(store))
+            return;
+       
+        tmpalgs = sk_ALGORITHM_new_reserve(NULL,
+                                           ossl_sa_ALGORITHM_num(store->algs));
+        if (tmpalgs == NULL) {
+            ossl_property_unlock(store);
+            return;
+        }
+
+        ossl_sa_ALGORITHM_doall_arg(store->algs, alg_copy, tmpalgs);
+        ossl_property_unlock(store);
+        numalgs = sk_ALGORITHM_num(tmpalgs);
+        for (i = 0; i < numalgs; i++) {
+            alg = sk_ALGORITHM_value(tmpalgs, i);
+            numimps = sk_IMPLEMENTATION_num(alg->impls);
+            for (j = 0; j < numimps; j++)
+                alg_do_one(alg, sk_IMPLEMENTATION_value(alg->impls, j), fn, fnarg);
+        }
+        sk_ALGORITHM_free(tmpalgs);
+    }
 }
 
 int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
