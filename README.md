@@ -13,13 +13,13 @@ for the TLS (formerly SSL), DTLS and QUIC (currently client side only)
 protocols.
 
 The protocol implementations are based on a full-strength general purpose
-cryptographic library, which can also be used stand-alone. Also included is a
+cryptographic library, which can also be used standalone. Also included is a
 cryptographic module validated to conform with FIPS standards.
 
 OpenSSL is descended from the SSLeay library developed by Eric A. Young
 and Tim J. Hudson.
 
-The official Home Page of the OpenSSL Project is [www.openssl.org].
+The official Homepage of the OpenSSL Project is [www.openssl.org].
 
 Table of Contents
 =================
@@ -48,7 +48,7 @@ The OpenSSL toolkit includes:
   basis of the TLS implementation, but can also be used independently.
 
 - **openssl**
-  the OpenSSL command line tool, a swiss army knife for cryptographic tasks,
+  the OpenSSL command line tool, a Swiss Army knife for cryptographic tasks,
   testing and analyzing. It can be used for
   - creation of key parameters
   - creation of X.509 certificates, CSRs and CRLs
@@ -113,7 +113,7 @@ Build and Install
 
 After obtaining the Source, have a look at the [INSTALL](INSTALL.md) file for
 detailed instructions about building and installing OpenSSL. For some
-platforms, the installation instructions are amended by a platform specific
+platforms, the installation instructions are amended by a platform-specific
 document.
 
  * [Notes for UNIX-like platforms](NOTES-UNIX.md)
