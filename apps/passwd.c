@@ -706,15 +706,14 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     cp = out_buf + strlen(out_buf);
     *cp++ = ascii_dollar[0];
 
-# define b64_from_24bit(B2, B1, B0, N)                                   \
+# define b64_from_24bit(B2, B1, B0, N)                                  \
     do {                                                                \
         unsigned int w = ((B2) << 16) | ((B1) << 8) | (B0);             \
         int i = (N);                                                    \
-        while (i-- > 0)                                                 \
-            {                                                           \
-                *cp++ = cov_2char[w & 0x3f];                            \
-                w >>= 6;                                                \
-            }                                                           \
+        while (i-- > 0) {                                               \
+            *cp++ = cov_2char[w & 0x3f];                                \
+            w >>= 6;                                                    \
+        }                                                               \
     } while (0)
 
     switch (magic[0]) {

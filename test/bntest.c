@@ -2847,12 +2847,11 @@ static int test_gcd_prime(void)
     return st;
 }
 
-typedef struct mod_exp_test_st
-{
-  const char *base;
-  const char *exp;
-  const char *mod;
-  const char *res;
+typedef struct mod_exp_test_st {
+    const char *base;
+    const char *exp;
+    const char *mod;
+    const char *res;
 } MOD_EXP_TEST;
 
 static const MOD_EXP_TEST ModExpTests[] = {

@@ -118,8 +118,9 @@ typedef limb longfelem[NLIMBS * 2];
 typedef u64 smallfelem[NLIMBS];
 
 /* This is the value of the prime as four 64-bit words, little-endian. */
-static const u64 kPrime[4] =
-    { 0xfffffffffffffffful, 0xffffffff, 0, 0xffffffff00000001ul };
+static const u64 kPrime[4] = {
+    0xfffffffffffffffful, 0xffffffff, 0, 0xffffffff00000001ul
+};
 static const u64 bottom63bits = 0x7ffffffffffffffful;
 
 /*
@@ -292,8 +293,9 @@ static void felem_diff(felem out, const felem in)
 #define two107m43p11 (((limb)1) << 107) - (((limb)1) << 43) + (((limb)1) << 11)
 
 /* zero107 is 0 mod p */
-static const felem zero107 =
-    { two107m43m11, two107, two107m43p11, two107m43p11 };
+static const felem zero107 = {
+    two107m43m11, two107, two107m43p11, two107m43p11
+};
 
 /*-
  * An alternative felem_diff for larger inputs |in|

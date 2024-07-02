@@ -1004,7 +1004,7 @@ int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp)
     return ret;
 }
 
-# endif /* OPENSSL_NO_ECX */ 
+# endif /* OPENSSL_NO_ECX */
 #endif
 
 void X509_PUBKEY_set0_public_key(X509_PUBKEY *pub,

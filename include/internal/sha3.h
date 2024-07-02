@@ -26,8 +26,7 @@ typedef size_t (sha3_absorb_fn)(void *vctx, const void *in, size_t inlen);
 typedef int (sha3_final_fn)(void *vctx, unsigned char *out, size_t outlen);
 typedef int (sha3_squeeze_fn)(void *vctx, unsigned char *out, size_t outlen);
 
-typedef struct prov_sha3_meth_st
-{
+typedef struct prov_sha3_meth_st {
     sha3_absorb_fn *absorb;
     sha3_final_fn *final;
     sha3_squeeze_fn *squeeze;

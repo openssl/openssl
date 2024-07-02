@@ -105,8 +105,7 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
     size_t bytes_needed;
 
     bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    if (bytes_needed > 0)
-    {
+    if (bytes_needed > 0) {
         int retryCount = 0;
         STATUS result = ERROR;
         unsigned char *buffer;

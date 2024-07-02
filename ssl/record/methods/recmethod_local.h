@@ -91,8 +91,7 @@ typedef struct tls_rl_record_st {
 
 
 /* Protocol version specific function pointers */
-struct record_functions_st
-{
+struct record_functions_st {
     /*
      * Returns either OSSL_RECORD_RETURN_SUCCESS, OSSL_RECORD_RETURN_FATAL or
      * OSSL_RECORD_RETURN_NON_FATAL_ERR if we can keep trying to find an
@@ -209,8 +208,7 @@ struct record_functions_st
     int (*prepare_write_bio)(OSSL_RECORD_LAYER *rl, int type);
 };
 
-struct ossl_record_layer_st
-{
+struct ossl_record_layer_st {
     OSSL_LIB_CTX *libctx;
     const char *propq;
     int isdtls;

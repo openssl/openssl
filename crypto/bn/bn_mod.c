@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include "bn_local.h"
 
 int BN_nnmod(BIGNUM *r, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
@@ -61,7 +62,7 @@ int bn_mod_add_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     if (bn_wexpand(r, mtop) == NULL)
         return 0;
 
-    if (mtop > sizeof(storage) / sizeof(storage[0])) {
+    if (mtop > OSSL_NELEM(storage)) {
         tp = OPENSSL_malloc(mtop * sizeof(BN_ULONG));
         if (tp == NULL)
             return 0;

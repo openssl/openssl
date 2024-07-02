@@ -236,7 +236,7 @@ void ssl_cert_clear_certs(CERT *c)
 #ifndef OPENSSL_NO_COMP_ALG
     int j;
 #endif
-    
+
     if (c == NULL)
         return;
     for (i = 0; i < c->ssl_pkey_num; i++) {

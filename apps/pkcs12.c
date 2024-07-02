@@ -1257,8 +1257,7 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
         }
 
         if (X509_ATTRIBUTE_count(attr)) {
-            for (j = 0; j < X509_ATTRIBUTE_count(attr); j++)
-            {
+            for (j = 0; j < X509_ATTRIBUTE_count(attr); j++) {
                 av = X509_ATTRIBUTE_get0_type(attr, j);
                 print_attribute(out, av);
             }

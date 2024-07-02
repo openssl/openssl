@@ -525,8 +525,7 @@ EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
     return new_raw_key_int(NULL, NULL, NULL, type, e, pub, len, 0);
 }
 
-struct raw_key_details_st
-{
+struct raw_key_details_st {
     unsigned char **key;
     size_t *len;
     int selection;

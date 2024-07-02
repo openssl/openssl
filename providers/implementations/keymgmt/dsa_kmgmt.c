@@ -73,8 +73,7 @@ typedef struct dh_name2id_st{
     int id;
 } DSA_GENTYPE_NAME2ID;
 
-static const DSA_GENTYPE_NAME2ID dsatype2id[]=
-{
+static const DSA_GENTYPE_NAME2ID dsatype2id[] = {
 #ifdef FIPS_MODULE
     { "default", DSA_PARAMGEN_TYPE_FIPS_186_4 },
 #else

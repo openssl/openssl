@@ -396,13 +396,12 @@ static int cname##_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const uns
 #define BLOCK_CIPHER_func_cbc(cname, cprefix, kstruct, ksched) \
 static int cname##_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl) \
 {\
-        while(inl>=EVP_MAXCHUNK) \
-            {\
+        while(inl>=EVP_MAXCHUNK) {\
             cprefix##_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &EVP_C_DATA(kstruct,ctx)->ksched, ctx->iv, EVP_CIPHER_CTX_is_encrypting(ctx));\
             inl-=EVP_MAXCHUNK;\
             in +=EVP_MAXCHUNK;\
             out+=EVP_MAXCHUNK;\
-            }\
+        }\
         if (inl)\
             cprefix##_cbc_encrypt(in, out, (long)inl, &EVP_C_DATA(kstruct,ctx)->ksched, ctx->iv, EVP_CIPHER_CTX_is_encrypting(ctx));\
         return 1;\
@@ -414,8 +413,7 @@ static int cname##_cfb##cbits##_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, 
     size_t chunk = EVP_MAXCHUNK;\
     if (cbits == 1)  chunk >>= 3;\
     if (inl < chunk) chunk = inl;\
-    while (inl && inl >= chunk)\
-    {\
+    while (inl && inl >= chunk) {\
         int num = EVP_CIPHER_CTX_get_num(ctx);\
         cprefix##_cfb##cbits##_encrypt(in, out, (long) \
             ((cbits == 1) \

@@ -596,7 +596,7 @@ static void felem_reduce(felem out, const widefelem in)
     acc[0] += (acc[7] & 0xffffffffffff) << 8;
 
     /*-
-     * acc[k] < in[k] + 2^124 + 2^121 
+     * acc[k] < in[k] + 2^124 + 2^121
      *        < in[k] + 2^125
      *        < 2^128, for k <= 6
      */
@@ -621,7 +621,7 @@ static void felem_reduce(felem out, const widefelem in)
     /* [3]: Eliminate high bits of acc[6] */
     temp = acc[6] >> 48;
     acc[6] &= 0x0000ffffffffffff;
-    
+
     /* temp < 2^80 */
 
     acc[3] += temp >> 40;
@@ -865,7 +865,7 @@ static void felem_contract(felem out, const felem in)
     unsigned int i;
 
     memcpy(tmp, in, sizeof(felem));
- 
+
     /* Case 1: a = 1 iff |in| >= 2^384 */
     a = (in[6] >> 48);
     tmp[0] += a;

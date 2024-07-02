@@ -398,8 +398,7 @@ err:
     return rv;
 }
 
-static const PROV_CIPHER_HW_CHACHA20_POLY1305 chacha20poly1305_hw =
-{
+static const PROV_CIPHER_HW_CHACHA20_POLY1305 chacha20poly1305_hw = {
     { chacha20_poly1305_initkey, NULL },
     chacha20_poly1305_aead_cipher,
     chacha20_poly1305_initiv,

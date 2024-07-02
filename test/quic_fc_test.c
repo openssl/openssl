@@ -367,7 +367,7 @@ static const struct rx_test_op rx_script_1[] = {
     RX_OP_CHECK_ERROR(OSSL_QUIC_ERR_FLOW_CONTROL_ERROR, 1)
     RX_OP_CHECK_ERROR(0, 0)
     RX_OP_CHECK_CWM(INIT_WINDOW_SIZE * 5)
-    /* 
+    /*
      * No window expansion due to flow control violation; window expansion is
      * triggered by retirement only.
      */

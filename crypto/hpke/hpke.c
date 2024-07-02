@@ -45,8 +45,7 @@ static const char OSSL_HPKE_SECRET_LABEL[] = "\x73\x65\x63\x72\x65\x74";
 /**
  * @brief sender or receiver context
  */
-struct ossl_hpke_ctx_st
-{
+struct ossl_hpke_ctx_st {
     OSSL_LIB_CTX *libctx; /* library context */
     char *propq; /* properties */
     int mode; /* HPKE mode */

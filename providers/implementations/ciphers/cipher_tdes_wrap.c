@@ -27,8 +27,7 @@
 static OSSL_FUNC_cipher_update_fn tdes_wrap_update;
 static OSSL_FUNC_cipher_cipher_fn tdes_wrap_cipher;
 
-static const unsigned char wrap_iv[8] =
-{
+static const unsigned char wrap_iv[8] = {
     0x4a, 0xdd, 0xa2, 0x2c, 0x79, 0xe8, 0x21, 0x05
 };
 

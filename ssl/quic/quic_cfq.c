@@ -71,7 +71,7 @@ typedef struct quic_cfq_item_list_st {
 } QUIC_CFQ_ITEM_LIST;
 
 struct quic_cfq_st {
-    /* 
+    /*
      * Invariant: A CFQ item is always in exactly one of these lists, never more
      * or less than one.
      *

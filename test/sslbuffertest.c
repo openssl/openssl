@@ -140,8 +140,7 @@ static int test_func(int test)
          * bytes from the record header/padding etc.
          */
         for (ret = -1, i = 0, len = 0; len != sizeof(testdata) &&
-                 i < MAX_ATTEMPTS; i++)
-        {
+                                       i < MAX_ATTEMPTS; i++) {
             if (test >= 5 && (!TEST_true(SSL_free_buffers(serverssl))
                               || !TEST_true(checkbuffers(serverssl, 0))))
                 goto end;

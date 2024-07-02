@@ -115,7 +115,7 @@ struct ossl_ackm_tx_pkt_st {
     void (*on_discarded)(void *arg);
     void  *cb_arg;
 
-    /* 
+    /*
      * (Internal use fields; must be zero-initialized.)
      *
      * Keep a TX history list, anext is used to manifest

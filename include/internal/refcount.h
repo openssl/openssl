@@ -199,7 +199,7 @@ typedef struct {
 
 #  ifdef OPENSSL_THREADS
 
-static ossl_unused ossl_inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, 
+static ossl_unused ossl_inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt,
                                                  int *ret)
 {
     return CRYPTO_atomic_add(&refcnt->val, 1, ret, refcnt->lock);
@@ -237,7 +237,7 @@ static ossl_unused ossl_inline void CRYPTO_FREE_REF(CRYPTO_REF_COUNT *refcnt)   
 
 #  else     /* OPENSSL_THREADS */
 
-static ossl_unused ossl_inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, 
+static ossl_unused ossl_inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt,
                                                  int *ret)
 {
     refcnt->val++;

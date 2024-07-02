@@ -51,7 +51,7 @@ static int demonstrate_digest(BIO *input)
 
     /*
      * Fetch a message digest by name
-     * The algorithm name is case insensitive. 
+     * The algorithm name is case insensitive.
      * See providers(7) for details about algorithm fetching
      */
     message_digest = EVP_MD_fetch(library_context,
@@ -85,7 +85,7 @@ static int demonstrate_digest(BIO *input)
         goto cleanup;
     }
     /*
-     * Initialize the message digest context to use the fetched 
+     * Initialize the message digest context to use the fetched
      * digest provider
      */
     if (EVP_DigestInit(digest_context, message_digest) != 1) {

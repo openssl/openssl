@@ -76,8 +76,7 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
         again = (buf[i - 1] == '\\');
 
         for (j = 0; j < i; j++) {
-            if (!ossl_isxdigit(buf[j]))
-            {
+            if (!ossl_isxdigit(buf[j])) {
                 i = j;
                 break;
             }

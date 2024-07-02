@@ -324,8 +324,9 @@ int DES_set_key_checked(const_DES_cblock *key, DES_key_schedule *schedule)
 
 void DES_set_key_unchecked(const_DES_cblock *key, DES_key_schedule *schedule)
 {
-    static const int shifts2[16] =
-        { 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0 };
+    static const int shifts2[16] = {
+         0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0
+     };
     register DES_LONG c, d, t, s, t2;
     register const unsigned char *in;
     register DES_LONG *k;

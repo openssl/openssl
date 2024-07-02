@@ -11,6 +11,8 @@
 #include <string.h>
 #include <assert.h>
 
+#include "internal/nelem.h"
+
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
                    size_t r);
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r, int next);
@@ -231,7 +233,7 @@ static void Chi(uint64_t A[5][5])
 
 static void Iota(uint64_t A[5][5], size_t i)
 {
-    assert(i < (sizeof(iotas) / sizeof(iotas[0])));
+    assert(i < OSSL_NELEM(iotas));
     A[0][0] ^= iotas[i];
 }
 
@@ -264,7 +266,7 @@ static void Round(uint64_t A[5][5], size_t i)
     uint64_t C[5], E[2];        /* registers */
     uint64_t D[5], T[2][5];     /* memory    */
 
-    assert(i < (sizeof(iotas) / sizeof(iotas[0])));
+    assert(i < OSSL_NELEM(iotas));
 
     C[0] = A[0][0] ^ A[1][0] ^ A[2][0] ^ A[3][0] ^ A[4][0];
     C[1] = A[0][1] ^ A[1][1] ^ A[2][1] ^ A[3][1] ^ A[4][1];
@@ -391,7 +393,7 @@ static void Round(uint64_t A[5][5], size_t i)
 {
     uint64_t C[5], D[5];
 
-    assert(i < (sizeof(iotas) / sizeof(iotas[0])));
+    assert(i < OSSL_NELEM(iotas));
 
     C[0] = A[0][0] ^ A[1][0] ^ A[2][0] ^ A[3][0] ^ A[4][0];
     C[1] = A[0][1] ^ A[1][1] ^ A[2][1] ^ A[3][1] ^ A[4][1];
@@ -536,7 +538,7 @@ static void Round(uint64_t R[5][5], uint64_t A[5][5], size_t i)
 {
     uint64_t C[5], D[5];
 
-    assert(i < (sizeof(iotas) / sizeof(iotas[0])));
+    assert(i < OSSL_NELEM(iotas));
 
     C[0] = A[0][0] ^ A[1][0] ^ A[2][0] ^ A[3][0] ^ A[4][0];
     C[1] = A[0][1] ^ A[1][1] ^ A[2][1] ^ A[3][1] ^ A[4][1];
@@ -694,7 +696,7 @@ static void FourRounds(uint64_t A[5][5], size_t i)
 {
     uint64_t B[5], C[5], D[5];
 
-    assert(i <= (sizeof(iotas) / sizeof(iotas[0]) - 4));
+    assert(i <= OSSL_NELEM(iotas) - 4);
 
     /* Round 4*n */
     C[0] = A[0][0] ^ A[1][0] ^ A[2][0] ^ A[3][0] ^ A[4][0];

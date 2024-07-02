@@ -38,7 +38,7 @@ static const char *nid2name(int meth, const OSSL_ITEM *items, size_t items_n)
 }
 
 /*
- * The list of permitted hash functions are taken from 
+ * The list of permitted hash functions are taken from
  * https://tools.ietf.org/html/rfc8017#appendix-A.2.1:
  *
  * OAEP-PSSDigestAlgorithms    ALGORITHM-IDENTIFIER ::= {
