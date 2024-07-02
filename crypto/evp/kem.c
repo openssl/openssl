@@ -87,6 +87,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
          * iteration we're on.
          */
         EVP_KEM_free(kem);
+        kem = NULL;
         EVP_KEYMGMT_free(tmp_keymgmt);
 
         switch (iter) {
@@ -143,6 +144,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
 
     if (provkey == NULL) {
         EVP_KEM_free(kem);
+        kem = NULL;
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
