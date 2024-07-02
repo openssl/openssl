@@ -395,6 +395,11 @@ If it isn't set, a call to EVP_MAC_init() will set it.
 
 EVP_MAC_do_all_provided() returns nothing at all.
 
+EVP_MAC_gettable_params(), EVP_MAC_gettable_params(),
+EVP_MAC_gettable_ctx_params(), EVP_MAC_CTX_gettable_params(),
+EVP_MAC_settable_ctx_params(), EVP_MAC_CTX_settable_params()
+return a constant L<OSSL_PARAM(3)> array or NULL on error.
+
 =head1 EXAMPLES
 
   #include <stdlib.h>

@@ -188,8 +188,10 @@ const OSSL_PROVIDER *EVP_MAC_get0_provider(const EVP_MAC *mac)
 
 const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac)
 {
-    if (mac->gettable_params == NULL)
+    if (mac == NULL || mac->gettable_params == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GETTABLE_PARAMS);
         return NULL;
+    }
     return mac->gettable_params(ossl_provider_ctx(EVP_MAC_get0_provider(mac)));
 }
 
@@ -197,8 +199,10 @@ const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac)
 {
     void *alg;
 
-    if (mac->gettable_ctx_params == NULL)
+    if (mac == NULL || mac->gettable_ctx_params == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GETTABLE_CTX_PARAMS);
         return NULL;
+    }
     alg = ossl_provider_ctx(EVP_MAC_get0_provider(mac));
     return mac->gettable_ctx_params(NULL, alg);
 }
@@ -207,8 +211,10 @@ const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac)
 {
     void *alg;
 
-    if (mac->settable_ctx_params == NULL)
+    if (mac == NULL || mac->settable_ctx_params == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_SETTABLE_CTX_PARAMS);
         return NULL;
+    }
     alg = ossl_provider_ctx(EVP_MAC_get0_provider(mac));
     return mac->settable_ctx_params(NULL, alg);
 }
@@ -217,8 +223,11 @@ const OSSL_PARAM *EVP_MAC_CTX_gettable_params(EVP_MAC_CTX *ctx)
 {
     void *alg;
 
-    if (ctx->meth->gettable_ctx_params == NULL)
+    if (ctx == NULL || ctx->meth == NULL
+            || ctx->meth->gettable_ctx_params == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_GETTABLE_CTX_PARAMS);
         return NULL;
+    }
     alg = ossl_provider_ctx(EVP_MAC_get0_provider(ctx->meth));
     return ctx->meth->gettable_ctx_params(ctx->algctx, alg);
 }
@@ -227,8 +236,11 @@ const OSSL_PARAM *EVP_MAC_CTX_settable_params(EVP_MAC_CTX *ctx)
 {
     void *alg;
 
-    if (ctx->meth->settable_ctx_params == NULL)
+    if (ctx == NULL || ctx->meth == NULL
+        || ctx->meth->settable_ctx_params == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_SETTABLE_CTX_PARAMS);
         return NULL;
+    }
     alg = ossl_provider_ctx(EVP_MAC_get0_provider(ctx->meth));
     return ctx->meth->settable_ctx_params(ctx->algctx, alg);
 }

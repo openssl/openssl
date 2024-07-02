@@ -206,7 +206,8 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
     if ((decoder = ossl_decoder_new()) == NULL)
         return NULL;
     decoder->base.id = id;
-    if ((decoder->base.name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
+    if ((decoder->base.name =
+         ossl_algorithm_get1_first_name(algodef)) == NULL) {
         OSSL_DECODER_free(decoder);
         return NULL;
     }
@@ -283,7 +284,6 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
     decoder->base.prov = prov;
     return decoder;
 }
-
 
 /*
  * The core fetching functionality passes the names of the implementation.
@@ -521,7 +521,8 @@ static int resolve_name(OSSL_DECODER *decoder, const char *name)
     return ossl_namemap_name2num(namemap, name);
 }
 
-int ossl_decoder_fast_is_a(OSSL_DECODER *decoder, const char *name, int *id_cache)
+int ossl_decoder_fast_is_a(OSSL_DECODER *decoder, const char *name,
+                           int *id_cache)
 {
     int id = *id_cache;
 
@@ -588,6 +589,7 @@ OSSL_DECODER_gettable_params(OSSL_DECODER *decoder)
 
         return decoder->gettable_params(provctx);
     }
+    ERR_raise(ERR_LIB_OSSL_DECODER, OSSL_DECODER_R_MISSING_GETTABLE_PARAMS);
     return NULL;
 }
 
@@ -606,6 +608,7 @@ OSSL_DECODER_settable_ctx_params(OSSL_DECODER *decoder)
 
         return decoder->settable_ctx_params(provctx);
     }
+    ERR_raise(ERR_LIB_OSSL_DECODER, OSSL_DECODER_R_MISSING_SETTABLE_CTX_PARAMS);
     return NULL;
 }
 

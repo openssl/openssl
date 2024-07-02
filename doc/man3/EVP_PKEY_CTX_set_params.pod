@@ -61,9 +61,9 @@ L<EVP_PKEY-X25519(7)/Common X25519, X448, ED25519 and ED448 parameters>
 =head1 RETURN VALUES
 
 EVP_PKEY_CTX_set_params() returns 1 for success or 0 otherwise.
-EVP_PKEY_CTX_settable_params() returns an OSSL_PARAM array on success or NULL on
-error.
-It may also return NULL if there are no settable parameters available.
+EVP_PKEY_CTX_gettable_params() and EVP_PKEY_CTX_settable_params()
+return a constant L<OSSL_PARAM(3)> array on success or NULL on error.
+It may also return NULL if there are no get/settable parameters available.
 
 All other functions and macros described on this page return a positive value
 for success and 0 or a negative value for failure. In particular a return value
