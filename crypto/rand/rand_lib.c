@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,6 +19,10 @@
 #include "crypto/cryptlib.h"
 #include "rand_local.h"
 #include "crypto/context.h"
+
+#ifdef OPENSSL_RAND_SEED_JITTER
+#include <jitterentropy.h>
+#endif
 
 #ifndef FIPS_MODULE
 # include <stdio.h>
@@ -61,6 +65,11 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
 
     if (!ossl_rand_pool_init())
         goto err;
+
+# ifdef OPENSSL_RAND_SEED_JITTER
+    if (jent_entropy_init_ex(0, JENT_FORCE_FIPS))
+        goto err;
+# endif
 
     rand_inited = 1;
     return 1;
@@ -655,7 +664,17 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
         ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
         return NULL;
     }
+#if defined(OPENSSL_RAND_SEED_JITTER)
+    /*
+     * Explicitely use SEED_JITTER, directly, without chaining to
+     * allow reuse of pre-certified static jitterentropy.a without
+     * need for a separate ESV certificate. Potentially this should be
+     * default for all FIPS_MODULE builds, not just jitterentropy.
+     */
+    ctx = EVP_RAND_CTX_new(rand, NULL);
+#else
     ctx = EVP_RAND_CTX_new(rand, parent);
+#endif
     EVP_RAND_free(rand);
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_CREATE_DRBG);
