@@ -27,6 +27,9 @@ plan skip_all => "This test is not supported in a no-cmp build"
 plan skip_all => "This test is not supported in a shared library build on Windows"
     if $^O eq 'MSWin32' && !disabled("shared");
 
+plan skip_all => "Intermediate_CA.crt uses legacy P-192"
+    unless $no_fips;
+
 plan tests => 2 + ($no_fips ? 0 : 1); #fips test
 
 my @basic_cmd = ("cmp_protect_test",
