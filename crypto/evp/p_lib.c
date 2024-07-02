@@ -992,12 +992,19 @@ int EVP_PKEY_type(int type)
 
 int EVP_PKEY_get_id(const EVP_PKEY *pkey)
 {
+    if (pkey->type == EVP_PKEY_KEYMGMT) {
+        const char *name = EVP_KEYMGMT_get0_name(pkey->keymgmt);
+        int type = evp_pkey_name2type(name);
+        if (type != NID_undef)
+            return type;
+    }
+
     return pkey->type;
 }
 
 int EVP_PKEY_get_base_id(const EVP_PKEY *pkey)
 {
-    return EVP_PKEY_type(pkey->type);
+    return EVP_PKEY_type(EVP_PKEY_get_id(pkey));
 }
 
 /*
