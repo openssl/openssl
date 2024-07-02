@@ -201,9 +201,11 @@ static void init_thread_destructor(void *hands)
 
 int ossl_init_thread(void)
 {
-    if (!CRYPTO_THREAD_init_local(&destructor_key.value,
-                                  init_thread_destructor))
-        return 0;
+    if (destructor_key.sane == -1) {
+        if (!CRYPTO_THREAD_init_local(&destructor_key.value,
+                                    init_thread_destructor))
+            return 0;
+    }
 
     return 1;
 }

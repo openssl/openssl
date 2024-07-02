@@ -25,6 +25,8 @@ my $config_path = abs_path(srctop_file("test", $no_fips ? "default.cnf"
 
 plan tests => 3;
 
+$ENV{TSAN_OPTIONS} = "suppressions=".srctop_file('/util/suppressions.txt');
+
 if ($no_fips) {
     ok(run(test(["threadstest", "-config", $config_path, data_dir()])),
        "running test_threads");

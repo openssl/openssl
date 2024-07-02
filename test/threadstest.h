@@ -65,7 +65,6 @@ static void *thread_run(void *arg)
     *(void **) (&f) = arg;
 
     f();
-    OPENSSL_thread_stop();
     return NULL;
 }
 

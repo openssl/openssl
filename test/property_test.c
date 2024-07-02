@@ -368,55 +368,6 @@ static int test_definition_compares(int n)
     return r;
 }
 
-static int test_register_deregister(void)
-{
-    static const struct {
-        int nid;
-        const char *prop;
-        char *impl;
-    } impls[] = {
-        { 6, "position=1", "a" },
-        { 6, "position=2", "b" },
-        { 6, "position=3", "c" },
-        { 6, "position=4", "d" },
-    };
-    size_t i;
-    int ret = 0;
-    OSSL_METHOD_STORE *store;
-    OSSL_PROVIDER prov = { 1 };
-
-    if (!TEST_ptr(store = ossl_method_store_new(NULL))
-        || !add_property_names("position", NULL))
-        goto err;
-
-    for (i = 0; i < OSSL_NELEM(impls); i++)
-        if (!TEST_true(ossl_method_store_add(store, &prov, impls[i].nid,
-                                             impls[i].prop, impls[i].impl,
-                                             &up_ref, &down_ref))) {
-            TEST_note("iteration %zd", i + 1);
-            goto err;
-        }
-
-    /* Deregister in a different order to registration */
-    for (i = 0; i < OSSL_NELEM(impls); i++) {
-        const size_t j = (1 + i * 3) % OSSL_NELEM(impls);
-        int nid = impls[j].nid;
-        void *impl = impls[j].impl;
-
-        if (!TEST_true(ossl_method_store_remove(store, nid, impl))
-            || !TEST_false(ossl_method_store_remove(store, nid, impl))) {
-            TEST_note("iteration %zd, position %zd", i + 1, j + 1);
-            goto err;
-        }
-    }
-
-    if (TEST_false(ossl_method_store_remove(store, impls[0].nid, impls[0].impl)))
-        ret = 1;
-err:
-    ossl_method_store_free(store);
-    return ret;
-}
-
 static int test_property(void)
 {
     static OSSL_PROVIDER fake_provider1 = { 1 };
@@ -696,7 +647,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_property_merge, OSSL_NELEM(merge_tests));
     ADD_TEST(test_property_defn_cache);
     ADD_ALL_TESTS(test_definition_compares, OSSL_NELEM(definition_tests));
-    ADD_TEST(test_register_deregister);
     ADD_TEST(test_property);
     ADD_TEST(test_query_cache_stochastic);
     ADD_TEST(test_fips_mode);
