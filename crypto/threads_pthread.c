@@ -59,7 +59,7 @@ __tsan_mutex_post_lock((x), 0, 0)
 
 # include <assert.h>
 
-# ifdef PTHREAD_RWLOCK_INITIALIZER
+# if defined(PTHREAD_RWLOCK_INITIALIZER) && defined(NDEBUG)
 #  define USE_RWLOCK
 # endif
 
