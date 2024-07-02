@@ -288,6 +288,9 @@ int FuzzerInitialize(int *argc, char ***argv)
 {
     FuzzerSetRand();
     pctx = ASN1_PCTX_new();
+    if (pctx == NULL)
+        return 0;
+
     ASN1_PCTX_set_flags(pctx, ASN1_PCTX_FLAGS_SHOW_ABSENT |
         ASN1_PCTX_FLAGS_SHOW_SEQUENCE | ASN1_PCTX_FLAGS_SHOW_SSOF |
         ASN1_PCTX_FLAGS_SHOW_TYPE | ASN1_PCTX_FLAGS_SHOW_FIELD_STRUCT_NAME);
