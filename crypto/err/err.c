@@ -188,6 +188,8 @@ static int err_string_data_cmp(const ERR_STRING_DATA *a,
 static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 {
     ERR_STRING_DATA *p = NULL;
+    if(err_string_lock == NULL)
+	return NULL;
 
     if (!CRYPTO_THREAD_read_lock(err_string_lock))
         return NULL;
