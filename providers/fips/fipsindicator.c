@@ -15,11 +15,16 @@
 
 void ossl_FIPS_IND_init(ossl_FIPS_IND *ind)
 {
-    ind->approved = 1; /* Assume we are approved by default */
+    ossl_FIPS_IND_set_approved(ind); /* Assume we are approved by default */
     memset(ind->settable, OSSL_FIPS_IND_STATE_UNKNOWN, sizeof(ind->settable));
 }
 
-void ossl_FIPS_IND_dup(ossl_FIPS_IND *dst, const ossl_FIPS_IND *src)
+void ossl_FIPS_IND_set_approved(ossl_FIPS_IND *ind)
+{
+    ind->approved = 1;
+}
+
+void ossl_FIPS_IND_copy(ossl_FIPS_IND *dst, const ossl_FIPS_IND *src)
 {
     *dst = *src;
 }

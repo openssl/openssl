@@ -57,6 +57,7 @@ int ossl_FIPS_IND_callback(OSSL_LIB_CTX *libctx, const char *type,
                            const char *desc);
 
 void ossl_FIPS_IND_init(ossl_FIPS_IND *ind);
+void ossl_FIPS_IND_set_approved(ossl_FIPS_IND *ind);
 void ossl_FIPS_IND_set_settable(ossl_FIPS_IND *ind, int id, int enable);
 int ossl_FIPS_IND_get_settable(const ossl_FIPS_IND *ind, int id);
 int ossl_FIPS_IND_on_unapproved(ossl_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
@@ -66,14 +67,16 @@ int ossl_FIPS_IND_set_ctx_param(ossl_FIPS_IND *ind, int id,
                                 const OSSL_PARAM params[], const char *name);
 int ossl_FIPS_IND_get_ctx_param(const ossl_FIPS_IND *ind,
                                       OSSL_PARAM params[]);
-void ossl_FIPS_IND_dup(ossl_FIPS_IND *dst, const ossl_FIPS_IND *src);
+void ossl_FIPS_IND_copy(ossl_FIPS_IND *dst, const ossl_FIPS_IND *src);
 
 /* Place this in the algorithm ctx structure */
 # define OSSL_FIPS_IND_DECLARE ossl_FIPS_IND indicator;
 /* Call this to initialize the indicator */
 # define OSSL_FIPS_IND_INIT(ctx) ossl_FIPS_IND_init(&ctx->indicator);
-# define OSSL_FIPS_IND_DUP(dst, src) ossl_FIPS_IND_dup(&dst->indicator, &src->indicator);
+# define OSSL_FIPS_IND_COPY(dst, src) ossl_FIPS_IND_copy(&dst->indicator, &src->indicator);
 
+/* Required for reset */
+# define OSSL_FIPS_IND_SET_APPROVED(ctx) ossl_FIPS_IND_set_approved(&ctx->indicator);
 /*
  * This should be called if a fips check fails, to indicate the operation is not approved
  * If there is more than 1 strict check flag per algorithm ctx, the id represents
@@ -117,11 +120,12 @@ int ossl_fips_ind_digest_sign_check(ossl_FIPS_IND *ind, int id,
 #else
 # define OSSL_FIPS_IND_DECLARE
 # define OSSL_FIPS_IND_INIT(ctx)
+# define OSSL_FIPS_IND_SET_APPROVED(ctx)
 # define OSSL_FIPS_IND_ON_UNAPPROVED(ctx, id, libctx, algname, opname, configopt_fn)
 # define OSSL_FIPS_IND_SETTABLE_CTX_PARAM(name)
 # define OSSL_FIPS_IND_SET_CTX_PARAM(ctx, id, params, name) 1
 # define OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
 # define OSSL_FIPS_IND_GET_CTX_PARAM(ctx, params) 1
-# define OSSL_FIPS_IND_DUP(dst, src)
+# define OSSL_FIPS_IND_COPY(dst, src)
 
 #endif
