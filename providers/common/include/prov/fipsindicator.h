@@ -9,6 +9,11 @@
 
 #ifdef FIPS_MODULE
 
+# include <openssl/core.h> /* OSSL_CALLBACK, OSSL_LIB_CTX */
+# include <openssl/indicator.h>
+# include "crypto/types.h"
+# include <openssl/ec.h>
+
 /*
  * There may be multiple settables associated with an algorithm that allow
  * overriding the default status.
@@ -17,14 +22,14 @@
 # define OSSL_FIPS_IND_SETTABLE0 0
 # define OSSL_FIPS_IND_SETTABLE1 1
 # define OSSL_FIPS_IND_SETTABLE2 2
+# define OSSL_FIPS_IND_SETTABLE3 2
+# define OSSL_FIPS_IND_SETTABLE4 2
+# define OSSL_FIPS_IND_SETTABLE5 2
+# define OSSL_FIPS_IND_SETTABLE6 2
+# define OSSL_FIPS_IND_SETTABLE7 2
+# define OSSL_FIPS_IND_SETTABLE_MAX (1 + OSSL_FIPS_IND_SETTABLE7)
 
-# include <openssl/core.h> /* OSSL_CALLBACK, OSSL_LIB_CTX */
-# include <openssl/indicator.h>
-# include "crypto/types.h"
-# include <openssl/ec.h>
-
-#define OSSL_FIPS_IND_MAX_SETTABLE 8
-
+/* Each settable is in one of 3 states */
 #define OSSL_FIPS_IND_STATE_UNKNOWN    -1  /* Initial unknown state */
 #define OSSL_FIPS_IND_STATE_STRICT      1  /* Strict enforcement */
 #define OSSL_FIPS_IND_STATE_TOLERANT    0  /* Relaxation of rules */
@@ -48,7 +53,7 @@
  */
 typedef struct ossl_fips_ind_st {
     unsigned int approved;
-    int settable[OSSL_FIPS_IND_MAX_SETTABLE]; /* See OSSL_FIPS_IND_STATE */
+    int settable[OSSL_FIPS_IND_SETTABLE_MAX]; /* See OSSL_FIPS_IND_STATE */
 } ossl_FIPS_IND;
 
 typedef int (OSSL_FIPS_IND_CHECK_CB)(OSSL_LIB_CTX *libctx);
@@ -73,12 +78,20 @@ void ossl_FIPS_IND_copy(ossl_FIPS_IND *dst, const ossl_FIPS_IND *src);
 # define OSSL_FIPS_IND_DECLARE ossl_FIPS_IND indicator;
 /* Call this to initialize the indicator */
 # define OSSL_FIPS_IND_INIT(ctx) ossl_FIPS_IND_init(&ctx->indicator);
+/*
+ * Use the copy if an algorithm has a dup function that does not copy the src to
+ * the dst.
+ */
 # define OSSL_FIPS_IND_COPY(dst, src) ossl_FIPS_IND_copy(&dst->indicator, &src->indicator);
 
-/* Required for reset */
+/*
+ * Required for reset - since once something becomes unapproved it will remain
+ * unapproved unless this is used. This should be used in the init before
+ * params are set into the ctx & before any FIPS checks are done.
+ */
 # define OSSL_FIPS_IND_SET_APPROVED(ctx) ossl_FIPS_IND_set_approved(&ctx->indicator);
 /*
- * This should be called if a fips check fails, to indicate the operation is not approved
+ * This should be called if a FIPS check fails, to indicate the operation is not approved
  * If there is more than 1 strict check flag per algorithm ctx, the id represents
  * the index.
  */
@@ -90,7 +103,7 @@ void ossl_FIPS_IND_copy(ossl_FIPS_IND *dst, const ossl_FIPS_IND *src);
 
 /*
  * The id here must match the one used by OSSL_FIPS_IND_ON_UNAPPROVED
- * The name should also end in the same char
+ * The name must match the param used by OSSL_FIPS_IND_SETTABLE_CTX_PARAM
  */
 # define OSSL_FIPS_IND_SET_CTX_PARAM(ctx, id, params, name) \
     ossl_FIPS_IND_set_ctx_param(&((ctx)->indicator), id, params, name)
@@ -103,6 +116,11 @@ void ossl_FIPS_IND_copy(ossl_FIPS_IND *dst, const ossl_FIPS_IND *src);
 
 #define OSSL_FIPS_IND_GET(ctx) &((ctx)->indicator)
 
+/*
+ * The following functions are used instead of macros in order to share
+ * common functionality across different algorithms. e.g. The rsa key check is
+ * used by KEM, ASYM_CIPHER,...
+ */
 int ossl_fips_ind_rsa_key_check(ossl_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
                                 const RSA *rsa, const char *desc, int protect);
 # ifndef OPENSSL_NO_EC

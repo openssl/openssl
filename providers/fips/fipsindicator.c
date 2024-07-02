@@ -31,7 +31,7 @@ void ossl_FIPS_IND_copy(ossl_FIPS_IND *dst, const ossl_FIPS_IND *src)
 
 void ossl_FIPS_IND_set_settable(ossl_FIPS_IND *ind, int id, int state)
 {
-    if (!ossl_assert(id < OSSL_FIPS_IND_MAX_SETTABLE))
+    if (!ossl_assert(id < OSSL_FIPS_IND_SETTABLE_MAX))
         return;
     if (!ossl_assert(state == OSSL_FIPS_IND_STATE_STRICT
                      || state == OSSL_FIPS_IND_STATE_TOLERANT))
@@ -41,7 +41,7 @@ void ossl_FIPS_IND_set_settable(ossl_FIPS_IND *ind, int id, int state)
 
 int ossl_FIPS_IND_get_settable(const ossl_FIPS_IND *ind, int id)
 {
-    if (!ossl_assert(id < OSSL_FIPS_IND_MAX_SETTABLE))
+    if (!ossl_assert(id < OSSL_FIPS_IND_SETTABLE_MAX))
         return OSSL_FIPS_IND_STATE_UNKNOWN;
     return ind->settable[id];
 }
