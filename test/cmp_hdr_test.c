@@ -143,6 +143,7 @@ static int execute_HDR_set1_recipient_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
     int res = 0;
     X509_NAME *x509name = X509_NAME_new();
+    int res = 0;
 
     if (!TEST_ptr(x509name))
         goto err;
