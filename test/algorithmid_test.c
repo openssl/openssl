@@ -211,6 +211,41 @@ static int test_spki_file(void)
     return ret;
 }
 
+static int test_x509_algo(void)
+{
+    int ret = 0;
+    X509_ALGOR *algo = NULL;
+    X509_ALGOR *algo_second = NULL;
+    const EVP_MD* md = EVP_get_digestbyname("sha256");
+
+    if (md == NULL)
+        goto err;
+    if ((algo = X509_ALGOR_new()) == NULL)
+        goto err;
+    if ((algo->algorithm = OBJ_nid2obj(EVP_MD_get_type(md))) == NULL)
+        goto err;
+    if ((algo->parameter = ASN1_TYPE_new()) == NULL)
+        goto err;
+    algo->parameter->type = V_ASN1_NULL;
+
+    if(TEST_int_eq(X509_ALGOR_copy(algo, NULL), 0))
+        goto err;
+    if(TEST_int_eq(X509_ALGOR_copy(NULL, algo), 0))
+        goto err;
+    if(TEST_int_eq(X509_ALGOR_copy(algo, algo), 1))
+        goto err;
+    if(TEST_int_eq(X509_ALGOR_copy(algo_second, algo), 1))
+        goto err;
+    if(TEST_int_eq(X509_ALGOR_cmp(algo_second, algo), 0))
+        goto err;
+
+    ret = 1;
+err:
+    X509_ALGOR_free(algo);
+    X509_ALGOR_free(algo_second);
+    return ret;
+}
+
 static int test_x509_files(void)
 {
     X509 *eecert = NULL, *cacert = NULL;
@@ -322,6 +357,7 @@ int setup_tests(void)
 
     if (x509)
         ADD_TEST(test_x509_files);
+        ADD_TEST(test_x509_algo);
     if (spki)
         ADD_TEST(test_spki_file);
     return 1;
