@@ -61,8 +61,8 @@ __END__
 .text
 
 .extern AES_cbc_encrypt
-.extern AES_encrypt
-.extern AES_decrypt
+.extern ossl_bsaes_encrypt
+.extern ossl_bsaes_decrypt
 
 .type   _bsaes_decrypt8,%function
 .align  4
@@ -1236,7 +1236,7 @@ ossl_bsaes_cbc_encrypt:
         mov     v8.16b, v15.16b
         mov     v15.16b, v0.16b
         mov     x2, x3
-        bl      AES_decrypt
+        bl      ossl_bsaes_decrypt
         ldr     x14, [sp, #16]
         ldp     x1, x4, [sp], #32
         ldr     q0, [x1]                    // load result
@@ -1436,7 +1436,7 @@ ossl_bsaes_ctr32_encrypt_blocks:
         add     x1, sp, #64                 // output on the stack
         mov     x2, x22                     // key
 
-        bl      AES_encrypt
+        bl      ossl_bsaes_encrypt
 
         ldr     q0, [x19], #16              // load input
         ldr     q1, [sp, #64]               // load encrypted counter
@@ -1506,7 +1506,7 @@ ossl_bsaes_xts_encrypt:
         mov     x0, x5                      // iv[]
         mov     x1, sp
         mov     x2, x4                      // key2
-        bl      AES_encrypt
+        bl      ossl_bsaes_encrypt
         ldr     q11, [sp], #16
 
         ldr     w1, [x23, #240]             // get # of rounds
@@ -1835,11 +1835,11 @@ ossl_bsaes_xts_encrypt:
         sub     x0, sp, #16
         sub     x1, sp, #16
         mov     x2, x23
-        mov     v13.d[0], v11.d[1]          // just in case AES_encrypt corrupts top half of callee-saved SIMD registers
+        mov     v13.d[0], v11.d[1]          // just in case ossl_bsaes_encrypt corrupts top half of callee-saved SIMD registers
         mov     v14.d[0], v12.d[1]
         str     q0, [sp, #-16]!
 
-        bl      AES_encrypt
+        bl      ossl_bsaes_encrypt
 
         ldr     q0, [sp], #16
         trn1    v13.2d, v11.2d, v13.2d
@@ -1874,9 +1874,9 @@ ossl_bsaes_xts_encrypt:
         mov     x1, sp
         mov     x2, x23
         mov     x21, x6
-        mov     v13.d[0], v11.d[1]          // just in case AES_encrypt corrupts top half of callee-saved SIMD registers
+        mov     v13.d[0], v11.d[1]          // just in case ossl_bsaes_encrypt corrupts top half of callee-saved SIMD registers
 
-        bl      AES_encrypt
+        bl      ossl_bsaes_encrypt
 
         trn1    v11.2d, v11.2d, v13.2d
         ldr     q0, [sp], #16
@@ -1952,7 +1952,7 @@ ossl_bsaes_xts_decrypt:
         mov     x0, x5                      // iv[]
         mov     x1, sp
         mov     x2, x4                      // key2
-        bl      AES_encrypt
+        bl      ossl_bsaes_encrypt
         ldr     q11, [sp], #16
 
         ldr     w1, [x23, #240]             // get # of rounds
@@ -2287,11 +2287,11 @@ ossl_bsaes_xts_decrypt:
         sub     x0, sp, #16
         sub     x1, sp, #16
         mov     x2, x23
-        mov     v13.d[0], v11.d[1]          // just in case AES_decrypt corrupts top half of callee-saved SIMD registers
+        mov     v13.d[0], v11.d[1]          // just in case ossl_bsaes_decrypt corrupts top half of callee-saved SIMD registers
         mov     v14.d[0], v12.d[1]
         str     q0, [sp, #-16]!
 
-        bl      AES_decrypt
+        bl      ossl_bsaes_decrypt
 
         ldr     q0, [sp], #16
         trn1    v13.2d, v11.2d, v13.2d
@@ -2318,10 +2318,10 @@ ossl_bsaes_xts_decrypt:
         mov     x0, sp
         mov     x1, sp
         mov     x2, x23
-        mov     v13.d[0], v11.d[1]          // just in case AES_decrypt corrupts top half of callee-saved SIMD registers
+        mov     v13.d[0], v11.d[1]          // just in case ossl_bsaes_decrypt corrupts top half of callee-saved SIMD registers
         mov     v14.d[0], v12.d[1]
 
-        bl      AES_decrypt
+        bl      ossl_bsaes_decrypt
 
         trn1    v12.2d, v12.2d, v14.2d
         trn1    v11.2d, v11.2d, v13.2d
@@ -2353,7 +2353,7 @@ ossl_bsaes_xts_decrypt:
         mov     x2, x23
         mov     x21, x6
 
-        bl      AES_decrypt
+        bl      ossl_bsaes_decrypt
 
         trn1    v11.2d, v11.2d, v13.2d
         ldr     q0, [sp], #16
