@@ -578,6 +578,11 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
 #endif
         switch (prsactx->pad_mode) {
         case RSA_X931_PADDING:
+#ifdef FIPS_MODULE
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_PADDING_MODE,
+                           "PKCS#1 v1.5 or PSS padding allowed");
+            return 0;
+#else
             if ((size_t)RSA_size(prsactx->rsa) < tbslen + 1) {
                 ERR_raise_data(ERR_LIB_PROV, PROV_R_KEY_SIZE_TOO_SMALL,
                                "RSA key size = %d, expected minimum = %d",
@@ -594,7 +599,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
                                       sig, prsactx->rsa, RSA_X931_PADDING);
             clean_tbuf(prsactx);
             break;
-
+#endif
         case RSA_PKCS1_PADDING:
             {
                 unsigned int sltmp;
@@ -1252,6 +1257,13 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
             err_extra_text = "No padding not allowed with RSA-PSS";
             goto cont;
         case RSA_X931_PADDING:
+#ifdef FIPS_MODULE
+            if (!ossl_rsa_check_key_pad(prsactx->libctx, prsactx->rsa,
+                                        prsactx->operation, pad_mode)) {
+                err_extra_text = NULL;
+                goto bad_pad;
+            }
+#endif
             err_extra_text = "X.931 padding not allowed with RSA-PSS";
         cont:
             if (RSA_test_flags(prsactx->rsa,

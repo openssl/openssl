@@ -11,6 +11,8 @@
 
 /* Functions that are common */
 int ossl_rsa_check_key(OSSL_LIB_CTX *ctx, const RSA *rsa, int operation);
+int ossl_rsa_check_key_pad(OSSL_LIB_CTX *ctx, const RSA *rsa, int operation,
+                       int padmode);
 int ossl_ec_check_key(OSSL_LIB_CTX *ctx, const EC_KEY *ec, int protect);
 int ossl_dsa_check_key(OSSL_LIB_CTX *ctx, const DSA *dsa, int sign);
 int ossl_dh_check_key(OSSL_LIB_CTX *ctx, const DH *dh);

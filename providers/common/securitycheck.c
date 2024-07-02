@@ -25,53 +25,84 @@
  * signing), and for legacy purposes 80 bits (for decryption or verifying).
  * Set protect = 1 for encryption or signing operations, or 0 otherwise. See
  * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf.
+ *
+ * FIPS 140-3 Notes:
+ *  - Key transport and key agreement now enforce the protection limit
+      when processing.
+ *  - Older FIPS 186-2/X931 standards restricted the modulus to 1024+256*s (bits)
  */
-int ossl_rsa_check_key(OSSL_LIB_CTX *ctx, const RSA *rsa, int operation)
+int ossl_rsa_check_key_pad(OSSL_LIB_CTX *ctx, const RSA *rsa, int operation,
+                           int padmode)
 {
-    int protect = 0;
-
-    switch (operation) {
-        case EVP_PKEY_OP_SIGN:
-            protect = 1;
-            /* fallthrough */
-        case EVP_PKEY_OP_VERIFY:
-            break;
-        case EVP_PKEY_OP_ENCAPSULATE:
-        case EVP_PKEY_OP_ENCRYPT:
-            protect = 1;
-            /* fallthrough */
-        case EVP_PKEY_OP_VERIFYRECOVER:
-        case EVP_PKEY_OP_DECAPSULATE:
-        case EVP_PKEY_OP_DECRYPT:
-            if (RSA_test_flags(rsa,
-                               RSA_FLAG_TYPE_MASK) == RSA_FLAG_TYPE_RSASSAPSS) {
-                ERR_raise_data(ERR_LIB_PROV,
-                               PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
-                               "operation: %d", operation);
-                return 0;
-            }
-            break;
-        default:
-            ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
-                           "invalid operation: %d", operation);
-            return 0;
-    }
-
 #if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
     if (ossl_securitycheck_enabled(ctx)) {
+        int protect, encryption;
         int sz = RSA_bits(rsa);
 
-        if (protect ? (sz < 2048) : (sz < 1024)) {
+        switch (operation) {
+            case EVP_PKEY_OP_VERIFY:
+                protect = 0;
+                encryption = 0;
+                break;
+            case EVP_PKEY_OP_SIGN:
+                protect = 1;
+                encryption = 0;
+                break;
+            case EVP_PKEY_OP_VERIFYRECOVER:
+                protect = 0;
+                encryption = 0;
+                break;
+            case EVP_PKEY_OP_ENCAPSULATE:
+            case EVP_PKEY_OP_ENCRYPT:
+                protect = 1;
+                encryption = 1;
+                break;
+            case EVP_PKEY_OP_DECAPSULATE:
+            case EVP_PKEY_OP_DECRYPT:
+                protect = 0;
+                encryption = 1;
+                break;
+            default:
+                ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
+                               "invalid operation: %d", operation);
+                return 0;
+        }
+        if (encryption == 1
+                && RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK)
+                       == RSA_FLAG_TYPE_RSASSAPSS) {
+            ERR_raise_data(ERR_LIB_PROV,
+                           PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+                           "operation: %d", operation);
+            return 0;
+        }
+
+        if (protect || encryption ? (sz < 2048) : (sz < 1024)) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
                            "operation: %d", operation);
             return 0;
         }
+        if (padmode == RSA_X931_PADDING) {
+            if (protect) {
+                ERR_raise_data(ERR_LIB_PROV,
+                               PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+                               "X9.31 Not allowed for signing");
+                return 0;
+            }
+            /* X931 uses sizes of 1024 + 256 * s (bits)*/
+            if ((sz & 0xFF) != 0) {
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
+                               "X9.31 key length must be a multiple of 256 bits");
+                return 0;
+            }
+        }
     }
-#else
-    /* make protect used */
-    (void)protect;
 #endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
     return 1;
+}
+
+int ossl_rsa_check_key(OSSL_LIB_CTX *ctx, const RSA *rsa, int operation)
+{
+    return ossl_rsa_check_key_pad(ctx, rsa, operation, RSA_NO_PADDING);
 }
 
 #ifndef OPENSSL_NO_EC

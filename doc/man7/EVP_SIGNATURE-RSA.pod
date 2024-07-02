@@ -36,6 +36,10 @@ The type of padding to be used. Its value can be one of the following:
 
 =item "x931" (B<OSSL_PKEY_RSA_PAD_MODE_X931>)
 
+This padding mode is no longer supported by the FIPS provider for signature
+generation, but may be used for signature verification for legacy use cases.
+(This is a FIPS 140-3 requirement)
+
 =item "pss" (B<OSSL_PKEY_RSA_PAD_MODE_PSS>)
 
 =back
