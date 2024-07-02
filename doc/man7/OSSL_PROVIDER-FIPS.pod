@@ -339,6 +339,8 @@ The FIPS module passes the following descriptions(s) to OSSL_SELF_TEST_onbegin()
 
 =item "RSA" (B<OSSL_SELF_TEST_DESC_PCT_RSA_PKCS1>)
 
+=item "RSA" (B<OSSL_SELF_TEST_DESC_PCT_RSA>)
+
 =item "ECDSA" (B<OSSL_SELF_TEST_DESC_PCT_ECDSA>)
 
 =item "EDDSA" (B<OSSL_SELF_TEST_DESC_PCT_EDDSA>)
