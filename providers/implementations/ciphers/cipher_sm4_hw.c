@@ -134,7 +134,7 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_sm4_##mode(size_t keybits)           \
     return &sm4_##mode;                                                        \
 }
 
-#if defined(__riscv) && __riscv_xlen == 64
+#if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 # include "cipher_sm4_hw_rv64i.inc"
 #else
 /* The generic case */

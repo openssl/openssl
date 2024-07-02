@@ -38,7 +38,7 @@ static inline int vpsm4_ex_capable(void)
 #   define HWSM4_cbc_encrypt sm4_v8_cbc_encrypt
 #   define HWSM4_ecb_encrypt sm4_v8_ecb_encrypt
 #   define HWSM4_ctr32_encrypt_blocks sm4_v8_ctr32_encrypt_blocks
-#  elif defined(__riscv) && __riscv_xlen == 64
+#  elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 /* RV64 support */
 #   include "riscv_arch.h"
 /* Zvksed extension (vector crypto SM4). */

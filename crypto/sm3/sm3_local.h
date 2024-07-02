@@ -39,7 +39,7 @@
 #  define HWSM3_CAPABLE (OPENSSL_armcap_P & ARMV8_SM3)
 void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 # endif
-# if defined(__riscv) && __riscv_xlen == 64
+# if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 #  include "crypto/riscv_arch.h"
 #  define HWSM3_CAPABLE 1
 void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
