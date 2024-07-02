@@ -478,16 +478,32 @@ static void alg_do_each(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
     }
 }
 
+static void alg_copy(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
+{
+    SPARSE_ARRAY_OF(ALGORITHM) *newsa = arg;
+    ossl_sa_ALGORITHM_set(newsa, idx, alg);
+}
+
 void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
                               void (*fn)(int id, void *method, void *fnarg),
                               void *fnarg)
 {
     struct alg_do_each_data_st data;
+    SPARSE_ARRAY_OF(ALGORITHM) *tmpalgs = ossl_sa_ALGORITHM_new();
+
+    if (tmpalgs == NULL)
+        return;
 
     data.fn = fn;
     data.fnarg = fnarg;
-    if (store != NULL)
-        ossl_sa_ALGORITHM_doall_arg(store->algs, alg_do_each, &data);
+    if (store != NULL) {
+        if (!ossl_property_read_lock(store))
+            return;
+        ossl_sa_ALGORITHM_doall_arg(store->algs, alg_copy, tmpalgs);
+        ossl_property_unlock(store);
+        ossl_sa_ALGORITHM_doall_arg(tmpalgs, alg_do_each, &data);
+        ossl_sa_ALGORITHM_free(tmpalgs);
+    }
 }
 
 int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
