@@ -156,11 +156,7 @@ This is an unapproved algorithm.
 
 =item ED25519, see L<EVP_SIGNATURE-ED25519(7)>
 
-This is an unapproved algorithm.
-
 =item ED448, see L<EVP_SIGNATURE-ED448(7)>
-
-This is an unapproved algorithm.
 
 =item ECDSA, see L<EVP_SIGNATURE-ECDSA(7)>
 
@@ -374,6 +370,8 @@ Digest tests used with the "KAT_Digest" type.
 =item "RSA" (B<OSSL_SELF_TEST_DESC_SIGN_RSA>)
 
 =item "ECDSA" (B<OSSL_SELF_TEST_DESC_SIGN_ECDSA>)
+
+=item "EDDSA" (B<OSSL_SELF_TEST_DESC_SIGN_EDDSA>)
 
 Signature tests used with the "KAT_Signature" type.
 

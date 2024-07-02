@@ -467,6 +467,10 @@ static int self_test_sign(const ST_KAT_SIGN *t,
 
     OSSL_SELF_TEST_onbegin(st, typ, t->desc);
 
+    if (!set_kat_drbg(libctx, t->entropy, t->entropy_len,
+                      t->nonce, t->nonce_len, t->persstr, t->persstr_len))
+        goto err;
+
     bnctx = BN_CTX_new_ex(libctx);
     if (bnctx == NULL)
         goto err;
@@ -524,9 +528,94 @@ err:
     OSSL_PARAM_free(params);
     OSSL_PARAM_free(params_sig);
     OSSL_PARAM_BLD_free(bld);
+    if (!reset_main_drbg(libctx))
+        ret = 0;
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
+
+#ifndef OPENSSL_NO_ECX
+static int self_test_digest_sign(const ST_KAT_SIGN *t,
+                                 OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+{
+    int ret = 0;
+    OSSL_PARAM *paramskey = NULL, *paramsinit = NULL;
+    OSSL_PARAM_BLD *bldkey = NULL, *bldinit = NULL;
+    EVP_MD_CTX *mctx = NULL;
+    EVP_PKEY_CTX *fromctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    unsigned char sig[256];
+    BN_CTX *bnctx = NULL;
+    size_t siglen = sizeof(sig);
+    static const unsigned char in[] = {
+        0x64, 0xa6, 0x5f, 0x3c, 0xde, 0xdc, 0xdd, 0x66,
+        0x81, 0x1e, 0x29, 0x15
+    };
+    const char *typ = OSSL_SELF_TEST_TYPE_KAT_SIGNATURE;
+
+    if (t->sig_expected == NULL)
+        typ = OSSL_SELF_TEST_TYPE_PCT_SIGNATURE;
+
+    OSSL_SELF_TEST_onbegin(st, typ, t->desc);
+
+    bnctx = BN_CTX_new_ex(libctx);
+    if (bnctx == NULL)
+        goto err;
+
+    bldkey = OSSL_PARAM_BLD_new();
+    bldinit = OSSL_PARAM_BLD_new();
+    if (bldkey == NULL || bldinit == NULL)
+        goto err;
+
+    if (!add_params(bldkey, t->key, bnctx))
+        goto err;
+    if (!add_params(bldinit, t->init, bnctx))
+        goto err;
+    paramskey = OSSL_PARAM_BLD_to_param(bldkey);
+    paramsinit = OSSL_PARAM_BLD_to_param(bldinit);
+
+    fromctx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, "");
+    if (fromctx == NULL\
+        || paramskey == NULL
+        || paramsinit == NULL)
+        goto err;
+    if (EVP_PKEY_fromdata_init(fromctx) <= 0
+        || EVP_PKEY_fromdata(fromctx, &pkey, EVP_PKEY_KEYPAIR, paramskey) <= 0)
+        goto err;
+
+    mctx = EVP_MD_CTX_new();
+    if (mctx == NULL
+        || EVP_DigestSignInit_ex(mctx, NULL, NULL, libctx, NULL,
+                                 pkey, paramsinit)<= 0)
+        goto err;
+
+    if (EVP_DigestSign(mctx, sig, &siglen, in, sizeof(in)) <= 0)
+        goto err;
+    if (t->sig_expected != NULL
+        && (siglen != t->sig_expected_len
+            || memcmp(sig, t->sig_expected, t->sig_expected_len) != 0))
+        goto err;
+
+    if (EVP_DigestVerifyInit_ex(mctx, NULL, NULL, libctx, NULL,
+                                pkey, paramsinit) <= 0)
+        goto err;
+    OSSL_SELF_TEST_oncorrupt_byte(st, sig);
+    if (EVP_DigestVerify(mctx, sig, siglen, in, sizeof(in)) <= 0)
+        goto err;
+    ret = 1;
+err:
+    BN_CTX_free(bnctx);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(fromctx);
+    EVP_MD_CTX_free(mctx);
+    OSSL_PARAM_free(paramskey);
+    OSSL_PARAM_free(paramsinit);
+    OSSL_PARAM_BLD_free(bldkey);
+    OSSL_PARAM_BLD_free(bldinit);
+    OSSL_SELF_TEST_onend(st, ret);
+    return ret;
+}
+#endif /* OPENSSL_NO_ECX */
 
 /*
  * Test an encrypt or decrypt KAT..
@@ -697,13 +786,16 @@ static int self_test_signatures(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 
     for (i = 0; ret && i < (int)OSSL_NELEM(st_kat_sign_tests); ++i) {
         t = st_kat_sign_tests + i;
-        if (!set_kat_drbg(libctx, t->entropy, t->entropy_len,
-                          t->nonce, t->nonce_len, t->persstr, t->persstr_len))
-            return 0;
-        if (!self_test_sign(t, st, libctx))
-            ret = 0;
-        if (!reset_main_drbg(libctx))
-            ret = 0;
+#ifndef OPENSSL_NO_ECX
+        if (t->oneshot) {
+            if (!self_test_digest_sign(t, st, libctx))
+                ret = 0;
+        } else
+#endif
+        {
+            if (!self_test_sign(t, st, libctx))
+                ret = 0;
+        }
     }
     return ret;
 }
