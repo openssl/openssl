@@ -1474,7 +1474,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-mod-cmp2000", "id-mod-cmp2000", NID_id_mod_cmp2000, 8, &so[2075]},
     {"biometricInfo", "Biometric Info", NID_biometricInfo, 8, &so[2083]},
     {"qcStatements", "qcStatements", NID_qcStatements, 8, &so[2091]},
-    {"ac-auditEntity", "ac-auditEntity", NID_ac_auditEntity, 8, &so[2099]},
+    {"ac-auditEntity", "X509v3 Audit Identity", NID_ac_auditEntity, 8, &so[2099]},
     {"ac-targeting", "ac-targeting", NID_ac_targeting, 8, &so[2107]},
     {"aaControls", "aaControls", NID_aaControls, 8, &so[2115]},
     {"sbgp-ipAddrBlock", "sbgp-ipAddrBlock", NID_sbgp_ipAddrBlock, 8, &so[2123]},
@@ -4043,6 +4043,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1307,    /* "X509v3 Attribute Authority Issuing Distribution Point" */
     1300,    /* "X509v3 Attribute Descriptor" */
     1312,    /* "X509v3 Attribute Mappings" */
+     287,    /* "X509v3 Audit Identity" */
     1295,    /* "X509v3 Authority Attribute Identifier" */
       90,    /* "X509v3 Authority Key Identifier" */
     1314,    /* "X509v3 Authorization Validation" */
@@ -4088,7 +4089,6 @@ static const unsigned int ln_objs[NUM_LN] = {
     1289,    /* "Zstandard compression" */
      478,    /* "aRecord" */
      289,    /* "aaControls" */
-     287,    /* "ac-auditEntity" */
      397,    /* "ac-proxying" */
      288,    /* "ac-targeting" */
      446,    /* "account" */

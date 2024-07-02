@@ -1584,6 +1584,7 @@
 #define OBJ_qcStatements                OBJ_id_pe,3L
 
 #define SN_ac_auditEntity               "ac-auditEntity"
+#define LN_ac_auditEntity               "X509v3 Audit Identity"
 #define NID_ac_auditEntity              287
 #define OBJ_ac_auditEntity              OBJ_id_pe,4L
 
