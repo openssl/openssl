@@ -899,7 +899,7 @@ static const char *format2string(int format)
     return NULL;
 }
 
-/* Set type expectation, but clear it if objects of different types expected. */
+/* Set type expectation, but set to 0 if objects of several types expected. */
 #define SET_EXPECT(val) \
     (expect = expect < 0 ? (val) : (expect == (val) ? (val) : 0))
 #define SET_EXPECT1(pvar, val) \
@@ -907,6 +907,7 @@ static const char *format2string(int format)
         *(pvar) = NULL; \
         SET_EXPECT(val); \
     }
+/* Provide (error msg) text for some of the credential types to be loaded. */
 #define FAIL_NAME \
     (ppkey != NULL ? "private key" : ppubkey != NULL ? "public key" :  \
      pparams != NULL ? "key parameters" :                              \
@@ -914,7 +915,9 @@ static const char *format2string(int format)
      pcrl != NULL ? "CRL" : pcrls != NULL ? "CRLs" : NULL)
 /*
  * Load those types of credentials for which the result pointer is not NULL.
- * Reads from stdio if uri is NULL and maybe_stdin is nonzero.
+ * Reads from stdio if 'uri' is NULL and 'maybe_stdin' is nonzero.
+ * 'format' parameter may be FORMAT_PEM, FORMAT_ASN1, or 0 for no hint.
+ * desc may contain more detail on the credential(s) to be loaded for error msg
  * For non-NULL ppkey, pcert, and pcrl the first suitable value found is loaded.
  * If pcerts is non-NULL and *pcerts == NULL then a new cert list is allocated.
  * If pcerts is non-NULL then all available certificates are appended to *pcerts
@@ -942,13 +945,14 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     OSSL_PARAM itp[2];
     const OSSL_PARAM *params = NULL;
 
+    /* 'failed' describes type of credential to load for potential error msg */
     if (failed == NULL) {
         if (!quiet)
-            BIO_printf(bio_err, "Internal error: nothing to load from %s\n",
+            BIO_printf(bio_err, "Internal error: nothing was requested to load from %s\n",
                        uri != NULL ? uri : "<stdin>");
         return 0;
     }
-    ERR_set_mark();
+    ERR_set_mark(); /* suppress (most) low-level errors during loading */
 
     SET_EXPECT1(ppkey, OSSL_STORE_INFO_PKEY);
     SET_EXPECT1(ppubkey, OSSL_STORE_INFO_PUBKEY);
@@ -1008,6 +1012,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
             BIO_printf(bio_err, "Could not open file or uri for loading");
         goto end;
     }
+    /* expect == 0 means here multiple types of credentials are to be loaded */
     if (expect > 0 && !OSSL_STORE_expect(ctx, expect)) {
         if (!quiet)
             BIO_printf(bio_err, "Internal error trying to load");
@@ -1015,6 +1020,8 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     }
 
     failed = NULL;
+    /* from here, failed != NULL only if actually an error has been detected */
+
     while ((ppkey != NULL || ppubkey != NULL || pparams != NULL
             || pcert != NULL || pcerts != NULL || pcrl != NULL || pcrls != NULL)
            && !OSSL_STORE_eof(ctx)) {
@@ -1084,7 +1091,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
             ncrls += ok;
             break;
         default:
-            /* skip any other type */
+            /* skip any other type; ok stays == 1 */
             break;
         }
         OSSL_STORE_INFO_free(info);
@@ -1098,18 +1105,22 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
 
  end:
     OSSL_STORE_close(ctx);
-    if (ncerts > 0)
-        pcerts = NULL;
-    if (ncrls > 0)
-        pcrls = NULL;
+
+    /* see if any of the requested types of credentials was not found */
     if (failed == NULL) {
+        if (ncerts > 0)
+            pcerts = NULL;
+        if (ncrls > 0)
+            pcrls = NULL;
         failed = FAIL_NAME;
         if (failed != NULL && !quiet)
             BIO_printf(bio_err, "Could not find");
     }
+
     if (failed != NULL && !quiet) {
         unsigned long err = ERR_peek_last_error();
 
+        /* continee the error message with the type of credential affected */
         if (desc != NULL && strstr(desc, failed) != NULL) {
             BIO_printf(bio_err, " %s", desc);
         } else {
@@ -3464,6 +3475,7 @@ int opt_legacy_okay(void)
 {
     int provider_options = opt_provider_option_given();
     int libctx = app_get0_libctx() != NULL || app_get0_propq() != NULL;
+
     /*
      * Having a provider option specified or a custom library context or
      * property query, is a sure sign we're not using legacy.
