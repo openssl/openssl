@@ -30,14 +30,24 @@ other input that's limited to the modulus size of the RSA pkey.
 
 ### Making things less confusing with distinct function names
 
-So far, `EVP_PKEY_sign()` and friends are only expected to act as
-"primitive" functions.  This design essentially proposes an extension to
-also allow streaming functionality through an *update* and a *final*
-function.  Discussions have revealed that it is potentially confusing to
-confound pure "primitive" functionality with functionality that expects a
-digest as input, as well as with "streaming" functionality into the same
-name, so this design also includes a naming proposal that distinguishes
-the two uses.
+So far, `EVP_PKEY_sign()` and friends are only expected to act on the
+pre-computed digest of a message (under the condition that proper flags
+and signature md are specified using functions like
+`EVP_PKEY_CTX_set_rsa_padding()` and `EVP_PKEY_CTX_set_signature_md()`),
+or to act as "primitive" [^1] functions (under the contition that proper
+flags are specified, like `RSA_NO_PADDING` for RSA signatures).
+
+This design proposes an extension to also allow full (not pre-hashed)
+messages to be passed, both in one go (oneshot) and in a streaming style
+through an *update* and a *final* function.
+
+Discussions have revealed that it is potentially confusing to confound pure
+"primitive" functionality with functionality that expects a digest as input,
+as well as with "streaming" functionality into the same name, so this design
+also includes separate *init* functions to allow this new functionality, which
+includes a naming proposal that distinguishes the two uses.
+
+[^1]: the term "primitive" is borrowed from [PKCS#1](https://www.rfc-editor.org/rfc/rfc8017#section-5)
 
 ### Making it possible to verify with an early signature
 
@@ -45,6 +55,16 @@ There are newer verifying algorithms that need to receive the signature
 before processing the data.  This is particularly important for streaming
 functionality.  This design proposes a mechanism to accomodate this, which
 is different than the mechanism you get with `EVP_PKEY_verify()`.
+
+### API design style
+
+Because the *oneshot*, *update* and *final* functionality of all the function
+groups described here are hinged on the corresponding *init* function, a
+minimalistic design is chosen, especially for the provider interface.
+Additional aliases for applications are not part of this design.
+
+*This avoids the confusion of mixing up calls to "the right" update function
+(for example) that does the same thing as its sibblings.*
 
 Public API - API Reference
 --------------------------
