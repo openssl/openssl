@@ -154,15 +154,14 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
   if ((item->revents & SSL_POLL_EVENT_ISB) ||
       (item->revents & SSL_POLL_EVENT_ISU)) {
     SSL *stream = SSL_accept_stream(ssl_ids[0].s, 0);
-    if (stream != NULL) {
-      printf("=> Received connection on %lld\n", (unsigned long long) SSL_get_stream_id(stream));
-      add_id(SSL_get_stream_id(stream), stream, h3ssl);
-      printf("read_from_ssl_ids %ld events\n", (unsigned long) result_count);
-      if (result_count == 1) {
-        return 1; /* loop until we have all the streams */
-      }
-    } else {
+    if (stream == NULL) {
       return -1; /* something is wrong */
+    }
+    printf("=> Received connection on %lld\n", (unsigned long long) SSL_get_stream_id(stream));
+    add_id(SSL_get_stream_id(stream), stream, h3ssl);
+    printf("read_from_ssl_ids %ld events\n", (unsigned long) result_count);
+    if (result_count == 1) {
+      return 1; /* loop until we have all the streams */
     }
   }
   /* Create new streams when allowed */
@@ -431,8 +430,9 @@ static int waitsocket(int fd, int sec) {
     tv.tv_usec = 0;
     printf("waitsocket for %d\n", sec);
     ret = select(fdmax + 1, &read_fds, NULL, NULL, &tv);
-  } else
+  } else {
     ret = select(fdmax + 1, &read_fds, NULL, NULL, NULL);
+  }
   if (ret == -1) {
     printf("waitsocket failed\n");
     exit(1);
@@ -469,7 +469,6 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
     goto err;
 
   for (;;) {
-    try:
     fprintf(stderr, "waiting on socket\n");
     fflush(stderr);
     waitsocket(fd, 0);
@@ -482,7 +481,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
     fflush(stderr);
     if (conn == NULL) {
       fprintf(stderr, "error while accepting connection\n");
-      goto try;
+      continue;
     }
 
     /* set the incoming stream policy to accept */
