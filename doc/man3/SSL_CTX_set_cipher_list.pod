@@ -56,7 +56,7 @@ ciphersuite names in order of preference. Valid TLSv1.3 ciphersuite names are:
 
 =back
 
-An empty list is permissible. The default value for the this setting is:
+An empty list is permissible. The default value for this setting is:
 
 "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256"
 
