@@ -467,7 +467,7 @@ static void alg_copy(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
 {
     STACK_OF(ALGORITHM) *newalg = arg;
 
-    sk_ALGORITHM_push(newalg, alg);
+    (void)sk_ALGORITHM_push(newalg, alg);
 }
 
 void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
