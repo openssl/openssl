@@ -160,22 +160,33 @@ OSSL_CORE_MAKE_FUNC(int, signature_sign_init_for_digest,
                     (void *ctx, void *provkey, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, signature_sign_init_for_message,
                     (void *ctx, void *provkey, const OSSL_PARAM params[]))
+
+#define OSSL_FUNC_SIGNATURE_VERIFY_INIT_FOR_DIGEST  29
+#define OSSL_FUNC_SIGNATURE_VERIFY_INIT_FOR_MESSAGE 30
+OSSL_CORE_MAKE_FUNC(int, signature_verify_init_for_digest,
+                    (void *ctx, void *provkey, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, signature_verify_init_for_message,
+                    (void *ctx, void *provkey, const OSSL_PARAM params[]))
+
+#define OSSL_FUNC_SIGNATURE_VERIFY_RECOVER_INIT_FOR_DIGEST 31
+OSSL_CORE_MAKE_FUNC(int, signature_verify_recover_init_for_digest,
+                    (void *ctx, void *provkey, const OSSL_PARAM params[]))
 ```
 
 Furthermore, the public API above requires added provider functionality,
 which we try to keep to a minimum:
 
 ``` C
-# define OSSL_FUNC_SIGNATURE_SIGN_UPDATE            29
-# define OSSL_FUNC_SIGNATURE_SIGN_FINAL             30
+# define OSSL_FUNC_SIGNATURE_SIGN_UPDATE            32
+# define OSSL_FUNC_SIGNATURE_SIGN_FINAL             33
 OSSL_CORE_MAKE_FUNC(int, signature_sign_update, (void *ctx,
                                                  const unsigned char *in,
                                                  size_t inlen))
 OSSL_CORE_MAKE_FUNC(int, signature_sign_final, (void *ctx,  unsigned char *sig,
                                                 size_t *siglen, size_t sigsize))
 
-# define OSSL_FUNC_SIGNATURE_VERIFY_UPDATE          31
-# define OSSL_FUNC_SIGNATURE_VERIFY_FINAL           32
+# define OSSL_FUNC_SIGNATURE_VERIFY_UPDATE          34
+# define OSSL_FUNC_SIGNATURE_VERIFY_FINAL           35
 OSSL_CORE_MAKE_FUNC(int, signature_verify_update,
                     (void *ctx, const unsigned char *in, size_t inlen))
 /*
