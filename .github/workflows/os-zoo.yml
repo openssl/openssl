@@ -27,7 +27,7 @@ jobs:
       image: docker.io/library/alpine:${{ matrix.tag }}
     env:
       # https://www.openwall.com/lists/musl/2022/02/16/14
-      EXTRA_CFLAGS: ${{ matrix.cc == 'clang' && '-Wno-sign-compare -Wno-switch-default' || '' }}
+      EXTRA_CFLAGS: ${{ matrix.cc == 'clang' && '-Wno-sign-compare' || '' }}
       CC: ${{ matrix.cc }}
     steps:
     - name: install packages
