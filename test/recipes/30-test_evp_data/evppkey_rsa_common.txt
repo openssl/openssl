@@ -1915,6 +1915,13 @@ Title = RSA FIPS tests
 
 # FIPS tests
 
+# Decrypt with small RSA key is not permitted in FIPS mode
+Availablein = fips
+Decrypt = RSA-512
+Securitycheck = 1
+Input = 550AF55A2904E7B9762352F8FB7FA235A9CB053AACB2D5FCB8CA48453CB2EE3619746C701ABF2D4CC67003471A187900B05AA812BD25ED05C675DFC8C97A24A7BF49BD6214992CAD766D05A9A2B57B74F26A737E0237B8B76C45F1F226A836D7CFBC75BA999BDBE48DBC09227AA46C88F21DCCBA7840141AD5A5D71FD122E6BD6AC3E564780DFE623FC1CA9B995A6037BF0BBD43B205A84AC5444F34202C05CE9113087176432476576DE6FFFF9A52EA57C08BE3EC2F49676CB8E12F762AC71FA3C321E00AC988910C85FF52F93825666CE0D40FFAA0592078919D4493F46D95CCF76364C6D57760DD0B64805F9AFC76A2365A5575CA301D5103F0EA76CB9A78
+Result = KEYOP_INIT_ERROR
+
 # Verifying with SHA1 is permitted in fips mode for older applications
 DigestVerify = SHA1
 Key = RSA-2048
@@ -1928,7 +1935,7 @@ Input = "Hello"
 Output = 80382819f51b197c42f9fc02a85198683d918059afc013ae155992442563dd2897008297fecb3a8d8cf9421d493a99bd427a628f17cc4a7c76d23dfad0619f4068403fa7351f6d5a92a631d670c04407f305a4b5cb492295754e73e9b7ad41459826d3619a61e90d4744bdaf0f24f2393ea9241e973600c2ed62b1a0a37c504e
 
 # Signing with SHA1 is not allowed in fips mode
-Availablein = fips
+FIPSversion = >=3.4.0
 DigestSign = SHA1
 Securitycheck = 1
 Key = RSA-2048
@@ -1936,7 +1943,7 @@ Input = "Hello"
 Result = DIGESTSIGNINIT_ERROR
 
 # Signing with a 1024 bit key is not allowed in fips mode
-Availablein = fips
+FIPSversion = >=3.4.0
 DigestSign = SHA256
 Securitycheck = 1
 Key = RSA-1024
@@ -1944,7 +1951,7 @@ Input = "Hello"
 Result = DIGESTSIGNINIT_ERROR
 
 # Verifying with a legacy digest in fips mode is not allowed
-Availablein = fips
+FIPSversion = >=3.4.0
 DigestVerify = MD5
 Securitycheck = 1
 Key = RSA-2048
@@ -1952,9 +1959,52 @@ Input = "Hello"
 Result = DIGESTVERIFYINIT_ERROR
 
 # Verifying with a key smaller than 1024 bits in fips mode is not allowed
-Availablein = fips
+FIPSversion = >=3.4.0
 DigestVerify = SHA256
 Securitycheck = 1
 Key = RSA-512
 Input = "Hello"
 Result = DIGESTVERIFYINIT_ERROR
+
+##################################################
+# Check that the indicator callback is triggered
+
+Title = RSA FIPS Indicator tests
+
+# Decrypt with small RSA key is not permitted in FIPS mode
+FIPSversion = >=3.4.0
+Decrypt = RSA-512
+Securitycheck = 1
+Unapproved = 1
+CtrlInit = key-check:0
+Input = 550AF55A2904E7B9762352F8FB7FA235
+Result = KEYOP_MISMATCH
+
+# Signing with SHA1 is not allowed in fips mode
+FIPSversion = >=3.4.0
+DigestSign = SHA1
+Securitycheck = 1
+Unapproved = 1
+CtrlInit = digest-check:0
+Key = RSA-2048
+Input = "Hello"
+Result = SIGNATURE_MISMATCH
+
+FIPSversion = >=3.4.0
+DigestSign = SHA256
+Securitycheck = 1
+Unapproved = 1
+CtrlInit = key-check:0
+Key = RSA-1024
+Input = "Hello"
+Result = SIGNATURE_MISMATCH
+
+# Verifying with a key smaller than 1024 bits in fips mode is not allowed
+FIPSversion = >=3.4.0
+DigestVerify = SHA256
+Securitycheck = 1
+Unapproved = 1
+CtrlInit = key-check:0
+Key = RSA-512
+Input = "Hello"
+Result = VERIFY_ERROR

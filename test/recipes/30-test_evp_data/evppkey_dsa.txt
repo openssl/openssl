@@ -334,7 +334,7 @@ Result = DIGESTSIGNINIT_ERROR
 Availablein = fips
 DigestSign = SHA1
 Securitycheck = 1
-Key = DSA-2048
+Key = DSA-2048-256
 Input = "Hello"
 Result = DIGESTSIGNINIT_ERROR
 
@@ -353,3 +353,46 @@ Securitycheck = 1
 Key = DSA-4096-256
 Input = "Hello"
 Result = DIGESTSIGNINIT_ERROR
+
+Title = Fips Indicator Tests
+# Check that the indicator callback is triggered
+
+# Test sign with a 1024 bit key in fips mode
+FIPSversion = >=3.4.0
+DigestSign = SHA256
+Securitycheck = 1
+Unapproved = 1
+CtrlInit = key-check:0
+Key = DSA-1024-FIPS186-2
+Input = "Hello"
+Result = SIGNATURE_MISMATCH
+
+# Test sign with a 3072 bit key with N == 224 is not allowed in fips mode
+FIPSversion = >=3.4.0
+DigestSign = SHA256
+Securitycheck = 1
+Unapproved = 1
+CtrlInit = key-check:0
+Key = DSA-3072-224
+Input = "Hello"
+Result = SIGNATURE_MISMATCH
+
+# Test sign with a 4096 bit key is not allowed in fips mode
+FIPSversion = >=3.4.0
+DigestSign = SHA256
+Securitycheck = 1
+Unapproved = 1
+CtrlInit = key-check:0
+Key = DSA-4096-256
+Input = "Hello"
+Result = SIGNATURE_MISMATCH
+
+# Test sign with SHA1 is not allowed in fips mode
+FIPSversion = >=3.4.0
+DigestSign = SHA1
+Securitycheck = 1
+Unapproved = 1
+CtrlInit = digest-check:0
+Key = DSA-2048-256
+Input = "Hello"
+Result = SIGNATURE_MISMATCH

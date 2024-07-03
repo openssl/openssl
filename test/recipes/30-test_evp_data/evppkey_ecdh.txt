@@ -2710,7 +2710,7 @@ Availablein = fips
 Derive=ALICE_prime192v1
 Securitycheck = 1
 PeerKey=BOB_prime192v1_PUB
-Result = DERIVE_SET_PEER_ERROR
+Result = KEYOP_INIT_ERROR
 
 # ECDH Bob with Alice peer
 
