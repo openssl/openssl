@@ -481,7 +481,7 @@ int req_main(int argc, char **argv)
             }
             i = duplicated(addexts, p);
             if (i == 1)
-                goto opthelp;
+                goto end;
             if (i == -1)
                 BIO_printf(bio_err, "Internal error handling -addext %s\n", p);
             if (i < 0 || BIO_printf(addext_bio, "%s\n", p) < 0)
