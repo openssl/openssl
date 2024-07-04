@@ -476,13 +476,14 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
 {
     int i, j;
     int numalgs, numimps;
-    STACK_OF(ALGORITHM) *tmpalgs = sk_ALGORITHM_new_null();
+    STACK_OF(ALGORITHM) *tmpalgs;
     ALGORITHM *alg;
 
-    if (tmpalgs == NULL)
-        return;
-
     if (store != NULL) {
+        tmpalgs = sk_ALGORITHM_new_reserve(NULL,
+                                           ossl_sa_ALGORITHM_num(store->algs));
+        if (tmpalgs == NULL)
+            return;
         if (!ossl_property_read_lock(store))
             return;
         ossl_sa_ALGORITHM_doall_arg(store->algs, alg_copy, tmpalgs);
