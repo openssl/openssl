@@ -33,6 +33,12 @@ extern "C" {
 # include <openssl/safestack.h>
 # include <openssl/macros.h>
 
+# if OPENSSL_VERSION_MAJOR >= 4
+#  define OSSL_CONST_FUTURE const
+# else
+#  define OSSL_CONST_FUTURE
+# endif
+
 typedef struct ossl_provider_st OSSL_PROVIDER; /* Provider Object */
 
 # ifdef NO_ASN1_TYPEDEFS

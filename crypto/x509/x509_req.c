@@ -139,7 +139,7 @@ static STACK_OF(X509_EXTENSION) *get_extensions_by_nid(const X509_REQ *req,
                       ASN1_ITEM_rptr(X509_EXTENSIONS));
 }
 
-STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(const X509_REQ *req)
+STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(OSSL_CONST_FUTURE X509_REQ *req)
 {
     STACK_OF(X509_EXTENSION) *exts = NULL;
     int *pnid;
