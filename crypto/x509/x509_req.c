@@ -117,26 +117,19 @@ void X509_REQ_set_extension_nids(int *nids)
     ext_nids = nids;
 }
 
-STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
+static STACK_OF(X509_EXTENSION) *get_extensions_by_nid(const X509_REQ *req,
+                                                       int nid)
 {
     X509_ATTRIBUTE *attr;
     ASN1_TYPE *ext = NULL;
-    int idx, *pnid;
     const unsigned char *p;
+    int idx = X509_REQ_get_attr_by_NID(req, nid, -1);
 
-    if (req == NULL || !ext_nids)
-        return NULL;
-    for (pnid = ext_nids; *pnid != NID_undef; pnid++) {
-        idx = X509_REQ_get_attr_by_NID(req, *pnid, -1);
-        if (idx < 0)
-            continue;
-        attr = X509_REQ_get_attr(req, idx);
-        ext = X509_ATTRIBUTE_get0_type(attr, 0);
-        break;
-    }
-    if (ext == NULL) /* no extensions is not an error */
+    if (idx < 0) /* no extensions is not an error */
         return sk_X509_EXTENSION_new_null();
-    if (ext->type != V_ASN1_SEQUENCE) {
+    attr = X509_REQ_get_attr(req, idx);
+    ext = X509_ATTRIBUTE_get0_type(attr, 0);
+    if (ext == NULL || ext->type != V_ASN1_SEQUENCE) {
         ERR_raise(ERR_LIB_X509, X509_R_WRONG_TYPE);
         return NULL;
     }
@@ -144,6 +137,25 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
     return (STACK_OF(X509_EXTENSION) *)
         ASN1_item_d2i(NULL, &p, ext->value.sequence->length,
                       ASN1_ITEM_rptr(X509_EXTENSIONS));
+}
+
+STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(const X509_REQ *req)
+{
+    STACK_OF(X509_EXTENSION) *exts = NULL;
+    int *pnid;
+
+    if (req == NULL || ext_nids == NULL)
+        return NULL;
+    for (pnid = ext_nids; *pnid != NID_undef; pnid++) {
+        exts = get_extensions_by_nid(req, *pnid);
+        if (exts == NULL)
+            return NULL;
+        if (sk_X509_EXTENSION_num(exts) > 0)
+            return exts;
+        sk_X509_EXTENSION_free(exts);
+    }
+    /* no extensions is not an error */
+    return sk_X509_EXTENSION_new_null();
 }
 
 /*
