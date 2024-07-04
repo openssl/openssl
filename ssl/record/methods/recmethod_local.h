@@ -324,6 +324,7 @@ struct ossl_record_layer_st
 
     /* TLSv1.3 record padding */
     size_t block_padding;
+    size_t hs_padding;
 
     /* Only used by SSLv3 */
     unsigned char mac_secret[EVP_MAX_MD_SIZE];

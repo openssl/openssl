@@ -2263,6 +2263,8 @@ void SSL_CTX_set_record_padding_callback(SSL_CTX *ctx,
 void SSL_CTX_set_record_padding_callback_arg(SSL_CTX *ctx, void *arg);
 void *SSL_CTX_get_record_padding_callback_arg(const SSL_CTX *ctx);
 int SSL_CTX_set_block_padding(SSL_CTX *ctx, size_t block_size);
+int SSL_CTX_set_block_padding_ex(SSL_CTX *ctx, size_t app_block_size,
+                                 size_t hs_block_size);
 
 int SSL_set_record_padding_callback(SSL *ssl,
                                     size_t (*cb) (SSL *ssl, int type,
@@ -2270,7 +2272,8 @@ int SSL_set_record_padding_callback(SSL *ssl,
 void SSL_set_record_padding_callback_arg(SSL *ssl, void *arg);
 void *SSL_get_record_padding_callback_arg(const SSL *ssl);
 int SSL_set_block_padding(SSL *ssl, size_t block_size);
-
+int SSL_set_block_padding_ex(SSL *ssl, size_t app_block_size,
+                             size_t hs_block_size);
 int SSL_set_num_tickets(SSL *s, size_t num_tickets);
 size_t SSL_get_num_tickets(const SSL *s);
 int SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets);

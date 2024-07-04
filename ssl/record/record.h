@@ -113,6 +113,7 @@ typedef struct record_layer_st {
     size_t (*record_padding_cb)(SSL *s, int type, size_t len, void *arg);
     void *record_padding_arg;
     size_t block_padding;
+    size_t hs_padding;
 
     /* How many records we have read from the record layer */
     size_t num_recs;

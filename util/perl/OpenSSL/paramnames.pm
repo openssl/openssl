@@ -506,6 +506,7 @@ my %params = (
     'LIBSSL_RECORD_LAYER_PARAM_MAX_FRAG_LEN' =>   "max_frag_len",
     'LIBSSL_RECORD_LAYER_PARAM_MAX_EARLY_DATA' => "max_early_data",
     'LIBSSL_RECORD_LAYER_PARAM_BLOCK_PADDING' =>  "block_padding",
+    'LIBSSL_RECORD_LAYER_PARAM_HS_PADDING' =>     "hs_padding",
 );
 
 # Generate string based macros for public consumption
