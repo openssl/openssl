@@ -243,26 +243,25 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
         if (item->revents & SSL_POLL_EVENT_R) {
             /* try to read */
             size_t l = sizeof(msg2) - 1;
+            int r;
 
-            if (SSL_net_read_desired(ssl_ids[i].s)) {
-                ret = SSL_read(ssl_ids[i].s, msg2, l);
-            } else {
+            if (!SSL_net_read_desired(ssl_ids[i].s)) {
                 continue;
             }
+            ret = SSL_read(ssl_ids[i].s, msg2, l);
             if (ret <= 0) {
                 printf("SSL_read on %llu failed\n",
                        (unsigned long long)ssl_ids[i].id);
                 continue; /* TODO */
-            } else {
-                int r = nghttp3_conn_read_stream(h3conn, ssl_ids[i].id, msg2,
-                                                 ret, 0);
-
-                printf("reading something %d on %llu\n", ret,
-                       (unsigned long long)ssl_ids[i].id);
-                printf("nghttp3_conn_read_stream used %d of %d on %llu\n", r,
-                       ret, (unsigned long long)ssl_ids[i].id);
-                hassomething++;
             }
+            r = nghttp3_conn_read_stream(h3conn, ssl_ids[i].id, msg2,
+                                             ret, 0);
+
+            printf("reading something %d on %llu\n", ret,
+                   (unsigned long long)ssl_ids[i].id);
+            printf("nghttp3_conn_read_stream used %d of %d on %llu\n", r,
+                   ret, (unsigned long long)ssl_ids[i].id);
+            hassomething++;
         } else {
             /* Figure out ??? */
             printf("revent %llu (%d) on %llu\n",
@@ -357,11 +356,10 @@ static int quic_server_write(struct h3ssl *h3ssl, uint64_t streamid,
                 fprintf(stderr, "couldn't write on connection\n");
                 ERR_print_errors_fp(stderr);
                 return 0;
-            } else {
-                printf("written %ld on %lld flags %lld\n", (unsigned long)len,
-                       (unsigned long long)streamid, (unsigned long long)flags);
-                return 1;
             }
+            printf("written %ld on %lld flags %lld\n", (unsigned long)len,
+                   (unsigned long long)streamid, (unsigned long long)flags);
+            return 1;
         }
     }
     printf("quic_server_write %ld on %lld (NOT FOUND!)\n", (unsigned long)len,
@@ -611,9 +609,8 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
                 printf("nghttp3_conn_writev_stream done: %ld\n",
                        (long int)sveccnt);
                 break;
-            } else {
-                printf("nghttp3_conn_writev_stream: %ld\n", (long int)sveccnt);
             }
+            printf("nghttp3_conn_writev_stream: %ld\n", (long int)sveccnt);
             for (i = 0; i < sveccnt; i++) {
                 size_t numbytes = vec[i].len;
 
