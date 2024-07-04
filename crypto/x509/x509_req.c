@@ -168,14 +168,39 @@ int X509_REQ_add_extensions_nid(X509_REQ *req,
     int extlen;
     int rv = 0;
     unsigned char *ext = NULL;
+    STACK_OF(X509_EXTENSION) *mod_exts = NULL;
+    int loc;
+
+    if (sk_X509_EXTENSION_num(exts) <= 0)
+        return 1; /* adding NULL or empty list of exts is a no-op */
+
+    loc = X509at_get_attr_by_NID(req->req_info.attributes, nid, -1);
+    if (loc != -1) {
+        if ((mod_exts = get_extensions_by_nid(req, nid)) == NULL)
+            return 0;
+        if (X509v3_add_extensions(&mod_exts, exts) == NULL)
+            goto end;
+    }
 
     /* Generate encoding of extensions */
-    extlen = ASN1_item_i2d((const ASN1_VALUE *)exts, &ext,
-                           ASN1_ITEM_rptr(X509_EXTENSIONS));
+    extlen = ASN1_item_i2d((const ASN1_VALUE *)
+                           (mod_exts == NULL ? exts : mod_exts),
+                           &ext, ASN1_ITEM_rptr(X509_EXTENSIONS));
     if (extlen <= 0)
-        return 0;
+        goto end;
+    if (mod_exts != NULL) {
+        X509_ATTRIBUTE *att = X509at_delete_attr(req->req_info.attributes, loc);
+
+        if (att == NULL)
+            goto end;
+        X509_ATTRIBUTE_free(att);
+    }
+
     rv = X509_REQ_add1_attr_by_NID(req, nid, V_ASN1_SEQUENCE, ext, extlen);
     OPENSSL_free(ext);
+
+ end:
+    sk_X509_EXTENSION_pop_free(mod_exts, X509_EXTENSION_free);
     return rv;
 }
 
