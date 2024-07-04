@@ -392,7 +392,11 @@ Add a specific extension to the certificate (if B<-x509> is in use)
 or certificate request.  The argument must have the form of
 a C<key=value> pair as it would appear in a config file.
 
+If an extension is added using this option that has the same OID as one
+defined in the extension section of the config file, it overrides that one.
+
 This option can be given multiple times.
+Doing so, the same key most not be given more than once.
 
 =item B<-precert>
 
@@ -552,7 +556,7 @@ BMPStrings and UTF8Strings.
 
 This specifies the configuration file section containing a list of
 extensions to add to the certificate request. It can be overridden
-by the B<-reqexts> command line switch. See the
+by the B<-reqexts> (or B<-extensions>) command line switch. See the
 L<x509v3_config(5)> manual page for details of the
 extension section format.
 

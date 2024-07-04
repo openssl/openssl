@@ -78,3 +78,6 @@ C  = UK
 O  = My Organization
 OU = My Unit
 CN = My Name
+
+[ reqexts ]
+keyUsage = critical,digitalSignature,keyEncipherment
