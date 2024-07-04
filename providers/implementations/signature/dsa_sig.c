@@ -209,6 +209,19 @@ err:
 }
 
 #ifdef FIPS_MODULE
+
+static int dsa_sign_check_approved(PROV_DSA_CTX *ctx, int signing,
+                                   const char *desc)
+{
+    /* DSA Signing is not approved in FIPS 140-3 */
+    if (signing
+        && !OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE2,
+                                        ctx->libctx, desc, "DSA",
+                                        FIPS_dsa_sign_check))
+        return 0;
+    return 1;
+}
+
 static int dsa_check_key(PROV_DSA_CTX *ctx, int sign, const char *desc)
 {
     int approved = ossl_dsa_check_key(ctx->dsa, sign);
@@ -253,6 +266,8 @@ static int dsa_signverify_init(void *vpdsactx, void *vdsa,
     if (!dsa_set_ctx_params(pdsactx, params))
         return 0;
 #ifdef FIPS_MODULE
+    if (!dsa_sign_check_approved(pdsactx, operation == EVP_PKEY_OP_SIGN, desc))
+        return 0;
     if (!dsa_check_key(pdsactx, operation == EVP_PKEY_OP_SIGN, desc))
         return 0;
 #endif
@@ -283,6 +298,11 @@ static int dsa_sign(void *vpdsactx, unsigned char *sig, size_t *siglen,
 
     if (!ossl_prov_is_running())
         return 0;
+
+#ifdef FIPS_MODULE
+    if (!dsa_sign_check_approved(pdsactx, 1, "Sign"))
+        return 0;
+#endif
 
     if (sig == NULL) {
         *siglen = dsasize;
@@ -541,10 +561,13 @@ static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
 
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(pdsactx, OSSL_FIPS_IND_SETTABLE0, params,
                                      OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK))
-        return  0;
+        return 0;
     if (!OSSL_FIPS_IND_SET_CTX_PARAM(pdsactx, OSSL_FIPS_IND_SETTABLE1, params,
                                      OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK))
-        return  0;
+        return 0;
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(pdsactx, OSSL_FIPS_IND_SETTABLE2, params,
+                                     OSSL_SIGNATURE_PARAM_FIPS_SIGN_CHECK))
+        return 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
     if (p != NULL) {
@@ -575,6 +598,7 @@ static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_NONCE_TYPE, NULL),
     OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK)
     OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK)
+    OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_SIGNATURE_PARAM_FIPS_SIGN_CHECK)
     OSSL_PARAM_END
 };
 

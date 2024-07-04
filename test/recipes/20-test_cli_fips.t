@@ -36,6 +36,9 @@ my $bogus_data = $fipsconf;
 
 $ENV{OPENSSL_CONF} = $fipsconf;
 
+run(test(["fips_version_test", "-config", $fipsconf, "<3.4.0"]),
+          capture => 1, statusvar => \my $dsasignpass);
+
 ok(run(app(['openssl', 'list', '-public-key-methods', '-verbose'])),
    "provider listing of public key methods");
 ok(run(app(['openssl', 'list', '-public-key-algorithms', '-verbose'])),
@@ -279,7 +282,7 @@ SKIP: {
 
 SKIP : {
     skip "FIPS DSA tests because of no dsa in this build", 1
-        if disabled("dsa");
+        if disabled("dsa") || $dsasignpass == '0';
 
     subtest DSA => sub {
         my $testtext_prefix = 'DSA';

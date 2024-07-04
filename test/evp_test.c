@@ -189,6 +189,7 @@ static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_int("key-check", NULL),
     OSSL_PARAM_int("digest-check", NULL),
     OSSL_PARAM_int("ems_check", NULL),
+    OSSL_PARAM_int("sign-check", NULL),
     OSSL_PARAM_END
 };
 
@@ -4072,7 +4073,7 @@ static int check_deterministic_noncetype(EVP_TEST *t,
 static int signverify_init(EVP_TEST *t, DIGESTSIGN_DATA *data)
 {
     const char *name = data->md == NULL ? NULL : EVP_MD_get0_name(data->md);
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    OSSL_PARAM params[5];
     OSSL_PARAM *p = NULL;
     int i, ret = 0;
     size_t params_n = 0, params_allocated_n = 0;

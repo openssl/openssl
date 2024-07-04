@@ -10,6 +10,10 @@
 #include "crypto/types.h"
 #include <openssl/ec.h>
 
+#ifdef FIPS_MODULE
+# include "fipscommon.h"
+#endif
+
 /* Functions that are common */
 int ossl_rsa_key_op_get_protect(const RSA *rsa, int operation, int *outprotect);
 int ossl_rsa_check_key_size(const RSA *rsa, int protect);

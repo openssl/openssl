@@ -39,6 +39,7 @@ my %params = (
     'PROV_PARAM_SSHKDF_DIGEST_CHECK' =>    "sshkdf-digest-check",    # uint
     'PROV_PARAM_SSKDF_DIGEST_CHECK' =>     "sskdf-digest-check",     # uint
     'PROV_PARAM_X963KDF_DIGEST_CHECK' =>   "x963kdf-digest-check",   # uint
+    'PROV_PARAM_DSA_SIGN_DISABLED' =>      "dsa-sign-disabled",      # uint
 
 # Self test callback parameters
     'PROV_PARAM_SELF_TEST_PHASE' =>  "st-phase",# utf8_string
@@ -407,6 +408,7 @@ my %params = (
     'SIGNATURE_PARAM_CONTEXT_STRING' =>     "context-string",
     'SIGNATURE_PARAM_FIPS_DIGEST_CHECK' =>  '*PKEY_PARAM_FIPS_DIGEST_CHECK',
     'SIGNATURE_PARAM_FIPS_KEY_CHECK' =>     '*PKEY_PARAM_FIPS_KEY_CHECK',
+    'SIGNATURE_PARAM_FIPS_SIGN_CHECK' =>    "sign-check",
     'SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
 
 # Asym cipher parameters
