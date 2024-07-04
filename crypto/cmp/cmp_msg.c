@@ -145,34 +145,6 @@ static int add1_extension(X509_EXTENSIONS **pexts, int nid, int crit, void *ex)
     return res;
 }
 
-/* Add extension list to the referenced extension stack, which may be NULL */
-static int add_extensions(STACK_OF(X509_EXTENSION) **target,
-                          const STACK_OF(X509_EXTENSION) *exts)
-{
-    int i;
-
-    if (target == NULL)
-        return 0;
-
-    for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-        X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
-        ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
-        int idx = X509v3_get_ext_by_OBJ(*target, obj, -1);
-
-        /* Does extension exist in target? */
-        if (idx != -1) {
-            /* Delete all extensions of same type */
-            do {
-                X509_EXTENSION_free(sk_X509_EXTENSION_delete(*target, idx));
-                idx = X509v3_get_ext_by_OBJ(*target, obj, -1);
-            } while (idx != -1);
-        }
-        if (!X509v3_add_ext(target, ext, -1))
-            return 0;
-    }
-    return 1;
-}
-
 /* Add a CRL revocation reason code to extension stack, which may be NULL */
 static int add_crl_reason_extension(X509_EXTENSIONS **pexts, int reason_code)
 {
@@ -359,7 +331,7 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
             && !add1_extension(&exts, NID_subject_alt_name, crit, default_sans))
         goto err;
     if (ctx->reqExtensions != NULL /* augment/override existing ones */
-            && !add_extensions(&exts, ctx->reqExtensions))
+            && X509v3_add_extensions(&exts, ctx->reqExtensions) == NULL)
         goto err;
     if (sk_GENERAL_NAME_num(ctx->subjectAltNames) > 0
             && !add1_extension(&exts, NID_subject_alt_name,

@@ -142,6 +142,36 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
     return NULL;
 }
 
+STACK_OF(X509_EXTENSION)
+     *X509v3_add_extensions(STACK_OF(X509_EXTENSION) **target,
+                            const STACK_OF(X509_EXTENSION) *exts)
+{
+    int i;
+
+    if (target == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
+        X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
+        ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
+        int idx = X509v3_get_ext_by_OBJ(*target, obj, -1);
+
+        /* Does extension exist in target? */
+        if (idx != -1) {
+            /* Delete all extensions of same type */
+            do {
+                X509_EXTENSION_free(sk_X509_EXTENSION_delete(*target, idx));
+                idx = X509v3_get_ext_by_OBJ(*target, obj, -1);
+            } while (idx != -1);
+        }
+        if (!X509v3_add_ext(target, ext, -1))
+            return NULL;
+    }
+    return *target;
+}
+
 X509_EXTENSION *X509_EXTENSION_create_by_NID(X509_EXTENSION **ex, int nid,
                                              int crit,
                                              ASN1_OCTET_STRING *data)
