@@ -128,7 +128,6 @@ int EVP_PKEY_verify_update(EVP_PKEY_CTX *ctx,
 int EVP_PKEY_verify_final(EVP_PKEY_CTX *ctx);
 ```
 
-
 Requirements on the providers
 -----------------------------
 
