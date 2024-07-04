@@ -134,8 +134,9 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
 
     item = items;
     ssl_ids = h3ssl->ssl_ids;
-    /* Process all the streams */
-    /* the first one is the connection if we get something here is a new stream
+    /*
+     * Process all the streams
+     * the first one is the connection if we get something here is a new stream
      */
     for (i = 0; i < MAXSSL_IDS; i++) {
         if (ssl_ids[i].s != NULL) {
@@ -524,7 +525,8 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
         fprintf(stderr, "before SSL_accept_connection\n");
         fflush(stderr);
 
-        /* SSL_accept_connection will retrun NULL if there is nothing to accept
+        /*
+         * SSL_accept_connection will return NULL if there is nothing to accept
          */
         conn = SSL_accept_connection(listener, 0);
         fprintf(stderr, "after SSL_accept_connection\n");
@@ -660,7 +662,8 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
             }
         }
 
-        /* Free the connection, then loop again, accepting another connection.
+        /*
+         * Free the connection, then loop again, accepting another connection.
          */
         SSL_free(conn);
     }
