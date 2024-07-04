@@ -118,6 +118,13 @@ extern "C" {
  */
 # define OSSL_PROV_FIPS_PARAM_X963KDF_DIGEST_CHECK "x963kdf-digest-check"
 
+/*
+ * A boolean that determines if DSA signing operations are allowed.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_DSA_SIGN_DISABLED "dsa-sign-disabled"
+
 # ifdef __cplusplus
 }
 # endif

@@ -38,6 +38,7 @@ my $no_anydtls = alldisabled(available_protocols("dtls"));
 plan skip_all => "No SSL/TLS/DTLS protocol is support by this OpenSSL build"
     if $no_anytls && $no_anydtls;
 
+my $dsaallow = '1';
 my $digest = "-sha1";
 my @reqcmd = ("openssl", "req");
 my @x509cmd = ("openssl", "x509", $digest);
@@ -331,6 +332,12 @@ sub testssl {
         push @providerflags, "-provider", "legacy";
     }
 
+    $dsaallow = '1';
+    if  ($provider eq "fips") {
+        run(test(["fips_version_test", "-config", $configfile, "<3.4.0"]),
+              capture => 1, statusvar => \$dsaallow);
+    }
+
     my @ssltest = ("ssl_old_test",
                    "-s_key", $key, "-s_cert", $cert,
                    "-c_key", $key, "-c_cert", $cert,
@@ -436,7 +443,7 @@ sub testssl {
         my @exkeys = ();
         my $ciphers = '-PSK:-SRP:@SECLEVEL=0';
 
-        if (!$no_dsa) {
+        if (!$no_dsa && $dsaallow == '1') {
             push @exkeys, "-s_cert", "certD.ss", "-s_key", $Dkey;
         }
 
@@ -494,7 +501,11 @@ sub testssl {
             my $flag = $protocol eq "-tls1_3" ? "" : $protocol;
             my $ciphersuites = "";
             foreach my $cipher (@{$ciphersuites{$protocol}}) {
-                if ($protocol eq "-ssl3" && $cipher =~ /ECDH/ ) {
+                if ($dsaallow == '0' && index($cipher, "DSS") != -1) {
+                    # DSA is not allowed in FIPS 140-3
+                    note "*****SKIPPING $protocol $cipher";
+                    ok(1);
+                } elsif ($protocol eq "-ssl3" && $cipher =~ /ECDH/ ) {
                     note "*****SKIPPING $protocol $cipher";
                     ok(1);
                 } else {

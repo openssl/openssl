@@ -40,6 +40,7 @@ my @defaultprov = ("-provider-path", $provpath,
 
 my @config = ( );
 my $provname = 'default';
+my $dsaallow = '1';
 
 my $datadir = srctop_dir("test", "recipes", "80-test_cms_data");
 my $smdir    = srctop_dir("test", "smime-certs");
@@ -55,8 +56,13 @@ plan tests => 25;
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
 unless ($no_fips) {
-    @config = ( "-config", srctop_file("test", "fips-and-base.cnf") );
+    my $provconf = srctop_file("test", "fips-and-base.cnf");
+    @config = ( "-config", $provconf );
     $provname = 'fips';
+
+    run(test(["fips_version_test", "-config", $provconf, "<3.4.0"]),
+    capture => 1, statusvar => \$dsaallow);
+    $no_dsa = 1 if $dsaallow == '0';
 }
 
 $ENV{OPENSSL_TEST_LIBCTX} = "1";

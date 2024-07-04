@@ -29,6 +29,8 @@ using EVP_PKEY_sign_init_ex() or EVP_PKEY_verify_init_ex().
 
 =item "digest-check" (B<OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK>) <integer>
 
+=item "sign-check"  (B<OSSL_SIGNATURE_PARAM_FIPS_SIGN_CHECK>) <int>
+
 The settable parameters are described in L<provider-signature(7)>.
 
 =back

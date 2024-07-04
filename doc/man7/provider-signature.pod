@@ -392,7 +392,7 @@ supply known values that either pass or fail.
 
 A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
 This may be used after calling either the sign or verify final functions. It may
-return 0 if either the "digest-check" or the "key-check" are set to 0.
+return 0 if either the "digest-check", "key-check", or "sign-check" are set to 0.
 This option is used by the OpenSSL FIPS provider.
 
 =item "key-check" (B<OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK>) <integer>
@@ -411,6 +411,15 @@ If required this parameter should be set before the signature digest is set.
 The default value of 1 causes an error when the digest is set if the digest is
 not FIPS approved (e.g. SHA1 is used for signing). Setting this to 0 will ignore
 the error and set the approved "fips-indicator" to 0.
+This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
+set to 0.
+
+=item "sign-check" (B<OSSL_SIGNATURE_PARAM_FIPS_SIGN_CHECK>) <int>
+
+If required this parameter should be set early via an init function.
+The default value of 1 causes an error when a signing algorithm is used. (This
+is triggered by deprecated signing algorithms).
+Setting this to 0 will ignore the error and set the approved "fips-indicator" to 0.
 This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
 set to 0.
 

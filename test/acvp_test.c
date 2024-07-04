@@ -46,6 +46,9 @@ static OSSL_PROVIDER *prov_null = NULL;
 static OSSL_LIB_CTX *libctx = NULL;
 static SELF_TEST_ARGS self_test_args = { 0 };
 static OSSL_CALLBACK self_test_events;
+#ifndef OPENSSL_NO_DSA
+static int dsasign_allowed = 1;
+#endif
 
 const OPTIONS *test_get_options(void)
 {
@@ -597,12 +600,14 @@ static int dsa_siggen_test(int id)
     if (!TEST_ptr(pkey = dsa_keygen(tst->L, tst->N)))
         goto err;
 
-    if (!TEST_true(sig_gen(pkey, NULL, tst->digest_alg, tst->msg, tst->msg_len,
-                           &sig, &sig_len))
-        || !TEST_true(get_dsa_sig_rs_bytes(sig, sig_len, &r, &s, &rlen, &slen)))
-        goto err;
-    test_output_memory("r", r, rlen);
-    test_output_memory("s", s, slen);
+    if (dsasign_allowed) {
+        if (!TEST_true(sig_gen(pkey, NULL, tst->digest_alg, tst->msg, tst->msg_len,
+                               &sig, &sig_len))
+            || !TEST_true(get_dsa_sig_rs_bytes(sig, sig_len, &r, &s, &rlen, &slen)))
+            goto err;
+        test_output_memory("r", r, rlen);
+        test_output_memory("s", s, slen);
+    }
     ret = 1;
 err:
     OPENSSL_free(r);
@@ -1479,6 +1484,7 @@ int setup_tests(void)
 #endif /* OPENSSL_NO_DH */
 
 #ifndef OPENSSL_NO_DSA
+    dsasign_allowed = fips_provider_version_lt(libctx, 3, 4, 0);
     ADD_ALL_TESTS(dsa_keygen_test, OSSL_NELEM(dsa_keygen_data));
     ADD_ALL_TESTS(dsa_paramgen_test, OSSL_NELEM(dsa_paramgen_data));
     ADD_ALL_TESTS(dsa_pqver_test, OSSL_NELEM(dsa_pqver_data));
