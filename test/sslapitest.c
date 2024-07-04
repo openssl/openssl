@@ -11104,6 +11104,8 @@ static size_t record_pad_cb(SSL *s, int type, size_t len, void *arg)
  * Test 1: Record padding callback on the SSL
  * Test 2: Record block padding on the SSL_CTX
  * Test 3: Record block padding on the SSL
+ * Test 4: Extended record block padding on the SSL_CTX
+ * Test 5: Extended record block padding on the SSL
  */
 static int test_tls13_record_padding(int idx)
 {
@@ -11133,6 +11135,10 @@ static int test_tls13_record_padding(int idx)
             goto end;
         if (!TEST_true(SSL_CTX_set_block_padding(cctx, 512)))
             goto end;
+    } else if (idx == 4) {
+        /* pad only handshake/alert messages */
+        if (!TEST_true(SSL_CTX_set_block_padding_ex(cctx, 0, 512)))
+            goto end;
     }
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
@@ -11150,6 +11156,16 @@ static int test_tls13_record_padding(int idx)
                                               SSL3_RT_MAX_PLAIN_LENGTH + 1)))
             goto end;
         if (!TEST_true(SSL_set_block_padding(clientssl, 512)))
+            goto end;
+    } else if (idx == 5) {
+        /* Exceeding the max plain length should fail */
+        if (!TEST_false(SSL_set_block_padding_ex(clientssl, 0,
+                                                 SSL3_RT_MAX_PLAIN_LENGTH + 1)))
+            goto end;
+        /* pad server and client handshake only */
+        if (!TEST_true(SSL_set_block_padding_ex(clientssl, 0, 512)))
+            goto end;
+        if (!TEST_true(SSL_set_block_padding_ex(serverssl, 0, 512)))
             goto end;
     }
 
@@ -12637,7 +12653,7 @@ int setup_tests(void)
     ADD_TEST(test_load_dhfile);
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_TEST(test_read_ahead_key_change);
-    ADD_ALL_TESTS(test_tls13_record_padding, 4);
+    ADD_ALL_TESTS(test_tls13_record_padding, 6);
 #endif
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_serverinfo_custom, 4);

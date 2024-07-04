@@ -649,20 +649,44 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
     return rv > 0;
 }
 
+/*
+ * |value| input is "<number[,number]>"
+ * where the first number is the padding block size for
+ * application data, and the optional second is the
+ * padding block size for handshake messages
+ */
 static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 0;
-    int block_size = atoi(value);
+    size_t block_padding = 0, hs_padding = 0;
+    char *commap = NULL, *copy = NULL;
 
+    copy = OPENSSL_strdup(value);
+    if (copy == NULL)
+        return 0;
+    commap = strstr(copy, ",");
+    if (commap != NULL) {
+        *commap = '\0';
+        if (*(commap + 1) == '\0') {
+            OPENSSL_free(copy);
+            return 0;
+        }
+        hs_padding = (size_t) atoi(commap + 1);
+    }
+    block_padding = (size_t) atoi(copy);
+    if (commap == NULL)
+        hs_padding = block_padding;
+    OPENSSL_free(copy);
     /*
-     * All we care about is a non-negative value,
+     * All we care about are non-negative values,
      * the setters check the range
      */
-    if (block_size >= 0) {
+    if (block_padding >= 0 || hs_padding >= 0) {
         if (cctx->ctx)
-            rv = SSL_CTX_set_block_padding(cctx->ctx, block_size);
+            rv = SSL_CTX_set_block_padding_ex(cctx->ctx, block_padding,
+                                              hs_padding);
         if (cctx->ssl)
-            rv = SSL_set_block_padding(cctx->ssl, block_size);
+            rv = SSL_set_block_padding_ex(cctx->ssl, block_padding, hs_padding);
     }
     return rv;
 }

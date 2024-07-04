@@ -1126,6 +1126,7 @@ struct ssl_ctx_st {
     size_t (*record_padding_cb)(SSL *s, int type, size_t len, void *arg);
     void *record_padding_arg;
     size_t block_padding;
+    size_t hs_padding;
 
     /* Session ticket appdata */
     SSL_CTX_generate_session_ticket_fn generate_ticket_cb;

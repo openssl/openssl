@@ -335,22 +335,51 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
         size_t padding = 0;
         size_t max_padding = rl->max_frag_len - rlen;
 
+        /*
+         * We might want to change the "else if" below so that
+         * library-added padding can still happen even if there
+         * is an application-layer callback. The reason being
+         * the application may not be aware that the effectivness
+         * of ECH could be damaged if the callback e.g. only
+         * padded application data. However, doing so would be
+         * a change that could break some application that has
+         * a client and server that both know what padding they
+         * like, and that dislike any other padding. That'd need
+         * one of those to have been updated though so the 
+         * probability may be low enough that we could change
+         * the "else if" below to just an "if" and pick the
+         * larger of the library and callback's idea of padding.
+         * (Still subject to max_padding though.)
+         */
         if (rl->padding != NULL) {
             padding = rl->padding(rl->cbarg, thistempl->type, rlen);
-        } else if (rl->block_padding > 0) {
-            size_t mask = rl->block_padding - 1;
-            size_t remainder;
+        } else if (rl->block_padding > 0 || rl->hs_padding > 0) {
+            size_t mask, bp = 0, remainder;
 
-            /* optimize for power of 2 */
-            if ((rl->block_padding & mask) == 0)
-                remainder = rlen & mask;
-            else
-                remainder = rlen % rl->block_padding;
-            /* don't want to add a block of padding if we don't have to */
-            if (remainder == 0)
-                padding = 0;
-            else
-                padding = rl->block_padding - remainder;
+            /*
+             * pad handshake or alert messages based on |hs_padding|
+             * but application data based on |block_padding|
+             */
+            if (thistempl->type == SSL3_RT_HANDSHAKE && rl->hs_padding > 0)
+                bp = rl->hs_padding;
+            else if (thistempl->type == SSL3_RT_ALERT && rl->hs_padding > 0)
+                bp = rl->hs_padding;
+            else if (thistempl->type == SSL3_RT_APPLICATION_DATA
+                     && rl->block_padding > 0)
+                bp = rl->block_padding;
+            if (bp > 0) {
+                mask = bp - 1;
+                /* optimize for power of 2 */
+                if ((bp & mask) == 0)
+                    remainder = rlen & mask;
+                else
+                    remainder = rlen % bp;
+                /* don't want to add a block of padding if we don't have to */
+                if (remainder == 0)
+                    padding = 0;
+                else
+                    padding = bp - remainder;
+            }
         }
         if (padding > 0) {
             /* do not allow the record to exceed max plaintext length */

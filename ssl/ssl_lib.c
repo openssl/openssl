@@ -785,6 +785,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     s->rlayer.record_padding_cb = ctx->record_padding_cb;
     s->rlayer.record_padding_arg = ctx->record_padding_arg;
     s->rlayer.block_padding = ctx->block_padding;
+    s->rlayer.hs_padding = ctx->hs_padding;
     s->sid_ctx_length = ctx->sid_ctx_length;
     if (!ossl_assert(s->sid_ctx_length <= sizeof(s->sid_ctx)))
         goto err;
@@ -5713,19 +5714,33 @@ void *SSL_CTX_get_record_padding_callback_arg(const SSL_CTX *ctx)
     return ctx->record_padding_arg;
 }
 
-int SSL_CTX_set_block_padding(SSL_CTX *ctx, size_t block_size)
+int SSL_CTX_set_block_padding_ex(SSL_CTX *ctx, size_t app_block_size,
+                                 size_t hs_block_size)
 {
-    if (IS_QUIC_CTX(ctx) && block_size > 1)
+    if (IS_QUIC_CTX(ctx) && (app_block_size > 1 || hs_block_size > 1))
         return 0;
 
     /* block size of 0 or 1 is basically no padding */
-    if (block_size == 1)
+    if (app_block_size == 1) {
         ctx->block_padding = 0;
-    else if (block_size <= SSL3_RT_MAX_PLAIN_LENGTH)
-        ctx->block_padding = block_size;
-    else
+    } else if (app_block_size <= SSL3_RT_MAX_PLAIN_LENGTH) {
+        ctx->block_padding = app_block_size;
+    } else {
         return 0;
+    }
+    if (hs_block_size == 1) {
+        ctx->hs_padding = 0;
+    } else if (hs_block_size <= SSL3_RT_MAX_PLAIN_LENGTH) {
+        ctx->hs_padding = hs_block_size;
+    } else {
+        return 0;
+    }
     return 1;
+}
+
+int SSL_CTX_set_block_padding(SSL_CTX *ctx, size_t block_size)
+{
+    return SSL_CTX_set_block_padding_ex(ctx, block_size, block_size);
 }
 
 int SSL_set_record_padding_callback(SSL *ssl,
@@ -5766,21 +5781,37 @@ void *SSL_get_record_padding_callback_arg(const SSL *ssl)
     return sc->rlayer.record_padding_arg;
 }
 
-int SSL_set_block_padding(SSL *ssl, size_t block_size)
+int SSL_set_block_padding_ex(SSL *ssl, size_t app_block_size,
+                             size_t hs_block_size)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
-    if (sc == NULL || (IS_QUIC(ssl) && block_size > 1))
+    if (sc == NULL
+        || (IS_QUIC(ssl)
+            && (app_block_size > 1 || hs_block_size > 1)))
         return 0;
 
     /* block size of 0 or 1 is basically no padding */
-    if (block_size == 1)
+    if (app_block_size == 1) {
         sc->rlayer.block_padding = 0;
-    else if (block_size <= SSL3_RT_MAX_PLAIN_LENGTH)
-        sc->rlayer.block_padding = block_size;
-    else
+    } else if (app_block_size <= SSL3_RT_MAX_PLAIN_LENGTH) {
+        sc->rlayer.block_padding = app_block_size;
+    } else {
         return 0;
+    }
+    if (hs_block_size == 1) {
+        sc->rlayer.hs_padding = 0;
+    } else if (hs_block_size <= SSL3_RT_MAX_PLAIN_LENGTH) {
+        sc->rlayer.hs_padding = hs_block_size;
+    } else {
+        return 0;
+    }
     return 1;
+}
+
+int SSL_set_block_padding(SSL *ssl, size_t block_size)
+{
+    return SSL_set_block_padding_ex(ssl, block_size, block_size);
 }
 
 int SSL_set_num_tickets(SSL *s, size_t num_tickets)

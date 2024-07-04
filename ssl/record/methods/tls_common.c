@@ -1218,6 +1218,12 @@ int tls_set_options(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options)
             ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
+        p = OSSL_PARAM_locate_const(options,
+                                    OSSL_LIBSSL_RECORD_LAYER_PARAM_HS_PADDING);
+        if (p != NULL && !OSSL_PARAM_get_size_t(p, &rl->hs_padding)) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
     }
 
     if (rl->level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION) {
