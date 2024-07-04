@@ -15,8 +15,8 @@
 #include <unistd.h>
 
 #define MAKE_NV(NAME, VALUE)                                                   \
-    { (uint8_t *)(NAME), (uint8_t *)(VALUE), sizeof((NAME)) - 1,                \
-     sizeof((VALUE)) - 1, NGHTTP3_NV_FLAG_NONE }
+    { (uint8_t *)(NAME), (uint8_t *)(VALUE), sizeof((NAME)) - 1,               \
+      sizeof((VALUE)) - 1, NGHTTP3_NV_FLAG_NONE }
 #define nghttp3_arraylen(A) (sizeof(A) / sizeof(*(A)))
 
 /* CURL according to trace has 2 more streams 7 and 11 */
@@ -34,7 +34,8 @@ struct h3ssl {
     int done;
 };
 
-static void init_id(struct h3ssl *h3ssl) {
+static void init_ids(struct h3ssl *h3ssl)
+{
     struct ssl_id *ssl_ids;
     int i;
 
@@ -49,7 +50,8 @@ static void init_id(struct h3ssl *h3ssl) {
     h3ssl->done = 0;
 }
 
-static void add_id(uint64_t id, SSL *ssl, struct h3ssl *h3ssl) {
+static void add_id(uint64_t id, SSL *ssl, struct h3ssl *h3ssl)
+{
     struct ssl_id *ssl_ids;
     int i;
 
@@ -65,7 +67,8 @@ static void add_id(uint64_t id, SSL *ssl, struct h3ssl *h3ssl) {
     exit(1);
 }
 
-static void h3close(struct h3ssl *h3ssl, uint64_t id) {
+static void h3close(struct h3ssl *h3ssl, uint64_t id)
+{
     struct ssl_id *ssl_ids;
     int i;
 
@@ -73,7 +76,7 @@ static void h3close(struct h3ssl *h3ssl, uint64_t id) {
     for (i = 0; i < MAXSSL_IDS; i++) {
         if (ssl_ids[i].id == id) {
             if (!SSL_stream_conclude(ssl_ids[i].s, 0))
-                printf("h3close: SSL_stream_conclude failed\n");
+                fprintf(stderr, "h3close: SSL_stream_conclude on %llu failed\n", (unsigned long long) id);
             SSL_shutdown(ssl_ids[i].s);
         }
     }
@@ -82,7 +85,8 @@ static void h3close(struct h3ssl *h3ssl, uint64_t id) {
 static int on_recv_header(nghttp3_conn *conn, int64_t stream_id, int32_t token,
                           nghttp3_rcbuf *name, nghttp3_rcbuf *value,
                           uint8_t flags, void *user_data,
-                          void *stream_user_data) {
+                          void *stream_user_data)
+{
     nghttp3_vec vname, vvalue;
 
     /* Received a single HTTP header. */
@@ -98,7 +102,8 @@ static int on_recv_header(nghttp3_conn *conn, int64_t stream_id, int32_t token,
 }
 
 static int on_end_headers(nghttp3_conn *conn, int64_t stream_id, int fin,
-                          void *user_data, void *stream_user_data) {
+                          void *user_data, void *stream_user_data)
+{
     struct h3ssl *h3ssl = (struct h3ssl *)user_data;
 
     fprintf(stderr, "on_end_headers!\n");
@@ -108,14 +113,16 @@ static int on_end_headers(nghttp3_conn *conn, int64_t stream_id, int fin,
 
 static int on_recv_data(nghttp3_conn *conn, int64_t stream_id,
                         const uint8_t *data, size_t datalen,
-                        void *conn_user_data, void *stream_user_data) {
+                        void *conn_user_data, void *stream_user_data)
+{
     fprintf(stderr, "on_recv_data! %ld\n", (unsigned long)datalen);
     fprintf(stderr, "on_recv_data! %.*s\n", (int)datalen, data);
     return 0;
 }
 
 static int on_end_stream(nghttp3_conn *h3conn, int64_t stream_id,
-                         void *conn_user_data, void *stream_user_data) {
+                         void *conn_user_data, void *stream_user_data)
+{
     struct h3ssl *h3ssl = (struct h3ssl *)conn_user_data;
 
     printf("on_end_stream!\n");
@@ -123,17 +130,16 @@ static int on_end_stream(nghttp3_conn *h3conn, int64_t stream_id,
     return 0;
 }
 
-static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
+static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
+{
     uint8_t msg2[16000];
     int hassomething = 0, i;
-    struct ssl_id *ssl_ids;
+    struct ssl_id *ssl_ids = h3ssl->ssl_ids;
     SSL_POLL_ITEM items[MAXSSL_IDS] = {0}, *item = items;
     static const struct timeval nz_timeout = {0, 0};
     size_t result_count = SIZE_MAX;
     int numitem = 0, ret;
 
-    item = items;
-    ssl_ids = h3ssl->ssl_ids;
     /*
      * Process all the streams
      * the first one is the connection if we get something here is a new stream
@@ -141,8 +147,8 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
     for (i = 0; i < MAXSSL_IDS; i++) {
         if (ssl_ids[i].s != NULL) {
             item->desc = SSL_as_poll_descriptor(ssl_ids[i].s);
-            item->events = UINT64_MAX;
-            item->revents = UINT64_MAX;
+            item->events = UINT64_MAX;  /* TODO adjust to the event we need process */
+            item->revents = UINT64_MAX; /* TODO adjust to the event we need process */
             numitem++;
             item++;
         }
@@ -216,7 +222,7 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
             p_streamid = SSL_get_stream_id(pstream);
             if (nghttp3_conn_bind_qpack_streams(h3conn, p_streamid,
                                                 r_streamid)) {
-                printf("nghttp3_conn_bind_qpack_streams failed!\n");
+                fprintf(stderr, "nghttp3_conn_bind_qpack_streams failed!\n");
                 return -1;
             }
             printf("control: NONE enc %llu dec %llu\n",
@@ -250,7 +256,7 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
             }
             ret = SSL_read(ssl_ids[i].s, msg2, l);
             if (ret <= 0) {
-                printf("SSL_read on %llu failed\n",
+                fprintf(stderr, "SSL_read on %llu failed\n",
                        (unsigned long long)ssl_ids[i].id);
                 continue; /* TODO */
             }
@@ -272,7 +278,8 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
     return hassomething;
 }
 
-static int nothing_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
+static int nothing_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
+{
     int hassomething = 0;
     struct ssl_id *ssl_ids;
     SSL_POLL_ITEM items[MAXSSL_IDS] = {0}, *item = items;
@@ -285,8 +292,8 @@ static int nothing_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl) {
     for (i = 0; i < MAXSSL_IDS; i++) {
         if (ssl_ids[i].s) {
             item->desc = SSL_as_poll_descriptor(ssl_ids[i].s);
-            item->events = UINT64_MAX;
-            item->revents = UINT64_MAX;
+            item->events = UINT64_MAX;  /* TODO adjust to the event we need process */
+            item->revents = UINT64_MAX; /* TODO adjust to the event we need process */
             numitem++;
             item++;
         }
@@ -375,8 +382,8 @@ static int quic_server_write(struct h3ssl *h3ssl, uint64_t streamid,
  */
 
 /* ALPN string for TLS handshake. We pretent h3-29 and h3 */
-static const unsigned char alpn_ossltest[] = {5,   'h', '3', '-', '2',
-                                              '9', 2,   'h', '3'};
+static const unsigned char alpn_ossltest[] = { 5,   'h', '3', '-', '2',
+                                               '9', 2,   'h', '3' };
 
 /*
  * This callback validates and negotiates the desired ALPN on the server side.
@@ -393,7 +400,8 @@ static int select_alpn(SSL *ssl, const unsigned char **out,
 }
 
 /* Create SSL_CTX. */
-static SSL_CTX *create_ctx(const char *cert_path, const char *key_path) {
+static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
+{
     SSL_CTX *ctx;
 
     ctx = SSL_CTX_new(OSSL_QUIC_server_method());
@@ -426,7 +434,8 @@ err:
 }
 
 /* Create UDP socket using given port. */
-static int create_socket(uint16_t port) {
+static int create_socket(uint16_t port)
+{
     int fd = -1;
     struct sockaddr_in sa = {0};
 
@@ -452,7 +461,8 @@ err:
     return -1;
 }
 
-static int waitsocket(int fd, int sec) {
+static int waitsocket(int fd, int sec)
+{
     fd_set read_fds;
     int fdmax = fd;
     int ret;
@@ -470,7 +480,7 @@ static int waitsocket(int fd, int sec) {
         ret = select(fdmax + 1, &read_fds, NULL, NULL, NULL);
     }
     if (ret == -1) {
-        printf("waitsocket failed\n");
+        fprintf(stderr, "waitsocket failed\n");
         exit(1);
     } else if (ret) {
         printf("waitsocket %d\n", FD_ISSET(fd, &read_fds));
@@ -480,7 +490,8 @@ static int waitsocket(int fd, int sec) {
 }
 
 /* Main loop for server to accept QUIC connections. */
-static int run_quic_server(SSL_CTX *ctx, int fd) {
+static int run_quic_server(SSL_CTX *ctx, int fd)
+{
     int ok = 0;
     SSL *listener = NULL, *conn = NULL;
 
@@ -548,7 +559,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
          */
 
         /* try to use nghttp3 to send a response */
-        init_id(&h3ssl);
+        init_ids(&h3ssl);
         nghttp3_settings_default(&settings);
 
         /* Setup callbacks. */
@@ -559,7 +570,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
 
         if (nghttp3_conn_server_new(&h3conn, &callbacks, &settings, mem,
                                     &h3ssl)) {
-            printf("nghttp3_conn_client_new failed!\n");
+            fprintf(stderr, "nghttp3_conn_client_new failed!\n");
             exit(1);
         }
 
@@ -577,7 +588,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
                 }
             hassomething = read_from_ssl_ids(h3conn, &h3ssl);
             if (hassomething == -1) {
-                printf("read_from_ssl_ids hassomething failed\n");
+                fprintf(stderr, "read_from_ssl_ids hassomething failed\n");
                 goto err;
             } else if (hassomething == 0) {
                 printf("read_from_ssl_ids hassomething nothing...\n");
@@ -593,7 +604,7 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
         /* XXX add  MAKE_NV("connection", "close"), to resp[] and recheck */
         dr.read_data = step_read_data;
         if (nghttp3_conn_submit_response(h3conn, 0, resp, 2, &dr)) {
-            printf("nghttp3_conn_submit_response failed!\n");
+            fprintf(stderr, "nghttp3_conn_submit_response failed!\n");
             goto err;
         }
         printf("nghttp3_conn_submit_response...\n");
@@ -618,14 +629,14 @@ static int run_quic_server(SSL_CTX *ctx, int fd) {
                        (unsigned long long)streamid, (unsigned long)vec[i].len);
                 if (!quic_server_write(&h3ssl, streamid, vec[i].base,
                                        vec[i].len, fin, &numbytes)) {
-                    printf("quic_server_write failed!\n");
+                    fprintf(stderr, "quic_server_write failed!\n");
                     goto err;
                 }
             }
             if (nghttp3_conn_add_write_offset(
                     h3conn, streamid,
                     (size_t)nghttp3_vec_len(vec, (size_t)sveccnt))) {
-                printf("nghttp3_conn_add_write_offset failed!\n");
+                fprintf(stderr, "nghttp3_conn_add_write_offset failed!\n");
                 goto err;
             }
         }
@@ -678,7 +689,8 @@ err:
  * demo server... just return a 20 bytes ascii string as response for any
  * request single h3 connection and single threaded.
  */
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     int rc = 1;
     SSL_CTX *ctx = NULL;
     int fd = -1;
