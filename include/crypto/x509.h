@@ -373,7 +373,7 @@ int x509v3_add_len_value_uchar(const char *name, const unsigned char *value,
                                size_t vallen, STACK_OF(CONF_VALUE) **extlist);
 /* Attribute addition functions not checking for duplicate attributes */
 STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
-                                                X509_ATTRIBUTE *attr);
+                                                const X509_ATTRIBUTE *attr);
 STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr_by_OBJ(STACK_OF(X509_ATTRIBUTE) **x,
                                                        const ASN1_OBJECT *obj,
                                                        int type,
