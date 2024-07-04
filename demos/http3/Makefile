@@ -4,7 +4,10 @@
 #
 #    LD_LIBRARY_PATH=../.. ./ossl-nghttp3-demo www.example.com:443
 
-CFLAGS  += -I../../include -g -Wall -Wsign-compare --extra-warnings
+# when using gcc the below CFLAGS make sure you follow most of the rules of OpenSSL coding style.
+#CFLAGS  += -I../../include -g -Wall -Wsign-compare -std=c90 -pedantic -pedantic-errors -Wno-long-long
+
+CFLAGS  += -I../../include -g -Wall -Wsign-compare
 LDFLAGS += -L../..
 LDLIBS  = -lcrypto -lssl -lnghttp3
 
