@@ -140,7 +140,7 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
     }
 
     for (ep = bp->first_entry; ep; ep = ep->next) {
-        if (digest && memcmp(digest, ep->digest, evpmdsize) == 0) {
+        if (digest && memcmp(digest, ep->digest, (size_t)evpmdsize) == 0) {
             BIO_printf(bio_err,
                        "%s: warning: skipping duplicate %s in %s\n",
                        opt_getprog(),
@@ -183,7 +183,7 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
     if (need_symlink && !ep->need_symlink) {
         ep->need_symlink = 1;
         bp->num_needed++;
-        memcpy(ep->digest, digest, evpmdsize);
+        memcpy(ep->digest, digest, (size_t)evpmdsize);
     }
     return 0;
 }
@@ -552,6 +552,9 @@ int rehash_main(int argc, char **argv)
 
     evpmd = EVP_sha1();
     evpmdsize = EVP_MD_get_size(evpmd);
+
+    if (evpmdsize <= 0 || evpmdsize > EVP_MAX_MD_SIZE)
+        goto end;
 
     if (*argv != NULL) {
         while (*argv != NULL)
