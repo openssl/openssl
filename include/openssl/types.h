@@ -34,9 +34,9 @@ extern "C" {
 # include <openssl/macros.h>
 
 # if OPENSSL_VERSION_MAJOR >= 4
-#  define OSSL_CONST_FUTURE const
+#  define OSSL_FUTURE_CONST const
 # else
-#  define OSSL_CONST_FUTURE
+#  define OSSL_FUTURE_CONST
 # endif
 
 typedef struct ossl_provider_st OSSL_PROVIDER; /* Provider Object */
