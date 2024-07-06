@@ -20,6 +20,7 @@
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include "internal/thread_once.h"
+#include "internal/rcu.h"
 #include "crypto/lhash.h"
 #include "crypto/sparse_array.h"
 #include "property_local.h"
@@ -50,6 +51,7 @@ typedef struct {
     const OSSL_PROVIDER *provider;
     const char *query;
     METHOD method;
+    size_t size;
     char body[1];
 } QUERY;
 
@@ -61,22 +63,8 @@ typedef struct {
     LHASH_OF(QUERY) *cache;
 } ALGORITHM;
 
-struct ossl_method_store_st {
-    OSSL_LIB_CTX *ctx;
+typedef struct {
     SPARSE_ARRAY_OF(ALGORITHM) *algs;
-    /*
-     * Lock to protect the |algs| array from concurrent writing, when
-     * individual implementations or queries are inserted.  This is used
-     * by the appropriate functions here.
-     */
-    CRYPTO_RWLOCK *lock;
-    /*
-     * Lock to reserve the whole store.  This is used when fetching a set
-     * of algorithms, via these functions, found in crypto/core_fetch.c:
-     * ossl_method_construct_reserve_store()
-     * ossl_method_construct_unreserve_store()
-     */
-    CRYPTO_RWLOCK *biglock;
 
     /* query cache specific values */
 
@@ -85,6 +73,26 @@ struct ossl_method_store_st {
 
     /* Flag: 1 if query cache entries for all algs need flushing */
     int cache_need_flush;
+} STORED_ALGORITHMS;
+
+struct ossl_method_store_st {
+    OSSL_LIB_CTX *ctx;
+
+    STORED_ALGORITHMS *algs;
+
+    /*
+     * Lock to protect the cached algorithms |algs| from concurrent writing,
+     * when individual implementations or queries are inserted.  This is used
+     * by the appropriate functions here.
+     */
+    CRYPTO_RCU_LOCK *lock;
+    /*
+     * Lock to reserve the whole store.  This is used when fetching a set
+     * of algorithms, via these functions, found in crypto/core_fetch.c:
+     * ossl_method_construct_reserve_store()
+     * ossl_method_construct_unreserve_store()
+     */
+    CRYPTO_RWLOCK *biglock;
 };
 
 typedef struct {
@@ -95,6 +103,7 @@ typedef struct {
 } IMPL_CACHE_FLUSH;
 
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
+DEFINE_STACK_OF(ALGORITHM)
 
 typedef struct ossl_global_properties_st {
     OSSL_PROPERTY_LIST *list;
@@ -102,10 +111,6 @@ typedef struct ossl_global_properties_st {
     unsigned int no_mirrored : 1;
 #endif
 } OSSL_GLOBAL_PROPERTIES;
-
-static void ossl_method_cache_flush_alg(OSSL_METHOD_STORE *store,
-                                        ALGORITHM *alg);
-static void ossl_method_cache_flush(OSSL_METHOD_STORE *store, int nid);
 
 /* Global properties are stored per library context */
 void ossl_ctx_global_properties_free(void *vglobp)
@@ -166,21 +171,6 @@ static void ossl_method_free(METHOD *method)
     (*method->free)(method->method);
 }
 
-static __owur int ossl_property_read_lock(OSSL_METHOD_STORE *p)
-{
-    return p != NULL ? CRYPTO_THREAD_read_lock(p->lock) : 0;
-}
-
-static __owur int ossl_property_write_lock(OSSL_METHOD_STORE *p)
-{
-    return p != NULL ? CRYPTO_THREAD_write_lock(p->lock) : 0;
-}
-
-static int ossl_property_unlock(OSSL_METHOD_STORE *p)
-{
-    return p != 0 ? CRYPTO_THREAD_unlock(p->lock) : 0;
-}
-
 static unsigned long query_hash(const QUERY *a)
 {
     return OPENSSL_LH_strhash(a->query);
@@ -205,6 +195,75 @@ static void impl_free(IMPLEMENTATION *impl)
     }
 }
 
+static STORED_ALGORITHMS *stored_algs_new(void)
+{
+    STORED_ALGORITHMS *ret;
+
+    ret = OPENSSL_zalloc(sizeof(*ret));
+    if (ret == NULL)
+        return NULL;
+
+    ret->algs = ossl_sa_ALGORITHM_new();
+    if (ret->algs == NULL) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
+    return ret;
+}
+
+/* Does not free the actual ALGORITHM structures */
+static void stored_algs_free(STORED_ALGORITHMS *algs)
+{
+    if (algs == NULL)
+        return;
+
+    ossl_sa_ALGORITHM_free(algs->algs);
+    OPENSSL_free(algs);
+}
+
+struct data_shallow_dup {
+    int err;
+    SPARSE_ARRAY_OF(ALGORITHM) *saalg;
+};
+
+/* Shallow dup of an ALGORITHM */
+static void alg_shallow_dup(uintmax_t idx, ALGORITHM *alg, void *arg)
+{
+    struct data_shallow_dup *data = arg;
+
+    if (data->err)
+        return;
+
+    if (!ossl_sa_ALGORITHM_set(data->saalg, idx, alg))
+        data->err = 1;
+
+    return;
+}
+
+static STORED_ALGORITHMS *
+stored_algs_shallow_dup(STORED_ALGORITHMS *src)
+{
+    STORED_ALGORITHMS *dest;
+    struct data_shallow_dup data;
+
+    dest = stored_algs_new();
+    if (dest == NULL)
+        return NULL;
+    dest->cache_need_flush = src->cache_need_flush;
+    dest->cache_nelem = src->cache_nelem;
+
+    data.err = 0;
+    data.saalg = dest->algs;
+    ossl_sa_ALGORITHM_doall_arg(src->algs, alg_shallow_dup, &data);
+    if (data.err) {
+        stored_algs_free(dest);
+        return NULL;
+    }
+
+    return dest;
+}
+
 static void impl_cache_free(QUERY *elem)
 {
     if (elem != NULL) {
@@ -219,18 +278,41 @@ static void impl_cache_flush_alg(ossl_uintmax_t idx, ALGORITHM *alg)
     lh_QUERY_flush(alg->cache);
 }
 
+static void alg_free(ALGORITHM *alg)
+{
+    if (alg != NULL)
+        lh_QUERY_free(alg->cache);
+    OPENSSL_free(alg);
+}
+
+static void alg_and_cache_free(ALGORITHM *alg)
+{
+    if (alg != NULL)
+        impl_cache_flush_alg(0, alg);
+    alg_free(alg);
+}
+
+/*
+ * Flush the cache, free the impl statck and free the alg. Does not free the
+ * actual implementations themselves
+ */
+static void alg_free_all(ALGORITHM *alg)
+{
+    if (alg != NULL)
+        sk_IMPLEMENTATION_free(alg->impls);
+    alg_and_cache_free(alg);
+}
+
 static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a, void *arg)
 {
     OSSL_METHOD_STORE *store = arg;
 
     if (a != NULL) {
         sk_IMPLEMENTATION_pop_free(a->impls, &impl_free);
-        lh_QUERY_doall(a->cache, &impl_cache_free);
-        lh_QUERY_free(a->cache);
-        OPENSSL_free(a);
+        alg_and_cache_free(a);
     }
     if (store != NULL)
-        ossl_sa_ALGORITHM_set(store->algs, idx, NULL);
+        ossl_sa_ALGORITHM_set(store->algs->algs, idx, NULL);
 }
 
 /*
@@ -244,8 +326,8 @@ OSSL_METHOD_STORE *ossl_method_store_new(OSSL_LIB_CTX *ctx)
     res = OPENSSL_zalloc(sizeof(*res));
     if (res != NULL) {
         res->ctx = ctx;
-        if ((res->algs = ossl_sa_ALGORITHM_new()) == NULL
-            || (res->lock = CRYPTO_THREAD_lock_new()) == NULL
+        if ((res->algs = stored_algs_new()) == NULL
+            || (res->lock = ossl_rcu_lock_new(1, ctx)) == NULL
             || (res->biglock = CRYPTO_THREAD_lock_new()) == NULL) {
             ossl_method_store_free(res);
             return NULL;
@@ -258,9 +340,9 @@ void ossl_method_store_free(OSSL_METHOD_STORE *store)
 {
     if (store != NULL) {
         if (store->algs != NULL)
-            ossl_sa_ALGORITHM_doall_arg(store->algs, &alg_cleanup, store);
-        ossl_sa_ALGORITHM_free(store->algs);
-        CRYPTO_THREAD_lock_free(store->lock);
+            ossl_sa_ALGORITHM_doall_arg(store->algs->algs, &alg_cleanup, store);
+        stored_algs_free(store->algs);
+        ossl_rcu_lock_free(store->lock);
         CRYPTO_THREAD_lock_free(store->biglock);
         OPENSSL_free(store);
     }
@@ -276,14 +358,10 @@ int ossl_method_unlock_store(OSSL_METHOD_STORE *store)
     return store != NULL ? CRYPTO_THREAD_unlock(store->biglock) : 0;
 }
 
-static ALGORITHM *ossl_method_store_retrieve(OSSL_METHOD_STORE *store, int nid)
+static ALGORITHM *stored_algs_retrieve(STORED_ALGORITHMS *algs, int nid)
 {
-    return ossl_sa_ALGORITHM_get(store->algs, nid);
-}
 
-static int ossl_method_store_insert(OSSL_METHOD_STORE *store, ALGORITHM *alg)
-{
-    return ossl_sa_ALGORITHM_set(store->algs, alg->nid, alg);
+    return ossl_sa_ALGORITHM_get(algs->algs, nid);
 }
 
 int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
@@ -291,8 +369,9 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
                           int (*method_up_ref)(void *),
                           void (*method_destruct)(void *))
 {
-    ALGORITHM *alg = NULL;
+    ALGORITHM *algold = NULL, *algnew = NULL;
     IMPLEMENTATION *impl;
+    STORED_ALGORITHMS *algsnew = NULL, *algsold = NULL;
     int ret = 0;
     int i;
 
@@ -317,164 +396,238 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     }
     impl->provider = prov;
 
-    /* Insert into the hash table if required */
-    if (!ossl_property_write_lock(store)) {
-        OPENSSL_free(impl);
-        return 0;
-    }
-    ossl_method_cache_flush(store, nid);
     if ((impl->properties = ossl_prop_defn_get(store->ctx, properties)) == NULL) {
         impl->properties = ossl_parse_property(store->ctx, properties);
-        if (impl->properties == NULL)
-            goto err;
+        if (impl->properties == NULL) {
+            OPENSSL_free(impl);
+            return 0;
+        }
         if (!ossl_prop_defn_set(store->ctx, properties, &impl->properties)) {
             ossl_property_free(impl->properties);
-            impl->properties = NULL;
-            goto err;
+            OPENSSL_free(impl);
+            return 0;
         }
     }
 
-    alg = ossl_method_store_retrieve(store, nid);
-    if (alg == NULL) {
-        if ((alg = OPENSSL_zalloc(sizeof(*alg))) == NULL
-                || (alg->impls = sk_IMPLEMENTATION_new_null()) == NULL
-                || (alg->cache = lh_QUERY_new(&query_hash, &query_cmp)) == NULL)
-            goto err;
-        alg->nid = nid;
-        if (!ossl_method_store_insert(store, alg))
-            goto err;
-    }
+    /* Insert the new implementation if required */
+    ossl_rcu_write_lock(store->lock);
+
+    algsold = ossl_rcu_deref(&store->algs);
+    algsnew = stored_algs_shallow_dup(algsold);
+
+    if (algsnew == NULL)
+        goto err;
+
+    algold = stored_algs_retrieve(algsold, nid);
+
+    if ((algnew = OPENSSL_zalloc(sizeof(*algnew))) == NULL
+            || (algnew->cache = lh_QUERY_new(&query_hash, &query_cmp)) == NULL)
+        goto err;
+    algnew->nid = nid;
+
+    if (algold != NULL)
+        /* Copy any pre-existing implementations onto the new stack */
+        algnew->impls = sk_IMPLEMENTATION_dup(algold->impls);
+    else
+        algnew->impls = sk_IMPLEMENTATION_new_null();
+
+    if (algnew->impls == NULL)
+        goto err;
 
     /* Push onto stack if there isn't one there already */
-    for (i = 0; i < sk_IMPLEMENTATION_num(alg->impls); i++) {
-        const IMPLEMENTATION *tmpimpl = sk_IMPLEMENTATION_value(alg->impls, i);
+    for (i = 0; i < sk_IMPLEMENTATION_num(algnew->impls); i++) {
+        const IMPLEMENTATION *tmpimpl = sk_IMPLEMENTATION_value(algnew->impls, i);
 
         if (tmpimpl->provider == impl->provider
             && tmpimpl->properties == impl->properties)
             break;
     }
-    if (i == sk_IMPLEMENTATION_num(alg->impls)
-        && sk_IMPLEMENTATION_push(alg->impls, impl))
+    if (i == sk_IMPLEMENTATION_num(algnew->impls)
+        && ossl_sa_ALGORITHM_set(algsnew->algs, nid, algnew)
+        && sk_IMPLEMENTATION_push(algnew->impls, impl)) {
+        if (algold != NULL)
+            algsnew->cache_nelem -= lh_QUERY_num_items(algold->cache);
+        ossl_rcu_assign_ptr(&store->algs, &algsnew);
         ret = 1;
-    ossl_property_unlock(store);
-    if (ret == 0)
+    }
+
+ err:
+    ossl_rcu_write_unlock(store->lock);
+
+    if (ret) {
+        ossl_synchronize_rcu(store->lock);
+        stored_algs_free(algsold);
+        alg_free_all(algold);
+    } else {
+        stored_algs_free(algsnew);
+        alg_free_all(algnew);
         impl_free(impl);
+    }
+
     return ret;
-
-err:
-    ossl_property_unlock(store);
-    alg_cleanup(0, alg, NULL);
-    impl_free(impl);
-    return 0;
 }
 
-int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
-                             const void *method)
-{
-    ALGORITHM *alg = NULL;
-    int i;
-
-    if (nid <= 0 || method == NULL || store == NULL)
-        return 0;
-
-    if (!ossl_property_write_lock(store))
-        return 0;
-    ossl_method_cache_flush(store, nid);
-    alg = ossl_method_store_retrieve(store, nid);
-    if (alg == NULL) {
-        ossl_property_unlock(store);
-        return 0;
-    }
-
-    /*
-     * A sorting find then a delete could be faster but these stacks should be
-     * relatively small, so we avoid the overhead.  Sorting could also surprise
-     * users when result orderings change (even though they are not guaranteed).
-     */
-    for (i = 0; i < sk_IMPLEMENTATION_num(alg->impls); i++) {
-        IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
-
-        if (impl->method.method == method) {
-            impl_free(impl);
-            (void)sk_IMPLEMENTATION_delete(alg->impls, i);
-            ossl_property_unlock(store);
-            return 1;
-        }
-    }
-    ossl_property_unlock(store);
-    return 0;
-}
-
-struct alg_cleanup_by_provider_data_st {
+struct doall_alg_data_st {
     OSSL_METHOD_STORE *store;
     const OSSL_PROVIDER *prov;
+    STORED_ALGORITHMS *algs;
+    STACK_OF(ALGORITHM) *newalgs;
+    STACK_OF(ALGORITHM) *oldalgs;
+    STACK_OF(IMPLEMENTATION) *oldimpls;
+    int err;
 };
 
 static void
-alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
+alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *algold, void *arg)
 {
-    struct alg_cleanup_by_provider_data_st *data = arg;
-    int i, count;
+    struct doall_alg_data_st *data = arg;
+    int i;
+    int numimpl = sk_IMPLEMENTATION_num(algold->impls);
+    ALGORITHM *algnew = NULL;
+
+    /* If we already encountered an error then don't do anything more */
+    if (data->err)
+        return;
+
+    /* First check if we have any implementations that need to be removed */
+    for (i = 0; i < numimpl; i++) {
+        IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(algold->impls, i);
+
+        if (impl->provider == data->prov)
+            break;
+    }
+    if (i == numimpl)
+        /* Nothing to be done */
+        return;
+
+    algnew = OPENSSL_malloc(sizeof(*algnew));
+    if (algnew == NULL)
+        goto err;
+
+    algnew->nid = algold->nid;
+    algnew->impls = sk_IMPLEMENTATION_dup(algold->impls);
+    /*
+     * If we remove any implementation, we also clear the whole associated
+     * cache.
+     */
+    algnew->cache = lh_QUERY_new(&query_hash, &query_cmp);
+    if (algnew->impls == NULL || algnew->cache == NULL)
+        goto err;
 
     /*
-     * We walk the stack backwards, to avoid having to deal with stack shifts
-     * caused by deletion
-     */
-    for (count = 0, i = sk_IMPLEMENTATION_num(alg->impls); i-- > 0;) {
-        IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
+    * We walk the stack backwards, to avoid having to deal with stack shifts
+    * caused by deletion
+    */
+    for (i = numimpl; i-- > 0;) {
+        IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(algnew->impls, i);
 
         if (impl->provider == data->prov) {
-            impl_free(impl);
-            (void)sk_IMPLEMENTATION_delete(alg->impls, i);
-            count++;
+            (void)sk_IMPLEMENTATION_delete(algnew->impls, i);
+            /* Schedule the impl for later freeing */
+            if (sk_IMPLEMENTATION_push(data->oldimpls, impl) == 0)
+                goto err;
         }
     }
 
+    /* Schedule the old alg for later freeing */
+    if (sk_ALGORITHM_push(data->oldalgs, algold) == 0)
+        goto err;
+
     /*
-     * If we removed any implementation, we also clear the whole associated
-     * cache, 'cause that's the sensible thing to do.
-     * There's no point flushing the cache entries where we didn't remove
-     * any implementation, though.
+     * We also remember the new alg we created in case we encounter a later
+     * error and have to rollback
      */
-    if (count > 0)
-        ossl_method_cache_flush_alg(data->store, alg);
+    if (sk_ALGORITHM_push(data->newalgs, algnew) == 0)
+        goto err;
+
+    if (ossl_sa_ALGORITHM_set(data->algs->algs, idx, algnew) == 0) {
+        /* algnew is already scheduled for rollback in data->newalgs */
+        algnew = NULL;
+        goto err;
+    }
+
+    data->algs->cache_nelem -= lh_QUERY_num_items(algold->cache);
+    return;
+
+ err:
+    alg_free_all(algnew);
+    data->err = 1;
 }
 
 int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
                                           const OSSL_PROVIDER *prov)
 {
-    struct alg_cleanup_by_provider_data_st data;
+    struct doall_alg_data_st data;
+    STORED_ALGORITHMS *algsold, *algsnew;
 
-    if (!ossl_property_write_lock(store))
-        return 0;
+    data.newalgs = NULL;
+    data.oldalgs = NULL;
+    data.oldimpls = NULL;
+
+    ossl_rcu_write_lock(store->lock);
+    algsold = ossl_rcu_deref(&store->algs);
+    algsnew = stored_algs_shallow_dup(algsold);
+    if (algsnew == NULL)
+        goto err;
     data.prov = prov;
     data.store = store;
-    ossl_sa_ALGORITHM_doall_arg(store->algs, &alg_cleanup_by_provider, &data);
-    ossl_property_unlock(store);
+    data.algs = algsnew;
+    data.newalgs = sk_ALGORITHM_new_null();
+    data.oldalgs = sk_ALGORITHM_new_null();
+    data.oldimpls = sk_IMPLEMENTATION_new_null();
+    data.err = 0;
+    if (data.newalgs == NULL || data.oldalgs == NULL || data.oldimpls == NULL)
+        goto err;
+    ossl_sa_ALGORITHM_doall_arg(algsnew->algs, &alg_cleanup_by_provider, &data);
+    if (data.err)
+        goto err;
+    ossl_rcu_assign_ptr(&store->algs, &algsnew);
+    ossl_rcu_write_unlock(store->lock);
+    ossl_synchronize_rcu(store->lock);
+
+    /* Free any old algorithms and implementations we are no longer using */
+    sk_ALGORITHM_free(data.newalgs);
+    sk_ALGORITHM_pop_free(data.oldalgs, alg_free_all);
+    sk_IMPLEMENTATION_pop_free(data.oldimpls, impl_free);
+    stored_algs_free(algsold);
     return 1;
+ err:
+    ossl_rcu_write_unlock(store->lock);
+    /* Rollback */
+    sk_ALGORITHM_pop_free(data.newalgs, alg_free_all);
+    sk_ALGORITHM_free(data.oldalgs);
+    sk_IMPLEMENTATION_free(data.oldimpls);
+    stored_algs_free(algsnew);
+    return 0;
 }
 
-static void alg_do_one(ALGORITHM *alg, IMPLEMENTATION *impl,
-                       void (*fn)(int id, void *method, void *fnarg),
-                       void *fnarg)
-{
-    fn(alg->nid, impl->method.method, fnarg);
-}
+typedef struct method_data_st {
+    METHOD method;
+    int nid;
+} METHOD_DATA;
 
-struct alg_do_each_data_st {
-    void (*fn)(int id, void *method, void *fnarg);
-    void *fnarg;
-};
+DEFINE_STACK_OF(METHOD_DATA)
 
 static void alg_do_each(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
 {
-    struct alg_do_each_data_st *data = arg;
+    STACK_OF(METHOD_DATA) *data = arg;
     int i, end = sk_IMPLEMENTATION_num(alg->impls);
 
     for (i = 0; i < end; i++) {
         IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
+        METHOD_DATA *methdata = OPENSSL_malloc(sizeof(*methdata));
 
-        alg_do_one(alg, impl, data->fn, data->fnarg);
+        methdata->nid = alg->nid;
+        methdata->method = impl->method;
+
+        if (ossl_method_up_ref(&methdata->method)) {
+            if (sk_METHOD_DATA_push(data, methdata) == 0) {
+                ossl_method_free(&methdata->method);
+                OPENSSL_free(methdata);
+            }
+        } else {
+            OPENSSL_free(methdata);
+        }
     }
 }
 
@@ -482,12 +635,37 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
                               void (*fn)(int id, void *method, void *fnarg),
                               void *fnarg)
 {
-    struct alg_do_each_data_st data;
+    STACK_OF(METHOD_DATA) *data;
+    int i;
+    STORED_ALGORITHMS *algs;
 
-    data.fn = fn;
-    data.fnarg = fnarg;
-    if (store != NULL)
-        ossl_sa_ALGORITHM_doall_arg(store->algs, alg_do_each, &data);
+    if (store == NULL)
+        return;
+
+    data = sk_METHOD_DATA_new_null();
+    if (data == NULL)
+        return;
+
+    /*
+     * We cannot call the user supplied function under a read lock in case that
+     * function itself attempts to obtain a recursive lock on the store. Instead
+     * we gather a list of all the methods under a read lock, and then
+     * subsequently call the user function not under lock. The methods are
+     * up-ref'd to ensure that they remain valid even while not under the lock.
+     */
+    ossl_rcu_read_lock(store->lock);
+    algs = ossl_rcu_deref(&store->algs);
+    ossl_sa_ALGORITHM_doall_arg(algs->algs, alg_do_each, data);
+    ossl_rcu_read_unlock(store->lock);
+
+    for (i = 0; i < sk_METHOD_DATA_num(data); i++) {
+        METHOD_DATA *methdata = sk_METHOD_DATA_value(data, i);
+
+        fn(methdata->nid, methdata->method.method, fnarg);
+        ossl_method_free(&methdata->method);
+        OPENSSL_free(methdata);
+    }
+    sk_METHOD_DATA_free(data);
 }
 
 int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
@@ -511,12 +689,15 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
         return 0;
 #endif
 
-    /* This only needs to be a read lock, because the query won't create anything */
-    if (!ossl_property_read_lock(store))
-        return 0;
-    alg = ossl_method_store_retrieve(store, nid);
+    /*
+     * This only needs to be a read lock, because the query won't create
+     * anything
+     */
+    ossl_rcu_read_lock(store->lock);
+
+    alg = stored_algs_retrieve(ossl_rcu_deref(&store->algs), nid);
     if (alg == NULL) {
-        ossl_property_unlock(store);
+        ossl_rcu_read_unlock(store->lock);
         return 0;
     }
 
@@ -568,34 +749,94 @@ fin:
     } else {
         ret = 0;
     }
-    ossl_property_unlock(store);
+    ossl_rcu_read_unlock(store->lock);
     ossl_property_free(p2);
     return ret;
 }
 
-static void ossl_method_cache_flush_alg(OSSL_METHOD_STORE *store,
-                                        ALGORITHM *alg)
+static void do_cache_flush_all(ossl_uintmax_t idx, ALGORITHM *algold,
+                               void *arg)
 {
-    store->cache_nelem -= lh_QUERY_num_items(alg->cache);
-    impl_cache_flush_alg(0, alg);
-}
+    ALGORITHM *algnew = NULL;
+    struct doall_alg_data_st *data = arg;
 
-static void ossl_method_cache_flush(OSSL_METHOD_STORE *store, int nid)
-{
-    ALGORITHM *alg = ossl_method_store_retrieve(store, nid);
+    if (data->err)
+        return;
 
-    if (alg != NULL)
-        ossl_method_cache_flush_alg(store, alg);
+    if (lh_QUERY_num_items(algold->cache) == 0)
+        return;
+
+    algnew = OPENSSL_malloc(sizeof(*algnew));
+    if (algnew == NULL)
+        goto err;
+
+    *algnew = *algold;
+    /* We retain the impls stack but clear the cache */
+    algnew->cache = lh_QUERY_new(&query_hash, &query_cmp);
+    if (algnew->cache == NULL)
+        goto err;
+
+    if (sk_ALGORITHM_push(data->oldalgs, algold) == 0)
+        goto err;
+
+    if (sk_ALGORITHM_push(data->newalgs, algnew) == 0)
+        goto err;
+
+    if (ossl_sa_ALGORITHM_set(data->algs->algs, idx, algnew) == 0) {
+        /* Already in the newalgs stack so don't free algnew in the error block */
+        algnew = NULL;
+        goto err;
+    }
+
+    return;
+
+ err:
+    alg_and_cache_free(algnew);
+    data->err = 1;
 }
 
 int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 {
-    if (!ossl_property_write_lock(store))
-        return 0;
-    ossl_sa_ALGORITHM_doall(store->algs, &impl_cache_flush_alg);
-    store->cache_nelem = 0;
-    ossl_property_unlock(store);
+    struct doall_alg_data_st data;
+    STORED_ALGORITHMS *algsold, *algsnew;
+
+    data.newalgs = NULL;
+    data.oldalgs = NULL;
+
+    ossl_rcu_write_lock(store->lock);
+    algsold = ossl_rcu_deref(&store->algs);
+    algsnew = stored_algs_shallow_dup(algsold);
+    if (algsnew == NULL)
+        goto err;
+    data.algs = algsnew;
+    data.newalgs = sk_ALGORITHM_new_null();
+    data.oldalgs = sk_ALGORITHM_new_null();
+    data.err = 0;
+    if (data.newalgs == NULL || data.oldalgs == NULL)
+        goto err;
+
+    ossl_sa_ALGORITHM_doall_arg(algsold->algs, &do_cache_flush_all, &data);
+    if (data.err)
+        goto err;
+
+    algsnew->cache_nelem = 0;
+    ossl_rcu_assign_ptr(&store->algs, &algsnew);
+    ossl_rcu_write_unlock(store->lock);
+    ossl_synchronize_rcu(store->lock);
+
+    /* Free any old algorithms we are no longer using */
+    sk_ALGORITHM_free(data.newalgs);
+    sk_ALGORITHM_pop_free(data.oldalgs, alg_and_cache_free);
+    stored_algs_free(algsold);
     return 1;
+
+ err:
+    ossl_rcu_write_unlock(store->lock);
+    /* Rollback */
+    sk_ALGORITHM_pop_free(data.newalgs, alg_and_cache_free);
+    sk_ALGORITHM_free(data.oldalgs);
+    stored_algs_free(algsnew);
+    return 0;
 }
 
 IMPLEMENT_LHASH_DOALL_ARG(QUERY, IMPL_CACHE_FLUSH);
@@ -649,7 +890,7 @@ static void impl_cache_flush_one_alg(ossl_uintmax_t idx, ALGORITHM *alg,
                                     state);
 }
 
-static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
+static void ossl_method_cache_flush_some(STORED_ALGORITHMS *algs)
 {
     IMPL_CACHE_FLUSH state;
     static TSAN_QUALIFIER uint32_t global_seed = 1;
@@ -661,9 +902,9 @@ static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
         state.using_global_seed = 1;
         state.seed = tsan_load(&global_seed);
     }
-    store->cache_need_flush = 0;
-    ossl_sa_ALGORITHM_doall_arg(store->algs, &impl_cache_flush_one_alg, &state);
-    store->cache_nelem = state.nelem;
+    algs->cache_need_flush = 0;
+    ossl_sa_ALGORITHM_doall_arg(algs->algs, &impl_cache_flush_one_alg, &state);
+    algs->cache_nelem = state.nelem;
     /* Without a timer, update the global seed */
     if (state.using_global_seed)
         tsan_add(&global_seed, state.seed);
@@ -679,9 +920,9 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     if (nid <= 0 || store == NULL || prop_query == NULL)
         return 0;
 
-    if (!ossl_property_read_lock(store))
-        return 0;
-    alg = ossl_method_store_retrieve(store, nid);
+    ossl_rcu_read_lock(store->lock);
+
+    alg = stored_algs_retrieve(ossl_rcu_deref(&store->algs), nid);
     if (alg == NULL)
         goto err;
 
@@ -695,8 +936,41 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         res = 1;
     }
 err:
-    ossl_property_unlock(store);
+    ossl_rcu_read_unlock(store->lock);
     return res;
+}
+
+struct doall_cache_data_st {
+    int err;
+    LHASH_OF(QUERY) *cache;
+};
+
+static void dup_cache_entry(QUERY *src, void *arg)
+{
+    struct doall_cache_data_st *data = arg;
+    QUERY *dest;
+
+    if (data->err == 1)
+        return;
+
+    dest = OPENSSL_malloc(src->size);
+    if (dest == NULL)
+        goto err;
+
+    memcpy(dest, src, src->size);
+    dest->query = dest->body;
+    if (!ossl_method_up_ref(&dest->method))
+        goto err;
+
+    (void)lh_QUERY_insert(data->cache, dest);
+    if (lh_QUERY_error(data->cache)) {
+        ossl_method_free(&dest->method);
+        goto err;
+    }
+    return;
+ err:
+    data->err = 1;
+    OPENSSL_free(dest);
 }
 
 int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
@@ -704,8 +978,10 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
                                 int (*method_up_ref)(void *),
                                 void (*method_destruct)(void *))
 {
-    QUERY elem, *old, *p = NULL;
-    ALGORITHM *alg;
+    struct doall_cache_data_st data;
+    STORED_ALGORITHMS *algsold, *algsnew;
+    QUERY elem, *old = NULL, *p = NULL;
+    ALGORITHM *algold = NULL, *algnew = NULL;
     size_t len;
     int res = 1;
 
@@ -715,21 +991,38 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     if (!ossl_assert(prov != NULL))
         return 0;
 
-    if (!ossl_property_write_lock(store))
-        return 0;
-    if (store->cache_need_flush)
-        ossl_method_cache_flush_some(store);
-    alg = ossl_method_store_retrieve(store, nid);
-    if (alg == NULL)
+    ossl_rcu_write_lock(store->lock);
+    algsold = ossl_rcu_deref(&store->algs);
+    algsnew = stored_algs_shallow_dup(algsold);
+    if (algsnew == NULL)
+        goto err;
+
+    if (algsnew->cache_need_flush)
+        ossl_method_cache_flush_some(algsnew);
+
+    algold = stored_algs_retrieve(algsold, nid);
+    if (algold == NULL)
+        goto err;
+
+    algnew = OPENSSL_malloc(sizeof(*algnew));
+    if (algnew == NULL)
+        goto err;
+    *algnew = *algold;
+    /* We retain the impls stack but clear the cache */
+    algnew->cache = lh_QUERY_new(&query_hash, &query_cmp);
+    if (algnew->cache == NULL)
+        goto err;
+    data.err = 0;
+    data.cache = algnew->cache;
+    lh_QUERY_doall_arg(algold->cache, dup_cache_entry, &data);
+    if (data.err)
         goto err;
 
     if (method == NULL) {
         elem.query = prop_query;
         elem.provider = prov;
-        if ((old = lh_QUERY_delete(alg->cache, &elem)) != NULL) {
-            impl_cache_free(old);
-            store->cache_nelem--;
-        }
+        if ((old = lh_QUERY_delete(algnew->cache, &elem)) != NULL)
+            algsnew->cache_nelem--;
         goto end;
     }
     p = OPENSSL_malloc(sizeof(*p) + (len = strlen(prop_query)));
@@ -739,16 +1032,15 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         p->method.method = method;
         p->method.up_ref = method_up_ref;
         p->method.free = method_destruct;
+        p->size = sizeof(*p) + len;
         if (!ossl_method_up_ref(&p->method))
             goto err;
         memcpy((char *)p->query, prop_query, len + 1);
-        if ((old = lh_QUERY_insert(alg->cache, p)) != NULL) {
-            impl_cache_free(old);
+        if ((old = lh_QUERY_insert(algnew->cache, p)) != NULL)
             goto end;
-        }
-        if (!lh_QUERY_error(alg->cache)) {
-            if (++store->cache_nelem >= IMPL_CACHE_FLUSH_THRESHOLD)
-                store->cache_need_flush = 1;
+        if (!lh_QUERY_error(algnew->cache)) {
+            if (++algsnew->cache_nelem >= IMPL_CACHE_FLUSH_THRESHOLD)
+                algsnew->cache_need_flush = 1;
             goto end;
         }
         ossl_method_free(&p->method);
@@ -757,6 +1049,25 @@ err:
     res = 0;
     OPENSSL_free(p);
 end:
-    ossl_property_unlock(store);
+    if (res) {
+        if (ossl_sa_ALGORITHM_set(algsnew->algs, nid, algnew) != 0) {
+            ossl_rcu_assign_ptr(&store->algs, &algsnew);
+        } else {
+            res = 0;
+            OPENSSL_free(p);
+        }
+    }
+    ossl_rcu_write_unlock(store->lock);
+
+    if (res) {
+        ossl_synchronize_rcu(store->lock);
+        stored_algs_free(algsold);
+        alg_and_cache_free(algold);
+    } else {
+        stored_algs_free(algsnew);
+        alg_and_cache_free(algnew);
+    }
+
+    impl_cache_free(old);
     return res;
 }
