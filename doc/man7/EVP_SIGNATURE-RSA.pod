@@ -10,6 +10,43 @@ EVP_SIGNATURE-RSA
 Support for computing RSA signatures.
 See L<EVP_PKEY-RSA(7)> for information related to RSA keys.
 
+=head2 Algorithm Names
+
+In this list, names are grouped together to signify that they are the same
+algorithm having multiple names.  This also includes the OID in canonical
+decimal form (which means that they are possible to fetch if the caller has a
+mere OID which came out in this form after a call to L<OBJ_obj2txt(3)>).
+
+=over 4
+
+=item "RSA", "rsaEncryption", "1.2.840.113549.1.1.1"
+
+The base signature algorithm, supported explicitly fetched with
+L<EVP_PKEY_sign_init_ex2(3)>, and implicitly fetched (through
+L<RSA keys|EVP_PKEY-RSA(7)>) with L<EVP_DigestSignInit(3)> and
+L<EVP_DigestVerifyInit(3)>.
+
+Can't be used with L<EVP_PKEY_sign_message_init(3)>
+
+=item "RSA-RIPEMD160", "ripemd160WithRSA", "1.3.36.3.3.1.2"
+=item "RSA-SHA2-256", "RSA-SHA256", "sha256WithRSAEncryption", "1.2.840.113549.1.1.11"
+=item "RSA-SHA2-384", "RSA-SHA384", "sha384WithRSAEncryption", "1.2.840.113549.1.1.12"
+=item "RSA-SHA2-512", "RSA-SHA512", "sha512WithRSAEncryption", "1.2.840.113549.1.1.13"
+=item "RSA-SHA2-224", "RSA-SHA224", "sha224WithRSAEncryption", "1.2.840.113549.1.1.14"
+=item "RSA-SHA2-512/224", "RSA-SHA512-224", "sha512-224WithRSAEncryption", "1.2.840.113549.1.1.15"
+=item "RSA-SHA2-512/256", "RSA-SHA512-256", "sha512-256WithRSAEncryption", "1.2.840.113549.1.1.16"
+=item "RSA-SHA3-224", "id-rsassa-pkcs1-v1_5-with-sha3-224", "2.16.840.1.101.3.4.3.13"
+=item "RSA-SHA3-256", "id-rsassa-pkcs1-v1_5-with-sha3-256", "2.16.840.1.101.3.4.3.14"
+=item "RSA-SHA3-384", "id-rsassa-pkcs1-v1_5-with-sha3-384", "2.16.840.1.101.3.4.3.15"
+=item "RSA-SHA3-512", "id-rsassa-pkcs1-v1_5-with-sha3-512", "2.16.840.1.101.3.4.3.16"
+=item "RSA-SM3", "sm3WithRSAEncryption", "1.2.156.10197.1.504"
+
+PKCS#1 v1.5 RSA signature schemes with diverse message digest algorithm.  They
+are all supported explicitly fetched with L<EVP_PKEY_sign_init_ex2(3)> and
+L<EVP_PKEY_sign_message_init(3)>.
+
+=back
+
 =head2 Signature Parameters
 
 The following signature parameters can be set using EVP_PKEY_CTX_set_params().
@@ -22,6 +59,9 @@ using EVP_PKEY_sign_init_ex() or EVP_PKEY_verify_init_ex().
 =item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <UTF8 string>
 
 =item "properties" (B<OSSL_SIGNATURE_PARAM_PROPERTIES>) <UTF8 string>
+
+These are not supported with the RSA signature schemes that already include a
+message digest algorithm, See L</Algorithm Names> above.
 
 =item "key-check" (B<OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK>) <integer>
 

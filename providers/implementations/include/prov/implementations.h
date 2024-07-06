@@ -328,6 +328,26 @@ extern const OSSL_DISPATCH ossl_kdf_scrypt_keyexch_functions[];
 /* Signature */
 extern const OSSL_DISPATCH ossl_dsa_signature_functions[];
 extern const OSSL_DISPATCH ossl_rsa_signature_functions[];
+#ifndef OPENSSL_NO_MD5
+extern const OSSL_DISPATCH ossl_rsa_md5_signature_functions[];
+#endif
+#ifndef OPENSSL_NO_RMD160
+extern const OSSL_DISPATCH ossl_rsa_ripemd160_signature_functions[];
+#endif
+extern const OSSL_DISPATCH ossl_rsa_sha1_signature_functions[];
+extern const OSSL_DISPATCH ossl_rsa_sha224_signature_functions[];
+extern const OSSL_DISPATCH ossl_rsa_sha256_signature_functions[];
+extern const OSSL_DISPATCH ossl_rsa_sha384_signature_functions[];
+extern const OSSL_DISPATCH ossl_rsa_sha512_signature_functions[];
+extern const OSSL_DISPATCH ossl_rsa_sha512_224_signature_functions[];
+extern const OSSL_DISPATCH ossl_rsa_sha512_256_signature_functions[];
+extern const OSSL_DISPATCH ossl_rsa_sha3_224_signature_functions[];
+extern const OSSL_DISPATCH ossl_rsa_sha3_256_signature_functions[];
+extern const OSSL_DISPATCH ossl_rsa_sha3_384_signature_functions[];
+extern const OSSL_DISPATCH ossl_rsa_sha3_512_signature_functions[];
+#ifndef OPENSSL_NO_SM3
+extern const OSSL_DISPATCH ossl_rsa_sm3_signature_functions[];
+#endif
 extern const OSSL_DISPATCH ossl_ed25519_signature_functions[];
 extern const OSSL_DISPATCH ossl_ed448_signature_functions[];
 extern const OSSL_DISPATCH ossl_ecdsa_signature_functions[];
