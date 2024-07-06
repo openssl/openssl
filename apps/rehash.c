@@ -553,7 +553,7 @@ int rehash_main(int argc, char **argv)
     evpmd = EVP_sha1();
     evpmdsize = EVP_MD_get_size(evpmd);
 
-    if (evpmdsize <= 0)
+    if (evpmdsize <= 0 || evpmdsize > EVP_MAX_MD_SIZE)
         goto end;
 
     if (*argv != NULL) {
