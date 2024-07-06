@@ -335,9 +335,8 @@ size_t UTIL_url_encode(const char  *source,
 int f()
 {
     c;
-    if (1) {
+    if (1)
         c;
-    }
     c;
     if (1)
         if (2)
