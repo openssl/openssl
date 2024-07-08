@@ -356,7 +356,13 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
         } else if (rl->block_padding > 0 || rl->hs_padding > 0) {
             size_t mask, bp = 0, remainder;
 
+            /*
+             * pad handshake or alert messages based on |hs_padding|
+             * but application data based on |block_padding|
+             */
             if (thistempl->type == SSL3_RT_HANDSHAKE && rl->hs_padding > 0)
+                bp = rl->hs_padding;
+            else if (thistempl->type == SSL3_RT_ALERT && rl->hs_padding > 0)
                 bp = rl->hs_padding;
             else if (thistempl->type == SSL3_RT_APPLICATION_DATA
                      && rl->block_padding > 0)

@@ -671,7 +671,7 @@ static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
             OPENSSL_free(copy);
             return 0;
         }
-        hs_padding = atoi(commap + 1);
+        hs_padding = (size_t) atoi(commap + 1);
     }
     block_padding = (size_t) atoi(copy);
     if (commap == NULL)

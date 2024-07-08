@@ -11104,8 +11104,8 @@ static size_t record_pad_cb(SSL *s, int type, size_t len, void *arg)
  * Test 1: Record padding callback on the SSL
  * Test 2: Record block padding on the SSL_CTX
  * Test 3: Record block padding on the SSL
- * Test 4: Record block padding on the SSL_CTX with flags
- * Test 5: Record block padding on the SSL with flags
+ * Test 4: Extended record block padding on the SSL_CTX
+ * Test 5: Extended record block padding on the SSL
  */
 static int test_tls13_record_padding(int idx)
 {
@@ -11136,7 +11136,7 @@ static int test_tls13_record_padding(int idx)
         if (!TEST_true(SSL_CTX_set_block_padding(cctx, 512)))
             goto end;
     } else if (idx == 4) {
-        /* pad only hanshake messages */
+        /* pad only handshake/alert messages */
         if (!TEST_true(SSL_CTX_set_block_padding_ex(cctx, 0, 512)))
             goto end;
     }
@@ -11158,6 +11158,10 @@ static int test_tls13_record_padding(int idx)
         if (!TEST_true(SSL_set_block_padding(clientssl, 512)))
             goto end;
     } else if (idx == 5) {
+        /* Exceeding the max plain length should fail */
+        if (!TEST_false(SSL_set_block_padding_ex(clientssl, 0,
+                                                 SSL3_RT_MAX_PLAIN_LENGTH + 1)))
+            goto end;
         /* pad server and client handshake only */
         if (!TEST_true(SSL_set_block_padding_ex(clientssl, 0, 512)))
             goto end;

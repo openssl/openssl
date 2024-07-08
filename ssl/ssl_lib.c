@@ -5717,7 +5717,7 @@ void *SSL_CTX_get_record_padding_callback_arg(const SSL_CTX *ctx)
 int SSL_CTX_set_block_padding_ex(SSL_CTX *ctx, size_t app_block_size,
                                  size_t hs_block_size)
 {
-    if (IS_QUIC_CTX(ctx) && (app_block_size > 1 || hs_block_size >1))
+    if (IS_QUIC_CTX(ctx) && (app_block_size > 1 || hs_block_size > 1))
         return 0;
 
     /* block size of 0 or 1 is basically no padding */
