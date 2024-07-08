@@ -833,3 +833,4 @@ EVP_PKEY_id                             define
 EVP_PKEY_base_id                        define
 SSL_set_retry_verify                    define
 TS_VERIFY_CTX                           define
+CMAC_CTX                                define
