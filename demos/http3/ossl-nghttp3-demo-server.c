@@ -592,10 +592,8 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
                 goto err;
             } else if (hassomething == 0) {
                 printf("read_from_ssl_ids hassomething nothing...\n");
-                break;
             } else {
                 printf("read_from_ssl_ids hassomething %d...\n", hassomething);
-                continue;
             }
         }
         printf("end_headers_received!!!\n");
@@ -621,14 +619,18 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
                        (long int)sveccnt);
                 break;
             }
-            printf("nghttp3_conn_writev_stream: %ld\n", (long int)sveccnt);
+            printf("nghttp3_conn_writev_stream: %ld fin: %d\n", (long int)sveccnt, fin);
             for (i = 0; i < sveccnt; i++) {
                 size_t numbytes = vec[i].len;
+                int flagwrite = 0;
 
                 printf("quic_server_write on %llu for %ld\n",
                        (unsigned long long)streamid, (unsigned long)vec[i].len);
+                if (flagwrite && i == sveccnt - 1) {
+                    flagwrite = SSL_WRITE_FLAG_CONCLUDE;
+                }
                 if (!quic_server_write(&h3ssl, streamid, vec[i].base,
-                                       vec[i].len, fin, &numbytes)) {
+                                       vec[i].len, flagwrite, &numbytes)) {
                     fprintf(stderr, "quic_server_write failed!\n");
                     goto err;
                 }
