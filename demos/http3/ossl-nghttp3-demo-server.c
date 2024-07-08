@@ -319,6 +319,10 @@ static int nothing_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
             printf("revent %llu (%d) on %llu\n",
                    (unsigned long long)item->revents, SSL_POLL_EVENT_W,
                    (unsigned long long)ssl_ids[i].id);
+        } else if (item->revents == SSL_POLL_EVENT_ER) {
+            printf("revent %llu (%d) on %llu\n",
+                   (unsigned long long)item->revents, SSL_POLL_EVENT_ER,
+                   (unsigned long long)ssl_ids[i].id);
         } else {
             /* Figure out ??? */
             printf("revent %llu (%d) on %llu\n",
