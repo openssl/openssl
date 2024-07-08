@@ -783,6 +783,10 @@ DEPEND[html/man3/BUF_MEM_new.html]=man3/BUF_MEM_new.pod
 GENERATE[html/man3/BUF_MEM_new.html]=man3/BUF_MEM_new.pod
 DEPEND[man/man3/BUF_MEM_new.3]=man3/BUF_MEM_new.pod
 GENERATE[man/man3/BUF_MEM_new.3]=man3/BUF_MEM_new.pod
+DEPEND[html/man3/CMAC_CTX.html]=man3/CMAC_CTX.pod
+GENERATE[html/man3/CMAC_CTX.html]=man3/CMAC_CTX.pod
+DEPEND[man/man3/CMAC_CTX.3]=man3/CMAC_CTX.pod
+GENERATE[man/man3/CMAC_CTX.3]=man3/CMAC_CTX.pod
 DEPEND[html/man3/CMS_EncryptedData_decrypt.html]=man3/CMS_EncryptedData_decrypt.pod
 GENERATE[html/man3/CMS_EncryptedData_decrypt.html]=man3/CMS_EncryptedData_decrypt.pod
 DEPEND[man/man3/CMS_EncryptedData_decrypt.3]=man3/CMS_EncryptedData_decrypt.pod
@@ -3179,6 +3183,7 @@ html/man3/BN_set_bit.html \
 html/man3/BN_swap.html \
 html/man3/BN_zero.html \
 html/man3/BUF_MEM_new.html \
+html/man3/CMAC_CTX.html \
 html/man3/CMS_EncryptedData_decrypt.html \
 html/man3/CMS_EncryptedData_encrypt.html \
 html/man3/CMS_EnvelopedData_create.html \
@@ -3837,6 +3842,7 @@ man/man3/BN_set_bit.3 \
 man/man3/BN_swap.3 \
 man/man3/BN_zero.3 \
 man/man3/BUF_MEM_new.3 \
+man/man3/CMAC_CTX.3 \
 man/man3/CMS_EncryptedData_decrypt.3 \
 man/man3/CMS_EncryptedData_encrypt.3 \
 man/man3/CMS_EnvelopedData_create.3 \
