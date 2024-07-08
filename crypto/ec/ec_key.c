@@ -563,9 +563,15 @@ int ossl_ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx)
     int ret = 0;
     EC_POINT *point = NULL;
     const BIGNUM *order = NULL;
+    const BIGNUM *cofactor = EC_GROUP_get0_cofactor(eckey->group);
 
     if (!ossl_ec_key_public_check_quick(eckey, ctx))
         return 0;
+
+    if (cofactor != NULL && BN_is_one(cofactor)) {
+        /* Skip the unnecessary expensive computation for curves with cofactor of 1. */
+        return 1;
+    }
 
     point = EC_POINT_new(eckey->group);
     if (point == NULL)
