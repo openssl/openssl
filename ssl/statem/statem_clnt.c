@@ -2894,39 +2894,39 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt
         sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp_ex, OCSP_RESPONSE_free);
         s->ext.ocsp.resp_ex = sk_OCSP_RESPONSE_new_null();
     }
-    if (SSL_CONNECTION_IS_TLS13(s) || type == TLSEXT_STATUSTYPE_ocsp) {
-        if (PACKET_remaining(pkt) > 0) {
-            if (!PACKET_get_net_3_len(pkt, &resplen)
-                || PACKET_remaining(pkt) != resplen) {
-                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+
+    if (PACKET_remaining(pkt) > 0) {
+        if (!PACKET_get_net_3_len(pkt, &resplen)
+            || PACKET_remaining(pkt) != resplen) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+            return 0;
+        }
+
+        if (resplen > 0) {
+            respder = OPENSSL_malloc(resplen);
+
+            if (respder == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
                 return 0;
             }
 
-            if (resplen > 0) {
-                respder = OPENSSL_malloc(resplen);
-
-                if (respder == NULL) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
-                    return 0;
-                }
-
-                if (!PACKET_copy_bytes(pkt, respder, resplen)) {
-                    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-                    OPENSSL_free(respder);
-                    return 0;
-                }
-                p = respder;
-                resp = d2i_OCSP_RESPONSE(NULL, &p, resplen);
+            if (!PACKET_copy_bytes(pkt, respder, resplen)) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
                 OPENSSL_free(respder);
-                if (resp == NULL) {
-                    SSLfatal(s, TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE,
-                    SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE);
-                    return 0;
-                }
-                sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp_ex, resp, chainidx);
+                return 0;
             }
+            p = respder;
+            resp = d2i_OCSP_RESPONSE(NULL, &p, resplen);
+            OPENSSL_free(respder);
+            if (resp == NULL) {
+                SSLfatal(s, TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE,
+                         SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE);
+                return 0;
+            }
+            sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp_ex, resp, chainidx);
         }
     }
+
 #endif
     return 1;
 }

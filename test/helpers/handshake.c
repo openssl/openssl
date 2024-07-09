@@ -321,10 +321,7 @@ static int client_ocsp_cb(SSL *s, void *arg)
 
     OCSP_RESPONSE_free(dummy_ocsp_resp);
 
-    if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
-        return 0;
-
-    return 1;
+    return i == OCSP_RESPONSE_STATUS_SUCCESSFUL;
 }
 
 static int client_ocsp_cb_ext(SSL *s, void *arg)

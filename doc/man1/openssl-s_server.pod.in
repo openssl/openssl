@@ -550,6 +550,8 @@ Any given query component is handled as part of the path component.
 
 Overrides any OCSP responder URLs from the certificate and always provides the
 OCSP Response stored in the file. The file must be in DER format.
+This option may be used multiple times to specify OCSP Responses for all
+certificates in the server certificate chain.
 
 =item B<-ssl_config> I<val>
 

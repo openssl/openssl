@@ -3655,6 +3655,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP:
+        ret = 1;
 #ifndef OPENSSL_NO_OCSP
         if (sc->ext.ocsp.resp != NULL) {
             OPENSSL_free(sc->ext.ocsp.resp);
@@ -3669,11 +3670,13 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
             p = parg;
             resp = d2i_OCSP_RESPONSE(NULL, (const unsigned char **)&p, larg);
-            if (resp != NULL)
-                sk_OCSP_RESPONSE_push(sc->ext.ocsp.resp_ex, resp);
+            if (resp != NULL) {
+                if(!sk_OCSP_RESPONSE_push(sc->ext.ocsp.resp_ex, resp)) {
+                    ret = -1;
+                }
+            }
         }
 #endif
-        ret = 1;
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP_EX:

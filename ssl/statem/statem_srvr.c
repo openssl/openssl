@@ -2174,8 +2174,10 @@ static int tls_handle_status_request(SSL_CONNECTION *s)
                 break;
                 /* status request response should be sent */
             case SSL_TLSEXT_ERR_OK:
-                if (s->ext.ocsp.resp_ex)
+#ifndef OPENSSL_NO_OCSP
+                if (s->ext.ocsp.resp_ex && sk_OCSP_RESPONSE_num(s->ext.ocsp.resp_ex) > 0)
                     s->ext.status_expected = 1;
+#endif
                 break;
                 /* something bad happened */
             case SSL_TLSEXT_ERR_ALERT_FATAL:
