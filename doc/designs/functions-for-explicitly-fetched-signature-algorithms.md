@@ -34,18 +34,19 @@ So far, `EVP_PKEY_sign()` and friends are only expected to act on the
 pre-computed digest of a message (under the condition that proper flags
 and signature md are specified using functions like
 `EVP_PKEY_CTX_set_rsa_padding()` and `EVP_PKEY_CTX_set_signature_md()`),
-or to act as "primitive" [^1] functions (under the contition that proper
+or to act as "primitive" [^1] functions (under the condition that proper
 flags are specified, like `RSA_NO_PADDING` for RSA signatures).
 
 This design proposes an extension to also allow full (not pre-hashed)
-messages to be passed, both in one go (oneshot) and in a streaming style
-through an *update* and a *final* function.
+messages to be passed, in a streaming style through an *update* and a
+*final* function.
 
-Discussions have revealed that it is potentially confusing to confound pure
-"primitive" functionality with functionality that expects a digest as input,
-as well as with "streaming" functionality into the same name, so this design
-also includes separate *init* functions to allow this new functionality, which
-includes a naming proposal that distinguishes the two uses.
+Discussions have revealed that it is potentially confusing to confound the
+current functionality with streaming style functionality into the same name,
+so this design separates those out with specific init / update / final
+functions for that purpose.  For oneshot functionality, `EVP_PKEY_sign()`
+and `EVP_PKEY_verify()` remain supported, possibly through an alias for the
+application.
 
 [^1]: the term "primitive" is borrowed from [PKCS#1](https://www.rfc-editor.org/rfc/rfc8017#section-5)
 
@@ -53,79 +54,70 @@ includes a naming proposal that distinguishes the two uses.
 
 There are newer verifying algorithms that need to receive the signature
 before processing the data.  This is particularly important for streaming
-functionality.  This design proposes a mechanism to accomodate this, which
-is different than the mechanism you get with `EVP_PKEY_verify()`.
+functionality.  This design proposes a mechanism to accomodate this for the
+streaming style functionality.
 
-### API design style
+New public API - API Reference
+------------------------------
 
-Because the *oneshot*, *update* and *final* functionality of all the function
-groups described here are hinged on the corresponding *init* function, a
-minimalistic design is chosen, especially for the provider interface.
-Additional aliases for applications are not part of this design.
-
-*This avoids the confusion of mixing up calls to "the right" update function
-(for example) that does the same thing as its sibblings.*
-
-Public API - API Reference
---------------------------
-
-### For signing with `EVP_SIGNATURE`
-
-#### Signing a digest
+### For limited input size / oneshot signing with `EVP_SIGNATURE`
 
 ``` C
-int EVP_PKEY_sign_init_for_digest(EVP_PKEY_CTX *pctx,
-                                  EVP_SIGNATURE *algo,
-                                  const OSSL_PARAM params[]);
+int EVP_PKEY_sign_init_ex2(EVP_PKEY_CTX *pctx,
+                           EVP_SIGNATURE *algo,
+                           const OSSL_PARAM params[]);
 ```
 
-(notably, a fetched "RSA" should probably not accept `RSA_NO_PADDING` when
-initialized with this call)
-
-#### Signing a stream
+### For signing a stream with `EVP_SIGNATURE`
 
 ``` C
-int EVP_PKEY_sign_init_for_message(EVP_PKEY_CTX *pctx,
-                                   EVP_SIGNATURE *algo,
-                                   const OSSL_PARAM params[]);
-int EVP_PKEY_sign_update(EVP_PKEY_CTX *ctx,
-                         const unsigned char *in, size_t inlen);
-int EVP_PKEY_sign_final(EVP_PKEY_CTX *ctx,
-                        unsigned char *sig, size_t *siglen);
+int EVP_PKEY_sign_message_init(EVP_PKEY_CTX *pctx,
+                               EVP_SIGNATURE *algo,
+                               const OSSL_PARAM params[]);
+int EVP_PKEY_sign_message_update(EVP_PKEY_CTX *ctx,
+                                 const unsigned char *in,
+                                 size_t inlen);
+int EVP_PKEY_sign_message_final(EVP_PKEY_CTX *ctx,
+                                unsigned char *sig,
+                                size_t *siglen);
 ```
 
-### For verifying with `EVP_SIGNATURE`
+### For limited input size / oneshot verification with `EVP_SIGNATURE`
 
-#### Verifying a digest
+``` C
+int EVP_PKEY_verify_init_ex2(EVP_PKEY_CTX *pctx,
+                             EVP_SIGNATURE *algo,
+                             const OSSL_PARAM params[]);
+```
+
+### For verifying a stream with `EVP_SIGNATURE`
 
 ``` C
 /* Initializers */
-int EVP_PKEY_verify_init_for_digest(EVP_PKEY_CTX *pctx,
-                                    EVP_SIGNATURE *algo,
-                                    const OSSL_PARAM params[]);
-int EVP_PKEY_verify_recover_init_for_digest(EVP_PKEY_CTX *pctx,
-                                            EVP_SIGNATURE *algo,
-                                            const OSSL_PARAM params[]);
-```
-
-#### Verifying a stream
-
-Do note that there's no proposed streaming definition for verify recover
-functionality.
-
-``` C
-/* Initializers */
-int EVP_PKEY_verify_init_for_message(EVP_PKEY_CTX *pctx,
-                                     EVP_SIGNATURE *algo,
-                                     const OSSL_PARAM params[]);
+int EVP_PKEY_verify_message_init(EVP_PKEY_CTX *pctx,
+                                 EVP_SIGNATURE *algo,
+                                 const OSSL_PARAM params[]);
 /* Signature setter */
 int EVP_PKEY_CTX_set_signature(EVP_PKEY_CTX *pctx,
                                unsigned char *sig, size_t siglen,
                                size_t sigsize);
 /* Update and final */
-int EVP_PKEY_verify_update(EVP_PKEY_CTX *ctx,
-                           const unsigned char *in, size_t inlen);
-int EVP_PKEY_verify_final(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_verify_message_update(EVP_PKEY_CTX *ctx,
+                                   const unsigned char *in,
+                                   size_t inlen);
+int EVP_PKEY_verify_message_final(EVP_PKEY_CTX *ctx);
+```
+
+### For verify_recover with `EVP_SIGNATURE`
+
+According to feedback, a stream style interface is uninteresting for
+verify_recover, so we only specify a new init function.
+
+``` C
+/* Initializers */
+int EVP_PKEY_verify_recover_init_ex2(EVP_PKEY_CTX *pctx,
+                                     EVP_SIGNATURE *algo,
+                                     const OSSL_PARAM params[]);
 ```
 
 Requirements on the providers
@@ -149,59 +141,48 @@ terminated array of key type name instead:
 OSSL_CORE_MAKE_FUNC(const char **, signature_query_key_type, (void))
 ```
 
-To reflect the `for_digest` and `for_message` init functions, the provider
-will need to implement the following functions:
+Furthermore, the distinction of intent, i.e. whether the input is expected
+to be a pre-hashed digest or the original message, must be passed on to the
+provider.  Because we already distinguish that with function names in the
+public API, we use the same mapping in the provider interface.
+
+The already existing `signature_sign` and `signature_verify` remain as they
+are, and can be combined with message init calls.
 
 ``` C
-#define OSSL_FUNC_SIGNATURE_SIGN_INIT_FOR_DIGEST    27
-#define OSSL_FUNC_SIGNATURE_SIGN_INIT_FOR_MESSAGE   28
-OSSL_CORE_MAKE_FUNC(int, signature_sign_init_for_digest,
+# define OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_INIT      27
+# define OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_UPDATE    28
+# define OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_FINAL     29
+OSSL_CORE_MAKE_FUNC(int, signature_sign_message_init,
                     (void *ctx, void *provkey, const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(int, signature_sign_init_for_message,
+OSSL_CORE_MAKE_FUNC(int, signature_sign_message_update,
+                    (void *ctx, const unsigned char *in, size_t inlen))
+OSSL_CORE_MAKE_FUNC(int, signature_sign_message_final,
+                    (void *ctx, unsigned char *sig, size_t *siglen, size_t sigsize))
+
+# define OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT    30
+# define OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_UPDATE  31
+# define OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_FINAL   32
+OSSL_CORE_MAKE_FUNC(int, signature_verify_message_init,
                     (void *ctx, void *provkey, const OSSL_PARAM params[]))
-
-#define OSSL_FUNC_SIGNATURE_VERIFY_INIT_FOR_DIGEST  29
-#define OSSL_FUNC_SIGNATURE_VERIFY_INIT_FOR_MESSAGE 30
-OSSL_CORE_MAKE_FUNC(int, signature_verify_init_for_digest,
-                    (void *ctx, void *provkey, const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(int, signature_verify_init_for_message,
-                    (void *ctx, void *provkey, const OSSL_PARAM params[]))
-
-#define OSSL_FUNC_SIGNATURE_VERIFY_RECOVER_INIT_FOR_DIGEST 31
-OSSL_CORE_MAKE_FUNC(int, signature_verify_recover_init_for_digest,
-                    (void *ctx, void *provkey, const OSSL_PARAM params[]))
-```
-
-Furthermore, the public API above requires added provider functionality,
-which we try to keep to a minimum:
-
-``` C
-# define OSSL_FUNC_SIGNATURE_SIGN_UPDATE            32
-# define OSSL_FUNC_SIGNATURE_SIGN_FINAL             33
-OSSL_CORE_MAKE_FUNC(int, signature_sign_update, (void *ctx,
-                                                 const unsigned char *in,
-                                                 size_t inlen))
-OSSL_CORE_MAKE_FUNC(int, signature_sign_final, (void *ctx,  unsigned char *sig,
-                                                size_t *siglen, size_t sigsize))
-
-# define OSSL_FUNC_SIGNATURE_VERIFY_UPDATE          34
-# define OSSL_FUNC_SIGNATURE_VERIFY_FINAL           35
-OSSL_CORE_MAKE_FUNC(int, signature_verify_update,
+OSSL_CORE_MAKE_FUNC(int, signature_verify_message_update,
                     (void *ctx, const unsigned char *in, size_t inlen))
 /*
- * signature_verify_final requires that the signature to be verified against
- * is specified via an OSSL_PARAM.
+ * signature_verify_message_final requires that the signature to be verified
+ * against is specified via an OSSL_PARAM.
  */
-OSSL_CORE_MAKE_FUNC(int, signature_verify_final, (void *ctx))
+OSSL_CORE_MAKE_FUNC(int, signature_verify_message_final, (void *ctx))
 ```
 
 Fallback strategies
 -------------------
 
 Because existing providers haven't been updated to respond to the key type
-query, some fallback strategies will be needed to find out if the `EVP_PKEY`
-key type is possible to use with the fetched algorithm.  This is only
-possible to do with simple (non-composite) algorithms.
+query, some fallback strategies will be needed for the init calls that take
+an explicitly fetched `EVP_SIGNATURE` argument (they can at least be used
+for pre-hashed digest operations).  To find out if the `EVP_PKEY` key type
+is possible to use with the explicitly fetched algorithm, the following
+fallback strategies may be used.
 
 -   Check if the fetched operation name matches the key type (keymgmt name)
     of the `EVP_PKEY` that's involved in the operation.  For example, this
