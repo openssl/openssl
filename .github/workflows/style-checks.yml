@@ -35,7 +35,7 @@ jobs:
         echo "Checking from $REFSTART to $REFEND"
         for i in $(git log --no-merges --format=%H $REFSTART..$REFEND)
         do
-          echo "Checking commit $i"
+          echo "::group::Style report for commit $i"
           set +e
           ./util/check-format-commit.sh $i
           if [ $? -ne 0 ]
@@ -43,12 +43,13 @@ jobs:
             ERRORS_FOUND=1
           fi
           set -e
+          echo "::endgroup::"
         done
-        SKIP_TEST=$(gh pr view $PR_NUMBER --json labels --jq '.labels[] | select(.name == "style:exempted") | .name')
+        SKIP_TEST=$(gh pr view $PR_NUMBER --json labels --jq '.labels[] | select(.name == "style: waived") | .name')
         if [ -z "$SKIP_TEST" ]
         then
           exit $ERRORS_FOUND
         else
-          echo "PR $PR_NUMBER is marked with style:exempted, waiving style check errors"
+          echo "PR $PR_NUMBER is marked with style: waived, waiving style check errors"
           exit 0
         fi
