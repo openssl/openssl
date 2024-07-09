@@ -627,7 +627,7 @@ const OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_OCSP
     OPT_SECTION("OCSP stapling"),
     {"status", OPT_STATUS, '-',
-    "Sends a certificate status request to the server (OCSP stapling)." \
+    "Sends a certificate status request to the server (OCSP stapling). " \
     "The server response (if any) is only printed out."},
     {"ocsp_check_leaf", OPT_STATUS_OCSP_CHECK_LEAF, '-',
      "Leaf certificate status checking with response from OCSP stapling"},
@@ -3645,28 +3645,49 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     OCSP_RESPONSE *rsp;
 
-    SSL_get_tlsext_status_ocsp_resp_ex(s, &sk_resp);
+    if (SSL_version(s) == TLS1_3_VERSION) {
+        SSL_get_tlsext_status_ocsp_resp_ex(s, &sk_resp);
 
-    BIO_puts(arg, "OCSP response: ");
+        BIO_puts(arg, "OCSP response: ");
 
-    if (sk_resp == NULL) {
-        BIO_puts(arg, "no response sent\n");
-        return 1;
-    }
+        if (sk_resp == NULL) {
+            BIO_puts(arg, "no response sent\n");
+            return 1;
+        }
 
-    num = sk_OCSP_RESPONSE_num(sk_resp);
+        num = sk_OCSP_RESPONSE_num(sk_resp);
 
-    BIO_printf(arg, "number of responses: %d", num);
-    for (i = 0; i < num; i++) {
-        rsp = sk_OCSP_RESPONSE_value(sk_resp, i);
+        BIO_printf(arg, "number of responses: %d", num);
+        for (i = 0; i < num; i++) {
+            rsp = sk_OCSP_RESPONSE_value(sk_resp, i);
+            if (rsp == NULL) {
+                BIO_puts(arg, "response parse error\n");
+                return 0;
+            }
+            BIO_puts(arg, "\n-----BEGIN OCSP RESPONSE-----\n");
+            OCSP_RESPONSE_print(arg, rsp, 0);
+            BIO_puts(arg, "-----END  OCSP RESPONSE-----\n");
+        }
+    } else {
+        const unsigned char *p;
+        int len;
+        len = SSL_get_tlsext_status_ocsp_resp(s, &p);
+        BIO_puts(arg, "OCSP response: ");
+        if (p == NULL) {
+            BIO_puts(arg, "no response sent\n");
+            return 1;
+        }
+        rsp = d2i_OCSP_RESPONSE(NULL, &p, len);
         if (rsp == NULL) {
             BIO_puts(arg, "response parse error\n");
+            BIO_dump_indent(arg, (char *)p, len, 4);
             return 0;
         }
         BIO_puts(arg, "\n-----BEGIN OCSP RESPONSE-----\n");
         OCSP_RESPONSE_print(arg, rsp, 0);
         BIO_puts(arg, "-----END  OCSP RESPONSE-----\n");
     }
+
     return 1;
 }
 # endif
