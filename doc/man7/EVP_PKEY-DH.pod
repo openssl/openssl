@@ -21,7 +21,7 @@ I<q> value.
 The B<DHX> key type uses X9.42 format which saves the value of I<q> and this
 must be used for FIPS186-4. If key validation is required, users should be aware
 of the nuances associated with FIPS186-4 style parameters as discussed in
-L</DH key validation>.
+L</DH and DHX key validation>.
 
 =head2 DH and DHX domain parameters
 
