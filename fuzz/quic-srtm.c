@@ -36,7 +36,8 @@ enum {
     CMD_ADD,
     CMD_REMOVE,
     CMD_CULL,
-    CMD_LOOKUP
+    CMD_LOOKUP,
+    CMD_MAX
 };
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
@@ -60,7 +61,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         if (!PACKET_get_1(&pkt, &cmd))
             goto err;
 
-        switch (cmd) {
+        switch (cmd % CMD_MAX) {
         case CMD_ADD:
             if (!PACKET_get_net_8(&pkt, &arg_opaque)
                 || !PACKET_get_net_8(&pkt, &arg_seq_num)
