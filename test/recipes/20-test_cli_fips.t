@@ -51,6 +51,8 @@ ok(run(app(['openssl', 'list', '-kem-algorithms', '-verbose'])),
    "provider listing of key encapsulation algorithms");
 ok(run(app(['openssl', 'list', '-signature-algorithms', '-verbose'])),
    "provider listing of signature algorithms");
+ok(run(app(['openssl', 'list', '-tls-signature-algorithms', '-verbose'])),
+   "provider listing of TLS signature algorithms");
 ok(run(app(['openssl', 'list', '-asymcipher-algorithms', '-verbose'])),
    "provider listing of encryption algorithms");
 ok(run(app(['openssl', 'list', '-key-managers', '-verbose', '-select', 'DSA' ])),
