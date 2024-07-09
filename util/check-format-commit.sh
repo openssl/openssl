@@ -7,7 +7,7 @@
 # or at https://www.openssl.org/source/license.html
 #
 # This script is a wrapper around check-format.pl.  It accepts a commit sha
-# value as input, and uses the to identify the files and ranges that were
+# value as input, and uses it to identify the files and ranges that were
 # changed in that commit, filtering check-format.pl output only to lines that
 # fall into the commits change ranges.
 #
