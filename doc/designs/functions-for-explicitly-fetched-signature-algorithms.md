@@ -45,7 +45,7 @@ Discussions have revealed that it is potentially confusing to confound the
 current functionality with streaming style functionality into the same name,
 so this design separates those out with specific init / update / final
 functions for that purpose.  For oneshot functionality, `EVP_PKEY_sign()`
-and `EVP_PKEY_verify()` remain supported, possibly through an alias for the
+and `EVP_PKEY_verify()` remain supported, through an alias for the
 application.
 
 [^1]: the term "primitive" is borrowed from [PKCS#1](https://www.rfc-editor.org/rfc/rfc8017#section-5)
@@ -80,6 +80,8 @@ int EVP_PKEY_sign_message_update(EVP_PKEY_CTX *ctx,
 int EVP_PKEY_sign_message_final(EVP_PKEY_CTX *ctx,
                                 unsigned char *sig,
                                 size_t *siglen);
+#define EVP_PKEY_sign_message(ctx,sig,siglen,tbs,tbslen) \
+    EVP_PKEY_sign(ctx,sig,siglen,tbs,tbslen)
 ```
 
 ### For limited input size / oneshot verification with `EVP_SIGNATURE`
@@ -106,6 +108,9 @@ int EVP_PKEY_verify_message_update(EVP_PKEY_CTX *ctx,
                                    const unsigned char *in,
                                    size_t inlen);
 int EVP_PKEY_verify_message_final(EVP_PKEY_CTX *ctx);
+
+#define EVP_PKEY_verify_message(ctx,sig,siglen,tbs,tbslen) \
+    EVP_PKEY_sign(ctx,sig,siglen,tbs,tbslen)
 ```
 
 ### For verify_recover with `EVP_SIGNATURE`
