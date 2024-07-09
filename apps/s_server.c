@@ -452,7 +452,7 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
 /* Structure passed to cert status callback */
 typedef struct tlsextstatusctx_st {
     int timeout;
-    /* File to load OCSP Response from (or NULL if no file) */
+    /* List of filenames, from which we are loading each OCSP Response to staple during handshake (or NULL if no file) */
     STACK_OF(OPENSSL_STRING) *skrespin;
     /* Default responder to use */
     char *host, *path, *port;
@@ -595,23 +595,30 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
 {
     X509 *x = NULL;
     int ret = SSL_TLSEXT_ERR_NOACK;
-    int i;
-    int num = 1;
+    int i, num = 1;
     STACK_OF(X509) *server_certs = NULL;
     OCSP_RESPONSE *resp = NULL;
 
-    if (*sk_resp != NULL) {
+    if (*sk_resp != NULL)
         sk_OCSP_RESPONSE_pop_free(*sk_resp, OCSP_RESPONSE_free);
-    }
+
     *sk_resp = sk_OCSP_RESPONSE_new_null();
 
     SSL_get0_chain_certs(s, &server_certs);
-    if (server_certs != NULL)
+    if (server_certs != NULL && (SSL_version(s) >= TLS1_3_VERSION)) {
         /* certificate chain is available */
         num = sk_X509_num(server_certs);
-    else
-        /* certificate chain is not available, set num to 1 for server certificate */
+    }
+    else {
+        /*
+         * certificate chain is not available,
+         * set num to 1 for server certificate
+         */
         num = 1;
+    }
+
+    sk_OCSP_RESPONSE_reserve(*sk_resp, num);
+
     for (i = -1; i < num - 1; i++) {
         if (i == -1) {
             /* get OCSP response for server certificate first */
@@ -626,9 +633,8 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
 
         resp = NULL;
         ret = get_ocsp_resp_from_responder_single(s, x, srctx, &resp);
-        if (ret == SSL_TLSEXT_ERR_OK && resp != NULL) {
+        if (ret == SSL_TLSEXT_ERR_OK && resp != NULL)
             sk_OCSP_RESPONSE_insert(*sk_resp, resp, -1);
-        }
     }
 
     return SSL_TLSEXT_ERR_OK;
@@ -644,7 +650,7 @@ static int cert_status_cb(SSL *s, void *arg)
     tlsextstatusctx *srctx = arg;
     OCSP_RESPONSE *resp = NULL;
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
-    char* respfile = NULL;
+    char *respfile = NULL;
     int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
     int i;
     BIO *derbio;
@@ -653,11 +659,14 @@ static int cert_status_cb(SSL *s, void *arg)
         BIO_puts(bio_err, "cert_status: callback called\n");
 
     if (srctx->skrespin != NULL) {
+
+        sk_resp = sk_OCSP_RESPONSE_new_reserve(NULL,
+                                               sk_OPENSSL_STRING_num(srctx->skrespin));
+
         for (i = 0; i < sk_OPENSSL_STRING_num(srctx->skrespin); i++) {
             respfile = sk_OPENSSL_STRING_value(srctx->skrespin, i);
 
             derbio = bio_open_default(respfile, 'r', FORMAT_ASN1);
-            BIO_printf(bio_err, "********************** read response from file : %s\n", respfile);
 
             if (derbio == NULL) {
                 BIO_puts(bio_err, "cert_status: Cannot open OCSP response file\n");
@@ -669,9 +678,6 @@ static int cert_status_cb(SSL *s, void *arg)
                 BIO_puts(bio_err, "cert_status: Error reading OCSP response\n");
                 goto err;
             }
-
-            if (sk_resp == NULL)
-                sk_resp = sk_OCSP_RESPONSE_new_null();
 
             sk_OCSP_RESPONSE_insert(sk_resp, resp, -1);
         }
@@ -947,7 +953,7 @@ const OPTIONS s_server_options[] = {
     {OPT_MORE_STR, 0, 0,
      "Default from environment variable 'no_proxy', else 'NO_PROXY', else none"},
     {"status_file", OPT_STATUS_FILE, '<',
-     "File containing DER encoded OCSP Response"},
+     "File containing DER encoded OCSP Response (can be specified multiple times)"},
 #endif
 
     OPT_SECTION("Debug"),

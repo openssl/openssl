@@ -40,7 +40,7 @@ SSL_set_tlsext_status_ocsp_resp_ex
 
 =head1 DESCRIPTION
 
-A client application may request that a server send back an OCSP status response
+A client application may request that a server send back OCSP status response(s)
 (also known as OCSP stapling). To do so the client should call the
 SSL_CTX_set_tlsext_status_type() function prior to the creation of any SSL
 objects. Alternatively an application can call the SSL_set_tlsext_status_type()
@@ -50,9 +50,13 @@ should be passed in the B<type> argument. Calling
 SSL_CTX_get_tlsext_status_type() will return the type B<TLSEXT_STATUSTYPE_ocsp>
 previously set via SSL_CTX_set_tlsext_status_type() or -1 if not set.
 
+For TLS versions previous 1.3 only a single OCSP status response is send back
+by the server. TLS 1.3 specifies that the server can send OCSP status responses
+for the whole chain (OCSP multi stapling).
+
 The client should additionally provide a callback function to decide what to do
 with the returned OCSP response by calling SSL_CTX_set_tlsext_status_cb(). The
-callback function should determine whether the returned OCSP response is
+callback function should determine whether the returned OCSP response(s) are
 acceptable or not. The callback will be passed as an argument the value
 previously set via a call to SSL_CTX_set_tlsext_status_arg(). Note that the
 callback will not be called in the event of a handshake where session resumption
@@ -68,40 +72,42 @@ side SSL_get_tlsext_status_type() can be used to determine whether the client
 requested OCSP stapling. If the client requested it then this function will
 return B<TLSEXT_STATUSTYPE_ocsp>, or -1 otherwise.
 
-The response returned by the server can be obtained via a call to
-SSL_get_tlsext_status_ocsp_resp(). The value B<*resp> will be updated to point
-to the OCSP response data and the return value will be the length of that data.
-Typically a callback would obtain an OCSP_RESPONSE object from this data via a
-call to the d2i_OCSP_RESPONSE() function. If the server has not provided any
-response data then B<*resp> will be NULL and the return value from
+A single response returned by the server (TLS < 1.3) can be obtained via a call
+to SSL_get_tlsext_status_ocsp_resp(). The value B<*resp> will be updated to
+point to the OCSP response data and the return value will be the length of that
+data. Typically a callback would obtain an OCSP_RESPONSE object from this data
+via a call to the d2i_OCSP_RESPONSE() function. If the server has not provided
+any response data then B<*resp> will be NULL and the return value from
 SSL_get_tlsext_status_ocsp_resp() will be -1.
 
 A server application must also call the SSL_CTX_set_tlsext_status_cb() function
-if it wants to be able to provide clients with OCSP Certificate Status
-responses. Typically the server callback would obtain the server certificate
-that is being sent back to the client via a call to SSL_get_certificate();
-obtain the OCSP response to be sent back; and then set that response data by
-calling SSL_set_tlsext_status_ocsp_resp(). A pointer to the response data should
-be provided in the B<resp> argument, and the length of that data should be in
-the B<len> argument.
+if it wants to be able to provide clients with (single) OCSP Certificate Status
+response for the server certificate. Typically the server callback would
+obtain the server certificate that is being sent back to the client via a call
+to SSL_get_certificate(); obtain the OCSP response to be sent back; and then set
+that response data by calling SSL_set_tlsext_status_ocsp_resp(). A pointer to
+the response data should be provided in the B<resp> argument, and the length of
+that data should be in the B<len> argument.
 
-The response returned by the server can be obtained via a call to
-SSL_get_tlsext_status_ocsp_resp_ex(). The value B<*resp> will be updated to point
-to the OCSP response stack and the return value will be the number of responses
-on the stack.
+In the case of multi stapling the responses returned by the server can be
+obtained via a call to SSL_get_tlsext_status_ocsp_resp_ex(). The value B<*resp>
+will be updated to point to the OCSP response stack and the return value will
+be the number of responses on the stack.
 Typically a callback would obtain an OCSP_RESPONSE object from the stack via a
-call to sk_OCSP_RESPONSE_pop or sk_OCSP_RESPONSE_pop_free and convert it with
-the d2i_OCSP_RESPONSE() function. If the server has not provided any
-response data then B<*resp> will be NULL and the return value from
-SSL_get_tlsext_status_ocsp_resp_ex() will be -1.
+call to sk_OCSP_RESPONSE_pop and convert it with the d2i_OCSP_RESPONSE()
+function. If the server has not provided any response data then B<*resp> will
+be NULL and the return value from SSL_get_tlsext_status_ocsp_resp_ex() will
+be -1.
 
 A server application must also call the SSL_CTX_set_tlsext_status_cb() function
 if it wants to be able to provide clients with OCSP Certificate Status
-responses. Typically the server callback would obtain the server certificate
-that is being sent back to the client via a call to SSL_get_certificate();
-obtain the OCSP response to be sent back; and then set that response data by
-calling SSL_set_tlsext_status_ocsp_resp_ex(). A stack of OCSP responses should
-be provided in the B<resp> argument.
+responses for all certificates in the chain of the server certificate (excluding
+the root CA certificate) called multi stapling (TLS 1.3). Typically the server
+callback would obtain the certificates that are being sent back to the client
+via a call to SSL_get_certificate() resp. SSL_get0_chain_certs(); obtain the
+OCSP response to be sent back; and then set that response data by calling
+SSL_set_tlsext_status_ocsp_resp_ex(). A stack of OCSP responses should be
+provided in the B<resp> argument.
 
 =head1 RETURN VALUES
 
@@ -141,6 +147,9 @@ L<ssl(7)>
 
 The SSL_get_tlsext_status_type(), SSL_CTX_get_tlsext_status_type()
 and SSL_CTX_set_tlsext_status_type() functions were added in OpenSSL 1.1.0.
+
+The SSL_get_tlsext_status_ocsp_resp_ex and SSL_set_tlsext_status_ocsp_resp_ex
+functions were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
