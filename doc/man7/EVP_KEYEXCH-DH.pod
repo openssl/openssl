@@ -2,14 +2,19 @@
 
 =head1 NAME
 
-EVP_KEYEXCH-DH
+EVP_KEYEXCH-DH, EVP_KEYEXCH-DHX
 - DH Key Exchange algorithm support
 
 =head1 DESCRIPTION
 
-Key exchange support for the B<DH> key type.
+Key exchange support for the B<DH> and B<DHX> key types.
 
-=head2 DH key exchange parameters
+Please note that although both key types support the same key exchange
+operations, they cannot be used together in a single key exchange. It
+is not possible to use a private key of the B<DH> type in key exchange
+with the public key of B<DHX> type and neither the other way around.
+
+=head2 DH and DHX key exchange parameters
 
 =over 4
 
