@@ -50,6 +50,13 @@ trap cleanup EXIT
 # resolve them to sha256 sums easily
 COMMIT=$(git rev-parse $1)
 
+# Fail gracefully if git rev-parse doesn't produce a valid
+# commit
+if [ $? -ne 0 ]
+then
+    echo "$1 is not a valid revision"
+    exit 1
+fi
 
 # Create a iteratable list of files to check for a
 # given commit. It produces output of the format
