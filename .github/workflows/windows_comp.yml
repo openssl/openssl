@@ -11,6 +11,7 @@ on:
   pull_request:
     paths:
       - 'crypto/comp/*.c'
+      - '.github/workflows/windows_comp.yml'
   push:
     paths:
       - '**.c'
