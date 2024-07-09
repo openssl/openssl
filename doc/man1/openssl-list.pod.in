@@ -33,6 +33,7 @@ B<openssl list>
 [B<-key-exchange-algorithms>]
 [B<-kem-algorithms>]
 [B<-signature-algorithms>]
+[B<-tls-signature-algorithms>]
 [B<-asymcipher-algorithms>]
 [B<-public-key-algorithms>]
 [B<-public-key-methods>]
@@ -193,6 +194,13 @@ Display a list of key encapsulation algorithms.
 =item B<-signature-algorithms>
 
 Display a list of signature algorithms.
+
+=item B<-tls-signature-algorithms>
+
+Display the list of signature algorithms available for TLS handshakes
+made available by all currently active providers.
+The output format is colon delimited in a form directly usable in
+L<SSL_CONF_cmd(3)> specifying SignatureAlgorithms.
 
 =item B<-asymcipher-algorithms>
 

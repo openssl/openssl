@@ -26,7 +26,7 @@ use platform;
 my $no_check = disabled("fips") || disabled('fips-securitychecks');
 plan skip_all => "Test only supported in a fips build with security checks"
     if $no_check;
-plan tests => 11;
+plan tests => 12;
 
 my $fipsmodule = bldtop_file('providers', platform->dso('fips'));
 my $fipsconf = srctop_file("test", "fips-and-base.cnf");
@@ -51,6 +51,8 @@ ok(run(app(['openssl', 'list', '-kem-algorithms', '-verbose'])),
    "provider listing of key encapsulation algorithms");
 ok(run(app(['openssl', 'list', '-signature-algorithms', '-verbose'])),
    "provider listing of signature algorithms");
+ok(run(app(['openssl', 'list', '-tls-signature-algorithms', '-verbose'])),
+   "provider listing of TLS signature algorithms");
 ok(run(app(['openssl', 'list', '-asymcipher-algorithms', '-verbose'])),
    "provider listing of encryption algorithms");
 ok(run(app(['openssl', 'list', '-key-managers', '-verbose', '-select', 'DSA' ])),
