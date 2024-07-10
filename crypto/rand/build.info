@@ -13,3 +13,4 @@ ENDIF
 
 SOURCE[../../libcrypto]=$COMMON $CRYPTO
 SOURCE[../../providers/libfips.a]=$COMMON
+SOURCE[../../providers/libjitter.a]=rand_pool.c

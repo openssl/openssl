@@ -476,6 +476,7 @@ my @disablables = (
     "gost",
     "http",
     "idea",
+    "jitter",
     "ktls",
     "legacy",
     "loadereng",
@@ -586,6 +587,7 @@ our %disabled = ( # "what"         => "comment"
                   "fuzz-afl"            => "default",
                   "fuzz-libfuzzer"      => "default",
                   "pie"                 => "default",
+                  "jitter"              => "default",
                   "ktls"                => "default",
                   "md2"                 => "default",
                   "msan"                => "default",
@@ -1018,6 +1020,14 @@ while (@argvcopy)
                 elsif (/^--openssldir=(.*)$/)
                         {
                         $config{openssldir}=$1;
+                        }
+                elsif (/^--with-jitter-include=(.*)$/)
+                        {
+                        $withargs{jitter_include}=$1;
+                        }
+                elsif (/^--with-jitter-lib=(.*)$/)
+                        {
+                        $withargs{jitter_lib}=$1;
                         }
                 elsif (/^--with-zlib-lib=(.*)$/)
                         {
