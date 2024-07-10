@@ -23,9 +23,9 @@
  * Forward declarations to ensure that interface functions are correctly
  * defined.
  */
-static OSSL_FUNC_provider_gettable_params_fn legacy_gettable_params;
-static OSSL_FUNC_provider_get_params_fn legacy_get_params;
-static OSSL_FUNC_provider_query_operation_fn legacy_query;
+static OSSL_FUNC_provider_gettable_params_fn jitter_gettable_params;
+static OSSL_FUNC_provider_get_params_fn jitter_get_params;
+static OSSL_FUNC_provider_query_operation_fn jitter_query;
 
 /* Functions provided by the core */
 static OSSL_FUNC_core_new_error_fn *c_new_error;
@@ -36,7 +36,7 @@ static OSSL_FUNC_core_clear_last_error_mark_fn *c_clear_last_error_mark;
 static OSSL_FUNC_core_pop_error_to_mark_fn *c_pop_error_to_mark;
 
 /* Parameters we provide to the core */
-static const OSSL_PARAM legacy_param_types[] = {
+static const OSSL_PARAM jitter_param_types[] = {
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
     /* TODO maybe expose jent_version() in buildinfo */
@@ -45,12 +45,12 @@ static const OSSL_PARAM legacy_param_types[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *legacy_gettable_params(void *provctx)
+static const OSSL_PARAM *jitter_gettable_params(void *provctx)
 {
-    return legacy_param_types;
+    return jitter_param_types;
 }
 
-static int legacy_get_params(void *provctx, OSSL_PARAM params[])
+static int jitter_get_params(void *provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -70,11 +70,11 @@ static int legacy_get_params(void *provctx, OSSL_PARAM params[])
 }
 
 static const OSSL_ALGORITHM jitter_rands[] = {
-    { PROV_NAMES_SEED_SRC_JITTER, "provider=jitter", ossl_seed_src_jitter_functions },
+    { PROV_NAMES_SEED_SRC_JITTER, "provider=jitter", ossl_jitter_functions },
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM *legacy_query(void *provctx, int operation_id,
+static const OSSL_ALGORITHM *jitter_query(void *provctx, int operation_id,
                                           int *no_cache)
 {
     *no_cache = 0;
@@ -85,18 +85,19 @@ static const OSSL_ALGORITHM *legacy_query(void *provctx, int operation_id,
     return NULL;
 }
 
-static void legacy_teardown(void *provctx)
+static void jitter_teardown(void *provctx)
 {
     OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));
     ossl_prov_ctx_free(provctx);
 }
 
 /* Functions we provide to the core */
-static const OSSL_DISPATCH legacy_dispatch_table[] = {
-    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))legacy_teardown },
-    { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))legacy_gettable_params },
-    { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))legacy_get_params },
-    { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))legacy_query },
+static const OSSL_DISPATCH jitter_dispatch_table[] = {
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))jitter_teardown },
+    { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS,
+      (void (*)(void))jitter_gettable_params },
+    { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))jitter_get_params },
+    { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))jitter_query },
     OSSL_DISPATCH_END
 };
 
@@ -112,7 +113,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         /*
          * We do not support the scenario of an application linked against
          * multiple versions of libcrypto (e.g. one static and one dynamic),
-         * but sharing a single legacy.so. We do a simple sanity check here.
+         * but sharing a single jitter.so. We do a simple sanity check here.
          */
 #define set_func(c, f) if (c == NULL) c = f; else if (c != f) return 0;
         switch (tmp->function_id) {
@@ -133,7 +134,8 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                      OSSL_FUNC_core_clear_last_error_mark(tmp));
             break;
         case OSSL_FUNC_CORE_POP_ERROR_TO_MARK:
-            set_func(c_pop_error_to_mark, OSSL_FUNC_core_pop_error_to_mark(tmp));
+            set_func(c_pop_error_to_mark,
+                     OSSL_FUNC_core_pop_error_to_mark(tmp));
             break;
         }
     }
@@ -141,14 +143,14 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     if ((*provctx = ossl_prov_ctx_new()) == NULL
         || (libctx = OSSL_LIB_CTX_new_child(handle, in)) == NULL) {
         OSSL_LIB_CTX_free(libctx);
-        legacy_teardown(*provctx);
+        jitter_teardown(*provctx);
         *provctx = NULL;
         return 0;
     }
     ossl_prov_ctx_set0_libctx(*provctx, libctx);
     ossl_prov_ctx_set0_handle(*provctx, handle);
 
-    *out = legacy_dispatch_table;
+    *out = jitter_dispatch_table;
 
     return 1;
 }
@@ -200,4 +202,3 @@ int ERR_pop_to_mark(void)
 {
     return c_pop_error_to_mark(NULL);
 }
-
