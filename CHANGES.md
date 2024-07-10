@@ -27,7 +27,17 @@ OpenSSL 3.2
 
 ### Changes between 3.2.2 and 3.2.3 [xx XXX xxxx]
 
- * none yet
+ * Fixed possible denial of service in X.509 name checks.
+
+   Applications performing certificate name checks (e.g., TLS clients checking
+   server certificates) may attempt to read an invalid memory address when
+   comparing the expected name with an `otherName` subject alternative name of
+   an X.509 certificate. This may result in an exception that terminates the
+   application program.
+
+   [(CVE-2024-6119)]
+
+   *Viktor Dukhovni*
 
 ### Changes between 3.2.1 and 3.2.2 [4 Jun 2024]
 
@@ -20475,6 +20485,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2024-6119]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-6119
 [CVE-2024-4741]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-4741
 [CVE-2024-4603]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-4603
 [CVE-2024-2511]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-2511
