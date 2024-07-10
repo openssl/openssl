@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 93;
+plan tests => 95;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -285,6 +285,14 @@ cert_contains($user_notice_cert,
 cert_contains($user_notice_cert,
               "Explicit Text: Ice ice baby",
               1, 'X509v3 User Notice');
+
+my $battcons_cert = srctop_file(@certs, "ext-basicAttConstraints.pem");
+cert_contains($battcons_cert,
+              "authority:TRUE",
+              1, 'X.509 Basic Attribute Constraints Authority');
+cert_contains($battcons_cert,
+              "pathlen:3",
+              1, 'X.509 Basic Attribute Constraints Path Length');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
