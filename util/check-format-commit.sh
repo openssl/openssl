@@ -20,7 +20,16 @@ EXCLUDED_FILE_REGEX=("\.pod" \
                      "\.pm"  \
                      "\.t"   \
                      "\.yml" \
-                     "\.sh")
+                     "\.sh" \
+                     "\.cnf" \
+                     "\.conf" \
+                     "\.info" \
+                     "\.md" \
+                     "\.S" \
+                     "\.pem" \
+                     "\.txt" \
+                     "\.dat" \
+                     "Configure") 
 
 # Exit code for the script
 EXIT_CODE=0
