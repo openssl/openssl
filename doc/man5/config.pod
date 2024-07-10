@@ -478,6 +478,13 @@ to access the same randomness sources from outside the validated boundary.
 
 This sets the property query used when fetching the randomness source.
 
+=item B<chain>
+
+This controls whether or not public/private random instances chain to primary
+for seeding, or not. Default is 1, meaning to chain. Set to 0, for
+public/private random instances to acquire entropy seed directly. See
+L<EVP_RAND(7)> for more details.
+
 =back
 
 =head1 EXAMPLES
