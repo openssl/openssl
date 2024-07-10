@@ -5630,10 +5630,10 @@ static int test_invalid_ctx_for_digest(void)
     EVP_MD_CTX *mdctx;
 
     mdctx = EVP_MD_CTX_new();
-    if (mdctx == NULL)
+    if (!TEST_ptr(mdctx))
         return 0;
 
-    if (EVP_DigestUpdate(mdctx, "test", sizeof("test") - 1) == 1)
+    if (!TEST_int_eq(EVP_DigestUpdate(mdctx, "test", sizeof("test") - 1), 0))
         ret = 0;
     else
         ret = 1;
