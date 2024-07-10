@@ -7,9 +7,11 @@
 
 name: OS Zoo CI
 
-on:
-  schedule:
-    - cron: '0 5 * * *'
+on: [pull_request]
+#to be reverted by fixup!
+#on:
+#  schedule:
+#    - cron: '0 5 * * *'
 
 permissions:
   contents: read
@@ -21,7 +23,7 @@ jobs:
       matrix:
         tag: [edge, latest]
         cc: [gcc, clang]
-        branch: [openssl-3.0, openssl-3.1, master]
+        branch: [openssl-3.0, openssl-3.3, master]
     runs-on: ubuntu-latest
     container:
       image: docker.io/library/alpine:${{ matrix.tag }}
@@ -31,7 +33,12 @@ jobs:
       CC: ${{ matrix.cc }}
     steps:
     - name: install packages
+      if: ${{ matrix.tag != 'edge' }}
       run: apk --no-cache add build-base perl linux-headers ${{ matrix.cc }}
+    - name: install packages without fortify headers
+      if: ${{ matrix.tag == 'edge' }}
+      # The build breaks on edge with gcc due to fortify source triggering false warnings
+      run: apk --no-cache add make perl linux-headers ${{ matrix.cc }}
     - uses: actions/checkout@v4
       with:
         ref: ${{ matrix.branch }}
@@ -54,7 +61,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        branch: [openssl-3.0, openssl-3.1, master]
+        branch: [openssl-3.0, openssl-3.3, master]
         zoo:
           - image: docker.io/library/debian:10
             install: apt-get update && apt-get install -y gcc make perl
@@ -104,7 +111,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        branch: [openssl-3.0, openssl-3.1, master]
+        branch: [openssl-3.0, openssl-3.3, master]
         os: [macos-12, macos-13, macos-14]
     runs-on: ${{ matrix.os }}
     steps:
@@ -130,7 +137,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        branch: [openssl-3.0, openssl-3.1, master]
+        branch: [openssl-3.0, openssl-3.3, master]
         os: [windows-2019, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
