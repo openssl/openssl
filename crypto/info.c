@@ -15,6 +15,11 @@
 #include "internal/e_os.h"
 #include "buildinf.h"
 
+#ifndef OPENSSL_NO_JITTER
+# include <stdio.h>
+# include <jitterentropy.h>
+#endif
+
 #if defined(__arm__) || defined(__arm) || defined(__aarch64__)
 # include "arm_arch.h"
 # define CPU_INFO_STR_LEN 128
@@ -182,6 +187,11 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
 #endif
 #ifdef OPENSSL_RAND_SEED_OS
         add_seeds_string("os-specific");
+#endif
+#ifndef OPENSSL_NO_JITTER
+        char jent_version_string[32];
+        sprintf(jent_version_string, "JITTER (%d)", jent_version());
+        add_seeds_string(jent_version_string);
 #endif
         seed_sources = seeds;
     }

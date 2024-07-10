@@ -311,6 +311,7 @@
 #define PROV_NAMES_HMAC_DRBG "HMAC-DRBG"
 #define PROV_NAMES_TEST_RAND "TEST-RAND"
 #define PROV_NAMES_SEED_SRC "SEED-SRC"
+#define PROV_NAMES_JITTER "JITTER"
 
 /*-
  * Asymmetric algos
