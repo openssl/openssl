@@ -95,7 +95,7 @@ struct rcu_lock_st {
     struct rcu_qp *qp_group;
     size_t group_count;
     uint32_t next_to_retire;
-    volatile long int reader_idx;
+    uint32_t reader_idx;
     uint32_t current_alloc_idx;
     uint32_t writers_alloced;
     CRYPTO_MUTEX *write_lock;
@@ -675,7 +675,7 @@ int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 
     return 1;
 #else
-    /* On Windows, LONG is always the same size as int. */
+    /* On Windows, LONG (but not long) is always the same size as int. */
     *ret = (int)InterlockedOr((LONG volatile *)val, 0);
     return 1;
 #endif
