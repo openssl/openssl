@@ -92,7 +92,7 @@ DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)
 
 extern const EVP_PKEY_ASN1_METHOD ossl_dh_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ossl_dhx_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD ossl_dsa_asn1_meths[5];
+extern const EVP_PKEY_ASN1_METHOD ossl_dsa_asn1_meths[4];
 extern const EVP_PKEY_ASN1_METHOD ossl_eckey_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ossl_ecx25519_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ossl_ecx448_asn1_meth;
