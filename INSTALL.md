@@ -521,32 +521,22 @@ at the end of this document.
 
 [rng]: #notes-on-random-number-generation
 
-# jitter
+### jitter
 
 When configured with `enable-jitter`, a "JITTER" RNG is compiled that
-can provided alternative software seed source. It can be configured by
-loadin setting `seed` setting in `openssl.cnf`. An example
-`openssl.cnf` is shown below:
+can provide an alternative software seed source. It can be configured
+by setting `seed` option in `openssl.cnf`. A minimal `openssl.cnf` is
+shown below:
 
     openssl_conf = openssl_init
 
-    # Comment out the next line to ignore configuration errors
-    config_diagnostics = 1
-
     [openssl_init]
-    providers = provider_sect
     random = random
-
-    [provider_sect]
-    default = default_sect
-
-    [default_sect]
-    activate = 1
 
     [random]
     seed=JITTER
 
-It uses statically linked [jitterentropy-library](https://github.com/smuellerDD/jitterentropy-library) as the seed source.
+It uses a statically linked [jitterentropy-library](https://github.com/smuellerDD/jitterentropy-library) as the seed source.
 
 Additional configuration flags available:
 
@@ -559,7 +549,6 @@ it is outside the system include path.
 
 This is the directory containing the static libjitterentropy.a
 library, if it is outside the system library path.
-
 
 Setting the FIPS HMAC key
 -------------------------

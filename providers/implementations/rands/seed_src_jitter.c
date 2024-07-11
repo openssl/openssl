@@ -90,7 +90,7 @@ static size_t get_jitter_random_value(unsigned char *buf, size_t len)
         /*
          * Do not use _safe API variant with built-in retries, until
          * failure because it reseeds the entropy source which is not
-         * certifyable
+         * certifiable
          */
         result = jent_read_entropy(jitter_ec, (char *) buf, len);
 
