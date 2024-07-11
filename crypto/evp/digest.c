@@ -25,19 +25,25 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-static void cleanup_old_md_data(EVP_MD_CTX *ctx, int force)
+static void cleanup_old_md_data(EVP_MD_CTX *ctx)
 {
     if (ctx->digest != NULL) {
         if (ctx->digest->cleanup != NULL
                 && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_CLEANED))
             ctx->digest->cleanup(ctx);
-        if (ctx->md_data != NULL && ctx->digest->ctx_size > 0
-                && (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)
-                    || force)) {
+        if (ctx->md_data != NULL && ctx->digest->ctx_size > 0) {
             OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
             ctx->md_data = NULL;
         }
     }
+}
+
+static unsigned char *evp_md_ctx_take_data(EVP_MD_CTX *ctx)
+{
+    unsigned char *md_data = ctx->md_data;
+
+    ctx->md_data = NULL;
+    return md_data;
 }
 
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force, int keep_fetched)
@@ -55,7 +61,7 @@ void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force, int keep_fetched)
      * Don't assume ctx->md_data was cleaned in EVP_Digest_Final, because
      * sometimes only copies of the context are ever finalised.
      */
-    cleanup_old_md_data(ctx, force);
+    cleanup_old_md_data(ctx);
     if (force)
         ctx->digest = NULL;
 
@@ -244,7 +250,7 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
         goto legacy;
     }
 
-    cleanup_old_md_data(ctx, 1);
+    cleanup_old_md_data(ctx);
 
     /* Start of non-legacy code below */
     if (ctx->digest == type) {
@@ -337,7 +343,7 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
     }
 #endif
     if (ctx->digest != type) {
-        cleanup_old_md_data(ctx, 1);
+        cleanup_old_md_data(ctx);
 
         ctx->digest = type;
         if (!(ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) && type->ctx_size) {
@@ -673,28 +679,19 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
     }
 #endif
 
-    if (out->digest == in->digest) {
-        tmp_buf = out->md_data;
-        EVP_MD_CTX_set_flags(out, EVP_MD_CTX_FLAG_REUSE);
-    } else
+    /* if both contexts use the same digest, reuse the allocated memory */
+    if (out->digest == in->digest)
+        tmp_buf = evp_md_ctx_take_data(out->md_data);
+    else
         tmp_buf = NULL;
     EVP_MD_CTX_reset(out);
     memcpy(out, in, sizeof(*out));
 
-    /* copied EVP_MD_CTX should free the copied EVP_PKEY_CTX */
-    EVP_MD_CTX_clear_flags(out, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
-
-    /* Null these variables, since they are getting fixed up
-     * properly below.  Anything else may cause a memleak and/or
-     * double free if any of the memory allocations below fail
-     */
     out->md_data = NULL;
-    out->pctx = NULL;
-
-    if (in->md_data && out->digest->ctx_size) {
-        if (tmp_buf)
+    if (out->digest->ctx_size) {
+        if (tmp_buf) {
             out->md_data = tmp_buf;
-        else {
+        } else {
             out->md_data = OPENSSL_malloc(out->digest->ctx_size);
             if (out->md_data == NULL)
                 return 0;
@@ -704,6 +701,10 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
     out->update = in->update;
 
+    /* copied EVP_MD_CTX should free the copied EVP_PKEY_CTX */
+    EVP_MD_CTX_clear_flags(out, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+    /* Null this variable, to prevent memory leak or double free */
+    out->pctx = NULL;
 #ifndef FIPS_MODULE
     if (in->pctx) {
         out->pctx = EVP_PKEY_CTX_dup(in->pctx);
