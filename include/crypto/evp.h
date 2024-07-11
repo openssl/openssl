@@ -726,26 +726,26 @@ struct evp_pkey_st {
         int security_bits;
         int size;
     } cache;
-} /* EVP_PKEY */ ;
+}; /* EVP_PKEY */
 
 /* The EVP_PKEY_OP_TYPE_ macros are found in include/openssl/evp.h */
 
-#define EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx) \
+# define EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx) \
     (((ctx)->operation & EVP_PKEY_OP_TYPE_SIG) != 0)
 
-#define EVP_PKEY_CTX_IS_DERIVE_OP(ctx) \
+# define EVP_PKEY_CTX_IS_DERIVE_OP(ctx) \
     (((ctx)->operation & EVP_PKEY_OP_TYPE_DERIVE) != 0)
 
-#define EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx) \
+# define EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx) \
     (((ctx)->operation & EVP_PKEY_OP_TYPE_CRYPT) != 0)
 
-#define EVP_PKEY_CTX_IS_GEN_OP(ctx) \
+# define EVP_PKEY_CTX_IS_GEN_OP(ctx) \
     (((ctx)->operation & EVP_PKEY_OP_TYPE_GEN) != 0)
 
-#define EVP_PKEY_CTX_IS_FROMDATA_OP(ctx) \
+# define EVP_PKEY_CTX_IS_FROMDATA_OP(ctx) \
     (((ctx)->operation & EVP_PKEY_OP_TYPE_DATA) != 0)
 
-#define EVP_PKEY_CTX_IS_KEM_OP(ctx) \
+# define EVP_PKEY_CTX_IS_KEM_OP(ctx) \
     (((ctx)->operation & EVP_PKEY_OP_TYPE_KEM) != 0)
 
 void openssl_add_all_ciphers_int(void);
