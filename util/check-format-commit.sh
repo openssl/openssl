@@ -51,6 +51,14 @@ trap cleanup EXIT
 COMMIT_RANGE="$@"
 COMMIT_LAST=$(git rev-parse $COMMIT_RANGE)
 
+# Fail gracefully if git rev-parse doesn't produce a valid
+# commit
+if [ $? -ne 0 ]
+then
+    echo "$1 is not a valid revision"
+    exit 1
+fi
+
 # If the commit range was just one single revision, git rev-parse
 # will output jut commit id of that one alone.  In that case, we
 # must manipulate a little to get a desirable result, 'cause git
@@ -63,15 +71,7 @@ else
     COMMIT_RANGE=$COMMIT_RANGE^..$COMMIT_RANGE
 fi
 
-# Fail gracefully if git rev-parse doesn't produce a valid
-# commit
-if [ $? -ne 0 ]
-then
-    echo "$1 is not a valid revision"
-    exit 1
-fi
-
-# Create a iteratable list of files to check formatting on,
+# Create an iteratable list of files to check formatting on,
 # including the line ranges that are changed by the commits
 # It produces output of this format:
 # <file name> <change start line>, <change line count>
