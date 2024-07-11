@@ -46,6 +46,8 @@ These parameter works as described in L<EVP_RAND(3)/PARAMETERS>.
 
 =item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_COUNTER>) <unsigned integer>
 
+=item "fips-indicator" (B<OSSL_EXCHANGE_PARAM_FIPS_APPROVED_INDICATOR>) <int>
+
 These parameters work as described in L<EVP_RAND(3)/PARAMETERS>, except that
 they can all be set as well as read.
 
