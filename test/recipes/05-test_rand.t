@@ -10,11 +10,19 @@ use strict;
 use warnings;
 use OpenSSL::Test;
 use OpenSSL::Test::Utils;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
-plan tests => 5;
+plan tests => 6;
 setup("test_rand");
 
-ok(run(test(["rand_test"])));
+ok(run(test(["rand_test", srctop_file("test", "default.cnf")])));
+
+SKIP: {
+    skip "Skipping FIPS test in this build", 1 if disabled('fips');
+
+    ok(run(test(["rand_test", srctop_file("test", "fips.cnf")])));
+}
+
 ok(run(test(["drbgtest"])));
 ok(run(test(["rand_status_test"])));
 
