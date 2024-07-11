@@ -1326,6 +1326,11 @@ All operations depending on the random generator such as creating keys
 will not work unless the random generator is seeded manually by the
 application.
 
+Alternative to manually seeding is to compiler with JITTER RNG
+enabled, it will be used instead of rand-seed=none. Or specify
+alternative seed= provider in openssl.cnf (for example from a 3rd
+party entropy provider).
+
 Please read the 'Note on random number generation' section in the
 INSTALL.md instructions and the RAND_DRBG(7) manual page for more
 details.

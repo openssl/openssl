@@ -593,7 +593,15 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
                 propq = props;
             }
         }
+        /*
+         * This is mostly for testing, as there is no other way to conveniently
+         * force JITTER by default during unit tests
+         */
+#if defined(OPENSSL_RAND_SEED_NONE) && !defined(OPENSSL_NO_JITTER)
+        name = "JITTER";
+#else
         name = "SEED-SRC";
+#endif
     }
 
     rand = EVP_RAND_fetch(libctx, name, propq);
