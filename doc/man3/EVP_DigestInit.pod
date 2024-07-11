@@ -550,9 +550,13 @@ can be used the manipulate and test these B<EVP_MD_CTX> flags:
 
 This flag instructs the digest to optimize for one update only, if possible.
 
-=for comment EVP_MD_CTX_FLAG_CLEANED is internal, don't mention it
+=item EVP_MD_CTX_FLAG_CLEANED
 
-=for comment EVP_MD_CTX_FLAG_REUSE is internal, don't mention it
+This flag is for internal use only and I<must not> be used in user code.
+
+=item EVP_MD_CTX_FLAG_REUSE
+
+This flag is for internal use only and I<must not> be used in user code.
 
 =for comment We currently avoid documenting flags that are only bit holder:
 EVP_MD_CTX_FLAG_NON_FIPS_ALLOW, EVP_MD_CTX_FLAGS_PAD_*
