@@ -521,7 +521,7 @@ at the end of this document.
 
 [rng]: #notes-on-random-number-generation
 
-# jitter
+### jitter
 
 When configured with `enable-jitter`, a "JITTER" RNG is compiled that
 can provided alternative software seed source. It can be configured by
@@ -559,7 +559,6 @@ it is outside the system include path.
 
 This is the directory containing the static libjitterentropy.a
 library, if it is outside the system library path.
-
 
 Setting the FIPS HMAC key
 -------------------------
