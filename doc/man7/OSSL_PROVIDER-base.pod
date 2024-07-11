@@ -63,10 +63,12 @@ The OpenSSL base provider supports these operations and algorithms:
 
 =item SEED-SRC,  see L<EVP_RAND-SEED-SRC(7)>
 
+=item JITTER,  see L<EVP_RAND-JITTER(7)>
+
 =back
 
-In addition to this provider, the "SEED-SRC" algorithm is also available in the
-default provider.
+In addition to this provider, the "SEED-SRC" and "JITTER" algorithms
+are also available in the default provider.
 
 =head2 Asymmetric Key Encoder
 
