@@ -33,18 +33,15 @@ jobs:
         REFSTART=$(git rev-parse $GITHUB_BASE_REF)
         REFEND=$(git rev-parse HEAD)
         echo "Checking from $REFSTART to $REFEND"
-        for i in $(git log --no-merges --format=%H $REFSTART..$REFEND)
-        do
-          echo "::group::Style report for commit $i"
-          set +e
-          ./util/check-format-commit.sh $i
-          if [ $? -ne 0 ]
-          then
-            ERRORS_FOUND=1
-          fi
-          set -e
-          echo "::endgroup::"
-        done
+        echo "::group::Style report for commits $REFSTART..$REFEND"
+        set +e
+        ./util/check-format-commit.sh $REFSTART..$REFEND
+        if [ $? -ne 0 ]
+        then
+          ERRORS_FOUND=1
+        fi
+        set -e
+        echo "::endgroup::"
         SKIP_TEST=$(gh pr view $PR_NUMBER --json labels --jq '.labels[] | select(.name == "style: waived") | .name')
         if [ -z "$SKIP_TEST" ]
         then
