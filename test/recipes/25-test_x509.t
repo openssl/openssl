@@ -286,11 +286,11 @@ cert_contains($user_notice_cert,
               "Explicit Text: Ice ice baby",
               1, 'X509v3 User Notice');
 
-my $bacons_cert = srctop_file(@certs, "ext-basicAttConstraints.pem");
-cert_contains($bacons_cert,
+my $battcons_cert = srctop_file(@certs, "ext-basicAttConstraints.pem");
+cert_contains($battcons_cert,
               "authority:TRUE",
               1, 'X.509 Basic Attribute Constraints Authority');
-cert_contains($bacons_cert,
+cert_contains($battcons_cert,
               "pathlen:3",
               1, 'X.509 Basic Attribute Constraints Path Length');
 
