@@ -76,7 +76,7 @@ fi
 # It produces output of this format:
 # <file name> <change start line>, <change line count>
 touch $TEMPDIR/ranges.txt
-git diff $COMMIT_RANGE | awk '
+git diff -U0 $COMMIT_RANGE | awk '
     BEGIN {myfile=""} 
     /+{3}/ {
         gsub(/b\//,"",$2);
