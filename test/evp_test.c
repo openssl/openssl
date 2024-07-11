@@ -1863,8 +1863,10 @@ static int mac_test_run_mac(EVP_TEST *t)
         goto err;
 
     p = OSSL_PARAM_locate(params + params_n_allocstart, "size");
-    if (p != NULL)
-        OSSL_PARAM_get_size_t(p, &size_val);
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_size_t(p, &size_val))
+            goto err;
+    }
 
     if ((ctx = EVP_MAC_CTX_new(expected->mac)) == NULL) {
         t->err = "MAC_CREATE_ERROR";
