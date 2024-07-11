@@ -5,8 +5,6 @@
 #                       go in the FIPS provider.  The compilations for this
 #                       library are all done with FIPS_MODULE defined.
 #
-# libjitter.a           Contains jitterentropy based RAND seed source.
-#
 # liblegacy.a           Contains all algorithm implementations that should
 #                       go into the legacy provider.  The compilations for
 #                       this library are all done with STATIC_LEGACY defined.
@@ -40,7 +38,6 @@ INCLUDE[../libcrypto]=common/include
 # Libraries we're dealing with
 $LIBCOMMON=libcommon.a
 $LIBFIPS=libfips.a
-$LIBJITTER=libjitter.a
 $LIBLEGACY=liblegacy.a
 $LIBDEFAULT=libdefault.a
 LIBS{noinst}=$LIBDEFAULT $LIBCOMMON
@@ -53,7 +50,6 @@ $COMMON_INCLUDES=../crypto ../include implementations/include common/include
 
 INCLUDE[$LIBCOMMON]=$COMMON_INCLUDES
 INCLUDE[$LIBFIPS]=.. $COMMON_INCLUDES
-INCLUDE[$LIBJITTER]=.. $COMMON_INCLUDES
 INCLUDE[$LIBLEGACY]=.. $COMMON_INCLUDES
 INCLUDE[$LIBDEFAULT]=.. $COMMON_INCLUDES
 DEFINE[$LIBFIPS]=FIPS_MODULE
@@ -67,7 +63,6 @@ DEPEND[$LIBCOMMON]{weak}=../libcrypto
 # The $LIBFIPS dependency on $LIBCOMMON is extra strong, to mitigate for
 # linking problems because they are interdependent
 SOURCE[$LIBFIPS]=$LIBCOMMON
-DEPEND[$LIBJITTER]=$LIBCOMMON ../libcrypto
 DEPEND[$LIBLEGACY]=$LIBCOMMON
 DEPEND[$LIBDEFAULT]=$LIBCOMMON
 
@@ -129,37 +124,6 @@ IF[{- !$disabled{fips} -}]
     GENERATE[fips.rc]=../util/mkrc.pl fips
     SOURCE[$FIPSGOAL]=fips.rc
   ENDIF
-ENDIF
-
-# JITTER RND seed source provider stuff
-# We define it this way to ensure that configdata.pm will have all the necessary
-# information even if we don't build the module.  This will allow us to make all
-# kinds of checks on the source, based on what we specify in diverse build.info
-# files. libjitter.a, jitter.so and their sources aren't built unless the proper
-# LIBS or MODULES statement has been seen, so we have those and only those
-# within a condition.
-IF[{- !$disabled{jitter} -}]
-  $JITTERGOAL=jitter
-
-  # This is the trigger to actually build the FIPS module.  Without these
-  # statements, the final build file will not have a trace of it.
-  MODULES{jitter}=$JITTERGOAL
-  LIBS{noinst}=$LIBJITTER
-
-  DEPEND[$JITTERGOAL]=$LIBJITTER
-  IF[{- defined $target{shared_defflag} -}]
-    SOURCE[$JITTERGOAL]=jitter.ld
-    GENERATE[jitter.ld]=../util/providers.num
-  ENDIF
-
-  # Add VERSIONINFO resource for windows
-  IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
-    GENERATE[jitter.rc]=../util/mkrc.pl jitter
-    SOURCE[$FIPSGOAL]=jitter.rc
-  ENDIF
-
-  SOURCE[$JITTERGOAL]=prov_running.c jitterprov.c
-  INCLUDE[$JITTERGOAL]=../include implementations/include common/include
 ENDIF
 
 #

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,9 +22,10 @@
 #include "crypto/rand.h"
 #include "crypto/rand_pool.h"
 
-#include <jitterentropy.h>
+#ifndef OPENSSL_NO_JITTER
+# include <jitterentropy.h>
 
-#define JITTER_MAX_NUM_TRIES 3
+# define JITTER_MAX_NUM_TRIES 3
 
 static OSSL_FUNC_rand_newctx_fn jitter_new;
 static OSSL_FUNC_rand_freectx_fn jitter_free;
@@ -137,6 +138,9 @@ static int jitter_instantiate(void *vseed, unsigned int strength,
                               ossl_unused const OSSL_PARAM params[])
 {
     PROV_JITTER *s = (PROV_JITTER *)vseed;
+
+    if (jent_entropy_init_ex(0, JENT_FORCE_FIPS))
+        return 0;
 
     s->state = EVP_RAND_STATE_READY;
     return 1;
@@ -313,3 +317,6 @@ const OSSL_DISPATCH ossl_jitter_functions[] = {
     { OSSL_FUNC_RAND_CLEAR_SEED, (void(*)(void))jitter_clear_seed },
     OSSL_DISPATCH_END
 };
+#else
+NON_EMPTY_TRANSLATION_UNIT
+#endif

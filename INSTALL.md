@@ -523,10 +523,10 @@ at the end of this document.
 
 # jitter
 
-When configured with `enable-jitter`, a jitter provider is compiled that can
-provided alternative software seed source. It can be configured by loading
-jitter provider and setting `seed` setting in `openssl.cnf`. A complete minimal
-`openssl.cnf` that loads `default` and `jitter` providers is shown below:
+When configured with `enable-jitter`, a "JITTER" RNG is compiled that
+can provided alternative software seed source. It can be configured by
+loadin setting `seed` setting in `openssl.cnf`. An example
+`openssl.cnf` is shown below:
 
     openssl_conf = openssl_init
 
@@ -539,16 +539,12 @@ jitter provider and setting `seed` setting in `openssl.cnf`. A complete minimal
 
     [provider_sect]
     default = default_sect
-    jitter = jitter_sect
 
     [default_sect]
     activate = 1
 
-    [jitter_sect]
-    activate = 1
-
     [random]
-    seed=SEED-SRC-JITTER
+    seed=JITTER
 
 It uses statically linked [jitterentropy-library](https://github.com/smuellerDD/jitterentropy-library) as the seed source.
 

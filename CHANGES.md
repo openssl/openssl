@@ -161,8 +161,8 @@ OpenSSL 3.3
 
 ### Changes between 3.2 and 3.3.0 [9 Apr 2024]
 
- * Add a new random seed source provider `jitter` using a statically
-   linked jitterentropy library.
+ * Add a new random seed source RNG `JITTER` using a statically linked
+   jitterentropy library.
 
    *Dimitri John Ledkov*
 

@@ -9,13 +9,9 @@ random = random
 
 [provider_sect]
 default = default_sect
-jitter = jitter_sect
 
 [default_sect]
 activate = 1
 
-[jitter_sect]
-activate = 1
-
 [random]
-seed=SEED-SRC-JITTER
+seed=JITTER
