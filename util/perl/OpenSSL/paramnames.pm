@@ -202,6 +202,7 @@ my %params = (
     'RAND_PARAM_TEST_ENTROPY' =>            "test_entropy",
     'RAND_PARAM_TEST_NONCE' =>              "test_nonce",
     'RAND_PARAM_GENERATE' =>                "generate",
+    'RAND_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
 
 # RAND/DRBG names
     'DRBG_PARAM_RESEED_REQUESTS' =>         "reseed_requests",
