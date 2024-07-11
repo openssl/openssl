@@ -142,8 +142,8 @@ For B<DHX> the I<seed> and I<pcounter> can be stored in ASN1 data
 B<DH> parameters with named safe prime group instead.
 
 With the OpenSSL FIPS provider, L<EVP_PKEY_param_check(3)> and
-L<EVP_PKEY_param_check_quick(3)> behave in the following way: The parameters are
-tested whether they are either an approved safe prime group OR that the FFC
+L<EVP_PKEY_param_check_quick(3)> behave in the following way: the parameters
+are tested if they are either an approved safe prime group OR that the FFC
 parameters conform to FIPS186-4 as defined in SP800-56Ar3 I<Assurances of
 Domain-Parameter Validity>.
 
@@ -157,7 +157,7 @@ L<EVP_PKEY_public_check(3)> conforms to SP800-56Ar3
 I<FFC Full Public-Key Validation>.
 
 L<EVP_PKEY_public_check_quick(3)> conforms to SP800-56Ar3
-I<FFC Partial Public-Key Validation> when the DH key is an approved named safe
+I<FFC Partial Public-Key Validation> when the key is an approved named safe
 prime group, otherwise it is the same as L<EVP_PKEY_public_check(3)>.
 
 L<EVP_PKEY_private_check(3)> tests that the private key is in the correct range
