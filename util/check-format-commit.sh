@@ -71,7 +71,13 @@ git show $COMMIT | awk -v mycmt=$COMMIT '
 for i in ${FILE_ALLOWLIST[@]}
 do
     touch $TEMPDIR/ranges.filter
-    grep "$i" $TEMPDIR/ranges.txt >> $TEMPDIR/ranges.filter || true
+    # Note the space after the $i below.  This is done because we want
+    # to match on file suffixes, but the input file is of the form
+    # <commit> <file> <range start>, <range length>
+    # So we can't just match on end of line.  The additional space
+    # here lets us match on suffixes followed by the expected space
+    # in the input file
+    grep "$i " $TEMPDIR/ranges.txt >> $TEMPDIR/ranges.filter || true
 done
 cp $TEMPDIR/ranges.filter $TEMPDIR/ranges.txt
 REMAINING_FILES=$(wc -l $TEMPDIR/ranges.filter | awk '{print $1}')
