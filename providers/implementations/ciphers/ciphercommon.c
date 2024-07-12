@@ -79,7 +79,7 @@ int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_CIPHER_THEN_MAC);
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ENCRYPT_THEN_MAC);
     if (p != NULL
         && !OSSL_PARAM_set_int(p, (flags & EVP_CIPH_FLAG_ENC_THEN_MAC) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
