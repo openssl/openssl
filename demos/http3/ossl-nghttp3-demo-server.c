@@ -130,9 +130,83 @@ static int on_end_stream(nghttp3_conn *h3conn, int64_t stream_id,
     return 0;
 }
 
+/* Read from the stream and push to the h3conn */
+static int quic_server_read(nghttp3_conn *h3conn, SSL *stream, uint64_t id)
+{
+    int ret, r;
+    uint8_t msg2[16000];
+    size_t l = sizeof(msg2) - 1;
+
+    if (!SSL_net_read_desired(stream))
+        return 0; /* Nothing to read */
+
+    ret = SSL_read(stream, msg2, l);
+    if (ret <= 0) {
+        fprintf(stderr, "SSL_read on %llu failed\n",
+               (unsigned long long) id);
+        return -1;
+    }
+
+    r = nghttp3_conn_read_stream(h3conn, id, msg2, ret, 0);
+
+    printf("reading something %d on %llu\n", ret,
+           (unsigned long long) id);
+    printf("nghttp3_conn_read_stream used %d of %d on %llu\n", r,
+           ret, (unsigned long long) id);
+    if (r != ret)
+        return -1;
+    return 1;
+}
+/*
+ * creates the control stream (which seems not need), the encoding
+ * and decoding streams.
+ * nghttp3_conn_bind_control_stream() is for the control stream.
+ */
+static int quic_server_h3streams(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
+{
+    SSL *rstream;
+    SSL *pstream;
+    uint64_t r_streamid, p_streamid;
+    struct ssl_id *ssl_ids = h3ssl->ssl_ids;
+
+   rstream = SSL_new_stream(ssl_ids[0].s, SSL_STREAM_FLAG_UNI);
+    if (rstream != NULL) {
+        fprintf(stderr, "=> Opened on %llu\n",
+                (unsigned long long)SSL_get_stream_id(rstream));
+        fflush(stderr);
+    } else {
+        fprintf(stderr, "=> Stream == NULL!\n");
+        fflush(stderr);
+        return -1;
+    }
+    pstream = SSL_new_stream(ssl_ids[0].s, SSL_STREAM_FLAG_UNI);
+    if (pstream != NULL) {
+        fprintf(stderr, "=> Opened on %llu\n",
+                (unsigned long long)SSL_get_stream_id(pstream));
+        fflush(stderr);
+    } else {
+        fprintf(stderr, "=> Stream == NULL!\n");
+        fflush(stderr);
+        return -1;
+    }
+    r_streamid = SSL_get_stream_id(rstream);
+    p_streamid = SSL_get_stream_id(pstream);
+    if (nghttp3_conn_bind_qpack_streams(h3conn, p_streamid, r_streamid)) {
+        fprintf(stderr, "nghttp3_conn_bind_qpack_streams failed!\n");
+        return -1;
+    }
+    printf("control: NONE enc %llu dec %llu\n",
+           (unsigned long long)p_streamid,
+           (unsigned long long)r_streamid);
+    add_id(SSL_get_stream_id(rstream), rstream, h3ssl);
+    add_id(SSL_get_stream_id(pstream), pstream, h3ssl);
+
+    /* TODO control stream? */
+    return 0;
+}
+
 static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
 {
-    uint8_t msg2[16000];
     int hassomething = 0, i;
     struct ssl_id *ssl_ids = h3ssl->ssl_ids;
     SSL_POLL_ITEM items[MAXSSL_IDS] = {0}, *item = items;
@@ -165,19 +239,25 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
     }
 
     /* We have something */
+    printf("read_from_ssl_ids %ld events\n", (unsigned long)result_count);
     item = items;
     /* SSL_accept_stream if anyway */
     if ((item->revents & SSL_POLL_EVENT_ISB) ||
         (item->revents & SSL_POLL_EVENT_ISU)) {
         SSL *stream = SSL_accept_stream(ssl_ids[0].s, 0);
+        uint64_t id;
 
         if (stream == NULL) {
             return -1; /* something is wrong */
         }
-        printf("=> Received connection on %lld\n",
-               (unsigned long long)SSL_get_stream_id(stream));
-        add_id(SSL_get_stream_id(stream), stream, h3ssl);
-        printf("read_from_ssl_ids %ld events\n", (unsigned long)result_count);
+        id = SSL_get_stream_id(stream);
+        printf("=> Received connection on %lld\n", (unsigned long long) id);
+        add_id(id, stream, h3ssl);
+
+        if (quic_server_read(h3conn, stream, id) == -1) {
+            return -1; /* something is wrong */
+        }
+        hassomething++;
         if (result_count == 1) {
             return 1; /* loop until we have all the streams */
         }
@@ -189,47 +269,15 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
     }
     if (item->revents & SSL_POLL_EVENT_OSU) {
         /* at least one uni */
-        printf("Create uni\n");
         /* we have 4 streams from the client 2, 6 , 10 and 0 */
         /* need 2 streams to the client */
         if (!h3ssl->has_uni) {
-            SSL *rstream;
-            SSL *pstream;
-            uint64_t r_streamid, p_streamid;
-
-            printf("Create uni beacause !h3ssl->has_uni\n");
-            rstream = SSL_new_stream(ssl_ids[0].s, SSL_STREAM_FLAG_UNI);
-            if (rstream != NULL) {
-                fprintf(stderr, "=> Opened on %llu\n",
-                        (unsigned long long)SSL_get_stream_id(rstream));
-                fflush(stderr);
-            } else {
-                fprintf(stderr, "=> Stream == NULL!\n");
-                fflush(stderr);
+            printf("Create uni\n");
+            ret = quic_server_h3streams(h3conn, h3ssl);
+            if (ret == -1) {
+                fprintf(stderr, "quic_server_h3streams failed!\n");
                 return -1;
             }
-            pstream = SSL_new_stream(ssl_ids[0].s, SSL_STREAM_FLAG_UNI);
-            if (pstream != NULL) {
-                fprintf(stderr, "=> Opened on %llu\n",
-                        (unsigned long long)SSL_get_stream_id(pstream));
-                fflush(stderr);
-            } else {
-                fprintf(stderr, "=> Stream == NULL!\n");
-                fflush(stderr);
-                return -1;
-            }
-            r_streamid = SSL_get_stream_id(rstream);
-            p_streamid = SSL_get_stream_id(pstream);
-            if (nghttp3_conn_bind_qpack_streams(h3conn, p_streamid,
-                                                r_streamid)) {
-                fprintf(stderr, "nghttp3_conn_bind_qpack_streams failed!\n");
-                return -1;
-            }
-            printf("control: NONE enc %llu dec %llu\n",
-                   (unsigned long long)p_streamid,
-                   (unsigned long long)r_streamid);
-            add_id(SSL_get_stream_id(rstream), rstream, h3ssl);
-            add_id(SSL_get_stream_id(pstream), pstream, h3ssl);
             h3ssl->has_uni = 1;
             if (result_count == 1) {
                 printf("read_from_ssl_ids 1 event only!\n");
@@ -248,25 +296,15 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
 
         if (item->revents & SSL_POLL_EVENT_R) {
             /* try to read */
-            size_t l = sizeof(msg2) - 1;
             int r;
 
-            if (!SSL_net_read_desired(ssl_ids[i].s)) {
+            r = quic_server_read(h3conn, ssl_ids[i].s, ssl_ids[i].id);
+            if (r == 0) {
                 continue;
             }
-            ret = SSL_read(ssl_ids[i].s, msg2, l);
-            if (ret <= 0) {
-                fprintf(stderr, "SSL_read on %llu failed\n",
-                       (unsigned long long)ssl_ids[i].id);
-                continue; /* TODO */
+            if (r == -1) {
+                return -1;
             }
-            r = nghttp3_conn_read_stream(h3conn, ssl_ids[i].id, msg2,
-                                             ret, 0);
-
-            printf("reading something %d on %llu\n", ret,
-                   (unsigned long long)ssl_ids[i].id);
-            printf("nghttp3_conn_read_stream used %d of %d on %llu\n", r,
-                   ret, (unsigned long long)ssl_ids[i].id);
             hassomething++;
         } else {
             /* Figure out ??? */
@@ -481,6 +519,7 @@ static int waitsocket(int fd, int sec)
         printf("waitsocket for %d\n", sec);
         ret = select(fdmax + 1, &read_fds, NULL, NULL, &tv);
     } else {
+        printf("waitsocket for ever\n");
         ret = select(fdmax + 1, &read_fds, NULL, NULL, NULL);
     }
     if (ret == -1) {
@@ -601,6 +640,15 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
             }
         }
         printf("end_headers_received!!!\n");
+        if (!h3ssl.has_uni) {
+            /* time to create those otherwise we can't push anything to the client */
+            printf("Create uni\n");
+            if (quic_server_h3streams(h3conn, &h3ssl) == -1) {
+                fprintf(stderr, "quic_server_h3streams failed!\n");
+                goto err;
+            }
+            h3ssl.has_uni = 1;
+        }
 
         /* we have receive the request build the response and send it */
         /* XXX add  MAKE_NV("connection", "close"), to resp[] and recheck */
