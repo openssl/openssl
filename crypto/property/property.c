@@ -657,10 +657,13 @@ static void impl_cache_flush_one_alg(ossl_uintmax_t idx, ALGORITHM *alg,
                                      void *v)
 {
     IMPL_CACHE_FLUSH *state = (IMPL_CACHE_FLUSH *)v;
+    unsigned long orig_down_load = lh_QUERY_get_down_load(alg->cache);
 
     state->cache = alg->cache;
+    lh_QUERY_set_down_load(alg->cache, 0);
     lh_QUERY_doall_IMPL_CACHE_FLUSH(state->cache, &impl_cache_flush_cache,
                                     state);
+    lh_QUERY_set_down_load(alg->cache, orig_down_load);
 }
 
 static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
