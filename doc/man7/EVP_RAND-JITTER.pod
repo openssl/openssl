@@ -9,8 +9,12 @@ EVP_RAND-JITTER - The randomness seed source EVP_RAND implementation
 Support for deterministic random number generator seeding through the
 B<EVP_RAND> API.
 
-The seed source comes from statically linked jitterentropy-library,
-which produces randomness based on tiny CPU "jitter" fluctuations.
+This software seed source produces randomness based on tiny CPU
+"jitter" fluctuations.
+
+It is available when OpenSSL is compiled with B<enable-jitter>
+option. When available it is listed in B<openssl list
+-random-generators> and B<openssl info -seeds>.
 
 =head2 Identity
 

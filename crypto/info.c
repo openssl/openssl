@@ -189,9 +189,11 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
         add_seeds_string("os-specific");
 #endif
 #ifndef OPENSSL_NO_JITTER
-        char jent_version_string[32];
-        sprintf(jent_version_string, "JITTER (%d)", jent_version());
-        add_seeds_string(jent_version_string);
+	{
+            char jent_version_string[32];
+            sprintf(jent_version_string, "JITTER (%d)", jent_version());
+            add_seeds_string(jent_version_string);
+	}
 #endif
         seed_sources = seeds;
     }
