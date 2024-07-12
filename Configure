@@ -1321,15 +1321,14 @@ if (scalar(grep { $_ eq 'none' } @seed_sources) > 0) {
 
 ============================== WARNING ===============================
 You have selected the --with-rand-seed=none option, which effectively
-disables automatic reseeding of the OpenSSL random generator.
+disables automatic reseeding of the OpenSSL SEED-SRC random generator.
 All operations depending on the random generator such as creating keys
 will not work unless the random generator is seeded manually by the
 application.
 
-Alternative to manually seeding is to compile with JITTER RNG enabled,
-it will be used instead of rand-seed=none. Or specify alternative
-seed= provider in openssl.cnf (for example from a 3rd party entropy
-provider).
+Instead of manually seeding, a different random generator can be set
+at runtime in openssl.cnf or configured at build time with
+-DOPENSSL_DEFAULT_SEED_SRC.
 
 Please read the 'Note on random number generation' section in the
 INSTALL.md instructions and the RAND_DRBG(7) manual page for more
