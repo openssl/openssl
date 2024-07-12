@@ -12,24 +12,9 @@
 # fall into the commits change ranges.
 #
 
-
-# List of Regexes to use when running check-format.pl.
-# Style checks don't apply to any of these
-EXCLUDED_FILE_REGEX=("\.pod" \
-                     "\.pl"  \
-                     "\.pm"  \
-                     "\.t"   \
-                     "\.yml" \
-                     "\.sh" \
-                     "\.cnf" \
-                     "\.conf" \
-                     "\.info" \
-                     "\.md" \
-                     "\.S" \
-                     "\.pem" \
-                     "\.txt" \
-                     "\.dat" \
-                     "Configure") 
+# Allowlist of files to scan
+# Currently this is any .c or .h file (with an optional .in suffix
+FILE_ALLOWLIST=("\.[ch]\(.in\)\?")
 
 # Exit code for the script
 EXIT_CODE=0
@@ -82,19 +67,19 @@ git show $COMMIT | awk -v mycmt=$COMMIT '
         printf mycmt " " myfile " " $3 "\n"
     }' >> $TEMPDIR/ranges.txt || true
 
-# filter out anything that matches on a filter regex
-for i in ${EXCLUDED_FILE_REGEX[@]}
+# filter in anything that matches on a filter regex
+for i in ${FILE_ALLOWLIST[@]}
 do
     touch $TEMPDIR/ranges.filter
-    grep -v "$i" $TEMPDIR/ranges.txt >> $TEMPDIR/ranges.filter || true
-    REMAINING_FILES=$(wc -l $TEMPDIR/ranges.filter | awk '{print $1}')
-    if [ $REMAINING_FILES -eq 0 ]
-    then
-        echo "This commit has no files that require checking"
-        exit 0
-    fi
-    mv $TEMPDIR/ranges.filter $TEMPDIR/ranges.txt
+    grep "$i" $TEMPDIR/ranges.txt >> $TEMPDIR/ranges.filter || true
 done
+cp $TEMPDIR/ranges.filter $TEMPDIR/ranges.txt
+REMAINING_FILES=$(wc -l $TEMPDIR/ranges.filter | awk '{print $1}')
+if [ $REMAINING_FILES -eq 0 ]
+then
+    echo "This commit has no files that require checking"
+    exit 0
+fi
 
 # check out the files from the commit level.
 # For each file name in ranges, we show that file at the commit
