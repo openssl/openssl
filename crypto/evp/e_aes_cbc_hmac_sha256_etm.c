@@ -14,7 +14,7 @@
 
 #if defined(__aarch64__) && defined(AES_CBC_HMAC_SHA_ETM_CAPABLE)
 
-#include "arm_arch.h"
+# include "arm_arch.h"
 
 static EVP_CIPHER hwaes_128_cbc_hmac_sha256_etm_cipher = {
 # ifdef NID_aes_128_cbc_hmac_sha256_etm
@@ -76,21 +76,21 @@ static EVP_CIPHER hwaes_256_cbc_hmac_sha256_etm_cipher = {
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha256_etm(void)
 {
     return ((OPENSSL_armcap_P & ARMV8_AES) &&
-                (OPENSSL_armcap_P & ARMV8_SHA256) ?
+            (OPENSSL_armcap_P & ARMV8_SHA256) ?
             &hwaes_128_cbc_hmac_sha256_etm_cipher : NULL);
 }
 
 const EVP_CIPHER *EVP_aes_192_cbc_hmac_sha256_etm(void)
 {
     return ((OPENSSL_armcap_P & ARMV8_AES) &&
-                (OPENSSL_armcap_P & ARMV8_SHA256) ?
+            (OPENSSL_armcap_P & ARMV8_SHA256) ?
             &hwaes_192_cbc_hmac_sha256_etm_cipher : NULL);
 }
 
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha256_etm(void)
 {
     return ((OPENSSL_armcap_P & ARMV8_AES) &&
-                (OPENSSL_armcap_P & ARMV8_SHA256) ?
+            (OPENSSL_armcap_P & ARMV8_SHA256) ?
             &hwaes_256_cbc_hmac_sha256_etm_cipher : NULL);
 }
 #else

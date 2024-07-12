@@ -24,11 +24,11 @@ void sha256_block_data_order(void *c, const void *p, size_t len);
 
 # if defined(__aarch64__)
 int asm_aescbc_sha256_hmac(const uint8_t *csrc, uint8_t *cdst, uint64_t clen,
-                         uint8_t *dsrc, uint8_t *ddst, uint64_t dlen,
-                         CIPH_DIGEST *arg);
+                           uint8_t *dsrc, uint8_t *ddst, uint64_t dlen,
+                           CIPH_DIGEST *arg);
 void asm_sha256_hmac_aescbc_dec(const uint8_t *csrc, uint8_t *cdst, uint64_t clen,
-                              const unsigned char *dsrc, uint8_t *ddst, size_t dlen,
-                              CIPH_DIGEST *arg);
+                                const unsigned char *dsrc, uint8_t *ddst, size_t dlen,
+                                CIPH_DIGEST *arg);
 #  define HWAES128_ENC_CBC_SHA256_ETM asm_aescbc_sha256_hmac
 #  define HWAES128_DEC_CBC_SHA256_ETM asm_sha256_hmac_aescbc_dec
 # endif
@@ -74,7 +74,9 @@ static int hwaes_cbc_hmac_sha256_etm(PROV_CIPHER_CTX *vctx,
 {
     PROV_AES_HMAC_SHA_ETM_CTX *ctx = (PROV_AES_HMAC_SHA_ETM_CTX *)vctx;
     CIPH_DIGEST arg = {0};
+
     ciph_digest_arg_init(&arg, vctx);
+
     if (len % AES_BLOCK_SIZE) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH);
         return 0;
@@ -166,8 +168,8 @@ static int aes_cbc_hmac_sha256_cipher(PROV_CIPHER_CTX *vctx,
 
 static const PROV_CIPHER_HW_AES_HMAC_SHA_ETM cipher_hw_aes_hmac_sha256_etm = {
     {
-      aes_cbc_hmac_sha256_init_key,
-      aes_cbc_hmac_sha256_cipher
+        aes_cbc_hmac_sha256_init_key,
+        aes_cbc_hmac_sha256_cipher
     },
     aes_cbc_hmac_sha256_set_mac_key
 };

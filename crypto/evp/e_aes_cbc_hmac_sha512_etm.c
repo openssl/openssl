@@ -15,11 +15,11 @@
 
 #if defined(__aarch64__) && defined(AES_CBC_HMAC_SHA_ETM_CAPABLE)
 
-#include "arm_arch.h"
+# include "arm_arch.h"
 
 # define HWAES_CBC_HMAC_SHA512_CAPABLE \
-         ((OPENSSL_armcap_P & ARMV8_AES) && \
-         (OPENSSL_armcap_P & ARMV8_SHA512))
+    ((OPENSSL_armcap_P & ARMV8_AES) && \
+     (OPENSSL_armcap_P & ARMV8_SHA512))
 
 static EVP_CIPHER hwaes_128_cbc_hmac_sha512_etm_cipher = {
 # ifdef NID_aes_128_cbc_hmac_sha512_etm
