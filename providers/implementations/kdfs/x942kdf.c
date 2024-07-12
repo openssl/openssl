@@ -507,12 +507,21 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     KDF_X942 *ctx = vctx;
     OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(ctx->provctx);
     const char *propq = NULL;
+    const EVP_MD *md;
     size_t id;
 
     if (params == NULL)
         return 1;
-    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
-        return 0;
+
+    if (OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST) != NULL) {
+        if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
+            return 0;
+        md = ossl_prov_digest_md(&ctx->digest);
+        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
+            return 0;
+        }
+    }
 
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SECRET);
     if (p == NULL)
