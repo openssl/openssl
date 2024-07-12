@@ -16,7 +16,7 @@
 #ifndef AES_CBC_HMAC_SHA_ETM_CAPABLE
 # define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)              \
 const OSSL_DISPATCH ossl_##nm##kbits##sub##_functions[] = {                    \
-    OSSL_DISPATCH_END                                                              \
+    OSSL_DISPATCH_END                                                          \
 };
 #else
 static OSSL_FUNC_cipher_encrypt_init_fn aes_einit;
@@ -32,7 +32,7 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_AES_HMAC_SHA_ETM_CTX *ctx = (PROV_AES_HMAC_SHA_ETM_CTX *)vctx;
     PROV_CIPHER_HW_AES_HMAC_SHA_ETM *hw =
-       (PROV_CIPHER_HW_AES_HMAC_SHA_ETM *)ctx->hw;
+        (PROV_CIPHER_HW_AES_HMAC_SHA_ETM *)ctx->hw;
     const OSSL_PARAM *p;
 
     if (params == NULL)
@@ -82,8 +82,8 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 static int aes_einit(void *ctx, const unsigned char *key, size_t keylen,
-                          const unsigned char *iv, size_t ivlen,
-                          const OSSL_PARAM params[])
+                     const unsigned char *iv, size_t ivlen,
+                     const OSSL_PARAM params[])
 {
     if (!ossl_cipher_generic_einit(ctx, key, keylen, iv, ivlen, NULL))
         return 0;
@@ -91,8 +91,8 @@ static int aes_einit(void *ctx, const unsigned char *key, size_t keylen,
 }
 
 static int aes_dinit(void *ctx, const unsigned char *key, size_t keylen,
-                          const unsigned char *iv, size_t ivlen,
-                          const OSSL_PARAM params[])
+                     const unsigned char *iv, size_t ivlen,
+                     const OSSL_PARAM params[])
 {
     if (!ossl_cipher_generic_dinit(ctx, key, keylen, iv, ivlen, NULL))
         return 0;
