@@ -187,3 +187,21 @@ Ctrl.salt = salt:salt
 Ctrl.iter = iter:1
 Ctrl.digest = digest:sha512
 Output = 00ef42cdbfc98d29db20976608e455567fdddf14
+
+FIPSversion = <3.4.0
+KDF = PBKDF2
+Ctrl.pkcs5 = pkcs5:1
+Ctrl.pass = pass:password
+Ctrl.salt = salt:salt
+Ctrl.iter = iter:1
+Ctrl.digest = digest:shake-128
+Result = KDF_DERIVE_ERROR
+
+FIPSversion = >=3.4.0
+KDF = PBKDF2
+Ctrl.pkcs5 = pkcs5:1
+Ctrl.pass = pass:password
+Ctrl.salt = salt:salt
+Ctrl.iter = iter:1
+Ctrl.digest = digest:shake-128
+Result = KDF_CTRL_ERROR
