@@ -25,8 +25,6 @@
 #ifndef OPENSSL_NO_JITTER
 # include <jitterentropy.h>
 
-# define JITTER_MAX_NUM_TRIES 3
-
 static OSSL_FUNC_rand_newctx_fn jitter_new;
 static OSSL_FUNC_rand_freectx_fn jitter_free;
 static OSSL_FUNC_rand_instantiate_fn jitter_instantiate;
@@ -41,12 +39,13 @@ static OSSL_FUNC_rand_lock_fn jitter_lock;
 static OSSL_FUNC_rand_unlock_fn jitter_unlock;
 static OSSL_FUNC_rand_get_seed_fn jitter_get_seed;
 static OSSL_FUNC_rand_clear_seed_fn jitter_clear_seed;
-static size_t get_jitter_random_value(unsigned char *buf, size_t len);
 
 typedef struct {
     void *provctx;
     int state;
 } PROV_JITTER;
+
+static size_t get_jitter_random_value(PROV_JITTER *s, unsigned char *buf, size_t len);
 
 /*
  * Acquire entropy from jitterentropy library
@@ -54,7 +53,8 @@ typedef struct {
  * Returns the total entropy count, if it exceeds the requested
  * entropy count. Otherwise, returns an entropy count of 0.
  */
-size_t ossl_prov_acquire_entropy_from_jitter(RAND_POOL *pool)
+static size_t ossl_prov_acquire_entropy_from_jitter(PROV_JITTER *s,
+                                                    RAND_POOL *pool)
 {
     size_t bytes_needed;
     unsigned char *buffer;
@@ -64,7 +64,7 @@ size_t ossl_prov_acquire_entropy_from_jitter(RAND_POOL *pool)
         buffer = ossl_rand_pool_add_begin(pool, bytes_needed);
 
         if (buffer != NULL) {
-            if (get_jitter_random_value(buffer, bytes_needed) == bytes_needed) {
+            if (get_jitter_random_value(s, buffer, bytes_needed) == bytes_needed) {
                 ossl_rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
             } else {
                 ossl_rand_pool_add_end(pool, 0, 0);
@@ -76,34 +76,32 @@ size_t ossl_prov_acquire_entropy_from_jitter(RAND_POOL *pool)
 }
 
 /* Obtain random bytes from the jitter library */
-static size_t get_jitter_random_value(unsigned char *buf, size_t len)
+static size_t get_jitter_random_value(PROV_JITTER *s,
+                                      unsigned char *buf, size_t len)
 {
     struct rand_data *jitter_ec = NULL;
     ssize_t result = 0;
-    size_t num_tries;
 
     jitter_ec = jent_entropy_collector_alloc(0, JENT_FORCE_FIPS);
     if (jitter_ec == NULL)
         return 0;
 
-    for (num_tries = 0; num_tries < JITTER_MAX_NUM_TRIES; num_tries++) {
-        /*
-         * Do not use _safe API variant with built-in retries, until
-         * failure because it reseeds the entropy source which is not
-         * certifiable
-         */
-        result = jent_read_entropy(jitter_ec, (char *) buf, len);
-
-        /* Success */
-        if (result == len) {
-            jent_entropy_collector_free(jitter_ec);
-            return len;
-        }
-    }
-
+    /*
+     * Do not use _safe API variant with built-in retries, until
+     * failure because it reseeds the entropy source which is not
+     * certifiable
+     */
+    result = jent_read_entropy(jitter_ec, (char *) buf, len);
     jent_entropy_collector_free(jitter_ec);
 
-    /* Catastrophic failure, maybe should abort here */
+    /* Success */
+    if (result == len)
+        return len;
+
+    /* Failure */
+    s->state = EVP_RAND_STATE_ERROR;
+    ERR_raise_data(ERR_LIB_RAND, RAND_R_ERROR_RETRIEVING_ENTROPY,
+                   "jent_read_entropy (%d)", result);
     return 0;
 }
 
@@ -138,9 +136,14 @@ static int jitter_instantiate(void *vseed, unsigned int strength,
                               ossl_unused const OSSL_PARAM params[])
 {
     PROV_JITTER *s = (PROV_JITTER *)vseed;
+    int ret;
 
-    if (jent_entropy_init_ex(0, JENT_FORCE_FIPS))
+    if ((ret = jent_entropy_init_ex(0, JENT_FORCE_FIPS)) != 0) {
+        ERR_raise_data(ERR_LIB_RAND, RAND_R_ERROR_RETRIEVING_ENTROPY,
+                       "jent_entropy_init_ex (%d)", ret);
+        s->state = EVP_RAND_STATE_ERROR;
         return 0;
+    }
 
     s->state = EVP_RAND_STATE_READY;
     return 1;
@@ -178,7 +181,7 @@ static int jitter_generate(void *vseed, unsigned char *out, size_t outlen,
     }
 
     /* Get entropy from jitter entropy library. */
-    entropy_available = ossl_prov_acquire_entropy_from_jitter(pool);
+    entropy_available = ossl_prov_acquire_entropy_from_jitter(s, pool);
 
     if (entropy_available > 0)
         memcpy(out, ossl_rand_pool_buffer(pool), ossl_rand_pool_length(pool));
@@ -252,6 +255,7 @@ static size_t jitter_get_seed(void *vseed, unsigned char **pout,
     size_t entropy_available = 0;
     size_t i;
     RAND_POOL *pool;
+    PROV_JITTER *s = (PROV_JITTER *)vseed;
 
     pool = ossl_rand_pool_new(entropy, 1, min_len, max_len);
     if (pool == NULL) {
@@ -260,7 +264,7 @@ static size_t jitter_get_seed(void *vseed, unsigned char **pout,
     }
 
     /* Get entropy from jitter entropy library. */
-    entropy_available = ossl_prov_acquire_entropy_from_jitter(pool);
+    entropy_available = ossl_prov_acquire_entropy_from_jitter(s, pool);
 
     if (entropy_available > 0) {
         ret = ossl_rand_pool_length(pool);
