@@ -4971,3 +4971,44 @@ Ctrl.mode = mode:EXTRACT_ONLY
 Ctrl.digest = digest:SHA512-256
 Ctrl.key = hexkey:f8af6aea2d397baf2948a25b2834200692cff17eee9165e4e27babee9edefd05
 Output = c8240b43113bb8bd211ee97c5145d389e8074f76eeeaac74eb55691062a436e4
+
+# Test that the key whose length is shorter than 112 bits is rejected
+FIPSversion = >=3.4.0
+KDF = TLS13-KDF
+Ctrl.mode = mode:EXTRACT_ONLY
+Ctrl.digest = digest:SHA2-256
+Ctrl.key = hexkey:0102030405060708090a0b
+Result = KDF_DERIVE_ERROR
+
+FIPSversion = >=3.4.0
+KDF = TLS13-KDF
+Ctrl.mode = mode:EXPAND_ONLY
+Ctrl.digest = digest:SHA2-256
+Ctrl.key = hexkey:0102030405060708090a0b
+Ctrl.data = hexdata:7c92f68bd5bf3638ea338a6494722e1b44127e1b7e8aad535f2322a644ff22b3
+Ctrl.prefix = hexprefix:746c73313320
+Ctrl.label = hexlabel:6320652074726166666963
+Result = KDF_DERIVE_ERROR
+
+# Test that the key whose length is shorter than 112 bits is reported as
+# unapproved
+FIPSversion = >=3.4.0
+KDF = TLS13-KDF
+Unapproved = 1
+Ctrl.key-check = key-check:0
+Ctrl.mode = mode:EXTRACT_ONLY
+Ctrl.digest = digest:SHA2-256
+Ctrl.key = hexkey:0102030405060708090a0b
+Output = ac5ae06e0f6bff82f6256f0fc9fb943554752ba0c93f42ee6499b99c9e5c24a8
+
+FIPSversion = >=3.4.0
+KDF = TLS13-KDF
+Unapproved = 1
+Ctrl.key-check = key-check:0
+Ctrl.mode = mode:EXPAND_ONLY
+Ctrl.digest = digest:SHA2-256
+Ctrl.key = hexkey:0b0b0b0b0b0b0b0b0b0b0b
+Ctrl.data = hexdata:7c92f68bd5bf3638ea338a6494722e1b44127e1b7e8aad535f2322a644ff22b3
+Ctrl.prefix = hexprefix:746c73313320
+Ctrl.label = hexlabel:6320652074726166666963
+Output = a8464234c7957b85460bf7abda8e20aa43b9e0944c02d76c1c28672619cf6978

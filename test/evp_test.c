@@ -3691,6 +3691,7 @@ static int pkey_kdf_test_parse(EVP_TEST *t,
 
 static int pkey_kdf_test_run(EVP_TEST *t)
 {
+    int ret = 1;
     PKEY_KDF_DATA *expected = t->data;
     unsigned char *got = NULL;
     size_t got_len = 0;
@@ -3724,6 +3725,10 @@ static int pkey_kdf_test_run(EVP_TEST *t)
         t->err = "KDF_DERIVE_ERROR";
         goto err;
     }
+    if (!pkey_check_fips_approved(expected->ctx, t)) {
+        ret = 0;
+        goto err;
+    }
     if (!TEST_mem_eq(expected->output, expected->output_len, got, got_len)) {
         t->err = "KDF_MISMATCH";
         goto err;
@@ -3732,7 +3737,7 @@ static int pkey_kdf_test_run(EVP_TEST *t)
 
  err:
     OPENSSL_free(got);
-    return 1;
+    return ret;
 }
 
 static const EVP_TEST_METHOD pkey_kdf_test_method = {
