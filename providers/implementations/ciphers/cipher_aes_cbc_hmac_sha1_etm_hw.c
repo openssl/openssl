@@ -74,7 +74,9 @@ static int hwaes_cbc_hmac_sha1_etm(PROV_CIPHER_CTX *vctx,
 {
     PROV_AES_HMAC_SHA_ETM_CTX *ctx = (PROV_AES_HMAC_SHA_ETM_CTX *)vctx;
     CIPH_DIGEST arg = {0};
+
     ciph_digest_arg_init(&arg, vctx);
+
     if (len % AES_BLOCK_SIZE) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH);
         return 0;
@@ -166,8 +168,8 @@ static int aes_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
 
 static const PROV_CIPHER_HW_AES_HMAC_SHA_ETM cipher_hw_aes_hmac_sha1_etm = {
     {
-      aes_cbc_hmac_sha1_init_key,
-      aes_cbc_hmac_sha1_cipher
+        aes_cbc_hmac_sha1_init_key,
+        aes_cbc_hmac_sha1_cipher
     },
     aes_cbc_hmac_sha1_set_mac_key
 };

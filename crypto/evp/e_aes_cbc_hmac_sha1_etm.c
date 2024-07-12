@@ -16,9 +16,9 @@
 
 # include "arm_arch.h"
 
-static EVP_CIPHER hwaes_128_cbc_hmac_sha256_etm_cipher = {
-# ifdef NID_aes_128_cbc_hmac_sha256_etm
-    NID_aes_128_cbc_hmac_sha256_etm,
+static EVP_CIPHER hwaes_128_cbc_hmac_sha1_etm_cipher = {
+# ifdef NID_aes_128_cbc_hmac_sha1_etm
+    NID_aes_128_cbc_hmac_sha1_etm,
 # else
     NID_undef,
 # endif
@@ -35,9 +35,9 @@ static EVP_CIPHER hwaes_128_cbc_hmac_sha256_etm_cipher = {
     NULL
 };
 
-static EVP_CIPHER hwaes_192_cbc_hmac_sha256_etm_cipher = {
-# ifdef NID_aes_192_cbc_hmac_sha256_etm
-    NID_aes_192_cbc_hmac_sha256_etm,
+static EVP_CIPHER hwaes_192_cbc_hmac_sha1_etm_cipher = {
+# ifdef NID_aes_192_cbc_hmac_sha1_etm
+    NID_aes_192_cbc_hmac_sha1_etm,
 # else
     NID_undef,
 # endif
@@ -54,9 +54,9 @@ static EVP_CIPHER hwaes_192_cbc_hmac_sha256_etm_cipher = {
     NULL
 };
 
-static EVP_CIPHER hwaes_256_cbc_hmac_sha256_etm_cipher = {
-# ifdef NID_aes_256_cbc_hmac_sha256_etm
-    NID_aes_256_cbc_hmac_sha256_etm,
+static EVP_CIPHER hwaes_256_cbc_hmac_sha1_etm_cipher = {
+# ifdef NID_aes_256_cbc_hmac_sha1_etm
+    NID_aes_256_cbc_hmac_sha1_etm,
 # else
     NID_undef,
 # endif
@@ -73,38 +73,38 @@ static EVP_CIPHER hwaes_256_cbc_hmac_sha256_etm_cipher = {
     NULL
 };
 
-const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha256_etm(void)
+const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1_etm(void)
 {
     return ((OPENSSL_armcap_P & ARMV8_AES) &&
-            (OPENSSL_armcap_P & ARMV8_SHA256) ?
-            &hwaes_128_cbc_hmac_sha256_etm_cipher : NULL);
+            (OPENSSL_armcap_P & ARMV8_SHA1) ?
+            &hwaes_128_cbc_hmac_sha1_etm_cipher : NULL);
 }
 
-const EVP_CIPHER *EVP_aes_192_cbc_hmac_sha256_etm(void)
+const EVP_CIPHER *EVP_aes_192_cbc_hmac_sha1_etm(void)
 {
     return ((OPENSSL_armcap_P & ARMV8_AES) &&
-            (OPENSSL_armcap_P & ARMV8_SHA256) ?
-            &hwaes_192_cbc_hmac_sha256_etm_cipher : NULL);
+            (OPENSSL_armcap_P & ARMV8_SHA1) ?
+            &hwaes_192_cbc_hmac_sha1_etm_cipher : NULL);
 }
 
-const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha256_etm(void)
+const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1_etm(void)
 {
     return ((OPENSSL_armcap_P & ARMV8_AES) &&
-            (OPENSSL_armcap_P & ARMV8_SHA256) ?
-            &hwaes_256_cbc_hmac_sha256_etm_cipher : NULL);
+            (OPENSSL_armcap_P & ARMV8_SHA1) ?
+            &hwaes_256_cbc_hmac_sha1_etm_cipher : NULL);
 }
 #else
-const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha256_etm(void)
+const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1_etm(void)
 {
     return NULL;
 }
 
-const EVP_CIPHER *EVP_aes_192_cbc_hmac_sha256_etm(void)
+const EVP_CIPHER *EVP_aes_192_cbc_hmac_sha1_etm(void)
 {
     return NULL;
 }
 
-const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha256_etm(void)
+const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1_etm(void)
 {
     return NULL;
 }
