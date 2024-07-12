@@ -350,7 +350,7 @@ int EVP_CIPHER_get_type(const EVP_CIPHER *cipher)
 int evp_cipher_cache_constants(EVP_CIPHER *cipher)
 {
     int ok, aead = 0, custom_iv = 0, cts = 0, multiblock = 0, randkey = 0;
-    int cipher_then_mac = 0;
+    int encrypt_then_mac = 0;
     size_t ivlen = 0;
     size_t blksz = 0;
     size_t keylen = 0;
@@ -369,8 +369,8 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
                                          &multiblock);
     params[8] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_HAS_RAND_KEY,
                                          &randkey);
-    params[9] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_CIPHER_THEN_MAC,
-                                         &cipher_then_mac);
+    params[9] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_ENCRYPT_THEN_MAC,
+                                         &encrypt_then_mac);
     params[10] = OSSL_PARAM_construct_end();
     ok = evp_do_ciph_getparams(cipher, params) > 0;
     if (ok) {
@@ -390,7 +390,7 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
             cipher->flags |= EVP_CIPH_FLAG_CUSTOM_CIPHER;
         if (randkey)
             cipher->flags |= EVP_CIPH_RAND_KEY;
-        if (cipher_then_mac)
+        if (encrypt_then_mac)
             cipher->flags |= EVP_CIPH_FLAG_ENC_THEN_MAC;
         if (OSSL_PARAM_locate_const(EVP_CIPHER_gettable_ctx_params(cipher),
                                     OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS))
