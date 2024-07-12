@@ -658,8 +658,9 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
 static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 0;
-    size_t block_padding = 0, hs_padding = 0;
+    unsigned long block_padding = 0, hs_padding = 0;
     char *commap = NULL, *copy = NULL;
+    char *endptr = NULL;
 
     copy = OPENSSL_strdup(value);
     if (copy == NULL)
@@ -671,9 +672,11 @@ static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
             OPENSSL_free(copy);
             return 0;
         }
-        hs_padding = (size_t) atoi(commap + 1);
+        if (!OPENSSL_strtoul(commap + 1, &endptr, 0, &hs_padding))
+            return 0;
     }
-    block_padding = (size_t) atoi(copy);
+    if (!OPENSSL_strtoul(copy, &endptr, 0, &block_padding))
+        return 0;
     if (commap == NULL)
         hs_padding = block_padding;
     OPENSSL_free(copy);
@@ -683,10 +686,11 @@ static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
      */
     if (block_padding >= 0 || hs_padding >= 0) {
         if (cctx->ctx)
-            rv = SSL_CTX_set_block_padding_ex(cctx->ctx, block_padding,
-                                              hs_padding);
+            rv = SSL_CTX_set_block_padding_ex(cctx->ctx, (size_t)block_padding,
+                                              (size_t)hs_padding);
         if (cctx->ssl)
-            rv = SSL_set_block_padding_ex(cctx->ssl, block_padding, hs_padding);
+            rv = SSL_set_block_padding_ex(cctx->ssl, (size_t)block_padding,
+                                          (size_t)hs_padding);
     }
     return rv;
 }
