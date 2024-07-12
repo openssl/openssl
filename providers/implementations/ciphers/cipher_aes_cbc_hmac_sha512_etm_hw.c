@@ -26,16 +26,16 @@ const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha512_e
     return NULL;
 }
 #else
-#if defined(__aarch64__)
+# if defined(__aarch64__)
 void asm_aescbc_sha512_hmac(const uint8_t *csrc, uint8_t *cdst, uint64_t clen,
                             uint8_t *dsrc, uint8_t *ddst, uint64_t dlen,
                             CIPH_DIGEST *arg);
 void asm_sha512_hmac_aescbc_dec(const uint8_t *csrc, uint8_t *cdst, uint64_t clen,
                                 uint8_t *dsrc, uint8_t *ddst, uint64_t dlen,
                                 CIPH_DIGEST *arg);
-#    define HWAES_ENC_CBC_SHA512_ETM asm_aescbc_sha512_hmac
-#    define HWAES_DEC_CBC_SHA512_ETM asm_sha512_hmac_aescbc_dec
-#endif
+#  define HWAES_ENC_CBC_SHA512_ETM asm_aescbc_sha512_hmac
+#  define HWAES_DEC_CBC_SHA512_ETM asm_sha512_hmac_aescbc_dec
+# endif
 
 int ossl_cipher_capable_aes_cbc_hmac_sha512_etm(void)
 {
@@ -111,7 +111,6 @@ static int hwaes_cbc_hmac_sha512_etm(PROV_CIPHER_CTX *vctx,
                                      const unsigned char *in, size_t len)
 {
     PROV_AES_HMAC_SHA_ETM_CTX *ctx = (PROV_AES_HMAC_SHA_ETM_CTX *)vctx;
-
     CIPH_DIGEST arg = {0};
 
     ciph_digest_arg_init(&arg, vctx);
@@ -178,8 +177,8 @@ static void hwaes_cbc_hmac_sha512_set_mac_key(void *vctx,
 
 static const PROV_CIPHER_HW_AES_HMAC_SHA_ETM cipher_hw_aes_hmac_sha512_etm = {
     {
-      hwaes_cbc_hmac_sha512_init_key,
-      hwaes_cbc_hmac_sha512_cipher
+     hwaes_cbc_hmac_sha512_init_key,
+     hwaes_cbc_hmac_sha512_cipher
     },
     hwaes_cbc_hmac_sha512_set_mac_key
 };
