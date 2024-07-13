@@ -834,3 +834,4 @@ EVP_PKEY_base_id                        define
 SSL_set_retry_verify                    define
 TS_VERIFY_CTX                           define
 CMAC_CTX                                define
+SSL_get_builtin_sigalgs                 define

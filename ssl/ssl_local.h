@@ -1862,6 +1862,8 @@ typedef struct sigalg_lookup_st {
     int enabled;
 } SIGALG_LOOKUP;
 
+const char *ssl_get_sigalg_name(int sigalg);
+
 /* DTLS structures */
 
 # ifndef OPENSSL_NO_SCTP

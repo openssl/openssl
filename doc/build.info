@@ -2563,6 +2563,10 @@ DEPEND[html/man3/SSL_get_all_async_fds.html]=man3/SSL_get_all_async_fds.pod
 GENERATE[html/man3/SSL_get_all_async_fds.html]=man3/SSL_get_all_async_fds.pod
 DEPEND[man/man3/SSL_get_all_async_fds.3]=man3/SSL_get_all_async_fds.pod
 GENERATE[man/man3/SSL_get_all_async_fds.3]=man3/SSL_get_all_async_fds.pod
+DEPEND[html/man3/SSL_get_builtin_sigalgs.html]=man3/SSL_get_builtin_sigalgs.pod
+GENERATE[html/man3/SSL_get_builtin_sigalgs.html]=man3/SSL_get_builtin_sigalgs.pod
+DEPEND[man/man3/SSL_get_builtin_sigalgs.3]=man3/SSL_get_builtin_sigalgs.pod
+GENERATE[man/man3/SSL_get_builtin_sigalgs.3]=man3/SSL_get_builtin_sigalgs.pod
 DEPEND[html/man3/SSL_get_certificate.html]=man3/SSL_get_certificate.pod
 GENERATE[html/man3/SSL_get_certificate.html]=man3/SSL_get_certificate.pod
 DEPEND[man/man3/SSL_get_certificate.3]=man3/SSL_get_certificate.pod
@@ -3632,6 +3636,7 @@ html/man3/SSL_get0_peer_rpk.html \
 html/man3/SSL_get0_peer_scts.html \
 html/man3/SSL_get_SSL_CTX.html \
 html/man3/SSL_get_all_async_fds.html \
+html/man3/SSL_get_builtin_sigalgs.html \
 html/man3/SSL_get_certificate.html \
 html/man3/SSL_get_ciphers.html \
 html/man3/SSL_get_client_random.html \
@@ -4292,6 +4297,7 @@ man/man3/SSL_get0_peer_rpk.3 \
 man/man3/SSL_get0_peer_scts.3 \
 man/man3/SSL_get_SSL_CTX.3 \
 man/man3/SSL_get_all_async_fds.3 \
+man/man3/SSL_get_builtin_sigalgs.3 \
 man/man3/SSL_get_certificate.3 \
 man/man3/SSL_get_ciphers.3 \
 man/man3/SSL_get_client_random.3 \

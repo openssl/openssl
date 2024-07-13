@@ -1594,6 +1594,57 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
     return ret;
 }
 
+#define SIGLEN_BUF_INCREMENT 100
+
+char* SSL_get_builtin_sigalgs(OSSL_LIB_CTX *libctx) {
+    size_t i, retlen = 0, maxretlen = SIGLEN_BUF_INCREMENT;
+    const SIGALG_LOOKUP *lu;
+    EVP_PKEY *tmpkey = EVP_PKEY_new();
+    char *retval = OPENSSL_zalloc(maxretlen);
+
+    for (i = 0, lu = sigalg_lookup_tbl;
+         i < OSSL_NELEM(sigalg_lookup_tbl); lu++, i++) {
+        EVP_PKEY_CTX *pctx;
+        int enabled = 1;
+
+        /* Check hash is available in some provider. */
+        if (lu->hash != NID_undef) {
+            EVP_MD *hash = EVP_MD_fetch(libctx, OBJ_nid2ln(lu->hash), NULL);
+            /* If unable to create we assume the hash algorithm is unavailable */
+            if (hash == NULL) {
+                enabled = 0;
+                continue;
+            }
+            EVP_MD_free(hash);
+        }
+
+        if (!EVP_PKEY_set_type(tmpkey, lu->sig)) {
+            enabled = 0;
+            continue;
+        }
+        pctx = EVP_PKEY_CTX_new_from_pkey(libctx, tmpkey, NULL);
+        /* If unable to create pctx we assume the sig algorithm is unavailable */
+        if (pctx == NULL)
+            enabled = 0;
+        EVP_PKEY_CTX_free(pctx);
+
+        if (enabled) {
+            /* Too bad lu->name is not always set, so use this indirection */
+            const char *sa = ssl_get_sigalg_name(lu->sigalg);
+            if (strlen(sa) + strlen(retval) + 1 >= maxretlen) {
+                maxretlen += SIGLEN_BUF_INCREMENT;
+                retval = OPENSSL_realloc(retval, maxretlen);
+            }
+            if (retlen > 0) OPENSSL_strlcat(retval, ":", ++retlen);
+            retlen += strlen(sa)+1;
+            OPENSSL_strlcat(retval, sa, retlen);
+        }
+    }
+
+    EVP_PKEY_free(tmpkey);
+    return retval;
+}
+
 /* Lookup TLS signature algorithm */
 static const SIGALG_LOOKUP *tls1_lookup_sigalg(const SSL_CONNECTION *s,
                                                uint16_t sigalg)

@@ -21,6 +21,7 @@
 #include <openssl/store.h>
 #include <openssl/core_names.h>
 #include <openssl/rand.h>
+#include <openssl/tls1.h>
 #include "apps.h"
 #include "app_params.h"
 #include "progs.h"
@@ -757,7 +758,8 @@ static int list_provider_tls_sigalgs(const OSSL_PARAM params[], void *data)
         if (*((int *)data))
             BIO_printf(bio_out, ":");
         BIO_printf(bio_out, "%s", (char*)(p->data));
-        *((int *)data) = 1;
+        /* mark presence of a provider-based sigalg */
+        *((int *)data) = 2;
     }
     /* As built-in providers don't have this capability, never error */
     return 1;
@@ -775,12 +777,19 @@ static int list_tls_sigalg_caps(OSSL_PROVIDER *provider, void *cbdata) {
 static void list_tls_signatures(void)
 {
     int tls_sigalg_listed = 0;
+    char *builtin_sigalgs = SSL_get_builtin_sigalgs(app_get0_libctx());
+
+    if (builtin_sigalgs) {
+        BIO_printf(bio_out, "%s", builtin_sigalgs);
+        OPENSSL_free(builtin_sigalgs);
+        tls_sigalg_listed = 1;
+    }
 
     /* As built-in providers don't have this capability, never error */
     OSSL_PROVIDER_do_all(NULL, list_tls_sigalg_caps, &tls_sigalg_listed);
-    if (tls_sigalg_listed == 0)
+    if (tls_sigalg_listed < 2)
         BIO_printf(bio_out,
-                   "No TLS sig algs registered by currently active providers");
+                   "\nNo TLS sig algs registered by currently active providers");
     BIO_printf(bio_out, "\n");
 }
 
