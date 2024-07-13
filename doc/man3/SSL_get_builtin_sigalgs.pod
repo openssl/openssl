@@ -26,10 +26,6 @@ algorithms can be activated, e.g., if suitable providers are missing.
 
 A newly allocated string is always returned but it may have strlen == 0.
 
-=back
-
-L<ssl(7)>
-
 =head1 COPYRIGHT
 
 Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.

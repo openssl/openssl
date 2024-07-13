@@ -72,7 +72,7 @@ static void legacy_cipher_fn(const EVP_CIPHER *c,
 {
     if (select_name != NULL
         && (c == NULL
-            || OPENSSL_strcasecmp(select_name,  EVP_CIPHER_get0_name(c)) != 0))
+            || OPENSSL_strcasecmp(select_name, EVP_CIPHER_get0_name(c)) != 0))
         return;
     if (c != NULL) {
         BIO_printf(arg, "  %s\n", EVP_CIPHER_get0_name(c));
@@ -757,7 +757,7 @@ static int list_provider_tls_sigalgs(const OSSL_PARAM params[], void *data)
     if (p != NULL && p->data_type == OSSL_PARAM_UTF8_STRING) {
         if (*((int *)data))
             BIO_printf(bio_out, ":");
-        BIO_printf(bio_out, "%s", (char*)(p->data));
+        BIO_printf(bio_out, "%s", (char *)(p->data));
         /* mark presence of a provider-based sigalg */
         *((int *)data) = 2;
     }
@@ -765,8 +765,8 @@ static int list_provider_tls_sigalgs(const OSSL_PARAM params[], void *data)
     return 1;
 }
 
-static int list_tls_sigalg_caps(OSSL_PROVIDER *provider, void *cbdata) {
-
+static int list_tls_sigalg_caps(OSSL_PROVIDER *provider, void *cbdata)
+{
     OSSL_PROVIDER_get_capabilities(provider, "TLS-SIGALG",
                                    list_provider_tls_sigalgs,
                                    cbdata);
@@ -1544,7 +1544,7 @@ const OPTIONS list_options[] = {
      "List of message authentication code algorithms"},
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     {"cipher-commands", OPT_CIPHER_COMMANDS, '-',
-    "List of cipher commands (deprecated)"},
+     "List of cipher commands (deprecated)"},
 #endif
     {"cipher-algorithms", OPT_CIPHER_ALGORITHMS, '-',
      "List of symmetric cipher algorithms"},
@@ -1740,7 +1740,7 @@ int list_main(int argc, char **argv)
             BIO_printf(bio_out, "\n"); \
         } \
         cmd; \
-    } while(0) 
+    } while (0)
 
     if (todo.commands)
         MAYBE_ADD_NL(list_type(FT_general, one));
