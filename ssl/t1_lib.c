@@ -1596,7 +1596,8 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
 
 #define SIGLEN_BUF_INCREMENT 100
 
-char* SSL_get_builtin_sigalgs(OSSL_LIB_CTX *libctx) {
+char *SSL_get_builtin_sigalgs(OSSL_LIB_CTX *libctx)
+{
     size_t i, retlen = 0, maxretlen = SIGLEN_BUF_INCREMENT;
     const SIGALG_LOOKUP *lu;
     EVP_PKEY *tmpkey = EVP_PKEY_new();
@@ -1610,6 +1611,7 @@ char* SSL_get_builtin_sigalgs(OSSL_LIB_CTX *libctx) {
         /* Check hash is available in some provider. */
         if (lu->hash != NID_undef) {
             EVP_MD *hash = EVP_MD_fetch(libctx, OBJ_nid2ln(lu->hash), NULL);
+
             /* If unable to create we assume the hash algorithm is unavailable */
             if (hash == NULL) {
                 enabled = 0;
@@ -1631,11 +1633,13 @@ char* SSL_get_builtin_sigalgs(OSSL_LIB_CTX *libctx) {
         if (enabled) {
             /* Too bad lu->name is not always set, so use this indirection */
             const char *sa = ssl_get_sigalg_name(lu->sigalg);
+
             if (strlen(sa) + strlen(retval) + 1 >= maxretlen) {
                 maxretlen += SIGLEN_BUF_INCREMENT;
                 retval = OPENSSL_realloc(retval, maxretlen);
             }
-            if (retlen > 0) OPENSSL_strlcat(retval, ":", ++retlen);
+            if (retlen > 0)
+                OPENSSL_strlcat(retval, ":", ++retlen);
             retlen += strlen(sa)+1;
             OPENSSL_strlcat(retval, sa, retlen);
         }

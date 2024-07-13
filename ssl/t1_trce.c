@@ -737,7 +737,8 @@ static int ssl_print_signature(BIO *bio, int indent, const SSL_CONNECTION *sc,
     return ssl_print_hexbuf(bio, indent, "Signature", 2, pmsg, pmsglen);
 }
 
-const char *ssl_get_sigalg_name(int sigalg) {
+const char *ssl_get_sigalg_name(int sigalg)
+{
     return ssl_trace_str(sigalg, ssl_sigalg_tbl);
 }
 

@@ -1255,6 +1255,7 @@ static int provider_cmp(const OSSL_PROVIDER * const *a,
 static int collect_providers(OSSL_PROVIDER *provider, void *stack)
 {
     STACK_OF(OSSL_PROVIDER) *provider_stack = stack;
+
     /*
      * If OK - result is the index of inserted data
      * Error - result is -1 or 0
@@ -1626,7 +1627,7 @@ int list_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:  /* Never hit, but suppresses warning */
         case OPT_ERR:
-opthelp:
+        opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             return 1;
         case OPT_HELP:
@@ -1739,7 +1740,7 @@ opthelp:
             BIO_printf(bio_out, "\n"); \
         } \
         cmd; \
-    } while(0)
+    } while(0) 
 
     if (todo.commands)
         MAYBE_ADD_NL(list_type(FT_general, one));
