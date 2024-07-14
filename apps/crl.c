@@ -82,6 +82,7 @@ int crl_main(int argc, char **argv)
     X509_STORE_CTX *ctx = NULL;
     X509_LOOKUP *lookup = NULL;
     X509_OBJECT *xobj = NULL;
+    STACK_OF(X509_OBJECT) *matching_objs = NULL;
     EVP_PKEY *pkey;
     EVP_MD *digest = (EVP_MD *)EVP_sha1();
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
@@ -93,7 +94,7 @@ int crl_main(int argc, char **argv)
     int ret = 1, num = 0, badsig = 0, fingerprint = 0, crlnumber = 0;
     int text = 0, do_ver = 0, noCAfile = 0, noCApath = 0, noCAstore = 0;
     unsigned long dateopt = ASN1_DTFLGS_RFC822;
-    int i;
+    int i, k, num_objs;
 #ifndef OPENSSL_NO_MD5
     int hash_old = 0;
 #endif
@@ -148,13 +149,13 @@ int crl_main(int argc, char **argv)
             do_ver = 1;
             break;
         case OPT_NOCAPATH:
-            noCApath =  1;
+            noCApath = 1;
             break;
         case OPT_NOCAFILE:
-            noCAfile =  1;
+            noCAfile = 1;
             break;
         case OPT_NOCASTORE:
-            noCAstore =  1;
+            noCAstore = 1;
             break;
         case OPT_HASH_OLD:
 #ifndef OPENSSL_NO_MD5
@@ -232,27 +233,37 @@ int crl_main(int argc, char **argv)
             goto end;
         }
 
-        xobj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509,
-                                                 X509_CRL_get_issuer(x));
-        if (xobj == NULL) {
-            BIO_printf(bio_err, "Error getting CRL issuer certificate\n");
-            goto end;
-        }
-        pkey = X509_get_pubkey(X509_OBJECT_get0_X509(xobj));
-        X509_OBJECT_free(xobj);
-        if (pkey == NULL) {
-            BIO_printf(bio_err, "Error getting CRL issuer public key\n");
-            goto end;
-        }
-        i = X509_CRL_verify(x, pkey);
-        EVP_PKEY_free(pkey);
-        if (i < 0)
-            goto end;
-        if (i == 0) {
+        matching_objs = X509_STORE_CTX_get1_objs_by_auth(ctx,
+                                                         X509_CRL_get_issuer(x),
+                                                         X509_CRL_get0_authority_key_id(x));
+        num_objs = sk_X509_OBJECT_num(matching_objs);
+        if (num_objs == 0) {
             BIO_printf(bio_err, "verify failure\n");
-	    goto end;
-        } else
-            BIO_printf(bio_err, "verify OK\n");
+            goto end;
+        }
+        for (i = 0; i < num_objs; i++) {
+            xobj = sk_X509_OBJECT_value(matching_objs, i);
+            if (xobj == NULL) {
+                BIO_printf(bio_err, "Error getting CRL issuer certificate\n");
+                goto end;
+            }
+            pkey = X509_get_pubkey(X509_OBJECT_get0_X509(xobj));
+            if (pkey == NULL) {
+                BIO_printf(bio_err, "Error getting CRL issuer public key\n");
+                goto end;
+            }
+            k = X509_CRL_verify(x, pkey);
+            EVP_PKEY_free(pkey);
+            if (k < 0)
+                goto end;
+            if (k != 0) {
+                BIO_printf(bio_err, "verify OK\n");
+                ret = 0;
+                goto end;
+            }
+        }
+        BIO_printf(bio_err, "verify failure\n");
+        goto end;
     }
 
     if (crldiff != NULL) {
@@ -391,5 +402,6 @@ int crl_main(int argc, char **argv)
     X509_CRL_free(x);
     X509_STORE_CTX_free(ctx);
     X509_STORE_free(store);
+    sk_X509_OBJECT_free(matching_objs); /* objs freed via store */
     return ret;
 }
