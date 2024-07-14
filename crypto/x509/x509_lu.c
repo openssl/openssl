@@ -383,6 +383,54 @@ int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *ctx,
     return ossl_x509_store_ctx_get_by_subject(ctx, type, name, ret) > 0;
 }
 
+static void ossl_x509_store_ctx_add_matching(X509_OBJECT *obj,
+                                             const X509_NAME *name,
+                                             const ASN1_OCTET_STRING *akid,
+                                             STACK_OF(X509_OBJECT) *result)
+{
+    X509 *cert = NULL;
+    const ASN1_STRING *skid = NULL;
+
+    if (obj->type == X509_LU_X509) {
+        cert = X509_OBJECT_get0_X509(obj);
+        if (X509_NAME_cmp(X509_get_subject_name(cert), name) == 0) {
+            skid = X509_get0_subject_key_id(cert);
+            if (akid == NULL || skid == NULL ||
+                ASN1_OCTET_STRING_cmp(akid, skid) == 0)
+                sk_X509_OBJECT_push(result, obj);
+        }
+    }
+}
+
+STACK_OF(X509_OBJECT) *X509_STORE_CTX_get1_objs_by_auth(X509_STORE_CTX *ctx,
+                                                        const X509_NAME *name,
+                                                        const ASN1_OCTET_STRING *akid)
+{
+    X509_STORE *store = ctx->store;
+    STACK_OF(X509_OBJECT) *result = NULL;
+    X509_OBJECT *obj = NULL;
+    int i, num_objs;
+
+    if (store == NULL || name == NULL)
+        return NULL;
+
+    if (!X509_STORE_lock(store))
+        return NULL;
+
+    result = sk_X509_OBJECT_new_null();
+    if (result == NULL)
+        return NULL;
+
+    num_objs = sk_X509_OBJECT_num(store->objs);
+    for (i = 0; i < num_objs; i++) {
+        obj = sk_X509_OBJECT_value(store->objs, i);
+        ossl_x509_store_ctx_add_matching(obj, name, akid, result);
+    }
+
+    X509_STORE_unlock(store);
+    return result;
+}
+
 static int x509_store_add(X509_STORE *store, void *x, int crl)
 {
     X509_OBJECT *obj;

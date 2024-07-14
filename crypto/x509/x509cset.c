@@ -14,6 +14,7 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include "crypto/x509.h"
 
 int X509_CRL_set_version(X509_CRL *x, long version)
@@ -113,6 +114,13 @@ ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *crl)
 X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl)
 {
     return crl->crl.issuer;
+}
+
+const ASN1_OCTET_STRING *X509_CRL_get0_authority_key_id(const X509_CRL *crl)
+{
+    if (crl == NULL)
+        return NULL;
+    return crl->akid != NULL ? crl->akid->keyid : NULL;
 }
 
 const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl)
