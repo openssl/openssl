@@ -110,9 +110,9 @@ ENDIF
 
 # This file sets the build directory up for CMake inclusion
 GENERATE[OpenSSLConfig.cmake]=exporters/cmake/OpenSSLConfig.cmake.in
-DEPEND[OpenSSLConfig.cmake]=builddata.pm
+DEPEND[OpenSSLConfig.cmake]=installdata.pm
 GENERATE[OpenSSLConfigVersion.cmake]=exporters/cmake/OpenSSLConfigVersion.cmake.in
-DEPEND[OpenSSLConfigVersion.cmake]=builddata.pm
+DEPEND[OpenSSLConfigVersion.cmake]=installdata.pm
 DEPEND[OpenSSLConfigVersion.cmake]=OpenSSLConfig.cmake
 DEPEND[""]=OpenSSLConfigVersion.cmake
 
