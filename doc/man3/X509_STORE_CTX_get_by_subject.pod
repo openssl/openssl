@@ -3,7 +3,8 @@
 =head1 NAME
 
 X509_STORE_CTX_get_by_subject,
-X509_STORE_CTX_get_obj_by_subject
+X509_STORE_CTX_get_obj_by_subject,
+X509_STORE_CTX_get1_objs_by_auth
 - X509 and X509_CRL lookup functions
 
 =head1 SYNOPSIS
@@ -16,7 +17,9 @@ X509_STORE_CTX_get_obj_by_subject
  X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs,
                                                 X509_LOOKUP_TYPE type,
                                                 const X509_NAME *name);
-
+ STACK_OF(X509_OBJECT) *X509_STORE_CTX_get1_objs_by_auth(X509_STORE_CTX *ctx,
+                                                         const X509_NAME *name,
+                                                         const ASN1_OCTET_STRING *akid);
 =head1 DESCRIPTION
 
 X509_STORE_CTX_get_by_subject() tries to find an object
@@ -28,11 +31,23 @@ stores the looked up object in I<ret>.
 X509_STORE_CTX_get_obj_by_subject() is like X509_STORE_CTX_get_by_subject()
 but returns the found object on success, else NULL.
 
+X509_STORE_CTX_get1_objs_by_auth() finds all certificates in the store that
+match the given subject I<name> and, if provided, the authority key ID I<akid>.
+If both I<name> and I<akid> are supplied, the function requires both values
+to match. The authority key ID is matched against the subject key ID of the
+certificates in the store. Certificates are matched in the order they
+are stored.
+
 =head1 RETURN VALUES
 
 X509_STORE_CTX_get_by_subject() returns 1 if the lookup was successful, else 0.
 
 X509_STORE_CTX_get_obj_by_subject() returns an object on success, else NULL.
+
+X509_STORE_CTX_get1_objs_by_auth() returns a new stack with pointers to all
+matching certificates in the store. The caller must free the returned stack.
+If no certificate matches the given subject, an empty stack is returned.
+In case of any error, NULL is returned.
 
 =head1 SEE ALSO
 
