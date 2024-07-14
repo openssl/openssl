@@ -127,13 +127,13 @@ set(OPENSSL_VERSION_FIX "${OpenSSL_VERSION_PATCH}")
 set(OPENSSL_FOUND YES)
 
 # Directories and names
-set(OPENSSL_INCLUDE_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::INCLUDEDIR_REL, 1); -}")
-set(OPENSSL_LIBRARY_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::LIBDIR_REL, 1); -}")
-set(OPENSSL_ENGINES_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::ENGINESDIR_REL, 1); -}")
-set(OPENSSL_MODULES_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::MODULESDIR_REL, 1); -}")
-set(OPENSSL_RUNTIME_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::BINDIR_REL, 1); -}")
+set(OPENSSL_LIBRARY_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX, 1); -}")
+set(OPENSSL_INCLUDE_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX, 1); -}")
+set(OPENSSL_ENGINES_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX, 1); -}/{- unixify($OpenSSL::safe::installdata::ENGINESDIR_REL_LIBDIR, 1); -}")
+set(OPENSSL_MODULES_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX, 1); -}/{- unixify($OpenSSL::safe::installdata::MODULESDIR_REL_LIBDIR, 1); -}")
+set(OPENSSL_RUNTIME_DIR "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::BINDIR_REL_PREFIX, 1); -}")
 {- output_off() if $disabled{uplink}; "" -}
-set(OPENSSL_APPLINK_SOURCE "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::APPLINKDIR_REL, 1); -}/applink.c")
+set(OPENSSL_APPLINK_SOURCE "${_ossl_prefix}/{- unixify($OpenSSL::safe::installdata::APPLINKDIR_REL_PREFIX, 1); -}/applink.c")
 {- output_on() if $disabled{uplink}; "" -}
 set(OPENSSL_PROGRAM "${OPENSSL_RUNTIME_DIR}/{- platform->bin('openssl') -}")
 
