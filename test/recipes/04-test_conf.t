@@ -18,6 +18,7 @@ setup('test_conf');
 my %input_result = (
     'dollarid_on.cnf'  => 'dollarid_on.txt',
     'dollarid_off.cnf' => 'dollarid_off.txt',
+    'oversized_line.cnf' => 'oversized_line.txt',
 );
 
 plan skip_all => 'This is unsupported for cross compiled configurations'
