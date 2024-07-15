@@ -646,7 +646,7 @@ int opt_uintmax(const char *value, ossl_uintmax_t *result)
         opt_number_error(value);
         return 0;
     }
-    *result = (ossl_intmax_t)m;
+    *result = (ossl_uintmax_t)m;
     errno = oerrno;
     return 1;
 }
