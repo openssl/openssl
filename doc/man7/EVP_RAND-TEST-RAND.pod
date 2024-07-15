@@ -1,3 +1,4 @@
+
 =pod
 
 =head1 NAME
@@ -22,7 +23,7 @@ The supported parameters are:
 
 =item "state" (B<OSSL_RAND_PARAM_STATE>) <integer>
 
-=item "fips-indicator" (B<OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR>) <int>
+=item "fips-indicator" (B<OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
 
 These parameter works as described in L<EVP_RAND(3)/PARAMETERS>.
 
