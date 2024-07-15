@@ -330,7 +330,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
 
         v = NULL;
         /* check for line continuation */
-        if (bufnum >= 1) {
+        if (!again && bufnum >= 1) {
             /*
              * If we have bytes and the last char '\\' and second last char
              * is not '\\'
