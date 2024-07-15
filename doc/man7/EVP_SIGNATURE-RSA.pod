@@ -23,9 +23,9 @@ using EVP_PKEY_sign_init_ex() or EVP_PKEY_verify_init_ex().
 
 =item "properties" (B<OSSL_SIGNATURE_PARAM_PROPERTIES>) <UTF8 string>
 
-=item "key-check" (B<OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK>) <int>
+=item "key-check" (B<OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK>) <integer>
 
-=item "digest-check" (B<OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK>) <int>
+=item "digest-check" (B<OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK>) <integer>
 
 These common parameters are described in L<provider-signature(7)>.
 
@@ -89,7 +89,7 @@ EVP_PKEY_CTX_get_params().
 
 =item "algorithm-id" (B<OSSL_SIGNATURE_PARAM_ALGORITHM_ID>) <octet string>
 
-=item "fips-indicator" (B<OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR>) <int>
+=item "fips-indicator" (B<OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
 
 These common parameter are described in L<provider-signature(7)>.
 
