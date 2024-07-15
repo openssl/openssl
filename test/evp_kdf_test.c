@@ -1966,6 +1966,7 @@ err:
     return ret;
 }
 
+/* Test that changing the KBKDF algorithm from KMAC to HMAC works correctly */
 static int test_kbkdf_mac_change(void)
 {
     int ret = 0;
