@@ -375,9 +375,13 @@ exists.
 
 Encrypts I<inl> bytes from the buffer I<in> and writes the encrypted version to
 I<out>. The pointers I<out> and I<in> may point to the same location, in which
-case the encryption will be done in-place. If I<out> and I<in> point to different
-locations, the two buffers must be disjoint, otherwise the operation might fail
-or the outcome might be undefined.
+case the encryption will be done in-place. However, in-place encryption is
+guaranteed to work only if the encryption context (I<ctx>) has processed data in
+multiples of the block size. If the context contains an incomplete data block
+from previous operations, in-place encryption will fail.
+
+If I<out> and I<in> point to different locations, the two buffers must be
+disjoint, otherwise the operation might fail or the outcome might be undefined.
 
 This function can be called multiple times to encrypt successive blocks
 of data. The amount of data written depends on the block alignment of the
