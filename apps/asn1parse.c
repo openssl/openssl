@@ -216,6 +216,9 @@ int asn1parse_main(int argc, char **argv)
                 i = BIO_read(in, &(buf->data[num]), BUFSIZ);
                 if (i <= 0)
                     break;
+                /* make sure num doesn't overflow */
+                if (i > LONG_MAX - num)
+                    goto end;
                 num += i;
             }
         }
