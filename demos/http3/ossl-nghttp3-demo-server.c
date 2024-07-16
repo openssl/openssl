@@ -336,7 +336,7 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
     }
     /* Well trying... */
     if (numitem <= 1) {
-        return 0; /* Assume nothing for the moment */
+        return hassomething;
     }
 
     /* Process the other stream */
