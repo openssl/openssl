@@ -31,6 +31,7 @@ struct h3ssl {
     int end_headers_received;
     int datadone;
     int has_uni;
+    int close_done;
     int done;
 };
 
@@ -47,6 +48,7 @@ static void init_ids(struct h3ssl *h3ssl)
     h3ssl->end_headers_received = 0;
     h3ssl->datadone = 0;
     h3ssl->has_uni = 0;
+    h3ssl->close_done = 0;
     h3ssl->done = 0;
 }
 
@@ -157,16 +159,18 @@ static int quic_server_read(nghttp3_conn *h3conn, SSL *stream, uint64_t id)
         return -1;
     return 1;
 }
+
+
 /*
- * creates the control stream (which seems not need), the encoding
- * and decoding streams.
+ * creates the control stream, the encoding and decoding streams.
  * nghttp3_conn_bind_control_stream() is for the control stream.
  */
 static int quic_server_h3streams(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
 {
     SSL *rstream;
     SSL *pstream;
-    uint64_t r_streamid, p_streamid;
+    SSL *cstream;
+    uint64_t r_streamid, p_streamid, c_streamid;
     struct ssl_id *ssl_ids = h3ssl->ssl_ids;
 
    rstream = SSL_new_stream(ssl_ids[0].s, SSL_STREAM_FLAG_UNI);
@@ -189,22 +193,39 @@ static int quic_server_h3streams(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
         fflush(stderr);
         return -1;
     }
+    cstream = SSL_new_stream(ssl_ids[0].s, SSL_STREAM_FLAG_UNI);
+    if (cstream != NULL) {
+        fprintf(stderr, "=> Opened on %llu\n",
+                (unsigned long long)SSL_get_stream_id(cstream));
+        fflush(stderr);
+    } else {
+        fprintf(stderr, "=> Stream == NULL!\n");
+        fflush(stderr);
+        return -1;
+    }
     r_streamid = SSL_get_stream_id(rstream);
     p_streamid = SSL_get_stream_id(pstream);
+    c_streamid = SSL_get_stream_id(cstream);
     if (nghttp3_conn_bind_qpack_streams(h3conn, p_streamid, r_streamid)) {
         fprintf(stderr, "nghttp3_conn_bind_qpack_streams failed!\n");
         return -1;
     }
-    printf("control: NONE enc %llu dec %llu\n",
+    if (nghttp3_conn_bind_control_stream(h3conn, c_streamid)) {
+        fprintf(stderr, "nghttp3_conn_bind_qpack_streams failed!\n");
+        return -1;
+    }
+    printf("control: %llu enc %llu dec %llu\n",
+           (unsigned long long)c_streamid,
            (unsigned long long)p_streamid,
            (unsigned long long)r_streamid);
     add_id(SSL_get_stream_id(rstream), rstream, h3ssl);
     add_id(SSL_get_stream_id(pstream), pstream, h3ssl);
+    add_id(SSL_get_stream_id(cstream), cstream, h3ssl);
 
-    /* TODO control stream? */
     return 0;
 }
 
+/* Try to read from the streams we have */
 static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
 {
     int hassomething = 0, i;
@@ -213,6 +234,7 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
     static const struct timeval nz_timeout = {0, 0};
     size_t result_count = SIZE_MAX;
     int numitem = 0, ret;
+    uint64_t processed_event = 0;
 
     /*
      * Process all the streams
@@ -233,13 +255,13 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
         fprintf(stderr, "SSL_poll failed\n");
         return -1; /* something is wrong */
     }
+    printf("read_from_ssl_ids %ld events\n", (unsigned long)result_count);
     if (result_count == 0) {
         /* Timeout may be something somewhere */
         return 0;
     }
 
     /* We have something */
-    printf("read_from_ssl_ids %ld events\n", (unsigned long)result_count);
     item = items;
     /* SSL_accept_stream if anyway */
     if ((item->revents & SSL_POLL_EVENT_ISB) ||
@@ -258,19 +280,23 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
             return -1; /* something is wrong */
         }
         hassomething++;
-        if (result_count == 1) {
-            return 1; /* loop until we have all the streams */
-        }
+        if (item->revents & SSL_POLL_EVENT_ISB)
+            processed_event = processed_event + SSL_POLL_EVENT_ISB;
+        if (item->revents & SSL_POLL_EVENT_ISU)
+            processed_event = processed_event + SSL_POLL_EVENT_ISU;
     }
-    /* Create new streams when allowed */
     if (item->revents & SSL_POLL_EVENT_OSB) {
+        /* Create new streams when allowed */
         /* at least one bidi */
+        processed_event = processed_event + SSL_POLL_EVENT_OSB;
         printf("Create bidi?\n");
     }
     if (item->revents & SSL_POLL_EVENT_OSU) {
         /* at least one uni */
         /* we have 4 streams from the client 2, 6 , 10 and 0 */
         /* need 2 streams to the client */
+        printf("Create uni?\n");
+        processed_event = processed_event + SSL_POLL_EVENT_OSU;
         if (!h3ssl->has_uni) {
             printf("Create uni\n");
             ret = quic_server_h3streams(h3conn, h3ssl);
@@ -279,11 +305,34 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
                 return -1;
             }
             h3ssl->has_uni = 1;
-            if (result_count == 1) {
-                printf("read_from_ssl_ids 1 event only!\n");
-                return 0; /* one event only so we are done */
-            }
+            hassomething++;
         }
+    }
+    if (item->revents & SSL_POLL_EVENT_EC) {
+        /* the connection begins terminating */
+        printf("Connection terminating\n");
+        if (!h3ssl->close_done) {
+            h3ssl->close_done = 1;
+            hassomething++;
+        }
+        processed_event = processed_event + SSL_POLL_EVENT_EC;
+    }
+    if (item->revents & SSL_POLL_EVENT_ECD) {
+        /* the connection is terminated */
+        printf("Connection terminated\n");
+        h3ssl->done = 1;
+        hassomething++;
+        processed_event = processed_event + SSL_POLL_EVENT_ECD;
+    }
+    if (item->revents != processed_event) {
+        /* we missed something we need to figure out */
+        printf("Missed revent %llu (%d) on %llu\n",
+               (unsigned long long)item->revents, SSL_POLL_EVENT_W,
+               (unsigned long long)ssl_ids[i].id);
+    }
+    if (result_count == 1 && !processed_event) {
+        printf("read_from_ssl_ids 1 event only!\n");
+        return hassomething; /* one event only so we are done */
     }
     /* Well trying... */
     if (numitem <= 1) {
@@ -293,6 +342,7 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
     /* Process the other stream */
     for (i = 1; i < numitem; i++) {
         item++;
+        processed_event = 0;
 
         if (item->revents & SSL_POLL_EVENT_R) {
             /* try to read */
@@ -306,67 +356,13 @@ static int read_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
                 return -1;
             }
             hassomething++;
-        } else {
+            processed_event = processed_event + SSL_POLL_EVENT_R;
+        }
+        if (item->revents != processed_event) {
             /* Figure out ??? */
             printf("revent %llu (%d) on %llu\n",
                    (unsigned long long)item->revents, SSL_POLL_EVENT_W,
                    (unsigned long long)ssl_ids[i].id);
-        }
-    }
-    return hassomething;
-}
-
-static int nothing_from_ssl_ids(nghttp3_conn *h3conn, struct h3ssl *h3ssl)
-{
-    int hassomething = 0;
-    struct ssl_id *ssl_ids;
-    SSL_POLL_ITEM items[MAXSSL_IDS] = {0}, *item = items;
-    static const struct timeval nz_timeout = {0, 0};
-    size_t result_count = SIZE_MAX;
-    int numitem = 0, i, ret;
-
-    ssl_ids = h3ssl->ssl_ids;
-    /* Process all the streams */
-    for (i = 0; i < MAXSSL_IDS; i++) {
-        if (ssl_ids[i].s) {
-            item->desc = SSL_as_poll_descriptor(ssl_ids[i].s);
-            item->events = UINT64_MAX;  /* TODO adjust to the event we need process */
-            item->revents = UINT64_MAX; /* TODO adjust to the event we need process */
-            numitem++;
-            item++;
-        }
-    }
-    ret = SSL_poll(items, numitem, sizeof(SSL_POLL_ITEM), &nz_timeout, 0,
-                   &result_count);
-    if (!ret) {
-        fprintf(stderr, "SSL_poll failed\n");
-        return -1; /* something is wrong */
-    }
-    if (result_count == 0) {
-        /* Timeout may be something somewhere */
-        return 0;
-    }
-
-    /* We have something */
-    item = items;
-    for (i = 0; i < numitem; i++) {
-        item++;
-        if (item->revents == SSL_POLL_EVENT_NONE) {
-            continue;
-        } else if (item->revents == SSL_POLL_EVENT_W) {
-            printf("revent %llu (%d) on %llu\n",
-                   (unsigned long long)item->revents, SSL_POLL_EVENT_W,
-                   (unsigned long long)ssl_ids[i].id);
-        } else if (item->revents == SSL_POLL_EVENT_ER) {
-            printf("revent %llu (%d) on %llu\n",
-                   (unsigned long long)item->revents, SSL_POLL_EVENT_ER,
-                   (unsigned long long)ssl_ids[i].id);
-        } else {
-            /* Figure out ??? */
-            printf("revent %llu (%d) on %llu\n",
-                   (unsigned long long)item->revents, SSL_POLL_EVENT_NONE,
-                   (unsigned long long)ssl_ids[i].id);
-            hassomething++;
         }
     }
     return hassomething;
@@ -637,7 +633,15 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
                 printf("read_from_ssl_ids hassomething nothing...\n");
             } else {
                 printf("read_from_ssl_ids hassomething %d...\n", hassomething);
+                if (h3ssl.close_done) {
+                    /* Other side has closed */
+                    break;
+                }
             }
+        }
+        if (h3ssl.close_done) {
+            printf("Other side close without request\n");
+            goto wait_close;
         }
         printf("end_headers_received!!!\n");
         if (!h3ssl.has_uni) {
@@ -701,26 +705,32 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
              * All the data was sent.
              * close stream zero
              */
-            h3close(&h3ssl, 0);
+            if (!h3ssl.close_done) {
+                h3close(&h3ssl, 0);
+            }
         }
 
         /* wait until closed */
+wait_close:
         for (;;) {
             int hasnothing;
 
             if (waitsocket(fd, 5)) {
                 printf("hasnothing timeout\n");
-                goto err;
+                /* XXX probably not always OK */
+                break;
             }
-            hasnothing = nothing_from_ssl_ids(h3conn, &h3ssl);
+            hasnothing = read_from_ssl_ids(h3conn, &h3ssl);
             if (hasnothing == -1) {
                 printf("hasnothing failed\n");
                 goto err;
             } else if (hasnothing == 0) {
                 printf("hasnothing nothing...\n");
-                break;
+                continue;
             } else {
                 printf("hasnothing something...\n");
+                if (h3ssl.done)
+                    break;
             }
         }
 
