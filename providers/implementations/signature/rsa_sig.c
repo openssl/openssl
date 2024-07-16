@@ -345,29 +345,29 @@ static int rsa_check_padding(const PROV_RSA_CTX *prsactx,
                              int mdnid)
 {
     switch (prsactx->pad_mode) {
-        case RSA_NO_PADDING:
-            if (mdname != NULL || mdnid != NID_undef) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PADDING_MODE);
+    case RSA_NO_PADDING:
+        if (mdname != NULL || mdnid != NID_undef) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PADDING_MODE);
+            return 0;
+        }
+        break;
+    case RSA_X931_PADDING:
+        if (RSA_X931_hash_id(mdnid) == -1) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_X931_DIGEST);
+            return 0;
+        }
+        break;
+    case RSA_PKCS1_PSS_PADDING:
+        if (rsa_pss_restricted(prsactx))
+            if ((mdname != NULL && !wrap_md_is_a(prsactx, mdname, mdnid))
+                || (mgf1_mdname != NULL
+                    && !EVP_MD_is_a(prsactx->mgf1_md, mgf1_mdname))) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
                 return 0;
             }
-            break;
-        case RSA_X931_PADDING:
-            if (RSA_X931_hash_id(mdnid) == -1) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_X931_DIGEST);
-                return 0;
-            }
-            break;
-        case RSA_PKCS1_PSS_PADDING:
-            if (rsa_pss_restricted(prsactx))
-                if ((mdname != NULL && !wrap_md_is_a(prsactx, mdname, mdnid))
-                    || (mgf1_mdname != NULL
-                        && !EVP_MD_is_a(prsactx->mgf1_md, mgf1_mdname))) {
-                    ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
-                    return 0;
-                }
-            break;
-        default:
-            break;
+        break;
+    default:
+        break;
     }
 
     return 1;
