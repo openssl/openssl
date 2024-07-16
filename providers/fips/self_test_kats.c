@@ -575,7 +575,7 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
     paramsinit = OSSL_PARAM_BLD_to_param(bldinit);
 
     fromctx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, "");
-    if (fromctx == NULL\
+    if (fromctx == NULL
         || paramskey == NULL
         || paramsinit == NULL)
         goto err;
@@ -586,7 +586,7 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
     mctx = EVP_MD_CTX_new();
     if (mctx == NULL
         || EVP_DigestSignInit_ex(mctx, NULL, NULL, libctx, NULL,
-                                 pkey, paramsinit)<= 0)
+                                 pkey, paramsinit) <= 0)
         goto err;
 
     if (EVP_DigestSign(mctx, sig, &siglen, in, sizeof(in)) <= 0)
