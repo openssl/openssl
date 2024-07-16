@@ -130,6 +130,8 @@ do
         RANGE=$k
         RSTART=$(echo $RANGE | awk -F',' '{print $1}')
         RLEN=$(echo $RANGE | awk -F',' '{print $2}')
+        # when the hunk is just one line, its length is implied
+        if [ -z "$RLEN" ]; then RLEN=1; fi
         let REND=$RSTART+$RLEN
         range_start+=($RSTART)
         range_end+=($REND)
