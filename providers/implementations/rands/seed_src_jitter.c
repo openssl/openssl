@@ -25,6 +25,8 @@
 #ifndef OPENSSL_NO_JITTER
 # include <jitterentropy.h>
 
+# define JITTER_MAX_NUM_TRIES 3
+
 static OSSL_FUNC_rand_newctx_fn jitter_new;
 static OSSL_FUNC_rand_freectx_fn jitter_free;
 static OSSL_FUNC_rand_instantiate_fn jitter_instantiate;
@@ -81,24 +83,32 @@ static size_t get_jitter_random_value(PROV_JITTER *s,
 {
     struct rand_data *jitter_ec = NULL;
     ssize_t result = 0;
+    size_t num_tries;
 
-    jitter_ec = jent_entropy_collector_alloc(0, JENT_FORCE_FIPS);
-    if (jitter_ec == NULL)
-        return 0;
+    /* Retry intermittent failures, then give up */
+    for (num_tries = 0; num_tries < JITTER_MAX_NUM_TRIES; num_tries++) {
+        /* Allocate a fresh collector */
+        jitter_ec = jent_entropy_collector_alloc(0, JENT_FORCE_FIPS);
+        if (jitter_ec == NULL)
+            continue;
 
-    /*
-     * Do not use _safe API variant with built-in retries, until
-     * failure because it reseeds the entropy source which is not
-     * certifiable
-     */
-    result = jent_read_entropy(jitter_ec, (char *) buf, len);
-    jent_entropy_collector_free(jitter_ec);
+        /* Do not use _safe API as per typical security policies */
+        result = jent_read_entropy(jitter_ec, (char *) buf, len);
+        jent_entropy_collector_free(jitter_ec);
 
-    /* Success */
-    if (result == len)
-        return len;
+        /*
+         * Permanent Failure
+         * https://github.com/smuellerDD/jitterentropy-library/issues/118
+         */
+        if (result < -5)
+            break;
 
-    /* Failure */
+        /* Success */
+        if (result == len)
+            return len;
+    }
+
+    /* Permanent failure or too many intermittent failures */
     s->state = EVP_RAND_STATE_ERROR;
     ERR_raise_data(ERR_LIB_RAND, RAND_R_ERROR_RETRIEVING_ENTROPY,
                    "jent_read_entropy (%d)", result);
