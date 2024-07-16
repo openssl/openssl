@@ -172,6 +172,8 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
                  * since we set our key and 2 factors above we can skip
                  * the call to ossl_rsa_set0_all_params
                  */
+                if (ctx == NULL)
+                    goto err;
                 if (!ossl_rsa_sp800_56b_derive_params_from_pq(rsa,
                                                               RSA_bits(rsa),
                                                               NULL, ctx)) {
