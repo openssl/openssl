@@ -238,6 +238,16 @@ int setup_tests(void);
 void cleanup_tests(void);
 
 /*
+ * This function matches the OpenSSL version with (potentially multiple)
+ * <operator>maj.min.patch version strings in versions.
+ * The operator can be one of = ! <= or > comparison symbols.
+ * If the OpenSSL version matches all the version comparisons the function
+ * returns 1.  If the OpenSSL version does not match the version comparisons,
+ * it returns 0.  On error the function returns -1.
+ */
+int version_match(const char *versions);
+
+/*
  * Helper functions to detect specific versions of the FIPS provider being in use.
  * Because of FIPS rules, code changes after a module has been validated are
  * difficult and because we provide a hard guarantee of ABI and behavioural

@@ -26,7 +26,8 @@ IF[{- !$disabled{tests} -}]
           testutil/format_output.c testutil/load.c testutil/fake_random.c \
           testutil/test_cleanup.c testutil/main.c testutil/testutil_init.c \
           testutil/options.c testutil/test_options.c testutil/provider.c \
-          testutil/apps_shims.c testutil/random.c testutil/helper.c $LIBAPPSSRC
+          testutil/apps_shims.c testutil/random.c testutil/helper.c \
+          testutil/version_check.c $LIBAPPSSRC
   INCLUDE[libtestutil.a]=../include ../apps/include ..
   DEPEND[libtestutil.a]=../libcrypto
 
@@ -60,7 +61,7 @@ IF[{- !$disabled{tests} -}]
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
-          provfetchtest prov_config_test rand_test \
+          provfetchtest prov_config_test rand_test version_test \
           ca_internals_test bio_tfo_test membio_test bio_dgram_test list_test \
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
@@ -549,6 +550,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[fips_version_test]=fips_version_test.c
   INCLUDE[fips_version_test]=../include  ../apps/include
   DEPEND[fips_version_test]=../libcrypto libtestutil.a
+
+  SOURCE[version_test]=version_test.c
+  INCLUDE[version_test]=../include  ../apps/include
+  DEPEND[version_test]=../libcrypto libtestutil.a
 
   SOURCE[ocspapitest]=ocspapitest.c
   INCLUDE[ocspapitest]=../include ../apps/include
