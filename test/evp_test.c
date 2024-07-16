@@ -4655,6 +4655,20 @@ start:
         skipped++;
         pp++;
         goto start;
+    } else if (strcmp(pp->key, "Version") == 0) {
+        j = version_match(pp->value);
+        if (j < 0) {
+            TEST_info("Line %d: error matching OpenSSL versions\n", t->s.curr);
+            return 0;
+        } else if (j == 0) {
+            TEST_info("skipping, OpenSSL incompatible version: %s:%d",
+                      t->s.test_file, t->s.start);
+            t->skip = 1;
+            return 0;
+        }
+        skipped++;
+        pp++;
+        goto start;
     } else if (strcmp(pp->key, "FIPSversion") == 0) {
         if (prov_available("fips")) {
             j = fips_provider_version_match(libctx, pp->value);
