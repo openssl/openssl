@@ -201,7 +201,7 @@ static int test_rng_get_ctx_params(void *vtest, OSSL_PARAM params[])
         return 0;
 
 #ifdef FIPS_MODULE
-    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_FIPS_APPROVED_INDICATOR);
+    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR);
     if (p != NULL && !OSSL_PARAM_set_int(p, 0))
         return 0;
 #endif  /* FIPS_MODULE */
