@@ -49,7 +49,7 @@ static int test_rand(void)
     prov = EVP_RAND_get0_provider(EVP_RAND_CTX_get0_rand(privctx));
     if (prov != NULL
             && strcmp(OSSL_PROVIDER_get0_name(prov), "fips") == 0) {
-        params[0] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_FIPS_APPROVED_INDICATOR,
+        params[0] = OSSL_PARAM_construct_int(OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR,
                                              &indicator);
         if (!TEST_true(EVP_RAND_CTX_get_params(privctx, params))
                 || !TEST_int_eq(indicator, 0))
