@@ -217,7 +217,7 @@ int asn1parse_main(int argc, char **argv)
                 if (i <= 0)
                     break;
                 /* make sure num doesn't overflow */
-                if ((num + i) <= 0)
+                if (i > LONG_MAX - num)
                     goto end;
                 num += i;
             }
