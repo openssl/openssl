@@ -62,6 +62,14 @@ extern "C" {
 # define OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK "tls1-prf-ems-check"
 
 /*
+ * A boolean that determines if the runtime FIPS check for undersized MAC output
+ * is performed.
+ * This is enabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+#define OSSL_PROV_FIPS_PARAM_NO_SHORT_MAC "no-short-mac"
+
+/*
  * A boolean that determines if truncated digests can be used with Hash and HMAC
  * DRBGs.  FIPS 140-3 IG D.R disallows such use for efficiency rather than
  * security reasons.
