@@ -1132,20 +1132,10 @@ Ctrl.hexinfo = hexinfo:0553552e5345a22404223020a003020110a10c040aaaaaaaaaaaaaaa
 Ctrl.hexinfo = hexinfo:aaaaaaa20b0409bbbbbbbbbbbbbbbbbb
 Output = d3c78b78d75313e9a926f75dfb012363fa17fa01db
 
-Title = FIPS indicator tests
-
-# Test that the operation with unapproved digest function is rejected
-#
-# There is no corresponding test for checking `fips-indicator` and derived key
-# because that
-# * SSKDF can be used with SHA-1, SHA-2 and SHA-3 but not with the
-#   extendable-output functions.
-# * The return value from the `EVP_MD_get_size` function for the
-#   extendable-output functions always is 0, so the `SSKDF_hash_kdm` function
-#   will return 0 directly.
+# Test that the operation with XOF digest function is rejected
 FIPSversion = >=3.4.0
 KDF = SSKDF
 Ctrl.digest = digest:SHAKE-256
 Ctrl.hexsecret = hexsecret:d09a6b1a472f930db4f5e6b967900744
 Ctrl.hexinfo = hexinfo:b117255ab5f1b6b96fc434b0
-Result = KDF_DERIVE_ERROR
+Result = KDF_CTRL_ERROR
