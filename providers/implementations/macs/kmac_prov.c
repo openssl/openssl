@@ -54,11 +54,14 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#include <openssl/fips_names.h>
 
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+#include "prov/fipscommon.h"
+#include "prov/fipsindicator.h"
 #include "internal/cryptlib.h" /* ossl_assert */
 
 /*
@@ -126,6 +129,7 @@ struct kmac_data_st {
     /* key and custom are stored in encoded form */
     unsigned char key[KMAC_MAX_KEY_ENCODED];
     unsigned char custom[KMAC_MAX_CUSTOM_ENCODED];
+    OSSL_FIPS_IND_DECLARE
 };
 
 static int encode_string(unsigned char *out, size_t out_max_len, size_t *out_len,
@@ -172,6 +176,7 @@ static struct kmac_data_st *kmac_new(void *provctx)
         return NULL;
     }
     kctx->provctx = provctx;
+    OSSL_FIPS_IND_INIT(kctx)
     return kctx;
 }
 
@@ -241,6 +246,7 @@ static void *kmac_dup(void *vsrc)
     dst->xof_mode = src->xof_mode;
     memcpy(dst->key, src->key, src->key_len);
     memcpy(dst->custom, src->custom, dst->custom_len);
+    OSSL_FIPS_IND_COPY(dst, src)
 
     return dst;
 }
@@ -359,6 +365,7 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_BLOCK_SIZE, NULL),
+    OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *kmac_gettable_ctx_params(ossl_unused void *ctx,
@@ -383,6 +390,9 @@ static int kmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
             return 0;
     }
 
+    if (!OSSL_FIPS_IND_GET_CTX_PARAM(kctx, params))
+        return 0;
+
     return 1;
 }
 
@@ -391,6 +401,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_CUSTOM, NULL, 0),
+    OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_PROV_FIPS_PARAM_NO_SHORT_MAC)
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *kmac_settable_ctx_params(ossl_unused void *ctx,
@@ -416,6 +427,10 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
     if (params == NULL)
         return 1;
 
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(kctx, OSSL_FIPS_IND_SETTABLE0, params,
+                                     OSSL_PROV_PARAM_NO_SHORT_MAC))
+        return  0;
+
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_XOF)) != NULL
         && !OSSL_PARAM_get_int(p, &kctx->xof_mode))
         return 0;
@@ -428,6 +443,18 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
             return 0;
         }
+#ifdef FIPS_MODULE
+        /* SP 800-185 8.4.2 mandates a minimum of 32 bits of output */
+        if (sz < 32 / 8) {
+            if (!OSSL_FIPS_IND_ON_UNAPPROVED(kctx, OSSL_FIPS_IND_SETTABLE0,
+                                             PROV_LIBCTX_OF(kctx->provctx),
+                                             "KMAC", "length",
+                                             &FIPS_no_short_mac)) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
+                return 0;
+            }
+        }
+#endif
         kctx->out_len = sz;
     }
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL
