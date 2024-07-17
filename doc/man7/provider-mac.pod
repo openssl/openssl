@@ -191,6 +191,29 @@ Can be used to get the MAC block size (if supported by the algorithm).
 
 =back
 
+=over 4
+
+=item "fips-indicator" (B<OSSL_MAC_PARAM_FIPS_APPROVED_INDICATOR>) <int>
+
+A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
+This may be used after calling the final function.  It may return 0 if
+"no-short-mac" are set to 0.  This option is used by the OpenSSL FIPS
+provider.
+
+=back
+
+=over 4
+
+=item "no-short-mac" (B<OSSL_PROV_FIPS_PARAM_NO_SHORT_MAC>) <integer>
+
+If required this parameter should be set early via an init function.
+The default value of 1 causes an error when too short MAC output is
+asked for.  Setting this to 0 will ignore the error and set the approved
+"fips-indicator" to 0.  This option is used by the OpenSSL FIPS provider,
+and breaks FIPS compliance if set to 0.
+
+=back
+
 =back
 
 =head1 NOTES
