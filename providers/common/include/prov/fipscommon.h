@@ -12,6 +12,7 @@
 
 int FIPS_security_check_enabled(OSSL_LIB_CTX *libctx);
 int FIPS_tls_prf_ems_check(OSSL_LIB_CTX *libctx);
+int FIPS_no_short_mac(OSSL_LIB_CTX *libctx);
 int FIPS_restricted_drbg_digests_enabled(OSSL_LIB_CTX *libctx);
 int FIPS_hkdf_digest_check(OSSL_LIB_CTX *libctx);
 int FIPS_tls13_kdf_digest_check(OSSL_LIB_CTX *libctx);
