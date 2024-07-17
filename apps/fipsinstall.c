@@ -54,7 +54,7 @@ const OPTIONS fipsinstall_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"pedantic", OPT_PEDANTIC, '-', "Set options for strict FIPS compliance"},
     {"verify", OPT_VERIFY, '-',
-        "Verify a config file instead of generating one"},
+     "Verify a config file instead of generating one"},
     {"module", OPT_MODULE, '<', "File name of the provider module"},
     {"provider_name", OPT_PROV_NAME, 's', "FIPS provider name"},
     {"section_name", OPT_SECTION_NAME, 's',
@@ -290,7 +290,7 @@ static int write_config_fips_section(BIO *out, const char *section,
                        install_mac_len)
             || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
                           INSTALL_STATUS_VAL) <= 0)
-        goto end;
+            goto end;
     }
     ret = 1;
 end:
@@ -307,12 +307,12 @@ static CONF *generate_config_and_load(const char *prov_name,
     CONF *conf = NULL;
 
     mem_bio = BIO_new(BIO_s_mem());
-    if (mem_bio  == NULL)
+    if (mem_bio == NULL)
         return 0;
     if (!write_config_header(mem_bio, prov_name, section)
-         || !write_config_fips_section(mem_bio, section,
-                                       module_mac, module_mac_len,
-                                       opts, NULL, 0))
+        || !write_config_fips_section(mem_bio, section,
+                                      module_mac, module_mac_len,
+                                      opts, NULL, 0))
         goto end;
 
     conf = app_load_config_bio(mem_bio, NULL);
@@ -434,7 +434,7 @@ int fipsinstall_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
-opthelp:
+ opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto cleanup;
         case OPT_HELP:
