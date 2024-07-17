@@ -127,10 +127,9 @@ static int sshkdf_set_membuf(unsigned char **dst, size_t *dst_len,
 }
 
 #ifdef FIPS_MODULE
-static int fips_digest_check_passed(KDF_SSHKDF *ctx)
+static int fips_digest_check_passed(KDF_SSHKDF *ctx, const EVP_MD *md)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
     /*
      * Perform digest check
      *
@@ -187,11 +186,6 @@ static int kdf_sshkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         return 0;
     }
 
-#ifdef FIPS_MODULE
-    if (!fips_digest_check_passed(ctx))
-        return 0;
-#endif
-
     return SSHKDF(md, ctx->key, ctx->key_len,
                   ctx->xcghash, ctx->xcghash_len,
                   ctx->session_id, ctx->session_id_len,
@@ -211,8 +205,23 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                                      OSSL_KDF_PARAM_FIPS_DIGEST_CHECK))
         return 0;
 
-    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
-        return 0;
+    if (OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST) != NULL) {
+        const EVP_MD *md = NULL;
+
+        if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
+            return 0;
+
+        md = ossl_prov_digest_md(&ctx->digest);
+        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
+            return 0;
+        }
+
+#ifdef FIPS_MODULE
+        if (!fips_digest_check_passed(ctx, md))
+            return 0;
+#endif
+    }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL)
         if (!sshkdf_set_membuf(&ctx->key, &ctx->key_len, p))

@@ -222,20 +222,11 @@ Ctrl.salt = hexsalt:000000000000000000000000000000000000000000000000000000000000
 Ctrl.info = info:
 Output = 62f99231760bedd72319cc6cad
 
-Title = FIPS indicator tests
-
-# Test that the operation with unapproved digest function is rejected
-#
-# There is no corresponding test for checking `fips-indicator` and derived key
-# because that
-# * HKDF can be used with SHA-1, SHA-2 and SHA-3 but not with the
-#   extendable-output functions.
-# * HMAC construction is not allowed to be used with the extendable-output
-#   functions.
+# Test that the operation with XOF digest function is rejected
 FIPSversion = >=3.4.0
 KDF = HKDF
 Ctrl.digest = digest:SHAKE-256
 Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
 Ctrl.salt = hexsalt:000102030405060708090a0b0c
 Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
-Result = KDF_DERIVE_ERROR
+Result = KDF_CTRL_ERROR

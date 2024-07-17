@@ -109,10 +109,6 @@ typedef struct {
     unsigned char *seed;
     size_t seedlen;
 
-#ifdef FIPS_MODULE
-    PROV_DIGEST digest;
-#endif
-
     OSSL_FIPS_IND_DECLARE
 } TLS1_PRF;
 
@@ -145,9 +141,6 @@ static void kdf_tls1_prf_reset(void *vctx)
     TLS1_PRF *ctx = (TLS1_PRF *)vctx;
     void *provctx = ctx->provctx;
 
-#ifdef FIPS_MODULE
-    ossl_prov_digest_reset(&ctx->digest);
-#endif
     EVP_MAC_CTX_free(ctx->P_hash);
     EVP_MAC_CTX_free(ctx->P_sha1);
     OPENSSL_clear_free(ctx->sec, ctx->seclen);
@@ -174,10 +167,6 @@ static void *kdf_tls1_prf_dup(void *vctx)
         if (!ossl_prov_memdup(src->seed, src->seedlen, &dest->seed,
                               &dest->seedlen))
             goto err;
-#ifdef FIPS_MODULE
-        if (!ossl_prov_digest_copy(&dest->digest, &src->digest))
-            goto err;
-#endif
         OSSL_FIPS_IND_COPY(dest, src)
     }
     return dest;
@@ -215,10 +204,9 @@ static int fips_ems_check_passed(TLS1_PRF *ctx)
     return 1;
 }
 
-static int fips_digest_check_passed(TLS1_PRF *ctx)
+static int fips_digest_check_passed(TLS1_PRF *ctx, const EVP_MD *md)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
     /*
      * Perform digest check
      *
@@ -226,8 +214,7 @@ static int fips_digest_check_passed(TLS1_PRF *ctx)
      * specified in FIPS 180-3. ACVP also only lists the same set of hash
      * functions.
      */
-    int digest_unapproved = (md != NULL)
-        && !EVP_MD_is_a(md, SN_sha256)
+    int digest_unapproved = !EVP_MD_is_a(md, SN_sha256)
         && !EVP_MD_is_a(md, SN_sha384)
         && !EVP_MD_is_a(md, SN_sha512);
 
@@ -271,8 +258,6 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
 #ifdef FIPS_MODULE
     if (!fips_ems_check_passed(ctx))
         return 0;
-    if (!fips_digest_check_passed(ctx))
-        return 0;
 #endif
 
     return tls1_prf_alg(ctx->P_hash, ctx->P_sha1,
@@ -298,6 +283,9 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
+        PROV_DIGEST digest;
+        const EVP_MD *md = NULL;
+
         if (OPENSSL_strcasecmp(p->data, SN_md5_sha1) == 0) {
             if (!ossl_prov_macctx_load_from_params(&ctx->P_hash, params,
                                                    OSSL_MAC_NAME_HMAC,
@@ -314,9 +302,22 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                 return 0;
         }
 
-#ifdef FIPS_MODULE
-        if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
+        memset(&digest, 0, sizeof(digest));
+        if (!ossl_prov_digest_load_from_params(&digest, params, libctx))
             return 0;
+
+        md = ossl_prov_digest_md(&digest);
+        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
+            ossl_prov_digest_reset(&digest);
+            return 0;
+        }
+
+#ifdef FIPS_MODULE
+        if (!fips_digest_check_passed(ctx, md)) {
+            ossl_prov_digest_reset(&digest);
+            return 0;
+        }
 #endif
     }
 
