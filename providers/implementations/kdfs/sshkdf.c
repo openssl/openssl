@@ -385,4 +385,3 @@ out:
     OPENSSL_cleanse(digest, EVP_MAX_MD_SIZE);
     return ret;
 }
-
