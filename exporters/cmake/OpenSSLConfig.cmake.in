@@ -91,11 +91,13 @@ get_filename_component(_ossl_prefix "${CMAKE_CURRENT_LIST_FILE}" PATH)
 {-
   # For each component in $OpenSSL::safe::installdata::CMAKECONFIGDIR relative to
   # $OpenSSL::safe::installdata::PREFIX, have CMake figure out the parent directory.
-  my $d = join('/', unixify($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX),
-                    unixify($OpenSSL::safe::installdata::CMAKECONFIGDIR_REL_LIBDIR));
+  my $d = join('/', unixify(catdir($OpenSSL::safe::installdata::LIBDIR_REL_PREFIX,
+                                   $OpenSSL::safe::installdata::CMAKECONFIGDIR_REL_LIBDIR), 1));
   $OUT = '';
-  $OUT .= 'get_filename_component(_ossl_prefix "${_ossl_prefix}" PATH)' . "\n"
-      foreach (split '/', $d);
+  if ($d ne '.') {
+      $OUT .= 'get_filename_component(_ossl_prefix "${_ossl_prefix}" PATH)' . "\n"
+          foreach (split '/', $d);
+  }
 -}
 if(_ossl_prefix STREQUAL "/")
   set(_ossl_prefix "")
