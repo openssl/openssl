@@ -1381,102 +1381,102 @@ static const uint16_t suiteb_sigalgs[] = {
 };
 
 static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
-    {"ecdsa_secp256r1_sha256", TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
+    {TLSEXT_SIGALG_ecdsa_secp256r1_sha256_name, TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA256, NID_X9_62_prime256v1, 1},
-    {"ecdsa_secp384r1_sha384", TLSEXT_SIGALG_ecdsa_secp384r1_sha384,
+    {TLSEXT_SIGALG_ecdsa_secp384r1_sha384_name, TLSEXT_SIGALG_ecdsa_secp384r1_sha384,
      NID_sha384, SSL_MD_SHA384_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA384, NID_secp384r1, 1},
-    {"ecdsa_secp521r1_sha512", TLSEXT_SIGALG_ecdsa_secp521r1_sha512,
+    {TLSEXT_SIGALG_ecdsa_secp521r1_sha512_name, TLSEXT_SIGALG_ecdsa_secp521r1_sha512,
      NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA512, NID_secp521r1, 1},
-    {"ed25519", TLSEXT_SIGALG_ed25519,
+    {TLSEXT_SIGALG_ed25519_name, TLSEXT_SIGALG_ed25519,
      NID_undef, -1, EVP_PKEY_ED25519, SSL_PKEY_ED25519,
      NID_undef, NID_undef, 1},
-    {"ed448", TLSEXT_SIGALG_ed448,
+    {TLSEXT_SIGALG_ed448_name, TLSEXT_SIGALG_ed448,
      NID_undef, -1, EVP_PKEY_ED448, SSL_PKEY_ED448,
      NID_undef, NID_undef, 1},
-    {NULL, TLSEXT_SIGALG_ecdsa_sha224,
+    {TLSEXT_SIGALG_ecdsa_sha224_name, TLSEXT_SIGALG_ecdsa_sha224,
      NID_sha224, SSL_MD_SHA224_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA224, NID_undef, 1},
-    {NULL, TLSEXT_SIGALG_ecdsa_sha1,
+    {TLSEXT_SIGALG_ecdsa_sha1_name, TLSEXT_SIGALG_ecdsa_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA1, NID_undef, 1},
-    {"ecdsa_brainpoolP256r1_sha256", TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256,
+    {TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256_name, TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA256, NID_brainpoolP256r1, 1},
-    {"ecdsa_brainpoolP384r1_sha384", TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384,
+    {TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name, TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384,
      NID_sha384, SSL_MD_SHA384_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA384, NID_brainpoolP384r1, 1},
-    {"ecdsa_brainpoolP512r1_sha512", TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512,
+    {TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name, TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512,
      NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA512, NID_brainpoolP512r1, 1},
-    {"rsa_pss_rsae_sha256", TLSEXT_SIGALG_rsa_pss_rsae_sha256,
+    {TLSEXT_SIGALG_rsa_pss_rsae_sha256_name, TLSEXT_SIGALG_rsa_pss_rsae_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_RSA_PSS, SSL_PKEY_RSA,
      NID_undef, NID_undef, 1},
-    {"rsa_pss_rsae_sha384", TLSEXT_SIGALG_rsa_pss_rsae_sha384,
+    {TLSEXT_SIGALG_rsa_pss_rsae_sha384_name, TLSEXT_SIGALG_rsa_pss_rsae_sha384,
      NID_sha384, SSL_MD_SHA384_IDX, EVP_PKEY_RSA_PSS, SSL_PKEY_RSA,
      NID_undef, NID_undef, 1},
-    {"rsa_pss_rsae_sha512", TLSEXT_SIGALG_rsa_pss_rsae_sha512,
+    {TLSEXT_SIGALG_rsa_pss_rsae_sha512_name, TLSEXT_SIGALG_rsa_pss_rsae_sha512,
      NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_RSA_PSS, SSL_PKEY_RSA,
      NID_undef, NID_undef, 1},
-    {"rsa_pss_pss_sha256", TLSEXT_SIGALG_rsa_pss_pss_sha256,
+    {TLSEXT_SIGALG_rsa_pss_pss_sha256_name, TLSEXT_SIGALG_rsa_pss_pss_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_RSA_PSS, SSL_PKEY_RSA_PSS_SIGN,
      NID_undef, NID_undef, 1},
-    {"rsa_pss_pss_sha384", TLSEXT_SIGALG_rsa_pss_pss_sha384,
+    {TLSEXT_SIGALG_rsa_pss_pss_sha384_name, TLSEXT_SIGALG_rsa_pss_pss_sha384,
      NID_sha384, SSL_MD_SHA384_IDX, EVP_PKEY_RSA_PSS, SSL_PKEY_RSA_PSS_SIGN,
      NID_undef, NID_undef, 1},
-    {"rsa_pss_pss_sha512", TLSEXT_SIGALG_rsa_pss_pss_sha512,
+    {TLSEXT_SIGALG_rsa_pss_pss_sha512_name, TLSEXT_SIGALG_rsa_pss_pss_sha512,
      NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_RSA_PSS, SSL_PKEY_RSA_PSS_SIGN,
      NID_undef, NID_undef, 1},
-    {"rsa_pkcs1_sha256", TLSEXT_SIGALG_rsa_pkcs1_sha256,
+    {TLSEXT_SIGALG_rsa_pkcs1_sha256_name, TLSEXT_SIGALG_rsa_pkcs1_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha256WithRSAEncryption, NID_undef, 1},
-    {"rsa_pkcs1_sha384", TLSEXT_SIGALG_rsa_pkcs1_sha384,
+    {TLSEXT_SIGALG_rsa_pkcs1_sha384_name, TLSEXT_SIGALG_rsa_pkcs1_sha384,
      NID_sha384, SSL_MD_SHA384_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha384WithRSAEncryption, NID_undef, 1},
-    {"rsa_pkcs1_sha512", TLSEXT_SIGALG_rsa_pkcs1_sha512,
+    {TLSEXT_SIGALG_rsa_pkcs1_sha512_name, TLSEXT_SIGALG_rsa_pkcs1_sha512,
      NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha512WithRSAEncryption, NID_undef, 1},
-    {"rsa_pkcs1_sha224", TLSEXT_SIGALG_rsa_pkcs1_sha224,
+    {TLSEXT_SIGALG_rsa_pkcs1_sha224_name, TLSEXT_SIGALG_rsa_pkcs1_sha224,
      NID_sha224, SSL_MD_SHA224_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha224WithRSAEncryption, NID_undef, 1},
-    {"rsa_pkcs1_sha1", TLSEXT_SIGALG_rsa_pkcs1_sha1,
+    {TLSEXT_SIGALG_rsa_pkcs1_sha1_name, TLSEXT_SIGALG_rsa_pkcs1_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha1WithRSAEncryption, NID_undef, 1},
-    {NULL, TLSEXT_SIGALG_dsa_sha256,
+    {TLSEXT_SIGALG_dsa_sha256_name, TLSEXT_SIGALG_dsa_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_DSA, SSL_PKEY_DSA_SIGN,
      NID_dsa_with_SHA256, NID_undef, 1},
-    {NULL, TLSEXT_SIGALG_dsa_sha384,
+    {TLSEXT_SIGALG_dsa_sha384_name, TLSEXT_SIGALG_dsa_sha384,
      NID_sha384, SSL_MD_SHA384_IDX, EVP_PKEY_DSA, SSL_PKEY_DSA_SIGN,
      NID_undef, NID_undef, 1},
-    {NULL, TLSEXT_SIGALG_dsa_sha512,
+    {TLSEXT_SIGALG_dsa_sha512_name, TLSEXT_SIGALG_dsa_sha512,
      NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_DSA, SSL_PKEY_DSA_SIGN,
      NID_undef, NID_undef, 1},
-    {NULL, TLSEXT_SIGALG_dsa_sha224,
+    {TLSEXT_SIGALG_dsa_sha224_name, TLSEXT_SIGALG_dsa_sha224,
      NID_sha224, SSL_MD_SHA224_IDX, EVP_PKEY_DSA, SSL_PKEY_DSA_SIGN,
      NID_undef, NID_undef, 1},
-    {NULL, TLSEXT_SIGALG_dsa_sha1,
+    {TLSEXT_SIGALG_dsa_sha1_name, TLSEXT_SIGALG_dsa_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_DSA, SSL_PKEY_DSA_SIGN,
      NID_dsaWithSHA1, NID_undef, 1},
 #ifndef OPENSSL_NO_GOST
-    {NULL, TLSEXT_SIGALG_gostr34102012_256_intrinsic,
+    {TLSEXT_SIGALG_gostr34102012_256_intrinsic_name, TLSEXT_SIGALG_gostr34102012_256_intrinsic,
      NID_id_GostR3411_2012_256, SSL_MD_GOST12_256_IDX,
      NID_id_GostR3410_2012_256, SSL_PKEY_GOST12_256,
      NID_undef, NID_undef, 1},
-    {NULL, TLSEXT_SIGALG_gostr34102012_512_intrinsic,
+    {TLSEXT_SIGALG_gostr34102012_512_intrinsic_name, TLSEXT_SIGALG_gostr34102012_512_intrinsic,
      NID_id_GostR3411_2012_512, SSL_MD_GOST12_512_IDX,
      NID_id_GostR3410_2012_512, SSL_PKEY_GOST12_512,
      NID_undef, NID_undef, 1},
-    {NULL, TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256,
+    {TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256_name, TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256,
      NID_id_GostR3411_2012_256, SSL_MD_GOST12_256_IDX,
      NID_id_GostR3410_2012_256, SSL_PKEY_GOST12_256,
      NID_undef, NID_undef, 1},
-    {NULL, TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512,
+    {TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512_name, TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512,
      NID_id_GostR3411_2012_512, SSL_MD_GOST12_512_IDX,
      NID_id_GostR3410_2012_512, SSL_PKEY_GOST12_512,
      NID_undef, NID_undef, 1},
-    {NULL, TLSEXT_SIGALG_gostr34102001_gostr3411,
+    {TLSEXT_SIGALG_gostr34102001_gostr3411_name, TLSEXT_SIGALG_gostr34102001_gostr3411,
      NID_id_GostR3411_94, SSL_MD_GOST94_IDX,
      NID_id_GostR3410_2001, SSL_PKEY_GOST01,
      NID_undef, NID_undef, 1}
@@ -1631,17 +1631,22 @@ char *SSL_get_builtin_sigalgs(OSSL_LIB_CTX *libctx)
         EVP_PKEY_CTX_free(pctx);
 
         if (enabled) {
-            /* Too bad lu->name is not always set, so use this indirection */
-            const char *sa = ssl_get_sigalg_name(lu->sigalg);
+            const char *sa = lu->name;
 
-            if (strlen(sa) + strlen(retval) + 1 >= maxretlen) {
-                maxretlen += SIGLEN_BUF_INCREMENT;
-                retval = OPENSSL_realloc(retval, maxretlen);
+            if (sa != NULL) {
+                if (strlen(sa) + strlen(retval) + 1 >= maxretlen) {
+                    maxretlen += SIGLEN_BUF_INCREMENT;
+                    retval = OPENSSL_realloc(retval, maxretlen);
+                }
+                if (retlen > 0)
+                    OPENSSL_strlcat(retval, ":", ++retlen);
+                retlen += strlen(sa)+1;
+                OPENSSL_strlcat(retval, sa, retlen);
             }
-            if (retlen > 0)
-                OPENSSL_strlcat(retval, ":", ++retlen);
-            retlen += strlen(sa)+1;
-            OPENSSL_strlcat(retval, sa, retlen);
+            else {
+                /* lu->name must not be NULL */
+                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            }
         }
     }
 

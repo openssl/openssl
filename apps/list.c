@@ -779,7 +779,7 @@ static void list_tls_signatures(void)
     int tls_sigalg_listed = 0;
     char *builtin_sigalgs = SSL_get_builtin_sigalgs(app_get0_libctx());
 
-    if (builtin_sigalgs) {
+    if (builtin_sigalgs && strlen(builtin_sigalgs)>0) {
         BIO_printf(bio_out, "%s", builtin_sigalgs);
         OPENSSL_free(builtin_sigalgs);
         tls_sigalg_listed = 1;
@@ -1627,7 +1627,7 @@ int list_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:  /* Never hit, but suppresses warning */
         case OPT_ERR:
-        opthelp:
+opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             return 1;
         case OPT_HELP:

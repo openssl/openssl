@@ -568,37 +568,37 @@ static const ssl_trace_tbl ssl_mfl_tbl[] = {
 };
 
 static const ssl_trace_tbl ssl_sigalg_tbl[] = {
-    {TLSEXT_SIGALG_ecdsa_secp256r1_sha256, "ecdsa_secp256r1_sha256"},
-    {TLSEXT_SIGALG_ecdsa_secp384r1_sha384, "ecdsa_secp384r1_sha384"},
-    {TLSEXT_SIGALG_ecdsa_secp521r1_sha512, "ecdsa_secp521r1_sha512"},
-    {TLSEXT_SIGALG_ecdsa_sha224, "ecdsa_sha224"},
-    {TLSEXT_SIGALG_ed25519, "ed25519"},
-    {TLSEXT_SIGALG_ed448, "ed448"},
-    {TLSEXT_SIGALG_ecdsa_sha1, "ecdsa_sha1"},
-    {TLSEXT_SIGALG_rsa_pss_rsae_sha256, "rsa_pss_rsae_sha256"},
-    {TLSEXT_SIGALG_rsa_pss_rsae_sha384, "rsa_pss_rsae_sha384"},
-    {TLSEXT_SIGALG_rsa_pss_rsae_sha512, "rsa_pss_rsae_sha512"},
-    {TLSEXT_SIGALG_rsa_pss_pss_sha256, "rsa_pss_pss_sha256"},
-    {TLSEXT_SIGALG_rsa_pss_pss_sha384, "rsa_pss_pss_sha384"},
-    {TLSEXT_SIGALG_rsa_pss_pss_sha512, "rsa_pss_pss_sha512"},
-    {TLSEXT_SIGALG_rsa_pkcs1_sha256, "rsa_pkcs1_sha256"},
-    {TLSEXT_SIGALG_rsa_pkcs1_sha384, "rsa_pkcs1_sha384"},
-    {TLSEXT_SIGALG_rsa_pkcs1_sha512, "rsa_pkcs1_sha512"},
-    {TLSEXT_SIGALG_rsa_pkcs1_sha224, "rsa_pkcs1_sha224"},
-    {TLSEXT_SIGALG_rsa_pkcs1_sha1, "rsa_pkcs1_sha1"},
-    {TLSEXT_SIGALG_dsa_sha256, "dsa_sha256"},
-    {TLSEXT_SIGALG_dsa_sha384, "dsa_sha384"},
-    {TLSEXT_SIGALG_dsa_sha512, "dsa_sha512"},
-    {TLSEXT_SIGALG_dsa_sha224, "dsa_sha224"},
-    {TLSEXT_SIGALG_dsa_sha1, "dsa_sha1"},
-    {TLSEXT_SIGALG_gostr34102012_256_intrinsic, "gost2012_256"},
-    {TLSEXT_SIGALG_gostr34102012_512_intrinsic, "gost2012_512"},
-    {TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, "gost2012_256"},
-    {TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, "gost2012_512"},
-    {TLSEXT_SIGALG_gostr34102001_gostr3411, "gost2001_gost94"},
-    {TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256, "ecdsa_brainpoolP256r1_sha256"},
-    {TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384, "ecdsa_brainpoolP384r1_sha384"},
-    {TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512, "ecdsa_brainpoolP512r1_sha512"},
+    {TLSEXT_SIGALG_ecdsa_secp256r1_sha256, TLSEXT_SIGALG_ecdsa_secp256r1_sha256_name},
+    {TLSEXT_SIGALG_ecdsa_secp384r1_sha384, TLSEXT_SIGALG_ecdsa_secp384r1_sha384_name},
+    {TLSEXT_SIGALG_ecdsa_secp521r1_sha512,TLSEXT_SIGALG_ecdsa_secp521r1_sha512_name},
+    {TLSEXT_SIGALG_ecdsa_sha224, TLSEXT_SIGALG_ecdsa_sha224_name},
+    {TLSEXT_SIGALG_ed25519, TLSEXT_SIGALG_ed25519_name},
+    {TLSEXT_SIGALG_ed448, TLSEXT_SIGALG_ed448_name},
+    {TLSEXT_SIGALG_ecdsa_sha1, TLSEXT_SIGALG_ecdsa_sha1_name},
+    {TLSEXT_SIGALG_rsa_pss_rsae_sha256, TLSEXT_SIGALG_rsa_pss_rsae_sha256_name},
+    {TLSEXT_SIGALG_rsa_pss_rsae_sha384, TLSEXT_SIGALG_rsa_pss_rsae_sha384_name},
+    {TLSEXT_SIGALG_rsa_pss_rsae_sha512, TLSEXT_SIGALG_rsa_pss_rsae_sha512_name},
+    {TLSEXT_SIGALG_rsa_pss_pss_sha256, TLSEXT_SIGALG_rsa_pss_pss_sha256_name},
+    {TLSEXT_SIGALG_rsa_pss_pss_sha384, TLSEXT_SIGALG_rsa_pss_pss_sha384_name},
+    {TLSEXT_SIGALG_rsa_pss_pss_sha512, TLSEXT_SIGALG_rsa_pss_pss_sha512_name},
+    {TLSEXT_SIGALG_rsa_pkcs1_sha256, TLSEXT_SIGALG_rsa_pkcs1_sha256_name},
+    {TLSEXT_SIGALG_rsa_pkcs1_sha384, TLSEXT_SIGALG_rsa_pkcs1_sha384_name},
+    {TLSEXT_SIGALG_rsa_pkcs1_sha512, TLSEXT_SIGALG_rsa_pkcs1_sha512_name},
+    {TLSEXT_SIGALG_rsa_pkcs1_sha224, TLSEXT_SIGALG_rsa_pkcs1_sha224_name},
+    {TLSEXT_SIGALG_rsa_pkcs1_sha1, TLSEXT_SIGALG_rsa_pkcs1_sha1_name},
+    {TLSEXT_SIGALG_dsa_sha256, TLSEXT_SIGALG_dsa_sha256_name},
+    {TLSEXT_SIGALG_dsa_sha384, TLSEXT_SIGALG_dsa_sha384_name},
+    {TLSEXT_SIGALG_dsa_sha512, TLSEXT_SIGALG_dsa_sha512_name},
+    {TLSEXT_SIGALG_dsa_sha224, TLSEXT_SIGALG_dsa_sha224_name},
+    {TLSEXT_SIGALG_dsa_sha1, TLSEXT_SIGALG_dsa_sha1_name},
+    {TLSEXT_SIGALG_gostr34102012_256_intrinsic, TLSEXT_SIGALG_gostr34102012_256_intrinsic_name},
+    {TLSEXT_SIGALG_gostr34102012_512_intrinsic, TLSEXT_SIGALG_gostr34102012_512_intrinsic_name},
+    {TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256_name},
+    {TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512_name},
+    {TLSEXT_SIGALG_gostr34102001_gostr3411, TLSEXT_SIGALG_gostr34102001_gostr3411_name},
+    {TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256, TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256_name},
+    {TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384, TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name},
+    {TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512, TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name}
 };
 
 static const ssl_trace_tbl ssl_ctype_tbl[] = {
@@ -735,11 +735,6 @@ static int ssl_print_signature(BIO *bio, int indent, const SSL_CONNECTION *sc,
         *pmsglen -= 2;
     }
     return ssl_print_hexbuf(bio, indent, "Signature", 2, pmsg, pmsglen);
-}
-
-const char *ssl_get_sigalg_name(int sigalg)
-{
-    return ssl_trace_str(sigalg, ssl_sigalg_tbl);
 }
 
 static int ssl_print_extension(BIO *bio, int indent, int server,
