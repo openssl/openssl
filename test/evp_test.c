@@ -126,6 +126,22 @@ static int check_fips_approved(EVP_TEST *t, int approved)
     return 1;
 }
 
+static int mac_check_fips_approved(EVP_MAC_CTX *ctx, EVP_TEST *t)
+{
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    /*
+     * For any getters that do not handle the FIPS indicator assume a default
+     * value of approved.
+     */
+    int approved = 1;
+
+    params[0] = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_FIPS_APPROVED_INDICATOR,
+                                         &approved);
+    if (!EVP_MAC_CTX_get_params(ctx, params))
+        return 0;
+    return check_fips_approved(t, approved);
+}
+
 static int pkey_check_fips_approved(EVP_PKEY_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
@@ -1963,6 +1979,8 @@ static int mac_test_run_mac(EVP_TEST *t)
             t->err = "TEST_MAC_ERR";
             goto err;
         }
+        if (!mac_check_fips_approved(ctx, t))
+            goto err;
     }
     /* FIPS(3.0.0): can't reinitialise MAC contexts #18100 */
     if (reinit-- && fips_provider_version_gt(libctx, 3, 0, 0)) {
