@@ -128,10 +128,18 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     }
 
     /* For integrity-only ciphers, nonce_len is same as MAC size */
-    if (rl->mac_ctx != NULL)
+    if (rl->mac_ctx != NULL) {
         nonce_len = EVP_MAC_CTX_get_mac_size(rl->mac_ctx);
-    else
-        nonce_len = EVP_CIPHER_CTX_get_iv_length(enc_ctx);
+    } else {
+        int ivlen = EVP_CIPHER_CTX_get_iv_length(enc_ctx);
+
+        if (ivlen < 0) {
+            /* Should not happen */
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        nonce_len = (size_t)ivlen;
+    }
 
     if (!sending) {
         /*
