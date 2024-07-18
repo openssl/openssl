@@ -45,6 +45,10 @@ static int test_rand(void)
             || !TEST_mem_eq(outbuf, sizeof(outbuf), entropy2, sizeof(outbuf)))
         return 0;
 
+    if (fips_provider_version_lt(NULL, 3, 4, 0)) {
+        /* Skip the rest and pass the test */
+        return 1;
+    }
     /* Verify that the FIPS indicator can be read and is false */
     prov = EVP_RAND_get0_provider(EVP_RAND_CTX_get0_rand(privctx));
     if (prov != NULL
