@@ -480,8 +480,8 @@ static int i2d_name_canon(const STACK_OF(STACK_OF_X509_NAME_ENTRY) * _intname,
         v = sk_ASN1_VALUE_value(intname, i);
         ltmp = ASN1_item_ex_i2d(&v, in,
                                 ASN1_ITEM_rptr(X509_NAME_ENTRIES), -1, -1);
-        if (ltmp < 0)
-            return ltmp;
+        if (ltmp < 0 || len > INT_MAX - ltmp)
+            return -1;
         len += ltmp;
     }
     return len;
