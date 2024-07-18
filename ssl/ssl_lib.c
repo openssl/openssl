@@ -9,7 +9,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
 #include "ssl_local.h"
 #include "internal/e_os.h"
 #include <openssl/objects.h>
@@ -6747,11 +6746,11 @@ static int nss_keylog_int(const char *prefix,
                           const uint8_t *parameter_2,
                           size_t parameter_2_len)
 {
+    static const char hexdig[] = "0123456789abcdef";
     char *out = NULL;
     char *cursor = NULL;
-    size_t out_len = 0;
-    size_t i;
-    size_t prefix_len;
+    const uint8_t *p;
+    size_t out_len = 0, i, prefix_len;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(sc);
 
     if (sctx->keylog_callback == NULL)
@@ -6770,26 +6769,25 @@ static int nss_keylog_int(const char *prefix,
     if ((out = cursor = OPENSSL_malloc(out_len)) == NULL)
         return 0;
 
-    strcpy(cursor, prefix);
+    memcpy(cursor, prefix, prefix_len);
     cursor += prefix_len;
     *cursor++ = ' ';
 
-    for (i = 0; i < parameter_1_len; i++) {
-        sprintf(cursor, "%02x", parameter_1[i]);
-        cursor += 2;
+    for (i = 0, p = parameter_1; i < parameter_1_len; i++, ++p) {
+        *cursor++ = hexdig[(*p >> 4) & 0xf];
+        *cursor++ = hexdig[*p & 0xf];
     }
     *cursor++ = ' ';
 
-    for (i = 0; i < parameter_2_len; i++) {
-        sprintf(cursor, "%02x", parameter_2[i]);
-        cursor += 2;
+    for (i = 0, p = parameter_2; i < parameter_2_len; i++, ++p) {
+        *cursor++ = hexdig[(*p >> 4) & 0xf];
+        *cursor++ = hexdig[*p & 0xf];
     }
     *cursor = '\0';
 
     sctx->keylog_callback(SSL_CONNECTION_GET_SSL(sc), (const char *)out);
     OPENSSL_clear_free(out, out_len);
     return 1;
-
 }
 
 int ssl_log_rsa_client_key_exchange(SSL_CONNECTION *sc,
