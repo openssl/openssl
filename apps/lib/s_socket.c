@@ -84,8 +84,10 @@ int init_client(int *sock, const char *host, const char *port,
     int ret;
     int options = 0;
 
-    if (tfo && ba_ret != NULL)
+    if (*ba_ret != NULL) {
+        BIO_ADDR_free(*ba_ret);
         *ba_ret = NULL;
+    }
 
     if (BIO_sock_init() != 1)
         return 0;
