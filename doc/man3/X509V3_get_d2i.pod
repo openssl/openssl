@@ -119,6 +119,7 @@ The function X509V3_get_d2i() and its variants
 will return NULL if the extension is not
 found, occurs multiple times or cannot be decoded. It is possible to
 determine the precise reason by checking the value of I<*crit>.
+The returned pointer must be explicitly freed.
 
 The function X509V3_add1_i2d() and its variants allocate B<X509_EXTENSION>
 objects on STACK I<*x> depending on I<flags>. The B<X509_EXTENSION> objects
