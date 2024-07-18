@@ -45,6 +45,10 @@ static int test_rand(void)
             || !TEST_mem_eq(outbuf, sizeof(outbuf), entropy2, sizeof(outbuf)))
         return 0;
 
+    if (fips_provider_version_lt(NULL, 3, 4, 0)) {
+        /* Skip the rest and pass the test */
+        return 1;
+    }
     /* Verify that the FIPS indicator can be read and is false */
     prov = EVP_RAND_get0_provider(EVP_RAND_CTX_get0_rand(privctx));
     if (prov != NULL
@@ -96,7 +100,8 @@ int setup_tests(void)
     if (!TEST_ptr(configfile = test_get_argument(0))
             || !TEST_true(RAND_set_DRBG_type(NULL, "TEST-RAND", "fips=no",
                                              NULL, NULL))
-            || !TEST_true(OSSL_LIB_CTX_load_config(NULL, configfile)))
+            || (fips_provider_version_ge(NULL, 3, 0, 8)
+                && !TEST_true(OSSL_LIB_CTX_load_config(NULL, configfile))))
         return 0;
 
     ADD_TEST(test_rand);
