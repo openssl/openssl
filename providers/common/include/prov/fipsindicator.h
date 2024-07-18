@@ -52,8 +52,8 @@
  * settable.
  */
 typedef struct ossl_fips_ind_st {
-    unsigned int approved;
-    int settable[OSSL_FIPS_IND_SETTABLE_MAX]; /* See OSSL_FIPS_IND_STATE */
+    unsigned char approved;
+    signed char settable[OSSL_FIPS_IND_SETTABLE_MAX]; /* See OSSL_FIPS_IND_STATE */
 } OSSL_FIPS_IND;
 
 typedef int (OSSL_FIPS_IND_CHECK_CB)(OSSL_LIB_CTX *libctx);
