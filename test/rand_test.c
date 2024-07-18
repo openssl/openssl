@@ -100,7 +100,8 @@ int setup_tests(void)
     if (!TEST_ptr(configfile = test_get_argument(0))
             || !TEST_true(RAND_set_DRBG_type(NULL, "TEST-RAND", "fips=no",
                                              NULL, NULL))
-            || !TEST_true(OSSL_LIB_CTX_load_config(NULL, configfile)))
+            || (fips_provider_version_ge(NULL, 3, 0, 8)
+                && !TEST_true(OSSL_LIB_CTX_load_config(NULL, configfile))))
         return 0;
 
     ADD_TEST(test_rand);
