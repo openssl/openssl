@@ -531,7 +531,7 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
     rv = int_bn_mod_inverse(in, a, n, ctx, &noinv);
     if (noinv)
         ERR_raise(ERR_LIB_BN, BN_R_NO_INVERSE);
-    BN_CTX_free(new_ctx);
+
     return rv;
 }
 
