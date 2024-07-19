@@ -398,7 +398,8 @@ static struct rcu_qp *get_hold_current_qp(struct rcu_lock_st *lock)
                          __ATOMIC_RELEASE);
 
         /* if the idx hasn't changed, we're good, else try again */
-        if (qp_idx == ATOMIC_LOAD_N(uint32_t, &lock->reader_idx, __ATOMIC_ACQUIRE))
+        if (qp_idx == ATOMIC_LOAD_N(uint32_t, &lock->reader_idx,
+                                    __ATOMIC_ACQUIRE))
             break;
 
         /*
@@ -481,8 +482,8 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
              */
             data->thread_qps[i].depth--;
             if (data->thread_qps[i].depth == 0) {
-                ret = ATOMIC_SUB_FETCH(&data->thread_qps[i].qp->users, VAL_READER,
-                                       __ATOMIC_RELEASE);
+                ret = ATOMIC_SUB_FETCH(&data->thread_qps[i].qp->users,
+                                       VAL_READER, __ATOMIC_RELEASE);
                 OPENSSL_assert(ret != UINT64_MAX);
                 data->thread_qps[i].qp = NULL;
                 data->thread_qps[i].lock = NULL;
