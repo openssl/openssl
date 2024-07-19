@@ -32,7 +32,7 @@ domain flags on a B<SSL_CTX> using a QUIC B<SSL_METHOD>. These flags determine
 the concurrency model which is used for a QUIC domain. A detailed introduction
 to these concepts can be found in L<openssl-quic-concurrency(7)>.
 
-The flags comprise zero or more of the following flags:
+Applications may use either one the flags here:
 
 =over 4
 
@@ -50,7 +50,7 @@ B<SSL_DOMAIN_FLAG_SINGLE_THREAD>.
 
 =item B<SSL_DOMAIN_FLAG_THREAD_ASSISTED>
 
-Specifying this flag configures the Thread-Assisted Concurrency Modle (TACM).
+Specifying this flag configures the Thread-Assisted Concurrency Model (TACM).
 It implies B<SSL_DOMAIN_FLAG_MULTI_THREAD> and B<SSL_DOMAIN_FLAG_BLOCKING>.
 
 This concurrency model is not available if OpenSSL was built without thread
