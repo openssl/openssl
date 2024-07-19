@@ -32,7 +32,7 @@ static int create_socket(int domain, int socktype, int protocol)
      */
     fd = (int)WSASocketA(domain, socktype, protocol, NULL, 0,
                          WSA_FLAG_NO_HANDLE_INHERIT);
-    if (fd < 0)
+    if (fd == INVALID_SOCKET)
         return -1;
 
     /* Prevent interference with the socket from other processes on Windows. */
@@ -47,7 +47,7 @@ static int create_socket(int domain, int socktype, int protocol)
 # endif
 
     fd = BIO_socket(domain, socktype, protocol, 0);
-    if (fd < 0)
+    if (fd == INVALID_SOCKET)
         return -1;
 
     /*
@@ -80,7 +80,7 @@ int ossl_rio_notifier_init(RIO_NOTIFIER *nfy)
 
     /* Create a close-on-exec socket. */
     lfd = create_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (lfd < 0)
+    if (lfd == INVALID_SOCKET)
         return 0;
 
     /* Bind the socket to a random loopback port. */
