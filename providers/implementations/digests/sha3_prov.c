@@ -527,9 +527,9 @@ const OSSL_DISPATCH ossl_##name##_functions[] = {                              \
     { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))shake_set_ctx_params }, \
     { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))shake_settable_ctx_params },                              \
-     { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, (void (*)(void))shake_get_ctx_params },\
-     { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,                                   \
-      (void (*)(void))shake_gettable_ctx_params },                             \
+    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, (void (*)(void))shake_get_ctx_params }, \
+    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,                                    \
+     (void (*)(void))shake_gettable_ctx_params },                              \
     PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 static void keccak_freectx(void *vctx)
