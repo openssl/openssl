@@ -71,10 +71,10 @@
  * the reactor interface.
  */
 struct quic_tick_result_st {
+    OSSL_TIME   tick_deadline;
     char        net_read_desired;
     char        net_write_desired;
     char        notify_other_threads;
-    OSSL_TIME   tick_deadline;
 };
 
 static ossl_inline ossl_unused void
@@ -116,7 +116,7 @@ struct quic_reactor_st {
 
     /*
      * Count of the current number of blocking waiters. Like everything else,
-     * this is protected the caller's mutex (i.e., the engine mutex).
+     * this is protected by the caller's mutex (i.e., the engine mutex).
      */
     size_t cur_blocking_waiters;
 

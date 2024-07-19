@@ -4216,7 +4216,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
 # ifndef OPENSSL_NO_QUIC
     ret->domain_flags = 0;
     if (IS_QUIC_METHOD(meth)) {
-# if defined(OPENSSL_THREADS)
+#  if defined(OPENSSL_THREADS)
         if (meth == OSSL_QUIC_client_thread_method())
             ret->domain_flags
                 = SSL_DOMAIN_FLAG_MULTI_THREAD
@@ -4226,11 +4226,11 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
             ret->domain_flags
                 = SSL_DOMAIN_FLAG_MULTI_THREAD
                 | SSL_DOMAIN_FLAG_LEGACY_BLOCKING;
-# else
+#  else
         ret->domain_flags
             = SSL_DOMAIN_FLAG_SINGLE_THREAD
             | SSL_DOMAIN_FLAG_LEGACY_BLOCKING;
-# endif
+#  endif
     }
 # endif
 

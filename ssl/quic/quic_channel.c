@@ -2119,7 +2119,7 @@ static int ch_rx(QUIC_CHANNEL *ch, int channel_only, int *notify_other_threads)
 
     ch_rx_check_forged_pkt_limit(ch);
 
-    if (handled_any)
+    if (handled_any && notify_other_threads != NULL)
         *notify_other_threads = 1;
 
     /*
