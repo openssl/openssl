@@ -231,19 +231,19 @@ static int poll_two_fds(int rfd, int rfd_want_read,
     FD_ZERO(&wfd_set);
     FD_ZERO(&efd_set);
 
-    if (rfd != -1 && rfd_want_read)
+    if (rfd != INVALID_SOCKET && rfd_want_read)
         openssl_fdset(rfd, &rfd_set);
-    if (wfd != -1 && wfd_want_write)
+    if (wfd != INVALID_SOCKET && wfd_want_write)
         openssl_fdset(wfd, &wfd_set);
 
     /* Always check for error conditions. */
-    if (rfd != -1)
+    if (rfd != INVALID_SOCKET)
         openssl_fdset(rfd, &efd_set);
-    if (wfd != -1)
+    if (wfd != INVALID_SOCKET)
         openssl_fdset(wfd, &efd_set);
 
     /* Check for notifier FD readability. */
-    if (notify_rfd != -1) {
+    if (notify_rfd != INVALID_SOCKET) {
         openssl_fdset(notify_rfd, &rfd_set);
         openssl_fdset(notify_rfd, &efd_set);
     }
@@ -254,11 +254,17 @@ static int poll_two_fds(int rfd, int rfd_want_read,
     if (notify_rfd > maxfd)
         maxfd = notify_rfd;
 
-    if (!ossl_assert(rfd != -1 || wfd != -1
+    if (!ossl_assert(rfd != INVALID_SOCKET || wfd != INVALID_SOCKET
                      || !ossl_time_is_infinite(deadline)))
         /* Do not block forever; should not happen. */
         return 0;
 
+    /*
+     * The mutex dance (unlock/re-locak after poll/seclect) is
+     * potentially problematic. This may create a situation when
+     * two threads arrive to select/poll with the same file
+     * descriptors. We just need to be aware of this.
+     */
 # if defined(OPENSSL_THREADS)
     if (mutex != NULL)
         ossl_crypto_mutex_unlock(mutex);
@@ -460,7 +466,8 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
     OSSL_TIME tick_deadline;
 
     notifier_fd
-        = (rtor->have_notifier ? ossl_rio_notifier_as_fd(&rtor->notifier) : -1);
+        = (rtor->have_notifier ? ossl_rio_notifier_as_fd(&rtor->notifier)
+                               : INVALID_SOCKET);
 
     for (;;) {
         if ((flags & SKIP_FIRST_TICK) != 0)
@@ -529,7 +536,7 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
          *   Second, the thread which happened to be the one which decremented
          *   cur_blocking_waiters to 0 unsignals the notifier and is then
          *   responsible for broadcasting to a CV to indicate to the other
-         *   threads that the synchronised wakeup has been cmpleted. Other
+         *   threads that the synchronised wakeup has been completed. Other
          *   threads wait for this CV to be signalled.
          *
          */
