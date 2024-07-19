@@ -151,7 +151,7 @@ int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
     return 1;
 }
 
-#define OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX 256
+# define OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX 256
 
 static void *thread_local_storage[OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX];
 
