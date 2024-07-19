@@ -1083,7 +1083,7 @@ int EVP_MD_CTX_get_size_ex(const EVP_MD_CTX *ctx)
         if (EVP_MD_CTX_get_params(c, params) != 1
                 || xoflen == SIZE_MAX
                 || xoflen == 0)
-           return -1;
+            return -1;
         return xoflen;
     }
     /* Normal digests have a constant fixed size output */
