@@ -237,8 +237,9 @@ static int wrong_type(const SSL *s, uint32_t flags)
 }
 
 /*
- * Given a QCSO, QSSO or QLSO, initialises a QCTX, determining the contextually
- * applicable QUIC_LISTENER, QUIC_CONNECTION and QUIC_XSO pointers.
+ * Given a QDSO, QCSO, QSSO or QLSO, initialises a QCTX, determining the
+ * contextually applicable QUIC_LISTENER, QUIC_CONNECTION and QUIC_XSO
+ * pointers.
  *
  * After this returns 1, all fields of the passed QCTX are initialised.
  * Returns 0 on failure. This function is intended to be used to provide API
@@ -710,10 +711,9 @@ static void quic_free_listener(QCTX *ctx)
 #if defined(OPENSSL_THREADS)
         ossl_crypto_mutex_free(&ctx->ql->mutex);
 #endif
-    }
-
-    if (ctx->ql->domain != NULL)
+    } else {
         SSL_free(&ctx->ql->domain->obj.ssl);
+    }
 }
 
 /* SSL_free */
@@ -4290,7 +4290,6 @@ SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags)
     QCTX ctx;
     QUIC_LISTENER *ql = NULL;
     QUIC_PORT_ARGS port_args = {0};
-    int reffed = 0;
 
     if (!expect_quic_domain(ssl, &ctx))
         return NULL;
@@ -4298,7 +4297,6 @@ SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags)
     if (!SSL_up_ref(&ctx.qd->obj.ssl))
         return NULL;
 
-    reffed = 1;
     qctx_lock(&ctx);
 
     if ((ql = OPENSSL_zalloc(sizeof(*ql))) == NULL) {
@@ -4338,8 +4336,7 @@ err:
 
     OPENSSL_free(ql);
     qctx_unlock(&ctx);
-    if (reffed)
-        SSL_free(&ctx.qd->obj.ssl);
+    SSL_free(&ctx.qd->obj.ssl);
 
     return NULL;
 }
@@ -4554,7 +4551,7 @@ SSL *ossl_quic_new_domain(SSL_CTX *ctx, uint64_t flags)
 
     if ((qd = OPENSSL_zalloc(sizeof(*qd))) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
-        goto err;
+        return NULL;
     }
 
 #if defined(OPENSSL_THREADS)
@@ -4586,9 +4583,7 @@ SSL *ossl_quic_new_domain(SSL_CTX *ctx, uint64_t flags)
     return &qd->obj.ssl;
 
 err:
-    if (qd != NULL)
-        ossl_quic_engine_free(qd->engine);
-
+    ossl_quic_engine_free(qd->engine);
 #if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_free(&qd->mutex);
 #endif
