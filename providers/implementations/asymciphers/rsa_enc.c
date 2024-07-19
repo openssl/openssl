@@ -51,7 +51,6 @@ static OSSL_ITEM padding_item[] = {
     { RSA_NO_PADDING,           OSSL_PKEY_RSA_PAD_MODE_NONE },
     { RSA_PKCS1_OAEP_PADDING,   OSSL_PKEY_RSA_PAD_MODE_OAEP }, /* Correct spelling first */
     { RSA_PKCS1_OAEP_PADDING,   "oeap"   },
-    { RSA_X931_PADDING,         OSSL_PKEY_RSA_PAD_MODE_X931 },
     { 0,                        NULL     }
 };
 
