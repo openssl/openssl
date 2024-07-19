@@ -3481,8 +3481,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     print_verify_detail(s, bio);
     BIO_printf(bio, (SSL_session_reused(s) ? "---\nReused, " : "---\nNew, "));
     c = SSL_get_current_cipher(s);
-    BIO_printf(bio, "Cipher is %s (%s)\n",
-               SSL_CIPHER_get_name(c), SSL_CIPHER_get_version(c));
+    BIO_printf(bio, "%s, Cipher is %s\n",
+               SSL_CIPHER_get_version(c), SSL_CIPHER_get_name(c));
     BIO_printf(bio, "Protocol: %s\n", SSL_get_version(s));
     if (peer != NULL) {
         EVP_PKEY *pktmp;
