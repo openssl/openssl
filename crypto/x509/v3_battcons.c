@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,7 +19,6 @@ static STACK_OF(CONF_VALUE) *i2v_OSSL_BASIC_ATTR_CONSTRAINTS(
     OSSL_BASIC_ATTR_CONSTRAINTS *battcons,
     STACK_OF(CONF_VALUE)
     *extlist);
-
 static OSSL_BASIC_ATTR_CONSTRAINTS *v2i_OSSL_BASIC_ATTR_CONSTRAINTS(
     X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx,
@@ -37,8 +36,8 @@ const X509V3_EXT_METHOD ossl_v3_battcons = {
 };
 
 ASN1_SEQUENCE(OSSL_BASIC_ATTR_CONSTRAINTS) = {
-        ASN1_OPT(OSSL_BASIC_ATTR_CONSTRAINTS, authority, ASN1_FBOOLEAN),
-        ASN1_OPT(OSSL_BASIC_ATTR_CONSTRAINTS, pathlen, ASN1_INTEGER)
+    ASN1_OPT(OSSL_BASIC_ATTR_CONSTRAINTS, authority, ASN1_FBOOLEAN),
+    ASN1_OPT(OSSL_BASIC_ATTR_CONSTRAINTS, pathlen, ASN1_INTEGER)
 } ASN1_SEQUENCE_END(OSSL_BASIC_ATTR_CONSTRAINTS)
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_BASIC_ATTR_CONSTRAINTS)
@@ -46,8 +45,7 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_BASIC_ATTR_CONSTRAINTS)
 static STACK_OF(CONF_VALUE) *i2v_OSSL_BASIC_ATTR_CONSTRAINTS(
     X509V3_EXT_METHOD *method,
     OSSL_BASIC_ATTR_CONSTRAINTS *battcons,
-    STACK_OF(CONF_VALUE)
-    *extlist)
+    STACK_OF(CONF_VALUE) *extlist)
 {
     X509V3_add_value_bool("authority", battcons->authority, &extlist);
     X509V3_add_value_int("pathlen", battcons->pathlen, &extlist);
