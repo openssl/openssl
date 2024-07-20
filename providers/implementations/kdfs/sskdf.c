@@ -493,7 +493,7 @@ static int x963kdf_derive(void *vctx, unsigned char *key, size_t keylen,
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
     const EVP_MD *md;
 
-    if (!ossl_prov_is_running() || !sskdf_set_ctx_params(ctx, params))
+    if (!ossl_prov_is_running() || !x963kdf_set_ctx_params(ctx, params))
         return 0;
 
     if (ctx->secret == NULL) {
