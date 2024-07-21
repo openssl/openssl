@@ -112,7 +112,7 @@ static CRYPTO_ONCE defaults_setup_init = CRYPTO_ONCE_STATIC_INIT;
 
 /**
  * @brief Function to setup default values to run once.
- * Only used in Windows environments.  Does run time initalization
+ * Only used in Windows environments.  Does run time initialization
  * of openssldir/modulesdir/enginesdir from the registry
  */
 DEFINE_RUN_ONCE_STATIC(do_defaults_setup)

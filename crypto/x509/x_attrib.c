@@ -249,7 +249,7 @@ int ossl_print_attribute_value(BIO *out,
     /* OID-IRI would go here. */
     /* RELATIVE-OID-IRI would go here. */
 
-    /* Would it be approriate to just hexdump? */
+    /* Would it be appropriate to just hexdump? */
     default:
         return BIO_printf(out,
                           "%*s<Unsupported tag %d>",
