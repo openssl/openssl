@@ -82,7 +82,7 @@ choice of preferred pass phrase callback form.  These are called indirectly,
 through an internal L<OSSL_PASSPHRASE_CALLBACK(3)> function.
 
 The internal L<OSSL_PASSPHRASE_CALLBACK(3)> function caches the pass phrase, to
-be re-used in all decodings that are performed in the same decoding run (for
+be reused in all decodings that are performed in the same decoding run (for
 example, within one L<OSSL_DECODER_from_bio(3)> call).
 
 =head2 Input Types
