@@ -211,7 +211,7 @@ CRYPTO_mem_debug_push(), and CRYPTO_mem_debug_pop()
 are deprecated and are no-ops that always return 0.
 
 OPENSSL_strtoul() returns 1 on success and 0 in the event that an error has
-occured. Specifically, 0 is returned in the following events:
+occurred. Specifically, 0 is returned in the following events:
 
 =over 4
 
@@ -231,7 +231,7 @@ If no characters were consumed in the translation
 =back
 
 Note that a success condition does not imply that the expected
-translation has been preformed.  For instance calling
+translation has been performed.  For instance calling
 
     OPENSSL_strtoul("0x12345", &endptr, 10, &num);
 

@@ -77,7 +77,7 @@ int ossl_ec_check_curve_allowed(const EC_GROUP *group)
     const char *curve_name;
     int nid = EC_GROUP_get_curve_name(group);
 
-    /* Explict curves are not FIPS approved */
+    /* Explicit curves are not FIPS approved */
     if (nid == NID_undef)
         return 0;
     /* Only NIST curves are FIPS approved */

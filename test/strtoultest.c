@@ -15,7 +15,7 @@ struct strtoul_test_entry {
     char *input; /* the input string */
     int base; /* the base we are converting in */
     unsigned long expect_val; /* the expected value we should get */
-    int expect_err;  /* the expected error we expect to recieve */
+    int expect_err;  /* the expected error we expect to receive */
     size_t expect_endptr_offset; /* the expected endptr offset, +1 for NULL */
 };
 
