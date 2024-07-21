@@ -80,7 +80,7 @@ least one valid (nonempty) protocol entry in the list.
 The SSL_select_next_proto() helper function can be useful from either the ALPN
 callback or the NPN callback (described below). If no match is found, the first
 item in B<client>, B<client_len> is returned in B<out>, B<outlen> and
-B<OPENSSL_NPN_NO_OVERLAP> is returned. This can be useful when implementating
+B<OPENSSL_NPN_NO_OVERLAP> is returned. This can be useful when implementing
 the NPN callback. In the ALPN case, the value returned in B<out> and B<outlen>
 must be ignored if B<OPENSSL_NPN_NO_OVERLAP> has been returned from
 SSL_select_next_proto().
