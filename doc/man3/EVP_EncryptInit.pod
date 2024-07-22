@@ -1302,6 +1302,15 @@ indicates whether the operation was successful. If it does not indicate success,
 the authentication operation has failed and any output data B<MUST NOT> be used
 as it is corrupted.
 
+Please note that the number of authenticated bytes returned by
+EVP_CipherUpdate() depends on the cipher used. Stream ciphers, such as ChaCha20
+or ciphers in GCM mode, can handle 1 byte at a time, resulting in an effective
+"block" size of 1. Conversely, ciphers in OCB mode must process data one block
+at a time, and the block size is returned.
+
+Regardless of the returned size, it is safe to pass unpadded data to an
+EVP_CipherUpdate() call in a single operation.
+
 =head2 GCM and OCB Modes
 
 The following I<ctrl>s are supported in GCM and OCB modes.
