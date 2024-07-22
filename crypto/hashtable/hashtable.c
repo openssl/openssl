@@ -485,7 +485,6 @@ static int grow_hashtable(HT *h, size_t oldsize)
     /*
      * Now we replace the old mutable data with the new
      */
-    oldmd = ossl_rcu_deref(&h->md);
     ossl_rcu_assign_ptr(&h->md, &newmd);
     ossl_rcu_call(h->lock, free_old_neigh_table, oldmd);
     h->wpd.need_sync = 1;
@@ -658,6 +657,7 @@ static void free_old_entry(void *arg)
 
 int ossl_ht_delete(HT *h, HT_KEY *key)
 {
+    struct ht_mutable_data_st *md = ossl_rcu_deref(&h->md);
     uint64_t hash;
     uint64_t neigh_idx;
     size_t j;
@@ -667,15 +667,15 @@ int ossl_ht_delete(HT *h, HT_KEY *key)
 
     hash = h->config.ht_hash_fn(key->keybuf, key->keysize);
 
-    neigh_idx = hash & h->md->neighborhood_mask;
-    PREFETCH_NEIGHBORHOOD(h->md->neighborhoods[neigh_idx]);
+    neigh_idx = hash & md->neighborhood_mask;
+    PREFETCH_NEIGHBORHOOD(md->neighborhoods[neigh_idx]);
     for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
-        if (compare_hash(hash, h->md->neighborhoods[neigh_idx].entries[j].hash)) {
+        if (compare_hash(hash, md->neighborhoods[neigh_idx].entries[j].hash)) {
             h->wpd.value_count--;
-            CRYPTO_atomic_store(&h->md->neighborhoods[neigh_idx].entries[j].hash,
+            CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[j].hash,
                                 0, h->atomic_lock);
-            v = (struct ht_internal_value_st *)h->md->neighborhoods[neigh_idx].entries[j].value;
-            ossl_rcu_assign_ptr(&h->md->neighborhoods[neigh_idx].entries[j].value,
+            v = (struct ht_internal_value_st *)md->neighborhoods[neigh_idx].entries[j].value;
+            ossl_rcu_assign_ptr(&md->neighborhoods[neigh_idx].entries[j].value,
                                 &nv);
             rc = 1;
             break;
