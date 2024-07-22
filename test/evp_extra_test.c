@@ -5478,7 +5478,7 @@ static int aes_gcm_decrypt(const unsigned char *gcm_key, size_t gcm_key_s,
         goto err;
 
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-                                                  (void*)gcm_tag, gcm_tag_s);
+                                                  (void *)gcm_tag, gcm_tag_s);
 
     if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, params))
             ||!TEST_true(EVP_DecryptFinal_ex(ctx, outbuf, &outlen)))

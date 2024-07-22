@@ -192,7 +192,7 @@ static int aes_gcm_decrypt(void)
 
     /* Set expected tag value. */
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-                                                  (void*)gcm_tag, sizeof(gcm_tag));
+                                                  (void* )gcm_tag, sizeof(gcm_tag));
 
     if (!EVP_CIPHER_CTX_set_params(ctx, params))
         goto err;

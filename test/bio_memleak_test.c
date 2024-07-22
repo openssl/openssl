@@ -261,7 +261,7 @@ static int test_bio_i2d_ASN1_mime(void)
 
     error_callback_fired = 0;
 
-    if (!TEST_false(i2d_ASN1_bio_stream(out, (ASN1_VALUE*) p7, bio,
+    if (!TEST_false(i2d_ASN1_bio_stream(out, (ASN1_VALUE *) p7, bio,
                                         SMIME_STREAM | SMIME_BINARY,
                                         ASN1_ITEM_rptr(PKCS7))))
         goto finish;

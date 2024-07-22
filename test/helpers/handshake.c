@@ -81,7 +81,7 @@ static void info_cb(const SSL *s, int where, int ret)
 {
     if (where & SSL_CB_ALERT) {
         HANDSHAKE_EX_DATA *ex_data =
-            (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
+            (HANDSHAKE_EX_DATA *)(SSL_get_ex_data(s, ex_data_idx));
         if (where & SSL_CB_WRITE) {
             ex_data->alert_sent = ret;
             if (strcmp(SSL_alert_type_string(ret), "F") == 0
@@ -103,7 +103,7 @@ static int select_server_ctx(SSL *s, void *arg, int ignore)
 {
     const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
     HANDSHAKE_EX_DATA *ex_data =
-        (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
+        (HANDSHAKE_EX_DATA *)(SSL_get_ex_data(s, ex_data_idx));
 
     if (servername == NULL) {
         ex_data->servername = SSL_TEST_SERVERNAME_SERVER1;
@@ -111,7 +111,7 @@ static int select_server_ctx(SSL *s, void *arg, int ignore)
     }
 
     if (strcmp(servername, "server2") == 0) {
-        SSL_CTX *new_ctx = (SSL_CTX*)arg;
+        SSL_CTX *new_ctx = (SSL_CTX *)arg;
         SSL_set_SSL_CTX(s, new_ctx);
         /*
          * Copy over all the SSL_CTX options - reasonable behavior
@@ -141,7 +141,7 @@ static int client_hello_select_server_ctx(SSL *s, void *arg, int ignore)
     const unsigned char *p;
     size_t len, remaining;
     HANDSHAKE_EX_DATA *ex_data =
-        (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
+        (HANDSHAKE_EX_DATA *)(SSL_get_ex_data(s, ex_data_idx));
 
     /*
      * The server_name extension was given too much extensibility when it
@@ -336,7 +336,7 @@ static int do_not_call_session_ticket_cb(SSL *s, unsigned char *key_name,
                                          EVP_MAC_CTX *hctx, int enc)
 {
     HANDSHAKE_EX_DATA *ex_data =
-        (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
+        (HANDSHAKE_EX_DATA *)(SSL_get_ex_data(s, ex_data_idx));
     ex_data->session_ticket_do_not_call = 1;
     return 0;
 }
@@ -400,7 +400,7 @@ static int client_npn_cb(SSL *s, unsigned char **out, unsigned char *outlen,
                          const unsigned char *in, unsigned int inlen,
                          void *arg)
 {
-    CTX_DATA *ctx_data = (CTX_DATA*)(arg);
+    CTX_DATA *ctx_data = (CTX_DATA *)(arg);
     int ret;
 
     ret = SSL_select_next_proto(out, outlen, in, inlen,
@@ -414,7 +414,7 @@ static int client_npn_cb(SSL *s, unsigned char **out, unsigned char *outlen,
 static int server_npn_cb(SSL *s, const unsigned char **data,
                          unsigned int *len, void *arg)
 {
-    CTX_DATA *ctx_data = (CTX_DATA*)(arg);
+    CTX_DATA *ctx_data = (CTX_DATA *)(arg);
     *data = ctx_data->npn_protocols;
     *len = ctx_data->npn_protocols_len;
     return SSL_TLSEXT_ERR_OK;
@@ -431,7 +431,7 @@ static int server_alpn_cb(SSL *s, const unsigned char **out,
                           unsigned char *outlen, const unsigned char *in,
                           unsigned int inlen, void *arg)
 {
-    CTX_DATA *ctx_data = (CTX_DATA*)(arg);
+    CTX_DATA *ctx_data = (CTX_DATA *)(arg);
     int ret;
 
     /* SSL_select_next_proto isn't const-correct... */
@@ -1253,8 +1253,8 @@ static char *dup_str(const unsigned char *in, size_t len)
         return NULL;
 
     /* Assert that the string does not contain NUL-bytes. */
-    if (TEST_size_t_eq(OPENSSL_strnlen((const char*)(in), len), len))
-        TEST_ptr(ret = OPENSSL_strndup((const char*)(in), len));
+    if (TEST_size_t_eq(OPENSSL_strnlen((const char *)(in), len), len))
+        TEST_ptr(ret = OPENSSL_strndup((const char *)(in), len));
     return ret;
 }
 
@@ -1683,15 +1683,15 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     ret->server_alpn_negotiated = dup_str(proto, proto_len);
 
     if ((sess = SSL_get0_session(server.ssl)) != NULL) {
-        SSL_SESSION_get0_ticket_appdata(sess, (void**)&tick, &tick_len);
-        ret->result_session_ticket_app_data = OPENSSL_strndup((const char*)tick, tick_len);
+        SSL_SESSION_get0_ticket_appdata(sess, (void **)&tick, &tick_len);
+        ret->result_session_ticket_app_data = OPENSSL_strndup((const char *)tick, tick_len);
     }
 
     ret->client_resumed = SSL_session_reused(client.ssl);
     ret->server_resumed = SSL_session_reused(server.ssl);
 
     cipher = SSL_CIPHER_get_name(SSL_get_current_cipher(client.ssl));
-    ret->cipher = dup_str((const unsigned char*)cipher, strlen(cipher));
+    ret->cipher = dup_str((const unsigned char *)cipher, strlen(cipher));
 
     if (session_out != NULL)
         *session_out = SSL_get1_session(client.ssl);

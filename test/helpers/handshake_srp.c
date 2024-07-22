@@ -21,13 +21,13 @@
 
 static char *client_srp_cb(SSL *s, void *arg)
 {
-    CTX_DATA *ctx_data = (CTX_DATA*)(arg);
+    CTX_DATA *ctx_data = (CTX_DATA *)(arg);
     return OPENSSL_strdup(ctx_data->srp_password);
 }
 
 static int server_srp_cb(SSL *s, int *ad, void *arg)
 {
-    CTX_DATA *ctx_data = (CTX_DATA*)(arg);
+    CTX_DATA *ctx_data = (CTX_DATA *)(arg);
     if (strcmp(ctx_data->srp_user, SSL_get_srp_username(s)) != 0)
         return SSL3_AL_FATAL;
     if (SSL_set_srp_server_param_pw(s, ctx_data->srp_user,

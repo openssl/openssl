@@ -461,7 +461,7 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
         no_linger.l_linger = 0;
         fd = SSL_get_fd(serverCon);
         if (fd >= 0)
-            (void)setsockopt(fd, SOL_SOCKET, SO_LINGER, (char*)&no_linger,
+            (void)setsockopt(fd, SOL_SOCKET, SO_LINGER, (char *)&no_linger,
                              sizeof(no_linger));
     }
 #endif

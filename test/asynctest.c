@@ -174,12 +174,12 @@ static int test_ASYNC_callback_status(void)
 
     if (       !ASYNC_init_thread(1, 0)
             || (waitctx = ASYNC_WAIT_CTX_new()) == NULL
-            || ASYNC_WAIT_CTX_set_callback(waitctx, test_callback, (void*)&set_arg)
+            || ASYNC_WAIT_CTX_set_callback(waitctx, test_callback, (void *)&set_arg)
                != 1
             || ASYNC_WAIT_CTX_get_callback(waitctx, &get_callback, &get_arg)
                != 1
             || test_callback != get_callback
-            || get_arg != (void*)&set_arg
+            || get_arg != (void *)&set_arg
             || (*get_callback)(get_arg) != 1
             || ASYNC_WAIT_CTX_set_status(waitctx, set_status) != 1
             || set_status != ASYNC_WAIT_CTX_get_status(waitctx)) {

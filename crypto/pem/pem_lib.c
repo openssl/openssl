@@ -967,9 +967,9 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     }
 
     EVP_DecodeInit(ctx);
-    if (EVP_DecodeUpdate(ctx, (unsigned char*)buf_mem->data, &len,
-                         (unsigned char*)buf_mem->data, len) < 0
-            || EVP_DecodeFinal(ctx, (unsigned char*)&(buf_mem->data[len]),
+    if (EVP_DecodeUpdate(ctx, (unsigned char *)buf_mem->data, &len,
+                         (unsigned char *)buf_mem->data, len) < 0
+            || EVP_DecodeFinal(ctx, (unsigned char *)&(buf_mem->data[len]),
                                &taillen) < 0) {
         ERR_raise(ERR_LIB_PEM, PEM_R_BAD_BASE64_DECODE);
         goto end;

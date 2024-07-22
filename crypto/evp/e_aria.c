@@ -773,7 +773,7 @@ static const EVP_CIPHER aria_##keylen##_##mode = { \
         sizeof(EVP_ARIA_##MODE##_CTX),             \
         NULL,NULL,aria_##mode##_ctrl,NULL };       \
 const EVP_CIPHER *EVP_aria_##keylen##_##mode(void) \
-{ return (EVP_CIPHER*)&aria_##keylen##_##mode; }
+{ return (EVP_CIPHER *)&aria_##keylen##_##mode; }
 
 BLOCK_CIPHER_aead(128, gcm, GCM)
 BLOCK_CIPHER_aead(192, gcm, GCM)

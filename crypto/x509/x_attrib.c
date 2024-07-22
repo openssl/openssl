@@ -123,7 +123,7 @@ int ossl_print_attribute_value(BIO *out,
          */
         value = av->value.sequence->data;
         xn = d2i_X509_NAME(NULL,
-                           (const unsigned char**)&value,
+                           (const unsigned char **)&value,
                            av->value.sequence->length);
         if (xn == NULL) {
             BIO_puts(out, "(COULD NOT DECODE DISTINGUISHED NAME)\n");

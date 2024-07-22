@@ -590,7 +590,7 @@ int ossl_pool_add_nonce_data(RAND_POOL *pool)
     data.pid = getpid();
     data.tid = CRYPTO_THREAD_get_current_id();
     data.seq = 0;
-    sys$gettim((void*)&data.time);
+    sys$gettim((void *)&data.time);
 
     if (data.time == last_time) {
         data.seq = ++last_seq;

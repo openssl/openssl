@@ -106,7 +106,7 @@ static int ssl_comp_cert(SSL *ssl, int alg)
 
 static void cert_comp_info_cb(const SSL *s, int where, int ret)
 {
-    int *seen = (int*)SSL_get_app_data(s);
+    int *seen = (int *)SSL_get_app_data(s);
 
     if (SSL_is_server(s)) {
         /* TLS_ST_SR_COMP_CERT */
@@ -215,7 +215,7 @@ static int test_ssl_cert_comp(int test)
         if (!TEST_int_eq(sc->cert->key->cert_comp_used, 0))
             goto end;
 
-        if (!TEST_false(*(int*)SSL_get_app_data(clientssl)))
+        if (!TEST_false(*(int *)SSL_get_app_data(clientssl)))
             goto end;
     } else {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(serverssl);
@@ -223,13 +223,13 @@ static int test_ssl_cert_comp(int test)
         if (!TEST_int_gt(sc->cert->key->cert_comp_used, 0))
             goto end;
 
-        if (!TEST_true(*(int*)SSL_get_app_data(clientssl)))
+        if (!TEST_true(*(int *)SSL_get_app_data(clientssl)))
             goto end;
     }
 
     if (test == 2) {
         /* Only for client auth */
-        if (!TEST_true(*(int*)SSL_get_app_data(serverssl)))
+        if (!TEST_true(*(int *)SSL_get_app_data(serverssl)))
             goto end;
     }
 

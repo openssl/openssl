@@ -49,7 +49,7 @@ static int test_thread_reported_flags(void)
 # define TEST_THREAD_NATIVE_FN_SET_VALUE 1
 static uint32_t test_thread_native_fn(void *data)
 {
-    uint32_t *ldata = (uint32_t*) data;
+    uint32_t *ldata = (uint32_t *) data;
     *ldata = *ldata + 1;
     return *ldata - 1;
 }

@@ -585,7 +585,7 @@ end:
         \
         if (alg == NULL) \
             break; \
-        fuzzed_params = fuzz_params((OSSL_PARAM*) evp##_settable_ctx_params(alg), &buf, &len); \
+        fuzzed_params = fuzz_params((OSSL_PARAM *) evp##_settable_ctx_params(alg), &buf, &len); \
         if (fuzzed_params != NULL) \
             f(alg, fuzzed_params); \
         free_params(fuzzed_params); \

@@ -260,7 +260,7 @@ static int test_x509_cmp_time(int idx)
 
     memset(&t, 0, sizeof(t));
     t.type = x509_cmp_tests[idx].type;
-    t.data = (unsigned char*)(x509_cmp_tests[idx].data);
+    t.data = (unsigned char *)(x509_cmp_tests[idx].data);
     t.length = strlen(x509_cmp_tests[idx].data);
     t.flags = 0;
 
@@ -479,7 +479,7 @@ static int test_days(int n)
 }
 
 #define construct_asn1_time(s, t, e) \
-    { { sizeof(s) - 1, t, (unsigned char*)s, 0 }, e }
+    { { sizeof(s) - 1, t, (unsigned char *)s, 0 }, e }
 
 static const struct {
     ASN1_TIME asn1;

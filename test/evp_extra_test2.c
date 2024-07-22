@@ -1051,7 +1051,7 @@ static int test_dsa_todata(void)
     int dsa_gindex = 5;
 
     gen_params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_FFC_SEED,
-                                                      (void*)dsa_seed,
+                                                      (void *)dsa_seed,
                                                       sizeof(dsa_seed));
     gen_params[1] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FFC_GINDEX,
                                              &dsa_gindex);

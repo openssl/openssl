@@ -32,16 +32,16 @@ int poly1305_init(void *ctx, const unsigned char key[16], void *func[2])
 {
     if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
         poly1305_init_int(ctx, key);
-        func[0] = (void*)(uintptr_t)poly1305_blocks_vsx;
-        func[1] = (void*)(uintptr_t)poly1305_emit;
+        func[0] = (void *)(uintptr_t)poly1305_blocks_vsx;
+        func[1] = (void *)(uintptr_t)poly1305_emit;
     } else if (sizeof(size_t) == 4 && (OPENSSL_ppccap_P & PPC_FPU)) {
         poly1305_init_fpu(ctx, key);
-        func[0] = (void*)(uintptr_t)poly1305_blocks_fpu;
-        func[1] = (void*)(uintptr_t)poly1305_emit_fpu;
+        func[0] = (void *)(uintptr_t)poly1305_blocks_fpu;
+        func[1] = (void *)(uintptr_t)poly1305_emit_fpu;
     } else {
         poly1305_init_int(ctx, key);
-        func[0] = (void*)(uintptr_t)poly1305_blocks;
-        func[1] = (void*)(uintptr_t)poly1305_emit;
+        func[0] = (void *)(uintptr_t)poly1305_blocks;
+        func[1] = (void *)(uintptr_t)poly1305_emit;
     }
     return 1;
 }

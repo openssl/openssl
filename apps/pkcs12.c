@@ -686,7 +686,7 @@ int pkcs12_main(int argc, char **argv)
         p12 = PKCS12_create_ex2(cpass, name, key, ee_cert, certs,
                                 key_pbe, cert_pbe, iter, -1, keytype,
                                 app_get0_libctx(), app_get0_propq(),
-                                jdk_trust, (void*)obj);
+                                jdk_trust, (void *)obj);
 
         if (p12 == NULL) {
             BIO_printf(bio_err, "Error creating PKCS12 structure for %s\n",
@@ -868,7 +868,7 @@ static int jdk_trust(PKCS12_SAFEBAG *bag, void *cbarg)
     attrs = (STACK_OF(X509_ATTRIBUTE)*)PKCS12_SAFEBAG_get0_attrs(bag);
 
     /* Create a new attr for the JDK Trusted Usage and add it */
-    attr = X509_ATTRIBUTE_create(NID_oracle_jdk_trustedkeyusage, V_ASN1_OBJECT, (ASN1_OBJECT*)cbarg);
+    attr = X509_ATTRIBUTE_create(NID_oracle_jdk_trustedkeyusage, V_ASN1_OBJECT, (ASN1_OBJECT *)cbarg);
 
     /* Add the new attr, if attrs is NULL, it'll be initialised */
     X509at_add1_attr(&attrs, attr);

@@ -681,11 +681,11 @@ ERR_STATE *ossl_err_get_state_int(void)
         return NULL;
 
     state = CRYPTO_THREAD_get_local(&err_thread_local);
-    if (state == (ERR_STATE*)-1)
+    if (state == (ERR_STATE *)-1)
         return NULL;
 
     if (state == NULL) {
-        if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
+        if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE *)-1))
             return NULL;
 
         state = OSSL_ERR_STATE_new();
@@ -744,7 +744,7 @@ int err_shelve_state(void **state)
         return 0;
 
     *state = CRYPTO_THREAD_get_local(&err_thread_local);
-    if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
+    if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE *)-1))
         return 0;
 
     set_sys_error(saveerrno);
@@ -757,8 +757,8 @@ int err_shelve_state(void **state)
  */
 void err_unshelve_state(void* state)
 {
-    if (state != (void*)-1)
-        CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)state);
+    if (state != (void *)-1)
+        CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE *)state);
 }
 
 int ERR_get_next_error_library(void)

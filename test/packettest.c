@@ -249,11 +249,11 @@ static int test_PACKET_strndup(void)
     memset(buf2, 'y', 10);
     buf2[5] = '\0';
 
-    if (!TEST_true(PACKET_buf_init(&pkt, (unsigned char*)buf1, 10))
+    if (!TEST_true(PACKET_buf_init(&pkt, (unsigned char *)buf1, 10))
             || !TEST_true(PACKET_strndup(&pkt, &data))
             || !TEST_size_t_eq(strlen(data), 10)
             || !TEST_strn_eq(data, buf1, 10)
-            || !TEST_true(PACKET_buf_init(&pkt, (unsigned char*)buf2, 10))
+            || !TEST_true(PACKET_buf_init(&pkt, (unsigned char *)buf2, 10))
             || !TEST_true(PACKET_strndup(&pkt, &data))
             || !TEST_size_t_eq(strlen(data), 5)
             || !TEST_str_eq(data, buf2))
@@ -274,9 +274,9 @@ static int test_PACKET_contains_zero_byte(void)
     memset(buf2, 'y', 10);
     buf2[5] = '\0';
 
-    if (!TEST_true(PACKET_buf_init(&pkt, (unsigned char*)buf1, 10))
+    if (!TEST_true(PACKET_buf_init(&pkt, (unsigned char *)buf1, 10))
             || !TEST_false(PACKET_contains_zero_byte(&pkt))
-            || !TEST_true(PACKET_buf_init(&pkt, (unsigned char*)buf2, 10))
+            || !TEST_true(PACKET_buf_init(&pkt, (unsigned char *)buf2, 10))
             || !TEST_true(PACKET_contains_zero_byte(&pkt)))
         return 0;
 

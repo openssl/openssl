@@ -3967,7 +3967,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return 1;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG:
-        *(void**)parg = ctx->ext.status_arg;
+        *(void **)parg = ctx->ext.status_arg;
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB:

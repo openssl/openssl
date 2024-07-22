@@ -1442,7 +1442,7 @@ static int ssl_print_compressed_certificates(BIO *bio, const SSL_CONNECTION *sc,
     }
 
     if ((comp = COMP_CTX_new(method)) == NULL
-            || COMP_expand_block(comp, ucdata, uclen, (unsigned char*)msg, clen) != (int)uclen)
+            || COMP_expand_block(comp, ucdata, uclen, (unsigned char *)msg, clen) != (int)uclen)
         goto err;
 
     ret = ssl_print_certificates(bio, sc, server, indent, ucdata, uclen);
