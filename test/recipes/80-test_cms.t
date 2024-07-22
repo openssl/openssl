@@ -380,7 +380,7 @@ my @smime_cms_tests = (
     ],
 
     [ "encrypted content test streaming PEM format, triple DES key",
-      [ "{cmd1}", @prov, "-EncryptedData_encrypt", "-in", $smcont, "-outform", "PEM",
+      [ "{cmd1}", @defaultprov, "-EncryptedData_encrypt", "-in", $smcont, "-outform", "PEM",
         "-des3", "-secretkey", "000102030405060708090A0B0C0D0E0F1011121314151617",
         "-stream", "-out", "{output}.cms" ],
       [ "{cmd2}", @prov, "-EncryptedData_decrypt", "-in", "{output}.cms",

@@ -42,10 +42,7 @@ static OSSL_FUNC_provider_query_operation_fn fips_query;
 
 #define ALGC(NAMES, FUNC, CHECK)                \
     { { NAMES, FIPS_DEFAULT_PROPERTIES, FUNC }, CHECK }
-#define UNAPPROVED_ALGC(NAMES, FUNC, CHECK)     \
-    { { NAMES, FIPS_UNAPPROVED_PROPERTIES, FUNC }, CHECK }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
-#define UNAPPROVED_ALG(NAMES, FUNC) UNAPPROVED_ALGC(NAMES, FUNC, NULL)
 
 extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
 
@@ -99,6 +96,7 @@ typedef struct fips_global_st {
     FIPS_OPTION fips_sskdf_digest_check;
     FIPS_OPTION fips_x963kdf_digest_check;
     FIPS_OPTION fips_dsa_sign_disallowed;
+    FIPS_OPTION fips_tdes_encrypt_disallowed;
 } FIPS_GLOBAL;
 
 static void init_fips_option(FIPS_OPTION *opt, int enabled)
@@ -124,6 +122,7 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     init_fips_option(&fgbl->fips_sskdf_digest_check, 0);
     init_fips_option(&fgbl->fips_x963kdf_digest_check, 0);
     init_fips_option(&fgbl->fips_dsa_sign_disallowed, 0);
+    init_fips_option(&fgbl->fips_tdes_encrypt_disallowed, 0);
     return fgbl;
 }
 
@@ -154,8 +153,10 @@ static const OSSL_PARAM fips_param_types[] = {
                     NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_X963KDF_DIGEST_CHECK, OSSL_PARAM_INTEGER,
                     NULL, 0),
-    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_DSA_SIGN_DISABLED,
-                    OSSL_PARAM_INTEGER, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_DSA_SIGN_DISABLED, OSSL_PARAM_INTEGER,
+                    NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_TDES_ENCRYPT_DISABLED, OSSL_PARAM_INTEGER,
+                    NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -224,6 +225,8 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
                         fips_x963kdf_digest_check);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_DSA_SIGN_DISABLED,
                         fips_dsa_sign_disallowed);
+    FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_TDES_ENCRYPT_DISABLED,
+                        fips_tdes_encrypt_disallowed);
 #undef FIPS_FEATURE_OPTION
 
     *p = OSSL_PARAM_construct_end();
@@ -287,6 +290,8 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
                      fips_x963kdf_digest_check);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_DSA_SIGN_DISABLED,
                      fips_dsa_sign_disallowed);
+    FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_TDES_ENCRYPT_DISABLED,
+                     fips_tdes_encrypt_disallowed);
 #undef FIPS_FEATURE_GET
     return 1;
 }
@@ -425,8 +430,8 @@ static const OSSL_ALGORITHM_CAPABLE fips_ciphers[] = {
     ALGC(PROV_NAMES_AES_256_CBC_HMAC_SHA256, ossl_aes256cbc_hmac_sha256_functions,
          ossl_cipher_capable_aes_cbc_hmac_sha256),
 #ifndef OPENSSL_NO_DES
-    UNAPPROVED_ALG(PROV_NAMES_DES_EDE3_ECB, ossl_tdes_ede3_ecb_functions),
-    UNAPPROVED_ALG(PROV_NAMES_DES_EDE3_CBC, ossl_tdes_ede3_cbc_functions),
+    ALG(PROV_NAMES_DES_EDE3_ECB, ossl_tdes_ede3_ecb_functions),
+    ALG(PROV_NAMES_DES_EDE3_CBC, ossl_tdes_ede3_cbc_functions),
 #endif  /* OPENSSL_NO_DES */
     { { NULL, NULL, NULL }, NULL }
 };
@@ -829,6 +834,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     FIPS_SET_OPTION(fgbl, fips_sskdf_digest_check);
     FIPS_SET_OPTION(fgbl, fips_x963kdf_digest_check);
     FIPS_SET_OPTION(fgbl, fips_dsa_sign_disallowed);
+    FIPS_SET_OPTION(fgbl, fips_tdes_encrypt_disallowed);
 #undef FIPS_SET_OPTION
 
     ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
@@ -1038,6 +1044,7 @@ FIPS_FEATURE_CHECK(FIPS_sshkdf_digest_check, fips_sshkdf_digest_check)
 FIPS_FEATURE_CHECK(FIPS_sskdf_digest_check, fips_sskdf_digest_check)
 FIPS_FEATURE_CHECK(FIPS_x963kdf_digest_check, fips_x963kdf_digest_check)
 FIPS_FEATURE_CHECK(FIPS_dsa_sign_check, fips_dsa_sign_disallowed)
+FIPS_FEATURE_CHECK(FIPS_tdes_encrypt_check, fips_tdes_encrypt_disallowed)
 
 #undef FIPS_FEATURE_CHECK
 

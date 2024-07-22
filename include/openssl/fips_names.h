@@ -133,6 +133,14 @@ extern "C" {
  */
 # define OSSL_PROV_FIPS_PARAM_DSA_SIGN_DISABLED "dsa-sign-disabled"
 
+/*
+ * A boolean that determines if Triple-DES encryption operations are allowed.
+ * See SP800-131A r2 for further information.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_TDES_ENCRYPT_DISABLED "tdes-encrypt-disabled"
+
 # ifdef __cplusplus
 }
 # endif

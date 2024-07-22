@@ -19,6 +19,7 @@
 #include "cipher_tdes.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "prov/fipscommon.h"
 
 void *ossl_tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
                        size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw)
@@ -29,9 +30,11 @@ void *ossl_tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
         return NULL;
 
     tctx = OPENSSL_zalloc(sizeof(*tctx));
-    if (tctx != NULL)
+    if (tctx != NULL) {
+        OSSL_FIPS_IND_INIT(tctx)
         ossl_cipher_generic_initkey(tctx, kbits, blkbits, ivbits, mode, flags,
                                     hw, provctx);
+    }
     return tctx;
 }
 
@@ -46,6 +49,7 @@ void *ossl_tdes_dupctx(void *ctx)
     ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL)
         return NULL;
+    OSSL_FIPS_IND_COPY(ret, in)
     in->base.hw->copyctx(&ret->base, &in->base);
 
     return ret;
@@ -58,6 +62,19 @@ void ossl_tdes_freectx(void *vctx)
     ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
+
+#ifdef FIPS_MODULE
+static int tdes_encrypt_check_approved(PROV_TDES_CTX *ctx, int enc)
+{
+    /* Triple-DES encryption is not approved in FIPS 140-3 */
+    if (enc && !OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
+                                            ctx->base.libctx,
+                                            "Triple-DES", "Encryption",
+                                            FIPS_tdes_encrypt_check))
+        return 0;
+    return 1;
+}
+#endif
 
 static int tdes_init(void *vctx, const unsigned char *key, size_t keylen,
                      const unsigned char *iv, size_t ivlen,
@@ -92,7 +109,13 @@ static int tdes_init(void *vctx, const unsigned char *key, size_t keylen,
             return 0;
         ctx->key_set = 1;
     }
-    return ossl_cipher_generic_set_ctx_params(ctx, params);
+    if (!ossl_tdes_set_ctx_params(ctx, params))
+        return 0;
+#ifdef FIPS_MODULE
+    if (!tdes_encrypt_check_approved((PROV_TDES_CTX *)ctx, enc))
+        return 0;
+#endif
+    return 1;
 }
 
 int ossl_tdes_einit(void *vctx, const unsigned char *key, size_t keylen,
@@ -111,11 +134,11 @@ int ossl_tdes_dinit(void *vctx, const unsigned char *key, size_t keylen,
 
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(ossl_tdes)
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_RANDOM_KEY, NULL, 0),
+    OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(ossl_tdes)
 
 static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
 {
-
     DES_cblock *deskey = ptr;
     size_t kl = ctx->keylen;
 
@@ -132,7 +155,7 @@ static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
 
 int ossl_tdes_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
-    PROV_CIPHER_CTX  *ctx = (PROV_CIPHER_CTX *)vctx;
+    PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     OSSL_PARAM *p;
 
     if (!ossl_cipher_generic_get_ctx_params(vctx, params))
@@ -143,5 +166,22 @@ int ossl_tdes_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GENERATE_KEY);
         return 0;
     }
+    if (!OSSL_FIPS_IND_GET_CTX_PARAM((PROV_TDES_CTX *)vctx, params))
+        return 0;
     return 1;
+}
+
+CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(ossl_tdes)
+    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),
+    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_NUM, NULL),
+    OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_CIPHER_PARAM_FIPS_ENCRYPT_CHECK)
+CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(ossl_tdes)
+
+int ossl_tdes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM((PROV_TDES_CTX *)vctx,
+                                     OSSL_FIPS_IND_SETTABLE0, params,
+                                     OSSL_CIPHER_PARAM_FIPS_ENCRYPT_CHECK))
+        return 0;
+    return ossl_cipher_generic_set_ctx_params(vctx, params);
 }

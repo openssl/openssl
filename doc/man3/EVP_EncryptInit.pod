@@ -893,6 +893,12 @@ Gets the result of running the "tls1multi_aad" operation.
 
 Used to pass the TLS MAC data.
 
+=item "fips-indicator" (B<OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
+This may be used after calling a cipher final operation such as
+EVP_EncryptFinal_ex(). It may return 0 if the "encrypt-check" option is set to 0.
+
 =back
 
 =head2 Settable EVP_CIPHER_CTX parameters
@@ -1038,6 +1044,16 @@ The IEEE Std. 1619-2007 variant of SM4-XTS algorithm.
 =back
 
 The default value is "GB".
+
+=item "encrypt-check" (B<OSSL_CIPHER_PARAM_FIPS_ENCRYPT_CHECK>) <integer>
+
+If required this parameter should be set early via an cipher encrypt init
+function such as EVP_EncryptInit_ex2().
+The default value of 1 causes an error when an encryption operation is triggered.
+Setting this to 0 will ignore the error and set the approved "fips-indicator" to
+0.
+This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
+set to 0.
 
 =back
 

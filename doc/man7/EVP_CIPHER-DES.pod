@@ -59,7 +59,7 @@ The following algorithms are available in the legacy provider:
 =head2 Parameters
 
 This implementation supports the parameters described in
-L<EVP_EncryptInit(3)/PARAMETERS>.
+L<EVP_EncryptInit(3)/PARAMETERS> including "encrypt-check" and "fips-indicator".
 
 =head1 SEE ALSO
 

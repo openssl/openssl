@@ -210,6 +210,19 @@ static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);
             return 0;
         }
+#ifdef FIPS_MODULE
+        {
+            const EVP_CIPHER *cipher = ossl_prov_cipher_cipher(&macctx->cipher);
+            int approved = EVP_CIPHER_is_a(cipher, "AES-256-CBC")
+                           || EVP_CIPHER_is_a(cipher, "AES-192-CBC")
+                           || EVP_CIPHER_is_a(cipher, "AES-128-CBC");
+
+            if (!approved) {
+                ERR_raise(ERR_LIB_PROV, EVP_R_UNSUPPORTED_CIPHER);
+                return 0;
+            }
+        }
+#endif
     }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {

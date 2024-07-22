@@ -21,6 +21,7 @@
  */
 #include "internal/deprecated.h"
 #include <assert.h>
+#include <string.h>
 #include <openssl/evp.h>
 #include <openssl/provider.h>
 #include <openssl/dsa.h>
@@ -398,7 +399,6 @@ static int test_cipher_reinit(int test_id)
 
     /* DES3-WRAP uses random every update - so it will give a different value */
     diff = EVP_CIPHER_is_a(cipher, "DES3-WRAP");
-
     if (!TEST_true(EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv))
         || !TEST_true(EVP_EncryptUpdate(ctx, out1, &out1_len, in, sizeof(in)))
         || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
@@ -519,7 +519,6 @@ err:
     return ret;
 }
 
-
 static int name_cmp(const char * const *a, const char * const *b)
 {
     return OPENSSL_strcasecmp(*a, *b);
@@ -531,6 +530,10 @@ static void collect_cipher_names(EVP_CIPHER *cipher, void *cipher_names_list)
     const char *name = EVP_CIPHER_get0_name(cipher);
     char *namedup = NULL;
 
+    /* Skip Triple-DES encryption operations in FIPS mode */
+    if (OSSL_PROVIDER_available(libctx, "fips")
+            && strncmp(name, "DES", 3) == 0)
+        return;
     assert(name != NULL);
     /* the cipher will be freed after returning, strdup is needed */
     if ((namedup = OPENSSL_strdup(name)) != NULL
@@ -614,13 +617,18 @@ static int test_cipher_tdes_randkey(void)
     EVP_CIPHER_CTX *ctx = NULL;
     EVP_CIPHER *tdes_cipher = NULL, *aes_cipher = NULL;
     unsigned char key[24] = { 0 };
+    OSSL_PARAM params[2];
+    int check = 0;
 
+    params[0] = OSSL_PARAM_construct_int("encrypt-check", &check);
+    params[1] = OSSL_PARAM_construct_end();
     ret = TEST_ptr(aes_cipher = EVP_CIPHER_fetch(libctx, "AES-256-CBC", NULL))
           && TEST_int_eq(EVP_CIPHER_get_flags(aes_cipher) & EVP_CIPH_RAND_KEY, 0)
           && TEST_ptr(tdes_cipher = EVP_CIPHER_fetch(libctx, "DES-EDE3-CBC", NULL))
           && TEST_int_ne(EVP_CIPHER_get_flags(tdes_cipher) & EVP_CIPH_RAND_KEY, 0)
           && TEST_ptr(ctx = EVP_CIPHER_CTX_new())
-          && TEST_true(EVP_CipherInit_ex(ctx, tdes_cipher, NULL, NULL, NULL, 1))
+          && TEST_true(EVP_CipherInit_ex2(ctx, tdes_cipher, NULL, NULL, 1,
+                                          params))
           && TEST_int_gt(EVP_CIPHER_CTX_rand_key(ctx, key), 0);
 
     EVP_CIPHER_CTX_free(ctx);
