@@ -98,17 +98,17 @@ sub run_tests
 
 
 
-        #Test 4: Client falls back from (D)TLSv1.3 (server does not support the
-        #        fallback SCSV)
-        $proxy->clear();
-        $testtype = FALLBACK_FROM_TLS_1_3;
-        $proxy->clientflags("-fallback_scsv -max_protocol ".$proto1_2);
-        $proxy->start();
-        my $alert = TLSProxy::Message->alert();
-        ok(TLSProxy::Message->fail()
-            && !$alert->server()
-            && $alert->description() == TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER,
-            "Fallback from ".$proto1_3);
+    #Test 4: Client falls back from (D)TLSv1.3 (server does not support the
+    #        fallback SCSV)
+    $proxy->clear();
+    $testtype = FALLBACK_FROM_TLS_1_3;
+    $proxy->clientflags("-fallback_scsv -max_protocol ".$proto1_2);
+    $proxy->start();
+    my $alert = TLSProxy::Message->alert();
+    ok(TLSProxy::Message->fail()
+        && !$alert->server()
+        && $alert->description() == TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER,
+        "Fallback from ".$proto1_3);
 
 
     SKIP: {
