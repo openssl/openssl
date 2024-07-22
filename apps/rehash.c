@@ -564,7 +564,7 @@ int rehash_main(int argc, char **argv)
         m = OPENSSL_strdup(env);
         if (m == NULL) {
             BIO_puts(bio_err, "out of memory\n");
-            errs = -1;
+            errs = 1;
             goto end;
         }
         for (e = strtok(m, lsc); e != NULL; e = strtok(NULL, lsc))
