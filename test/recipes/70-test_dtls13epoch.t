@@ -14,7 +14,7 @@ use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 use TLSProxy::Message;
 
-my $test_name = "test_dtlsrecords";
+my $test_name = "test_dtls13epoch";
 setup($test_name);
 
 plan skip_all => "DTLSProxy isn't usable on $^O"

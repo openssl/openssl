@@ -680,25 +680,9 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
     return ret;
 }
 
-static int ssl3_cc_modifies_read_epoch(int is_server, int rw)
-{
-    int modify_read_epoch;
-
-    if (((rw & SSL3_CC_CLIENT) && is_server)
-            || ((rw & SSL3_CC_SERVER) && !is_server)) {
-        /* Either we are a server modifying client side epoch
-         * or a client modifying server side epoch */
-        modify_read_epoch = (rw & SSL3_CC_READ) == 0;
-    } else {
-        modify_read_epoch = (rw & SSL3_CC_READ) != 0;
-    }
-
-    return modify_read_epoch;
-}
-
 void dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
 {
-    if (ssl3_cc_modifies_read_epoch(s->server, rw)) {
+    if (rw & SSL3_CC_READ) {
         s->rlayer.d->r_epoch++;
 
         /*
