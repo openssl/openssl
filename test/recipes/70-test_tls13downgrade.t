@@ -66,8 +66,7 @@ sub run_tests
             srctop_file("apps", "server.pem"),
             (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
         );
-    }
-    else {
+    } else {
         $proxy = TLSProxy::Proxy->new(
             undef,
             cmdstr(app([ "openssl" ]), display => 1),
