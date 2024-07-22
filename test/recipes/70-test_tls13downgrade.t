@@ -96,8 +96,6 @@ sub run_tests
     $proxy->start();
     ok(TLSProxy::Message->fail(), "Downgrade ".$proto1_2." to ".$proto1_1);
 
-
-
     #Test 4: Client falls back from (D)TLSv1.3 (server does not support the
     #        fallback SCSV)
     $proxy->clear();
@@ -109,7 +107,6 @@ sub run_tests
         && !$alert->server()
         && $alert->description() == TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER,
         "Fallback from ".$proto1_3);
-
 
     SKIP: {
         skip "TLSv1.1 disabled", 2 if disabled("tls1_1");
