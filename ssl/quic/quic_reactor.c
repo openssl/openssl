@@ -243,9 +243,11 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         openssl_fdset(wfd, &efd_set);
 
     /* Check for notifier FD readability. */
-    if (notify_rfd != -1) {
+    if (notify_rfd == INVALID_SOCKET) {
         openssl_fdset(notify_rfd, &rfd_set);
         openssl_fdset(notify_rfd, &efd_set);
+    } else {
+        return 0;
     }
 
     maxfd = rfd;
