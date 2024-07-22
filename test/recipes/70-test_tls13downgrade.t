@@ -98,13 +98,7 @@ sub run_tests
     ok(TLSProxy::Message->fail(), "Downgrade ".$proto1_2." to ".$proto1_1);
 
 
-    SKIP: {
-        # TODO(DTLSv1.3):
-        # The handshake is terminated with
-        #    inappropriate fallback:ssl/statem/statem_srvr.c:1822
-        # Need to determine if this is correct behaviour.
-        skip "Test does not work with second ClientHello after a HelloVerifyRequest",
-             1 if $run_test_as_dtls == 1;
+
         #Test 4: Client falls back from (D)TLSv1.3 (server does not support the
         #        fallback SCSV)
         $proxy->clear();
@@ -116,7 +110,7 @@ sub run_tests
             && !$alert->server()
             && $alert->description() == TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER,
             "Fallback from ".$proto1_3);
-    }
+
 
     SKIP: {
         skip "TLSv1.1 disabled", 2 if disabled("tls1_1");
@@ -142,12 +136,22 @@ sub downgrade_filter
 {
     my $proxy = shift;
 
-    # We're only interested in the initial ClientHello
-    if ($proxy->flight != 0) {
+    # We're only interested in the initial ClientHello except if we are expecting
+    # DTLS1.2 handshake in which case the client will send a second ClientHello
+    my $second_client_hello = $testtype == FALLBACK_FROM_TLS_1_3 && $proxy->isdtls
+                              && $proxy->flight == 2;
+
+    if ($proxy->flight != 0 && !$second_client_hello) {
         return;
     }
 
-    my $message = ${$proxy->message_list}[0];
+    my $message;
+
+    if ($second_client_hello == 0) {
+        $message = ${$proxy->message_list}[0];
+    } else {
+        $message = ${$proxy->message_list}[2];
+    }
 
     if ($testtype == FALLBACK_FROM_TLS_1_3) {
         #The default ciphersuite we use for TLSv1.2 without any SCSV
