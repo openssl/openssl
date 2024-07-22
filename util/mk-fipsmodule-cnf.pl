@@ -17,6 +17,7 @@ my $no_short_mac = 1;
 my $drgb_no_trunc_dgst = 1;
 my $kdf_digest_check = 1;
 my $dsa_sign_disabled = 1;
+my $tdes_encrypt_disabled = 1;
 
 my $activate = 1;
 my $version = 1;
@@ -50,15 +51,16 @@ activate = $activate
 install-version = $version
 conditional-errors = $conditional_errors
 security-checks = $security_checks
+module-mac = $module_mac
 tls1-prf-ems-check = $ems_check
 no-short-mac = $no_short_mac
 drbg-no-trunc-md = $drgb_no_trunc_dgst
 dsa-sign-disabled = $dsa_sign_disabled
-module-mac = $module_mac
 hkdf-digest-check = $kdf_digest_check
 tls13-kdf-digest-check = $kdf_digest_check
 tls1-prf-digest-check = $kdf_digest_check
 sshkdf-digest-check = $kdf_digest_check
 sskdf-digest-check = $kdf_digest_check
 x963kdf-digest-check = $kdf_digest_check
+tdes-encrypt-disabled = $tdes_encrypt_disabled
 _____

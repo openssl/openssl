@@ -47,6 +47,7 @@ typedef enum OPTION_choice {
     OPT_SSKDF_DIGEST_CHECK,
     OPT_X963KDF_DIGEST_CHECK,
     OPT_DISALLOW_DSA_SIGN,
+    OPT_DISALLOW_TDES_ENCRYPT,
     OPT_SELF_TEST_ONLOAD, OPT_SELF_TEST_ONINSTALL
 } OPTION_CHOICE;
 
@@ -88,6 +89,8 @@ const OPTIONS fipsinstall_options[] = {
      "Enable digest check for X963KDF"},
     {"dsa_sign_disabled", OPT_DISALLOW_DSA_SIGN, '-',
      "Disallow DSA signing"},
+    {"tdes_encrypt_disabled", OPT_DISALLOW_TDES_ENCRYPT, '-',
+     "Disallow Triple-DES encryption"},
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input config file, used when verifying"},
 
@@ -118,6 +121,7 @@ typedef struct {
     unsigned int sskdf_digest_check : 1;
     unsigned int x963kdf_digest_check : 1;
     unsigned int dsa_sign_disabled : 1;
+    unsigned int tdes_encrypt_disabled : 1;
 } FIPS_OPTS;
 
 /* Pedantic FIPS compliance */
@@ -135,6 +139,7 @@ static const FIPS_OPTS pedantic_opts = {
     1,      /* sskdf_digest_check */
     1,      /* x963kdf_digest_check */
     1,      /* dsa_sign_disabled */
+    1,      /* tdes_encrypt_disabled */
 };
 
 /* Default FIPS settings for backward compatibility */
@@ -152,6 +157,7 @@ static FIPS_OPTS fips_opts = {
     0,      /* sskdf_digest_check */
     0,      /* x963kdf_digest_check */
     0,      /* dsa_sign_disabled */
+    0,      /* tdes_encrypt_disabled */
 };
 
 static int check_non_pedantic_fips(int pedantic, const char *name)
@@ -295,6 +301,8 @@ static int write_config_fips_section(BIO *out, const char *section,
                       opts->x963kdf_digest_check ? "1": "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_DSA_SIGN_DISABLED,
                       opts->dsa_sign_disabled ? "1" : "0") <= 0
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_TDES_ENCRYPT_DISABLED,
+                      opts->tdes_encrypt_disabled ? "1" : "0") <= 0
         || !print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
                       module_mac_len))
         goto end;
@@ -504,6 +512,9 @@ int fipsinstall_main(int argc, char **argv)
             break;
         case OPT_DISALLOW_DSA_SIGN:
             fips_opts.dsa_sign_disabled = 1;
+            break;
+        case OPT_DISALLOW_TDES_ENCRYPT:
+            fips_opts.tdes_encrypt_disabled = 1;
             break;
         case OPT_QUIET:
             quiet = 1;

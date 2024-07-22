@@ -10,6 +10,7 @@
 #include <openssl/des.h>
 #include <openssl/core_dispatch.h>
 #include "crypto/des_platform.h"
+#include "prov/fipsindicator.h"
 
 #define DES_BLOCK_SIZE 8
 #define TDES_IVLEN 8
@@ -25,6 +26,7 @@ typedef struct prov_tdes_ctx_st {
         void (*cbc) (const void *, void *, size_t,
                      const DES_key_schedule *, unsigned char *);
     } tstream;
+    OSSL_FIPS_IND_DECLARE
 
 } PROV_TDES_CTX;
 
@@ -64,9 +66,9 @@ const OSSL_DISPATCH ossl_tdes_##type##_##lcmode##_functions[] = {              \
     { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                    \
       (void (*)(void))ossl_tdes_gettable_ctx_params },                         \
     { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                         \
-     (void (*)(void))ossl_cipher_generic_set_ctx_params },                     \
+      (void (*)(void))ossl_tdes_set_ctx_params },                              \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
-     (void (*)(void))ossl_cipher_generic_settable_ctx_params },                \
+      (void (*)(void))ossl_tdes_settable_ctx_params },                         \
     OSSL_DISPATCH_END                                                          \
 }
 
@@ -78,6 +80,8 @@ OSSL_FUNC_cipher_encrypt_init_fn ossl_tdes_einit;
 OSSL_FUNC_cipher_decrypt_init_fn ossl_tdes_dinit;
 OSSL_FUNC_cipher_get_ctx_params_fn ossl_tdes_get_ctx_params;
 OSSL_FUNC_cipher_gettable_ctx_params_fn ossl_tdes_gettable_ctx_params;
+OSSL_FUNC_cipher_set_ctx_params_fn ossl_tdes_set_ctx_params;
+OSSL_FUNC_cipher_settable_ctx_params_fn ossl_tdes_settable_ctx_params;
 
 #define PROV_CIPHER_HW_tdes_mode(type, mode)                                   \
 static const PROV_CIPHER_HW type##_##mode = {                                  \
