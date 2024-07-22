@@ -994,7 +994,7 @@ int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
         return 1;
     }
 # endif
-    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
+    if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
         return 0;
     *dst  = val;
     if (!CRYPTO_THREAD_unlock(lock))
