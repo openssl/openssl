@@ -148,7 +148,7 @@ static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method,
         ext_der = NULL;
         ext_len =
             ASN1_item_i2d(ext_struc, &ext_der, ASN1_ITEM_ptr(method->it));
-        if (ext_len < 0) {
+        if (ext_len < 0 || ext_der == NULL) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
             goto err;
         }
