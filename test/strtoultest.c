@@ -36,16 +36,17 @@ static struct strtoul_test_entry strtoul_tests[] = {
     {
         "0x12345", 10, 0, 1, 1
     },
-#if defined(__WORDSIZE) && __WORDSIZE == 64
+#if ULONG_MAX == 4294967295
     /* pass on ULONG_MAX translation */
-    {
-        "18446744073709551615", 0, ULONG_MAX, 1, 20
-    },
-#else
     {
         "4294967295", 0, ULONG_MAX, 1, 10
     },
+#else
+    {
+        "18446744073709551615", 0, ULONG_MAX, 1, 20
+    },
 #endif
+
     /* fail on negative input */
     {
         "-1", 0, 0, 0, 0
