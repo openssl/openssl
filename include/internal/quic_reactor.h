@@ -116,7 +116,7 @@ struct quic_reactor_st {
 
     /*
      * Count of the current number of blocking waiters. Like everything else,
-     * this is protected the caller's mutex (i.e., the engine mutex).
+     * this is protected by the caller's mutex (i.e., the engine mutex).
      */
     size_t cur_blocking_waiters;
 
