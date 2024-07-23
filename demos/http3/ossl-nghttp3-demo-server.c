@@ -91,7 +91,7 @@ static void set_id_status(uint64_t id, int status, struct h3ssl *h3ssl)
         }
     }
     printf("Oops can't set status, can't find stream!!!\n");
-    exit(1);
+    assert(0);
 }
 static int are_all_clientid_closed(struct h3ssl *h3ssl)
 {
@@ -177,7 +177,7 @@ static int quic_server_read(nghttp3_conn *h3conn, SSL *stream, uint64_t id, stru
 {
     int ret, r;
     uint8_t msg2[16000];
-    size_t l = sizeof(msg2) - 1;
+    size_t l = sizeof(msg2);
 
     if (!SSL_net_read_desired(stream))
         return 0; /* Nothing to read */
@@ -201,8 +201,6 @@ static int quic_server_read(nghttp3_conn *h3conn, SSL *stream, uint64_t id, stru
        r = ret; /* ignore it for the moment ... */
     }
 
-    printf("reading something %d on %llu\n", ret,
-           (unsigned long long) id);
     printf("nghttp3_conn_read_stream used %d of %d on %llu\n", r,
            ret, (unsigned long long) id);
     if (r != ret) {
