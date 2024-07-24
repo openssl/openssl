@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -160,22 +160,28 @@ unless ($no_fips) {
 
     $ENV{OPENSSL_TEST_LIBCTX} = "1";
 
+    # DSA signing/keygen is not approved in FIPS 140-3
+    run(test(["fips_version_test", "-config", $provconf, "<3.4.0"]),
+             capture => 1, statusvar => \my $dsasignpass);
+
     # Generate params
-    ok(run(app(['openssl', 'genpkey',
+    is(run(app(['openssl', 'genpkey',
                 @prov,
                '-genparam',
                '-algorithm', 'DSA',
                '-pkeyopt', 'pbits:3072',
                '-pkeyopt', 'qbits:256',
                '-out', 'gendsatest3072params.pem'])),
+       $dsasignpass,
        "Generating 3072-bit DSA params");
 
     # Generate keypair
-    ok(run(app(['openssl', 'genpkey',
+    is(run(app(['openssl', 'genpkey',
                 @prov,
                '-paramfile', 'gendsatest3072params.pem',
                '-text',
                '-out', 'gendsatest3072.pem'])),
+       $dsasignpass,
        "Generating 3072-bit DSA keypair");
 
 }

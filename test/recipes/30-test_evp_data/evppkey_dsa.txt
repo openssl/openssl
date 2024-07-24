@@ -437,3 +437,43 @@ CtrlInit = sign-check:0
 Key = DSA-2048-256
 Input = "Hello"
 Result = DIGESTSIGNINIT_ERROR
+
+Title = Test DSA keygen
+
+# Load DSA Params to use in the DSA keygen tests 
+ParamKey = DSA-2048-PARAMS
+-----BEGIN DSA PARAMETERS-----
+MIICKAKCAQEAgrJrFYjhhJ3NnIBSRNpVK5+gze+9fA4Ce0Yjbiz3KOU2TTtE1mbf
+lGVsjuAEX2c/cBUWFEjg77EoGCFCpfbzSh6nd2DgCiFaw91ak3GuQ+yKs55SyeQV
+ikUQaAILVm0SgIPhdCUtG5XdghJyNUTEHFowWXh3gaQDaRB6MqxbMj0a9LoRwYAw
+Mo/9bug6Uh/ITEKjoBertznRW8SflHhATvc6eCL6NXi3qhkQIgYDdwxUGGz1SnfH
+wUTYcvu2eogv+0WAnnxCJh51qv2gUynH4TLeL9g/jskcJfvYtejJ+k/G3Q6dsEn/
+an8pdKdH0MaplOZNB6nJSa1H0VZfg9V9VQIdALq9dtHaBpeXSal0qhn0P/nmR9ID
+I1Yn4K1l33cCggEAAulOaqN0hBs9DXQyljrKesD8zTLgIsabgyEauuyFfsZp5ezU
+762cnqDde20DPTHu1hbVmw68hvKDAWNpVzMMsopFPPWt8JwnEHSMZxwv08RxBET9
+HQXL4+YxA9hfAmtRkUK+QdZFRdXv4AjnxcLyNbIqT/uPm1c/+Dd7875rIzTcW3cc
+IvhlS7VgfwIg0IUuGF2uXt/6P7zInftR+nan4/DbNWind5308I7l4jchRjUDRlsK
+WbJpcH2m2K43Ue0MUKIki1dTlH07PiHUuY4wQ+jInWtnnRQlLGSw+LdrD7gwpFYY
+w/lWdpSTr0aHbSvxD9vcrUzKljFY6iSQF32wcg==
+-----END DSA PARAMETERS-----
+
+# FIPS Key generation tests
+
+# Test FIPS DSA keygen is not allowed 
+Availablein = fips
+FIPSversion = >=3.4.0
+KeyGen = DSA
+KeyParam = DSA-2048-PARAMS
+KeyName = tmp1dsa
+Result = KEYGEN_GENERATE_ERROR
+
+Title = Test DSA keygen FIPS indicator test
+
+# Test DSA keygen is not approved
+Availablein = fips
+FIPSversion = >=3.4.0
+KeyGen = DSA
+KeyParam = DSA-2048-PARAMS
+KeyName = tmp2dsa
+Unapproved = 1
+Ctrl = sign-check:0

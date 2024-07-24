@@ -126,11 +126,9 @@ int test_readstanza(STANZA *s)
         if (s->numpairs == 0)
             s->start = s->curr;
 
-        if (strcmp(key, "PrivateKey") == 0) {
-            if (!read_key(s))
-                return 0;
-        }
-        if (strcmp(key, "PublicKey") == 0) {
+        if (strcmp(key, "PrivateKey") == 0
+                || strcmp(key, "PublicKey") == 0
+                || strcmp(key, "ParamKey") == 0) {
             if (!read_key(s))
                 return 0;
         }

@@ -347,7 +347,7 @@ static EVP_PKEY *dsa_paramgen(int L, int N)
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(paramgen_ctx, L))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_q_bits(paramgen_ctx, N))
         || !TEST_true(EVP_PKEY_paramgen(paramgen_ctx, &param_key)))
-        return NULL;
+        TEST_info("dsa_paramgen failed");
     EVP_PKEY_CTX_free(paramgen_ctx);
     return param_key;
 }
@@ -378,6 +378,10 @@ static int dsa_keygen_test(int id)
     size_t priv_len = 0, pub_len = 0;
     const struct dsa_paramgen_st *tst = &dsa_keygen_data[id];
 
+    if (!dsasign_allowed) {
+        TEST_info("DSA keygen test skipped: DSA signing is not allowed");
+        return 1;
+    }
     if (!TEST_ptr(param_key = dsa_paramgen(tst->L, tst->N))
         || !TEST_ptr(keygen_ctx = EVP_PKEY_CTX_new_from_pkey(libctx, param_key,
                                                              NULL))
@@ -421,23 +425,31 @@ static int dsa_paramgen_test(int id)
     if (!TEST_ptr(paramgen_ctx = EVP_PKEY_CTX_new_from_name(libctx, "DSA", NULL))
         || !TEST_int_gt(EVP_PKEY_paramgen_init(paramgen_ctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(paramgen_ctx, tst->L))
-        || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_q_bits(paramgen_ctx, tst->N))
-        || !TEST_true(EVP_PKEY_paramgen(paramgen_ctx, &param_key))
-        || !TEST_true(pkey_get_bn_bytes(param_key, OSSL_PKEY_PARAM_FFC_P,
-                                        &p, &plen))
-        || !TEST_true(pkey_get_bn_bytes(param_key, OSSL_PKEY_PARAM_FFC_Q,
-                                        &q, &qlen))
-        || !TEST_true(pkey_get_octet_bytes(param_key, OSSL_PKEY_PARAM_FFC_SEED,
-                                           &seed, &seedlen))
-        || !TEST_true(EVP_PKEY_get_int_param(param_key,
-                                             OSSL_PKEY_PARAM_FFC_PCOUNTER,
-                                             &counter)))
+        || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_q_bits(paramgen_ctx,
+                                                           tst->N)))
         goto err;
 
-    test_output_memory("p", p, plen);
-    test_output_memory("q", q, qlen);
-    test_output_memory("domainSeed", seed, seedlen);
-    test_printf_stderr("%s: %d\n", "counter", counter);
+    if (!dsasign_allowed) {
+        if (!TEST_false(EVP_PKEY_paramgen(paramgen_ctx, &param_key)))
+            goto err;
+    } else {
+        if (!TEST_true(EVP_PKEY_paramgen(paramgen_ctx, &param_key))
+            || !TEST_true(pkey_get_bn_bytes(param_key, OSSL_PKEY_PARAM_FFC_P,
+                                            &p, &plen))
+            || !TEST_true(pkey_get_bn_bytes(param_key, OSSL_PKEY_PARAM_FFC_Q,
+                                            &q, &qlen))
+            || !TEST_true(pkey_get_octet_bytes(param_key,
+                                               OSSL_PKEY_PARAM_FFC_SEED,
+                                               &seed, &seedlen))
+            || !TEST_true(EVP_PKEY_get_int_param(param_key,
+                                                 OSSL_PKEY_PARAM_FFC_PCOUNTER,
+                                                 &counter)))
+            goto err;
+        test_output_memory("p", p, plen);
+        test_output_memory("q", q, qlen);
+        test_output_memory("domainSeed", seed, seedlen);
+        test_printf_stderr("%s: %d\n", "counter", counter);
+    }
     ret = 1;
 err:
     OPENSSL_free(p);
@@ -597,10 +609,12 @@ static int dsa_siggen_test(int id)
     size_t sig_len = 0, rlen = 0, slen = 0;
     const struct dsa_siggen_st *tst = &dsa_siggen_data[id];
 
-    if (!TEST_ptr(pkey = dsa_keygen(tst->L, tst->N)))
-        goto err;
-
-    if (dsasign_allowed) {
+    if (!dsasign_allowed) {
+        if (!TEST_ptr_null(pkey = dsa_keygen(tst->L, tst->N)))
+            goto err;
+    } else {
+        if (!TEST_ptr(pkey = dsa_keygen(tst->L, tst->N)))
+            goto err;
         if (!TEST_true(sig_gen(pkey, NULL, tst->digest_alg, tst->msg, tst->msg_len,
                                &sig, &sig_len))
             || !TEST_true(get_dsa_sig_rs_bytes(sig, sig_len, &r, &s, &rlen, &slen)))
