@@ -50,9 +50,9 @@ tls1-prf-ems-check = $ems_check
 drbg-no-trunc-md = $drgb_no_trunc_dgst
 module-mac = $module_mac
 hkdf-digest-check = $kdf_digest_check
-tls13-kdf-digest-check = $kd_digest_check
+tls13-kdf-digest-check = $kdf_digest_check
 tls1-prf-digest-check = $kdf_digest_check
-sshkdf-digest-check = $k_digest_check
-sskdf-digest-check = $kd_digest_check
-x963kdf-digest-check = $kdf__digest_check
+sshkdf-digest-check = $kdf_digest_check
+sskdf-digest-check = $kdf_digest_check
+x963kdf-digest-check = $kdf_digest_check
 _____
