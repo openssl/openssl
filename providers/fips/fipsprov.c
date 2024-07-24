@@ -460,6 +460,15 @@ static const OSSL_ALGORITHM fips_signature[] = {
       ossl_ed448ph_signature_functions },
 # endif
     { PROV_NAMES_ECDSA, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_signature_functions },
+    { PROV_NAMES_ECDSA_SHA1, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha1_signature_functions },
+    { PROV_NAMES_ECDSA_SHA224, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha224_signature_functions },
+    { PROV_NAMES_ECDSA_SHA256, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha256_signature_functions },
+    { PROV_NAMES_ECDSA_SHA384, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha384_signature_functions },
+    { PROV_NAMES_ECDSA_SHA512, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha512_signature_functions },
+    { PROV_NAMES_ECDSA_SHA3_224, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha3_224_signature_functions },
+    { PROV_NAMES_ECDSA_SHA3_256, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha3_256_signature_functions },
+    { PROV_NAMES_ECDSA_SHA3_384, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha3_384_signature_functions },
+    { PROV_NAMES_ECDSA_SHA3_512, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha3_512_signature_functions },
 #endif
     { PROV_NAMES_HMAC, FIPS_DEFAULT_PROPERTIES,
       ossl_mac_legacy_hmac_signature_functions },
