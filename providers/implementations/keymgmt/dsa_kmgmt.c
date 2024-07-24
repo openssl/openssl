@@ -18,6 +18,8 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include "prov/providercommon.h"
+#include "prov/fipsindicator.h"
+#include "prov/fipscommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "crypto/dsa.h"
@@ -31,6 +33,8 @@ static OSSL_FUNC_keymgmt_gen_init_fn dsa_gen_init;
 static OSSL_FUNC_keymgmt_gen_set_template_fn dsa_gen_set_template;
 static OSSL_FUNC_keymgmt_gen_set_params_fn dsa_gen_set_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn dsa_gen_settable_params;
+static OSSL_FUNC_keymgmt_gen_get_params_fn dsa_gen_get_params;
+static OSSL_FUNC_keymgmt_gen_gettable_params_fn dsa_gen_gettable_params;
 static OSSL_FUNC_keymgmt_gen_fn dsa_gen;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn dsa_gen_cleanup;
 static OSSL_FUNC_keymgmt_load_fn dsa_load;
@@ -67,6 +71,7 @@ struct dsa_gen_ctx {
     char *mdprops;
     OSSL_CALLBACK *cb;
     void *cbarg;
+    OSSL_FIPS_IND_DECLARE
 };
 typedef struct dh_name2id_st{
     const char *name;
@@ -423,6 +428,7 @@ static void *dsa_gen_init(void *provctx, int selection,
         gctx->gindex = -1;
         gctx->pcounter = -1;
         gctx->hindex = 0;
+        OSSL_FIPS_IND_INIT(gctx)
     }
     if (!dsa_gen_set_params(gctx, params)) {
         OPENSSL_free(gctx);
@@ -468,6 +474,9 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(gctx, OSSL_FIPS_IND_SETTABLE0, params,
+                                     OSSL_PKEY_PARAM_FIPS_SIGN_CHECK))
+        return 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_TYPE);
     if (p != NULL) {
@@ -542,9 +551,34 @@ static const OSSL_PARAM *dsa_gen_settable_params(ossl_unused void *genctx,
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_FFC_SEED, NULL, 0),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_PCOUNTER, NULL),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_H, NULL),
+        OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_PKEY_PARAM_FIPS_SIGN_CHECK)
         OSSL_PARAM_END
     };
     return settable;
+}
+
+static int dsa_gen_get_params(void *genctx, OSSL_PARAM *params)
+{
+    struct dsa_gen_ctx *gctx = genctx;
+
+    if (gctx == NULL)
+        return 0;
+    if (params == NULL)
+        return 1;
+    if (!OSSL_FIPS_IND_GET_CTX_PARAM(gctx, params))
+        return 0;
+    return 1;
+}
+
+static const OSSL_PARAM *dsa_gen_gettable_params(ossl_unused void *ctx,
+                                                 ossl_unused void *provctx)
+{
+    static const OSSL_PARAM dsa_gen_gettable_params_table[] = {
+        OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
+        OSSL_PARAM_END
+    };
+
+    return dsa_gen_gettable_params_table;
 }
 
 static int dsa_gencb(int p, int n, BN_GENCB *cb)
@@ -568,6 +602,18 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     if (!ossl_prov_is_running() || gctx == NULL)
         return NULL;
+
+#ifdef FIPS_MODULE
+    /*
+     * DSA signing is not approved in FIPS 140-3, so there is no
+     * need for DSA keygen either.
+     */
+    if (!OSSL_FIPS_IND_ON_UNAPPROVED(gctx, OSSL_FIPS_IND_SETTABLE0,
+                                     gctx->libctx, "DSA", "Keygen",
+                                     FIPS_dsa_sign_check))
+    return 0;
+#endif
+
     dsa = ossl_dsa_new(gctx->libctx);
     if (dsa == NULL)
         return NULL;
@@ -682,6 +728,9 @@ const OSSL_DISPATCH ossl_dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))dsa_gen_set_params },
     { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
       (void (*)(void))dsa_gen_settable_params },
+    { OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS, (void (*)(void))dsa_gen_get_params },
+    { OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS,
+      (void (*)(void))dsa_gen_gettable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))dsa_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))dsa_gen_cleanup },
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))dsa_load },
