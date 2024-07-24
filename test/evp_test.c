@@ -150,6 +150,13 @@ static int pkey_check_fips_approved(EVP_PKEY_CTX *ctx, EVP_TEST *t)
      * value of approved.
      */
     int approved = 1;
+    const OSSL_PARAM *gettables = EVP_PKEY_CTX_gettable_params(ctx);
+
+    if (gettables == NULL
+        || OSSL_PARAM_locate_const(gettables,
+                                   OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR)
+                                   == NULL)
+        return 1;
 
     params[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR,
                                          &approved);
@@ -3864,14 +3871,15 @@ static const EVP_TEST_METHOD keypair_test_method = {
  **/
 
 typedef struct keygen_test_data_st {
-    EVP_PKEY_CTX *genctx; /* Keygen context to use */
     char *keyname; /* Key name to store key or NULL */
+    char *paramname;
+    char *alg;
+    STACK_OF(OPENSSL_STRING) *controls; /* Collection of controls */
 } KEYGEN_TEST_DATA;
 
 static int keygen_test_init(EVP_TEST *t, const char *alg)
 {
     KEYGEN_TEST_DATA *data;
-    EVP_PKEY_CTX *genctx;
     int nid = OBJ_sn2nid(alg);
 
     if (nid == NID_undef) {
@@ -3884,24 +3892,17 @@ static int keygen_test_init(EVP_TEST *t, const char *alg)
         t->skip = 1;
         return 1;
     }
-    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, alg, propquery)))
-        goto err;
-
-    if (EVP_PKEY_keygen_init(genctx) <= 0) {
-        t->err = "KEYGEN_INIT_ERROR";
-        goto err;
-    }
 
     if (!TEST_ptr(data = OPENSSL_malloc(sizeof(*data))))
         goto err;
-    data->genctx = genctx;
     data->keyname = NULL;
+    data->alg = OPENSSL_strdup(alg);
+    data->paramname = NULL;
+    data->controls = sk_OPENSSL_STRING_new_null();
     t->data = data;
     t->err = NULL;
     return 1;
-
 err:
-    EVP_PKEY_CTX_free(genctx);
     return 0;
 }
 
@@ -3909,7 +3910,9 @@ static void keygen_test_cleanup(EVP_TEST *t)
 {
     KEYGEN_TEST_DATA *keygen = t->data;
 
-    EVP_PKEY_CTX_free(keygen->genctx);
+    ctrlfree(keygen->controls);
+    OPENSSL_free(keygen->alg);
+    OPENSSL_free(keygen->paramname);
     OPENSSL_free(keygen->keyname);
     OPENSSL_free(t->data);
     t->data = NULL;
@@ -3922,19 +3925,55 @@ static int keygen_test_parse(EVP_TEST *t,
 
     if (strcmp(keyword, "KeyName") == 0)
         return TEST_ptr(keygen->keyname = OPENSSL_strdup(value));
+    if (strcmp(keyword, "KeyParam") == 0)
+        return TEST_ptr(keygen->paramname = OPENSSL_strdup(value));
     if (strcmp(keyword, "Ctrl") == 0)
-        return pkey_test_ctrl(t, keygen->genctx, value);
+        return ctrladd(keygen->controls, value);
     return 0;
 }
 
 static int keygen_test_run(EVP_TEST *t)
 {
     KEYGEN_TEST_DATA *keygen = t->data;
-    EVP_PKEY *pkey = NULL;
-    int rv = 1;
+    EVP_PKEY *pkey = NULL, *keyparams = NULL;
+    EVP_PKEY_CTX *genctx = NULL; /* Keygen context to use */
+    int rv = 1, i;
 
-    if (EVP_PKEY_keygen(keygen->genctx, &pkey) <= 0) {
+    if (keygen->paramname != NULL) {
+        rv = find_key(&keyparams, keygen->paramname, public_keys);
+        if (rv == 0 || keyparams == NULL) {
+            TEST_info("skipping, key '%s' is disabled", keygen->paramname);
+            t->skip = 1;
+            return 1;
+        }
+        if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_pkey(libctx, keyparams,
+                                                          propquery)))
+            goto err;
+
+    } else {
+        if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, keygen->alg,
+                                                          propquery)))
+            goto err;
+    }
+
+    if (EVP_PKEY_keygen_init(genctx) <= 0) {
+        t->err = "KEYGEN_INIT_ERROR";
+        goto err;
+    }
+
+    for (i = 0; i < sk_OPENSSL_STRING_num(keygen->controls); ++i) {
+        if (!pkey_test_ctrl(t, genctx,
+                            sk_OPENSSL_STRING_value(keygen->controls, i))
+                || t->err != NULL)
+            goto err;
+    }
+
+    if (EVP_PKEY_keygen(genctx, &pkey) <= 0) {
         t->err = "KEYGEN_GENERATE_ERROR";
+        goto err;
+    }
+    if (!pkey_check_fips_approved(genctx, t)) {
+        rv = 0;
         goto err;
     }
 
@@ -3964,8 +4003,8 @@ static int keygen_test_run(EVP_TEST *t)
     }
 
     t->err = NULL;
-
 err:
+    EVP_PKEY_CTX_free(genctx);
     return rv;
 }
 
@@ -4643,6 +4682,15 @@ start:
         if (pkey == NULL && !key_unsupported()) {
             EVP_PKEY_free(pkey);
             TEST_info("Can't read public key %s", pp->value);
+            TEST_openssl_errors();
+            return 0;
+        }
+        klist = &public_keys;
+    } else if (strcmp(pp->key, "ParamKey") == 0) {
+        pkey = PEM_read_bio_Parameters_ex(t->s.key, NULL, libctx, NULL);
+        if (pkey == NULL && !key_unsupported()) {
+            EVP_PKEY_free(pkey);
+            TEST_info("Can't read params key %s", pp->value);
             TEST_openssl_errors();
             return 0;
         }
