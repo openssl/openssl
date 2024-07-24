@@ -2537,7 +2537,7 @@ static int pkey_test_run_init(EVP_TEST *t)
 {
     PKEY_DATA *data = t->data;
     int i, ret = 0;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    OSSL_PARAM params[3] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
     OSSL_PARAM *p = NULL;
     size_t params_n = 0, params_n_allocstart = 0;
 
@@ -2626,6 +2626,9 @@ static int pkey_test_run(EVP_TEST *t)
     if (!memory_err_compare(t, "KEYOP_MISMATCH",
                             expected->output, expected->output_len,
                             got, got_len))
+        goto err;
+
+    if (pkey_check_fips_approved(expected->ctx, t) <= 0)
         goto err;
 
  err:

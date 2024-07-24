@@ -332,6 +332,15 @@ extern const OSSL_DISPATCH ossl_kdf_scrypt_keyexch_functions[];
 
 /* Signature */
 extern const OSSL_DISPATCH ossl_dsa_signature_functions[];
+extern const OSSL_DISPATCH ossl_dsa_sha1_signature_functions[];
+extern const OSSL_DISPATCH ossl_dsa_sha224_signature_functions[];
+extern const OSSL_DISPATCH ossl_dsa_sha256_signature_functions[];
+extern const OSSL_DISPATCH ossl_dsa_sha384_signature_functions[];
+extern const OSSL_DISPATCH ossl_dsa_sha512_signature_functions[];
+extern const OSSL_DISPATCH ossl_dsa_sha3_224_signature_functions[];
+extern const OSSL_DISPATCH ossl_dsa_sha3_256_signature_functions[];
+extern const OSSL_DISPATCH ossl_dsa_sha3_384_signature_functions[];
+extern const OSSL_DISPATCH ossl_dsa_sha3_512_signature_functions[];
 extern const OSSL_DISPATCH ossl_rsa_signature_functions[];
 #ifndef OPENSSL_NO_MD5
 extern const OSSL_DISPATCH ossl_rsa_md5_signature_functions[];

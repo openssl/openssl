@@ -413,6 +413,15 @@ static const OSSL_ALGORITHM fips_keyexch[] = {
 static const OSSL_ALGORITHM fips_signature[] = {
 #ifndef OPENSSL_NO_DSA
     { PROV_NAMES_DSA, FIPS_DEFAULT_PROPERTIES, ossl_dsa_signature_functions },
+    { PROV_NAMES_DSA_SHA1, FIPS_DEFAULT_PROPERTIES, ossl_dsa_sha1_signature_functions },
+    { PROV_NAMES_DSA_SHA224, FIPS_DEFAULT_PROPERTIES, ossl_dsa_sha224_signature_functions },
+    { PROV_NAMES_DSA_SHA256, FIPS_DEFAULT_PROPERTIES, ossl_dsa_sha256_signature_functions },
+    { PROV_NAMES_DSA_SHA384, FIPS_DEFAULT_PROPERTIES, ossl_dsa_sha384_signature_functions },
+    { PROV_NAMES_DSA_SHA512, FIPS_DEFAULT_PROPERTIES, ossl_dsa_sha512_signature_functions },
+    { PROV_NAMES_DSA_SHA3_224, FIPS_DEFAULT_PROPERTIES, ossl_dsa_sha3_224_signature_functions },
+    { PROV_NAMES_DSA_SHA3_256, FIPS_DEFAULT_PROPERTIES, ossl_dsa_sha3_256_signature_functions },
+    { PROV_NAMES_DSA_SHA3_384, FIPS_DEFAULT_PROPERTIES, ossl_dsa_sha3_384_signature_functions },
+    { PROV_NAMES_DSA_SHA3_512, FIPS_DEFAULT_PROPERTIES, ossl_dsa_sha3_512_signature_functions },
 #endif
     { PROV_NAMES_RSA, FIPS_DEFAULT_PROPERTIES, ossl_rsa_signature_functions },
     { PROV_NAMES_RSA_SHA1, FIPS_DEFAULT_PROPERTIES,
