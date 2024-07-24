@@ -29,6 +29,12 @@ OpenSSL 3.4
 
 ### Changes between 3.3 and 3.4 [xx XXX xxxx]
 
+ * Add FIPS provider configuration option to enforce the a minimal
+   MAC length check.  The option '-no_short_mac' can optionally be
+   supplied to 'openssl fipsinstall'.
+
+   *Paul Dale*
+
  * Redesigned Windows use of OPENSSLDIR/ENGINESDIR/MODULESDIR such that
    what were formerly build time locations can now be defined at run time
    with registry keys. See NOTES-WINDOWS.md
@@ -1108,7 +1114,7 @@ OpenSSL 3.1
 
  * Add FIPS provider configuration option to enforce the
    Extended Master Secret (EMS) check during the TLS1_PRF KDF.
-   The option '-ems-check' can optionally be supplied to
+   The option '-ems_check' can optionally be supplied to
    'openssl fipsinstall'.
 
    *Shane Lontis*
