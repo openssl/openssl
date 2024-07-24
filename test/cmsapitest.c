@@ -332,6 +332,9 @@ static unsigned char *read_all(BIO *bio, long *p_len)
         if (ret < 0)
             break;
 
+        if (LONG_MAX - ret < *p_len)
+            break;
+
         *p_len += ret;
 
         if (ret < step)
