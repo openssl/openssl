@@ -476,6 +476,23 @@ Input = ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a
 Ctrl = hexcontext-string:
 Output = 98a70222f0b8121aa9d30f813d683f809e462b469c7ff87639499bb94e6dae4131f85042463c2a355a2003d062adf5aaa10b8c61e636062aaad11c2a26083406
 
+# Same as the Sign above, but using the plain ED25519 with an instance set
+# through controls
+FIPSversion = >=3.2.0
+Sign = Ed25519:EDDSA-TV-10-Raw
+Ctrl = instance:Ed25519ph
+Input = ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f
+Ctrl = hexcontext-string:
+Output = 98a70222f0b8121aa9d30f813d683f809e462b469c7ff87639499bb94e6dae4131f85042463c2a355a2003d062adf5aaa10b8c61e636062aaad11c2a26083406
+
+# Same as the Sign above, but forgetting to set an instance, should lead to
+# an error
+FIPSversion = >=3.2.0
+Sign = Ed25519:EDDSA-TV-10-Raw
+Input = ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f
+Ctrl = hexcontext-string:
+Result = KEYOP_ERROR
+
 # Test Vector 11
 # Ed448
 PrivateKeyRaw = EDDSA-TV-11-Raw:ED448:6c82a562cb808d10d632be89c8513ebf6c929f34ddfa8c9f63c9960ef6e348a3528c8a3fcc2f044e39a3fc5b94492f8f032e7549a20098f95b
@@ -625,6 +642,23 @@ Input = 483366601360a8771c6863080cc4114d8db44530f8f1e1ee4f94ea37e78b5739d5a15bef
 Ctrl = hexcontext-string:
 Output = 822f6901f7480f3d5f562c592994d9693602875614483256505600bbc281ae381f54d6bce2ea911574932f52a4e6cadd78769375ec3ffd1b801a0d9b3f4030cd433964b6457ea39476511214f97469b57dd32dbc560a9a94d00bff07620464a3ad203df7dc7ce360c3cd3696d9d9fab90f00
 
+# Same as the Sign above, but using the plain ED25519 with an instance set
+# through controls
+FIPSversion = >=3.2.0
+Sign = Ed448:EDDSA-TV-20-Raw
+Ctrl = instance:Ed448ph
+Input = 483366601360a8771c6863080cc4114d8db44530f8f1e1ee4f94ea37e78b5739d5a15bef186a5386c75744c0527e1faa9f8726e462a12a4feb06bd8801e751e4
+Ctrl = hexcontext-string:
+Output = 822f6901f7480f3d5f562c592994d9693602875614483256505600bbc281ae381f54d6bce2ea911574932f52a4e6cadd78769375ec3ffd1b801a0d9b3f4030cd433964b6457ea39476511214f97469b57dd32dbc560a9a94d00bff07620464a3ad203df7dc7ce360c3cd3696d9d9fab90f00
+
+# Same as the Sign above, but forgetting to set an instance, should lead to
+# an error
+FIPSversion = >=3.2.0
+Sign = Ed448:EDDSA-TV-20-Raw
+Input = 483366601360a8771c6863080cc4114d8db44530f8f1e1ee4f94ea37e78b5739d5a15bef186a5386c75744c0527e1faa9f8726e462a12a4feb06bd8801e751e4
+Ctrl = hexcontext-string:
+Result = KEYOP_ERROR
+
 # Test Vector 21
 # Ed448ph
 PrivateKeyRaw = EDDSA-TV-21-Raw:ED448:833fe62409237b9d62ec77587520911e9a759cec1d19755b7da901b96dca3d42ef7822e0d5104127dc05d6dbefde69e3ab2cec7c867c6e2c49
@@ -647,3 +681,20 @@ Sign = Ed448ph:EDDSA-TV-21-Raw
 Input = 483366601360a8771c6863080cc4114d8db44530f8f1e1ee4f94ea37e78b5739d5a15bef186a5386c75744c0527e1faa9f8726e462a12a4feb06bd8801e751e4
 Ctrl = hexcontext-string:666f6f
 Output = c32299d46ec8ff02b54540982814dce9a05812f81962b649d528095916a2aa481065b1580423ef927ecf0af5888f90da0f6a9a85ad5dc3f280d91224ba9911a3653d00e484e2ce232521481c8658df304bb7745a73514cdb9bf3e15784ab71284f8d0704a608c54a6b62d97beb511d132100
+
+# Same as the Sign above, but using the plain ED25519 with an instance set
+# through controls
+FIPSversion = >=3.2.0
+Sign = Ed448:EDDSA-TV-21-Raw
+Ctrl = instance:Ed448ph
+Input = 483366601360a8771c6863080cc4114d8db44530f8f1e1ee4f94ea37e78b5739d5a15bef186a5386c75744c0527e1faa9f8726e462a12a4feb06bd8801e751e4
+Ctrl = hexcontext-string:666f6f
+Output = c32299d46ec8ff02b54540982814dce9a05812f81962b649d528095916a2aa481065b1580423ef927ecf0af5888f90da0f6a9a85ad5dc3f280d91224ba9911a3653d00e484e2ce232521481c8658df304bb7745a73514cdb9bf3e15784ab71284f8d0704a608c54a6b62d97beb511d132100
+
+# Same as the Sign above, but forgetting to set an instance, should lead to
+# an error
+FIPSversion = >=3.2.0
+Sign = Ed448:EDDSA-TV-21-Raw
+Input = 483366601360a8771c6863080cc4114d8db44530f8f1e1ee4f94ea37e78b5739d5a15bef186a5386c75744c0527e1faa9f8726e462a12a4feb06bd8801e751e4
+Ctrl = hexcontext-string:666f6f
+Result = KEYOP_ERROR
