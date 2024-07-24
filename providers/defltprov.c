@@ -431,6 +431,15 @@ static const OSSL_ALGORITHM deflt_signature[] = {
     { PROV_NAMES_ED448, "provider=default", ossl_ed448_signature_functions },
 # endif
     { PROV_NAMES_ECDSA, "provider=default", ossl_ecdsa_signature_functions },
+    { PROV_NAMES_ECDSA_SHA1, "provider=default", ossl_ecdsa_sha1_signature_functions },
+    { PROV_NAMES_ECDSA_SHA224, "provider=default", ossl_ecdsa_sha224_signature_functions },
+    { PROV_NAMES_ECDSA_SHA256, "provider=default", ossl_ecdsa_sha256_signature_functions },
+    { PROV_NAMES_ECDSA_SHA384, "provider=default", ossl_ecdsa_sha384_signature_functions },
+    { PROV_NAMES_ECDSA_SHA512, "provider=default", ossl_ecdsa_sha512_signature_functions },
+    { PROV_NAMES_ECDSA_SHA3_224, "provider=default", ossl_ecdsa_sha3_224_signature_functions },
+    { PROV_NAMES_ECDSA_SHA3_256, "provider=default", ossl_ecdsa_sha3_256_signature_functions },
+    { PROV_NAMES_ECDSA_SHA3_384, "provider=default", ossl_ecdsa_sha3_384_signature_functions },
+    { PROV_NAMES_ECDSA_SHA3_512, "provider=default", ossl_ecdsa_sha3_512_signature_functions },
 # ifndef OPENSSL_NO_SM2
     { PROV_NAMES_SM2, "provider=default", ossl_sm2_signature_functions },
 # endif

@@ -86,6 +86,7 @@ push @files, qw(
                 evppkey_ecc.txt
                 evppkey_ecdh.txt
                 evppkey_ecdsa.txt
+                evppkey_ecdsa_sigalg.txt
                 evppkey_kas.txt
                 evppkey_mismatch.txt
                ) unless $no_ec;

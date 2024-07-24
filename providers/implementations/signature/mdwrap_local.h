@@ -140,6 +140,14 @@ static ossl_inline size_t wrap_md_get_size(struct md_wrapper_st *wrp)
     return 0;
 }
 
+/* ECDSA uses this */
+static ossl_inline int wrap_md_set_size(struct md_wrapper_st *wrp,
+                                        size_t mdsize)
+{
+    wrp->mdsize = mdsize;
+    return 1;
+}
+
 static ossl_inline int wrap_md_up_ref(struct md_wrapper_st *wrp)
 {
     if (wrp->md != NULL)
