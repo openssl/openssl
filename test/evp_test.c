@@ -2598,6 +2598,9 @@ static int pkey_test_run(EVP_TEST *t)
                             got, got_len))
         goto err;
 
+    if (pkey_check_fips_approved(expected->ctx, t) <= 0)
+        goto err;
+
  err:
     OPENSSL_free(got);
     EVP_PKEY_CTX_free(copy);

@@ -74,7 +74,10 @@ push @files, qw(
                 evpkdf_x942_des.txt
                 evpmac_cmac_des.txt
                ) unless $no_des;
-push @files, qw(evppkey_dsa.txt) unless $no_dsa;
+push @files, qw(
+                evppkey_dsa.txt
+                evppkey_dsa_sigalg.txt
+               ) unless $no_dsa;
 push @files, qw(
                 evppkey_ecx.txt
                 evppkey_mismatch_ecx.txt

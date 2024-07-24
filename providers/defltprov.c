@@ -397,6 +397,15 @@ static const OSSL_ALGORITHM deflt_rands[] = {
 static const OSSL_ALGORITHM deflt_signature[] = {
 #ifndef OPENSSL_NO_DSA
     { PROV_NAMES_DSA, "provider=default", ossl_dsa_signature_functions },
+    { PROV_NAMES_DSA_SHA1, "provider=default", ossl_dsa_sha1_signature_functions },
+    { PROV_NAMES_DSA_SHA224, "provider=default", ossl_dsa_sha224_signature_functions },
+    { PROV_NAMES_DSA_SHA256, "provider=default", ossl_dsa_sha256_signature_functions },
+    { PROV_NAMES_DSA_SHA384, "provider=default", ossl_dsa_sha384_signature_functions },
+    { PROV_NAMES_DSA_SHA512, "provider=default", ossl_dsa_sha512_signature_functions },
+    { PROV_NAMES_DSA_SHA3_224, "provider=default", ossl_dsa_sha3_224_signature_functions },
+    { PROV_NAMES_DSA_SHA3_256, "provider=default", ossl_dsa_sha3_256_signature_functions },
+    { PROV_NAMES_DSA_SHA3_384, "provider=default", ossl_dsa_sha3_384_signature_functions },
+    { PROV_NAMES_DSA_SHA3_512, "provider=default", ossl_dsa_sha3_512_signature_functions },
 #endif
     { PROV_NAMES_RSA, "provider=default", ossl_rsa_signature_functions },
 #if !defined(OPENSSL_NO_RMD160) && !defined(FIPS_MODULE)
