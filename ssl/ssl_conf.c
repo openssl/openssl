@@ -681,6 +681,10 @@ static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
         hs_padding = block_padding;
     OPENSSL_free(copy);
 
+    /*
+     * All we care about are non-negative values,
+     * the setters check the range
+     */
     if (cctx->ctx)
         rv = SSL_CTX_set_block_padding_ex(cctx->ctx, (size_t)block_padding,
                                           (size_t)hs_padding);
