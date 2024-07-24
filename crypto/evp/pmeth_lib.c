@@ -732,6 +732,12 @@ int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
             return
                 ctx->op.encap.kem->get_ctx_params(ctx->op.encap.algctx,
                                                   params);
+        if (EVP_PKEY_CTX_IS_GEN_OP(ctx)
+            && ctx->keymgmt != NULL
+            && ctx->keymgmt->gen_get_params != NULL)
+            return
+                evp_keymgmt_gen_get_params(ctx->keymgmt, ctx->op.keymgmt.genctx,
+                                           params);
         break;
 #ifndef FIPS_MODULE
     case EVP_PKEY_STATE_UNKNOWN:
@@ -776,6 +782,13 @@ const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(const EVP_PKEY_CTX *ctx)
         provctx = ossl_provider_ctx(EVP_KEM_get0_provider(ctx->op.encap.kem));
         return ctx->op.encap.kem->gettable_ctx_params(ctx->op.encap.algctx,
                                                       provctx);
+    }
+    if (EVP_PKEY_CTX_IS_GEN_OP(ctx)
+            && ctx->keymgmt != NULL
+            && ctx->keymgmt->gen_gettable_params != NULL) {
+        provctx = ossl_provider_ctx(EVP_KEYMGMT_get0_provider(ctx->keymgmt));
+        return ctx->keymgmt->gen_gettable_params(ctx->op.keymgmt.genctx,
+                                                 provctx);
     }
     return NULL;
 }

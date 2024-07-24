@@ -22,7 +22,10 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_keymgmt_gen_init(void *provctx, int selection,
                                   const OSSL_PARAM params[]);
  int OSSL_FUNC_keymgmt_gen_set_template(void *genctx, void *template);
+ int OSSL_FUNC_keymgmt_gen_get_params(void *genctx, OSSL_PARAM params[]);
  int OSSL_FUNC_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]);
+ const OSSL_PARAM *OSSL_FUNC_keymgmt_gen_gettable_params(void *genctx,
+                                                         void *provctx);
  const OSSL_PARAM *OSSL_FUNC_keymgmt_gen_settable_params(void *genctx,
                                                          void *provctx);
  void *OSSL_FUNC_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg);
@@ -97,6 +100,8 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
 
  OSSL_FUNC_keymgmt_gen_init             OSSL_FUNC_KEYMGMT_GEN_INIT
  OSSL_FUNC_keymgmt_gen_set_template     OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE
+ OSSL_FUNC_keymgmt_gen_get_params       OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS
+ OSSL_FUNC_keymgmt_gen_gettable_params  OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS
  OSSL_FUNC_keymgmt_gen_set_params       OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS
  OSSL_FUNC_keymgmt_gen_settable_params  OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS
  OSSL_FUNC_keymgmt_gen                  OSSL_FUNC_KEYMGMT_GEN
@@ -219,6 +224,7 @@ key object, but that is not mandatory.
 OSSL_FUNC_keymgmt_free() should free the passed I<keydata>.
 
 OSSL_FUNC_keymgmt_gen_init(), OSSL_FUNC_keymgmt_gen_set_template(),
+OSSL_FUNC_keymgmt_gen_get_params(), OSSL_FUNC_keymgmt_gen_gettable_params(),
 OSSL_FUNC_keymgmt_gen_set_params(), OSSL_FUNC_keymgmt_gen_settable_params(),
 OSSL_FUNC_keymgmt_gen() and OSSL_FUNC_keymgmt_gen_cleanup() work together as a
 more elaborate context based key object constructor.
@@ -235,6 +241,13 @@ with the same KEYMGMT, and from which content that the implementation
 chooses can be used as a template for the key object to be generated.
 Typically, the generation of a DSA or DH key would get the domain
 parameters from this I<template>.
+
+OSSL_FUNC_keymgmt_gen_get_params() should retrieve parameters into
+I<params> in the key object generation context I<genctx>.
+
+OSSL_FUNC_keymgmt_gen_gettable_params() should return a constant array of
+descriptor L<OSSL_PARAM(3)>, for parameters that
+OSSL_FUNC_keymgmt_gen_get_params() can handle.
 
 OSSL_FUNC_keymgmt_gen_set_params() should set additional parameters from
 I<params> in the key object generation context I<genctx>.
@@ -465,6 +478,9 @@ The KEYMGMT interface was introduced in OpenSSL 3.0.
 
 Functions OSSL_FUNC_keymgmt_import_types_ex(), and OSSL_FUNC_keymgmt_export_types_ex()
 were added with OpenSSL 3.2.
+
+The functions OSSL_FUNC_keymgmt_gen_get_params() and
+OSSL_FUNC_keymgmt_gen_gettable_params() were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
