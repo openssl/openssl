@@ -54,6 +54,7 @@
 # define EVP_R_EXPECTING_A_SIPHASH_KEY                    175
 # define EVP_R_FINAL_ERROR                                188
 # define EVP_R_GENERATE_ERROR                             214
+# define EVP_R_GETTING_ALGORITHMIDENTIFIER_NOT_SUPPORTED  229
 # define EVP_R_GET_RAW_KEY_FAILED                         182
 # define EVP_R_ILLEGAL_SCRYPT_PARAMETERS                  171
 # define EVP_R_INACCESSIBLE_DOMAIN_PARAMETERS             204
