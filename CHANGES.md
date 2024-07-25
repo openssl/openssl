@@ -29,6 +29,12 @@ OpenSSL 3.4
 
 ### Changes between 3.3 and 3.4 [xx XXX xxxx]
 
+ * Changed DTLS handling of record with invalid MAC.
+   Records with invalid MAC used to generate fatal alert, and are now
+   silently dropped.
+
+   *Omer Kattan*
+
  * Redesigned Windows use of OPENSSLDIR/ENGINESDIR/MODULESDIR such that
    what were formerly build time locations can now be defined at run time
    with registry keys. See NOTES-WINDOWS.md

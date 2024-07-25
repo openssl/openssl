@@ -170,8 +170,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
         mac = rr->data + rr->length;
         i = rl->funcs->mac(rl, rr, md, 0 /* not send */);
         if (i == 0 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0) {
-            RLAYERfatal(rl, SSL_AD_BAD_RECORD_MAC,
-                        SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
+            /* Silently drop the packet in case of invalid MAC. */
             return 0;
         }
         /*
