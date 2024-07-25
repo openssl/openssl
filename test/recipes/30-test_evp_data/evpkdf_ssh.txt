@@ -4848,6 +4848,7 @@ Ctrl.hexsession_id = hexsession_id:a4ebd45934f56792b5112dcd75a1075fdc889245
 Output = FF
 Result = KDF_DERIVE_ERROR
 
+Availablein = default
 KDF = SSHKDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexkey = hexkey:0000008055bae931c07fd824bf10add1902b6fbc7c665347383498a686929ff5a25f8e40cb6645ea814fb1a5e0a11f852f86255641e5ed986e83a78bc8269480eac0b0dfd770cab92e7a28dd87ff452466d6ae867cead63b366b1c286e6c4811a9f14c27aea14c5171d49b78c06e3735d36e6a3be321dd5fc82308f34ee1cb17fba94a59
@@ -4867,6 +4868,7 @@ Output = FF
 Result = KDF_MISMATCH
 
 # Test that unsupported XOF is rejected
+FIPSversion = >=3.4.0
 KDF = SSHKDF
 Ctrl.digest = digest:SHAKE-256
 Ctrl.hexkey = hexkey:0000008055bae931c07fd824bf10add1902b6fbc7c665347383498a686929ff5a25f8e40cb6645ea814fb1a5e0a11f852f86255641e5ed986e83a78bc8269480eac0b0dfd770cab92e7a28dd87ff452466d6ae867cead63b366b1c286e6c4811a9f14c27aea14c5171d49b78c06e3735d36e6a3be321dd5fc82308f34ee1cb17fba94a59
@@ -4874,6 +4876,15 @@ Ctrl.hexxcghash = hexxcghash:a4ebd45934f56792b5112dcd75a1075fdc889245
 Ctrl.hexsession_id = hexsession_id:a4ebd45934f56792b5112dcd75a1075fdc889245
 Ctrl.type = type:A
 Result = KDF_CTRL_ERROR
+
+FIPSversion = <3.4.0
+KDF = SSHKDF
+Ctrl.digest = digest:SHAKE-256
+Ctrl.hexkey = hexkey:0000008055bae931c07fd824bf10add1902b6fbc7c665347383498a686929ff5a25f8e40cb6645ea814fb1a5e0a11f852f86255641e5ed986e83a78bc8269480eac0b0dfd770cab92e7a28dd87ff452466d6ae867cead63b366b1c286e6c4811a9f14c27aea14c5171d49b78c06e3735d36e6a3be321dd5fc82308f34ee1cb17fba94a59
+Ctrl.hexxcghash = hexxcghash:a4ebd45934f56792b5112dcd75a1075fdc889245
+Ctrl.hexsession_id = hexsession_id:a4ebd45934f56792b5112dcd75a1075fdc889245
+Ctrl.type = type:A
+Result = KDF_MISMATCH
 
 Title = FIPS indicator tests
 

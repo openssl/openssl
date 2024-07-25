@@ -4937,6 +4937,14 @@ Result = KDF_CTRL_ERROR
 
 Title = TLS13-KDF unsupported XOF test
 
+FIPSversion = <3.4.0
+KDF = TLS13-KDF
+Ctrl.mode = mode:EXTRACT_ONLY
+Ctrl.digest = digest:SHAKE-256
+Ctrl.key = hexkey:f8af6aea2d397baf2948a25b2834200692cff17eee9165e4e27babee9edefd05
+Result = KDF_DERIVE_ERROR
+
+FIPSversion = >=3.4.0
 KDF = TLS13-KDF
 Ctrl.mode = mode:EXTRACT_ONLY
 Ctrl.digest = digest:SHAKE-256
