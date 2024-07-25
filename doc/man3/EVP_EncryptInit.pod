@@ -782,12 +782,23 @@ The length of the "keybits" parameter should not exceed that of a B<size_t>.
 Gets or sets the number of rounds to be used for a cipher.
 This is used by the RC5 cipher.
 
-=item "alg_id_param" (B<OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS>) <octet string>
+=item "algorithm-id" (B<OSSL_CIPHER_PARAM_ALGORITHM_ID>) <octet string>
+
+Used to get the DER encoded AlgorithmIdentifier from the cipher
+implementation.  Functions like L<EVP_PKEY_CTX_get_algor(3)> use this
+parameter.
+
+=item "algorithm-id-params" (B<OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS>) <octet string>
 
 Used to pass the DER encoded AlgorithmIdentifier parameter to or from
-the cipher implementation.  Functions like L<EVP_CIPHER_param_to_asn1(3)>
-and L<EVP_CIPHER_asn1_to_param(3)> use this parameter for any implementation
-that has the flag B<EVP_CIPH_FLAG_CUSTOM_ASN1> set.
+the cipher implementation.
+Functions like L<EVP_CIPHER_CTX_set_algor_params(3)> and
+L<EVP_CIPHER_CTX_get_algor_params(3)> use this parameter.
+
+=item "alg_id_params" (B<OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS_OLD>) <octet string>
+
+An deprecated alias for "algorithm-id-params", only used by
+L<EVP_CIPHER_param_to_asn1(3)> and L<EVP_CIPHER_asn1_to_param(3)>.
 
 =item "cts_mode" (B<OSSL_CIPHER_PARAM_CTS_MODE>) <UTF8 string>
 

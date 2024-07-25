@@ -1,11 +1,13 @@
-Passing AlgorithmIdentifier parameters to operations
-====================================================
+Handling AlgorithmIdentifier and its parameters with provider operations
+========================================================================
 
 Quick background
 ----------------
 
 We currently only support passing the AlgorithmIdentifier (`X509_ALGOR`)
-parameter field to symmetric cipher provider implementations.
+parameter field to symmetric cipher provider implementations.  We currently
+only support getting full AlgorithmIdentifier (`X509_ALGOR`) from signature
+provider implementations.
 
 We do support passing them to legacy implementations of other types of
 operation algorithms as well, but it's done in a way that can't be supported
@@ -15,18 +17,30 @@ libcrypto and the backend implementation.
 For a longer background and explanation, see
 [Background / tl;dr](#background-tldr) at the end of this design.
 
-Establish an OSSL_PARAM key that any algorithms may become aware of
--------------------------------------------------------------------
+Establish OSSL_PARAM keys that any algorithms may become aware of
+-----------------------------------------------------------------
 
-We already have a parameter key, but it's currently only specified for
-`EVP_CIPHER`, in support of `EVP_CIPHER_param_to_asn1()` and
-`EVP_CIPHER_asn1_to_param()`.
+We already have known parameter keys:
 
-"alg_id_param", also known as the macro `OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS`
+- "algor_id_param", also known as the macro `OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS`.
 
-This parameter can be used in the exact same manner with other operations,
-with the value of the AlgorithmIdentifier parameter as an octet string, to
-be interpreted by the implementations in whatever way they see fit.
+  This is currently only specified for `EVP_CIPHER`, in support of
+  `EVP_CIPHER_param_to_asn1()` and `EVP_CIPHER_asn1_to_param()`
+
+- "algorithm-id", also known as the macro `OSSL_SIGNATURE_PARAM_ALGORITHM_ID`.
+
+This design proposes:
+
+1. Adding a parameter key "algorithm-id-params", to replace "algor_id_param",
+   and deprecate the latter.
+2. Making both "algorithm-id" and "algorithm-id-params" generically available,
+   rather than only tied to `EVP_SIGNATURE` ("algorithm-id") or `EVP_CIPHER`
+   ("algor_id_param").
+
+This way, these parameters can be used in the exact same manner with other
+operations, with the value of the AlgorithmIdentifier as well as its
+parameters as octet strings, to be used and interpreted by applications and
+provider implementations alike in whatever way they see fit.
 
 Applications can choose to add these in an `OSSL_PARAM` array, to be passed
 with the multitude of initialization functions that take such an array, or
@@ -34,7 +48,7 @@ using specific operation `OSSL_PARAM` setters and getters (such as
 `EVP_PKEY_CTX_set_params`), or using other available convenience functions
 (see below).
 
-This parameter will have to be documented in the following files:
+These parameter will have to be documented in the following files:
 
 - `doc/man7/provider-asym_cipher.pod`
 - `doc/man7/provider-cipher.pod`
@@ -67,20 +81,25 @@ such parameter data from them.
  * These two would essentially be aliases for EVP_CIPHER_param_to_asn1()
  * and EVP_CIPHER_asn1_to_param().
  */
-EVP_CIPHER_CTX_set_algor_param(EVP_PKEY_CTX *ctx, X509_ALGOR *alg);
-EVP_CIPHER_CTX_get_algor_param(EVP_PKEY_CTX *ctx, X509_ALGOR *alg);
+EVP_CIPHER_CTX_set_algor_params(EVP_CIPHER_CTX *ctx, const X509_ALGOR *alg);
+EVP_CIPHER_CTX_get_algor_params(EVP_CIPHER_CTX *ctx, X509_ALGOR *alg);
+EVP_CIPHER_CTX_get_algor(EVP_CIPHER_CTX *ctx, X509_ALGOR **alg);
 
-EVP_MD_CTX_set_algor_param(EVP_PKEY_CTX *ctx, X509_ALGOR *alg);
-EVP_MD_CTX_get_algor_param(EVP_PKEY_CTX *ctx, X509_ALGOR *alg);
+EVP_MD_CTX_set_algor_params(EVP_MD_CTX *ctx, const X509_ALGOR *alg);
+EVP_MD_CTX_get_algor_params(EVP_MD_CTX *ctx, X509_ALGOR *alg);
+EVP_MD_CTX_get_algor(EVP_MD_CTX *ctx, X509_ALGOR **alg);
 
-EVP_MAC_CTX_set_algor_param(EVP_PKEY_CTX *ctx, X509_ALGOR *alg);
-EVP_MAC_CTX_get_algor_param(EVP_PKEY_CTX *ctx, X509_ALGOR *alg);
+EVP_MAC_CTX_set_algor_params(EVP_MAC_CTX *ctx, const X509_ALGOR *alg);
+EVP_MAC_CTX_get_algor_params(EVP_MAC_CTX *ctx, X509_ALGOR *alg);
+EVP_MAC_CTX_get_algor(EVP_MAC_CTX *ctx, X509_ALGOR **alg);
 
-EVP_KDF_CTX_set_algor_param(EVP_PKEY_CTX *ctx, X509_ALGOR *alg);
-EVP_KDF_CTX_get_algor_param(EVP_PKEY_CTX *ctx, X509_ALGOR *alg);
+EVP_KDF_CTX_set_algor_params(EVP_KDF_CTX *ctx, const X509_ALGOR *alg);
+EVP_KDF_CTX_get_algor_params(EVP_KDF_CTX *ctx, X509_ALGOR *alg);
+EVP_KDF_CTX_get_algor(EVP_KDF_CTX *ctx, X509_ALGOR **alg);
 
-EVP_PKEY_CTX_set_algor_param(EVP_PKEY_CTX *ctx, X509_ALGOR *alg);
-EVP_PKEY_CTX_get_algor_param(EVP_PKEY_CTX *ctx, X509_ALGOR *alg);
+EVP_PKEY_CTX_set_algor_params(EVP_PKEY_CTX *ctx, const X509_ALGOR *alg);
+EVP_PKEY_CTX_get_algor_params(EVP_PKEY_CTX *ctx, X509_ALGOR *alg);
+EVP_PKEY_CTX_get_algor(EVP_PKEY_CTX *ctx, X509_ALGOR **alg);
 ```
 
 Note that all might not need to be added immediately, depending on if they
