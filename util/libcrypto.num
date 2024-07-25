@@ -5711,3 +5711,6 @@ OSSL_BASIC_ATTR_CONSTRAINTS_it          ?	3_4_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_set_algor_params         ?	3_4_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_get_algor_params         ?	3_4_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_get_algor                ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_algor_params           ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_get_algor_params           ?	3_4_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_get_algor                  ?	3_4_0	EXIST::FUNCTION:

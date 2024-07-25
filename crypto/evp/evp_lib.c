@@ -1344,4 +1344,120 @@ int EVP_CIPHER_CTX_get_algor(EVP_CIPHER_CTX *ctx, X509_ALGOR **alg)
     return ret;
 }
 
+int EVP_PKEY_CTX_set_algor_params(EVP_PKEY_CTX *ctx, const X509_ALGOR *alg)
+{
+    int ret = -1;                /* Assume the worst */
+    unsigned char *der = NULL;
+    int derl = -1;
+
+    if ((derl = i2d_ASN1_TYPE(alg->parameter, &der)) >= 0) {
+        const char *k = OSSL_PKEY_PARAM_ALGORITHM_ID_PARAMS;
+        OSSL_PARAM params[2];
+
+        /*
+         * Passing the same data with both the old (deprecated) and the
+         * new AlgID parameters OSSL_PARAM key.
+         */
+        params[0] = OSSL_PARAM_construct_octet_string(k, der, (size_t)derl);
+        params[1] = OSSL_PARAM_construct_end();
+        ret = EVP_PKEY_CTX_set_params(ctx, params);
+    }
+    OPENSSL_free(der);
+    return ret;
+}
+
+int EVP_PKEY_CTX_get_algor_params(EVP_PKEY_CTX *ctx, X509_ALGOR *alg)
+{
+    int ret = -1;                /* Assume the worst */
+    OSSL_PARAM params[2];
+    unsigned char *der = NULL;
+    size_t derl;
+    ASN1_TYPE *type = NULL;
+    const char *k = OSSL_PKEY_PARAM_ALGORITHM_ID_PARAMS;
+
+    /*
+     * We make two passes, the first to get the appropriate buffer size,
+     * and the second to get the actual value.
+     * Also, using both the old (deprecated) and the new AlgID parameters
+     * OSSL_PARAM key, and using whichever the provider responds to.
+     * Should the provider respond on both, the new key takes priority.
+     */
+    params[0] = OSSL_PARAM_construct_octet_string(k, NULL, 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (!EVP_PKEY_CTX_get_params(ctx, params))
+        goto err;
+
+    /*
+     * If alg->parameter is non-NULL, it will be changed by d2i_ASN1_TYPE()
+     * below.  If it is NULL, the d2i_ASN1_TYPE() call will allocate new
+     * space for it.  Either way, alg->parameter can be safely assigned
+     * with type after the d2i_ASN1_TYPE() call, with the safety that it
+     * will be ok.
+     */
+    type = alg->parameter;
+
+    derl = params[0].return_size;
+    if (OSSL_PARAM_modified(&params[0])
+        /* ... but, we should get a return size too! */
+        && derl != 0
+        && (der = OPENSSL_malloc(derl)) != NULL) {
+        unsigned char *derp = der;
+
+        params[0] = OSSL_PARAM_construct_octet_string(k, der, derl);
+        if (EVP_PKEY_CTX_get_params(ctx, params)
+            && OSSL_PARAM_modified(&params[0])
+            && d2i_ASN1_TYPE(&type, (const unsigned char **)&derp,
+                             derl) != NULL) {
+            /*
+             * Don't free alg->parameter, see comment further up.
+             * Worst case, alg->parameter gets assigned its own value.
+             */
+            alg->parameter = type;
+            ret = 1;
+        }
+    }
+ err:
+    OPENSSL_free(der);
+    return ret;
+}
+
+int EVP_PKEY_CTX_get_algor(EVP_PKEY_CTX *ctx, X509_ALGOR **alg)
+{
+    int ret = -1;                /* Assume the worst */
+    OSSL_PARAM params[2];
+    size_t aid_len = 0;
+    const char *k_aid = OSSL_SIGNATURE_PARAM_ALGORITHM_ID;
+
+    params[0] = OSSL_PARAM_construct_octet_string(k_aid, NULL, 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (EVP_PKEY_CTX_get_params(ctx, params) <= 0)
+        goto err;
+
+    if (OSSL_PARAM_modified(&params[0]))
+        aid_len = params[0].return_size;
+    if (aid_len == 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_GETTING_ALGORITHMIDENTIFIER_NOT_SUPPORTED);
+        ret = -2;
+        goto err;
+    }
+    if (alg != NULL) {
+        unsigned char *aid = NULL;
+        const unsigned char *pp = NULL;
+
+        if ((aid = OPENSSL_malloc(aid_len)) != NULL) {
+            params[0] = OSSL_PARAM_construct_octet_string(k_aid, aid, aid_len);
+            pp = aid;
+            if (EVP_PKEY_CTX_get_params(ctx, params)
+                && OSSL_PARAM_modified(&params[0])
+                && d2i_X509_ALGOR(alg, &pp, aid_len) != NULL)
+                ret = 1;
+        }
+        OPENSSL_free(aid);
+    }
+ err:
+    return ret;
+}
+
 #endif /* !defined(FIPS_MODULE) */
