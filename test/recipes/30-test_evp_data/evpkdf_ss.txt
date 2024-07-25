@@ -1131,3 +1131,11 @@ Ctrl.hexinfo = hexinfo:0553552e5345a11a3018a003020101a111300f1b066b72627467741b
 Ctrl.hexinfo = hexinfo:0553552e5345a22404223020a003020110a10c040aaaaaaaaaaaaaaa
 Ctrl.hexinfo = hexinfo:aaaaaaa20b0409bbbbbbbbbbbbbbbbbb
 Output = d3c78b78d75313e9a926f75dfb012363fa17fa01db
+
+# Test that the operation with XOF digest function is rejected
+FIPSversion = >=3.4.0
+KDF = SSKDF
+Ctrl.digest = digest:SHAKE-256
+Ctrl.hexsecret = hexsecret:d09a6b1a472f930db4f5e6b967900744
+Ctrl.hexinfo = hexinfo:b117255ab5f1b6b96fc434b0
+Result = KDF_CTRL_ERROR

@@ -31,8 +31,13 @@ The decapsulate function recovers the secret using the RSA private key.
 
 This can be set using EVP_PKEY_CTX_set_kem_op().
 
-=back
+=item "fips-indicator" (B<OSSL_KEM_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
 
+=item "key-check" (B<OSSL_KEM_PARAM_FIPS_KEY_CHECK>) <integer>
+
+These parameters are described in L<provider-kem(7)>.
+
+=back
 
 =head1 CONFORMING TO
 

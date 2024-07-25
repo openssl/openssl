@@ -160,7 +160,7 @@ static int read_utf8_string(const uint8_t **buf, size_t *len, char **res)
     size_t found_len;
     int r;
 
-    found_len = strnlen((const char *) *buf, *len);
+    found_len = OPENSSL_strnlen((const char *) *buf, *len);
 
     if (found_len == *len) {
         r = -1;

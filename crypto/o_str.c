@@ -90,6 +90,74 @@ size_t OPENSSL_strlcat(char *dst, const char *src, size_t size)
     return l + OPENSSL_strlcpy(dst, src, size);
 }
 
+/**
+ * @brief Converts a string to an unsigned long integer.
+ *
+ * This function attempts to convert a string representation of a number
+ * to an unsigned long integer, given a specified base. It also provides
+ * error checking and reports whether the conversion was successful.
+ * This function is just a wrapper around the POSIX strtoul function with
+ * additional error checking.  This implies that errno for the caller is set
+ * on calls to this function.
+ *
+ * @param str The string containing the representation of the number.
+ * @param endptr A pointer to a pointer to character. If not NULL, it is set
+ *               to the character immediately following the number in the
+ *               string.
+ * @param base The base to use for the conversion, which must be between 2,
+ *             and 36 inclusive, or be the special value 0. If the base is 0,
+ *             the actual base is determined by the format of the initial
+ *             characters of the string.
+ * @param num A pointer to an unsigned long where the result of the
+ *            conversion is stored.
+ *
+ * @return 1 if the conversion was successful, 0 otherwise. Conversion is
+ *         considered unsuccessful if no digits were consumed or if an error
+ *         occurred during conversion.
+ *
+ * @note It is the caller's responsibility to check if the conversion is
+ *       correct based on the expected consumption of the string as reported
+ *       by endptr.
+ */
+int OPENSSL_strtoul(const char *str, char **endptr, int base,
+                    unsigned long *num)
+{
+    char *tmp_endptr;
+    char **internal_endptr = endptr == NULL ? &tmp_endptr : endptr;
+
+    errno = 0;
+
+    *internal_endptr = (char *)str;
+
+    if (num == NULL)
+        return 0;
+
+    if (str == NULL)
+        return 0;
+
+    /* Fail on negative input */
+    if (*str == '-')
+        return 0;
+
+    *num = strtoul(str, internal_endptr, base);
+    /*
+     * We return error from this function under the following conditions
+     * 1) If strtoul itself returned an error in translation
+     * 2) If the caller didn't pass in an endptr value, and **internal_endptr
+     *    doesn't point to '\0'.  The implication here is that if the caller
+     *    doesn't care how much of a string is consumed, they expect the entire
+     *    string to be consumed.  As such, no pointing to the NULL terminator
+     *    means there was some part of the string left over after translation
+     * 3) If no bytes of the string were consumed
+     */
+    if (errno != 0 ||
+        (endptr == NULL && **internal_endptr != '\0') ||
+        (str == *internal_endptr))
+        return 0;
+
+    return 1;
+}
+
 int OPENSSL_hexchar2int(unsigned char c)
 {
 #ifdef CHARSET_EBCDIC
@@ -225,12 +293,14 @@ static int buf2hexstr_sep(char *str, size_t str_n, size_t *strlength,
     int has_sep = (sep != CH_ZERO);
     size_t len = has_sep ? buflen * 3 : 1 + buflen * 2;
 
+    if (len == 0)
+        ++len;
     if (strlength != NULL)
         *strlength = len;
     if (str == NULL)
         return 1;
 
-    if (str_n < (unsigned long)len) {
+    if (str_n < len) {
         ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_TOO_SMALL_BUFFER);
         return 0;
     }
@@ -242,7 +312,7 @@ static int buf2hexstr_sep(char *str, size_t str_n, size_t *strlength,
         if (has_sep)
             *q++ = sep;
     }
-    if (has_sep)
+    if (has_sep && buflen > 0)
         --q;
     *q = CH_ZERO;
 

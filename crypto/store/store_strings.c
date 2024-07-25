@@ -9,6 +9,8 @@
 
 #include <openssl/store.h>
 
+#include "internal/nelem.h"
+
 static char *type_strings[] = {
     "Name",                      /* OSSL_STORE_INFO_NAME */
     "Parameters",                /* OSSL_STORE_INFO_PARAMS */
@@ -20,7 +22,7 @@ static char *type_strings[] = {
 
 const char *OSSL_STORE_INFO_type_string(int type)
 {
-    int types = sizeof(type_strings) / sizeof(type_strings[0]);
+    int types = OSSL_NELEM(type_strings);
 
     if (type < 1 || type > types)
         return NULL;

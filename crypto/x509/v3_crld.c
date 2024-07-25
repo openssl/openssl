@@ -419,23 +419,11 @@ static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
     return NULL;
 }
 
-static int print_gens(BIO *out, STACK_OF(GENERAL_NAME) *gens, int indent)
-{
-    int i;
-    for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
-        if (i > 0)
-            BIO_puts(out, "\n");
-        BIO_printf(out, "%*s", indent + 2, "");
-        GENERAL_NAME_print(out, sk_GENERAL_NAME_value(gens, i));
-    }
-    return 1;
-}
-
 static int print_distpoint(BIO *out, DIST_POINT_NAME *dpn, int indent)
 {
     if (dpn->type == 0) {
         BIO_printf(out, "%*sFull Name:\n", indent, "");
-        print_gens(out, dpn->name.fullname, indent);
+        OSSL_GENERAL_NAMES_print(out, dpn->name.fullname, indent);
     } else {
         X509_NAME ntmp;
         ntmp.entries = dpn->name.relativename;
@@ -486,7 +474,7 @@ static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
             print_reasons(out, "Reasons", point->reasons, indent);
         if (point->CRLissuer) {
             BIO_printf(out, "%*sCRL Issuer:\n", indent, "");
-            print_gens(out, point->CRLissuer, indent);
+            OSSL_GENERAL_NAMES_print(out, point->CRLissuer, indent);
         }
     }
     return 1;

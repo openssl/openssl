@@ -16,7 +16,7 @@
 /*
  * VMS C only for now, implemented in vms_decc_init.c
  * If other C compilers forget to terminate argv with NULL, this function
- * can be re-used.
+ * can be reused.
  */
 char **copy_argv(int *argc, char *argv[]);
 # endif

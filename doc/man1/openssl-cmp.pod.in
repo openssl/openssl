@@ -19,6 +19,8 @@ Generic message options:
 [B<-infotype> I<name>]
 [B<-profile> I<name>]
 [B<-geninfo> I<values>]
+[B<-template> I<filename>]
+[B<-keyspec> I<filename>]
 
 Certificate enrollment options:
 
@@ -252,8 +254,8 @@ ITAV B<infoType>s is printed to stdout.
 
 Set InfoType name to use for requesting specific info in B<genm>,
 e.g., C<signKeyPairTypes>.
-So far, there is specific support for C<caCerts>, C<rootCaCert>
-and C<crlStatusList>.
+There is specific support for C<caCerts>, C<rootCaCert>,  
+C<certReqTemplate>, and C<crlStatusList> (CRL update retrieval).
 
 =item B<-profile> I<name>
 
@@ -267,6 +269,18 @@ the generalInfo field of the PKIHeader of requests messages.
 Each InfoTypeAndValue gives an OID and an integer or string value
 of the form I<OID>:int:I<number> or I<OID>:str:I<text>,
 e.g., C<'1.2.3.4:int:56789, id-kp:str:name'>.
+
+=item B<-template> I<filename>
+
+The file to save any CRMF certTemplate in DER format
+received in a genp message with id-it-certReqTemplate.
+
+=item B<-keyspec> I<filename>
+
+It is optional and used to specify the file to save any keySpec if
+present in a genp message with id-it-keyGenParameters.
+
+Note: any keySpec field contents received are logged as INFO.
 
 =back
 
@@ -420,6 +434,12 @@ The file where any newly enrolled certificate should be saved.
 =item B<-chainout> I<filename>
 
 The file where the chain of any newly enrolled certificate should be saved.
+This chain excludes the leaf certificate, i.e., the newly enrolled certificate.
+Also the trust anchor (the root certificate) is not included.
+
+If the B<-certout> option is given, too, with equal I<filename> argument,
+then the file produced contains both outputs concatenated:
+the newly enrolled certificate followed by its chain.
 
 =back
 

@@ -44,6 +44,33 @@ This parameter sets the context seed.
 The length of the context seed cannot exceed 1024 bytes;
 this should be more than enough for any normal use of the TLS PRF.
 
+=item "fips-indicator" (B<OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
+This may be used after calling EVP_KDF_derive. It returns 0 if any "***-check"
+related parameter is set to 0 and the check fails.
+This option is used by the OpenSSL FIPS provider.
+
+=item "ems_check" (B<OSSL_KDF_PARAM_FIPS_EMS_CHECK>) <integer>
+
+The default value of 1 causes an error during EVP_KDF_derive() if
+"master secret" is used instead of "extended master secret" Setting this to zero
+will ignore the error and set the approved "fips-indicator" to 0.
+This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
+set to 0.
+
+=item "digest-check" (B<OSSL_KDF_PARAM_FIPS_DIGEST_CHECK>) <int>
+
+The default value of 1 causes an error during EVP_KDF_derive() if
+used digest is not approved.
+Setting this to zero will ignore the error and set the approved
+"fips-indicator" to 0.
+This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
+set to 0.
+
+According to SP 800-135r1, the following are approved digest algorithms:
+SHA2-256, SHA2-384, SHA2-512.
+
 =back
 
 =head1 NOTES

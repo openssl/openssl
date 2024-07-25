@@ -41,7 +41,6 @@ OSSL_CRMF_MSG_get_certReqId
 
  int OSSL_CRMF_MSG_get_certReqId(const OSSL_CRMF_MSG *crm);
 
-
 =head1 DESCRIPTION
 
 OSSL_CRMF_MSG_get0_tmpl() retrieves the certificate template of I<crm>.

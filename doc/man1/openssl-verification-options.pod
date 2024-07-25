@@ -430,7 +430,7 @@ This option may be used multiple times.
 =item B<-policy> I<arg>
 
 Enable policy processing and add I<arg> to the user-initial-policy-set (see
-RFC5280). The policy I<arg> can be an object name an OID in numeric form.
+RFC5280). The policy I<arg> can be an object name or an OID in numeric form.
 This argument can appear more than once.
 
 =item B<-explicit_policy>

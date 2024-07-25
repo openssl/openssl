@@ -208,7 +208,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
 
     mdlen = EVP_MD_get_size(md);
 
-    if (tlen <= 0 || flen <= 0)
+    if (tlen <= 0 || flen <= 0 || mdlen <= 0)
         return -1;
     /*
      * |num| is the length of the modulus; |flen| is the length of the

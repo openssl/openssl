@@ -62,7 +62,7 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
 /*
  * Top secret. This algorithm only works if no one knows what this number is.
  * Please don't tell anyone what it is.
- * 
+ *
  * This algorithm is for testing only - don't really use it!
  */
 static const unsigned char private_constant[XOR_KEY_SIZE] = {
@@ -1115,7 +1115,7 @@ static const OSSL_DISPATCH xor_keymgmt_functions[] = {
     OSSL_DISPATCH_END
 };
 
-/* We're re-using most XOR keymgmt functions also for signature operations: */
+/* We're reusing most XOR keymgmt functions also for signature operations: */
 static void *xor_xorhmacsig_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     XORKEY *k = xor_gen(genctx, osslcb, cbarg);
@@ -1821,7 +1821,7 @@ static int key2any_check_selection(int selection, int selection_mask)
          * If the caller asked for the currently checked bit(s), return
          * whether the decoder description says it's supported.
          */
-        if (check1) 
+        if (check1)
             return check2;
     }
 
@@ -2614,7 +2614,7 @@ static int xor_get_aid(unsigned char** oidbuf, const char *tls_name) {
 
    X509_ALGOR_set0(algor, OBJ_txt2obj(tls_name, 0), V_ASN1_UNDEF, NULL);
 
-   aidlen = i2d_X509_ALGOR(algor, oidbuf); 
+   aidlen = i2d_X509_ALGOR(algor, oidbuf);
    X509_ALGOR_free(algor);
    return(aidlen);
 }
@@ -2892,7 +2892,7 @@ int xor_sig_digest_sign_final(void *vpxor_sigctx,
     }
 
     return xor_sig_sign(vpxor_sigctx, sig, siglen, sigsize, digest, (size_t)dlen);
-        
+
 }
 
 int xor_sig_digest_verify_final(void *vpxor_sigctx, const unsigned char *sig,

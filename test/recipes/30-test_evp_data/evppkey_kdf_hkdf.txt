@@ -193,3 +193,12 @@ Ctrl.md = md:SHA1
 Ctrl.IKM = hexkey:0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
 Ctrl.salt = salt:
 Output = 2c91117204d745f3500d636a62f64f0ab3bae548aa53d423b0d1f27ebba6f5e5673a081d70cce7acfc48
+
+# Test that the operation with XOF digest function is rejected
+FIPSversion = >=3.4.0
+PKEYKDF = HKDF
+Ctrl.digest = digest:SHAKE-256
+Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
+Ctrl.salt = hexsalt:000102030405060708090a0b0c
+Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
+Result = PKEY_CTRL_ERROR

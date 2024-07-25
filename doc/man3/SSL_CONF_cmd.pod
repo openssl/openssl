@@ -227,9 +227,15 @@ deprecated alternative commands below.
 
 =item B<-record_padding> I<padding>
 
-Attempts to pad TLSv1.3 records so that they are a multiple of B<padding>
-in length on send. A B<padding> of 0 or 1 turns off padding. Otherwise,
-the B<padding> must be >1 or <=16384.
+Controls use of TLSv1.3 record layer padding.  B<padding> is a string of the
+form "number[,number]" where the (required) first number is the padding block
+size (in octets) for application data, and the optional second number is the
+padding block size for handshake and alert messages.  If the optional second
+number is omitted, the same padding will be applied to all messages.
+
+Padding attempts to pad TLSv1.3 records so that they are a multiple of the set
+length on send. A value of 0 or 1 turns off padding as relevant. Otherwise, the
+values must be >1 or <=16384.
 
 =item B<-debug_broken_protocol>
 
@@ -359,9 +365,15 @@ operations are permitted.
 
 =item B<RecordPadding>
 
-Attempts to pad TLSv1.3 records so that they are a multiple of B<value> in
-length on send. A B<value> of 0 or 1 turns off padding. Otherwise, the
-B<value> must be >1 or <=16384.
+Controls use of TLSv1.3 record layer padding.  B<value> is a string of the form
+"number[,number]" where the (required) first number is the padding block size
+(in octets) for application data, and the optional second number is the padding
+block size for handshake and alert messages.  If the optional second number is
+omitted, the same padding will be applied to all messages.
+
+Padding attempts to pad TLSv1.3 records so that they are a multiple of the set
+length on send. A value of 0 or 1 turns off padding as relevant. Otherwise, the
+values must be >1 or <=16384.
 
 =item B<SignatureAlgorithms>
 

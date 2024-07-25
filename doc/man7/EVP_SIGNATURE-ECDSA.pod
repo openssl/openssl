@@ -23,6 +23,10 @@ and before calling EVP_PKEY_sign() or EVP_PKEY_verify().
 
 =item "nonce-type" (B<OSSL_SIGNATURE_PARAM_NONCE_TYPE>) <unsigned integer>
 
+=item "key-check" (B<OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK>) <integer>
+
+=item "digest-check" (B<OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK>) <integer>
+
 These parameters are described in L<provider-signature(7)>.
 
 =back
@@ -37,6 +41,8 @@ EVP_PKEY_CTX_get_params().
 =item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <UTF8 string>
 
 =item "nonce-type" (B<OSSL_SIGNATURE_PARAM_NONCE_TYPE>) <unsigned integer>
+
+=item "fips-indicator" (B<OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
 
 The parameters are described in L<provider-signature(7)>.
 

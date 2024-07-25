@@ -80,7 +80,7 @@ X509_ATTRIBUTE *X509at_delete_attr(STACK_OF(X509_ATTRIBUTE) *x, int loc)
 }
 
 STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
-                                                X509_ATTRIBUTE *attr)
+                                                const X509_ATTRIBUTE *attr)
 {
     X509_ATTRIBUTE *new_attr = NULL;
     STACK_OF(X509_ATTRIBUTE) *sk = NULL;
@@ -123,7 +123,8 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
         return NULL;
     }
     if (*x != NULL && X509at_get_attr_by_OBJ(*x, attr->object, -1) != -1) {
-        ERR_raise(ERR_LIB_X509, X509_R_DUPLICATE_ATTRIBUTE);
+        ERR_raise_data(ERR_LIB_X509, X509_R_DUPLICATE_ATTRIBUTE,
+                       "name=%s", OBJ_nid2sn(OBJ_obj2nid(attr->object)));
         return NULL;
     }
 
@@ -158,7 +159,8 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_OBJ(STACK_OF(X509_ATTRIBUTE)
         return NULL;
     }
     if (*x != NULL && X509at_get_attr_by_OBJ(*x, obj, -1) != -1) {
-        ERR_raise(ERR_LIB_X509, X509_R_DUPLICATE_ATTRIBUTE);
+        ERR_raise_data(ERR_LIB_X509, X509_R_DUPLICATE_ATTRIBUTE,
+                       "name=%s", OBJ_nid2sn(OBJ_obj2nid(obj)));
         return NULL;
     }
 
@@ -191,7 +193,8 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_NID(STACK_OF(X509_ATTRIBUTE)
         return NULL;
     }
     if (*x != NULL && X509at_get_attr_by_NID(*x, nid, -1) != -1) {
-        ERR_raise(ERR_LIB_X509, X509_R_DUPLICATE_ATTRIBUTE);
+        ERR_raise_data(ERR_LIB_X509, X509_R_DUPLICATE_ATTRIBUTE,
+                       "name=%s", OBJ_nid2sn(nid));
         return NULL;
     }
 

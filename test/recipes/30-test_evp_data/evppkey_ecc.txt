@@ -3594,7 +3594,16 @@ Derive=BOB_cf_prime192v1
 Securitycheck = 1
 PeerKey=ALICE_cf_prime192v1_PUB
 SharedSecret=e36cad3b0f8d00f60f090440a76df47896713ae61421c354
-Result = DERIVE_SET_PEER_ERROR
+Result = KEYOP_INIT_ERROR
+
+# Check the indicator callback is triggered
+FIPSversion = >=3.4.0
+Derive=BOB_cf_prime192v1
+Securitycheck = 1
+Unapproved = 1
+CtrlInit = key-check:0
+PeerKey=ALICE_cf_prime192v1_PUB
+SharedSecret=e36cad3b0f8d00f60f090440a76df47896713ae61421c354
 
 Title=prime256v1 curve tests
 

@@ -63,7 +63,7 @@ static int alpn_select_cb(SSL *ssl, const unsigned char **out,
 
     if (srv->args.alpn == NULL) {
         alpn = alpndeflt;
-        alpnlen = sizeof(alpn);
+        alpnlen = sizeof(alpndeflt);
     } else {
         alpn = srv->args.alpn;
         alpnlen = srv->args.alpnlen;

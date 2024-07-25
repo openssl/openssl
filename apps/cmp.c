@@ -97,6 +97,8 @@ static char *opt_oldwithnew = NULL;
 static char *opt_crlcert = NULL;
 static char *opt_oldcrl = NULL;
 static char *opt_crlout = NULL;
+static char *opt_template = NULL;
+static char *opt_keyspec = NULL;
 
 /* client authentication */
 static char *opt_ref = NULL;
@@ -225,6 +227,7 @@ typedef enum OPTION_choice {
     OPT_CONFIG, OPT_SECTION, OPT_VERBOSITY,
 
     OPT_CMD, OPT_INFOTYPE, OPT_PROFILE, OPT_GENINFO,
+    OPT_TEMPLATE, OPT_KEYSPEC,
 
     OPT_NEWKEY, OPT_NEWKEYPASS, OPT_SUBJECT,
     OPT_DAYS, OPT_REQEXTS,
@@ -313,6 +316,10 @@ const OPTIONS cmp_options[] = {
      "Comma-separated list of OID and value to place in generalInfo PKIHeader"},
     {OPT_MORE_STR, 0, 0,
      "of form <OID>:int:<n> or <OID>:str:<s>, e.g. \'1.2.3.4:int:56789, id-kp:str:name'"},
+    { "template", OPT_TEMPLATE, 's',
+      "File to save certTemplate received in genp of type certReqTemplate"},
+    { "keyspec", OPT_KEYSPEC, 's',
+      "Optional file to save Key specification received in genp of type certReqTemplate"},
 
     OPT_SECTION("Certificate enrollment"),
     {"newkey", OPT_NEWKEY, 's',
@@ -620,6 +627,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {&opt_config}, {&opt_section}, {(char **)&opt_verbosity},
 
     {&opt_cmd_s}, {&opt_infotype_s}, {&opt_profile}, {&opt_geninfo},
+    {&opt_template}, {&opt_keyspec},
 
     {&opt_newkey}, {&opt_newkeypass}, {&opt_subject},
     {(char **)&opt_days}, {&opt_reqexts},
@@ -2176,6 +2184,17 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         if (opt_oldwithnew != NULL)
             CMP_warn1("-oldwithnew %s", msg);
     }
+    if (opt_cmd != CMP_GENM || opt_infotype != NID_id_it_certReqTemplate) {
+        const char *msg = "option is ignored unless -cmd 'genm' and -infotype 'certReqTemplate' is given";
+
+        if (opt_template != NULL)
+            CMP_warn1("-template %s", msg);
+        if (opt_keyspec != NULL)
+            CMP_warn1("-keyspec %s", msg);
+    } else {
+        if (opt_template == NULL)
+            CMP_err("missing -template option for genm with infotype certReqTemplate");
+    }
 
     if (!setup_verification_ctx(ctx))
         goto err;
@@ -2418,6 +2437,57 @@ static int save_crl_or_delete(X509_CRL *crl, const char *file, const char *desc)
     if (file == NULL)
         return 1;
     return (crl == NULL) ? delete_file(file, desc) : save_crl(crl, file, desc);
+}
+
+static int save_template(const char *file, const OSSL_CRMF_CERTTEMPLATE *tmpl)
+{
+    BIO *bio = BIO_new_file(file, "wb");
+
+    if (bio == NULL) {
+        CMP_err1("error saving certTemplate from genp: cannot open file %s",
+                 file);
+        return 0;
+    }
+    if (!ASN1_i2d_bio_of(OSSL_CRMF_CERTTEMPLATE, i2d_OSSL_CRMF_CERTTEMPLATE,
+                         bio, tmpl)) {
+        CMP_err1("error saving certTemplate from genp: cannot write file %s",
+                 file);
+        return 0;
+    } else {
+        CMP_info1("stored certTemplate from genp to file '%s'", file);
+    }
+    BIO_free(bio);
+    return 1;
+}
+
+static int save_keyspec(const char *file, const OSSL_CMP_ATAVS *keyspec)
+{
+    BIO *bio = BIO_new_file(file, "wb");
+
+    if (bio == NULL) {
+        CMP_err1("error saving keySpec from genp: cannot open file %s", file);
+        return 0;
+    }
+
+    if (!ASN1_i2d_bio_of(OSSL_CMP_ATAVS, i2d_OSSL_CMP_ATAVS, bio, keyspec)) {
+        CMP_err1("error saving keySpec from genp: cannot write file %s", file);
+        return 0;
+    } else {
+        CMP_info1("stored keySpec from genp to file '%s'", file);
+    }
+    BIO_free(bio);
+    return 1;
+}
+
+static const char *nid_name(int nid)
+{
+    const char *name = OBJ_nid2ln(nid);
+
+    if (name == NULL)
+        name = OBJ_nid2sn(nid);
+    if (name == NULL)
+        name = "<unknown OID>";
+    return name;
 }
 
 static int print_itavs(const STACK_OF(OSSL_CMP_ITAV) *itavs)
@@ -2845,6 +2915,12 @@ static int get_opts(int argc, char **argv)
         case OPT_GENINFO:
             opt_geninfo = opt_str();
             break;
+        case OPT_TEMPLATE:
+            opt_template = opt_str();
+            break;
+        case OPT_KEYSPEC:
+            opt_keyspec = opt_str();
+            break;
 
         case OPT_NEWKEY:
             opt_newkey = opt_str();
@@ -3154,6 +3230,71 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx)
 }
 #endif
 
+static void print_keyspec(OSSL_CMP_ATAVS *keySpec)
+{
+    const char *desc = "specifications contained in keySpec from genp";
+    BIO *mem;
+    int i;
+    const char *p;
+    long len;
+
+    if (keySpec == NULL) {
+        CMP_info1("No %s", desc);
+        return;
+    }
+
+    mem = BIO_new(BIO_s_mem());
+    if (mem == NULL) {
+        CMP_err1("Out of memory - cannot dump key %s", desc);
+        return;
+    }
+    BIO_printf(mem, "Key %s:\n", desc);
+
+    for (i = 0; i < sk_OSSL_CMP_ATAV_num(keySpec); i++) {
+        OSSL_CMP_ATAV *atav = sk_OSSL_CMP_ATAV_value(keySpec, i);
+        ASN1_OBJECT *type = OSSL_CMP_ATAV_get0_type(atav /* may be NULL */);
+        int nid = OBJ_obj2nid(type);
+
+        switch (nid) {
+        case NID_id_regCtrl_algId:
+            {
+                X509_ALGOR *alg = OSSL_CMP_ATAV_get0_algId(atav);
+                const ASN1_OBJECT *oid;
+                int paramtype;
+                const void *param;
+
+                X509_ALGOR_get0(&oid, &paramtype, &param, alg);
+                BIO_printf(mem, "Key algorithm: ");
+                i2a_ASN1_OBJECT(mem, oid);
+                if (paramtype == V_ASN1_UNDEF || alg->parameter == NULL) {
+                    BIO_printf(mem, "\n");
+                } else {
+                    BIO_printf(mem, " - ");
+                    ASN1_item_print(mem, (ASN1_VALUE *)alg,
+                                    0, ASN1_ITEM_rptr(X509_ALGOR), NULL);
+                }
+            }
+            break;
+        case NID_id_regCtrl_rsaKeyLen:
+            BIO_printf(mem, "Key algorithm: RSA %d\n",
+                       OSSL_CMP_ATAV_get_rsaKeyLen(atav));
+            break;
+        default:
+            BIO_printf(mem, "Invalid key spec: %s\n", nid_name(nid));
+            break;
+        }
+    }
+    BIO_printf(mem, "End of key %s", desc);
+
+    len = BIO_get_mem_data(mem, &p);
+    if (len > INT_MAX)
+        CMP_err1("Info too large - cannot dump key %s", desc);
+    else
+        CMP_info2("%.*s", (int)len, p);
+    BIO_free(mem);
+    return;
+}
+
 static void print_status(void)
 {
     /* print PKIStatusInfo */
@@ -3300,6 +3441,42 @@ static int do_genm(OSSL_CMP_CTX *ctx)
         X509_CRL_free(crl);
         return res;
 
+    } else if (opt_infotype == NID_id_it_certReqTemplate) {
+        OSSL_CRMF_CERTTEMPLATE *certTemplate;
+        OSSL_CMP_ATAVS *keySpec;
+        int res = 0;
+
+        if (!OSSL_CMP_get1_certReqTemplate(ctx, &certTemplate, &keySpec))
+            return 0;
+
+        if (certTemplate == NULL) {
+            CMP_warn("no certificate request template available");
+            if (!delete_file(opt_template, "certTemplate from genp"))
+                return 0;
+            if (opt_keyspec != NULL
+                && !delete_file(opt_keyspec, "keySpec from genp"))
+                return 0;
+            return 1;
+        }
+        if (!save_template(opt_template, certTemplate))
+            goto tmpl_end;
+
+        print_keyspec(keySpec);
+        if (opt_keyspec != NULL) {
+            if (keySpec == NULL) {
+                CMP_warn("no key specifications available");
+                if (!delete_file(opt_keyspec, "keySpec from genp"))
+                    goto tmpl_end;
+            } else if (!save_keyspec(opt_keyspec, keySpec)) {
+                goto tmpl_end;
+            }
+        }
+
+        res = 1;
+    tmpl_end:
+        OSSL_CRMF_CERTTEMPLATE_free(certTemplate);
+        sk_OSSL_CMP_ATAV_pop_free(keySpec, OSSL_CMP_ATAV_free);
+        return res;
     } else {
         OSSL_CMP_ITAV *req;
         STACK_OF(OSSL_CMP_ITAV) *itavs;
@@ -3594,13 +3771,28 @@ int cmp_main(int argc, char **argv)
                             opt_extracertsout, "extra") < 0)
             goto err;
         if (newcert != NULL && (opt_cmd == CMP_IR || opt_cmd == CMP_CR
-                                || opt_cmd == CMP_KUR || opt_cmd == CMP_P10CR))
-            if (!save_cert_or_delete(newcert, opt_certout, "newly enrolled")
-                || save_free_certs(OSSL_CMP_CTX_get1_newChain(cmp_ctx),
-                                   opt_chainout, "chain") < 0
-                || save_free_certs(OSSL_CMP_CTX_get1_caPubs(cmp_ctx),
-                                   opt_cacertsout, "CA") < 0)
+                                || opt_cmd == CMP_KUR || opt_cmd == CMP_P10CR)) {
+            STACK_OF(X509) *newchain = OSSL_CMP_CTX_get1_newChain(cmp_ctx);
+
+            if (newcert != NULL && newchain != NULL /* NULL is on error only */
+                && opt_certout != NULL && opt_chainout != NULL
+                && strcmp(opt_certout, opt_chainout) == 0) {
+                if (!X509_add_cert(newchain, newcert, X509_ADD_FLAG_PREPEND
+                                   | X509_ADD_FLAG_UP_REF)) {
+                    sk_X509_pop_free(newchain, X509_free);
+                    goto err;
+                }
+                if (!save_free_certs(newchain, opt_chainout, "newly enrolled cert and chain"))
+                    goto err;
+            } else {
+                if (save_free_certs(newchain, opt_chainout, "chain") < 0
+                    || !save_cert_or_delete(newcert, opt_certout, "newly enrolled"))
+                    goto err;
+            }
+            if (save_free_certs(OSSL_CMP_CTX_get1_caPubs(cmp_ctx),
+                                opt_cacertsout, "CA") < 0)
                 goto err;
+        }
         if (!OSSL_CMP_CTX_reinit(cmp_ctx))
             goto err;
     }

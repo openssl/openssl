@@ -354,7 +354,8 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (!ossl_prov_macctx_load_from_params(&ctx->ctx_init, params, NULL,
                                            NULL, NULL, libctx))
         return 0;
-    else if (ctx->ctx_init != NULL) {
+    if (ctx->ctx_init != NULL) {
+        ctx->is_kmac = 0;
         if (EVP_MAC_is_a(EVP_MAC_CTX_get0_mac(ctx->ctx_init),
                          OSSL_MAC_NAME_KMAC128)
             || EVP_MAC_is_a(EVP_MAC_CTX_get0_mac(ctx->ctx_init),
@@ -462,8 +463,9 @@ static int kbkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 static const OSSL_PARAM *kbkdf_gettable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *provctx)
 {
-    static const OSSL_PARAM known_gettable_ctx_params[] =
-        { OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL), OSSL_PARAM_END };
+    static const OSSL_PARAM known_gettable_ctx_params[] = {
+        OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL), OSSL_PARAM_END
+    };
     return known_gettable_ctx_params;
 }
 

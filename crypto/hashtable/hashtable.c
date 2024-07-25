@@ -68,7 +68,7 @@
 
 #include "internal/numbers.h"
 /*
- * When we do a lookup/insert/delete, there is a high likelyhood
+ * When we do a lookup/insert/delete, there is a high likelihood
  * that we will iterate over at least part of the neighborhood list
  * As such, because we design a neighborhood entry to fit into a single
  * cache line it is advantageous, when supported to fetch the entire
@@ -639,8 +639,7 @@ HT_VALUE *ossl_ht_get(HT *h, HT_KEY *key)
         CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
                            &ehash, h->atomic_lock);
         if (compare_hash(hash, ehash)) {
-            CRYPTO_atomic_load((uint64_t *)&md->neighborhoods[neigh_idx].entries[j].value,
-                               (uint64_t *)&vidx, h->atomic_lock);
+            vidx = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
             ret = (HT_VALUE *)vidx;
             break;
         }

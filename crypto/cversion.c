@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/common.h"
 
 #include "buildinf.h"
 
@@ -59,28 +60,18 @@ const char *OpenSSL_version(int t)
     case OPENSSL_PLATFORM:
         return PLATFORM;
     case OPENSSL_DIR:
-#ifdef OPENSSLDIR
-        return "OPENSSLDIR: \"" OPENSSLDIR "\"";
-#else
-        return "OPENSSLDIR: N/A";
-#endif
+        return ossl_get_openssldir();
     case OPENSSL_ENGINES_DIR:
-#ifdef ENGINESDIR
-        return "ENGINESDIR: \"" ENGINESDIR "\"";
-#else
-        return "ENGINESDIR: N/A";
-#endif
+        return ossl_get_enginesdir();
     case OPENSSL_MODULES_DIR:
-#ifdef MODULESDIR
-        return "MODULESDIR: \"" MODULESDIR "\"";
-#else
-        return "MODULESDIR: N/A";
-#endif
+        return ossl_get_modulesdir();
     case OPENSSL_CPU_INFO:
         if (OPENSSL_info(OPENSSL_INFO_CPU_SETTINGS) != NULL)
             return ossl_cpu_info_str;
         else
             return "CPUINFO: N/A";
+    case OPENSSL_WINCTX:
+        return ossl_get_wininstallcontext();
     }
     return "not available";
 }

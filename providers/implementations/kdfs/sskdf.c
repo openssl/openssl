@@ -50,6 +50,9 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
+#include "prov/securitycheck.h"
+#include "prov/fipscommon.h"
+#include "prov/fipsindicator.h"
 #include "internal/params.h"
 
 typedef struct {
@@ -64,6 +67,7 @@ typedef struct {
     size_t salt_len;
     size_t out_len; /* optional KMAC parameter */
     int is_kmac;
+    OSSL_FIPS_IND_DECLARE
 } KDF_SSKDF;
 
 #define SSKDF_MAX_INLEN (1<<30)
@@ -78,11 +82,30 @@ static OSSL_FUNC_kdf_dupctx_fn sskdf_dup;
 static OSSL_FUNC_kdf_freectx_fn sskdf_free;
 static OSSL_FUNC_kdf_reset_fn sskdf_reset;
 static OSSL_FUNC_kdf_derive_fn sskdf_derive;
-static OSSL_FUNC_kdf_derive_fn x963kdf_derive;
 static OSSL_FUNC_kdf_settable_ctx_params_fn sskdf_settable_ctx_params;
 static OSSL_FUNC_kdf_set_ctx_params_fn sskdf_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn sskdf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn sskdf_get_ctx_params;
+static OSSL_FUNC_kdf_derive_fn x963kdf_derive;
+static OSSL_FUNC_kdf_settable_ctx_params_fn x963kdf_settable_ctx_params;
+static OSSL_FUNC_kdf_set_ctx_params_fn x963kdf_set_ctx_params;
+static OSSL_FUNC_kdf_gettable_ctx_params_fn x963kdf_gettable_ctx_params;
+static OSSL_FUNC_kdf_get_ctx_params_fn x963kdf_get_ctx_params;
+
+/* Settable context parameters that are common across SSKDF and X963 KDF */
+#define SSKDF_COMMON_SETTABLES                                      \
+    OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SECRET, NULL, 0),        \
+    OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),           \
+    OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0),          \
+    OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),     \
+    OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),         \
+    OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MAC, NULL, 0),            \
+    OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0),          \
+    OSSL_PARAM_size_t(OSSL_KDF_PARAM_MAC_SIZE, NULL)
+
+/* Gettable context parameters that are common across SSKDF and X963 KDF */
+#define SSKDF_COMMON_GETTABLES                                          \
+    OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL)
 
 /*
  * Refer to https://csrc.nist.gov/publications/detail/sp/800-56c/rev-1/final
@@ -292,8 +315,10 @@ static void *sskdf_new(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL)
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL) {
         ctx->provctx = provctx;
+        OSSL_FIPS_IND_INIT(ctx)
+    }
     return ctx;
 }
 
@@ -343,6 +368,7 @@ static void *sskdf_dup(void *vctx)
             goto err;
         dest->out_len = src->out_len;
         dest->is_kmac = src->is_kmac;
+        OSSL_FIPS_IND_COPY(dest, src)
     }
     return dest;
 
@@ -380,6 +406,7 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
         return 0;
     }
+
     md = ossl_prov_digest_md(&ctx->digest);
 
     if (ctx->macctx != NULL) {
@@ -435,13 +462,38 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen,
     }
 }
 
+#ifdef FIPS_MODULE
+static int fips_x963kdf_digest_check_passed(KDF_SSKDF *ctx, const EVP_MD *md)
+{
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    /*
+     * Perform digest check
+     *
+     * X963KDF is a KDF defined in ANSI-X9.63. According to ACVP specification
+     * section 7.3.1, only SHA-2 and SHA-3 can be regarded as valid hash
+     * functions.
+     */
+    int digest_unapproved = (ctx->is_kmac != 1) && EVP_MD_is_a(md, SN_sha1);
+
+    if (digest_unapproved) {
+        if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
+                                         libctx, "X963KDF", "Digest",
+                                         FIPS_x963kdf_digest_check)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
+            return 0;
+        }
+    }
+    return 1;
+}
+#endif
+
 static int x963kdf_derive(void *vctx, unsigned char *key, size_t keylen,
                           const OSSL_PARAM params[])
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
     const EVP_MD *md;
 
-    if (!ossl_prov_is_running() || !sskdf_set_ctx_params(ctx, params))
+    if (!ossl_prov_is_running() || !x963kdf_set_ctx_params(ctx, params))
         return 0;
 
     if (ctx->secret == NULL) {
@@ -465,11 +517,11 @@ static int x963kdf_derive(void *vctx, unsigned char *key, size_t keylen,
                           ctx->info, ctx->info_len, 1, key, keylen);
 }
 
-static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int sskdf_common_set_ctx_params(KDF_SSKDF *ctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
-    KDF_SSKDF *ctx = vctx;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    const EVP_MD *md = NULL;
     size_t sz;
     int r;
 
@@ -488,8 +540,16 @@ static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
          }
     }
 
-    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
-        return 0;
+    if (OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST) != NULL) {
+        if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
+            return 0;
+
+        md = ossl_prov_digest_md(&ctx->digest);
+        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
+            return 0;
+        }
+    }
 
     r = ossl_param_get1_octet_string(params, OSSL_KDF_PARAM_SECRET,
                                      &ctx->secret, &ctx->secret_len);
@@ -516,38 +576,123 @@ static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
+static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
+
+    if (params == NULL)
+        return 1;
+
+    if (!sskdf_common_set_ctx_params(ctx, params))
+        return 0;
+
+    return 1;
+}
+
 static const OSSL_PARAM *sskdf_settable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
-        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SECRET, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0),
-        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
-        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),
-        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MAC, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0),
-        OSSL_PARAM_size_t(OSSL_KDF_PARAM_MAC_SIZE, NULL),
+        SSKDF_COMMON_SETTABLES,
         OSSL_PARAM_END
     };
     return known_settable_ctx_params;
 }
 
+static int sskdf_common_get_ctx_params(KDF_SSKDF *ctx, OSSL_PARAM params[])
+{
+    OSSL_PARAM *p;
+
+    if (params == NULL)
+        return 1;
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL) {
+        if (!OSSL_PARAM_set_size_t(p, sskdf_size(ctx)))
+            return 0;
+    }
+
+    return 1;
+}
+
 static int sskdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
-    OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL)
-        return OSSL_PARAM_set_size_t(p, sskdf_size(ctx));
-    return -2;
+    if (params == NULL)
+        return 1;
+
+    if (!sskdf_common_get_ctx_params(ctx, params))
+        return 0;
+
+    return 1;
 }
 
 static const OSSL_PARAM *sskdf_gettable_ctx_params(ossl_unused void *ctx,
                                                    ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
-        OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
+        SSKDF_COMMON_GETTABLES,
+        OSSL_PARAM_END
+    };
+    return known_gettable_ctx_params;
+}
+
+static int x963kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
+
+    if (params == NULL)
+        return 1;
+
+    if (!OSSL_FIPS_IND_SET_CTX_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, params,
+                                     OSSL_KDF_PARAM_FIPS_DIGEST_CHECK))
+        return 0;
+
+    if (!sskdf_common_set_ctx_params(ctx, params))
+        return 0;
+
+#ifdef FIPS_MODULE
+    if (OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST) != NULL) {
+        const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+
+        if (!fips_x963kdf_digest_check_passed(ctx, md))
+            return 0;
+    }
+#endif
+
+    return 1;
+}
+
+static const OSSL_PARAM *x963kdf_settable_ctx_params(ossl_unused void *ctx,
+                                                     ossl_unused void *provctx)
+{
+    static const OSSL_PARAM known_settable_ctx_params[] = {
+        SSKDF_COMMON_SETTABLES,
+        OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_KDF_PARAM_FIPS_DIGEST_CHECK)
+        OSSL_PARAM_END
+    };
+    return known_settable_ctx_params;
+}
+
+static int x963kdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
+{
+    KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
+
+    if (!sskdf_common_get_ctx_params(ctx, params))
+        return 0;
+
+    if (!OSSL_FIPS_IND_GET_CTX_PARAM(ctx, params))
+        return 0;
+
+    return 1;
+}
+
+static const OSSL_PARAM *x963kdf_gettable_ctx_params(ossl_unused void *ctx,
+                                                     ossl_unused void *provctx)
+{
+    static const OSSL_PARAM known_gettable_ctx_params[] = {
+        SSKDF_COMMON_GETTABLES,
+        OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
         OSSL_PARAM_END
     };
     return known_gettable_ctx_params;
@@ -575,10 +720,10 @@ const OSSL_DISPATCH ossl_kdf_x963_kdf_functions[] = {
     { OSSL_FUNC_KDF_RESET, (void(*)(void))sskdf_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))x963kdf_derive },
     { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS,
-      (void(*)(void))sskdf_settable_ctx_params },
-    { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))sskdf_set_ctx_params },
+      (void(*)(void))x963kdf_settable_ctx_params },
+    { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))x963kdf_set_ctx_params },
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
-      (void(*)(void))sskdf_gettable_ctx_params },
-    { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))sskdf_get_ctx_params },
+      (void(*)(void))x963kdf_gettable_ctx_params },
+    { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))x963kdf_get_ctx_params },
     OSSL_DISPATCH_END
 };

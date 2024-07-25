@@ -125,8 +125,7 @@ static ossl_inline int io_read(aio_context_t ctx, long n, struct iocb **iocb)
 }
 
 /* A version of 'struct timespec' with 32-bit time_t and nanoseconds.  */
-struct __timespec32
-{
+struct __timespec32 {
   __kernel_long_t tv_sec;
   __kernel_long_t tv_nsec;
 };
@@ -774,7 +773,7 @@ static int afalg_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 
     if (cipher == NULL) {
         *nids = afalg_cipher_nids;
-        return (sizeof(afalg_cipher_nids) / sizeof(afalg_cipher_nids[0]));
+        return OSSL_NELEM(afalg_cipher_nids);
     }
 
     switch (nid) {

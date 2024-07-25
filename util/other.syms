@@ -461,6 +461,9 @@ OSSL_CMP_LOG_WARNING                    define
 OSSL_CMP_MSTR_HELPER                    define
 OSSL_CMP_MSTR                           define
 OSSL_CMP_P10CR                          define
+OSSL_CMP_ATAV                           define
+OSSL_CMP_ATAV_free                      define
+OSSL_CMP_ATAVS                          define
 OSSL_CMP_certConf_cb_t                  datatype
 OSSL_CMP_log_cb_t                       datatype
 OSSL_CMP_severity                       datatype
@@ -829,3 +832,5 @@ EVP_PKEY_size                           define
 EVP_PKEY_id                             define
 EVP_PKEY_base_id                        define
 SSL_set_retry_verify                    define
+TS_VERIFY_CTX                           define
+CMAC_CTX                                define

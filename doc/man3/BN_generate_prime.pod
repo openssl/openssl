@@ -167,7 +167,8 @@ programs should prefer the "new" style, whilst the "old" style is provided
 for backwards compatibility purposes.
 
 A B<BN_GENCB> structure should be created through a call to BN_GENCB_new(),
-and freed through a call to BN_GENCB_free().
+and freed through a call to BN_GENCB_free(). If the argument is NULL,
+nothing is done.
 
 For "new" style callbacks a BN_GENCB structure should be initialised with a
 call to BN_GENCB_set(), where B<gencb> is a B<BN_GENCB *>, B<callback> is of

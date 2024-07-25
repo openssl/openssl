@@ -25,6 +25,7 @@ use TLSProxy::CertificateRequest;
 use TLSProxy::CertificateVerify;
 use TLSProxy::ServerKeyExchange;
 use TLSProxy::NewSessionTicket;
+use TLSProxy::NextProto;
 
 my $have_IPv6;
 my $IP_factory;

@@ -120,7 +120,7 @@ Could be detected using hwprobe for Linux kernel >= 6.8
 
 =item V
 
-Vector Extention for Application Processors
+Vector Extension for Application Processors
 
 Could be detected using hwprobe for Linux kernel >= 6.5
 

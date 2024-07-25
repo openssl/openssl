@@ -35,7 +35,7 @@ I<meth> is set to NULL then the default value of NCONF_default() is used.
 NCONF_new() is similar to NCONF_new_ex() but sets the I<libctx> to NULL.
 
 NCONF_free() frees the data associated with I<conf> and then frees the I<conf>
-object.
+object. If the argument is NULL, nothing is done.
 
 NCONF_load() parses the file named I<filename> and adds the values found to
 I<conf>. If an error occurs I<file> and I<eline> list the file and line that

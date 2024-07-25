@@ -123,7 +123,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
         goto err;
 
     kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, pctx->propquery);
-    if (kekcipher == NULL 
+    if (kekcipher == NULL
         || EVP_CIPHER_get_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;
     if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))

@@ -322,4 +322,37 @@ our @tests = (
             "ExpectedALPNProtocol" => undef,
         },
     },
+    {
+        name => "alpn-empty-client-list",
+        server => {
+            extra => {
+                "ALPNProtocols" => "foo",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "",
+            },
+        },
+        test => {
+            "ExpectedALPNProtocol" => undef,
+        },
+    },
+    {
+        name => "alpn-empty-server-list",
+        server => {
+            extra => {
+                "ALPNProtocols" => "",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo",
+            },
+        },
+        test => {
+            "ExpectedResult" => "ServerFail",
+            "ExpectedServerAlert" => "NoApplicationProtocol",
+        },
+    },
 );

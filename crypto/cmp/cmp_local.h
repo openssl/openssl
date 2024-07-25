@@ -294,6 +294,8 @@ struct ossl_cmp_itav_st {
         X509 *rootCaCert;
         /* NID_id_it_rootCaKeyUpdate - Root CA Certificate Update */
         OSSL_CMP_ROOTCAKEYUPDATE *rootCaKeyUpdate;
+        /* NID_id_it_certReqTemplate - Certificate Request Template */
+        OSSL_CMP_CERTREQTEMPLATE *certReqTemplate;
         /* NID_id_it_crlStatusList -  CRL Update Retrieval */
         STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList;
         /* NID_id_it_crls - Certificate Status Lists */
@@ -799,6 +801,17 @@ struct ossl_cmp_rootcakeyupdate_st {
     X509 *oldWithNew;
 } /* OSSL_CMP_ROOTCAKEYUPDATE */;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
+
+/*-
+ * CertReqTemplateContent ::= SEQUENCE {
+ *      certTemplate      CertTemplate,
+ *      keySpec           Controls OPTIONAL
+ * }
+ */
+struct ossl_cmp_certreqtemplate_st {
+    OSSL_CRMF_CERTTEMPLATE *certTemplate;
+    OSSL_CMP_ATAVS *keySpec;
+} /* OSSL_CMP_CERTREQTEMPLATE */;
 
 /* from cmp_asn.c */
 int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a);

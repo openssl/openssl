@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 51;
+plan tests => 95;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -143,6 +143,157 @@ cert_contains(srctop_file(@certs, "ext-indirectIssuer.pem"),
               "Indirect Issuer",
               1, 'X.509 Indirect Issuer');
 
+my $tgt_info_cert = srctop_file(@certs, "ext-targetingInformation.pem");
+cert_contains($tgt_info_cert,
+              "AC Targeting",
+              1, 'X.509 Targeting Information Extension');
+cert_contains($tgt_info_cert,
+              "Targets:",
+              1, 'X.509 Targeting Information Targets');
+cert_contains($tgt_info_cert,
+              "Target:",
+              1, 'X.509 Targeting Information Target');
+cert_contains($tgt_info_cert,
+              "Target Name: DirName:CN = W",
+              1, 'X.509 Targeting Information Target Name');
+cert_contains($tgt_info_cert,
+              "Target Group: DNS:wildboarsoftware.com",
+              1, 'X.509 Targeting Information Target Name');
+cert_contains($tgt_info_cert,
+              "Issuer Names:",
+              1, 'X.509 Targeting Information Issuer Names');
+cert_contains($tgt_info_cert,
+              "Issuer Serial: 01020304",
+              1, 'X.509 Targeting Information Issuer Serial');
+cert_contains($tgt_info_cert,
+              "Issuer UID: B0",
+              1, 'X.509 Targeting Information Issuer UID');
+cert_contains($tgt_info_cert,
+              "Digest Type: Public Key",
+              1, 'X.509 Targeting Information Object Digest Type');
+
+my $hnc_cert = srctop_file(@certs, "ext-holderNameConstraints.pem");
+cert_contains($hnc_cert,
+              "X509v3 Holder Name Constraints",
+              1, 'X.509 Holder Name Constraints');
+cert_contains($hnc_cert,
+              "Permitted:",
+              1, 'X.509 Holder Name Constraints Permitted');
+cert_contains($hnc_cert,
+              "DirName:CN = Wildboar",
+              1, 'X.509 Holder Name Constraint');
+
+my $dnc_cert = srctop_file(@certs, "ext-delegatedNameConstraints.pem");
+cert_contains($dnc_cert,
+              "X509v3 Delegated Name Constraints",
+              1, 'X.509 Delegated Name Constraints');
+cert_contains($dnc_cert,
+              "Permitted:",
+              1, 'X.509 Delegated Name Constraints Permitted');
+cert_contains($dnc_cert,
+              "DirName:CN = Wildboar",
+              1, 'X.509 Delegated Name Constraint');
+my $sda_cert = srctop_file(@certs, "ext-subjectDirectoryAttributes.pem");
+cert_contains($sda_cert,
+              "Steve Brule",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "CN=Hi mom",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "<No Values>",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "Funkytown",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "commonName",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "owner",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "givenName",
+              1, 'X.509 Subject Directory Attributes');
+cert_contains($sda_cert,
+              "localityName",
+              1, 'X.509 Subject Directory Attributes');
+
+my $ass_info_cert = srctop_file(@certs, "ext-associatedInformation.pem");
+cert_contains($ass_info_cert,
+              "Steve Brule",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "CN=Hi mom",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "<No Values>",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "Funkytown",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "commonName",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "owner",
+              1, 'X509v3 Associated Information');
+cert_contains($sda_cert,
+              "givenName",
+              1, 'X509v3 Associated Information');
+cert_contains($ass_info_cert,
+              "localityName",
+              1, 'X509v3 Associated Information');
+
+my $acc_cert_pol = srctop_file(@certs, "ext-acceptableCertPolicies.pem");
+cert_contains($acc_cert_pol,
+              "X509v3 Acceptable Certification Policies",
+              1, 'X509v3 Acceptable Certification Policies');
+# Yes, I know these OIDs make no sense in a policies extension. It's just a test.
+cert_contains($acc_cert_pol,
+              "organizationalUnitName",
+              1, 'X509v3 Acceptable Certification Policies');
+cert_contains($acc_cert_pol,
+              "description",
+              1, 'X509v3 Acceptable Certification Policies');
+
+my $acc_priv_pol = srctop_file(@certs, "ext-acceptablePrivilegePolicies.pem");
+cert_contains($acc_priv_pol,
+              "X509v3 Acceptable Privilege Policies",
+              1, 'X509v3 Acceptable Privilege Policies');
+# Yes, I know these OIDs make no sense in a policies extension. It's just a test.
+cert_contains($acc_priv_pol,
+              "commonName",
+              1, 'X509v3 Acceptable Certification Policies');
+cert_contains($acc_priv_pol,
+              "organizationName",
+              1, 'X509v3 Acceptable Certification Policies');
+
+my $user_notice_cert = srctop_file(@certs, "ext-userNotice.pem");
+cert_contains($user_notice_cert,
+              "Organization: Wildboar Software",
+              1, 'X509v3 User Notice');
+cert_contains($user_notice_cert,
+              "Numbers: 123, 456",
+              1, 'X509v3 User Notice');
+cert_contains($user_notice_cert,
+              "Explicit Text: Hey there big boi",
+              1, 'X509v3 User Notice');
+cert_contains($user_notice_cert,
+              "Number: 50505",
+              1, 'X509v3 User Notice');
+cert_contains($user_notice_cert,
+              "Explicit Text: Ice ice baby",
+              1, 'X509v3 User Notice');
+
+my $battcons_cert = srctop_file(@certs, "ext-basicAttConstraints.pem");
+cert_contains($battcons_cert,
+              "authority:TRUE",
+              1, 'X.509 Basic Attribute Constraints Authority');
+cert_contains($battcons_cert,
+              "pathlen:3",
+              1, 'X.509 Basic Attribute Constraints Path Length');
+
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
     my $infile = srctop_file(@certs, $cert);
@@ -254,7 +405,7 @@ ok(run(app(["openssl", "x509", "-req", "-text", "-CAcreateserial",
             "-in", $b_csr])));
 ok(-e $ca_serial_dot_in_dir);
 
-# Tests for explict start and end dates of certificates
+# Tests for explicit start and end dates of certificates
 my %today = (strftime("%Y-%m-%d", gmtime) => 1);
 my $enddate;
 ok(run(app(["openssl", "x509", "-req", "-text",
@@ -304,5 +455,7 @@ ok(run(app(["openssl", "x509", "-req", "-text",
 SKIP: {
     skip "EC is not supported by this OpenSSL build", 1
         if disabled("ec");
-    ok(run(test(["x509_test"])), "running x509_test");
+    my $psscert = srctop_file(@certs, "ee-self-signed-pss.pem");
+
+    ok(run(test(["x509_test", $psscert])), "running x509_test");
 }

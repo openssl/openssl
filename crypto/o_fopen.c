@@ -39,8 +39,14 @@ FILE *openssl_fopen(const char *filename, const char *mode)
 {
     FILE *file = NULL;
 # if defined(_WIN32) && defined(CP_UTF8)
-    int sz, len_0 = (int)strlen(filename) + 1;
+    int sz, len_0;
     DWORD flags;
+# endif
+
+    if (filename == NULL)
+        return NULL;
+# if defined(_WIN32) && defined(CP_UTF8)
+    len_0 = (int)strlen(filename) + 1;
 
     /*
      * Basically there are three cases to cover: a) filename is

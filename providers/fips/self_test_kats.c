@@ -162,8 +162,7 @@ static int add_params(OSSL_PARAM_BLD *bld, const ST_KAT_PARAM *params,
 
     if (params == NULL)
         return 1;
-    for (p = params; p->data != NULL; ++p)
-    {
+    for (p = params; p->data != NULL; ++p) {
         switch (p->type) {
         case OSSL_PARAM_UNSIGNED_INTEGER: {
             BIGNUM *bn = BN_CTX_get(ctx);
@@ -858,8 +857,12 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     EVP_RAND_CTX *saved_rand = ossl_rand_get0_private_noncreating(libctx);
     int ret = 1;
 
+    if (saved_rand != NULL && !EVP_RAND_CTX_up_ref(saved_rand))
+        return 0;
     if (!setup_main_random(libctx)
             || !RAND_set0_private(libctx, main_rand)) {
+        /* Decrement saved_rand reference counter */
+        EVP_RAND_CTX_free(saved_rand);
         EVP_RAND_CTX_free(main_rand);
         return 0;
     }

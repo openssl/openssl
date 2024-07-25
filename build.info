@@ -109,6 +109,11 @@ IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
 ENDIF
 
 # This file sets the build directory up for CMake inclusion
+# Note: This generation of OpenSSLConfig[Version].cmake is used
+# for building openssl locally, and so the build variables are 
+# taken from builddata.pm rather than installdata.pm.  For exportable
+# versions of these generated files, you'll find them in the exporters
+# directory
 GENERATE[OpenSSLConfig.cmake]=exporters/cmake/OpenSSLConfig.cmake.in
 DEPEND[OpenSSLConfig.cmake]=builddata.pm
 GENERATE[OpenSSLConfigVersion.cmake]=exporters/cmake/OpenSSLConfigVersion.cmake.in

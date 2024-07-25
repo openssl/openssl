@@ -1463,7 +1463,7 @@ typedef enum HELPLIST_CHOICE {
     OPT_STORE_LOADERS, OPT_PROVIDER_INFO,
     OPT_OBJECTS, OPT_SELECT_NAME,
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-    OPT_ENGINES, 
+    OPT_ENGINES,
 #endif
     OPT_PROV_ENUM
 } HELPLIST_CHOICE;
@@ -1495,7 +1495,7 @@ const OPTIONS list_options[] = {
     {"mac-algorithms", OPT_MAC_ALGORITHMS, '-',
      "List of message authentication code algorithms"},
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-    {"cipher-commands", OPT_CIPHER_COMMANDS, '-', 
+    {"cipher-commands", OPT_CIPHER_COMMANDS, '-',
     "List of cipher commands (deprecated)"},
 #endif
     {"cipher-algorithms", OPT_CIPHER_ALGORITHMS, '-',

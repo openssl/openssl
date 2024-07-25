@@ -23,7 +23,8 @@ struct rcu_lock_st {
     struct rcu_cb_item *cb_items;
 };
 
-CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
+CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers,
+                                   ossl_unused OSSL_LIB_CTX *ctx)
 {
     struct rcu_lock_st *lock;
 
@@ -205,6 +206,24 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b)
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 {
     *val += amount;
+    *ret  = *val;
+
+    return 1;
+}
+
+int CRYPTO_atomic_add64(uint64_t *val, uint64_t op, uint64_t *ret,
+                        CRYPTO_RWLOCK *lock)
+{
+    *val += op;
+    *ret  = *val;
+
+    return 1;
+}
+
+int CRYPTO_atomic_and(uint64_t *val, uint64_t op, uint64_t *ret,
+                      CRYPTO_RWLOCK *lock)
+{
+    *val &= op;
     *ret  = *val;
 
     return 1;

@@ -53,6 +53,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
 #endif
     &ossl_v3_sinfo,
     &ossl_v3_policy_constraints,
+    &ossl_v3_targeting_information,
     &ossl_v3_no_rev_avail,
 #ifndef OPENSSL_NO_OCSP
     &ossl_v3_crl_hold,
@@ -61,6 +62,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &ossl_v3_name_constraints,
     &ossl_v3_policy_mappings,
     &ossl_v3_inhibit_anyp,
+    &ossl_v3_subj_dir_attrs,
     &ossl_v3_idp,
     &ossl_v3_alt[2],
     &ossl_v3_freshest_crl,
@@ -73,11 +75,18 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &ossl_v3_issuer_sign_tool,
     &ossl_v3_tls_feature,
     &ossl_v3_ext_admission,
+    &ossl_v3_battcons,
+    &ossl_v3_delegated_name_constraints,
+    &ossl_v3_user_notice,
     &ossl_v3_soa_identifier,
+    &ossl_v3_acc_cert_policies,
+    &ossl_v3_acc_priv_policies,
     &ossl_v3_indirect_issuer,
     &ossl_v3_no_assertion,
     &ossl_v3_single_use,
-    &ossl_v3_group_ac
+    &ossl_v3_group_ac,
+    &ossl_v3_holder_name_constraints,
+    &ossl_v3_associated_info,
 };
 
 /* Number of standard extensions */

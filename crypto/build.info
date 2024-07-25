@@ -91,7 +91,7 @@ DEFINE[../providers/libdefault.a]=$CPUIDDEF
 $CORE_COMMON=provider_core.c provider_predefined.c \
         core_fetch.c core_algorithm.c core_namemap.c self_test_core.c
 
-SOURCE[../libcrypto]=$CORE_COMMON provider_conf.c
+SOURCE[../libcrypto]=$CORE_COMMON provider_conf.c indicator_core.c
 SOURCE[../providers/libfips.a]=$CORE_COMMON
 
 # Central utilities
@@ -107,7 +107,7 @@ SOURCE[../libcrypto]=$UTIL_COMMON \
         comp_methods.c cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c \
         o_dir.c o_fopen.c getenv.c o_init.c init.c trace.c provider.c \
         provider_child.c punycode.c passphrase.c sleep.c deterministic_nonce.c \
-        quic_vlint.c time.c
+        quic_vlint.c time.c defaults.c
 SOURCE[../providers/libfips.a]=$UTIL_COMMON
 
 SOURCE[../libcrypto]=$UPLINKSRC

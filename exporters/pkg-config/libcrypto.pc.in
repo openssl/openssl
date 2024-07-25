@@ -1,7 +1,11 @@
-libdir={- $OpenSSL::safe::installdata::LIBDIR -}
-includedir={- $OpenSSL::safe::installdata::INCLUDEDIR -}
-enginesdir={- $OpenSSL::safe::installdata::ENGINESDIR -}
-modulesdir={- $OpenSSL::safe::installdata::MODULESDIR -}
+prefix={- $OpenSSL::safe::installdata::PREFIX -}
+exec_prefix=${prefix}
+libdir={- $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX
+          ? '${exec_prefix}/' . $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX
+          : $OpenSSL::safe::installdata::libdir -}
+includedir=${prefix}/{- $OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX -}
+enginesdir=${libdir}/{- $OpenSSL::safe::installdata::ENGINESDIR_REL_LIBDIR -}
+modulesdir=${libdir}/{- $OpenSSL::safe::installdata::MODULESDIR_REL_LIBDIR -}
 
 Name: OpenSSL-libcrypto
 Description: OpenSSL cryptography library

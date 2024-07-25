@@ -692,6 +692,18 @@ char *CONF_get1_default_config_file(void)
         return OPENSSL_strdup(file);
 
     t = X509_get_default_cert_area();
+    /*
+     * On windows systems with -DOSSL_WINCTX set, if the needed registry
+     * keys are not yet set, openssl applets will return, due to an inability
+     * to locate various directories, like the default cert area.  In that
+     * event, clone an empty string here, so that commands like openssl version
+     * continue to operate properly without needing to set OPENSSL_CONF.
+     * Applets like cms will fail gracefully later when they try to parse an
+     * empty config file
+     */
+    if (t == NULL)
+        return OPENSSL_strdup("");
+
 #ifndef OPENSSL_SYS_VMS
     sep = "/";
 #endif

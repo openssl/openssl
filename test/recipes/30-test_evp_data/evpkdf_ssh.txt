@@ -4865,3 +4865,37 @@ Ctrl.hexsession_id = hexsession_id:a4ebd45934f56792b5112dcd75a1075fdc889245
 Ctrl.type = type:A
 Output = FF
 Result = KDF_MISMATCH
+
+# Test that unsupported XOF is rejected
+KDF = SSHKDF
+Ctrl.digest = digest:SHAKE-256
+Ctrl.hexkey = hexkey:0000008055bae931c07fd824bf10add1902b6fbc7c665347383498a686929ff5a25f8e40cb6645ea814fb1a5e0a11f852f86255641e5ed986e83a78bc8269480eac0b0dfd770cab92e7a28dd87ff452466d6ae867cead63b366b1c286e6c4811a9f14c27aea14c5171d49b78c06e3735d36e6a3be321dd5fc82308f34ee1cb17fba94a59
+Ctrl.hexxcghash = hexxcghash:a4ebd45934f56792b5112dcd75a1075fdc889245
+Ctrl.hexsession_id = hexsession_id:a4ebd45934f56792b5112dcd75a1075fdc889245
+Ctrl.type = type:A
+Result = KDF_CTRL_ERROR
+
+Title = FIPS indicator tests
+
+# Test that the operation with unapproved digest function is rejected
+FIPSversion = >=3.4.0
+KDF = SSHKDF
+Ctrl.digest = digest:SHA512-256
+Ctrl.hexkey = hexkey:0000008055bae931c07fd824bf10add1902b6fbc7c665347383498a686929ff5a25f8e40cb6645ea814fb1a5e0a11f852f86255641e5ed986e83a78bc8269480eac0b0dfd770cab92e7a28dd87ff452466d6ae867cead63b366b1c286e6c4811a9f14c27aea14c5171d49b78c06e3735d36e6a3be321dd5fc82308f34ee1cb17fba94a59
+Ctrl.hexxcghash = hexxcghash:a4ebd45934f56792b5112dcd75a1075fdc889245
+Ctrl.hexsession_id = hexsession_id:a4ebd45934f56792b5112dcd75a1075fdc889245
+Ctrl.type = type:A
+Result = KDF_CTRL_ERROR
+
+# Test that the operation with unapproved digest function is is reported as
+# unapproved
+FIPSversion = >=3.4.0
+KDF = SSHKDF
+Unapproved = 1
+Ctrl.digest-check = digest-check:0
+Ctrl.digest = digest:SHA512-256
+Ctrl.hexkey = hexkey:0000008055bae931c07fd824bf10add1902b6fbc7c665347383498a686929ff5a25f8e40cb6645ea814fb1a5e0a11f852f86255641e5ed986e83a78bc8269480eac0b0dfd770cab92e7a28dd87ff452466d6ae867cead63b366b1c286e6c4811a9f14c27aea14c5171d49b78c06e3735d36e6a3be321dd5fc82308f34ee1cb17fba94a59
+Ctrl.hexxcghash = hexxcghash:a4ebd45934f56792b5112dcd75a1075fdc889245
+Ctrl.hexsession_id = hexsession_id:a4ebd45934f56792b5112dcd75a1075fdc889245
+Ctrl.type = type:A
+Output = d37ea221cbcc026d95e8c10b7d28a1b41e4ec1b497bae0e4cdbc1446e5bd59e2

@@ -16,7 +16,8 @@ OSSL_CMP_exec_RR_ses,
 OSSL_CMP_exec_GENM_ses,
 OSSL_CMP_get1_caCerts,
 OSSL_CMP_get1_rootCaKeyUpdate,
-OSSL_CMP_get1_crlUpdate
+OSSL_CMP_get1_crlUpdate,
+OSSL_CMP_get1_certReqTemplate
 - functions implementing CMP client transactions
 
 =head1 SYNOPSIS
@@ -45,7 +46,9 @@ OSSL_CMP_get1_crlUpdate
  int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509 *crlcert,
                              const X509_CRL *last_crl,
                              X509_CRL **crl);
-
+ int OSSL_CMP_get1_certReqTemplate(OSSL_CMP_CTX *ctx,
+                                   OSSL_CRMF_CERTTEMPLATE **certTemplate,
+                                   OSSL_CMP_ATAVS **keySpec);
 =head1 DESCRIPTION
 
 This is the OpenSSL API for doing CMP (Certificate Management Protocol)
@@ -169,6 +172,15 @@ On success it assigns to I<*crl> the CRL received.
 NULL means that no CRL was provided by the server.
 The CRL obtained this way must be freed by the caller.
 
+OSSL_CMP_get1_certReqTemplate() uses a genm request message with
+infoType certReqTemplate to obtain a certificate request template from the
+CMP server referenced by I<ctx>. On success it assigns to I<*certTemplate>
+the certificate template received. NULL output means that no certificate
+request template was provided by the server.
+The optional I<keySpec> output parameter is assigned the key specification
+if received, otherwise it set to NULL.
+Both must be freed by the caller.
+
 =head1 NOTES
 
 CMP is defined in RFC 4210 (and CRMF in RFC 4211).
@@ -205,7 +217,8 @@ and the output parameter I<checkAfter> has been used to
 assign the received value unless I<checkAfter> is NULL.
 
 OSSL_CMP_exec_RR_ses(), OSSL_CMP_get1_caCerts(),
-OSSL_CMP_get1_rootCaKeyUpdate() and OSSL_CMP_get1_crlUpdate()
+OSSL_CMP_get1_rootCaKeyUpdate(), OSSL_CMP_get1_crlUpdate()
+and OSSL_CMP_get1_certReqTemplate()
 return 1 on success, 0 on error.
 
 OSSL_CMP_exec_GENM_ses() returns NULL on error,
@@ -235,7 +248,8 @@ were added in OpenSSL 3.2.
 Support for delayed delivery of all types of response messages
 was added in OpenSSL 3.3.
 
-OSSL_CMP_get1_crlUpdate() was added in OpenSSL 3.4.
+OSSL_CMP_get1_crlUpdate() and OSSL_CMP_get1_certReqTemplate()
+were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

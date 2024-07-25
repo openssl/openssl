@@ -46,6 +46,7 @@ for all the added entries. Any allocated data in the saved error
 entries is duplicated on adding to the thread state.
 
 OSSL_ERR_STATE_free() frees the saved error state I<es>.
+If the argument is NULL, nothing is done.
 
 =head1 RETURN VALUES
 

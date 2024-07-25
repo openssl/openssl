@@ -7,7 +7,7 @@ OPENSSL_malloc, OPENSSL_aligned_alloc, OPENSSL_zalloc, OPENSSL_realloc,
 OPENSSL_free, OPENSSL_clear_realloc, OPENSSL_clear_free, OPENSSL_cleanse,
 CRYPTO_malloc, CRYPTO_aligned_alloc, CRYPTO_zalloc, CRYPTO_realloc, CRYPTO_free,
 OPENSSL_strdup, OPENSSL_strndup,
-OPENSSL_memdup, OPENSSL_strlcpy, OPENSSL_strlcat,
+OPENSSL_memdup, OPENSSL_strlcpy, OPENSSL_strlcat, OPENSSL_strtoul,
 CRYPTO_strdup, CRYPTO_strndup,
 OPENSSL_mem_debug_push, OPENSSL_mem_debug_pop,
 CRYPTO_mem_debug_push, CRYPTO_mem_debug_pop,
@@ -36,6 +36,7 @@ OPENSSL_MALLOC_FD
  char *OPENSSL_strndup(const char *str, size_t s);
  size_t OPENSSL_strlcat(char *dst, const char *src, size_t size);
  size_t OPENSSL_strlcpy(char *dst, const char *src, size_t size);
+ int OPENSSL_strtoul(char *src, char **endptr, int base, unsigned long *num);
  void *OPENSSL_memdup(void *data, size_t s);
  void *OPENSSL_clear_realloc(void *p, size_t old_len, size_t num);
  void OPENSSL_clear_free(void *str, size_t num);
@@ -116,7 +117,8 @@ the returned pointer.
 OPENSSL_clear_realloc() and OPENSSL_clear_free() should be used
 when the buffer at B<addr> holds sensitive information.
 The old buffer is filled with zero's by calling OPENSSL_cleanse()
-before ultimately calling OPENSSL_free().
+before ultimately calling OPENSSL_free(). If the argument to OPENSSL_free() is
+NULL, nothing is done.
 
 OPENSSL_cleanse() fills B<ptr> of size B<len> with a string of 0's.
 Use OPENSSL_cleanse() with care if the memory is a mapping of a file.
@@ -133,6 +135,12 @@ OPENSSL_malloc() and should be released by calling OPENSSL_free().
 OPENSSL_strlcpy(),
 OPENSSL_strlcat() and OPENSSL_strnlen() are equivalents of the common C
 library functions and are provided for portability.
+
+OPENSSL_strtoul() is a wrapper around the POSIX function strtoul, with the same
+behaviors listed in the POSIX documentation, with the additional behavior that
+it validates the input I<str> and I<num> parameters for not being NULL, and confirms
+that at least a single byte of input has been consumed in the translation,
+returning an error in the event that no bytes were consumed.
 
 If no allocations have been done, it is possible to "swap out" the default
 implementations for OPENSSL_malloc(), OPENSSL_realloc() and OPENSSL_free()
@@ -201,6 +209,35 @@ always return -1.
 OPENSSL_mem_debug_push(), OPENSSL_mem_debug_pop(),
 CRYPTO_mem_debug_push(), and CRYPTO_mem_debug_pop()
 are deprecated and are no-ops that always return 0.
+
+OPENSSL_strtoul() returns 1 on success and 0 in the event that an error has
+occured. Specifically, 0 is returned in the following events:
+
+=over 4
+
+=item *
+
+If the underlying call to strtoul returned a non zero errno value
+
+=item *
+
+If the translation did not consume the entire input string, and the passed
+endptr value was NULL
+
+=item *
+
+If no characters were consumed in the translation
+
+=back
+
+Note that a success condition does not imply that the expected
+translation has been preformed.  For instance calling
+
+    OPENSSL_strtoul("0x12345", &endptr, 10, &num);
+
+will result in a successful translation with num having the value 0, and
+*endptr = 'x'.  Be sure to validate how much data was consumed when calling this
+function.
 
 =head1 HISTORY
 

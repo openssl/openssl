@@ -3051,7 +3051,7 @@ int speed_main(int argc, char **argv)
             ERR_print_errors(bio_err);
             op_count = 1;
         } else {
-            pkey_print_message("private", "rsa encrypt",
+            pkey_print_message("public", "rsa encrypt",
                                rsa_keys[testnum].bits, seconds.rsa);
             /* RSA_blinding_on(rsa_key[testnum],NULL); */
             Time_F(START);
@@ -3119,7 +3119,6 @@ int speed_main(int argc, char **argv)
             loopargs[i].sigsize = loopargs[i].buflen;
             if (loopargs[i].dsa_sign_ctx[testnum] == NULL
                 || EVP_PKEY_sign_init(loopargs[i].dsa_sign_ctx[testnum]) <= 0
-
                 || EVP_PKEY_sign(loopargs[i].dsa_sign_ctx[testnum],
                                  loopargs[i].buf2,
                                  &loopargs[i].sigsize,
@@ -3196,7 +3195,6 @@ int speed_main(int argc, char **argv)
             loopargs[i].sigsize = loopargs[i].buflen;
             if (loopargs[i].ecdsa_sign_ctx[testnum] == NULL
                 || EVP_PKEY_sign_init(loopargs[i].ecdsa_sign_ctx[testnum]) <= 0
-
                 || EVP_PKEY_sign(loopargs[i].ecdsa_sign_ctx[testnum],
                                  loopargs[i].buf2,
                                  &loopargs[i].sigsize,
@@ -4770,8 +4768,9 @@ static int do_multi(int multi, int size_num)
 static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
                              const openssl_speed_sec_t *seconds)
 {
-    static const int mblengths_list[] =
-        { 8 * 1024, 2 * 8 * 1024, 4 * 8 * 1024, 8 * 8 * 1024, 8 * 16 * 1024 };
+    static const int mblengths_list[] = {
+        8 * 1024, 2 * 8 * 1024, 4 * 8 * 1024, 8 * 8 * 1024, 8 * 16 * 1024
+    };
     const int *mblengths = mblengths_list;
     int j, count, keylen, num = OSSL_NELEM(mblengths_list), ciph_success = 1;
     const char *alg_name;

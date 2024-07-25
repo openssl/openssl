@@ -31,6 +31,7 @@ ECDSA_SIG_new() allocates an empty B<ECDSA_SIG> structure.
 Note: before OpenSSL 1.1.0, the I<r> and I<s> components were initialised.
 
 ECDSA_SIG_free() frees the B<ECDSA_SIG> structure I<sig>.
+If the argument is NULL, nothing is done.
 
 ECDSA_SIG_get0() returns internal pointers the I<r> and I<s> values contained
 in I<sig> and stores them in I<*pr> and I<*ps>, respectively.

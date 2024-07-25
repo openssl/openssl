@@ -67,8 +67,7 @@ static int cipher_hw_desx_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-static const PROV_CIPHER_HW desx_cbc =
-{
+static const PROV_CIPHER_HW desx_cbc = {
     cipher_hw_desx_cbc_initkey,
     cipher_hw_desx_cbc,
     cipher_hw_desx_copyctx

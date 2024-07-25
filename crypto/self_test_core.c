@@ -13,14 +13,12 @@
 #include "internal/cryptlib.h"
 #include "crypto/context.h"
 
-typedef struct self_test_cb_st
-{
+typedef struct self_test_cb_st {
     OSSL_CALLBACK *cb;
     void *cbarg;
 } SELF_TEST_CB;
 
-struct ossl_self_test_st
-{
+struct ossl_self_test_st {
     /* local state variables */
     const char *phase;
     const char *type;

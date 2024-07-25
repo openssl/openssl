@@ -221,3 +221,12 @@ Ctrl.IKM = hexkey:1a2d
 Ctrl.salt = hexsalt:000000000000000000000000000000000000000000000000000000000000000000
 Ctrl.info = info:
 Output = 62f99231760bedd72319cc6cad
+
+# Test that the operation with XOF digest function is rejected
+FIPSversion = >=3.4.0
+KDF = HKDF
+Ctrl.digest = digest:SHAKE-256
+Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
+Ctrl.salt = hexsalt:000102030405060708090a0b0c
+Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
+Result = KDF_CTRL_ERROR

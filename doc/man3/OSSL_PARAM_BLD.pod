@@ -53,6 +53,7 @@ so that values can be added.
 Any existing values are cleared.
 
 OSSL_PARAM_BLD_free() deallocates the memory allocates by OSSL_PARAM_BLD_new().
+If the argument is NULL, nothing is done.
 
 OSSL_PARAM_BLD_to_param() converts a built up OSSL_PARAM_BLD structure
 I<bld> into an allocated OSSL_PARAM array.

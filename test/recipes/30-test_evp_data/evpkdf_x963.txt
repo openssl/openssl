@@ -17,6 +17,7 @@
 
 Title = X963 KDF tests (from NIST test vectors)
 
+FIPSversion = <3.4.0
 KDF = X963KDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:fd17198b89ab39c4ab5d7cca363b82f9fd7e23c3984dc8a2
@@ -119,3 +120,31 @@ Ctrl.hexsecret = hexsecret:0096172bf47d06d544ae98471490cf9e52ee59ea7a2208b33b26c
 Ctrl.hexinfo = hexinfo:cf3a74ba86
 Ctrl.hexinfo = hexinfo:af42f1ae85477ead645583
 Output = 995d1ab8557dfeafcb347f8182583fa0ac5e6cb3912393592590989f38a0214f6cf7d6fbe23917b0966c6a870876de2a2c13a45fa7aa1715be137ed332e1ffc204ce4dcce33ece6dec7f3da61fa049780040e44142cc8a1e5121cf56b386f65b7c261a192f05e5fefae4221a602bc51c41ef175dc45fb7eab8642421b4f7e3e7
+
+# Test that unsupported XOF is rejected
+KDF = X963KDF
+Ctrl.digest = digest:SHAKE-256
+Ctrl.hexsecret = hexsecret:fd17198b89ab39c4ab5d7cca363b82f9fd7e23c3984dc8a2
+Ctrl.hexinfo = hexinfo:856a53f3e36a26bbc5792879f307cce2
+Result = KDF_CTRL_ERROR
+
+Title = FIPS indicator tests
+
+# Test that the operation with unapproved digest function is rejected
+FIPSversion = >=3.4.0
+KDF = X963KDF
+Ctrl.digest = digest:SHA1
+Ctrl.hexsecret = hexsecret:fd17198b89ab39c4ab5d7cca363b82f9fd7e23c3984dc8a2
+Ctrl.hexinfo = hexinfo:856a53f3e36a26bbc5792879f307cce2
+Result = KDF_CTRL_ERROR
+
+# Test that the operation with unapproved digest function is is reported as
+# unapproved
+FIPSversion = >=3.4.0
+KDF = X963KDF
+Unapproved = 1
+Ctrl.digest-check = digest-check:0
+Ctrl.digest = digest:SHA1
+Ctrl.hexsecret = hexsecret:fd17198b89ab39c4ab5d7cca363b82f9fd7e23c3984dc8a2
+Ctrl.hexinfo = hexinfo:856a53f3e36a26bbc5792879f307cce2
+Output = 6e5fad865cb4a51c95209b16df0cc490bc2c9064405c5bccd4ee4832a531fbe7f10cb79e2eab6ab1149fbd5a23cfdabc41242269c9df22f628c4424333855b64e95e2d4fb8469c669f17176c07d103376b10b384ec5763d8b8c610409f19aca8eb31f9d85cc61a8d6d4a03d03e5a506b78d6847e93d295ee548c65afedd2efec

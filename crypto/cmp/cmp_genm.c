@@ -406,3 +406,36 @@ int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509 *crlcert,
     OSSL_CMP_ITAV_free(itav);
     return res;
 }
+
+int OSSL_CMP_get1_certReqTemplate(OSSL_CMP_CTX *ctx,
+                                  OSSL_CRMF_CERTTEMPLATE **certTemplate,
+                                  OSSL_CMP_ATAVS **keySpec)
+{
+    OSSL_CMP_ITAV *req, *itav = NULL;
+    int res = 0;
+
+    if (keySpec != NULL)
+        *keySpec = NULL;
+    if (certTemplate == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    *certTemplate = NULL;
+
+    if ((req = OSSL_CMP_ITAV_new0_certReqTemplate(NULL, NULL)) == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_GENERATE_CERTREQTEMPLATE);
+        return 0;
+    }
+
+    if ((itav = get_genm_itav(ctx, req, NID_id_it_certReqTemplate,
+                              "certReqTemplate")) == NULL)
+        return 0;
+
+    if (!OSSL_CMP_ITAV_get1_certReqTemplate(itav, certTemplate, keySpec))
+        goto end;
+
+    res = 1;
+ end:
+    OSSL_CMP_ITAV_free(itav);
+    return res;
+}

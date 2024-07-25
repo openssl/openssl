@@ -32,6 +32,7 @@
 #include "crypto/context.h"
 #ifndef FIPS_MODULE
 # include <openssl/self_test.h>
+# include <openssl/indicator.h>
 #endif
 
 /*
@@ -920,7 +921,7 @@ static int provider_init(OSSL_PROVIDER *prov)
             if (load_dir == NULL) {
                 load_dir = ossl_safe_getenv("OPENSSL_MODULES");
                 if (load_dir == NULL)
-                    load_dir = MODULESDIR;
+                    load_dir = ossl_get_modulesdir();
             }
 
             DSO_ctrl(prov->module, DSO_CTRL_SET_FLAGS,
@@ -1934,6 +1935,7 @@ OSSL_FUNC_BIO_up_ref_fn ossl_core_bio_up_ref;
 OSSL_FUNC_BIO_free_fn ossl_core_bio_free;
 OSSL_FUNC_BIO_vprintf_fn ossl_core_bio_vprintf;
 OSSL_FUNC_BIO_vsnprintf_fn BIO_vsnprintf;
+static OSSL_FUNC_indicator_cb_fn core_indicator_get_callback;
 static OSSL_FUNC_self_test_cb_fn core_self_test_get_callback;
 static OSSL_FUNC_get_entropy_fn rand_get_entropy;
 static OSSL_FUNC_get_user_entropy_fn rand_get_user_entropy;
@@ -2097,6 +2099,12 @@ static int core_pop_error_to_mark(const OSSL_CORE_HANDLE *handle)
     return ERR_pop_to_mark();
 }
 
+static void core_indicator_get_callback(OPENSSL_CORE_CTX *libctx,
+                                        OSSL_INDICATOR_CALLBACK **cb)
+{
+    OSSL_INDICATOR_get_callback((OSSL_LIB_CTX *)libctx, cb);
+}
+
 static void core_self_test_get_callback(OPENSSL_CORE_CTX *libctx,
                                         OSSL_CALLBACK **cb, void **cbarg)
 {
@@ -2258,6 +2266,7 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_BIO_VPRINTF, (void (*)(void))ossl_core_bio_vprintf },
     { OSSL_FUNC_BIO_VSNPRINTF, (void (*)(void))BIO_vsnprintf },
     { OSSL_FUNC_SELF_TEST_CB, (void (*)(void))core_self_test_get_callback },
+    { OSSL_FUNC_INDICATOR_CB, (void (*)(void))core_indicator_get_callback },
     { OSSL_FUNC_GET_ENTROPY, (void (*)(void))rand_get_entropy },
     { OSSL_FUNC_GET_USER_ENTROPY, (void (*)(void))rand_get_user_entropy },
     { OSSL_FUNC_CLEANUP_ENTROPY, (void (*)(void))rand_cleanup_entropy },

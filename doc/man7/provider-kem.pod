@@ -186,12 +186,36 @@ See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 the OSSL_FUNC_kem_get_ctx_params() and OSSL_FUNC_kem_set_ctx_params()
 functions.
 
-OSSL_FUNC_kem_get_ctx_params() gets asymmetric kem parameters associated
+Common parameters currently recognised by built-in key encapsulation algorithms
+are as follows.
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_KEM_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
+This may be used after calling either OSSL_FUNC_kem_encapsulate() or 
+OSSL_FUNC_kem_decapsulate(). It may return 0 if the "key-check" is set to 0.
+This option is used by the OpenSSL FIPS provider.
+
+=item "key-check" (B<OSSL_KEM_PARAM_FIPS_KEY_CHECK>) <integer>
+
+If required this parameter should be set using OSSL_FUNC_kem_encapsulate_init()
+or OSSL_FUNC_kem_decapsulate_init().
+The default value of 1 causes an error during the init if the key is not FIPS
+approved (e.g. The key has a security strength of less than 112 bits). Setting
+this to 0 will ignore the error and set the approved "fips-indicator" to 0.
+This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
+set to 0.
+
+=back
+
+OSSL_FUNC_kem_get_ctx_params() gets asymmetric KEM parameters associated
 with the given provider side asymmetric kem context I<ctx> and stores them in
 I<params>.
 Passing NULL for I<params> should return true.
 
-OSSL_FUNC_kem_set_ctx_params() sets the asymmetric kem parameters associated
+OSSL_FUNC_kem_set_ctx_params() sets the asymmetric KEM parameters associated
 with the given provider side asymmetric kem context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 Passing NULL for I<params> should return true.
@@ -220,6 +244,9 @@ The provider KEM interface was introduced in OpenSSL 3.0.
 
 OSSL_FUNC_kem_auth_encapsulate_init() and OSSL_FUNC_kem_auth_decapsulate_init()
 were added in OpenSSL 3.2.
+
+The Asymmetric Key Encapsulation Parameters "fips-indicator" and "key-check"
+were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 

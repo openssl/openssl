@@ -516,26 +516,24 @@ static int dsa_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
 
 /* NB these are sorted in pkey_id order, lowest first */
 
-const EVP_PKEY_ASN1_METHOD ossl_dsa_asn1_meths[5] = {
+const EVP_PKEY_ASN1_METHOD ossl_dsa_asn1_meths[4] = {
 
-    {
-     EVP_PKEY_DSA2,
-     EVP_PKEY_DSA,
-     ASN1_PKEY_ALIAS},
-
+    /* This aliases NID_dsa with NID_dsa_2 */
     {
      EVP_PKEY_DSA1,
      EVP_PKEY_DSA,
      ASN1_PKEY_ALIAS},
 
+    /* This aliases NID_dsaWithSHA with NID_dsaWithSHA_2 */
     {
      EVP_PKEY_DSA4,
-     EVP_PKEY_DSA,
+     EVP_PKEY_DSA2,
      ASN1_PKEY_ALIAS},
 
+    /* This aliases NID_dsaWithSHA with NID_dsaWithSHA1 */
     {
      EVP_PKEY_DSA3,
-     EVP_PKEY_DSA,
+     EVP_PKEY_DSA2,
      ASN1_PKEY_ALIAS},
 
     {

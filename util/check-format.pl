@@ -12,7 +12,7 @@
 # - check formatting of C source according to OpenSSL coding style
 #
 # usage:
-#   check-format.pl [-l|--sloppy-len] [-l|--sloppy-bodylen]
+#   check-format.pl [-l|--strict-len] [-b|--sloppy-bodylen]
 #                   [-s|--sloppy-space] [-c|--sloppy-comment]
 #                   [-m|--sloppy-macro] [-h|--sloppy-hang]
 #                   [-e|--eol-comment] [-1|--1-stmt]
@@ -28,8 +28,8 @@
 # Still it should be useful for detecting most typical glitches.
 #
 # options:
-#  -l | --sloppy-len     increase accepted max line length from 80 to 84
-#  -l | --sloppy-bodylen do not report function body length > 200
+#  -l | --strict-len     decrease accepted max line length from 100 to 80
+#  -b | --sloppy-bodylen do not report function body length > 200
 #  -s | --sloppy-space   do not report whitespace nits
 #  -c | --sloppy-comment do not report indentation of comments
 #                        Otherwise for each multi-line comment the indentation of
@@ -93,7 +93,8 @@ use strict;
 use POSIX;
 
 use constant INDENT_LEVEL => 4;
-use constant MAX_LINE_LENGTH => 80;
+use constant MAX_LINE_LENGTH => 100;
+use constant STRICT_LINE_LENGTH => 80;
 use constant MAX_BODY_LENGTH => 200;
 
 # global variables @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -110,8 +111,8 @@ my $extended_1_stmt = 0;
 
 while ($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
     my $arg = $1; shift;
-    if ($arg =~ m/^(l|-sloppy-len)$/) {
-        $max_length += INDENT_LEVEL;
+    if ($arg =~ m/^(l|-strict-len)$/) {
+        $max_length = STRICT_LINE_LENGTH;
     } elsif ($arg =~ m/^(b|-sloppy-bodylen)$/) {
         $sloppy_bodylen = 1;
     } elsif ($arg =~ m/^(s|-sloppy-space)$/) {
@@ -167,7 +168,7 @@ my $local_offset;          # current extra indent due to label, switch case/defa
 my $line_body_start;       # number of line where last function body started, or 0
 my $line_function_start;   # number of line where last function definition started, used for $line_body_start
 my $last_function_header;  # header containing name of last function defined, used if $line_body_start != 0
-my $line_opening_brace;    # number of previous line with opening brace after do/while/for, optionally for if/else
+my $line_opening_brace;    # number of previous line with opening brace after if/do/while/for, optionally for 'else'
 
 my $keyword_opening_brace; # name of previous keyword, used if $line_opening_brace != 0
 my $block_indent;          # currently required normal indentation at block/statement level
@@ -425,7 +426,7 @@ sub check_indent { # used for lines outside multi-line string literals
         # do not report if contents have been shifted left of nested expr indent (but not as far as stmt indent)
         # apparently aligned to the right in order to fit within line length limit
         return if $stmt_indent < $count && $count < $expr_indent &&
-            length($contents) == MAX_LINE_LENGTH + length("\n");
+            length($contents) == $max_length + length("\n");
     }
 
     report("indent = $count != $ref_indent for $ref_desc".
@@ -677,7 +678,7 @@ while (<>) { # loop over all lines of all input files
           && length($1) < $max_length)
         # this allows over-long trailing string literals with beginning col before $max_length
         ) {
-        report("line length = $len > ".MAX_LINE_LENGTH);
+        report("line length = $len > ".$max_length);
     }
 
     # handle C++ / C99 - style end-of-line comments
@@ -972,9 +973,12 @@ while (<>) { # loop over all lines of all input files
     # check for code block containing a single line/statement
     if ($line_before2 > 0 && !$outermost_level && # within function body
         $in_typedecl == 0 && @nested_indents == 0 && # neither within type declaration nor inside stmt/expr
-        m/^[\s@]*\}/) { # leading closing brace '}', any preceding blinded comment must not be matched
+        m/^[\s@]*\}\s*(\w*)/) { # leading closing brace '}', any preceding blinded comment must not be matched
         # TODO extend detection from single-line to potentially multi-line statement
+        my $next_word = $1;
         if ($line_opening_brace > 0 &&
+            ($keyword_opening_brace ne "if" ||
+             $extended_1_stmt || $next_word ne "else") &&
             ($line_opening_brace == $line_before2 ||
              $line_opening_brace == $line_before)
             && $contents_before =~ m/;/) { # there is at least one terminator ';', so there is some stmt
@@ -1132,9 +1136,9 @@ while (<>) { # loop over all lines of all input files
                     $line_body_start = $contents =~ m/LONG BODY/ ? 0 : $line if $line_function_start != 0;
                 }
             } else {
-                $line_opening_brace = $line if $keyword_opening_brace =~ m/do|while|for/;
+                $line_opening_brace = $line if $keyword_opening_brace =~ m/if|do|while|for/;
                 # using, not assigning, $keyword_opening_brace here because it could be on an earlier line
-                $line_opening_brace = $line if $keyword_opening_brace =~ m/if|else/ && $extended_1_stmt &&
+                $line_opening_brace = $line if $keyword_opening_brace eq "else" && $extended_1_stmt &&
                 # TODO prevent false positives for if/else where braces around single-statement branches
                 # should be avoided but only if all branches have just single statements
                 # The following helps detecting the exception when handling multiple 'if ... else' branches:

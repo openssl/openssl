@@ -43,6 +43,11 @@ int X509_verify(X509 *a, EVP_PKEY *r)
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
                        const char *propq)
 {
+    if (X509_REQ_get_version(a) != X509_REQ_VERSION_1) {
+        ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_VERSION);
+        return -1;
+    }
+
     return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_REQ_INFO), &a->sig_alg,
                                a->signature, &a->req_info, a->distinguishing_id,
                                r, libctx, propq);

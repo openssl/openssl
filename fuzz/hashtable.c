@@ -130,7 +130,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
     /*
      * We need at least 11 bytes to be able to do anything here
-     * 1 byte to detect the operation to preform, 2 bytes
+     * 1 byte to detect the operation to perform, 2 bytes
      * for the lookup key, and 8 bytes of value
      */
     if (len < 11) {

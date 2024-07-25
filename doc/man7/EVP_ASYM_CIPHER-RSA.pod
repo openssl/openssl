@@ -57,6 +57,10 @@ See L<EVP_PKEY_CTX_set_rsa_padding(3)> for further details.
 
 =item "oaep-label" (B<OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL>) <octet string>
 
+=item "fips-indicator" (B<OSSL_ASYM_CIPHER_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+=item "key-check" (B<OSSL_ASYM_CIPHER_PARAM_FIPS_KEY_CHECK>) <integer>
+
 =item "tls-client-version" (B<OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION>) <unsigned integer>
 
 See B<RSA_PKCS1_WITH_TLS_PADDING> on the page L<EVP_PKEY_CTX_set_rsa_padding(3)>.

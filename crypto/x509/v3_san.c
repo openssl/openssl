@@ -127,7 +127,7 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
                 return NULL;
             break;
         default:
-            if (OBJ_obj2txt(oline, sizeof(oline), gen->d.otherName->type_id, 0) > 0) 
+            if (OBJ_obj2txt(oline, sizeof(oline), gen->d.otherName->type_id, 0) > 0)
                 BIO_snprintf(othername, sizeof(othername), "othername: %s:",
                              oline);
             else
@@ -138,14 +138,14 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
                 if (x509v3_add_len_value_uchar(othername,
                              gen->d.otherName->value->value.ia5string->data,
                              gen->d.otherName->value->value.ia5string->length,
-                             &ret)) 
+                             &ret))
                     return ret;
             }
             if (gen->d.otherName->value->type == V_ASN1_UTF8STRING) {
                 if (x509v3_add_len_value_uchar(othername,
                              gen->d.otherName->value->value.utf8string->data,
                              gen->d.otherName->value->value.utf8string->length,
-                             &ret)) 
+                             &ret))
                     return ret;
             }
             if (!X509V3_add_value(othername, "<unsupported>", &ret))

@@ -785,6 +785,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     s->rlayer.record_padding_cb = ctx->record_padding_cb;
     s->rlayer.record_padding_arg = ctx->record_padding_arg;
     s->rlayer.block_padding = ctx->block_padding;
+    s->rlayer.hs_padding = ctx->hs_padding;
     s->sid_ctx_length = ctx->sid_ctx_length;
     if (!ossl_assert(s->sid_ctx_length <= sizeof(s->sid_ctx)))
         goto err;
@@ -1115,8 +1116,7 @@ int SSL_add1_host(SSL *s, const char *hostname)
 
     /* If a hostname is provided and parses as an IP address,
      * treat it as such. */
-    if (hostname)
-    {
+    if (hostname) {
         ASN1_OCTET_STRING *ip;
         char *old_ip;
 
@@ -1126,8 +1126,7 @@ int SSL_add1_host(SSL *s, const char *hostname)
             ASN1_OCTET_STRING_free(ip);
 
             old_ip = X509_VERIFY_PARAM_get1_ip_asc(sc->param);
-            if (old_ip)
-            {
+            if (old_ip) {
                 OPENSSL_free(old_ip);
                 /* There can be only one IP address */
                 return 0;
@@ -3535,37 +3534,54 @@ int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
                           unsigned int server_len,
                           const unsigned char *client, unsigned int client_len)
 {
-    unsigned int i, j;
-    const unsigned char *result;
-    int status = OPENSSL_NPN_UNSUPPORTED;
+    PACKET cpkt, csubpkt, spkt, ssubpkt;
+
+    if (!PACKET_buf_init(&cpkt, client, client_len)
+            || !PACKET_get_length_prefixed_1(&cpkt, &csubpkt)
+            || PACKET_remaining(&csubpkt) == 0) {
+        *out = NULL;
+        *outlen = 0;
+        return OPENSSL_NPN_NO_OVERLAP;
+    }
+
+    /*
+     * Set the default opportunistic protocol. Will be overwritten if we find
+     * a match.
+     */
+    *out = (unsigned char *)PACKET_data(&csubpkt);
+    *outlen = (unsigned char)PACKET_remaining(&csubpkt);
 
     /*
      * For each protocol in server preference order, see if we support it.
      */
-    for (i = 0; i < server_len;) {
-        for (j = 0; j < client_len;) {
-            if (server[i] == client[j] &&
-                memcmp(&server[i + 1], &client[j + 1], server[i]) == 0) {
-                /* We found a match */
-                result = &server[i];
-                status = OPENSSL_NPN_NEGOTIATED;
-                goto found;
+    if (PACKET_buf_init(&spkt, server, server_len)) {
+        while (PACKET_get_length_prefixed_1(&spkt, &ssubpkt)) {
+            if (PACKET_remaining(&ssubpkt) == 0)
+                continue; /* Invalid - ignore it */
+            if (PACKET_buf_init(&cpkt, client, client_len)) {
+                while (PACKET_get_length_prefixed_1(&cpkt, &csubpkt)) {
+                    if (PACKET_equal(&csubpkt, PACKET_data(&ssubpkt),
+                                     PACKET_remaining(&ssubpkt))) {
+                        /* We found a match */
+                        *out = (unsigned char *)PACKET_data(&ssubpkt);
+                        *outlen = (unsigned char)PACKET_remaining(&ssubpkt);
+                        return OPENSSL_NPN_NEGOTIATED;
+                    }
+                }
+                /* Ignore spurious trailing bytes in the client list */
+            } else {
+                /* This should never happen */
+                return OPENSSL_NPN_NO_OVERLAP;
             }
-            j += client[j];
-            j++;
         }
-        i += server[i];
-        i++;
+        /* Ignore spurious trailing bytes in the server list */
     }
 
-    /* There's no overlap between our protocols and the server's list. */
-    result = client;
-    status = OPENSSL_NPN_NO_OVERLAP;
-
- found:
-    *out = (unsigned char *)result + 1;
-    *outlen = result[0];
-    return status;
+    /*
+     * There's no overlap between our protocols and the server's list. We use
+     * the default opportunistic protocol selected earlier
+     */
+    return OPENSSL_NPN_NO_OVERLAP;
 }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -4802,8 +4818,7 @@ int ssl_undefined_const_function(const SSL *s)
 
 const char *ssl_protocol_to_string(int version)
 {
-    switch (version)
-    {
+    switch (version) {
     case TLS1_3_VERSION:
         return "TLSv1.3";
 
@@ -5696,19 +5711,33 @@ void *SSL_CTX_get_record_padding_callback_arg(const SSL_CTX *ctx)
     return ctx->record_padding_arg;
 }
 
-int SSL_CTX_set_block_padding(SSL_CTX *ctx, size_t block_size)
+int SSL_CTX_set_block_padding_ex(SSL_CTX *ctx, size_t app_block_size,
+                                 size_t hs_block_size)
 {
-    if (IS_QUIC_CTX(ctx) && block_size > 1)
+    if (IS_QUIC_CTX(ctx) && (app_block_size > 1 || hs_block_size > 1))
         return 0;
 
     /* block size of 0 or 1 is basically no padding */
-    if (block_size == 1)
+    if (app_block_size == 1) {
         ctx->block_padding = 0;
-    else if (block_size <= SSL3_RT_MAX_PLAIN_LENGTH)
-        ctx->block_padding = block_size;
-    else
+    } else if (app_block_size <= SSL3_RT_MAX_PLAIN_LENGTH) {
+        ctx->block_padding = app_block_size;
+    } else {
         return 0;
+    }
+    if (hs_block_size == 1) {
+        ctx->hs_padding = 0;
+    } else if (hs_block_size <= SSL3_RT_MAX_PLAIN_LENGTH) {
+        ctx->hs_padding = hs_block_size;
+    } else {
+        return 0;
+    }
     return 1;
+}
+
+int SSL_CTX_set_block_padding(SSL_CTX *ctx, size_t block_size)
+{
+    return SSL_CTX_set_block_padding_ex(ctx, block_size, block_size);
 }
 
 int SSL_set_record_padding_callback(SSL *ssl,
@@ -5749,21 +5778,37 @@ void *SSL_get_record_padding_callback_arg(const SSL *ssl)
     return sc->rlayer.record_padding_arg;
 }
 
-int SSL_set_block_padding(SSL *ssl, size_t block_size)
+int SSL_set_block_padding_ex(SSL *ssl, size_t app_block_size,
+                             size_t hs_block_size)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
-    if (sc == NULL || (IS_QUIC(ssl) && block_size > 1))
+    if (sc == NULL
+        || (IS_QUIC(ssl)
+            && (app_block_size > 1 || hs_block_size > 1)))
         return 0;
 
     /* block size of 0 or 1 is basically no padding */
-    if (block_size == 1)
+    if (app_block_size == 1) {
         sc->rlayer.block_padding = 0;
-    else if (block_size <= SSL3_RT_MAX_PLAIN_LENGTH)
-        sc->rlayer.block_padding = block_size;
-    else
+    } else if (app_block_size <= SSL3_RT_MAX_PLAIN_LENGTH) {
+        sc->rlayer.block_padding = app_block_size;
+    } else {
         return 0;
+    }
+    if (hs_block_size == 1) {
+        sc->rlayer.hs_padding = 0;
+    } else if (hs_block_size <= SSL3_RT_MAX_PLAIN_LENGTH) {
+        sc->rlayer.hs_padding = hs_block_size;
+    } else {
+        return 0;
+    }
     return 1;
+}
+
+int SSL_set_block_padding(SSL *ssl, size_t block_size)
+{
+    return SSL_set_block_padding_ex(ssl, block_size, block_size);
 }
 
 int SSL_set_num_tickets(SSL *s, size_t num_tickets)
@@ -6395,7 +6440,7 @@ int ssl_validate_ct(SSL_CONNECTION *s)
  end:
     CT_POLICY_EVAL_CTX_free(ctx);
     /*
-     * With SSL_VERIFY_NONE the session may be cached and re-used despite a
+     * With SSL_VERIFY_NONE the session may be cached and reused despite a
      * failure return code here.  Also the application may wish the complete
      * the handshake, and then disconnect cleanly at a higher layer, after
      * checking the verification status of the completed connection.

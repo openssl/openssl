@@ -564,6 +564,9 @@ intermediate CAs, or the issuer is simply unrecognised).
 See L<ossl-guide-tls-client-non-block(7)> to read a tutorial on how to modify
 the client developed on this page to support a nonblocking socket.
 
+See L<ossl-guide-tls-server-block(7)> for a tutorial on how to implement a
+simple TLS server handling one client at a time over a blocking socket.
+
 See L<ossl-guide-quic-client-block(7)> to read a tutorial on how to modify the
 client developed on this page to support QUIC instead of TLS.
 

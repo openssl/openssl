@@ -109,6 +109,7 @@ SSL_SESSION *SSL_SESSION_new(void)
     if (ss == NULL)
         return NULL;
 
+    ss->ext.max_fragment_len_mode = TLSEXT_max_fragment_length_UNSPECIFIED;
     ss->verify_result = 1;      /* avoid 0 (= X509_V_OK) just in case */
    /* 5 minute timeout by default */
     ss->timeout = ossl_seconds2time(60 * 5 + 4);
@@ -138,7 +139,12 @@ static SSL_SESSION *ssl_session_dup_intern(const SSL_SESSION *src, int ticket)
     dest = OPENSSL_malloc(sizeof(*dest));
     if (dest == NULL)
         return NULL;
-    memcpy(dest, src, sizeof(*dest));
+
+    /*
+     * src is logically read-only but the prev/next pointers are not, they are
+     * part of the session cache and can be modified concurrently.
+     */
+    memcpy(dest, src, offsetof(SSL_SESSION, prev));
 
     /*
      * Set the various pointers to NULL so that we can call SSL_SESSION_free in
