@@ -122,6 +122,14 @@ Ctrl.hexinfo = hexinfo:af42f1ae85477ead645583
 Output = 995d1ab8557dfeafcb347f8182583fa0ac5e6cb3912393592590989f38a0214f6cf7d6fbe23917b0966c6a870876de2a2c13a45fa7aa1715be137ed332e1ffc204ce4dcce33ece6dec7f3da61fa049780040e44142cc8a1e5121cf56b386f65b7c261a192f05e5fefae4221a602bc51c41ef175dc45fb7eab8642421b4f7e3e7
 
 # Test that unsupported XOF is rejected
+FIPSversion = <3.4.0
+KDF = X963KDF
+Ctrl.digest = digest:SHAKE-256
+Ctrl.hexsecret = hexsecret:fd17198b89ab39c4ab5d7cca363b82f9fd7e23c3984dc8a2
+Ctrl.hexinfo = hexinfo:856a53f3e36a26bbc5792879f307cce2
+Result = KDF_DERIVE_ERROR
+
+FIPSversion = >=3.4.0
 KDF = X963KDF
 Ctrl.digest = digest:SHAKE-256
 Ctrl.hexsecret = hexsecret:fd17198b89ab39c4ab5d7cca363b82f9fd7e23c3984dc8a2
