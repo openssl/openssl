@@ -106,7 +106,7 @@ static int rc2_dinit(void *ctx, const unsigned char *key, size_t keylen,
 static int rc2_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_RC2_CTX *ctx = (PROV_RC2_CTX *)vctx;
-    OSSL_PARAM *p;
+    OSSL_PARAM *p, *p1, *p2;
 
     if (!ossl_cipher_generic_get_ctx_params(vctx, params))
         return 0;
@@ -115,15 +115,19 @@ static int rc2_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS);
-    if (p != NULL) {
+    p1 = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS);
+    p2 = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS_OLD);
+    if (p1 != NULL || p2 != NULL) {
         long num;
         int i;
         ASN1_TYPE *type;
-        unsigned char *d = p->data;
-        unsigned char **dd = d == NULL ? NULL : &d;
+        unsigned char *d1 = (p1 == NULL) ? NULL : p1->data;
+        unsigned char *d2 = (p2 == NULL) ? NULL : p2->data;
+        unsigned char **dd1 = d1 == NULL ? NULL : &d1;
+        unsigned char **dd2 = d2 == NULL ? NULL : &d2;
 
-        if (p->data_type != OSSL_PARAM_OCTET_STRING) {
+        if ((p1 != NULL && p1->data_type != OSSL_PARAM_OCTET_STRING)
+            || (p2 != NULL && p2->data_type != OSSL_PARAM_OCTET_STRING)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
@@ -140,13 +144,23 @@ static int rc2_get_ctx_params(void *vctx, OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, ERR_R_ASN1_LIB);
             return 0;
         }
+
         /*
          * IF the caller has a buffer, we pray to the gods they got the
          * size right.  There's no way to tell the i2d functions...
          */
-        i = i2d_ASN1_TYPE(type, dd);
-        if (i >= 0)
-            p->return_size = (size_t)i;
+        i = i2d_ASN1_TYPE(type, dd1);
+        if (p1 != NULL && i >= 0)
+            p1->return_size = (size_t)i;
+
+        /*
+         * If the buffers differ, redo the i2d on the second buffer.
+         * Otherwise, just use |i| as computed above
+         */
+        if (d1 != d2)
+            i = i2d_ASN1_TYPE(type, dd2);
+        if (p2 != NULL && i >= 0)
+            p2->return_size = (size_t)i;
 
         ASN1_TYPE_free(type);
         if (i < 0) {
