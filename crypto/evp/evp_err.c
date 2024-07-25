@@ -71,6 +71,8 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     "expecting a siphash key"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_FINAL_ERROR), "final error"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_GENERATE_ERROR), "generate error"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_GETTING_ALGORITHMIDENTIFIER_NOT_SUPPORTED),
+     "getting AlgorithmIdentifier not supported"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_GET_RAW_KEY_FAILED), "get raw key failed"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_ILLEGAL_SCRYPT_PARAMETERS),
     "illegal scrypt parameters"},

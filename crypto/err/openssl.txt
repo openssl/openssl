@@ -738,6 +738,8 @@ EVP_R_EXPECTING_A_POLY1305_KEY:164:expecting a poly1305 key
 EVP_R_EXPECTING_A_SIPHASH_KEY:175:expecting a siphash key
 EVP_R_FINAL_ERROR:188:final error
 EVP_R_GENERATE_ERROR:214:generate error
+EVP_R_GETTING_ALGORITHMIDENTIFIER_NOT_SUPPORTED:226:\
+	getting AlgorithmIdentifier not supported
 EVP_R_GET_RAW_KEY_FAILED:182:get raw key failed
 EVP_R_ILLEGAL_SCRYPT_PARAMETERS:171:illegal scrypt parameters
 EVP_R_INACCESSIBLE_DOMAIN_PARAMETERS:204:inaccessible domain parameters
