@@ -187,6 +187,28 @@ that m > k3 > k2 > k1 > 0
 
 =back
 
+The following KeyGen settable parameter is also available for the OpenSSL FIPS
+provider's EC algorithm:
+
+=over 4
+
+=item "key-check" (B<OSSL_PKEY_PARAM_FIPS_KEY_CHECK>) <integer>
+
+See L<provider-keymgmt(7)/Common Information Parameters> for further information.
+
+=back
+
+The following KeyGen Gettable parameter is available for the OpenSSL FIPS
+provider's EC algorithm:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+See L<provider-keymgmt(7)/Common Information Parameters> for further information.
+
+=back
+
 =head2 EC key validation
 
 For EC keys, L<EVP_PKEY_param_check(3)> behaves in the following way:
