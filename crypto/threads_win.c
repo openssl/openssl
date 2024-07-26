@@ -365,7 +365,7 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock)
 
     /* update the reader index to be the prior qp */
     tmp = lock->current_alloc_idx;
-    InterlockedExchange(&lock->reader_idx, tmp);
+    InterlockedExchange((LONG volatile *)&lock->reader_idx, tmp);
 
     /* wake up any waiters */
     ossl_crypto_condvar_broadcast(lock->alloc_signal);
