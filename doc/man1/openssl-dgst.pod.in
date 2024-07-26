@@ -126,7 +126,8 @@ See L<openssl-format-options(1)> for details.
 =item B<-sigopt> I<nm>:I<v>
 
 Pass options to the signature algorithm during sign or verify operations.
-Names and values of these options are algorithm-specific.
+Names and values of these options are algorithm-specific and documented
+in L<provider-signature(7)/Signature parameters>.
 
 =item B<-passin> I<arg>
 
