@@ -86,6 +86,14 @@ extern "C" {
 # define OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST "drbg-no-trunc-md"
 
 /*
+ * A boolean that determines if the digest algorithm used as part of a
+ * signature algorithm is in the approved list.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_SIGNATURE_DIGEST_CHECK "signature-digest-check"
+
+/*
  * A boolean that determines if the runtime FIPS digest check for HKDF is
  * performed.
  * This is disabled by default.
