@@ -28,6 +28,7 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
+#include "prov/fipscommon.h"
 #include "prov/fipsindicator.h"
 #include "pbkdf2.h"
 
@@ -205,11 +206,6 @@ static int pbkdf2_lower_bound_check_passed(int saltlen, uint64_t iter,
 }
 
 #ifdef FIPS_MODULE
-static int fips_lower_bound_check_enabled(OSSL_LIB_CTX *libctx)
-{
-    return ossl_kdf_pbkdf2_default_checks; /* Always is 1 */
-}
-
 static int fips_lower_bound_check_passed(KDF_PBKDF2 *ctx, size_t keylen)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
@@ -221,7 +217,7 @@ static int fips_lower_bound_check_passed(KDF_PBKDF2 *ctx, size_t keylen)
     if (!approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0, libctx,
                                          "PBKDF2", desc,
-                                         fips_lower_bound_check_enabled)) {
+                                         FIPS_pbkdf2_lower_bound_check)) {
             ERR_raise(ERR_LIB_PROV, error);
             return 0;
         }

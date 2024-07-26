@@ -49,6 +49,7 @@ my %params = (
     'PROV_PARAM_SSHKDF_KEY_CHECK' =>       "sshkdf-key-check",       # uint
     'PROV_PARAM_SSKDF_KEY_CHECK' =>        "sskdf-key-check",        # uint
     'PROV_PARAM_X963KDF_KEY_CHECK' =>      "x963kdf-key-check",      # uint
+    'PROV_PARAM_PBKDF2_LOWER_BOUND_CHECK' => "pbkdf2-lower-bound-check", # uint
 
 # Self test callback parameters
     'PROV_PARAM_SELF_TEST_PHASE' =>  "st-phase",# utf8_string
