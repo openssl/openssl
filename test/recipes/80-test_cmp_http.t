@@ -254,9 +254,9 @@ sub load_tests {
         my $noproxy = $no_proxy;
         if ($line =~ m/,\s*-no_proxy\s*,(.*?)(,|$)/) {
             $noproxy = $1;
-        } elsif ($server_host eq "127.0.0.1") {
+        } elsif ($server_host eq "127.0.0.1" || $server_host eq "[::1]") {
             # do connections to localhost (e.g., mock server) without proxy
-            $line =~ s{-section,,}{-section,,-no_proxy,127.0.0.1,} ;
+            $line =~ s{-section,,}{-section,,-no_proxy,$server_host,} ;
         }
         if ($line =~ m/,\s*-proxy\s*,/) {
             next LOOP if $no_proxy && ($noproxy =~ $server_host);
