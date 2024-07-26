@@ -3931,7 +3931,6 @@ static void keygen_test_cleanup(EVP_TEST *t)
     OPENSSL_free(keygen->alg);
     OPENSSL_free(keygen->keyname);
     OPENSSL_free(keygen->paramname);
-    OPENSSL_free(keygen->alg);
     OPENSSL_free(t->data);
     t->data = NULL;
 }
@@ -3955,7 +3954,7 @@ static int keygen_test_run(EVP_TEST *t)
     KEYGEN_TEST_DATA *keygen = t->data;
     EVP_PKEY *pkey = NULL, *keyparams = NULL;
     EVP_PKEY_CTX *genctx = NULL; /* Keygen context to use */
-    int rv = 1, i;
+    int rv = 1;
     OSSL_PARAM params[4];
     size_t params_n = 0;
 

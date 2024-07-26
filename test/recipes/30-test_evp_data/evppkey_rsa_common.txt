@@ -1891,8 +1891,8 @@ Title = Test RSA keygen
 # RSA-PSS with restrictions, should succeed.
 KeyGen = RSASSA-PSS
 KeyName = tmppss
-Ctrl = rsa_pss_keygen_md:sha256
-Ctrl = rsa_pss_keygen_mgf1_md:sha512
+Ctrl = digest:sha256
+Ctrl = mgf1-digest:sha512
 
 # Check MGF1 restrictions
 DigestVerify = SHA256
