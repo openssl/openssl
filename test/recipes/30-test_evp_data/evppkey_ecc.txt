@@ -4538,3 +4538,24 @@ PeerKey=MALICE_cf_sect571r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
 Reason=point at infinity
+
+Title = Test EC keygen
+
+KeyGen = ec
+KeyName = ec1
+Ctrl = group:P-256
+
+# Test KeyGen with a curve with < 112 bits of security fails.
+FIPSversion = >=3.4.0
+KeyGen = ec
+KeyName = ec2
+Ctrl = group:P-192
+Result = KEYGEN_GENERATE_ERROR
+
+# Test KeyGen with a curve with < 112 bits of security is not approved
+FIPSversion = >=3.4.0
+KeyGen = ec
+KeyName = ec3
+Ctrl = group:P-192
+Unapproved = 1
+Ctrl = key-check:0
