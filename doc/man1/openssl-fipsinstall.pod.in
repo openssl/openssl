@@ -31,6 +31,7 @@ B<openssl fipsinstall>
 [B<-sskdf_digest_check>]
 [B<-x963kdf_digest_check>]
 [B<-dsa_sign_disabled>]
+[B<-no_pbkdf2_lower_bound_check>]
 [B<-no_short_mac>]
 [B<-tdes_encrypt_disabled>]
 [B<-rsa_sign_x931_disabled>]
@@ -298,6 +299,11 @@ See NIST SP 800-131Ar2 for details.
 Configure the module to enable a run-time short key-derivation key check when
 deriving a key by X963KDF.
 See NIST SP 800-131Ar2 for details.
+
+=item B<-no_pbkdf2_lower_bound_check>
+
+Configure the module to not perform run-time lower bound check for PBKDF2.
+See NIST SP 800-132 for details.
 
 =item B<-self_test_onload>
 

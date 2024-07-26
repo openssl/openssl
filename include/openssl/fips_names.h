@@ -198,6 +198,14 @@ extern "C" {
  */
 # define OSSL_PROV_FIPS_PARAM_X963KDF_KEY_CHECK "x963kdf-key-check"
 
+/*
+ * A boolean that determines if the runtime lower bound check for PBKDF2 is
+ * performed.
+ * This is enabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_PBKDF2_LOWER_BOUND_CHECK "pbkdf2-lower-bound-check"
+
 # ifdef __cplusplus
 }
 # endif

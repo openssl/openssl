@@ -29,5 +29,6 @@ int FIPS_tls1_prf_key_check(OSSL_LIB_CTX *libctx);
 int FIPS_sshkdf_key_check(OSSL_LIB_CTX *libctx);
 int FIPS_sskdf_key_check(OSSL_LIB_CTX *libctx);
 int FIPS_x963kdf_key_check(OSSL_LIB_CTX *libctx);
+int FIPS_pbkdf2_lower_bound_check(OSSL_LIB_CTX *libctx);
 
 #endif

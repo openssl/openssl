@@ -30,7 +30,8 @@ my @pedantic_okay =
 
 # Incompatible options for pedantic FIPS compliance
 my @pedantic_fail =
-    ( 'no_conditional_errors', 'no_security_checks', 'self_test_oninstall' );
+    ( 'no_conditional_errors', 'no_security_checks', 'self_test_oninstall',
+      'no_pbkdf2_lower_bound_check' );
 
 plan tests => 35 + (scalar @pedantic_okay) + (scalar @pedantic_fail);
 
