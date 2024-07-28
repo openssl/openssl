@@ -88,7 +88,8 @@ static size_t get_hardware_random_value(unsigned char *buf, size_t len)
     return 0;
 }
 #else
-static size_t get_hardware_random_value(unsigned char *buf, size_t len) {
+static size_t get_hardware_random_value(unsigned char *buf, size_t len)
+{
     /* Whichever comes first, use RDSEED, RDRAND or nothing */
     if ((OPENSSL_ia32cap_P[2] & (1 << 18)) != 0) {
         if (OPENSSL_ia32_rdseed_bytes(buf, len) != len)

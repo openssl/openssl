@@ -860,7 +860,8 @@ static void *xor_load(const void *reference, size_t reference_sz)
 }
 
 /* check one key is the "XOR complement" of the other */
-static int xor_recreate(const unsigned char *kd1, const unsigned char *kd2) {
+static int xor_recreate(const unsigned char *kd1, const unsigned char *kd2)
+{
     int i;
 
     for (i = 0; i < XOR_KEY_SIZE; i++) {
@@ -2608,7 +2609,8 @@ static OSSL_FUNC_signature_gettable_ctx_md_params_fn xor_sig_gettable_ctx_md_par
 static OSSL_FUNC_signature_set_ctx_md_params_fn xor_sig_set_ctx_md_params;
 static OSSL_FUNC_signature_settable_ctx_md_params_fn xor_sig_settable_ctx_md_params;
 
-static int xor_get_aid(unsigned char** oidbuf, const char *tls_name) {
+static int xor_get_aid(unsigned char** oidbuf, const char *tls_name)
+{
    X509_ALGOR *algor = X509_ALGOR_new();
    int aidlen = 0;
 

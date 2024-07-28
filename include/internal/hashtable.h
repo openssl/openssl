@@ -167,7 +167,8 @@ memset((key), 0, sizeof(*(key))); \
 static uintptr_t name##_##vtype##_id = 0; \
 pfx ossl_unused int ossl_ht_##name##_##vtype##_insert(HT *h, HT_KEY *key,      \
                                                       vtype *data,             \
-                                                      vtype **olddata) {       \
+                                                      vtype **olddata)         \
+{                                                                              \
     HT_VALUE inval;                                                            \
     HT_VALUE *oval = NULL;                                                     \
     int rc;                                                                    \

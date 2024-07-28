@@ -1446,7 +1446,8 @@ err:
 #endif
 
 static int ecp_nistz256group_full_init(EC_GROUP *group,
-                                       const unsigned char *params) {
+                                       const unsigned char *params)
+{
     BN_CTX *ctx = NULL;
     BN_MONT_CTX *mont = NULL, *ordmont = NULL;
     const int param_len = 32;

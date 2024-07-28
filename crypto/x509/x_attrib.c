@@ -75,7 +75,8 @@ static int print_hex(BIO *out, unsigned char *buf, int len)
     return result;
 }
 
-static int print_oid(BIO *out, const ASN1_OBJECT *oid) {
+static int print_oid(BIO *out, const ASN1_OBJECT *oid)
+{
     const char *ln;
     char objbuf[80];
     int rc;

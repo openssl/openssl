@@ -97,7 +97,8 @@ static void async_job_free(ASYNC_JOB *job)
     }
 }
 
-static ASYNC_JOB *async_get_pool_job(void) {
+static ASYNC_JOB *async_get_pool_job(void)
+{
     ASYNC_JOB *job;
     async_pool *pool;
 
@@ -130,7 +131,8 @@ static ASYNC_JOB *async_get_pool_job(void) {
     return job;
 }
 
-static void async_release_job(ASYNC_JOB *job) {
+static void async_release_job(ASYNC_JOB *job)
+{
     async_pool *pool;
 
     pool = (async_pool *)CRYPTO_THREAD_get_local(&poolkey);

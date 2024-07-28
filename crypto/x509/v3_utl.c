@@ -1157,7 +1157,8 @@ int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc)
  * to the component, and advances *str to the first unconsumed character. On
  * invalid input, it returns zero.
  */
-static int get_ipv4_component(uint8_t *out_byte, const char **str) {
+static int get_ipv4_component(uint8_t *out_byte, const char **str)
+{
     /* Store a slightly larger intermediary so the overflow check is easier. */
     uint32_t out = 0;
 

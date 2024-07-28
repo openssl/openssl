@@ -5104,7 +5104,8 @@ const char *SSL_get0_group_name(SSL *s)
     return tls1_group_id2name(s->ctx, id);
 }
 
-const char *SSL_group_to_name(SSL *s, int nid) {
+const char *SSL_group_to_name(SSL *s, int nid)
+{
     int group_id = 0;
     const TLS_GROUP_INFO *cinf = NULL;
 

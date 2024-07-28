@@ -315,7 +315,8 @@ static int ec_precompute_mont_data(EC_GROUP *);
  *
  * Otherwise, zero cofactor and return success.
  */
-static int ec_guess_cofactor(EC_GROUP *group) {
+static int ec_guess_cofactor(EC_GROUP *group)
+{
     int ret = 0;
     BN_CTX *ctx = NULL;
     BIGNUM *q = NULL;

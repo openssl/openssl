@@ -2131,7 +2131,8 @@ int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
     return ssl_cipher_table_auth[i].nid;
 }
 
-int ssl_get_md_idx(int md_nid) {
+int ssl_get_md_idx(int md_nid)
+{
     int i;
 
     for(i = 0; i < SSL_MD_NUM_IDX; i++) {

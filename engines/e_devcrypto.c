@@ -84,7 +84,8 @@ struct driver_info_st {
 void engine_load_devcrypto_int(void);
 #endif
 
-static int clean_devcrypto_session(session_op_t *sess) {
+static int clean_devcrypto_session(session_op_t *sess)
+{
     if (ioctl(cfd, CIOCFSESSION, &sess->ses) < 0) {
         ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
         return 0;
@@ -1276,8 +1277,8 @@ static int devcrypto_unload(ENGINE *e)
     return 1;
 }
 
-static int bind_devcrypto(ENGINE *e) {
-
+static int bind_devcrypto(ENGINE *e)
+{
     if (!ENGINE_set_id(e, engine_devcrypto_id)
         || !ENGINE_set_name(e, "/dev/crypto engine")
         || !ENGINE_set_destroy_function(e, devcrypto_unload)

@@ -298,13 +298,15 @@ static int client_ocsp_cb(SSL *s, void *arg)
     return 1;
 }
 
-static int verify_reject_cb(X509_STORE_CTX *ctx, void *arg) {
+static int verify_reject_cb(X509_STORE_CTX *ctx, void *arg)
+{
     X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
     return 0;
 }
 
 static int n_retries = 0;
-static int verify_retry_cb(X509_STORE_CTX *ctx, void *arg) {
+static int verify_retry_cb(X509_STORE_CTX *ctx, void *arg)
+{
     int idx = SSL_get_ex_data_X509_STORE_CTX_idx();
     SSL *ssl;
 
@@ -319,7 +321,8 @@ static int verify_retry_cb(X509_STORE_CTX *ctx, void *arg) {
     return SSL_set_retry_verify(ssl);
 }
 
-static int verify_accept_cb(X509_STORE_CTX *ctx, void *arg) {
+static int verify_accept_cb(X509_STORE_CTX *ctx, void *arg)
+{
     return 1;
 }
 

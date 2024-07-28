@@ -736,7 +736,8 @@ static EVP_RAND_CTX *main_rand = NULL;
 static int set_kat_drbg(OSSL_LIB_CTX *ctx,
                         const unsigned char *entropy, size_t entropy_len,
                         const unsigned char *nonce, size_t nonce_len,
-                        const unsigned char *persstr, size_t persstr_len) {
+                        const unsigned char *persstr, size_t persstr_len)
+{
     EVP_RAND *rand;
     unsigned int strength = 256;
     EVP_RAND_CTX *parent_rand = NULL;
@@ -810,7 +811,8 @@ static int set_kat_drbg(OSSL_LIB_CTX *ctx,
     return 0;
 }
 
-static int reset_main_drbg(OSSL_LIB_CTX *ctx) {
+static int reset_main_drbg(OSSL_LIB_CTX *ctx)
+{
     int ret = 1;
 
     if (!RAND_set0_private(ctx, main_rand))

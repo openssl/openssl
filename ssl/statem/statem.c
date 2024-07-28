@@ -538,7 +538,8 @@ static void init_read_state_machine(SSL_CONNECTION *s)
     st->read_state = READ_STATE_HEADER;
 }
 
-static int grow_init_buf(SSL_CONNECTION *s, size_t size) {
+static int grow_init_buf(SSL_CONNECTION *s, size_t size)
+{
 
     size_t msg_offset = (char *)s->init_msg - s->init_buf->data;
 

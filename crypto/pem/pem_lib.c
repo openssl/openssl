@@ -284,14 +284,16 @@ static int pem_bytes_read_bio_flags(unsigned char **pdata, long *plen,
 
 int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm,
                        const char *name, BIO *bp, pem_password_cb *cb,
-                       void *u) {
+                       void *u)
+{
     return pem_bytes_read_bio_flags(pdata, plen, pnm, name, bp, cb, u,
                                     PEM_FLAG_EAY_COMPATIBLE);
 }
 
 int PEM_bytes_read_bio_secmem(unsigned char **pdata, long *plen, char **pnm,
                               const char *name, BIO *bp, pem_password_cb *cb,
-                              void *u) {
+                              void *u)
+{
     return pem_bytes_read_bio_flags(pdata, plen, pnm, name, bp, cb, u,
                                     PEM_FLAG_SECURE | PEM_FLAG_EAY_COMPATIBLE);
 }

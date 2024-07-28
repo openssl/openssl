@@ -4371,7 +4371,8 @@ static void fe_mul121666(fe h, fe f)
 
 static void x25519_scalar_mult_generic(uint8_t out[32],
                                        const uint8_t scalar[32],
-                                       const uint8_t point[32]) {
+                                       const uint8_t point[32])
+{
     fe x1, x2, z2, x3, z3, tmp0, tmp1;
     uint8_t e[32];
     unsigned swap = 0;
@@ -4421,7 +4422,8 @@ static void x25519_scalar_mult_generic(uint8_t out[32],
 }
 
 static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
-                               const uint8_t point[32]) {
+                               const uint8_t point[32])
+{
     x25519_scalar_mult_generic(out, scalar, point);
 }
 #endif
