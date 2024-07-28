@@ -281,8 +281,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
             filename++;
             break;
         }
-    }
-    while (last);
+    } while (last);
 
     if (!result->nodelen)
         result->node = NULL;

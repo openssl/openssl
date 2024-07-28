@@ -203,8 +203,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
             ERR_raise(ERR_LIB_BN, BN_R_P_IS_NOT_PRIME);
             goto end;
         }
-    }
-    while (r == 1 && ++i < 82);
+    } while (r == 1 && ++i < 82);
 
     if (r != -1) {
         /*

@@ -696,8 +696,7 @@ static void run_multi_thread_test(void)
             multi_thread_rand_bytes_succeeded = 0;
         if (rand_priv_bytes(buf, sizeof(buf)) <= 0)
             multi_thread_rand_priv_bytes_succeeded = 0;
-    }
-    while (time(NULL) - start < 5);
+    } while (time(NULL) - start < 5);
 }
 
 # if defined(OPENSSL_SYS_WINDOWS)

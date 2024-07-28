@@ -453,8 +453,7 @@ static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in)
             do {
                 from++;
                 i++;
-            }
-            while (ossl_isspace(*from));
+            } while (ossl_isspace(*from));
         } else {
             *to++ = ossl_tolower(*from);
             from++;

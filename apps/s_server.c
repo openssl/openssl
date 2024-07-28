@@ -3773,9 +3773,8 @@ static int generate_session_id(SSL *ssl, unsigned char *id,
         memcpy(id, session_id_prefix,
                (session_id_prefix_len < *id_len) ?
                 session_id_prefix_len : *id_len);
-    }
-    while (SSL_has_matching_session_id(ssl, id, *id_len) &&
-           (++count < MAX_SESSION_ID_ATTEMPTS));
+    } while (SSL_has_matching_session_id(ssl, id, *id_len) &&
+             (++count < MAX_SESSION_ID_ATTEMPTS));
     if (count >= MAX_SESSION_ID_ATTEMPTS)
         return 0;
     return 1;

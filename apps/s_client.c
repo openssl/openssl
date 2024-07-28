@@ -2424,8 +2424,7 @@ int s_client_main(int argc, char **argv)
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
                 if (strstr(mbuf, "STARTTLS"))
                     foundit = 1;
-            }
-            while (mbuf_len > 3 && mbuf[0] != '.');
+            } while (mbuf_len > 3 && mbuf[0] != '.');
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);
@@ -2449,8 +2448,7 @@ int s_client_main(int argc, char **argv)
             /* wait for multi-line response to end from FTP */
             do {
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
-            }
-            while (mbuf_len > 3 && (!isdigit((unsigned char)mbuf[0]) || !isdigit((unsigned char)mbuf[1]) || !isdigit((unsigned char)mbuf[2]) || mbuf[3] != ' '));
+            } while (mbuf_len > 3 && (!isdigit((unsigned char)mbuf[0]) || !isdigit((unsigned char)mbuf[1]) || !isdigit((unsigned char)mbuf[2]) || mbuf[3] != ' '));
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);

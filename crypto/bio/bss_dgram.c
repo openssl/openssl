@@ -2078,9 +2078,8 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
             } else {
                 ret += n;
             }
-        }
-        while ((msg.msg_flags & MSG_NOTIFICATION) && (msg.msg_flags & MSG_EOR)
-               && (ret < outl));
+        } while ((msg.msg_flags & MSG_NOTIFICATION) && (msg.msg_flags & MSG_EOR)
+                 && (ret < outl));
 
         if (ret > 0 && !(msg.msg_flags & MSG_EOR)) {
             /* Partial message read, this should never happen! */

@@ -388,8 +388,7 @@ static int aesni_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                     enc ? aesni_ocb_encrypt
                                         : aesni_ocb_decrypt))
                 return 0;
-        }
-        while (0);
+        } while (0);
 
         /*
          * If we have an iv we can set it directly, otherwise use saved IV.
@@ -769,8 +768,7 @@ static int aes_t4_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                     (block128_f) aes_t4_decrypt,
                                     NULL))
                 return 0;
-        }
-        while (0);
+        } while (0);
 
         /*
          * If we have an iv we can set it directly, otherwise use saved IV.
@@ -3963,8 +3961,7 @@ static int aes_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                     (block128_f) AES_decrypt,
                                     NULL))
                 return 0;
-        }
-        while (0);
+        } while (0);
 
         /*
          * If we have an iv we can set it directly, otherwise use saved IV.

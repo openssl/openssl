@@ -179,8 +179,7 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
                 return 0;
             }
 
-        }
-        while (BN_cmp(r, range) >= 0);
+        } while (BN_cmp(r, range) >= 0);
     } else {
         do {
             /* range = 11..._2  or  range = 101..._2 */
@@ -192,8 +191,7 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
                 ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_ITERATIONS);
                 return 0;
             }
-        }
-        while (BN_cmp(r, range) >= 0);
+        } while (BN_cmp(r, range) >= 0);
     }
 
     bn_check_top(r);
@@ -272,8 +270,7 @@ int ossl_bn_priv_rand_range_fixed_top(BIGNUM *r, const BIGNUM *range,
                 return 0;
             }
             ossl_bn_mask_bits_fixed_top(r, n);
-        }
-        while (BN_ucmp(r, range) >= 0);
+        } while (BN_ucmp(r, range) >= 0);
 #ifdef BN_DEBUG
         /* With BN_DEBUG on a fixed top number cannot be returned */
         bn_correct_top(r);
