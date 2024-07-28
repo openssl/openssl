@@ -778,8 +778,7 @@ int tls1_group_id2nid(uint16_t group_id, int include_unknown)
      * Return well known Group NIDs - for backwards compatibility. This won't
      * work for groups we don't know about.
      */
-    for (i = 0; i < OSSL_NELEM(nid_to_group); i++)
-    {
+    for (i = 0; i < OSSL_NELEM(nid_to_group); i++) {
         if (nid_to_group[i].group_id == group_id)
             return nid_to_group[i].nid;
     }
@@ -796,8 +795,7 @@ uint16_t tls1_nid2group_id(int nid)
      * Return well known Group ids - for backwards compatibility. This won't
      * work for groups we don't know about.
      */
-    for (i = 0; i < OSSL_NELEM(nid_to_group); i++)
-    {
+    for (i = 0; i < OSSL_NELEM(nid_to_group); i++) {
         if (nid_to_group[i].nid == nid)
             return nid_to_group[i].group_id;
     }
@@ -1827,8 +1825,7 @@ static int sigalg_security_bits(SSL_CTX *ctx, const SIGALG_LOOKUP *lu)
 
     if (!tls1_lookup_md(ctx, lu, &md))
         return 0;
-    if (md != NULL)
-    {
+    if (md != NULL) {
         int md_type = EVP_MD_get_type(md);
 
         /* Security bits: half digest bits */

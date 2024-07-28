@@ -134,7 +134,7 @@ static int shake_squeeze(void *vctx, unsigned char *out, size_t *outl,
         return 0;
     if (ctx->meth.squeeze == NULL)
         return 0;
-    if (outlen > 0)
+    if (outlen > 0)./providers/implementations/digests/sha3_prov.c
         ret = ctx->meth.squeeze(ctx, out, outlen);
 
     *outl = outlen;
@@ -171,8 +171,7 @@ static PROV_SHA3_METHOD sha3_generic_md = {
     NULL
 };
 
-static PROV_SHA3_METHOD shake_generic_md =
-{
+static PROV_SHA3_METHOD shake_generic_md = {
     generic_sha3_absorb,
     generic_sha3_final,
     generic_sha3_squeeze
@@ -428,8 +427,7 @@ static PROV_SHA3_METHOD sha3_ARMSHA3_md = {
     armsha3_sha3_absorb,
     generic_sha3_final
 };
-static PROV_SHA3_METHOD shake_ARMSHA3_md =
-{
+static PROV_SHA3_METHOD shake_ARMSHA3_md = {
     armsha3_sha3_absorb,
     generic_sha3_final,
     generic_sha3_squeeze

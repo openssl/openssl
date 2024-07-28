@@ -9213,8 +9213,7 @@ static int test_ca_names(int tst)
 }
 
 #ifndef OPENSSL_NO_TLS1_2
-static const char *multiblock_cipherlist_data[]=
-{
+static const char *multiblock_cipherlist_data[] = {
     "AES128-SHA",
     "AES128-SHA256",
     "AES256-SHA",

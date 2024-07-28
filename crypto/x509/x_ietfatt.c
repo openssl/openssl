@@ -68,8 +68,7 @@ OSSL_IETF_ATTR_SYNTAX *d2i_OSSL_IETF_ATTR_SYNTAX (OSSL_IETF_ATTR_SYNTAX **a,
     if (ias == NULL)
         return ias;
 
-    for (i = 0; i < sk_OSSL_IETF_ATTR_SYNTAX_VALUE_num(ias->values); i++)
-    {
+    for (i = 0; i < sk_OSSL_IETF_ATTR_SYNTAX_VALUE_num(ias->values); i++) {
         OSSL_IETF_ATTR_SYNTAX_VALUE *val;
 
         val = sk_OSSL_IETF_ATTR_SYNTAX_VALUE_value(ias->values, i);
