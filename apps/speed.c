@@ -3418,7 +3418,7 @@ int speed_main(int argc, char **argv)
 
                 BIO_printf(bio_err,
                            mr ? "+R10:%ld:%u:%s:%.2f\n" :
-                           "%ld %u bits %s sign ops in %.2fs \n",
+                           "%ld %u bits %s sign ops in %.2fs\n",
                            count, ed_curves[testnum].bits,
                            ed_curves[testnum].name, d);
                 eddsa_results[testnum][0] = (double)count / d;
@@ -3549,7 +3549,7 @@ int speed_main(int argc, char **argv)
 
                 BIO_printf(bio_err,
                            mr ? "+R12:%ld:%u:%s:%.2f\n" :
-                           "%ld %u bits %s sign ops in %.2fs \n",
+                           "%ld %u bits %s sign ops in %.2fs\n",
                            count, sm2_curves[testnum].bits,
                            sm2_curves[testnum].name, d);
                 sm2_results[testnum][0] = (double)count / d;
