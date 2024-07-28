@@ -146,7 +146,7 @@ static int provider_conf_params_internal(OSSL_PROVIDER *prov,
 
 /*
  * recursively parse the provider configuration section
- * of the config file. 
+ * of the config file.
  * Returns
  * 1 on success
  * 0 on non-fatal error

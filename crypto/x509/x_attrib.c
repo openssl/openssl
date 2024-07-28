@@ -177,7 +177,7 @@ int ossl_print_attribute_value(BIO *out,
         if (BIO_printf(out, "%*s", indent, "") < 0)
             return 0;
         return print_oid(out, av->value.object);
-    
+
     /*
      * ObjectDescriptor is an IMPLICIT GraphicString, but GeneralString is a
      * superset supported by OpenSSL, so we will use that anywhere a

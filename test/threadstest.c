@@ -295,7 +295,7 @@ static int torture_rw_high(void)
 }
 
 
-# ifndef OPENSSL_SYS_MACOSX 
+# ifndef OPENSSL_SYS_MACOSX
 static CRYPTO_RCU_LOCK *rcu_lock = NULL;
 
 static int writer1_done = 0;

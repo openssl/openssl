@@ -481,7 +481,7 @@ int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     } else {
         const EVP_MD *digest = ctx->ssl_digest_methods[i];
 
-        if (digest == NULL || !ssl_evp_md_up_ref(digest)) 
+        if (digest == NULL || !ssl_evp_md_up_ref(digest))
             return 0;
 
         *md = digest;
