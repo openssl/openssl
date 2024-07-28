@@ -5672,13 +5672,13 @@ int setup_tests(void)
             if (!TEST_ptr(testctx))
                 return 0;
 #ifdef STATIC_LEGACY
-	    /*
-	     * This test is always statically linked against libcrypto. We must not
-	     * attempt to load legacy.so that might be dynamically linked against
-	     * libcrypto. Instead we use a built-in version of the legacy provider.
-	     */
-	    if (!OSSL_PROVIDER_add_builtin(testctx, "legacy", ossl_legacy_provider_init))
-		return 0;
+            /*
+             * This test is always statically linked against libcrypto. We must not
+             * attempt to load legacy.so that might be dynamically linked against
+             * libcrypto. Instead we use a built-in version of the legacy provider.
+             */
+            if (!OSSL_PROVIDER_add_builtin(testctx, "legacy", ossl_legacy_provider_init))
+                return 0;
 #endif
             /* Swap the libctx to test non-default context only */
             nullprov = OSSL_PROVIDER_load(NULL, "null");

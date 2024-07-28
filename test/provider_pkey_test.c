@@ -346,7 +346,7 @@ static int test_pkey_delete(void)
 
     while (!OSSL_STORE_eof(ctx)) {
            info = OSSL_STORE_load(ctx);
-	   if (!TEST_ptr_null(info))
+       if (!TEST_ptr_null(info))
                goto end;
     }
 

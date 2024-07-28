@@ -361,7 +361,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
 #    elif defined(OPENSSL_APPLE_CRYPTO_RANDOM)
 
     if (CCRandomGenerateBytes(buf, buflen) == kCCSuccess)
-	    return (ssize_t)buflen;
+        return (ssize_t)buflen;
 
     return -1;
 #    else
