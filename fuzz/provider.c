@@ -590,7 +590,7 @@ end:
             f(alg, fuzzed_params); \
         free_params(fuzzed_params); \
         OSSL_PARAM_free(fuzzed_params); \
-    } while (0);
+    } while (0)
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
