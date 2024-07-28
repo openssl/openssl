@@ -482,7 +482,7 @@ static int CreateSocketPair (int SocketFamily,
     SocketPair[0] = SockDesc2 ;
     SocketPair[1] = socket_fd (TcpDeviceChan);
 
-    return (0) ;
+    return 0;
 
 }
 

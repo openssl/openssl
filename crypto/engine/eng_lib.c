@@ -122,7 +122,7 @@ static int int_cleanup_check(int create)
     if (!create)
         return 0;
     cleanup_stack = sk_ENGINE_CLEANUP_ITEM_new_null();
-    return (cleanup_stack ? 1 : 0);
+    return cleanup_stack ? 1 : 0;
 }
 
 static ENGINE_CLEANUP_ITEM *int_cleanup_item(ENGINE_CLEANUP_CB *cb)

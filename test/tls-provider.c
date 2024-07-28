@@ -2618,7 +2618,7 @@ static int xor_get_aid(unsigned char** oidbuf, const char *tls_name)
 
    aidlen = i2d_X509_ALGOR(algor, oidbuf);
    X509_ALGOR_free(algor);
-   return(aidlen);
+   return aidlen;
 }
 
 /*
