@@ -124,7 +124,9 @@ print <<_____;
 our \$VERSION                    = '$ENV{VERSION}';
 our \@LDLIBS                     =
     # Unix and Windows use space separation, VMS uses comma separation
-    split(/ +| *, */, '$ENV{LDLIBS}');
+    \$^O eq 'VMS'
+    ? split(/ *, */, '$ENV{LDLIBS}')
+    : split(/ +/, '$ENV{LDLIBS}');
 
 1;
 _____
