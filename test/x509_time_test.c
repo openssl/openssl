@@ -484,7 +484,7 @@ static int test_days(int n)
 static const struct {
     ASN1_TIME asn1;
     const char *readable;
-} x509_print_tests_rfc_822 [] = {
+} x509_print_tests_rfc_822[] = {
     /* Generalized Time */
     construct_asn1_time("20170731222050Z", V_ASN1_GENERALIZEDTIME,
             "Jul 31 22:20:50 2017 GMT"),
@@ -511,7 +511,7 @@ static const struct {
 static const struct {
     ASN1_TIME asn1;
     const char *readable;
-} x509_print_tests_iso_8601 [] = {
+} x509_print_tests_iso_8601[] = {
     /* Generalized Time */
     construct_asn1_time("20170731222050Z", V_ASN1_GENERALIZEDTIME,
             "2017-07-31 22:20:50Z"),

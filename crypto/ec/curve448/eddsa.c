@@ -94,7 +94,7 @@ c448_error_t
 ossl_c448_ed448_convert_private_key_to_x448(
                             OSSL_LIB_CTX *ctx,
                             uint8_t x[X448_PRIVATE_BYTES],
-                            const uint8_t ed [EDDSA_448_PRIVATE_BYTES],
+                            const uint8_t ed[EDDSA_448_PRIVATE_BYTES],
                             const char *propq)
 {
     /* pass the private key through oneshot_hash function */

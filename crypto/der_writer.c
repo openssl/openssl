@@ -138,7 +138,7 @@ static int int_put_bytes_bn(WPACKET *pkt, const void *v,
 
     /* The BIGNUM limbs are in LE order */
     *top_byte =
-        ((bn_get_words(v) [(n - 1) / BN_BYTES]) >> (8 * ((n - 1) % BN_BYTES)))
+        ((bn_get_words(v)[(n - 1) / BN_BYTES]) >> (8 * ((n - 1) % BN_BYTES)))
         & 0xFF;
 
     if (!WPACKET_allocate_bytes(pkt, n, &p))
