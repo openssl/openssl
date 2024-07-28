@@ -1094,8 +1094,8 @@ static int test_hpke_modes_suites(void)
                         const char *res = NULL;
 
                         res = (overallresult == 1 ? "worked" : "failed");
-                        TEST_note("HPKE %s for mode: %s/0x%02x, "\
-                                  "kem: %s/0x%02x, kdf: %s/0x%02x, "\
+                        TEST_note("HPKE %s for mode: %s/0x%02x, "
+                                  "kem: %s/0x%02x, kdf: %s/0x%02x, "
                                   "aead: %s/0x%02x", res,
                                   mode_str_list[mind], (int) mind,
                                   kem_str_list[kemind], kem_id,
