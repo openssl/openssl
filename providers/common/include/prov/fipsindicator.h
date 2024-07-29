@@ -116,6 +116,11 @@ void ossl_FIPS_IND_copy(OSSL_FIPS_IND *dst, const OSSL_FIPS_IND *src);
 
 #define OSSL_FIPS_IND_GET(ctx) &((ctx)->indicator)
 
+#define OSSL_FIPS_IND_GET_PARAM(ctx, p, settable, id, name)                    \
+    *settable = ossl_FIPS_IND_get_settable(&((ctx)->indicator), id);           \
+    if (*settable != OSSL_FIPS_IND_STATE_UNKNOWN)                              \
+        *p = OSSL_PARAM_construct_int(name, settable);                         \
+
 int ossl_fips_ind_rsa_key_check(OSSL_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
                                 const RSA *rsa, const char *desc, int protect);
 # ifndef OPENSSL_NO_EC

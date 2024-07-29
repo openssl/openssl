@@ -47,6 +47,17 @@ Sets the properties to be queried when trying to fetch the underlying cipher.
 This must be given together with the cipher naming parameter to be considered
 valid.
 
+=item "encrypt-check" (B<OSSL_CIPHER_PARAM_FIPS_ENCRYPT_CHECK>) <integer>
+
+If required this parameter should be set before EVP_MAC_init()
+
+The default value of 1 causes an error when a unapproved Triple-DES encryption
+operation is triggered.
+Setting this to 0 will ignore the error and set the approved "fips-indicator" to
+0.
+This option is used by the OpenSSL FIPS provider, and breaks FIPS compliance if
+set to 0.
+
 =back
 
 The following parameters can be retrieved with
@@ -59,14 +70,17 @@ EVP_MAC_CTX_get_params():
 The "size" parameter can also be retrieved with with EVP_MAC_CTX_get_mac_size().
 The length of the "size" parameter is equal to that of an B<unsigned int>.
 
-=back
-
-=over 4
 
 =item "block-size" (B<OSSL_MAC_PARAM_BLOCK_SIZE>) <unsigned integer>
 
 Gets the MAC block size.  The "block-size" parameter can also be retrieved with
 EVP_MAC_CTX_get_block_size().
+
+=item "fips-indicator" (B<OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
+This may be used after calling EVP_MAC_final().
+It may return 0 if the "encrypt-check" option is set to 0.
 
 =back
 
