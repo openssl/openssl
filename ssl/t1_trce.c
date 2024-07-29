@@ -1697,6 +1697,10 @@ static int ssl_print_handshake(BIO *bio, const SSL_CONNECTION *sc, int server,
             return 0;
         break;
 
+    case SSL3_MT_END_OF_EARLY_DATA:
+        BIO_indent(bio, indent, 80);
+        break;
+
     default:
         BIO_indent(bio, indent + 2, 80);
         BIO_puts(bio, "Unsupported, hex dump follows:\n");
