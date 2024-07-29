@@ -26,7 +26,9 @@ plan skip_all => "Test only supported in a fips build" if disabled("fips");
 
 # Compatible options for pedantic FIPS compliance
 my @pedantic_okay =
-    ( 'ems_check', 'no_drbg_truncated_digests', 'self_test_onload' );
+    ( 'ems_check', 'no_drbg_truncated_digests', 'self_test_onload',
+      'signature_digest_check'
+    );
 
 # Incompatible options for pedantic FIPS compliance
 my @pedantic_fail =
