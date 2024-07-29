@@ -477,3 +477,11 @@ KeyParam = DSA-2048-PARAMS
 KeyName = tmp2dsa
 Unapproved = 1
 Ctrl = sign-check:0
+
+Title = XOF disallowed
+
+DigestVerify = SHAKE256
+Key = DSA-1024
+Input = "Hello "
+Result = DIGESTVERIFYINIT_ERROR
+
