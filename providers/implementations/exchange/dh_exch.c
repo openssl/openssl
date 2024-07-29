@@ -392,6 +392,11 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
         pdhctx->kdf_md = EVP_MD_fetch(pdhctx->libctx, name, mdprops);
         if (pdhctx->kdf_md == NULL)
             return 0;
+        /* XOF digests are not allowed */
+        if ((EVP_MD_get_flags(pdhctx->kdf_md) & EVP_MD_FLAG_XOF) != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
+            return 0;
+        }
 #ifdef FIPS_MODULE
         if (!digest_check(pdhctx, pdhctx->kdf_md)) {
             EVP_MD_free(pdhctx->kdf_md);
