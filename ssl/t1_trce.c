@@ -1698,7 +1698,8 @@ static int ssl_print_handshake(BIO *bio, const SSL_CONNECTION *sc, int server,
         break;
 
     case SSL3_MT_END_OF_EARLY_DATA:
-        BIO_indent(bio, indent, 80);
+        if (msglen != 0)
+            ssl_print_hex(bio, indent + 2, "unexpected value", msg, msglen);
         break;
 
     default:
