@@ -529,8 +529,11 @@ static int ossl_ht_insert_locked(HT *h, uint64_t hash,
 
     for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
         ival = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
-        CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
-                           &ihash, h->atomic_lock);
+
+        if (!CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
+                                &ihash, h->atomic_lock))
+            return 0;
+
         if (ival == NULL)
             empty_idx = j;
         if (compare_hash(hash, ihash)) {
@@ -539,8 +542,10 @@ static int ossl_ht_insert_locked(HT *h, uint64_t hash,
                 return 0;
             }
             /* Do a replacement */
-            CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[j].hash,
-                                hash, h->atomic_lock);
+            if (!CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[j].hash,
+                                     hash, h->atomic_lock))
+                return 0;
+
             *olddata = (HT_VALUE *)md->neighborhoods[neigh_idx].entries[j].value;
             ossl_rcu_assign_ptr(&md->neighborhoods[neigh_idx].entries[j].value,
                                 &newval);
@@ -553,8 +558,9 @@ static int ossl_ht_insert_locked(HT *h, uint64_t hash,
     if (empty_idx == SIZE_MAX)
         return -1; /* out of space */
     h->wpd.value_count++;
-    CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[empty_idx].hash,
-                        hash, h->atomic_lock);
+    if (!CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[empty_idx].hash,
+                             hash, h->atomic_lock))
+        return 0;
     ossl_rcu_assign_ptr(&md->neighborhoods[neigh_idx].entries[empty_idx].value,
                         &newval);
     return 1;
@@ -635,8 +641,9 @@ HT_VALUE *ossl_ht_get(HT *h, HT_KEY *key)
     neigh_idx = hash & md->neighborhood_mask;
     PREFETCH_NEIGHBORHOOD(md->neighborhoods[neigh_idx]);
     for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
-        CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
-                           &ehash, h->atomic_lock);
+        if (!CRYPTO_atomic_load(&md->neighborhoods[neigh_idx].entries[j].hash,
+                                &ehash, h->atomic_lock))
+            break;
         if (compare_hash(hash, ehash)) {
             vidx = ossl_rcu_deref(&md->neighborhoods[neigh_idx].entries[j].value);
             ret = (HT_VALUE *)vidx;
@@ -672,8 +679,9 @@ int ossl_ht_delete(HT *h, HT_KEY *key)
     for (j = 0; j < NEIGHBORHOOD_LEN; j++) {
         if (compare_hash(hash, md->neighborhoods[neigh_idx].entries[j].hash)) {
             h->wpd.value_count--;
-            CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[j].hash,
-                                0, h->atomic_lock);
+            if (!CRYPTO_atomic_store(&md->neighborhoods[neigh_idx].entries[j].hash,
+                                     0, h->atomic_lock))
+                break;
             v = (struct ht_internal_value_st *)md->neighborhoods[neigh_idx].entries[j].value;
             ossl_rcu_assign_ptr(&md->neighborhoods[neigh_idx].entries[j].value,
                                 &nv);
