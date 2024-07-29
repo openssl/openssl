@@ -106,6 +106,10 @@ DEPEND[man/man1/openssl-errstr.1]=man1/openssl-errstr.pod
 GENERATE[man/man1/openssl-errstr.1]=man1/openssl-errstr.pod
 DEPEND[man1/openssl-errstr.pod]{pod}=man1/openssl-errstr.pod.in
 GENERATE[man1/openssl-errstr.pod]=man1/openssl-errstr.pod.in
+DEPEND[html/man1/evp_test.html]=man1/openssl-evp_test.pod
+GENERATE[html/man1/evp_test.html]=man1/openssl-evp_test.pod
+DEPEND[man/man1/evp_test.1]=man1/openssl-evp_test.pod
+GENERATE[man/man1/evp_test.1]=man1/openssl-evp_test.pod
 DEPEND[html/man1/openssl-fipsinstall.html]=man1/openssl-fipsinstall.pod
 GENERATE[html/man1/openssl-fipsinstall.html]=man1/openssl-fipsinstall.pod
 DEPEND[man/man1/openssl-fipsinstall.1]=man1/openssl-fipsinstall.pod
@@ -365,6 +369,7 @@ html/man1/openssl-ecparam.html \
 html/man1/openssl-enc.html \
 html/man1/openssl-engine.html \
 html/man1/openssl-errstr.html \
+html/man1/openssl-evp_test.html \
 html/man1/openssl-fipsinstall.html \
 html/man1/openssl-format-options.html \
 html/man1/openssl-gendsa.html \
@@ -425,6 +430,7 @@ man/man1/openssl-ecparam.1 \
 man/man1/openssl-enc.1 \
 man/man1/openssl-engine.1 \
 man/man1/openssl-errstr.1 \
+man/man1/openssl-evp_test.1 \
 man/man1/openssl-fipsinstall.1 \
 man/man1/openssl-format-options.1 \
 man/man1/openssl-gendsa.1 \
