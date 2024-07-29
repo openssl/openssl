@@ -1966,6 +1966,14 @@ Key = RSA-512
 Input = "Hello"
 Result = DIGESTVERIFYINIT_ERROR
 
+# RSA Signing with X931 is not approved in FIPS 140-3
+FIPSversion = >=3.4.0
+Sign = RSA-2048
+Ctrl = rsa_padding_mode:x931
+Input = "0123456789ABCDEF123456789ABC"
+Output = c09d402423cbf233d26cae21f954547bc43fe80fd41360a0336cfdbe9aedad05bef6fd2eaee6cd60089a52482d4809a238149520df3bdde4cb9e23d9307b05c0a6f327052325a29adf2cc95b66523be7024e2a585c3d4db15dfbe146efe0ecdc0402e33fe5d40324ee96c5c3edd374a15cdc0f5d84aa243c0f07e188c6518fbfceae158a9943be398e31097da81b62074f626eff738be6160741d5a26957a482b3251fd85d8df78b98148459de10aa93305dbb4a5230aa1da291a9b0e481918f99b7638d72bb687f97661d304ae145d64a474437a4ef39d7b8059332ddeb07e92bf6e0e3acaf8afedc93795e4511737ec1e7aab6d5bc9466afc950c1c17b48ad
+Result = PKEY_CTRL_ERROR
+
 ##################################################
 # Check that the indicator callback is triggered
 
@@ -2008,3 +2016,13 @@ CtrlInit = key-check:0
 Key = RSA-512
 Input = "Hello"
 Result = VERIFY_ERROR
+
+# RSA Signing with X931 is not approved in FIPS 140-3
+FIPSversion = >=3.4.0
+Sign = RSA-2048
+Unapproved = 1
+CtrlInit = sign-x931-pad-check:0
+Ctrl = digest:SHA256
+Ctrl = rsa_padding_mode:x931
+Input = "0123456789ABCDEF123456789ABCDEFG"
+Output = 4b75f521e2e6eeda3f2dcb84ebdacbadeab8ffc1ecdf06c7c4e38727e082a8f5e71be66cdee6d14da1d3a0f18ff20914f71b5308363c81e7471688f4f201e82603ea6a7f31da89cd846b30e2893fd956e76b3d23d40f733e0358e3883526158c74577ba43cc664eaeb909818e75b89fc764cf4575517f87251f8d3cf29b1532f33e6183d454bddd6f255d0ca4415d957eb90dbc55d047f48a01c6e68d5ab46327a158ff7a3383b5b0446b8cd4a91b8859abd3285020a1613ef17d3f8562147828bb36be65505eeec77e968d04e172e2851ff1d7ef523b4022deb72d5fbf78db6738d170098586b904d1c369cedb5e3fe1b909a8dd8ac3beb521af2510d044580

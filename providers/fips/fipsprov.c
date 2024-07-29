@@ -97,6 +97,7 @@ typedef struct fips_global_st {
     FIPS_OPTION fips_x963kdf_digest_check;
     FIPS_OPTION fips_dsa_sign_disallowed;
     FIPS_OPTION fips_tdes_encrypt_disallowed;
+    FIPS_OPTION fips_rsa_sign_x931_disallowed;
 } FIPS_GLOBAL;
 
 static void init_fips_option(FIPS_OPTION *opt, int enabled)
@@ -123,6 +124,7 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     init_fips_option(&fgbl->fips_x963kdf_digest_check, 0);
     init_fips_option(&fgbl->fips_dsa_sign_disallowed, 0);
     init_fips_option(&fgbl->fips_tdes_encrypt_disallowed, 0);
+    init_fips_option(&fgbl->fips_rsa_sign_x931_disallowed, 0);
     return fgbl;
 }
 
@@ -157,6 +159,8 @@ static const OSSL_PARAM fips_param_types[] = {
                     NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_TDES_ENCRYPT_DISABLED, OSSL_PARAM_INTEGER,
                     NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_RSA_SIGN_X931_PAD_DISABLED,
+                    OSSL_PARAM_INTEGER, NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -227,6 +231,8 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
                         fips_dsa_sign_disallowed);
     FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_TDES_ENCRYPT_DISABLED,
                         fips_tdes_encrypt_disallowed);
+    FIPS_FEATURE_OPTION(fgbl, OSSL_PROV_FIPS_PARAM_RSA_SIGN_X931_PAD_DISABLED,
+                        fips_rsa_sign_x931_disallowed);
 #undef FIPS_FEATURE_OPTION
 
     *p = OSSL_PARAM_construct_end();
@@ -292,6 +298,8 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
                      fips_dsa_sign_disallowed);
     FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_TDES_ENCRYPT_DISABLED,
                      fips_tdes_encrypt_disallowed);
+    FIPS_FEATURE_GET(fgbl, OSSL_PROV_PARAM_RSA_SIGN_X931_PAD_DISABLED,
+                     fips_rsa_sign_x931_disallowed);
 #undef FIPS_FEATURE_GET
     return 1;
 }
@@ -835,6 +843,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     FIPS_SET_OPTION(fgbl, fips_x963kdf_digest_check);
     FIPS_SET_OPTION(fgbl, fips_dsa_sign_disallowed);
     FIPS_SET_OPTION(fgbl, fips_tdes_encrypt_disallowed);
+    FIPS_SET_OPTION(fgbl, fips_rsa_sign_x931_disallowed);
 #undef FIPS_SET_OPTION
 
     ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
@@ -1045,6 +1054,8 @@ FIPS_FEATURE_CHECK(FIPS_sskdf_digest_check, fips_sskdf_digest_check)
 FIPS_FEATURE_CHECK(FIPS_x963kdf_digest_check, fips_x963kdf_digest_check)
 FIPS_FEATURE_CHECK(FIPS_dsa_sign_check, fips_dsa_sign_disallowed)
 FIPS_FEATURE_CHECK(FIPS_tdes_encrypt_check, fips_tdes_encrypt_disallowed)
+FIPS_FEATURE_CHECK(FIPS_rsa_sign_x931_disallowed,
+                   fips_rsa_sign_x931_disallowed)
 
 #undef FIPS_FEATURE_CHECK
 

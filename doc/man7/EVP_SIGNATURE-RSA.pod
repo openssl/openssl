@@ -27,6 +27,8 @@ using EVP_PKEY_sign_init_ex() or EVP_PKEY_verify_init_ex().
 
 =item "digest-check" (B<OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK>) <integer>
 
+=item "sign-x931-pad-check" (B<SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK>) <int>
+
 These common parameters are described in L<provider-signature(7)>.
 
 =item "pad-mode" (B<OSSL_SIGNATURE_PARAM_PAD_MODE>) <UTF8 string>
@@ -40,6 +42,10 @@ The type of padding to be used. Its value can be one of the following:
 =item "pkcs1" (B<OSSL_PKEY_RSA_PAD_MODE_PKCSV15>)
 
 =item "x931" (B<OSSL_PKEY_RSA_PAD_MODE_X931>)
+
+This padding mode is no longer supported by the FIPS provider for signature
+generation, but may be used for signature verification for legacy use cases.
+(This is a FIPS 140-3 requirement)
 
 =item "pss" (B<OSSL_PKEY_RSA_PAD_MODE_PSS>)
 

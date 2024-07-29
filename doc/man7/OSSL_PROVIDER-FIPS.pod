@@ -152,6 +152,10 @@ This is an unapproved algorithm.
 
 =item RSA, see L<EVP_SIGNATURE-RSA(7)>
 
+The B<X931> padding mode "OSSL_PKEY_RSA_PAD_MODE_X931" is no longer supported
+for signature generation, but may be used for verification for legacy use cases.
+(This is a FIPS 140-3 requirement)
+
 =item DSA, see L<EVP_SIGNATURE-DSA(7)>
 
 =item ED25519, see L<EVP_SIGNATURE-ED25519(7)>
