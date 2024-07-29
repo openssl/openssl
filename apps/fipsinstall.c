@@ -39,6 +39,7 @@ typedef enum OPTION_choice {
     OPT_NO_CONDITIONAL_ERRORS,
     OPT_NO_SECURITY_CHECKS,
     OPT_TLS_PRF_EMS_CHECK, OPT_NO_SHORT_MAC,
+    OPT_DISALLOW_SIGNATURE_X931_PADDING,
     OPT_DISALLOW_DRGB_TRUNC_DIGEST,
     OPT_HKDF_DIGEST_CHECK,
     OPT_TLS13_KDF_DIGEST_CHECK,
@@ -91,6 +92,8 @@ const OPTIONS fipsinstall_options[] = {
      "Disallow DSA signing"},
     {"tdes_encrypt_disabled", OPT_DISALLOW_TDES_ENCRYPT, '-',
      "Disallow Triple-DES encryption"},
+    {"rsa_sign_x931_disabled", OPT_DISALLOW_SIGNATURE_X931_PADDING, '-',
+     "Disallow X931 Padding for RSA signing"},
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input config file, used when verifying"},
 
@@ -122,6 +125,7 @@ typedef struct {
     unsigned int x963kdf_digest_check : 1;
     unsigned int dsa_sign_disabled : 1;
     unsigned int tdes_encrypt_disabled : 1;
+    unsigned int sign_x931_padding_disabled : 1;
 } FIPS_OPTS;
 
 /* Pedantic FIPS compliance */
@@ -140,6 +144,7 @@ static const FIPS_OPTS pedantic_opts = {
     1,      /* x963kdf_digest_check */
     1,      /* dsa_sign_disabled */
     1,      /* tdes_encrypt_disabled */
+    1,      /* sign_x931_padding_disabled */
 };
 
 /* Default FIPS settings for backward compatibility */
@@ -158,6 +163,7 @@ static FIPS_OPTS fips_opts = {
     0,      /* x963kdf_digest_check */
     0,      /* dsa_sign_disabled */
     0,      /* tdes_encrypt_disabled */
+    0,      /* sign_x931_padding_disabled */
 };
 
 static int check_non_pedantic_fips(int pedantic, const char *name)
@@ -303,6 +309,9 @@ static int write_config_fips_section(BIO *out, const char *section,
                       opts->dsa_sign_disabled ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_TDES_ENCRYPT_DISABLED,
                       opts->tdes_encrypt_disabled ? "1" : "0") <= 0
+        || BIO_printf(out, "%s = %s\n",
+                      OSSL_PROV_FIPS_PARAM_RSA_SIGN_X931_PAD_DISABLED,
+                      opts->sign_x931_padding_disabled ? "1" : "0") <= 0
         || !print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
                       module_mac_len))
         goto end;
@@ -515,6 +524,9 @@ int fipsinstall_main(int argc, char **argv)
             break;
         case OPT_DISALLOW_TDES_ENCRYPT:
             fips_opts.tdes_encrypt_disabled = 1;
+            break;
+        case OPT_DISALLOW_SIGNATURE_X931_PADDING:
+            fips_opts.sign_x931_padding_disabled = 1;
             break;
         case OPT_QUIET:
             quiet = 1;

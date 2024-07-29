@@ -141,6 +141,15 @@ extern "C" {
  */
 # define OSSL_PROV_FIPS_PARAM_TDES_ENCRYPT_DISABLED "tdes-encrypt-disabled"
 
+/*
+ * A boolean that determines if X9.31 padding can be used for RSA signing.
+ * X9.31 RSA has been removed from FIPS 186-5, and is no longer approved for
+ * signing. it may still be used for verification for legacy purposes.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_RSA_SIGN_X931_PAD_DISABLED "rsa-sign-x931-pad-disabled"
+
 # ifdef __cplusplus
 }
 # endif

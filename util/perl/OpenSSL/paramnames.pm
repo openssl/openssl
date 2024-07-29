@@ -42,6 +42,7 @@ my %params = (
     'PROV_PARAM_X963KDF_DIGEST_CHECK' =>   "x963kdf-digest-check",   # uint
     'PROV_PARAM_DSA_SIGN_DISABLED' =>      "dsa-sign-disabled",      # uint
     'PROV_PARAM_TDES_ENCRYPT_DISABLED' =>  "tdes-encrypt-disabled",  # uint
+    'PROV_PARAM_RSA_SIGN_X931_PAD_DISABLED' =>  "rsa-sign-x931-pad-disabled",   # uint
 
 # Self test callback parameters
     'PROV_PARAM_SELF_TEST_PHASE' =>  "st-phase",# utf8_string
@@ -414,6 +415,7 @@ my %params = (
     'SIGNATURE_PARAM_FIPS_DIGEST_CHECK' =>  '*PKEY_PARAM_FIPS_DIGEST_CHECK',
     'SIGNATURE_PARAM_FIPS_KEY_CHECK' =>     '*PKEY_PARAM_FIPS_KEY_CHECK',
     'SIGNATURE_PARAM_FIPS_SIGN_CHECK' =>    "sign-check",
+    'SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK' => "sign-x931-pad-check",
     'SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
 
 # Asym cipher parameters

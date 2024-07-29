@@ -33,6 +33,7 @@ B<openssl fipsinstall>
 [B<-dsa_sign_disabled>]
 [B<-no_short_mac>]
 [B<-tdes_encrypt_disabled>]
+[B<-rsa_sign_x931_disabled>]
 [B<-self_test_onload>]
 [B<-self_test_oninstall>]
 [B<-corrupt_desc> I<selftest_description>]
@@ -250,6 +251,11 @@ still allowed). See FIPS 140-3 IG C.K for details.
 Configure the module to not allow Triple-DES encryption.
 Triple-DES decryption is still allowed for legacy purposes.
 See SP800-131Ar2 for details.
+
+=item B<-rsa_sign_x931_disabled>
+
+Configure the module to not allow X9.31 padding be used when signing with RSA.
+See FIPS 140-3 IG C.K for details.
 
 =item B<-self_test_onload>
 
