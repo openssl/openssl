@@ -59,7 +59,11 @@ __tsan_mutex_post_lock((x), 0, 0)
 
 # include <assert.h>
 
-# ifdef PTHREAD_RWLOCK_INITIALIZER
+/*
+ * The Non-Stop KLT thread model currently seems broken in its rwlock
+ * implementation
+ */
+# if defined(PTHREAD_RWLOCK_INITIALIZER) && !defined(_KLT_MODEL_)
 #  define USE_RWLOCK
 # endif
 
