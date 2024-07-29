@@ -133,7 +133,8 @@ int ossl_fips_ind_digest_check(OSSL_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
 int ossl_fips_ind_digest_sign_check(OSSL_FIPS_IND *ind, int id,
                                     OSSL_LIB_CTX *libctx,
                                     int nid, int sha1_allowed,
-                                    const char *desc);
+                                    const char *desc,
+                                    OSSL_FIPS_IND_CHECK_CB *config_check_f);
 
 #else
 # define OSSL_FIPS_IND_DECLARE
