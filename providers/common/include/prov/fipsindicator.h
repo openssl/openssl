@@ -114,9 +114,9 @@ void ossl_FIPS_IND_copy(OSSL_FIPS_IND *dst, const OSSL_FIPS_IND *src);
 # define OSSL_FIPS_IND_GET_CTX_PARAM(ctx, prms) \
     ossl_FIPS_IND_get_ctx_param(&((ctx)->indicator), prms)
 
-#define OSSL_FIPS_IND_GET(ctx) &((ctx)->indicator)
+# define OSSL_FIPS_IND_GET(ctx) &((ctx)->indicator)
 
-#define OSSL_FIPS_IND_GET_PARAM(ctx, p, settable, id, name)                    \
+# define OSSL_FIPS_IND_GET_PARAM(ctx, p, settable, id, name)                   \
     *settable = ossl_FIPS_IND_get_settable(&((ctx)->indicator), id);           \
     if (*settable != OSSL_FIPS_IND_STATE_UNKNOWN)                              \
         *p = OSSL_PARAM_construct_int(name, settable);                         \
