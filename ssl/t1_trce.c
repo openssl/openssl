@@ -1671,6 +1671,7 @@ static int ssl_print_handshake(BIO *bio, const SSL_CONNECTION *sc, int server,
         ssl_print_hex(bio, indent + 2, "verify_data", msg, msglen);
         break;
 
+    case SSL3_MT_END_OF_EARLY_DATA:
     case SSL3_MT_SERVER_DONE:
         if (msglen != 0)
             ssl_print_hex(bio, indent + 2, "unexpected value", msg, msglen);
@@ -1695,11 +1696,6 @@ static int ssl_print_handshake(BIO *bio, const SSL_CONNECTION *sc, int server,
         if (!ssl_trace_list(bio, indent + 2, msg, msglen, 1,
                             ssl_key_update_tbl))
             return 0;
-        break;
-
-    case SSL3_MT_END_OF_EARLY_DATA:
-        if (msglen != 0)
-            ssl_print_hex(bio, indent + 2, "unexpected value", msg, msglen);
         break;
 
     default:
