@@ -353,7 +353,7 @@ static int write_config_fips_section(BIO *out, const char *section,
                       opts->eddsa_no_verify_digested ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_NO_SHORT_MAC,
                       opts->no_short_mac ? "1" : "0") <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST,
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST,
                       opts->drgb_no_trunc_dgst ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_SIGNATURE_DIGEST_CHECK,
                       opts->signature_digest_check ? "1" : "0") <= 0
