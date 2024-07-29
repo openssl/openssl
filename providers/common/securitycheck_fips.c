@@ -99,7 +99,8 @@ int ossl_fips_ind_digest_check(OSSL_FIPS_IND *ind, int id,
 int ossl_fips_ind_digest_sign_check(OSSL_FIPS_IND *ind, int id,
                                     OSSL_LIB_CTX *libctx,
                                     int nid, int sha1_allowed,
-                                    const char *desc)
+                                    const char *desc,
+                                    OSSL_FIPS_IND_CHECK_CB *config_check_f)
 {
     int approved;
 
@@ -110,7 +111,7 @@ int ossl_fips_ind_digest_sign_check(OSSL_FIPS_IND *ind, int id,
 
     if (!approved) {
         if (!ossl_FIPS_IND_on_unapproved(ind, id, libctx, desc, "Digest SHA1",
-                                         ossl_securitycheck_enabled)) {
+                                         config_check_f)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
             return 0;
         }
